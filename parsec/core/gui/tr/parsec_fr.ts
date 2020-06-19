@@ -73,35 +73,104 @@
     </message>
 </context>
 <context>
-    <name>ClaimDeviceWidget</name>
+    <name>ClaimDeviceCodeExchangeWidget</name>
     <message>
-        <location filename="../forms/claim_device_widget.ui" line="20"/>
+        <location filename="../forms/claim_device_code_exchange_widget.ui" line="14"/>
         <source>Form</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../forms/claim_device_widget.ui" line="107"/>
-        <source>TEXT_LABEL_TOKEN</source>
+        <location filename="../forms/claim_device_code_exchange_widget.ui" line="59"/>
+        <source>TEXT_CLAIM_DEVICE_CODE_EXCHANGE_GET_CODE_INSTRUCTIONS</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../forms/claim_device_widget.ui" line="167"/>
+        <location filename="../forms/claim_device_code_exchange_widget.ui" line="129"/>
+        <source>TEXT_CLAIM_DEVICE_CODE_EXCHANGE_GIVE_CODE_INSTRUCTIONS</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../forms/claim_device_code_exchange_widget.ui" line="179"/>
+        <source>TEXT_CLAIM_DEVICE_CODE_EXCHANGE_WAIT</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
+    <name>ClaimDeviceInstructionsWidget</name>
+    <message>
+        <location filename="../forms/claim_device_instructions_widget.ui" line="14"/>
+        <source>Form</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../forms/claim_device_instructions_widget.ui" line="44"/>
+        <source>TEXT_CLAIM_DEVICE_INSTRUCTIONS</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../forms/claim_device_instructions_widget.ui" line="72"/>
+        <source>ACTION_START</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
+    <name>ClaimDeviceProvideInfoWidget</name>
+    <message>
+        <location filename="../forms/claim_device_provide_info_widget.ui" line="14"/>
+        <source>Form</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../forms/claim_device_provide_info_widget.ui" line="35"/>
+        <source>TEXT_CLAIM_DEVICE_PROVIDE_INFO_INSTRUCTIONS</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../forms/claim_device_provide_info_widget.ui" line="72"/>
+        <source>TEXT_LABEL_DEVICE</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../forms/claim_device_provide_info_widget.ui" line="96"/>
+        <source>TEXT_LABEL_DEVICE_PLACEHOLDER</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../forms/claim_device_provide_info_widget.ui" line="138"/>
         <source>TEXT_LABEL_PASSWORD</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../forms/claim_device_widget.ui" line="215"/>
+        <location filename="../forms/claim_device_provide_info_widget.ui" line="165"/>
+        <source>TEXT_LABEL_PASSWORD_PLACEHOLDER</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../forms/claim_device_provide_info_widget.ui" line="186"/>
         <source>TEXT_LABEL_PASSWORD_CONFIRMATION</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../forms/claim_device_widget.ui" line="278"/>
-        <source>TEXT_CLAIM_DEVICE_TOOLTIP</source>
+        <location filename="../forms/claim_device_provide_info_widget.ui" line="210"/>
+        <source>TEXT_LABEL_PASSWORD_CONFIRMATION_PLACEHOLDER</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../forms/claim_device_widget.ui" line="284"/>
-        <source>ACTION_CLAIM_DEVICE</source>
+        <location filename="../forms/claim_device_provide_info_widget.ui" line="260"/>
+        <source>ACTION_CREATE_DEVICE</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../forms/claim_device_provide_info_widget.ui" line="269"/>
+        <source>TEXT_CLAIM_DEVICE_WAIT_FOR_DEVICE_INFO</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
+    <name>ClaimDeviceWidget</name>
+    <message>
+        <location filename="../forms/claim_device_widget.ui" line="26"/>
+        <source>Form</source>
         <translation type="unfinished"></translation>
     </message>
 </context>
@@ -141,27 +210,27 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../forms/claim_user_finalize_widget.ui" line="72"/>
+        <location filename="../forms/claim_user_finalize_widget.ui" line="75"/>
         <source>TEXT_LABEL_PASSWORD</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../forms/claim_user_finalize_widget.ui" line="99"/>
+        <location filename="../forms/claim_user_finalize_widget.ui" line="102"/>
         <source>TEXT_LABEL_PASSWORD_PLACEHOLDER</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../forms/claim_user_finalize_widget.ui" line="120"/>
+        <location filename="../forms/claim_user_finalize_widget.ui" line="123"/>
         <source>TEXT_LABEL_PASSWORD_CONFIRMATION</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../forms/claim_user_finalize_widget.ui" line="144"/>
+        <location filename="../forms/claim_user_finalize_widget.ui" line="147"/>
         <source>TEXT_LABEL_PASSWORD_CONFIRMATION_PLACEHOLDER</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../forms/claim_user_finalize_widget.ui" line="194"/>
+        <location filename="../forms/claim_user_finalize_widget.ui" line="197"/>
         <source>ACTION_OK</source>
         <translation type="unfinished"></translation>
     </message>
@@ -337,11 +406,6 @@
 </context>
 <context>
     <name>DeviceInvitationWidget</name>
-    <message>
-        <location filename="../forms/device_invitation_widget.ui" line="26"/>
-        <source>Form</source>
-        <translation type="unfinished"></translation>
-    </message>
 </context>
 <context>
     <name>DevicesWidget</name>
@@ -526,6 +590,65 @@ p, li { white-space: pre-wrap; }
     </message>
 </context>
 <context>
+    <name>GreetDeviceCodeExchangeWidget</name>
+    <message>
+        <location filename="../forms/greet_device_code_exchange_widget.ui" line="14"/>
+        <source>Form</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../forms/greet_device_code_exchange_widget.ui" line="41"/>
+        <source>TEXT_GREET_DEVICE_CODE_EXCHANGE_GIVE_CODE_INSTRUCTIONS</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../forms/greet_device_code_exchange_widget.ui" line="91"/>
+        <source>TEXT_GREET_DEVICE_CODE_EXCHANGE_WAIT</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../forms/greet_device_code_exchange_widget.ui" line="131"/>
+        <source>TEXT_GREET_DEVICE_CODE_EXCHANGE_GET_CODE_INSTRUCTIONS</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../forms/greet_device_code_exchange_widget.ui" line="180"/>
+        <source>TEXT_GREET_DEVICE_WAIT_INFO</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
+    <name>GreetDeviceInstructionsWidget</name>
+    <message>
+        <location filename="../forms/greet_device_instructions_widget.ui" line="14"/>
+        <source>Form</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../forms/greet_device_instructions_widget.ui" line="66"/>
+        <source>ACTION_COPY_ADDR</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../forms/greet_device_instructions_widget.ui" line="73"/>
+        <source>ACTION_SEND_EMAIL</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../forms/greet_device_instructions_widget.ui" line="110"/>
+        <source>ACTION_START</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
+    <name>GreetDeviceWidget</name>
+    <message>
+        <location filename="../forms/greet_device_widget.ui" line="14"/>
+        <source>Form</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
     <name>GreetUserCheckInfoWidget</name>
     <message>
         <location filename="../forms/greet_user_check_info_widget.ui" line="14"/>
@@ -538,28 +661,28 @@ p, li { white-space: pre-wrap; }
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../forms/greet_user_check_info_widget.ui" line="72"/>
+        <location filename="../forms/greet_user_check_info_widget.ui" line="75"/>
         <source>TEXT_LABEL_USER_FULL_NAME</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../forms/greet_user_check_info_widget.ui" line="114"/>
+        <location filename="../forms/greet_user_check_info_widget.ui" line="117"/>
         <source>TEXT_LABEL_DEVICE</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../forms/greet_user_check_info_widget.ui" line="156"/>
+        <location filename="../forms/greet_user_check_info_widget.ui" line="159"/>
         <source>TEXT_LABEL_USER_EMAIL</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../forms/greet_user_check_info_widget.ui" line="192"/>
-        <source>TEXT_GREET_USER_IS_ADMIN</source>
+        <location filename="../forms/greet_user_check_info_widget.ui" line="243"/>
+        <source>ACTION_CREATE_USER</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../forms/greet_user_check_info_widget.ui" line="217"/>
-        <source>ACTION_CREATE_USER</source>
+        <location filename="../forms/greet_user_check_info_widget.ui" line="207"/>
+        <source>TEXT_LABEL_USER_ROLE</source>
         <translation type="unfinished"></translation>
     </message>
 </context>
@@ -643,64 +766,9 @@ p, li { white-space: pre-wrap; }
 </context>
 <context>
     <name>InviteDeviceWidget</name>
-    <message>
-        <location filename="../forms/invite_device_widget.ui" line="14"/>
-        <source>Form</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../forms/invite_device_widget.ui" line="61"/>
-        <source>ACTION_INVITE_DEVICE_NEW_INVITE</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../forms/invite_device_widget.ui" line="94"/>
-        <source>TEXT_INVITE_DEVICE_INSTRUCTIONS</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../forms/invite_device_widget.ui" line="129"/>
-        <source>ACTION_CANCEL_INVITATION</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../forms/invite_device_widget.ui" line="136"/>
-        <source>ACTION_COPY_TO_CLIPBOARD</source>
-        <translation type="unfinished"></translation>
-    </message>
 </context>
 <context>
     <name>InviteUserWidget</name>
-    <message>
-        <location filename="../forms/invite_user_widget.ui" line="20"/>
-        <source>Form</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../forms/invite_user_widget.ui" line="64"/>
-        <source>TEXT_USER_INVITATION_EMAIL_LABEL</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../forms/invite_user_widget.ui" line="71"/>
-        <source>TEXT_USER_INVITATION_EMAIL_PLACEHOLDER</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../forms/invite_user_widget.ui" line="98"/>
-        <source>ACTION_INVITE_USER</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../forms/invite_user_widget.ui" line="112"/>
-        <source>TEXT_USER_INVITATION_NO_ACTIVE_INVITATION</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../forms/invite_user_widget.ui" line="147"/>
-        <source>TEXT_USER_INVITATION_ACTIVE_INVITATIONS_TITLE</source>
-        <translation type="unfinished"></translation>
-    </message>
 </context>
 <context>
     <name>LicenseWidget</name>
@@ -979,17 +1047,7 @@ p, li { white-space: pre-wrap; }
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../forms/settings_widget.ui" line="453"/>
-        <source>TEXT_SETTINGS_MISC_TITLE</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../forms/settings_widget.ui" line="467"/>
-        <source>TEXT_SETTINGS_CHECK_DISABLE_ACROBAT_CONTAINERS</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../forms/settings_widget.ui" line="557"/>
+        <location filename="../forms/settings_widget.ui" line="504"/>
         <source>ACTION_SAVE</source>
         <translation type="unfinished"></translation>
     </message>
@@ -1043,33 +1101,31 @@ p, li { white-space: pre-wrap; }
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../forms/user_button.ui" line="237"/>
-        <source>TEXT_USER_LABEL_CREATED</source>
+        <location filename="../forms/user_button.ui" line="117"/>
+        <source>ACTION_CANCEL_USER_INVITATION_TOOLTIP</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
+    <name>UserInvitationButton</name>
+    <message>
+        <location filename="../forms/user_invitation_button.ui" line="26"/>
+        <source>Form</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../forms/user_invitation_button.ui" line="116"/>
+        <source>ACTION_CANCEL_USER_INVITATION_TOOLTIP</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../forms/user_invitation_button.ui" line="285"/>
+        <source>BUTTON_GREET_USER</source>
         <translation type="unfinished"></translation>
     </message>
 </context>
 <context>
     <name>UserInvitationWidget</name>
-    <message>
-        <location filename="../forms/user_invitation_widget.ui" line="20"/>
-        <source>Form</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../forms/user_invitation_widget.ui" line="55"/>
-        <source>ACTION_GREET_USER</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../forms/user_invitation_widget.ui" line="149"/>
-        <source>USER_INVITATION_STATUS_LABEL</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../forms/user_invitation_widget.ui" line="210"/>
-        <source>ACTION_CANCEL_USER_INVITATION_TOOLTIP</source>
-        <translation type="unfinished"></translation>
-    </message>
 </context>
 <context>
     <name>UsersWidget</name>

@@ -7,8 +7,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PROJECT VERSION\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2020-06-04 09:41+0200\n"
-"PO-Revision-Date: 2020-06-04 09:42+0200\n"
+"POT-Creation-Date: 2020-06-19 09:36+0200\n"
+"PO-Revision-Date: 2020-06-19 09:50+0200\n"
 "Last-Translator: \n"
 "Language: en\n"
 "Language-Team: en <LL@li.org>\n"
@@ -169,8 +169,23 @@ msgstr "Error while retrieving the file history."
 msgid "TEXT_FILE_HISTORY_TITLE_name"
 msgstr "File history of {name}"
 
+msgid "TEXT_GREET_USER_WAITING"
+msgstr "Waiting for the other user..."
+
+msgid "TEXT_GREET_USER_WAIT_PEER_ERROR"
+msgstr "Failed to wait for the other user."
+
+msgid "TEXT_USER_PROFILE_STANDARD"
+msgstr "Standard"
+
+msgid "TEXT_USER_PROFILE_OUTSIDER"
+msgstr "Outsider"
+
+msgid "TEXT_USER_PROFILE_ADMIN"
+msgstr "Administrator"
+
 msgid "TEXT_GREET_USER_INVALID_HUMAN_HANDLE"
-msgstr ""
+msgstr "The email is invalid."
 
 msgid "TEXT_GREET_USER_INVALID_DEVICE_ID"
 msgstr "The device's name is not valid."
@@ -280,14 +295,14 @@ msgstr "Reencrypting the workspace"
 msgid "TEXT_WORKSPACE_IS_PRIVATE"
 msgstr "private"
 
+msgid "TEXT_WORKSPACE_IS_OWNED_BY_user"
+msgstr "owned by {user}"
+
 msgid "TEXT_WORKSPACE_IS_SHARED_WITH_user"
 msgstr "shared with {user}"
 
 msgid "TEXT_WORKSPACE_IS_SHARED_WITH_n_USERS"
 msgstr "shared with {n} users"
-
-msgid "TEXT_WORKSPACE_IS_OWNED_BY_user"
-msgstr "owned by {user}"
 
 msgid "TEXT_WORKSPACE_IS_TIMESTAMPED_date"
 msgstr "temporary_{date}"
@@ -321,7 +336,7 @@ msgid "TEXT_CLAIM_USER_INVALID_DEVICE_ID"
 msgstr "The device's name is invalid."
 
 msgid "TEXT_CLAIM_USER_INVALID_HUMAN_HANDLE"
-msgstr ""
+msgstr "The email is invalid."
 
 msgid "TEXT_CLAIM_USER_CLAIM_ERROR"
 msgstr "Internal error. Please restart the process."
@@ -348,6 +363,9 @@ msgstr "current"
 
 msgid "ACTION_DEVICE_MENU_CHANGE_PASSWORD"
 msgstr "Change password"
+
+msgid "TEXT_DEVICES_CANNOT_INVITE_DEVICE"
+msgstr "Cannot invite the device."
 
 msgid "TEXT_WORKSPACE_GOTO_FILE_LINK_TITLE"
 msgstr "Access a file by its link"
@@ -386,6 +404,9 @@ msgstr "No workspace has been created yet."
 
 msgid "TEXT_WORKSPACE_CANNOT_MOUNT"
 msgstr "An internal error prevents PARSEC from accessing the files in this workspace."
+
+msgid "TEXT_WORKSPACE_CANNOT_UNMOUNT"
+msgstr ""
 
 msgid "TEXT_WORKSPACE_DELETE_TITLE"
 msgstr "Delete the workspace"
@@ -446,11 +467,40 @@ msgstr "Workspace"
 msgid "ACTION_WORKSPACE_NEW_CREATE"
 msgstr "Create"
 
-msgid "TEXT_USER_ROLE_ADMIN"
-msgstr "Administrator"
+msgid "TEXT_GREET_USER_INSTRUCTIONS_email-addr"
+msgstr ""
 
-msgid "TEXT_USER_ROLE_CONTRIBUTOR"
-msgstr "Contributor"
+msgid "TEXT_GREET_USER_ADDR_COPIED_TO_CLIPBOARD"
+msgstr "URL copied to clipboard"
+
+msgid "TEXT_GREET_DEVICE_EMAIL_SENT"
+msgstr "Email sent"
+
+msgid "TEXT_GREET_DEVICE_SEND_EMAIL_ERROR"
+msgstr "Could not send the email."
+
+msgid "TEXT_GREET_DEVICE_WAITING"
+msgstr "Waiting for the new device..."
+
+msgid "TEXT_GREET_DEVICE_WAIT_PEER_ERROR"
+msgstr "Error while waiting for the new device."
+
+msgid "TEXT_GREETER_DEVICE_NONE_CODE_CLICKED"
+msgstr ""
+"If you didn't see the code that was given to you, it could mean that a malicious user "
+"is trying to register in your stead.\n"
+"\n"
+"You can retry the invitation process. If this problem persists, your network may not "
+"be safe."
+
+msgid "TEXT_GREET_DEVICE_TITLE"
+msgstr "Greet a new device"
+
+msgid "ACTION_USER_INVITE_COPY_ADDR"
+msgstr "Copy address"
+
+msgid "ACTION_USER_INVITE_COPY_EMAIL"
+msgstr "Copy email"
 
 msgid "TEXT_USER_IS_CURRENT"
 msgstr "you"
@@ -460,6 +510,32 @@ msgstr "Revoked"
 
 msgid "ACTION_USER_MENU_REVOKE"
 msgstr "Revoke"
+
+msgid "TEXT_USER_INVITE_EMAIL"
+msgstr "Invite a new user"
+
+msgid "TEXT_USER_INVITE_EMAIL_INSTRUCTIONS"
+msgstr "Please provide the new user's email address:"
+
+msgid "TEXT_USER_INVITE_EMAIL_PLACEHOLDER"
+msgstr "john.doe@host.com"
+
+msgid "ACTION_USER_INVITE_DO_INVITE"
+msgstr "Invite the user"
+
+msgid "TEXT_USER_INVITE_CANCEL_INVITE_QUESTION_TITLE"
+msgstr "Cancel the invitation"
+
+msgid "TEXT_USER_INVITE_CANCEL_INVITE_QUESTION_CONTENT"
+msgstr ""
+"Are you sure you want to cancel this invitation ? The link that was send by email to "
+"the user will become invalid."
+
+msgid "TEXT_USER_INVITE_CANCEL_INVITE_ACCEPT"
+msgstr "Cancel the invitation"
+
+msgid "ACTION_NO"
+msgstr "No"
 
 msgid "TEXT_USER_REVOKE_SUCCESS_user"
 msgstr ""
@@ -496,6 +572,12 @@ msgstr "Revoke the user"
 
 msgid "TEXT_USER_LIST_RETRIEVABLE_FAILURE"
 msgstr "Failed to retrieve the user list from the server."
+
+msgid "TEXT_INVITE_USER_CANCEL_ERROR"
+msgstr "Could not cancel the invitation."
+
+msgid "TEXT_INVITE_USER_INVITE_ERROR"
+msgstr "Could not invite the user."
 
 msgid "TEXT_PARSEC_LICENSE"
 msgstr ""
@@ -1211,27 +1293,6 @@ msgstr "Kb"
 msgid "TEXT_FILE_SIZE_B"
 msgstr "b"
 
-msgid "TEXT_INVITATION_STATUS_READY"
-msgstr "Ready"
-
-msgid "TEXT_INVITATION_STATUS_READY_TOOLTIP"
-msgstr "The invitation is ready"
-
-msgid "TEXT_INVITATION_STATUS_IDLE"
-msgstr "Idle"
-
-msgid "TEXT_INVITATION_STATUS_IDLE_TOOLTIP"
-msgstr "The invitation is idle"
-
-msgid "TEXT_INVITATION_STATUS_CANCELLED"
-msgstr "Cancelled"
-
-msgid "TEXT_INVITATION_STATUS_CANCELLED_TOOLTIP"
-msgstr "The invitation is cancelled"
-
-msgid "TEXT_INVITE_DEVICE_TITLE"
-msgstr "Invite a new device"
-
 msgid "TEXT_PARSEC_NEW_VERSION_AVAILABLE_version"
 msgstr "The version <b>{version}</b> of PARSEC is available!"
 
@@ -1416,40 +1477,45 @@ msgstr "You do not have any device on this computer."
 msgid "ACTION_LOGGING_IN"
 msgstr "Logging in..."
 
-msgid "TEXT_CLAIM_DEVICE_INSTRUCTIONS_device-url-organization"
+msgid "TEXT_CLAIM_DEVICE_INVALID_CODE_CLICKED"
 msgstr ""
-"You can finalize the creation of your device <b>{device}</b> of the organization "
-"<b>{organization}</b> by choosing a password and providing the six digits token."
+"You did not click the right code. It may mean an attack from a malicious user trying "
+"to register in your stead."
 
-msgid "TEXT_CLAIM_DEVICE_NOT_FOUND"
-msgstr "No invitation has been found for this device."
+msgid "TEXT_CLAIM_DEVICE_NONE_CODE_CLICKED"
+msgstr ""
+"If you didn't see the code that was given to you, it could mean that a malicious user "
+"is trying to register in your stead.\n"
+"\n"
+"You can retry the invitation process. If this problem persists, your network may not "
+"be safe."
 
-msgid "TEXT_CLAIM_DEVICE_PASSWORD_MISMATCH"
-msgstr "The password and the password confirmation do no match."
+msgid "TEXT_CLAIM_DEVICE_GET_GREETER_SAS_ERROR"
+msgstr "Error while claiming the device."
 
-msgid "TEXT_CLAIM_DEVICE_PASSWORD_COMPLEXITY_TOO_LOW"
-msgstr "The password is not complex enough."
+msgid "TEXT_CLAIM_DEVICE_WAIT_TRUST_ERROR"
+msgstr "Error while claiming the device."
 
-msgid "TEXT_CLAIM_DEVICE_INVALID_URL"
-msgstr "An internal error occurred while registering the device."
+msgid "TEXT_CLAIM_DEVICE_WAIT_PEER_TRUST_ERROR"
+msgstr "Error while claiming the device."
 
-msgid "TEXT_CLAIM_DEVICE_BAD_DEVICE_NAME"
-msgstr "The device name is invalid."
+msgid "TEXT_CLAIM_DEVICE_INVALID_DEVICE_NAME"
+msgstr "Invalid device name."
 
-msgid "TEXT_CLAIM_DEVICE_BAD_USER_NAME"
-msgstr "An internal error occurred while registering the device."
+msgid "TEXT_CLAIM_DEVICE_CLAIM_ERROR"
+msgstr "Error while claiming the device."
 
-msgid "TEXT_CLAIM_DEVICE_BACKEND_REFUSAL"
-msgstr "An internal error occurred while registering the device."
+msgid "TEXT_CLAIM_DEVICE_FAILED_TO_RETRIEVE_INFO"
+msgstr "Error while claiming the device."
 
-msgid "TEXT_CLAIM_DEVICE_BACKEND_OFFLINE"
-msgstr "The server is offline or you have no access to the internet."
+msgid "TEXT_CLAIM_DEVICE_SUCCESSFUL"
+msgstr "The device was successfully created!"
 
-msgid "TEXT_CLAIM_DEVICE_UNKNOWN_FAILURE"
-msgstr "An internal error occurred while registering the device."
+msgid "TEXT_CLAIM_DEVICE_INVITATION_NOT_FOUND"
+msgstr "No invitation found for this device."
 
-msgid "TEXT_CLAIM_DEVICE_SUCCESS"
-msgstr "Your device was successfully registered!"
+msgid "TEXT_CLAIM_DEVICE_UNKNOWN_ERROR"
+msgstr "Error while claiming the device."
 
 msgid "TEXT_CLAIM_DEVICE_TITLE"
 msgstr "Register a device"
@@ -1516,35 +1582,6 @@ msgstr "Users"
 
 msgid "ACTION_MENU_DEVICES"
 msgstr "Devices"
-
-msgid "ACTION_USER_INVITE_COPY_ADDR"
-msgstr "Copy address"
-
-msgid "ACTION_USER_INVITE_COPY_EMAIL"
-msgstr "Copy email"
-
-msgid "TEXT_USER_INVITE_CANCEL_INVITE_QUESTION_TITLE"
-msgstr "Cancel the invitation"
-
-msgid "TEXT_USER_INVITE_CANCEL_INVITE_QUESTION_CONTENT"
-msgstr ""
-"Are you sure you want to cancel this invitation ? The link that was send by email to "
-"the user will become invalid."
-
-msgid "TEXT_USER_INVITE_CANCEL_INVITE_ACCEPT"
-msgstr "Cancel the invitation"
-
-msgid "ACTION_NO"
-msgstr "No"
-
-msgid "TEXT_INVITE_USER_CANCEL_ERROR"
-msgstr "Could not cancel the invitation."
-
-msgid "TEXT_INVITE_USER_INVITE_ERROR"
-msgstr "Could not invite the user."
-
-msgid "TEXT_INVITE_USER_TITLE"
-msgstr "Manage invitations"
 
 msgid "TEXT_PARSEC_WINDOW_TITLE_version"
 msgstr "PARSEC {version}"
@@ -1635,9 +1672,6 @@ msgstr ""
 msgid "ACTION_ERROR_REPORTING_ACCEPT"
 msgstr "Allow error reporting"
 
-msgid "ACTION_NO"
-msgstr "No"
-
 msgid "TEXT_KICKSTART_PARSEC_WHAT_TO_DO_TITLE"
 msgstr "Welcome to Parsec!"
 
@@ -1721,14 +1755,41 @@ msgstr "Bootstrap the organization"
 msgid "ACTION_BOOTSTRAP_ORG"
 msgstr "Bootstrap the organization"
 
-msgid "TEXT_LABEL_TOKEN"
-msgstr "Token"
+msgid "TEXT_CLAIM_DEVICE_CODE_EXCHANGE_GET_CODE_INSTRUCTIONS"
+msgstr "Get the code from your other device."
 
-msgid "TEXT_CLAIM_DEVICE_TOOLTIP"
-msgstr "Register the device"
+msgid "TEXT_CLAIM_DEVICE_CODE_EXCHANGE_GIVE_CODE_INSTRUCTIONS"
+msgstr "Use the code on your other device."
 
-msgid "ACTION_CLAIM_DEVICE"
-msgstr "Register the device"
+msgid "TEXT_CLAIM_DEVICE_CODE_EXCHANGE_WAIT"
+msgstr "Waiting"
+
+msgid "TEXT_CLAIM_DEVICE_INSTRUCTIONS"
+msgstr ""
+
+msgid "ACTION_START"
+msgstr "Start"
+
+msgid "TEXT_CLAIM_DEVICE_PROVIDE_INFO_INSTRUCTIONS"
+msgstr ""
+
+msgid "TEXT_LABEL_DEVICE"
+msgstr "Device name"
+
+msgid "TEXT_LABEL_DEVICE_PLACEHOLDER"
+msgstr "device"
+
+msgid "TEXT_LABEL_PASSWORD_PLACEHOLDER"
+msgstr "Password"
+
+msgid "TEXT_LABEL_PASSWORD_CONFIRMATION_PLACEHOLDER"
+msgstr "Password confirmation"
+
+msgid "ACTION_CREATE_DEVICE"
+msgstr ""
+
+msgid "TEXT_CLAIM_DEVICE_WAIT_FOR_DEVICE_INFO"
+msgstr ""
 
 msgid "TEXT_CLAIM_USER_CODE_EXCHANGE_GET_CODE_INSTRUCTIONS"
 msgstr ""
@@ -1746,12 +1807,6 @@ msgstr ""
 "The user was successfully created. To start using Parsec, you will now have to choose "
 "a password."
 
-msgid "TEXT_LABEL_PASSWORD_PLACEHOLDER"
-msgstr "Password"
-
-msgid "TEXT_LABEL_PASSWORD_CONFIRMATION_PLACEHOLDER"
-msgstr "Password confirmation"
-
 msgid "TEXT_CLAIM_USER_INSTRUCTIONS"
 msgstr ""
 "Welcome!\n"
@@ -1766,9 +1821,6 @@ msgstr ""
 "\n"
 "When you are ready to begin, click Start!"
 
-msgid "ACTION_START"
-msgstr "Start"
-
 msgid "TEXT_CLAIM_USER_PROVIDE_INFO_INSTRUCTIONS"
 msgstr "Please provide the following information:"
 
@@ -1777,12 +1829,6 @@ msgstr "Full name"
 
 msgid "TEXT_LABEL_USER_FULL_NAME_PLACEHOLDER"
 msgstr "John Smith"
-
-msgid "TEXT_LABEL_DEVICE"
-msgstr "Device name"
-
-msgid "TEXT_LABEL_DEVICE_PLACEHOLDER"
-msgstr "device"
 
 msgid "TEXT_LABEL_USER_EMAIL"
 msgstr "Email"
@@ -1907,16 +1953,34 @@ msgstr "Import new files into this workspace."
 msgid "TEXT_FILE_IMPORT_FOLDER_TOOLTIP"
 msgstr "Import a new folder into this workspace."
 
+msgid "TEXT_GREET_DEVICE_CODE_EXCHANGE_GIVE_CODE_INSTRUCTIONS"
+msgstr ""
+
+msgid "TEXT_GREET_DEVICE_CODE_EXCHANGE_WAIT"
+msgstr ""
+
+msgid "TEXT_GREET_DEVICE_CODE_EXCHANGE_GET_CODE_INSTRUCTIONS"
+msgstr ""
+
+msgid "TEXT_GREET_DEVICE_WAIT_INFO"
+msgstr ""
+
+msgid "ACTION_COPY_ADDR"
+msgstr ""
+
+msgid "ACTION_SEND_EMAIL"
+msgstr ""
+
 msgid "TEXT_GREET_USER_WAITING_FOR_INFO"
 msgstr ""
 "We're waiting for the user to fill out their information. You will be able to review "
 "them."
 
-msgid "TEXT_GREET_USER_IS_ADMIN"
-msgstr "The user will be an administrator"
-
 msgid "ACTION_CREATE_USER"
 msgstr "Finish"
+
+msgid "TEXT_LABEL_USER_ROLE"
+msgstr ""
 
 msgid "TEXT_GREET_USER_CODE_EXCHANGE_GIVE_CODE_INSTRUCTIONS"
 msgstr "Please give the following code to the user."
@@ -1941,33 +2005,6 @@ msgstr ""
 
 msgid "TEXT_DIALOG_CLOSE_TOOLTIP"
 msgstr "Close the window."
-
-msgid "ACTION_INVITE_DEVICE_NEW_INVITE"
-msgstr ""
-
-msgid "TEXT_INVITE_DEVICE_INSTRUCTIONS"
-msgstr ""
-
-msgid "ACTION_CANCEL_INVITATION"
-msgstr "Cancel the invitation"
-
-msgid "ACTION_COPY_TO_CLIPBOARD"
-msgstr "Copy to clipboard"
-
-msgid "TEXT_USER_INVITATION_EMAIL_LABEL"
-msgstr "Email"
-
-msgid "TEXT_USER_INVITATION_EMAIL_PLACEHOLDER"
-msgstr "name@host.com"
-
-msgid "ACTION_INVITE_USER"
-msgstr "Invite a user"
-
-msgid "TEXT_USER_INVITATION_NO_ACTIVE_INVITATION"
-msgstr "No active invitations found."
-
-msgid "TEXT_USER_INVITATION_ACTIVE_INVITATIONS_TITLE"
-msgstr "Currently active invitations"
 
 msgid "TEXT_IMPORT_FILES_PROGRESS"
 msgstr "Importing file"
@@ -2035,12 +2072,6 @@ msgstr "Interface"
 msgid "TEXT_SETTINGS_CHECK_USE_WORKSPACES_COLORS"
 msgstr "Use colors for workspaces"
 
-msgid "TEXT_SETTINGS_MISC_TITLE"
-msgstr "Misc"
-
-msgid "TEXT_SETTINGS_CHECK_DISABLE_ACROBAT_CONTAINERS"
-msgstr "Disable Acrobat Containers"
-
 msgid "ACTION_SAVE"
 msgstr "Save"
 
@@ -2059,19 +2090,11 @@ msgstr "...and a time..."
 msgid "ACTION_WORKSPACE_TIMESTAMPED_MOUNT"
 msgstr "See the workspace"
 
-msgid "TEXT_USER_LABEL_CREATED"
-msgstr "Created"
-
-msgid "ACTION_GREET_USER"
-msgstr ""
-"Greet\n"
-"the user"
-
-msgid "USER_INVITATION_STATUS_LABEL"
-msgstr "Status"
-
 msgid "ACTION_CANCEL_USER_INVITATION_TOOLTIP"
 msgstr "Cancel the invitation"
+
+msgid "BUTTON_GREET_USER"
+msgstr ""
 
 msgid "TEXT_USERS_FILTER_USERS_PLACEHOLDER"
 msgstr "Filter users"
@@ -2299,3 +2322,118 @@ msgstr "Go to a file using a link"
 
 #~ msgid "TEXT_LABEL_USERNAME_PLACEHOLDER"
 #~ msgstr "username"
+
+#~ msgid "TEXT_USER_ROLE_ADMIN"
+#~ msgstr "Administrator"
+
+#~ msgid "TEXT_USER_ROLE_CONTRIBUTOR"
+#~ msgstr "Contributor"
+
+#~ msgid "TEXT_INVITATION_STATUS_READY"
+#~ msgstr "Ready"
+
+#~ msgid "TEXT_INVITATION_STATUS_READY_TOOLTIP"
+#~ msgstr "The invitation is ready"
+
+#~ msgid "TEXT_INVITATION_STATUS_IDLE"
+#~ msgstr "Idle"
+
+#~ msgid "TEXT_INVITATION_STATUS_IDLE_TOOLTIP"
+#~ msgstr "The invitation is idle"
+
+#~ msgid "TEXT_INVITATION_STATUS_CANCELLED"
+#~ msgstr "Cancelled"
+
+#~ msgid "TEXT_INVITATION_STATUS_CANCELLED_TOOLTIP"
+#~ msgstr "The invitation is cancelled"
+
+#~ msgid "TEXT_INVITE_DEVICE_TITLE"
+#~ msgstr "Invite a new device"
+
+#~ msgid "TEXT_CLAIM_DEVICE_INSTRUCTIONS_device-url-organization"
+#~ msgstr ""
+#~ "You can finalize the creation of your device <b>{device}</b> of the organization "
+#~ "<b>{organization}</b> by choosing a password and providing the six digits token."
+
+#~ msgid "TEXT_CLAIM_DEVICE_NOT_FOUND"
+#~ msgstr "No invitation has been found for this device."
+
+#~ msgid "TEXT_CLAIM_DEVICE_PASSWORD_MISMATCH"
+#~ msgstr "The password and the password confirmation do no match."
+
+#~ msgid "TEXT_CLAIM_DEVICE_PASSWORD_COMPLEXITY_TOO_LOW"
+#~ msgstr "The password is not complex enough."
+
+#~ msgid "TEXT_CLAIM_DEVICE_INVALID_URL"
+#~ msgstr "An internal error occurred while registering the device."
+
+#~ msgid "TEXT_CLAIM_DEVICE_BAD_DEVICE_NAME"
+#~ msgstr "The device name is invalid."
+
+#~ msgid "TEXT_CLAIM_DEVICE_BAD_USER_NAME"
+#~ msgstr "An internal error occurred while registering the device."
+
+#~ msgid "TEXT_CLAIM_DEVICE_BACKEND_REFUSAL"
+#~ msgstr "An internal error occurred while registering the device."
+
+#~ msgid "TEXT_CLAIM_DEVICE_BACKEND_OFFLINE"
+#~ msgstr "The server is offline or you have no access to the internet."
+
+#~ msgid "TEXT_CLAIM_DEVICE_UNKNOWN_FAILURE"
+#~ msgstr "An internal error occurred while registering the device."
+
+#~ msgid "TEXT_CLAIM_DEVICE_SUCCESS"
+#~ msgstr "Your device was successfully registered!"
+
+#~ msgid "TEXT_INVITE_USER_TITLE"
+#~ msgstr "Manage invitations"
+
+#~ msgid "TEXT_LABEL_TOKEN"
+#~ msgstr "Token"
+
+#~ msgid "TEXT_CLAIM_DEVICE_TOOLTIP"
+#~ msgstr "Register the device"
+
+#~ msgid "ACTION_CLAIM_DEVICE"
+#~ msgstr "Register the device"
+
+#~ msgid "TEXT_GREET_USER_IS_ADMIN"
+#~ msgstr "The user will be an administrator"
+
+#~ msgid "ACTION_CANCEL_INVITATION"
+#~ msgstr "Cancel the invitation"
+
+#~ msgid "ACTION_COPY_TO_CLIPBOARD"
+#~ msgstr "Copy to clipboard"
+
+#~ msgid "TEXT_USER_INVITATION_EMAIL_LABEL"
+#~ msgstr "Email"
+
+#~ msgid "TEXT_USER_INVITATION_EMAIL_PLACEHOLDER"
+#~ msgstr "name@host.com"
+
+#~ msgid "ACTION_INVITE_USER"
+#~ msgstr "Invite a user"
+
+#~ msgid "TEXT_USER_INVITATION_NO_ACTIVE_INVITATION"
+#~ msgstr "No active invitations found."
+
+#~ msgid "TEXT_USER_INVITATION_ACTIVE_INVITATIONS_TITLE"
+#~ msgstr "Currently active invitations"
+
+#~ msgid "TEXT_SETTINGS_MISC_TITLE"
+#~ msgstr "Misc"
+
+#~ msgid "TEXT_SETTINGS_CHECK_DISABLE_ACROBAT_CONTAINERS"
+#~ msgstr "Disable Acrobat Containers"
+
+#~ msgid "TEXT_USER_LABEL_CREATED"
+#~ msgstr "Created"
+
+#~ msgid "ACTION_GREET_USER"
+#~ msgstr ""
+#~ "Greet\n"
+#~ "the user"
+
+#~ msgid "USER_INVITATION_STATUS_LABEL"
+#~ msgstr "Status"

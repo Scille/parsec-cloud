@@ -38,7 +38,7 @@
       </sizepolicy>
      </property>
      <property name="text">
-      <string/>
+      <string>TEXT_GREET_DEVICE_INSTRUCTIONS</string>
      </property>
      <property name="wordWrap">
       <bool>true</bool>

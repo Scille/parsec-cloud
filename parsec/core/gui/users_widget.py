@@ -113,21 +113,22 @@ class UserButton(QWidget, Ui_UserButton):
         self.is_revoked = is_revoked
         self.certified_on = certified_on
         self.is_current_user = is_current_user
+        self.displayed_name = None
         if human_handle:
-            self.label_username.setText(
-                ensure_string_size(human_handle.label, 260, self.label_username.font())
-            )
-            self.label_username.setToolTip(human_handle.label)
+            self.displayed_name = human_handle.label
             if self.is_current_user:
                 self.label_email.setText(
                     ensure_string_size(human_handle.email, 260, self.label_email.font())
                 )
                 self.label_email.setToolTip(human_handle.email)
         else:
-            self.label_username.setText(
-                ensure_string_size(user_name, 260, self.label_username.font())
-            )
-            self.label_username.setToolTip(user_name)
+            self.displayed_name = user_name
+
+        self.label_username.setText(
+            ensure_string_size(self.displayed_name, 260, self.label_username.font())
+        )
+        self.label_username.setToolTip(self.displayed_name)
+
         if self.is_current_user:
             self.label_is_current.setText("({})".format(_("TEXT_USER_IS_CURRENT")))
         self.label_icon.apply_style()
@@ -147,10 +148,6 @@ class UserButton(QWidget, Ui_UserButton):
     @property
     def is_revoked(self):
         return self._is_revoked
-
-    @property
-    def displayed_name(self):
-        return self.label_username.text()
 
     @is_revoked.setter
     def is_revoked(self, value):

@@ -1,3 +1,5 @@
+# Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
+
 from PyQt5.QtCore import pyqtSignal
 from PyQt5.QtGui import QFont
 from PyQt5.QtWidgets import QWidget, QDialog
@@ -6,7 +8,7 @@ from enum import IntEnum
 
 import trio
 
-from parsec.api.protocol import DeviceID, InvitationType
+from parsec.api.protocol import InvitationType
 from parsec.core.backend_connection import backend_authenticated_cmds_factory
 from parsec.core.invite import DeviceGreetInitialCtx, InviteError
 
@@ -162,7 +164,6 @@ class GreetDeviceInstructionsWidget(QWidget, Ui_GreetDeviceInstructionsWidget):
         self.button_start.clicked.connect(self._on_button_start_clicked)
         self.button_send_email.clicked.connect(self._on_button_send_email_clicked)
         self.button_copy_addr.clicked.connect(self._on_copy_addr_clicked)
-        self.label_instructions.setText(_("TEXT_GREET_USER_INSTRUCTIONS_email-addr").format(email="a@b.c", addr=str(invite_addr)))
 
     def _on_copy_addr_clicked(self):
         desktop.copy_to_clipboard(str(self.invite_addr))
@@ -443,7 +444,13 @@ class GreetDeviceWidget(QWidget, Ui_GreetDeviceWidget):
             if current_page:
                 current_page.hide()
                 current_page.setParent(None)
-        page = GreetDeviceInstructionsWidget(self.jobs_ctx, self.greeter, self.invite_addr, device=self.core.device, config=self.core.config)
+        page = GreetDeviceInstructionsWidget(
+            self.jobs_ctx,
+            self.greeter,
+            self.invite_addr,
+            device=self.core.device,
+            config=self.core.config,
+        )
         page.succeeded.connect(self._goto_page2)
         page.failed.connect(self._on_page_failure_reboot)
         self.main_layout.addWidget(page)

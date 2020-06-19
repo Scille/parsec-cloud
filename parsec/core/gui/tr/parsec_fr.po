@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PROJECT VERSION\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2020-06-04 09:41+0200\n"
+"POT-Creation-Date: 2020-06-19 09:36+0200\n"
 "PO-Revision-Date: 2020-06-04 09:42+0200\n"
 "Last-Translator: \n"
 "Language: fr\n"
@@ -175,6 +175,21 @@ msgstr ""
 msgid "TEXT_FILE_HISTORY_TITLE_name"
 msgstr "Historique du fichier {name}"
 
+msgid "TEXT_GREET_USER_WAITING"
+msgstr ""
+
+msgid "TEXT_GREET_USER_WAIT_PEER_ERROR"
+msgstr ""
+
+msgid "TEXT_USER_PROFILE_STANDARD"
+msgstr ""
+
+msgid "TEXT_USER_PROFILE_OUTSIDER"
+msgstr ""
+
+msgid "TEXT_USER_PROFILE_ADMIN"
+msgstr ""
+
 msgid "TEXT_GREET_USER_INVALID_HUMAN_HANDLE"
 msgstr ""
 
@@ -287,22 +302,17 @@ msgstr "En cours de rechiffrement"
 msgid "TEXT_WORKSPACE_IS_PRIVATE"
 msgstr "privé"
 
+msgid "TEXT_WORKSPACE_IS_OWNED_BY_user"
+msgstr "administré par {user}"
+
 msgid "TEXT_WORKSPACE_IS_SHARED_WITH_user"
 msgstr "partagé avec {user}"
 
 msgid "TEXT_WORKSPACE_IS_SHARED_WITH_n_USERS"
 msgstr "partagé avec {n} utilisateurs"
 
-msgid "TEXT_WORKSPACE_IS_OWNED_BY_user"
-msgstr "administré par {user}"
-
 msgid "TEXT_WORKSPACE_IS_TIMESTAMPED_date"
 msgstr "temporary_{date}"
-msgid "TEXT_WORKSPACE_IS_SHARED"
-msgstr "partagé"
-
-msgid "TEXT_WORKSPACE_IS_TIMESTAMPED_date"
-msgstr "temporaire_{date}"
 
 msgid "TEXT_CLAIM_USER_DEVICE_ALREADY_EXISTS"
 msgstr ""
@@ -352,6 +362,9 @@ msgstr "actuel"
 msgid "ACTION_DEVICE_MENU_CHANGE_PASSWORD"
 msgstr "Changer le mot de passe"
 
+msgid "TEXT_DEVICES_CANNOT_INVITE_DEVICE"
+msgstr ""
+
 msgid "TEXT_WORKSPACE_GOTO_FILE_LINK_TITLE"
 msgstr "Accéder à un fichier par son lien"
 
@@ -393,6 +406,9 @@ msgid "TEXT_WORKSPACE_CANNOT_MOUNT"
 msgstr ""
 "Une erreur interne empêche PARSEC d'accéder aux fichiers de cet espace de"
 " travail."
+
+msgid "TEXT_WORKSPACE_CANNOT_UNMOUNT"
+msgstr ""
 
 msgid "TEXT_WORKSPACE_DELETE_TITLE"
 msgstr "Supprimer l'espace de travail"
@@ -456,11 +472,35 @@ msgstr "Espace de travail"
 msgid "ACTION_WORKSPACE_NEW_CREATE"
 msgstr "Créer"
 
-msgid "TEXT_USER_ROLE_ADMIN"
-msgstr "Administrateur"
+msgid "TEXT_GREET_USER_INSTRUCTIONS_email-addr"
+msgstr ""
 
-msgid "TEXT_USER_ROLE_CONTRIBUTOR"
-msgstr "Contributeur"
+msgid "TEXT_GREET_USER_ADDR_COPIED_TO_CLIPBOARD"
+msgstr ""
+
+msgid "TEXT_GREET_DEVICE_EMAIL_SENT"
+msgstr ""
+
+msgid "TEXT_GREET_DEVICE_SEND_EMAIL_ERROR"
+msgstr ""
+
+msgid "TEXT_GREET_DEVICE_WAITING"
+msgstr ""
+
+msgid "TEXT_GREET_DEVICE_WAIT_PEER_ERROR"
+msgstr ""
+
+msgid "TEXT_GREETER_DEVICE_NONE_CODE_CLICKED"
+msgstr ""
+
+msgid "TEXT_GREET_DEVICE_TITLE"
+msgstr ""
+
+msgid "ACTION_USER_INVITE_COPY_ADDR"
+msgstr ""
+
+msgid "ACTION_USER_INVITE_COPY_EMAIL"
+msgstr ""
 
 msgid "TEXT_USER_IS_CURRENT"
 msgstr "vous"
@@ -470,6 +510,30 @@ msgstr "Révoqué"
 
 msgid "ACTION_USER_MENU_REVOKE"
 msgstr "Révoquer"
+
+msgid "TEXT_USER_INVITE_EMAIL"
+msgstr ""
+
+msgid "TEXT_USER_INVITE_EMAIL_INSTRUCTIONS"
+msgstr ""
+
+msgid "TEXT_USER_INVITE_EMAIL_PLACEHOLDER"
+msgstr ""
+
+msgid "ACTION_USER_INVITE_DO_INVITE"
+msgstr ""
+
+msgid "TEXT_USER_INVITE_CANCEL_INVITE_QUESTION_TITLE"
+msgstr ""
+
+msgid "TEXT_USER_INVITE_CANCEL_INVITE_QUESTION_CONTENT"
+msgstr ""
+
+msgid "TEXT_USER_INVITE_CANCEL_INVITE_ACCEPT"
+msgstr ""
+
+msgid "ACTION_NO"
+msgstr "Non"
 
 msgid "TEXT_USER_REVOKE_SUCCESS_user"
 msgstr ""
@@ -506,6 +570,12 @@ msgstr "Révoquer l'utilisateur"
 
 msgid "TEXT_USER_LIST_RETRIEVABLE_FAILURE"
 msgstr "Impossible de récupérer la liste des utilisateurs depuis le serveur."
+
+msgid "TEXT_INVITE_USER_CANCEL_ERROR"
+msgstr ""
+
+msgid "TEXT_INVITE_USER_INVITE_ERROR"
+msgstr ""
 
 msgid "TEXT_PARSEC_LICENSE"
 msgstr ""
@@ -1294,27 +1364,6 @@ msgstr "Ko"
 msgid "TEXT_FILE_SIZE_B"
 msgstr "o"
 
-msgid "TEXT_INVITATION_STATUS_READY"
-msgstr ""
-
-msgid "TEXT_INVITATION_STATUS_READY_TOOLTIP"
-msgstr ""
-
-msgid "TEXT_INVITATION_STATUS_IDLE"
-msgstr ""
-
-msgid "TEXT_INVITATION_STATUS_IDLE_TOOLTIP"
-msgstr ""
-
-msgid "TEXT_INVITATION_STATUS_CANCELLED"
-msgstr ""
-
-msgid "TEXT_INVITATION_STATUS_CANCELLED_TOOLTIP"
-msgstr ""
-
-msgid "TEXT_INVITE_DEVICE_TITLE"
-msgstr "Inviter un nouvel appareil"
-
 msgid "TEXT_PARSEC_NEW_VERSION_AVAILABLE_version"
 msgstr "La version <b>{version}</b> de PARSEC est disponible !"
 
@@ -1505,41 +1554,38 @@ msgstr "Vous n'avez aucun appareil sur cet ordinateur."
 msgid "ACTION_LOGGING_IN"
 msgstr "En cours de connexion..."
 
-msgid "TEXT_CLAIM_DEVICE_INSTRUCTIONS_device-url-organization"
+msgid "TEXT_CLAIM_DEVICE_INVALID_CODE_CLICKED"
 msgstr ""
-"Vous pouvez finaliser la création de votre appareil <b>{device}</b> de "
-"l'organisation <b>{organization}</b> en choisissant un mot de passe et en"
-" fournissant le jeton à six chiffres."
 
-msgid "TEXT_CLAIM_DEVICE_NOT_FOUND"
-msgstr "Aucune invitation n'a été trouvée pour cet appareil."
+msgid "TEXT_CLAIM_DEVICE_NONE_CODE_CLICKED"
+msgstr ""
 
-msgid "TEXT_CLAIM_DEVICE_PASSWORD_MISMATCH"
-msgstr "Le mot de passe et la confirmation ne correspondent pas."
+msgid "TEXT_CLAIM_DEVICE_GET_GREETER_SAS_ERROR"
+msgstr ""
 
-msgid "TEXT_CLAIM_DEVICE_PASSWORD_COMPLEXITY_TOO_LOW"
-msgstr "Le mot de passe n'est pas assez complexe."
+msgid "TEXT_CLAIM_DEVICE_WAIT_TRUST_ERROR"
+msgstr ""
 
-msgid "TEXT_CLAIM_DEVICE_INVALID_URL"
-msgstr "Une erreur interne est survenue lors de l'enregistrement de l'appareil."
+msgid "TEXT_CLAIM_DEVICE_WAIT_PEER_TRUST_ERROR"
+msgstr ""
 
-msgid "TEXT_CLAIM_DEVICE_BAD_DEVICE_NAME"
-msgstr "Le nom d'appareil n'est pas valide."
+msgid "TEXT_CLAIM_DEVICE_INVALID_DEVICE_NAME"
+msgstr ""
 
-msgid "TEXT_CLAIM_DEVICE_BAD_USER_NAME"
-msgstr "Une erreur interne est survenue lors de l'enregistrement de l'appareil."
+msgid "TEXT_CLAIM_DEVICE_CLAIM_ERROR"
+msgstr ""
 
-msgid "TEXT_CLAIM_DEVICE_BACKEND_REFUSAL"
-msgstr "Une erreur interne est survenue lors de l'enregistrement de l'appareil."
+msgid "TEXT_CLAIM_DEVICE_FAILED_TO_RETRIEVE_INFO"
+msgstr ""
 
-msgid "TEXT_CLAIM_DEVICE_BACKEND_OFFLINE"
-msgstr "Le serveur est hors-ligne ou vous n'êtes pas connecté à internet."
+msgid "TEXT_CLAIM_DEVICE_SUCCESSFUL"
+msgstr ""
 
-msgid "TEXT_CLAIM_DEVICE_UNKNOWN_FAILURE"
-msgstr "Une erreur interne est survenue lors de l'enregistrement de l'appareil."
+msgid "TEXT_CLAIM_DEVICE_INVITATION_NOT_FOUND"
+msgstr ""
 
-msgid "TEXT_CLAIM_DEVICE_SUCCESS"
-msgstr "Votre appareil a été enregistré avec succès."
+msgid "TEXT_CLAIM_DEVICE_UNKNOWN_ERROR"
+msgstr ""
 
 msgid "TEXT_CLAIM_DEVICE_TITLE"
 msgstr "Enregistrer un appareil"
@@ -1606,33 +1652,6 @@ msgstr "Utilisateurs"
 
 msgid "ACTION_MENU_DEVICES"
 msgstr "Appareils"
-
-msgid "ACTION_USER_INVITE_COPY_ADDR"
-msgstr ""
-
-msgid "ACTION_USER_INVITE_COPY_EMAIL"
-msgstr ""
-
-msgid "TEXT_USER_INVITE_CANCEL_INVITE_QUESTION_TITLE"
-msgstr ""
-
-msgid "TEXT_USER_INVITE_CANCEL_INVITE_QUESTION_CONTENT"
-msgstr ""
-
-msgid "TEXT_USER_INVITE_CANCEL_INVITE_ACCEPT"
-msgstr ""
-
-msgid "ACTION_NO"
-msgstr "Non"
-
-msgid "TEXT_INVITE_USER_CANCEL_ERROR"
-msgstr ""
-
-msgid "TEXT_INVITE_USER_INVITE_ERROR"
-msgstr ""
-
-msgid "TEXT_INVITE_USER_TITLE"
-msgstr "Inviter un utilisateur"
 
 msgid "TEXT_PARSEC_WINDOW_TITLE_version"
 msgstr "PARSEC {version}"
@@ -1724,9 +1743,6 @@ msgstr ""
 msgid "ACTION_ERROR_REPORTING_ACCEPT"
 msgstr "Autoriser les rapports d'erreur"
 
-msgid "ACTION_NO"
-msgstr "Non"
-
 msgid "TEXT_KICKSTART_PARSEC_WHAT_TO_DO_TITLE"
 msgstr "Bienvenue dans Parsec !"
 
@@ -1743,18 +1759,19 @@ msgid "TEXT_TAB_TITLE_LOG_IN_SCREEN"
 msgstr "Connexion"
 
 msgid "TEXT_FILE_LINK_NOT_IN_ORG_organization"
-msgstr "Vous ne pouvez pas accéder à ce fichier car vous n'avez aucun appareil appartenant à l'organisation {organization} on this machine."
+msgstr ""
+"Vous ne pouvez pas accéder à ce fichier car vous n'avez aucun appareil "
+"appartenant à l'organisation {organization} on this machine."
 
 msgid "TEXT_FILE_LINK_WORKSPACE_NOT_FOUND_organization"
-msgstr "Vous n'avez pas accès à l'espace de travail auquel appartient ce fichier. Il n'a peut-être pas été partagé avec vous."
+msgstr ""
+"Vous n'avez pas accès à l'espace de travail auquel appartient ce fichier."
+" Il n'a peut-être pas été partagé avec vous."
 
 msgid "TEXT_FILE_LINK_PLEASE_LOG_IN_organization"
-msgstr "Veuillez vous connecter à l'organisation {organization} pour accéder à ce fichier."
-
-msgid "TEXT_FILE_LINK_NOT_FOUND_organization"
 msgstr ""
-"Le fichier n'a pas pu être trouvé au sein de l'organisation "
-"<b>{organization}</b>. Peut-être qu'il n'a pas été partagé avec vous."
+"Veuillez vous connecter à l'organisation {organization} pour accéder à ce"
+" fichier."
 
 msgid "ACTION_TAB_CLOSE_CONFIRM"
 msgstr "Fermer l'onglet"
@@ -1808,14 +1825,41 @@ msgstr "Démarrer l'organisation"
 msgid "ACTION_BOOTSTRAP_ORG"
 msgstr "Démarrer l'organisation"
 
-msgid "TEXT_LABEL_TOKEN"
-msgstr "Jeton"
+msgid "TEXT_CLAIM_DEVICE_CODE_EXCHANGE_GET_CODE_INSTRUCTIONS"
+msgstr ""
 
-msgid "TEXT_CLAIM_DEVICE_TOOLTIP"
-msgstr "Enregistrer un nouvel appareil"
+msgid "TEXT_CLAIM_DEVICE_CODE_EXCHANGE_GIVE_CODE_INSTRUCTIONS"
+msgstr ""
 
-msgid "ACTION_CLAIM_DEVICE"
-msgstr "Enregistrer un nouvel appareil"
+msgid "TEXT_CLAIM_DEVICE_CODE_EXCHANGE_WAIT"
+msgstr ""
+
+msgid "TEXT_CLAIM_DEVICE_INSTRUCTIONS"
+msgstr ""
+
+msgid "ACTION_START"
+msgstr ""
+
+msgid "TEXT_CLAIM_DEVICE_PROVIDE_INFO_INSTRUCTIONS"
+msgstr ""
+
+msgid "TEXT_LABEL_DEVICE"
+msgstr ""
+
+msgid "TEXT_LABEL_DEVICE_PLACEHOLDER"
+msgstr ""
+
+msgid "TEXT_LABEL_PASSWORD_PLACEHOLDER"
+msgstr ""
+
+msgid "TEXT_LABEL_PASSWORD_CONFIRMATION_PLACEHOLDER"
+msgstr ""
+
+msgid "ACTION_CREATE_DEVICE"
+msgstr ""
+
+msgid "TEXT_CLAIM_DEVICE_WAIT_FOR_DEVICE_INFO"
+msgstr ""
 
 msgid "TEXT_CLAIM_USER_CODE_EXCHANGE_GET_CODE_INSTRUCTIONS"
 msgstr ""
@@ -1829,16 +1873,7 @@ msgstr ""
 msgid "TEXT_CLAIM_USER_FINALIZE_INSTRUCTIONS"
 msgstr ""
 
-msgid "TEXT_LABEL_PASSWORD_PLACEHOLDER"
-msgstr ""
-
-msgid "TEXT_LABEL_PASSWORD_CONFIRMATION_PLACEHOLDER"
-msgstr ""
-
 msgid "TEXT_CLAIM_USER_INSTRUCTIONS"
-msgstr ""
-
-msgid "ACTION_START"
 msgstr ""
 
 msgid "TEXT_CLAIM_USER_PROVIDE_INFO_INSTRUCTIONS"
@@ -1848,12 +1883,6 @@ msgid "TEXT_LABEL_USER_FULL_NAME"
 msgstr ""
 
 msgid "TEXT_LABEL_USER_FULL_NAME_PLACEHOLDER"
-msgstr ""
-
-msgid "TEXT_LABEL_DEVICE"
-msgstr ""
-
-msgid "TEXT_LABEL_DEVICE_PLACEHOLDER"
 msgstr ""
 
 msgid "TEXT_LABEL_USER_EMAIL"
@@ -1985,13 +2014,31 @@ msgstr "Importer des fichiers dans cet espace de travail."
 msgid "TEXT_FILE_IMPORT_FOLDER_TOOLTIP"
 msgstr "Importer un répertoire dans cet espace de travail."
 
+msgid "TEXT_GREET_DEVICE_CODE_EXCHANGE_GIVE_CODE_INSTRUCTIONS"
+msgstr ""
+
+msgid "TEXT_GREET_DEVICE_CODE_EXCHANGE_WAIT"
+msgstr ""
+
+msgid "TEXT_GREET_DEVICE_CODE_EXCHANGE_GET_CODE_INSTRUCTIONS"
+msgstr ""
+
+msgid "TEXT_GREET_DEVICE_WAIT_INFO"
+msgstr ""
+
+msgid "ACTION_COPY_ADDR"
+msgstr ""
+
+msgid "ACTION_SEND_EMAIL"
+msgstr ""
+
 msgid "TEXT_GREET_USER_WAITING_FOR_INFO"
 msgstr ""
 
-msgid "TEXT_GREET_USER_IS_ADMIN"
+msgid "ACTION_CREATE_USER"
 msgstr ""
 
-msgid "ACTION_CREATE_USER"
+msgid "TEXT_LABEL_USER_ROLE"
 msgstr ""
 
 msgid "TEXT_GREET_USER_CODE_EXCHANGE_GIVE_CODE_INSTRUCTIONS"
@@ -2008,33 +2055,6 @@ msgstr ""
 
 msgid "TEXT_DIALOG_CLOSE_TOOLTIP"
 msgstr "Fermer la fenêtre."
-
-msgid "ACTION_INVITE_DEVICE_NEW_INVITE"
-msgstr ""
-
-msgid "TEXT_INVITE_DEVICE_INSTRUCTIONS"
-msgstr ""
-
-msgid "ACTION_CANCEL_INVITATION"
-msgstr ""
-
-msgid "ACTION_COPY_TO_CLIPBOARD"
-msgstr ""
-
-msgid "TEXT_USER_INVITATION_EMAIL_LABEL"
-msgstr ""
-
-msgid "TEXT_USER_INVITATION_EMAIL_PLACEHOLDER"
-msgstr ""
-
-msgid "ACTION_INVITE_USER"
-msgstr ""
-
-msgid "TEXT_USER_INVITATION_NO_ACTIVE_INVITATION"
-msgstr ""
-
-msgid "TEXT_USER_INVITATION_ACTIVE_INVITATIONS_TITLE"
-msgstr ""
 
 msgid "TEXT_IMPORT_FILES_PROGRESS"
 msgstr "Import du fichier"
@@ -2102,12 +2122,6 @@ msgstr "Interface"
 msgid "TEXT_SETTINGS_CHECK_USE_WORKSPACES_COLORS"
 msgstr "Utiliser des couleurs pour les espaces de travail"
 
-msgid "TEXT_SETTINGS_MISC_TITLE"
-msgstr "Divers"
-
-msgid "TEXT_SETTINGS_CHECK_DISABLE_ACROBAT_CONTAINERS"
-msgstr "Désactiver les conteneurs Acrobat Reader"
-
 msgid "ACTION_SAVE"
 msgstr "Sauvegarder"
 
@@ -2128,16 +2142,10 @@ msgstr "... et une heure ..."
 msgid "ACTION_WORKSPACE_TIMESTAMPED_MOUNT"
 msgstr "Voir l'espace de travail"
 
-msgid "TEXT_USER_LABEL_CREATED"
-msgstr "Créé"
-
-msgid "ACTION_GREET_USER"
-msgstr ""
-
-msgid "USER_INVITATION_STATUS_LABEL"
-msgstr ""
-
 msgid "ACTION_CANCEL_USER_INVITATION_TOOLTIP"
+msgstr ""
+
+msgid "BUTTON_GREET_USER"
 msgstr ""
 
 msgid "TEXT_USERS_FILTER_USERS_PLACEHOLDER"
@@ -2249,7 +2257,11 @@ msgstr "Trouver un fichier via son lien"
 #~ msgstr "Donnez votre avis"
 
 #~ msgid "TEXT_FILE_LINK_NOT_FOUND_organization"
-#~ msgstr "Le fichier n'a pas pu être trouvé au sein de l'organisation <b>{organization}</b>. Peut-être qu'il n'a pas été partagé avec vous."
+#~ msgstr ""
+#~ "Le fichier n'a pas pu être trouvé"
+#~ " au sein de l'organisation "
+#~ "<b>{organization}</b>. Peut-être qu'il n'a "
+#~ "pas été partagé avec vous."
 
 #~ msgid "TEXT_CLAIM_USER_INSTRUCTIONS_user-url-organization"
 #~ msgstr ""
@@ -2441,3 +2453,129 @@ msgstr "Trouver un fichier via son lien"
 
 #~ msgid "TEXT_LABEL_USERNAME_PLACEHOLDER"
 #~ msgstr ""
+
+#~ msgid "TEXT_WORKSPACE_IS_SHARED"
+#~ msgstr "partagé"
+
+#~ msgid "TEXT_USER_ROLE_ADMIN"
+#~ msgstr "Administrateur"
+
+#~ msgid "TEXT_USER_ROLE_CONTRIBUTOR"
+#~ msgstr "Contributeur"
+
+#~ msgid "TEXT_INVITATION_STATUS_READY"
+#~ msgstr ""
+
+#~ msgid "TEXT_INVITATION_STATUS_READY_TOOLTIP"
+#~ msgstr ""
+
+#~ msgid "TEXT_INVITATION_STATUS_IDLE"
+#~ msgstr ""
+
+#~ msgid "TEXT_INVITATION_STATUS_IDLE_TOOLTIP"
+#~ msgstr ""
+
+#~ msgid "TEXT_INVITATION_STATUS_CANCELLED"
+#~ msgstr ""
+
+#~ msgid "TEXT_INVITATION_STATUS_CANCELLED_TOOLTIP"
+#~ msgstr ""
+
+#~ msgid "TEXT_INVITE_DEVICE_TITLE"
+#~ msgstr "Inviter un nouvel appareil"
+
+#~ msgid "TEXT_CLAIM_DEVICE_INSTRUCTIONS_device-url-organization"
+#~ msgstr ""
+#~ "Vous pouvez finaliser la création de "
+#~ "votre appareil <b>{device}</b> de "
+#~ "l'organisation <b>{organization}</b> en choisissant"
+#~ " un mot de passe et en "
+#~ "fournissant le jeton à six chiffres."
+
+#~ msgid "TEXT_CLAIM_DEVICE_NOT_FOUND"
+#~ msgstr "Aucune invitation n'a été trouvée pour cet appareil."
+
+#~ msgid "TEXT_CLAIM_DEVICE_PASSWORD_MISMATCH"
+#~ msgstr "Le mot de passe et la confirmation ne correspondent pas."
+
+#~ msgid "TEXT_CLAIM_DEVICE_PASSWORD_COMPLEXITY_TOO_LOW"
+#~ msgstr "Le mot de passe n'est pas assez complexe."
+
+#~ msgid "TEXT_CLAIM_DEVICE_INVALID_URL"
+#~ msgstr "Une erreur interne est survenue lors de l'enregistrement de l'appareil."
+
+#~ msgid "TEXT_CLAIM_DEVICE_BAD_DEVICE_NAME"
+#~ msgstr "Le nom d'appareil n'est pas valide."
+
+#~ msgid "TEXT_CLAIM_DEVICE_BAD_USER_NAME"
+#~ msgstr "Une erreur interne est survenue lors de l'enregistrement de l'appareil."
+
+#~ msgid "TEXT_CLAIM_DEVICE_BACKEND_REFUSAL"
+#~ msgstr "Une erreur interne est survenue lors de l'enregistrement de l'appareil."
+
+#~ msgid "TEXT_CLAIM_DEVICE_BACKEND_OFFLINE"
+#~ msgstr "Le serveur est hors-ligne ou vous n'êtes pas connecté à internet."
+
+#~ msgid "TEXT_CLAIM_DEVICE_UNKNOWN_FAILURE"
+#~ msgstr "Une erreur interne est survenue lors de l'enregistrement de l'appareil."
+
+#~ msgid "TEXT_CLAIM_DEVICE_SUCCESS"
+#~ msgstr "Votre appareil a été enregistré avec succès."
+
+#~ msgid "TEXT_INVITE_USER_TITLE"
+#~ msgstr "Inviter un utilisateur"
+
+#~ msgid "TEXT_LABEL_TOKEN"
+#~ msgstr "Jeton"
+
+#~ msgid "TEXT_CLAIM_DEVICE_TOOLTIP"
+#~ msgstr "Enregistrer un nouvel appareil"
+
+#~ msgid "ACTION_CLAIM_DEVICE"
+#~ msgstr "Enregistrer un nouvel appareil"
+
+#~ msgid "TEXT_GREET_USER_IS_ADMIN"
+#~ msgstr ""
+
+#~ msgid "ACTION_INVITE_DEVICE_NEW_INVITE"
+#~ msgstr ""
+
+#~ msgid "TEXT_INVITE_DEVICE_INSTRUCTIONS"
+#~ msgstr ""
+
+#~ msgid "ACTION_CANCEL_INVITATION"
+#~ msgstr ""
+
+#~ msgid "ACTION_COPY_TO_CLIPBOARD"
+#~ msgstr ""
+
+#~ msgid "TEXT_USER_INVITATION_EMAIL_LABEL"
+#~ msgstr ""
+
+#~ msgid "TEXT_USER_INVITATION_EMAIL_PLACEHOLDER"
+#~ msgstr ""
+
+#~ msgid "ACTION_INVITE_USER"
+#~ msgstr ""
+
+#~ msgid "TEXT_USER_INVITATION_NO_ACTIVE_INVITATION"
+#~ msgstr ""
+
+#~ msgid "TEXT_USER_INVITATION_ACTIVE_INVITATIONS_TITLE"
+#~ msgstr ""
+
+#~ msgid "TEXT_SETTINGS_MISC_TITLE"
+#~ msgstr "Divers"
+
+#~ msgid "TEXT_SETTINGS_CHECK_DISABLE_ACROBAT_CONTAINERS"
+#~ msgstr "Désactiver les conteneurs Acrobat Reader"
+
+#~ msgid "TEXT_USER_LABEL_CREATED"
+#~ msgstr "Créé"
+
+#~ msgid "ACTION_GREET_USER"
+#~ msgstr ""
+
+#~ msgid "USER_INVITATION_STATUS_LABEL"
+#~ msgstr ""
+

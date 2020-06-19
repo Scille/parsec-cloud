@@ -42,18 +42,20 @@ async def test_list_users(aqtbot, running_backend, logged_gui):
 
     assert u_w.layout_users.count() == 3
     item = u_w.layout_users.itemAt(0)
-    assert item.widget().label_username.text() == "adam"
+    assert item.widget().label_username.text() == "Adamy McAdamFace"
+    assert item.widget().label_email.text() == ""
     assert item.widget().label_role.text() == "Administrator"
-    assert item.widget().label_revoked.text() == ""
+    assert item.widget().label_is_current.text() == ""
     item = u_w.layout_users.itemAt(1)
-    assert item.widget().label_username.text() == "alice"
-    assert item.widget().label_user_is_current.text() == "(you)"
+    assert item.widget().label_username.text() == "Alicey McAliceFace"
+    assert item.widget().label_email.text() == "alice@example.com"
+    assert item.widget().label_is_current.text() == "(you)"
     assert item.widget().label_role.text() == "Administrator"
-    assert item.widget().label_revoked.text() == ""
     item = u_w.layout_users.itemAt(2)
-    assert item.widget().label_username.text() == "bob"
-    assert item.widget().label_role.text() == "Contributor"
-    assert item.widget().label_revoked.text() == ""
+    assert item.widget().label_username.text() == "Boby McBobFace"
+    assert item.widget().label_email.text() == ""
+    assert item.widget().label_is_current.text() == ""
+    assert item.widget().label_role.text() == "Standard"
 
 
 @pytest.mark.gui
@@ -80,7 +82,7 @@ async def test_revoke_user(
 
     if online:
         async with aqtbot.wait_signal(u_w.revoke_success):
-            bob_w.revoke_clicked.emit(bob_w)
+            bob_w.revoke_clicked.emit(bob_w.user_name)
         assert len(autoclose_dialog.dialogs) == 1
         assert autoclose_dialog.dialogs[0][0] == ""
         assert (
@@ -91,7 +93,7 @@ async def test_revoke_user(
     else:
         with running_backend.offline():
             async with aqtbot.wait_signal(u_w.revoke_error):
-                bob_w.revoke_clicked.emit(bob_w)
+                bob_w.revoke_clicked.emit(bob_w.user_name)
             assert len(autoclose_dialog.dialogs) == 1
             assert autoclose_dialog.dialogs[0][0] == "Error"
             assert (
@@ -136,7 +138,7 @@ async def test_filter_users(aqtbot, running_backend, logged_gui):
     assert adam_w.isVisible() is True
 
     async with aqtbot.wait_signal(u_w.filter_timer.timeout):
-        aqtbot.qtbot.keyClicks(u_w.line_edit_search, "a")
+        aqtbot.qtbot.keyClicks(u_w.line_edit_search, "mca")
     assert alice_w.isVisible() is True
     assert bob_w.isVisible() is False
     assert adam_w.isVisible() is True
