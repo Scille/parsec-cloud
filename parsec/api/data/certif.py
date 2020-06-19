@@ -127,9 +127,9 @@ class DeviceCertificateContent(BaseAPISignedData):
     class SCHEMA_CLS(BaseSignedDataSchema):
         type = fields.CheckedConstant("device_certificate", required=True)
         device_id = DeviceIDField(required=True)
-        verify_key = fields.VerifyKey(required=True)
         # Device label can be none in case of redacted certificate
         device_label = fields.String(allow_none=True, missing=None)
+        verify_key = fields.VerifyKey(required=True)
 
         @post_load
         def make_obj(self, data):
@@ -137,8 +137,8 @@ class DeviceCertificateContent(BaseAPISignedData):
             return DeviceCertificateContent(**data)
 
     device_id: DeviceID
+    device_label: Optional[str]
     verify_key: VerifyKey
-    device_label: Optional[str] = None
 
     @classmethod
     def verify_and_load(

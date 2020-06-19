@@ -19,7 +19,10 @@ def alice_nd(local_device_factory, alice):
 @customize_fixtures(
     alice_profile=UserProfile.OUTSIDER
 )  # Any profile is be allowed to create new devices
-async def test_device_create_ok(backend, backend_sock_factory, alice_backend_sock, alice, alice_nd):
+@pytest.mark.parametrize("with_labels", [False, True])
+async def test_device_create_ok(
+    backend, backend_sock_factory, alice_backend_sock, alice, alice_nd, with_labels
+):
     now = pendulum.now()
     device_certificate = DeviceCertificateContent(
         author=alice.device_id,
@@ -29,6 +32,8 @@ async def test_device_create_ok(backend, backend_sock_factory, alice_backend_soc
         verify_key=alice_nd.verify_key,
     )
     redacted_device_certificate = device_certificate.evolve(device_label=None)
+    if not with_labels:
+        device_certificate = redacted_device_certificate
     device_certificate = device_certificate.dump_and_sign(alice.signing_key)
     redacted_device_certificate = redacted_device_certificate.dump_and_sign(alice.signing_key)
 
@@ -62,7 +67,7 @@ async def test_device_create_ok(backend, backend_sock_factory, alice_backend_soc
     )
     assert backend_device == Device(
         device_id=alice_nd.device_id,
-        device_label=alice_nd.device_label,
+        device_label=alice_nd.device_label if with_labels else None,
         device_certificate=device_certificate,
         redacted_device_certificate=redacted_device_certificate,
         device_certifier=alice.device_id,
@@ -77,16 +82,22 @@ async def test_device_create_invalid_certified(alice_backend_sock, alice, bob, a
         author=alice.device_id,
         timestamp=now,
         device_id=alice_nd.device_id,
+        device_label=None,  # Can be used as regular and redacted certificate
         verify_key=alice_nd.verify_key,
     ).dump_and_sign(alice.signing_key)
     bad_device_certificate = DeviceCertificateContent(
         author=bob.device_id,
         timestamp=now,
         device_id=alice_nd.device_id,
+        device_label=None,  # Can be used as regular and redacted certificate
         verify_key=alice_nd.verify_key,
     ).dump_and_sign(bob.signing_key)
 
-    rep = await device_create(alice_backend_sock, device_certificate=bad_device_certificate)
+    rep = await device_create(
+        alice_backend_sock,
+        device_certificate=bad_device_certificate,
+        redacted_device_certificate=good_device_certificate,
+    )
     assert rep == {
         "status": "invalid_certification",
         "reason": "Invalid certification data (Signature was forged or corrupt).",
@@ -112,10 +123,15 @@ async def test_device_create_already_exists(alice_backend_sock, alice, alice2):
         author=alice.device_id,
         timestamp=now,
         device_id=alice2.device_id,
+        device_label=None,
         verify_key=alice2.verify_key,
     ).dump_and_sign(alice.signing_key)
 
-    rep = await device_create(alice_backend_sock, device_certificate=device_certificate)
+    rep = await device_create(
+        alice_backend_sock,
+        device_certificate=device_certificate,
+        redacted_device_certificate=device_certificate,
+    )
     assert rep == {
         "status": "already_exists",
         "reason": f"Device `{alice2.device_id}` already exists",
@@ -129,10 +145,15 @@ async def test_device_create_not_own_user(bob_backend_sock, bob, alice_nd):
         author=bob.device_id,
         timestamp=now,
         device_id=alice_nd.device_id,
+        device_label=None,
         verify_key=alice_nd.verify_key,
     ).dump_and_sign(bob.signing_key)
 
-    rep = await device_create(bob_backend_sock, device_certificate=device_certificate)
+    rep = await device_create(
+        bob_backend_sock,
+        device_certificate=device_certificate,
+        redacted_device_certificate=device_certificate,
+    )
     assert rep == {"status": "bad_user_id", "reason": "Device must be handled by it own user."}
 
 
@@ -143,11 +164,16 @@ async def test_device_create_certify_too_old(alice_backend_sock, alice, alice_nd
         author=alice.device_id,
         timestamp=now,
         device_id=alice_nd.device_id,
+        device_label=None,
         verify_key=alice_nd.verify_key,
     ).dump_and_sign(alice.signing_key)
 
     with freeze_time(now.add(seconds=INVITATION_VALIDITY + 1)):
-        rep = await device_create(alice_backend_sock, device_certificate=device_certificate)
+        rep = await device_create(
+            alice_backend_sock,
+            device_certificate=device_certificate,
+            redacted_device_certificate=device_certificate,
+        )
         assert rep == {
             "status": "invalid_certification",
             "reason": "Invalid timestamp in certification.",
@@ -161,8 +187,8 @@ async def test_device_create_bad_redacted_device_certificate(alice_backend_sock,
         author=alice.device_id,
         timestamp=now,
         device_id=alice_nd.device_id,
-        verify_key=alice_nd.verify_key,
         device_label=alice_nd.device_label,
+        verify_key=alice_nd.verify_key,
     )
     good_redacted_device_certificate = device_certificate.evolve(device_label=None)
     device_certificate = device_certificate.dump_and_sign(alice.signing_key)
@@ -203,8 +229,8 @@ async def test_redacted_certificates_cannot_contain_sensitive_data(
         author=alice.device_id,
         timestamp=now,
         device_id=alice_nd.device_id,
-        verify_key=alice_nd.verify_key,
         device_label=alice_nd.device_label,
+        verify_key=alice_nd.verify_key,
     ).dump_and_sign(alice.signing_key)
 
     with freeze_time(now):

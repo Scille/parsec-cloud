@@ -766,6 +766,12 @@ class BaseUserComponent:
                 "reason": f"Invalid timestamp in certification.",
             }
 
+        if data.device_label:
+            return {
+                "status": "invalid_data",
+                "reason": "Redacted Device certificate must not contain a device_label field.",
+            }
+
         if data.device_id.user_id != client_ctx.user_id:
             return {"status": "bad_user_id", "reason": "Device must be handled by it own user."}
 

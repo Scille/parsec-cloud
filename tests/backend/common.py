@@ -324,7 +324,7 @@ user_revoke = CmdSock(
 device_create = CmdSock(
     "device_create",
     device_create_serializer,
-    parse_args=lambda self, device_certificate, redacted_device_certificate=None: {
+    parse_args=lambda self, device_certificate, redacted_device_certificate: {
         "device_certificate": device_certificate,
         "redacted_device_certificate": redacted_device_certificate,
     },
