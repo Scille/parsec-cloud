@@ -1,5 +1,6 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
 
+from parsec.backend.backend_events import BackendEvents
 import itertools
 from typing import Optional
 from triopg import UniqueViolationError
@@ -211,7 +212,7 @@ async def _create_user(
     # TODO: should be no longer needed once APIv1 is removed
     await send_signal(
         conn,
-        "user.created",
+        BackendEvents.user_created,
         organization_id=organization_id,
         user_id=user.user_id,
         user_certificate=user.user_certificate,
@@ -268,7 +269,7 @@ async def query_create_device(
     await _create_device(conn, organization_id, device, encrypted_answer)
     await send_signal(
         conn,
-        "device.created",
+        BackendEvents.device_created,
         organization_id=organization_id,
         device_id=device.device_id,
         device_certificate=device.device_certificate,

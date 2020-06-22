@@ -1,5 +1,6 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
 
+from parsec.backend.backend_events import BackendEvents
 import attr
 import pendulum
 from uuid import UUID
@@ -197,7 +198,7 @@ class MemoryVlobComponent(BaseVlobComponent):
         changes.checkpoint += 1
         changes.changes[src_id] = (author, changes.checkpoint, src_version)
         await self._send_event(
-            "realm.vlobs_updated",
+            BackendEvents.realm_vlobs_updated,
             organization_id=organization_id,
             author=author,
             realm_id=realm_id,

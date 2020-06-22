@@ -1,5 +1,6 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
 
+from parsec.backend.backend_events import BackendEvents
 import attr
 import pendulum
 from uuid import UUID
@@ -83,7 +84,7 @@ class MemoryRealmComponent(BaseRealmComponent):
             self._realms[key] = Realm(granted_roles=[self_granted_role])
 
             await self._send_event(
-                "realm.roles_updated",
+                BackendEvents.realm_roles_updated,
                 organization_id=organization_id,
                 author=self_granted_role.granted_by,
                 realm_id=self_granted_role.realm_id,
@@ -173,7 +174,7 @@ class MemoryRealmComponent(BaseRealmComponent):
         realm.granted_roles.append(new_role)
 
         await self._send_event(
-            "realm.roles_updated",
+            BackendEvents.realm_roles_updated,
             organization_id=organization_id,
             author=new_role.granted_by,
             realm_id=new_role.realm_id,
@@ -230,7 +231,7 @@ class MemoryRealmComponent(BaseRealmComponent):
         # Should first send maintenance event, then message to each participant
 
         await self._send_event(
-            "realm.maintenance_started",
+            BackendEvents.realm_maintenance_started,
             organization_id=organization_id,
             author=author,
             realm_id=realm_id,
@@ -267,7 +268,7 @@ class MemoryRealmComponent(BaseRealmComponent):
         )
 
         await self._send_event(
-            "realm.maintenance_finished",
+            BackendEvents.realm_maintenance_finished,
             organization_id=organization_id,
             author=author,
             realm_id=realm_id,

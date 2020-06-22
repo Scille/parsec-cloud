@@ -1,5 +1,6 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
 
+from parsec.backend.backend_events import BackendEvents
 import pytest
 import trio
 
@@ -16,10 +17,10 @@ async def test_events_subscribe(backend, alice_backend_sock, alice2_backend_sock
         await ping(alice2_backend_sock, "foo")
 
         # No guarantees those events occur before the commands' return
-        await spy.wait_multiple_with_timeout(["pinged", "pinged"])
+        await spy.wait_multiple_with_timeout([BackendEvents.pinged, BackendEvents.pinged])
 
     rep = await events_listen_nowait(alice_backend_sock)
-    assert rep == {"status": "ok", "event": "pinged", "ping": "foo"}
+    assert rep == {"status": "ok", "event": BackendEvents.pinged, "ping": "foo"}
     rep = await events_listen_nowait(alice_backend_sock)
     assert rep == {"status": "no_events"}
 
@@ -32,7 +33,7 @@ async def test_event_resubscribe(backend, alice_backend_sock, alice2_backend_soc
         await ping(alice2_backend_sock, "foo")
 
         # No guarantees those events occur before the commands' return
-        await spy.wait_with_timeout("pinged")
+        await spy.wait_with_timeout(BackendEvents.pinged)
 
     # Resubscribing should have no effect
     await events_subscribe(alice_backend_sock)
@@ -42,14 +43,14 @@ async def test_event_resubscribe(backend, alice_backend_sock, alice2_backend_soc
         await ping(alice2_backend_sock, "spam")
 
         # No guarantees those events occur before the commands' return
-        await spy.wait_multiple_with_timeout(["pinged", "pinged"])
+        await spy.wait_multiple_with_timeout([BackendEvents.pinged, BackendEvents.pinged])
 
     rep = await events_listen_nowait(alice_backend_sock)
-    assert rep == {"status": "ok", "event": "pinged", "ping": "foo"}
+    assert rep == {"status": "ok", "event": BackendEvents.pinged, "ping": "foo"}
     rep = await events_listen_nowait(alice_backend_sock)
-    assert rep == {"status": "ok", "event": "pinged", "ping": "bar"}
+    assert rep == {"status": "ok", "event": BackendEvents.pinged, "ping": "bar"}
     rep = await events_listen_nowait(alice_backend_sock)
-    assert rep == {"status": "ok", "event": "pinged", "ping": "spam"}
+    assert rep == {"status": "ok", "event": BackendEvents.pinged, "ping": "spam"}
     rep = await events_listen_nowait(alice_backend_sock)
     assert rep == {"status": "no_events"}
 
@@ -66,7 +67,7 @@ async def test_cross_backend_event(backend_factory, backend_sock_factory, alice,
 
             async with events_listen(alice_sock) as listen:
                 await ping(bob_sock, "foo")
-            assert listen.rep == {"status": "ok", "event": "pinged", "ping": "foo"}
+            assert listen.rep == {"status": "ok", "event": BackendEvents.pinged, "ping": "foo"}
 
             await ping(bob_sock, "foo")
 
@@ -78,7 +79,7 @@ async def test_cross_backend_event(backend_factory, backend_sock_factory, alice,
                     if rep["status"] != "no_events":
                         break
                     await trio.sleep(0.1)
-            assert rep == {"status": "ok", "event": "pinged", "ping": "foo"}
+            assert rep == {"status": "ok", "event": BackendEvents.pinged, "ping": "foo"}
 
             rep = await events_listen_nowait(alice_sock)
             assert rep == {"status": "no_events"}

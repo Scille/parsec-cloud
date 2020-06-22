@@ -1,5 +1,6 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
 
+from parsec.backend.backend_events import BackendEvents
 import pytest
 import pendulum
 
@@ -45,7 +46,7 @@ async def test_user_create_ok(backend, apiv1_backend_sock_factory, alice, mallor
 
         # No guarantees this event occurs before the command's return
         await spy.wait_with_timeout(
-            "user.created",
+            BackendEvents.user_created,
             {
                 "organization_id": alice.organization_id,
                 "user_id": mallory.user_id,

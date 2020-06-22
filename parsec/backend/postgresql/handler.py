@@ -1,5 +1,6 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
 
+from parsec.backend.backend_events import BackendEvents
 import trio
 import attr
 import re
@@ -178,9 +179,9 @@ class PGHandler:
         signal = data.pop("__signal__")
         logger.debug("notif received", pid=pid, channel=channel, payload=payload)
         # Kind of a hack, but fine enough for the moment
-        if signal == "realm.roles_updated":
+        if signal == BackendEvents.realm_roles_updated:
             data["role"] = STR_TO_REALM_ROLE.get(data.pop("role_str"))
-        elif signal == "invite.status_changed":
+        elif signal == BackendEvents.invite_status_changed:
             data["status"] = STR_TO_INVITATION_STATUS.get(data.pop("status_str"))
         self.event_bus.send(signal, **data)
 

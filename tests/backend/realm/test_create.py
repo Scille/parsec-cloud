@@ -1,5 +1,6 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
 
+from parsec.backend.backend_events import BackendEvents
 import pytest
 import pendulum
 from uuid import UUID
@@ -24,7 +25,7 @@ async def test_create_ok(backend, alice, alice_backend_sock):
     with backend.event_bus.listen() as spy:
         rep = await realm_create(alice_backend_sock, certif)
         assert rep == {"status": "ok"}
-        await spy.wait_with_timeout("realm.roles_updated")
+        await spy.wait_with_timeout(BackendEvents.realm_roles_updated)
 
 
 @pytest.mark.trio

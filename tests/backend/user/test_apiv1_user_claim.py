@@ -1,5 +1,6 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
 
+from parsec.backend.backend_events import BackendEvents
 import pytest
 import trio
 from pendulum import Pendulum
@@ -121,7 +122,9 @@ async def test_user_claim_timeout(
             encrypted_claim=b"<foo>",
         ) as prep:
 
-            await spy.wait_with_timeout("event.connected", {"event_name": "user.created"})
+            await spy.wait_with_timeout(
+                "event.connected", {"event_name": BackendEvents.user_created}
+            )
             mock_clock.jump(PEER_EVENT_MAX_WAIT + 1)
 
     assert prep[0] == {
@@ -142,10 +145,10 @@ async def test_user_claim_denied(
         ) as prep:
 
             await spy.wait_with_timeout(
-                "event.connected", {"event_name": "user.invitation.cancelled"}
+                "event.connected", {"event_name": BackendEvents.user_invitation_cancelled}
             )
             backend.event_bus.send(
-                "user.created",
+                BackendEvents.user_created,
                 organization_id=coolorg.organization_id,
                 user_id="dummy",
                 user_certificate=b"<dummy user certif>",
@@ -153,7 +156,7 @@ async def test_user_claim_denied(
                 first_device_certificate=b"<dummy device certif>",
             )
             backend.event_bus.send(
-                "user.invitation.cancelled",
+                BackendEvents.user_invitation_cancelled,
                 organization_id=coolorg.organization_id,
                 user_id=mallory_invitation.user_id,
             )

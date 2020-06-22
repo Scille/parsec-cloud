@@ -1,5 +1,6 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
 
+from parsec.backend.backend_events import BackendEvents
 import trio
 import pytest
 import pendulum
@@ -237,9 +238,11 @@ async def test_events_listen_wait_has_watchdog(monkeypatch, mock_clock, running_
                 assert isinstance(event, Pong)
                 assert client_transport is client_transport2
 
-            await backend_client_ctx.send_events_channel.send({"event": "pinged", "ping": "foo"})
+            await backend_client_ctx.send_events_channel.send(
+                {"event": BackendEvents.pinged, "ping": "foo"}
+            )
 
-    assert events_listen_rep == {"status": "ok", "event": "pinged", "ping": "foo"}
+    assert events_listen_rep == {"status": "ok", "event": BackendEvents.pinged, "ping": "foo"}
 
 
 @pytest.mark.trio

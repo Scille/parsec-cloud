@@ -1,5 +1,6 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
 
+from parsec.backend.backend_events import BackendEvents
 import pendulum
 from uuid import UUID
 from typing import Dict
@@ -160,7 +161,7 @@ INSERT INTO vlob_encryption_revision(
 
     await send_signal(
         conn,
-        "realm.maintenance_started",
+        BackendEvents.realm_maintenance_started,
         organization_id=organization_id,
         author=author,
         realm_id=realm_id,
@@ -239,7 +240,7 @@ WHERE
 
     await send_signal(
         conn,
-        "realm.maintenance_finished",
+        BackendEvents.realm_maintenance_finished,
         organization_id=organization_id,
         author=author,
         realm_id=realm_id,

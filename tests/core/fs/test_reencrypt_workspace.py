@@ -1,5 +1,6 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
 
+from parsec.backend.backend_events import BackendEvents
 import pytest
 from pendulum import Pendulum
 from unittest.mock import ANY
@@ -44,7 +45,7 @@ async def test_do_reencryption(running_backend, workspace, alice, alice_user_fs)
         await spy.wait_multiple_with_timeout(
             [
                 (
-                    "realm.maintenance_started",
+                    BackendEvents.realm_maintenance_started,
                     {
                         "organization_id": alice.organization_id,
                         "author": alice.device_id,
@@ -53,7 +54,7 @@ async def test_do_reencryption(running_backend, workspace, alice, alice_user_fs)
                     },
                 ),
                 (
-                    "message.received",
+                    BackendEvents.message_received,
                     {
                         "organization_id": alice.organization_id,
                         "author": alice.device_id,
@@ -125,7 +126,7 @@ async def test_concurrent_continue_reencryption(running_backend, workspace, alic
     with running_backend.backend.event_bus.listen() as spy:
         job1 = await alice_user_fs.workspace_start_reencryption(workspace)
 
-        await spy.wait_with_timeout("message.received")
+        await spy.wait_with_timeout(BackendEvents.message_received)
 
     # Update encryption_revision in user manifest
     await alice_user_fs.process_last_messages()

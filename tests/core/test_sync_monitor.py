@@ -1,5 +1,6 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
 
+from parsec.backend.backend_events import BackendEvents
 import trio
 import pytest
 from unittest.mock import ANY
@@ -189,7 +190,7 @@ async def test_reconnect_with_remote_changes(
             await spy.wait_multiple_with_timeout(
                 [
                     (
-                        "realm.vlobs_updated",
+                        BackendEvents.realm_vlobs_updated,
                         {
                             "organization_id": alice2.organization_id,
                             "author": alice2.device_id,
@@ -200,7 +201,7 @@ async def test_reconnect_with_remote_changes(
                         },
                     ),
                     (
-                        "realm.vlobs_updated",
+                        BackendEvents.realm_vlobs_updated,
                         {
                             "organization_id": alice2.organization_id,
                             "author": alice2.device_id,
@@ -211,7 +212,7 @@ async def test_reconnect_with_remote_changes(
                         },
                     ),
                     (
-                        "realm.vlobs_updated",
+                        BackendEvents.realm_vlobs_updated,
                         {
                             "organization_id": alice2.organization_id,
                             "author": alice2.device_id,

@@ -1,5 +1,6 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
 
+from parsec.backend.backend_events import BackendEvents
 import re
 from pendulum import Pendulum, now as pendulum_now
 from uuid import UUID, uuid4
@@ -202,7 +203,7 @@ async def _do_delete_invitation(
     await conn.execute(*_q_delete_invitation(row_id=row_id, on=on, reason=reason.value))
     await send_signal(
         conn,
-        "invite.status_changed",
+        BackendEvents.invite_status_changed,
         organization_id=organization_id,
         greeter=greeter,
         token=token,
@@ -386,7 +387,7 @@ async def _conduit_talk(
         # Note that in case of conduit reset, this signal will lure the peer into
         # thinking we have answered so he will wakeup and take into account the reset
         await send_signal(
-            conn, "invite.conduit_updated", organization_id=organization_id, token=token
+            conn, BackendEvents.invite_conduit_updated, organization_id=organization_id, token=token
         )
 
     return ConduitListenCtx(
@@ -451,7 +452,7 @@ async def _conduit_listen(conn, ctx: ConduitListenCtx) -> Optional[bytes]:
                 )
                 await send_signal(
                     conn,
-                    "invite.conduit_updated",
+                    BackendEvents.invite_conduit_updated,
                     organization_id=ctx.organization_id,
                     token=ctx.token,
                 )
@@ -518,7 +519,7 @@ async def _do_new_user_invitation(
         )
     await send_signal(
         conn,
-        "invite.status_changed",
+        BackendEvents.invite_status_changed,
         organization_id=organization_id,
         greeter=greeter_user_id,
         token=token,
@@ -715,7 +716,7 @@ class PGInviteComponent(BaseInviteComponent):
         async with self.dbh.pool.acquire() as conn:
             await send_signal(
                 conn,
-                "invite.status_changed",
+                BackendEvents.invite_status_changed,
                 organization_id=organization_id,
                 greeter=greeter,
                 token=token,
@@ -728,7 +729,7 @@ class PGInviteComponent(BaseInviteComponent):
         async with self.dbh.pool.acquire() as conn:
             await send_signal(
                 conn,
-                "invite.status_changed",
+                BackendEvents.invite_status_changed,
                 organization_id=organization_id,
                 greeter=greeter,
                 token=token,

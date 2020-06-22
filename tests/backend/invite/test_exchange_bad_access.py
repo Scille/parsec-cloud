@@ -1,5 +1,6 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
 
+from parsec.backend.backend_events import BackendEvents
 import pytest
 import trio
 from uuid import uuid4
@@ -162,7 +163,7 @@ async def test_claimer_exchange_bad_access(alice, backend, backend_invited_sock_
         # Disable the callback responsible for closing the claimer's connection
         # on invitation deletion. This way we can test connection behavior
         # when the automatic closing takes time to be processed.
-        backend.event_bus.mute("invite.status_changed")
+        backend.event_bus.mute(BackendEvents.invite_status_changed)
 
         await backend.invite.delete(
             organization_id=alice.organization_id,

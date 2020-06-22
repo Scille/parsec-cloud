@@ -1,5 +1,6 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
 
+from parsec.backend.backend_events import BackendEvents
 import pytest
 import trio
 from pendulum import Pendulum
@@ -40,7 +41,7 @@ async def test_claimer_join_and_leave(
             rep = await events_listen_wait(alice_backend_sock)
         assert rep == {
             "status": "ok",
-            "event": "invite.status_changed",
+            "event": BackendEvents.invite_status_changed,
             "token": invitation.token,
             "invitation_status": InvitationStatus.READY,
         }
@@ -67,7 +68,7 @@ async def test_claimer_join_and_leave(
         rep = await events_listen_wait(alice_backend_sock)
     assert rep == {
         "status": "ok",
-        "event": "invite.status_changed",
+        "event": BackendEvents.invite_status_changed,
         "token": invitation.token,
         "invitation_status": InvitationStatus.IDLE,
     }

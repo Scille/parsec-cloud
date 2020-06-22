@@ -1,5 +1,6 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
 
+from parsec.backend.backend_events import BackendEvents
 from typing import Optional
 import trio
 from structlog import get_logger
@@ -151,7 +152,7 @@ class BackendApp:
                             ):
                                 cancel_scope.cancel()
 
-                        client_ctx.event_bus_ctx.connect("user.revoked", _on_revoked)
+                        client_ctx.event_bus_ctx.connect(BackendEvents.user_revoked, _on_revoked)
                         await self._handle_client_loop(transport, client_ctx)
 
             elif isinstance(client_ctx, InvitedClientContext):
@@ -175,7 +176,7 @@ class BackendApp:
                                     cancel_scope.cancel()
 
                             event_bus_ctx.connect(
-                                "invite.status_changed", _on_invite_status_changed
+                                BackendEvents.invite_status_changed, _on_invite_status_changed
                             )
                             await self._handle_client_loop(transport, client_ctx)
                 finally:
