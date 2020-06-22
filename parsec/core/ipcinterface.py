@@ -99,7 +99,7 @@ def _install_posix_file_lock(socket_file: Path):
     import fcntl
 
     try:
-        socket_file.parent.mkdir(parents=True, exist_ok=True)
+        socket_file.parent.mkdir(mode=0o700, parents=True, exist_ok=True)
         with open(socket_file, "a") as fd:
             try:
                 fcntl.flock(fd, fcntl.LOCK_EX | fcntl.LOCK_NB)
@@ -165,7 +165,7 @@ async def _run_tcp_server(socket_file: Path, cmd_handler):
             port = listeners[0].socket.getsockname()[1]
 
             # Make sure the path exists and write the socket file
-            socket_file.parent.mkdir(parents=True, exist_ok=True)
+            socket_file.parent.mkdir(mode=0o700, parents=True, exist_ok=True)
             socket_file.write_text(str(port))
 
             logger.info("IPC server ready", port=port)

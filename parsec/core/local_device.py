@@ -223,7 +223,7 @@ def _save_device_with_password(
     )
 
     try:
-        key_file.parent.mkdir(exist_ok=True, parents=True)
+        key_file.parent.mkdir(mode=0o700, exist_ok=True, parents=True)
         key_file.write_bytes(key_file_content)
 
     except OSError as exc:

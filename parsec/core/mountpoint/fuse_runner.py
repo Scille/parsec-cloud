@@ -56,7 +56,7 @@ async def _bootstrap_mountpoint(base_mountpoint_path: PurePath, workspace_fs) ->
         try:
             # On POSIX systems, mounting target must exists
             trio_mountpoint_path = trio.Path(mountpoint_path)
-            await trio_mountpoint_path.mkdir(exist_ok=True, parents=True)
+            await trio_mountpoint_path.mkdir(mode=0o700, exist_ok=True, parents=True)
             base_st_dev = (await trio.Path(base_mountpoint_path).stat()).st_dev
             initial_st_dev = (await trio_mountpoint_path.stat()).st_dev
             if initial_st_dev != base_st_dev:
