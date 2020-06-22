@@ -11,7 +11,7 @@ trigger:
 variables:
   python.version: '3.6'
   postgresql.version: '10'
-  winfsp.version: '1.7.20038-pre'
+  winfsp.version: '1.7.20172'
   pytest.base_args: |
     --log-level=DEBUG \
     --durations=10 -v \
@@ -400,7 +400,7 @@ jobs:
     workingDirectory: $(Agent.TempDirectory)/winbuild
   - bash: |
       set -eux
-      curl -L https://github.com/billziss-gh/winfsp/releases/download/v1.7B1/winfsp-1.7.20038.msi -o winfsp-1.7.20038.msi
+      curl -L https://github.com/billziss-gh/winfsp/releases/download/v1.7/winfsp-1.7.20172.msi -o winfsp-1.7.20172.msi
       makensis.exe installer.nsi
       mkdir dist
       cp build/parsec*-setup.exe dist
