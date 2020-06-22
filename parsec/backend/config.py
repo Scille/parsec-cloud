@@ -3,6 +3,8 @@
 import attr
 from typing import List, Optional
 
+from parsec.core.types import BackendAddr
+
 
 class BaseBlockStoreConfig:
     pass
@@ -62,6 +64,16 @@ class MockedBlockStoreConfig(BaseBlockStoreConfig):
 
 
 @attr.s(slots=True, frozen=True, auto_attribs=True)
+class EmailConfig:
+    server: str
+    port: int
+    address: str
+    password: str
+    use_ssl: bool
+    use_tls: bool
+
+
+@attr.s(slots=True, frozen=True, auto_attribs=True)
 class BackendConfig:
     administration_token: str
 
@@ -73,13 +85,8 @@ class BackendConfig:
 
     blockstore_config: BaseBlockStoreConfig
 
-    # Added parameters for invite mail
-    ssl_enabled: bool
-    invite_mail_server: str
-    invite_mail_port: int
-    invite_mail_sender_addr: str
-    invite_mail_sender_password: str
-    # TODO add invite link parameter here
+    email_config: EmailConfig
+    backend_addr: BackendAddr
 
     debug: bool
 

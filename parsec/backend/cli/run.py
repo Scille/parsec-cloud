@@ -13,6 +13,7 @@ from parsec.logging import configure_logging, configure_sentry_logging
 from parsec.backend import backend_app_factory
 from parsec.backend.config import (
     BackendConfig,
+    EmailConfig,
     MockedBlockStoreConfig,
     PostgreSQLBlockStoreConfig,
     S3BlockStoreConfig,
@@ -21,6 +22,7 @@ from parsec.backend.config import (
     RAID1BlockStoreConfig,
     RAID5BlockStoreConfig,
 )
+from parsec.core.types import BackendAddr
 
 
 logger = get_logger()
@@ -259,19 +261,40 @@ integer and `<config>` the MOCKED/POSTGRESQL/S3/SWIFT config.
     help="Secret token to access the administration api",
 )
 @click.option(
-    "--invite-mail-server", envvar="PARSEC_INVITE_SERVER", help="SMTP server for the invite mail"
+    "--backend-addr",
+    envvar="PARSEC_BACKEND_ADDR",
+    type=BackendAddr,
+    help="Invite link's address for the backend",
 )
 @click.option(
-    "--invite-mail-port",
-    envvar="PARSEC_INVITE_PORT",
+    "--email-server", envvar="PARSEC_EMAIL_SERVER", help="SMTP server for the invite email"
+)
+@click.option(
+    "--email-port",
+    envvar="PARSEC_EMAIL_PORT",
     type=int,
-    help="SMTP port for the invite mail",
+    default=25,
+    help="SMTP port for the invite email",
 )
 @click.option(
-    "--invite-mail-addr", envvar="PARSEC_INVITE_ADDRESS", help="Email address for the invite mail"
+    "--email-address",
+    envvar="PARSEC_EMAIL_ADDRESS",
+    help="Email address for automated email sending",
 )
 @click.option(
-    "--invite-mail-password", envvar="PARSEC_INVITE_PASSWORD", help="Password for the invite mail"
+    "--email-password", envvar="PARSEC_EMAIL_PASSWORD", help="Password for the email address"
+)
+@click.option(
+    "--email-use-ssl",
+    envvar="PARSEC_EMAIL_USE_SSL",
+    default=False,
+    help="Use SSL or not for SMTP config",
+)
+@click.option(
+    "--email-use-tls",
+    envvar="PARSEC_EMAIL_USE_TLS",
+    default=False,
+    help="Use TLS or not for SMTP config",
 )
 @click.option(
     "--ssl-keyfile",
@@ -315,10 +338,13 @@ def run_cmd(
     db_max_connections,
     blockstore,
     administration_token,
-    invite_mail_addr,
-    invite_mail_server,
-    invite_mail_port,
-    invite_mail_password,
+    backend_addr,
+    email_server,
+    email_port,
+    email_address,
+    email_password,
+    email_use_ssl,
+    email_use_tls,
     ssl_keyfile,
     ssl_certfile,
     log_level,
@@ -346,16 +372,20 @@ def run_cmd(
 
         config = BackendConfig(
             administration_token=administration_token,
+            backend_addr=backend_addr,
             db_url=db,
             db_drop_deleted_data=db_drop_deleted_data,
             db_min_connections=db_min_connections,
             db_max_connections=db_max_connections,
             blockstore_config=blockstore,
-            ssl_enabled=ssl_context is not None,
-            invite_mail_server=invite_mail_server,
-            invite_mail_port=invite_mail_port,
-            invite_mail_sender_addr=invite_mail_addr,
-            invite_mail_sender_password=invite_mail_password,
+            email_config=EmailConfig(
+                email_server,
+                email_port,
+                email_address,
+                email_password,
+                email_use_ssl,
+                email_use_tls,
+            ),
             debug=debug,
         )
 

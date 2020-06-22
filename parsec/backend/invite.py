@@ -6,7 +6,10 @@ import trio
 import smtplib
 import ssl
 import importlib_resources
-import sys
+<<<<<<< HEAD
+=======
+from sys import stderr
+>>>>>>> 5174ab22... invite link formatted, most necessary infos put in backend
 from enum import Enum
 from uuid import UUID, uuid4
 from collections import defaultdict
@@ -14,7 +17,6 @@ from typing import Dict, List, Optional, Union, Set
 from pendulum import Pendulum, now as pendulum_now
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
-from socket import gaierror
 
 from parsec.crypto import PublicKey
 from parsec.event_bus import EventBus
@@ -47,6 +49,7 @@ from parsec.api.protocol import (
 from parsec.backend.utils import catch_protocol_errors, api
 from parsec.backend import mail as module
 from parsec.backend.config import BackendConfig
+from parsec.core.types import BackendInvitationAddr
 
 
 PEER_EVENT_MAX_WAIT = 300  # 5mn
@@ -131,10 +134,12 @@ class DeviceInvitation:
 Invitation = Union[UserInvitation, DeviceInvitation]
 
 
-async def send_invite_email(invitation: Invitation, config: BackendConfig) -> None:
-    sender_email = config.invite_mail_sender_addr
+async def send_invite_email(
+    invitation: UserInvitation, config: BackendConfig, sender_name: str
+) -> None:
+    sender_email = config.email_config.address
     receiver_email = invitation.claimer_email
-    password = config.invite_mail_sender_password
+    password = config.email_config.password
 
     # mail settings
     message = MIMEMultipart("alternative")
@@ -142,10 +147,9 @@ async def send_invite_email(invitation: Invitation, config: BackendConfig) -> No
     message["From"] = sender_email
     message["To"] = receiver_email
 
-    # These strings are subject to changes, especially to cover
-    # multiple languages (at least english & french)
+    # mail content
     line1 = (
-        f"You have received an invitation from {invitation.greeter_user_id} to "
+        f"You have received an invitation from {sender_name} to "
         "join their workspace on Parsec.\nDownload now via the following link : "
     )
     line2 = "Once installed, open the next link with Parsec"
@@ -157,9 +161,17 @@ async def send_invite_email(invitation: Invitation, config: BackendConfig) -> No
     button1 = "Download Parsec"
     button2 = "Invite link"
     parsec_url = "https://parsec.cloud/get-parsec"
-    # TODO finish the invite_link
-    no_ssl = str(not config.ssl_enabled).lower()
-    invite_link = f"parsec://localhost:6888/corp?action=claim_user&token={invitation.token.hex}&no_ssl={no_ssl}"
+
+    invite_link = str(
+        BackendInvitationAddr(
+            organization_id=OrganizationID("carp"),  # Where is this info located?
+            invitation_type=InvitationType.USER,
+            token=invitation.token,
+            hostname=config.backend_addr.hostname,
+            port=config.backend_addr.port,
+            use_ssl=config.backend_addr.use_ssl,
+        )
+    )
 
     # Plain-text version used as backup if the html doesn't work for the client
     text = f"{line1}{parsec_url}\n{line2}\n{invite_link}\n{line4}"
@@ -190,21 +202,32 @@ async def send_invite_email(invitation: Invitation, config: BackendConfig) -> No
         sender_email: str, receiver_email: str, password: str, message: MIMEMultipart
     ):
         # Create secure connection with server and send email
-        context = ssl.create_default_context()
         try:
-            with smtplib.SMTP_SSL(
-                config.invite_mail_server, config.invite_mail_port, context=context
-            ) as server:
-                server.login(sender_email, password)
+            context = ssl.create_default_context()
+            if config.email_config.use_ssl:
+                server = smtplib.SMTP_SSL(
+                    config.email_config.server, config.email_config.port, context=context
+                )
+            else:
+                server = smtplib.SMTP(config.email_config.server, config.email_config.port)
+            with server:
+                if config.email_config.use_tls and not config.email_config.use_ssl:
+                    if server.starttls(context=context)[0] != 220:
+<<<<<<< HEAD
+                        print("Email TLS connexion isn't encrypted")
+=======
+                        print("Email TLS connexion isn't encrypted", file=stderr)
+>>>>>>> 5174ab22... invite link formatted, most necessary infos put in backend
+                        return
+                if sender_email and password:
+                    server.login(sender_email, password)
                 server.sendmail(sender_email, receiver_email, message.as_string())
-        except (gaierror, ConnectionRefusedError):
-            print("Failed to connect to the server. Bad connection settings?", file=sys.stderr)
-        except smtplib.SMTPServerDisconnected:
-            print("Failed to connect to the server. Wrong user/password?", file=sys.stderr)
         except smtplib.SMTPException as e:
-            print("SMTP error occurred: " + str(e), file=sys.stderr)
-        # Added try / except statements in case of errors
-        # print, raise or return in the except statements ?
+<<<<<<< HEAD
+            print(f"SMTP error occurred: {e}")
+=======
+            print(f"SMTP error occurred: {e}", file=stderr)
+>>>>>>> 5174ab22... invite link formatted, most necessary infos put in backend
 
     await trio.to_thread.run_sync(
         _thread_target_send_email, sender_email, receiver_email, password, message
@@ -260,7 +283,11 @@ class BaseInviteComponent:
             )
 
             if msg["send_email"]:
-                await send_invite_email(invitation, self._config)
+                await send_invite_email(
+                    invitation,
+                    self._config,
+                    str(client_ctx.human_handle or client_ctx.device_id.user_id),
+                )
 
         else:  # Device
             invitation = await self.new_for_device(

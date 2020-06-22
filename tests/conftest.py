@@ -495,6 +495,8 @@ def backend_factory(
                 "debug": False,
                 "db_url": backend_store,
                 "blockstore_config": blockstore,
+                "email_config": None,
+                "backend_addr": None,
                 **config,
             }
         )
