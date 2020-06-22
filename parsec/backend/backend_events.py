@@ -1,7 +1,8 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
+from enum import Enum
 
 
-class BackendEvents:
+class BackendEvents(Enum):
     """ Backend internal events"""
 
     # Device
@@ -9,13 +10,16 @@ class BackendEvents:
     device_created = "device.created"
     device_invitation_cancelled = "device.invitation.cancelled"
     # Invitation
-    invite_status_changed = "invite.status_changed"
     invite_conduit_updated = "invite.conduit_updated"
     # User
     user_claimed = "user.claimed"
     user_created = "user.created"
     user_revoked = "user.revoked"
+
     user_invitation_cancelled = "user.invitation.cancelled"
+
+
+class ApiEvents:
     # Realm
     realm_vlobs_updated = "realm.vlobs_updated"
     realm_roles_updated = "realm.roles_updated"
@@ -24,3 +28,5 @@ class BackendEvents:
     # Others
     message_received = "message.received"
     pinged = "pinged"
+
+    invite_status_changed = "invite.status_changed"

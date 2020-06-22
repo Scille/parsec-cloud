@@ -1,6 +1,6 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
 
-from parsec.backend.backend_events import BackendEvents
+from parsec.backend.backend_events import ApiEvents
 import pytest
 from pendulum import Pendulum
 
@@ -25,7 +25,7 @@ async def test_message_from_bob_to_alice(backend, alice, bob, alice_backend_sock
             bob.organization_id, bob.device_id, alice.user_id, d1, b"Hello from Bob !"
         )
 
-    assert listen.rep == {"status": "ok", "event": BackendEvents.message_received, "index": 1}
+    assert listen.rep == {"status": "ok", "event": ApiEvents.message_received, "index": 1}
 
     rep = await message_get(alice_backend_sock)
     assert rep == {
@@ -75,11 +75,7 @@ async def test_message_from_bob_to_alice_multi_backends(
                     bob.organization_id, bob.device_id, alice.user_id, d1, b"Hello from Bob !"
                 )
 
-            assert listen.rep == {
-                "status": "ok",
-                "event": BackendEvents.message_received,
-                "index": 1,
-            }
+            assert listen.rep == {"status": "ok", "event": ApiEvents.message_received, "index": 1}
 
             rep = await message_get(alice_backend_sock)
             assert rep == {
@@ -111,7 +107,7 @@ async def test_message_received_event(backend, alice_backend_sock, alice, bob):
 
         # No guarantees those events occur before the commands' return
         await spy.wait_multiple_with_timeout(
-            [BackendEvents.message_received, BackendEvents.message_received]
+            [ApiEvents.message_received, ApiEvents.message_received]
         )
 
     reps = [
@@ -120,8 +116,8 @@ async def test_message_received_event(backend, alice_backend_sock, alice, bob):
         await events_listen_nowait(alice_backend_sock),
     ]
     assert reps == [
-        {"status": "ok", "event": BackendEvents.message_received, "index": 1},
-        {"status": "ok", "event": BackendEvents.message_received, "index": 2},
+        {"status": "ok", "event": ApiEvents.message_received, "index": 1},
+        {"status": "ok", "event": ApiEvents.message_received, "index": 2},
         {"status": "no_events"},
     ]
 
@@ -132,13 +128,13 @@ async def test_message_received_event(backend, alice_backend_sock, alice, bob):
         )
 
         # No guarantees those events occur before the commands' return
-        await spy.wait_multiple_with_timeout([BackendEvents.message_received])
+        await spy.wait_multiple_with_timeout([ApiEvents.message_received])
 
     reps = [
         await events_listen_nowait(alice_backend_sock),
         await events_listen_nowait(alice_backend_sock),
     ]
     assert reps == [
-        {"status": "ok", "event": BackendEvents.message_received, "index": 3},
+        {"status": "ok", "event": ApiEvents.message_received, "index": 3},
         {"status": "no_events"},
     ]

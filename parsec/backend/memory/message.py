@@ -1,6 +1,6 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
 
-from parsec.backend.backend_events import BackendEvents
+from parsec.backend.backend_events import ApiEvents
 from typing import List, Tuple
 from collections import defaultdict
 from pendulum import Pendulum
@@ -29,7 +29,7 @@ class MemoryMessageComponent(BaseMessageComponent):
         messages[recipient].append((sender, timestamp, body))
         index = len(messages[recipient])
         await self._send_event(
-            BackendEvents.message_received,
+            ApiEvents.message_received,
             organization_id=organization_id,
             author=sender,
             recipient=recipient,

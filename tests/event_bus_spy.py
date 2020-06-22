@@ -5,7 +5,7 @@ import attr
 import pendulum
 from contextlib import contextmanager
 from unittest.mock import ANY
-
+from enum import Enum
 from parsec.event_bus import EventBus
 
 
@@ -134,16 +134,23 @@ class EventBusSpy:
         return cooked_events
 
     def _cook_event_params(self, event):
+        # print("## Enter ##", event)
         if isinstance(event, SpiedEvent):
             return event
         elif event is ANY:
             return event
         elif isinstance(event, str):
             return SpiedEvent(event, ANY, ANY)
+        elif isinstance(event, Enum):
+            print(event)
+            print(event.value)
+            event = SpiedEvent(event.value, ANY, ANY)
+            print(event)
         elif isinstance(event, tuple):
             event = event + (ANY,) * (3 - len(event))
             return SpiedEvent(*event)
         else:
+            print(event)
             raise ValueError(
                 "event must be provided as `SpiedEvent`, `(<event>, <kwargs>, <dt>)` tuple "
                 "or string"

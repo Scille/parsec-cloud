@@ -1,6 +1,6 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
 
-from parsec.backend.backend_events import BackendEvents
+from parsec.backend.backend_events import ApiEvents
 import pytest
 import trio
 from unittest.mock import ANY
@@ -74,7 +74,7 @@ async def test_process_while_offline(
             )
             await alice_core.wait_idle_monitors()
         assert alice_core.backend_conn.status == BackendConnStatus.READY
-        spy.assert_event_occured(BackendEvents.pinged, {"ping": "hello from Bob !"})
+        spy.assert_event_occured(ApiEvents.pinged, {"ping": "hello from Bob !"})
 
 
 @pytest.mark.trio

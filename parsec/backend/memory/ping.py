@@ -1,6 +1,6 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
 
-from parsec.backend.backend_events import BackendEvents
+from parsec.backend.backend_events import ApiEvents
 from parsec.api.protocol import DeviceID, OrganizationID
 from parsec.backend.ping import BasePingComponent
 
@@ -15,5 +15,5 @@ class MemoryPingComponent(BasePingComponent):
     async def ping(self, organization_id: OrganizationID, author: DeviceID, ping: str) -> None:
         if author:
             await self._send_event(
-                BackendEvents.pinged, organization_id=organization_id, author=author, ping=ping
+                ApiEvents.pinged, organization_id=organization_id, author=author, ping=ping
             )

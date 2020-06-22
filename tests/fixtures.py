@@ -1,6 +1,6 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
 
-from parsec.backend.backend_events import BackendEvents
+from parsec.backend.backend_events import ApiEvents
 import attr
 import re
 import pytest
@@ -522,7 +522,7 @@ def backend_data_binder_factory(request, backend_addr, initial_user_manifest_sta
                 await spy.wait_multiple_with_timeout(
                     [
                         (
-                            BackendEvents.realm_roles_updated,
+                            ApiEvents.realm_roles_updated,
                             {
                                 "organization_id": author.organization_id,
                                 "author": author.device_id,
@@ -532,7 +532,7 @@ def backend_data_binder_factory(request, backend_addr, initial_user_manifest_sta
                             },
                         ),
                         (
-                            BackendEvents.realm_vlobs_updated,
+                            ApiEvents.realm_vlobs_updated,
                             {
                                 "organization_id": author.organization_id,
                                 "author": author.device_id,

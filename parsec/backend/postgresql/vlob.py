@@ -1,6 +1,6 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
 
-from parsec.backend.backend_events import BackendEvents
+from parsec.backend.backend_events import ApiEvents
 import pendulum
 from triopg import UniqueViolationError
 from uuid import UUID
@@ -134,7 +134,7 @@ RETURNING index
 
     await send_signal(
         conn,
-        BackendEvents.realm_vlobs_updated,
+        ApiEvents.realm_vlobs_updated,
         organization_id=organization_id,
         author=author,
         realm_id=realm_id,

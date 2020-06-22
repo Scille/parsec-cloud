@@ -1,6 +1,6 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
 
-from parsec.backend.backend_events import BackendEvents
+from parsec.backend.backend_events import ApiEvents
 import pytest
 import trio
 from pendulum import Pendulum, now as pendulum_now
@@ -451,18 +451,18 @@ async def test_reencryption_events(
         with trio.fail_after(1):
             # No guarantees those events occur before the commands' return
             await spy.wait_multiple(
-                [BackendEvents.realm_maintenance_started, BackendEvents.message_received]
+                [ApiEvents.realm_maintenance_started, ApiEvents.message_received]
             )
 
         rep = await events_listen_nowait(alice_backend_sock)
         assert rep == {
             "status": "ok",
-            "event": BackendEvents.realm_maintenance_started,
+            "event": ApiEvents.realm_maintenance_started,
             "realm_id": realm,
             "encryption_revision": 2,
         }
         rep = await events_listen_nowait(alice_backend_sock)
-        assert rep == {"status": "ok", "event": BackendEvents.message_received, "index": 1}
+        assert rep == {"status": "ok", "event": ApiEvents.message_received, "index": 1}
 
         # Do the reencryption
         rep = await vlob_maintenance_get_reencryption_batch(alice_backend_sock, realm, 2, size=100)
@@ -472,12 +472,12 @@ async def test_reencryption_events(
         await realm_finish_reencryption_maintenance(alice2_backend_sock, realm, 2)
 
         # No guarantees those events occur before the commands' return
-        await spy.wait_with_timeout(BackendEvents.realm_maintenance_finished)
+        await spy.wait_with_timeout(ApiEvents.realm_maintenance_finished)
 
         rep = await events_listen_nowait(alice_backend_sock)
         assert rep == {
             "status": "ok",
-            "event": BackendEvents.realm_maintenance_finished,
+            "event": ApiEvents.realm_maintenance_finished,
             "realm_id": realm,
             "encryption_revision": 2,
         }

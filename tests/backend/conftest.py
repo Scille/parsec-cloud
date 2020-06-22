@@ -1,6 +1,6 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
 
-from parsec.backend.backend_events import BackendEvents
+from parsec.backend.backend_events import ApiEvents
 import pytest
 from uuid import UUID, uuid4
 from pendulum import Pendulum, now as pendulum_now
@@ -221,7 +221,7 @@ def realm_factory():
                     granted_on=now,
                 ),
             )
-            await spy.wait_with_timeout(BackendEvents.realm_roles_updated)
+            await spy.wait_with_timeout(ApiEvents.realm_roles_updated)
         return realm_id
 
     return _realm_factory

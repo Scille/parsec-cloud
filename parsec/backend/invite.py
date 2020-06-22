@@ -1,6 +1,6 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
 
-from parsec.backend.backend_events import BackendEvents
+from parsec.backend.backend_events import BackendEvents, ApiEvents
 import attr
 from enum import Enum
 from uuid import UUID, uuid4
@@ -151,7 +151,7 @@ class BaseInviteComponent:
             else:  # Invitation deleted or back to idle
                 self._claimers_ready[organization_id].discard(token)
 
-        self._event_bus.connect(BackendEvents.invite_status_changed, _on_status_changed)
+        self._event_bus.connect(ApiEvents.invite_status_changed, _on_status_changed)
 
     @api("invite_new", handshake_types=[HandshakeType.AUTHENTICATED])
     @catch_protocol_errors

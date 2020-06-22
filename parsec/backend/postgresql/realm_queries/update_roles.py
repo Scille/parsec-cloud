@@ -1,6 +1,6 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
 
-from parsec.backend.backend_events import BackendEvents
+from parsec.backend.backend_events import ApiEvents
 from typing import Optional
 from pypika import Parameter
 from pypika.enums import Order
@@ -152,7 +152,7 @@ async def query_update_roles(
 
     await send_signal(
         conn,
-        BackendEvents.realm_roles_updated,
+        ApiEvents.realm_roles_updated,
         organization_id=organization_id,
         author=new_role.granted_by,
         realm_id=new_role.realm_id,

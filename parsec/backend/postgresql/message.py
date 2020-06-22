@@ -1,6 +1,6 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
 
-from parsec.backend.backend_events import BackendEvents
+from parsec.backend.backend_events import ApiEvents
 from pendulum import Pendulum
 from typing import List, Tuple
 from pypika import Parameter, Order, functions as fn
@@ -59,7 +59,7 @@ async def send_message(conn, organization_id, sender, recipient, timestamp, body
 
     await send_signal(
         conn,
-        BackendEvents.message_received,
+        ApiEvents.message_received,
         organization_id=organization_id,
         author=sender,
         recipient=recipient,

@@ -1,6 +1,6 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
 
-from parsec.backend.backend_events import BackendEvents
+from parsec.backend.backend_events import BackendEvents, ApiEvents
 import attr
 from uuid import UUID
 from typing import List, Optional, Tuple
@@ -229,7 +229,7 @@ class MemoryInviteComponent(BaseInviteComponent):
             org.invitations[invitation.token] = invitation
 
         await self._send_event(
-            BackendEvents.invite_status_changed,
+            ApiEvents.invite_status_changed,
             organization_id=organization_id,
             greeter=invitation.greeter_user_id,
             token=invitation.token,
@@ -249,7 +249,7 @@ class MemoryInviteComponent(BaseInviteComponent):
         org = self._organizations[organization_id]
         org.deleted_invitations[token] = (on, reason)
         await self._send_event(
-            BackendEvents.invite_status_changed,
+            ApiEvents.invite_status_changed,
             organization_id=organization_id,
             greeter=greeter,
             token=token,
@@ -277,7 +277,7 @@ class MemoryInviteComponent(BaseInviteComponent):
         self, organization_id: OrganizationID, greeter: UserID, token: UUID
     ) -> None:
         await self._send_event(
-            BackendEvents.invite_status_changed,
+            ApiEvents.invite_status_changed,
             organization_id=organization_id,
             greeter=greeter,
             token=token,
@@ -288,7 +288,7 @@ class MemoryInviteComponent(BaseInviteComponent):
         self, organization_id: OrganizationID, greeter: UserID, token: UUID
     ) -> None:
         await self._send_event(
-            BackendEvents.invite_status_changed,
+            ApiEvents.invite_status_changed,
             organization_id=organization_id,
             greeter=greeter,
             token=token,

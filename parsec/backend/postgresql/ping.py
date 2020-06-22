@@ -1,6 +1,6 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
 
-from parsec.backend.backend_events import BackendEvents
+from parsec.backend.backend_events import ApiEvents
 from parsec.api.protocol import DeviceID, OrganizationID
 from parsec.backend.ping import BasePingComponent
 from parsec.backend.postgresql.handler import send_signal, PGHandler
@@ -15,9 +15,5 @@ class PGPingComponent(BasePingComponent):
             return
         async with self.dbh.pool.acquire() as conn:
             await send_signal(
-                conn,
-                BackendEvents.pinged,
-                organization_id=organization_id,
-                author=author,
-                ping=ping,
+                conn, ApiEvents.pinged, organization_id=organization_id, author=author, ping=ping
             )

@@ -1,6 +1,6 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
 
-from parsec.backend.backend_events import BackendEvents
+from parsec.backend.backend_events import BackendEvents, ApiEvents
 from typing import Optional
 import trio
 from structlog import get_logger
@@ -176,7 +176,7 @@ class BackendApp:
                                     cancel_scope.cancel()
 
                             event_bus_ctx.connect(
-                                BackendEvents.invite_status_changed, _on_invite_status_changed
+                                ApiEvents.invite_status_changed, _on_invite_status_changed
                             )
                             await self._handle_client_loop(transport, client_ctx)
                 finally:

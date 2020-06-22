@@ -1,6 +1,6 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
 
-from parsec.backend.backend_events import BackendEvents
+from parsec.backend.backend_events import ApiEvents
 import pytest
 import trio
 
@@ -72,7 +72,7 @@ async def test_init_with_backend_online(running_backend, event_bus, alice):
 
             # Test events
             running_backend.backend.event_bus.send(
-                BackendEvents.pinged,
+                ApiEvents.pinged,
                 organization_id=alice.organization_id,
                 author="bob@test",
                 ping="foo",
@@ -167,7 +167,7 @@ async def test_switch_offline(mock_clock, running_backend, event_bus, alice):
             # Make sure event system still works as expected
             spy.clear()
             running_backend.backend.event_bus.send(
-                BackendEvents.pinged,
+                ApiEvents.pinged,
                 organization_id=alice.organization_id,
                 author="bob@test",
                 ping="foo",

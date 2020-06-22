@@ -1,6 +1,6 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
 
-from parsec.backend.backend_events import BackendEvents
+from parsec.backend.backend_events import ApiEvents
 import trio
 
 from parsec.api.protocol import events_subscribe_serializer, events_listen_serializer
@@ -87,17 +87,15 @@ class EventsComponent:
         client_ctx.event_bus_ctx.clear()
 
         # Connect the new callbacks
-        client_ctx.event_bus_ctx.connect(BackendEvents.pinged, _on_pinged)
-        client_ctx.event_bus_ctx.connect(BackendEvents.realm_vlobs_updated, _on_realm_events)
-        client_ctx.event_bus_ctx.connect(BackendEvents.realm_maintenance_started, _on_realm_events)
-        client_ctx.event_bus_ctx.connect(BackendEvents.realm_maintenance_finished, _on_realm_events)
-        client_ctx.event_bus_ctx.connect(BackendEvents.message_received, _on_message_received)
-        client_ctx.event_bus_ctx.connect(
-            BackendEvents.invite_status_changed, _on_invite_status_changed
-        )
+        client_ctx.event_bus_ctx.connect(ApiEvents.pinged, _on_pinged)
+        client_ctx.event_bus_ctx.connect(ApiEvents.realm_vlobs_updated, _on_realm_events)
+        client_ctx.event_bus_ctx.connect(ApiEvents.realm_maintenance_started, _on_realm_events)
+        client_ctx.event_bus_ctx.connect(ApiEvents.realm_maintenance_finished, _on_realm_events)
+        client_ctx.event_bus_ctx.connect(ApiEvents.message_received, _on_message_received)
+        client_ctx.event_bus_ctx.connect(ApiEvents.invite_status_changed, _on_invite_status_changed)
 
         # Final event to keep up to date the list of realm we should listen on
-        client_ctx.event_bus_ctx.connect(BackendEvents.realm_roles_updated, _on_roles_updated)
+        client_ctx.event_bus_ctx.connect(ApiEvents.realm_roles_updated, _on_roles_updated)
 
         # Finally populate the list of realm we should listen on
         realms_for_user = await self._realm_component.get_realms_for_user(

@@ -1,6 +1,6 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
 
-from parsec.backend.backend_events import BackendEvents
+from parsec.backend.backend_events import BackendEvents, ApiEvents
 import re
 from pendulum import Pendulum, now as pendulum_now
 from uuid import UUID, uuid4
@@ -203,7 +203,7 @@ async def _do_delete_invitation(
     await conn.execute(*_q_delete_invitation(row_id=row_id, on=on, reason=reason.value))
     await send_signal(
         conn,
-        BackendEvents.invite_status_changed,
+        ApiEvents.invite_status_changed,
         organization_id=organization_id,
         greeter=greeter,
         token=token,
@@ -519,7 +519,7 @@ async def _do_new_user_invitation(
         )
     await send_signal(
         conn,
-        BackendEvents.invite_status_changed,
+        ApiEvents.invite_status_changed,
         organization_id=organization_id,
         greeter=greeter_user_id,
         token=token,
@@ -716,7 +716,7 @@ class PGInviteComponent(BaseInviteComponent):
         async with self.dbh.pool.acquire() as conn:
             await send_signal(
                 conn,
-                BackendEvents.invite_status_changed,
+                ApiEvents.invite_status_changed,
                 organization_id=organization_id,
                 greeter=greeter,
                 token=token,
@@ -729,7 +729,7 @@ class PGInviteComponent(BaseInviteComponent):
         async with self.dbh.pool.acquire() as conn:
             await send_signal(
                 conn,
-                BackendEvents.invite_status_changed,
+                ApiEvents.invite_status_changed,
                 organization_id=organization_id,
                 greeter=greeter,
                 token=token,
