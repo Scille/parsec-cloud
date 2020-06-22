@@ -83,11 +83,11 @@ class Device:
         return DeviceCertificateContent.unsecure_load(self.device_certificate).verify_key
 
     device_id: DeviceID
+    device_label: Optional[str]
     device_certificate: bytes
     redacted_device_certificate: bytes
     device_certifier: Optional[DeviceID]
     created_on: pendulum.Pendulum = attr.ib(factory=pendulum.now)
-    device_label: Optional[str] = None
 
 
 @attr.s(slots=True, frozen=True, repr=False, auto_attribs=True)
@@ -103,11 +103,11 @@ class User:
         return UserCertificateContent.unsecure_load(self.user_certificate).public_key
 
     user_id: UserID
+    human_handle: Optional[HumanHandle]
     user_certificate: bytes
     redacted_user_certificate: bytes
     user_certifier: Optional[DeviceID]
     profile: UserProfile = UserProfile.STANDARD
-    human_handle: Optional[HumanHandle] = None
     created_on: pendulum.Pendulum = attr.ib(factory=pendulum.now)
     revoked_on: Optional[pendulum.Pendulum] = None
     revoked_user_certificate: Optional[bytes] = None
@@ -766,12 +766,19 @@ class BaseUserComponent:
                 "reason": f"Invalid timestamp in certification.",
             }
 
+        if data.device_label:
+            return {
+                "status": "invalid_data",
+                "reason": "Redacted Device certificate must not contain a device_label field.",
+            }
+
         if data.device_id.user_id != client_ctx.user_id:
             return {"status": "bad_user_id", "reason": "Device must be handled by it own user."}
 
         try:
             device = Device(
                 device_id=data.device_id,
+                device_label=None,
                 device_certificate=msg["device_certificate"],
                 redacted_device_certificate=msg["device_certificate"],
                 device_certifier=data.author,

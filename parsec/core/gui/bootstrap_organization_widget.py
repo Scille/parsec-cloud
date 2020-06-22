@@ -67,21 +67,27 @@ async def _do_bootstrap_organization(
         author=None,
         timestamp=now,
         user_id=device.user_id,
+        human_handle=None,
         public_key=device.public_key,
         profile=device.profile,
     ).dump_and_sign(root_signing_key)
     device_certificate = DeviceCertificateContent(
-        author=None, timestamp=now, device_id=device_id, verify_key=device.verify_key
+        author=None,
+        timestamp=now,
+        device_id=device_id,
+        device_label=None,
+        verify_key=device.verify_key,
     ).dump_and_sign(root_signing_key)
 
     try:
         async with apiv1_backend_anonymous_cmds_factory(bootstrap_addr) as cmds:
             rep = await cmds.organization_bootstrap(
-                bootstrap_addr.organization_id,
-                bootstrap_addr.token,
-                root_verify_key,
-                user_certificate,
-                device_certificate,
+                organization_id=bootstrap_addr.organization_id,
+                bootstrap_token=bootstrap_addr.token,
+                root_verify_key=root_verify_key,
+                # Regular certificates compatible with redacted here
+                redacted_user_certificate=user_certificate,
+                redacted_device_certificate=device_certificate,
             )
 
             if rep["status"] == "already_bootstrapped":

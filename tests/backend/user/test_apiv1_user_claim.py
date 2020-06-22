@@ -75,12 +75,14 @@ async def test_user_claim_ok(
                 alice.organization_id,
                 User(
                     user_id=UserID("dummy"),
+                    human_handle=None,
                     user_certificate=b"<user certif>",
                     redacted_user_certificate=b"<redacted user certif>",
                     user_certifier=alice.device_id,
                 ),
                 Device(
                     device_id=DeviceID("dummy@pc1"),
+                    device_label=None,
                     device_certificate=b"<device certif>",
                     redacted_device_certificate=b"<redacted device certif>",
                     device_certifier=alice.device_id,
@@ -91,12 +93,14 @@ async def test_user_claim_ok(
                 alice.organization_id,
                 User(
                     user_id=mallory_invitation.user_id,
+                    human_handle=None,
                     user_certificate=b"<user certif>",
                     redacted_user_certificate=b"<redacted user certif>",
                     user_certifier=alice.device_id,
                 ),
                 Device(
                     device_id=mallory_invitation.user_id.to_device_id("pc1"),
+                    device_label=None,
                     device_certificate=b"<device certif>",
                     redacted_device_certificate=b"<redacted device certif>",
                     device_certifier=alice.device_id,
@@ -180,12 +184,14 @@ async def test_user_claim_already_exists(
         alice.organization_id,
         User(
             user_id=mallory_invitation.user_id,
+            human_handle=None,
             user_certificate=b"<foo>",
             redacted_user_certificate=b"<foo>",
             user_certifier=alice.device_id,
         ),
         Device(
             device_id=mallory_invitation.user_id.to_device_id("pc1"),
+            device_label=None,
             device_certificate=b"<bar>",
             redacted_device_certificate=b"<bar>",
             device_certifier=alice.device_id,

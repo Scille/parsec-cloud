@@ -231,6 +231,8 @@ async def claim_device(
     return LocalDevice(
         organization_addr=organization_addr,
         device_id=new_device_id,
+        device_label=None,
+        human_handle=None,
         signing_key=device_signing_key,
         private_key=answer.private_key,
         profile=UserProfile.ADMIN if invitation_creator_user.is_admin else UserProfile.STANDARD,
@@ -284,6 +286,7 @@ async def invite_and_create_device(
                         author=device.device_id,
                         timestamp=now,
                         device_id=claim.device_id,
+                        device_label=None,
                         verify_key=claim.verify_key,
                     ).dump_and_sign(device.signing_key)
 
@@ -373,6 +376,7 @@ async def invite_and_create_user(
                         author=device.device_id,
                         timestamp=now,
                         user_id=device_id.user_id,
+                        human_handle=None,
                         public_key=claim.public_key,
                         profile=UserProfile.ADMIN if is_admin else UserProfile.STANDARD,
                     ).dump_and_sign(device.signing_key)
@@ -380,6 +384,7 @@ async def invite_and_create_user(
                         author=device.device_id,
                         timestamp=now,
                         device_id=device_id,
+                        device_label=None,
                         verify_key=claim.verify_key,
                     ).dump_and_sign(device.signing_key)
 

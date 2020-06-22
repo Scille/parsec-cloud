@@ -12,28 +12,33 @@ from tests.backend.common import user_get, user_create
 
 
 @pytest.mark.trio
-@pytest.mark.parametrize("profile", UserProfile)
+@pytest.mark.parametrize(
+    "profile,with_labels", [(profile, profile != UserProfile.STANDARD) for profile in UserProfile]
+)
 async def test_user_create_ok(
-    backend, backend_sock_factory, alice_backend_sock, alice, mallory, profile
+    backend, backend_sock_factory, alice_backend_sock, alice, mallory, profile, with_labels
 ):
     now = pendulum.now()
     user_certificate = UserCertificateContent(
         author=alice.device_id,
         timestamp=now,
         user_id=mallory.user_id,
+        human_handle=mallory.human_handle,
         public_key=mallory.public_key,
         profile=profile,
-        human_handle=mallory.human_handle,
     )
     redacted_user_certificate = user_certificate.evolve(human_handle=None)
     device_certificate = DeviceCertificateContent(
         author=alice.device_id,
         timestamp=now,
         device_id=mallory.device_id,
-        verify_key=mallory.verify_key,
         device_label=mallory.device_label,
+        verify_key=mallory.verify_key,
     )
     redacted_device_certificate = device_certificate.evolve(device_label=None)
+    if not with_labels:
+        user_certificate = redacted_user_certificate
+        device_certificate = redacted_device_certificate
 
     user_certificate = user_certificate.dump_and_sign(alice.signing_key)
     device_certificate = device_certificate.dump_and_sign(alice.signing_key)
@@ -60,7 +65,7 @@ async def test_user_create_ok(
     )
     assert backend_user == User(
         user_id=mallory.user_id,
-        human_handle=mallory.human_handle,
+        human_handle=mallory.human_handle if with_labels else None,
         profile=profile,
         user_certificate=user_certificate,
         redacted_user_certificate=redacted_user_certificate,
@@ -69,7 +74,7 @@ async def test_user_create_ok(
     )
     assert backend_device == Device(
         device_id=mallory.device_id,
-        device_label=mallory.device_label,
+        device_label=mallory.device_label if with_labels else None,
         device_certificate=device_certificate,
         redacted_device_certificate=redacted_device_certificate,
         device_certifier=alice.device_id,
@@ -84,6 +89,7 @@ async def test_user_create_invalid_certificate(alice_backend_sock, alice, bob, m
         author=alice.device_id,
         timestamp=now,
         user_id=mallory.user_id,
+        human_handle=mallory.human_handle,
         public_key=mallory.public_key,
         profile=UserProfile.STANDARD,
     ).dump_and_sign(alice.signing_key)
@@ -91,12 +97,14 @@ async def test_user_create_invalid_certificate(alice_backend_sock, alice, bob, m
         author=alice.device_id,
         timestamp=now,
         device_id=mallory.device_id,
+        device_label=mallory.device_label,
         verify_key=mallory.verify_key,
     ).dump_and_sign(alice.signing_key)
     bad_user_certificate = UserCertificateContent(
         author=bob.device_id,
         timestamp=now,
         user_id=mallory.user_id,
+        human_handle=mallory.human_handle,
         public_key=mallory.public_key,
         profile=UserProfile.STANDARD,
     ).dump_and_sign(bob.signing_key)
@@ -104,6 +112,7 @@ async def test_user_create_invalid_certificate(alice_backend_sock, alice, bob, m
         author=bob.device_id,
         timestamp=now,
         device_id=mallory.device_id,
+        device_label=mallory.device_label,
         verify_key=mallory.verify_key,
     ).dump_and_sign(bob.signing_key)
 
@@ -150,6 +159,7 @@ async def test_user_create_not_matching_user_device(alice_backend_sock, alice, b
         author=alice.device_id,
         timestamp=now,
         user_id=mallory.user_id,
+        human_handle=mallory.human_handle,
         public_key=mallory.public_key,
         profile=UserProfile.STANDARD,
     ).dump_and_sign(alice.signing_key)
@@ -157,6 +167,7 @@ async def test_user_create_not_matching_user_device(alice_backend_sock, alice, b
         author=alice.device_id,
         timestamp=now,
         device_id=bob.device_id,
+        device_label=mallory.device_label,
         verify_key=mallory.verify_key,
     ).dump_and_sign(alice.signing_key)
 
@@ -180,6 +191,7 @@ async def test_user_create_bad_redacted_device_certificate(alice_backend_sock, a
         author=alice.device_id,
         timestamp=now,
         user_id=mallory.user_id,
+        human_handle=None,  # Can be used as regular and redacted certificate
         public_key=mallory.public_key,
         profile=UserProfile.STANDARD,
     ).dump_and_sign(alice.signing_key)
@@ -187,8 +199,8 @@ async def test_user_create_bad_redacted_device_certificate(alice_backend_sock, a
         author=alice.device_id,
         timestamp=now,
         device_id=mallory.device_id,
-        verify_key=mallory.verify_key,
         device_label=mallory.device_label,
+        verify_key=mallory.verify_key,
     )
     good_redacted_device_certificate = device_certificate.evolve(device_label=None)
     device_certificate = device_certificate.dump_and_sign(alice.signing_key)
@@ -245,6 +257,7 @@ async def test_user_create_bad_redacted_user_certificate(alice_backend_sock, ali
         author=alice.device_id,
         timestamp=now,
         device_id=mallory.device_id,
+        device_label=None,  # Can be used as regular and redacted certificate
         verify_key=mallory.verify_key,
     ).dump_and_sign(alice.signing_key)
     user_certificate = UserCertificateContent(
@@ -309,11 +322,16 @@ async def test_user_create_already_exists(alice_backend_sock, alice, bob):
         author=alice.device_id,
         timestamp=now,
         user_id=bob.user_id,
+        human_handle=None,
         public_key=bob.public_key,
         profile=UserProfile.STANDARD,
     ).dump_and_sign(alice.signing_key)
     device_certificate = DeviceCertificateContent(
-        author=alice.device_id, timestamp=now, device_id=bob.device_id, verify_key=bob.verify_key
+        author=alice.device_id,
+        timestamp=now,
+        device_id=bob.device_id,
+        device_label=None,
+        verify_key=bob.verify_key,
     ).dump_and_sign(alice.signing_key)
 
     rep = await user_create(
@@ -334,23 +352,31 @@ async def test_user_create_human_handle_already_exists(alice_backend_sock, alice
         author=alice.device_id,
         timestamp=now,
         user_id=bob2_device_id.user_id,
+        human_handle=bob.human_handle,
         public_key=bob.public_key,
         profile=UserProfile.STANDARD,
-        human_handle=bob.human_handle,
     )
     redacted_user_certificate = user_certificate.evolve(human_handle=None)
+    device_certificate = DeviceCertificateContent(
+        author=alice.device_id,
+        timestamp=now,
+        device_id=bob2_device_id,
+        device_label="dev2",
+        verify_key=bob.verify_key,
+    )
+    redacted_device_certificate = device_certificate.evolve(device_label=None)
+
     user_certificate = user_certificate.dump_and_sign(alice.signing_key)
     redacted_user_certificate = redacted_user_certificate.dump_and_sign(alice.signing_key)
-    device_certificate = DeviceCertificateContent(
-        author=alice.device_id, timestamp=now, device_id=bob2_device_id, verify_key=bob.verify_key
-    ).dump_and_sign(alice.signing_key)
+    device_certificate = device_certificate.dump_and_sign(alice.signing_key)
+    redacted_device_certificate = redacted_device_certificate.dump_and_sign(alice.signing_key)
 
     rep = await user_create(
         alice_backend_sock,
         user_certificate=user_certificate,
         device_certificate=device_certificate,
         redacted_user_certificate=redacted_user_certificate,
-        redacted_device_certificate=device_certificate,
+        redacted_device_certificate=redacted_device_certificate,
     )
     assert rep == {
         "status": "already_exists",
@@ -372,23 +398,31 @@ async def test_user_create_human_handle_with_revoked_previous_one(
         author=alice.device_id,
         timestamp=now,
         user_id=bob2_device_id.user_id,
+        human_handle=bob.human_handle,
         public_key=bob.public_key,
         profile=UserProfile.STANDARD,
-        human_handle=bob.human_handle,
     )
     redacted_user_certificate = user_certificate.evolve(human_handle=None)
+    device_certificate = DeviceCertificateContent(
+        author=alice.device_id,
+        timestamp=now,
+        device_id=bob2_device_id,
+        device_label=bob.device_label,  # Device label doesn't have to be unique
+        verify_key=bob.verify_key,
+    )
+    redacted_device_certificate = device_certificate.evolve(device_label=None)
+
     user_certificate = user_certificate.dump_and_sign(alice.signing_key)
     redacted_user_certificate = redacted_user_certificate.dump_and_sign(alice.signing_key)
-    device_certificate = DeviceCertificateContent(
-        author=alice.device_id, timestamp=now, device_id=bob2_device_id, verify_key=bob.verify_key
-    ).dump_and_sign(alice.signing_key)
+    device_certificate = device_certificate.dump_and_sign(alice.signing_key)
+    redacted_device_certificate = redacted_device_certificate.dump_and_sign(alice.signing_key)
 
     rep = await user_create(
         alice_backend_sock,
         user_certificate=user_certificate,
         device_certificate=device_certificate,
         redacted_user_certificate=redacted_user_certificate,
-        redacted_device_certificate=device_certificate,
+        redacted_device_certificate=redacted_device_certificate,
     )
     assert rep == {"status": "ok"}
 
@@ -401,6 +435,7 @@ async def test_user_create_not_matching_certified_on(alice_backend_sock, alice, 
         author=alice.device_id,
         timestamp=date1,
         user_id=mallory.user_id,
+        human_handle=mallory.human_handle,
         public_key=mallory.public_key,
         profile=UserProfile.STANDARD,
     ).dump_and_sign(alice.signing_key)
@@ -408,6 +443,7 @@ async def test_user_create_not_matching_certified_on(alice_backend_sock, alice, 
         author=alice.device_id,
         timestamp=date2,
         device_id=mallory.device_id,
+        device_label=mallory.device_label,
         verify_key=mallory.verify_key,
     ).dump_and_sign(alice.signing_key)
     with freeze_time(date1):
@@ -432,6 +468,7 @@ async def test_user_create_certificate_too_old(alice_backend_sock, alice, mallor
         author=alice.device_id,
         timestamp=too_old,
         user_id=mallory.user_id,
+        human_handle=mallory.human_handle,
         public_key=mallory.public_key,
         profile=UserProfile.STANDARD,
     ).dump_and_sign(alice.signing_key)
@@ -439,6 +476,7 @@ async def test_user_create_certificate_too_old(alice_backend_sock, alice, mallor
         author=alice.device_id,
         timestamp=too_old,
         device_id=mallory.device_id,
+        device_label=mallory.device_label,
         verify_key=mallory.verify_key,
     ).dump_and_sign(alice.signing_key)
 
@@ -479,17 +517,17 @@ async def test_redacted_certificates_cannot_contain_sensitive_data(
         author=alice.device_id,
         timestamp=now,
         user_id=mallory.user_id,
+        human_handle=mallory.human_handle,
         public_key=mallory.public_key,
         profile=UserProfile.STANDARD,
-        human_handle=mallory.human_handle,
     )
     redacted_user_certificate = user_certificate.evolve(human_handle=None)
     device_certificate = DeviceCertificateContent(
         author=alice.device_id,
         timestamp=now,
         device_id=mallory.device_id,
-        verify_key=mallory.verify_key,
         device_label=mallory.device_label,
+        verify_key=mallory.verify_key,
     )
     redacted_device_certificate = device_certificate.evolve(device_label=None)
 

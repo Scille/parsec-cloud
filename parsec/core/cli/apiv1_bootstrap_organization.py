@@ -35,19 +35,17 @@ async def _bootstrap_organization(
         author=None,
         timestamp=now,
         user_id=device.user_id,
+        human_handle=None,
         public_key=device.public_key,
         profile=device.profile,
-    )
-    redacted_user_certificate = user_certificate.evolve(human_handle=None)
+    ).dump_and_sign(root_signing_key)
     device_certificate = DeviceCertificateContent(
-        author=None, timestamp=now, device_id=device_id, verify_key=device.verify_key
-    )
-    redacted_device_certificate = device_certificate.evolve(device_label=None)
-
-    user_certificate = user_certificate.dump_and_sign(root_signing_key)
-    device_certificate = device_certificate.dump_and_sign(root_signing_key)
-    redacted_user_certificate = redacted_user_certificate.dump_and_sign(root_signing_key)
-    redacted_device_certificate = redacted_device_certificate.dump_and_sign(root_signing_key)
+        author=None,
+        timestamp=now,
+        device_id=device_id,
+        device_label=None,
+        verify_key=device.verify_key,
+    ).dump_and_sign(root_signing_key)
 
     async with spinner(f"Sending {device_display} to server"):
         async with apiv1_backend_anonymous_cmds_factory(organization_bootstrap_addr) as cmds:
@@ -57,8 +55,9 @@ async def _bootstrap_organization(
                 root_verify_key=root_verify_key,
                 user_certificate=user_certificate,
                 device_certificate=device_certificate,
-                redacted_user_certificate=redacted_user_certificate,
-                redacted_device_certificate=redacted_device_certificate,
+                # Regular certificates compatible with redacted here
+                redacted_user_certificate=user_certificate,
+                redacted_device_certificate=device_certificate,
             )
 
     organization_addr_display = click.style(organization_addr.to_url(), fg="yellow")

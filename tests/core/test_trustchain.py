@@ -120,6 +120,7 @@ def trustchain_data_factory(local_device_factory, coolorg):
                 author=certifier_id,
                 timestamp=created_on,
                 device_id=local_device.device_id,
+                device_label=local_device.device_label,
                 verify_key=local_device.verify_key,
             )
             data.add_device_certif(
@@ -140,6 +141,7 @@ def trustchain_data_factory(local_device_factory, coolorg):
                 author=certifier_id,
                 timestamp=created_on,
                 user_id=local_user.user_id,
+                human_handle=local_device.human_handle,
                 public_key=local_user.public_key,
                 profile=todo_user.get("profile", UserProfile.STANDARD),
             )

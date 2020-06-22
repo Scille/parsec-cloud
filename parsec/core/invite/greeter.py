@@ -303,8 +303,8 @@ class UserGreetInProgress4Ctx:
                 author=author.device_id,
                 timestamp=now,
                 device_id=device_id,
-                verify_key=self._verify_key,
                 device_label=device_label,
+                verify_key=self._verify_key,
             )
             redacted_device_certificate = device_certificate.evolve(device_label=None)
 
@@ -367,8 +367,8 @@ class DeviceGreetInProgress4Ctx:
                 author=author.device_id,
                 timestamp=now,
                 device_id=device_id,
-                verify_key=self._verify_key,
                 device_label=device_label,
+                verify_key=self._verify_key,
             )
             redacted_device_certificate = device_certificate.evolve(device_label=None)
 
