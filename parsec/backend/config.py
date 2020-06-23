@@ -71,6 +71,7 @@ class EmailConfig:
     password: str
     use_ssl: bool
     use_tls: bool
+    language: str
 
 
 @attr.s(slots=True, frozen=True, auto_attribs=True)

@@ -297,6 +297,9 @@ integer and `<config>` the MOCKED/POSTGRESQL/S3/SWIFT config.
     help="Use TLS or not for SMTP config",
 )
 @click.option(
+    "--email-language", envvar="PARSEC_EMAIL_LANGUAGE", default="en", help="Language used in email"
+)
+@click.option(
     "--ssl-keyfile",
     type=click.Path(exists=True, dir_okay=False),
     envvar="PARSEC_SSL_KEYFILE",
@@ -345,6 +348,7 @@ def run_cmd(
     email_password,
     email_use_ssl,
     email_use_tls,
+    email_language,
     ssl_keyfile,
     ssl_certfile,
     log_level,
@@ -385,6 +389,7 @@ def run_cmd(
                 email_password,
                 email_use_ssl,
                 email_use_tls,
+                email_language,
             ),
             debug=debug,
         )

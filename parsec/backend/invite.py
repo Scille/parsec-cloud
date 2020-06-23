@@ -6,10 +6,6 @@ import trio
 import smtplib
 import ssl
 import importlib_resources
-<<<<<<< HEAD
-=======
-from sys import stderr
->>>>>>> 5174ab22... invite link formatted, most necessary infos put in backend
 from enum import Enum
 from uuid import UUID, uuid4
 from collections import defaultdict
@@ -18,6 +14,7 @@ from pendulum import Pendulum, now as pendulum_now
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
 
+import parsec.backend.mail
 from parsec.crypto import PublicKey
 from parsec.event_bus import EventBus
 from parsec.api.data import UserProfile
@@ -47,7 +44,6 @@ from parsec.api.protocol import (
     invite_4_claimer_communicate_serializer,
 )
 from parsec.backend.utils import catch_protocol_errors, api
-from parsec.backend import mail as module
 from parsec.backend.config import BackendConfig
 from parsec.core.types import BackendInvitationAddr
 
@@ -134,37 +130,60 @@ class DeviceInvitation:
 Invitation = Union[UserInvitation, DeviceInvitation]
 
 
-async def send_invite_email(
-    invitation: UserInvitation, config: BackendConfig, sender_name: str
-) -> None:
+async def send_invite_email(invitation: UserInvitation, config: BackendConfig, client_ctx) -> None:
     sender_email = config.email_config.address
     receiver_email = invitation.claimer_email
     password = config.email_config.password
-
-    # mail settings
-    message = MIMEMultipart("alternative")
-    message["Subject"] = "You have received an invitation on Parsec Cloud"
-    message["From"] = sender_email
-    message["To"] = receiver_email
+    sender_name = str(client_ctx.human_handle or client_ctx.device_id.user_id)
 
     # mail content
-    line1 = (
-        f"You have received an invitation from {sender_name} to "
-        "join their workspace on Parsec.\nDownload now via the following link : "
-    )
-    line2 = "Once installed, open the next link with Parsec"
-    line3 = "Or if it doesn't work, copy and paste it in the concerned section"
-    line4 = (
-        f"Lastly, get in touch with {invitation.greeter_user_id} "
-        "and follow the next steps on Parsec to become part of their workspace."
-    )
-    button1 = "Download Parsec"
-    button2 = "Invite link"
+    MAIL_TEXT = {
+        "en": {
+            "title": "You have received an invitation on Parsec Cloud",
+            "preheader": "Follow these steps to join your new workspace",
+            "body": [
+                (
+                    f"You have received an invitation from {sender_name} to "
+                    "join their workspace on Parsec.\n"
+                    "Download now via the following link : "
+                ),
+                "Once installed, open the next link with Parsec : ",
+                "Or if it doesn't work, copy and paste it in the concerned section : ",
+                (
+                    f"Lastly, get in touch with {sender_name} "
+                    "and follow the next steps on Parsec to become part of their workspace."
+                ),
+            ],
+            "download_button": "Download Parsec",
+            "invite_button": "Invite Link",
+            "parsec_by": "Parsec by ",
+        },
+        "fr": {
+            "title": "Vous avez reçu une invitation sur Parsec Cloud",
+            "preheader": "Suivez ces étapes pour rejoindre votre nouvel espace de travail",
+            "body": [
+                (
+                    f"Vous avez reçu une invitation de la part de {sender_name}"
+                    " pour rejoindre leur espace de travail sur Parsec.\n"
+                    "Téléchargez Parsec en suivant ce lien : "
+                ),
+                "Une fois installé, ouvrez le lien suivant avec Parsec : ",
+                "Si cela échoue, copiez puis collez le lien dans la section dédiée : ",
+                (
+                    f"Enfin, contactez {sender_name} puis suivez "
+                    "les étapes indiquées sur Parsec pour rejoindre leur espace de travail."
+                ),
+            ],
+            "download_button": "Télécharger Parsec",
+            "invite_button": "Lien d'invitation",
+            "parsec_by": "Parsec par ",
+        },
+    }
     parsec_url = "https://parsec.cloud/get-parsec"
-
+    body = MAIL_TEXT[config.email_config.language]["body"]
     invite_link = str(
         BackendInvitationAddr(
-            organization_id=OrganizationID("carp"),  # Where is this info located?
+            organization_id=client_ctx.organization_id,
             invitation_type=InvitationType.USER,
             token=invitation.token,
             hostname=config.backend_addr.hostname,
@@ -174,20 +193,28 @@ async def send_invite_email(
     )
 
     # Plain-text version used as backup if the html doesn't work for the client
-    text = f"{line1}{parsec_url}\n{line2}\n{invite_link}\n{line4}"
+    text = f"{body[0]}{parsec_url}\n{body[1]}\n{invite_link}\n{body[3]}"
 
     # HTML version
-    html = importlib_resources.read_text(module, "invite_mail.tmpl.html")
+    html = importlib_resources.read_text(parsec.backend.mail, "invite_mail.tmpl.html")
     html = html.format(
-        line1=line1,
-        line2=line2,
-        line3=line3,
-        line4=line4,
-        button1=button1,
-        button2=button2,
+        line1=body[0],
+        line2=body[1],
+        line3=body[2],
+        line4=body[3],
+        preheader=MAIL_TEXT[config.email_config.language]["preheader"],
+        button1=MAIL_TEXT[config.email_config.language]["download_button"],
+        button2=MAIL_TEXT[config.email_config.language]["invite_button"],
+        parsec_by=MAIL_TEXT[config.email_config.language]["parsec_by"],
         parsec_url=parsec_url,
         invite_link=invite_link,
     )
+
+    # mail settings
+    message = MIMEMultipart("alternative")
+    message["Subject"] = MAIL_TEXT[config.email_config.language]["title"]
+    message["From"] = sender_email
+    message["To"] = receiver_email
 
     # Turn parts into MIMEText objects
     part1 = MIMEText(text, "plain")
@@ -213,21 +240,13 @@ async def send_invite_email(
             with server:
                 if config.email_config.use_tls and not config.email_config.use_ssl:
                     if server.starttls(context=context)[0] != 220:
-<<<<<<< HEAD
                         print("Email TLS connexion isn't encrypted")
-=======
-                        print("Email TLS connexion isn't encrypted", file=stderr)
->>>>>>> 5174ab22... invite link formatted, most necessary infos put in backend
                         return
                 if sender_email and password:
                     server.login(sender_email, password)
                 server.sendmail(sender_email, receiver_email, message.as_string())
         except smtplib.SMTPException as e:
-<<<<<<< HEAD
             print(f"SMTP error occurred: {e}")
-=======
-            print(f"SMTP error occurred: {e}", file=stderr)
->>>>>>> 5174ab22... invite link formatted, most necessary infos put in backend
 
     await trio.to_thread.run_sync(
         _thread_target_send_email, sender_email, receiver_email, password, message
@@ -283,11 +302,7 @@ class BaseInviteComponent:
             )
 
             if msg["send_email"]:
-                await send_invite_email(
-                    invitation,
-                    self._config,
-                    str(client_ctx.human_handle or client_ctx.device_id.user_id),
-                )
+                await send_invite_email(invitation, self._config, client_ctx)
 
         else:  # Device
             invitation = await self.new_for_device(
