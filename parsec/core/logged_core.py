@@ -9,7 +9,7 @@ from async_generator import asynccontextmanager
 from parsec.event_bus import EventBus
 from parsec.core.types import LocalDevice
 from parsec.core.config import CoreConfig
-from parsec.core.backend_connection import APIV1_BackendAuthenticatedConn
+from parsec.core.backend_connection import BackendAuthenticatedConn
 from parsec.core.mountpoint import mountpoint_manager_factory
 from parsec.core.remote_devices_manager import RemoteDevicesManager
 from parsec.core.messages_monitor import monitor_messages
@@ -47,7 +47,7 @@ async def logged_core_factory(
 ):
     event_bus = event_bus or EventBus()
 
-    backend_conn = APIV1_BackendAuthenticatedConn(
+    backend_conn = BackendAuthenticatedConn(
         addr=device.organization_addr,
         device_id=device.device_id,
         signing_key=device.signing_key,
