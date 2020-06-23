@@ -1,13 +1,11 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
 
-from uuid import UUID
-
 from PyQt5.QtCore import pyqtSignal, Qt, QTimer
-from PyQt5.QtWidgets import QWidget, QMenu, QGraphicsDropShadowEffect, QApplication
+from PyQt5.QtWidgets import QWidget, QMenu, QGraphicsDropShadowEffect
 from PyQt5.QtGui import QColor
 
-from parsec.api.protocol import DeviceID, InvitationType, InvitationStatus, InvitationDeletedReason
-from parsec.core.backend_connection import BackendConnectionError, BackendNotAvailable, backend_authenticated_cmds_factory
+from parsec.api.protocol import InvitationType
+from parsec.core.backend_connection import backend_authenticated_cmds_factory
 from parsec.core.remote_devices_manager import RemoteDevicesManagerBackendOfflineError
 from parsec.core.types import BackendInvitationAddr
 
@@ -15,6 +13,7 @@ from parsec.core.gui.trio_thread import JobResultError, ThreadSafeQtSignal, QtTo
 from parsec.core.gui.greet_device_widget import GreetDeviceWidget
 from parsec.core.gui.lang import translate as _
 from parsec.core.gui.custom_widgets import ensure_string_size
+from parsec.core.gui.custom_dialogs import show_error
 from parsec.core.gui.password_change_widget import PasswordChangeWidget
 from parsec.core.gui.flow_layout import FlowLayout
 from parsec.core.gui.ui.devices_widget import Ui_DevicesWidget
@@ -31,7 +30,9 @@ class DeviceButton(QWidget, Ui_DeviceButton):
         self.label_icon.apply_style()
         self.device_name = device_name
         self.certified_on = certified_on
-        self.label_device_name.setText(ensure_string_size(self.device_name, 260, self.label_device_name.font()))
+        self.label_device_name.setText(
+            ensure_string_size(self.device_name, 260, self.label_device_name.font())
+        )
         self.label_device_name.setToolTip(self.device_name)
         if self.is_current_device:
             self.label_is_current.setText("({})".format(_("TEXT_DEVICE_IS_CURRENT")))
@@ -148,7 +149,9 @@ class DevicesWidget(QWidget, Ui_DevicesWidget):
         )
 
     def _on_invite_success(self, job):
-        GreetDeviceWidget.exec_modal(core=self.core, jobs_ctx=self.jobs_ctx, invite_addr=job.ret, parent=self)
+        GreetDeviceWidget.exec_modal(
+            core=self.core, jobs_ctx=self.jobs_ctx, invite_addr=job.ret, parent=self
+        )
         self.reset()
 
     def _on_invite_error(self, job):
@@ -165,7 +168,7 @@ class DevicesWidget(QWidget, Ui_DevicesWidget):
         current_device = self.core.device
         self.layout_devices.clear()
         for device in devices:
-            device_name = device.device_id.device_name
+            device_name = device.device_label
             self.add_device(
                 device_name,
                 is_current_device=device_name == current_device.device_id.device_name,

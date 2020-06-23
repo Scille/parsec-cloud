@@ -39,6 +39,10 @@
 	background-color: #FFFFFF;
 	border-radius: 8px;
 }
+
+#label_username {
+color: #0092FF;
+}
 </string>
   </property>
   <layout class="QVBoxLayout" name="verticalLayout">
@@ -76,89 +80,17 @@
        <number>10</number>
       </property>
       <item>
-       <layout class="QHBoxLayout" name="horizontalLayout_3">
-        <item>
-         <spacer name="horizontalSpacer_4">
-          <property name="orientation">
-           <enum>Qt::Horizontal</enum>
-          </property>
-          <property name="sizeHint" stdset="0">
-           <size>
-            <width>40</width>
-            <height>20</height>
-           </size>
-          </property>
-         </spacer>
-        </item>
-        <item>
-         <widget class="Button" name="button_cancel">
-          <property name="sizePolicy">
-           <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
-            <horstretch>0</horstretch>
-            <verstretch>0</verstretch>
-           </sizepolicy>
-          </property>
-          <property name="minimumSize">
-           <size>
-            <width>32</width>
-            <height>32</height>
-           </size>
-          </property>
-          <property name="maximumSize">
-           <size>
-            <width>32</width>
-            <height>32</height>
-           </size>
-          </property>
-          <property name="cursor">
-           <cursorShape>PointingHandCursor</cursorShape>
-          </property>
-          <property name="toolTip">
-           <string>ACTION_CANCEL_USER_INVITATION_TOOLTIP</string>
-          </property>
-          <property name="text">
-           <string/>
-          </property>
-          <property name="icon">
-           <iconset resource="../rc/resources.qrc">
-            <normaloff>:/icons/images/material/block.svg</normaloff>:/icons/images/material/block.svg</iconset>
-          </property>
-          <property name="iconSize">
-           <size>
-            <width>32</width>
-            <height>32</height>
-           </size>
-          </property>
-          <property name="flat">
-           <bool>true</bool>
-          </property>
-          <property name="color" stdset="0">
-           <color>
-            <red>241</red>
-            <green>150</green>
-            <blue>43</blue>
-           </color>
-          </property>
-          <property name="hover_color" stdset="0">
-           <color>
-            <red>224</red>
-            <green>132</green>
-            <blue>28</blue>
-           </color>
-          </property>
-         </widget>
-        </item>
-       </layout>
-      </item>
-      <item>
        <spacer name="verticalSpacer">
         <property name="orientation">
          <enum>Qt::Vertical</enum>
         </property>
+        <property name="sizeType">
+         <enum>QSizePolicy::Fixed</enum>
+        </property>
         <property name="sizeHint" stdset="0">
          <size>
           <width>20</width>
-          <height>40</height>
+          <height>50</height>
          </size>
         </property>
        </spacer>
@@ -294,11 +226,6 @@
   <customwidget>
    <class>IconLabel</class>
    <extends>QLabel</extends>
-   <header>parsec.core.gui.custom_widgets</header>
-  </customwidget>
-  <customwidget>
-   <class>Button</class>
-   <extends>QPushButton</extends>
    <header>parsec.core.gui.custom_widgets</header>
   </customwidget>
  </customwidgets>

@@ -134,9 +134,6 @@ class UserButton(QWidget, Ui_UserButton):
         self.label_icon.apply_style()
         self.setContextMenuPolicy(Qt.CustomContextMenu)
         self.customContextMenuRequested.connect(self.show_context_menu)
-        # This button is useless, its only purpose is to get the same alignement as a
-        # UserInvitationButton
-        self.button_cancel.hide()
         self.label_role.setText(profiles_txt[profile])
         effect = QGraphicsDropShadowEffect(self)
         effect.setColor(QColor(0x99, 0x99, 0x99))
