@@ -11,7 +11,7 @@ from parsec.core.gui.flow_layout import FlowLayout
 from parsec.core.gui.ui.devices_widget import Ui_DevicesWidget
 from parsec.core.gui.invite_device_widget import InviteDeviceWidget
 from parsec.core.gui.ui.device_button import Ui_DeviceButton
-from parsec.core.remote_devices_manager import RemoteDevicesManagerBackendOfflineError
+from parsec.core.backend_connection import BackendNotAvailable
 
 
 class DeviceButton(QWidget, Ui_DeviceButton):
@@ -51,12 +51,8 @@ class DeviceButton(QWidget, Ui_DeviceButton):
 
 async def _do_list_devices(core):
     try:
-        current_device = core.device
-        _, _, devices = await core.remote_devices_manager.get_user_and_devices(
-            current_device.user_id
-        )
-        return devices
-    except RemoteDevicesManagerBackendOfflineError as exc:
+        return await core.get_user_devices_info()
+    except BackendNotAvailable as exc:
         raise JobResultError("offline") from exc
     # TODO : handle all errors from the remote_devices_manager and notify GUI
     # Raises:
@@ -126,11 +122,10 @@ class DevicesWidget(QWidget, Ui_DevicesWidget):
         self.devices = []
         self.layout_devices.clear()
         for device in devices:
-            device_name = device.device_id.device_name
             self.add_device(
-                device_name,
-                is_current_device=device_name == current_device.device_id.device_name,
-                certified_on=device.timestamp,
+                device.device_name,
+                is_current_device=device.device_name == current_device.device_name,
+                certified_on=device.created_on,
             )
 
     def on_list_error(self, job):
