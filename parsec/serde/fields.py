@@ -47,6 +47,7 @@ __all__ = (
     "Bytes",
     "DateTime",
     "CheckedConstant",
+    "EnumCheckedConstant",
     "Map",
     "VerifyKey",
     "SigningKey",
