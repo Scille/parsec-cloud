@@ -1,5 +1,6 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
 
+from parsec.core.core_events import CoreEvent
 import trio
 
 from parsec.core.fs import FSBackendOfflineError
@@ -25,7 +26,7 @@ async def monitor_messages(user_fs, event_bus, task_status):
         # not yet notified to task_status
         task_status.awake()
 
-    with event_bus.connect_in_context(("backend.message.received", _on_message_received)):
+    with event_bus.connect_in_context((CoreEvent.backend_message_received, _on_message_received)):
         try:
             await user_fs.process_last_messages()
             task_status.started()

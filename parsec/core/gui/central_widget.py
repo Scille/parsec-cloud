@@ -1,5 +1,6 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
 
+from parsec.core.core_events import CoreEvent
 from PyQt5.QtCore import pyqtSignal
 from PyQt5.QtGui import QPixmap, QColor
 from PyQt5.QtWidgets import QGraphicsDropShadowEffect, QWidget
@@ -26,12 +27,12 @@ from parsec.core.fs import (
 
 class CentralWidget(QWidget, Ui_CentralWidget):
     NOTIFICATION_EVENTS = [
-        "backend.connection.changed",
-        "mountpoint.stopped",
-        "mountpoint.remote_error",
-        "mountpoint.unhandled_error",
-        "sharing.updated",
-        "fs.entry.file_update_conflicted",
+        CoreEvent.backend_connection_changed,
+        CoreEvent.mountpoint_stopped,
+        CoreEvent.mountpoint_remote_error,
+        CoreEvent.mountpoint_unhandled_error,
+        CoreEvent.sharing_updated,
+        CoreEvent.fs_entry_file_update_conflicted,
     ]
 
     connection_state_changed = pyqtSignal(object, object)
@@ -100,11 +101,11 @@ class CentralWidget(QWidget, Ui_CentralWidget):
             self.widget_title3.hide()
 
     def handle_event(self, event, **kwargs):
-        if event == "backend.connection.changed":
+        if event == CoreEvent.backend_connection_changed:
             self.connection_state_changed.emit(kwargs["status"], kwargs["status_exc"])
-        elif event == "mountpoint.stopped":
+        elif event == CoreEvent.mountpoint_stopped:
             self.new_notification.emit("WARNING", _("NOTIF_WARN_MOUNTPOINT_UNMOUNTED"))
-        elif event == "mountpoint.remote_error":
+        elif event == CoreEvent.mountpoint_remote_error:
             exc = kwargs["exc"]
             path = kwargs["path"]
             if isinstance(exc, FSWorkspaceNoReadAccess):
@@ -116,7 +117,7 @@ class CentralWidget(QWidget, Ui_CentralWidget):
             else:
                 msg = _("NOTIF_WARN_MOUNTPOINT_REMOTE_ERROR_{}_{}").format(path, str(exc))
             self.new_notification.emit("WARNING", msg)
-        elif event == "mountpoint.unhandled_error":
+        elif event == CoreEvent.mountpoint_unhandled_error:
             exc = kwargs["exc"]
             path = kwargs["path"]
             operation = kwargs["operation"]
@@ -126,7 +127,7 @@ class CentralWidget(QWidget, Ui_CentralWidget):
                     operation, path, str(exc)
                 ),
             )
-        elif event == "sharing.updated":
+        elif event == CoreEvent.sharing_updated:
             new_entry = kwargs["new_entry"]
             previous_entry = kwargs["previous_entry"]
             new_role = getattr(new_entry, "role", None)
@@ -143,7 +144,7 @@ class CentralWidget(QWidget, Ui_CentralWidget):
                 self.new_notification.emit(
                     "INFO", _("NOTIF_INFO_WORKSPACE_UNSHARED_{}").format(previous_entry.name)
                 )
-        elif event == "fs.entry.file_update_conflicted":
+        elif event == CoreEvent.fs_entry_file_update_conflicted:
             self.new_notification.emit(
                 "WARNING", _("NOTIF_WARN_SYNC_CONFLICT_{}").format(kwargs["path"])
             )

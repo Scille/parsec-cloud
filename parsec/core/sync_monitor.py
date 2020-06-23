@@ -1,5 +1,6 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
 
+from parsec.core.core_events import CoreEvent
 import trio
 from trio.hazmat import current_clock
 import math
@@ -375,9 +376,9 @@ async def monitor_sync(user_fs, event_bus, task_status):
                 return math.inf
 
     with event_bus.connect_in_context(
-        ("fs.entry.updated", _on_entry_updated),
-        ("backend.realm.vlobs_updated", _on_realm_vlobs_updated),
-        ("sharing.updated", _on_sharing_updated),
+        (CoreEvent.fs_entry_updated, _on_entry_updated),
+        (CoreEvent.backend_realm_vlobs_updated, _on_realm_vlobs_updated),
+        (CoreEvent.sharing_updated, _on_sharing_updated),
     ):
         due_times = []
         # Init userfs sync context

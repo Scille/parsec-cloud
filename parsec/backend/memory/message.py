@@ -4,6 +4,7 @@ from typing import List, Tuple
 from collections import defaultdict
 from pendulum import Pendulum
 
+from parsec.backend.backend_events import BackendEvent
 from parsec.api.protocol import UserID, DeviceID, OrganizationID
 from parsec.backend.message import BaseMessageComponent
 
@@ -28,7 +29,7 @@ class MemoryMessageComponent(BaseMessageComponent):
         messages[recipient].append((sender, timestamp, body))
         index = len(messages[recipient])
         await self._send_event(
-            "message.received",
+            BackendEvent.message_received,
             organization_id=organization_id,
             author=sender,
             recipient=recipient,

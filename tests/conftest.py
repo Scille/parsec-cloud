@@ -1,5 +1,6 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
 
+from parsec.core.core_events import CoreEvent
 import pytest
 import os
 import re
@@ -592,7 +593,7 @@ def core_factory(
                 # switches online concurrently with the test.
                 if "running_backend" in request.fixturenames:
                     await spy.wait_with_timeout(
-                        "backend.connection.changed",
+                        CoreEvent.backend_connection_changed,
                         {"status": BackendConnStatus.READY, "status_exc": spy.ANY},
                     )
                 assert core.are_monitors_idle()

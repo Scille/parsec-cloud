@@ -4,8 +4,7 @@ import pendulum
 from uuid import UUID
 from typing import Dict, List, Optional
 
-from parsec.api.protocol import RealmRole
-from parsec.api.protocol import DeviceID, UserID, OrganizationID
+from parsec.api.protocol import DeviceID, UserID, OrganizationID, RealmRole
 from parsec.backend.realm import BaseRealmComponent, RealmStatus, RealmGrantedRole
 from parsec.backend.postgresql.handler import PGHandler
 from parsec.backend.postgresql.realm_queries import (

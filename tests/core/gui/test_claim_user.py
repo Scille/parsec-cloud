@@ -1,5 +1,6 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
 
+from parsec.backend.backend_events import BackendEvent
 import pytest
 import trio
 from PyQt5 import QtCore, QtWidgets
@@ -32,7 +33,9 @@ async def alice_invite(running_backend, backend, alice):
     async with trio.open_service_nursery() as nursery:
         with backend.event_bus.listen() as spy:
             nursery.start_soon(_invite)
-            await spy.wait_with_timeout("event.connected", {"event_name": "user.claimed"})
+            await spy.wait_with_timeout(
+                "event.connected", {"event_name": BackendEvent.user_claimed}
+            )
 
             yield invitation
 

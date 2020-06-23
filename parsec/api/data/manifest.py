@@ -16,6 +16,7 @@ from parsec.api.data.base import (
     DataValidationError,
 )
 from parsec.api.data.entry import EntryID, EntryIDField, EntryName, EntryNameField
+from enum import Enum
 
 
 class BlockID(UUID4):
@@ -23,6 +24,13 @@ class BlockID(UUID4):
 
 
 BlockIDField = fields.uuid_based_field_factory(BlockID)
+
+
+class ManifestType(Enum):
+    FILE_MANIFEST = "file_manifest"
+    FOLDER_MANIFEST = "folder_manifest"
+    WORKSPACE_MANIFEST = "workspace_manifest"
+    USER_MANIFEST = "user_manifest"
 
 
 class BlockAccess(BaseData):
@@ -104,10 +112,10 @@ class Manifest(BaseAPISignedData):
         @property
         def type_schemas(self):
             return {
-                "file_manifest": FileManifest.SCHEMA_CLS,
-                "folder_manifest": FolderManifest.SCHEMA_CLS,
-                "workspace_manifest": WorkspaceManifest.SCHEMA_CLS,
-                "user_manifest": UserManifest.SCHEMA_CLS,
+                ManifestType.FILE_MANIFEST: FileManifest.SCHEMA_CLS,
+                ManifestType.FOLDER_MANIFEST: FolderManifest.SCHEMA_CLS,
+                ManifestType.WORKSPACE_MANIFEST: WorkspaceManifest.SCHEMA_CLS,
+                ManifestType.USER_MANIFEST: UserManifest.SCHEMA_CLS,
             }
 
         def get_obj_type(self, obj):
@@ -137,7 +145,7 @@ class Manifest(BaseAPISignedData):
 
 class FolderManifest(VerifyParentMixin, Manifest):
     class SCHEMA_CLS(BaseSignedDataSchema):
-        type = fields.CheckedConstant("folder_manifest", required=True)
+        type = fields.EnumCheckedConstant(ManifestType.FOLDER_MANIFEST, required=True)
         id = EntryIDField(required=True)
         parent = EntryIDField(required=True)
         # Version 0 means the data is not synchronized (hence author sould be None)
@@ -165,7 +173,7 @@ class FolderManifest(VerifyParentMixin, Manifest):
 
 class FileManifest(VerifyParentMixin, Manifest):
     class SCHEMA_CLS(BaseSignedDataSchema):
-        type = fields.CheckedConstant("file_manifest", required=True)
+        type = fields.EnumCheckedConstant(ManifestType.FILE_MANIFEST, required=True)
         id = EntryIDField(required=True)
         parent = EntryIDField(required=True)
         # Version 0 means the data is not synchronized (hence author sould be None)
@@ -193,7 +201,7 @@ class FileManifest(VerifyParentMixin, Manifest):
 
 class WorkspaceManifest(Manifest):
     class SCHEMA_CLS(BaseSignedDataSchema):
-        type = fields.CheckedConstant("workspace_manifest", required=True)
+        type = fields.EnumCheckedConstant(ManifestType.WORKSPACE_MANIFEST, required=True)
         id = EntryIDField(required=True)
         # Version 0 means the data is not synchronized (hence author sould be None)
         version = fields.Integer(required=True, validate=validate.Range(min=0))
@@ -219,7 +227,7 @@ class WorkspaceManifest(Manifest):
 
 class UserManifest(Manifest):
     class SCHEMA_CLS(BaseSignedDataSchema):
-        type = fields.CheckedConstant("user_manifest", required=True)
+        type = fields.EnumCheckedConstant(ManifestType.USER_MANIFEST, required=True)
         id = EntryIDField(required=True)
         # Version 0 means the data is not synchronized (hence author sould be None)
         version = fields.Integer(required=True, validate=validate.Range(min=0))

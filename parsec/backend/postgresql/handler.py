@@ -14,12 +14,16 @@ from structlog import get_logger
 from base64 import b64decode, b64encode
 import importlib_resources
 
-
 from parsec.event_bus import EventBus
 from parsec.serde import packb, unpackb
 from parsec.utils import start_task, TaskStatus
-from parsec.backend.postgresql.tables import STR_TO_REALM_ROLE, STR_TO_INVITATION_STATUS
+from parsec.backend.postgresql.tables import (
+    STR_TO_REALM_ROLE,
+    STR_TO_INVITATION_STATUS,
+    STR_TO_BACKEND_EVENTS,
+)
 from parsec.backend.postgresql import migrations as migrations_module
+from parsec.backend.backend_events import BackendEvent
 
 
 logger = get_logger()
@@ -177,10 +181,12 @@ class PGHandler:
         data.pop("__id__")  # Simply discard the notification id
         signal = data.pop("__signal__")
         logger.debug("notif received", pid=pid, channel=channel, payload=payload)
+        # Convert strings to enums
+        signal = STR_TO_BACKEND_EVENTS[signal]
         # Kind of a hack, but fine enough for the moment
-        if signal == "realm.roles_updated":
+        if signal == BackendEvent.realm_roles_updated:
             data["role"] = STR_TO_REALM_ROLE.get(data.pop("role_str"))
-        elif signal == "invite.status_changed":
+        elif signal == BackendEvent.invite_status_changed:
             data["status"] = STR_TO_INVITATION_STATUS.get(data.pop("status_str"))
         self.event_bus.send(signal, **data)
 
@@ -196,8 +202,8 @@ async def send_signal(conn, signal, **kwargs):
     # Add UUID to ensure the payload is unique given it seems Postgresql can
     # drop duplicated NOTIFY (same channel/payload)
     # see: https://github.com/Scille/parsec-cloud/issues/199
-    raw_data = b64encode(packb({"__id__": uuid4().hex, "__signal__": signal, **kwargs})).decode(
-        "ascii"
-    )
+    raw_data = b64encode(
+        packb({"__id__": uuid4().hex, "__signal__": signal.value, **kwargs})
+    ).decode("ascii")
     await conn.execute("SELECT pg_notify($1, $2)", "app_notification", raw_data)
     logger.debug("notif sent", signal=signal, kwargs=kwargs)

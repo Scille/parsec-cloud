@@ -1,5 +1,6 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
 
+from parsec.backend.backend_events import BackendEvent
 from pypika import Parameter
 
 from parsec.api.protocol import OrganizationID, DeviceID, UserID
@@ -124,7 +125,7 @@ async def query_claim_device_invitation(
     invitation = await _get_device_invitation(conn, organization_id, device_id)
     await send_signal(
         conn,
-        "device.claimed",
+        BackendEvent.device_claimed,
         organization_id=organization_id,
         device_id=invitation.device_id,
         encrypted_claim=encrypted_claim,
@@ -144,5 +145,8 @@ async def query_cancel_device_invitation(
         raise UserError(f"Deletion error: {result}")
 
     await send_signal(
-        conn, "device.invitation.cancelled", organization_id=organization_id, device_id=device_id
+        conn,
+        BackendEvent.device_invitation_cancelled,
+        organization_id=organization_id,
+        device_id=device_id,
     )

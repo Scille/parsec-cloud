@@ -2,9 +2,11 @@
 
 import trio
 
-from parsec.api.protocol import events_subscribe_serializer, events_listen_serializer
+from parsec.api.protocol import events_subscribe_serializer, events_listen_serializer, Event
 from parsec.backend.utils import catch_protocol_errors, run_with_breathing_transport, api
 from parsec.backend.realm import BaseRealmComponent
+from parsec.backend.backend_events import BackendEvent
+from functools import partial
 
 
 class EventsComponent:
@@ -16,7 +18,7 @@ class EventsComponent:
     async def api_events_subscribe(self, client_ctx, msg):
         msg = events_subscribe_serializer.req_load(msg)
 
-        def _on_roles_updated(event, organization_id, author, realm_id, user, role):
+        def _on_roles_updated(event, backend_event, organization_id, author, realm_id, user, role):
             if organization_id != client_ctx.organization_id or user != client_ctx.user_id:
                 return
 
@@ -37,7 +39,7 @@ class EventsComponent:
             except trio.WouldBlock:
                 client_ctx.logger.warning(f"event queue is full for {client_ctx}")
 
-        def _on_pinged(event, organization_id, author, ping):
+        def _on_pinged(event, backend_event, organization_id, author, ping):
             if organization_id != client_ctx.organization_id or author == client_ctx.device_id:
                 return
 
@@ -46,7 +48,7 @@ class EventsComponent:
             except trio.WouldBlock:
                 client_ctx.logger.warning(f"event queue is full for {client_ctx}")
 
-        def _on_realm_events(event, organization_id, author, realm_id, **kwargs):
+        def _on_realm_events(event, backend_event, organization_id, author, realm_id, **kwargs):
             if (
                 organization_id != client_ctx.organization_id
                 or author == client_ctx.device_id
@@ -61,7 +63,7 @@ class EventsComponent:
             except trio.WouldBlock:
                 client_ctx.logger.warning(f"event queue is full for {client_ctx}")
 
-        def _on_message_received(event, organization_id, author, recipient, index):
+        def _on_message_received(event, backend_event, organization_id, author, recipient, index):
             if organization_id != client_ctx.organization_id or recipient != client_ctx.user_id:
                 return
 
@@ -70,7 +72,9 @@ class EventsComponent:
             except trio.WouldBlock:
                 client_ctx.logger.warning(f"event queue is full for {client_ctx}")
 
-        def _on_invite_status_changed(event, organization_id, greeter, token, status):
+        def _on_invite_status_changed(
+            event, backend_event, organization_id, greeter, token, status
+        ):
             print("EVENT STATUS CHANGED ====>", organization_id, greeter, token, status)
             if organization_id != client_ctx.organization_id or greeter != client_ctx.user_id:
                 return
@@ -86,15 +90,30 @@ class EventsComponent:
         client_ctx.event_bus_ctx.clear()
 
         # Connect the new callbacks
-        client_ctx.event_bus_ctx.connect("pinged", _on_pinged)
-        client_ctx.event_bus_ctx.connect("realm.vlobs_updated", _on_realm_events)
-        client_ctx.event_bus_ctx.connect("realm.maintenance_started", _on_realm_events)
-        client_ctx.event_bus_ctx.connect("realm.maintenance_finished", _on_realm_events)
-        client_ctx.event_bus_ctx.connect("message.received", _on_message_received)
-        client_ctx.event_bus_ctx.connect("invite.status_changed", _on_invite_status_changed)
+        client_ctx.event_bus_ctx.connect(BackendEvent.pinged, partial(_on_pinged, Event.pinged))
+        client_ctx.event_bus_ctx.connect(
+            BackendEvent.realm_vlobs_updated, partial(_on_realm_events, Event.realm_vlobs_updated)
+        )
+        client_ctx.event_bus_ctx.connect(
+            BackendEvent.realm_maintenance_started,
+            partial(_on_realm_events, Event.realm_maintenance_started),
+        )
+        client_ctx.event_bus_ctx.connect(
+            BackendEvent.realm_maintenance_finished,
+            partial(_on_realm_events, Event.realm_maintenance_finished),
+        )
+        client_ctx.event_bus_ctx.connect(
+            BackendEvent.message_received, partial(_on_message_received, Event.message_received)
+        )
+        client_ctx.event_bus_ctx.connect(
+            BackendEvent.invite_status_changed,
+            partial(_on_invite_status_changed, Event.invite_status_changed),
+        )
 
         # Final event to keep up to date the list of realm we should listen on
-        client_ctx.event_bus_ctx.connect("realm.roles_updated", _on_roles_updated)
+        client_ctx.event_bus_ctx.connect(
+            BackendEvent.realm_roles_updated, partial(_on_roles_updated, Event.realm_roles_updated)
+        )
 
         # Finally populate the list of realm we should listen on
         realms_for_user = await self._realm_component.get_realms_for_user(

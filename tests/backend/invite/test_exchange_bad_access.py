@@ -9,6 +9,7 @@ from functools import partial
 from parsec.crypto import PrivateKey
 from parsec.api.transport import TransportError
 from parsec.api.protocol import InvitationDeletedReason, InvitationType
+from parsec.backend.backend_events import BackendEvent
 
 from tests.backend.common import (
     ping,
@@ -162,7 +163,7 @@ async def test_claimer_exchange_bad_access(alice, backend, backend_invited_sock_
         # Disable the callback responsible for closing the claimer's connection
         # on invitation deletion. This way we can test connection behavior
         # when the automatic closing takes time to be processed.
-        backend.event_bus.mute("invite.status_changed")
+        backend.event_bus.mute(BackendEvent.invite_status_changed)
 
         await backend.invite.delete(
             organization_id=alice.organization_id,

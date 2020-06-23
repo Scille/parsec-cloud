@@ -6,7 +6,12 @@ import pendulum
 
 from parsec.api.transport import Transport, Ping, Pong
 from parsec.api.data import RevokedUserCertificateContent
-from parsec.api.protocol import ServerHandshake, APIV1_HandshakeType, APIV1_AUTHENTICATED_CMDS
+from parsec.api.protocol import (
+    ServerHandshake,
+    APIV1_HandshakeType,
+    APIV1_AUTHENTICATED_CMDS,
+    Event,
+)
 from parsec.core.types import BackendOrganizationAddr
 from parsec.core.backend_connection import (
     BackendNotAvailable,
@@ -237,9 +242,11 @@ async def test_events_listen_wait_has_watchdog(monkeypatch, mock_clock, running_
                 assert isinstance(event, Pong)
                 assert client_transport is client_transport2
 
-            await backend_client_ctx.send_events_channel.send({"event": "pinged", "ping": "foo"})
+            await backend_client_ctx.send_events_channel.send(
+                {"event": Event.pinged, "ping": "foo"}
+            )
 
-    assert events_listen_rep == {"status": "ok", "event": "pinged", "ping": "foo"}
+    assert events_listen_rep == {"status": "ok", "event": Event.pinged, "ping": "foo"}
 
 
 @pytest.mark.trio

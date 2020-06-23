@@ -1,5 +1,6 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
 
+from parsec.core.core_events import CoreEvent
 import pytest
 from PyQt5 import QtCore
 
@@ -118,7 +119,7 @@ async def test_mountpoint_remote_error_event(aqtbot, running_backend, logged_gui
 
     async with aqtbot.wait_signal(c_w.new_notification):
         c_w.event_bus.send(
-            "mountpoint.remote_error",
+            CoreEvent.mountpoint_remote_error,
             exc=FSWorkspaceNoReadAccess("Cannot get workspace roles: no read access"),
             path="/foo",
             operation="open",
@@ -131,7 +132,7 @@ async def test_mountpoint_remote_error_event(aqtbot, running_backend, logged_gui
 
     async with aqtbot.wait_signal(c_w.new_notification):
         c_w.event_bus.send(
-            "mountpoint.unhandled_error",
+            CoreEvent.mountpoint_unhandled_error,
             exc=RuntimeError("D'Oh !"),
             path="/bar",
             operation="unlink",

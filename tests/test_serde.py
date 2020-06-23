@@ -15,6 +15,10 @@ from parsec.serde import (
     SerdeError,
 )
 
+from parsec.serde.schema import OneOfSchemaLegacy
+
+from enum import Enum
+
 
 def test_pack_datetime():
     data = {"date": pendulum.now()}
@@ -50,20 +54,44 @@ def test_serializer_loads_bad_data():
             serializer.loads(raw)
 
 
-def test_oneof_schema():
+class AnimalsEnum(Enum):
+    BIRD = "bird"
+    FISH = "fish"
+
+
+class AnimalsStr:
+    BIRD = "bird"
+    FISH = "fish"
+
+
+@pytest.mark.parametrize(
+    "oneof_schema_cls, animals_cls, bird, fish",
+    [
+        pytest.param(
+            OneOfSchema, AnimalsEnum, AnimalsEnum.BIRD, AnimalsEnum.FISH, id="OneOfSchema"
+        ),
+        pytest.param(
+            OneOfSchemaLegacy, AnimalsStr, AnimalsStr.BIRD, AnimalsStr.FISH, id="OneOfSchemaLegacy"
+        ),
+    ],
+)
+def test_oneof_schema(oneof_schema_cls, animals_cls, bird, fish):
     class BirdSchema(BaseSchema):
         flying = fields.Boolean()
 
     class FishSchema(BaseSchema):
         swimming = fields.Int()
 
-    class AnimalSchema(OneOfSchema):
+    class AnimalSchema(oneof_schema_cls):
         type_field = "type"
-        type_schemas = {"bird": BirdSchema(), "fish": FishSchema()}
+        type_schemas = {animals_cls.BIRD: BirdSchema(), animals_cls.FISH: FishSchema()}
+
+        def get_obj_type(self, obj):
+            return obj.__class__.__name__
 
     schema = AnimalSchema()
 
-    res, errors = schema.load({"type": "fish", "swimming": True})
+    res, errors = schema.load({"type": fish, "swimming": True})
     assert not errors
     assert res == {"swimming": True}
 
@@ -72,7 +100,7 @@ def test_oneof_schema():
 
     # Schema ignore unknown fields
     res, errors = schema.load(
-        [{"type": "fish", "swimming": True}, {"type": "bird", "swimming": True}], many=True
+        [{"type": "fish", "swimming": True}, {"type": bird, "swimming": True}], many=True
     )
     assert res == [{"swimming": True}, {}]
     assert not errors

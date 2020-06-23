@@ -1,5 +1,6 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
 
+from parsec.core.core_events import CoreEvent
 import os
 import errno
 from uuid import uuid4
@@ -143,7 +144,10 @@ async def test_mount_and_explore_workspace(
             expected = {"mountpoint": mountpoint_path, "workspace_id": wid, "timestamp": None}
 
             spy.assert_events_occured(
-                [("mountpoint.starting", expected), ("mountpoint.started", expected)]
+                [
+                    (CoreEvent.mountpoint_starting, expected),
+                    (CoreEvent.mountpoint_started, expected),
+                ]
             )
 
             # Finally explore the mountpoint
@@ -166,11 +170,11 @@ async def test_mount_and_explore_workspace(
             if manual_unmount:
                 await mountpoint_manager.unmount_workspace(wid)
                 # Mountpoint should be stopped by now
-                spy.assert_events_occured([("mountpoint.stopped", expected)])
+                spy.assert_events_occured([(CoreEvent.mountpoint_stopped, expected)])
 
         if not manual_unmount:
             # Mountpoint should be stopped by now
-            spy.assert_events_occured([("mountpoint.stopped", expected)])
+            spy.assert_events_occured([(CoreEvent.mountpoint_stopped, expected)])
 
 
 @pytest.mark.trio

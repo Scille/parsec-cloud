@@ -138,12 +138,12 @@ class HandshakeAnswerSchema(OneOfSchema):
     type_field = "type"
     type_field_remove = False
     type_schemas = {
-        HandshakeType.AUTHENTICATED.value: HandshakeAuthenticatedAnswerSchema(),
-        HandshakeType.INVITED.value: HandshakeInvitedAnswerSchema(),
+        HandshakeType.AUTHENTICATED: HandshakeAuthenticatedAnswerSchema(),
+        HandshakeType.INVITED: HandshakeInvitedAnswerSchema(),
     }
 
     def get_obj_type(self, obj):
-        return obj["type"].value
+        return obj["type"]
 
 
 handshake_answer_serializer = serializer_factory(HandshakeAnswerSchema)
@@ -179,13 +179,13 @@ class APIV1_HandshakeAnswerSchema(OneOfSchema):
     type_field = "type"
     type_field_remove = False
     type_schemas = {
-        APIV1_HandshakeType.AUTHENTICATED.value: APIV1_HandshakeAuthenticatedAnswerSchema(),
-        APIV1_HandshakeType.ANONYMOUS.value: APIV1_HandshakeAnonymousAnswerSchema(),
-        APIV1_HandshakeType.ADMINISTRATION.value: APIV1_HandshakeAdministrationAnswerSchema(),
+        APIV1_HandshakeType.AUTHENTICATED: APIV1_HandshakeAuthenticatedAnswerSchema(),
+        APIV1_HandshakeType.ANONYMOUS: APIV1_HandshakeAnonymousAnswerSchema(),
+        APIV1_HandshakeType.ADMINISTRATION: APIV1_HandshakeAdministrationAnswerSchema(),
     }
 
     def get_obj_type(self, obj):
-        return obj["type"].value
+        return obj["type"]
 
 
 apiv1_handshake_answer_serializer = serializer_factory(APIV1_HandshakeAnswerSchema)

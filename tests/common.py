@@ -1,5 +1,6 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
 
+from parsec.core.core_events import CoreEvent
 from unittest.mock import Mock
 from inspect import iscoroutinefunction
 from contextlib import ExitStack, contextmanager
@@ -179,11 +180,15 @@ async def create_shared_workspace(name, creator, *shared_with):
         with trio.fail_after(1):
             if creator_spy:
                 await creator_spy.wait_multiple(
-                    ["fs.workspace.created", "backend.realm.roles_updated"]
+                    [CoreEvent.fs_workspace_created, CoreEvent.backend_realm_roles_updated]
                 )
             for spy in shared_with_spies:
                 await spy.wait_multiple(
-                    ["backend.realm.roles_updated", "backend.message.received", "sharing.updated"]
+                    [
+                        CoreEvent.backend_realm_roles_updated,
+                        CoreEvent.backend_message_received,
+                        CoreEvent.sharing_updated,
+                    ]
                 )
 
         for user_fs in all_user_fss:

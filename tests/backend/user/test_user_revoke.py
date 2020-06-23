@@ -1,5 +1,6 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
 
+from parsec.backend.backend_events import BackendEvent
 import pytest
 import trio
 from pendulum import now as pendulum_now, Pendulum
@@ -29,7 +30,8 @@ async def test_backend_close_on_user_revoke(
             rep = await user_revoke(alice_backend_sock, revoked_user_certificate=bob_revocation)
             assert rep == {"status": "ok"}
             await spy.wait_with_timeout(
-                "user.revoked", {"organization_id": bob.organization_id, "user_id": bob.user_id}
+                BackendEvent.user_revoked,
+                {"organization_id": bob.organization_id, "user_id": bob.user_id},
             )
             # `user.revoked` event schedules connection cancellation, so wait
             # for things to settle down to make sure the cancellation is done
@@ -50,7 +52,8 @@ async def test_user_revoke_ok(backend, backend_sock_factory, adam_backend_sock, 
         rep = await user_revoke(adam_backend_sock, revoked_user_certificate=alice_revocation)
         assert rep == {"status": "ok"}
         await spy.wait_with_timeout(
-            "user.revoked", {"organization_id": alice.organization_id, "user_id": alice.user_id}
+            BackendEvent.user_revoked,
+            {"organization_id": alice.organization_id, "user_id": alice.user_id},
         )
 
     # Alice cannot connect from now on...

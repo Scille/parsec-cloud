@@ -2,6 +2,7 @@
 
 from marshmallow import Schema, MarshalResult, UnmarshalResult, ValidationError, post_load
 
+from enum import Enum
 
 try:
     import toastedmarshmallow
@@ -99,17 +100,27 @@ class OneOfSchema(BaseSchema):
 
     def _get_schema(self, type):
         if self._instantiated_schemas is None:
+            # Assert all schemas key are Enum:
+            if not all([isinstance(k, Enum) for k in self.type_schemas]):
+                raise ValueError("type_schemas key can only be an Enum")
             self._instantiated_schemas = {
                 k: v if isinstance(v, Schema) else v() for k, v in self.type_schemas.items()
             }
+
             if self.fallback_type_schema and not isinstance(self.fallback_type_schema, Schema):
                 self._instantiated_fallback_schema = self.fallback_type_schema()
+
+        if not isinstance(type, Enum):
+            for k in self._instantiated_schemas:
+                if k.value == type:
+                    type = k
+                    break
 
         return self._instantiated_schemas.get(type, self._instantiated_fallback_schema)
 
     def get_obj_type(self, obj):
         """Returns name of object schema"""
-        return obj.__class__.__name__
+        raise NotImplementedError()
 
     def dump(self, obj, many=None, update_fields=True, **kwargs):
         many = self.many if many is None else bool(many)
@@ -201,3 +212,16 @@ class OneOfSchema(BaseSchema):
             return self.load(data, many=many, partial=partial).errors
         except ValidationError as ve:
             return ve.messages
+
+
+class OneOfSchemaLegacy(OneOfSchema):
+    def _get_schema(self, type):
+        if self._instantiated_schemas is None:
+            self._instantiated_schemas = {
+                k: v if isinstance(v, Schema) else v() for k, v in self.type_schemas.items()
+            }
+
+            if self.fallback_type_schema and not isinstance(self.fallback_type_schema, Schema):
+                self._instantiated_fallback_schema = self.fallback_type_schema()
+
+        return self._instantiated_schemas.get(type, self._instantiated_fallback_schema)

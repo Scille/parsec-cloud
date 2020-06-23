@@ -6,6 +6,7 @@ from uuid import UUID
 from typing import List, Tuple, Dict, Optional
 from collections import defaultdict
 
+from parsec.backend.backend_events import BackendEvent
 from parsec.api.protocol import DeviceID, OrganizationID
 from parsec.api.protocol import RealmRole
 from parsec.backend.realm import BaseRealmComponent, RealmNotFoundError
@@ -197,7 +198,7 @@ class MemoryVlobComponent(BaseVlobComponent):
         changes.checkpoint += 1
         changes.changes[src_id] = (author, changes.checkpoint, src_version)
         await self._send_event(
-            "realm.vlobs_updated",
+            BackendEvent.realm_vlobs_updated,
             organization_id=organization_id,
             author=author,
             realm_id=realm_id,

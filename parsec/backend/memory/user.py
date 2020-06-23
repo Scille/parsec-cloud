@@ -1,5 +1,6 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
 
+from parsec.backend.backend_events import BackendEvent
 import attr
 import pendulum
 from typing import Tuple, List, Dict
@@ -57,7 +58,7 @@ class MemoryUserComponent(BaseUserComponent):
             org.human_handle_to_user_id[user.human_handle] = user.user_id
 
         await self._send_event(
-            "user.created",
+            BackendEvent.user_created,
             organization_id=organization_id,
             user_id=user.user_id,
             user_certificate=user.user_certificate,
@@ -79,7 +80,7 @@ class MemoryUserComponent(BaseUserComponent):
 
         user_devices[device.device_name] = device
         await self._send_event(
-            "device.created",
+            BackendEvent.device_created,
             organization_id=organization_id,
             device_id=device.device_id,
             device_certificate=device.device_certificate,
@@ -331,7 +332,7 @@ class MemoryUserComponent(BaseUserComponent):
     ) -> UserInvitation:
         invitation = await self.get_user_invitation(organization_id, user_id)
         await self._send_event(
-            "user.claimed",
+            BackendEvent.user_claimed,
             organization_id=organization_id,
             user_id=invitation.user_id,
             encrypted_claim=encrypted_claim,
@@ -345,7 +346,9 @@ class MemoryUserComponent(BaseUserComponent):
 
         if org.invitations.pop(user_id, None):
             await self._send_event(
-                "user.invitation.cancelled", organization_id=organization_id, user_id=user_id
+                BackendEvent.user_invitation_cancelled,
+                organization_id=organization_id,
+                user_id=user_id,
             )
 
     async def create_device_invitation(
@@ -379,7 +382,7 @@ class MemoryUserComponent(BaseUserComponent):
     ) -> DeviceInvitation:
         invitation = await self.get_device_invitation(organization_id, device_id)
         await self._send_event(
-            "device.claimed",
+            BackendEvent.device_claimed,
             organization_id=organization_id,
             device_id=invitation.device_id,
             encrypted_claim=encrypted_claim,
@@ -393,7 +396,9 @@ class MemoryUserComponent(BaseUserComponent):
 
         if org.invitations.pop(device_id, None):
             await self._send_event(
-                "device.invitation.cancelled", organization_id=organization_id, device_id=device_id
+                BackendEvent.device_invitation_cancelled,
+                organization_id=organization_id,
+                device_id=device_id,
             )
 
     async def revoke_user(
@@ -423,4 +428,6 @@ class MemoryUserComponent(BaseUserComponent):
         if user.human_handle:
             del org.human_handle_to_user_id[user.human_handle]
 
-        await self._send_event("user.revoked", organization_id=organization_id, user_id=user_id)
+        await self._send_event(
+            BackendEvent.user_revoked, organization_id=organization_id, user_id=user_id
+        )

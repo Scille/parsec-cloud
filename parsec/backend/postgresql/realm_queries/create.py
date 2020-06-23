@@ -3,8 +3,9 @@
 from pypika import Parameter
 from pypika.terms import ValueWrapper
 
-from parsec.api.protocol import RealmRole
-from parsec.api.protocol import OrganizationID
+
+from parsec.backend.backend_events import BackendEvent
+from parsec.api.protocol import RealmRole, OrganizationID
 from parsec.backend.realm import RealmGrantedRole, RealmAlreadyExistsError
 from parsec.backend.postgresql.handler import send_signal
 from parsec.backend.postgresql.utils import query
@@ -91,7 +92,7 @@ async def query_create(
 
     await send_signal(
         conn,
-        "realm.roles_updated",
+        BackendEvent.realm_roles_updated,
         organization_id=organization_id,
         author=self_granted_role.granted_by,
         realm_id=self_granted_role.realm_id,

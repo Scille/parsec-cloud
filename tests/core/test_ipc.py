@@ -6,6 +6,7 @@ import os
 import subprocess
 from uuid import uuid4
 from pathlib import Path
+from parsec.core.ipcinterface import RequestType
 
 from parsec.core.ipcinterface import (
     _install_win32_mutex,
@@ -113,7 +114,7 @@ async def test_ipc_server(tmpdir, monkeypatch):
     mut1 = uuid4().hex
 
     async def _cmd_handler(cmd):
-        assert cmd == {"cmd": "foreground"}
+        assert cmd == {"cmd": RequestType.FOREGROUND}
         return {"status": "ok"}
 
     mut1 = uuid4().hex
@@ -125,7 +126,7 @@ async def test_ipc_server(tmpdir, monkeypatch):
                     pass
 
             # Send good command
-            ret = await send_to_ipc_server(file1, "foreground")
+            ret = await send_to_ipc_server(file1, RequestType.FOREGROUND)
             assert ret == {"status": "ok"}
 
             # Send bad command, should be catched before even trying to reach the server
