@@ -246,7 +246,7 @@ class BackendApp:
                     continue
 
             if get_log_level() <= LOG_LEVEL_DEBUG:
-                client_ctx.logger.debug("Response", rep=_filter_binary_fields(req))
+                client_ctx.logger.debug("Response", rep=_filter_binary_fields(rep))
             else:
                 client_ctx.logger.info("Request", cmd=cmd, status=rep["status"])
             raw_rep = packb(rep)
