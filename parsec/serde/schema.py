@@ -144,7 +144,7 @@ class OneOfSchema(BaseSchema):
             return MarshalResult(None, {"_schema": "Unsupported object type: %s" % obj_type})
 
         result = schema.dump(obj, many=False, update_fields=update_fields, **kwargs)
-        if result.data:
+        if result.data and self.type_field not in result.data:
             result.data[self.type_field] = obj_type
         return result
 
