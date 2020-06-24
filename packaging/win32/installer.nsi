@@ -33,7 +33,7 @@
 !define LICENSE_FILEPATH "${PARSEC_FREEZE_BUILD_DIR}\LICENSE.txt"
 !define INSTALLER_FILENAME "parsec-${PROGRAM_VERSION}-${PROGRAM_PLATFORM}-setup.exe"
 
-!define WINFSP_INSTALLER "winfsp-1.7.20038.msi"
+!define WINFSP_INSTALLER "winfsp-1.7.20172.msi"
 
 # Set default compressor
 SetCompressor /FINAL /SOLID lzma
