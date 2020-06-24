@@ -25,3 +25,50 @@ msgstr "Architecture"
 msgid "<TODO>"
 msgstr "<TODO>"
 
+
+
+
+Parsec security model
+=====================
+PARSEC sécurise les données sensibles avant qu’elles ne soient stockées sur les clouds publics, en
+procédant en trois étapes :
+● Découpage en blocs des fichiers avant chiffrement;
+● Chiffrement de chaque bloc par une clé symétrique différente (BLOCK_ENC_KEY);
+● Chiffrement des métadonnées (arborescence, composition des fichiers, les BLOCK_ENC_KEY,
+information de partage) par la clé privée de l’utilisateur (USER_ENC_S_KEY).
+
+La séparation des acteurs
+*************************
+
+● Utilisateur : représente une personne physique dans Parsec. Un utilisateur dispose d’une clé asymétrique
+(USER_ENC_S_KEY / USER_ENC_P_KEY) lui permettant de chiffrer des données uniquement pour lui
+tel que son User Manifest (voir ci-dessous).
+● Le Poste de Travail : support physique -- ordinateur desktop ou portable.
+● Terminal : c’est par l’intermédiaire d’un terminal (ou device) que l’utilisateur accède à Parsec. Chaque
+utilisateur a potentiellement plusieurs terminaux (ex: un pour son ordinateur fixe et un autre sur son
+portable). Chaque terminal possède sa propre clé asymétrique de signature (DEVICE_SIG_S_KEY /
+DEVICE_SIG_P_KEY) permettant de signer les modifications qu’il a réalisé.
+
+
+Parsec data model
+*****************
+
+● File Manifest : contient le nom du fichier, la liste des blocs qui le composent et les BLOCK_ENC_KEY
+associées.
+● Folder Manifest : index qui contient un ensemble d’entrées, chaque entrée étant un File Manifest ou un
+autre Folder Manifest.
+● Workspace Manifest : index similaire au Folder Manifest, mais pouvant être partagé entre plusieurs
+utilisateurs.
+● User Manifest : index racine propre à chaque utilisateur et contenant les Workspace Manifests partagés
+avec celui-ci.
+
+Data sharing model
+******************
+
+● Workspace : un groupe d’utilisateurs partageant le même niveau de confiance. PARSEC effectue le
+partage de données sensibles via le chiffrement de la clé de workspace (WS_ENC_KEY) par la clé du
+destinataire du partage (USER_ENC_P_KEY) -- cette étape de chiffrement est répétée autant de fois
+qu’il y a de destinataires.
+● Organisation : un ensemble des workspaces et un ensemble d'utilisateurs membres de l'organisation.
+L'accès à un workspace ne peut être accordé qu'aux membres de l'organisation. Deux organisations
+distinctes ne peuvent pas accéder au même workspace.

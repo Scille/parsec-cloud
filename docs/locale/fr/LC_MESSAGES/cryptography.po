@@ -1,0 +1,177 @@
+# SOME DESCRIPTIVE TITLE.
+# Copyright (C) 2016-2020, Scille SAS
+# This file is distributed under the same license as the Parsec package.
+# FIRST AUTHOR <EMAIL@ADDRESS>, 2020.
+#
+#, fuzzy
+msgid ""
+msgstr ""
+"Project-Id-Version: Parsec 1.7.2+dev\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2020-02-26 20:04+0100\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language-Team: LANGUAGE <LL@li.org>\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=utf-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Generated-By: Babel 2.6.0\n"
+
+#: ../../architecture.rst:5
+msgid "Architecture"
+msgstr "Architecture"
+
+#: ../../architecture.rst:7
+msgid "<TODO>"
+msgstr "<TODO>"
+
+
+
+
+Creating an Organisation
+========================
+
+
+1. Dans un premier temps un administrateur du serveur de métadonnées enregistre le nom de l'organisation
+et obtient un token d'initialisation de l'organisation qu'il transmet à la personne désignée pour être le
+premier administrateur de l'organisation.
+2. Dans un second temps, l'application crée sur le poste de ce premier administrateur de l'organisation une
+clé d'organisation (ORG_ROOT_SIG_S_KEY, ORG_ROOT_SIG_P_KEY), une clé de compte
+d'utilisateur (USER_ENC_S_KEY, USER_ENC_P_KEY) et une clé de terminal (DEVICE_SIG_S_KEY,
+DEVICE_SIG_P_KEY). L'application certifie les clés publiques de l'utilisateur et de l'appareil avec la clé
+de signature de l'organisation et les télécharge sur le back-end. De plus, seule la partie publique de la clé
+racine de l'organisation (ORG_ROOT_SIG_P_KEY) est téléchargée dans le serveur de métadonnées, la
+partie secrète est intentionnellement oubliée, ce qui la rend irrécupérable.
+
+
+
+Adding a new User
+=================
+
+.. figure:: crypto_new_user.svg
+    :align: center
+    :alt: Parsec single server, multi organizations showcase
+
+
+    La solution Parsec implique de nombreux concepts cryptographiques afin par
+    exemple de permettre les échanges de clés entre les utilisateurs d’un même work-
+    group, ou l’ajout d’un nouvel utilisateur au système sans impliquer d’autres clés
+    privées que celles que le nouvel utilisateur se crée ainsi que celles de l’administrateur
+    l’invitant. Un utilisateur (user ) peut posséder un ou plusieurs appareils (devices)
+    qu’il peut utiliser de manière transparente, et il est en capacité d’ajouter de nou-
+    veaux devices depuis n’importe lequel de ses devices dès qu’il le souhaite. Étant
+    donné que l’une des missions que j’ai effectuée a conduit à modifier légèrement le
+    processus d’ivitation d’user ou de device, il est nécessaire de l’expliquer.
+    La création d’un nouvel utilisateur doit se faire par un utilisateur existant, déjà
+    enregistré dans l’organisation et ayant le profil administrateur.
+    Considérons le cas où un administrateur Alice veut rajouter un utilisateur Bob :
+    61. Alice transmet (physiquement, de personne à personne) à Bob une chaîne
+    de caractères alphanumériques générée aléatoirement par son client Parsec
+    (token).
+    2. Le client Parsec de Bob crée deux bi-clés :
+    — USER_ENC_S_KEY/USER_ENC_P_KEY
+    — DEVICE_SIG_S_KEY/DEVICE_SIG_P_KEY
+    3. Le client Parsec de Bob envoie au serveur de métadonnées
+    — le token
+    — son nom de device
+    — ses clés USER_ENC_P_KEY et DEVICE_SIG_P_KEY
+    chiffrées avec la clé publique d’Alice qu’il a également récupérée auprès du
+    serveur de métadonnées.
+    4. Le serveur de métadonnées transmet ce message au client Parsec d’Alice pour
+    qu’il le déchiffre.
+    5. Alice peut alors valider qu’il s’agit bien du token qu’elle a envoyé à Bob.
+    6. Dans le cas positif, le client parsec d’Alice renvoie les clés de Bob signées par
+    sa clé de terminal DEVICE_SIG_S_KEY au serveur de métadonnées qui
+    les enregistre et renvoie alors au client Parsec de Bob la confirmation qu’il
+    est bien enregistré.
+    Le cas du premier utilisateur est particulier car il ne peut pas être créé par un
+autre utilisateur. Il doit utiliser son client Parsec dans un mode spécial afin de générer
+la clé racine de l’organisation avec laquelle ses clés publiques USER_ENC_P_KEY
+et DEVICE_SIG_P_KEY vont être signées. Ainsi, comme chaque clé d’utilisateur
+est signée par un terminal enregistré dans l’organisation, et que celle du premier uti-
+lisateur est signée par la clé racine, en revalidant la chaîne de signatures, un client
+est en mesure de s’assurer qu’une clé a bien été ajoutée à Parsec par un terminal
+légitime et peut donc être considérée comme valide.
+
+
+
+La création d’un nouvel utilisateur ne peut se faire que par un utilisateur existant, déjà enregistré dans
+l’organisation et ayant le profil Administrateur.
+Considérons le cas où Alice est Administrateur et veut rajouter Bob :
+1. Alice signale au back-end que Bob est invité au sein de l'organisation en transmettant son adresse
+e-mail.
+2. Le serveur de métadonnées envoie un e-mail à Bob avec une URL d'invitation qui contient l'ID
+d'organisation et un identifiant unique du canal d'invitation.
+3. Alice et Bob effectuent un échange de clé Diffie Hellman (DH) [1] authentifié :
+a. Alice et Bob créent des clés asymétriques éphémères et échangent les parties publiques en
+utilisant le serveur de métadonnées comme canal de transmission pour déduire une clé secrète
+partagée dans le style de DH.
+b. Pour empêcher un serveur de métadonnées malveillant de modifier le canal DH (attaque
+man-in-the-middle), Alice et Bob authentifient leur clé secrète partagée à l'aide du protocole
+Short Authentication String (SAS) [2]. Chaque partie communique verbalement un token SAS
+que son homologue doit valider parmi un ensemble de tokens (conformément aux
+recommandations de la littérature scientifique [3]).
+
+4. Bob génère ses clés d'utilisateur (USER_ENC_P_KEY, USER_ENC_S_KEY) et de terminal
+(DEVICE_SIG_P_KEY, DEVICE_SIG_S_KEY) et utilise le canal authentifié pour communiquer leurs
+parties publiques à Alice.
+5. Alice signe ces deux clés à l'aide de sa clé privée (DEVICE_SIG_S_KEY) et télécharge ces clés
+certifiées sur le serveur de métadonnées
+Comme chaque clé d’utilisateur est signée par un terminal enregistré dans l’organisation et celle du premier
+utilisateur est signée par la clé racine (ORG_ROOT_SIG_S_KEY), en revalidant la chaîne de signatures, un
+client est en mesure de s’assurer qu’une clé a bien été ajoutée à PARSEC par un terminal légitime et peut
+donc être considérée comme valide.
+Un utilisateur se voit attribuer une adresse email à sa création afin de signifier sa correspondance à une
+personne physique. Pour une adresse email donnée, il existe au plus un utilisateur non révoqué dans une
+organisation. De cette façon un utilisateur compromis peut être remplacé au sein de l’organisation (i.e.
+révocation de l’utilisateur existant puis création d’un nouvel utilisateur avec la même adresse email), tout en
+permettant aux autres utilisateur de le retrouver via la même adresse email.
+
+
+
+Adding a new Device
+===================
+La création d’un nouveau terminal fonctionne de manière similaire à celle d’un nouvel utilisateur à ceci près
+que le nouveau terminal n’a pas à créer de clé d’utilisateur (USER_ENC_P_KEY, USER_ENC_S_KEY) mais
+c’est au terminal existant de lui transmettre cette information de manière sécurisée. Le même mécanisme
+DH authentifié par SAS est utilisé comme décrit dans la section précédente. La nouvelle clé de périphérique est certifiée de
+manière identique en utilisant la clé de signature de terminal existante (DEVICE_SIG_S_KEY) avant d'être
+mise à jour vers le serveur de métadonnées.
+
+
+Gestion de la lecture d'un fichier
+==================================
+Le client PARSEC tente de privilégier l’accès local aux données lors de la lecture de fichier. Cela n’est pas
+toujours possible et la consultation du serveur de métadonnées peut s’avérer obligatoire. La lecture d’un
+fichier est illustré dans la Figure 4 :
+1. Si le client Parsec ne possède pas le File Manifest en local, il s’authentifie auprès du serveur de
+métadonnées pour le lui demander ;
+2. Le serveur de métadonnées s’assure que le client a le droit d’y accéder et le lui envoie le cas
+échéant ;
+3. Le client Parsec déchiffre le manifest résultant et vérifie en la signature (à noter que la phase de
+récupération de la clé publique du terminal ayant signé le manifest est analogue au mécanisme
+présenté dans le chapitre dédié à la gestion des utilisateurs/terminaux) ;
+4. Le client Parsec peut alors retrouver tous les blocs nécessaires à la lecture du fichier ;
+5. Dans le cas des blocs non présents en local, le client Parsec les demandes au serveur de
+métadonnées. Une fois récupérés, le client les déchiffre et vérifie leur hash ;
+6. Finalement le client peut recombiner les blocs déchiffrés pour former le contenu du fichier demandé.
+
+L’utilisateur interagit avec les fichiers en utilisant ses logiciels tiers classiques. Les données sont dans un
+premier temps stockées sur le disque dur de la machine, cela pour des questions de performance et de
+résilience ainsi que pour permettre de fonctionner en mode hors ligne. Dans un second temps, le client
+Parsec envoie les modifications, s’il y en a, au serveur de métadonnées.
+L’historisation permet à l’utilisateur de lister toutes les versions de tel fichier particulier, et de restaurer le
+contenu à une version précédente.
+
+
+Gestion des workspaces et du contrôle d'accès
+=============================================
+Afin de pouvoir stocker des fichiers, l’utilisateur doit d’abord créer un workspace en sauvegarder les
+informations d’accès (identifiant WS_ID et clé symétrique de chiffrement WS_ENC_KEY) dans son User
+Manifest.
+Le partage d’un workspace consiste en deux opérations :
+1. Fournir les données d’accès (WS_ID et WS_ENC_KEY) au Workspace Manifest. Cela est réalisé au
+moyen d’un mécanisme d’envoi de messages chiffrés entre utilisateurs et traité automatiquement par le
+client Parsec. Le nouvel utilisateur stocke alors ces informations dans son User Manifeste ;
+2. Informer le serveur de métadonnées qu’un nouvel utilisateur peut lire (et le cas échéant modifier) les
+éléments reliés à le workspace donnée.

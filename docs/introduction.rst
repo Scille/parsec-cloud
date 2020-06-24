@@ -26,20 +26,4 @@ Key features:
 - Cryptographic signature. Each modification is signed by it author making trivial
   to identify modifications.
 - Simplified enrollment. New user enrollment is simple as sharing a link and a token code.
-- Simple to host. Parsec server only requires a PostgreSQL DB and Amazon S3 or OpenStack
-  Swift object storage.
-
-
-Overview
-========
-
-
-Parsec is divided between a client (responsible for expose data to the user and
-provide an encryption layer) and a server (storing the encrypted data and notifying clients about
-other users activity such as data modification or new sharing).
-
-.. figure:: architecture_diagram.svg
-    :align: center
-    :alt: Parsec single server, multi organizations showcase
-
-    Parsec single server, multi organizations showcase
+- Simple to host.
