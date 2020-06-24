@@ -1,12 +1,15 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
 
+import attr
 from typing import Tuple, Optional
 from hashlib import sha256
 from marshmallow import ValidationError
+from pendulum import Pendulum, now as pendulum_now
 
 from parsec.crypto import SecretKey, PrivateKey, SigningKey
 from parsec.serde import fields, post_load
 from parsec.api.protocol import (
+    UserID,
     DeviceID,
     OrganizationID,
     HumanHandle,
@@ -117,3 +120,49 @@ class LocalDevice(BaseLocalData):
     @property
     def public_key(self):
         return self.private_key.public_key
+
+    @property
+    def user_display(self) -> str:
+        return str(self.human_handle or self.user_id)
+
+    @property
+    def device_display(self) -> str:
+        return str(self.device_label or self.device_id.device_name)
+
+
+@attr.s(slots=True, frozen=True, auto_attribs=True)
+class UserInfo:
+    user_id: UserID
+    human_handle: Optional[HumanHandle]
+    profile: UserProfile
+    created_on: Pendulum
+    revoked_on: Optional[Pendulum]
+
+    @property
+    def user_display(self) -> str:
+        return str(self.human_handle or self.user_id)
+
+    @property
+    def is_revoked(self):
+        return pendulum_now() >= self.revoked_on if self.revoked_on else False
+
+    def __repr__(self):
+        return f"<UserInfo {self.user_display}>"
+
+
+@attr.s(slots=True, frozen=True, auto_attribs=True)
+class DeviceInfo:
+    device_id: DeviceID
+    device_label: Optional[str]
+    created_on: Pendulum
+
+    @property
+    def device_name(self):
+        return self.device_id.device_name
+
+    @property
+    def device_display(self) -> str:
+        return str(self.device_label or self.device_id.device_name)
+
+    def __repr__(self):
+        return f"DeviceInfo({self.device_display})"
