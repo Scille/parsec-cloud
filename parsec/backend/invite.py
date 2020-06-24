@@ -129,6 +129,49 @@ class DeviceInvitation:
 
 Invitation = Union[UserInvitation, DeviceInvitation]
 
+MAIL_TEXT = {
+    "en": {
+        "title": "You have received an invitation on Parsec Cloud",
+        "preheader": "Follow these steps to join your new workspace",
+        "body": [
+            (
+                "You have received an invitation from {sender_name} to "
+                "join their workspace on Parsec."
+            ),
+            "Download now via the following link : ",
+            "Once installed, open the next link with Parsec : ",
+            "Or if it doesn't work, copy and paste it in the concerned section : ",
+            (
+                "Lastly, get in touch with {sender_name} "
+                "and follow the next steps on Parsec to become part of their workspace."
+            ),
+        ],
+        "download_button": "Download Parsec",
+        "invite_button": "Invite Link",
+        "parsec_by": "Parsec by ",
+    },
+    "fr": {
+        "title": "Vous avez reçu une invitation sur Parsec Cloud",
+        "preheader": "Suivez ces étapes pour rejoindre votre nouvel espace de travail",
+        "body": [
+            (
+                "Vous avez reçu une invitation de la part de {sender_name}"
+                " pour rejoindre leur espace de travail sur Parsec."
+            ),
+            "Téléchargez Parsec en suivant ce lien : ",
+            "Une fois installé, ouvrez le lien suivant avec Parsec : ",
+            "Si cela échoue, copiez puis collez le lien dans la section dédiée : ",
+            (
+                "Enfin, contactez {sender_name} puis suivez "
+                "les étapes indiquées sur Parsec pour rejoindre leur espace de travail."
+            ),
+        ],
+        "download_button": "Télécharger Parsec",
+        "invite_button": "Lien d'invitation",
+        "parsec_by": "Parsec par ",
+    },
+}
+
 
 async def send_invite_email(invitation: UserInvitation, config: BackendConfig, client_ctx) -> None:
     sender_email = config.email_config.address
@@ -136,51 +179,11 @@ async def send_invite_email(invitation: UserInvitation, config: BackendConfig, c
     password = config.email_config.password
     sender_name = str(client_ctx.human_handle or client_ctx.device_id.user_id)
 
-    # mail content
-    MAIL_TEXT = {
-        "en": {
-            "title": "You have received an invitation on Parsec Cloud",
-            "preheader": "Follow these steps to join your new workspace",
-            "body": [
-                (
-                    f"You have received an invitation from {sender_name} to "
-                    "join their workspace on Parsec.\n"
-                    "Download now via the following link : "
-                ),
-                "Once installed, open the next link with Parsec : ",
-                "Or if it doesn't work, copy and paste it in the concerned section : ",
-                (
-                    f"Lastly, get in touch with {sender_name} "
-                    "and follow the next steps on Parsec to become part of their workspace."
-                ),
-            ],
-            "download_button": "Download Parsec",
-            "invite_button": "Invite Link",
-            "parsec_by": "Parsec by ",
-        },
-        "fr": {
-            "title": "Vous avez reçu une invitation sur Parsec Cloud",
-            "preheader": "Suivez ces étapes pour rejoindre votre nouvel espace de travail",
-            "body": [
-                (
-                    f"Vous avez reçu une invitation de la part de {sender_name}"
-                    " pour rejoindre leur espace de travail sur Parsec.\n"
-                    "Téléchargez Parsec en suivant ce lien : "
-                ),
-                "Une fois installé, ouvrez le lien suivant avec Parsec : ",
-                "Si cela échoue, copiez puis collez le lien dans la section dédiée : ",
-                (
-                    f"Enfin, contactez {sender_name} puis suivez "
-                    "les étapes indiquées sur Parsec pour rejoindre leur espace de travail."
-                ),
-            ],
-            "download_button": "Télécharger Parsec",
-            "invite_button": "Lien d'invitation",
-            "parsec_by": "Parsec par ",
-        },
-    }
     parsec_url = "https://parsec.cloud/get-parsec"
-    body = MAIL_TEXT[config.email_config.language]["body"]
+    body = [
+        line.format(sender_name=sender_name)
+        for line in MAIL_TEXT[config.email_config.language]["body"]
+    ]
     invite_link = str(
         BackendInvitationAddr(
             organization_id=client_ctx.organization_id,
@@ -193,7 +196,7 @@ async def send_invite_email(invitation: UserInvitation, config: BackendConfig, c
     )
 
     # Plain-text version used as backup if the html doesn't work for the client
-    text = f"{body[0]}{parsec_url}\n{body[1]}\n{invite_link}\n{body[3]}"
+    text = f"{body[0]}\n{body[1]}\n{parsec_url}\n{body[2]}\n{invite_link}\n{body[4]}"
 
     # HTML version
     html = importlib_resources.read_text(parsec.backend.mail, "invite_mail.tmpl.html")
@@ -202,6 +205,7 @@ async def send_invite_email(invitation: UserInvitation, config: BackendConfig, c
         line2=body[1],
         line3=body[2],
         line4=body[3],
+        line5=body[4],
         preheader=MAIL_TEXT[config.email_config.language]["preheader"],
         button1=MAIL_TEXT[config.email_config.language]["download_button"],
         button2=MAIL_TEXT[config.email_config.language]["invite_button"],
