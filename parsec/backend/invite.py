@@ -135,15 +135,17 @@ MAIL_TEXT = {
         "preheader": "Follow these steps to join your new workspace",
         "body": [
             (
-                "You have received an invitation from {sender_name} to "
-                "join their workspace on Parsec."
+                "You have received an invitation from {sender_name} "
+                "to join their workspace on Parsec."
             ),
             "Download now via the following link : ",
+            "{parsec_url}",
             "Once installed, open the next link with Parsec : ",
-            "Or if it doesn't work, copy and paste it in the concerned section : ",
+            "{invite_link}",
+            "Or if it doesn't work, copy and paste it in the concerned section.",
             (
-                "Lastly, get in touch with {sender_name} "
-                "and follow the next steps on Parsec to become part of their workspace."
+                "Lastly, get in touch with {sender_name} and follow the "
+                "next steps on Parsec to become part of their workspace."
             ),
         ],
         "download_button": "Download Parsec",
@@ -155,15 +157,17 @@ MAIL_TEXT = {
         "preheader": "Suivez ces étapes pour rejoindre votre nouvel espace de travail",
         "body": [
             (
-                "Vous avez reçu une invitation de la part de {sender_name}"
-                " pour rejoindre leur espace de travail sur Parsec."
+                "Vous avez reçu une invitation de la part de {sender_name} "
+                "pour rejoindre leur espace de travail sur Parsec."
             ),
             "Téléchargez Parsec en suivant ce lien : ",
+            "{parsec_url}",
             "Une fois installé, ouvrez le lien suivant avec Parsec : ",
-            "Si cela échoue, copiez puis collez le lien dans la section dédiée : ",
+            "{invite_link}",
+            "Si cela échoue, copiez puis collez ce lien dans la section dédiée.",
             (
-                "Enfin, contactez {sender_name} puis suivez "
-                "les étapes indiquées sur Parsec pour rejoindre leur espace de travail."
+                "Enfin, contactez {sender_name} puis suivez les étapes "
+                "indiquées sur Parsec pour rejoindre leur espace de travail."
             ),
         ],
         "download_button": "Télécharger Parsec",
@@ -180,10 +184,6 @@ async def send_invite_email(invitation: UserInvitation, config: BackendConfig, c
     sender_name = str(client_ctx.human_handle or client_ctx.device_id.user_id)
 
     parsec_url = "https://parsec.cloud/get-parsec"
-    body = [
-        line.format(sender_name=sender_name)
-        for line in MAIL_TEXT[config.email_config.language]["body"]
-    ]
     invite_link = str(
         BackendInvitationAddr(
             organization_id=client_ctx.organization_id,
@@ -194,24 +194,28 @@ async def send_invite_email(invitation: UserInvitation, config: BackendConfig, c
             use_ssl=config.backend_addr.use_ssl,
         )
     )
+    body = [
+        line.format(sender_name=sender_name, invite_link=invite_link, parsec_url=parsec_url)
+        for line in MAIL_TEXT[config.email_config.language]["body"]
+    ]
 
     # Plain-text version used as backup if the html doesn't work for the client
-    text = f"{body[0]}\n{body[1]}\n{parsec_url}\n{body[2]}\n{invite_link}\n{body[4]}"
+    text = "\n".join(body)
 
     # HTML version
     html = importlib_resources.read_text(parsec.backend.mail, "invite_mail.tmpl.html")
     html = html.format(
         line1=body[0],
         line2=body[1],
-        line3=body[2],
-        line4=body[3],
-        line5=body[4],
+        parsec_url=body[2],
+        line3=body[3],
+        invite_link=body[4],
+        line4=body[5],
+        line5=body[6],
         preheader=MAIL_TEXT[config.email_config.language]["preheader"],
         button1=MAIL_TEXT[config.email_config.language]["download_button"],
         button2=MAIL_TEXT[config.email_config.language]["invite_button"],
         parsec_by=MAIL_TEXT[config.email_config.language]["parsec_by"],
-        parsec_url=parsec_url,
-        invite_link=invite_link,
     )
 
     # mail settings
