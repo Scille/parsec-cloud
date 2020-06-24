@@ -332,3 +332,5 @@ VIAddVersionKey FileDescription "${PROGRAM_NAME} Application Installer"
 VIAddVersionKey FileVersion "${PARSEC_INSTALLER_VERSION}.0.0"
 VIAddVersionKey ProductVersion "${PROGRAM_VERSION}.0"
 VIAddVersionKey OriginalFilename ${INSTALLER_FILENAME}
+
+ManifestDPIAware true
