@@ -49,6 +49,7 @@ Management of file reads
 ========================
 
 The PARSEC client tries to prioritize local access to data when reading a file. This isn't always possible and the consultation of the metadata server can be mandatory.
+
 Reading of a file is described in the following figure :
 
 .. figure:: figures/parsec_file_read.png
