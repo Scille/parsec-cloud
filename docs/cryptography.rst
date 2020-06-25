@@ -16,42 +16,33 @@ An organization can be bootstrapped without the administrator of the back-end kn
 In this section, the mechanisms enabling Parsec to reach that Zero-Trust level of confidentiality will quickly be explained (in that context, Zero-Trust means that no trust has to be placed in the back-end for the solution to be secure).
 
 
-
 Creating an Organization
 ========================
 
 1. First, an administrator of the metadata server register the name of the organization and obtain an initialization token of the organization that he transmits to the person selected to be the first administrator of that organization.
-2. Second, the application creates on the device of that first administrator an organization key (ORG_ROOT_SIG_S_KEY, ORG_ROOT_SIG_P_KEY), a user key (USER_ENC_S_KEY, USER_ENC_P_KEY), and a device key (DEVICE_SIG_S_KEY, DEVICE_SIG_P_KEY).
-   The application certifies public user and device keys with the signature key of the organization and upload them on the back-end. Moreover, only the public part of the organization root key (ORG_ROOT_SIG_P_KEY) is uploaded to the metadata server, the secret part of the key is intentionally discarded, which makes it nonrecoverable.
-
+2. Second, the application creates on the device of that first administrator an organization key (ORG_ROOT_SIG_S_KEY, ORG_ROOT_SIG_P_KEY), a user key (USER_ENC_S_KEY, USER_ENC_P_KEY), and a device key (DEVICE_SIG_S_KEY, DEVICE_SIG_P_KEY). The application certifies public user and device keys with the signature key of the organization and upload them on the back-end. Moreover, only the public part of the organization root key (ORG_ROOT_SIG_P_KEY) is uploaded to the metadata server, the secret part of the key is intentionally discarded, which makes it nonrecoverable.
 
 
 Adding a new User
 =================
 
-The creation of a new user can only be done by an existing user, already registered in the organization and having the Administrator profile.
-Let's consider the case where Alice is Administrator and wants to register Bob :
+The creation of a new user can only be done by an existing user, already registered in the organization and having the Administrator profile. Let's consider the case where Alice is Administrator and wants to register Bob :
 
 1. Alice signals to the back-end that Bob is invited to the organization and transmits his email adress.
 2. The metadata server sends to Bob an email with an invitation URL containing the organization ID and an unique identifier for the invitation canal.
 3. Alice and Bob proceed to an `authenticated Diffie Hellman exchange <https://en.wikipedia.org/wiki/Diffie%E2%80%93Hellman_key_exchange>`_ (DH) :
 
    a. Alice and Bob create asymmetric ephemeral keys and exchange public parts of that keys using the metadata server as a transmission canal to deduce a secrete key shared in the style of DH.
-   b. To prevent a malicious metadata server to modify the DH canal (Man-in-the-middle attack), Alice and Bob authenticate their secrete key using the `Short Authentication String <https://www.iacr.org/archive/crypto2005/36210303/36210303.pdf>`_ (SAS) protocol.
-      Each party share verbally a SAS token that his pair must validate from a set of tokens `(accordingly to the recommendations of the scientific community) <https://www.cs.columbia.edu/~nieh/pubs/eurosys2019_e3.pdf>`_ .
+   b. To prevent a malicious metadata server to modify the DH canal (Man-in-the-middle attack), Alice and Bob authenticate their secrete key using the `Short Authentication String <https://www.iacr.org/archive/crypto2005/36210303/36210303.pdf>`_ (SAS) protocol. Each party share verbally a SAS token that his pair must validate from a set of tokens `(accordingly to the recommendations of the scientific community) <https://www.cs.columbia.edu/~nieh/pubs/eurosys2019_e3.pdf>`_ .
 
 4. Bob generate his user (USER_ENC_P_KEY, USER_ENC_S_KEY) and device (DEVICE_SIG_P_KEY, DEVICE_SIG_S_KEY) keys and use the authenticated channel to share their public parts with Alice.
-5. Alice signs that two keys with the help of her private key (DEVICE_SIG_S_KEY) and upload those certified keys to the metadata server.
-   As each user key is signed by a device registered in the organization and the one of the first user is signed by the root key (ORG_ROOT_SIG_S_KEY), re-validating the signature trust-chain, a client is able to verify that a key has been added to PARSEC by a legitimate terminal and can be considered as valid.
-   Each user is attributed an email address at its creation in order to reflect his correspondence to a natural person. For a given email address, it exists at least one non-revoked user in the organization (i.e. revocation of the existing user then creation of a new user with the same email address), while enabling other users to find him with the same email address.
-
+5. Alice signs that two keys with the help of her private key (DEVICE_SIG_S_KEY) and upload those certified keys to the metadata server. As each user key is signed by a device registered in the organization and the one of the first user is signed by the root key (ORG_ROOT_SIG_S_KEY), re-validating the signature trust-chain, a client is able to verify that a key has been added to PARSEC by a legitimate terminal and can be considered as valid. Each user is attributed an email address at its creation in order to reflect his correspondence to a natural person. For a given email address, it exists at least one non-revoked user in the organization (i.e. revocation of the existing user then creation of a new user with the same email address), while enabling other users to find him with the same email address.
 
 
 Adding a new Device
 ===================
 
-The creation of a new device works in a similar way to the creation of a new user, except that the new device doesn't have create a user key (USER_ENC_P_KEY, USER_ENC_S_KEY), but it is the role of the inviting device to transmit him that information in a secure way.
-The same authenticated DH mechanism is used as described in the previous section. The new device key is certified in the same way using the existing device signature key (DEVICE_SIG_S_KEY) before being uploaded to the metadata server.
+The creation of a new device works in a similar way to the creation of a new user, except that the new device doesn't have create a user key (USER_ENC_P_KEY, USER_ENC_S_KEY), but it is the role of the inviting device to transmit him that information in a secure way. The same authenticated DH mechanism is used as described in the previous section. The new device key is certified in the same way using the existing device signature key (DEVICE_SIG_S_KEY) before being uploaded to the metadata server.
 
 
 Management of file reads
