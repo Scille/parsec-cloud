@@ -36,6 +36,7 @@ The main documentation for the site is organized into the following sections:
    :name: sec-installation
 
    architecture
+   roles
    cryptography
    hosting_server
 

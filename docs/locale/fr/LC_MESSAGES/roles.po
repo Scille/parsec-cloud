@@ -26,7 +26,7 @@ msgid "There are two profiles for user management :"
 msgstr "Il existe deux profils pour la gestion des utilisateurs :"
 
 msgid "The User profile enables"
-msgstr "Utilisateur permet :"
+msgstr "Utilisateur permet"
 
 msgid "the creation of a Workspace;"
 msgstr "la création d’un workspace;"

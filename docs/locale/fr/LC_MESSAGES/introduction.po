@@ -82,27 +82,13 @@ msgstr ""
 
 #: ../../introduction.rst:28
 msgid ""
-"Simple to host. Parsec server only requires a PostgreSQL DB and Amazon S3 or "
-"OpenStack Swift object storage."
+"Simple to host."
 msgstr ""
-"Simple à auto-héberger. Le serveur Parsec ne requiert qu'une base PostgreSQL ainsi "
-"qu'une solution de stockage objet de type OpenStack Swift ou Amazon S3"
+"Simple à auto-héberger."
 
 #: ../../introduction.rst:33
 msgid "Overview"
 msgstr "Vue d'ensemble"
-
-#: ../../introduction.rst:36
-msgid ""
-"Parsec is divided between a client (responsible for expose data to the user and "
-"provide an encryption layer) and a server (storing the encrypted data and "
-"notifying clients about other users activity such as data modification or new "
-"sharing)."
-msgstr ""
-"Parsec est divisé en un client (responsable d'exposer les données à l'utilisateur "
-"ainsi que de gérer la couche cryptographique) et le serveur (servant à stocker les "
-"données chiffrées ainsi qu'à notifier les clients des actions des autres "
-"utilisateurs telles une modification d'un fichier ou un nouveau partage)"
 
 #: ../../introduction.rst:44
 msgid "Parsec single server, multi organizations showcase"

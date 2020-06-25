@@ -8,11 +8,7 @@ Architecture
 Overview
 ========
 
-Parsec is divided between a client (responsible for exposing data to the user and
-providing an encryption layer) and a server (storing the encrypted data and notifying clients about
-other users activity such as data modification or new sharing).
-
-
+Parsec is divided between a client (responsible for exposing data to the user and providing an encryption layer) and a server (storing the encrypted data and notifying clients about other users activity such as data modification or new sharing).
 
 .. figure:: figures/architecture_diagram.svg
     :align: center
@@ -20,9 +16,7 @@ other users activity such as data modification or new sharing).
 
     Parsec single server, multi organizations showcase
 
-The Parsec server only requires a PostgreSQL DB for metadata (that is encrypted
-using devices keys for the most part) and an Amazon S3 or OpenStack Swift object storage for data
-blobs (that are all encrypted using Workspaces keys, that never left users' devices).
+The Parsec server only requires a PostgreSQL DB for metadata (that is encrypted using devices keys for the most part) and an Amazon S3 or OpenStack Swift object storage for data blobs (that are all encrypted using Workspaces keys, that never left users' devices).
 Redundancy using multiple cloud providers is possible.
 
 
@@ -40,12 +34,11 @@ PARSEC secures sensitive data before they are stored on public clouds, proceedin
 Separation of the actors
 ************************
 
-- User : represents a natural person in Parsec. An user have an asymmetric key (USER_ENC_S_KEY / USER_ENC_P_KEY) that enables him to encrypt data for him alone, like his User Manifest (see below).
+- User : represents a natural person in Parsec. An user owns an asymmetric key (USER_ENC_S_KEY / USER_ENC_P_KEY) that enables him to encrypt data for him alone, like his User Manifest (see below).
 - The Workstation : the physical support -- desktop or mobile computer.
 - Device : it is through a Device that the user accesses Parsec.
   Each user potentially has multiple devices (e.g. one for his desktop and one for his laptop).
-  Each terminal owns it's own asymmetric signature key (DEVICE_SIG_S_KEY /
-  DEVICE_SIG_P_KEY) enabling him to sign the modification he has made.
+  Each terminal owns it's own asymmetric signature key (DEVICE_SIG_S_KEY / DEVICE_SIG_P_KEY) enabling him to sign the modification he has made.
 
 
 Parsec data model
