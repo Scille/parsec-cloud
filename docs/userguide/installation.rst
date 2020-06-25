@@ -46,7 +46,7 @@ Given that Parsec is written in Python, an alternative is to install it through 
 
     pip install parsec-cloud
 
-Or intall it with all its dependencies, for the GUI
+Or intall it with all its dependencies, for the GUI.
 
 .. code-block:: shell
 

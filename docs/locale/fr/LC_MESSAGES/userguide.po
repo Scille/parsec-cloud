@@ -76,6 +76,10 @@ msgstr "Via pip"
 msgid "Given that Parsec is written in Python, an alternative is to install it through `pip (the Python package repository) <https://pypi.org/project/parsec-cloud/>`_."
 msgstr "Parsec étant écrit en Python, une autre façon de l'installer est via `pip (Python package repository) <https://pypi.org/project/parsec-cloud/>`_."
 
+#: ../../userguide/installation.rst:47
+msgid "Or intall it with all its dependencies, for the GUI."
+msgstr "Ou l'installer avec toutes ses dépendances, pour l'interface graphique entre autres."
+
 #: ../../userguide/installation.rst:56
 msgid "Parsec requires Python >= 3.6 to work."
 msgstr "Parsec a besoin de Python >= 3.6 pour fonctionner."
