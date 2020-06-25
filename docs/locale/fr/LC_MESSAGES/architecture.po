@@ -92,5 +92,5 @@ msgstr "PARSEC effectue le partage de données sensibles via le chiffrement de l
 msgid "Organization : a set of Workspaces and a set of Users members of that organization."
 msgstr "Organisation : un ensemble des workspaces et un ensemble d'utilisateurs membres de l'organisation."
 
-msgid "The access to a workspace can only be awarded to members of the organization. Two distincts organizations can't share the same Workspace."
-msgstr "L'accès à un workspace ne peut être accordé qu'aux membres de l'organisation. Deux organisations distinctes ne peuvent pas accéder au même workspace."
+msgid "The access to a workspace can only be awarded to members of the organization. Two distincts organizations cant share the same Workspace."
+msgstr "Laccès à un workspace ne peut être accordé quaux membres de lorganisation. Deux organisations distinctes ne peuvent pas accéder au même workspace."

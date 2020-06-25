@@ -1,8 +1,8 @@
 .. _doc_roles:
 
-=====
-Roles
-=====
+==================
+Profiles and Roles
+==================
 
 
 User management
