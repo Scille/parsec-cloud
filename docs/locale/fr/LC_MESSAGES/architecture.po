@@ -26,11 +26,8 @@ msgstr "Aperçu"
 msgid "Parsec is divided between a client (responsible for exposing data to the user and providing an encryption layer) and a server (storing the encrypted data and notifying clients about other users activity such as data modification or new sharing)."
 msgstr "Parsec est divisé en un client (responsable d'exposer les données à l'utilisateur ainsi que de gérer la couche cryptographique) et le serveur (servant à stocker les données chiffrées ainsi qu'à notifier les clients des actions des autres utilisateurs telles une modification d'un fichier ou un nouveau partage)."
 
-msgid "The Parsec server only requires a PostgreSQL DB for metadata (that is encrypted using devices keys for the most part) and an Amazon S3 or OpenStack Swift object storage for data blobs (that are all encrypted using Workspaces keys, that never left users’ devices)."
-msgstr "Le serveur Parsec ne requiert qu'une base de données PostgreSQL pour les métadonnées (qui sont chiffrées par les clés des appareils dans leur majorité) et un stockage objet Amazon S3 ou OpenStack Swift for les blobs binaires (qui sont tous chiffrés en utilisant des clés de Workspace, qui ne quittent pas les appareils des utilisateurs)."
-
-msgid "Redundancy using multiple cloud providers is possible."
-msgstr "Il est possible de mettre en place un système de redondance avec de multiples fournisseurs de cloud différents."
+msgid "The Parsec server only requires a PostgreSQL DB for metadata (that is encrypted using devices keys for the most part) and an Amazon S3 or OpenStack Swift object storage for data blobs (that are all encrypted using Workspaces keys, that never left users’ devices). Redundancy using multiple cloud providers is possible."
+msgstr "Le serveur Parsec ne requiert qu'une base de données PostgreSQL pour les métadonnées (qui sont chiffrées par les clés des appareils dans leur majorité) et un stockage objet Amazon S3 ou OpenStack Swift for les blobs binaires (qui sont tous chiffrés en utilisant des clés de Workspace, qui ne quittent pas les appareils des utilisateurs). Il est possible de mettre en place un système de redondance avec de multiples fournisseurs de cloud différents."
 
 msgid "Parsec security model"
 msgstr "Modèle de sécurité Parsec"
@@ -77,14 +74,8 @@ msgstr "User Manifest : index racine propre à chaque utilisateur et contenant l
 msgid "Data sharing model"
 msgstr "Modèle de partage de données"
 
-msgid "Workspace : a set of users sharing a trust perimeter."
-msgstr "Workspace : un groupe d’utilisateurs partageant le même niveau de confiance."
+msgid "Workspace : a set of users sharing a trust perimeter. Parsec do the sharing of sensitive data by encrypting the Workspace Key (WS_ENC_KEY) using the key of the receiver of that data (USER_ENC_P_KEY) -- that step is repeated for each receiver."
+msgstr "Workspace : un groupe d’utilisateurs partageant le même niveau de confiance. PARSEC effectue le partage de données sensibles via le chiffrement de la clé de workspace (WS_ENC_KEY) par la clé du destinataire du partage (USER_ENC_P_KEY) -- cette étape de chiffrement est répétée autant de fois qu’il y a de destinataires."
 
-msgid "Parsec do the sharing of sensitive data by encrypting the Workspace Key (WS_ENC_KEY) using the key of the receiver of that data (USER_ENC_P_KEY) -- that step is repeated for each receiver."
-msgstr "PARSEC effectue le partage de données sensibles via le chiffrement de la clé de workspace (WS_ENC_KEY) par la clé du destinataire du partage (USER_ENC_P_KEY) -- cette étape de chiffrement est répétée autant de fois qu’il y a de destinataires."
-
-msgid "Organization : a set of Workspaces and a set of Users members of that organization."
-msgstr "Organisation : un ensemble des workspaces et un ensemble d'utilisateurs membres de l'organisation."
-
-msgid "The access to a workspace can only be awarded to members of the organization. Two distincts organizations can't share the same Workspace."
-msgstr "L'accès à un workspace ne peut être accordé qu'aux membres de l'organisation. Deux organisations distinctes ne peuvent pas accéder au même workspace."
+msgid "Organization : a set of Workspaces and a set of Users members of that organization. The access to a workspace can only be awarded to members of the organization. Two distincts organizations can't share the same Workspace."
+msgstr "Organisation : un ensemble des workspaces et un ensemble d'utilisateurs membres de l'organisation. L'accès à un workspace ne peut être accordé qu'aux membres de l'organisation. Deux organisations distinctes ne peuvent pas accéder au même workspace."
