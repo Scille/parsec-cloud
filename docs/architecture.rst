@@ -60,13 +60,7 @@ Parsec data model
 Data sharing model
 ******************
 
-- Workspace : a
-
-
-un groupe d’utilisateurs partageant le même niveau de confiance. PARSEC effectue le
-partage de données sensibles via le chiffrement de la clé de workspace (WS_ENC_KEY) par la clé du
-destinataire du partage (USER_ENC_P_KEY) -- cette étape de chiffrement est répétée autant de fois
-qu’il y a de destinataires.
-● Organisation : un ensemble des workspaces et un ensemble d'utilisateurs membres de l'organisation.
-L'accès à un workspace ne peut être accordé qu'aux membres de l'organisation. Deux organisations
-distinctes ne peuvent pas accéder au même workspace.
+- Workspace : a set of users sharing a trust perimeter.
+  Parsec do the sharing of sensitive data by encrypting the Workspace Key (WS_ENC_KEY) using the key of the receiver of that data (USER_ENC_P_KEY) -- that step is repeated for each receiver.
+- Organization : a set of Workspaces and a set of Users members of that organization.
+  The access to a workspace can only be awarded to members of the organization. Two distincts organizations can't share the same Workspace.
