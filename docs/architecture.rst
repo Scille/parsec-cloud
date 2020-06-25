@@ -36,9 +36,7 @@ Separation of the actors
 
 - User : represents a natural person in Parsec. An user owns an asymmetric key (USER_ENC_S_KEY / USER_ENC_P_KEY) that enables him to encrypt data for him alone, like his User Manifest (see below).
 - The Workstation : the physical support -- desktop or mobile computer.
-- Device : it is through a Device that the user accesses Parsec.
-  Each user potentially has multiple devices (e.g. one for his desktop and one for his laptop).
-  Each terminal owns it's own asymmetric signature key (DEVICE_SIG_S_KEY / DEVICE_SIG_P_KEY) enabling him to sign the modification he has made.
+- Device : it is through a Device that the user accesses Parsec. Each user potentially has multiple devices (e.g. one for his desktop and one for his laptop). Each terminal owns it's own asymmetric signature key (DEVICE_SIG_S_KEY / DEVICE_SIG_P_KEY) enabling him to sign the modification he has made.
 
 
 Parsec data model
@@ -55,5 +53,4 @@ Data sharing model
 
 - Workspace : a set of users sharing a trust perimeter.
   Parsec do the sharing of sensitive data by encrypting the Workspace Key (WS_ENC_KEY) using the key of the receiver of that data (USER_ENC_P_KEY) -- that step is repeated for each receiver.
-- Organization : a set of Workspaces and a set of Users members of that organization.
-  The access to a workspace can only be awarded to members of the organization. Two distincts organizations cant share the same Workspace.
+- Organization : a set of Workspaces and a set of Users members of that organization. The access to a workspace can only be awarded to members of the organization. Two distincts organizations can't share the same Workspace.

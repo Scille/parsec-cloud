@@ -56,14 +56,8 @@ msgstr "Utilisateur : représente une personne physique dans Parsec. Un utilisat
 msgid "The Workstation : the physical support -- desktop or mobile computer."
 msgstr "Le Poste de Travail : support physique -- ordinateur desktop ou portable."
 
-msgid "Device : it is through a Device that the user accesses Parsec."
-msgstr "Terminal : c’est par l’intermédiaire d’un terminal (ou device) que l’utilisateur accède à Parsec."
-
-msgid "Each user potentially has multiple devices (e.g. one for his desktop and one for his laptop)."
-msgstr "Chaque utilisateur a potentiellement plusieurs terminaux (ex: un pour son ordinateur fixe et un autre sur son portable)."
-
-msgid "Each terminal owns its own asymmetric signature key (DEVICE_SIG_S_KEY / DEVICE_SIG_P_KEY) enabling him to sign the modification he has made."
-msgstr "Chaque terminal possède sa propre clé asymétrique de signature (DEVICE_SIG_S_KEY / DEVICE_SIG_P_KEY) permettant de signer les modifications qu’il a réalisé."
+msgid "Device : it is through a Device that the user accesses Parsec. Each user potentially has multiple devices (e.g. one for his desktop and one for his laptop). Each terminal owns it's own asymmetric signature key (DEVICE_SIG_S_KEY / DEVICE_SIG_P_KEY) enabling him to sign the modification he has made."
+msgstr "Terminal : c’est par l’intermédiaire d’un terminal (ou device) que l’utilisateur accède à Parsec. Chaque utilisateur a potentiellement plusieurs terminaux (ex: un pour son ordinateur fixe et un autre sur son portable). Chaque terminal possède sa propre clé asymétrique de signature (DEVICE_SIG_S_KEY / DEVICE_SIG_P_KEY) permettant de signer les modifications qu’il a réalisé."
 
 msgid "Parsec data model"
 msgstr "Modèle de données Parsec"
@@ -92,5 +86,5 @@ msgstr "PARSEC effectue le partage de données sensibles via le chiffrement de l
 msgid "Organization : a set of Workspaces and a set of Users members of that organization."
 msgstr "Organisation : un ensemble des workspaces et un ensemble d'utilisateurs membres de l'organisation."
 
-msgid "The access to a workspace can only be awarded to members of the organization. Two distincts organizations cant share the same Workspace."
-msgstr "Laccès à un workspace ne peut être accordé quaux membres de lorganisation. Deux organisations distinctes ne peuvent pas accéder au même workspace."
+msgid "The access to a workspace can only be awarded to members of the organization. Two distincts organizations can't share the same Workspace."
+msgstr "L'accès à un workspace ne peut être accordé qu'aux membres de l'organisation. Deux organisations distinctes ne peuvent pas accéder au même workspace."
