@@ -42,7 +42,7 @@ msgstr "Windows"
 
 #: ../../userguide/installation.rst:10
 msgid "Windows installer `is available in both 32 and 64 bits <https://github.com/Scille/parsec/releases/latest>`_, if not sure you should use the 64bits version (called ``parsec-vX.Y.Z-win64-setup.exe``)."
-msgstr "L'installeur Windows `est disponible en 32 ou 64 bits <https://github.com/Scille/parsec-build/releases/latest>`_, si vous n'êtes pas sûr, prenez la version 64bits (appelée ``parsec-vX.Y.Z-win64-setup.exe``)."
+msgstr "L'installeur Windows `est disponible en 32 ou 64 bits <https://github.com/Scille/parsec/releases/latest>`_, si vous n'êtes pas sûr, prenez la version 64bits (appelée ``parsec-vX.Y.Z-win64-setup.exe``)."
 
 #: ../../userguide/installation.rst:15
 msgid "Linux"
