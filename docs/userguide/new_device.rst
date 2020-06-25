@@ -24,9 +24,7 @@ Inviting a new device is done from the Parsec client:
     :align: center
     :alt: Device invitation process
 
-Once started, the invitation is pending (note you can cancel it though) and an
-invitation URL and token are displayed. The URL shoul now be transfered on
-the invited computer.
+Once started, the invitation is pending (note you can cancel it though) and an invitation URL and token are displayed. The URL shoul now be transfered on the invited computer.
 
 .. warning::
 
