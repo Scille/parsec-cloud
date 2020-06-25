@@ -94,7 +94,7 @@ msgid "The metadata server ensures that the client has the right to access it an
 msgstr "Le serveur de métadonnées s’assure que le client a le droit d’y accéder et le lui envoie le cas échéant ;"
 
 msgid "The Parsec client decrypts the resulting manifest and verifies its signature (it is noticeable that the recuperation phase of the public key of the device that has signed the manifest is analogous to the mechanism presented in the chapter dedicated to the management of the users/devices) ;"
-msgstr "Le client Parsec déchiffre le manifest résultant et vérifie en la signature (à noter que la phase de récupération de la clé publique du terminal ayant signé le manifest est analogue au mécanisme présenté dans le chapitre dédié à la gestion des utilisateurs/terminaux) ;"
+msgstr "Le client Parsec déchiffre le manifest résultant et en vérifie la signature (à noter que la phase de récupération de la clé publique du terminal ayant signé le manifest est analogue au mécanisme présenté dans le chapitre dédié à la gestion des utilisateurs/terminaux) ;"
 
 msgid "The Parsec client can the find all the blocks necessary to the reading of the file ;"
 msgstr "Le client Parsec peut alors retrouver tous les blocs nécessaires à la lecture du fichier ;"
