@@ -41,7 +41,6 @@ msgid "Windows"
 msgstr "Windows"
 
 #: ../../userguide/installation.rst:10
-#, fuzzy
 msgid "Windows installer `is available in both 32 and 64 bits <https://github.com/Scille/parsec/releases/latest>`_, if not sure you should use the 64bits version (called ``parsec-vX.Y.Z-win64-setup.exe``)."
 msgstr "L'installeur Windows `est disponible en 32 ou 64 bits <https://github.com/Scille/parsec-build/releases/latest>`_, si vous n'êtes pas sûr, prenez la version 64bits (appelée ``parsec-vX.Y.Z-win64-setup.exe``)."
 
@@ -54,7 +53,6 @@ msgid "Parsec is available on Snap:"
 msgstr "Parsec est disponible sur Snap:"
 
 #: ../../userguide/installation.rst:23
-#, fuzzy
 msgid "If you are familiar with Snap, you may notice that Parsec snap is provided in classic mode (i.e. without sandbox). This is needed because Parsec needs `Fuse <https://en.wikipedia.org/wiki/Filesystem_in_Userspace>`_ to mount your data as a virtual directory, which is not allowed by the Snap sandbox."
 msgstr "Si vous connaisez Snap, vous avez peut-être remarqué que le snap Parsec fonctionne en mode classique (c'est à dire sans isolation). Cela est nécessaire car Parsec utilise `Fuse <https://fr.wikipedia.org/wiki/Filesystem_in_Userspace>`_ pour exposer vos données comme un disque virtuel, ce qui n'est pas autorisé par l'isolation de Snap."
 
@@ -75,7 +73,6 @@ msgid "Via pip"
 msgstr "Via pip"
 
 #: ../../userguide/installation.rst:47
-#, fuzzy
 msgid "Given that Parsec is written in Python, an alternative is to install it through `pip (the Python package repository) <https://pypi.org/project/parsec-cloud/>`_."
 msgstr "Parsec étant écrit en Python, une autre façon de l'installer est via `pip (Python package repository) <https://pypi.org/project/parsec-cloud/>`_."
 
@@ -117,7 +114,6 @@ msgid "Inviting a new device is done from the Parsec client:"
 msgstr "Inviter un nouveau périphérique se fait via le client Parsec:"
 
 #: ../../userguide/new_device.rst:27
-#, fuzzy
 msgid "Once started, the invitation is pending (note you can cancel it though) and an invitation URL and token are displayed. The URL shoul now be transfered on the invited computer."
 msgstr "Une fois commencée, l'invitation apparait comme en attente (notez qu'il est toutefois possible de l'annuler) et un lien d'invitation ainsi qu'un code sont affichés. Ce lien doit maintenant être transmis sur l'ordinateur invité."
 
@@ -183,7 +179,6 @@ msgid "This URL is needed to bootstrap the organization by registering yourself 
 msgstr "Ce lien est nécessaire pour démarrer l'organisation en vous enregistrant en tant que premier utilisateur et périphérique. Cliquer sur le lien devrait afficher le client Parsec (le démarrant si nécessaire) avec l'écran suivant :"
 
 #: ../../userguide/new_organization.rst:30 ../../userguide/new_user.rst:58
-#, fuzzy
 msgid "If clicking on the URL doesn't work, you can also use the ``Enter a URL manually`` dialog."
 msgstr "Si cliquer sur le lien ne fait rien, vous pouvez aussi utiliser le bouton ``Entrer un lien manuellement`` dans Parsec."
 
@@ -229,7 +224,6 @@ msgid "In Parsec, inviting a user is a critical operation that aims at building 
 msgstr "Dans Parsec, inviter un utilisateur est une opération critique qui vise à établir de la confiance envers un utilisateur inconnu par le biais de l'utilisateur ayant décidé de l'inviter. Pour cette raison cette opération nécessite que l'utilisateur invité et celui invitant soient tous les deux connectés au serveur Parsec en même temps."
 
 #: ../../userguide/new_user.rst:16
-#, fuzzy
 msgid "Inviting a user is done from the Parsec client:"
 msgstr "Inviter un nouveau périphérique se fait via le client Parsec:"
 
