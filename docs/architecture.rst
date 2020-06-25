@@ -16,7 +16,7 @@ Parsec is divided between a client (responsible for exposing data to the user an
 
     Parsec single server, multi organizations showcase
 
-The Parsec server only requires a PostgreSQL DB for metadata (that is encrypted using devices keys for the most part) and an Amazon S3 or OpenStack Swift object storage for data blobs (that are all encrypted using Workspaces keys, that never left users' devices).
+The Parsec server only requires a PostgreSQL DB for metadata (that is encrypted using devices keys for the most part) and an Amazon S3 or OpenStack Swift object storage for data blobs (that are all encrypted using Workspaces keys, that never left users’ devices).
 Redundancy using multiple cloud providers is possible.
 
 
