@@ -13,6 +13,7 @@ from typing import Dict, List, Optional, Union, Set
 from pendulum import Pendulum, now as pendulum_now
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
+from structlog import get_logger
 
 import parsec.backend.mail
 from parsec.crypto import PublicKey
@@ -47,6 +48,8 @@ from parsec.backend.utils import catch_protocol_errors, api
 from parsec.backend.config import BackendConfig
 from parsec.core.types import BackendInvitationAddr
 
+
+logger = get_logger()
 
 PEER_EVENT_MAX_WAIT = 300  # 5mn
 
@@ -203,15 +206,16 @@ async def send_invite_email(invitation: UserInvitation, config: BackendConfig, c
     text = "\n".join(body)
 
     # HTML version
+    paragraph_1 = "<br>".join(body[:2])
+    paragraph_2 = body[3]
+    paragraph_3 = "<br><br>".join([body[5], invite_link, body[6]])
     html = importlib_resources.read_text(parsec.backend.mail, "invite_mail.tmpl.html")
     html = html.format(
-        line1=body[0],
-        line2=body[1],
+        paragraph_1=paragraph_1,
+        paragraph_2=paragraph_2,
+        paragraph_3=paragraph_3,
         parsec_url=body[2],
-        line3=body[3],
         invite_link=body[4],
-        line4=body[5],
-        line5=body[6],
         preheader=MAIL_TEXT[config.email_config.language]["preheader"],
         button1=MAIL_TEXT[config.email_config.language]["download_button"],
         button2=MAIL_TEXT[config.email_config.language]["invite_button"],
@@ -248,13 +252,12 @@ async def send_invite_email(invitation: UserInvitation, config: BackendConfig, c
             with server:
                 if config.email_config.use_tls and not config.email_config.use_ssl:
                     if server.starttls(context=context)[0] != 220:
-                        print("Email TLS connexion isn't encrypted")
-                        return
+                        logger.warning("Email TLS connexion isn't encrypted")
                 if sender_email and password:
                     server.login(sender_email, password)
                 server.sendmail(sender_email, receiver_email, message.as_string())
         except smtplib.SMTPException as e:
-            print(f"SMTP error occurred: {e}")
+            logger.warning(f"SMTP error occured: {e}", exc_info=e)
 
     await trio.to_thread.run_sync(
         _thread_target_send_email, sender_email, receiver_email, password, message
