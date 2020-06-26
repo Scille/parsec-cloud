@@ -143,6 +143,10 @@ class UserInfo:
         return str(self.human_handle or self.user_id)
 
     @property
+    def short_user_display(self) -> str:
+        return str(self.human_handle.label if self.human_handle else self.user_id)
+
+    @property
     def is_revoked(self):
         return pendulum_now() >= self.revoked_on if self.revoked_on else False
 

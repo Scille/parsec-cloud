@@ -10,9 +10,8 @@ import trio
 
 from structlog import get_logger
 
-from parsec.api.protocol import DeviceID, DeviceName
 from parsec.core.types import LocalDevice
-from parsec.core.local_device import LocalDeviceAlreadyExistsError, save_device_with_password
+from parsec.core.local_device import save_device_with_password
 
 from parsec.core.invite import claimer_retrieve_info
 from parsec.core.backend_connection import backend_invited_cmds_factory, BackendConnectionRefused
@@ -102,11 +101,10 @@ class Claimer:
                 assert r == self.Step.ClaimDevice
 
                 try:
-                    device_name, device_label = await self.main_oob_recv.receive()
+                    device_label = await self.main_oob_recv.receive()
 
                     new_device = await in_progress_ctx.do_claim_device(
-                        requested_device_name=device_name,
-                        requested_device_label=device_label,
+                        requested_device_label=device_label
                     )
                     await self.job_oob_send.send((True, None, new_device))
                 except Exception as exc:
@@ -150,9 +148,9 @@ class Claimer:
         if not r:
             raise JobResultError(status="wait-trust-failed", origin=exc)
 
-    async def claim_device(self, device_name, device_label):
+    async def claim_device(self, device_label):
         await self.main_oob_send.send(self.Step.ClaimDevice)
-        await self.main_oob_send.send((device_name, device_label))
+        await self.main_oob_send.send(device_label)
         r, exc, new_device = await self.job_oob_recv.receive()
         if not r:
             raise JobResultError(status="claim-device-failed", origin=exc)
@@ -338,6 +336,7 @@ class ClaimDeviceProvideInfoWidget(QWidget, Ui_ClaimDeviceProvideInfoWidget):
         self.claim_job = None
         self.line_edit_device.setFocus()
         self.line_edit_device.setValidator(validators.DeviceNameValidator())
+        self.line_edit_device.setText(get_default_device())
         self.line_edit_device.textChanged.connect(self.check_infos)
         self.line_edit_password.textChanged.connect(
             self.password_strength_widget.on_password_change
@@ -361,13 +360,7 @@ class ClaimDeviceProvideInfoWidget(QWidget, Ui_ClaimDeviceProvideInfoWidget):
             self.button_ok.setDisabled(True)
 
     def _on_claim_clicked(self):
-        device_name = None
         device_label = self.line_edit_device.text()
-        try:
-            device_name = DeviceName(self.line_edit_device.text())
-        except ValueError as exc:
-            show_error(self, _("TEXT_CLAIM_DEVICE_INVALID_DEVICE_NAME"), exception=exc)
-            return
         self.button_ok.setDisabled(True)
         self.widget_info.setDisabled(True)
         self.label_wait.show()
@@ -375,7 +368,6 @@ class ClaimDeviceProvideInfoWidget(QWidget, Ui_ClaimDeviceProvideInfoWidget):
             ThreadSafeQtSignal(self, "claim_success"),
             ThreadSafeQtSignal(self, "claim_error"),
             self.claimer.claim_device,
-            device_name=device_name,
             device_label=device_label,
         )
 

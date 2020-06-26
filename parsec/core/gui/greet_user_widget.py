@@ -1,3 +1,5 @@
+# Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
+
 from PyQt5.QtCore import pyqtSignal
 from PyQt5.QtGui import QFont
 from PyQt5.QtWidgets import QWidget, QDialog
@@ -7,7 +9,7 @@ from enum import IntEnum
 import trio
 
 from parsec.api.data import UserProfile
-from parsec.api.protocol import DeviceID, HumanHandle
+from parsec.api.protocol import HumanHandle
 from parsec.core.backend_connection import backend_authenticated_cmds_factory
 from parsec.core.invite import UserGreetInitialCtx, InviteError
 
@@ -105,11 +107,10 @@ class Greeter:
 
                 assert r == self.Step.CreateNewUser
                 try:
-                    human_handle, device_id, profile = await self.main_mc_recv.receive()
+                    human_handle, device_label, profile = await self.main_mc_recv.receive()
                     await in_progress_ctx.do_create_new_user(
                         author=device,
-                        device_id=device_id,
-                        device_label=str(device_id).split("@")[1],
+                        device_label=device_label,
                         human_handle=human_handle,
                         profile=profile,
                     )
@@ -158,9 +159,9 @@ class Greeter:
             raise JobResultError(status="get-claim-request-failed", origin=exc)
         return human_handle, device_id
 
-    async def create_new_user(self, human_handle, device_id, profile):
+    async def create_new_user(self, human_handle, device_label, profile):
         await self.main_mc_send.send(self.Step.CreateNewUser)
-        await self.main_mc_send.send((human_handle, device_id, profile))
+        await self.main_mc_send.send((human_handle, device_label, profile))
         r, exc = await self.job_mc_recv.receive()
         if not r:
             raise JobResultError(status="create-new-user-failed", origin=exc)
@@ -253,10 +254,7 @@ class GreetUserCheckInfoWidget(QWidget, Ui_GreetUserCheckInfoWidget):
         self.button_create_user.clicked.connect(self._on_create_user_clicked)
 
     def check_infos(self, _=""):
-        if (
-            self.line_edit_user_full_name.text()
-            and self.line_edit_device.text()
-        ):
+        if self.line_edit_user_full_name.text() and self.line_edit_device.text():
             self.button_create_user.setDisabled(False)
         else:
             self.button_create_user.setDisabled(True)
@@ -264,18 +262,13 @@ class GreetUserCheckInfoWidget(QWidget, Ui_GreetUserCheckInfoWidget):
     def _on_create_user_clicked(self):
         assert not self.create_user_job
         handle = None
-        device_id = None
+        device_label = self.line_edit_device.text()
         try:
             handle = HumanHandle(
                 label=self.line_edit_user_full_name.text(), email=self.line_edit_user_email.text()
             )
         except ValueError as exc:
             show_error(self, _("TEXT_GREET_USER_INVALID_HUMAN_HANDLE"), exception=exc)
-            return
-        try:
-            device_id = DeviceID(self.line_edit_device.text())
-        except ValueError as exc:
-            show_error(self, _("TEXT_GREET_USER_INVALID_DEVICE_ID"), exception=exc)
             return
         self.button_create_user.setDisabled(True)
         self.button_create_user.setText("TEXT_GREET_USER_WAITING")
@@ -284,7 +277,7 @@ class GreetUserCheckInfoWidget(QWidget, Ui_GreetUserCheckInfoWidget):
             ThreadSafeQtSignal(self, "create_user_error"),
             self.greeter.create_new_user,
             human_handle=handle,
-            device_id=device_id,
+            device_label=device_label,
             profile=self.combo_profile.currentData(),
         )
 
@@ -322,13 +315,13 @@ class GreetUserCheckInfoWidget(QWidget, Ui_GreetUserCheckInfoWidget):
         assert self.get_requests_job.is_finished()
         assert self.get_requests_job.status == "ok"
 
-        human_handle, device_id = self.get_requests_job.ret
+        human_handle, device_label = self.get_requests_job.ret
         self.get_requests_job = None
         self.label_waiting.hide()
         self.widget_info.show()
         self.line_edit_user_full_name.setText(human_handle.label)
         self.line_edit_user_email.setText(human_handle.email)
-        self.line_edit_device.setText(str(device_id))
+        self.line_edit_device.setText(device_label)
         self.check_infos()
 
     def _on_get_requests_error(self):

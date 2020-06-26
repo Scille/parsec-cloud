@@ -10,7 +10,7 @@ import trio
 
 from structlog import get_logger
 
-from parsec.api.protocol import DeviceID, HumanHandle
+from parsec.api.protocol import HumanHandle
 from parsec.core.types import LocalDevice
 from parsec.core.local_device import LocalDeviceAlreadyExistsError, save_device_with_password
 
@@ -103,10 +103,10 @@ class Claimer:
                 assert r == self.Step.ClaimUser
 
                 try:
-                    device_id, human_handle = await self.main_oob_recv.receive()
+                    device_label, human_handle = await self.main_oob_recv.receive()
 
                     new_device = await in_progress_ctx.do_claim_user(
-                        requested_device_id=device_id, requested_human_handle=human_handle
+                        requested_device_label=device_label, requested_human_handle=human_handle
                     )
                     await self.job_oob_send.send((True, None, new_device))
                 except Exception as exc:
@@ -151,9 +151,9 @@ class Claimer:
         if not r:
             raise JobResultError(status="wait-trust-failed", origin=exc)
 
-    async def claim_user(self, device_id, human_handle):
+    async def claim_user(self, device_label, human_handle):
         await self.main_oob_send.send(self.Step.ClaimUser)
-        await self.main_oob_send.send((device_id, human_handle))
+        await self.main_oob_send.send((device_label, human_handle))
         r, exc, new_device = await self.job_oob_recv.receive()
         if not r:
             raise JobResultError(status="claim-user-failed", origin=exc)
@@ -392,13 +392,7 @@ class ClaimUserProvideInfoWidget(QWidget, Ui_ClaimUserProvideInfoWidget):
             self.button_ok.setDisabled(True)
 
     def _on_claim_clicked(self):
-        device_id = None
-        human_handle = None
-        try:
-            device_id = DeviceID("{}@{}".format(self.user_id, self.line_edit_device.text()))
-        except ValueError as exc:
-            show_error(self, _("TEXT_CLAIM_USER_INVALID_DEVICE_ID"), exception=exc)
-            return
+        device_label = self.line_edit_device.text()
         try:
             human_handle = HumanHandle(
                 email=self.line_edit_user_email.text(), label=self.line_edit_user_full_name.text()
@@ -413,7 +407,7 @@ class ClaimUserProvideInfoWidget(QWidget, Ui_ClaimUserProvideInfoWidget):
             ThreadSafeQtSignal(self, "claim_success"),
             ThreadSafeQtSignal(self, "claim_error"),
             self.claimer.claim_user,
-            device_id=device_id,
+            device_label=device_label,
             human_handle=human_handle,
         )
 

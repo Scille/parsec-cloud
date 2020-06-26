@@ -82,9 +82,7 @@ class Greeter:
                     in_progress_ctx = await in_progress_ctx.do_signify_trust()
                     in_progress_ctx = await in_progress_ctx.do_get_claim_requests()
                     await in_progress_ctx.do_create_new_device(
-                        author=device,
-                        device_name=in_progress_ctx.requested_device_name,
-                        device_label=in_progress_ctx.requested_device_label,
+                        author=device, device_label=in_progress_ctx.requested_device_label
                     )
                     await self.job_mc_send.send((True, None))
                 except InviteError as exc:

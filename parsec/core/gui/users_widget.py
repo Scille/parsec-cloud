@@ -9,7 +9,7 @@ from PyQt5.QtGui import QColor
 
 from parsec.api.protocol import InvitationType, InvitationDeletedReason
 from parsec.api.data import UserProfile
-from parsec.core.types import BackendInvitationAddr
+from parsec.core.types import BackendInvitationAddr, UserInfo
 
 from parsec.core.backend_connection import (
     BackendConnectionError,
@@ -83,57 +83,21 @@ class UserInvitationButton(QWidget, Ui_UserInvitationButton):
 
 
 class UserButton(QWidget, Ui_UserButton):
-    revoke_clicked = pyqtSignal(QWidget)
+    revoke_clicked = pyqtSignal(UserInfo)
 
-    def __init__(
-        self,
-        user_id,
-        human_handle,
-        is_current_user,
-        profile,
-        certified_on,
-        is_revoked,
-        current_user_is_admin,
-    ):
+    def __init__(self, user_info, is_current_user, current_user_is_admin):
         super().__init__()
         self.setupUi(self)
 
-        profiles_txt = {
-            UserProfile.OUTSIDER: _("TEXT_USER_PROFILE_OUTSIDER"),
-            UserProfile.STANDARD: _("TEXT_USER_PROFILE_STANDARD"),
-            UserProfile.ADMIN: _("TEXT_USER_PROFILE_ADMIN"),
-        }
-
-        self.user_id = user_id
-        self.current_user_is_admin = current_user_is_admin
-        self.profile = profile
-        self.is_revoked = is_revoked
-        self.certified_on = certified_on
+        self.user_info = user_info
         self.is_current_user = is_current_user
-        self.human_handle = human_handle
-
-        self.displayed_name = None
-        if human_handle:
-            self.displayed_name = human_handle.label
-            if self.is_current_user:
-                self.label_email.setText(
-                    ensure_string_size(human_handle.email, 260, self.label_email.font())
-                )
-                self.label_email.setToolTip(human_handle.email)
-        else:
-            self.displayed_name = user_id
-
-        self.label_username.setText(
-            ensure_string_size(self.displayed_name, 260, self.label_username.font())
-        )
-        self.label_username.setToolTip(self.displayed_name)
+        self.current_user_is_admin = current_user_is_admin
 
         if self.is_current_user:
             self.label_is_current.setText("({})".format(_("TEXT_USER_IS_CURRENT")))
         self.label_icon.apply_style()
         self.setContextMenuPolicy(Qt.CustomContextMenu)
         self.customContextMenuRequested.connect(self.show_context_menu)
-        self.label_role.setText(profiles_txt[profile])
         effect = QGraphicsDropShadowEffect(self)
         effect.setColor(QColor(0x99, 0x99, 0x99))
         effect.setBlurRadius(10)
@@ -142,25 +106,38 @@ class UserButton(QWidget, Ui_UserButton):
         self.setGraphicsEffect(effect)
 
     @property
-    def user_display(self):
-        return self.human_handle.label if self.human_handle else self.user_id
+    def user_info(self):
+        return self._user_info
 
-    @property
-    def is_revoked(self):
-        return self._is_revoked
+    @user_info.setter
+    def user_info(self, val):
+        profiles_txt = {
+            UserProfile.OUTSIDER: _("TEXT_USER_PROFILE_OUTSIDER"),
+            UserProfile.STANDARD: _("TEXT_USER_PROFILE_STANDARD"),
+            UserProfile.ADMIN: _("TEXT_USER_PROFILE_ADMIN"),
+        }
 
-    @is_revoked.setter
-    def is_revoked(self, value):
-        self._is_revoked = value
-        if value:
+        self._user_info = val
+        if self.user_info.is_revoked:
             self.setToolTip(_("TEXT_USER_IS_REVOKED"))
             self.widget.setStyleSheet("background-color: #DDDDDD;")
         else:
             self.setToolTip("")
             self.widget.setStyleSheet("background-color: #FFFFFF;")
+        if self.user_info.human_handle:
+            self.label_email.setText(
+                ensure_string_size(self.user_info.human_handle.email, 260, self.label_email.font())
+            )
+            self.label_email.setToolTip(self.user_info.human_handle.email)
+
+        self.label_username.setText(
+            ensure_string_size(self.user_info.short_user_display, 260, self.label_username.font())
+        )
+        self.label_username.setToolTip(self.user_info.short_user_display)
+        self.label_role.setText(profiles_txt[self.user_info.profile])
 
     def show_context_menu(self, pos):
-        if self.is_revoked or self.is_current_user or not self.current_user_is_admin:
+        if self.user_info.is_revoked or self.is_current_user or not self.current_user_is_admin:
             return
         global_pos = self.mapToGlobal(pos)
         menu = QMenu(self)
@@ -169,13 +146,15 @@ class UserButton(QWidget, Ui_UserButton):
         menu.exec_(global_pos)
 
     def revoke(self):
-        self.revoke_clicked.emit(self)
+        self.revoke_clicked.emit(self.user_info)
 
 
-async def _do_revoke_user(core, user_id, button):
+async def _do_revoke_user(core, user_info):
     try:
-        await core.revoke_user(user_id)
-        return button
+        await core.revoke_user(user_info.user_id)
+        user_info = await core.get_user_info(user_info.user_id)
+        print(user_info.is_revoked)
+        return user_info
     except BackendNotAvailable as exc:
         raise JobResultError("offline") from exc
     except BackendConnectionError as exc:
@@ -290,7 +269,7 @@ class UsersWidget(QWidget, Ui_UsersWidget):
                 w = item.widget()
                 if pattern and (
                     isinstance(w, UserButton)
-                    and pattern not in w.displayed_name.lower()
+                    and pattern not in w.user_info.user_display.lower()
                     or isinstance(w, UserInvitationButton)
                     and pattern not in w.email.lower()
                 ):
@@ -318,14 +297,10 @@ class UsersWidget(QWidget, Ui_UsersWidget):
             email=user_email,
         )
 
-    def add_user(self, user_id, human_handle, is_current_user, profile, certified_on, is_revoked):
+    def add_user(self, user_info, is_current_user):
         button = UserButton(
-            user_id=user_id,
-            human_handle=human_handle,
+            user_info=user_info,
             is_current_user=is_current_user,
-            profile=profile,
-            certified_on=certified_on,
-            is_revoked=is_revoked,
             current_user_is_admin=self.core.device.is_admin,
         )
         self.layout_users.addWidget(button)
@@ -362,9 +337,20 @@ class UsersWidget(QWidget, Ui_UsersWidget):
         )
 
     def on_revoke_success(self, job):
-        button = job.ret
-        show_info(self, _("TEXT_USER_REVOKE_SUCCESS_user").format(user=button.user_display))
-        button.is_revoked = True
+        user_info = job.ret
+        show_info(
+            self, _("TEXT_USER_REVOKE_SUCCESS_user").format(user=user_info.short_user_display)
+        )
+        for i in range(self.layout_users.count()):
+            item = self.layout_users.itemAt(i)
+            if item:
+                button = item.widget()
+                if (
+                    button
+                    and isinstance(button, UserButton)
+                    and button.user_info.user_id == user_info.user_id
+                ):
+                    button.user_info = user_info
 
     def on_revoke_error(self, job):
         status = job.status
@@ -380,11 +366,11 @@ class UsersWidget(QWidget, Ui_UsersWidget):
             errmsg = _("TEXT_USER_REVOCATION_UNKNOWN_FAILURE")
         show_error(self, errmsg, exception=job.exc)
 
-    def revoke_user(self, user_button):
+    def revoke_user(self, user_info):
         result = ask_question(
             self,
             _("TEXT_USER_REVOCATION_TITLE"),
-            _("TEXT_USER_REVOCATION_INSTRUCTIONS_user").format(user=user_button.user_display),
+            _("TEXT_USER_REVOCATION_INSTRUCTIONS_user").format(user=user_info.short_user_display),
             [_("ACTION_USER_REVOCATION_CONFIRM"), _("ACTION_CANCEL")],
         )
         if result != _("ACTION_USER_REVOCATION_CONFIRM"):
@@ -394,21 +380,13 @@ class UsersWidget(QWidget, Ui_UsersWidget):
             ThreadSafeQtSignal(self, "revoke_error", QtToTrioJob),
             _do_revoke_user,
             core=self.core,
-            user_id=user_button.user_id,
-            button=user_button,
+            user_info=user_info,
         )
 
     def on_list_success(self, job):
         current_user = self.core.device.user_id
-        for user in job.ret:
-            self.add_user(
-                user_id=user.user_id,
-                human_handle=user.human_handle,
-                is_current_user=current_user == user.user_id,
-                profile=user.profile,
-                certified_on=user.created_on,
-                is_revoked=user.is_revoked is not None,
-            )
+        for user_info in job.ret:
+            self.add_user(user_info=user_info, is_current_user=current_user == user_info.user_id)
 
     def on_list_error(self, job):
         status = job.status

@@ -22,17 +22,17 @@ from parsec.core.gui.ui.device_button import Ui_DeviceButton
 class DeviceButton(QWidget, Ui_DeviceButton):
     change_password_clicked = pyqtSignal(str)
 
-    def __init__(self, device_name, is_current_device, certified_on):
+    def __init__(self, device_info, is_current_device):
         super().__init__()
         self.setupUi(self)
         self.is_current_device = is_current_device
+        self.device_info = device_info
         self.label_icon.apply_style()
-        self.device_name = device_name
-        self.certified_on = certified_on
+
         self.label_device_name.setText(
-            ensure_string_size(self.device_name, 260, self.label_device_name.font())
+            ensure_string_size(self.device_info.device_display, 260, self.label_device_name.font())
         )
-        self.label_device_name.setToolTip(self.device_name)
+        self.label_device_name.setToolTip(self.device_info.device_display)
         if self.is_current_device:
             self.label_is_current.setText("({})".format(_("TEXT_DEVICE_IS_CURRENT")))
         self.setContextMenuPolicy(Qt.CustomContextMenu)
@@ -126,7 +126,7 @@ class DevicesWidget(QWidget, Ui_DevicesWidget):
             item = self.layout_devices.itemAt(i)
             if item:
                 w = item.widget()
-                if pattern and pattern not in w.device_name.lower():
+                if pattern and pattern not in w.device_info.device_display.lower():
                     w.hide()
                 else:
                     w.show()
@@ -152,8 +152,8 @@ class DevicesWidget(QWidget, Ui_DevicesWidget):
     def _on_invite_error(self, job):
         show_error(_("TEXT_DEVICES_CANNOT_INVITE_DEVICE"))
 
-    def add_device(self, device_name, is_current_device, certified_on):
-        button = DeviceButton(device_name, is_current_device, certified_on)
+    def add_device(self, device_info, is_current_device):
+        button = DeviceButton(device_info, is_current_device)
         self.layout_devices.addWidget(button)
         button.change_password_clicked.connect(self.change_password)
         button.show()
@@ -163,11 +163,7 @@ class DevicesWidget(QWidget, Ui_DevicesWidget):
         current_device = self.core.device
         self.layout_devices.clear()
         for device in devices:
-            self.add_device(
-                device.device_name,
-                is_current_device=device.device_name == current_device.device_name,
-                certified_on=device.created_on,
-            )
+            self.add_device(device, is_current_device=current_device.device_id == device.device_id)
 
     def on_list_error(self, job):
         pass

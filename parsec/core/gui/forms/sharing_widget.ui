@@ -74,8 +74,14 @@ background: 0;
     <widget class="ComboBox" name="combo_role">
      <property name="minimumSize">
       <size>
-       <width>0</width>
+       <width>150</width>
        <height>32</height>
+      </size>
+     </property>
+     <property name="maximumSize">
+      <size>
+       <width>150</width>
+       <height>16777215</height>
       </size>
      </property>
      <property name="font">
@@ -122,13 +128,13 @@ background: 0;
  </widget>
  <customwidgets>
   <customwidget>
-   <class>ComboBox</class>
-   <extends>QComboBox</extends>
+   <class>Button</class>
+   <extends>QPushButton</extends>
    <header>parsec.core.gui.custom_widgets</header>
   </customwidget>
   <customwidget>
-   <class>Button</class>
-   <extends>QPushButton</extends>
+   <class>ComboBox</class>
+   <extends>QComboBox</extends>
    <header>parsec.core.gui.custom_widgets</header>
   </customwidget>
  </customwidgets>

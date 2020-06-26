@@ -3,7 +3,7 @@
 from PyQt5.QtCore import QTimer, Qt, QCoreApplication, pyqtSignal
 from PyQt5.QtWidgets import QCompleter, QWidget
 
-from parsec.api.protocol import UserID
+from parsec.core.types import UserInfo
 from parsec.core.fs import FSError
 from parsec.core.types import WorkspaceRole
 
@@ -34,51 +34,47 @@ async def _do_get_participants(core, workspace_fs):
     ret = {}
     participants = await workspace_fs.get_user_roles()
     for user, role in participants.items():
-        user_info, revoked_info = await core.remote_devices_manager.get_user(user)
-        ret[user] = (role, revoked_info)
+        user_info = await core.get_user_info(user)
+        ret[user_info.user_id] = (role, user_info)
     return ret
 
 
 async def _do_user_find(core, text):
-    rep = await core.backend_cmds.user_find(text, 1, 100, True)
-    if rep["status"] != "ok":
-        raise JobResultError("error", rep=rep)
-    users = [u for u in rep["results"] if u != core.device.user_id]
+    users, total = await core.find_humans(text, omit_revoked=True)
+    users = [u for u in users if u.user_id != core.device.user_id]
     return users
 
 
-async def _do_share_workspace(user_fs, workspace_fs, user, role):
-    user_id = UserID(user)
+async def _do_share_workspace(user_fs, workspace_fs, user_info, role):
     workspace_name = workspace_fs.get_workspace_name()
     try:
-        await user_fs.workspace_share(workspace_fs.workspace_id, user_id, role)
-        return workspace_name, user_id, role
+        await user_fs.workspace_share(workspace_fs.workspace_id, user_info.user_id, role)
+        return workspace_name, user_info, role
     except ValueError as exc:
-        raise JobResultError("invalid-user", workspace_name=workspace_name, user=user_id) from exc
+        raise JobResultError("invalid-user", workspace_name=workspace_name, user=user_info) from exc
     except FSError as exc:
-        raise JobResultError("fs-error", workspace_name=workspace_name, user=user_id) from exc
+        raise JobResultError("fs-error", workspace_name=workspace_name, user=user_info) from exc
     except Exception as exc:
-        raise JobResultError("error", workspace_name=workspace_name, user=user_id) from exc
+        raise JobResultError("error", workspace_name=workspace_name, user=user_info) from exc
 
 
 async def _do_share_workspace_multiple(user_fs, workspace_fs, user_roles):
     errors = {}
     successes = {}
-    for user, role in user_roles.items():
+    for user_info, role in user_roles.items():
         try:
-            user_id = UserID(user)
-            await user_fs.workspace_share(workspace_fs.workspace_id, user_id, role)
-            successes[user_id] = role
+            await user_fs.workspace_share(workspace_fs.workspace_id, user_info.user_id, role)
+            successes[user_info] = role
         except Exception:
-            errors[user_id] = role
+            errors[user_info] = role
     return workspace_fs.get_workspace_name(), successes, errors
 
 
 class SharingWidget(QWidget, Ui_SharingWidget):
-    delete_clicked = pyqtSignal(UserID)
+    delete_clicked = pyqtSignal(UserInfo)
     role_changed = pyqtSignal()
 
-    def __init__(self, user, is_current_user, current_user_role, role, is_revoked, enabled):
+    def __init__(self, user_info, is_current_user, current_user_role, role, enabled):
         super().__init__()
         self.setupUi(self)
         self.ROLES_TRANSLATIONS = {
@@ -90,15 +86,14 @@ class SharingWidget(QWidget, Ui_SharingWidget):
         self.role = role
         self.current_user_role = current_user_role
         self.is_current_user = is_current_user
-        self.is_revoked = is_revoked
-        self.user = user
+        self.user_info = user_info
         self.button_delete.apply_style()
         if self.role == WorkspaceRole.OWNER:
-            self.label_name.setText(f"<b>{self.user}</b>")
+            self.label_name.setText(f"<b>{self.user_info.short_user_display}</b>")
         else:
-            self.label_name.setText(self.user)
+            self.label_name.setText(self.user_info.short_user_display)
 
-        if self.is_revoked:
+        if self.user_info.is_revoked:
             self.setDisabled(True)
             font = self.label_name.font()
             font.setStrikeOut(True)
@@ -123,11 +118,15 @@ class SharingWidget(QWidget, Ui_SharingWidget):
         self.role_changed.emit()
 
     @property
+    def is_revoked(self):
+        return self.user_info.is_revoked
+
+    @property
     def new_role(self):
         return _index_to_role(self.combo_role.currentIndex())
 
     def on_delete_clicked(self):
-        self.delete_clicked.emit(self.user)
+        self.delete_clicked.emit(self.user_info)
 
     def should_update(self):
         return self.role != self.new_role
@@ -157,6 +156,8 @@ class WorkspaceSharingWidget(QWidget, Ui_WorkspaceSharingWidget):
         self.timer.timeout.connect(self.show_auto_complete)
         self.button_share.clicked.connect(self.on_share_clicked)
         self.button_apply.clicked.connect(self.on_update_permissions_clicked)
+
+        self.last_human_find = None
 
         self.share_success.connect(self._on_share_success)
         self.share_error.connect(self._on_share_error)
@@ -224,14 +225,18 @@ class WorkspaceSharingWidget(QWidget, Ui_WorkspaceSharingWidget):
         user_name = self.line_edit_share.text()
         if not user_name:
             return
-        if user_name == self.core.device.user_id:
-            show_info(self, _("TEXT_WORKSPACE_SHARING_CANNOT_SHARE_WITH_YOURSELF"))
+        if user_name not in self.last_human_find:
+            show_error(self, _("TEXT_WORKSPACE_SHARING_USER_NOT_FOUND"))
             return
+        user_info = self.last_human_find[user_name]
         for i in range(self.scroll_content.layout().count()):
             item = self.scroll_content.layout().itemAt(i)
-            if item and item.widget() and item.widget().user == user_name:
+            if item and item.widget() and item.widget().user_info.user_id == user_info.user_id:
                 show_info(
-                    self, _("TEXT_WORKSPACE_SHARING_ALREADY_SHARED_user").format(user=user_name)
+                    self,
+                    _("TEXT_WORKSPACE_SHARING_ALREADY_SHARED_user").format(
+                        user=str(user_info.short_user_display)
+                    ),
                 )
                 return
 
@@ -241,11 +246,11 @@ class WorkspaceSharingWidget(QWidget, Ui_WorkspaceSharingWidget):
             _do_share_workspace,
             user_fs=self.user_fs,
             workspace_fs=self.workspace_fs,
-            user=user_name,
+            user_info=user_info,
             role=_index_to_role(self.combo_role.currentIndex()),
         )
 
-    def add_participant(self, user, is_current_user, role, is_revoked):
+    def add_participant(self, user_info, is_current_user, role):
         enabled = True
         if is_current_user:
             enabled = False
@@ -260,11 +265,10 @@ class WorkspaceSharingWidget(QWidget, Ui_WorkspaceSharingWidget):
             enabled = False
 
         w = SharingWidget(
-            user=user,
+            user_info=user_info,
             is_current_user=is_current_user,
             current_user_role=self.current_user_role,
             role=role,
-            is_revoked=is_revoked,
             enabled=enabled,
         )
         w.role_changed.connect(self.on_role_changed)
@@ -280,11 +284,13 @@ class WorkspaceSharingWidget(QWidget, Ui_WorkspaceSharingWidget):
         else:
             self.button_apply.setDisabled(True)
 
-    def on_remove_user_clicked(self, user):
+    def on_remove_user_clicked(self, user_info):
         r = ask_question(
             parent=self,
             title=_("TEXT_WORKSPACE_SHARING_UNSHARE_TITLE"),
-            message=_("TEXT_WORKSPACE_SHARING_UNSHARE_INSTRUCTIONS_user").format(user=user),
+            message=_("TEXT_WORKSPACE_SHARING_UNSHARE_INSTRUCTIONS_user").format(
+                user=user_info.short_user_display
+            ),
             button_texts=[_("ACTION_WORKSPACE_UNSHARE_CONFIRM"), _("ACTION_CANCEL")],
         )
         if r != _("ACTION_WORKSPACE_UNSHARE_CONFIRM"):
@@ -296,7 +302,7 @@ class WorkspaceSharingWidget(QWidget, Ui_WorkspaceSharingWidget):
             _do_share_workspace,
             user_fs=self.user_fs,
             workspace_fs=self.workspace_fs,
-            user=user,
+            user_info=user_info,
             role=None,
         )
 
@@ -309,7 +315,7 @@ class WorkspaceSharingWidget(QWidget, Ui_WorkspaceSharingWidget):
             if not w or not isinstance(w, SharingWidget):
                 continue
             if w.should_update():
-                user_roles[w.user] = w.new_role
+                user_roles[w.user_info] = w.new_role
 
         self.jobs_ctx.submit_job(
             ThreadSafeQtSignal(self, "share_update_success", QtToTrioJob),
@@ -329,15 +335,16 @@ class WorkspaceSharingWidget(QWidget, Ui_WorkspaceSharingWidget):
         return False
 
     def _on_share_success(self, job):
-        workspace_name, user, role = job.ret
-        self.add_participant(user, False, role, is_revoked=False)
+        workspace_name, user_info, role = job.ret
+        self.add_participant(user_info, is_current_user=False, role=role)
 
     def _on_share_error(self, job):
         exc = job.exc
         show_error(
             self,
             _("TEXT_WORKSPACE_SHARING_SHARE_ERROR_workspace-user").format(
-                workspace=exc.params.get("workspace_name"), user=exc.params.get("user")
+                workspace=exc.params.get("workspace_name"),
+                user=exc.params.get("user").short_user_display,
             ),
             exception=exc,
         )
@@ -350,7 +357,8 @@ class WorkspaceSharingWidget(QWidget, Ui_WorkspaceSharingWidget):
         show_error(
             self,
             _("TEXT_WORKSPACE_SHARING_UNSHARE_ERROR_workspace-user").format(
-                workspace=exc.params.get("workspace_name"), user=exc.params.get("user")
+                workspace=exc.params.get("workspace_name"),
+                user=exc.params.get("user").short_user_display,
             ),
         )
 
@@ -362,7 +370,7 @@ class WorkspaceSharingWidget(QWidget, Ui_WorkspaceSharingWidget):
                 self,
                 _(
                     "TEXT_WORKSPACE_SHARING_UPDATE_ROLES_ERROR_errors".format(
-                        errors="\n".join(errors.keys())
+                        errors="\n".join([u.short_user_display for u in errors.keys()])
                     )
                 ),
             )
@@ -381,9 +389,9 @@ class WorkspaceSharingWidget(QWidget, Ui_WorkspaceSharingWidget):
             self.scroll_content.layout().removeItem(item)
             w.setParent(None)
         QCoreApplication.processEvents()
-        for user, (role, revoked_info) in participants.items():
+        for (role, user_info) in participants.values():
             self.add_participant(
-                user, user == self.core.device.user_id, role, is_revoked=revoked_info is not None
+                user_info, is_current_user=user_info.user_id == self.core.device.user_id, role=role
             )
         self.line_edit_share.setText("")
         self.button_share.setDisabled(True)
@@ -394,10 +402,16 @@ class WorkspaceSharingWidget(QWidget, Ui_WorkspaceSharingWidget):
 
     def _on_user_find_success(self, job):
         users = job.ret
-        completer = QCompleter(users)
-        completer.setCaseSensitivity(Qt.CaseInsensitive)
-        self.line_edit_share.setCompleter(completer)
-        self.line_edit_share.completer().complete()
+        if users:
+            self.last_human_find = {u.user_display: u for u in users}
+            completer = QCompleter([u.user_display for u in users])
+            completer.setCaseSensitivity(Qt.CaseInsensitive)
+            self.line_edit_share.setCompleter(completer)
+            self.line_edit_share.completer().complete()
+        else:
+            completer = QCompleter()
+            self.line_edit_share.setCompleter(completer)
+            self.line_edit_share.completer().complete()
 
     def _on_user_find_error(self, job):
         pass
