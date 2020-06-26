@@ -16,6 +16,7 @@ variables:
     --log-level=DEBUG \
     --durations=10 -v \
     --cov=parsec --cov-config=setup.cfg --cov-append --cov-report= \
+  debug.stress_flaky_tests: 10
 
 jobs:
 
@@ -182,6 +183,15 @@ jobs:
       cp -R tests "$(Agent.TempDirectory)"\\empty
       cp setup.cfg "$(Agent.TempDirectory)"\\empty
     displayName: 'Install'
+  - bash: |
+      set -eux
+      # Install pytest-repeat
+      pip install pytest-repeat
+      # Repeat flaky tests X times
+      py.test tests --runmountpoint --runslow --rungui -m flaky --count $(debug.stress_flaky_tests) -v
+    workingDirectory: $(Agent.TempDirectory)/empty
+    displayName: 'Debug: stress flaky tests'
+    condition: and(succeeded(), gt(variables['debug.stress_flaky_tests'], 0))
   - bash: |
       set -eux
       py.test $(pytest.base_args) \
