@@ -1745,7 +1745,7 @@ msgstr "Organization name"
 
 msgid "ACTION_ACCEPT_CONTRACT"
 msgstr ""
-"I accept the <a href=\"https://my.parsec.cloud/assets/privacypolicy.pdf\" title="
+"I accept the <a href=\"https://parsec.cloud/pdf/Parsec-Privacy-Policy-fr.pdf\" title="
 "\"Contract\">contract</a> and PARSEC's <a href=\"https://my.parsec.cloud/assets/"
 "termsandconditions.pdf\" title=\"Condition Générales d'Utilisation\">conditions "
 "générales d'utilisation</a>"
