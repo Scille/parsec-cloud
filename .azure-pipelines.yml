@@ -163,9 +163,9 @@ jobs:
       choco install -y --limit-output winfsp --pre --version=$(winfsp.version)
       # Install winfsp-test and put it in PATH
       mkdir winfsp-test
-      curl -L https://github.com/billziss-gh/winfsp/releases/download/v1.5/winfsp-tests-1.5.20002.zip -o winfsp-test/winfsp-tests.zip
+      curl -L https://github.com/billziss-gh/winfsp/releases/download/v1.7/winfsp-tests-1.7.20172.zip -o winfsp-test/winfsp-tests.zip
       unzip winfsp-test/winfsp-tests.zip -d winfsp-test
-      ##vso[task.prependpath]$(Build.SourcesDirectory)/winfsp-test
+      echo "##vso[task.prependpath]$(Build.SourcesDirectory)\\winfsp-test"
     displayName: 'Bootstrap'
   - bash: |
       set -eux
@@ -175,6 +175,8 @@ jobs:
       pip install $(ls dist/parsec_cloud-*.whl)[all]
       # Check dependency compatibility
       pip check parsec[all]
+      # Check winfsp-tests availability
+      python -c "import winfspy.tests.winfsp_tests"
       # Create isolated test directory
       mkdir -p "$(Agent.TempDirectory)"\\empty
       cp -R tests "$(Agent.TempDirectory)"\\empty
