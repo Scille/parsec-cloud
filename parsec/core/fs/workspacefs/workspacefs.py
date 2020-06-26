@@ -3,7 +3,7 @@
 import attr
 import trio
 from collections import defaultdict
-from typing import Union, Iterator, Dict, Tuple
+from typing import Union, List, Dict, Tuple, AsyncGenerator
 from pendulum import Pendulum, now as pendulum_now
 
 from parsec.api.data import Manifest as RemoteManifest
@@ -41,13 +41,14 @@ from parsec.core.fs.exceptions import (
     FSNotADirectoryError,
 )
 
+
 AnyPath = Union[FsPath, str]
 
 
-@attr.s(frozen=True)
+@attr.s(slots=True, frozen=True, auto_attribs=True)
 class ReencryptionNeed:
-    user_revoked: Tuple[UserID] = attr.ib(factory=tuple)
-    role_revoked: Tuple[UserID] = attr.ib(factory=tuple)
+    user_revoked: Tuple[UserID]
+    role_revoked: Tuple[UserID]
 
     @property
     def need_reencryption(self):
@@ -159,7 +160,7 @@ class WorkspaceFS:
         try:
             workspace_manifest = await self.local_storage.get_manifest(self.workspace_id)
             if workspace_manifest.is_placeholder:
-                return ReencryptionNeed()
+                return ReencryptionNeed(user_revoked=(), role_revoked=())
 
         except FSLocalMissError:
             pass
@@ -251,7 +252,7 @@ class WorkspaceFS:
         info = await self.transactions.entry_info(FsPath(path))
         return info["type"] == "file"
 
-    async def iterdir(self, path: AnyPath) -> Iterator[FsPath]:
+    async def iterdir(self, path: AnyPath) -> AsyncGenerator[FsPath, None]:
         """
         Raises:
             FSError
@@ -263,7 +264,7 @@ class WorkspaceFS:
         for child in info["children"]:
             yield path / child
 
-    async def listdir(self, path: AnyPath) -> Iterator[FsPath]:
+    async def listdir(self, path: AnyPath) -> List[FsPath]:
         """
         Raises:
             FSError

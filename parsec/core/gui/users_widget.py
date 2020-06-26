@@ -1,18 +1,15 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
 
-import pendulum
+
 from uuid import UUID
+
 from PyQt5.QtCore import Qt, pyqtSignal, QTimer
 from PyQt5.QtWidgets import QWidget, QMenu, QGraphicsDropShadowEffect
 from PyQt5.QtGui import QColor
 
-from parsec.api.protocol import UserID, InvitationType, InvitationDeletedReason
-from parsec.api.data import RevokedUserCertificateContent, UserProfile
+from parsec.api.protocol import InvitationType, InvitationDeletedReason
+from parsec.api.data import UserProfile
 from parsec.core.types import BackendInvitationAddr
-from parsec.core.remote_devices_manager import (
-    RemoteDevicesManagerError,
-    RemoteDevicesManagerBackendOfflineError,
-)
 
 from parsec.core.backend_connection import (
     BackendConnectionError,
@@ -86,11 +83,11 @@ class UserInvitationButton(QWidget, Ui_UserInvitationButton):
 
 
 class UserButton(QWidget, Ui_UserButton):
-    revoke_clicked = pyqtSignal(str)
+    revoke_clicked = pyqtSignal(QWidget)
 
     def __init__(
         self,
-        user_name,
+        user_id,
         human_handle,
         is_current_user,
         profile,
@@ -107,12 +104,14 @@ class UserButton(QWidget, Ui_UserButton):
             UserProfile.ADMIN: _("TEXT_USER_PROFILE_ADMIN"),
         }
 
-        self.user_name = user_name
+        self.user_id = user_id
         self.current_user_is_admin = current_user_is_admin
         self.profile = profile
         self.is_revoked = is_revoked
         self.certified_on = certified_on
         self.is_current_user = is_current_user
+        self.human_handle = human_handle
+
         self.displayed_name = None
         if human_handle:
             self.displayed_name = human_handle.label
@@ -122,7 +121,7 @@ class UserButton(QWidget, Ui_UserButton):
                 )
                 self.label_email.setToolTip(human_handle.email)
         else:
-            self.displayed_name = user_name
+            self.displayed_name = user_id
 
         self.label_username.setText(
             ensure_string_size(self.displayed_name, 260, self.label_username.font())
@@ -141,6 +140,10 @@ class UserButton(QWidget, Ui_UserButton):
         effect.setXOffset(2)
         effect.setYOffset(2)
         self.setGraphicsEffect(effect)
+
+    @property
+    def user_display(self):
+        return self.human_handle.label if self.human_handle else self.user_id
 
     @property
     def is_revoked(self):
@@ -166,19 +169,13 @@ class UserButton(QWidget, Ui_UserButton):
         menu.exec_(global_pos)
 
     def revoke(self):
-        self.revoke_clicked.emit(self.user_name)
+        self.revoke_clicked.emit(self)
 
 
-async def _do_revoke_user(core, user_name):
+async def _do_revoke_user(core, user_id, button):
     try:
-        now = pendulum.now()
-        revoked_device_certificate = RevokedUserCertificateContent(
-            author=core.device.device_id, timestamp=now, user_id=UserID(user_name)
-        ).dump_and_sign(core.device.signing_key)
-        rep = await core.user_fs.backend_cmds.user_revoke(revoked_device_certificate)
-        if rep["status"] != "ok":
-            raise JobResultError(rep["status"])
-        return user_name
+        await core.revoke_user(user_id)
+        return button
     except BackendNotAvailable as exc:
         raise JobResultError("offline") from exc
     except BackendConnectionError as exc:
@@ -231,22 +228,12 @@ async def _do_invite_user(device, config, email):
 
 async def _do_list_users(core):
     try:
-        rep = await core.user_fs.backend_cmds.user_find()
-        if rep["status"] != "ok":
-            raise JobResultError(rep["status"])
+        users, total = await core.find_humans()
+        # TODO: handle pagination ! (currently we only display the first 100 users...)
+        return users
     except BackendNotAvailable as exc:
         raise JobResultError("offline") from exc
     except BackendConnectionError as exc:
-        raise JobResultError("error") from exc
-    try:
-        ret = []
-        for user in rep["results"]:
-            user_info, user_revoked_info = await core.remote_devices_manager.get_user(user)
-            ret.append((user_info, user_revoked_info))
-        return ret
-    except RemoteDevicesManagerBackendOfflineError as exc:
-        raise JobResultError("offline") from exc
-    except RemoteDevicesManagerError as exc:
         raise JobResultError("error") from exc
 
 
@@ -331,9 +318,9 @@ class UsersWidget(QWidget, Ui_UsersWidget):
             email=user_email,
         )
 
-    def add_user(self, user_name, human_handle, is_current_user, profile, certified_on, is_revoked):
+    def add_user(self, user_id, human_handle, is_current_user, profile, certified_on, is_revoked):
         button = UserButton(
-            user_name=user_name,
+            user_id=user_id,
             human_handle=human_handle,
             is_current_user=is_current_user,
             profile=profile,
@@ -375,15 +362,9 @@ class UsersWidget(QWidget, Ui_UsersWidget):
         )
 
     def on_revoke_success(self, job):
-        show_info(self, _("TEXT_USER_REVOKE_SUCCESS_user").format(user=job.ret))
-        for i in range(self.layout_users.count()):
-            item = self.layout_users.itemAt(i)
-            if item:
-                widget = item.widget()
-                if widget and isinstance(widget, UserButton):
-                    if widget.user_name == job.ret:
-                        widget.is_revoked = True
-                        return
+        button = job.ret
+        show_info(self, _("TEXT_USER_REVOKE_SUCCESS_user").format(user=button.user_display))
+        button.is_revoked = True
 
     def on_revoke_error(self, job):
         status = job.status
@@ -399,11 +380,11 @@ class UsersWidget(QWidget, Ui_UsersWidget):
             errmsg = _("TEXT_USER_REVOCATION_UNKNOWN_FAILURE")
         show_error(self, errmsg, exception=job.exc)
 
-    def revoke_user(self, user_name):
+    def revoke_user(self, user_button):
         result = ask_question(
             self,
             _("TEXT_USER_REVOCATION_TITLE"),
-            _("TEXT_USER_REVOCATION_INSTRUCTIONS_user").format(user=user_name),
+            _("TEXT_USER_REVOCATION_INSTRUCTIONS_user").format(user=user_button.user_display),
             [_("ACTION_USER_REVOCATION_CONFIRM"), _("ACTION_CANCEL")],
         )
         if result != _("ACTION_USER_REVOCATION_CONFIRM"):
@@ -413,19 +394,20 @@ class UsersWidget(QWidget, Ui_UsersWidget):
             ThreadSafeQtSignal(self, "revoke_error", QtToTrioJob),
             _do_revoke_user,
             core=self.core,
-            user_name=user_name,
+            user_id=user_button.user_id,
+            button=user_button,
         )
 
     def on_list_success(self, job):
         current_user = self.core.device.user_id
-        for user_info, user_revoked_info in job.ret:
+        for user in job.ret:
             self.add_user(
-                user_name=str(user_info.user_id),
-                human_handle=user_info.human_handle,
-                is_current_user=current_user == user_info.user_id,
-                profile=user_info.profile,
-                certified_on=user_info.timestamp,
-                is_revoked=user_revoked_info is not None,
+                user_id=user.user_id,
+                human_handle=user.human_handle,
+                is_current_user=current_user == user.user_id,
+                profile=user.profile,
+                certified_on=user.created_on,
+                is_revoked=user.is_revoked is not None,
             )
 
     def on_list_error(self, job):

@@ -5,8 +5,7 @@ from PyQt5.QtWidgets import QWidget, QMenu, QGraphicsDropShadowEffect
 from PyQt5.QtGui import QColor
 
 from parsec.api.protocol import InvitationType
-from parsec.core.backend_connection import backend_authenticated_cmds_factory
-from parsec.core.remote_devices_manager import RemoteDevicesManagerBackendOfflineError
+from parsec.core.backend_connection import BackendNotAvailable, backend_authenticated_cmds_factory
 from parsec.core.types import BackendInvitationAddr
 
 from parsec.core.gui.trio_thread import JobResultError, ThreadSafeQtSignal, QtToTrioJob
@@ -79,12 +78,8 @@ async def _do_invite_device(device, config):
 
 async def _do_list_devices(core):
     try:
-        current_device = core.device
-        _, _, devices = await core.remote_devices_manager.get_user_and_devices(
-            current_device.user_id
-        )
-        return devices
-    except RemoteDevicesManagerBackendOfflineError as exc:
+        return await core.get_user_devices_info()
+    except BackendNotAvailable as exc:
         raise JobResultError("offline") from exc
     # TODO : handle all errors from the remote_devices_manager and notify GUI
     # Raises:
@@ -168,11 +163,10 @@ class DevicesWidget(QWidget, Ui_DevicesWidget):
         current_device = self.core.device
         self.layout_devices.clear()
         for device in devices:
-            device_name = device.device_label
             self.add_device(
-                device_name,
-                is_current_device=device_name == current_device.device_id.device_name,
-                certified_on=device.timestamp,
+                device.device_name,
+                is_current_device=device.device_name == current_device.device_name,
+                certified_on=device.created_on,
             )
 
     def on_list_error(self, job):

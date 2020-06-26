@@ -15,3 +15,8 @@ class BackendNotAvailable(BackendConnectionError):
 
 class BackendConnectionRefused(BackendConnectionError):
     pass
+
+
+# TODO: hack needed by `LoggedCore.get_user_info`
+class BackendNotFoundError(BackendConnectionError):
+    pass

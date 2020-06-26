@@ -42,16 +42,21 @@ async def test_list_users(aqtbot, running_backend, logged_gui):
 
     assert u_w.layout_users.count() == 3
     item = u_w.layout_users.itemAt(0)
+
     assert item.widget().label_username.text() == "Adamy McAdamFace"
     assert item.widget().label_email.text() == ""
+
     assert item.widget().label_role.text() == "Administrator"
     assert item.widget().label_is_current.text() == ""
     item = u_w.layout_users.itemAt(1)
+
     assert item.widget().label_username.text() == "Alicey McAliceFace"
     assert item.widget().label_email.text() == "alice@example.com"
     assert item.widget().label_is_current.text() == "(you)"
+
     assert item.widget().label_role.text() == "Administrator"
     item = u_w.layout_users.itemAt(2)
+
     assert item.widget().label_username.text() == "Boby McBobFace"
     assert item.widget().label_email.text() == ""
     assert item.widget().label_is_current.text() == ""
@@ -72,7 +77,8 @@ async def test_revoke_user(
 
     assert u_w.layout_users.count() == 3
     bob_w = u_w.layout_users.itemAt(2).widget()
-    assert bob_w.user_name == "bob"
+    assert bob_w.user_display == "Boby McBobFace <bob@example.com>"
+    assert bob_w.user_id == "bob"
     assert bob_w.is_revoked is False
 
     monkeypatch.setattr(
@@ -87,7 +93,7 @@ async def test_revoke_user(
         assert autoclose_dialog.dialogs[0][0] == ""
         assert (
             autoclose_dialog.dialogs[0][1]
-            == "The user <b>bob</b> has been successfully revoked. Do no forget to reencrypt the workspaces that were shared with them."
+            == "The user <b>Boby McBobFace <bob@example.com></b> has been successfully revoked. Do no forget to reencrypt the workspaces that were shared with them."
         )
         assert bob_w.is_revoked is True
     else:
@@ -115,11 +121,11 @@ async def test_filter_users(aqtbot, running_backend, logged_gui):
     assert u_w.layout_users.count() == 3
 
     adam_w = u_w.layout_users.itemAt(0).widget()
-    assert adam_w.user_name == "adam"
+    assert adam_w.user_name == "Adamy McAdamFace <adam@example.com>"
     alice_w = u_w.layout_users.itemAt(1).widget()
-    assert alice_w.user_name == "alice"
+    assert alice_w.user_name == "Alicey McAliceFace <alice@example.com>"
     bob_w = u_w.layout_users.itemAt(2).widget()
-    assert bob_w.user_name == "bob"
+    assert bob_w.user_name == "Boby McBobFace <bob@example.com>"
 
     assert alice_w.isVisible() is True
     assert bob_w.isVisible() is True
@@ -138,7 +144,7 @@ async def test_filter_users(aqtbot, running_backend, logged_gui):
     assert adam_w.isVisible() is True
 
     async with aqtbot.wait_signal(u_w.filter_timer.timeout):
-        aqtbot.qtbot.keyClicks(u_w.line_edit_search, "mca")
+        aqtbot.qtbot.keyClicks(u_w.line_edit_search, "a")
     assert alice_w.isVisible() is True
     assert bob_w.isVisible() is False
     assert adam_w.isVisible() is True

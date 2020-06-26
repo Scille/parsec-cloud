@@ -43,7 +43,7 @@ async def test_process_while_offline(
     mock_clock, running_backend, alice_core, bob_user_fs, alice, bob
 ):
     mock_clock.autojump_threshold = 0
-    assert alice_core.backend_conn.status == BackendConnStatus.READY
+    assert alice_core.backend_status == BackendConnStatus.READY
 
     with running_backend.offline():
         with alice_core.event_bus.listen() as spy:
@@ -57,7 +57,7 @@ async def test_process_while_offline(
                     {"status": BackendConnStatus.LOST, "status_exc": spy.ANY},
                 )
                 await alice_core.wait_idle_monitors()
-            assert alice_core.backend_conn.status == BackendConnStatus.LOST
+            assert alice_core.backend_status == BackendConnStatus.LOST
 
         # Send message while alice is offline
         await _send_msg(
@@ -72,7 +72,7 @@ async def test_process_while_offline(
                 {"status": BackendConnStatus.READY, "status_exc": None},
             )
             await alice_core.wait_idle_monitors()
-        assert alice_core.backend_conn.status == BackendConnStatus.READY
+        assert alice_core.backend_status == BackendConnStatus.READY
         spy.assert_event_occured("pinged", {"ping": "hello from Bob !"})
 
 

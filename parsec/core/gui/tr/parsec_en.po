@@ -1279,19 +1279,19 @@ msgstr ""
 "</body></html>"
 
 msgid "TEXT_FILE_SIZE_TB"
-msgstr "Tb"
+msgstr "TB"
 
 msgid "TEXT_FILE_SIZE_GB"
-msgstr "Gb"
+msgstr "GB"
 
 msgid "TEXT_FILE_SIZE_MB"
-msgstr "Mb"
+msgstr "MB"
 
 msgid "TEXT_FILE_SIZE_KB"
-msgstr "Kb"
+msgstr "KB"
 
 msgid "TEXT_FILE_SIZE_B"
-msgstr "b"
+msgstr "B"
 
 msgid "TEXT_PARSEC_NEW_VERSION_AVAILABLE_version"
 msgstr "The version <b>{version}</b> of PARSEC is available!"

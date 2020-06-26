@@ -5,6 +5,7 @@ from parsec.core.backend_connection.exceptions import (
     BackendProtocolError,
     BackendNotAvailable,
     BackendConnectionRefused,
+    BackendNotFoundError,
 )
 from parsec.core.backend_connection.authenticated import (
     BackendAuthenticatedCmds,
@@ -34,6 +35,7 @@ __all__ = (
     "BackendProtocolError",
     "BackendNotAvailable",
     "BackendConnectionRefused",
+    "BackendNotFoundError",
     # Authenticated
     "BackendAuthenticatedCmds",
     "BackendConnStatus",

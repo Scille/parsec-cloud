@@ -92,9 +92,7 @@ class CentralWidget(QWidget, Ui_CentralWidget):
         self.devices_widget = DevicesWidget(self.core, self.jobs_ctx, self.event_bus, parent=self)
         self.widget_central.layout().insertWidget(0, self.devices_widget)
 
-        self._on_connection_state_changed(
-            self.core.backend_conn.status, self.core.backend_conn.status_exc
-        )
+        self._on_connection_state_changed(self.core.backend_status, self.core.backend_status_exc)
         self.show_mount_widget()
 
     def _on_folder_changed(self, workspace_name, path):
