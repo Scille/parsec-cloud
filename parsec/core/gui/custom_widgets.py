@@ -20,7 +20,7 @@ def ensure_string_size(s, size, font):
     metrics = QFontMetrics(font)
     if metrics.horizontalAdvance(s) > size:
         while metrics.horizontalAdvance(s + "...") > size:
-            s = s[:len(s) - 1]
+            s = s[: len(s) - 1]
         s += "..."
     return s
 

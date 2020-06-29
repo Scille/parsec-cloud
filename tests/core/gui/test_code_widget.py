@@ -5,6 +5,7 @@ from PyQt5 import QtCore
 
 from parsec.core.gui.custom_widgets import CodeInputWidget
 
+
 @pytest.mark.gui
 def test_code_input_right_choice(qtbot):
     w = CodeInputWidget()
@@ -22,6 +23,7 @@ def test_code_input_right_choice(qtbot):
     assert right_btn
     with qtbot.wait_signal(w.good_code_clicked):
         qtbot.mouseClick(right_btn, QtCore.Qt.LeftButton)
+
 
 @pytest.mark.gui
 def test_code_input_wrong_choice(qtbot):
