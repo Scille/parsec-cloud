@@ -180,6 +180,11 @@ async def winfsp_mountpoint_runner(
 
             # Run fs start in a thread
             await trio.to_thread.run_sync(fs.start)
+
+            # The system is too sensitive right after starting
+            await trio.sleep(0.010)  # 10 ms
+
+            # Make sure the mountpoint is ready
             await _wait_for_winfsp_ready(mountpoint_path)
 
             # Notify the manager that the mountpoint is ready

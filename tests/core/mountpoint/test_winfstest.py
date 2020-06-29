@@ -28,6 +28,7 @@ def file_system_path(mountpoint_service):
 
 @pytest.mark.slow
 @pytest.mark.mountpoint
+@pytest.mark.flaky(reruns=1)
 @pytest.mark.parametrize("test_module_path", TEST_MODULES, ids=[path.name for path in TEST_MODULES])
 def test_winfstest(test_module_path, file_system_path, process_runner):
 
@@ -54,9 +55,6 @@ def test_winfstest(test_module_path, file_system_path, process_runner):
     # Setting security attributes is not supported at the moment
     if "GetSetSecurity" in test_module_path.name:
         pytest.xfail()
-
-    # TODO: those tests are too unstable
-    pytest.xfail()
 
     # Run winfstest with the parsec mountpoint
     winfstest.test_winfs(test_module_path, file_system_path, process_runner)
