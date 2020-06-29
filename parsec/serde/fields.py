@@ -208,6 +208,9 @@ class CheckedConstant(Field):
         super().__init__(**kwargs)
         self.constant = constant
 
+    def _serialize(self, value, attr, obj):
+        return self.constant
+
     def _deserialize(self, value, attr, data):
         if value != self.constant:
             raise ValidationError(f"Invalid value, should be `{self.constant}`")
