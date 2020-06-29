@@ -41,7 +41,7 @@ Separation of the actors
 Parsec data model
 *****************
 
-- File Manifest : contains the name of the file, the lost of block composing it and the associated BLOCK_ENC_KEY.
+- File Manifest : contains the name of the file, the list of block composing it and the associated BLOCK_ENC_KEY.
 - Folder Manifest : index containing a set of entries, each entry being a File Manifest or another Folder Manifest.
 - Workspace Manifest : index similar to the Folder Manifest, but that can be shared between multiple users.
 - User Manifest : root index of each user containing the Workspaces Manifests shared with him.
