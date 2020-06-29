@@ -11,12 +11,16 @@ for read and write access.
 
 So before adding data to Parsec we must create a workspace:
 
-.. image:: share_workspace.gif
+.. image:: screen/create_workspace.png
     :align: center
-    :alt: Sharing workspace process
+    :alt: Creating workspace process
 
 The creator of the workspace automatically gets the ``Owner`` role, as shown
 above, and can then share the workspace with other users.
+
+.. image:: screen/share_workspace.png
+    :align: center
+    :alt: Sharing workspace process
 
 Regarding the different sharing roles:
 
@@ -30,28 +34,34 @@ Regarding the different sharing roles:
 
 .. warning::
 
-    Just like a user with a single device is bad because there is no fall-back if
-    something happens to it, having a workspace with a single user is dangerous!
+    Just like a user with a single device is bad because there is no fall-back if something happens to it, having a workspace with a single user is dangerous.
 
-    Strong cryptographic security prevent from data recovery if the user is
-    lost or cannot log in. For this reason it's better to share the workspace
-    with other users.
+    Strong cryptographic security prevent data recovery if the user is lost or cannot log in. For this reason it is better to share the workspace with other users.
 
 Upload data
 -----------
 
-Once the workspace is created, it appears in the file explorer as a regular
-folder.
+Once the workspace is created, it appears in the file explorer as a regular folder.
 
-.. image:: upload_files.gif
+.. image:: screens/parsec_in_file_explorer.png
     :align: center
-    :alt: Working with files in the workspace
+    :alt: Working with files in the workspace through system file explorer
 
-As you can see data copied from file explorer also appear into the Parsec
-client. On top of that the Parsec client also displays the current synchronization
-state of each file (showing whether the modification are only present locally or
-if they have been synced with the server and hence are visible by everybody with
-access to the workspace).
+.. note::
+
+    Although workspaces are mounted by default, they can be unmounted or mounted back using the toggle at the bottom left of the workspace card. When a workspace is unmounted, his data are not accessible in Parsec, and it is not reachable through the regular file explorer of the computer.
+
+    .. image:: screens/workspace_unmounted_mounted.png
+        :align: center
+        :alt: workspaces unmounted and mounted
+
+Parsec also proposes its own file manager, accessible when clicking on a mounted workspace.
+
+.. image:: screens/parsec_file_explorer.png
+    :align: center
+    :alt: Parsec in file explorer
+
+Data copied from file explorer also appear into the Parsec client. On top of that the Parsec client also displays the current synchronization state of each file (showing whether the modification are only present locally or if they have been synced with the server and hence are visible by everybody with access to the workspace).
 
 .. note::
 

@@ -227,44 +227,54 @@ msgid "Create new users"
 msgstr "Créer de nouveaux utilisateurs"
 
 #: ../../userguide/new_user.rst:6
-msgid "Now that our organization is ready, it's time to start inviting new users!"
-msgstr "Maintenant que notre organisation est prête, il est temps d'inviter de nouveaux utilisateurs !"
+msgid "Now that our organization is ready, we can start inviting new users."
+msgstr "Maintenant que notre organisation est prête, nous pouvons inviter de nouveaux utilisateurs."
 
 #: ../../userguide/new_user.rst:8
 msgid "In Parsec, inviting a user is a critical operation that aims at building trust toward an unknown user the inviting using has vouched for. For this reason the operation requires both the invitee and inviting users to be connected to the Parsec server at the same time."
 msgstr "Dans Parsec, inviter un utilisateur est une opération critique qui vise à établir de la confiance envers un utilisateur inconnu par le biais de l'utilisateur ayant décidé de l'inviter. Pour cette raison cette opération nécessite que l'utilisateur invité et celui invitant soient tous les deux connectés au serveur Parsec en même temps."
+
+msgid "Send invite"
+msgstr "Envoi de l'invitation"
 
 #: ../../userguide/new_user.rst:16
 msgid "Inviting a user is done from the Parsec client:"
 msgstr "Inviter un nouveau périphérique se fait via le client Parsec:"
 
 #: ../../userguide/new_user.rst:22
-msgid "Once started the invitation is pending (note you can cancel it though) and an invitation URL and token are displayed. Those URL and token should be provided to the invitee."
-msgstr "Une fois commencée, l'invitation apparait comme en attente (notez qu'il est toutefois possible de l'annuler) et un lien d'invitation ainsi qu'un code sont affichés. Ces informations doivent maintenant être transmises à l'invité."
+msgid "Once started the invitation is pending (note you can cancel it though) and the invitee must check his emails for an invitation link that has been sent to him."
+msgstr "Une fois commencée, l'invitation apparait comme en attente (notez qu'il est toutefois possible de l'annuler) et l'invité doit recevoir un lien d'invitation par email."
 
 #: ../../userguide/new_user.rst:26
-msgid "It's also during this step that is chosen if the invitee will have administrator rights over the organization. Make sure to double check this as you won't be able to change that later!"
-msgstr "C'est aussi pendant cette étape qu'il est décidé si l'utilisateur invité bénéficiera des droits d'administration sur l'organisation. Assurez-vous de vérifier ce paramètre car il ne sera plus modifiable par la suite !"
-
-#: ../../userguide/new_user.rst:32
-msgid "User invitation URL and token should be provided to the invitee by two different means of communication (i.g. URL sent by email and token by phone)."
-msgstr "Le lien et le code d'invitation doivent être fournis à l'invité par deux canaux de communication différent (par exemple en envoyant le lien par mail et en dictant le code par téléphone)."
+msgid "It's also during this step that is chosen if the invitee will have administrator rights over the organization. Make sure to double check this as you won't be able to change that later."
+msgstr "C'est aussi pendant cette étape qu'il est décidé si l'utilisateur invité bénéficiera des droits d'administration sur l'organisation. Assurez-vous de vérifier ce paramètre car il ne sera plus modifiable par la suite."
 
 #: ../../userguide/new_user.rst:41
 msgid "Only an administrator of the organization can invite a new user"
 msgstr "Seul un administrateur de l'organisation peut inviter de nouveau utilisateurs"
 
-#: ../../userguide/new_user.rst:46
-msgid "From the invitee user's computer, clicking on the invitation URL should open up Parsec client:"
-msgstr "Depuis l'ordinateur de l'invité, cliquer sur le lien d'invitation devrait ouvrir le client Parsec :"
+msgid "Receive invite"
+msgstr "Réception de l'invitation"
 
-#: ../../userguide/new_user.rst:53
-msgid "That's it! The invitee user's Parsec client has been configured and is ready to log in."
-msgstr "C'est bon ! Le client Parsec de l'utilisateur invité a été configuré et est maintenant prêt à s'authentifier."
+#: ../../userguide/new_user.rst:32
+msgid "The invitee should receive a link by email enabling him to register. Clicking on the invitation URL should open up the Parsec client. The token exchange will now start."
+msgstr "L'invité a du recevoir par email le code lui permettant de s'inscrire. Cliquer sur cette URL d'activation devrait ouvrir le client Parsec. L'échange de token peut maintenant commencer."
+
+#: ../../userguide/new_user.rst:46
+msgid "If clicking on the URL doesn't work, you can also use the ``Enter a URL manually`` dialog."
+msgstr "Si cliquer sur le lien d'invitation ne fonctionne pas, il est possible d'utiliser le menu ``Enter a URL manually``"
 
 #: ../../userguide/new_user.rst:60
-msgid "The inviting user will also be notified of the successful claim."
-msgstr "L'utilisateur ayant créé l'invitation sera aussi informé de la réussite de l'opération."
+msgid "The token exchange is a verification process that aims at ensuring that the two users are not victim of a `Man-in-the-middle attack <https://en.wikipedia.org/wiki/Man-in-the-middle_attack>`_. You can read more about that process at the :ref:`cryptography <doc_cryptography>` section."
+msgstr "L'échange de token est un processus de vérification qui a pour but de s'assurer que les deux utilisateurs ne sont pas victimes d'une `Attaque de l'homme du milieu <https://fr.wikipedia.org/wiki/Attaque_de_l%27homme_du_milieu>`_. Il est possible d'en apprendre plus à la section :ref:`cryptography <doc_cryptography>`"
+
+#: ../../userguide/new_user.rst:60
+msgid "The inviting and the invitee will have to exchange tokens in person or on an already verified canal. For that, they will both be given a token, or a list of tokens : the user with the list must click on the token displayed by the Parsec client of the other user. If the token one of them is given is not present in the list, it means there is a very high probability that one of the user is victim of a `Man-in-the-middle attack <https://en.wikipedia.org/wiki/Man-in-the-middle_attack>`_."
+msgstr "L'inviteur et l'invité doivent échanger les tokens en personne où par un canal considéré comme sûr. Pour cela, ils obtiendront chacun à leur tour un token, ou une liste de token : l'utilisateur auquel une liste est présentée doit cliquer sur le token affiché par le client Parsec de l'autre utilisateur. Si le token donné à l'un des deux ne se trouve pas dans la liste présenté à l'autre, cela signifie qu'il y a une très forte probabilité que l'un des deux utilisateur soit victime d'une `Attaque de l'homme du milieu <https://fr.wikipedia.org/wiki/Attaque_de_l%27homme_du_milieu>`_."
+
+#: ../../userguide/new_user.rst:53
+msgid "The invitee user’s Parsec client has been configured and is ready to log in."
+msgstr "Le client Parsec de l'utilisateur invité a été configuré et est maintenant prêt à s'authentifier."
 
 
 #############################
@@ -377,11 +387,11 @@ msgid "Owner: same as Manager, but can also give Manager and Owner roles to othe
 msgstr "Propriétaire: comme Gérant, mais peut aussi donner les roles Gérant et Propriétaire à d'autres utilisateurs. En plus de cela, les Propriétaires sont responsable des opérations de maintenance comme le :ref:`re-chiffrement de l'espace de travail <doc_userguide_revoke_user_workspace_re_encryption>`."
 
 #: ../../userguide/share_data.rst:33
-msgid "Just like a user with a single device is bad because there is no fall-back if something happens to it, having a workspace with a single user is dangerous!"
-msgstr "De la même façon qu'un utilisateur avec un seul périphérique est une mauvaise idée car il ne dispose pas de moyen de récupération en cas de problème, avoir un espace de travail contenant un seul utilisateur est dangereux !"
+msgid "Just like a user with a single device is bad because there is no fall-back if something happens to it, having a workspace with a single user is dangerous."
+msgstr "De la même façon qu'un utilisateur avec un seul périphérique est une mauvaise idée car il ne dispose pas de moyen de récupération en cas de problème, avoir un espace de travail contenant un seul utilisateur est dangereux."
 
 #: ../../userguide/share_data.rst:36
-msgid "Strong cryptographic security prevent from data recovery if the user is lost or cannot log in. For this reason it's better to share the workspace with other users."
+msgid "Strong cryptographic security prevent data recovery if the user is lost or cannot log in. For this reason it is better to share the workspace with other users."
 msgstr "Le chiffrement des données empêche toute récupération si cet utilisateur n'est plus en mesure de se connecter au système. Pour cette raison il est recommandé de partage l'espace de travail avec d'autres utilisateurs."
 
 #: ../../userguide/share_data.rst:41
@@ -392,8 +402,14 @@ msgstr "Importer des données"
 msgid "Once the workspace is created, it appears in the file explorer as a regular folder."
 msgstr "Une fois l'espace de travail créé, il apparait dans l'explorateur de fichiers comme un répertoire classique."
 
+msgid "Although workspaces are mounted by default, they can be unmounted or mounted back using the toggle at the bottom left of the workspace card. When a workspace is unmounted, his data are not accessible in Parsec, and it is not reachable through the regular file explorer of the computer."
+msgstr: "Bien que les workspaces soient montés par défaut, ils peuvent être démontés ou remontés en utilisant le bouton en bas à gauche de chaque carte de workspace. Quand un workspace est démonté, ses données ne sont pas accessibles dans Parsec, et il n'est pas non plus accessible dans l'explorateur de fichier par défaut de l'appareil."
+
+msgid "Parsec also proposes its own file manager, accessible when clicking on a mounted workspace."
+msgstr "Parsec propose aussi son propre système de fichier, accessible par un clic sur un workspace monté."
+
 #: ../../userguide/share_data.rst:50
-msgid "As you can see data copied from file explorer also appear into the Parsec client. On top of that the Parsec client also displays the current synchronization state of each file (showing whether the modification are only present locally or if they have been synced with the server and hence are visible by everybody with access to the workspace)."
+msgid "Data copied from file explorer also appear into the Parsec client. On top of that the Parsec client also displays the current synchronization state of each file (showing whether the modification are only present locally or if they have been synced with the server and hence are visible by everybody with access to the workspace)."
 msgstr "Les données copiées depuis l'explorateur de fichiers apparaissent dans le client Parsec. En plus de ça le client Parsec affiche aussi l'état de la synchronisation de chaque fichier (c'est à dire si les modifications d'un fichier sont présentent uniquement en local ou bien si elles ont été synchronisées avec le serveur Parsec et sont donc visibles par les autres utilisateurs ayant accès à l'espace de travail)"
 
 #: ../../userguide/share_data.rst:58

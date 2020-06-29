@@ -3,58 +3,50 @@
 Create new users
 ================
 
-Now that our organization is ready, it's time to start inviting new users!
+Now that our organization is ready, we can start inviting new users.
 
-In Parsec, inviting a user is a critical operation that aims at building
-trust toward an unknown user the inviting using has vouched for.
-For this reason the operation requires both the invitee and inviting users to
-be connected to the Parsec server at the same time.
+In Parsec, inviting a user is a critical operation that aims at building trust toward an unknown user the inviting using has vouched for. For this reason the operation requires both the invitee and inviting users to be connected to the Parsec server at the same time.
 
-Invite step
+Send invite
 -----------
 
 Inviting a user is done from the Parsec client:
 
-.. image:: invite_user.gif
+.. image:: screens/click_on_invite_user.png
     :align: center
-    :alt: User invitation process
+    :alt: Click on Invite User
 
-Once started the invitation is pending (note you can cancel it though) and an
-invitation URL and token are displayed. Those URL and token should be provided
-to the invitee.
+Once started the invitation is pending (note you can cancel it though) and the invitee must check his emails for an invitation link that has been sent to him.
 
-It's also during this step that is chosen if the invitee will have administrator
-rights over the organization. Make sure to double check this as you won't be
-able to change that later!
-
-.. warning::
-
-    User invitation URL and token should be provided to the invitee by two
-    different means of communication (i.g. URL sent by email and token by phone).
-
-    This is important to ensure protection against
-    `man-in-the-middle <https://en.wikipedia.org/wiki/Man-in-the-middle_attack>`_
-    attack.
+It's also during this step that is chosen if the invitee will have administrator rights over the organization. Make sure to double check this as you won't be able to change that later.
 
 .. note::
 
     Only an administrator of the organization can invite a new user
 
-Claim step
-----------
+Receive invite
+--------------
 
-From the invitee user's computer, clicking on the invitation URL should open up
-Parsec client:
-
-.. image:: claim_user.gif
-    :align: center
-    :alt: User claim process
-
-That's it! The invitee user's Parsec client has been configured and is ready
-to log in.
+The invitee should receive a link by email enabling him to register. Clicking on the invitation URL should open up the Parsec client. The token exchange will now start.
 
 .. note::
 
-    - If clicking on the URL doesn't work, you can also use the
-      ``Enter a URL manually`` dialog.
-    - The inviting user will also be notified of the successful claim.
+    If clicking on the URL doesn't work, you can also use the ``Enter a URL manually`` dialog.
+
+
+Token exchange
+--------------
+
+The token exchange is a verification process that aims at ensuring that the two users are not victim of a `Man-in-the-middle attack <https://en.wikipedia.org/wiki/Man-in-the-middle_attack>`_. You can read more about that process at the :ref:`cryptography <doc_cryptography>` section.
+
+The inviting and the invitee will have to exchange tokens in person or on an already verified canal. For that, they will both be given a token, or a list of tokens : the user with the list must click on the token displayed by the Parsec client of the other user. If the token one of them is given is not present in the list, it means there is a very high probability that one of the user is victim of a `Man-in-the-middle attack <https://en.wikipedia.org/wiki/Man-in-the-middle_attack>`_.
+
+.. image:: screens/token_echange_token_display.png
+    :align: center
+    :alt: Display of a token that has to be transmitted during a token exchange
+
+.. image:: screens/token_echange_token_list.png
+    :align: center
+    :alt: List of tokens displayed during a token exchange
+
+The invitee user’s Parsec client has been configured and is ready to log in.
