@@ -1,6 +1,7 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
 
 from marshmallow import Schema, MarshalResult, UnmarshalResult, ValidationError, post_load
+from typing import Union, Dict
 
 from enum import Enum
 
@@ -91,13 +92,13 @@ class OneOfSchema(BaseSchema):
     setting `type_field` class property.
     """
 
-    type_field = "type"
-    type_schemas = {}
-    fallback_type_schema = None
-    _instantiated_schemas = None
-    _instantiated_fallback_schema = None
+    type_field: str = "type"
+    type_schemas: Dict[Enum, Schema] = {}
+    fallback_type_schema: Schema = None
+    _instantiated_schemas: Dict[Union[Enum, str], Schema] = None
+    _instantiated_fallback_schema: Schema = None
 
-    def _instantiate_schemas(self):
+    def _build_schemas(self):
         enum_types = {type(k) for k in self.type_schemas.keys()}
         if len(enum_types) != 1 or not issubclass(enum_types.pop(), Enum):
             raise ValueError("type_schemas key can only be one Enum")
@@ -112,9 +113,9 @@ class OneOfSchema(BaseSchema):
         if self.fallback_type_schema:
             self._instantiated_fallback_schema = self.fallback_type_schema()
 
-    def _get_schema(self, type):
+    def _get_schema(self, type: Union[Enum, str]):
         if self._instantiated_schemas is None:
-            self._instantiate_schemas()
+            self._build_schemas()
         return self._instantiated_schemas.get(type, self._instantiated_fallback_schema)
 
     def get_obj_type(self, obj):
@@ -210,8 +211,8 @@ class OneOfSchema(BaseSchema):
 
 
 class OneOfSchemaLegacy(OneOfSchema):
-    _instantiated_schemas = None
-    _instantiated_fallback_schema = None
+    _instantiated_schemas: Dict[str, Schema] = None
+    _instantiated_fallback_schema: Schema = None
 
     def _get_schema(self, type):
         if self._instantiated_schemas is None:
@@ -219,7 +220,7 @@ class OneOfSchemaLegacy(OneOfSchema):
                 k: v if isinstance(v, Schema) else v() for k, v in self.type_schemas.items()
             }
 
-            if self.fallback_type_schema and not isinstance(self.fallback_type_schema, Schema):
+            if self.fallback_type_schema:
                 self._instantiated_fallback_schema = self.fallback_type_schema()
 
         return self._instantiated_schemas.get(type, self._instantiated_fallback_schema)

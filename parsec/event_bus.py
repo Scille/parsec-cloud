@@ -16,7 +16,7 @@ class EventWaiter:
         self._event_occured = trio.Event()
         self._event_result = None
 
-    def _cb(self, event: str, **kwargs):
+    def _cb(self, event: Enum, **kwargs):
         if self._event_occured.is_set():
             return
         if self._filter and not self._filter(event, **kwargs):
@@ -43,7 +43,7 @@ class EventBus:
     def connection_context(self):
         return EventBusConnectionContext(self)
 
-    def send(self, event: str, **kwargs):
+    def send(self, event: Enum, **kwargs):
         # Do not log meta events (event.connected and event.disconnected)
         if "event_name" not in kwargs:
             logger.debug("Send event", event_name=event, **kwargs)
@@ -59,7 +59,7 @@ class EventBus:
                 )
 
     @contextmanager
-    def waiter_on(self, event: str, *, filter=None):
+    def waiter_on(self, event: Enum, *, filter=None):
         ew = EventWaiter(filter)
         self.connect(event, ew._cb)
         try:
@@ -69,7 +69,7 @@ class EventBus:
             self.disconnect(event, ew._cb)
 
     @contextmanager
-    def waiter_on_first(self, *events: List[str], filter=None):
+    def waiter_on_first(self, *events: List[Enum], filter=None):
         ew = EventWaiter(filter)
         for event in events:
             self.connect(event, ew._cb)
@@ -80,12 +80,12 @@ class EventBus:
             for event in events:
                 self.disconnect(event, ew._cb)
 
-    def connect(self, event: str, cb):
+    def connect(self, event: Enum, cb):
         self._event_handlers[event].append(cb)
         self.send("event.connected", event_name=event)
 
     @contextmanager
-    def connect_in_context(self, *events: List[str]):
+    def connect_in_context(self, *events: List[Enum]):
         for event, cb in events:
             self.connect(event, cb)
         try:
@@ -95,7 +95,7 @@ class EventBus:
             for event, cb in events:
                 self.disconnect(event, cb)
 
-    def disconnect(self, event: str, cb):
+    def disconnect(self, event: Enum, cb):
         self._event_handlers[event].remove(cb)
         self.send("event.disconnected", event_name=event)
 
@@ -116,22 +116,22 @@ class EventBusConnectionContext:
             self.event_bus.disconnect(event, cb)
         self.to_disconnect.clear()
 
-    def send(self, event: str, **kwargs):
+    def send(self, event: Enum, **kwargs):
         self.event_bus.send(event, **kwargs)
 
-    def waiter_on(self, event: str):
+    def waiter_on(self, event: Enum):
         return self.event_bus.waiter_on(event)
 
-    def waiter_on_first(self, *events: List[str]):
+    def waiter_on_first(self, *events: List[Enum]):
         return self.event_bus.waiter_on_first(*events)
 
-    def connect(self, event: str, cb):
+    def connect(self, event: Enum, cb):
         self.to_disconnect.append((event, cb))
         self.event_bus.connect(event, cb)
 
-    def connect_in_context(self, *events: List[str]):
+    def connect_in_context(self, *events: List[Enum]):
         return self.event_bus.connect_in_context(*events)
 
-    def disconnect(self, event: str, cb):
+    def disconnect(self, event: Enum, cb):
         self.event_bus.disconnect(event, cb)
         self.to_disconnect.remove((event, cb))
