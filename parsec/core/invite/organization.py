@@ -9,6 +9,7 @@ from parsec.api.protocol import HumanHandle, DeviceID
 from parsec.core.types import LocalDevice, BackendOrganizationAddr
 from parsec.core.local_device import generate_new_device
 from parsec.core.backend_connection import APIV1_BackendAnonymousCmds
+from parsec.core.invite.exceptions import InviteNotAvailableError, InviteError
 
 
 async def bootstrap_organization(
@@ -57,7 +58,7 @@ async def bootstrap_organization(
     device_certificate = device_certificate.dump_and_sign(root_signing_key)
     redacted_device_certificate = redacted_device_certificate.dump_and_sign(root_signing_key)
 
-    await cmds.organization_bootstrap(
+    rep = await cmds.organization_bootstrap(
         organization_id=cmds.addr.organization_id,
         bootstrap_token=cmds.addr.token,
         root_verify_key=root_verify_key,
@@ -66,5 +67,9 @@ async def bootstrap_organization(
         redacted_user_certificate=redacted_user_certificate,
         redacted_device_certificate=redacted_device_certificate,
     )
+    if rep["status"] in ("not_found", "already_bootstrapped"):
+        raise InviteNotAvailableError()
+    elif rep["status"] != "ok":
+        raise InviteError(f"Backend error: {rep}")
 
     return device

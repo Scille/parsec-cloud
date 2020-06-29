@@ -259,11 +259,21 @@ async def test_organization_expired_create_and_bootstrap(
     )
     assert rep == {"status": "ok", "bootstrap_token": ANY, "expiration_date": expiration_date}
 
-    # 2) Bootstrap is not possible
+    # 2) Connection to backend for bootstrap purpose is not possible
 
     with pytest.raises(HandshakeOrganizationExpired):
         async with apiv1_backend_sock_factory(backend, neworg.organization_id):
             pass
+
+    # 3) Now re-create the organization to overwrite the expiration date
+
+    rep = await organization_create(administration_backend_sock, neworg.organization_id)
+    assert rep == {"status": "ok", "bootstrap_token": ANY}
+
+    # 4) This time, bootstrap is possible
+
+    async with apiv1_backend_sock_factory(backend, neworg.organization_id):
+        pass
 
 
 @pytest.mark.trio
