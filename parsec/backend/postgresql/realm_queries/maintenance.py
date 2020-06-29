@@ -160,7 +160,7 @@ INSERT INTO vlob_encryption_revision(
 
     await send_signal(
         conn,
-        BackendEvent.realm_maintenance_started,
+        BackendEvent.REALM_MAINTENANCE_STARTED,
         organization_id=organization_id,
         author=author,
         realm_id=realm_id,
@@ -239,7 +239,7 @@ WHERE
 
     await send_signal(
         conn,
-        BackendEvent.realm_maintenance_finished,
+        BackendEvent.REALM_MAINTENANCE_FINISHED,
         organization_id=organization_id,
         author=author,
         realm_id=realm_id,

@@ -104,7 +104,7 @@ class MemoryInviteComponent(BaseInviteComponent):
         # Note that in case of conduit reset, this signal will lure the peer into
         # thinking we have answered so he will wakeup and take into account the reset
         await self._send_event(
-            BackendEvent.invite_conduit_updated, organization_id=organization_id, token=token
+            BackendEvent.INVITE_CONDUIT_UPDATED, organization_id=organization_id, token=token
         )
 
         return ConduitListenCtx(
@@ -142,7 +142,7 @@ class MemoryInviteComponent(BaseInviteComponent):
                 conduit.greeter_payload = None
                 conduit.claimer_payload = None
                 await self._send_event(
-                    BackendEvent.invite_conduit_updated,
+                    BackendEvent.INVITE_CONDUIT_UPDATED,
                     organization_id=ctx.organization_id,
                     token=ctx.token,
                 )
@@ -229,7 +229,7 @@ class MemoryInviteComponent(BaseInviteComponent):
             org.invitations[invitation.token] = invitation
 
         await self._send_event(
-            BackendEvent.invite_status_changed,
+            BackendEvent.INVITE_STATUS_CHANGED,
             organization_id=organization_id,
             greeter=invitation.greeter_user_id,
             token=invitation.token,
@@ -249,7 +249,7 @@ class MemoryInviteComponent(BaseInviteComponent):
         org = self._organizations[organization_id]
         org.deleted_invitations[token] = (on, reason)
         await self._send_event(
-            BackendEvent.invite_status_changed,
+            BackendEvent.INVITE_STATUS_CHANGED,
             organization_id=organization_id,
             greeter=greeter,
             token=token,
@@ -277,7 +277,7 @@ class MemoryInviteComponent(BaseInviteComponent):
         self, organization_id: OrganizationID, greeter: UserID, token: UUID
     ) -> None:
         await self._send_event(
-            BackendEvent.invite_status_changed,
+            BackendEvent.INVITE_STATUS_CHANGED,
             organization_id=organization_id,
             greeter=greeter,
             token=token,
@@ -288,7 +288,7 @@ class MemoryInviteComponent(BaseInviteComponent):
         self, organization_id: OrganizationID, greeter: UserID, token: UUID
     ) -> None:
         await self._send_event(
-            BackendEvent.invite_status_changed,
+            BackendEvent.INVITE_STATUS_CHANGED,
             organization_id=organization_id,
             greeter=greeter,
             token=token,

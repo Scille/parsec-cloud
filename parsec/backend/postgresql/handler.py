@@ -184,9 +184,9 @@ class PGHandler:
         # Convert strings to enums
         signal = STR_TO_BACKEND_EVENTS[signal]
         # Kind of a hack, but fine enough for the moment
-        if signal == BackendEvent.realm_roles_updated:
+        if signal == BackendEvent.REALM_ROLES_UPDATED:
             data["role"] = STR_TO_REALM_ROLE.get(data.pop("role_str"))
-        elif signal == BackendEvent.invite_status_changed:
+        elif signal == BackendEvent.INVITE_STATUS_CHANGED:
             data["status"] = STR_TO_INVITATION_STATUS.get(data.pop("status_str"))
         self.event_bus.send(signal, **data)
 

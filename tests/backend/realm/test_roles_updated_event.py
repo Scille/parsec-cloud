@@ -5,7 +5,7 @@ import pendulum
 from uuid import UUID
 
 from parsec.api.data import RealmRoleCertificateContent
-from parsec.api.protocol import RealmRole, Event
+from parsec.api.protocol import RealmRole, APIEvent
 from parsec.backend.backend_events import BackendEvent
 
 from tests.backend.test_events import events_subscribe, events_listen_nowait
@@ -23,7 +23,7 @@ async def test_realm_create(backend, alice, alice_backend_sock):
     with backend.event_bus.listen() as spy:
         rep = await realm_create(alice_backend_sock, certif)
         assert rep == {"status": "ok"}
-        await spy.wait_with_timeout(BackendEvent.realm_roles_updated)
+        await spy.wait_with_timeout(BackendEvent.REALM_ROLES_UPDATED)
 
 
 @pytest.mark.trio
@@ -44,7 +44,7 @@ async def test_roles_updated_for_participant(
             assert rep == {"status": "ok"}
 
             await spy.wait_with_timeout(
-                BackendEvent.realm_roles_updated,
+                BackendEvent.REALM_ROLES_UPDATED,
                 {
                     "organization_id": alice.organization_id,
                     "author": alice.device_id,
@@ -58,7 +58,7 @@ async def test_roles_updated_for_participant(
         rep = await events_listen_nowait(bob_backend_sock)
         assert rep == {
             "status": "ok",
-            "event": Event.realm_roles_updated,
+            "event": APIEvent.REALM_ROLES_UPDATED,
             "realm_id": realm,
             "role": role,
         }

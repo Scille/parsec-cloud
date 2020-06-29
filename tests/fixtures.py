@@ -522,7 +522,7 @@ def backend_data_binder_factory(request, backend_addr, initial_user_manifest_sta
                 await spy.wait_multiple_with_timeout(
                     [
                         (
-                            BackendEvent.realm_roles_updated,
+                            BackendEvent.REALM_ROLES_UPDATED,
                             {
                                 "organization_id": author.organization_id,
                                 "author": author.device_id,
@@ -532,7 +532,7 @@ def backend_data_binder_factory(request, backend_addr, initial_user_manifest_sta
                             },
                         ),
                         (
-                            BackendEvent.realm_vlobs_updated,
+                            BackendEvent.REALM_VLOBS_UPDATED,
                             {
                                 "organization_id": author.organization_id,
                                 "author": author.device_id,

@@ -4,7 +4,7 @@ import pytest
 from uuid import UUID
 from pendulum import Pendulum
 
-from parsec.api.protocol import RealmRole, Event
+from parsec.api.protocol import RealmRole, APIEvent
 from parsec.backend.realm import RealmGrantedRole
 from parsec.backend.backend_events import BackendEvent
 
@@ -33,7 +33,7 @@ async def test_vlobs_updated_event_ok(
             timestamp=NOW,
             blob=b"v1",
         )
-        await spy.wait_with_timeout(BackendEvent.realm_vlobs_updated)
+        await spy.wait_with_timeout(BackendEvent.REALM_VLOBS_UPDATED)
 
     # Start listening events
     await events_subscribe(alice_backend_sock)
@@ -77,7 +77,7 @@ async def test_vlobs_updated_event_ok(
         await spy.wait_multiple_with_timeout(
             [
                 (
-                    BackendEvent.realm_vlobs_updated,
+                    BackendEvent.REALM_VLOBS_UPDATED,
                     {
                         "organization_id": alice2.organization_id,
                         "author": alice2.device_id,
@@ -88,7 +88,7 @@ async def test_vlobs_updated_event_ok(
                     },
                 ),
                 (
-                    BackendEvent.realm_vlobs_updated,
+                    BackendEvent.REALM_VLOBS_UPDATED,
                     {
                         "organization_id": alice2.organization_id,
                         "author": alice2.device_id,
@@ -99,7 +99,7 @@ async def test_vlobs_updated_event_ok(
                     },
                 ),
                 (
-                    BackendEvent.realm_vlobs_updated,
+                    BackendEvent.REALM_VLOBS_UPDATED,
                     {
                         "organization_id": alice2.organization_id,
                         "author": alice2.device_id,
@@ -121,7 +121,7 @@ async def test_vlobs_updated_event_ok(
     assert reps == [
         {
             "status": "ok",
-            "event": Event.realm_vlobs_updated,
+            "event": APIEvent.REALM_VLOBS_UPDATED,
             "realm_id": other_realm,
             "checkpoint": 1,
             "src_id": OTHER_VLOB_ID,
@@ -129,7 +129,7 @@ async def test_vlobs_updated_event_ok(
         },
         {
             "status": "ok",
-            "event": Event.realm_vlobs_updated,
+            "event": APIEvent.REALM_VLOBS_UPDATED,
             "realm_id": realm,
             "checkpoint": 2,
             "src_id": VLOB_ID,
@@ -137,7 +137,7 @@ async def test_vlobs_updated_event_ok(
         },
         {
             "status": "ok",
-            "event": Event.realm_vlobs_updated,
+            "event": APIEvent.REALM_VLOBS_UPDATED,
             "realm_id": realm,
             "checkpoint": 3,
             "src_id": VLOB_ID,
@@ -185,9 +185,9 @@ async def test_vlobs_updated_event_handle_self_events(backend, alice_backend_soc
         # Wait for events to be processed by the backend
         await spy.wait_multiple_with_timeout(
             [
-                BackendEvent.realm_vlobs_updated,
-                BackendEvent.realm_vlobs_updated,
-                BackendEvent.realm_vlobs_updated,
+                BackendEvent.REALM_VLOBS_UPDATED,
+                BackendEvent.REALM_VLOBS_UPDATED,
+                BackendEvent.REALM_VLOBS_UPDATED,
             ]
         )
 
@@ -223,7 +223,7 @@ async def test_vlobs_updated_event_not_participant(backend, alice_backend_sock, 
 
         # Wait for events to be processed by the backend
         await spy.wait_multiple_with_timeout(
-            [BackendEvent.realm_vlobs_updated, BackendEvent.realm_vlobs_updated]
+            [BackendEvent.REALM_VLOBS_UPDATED, BackendEvent.REALM_VLOBS_UPDATED]
         )
 
     rep = await events_listen_nowait(alice_backend_sock)
@@ -277,9 +277,9 @@ async def test_vlobs_updated_event_realm_created_after_subscribe(
         # Wait for events to be processed by the backend
         await spy.wait_multiple_with_timeout(
             [
-                BackendEvent.realm_roles_updated,
-                BackendEvent.realm_vlobs_updated,
-                BackendEvent.realm_vlobs_updated,
+                BackendEvent.REALM_ROLES_UPDATED,
+                BackendEvent.REALM_VLOBS_UPDATED,
+                BackendEvent.REALM_VLOBS_UPDATED,
             ]
         )
 
@@ -287,7 +287,7 @@ async def test_vlobs_updated_event_realm_created_after_subscribe(
     rep = await events_listen_nowait(alice_backend_sock)
     assert rep == {
         "status": "ok",
-        "event": Event.realm_roles_updated,
+        "event": APIEvent.REALM_ROLES_UPDATED,
         "realm_id": realm_id,
         "role": RealmRole.OWNER,
     }
@@ -297,7 +297,7 @@ async def test_vlobs_updated_event_realm_created_after_subscribe(
         rep = await events_listen_nowait(alice_backend_sock)
         assert rep == {
             "status": "ok",
-            "event": Event.realm_vlobs_updated,
+            "event": APIEvent.REALM_VLOBS_UPDATED,
             "realm_id": realm_id,
             "checkpoint": 1,
             "src_id": VLOB_ID,
@@ -308,7 +308,7 @@ async def test_vlobs_updated_event_realm_created_after_subscribe(
     rep = await events_listen_nowait(alice_backend_sock)
     assert rep == {
         "status": "ok",
-        "event": Event.realm_vlobs_updated,
+        "event": APIEvent.REALM_VLOBS_UPDATED,
         "realm_id": realm_id,
         "checkpoint": 2,
         "src_id": VLOB_ID,

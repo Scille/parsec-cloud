@@ -50,7 +50,7 @@ async def test_device_create_ok(
 
         # No guarantees this event occurs before the command's return
         await spy.wait_with_timeout(
-            BackendEvent.device_created,
+            BackendEvent.DEVICE_CREATED,
             {
                 "organization_id": alice_nd.organization_id,
                 "device_id": alice_nd.device_id,

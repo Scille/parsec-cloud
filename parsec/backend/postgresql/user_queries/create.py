@@ -212,7 +212,7 @@ async def _create_user(
     # TODO: should be no longer needed once APIv1 is removed
     await send_signal(
         conn,
-        BackendEvent.user_created,
+        BackendEvent.USER_CREATED,
         organization_id=organization_id,
         user_id=user.user_id,
         user_certificate=user.user_certificate,
@@ -269,7 +269,7 @@ async def query_create_device(
     await _create_device(conn, organization_id, device, encrypted_answer)
     await send_signal(
         conn,
-        BackendEvent.device_created,
+        BackendEvent.DEVICE_CREATED,
         organization_id=organization_id,
         device_id=device.device_id,
         device_certificate=device.device_certificate,

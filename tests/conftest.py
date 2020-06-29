@@ -593,7 +593,7 @@ def core_factory(
                 # switches online concurrently with the test.
                 if "running_backend" in request.fixturenames:
                     await spy.wait_with_timeout(
-                        CoreEvent.backend_connection_changed,
+                        CoreEvent.BACKEND_CONNECTION_CHANGED,
                         {"status": BackendConnStatus.READY, "status_exc": spy.ANY},
                     )
                 assert core.are_monitors_idle()

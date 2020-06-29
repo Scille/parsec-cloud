@@ -198,7 +198,7 @@ class MemoryVlobComponent(BaseVlobComponent):
         changes.checkpoint += 1
         changes.changes[src_id] = (author, changes.checkpoint, src_version)
         await self._send_event(
-            BackendEvent.realm_vlobs_updated,
+            BackendEvent.REALM_VLOBS_UPDATED,
             organization_id=organization_id,
             author=author,
             realm_id=realm_id,

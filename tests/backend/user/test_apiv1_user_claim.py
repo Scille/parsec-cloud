@@ -128,7 +128,7 @@ async def test_user_claim_timeout(
         ) as prep:
 
             await spy.wait_with_timeout(
-                MetaEvent.EVENT_CONNECTED, {"event_type": BackendEvent.user_created}
+                MetaEvent.EVENT_CONNECTED, {"event_type": BackendEvent.USER_CREATED}
             )
             mock_clock.jump(PEER_EVENT_MAX_WAIT + 1)
 
@@ -150,10 +150,10 @@ async def test_user_claim_denied(
         ) as prep:
 
             await spy.wait_with_timeout(
-                MetaEvent.EVENT_CONNECTED, {"event_type": BackendEvent.user_invitation_cancelled}
+                MetaEvent.EVENT_CONNECTED, {"event_type": BackendEvent.USER_INVITATION_CANCELLED}
             )
             backend.event_bus.send(
-                BackendEvent.user_created,
+                BackendEvent.USER_CREATED,
                 organization_id=coolorg.organization_id,
                 user_id="dummy",
                 user_certificate=b"<dummy user certif>",
@@ -161,7 +161,7 @@ async def test_user_claim_denied(
                 first_device_certificate=b"<dummy device certif>",
             )
             backend.event_bus.send(
-                BackendEvent.user_invitation_cancelled,
+                BackendEvent.USER_INVITATION_CANCELLED,
                 organization_id=coolorg.organization_id,
                 user_id=mallory_invitation.user_id,
             )

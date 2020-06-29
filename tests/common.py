@@ -180,14 +180,14 @@ async def create_shared_workspace(name, creator, *shared_with):
         with trio.fail_after(1):
             if creator_spy:
                 await creator_spy.wait_multiple(
-                    [CoreEvent.fs_workspace_created, CoreEvent.backend_realm_roles_updated]
+                    [CoreEvent.FS_WORKSPACE_CREATED, CoreEvent.BACKEND_REALM_ROLES_UPDATED]
                 )
             for spy in shared_with_spies:
                 await spy.wait_multiple(
                     [
-                        CoreEvent.backend_realm_roles_updated,
-                        CoreEvent.backend_message_received,
-                        CoreEvent.sharing_updated,
+                        CoreEvent.BACKEND_REALM_ROLES_UPDATED,
+                        CoreEvent.BACKEND_MESSAGE_RECEIVED,
+                        CoreEvent.SHARING_UPDATED,
                     ]
                 )
 

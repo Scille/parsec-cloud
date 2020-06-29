@@ -88,7 +88,7 @@ class InstanceWidget(QWidget):
         return self.running_core_job is not None
 
     def on_core_config_updated(self, event, **kwargs):
-        self.event_bus.send(CoreEvent.gui_config_changed, **kwargs)
+        self.event_bus.send(CoreEvent.GUI_CONFIG_CHANGED, **kwargs)
 
     def start_core(self, device):
         assert not self.running_core_job
@@ -109,9 +109,9 @@ class InstanceWidget(QWidget):
     def on_run_core_ready(self, core, core_jobs_ctx):
         self.core = core
         self.core_jobs_ctx = core_jobs_ctx
-        self.core.event_bus.connect(CoreEvent.gui_config_changed, self.on_core_config_updated)
+        self.core.event_bus.connect(CoreEvent.GUI_CONFIG_CHANGED, self.on_core_config_updated)
         self.event_bus.send(
-            CoreEvent.gui_config_changed,
+            CoreEvent.GUI_CONFIG_CHANGED,
             gui_last_device="{}:{}".format(
                 self.core.device.organization_addr.organization_id, self.core.device.device_id
             ),
@@ -125,7 +125,7 @@ class InstanceWidget(QWidget):
         assert self.running_core_job.is_finished()
         if self.core:
             self.core.event_bus.disconnect(
-                CoreEvent.gui_config_changed, self.on_core_config_updated
+                CoreEvent.GUI_CONFIG_CHANGED, self.on_core_config_updated
             )
         if self.running_core_job.status is not None:
             if isinstance(self.running_core_job.exc, HandshakeRevokedDevice):
@@ -159,7 +159,7 @@ class InstanceWidget(QWidget):
                 self.core.device.organization_addr.organization_id, self.core.device.device_id
             )
             self.core.event_bus.disconnect(
-                CoreEvent.gui_config_changed, self.on_core_config_updated
+                CoreEvent.GUI_CONFIG_CHANGED, self.on_core_config_updated
             )
         self.running_core_job = None
         self.core_jobs_ctx = None

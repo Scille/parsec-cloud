@@ -44,13 +44,13 @@ def translate_error(event_bus, operation, path):
         raise FuseOSError(exc.errno) from exc
 
     except FSRemoteOperationError as exc:
-        event_bus.send(CoreEvent.mountpoint_remote_error, exc=exc, operation=operation, path=path)
+        event_bus.send(CoreEvent.MOUNTPOINT_REMOTE_ERROR, exc=exc, operation=operation, path=path)
         raise FuseOSError(exc.errno) from exc
 
     except Exception as exc:
         logger.exception("Unhandled exception in fuse mountpoint")
         event_bus.send(
-            CoreEvent.mountpoint_unhandled_error, exc=exc, operation=operation, path=path
+            CoreEvent.MOUNTPOINT_UNHANDLED_ERROR, exc=exc, operation=operation, path=path
         )
         # Use EINVAL as fallback error code, since this is what fusepy does.
         raise FuseOSError(errno.EINVAL) from exc

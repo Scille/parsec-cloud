@@ -87,7 +87,7 @@ async def test_device_invite_then_claim_ok(alice, apiv1_alice_backend_cmds, runn
         async with trio.open_service_nursery() as nursery:
             nursery.start_soon(_alice_invite)
             await spy.wait_with_timeout(
-                MetaEvent.EVENT_CONNECTED, {"event_type": BackendEvent.device_claimed}
+                MetaEvent.EVENT_CONNECTED, {"event_type": BackendEvent.DEVICE_CLAIMED}
             )
             nursery.start_soon(_alice_nd_claim)
 

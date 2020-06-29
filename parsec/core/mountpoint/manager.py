@@ -287,19 +287,19 @@ async def mountpoint_manager_factory(
 
     def on_event(event, new_entry, previous_entry=None):
         # Workspace created
-        if event == CoreEvent.fs_workspace_created:
+        if event == CoreEvent.FS_WORKSPACE_CREATED:
             if mount_on_workspace_created:
                 mount_nursery.start_soon(mountpoint_manager.safe_mount, new_entry.id)
             return
 
         # Workspace revoked
-        if event == CoreEvent.sharing_updated and new_entry.role is None:
+        if event == CoreEvent.SHARING_UPDATED and new_entry.role is None:
             if unmount_on_workspace_revoked:
                 mount_nursery.start_soon(mountpoint_manager.safe_unmount, new_entry.id)
             return
 
         # Workspace shared
-        if event == CoreEvent.sharing_updated and previous_entry is None:
+        if event == CoreEvent.SHARING_UPDATED and previous_entry is None:
             if mount_on_workspace_shared:
                 mount_nursery.start_soon(mountpoint_manager.safe_mount, new_entry.id)
             return
@@ -318,8 +318,8 @@ async def mountpoint_manager_factory(
 
                 # Setup new workspace events
                 with event_bus.connect_in_context(
-                    (CoreEvent.fs_workspace_created, on_event),
-                    (CoreEvent.sharing_updated, on_event),
+                    (CoreEvent.FS_WORKSPACE_CREATED, on_event),
+                    (CoreEvent.SHARING_UPDATED, on_event),
                 ):
 
                     # Mount required workspaces

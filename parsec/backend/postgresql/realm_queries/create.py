@@ -92,7 +92,7 @@ async def query_create(
 
     await send_signal(
         conn,
-        BackendEvent.realm_roles_updated,
+        BackendEvent.REALM_ROLES_UPDATED,
         organization_id=organization_id,
         author=self_granted_role.granted_by,
         realm_id=self_granted_role.realm_id,

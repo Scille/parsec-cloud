@@ -26,7 +26,7 @@ async def monitor_messages(user_fs, event_bus, task_status):
         # not yet notified to task_status
         task_status.awake()
 
-    with event_bus.connect_in_context((CoreEvent.backend_message_received, _on_message_received)):
+    with event_bus.connect_in_context((CoreEvent.BACKEND_MESSAGE_RECEIVED, _on_message_received)):
         try:
             await user_fs.process_last_messages()
             task_status.started()

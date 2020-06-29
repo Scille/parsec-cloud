@@ -64,7 +64,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         self.minimize_on_close = minimize_on_close
         self.force_close = False
         self.need_close = False
-        self.event_bus.connect(CoreEvent.gui_config_changed, self.on_config_updated)
+        self.event_bus.connect(CoreEvent.GUI_CONFIG_CHANGED, self.on_config_updated)
         self.setWindowTitle(_("TEXT_PARSEC_WINDOW_TITLE_version").format(version=PARSEC_VERSION))
         self.foreground_needed.connect(self._on_foreground_needed)
         self.new_instance_needed.connect(self._on_new_instance_needed)
@@ -380,7 +380,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
 
             # Acknowledge the changes
             self.event_bus.send(
-                CoreEvent.gui_config_changed,
+                CoreEvent.GUI_CONFIG_CHANGED,
                 gui_first_launch=False,
                 gui_last_version=PARSEC_VERSION,
                 telemetry_enabled=r == _("ACTION_ERROR_REPORTING_ACCEPT"),
@@ -401,7 +401,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
                     win_registry.del_acrobat_app_container_enabled()
 
             # Acknowledge the changes
-            self.event_bus.send(CoreEvent.gui_config_changed, gui_last_version=PARSEC_VERSION)
+            self.event_bus.send(CoreEvent.GUI_CONFIG_CHANGED, gui_last_version=PARSEC_VERSION)
 
         telemetry.init(self.config)
 
@@ -451,7 +451,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         idx = self.tab_center.indexOf(widget)
         if idx == -1 or idx == self.tab_center.currentIndex():
             return
-        if event == CoreEvent.sharing_updated:
+        if event == CoreEvent.SHARING_UPDATED:
             self.tab_center.tabBar().setTabTextColor(idx, MainWindow.TAB_NOTIFICATION_COLOR)
 
     def _get_login_tab_index(self):

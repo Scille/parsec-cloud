@@ -247,7 +247,7 @@ class EntryTransactions(FileTransactions):
             await self.local_storage.set_manifest(parent.id, new_parent)
 
         # Send event
-        self._send_event(CoreEvent.fs_entry_updated, id=parent.id)
+        self._send_event(CoreEvent.FS_ENTRY_UPDATED, id=parent.id)
 
         # Return the entry id of the renamed entry
         return parent.children[source.name]
@@ -278,7 +278,7 @@ class EntryTransactions(FileTransactions):
             await self.local_storage.set_manifest(parent.id, new_parent)
 
         # Send event
-        self._send_event(CoreEvent.fs_entry_updated, id=parent.id)
+        self._send_event(CoreEvent.FS_ENTRY_UPDATED, id=parent.id)
 
         # Return the entry id of the removed folder
         return child.id
@@ -305,7 +305,7 @@ class EntryTransactions(FileTransactions):
             await self.local_storage.set_manifest(parent.id, new_parent)
 
         # Send event
-        self._send_event(CoreEvent.fs_entry_updated, id=parent.id)
+        self._send_event(CoreEvent.FS_ENTRY_UPDATED, id=parent.id)
 
         # Return the entry id of the deleted file
         return child.id
@@ -332,8 +332,8 @@ class EntryTransactions(FileTransactions):
             await self.local_storage.set_manifest(parent.id, new_parent)
 
         # Send events
-        self._send_event(CoreEvent.fs_entry_updated, id=parent.id)
-        self._send_event(CoreEvent.fs_entry_updated, id=child.id)
+        self._send_event(CoreEvent.FS_ENTRY_UPDATED, id=parent.id)
+        self._send_event(CoreEvent.FS_ENTRY_UPDATED, id=child.id)
 
         # Return the entry id of the created folder
         return child.id
@@ -361,8 +361,8 @@ class EntryTransactions(FileTransactions):
             fd = self.local_storage.create_file_descriptor(child) if open else None
 
         # Send events
-        self._send_event(CoreEvent.fs_entry_updated, id=parent.id)
-        self._send_event(CoreEvent.fs_entry_updated, id=child.id)
+        self._send_event(CoreEvent.FS_ENTRY_UPDATED, id=parent.id)
+        self._send_event(CoreEvent.FS_ENTRY_UPDATED, id=child.id)
 
         # Return the entry id of the created file and the file descriptor
         return child.id, fd

@@ -18,7 +18,7 @@ async def test_monitors_idle(running_backend, alice_core):
     assert alice_core.are_monitors_idle()
 
     # Force wakeup of the message monitor
-    alice_core.event_bus.send(CoreEvent.backend_message_received, index=42)
+    alice_core.event_bus.send(CoreEvent.BACKEND_MESSAGE_RECEIVED, index=42)
     assert not alice_core.are_monitors_idle()
     await alice_core.wait_idle_monitors()
     assert alice_core.are_monitors_idle()
@@ -49,12 +49,12 @@ async def test_process_while_offline(
     with running_backend.offline():
         with alice_core.event_bus.listen() as spy:
             # Force wakeup of the message monitor
-            alice_core.event_bus.send(CoreEvent.backend_message_received, index=42)
+            alice_core.event_bus.send(CoreEvent.BACKEND_MESSAGE_RECEIVED, index=42)
             assert not alice_core.are_monitors_idle()
 
             with trio.fail_after(60):  # autojump, so not *really* 60s
                 await spy.wait(
-                    CoreEvent.backend_connection_changed,
+                    CoreEvent.BACKEND_CONNECTION_CHANGED,
                     {"status": BackendConnStatus.LOST, "status_exc": spy.ANY},
                 )
                 await alice_core.wait_idle_monitors()
@@ -69,12 +69,12 @@ async def test_process_while_offline(
         # Alice is back online, should retrieve Bob's message fine
         with trio.fail_after(60):  # autojump, so not *really* 60s
             await spy.wait(
-                CoreEvent.backend_connection_changed,
+                CoreEvent.BACKEND_CONNECTION_CHANGED,
                 {"status": BackendConnStatus.READY, "status_exc": None},
             )
             await alice_core.wait_idle_monitors()
         assert alice_core.backend_status == BackendConnStatus.READY
-        spy.assert_event_occured(CoreEvent.pinged, {"ping": "hello from Bob !"})
+        spy.assert_event_occured(CoreEvent.MESSAGE_PINGED, {"ping": "hello from Bob !"})
 
 
 @pytest.mark.trio
@@ -95,7 +95,7 @@ async def test_new_sharing_trigger_event(alice_core, bob_core, running_backend):
 
         # Bob should get a notification
         await spy.wait_with_timeout(
-            CoreEvent.sharing_updated,
+            CoreEvent.SHARING_UPDATED,
             {
                 "new_entry": WorkspaceEntry(
                     name="foo",
@@ -122,7 +122,7 @@ async def test_revoke_sharing_trigger_event(alice_core, bob_core, running_backen
 
         # Each workspace participant should get the message
         await spy.wait_with_timeout(
-            CoreEvent.sharing_updated,
+            CoreEvent.SHARING_UPDATED,
             {
                 "new_entry": WorkspaceEntry(
                     name="w",
@@ -157,7 +157,7 @@ async def test_new_reencryption_trigger_event(alice_core, bob_core, running_back
 
         # Each workspace participant should get the message
         await aspy.wait_with_timeout(
-            CoreEvent.sharing_updated,
+            CoreEvent.SHARING_UPDATED,
             {
                 "new_entry": WorkspaceEntry(
                     name="w",
@@ -180,7 +180,7 @@ async def test_new_reencryption_trigger_event(alice_core, bob_core, running_back
             },
         )
         await bspy.wait_with_timeout(
-            CoreEvent.sharing_updated,
+            CoreEvent.SHARING_UPDATED,
             {
                 "new_entry": WorkspaceEntry(
                     name="w",

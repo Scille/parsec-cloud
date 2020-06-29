@@ -116,7 +116,7 @@ async def test_device_claim_timeout(
         ) as prep:
 
             await spy.wait_with_timeout(
-                MetaEvent.EVENT_CONNECTED, {"event_type": BackendEvent.device_created}
+                MetaEvent.EVENT_CONNECTED, {"event_type": BackendEvent.DEVICE_CREATED}
             )
             mock_clock.jump(PEER_EVENT_MAX_WAIT + 1)
 
@@ -138,17 +138,17 @@ async def test_device_claim_denied(
         ) as prep:
 
             await spy.wait_with_timeout(
-                MetaEvent.EVENT_CONNECTED, {"event_type": BackendEvent.device_invitation_cancelled}
+                MetaEvent.EVENT_CONNECTED, {"event_type": BackendEvent.DEVICE_INVITATION_CANCELLED}
             )
             backend.event_bus.send(
-                BackendEvent.device_created,
+                BackendEvent.DEVICE_CREATED,
                 organization_id=alice.organization_id,
                 device_id="dummy@foo",
                 device_certificate=b"<dummy@foo certificate>",
                 encrypted_answer=b"<dummy>",
             )
             backend.event_bus.send(
-                BackendEvent.device_invitation_cancelled,
+                BackendEvent.DEVICE_INVITATION_CANCELLED,
                 organization_id=alice.organization_id,
                 device_id=alice_nd_invitation.device_id,
             )

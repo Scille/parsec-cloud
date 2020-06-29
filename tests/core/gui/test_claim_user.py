@@ -35,7 +35,7 @@ async def alice_invite(running_backend, backend, alice):
         with backend.event_bus.listen() as spy:
             nursery.start_soon(_invite)
             await spy.wait_with_timeout(
-                MetaEvent.EVENT_CONNECTED, {"event_type": BackendEvent.user_claimed}
+                MetaEvent.EVENT_CONNECTED, {"event_type": BackendEvent.USER_CLAIMED}
             )
 
             yield invitation

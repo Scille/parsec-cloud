@@ -93,10 +93,10 @@ async def test_concurrent_devices_agreed_on_root_manifest(
         date_sync = Pendulum(2000, 1, 5)
         spy.assert_events_exactly_occured(
             [
-                (CoreEvent.fs_entry_minimal_synced, {"id": alice.user_manifest_id}, date_sync),
-                (CoreEvent.fs_entry_minimal_synced, {"id": wid1}, date_sync),
-                (CoreEvent.fs_entry_synced, {"id": alice.user_manifest_id}, date_sync),
-                (CoreEvent.fs_entry_synced, {"id": wid1}, date_sync),
+                (CoreEvent.FS_ENTRY_MINIMAL_SYNCED, {"id": alice.user_manifest_id}, date_sync),
+                (CoreEvent.FS_ENTRY_MINIMAL_SYNCED, {"id": wid1}, date_sync),
+                (CoreEvent.FS_ENTRY_SYNCED, {"id": alice.user_manifest_id}, date_sync),
+                (CoreEvent.FS_ENTRY_SYNCED, {"id": wid1}, date_sync),
             ]
         )
 
@@ -106,10 +106,10 @@ async def test_concurrent_devices_agreed_on_root_manifest(
         date_sync = Pendulum(2000, 1, 6)
         spy.assert_events_exactly_occured(
             [
-                (CoreEvent.fs_entry_minimal_synced, {"id": alice.user_manifest_id}, date_sync),
-                (CoreEvent.fs_entry_minimal_synced, {"id": wid2}, date_sync),
-                (CoreEvent.fs_entry_synced, {"id": alice.user_manifest_id}, date_sync),
-                (CoreEvent.fs_entry_synced, {"id": wid2}, date_sync),
+                (CoreEvent.FS_ENTRY_MINIMAL_SYNCED, {"id": alice.user_manifest_id}, date_sync),
+                (CoreEvent.FS_ENTRY_MINIMAL_SYNCED, {"id": wid2}, date_sync),
+                (CoreEvent.FS_ENTRY_SYNCED, {"id": alice.user_manifest_id}, date_sync),
+                (CoreEvent.FS_ENTRY_SYNCED, {"id": wid2}, date_sync),
             ]
         )
 
@@ -120,7 +120,7 @@ async def test_concurrent_devices_agreed_on_root_manifest(
         spy.assert_events_exactly_occured(
             [
                 (
-                    CoreEvent.fs_entry_remote_changed,
+                    CoreEvent.FS_ENTRY_REMOTE_CHANGED,
                     {"path": "/", "id": spy.ANY},
                     date_sync,
                 )  # TODO: really needed ?

@@ -163,7 +163,7 @@ async def test_claimer_exchange_bad_access(alice, backend, backend_invited_sock_
         # Disable the callback responsible for closing the claimer's connection
         # on invitation deletion. This way we can test connection behavior
         # when the automatic closing takes time to be processed.
-        backend.event_bus.mute(BackendEvent.invite_status_changed)
+        backend.event_bus.mute(BackendEvent.INVITE_STATUS_CHANGED)
 
         await backend.invite.delete(
             organization_id=alice.organization_id,

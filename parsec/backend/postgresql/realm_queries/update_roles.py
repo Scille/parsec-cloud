@@ -152,7 +152,7 @@ async def query_update_roles(
 
     await send_signal(
         conn,
-        BackendEvent.realm_roles_updated,
+        BackendEvent.REALM_ROLES_UPDATED,
         organization_id=organization_id,
         author=new_role.granted_by,
         realm_id=new_role.realm_id,

@@ -48,7 +48,7 @@ async def test_user_create_ok(backend, apiv1_backend_sock_factory, alice, mallor
 
         # No guarantees this event occurs before the command's return
         await spy.wait_with_timeout(
-            BackendEvent.user_created,
+            BackendEvent.USER_CREATED,
             {
                 "organization_id": alice.organization_id,
                 "user_id": mallory.user_id,

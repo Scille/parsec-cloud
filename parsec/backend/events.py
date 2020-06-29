@@ -2,7 +2,7 @@
 
 import trio
 
-from parsec.api.protocol import events_subscribe_serializer, events_listen_serializer, Event
+from parsec.api.protocol import events_subscribe_serializer, events_listen_serializer, APIEvent
 from parsec.backend.utils import catch_protocol_errors, run_with_breathing_transport, api
 from parsec.backend.realm import BaseRealmComponent
 from parsec.backend.backend_events import BackendEvent
@@ -90,29 +90,31 @@ class EventsComponent:
         client_ctx.event_bus_ctx.clear()
 
         # Connect the new callbacks
-        client_ctx.event_bus_ctx.connect(BackendEvent.pinged, partial(_on_pinged, Event.pinged))
+        client_ctx.event_bus_ctx.connect(BackendEvent.PINGED, partial(_on_pinged, APIEvent.PINGED))
         client_ctx.event_bus_ctx.connect(
-            BackendEvent.realm_vlobs_updated, partial(_on_realm_events, Event.realm_vlobs_updated)
+            BackendEvent.REALM_VLOBS_UPDATED,
+            partial(_on_realm_events, APIEvent.REALM_VLOBS_UPDATED),
         )
         client_ctx.event_bus_ctx.connect(
-            BackendEvent.realm_maintenance_started,
-            partial(_on_realm_events, Event.realm_maintenance_started),
+            BackendEvent.REALM_MAINTENANCE_STARTED,
+            partial(_on_realm_events, APIEvent.REALM_MAINTENANCE_STARTED),
         )
         client_ctx.event_bus_ctx.connect(
-            BackendEvent.realm_maintenance_finished,
-            partial(_on_realm_events, Event.realm_maintenance_finished),
+            BackendEvent.REALM_MAINTENANCE_FINISHED,
+            partial(_on_realm_events, APIEvent.REALM_MAINTENANCE_FINISHED),
         )
         client_ctx.event_bus_ctx.connect(
-            BackendEvent.message_received, partial(_on_message_received, Event.message_received)
+            BackendEvent.MESSAGE_RECEIVED, partial(_on_message_received, APIEvent.MESSAGE_RECEIVED)
         )
         client_ctx.event_bus_ctx.connect(
-            BackendEvent.invite_status_changed,
-            partial(_on_invite_status_changed, Event.invite_status_changed),
+            BackendEvent.INVITE_STATUS_CHANGED,
+            partial(_on_invite_status_changed, APIEvent.INVITE_STATUS_CHANGED),
         )
 
         # Final event to keep up to date the list of realm we should listen on
         client_ctx.event_bus_ctx.connect(
-            BackendEvent.realm_roles_updated, partial(_on_roles_updated, Event.realm_roles_updated)
+            BackendEvent.REALM_ROLES_UPDATED,
+            partial(_on_roles_updated, APIEvent.REALM_ROLES_UPDATED),
         )
 
         # Finally populate the list of realm we should listen on

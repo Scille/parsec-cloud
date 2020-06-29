@@ -114,7 +114,7 @@ async def fuse_mountpoint_runner(
         "timestamp": getattr(workspace_fs, "timestamp", None),
     }
     try:
-        event_bus.send(CoreEvent.mountpoint_starting, **event_kwargs)
+        event_bus.send(CoreEvent.MOUNTPOINT_STARTING, **event_kwargs)
 
         async with trio.open_service_nursery() as nursery:
 
@@ -163,12 +163,12 @@ async def fuse_mountpoint_runner(
                 )
                 await _wait_for_fuse_ready(mountpoint_path, fuse_thread_started, initial_st_dev)
 
-            event_bus.send(CoreEvent.mountpoint_started, **event_kwargs)
+            event_bus.send(CoreEvent.MOUNTPOINT_STARTED, **event_kwargs)
             task_status.started(mountpoint_path)
 
     finally:
         await _stop_fuse_thread(mountpoint_path, fuse_operations, fuse_thread_stopped)
-        event_bus.send(CoreEvent.mountpoint_stopped, **event_kwargs)
+        event_bus.send(CoreEvent.MOUNTPOINT_STOPPED, **event_kwargs)
         await _teardown_mountpoint(mountpoint_path)
 
 

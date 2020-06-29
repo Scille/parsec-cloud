@@ -8,29 +8,29 @@ from parsec.api.protocol.realm import RealmRoleField
 from parsec.api.protocol.invite import InvitationStatusField
 
 
-class Event(Enum):
-    pinged = "pinged"
-    message_received = "message.received"
-    invite_status_changed = "invite.status_changed"
-    realm_maintenance_finished = "realm.maintenance_finished"
-    realm_maintenance_started = "realm.maintenance_started"
-    realm_vlobs_updated = "realm.vlobs_updated"
-    realm_roles_updated = "realm.roles_updated"
+class APIEvent(Enum):
+    PINGED = "pinged"
+    MESSAGE_RECEIVED = "message.received"
+    INVITE_STATUS_CHANGED = "invite.status_changed"
+    REALM_MAINTENANCE_FINISHED = "realm.maintenance_finished"
+    REALM_MAINTENANCE_STARTED = "realm.maintenance_started"
+    REALM_VLOBS_UPDATED = "realm.vlobs_updated"
+    REALM_ROLES_UPDATED = "realm.roles_updated"
 
 
 class EventsPingedRepSchema(BaseRepSchema):
-    event = fields.EnumCheckedConstant(Event.pinged, required=True)
+    event = fields.EnumCheckedConstant(APIEvent.PINGED, required=True)
     ping = fields.String(validate=validate.Length(max=64), required=True)
 
 
 class EventsRealmRolesUpdatedRepSchema(BaseRepSchema):
-    event = fields.EnumCheckedConstant(Event.realm_roles_updated, required=True)
+    event = fields.EnumCheckedConstant(APIEvent.REALM_ROLES_UPDATED, required=True)
     realm_id = fields.UUID(required=True)
     role = RealmRoleField(required=True, allow_none=True)
 
 
 class EventsRealmVlobsUpdatedRepSchema(BaseRepSchema):
-    event = fields.EnumCheckedConstant(Event.realm_vlobs_updated, required=True)
+    event = fields.EnumCheckedConstant(APIEvent.REALM_VLOBS_UPDATED, required=True)
     realm_id = fields.UUID(required=True)
     checkpoint = fields.Integer(required=True)
     src_id = fields.UUID(required=True)
@@ -38,24 +38,24 @@ class EventsRealmVlobsUpdatedRepSchema(BaseRepSchema):
 
 
 class EventsRealmMaintenanceStartedRepSchema(BaseRepSchema):
-    event = fields.EnumCheckedConstant(Event.realm_maintenance_started, required=True)
+    event = fields.EnumCheckedConstant(APIEvent.REALM_MAINTENANCE_STARTED, required=True)
     realm_id = fields.UUID(required=True)
     encryption_revision = fields.Integer(required=True)
 
 
 class EventsRealmMaintenanceFinishedRepSchema(BaseRepSchema):
-    event = fields.EnumCheckedConstant(Event.realm_maintenance_finished, required=True)
+    event = fields.EnumCheckedConstant(APIEvent.REALM_MAINTENANCE_FINISHED, required=True)
     realm_id = fields.UUID(required=True)
     encryption_revision = fields.Integer(required=True)
 
 
 class EventsMessageReceivedRepSchema(BaseRepSchema):
-    event = fields.EnumCheckedConstant(Event.message_received, required=True)
+    event = fields.EnumCheckedConstant(APIEvent.MESSAGE_RECEIVED, required=True)
     index = fields.Integer(required=True)
 
 
 class EventsInviteStatusChangedRepSchema(BaseRepSchema):
-    event = fields.EnumCheckedConstant(Event.invite_status_changed, required=True)
+    event = fields.EnumCheckedConstant(APIEvent.INVITE_STATUS_CHANGED, required=True)
     token = fields.UUID(required=True)
     invitation_status = InvitationStatusField(required=True)
 
@@ -67,13 +67,13 @@ class EventsListenReqSchema(BaseReqSchema):
 class EventsListenRepSchema(OneOfSchema):
     type_field = "event"
     type_schemas = {
-        Event.pinged: EventsPingedRepSchema(),
-        Event.message_received: EventsMessageReceivedRepSchema(),
-        Event.invite_status_changed: EventsInviteStatusChangedRepSchema(),
-        Event.realm_roles_updated: EventsRealmRolesUpdatedRepSchema(),
-        Event.realm_vlobs_updated: EventsRealmVlobsUpdatedRepSchema(),
-        Event.realm_maintenance_started: EventsRealmMaintenanceStartedRepSchema(),
-        Event.realm_maintenance_finished: EventsRealmMaintenanceFinishedRepSchema(),
+        APIEvent.PINGED: EventsPingedRepSchema(),
+        APIEvent.MESSAGE_RECEIVED: EventsMessageReceivedRepSchema(),
+        APIEvent.INVITE_STATUS_CHANGED: EventsInviteStatusChangedRepSchema(),
+        APIEvent.REALM_ROLES_UPDATED: EventsRealmRolesUpdatedRepSchema(),
+        APIEvent.REALM_VLOBS_UPDATED: EventsRealmVlobsUpdatedRepSchema(),
+        APIEvent.REALM_MAINTENANCE_STARTED: EventsRealmMaintenanceStartedRepSchema(),
+        APIEvent.REALM_MAINTENANCE_FINISHED: EventsRealmMaintenanceFinishedRepSchema(),
     }
 
     def get_obj_type(self, obj):

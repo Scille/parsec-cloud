@@ -521,7 +521,7 @@ async def test_claimer_step_1_retry(
                     invited_sock, claimer_public_key=claimer_privkey.public_key
                 ):
                     await spy.wait_with_timeout(
-                        BackendEvent.invite_conduit_updated,
+                        BackendEvent.INVITE_CONDUIT_UPDATED,
                         kwargs={
                             "organization_id": alice.organization_id,
                             "token": invitation.token,
@@ -546,7 +546,7 @@ async def test_claimer_step_1_retry(
                     # before starting the greeter command otherwise it will
                     # also be reseted
                     await spy.wait_with_timeout(
-                        BackendEvent.invite_conduit_updated,
+                        BackendEvent.INVITE_CONDUIT_UPDATED,
                         kwargs={
                             "organization_id": alice.organization_id,
                             "token": invitation.token,
@@ -600,7 +600,7 @@ async def test_claimer_step_2_retry(
                 alice_backend_sock, token=invitation.token
             ) as greeter_2a_async_rep:
                 await spy.wait_with_timeout(
-                    BackendEvent.invite_conduit_updated,
+                    BackendEvent.INVITE_CONDUIT_UPDATED,
                     kwargs={"organization_id": alice.organization_id, "token": invitation.token},
                 )
 

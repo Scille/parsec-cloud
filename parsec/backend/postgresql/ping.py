@@ -15,5 +15,5 @@ class PGPingComponent(BasePingComponent):
             return
         async with self.dbh.pool.acquire() as conn:
             await send_signal(
-                conn, BackendEvent.pinged, organization_id=organization_id, author=author, ping=ping
+                conn, BackendEvent.PINGED, organization_id=organization_id, author=author, ping=ping
             )

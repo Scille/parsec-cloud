@@ -10,7 +10,7 @@ from functools import partial
 from parsec.crypto import SigningKey
 from parsec.event_bus import EventBus
 from parsec.api.data import EntryID
-from parsec.api.protocol import DeviceID, Event, AUTHENTICATED_CMDS
+from parsec.api.protocol import DeviceID, APIEvent, AUTHENTICATED_CMDS
 from parsec.core.types import BackendOrganizationAddr
 from parsec.core.backend_connection import cmds
 from parsec.core.backend_connection.transport import connect_as_authenticated, TransportPool
@@ -39,37 +39,37 @@ def _handle_event(event_bus: EventBus, rep: dict) -> None:
         logger.warning("Bad response to `events_listen` command", rep=rep)
         return
 
-    if rep["event"] == Event.message_received:
-        event_bus.send(CoreEvent.backend_message_received, index=rep["index"])
+    if rep["event"] == APIEvent.MESSAGE_RECEIVED:
+        event_bus.send(CoreEvent.BACKEND_MESSAGE_RECEIVED, index=rep["index"])
 
-    elif rep["event"] == Event.pinged:
-        event_bus.send(CoreEvent.backend_pinged, ping=rep["ping"])
+    elif rep["event"] == APIEvent.PINGED:
+        event_bus.send(CoreEvent.BACKEND_PINGED, ping=rep["ping"])
 
-    elif rep["event"] == Event.realm_roles_updated:
+    elif rep["event"] == APIEvent.REALM_ROLES_UPDATED:
         realm_id = EntryID(rep["realm_id"])
-        event_bus.send(CoreEvent.backend_realm_roles_updated, realm_id=realm_id, role=rep["role"])
+        event_bus.send(CoreEvent.BACKEND_REALM_ROLES_UPDATED, realm_id=realm_id, role=rep["role"])
 
-    elif rep["event"] == Event.realm_vlobs_updated:
+    elif rep["event"] == APIEvent.REALM_VLOBS_UPDATED:
         src_id = EntryID(rep["src_id"])
         realm_id = EntryID(rep["realm_id"])
         event_bus.send(
-            CoreEvent.backend_realm_vlobs_updated,
+            CoreEvent.BACKEND_REALM_VLOBS_UPDATED,
             realm_id=realm_id,
             checkpoint=rep["checkpoint"],
             src_id=src_id,
             src_version=rep["src_version"],
         )
 
-    elif rep["event"] == Event.realm_maintenance_started:
+    elif rep["event"] == APIEvent.REALM_MAINTENANCE_STARTED:
         event_bus.send(
-            CoreEvent.backend_realm_maintenance_started,
+            CoreEvent.BACKEND_REALM_MAINTENANCE_STARTED,
             realm_id=rep["realm_id"],
             encryption_revision=rep["encryption_revision"],
         )
 
-    elif rep["event"] == Event.realm_maintenance_finished:
+    elif rep["event"] == APIEvent.REALM_MAINTENANCE_FINISHED:
         event_bus.send(
-            CoreEvent.backend_realm_maintenance_finished,
+            CoreEvent.BACKEND_REALM_MAINTENANCE_FINISHED,
             realm_id=rep["realm_id"],
             encryption_revision=rep["encryption_revision"],
         )
@@ -167,7 +167,7 @@ class BackendAuthenticatedConn:
             assert self._status not in (BackendConnStatus.READY, BackendConnStatus.INITIALIZING)
             if self._backend_connection_failures == 0:
                 self.event_bus.send(
-                    CoreEvent.backend_connection_changed,
+                    CoreEvent.BACKEND_CONNECTION_CHANGED,
                     status=self._status,
                     status_exc=self._status_exc,
                 )
@@ -196,7 +196,7 @@ class BackendAuthenticatedConn:
             self._status_exc = None
             self._backend_connection_failures = 0
             self.event_bus.send(
-                CoreEvent.backend_connection_changed,
+                CoreEvent.BACKEND_CONNECTION_CHANGED,
                 status=self._status,
                 status_exc=self._status_exc,
             )
@@ -233,7 +233,7 @@ class BackendAuthenticatedConn:
 
                     self._status = BackendConnStatus.READY
                     self.event_bus.send(
-                        CoreEvent.backend_connection_changed, status=self._status, status_exc=None
+                        CoreEvent.BACKEND_CONNECTION_CHANGED, status=self._status, status_exc=None
                     )
 
                     while True:

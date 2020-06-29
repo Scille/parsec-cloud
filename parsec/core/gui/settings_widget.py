@@ -43,7 +43,7 @@ class SettingsWidget(QWidget, Ui_SettingsWidget):
 
     def save(self):
         self.event_bus.send(
-            CoreEvent.gui_config_changed,
+            CoreEvent.GUI_CONFIG_CHANGED,
             telemetry_enabled=self.check_box_send_data.isChecked(),
             gui_tray_enabled=self.check_box_tray.isChecked(),
             gui_language=self.combo_languages.currentData(),

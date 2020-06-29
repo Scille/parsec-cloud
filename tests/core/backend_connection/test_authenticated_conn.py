@@ -24,7 +24,7 @@ async def alice_backend_conn(alice, event_bus_factory, running_backend_ready):
     with event_bus.listen() as spy:
         async with conn.run():
             await spy.wait_with_timeout(
-                CoreEvent.backend_connection_changed,
+                CoreEvent.BACKEND_CONNECTION_CHANGED,
                 {"status": BackendConnStatus.READY, "status_exc": None},
             )
             yield conn
@@ -54,11 +54,11 @@ async def test_init_with_backend_online(running_backend, event_bus, alice):
             await spy.wait_multiple_with_timeout(
                 [
                     (
-                        CoreEvent.backend_connection_changed,
+                        CoreEvent.BACKEND_CONNECTION_CHANGED,
                         {"status": BackendConnStatus.INITIALIZING, "status_exc": None},
                     ),
                     (
-                        CoreEvent.backend_connection_changed,
+                        CoreEvent.BACKEND_CONNECTION_CHANGED,
                         {"status": BackendConnStatus.READY, "status_exc": None},
                     ),
                 ]
@@ -73,12 +73,12 @@ async def test_init_with_backend_online(running_backend, event_bus, alice):
 
             # Test events
             running_backend.backend.event_bus.send(
-                BackendEvent.pinged,
+                BackendEvent.PINGED,
                 organization_id=alice.organization_id,
                 author="bob@test",
                 ping="foo",
             )
-            await spy.wait_with_timeout(CoreEvent.backend_pinged, {"ping": "foo"})
+            await spy.wait_with_timeout(CoreEvent.BACKEND_PINGED, {"ping": "foo"})
 
         assert monitor_teardown
 
@@ -92,7 +92,7 @@ async def test_init_with_backend_offline(event_bus, alice):
     with event_bus.listen() as spy:
         async with conn.run():
             await spy.wait_with_timeout(
-                CoreEvent.backend_connection_changed,
+                CoreEvent.BACKEND_CONNECTION_CHANGED,
                 {"status": BackendConnStatus.LOST, "status_exc": spy.ANY},
             )
             assert conn.status == BackendConnStatus.LOST
@@ -119,7 +119,7 @@ async def test_monitor_crash(running_backend, event_bus, alice, during_bootstrap
         conn.register_monitor(_bad_monitor)
         async with conn.run():
             await spy.wait_with_timeout(
-                CoreEvent.backend_connection_changed,
+                CoreEvent.BACKEND_CONNECTION_CHANGED,
                 {"status": BackendConnStatus.CRASHED, "status_exc": spy.ANY},
             )
             assert conn.status == BackendConnStatus.CRASHED
@@ -141,7 +141,7 @@ async def test_switch_offline(mock_clock, running_backend, event_bus, alice):
 
             # Wait for the connection to be initialized
             await spy.wait_with_timeout(
-                CoreEvent.backend_connection_changed,
+                CoreEvent.BACKEND_CONNECTION_CHANGED,
                 {"status": BackendConnStatus.READY, "status_exc": None},
             )
 
@@ -149,7 +149,7 @@ async def test_switch_offline(mock_clock, running_backend, event_bus, alice):
             spy.clear()
             with running_backend.offline():
                 await spy.wait_with_timeout(
-                    CoreEvent.backend_connection_changed,
+                    CoreEvent.BACKEND_CONNECTION_CHANGED,
                     {"status": BackendConnStatus.LOST, "status_exc": spy.ANY},
                 )
                 assert conn.status == BackendConnStatus.LOST
@@ -160,7 +160,7 @@ async def test_switch_offline(mock_clock, running_backend, event_bus, alice):
             # Backend event manager waits before retrying to connect
             mock_clock.jump(5.0)
             await spy.wait_with_timeout(
-                CoreEvent.backend_connection_changed,
+                CoreEvent.BACKEND_CONNECTION_CHANGED,
                 {"status": BackendConnStatus.READY, "status_exc": None},
             )
             assert conn.status == BackendConnStatus.READY
@@ -168,12 +168,12 @@ async def test_switch_offline(mock_clock, running_backend, event_bus, alice):
             # Make sure event system still works as expected
             spy.clear()
             running_backend.backend.event_bus.send(
-                BackendEvent.pinged,
+                BackendEvent.PINGED,
                 organization_id=alice.organization_id,
                 author="bob@test",
                 ping="foo",
             )
-            await spy.wait_with_timeout(CoreEvent.backend_pinged, {"ping": "foo"})
+            await spy.wait_with_timeout(CoreEvent.BACKEND_PINGED, {"ping": "foo"})
 
 
 @pytest.mark.trio
@@ -221,12 +221,12 @@ async def test_realm_notif_on_new_entry_sync(running_backend, alice_backend_conn
             [
                 # File manifest creation
                 (
-                    CoreEvent.backend_realm_vlobs_updated,
+                    CoreEvent.BACKEND_REALM_VLOBS_UPDATED,
                     {"realm_id": wid, "checkpoint": 1, "src_id": entry_id, "src_version": 1},
                 ),
                 # Workspace manifest creation containing the file entry
                 (
-                    CoreEvent.backend_realm_vlobs_updated,
+                    CoreEvent.BACKEND_REALM_VLOBS_UPDATED,
                     {"realm_id": wid, "checkpoint": 2, "src_id": wid, "src_version": 1},
                 ),
             ]
@@ -245,15 +245,15 @@ async def test_realm_notif_on_new_workspace_sync(
         await spy.wait_multiple_with_timeout(
             [
                 # Access to newly created realm
-                (CoreEvent.backend_realm_roles_updated, {"realm_id": wid, "role": RealmRole.OWNER}),
+                (CoreEvent.BACKEND_REALM_ROLES_UPDATED, {"realm_id": wid, "role": RealmRole.OWNER}),
                 # New realm workspace manifest created
                 (
-                    CoreEvent.backend_realm_vlobs_updated,
+                    CoreEvent.BACKEND_REALM_VLOBS_UPDATED,
                     {"realm_id": wid, "checkpoint": 1, "src_id": wid, "src_version": 1},
                 ),
                 # User manifest updated
                 (
-                    CoreEvent.backend_realm_vlobs_updated,
+                    CoreEvent.BACKEND_REALM_VLOBS_UPDATED,
                     {"realm_id": uid, "checkpoint": 2, "src_id": uid, "src_version": 2},
                 ),
             ]
@@ -272,11 +272,11 @@ async def test_realm_notif_maintenance(running_backend, alice_backend_conn, alic
         await spy.wait_multiple_with_timeout(
             [
                 (
-                    CoreEvent.backend_realm_maintenance_started,
+                    CoreEvent.BACKEND_REALM_MAINTENANCE_STARTED,
                     {"realm_id": wid, "encryption_revision": 2},
                 ),
                 # Receive the message containing the new key and encryption revision
-                CoreEvent.backend_message_received,
+                CoreEvent.BACKEND_MESSAGE_RECEIVED,
             ]
         )
 
@@ -286,7 +286,7 @@ async def test_realm_notif_maintenance(running_backend, alice_backend_conn, alic
         assert total == done
 
         await spy.wait_with_timeout(
-            CoreEvent.backend_realm_maintenance_finished,
+            CoreEvent.BACKEND_REALM_MAINTENANCE_FINISHED,
             {"realm_id": wid, "encryption_revision": 2},
         )
 
@@ -302,7 +302,7 @@ async def test_connection_refused(mock_clock, running_backend, event_bus, mallor
 
             # Wait for the connection to be initialized
             await spy.wait_with_timeout(
-                CoreEvent.backend_connection_changed,
+                CoreEvent.BACKEND_CONNECTION_CHANGED,
                 {"status": BackendConnStatus.REFUSED, "status_exc": spy.ANY},
             )
 

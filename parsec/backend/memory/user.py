@@ -58,7 +58,7 @@ class MemoryUserComponent(BaseUserComponent):
             org.human_handle_to_user_id[user.human_handle] = user.user_id
 
         await self._send_event(
-            BackendEvent.user_created,
+            BackendEvent.USER_CREATED,
             organization_id=organization_id,
             user_id=user.user_id,
             user_certificate=user.user_certificate,
@@ -80,7 +80,7 @@ class MemoryUserComponent(BaseUserComponent):
 
         user_devices[device.device_name] = device
         await self._send_event(
-            BackendEvent.device_created,
+            BackendEvent.DEVICE_CREATED,
             organization_id=organization_id,
             device_id=device.device_id,
             device_certificate=device.device_certificate,
@@ -332,7 +332,7 @@ class MemoryUserComponent(BaseUserComponent):
     ) -> UserInvitation:
         invitation = await self.get_user_invitation(organization_id, user_id)
         await self._send_event(
-            BackendEvent.user_claimed,
+            BackendEvent.USER_CLAIMED,
             organization_id=organization_id,
             user_id=invitation.user_id,
             encrypted_claim=encrypted_claim,
@@ -346,7 +346,7 @@ class MemoryUserComponent(BaseUserComponent):
 
         if org.invitations.pop(user_id, None):
             await self._send_event(
-                BackendEvent.user_invitation_cancelled,
+                BackendEvent.USER_INVITATION_CANCELLED,
                 organization_id=organization_id,
                 user_id=user_id,
             )
@@ -382,7 +382,7 @@ class MemoryUserComponent(BaseUserComponent):
     ) -> DeviceInvitation:
         invitation = await self.get_device_invitation(organization_id, device_id)
         await self._send_event(
-            BackendEvent.device_claimed,
+            BackendEvent.DEVICE_CLAIMED,
             organization_id=organization_id,
             device_id=invitation.device_id,
             encrypted_claim=encrypted_claim,
@@ -396,7 +396,7 @@ class MemoryUserComponent(BaseUserComponent):
 
         if org.invitations.pop(device_id, None):
             await self._send_event(
-                BackendEvent.device_invitation_cancelled,
+                BackendEvent.DEVICE_INVITATION_CANCELLED,
                 organization_id=organization_id,
                 device_id=device_id,
             )
@@ -429,5 +429,5 @@ class MemoryUserComponent(BaseUserComponent):
             del org.human_handle_to_user_id[user.human_handle]
 
         await self._send_event(
-            BackendEvent.user_revoked, organization_id=organization_id, user_id=user_id
+            BackendEvent.USER_REVOKED, organization_id=organization_id, user_id=user_id
         )

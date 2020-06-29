@@ -315,18 +315,18 @@ async def test_file_conflict(alice_sync_transactions):
     spy.assert_events_exactly_occured(
         [
             (
-                CoreEvent.fs_entry_updated,
+                CoreEvent.FS_ENTRY_UPDATED,
                 {"workspace_id": sync_transactions.workspace_id, "id": a2_id},
             ),
             (
-                CoreEvent.fs_entry_updated,
+                CoreEvent.FS_ENTRY_UPDATED,
                 {
                     "workspace_id": sync_transactions.workspace_id,
                     "id": sync_transactions.workspace_id,
                 },
             ),
             (
-                CoreEvent.fs_entry_file_conflict_resolved,
+                CoreEvent.FS_ENTRY_FILE_CONFLICT_RESOLVED,
                 {"workspace_id": sync_transactions.workspace_id, "id": a_id, "backup_id": a2_id},
             ),
         ]

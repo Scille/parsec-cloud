@@ -376,9 +376,9 @@ async def monitor_sync(user_fs, event_bus, task_status):
                 return math.inf
 
     with event_bus.connect_in_context(
-        (CoreEvent.fs_entry_updated, _on_entry_updated),
-        (CoreEvent.backend_realm_vlobs_updated, _on_realm_vlobs_updated),
-        (CoreEvent.sharing_updated, _on_sharing_updated),
+        (CoreEvent.FS_ENTRY_UPDATED, _on_entry_updated),
+        (CoreEvent.BACKEND_REALM_VLOBS_UPDATED, _on_realm_vlobs_updated),
+        (CoreEvent.SHARING_UPDATED, _on_sharing_updated),
     ):
         due_times = []
         # Init userfs sync context

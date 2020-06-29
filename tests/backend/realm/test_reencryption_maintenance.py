@@ -5,7 +5,7 @@ import trio
 from pendulum import Pendulum, now as pendulum_now
 
 from parsec.backend.backend_events import BackendEvent
-from parsec.api.protocol import RealmRole, MaintenanceType, Event
+from parsec.api.protocol import RealmRole, MaintenanceType, APIEvent
 from parsec.backend.realm import RealmGrantedRole
 
 from tests.common import freeze_time
@@ -451,18 +451,18 @@ async def test_reencryption_events(
         with trio.fail_after(1):
             # No guarantees those events occur before the commands' return
             await spy.wait_multiple(
-                [BackendEvent.realm_maintenance_started, BackendEvent.message_received]
+                [BackendEvent.REALM_MAINTENANCE_STARTED, BackendEvent.MESSAGE_RECEIVED]
             )
 
         rep = await events_listen_nowait(alice_backend_sock)
         assert rep == {
             "status": "ok",
-            "event": Event.realm_maintenance_started,
+            "event": APIEvent.REALM_MAINTENANCE_STARTED,
             "realm_id": realm,
             "encryption_revision": 2,
         }
         rep = await events_listen_nowait(alice_backend_sock)
-        assert rep == {"status": "ok", "event": Event.message_received, "index": 1}
+        assert rep == {"status": "ok", "event": APIEvent.MESSAGE_RECEIVED, "index": 1}
 
         # Do the reencryption
         rep = await vlob_maintenance_get_reencryption_batch(alice_backend_sock, realm, 2, size=100)
@@ -472,12 +472,12 @@ async def test_reencryption_events(
         await realm_finish_reencryption_maintenance(alice2_backend_sock, realm, 2)
 
         # No guarantees those events occur before the commands' return
-        await spy.wait_with_timeout(BackendEvent.realm_maintenance_finished)
+        await spy.wait_with_timeout(BackendEvent.REALM_MAINTENANCE_FINISHED)
 
         rep = await events_listen_nowait(alice_backend_sock)
         assert rep == {
             "status": "ok",
-            "event": Event.realm_maintenance_finished,
+            "event": APIEvent.REALM_MAINTENANCE_FINISHED,
             "realm_id": realm,
             "encryption_revision": 2,
         }

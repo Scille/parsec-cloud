@@ -108,7 +108,7 @@ async def query_claim_user_invitation(
     invitation = await _get_user_invitation(conn, organization_id, user_id)
     await send_signal(
         conn,
-        BackendEvent.user_claimed,
+        BackendEvent.USER_CLAIMED,
         organization_id=organization_id,
         user_id=invitation.user_id,
         encrypted_claim=encrypted_claim,

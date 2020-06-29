@@ -30,7 +30,7 @@ async def test_backend_close_on_user_revoke(
             rep = await user_revoke(alice_backend_sock, revoked_user_certificate=bob_revocation)
             assert rep == {"status": "ok"}
             await spy.wait_with_timeout(
-                BackendEvent.user_revoked,
+                BackendEvent.USER_REVOKED,
                 {"organization_id": bob.organization_id, "user_id": bob.user_id},
             )
             # `user.revoked` event schedules connection cancellation, so wait
@@ -52,7 +52,7 @@ async def test_user_revoke_ok(backend, backend_sock_factory, adam_backend_sock, 
         rep = await user_revoke(adam_backend_sock, revoked_user_certificate=alice_revocation)
         assert rep == {"status": "ok"}
         await spy.wait_with_timeout(
-            BackendEvent.user_revoked,
+            BackendEvent.USER_REVOKED,
             {"organization_id": alice.organization_id, "user_id": alice.user_id},
         )
 

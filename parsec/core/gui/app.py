@@ -186,7 +186,7 @@ def run_gui(config: CoreConfig, start_arg: str = None, diagnose: bool = False):
             diagnose_timer.timeout.connect(kill_window)
 
         if lang_key:
-            event_bus.send(CoreEvent.gui_config_changed, gui_language=lang_key)
+            event_bus.send(CoreEvent.GUI_CONFIG_CHANGED, gui_language=lang_key)
 
         if diagnose:
             with fail_on_first_exception(kill_window):

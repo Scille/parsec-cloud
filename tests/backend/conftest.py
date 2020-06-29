@@ -221,7 +221,7 @@ def realm_factory():
                     granted_on=now,
                 ),
             )
-            await spy.wait_with_timeout(BackendEvent.realm_roles_updated)
+            await spy.wait_with_timeout(BackendEvent.REALM_ROLES_UPDATED)
         return realm_id
 
     return _realm_factory

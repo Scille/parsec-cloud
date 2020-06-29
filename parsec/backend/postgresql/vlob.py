@@ -135,7 +135,7 @@ RETURNING index
 
     await send_signal(
         conn,
-        BackendEvent.realm_vlobs_updated,
+        BackendEvent.REALM_VLOBS_UPDATED,
         organization_id=organization_id,
         author=author,
         realm_id=realm_id,

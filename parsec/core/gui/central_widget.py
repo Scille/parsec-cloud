@@ -27,12 +27,12 @@ from parsec.core.fs import (
 
 class CentralWidget(QWidget, Ui_CentralWidget):
     NOTIFICATION_EVENTS = [
-        CoreEvent.backend_connection_changed,
-        CoreEvent.mountpoint_stopped,
-        CoreEvent.mountpoint_remote_error,
-        CoreEvent.mountpoint_unhandled_error,
-        CoreEvent.sharing_updated,
-        CoreEvent.fs_entry_file_update_conflicted,
+        CoreEvent.BACKEND_CONNECTION_CHANGED,
+        CoreEvent.MOUNTPOINT_STOPPED,
+        CoreEvent.MOUNTPOINT_REMOTE_ERROR,
+        CoreEvent.MOUNTPOINT_UNHANDLED_ERROR,
+        CoreEvent.SHARING_UPDATED,
+        CoreEvent.FS_ENTRY_FILE_UPDATE_CONFLICTED,
     ]
 
     connection_state_changed = pyqtSignal(object, object)
@@ -101,11 +101,11 @@ class CentralWidget(QWidget, Ui_CentralWidget):
             self.widget_title3.hide()
 
     def handle_event(self, event, **kwargs):
-        if event == CoreEvent.backend_connection_changed:
+        if event == CoreEvent.BACKEND_CONNECTION_CHANGED:
             self.connection_state_changed.emit(kwargs["status"], kwargs["status_exc"])
-        elif event == CoreEvent.mountpoint_stopped:
+        elif event == CoreEvent.MOUNTPOINT_STOPPED:
             self.new_notification.emit("WARNING", _("NOTIF_WARN_MOUNTPOINT_UNMOUNTED"))
-        elif event == CoreEvent.mountpoint_remote_error:
+        elif event == CoreEvent.MOUNTPOINT_REMOTE_ERROR:
             exc = kwargs["exc"]
             path = kwargs["path"]
             if isinstance(exc, FSWorkspaceNoReadAccess):
@@ -117,7 +117,7 @@ class CentralWidget(QWidget, Ui_CentralWidget):
             else:
                 msg = _("NOTIF_WARN_MOUNTPOINT_REMOTE_ERROR_{}_{}").format(path, str(exc))
             self.new_notification.emit("WARNING", msg)
-        elif event == CoreEvent.mountpoint_unhandled_error:
+        elif event == CoreEvent.MOUNTPOINT_UNHANDLED_ERROR:
             exc = kwargs["exc"]
             path = kwargs["path"]
             operation = kwargs["operation"]
@@ -127,7 +127,7 @@ class CentralWidget(QWidget, Ui_CentralWidget):
                     operation, path, str(exc)
                 ),
             )
-        elif event == CoreEvent.sharing_updated:
+        elif event == CoreEvent.SHARING_UPDATED:
             new_entry = kwargs["new_entry"]
             previous_entry = kwargs["previous_entry"]
             new_role = getattr(new_entry, "role", None)
@@ -144,7 +144,7 @@ class CentralWidget(QWidget, Ui_CentralWidget):
                 self.new_notification.emit(
                     "INFO", _("NOTIF_INFO_WORKSPACE_UNSHARED_{}").format(previous_entry.name)
                 )
-        elif event == CoreEvent.fs_entry_file_update_conflicted:
+        elif event == CoreEvent.FS_ENTRY_FILE_UPDATE_CONFLICTED:
             self.new_notification.emit(
                 "WARNING", _("NOTIF_WARN_SYNC_CONFLICT_{}").format(kwargs["path"])
             )

@@ -59,7 +59,7 @@ async def send_message(conn, organization_id, sender, recipient, timestamp, body
 
     await send_signal(
         conn,
-        BackendEvent.message_received,
+        BackendEvent.MESSAGE_RECEIVED,
         organization_id=organization_id,
         author=sender,
         recipient=recipient,

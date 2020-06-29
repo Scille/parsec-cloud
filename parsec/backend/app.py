@@ -152,7 +152,7 @@ class BackendApp:
                             ):
                                 cancel_scope.cancel()
 
-                        client_ctx.event_bus_ctx.connect(BackendEvent.user_revoked, _on_revoked)
+                        client_ctx.event_bus_ctx.connect(BackendEvent.USER_REVOKED, _on_revoked)
                         await self._handle_client_loop(transport, client_ctx)
 
             elif isinstance(client_ctx, InvitedClientContext):
@@ -176,7 +176,7 @@ class BackendApp:
                                     cancel_scope.cancel()
 
                             event_bus_ctx.connect(
-                                BackendEvent.invite_status_changed, _on_invite_status_changed
+                                BackendEvent.INVITE_STATUS_CHANGED, _on_invite_status_changed
                             )
                             await self._handle_client_loop(transport, client_ctx)
                 finally:

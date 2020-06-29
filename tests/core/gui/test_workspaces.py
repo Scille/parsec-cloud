@@ -119,7 +119,7 @@ async def test_mountpoint_remote_error_event(aqtbot, running_backend, logged_gui
 
     async with aqtbot.wait_signal(c_w.new_notification):
         c_w.event_bus.send(
-            CoreEvent.mountpoint_remote_error,
+            CoreEvent.MOUNTPOINT_REMOTE_ERROR,
             exc=FSWorkspaceNoReadAccess("Cannot get workspace roles: no read access"),
             path="/foo",
             operation="open",
@@ -132,7 +132,7 @@ async def test_mountpoint_remote_error_event(aqtbot, running_backend, logged_gui
 
     async with aqtbot.wait_signal(c_w.new_notification):
         c_w.event_bus.send(
-            CoreEvent.mountpoint_unhandled_error,
+            CoreEvent.MOUNTPOINT_UNHANDLED_ERROR,
             exc=RuntimeError("D'Oh !"),
             path="/bar",
             operation="unlink",

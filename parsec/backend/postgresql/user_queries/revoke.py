@@ -66,5 +66,5 @@ async def query_revoke_user(
             raise UserError(f"Update error: {result}")
     else:
         await send_signal(
-            conn, BackendEvent.user_revoked, organization_id=organization_id, user_id=user_id
+            conn, BackendEvent.USER_REVOKED, organization_id=organization_id, user_id=user_id
         )

@@ -125,7 +125,7 @@ async def query_claim_device_invitation(
     invitation = await _get_device_invitation(conn, organization_id, device_id)
     await send_signal(
         conn,
-        BackendEvent.device_claimed,
+        BackendEvent.DEVICE_CLAIMED,
         organization_id=organization_id,
         device_id=invitation.device_id,
         encrypted_claim=encrypted_claim,
@@ -146,7 +146,7 @@ async def query_cancel_device_invitation(
 
     await send_signal(
         conn,
-        BackendEvent.device_invitation_cancelled,
+        BackendEvent.DEVICE_INVITATION_CANCELLED,
         organization_id=organization_id,
         device_id=device_id,
     )

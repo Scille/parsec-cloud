@@ -29,7 +29,7 @@ class MemoryMessageComponent(BaseMessageComponent):
         messages[recipient].append((sender, timestamp, body))
         index = len(messages[recipient])
         await self._send_event(
-            BackendEvent.message_received,
+            BackendEvent.MESSAGE_RECEIVED,
             organization_id=organization_id,
             author=sender,
             recipient=recipient,

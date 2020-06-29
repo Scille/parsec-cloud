@@ -10,7 +10,7 @@ from parsec.api.protocol import (
     ServerHandshake,
     APIV1_HandshakeType,
     APIV1_AUTHENTICATED_CMDS,
-    Event,
+    APIEvent,
 )
 from parsec.core.types import BackendOrganizationAddr
 from parsec.core.backend_connection import (
@@ -243,10 +243,10 @@ async def test_events_listen_wait_has_watchdog(monkeypatch, mock_clock, running_
                 assert client_transport is client_transport2
 
             await backend_client_ctx.send_events_channel.send(
-                {"event": Event.pinged, "ping": "foo"}
+                {"event": APIEvent.PINGED, "ping": "foo"}
             )
 
-    assert events_listen_rep == {"status": "ok", "event": Event.pinged, "ping": "foo"}
+    assert events_listen_rep == {"status": "ok", "event": APIEvent.PINGED, "ping": "foo"}
 
 
 @pytest.mark.trio

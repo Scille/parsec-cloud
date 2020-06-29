@@ -30,13 +30,13 @@ async def wait_for_entries_synced(core, entries_pathes):
         if synced == to_sync:
             event.set()
 
-    core.signal_ns.connect(CoreEvent.fs_entry_synced, _on_entry_synced)
+    core.signal_ns.connect(CoreEvent.FS_ENTRY_SYNCED, _on_entry_synced)
     try:
         yield event
         await event.wait()
 
     finally:
-        core.signal_ns.disconnect(CoreEvent.fs_entry_synced, _on_entry_synced)
+        core.signal_ns.disconnect(CoreEvent.FS_ENTRY_SYNCED, _on_entry_synced)
 
 
 # @pytest.mark.trio

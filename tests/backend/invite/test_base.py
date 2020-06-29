@@ -13,7 +13,7 @@ from parsec.api.protocol import (
     InvitationDeletedReason,
     InvitationType,
     HandshakeBadIdentity,
-    Event,
+    APIEvent,
 )
 
 from tests.common import freeze_time, customize_fixtures
@@ -45,7 +45,7 @@ async def test_user_create_and_info(
             created_on=Pendulum(2000, 1, 3),
         )
         await spy.wait_multiple_with_timeout(
-            [BackendEvent.invite_status_changed, BackendEvent.invite_status_changed]
+            [BackendEvent.INVITE_STATUS_CHANGED, BackendEvent.INVITE_STATUS_CHANGED]
         )
 
     await events_subscribe(alice2_backend_sock)
@@ -61,7 +61,7 @@ async def test_user_create_and_info(
         rep = await events_listen_wait(alice2_backend_sock)
     assert rep == {
         "status": "ok",
-        "event": Event.invite_status_changed,
+        "event": APIEvent.INVITE_STATUS_CHANGED,
         "invitation_status": InvitationStatus.IDLE,
         "token": token,
     }
@@ -121,7 +121,7 @@ async def test_device_create_and_info(
             claimer_email="other@example.com",
             created_on=Pendulum(2000, 1, 2),
         )
-        await spy.wait_multiple_with_timeout([BackendEvent.invite_status_changed])
+        await spy.wait_multiple_with_timeout([BackendEvent.INVITE_STATUS_CHANGED])
 
     await events_subscribe(alice2_backend_sock)
 
@@ -134,7 +134,7 @@ async def test_device_create_and_info(
         rep = await events_listen_wait(alice2_backend_sock)
     assert rep == {
         "status": "ok",
-        "event": Event.invite_status_changed,
+        "event": APIEvent.INVITE_STATUS_CHANGED,
         "invitation_status": InvitationStatus.IDLE,
         "token": token,
     }
@@ -211,7 +211,7 @@ async def test_delete(
             greeter_user_id=alice.user_id,
             created_on=Pendulum(2000, 1, 2),
         )
-        await spy.wait_multiple_with_timeout([BackendEvent.invite_status_changed])
+        await spy.wait_multiple_with_timeout([BackendEvent.INVITE_STATUS_CHANGED])
 
     await events_subscribe(alice2_backend_sock)
 
@@ -225,7 +225,7 @@ async def test_delete(
         rep = await events_listen_wait(alice2_backend_sock)
     assert rep == {
         "status": "ok",
-        "event": Event.invite_status_changed,
+        "event": APIEvent.INVITE_STATUS_CHANGED,
         "invitation_status": InvitationStatus.DELETED,
         "token": invitation.token,
     }
