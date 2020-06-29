@@ -1,6 +1,7 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
 
 from parsec.backend.backend_events import BackendEvent
+from parsec.event_bus import MetaEvent
 import pytest
 import trio
 
@@ -26,7 +27,7 @@ async def _invite_and_claim(
         async with trio.open_service_nursery() as nursery:
             with running_backend.backend.event_bus.listen() as spy:
                 nursery.start_soon(invite_func)
-                await spy.wait("event.connected", {"event_name": event_name})
+                await spy.wait(MetaEvent.EVENT_CONNECTED, {"event_name": event_name})
             nursery.start_soon(claim_func)
 
 

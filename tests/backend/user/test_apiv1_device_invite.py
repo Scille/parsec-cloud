@@ -1,6 +1,7 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
 
 from parsec.backend.backend_events import BackendEvent
+from parsec.event_bus import MetaEvent
 import pytest
 import trio
 from async_generator import asynccontextmanager
@@ -84,7 +85,7 @@ async def test_device_invite_timeout(
             apiv1_alice_backend_sock, invited_device_name=alice_nd_id.device_name
         ) as prep:
             await spy.wait_with_timeout(
-                "event.connected", {"event_name": BackendEvent.device_claimed}
+                MetaEvent.EVENT_CONNECTED, {"event_name": BackendEvent.device_claimed}
             )
             mock_clock.jump(PEER_EVENT_MAX_WAIT + 1)
 
@@ -103,14 +104,16 @@ async def test_concurrent_device_invite(
             apiv1_alice_backend_sock, invited_device_name=alice_nd_id.device_name
         ) as prep:
 
-            await spy.wait("event.connected", {"event_name": BackendEvent.device_claimed})
+            await spy.wait(MetaEvent.EVENT_CONNECTED, {"event_name": BackendEvent.device_claimed})
             spy.clear()
 
             async with device_invite(
                 apiv1_alice2_backend_sock, invited_device_name=alice_nd_id.device_name
             ) as prep2:
 
-                await spy.wait("event.connected", {"event_name": BackendEvent.device_claimed})
+                await spy.wait(
+                    MetaEvent.EVENT_CONNECTED, {"event_name": BackendEvent.device_claimed}
+                )
 
                 backend.event_bus.send(
                     BackendEvent.device_claimed,
@@ -132,7 +135,7 @@ async def test_device_invite_same_name_different_organizations(
             apiv1_alice_backend_sock, invited_device_name=alice_nd_id.device_name
         ) as prep:
 
-            await spy.wait("event.connected", {"event_name": BackendEvent.device_claimed})
+            await spy.wait(MetaEvent.EVENT_CONNECTED, {"event_name": BackendEvent.device_claimed})
 
             backend.event_bus.send(
                 BackendEvent.device_claimed,

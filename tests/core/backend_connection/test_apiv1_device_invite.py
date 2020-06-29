@@ -1,6 +1,7 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
 
 from parsec.backend.backend_events import BackendEvent
+from parsec.event_bus import MetaEvent
 import pytest
 import trio
 import pendulum
@@ -86,7 +87,7 @@ async def test_device_invite_then_claim_ok(alice, apiv1_alice_backend_cmds, runn
         async with trio.open_service_nursery() as nursery:
             nursery.start_soon(_alice_invite)
             await spy.wait_with_timeout(
-                "event.connected", {"event_name": BackendEvent.device_claimed}
+                MetaEvent.EVENT_CONNECTED, {"event_name": BackendEvent.device_claimed}
             )
             nursery.start_soon(_alice_nd_claim)
 

@@ -5,9 +5,14 @@ import trio
 from structlog import get_logger
 from collections import defaultdict
 from contextlib import contextmanager
-
+from enum import Enum
 
 logger = get_logger()
+
+
+class MetaEvent(Enum):
+    EVENT_CONNECTED = "event.connected"
+    EVENT_DISCONNECTED = "event.disconnected"
 
 
 class EventWaiter:
@@ -82,7 +87,7 @@ class EventBus:
 
     def connect(self, event: Enum, cb):
         self._event_handlers[event].append(cb)
-        self.send("event.connected", event_name=event)
+        self.send(MetaEvent.EVENT_CONNECTED, event_name=event)
 
     @contextmanager
     def connect_in_context(self, *events: List[Enum]):
@@ -97,7 +102,7 @@ class EventBus:
 
     def disconnect(self, event: Enum, cb):
         self._event_handlers[event].remove(cb)
-        self.send("event.disconnected", event_name=event)
+        self.send(MetaEvent.EVENT_DISCONNECTED, event_name=event)
 
 
 class EventBusConnectionContext:

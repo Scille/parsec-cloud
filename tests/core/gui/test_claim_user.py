@@ -1,6 +1,7 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
 
 from parsec.backend.backend_events import BackendEvent
+from parsec.event_bus import MetaEvent
 import pytest
 import trio
 from PyQt5 import QtCore, QtWidgets
@@ -34,7 +35,7 @@ async def alice_invite(running_backend, backend, alice):
         with backend.event_bus.listen() as spy:
             nursery.start_soon(_invite)
             await spy.wait_with_timeout(
-                "event.connected", {"event_name": BackendEvent.user_claimed}
+                MetaEvent.EVENT_CONNECTED, {"event_name": BackendEvent.user_claimed}
             )
 
             yield invitation

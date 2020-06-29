@@ -147,7 +147,7 @@ class EventBusSpy:
         else:
             raise ValueError(
                 "event must be provided as `SpiedEvent`, `(<event>, <kwargs>, <dt>)` tuple "
-                "or string"
+                "or an Enum"
             )
 
     def assert_event_occured(self, event, kwargs=ANY, dt=ANY):
