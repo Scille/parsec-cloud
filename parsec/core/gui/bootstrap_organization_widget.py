@@ -1,15 +1,11 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
 
-import pendulum
-
 from PyQt5.QtCore import pyqtSignal
 from PyQt5.QtWidgets import QWidget, QApplication, QDialog
 
 from structlog import get_logger
 
-from parsec.crypto import SigningKey
-from parsec.api.data import UserCertificateContent, DeviceCertificateContent, UserProfile
-from parsec.api.protocol import DeviceID
+from parsec.api.protocol import HumanHandle
 from parsec.core.types import BackendOrganizationBootstrapAddr
 from parsec.core.backend_connection import (
     apiv1_backend_anonymous_cmds_factory,
@@ -17,11 +13,8 @@ from parsec.core.backend_connection import (
     BackendConnectionRefused,
     BackendConnectionError,
 )
-from parsec.core.local_device import (
-    generate_new_device,
-    save_device_with_password,
-    LocalDeviceAlreadyExistsError,
-)
+from parsec.core.invite import bootstrap_organization
+from parsec.core.local_device import save_device_with_password
 from parsec.core.gui.trio_thread import JobResultError, ThreadSafeQtSignal
 from parsec.core.gui.custom_dialogs import show_error, GreyedDialog, show_info
 from parsec.core.gui.desktop import get_default_device
@@ -37,8 +30,8 @@ async def _do_bootstrap_organization(
     config_dir,
     password: str,
     password_check: str,
-    user_id: str,
-    device_name: str,
+    human_handle: HumanHandle,
+    device_label: str,
     bootstrap_addr: BackendOrganizationBootstrapAddr,
 ):
     if password != password_check:
@@ -47,62 +40,16 @@ async def _do_bootstrap_organization(
         raise JobResultError("password-size")
 
     try:
-        device_id = DeviceID(f"{user_id}@{device_name}")
-    except ValueError as exc:
-        raise JobResultError("bad-device_name") from exc
-
-    root_signing_key = SigningKey.generate()
-    root_verify_key = root_signing_key.verify_key
-    organization_addr = bootstrap_addr.generate_organization_addr(root_verify_key)
-
-    try:
-        device = generate_new_device(device_id, organization_addr, profile=UserProfile.ADMIN)
-        save_device_with_password(config_dir, device, password)
-
-    except LocalDeviceAlreadyExistsError as exc:
-        raise JobResultError("user-exists") from exc
-
-    now = pendulum.now()
-    user_certificate = UserCertificateContent(
-        author=None,
-        timestamp=now,
-        user_id=device.user_id,
-        human_handle=None,
-        public_key=device.public_key,
-        profile=device.profile,
-    ).dump_and_sign(root_signing_key)
-    device_certificate = DeviceCertificateContent(
-        author=None,
-        timestamp=now,
-        device_id=device_id,
-        device_label=None,
-        verify_key=device.verify_key,
-    ).dump_and_sign(root_signing_key)
-
-    try:
-        async with apiv1_backend_anonymous_cmds_factory(bootstrap_addr) as cmds:
-            rep = await cmds.organization_bootstrap(
-                organization_id=bootstrap_addr.organization_id,
-                bootstrap_token=bootstrap_addr.token,
-                root_verify_key=root_verify_key,
-                # Regular certificates compatible with redacted here
-                redacted_user_certificate=user_certificate,
-                redacted_device_certificate=device_certificate,
+        async with apiv1_backend_anonymous_cmds_factory(addr=bootstrap_addr) as cmds:
+            new_device = await bootstrap_organization(
+                cmds=cmds, human_handle=human_handle, device_label=device_label
             )
-
-            if rep["status"] == "already_bootstrapped":
-                raise JobResultError("already-bootstrapped", info=str(rep))
-            elif rep["status"] == "not_found":
-                raise JobResultError("invalid-url", info=str(rep))
-            elif rep["status"] != "ok":
-                raise JobResultError("refused-by-backend", info=str(rep))
-        return device, password
+            save_device_with_password(config_dir, new_device, password)
+            return new_device, password
     except BackendConnectionRefused as exc:
         raise JobResultError("invalid-url", info=str(exc)) from exc
-
     except BackendNotAvailable as exc:
         raise JobResultError("backend-offline", info=str(exc)) from exc
-
     except BackendConnectionError as exc:
         raise JobResultError("refused-by-backend", info=str(exc)) from exc
 
@@ -206,6 +153,14 @@ class BootstrapOrganizationWidget(QWidget, Ui_BootstrapOrganizationWidget):
     def bootstrap_clicked(self):
         assert not self.bootstrap_job
 
+        try:
+            human_handle = HumanHandle(
+                email=self.line_edit_email.text(), label=self.line_edit_login.text()
+            )
+        except ValueError as exc:
+            show_error(_("TEXT_BOOTSTRAP_ORG_INVALID_EMAIL"), exception=exc)
+            return
+
         self.bootstrap_job = self.jobs_ctx.submit_job(
             ThreadSafeQtSignal(self, "bootstrap_success"),
             ThreadSafeQtSignal(self, "bootstrap_error"),
@@ -213,8 +168,8 @@ class BootstrapOrganizationWidget(QWidget, Ui_BootstrapOrganizationWidget):
             config_dir=self.config.config_dir,
             password=self.line_edit_password.text(),
             password_check=self.line_edit_password_check.text(),
-            user_id=self.line_edit_login.text(),
-            device_name=self.line_edit_device.text(),
+            human_handle=human_handle,
+            device_label=self.line_edit_device.text(),
             bootstrap_addr=self.addr,
         )
         self.check_infos()
@@ -235,6 +190,7 @@ class BootstrapOrganizationWidget(QWidget, Ui_BootstrapOrganizationWidget):
             and len(self.line_edit_password.text())
             and get_password_strength(self.line_edit_password.text()) > 0
             and len(self.line_edit_password_check.text())
+            and len(self.line_edit_email.text())
         ):
             self.button_bootstrap.setDisabled(False)
         else:
@@ -243,7 +199,7 @@ class BootstrapOrganizationWidget(QWidget, Ui_BootstrapOrganizationWidget):
     @classmethod
     def exec_modal(cls, jobs_ctx, config, addr, parent):
         w = cls(jobs_ctx=jobs_ctx, config=config, addr=addr)
-        d = GreyedDialog(w, _("TEXT_BOOTSTRAP_ORG_TITLE"), parent=parent)
+        d = GreyedDialog(w, _("TEXT_BOOTSTRAP_ORG_TITLE"), parent=parent, width=1000)
         w.dialog = d
         w.line_edit_login.setFocus()
         if d.exec_() == QDialog.Accepted and w.status:

@@ -6,22 +6,26 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>463</width>
-    <height>482</height>
+    <width>498</width>
+    <height>517</height>
    </rect>
   </property>
   <property name="windowTitle">
    <string>Form</string>
   </property>
   <property name="styleSheet">
-   <string notr="true">#label_device_name, #label_username, #label_password, #label_confirmation {
+   <string notr="true">#label_device_name, #label_username, #label_password, #label_confirmation, #label_email {
 	color: #999999;
 	padding-left: 10px;
+}
+
+#scrollArea, #scrollAreaWidgetContents {
+	background: none;
 }</string>
   </property>
   <layout class="QVBoxLayout" name="verticalLayout_4">
    <property name="spacing">
-    <number>30</number>
+    <number>0</number>
    </property>
    <property name="leftMargin">
     <number>0</number>
@@ -66,306 +70,363 @@
     </widget>
    </item>
    <item>
-    <widget class="QWidget" name="widget" native="true">
-     <property name="sizePolicy">
-      <sizepolicy hsizetype="Expanding" vsizetype="Preferred">
-       <horstretch>0</horstretch>
-       <verstretch>0</verstretch>
-      </sizepolicy>
+    <widget class="QScrollArea" name="scrollArea">
+     <property name="frameShape">
+      <enum>QFrame::NoFrame</enum>
      </property>
-     <property name="minimumSize">
-      <size>
-       <width>0</width>
-       <height>0</height>
-      </size>
+     <property name="frameShadow">
+      <enum>QFrame::Plain</enum>
      </property>
-     <layout class="QVBoxLayout" name="verticalLayout_6">
-      <property name="spacing">
-       <number>0</number>
+     <property name="lineWidth">
+      <number>0</number>
+     </property>
+     <property name="horizontalScrollBarPolicy">
+      <enum>Qt::ScrollBarAlwaysOff</enum>
+     </property>
+     <property name="widgetResizable">
+      <bool>true</bool>
+     </property>
+     <widget class="QWidget" name="scrollAreaWidgetContents">
+      <property name="geometry">
+       <rect>
+        <x>0</x>
+        <y>0</y>
+        <width>498</width>
+        <height>478</height>
+       </rect>
       </property>
-      <property name="leftMargin">
-       <number>0</number>
-      </property>
-      <property name="topMargin">
-       <number>0</number>
-      </property>
-      <property name="rightMargin">
-       <number>0</number>
-      </property>
-      <property name="bottomMargin">
-       <number>0</number>
-      </property>
-      <item>
-       <widget class="QWidget" name="widget_2" native="true">
-        <layout class="QVBoxLayout" name="verticalLayout">
-         <property name="spacing">
-          <number>20</number>
-         </property>
-         <property name="leftMargin">
-          <number>0</number>
-         </property>
-         <property name="topMargin">
-          <number>0</number>
-         </property>
-         <property name="rightMargin">
-          <number>0</number>
-         </property>
-         <property name="bottomMargin">
-          <number>0</number>
-         </property>
-         <item>
-          <layout class="QVBoxLayout" name="verticalLayout_5">
-           <property name="spacing">
-            <number>5</number>
-           </property>
-           <item>
-            <widget class="QLabel" name="label_username">
-             <property name="font">
-              <font>
-               <pointsize>11</pointsize>
-               <weight>75</weight>
-               <bold>true</bold>
-              </font>
+      <layout class="QVBoxLayout" name="verticalLayout_8">
+       <property name="spacing">
+        <number>0</number>
+       </property>
+       <property name="leftMargin">
+        <number>0</number>
+       </property>
+       <property name="topMargin">
+        <number>20</number>
+       </property>
+       <property name="rightMargin">
+        <number>10</number>
+       </property>
+       <property name="bottomMargin">
+        <number>0</number>
+       </property>
+       <item>
+        <widget class="QWidget" name="widget_2" native="true">
+         <layout class="QVBoxLayout" name="verticalLayout">
+          <property name="spacing">
+           <number>20</number>
+          </property>
+          <property name="leftMargin">
+           <number>0</number>
+          </property>
+          <property name="topMargin">
+           <number>0</number>
+          </property>
+          <property name="rightMargin">
+           <number>0</number>
+          </property>
+          <property name="bottomMargin">
+           <number>0</number>
+          </property>
+          <item>
+           <layout class="QVBoxLayout" name="verticalLayout_5">
+            <property name="spacing">
+             <number>5</number>
+            </property>
+            <item>
+             <widget class="QLabel" name="label_username">
+              <property name="font">
+               <font>
+                <pointsize>11</pointsize>
+                <weight>75</weight>
+                <bold>true</bold>
+               </font>
+              </property>
+              <property name="text">
+               <string>TEXT_LABEL_USER_NAME</string>
+              </property>
+              <property name="alignment">
+               <set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignVCenter</set>
+              </property>
+             </widget>
+            </item>
+            <item>
+             <widget class="QLineEdit" name="line_edit_login">
+              <property name="minimumSize">
+               <size>
+                <width>0</width>
+                <height>32</height>
+               </size>
+              </property>
+              <property name="font">
+               <font>
+                <pointsize>12</pointsize>
+               </font>
+              </property>
+              <property name="placeholderText">
+               <string/>
+              </property>
+             </widget>
+            </item>
+           </layout>
+          </item>
+          <item>
+           <layout class="QVBoxLayout" name="verticalLayout_3">
+            <property name="spacing">
+             <number>5</number>
+            </property>
+            <item>
+             <widget class="QLabel" name="label_email">
+              <property name="font">
+               <font>
+                <pointsize>11</pointsize>
+                <weight>75</weight>
+                <bold>true</bold>
+               </font>
+              </property>
+              <property name="text">
+               <string>TEXT_LABEL_USER_EMAIL</string>
+              </property>
+             </widget>
+            </item>
+            <item>
+             <widget class="QLineEdit" name="line_edit_email">
+              <property name="minimumSize">
+               <size>
+                <width>0</width>
+                <height>32</height>
+               </size>
+              </property>
+             </widget>
+            </item>
+           </layout>
+          </item>
+          <item>
+           <layout class="QVBoxLayout" name="verticalLayout_7">
+            <property name="spacing">
+             <number>5</number>
+            </property>
+            <item>
+             <widget class="QLabel" name="label_device_name">
+              <property name="font">
+               <font>
+                <pointsize>11</pointsize>
+                <weight>75</weight>
+                <bold>true</bold>
+               </font>
+              </property>
+              <property name="text">
+               <string>TEXT_LABEL_DEVICE_NAME</string>
+              </property>
+              <property name="alignment">
+               <set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignVCenter</set>
+              </property>
+             </widget>
+            </item>
+            <item>
+             <widget class="QLineEdit" name="line_edit_device">
+              <property name="minimumSize">
+               <size>
+                <width>0</width>
+                <height>32</height>
+               </size>
+              </property>
+              <property name="font">
+               <font>
+                <pointsize>12</pointsize>
+               </font>
+              </property>
+              <property name="placeholderText">
+               <string/>
+              </property>
+             </widget>
+            </item>
+           </layout>
+          </item>
+          <item>
+           <widget class="QWidget" name="widget_password" native="true">
+            <layout class="QVBoxLayout" name="verticalLayout_2">
+             <property name="spacing">
+              <number>10</number>
              </property>
-             <property name="text">
-              <string>TEXT_LABEL_USER_NAME</string>
+             <property name="leftMargin">
+              <number>0</number>
              </property>
-             <property name="alignment">
-              <set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignVCenter</set>
+             <property name="topMargin">
+              <number>0</number>
              </property>
-            </widget>
-           </item>
-           <item>
-            <widget class="QLineEdit" name="line_edit_login">
-             <property name="minimumSize">
-              <size>
-               <width>0</width>
-               <height>32</height>
-              </size>
+             <property name="rightMargin">
+              <number>0</number>
              </property>
-             <property name="font">
-              <font>
-               <pointsize>12</pointsize>
-              </font>
+             <property name="bottomMargin">
+              <number>0</number>
              </property>
-             <property name="placeholderText">
-              <string/>
-             </property>
-            </widget>
-           </item>
-          </layout>
-         </item>
-         <item>
-          <layout class="QVBoxLayout" name="verticalLayout_7">
-           <property name="spacing">
-            <number>5</number>
-           </property>
-           <item>
-            <widget class="QLabel" name="label_device_name">
-             <property name="font">
-              <font>
-               <pointsize>11</pointsize>
-               <weight>75</weight>
-               <bold>true</bold>
-              </font>
-             </property>
-             <property name="text">
-              <string>TEXT_LABEL_DEVICE_NAME</string>
-             </property>
-             <property name="alignment">
-              <set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignVCenter</set>
-             </property>
-            </widget>
-           </item>
-           <item>
-            <widget class="QLineEdit" name="line_edit_device">
-             <property name="minimumSize">
-              <size>
-               <width>0</width>
-               <height>32</height>
-              </size>
-             </property>
-             <property name="font">
-              <font>
-               <pointsize>12</pointsize>
-              </font>
-             </property>
-             <property name="placeholderText">
-              <string/>
-             </property>
-            </widget>
-           </item>
-          </layout>
-         </item>
-         <item>
-          <widget class="QWidget" name="widget_password" native="true">
-           <layout class="QVBoxLayout" name="verticalLayout_2">
+             <item>
+              <layout class="QVBoxLayout" name="verticalLayout_10">
+               <property name="spacing">
+                <number>5</number>
+               </property>
+               <item>
+                <widget class="QLabel" name="label_password">
+                 <property name="font">
+                  <font>
+                   <pointsize>11</pointsize>
+                   <weight>75</weight>
+                   <bold>true</bold>
+                  </font>
+                 </property>
+                 <property name="text">
+                  <string>TEXT_LABEL_PASSWORD</string>
+                 </property>
+                 <property name="alignment">
+                  <set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignVCenter</set>
+                 </property>
+                </widget>
+               </item>
+               <item>
+                <widget class="QLineEdit" name="line_edit_password">
+                 <property name="minimumSize">
+                  <size>
+                   <width>0</width>
+                   <height>32</height>
+                  </size>
+                 </property>
+                 <property name="font">
+                  <font>
+                   <pointsize>12</pointsize>
+                  </font>
+                 </property>
+                 <property name="text">
+                  <string/>
+                 </property>
+                 <property name="echoMode">
+                  <enum>QLineEdit::Password</enum>
+                 </property>
+                 <property name="placeholderText">
+                  <string/>
+                 </property>
+                </widget>
+               </item>
+              </layout>
+             </item>
+             <item>
+              <layout class="QVBoxLayout" name="verticalLayout_11">
+               <property name="spacing">
+                <number>5</number>
+               </property>
+               <item>
+                <widget class="QLabel" name="label_confirmation">
+                 <property name="font">
+                  <font>
+                   <pointsize>11</pointsize>
+                   <weight>75</weight>
+                   <bold>true</bold>
+                  </font>
+                 </property>
+                 <property name="text">
+                  <string>TEXT_LABEL_PASSWORD_CONFIRMATION</string>
+                 </property>
+                 <property name="alignment">
+                  <set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignVCenter</set>
+                 </property>
+                </widget>
+               </item>
+               <item>
+                <widget class="QLineEdit" name="line_edit_password_check">
+                 <property name="minimumSize">
+                  <size>
+                   <width>0</width>
+                   <height>32</height>
+                  </size>
+                 </property>
+                 <property name="font">
+                  <font>
+                   <pointsize>12</pointsize>
+                  </font>
+                 </property>
+                 <property name="echoMode">
+                  <enum>QLineEdit::Password</enum>
+                 </property>
+                 <property name="placeholderText">
+                  <string/>
+                 </property>
+                </widget>
+               </item>
+              </layout>
+             </item>
+             <item>
+              <layout class="QHBoxLayout" name="layout_password_strength"/>
+             </item>
+            </layout>
+           </widget>
+          </item>
+          <item>
+           <layout class="QHBoxLayout" name="horizontalLayout_3">
             <property name="spacing">
              <number>10</number>
             </property>
-            <property name="leftMargin">
-             <number>0</number>
-            </property>
             <property name="topMargin">
-             <number>0</number>
-            </property>
-            <property name="rightMargin">
-             <number>0</number>
-            </property>
-            <property name="bottomMargin">
-             <number>0</number>
+             <number>5</number>
             </property>
             <item>
-             <layout class="QVBoxLayout" name="verticalLayout_10">
-              <property name="spacing">
-               <number>5</number>
+             <spacer name="horizontalSpacer">
+              <property name="orientation">
+               <enum>Qt::Horizontal</enum>
               </property>
-              <item>
-               <widget class="QLabel" name="label_password">
-                <property name="font">
-                 <font>
-                  <pointsize>11</pointsize>
-                  <weight>75</weight>
-                  <bold>true</bold>
-                 </font>
-                </property>
-                <property name="text">
-                 <string>TEXT_LABEL_PASSWORD</string>
-                </property>
-                <property name="alignment">
-                 <set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignVCenter</set>
-                </property>
-               </widget>
-              </item>
-              <item>
-               <widget class="QLineEdit" name="line_edit_password">
-                <property name="minimumSize">
-                 <size>
-                  <width>0</width>
-                  <height>32</height>
-                 </size>
-                </property>
-                <property name="font">
-                 <font>
-                  <pointsize>12</pointsize>
-                 </font>
-                </property>
-                <property name="text">
-                 <string/>
-                </property>
-                <property name="echoMode">
-                 <enum>QLineEdit::Password</enum>
-                </property>
-                <property name="placeholderText">
-                 <string/>
-                </property>
-               </widget>
-              </item>
-             </layout>
+              <property name="sizeHint" stdset="0">
+               <size>
+                <width>40</width>
+                <height>20</height>
+               </size>
+              </property>
+             </spacer>
             </item>
             <item>
-             <layout class="QVBoxLayout" name="verticalLayout_11">
-              <property name="spacing">
-               <number>5</number>
+             <widget class="QPushButton" name="button_bootstrap">
+              <property name="cursor">
+               <cursorShape>PointingHandCursor</cursorShape>
               </property>
-              <item>
-               <widget class="QLabel" name="label_confirmation">
-                <property name="font">
-                 <font>
-                  <pointsize>11</pointsize>
-                  <weight>75</weight>
-                  <bold>true</bold>
-                 </font>
-                </property>
-                <property name="text">
-                 <string>TEXT_LABEL_PASSWORD_CONFIRMATION</string>
-                </property>
-                <property name="alignment">
-                 <set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignVCenter</set>
-                </property>
-               </widget>
-              </item>
-              <item>
-               <widget class="QLineEdit" name="line_edit_password_check">
-                <property name="minimumSize">
-                 <size>
-                  <width>0</width>
-                  <height>32</height>
-                 </size>
-                </property>
-                <property name="font">
-                 <font>
-                  <pointsize>12</pointsize>
-                 </font>
-                </property>
-                <property name="echoMode">
-                 <enum>QLineEdit::Password</enum>
-                </property>
-                <property name="placeholderText">
-                 <string/>
-                </property>
-               </widget>
-              </item>
-             </layout>
-            </item>
-            <item>
-             <layout class="QHBoxLayout" name="layout_password_strength"/>
+              <property name="toolTip">
+               <string>TEXT_BOOTSTRAP_ORG_TOOLTIP</string>
+              </property>
+              <property name="layoutDirection">
+               <enum>Qt::RightToLeft</enum>
+              </property>
+              <property name="text">
+               <string>ACTION_BOOTSTRAP_ORG</string>
+              </property>
+              <property name="iconSize">
+               <size>
+                <width>16</width>
+                <height>16</height>
+               </size>
+              </property>
+              <property name="flat">
+               <bool>false</bool>
+              </property>
+             </widget>
             </item>
            </layout>
-          </widget>
-         </item>
-         <item>
-          <layout class="QHBoxLayout" name="horizontalLayout_3">
-           <property name="spacing">
-            <number>10</number>
-           </property>
-           <property name="topMargin">
-            <number>5</number>
-           </property>
-           <item>
-            <spacer name="horizontalSpacer">
-             <property name="orientation">
-              <enum>Qt::Horizontal</enum>
-             </property>
-             <property name="sizeHint" stdset="0">
-              <size>
-               <width>40</width>
-               <height>20</height>
-              </size>
-             </property>
-            </spacer>
-           </item>
-           <item>
-            <widget class="QPushButton" name="button_bootstrap">
-             <property name="cursor">
-              <cursorShape>PointingHandCursor</cursorShape>
-             </property>
-             <property name="toolTip">
-              <string>TEXT_BOOTSTRAP_ORG_TOOLTIP</string>
-             </property>
-             <property name="layoutDirection">
-              <enum>Qt::RightToLeft</enum>
-             </property>
-             <property name="text">
-              <string>ACTION_BOOTSTRAP_ORG</string>
-             </property>
-             <property name="iconSize">
-              <size>
-               <width>16</width>
-               <height>16</height>
-              </size>
-             </property>
-             <property name="flat">
-              <bool>false</bool>
-             </property>
-            </widget>
-           </item>
-          </layout>
-         </item>
-        </layout>
-       </widget>
-      </item>
-     </layout>
+          </item>
+          <item>
+           <spacer name="verticalSpacer_2">
+            <property name="orientation">
+             <enum>Qt::Vertical</enum>
+            </property>
+            <property name="sizeHint" stdset="0">
+             <size>
+              <width>20</width>
+              <height>40</height>
+             </size>
+            </property>
+           </spacer>
+          </item>
+         </layout>
+        </widget>
+       </item>
+      </layout>
+     </widget>
     </widget>
    </item>
   </layout>

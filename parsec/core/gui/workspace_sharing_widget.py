@@ -225,7 +225,7 @@ class WorkspaceSharingWidget(QWidget, Ui_WorkspaceSharingWidget):
         user_name = self.line_edit_share.text()
         if not user_name:
             return
-        if user_name not in self.last_human_find:
+        if not self.last_human_find or user_name not in self.last_human_find:
             show_error(self, _("TEXT_WORKSPACE_SHARING_USER_NOT_FOUND"))
             return
         user_info = self.last_human_find[user_name]

@@ -263,16 +263,21 @@ class MainWindow(QMainWindow, Ui_MainWindow):
 
         action_addr = None
         try:
-            action_addr = BackendInvitationAddr.from_url(url)
+            action_addr = BackendActionAddr.from_url(url)
         except ValueError as exc:
             show_error(self, _("TEXT_INVALID_URL"), exception=exc)
             return
-        if action_addr.invitation_type == InvitationType.USER:
-            self._on_claim_user_clicked(action_addr)
-        elif action_addr.invitation_type == InvitationType.DEVICE:
-            self._on_claim_device_clicked(action_addr)
-        elif isinstance(action_addr, BackendOrganizationBootstrapAddr):
+
+        if isinstance(action_addr, BackendOrganizationBootstrapAddr):
             self._on_bootstrap_org_clicked(action_addr)
+        elif isinstance(action_addr, BackendInvitationAddr):
+            if action_addr.invitation_type == InvitationType.USER:
+                self._on_claim_user_clicked(action_addr)
+            elif action_addr.invitation_type == InvitationType.DEVICE:
+                self._on_claim_device_clicked(action_addr)
+            else:
+                show_error(self, _("TEXT_INVALID_URL"))
+                return
         else:
             show_error(self, _("TEXT_INVALID_URL"))
             return
