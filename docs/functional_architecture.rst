@@ -14,7 +14,7 @@ requêtes natives au système de fichiers virtuel défini dans le composant core
 
 GUI
 ***
- Le composant gui gère l'interface utilisateur interagit avec le composant core ou directement avec le
+Le composant gui gère l'interface utilisateur interagit avec le composant core ou directement avec le
 système de fichiers natif, mais pas avec le composant mountpoint. Contrairement au composant mountpoint,
 le gui souscrit aux événements exposés par le serveur de métadonnées, tels que les notifications en cas
 d’actions concurrentes, de suppression d'un groupe etc. cela afin d’en informer l’utilisateur.
@@ -59,11 +59,11 @@ Le serveur de métadonnées est dans un environnement distant et contient trois 
 
 ● La Messagerie permet d’envoyer des notifications techniques aux utilisateurs
 
-● Le Stockage des Données/Métadonnées. Les données des fichiers (les Blocks) sont stockés sur un
+● Le Stockage des Données/Métadonnées. Les données des fichiers (les Blocks) sont stockées sur un
 service de stockages objet (AWS S3 ou OpenStack Swift), les métadonnées (les Vlobs, pour Versioned
-bLOBS) sont stockés dans une base PostgreSQL
+Blobs) sont stockées dans une base PostgreSQL
 
-● Les Notification des Terminaux - s’occupe d’envoyer des notifications aux terminaux connectés lors de
+● Le module Notification des Terminaux - s’occupe d’envoyer des notifications aux terminaux connectés lors de
 modifications des données ou bien de la réception d’un nouveau message
 
 ● Le Gestionnaire de Clés Publiques contient une correspondance entre l’identité des utilisateurs/terminaux
