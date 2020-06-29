@@ -26,33 +26,38 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../forms/bootstrap_organization_widget.ui" line="131"/>
+        <location filename="../forms/bootstrap_organization_widget.ui" line="147"/>
         <source>TEXT_LABEL_USER_NAME</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../forms/bootstrap_organization_widget.ui" line="173"/>
+        <location filename="../forms/bootstrap_organization_widget.ui" line="220"/>
         <source>TEXT_LABEL_DEVICE_NAME</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../forms/bootstrap_organization_widget.ui" line="233"/>
+        <location filename="../forms/bootstrap_organization_widget.ui" line="280"/>
         <source>TEXT_LABEL_PASSWORD</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../forms/bootstrap_organization_widget.ui" line="281"/>
+        <location filename="../forms/bootstrap_organization_widget.ui" line="328"/>
         <source>TEXT_LABEL_PASSWORD_CONFIRMATION</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../forms/bootstrap_organization_widget.ui" line="344"/>
+        <location filename="../forms/bootstrap_organization_widget.ui" line="391"/>
         <source>TEXT_BOOTSTRAP_ORG_TOOLTIP</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../forms/bootstrap_organization_widget.ui" line="350"/>
+        <location filename="../forms/bootstrap_organization_widget.ui" line="397"/>
         <source>ACTION_BOOTSTRAP_ORG</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../forms/bootstrap_organization_widget.ui" line="189"/>
+        <source>TEXT_LABEL_USER_EMAIL</source>
         <translation type="unfinished"></translation>
     </message>
 </context>
@@ -405,9 +410,6 @@
     </message>
 </context>
 <context>
-    <name>DeviceInvitationWidget</name>
-</context>
-<context>
     <name>DevicesWidget</name>
     <message>
         <location filename="../forms/devices_widget.ui" line="14"/>
@@ -639,6 +641,11 @@ p, li { white-space: pre-wrap; }
         <source>ACTION_START</source>
         <translation type="unfinished"></translation>
     </message>
+    <message>
+        <location filename="../forms/greet_device_instructions_widget.ui" line="41"/>
+        <source>TEXT_GREET_DEVICE_INSTRUCTIONS</source>
+        <translation type="unfinished"></translation>
+    </message>
 </context>
 <context>
     <name>GreetDeviceWidget</name>
@@ -763,12 +770,6 @@ p, li { white-space: pre-wrap; }
         <source>Form</source>
         <translation type="unfinished"></translation>
     </message>
-</context>
-<context>
-    <name>InviteDeviceWidget</name>
-</context>
-<context>
-    <name>InviteUserWidget</name>
 </context>
 <context>
     <name>LicenseWidget</name>
@@ -1060,7 +1061,7 @@ p, li { white-space: pre-wrap; }
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../forms/sharing_widget.ui" line="94"/>
+        <location filename="../forms/sharing_widget.ui" line="100"/>
         <source>TEXT_WORKSPACE_SHARING_REMOVE_USER_TOOLTIP</source>
         <translation type="unfinished"></translation>
     </message>
@@ -1100,11 +1101,6 @@ p, li { white-space: pre-wrap; }
         <source>Form</source>
         <translation type="unfinished"></translation>
     </message>
-    <message>
-        <location filename="../forms/user_button.ui" line="117"/>
-        <source>ACTION_CANCEL_USER_INVITATION_TOOLTIP</source>
-        <translation type="unfinished"></translation>
-    </message>
 </context>
 <context>
     <name>UserInvitationButton</name>
@@ -1119,13 +1115,10 @@ p, li { white-space: pre-wrap; }
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../forms/user_invitation_button.ui" line="285"/>
-        <source>BUTTON_GREET_USER</source>
+        <location filename="../forms/user_invitation_button.ui" line="288"/>
+        <source>ACTION_GREET_USER</source>
         <translation type="unfinished"></translation>
     </message>
-</context>
-<context>
-    <name>UserInvitationWidget</name>
 </context>
 <context>
     <name>UsersWidget</name>

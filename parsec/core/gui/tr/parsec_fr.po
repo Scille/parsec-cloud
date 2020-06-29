@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PROJECT VERSION\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2020-06-19 09:36+0200\n"
+"POT-Creation-Date: 2020-06-29 18:44+0200\n"
 "PO-Revision-Date: 2020-06-04 09:42+0200\n"
 "Last-Translator: \n"
 "Language: fr\n"
@@ -193,9 +193,6 @@ msgstr ""
 msgid "TEXT_GREET_USER_INVALID_HUMAN_HANDLE"
 msgstr ""
 
-msgid "TEXT_GREET_USER_INVALID_DEVICE_ID"
-msgstr ""
-
 msgid "TEXT_GREETER_USER_NONE_CODE_CLICKED"
 msgstr ""
 
@@ -205,8 +202,8 @@ msgstr ""
 msgid "TEXT_WORKSPACE_SHARING_USER_IS_REVOKED"
 msgstr "Cet utilisateur est révoqué."
 
-msgid "TEXT_WORKSPACE_SHARING_CANNOT_SHARE_WITH_YOURSELF"
-msgstr "Impossible de partager l'espace de travail avec vous-même."
+msgid "TEXT_WORKSPACE_SHARING_USER_NOT_FOUND"
+msgstr ""
 
 msgid "TEXT_WORKSPACE_SHARING_ALREADY_SHARED_user"
 msgstr "Cet espace de travail est déjà partagé avec <b>{user}</b>."
@@ -330,9 +327,6 @@ msgid "TEXT_CLAIM_USER_WAIT_TRUST_ERROR"
 msgstr ""
 
 msgid "TEXT_CLAIM_USER_WAIT_PEER_TRUST_ERROR"
-msgstr ""
-
-msgid "TEXT_CLAIM_USER_INVALID_DEVICE_ID"
 msgstr ""
 
 msgid "TEXT_CLAIM_USER_INVALID_HUMAN_HANDLE"
@@ -471,9 +465,6 @@ msgstr "Espace de travail"
 
 msgid "ACTION_WORKSPACE_NEW_CREATE"
 msgstr "Créer"
-
-msgid "TEXT_GREET_USER_INSTRUCTIONS_email-addr"
-msgstr ""
 
 msgid "TEXT_GREET_USER_ADDR_COPIED_TO_CLIPBOARD"
 msgstr ""
@@ -1468,6 +1459,9 @@ msgstr ""
 msgid "ACTION_CONTINUE"
 msgstr "Continuer"
 
+msgid "TEXT_BOOTSTRAP_ORG_INVALID_EMAIL"
+msgstr ""
+
 msgid "TEXT_BOOTSTRAP_ORG_TITLE"
 msgstr "Démarrer l'organisation"
 
@@ -1567,9 +1561,6 @@ msgid "TEXT_CLAIM_DEVICE_WAIT_TRUST_ERROR"
 msgstr ""
 
 msgid "TEXT_CLAIM_DEVICE_WAIT_PEER_TRUST_ERROR"
-msgstr ""
-
-msgid "TEXT_CLAIM_DEVICE_INVALID_DEVICE_NAME"
 msgstr ""
 
 msgid "TEXT_CLAIM_DEVICE_CLAIM_ERROR"
@@ -1825,6 +1816,9 @@ msgstr "Démarrer l'organisation"
 msgid "ACTION_BOOTSTRAP_ORG"
 msgstr "Démarrer l'organisation"
 
+msgid "TEXT_LABEL_USER_EMAIL"
+msgstr "Email"
+
 msgid "TEXT_CLAIM_DEVICE_CODE_EXCHANGE_GET_CODE_INSTRUCTIONS"
 msgstr ""
 
@@ -1884,9 +1878,6 @@ msgstr ""
 
 msgid "TEXT_LABEL_USER_FULL_NAME_PLACEHOLDER"
 msgstr ""
-
-msgid "TEXT_LABEL_USER_EMAIL"
-msgstr "Email"
 
 msgid "TEXT_LABEL_USER_EMAIL_PLACEHOLDER"
 msgstr ""
@@ -2032,6 +2023,9 @@ msgstr ""
 msgid "ACTION_SEND_EMAIL"
 msgstr ""
 
+msgid "TEXT_GREET_DEVICE_INSTRUCTIONS"
+msgstr ""
+
 msgid "TEXT_GREET_USER_WAITING_FOR_INFO"
 msgstr ""
 
@@ -2145,7 +2139,7 @@ msgstr "Voir l'espace de travail"
 msgid "ACTION_CANCEL_USER_INVITATION_TOOLTIP"
 msgstr ""
 
-msgid "BUTTON_GREET_USER"
+msgid "ACTION_GREET_USER"
 msgstr ""
 
 msgid "TEXT_USERS_FILTER_USERS_PLACEHOLDER"
@@ -2577,5 +2571,23 @@ msgstr "Trouver un fichier via son lien"
 #~ msgstr ""
 
 #~ msgid "USER_INVITATION_STATUS_LABEL"
+#~ msgstr ""
+
+#~ msgid "TEXT_GREET_USER_INVALID_DEVICE_ID"
+#~ msgstr ""
+
+#~ msgid "TEXT_WORKSPACE_SHARING_CANNOT_SHARE_WITH_YOURSELF"
+#~ msgstr "Impossible de partager l'espace de travail avec vous-même."
+
+#~ msgid "TEXT_CLAIM_USER_INVALID_DEVICE_ID"
+#~ msgstr ""
+
+#~ msgid "TEXT_GREET_USER_INSTRUCTIONS_email-addr"
+#~ msgstr ""
+
+#~ msgid "TEXT_CLAIM_DEVICE_INVALID_DEVICE_NAME"
+#~ msgstr ""
+
+#~ msgid "BUTTON_GREET_USER"
 #~ msgstr ""
 

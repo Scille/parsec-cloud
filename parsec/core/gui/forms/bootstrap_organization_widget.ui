@@ -20,12 +20,12 @@
 }
 
 #scrollArea, #scrollAreaWidgetContents {
-	background: none;
+	background-color: #F4F4F4;
 }</string>
   </property>
   <layout class="QVBoxLayout" name="verticalLayout_4">
    <property name="spacing">
-    <number>0</number>
+    <number>20</number>
    </property>
    <property name="leftMargin">
     <number>0</number>
@@ -92,7 +92,7 @@
         <x>0</x>
         <y>0</y>
         <width>498</width>
-        <height>478</height>
+        <height>458</height>
        </rect>
       </property>
       <layout class="QVBoxLayout" name="verticalLayout_8">
@@ -103,10 +103,10 @@
         <number>0</number>
        </property>
        <property name="topMargin">
-        <number>20</number>
+        <number>0</number>
        </property>
        <property name="rightMargin">
-        <number>10</number>
+        <number>15</number>
        </property>
        <property name="bottomMargin">
         <number>0</number>
@@ -144,7 +144,7 @@
                </font>
               </property>
               <property name="text">
-               <string>TEXT_LABEL_USER_NAME</string>
+               <string>TEXT_LABEL_USER_FULL_NAME</string>
               </property>
               <property name="alignment">
                <set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignVCenter</set>
@@ -165,7 +165,7 @@
                </font>
               </property>
               <property name="placeholderText">
-               <string/>
+               <string>TEXT_LABEL_USER_FULL_NAME_PLACEHOLDER</string>
               </property>
              </widget>
             </item>
@@ -197,6 +197,14 @@
                 <width>0</width>
                 <height>32</height>
                </size>
+              </property>
+              <property name="font">
+               <font>
+                <pointsize>12</pointsize>
+               </font>
+              </property>
+              <property name="placeholderText">
+               <string>TEXT_LABEL_USER_EMAIL_PLACEHOLDER</string>
               </property>
              </widget>
             </item>
@@ -413,6 +421,9 @@
            <spacer name="verticalSpacer_2">
             <property name="orientation">
              <enum>Qt::Vertical</enum>
+            </property>
+            <property name="sizeType">
+             <enum>QSizePolicy::Preferred</enum>
             </property>
             <property name="sizeHint" stdset="0">
              <size>

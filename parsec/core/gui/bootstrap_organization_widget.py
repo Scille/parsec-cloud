@@ -14,6 +14,7 @@ from parsec.core.backend_connection import (
     BackendConnectionError,
 )
 from parsec.core.invite import bootstrap_organization
+from parsec.core.invite.exceptions import InviteNotFoundError, InviteAlreadyUsedError
 from parsec.core.local_device import save_device_with_password
 from parsec.core.gui.trio_thread import JobResultError, ThreadSafeQtSignal
 from parsec.core.gui.custom_dialogs import show_error, GreyedDialog, show_info
@@ -46,6 +47,10 @@ async def _do_bootstrap_organization(
             )
             save_device_with_password(config_dir, new_device, password)
             return new_device, password
+    except InviteNotFoundError as exc:
+        raise JobResultError("bad-url", info=str(exc)) from exc
+    except InviteAlreadyUsedError as exc:
+        raise JobResultError("already-bootstrapped", info=str(exc)) from exc
     except BackendConnectionRefused as exc:
         raise JobResultError("invalid-url", info=str(exc)) from exc
     except BackendNotAvailable as exc:
@@ -125,7 +130,7 @@ class BootstrapOrganizationWidget(QWidget, Ui_BootstrapOrganizationWidget):
             errmsg = _("TEXT_BOOTSTRAP_ORG_UNKNOWN_FAILURE")
         show_error(self, errmsg, exception=self.bootstrap_job.exc)
         self.bootstrap_job = None
-        self.check_infos()
+        self.dialog.reject()
 
     def on_bootstrap_success(self):
         assert self.bootstrap_job
@@ -180,7 +185,6 @@ class BootstrapOrganizationWidget(QWidget, Ui_BootstrapOrganizationWidget):
     def cancel_bootstrap(self):
         if self.bootstrap_job:
             self.bootstrap_job.cancel_and_join()
-        self.check_infos()
 
     def check_infos(self, _=""):
         if (

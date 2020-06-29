@@ -336,6 +336,7 @@ class WorkspaceSharingWidget(QWidget, Ui_WorkspaceSharingWidget):
 
     def _on_share_success(self, job):
         workspace_name, user_info, role = job.ret
+        self.line_edit_share.setText()
         self.add_participant(user_info, is_current_user=False, role=role)
 
     def _on_share_error(self, job):

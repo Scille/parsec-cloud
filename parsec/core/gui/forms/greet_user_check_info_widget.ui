@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>596</width>
-    <height>288</height>
+    <height>356</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -84,7 +84,7 @@
           <property name="minimumSize">
            <size>
             <width>0</width>
-            <height>0</height>
+            <height>32</height>
            </size>
           </property>
           <property name="font">
@@ -126,7 +126,7 @@
           <property name="minimumSize">
            <size>
             <width>0</width>
-            <height>0</height>
+            <height>32</height>
            </size>
           </property>
           <property name="font">
@@ -171,7 +171,7 @@
           <property name="minimumSize">
            <size>
             <width>0</width>
-            <height>0</height>
+            <height>32</height>
            </size>
           </property>
           <property name="font">
@@ -210,6 +210,12 @@
         </item>
         <item>
          <widget class="QComboBox" name="combo_profile">
+          <property name="minimumSize">
+           <size>
+            <width>0</width>
+            <height>32</height>
+           </size>
+          </property>
           <property name="font">
            <font>
             <pointsize>12</pointsize>

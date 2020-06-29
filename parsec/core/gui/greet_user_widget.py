@@ -97,7 +97,7 @@ class Greeter:
                             True,
                             None,
                             in_progress_ctx.requested_human_handle,
-                            in_progress_ctx.requested_device_id,
+                            in_progress_ctx.requested_device_label,
                         )
                     )
                 except Exception as exc:
@@ -154,10 +154,10 @@ class Greeter:
 
     async def get_claim_requests(self):
         await self.main_mc_send.send(self.Step.GetClaimRequests)
-        r, exc, human_handle, device_id = await self.job_mc_recv.receive()
+        r, exc, human_handle, device_label = await self.job_mc_recv.receive()
         if not r:
             raise JobResultError(status="get-claim-request-failed", origin=exc)
-        return human_handle, device_id
+        return human_handle, device_label
 
     async def create_new_user(self, human_handle, device_label, profile):
         await self.main_mc_send.send(self.Step.CreateNewUser)
