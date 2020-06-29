@@ -403,7 +403,7 @@ msgid "Once the workspace is created, it appears in the file explorer as a regul
 msgstr "Une fois l'espace de travail créé, il apparait dans l'explorateur de fichiers comme un répertoire classique."
 
 msgid "Although workspaces are mounted by default, they can be unmounted or mounted back using the toggle at the bottom left of the workspace card. When a workspace is unmounted, his data are not accessible in Parsec, and it is not reachable through the regular file explorer of the computer."
-msgstr: "Bien que les workspaces soient montés par défaut, ils peuvent être démontés ou remontés en utilisant le bouton en bas à gauche de chaque carte de workspace. Quand un workspace est démonté, ses données ne sont pas accessibles dans Parsec, et il n'est pas non plus accessible dans l'explorateur de fichier par défaut de l'appareil."
+msgstr "Bien que les workspaces soient montés par défaut, ils peuvent être démontés ou remontés en utilisant le bouton en bas à gauche de chaque carte de workspace. Quand un workspace est démonté, ses données ne sont pas accessibles dans Parsec, et il n'est pas non plus accessible dans l'explorateur de fichier par défaut de l'appareil."
 
 msgid "Parsec also proposes its own file manager, accessible when clicking on a mounted workspace."
 msgstr "Parsec propose aussi son propre système de fichier, accessible par un clic sur un workspace monté."
