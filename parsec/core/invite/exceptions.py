@@ -10,6 +10,11 @@ class InvitePeerResetError(InviteError):
         super().__init__(msg)
 
 
-class InviteNotAvailableError(InviteError):
-    def __init__(self, msg="Invitation not avaialble"):
+class InviteNotFoundError(InviteError):
+    def __init__(self, msg="Invitation not found"):
+        super().__init__(msg)
+
+
+class InviteAlreadyUsedError(InviteError):
+    def __init__(self, msg="Invitation already used"):
         super().__init__(msg)
