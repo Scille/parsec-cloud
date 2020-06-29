@@ -59,7 +59,6 @@ class NewInstanceReqSchema(BaseSchema):
 
 class CommandReqSchema(OneOfSchema):
     type_field = "cmd"
-    type_field_remove = False
     type_schemas = {
         RequestType.FOREGROUND: ForegroundReqSchema,
         RequestType.NEW_INSTANCE: NewInstanceReqSchema,

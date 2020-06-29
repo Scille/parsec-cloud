@@ -80,7 +80,6 @@ class CmdSerializer:
 
         class RepWithErrorSchema(OneOfSchemaLegacy):
             type_field = "status"
-            type_field_remove = False
             fallback_type_schema = ErrorRepSchema
             type_schemas = {"ok": self.rep_noerror_schema}
 

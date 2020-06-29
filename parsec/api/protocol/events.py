@@ -66,7 +66,6 @@ class EventsListenReqSchema(BaseReqSchema):
 
 class EventsListenRepSchema(OneOfSchema):
     type_field = "event"
-    type_field_remove = False
     type_schemas = {
         Event.pinged: EventsPingedRepSchema(),
         Event.message_received: EventsMessageReceivedRepSchema(),

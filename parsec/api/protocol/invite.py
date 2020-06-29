@@ -48,7 +48,6 @@ class InviteNewDeviceReqSchema(BaseReqSchema):
 
 class InviteNewReqSchema(OneOfSchema):
     type_field = "type"
-    type_field_remove = False
     type_schemas = {
         InvitationType.USER: InviteNewUserReqSchema(),
         InvitationType.DEVICE: InviteNewDeviceReqSchema(),
@@ -116,7 +115,6 @@ class InviteListItemDeviceSchema(BaseSchema):
 
 class InviteListItemSchema(OneOfSchema):
     type_field = "type"
-    type_field_remove = False
     type_schemas = {
         InvitationType.USER: InviteListItemUserSchema(),
         InvitationType.DEVICE: InviteListItemDeviceSchema(),
@@ -152,7 +150,6 @@ class InviteInfoDeviceRepSchema(BaseRepSchema):
 
 class InviteInfoRepSchema(OneOfSchema):
     type_field = "type"
-    type_field_remove = False
     type_schemas = {
         InvitationType.USER: InviteInfoUserRepSchema(),
         InvitationType.DEVICE: InviteInfoDeviceRepSchema(),

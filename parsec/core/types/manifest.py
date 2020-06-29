@@ -198,7 +198,6 @@ class LocalManifestType(Enum):
 class LocalManifest(BaseLocalData):
     class SCHEMA_CLS(OneOfSchema, BaseSchema):
         type_field = "type"
-        type_field_remove = False
 
         @property
         def type_schemas(self):

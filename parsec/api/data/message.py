@@ -19,7 +19,6 @@ class MessageContentType(Enum):
 class MessageContent(BaseAPISignedData):
     class SCHEMA_CLS(OneOfSchema, BaseSignedDataSchema):
         type_field = "type"
-        type_field_remove = False
 
         @property
         def type_schemas(self):

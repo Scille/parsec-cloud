@@ -92,30 +92,29 @@ class OneOfSchema(BaseSchema):
     """
 
     type_field = "type"
-    type_field_remove = True
     type_schemas = {}
     fallback_type_schema = None
     _instantiated_schemas = None
     _instantiated_fallback_schema = None
 
+    def _instantiate_schemas(self):
+        enum_types = {type(k) for k in self.type_schemas.keys()}
+        if len(enum_types) != 1 or not issubclass(enum_types.pop(), Enum):
+            raise ValueError("type_schemas key can only be one Enum")
+        self._instantiated_schemas = {}
+        for k, v in self.type_schemas.items():
+            schema_instance = v if isinstance(v, Schema) else v()
+            if self.type_field not in schema_instance.fields:
+                raise ValueError(f"{schema_instance} needs to define '{self.type_field}' field")
+            self._instantiated_schemas[k] = schema_instance
+            self._instantiated_schemas[k.value] = schema_instance
+
+        if self.fallback_type_schema:
+            self._instantiated_fallback_schema = self.fallback_type_schema()
+
     def _get_schema(self, type):
         if self._instantiated_schemas is None:
-            # Assert all schemas key are Enum:
-            if not all([isinstance(k, Enum) for k in self.type_schemas]):
-                raise ValueError("type_schemas key can only be an Enum")
-            self._instantiated_schemas = {
-                k: v if isinstance(v, Schema) else v() for k, v in self.type_schemas.items()
-            }
-
-            if self.fallback_type_schema and not isinstance(self.fallback_type_schema, Schema):
-                self._instantiated_fallback_schema = self.fallback_type_schema()
-
-        if not isinstance(type, Enum):
-            for k in self._instantiated_schemas:
-                if k.value == type:
-                    type = k
-                    break
-
+            self._instantiate_schemas()
         return self._instantiated_schemas.get(type, self._instantiated_fallback_schema)
 
     def get_obj_type(self, obj):
@@ -155,8 +154,6 @@ class OneOfSchema(BaseSchema):
             return MarshalResult(None, {"_schema": "Unsupported object type: %s" % obj_type})
 
         result = schema.dump(obj, many=False, update_fields=update_fields, **kwargs)
-        if result.data and self.type_field not in result.data:
-            result.data[self.type_field] = obj_type
         return result
 
     def load(self, data, many=None, partial=None):
@@ -190,8 +187,6 @@ class OneOfSchema(BaseSchema):
         data = dict(data)
 
         data_type = data.get(self.type_field)
-        if self.type_field in data and self.type_field_remove:
-            data.pop(self.type_field)
 
         if not data_type:
             return UnmarshalResult({}, {self.type_field: ["Missing data for required field."]})
@@ -215,6 +210,9 @@ class OneOfSchema(BaseSchema):
 
 
 class OneOfSchemaLegacy(OneOfSchema):
+    _instantiated_schemas = None
+    _instantiated_fallback_schema = None
+
     def _get_schema(self, type):
         if self._instantiated_schemas is None:
             self._instantiated_schemas = {

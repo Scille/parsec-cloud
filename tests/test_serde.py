@@ -65,25 +65,37 @@ class AnimalsStr:
 
 
 @pytest.mark.parametrize(
-    "oneof_schema_cls, animals_cls, bird, fish",
+    "oneof_schema_cls, animals_cls, bird, fish, fields_constant",
     [
         pytest.param(
-            OneOfSchema, AnimalsEnum, AnimalsEnum.BIRD, AnimalsEnum.FISH, id="OneOfSchema"
+            OneOfSchema,
+            AnimalsEnum,
+            AnimalsEnum.BIRD,
+            AnimalsEnum.FISH,
+            fields.EnumCheckedConstant,
+            id="OneOfSchema",
         ),
         pytest.param(
-            OneOfSchemaLegacy, AnimalsStr, AnimalsStr.BIRD, AnimalsStr.FISH, id="OneOfSchemaLegacy"
+            OneOfSchemaLegacy,
+            AnimalsStr,
+            AnimalsStr.BIRD,
+            AnimalsStr.FISH,
+            fields.CheckedConstant,
+            id="OneOfSchemaLegacy",
         ),
     ],
 )
-def test_oneof_schema(oneof_schema_cls, animals_cls, bird, fish):
+def test_oneof_schema(oneof_schema_cls, animals_cls, bird, fish, fields_constant):
     class BirdSchema(BaseSchema):
+        animal_type = fields_constant(bird)
         flying = fields.Boolean()
 
     class FishSchema(BaseSchema):
+        animal_type = fields_constant(fish)
         swimming = fields.Int()
 
     class AnimalSchema(oneof_schema_cls):
-        type_field = "type"
+        type_field = "animal_type"
         type_schemas = {animals_cls.BIRD: BirdSchema(), animals_cls.FISH: FishSchema()}
 
         def get_obj_type(self, obj):
@@ -91,18 +103,19 @@ def test_oneof_schema(oneof_schema_cls, animals_cls, bird, fish):
 
     schema = AnimalSchema()
 
-    res, errors = schema.load({"type": fish, "swimming": True})
+    res, errors = schema.load({"animal_type": "fish", "swimming": True})
     assert not errors
-    assert res == {"swimming": True}
+    assert res == {"animal_type": fish, "swimming": True}
 
-    res, errors = schema.load({"type": "dummy", "swimming": True})
-    assert errors == {"type": ["Unsupported value: dummy"]}
+    res, errors = schema.load({"animal_type": "dummy", "swimming": True})
+    assert errors == {"animal_type": ["Unsupported value: dummy"]}
 
     # Schema ignore unknown fields
     res, errors = schema.load(
-        [{"type": "fish", "swimming": True}, {"type": bird, "swimming": True}], many=True
+        [{"animal_type": "fish", "swimming": True}, {"animal_type": "bird", "swimming": True}],
+        many=True,
     )
-    assert res == [{"swimming": True}, {}]
+    assert res == [{"animal_type": fish, "swimming": 1}, {"animal_type": bird}]
     assert not errors
 
     bird_cls = namedtuple("bird", "flying,ignore_me")
@@ -111,9 +124,12 @@ def test_oneof_schema(oneof_schema_cls, animals_cls, bird, fish):
     fish = fish_cls(True)
 
     res, errors = schema.dump(bird)
-    assert res == {"type": "bird", "flying": True}
+    assert res == {"animal_type": "bird", "flying": True}
     assert not errors
 
     res, errors = schema.dump([bird, fish], many=True)
-    assert res == [{"type": "bird", "flying": True}, {"type": "fish", "swimming": True}]
+    assert res == [
+        {"animal_type": "bird", "flying": True},
+        {"animal_type": "fish", "swimming": True},
+    ]
     assert not errors
