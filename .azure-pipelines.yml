@@ -16,6 +16,7 @@ variables:
     --log-level=DEBUG \
     --durations=10 -v \
     --cov=parsec --cov-config=setup.cfg --cov-append --cov-report= \
+  debug.stress_flaky_tests: 0  # Repeat all flaky tests X times
 
 jobs:
 
@@ -40,6 +41,11 @@ jobs:
       pip install pre-commit
     displayName: 'Bootstrap'
   - bash: |
+      set -eux
+      # Patch .pre-commit-config.yaml to force mixed-line-ending checks to LF
+      sed -i '/id: mixed-line-ending/a\      args:\n\        - "--fix=lf"' .pre-commit-config.yaml
+      cat .pre-commit-config.yaml
+      # Run all pre-commit hooks on all files
       pre-commit run --all-files --show-diff-on-failure
     displayName: 'Pre-commit hooks check'
   - bash: |
@@ -163,9 +169,9 @@ jobs:
       choco install -y --limit-output winfsp --pre --version=$(winfsp.version)
       # Install winfsp-test and put it in PATH
       mkdir winfsp-test
-      curl -L https://github.com/billziss-gh/winfsp/releases/download/v1.5/winfsp-tests-1.5.20002.zip -o winfsp-test/winfsp-tests.zip
+      curl -L https://github.com/billziss-gh/winfsp/releases/download/v1.7/winfsp-tests-1.7.20172.zip -o winfsp-test/winfsp-tests.zip
       unzip winfsp-test/winfsp-tests.zip -d winfsp-test
-      ##vso[task.prependpath]$(Build.SourcesDirectory)/winfsp-test
+      echo "##vso[task.prependpath]$(Build.SourcesDirectory)\\winfsp-test"
     displayName: 'Bootstrap'
   - bash: |
       set -eux
@@ -175,11 +181,22 @@ jobs:
       pip install $(ls dist/parsec_cloud-*.whl)[all]
       # Check dependency compatibility
       pip check parsec[all]
+      # Check winfsp-tests availability
+      python -c "import winfspy.tests.winfsp_tests"
       # Create isolated test directory
       mkdir -p "$(Agent.TempDirectory)"\\empty
       cp -R tests "$(Agent.TempDirectory)"\\empty
       cp setup.cfg "$(Agent.TempDirectory)"\\empty
     displayName: 'Install'
+  - bash: |
+      set -eux
+      # Install pytest-repeat
+      pip install pytest-repeat
+      # Repeat flaky tests X times
+      py.test tests --runmountpoint --runslow --rungui -m flaky --count $(debug.stress_flaky_tests) -v
+    workingDirectory: $(Agent.TempDirectory)/empty
+    displayName: 'Debug: stress flaky tests'
+    condition: and(succeeded(), gt(variables['debug.stress_flaky_tests'], 0))
   - bash: |
       set -eux
       py.test $(pytest.base_args) \

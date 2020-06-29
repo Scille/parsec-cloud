@@ -67,6 +67,7 @@ def file_system_path(mountpoint_service):
 
 @pytest.mark.slow
 @pytest.mark.mountpoint
+@pytest.mark.flaky(reruns=1)
 @pytest.mark.parametrize("test_case", winfsp_tests.TEST_CASES)
 def test_winfsp_tests(test_case, file_system_tempdir):
 

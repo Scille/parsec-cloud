@@ -6,7 +6,7 @@ from parsec.api.data import UserProfile
 from parsec.api.protocol import OrganizationID, HumanHandle
 from parsec.core.backend_connection import apiv1_backend_anonymous_cmds_factory
 from parsec.core.types import BackendOrganizationBootstrapAddr
-from parsec.core.invite import bootstrap_organization
+from parsec.core.invite import bootstrap_organization, InviteNotFoundError, InviteAlreadyUsedError
 
 
 @pytest.mark.trio
@@ -65,3 +65,39 @@ async def test_good(
         assert backend_device.device_certificate != backend_device.redacted_device_certificate
     else:
         assert backend_device.device_certificate == backend_device.redacted_device_certificate
+
+
+@pytest.mark.trio
+async def test_invalid_token(running_backend, backend):
+    org_id = OrganizationID("NewOrg")
+    old_token = "123456"
+    new_token = "abcdef"
+    await backend.organization.create(org_id, old_token)
+    await backend.organization.create(org_id, new_token)
+
+    organization_addr = BackendOrganizationBootstrapAddr.build(
+        running_backend.addr, org_id, old_token
+    )
+
+    async with apiv1_backend_anonymous_cmds_factory(addr=organization_addr) as cmds:
+        with pytest.raises(InviteNotFoundError):
+            await bootstrap_organization(cmds, human_handle=None, device_label=None)
+
+
+@pytest.mark.trio
+async def test_already_bootstrapped(
+    running_backend, backend, alice, bob, alice_backend_cmds, user_fs_factory
+):
+    org_id = OrganizationID("NewOrg")
+    org_token = "123456"
+    await backend.organization.create(org_id, org_token)
+
+    organization_addr = BackendOrganizationBootstrapAddr.build(
+        running_backend.addr, org_id, org_token
+    )
+
+    async with apiv1_backend_anonymous_cmds_factory(addr=organization_addr) as cmds:
+        await bootstrap_organization(cmds, human_handle=None, device_label=None)
+
+        with pytest.raises(InviteAlreadyUsedError):
+            await bootstrap_organization(cmds, human_handle=None, device_label=None)
