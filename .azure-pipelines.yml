@@ -41,6 +41,11 @@ jobs:
       pip install pre-commit
     displayName: 'Bootstrap'
   - bash: |
+      set -eux
+      # Patch .pre-commit-config.yaml to force mixed-line-ending checks to LF
+      sed -i '/id: mixed-line-ending/a\      args:\n\        - "--fix=lf"' .pre-commit-config.yaml
+      cat .pre-commit-config.yaml
+      # Run all pre-commit hooks on all files
       pre-commit run --all-files --show-diff-on-failure
     displayName: 'Pre-commit hooks check'
   - bash: |
