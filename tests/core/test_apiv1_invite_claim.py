@@ -21,13 +21,13 @@ from parsec.core.backend_connection import backend_authenticated_cmds_factory
 
 
 async def _invite_and_claim(
-    running_backend, invite_func, claim_func, event_name=BackendEvent.user_claimed
+    running_backend, invite_func, claim_func, event_type=BackendEvent.user_claimed
 ):
     with trio.fail_after(1):
         async with trio.open_service_nursery() as nursery:
             with running_backend.backend.event_bus.listen() as spy:
                 nursery.start_soon(invite_func)
-                await spy.wait(MetaEvent.EVENT_CONNECTED, {"event_name": event_name})
+                await spy.wait(MetaEvent.EVENT_CONNECTED, {"event_type": event_type})
             nursery.start_soon(claim_func)
 
 
@@ -146,7 +146,7 @@ async def test_invite_claim_device(running_backend, backend, alice):
         new_device = await claim_device(alice.organization_addr, new_device_id, token=token)
 
     await _invite_and_claim(
-        running_backend, _from_alice, _from_new_device, event_name=BackendEvent.device_claimed
+        running_backend, _from_alice, _from_new_device, event_type=BackendEvent.device_claimed
     )
 
     # Now connect as the new device
@@ -194,10 +194,10 @@ async def test_invite_claim_multiple_devices_from_chained_user(running_backend, 
 
     await _invite_and_claim(running_backend, _invite_from_alice, _claim_from_1)
     await _invite_and_claim(
-        running_backend, _invite_from_1, _claim_from_2, event_name=BackendEvent.device_claimed
+        running_backend, _invite_from_1, _claim_from_2, event_type=BackendEvent.device_claimed
     )
     await _invite_and_claim(
-        running_backend, _invite_from_2, _claim_from_3, event_name=BackendEvent.device_claimed
+        running_backend, _invite_from_2, _claim_from_3, event_type=BackendEvent.device_claimed
     )
 
     # Now connect as the last device
@@ -321,7 +321,7 @@ async def test_device_claim_invalid_returned_certificate(
             exception_occured = True
 
         await _invite_and_claim(
-            running_backend, _from_alice, _from_new_device, event_name=BackendEvent.device_claimed
+            running_backend, _from_alice, _from_new_device, event_type=BackendEvent.device_claimed
         )
         assert exception_occured
 
@@ -377,7 +377,7 @@ async def test_device_invite_claim_invalid_token(running_backend, backend, alice
         claim_exception_occured = True
 
     await _invite_and_claim(
-        running_backend, _from_alice, _from_new_device, event_name=BackendEvent.device_claimed
+        running_backend, _from_alice, _from_new_device, event_type=BackendEvent.device_claimed
     )
     assert invite_exception_occured
     assert claim_exception_occured
@@ -462,7 +462,7 @@ async def test_device_invite_claim_cancel_invitation(running_backend, backend, a
         running_backend,
         _from_alice,
         _cancel_invite_and_claim,
-        event_name=BackendEvent.device_claimed,
+        event_type=BackendEvent.device_claimed,
     )
 
     # Now make sure the invitation cannot be used

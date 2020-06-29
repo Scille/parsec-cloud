@@ -75,7 +75,7 @@ async def test_user_invite_then_claim_ok(
         async with trio.open_service_nursery() as nursery:
             nursery.start_soon(_alice_invite)
             await spy.wait_with_timeout(
-                MetaEvent.EVENT_CONNECTED, {"event_name": BackendEvent.user_claimed}
+                MetaEvent.EVENT_CONNECTED, {"event_type": BackendEvent.user_claimed}
             )
             nursery.start_soon(_mallory_claim)
 

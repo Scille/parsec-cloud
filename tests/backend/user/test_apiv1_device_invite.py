@@ -85,7 +85,7 @@ async def test_device_invite_timeout(
             apiv1_alice_backend_sock, invited_device_name=alice_nd_id.device_name
         ) as prep:
             await spy.wait_with_timeout(
-                MetaEvent.EVENT_CONNECTED, {"event_name": BackendEvent.device_claimed}
+                MetaEvent.EVENT_CONNECTED, {"event_type": BackendEvent.device_claimed}
             )
             mock_clock.jump(PEER_EVENT_MAX_WAIT + 1)
 
@@ -104,7 +104,7 @@ async def test_concurrent_device_invite(
             apiv1_alice_backend_sock, invited_device_name=alice_nd_id.device_name
         ) as prep:
 
-            await spy.wait(MetaEvent.EVENT_CONNECTED, {"event_name": BackendEvent.device_claimed})
+            await spy.wait(MetaEvent.EVENT_CONNECTED, {"event_type": BackendEvent.device_claimed})
             spy.clear()
 
             async with device_invite(
@@ -112,7 +112,7 @@ async def test_concurrent_device_invite(
             ) as prep2:
 
                 await spy.wait(
-                    MetaEvent.EVENT_CONNECTED, {"event_name": BackendEvent.device_claimed}
+                    MetaEvent.EVENT_CONNECTED, {"event_type": BackendEvent.device_claimed}
                 )
 
                 backend.event_bus.send(
@@ -135,7 +135,7 @@ async def test_device_invite_same_name_different_organizations(
             apiv1_alice_backend_sock, invited_device_name=alice_nd_id.device_name
         ) as prep:
 
-            await spy.wait(MetaEvent.EVENT_CONNECTED, {"event_name": BackendEvent.device_claimed})
+            await spy.wait(MetaEvent.EVENT_CONNECTED, {"event_type": BackendEvent.device_claimed})
 
             backend.event_bus.send(
                 BackendEvent.device_claimed,

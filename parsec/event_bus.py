@@ -50,8 +50,8 @@ class EventBus:
 
     def send(self, event: Enum, **kwargs):
         # Do not log meta events (event.connected and event.disconnected)
-        if "event_name" not in kwargs:
-            logger.debug("Send event", event_name=event, **kwargs)
+        if "event_type" not in kwargs:
+            logger.debug("Send event", event_type=event, **kwargs)
         for cb in self._event_handlers[event]:
             try:
                 cb(event, **kwargs)
@@ -59,7 +59,7 @@ class EventBus:
                 logger.exception(
                     "Unhandled exception in event bus callback",
                     callback=cb,
-                    event_name=event,
+                    event_type=event,
                     **kwargs
                 )
 
@@ -87,7 +87,7 @@ class EventBus:
 
     def connect(self, event: Enum, cb):
         self._event_handlers[event].append(cb)
-        self.send(MetaEvent.EVENT_CONNECTED, event_name=event)
+        self.send(MetaEvent.EVENT_CONNECTED, event_type=event)
 
     @contextmanager
     def connect_in_context(self, *events: List[Enum]):
@@ -102,7 +102,7 @@ class EventBus:
 
     def disconnect(self, event: Enum, cb):
         self._event_handlers[event].remove(cb)
-        self.send(MetaEvent.EVENT_DISCONNECTED, event_name=event)
+        self.send(MetaEvent.EVENT_DISCONNECTED, event_type=event)
 
 
 class EventBusConnectionContext:

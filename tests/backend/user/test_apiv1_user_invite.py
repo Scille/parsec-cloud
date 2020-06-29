@@ -70,7 +70,7 @@ async def test_user_invite_timeout(mock_clock, backend, apiv1_alice_backend_sock
         async with user_invite(apiv1_alice_backend_sock, user_id=mallory.user_id) as prep:
 
             await spy.wait_with_timeout(
-                MetaEvent.EVENT_CONNECTED, {"event_name": BackendEvent.user_claimed}
+                MetaEvent.EVENT_CONNECTED, {"event_type": BackendEvent.user_claimed}
             )
             mock_clock.jump(PEER_EVENT_MAX_WAIT + 1)
 
@@ -98,11 +98,11 @@ async def test_concurrent_user_invite(
     with backend.event_bus.listen() as spy, trio.fail_after(1):
         async with user_invite(apiv1_alice_backend_sock, user_id=mallory.user_id) as prep1:
 
-            await spy.wait(MetaEvent.EVENT_CONNECTED, {"event_name": BackendEvent.user_claimed})
+            await spy.wait(MetaEvent.EVENT_CONNECTED, {"event_type": BackendEvent.user_claimed})
             async with user_invite(apiv1_adam_backend_sock, user_id=mallory.user_id) as prep2:
 
                 spy.clear()
-                await spy.wait(MetaEvent.EVENT_CONNECTED, {"event_name": BackendEvent.user_claimed})
+                await spy.wait(MetaEvent.EVENT_CONNECTED, {"event_type": BackendEvent.user_claimed})
 
                 backend.event_bus.send(
                     BackendEvent.user_claimed,
@@ -124,7 +124,7 @@ async def test_user_invite_same_name_different_organizations(
         async with user_invite(apiv1_alice_backend_sock, user_id=mallory.user_id) as prep:
 
             # Waiting for user.claimed event
-            await spy.wait(MetaEvent.EVENT_CONNECTED, {"event_name": BackendEvent.user_claimed})
+            await spy.wait(MetaEvent.EVENT_CONNECTED, {"event_type": BackendEvent.user_claimed})
 
             backend.event_bus.send(
                 BackendEvent.user_claimed,
@@ -146,7 +146,7 @@ async def test_user_invite_same_name_different_organizations(
         async with user_invite(apiv1_otheralice_backend_sock, user_id=mallory.user_id) as prep:
 
             # Waiting for user.claimed event
-            await spy.wait(MetaEvent.EVENT_CONNECTED, {"event_name": BackendEvent.user_claimed})
+            await spy.wait(MetaEvent.EVENT_CONNECTED, {"event_type": BackendEvent.user_claimed})
 
             backend.event_bus.send(
                 BackendEvent.user_claimed,
