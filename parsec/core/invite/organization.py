@@ -9,7 +9,23 @@ from parsec.api.protocol import HumanHandle, DeviceID
 from parsec.core.types import LocalDevice, BackendOrganizationAddr
 from parsec.core.local_device import generate_new_device
 from parsec.core.backend_connection import APIV1_BackendAnonymousCmds
-from parsec.core.invite.exceptions import InviteNotAvailableError, InviteError
+from parsec.core.invite.exceptions import (
+    InviteError,
+    InviteNotFoundError,
+    InviteAlreadyUsedError,
+    InvitePeerResetError,
+)
+
+
+def _check_rep(rep, step_name):
+    if rep["status"] == "not_found":
+        raise InviteNotFoundError
+    elif rep["status"] == "already_bootstrapped":
+        raise InviteAlreadyUsedError
+    elif rep["status"] == "invalid_state":
+        raise InvitePeerResetError
+    elif rep["status"] != "ok":
+        raise InviteError(f"Backend error during {step_name}: {rep}")
 
 
 async def bootstrap_organization(
@@ -67,9 +83,6 @@ async def bootstrap_organization(
         redacted_user_certificate=redacted_user_certificate,
         redacted_device_certificate=redacted_device_certificate,
     )
-    if rep["status"] in ("not_found", "already_bootstrapped"):
-        raise InviteNotAvailableError()
-    elif rep["status"] != "ok":
-        raise InviteError(f"Backend error: {rep}")
+    _check_rep(rep, step_name="organization bootstrap")
 
     return device

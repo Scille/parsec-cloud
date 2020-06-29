@@ -6,7 +6,7 @@ from parsec.api.data import UserProfile
 from parsec.api.protocol import OrganizationID, HumanHandle
 from parsec.core.backend_connection import apiv1_backend_anonymous_cmds_factory
 from parsec.core.types import BackendOrganizationBootstrapAddr
-from parsec.core.invite import bootstrap_organization, InviteNotAvailableError
+from parsec.core.invite import bootstrap_organization, InviteNotFoundError, InviteAlreadyUsedError
 
 
 @pytest.mark.trio
@@ -80,7 +80,7 @@ async def test_invalid_token(running_backend, backend):
     )
 
     async with apiv1_backend_anonymous_cmds_factory(addr=organization_addr) as cmds:
-        with pytest.raises(InviteNotAvailableError):
+        with pytest.raises(InviteNotFoundError):
             await bootstrap_organization(cmds, human_handle=None, device_label=None)
 
 
@@ -99,5 +99,5 @@ async def test_already_bootstrapped(
     async with apiv1_backend_anonymous_cmds_factory(addr=organization_addr) as cmds:
         await bootstrap_organization(cmds, human_handle=None, device_label=None)
 
-        with pytest.raises(InviteNotAvailableError):
+        with pytest.raises(InviteAlreadyUsedError):
             await bootstrap_organization(cmds, human_handle=None, device_label=None)
