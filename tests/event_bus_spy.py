@@ -139,13 +139,11 @@ class EventBusSpy:
             return event
         elif event is ANY:
             return event
-        elif isinstance(event, str):
+        elif isinstance(event, Enum):
             return SpiedEvent(event, ANY, ANY)
         elif isinstance(event, tuple):
             event = event + (ANY,) * (3 - len(event))
             return SpiedEvent(*event)
-        elif isinstance(event, Enum):
-            return SpiedEvent(event, ANY, ANY)
         else:
             raise ValueError(
                 "event must be provided as `SpiedEvent`, `(<event>, <kwargs>, <dt>)` tuple "
