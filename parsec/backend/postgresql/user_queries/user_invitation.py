@@ -1,5 +1,6 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
 
+from parsec.backend.backend_events import BackendEvent
 from pypika import Parameter
 
 from parsec.api.protocol import OrganizationID, UserID, DeviceID
@@ -107,7 +108,7 @@ async def query_claim_user_invitation(
     invitation = await _get_user_invitation(conn, organization_id, user_id)
     await send_signal(
         conn,
-        "user.claimed",
+        BackendEvent.USER_CLAIMED,
         organization_id=organization_id,
         user_id=invitation.user_id,
         encrypted_claim=encrypted_claim,

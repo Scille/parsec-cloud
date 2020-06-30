@@ -7,6 +7,7 @@ from uuid import UUID
 from parsec.utils import TIMESTAMP_MAX_DT
 from parsec.api.data import RealmRoleCertificateContent, UserProfile
 from parsec.api.protocol import RealmRole
+from parsec.backend.backend_events import BackendEvent
 
 from tests.common import freeze_time, customize_fixtures
 from tests.backend.test_events import events_subscribe
@@ -24,7 +25,7 @@ async def test_create_ok(backend, alice, alice_backend_sock):
     with backend.event_bus.listen() as spy:
         rep = await realm_create(alice_backend_sock, certif)
         assert rep == {"status": "ok"}
-        await spy.wait_with_timeout("realm.roles_updated")
+        await spy.wait_with_timeout(BackendEvent.REALM_ROLES_UPDATED)
 
 
 @pytest.mark.trio

@@ -1,5 +1,6 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
 
+from parsec.core.core_events import CoreEvent
 import math
 import trio
 import unicodedata
@@ -172,7 +173,7 @@ async def winfsp_mountpoint_runner(
         "timestamp": getattr(workspace_fs, "timestamp", None),
     }
     try:
-        event_bus.send("mountpoint.starting", **event_kwargs)
+        event_bus.send(CoreEvent.MOUNTPOINT_STARTING, **event_kwargs)
 
         # Manage drive icon
         drive_letter, *_ = mountpoint_path.drive
@@ -188,11 +189,11 @@ async def winfsp_mountpoint_runner(
             await _wait_for_winfsp_ready(mountpoint_path)
 
             # Notify the manager that the mountpoint is ready
-            event_bus.send("mountpoint.started", **event_kwargs)
+            event_bus.send(CoreEvent.MOUNTPOINT_STARTED, **event_kwargs)
             task_status.started(mountpoint_path)
 
             # Start recording `sharing.updated` events
-            with event_bus.waiter_on("sharing.updated") as waiter:
+            with event_bus.waiter_on(CoreEvent.SHARING_UPDATED) as waiter:
 
                 # Loop over `sharing.updated` event
                 while True:
@@ -219,4 +220,4 @@ async def winfsp_mountpoint_runner(
         # to finish so blocking the trio loop can produce a dead lock...
         with trio.CancelScope(shield=True):
             await trio.to_thread.run_sync(fs.stop)
-            event_bus.send("mountpoint.stopped", **event_kwargs)
+            event_bus.send(CoreEvent.MOUNTPOINT_STOPPED, **event_kwargs)

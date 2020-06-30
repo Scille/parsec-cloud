@@ -5,8 +5,7 @@ from uuid import UUID
 from typing import Dict, List
 from pypika import Parameter
 
-from parsec.api.protocol import RealmRole
-from parsec.api.protocol import DeviceID, UserID, OrganizationID
+from parsec.api.protocol import DeviceID, UserID, OrganizationID, RealmRole
 from parsec.backend.realm import RealmStatus, RealmAccessError, RealmNotFoundError
 from parsec.backend.postgresql.utils import query
 from parsec.backend.postgresql.tables import (

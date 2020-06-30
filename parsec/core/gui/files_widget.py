@@ -1,5 +1,6 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
 
+from parsec.core.core_events import CoreEvent
 import pathlib
 from uuid import UUID
 import trio
@@ -145,8 +146,8 @@ class Clipboard:
 
 
 class FilesWidget(QWidget, Ui_FilesWidget):
-    fs_updated_qt = pyqtSignal(str, UUID)
-    fs_synced_qt = pyqtSignal(str, UUID)
+    fs_updated_qt = pyqtSignal(CoreEvent, UUID)
+    fs_synced_qt = pyqtSignal(CoreEvent, UUID)
     entry_downsynced_qt = pyqtSignal(UUID, UUID)
 
     sharing_updated_qt = pyqtSignal(WorkspaceEntry, object)
@@ -242,10 +243,10 @@ class FilesWidget(QWidget, Ui_FilesWidget):
         self.loading_dialog = None
         self.import_progress.connect(self._on_import_progress)
 
-        self.event_bus.connect("fs.entry.updated", self._on_fs_entry_updated_trio)
-        self.event_bus.connect("fs.entry.synced", self._on_fs_entry_synced_trio)
-        self.event_bus.connect("sharing.updated", self._on_sharing_updated_trio)
-        self.event_bus.connect("fs.entry.downsynced", self._on_entry_downsynced_trio)
+        self.event_bus.connect(CoreEvent.FS_ENTRY_UPDATED, self._on_fs_entry_updated_trio)
+        self.event_bus.connect(CoreEvent.FS_ENTRY_SYNCED, self._on_fs_entry_synced_trio)
+        self.event_bus.connect(CoreEvent.SHARING_UPDATED, self._on_sharing_updated_trio)
+        self.event_bus.connect(CoreEvent.FS_ENTRY_DOWNSYNCED, self._on_entry_downsynced_trio)
 
     def disconnect_all(self):
         pass

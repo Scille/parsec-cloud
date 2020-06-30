@@ -9,6 +9,7 @@ from parsec.api.protocol import (
     InvitationDeletedReason,
 )
 from parsec.backend.invite import ConduitState
+from parsec.backend.backend_events import BackendEvent
 from parsec.backend.postgresql.utils import Query, fn_exists, Table
 
 
@@ -172,6 +173,7 @@ STR_TO_INVITATION_TYPE = {x.value: x for x in InvitationType}
 STR_TO_INVITATION_STATUS = {x.value: x for x in InvitationStatus}
 STR_TO_INVITATION_DELETED_REASON = {x.value: x for x in InvitationDeletedReason}
 STR_TO_INVITATION_CONDUIT_STATE = {x.value: x for x in ConduitState}
+STR_TO_BACKEND_EVENTS = {x.value: x for x in BackendEvent}
 
 
 t_invitation = Table("invitation")

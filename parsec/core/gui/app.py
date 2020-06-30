@@ -1,5 +1,6 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
 
+from parsec.core.core_events import CoreEvent
 
 import sys
 import signal
@@ -19,6 +20,7 @@ from parsec.core.ipcinterface import (
     send_to_ipc_server,
     IPCServerAlreadyRunning,
     IPCServerNotRunning,
+    IPCCommand,
 )
 
 try:
@@ -51,9 +53,9 @@ async def _start_ipc_server(config, main_window, start_arg, result_queue):
     foreground_needed_qt = ThreadSafeQtSignal(main_window, "foreground_needed")
 
     async def cmd_handler(cmd):
-        if cmd["cmd"] == "foreground":
+        if cmd["cmd"] == IPCCommand.FOREGROUND:
             foreground_needed_qt.emit()
-        elif cmd["cmd"] == "new_instance":
+        elif cmd["cmd"] == IPCCommand.NEW_INSTANCE:
             new_instance_needed_qt.emit(cmd.get("start_arg"))
         return {"status": "ok"}
 
@@ -71,10 +73,10 @@ async def _start_ipc_server(config, main_window, start_arg, result_queue):
                 try:
                     if start_arg:
                         await send_to_ipc_server(
-                            config.ipc_socket_file, "new_instance", start_arg=start_arg
+                            config.ipc_socket_file, IPCCommand.NEW_INSTANCE, start_arg=start_arg
                         )
                     else:
-                        await send_to_ipc_server(config.ipc_socket_file, "foreground")
+                        await send_to_ipc_server(config.ipc_socket_file, IPCCommand.FOREGROUND)
                 finally:
                     result_queue.put("already_running")
                 return
@@ -184,7 +186,7 @@ def run_gui(config: CoreConfig, start_arg: str = None, diagnose: bool = False):
             diagnose_timer.timeout.connect(kill_window)
 
         if lang_key:
-            event_bus.send("gui.config.changed", gui_language=lang_key)
+            event_bus.send(CoreEvent.GUI_CONFIG_CHANGED, gui_language=lang_key)
 
         if diagnose:
             with fail_on_first_exception(kill_window):

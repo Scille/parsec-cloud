@@ -1,5 +1,6 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
 
+from parsec.backend.backend_events import BackendEvent
 from pypika import Parameter
 import pendulum
 
@@ -64,4 +65,6 @@ async def query_revoke_user(
         else:
             raise UserError(f"Update error: {result}")
     else:
-        await send_signal(conn, "user.revoked", organization_id=organization_id, user_id=user_id)
+        await send_signal(
+            conn, BackendEvent.USER_REVOKED, organization_id=organization_id, user_id=user_id
+        )

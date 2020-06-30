@@ -7,6 +7,7 @@ from contextlib import contextmanager
 from async_generator import asynccontextmanager
 from structlog import get_logger
 from pathlib import Path
+from enum import Enum
 
 from parsec.serde import (
     BaseSchema,
@@ -20,6 +21,11 @@ from parsec.serde import (
 
 
 logger = get_logger()
+
+
+class IPCCommand(Enum):
+    FOREGROUND = "foreground"
+    NEW_INSTANCE = "new_instance"
 
 
 class IPCServerError(Exception):
@@ -43,18 +49,20 @@ class IPCServerAlreadyRunning(IPCServerError):
 
 
 class ForegroundReqSchema(BaseSchema):
-    cmd = fields.CheckedConstant("foreground", required=True)
+    cmd = fields.EnumCheckedConstant(IPCCommand.FOREGROUND, required=True)
 
 
 class NewInstanceReqSchema(BaseSchema):
-    cmd = fields.CheckedConstant("new_instance", required=True)
+    cmd = fields.EnumCheckedConstant(IPCCommand.NEW_INSTANCE, required=True)
     start_arg = fields.String(allow_none=True)
 
 
 class CommandReqSchema(OneOfSchema):
     type_field = "cmd"
-    type_field_remove = False
-    type_schemas = {"foreground": ForegroundReqSchema, "new_instance": NewInstanceReqSchema}
+    type_schemas = {
+        IPCCommand.FOREGROUND: ForegroundReqSchema,
+        IPCCommand.NEW_INSTANCE: NewInstanceReqSchema,
+    }
 
     def get_obj_type(self, obj):
         return obj["cmd"]

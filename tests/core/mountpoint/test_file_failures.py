@@ -1,5 +1,6 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
 
+from parsec.core.core_events import CoreEvent
 import os
 import trio
 import pytest
@@ -97,13 +98,13 @@ async def test_remote_error_event(
                 fd = os.open(str(trio_w / "foo.txt"), os.O_RDONLY)
                 with pytest.raises(OSError):
                     os.read(fd, 10)
-            spy.assert_event_occured("mountpoint.remote_error")
+            spy.assert_event_occured(CoreEvent.MOUNTPOINT_REMOTE_ERROR)
 
             # But should still be able to do local stuff though without remote errors
             with alice_user_fs.event_bus.listen() as spy:
                 os.open(str(trio_w / "bar.txt"), os.O_RDWR | os.O_CREAT)
             assert os.listdir(str(trio_w)) == ["bar.txt", "foo.txt"]
-            assert "mountpoint.remote_error" not in [e.event for e in spy.events]
+            assert CoreEvent.MOUNTPOINT_REMOTE_ERROR not in [e.event for e in spy.events]
 
             # Finally test unhandled error
             def _crash(*args, **kwargs):
@@ -116,6 +117,6 @@ async def test_remote_error_event(
             with alice_user_fs.event_bus.listen() as spy:
                 with pytest.raises(OSError):
                     os.mkdir(str(trio_w / "dummy"))
-            spy.assert_event_occured("mountpoint.unhandled_error")
+            spy.assert_event_occured(CoreEvent.MOUNTPOINT_UNHANDLED_ERROR)
 
         await trio.to_thread.run_sync(_testbed)

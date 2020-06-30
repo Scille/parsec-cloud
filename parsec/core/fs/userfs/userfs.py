@@ -1,5 +1,6 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
 
+from parsec.core.core_events import CoreEvent
 import trio
 from pathlib import Path
 from pendulum import Pendulum, now as pendulum_now
@@ -323,8 +324,8 @@ class UserFS:
             user_manifest = user_manifest.evolve_workspaces_and_mark_updated(workspace_entry)
             await self._create_workspace(workspace_entry.id, workspace_manifest)
             await self.set_user_manifest(user_manifest)
-            self.event_bus.send("fs.entry.updated", id=self.user_manifest_id)
-            self.event_bus.send("fs.workspace.created", new_entry=workspace_entry)
+            self.event_bus.send(CoreEvent.FS_ENTRY_UPDATED, id=self.user_manifest_id)
+            self.event_bus.send(CoreEvent.FS_WORKSPACE_CREATED, new_entry=workspace_entry)
 
         return workspace_entry.id
 
@@ -345,7 +346,7 @@ class UserFS:
                 updated_workspace_entry
             )
             await self.set_user_manifest(updated_user_manifest)
-            self.event_bus.send("fs.entry.updated", id=self.user_manifest_id)
+            self.event_bus.send(CoreEvent.FS_ENTRY_UPDATED, id=self.user_manifest_id)
 
     async def _fetch_remote_user_manifest(self, version: int = None) -> UserManifest:
         """
@@ -433,7 +434,9 @@ class UserFS:
             # Hence send the corresponding events !
             self._detect_and_send_shared_events(diverged_um, merged_um)
             # TODO: deprecated event ?
-            self.event_bus.send("fs.entry.remote_changed", path="/", id=self.user_manifest_id)
+            self.event_bus.send(
+                CoreEvent.FS_ENTRY_REMOTE_CHANGED, path="/", id=self.user_manifest_id
+            )
             return
 
     def _detect_and_send_shared_events(self, old_um, new_um):
@@ -454,7 +457,9 @@ class UserFS:
             elif old_entry is None:
                 if new_entry.role is not None:
                     # New sharing
-                    self.event_bus.send("sharing.updated", new_entry=new_entry, previous_entry=None)
+                    self.event_bus.send(
+                        CoreEvent.SHARING_UPDATED, new_entry=new_entry, previous_entry=None
+                    )
             else:
                 # Sharing role has changed
                 # Note it's possible to have `old_entry.role == new_entry.role`
@@ -463,7 +468,7 @@ class UserFS:
                 # been delivered to us (typically if we got removed from a workspace for
                 # a short period of time while a `realm.vlobs_updated` event occured).
                 self.event_bus.send(
-                    "sharing.updated", new_entry=new_entry, previous_entry=old_entry
+                    CoreEvent.SHARING_UPDATED, new_entry=new_entry, previous_entry=old_entry
                 )
 
     async def _outbound_sync(self) -> None:
@@ -552,7 +557,7 @@ class UserFS:
             if to_sync_um.version > diverged_um.base_version:
                 merged_um = merge_local_user_manifests(diverged_um, to_sync_um)
                 await self.set_user_manifest(merged_um)
-            self.event_bus.send("fs.entry.synced", id=self.user_manifest_id)
+            self.event_bus.send(CoreEvent.FS_ENTRY_SYNCED, id=self.user_manifest_id)
 
         return True
 
@@ -713,7 +718,7 @@ class UserFS:
                         last_processed_message=new_last_processed_message
                     )
                     await self.set_user_manifest(user_manifest)
-                    self.event_bus.send("fs.entry.updated", id=self.user_manifest_id)
+                    self.event_bus.send(CoreEvent.FS_ENTRY_UPDATED, id=self.user_manifest_id)
 
         return errors
 
@@ -756,7 +761,7 @@ class UserFS:
             await self._process_message_sharing_revoked(msg)
 
         elif isinstance(msg, PingMessageContent):
-            self.event_bus.send("pinged", ping=msg.ping)
+            self.event_bus.send(CoreEvent.MESSAGE_PINGED, ping=msg.ping)
 
     async def _process_message_sharing_granted(
         self, msg: Union[SharingRevokedMessageContent, SharingReencryptedMessageContent]
@@ -814,14 +819,16 @@ class UserFS:
 
             user_manifest = user_manifest.evolve_workspaces_and_mark_updated(workspace_entry)
             await self.set_user_manifest(user_manifest)
-            self.event_bus.send("userfs.updated")
+            self.event_bus.send(CoreEvent.USERFS_UPDATED)
 
             if not already_existing_entry:
                 # TODO: remove this event ?
-                self.event_bus.send("fs.entry.synced", id=workspace_entry.id)
+                self.event_bus.send(CoreEvent.FS_ENTRY_SYNCED, id=workspace_entry.id)
 
             self.event_bus.send(
-                "sharing.updated", new_entry=workspace_entry, previous_entry=already_existing_entry
+                CoreEvent.SHARING_UPDATED,
+                new_entry=workspace_entry,
+                previous_entry=already_existing_entry,
             )
 
     async def _process_message_sharing_revoked(self, msg: SharingRevokedMessageContent):
@@ -866,9 +873,9 @@ class UserFS:
 
             user_manifest = user_manifest.evolve_workspaces_and_mark_updated(workspace_entry)
             await self.set_user_manifest(user_manifest)
-            self.event_bus.send("userfs.updated")
+            self.event_bus.send(CoreEvent.USERFS_UPDATED)
             self.event_bus.send(
-                "sharing.updated",
+                CoreEvent.SHARING_UPDATED,
                 new_entry=workspace_entry,
                 previous_entry=existing_workspace_entry,
             )

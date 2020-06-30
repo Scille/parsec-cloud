@@ -63,8 +63,11 @@ class RemoteDevicesManager:
         self._trustchain_ctx = TrustchainContext(root_verify_key, cache_validity)
 
     @property
-    def cache_validity(self):
+    def cache_validity(self) -> int:
         return self._trustchain_ctx.cache_validity
+
+    def invalidate_user_cache(self, user_id: UserID) -> None:
+        self._trustchain_ctx.invalidate_user_cache(user_id)
 
     async def get_user(
         self, user_id: UserID, no_cache: bool = False
