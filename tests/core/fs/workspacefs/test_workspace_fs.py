@@ -10,18 +10,6 @@ from parsec.core.types import FsPath, EntryID
 from parsec.core.fs.exceptions import FSError
 
 
-@pytest.fixture
-@pytest.mark.trio
-async def alice_workspace(alice_user_fs, running_backend):
-    wid = await alice_user_fs.workspace_create("w")
-    workspace = alice_user_fs.get_workspace(wid)
-    await workspace.mkdir("/foo")
-    await workspace.touch("/foo/bar")
-    await workspace.touch("/foo/baz")
-    await workspace.sync()
-    return workspace
-
-
 @pytest.mark.trio
 async def test_workspace_properties(alice_workspace):
     assert alice_workspace.get_workspace_name() == "w"
