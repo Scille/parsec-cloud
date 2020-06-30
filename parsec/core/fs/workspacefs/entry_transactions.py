@@ -157,26 +157,7 @@ class EntryTransactions(FileTransactions):
 
         # Fetch data
         manifest = await self._get_manifest_from_path(path)
-
-        # General stats
-        stats = {
-            "id": manifest.id,
-            "created": manifest.created,
-            "updated": manifest.updated,
-            "base_version": manifest.base_version,
-            "is_placeholder": manifest.is_placeholder,
-            "need_sync": manifest.need_sync,
-        }
-
-        # File/folder specific stats
-        if is_file_manifest(manifest):
-            stats["type"] = "file"
-            stats["size"] = manifest.size
-        else:
-            stats["type"] = "folder"
-            stats["children"] = sorted(manifest.children.keys())
-
-        return stats
+        return manifest.to_stats()
 
     async def entry_rename(
         self, source: FsPath, destination: FsPath, overwrite: bool = True
