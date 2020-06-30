@@ -3,11 +3,11 @@
 import os
 
 import pytest
-from winfspy.tests.winfstest import test_winfs as winfstest
 
 if os.name != "nt":
     pytest.skip("Windows only", allow_module_level=True)
 
+from winfspy.tests.winfstest import test_winfs as winfstest
 
 # Constants
 
