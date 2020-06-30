@@ -1,5 +1,6 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
 
+from parsec.core.core_events import CoreEvent
 from typing import Tuple, List, Callable
 
 from collections import defaultdict
@@ -181,7 +182,7 @@ class FileTransactions:
                 self._write_count.pop(fd, None)
 
         # Notify
-        self._send_event("fs.entry.updated", id=manifest.id)
+        self._send_event(CoreEvent.FS_ENTRY_UPDATED, id=manifest.id)
         return len(content)
 
     async def fd_resize(self, fd: FileDescriptor, length: int, truncate_only=False) -> None:
@@ -196,7 +197,7 @@ class FileTransactions:
             await self._manifest_resize(manifest, length)
 
         # Notify
-        self._send_event("fs.entry.updated", id=manifest.id)
+        self._send_event(CoreEvent.FS_ENTRY_UPDATED, id=manifest.id)
 
     async def fd_read(self, fd: FileDescriptor, size: int, offset: int, raise_eof=False) -> bytes:
         # Loop over attemps

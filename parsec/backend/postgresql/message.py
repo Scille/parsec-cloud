@@ -4,6 +4,7 @@ from pendulum import Pendulum
 from typing import List, Tuple
 from pypika import Parameter, Order, functions as fn
 
+from parsec.backend.backend_events import BackendEvent
 from parsec.api.protocol import UserID, DeviceID, OrganizationID
 from parsec.backend.message import BaseMessageComponent
 from parsec.backend.postgresql.handler import send_signal, PGHandler
@@ -58,7 +59,7 @@ async def send_message(conn, organization_id, sender, recipient, timestamp, body
 
     await send_signal(
         conn,
-        "message.received",
+        BackendEvent.MESSAGE_RECEIVED,
         organization_id=organization_id,
         author=sender,
         recipient=recipient,

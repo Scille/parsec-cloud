@@ -12,6 +12,7 @@ from parsec.core.backend_connection import (
     BackendNotAvailable,
     BackendNotFoundError,
 )
+from parsec.core.core_events import CoreEvent
 
 
 @pytest.mark.trio
@@ -34,7 +35,7 @@ async def test_init_online_backend_late_reply(
                     can_serve_client.set()
                     # Now backend reply, monitor should send events accordingly
                     await spy.wait(
-                        "backend.connection.changed",
+                        CoreEvent.BACKEND_CONNECTION_CHANGED,
                         kwargs={"status": BackendConnStatus.READY, "status_exc": None},
                     )
 
@@ -55,7 +56,7 @@ async def test_init_offline_backend_late_reply(server_factory, core_config, alic
                 with core.event_bus.listen() as spy:
                     can_serve_client.set()
                     await spy.wait(
-                        "backend.connection.changed",
+                        CoreEvent.BACKEND_CONNECTION_CHANGED,
                         kwargs={"status": BackendConnStatus.LOST, "status_exc": ANY},
                     )
 

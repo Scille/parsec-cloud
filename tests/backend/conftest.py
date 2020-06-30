@@ -18,6 +18,7 @@ from parsec.api.protocol import (
 )
 from parsec.api.transport import Transport
 from parsec.backend.realm import RealmGrantedRole
+from parsec.backend.backend_events import BackendEvent
 from parsec.core.types import LocalDevice
 
 from tests.common import FreezeTestOnTransportError
@@ -220,7 +221,7 @@ def realm_factory():
                     granted_on=now,
                 ),
             )
-            await spy.wait_with_timeout("realm.roles_updated")
+            await spy.wait_with_timeout(BackendEvent.REALM_ROLES_UPDATED)
         return realm_id
 
     return _realm_factory

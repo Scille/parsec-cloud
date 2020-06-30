@@ -5,6 +5,7 @@ import attr
 import pendulum
 from contextlib import contextmanager
 from unittest.mock import ANY
+from enum import Enum
 
 from parsec.event_bus import EventBus
 
@@ -138,7 +139,7 @@ class EventBusSpy:
             return event
         elif event is ANY:
             return event
-        elif isinstance(event, str):
+        elif isinstance(event, Enum):
             return SpiedEvent(event, ANY, ANY)
         elif isinstance(event, tuple):
             event = event + (ANY,) * (3 - len(event))
@@ -146,7 +147,7 @@ class EventBusSpy:
         else:
             raise ValueError(
                 "event must be provided as `SpiedEvent`, `(<event>, <kwargs>, <dt>)` tuple "
-                "or string"
+                "or an Enum"
             )
 
     def assert_event_occured(self, event, kwargs=ANY, dt=ANY):

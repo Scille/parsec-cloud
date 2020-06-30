@@ -1,5 +1,6 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
 
+from parsec.core.core_events import CoreEvent
 import os
 import trio
 import logging
@@ -286,19 +287,19 @@ async def mountpoint_manager_factory(
 
     def on_event(event, new_entry, previous_entry=None):
         # Workspace created
-        if event == "fs.workspace.created":
+        if event == CoreEvent.FS_WORKSPACE_CREATED:
             if mount_on_workspace_created:
                 mount_nursery.start_soon(mountpoint_manager.safe_mount, new_entry.id)
             return
 
         # Workspace revoked
-        if event == "sharing.updated" and new_entry.role is None:
+        if event == CoreEvent.SHARING_UPDATED and new_entry.role is None:
             if unmount_on_workspace_revoked:
                 mount_nursery.start_soon(mountpoint_manager.safe_unmount, new_entry.id)
             return
 
         # Workspace shared
-        if event == "sharing.updated" and previous_entry is None:
+        if event == CoreEvent.SHARING_UPDATED and previous_entry is None:
             if mount_on_workspace_shared:
                 mount_nursery.start_soon(mountpoint_manager.safe_mount, new_entry.id)
             return
@@ -317,7 +318,8 @@ async def mountpoint_manager_factory(
 
                 # Setup new workspace events
                 with event_bus.connect_in_context(
-                    ("fs.workspace.created", on_event), ("sharing.updated", on_event)
+                    (CoreEvent.FS_WORKSPACE_CREATED, on_event),
+                    (CoreEvent.SHARING_UPDATED, on_event),
                 ):
 
                     # Mount required workspaces

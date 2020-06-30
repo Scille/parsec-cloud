@@ -1,5 +1,6 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
 
+from parsec.core.core_events import CoreEvent
 from itertools import count
 from typing import Optional, List, Dict, Iterator
 
@@ -255,11 +256,11 @@ class SyncTransactions(EntryTransactions):
 
             # Send downsynced event
             if base_version != new_base_version and remote_author != self.local_author:
-                self._send_event("fs.entry.downsynced", id=entry_id)
+                self._send_event(CoreEvent.FS_ENTRY_DOWNSYNCED, id=entry_id)
 
             # Send synced event
             if local_manifest.need_sync and not new_local_manifest.need_sync:
-                self._send_event("fs.entry.synced", id=entry_id)
+                self._send_event(CoreEvent.FS_ENTRY_SYNCED, id=entry_id)
 
             # Nothing new to upload
             if final or not new_local_manifest.need_sync:
@@ -337,8 +338,10 @@ class SyncTransactions(EntryTransactions):
                 await self.local_storage.set_manifest(parent_id, new_parent_manifest)
                 await self.local_storage.set_manifest(entry_id, other_manifest)
 
-                self._send_event("fs.entry.updated", id=new_manifest.id)
-                self._send_event("fs.entry.updated", id=parent_id)
+                self._send_event(CoreEvent.FS_ENTRY_UPDATED, id=new_manifest.id)
+                self._send_event(CoreEvent.FS_ENTRY_UPDATED, id=parent_id)
                 self._send_event(
-                    "fs.entry.file_conflict_resolved", id=entry_id, backup_id=new_manifest.id
+                    CoreEvent.FS_ENTRY_FILE_CONFLICT_RESOLVED,
+                    id=entry_id,
+                    backup_id=new_manifest.id,
                 )

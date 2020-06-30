@@ -6,6 +6,8 @@ from uuid import UUID
 from typing import List, Tuple, Dict, Optional
 from pypika import Parameter
 
+
+from parsec.backend.backend_events import BackendEvent
 from parsec.api.protocol import DeviceID, OrganizationID
 from parsec.backend.realm import RealmRole
 from parsec.backend.vlob import (
@@ -133,7 +135,7 @@ RETURNING index
 
     await send_signal(
         conn,
-        "realm.vlobs_updated",
+        BackendEvent.REALM_VLOBS_UPDATED,
         organization_id=organization_id,
         author=author,
         realm_id=realm_id,

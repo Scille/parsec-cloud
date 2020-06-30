@@ -19,6 +19,7 @@ from parsec.api.data import (
     RealmRoleCertificateContent,
 )
 from parsec.api.protocol import OrganizationID, UserID, DeviceID, HumanHandle, RealmRole
+from parsec.backend.backend_events import BackendEvent
 from parsec.core.types import LocalDevice, LocalUserManifest, BackendOrganizationBootstrapAddr
 from parsec.core.local_device import generate_new_device
 from parsec.backend.user import User as BackendUser, Device as BackendDevice
@@ -521,7 +522,7 @@ def backend_data_binder_factory(request, backend_addr, initial_user_manifest_sta
                 await spy.wait_multiple_with_timeout(
                     [
                         (
-                            "realm.roles_updated",
+                            BackendEvent.REALM_ROLES_UPDATED,
                             {
                                 "organization_id": author.organization_id,
                                 "author": author.device_id,
@@ -531,7 +532,7 @@ def backend_data_binder_factory(request, backend_addr, initial_user_manifest_sta
                             },
                         ),
                         (
-                            "realm.vlobs_updated",
+                            BackendEvent.REALM_VLOBS_UPDATED,
                             {
                                 "organization_id": author.organization_id,
                                 "author": author.device_id,
