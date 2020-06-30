@@ -88,7 +88,7 @@ async def test_revoke_user(
         bob_w.revoke_clicked.emit(bob_w.user_info)
 
     if online:
-        async with aqtbot.wait_signals([u_w.revoke_success, u_w.list_success]):
+        async with aqtbot.wait_signal(u_w.revoke_success):
             await aqtbot.qt_thread_gateway.send_action(emit_revoke)
         assert len(autoclose_dialog.dialogs) == 1
         assert autoclose_dialog.dialogs[0][0] == ""
@@ -96,9 +96,7 @@ async def test_revoke_user(
             autoclose_dialog.dialogs[0][1]
             == "The user <b>Boby McBobFace</b> has been successfully revoked. Do no forget to reencrypt the workspaces that were shared with them."
         )
-        new_bob_w = u_w.layout_users.itemAt(2).widget()
-        assert new_bob_w.label_username.text() == "Boby McBobFace"
-        assert new_bob_w.user_info.is_revoked is True
+        assert bob_w.user_info.is_revoked is True
     else:
 
         with running_backend.offline():

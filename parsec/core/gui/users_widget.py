@@ -153,7 +153,6 @@ async def _do_revoke_user(core, user_info):
     try:
         await core.revoke_user(user_info.user_id)
         user_info = await core.get_user_info(user_info.user_id)
-        print(user_info.is_revoked)
         return user_info
     except BackendNotAvailable as exc:
         raise JobResultError("offline") from exc

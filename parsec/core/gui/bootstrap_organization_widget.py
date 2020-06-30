@@ -137,6 +137,8 @@ class BootstrapOrganizationWidget(QWidget, Ui_BootstrapOrganizationWidget):
         assert self.bootstrap_job.is_finished()
         assert self.bootstrap_job.status == "ok"
 
+        print("SUCCESS ???")
+
         self.button_bootstrap.setDisabled(False)
         self.status = self.bootstrap_job.ret
         self.bootstrap_job = None
