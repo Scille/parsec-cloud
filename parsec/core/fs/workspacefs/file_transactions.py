@@ -20,6 +20,7 @@ from parsec.core.fs.workspacefs.file_operations import (
     prepare_reshape,
 )
 
+
 __all__ = ("FSInvalidFileDescriptor", "FileTransactions")
 
 
@@ -133,6 +134,11 @@ class FileTransactions:
             yield await self.local_storage.load_file_descriptor(fd)
 
     # Atomic transactions
+
+    async def fd_info(self, fd: FileDescriptor, path) -> dict:
+
+        manifest = await self.local_storage.load_file_descriptor(fd)
+        return manifest.to_stats()
 
     async def fd_close(self, fd: FileDescriptor) -> None:
         # Fetch and lock

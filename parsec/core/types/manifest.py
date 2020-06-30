@@ -259,6 +259,18 @@ class LocalManifest(BaseLocalData):
         )
         return reference.evolve(version=remote_manifest.version) == remote_manifest
 
+    def to_stats(self):
+        # General stats
+        stats = {
+            "id": self.id,
+            "created": self.created,
+            "updated": self.updated,
+            "base_version": self.base_version,
+            "is_placeholder": self.is_placeholder,
+            "need_sync": self.need_sync,
+        }
+        return stats
+
     # Debugging
 
     def asdict(self):
@@ -320,6 +332,12 @@ class LocalFileManifest(LocalManifest):
             size=0,
             blocks=blocks,
         )
+
+    def to_stats(self):
+        stats = super().to_stats()
+        stats["type"] = "file"
+        stats["size"] = self.size
+        return stats
 
     # Properties
 
@@ -437,6 +455,11 @@ class LocalFolderManifest(LocalManifest):
         )
 
     # Properties
+    def to_stats(self):
+        stats = super().to_stats()
+        stats["type"] = "folder"
+        stats["children"] = sorted(self.children.keys())
+        return stats
 
     @property
     def parent(self):
@@ -511,6 +534,12 @@ class LocalWorkspaceManifest(LocalManifest):
         )
 
     # Evolve methods
+
+    def to_stats(self):
+        stats = super().to_stats()
+        stats["type"] = "folder"
+        stats["children"] = sorted(self.children.keys())
+        return stats
 
     def evolve_children_and_mark_updated(self, data) -> "LocalWorkspaceManifest":
         return self.evolve_and_mark_updated(

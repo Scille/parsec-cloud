@@ -55,7 +55,7 @@ def extract_shabang_and_header_lines(fd):
 def check_headers(files):
     ret = 0
     for file in get_files(files):
-        with open(file, "r") as fd:
+        with open(file, "r", encoding="utf-8") as fd:
             shabang_line, header_line = extract_shabang_and_header_lines(fd)
             if not HEADER_RE.match(header_line.strip()):
                 print("Missing header", file)
