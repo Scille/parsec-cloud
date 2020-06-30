@@ -139,7 +139,7 @@ class LoggedCore:
             )
         return results
 
-    async def revoke_user(self, user_id: UserID):
+    async def revoke_user(self, user_id: UserID) -> None:
         """
         Raises:
             BackendConnectionError
@@ -153,6 +153,9 @@ class LoggedCore:
         )
         if rep["status"] != "ok":
             raise BackendConnectionError(f"Error while trying to revoke user {user_id}: {rep}")
+
+        # Invalidate potential cache to avoid displaying the user as not-revoked
+        self._remote_devices_manager.invalidate_user_cache(user_id)
 
 
 @asynccontextmanager
