@@ -1,7 +1,7 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
 
 import pytest
-from PyQt5 import QtCore, QtWidgets
+from PyQt5 import QtCore
 
 from parsec.core.invite.exceptions import InviteNotFoundError, InviteAlreadyUsedError
 from parsec.core.types import BackendOrganizationBootstrapAddr
@@ -65,7 +65,7 @@ async def test_bootstrap_organization(
         == "You organization <b>NewOrg</b> has been created!<br />\n<br />\n"
         "You will now be automatically logged in.<br />\n<br />\n"
         "To help you start with PARSEC, you can read the "
-        "<a href=\"https://docs.parsec.cloud/en/stable/\" title=\"User guide\">user guide</a>."
+        '<a href="https://docs.parsec.cloud/en/stable/" title="User guide">user guide</a>.'
     )
 
 
@@ -172,10 +172,7 @@ async def test_bootstrap_organization_invite_already_used(
         await aqtbot.mouse_click(bw.button_bootstrap, QtCore.Qt.LeftButton)
         await aqtbot.wait_until(error_shown)
         assert autoclose_dialog.dialogs[1][0] == "Error"
-        assert (
-            autoclose_dialog.dialogs[1][1]
-            == "This organization has already been bootstrapped."
-        )
+        assert autoclose_dialog.dialogs[1][1] == "This organization has already been bootstrapped."
 
 
 @pytest.mark.gui
@@ -201,10 +198,7 @@ async def test_bootstrap_organization_invite_not_found(
         await aqtbot.mouse_click(bw.button_bootstrap, QtCore.Qt.LeftButton)
         await aqtbot.wait_until(error_shown)
         assert autoclose_dialog.dialogs[1][0] == "Error"
-        assert (
-            autoclose_dialog.dialogs[1][1]
-            == "TEXT_BOOTSTRAP_ORG_INVITE_NOT_FOUND"
-        )
+        assert autoclose_dialog.dialogs[1][1] == "TEXT_BOOTSTRAP_ORG_INVITE_NOT_FOUND"
 
 
 @pytest.mark.gui
@@ -230,10 +224,7 @@ async def test_bootstrap_organization_unknown_error(
         await aqtbot.mouse_click(bw.button_bootstrap, QtCore.Qt.LeftButton)
         await aqtbot.wait_until(error_shown)
         assert autoclose_dialog.dialogs[1][0] == "Error"
-        assert (
-            autoclose_dialog.dialogs[1][1]
-            == "Could not bootstrap the organization."
-        )
+        assert autoclose_dialog.dialogs[1][1] == "Could not bootstrap the organization."
 
 
 @pytest.mark.gui
