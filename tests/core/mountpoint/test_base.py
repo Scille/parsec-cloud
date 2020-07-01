@@ -318,7 +318,6 @@ def test_unhandled_crash_in_fs_operation(caplog, mountpoint_service, monkeypatch
 
 @pytest.mark.trio
 @pytest.mark.mountpoint
-@pytest.mark.flaky(reruns=1)
 @pytest.mark.parametrize("revoking", ["read", "write"])
 async def test_mountpoint_revoke_access(
     base_mountpoint,
