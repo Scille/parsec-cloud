@@ -230,6 +230,8 @@ class WinFSPOperations(BaseFileSystemOperations):
 
     @handle_error
     def close(self, file_context):
+        # The file might be deleted at this point. This is fine though as the
+        # file descriptor can still be used after a deletion (posix style)
         if isinstance(file_context, OpenedFile):
             self.fs_access.fd_close(file_context.fd)
 
@@ -355,6 +357,9 @@ class WinFSPOperations(BaseFileSystemOperations):
     def cleanup(self, file_context, file_name, flags) -> None:
         file_name = _winpath_to_parsec(file_name)
 
+        # Cleanup operation is causal but close is not, so it's important
+        # to delete file and folder here in order to make sure the file/folder
+        # is actually deleted by the time the API call returns.
         FspCleanupDelete = 0x1
         if flags & FspCleanupDelete:
             if isinstance(file_context, OpenedFile):
