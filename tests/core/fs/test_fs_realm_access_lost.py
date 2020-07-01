@@ -51,10 +51,10 @@ async def test_block_no_access(running_backend, alice_user_fs, bob_user_fs):
     # Ensure file manifest is in cache (but not blocks)
     await bob_w.path_info("/foo.txt")
 
-    # Remove acces to bob
+    # Remove access to bob
     await alice_user_fs.workspace_share(wid, bob_user_fs.device.user_id, None)
 
-    # Try to acces blocks
+    # Try to access blocks
     with pytest.raises(FSWorkspaceNoAccess) as exc:
         await bob_w.read_bytes("/foo.txt")
     assert str(exc.value) == "Cannot load block: no read access"
