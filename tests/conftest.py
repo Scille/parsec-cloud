@@ -12,6 +12,7 @@ import pendulum
 from unittest.mock import patch
 import structlog
 import trio
+from trio.testing import MockClock
 import trio_asyncio
 from async_generator import asynccontextmanager
 import hypothesis
@@ -258,6 +259,17 @@ async def asyncio_loop(request):
         with trio.CancelScope(shield=True):
             async with trio_asyncio.open_loop() as loop:
                 yield loop
+
+
+@pytest.fixture
+def autojump_clock(request):
+    # Event dispatching through PostgreSQL LISTEN/NOTIFY is
+    # invisible from trio point of view, hence waiting for
+    # event with autojump_threshold=0 means we jump to timeout
+    if request.config.getoption("--postgresql"):
+        return MockClock(autojump_threshold=0.1)
+    else:
+        return MockClock(autojump_threshold=0)
 
 
 @pytest.fixture(scope="session")
