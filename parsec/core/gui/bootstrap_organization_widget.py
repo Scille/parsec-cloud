@@ -48,7 +48,7 @@ async def _do_bootstrap_organization(
             save_device_with_password(config_dir, new_device, password)
             return new_device, password
     except InviteNotFoundError as exc:
-        raise JobResultError("bad-url", info=str(exc)) from exc
+        raise JobResultError("not-found", info=str(exc)) from exc
     except InviteAlreadyUsedError as exc:
         raise JobResultError("already-bootstrapped", info=str(exc)) from exc
     except BackendConnectionRefused as exc:
@@ -108,6 +108,8 @@ class BootstrapOrganizationWidget(QWidget, Ui_BootstrapOrganizationWidget):
 
         if status == "invalid-url" or status == "bad-url":
             errmsg = _("TEXT_BOOTSTRAP_ORG_INVALID_URL")
+        elif status == "not-found":
+            errmsg = _("TEXT_BOOTSTRAP_ORG_INVITE_NOT_FOUND")
         elif status == "already-bootstrapped":
             errmsg = _("TEXT_BOOTSTRAP_ORG_ALREADY_BOOTSTRAPPED")
         elif status == "user-exists":
@@ -136,8 +138,6 @@ class BootstrapOrganizationWidget(QWidget, Ui_BootstrapOrganizationWidget):
         assert self.bootstrap_job
         assert self.bootstrap_job.is_finished()
         assert self.bootstrap_job.status == "ok"
-
-        print("SUCCESS ???")
 
         self.button_bootstrap.setDisabled(False)
         self.status = self.bootstrap_job.ret
