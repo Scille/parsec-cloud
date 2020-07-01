@@ -154,11 +154,12 @@ async def query_start_reencryption_maintenance(
         raise RealmEncryptionRevisionError("Invalid encryption revision")
 
     roles = await get_realm_role_for_not_revoked(conn, organization_id, realm_id)
-    if per_participant_message.keys() ^ roles.keys():
-        raise RealmParticipantsMismatchError("Realm participants and message recipients mismatch")
 
     if roles.get(author.user_id) != RealmRole.OWNER:
         raise RealmAccessError()
+
+    if per_participant_message.keys() ^ roles.keys():
+        raise RealmParticipantsMismatchError("Realm participants and message recipients mismatch")
 
     await conn.execute(
         *_q_query_start_reencryption_maintenance_update_realm(

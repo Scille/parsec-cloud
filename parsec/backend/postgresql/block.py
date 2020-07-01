@@ -54,7 +54,7 @@ SELECT
             ),
             realm="block.realm"
         )
-    }
+    } as has_access
 FROM block
 WHERE
     organization = { q_organization_internal_id("$organization_id") }
@@ -66,8 +66,19 @@ WHERE
 _q_get_block_write_right_and_unicity = Q(
     f"""
 SELECT
-    { q_user_can_write_vlob(organization_id="$organization_id", user_id="$user_id", realm_id="$realm_id") },
-    EXISTS({ q_block(organization_id="$organization_id", block_id="$block_id") })
+    {
+        q_user_can_write_vlob(
+            organization_id="$organization_id",
+            user_id="$user_id",
+            realm_id="$realm_id"
+        )
+    } as has_access,
+    EXISTS({
+        q_block(
+            organization_id="$organization_id",
+            block_id="$block_id"
+        )
+    }) as exists
 """
 )
 
@@ -124,10 +135,10 @@ class PGBlockComponent(BaseBlockComponent):
                     organization_id=organization_id, block_id=block_id, user_id=author.user_id
                 )
             )
-            if not ret or ret[0]:
+            if not ret or ret["deleted_on"]:
                 raise BlockNotFoundError()
 
-            elif not ret[1]:
+            elif not ret["has_access"]:
                 raise BlockAccessError()
 
         return await self._blockstore_component.read(organization_id, block_id)
@@ -153,10 +164,10 @@ class PGBlockComponent(BaseBlockComponent):
                 )
             )
 
-            if not ret[0]:
+            if not ret["has_access"]:
                 raise BlockAccessError()
 
-            elif ret[1]:
+            elif ret["exists"]:
                 raise BlockAlreadyExistsError()
 
             # 2) Upload block data in blockstore under an arbitrary id

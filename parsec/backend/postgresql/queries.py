@@ -120,13 +120,17 @@ def q_user_can_read_vlob(
         _q_realm = realm
 
     return f"""
-EXISTS (
-    SELECT true
-    FROM { table }
-    WHERE
-        { table }.realm = { _q_realm }
-        AND { table }.user_ = { _q_user }
-    LIMIT 1
+COALESCE(
+    (
+        SELECT { table }.role IS NOT NULL
+        FROM { table }
+        WHERE
+            { table }.realm = { _q_realm }
+            AND { table }.user_ = { _q_user }
+        ORDER BY certified_on DESC
+        LIMIT 1
+    ),
+    False
 )
 """
 
@@ -157,13 +161,16 @@ def q_user_can_write_vlob(
         _q_realm = realm
 
     return f"""
-EXISTS (
-    SELECT true
-    FROM { table }
-    WHERE
-        { table }.realm = { _q_realm }
-        AND { table }.user_ = { _q_user }
-        AND { table }.role <> 'READER'
-    LIMIT 1
+COALESCE(
+    (
+        SELECT { table }.role IN ('CONTRIBUTOR', 'MANAGER', 'OWNER')
+        FROM { table }
+        WHERE
+            { table }.realm = { _q_realm }
+            AND { table }.user_ = { _q_user }
+        ORDER BY certified_on DESC
+        LIMIT 1
+    ),
+    False
 )
 """

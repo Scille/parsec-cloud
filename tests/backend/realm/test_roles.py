@@ -260,7 +260,7 @@ async def test_update_roles_as_manager(
 
 
 @pytest.mark.trio
-@pytest.mark.parametrize("alice_role", (RealmRole.CONTRIBUTOR, RealmRole.READER))
+@pytest.mark.parametrize("alice_role", (RealmRole.CONTRIBUTOR, RealmRole.READER, None))
 async def test_role_update_not_allowed(
     backend_data_binder,
     local_device_factory,

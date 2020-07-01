@@ -112,6 +112,20 @@ async def test_create_check_access_rights(backend, alice, bob, bob_backend_sock,
         else:
             assert rep == {"status": "not_allowed"}
 
+    # Ensure user that used to be part of the realm have no longer access
+    await backend.realm.update_roles(
+        alice.organization_id,
+        RealmGrantedRole(
+            certificate=b"<dummy>",
+            realm_id=realm,
+            user_id=bob.user_id,
+            role=None,
+            granted_by=alice.device_id,
+        ),
+    )
+    rep = await vlob_create(bob_backend_sock, realm, vlob_id, b"Initial version.", check_rep=False)
+    assert rep == {"status": "not_allowed"}
+
 
 @pytest.mark.trio
 async def test_read_not_found(alice_backend_sock):
@@ -220,6 +234,20 @@ async def test_read_check_access_rights(backend, alice, bob, bob_backend_sock, r
         rep = await vlob_read(bob_backend_sock, vlobs[0])
         assert rep["status"] == "ok"
 
+    # Ensure user that used to be part of the realm have no longer access
+    await backend.realm.update_roles(
+        alice.organization_id,
+        RealmGrantedRole(
+            certificate=b"<dummy>",
+            realm_id=realm,
+            user_id=bob.user_id,
+            role=None,
+            granted_by=alice.device_id,
+        ),
+    )
+    rep = await vlob_read(bob_backend_sock, vlobs[0])
+    assert rep == {"status": "not_allowed"}
+
 
 @pytest.mark.trio
 async def test_read_other_organization(backend, sock_from_other_organization_factory, vlobs):
@@ -323,6 +351,22 @@ async def test_update_check_access_rights(backend, alice, bob, bob_backend_sock,
 
         else:
             assert rep == {"status": "not_allowed"}
+
+    # Ensure user that used to be part of the realm have no longer access
+    await backend.realm.update_roles(
+        alice.organization_id,
+        RealmGrantedRole(
+            certificate=b"<dummy>",
+            realm_id=realm,
+            user_id=bob.user_id,
+            role=None,
+            granted_by=alice.device_id,
+        ),
+    )
+    rep = await vlob_update(
+        bob_backend_sock, vlobs[0], version=next_version, blob=b"Next version.", check_rep=False
+    )
+    assert rep == {"status": "not_allowed"}
 
 
 @pytest.mark.trio
@@ -436,6 +480,20 @@ async def test_list_versions_check_access_rights(
         )
         rep = await vlob_list_versions(bob_backend_sock, vlobs[0])
         assert rep["status"] == "ok"
+
+    # Ensure user that used to be part of the realm have no longer access
+    await backend.realm.update_roles(
+        alice.organization_id,
+        RealmGrantedRole(
+            certificate=b"<dummy>",
+            realm_id=realm,
+            user_id=bob.user_id,
+            role=None,
+            granted_by=alice.device_id,
+        ),
+    )
+    rep = await vlob_list_versions(bob_backend_sock, vlobs[0])
+    assert rep == {"status": "not_allowed"}
 
 
 @pytest.mark.trio
