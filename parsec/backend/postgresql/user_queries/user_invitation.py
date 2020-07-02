@@ -126,3 +126,10 @@ async def query_cancel_user_invitation(
     result = await conn.execute(_q_delete_invitation, organization_id, user_id)
     if result not in ("DELETE 1", "DELETE 0"):
         raise UserError(f"Deletion error: {result}")
+
+    await send_signal(
+        conn,
+        BackendEvent.USER_INVITATION_CANCELLED,
+        organization_id=organization_id,
+        user_id=user_id,
+    )
