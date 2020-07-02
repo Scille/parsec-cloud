@@ -42,7 +42,7 @@ SELECT
     device_label,
     device_certificate,
     redacted_device_certificate,
-    { q_device(select="device_id", _id="device_certifier") } as device_certifier,
+    { q_device(table_alias="d", select="d.device_id", _id="device.device_certifier") } as device_certifier,
     created_on
 FROM device
 WHERE
@@ -55,15 +55,15 @@ WHERE
 _q_get_user_devices = Q(
     f"""
 SELECT
-    d1.device_id,
-    d1.device_label,
-    d1.device_certificate,
-    d1.redacted_device_certificate,
-    { q_device(select="device_id", _id="d1.device_certifier") } as device_certifier,
-    d1.created_on
-FROM device d1
+    device_id,
+    device_label,
+    device_certificate,
+    redacted_device_certificate,
+    { q_device(table_alias="d", select="d.device_id", _id="device.device_certifier") } as device_certifier,
+    created_on
+FROM device
 WHERE
-    d1.user_ = { q_user_internal_id(organization_id="$organization_id", user_id="$user_id") }
+    user_ = { q_user_internal_id(organization_id="$organization_id", user_id="$user_id") }
 """
 )
 

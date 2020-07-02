@@ -59,23 +59,29 @@ def _table_q_factory(table, public_id_field):
         organization_id=None,
         organization=None,
         _id=None,
-        table=table,
+        table_alias=None,
         select="*",
         suffix=None,
         **kwargs,
     ):
+        if table_alias:
+            from_table = f"{table} as {table_alias}"
+            select_table = table_alias
+        else:
+            from_table = table
+            select_table = table
         if _id is not None:
-            condition = f"{table}._id = {_id}"
+            condition = f"{select_table}._id = {_id}"
         else:
             public_id = kwargs.pop(public_id_field, None)
             assert public_id is not None
             assert organization_id is not None or organization is not None
             if not organization:
                 organization = q_organization_internal_id(organization_id)
-            condition = f"{table}.organization = {organization} AND {table}.{ public_id_field } = { public_id }"
+            condition = f"{select_table}.organization = {organization} AND {select_table}.{ public_id_field } = { public_id }"
         assert not kwargs
         suffix = suffix or ""
-        return f"(SELECT {select} FROM {table} WHERE {condition} {suffix})"
+        return f"(SELECT {select} FROM {from_table} WHERE {condition} {suffix})"
 
     def _q_internal_id(**kwargs):
         return _q(select="_id", **kwargs)
