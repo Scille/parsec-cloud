@@ -313,7 +313,7 @@ test_requirements = [
 ]
 
 
-PYQT_DEP = "PyQt5==5.13.1"
+PYQT_DEP = "PyQt5==5.15.0"
 BABEL_DEP = "Babel==2.6.0"
 WHEEL_DEP = "wheel==0.34.2"
 DOCUTILS_DEP = "docutils==0.15"
