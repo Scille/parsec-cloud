@@ -6,6 +6,7 @@ from PyQt5.QtWidgets import QCompleter, QWidget
 from parsec.api.protocol import UserID
 from parsec.core.fs import FSError
 from parsec.core.types import WorkspaceRole
+from parsec.core.backend_connection import BackendNotAvailable
 
 from parsec.core.gui.trio_thread import JobResultError, ThreadSafeQtSignal, QtToTrioJob
 
@@ -32,7 +33,10 @@ def _index_to_role(index):
 
 async def _do_get_participants(core, workspace_fs):
     ret = {}
-    participants = await workspace_fs.get_user_roles()
+    try:
+        participants = await workspace_fs.get_user_roles()
+    except BackendNotAvailable as exc:
+        raise JobResultError("offline") from exc
     for user, role in participants.items():
         user_info, revoked_info = await core.remote_devices_manager.get_user(user)
         ret[user] = (role, revoked_info)
@@ -40,7 +44,10 @@ async def _do_get_participants(core, workspace_fs):
 
 
 async def _do_user_find(core, text):
-    rep = await core.backend_cmds.user_find(text, 1, 100, True)
+    try:
+        rep = await core.backend_cmds.user_find(text, 1, 100, True)
+    except BackendNotAvailable as exc:
+        raise JobResultError("offline") from exc
     if rep["status"] != "ok":
         raise JobResultError("error", rep=rep)
     users = [u for u in rep["results"] if u != core.device.user_id]
