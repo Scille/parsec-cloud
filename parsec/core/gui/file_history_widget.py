@@ -28,7 +28,7 @@ class FileHistoryButton(QWidget, Ui_FileHistoryButton):
         if not src:
             self.label_src.hide()
         else:
-            self.label_src.setText(src)
+            self.label_src.setText(str(src))
         if not dst:
             self.label_dst.hide()
         else:
