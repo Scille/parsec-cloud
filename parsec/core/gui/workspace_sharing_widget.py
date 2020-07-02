@@ -55,9 +55,9 @@ async def _do_user_find(core, text):
 
 
 async def _do_share_workspace(user_fs, workspace_fs, user, role):
-    user_id = UserID(user)
-    workspace_name = workspace_fs.get_workspace_name()
     try:
+        user_id = UserID(user.strip())
+        workspace_name = workspace_fs.get_workspace_name()
         await user_fs.workspace_share(workspace_fs.workspace_id, user_id, role)
         return workspace_name, user_id, role
     except ValueError as exc:
