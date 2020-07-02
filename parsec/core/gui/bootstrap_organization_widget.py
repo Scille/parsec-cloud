@@ -85,6 +85,8 @@ async def _do_bootstrap_organization(
                 organization_id=bootstrap_addr.organization_id,
                 bootstrap_token=bootstrap_addr.token,
                 root_verify_key=root_verify_key,
+                user_certificate=user_certificate,
+                device_certificate=device_certificate,
                 # Regular certificates compatible with redacted here
                 redacted_user_certificate=user_certificate,
                 redacted_device_certificate=device_certificate,
