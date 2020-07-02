@@ -65,10 +65,10 @@ class MockedBlockStoreConfig(BaseBlockStoreConfig):
 
 @attr.s(slots=True, frozen=True, auto_attribs=True)
 class EmailConfig:
-    server: str
+    host: str
     port: int
-    address: str
-    password: str
+    user: str
+    password: Optional[str]
     use_ssl: bool
     use_tls: bool
     language: str
@@ -86,8 +86,8 @@ class BackendConfig:
 
     blockstore_config: BaseBlockStoreConfig
 
-    email_config: EmailConfig
-    backend_addr: BackendAddr
+    email_config: Optional[EmailConfig]
+    backend_addr: Optional[BackendAddr]
 
     debug: bool
 

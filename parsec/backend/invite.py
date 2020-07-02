@@ -15,7 +15,6 @@ from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
 from structlog import get_logger
 
-import parsec.backend.mail
 from parsec.crypto import PublicKey
 from parsec.event_bus import EventBus
 from parsec.api.data import UserProfile
@@ -44,9 +43,10 @@ from parsec.api.protocol import (
     invite_4_greeter_communicate_serializer,
     invite_4_claimer_communicate_serializer,
 )
+import parsec.backend.mail
 from parsec.backend.utils import catch_protocol_errors, api
-from parsec.backend.config import BackendConfig
-from parsec.core.types import BackendInvitationAddr
+from parsec.backend.config import BackendConfig, EmailConfig
+from parsec.core.types import BackendAddr, BackendInvitationAddr
 
 
 logger = get_logger()
@@ -180,26 +180,28 @@ MAIL_TEXT = {
 }
 
 
-async def send_invite_email(invitation: UserInvitation, config: BackendConfig, client_ctx) -> None:
-    sender_email = config.email_config.address
-    receiver_email = invitation.claimer_email
-    password = config.email_config.password
-    sender_name = str(client_ctx.human_handle or client_ctx.device_id.user_id)
-
+async def send_invite_email(
+    email_config: EmailConfig,
+    backend_addr: BackendAddr,
+    organization_id: OrganizationID,
+    invitation: UserInvitation,
+    sender_name: str,
+) -> None:
+    mail_text = MAIL_TEXT[email_config.language]
     parsec_url = "https://parsec.cloud/get-parsec"
     invite_link = str(
         BackendInvitationAddr(
-            organization_id=client_ctx.organization_id,
+            organization_id=organization_id,
             invitation_type=InvitationType.USER,
             token=invitation.token,
-            hostname=config.backend_addr.hostname,
-            port=config.backend_addr.port,
-            use_ssl=config.backend_addr.use_ssl,
+            hostname=backend_addr.hostname,
+            port=backend_addr.port,
+            use_ssl=backend_addr.use_ssl,
         )
     )
     body = [
         line.format(sender_name=sender_name, invite_link=invite_link, parsec_url=parsec_url)
-        for line in MAIL_TEXT[config.email_config.language]["body"]
+        for line in mail_text["body"]
     ]
 
     # Plain-text version used as backup if the html doesn't work for the client
@@ -216,17 +218,17 @@ async def send_invite_email(invitation: UserInvitation, config: BackendConfig, c
         paragraph_3=paragraph_3,
         parsec_url=body[2],
         invite_link=body[4],
-        preheader=MAIL_TEXT[config.email_config.language]["preheader"],
-        button1=MAIL_TEXT[config.email_config.language]["download_button"],
-        button2=MAIL_TEXT[config.email_config.language]["invite_button"],
-        parsec_by=MAIL_TEXT[config.email_config.language]["parsec_by"],
+        preheader=mail_text["preheader"],
+        button1=mail_text["download_button"],
+        button2=mail_text["invite_button"],
+        parsec_by=mail_text["parsec_by"],
     )
 
     # mail settings
     message = MIMEMultipart("alternative")
-    message["Subject"] = MAIL_TEXT[config.email_config.language]["title"]
-    message["From"] = sender_email
-    message["To"] = receiver_email
+    message["Subject"] = mail_text["title"]
+    message["From"] = email_config.user
+    message["To"] = invitation.claimer_email
 
     # Turn parts into MIMEText objects
     part1 = MIMEText(text, "plain")
@@ -237,31 +239,26 @@ async def send_invite_email(invitation: UserInvitation, config: BackendConfig, c
     message.attach(part1)
     message.attach(part2)
 
-    def _thread_target_send_email(
-        sender_email: str, receiver_email: str, password: str, message: MIMEMultipart
-    ):
-        # Create secure connection with server and send email
+    def _thread_target_send_email(message: MIMEMultipart):
         try:
             context = ssl.create_default_context()
-            if config.email_config.use_ssl:
-                server = smtplib.SMTP_SSL(
-                    config.email_config.server, config.email_config.port, context=context
-                )
+            if email_config.use_ssl:
+                server = smtplib.SMTP_SSL(email_config.server, email_config.port, context=context)
             else:
-                server = smtplib.SMTP(config.email_config.server, config.email_config.port)
+                server = smtplib.SMTP(email_config.server, email_config.port)
+
             with server:
-                if config.email_config.use_tls and not config.email_config.use_ssl:
+                if email_config.use_tls and not email_config.use_ssl:
                     if server.starttls(context=context)[0] != 220:
                         logger.warning("Email TLS connexion isn't encrypted")
-                if sender_email and password:
-                    server.login(sender_email, password)
-                server.sendmail(sender_email, receiver_email, message.as_string())
-        except smtplib.SMTPException as e:
-            logger.warning(f"SMTP error occured: {e}", exc_info=e)
+                if email_config.user and email_config.password:
+                    server.login(email_config.user, email_config.password)
+                server.sendmail(email_config.user, invitation.claimer_email, message.as_string())
 
-    await trio.to_thread.run_sync(
-        _thread_target_send_email, sender_email, receiver_email, password, message
-    )
+        except smtplib.SMTPException as e:
+            logger.warning("SMTP error on invitation email", exc_info=e, invitation=invitation)
+
+    await trio.to_thread.run_sync(_thread_target_send_email, message)
 
 
 class BaseInviteComponent:
@@ -313,7 +310,15 @@ class BaseInviteComponent:
             )
 
             if msg["send_email"]:
-                await send_invite_email(invitation, self._config, client_ctx)
+                if not self._config.email_config or not self._config.backend_addr:
+                    return invite_new_serializer.rep_dump({"status": "not_available"})
+                await send_invite_email(
+                    email_config=self._config.email_config,
+                    backend_addr=self._config.backend_addr,
+                    organization_id=client_ctx.organization_id,
+                    invitation=invitation,
+                    sender_name=client_ctx.user_display,
+                )
 
         else:  # Device
             invitation = await self.new_for_device(

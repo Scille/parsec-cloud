@@ -210,7 +210,6 @@ Allowed values:
 @click.option(
     "--db-drop-deleted-data",
     is_flag=True,
-    show_default=True,
     envvar="PARSEC_DB_DROP_DELETED_DATA",
     help="Actually delete data database instead of just marking it has deleted",
 )
@@ -264,40 +263,58 @@ integer and `<config>` the MOCKED/POSTGRESQL/S3/SWIFT config.
     "--backend-addr",
     envvar="PARSEC_BACKEND_ADDR",
     type=BackendAddr,
-    help="Invite link's address for the backend",
+    help="URL to reach this server (typically used in invitation emails)",
 )
-@click.option(
-    "--email-server", envvar="PARSEC_EMAIL_SERVER", help="SMTP server for the invite email"
-)
+@click.option("--email-host", envvar="PARSEC_EMAIL_HOST", help="The host to use for sending email")
 @click.option(
     "--email-port",
     envvar="PARSEC_EMAIL_PORT",
     type=int,
     default=25,
-    help="SMTP port for the invite email",
+    show_default=True,
+    help="Port to use for the SMTP server defined in EMAIL_HOST",
 )
 @click.option(
-    "--email-address",
-    envvar="PARSEC_EMAIL_ADDRESS",
-    help="Email address for automated email sending",
+    "--email-host-user",
+    envvar="PARSEC_EMAIL_HOST_USER",
+    help="Username to use for the SMTP server defined in EMAIL_HOST",
 )
 @click.option(
-    "--email-password", envvar="PARSEC_EMAIL_PASSWORD", help="Password for the email address"
+    "--email-host-password",
+    envvar="PARSEC_EMAIL_HOST_PASSWORD",
+    help=(
+        "Password to use for the SMTP server defined in EMAIL_HOST."
+        " This setting is used in conjunction with EMAIL_HOST_USER when authenticating to the SMTP server."
+    ),
 )
 @click.option(
     "--email-use-ssl",
     envvar="PARSEC_EMAIL_USE_SSL",
-    default=False,
-    help="Use SSL or not for SMTP config",
+    is_flag=True,
+    help=(
+        "Whether to use a TLS (secure) connection when talking to the SMTP server."
+        " This is used for explicit TLS connections, generally on port 587."
+    ),
 )
 @click.option(
     "--email-use-tls",
     envvar="PARSEC_EMAIL_USE_TLS",
-    default=False,
-    help="Use TLS or not for SMTP config",
+    is_flag=True,
+    help=(
+        "Whether to use an implicit TLS (secure) connection when talking to the SMTP server."
+        " In most email documentation this type of TLS connection is referred to as SSL."
+        " It is generally used on port 465."
+        " Note that --email-use-tls/--email-use-ssl are mutually exclusive,"
+        " so only set one of those settings to True."
+    ),
 )
 @click.option(
-    "--email-language", envvar="PARSEC_EMAIL_LANGUAGE", default="en", help="Language used in email"
+    "--email-language",
+    envvar="PARSEC_EMAIL_LANGUAGE",
+    type=click.Choice(("en", "fr")),
+    default="en",
+    show_default=True,
+    help="Language used in email",
 )
 @click.option(
     "--ssl-keyfile",
@@ -315,6 +332,7 @@ integer and `<config>` the MOCKED/POSTGRESQL/S3/SWIFT config.
     "--log-level",
     "-l",
     default="WARNING",
+    show_default=True,
     type=click.Choice(("DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL")),
     envvar="PARSEC_LOG_LEVEL",
 )
@@ -342,10 +360,10 @@ def run_cmd(
     blockstore,
     administration_token,
     backend_addr,
-    email_server,
+    email_host,
     email_port,
-    email_address,
-    email_password,
+    email_host_user,
+    email_host_password,
     email_use_ssl,
     email_use_tls,
     email_language,
@@ -374,23 +392,30 @@ def run_cmd(
         else:
             ssl_context = None
 
+        if email_host:
+            if not email_host_user:
+                raise ValueError("--email-host-user is required when --email-host is provided")
+            email_config = EmailConfig(
+                host=email_host,
+                port=email_port,
+                user=email_host_user,
+                password=email_host_password,
+                use_ssl=email_use_ssl,
+                use_tls=email_use_tls,
+                language=email_language,
+            )
+        else:
+            email_config = None
+
         config = BackendConfig(
             administration_token=administration_token,
-            backend_addr=backend_addr,
             db_url=db,
             db_drop_deleted_data=db_drop_deleted_data,
             db_min_connections=db_min_connections,
             db_max_connections=db_max_connections,
             blockstore_config=blockstore,
-            email_config=EmailConfig(
-                email_server,
-                email_port,
-                email_address,
-                email_password,
-                email_use_ssl,
-                email_use_tls,
-                email_language,
-            ),
+            email_config=email_config,
+            backend_addr=backend_addr,
             debug=debug,
         )
 
