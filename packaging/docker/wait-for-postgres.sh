@@ -4,6 +4,7 @@
 # Make Parsec wait for Postgres as it is not resilient enough
 # As recommended as a quickfix even by Docker documentation
 # Will be rendered useless when docker-compose is updated
+# See https://docs.docker.com/compose/startup-order/
 
 set -e
 

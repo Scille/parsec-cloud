@@ -8,8 +8,8 @@ services:
       - PARSEC_HOST=0.0.0.0
       - PARSEC_DB=postgresql://parsec@postgres/parsec?password=DBPASS  # Change db password for prod
       - PARSEC_BLOCKSTORE=POSTGRESQL  # This is a demo...
-      - PARSEC_LOG_LEVEL=DEBUG  # Change for prod
-      - PARSEC_ADMINISTRATION_TOKEN=CH4NG3M3  # Change for prod
+      - PARSEC_LOG_LEVEL=INFO
+      - PARSEC_ADMINISTRATION_TOKEN=s3cr3t  # Change for prod
     ports:
       - 6777:6777
 
@@ -22,8 +22,6 @@ services:
       - ./packaging/docker/wait-for-postgres.sh:/wait-for-postgres.sh:ro
     ##################################################################################
 
-    networks:
-      - parsec_net
   postgres:
     image: "postgres"
     volumes:
@@ -32,12 +30,7 @@ services:
       - POSTGRES_USER=parsec
       - POSTGRES_PASSWORD=DBPASS  # Change for prod
       - POSTGRES_DB=parsec
-    networks:
-      - parsec_net
 
 
 volumes:
   postgres-data:
-
-networks:
-  parsec_net:
