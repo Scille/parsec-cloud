@@ -1,0 +1,1 @@
+Fixed missing reject method on file history
