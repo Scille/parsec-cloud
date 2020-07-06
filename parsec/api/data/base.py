@@ -1,7 +1,7 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
 
 import attr
-from typing import Optional
+from typing import Optional, Any
 from pendulum import Pendulum
 
 from parsec.serde import (
@@ -83,7 +83,7 @@ class BaseSignedData(metaclass=SignedDataMeta):
     author: Optional[DeviceID]  # Set to None if signed by the root key
     timestamp: Pendulum
 
-    def __eq__(self, other: "BaseSignedData") -> bool:
+    def __eq__(self, other: Any) -> bool:
         if isinstance(other, type(self)):
             return attr.astuple(self).__eq__(attr.astuple(other))
         return NotImplemented
@@ -254,7 +254,7 @@ class BaseData(metaclass=DataMeta):
     SCHEMA_CLS = BaseSchema
     SERIALIZER_CLS = BaseSerializer
 
-    def __eq__(self, other: "BaseData") -> bool:
+    def __eq__(self, other: Any) -> bool:
         if isinstance(other, type(self)):
             return attr.astuple(self).__eq__(attr.astuple(other))
         return NotImplemented
