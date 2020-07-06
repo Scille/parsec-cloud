@@ -21,22 +21,20 @@ async def _import_file(workspace_fs: WorkspaceFS, src: FsPath, dest: FsPath):
     try:
         await workspace_fs.touch(dest)
     except FileExistsError:
-        await workspace_fs.truncate(dest, 0)
-    finally:
-        for offset, chunk in _chunks_from_path(workspace_fs, src):
-            await workspace_fs.write_bytes(dest, chunk, offset)
+        pass
+    f = await workspace_fs.open_file(dest, "w")
+    await f.write(b"".join(_chunks_from_path(workspace_fs, src)))
+    await f.close()
 
 
 def _chunks_from_path(workspace_fs: WorkspaceFS, src: AnyPath):
-    chunks = set()
+    chunks = []
     with open(src, "rb") as fd:
-        read_size = 0
         while True:
             chunk = fd.read(DEFAULT_BLOCK_SIZE)
             if not chunk:
                 break
-            chunks.add((read_size, chunk))
-            read_size += len(chunk)
+            chunks.append(chunk)
     return chunks
 
 
@@ -45,10 +43,13 @@ async def _update_file(
 ):
     remote_file_manifest = await workspace_fs.remote_loader.load_manifest(entry_id)
     remote_access_digests = [access.digest for access in remote_file_manifest.blocks]
-    for idx, (offset, chunk) in enumerate(_chunks_from_path(workspace_fs, path)):
+    offset = 0
+    for idx, chunk in enumerate(_chunks_from_path(workspace_fs, path)):
         if HashDigest.from_data(chunk) != remote_access_digests[idx]:
             await workspace_fs.write_bytes(FsPath(str(absolute_path)), chunk, offset)
             print(f"update the block {idx} in {path}")
+        offset += len(chunk)
+
     await workspace_fs.sync_by_id(entry_id, remote_changed=False, recursive=False)
 
 
