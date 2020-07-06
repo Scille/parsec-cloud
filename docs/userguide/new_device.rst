@@ -31,7 +31,7 @@ Once started the invitation is pending (note you can cancel it though) and the u
 Receive invite
 --------------
 
-The invitee should receive a link by email enabling him to register. Clicking on the invitation URL on the new computer should open up the Parsec client (it must have been installed previously). The token exchange will now start.
+The user should receive a link by email enabling him to register his device. Clicking on the invitation URL on the new computer should open up the Parsec client (it must have been installed previously). The token exchange will now start.
 
 .. note::
 
