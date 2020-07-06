@@ -7,6 +7,7 @@ from parsec.serde import fields, post_load, OneOfSchema
 from parsec.api.data.entry import EntryID, EntryIDField
 from parsec.api.data.base import BaseAPISignedData, BaseSignedDataSchema
 from enum import Enum
+import attr
 
 
 class MessageContentType(Enum):
@@ -16,6 +17,7 @@ class MessageContentType(Enum):
     PING = "ping"
 
 
+@attr.s(slots=True, frozen=True, auto_attribs=True, kw_only=True, eq=False)
 class MessageContent(BaseAPISignedData):
     class SCHEMA_CLS(OneOfSchema, BaseSignedDataSchema):
         type_field = "type"
@@ -33,6 +35,7 @@ class MessageContent(BaseAPISignedData):
             return obj["type"]
 
 
+@attr.s(slots=True, frozen=True, auto_attribs=True, kw_only=True, eq=False)
 class SharingGrantedMessageContent(MessageContent):
     class SCHEMA_CLS(BaseSignedDataSchema):
         type = fields.EnumCheckedConstant(MessageContentType.SHARING_GRANTED, required=True)
@@ -58,6 +61,7 @@ class SharingGrantedMessageContent(MessageContent):
     key: SecretKey
 
 
+@attr.s(slots=True, frozen=True, auto_attribs=True, kw_only=True, eq=False)
 class SharingReencryptedMessageContent(SharingGrantedMessageContent):
     class SCHEMA_CLS(SharingGrantedMessageContent.SCHEMA_CLS):
         type = fields.EnumCheckedConstant(MessageContentType.SHARING_REENCRYPTED, required=True)
@@ -71,6 +75,7 @@ class SharingReencryptedMessageContent(SharingGrantedMessageContent):
             return SharingReencryptedMessageContent(**data)
 
 
+@attr.s(slots=True, frozen=True, auto_attribs=True, kw_only=True, eq=False)
 class SharingRevokedMessageContent(MessageContent):
     class SCHEMA_CLS(BaseSignedDataSchema):
         type = fields.EnumCheckedConstant(MessageContentType.SHARING_REVOKED, required=True)
@@ -84,6 +89,7 @@ class SharingRevokedMessageContent(MessageContent):
     id: EntryID
 
 
+@attr.s(slots=True, frozen=True, auto_attribs=True, kw_only=True, eq=False)
 class PingMessageContent(MessageContent):
     class SCHEMA_CLS(BaseSignedDataSchema):
         type = fields.EnumCheckedConstant(MessageContentType.PING, required=True)

@@ -2,7 +2,7 @@
 
 import attr
 import functools
-from typing import Optional, Tuple
+from typing import Optional, Tuple, TypeVar
 from pendulum import Pendulum, now as pendulum_now
 
 from parsec.types import UUID4, FrozenDict
@@ -51,6 +51,7 @@ ChunkIDField = fields.uuid_based_field_factory(ChunkID)
 
 
 @functools.total_ordering
+@attr.s(slots=True, frozen=True, auto_attribs=True, kw_only=True, eq=False)
 class Chunk(BaseData):
     """Represents a chunk of a data in file manifest.
 
@@ -195,6 +196,10 @@ class LocalManifestType(Enum):
     LOCAL_USER_MANIFEST = "local_user_manifest"
 
 
+T = TypeVar("T", bound="LocalManifest")
+
+
+@attr.s(slots=True, frozen=True, auto_attribs=True, kw_only=True, eq=False)
 class LocalManifest(BaseLocalData):
     class SCHEMA_CLS(OneOfSchema, BaseSchema):
         type_field = "type"
@@ -231,7 +236,7 @@ class LocalManifest(BaseLocalData):
 
     # Evolve methods
 
-    def evolve_and_mark_updated(self, **data) -> "LocalManifest":
+    def evolve_and_mark_updated(self: T, **data) -> T:
         if "updated" not in data:
             data["updated"] = pendulum_now()
         data.setdefault("need_sync", True)
@@ -283,6 +288,7 @@ class LocalManifest(BaseLocalData):
         return dct
 
 
+@attr.s(slots=True, frozen=True, auto_attribs=True, kw_only=True, eq=False)
 class LocalFileManifest(LocalManifest):
     class SCHEMA_CLS(BaseSchema):
         type = fields.EnumCheckedConstant(LocalManifestType.LOCAL_FILE_MANIFEST, required=True)
@@ -305,7 +311,7 @@ class LocalFileManifest(LocalManifest):
     updated: Pendulum
     size: int
     blocksize: int
-    blocks: Tuple[Tuple[Chunk], ...]
+    blocks: Tuple[Tuple[Chunk, ...], ...]
 
     @classmethod
     def new_placeholder(
@@ -416,6 +422,7 @@ class LocalFileManifest(LocalManifest):
         return super().match_remote(remote_manifest)
 
 
+@attr.s(slots=True, frozen=True, auto_attribs=True, kw_only=True, eq=False)
 class LocalFolderManifest(LocalManifest):
     class SCHEMA_CLS(BaseSchema):
         type = fields.EnumCheckedConstant(LocalManifestType.LOCAL_FOLDER_MANIFEST, required=True)
@@ -496,6 +503,7 @@ class LocalFolderManifest(LocalManifest):
         )
 
 
+@attr.s(slots=True, frozen=True, auto_attribs=True, kw_only=True, eq=False)
 class LocalWorkspaceManifest(LocalManifest):
     class SCHEMA_CLS(BaseSchema):
         type = fields.EnumCheckedConstant(LocalManifestType.LOCAL_WORKSPACE_MANIFEST, required=True)
@@ -569,6 +577,7 @@ class LocalWorkspaceManifest(LocalManifest):
         )
 
 
+@attr.s(slots=True, frozen=True, auto_attribs=True, kw_only=True, eq=False)
 class LocalUserManifest(LocalManifest):
     class SCHEMA_CLS(BaseSchema):
         type = fields.EnumCheckedConstant(LocalManifestType.LOCAL_USER_MANIFEST, required=True)

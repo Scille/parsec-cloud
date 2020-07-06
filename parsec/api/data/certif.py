@@ -18,6 +18,7 @@ from parsec.api.protocol import (
     RealmRoleField,
 )
 from parsec.api.data.base import DataValidationError, BaseAPISignedData, BaseSignedDataSchema
+import attr
 
 
 class UserProfile(Enum):
@@ -39,6 +40,7 @@ class UserProfile(Enum):
 UserProfileField = fields.enum_field_factory(UserProfile)
 
 
+@attr.s(slots=True, frozen=True, auto_attribs=True, kw_only=True, eq=False)
 class UserCertificateContent(BaseAPISignedData):
     class SCHEMA_CLS(BaseSignedDataSchema):
         type = fields.CheckedConstant("user_certificate", required=True)
@@ -99,6 +101,7 @@ class UserCertificateContent(BaseAPISignedData):
         return data
 
 
+@attr.s(slots=True, frozen=True, auto_attribs=True, kw_only=True, eq=False)
 class RevokedUserCertificateContent(BaseAPISignedData):
     class SCHEMA_CLS(BaseSignedDataSchema):
         type = fields.CheckedConstant("revoked_user_certificate", required=True)
@@ -123,6 +126,7 @@ class RevokedUserCertificateContent(BaseAPISignedData):
         return data
 
 
+@attr.s(slots=True, frozen=True, auto_attribs=True, kw_only=True, eq=False)
 class DeviceCertificateContent(BaseAPISignedData):
     class SCHEMA_CLS(BaseSignedDataSchema):
         type = fields.CheckedConstant("device_certificate", required=True)
@@ -152,6 +156,7 @@ class DeviceCertificateContent(BaseAPISignedData):
         return data
 
 
+@attr.s(slots=True, frozen=True, auto_attribs=True, kw_only=True, eq=False)
 class RealmRoleCertificateContent(BaseAPISignedData):
     class SCHEMA_CLS(BaseSignedDataSchema):
         type = fields.CheckedConstant("realm_role_certificate", required=True)

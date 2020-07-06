@@ -39,22 +39,13 @@ class DataMeta(type):
     CLS_ATTR_COOKING = attr.s(slots=True, frozen=True, auto_attribs=True, kw_only=True, eq=False)
 
     def __new__(cls, name, bases, nmspc):
-
         # Sanity checks
         if "SCHEMA_CLS" not in nmspc:
             raise RuntimeError("Missing attribute `SCHEMA_CLS` in class definition")
         if not issubclass(nmspc["SCHEMA_CLS"], cls.BASE_SCHEMA_CLS):
             raise RuntimeError(f"Attribute `SCHEMA_CLS` must inherit {BaseSignedDataSchema!r}")
-
-        # During the creation of a class, we wrap it with `attr.s`.
-        # Under the hood, attr recreate a class so this metaclass is going to
-        # be called a second time.
-        # We must detect this second call to avoid infinie loop.
-        if "__attrs_attrs__" in nmspc:
-            return type.__new__(cls, name, bases, nmspc)
-
-        if "SERIALIZER" in nmspc:
-            raise RuntimeError("Attribute `SERIALIZER` is reserved")
+        # if "SERIALIZER" in nmspc:
+        #     raise RuntimeError("Attribute `SERIALIZER` is reserved")
 
         raw_cls = type.__new__(cls, name, bases, nmspc)
 
@@ -70,13 +61,14 @@ class DataMeta(type):
             nmspc["SCHEMA_CLS"], DataValidationError, DataSerializationError
         )
 
-        return cls.CLS_ATTR_COOKING(raw_cls)
+        return raw_cls
 
 
 class SignedDataMeta(DataMeta):
     BASE_SCHEMA_CLS = BaseSignedDataSchema
 
 
+@attr.s(slots=True, frozen=True, auto_attribs=True, kw_only=True, eq=False)
 class BaseSignedData(metaclass=SignedDataMeta):
     """
     Most data within the api should inherit this class. The goal is to have

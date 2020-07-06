@@ -4,11 +4,12 @@ from typing import Tuple
 
 from parsec.serde import BaseSchema, MsgpackSerializer
 from parsec.api.data import BaseData, EntryName
-
+import attr
 
 __all__ = ("BaseLocalData", "FsPath")
 
 
+@attr.s(slots=True, frozen=True, auto_attribs=True, kw_only=True, eq=False)
 class BaseLocalData(BaseData):
     """Unsigned and uncompressed base class for local data"""
 
