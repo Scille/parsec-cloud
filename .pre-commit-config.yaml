@@ -13,6 +13,10 @@ repos:
     rev: 3.7.7
     hooks:
     - id: flake8
+-   repo: https://github.com/pre-commit/mirrors-mypy
+    rev: v0.782
+    hooks:
+    -   id: mypy
 -   repo: https://github.com/pre-commit/pre-commit-hooks
     rev: v2.2.3  # Use the ref you want to point at
     hooks:
