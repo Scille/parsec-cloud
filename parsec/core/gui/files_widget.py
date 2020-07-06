@@ -286,7 +286,7 @@ class FilesWidget(QWidget, Ui_FilesWidget):
             self.current_directory / files[0].name,
         )
         desktop.copy_to_clipboard(str(url))
-        show_info(self, _("TEXT_FILE_LINK"))
+        show_info(self, _("TEXT_FILE_LINK_COPIED_TO_CLIPBOARD"))
 
     def on_copy_clicked(self):
         files = self.table_files.selected_files()

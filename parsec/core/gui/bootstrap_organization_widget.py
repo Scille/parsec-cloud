@@ -120,8 +120,6 @@ class BootstrapOrganizationWidget(QWidget, Ui_BootstrapOrganizationWidget):
             errmsg = _("TEXT_BOOTSTRAP_ORG_PASSWORD_COMPLEXITY_TOO_LOW")
         elif status == "bad-device_name":
             errmsg = _("TEXT_BOOTSTRAP_ORG_BAD_DEVICE_NAME")
-        elif status == "bad-user_id":
-            errmsg = _("TEXT_BOOTSTRAP_ORG_BAD_USER_NAME")
         elif status == "bad-api-version":
             errmsg = _("TEXT_BOOTSTRAP_ORG_BAD_API_VERSION")
         elif status == "refused-by-backend":

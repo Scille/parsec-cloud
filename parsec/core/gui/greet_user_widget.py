@@ -242,9 +242,10 @@ class GreetUserCheckInfoWidget(QWidget, Ui_GreetUserCheckInfoWidget):
         self.line_edit_user_email.textChanged.connect(self.check_infos)
         self.line_edit_device.textChanged.connect(self.check_infos)
 
-        self.combo_profile.addItem(_("TEXT_USER_PROFILE_STANDARD"), UserProfile.STANDARD)
         self.combo_profile.addItem(_("TEXT_USER_PROFILE_OUTSIDER"), UserProfile.OUTSIDER)
+        self.combo_profile.addItem(_("TEXT_USER_PROFILE_STANDARD"), UserProfile.STANDARD)
         self.combo_profile.addItem(_("TEXT_USER_PROFILE_ADMIN"), UserProfile.ADMIN)
+        self.combo_profile.setCurrentIndex(1)
 
         self.get_requests_success.connect(self._on_get_requests_success)
         self.get_requests_error.connect(self._on_get_requests_error)
@@ -406,7 +407,7 @@ class GreetUserCodeExchangeWidget(QWidget, Ui_GreetUserCodeExchangeWidget):
         self.failed.emit()
 
     def _on_none_clicked(self):
-        show_info(self, _("TEXT_GREETER_USER_NONE_CODE_CLICKED"))
+        show_info(self, _("TEXT_GREET_USER_NONE_CODE_CLICKED"))
         self.failed.emit()
 
     def _on_get_greeter_sas_success(self):

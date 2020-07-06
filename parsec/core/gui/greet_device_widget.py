@@ -289,7 +289,7 @@ class GreetDeviceCodeExchangeWidget(QWidget, Ui_GreetDeviceCodeExchangeWidget):
         self.failed.emit()
 
     def _on_none_clicked(self):
-        show_info(self, _("TEXT_GREETER_DEVICE_NONE_CODE_CLICKED"))
+        show_info(self, _("TEXT_GREET_DEVICE_NONE_CODE_CLICKED"))
         self.failed.emit()
 
     def _on_get_greeter_sas_success(self):

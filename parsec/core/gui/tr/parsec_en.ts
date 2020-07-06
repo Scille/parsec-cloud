@@ -26,38 +26,48 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../forms/bootstrap_organization_widget.ui" line="147"/>
-        <source>TEXT_LABEL_USER_NAME</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../forms/bootstrap_organization_widget.ui" line="220"/>
+        <location filename="../forms/bootstrap_organization_widget.ui" line="228"/>
         <source>TEXT_LABEL_DEVICE_NAME</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../forms/bootstrap_organization_widget.ui" line="280"/>
+        <location filename="../forms/bootstrap_organization_widget.ui" line="288"/>
         <source>TEXT_LABEL_PASSWORD</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../forms/bootstrap_organization_widget.ui" line="328"/>
+        <location filename="../forms/bootstrap_organization_widget.ui" line="336"/>
         <source>TEXT_LABEL_PASSWORD_CONFIRMATION</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../forms/bootstrap_organization_widget.ui" line="391"/>
+        <location filename="../forms/bootstrap_organization_widget.ui" line="399"/>
         <source>TEXT_BOOTSTRAP_ORG_TOOLTIP</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../forms/bootstrap_organization_widget.ui" line="397"/>
+        <location filename="../forms/bootstrap_organization_widget.ui" line="405"/>
         <source>ACTION_BOOTSTRAP_ORG</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
         <location filename="../forms/bootstrap_organization_widget.ui" line="189"/>
         <source>TEXT_LABEL_USER_EMAIL</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../forms/bootstrap_organization_widget.ui" line="147"/>
+        <source>TEXT_LABEL_USER_FULL_NAME</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../forms/bootstrap_organization_widget.ui" line="168"/>
+        <source>TEXT_LABEL_USER_FULL_NAME_PLACEHOLDER</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../forms/bootstrap_organization_widget.ui" line="207"/>
+        <source>TEXT_LABEL_USER_EMAIL_PLACEHOLDER</source>
         <translation type="unfinished"></translation>
     </message>
 </context>
@@ -673,23 +683,28 @@ p, li { white-space: pre-wrap; }
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../forms/greet_user_check_info_widget.ui" line="117"/>
+        <location filename="../forms/greet_user_check_info_widget.ui" line="165"/>
         <source>TEXT_LABEL_DEVICE</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../forms/greet_user_check_info_widget.ui" line="159"/>
+        <location filename="../forms/greet_user_check_info_widget.ui" line="117"/>
         <source>TEXT_LABEL_USER_EMAIL</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../forms/greet_user_check_info_widget.ui" line="243"/>
+        <location filename="../forms/greet_user_check_info_widget.ui" line="252"/>
         <source>ACTION_CREATE_USER</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
         <location filename="../forms/greet_user_check_info_widget.ui" line="207"/>
         <source>TEXT_LABEL_USER_ROLE</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../forms/greet_user_check_info_widget.ui" line="225"/>
+        <source>TEXT_USER_ROLES_TOOLTIP</source>
         <translation type="unfinished"></translation>
     </message>
 </context>
