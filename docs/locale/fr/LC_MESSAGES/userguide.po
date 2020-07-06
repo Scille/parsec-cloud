@@ -99,7 +99,7 @@ msgstr "Une fois installé, le client Parsec doit se connecter à une organisati
 
 #: ../../userguide/new_organization.rst:9
 msgid "The simplest way to do that is to create one directly from the Parsec client. It automatically handles all the process securely, and create a temporary account on the `Parsec SAAS service <https://my.parsec.cloud/>`_, sending an invitation link to end registration through email."
-msgstr "La façon la plus simple de faire cela est d'en créer une directement depuis le client Parsec. Cela prend en charge tout le processus de manière sécurisée, et créer un compte temporaire sur le `service SAAS Parsec <https://my.parsec.cloud/>`_ en envoyant par email un lien permettant de terminer l'inscription."
+msgstr "La façon la plus simple de faire cela est d'en créer une directement depuis le client Parsec. Cela prend en charge tout le processus de manière sécurisée, et crée un compte temporaire sur le `service SAAS Parsec <https://my.parsec.cloud/>`_ en envoyant par email un lien permettant de terminer l'inscription."
 
 #: ../../userguide/new_organization.rst:15
 msgid "Another possibility (though more technical) is to host you own Parsec server and create the organization on it using the Parsec CLI. You can then join that organization using an organization bootstrap URL. You can read about this in the :ref:`the Hosting server <doc_hosting_server>` part."
@@ -112,7 +112,7 @@ msgid "Otherwise, you can click on `Create an organization` in the Menu of the l
 msgstr "Sinon, vous pouvez cliquer sur `Créer une organisation` dans le menu en haut à gauche de l'écran de connexion."
 
 msgid "Once you start the process, you are asked for an Email and an Organization Name. This email address will be used to contact you later."
-msgstr "Une fois que vous avez démarré le processus, il vous sera demandé un Email et un Nom d'Organisation. C'est cette adresse email qui sera utilisé pour vous contacter."
+msgstr "Une fois que vous avez démarré le processus, il vous sera demandé un Email et un Nom d'Organisation. C'est cette adresse email qui sera utilisée pour vous contacter."
 
 msgid "Creating an organization through the Parsec client register yourself as its first user and device (this step is called the bootstrap). This is why you must enter your Username, Device name, and your Password."
 msgstr "Créer une organisation depuis le client Parsec vous enregistre comme son premier utilisateur et appareil (cette étape est appelée le bootstrap). C'est pourquoi vous devez entrer votre nom d'utilisateur, d'appareil, et mot de passe."
@@ -177,45 +177,29 @@ msgstr "Phase d'invitation"
 msgid "Inviting a new device is done from the Parsec client:"
 msgstr "Inviter un nouveau périphérique se fait via le client Parsec:"
 
-#: ../../userguide/new_device.rst:27
-msgid "Once started, the invitation is pending (note you can cancel it though) and an invitation URL and token are displayed. The URL shoul now be transfered on the invited computer."
-msgstr "Une fois commencée, l'invitation apparait comme en attente (notez qu'il est toutefois possible de l'annuler) et un lien d'invitation ainsi qu'un code sont affichés. Ce lien doit maintenant être transmis sur l'ordinateur invité."
+msgid "Once started the invitation is pending (note you can cancel it though) and the user must check his emails for an invitation link that has been sent to him."
+msgstr "Une fois commencée, l'invitation apparait comme en attente (notez qu'il est toutefois possible de l'annuler) et l'utilisateur doit recevoir un lien d'invitation par email."
 
-#: ../../userguide/new_device.rst:33
-msgid "Device invitation URL and token should be provided to the invitee by two different means of communication."
-msgstr "Le lien et le code d'invitation doivent être fournis à l'invité par deux canaux de communication différents."
-
-#: ../../userguide/new_device.rst:36 ../../userguide/new_user.rst:35
-msgid "This is important to ensure protection against `man-in-the-middle <https://en.wikipedia.org/wiki/Man-in-the-middle_attack>`_ attack."
-msgstr "C'est un point important visant à se protéger contre les `attaques de type homme du milieu <https://fr.wikipedia.org/wiki/Attaque_de_l%27homme_du_milieu>`_."
-
-#: ../../userguide/new_device.rst:42
-msgid "For cryptographic reasons, a user can only create new devices for himself"
-msgstr "Pour des raison cryptographiques, un utilisateur ne peut créer des nouveaux périphériques que pour lui-même."
-
-#: ../../userguide/new_device.rst:45 ../../userguide/new_user.rst:44
-msgid "Claim step"
-msgstr "Étape de demande"
-
-#: ../../userguide/new_device.rst:47
-msgid "From the new computer, clicking on the invitation URL should open up Parsec:"
-msgstr "Depuis le nouvel ordinateur, cliquer sur le lien devrait ouvrir Parsec :"
-
-#: ../../userguide/new_device.rst:53
-msgid "That's it! The user now has two devices, each on a different computer."
-msgstr "C'est bon ! L'utilisateur a maintenant deux périphériques, chacun sur un ordinateur différent."
+msgid "The user should receive a link by email enabling him to register his device. Clicking on the invitation URL on the new computer should open up the Parsec client (it must have been installed previously). The token exchange will now start."
+msgstr "L'utilisateur reçoit alors par email un lien d'activation lui permettant d'enregistrer son appareil. Cliquer sur ce lien d'activation sur le nouvel appareil devrait ouvrir le client Parsec (qui doit avoir été installé préalablement). L'échange de token va ensuite commencer."
 
 #: ../../userguide/new_device.rst:57
 msgid "If clicking on the URL doesn't work, you can also use the ``Enter a URL manually`` dialog inside Parsec."
 msgstr "Si cliquer sur le lien ne fait rien, vous pouvez aussi utiliser le bouton ``Entrer un lien manuellement`` dans Parsec."
 
-#: ../../userguide/new_device.rst:59
-msgid "The inviting device will also be notified of the successful claim."
-msgstr "Le périphérique ayant créé l'invitation sera aussi informé de la réussite de l'opération."
-
 #: ../../userguide/new_device.rst:60
 msgid "Given the password is only used locally, it doesn't have to be the same across devices."
 msgstr "Le mot de passe n'étant utilisé que localement, il n'a pas besoin d'être le même pour les deux périphériques."
+
+#: ../../userguide/new_user.rst:60
+msgid "The token exchange is a verification process that aims at ensuring that the two devices are not victim of a `Man-in-the-middle attack <https://en.wikipedia.org/wiki/Man-in-the-middle_attack>`_. You can read more about that process at the :ref:`cryptography <doc_cryptography>` section."
+msgstr "L'échange de token est un processus de vérification qui a pour but de s'assurer que les deux appareils ne sont pas victimes d'une `Attaque de l'homme du milieu <https://fr.wikipedia.org/wiki/Attaque_de_l%27homme_du_milieu>`_. Il est possible d'en apprendre plus à la section :ref:`cryptography <doc_cryptography>`"
+
+msgid "The user will have to proceed to a token exchange between the two devices. For that, the devices will both display a token, or a list of tokens : on the device with the list, the user must click on the token displayed by the Parsec client of the other device. If the token one of them is given is not present in the list, it means there is a very high probability that the user is victim of a `Man-in-the-middle attack <https://en.wikipedia.org/wiki/Man-in-the-middle_attack>`_."
+msgstr "L'utilisateur doit procéder à un échange de tokens entre ses deux appareils. Pour cela, les appareils afficheront chacun à leur tour un token, ou une liste de token : sur l'appareil sur lequel une liste est présentée, l'utilisateur doit cliquer sur le token affiché par le client Parsec de l'autre appareil. Si le token affiché par l'un des deux appareils ne se trouve pas dans la liste affichée par à l'autre, cela signifie qu'il y a une très forte probabilité que l'un des deux appareils soit victime d'une `Attaque de l'homme du milieu <https://fr.wikipedia.org/wiki/Attaque_de_l%27homme_du_milieu>`_."
+
+msgid "The user’s new Parsec client has been configured and is ready to log in."
+msgstr "Le nouveau client Parsec de l'utilisateur a été configuré et est maintenant prêt à s'authentifier."
 
 
 ##########################
