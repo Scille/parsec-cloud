@@ -29,7 +29,7 @@ body {
 .fa-bars { color: #006EFF; } .fa-bars:hover { color: #004EDF; }
 .fa-github { color: #006EFF; } .fa-github:hover { color: #004EDF; }
 a { color: #006EFF; } a:hover { color: #004EDF; }
-a:visited { color: #121D43; } a:visited:hover { color: #0A0F23; }
+a:visited { color: #006EFF; } a:visited:hover { color: #004EDF; }
 
 .wy-menu-vertical a { color: #AAAAAA; } .wy-menu-vertical a:hover { color: #FFFFFF; background-color: #006EFF; }
 .wy-menu-vertical li.current { background-color: rgba(0, 0, 0, 0); }
