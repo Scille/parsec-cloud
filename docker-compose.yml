@@ -1,0 +1,36 @@
+version: '2'
+services:
+  parsec:
+    build:
+      context: .
+      dockerfile: packaging/docker/Dockerfile
+    environment:
+      - PARSEC_HOST=0.0.0.0
+      - PARSEC_DB=postgresql://parsec@postgres/parsec?password=DBPASS  # Change db password for prod
+      - PARSEC_BLOCKSTORE=POSTGRESQL  # This is a demo...
+      - PARSEC_LOG_LEVEL=INFO
+      - PARSEC_ADMINISTRATION_TOKEN=s3cr3t  # Change for prod
+    ports:
+      - 6777:6777
+
+    #### TODO : that part could be useless if Parsec is made to retry connections ####
+    depends_on:
+      - "postgres"
+    entrypoint: []
+    command: ["/bin/sh", "/wait-for-postgres.sh", "postgresql://parsec@postgres/parsec?password=DBPASS", "parsec", "backend", "run"]
+    volumes:
+      - ./packaging/docker/wait-for-postgres.sh:/wait-for-postgres.sh:ro
+    ##################################################################################
+
+  postgres:
+    image: "postgres"
+    volumes:
+      - postgres-data:/var/lib/postgresql/data/
+    environment:
+      - POSTGRES_USER=parsec
+      - POSTGRES_PASSWORD=DBPASS  # Change for prod
+      - POSTGRES_DB=parsec
+
+
+volumes:
+  postgres-data:
