@@ -26,7 +26,7 @@ from parsec.api.data import (
     EntryIDField,
 )
 from parsec.core.types.base import BaseLocalData
-
+from enum import Enum
 
 __all__ = (
     "WorkspaceEntry",  # noqa: Republishing
@@ -188,18 +188,24 @@ class Chunk(BaseData):
 # Manifests data classes
 
 
+class LocalManifestType(Enum):
+    LOCAL_FILE_MANIFEST = "local_file_manifest"
+    LOCAL_FOLDER_MANIFEST = "local_folder_manifest"
+    LOCAL_WORKSPACE_MANIFEST = "local_workspace_manifest"
+    LOCAL_USER_MANIFEST = "local_user_manifest"
+
+
 class LocalManifest(BaseLocalData):
     class SCHEMA_CLS(OneOfSchema, BaseSchema):
         type_field = "type"
-        type_field_remove = False
 
         @property
         def type_schemas(self):
             return {
-                "local_file_manifest": LocalFileManifest.SCHEMA_CLS,
-                "local_folder_manifest": LocalFolderManifest.SCHEMA_CLS,
-                "local_workspace_manifest": LocalWorkspaceManifest.SCHEMA_CLS,
-                "local_user_manifest": LocalUserManifest.SCHEMA_CLS,
+                LocalManifestType.LOCAL_FILE_MANIFEST: LocalFileManifest.SCHEMA_CLS,
+                LocalManifestType.LOCAL_FOLDER_MANIFEST: LocalFolderManifest.SCHEMA_CLS,
+                LocalManifestType.LOCAL_WORKSPACE_MANIFEST: LocalWorkspaceManifest.SCHEMA_CLS,
+                LocalManifestType.LOCAL_USER_MANIFEST: LocalUserManifest.SCHEMA_CLS,
             }
 
         def get_obj_type(self, obj):
@@ -253,6 +259,18 @@ class LocalManifest(BaseLocalData):
         )
         return reference.evolve(version=remote_manifest.version) == remote_manifest
 
+    def to_stats(self):
+        # General stats
+        stats = {
+            "id": self.id,
+            "created": self.created,
+            "updated": self.updated,
+            "base_version": self.base_version,
+            "is_placeholder": self.is_placeholder,
+            "need_sync": self.need_sync,
+        }
+        return stats
+
     # Debugging
 
     def asdict(self):
@@ -267,7 +285,7 @@ class LocalManifest(BaseLocalData):
 
 class LocalFileManifest(LocalManifest):
     class SCHEMA_CLS(BaseSchema):
-        type = fields.CheckedConstant("local_file_manifest", required=True)
+        type = fields.EnumCheckedConstant(LocalManifestType.LOCAL_FILE_MANIFEST, required=True)
         base = fields.Nested(RemoteFileManifest.SCHEMA_CLS, required=True)
         need_sync = fields.Boolean(required=True)
         updated = fields.DateTime(required=True)
@@ -314,6 +332,12 @@ class LocalFileManifest(LocalManifest):
             size=0,
             blocks=blocks,
         )
+
+    def to_stats(self):
+        stats = super().to_stats()
+        stats["type"] = "file"
+        stats["size"] = self.size
+        return stats
 
     # Properties
 
@@ -394,7 +418,7 @@ class LocalFileManifest(LocalManifest):
 
 class LocalFolderManifest(LocalManifest):
     class SCHEMA_CLS(BaseSchema):
-        type = fields.CheckedConstant("local_folder_manifest", required=True)
+        type = fields.EnumCheckedConstant(LocalManifestType.LOCAL_FOLDER_MANIFEST, required=True)
         base = fields.Nested(RemoteFolderManifest.SCHEMA_CLS, required=True)
         need_sync = fields.Boolean(required=True)
         updated = fields.DateTime(required=True)
@@ -431,6 +455,11 @@ class LocalFolderManifest(LocalManifest):
         )
 
     # Properties
+    def to_stats(self):
+        stats = super().to_stats()
+        stats["type"] = "folder"
+        stats["children"] = sorted(self.children.keys())
+        return stats
 
     @property
     def parent(self):
@@ -469,7 +498,7 @@ class LocalFolderManifest(LocalManifest):
 
 class LocalWorkspaceManifest(LocalManifest):
     class SCHEMA_CLS(BaseSchema):
-        type = fields.CheckedConstant("local_workspace_manifest", required=True)
+        type = fields.EnumCheckedConstant(LocalManifestType.LOCAL_WORKSPACE_MANIFEST, required=True)
         base = fields.Nested(RemoteWorkspaceManifest.SCHEMA_CLS, required=True)
         need_sync = fields.Boolean(required=True)
         updated = fields.DateTime(required=True)
@@ -506,6 +535,12 @@ class LocalWorkspaceManifest(LocalManifest):
 
     # Evolve methods
 
+    def to_stats(self):
+        stats = super().to_stats()
+        stats["type"] = "folder"
+        stats["children"] = sorted(self.children.keys())
+        return stats
+
     def evolve_children_and_mark_updated(self, data) -> "LocalWorkspaceManifest":
         return self.evolve_and_mark_updated(
             children={k: v for k, v in {**self.children, **data}.items() if v is not None}
@@ -536,7 +571,7 @@ class LocalWorkspaceManifest(LocalManifest):
 
 class LocalUserManifest(LocalManifest):
     class SCHEMA_CLS(BaseSchema):
-        type = fields.CheckedConstant("local_user_manifest", required=True)
+        type = fields.EnumCheckedConstant(LocalManifestType.LOCAL_USER_MANIFEST, required=True)
         base = fields.Nested(RemoteUserManifest.SCHEMA_CLS, required=True)
         need_sync = fields.Boolean(required=True)
         updated = fields.DateTime(required=True)

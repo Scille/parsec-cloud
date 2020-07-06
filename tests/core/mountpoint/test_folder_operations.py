@@ -86,6 +86,7 @@ class PathElement:
 
 @pytest.mark.slow
 @pytest.mark.mountpoint
+@pytest.mark.flaky(reruns=0)
 def test_folder_operations(tmpdir, caplog, hypothesis_settings, mountpoint_service_factory):
 
     tentative = 0

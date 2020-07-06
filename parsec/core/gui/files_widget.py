@@ -1,5 +1,6 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
 
+from parsec.core.core_events import CoreEvent
 import pathlib
 from uuid import UUID
 import trio
@@ -98,14 +99,15 @@ async def _do_import(workspace_fs, files, total_size, progress_signal):
             progress_signal.emit(src.name, current_size)
 
             async with await trio.open_file(src, "rb") as f:
-                read_size = 0
-                while True:
-                    chunk = await f.read(DEFAULT_BLOCK_SIZE)
-                    if not chunk:
-                        break
-                    await workspace_fs.write_bytes(dst, chunk, read_size)
-                    read_size += len(chunk)
-                    progress_signal.emit(src.name, current_size + read_size)
+                async with await workspace_fs.open_file(dst, "w") as dest_file:
+                    read_size = 0
+                    while True:
+                        chunk = await f.read(DEFAULT_BLOCK_SIZE)
+                        if not chunk:
+                            break
+                        await dest_file.write(chunk)
+                        read_size += len(chunk)
+                        progress_signal.emit(src.name, current_size + read_size)
             current_size += read_size + 1
             progress_signal.emit(src.name, current_size)
 
@@ -145,8 +147,8 @@ class Clipboard:
 
 
 class FilesWidget(QWidget, Ui_FilesWidget):
-    fs_updated_qt = pyqtSignal(str, UUID)
-    fs_synced_qt = pyqtSignal(str, UUID)
+    fs_updated_qt = pyqtSignal(CoreEvent, UUID)
+    fs_synced_qt = pyqtSignal(CoreEvent, UUID)
     entry_downsynced_qt = pyqtSignal(UUID, UUID)
 
     sharing_updated_qt = pyqtSignal(WorkspaceEntry, object)
@@ -242,10 +244,10 @@ class FilesWidget(QWidget, Ui_FilesWidget):
         self.loading_dialog = None
         self.import_progress.connect(self._on_import_progress)
 
-        self.event_bus.connect("fs.entry.updated", self._on_fs_entry_updated_trio)
-        self.event_bus.connect("fs.entry.synced", self._on_fs_entry_synced_trio)
-        self.event_bus.connect("sharing.updated", self._on_sharing_updated_trio)
-        self.event_bus.connect("fs.entry.downsynced", self._on_entry_downsynced_trio)
+        self.event_bus.connect(CoreEvent.FS_ENTRY_UPDATED, self._on_fs_entry_updated_trio)
+        self.event_bus.connect(CoreEvent.FS_ENTRY_SYNCED, self._on_fs_entry_synced_trio)
+        self.event_bus.connect(CoreEvent.SHARING_UPDATED, self._on_sharing_updated_trio)
+        self.event_bus.connect(CoreEvent.FS_ENTRY_DOWNSYNCED, self._on_entry_downsynced_trio)
 
     def disconnect_all(self):
         pass

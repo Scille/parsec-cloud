@@ -5,16 +5,16 @@ import pytest
 from unittest.mock import ANY
 
 from parsec.core.backend_connection import BackendConnStatus
+from parsec.backend.backend_events import BackendEvent
+from parsec.core.core_events import CoreEvent
 
 
 @pytest.mark.trio
-async def test_monitors_idle(mock_clock, running_backend, alice_core, alice):
-    mock_clock.autojump_threshold = 0
-
+async def test_monitors_idle(autojump_clock, running_backend, alice_core, alice):
     assert alice_core.are_monitors_idle()
 
     # Force wakeup of the sync monitor
-    alice_core.event_bus.send("fs.entry.updated", id=alice.user_manifest_id)
+    alice_core.event_bus.send(CoreEvent.FS_ENTRY_UPDATED, id=alice.user_manifest_id)
     assert not alice_core.are_monitors_idle()
     with trio.fail_after(60):  # autojump, so not *really* 60s
         await alice_core.wait_idle_monitors()
@@ -22,13 +22,11 @@ async def test_monitors_idle(mock_clock, running_backend, alice_core, alice):
 
 
 @pytest.mark.trio
-async def test_monitor_switch_offline(mock_clock, running_backend, alice_core, alice):
-    mock_clock.autojump_threshold = 0
-
+async def test_monitor_switch_offline(autojump_clock, running_backend, alice_core, alice):
     assert alice_core.are_monitors_idle()
 
     # Force wakeup of the sync monitor
-    alice_core.event_bus.send("fs.entry.updated", id=alice.user_manifest_id)
+    alice_core.event_bus.send(CoreEvent.FS_ENTRY_UPDATED, id=alice.user_manifest_id)
     assert not alice_core.are_monitors_idle()
     with trio.fail_after(60):  # autojump, so not *really* 60s
         await alice_core.wait_idle_monitors()
@@ -37,20 +35,19 @@ async def test_monitor_switch_offline(mock_clock, running_backend, alice_core, a
 
 @pytest.mark.trio
 async def test_process_while_offline(
-    mock_clock, running_backend, alice_core, bob_user_fs, alice, bob
+    autojump_clock, running_backend, alice_core, bob_user_fs, alice, bob
 ):
-    mock_clock.autojump_threshold = 0
     assert alice_core.backend_status == BackendConnStatus.READY
 
     with running_backend.offline():
         with alice_core.event_bus.listen() as spy:
             # Force wakeup of the sync monitor
-            alice_core.event_bus.send("fs.entry.updated", id=alice.user_manifest_id)
+            alice_core.event_bus.send(CoreEvent.FS_ENTRY_UPDATED, id=alice.user_manifest_id)
             assert not alice_core.are_monitors_idle()
 
             with trio.fail_after(60):  # autojump, so not *really* 60s
                 await spy.wait(
-                    "backend.connection.changed",
+                    CoreEvent.BACKEND_CONNECTION_CHANGED,
                     {"status": BackendConnStatus.LOST, "status_exc": spy.ANY},
                 )
                 await alice_core.wait_idle_monitors()
@@ -59,10 +56,8 @@ async def test_process_while_offline(
 
 @pytest.mark.trio
 async def test_autosync_on_modification(
-    mock_clock, running_backend, alice, alice_core, alice2_user_fs
+    autojump_clock, running_backend, alice, alice_core, alice2_user_fs
 ):
-    mock_clock.autojump_threshold = 0
-
     with alice_core.event_bus.listen() as spy:
         wid = await alice_core.user_fs.workspace_create("w")
         workspace = alice_core.user_fs.get_workspace(wid)
@@ -71,8 +66,8 @@ async def test_autosync_on_modification(
             await alice_core.wait_idle_monitors()
         spy.assert_events_occured(
             [
-                ("fs.entry.synced", {"id": alice.user_manifest_id}),
-                ("fs.entry.synced", {"workspace_id": wid, "id": wid}),
+                (CoreEvent.FS_ENTRY_SYNCED, {"id": alice.user_manifest_id}),
+                (CoreEvent.FS_ENTRY_SYNCED, {"workspace_id": wid, "id": wid}),
             ],
             in_order=False,
         )
@@ -85,8 +80,8 @@ async def test_autosync_on_modification(
             await alice_core.wait_idle_monitors()
         spy.assert_events_occured(
             [
-                ("fs.entry.synced", {"workspace_id": wid, "id": foo_id}),
-                ("fs.entry.synced", {"workspace_id": wid, "id": wid}),
+                (CoreEvent.FS_ENTRY_SYNCED, {"workspace_id": wid, "id": foo_id}),
+                (CoreEvent.FS_ENTRY_SYNCED, {"workspace_id": wid, "id": wid}),
             ],
             in_order=False,
         )
@@ -101,10 +96,8 @@ async def test_autosync_on_modification(
 
 @pytest.mark.trio
 async def test_autosync_on_remote_modifications(
-    mock_clock, running_backend, alice, alice_core, alice2_user_fs
+    autojump_clock, running_backend, alice, alice_core, alice2_user_fs
 ):
-    mock_clock.autojump_threshold = 0
-
     with alice_core.event_bus.listen() as spy:
         wid = await alice2_user_fs.workspace_create("w")
         await alice2_user_fs.sync()
@@ -113,7 +106,7 @@ async def test_autosync_on_remote_modifications(
         await spy.wait_multiple_with_timeout(
             [
                 (
-                    "backend.realm.vlobs_updated",
+                    CoreEvent.BACKEND_REALM_VLOBS_UPDATED,
                     {
                         "realm_id": alice.user_manifest_id,
                         "checkpoint": 2,
@@ -121,7 +114,7 @@ async def test_autosync_on_remote_modifications(
                         "src_version": 2,
                     },
                 ),
-                ("fs.entry.remote_changed", {"id": alice.user_manifest_id, "path": "/"}),
+                (CoreEvent.FS_ENTRY_REMOTE_CHANGED, {"id": alice.user_manifest_id, "path": "/"}),
             ],
             timeout=60,  # autojump, so not *really* 60s
         )
@@ -140,11 +133,11 @@ async def test_autosync_on_remote_modifications(
         await spy.wait_multiple_with_timeout(
             [
                 (
-                    "backend.realm.vlobs_updated",
+                    CoreEvent.BACKEND_REALM_VLOBS_UPDATED,
                     {"realm_id": wid, "checkpoint": 2, "src_id": foo_id, "src_version": 1},
                 ),
                 (
-                    "backend.realm.vlobs_updated",
+                    CoreEvent.BACKEND_REALM_VLOBS_UPDATED,
                     {"realm_id": wid, "checkpoint": 3, "src_id": wid, "src_version": 2},
                 ),
             ],
@@ -160,10 +153,8 @@ async def test_autosync_on_remote_modifications(
 
 @pytest.mark.trio
 async def test_reconnect_with_remote_changes(
-    mock_clock, alice2, running_backend, alice_core, alice2_user_fs
+    autojump_clock, alice2, running_backend, alice_core, alice2_user_fs
 ):
-    mock_clock.autojump_threshold = 0
-
     wid = await alice_core.user_fs.workspace_create("w")
     alice_w = alice_core.user_fs.get_workspace(wid)
     await alice_w.mkdir("/foo")
@@ -189,7 +180,7 @@ async def test_reconnect_with_remote_changes(
             await spy.wait_multiple_with_timeout(
                 [
                     (
-                        "realm.vlobs_updated",
+                        BackendEvent.REALM_VLOBS_UPDATED,
                         {
                             "organization_id": alice2.organization_id,
                             "author": alice2.device_id,
@@ -200,7 +191,7 @@ async def test_reconnect_with_remote_changes(
                         },
                     ),
                     (
-                        "realm.vlobs_updated",
+                        BackendEvent.REALM_VLOBS_UPDATED,
                         {
                             "organization_id": alice2.organization_id,
                             "author": alice2.device_id,
@@ -211,7 +202,7 @@ async def test_reconnect_with_remote_changes(
                         },
                     ),
                     (
-                        "realm.vlobs_updated",
+                        BackendEvent.REALM_VLOBS_UPDATED,
                         {
                             "organization_id": alice2.organization_id,
                             "author": alice2.device_id,
@@ -228,14 +219,14 @@ async def test_reconnect_with_remote_changes(
     with alice_core.event_bus.listen() as spy:
         # Now alice should sync back the changes
         await spy.wait_with_timeout(
-            "backend.connection.changed",
+            CoreEvent.BACKEND_CONNECTION_CHANGED,
             {"status": BackendConnStatus.READY, "status_exc": spy.ANY},
             timeout=60,  # autojump, so not *really* 60s
         )
         await spy.wait_multiple_with_timeout(
             [
-                ("fs.entry.downsynced", {"workspace_id": wid, "id": foo_id}),
-                ("fs.entry.downsynced", {"workspace_id": wid, "id": bar_id}),
+                (CoreEvent.FS_ENTRY_DOWNSYNCED, {"workspace_id": wid, "id": foo_id}),
+                (CoreEvent.FS_ENTRY_DOWNSYNCED, {"workspace_id": wid, "id": bar_id}),
             ],
             in_order=False,
             timeout=60,  # autojump, so not *really* 60s

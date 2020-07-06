@@ -1,5 +1,6 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
 
+from parsec.core.core_events import CoreEvent
 import pytest
 import os
 import re
@@ -11,6 +12,7 @@ import pendulum
 from unittest.mock import patch
 import structlog
 import trio
+from trio.testing import MockClock
 import trio_asyncio
 from async_generator import asynccontextmanager
 import hypothesis
@@ -257,6 +259,17 @@ async def asyncio_loop(request):
         with trio.CancelScope(shield=True):
             async with trio_asyncio.open_loop() as loop:
                 yield loop
+
+
+@pytest.fixture
+def autojump_clock(request):
+    # Event dispatching through PostgreSQL LISTEN/NOTIFY is
+    # invisible from trio point of view, hence waiting for
+    # event with autojump_threshold=0 means we jump to timeout
+    if request.config.getoption("--postgresql"):
+        return MockClock(autojump_threshold=0.1)
+    else:
+        return MockClock(autojump_threshold=0)
 
 
 @pytest.fixture(scope="session")
@@ -592,7 +605,7 @@ def core_factory(
                 # switches online concurrently with the test.
                 if "running_backend" in request.fixturenames:
                     await spy.wait_with_timeout(
-                        "backend.connection.changed",
+                        CoreEvent.BACKEND_CONNECTION_CHANGED,
                         {"status": BackendConnStatus.READY, "status_exc": spy.ANY},
                     )
                 assert core.are_monitors_idle()

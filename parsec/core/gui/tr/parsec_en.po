@@ -190,7 +190,7 @@ msgid "ACTION_WORKSPACE_UNSHARE_CONFIRM"
 msgstr "Unshare"
 
 msgid "TEXT_WORKSPACE_SHARING_SHARE_ERROR_workspace-user"
-msgstr "Cannot share the workspace \"{workspace}\" with \"{user\"}."
+msgstr "Cannot share the workspace <b>{workspace}</b> with <b>{user}</b>."
 
 msgid "TEXT_WORKSPACE_SHARING_UNSHARE_ERROR_workspace-user"
 msgstr "Cannot remove <b>{user}</b> from the workspace <b>{workspace}</b>."

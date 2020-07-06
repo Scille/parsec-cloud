@@ -1,5 +1,6 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
 
+from parsec.backend.backend_events import BackendEvent
 import pytest
 import pendulum
 
@@ -47,7 +48,7 @@ async def test_device_create_ok(
 
         # No guarantees this event occurs before the command's return
         await spy.wait_with_timeout(
-            "device.created",
+            BackendEvent.DEVICE_CREATED,
             {
                 "organization_id": alice_nd.organization_id,
                 "device_id": alice_nd.device_id,

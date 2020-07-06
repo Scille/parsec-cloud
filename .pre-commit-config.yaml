@@ -17,8 +17,6 @@ repos:
     rev: v2.2.3  # Use the ref you want to point at
     hooks:
     - id: mixed-line-ending
-      args:
-        - "--fix=lf"
     - id: trailing-whitespace
 -   repo: local
     hooks:

@@ -1,5 +1,6 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
 
+from parsec.backend.backend_events import BackendEvent
 import trio
 import attr
 from typing import List, Optional, Tuple
@@ -277,7 +278,9 @@ class BaseUserComponent:
         def _filter_on_user_claimed(event, organization_id, user_id, encrypted_claim):
             return organization_id == client_ctx.organization_id and user_id == invitation.user_id
 
-        with self._event_bus.waiter_on("user.claimed", filter=_filter_on_user_claimed) as waiter:
+        with self._event_bus.waiter_on(
+            BackendEvent.USER_CLAIMED, filter=_filter_on_user_claimed
+        ) as waiter:
 
             try:
                 await self.create_user_invitation(client_ctx.organization_id, invitation)
@@ -365,8 +368,8 @@ class BaseUserComponent:
                 )
 
         with self._event_bus.connect_in_context(
-            ("user.created", _on_organization_events),
-            ("user.invitation.cancelled", _on_organization_events),
+            (BackendEvent.USER_CREATED, _on_organization_events),
+            (BackendEvent.USER_INVITATION_CANCELLED, _on_organization_events),
         ):
             try:
                 invitation = await self.claim_user_invitation(
@@ -384,7 +387,7 @@ class BaseUserComponent:
             # Wait for creator user to accept (or refuse) our claim
             async for event, user_id, first_device_id, user_certificate, first_device_certificate in recv_channel:
                 if user_id == invitation.user_id:
-                    replied_ok = event == "user.created"
+                    replied_ok = event == BackendEvent.USER_CREATED
                     break
 
         if not replied_ok:
@@ -615,7 +618,7 @@ class BaseUserComponent:
             return organization_id == client_ctx.organization_id and device_id == invited_device_id
 
         with self._event_bus.waiter_on(
-            "device.claimed", filter=_filter_on_device_claimed
+            BackendEvent.DEVICE_CLAIMED, filter=_filter_on_device_claimed
         ) as waiter:
 
             try:
@@ -697,8 +700,8 @@ class BaseUserComponent:
                 send_channel.send_nowait((event, device_id, device_certificate, encrypted_answer))
 
         with self._event_bus.connect_in_context(
-            ("device.created", _on_organization_events),
-            ("device.invitation.cancelled", _on_organization_events),
+            (BackendEvent.DEVICE_CREATED, _on_organization_events),
+            (BackendEvent.DEVICE_INVITATION_CANCELLED, _on_organization_events),
         ):
             try:
                 invitation = await self.claim_device_invitation(
@@ -716,7 +719,7 @@ class BaseUserComponent:
             # Wait for creator device to accept (or refuse) our claim
             async for event, device_id, device_certificate, encrypted_answer in recv_channel:
                 if device_id == invitation.device_id:
-                    replied_ok = event == "device.created"
+                    replied_ok = event == BackendEvent.DEVICE_CREATED
                     break
 
         if not replied_ok:

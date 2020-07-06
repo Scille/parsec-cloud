@@ -1,5 +1,7 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
 
+from parsec.backend.backend_events import BackendEvent
+from parsec.event_bus import MetaEvent
 import pytest
 import trio
 import pendulum
@@ -72,7 +74,9 @@ async def test_user_invite_then_claim_ok(
     with running_backend.backend.event_bus.listen() as spy:
         async with trio.open_service_nursery() as nursery:
             nursery.start_soon(_alice_invite)
-            await spy.wait_with_timeout("event.connected", {"event_name": "user.claimed"})
+            await spy.wait_with_timeout(
+                MetaEvent.EVENT_CONNECTED, {"event_type": BackendEvent.USER_CLAIMED}
+            )
             nursery.start_soon(_mallory_claim)
 
     # Now mallory should be able to connect to backend

@@ -290,15 +290,15 @@ requirements = [
 
 
 test_requirements = [
-    "pytest==4.4.0",
-    "pytest-cov==2.6.1",
-    "pytest-xdist==1.28.0",
+    "pytest==5.4.3",
+    "pytest-cov==2.10.0",
+    "pytest-xdist==1.32.0",
     "pytest-trio==0.5.2",
-    "pytest-qt==3.2.2",
-    "pluggy==0.9.0",  # see https://github.com/pytest-dev/pytest/issues/3753
+    "pytest-qt==3.3.0",
+    "pytest-rerunfailures==9.0",
     "hypothesis==5.3.0",
     "hypothesis-trio==0.5.0",
-    "trustme==0.5.2",
+    "trustme==0.6.0",
     # Winfsptest requirements
     # We can't use `winfspy[test]` because of some pip limitations
     # - see pip issues #7096/#6239/#4391/#988
@@ -313,7 +313,7 @@ test_requirements = [
 ]
 
 
-PYQT_DEP = "PyQt5==5.13.1"
+PYQT_DEP = "PyQt5==5.15.0"
 BABEL_DEP = "Babel==2.6.0"
 WHEEL_DEP = "wheel==0.34.2"
 DOCUTILS_DEP = "docutils==0.15"

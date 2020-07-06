@@ -25,16 +25,30 @@ from parsec.api.protocol import UserID, HumanHandle, InvitationType
 from parsec.core.local_device import generate_new_device
 from parsec.core.backend_connection import BackendInvitedCmds
 from parsec.core.types import LocalDevice, BackendOrganizationAddr
+from parsec.core.invite.exceptions import (
+    InviteError,
+    InviteNotFoundError,
+    InviteAlreadyUsedError,
+    InvitePeerResetError,
+)
 
-from parsec.core.invite.exceptions import InviteError, InvitePeerResetError
+
+def _check_rep(rep, step_name):
+    if rep["status"] == "not_found":
+        raise InviteNotFoundError
+    elif rep["status"] == "already_deleted":
+        raise InviteAlreadyUsedError
+    elif rep["status"] == "invalid_state":
+        raise InvitePeerResetError
+    elif rep["status"] != "ok":
+        raise InviteError(f"Backend error during {step_name}: {rep}")
 
 
 async def claimer_retrieve_info(
     cmds: BackendInvitedCmds
 ) -> Union["UserClaimInitialCtx", "DeviceClaimInitialCtx"]:
     rep = await cmds.invite_info()
-    if rep["status"] != "ok":
-        raise InviteError(f"Cannot retrieve invitation informations: {rep}")
+    _check_rep(rep, step_name="invitation retrieval")
 
     if rep["type"] == InvitationType.USER:
         return UserClaimInitialCtx(
@@ -63,8 +77,7 @@ class BaseClaimInitialCtx:
         rep = await self._cmds.invite_1_claimer_wait_peer(
             claimer_public_key=claimer_private_key.public_key
         )
-        if rep["status"] != "ok":
-            raise InviteError(f"Backend error during step 1: {rep}")
+        _check_rep(rep, step_name="step 1")
 
         shared_secret_key = generate_shared_secret_key(
             our_private_key=claimer_private_key, peer_public_key=rep["greeter_public_key"]
@@ -74,10 +87,7 @@ class BaseClaimInitialCtx:
         rep = await self._cmds.invite_2a_claimer_send_hashed_nonce(
             claimer_hashed_nonce=HashDigest.from_data(claimer_nonce)
         )
-        if rep["status"] == "invalid_state":
-            raise InvitePeerResetError()
-        elif rep["status"] != "ok":
-            raise InviteError(f"Backend error during step 2a: {rep}")
+        _check_rep(rep, step_name="step 2a")
 
         claimer_sas, greeter_sas = generate_sas_codes(
             claimer_nonce=claimer_nonce,
@@ -86,10 +96,7 @@ class BaseClaimInitialCtx:
         )
 
         rep = await self._cmds.invite_2b_claimer_send_nonce(claimer_nonce=claimer_nonce)
-        if rep["status"] == "invalid_state":
-            raise InvitePeerResetError()
-        elif rep["status"] != "ok":
-            raise InviteError(f"Backend error during step 2b: {rep}")
+        _check_rep(rep, step_name="step 2b")
 
         return claimer_sas, greeter_sas, shared_secret_key
 
@@ -133,10 +140,7 @@ class BaseClaimInProgress1Ctx:
 
     async def _do_signify_trust(self) -> None:
         rep = await self._cmds.invite_3a_claimer_signify_trust()
-        if rep["status"] == "invalid_state":
-            raise InvitePeerResetError()
-        elif rep["status"] != "ok":
-            raise InviteError(f"Backend error during step 3a: {rep}")
+        _check_rep(rep, step_name="step 3a")
 
 
 @attr.s(slots=True, frozen=True, auto_attribs=True)
@@ -170,10 +174,7 @@ class BaseClaimInProgress2Ctx:
 
     async def _do_wait_peer_trust(self) -> None:
         rep = await self._cmds.invite_3b_claimer_wait_peer_trust()
-        if rep["status"] == "invalid_state":
-            raise InvitePeerResetError()
-        elif rep["status"] != "ok":
-            raise InviteError(f"Backend error during step 3b: {rep}")
+        _check_rep(rep, step_name="step 3b")
 
 
 @attr.s(slots=True, frozen=True, auto_attribs=True)
@@ -212,16 +213,10 @@ class UserClaimInProgress3Ctx:
             raise InviteError("Cannot generate InviteUserData payload") from exc
 
         rep = await self._cmds.invite_4_claimer_communicate(payload=payload)
-        if rep["status"] == "invalid_state":
-            raise InvitePeerResetError()
-        elif rep["status"] != "ok":
-            raise InviteError(f"Backend error during step 4 (data exchange): {rep}")
+        _check_rep(rep, step_name="step 4 (data exchange)")
 
         rep = await self._cmds.invite_4_claimer_communicate(payload=b"")
-        if rep["status"] == "invalid_state":
-            raise InvitePeerResetError()
-        elif rep["status"] != "ok":
-            raise InviteError(f"Backend error during step 4 (confirmation exchange): {rep}")
+        _check_rep(rep, step_name="step 4 (confirmation exchange)")
 
         try:
             confirmation = InviteUserConfirmation.decrypt_and_load(
@@ -265,16 +260,10 @@ class DeviceClaimInProgress3Ctx:
             raise InviteError("Cannot generate InviteDeviceData payload") from exc
 
         rep = await self._cmds.invite_4_claimer_communicate(payload=payload)
-        if rep["status"] == "invalid_state":
-            raise InvitePeerResetError()
-        elif rep["status"] != "ok":
-            raise InviteError(f"Backend error during step 4 (data exchange): {rep}")
+        _check_rep(rep, step_name="step 4 (data exchange)")
 
         rep = await self._cmds.invite_4_claimer_communicate(payload=b"")
-        if rep["status"] == "invalid_state":
-            raise InvitePeerResetError()
-        elif rep["status"] != "ok":
-            raise InviteError(f"Backend error during step 4 (confirmation exchange): {rep}")
+        _check_rep(rep, step_name="step 4 (confirmation exchange)")
 
         try:
             confirmation = InviteDeviceConfirmation.decrypt_and_load(

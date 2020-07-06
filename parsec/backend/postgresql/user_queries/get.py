@@ -1,124 +1,155 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
 
 from typing import Tuple
-from pypika import Parameter
 
 from parsec.api.protocol import OrganizationID, UserID, DeviceID, HumanHandle
 from parsec.backend.user import User, Device, Trustchain, UserNotFoundError, GetUserAndDevicesResult
-from parsec.backend.postgresql.utils import Query, query
-from parsec.backend.postgresql.tables import (
-    STR_TO_USER_PROFILE,
-    t_user,
-    t_device,
-    q_device,
+from parsec.backend.postgresql.utils import query
+from parsec.backend.postgresql.tables import STR_TO_USER_PROFILE
+from parsec.backend.postgresql.queries import (
+    Q,
     q_organization_internal_id,
+    q_device,
     q_user_internal_id,
-    t_human,
     q_human,
 )
 
 
-_q_get_user = (
-    Query.from_(t_user)
-    .select(
-        q_human(_id=t_user.human).select(t_human.email).as_("human_email"),
-        q_human(_id=t_user.human).select(t_human.label).as_("human_label"),
-        "profile",
-        "user_certificate",
-        "redacted_user_certificate",
-        q_device(_id=t_user.user_certifier).select(t_device.device_id).as_("user_certifier"),
-        "created_on",
-        "revoked_on",
-        "revoked_user_certificate",
-        q_device(_id=t_user.revoked_user_certifier)
-        .select(t_device.device_id)
-        .as_("revoked_user_certifier"),
-    )
-    .where(
-        (t_user.organization == q_organization_internal_id(Parameter("$1")))
-        & (t_user.user_id == Parameter("$2"))
-    )
-    .get_sql()
+_q_get_user = Q(
+    f"""
+SELECT
+    { q_human(_id="user_.human", select="email") } as human_email,
+    { q_human(_id="user_.human", select="label") } as human_label,
+    profile,
+    user_certificate,
+    redacted_user_certificate,
+    { q_device(select="device_id", _id="user_.user_certifier") } as user_certifier,
+    created_on,
+    revoked_on,
+    revoked_user_certificate,
+    { q_device(select="device_id", _id="user_.revoked_user_certifier") } as revoked_user_certifier
+FROM user_
+WHERE
+    organization = { q_organization_internal_id("$organization_id") }
+    AND user_id = $user_id
+"""
 )
 
 
-_t_d1 = t_device.as_("d1")
-_t_d2 = t_device.as_("d2")
-_t_d3 = t_device.as_("d3")
-
-
-_q_get_device = (
-    Query.from_(_t_d1)
-    .select(
-        "device_label",
-        "device_certificate",
-        "redacted_device_certificate",
-        q_device(_id=_t_d1.device_certifier, table=_t_d2)
-        .select(_t_d2.device_id)
-        .as_("device_certifier"),
-        "created_on",
-    )
-    .where(
-        (_t_d1.organization == q_organization_internal_id(Parameter("$1")))
-        & (_t_d1.device_id == Parameter("$2"))
-    )
-    .get_sql()
+_q_get_device = Q(
+    f"""
+SELECT
+    device_label,
+    device_certificate,
+    redacted_device_certificate,
+    { q_device(table_alias="d", select="d.device_id", _id="device.device_certifier") } as device_certifier,
+    created_on
+FROM device
+WHERE
+    organization = { q_organization_internal_id("$organization_id") }
+    AND device_id = $device_id
+"""
 )
 
 
-_q_get_user_devices = (
-    Query.from_(_t_d1)
-    .select(
-        "device_id",
-        "device_label",
-        "device_certificate",
-        "redacted_device_certificate",
-        q_device(_id=_t_d1.device_certifier, table=_t_d2)
-        .select(_t_d2.device_id)
-        .as_("device_certifier"),
-        "created_on",
-    )
-    .where(
-        _t_d1.user_ == q_user_internal_id(organization_id=Parameter("$1"), user_id=Parameter("$2"))
-    )
-    .get_sql()
+_q_get_user_devices = Q(
+    f"""
+SELECT
+    device_id,
+    device_label,
+    device_certificate,
+    redacted_device_certificate,
+    { q_device(table_alias="d", select="d.device_id", _id="device.device_certifier") } as device_certifier,
+    created_on
+FROM device
+WHERE
+    user_ = { q_user_internal_id(organization_id="$organization_id", user_id="$user_id") }
+"""
 )
 
 
-_q_get_trustchain = """
+_q_get_trustchain = Q(
+    f"""
 WITH RECURSIVE cte2 (
-    _uid, _did, user_id, device_id,
-    user_certifier, revoked_user_certifier, device_certifier,
-    user_certificate, redacted_user_certificate, revoked_user_certificate, device_certificate, redacted_device_certificate
+    _uid,
+    _did,
+    user_id,
+    device_id,
+    user_certifier,
+    revoked_user_certifier,
+    device_certifier,
+    user_certificate,
+    redacted_user_certificate,
+    revoked_user_certificate,
+    device_certificate,
+    redacted_device_certificate
 ) AS (
 
     WITH cte (
-        _uid, _did, user_id, device_id,
-        user_certifier, revoked_user_certifier, device_certifier,
-        user_certificate, redacted_user_certificate, revoked_user_certificate, device_certificate, redacted_device_certificate
+        _uid,
+        _did,
+        user_id,
+        device_id,
+        user_certifier,
+        revoked_user_certifier,
+        device_certifier,
+        user_certificate,
+        redacted_user_certificate,
+        revoked_user_certificate,
+        device_certificate,
+        redacted_device_certificate
     ) AS (
-        SELECT user_._id AS _uid, device._id AS _did, user_id, device_id,
-        user_certifier, revoked_user_certifier, device_certifier,
-        user_certificate, redacted_user_certificate, revoked_user_certificate, device_certificate, redacted_device_certificate
-        FROM device LEFT JOIN user_ ON device.user_ = user_._id
-        WHERE device.organization = ({q_organization})
+        SELECT
+            user_._id AS _uid,
+            device._id AS _did,
+            user_id,
+            device_id,
+            user_certifier,
+            revoked_user_certifier,
+            device_certifier,
+            user_certificate,
+            redacted_user_certificate,
+            revoked_user_certificate,
+            device_certificate,
+            redacted_device_certificate
+        FROM device LEFT JOIN user_
+        ON device.user_ = user_._id
+        WHERE
+            device.organization = { q_organization_internal_id("$organization_id") }
     )
 
     SELECT
-        _uid, _did, user_id, device_id,
-        user_certifier, revoked_user_certifier, device_certifier,
-        user_certificate, redacted_user_certificate, revoked_user_certificate, device_certificate, redacted_device_certificate
+        _uid,
+        _did,
+        user_id,
+        device_id,
+        user_certifier,
+        revoked_user_certifier,
+        device_certifier,
+        user_certificate,
+        redacted_user_certificate,
+        revoked_user_certificate,
+        device_certificate,
+        redacted_device_certificate
     FROM cte
-    WHERE _did = ANY((SELECT _id FROM device WHERE organization = ({q_organization}) AND device_id = ANY($2::VARCHAR[])))
+    WHERE
+        _did = ANY({ q_device(organization_id="$organization_id", device_id="ANY($device_ids::VARCHAR[])", select="_id") })
 
     UNION
 
     SELECT
-        cte._uid, cte._did, cte.user_id, cte.device_id,
-        cte.user_certifier, cte.revoked_user_certifier, cte.device_certifier,
-        cte.user_certificate, cte.redacted_user_certificate,
+        cte._uid,
+        cte._did,
+        cte.user_id,
+        cte.device_id,
+        cte.user_certifier,
+        cte.revoked_user_certifier,
+        cte.device_certifier,
+        cte.user_certificate,
+        cte.redacted_user_certificate,
         cte.revoked_user_certificate,
-        cte.device_certificate, cte.redacted_device_certificate
+        cte.device_certificate,
+        cte.redacted_device_certificate
     FROM cte, cte2
     WHERE cte2.user_certifier = cte._did
         OR cte2.device_certifier = cte._did
@@ -126,15 +157,20 @@ WITH RECURSIVE cte2 (
 
 )
 SELECT DISTINCT ON (_did)
-    _did, _uid, device_certificate, redacted_device_certificate, user_certificate, redacted_user_certificate, revoked_user_certificate
+    _did,
+    _uid,
+    device_certificate,
+    redacted_device_certificate,
+    user_certificate,
+    redacted_user_certificate,
+    revoked_user_certificate
 FROM cte2;
-""".format(
-    q_organization=q_organization_internal_id(Parameter("$1"))
+"""
 )
 
 
 async def _get_user(conn, organization_id: OrganizationID, user_id: UserID) -> User:
-    row = await conn.fetchrow(_q_get_user, organization_id, user_id)
+    row = await conn.fetchrow(*_q_get_user(organization_id=organization_id, user_id=user_id))
     if not row:
         raise UserNotFoundError(user_id)
 
@@ -158,7 +194,7 @@ async def _get_user(conn, organization_id: OrganizationID, user_id: UserID) -> U
 
 
 async def _get_device(conn, organization_id: OrganizationID, device_id: DeviceID) -> Device:
-    row = await conn.fetchrow(_q_get_device, organization_id, device_id)
+    row = await conn.fetchrow(*_q_get_device(organization_id=organization_id, device_id=device_id))
     if not row:
         raise UserNotFoundError(device_id)
 
@@ -175,7 +211,9 @@ async def _get_device(conn, organization_id: OrganizationID, device_id: DeviceID
 async def _get_trustchain(
     conn, organization_id: OrganizationID, *device_ids: Tuple[DeviceID], redacted: bool = False
 ) -> Tuple[Device]:
-    rows = await conn.fetch(_q_get_trustchain, organization_id, device_ids)
+    rows = await conn.fetch(
+        *_q_get_trustchain(organization_id=organization_id, device_ids=device_ids)
+    )
     user_certif_field = "redacted_user_certificate" if redacted else "user_certificate"
     device_certif_field = "redacted_device_certificate" if redacted else "device_certificate"
 
@@ -198,7 +236,9 @@ async def _get_trustchain(
 async def _get_user_devices(
     conn, organization_id: OrganizationID, user_id: UserID
 ) -> Tuple[Device]:
-    results = await conn.fetch(_q_get_user_devices, organization_id, user_id)
+    results = await conn.fetch(
+        *_q_get_user_devices(organization_id=organization_id, user_id=user_id)
+    )
 
     return tuple(
         Device(
@@ -274,8 +314,12 @@ async def query_get_user_with_devices_and_trustchain(
 async def query_get_user_with_device(
     conn, organization_id: OrganizationID, device_id: DeviceID
 ) -> Tuple[User, Device]:
-    d_row = await conn.fetchrow(_q_get_device, organization_id, device_id)
-    u_row = await conn.fetchrow(_q_get_user, organization_id, device_id.user_id)
+    d_row = await conn.fetchrow(
+        *_q_get_device(organization_id=organization_id, device_id=device_id)
+    )
+    u_row = await conn.fetchrow(
+        *_q_get_user(organization_id=organization_id, user_id=device_id.user_id)
+    )
     if not u_row or not d_row:
         raise UserNotFoundError(device_id)
 

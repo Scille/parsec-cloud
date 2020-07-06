@@ -39,6 +39,9 @@ class TrustchainContext:
         self._devices_cache = {}
         self._revoked_users_cache = {}
 
+    def invalidate_user_cache(self, user_id: UserID) -> None:
+        self._users_cache.pop(user_id, None)
+
     def get_user(self, user_id: UserID, now: Pendulum = None) -> Optional[UserCertificateContent]:
         now = now or pendulum_now()
         try:

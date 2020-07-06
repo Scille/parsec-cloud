@@ -6,6 +6,8 @@ from uuid import UUID
 from typing import List, Tuple, Dict, Optional
 from pypika import Parameter
 
+
+from parsec.backend.backend_events import BackendEvent
 from parsec.api.protocol import DeviceID, OrganizationID
 from parsec.backend.realm import RealmRole
 from parsec.backend.vlob import (
@@ -30,9 +32,7 @@ from parsec.backend.postgresql.tables import (
     q_organization_internal_id,
     q_realm_internal_id,
     q_user_internal_id,
-    q_user_can_read_vlob,
     q_device_internal_id,
-    q_realm_in_maintenance,
     q_vlob_encryption_revision_internal_id,
 )
 
@@ -133,7 +133,7 @@ RETURNING index
 
     await send_signal(
         conn,
-        "realm.vlobs_updated",
+        BackendEvent.REALM_VLOBS_UPDATED,
         organization_id=organization_id,
         author=author,
         realm_id=realm_id,
@@ -440,51 +440,6 @@ RETURNING _id
             await _vlob_updated(
                 conn, vlob_atom_internal_id, organization_id, author, realm_id, vlob_id, version
             )
-
-    async def group_check(
-        self, organization_id: OrganizationID, author: DeviceID, to_check: List[dict]
-    ) -> List[dict]:
-        changed = []
-        to_check_dict = {}
-        for x in to_check:
-            if x["version"] == 0:
-                changed.append({"vlob_id": x["vlob_id"], "version": 0})
-            else:
-                to_check_dict[x["vlob_id"]] = x
-
-        async with self.dbh.pool.acquire() as conn:
-            query = """
-SELECT DISTINCT ON (vlob_id) vlob_id, version
-FROM vlob_atom
-WHERE
-    organization = ({})
-    AND vlob_id = any($3::uuid[])
-    AND ({})
-    AND NOT ({})
-ORDER BY vlob_id, version DESC
-""".format(
-                q_organization_internal_id(Parameter("$1")),
-                q_user_can_read_vlob(
-                    organization_id=Parameter("$1"),
-                    user_id=Parameter("$2"),
-                    realm=Query.from_(t_vlob_encryption_revision)
-                    .select("realm")
-                    .where(t_vlob_encryption_revision._id == Parameter("vlob_encryption_revision")),
-                ),
-                q_realm_in_maintenance(
-                    realm=Query.from_(t_vlob_encryption_revision)
-                    .select("realm")
-                    .where(t_vlob_encryption_revision._id == Parameter("vlob_encryption_revision"))
-                ),
-            )
-
-            rows = await conn.fetch(query, organization_id, author.user_id, to_check_dict.keys())
-
-        for vlob_id, version in rows:
-            if version != to_check_dict[vlob_id]["version"]:
-                changed.append({"vlob_id": vlob_id, "version": version})
-
-        return changed
 
     async def poll_changes(
         self, organization_id: OrganizationID, author: DeviceID, realm_id: UUID, checkpoint: int

@@ -1,62 +1,56 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
 
-import itertools
 from pendulum import now as pendulum_now
 from functools import lru_cache
 from typing import Tuple, List
-from pypika import PostgreSQLQuery as Query, Parameter
-from pypika.functions import Concat
 
 from parsec.api.protocol import UserID, OrganizationID, HumanHandle
 from parsec.backend.user import HumanFindResultItem
-from parsec.backend.postgresql.utils import IRegex, query
-from parsec.backend.postgresql.tables import t_human, t_user, q_organization_internal_id
+from parsec.backend.postgresql.utils import query
+from parsec.backend.postgresql.queries import Q, q_organization_internal_id
 
 
 @lru_cache()
 def _q_factory(query, omit_revoked):
-    _param_count = itertools.count(1)
-
-    def _next_param():
-        return Parameter(f"${next(_param_count)}")
-
-    q = (
-        Query.from_(t_user)
-        .select(t_user.user_id)
-        .where((t_user.organization == q_organization_internal_id(_next_param())))
-        .orderby(t_user.user_id)
-    )
+    conditions = []
     if query:
-        q = q.where(IRegex(t_user.user_id, _next_param()))
+        conditions.append("AND user_id ~* $query")
     if omit_revoked:
-        q = q.where(t_user.revoked_on.isnull() | t_user.revoked_on > _next_param())
-
-    return q.get_sql()
+        conditions.append("AND (revoked_on IS NULL OR revoked_on > $now)")
+    return Q(
+        f"""
+SELECT user_id
+FROM user_
+WHERE
+    organization = { q_organization_internal_id("$organization_id") }
+    { " ".join(conditions) }
+ORDER BY user_id
+    """
+    )
 
 
 @lru_cache()
 def _q_human_factory(query, omit_revoked, omit_non_human):
-    _param_count = itertools.count(1)
-
-    def _next_param():
-        return Parameter(f"${next(_param_count)}")
-
-    q_revoked = t_user.revoked_on.notnull() & (t_user.revoked_on <= _next_param())
-    q = (
-        Query.from_(t_user)
-        .left_join(t_human)
-        .on(t_user.human == t_human._id)
-        .select(t_user.user_id, t_human.email, t_human.label, q_revoked.as_("revoked"))
-        .where((t_user.organization == q_organization_internal_id(_next_param())))
-    )
+    conditions = []
     if query:
-        q = q.where(IRegex(Concat(t_human.label, t_human.email, t_user.user_id), _next_param()))
+        conditions.append("AND CONCAT(human.label,human.email,user_.user_id) ~* $query")
     if omit_revoked:
-        q = q.where(q_revoked.negate())
+        conditions.append("AND (user_.revoked_on IS NULL OR user_.revoked_on > $now)")
     if omit_non_human:
-        q = q.where(t_user.human.notnull())
-
-    return q.get_sql()
+        conditions.append("AND user_.human IS NOT NULL")
+    return Q(
+        f"""
+SELECT
+    user_.user_id,
+    human.email,
+    human.label,
+    user_.revoked_on IS NOT NULL AND user_.revoked_on <= $now
+FROM user_ LEFT JOIN human ON user_.human=human._id
+WHERE
+    user_.organization = { q_organization_internal_id("$organization_id") }
+    { " ".join(conditions) }
+    """
+    )
 
 
 @query()
@@ -72,23 +66,23 @@ async def query_find(
 
         if omit_revoked:
             q = _q_factory(query=True, omit_revoked=True)
-            args = (organization_id, query, pendulum_now())
+            args = q(organization_id=organization_id, query=query, now=pendulum_now())
 
         else:
             q = _q_factory(query=True, omit_revoked=False)
-            args = (organization_id, query)
+            args = q(organization_id=organization_id, query=query)
 
     else:
 
         if omit_revoked:
             q = _q_factory(query=False, omit_revoked=True)
-            args = (organization_id, pendulum_now())
+            args = q(organization_id=organization_id, now=pendulum_now())
 
         else:
             q = _q_factory(query=False, omit_revoked=False)
-            args = (organization_id,)
+            args = q(organization_id=organization_id)
 
-    all_results = await conn.fetch(q, *args)
+    all_results = await conn.fetch(*args)
     # TODO: should user LIMIT and OFFSET in the SQL query instead
     results = [UserID(x[0]) for x in all_results[(page - 1) * per_page : page * per_page]]
     return results, len(all_results)
@@ -108,23 +102,23 @@ async def query_find_humans(
 
         if omit_revoked:
             q = _q_human_factory(query=True, omit_revoked=True, omit_non_human=omit_non_human)
-            args = (pendulum_now(), organization_id, query)
+            args = q(organization_id=organization_id, now=pendulum_now(), query=query)
 
         else:
             q = _q_human_factory(query=True, omit_revoked=False, omit_non_human=omit_non_human)
-            args = (pendulum_now(), organization_id, query)
+            args = q(organization_id=organization_id, now=pendulum_now(), query=query)
 
     else:
 
         if omit_revoked:
             q = _q_human_factory(query=False, omit_revoked=True, omit_non_human=omit_non_human)
-            args = (pendulum_now(), organization_id)
+            args = q(organization_id=organization_id, now=pendulum_now())
 
         else:
             q = _q_human_factory(query=False, omit_revoked=False, omit_non_human=omit_non_human)
-            args = (pendulum_now(), organization_id)
+            args = q(organization_id=organization_id, now=pendulum_now())
 
-    raw_results = await conn.fetch(q, *args)
+    raw_results = await conn.fetch(*args)
 
     humans = [
         HumanFindResultItem(

@@ -10,13 +10,13 @@ from functools import partial
 from parsec.crypto import SigningKey
 from parsec.event_bus import EventBus
 from parsec.api.data import EntryID
-from parsec.api.protocol import DeviceID
+from parsec.api.protocol import DeviceID, APIEvent, AUTHENTICATED_CMDS
 from parsec.core.types import BackendOrganizationAddr
 from parsec.core.backend_connection import cmds
 from parsec.core.backend_connection.transport import connect_as_authenticated, TransportPool
 from parsec.core.backend_connection.exceptions import BackendNotAvailable, BackendConnectionRefused
 from parsec.core.backend_connection.expose_cmds import expose_cmds_with_retrier
-from parsec.api.protocol import AUTHENTICATED_CMDS
+from parsec.core.core_events import CoreEvent
 
 
 logger = get_logger()
@@ -39,37 +39,37 @@ def _handle_event(event_bus: EventBus, rep: dict) -> None:
         logger.warning("Bad response to `events_listen` command", rep=rep)
         return
 
-    if rep["event"] == "message.received":
-        event_bus.send("backend.message.received", index=rep["index"])
+    if rep["event"] == APIEvent.MESSAGE_RECEIVED:
+        event_bus.send(CoreEvent.BACKEND_MESSAGE_RECEIVED, index=rep["index"])
 
-    elif rep["event"] == "pinged":
-        event_bus.send("backend.pinged", ping=rep["ping"])
+    elif rep["event"] == APIEvent.PINGED:
+        event_bus.send(CoreEvent.BACKEND_PINGED, ping=rep["ping"])
 
-    elif rep["event"] == "realm.roles_updated":
+    elif rep["event"] == APIEvent.REALM_ROLES_UPDATED:
         realm_id = EntryID(rep["realm_id"])
-        event_bus.send("backend.realm.roles_updated", realm_id=realm_id, role=rep["role"])
+        event_bus.send(CoreEvent.BACKEND_REALM_ROLES_UPDATED, realm_id=realm_id, role=rep["role"])
 
-    elif rep["event"] == "realm.vlobs_updated":
+    elif rep["event"] == APIEvent.REALM_VLOBS_UPDATED:
         src_id = EntryID(rep["src_id"])
         realm_id = EntryID(rep["realm_id"])
         event_bus.send(
-            "backend.realm.vlobs_updated",
+            CoreEvent.BACKEND_REALM_VLOBS_UPDATED,
             realm_id=realm_id,
             checkpoint=rep["checkpoint"],
             src_id=src_id,
             src_version=rep["src_version"],
         )
 
-    elif rep["event"] == "realm.maintenance_started":
+    elif rep["event"] == APIEvent.REALM_MAINTENANCE_STARTED:
         event_bus.send(
-            "backend.realm.maintenance_started",
+            CoreEvent.BACKEND_REALM_MAINTENANCE_STARTED,
             realm_id=rep["realm_id"],
             encryption_revision=rep["encryption_revision"],
         )
 
-    elif rep["event"] == "realm.maintenance_finished":
+    elif rep["event"] == APIEvent.REALM_MAINTENANCE_FINISHED:
         event_bus.send(
-            "backend.realm.maintenance_finished",
+            CoreEvent.BACKEND_REALM_MAINTENANCE_FINISHED,
             realm_id=rep["realm_id"],
             encryption_revision=rep["encryption_revision"],
         )
@@ -167,7 +167,9 @@ class BackendAuthenticatedConn:
             assert self._status not in (BackendConnStatus.READY, BackendConnStatus.INITIALIZING)
             if self._backend_connection_failures == 0:
                 self.event_bus.send(
-                    "backend.connection.changed", status=self._status, status_exc=self._status_exc
+                    CoreEvent.BACKEND_CONNECTION_CHANGED,
+                    status=self._status,
+                    status_exc=self._status_exc,
                 )
             if self._status == BackendConnStatus.LOST:
                 # Start with a 1s cooldown and increase by power of 2 until
@@ -194,7 +196,9 @@ class BackendAuthenticatedConn:
             self._status_exc = None
             self._backend_connection_failures = 0
             self.event_bus.send(
-                "backend.connection.changed", status=self._status, status_exc=self._status_exc
+                CoreEvent.BACKEND_CONNECTION_CHANGED,
+                status=self._status,
+                status_exc=self._status_exc,
             )
             logger.info("Backend online")
 
@@ -229,7 +233,7 @@ class BackendAuthenticatedConn:
 
                     self._status = BackendConnStatus.READY
                     self.event_bus.send(
-                        "backend.connection.changed", status=self._status, status_exc=None
+                        CoreEvent.BACKEND_CONNECTION_CHANGED, status=self._status, status_exc=None
                     )
 
                     while True:

@@ -3,7 +3,6 @@
 from parsec.serde import (
     BaseSchema,
     fields,
-    OneOfSchema,
     post_load,
     MsgpackSerializer,
     SerdeValidationError,
@@ -11,6 +10,9 @@ from parsec.serde import (
     packb as _packb,
     unpackb as _unpackb,
 )
+
+
+from parsec.serde.schema import OneOfSchemaLegacy
 
 
 __all__ = ("ProtocolError", "BaseReqSchema", "BaseRepSchema", "CmdSerializer")
@@ -76,9 +78,8 @@ class CmdSerializer:
     def __init__(self, req_schema_cls, rep_schema_cls):
         self.rep_noerror_schema = rep_schema_cls()
 
-        class RepWithErrorSchema(OneOfSchema):
+        class RepWithErrorSchema(OneOfSchemaLegacy):
             type_field = "status"
-            type_field_remove = False
             fallback_type_schema = ErrorRepSchema
             type_schemas = {"ok": self.rep_noerror_schema}
 

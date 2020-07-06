@@ -1,6 +1,5 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
 
-import re
 from pendulum import Pendulum, now as pendulum_now
 from uuid import UUID, uuid4
 from typing import List, Optional
@@ -13,6 +12,7 @@ from parsec.api.protocol import (
     InvitationStatus,
     InvitationDeletedReason,
 )
+from parsec.backend.backend_events import BackendEvent
 from parsec.backend.postgresql.handler import send_signal, PGHandler
 from parsec.backend.postgresql.tables import STR_TO_INVITATION_CONDUIT_STATE
 from parsec.backend.invite import (
@@ -27,78 +27,12 @@ from parsec.backend.invite import (
     InvitationAlreadyDeletedError,
     InvitationInvalidStateError,
 )
-
-
-class Q:
-    def __init__(self, src, **kwargs):
-        # retrieve variables
-        variables = {}
-        for candidate in re.findall(r"\$([a-zA-Z0-9_]+)", src):
-            if candidate in variables:
-                continue
-            if candidate.isdigit():
-                raise ValueError(f"Invalid variable name `{candidate}`")
-            variables[candidate] = f"${len(variables) + 1}"
-        self._variables = variables
-
-        # Replace variables with their order-based equivalent
-        for variable, order_based in variables.items():
-            src = src.replace(f"${variable}", order_based)
-
-        self._sql = src
-        self._stripped_sql = " ".join([x.strip() for x in src.split()])
-
-    @property
-    def sql(self):
-        return self._sql
-
-    def __call__(self, **kwargs):
-        if kwargs.keys() != self._variables.keys():
-            missing = self._variables.keys() - kwargs.keys()
-            unknown = kwargs.keys() - self._variables.keys()
-            raise ValueError(f"Invalid paramaters, missing: {missing}, unknown: {unknown}")
-        args = [self._stripped_sql]
-        for variable in self._variables:
-            args.append(kwargs[variable])
-        return args
-
-
-def q_organization(organization_id=None, _id=None, table="organization", select="*"):
-    assert organization_id is not None or _id is not None
-    if _id is not None:
-        condition = f"{table}._id = {_id}"
-    else:
-        condition = f"{table}.organization_id = {organization_id}"
-    return f"(SELECT {select} FROM {table} WHERE {condition})"
-
-
-def q_organization_internal_id(organization_id, **kwargs):
-    return q_organization(organization_id=organization_id, select="_id", **kwargs)
-
-
-def q_user(
-    organization_id=None, organization=None, user_id=None, _id=None, table="user_", select="*"
-):
-    if _id is not None:
-        condition = f"{table}._id = {_id}"
-    else:
-        assert user_id is not None
-        assert organization_id is not None or organization is not None
-        if not organization:
-            organization = q_organization_internal_id(organization_id)
-        condition = f"{table}.organization = {organization} AND {table}.user_id = {user_id}"
-    return f"(SELECT {select} FROM {table} WHERE {condition})"
-
-
-def q_user_internal_id(user_id, organization_id=None, organization=None, **kwargs):
-    assert (not organization_id and organization) or (organization_id and not organization)
-    return q_user(
-        user_id=user_id,
-        organization_id=organization_id,
-        organization=organization,
-        select="_id",
-        **kwargs,
-    )
+from parsec.backend.postgresql.queries import (
+    Q,
+    q_organization_internal_id,
+    q_user,
+    q_user_internal_id,
+)
 
 
 _q_retrieve_compatible_user_invitation = Q(
@@ -202,7 +136,7 @@ async def _do_delete_invitation(
     await conn.execute(*_q_delete_invitation(row_id=row_id, on=on, reason=reason.value))
     await send_signal(
         conn,
-        "invite.status_changed",
+        BackendEvent.INVITE_STATUS_CHANGED,
         organization_id=organization_id,
         greeter=greeter,
         token=token,
@@ -386,7 +320,7 @@ async def _conduit_talk(
         # Note that in case of conduit reset, this signal will lure the peer into
         # thinking we have answered so he will wakeup and take into account the reset
         await send_signal(
-            conn, "invite.conduit_updated", organization_id=organization_id, token=token
+            conn, BackendEvent.INVITE_CONDUIT_UPDATED, organization_id=organization_id, token=token
         )
 
     return ConduitListenCtx(
@@ -451,7 +385,7 @@ async def _conduit_listen(conn, ctx: ConduitListenCtx) -> Optional[bytes]:
                 )
                 await send_signal(
                     conn,
-                    "invite.conduit_updated",
+                    BackendEvent.INVITE_CONDUIT_UPDATED,
                     organization_id=ctx.organization_id,
                     token=ctx.token,
                 )
@@ -518,7 +452,7 @@ async def _do_new_user_invitation(
         )
     await send_signal(
         conn,
-        "invite.status_changed",
+        BackendEvent.INVITE_STATUS_CHANGED,
         organization_id=organization_id,
         greeter=greeter_user_id,
         token=token,
@@ -715,7 +649,7 @@ class PGInviteComponent(BaseInviteComponent):
         async with self.dbh.pool.acquire() as conn:
             await send_signal(
                 conn,
-                "invite.status_changed",
+                BackendEvent.INVITE_STATUS_CHANGED,
                 organization_id=organization_id,
                 greeter=greeter,
                 token=token,
@@ -728,7 +662,7 @@ class PGInviteComponent(BaseInviteComponent):
         async with self.dbh.pool.acquire() as conn:
             await send_signal(
                 conn,
-                "invite.status_changed",
+                BackendEvent.INVITE_STATUS_CHANGED,
                 organization_id=organization_id,
                 greeter=greeter,
                 token=token,
