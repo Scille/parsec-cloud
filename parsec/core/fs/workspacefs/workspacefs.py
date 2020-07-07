@@ -43,8 +43,8 @@ AnyPath = Union[FsPath, str]
 
 @attr.s(slots=True, frozen=True, auto_attribs=True)
 class ReencryptionNeed:
-    user_revoked: Tuple[UserID]
-    role_revoked: Tuple[UserID]
+    user_revoked: Tuple[UserID, ...]
+    role_revoked: Tuple[UserID, ...]
 
     @property
     def need_reencryption(self):
