@@ -27,7 +27,7 @@ msgid "Parsec is divided between a client (responsible for exposing data to the 
 msgstr "Parsec est divisé en un client (responsable d'exposer les données à l'utilisateur ainsi que de gérer la couche cryptographique) et le serveur (servant à stocker les données chiffrées ainsi qu'à notifier les clients des actions des autres utilisateurs telles une modification d'un fichier ou un nouveau partage)."
 
 msgid "The Parsec server only requires a PostgreSQL DB for metadata (that is encrypted using devices keys for the most part) and an Amazon S3 or OpenStack Swift object storage for data blobs (that are all encrypted using Workspaces keys, that never left users’ devices). Redundancy using multiple cloud providers is possible."
-msgstr "Le serveur Parsec ne requiert qu'une base de données PostgreSQL pour les métadonnées (qui sont chiffrées par les clés des appareils dans leur majorité) et un stockage objet Amazon S3 ou OpenStack Swift for les blobs binaires (qui sont tous chiffrés en utilisant des clés de Workspace, qui ne quittent pas les appareils des utilisateurs). Il est possible de mettre en place un système de redondance avec de multiples fournisseurs de cloud différents."
+msgstr "Le serveur Parsec ne requiert qu'une base de données PostgreSQL pour les métadonnées (qui sont chiffrées par les clés des appareils dans leur majorité) et un stockage objet Amazon S3 ou OpenStack Swift pour les blobs binaires (qui sont tous chiffrés en utilisant des clés de Workspace, qui ne quittent pas les appareils des utilisateurs). Il est possible de mettre en place un système de redondance avec de multiples fournisseurs de cloud différents."
 
 msgid "Parsec security model"
 msgstr "Modèle de sécurité Parsec"
