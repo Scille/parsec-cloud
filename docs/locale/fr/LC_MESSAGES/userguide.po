@@ -271,7 +271,7 @@ msgstr "Révoquer des utilisateurs"
 
 #: ../../userguide/revoke_user.rst:6
 msgid "Revoking a user is the operation that aims at removing his access rights to the organization. This is needed when:"
-msgstr "Révoquer un utilisateur est une opération visant à supprimer ses droits d'accès à l'organisation. C'est "
+msgstr "Révoquer un utilisateur est une opération visant à supprimer ses droits d'accès à l'organisation. Cela est requis quand:"
 
 #: ../../userguide/revoke_user.rst:9
 msgid "the user is no longer needed (e.g. a person leaving his company)"
