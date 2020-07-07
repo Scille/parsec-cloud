@@ -18,6 +18,8 @@ import io
 from parsec.core.types import EntryID
 from parsec.core.fs.utils import ntstatus
 
+from typing import Optional
+
 
 # Base classes for all file system errors
 
@@ -49,9 +51,9 @@ class FSOperationError(OSError, FSError):
     Base class for the exceptions that may be raised during the execution of an operation
     """
 
-    ERRNO = None
+    ERRNO: Optional[int] = None
     WINERROR = None
-    NTSTATUS = None
+    NTSTATUS: Optional[ntstatus] = None
 
     def __init__(self, message=None, filename=None, filename2=None):
         # Get the actual message and save it
