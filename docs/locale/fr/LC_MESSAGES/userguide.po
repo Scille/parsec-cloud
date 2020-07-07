@@ -315,7 +315,7 @@ msgstr "Toutefois d'un point de vu cryptographique, l'utilisateur a toujours con
 
 #: ../../userguide/revoke_user.rst:46
 msgid "Concretely, once a user is revoked, each owner of a previously shared workspace will be notified a re-encryption operation is needed. Each owner can then choose to do the operation on the spot, or to wait until a better time to do it (for instance if multiple user are getting revoked in one batch)."
-msgstr "Concrêtement, cela signifie qu'une fois un utilisateur révoqué, chaque propriétaire d'un espace de travail ayant été partagé se voit notifié qu'une opération de re-chiffrement est nécessaire. À partir de ce moment, chaque propriétaire peut décider de réaliser l'opération ou bien d'attendre un meilleur moment (par exemple si plusieurs utilisateurs sont révoqués d'un coup)"
+msgstr "Concrêtement, cela signifie qu'une fois un utilisateur révoqué, chaque propriétaire d'un espace de travail ayant été partagé se voit notifié qu'une opération de re-chiffrement est nécessaire. À partir de ce moment, chaque propriétaire peut décider de réaliser l'opération ou bien d'attendre un meilleur moment (par exemple si plusieurs utilisateurs sont révoqués d'un coup)."
 
 #: ../../userguide/revoke_user.rst:58
 msgid "During it re-encryption, a workspace cannot be synchronized"
