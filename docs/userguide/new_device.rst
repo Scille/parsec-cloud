@@ -44,7 +44,7 @@ The user should receive a link by email enabling him to register his device. Cli
 Token exchange
 --------------
 
-The token exchange is a verification process that aims at ensuring that the two devices are not victim of a `Man-in-the-middle attack <https://en.wikipedia.org/wiki/Man-in-the-middle_attack>`_. You can read more about that process at the :ref:`cryptography <doc_cryptography>` section.
+The token exchange is a verification process that aims at ensuring that the two devices are not victim of a `Man-in-the-middle attack <https://en.wikipedia.org/wiki/Man-in-the-middle_attack>`_. You can read more about that process at the :ref:`Cryptography <doc_cryptography>` section.
 
 The user will have to proceed to a token exchange between the two devices. For that, the devices will both display a token, or a list of tokens : on the device with the list, the user must click on the token displayed by the Parsec client of the other device. If the token one of them is given is not present in the list, it means there is a very high probability that the user is victim of a `Man-in-the-middle attack <https://en.wikipedia.org/wiki/Man-in-the-middle_attack>`_.
 

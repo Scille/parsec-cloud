@@ -249,8 +249,8 @@ msgid "If clicking on the URL doesn't work, you can also use the ``Enter a URL m
 msgstr "Si cliquer sur le lien d'invitation ne fonctionne pas, il est possible d'utiliser le menu ``Enter a URL manually``"
 
 #: ../../userguide/new_user.rst:60
-msgid "The token exchange is a verification process that aims at ensuring that the two users are not victim of a `Man-in-the-middle attack <https://en.wikipedia.org/wiki/Man-in-the-middle_attack>`_. You can read more about that process at the :ref:`cryptography <doc_cryptography>` section."
-msgstr "L'échange de token est un processus de vérification qui a pour but de s'assurer que les deux utilisateurs ne sont pas victimes d'une `Attaque de l'homme du milieu <https://fr.wikipedia.org/wiki/Attaque_de_l%27homme_du_milieu>`_. Il est possible d'en apprendre plus à la section :ref:`cryptography <doc_cryptography>`"
+msgid "The token exchange is a verification process that aims at ensuring that the two users are not victim of a `Man-in-the-middle attack <https://en.wikipedia.org/wiki/Man-in-the-middle_attack>`_. You can read more about that process at the :ref:`Cryptography <doc_cryptography>` section."
+msgstr "L'échange de token est un processus de vérification qui a pour but de s'assurer que les deux utilisateurs ne sont pas victimes d'une `Attaque de l'homme du milieu <https://fr.wikipedia.org/wiki/Attaque_de_l%27homme_du_milieu>`_. Il est possible d'en apprendre plus à la section :ref:`Cryptography <doc_cryptography>`"
 
 #: ../../userguide/new_user.rst:60
 msgid "The inviting and the invitee will have to exchange tokens in person or on an already verified canal. For that, they will both be given a token, or a list of tokens : the user with the list must click on the token displayed by the Parsec client of the other user. If the token one of them is given is not present in the list, it means there is a very high probability that one of the user is victim of a `Man-in-the-middle attack <https://en.wikipedia.org/wiki/Man-in-the-middle_attack>`_."
