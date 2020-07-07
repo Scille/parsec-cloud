@@ -41,9 +41,8 @@ async def _send_msg(backend, author, recipient, ping="ping"):
 
 @pytest.mark.trio
 async def test_process_while_offline(
-    mock_clock, running_backend, alice_core, bob_user_fs, alice, bob
+    autojump_clock, running_backend, alice_core, bob_user_fs, alice, bob
 ):
-    mock_clock.autojump_threshold = 0
     assert alice_core.backend_status == BackendConnStatus.READY
 
     with running_backend.offline():

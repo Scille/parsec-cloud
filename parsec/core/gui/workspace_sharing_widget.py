@@ -4,8 +4,9 @@ from PyQt5.QtCore import QTimer, Qt, QCoreApplication, pyqtSignal
 from PyQt5.QtWidgets import QCompleter, QWidget
 
 from parsec.core.types import UserInfo
-from parsec.core.fs import FSError
+from parsec.core.fs import FSError, FSBackendOfflineError
 from parsec.core.types import WorkspaceRole
+from parsec.core.backend_connection import BackendNotAvailable
 
 from parsec.core.gui.trio_thread import JobResultError, ThreadSafeQtSignal, QtToTrioJob
 
@@ -32,7 +33,10 @@ def _index_to_role(index):
 
 async def _do_get_participants(core, workspace_fs):
     ret = {}
-    participants = await workspace_fs.get_user_roles()
+    try:
+        participants = await workspace_fs.get_user_roles()
+    except BackendNotAvailable as exc:
+        raise JobResultError("offline") from exc
     for user, role in participants.items():
         user_info = await core.get_user_info(user)
         ret[user_info.user_id] = (role, user_info)
@@ -40,18 +44,23 @@ async def _do_get_participants(core, workspace_fs):
 
 
 async def _do_user_find(core, text):
-    users, total = await core.find_humans(text, omit_revoked=True)
+    try:
+        users, total = await core.find_humans(text, omit_revoked=True)
+    except BackendNotAvailable as exc:
+        raise JobResultError("offline") from exc
     users = [u for u in users if u.user_id != core.device.user_id]
     return users
 
 
 async def _do_share_workspace(user_fs, workspace_fs, user_info, role):
-    workspace_name = workspace_fs.get_workspace_name()
     try:
+        workspace_name = workspace_fs.get_workspace_name()
         await user_fs.workspace_share(workspace_fs.workspace_id, user_info.user_id, role)
         return workspace_name, user_info, role
     except ValueError as exc:
         raise JobResultError("invalid-user", workspace_name=workspace_name, user=user_info) from exc
+    except FSBackendOfflineError as exc:
+        raise JobResultError("offline", workspace_name=workspace_name, user=user_info) from exc
     except FSError as exc:
         raise JobResultError("fs-error", workspace_name=workspace_name, user=user_info) from exc
     except Exception as exc:

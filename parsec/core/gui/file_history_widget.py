@@ -28,7 +28,7 @@ class FileHistoryButton(QWidget, Ui_FileHistoryButton):
         if not src:
             self.label_src.hide()
         else:
-            self.label_src.setText(src)
+            self.label_src.setText(str(src))
         if not dst:
             self.label_dst.hide()
         else:
@@ -51,6 +51,7 @@ class FileHistoryWidget(QWidget, Ui_FileHistoryWidget):
         super().__init__()
         self.setupUi(self)
         self.jobs_ctx = jobs_ctx
+        self.dialog = None
         update_version_list.connect(self.reset_dialog)
         self.get_versions_success.connect(self.on_get_version_success)
         self.get_versions_error.connect(self.on_get_version_error)
@@ -133,7 +134,7 @@ class FileHistoryWidget(QWidget, Ui_FileHistoryWidget):
         if self.versions_job and self.versions_job.status != "cancelled":
             show_error(self, _("TEXT_FILE_HISTORY_LIST_FAILURE"), exception=self.versions_job.exc)
         self.versions_job = None
-        self.reject()
+        self.dialog.reject()
 
     def on_close(self):
         if self.versions_job:
@@ -161,4 +162,5 @@ class FileHistoryWidget(QWidget, Ui_FileHistoryWidget):
         d = GreyedDialog(
             w, title=_("TEXT_FILE_HISTORY_TITLE_name").format(name=path.name), parent=parent
         )
+        w.dialog = d
         return d.exec_()

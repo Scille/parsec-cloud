@@ -10,9 +10,7 @@ from parsec.core.core_events import CoreEvent
 
 
 @pytest.mark.trio
-async def test_monitors_idle(mock_clock, running_backend, alice_core, alice):
-    mock_clock.autojump_threshold = 0
-
+async def test_monitors_idle(autojump_clock, running_backend, alice_core, alice):
     assert alice_core.are_monitors_idle()
 
     # Force wakeup of the sync monitor
@@ -24,9 +22,7 @@ async def test_monitors_idle(mock_clock, running_backend, alice_core, alice):
 
 
 @pytest.mark.trio
-async def test_monitor_switch_offline(mock_clock, running_backend, alice_core, alice):
-    mock_clock.autojump_threshold = 0
-
+async def test_monitor_switch_offline(autojump_clock, running_backend, alice_core, alice):
     assert alice_core.are_monitors_idle()
 
     # Force wakeup of the sync monitor
@@ -39,9 +35,8 @@ async def test_monitor_switch_offline(mock_clock, running_backend, alice_core, a
 
 @pytest.mark.trio
 async def test_process_while_offline(
-    mock_clock, running_backend, alice_core, bob_user_fs, alice, bob
+    autojump_clock, running_backend, alice_core, bob_user_fs, alice, bob
 ):
-    mock_clock.autojump_threshold = 0
     assert alice_core.backend_status == BackendConnStatus.READY
 
     with running_backend.offline():
@@ -61,10 +56,8 @@ async def test_process_while_offline(
 
 @pytest.mark.trio
 async def test_autosync_on_modification(
-    mock_clock, running_backend, alice, alice_core, alice2_user_fs
+    autojump_clock, running_backend, alice, alice_core, alice2_user_fs
 ):
-    mock_clock.autojump_threshold = 0
-
     with alice_core.event_bus.listen() as spy:
         wid = await alice_core.user_fs.workspace_create("w")
         workspace = alice_core.user_fs.get_workspace(wid)
@@ -103,10 +96,8 @@ async def test_autosync_on_modification(
 
 @pytest.mark.trio
 async def test_autosync_on_remote_modifications(
-    mock_clock, running_backend, alice, alice_core, alice2_user_fs
+    autojump_clock, running_backend, alice, alice_core, alice2_user_fs
 ):
-    mock_clock.autojump_threshold = 0
-
     with alice_core.event_bus.listen() as spy:
         wid = await alice2_user_fs.workspace_create("w")
         await alice2_user_fs.sync()
@@ -162,10 +153,8 @@ async def test_autosync_on_remote_modifications(
 
 @pytest.mark.trio
 async def test_reconnect_with_remote_changes(
-    mock_clock, alice2, running_backend, alice_core, alice2_user_fs
+    autojump_clock, alice2, running_backend, alice_core, alice2_user_fs
 ):
-    mock_clock.autojump_threshold = 0
-
     wid = await alice_core.user_fs.workspace_create("w")
     alice_w = alice_core.user_fs.get_workspace(wid)
     await alice_w.mkdir("/foo")

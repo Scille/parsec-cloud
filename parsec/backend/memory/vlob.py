@@ -284,33 +284,6 @@ class MemoryVlobComponent(BaseVlobComponent):
 
         await self._update_changes(organization_id, author, vlob.realm_id, vlob_id, version)
 
-    async def group_check(
-        self, organization_id: OrganizationID, author: DeviceID, to_check: List[dict]
-    ) -> List[dict]:
-        changed = []
-        for item in to_check:
-            vlob_id = item["vlob_id"]
-            version = item["version"]
-            if version == 0:
-                changed.append({"vlob_id": vlob_id, "version": version})
-            else:
-                try:
-                    vlob = self._get_vlob(organization_id, vlob_id)
-                except VlobNotFoundError:
-                    continue
-
-                try:
-                    self._check_realm_read_access(
-                        organization_id, vlob.realm_id, author.user_id, None
-                    )
-                except (VlobNotFoundError, VlobAccessError, VlobInMaintenanceError):
-                    continue
-
-                if vlob.current_version != version:
-                    changed.append({"vlob_id": vlob_id, "version": vlob.current_version})
-
-        return changed
-
     async def poll_changes(
         self, organization_id: OrganizationID, author: DeviceID, realm_id: UUID, checkpoint: int
     ) -> Tuple[int, Dict[UUID, int]]:

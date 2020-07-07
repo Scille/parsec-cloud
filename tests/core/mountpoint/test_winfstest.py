@@ -28,7 +28,6 @@ def file_system_path(mountpoint_service):
 
 @pytest.mark.slow
 @pytest.mark.mountpoint
-@pytest.mark.flaky(reruns=1)
 @pytest.mark.parametrize("test_module_path", TEST_MODULES, ids=[path.name for path in TEST_MODULES])
 def test_winfstest(test_module_path, file_system_path, process_runner):
 

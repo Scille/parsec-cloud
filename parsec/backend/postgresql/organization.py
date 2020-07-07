@@ -4,7 +4,6 @@ from typing import Optional
 
 from pendulum import Pendulum
 from triopg import UniqueViolationError
-from pypika import Parameter, functions as fn
 
 from parsec.api.protocol import OrganizationID
 from parsec.crypto import VerifyKey
@@ -21,26 +20,14 @@ from parsec.backend.organization import (
     OrganizationFirstUserCreationError,
 )
 from parsec.backend.postgresql.handler import PGHandler
-from parsec.backend.postgresql.utils import Query
-from parsec.backend.postgresql.tables import (
-    t_organization,
-    q_organization,
-    q_organization_internal_id,
-    t_user,
-    t_vlob_atom,
-    t_block,
-)
 from parsec.backend.postgresql.user_queries.create import _create_user
+from parsec.backend.postgresql.queries import Q, q_organization_internal_id
 
 
-_q_insert_organization = (
-    (
-        Query.into(t_organization)
-        .columns("organization_id", "bootstrap_token", "expiration_date")
-        .insert(Parameter("$1"), Parameter("$2"), Parameter("$3"))
-        .get_sql()
-    )
-    + """
+_q_insert_organization = Q(
+    """
+INSERT INTO organization (organization_id, bootstrap_token, expiration_date)
+VALUES ($organization_id, $bootstrap_token, $expiration_date)
 ON CONFLICT (organization_id) DO
     UPDATE SET
         bootstrap_token = EXCLUDED.bootstrap_token,
@@ -50,46 +37,57 @@ ON CONFLICT (organization_id) DO
 )
 
 
-_q_get_organization = (
-    q_organization(Parameter("$1"))
-    .select("bootstrap_token", "root_verify_key", "expiration_date")
-    .get_sql()
+_q_get_organization = Q(
+    """
+SELECT bootstrap_token, root_verify_key, expiration_date
+FROM organization
+WHERE organization_id = $organization_id
+"""
 )
 
 
-_q_bootstrap_organization = (
-    Query.update(t_organization)
-    .where(
-        (t_organization.organization_id == Parameter("$1"))
-        & (t_organization.bootstrap_token == Parameter("$2"))
-        & (t_organization.root_verify_key.isnull())
-    )
-    .set(t_organization.root_verify_key, Parameter("$3"))
-    .get_sql()
+_q_bootstrap_organization = Q(
+    """
+UPDATE organization
+SET root_verify_key = $root_verify_key
+WHERE
+    organization_id = $organization_id
+    AND bootstrap_token = $bootstrap_token
+    AND root_verify_key IS NULL
+"""
 )
 
 
-_q_get_stats = Query.select(
-    Query.from_(t_user)
-    .where(t_user.organization == q_organization_internal_id(Parameter("$1")))
-    .select(fn.Count("*"))
-    .as_("users"),
-    Query.from_(t_vlob_atom)
-    .where(t_vlob_atom.organization == q_organization_internal_id(Parameter("$1")))
-    .select(fn.Coalesce(fn.Sum(t_vlob_atom.size), 0))
-    .as_("metadata_size"),
-    Query.from_(t_block)
-    .where(t_block.organization == q_organization_internal_id(Parameter("$1")))
-    .select(fn.Coalesce(fn.Sum(t_block.size), 0))
-    .as_("data_size"),
-).get_sql()
+_q_get_stats = Q(
+    f"""
+SELECT
+    (
+        SELECT COUNT(*)
+        FROM user_
+        WHERE user_.organization = { q_organization_internal_id("$organization_id") }
+    ) users,
+    (
+        SELECT COALESCE(SUM(size), 0)
+        FROM vlob_atom
+        WHERE
+            organization = { q_organization_internal_id("$organization_id") }
+    ) metadata_size,
+    (
+        SELECT COALESCE(SUM(size), 0)
+        FROM block
+        WHERE
+            organization = { q_organization_internal_id("$organization_id") }
+    ) data_size
+"""
+)
 
 
-_q_update_organisation_expiration_date = (
-    Query.update(t_organization)
-    .where((t_organization.organization_id == Parameter("$1")))
-    .set(t_organization.expiration_date, Parameter("$2"))
-    .get_sql()
+_q_update_organisation_expiration_date = Q(
+    """
+UPDATE organization
+SET expiration_date = $expiration_date
+WHERE organization_id = $organization_id
+"""
 )
 
 
@@ -104,7 +102,11 @@ class PGOrganizationComponent(BaseOrganizationComponent):
         async with self.dbh.pool.acquire() as conn:
             try:
                 result = await conn.execute(
-                    _q_insert_organization, id, bootstrap_token, expiration_date
+                    *_q_insert_organization(
+                        organization_id=id,
+                        bootstrap_token=bootstrap_token,
+                        expiration_date=expiration_date,
+                    )
                 )
             except UniqueViolationError:
                 raise OrganizationAlreadyExistsError()
@@ -118,7 +120,7 @@ class PGOrganizationComponent(BaseOrganizationComponent):
 
     @staticmethod
     async def _get(conn, id: OrganizationID) -> Organization:
-        data = await conn.fetchrow(_q_get_organization, id)
+        data = await conn.fetchrow(*_q_get_organization(organization_id=id))
         if not data:
             raise OrganizationNotFoundError()
 
@@ -153,7 +155,11 @@ class PGOrganizationComponent(BaseOrganizationComponent):
                 raise OrganizationFirstUserCreationError(exc) from exc
 
             result = await conn.execute(
-                _q_bootstrap_organization, id, bootstrap_token, root_verify_key.encode()
+                *_q_bootstrap_organization(
+                    organization_id=id,
+                    bootstrap_token=bootstrap_token,
+                    root_verify_key=root_verify_key.encode(),
+                )
             )
 
             if result != "UPDATE 1":
@@ -162,7 +168,7 @@ class PGOrganizationComponent(BaseOrganizationComponent):
     async def stats(self, id: OrganizationID) -> OrganizationStats:
         async with self.dbh.pool.acquire() as conn, conn.transaction():
             await self._get(conn, id)  # Check organization exists
-            result = await conn.fetchrow(_q_get_stats, id)
+            result = await conn.fetchrow(*_q_get_stats(organization_id=id))
         return OrganizationStats(
             users=result["users"],
             data_size=result["data_size"],
@@ -173,7 +179,11 @@ class PGOrganizationComponent(BaseOrganizationComponent):
         self, id: OrganizationID, expiration_date: Pendulum = None
     ) -> None:
         async with self.dbh.pool.acquire() as conn, conn.transaction():
-            result = await conn.execute(_q_update_organisation_expiration_date, id, expiration_date)
+            result = await conn.execute(
+                *_q_update_organisation_expiration_date(
+                    organization_id=id, expiration_date=expiration_date
+                )
+            )
 
             if result == "UPDATE 0":
                 raise OrganizationNotFoundError
