@@ -24,8 +24,8 @@ above, and can then share the workspace with other users.
 
 Regarding the different sharing roles:
 
-- Reader: Has read-only access to the workspace
-- Contributor: Has read&write access
+- Reader: has read-only access to the workspace
+- Contributor: has read&write access
 - Manager: same access as Contributor, but can give Reader and Contributor
   roles to other users.
 - Owner: same as Manager, but can also give Manager and Owner roles to other users.

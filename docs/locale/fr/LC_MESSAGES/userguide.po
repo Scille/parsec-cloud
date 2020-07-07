@@ -355,12 +355,12 @@ msgid "Regarding the different sharing roles:"
 msgstr "Concernant les différents rôles de partage disponibles :"
 
 #: ../../userguide/share_data.rst:23
-msgid "Reader: Has read-only access to the workspace"
-msgstr "Lecteur: A un accès en lecture seule sur l'espace de travail"
+msgid "Reader: has read-only access to the workspace"
+msgstr "Lecteur: a un accès en lecture seule sur l'espace de travail"
 
 #: ../../userguide/share_data.rst:24
-msgid "Contributor: Has read&write access"
-msgstr "Contributeur: A un accès en lecture et écriture"
+msgid "Contributor: has read&write access"
+msgstr "Contributeur: a un accès en lecture et écriture"
 
 #: ../../userguide/share_data.rst:25
 msgid "Manager: same access as Contributor, but can give Reader and Contributor roles to other users."
