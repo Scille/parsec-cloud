@@ -123,6 +123,8 @@ class Manifest(BaseAPISignedData):
         def get_obj_type(self, obj):
             return obj["type"]
 
+    version: int
+
     @classmethod
     def verify_and_load(
         cls,
@@ -168,7 +170,6 @@ class FolderManifest(VerifyParentMixin, Manifest):
 
     id: EntryID
     parent: EntryID
-    version: int
     created: Pendulum
     updated: Pendulum
     children: FrozenDict[EntryName, EntryID]
@@ -195,7 +196,6 @@ class FileManifest(VerifyParentMixin, Manifest):
 
     id: EntryID
     parent: EntryID
-    version: int
     created: Pendulum
     updated: Pendulum
     size: int
@@ -224,7 +224,6 @@ class WorkspaceManifest(Manifest):
             return WorkspaceManifest(**data)
 
     id: EntryID
-    version: int
     created: Pendulum
     updated: Pendulum
     children: FrozenDict[EntryName, EntryID]
@@ -248,7 +247,6 @@ class UserManifest(Manifest):
             return UserManifest(**data)
 
     id: EntryID
-    version: int
     created: Pendulum
     updated: Pendulum
     last_processed_message: int

@@ -1,7 +1,7 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
 
 from contextlib import contextmanager
-from typing import Dict, Optional, List, Tuple, Union, cast
+from typing import Dict, Optional, List, Tuple, cast
 
 from pendulum import Pendulum, now as pendulum_now
 
@@ -13,10 +13,6 @@ from parsec.api.data import (
     BlockAccess,
     RealmRoleCertificateContent,
     Manifest as RemoteManifest,
-    FileManifest,
-    WorkspaceManifest,
-    UserManifest,
-    FolderManifest,
 )
 
 from parsec.core.types import EntryID, ChunkID
@@ -50,8 +46,6 @@ from parsec.core.fs.exceptions import (
     FSDeviceNotFoundError,
     FSInvalidTrustchainEror,
 )
-
-RemoteManifests = Union[FileManifest, WorkspaceManifest, UserManifest, FolderManifest]
 
 
 @contextmanager
@@ -471,7 +465,7 @@ class RemoteLoader:
         elif rep["status"] != "ok":
             raise FSError(f"Cannot create realm {realm_id}: `{rep['status']}`")
 
-    async def upload_manifest(self, entry_id: EntryID, manifest: RemoteManifests):
+    async def upload_manifest(self, entry_id: EntryID, manifest: RemoteManifest):
         """
         Raises:
             FSError
