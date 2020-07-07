@@ -1,0 +1,1 @@
+Fixed revoked user exception handling and notification.

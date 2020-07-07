@@ -1,7 +1,7 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
 
 from PyQt5.QtCore import pyqtSignal, Qt, QTimer
-from PyQt5.QtWidgets import QWidget, QMenu, QGraphicsDropShadowEffect
+from PyQt5.QtWidgets import QWidget, QMenu, QGraphicsDropShadowEffect, QLabel
 from PyQt5.QtGui import QColor
 
 from parsec.core.gui.trio_thread import JobResultError, ThreadSafeQtSignal, QtToTrioJob
@@ -11,7 +11,7 @@ from parsec.core.gui.flow_layout import FlowLayout
 from parsec.core.gui.ui.devices_widget import Ui_DevicesWidget
 from parsec.core.gui.invite_device_widget import InviteDeviceWidget
 from parsec.core.gui.ui.device_button import Ui_DeviceButton
-from parsec.core.backend_connection import BackendNotAvailable
+from parsec.core.backend_connection import BackendNotAvailable, BackendConnectionError
 
 
 class DeviceButton(QWidget, Ui_DeviceButton):
@@ -54,12 +54,8 @@ async def _do_list_devices(core):
         return await core.get_user_devices_info()
     except BackendNotAvailable as exc:
         raise JobResultError("offline") from exc
-    # TODO : handle all errors from the remote_devices_manager and notify GUI
-    # Raises:
-    #     RemoteDevicesManagerError
-    #     RemoteDevicesManagerBackendOfflineError
-    #     RemoteDevicesManagerNotFoundError
-    #     RemoteDevicesManagerInvalidTrustchainError
+    except BackendConnectionError as exc:
+        raise JobResultError("error") from exc
 
 
 class DevicesWidget(QWidget, Ui_DevicesWidget):
@@ -84,7 +80,10 @@ class DevicesWidget(QWidget, Ui_DevicesWidget):
         self.list_error.connect(self.on_list_error)
         self.line_edit_search.textChanged.connect(self.filter_timer.start)
         self.filter_timer.timeout.connect(self.on_filter_timer_timeout)
+
+    def show(self):
         self.reset()
+        super().show()
 
     def on_filter_timer_timeout(self):
         self.filter_devices(self.line_edit_search.text())
@@ -116,11 +115,14 @@ class DevicesWidget(QWidget, Ui_DevicesWidget):
         button.show()
         self.devices.append(device_name)
 
+    def _flush_devices_list(self):
+        self.devices = []
+        self.layout_devices.clear()
+
     def on_list_success(self, job):
         devices = job.ret
         current_device = self.core.device
-        self.devices = []
-        self.layout_devices.clear()
+        self._flush_devices_list()
         for device in devices:
             self.add_device(
                 device.device_name,
@@ -129,7 +131,12 @@ class DevicesWidget(QWidget, Ui_DevicesWidget):
             )
 
     def on_list_error(self, job):
-        pass
+        status = job.status
+        if status == "error":
+            self._flush_devices_list()
+            label = QLabel(_("TEXT_DEVICE_LIST_RETRIEVABLE_FAILURE"))
+            label.setAlignment(Qt.AlignHCenter | Qt.AlignVCenter)
+            self.layout_devices.addWidget(label)
 
     def reset(self):
         self.jobs_ctx.submit_job(

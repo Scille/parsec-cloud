@@ -460,6 +460,9 @@ msgstr "Révoquer l'utilisateur"
 msgid "TEXT_USER_LIST_RETRIEVABLE_FAILURE"
 msgstr "Impossible de récupérer la liste des utilisateurs depuis le serveur."
 
+msgid "TEXT_DEVICE_LIST_RETRIEVABLE_FAILURE"
+msgstr "Impossible de récupérer la liste des appareils depuis le serveur."
+
 msgid "TEXT_PARSEC_LICENSE"
 msgstr ""
 "<!DOCTYPE html PUBLIC \"-//W3C//DTD XHTML 1.0 Strict//EN\"\n"
