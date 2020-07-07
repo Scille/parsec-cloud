@@ -1,7 +1,7 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
 
 import attr
-from typing import Optional, Any
+from typing import Optional, Any, TypeVar, Type
 from pendulum import Pendulum
 
 from parsec.serde import (
@@ -68,6 +68,9 @@ class SignedDataMeta(DataMeta):
     BASE_SCHEMA_CLS = BaseSignedDataSchema
 
 
+T = TypeVar("T", bound="BaseSignedData")
+
+
 @attr.s(slots=True, frozen=True, auto_attribs=True, kw_only=True, eq=False)
 class BaseSignedData(metaclass=SignedDataMeta):
     """
@@ -99,7 +102,7 @@ class BaseSignedData(metaclass=SignedDataMeta):
         return self.SERIALIZER.dumps(self)
 
     @classmethod
-    def _deserialize(cls, raw: bytes) -> "BaseSignedData":
+    def _deserialize(cls: Type[T], raw: bytes) -> T:
         """
         Raises:
             DataError
@@ -147,22 +150,22 @@ class BaseSignedData(metaclass=SignedDataMeta):
             raise DataError(str(exc)) from exc
 
     @classmethod
-    def unsecure_load(self, signed: bytes) -> "BaseSignedData":
+    def unsecure_load(cls: Type[T], signed: bytes) -> T:
         """
         Raises:
             DataError
         """
         raw = VerifyKey.unsecure_unwrap(signed)
-        return self._deserialize(raw)
+        return cls._deserialize(raw)
 
     @classmethod
     def verify_and_load(
-        cls,
+        cls: Type[T],
         signed: bytes,
         author_verify_key: VerifyKey,
         expected_author: Optional[DeviceID],
         expected_timestamp: Pendulum = None,
-    ) -> "BaseSignedData":
+    ) -> T:
         """
         Raises:
             DataError
@@ -187,14 +190,14 @@ class BaseSignedData(metaclass=SignedDataMeta):
 
     @classmethod
     def decrypt_verify_and_load(
-        self,
+        cls: Type[T],
         encrypted: bytes,
         key: bytes,
         author_verify_key: VerifyKey,
         expected_author: DeviceID,
         expected_timestamp: Pendulum,
         **kwargs,
-    ) -> "BaseSignedData":
+    ) -> T:
         """
         Raises:
             DataError
@@ -205,7 +208,7 @@ class BaseSignedData(metaclass=SignedDataMeta):
         except CryptoError as exc:
             raise DataError(str(exc)) from exc
 
-        return self.verify_and_load(
+        return cls.verify_and_load(
             signed,
             author_verify_key=author_verify_key,
             expected_author=expected_author,
@@ -215,14 +218,14 @@ class BaseSignedData(metaclass=SignedDataMeta):
 
     @classmethod
     def decrypt_verify_and_load_for(
-        self,
+        cls: Type[T],
         encrypted: bytes,
         recipient_privkey: PrivateKey,
         author_verify_key: VerifyKey,
         expected_author: DeviceID,
         expected_timestamp: Pendulum,
         **kwargs,
-    ) -> "BaseSignedData":
+    ) -> T:
         """
         Raises:
             DataError
@@ -233,7 +236,7 @@ class BaseSignedData(metaclass=SignedDataMeta):
         except CryptoError as exc:
             raise DataError(str(exc)) from exc
 
-        return self.verify_and_load(
+        return cls.verify_and_load(
             signed,
             author_verify_key=author_verify_key,
             expected_author=expected_author,
@@ -335,6 +338,7 @@ class BaseData(metaclass=DataMeta):
 # Data class with serializers
 
 
+@attr.s(slots=True, frozen=True, auto_attribs=True, kw_only=True, eq=False)
 class BaseAPISignedData(BaseSignedData):
     """Signed and compressed base class for API data"""
 
@@ -342,6 +346,7 @@ class BaseAPISignedData(BaseSignedData):
     SERIALIZER_CLS = ZipMsgpackSerializer
 
 
+@attr.s(slots=True, frozen=True, auto_attribs=True, kw_only=True, eq=False)
 class BaseAPIData(BaseData):
     """Unsigned and compressed base class for API data"""
 
