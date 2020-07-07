@@ -198,7 +198,10 @@ async def test_bootstrap_organization_invite_not_found(
         await aqtbot.mouse_click(bw.button_bootstrap, QtCore.Qt.LeftButton)
         await aqtbot.wait_until(error_shown)
         assert autoclose_dialog.dialogs[1][0] == "Error"
-        assert autoclose_dialog.dialogs[1][1] == "TEXT_BOOTSTRAP_ORG_INVITE_NOT_FOUND"
+        assert (
+            autoclose_dialog.dialogs[1][1]
+            == "There are no organization to bootstrap with this link."
+        )
 
 
 @pytest.mark.gui
@@ -238,4 +241,4 @@ async def test_bootstrap_organization_with_bad_start_arg(
 
     assert len(autoclose_dialog.dialogs) == 1
     assert autoclose_dialog.dialogs[0][0] == "Error"
-    assert autoclose_dialog.dialogs[0][1] == "The URL is invalid."
+    assert autoclose_dialog.dialogs[0][1] == "The link is invalid."
