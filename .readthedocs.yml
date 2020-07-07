@@ -2,7 +2,7 @@ version: 2
 
 # The Docker image used for building the docs.
 build:
-  image: stable
+  image: latest
 
 python:
   version: 3.8
