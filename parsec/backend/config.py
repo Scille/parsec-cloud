@@ -3,6 +3,8 @@
 import attr
 from typing import List, Optional
 
+from parsec.core.types import BackendAddr
+
 
 class BaseBlockStoreConfig:
     pass
@@ -62,6 +64,17 @@ class MockedBlockStoreConfig(BaseBlockStoreConfig):
 
 
 @attr.s(slots=True, frozen=True, auto_attribs=True)
+class EmailConfig:
+    host: str
+    port: int
+    user: str
+    password: Optional[str]
+    use_ssl: bool
+    use_tls: bool
+    language: str
+
+
+@attr.s(slots=True, frozen=True, auto_attribs=True)
 class BackendConfig:
     administration_token: str
 
@@ -72,6 +85,9 @@ class BackendConfig:
     db_max_connections: int
 
     blockstore_config: BaseBlockStoreConfig
+
+    email_config: Optional[EmailConfig]
+    backend_addr: Optional[BackendAddr]
 
     debug: bool
 

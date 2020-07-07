@@ -13,6 +13,7 @@ from parsec.logging import configure_logging, configure_sentry_logging
 from parsec.backend import backend_app_factory
 from parsec.backend.config import (
     BackendConfig,
+    EmailConfig,
     MockedBlockStoreConfig,
     PostgreSQLBlockStoreConfig,
     S3BlockStoreConfig,
@@ -21,6 +22,7 @@ from parsec.backend.config import (
     RAID1BlockStoreConfig,
     RAID5BlockStoreConfig,
 )
+from parsec.core.types import BackendAddr
 
 
 logger = get_logger()
@@ -208,7 +210,6 @@ Allowed values:
 @click.option(
     "--db-drop-deleted-data",
     is_flag=True,
-    show_default=True,
     envvar="PARSEC_DB_DROP_DELETED_DATA",
     help="Actually delete data database instead of just marking it has deleted",
 )
@@ -259,6 +260,63 @@ integer and `<config>` the MOCKED/POSTGRESQL/S3/SWIFT config.
     help="Secret token to access the administration api",
 )
 @click.option(
+    "--backend-addr",
+    envvar="PARSEC_BACKEND_ADDR",
+    type=BackendAddr,
+    help="URL to reach this server (typically used in invitation emails)",
+)
+@click.option("--email-host", envvar="PARSEC_EMAIL_HOST", help="The host to use for sending email")
+@click.option(
+    "--email-port",
+    envvar="PARSEC_EMAIL_PORT",
+    type=int,
+    default=25,
+    show_default=True,
+    help="Port to use for the SMTP server defined in EMAIL_HOST",
+)
+@click.option(
+    "--email-host-user",
+    envvar="PARSEC_EMAIL_HOST_USER",
+    help="Username to use for the SMTP server defined in EMAIL_HOST",
+)
+@click.option(
+    "--email-host-password",
+    envvar="PARSEC_EMAIL_HOST_PASSWORD",
+    help=(
+        "Password to use for the SMTP server defined in EMAIL_HOST."
+        " This setting is used in conjunction with EMAIL_HOST_USER when authenticating to the SMTP server."
+    ),
+)
+@click.option(
+    "--email-use-ssl",
+    envvar="PARSEC_EMAIL_USE_SSL",
+    is_flag=True,
+    help=(
+        "Whether to use a TLS (secure) connection when talking to the SMTP server."
+        " This is used for explicit TLS connections, generally on port 587."
+    ),
+)
+@click.option(
+    "--email-use-tls",
+    envvar="PARSEC_EMAIL_USE_TLS",
+    is_flag=True,
+    help=(
+        "Whether to use an implicit TLS (secure) connection when talking to the SMTP server."
+        " In most email documentation this type of TLS connection is referred to as SSL."
+        " It is generally used on port 465."
+        " Note that --email-use-tls/--email-use-ssl are mutually exclusive,"
+        " so only set one of those settings to True."
+    ),
+)
+@click.option(
+    "--email-language",
+    envvar="PARSEC_EMAIL_LANGUAGE",
+    type=click.Choice(("en", "fr")),
+    default="en",
+    show_default=True,
+    help="Language used in email",
+)
+@click.option(
     "--ssl-keyfile",
     type=click.Path(exists=True, dir_okay=False),
     envvar="PARSEC_SSL_KEYFILE",
@@ -274,6 +332,7 @@ integer and `<config>` the MOCKED/POSTGRESQL/S3/SWIFT config.
     "--log-level",
     "-l",
     default="WARNING",
+    show_default=True,
     type=click.Choice(("DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL")),
     envvar="PARSEC_LOG_LEVEL",
 )
@@ -300,6 +359,14 @@ def run_cmd(
     db_max_connections,
     blockstore,
     administration_token,
+    backend_addr,
+    email_host,
+    email_port,
+    email_host_user,
+    email_host_password,
+    email_use_ssl,
+    email_use_tls,
+    email_language,
     ssl_keyfile,
     ssl_certfile,
     log_level,
@@ -316,16 +383,6 @@ def run_cmd(
 
     with cli_exception_handler(debug):
 
-        config = BackendConfig(
-            administration_token=administration_token,
-            db_url=db,
-            db_drop_deleted_data=db_drop_deleted_data,
-            db_min_connections=db_min_connections,
-            db_max_connections=db_max_connections,
-            blockstore_config=blockstore,
-            debug=debug,
-        )
-
         if ssl_certfile or ssl_keyfile:
             ssl_context = ssl.create_default_context(ssl.Purpose.CLIENT_AUTH)
             if ssl_certfile:
@@ -334,6 +391,33 @@ def run_cmd(
                 ssl_context.load_default_certs()
         else:
             ssl_context = None
+
+        if email_host:
+            if not email_host_user:
+                raise ValueError("--email-host-user is required when --email-host is provided")
+            email_config = EmailConfig(
+                host=email_host,
+                port=email_port,
+                user=email_host_user,
+                password=email_host_password,
+                use_ssl=email_use_ssl,
+                use_tls=email_use_tls,
+                language=email_language,
+            )
+        else:
+            email_config = None
+
+        config = BackendConfig(
+            administration_token=administration_token,
+            db_url=db,
+            db_drop_deleted_data=db_drop_deleted_data,
+            db_min_connections=db_min_connections,
+            db_max_connections=db_max_connections,
+            blockstore_config=blockstore,
+            email_config=email_config,
+            backend_addr=backend_addr,
+            debug=debug,
+        )
 
         async def _run_backend():
             async with backend_app_factory(config=config) as backend:
