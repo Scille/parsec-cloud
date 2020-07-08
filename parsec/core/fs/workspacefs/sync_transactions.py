@@ -2,7 +2,7 @@
 
 from parsec.core.core_events import CoreEvent
 from itertools import count
-from typing import Optional, List, Dict, Iterator
+from typing import Optional, List, Dict, AsyncIterator
 
 from pendulum import now as pendulum_now
 from parsec.api.protocol import DeviceID
@@ -14,6 +14,7 @@ from parsec.core.types import (
     LocalManifest,
     LocalFileManifest,
     LocalFolderishManifests,
+    RemoteFolderishManifests,
 )
 
 from parsec.core.fs.workspacefs.entry_transactions import EntryTransactions
@@ -185,8 +186,8 @@ class SyncTransactions(EntryTransactions):
     # Public read-only helpers
 
     async def get_placeholder_children(
-        self, remote_manifest: LocalFolderishManifests
-    ) -> Iterator[EntryID]:
+        self, remote_manifest: RemoteFolderishManifests
+    ) -> AsyncIterator[EntryID]:
         # Check children placeholder
         for chield_entry_id in remote_manifest.children.values():
             try:

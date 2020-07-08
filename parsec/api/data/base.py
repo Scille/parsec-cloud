@@ -91,7 +91,7 @@ class BaseSignedData(metaclass=SignedDataMeta):
             return attr.astuple(self).__eq__(attr.astuple(other))
         return NotImplemented
 
-    def evolve(self, **kwargs):
+    def evolve(self, **kwargs) -> T:
         return attr.evolve(self, **kwargs)
 
     def _serialize(self) -> bytes:
