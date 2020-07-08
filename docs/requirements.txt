@@ -1,3 +1,2 @@
-# This file enables the installation of PyQt as binary only, as source make rtd build fail
-PyQt5==5.15.0
---only-binary=PyQt5==5.15.0
+# Ensures setuptools version otherwise PyQt recipe fail
+setuptools>=49.1.0
