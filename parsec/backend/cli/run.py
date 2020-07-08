@@ -262,7 +262,7 @@ integer and `<config>` the MOCKED/POSTGRESQL/S3/SWIFT config.
 @click.option(
     "--backend-addr",
     envvar="PARSEC_BACKEND_ADDR",
-    type=BackendAddr,
+    type=BackendAddr.from_url,
     help="URL to reach this server (typically used in invitation emails)",
 )
 @click.option("--email-host", envvar="PARSEC_EMAIL_HOST", help="The host to use for sending email")
