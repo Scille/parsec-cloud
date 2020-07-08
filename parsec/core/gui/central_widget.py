@@ -10,7 +10,9 @@ from parsec.core.gui.users_widget import UsersWidget
 from parsec.core.gui.devices_widget import DevicesWidget
 from parsec.core.gui.menu_widget import MenuWidget
 from parsec.core.gui.lang import translate as _
+from parsec.core.gui.custom_dialogs import show_error
 from parsec.core.gui.ui.central_widget import Ui_CentralWidget
+
 
 from parsec.api.protocol import (
     HandshakeAPIVersionError,
@@ -177,6 +179,8 @@ class CentralWidget(QWidget, Ui_CentralWidget):
                 )
             elif isinstance(cause, HandshakeRevokedDevice):
                 tooltip = _("TEXT_BACKEND_STATE_REVOKED_DEVICE")
+                notif = ("REVOKED", tooltip)
+                self.new_notification.emit(*notif)
             elif isinstance(cause, HandshakeOrganizationExpired):
                 tooltip = _("TEXT_BACKEND_STATE_ORGANIZATION_EXPIRED")
             else:
@@ -196,7 +200,8 @@ class CentralWidget(QWidget, Ui_CentralWidget):
             self.new_notification.emit(*notif)
 
     def on_new_notification(self, notif_type, msg):
-        pass
+        if notif_type == "REVOKED":
+            show_error(self, msg)
 
     def show_mount_widget(self):
         self.clear_widgets()

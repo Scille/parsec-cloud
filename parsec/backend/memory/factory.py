@@ -32,7 +32,7 @@ async def components_factory(config: BackendConfig, event_bus: EventBus):
 
     organization = MemoryOrganizationComponent()
     user = MemoryUserComponent(_send_event, event_bus)
-    invite = MemoryInviteComponent(_send_event, event_bus)
+    invite = MemoryInviteComponent(_send_event, event_bus, config)
     message = MemoryMessageComponent(_send_event)
     realm = MemoryRealmComponent(_send_event)
     vlob = MemoryVlobComponent(_send_event)

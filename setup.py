@@ -367,6 +367,7 @@ setup(
     # Omitting GUI resources given they end up packaged in `parsec/core/gui/_resources_rc.py`
     package_data={
         "parsec.backend.postgresql.migrations": ["*.sql"],
+        "parsec.backend.mail": ["*.html"],
         "parsec.core.resources": ["*.ico"],
     },
     entry_points={

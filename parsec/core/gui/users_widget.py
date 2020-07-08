@@ -4,7 +4,7 @@
 from uuid import UUID
 
 from PyQt5.QtCore import Qt, pyqtSignal, QTimer
-from PyQt5.QtWidgets import QWidget, QMenu, QGraphicsDropShadowEffect
+from PyQt5.QtWidgets import QWidget, QMenu, QGraphicsDropShadowEffect, QLabel
 from PyQt5.QtGui import QColor
 
 from parsec.api.protocol import InvitationType, InvitationDeletedReason
@@ -255,7 +255,10 @@ class UsersWidget(QWidget, Ui_UsersWidget):
         self.invite_user_error.connect(self._on_invite_user_error)
         self.cancel_invitation_success.connect(self._on_cancel_invitation_success)
         self.cancel_invitation_error.connect(self._on_cancel_invitation_error)
+
+    def show(self):
         self.reset()
+        super().show()
 
     def on_filter_timer_timeout(self):
         self.filter_users(self.line_edit_search.text())
@@ -382,7 +385,18 @@ class UsersWidget(QWidget, Ui_UsersWidget):
             user_info=user_info,
         )
 
+    def _flush_users_list(self):
+        self.users = []
+        while self.layout_users.count() != 0:
+            item = self.layout_users.takeAt(0)
+            if item:
+                w = item.widget()
+                self.layout_users.removeWidget(w)
+                w.hide()
+                w.setParent(None)
+
     def on_list_success(self, job):
+        self._flush_users_list()
         current_user = self.core.device.user_id
         for user_info in job.ret:
             self.add_user(user_info=user_info, is_current_user=current_user == user_info.user_id)
@@ -390,6 +404,12 @@ class UsersWidget(QWidget, Ui_UsersWidget):
     def on_list_error(self, job):
         status = job.status
         if status == "offline":
+            return
+        elif status == "error":
+            self._flush_users_list()
+            label = QLabel(_("TEXT_USER_LIST_RETRIEVABLE_FAILURE"))
+            label.setAlignment(Qt.AlignHCenter | Qt.AlignVCenter)
+            self.layout_users.addWidget(label)
             return
         else:
             errmsg = _("TEXT_USER_LIST_RETRIEVABLE_FAILURE")

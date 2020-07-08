@@ -4,9 +4,10 @@ include LICENSE
 include README.rst
 
 recursive-include parsec/backend *.sql
+recursive-include parsec/backend/mail *.html
 recursive-include tests *.py *.bat *.sh *.md
 recursive-include docs *.rst conf.py Makefile make.bat
-recursice-include parsec/core/resources *.ico
+recursive-include parsec/core/resources *.ico
 recursive-include parsec/core/gui/forms *.ui
 recursive-include parsec/core/gui/tr *.po *.ts
 recursive-include parsec/core/gui/rc *.css *.html *.mo *.otf *.png *.qrc *.svg *.ttf

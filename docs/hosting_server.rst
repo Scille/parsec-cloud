@@ -192,6 +192,57 @@ Must be one of ``CONSOLE``, ``JSON``.
 
 The log file to write to.
 
+Email
+-----
+
+* ``--backend-addr``
+* Environ: ``PARSEC_BACKEND_ADDR``
+
+URL to reach this server (typically used in invitation emails).
+
+* ``--email-host``
+* Environ: ``PARSEC_EMAIL_HOST``
+
+The host to use for sending email.
+
+* ``--email-port``
+* Environ: ``PARSEC_EMAIL_PORT``
+* Default: ``25``
+
+Port to use for the SMTP server defined in EMAIL_HOST.
+
+* ``--email-host-user``
+* Environ: ``PARSEC_EMAIL_HOST_USER``
+
+Username to use for the SMTP server defined in EMAIL_HOST.
+
+* ``--email-host-password``
+* Environ: ``PARSEC_EMAIL_HOST_PASSWORD``
+
+Password to use for the SMTP server defined in EMAIL_HOST.
+This setting is used in conjunction with EMAIL_HOST_USER when authenticating to the SMTP server.
+
+* ``--email-use-ssl``
+* Environ: ``PARSEC_EMAIL_USE_SSL``
+
+Whether to use a TLS (secure) connection when talking to the SMTP server.
+This is used for explicit TLS connections, generally on port 587.
+
+* ``--email-use-tls``
+* Environ: ``PARSEC_EMAIL_USE_TLS``
+
+Whether to use an implicit TLS (secure) connection when talking to the SMTP server.
+In most email documentation this type of TLS connection is referred to as SSL.
+It is generally used on port 465.
+Note that ``--email-use-tls``/``--email-use-ssl`` are mutually exclusive, so only set one of those settings to True.
+
+* ``--email-language``
+* Environ: ``PARSEC_EMAIL_LANGUAGE``
+* Default: ``en``
+
+Language used in email (Allowed values: ``en`` or ``fr``).
+
+
 Sentry
 ------
 
