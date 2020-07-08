@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <ui version="4.0">
- <class>CreateOrgSecondPageWidget</class>
- <widget class="QWidget" name="CreateOrgSecondPageWidget">
+ <class>CreateOrgWebsiteWidget</class>
+ <widget class="QWidget" name="CreateOrgWebsiteWidget">
   <property name="geometry">
    <rect>
     <x>0</x>
@@ -33,6 +33,9 @@
     <widget class="QLabel" name="label">
      <property name="text">
       <string>TEXT_ORG_WIZARD_CREATE_ORG_INSTRUCTIONS</string>
+     </property>
+     <property name="wordWrap">
+      <bool>true</bool>
      </property>
     </widget>
    </item>

@@ -11,9 +11,111 @@ from PyQt5.QtWidgets import (
     QWidget,
     QListView,
     QComboBox,
+    QHBoxLayout,
+    QRadioButton,
+    QCheckBox,
+    QStyleOptionButton,
+    QStyle,
+    QSizePolicy,
 )
 
 from parsec.core.gui.ui.code_input_widget import Ui_CodeInputWidget
+
+
+class WrappedRadio(QRadioButton):
+    def __init__(self, parent):
+        super().__init__(parent)
+        self.layout = QHBoxLayout()
+        self.label = ClickableLabel()
+        self.setLayout(self.layout)
+        opt = QStyleOptionButton()
+        self.initStyleOption(opt)
+        indicator_w = self.style().pixelMetric(QStyle.PixelMetric.PM_IndicatorWidth, opt, self)
+        self.layout.setContentsMargins(0, 0, 0, 0)
+        self.layout.addWidget(self.label)
+        self.label.setIndent(indicator_w + 5)
+        self.label.setWordWrap(True)
+        self.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Minimum)
+        self.label.clicked.connect(self._on_label_clicked)
+
+    @property
+    def word_wrap(self):
+        return self.label.wordWrap()
+
+    @word_wrap.setter
+    def word_wrap(self, word_wrap):
+        self.label.setWordWrap(word_wrap)
+
+    def text(self):
+        return self.label.text()
+
+    def setText(self, text):
+        self.label.setText(text)
+
+    def sizeHint(self):
+        fm = QFontMetrics(self.label.font())
+        r = self.label.rect()
+        r.setLeft(r.left() + self.label.indent() + 5)
+        b_rect = fm.boundingRect(
+            r, Qt.AlignLeft | Qt.AlignVCenter | Qt.TextWordWrap, self.label.text()
+        )
+        ret = QSize(super().sizeHint().width(), b_rect.height())
+        return ret
+
+    def _on_label_clicked(self, _):
+        self.setChecked(not self.isChecked())
+
+    def resizeEvent(self, event):
+        super().resizeEvent(event)
+        self.updateGeometry()
+
+
+class WrappedCheckBox(QCheckBox):
+    def __init__(self, parent):
+        super().__init__(parent)
+        self.layout = QHBoxLayout()
+        self.label = ClickableLabel()
+        self.setLayout(self.layout)
+        opt = QStyleOptionButton()
+        self.initStyleOption(opt)
+        indicator_w = self.style().pixelMetric(QStyle.PixelMetric.PM_IndicatorWidth, opt, self)
+        self.layout.setContentsMargins(0, 0, 0, 0)
+        self.layout.addWidget(self.label)
+        self.label.setIndent(indicator_w + 5)
+        self.label.setWordWrap(self._word_wrap)
+        self.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Minimum)
+        self.label.clicked.connect(self._on_label_clicked)
+
+    @property
+    def word_wrap(self):
+        return self.label.wordWrap()
+
+    @word_wrap.setter
+    def word_wrap(self, word_wrap):
+        self.label.setWordWrap(word_wrap)
+
+    def text(self):
+        return self.label.text()
+
+    def setText(self, text):
+        self.label.setText(text)
+
+    def sizeHint(self):
+        fm = QFontMetrics(self.label.font())
+        r = self.label.rect()
+        r.setLeft(r.left() + self.label.indent() + 5)
+        b_rect = fm.boudingRect(
+            r, Qt.AlignLeft | Qt.AlignVCenter | Qt.TextWordWrap, self.label.text()
+        )
+        ret = QSize(super().sizeHint().width(), b_rect.height())
+        return ret
+
+    def _on_label_clicked(self, _):
+        self.setChecked(not self.isChecked())
+
+    def resizeEvent(self, event):
+        super().resizeEvent(event)
+        self.updateGeometry()
 
 
 def ensure_string_size(s, size, font):

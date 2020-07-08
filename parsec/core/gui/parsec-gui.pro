@@ -42,9 +42,7 @@ FORMS += forms/main_window.ui \
     forms/loading_widget.ui \
     forms/password_strength_widget.ui \
     forms/file_history_button.ui \
-    forms/create_org_first_page_widget.ui \
     forms/create_org_widget.ui \
-    forms/create_org_second_page_widget.ui \
     forms/greet_user_widget.ui \
     forms/claim_user_code_exchange_widget.ui \
     forms/claim_user_finalize_widget.ui \
@@ -60,7 +58,10 @@ FORMS += forms/main_window.ui \
     forms/greet_device_widget.ui \
     forms/claim_device_instructions_widget.ui \
     forms/claim_device_code_exchange_widget.ui \
-    forms/claim_device_provide_info_widget.ui
+    forms/claim_device_provide_info_widget.ui \
+    forms/create_org_chose_action_widget.ui \
+    forms/create_org_website_widget.ui \
+    forms/create_org_custom_widget.ui
 
 RESOURCES += rc/resources.qrc \
     forms/rc/resources.qrc

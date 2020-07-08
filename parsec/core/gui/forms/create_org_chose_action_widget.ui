@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <ui version="4.0">
- <class>CreateOrgFirstPageWidget</class>
- <widget class="QWidget" name="CreateOrgFirstPageWidget">
+ <class>CreateOrgChoseActionWidget</class>
+ <widget class="QWidget" name="CreateOrgChoseActionWidget">
   <property name="geometry">
    <rect>
     <x>0</x>
@@ -34,24 +34,34 @@
      <property name="text">
       <string>TEXT_ORG_WIZARD_CHOICE_INSTRUCTIONS</string>
      </property>
-    </widget>
-   </item>
-   <item>
-    <widget class="QRadioButton" name="radio_create_org">
-     <property name="text">
-      <string>TEXT_ORG_WIZARD_CREATE_FROM_SCRATCH</string>
+     <property name="wordWrap">
+      <bool>true</bool>
      </property>
     </widget>
    </item>
    <item>
-    <widget class="QRadioButton" name="radio_bootstrap_org">
+    <widget class="WrappedRadio" name="radio_create_website">
      <property name="text">
-      <string>TEXT_ORG_WIZARD_ALREADY_HAS_URL</string>
+      <string>TEXT_ORG_WIZARD_CREATE_ON_WEBSITE</string>
+     </property>
+    </widget>
+   </item>
+   <item>
+    <widget class="WrappedRadio" name="radio_create_custom">
+     <property name="text">
+      <string>TEXT_ORG_WIZARD_CREATE_ON_CUSTOM</string>
      </property>
     </widget>
    </item>
   </layout>
  </widget>
+ <customwidgets>
+  <customwidget>
+   <class>WrappedRadio</class>
+   <extends>QRadioButton</extends>
+   <header>parsec.core.gui.custom_widgets</header>
+  </customwidget>
+ </customwidgets>
  <resources/>
  <connections/>
 </ui>

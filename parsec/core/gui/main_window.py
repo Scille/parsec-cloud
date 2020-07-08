@@ -244,10 +244,10 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         self.add_instance()
 
     def _on_create_org_clicked(self):
-        r = CreateOrgWidget.exec_modal(self.jobs_ctx, self)
-        if r is None:
+        email, bootstrap_link = CreateOrgWidget.exec_modal(self.jobs_ctx, self)
+        if bootstrap_link is None:
             return
-        self._on_bootstrap_org_clicked(r)
+        self._on_bootstrap_org_clicked(action_addr=bootstrap_link, email=email)
 
     def _on_join_org_clicked(self):
         url = get_text_input(
@@ -283,7 +283,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
             show_error(self, _("TEXT_INVALID_URL"))
             return
 
-    def _on_bootstrap_org_clicked(self, action_addr=None):
+    def _on_bootstrap_org_clicked(self, action_addr=None, email=None):
         if not action_addr:
             url = get_text_input(
                 parent=self,
@@ -305,7 +305,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
                 show_error(self, _("TEXT_BOOTSTRAP_ORG_INVALID_URL"), exception=exc)
                 return
         ret = BootstrapOrganizationWidget.exec_modal(
-            jobs_ctx=self.jobs_ctx, config=self.config, addr=action_addr, parent=self
+            jobs_ctx=self.jobs_ctx, config=self.config, addr=action_addr, email=email, parent=self
         )
         if ret:
             self.reload_login_devices()

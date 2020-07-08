@@ -63,7 +63,7 @@ class BootstrapOrganizationWidget(QWidget, Ui_BootstrapOrganizationWidget):
     bootstrap_success = pyqtSignal()
     bootstrap_error = pyqtSignal()
 
-    def __init__(self, jobs_ctx, config, addr: BackendOrganizationBootstrapAddr):
+    def __init__(self, jobs_ctx, config, addr: BackendOrganizationBootstrapAddr, email=None):
         super().__init__()
         self.setupUi(self)
         self.dialog = None
@@ -79,9 +79,13 @@ class BootstrapOrganizationWidget(QWidget, Ui_BootstrapOrganizationWidget):
         self.button_bootstrap.clicked.connect(self.bootstrap_clicked)
         pwd_str_widget = PasswordStrengthWidget()
         self.layout_password_strength.addWidget(pwd_str_widget)
+        if email:
+            self.line_edit_email.setText(email)
+            self.line_edit_email.setReadOnly(True)
         self.line_edit_password.textChanged.connect(pwd_str_widget.on_password_change)
         self.line_edit_login.textChanged.connect(self.check_infos)
         self.line_edit_device.textChanged.connect(self.check_infos)
+        self.line_edit_email.textChanged.connect(self.check_infos)
         self.line_edit_password.textChanged.connect(self.check_infos)
         self.line_edit_password_check.textChanged.connect(self.check_infos)
         self.line_edit_device.setValidator(validators.DeviceNameValidator())
@@ -200,9 +204,10 @@ class BootstrapOrganizationWidget(QWidget, Ui_BootstrapOrganizationWidget):
             self.button_bootstrap.setDisabled(True)
 
     @classmethod
-    def exec_modal(cls, jobs_ctx, config, addr, parent):
-        w = cls(jobs_ctx=jobs_ctx, config=config, addr=addr)
+    def exec_modal(cls, jobs_ctx, config, addr, email, parent):
+        w = cls(jobs_ctx=jobs_ctx, config=config, addr=addr, email=email)
         d = GreyedDialog(w, _("TEXT_BOOTSTRAP_ORG_TITLE"), parent=parent, width=1000)
+
         w.dialog = d
         w.line_edit_login.setFocus()
         if d.exec_() == QDialog.Accepted and w.status:

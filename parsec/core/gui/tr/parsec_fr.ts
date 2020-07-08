@@ -343,52 +343,96 @@
     </message>
 </context>
 <context>
-    <name>CreateOrgFirstPageWidget</name>
+    <name>CreateOrgChoseActionWidget</name>
     <message>
-        <location filename="../forms/create_org_first_page_widget.ui" line="14"/>
+        <location filename="../forms/create_org_chose_action_widget.ui" line="14"/>
         <source>Form</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../forms/create_org_first_page_widget.ui" line="35"/>
+        <location filename="../forms/create_org_chose_action_widget.ui" line="35"/>
         <source>TEXT_ORG_WIZARD_CHOICE_INSTRUCTIONS</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../forms/create_org_first_page_widget.ui" line="42"/>
-        <source>TEXT_ORG_WIZARD_CREATE_FROM_SCRATCH</source>
+        <location filename="../forms/create_org_chose_action_widget.ui" line="42"/>
+        <source>TEXT_ORG_WIZARD_CREATE_ON_WEBSITE</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../forms/create_org_first_page_widget.ui" line="49"/>
-        <source>TEXT_ORG_WIZARD_ALREADY_HAS_URL</source>
+        <location filename="../forms/create_org_chose_action_widget.ui" line="49"/>
+        <source>TEXT_ORG_WIZARD_CREATE_ON_CUSTOM</source>
         <translation type="unfinished"></translation>
     </message>
 </context>
 <context>
-    <name>CreateOrgSecondPageWidget</name>
+    <name>CreateOrgCustomWidget</name>
     <message>
-        <location filename="../forms/create_org_second_page_widget.ui" line="14"/>
+        <location filename="../forms/create_org_custom_widget.ui" line="14"/>
         <source>Form</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../forms/create_org_second_page_widget.ui" line="35"/>
-        <source>TEXT_ORG_WIZARD_CREATE_ORG_INSTRUCTIONS</source>
+        <location filename="../forms/create_org_custom_widget.ui" line="35"/>
+        <source>TEXT_ORG_WIZARD_CREATE_ORG_CUSTOM_INSTRUCTIONS</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../forms/create_org_second_page_widget.ui" line="54"/>
-        <source>TEXT_LABEL_USER_EMAIL</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../forms/create_org_second_page_widget.ui" line="96"/>
+        <location filename="../forms/create_org_custom_widget.ui" line="54"/>
         <source>TEXT_LABEL_ORG_NAME</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../forms/create_org_second_page_widget.ui" line="187"/>
+        <location filename="../forms/create_org_custom_widget.ui" line="96"/>
+        <source>TEXT_LABEL_SERVER_URL</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../forms/create_org_custom_widget.ui" line="117"/>
+        <source>TEXT_CREATE_ORG_BACKEND_URL_PLACEHOLDER</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../forms/create_org_custom_widget.ui" line="138"/>
+        <source>TEXT_LABEL_SERVER_ADMIN_TOKEN</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../forms/create_org_custom_widget.ui" line="159"/>
+        <source>TEXT_CREATE_ORG_ADMIN_TOKEN</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
+    <name>CreateOrgFirstPageWidget</name>
+</context>
+<context>
+    <name>CreateOrgSecondPageWidget</name>
+</context>
+<context>
+    <name>CreateOrgWebsiteWidget</name>
+    <message>
+        <location filename="../forms/create_org_website_widget.ui" line="14"/>
+        <source>Form</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../forms/create_org_website_widget.ui" line="35"/>
+        <source>TEXT_ORG_WIZARD_CREATE_ORG_INSTRUCTIONS</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../forms/create_org_website_widget.ui" line="54"/>
+        <source>TEXT_LABEL_USER_EMAIL</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../forms/create_org_website_widget.ui" line="96"/>
+        <source>TEXT_LABEL_ORG_NAME</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../forms/create_org_website_widget.ui" line="187"/>
         <source>ACTION_ACCEPT_CONTRACT</source>
         <translation type="unfinished"></translation>
     </message>
