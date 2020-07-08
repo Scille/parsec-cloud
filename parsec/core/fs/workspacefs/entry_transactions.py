@@ -1,6 +1,6 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
 
-from parsec.core.core_events import CoreEvent
+import re
 from typing import Tuple
 from async_generator import asynccontextmanager
 
@@ -15,6 +15,7 @@ from parsec.core.types import (
 )
 
 
+from parsec.core.core_events import CoreEvent
 from parsec.core.fs.workspacefs.file_transactions import FileTransactions
 from parsec.core.fs.utils import is_file_manifest, is_folder_manifest, is_folderish_manifest
 from parsec.core.fs.exceptions import (
@@ -35,6 +36,10 @@ WRITE_RIGHT_ROLES = (WorkspaceRole.OWNER, WorkspaceRole.MANAGER, WorkspaceRole.C
 
 
 class EntryTransactions(FileTransactions):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        pattern = r"\~\$|\.\~|.*\.tmp$"
+        self.pattern_filter = re.compile(pattern).match
 
     # Right management helper
 
@@ -54,7 +59,7 @@ class EntryTransactions(FileTransactions):
             return await self.local_storage.get_manifest(entry_id)
         except FSLocalMissError as exc:
             remote_manifest = await self.remote_loader.load_manifest(exc.id)
-            return LocalManifest.from_remote(remote_manifest)
+            return LocalManifest.from_remote(remote_manifest).filter_names(self.pattern_filter)
 
     @asynccontextmanager
     async def _load_and_lock_manifest(self, entry_id: EntryID):
@@ -63,7 +68,9 @@ class EntryTransactions(FileTransactions):
                 local_manifest = await self.local_storage.get_manifest(entry_id)
             except FSLocalMissError as exc:
                 remote_manifest = await self.remote_loader.load_manifest(exc.id)
-                local_manifest = LocalManifest.from_remote(remote_manifest)
+                local_manifest = LocalManifest.from_remote(remote_manifest).filter_names(
+                    self.pattern_filter
+                )
                 await self.local_storage.set_manifest(entry_id, local_manifest)
             yield local_manifest
 
@@ -149,6 +156,11 @@ class EntryTransactions(FileTransactions):
             # Release the lock and download the child manifest
             await self._load_manifest(entry_id)
 
+    # Confinement helpers
+
+    def match_confined_pattern(self, path):
+        return self.pattern_filter(path.name)
+
     # Transactions
 
     async def entry_info(self, path: FsPath) -> dict:
@@ -224,6 +236,16 @@ class EntryTransactions(FileTransactions):
                 {destination.name: source_entry_id, source.name: None}
             )
 
+            # Update confined entries
+            old_confined = source_entry_id in parent.confined_entries
+            new_confined = self.match_confined_pattern(destination)
+            if not old_confined and new_confined:
+                new_confined_entries = parent.confined_entries | {source_entry_id}
+                new_parent = new_parent.evolve(confined_entries=new_confined_entries)
+            if old_confined and not new_confined:
+                new_confined_entries = parent.confined_entries - {source_entry_id}
+                new_parent = new_parent.evolve(confined_entries=new_confined_entries)
+
             # Atomic change
             await self.local_storage.set_manifest(parent.id, new_parent)
 
@@ -255,6 +277,11 @@ class EntryTransactions(FileTransactions):
             # Create new manifest
             new_parent = parent.evolve_children_and_mark_updated({path.name: None})
 
+            # Update confined_entries
+            if child.id in parent.confined_entries:
+                new_confined_entries = parent.confined_entries - {child.id}
+                new_parent = new_parent.evolve(confined_entries=new_confined_entries)
+
             # Atomic change
             await self.local_storage.set_manifest(parent.id, new_parent)
 
@@ -282,6 +309,11 @@ class EntryTransactions(FileTransactions):
             # Create new manifest
             new_parent = parent.evolve_children_and_mark_updated({path.name: None})
 
+            # Update confined_entries
+            if child.id in parent.confined_entries:
+                new_confined_entries = parent.confined_entries - {child.id}
+                new_parent = new_parent.evolve(confined_entries=new_confined_entries)
+
             # Atomic change
             await self.local_storage.set_manifest(parent.id, new_parent)
 
@@ -307,6 +339,11 @@ class EntryTransactions(FileTransactions):
 
             # New parent manifest
             new_parent = parent.evolve_children_and_mark_updated({path.name: child.id})
+
+            # Filtering
+            if self.match_confined_pattern(path):
+                new_confined_entries = parent.confined_entries | {child.id}
+                new_parent = new_parent.evolve(confined_entries=new_confined_entries)
 
             # ~ Atomic change
             await self.local_storage.set_manifest(child.id, child, check_lock_status=False)
@@ -335,6 +372,11 @@ class EntryTransactions(FileTransactions):
 
             # New parent manifest
             new_parent = parent.evolve_children_and_mark_updated({path.name: child.id})
+
+            # Filtering
+            if self.match_confined_pattern(path):
+                new_confined_entries = parent.confined_entries | {child.id}
+                new_parent = new_parent.evolve(confined_entries=new_confined_entries)
 
             # ~ Atomic change
             await self.local_storage.set_manifest(child.id, child, check_lock_status=False)

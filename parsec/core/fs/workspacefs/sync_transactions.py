@@ -2,7 +2,7 @@
 
 from parsec.core.core_events import CoreEvent
 from itertools import count
-from typing import Optional, List, Dict, Iterator
+from typing import Optional, List, Dict, Iterator, Callable
 
 from pendulum import now as pendulum_now
 from parsec.api.protocol import DeviceID
@@ -23,7 +23,7 @@ from parsec.core.fs.exceptions import (
     FSLocalMissError,
 )
 
-from parsec.core.fs.utils import is_file_manifest
+from parsec.core.fs.utils import is_file_manifest, is_workspace_manifest
 
 __all__ = "SyncTransactions"
 
@@ -139,25 +139,29 @@ def merge_manifests(
     local_author: DeviceID,
     local_manifest: LocalManifest,
     remote_manifest: Optional[RemoteManifest] = None,
+    pattern_filter: Optional[Callable[[str], bool]] = None,
 ):
-    # Exctract versions
-    local_version = local_manifest.base_version
-    remote_version = local_version if remote_manifest is None else remote_manifest.version
 
     # The remote hasn't changed
-    if remote_version <= local_version:
+    if remote_manifest is None or remote_manifest.version <= local_manifest.base_version:
         return local_manifest
+
+    # Exctract versions
+    assert remote_manifest is not None
+    remote_version = remote_manifest.version
+    local_version = local_manifest.base_version
+    local_from_remote = LocalManifest.from_remote(remote_manifest).filter_names(pattern_filter)
 
     # Only the remote has changed
     if not local_manifest.need_sync:
-        return LocalManifest.from_remote(remote_manifest)
+        return local_from_remote.restore_confined_entries(local_manifest)
 
     # Both the remote and the local have changed
     assert remote_version > local_version and local_manifest.need_sync
 
     # All the local changes have been successfully uploaded
     if local_manifest.match_remote(remote_manifest):
-        return LocalManifest.from_remote(remote_manifest)
+        return local_from_remote.restore_confined_entries(local_manifest)
 
     # The remote changes are ours, simply acknowledge them and keep our local changes
     if remote_manifest.author == local_author:
@@ -170,14 +174,23 @@ def merge_manifests(
     if is_file_manifest(local_manifest):
         raise FSFileConflictError(local_manifest, remote_manifest)
 
+    # Filter the base
+    filtered_base_children = {
+        name: entry_id
+        for name, entry_id in local_manifest.base.children.items()
+        if entry_id not in local_manifest.filtered_entries
+    }
+
     # Solve the folder conflict
     new_children = merge_folder_children(
-        local_manifest.base.children,
+        filtered_base_children,
         local_manifest.children,
-        remote_manifest.children,
+        local_from_remote.children,
         remote_manifest.author,
     )
-    return local_manifest.evolve_and_mark_updated(base=remote_manifest, children=new_children)
+
+    # Restore confined entries
+    return local_from_remote.evolve_and_mark_updated(children=new_children)
 
 
 class SyncTransactions(EntryTransactions):
@@ -224,6 +237,15 @@ class SyncTransactions(EntryTransactions):
         # Fetch and lock
         async with self.local_storage.lock_manifest(entry_id) as local_manifest:
 
+            # Manifest for a confined entry
+            if not is_workspace_manifest(local_manifest):
+                parent_manifest = await self.local_storage.get_manifest(local_manifest.parent)
+                if entry_id in parent_manifest.confined_entries:
+                    if local_manifest.need_sync:
+                        new_local_manifest = local_manifest.evolve(need_sync=False)
+                        await self.local_storage.set_manifest(entry_id, new_local_manifest)
+                    return None
+
             # Sync cannot be performed yet
             if not final and is_file_manifest(local_manifest) and not local_manifest.is_reshaped():
 
@@ -239,7 +261,9 @@ class SyncTransactions(EntryTransactions):
                 assert local_manifest.is_reshaped()
 
             # Merge manifests
-            new_local_manifest = merge_manifests(self.local_author, local_manifest, remote_manifest)
+            new_local_manifest = merge_manifests(
+                self.local_author, local_manifest, remote_manifest, self.pattern_filter
+            )
 
             # Extract authors
             base_author = local_manifest.base.author

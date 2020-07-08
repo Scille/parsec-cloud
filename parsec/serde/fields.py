@@ -55,6 +55,9 @@ __all__ = (
     "PrivateKey",
     "SecretKey",
     "HashDigest",
+    "FrozenList",
+    "FrozenMap",
+    "FrozenSet",
 )
 
 
@@ -258,6 +261,11 @@ class FrozenMap(Map):
 class FrozenList(List):
     def _deserialize(self, value, attr, obj):
         return tuple(super()._deserialize(value, attr, obj))
+
+
+class FrozenSet(List):
+    def _deserialize(self, value, attr, obj):
+        return frozenset(super()._deserialize(value, attr, obj))
 
 
 class Tuple(Field):

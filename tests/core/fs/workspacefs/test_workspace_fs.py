@@ -380,6 +380,8 @@ async def test_dump(alice_workspace):
                 "need_sync": False,
                 "parent": ANY,
                 "updated": ANY,
+                "confined_entries": frozenset(),
+                "filtered_entries": frozenset(),
             }
         },
         "created": ANY,
@@ -387,6 +389,8 @@ async def test_dump(alice_workspace):
         "is_placeholder": False,
         "need_sync": False,
         "updated": ANY,
+        "confined_entries": frozenset(),
+        "filtered_entries": frozenset(),
     }
 
 
