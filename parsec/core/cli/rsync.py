@@ -23,9 +23,9 @@ async def _import_file(workspace_fs: WorkspaceFS, local_path: FsPath, dest: FsPa
     except FileExistsError:
         pass
     dest_f = await workspace_fs.open_file(dest, "w")
-    for chunk in _chunks_from_path(local_path):
-        await dest_f.write(chunk)
-    await dest_f.close()
+    async with dest_f:
+        for chunk in _chunks_from_path(local_path):
+            await dest_f.write(chunk)
 
 
 def _chunks_from_path(src: AnyPath, size: int = DEFAULT_BLOCK_SIZE):
