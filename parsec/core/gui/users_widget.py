@@ -192,7 +192,7 @@ async def _do_invite_user(device, config, email):
         signing_key=device.signing_key,
         keepalive=config.backend_connection_keepalive,
     ) as cmds:
-        rep = await cmds.invite_new(type=InvitationType.USER, claimer_email=email, send_email=False)
+        rep = await cmds.invite_new(type=InvitationType.USER, claimer_email=email, send_email=True)
         if rep["status"] != "ok":
             raise JobResultError(rep["status"])
         action_addr = BackendInvitationAddr.build(
