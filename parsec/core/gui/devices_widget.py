@@ -162,7 +162,6 @@ class DevicesWidget(QWidget, Ui_DevicesWidget):
         button.show()
 
     def _flush_devices_list(self):
-        self.devices = []
         self.layout_devices.clear()
 
     def on_list_success(self, job):
