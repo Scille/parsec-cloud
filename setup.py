@@ -352,7 +352,7 @@ setup(
     url="https://github.com/Scille/parsec-cloud",
     packages=find_packages(include=["parsec", "parsec.*"]),
     package_dir={"parsec": "parsec"},
-    setup_requires=[WHEEL_DEP, PYQT_DEP, BABEL_DEP, DOCUTILS_DEP],  # To generate resources bundle
+    # setup_requires=[WHEEL_DEP, PYQT_DEP, BABEL_DEP, DOCUTILS_DEP],  # To generate resources bundle
     install_requires=requirements,
     extras_require=extra_requirements,
     cmdclass={
