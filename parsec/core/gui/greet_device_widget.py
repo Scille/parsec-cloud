@@ -188,7 +188,6 @@ class GreetDeviceInstructionsWidget(QWidget, Ui_GreetDeviceInstructionsWidget):
     def _on_button_start_clicked(self):
         self.button_start.setDisabled(True)
         self.button_send_email.setDisabled(True)
-        self.button_copy_addr.setDisabled(True)
         self.button_start.setText(_("TEXT_GREET_DEVICE_WAITING"))
         self.wait_peer_job = self.jobs_ctx.submit_job(
             ThreadSafeQtSignal(self, "wait_peer_success"),
