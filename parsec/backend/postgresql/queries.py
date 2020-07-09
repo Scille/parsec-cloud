@@ -20,7 +20,9 @@ class Q:
         self._variables = variables
 
         # Replace variables with their order-based equivalent
-        for variable, order_based in variables.items():
+        # Variables are sorted in reverse to differentiate variables from others
+        # with same name and a suffix, for example var and var_len
+        for variable, order_based in sorted(variables.items(), reverse=True):
             src = src.replace(f"${variable}", order_based)
 
         self._sql = src
@@ -96,8 +98,27 @@ q_device, q_device_internal_id = _table_q_factory("device", "device_id")
 q_user, q_user_internal_id = _table_q_factory("user_", "user_id")
 q_realm, q_realm_internal_id = _table_q_factory("realm", "realm_id")
 q_block, q_block_internal_id = _table_q_factory("block", "block_id")
-q_vlob, q_vlob_internal_id = _table_q_factory("vlob", "vlob_id")
 q_human, q_human_internal_id = _table_q_factory("human", "email")
+
+
+def q_vlob_encryption_revision_internal_id(
+    encryption_revision,
+    organization_id=None,
+    organization=None,
+    realm_id=None,
+    realm=None,
+    table="vlob_encryption_revision",
+):
+    if realm is None:
+        assert realm_id is not None
+        assert organization_id is not None or organization is not None
+        if organization is None:
+            _q_realm = q_realm_internal_id(organization_id=organization_id, realm_id=realm_id)
+        else:
+            _q_realm = q_realm_internal_id(organization=organization, realm_id=realm_id)
+    else:
+        _q_realm = realm
+    return f"(SELECT _id FROM {table} WHERE {table}.realm = {_q_realm} AND {table}.encryption_revision = {encryption_revision})"
 
 
 def q_user_can_read_vlob(
