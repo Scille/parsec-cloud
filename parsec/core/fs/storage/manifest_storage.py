@@ -2,11 +2,11 @@
 
 import trio
 from structlog import get_logger
-from typing import Dict, Tuple, Set, Optional
+from typing import Dict, Tuple, Set, Optional, Union
 from async_generator import asynccontextmanager
 
 from parsec.core.fs.exceptions import FSLocalMissError
-from parsec.core.types import EntryID, ChunkID, LocalDevice, LocalManifest
+from parsec.core.types import EntryID, ChunkID, LocalDevice, LocalManifest, BlockID
 from parsec.core.fs.storage.local_database import LocalDatabase
 
 logger = get_logger()
@@ -172,7 +172,7 @@ class ManifestStorage:
         entry_id: EntryID,
         manifest: LocalManifest,
         cache_only: bool = False,
-        removed_ids: Optional[Set[ChunkID]] = None,
+        removed_ids: Optional[Union[Set[ChunkID], Set[BlockID]]] = None,
     ) -> None:
         """
         Raises: Nothing !

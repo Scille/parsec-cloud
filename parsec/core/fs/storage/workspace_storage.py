@@ -2,7 +2,7 @@
 
 from pathlib import Path
 from collections import defaultdict
-from typing import Dict, Tuple, Set, Optional
+from typing import Dict, Tuple, Set, Optional, Union
 
 import trio
 from trio import hazmat
@@ -257,7 +257,7 @@ class WorkspaceStorage(BaseWorkspaceStorage):
         manifest: LocalManifest,
         cache_only: bool = False,
         check_lock_status: bool = True,
-        removed_ids: Optional[Set[ChunkID]] = None,
+        removed_ids: Optional[Union[Set[BlockID], Set[ChunkID]]] = None,
     ) -> None:
         if check_lock_status:
             self._check_lock_status(entry_id)
