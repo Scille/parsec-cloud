@@ -25,7 +25,7 @@ class ManifestStorage:
 
         # This cache contains all the manifests that have been set or accessed
         # since the last call to `clear_memory_cache`
-        self._cache = {}
+        self._cache: Dict[EntryID, LocalManifest] = {}
 
         # This dictionnary keeps track of all the entry ids of the manifests
         # that have been added to the cache but still needs to be written to
@@ -33,7 +33,7 @@ class ManifestStorage:
         # the chunks that needs to be removed from the localdb after the
         # manifest is written. Note: this set might be empty but the manifest
         # still requires to be flushed.
-        self._cache_ahead_of_localdb = {}
+        self._cache_ahead_of_localdb: Dict[EntryID, set] = {}
 
     @property
     def path(self):

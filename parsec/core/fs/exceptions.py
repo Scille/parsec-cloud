@@ -15,10 +15,10 @@ import os
 import errno
 import io
 
-from parsec.core.types import EntryID
+from parsec.core.types import EntryID, ChunkID
 from parsec.core.fs.utils import ntstatus
 
-from typing import Optional
+from typing import Optional, Union
 
 
 # Base classes for all file system errors
@@ -118,7 +118,7 @@ class FSWorkspaceTimestampedTooEarly(FSMiscError):
 
 
 class FSLocalMissError(FSInternalError):
-    def __init__(self, id: EntryID):
+    def __init__(self, id: Union[EntryID, ChunkID]):
         super().__init__(id)
         self.id = id
 

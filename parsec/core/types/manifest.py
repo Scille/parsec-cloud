@@ -216,6 +216,9 @@ class LocalManifest(BaseLocalData):
         def get_obj_type(self, obj):
             return obj["type"]
 
+    need_sync: bool
+    updated: Pendulum
+
     # Properties
 
     @property
@@ -307,8 +310,6 @@ class LocalFileManifest(LocalManifest):
             return LocalFileManifest(**data)
 
     base: RemoteFileManifest
-    need_sync: bool
-    updated: Pendulum
     size: int
     blocksize: int
     blocks: Tuple[Tuple[Chunk, ...], ...]
@@ -437,8 +438,6 @@ class LocalFolderManifest(LocalManifest):
             return LocalFolderManifest(**data)
 
     base: RemoteFolderManifest
-    need_sync: bool
-    updated: Pendulum
     children: FrozenDict[EntryName, EntryID]
 
     @classmethod
@@ -518,8 +517,6 @@ class LocalWorkspaceManifest(LocalManifest):
             return LocalWorkspaceManifest(**data)
 
     base: RemoteWorkspaceManifest
-    need_sync: bool
-    updated: Pendulum
     children: FrozenDict[EntryName, EntryID]
 
     @classmethod
@@ -593,8 +590,7 @@ class LocalUserManifest(LocalManifest):
             return LocalUserManifest(**data)
 
     base: RemoteUserManifest
-    need_sync: bool
-    updated: Pendulum
+
     last_processed_message: int
     workspaces: Tuple[WorkspaceEntry, ...]
 
