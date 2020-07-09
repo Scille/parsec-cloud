@@ -245,6 +245,9 @@ class BaseSignedData(metaclass=SignedDataMeta):
         )
 
 
+BaseDataType = TypeVar("BaseDataType", bound="BaseData")
+
+
 class BaseData(metaclass=DataMeta):
     """
     Some data within the api don't have to be signed (e.g. claim info) and
@@ -273,7 +276,7 @@ class BaseData(metaclass=DataMeta):
         return self.SERIALIZER.dumps(self)
 
     @classmethod
-    def load(cls, raw: bytes) -> "BaseData":
+    def load(cls: Type[BaseDataType], raw: bytes) -> BaseDataType:
         """
         Raises:
             DataError
@@ -305,7 +308,9 @@ class BaseData(metaclass=DataMeta):
             raise DataError(str(exc)) from exc
 
     @classmethod
-    def decrypt_and_load(cls, encrypted: bytes, key: SecretKey, **kwargs) -> "BaseData":
+    def decrypt_and_load(
+        cls: Type[BaseDataType], encrypted: bytes, key: SecretKey, **kwargs
+    ) -> BaseDataType:
         """
         Raises:
             DataError
@@ -320,8 +325,8 @@ class BaseData(metaclass=DataMeta):
 
     @classmethod
     def decrypt_and_load_for(
-        self, encrypted: bytes, recipient_privkey: PrivateKey, **kwargs
-    ) -> "BaseData":
+        cls: Type[BaseDataType], encrypted: bytes, recipient_privkey: PrivateKey, **kwargs
+    ) -> BaseDataType:
         """
         Raises:
             DataError
@@ -332,7 +337,7 @@ class BaseData(metaclass=DataMeta):
         except CryptoError as exc:
             raise DataError(str(exc)) from exc
 
-        return self.load(raw, **kwargs)
+        return cls.load(raw, **kwargs)
 
 
 # Data class with serializers
