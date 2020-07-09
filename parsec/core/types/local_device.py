@@ -126,6 +126,10 @@ class LocalDevice(BaseLocalData):
         return str(self.human_handle or self.user_id)
 
     @property
+    def short_user_display(self) -> str:
+        return str(self.human_handle.label if self.human_handle else self.user_id)
+
+    @property
     def device_display(self) -> str:
         return str(self.device_label or self.device_id.device_name)
 

@@ -445,7 +445,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
                 self.tab_center.setTabText(idx, _("TEXT_TAB_TITLE_LOG_IN_SCREEN"))
         elif state == "connected":
             device = tab.current_device
-            tab_name = f"{device.organization_id} - {device.human_handle.label}"
+            tab_name = f"{device.organization_id} - {device.short_user_display}"
             self.tab_center.setTabToolTip(idx, tab_name)
             self.tab_center.setTabText(idx, tab_name)
         if self.tab_center.count() == 1:
