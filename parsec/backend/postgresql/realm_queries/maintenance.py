@@ -18,7 +18,6 @@ from parsec.backend.realm import (
 from parsec.backend.postgresql.handler import send_signal
 from parsec.backend.postgresql.utils import query
 from parsec.backend.postgresql.message import send_message
-from parsec.backend.postgresql.tables import STR_TO_REALM_ROLE
 from parsec.backend.postgresql.queries import (
     Q,
     q_organization_internal_id,
@@ -26,6 +25,7 @@ from parsec.backend.postgresql.queries import (
     q_device_internal_id,
     q_realm,
     q_realm_internal_id,
+    STR_TO_REALM_ROLE,
 )
 
 

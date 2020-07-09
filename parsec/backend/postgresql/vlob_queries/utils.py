@@ -8,7 +8,7 @@ from parsec.backend.postgresql.queries import (
     q_organization_internal_id,
 )
 from parsec.backend.vlob import VlobAccessError, VlobNotFoundError
-from parsec.backend.postgresql.tables import STR_TO_REALM_ROLE
+from parsec.backend.postgresql.queries import STR_TO_REALM_ROLE
 
 
 _q_check_realm_access = Q(
