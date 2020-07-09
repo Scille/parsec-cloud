@@ -2,13 +2,14 @@
 
 import pytest
 from PyQt5 import QtCore
-
-from unittest.mock import patch
-from parsec.core.local_device import save_device_with_password
+from unittest.mock import patch, ANY
 
 from parsec.core.types import BackendOrganizationClaimUserAddr
+from parsec.core.local_device import save_device_with_password
 from parsec.core.gui.custom_dialogs import GreyedDialog
 from parsec.core.gui.users_widget import UserInvitationButton
+
+from tests.common import customize_fixtures
 
 
 async def logged_gui(aqtbot, gui_factory, autoclose_dialog, core_config, user):
@@ -46,7 +47,8 @@ async def logged_gui_bob(aqtbot, gui_factory, autoclose_dialog, core_config, bob
 
 @pytest.mark.gui
 @pytest.mark.trio
-async def test_invite_user(aqtbot, logged_gui_alice, running_backend, monkeypatch):
+@customize_fixtures(backend_has_email=True)
+async def test_invite_user(aqtbot, logged_gui_alice, running_backend, monkeypatch, email_letterbox):
     u_w = logged_gui_alice.test_get_users_widget()
     assert u_w is not None
 
@@ -57,7 +59,7 @@ async def test_invite_user(aqtbot, logged_gui_alice, running_backend, monkeypatc
 
     monkeypatch.setattr(
         "parsec.core.gui.users_widget.get_text_input",
-        lambda *args, **kwargs: ("hubert.farnsworth@pe.com"),
+        lambda *args, **kwargs: "hubert.farnsworth@pe.com",
     )
 
     async with aqtbot.wait_signal(u_w.invite_user_success):
@@ -70,6 +72,8 @@ async def test_invite_user(aqtbot, logged_gui_alice, running_backend, monkeypatc
     inv_btn = u_w.layout_users.itemAt(3).widget()
     assert isinstance(inv_btn, UserInvitationButton)
     assert inv_btn.email == "hubert.farnsworth@pe.com"
+
+    assert email_letterbox == [(inv_btn.email, ANY)]
 
 
 @pytest.mark.skip("Doesn't work currently")
