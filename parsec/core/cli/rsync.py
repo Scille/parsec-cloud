@@ -40,7 +40,7 @@ def _chunks_from_path(src: AnyPath, size: int = DEFAULT_BLOCK_SIZE):
 
 
 async def _update_file(
-    workspace_fs: WorkspaceFS, entry_id: EntryID, local_path: AnyPath, workspace_path: AnyPath
+    workspace_fs: WorkspaceFS, entry_id: EntryID, local_path: AnyPath, workspace_path: FsPath
 ):
 
     remote_file_manifest = await workspace_fs.remote_loader.load_manifest(entry_id)
@@ -48,7 +48,7 @@ async def _update_file(
     offset = 0
     for idx, chunk in enumerate(_chunks_from_path(local_path)):
         if HashDigest.from_data(chunk) != remote_access_digests[idx]:
-            await workspace_fs.write_bytes(FsPath(str(workspace_path)), chunk, offset)
+            await workspace_fs.write_bytes(workspace_path, chunk, offset)
             print(f"update the block {idx} in {workspace_path}")
         offset += len(chunk)
 
@@ -56,23 +56,22 @@ async def _update_file(
 
 
 async def _create_path(
-    workspace_fs: WorkspaceFS, is_dir: bool, local_path: AnyPath, workspace_path: AnyPath
+    workspace_fs: WorkspaceFS, is_dir: bool, local_path: AnyPath, workspace_path: FsPath
 ):
-    print("create %s" % workspace_path)
     folder_manifest = None
-    fs_path = FsPath(str(workspace_path))
+    print(f"Create {workspace_path}")
     if is_dir:
-        await workspace_fs.mkdir(fs_path)
+        await workspace_fs.mkdir(workspace_path)
         await workspace_fs.sync()
-        rep_info = await workspace_fs.path_info(fs_path)
+        rep_info = await workspace_fs.path_info(workspace_path)
         folder_manifest = await workspace_fs.local_storage.get_manifest(rep_info["id"])
     else:
-        await _import_file(workspace_fs, local_path, fs_path)
+        await _import_file(workspace_fs, local_path, workspace_path)
         await workspace_fs.sync()
     return folder_manifest
 
 
-async def _clear_path(workspace_fs: WorkspaceFS, workspace_path: AnyPath):
+async def _clear_path(workspace_fs: WorkspaceFS, workspace_path: FsPath):
     if await workspace_fs.is_dir(workspace_path):
         await workspace_fs.rmtree(workspace_path)
     else:
@@ -81,7 +80,7 @@ async def _clear_path(workspace_fs: WorkspaceFS, workspace_path: AnyPath):
 
 
 async def _clear_directory(
-    workspace_directory_path: AnyPath,
+    workspace_directory_path: FsPath,
     local_path: AnyPath,
     workspace_fs: WorkspaceFS,
     folder_manifest: FolderManifest,
@@ -89,13 +88,13 @@ async def _clear_directory(
     local_children_keys = [p.name for p in await local_path.iterdir()]
     for name, entry_id in folder_manifest.children.items():
         if name not in local_children_keys:
-            absolute_path = FsPath(str(await (workspace_directory_path / name).absolute()))
+            absolute_path = FsPath(workspace_directory_path / name)
             print("delete %s" % absolute_path)
             await _clear_path(workspace_fs, absolute_path)
 
 
 async def _get_or_create_directory(
-    entry_id: EntryID, workspace_fs: WorkspaceFS, local_path: AnyPath, workspace_path: AnyPath
+    entry_id: EntryID, workspace_fs: WorkspaceFS, local_path: AnyPath, workspace_path: FsPath
 ):
     if entry_id:
         folder_manifest = await workspace_fs.remote_loader.load_manifest(entry_id)
@@ -105,7 +104,7 @@ async def _get_or_create_directory(
 
 
 async def _upsert_file(
-    entry_id: EntryID, workspace_fs: WorkspaceFS, local_path: AnyPath, workspace_path: AnyPath
+    entry_id: EntryID, workspace_fs: WorkspaceFS, local_path: AnyPath, workspace_path: FsPath
 ):
     if entry_id:
         await _update_file(workspace_fs, entry_id, local_path, workspace_path)
@@ -114,7 +113,7 @@ async def _upsert_file(
 
 
 async def _sync_directory(
-    entry_id: EntryID, workspace_fs: WorkspaceFS, local_path: AnyPath, workspace_path: AnyPath
+    entry_id: EntryID, workspace_fs: WorkspaceFS, local_path: AnyPath, workspace_path: FsPath
 ):
     folder_manifest = await _get_or_create_directory(
         entry_id, workspace_fs, local_path, workspace_path
@@ -125,14 +124,14 @@ async def _sync_directory(
 
 
 async def _sync_directory_content(
-    workspace_directory_path: AnyPath,
+    workspace_directory_path: FsPath,
     directory_local_path: AnyPath,
     workspace_fs: WorkspaceFS,
     manifest: FolderManifest,
 ):
     for local_path in await directory_local_path.iterdir():
         name = local_path.name
-        workspace_path = await (workspace_directory_path / name).absolute()
+        workspace_path = FsPath(workspace_directory_path / name)
         entry_id = manifest.children.get(name)
         if await local_path.is_dir():
             await _sync_directory(entry_id, workspace_fs, local_path, workspace_path)
@@ -143,10 +142,15 @@ async def _sync_directory_content(
 def _parse_destination(core: LoggedCore, destination: str):
     try:
         workspace_name, path = destination.split(":")
-        path = trio.Path(path)
     except ValueError:
         workspace_name = destination
         path = None
+    if path:
+        try:
+            path = FsPath(path)
+        except ValueError:
+            path = FsPath(f"/{path}")
+
     for workspace in core.user_fs.get_user_manifest().workspaces:
         if workspace.name == workspace_name:
             break
@@ -156,18 +160,16 @@ def _parse_destination(core: LoggedCore, destination: str):
 
 
 async def _root_manifest_parent(
-    path_destination: trio.Path, workspace_fs: WorkspaceFS, workspace_manifest: WorkspaceManifest
+    path_destination: FsPath, workspace_fs: WorkspaceFS, workspace_manifest: WorkspaceManifest
 ):
 
     root_manifest = workspace_manifest
-    parent = trio.Path("/")
+    parent = FsPath("/")
     if path_destination:
         for p in path_destination.parts:
-            parent = trio.Path(parent / p)
+            parent = FsPath(parent / p)
             entry_id = root_manifest.children.get(p)
-            root_manifest = await _get_or_create_directory(
-                entry_id, workspace_fs, parent, await parent.absolute()
-            )
+            root_manifest = await _get_or_create_directory(entry_id, workspace_fs, parent, parent)
 
     return root_manifest, parent
 
