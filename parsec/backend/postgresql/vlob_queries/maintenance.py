@@ -5,9 +5,9 @@ from typing import List, Tuple
 
 from parsec.backend.realm import RealmRole
 from parsec.api.protocol import DeviceID, OrganizationID
-from parsec.backend.postgresql.utils import query
-from parsec.backend.postgresql.queries import (
+from parsec.backend.postgresql.utils import (
     Q,
+    query,
     q_vlob_encryption_revision_internal_id,
     q_organization_internal_id,
 )

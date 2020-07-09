@@ -6,9 +6,9 @@ from typing import Dict, Tuple, Optional
 
 from parsec.api.protocol import DeviceID, OrganizationID
 from parsec.backend.vlob import VlobVersionError, VlobNotFoundError
-from parsec.backend.postgresql.utils import query
-from parsec.backend.postgresql.queries import (
+from parsec.backend.postgresql.utils import (
     Q,
+    query,
     q_device,
     q_realm_internal_id,
     q_organization_internal_id,

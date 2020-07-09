@@ -4,10 +4,10 @@ import pendulum
 from triopg import UniqueViolationError
 from uuid import UUID
 
-from parsec.backend.postgresql.utils import query
 from parsec.api.protocol import DeviceID, OrganizationID
-from parsec.backend.postgresql.queries import (
+from parsec.backend.postgresql.utils import (
     Q,
+    query,
     q_organization_internal_id,
     q_device_internal_id,
     q_realm_internal_id,

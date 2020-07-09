@@ -6,9 +6,9 @@ from typing import Dict, List
 
 from parsec.api.protocol import DeviceID, UserID, OrganizationID, RealmRole
 from parsec.backend.realm import RealmStatus, RealmAccessError, RealmNotFoundError
-from parsec.backend.postgresql.utils import query
-from parsec.backend.postgresql.queries import (
+from parsec.backend.postgresql.utils import (
     Q,
+    query,
     q_organization_internal_id,
     q_user,
     q_user_internal_id,

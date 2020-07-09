@@ -26,7 +26,7 @@ from parsec.backend.invite import (
     InvitationAlreadyDeletedError,
     InvitationInvalidStateError,
 )
-from parsec.backend.postgresql.queries import (
+from parsec.backend.postgresql.utils import (
     Q,
     q_organization_internal_id,
     q_user,

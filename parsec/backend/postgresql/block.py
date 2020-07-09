@@ -16,7 +16,7 @@ from parsec.backend.block import (
     BlockInMaintenanceError,
 )
 from parsec.backend.postgresql.handler import PGHandler
-from parsec.backend.postgresql.queries import (
+from parsec.backend.postgresql.utils import (
     Q,
     q_organization_internal_id,
     q_user_internal_id,

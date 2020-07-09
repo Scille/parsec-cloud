@@ -4,9 +4,9 @@ from typing import Tuple
 
 from parsec.api.protocol import OrganizationID, UserID, DeviceID, HumanHandle
 from parsec.backend.user import User, Device, Trustchain, UserNotFoundError, GetUserAndDevicesResult
-from parsec.backend.postgresql.utils import query
-from parsec.backend.postgresql.queries import (
+from parsec.backend.postgresql.utils import (
     Q,
+    query,
     q_organization_internal_id,
     q_device,
     q_user_internal_id,

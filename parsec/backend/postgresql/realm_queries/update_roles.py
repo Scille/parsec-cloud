@@ -14,10 +14,10 @@ from parsec.backend.realm import (
     RealmInMaintenanceError,
 )
 from parsec.backend.postgresql.handler import send_signal
-from parsec.backend.postgresql.utils import query
 from parsec.backend.postgresql.message import send_message
-from parsec.backend.postgresql.queries import (
+from parsec.backend.postgresql.utils import (
     Q,
+    query,
     q_user,
     q_user_internal_id,
     q_device_internal_id,

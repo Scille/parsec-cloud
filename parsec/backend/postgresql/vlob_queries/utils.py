@@ -1,14 +1,14 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
 
-from parsec.backend.postgresql.utils import query
-from parsec.backend.postgresql.queries import (
+from parsec.backend.postgresql.utils import (
     Q,
+    query,
     q_realm_internal_id,
     q_user_internal_id,
     q_organization_internal_id,
+    STR_TO_REALM_ROLE,
 )
 from parsec.backend.vlob import VlobAccessError, VlobNotFoundError
-from parsec.backend.postgresql.queries import STR_TO_REALM_ROLE
 
 
 _q_check_realm_access = Q(
