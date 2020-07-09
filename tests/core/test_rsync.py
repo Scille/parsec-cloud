@@ -37,7 +37,8 @@ async def alice_workspace(alice_user_fs, running_backend):
 @pytest.mark.trio
 async def test_import_file(alice_workspace):
     with mock.patch(
-        "parsec.core.cli.rsync._chunks_from_path", mock.Mock(return_value=[b"random", b"chunks"])
+        "parsec.core.cli.rsync._chunks_from_path",
+        AsyncMock(spec=mock.Mock, side_effect=[[b"random", b"chunks"]]),
     ):
         f = await alice_workspace.open_file("/foo/bar")
         assert await f.read() == b""
@@ -47,20 +48,27 @@ async def test_import_file(alice_workspace):
         await f.close()
 
 
-def test_chunks_from_path():
-    with mock.patch("builtins.open", new_callable=mock.mock_open) as mo:
-        mock_file = mo.return_value
-        mock_file.read.side_effect = ReadSideEffect("chunk")
+@pytest.mark.trio
+async def test_chunks_from_path():
+    test = AsyncMock(spec=mock.Mock)
 
-        res = rsync._chunks_from_path("src_file", 1)
+    with mock.patch("trio.open_file", AsyncMock(spec=mock.Mock, side_effect=[test])) as mo:
+
+        test.read = AsyncMock(spec=mock.Mock, side_effect="chunk")
+        res = await rsync._chunks_from_path("src_file", 1)
         mo.assert_called_once_with("src_file", "rb")
+        test.read.assert_has_calls(
+            [mock.call(1), mock.call(1), mock.call(1), mock.call(1), mock.call(1), mock.call(1)]
+        )
         assert res == ["c", "h", "u", "n", "k"]
+    test.reset_mock()
 
-        mo.reset_mock()
-        mock_file.read.side_effect = ReadSideEffect("chunk")
+    with mock.patch("trio.open_file", AsyncMock(spec=mock.Mock, side_effect=[test])) as mo:
 
-        res = rsync._chunks_from_path("src_file", 2)
+        test.read = AsyncMock(spec=mock.Mock, side_effect=["ch", "un", "k"])
+        res = await rsync._chunks_from_path("src_file", 2)
         mo.assert_called_once_with("src_file", "rb")
+        test.read.assert_has_calls([mock.call(2), mock.call(2), mock.call(2), mock.call(2)])
         assert res == ["ch", "un", "k"]
 
 
@@ -85,7 +93,8 @@ async def test_update_file(alice_workspace):
     HashDigest.from_data = mock.Mock(side_effect=lambda x: x)
 
     with mock.patch(
-        "parsec.core.cli.rsync._chunks_from_path", mock.Mock(return_value=[b"block1", b"block2"])
+        "parsec.core.cli.rsync._chunks_from_path",
+        AsyncMock(spec=mock.Mock, side_effect=[[b"block1", b"block2"]]),
     ):
         entry_id = EntryID()
         await rsync._update_file(
@@ -100,7 +109,8 @@ async def test_update_file(alice_workspace):
     sync_by_id_mock.reset_mock()
 
     with mock.patch(
-        "parsec.core.cli.rsync._chunks_from_path", mock.Mock(return_value=[b"block1", b"block3"])
+        "parsec.core.cli.rsync._chunks_from_path",
+        AsyncMock(spec=mock.Mock, side_effect=[[b"block1", b"block3"]]),
     ):
 
         await rsync._update_file(
@@ -118,7 +128,8 @@ async def test_update_file(alice_workspace):
     write_bytes_mock.reset_mock()
 
     with mock.patch(
-        "parsec.core.cli.rsync._chunks_from_path", mock.Mock(return_value=[b"block3", b"block4"])
+        "parsec.core.cli.rsync._chunks_from_path",
+        AsyncMock(spec=mock.Mock, side_effect=[[b"block3", b"block4"]]),
     ):
         await rsync._update_file(
             alice_workspace, entry_id, FsPath("/src_file"), FsPath("/path_in_workspace")

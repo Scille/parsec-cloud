@@ -24,15 +24,18 @@ async def _import_file(workspace_fs: WorkspaceFS, local_path: FsPath, dest: FsPa
         pass
     dest_f = await workspace_fs.open_file(dest, "w")
     async with dest_f:
-        for chunk in _chunks_from_path(local_path):
+        for chunk in await _chunks_from_path(local_path):
             await dest_f.write(chunk)
 
 
-def _chunks_from_path(src: AnyPath, size: int = DEFAULT_BLOCK_SIZE):
+async def _chunks_from_path(src: AnyPath, size: int = DEFAULT_BLOCK_SIZE):
     chunks = []
-    with open(src, "rb") as fd:
+    fd = await trio.open_file(src, "rb")
+
+    async with fd:
+
         while True:
-            chunk = fd.read(size)
+            chunk = await fd.read(size)
             if not chunk:
                 break
             chunks.append(chunk)
@@ -46,7 +49,7 @@ async def _update_file(
     remote_file_manifest = await workspace_fs.remote_loader.load_manifest(entry_id)
     remote_access_digests = [access.digest for access in remote_file_manifest.blocks]
     offset = 0
-    for idx, chunk in enumerate(_chunks_from_path(local_path)):
+    for idx, chunk in enumerate(await _chunks_from_path(local_path)):
         if HashDigest.from_data(chunk) != remote_access_digests[idx]:
             await workspace_fs.write_bytes(workspace_path, chunk, offset)
             print(f"update the block {idx} in {workspace_path}")

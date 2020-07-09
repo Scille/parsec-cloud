@@ -66,6 +66,12 @@ class AsyncMock(Mock):
         else:
             return super().__call__(*args, **kwargs)
 
+    async def __aenter__(self, *args, **kwargs):
+        return self
+
+    async def __aexit__(self, *args, **kwargs):
+        return True
+
 
 class FreezeTestOnTransportError(Transport):
     """
