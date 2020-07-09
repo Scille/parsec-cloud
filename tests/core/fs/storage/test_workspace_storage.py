@@ -402,6 +402,18 @@ async def test_timestamped_storage(alice_workspace_storage):
     with pytest.raises(FSError):
         await taws.clear_manifest("manifest id")
 
+    with pytest.raises(FSError):
+        await taws.run_vacuum()
+
+    with pytest.raises(FSError):
+        await taws.get_need_sync_entries()
+
+    with pytest.raises(FSError):
+        await taws.get_realm_checkpoint()
+
+    with pytest.raises(FSError):
+        await taws.clear_memory_cache("flush")
+
     with pytest.raises(FSLocalMissError):
         await taws.get_manifest(EntryID())
 
