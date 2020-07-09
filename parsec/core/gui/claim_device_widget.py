@@ -14,7 +14,11 @@ from parsec.core.types import LocalDevice
 from parsec.core.local_device import save_device_with_password
 
 from parsec.core.invite import claimer_retrieve_info
-from parsec.core.backend_connection import backend_invited_cmds_factory, BackendConnectionRefused
+from parsec.core.backend_connection import (
+    backend_invited_cmds_factory,
+    BackendConnectionRefused,
+    BackendNotAvailable,
+)
 
 from parsec.core.gui import validators
 from parsec.core.gui.trio_thread import JobResultError, ThreadSafeQtSignal
@@ -44,9 +48,11 @@ class Claimer:
         self.main_oob_send, self.main_oob_recv = trio.open_memory_channel(0)
         self.job_oob_send, self.job_oob_recv = trio.open_memory_channel(0)
 
-    async def run(self, addr):
+    async def run(self, addr, config):
         try:
-            async with backend_invited_cmds_factory(addr=addr) as cmds:
+            async with backend_invited_cmds_factory(
+                addr=addr, keepalive=config.backend_connection_keepalive
+            ) as cmds:
                 r = await self.main_oob_recv.receive()
 
                 assert r == self.Step.RetrieveInfo
@@ -109,6 +115,8 @@ class Claimer:
                     await self.job_oob_send.send((True, None, new_device))
                 except Exception as exc:
                     await self.job_oob_send.send((False, exc, None))
+        except BackendNotAvailable as exc:
+            raise JobResultError(status="backend-not-available", origin=exc)
         except BackendConnectionRefused as exc:
             raise JobResultError(status="invitation-not-found", origin=exc)
 
@@ -418,7 +426,7 @@ class ClaimDeviceInstructionsWidget(QWidget, Ui_ClaimDeviceInstructionsWidget):
 
     def _on_button_start_clicked(self):
         self.button_start.setDisabled(True)
-        self.button_start.setText("TEXT_CLAIM_DEVICE_WAITING")
+        self.button_start.setText(_("TEXT_CLAIM_DEVICE_WAITING"))
         self.wait_peer_job = self.jobs_ctx.submit_job(
             ThreadSafeQtSignal(self, "wait_peer_success"),
             ThreadSafeQtSignal(self, "wait_peer_error"),
@@ -441,8 +449,8 @@ class ClaimDeviceInstructionsWidget(QWidget, Ui_ClaimDeviceInstructionsWidget):
             if self.wait_peer_job.exc:
                 exc = self.wait_peer_job.exc.params.get("origin", None)
             self.button_start.setDisabled(False)
-            self.button_start.setText("ACTION_START")
-            show_error(self, "TEXT_CLAIM_DEVICE_WAIT_PEER_ERROR", exception=exc)
+            self.button_start.setText(_("ACTION_START"))
+            show_error(self, _("TEXT_CLAIM_DEVICE_WAIT_PEER_ERROR"), exception=exc)
         self.wait_peer_job = None
 
     def cancel(self):
@@ -480,6 +488,7 @@ class ClaimDeviceWidget(QWidget, Ui_ClaimDeviceWidget):
             ThreadSafeQtSignal(self, "claimer_error"),
             self.claimer.run,
             addr=self.addr,
+            config=self.config,
         )
         self.retrieve_info_job = self.jobs_ctx.submit_job(
             ThreadSafeQtSignal(self, "retrieve_info_success"),
@@ -569,6 +578,8 @@ class ClaimDeviceWidget(QWidget, Ui_ClaimDeviceWidget):
             exc = None
             if self.claimer_job.status == "invitation-not-found":
                 msg = _("TEXT_CLAIM_DEVICE_INVITATION_NOT_FOUND")
+            elif self.claim_job.status == "backend-not-available":
+                msg = _("TEXT_INVITATION_BACKEND_NOT_AVAILABLE")
             else:
                 msg = _("TEXT_CLAIM_DEVICE_UNKNOWN_ERROR")
             if self.claimer_job.exc:

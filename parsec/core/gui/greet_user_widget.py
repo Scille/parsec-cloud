@@ -10,7 +10,7 @@ import trio
 
 from parsec.api.data import UserProfile
 from parsec.api.protocol import HumanHandle
-from parsec.core.backend_connection import backend_authenticated_cmds_factory
+from parsec.core.backend_connection import backend_authenticated_cmds_factory, BackendNotAvailable
 from parsec.core.invite import UserGreetInitialCtx, InviteError
 
 from parsec.core.gui.trio_thread import JobResultError, ThreadSafeQtSignal
@@ -53,7 +53,7 @@ class Greeter:
                     in_progress_ctx = await initial_ctx.do_wait_peer()
                     await self.job_mc_send.send((True, None))
                 except Exception as exc:
-                    await self.job_send.send((False, exc))
+                    await self.job_mc_send.send((False, exc))
 
                 r = await self.main_mc_recv.receive()
 
@@ -119,6 +119,8 @@ class Greeter:
                     await self.job_mc_send.send((False, exc))
                 except Exception as exc:
                     await self.job_mc_send.send((False, exc))
+        except BackendNotAvailable as exc:
+            raise JobResultError(status="backend-not-available", origin=exc)
         except Exception as exc:
             raise JobResultError(status="unknown", origin=exc)
 
@@ -242,10 +244,10 @@ class GreetUserCheckInfoWidget(QWidget, Ui_GreetUserCheckInfoWidget):
         self.line_edit_user_email.textChanged.connect(self.check_infos)
         self.line_edit_device.textChanged.connect(self.check_infos)
 
-        self.combo_profile.addItem(_("TEXT_USER_PROFILE_OUTSIDER"), UserProfile.OUTSIDER)
+        # self.combo_profile.addItem(_("TEXT_USER_PROFILE_OUTSIDER"), UserProfile.OUTSIDER)
         self.combo_profile.addItem(_("TEXT_USER_PROFILE_STANDARD"), UserProfile.STANDARD)
         self.combo_profile.addItem(_("TEXT_USER_PROFILE_ADMIN"), UserProfile.ADMIN)
-        self.combo_profile.setCurrentIndex(1)
+        self.combo_profile.setCurrentIndex(0)
 
         self.get_requests_success.connect(self._on_get_requests_success)
         self.get_requests_error.connect(self._on_get_requests_error)
@@ -272,7 +274,7 @@ class GreetUserCheckInfoWidget(QWidget, Ui_GreetUserCheckInfoWidget):
             show_error(self, _("TEXT_GREET_USER_INVALID_HUMAN_HANDLE"), exception=exc)
             return
         self.button_create_user.setDisabled(True)
-        self.button_create_user.setText("TEXT_GREET_USER_WAITING")
+        self.button_create_user.setText(_("TEXT_GREET_USER_WAITING"))
         self.create_user_job = self.jobs_ctx.submit_job(
             ThreadSafeQtSignal(self, "create_user_success"),
             ThreadSafeQtSignal(self, "create_user_error"),
@@ -301,7 +303,7 @@ class GreetUserCheckInfoWidget(QWidget, Ui_GreetUserCheckInfoWidget):
         assert self.create_user_job.is_finished()
         assert self.create_user_job.status != "ok"
         if self.create_user_job.status != "cancelled":
-            msg = "TEXT_GREET_USER_CREATE_USER_ERROR"
+            msg = _("TEXT_GREET_USER_CREATE_USER_ERROR")
             exc = None
             if self.create_user_job.exc:
                 exc = self.create_user_job.exc.params.get("origin", None)
@@ -330,7 +332,7 @@ class GreetUserCheckInfoWidget(QWidget, Ui_GreetUserCheckInfoWidget):
         assert self.get_requests_job.is_finished()
         assert self.get_requests_job.status != "ok"
         if self.get_requests_job.status != "cancelled":
-            msg = "TEXT_GREET_USER_GET_REQUESTS_ERROR"
+            msg = _("TEXT_GREET_USER_GET_REQUESTS_ERROR")
             exc = None
             if self.get_requests_job.exc:
                 exc = self.get_requests_job.exc.params.get("origin", None)
@@ -403,7 +405,7 @@ class GreetUserCodeExchangeWidget(QWidget, Ui_GreetUserCodeExchangeWidget):
         )
 
     def _on_wrong_claimer_code_clicked(self):
-        show_error(self, "TEXT_GREET_USER_INVALID_CODE_CLICKED")
+        show_error(self, _("TEXT_GREET_USER_INVALID_CODE_CLICKED"))
         self.failed.emit()
 
     def _on_none_clicked(self):
@@ -428,7 +430,7 @@ class GreetUserCodeExchangeWidget(QWidget, Ui_GreetUserCodeExchangeWidget):
         assert self.get_greeter_sas_job.is_finished()
         assert self.get_greeter_sas_job.status == "ok"
         if self.get_greeter_sas_job.status != "cancelled":
-            msg = "TEXT_GREET_USER_GET_GREETER_SAS_ERROR"
+            msg = _("TEXT_GREET_USER_GET_GREETER_SAS_ERROR")
             exc = None
             if self.get_greeter_sas_job.exc:
                 exc = self.get_greeter_sas_job.exc.params.get("origin", None)
@@ -453,7 +455,7 @@ class GreetUserCodeExchangeWidget(QWidget, Ui_GreetUserCodeExchangeWidget):
         assert self.get_claimer_sas_job.is_finished()
         assert self.get_claimer_sas_job.status == "ok"
         if self.get_claimer_sas_job.status != "cancelled":
-            msg = "TEXT_GREET_USER_GET_CLAIMER_SAS_ERROR"
+            msg = _("TEXT_GREET_USER_GET_CLAIMER_SAS_ERROR")
             exc = None
             if self.get_claimer_sas_job.exc:
                 exc = self.get_claimer_sas_job.exc.params.get("origin", None)
@@ -475,7 +477,7 @@ class GreetUserCodeExchangeWidget(QWidget, Ui_GreetUserCodeExchangeWidget):
         assert self.signify_trust_job.is_finished()
         assert self.signify_trust_job.status != "ok"
         if self.signify_trust_job.status != "cancelled":
-            msg = "TEXT_GREET_USER_SIGNIFY_TRUST_ERROR"
+            msg = _("TEXT_GREET_USER_SIGNIFY_TRUST_ERROR")
             exc = None
             if self.signify_trust_job.exc:
                 exc = self.signify_trust_job.exc.params.get("origin", None)
@@ -501,7 +503,7 @@ class GreetUserCodeExchangeWidget(QWidget, Ui_GreetUserCodeExchangeWidget):
         assert self.wait_peer_trust_job.is_finished()
         assert self.wait_peer_trust_job.status != "ok"
         if self.wait_peer_trust_job.status != "cancelled":
-            msg = "TEXT_GREET_USER_WAIT_PEER_TRUST_ERROR"
+            msg = _("TEXT_GREET_USER_WAIT_PEER_TRUST_ERROR")
             exc = None
             if self.wait_peer_trust_job.exc:
                 exc = self.wait_peer_trust_job.exc.params.get("origin", None)
@@ -584,7 +586,7 @@ class GreetUserWidget(QWidget, Ui_GreetUserWidget):
         self.main_layout.addWidget(page)
 
     def _on_finished(self):
-        show_info(self, "TEXT_USER_GREET_SUCCESSFUL")
+        show_info(self, _("TEXT_USER_GREET_SUCCESSFUL"))
         self.dialog.accept()
 
     def _on_greeter_success(self):
@@ -598,7 +600,11 @@ class GreetUserWidget(QWidget, Ui_GreetUserWidget):
         assert self.greeter_job.is_finished()
         assert self.greeter_job.status != "ok"
         if self.greeter_job.status != "cancelled":
-            msg = "TEXT_GREET_USER_UNKNOWN_ERROR"
+            msg = ""
+            if self.greeter_job.status == "backend-not-available":
+                msg = _("TEXT_INVITATION_BACKEND_NOT_AVAILABLE")
+            else:
+                msg = _("TEXT_GREET_USER_UNKNOWN_ERROR")
             exc = None
             if self.greeter_job.exc:
                 exc = self.greeter_job.exc.params.get("origin", None)

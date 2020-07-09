@@ -9,7 +9,7 @@ from enum import IntEnum
 import trio
 
 from parsec.api.protocol import InvitationType
-from parsec.core.backend_connection import backend_authenticated_cmds_factory
+from parsec.core.backend_connection import backend_authenticated_cmds_factory, BackendNotAvailable
 from parsec.core.invite import DeviceGreetInitialCtx, InviteError
 
 from parsec.core.gui.trio_thread import JobResultError, ThreadSafeQtSignal, QtToTrioJob
@@ -89,6 +89,8 @@ class Greeter:
                     await self.job_mc_send.send((False, exc))
                 except Exception as exc:
                     await self.job_mc_send.send((False, exc))
+        except BackendNotAvailable as exc:
+            raise JobResultError(status="backend-not-available", origin=exc)
         except Exception as exc:
             raise JobResultError(status="unknown", origin=exc)
 
@@ -284,7 +286,7 @@ class GreetDeviceCodeExchangeWidget(QWidget, Ui_GreetDeviceCodeExchangeWidget):
         )
 
     def _on_wrong_claimer_code_clicked(self):
-        show_error(self, "TEXT_GREET_DEVICE_INVALID_CODE_CLICKED")
+        show_error(self, _("TEXT_GREET_DEVICE_INVALID_CODE_CLICKED"))
         self.failed.emit()
 
     def _on_none_clicked(self):
@@ -309,7 +311,7 @@ class GreetDeviceCodeExchangeWidget(QWidget, Ui_GreetDeviceCodeExchangeWidget):
         assert self.get_greeter_sas_job.is_finished()
         assert self.get_greeter_sas_job.status == "ok"
         if self.get_greeter_sas_job.status != "cancelled":
-            msg = "TEXT_GREET_DEVICE_GET_GREETER_SAS_ERROR"
+            msg = _("TEXT_GREET_DEVICE_GET_GREETER_SAS_ERROR")
             exc = None
             if self.get_greeter_sas_job.exc:
                 exc = self.get_greeter_sas_job.exc.params.get("origin", None)
@@ -334,7 +336,7 @@ class GreetDeviceCodeExchangeWidget(QWidget, Ui_GreetDeviceCodeExchangeWidget):
         assert self.get_claimer_sas_job.is_finished()
         assert self.get_claimer_sas_job.status == "ok"
         if self.get_claimer_sas_job.status != "cancelled":
-            msg = "TEXT_GREET_DEVICE_GET_CLAIMER_SAS_ERROR"
+            msg = _("TEXT_GREET_DEVICE_GET_CLAIMER_SAS_ERROR")
             exc = None
             if self.get_claimer_sas_job.exc:
                 exc = self.get_claimer_sas_job.exc.params.get("origin", None)
@@ -356,7 +358,7 @@ class GreetDeviceCodeExchangeWidget(QWidget, Ui_GreetDeviceCodeExchangeWidget):
         assert self.signify_trust_job.is_finished()
         assert self.signify_trust_job.status != "ok"
         if self.signify_trust_job.status != "cancelled":
-            msg = "TEXT_GREET_DEVICE_SIGNIFY_TRUST_ERROR"
+            msg = _("TEXT_GREET_DEVICE_SIGNIFY_TRUST_ERROR")
             exc = None
             if self.signify_trust_job.exc:
                 exc = self.signify_trust_job.exc.params.get("origin", None)
@@ -382,7 +384,7 @@ class GreetDeviceCodeExchangeWidget(QWidget, Ui_GreetDeviceCodeExchangeWidget):
         assert self.wait_peer_trust_job.is_finished()
         assert self.wait_peer_trust_job.status != "ok"
         if self.wait_peer_trust_job.status != "cancelled":
-            msg = "TEXT_GREET_DEVICE_WAIT_PEER_TRUST_ERROR"
+            msg = _("TEXT_GREET_DEVICE_WAIT_PEER_TRUST_ERROR")
             exc = None
             if self.wait_peer_trust_job.exc:
                 exc = self.wait_peer_trust_job.exc.params.get("origin", None)
@@ -462,7 +464,7 @@ class GreetDeviceWidget(QWidget, Ui_GreetDeviceWidget):
         self.main_layout.addWidget(page)
 
     def _on_finished(self):
-        show_info(self, "TEXT_DEVICE_GREET_SUCCESSFUL")
+        show_info(self, _("TEXT_DEVICE_GREET_SUCCESSFUL"))
         self.dialog.accept()
 
     def _on_greeter_success(self):
@@ -476,7 +478,11 @@ class GreetDeviceWidget(QWidget, Ui_GreetDeviceWidget):
         assert self.greeter_job.is_finished()
         assert self.greeter_job.status != "ok"
         if self.greeter_job.status != "cancelled":
-            msg = "TEXT_GREET_DEVICE_UNKNOWN_ERROR"
+            msg = ""
+            if self.greeter_job.status == "backend-not-available":
+                msg = _("TEXT_INVITATION_BACKEND_NOT_AVAILABLE")
+            else:
+                msg = _("TEXT_GREET_DEVICE_UNKNOWN_ERROR")
             exc = None
             if self.greeter_job.exc:
                 exc = self.greeter_job.exc.params.get("origin", None)
