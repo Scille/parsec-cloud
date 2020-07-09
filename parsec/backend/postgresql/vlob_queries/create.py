@@ -6,6 +6,7 @@ from triopg import UniqueViolationError
 
 from parsec.api.protocol import DeviceID, OrganizationID
 from parsec.backend.vlob import VlobAlreadyExistsError
+from parsec.backend.postgresql.utils import query
 from parsec.backend.postgresql.queries import (
     Q,
     q_organization_internal_id,
@@ -43,27 +44,8 @@ RETURNING _id
 """
 )
 
-# .format(
-#                q_organization_internal_id(organization_id=Parameter("$1")),
-#                Query.from_(t_vlob_encryption_revision)
-#                .where(
-#                    (
-#                        t_vlob_encryption_revision.realm
-#                        == q_realm_internal_id(
-#                            organization_id=Parameter("$1"), realm_id=Parameter("$3")
-#                        )
-#                    )
-#                    & (t_vlob_encryption_revision.encryption_revision == Parameter("$4"))
-#                )
-#                .select("_id"),
-#                q_device_internal_id(
-#                    organization_id=Parameter("$1"), device_id=Parameter("$2")
-#                ),
-#            )
 
-print(_q_create)
-
-
+@query()
 async def query_create(
     conn,
     organization_id: OrganizationID,

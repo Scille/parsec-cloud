@@ -5,6 +5,7 @@ from typing import List, Tuple
 
 from parsec.backend.realm import RealmRole
 from parsec.api.protocol import DeviceID, OrganizationID
+from parsec.backend.postgresql.utils import query
 from parsec.backend.postgresql.queries import (
     Q,
     q_vlob_encryption_revision_internal_id,
@@ -128,6 +129,7 @@ async def _check_realm_and_maintenance_access(
     await _check_realm_access(conn, organization_id, realm_id, author, can_write_roles)
 
 
+@query()
 async def query_maintenance_get_reencryption_batch(
     conn,
     organization_id: OrganizationID,
@@ -152,6 +154,7 @@ async def query_maintenance_get_reencryption_batch(
         return [(row["vlob_id"], row["version"], row["blob"]) for row in rep]
 
 
+@query()
 async def query_maintenance_save_reencryption_batch(
     conn,
     organization_id: OrganizationID,

@@ -118,7 +118,13 @@ def q_vlob_encryption_revision_internal_id(
             _q_realm = q_realm_internal_id(organization=organization, realm_id=realm_id)
     else:
         _q_realm = realm
-    return f"(SELECT _id FROM {table} WHERE {table}.realm = {_q_realm} AND {table}.encryption_revision = {encryption_revision})"
+    return f"""
+(SELECT _id
+    FROM {table}
+    WHERE
+        {table}.realm = {_q_realm}
+        AND {table}.encryption_revision = {encryption_revision})
+"""
 
 
 def q_user_can_read_vlob(

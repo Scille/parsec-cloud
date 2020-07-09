@@ -4,7 +4,6 @@ import pendulum
 from uuid import UUID
 from typing import List, Tuple, Dict, Optional
 
-
 from parsec.backend.backend_events import BackendEvent
 from parsec.api.protocol import DeviceID, OrganizationID
 from parsec.backend.realm import RealmRole
@@ -17,18 +16,17 @@ from parsec.backend.vlob import (
 )
 from parsec.backend.postgresql.handler import PGHandler, retry_on_unique_violation
 from parsec.backend.postgresql.realm_queries.maintenance import get_realm_status, RealmNotFoundError
-from parsec.backend.postgresql.vlob_queries.write import query_update, query_vlob_updated
-from parsec.backend.postgresql.vlob_queries.maintenance import (
+from parsec.backend.postgresql.vlob_queries import (
+    query_update,
+    query_vlob_updated,
     query_maintenance_save_reencryption_batch,
     query_maintenance_get_reencryption_batch,
-)
-from parsec.backend.postgresql.vlob_queries.read import (
     query_read,
     query_poll_changes,
     query_list_versions,
+    query_check_realm_access,
+    query_create,
 )
-from parsec.backend.postgresql.vlob_queries.utils import query_check_realm_access
-from parsec.backend.postgresql.vlob_queries.create import query_create
 
 
 async def _check_realm(

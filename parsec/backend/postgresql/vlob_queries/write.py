@@ -4,6 +4,7 @@ import pendulum
 from triopg import UniqueViolationError
 from uuid import UUID
 
+from parsec.backend.postgresql.utils import query
 from parsec.api.protocol import DeviceID, OrganizationID
 from parsec.backend.postgresql.queries import (
     Q,
@@ -14,7 +15,8 @@ from parsec.backend.postgresql.queries import (
 )
 from parsec.backend.vlob import VlobVersionError, VlobTimestampError, VlobNotFoundError
 from parsec.backend.postgresql.handler import send_signal
-from parsec.backend.postgresql.vlob_queries.utils import _get_realm_id_from_vlob_id
+from parsec.backend.postgresql.vlob_queries.utils import query_get_realm_id_from_vlob_id
+from parsec.backend.backend_events import BackendEvent
 
 
 q_vlob_updated = Q(
@@ -35,6 +37,7 @@ RETURNING index
 )
 
 
+@query()
 async def query_vlob_updated(
     conn, vlob_atom_internal_id, organization_id, author, realm_id, src_id, src_version=1
 ):
@@ -49,7 +52,7 @@ async def query_vlob_updated(
 
     await send_signal(
         conn,
-        "realm.vlobs_updated",
+        BackendEvent.REALM_VLOBS_UPDATED,
         organization_id=organization_id,
         author=author,
         realm_id=realm_id,
@@ -104,6 +107,7 @@ RETURNING _id
 )
 
 
+@query()
 async def query_update(
     conn,
     organization_id: OrganizationID,
@@ -117,7 +121,7 @@ async def query_update(
     from parsec.backend.postgresql.vlob import _check_realm_and_write_access
 
     async with conn.transaction():
-        realm_id = await _get_realm_id_from_vlob_id(conn, organization_id, vlob_id)
+        realm_id = await query_get_realm_id_from_vlob_id(conn, organization_id, vlob_id)
         await _check_realm_and_write_access(
             conn, organization_id, author, realm_id, encryption_revision
         )

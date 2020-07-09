@@ -1,5 +1,6 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
 
+from parsec.backend.postgresql.utils import query
 from parsec.backend.postgresql.queries import (
     Q,
     q_realm_internal_id,
@@ -27,6 +28,7 @@ WHERE user_._id = { q_user_internal_id(organization_id="$organization_id", user_
 )
 
 
+@query()
 async def query_check_realm_access(conn, organization_id, realm_id, author, allowed_roles):
     rep = await conn.fetchrow(
         *_q_check_realm_access(
@@ -63,7 +65,8 @@ LIMIT 1
 )
 
 
-async def _get_realm_id_from_vlob_id(conn, organization_id, vlob_id):
+@query()
+async def query_get_realm_id_from_vlob_id(conn, organization_id, vlob_id):
 
     realm_id = await conn.fetchval(
         *_q_get_realm_id_from_vlob_id(organization_id=organization_id, vlob_id=vlob_id)
