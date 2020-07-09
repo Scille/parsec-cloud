@@ -248,9 +248,9 @@ async def send_email(email_config: EmailConfig, to_addr: str, message: Message) 
         try:
             context = ssl.create_default_context()
             if email_config.use_ssl:
-                server = smtplib.SMTP_SSL(email_config.server, email_config.port, context=context)
+                server = smtplib.SMTP_SSL(email_config.host, email_config.port, context=context)
             else:
-                server = smtplib.SMTP(email_config.server, email_config.port)
+                server = smtplib.SMTP(email_config.host, email_config.port)
 
             with server:
                 if email_config.use_tls and not email_config.use_ssl:
