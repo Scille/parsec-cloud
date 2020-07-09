@@ -83,6 +83,8 @@ class BackendConfig:
     db_drop_deleted_data: bool
     db_min_connections: int
     db_max_connections: int
+    db_first_tries_number: int
+    db_first_tries_sleep: int
 
     blockstore_config: BaseBlockStoreConfig
 

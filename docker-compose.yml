@@ -10,17 +10,12 @@ services:
       - PARSEC_BLOCKSTORE=POSTGRESQL  # This is a demo...
       - PARSEC_LOG_LEVEL=INFO
       - PARSEC_ADMINISTRATION_TOKEN=s3cr3t  # Change for prod
+      - PARSEC_DB_FIRST_TRIES_NUMBER=20
+      - PARSEC_DB_FIRST_TRIES_SLEEP=1
     ports:
       - 6777:6777
-
-    #### TODO : that part could be useless if Parsec is made to retry connections ####
     depends_on:
       - "postgres"
-    entrypoint: []
-    command: ["/bin/sh", "/wait-for-postgres.sh", "postgresql://parsec@postgres/parsec?password=DBPASS", "parsec", "backend", "run"]
-    volumes:
-      - ./packaging/docker/wait-for-postgres.sh:/wait-for-postgres.sh:ro
-    ##################################################################################
 
   postgres:
     image: "postgres"

@@ -20,7 +20,14 @@ from parsec.backend.postgresql.block import PGBlockComponent
 
 @asynccontextmanager
 async def components_factory(config: BackendConfig, event_bus: EventBus):
-    dbh = PGHandler(config.db_url, config.db_min_connections, config.db_max_connections, event_bus)
+    dbh = PGHandler(
+        config.db_url,
+        config.db_min_connections,
+        config.db_max_connections,
+        config.db_first_tries_number,
+        config.db_first_tries_sleep,
+        event_bus,
+    )
 
     organization = PGOrganizationComponent(dbh)
     user = PGUserComponent(dbh, event_bus)
