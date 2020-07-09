@@ -237,14 +237,21 @@ class SyncTransactions(EntryTransactions):
         # Fetch and lock
         async with self.local_storage.lock_manifest(entry_id) as local_manifest:
 
-            # Manifest for a confined entry
-            if not is_workspace_manifest(local_manifest):
-                parent_manifest = await self.local_storage.get_manifest(local_manifest.parent)
-                if entry_id in parent_manifest.confined_entries:
-                    if local_manifest.need_sync:
-                        new_local_manifest = local_manifest.evolve(need_sync=False)
-                        await self.local_storage.set_manifest(entry_id, new_local_manifest)
-                    return None
+            # Go through the parent chain
+            current_manifest = local_manifest
+            while not is_workspace_manifest(current_manifest):
+                parent_manifest = await self.local_storage.get_manifest(current_manifest.parent)
+
+                # The entry is not confined
+                if current_manifest.id not in parent_manifest.confined_entries:
+                    current_manifest = parent_manifest
+                    continue
+
+                # The entry is (maybe indirectly) confined
+                if local_manifest.need_sync:
+                    new_local_manifest = local_manifest.evolve(need_sync=False)
+                    await self.local_storage.set_manifest(entry_id, new_local_manifest)
+                return None
 
             # Sync cannot be performed yet
             if not final and is_file_manifest(local_manifest) and not local_manifest.is_reshaped():
