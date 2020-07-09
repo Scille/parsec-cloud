@@ -16,11 +16,11 @@ from parsec.core.local_device import list_available_devices, get_key_file
 from parsec.core.config import save_config
 from parsec.core.types import (
     BackendActionAddr,
+    BackendInvitationAddr,
     BackendOrganizationBootstrapAddr,
-    BackendOrganizationClaimUserAddr,
-    BackendOrganizationClaimDeviceAddr,
     BackendOrganizationFileLinkAddr,
 )
+from parsec.api.protocol import InvitationType
 from parsec.core.gui.lang import translate as _
 from parsec.core.gui.instance_widget import InstanceWidget
 from parsec.core.gui.parsec_application import ParsecApp
@@ -216,22 +216,22 @@ class MainWindow(QMainWindow, Ui_MainWindow):
 
     def _show_about(self):
         w = AboutWidget()
-        d = GreyedDialog(w, title="", parent=self)
+        d = GreyedDialog(w, title="", parent=self, width=1000)
         d.exec_()
 
     def _show_license(self):
         w = LicenseWidget()
-        d = GreyedDialog(w, title=_("TEXT_LICENSE_TITLE"), parent=self)
+        d = GreyedDialog(w, title=_("TEXT_LICENSE_TITLE"), parent=self, width=1000)
         d.exec_()
 
     def _show_changelog(self):
         w = ChangelogWidget()
-        d = GreyedDialog(w, title=_("TEXT_CHANGELOG_TITLE"), parent=self)
+        d = GreyedDialog(w, title=_("TEXT_CHANGELOG_TITLE"), parent=self, width=1000)
         d.exec_()
 
     def _show_settings(self):
         w = SettingsWidget(self.config, self.jobs_ctx, self.event_bus)
-        d = GreyedDialog(w, title=_("TEXT_SETTINGS_TITLE"), parent=self)
+        d = GreyedDialog(w, title=_("TEXT_SETTINGS_TITLE"), parent=self, width=1000)
         d.exec_()
 
     def _on_show_doc_clicked(self):
@@ -268,12 +268,17 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         except ValueError as exc:
             show_error(self, _("TEXT_INVALID_URL"), exception=exc)
             return
-        if isinstance(action_addr, BackendOrganizationClaimUserAddr):
-            self._on_claim_user_clicked(action_addr)
-        elif isinstance(action_addr, BackendOrganizationClaimDeviceAddr):
-            self._on_claim_device_clicked(action_addr)
-        elif isinstance(action_addr, BackendOrganizationBootstrapAddr):
+
+        if isinstance(action_addr, BackendOrganizationBootstrapAddr):
             self._on_bootstrap_org_clicked(action_addr)
+        elif isinstance(action_addr, BackendInvitationAddr):
+            if action_addr.invitation_type == InvitationType.USER:
+                self._on_claim_user_clicked(action_addr)
+            elif action_addr.invitation_type == InvitationType.DEVICE:
+                self._on_claim_device_clicked(action_addr)
+            else:
+                show_error(self, _("TEXT_INVALID_URL"))
+                return
         else:
             show_error(self, _("TEXT_INVALID_URL"))
             return
@@ -440,7 +445,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
                 self.tab_center.setTabText(idx, _("TEXT_TAB_TITLE_LOG_IN_SCREEN"))
         elif state == "connected":
             device = tab.current_device
-            tab_name = f"{device.organization_id}:{device.user_id}@{device.device_name}"
+            tab_name = f"{device.organization_id} - {device.human_handle.label}"
             self.tab_center.setTabToolTip(idx, tab_name)
             self.tab_center.setTabText(idx, tab_name)
         if self.tab_center.count() == 1:
@@ -563,10 +568,14 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         elif action_addr:
             if isinstance(action_addr, BackendOrganizationBootstrapAddr):
                 self._on_bootstrap_org_clicked(action_addr)
-            elif isinstance(action_addr, BackendOrganizationClaimUserAddr):
-                self._on_claim_user_clicked(action_addr)
-            elif isinstance(action_addr, BackendOrganizationClaimDeviceAddr):
-                self._on_claim_device_clicked(action_addr)
+            elif isinstance(action_addr, BackendInvitationAddr):
+                if action_addr.invitation_type == InvitationType.USER:
+                    self._on_claim_user_clicked(action_addr)
+                elif action_addr.invitation_type == InvitationType.DEVICE:
+                    self._on_claim_device_clicked(action_addr)
+                else:
+                    show_error(self, _("TEXT_INVALID_URL"))
+                    return
 
     def close_current_tab(self, force=False):
         if self.tab_center.count() == 1:

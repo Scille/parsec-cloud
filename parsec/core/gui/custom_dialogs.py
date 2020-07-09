@@ -4,7 +4,15 @@ import platform
 
 from PyQt5.QtCore import Qt
 from PyQt5.QtGui import QPainter
-from PyQt5.QtWidgets import QWidget, QCompleter, QDialog, QApplication, QStyleOption, QStyle
+from PyQt5.QtWidgets import (
+    QWidget,
+    QCompleter,
+    QDialog,
+    QApplication,
+    QStyleOption,
+    QStyle,
+    QSizePolicy,
+)
 
 from structlog import get_logger
 
@@ -24,7 +32,7 @@ logger = get_logger()
 
 
 class GreyedDialog(QDialog, Ui_GreyedDialog):
-    def __init__(self, center_widget, title, parent, hide_close=False):
+    def __init__(self, center_widget, title, parent, hide_close=False, width=None):
         super().__init__(None)
         self.setupUi(self)
         self.setModal(True)
@@ -47,6 +55,15 @@ class GreyedDialog(QDialog, Ui_GreyedDialog):
         if hide_close:
             self.button_close.hide()
         main_win = ParsecApp.get_main_window()
+        if width:
+            if width < main_win.size().width():
+                spacing = (main_win.size().width() - width) / 2
+                self._get_spacer_right().changeSize(
+                    spacing, 0, QSizePolicy.Preferred, QSizePolicy.Preferred
+                )
+                self._get_spacer_left().changeSize(
+                    spacing, 0, QSizePolicy.Preferred, QSizePolicy.Preferred
+                )
         if main_win:
             if main_win.isVisible():
                 self.setParent(main_win)
@@ -59,6 +76,18 @@ class GreyedDialog(QDialog, Ui_GreyedDialog):
         self.setFocus()
         self.accepted.connect(self.on_finished)
         self.rejected.connect(self.on_finished)
+
+    def _get_spacer_top(self):
+        return self.vertical_layout.itemAt(0).spacerItem()
+
+    def _get_spacer_bottom(self):
+        return self.vertical_layout.itemAt(2).spacerItem()
+
+    def _get_spacer_left(self):
+        return self.horizontal_layout.itemAt(0).spacerItem()
+
+    def _get_spacer_right(self):
+        return self.horizontal_layout.itemAt(2).spacerItem()
 
     def paintEvent(self, event):
         opt = QStyleOption()

@@ -22,10 +22,6 @@ async def logged_gui(aqtbot, gui_factory, running_backend, autoclose_dialog, cor
     async with aqtbot.wait_signals([lw.login_with_password_clicked, tabw.logged_in]):
         await aqtbot.mouse_click(lw.button_login, QtCore.Qt.LeftButton)
 
-    # Users and devices are not populated on startup
-    assert gui.test_get_devices_widget().devices == []
-    assert gui.test_get_users_widget().users == []
-
     return gui
 
 
