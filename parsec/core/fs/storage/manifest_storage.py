@@ -33,7 +33,7 @@ class ManifestStorage:
         # the chunks that needs to be removed from the localdb after the
         # manifest is written. Note: this set might be empty but the manifest
         # still requires to be flushed.
-        self._cache_ahead_of_localdb: Dict[EntryID, set] = {}
+        self._cache_ahead_of_localdb: Dict[EntryID, Set[Union[ChunkID, BlockID]]] = {}
 
     @property
     def path(self):
@@ -172,7 +172,7 @@ class ManifestStorage:
         entry_id: EntryID,
         manifest: LocalManifest,
         cache_only: bool = False,
-        removed_ids: Optional[Union[Set[ChunkID], Set[BlockID]]] = None,
+        removed_ids: Optional[Set[Union[ChunkID, BlockID]]] = None,
     ) -> None:
         """
         Raises: Nothing !
