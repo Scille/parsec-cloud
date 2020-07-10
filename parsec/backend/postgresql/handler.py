@@ -189,13 +189,13 @@ class PGHandler:
                         )
                         task_status.started()
                         await trio.sleep_forever()
-            except OSError as err:
+            except OSError:
                 if self.first_tries_number == 1:
-                    raise err
+                    raise
                 if self.first_tries_number > 1:
                     self.first_tries_number -= 1
                 logger.warning(
-                    "first db connection failed",
+                    "initial db connection failed",
                     tries_remaining=self.first_tries_number
                     if self.first_tries_number
                     else "unlimited",

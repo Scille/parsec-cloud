@@ -232,20 +232,14 @@ Allowed values:
     default=1,
     show_default=True,
     envvar="PARSEC_DB_FIRST_TRIES_NUMBER",
-    help=(
-        "Number of first tries allowed to connect to the database if using PostgreSQL, "
-        "0 is unlimited"
-    ),
+    help="Number of tries allowed during initial database connection (0 is unlimited)",
 )
 @click.option(
     "--db-first-tries-sleep",
     default=1,
     show_default=True,
     envvar="PARSEC_DB_FIRST_TRIES_SLEEP",
-    help=(
-        "Number of seconds waited between tries when connecting to the database if using "
-        "PostgreSQL and multiple tries are enabled"
-    ),
+    help="Number of second waited between tries during initial database connection",
 )
 @click.option(
     "--blockstore",
