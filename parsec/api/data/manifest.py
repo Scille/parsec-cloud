@@ -110,6 +110,7 @@ class VerifyParentMixin:
 class Manifest(BaseAPISignedData):
     class SCHEMA_CLS(OneOfSchema, BaseSignedDataSchema):
         type_field = "type"
+        version = fields.Integer(required=True, validate=validate.Range(min=0))
 
         @property
         def type_schemas(self):

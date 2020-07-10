@@ -52,7 +52,7 @@ class FSOperationError(OSError, FSError):
     """
 
     ERRNO: Optional[int] = None
-    WINERROR = None
+    WINERROR: Optional[int] = None
     NTSTATUS: Optional[ntstatus] = None
 
     def __init__(self, message=None, filename=None, filename2=None):

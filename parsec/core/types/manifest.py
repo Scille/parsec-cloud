@@ -203,6 +203,7 @@ T = TypeVar("T", bound="LocalManifest")
 class LocalManifest(BaseLocalData):
     class SCHEMA_CLS(OneOfSchema, BaseSchema):
         type_field = "type"
+        need_sync = fields.Boolean(required=True)
 
         @property
         def type_schemas(self):
@@ -218,6 +219,7 @@ class LocalManifest(BaseLocalData):
 
     need_sync: bool
     updated: Pendulum
+    base: RemoteManifest
 
     # Properties
 
@@ -261,7 +263,7 @@ class LocalManifest(BaseLocalData):
     def to_remote(self) -> RemoteManifest:
         raise NotImplementedError
 
-    def match_remote(self, remote_manifest: RemoteFileManifest) -> bool:
+    def match_remote(self, remote_manifest: RemoteManifest) -> bool:
         reference = self.to_remote(
             author=remote_manifest.author, timestamp=remote_manifest.timestamp
         )

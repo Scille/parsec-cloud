@@ -2,7 +2,7 @@
 
 from pathlib import Path
 from collections import defaultdict
-from typing import Dict, Tuple, Set, Optional, Union
+from typing import Dict, Tuple, Set, Optional, Union, AsyncGenerator
 
 import trio
 from trio import hazmat
@@ -74,7 +74,7 @@ class BaseWorkspaceStorage:
     # Locking helpers
 
     @asynccontextmanager
-    async def lock_entry_id(self, entry_id: EntryID):
+    async def lock_entry_id(self, entry_id: EntryID) -> AsyncGenerator[EntryID, None]:
         async with self.entry_locks[entry_id]:
             try:
                 self.locking_tasks[entry_id] = hazmat.current_task()
@@ -83,7 +83,7 @@ class BaseWorkspaceStorage:
                 del self.locking_tasks[entry_id]
 
     @asynccontextmanager
-    async def lock_manifest(self, entry_id: EntryID):
+    async def lock_manifest(self, entry_id: EntryID) -> AsyncGenerator[LocalManifest, None]:
         async with self.lock_entry_id(entry_id):
             yield await self.get_manifest(entry_id)
 
@@ -275,13 +275,13 @@ class WorkspaceStorage(BaseWorkspaceStorage):
 
     # Vacuum
 
-    async def run_vacuum(self):
+    async def run_vacuum(self) -> None:
         # Only the data storage needs to get vacuuumed
         await self.data_localdb.run_vacuum()
 
     # Timestamped workspace
 
-    def to_timestamped(self, timestamp: Pendulum):
+    def to_timestamped(self, timestamp: Pendulum) -> "WorkspaceStorageTimestamped":
         return WorkspaceStorageTimestamped(self, timestamp)
 
 
@@ -359,5 +359,5 @@ class WorkspaceStorageTimestamped(BaseWorkspaceStorage):
     async def ensure_manifest_persistent(self, entry_id: EntryID) -> None:
         pass
 
-    def to_timestamped(self, timestamp: Pendulum):
+    def to_timestamped(self, timestamp: Pendulum) -> "WorkspaceStorageTimestamped":
         return WorkspaceStorageTimestamped(self, timestamp)

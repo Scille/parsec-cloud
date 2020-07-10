@@ -1,10 +1,10 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
 
+import attr
 from typing import Tuple
 
 from parsec.serde import BaseSchema, MsgpackSerializer
 from parsec.api.data import BaseData, EntryName
-import attr
 
 __all__ = ("BaseLocalData", "FsPath")
 

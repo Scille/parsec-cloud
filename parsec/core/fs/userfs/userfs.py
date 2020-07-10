@@ -4,7 +4,7 @@ from parsec.core.core_events import CoreEvent
 import trio
 from pathlib import Path
 from pendulum import Pendulum, now as pendulum_now
-from typing import List, Tuple, Optional, Union
+from typing import Tuple, Optional, Union, Dict, Sequence
 from structlog import get_logger
 
 from async_generator import asynccontextmanager
@@ -35,6 +35,7 @@ from parsec.core.types import (
 # TODO: handle exceptions status...
 from parsec.core.backend_connection import (
     APIV1_BackendAuthenticatedCmds,
+    BackendAuthenticatedCmds,
     BackendConnectionError,
     BackendNotAvailable,
 )
@@ -148,7 +149,7 @@ class UserFS:
         self,
         device: LocalDevice,
         path: Path,
-        backend_cmds: APIV1_BackendAuthenticatedCmds,
+        backend_cmds: Union[APIV1_BackendAuthenticatedCmds, BackendAuthenticatedCmds],
         remote_devices_manager: RemoteDevicesManager,
         event_bus: EventBus,
     ):
@@ -158,14 +159,14 @@ class UserFS:
         self.remote_devices_manager = remote_devices_manager
         self.event_bus = event_bus
 
-        self.storage = None
+        self.storage: Optional[UserStorage] = None
 
         # Message processing is done in-order, hence it is pointless to do
         # it concurrently
-        self._workspace_storage_nursery = None
+        self._workspace_storage_nursery: Optional[trio.Nursery] = None
         self._process_messages_lock = trio.Lock()
         self._update_user_manifest_lock = trio.Lock()
-        self._workspace_storages = {}
+        self._workspace_storages: Dict[EntryID, WorkspaceFS] = {}
 
         now = pendulum_now()
         wentry = WorkspaceEntry(
@@ -216,11 +217,16 @@ class UserFS:
 
     def get_user_manifest(self) -> LocalUserManifest:
         """
-        Raises: Nothing !
+        Raises: ValueError
         """
+        if self.storage is None:
+            raise ValueError("Storage not set")
         return self.storage.get_user_manifest()
 
     async def set_user_manifest(self, manifest: LocalUserManifest) -> None:
+
+        if self.storage is None:
+            raise ValueError("Storage not set")
 
         # Make sure all the workspaces are loaded
         # In particular, we want to make sure that any workspace available through
@@ -233,6 +239,9 @@ class UserFS:
         await self.storage.set_user_manifest(manifest)
 
     async def _instantiate_workspace_storage(self, workspace_id: EntryID) -> WorkspaceStorage:
+        if self._workspace_storage_nursery is None:
+            raise ValueError("Storage not set")
+
         path = self.path / str(workspace_id)
 
         async def workspace_storage_task(task_status=trio.TASK_STATUS_IGNORED):
@@ -344,7 +353,7 @@ class UserFS:
             await self.set_user_manifest(updated_user_manifest)
             self.event_bus.send(CoreEvent.FS_ENTRY_UPDATED, id=self.user_manifest_id)
 
-    async def _fetch_remote_user_manifest(self, version: int = None) -> UserManifest:
+    async def _fetch_remote_user_manifest(self, version: Optional[int] = None) -> UserManifest:
         """
         Raises:
             FSError
@@ -594,7 +603,9 @@ class UserFS:
         # Build the sharing message
         try:
             if role is not None:
-                recipient_message = SharingGrantedMessageContent(
+                recipient_message: Union[
+                    SharingGrantedMessageContent, SharingRevokedMessageContent
+                ] = SharingGrantedMessageContent(
                     author=self.device.device_id,
                     timestamp=now,
                     name=workspace_entry.name,
@@ -651,7 +662,7 @@ class UserFS:
         elif rep["status"] != "ok":
             raise FSError(f"Error while trying to set vlob group roles in backend: {rep}")
 
-    async def process_last_messages(self) -> List[Tuple[int, Exception]]:
+    async def process_last_messages(self) -> Sequence[Tuple[int, Exception]]:
         """
         Raises:
             FSError
@@ -737,7 +748,7 @@ class UserFS:
             self.event_bus.send(CoreEvent.MESSAGE_PINGED, ping=msg.ping)
 
     async def _process_message_sharing_granted(
-        self, msg: Union[SharingRevokedMessageContent, SharingReencryptedMessageContent]
+        self, msg: Union[SharingGrantedMessageContent, SharingReencryptedMessageContent]
     ):
         """
         Raises:
@@ -757,7 +768,7 @@ class UserFS:
         except FSWorkspaceNoAccess:
             # Seems we lost the access roles anyway, nothing to do then
             return
-
+        print(msg)
         if roles.get(msg.author.user_id, None) not in (WorkspaceRole.OWNER, WorkspaceRole.MANAGER):
             raise FSSharingNotAllowedError(
                 f"User {msg.author.user_id} cannot share workspace `{msg.id}`"
@@ -1029,6 +1040,6 @@ class UserFS:
             if previous_workspace_entry.encryption_revision == current_encryption_revision - 1:
                 break
             else:
-                version_to_fetch = previous_workspace_entry.version - 1
+                version_to_fetch = previous_user_manifest.version - 1
 
         return ReencryptionJob(self.backend_cmds, workspace_entry, previous_workspace_entry)

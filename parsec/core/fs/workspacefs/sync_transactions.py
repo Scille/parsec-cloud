@@ -2,7 +2,7 @@
 
 from parsec.core.core_events import CoreEvent
 from itertools import count
-from typing import Optional, List, Dict, AsyncIterator
+from typing import Optional, List, Dict, AsyncIterator, cast, Tuple, Any, Union
 
 from pendulum import now as pendulum_now
 from parsec.api.protocol import DeviceID
@@ -13,6 +13,7 @@ from parsec.core.types import (
     EntryName,
     LocalManifest,
     LocalFileManifest,
+    LocalFolderManifest,
     LocalFolderishManifests,
     RemoteFolderishManifests,
 )
@@ -80,8 +81,8 @@ def merge_folder_children(
     ids = set(local_reversed) | set(remote_reversed)
 
     # First map all ids to their rightful name
-    solved_local_children = {}
-    solved_remote_children = {}
+    solved_local_children: Dict[EntryName, Any] = {}
+    solved_remote_children: Dict[EntryName, Any] = {}
     for id in ids:
         base_name = base_reversed.get(id)
         local_name = local_reversed.get(id)
@@ -149,6 +150,7 @@ def merge_manifests(
     if remote_version <= local_version:
         return local_manifest
 
+    remote_manifest = cast(RemoteManifest, remote_manifest)
     # Only the remote has changed
     if not local_manifest.need_sync:
         return LocalManifest.from_remote(remote_manifest)
@@ -173,9 +175,9 @@ def merge_manifests(
 
     # Solve the folder conflict
     new_children = merge_folder_children(
-        local_manifest.base.children,
-        local_manifest.children,
-        remote_manifest.children,
+        cast(LocalFolderishManifests, local_manifest).base.children,
+        cast(LocalFolderishManifests, local_manifest).children,
+        cast(RemoteFolderishManifests, remote_manifest).children,
         remote_manifest.author,
     )
     return local_manifest.evolve_and_mark_updated(base=remote_manifest, children=new_children)
@@ -289,7 +291,10 @@ class SyncTransactions(EntryTransactions):
             await self.remote_loader.load_blocks(missing)
 
     async def file_conflict(
-        self, entry_id: EntryID, local_manifest: LocalManifest, remote_manifest: RemoteManifest
+        self,
+        entry_id: EntryID,
+        local_manifest: Union[LocalFolderManifest, LocalFileManifest],
+        remote_manifest: RemoteManifest,
     ) -> None:
         # This is the only transaction that affects more than one manifests
         # That's because the local version of the file has to be registered in the
@@ -318,7 +323,7 @@ class SyncTransactions(EntryTransactions):
                             new_chunk = new_chunk.evolve_as_block(data)
                         new_chunks.append(chunk)
                     new_blocks.append(tuple(new_chunks))
-                new_blocks = tuple(new_blocks)
+                new_blocks: Tuple[Tuple[Any, ...], ...] = tuple(new_blocks)
 
                 # Prepare
                 new_name = get_conflict_filename(

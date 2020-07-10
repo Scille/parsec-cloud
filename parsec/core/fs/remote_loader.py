@@ -320,8 +320,8 @@ class RemoteLoader:
         self,
         entry_id: EntryID,
         version: Optional[int] = None,
-        timestamp: Pendulum = None,
-        expected_backend_timestamp: Pendulum = None,
+        timestamp: Optional[Pendulum] = None,
+        expected_backend_timestamp: Optional[Pendulum] = None,
     ) -> RemoteManifest:
         """
         Download a manifest.
@@ -599,8 +599,8 @@ class RemoteLoaderTimestamped(RemoteLoader):
         self,
         entry_id: EntryID,
         version: Optional[int] = None,
-        timestamp: Pendulum = None,
-        expected_backend_timestamp: Pendulum = None,
+        timestamp: Optional[Pendulum] = None,
+        expected_backend_timestamp: Optional[Pendulum] = None,
     ) -> RemoteManifest:
         """
         Allows to have manifests at all timestamps as it is needed by the versions method of either

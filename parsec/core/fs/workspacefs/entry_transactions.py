@@ -1,7 +1,7 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
 
 from parsec.core.core_events import CoreEvent
-from typing import Tuple
+from typing import Tuple, cast, Optional, AsyncGenerator
 from async_generator import asynccontextmanager
 
 from parsec.core.types import (
@@ -12,6 +12,7 @@ from parsec.core.types import (
     LocalFileManifest,
     LocalFolderManifest,
     FileDescriptor,
+    LocalFolderishManifests,
 )
 
 
@@ -53,7 +54,7 @@ class EntryTransactions(FileTransactions):
         try:
             return await self.local_storage.get_manifest(entry_id)
         except FSLocalMissError as exc:
-            remote_manifest = await self.remote_loader.load_manifest(exc.id)
+            remote_manifest = await self.remote_loader.load_manifest(cast(EntryID, exc.id))
             return LocalManifest.from_remote(remote_manifest)
 
     @asynccontextmanager
@@ -62,7 +63,7 @@ class EntryTransactions(FileTransactions):
             try:
                 local_manifest = await self.local_storage.get_manifest(entry_id)
             except FSLocalMissError as exc:
-                remote_manifest = await self.remote_loader.load_manifest(exc.id)
+                remote_manifest = await self.remote_loader.load_manifest(cast(EntryID, exc.id))
                 local_manifest = LocalManifest.from_remote(remote_manifest)
                 await self.local_storage.set_manifest(entry_id, local_manifest)
             yield local_manifest
@@ -72,7 +73,7 @@ class EntryTransactions(FileTransactions):
             return manifest
 
     @asynccontextmanager
-    async def _lock_manifest_from_path(self, path: FsPath) -> LocalManifest:
+    async def _lock_manifest_from_path(self, path: FsPath) -> AsyncGenerator[LocalManifest, None]:
         # Root entry_id and manifest
         entry_id = self.workspace_id
 
@@ -82,7 +83,7 @@ class EntryTransactions(FileTransactions):
             if is_file_manifest(manifest):
                 raise FSNotADirectoryError(filename=path)
             try:
-                entry_id = manifest.children[name]
+                entry_id = cast(LocalFolderishManifests, manifest).children[name]
             except (AttributeError, KeyError):
                 raise FSFileNotFoundError(filename=path)
 
@@ -97,7 +98,7 @@ class EntryTransactions(FileTransactions):
     @asynccontextmanager
     async def _lock_parent_manifest_from_path(
         self, path: FsPath
-    ) -> Tuple[LocalManifest, LocalManifest]:
+    ) -> AsyncGenerator[Tuple[LocalManifest, Optional[LocalManifest]], None]:
         # This is the most complicated locking scenario.
         # It requires locking the parent of the given entry and the entry itself
         # if it exists.
@@ -161,7 +162,7 @@ class EntryTransactions(FileTransactions):
 
     async def entry_rename(
         self, source: FsPath, destination: FsPath, overwrite: bool = True
-    ) -> EntryID:
+    ) -> Optional[EntryID]:
         # Check write rights
         self.check_write_rights(source)
 
@@ -191,7 +192,7 @@ class EntryTransactions(FileTransactions):
 
             # Source and destination are the same
             if source.name == destination.name:
-                return
+                return None
 
             # Destination already exists
             if not overwrite and child is not None:
@@ -319,7 +320,9 @@ class EntryTransactions(FileTransactions):
         # Return the entry id of the created folder
         return child.id
 
-    async def file_create(self, path: FsPath, open=True) -> Tuple[EntryID, FileDescriptor]:
+    async def file_create(
+        self, path: FsPath, open=True
+    ) -> Tuple[EntryID, Optional[FileDescriptor]]:
         # Check write rights
         self.check_write_rights(path)
 

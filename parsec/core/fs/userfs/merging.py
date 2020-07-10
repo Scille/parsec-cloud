@@ -1,9 +1,10 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
 
-from typing import Tuple, Optional
+from typing import Tuple, Optional, Dict
 
 from parsec.api.data import UserManifest, WorkspaceEntry
 from parsec.core.types import LocalUserManifest
+from parsec.api.data.entry import EntryID
 
 
 # TODO: replace sanity asserts by cleaner exceptions given they could be
@@ -58,9 +59,6 @@ def merge_workspace_entry(
     )
 
 
-from typing import Dict, Any
-
-
 def merge_workspace_entries(
     base: Optional[Tuple[WorkspaceEntry, ...]],
     diverged: Tuple[WorkspaceEntry, ...],
@@ -77,7 +75,7 @@ def merge_workspace_entries(
     assert not base_entries - diverged_entries
     assert not base_entries - target_entries
 
-    resolved: Dict[Any, WorkspaceEntry] = {we.id: we for we in target}
+    resolved: Dict[EntryID, WorkspaceEntry] = {we.id: we for we in target}
     for d_entry in diverged:
         t_entry: Optional[WorkspaceEntry] = resolved.get(d_entry.id)
 
