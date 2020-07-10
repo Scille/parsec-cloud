@@ -5,7 +5,6 @@ from uuid import UUID
 from typing import List, Tuple, Dict, Optional
 
 from parsec.api.protocol import DeviceID, OrganizationID
-from parsec.backend.realm import RealmRole
 from parsec.backend.vlob import BaseVlobComponent
 from parsec.backend.postgresql.handler import PGHandler, retry_on_unique_violation
 from parsec.backend.postgresql.vlob_queries import (
@@ -17,15 +16,6 @@ from parsec.backend.postgresql.vlob_queries import (
     query_list_versions,
     query_create,
 )
-from parsec.backend.postgresql.vlob_queries.utils import _check_realm, _check_realm_access
-
-
-async def _check_realm_and_write_access(
-    conn, organization_id, author, realm_id, encryption_revision
-):
-    await _check_realm(conn, organization_id, realm_id, encryption_revision)
-    can_write_roles = (RealmRole.OWNER, RealmRole.MANAGER, RealmRole.CONTRIBUTOR)
-    await _check_realm_access(conn, organization_id, realm_id, author, can_write_roles)
 
 
 class PGVlobComponent(BaseVlobComponent):

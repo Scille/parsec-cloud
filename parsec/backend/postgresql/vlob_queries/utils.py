@@ -7,6 +7,7 @@ from parsec.backend.postgresql.utils import (
     q_organization_internal_id,
     STR_TO_REALM_ROLE,
 )
+from parsec.backend.realm import RealmRole
 from parsec.backend.vlob import (
     VlobNotFoundError,
     VlobInMaintenanceError,
@@ -63,6 +64,14 @@ async def _check_realm_access(conn, organization_id, realm_id, author, allowed_r
 
     if STR_TO_REALM_ROLE.get(rep[0]) not in allowed_roles:
         raise VlobAccessError()
+
+
+async def _check_realm_and_write_access(
+    conn, organization_id, author, realm_id, encryption_revision
+):
+    await _check_realm(conn, organization_id, realm_id, encryption_revision)
+    can_write_roles = (RealmRole.OWNER, RealmRole.MANAGER, RealmRole.CONTRIBUTOR)
+    await _check_realm_access(conn, organization_id, realm_id, author, can_write_roles)
 
 
 _q_get_realm_id_from_vlob_id = Q(

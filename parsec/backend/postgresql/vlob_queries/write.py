@@ -20,7 +20,10 @@ from parsec.backend.vlob import (
     VlobAlreadyExistsError,
 )
 from parsec.backend.postgresql.handler import send_signal
-from parsec.backend.postgresql.vlob_queries.utils import _get_realm_id_from_vlob_id
+from parsec.backend.postgresql.vlob_queries.utils import (
+    _get_realm_id_from_vlob_id,
+    _check_realm_and_write_access,
+)
 from parsec.backend.backend_events import BackendEvent
 
 
@@ -124,8 +127,6 @@ async def query_update(
     timestamp: pendulum.Pendulum,
     blob: bytes,
 ) -> None:
-    from parsec.backend.postgresql.vlob import _check_realm_and_write_access
-
     async with conn.transaction():
         realm_id = await _get_realm_id_from_vlob_id(conn, organization_id, vlob_id)
         await _check_realm_and_write_access(
@@ -211,8 +212,6 @@ async def query_create(
     timestamp: pendulum.Pendulum,
     blob: bytes,
 ) -> None:
-    from parsec.backend.postgresql.vlob import _check_realm_and_write_access
-
     async with conn.transaction():
 
         await _check_realm_and_write_access(
