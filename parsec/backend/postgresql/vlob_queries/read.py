@@ -6,6 +6,7 @@ from typing import Dict, Tuple, Optional
 
 from parsec.api.protocol import DeviceID, OrganizationID
 from parsec.backend.vlob import VlobVersionError, VlobNotFoundError
+from parsec.backend.realm import RealmRole
 from parsec.backend.postgresql.utils import (
     Q,
     query,
@@ -14,7 +15,11 @@ from parsec.backend.postgresql.utils import (
     q_organization_internal_id,
     q_vlob_encryption_revision_internal_id,
 )
-from parsec.backend.postgresql.vlob_queries.utils import query_get_realm_id_from_vlob_id
+from parsec.backend.postgresql.vlob_queries.utils import (
+    _get_realm_id_from_vlob_id,
+    _check_realm,
+    _check_realm_access,
+)
 
 
 _q_read_data_without_timestamp = Q(
@@ -85,6 +90,14 @@ WHERE
 )
 
 
+async def _check_realm_and_read_access(
+    conn, organization_id, author, realm_id, encryption_revision
+):
+    await _check_realm(conn, organization_id, realm_id, encryption_revision)
+    can_read_roles = (RealmRole.OWNER, RealmRole.MANAGER, RealmRole.CONTRIBUTOR, RealmRole.READER)
+    await _check_realm_access(conn, organization_id, realm_id, author, can_read_roles)
+
+
 @query()
 async def query_read(
     conn,
@@ -95,11 +108,10 @@ async def query_read(
     version: Optional[int] = None,
     timestamp: Optional[pendulum.Pendulum] = None,
 ) -> Tuple[int, bytes, DeviceID, pendulum.Pendulum]:
-    from parsec.backend.postgresql.vlob import _check_realm_and_read_access
 
     async with conn.transaction():
 
-        realm_id = await query_get_realm_id_from_vlob_id(conn, organization_id, vlob_id)
+        realm_id = await _get_realm_id_from_vlob_id(conn, organization_id, vlob_id)
         await _check_realm_and_read_access(
             conn, organization_id, author, realm_id, encryption_revision
         )
@@ -114,7 +126,7 @@ async def query_read(
                         vlob_id=vlob_id,
                     )
                 )
-                assert data  # query_get_realm_id_from_vlob_id checks vlob presence
+                assert data  # _get_realm_id_from_vlob_id checks vlob presence
 
             else:
                 data = await conn.fetchrow(
@@ -180,10 +192,7 @@ ORDER BY version DESC
 async def query_poll_changes(
     conn, organization_id: OrganizationID, author: DeviceID, realm_id: UUID, checkpoint: int
 ) -> Tuple[int, Dict[UUID, int]]:
-    from parsec.backend.postgresql.vlob import _check_realm_and_read_access
-
     async with conn.transaction():
-
         await _check_realm_and_read_access(conn, organization_id, author, realm_id, None)
 
         ret = await conn.fetch(
@@ -201,11 +210,9 @@ async def query_poll_changes(
 async def query_list_versions(
     pool, organization_id: OrganizationID, author: DeviceID, vlob_id: UUID
 ) -> Dict[int, Tuple[pendulum.Pendulum, DeviceID]]:
-    from parsec.backend.postgresql.vlob import _check_realm_and_read_access
-
     async with pool.acquire() as conn:
         async with conn.transaction():
-            realm_id = await query_get_realm_id_from_vlob_id(conn, organization_id, vlob_id)
+            realm_id = await _get_realm_id_from_vlob_id(conn, organization_id, vlob_id)
             await _check_realm_and_read_access(conn, organization_id, author, realm_id, None)
 
             rows = await conn.fetch(

@@ -2,13 +2,36 @@
 
 from parsec.backend.postgresql.utils import (
     Q,
-    query,
     q_realm_internal_id,
     q_user_internal_id,
     q_organization_internal_id,
     STR_TO_REALM_ROLE,
 )
-from parsec.backend.vlob import VlobAccessError, VlobNotFoundError
+from parsec.backend.vlob import (
+    VlobNotFoundError,
+    VlobInMaintenanceError,
+    VlobNotInMaintenanceError,
+    VlobEncryptionRevisionError,
+    VlobAccessError,
+)
+from parsec.backend.postgresql.realm_queries.maintenance import get_realm_status, RealmNotFoundError
+
+
+async def _check_realm(
+    conn, organization_id, realm_id, encryption_revision, expected_maintenance=False
+):
+    try:
+        rep = await get_realm_status(conn, organization_id, realm_id)
+    except RealmNotFoundError as exc:
+        raise VlobNotFoundError(*exc.args) from exc
+    if expected_maintenance is False:
+        if rep["maintenance_type"]:
+            raise VlobInMaintenanceError("Data realm is currently under maintenance")
+    elif expected_maintenance is True:
+        if not rep["maintenance_type"]:
+            raise VlobNotInMaintenanceError(f"Realm `{realm_id}` not under maintenance")
+    if encryption_revision is not None and rep["encryption_revision"] != encryption_revision:
+        raise VlobEncryptionRevisionError()
 
 
 _q_check_realm_access = Q(
@@ -28,8 +51,7 @@ WHERE user_._id = { q_user_internal_id(organization_id="$organization_id", user_
 )
 
 
-@query()
-async def query_check_realm_access(conn, organization_id, realm_id, author, allowed_roles):
+async def _check_realm_access(conn, organization_id, realm_id, author, allowed_roles):
     rep = await conn.fetchrow(
         *_q_check_realm_access(
             organization_id=organization_id, realm_id=realm_id, user_id=author.user_id
@@ -65,8 +87,7 @@ LIMIT 1
 )
 
 
-@query()
-async def query_get_realm_id_from_vlob_id(conn, organization_id, vlob_id):
+async def _get_realm_id_from_vlob_id(conn, organization_id, vlob_id):
 
     realm_id = await conn.fetchval(
         *_q_get_realm_id_from_vlob_id(organization_id=organization_id, vlob_id=vlob_id)

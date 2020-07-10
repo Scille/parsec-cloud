@@ -11,6 +11,7 @@ from parsec.backend.postgresql.utils import (
     q_vlob_encryption_revision_internal_id,
     q_organization_internal_id,
 )
+from parsec.backend.postgresql.vlob_queries.utils import _check_realm, _check_realm_access
 
 
 _q_maintenance_get_reencryption_batch = Q(
@@ -120,8 +121,6 @@ SELECT (
 async def _check_realm_and_maintenance_access(
     conn, organization_id, author, realm_id, encryption_revision
 ):
-    from parsec.backend.postgresql.vlob import _check_realm, _check_realm_access
-
     await _check_realm(
         conn, organization_id, realm_id, encryption_revision, expected_maintenance=True
     )

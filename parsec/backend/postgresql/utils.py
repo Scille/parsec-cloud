@@ -140,11 +140,13 @@ def q_vlob_encryption_revision_internal_id(
     else:
         _q_realm = realm
     return f"""
-(SELECT _id
-    FROM {table}
-    WHERE
-        {table}.realm = {_q_realm}
-        AND {table}.encryption_revision = {encryption_revision})
+(
+SELECT _id
+FROM {table}
+WHERE
+    {table}.realm = {_q_realm}
+    AND {table}.encryption_revision = {encryption_revision}
+)
 """
 
 

@@ -4,53 +4,20 @@ import pendulum
 from uuid import UUID
 from typing import List, Tuple, Dict, Optional
 
-from parsec.backend.backend_events import BackendEvent
 from parsec.api.protocol import DeviceID, OrganizationID
 from parsec.backend.realm import RealmRole
-from parsec.backend.vlob import (
-    BaseVlobComponent,
-    VlobNotFoundError,
-    VlobEncryptionRevisionError,
-    VlobInMaintenanceError,
-    VlobNotInMaintenanceError,
-)
+from parsec.backend.vlob import BaseVlobComponent
 from parsec.backend.postgresql.handler import PGHandler, retry_on_unique_violation
-from parsec.backend.postgresql.realm_queries.maintenance import get_realm_status, RealmNotFoundError
 from parsec.backend.postgresql.vlob_queries import (
     query_update,
-    query_vlob_updated,
     query_maintenance_save_reencryption_batch,
     query_maintenance_get_reencryption_batch,
     query_read,
     query_poll_changes,
     query_list_versions,
-    query_check_realm_access,
     query_create,
 )
-
-
-async def _check_realm(
-    conn, organization_id, realm_id, encryption_revision, expected_maintenance=False
-):
-    try:
-        rep = await get_realm_status(conn, organization_id, realm_id)
-
-    except RealmNotFoundError as exc:
-        raise VlobNotFoundError(*exc.args) from exc
-
-    if expected_maintenance is False:
-        if rep["maintenance_type"]:
-            raise VlobInMaintenanceError("Data realm is currently under maintenance")
-    elif expected_maintenance is True:
-        if not rep["maintenance_type"]:
-            raise VlobNotInMaintenanceError(f"Realm `{realm_id}` not under maintenance")
-
-    if encryption_revision is not None and rep["encryption_revision"] != encryption_revision:
-        raise VlobEncryptionRevisionError()
-
-
-async def _check_realm_access(conn, organization_id, realm_id, author, allowed_roles):
-    await query_check_realm_access(conn, organization_id, realm_id, author, allowed_roles)
+from parsec.backend.postgresql.vlob_queries.utils import _check_realm, _check_realm_access
 
 
 async def _check_realm_and_write_access(
@@ -59,28 +26,6 @@ async def _check_realm_and_write_access(
     await _check_realm(conn, organization_id, realm_id, encryption_revision)
     can_write_roles = (RealmRole.OWNER, RealmRole.MANAGER, RealmRole.CONTRIBUTOR)
     await _check_realm_access(conn, organization_id, realm_id, author, can_write_roles)
-
-
-async def _check_realm_and_read_access(
-    conn, organization_id, author, realm_id, encryption_revision
-):
-    await _check_realm(conn, organization_id, realm_id, encryption_revision)
-    can_read_roles = (RealmRole.OWNER, RealmRole.MANAGER, RealmRole.CONTRIBUTOR, RealmRole.READER)
-    await _check_realm_access(conn, organization_id, realm_id, author, can_read_roles)
-
-
-async def _vlob_updated(
-    conn, vlob_atom_internal_id, organization_id, author, realm_id, src_id, src_version=1
-):
-    await query_vlob_updated(
-        conn,
-        BackendEvent.REALM_VLOBS_UPDATED,
-        organization_id=organization_id,
-        author=author,
-        realm_id=realm_id,
-        src_id=src_id,
-        src_version=src_version,
-    )
 
 
 class PGVlobComponent(BaseVlobComponent):
