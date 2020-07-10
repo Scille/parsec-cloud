@@ -17,6 +17,15 @@ services:
     depends_on:
       - "postgres"
 
+    #### TODO : that part will be useless once Parsec release are able to retry connections ####
+    depends_on:
+      - "postgres"
+    entrypoint: []
+    command: ["/bin/sh", "/wait-for-postgres.sh", "postgresql://parsec@postgres/parsec?password=DBPASS", "parsec", "backend", "run"]
+    volumes:
+      - ./packaging/docker/wait-for-postgres.sh:/wait-for-postgres.sh:ro
+    ############################################################################################
+
   postgres:
     image: "postgres"
     volumes:
