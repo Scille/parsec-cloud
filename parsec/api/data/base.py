@@ -68,7 +68,7 @@ class SignedDataMeta(DataMeta):
     BASE_SCHEMA_CLS = BaseSignedDataSchema
 
 
-T = TypeVar("T", bound="BaseSignedData")
+BaseSignedDataTypeVar = TypeVar("BaseSignedDataTypeVar", bound="BaseSignedData")
 
 
 @attr.s(slots=True, frozen=True, auto_attribs=True, kw_only=True, eq=False)
@@ -91,7 +91,7 @@ class BaseSignedData(metaclass=SignedDataMeta):
             return attr.astuple(self).__eq__(attr.astuple(other))
         return NotImplemented
 
-    def evolve(self, **kwargs) -> T:
+    def evolve(self, **kwargs) -> BaseSignedDataTypeVar:
         return attr.evolve(self, **kwargs)
 
     def _serialize(self) -> bytes:
@@ -102,7 +102,7 @@ class BaseSignedData(metaclass=SignedDataMeta):
         return self.SERIALIZER.dumps(self)
 
     @classmethod
-    def _deserialize(cls: Type[T], raw: bytes) -> T:
+    def _deserialize(cls: Type[BaseSignedDataTypeVar], raw: bytes) -> BaseSignedDataTypeVar:
         """
         Raises:
             DataError
@@ -150,7 +150,7 @@ class BaseSignedData(metaclass=SignedDataMeta):
             raise DataError(str(exc)) from exc
 
     @classmethod
-    def unsecure_load(cls: Type[T], signed: bytes) -> T:
+    def unsecure_load(cls: Type[BaseSignedDataTypeVar], signed: bytes) -> BaseSignedDataTypeVar:
         """
         Raises:
             DataError
@@ -160,12 +160,12 @@ class BaseSignedData(metaclass=SignedDataMeta):
 
     @classmethod
     def verify_and_load(
-        cls: Type[T],
+        cls: Type[BaseSignedDataTypeVar],
         signed: bytes,
         author_verify_key: VerifyKey,
         expected_author: Optional[DeviceID],
         expected_timestamp: Pendulum = None,
-    ) -> T:
+    ) -> BaseSignedDataTypeVar:
         """
         Raises:
             DataError
@@ -190,14 +190,14 @@ class BaseSignedData(metaclass=SignedDataMeta):
 
     @classmethod
     def decrypt_verify_and_load(
-        cls: Type[T],
+        cls: Type[BaseSignedDataTypeVar],
         encrypted: bytes,
         key: bytes,
         author_verify_key: VerifyKey,
         expected_author: DeviceID,
         expected_timestamp: Pendulum,
         **kwargs,
-    ) -> T:
+    ) -> BaseSignedDataTypeVar:
         """
         Raises:
             DataError
@@ -218,14 +218,14 @@ class BaseSignedData(metaclass=SignedDataMeta):
 
     @classmethod
     def decrypt_verify_and_load_for(
-        cls: Type[T],
+        cls: Type[BaseSignedDataTypeVar],
         encrypted: bytes,
         recipient_privkey: PrivateKey,
         author_verify_key: VerifyKey,
         expected_author: DeviceID,
         expected_timestamp: Pendulum,
         **kwargs,
-    ) -> T:
+    ) -> BaseSignedDataTypeVar:
         """
         Raises:
             DataError
@@ -245,7 +245,7 @@ class BaseSignedData(metaclass=SignedDataMeta):
         )
 
 
-BaseDataType = TypeVar("BaseDataType", bound="BaseData")
+BaseDataTypeVar = TypeVar("BaseDataTypeVar", bound="BaseData")
 
 
 class BaseData(metaclass=DataMeta):
@@ -276,7 +276,7 @@ class BaseData(metaclass=DataMeta):
         return self.SERIALIZER.dumps(self)
 
     @classmethod
-    def load(cls: Type[BaseDataType], raw: bytes) -> BaseDataType:
+    def load(cls: Type[BaseDataTypeVar], raw: bytes) -> BaseDataTypeVar:
         """
         Raises:
             DataError
@@ -309,8 +309,8 @@ class BaseData(metaclass=DataMeta):
 
     @classmethod
     def decrypt_and_load(
-        cls: Type[BaseDataType], encrypted: bytes, key: SecretKey, **kwargs
-    ) -> BaseDataType:
+        cls: Type[BaseDataTypeVar], encrypted: bytes, key: SecretKey, **kwargs
+    ) -> BaseDataTypeVar:
         """
         Raises:
             DataError
@@ -325,8 +325,8 @@ class BaseData(metaclass=DataMeta):
 
     @classmethod
     def decrypt_and_load_for(
-        cls: Type[BaseDataType], encrypted: bytes, recipient_privkey: PrivateKey, **kwargs
-    ) -> BaseDataType:
+        cls: Type[BaseDataTypeVar], encrypted: bytes, recipient_privkey: PrivateKey, **kwargs
+    ) -> BaseDataTypeVar:
         """
         Raises:
             DataError

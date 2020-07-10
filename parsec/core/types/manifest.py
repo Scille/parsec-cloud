@@ -2,7 +2,7 @@
 
 import attr
 import functools
-from typing import Optional, Tuple, TypeVar
+from typing import Optional, Tuple, TypeVar, Type
 from pendulum import Pendulum, now as pendulum_now
 
 from parsec.types import UUID4, FrozenDict
@@ -196,7 +196,7 @@ class LocalManifestType(Enum):
     LOCAL_USER_MANIFEST = "local_user_manifest"
 
 
-T = TypeVar("T", bound="LocalManifest")
+LocalManifestTypeVar = TypeVar("LocalManifestTypeVar", bound="LocalManifest")
 
 
 @attr.s(slots=True, frozen=True, auto_attribs=True, kw_only=True, eq=False)
@@ -241,7 +241,7 @@ class LocalManifest(BaseLocalData):
 
     # Evolve methods
 
-    def evolve_and_mark_updated(self: T, **data) -> T:
+    def evolve_and_mark_updated(self: LocalManifestTypeVar, **data) -> LocalManifestTypeVar:
         if "updated" not in data:
             data["updated"] = pendulum_now()
         data.setdefault("need_sync", True)
@@ -250,7 +250,9 @@ class LocalManifest(BaseLocalData):
     # Remote methods
 
     @classmethod
-    def from_remote(cls, remote: RemoteManifest) -> "LocalManifest":
+    def from_remote(
+        cls: Type[LocalManifestTypeVar], remote: RemoteManifest
+    ) -> LocalManifestTypeVar:
         if isinstance(remote, RemoteFileManifest):
             return LocalFileManifest.from_remote(remote)
         elif isinstance(remote, RemoteFolderManifest):
