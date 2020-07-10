@@ -2,12 +2,13 @@
 
 from pendulum import Pendulum
 
+from enum import Enum
+import attr
 from parsec.crypto import SecretKey
 from parsec.serde import fields, post_load, OneOfSchema
 from parsec.api.data.entry import EntryID, EntryIDField
 from parsec.api.data.base import BaseAPISignedData, BaseSignedDataSchema
-from enum import Enum
-import attr
+from parsec.api.protocol import DeviceID
 
 
 class MessageContentType(Enum):
@@ -33,6 +34,8 @@ class MessageContent(BaseAPISignedData):
 
         def get_obj_type(self, obj):
             return obj["type"]
+
+    author: DeviceID
 
 
 @attr.s(slots=True, frozen=True, auto_attribs=True, kw_only=True, eq=False)
