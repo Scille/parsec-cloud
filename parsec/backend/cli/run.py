@@ -208,12 +208,6 @@ Allowed values:
 """,
 )
 @click.option(
-    "--db-drop-deleted-data",
-    is_flag=True,
-    envvar="PARSEC_DB_DROP_DELETED_DATA",
-    help="Actually delete data database instead of just marking it has deleted",
-)
-@click.option(
     "--db-min-connections",
     default=5,
     show_default=True,
@@ -354,7 +348,6 @@ def run_cmd(
     host,
     port,
     db,
-    db_drop_deleted_data,
     db_min_connections,
     db_max_connections,
     blockstore,
@@ -410,7 +403,6 @@ def run_cmd(
         config = BackendConfig(
             administration_token=administration_token,
             db_url=db,
-            db_drop_deleted_data=db_drop_deleted_data,
             db_min_connections=db_min_connections,
             db_max_connections=db_max_connections,
             blockstore_config=blockstore,
