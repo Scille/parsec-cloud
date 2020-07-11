@@ -8,9 +8,11 @@ from trio.testing import trio_test as vanilla_trio_test
 import queue
 import threading
 from concurrent import futures
+from PyQt5 import QtCore
 
 from parsec.event_bus import EventBus
 from parsec import __version__ as parsec_version
+from parsec.core.local_device import save_device_with_password
 from parsec.core.gui.main_window import MainWindow
 from parsec.core.gui.trio_thread import QtToTrioJobScheduler
 from parsec.core.gui.login_widget import LoginWidget
@@ -286,6 +288,33 @@ def gui_factory(qtbot, qt_thread_gateway, core_config, monkeypatch):
 @pytest.fixture
 async def gui(gui_factory, event_bus, core_config):
     return await gui_factory(event_bus, core_config)
+
+
+@pytest.fixture
+async def logged_gui(aqtbot, gui_factory, core_config, alice, bob, fixtures_customization):
+    # Logged as bob (i.e. standard profile) by default
+    if fixtures_customization.get("logged_gui_as_admin", False):
+        device = alice
+    else:
+        device = bob
+
+    save_device_with_password(core_config.config_dir, device, "P@ssw0rd")
+
+    gui = await gui_factory()
+    lw = gui.test_get_login_widget()
+    tabw = gui.test_get_tab()
+
+    await aqtbot.key_clicks(lw.line_edit_password, "P@ssw0rd")
+
+    async with aqtbot.wait_signals([lw.login_with_password_clicked, tabw.logged_in]):
+        await aqtbot.mouse_click(lw.button_login, QtCore.Qt.LeftButton)
+
+    central_widget = gui.test_get_central_widget()
+    assert central_widget is not None
+
+    await aqtbot.mouse_click(central_widget.menu.button_users, QtCore.Qt.LeftButton)
+
+    return gui
 
 
 # Decorator to add a method to a class

@@ -1,6 +1,7 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
 
 import attr
+from uuid import UUID
 from pendulum import now as pendulum_now
 from typing import Optional, Tuple, List
 from structlog import get_logger
@@ -8,9 +9,9 @@ from functools import partial
 from async_generator import asynccontextmanager
 
 from parsec.event_bus import EventBus
-from parsec.api.protocol import UserID
+from parsec.api.protocol import UserID, InvitationType, InvitationDeletedReason
 from parsec.api.data import RevokedUserCertificateContent
-from parsec.core.types import LocalDevice, UserInfo, DeviceInfo
+from parsec.core.types import LocalDevice, UserInfo, DeviceInfo, BackendInvitationAddr
 from parsec.core.config import CoreConfig
 from parsec.core.backend_connection import (
     BackendAuthenticatedConn,
@@ -156,6 +157,61 @@ class LoggedCore:
 
         # Invalidate potential cache to avoid displaying the user as not-revoked
         self._remote_devices_manager.invalidate_user_cache(user_id)
+
+    async def new_user_invitation(self, email: str, send_email: bool) -> BackendInvitationAddr:
+        """
+        Raises:
+            BackendConnectionError
+        """
+        rep = await self._backend_conn.cmds.invite_new(
+            type=InvitationType.USER, claimer_email=email, send_email=send_email
+        )
+        if rep["status"] != "ok":
+            raise BackendConnectionError(f"Backend error: {rep}")
+        return BackendInvitationAddr.build(
+            backend_addr=self.device.organization_addr,
+            organization_id=self.device.organization_id,
+            invitation_type=InvitationType.USER,
+            token=rep["token"],
+        )
+
+    async def new_device_invitation(self, send_email: bool) -> BackendInvitationAddr:
+        """
+        Raises:
+            BackendConnectionError
+        """
+        rep = await self._backend_conn.cmds.invite_new(
+            type=InvitationType.DEVICE, send_email=send_email
+        )
+        if rep["status"] != "ok":
+            raise BackendConnectionError(f"Backend error: {rep}")
+        return BackendInvitationAddr.build(
+            backend_addr=self.device.organization_addr,
+            organization_id=self.device.organization_id,
+            invitation_type=InvitationType.DEVICE,
+            token=rep["token"],
+        )
+
+    async def delete_invitation(self, token: UUID, reason: InvitationDeletedReason) -> None:
+        """
+        Raises:
+            BackendConnectionError
+        """
+        rep = await self._backend_conn.cmds.invite_delete(
+            token=token, reason=InvitationDeletedReason.CANCELLED
+        )
+        if rep["status"] != "ok":
+            raise BackendConnectionError(f"Backend error: {rep}")
+
+    async def list_invitations(self) -> List[dict]:  # TODO: better return type
+        """
+        Raises:
+            BackendConnectionError
+        """
+        rep = await self._backend_conn.cmds.invite_list()
+        if rep["status"] != "ok":
+            raise BackendConnectionError(f"Backend error: {rep}")
+        return rep["invitations"]
 
 
 @asynccontextmanager

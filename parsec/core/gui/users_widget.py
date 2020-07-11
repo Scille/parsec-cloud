@@ -7,15 +7,11 @@ from PyQt5.QtCore import Qt, pyqtSignal, QTimer
 from PyQt5.QtWidgets import QWidget, QMenu, QGraphicsDropShadowEffect, QLabel
 from PyQt5.QtGui import QColor
 
-from parsec.api.protocol import InvitationType, InvitationDeletedReason
+from parsec.api.protocol import InvitationType
 from parsec.api.data import UserProfile
 from parsec.core.types import BackendInvitationAddr, UserInfo
 
-from parsec.core.backend_connection import (
-    BackendConnectionError,
-    BackendNotAvailable,
-    backend_authenticated_cmds_factory,
-)
+from parsec.core.backend_connection import BackendConnectionError, BackendNotAvailable
 
 from parsec.core.gui.trio_thread import JobResultError, ThreadSafeQtSignal, QtToTrioJob
 from parsec.core.gui.custom_dialogs import show_error, show_info, ask_question, get_text_input
@@ -160,55 +156,30 @@ async def _do_revoke_user(core, user_info):
         raise JobResultError("error") from exc
 
 
-async def _do_list_invitations(core):
-    async with backend_authenticated_cmds_factory(
-        addr=core.device.organization_addr,
-        device_id=core.device.device_id,
-        signing_key=core.device.signing_key,
-        keepalive=core.config.backend_connection_keepalive,
-    ) as cmds:
-        rep = await cmds.invite_list()
-        if rep["status"] != "ok":
-            raise JobResultError(rep["status"])
-        return [inv for inv in rep["invitations"] if inv["type"] == InvitationType.USER]
-
-
-async def _do_cancel_invitation(device, config, token):
-    async with backend_authenticated_cmds_factory(
-        addr=device.organization_addr,
-        device_id=device.device_id,
-        signing_key=device.signing_key,
-        keepalive=config.backend_connection_keepalive,
-    ) as cmds:
-        rep = await cmds.invite_delete(token=token, reason=InvitationDeletedReason.CANCELLED)
-        if rep["status"] != "ok":
-            raise JobResultError(rep["status"])
-
-
-async def _do_invite_user(device, config, email):
-    async with backend_authenticated_cmds_factory(
-        addr=device.organization_addr,
-        device_id=device.device_id,
-        signing_key=device.signing_key,
-        keepalive=config.backend_connection_keepalive,
-    ) as cmds:
-        rep = await cmds.invite_new(type=InvitationType.USER, claimer_email=email, send_email=True)
-        if rep["status"] != "ok":
-            raise JobResultError(rep["status"])
-        action_addr = BackendInvitationAddr.build(
-            backend_addr=device.organization_addr,
-            organization_id=device.organization_id,
-            invitation_type=InvitationType.USER,
-            token=rep["token"],
-        )
-        return action_addr
-
-
-async def _do_list_users(core):
+async def _do_list_users_and_invitations(core):
     try:
-        users, total = await core.find_humans()
         # TODO: handle pagination ! (currently we only display the first 100 users...)
-        return users
+        users, total = await core.find_humans()
+        invitations = await core.list_invitations()
+        return users, [inv for inv in invitations if inv["type"] == InvitationType.USER]
+    except BackendNotAvailable as exc:
+        raise JobResultError("offline") from exc
+    except BackendConnectionError as exc:
+        raise JobResultError("error") from exc
+
+
+async def _do_cancel_invitation(core, token):
+    try:
+        await core.delete_invitation(token=token)
+    except BackendNotAvailable as exc:
+        raise JobResultError("offline") from exc
+    except BackendConnectionError as exc:
+        raise JobResultError("error") from exc
+
+
+async def _do_invite_user(core, email):
+    try:
+        return await core.new_user_invitation(email=email, send_email=True)
     except BackendNotAvailable as exc:
         raise JobResultError("offline") from exc
     except BackendConnectionError as exc:
@@ -222,8 +193,6 @@ class UsersWidget(QWidget, Ui_UsersWidget):
     list_error = pyqtSignal(QtToTrioJob)
     invite_user_success = pyqtSignal(QtToTrioJob)
     invite_user_error = pyqtSignal(QtToTrioJob)
-    list_invitations_success = pyqtSignal(QtToTrioJob)
-    list_invitations_error = pyqtSignal(QtToTrioJob)
     cancel_invitation_success = pyqtSignal(QtToTrioJob)
     cancel_invitation_error = pyqtSignal(QtToTrioJob)
 
@@ -249,8 +218,6 @@ class UsersWidget(QWidget, Ui_UsersWidget):
         self.revoke_error.connect(self.on_revoke_error)
         self.list_success.connect(self.on_list_success)
         self.list_error.connect(self.on_list_error)
-        self.list_invitations_success.connect(self._on_list_invitations_success)
-        self.list_invitations_error.connect(self._on_list_invitations_error)
         self.invite_user_success.connect(self._on_invite_user_success)
         self.invite_user_error.connect(self._on_invite_user_error)
         self.cancel_invitation_success.connect(self._on_cancel_invitation_success)
@@ -294,8 +261,7 @@ class UsersWidget(QWidget, Ui_UsersWidget):
             ThreadSafeQtSignal(self, "invite_user_success", QtToTrioJob),
             ThreadSafeQtSignal(self, "invite_user_error", QtToTrioJob),
             _do_invite_user,
-            device=self.core.device,
-            config=self.core.config,
+            core=self.core,
             email=user_email,
         )
 
@@ -333,8 +299,7 @@ class UsersWidget(QWidget, Ui_UsersWidget):
             ThreadSafeQtSignal(self, "cancel_invitation_success", QtToTrioJob),
             ThreadSafeQtSignal(self, "cancel_invitation_error", QtToTrioJob),
             _do_cancel_invitation,
-            device=self.core.device,
-            config=self.core.config,
+            core=self.core,
             token=token,
         )
 
@@ -396,10 +361,21 @@ class UsersWidget(QWidget, Ui_UsersWidget):
                 w.setParent(None)
 
     def on_list_success(self, job):
+        users, invitations = job.ret
         self._flush_users_list()
+
         current_user = self.core.device.user_id
-        for user_info in job.ret:
+        for user_info in users:
             self.add_user(user_info=user_info, is_current_user=current_user == user_info.user_id)
+
+        for invitation in invitations:
+            addr = BackendInvitationAddr.build(
+                backend_addr=self.core.device.organization_addr,
+                organization_id=self.core.device.organization_id,
+                invitation_type=InvitationType.USER,
+                token=invitation["token"],
+            )
+            self.add_user_invitation(invitation["claimer_email"], addr)
 
     def on_list_error(self, job):
         status = job.status
@@ -429,22 +405,14 @@ class UsersWidget(QWidget, Ui_UsersWidget):
     def _on_invite_user_error(self, job):
         assert job.is_finished()
         assert job.status != "ok"
-        show_error(self, _("TEXT_INVITE_USER_INVITE_ERROR"), exception=job.exc)
 
-    def _on_list_invitations_success(self, job):
-        if not job.ret:
-            return
-        for invitation in job.ret:
-            addr = BackendInvitationAddr.build(
-                backend_addr=self.core.device.organization_addr,
-                organization_id=self.core.device.organization_id,
-                invitation_type=InvitationType.USER,
-                token=invitation["token"],
-            )
-            self.add_user_invitation(invitation["claimer_email"], addr)
+        status = job.status
+        if status == "offline":
+            errmsg = _("TEXT_INVITE_USER_INVITE_OFFLINE")
+        else:
+            errmsg = _("TEXT_INVITE_USER_INVITE_ERROR")
 
-    def _on_list_invitations_error(self, job):
-        pass
+        show_error(self, errmsg, exception=job.exc)
 
     def reset(self):
         self.layout_users.clear()
@@ -452,12 +420,6 @@ class UsersWidget(QWidget, Ui_UsersWidget):
         self.jobs_ctx.submit_job(
             ThreadSafeQtSignal(self, "list_success", QtToTrioJob),
             ThreadSafeQtSignal(self, "list_error", QtToTrioJob),
-            _do_list_users,
-            core=self.core,
-        )
-        self.jobs_ctx.submit_job(
-            ThreadSafeQtSignal(self, "list_invitations_success", QtToTrioJob),
-            ThreadSafeQtSignal(self, "list_invitations_error", QtToTrioJob),
-            _do_list_invitations,
+            _do_list_users_and_invitations,
             core=self.core,
         )

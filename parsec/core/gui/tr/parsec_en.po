@@ -637,6 +637,9 @@ msgstr "Could not cancel the invitation."
 msgid "TEXT_INVITE_USER_INVITE_ERROR"
 msgstr "Could not invite the user."
 
+msgid "TEXT_INVITE_USER_INVITE_OFFLINE"
+msgstr "The server is offline or you have no access to the internet."
+
 msgid "TEXT_PARSEC_LICENSE"
 msgstr ""
 "<!DOCTYPE html PUBLIC \"-//W3C//DTD XHTML 1.0 Strict//EN\"\n"

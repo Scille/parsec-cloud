@@ -652,6 +652,9 @@ msgstr "Impossible d'annuler l'invitation."
 msgid "TEXT_INVITE_USER_INVITE_ERROR"
 msgstr "Impossible d'inviter l'utilisateur."
 
+msgid "TEXT_INVITE_USER_INVITE_OFFLINE"
+msgstr "Le serveur est hors-ligne ou vous n'avez pas de connexion internet."
+
 msgid "TEXT_PARSEC_LICENSE"
 msgstr ""
 "<!DOCTYPE html PUBLIC \"-//W3C//DTD XHTML 1.0 Strict//EN\"\n"
