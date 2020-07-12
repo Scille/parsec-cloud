@@ -17,11 +17,7 @@ from tests.common import customize_fixtures
 async def test_invite_user(
     aqtbot, logged_gui, running_backend, monkeypatch, autoclose_dialog, email_letterbox, online
 ):
-    u_w = logged_gui.test_get_users_widget()
-    assert u_w is not None
-
-    async with aqtbot.wait_signal(u_w.list_success):
-        pass
+    u_w = await logged_gui.test_switch_to_users_widget()
 
     assert u_w.layout_users.count() == 3
 
@@ -59,11 +55,7 @@ async def test_invite_user(
 async def test_invite_user_not_allowed(
     aqtbot, logged_gui, running_backend, monkeypatch, autoclose_dialog
 ):
-    u_w = logged_gui.test_get_users_widget()
-    assert u_w is not None
-
-    async with aqtbot.wait_signal(u_w.list_success):
-        pass
+    u_w = await logged_gui.test_switch_to_users_widget()
 
     assert u_w.layout_users.count() == 3
 
@@ -78,11 +70,7 @@ async def test_invite_user_not_allowed(
 async def test_revoke_user(
     aqtbot, running_backend, autoclose_dialog, monkeypatch, logged_gui, online
 ):
-    u_w = logged_gui.test_get_users_widget()
-    assert u_w is not None
-
-    async with aqtbot.wait_signal(u_w.list_success):
-        pass
+    u_w = await logged_gui.test_switch_to_users_widget()
 
     assert u_w.layout_users.count() == 3
     bob_w = u_w.layout_users.itemAt(2).widget()
@@ -126,11 +114,7 @@ async def test_revoke_user(
 async def test_revoke_user_not_allowed(
     aqtbot, running_backend, autoclose_dialog, monkeypatch, logged_gui
 ):
-    u_w = logged_gui.test_get_users_widget()
-    assert u_w is not None
-
-    async with aqtbot.wait_signal(u_w.list_success):
-        pass
+    u_w = await logged_gui.test_switch_to_users_widget()
 
     assert u_w.layout_users.count() == 3
     alice_w = u_w.layout_users.itemAt(1).widget()

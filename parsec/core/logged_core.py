@@ -20,6 +20,12 @@ from parsec.core.backend_connection import (
     BackendConnStatus,
     BackendNotAvailable,
 )
+from parsec.core.invite import (
+    UserGreetInitialCtx,
+    UserGreetInProgress1Ctx,
+    DeviceGreetInitialCtx,
+    DeviceGreetInProgress1Ctx,
+)
 from parsec.core.remote_devices_manager import (
     RemoteDevicesManager,
     RemoteDevicesManagerError,
@@ -118,7 +124,7 @@ class LoggedCore:
         user_id = user_id or self.device.user_id
         try:
             user_certif, revoked_user_certif, device_certifs = await self._remote_devices_manager.get_user_and_devices(
-                user_id
+                user_id, no_cache=True
             )
         except RemoteDevicesManagerBackendOfflineError as exc:
             raise BackendNotAvailable(str(exc)) from exc
@@ -212,6 +218,24 @@ class LoggedCore:
         if rep["status"] != "ok":
             raise BackendConnectionError(f"Backend error: {rep}")
         return rep["invitations"]
+
+    async def start_greeting_user(self, token: UUID) -> UserGreetInProgress1Ctx:
+        """
+        Raises:
+            BackendConnectionError
+            InviteError
+        """
+        initial_ctx = UserGreetInitialCtx(cmds=self._backend_conn.cmds, token=token)
+        return await initial_ctx.do_wait_peer()
+
+    async def start_greeting_device(self, token: UUID) -> DeviceGreetInProgress1Ctx:
+        """
+        Raises:
+            BackendConnectionError
+            InviteError
+        """
+        initial_ctx = DeviceGreetInitialCtx(cmds=self._backend_conn.cmds, token=token)
+        return await initial_ctx.do_wait_peer()
 
 
 @asynccontextmanager
