@@ -407,8 +407,11 @@ msgstr "actuel"
 msgid "ACTION_DEVICE_MENU_CHANGE_PASSWORD"
 msgstr "Changer le mot de passe"
 
-msgid "TEXT_DEVICES_CANNOT_INVITE_DEVICE"
+msgid "TEXT_INVITE_DEVICE_INVITE_ERROR"
 msgstr "Impossible d'inviter un nouvel appareil"
+
+msgid "TEXT_INVITE_DEVICE_INVITE_OFFLINE"
+msgstr "Le serveur est hors-ligne ou vous n'avez pas de connexion internet."
 
 msgid "TEXT_DEVICE_LIST_RETRIEVABLE_FAILURE"
 msgstr "Impossible de récupérer la liste de vos appareils."

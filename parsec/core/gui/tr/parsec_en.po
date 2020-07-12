@@ -396,8 +396,11 @@ msgstr "current"
 msgid "ACTION_DEVICE_MENU_CHANGE_PASSWORD"
 msgstr "Change password"
 
-msgid "TEXT_DEVICES_CANNOT_INVITE_DEVICE"
-msgstr "Cannot invite a new device."
+msgid "TEXT_INVITE_DEVICE_INVITE_ERROR"
+msgstr "Could not invite the device."
+
+msgid "TEXT_INVITE_DEVICE_INVITE_OFFLINE"
+msgstr "The server is offline or you have no access to the internet."
 
 msgid "TEXT_DEVICE_LIST_RETRIEVABLE_FAILURE"
 msgstr "Failed to retrieve the device list from the server."

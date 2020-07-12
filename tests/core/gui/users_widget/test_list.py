@@ -8,11 +8,7 @@ from tests.common import customize_fixtures
 @pytest.mark.gui
 @pytest.mark.trio
 async def test_list_users(aqtbot, running_backend, logged_gui, autoclose_dialog):
-    u_w = logged_gui.test_get_users_widget()
-    assert u_w is not None
-
-    async with aqtbot.wait_signal(u_w.list_success):
-        pass
+    u_w = await logged_gui.test_switch_to_users_widget()
 
     assert u_w.layout_users.count() == 3
 
@@ -53,11 +49,7 @@ async def test_list_users_and_invitations(
         alice.organization_id, greeter_user_id=alice.user_id
     )
 
-    u_w = logged_gui.test_get_users_widget()
-    assert u_w is not None
-
-    async with aqtbot.wait_signal(u_w.list_success):
-        pass
+    u_w = await logged_gui.test_switch_to_users_widget()
 
     assert u_w.layout_users.count() == 5
 
@@ -89,12 +81,7 @@ async def test_list_users_and_invitations(
 @pytest.mark.gui
 @pytest.mark.trio
 async def test_list_users_offline(aqtbot, logged_gui, autoclose_dialog):
-    u_w = logged_gui.test_get_users_widget()
-    assert u_w is not None
-
-    async with aqtbot.wait_signal(u_w.list_error):
-        pass
-
+    u_w = await logged_gui.test_switch_to_users_widget(error=True)
     assert u_w.layout_users.count() == 0
     assert not autoclose_dialog.dialogs
 
@@ -102,11 +89,7 @@ async def test_list_users_offline(aqtbot, logged_gui, autoclose_dialog):
 @pytest.mark.gui
 @pytest.mark.trio
 async def test_filter_users(aqtbot, running_backend, logged_gui):
-    u_w = logged_gui.test_get_users_widget()
-    assert u_w is not None
-
-    async with aqtbot.wait_signal(u_w.list_success):
-        pass
+    u_w = await logged_gui.test_switch_to_users_widget()
 
     assert u_w.layout_users.count() == 3
 

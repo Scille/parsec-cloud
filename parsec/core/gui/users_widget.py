@@ -214,10 +214,10 @@ class UsersWidget(QWidget, Ui_UsersWidget):
         self.filter_timer.setInterval(300)
         self.line_edit_search.textChanged.connect(self.filter_timer.start)
         self.filter_timer.timeout.connect(self.on_filter_timer_timeout)
-        self.revoke_success.connect(self.on_revoke_success)
-        self.revoke_error.connect(self.on_revoke_error)
-        self.list_success.connect(self.on_list_success)
-        self.list_error.connect(self.on_list_error)
+        self.revoke_success.connect(self._on_revoke_success)
+        self.revoke_error.connect(self._on_revoke_error)
+        self.list_success.connect(self._on_list_success)
+        self.list_error.connect(self._on_list_error)
         self.invite_user_success.connect(self._on_invite_user_success)
         self.invite_user_error.connect(self._on_invite_user_error)
         self.cancel_invitation_success.connect(self._on_cancel_invitation_success)
@@ -283,8 +283,9 @@ class UsersWidget(QWidget, Ui_UsersWidget):
         button.show()
 
     def greet_user(self, token):
-        GreetUserWidget.exec_modal(core=self.core, jobs_ctx=self.jobs_ctx, token=token, parent=self)
-        self.reset()
+        GreetUserWidget.exec_modal(
+            core=self.core, jobs_ctx=self.jobs_ctx, token=token, parent=self, on_finished=self.reset
+        )
 
     def cancel_invitation(self, token):
         r = ask_question(
@@ -303,7 +304,10 @@ class UsersWidget(QWidget, Ui_UsersWidget):
             token=token,
         )
 
-    def on_revoke_success(self, job):
+    def _on_revoke_success(self, job):
+        assert job.is_finished()
+        assert job.status == "ok"
+
         user_info = job.ret
         show_info(
             self, _("TEXT_USER_REVOKE_SUCCESS_user").format(user=user_info.short_user_display)
@@ -319,7 +323,10 @@ class UsersWidget(QWidget, Ui_UsersWidget):
                 ):
                     button.user_info = user_info
 
-    def on_revoke_error(self, job):
+    def _on_revoke_error(self, job):
+        assert job.is_finished()
+        assert job.status != "ok"
+
         status = job.status
         if status == "already_revoked":
             errmsg = _("TEXT_USER_REVOCATION_USER_ALREADY_REVOKED")
@@ -360,7 +367,10 @@ class UsersWidget(QWidget, Ui_UsersWidget):
                 w.hide()
                 w.setParent(None)
 
-    def on_list_success(self, job):
+    def _on_list_success(self, job):
+        assert job.is_finished()
+        assert job.status == "ok"
+
         users, invitations = job.ret
         self._flush_users_list()
 
@@ -377,7 +387,10 @@ class UsersWidget(QWidget, Ui_UsersWidget):
             )
             self.add_user_invitation(invitation["claimer_email"], addr)
 
-    def on_list_error(self, job):
+    def _on_list_error(self, job):
+        assert job.is_finished()
+        assert job.status != "ok"
+
         status = job.status
         if status == "offline":
             return
@@ -392,14 +405,21 @@ class UsersWidget(QWidget, Ui_UsersWidget):
         show_error(self, errmsg, exception=job.exc)
 
     def _on_cancel_invitation_success(self, job):
+        assert job.is_finished()
+        assert job.status == "ok"
+
         self.reset()
 
     def _on_cancel_invitation_error(self, job):
         assert job.is_finished()
         assert job.status != "ok"
+
         show_error(self, _("TEXT_INVITE_USER_CANCEL_ERROR"), exception=job.exc)
 
     def _on_invite_user_success(self, job):
+        assert job.is_finished()
+        assert job.status == "ok"
+
         self.reset()
 
     def _on_invite_user_error(self, job):

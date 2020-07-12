@@ -2,7 +2,7 @@
 
 from PyQt5.QtCore import pyqtSignal
 from PyQt5.QtGui import QFont
-from PyQt5.QtWidgets import QWidget, QDialog
+from PyQt5.QtWidgets import QWidget
 
 from enum import IntEnum
 
@@ -503,10 +503,12 @@ class GreetDeviceWidget(QWidget, Ui_GreetDeviceWidget):
         self.cancel()
 
     @classmethod
-    def exec_modal(cls, core, jobs_ctx, invite_addr, parent):
+    def exec_modal(cls, core, jobs_ctx, invite_addr, parent, on_finished):
         w = cls(core=core, jobs_ctx=jobs_ctx, invite_addr=invite_addr)
         d = GreyedDialog(w, _("TEXT_GREET_DEVICE_TITLE"), parent=parent, width=1000)
         w.dialog = d
-        if d.exec_() == QDialog.Accepted and w.status:
-            return w.status
-        return None
+
+        d.finished.connect(on_finished)
+        # Unlike exec_, show is asynchronous and works within the main Qt loop
+        d.show()
+        return w

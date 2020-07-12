@@ -35,7 +35,7 @@ class GreyedDialog(QDialog, Ui_GreyedDialog):
     def __init__(self, center_widget, title, parent, hide_close=False, width=None):
         super().__init__(None)
         self.setupUi(self)
-        self.setModal(True)
+        # self.setModal(True)
         self.setObjectName("GreyedDialog")
         self.setWindowModality(Qt.ApplicationModal)
         self.button_close.apply_style()

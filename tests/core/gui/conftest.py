@@ -312,7 +312,26 @@ async def logged_gui(aqtbot, gui_factory, core_config, alice, bob, fixtures_cust
     central_widget = gui.test_get_central_widget()
     assert central_widget is not None
 
-    await aqtbot.mouse_click(central_widget.menu.button_users, QtCore.Qt.LeftButton)
+    # Add helpers
+
+    async def test_switch_to_devices_widget(error=False):
+        central_widget = gui.test_get_central_widget()
+        d_w = gui.test_get_devices_widget()
+        signal = d_w.list_error if error else d_w.list_success
+        async with aqtbot.wait_exposed(d_w), aqtbot.wait_signal(signal):
+            await aqtbot.mouse_click(central_widget.menu.button_devices, QtCore.Qt.LeftButton)
+        return d_w
+
+    async def test_switch_to_users_widget(error=False):
+        central_widget = gui.test_get_central_widget()
+        u_w = gui.test_get_users_widget()
+        signal = u_w.list_error if error else u_w.list_success
+        async with aqtbot.wait_exposed(u_w), aqtbot.wait_signal(signal):
+            await aqtbot.mouse_click(central_widget.menu.button_users, QtCore.Qt.LeftButton)
+        return u_w
+
+    gui.test_switch_to_devices_widget = test_switch_to_devices_widget
+    gui.test_switch_to_users_widget = test_switch_to_users_widget
 
     return gui
 
