@@ -591,6 +591,7 @@ def running_backend_ready(request):
 @pytest.fixture
 async def running_backend(server_factory, backend_addr, backend, running_backend_ready):
 
+    backend.backend_addr = backend_addr
     async with server_factory(backend.handle_client, backend_addr) as server:
         server.backend = backend
 

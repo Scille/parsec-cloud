@@ -119,12 +119,13 @@ class Transport:
         return transport
 
     @classmethod
-    async def init_for_server(cls, stream):
+    async def init_for_server(cls, stream, first_request_data=None):
         ws = WSConnection(ConnectionType.SERVER)
+        if first_request_data:
+            ws.receive_data(first_request_data)
         transport = cls(stream, ws)
 
         # Wait for client to init WebSocket handshake
-        event = "Websocket handshake timeout"
         with trio.move_on_after(WEBSOCKET_HANDSHAKE_TIMEOUT):
             event = await transport._next_ws_event()
 
