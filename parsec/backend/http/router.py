@@ -12,12 +12,7 @@ import importlib_resources
 from parsec.backend.http import PackageLoader
 
 import jinja2
-
 import h11
-
-# rendre methode controller privee
-# remove http from controller func etc
-# merge http_controller
 
 _JINJA2_ENV = jinja2.Environment(loader=PackageLoader("parsec.backend.http.templates"))
 

@@ -6,8 +6,6 @@ import trio
 from structlog import get_logger
 from logging import DEBUG as LOG_LEVEL_DEBUG
 from async_generator import asynccontextmanager
-
-
 from parsec.event_bus import EventBus
 from parsec.logging import get_log_level
 from parsec.api.transport import TransportError, TransportClosedByPeer, Transport
@@ -25,7 +23,6 @@ from parsec.backend.client_context import AuthenticatedClientContext, InvitedCli
 from parsec.backend.handshake import do_handshake
 from parsec.backend.memory import components_factory as mocked_components_factory
 from parsec.backend.postgresql import components_factory as postgresql_components_factory
-
 from parsec.backend.http.router import get_method_and_execute
 
 import h11
@@ -98,7 +95,6 @@ class BackendApp:
         )
 
     async def handle_client_websocket(self, stream, event, first_request_data=None):
-        print("websocket request")
         selected_logger = logger
 
         try:
@@ -235,14 +231,13 @@ class BackendApp:
             await stream.aclose()
             return
 
-        # Websocket upgrade
         try:
+            # Websocket upgrade, else HTTP
             if (b"connection", b"Upgrade") in event.headers:
                 await self.handle_client_websocket(
                     stream, event, first_request_data=first_request_data
                 )
             else:
-                # http
                 await self.handle_client_http(stream, event, conn)
         finally:
             try:

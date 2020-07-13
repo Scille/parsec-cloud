@@ -126,6 +126,7 @@ class Transport:
         transport = cls(stream, ws)
 
         # Wait for client to init WebSocket handshake
+        event = "Websocket handshake timeout"
         with trio.move_on_after(WEBSOCKET_HANDSHAKE_TIMEOUT):
             event = await transport._next_ws_event()
 

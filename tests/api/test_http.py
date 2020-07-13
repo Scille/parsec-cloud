@@ -47,7 +47,7 @@ async def test_static(running_backend):
     assert "HTTP/1.1 200" in rep
     # same test but inside css folder
     stream = await trio.open_tcp_stream(running_backend.addr.hostname, running_backend.addr.port)
-    await stream.send_all(b"GET /static/css/test.css HTTP/1.0\r\n\r\n")
+    await stream.send_all(b"GET /static/css/base.css HTTP/1.0\r\n\r\n")
     rep = await stream.receive_some()
     data = await stream.receive_some()
     rep = rep.decode("utf-8")
@@ -60,7 +60,7 @@ async def test_static(running_backend):
     )
     # same test but resource doesn't exist
     stream = await trio.open_tcp_stream(running_backend.addr.hostname, running_backend.addr.port)
-    await stream.send_all(b"GET /static/css/nonexistent.css HTTP/1.0\r\n\r\n")
+    await stream.send_all(b"GET /static/css/nonexistent1234.css HTTP/1.0\r\n\r\n")
     rep = await stream.receive_some()
     data = await stream.receive_some()
     rep = rep.decode("utf-8")

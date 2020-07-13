@@ -143,7 +143,7 @@ async def restart_local_backend(administration_token, backend_port):
         for data in backend_process.stdout:
             print(data.decode(), end="")
             break
-        # backend_process.stdout.close()
+        backend_process.stdout.close()
 
     # Windows restart
     if os.name == "nt" or True:
