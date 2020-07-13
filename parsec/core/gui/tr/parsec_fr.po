@@ -2167,6 +2167,9 @@ msgstr ""
 msgid "TEXT_FILE_HISTORY_VERSION"
 msgstr "Version"
 
+msgid "TEXT_FILE_HISTORY_CREATION"
+msgstr "création"
+
 msgid "TEXT_FILE_HISTORY_SIZE"
 msgstr "Taille"
 

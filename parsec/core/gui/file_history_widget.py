@@ -33,7 +33,7 @@ class FileHistoryButton(QWidget, Ui_FileHistoryButton):
         super().__init__()
         self.setupUi(self)
         if version <= 1:
-            version_str = "file creation"
+            version_str = _("TEXT_FILE_HISTORY_CREATION")
         else:
             version_str = str(version - 1)
         self.label_version.setText(version_str)
