@@ -14,6 +14,7 @@ import pkg_resources
 pkg_resources.require("parsec-cloud[all]")
 
 import os
+import sys
 import re
 import tempfile
 import subprocess
@@ -126,7 +127,7 @@ MimeType=x-scheme-handler/parsec;
 async def restart_local_backend(administration_token, backend_port):
     pattern = f"parsec.* backend.* run.* -P {backend_port}"
     command = (
-        f"python -Wignore -m parsec.cli backend run -b MOCKED --db MOCKED "
+        f"{sys.executable} -Wignore -m parsec.cli backend run -b MOCKED --db MOCKED "
         f"-P {backend_port} --administration-token {administration_token}"
     )
 
@@ -142,7 +143,7 @@ async def restart_local_backend(administration_token, backend_port):
         for data in backend_process.stdout:
             print(data.decode(), end="")
             break
-        backend_process.stdout.close()
+        # backend_process.stdout.close()
 
     # Windows restart
     if os.name == "nt" or True:
