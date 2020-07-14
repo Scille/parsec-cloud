@@ -5,11 +5,11 @@ import pytest
 from pendulum import Pendulum
 from unittest.mock import ANY
 
-from tests.common import freeze_time
+from tests.common import freeze_time, customize_fixtures
 
 
 @pytest.mark.trio
-@pytest.mark.backend_not_populated
+@customize_fixtures(backend_not_populated=True)
 @pytest.mark.skip  #  TODO refactoring?
 async def test_lazy_root_manifest_generation(
     running_backend, backend_data_binder, local_storage_factory, user_fs_factory, coolorg, alice
@@ -56,7 +56,7 @@ async def test_lazy_root_manifest_generation(
 
 
 @pytest.mark.trio
-@pytest.mark.backend_not_populated
+@customize_fixtures(backend_not_populated=True)
 @pytest.mark.xfail
 async def test_concurrent_devices_agreed_on_root_manifest(
     running_backend,
@@ -144,7 +144,7 @@ async def test_concurrent_devices_agreed_on_root_manifest(
 
 
 @pytest.mark.trio
-@pytest.mark.backend_not_populated
+@customize_fixtures(backend_not_populated=True)
 @pytest.mark.skip  #  TODO refactoring?
 async def test_reloading_v0_user_manifest(
     running_backend, backend_data_binder, local_storage_factory, user_fs_factory, coolorg, alice

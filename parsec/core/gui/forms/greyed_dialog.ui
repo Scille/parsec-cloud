@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>519</width>
-    <height>165</height>
+    <height>238</height>
    </rect>
   </property>
   <property name="sizePolicy">
@@ -37,7 +37,7 @@
   <property name="modal">
    <bool>true</bool>
   </property>
-  <layout class="QVBoxLayout" name="verticalLayout">
+  <layout class="QVBoxLayout" name="vertical_layout">
    <property name="spacing">
     <number>0</number>
    </property>
@@ -54,7 +54,7 @@
     <number>0</number>
    </property>
    <item>
-    <spacer name="verticalSpacer">
+    <spacer name="spacer_top">
      <property name="orientation">
       <enum>Qt::Vertical</enum>
      </property>
@@ -70,18 +70,21 @@
     </spacer>
    </item>
    <item>
-    <layout class="QHBoxLayout" name="horizontalLayout">
+    <layout class="QHBoxLayout" name="horizontal_layout">
      <property name="spacing">
       <number>0</number>
      </property>
      <item>
-      <spacer name="horizontalSpacer_2">
+      <spacer name="spacer_left">
        <property name="orientation">
         <enum>Qt::Horizontal</enum>
        </property>
+       <property name="sizeType">
+        <enum>QSizePolicy::Expanding</enum>
+       </property>
        <property name="sizeHint" stdset="0">
         <size>
-         <width>40</width>
+         <width>100</width>
          <height>20</height>
         </size>
        </property>
@@ -250,13 +253,16 @@
       </widget>
      </item>
      <item>
-      <spacer name="horizontalSpacer">
+      <spacer name="spacer_right">
        <property name="orientation">
         <enum>Qt::Horizontal</enum>
        </property>
+       <property name="sizeType">
+        <enum>QSizePolicy::Expanding</enum>
+       </property>
        <property name="sizeHint" stdset="0">
         <size>
-         <width>40</width>
+         <width>100</width>
          <height>20</height>
         </size>
        </property>
@@ -265,7 +271,7 @@
     </layout>
    </item>
    <item>
-    <spacer name="verticalSpacer_2">
+    <spacer name="spacer_bottom">
      <property name="orientation">
       <enum>Qt::Vertical</enum>
      </property>

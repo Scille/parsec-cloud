@@ -5,6 +5,7 @@ from unittest.mock import Mock, patch
 from http.client import HTTPResponse
 import hashlib
 import json
+from contextlib import contextmanager
 
 from parsec.core.gui.new_version import _do_check_new_version
 
@@ -100,14 +101,18 @@ def generate_json_data(json_generator):
     return r
 
 
-def urlopener(head_version="", api_json={}):
+def urlopener(head_version, api_json):
+    @contextmanager
     def urlopen(the_request):
         the_response = Mock(spec=HTTPResponse)
         head_version_url = f"{gui_web_releases_url}/tag/v{head_version}"
-        if the_request.full_url == gui_check_version_url and the_request.method == "HEAD":
-            the_response.geturl = lambda: head_version_url
+        the_response.geturl = (
+            lambda: head_version_url
+            if the_request.full_url == gui_check_version_url
+            else gui_check_version_url
+        )
         the_response.read = lambda: json.dumps(generate_json_data(api_json))
-        return the_response
+        yield the_response
 
     return urlopen
 

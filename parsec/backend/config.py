@@ -79,8 +79,6 @@ class BackendConfig:
     administration_token: str
 
     db_url: str
-    # If False, deleted data are only marked for deletion
-    db_drop_deleted_data: bool
     db_min_connections: int
     db_max_connections: int
     db_first_tries_number: int

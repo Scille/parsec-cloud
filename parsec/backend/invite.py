@@ -11,6 +11,7 @@ from uuid import UUID, uuid4
 from collections import defaultdict
 from typing import Dict, List, Optional, Union, Set
 from pendulum import Pendulum, now as pendulum_now
+from email.message import Message
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
 from structlog import get_logger
@@ -180,13 +181,13 @@ MAIL_TEXT = {
 }
 
 
-async def send_invite_email(
+def generate_invite_email(
     email_config: EmailConfig,
     backend_addr: BackendAddr,
     organization_id: OrganizationID,
     invitation: UserInvitation,
     sender_name: str,
-) -> None:
+) -> Message:
     mail_text = MAIL_TEXT[email_config.language]
     parsec_url = "https://parsec.cloud/get-parsec"
     invite_link = str(
@@ -239,13 +240,17 @@ async def send_invite_email(
     message.attach(part1)
     message.attach(part2)
 
-    def _thread_target_send_email(message: MIMEMultipart):
+    return message
+
+
+async def send_email(email_config: EmailConfig, to_addr: str, message: Message) -> None:
+    def _do():
         try:
             context = ssl.create_default_context()
             if email_config.use_ssl:
-                server = smtplib.SMTP_SSL(email_config.server, email_config.port, context=context)
+                server = smtplib.SMTP_SSL(email_config.host, email_config.port, context=context)
             else:
-                server = smtplib.SMTP(email_config.server, email_config.port)
+                server = smtplib.SMTP(email_config.host, email_config.port)
 
             with server:
                 if email_config.use_tls and not email_config.use_ssl:
@@ -253,12 +258,12 @@ async def send_invite_email(
                         logger.warning("Email TLS connexion isn't encrypted")
                 if email_config.user and email_config.password:
                     server.login(email_config.user, email_config.password)
-                server.sendmail(email_config.user, invitation.claimer_email, message.as_string())
+                server.sendmail(email_config.user, to_addr, message.as_string())
 
         except smtplib.SMTPException as e:
-            logger.warning("SMTP error on invitation email", exc_info=e, invitation=invitation)
+            logger.warning("SMTP error", exc_info=e, to_addr=to_addr)
 
-    await trio.to_thread.run_sync(_thread_target_send_email, message)
+    await trio.to_thread.run_sync(_do)
 
 
 class BaseInviteComponent:
@@ -312,12 +317,17 @@ class BaseInviteComponent:
             if msg["send_email"]:
                 if not self._config.email_config or not self._config.backend_addr:
                     return invite_new_serializer.rep_dump({"status": "not_available"})
-                await send_invite_email(
+                message = generate_invite_email(
                     email_config=self._config.email_config,
                     backend_addr=self._config.backend_addr,
                     organization_id=client_ctx.organization_id,
                     invitation=invitation,
                     sender_name=client_ctx.user_display,
+                )
+                await send_email(
+                    email_config=self._config.email_config,
+                    to_addr=invitation.claimer_email,
+                    message=message,
                 )
 
         else:  # Device

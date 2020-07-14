@@ -30,6 +30,7 @@ from parsec.core.fs.storage import LocalDatabase, local_database, UserStorage
 from parsec.backend import backend_app_factory
 from parsec.backend.config import (
     BackendConfig,
+    EmailConfig,
     MockedBlockStoreConfig,
     PostgreSQLBlockStoreConfig,
     RAID0BlockStoreConfig,
@@ -501,7 +502,6 @@ def backend_factory(
         config = BackendConfig(
             **{
                 "administration_token": "s3cr3t",
-                "db_drop_deleted_data": False,
                 "db_min_connections": 1,
                 "db_max_connections": 5,
                 "db_first_tries_number": 1,
@@ -537,15 +537,43 @@ def backend_factory(
 
 
 @pytest.fixture
-async def backend(backend_factory, request):
-    populate = "backend_not_populated" not in request.keywords
-    async with backend_factory(populated=populate) as backend:
+async def backend(backend_factory, request, fixtures_customization, backend_addr):
+    populated = not fixtures_customization.get("backend_not_populated", False)
+    if fixtures_customization.get("backend_has_email", False):
+        config = {
+            "email_config": EmailConfig(
+                host="example.com",
+                # Invalid port, hence we should crash if by mistake we try
+                # to reach this SMTP server
+                port=999999,
+                user="mail_user",
+                password=None,
+                use_ssl=False,
+                use_tls=False,
+                language="en",
+            ),
+            "backend_addr": backend_addr,
+        }
+    else:
+        config = {}
+    async with backend_factory(populated=populated, config=config) as backend:
         yield backend
 
 
 @pytest.fixture
 def backend_data_binder(backend, backend_data_binder_factory):
     return backend_data_binder_factory(backend)
+
+
+@pytest.fixture
+def email_letterbox(monkeypatch):
+    emails = []
+
+    async def _mocked_send_email(email_config, to_addr, message):
+        emails.append((to_addr, message))
+
+    monkeypatch.setattr("parsec.backend.invite.send_email", _mocked_send_email)
+    return emails
 
 
 @pytest.fixture
