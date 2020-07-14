@@ -203,7 +203,9 @@ LocalManifestTypeVar = TypeVar("LocalManifestTypeVar", bound="LocalManifest")
 class LocalManifest(BaseLocalData):
     class SCHEMA_CLS(OneOfSchema, BaseSchema):
         type_field = "type"
+        base = fields.Nested(RemoteManifest.SCHEMA_CLS, required=True)
         need_sync = fields.Boolean(required=True)
+        updated = fields.DateTime(required=True)
 
         @property
         def type_schemas(self):

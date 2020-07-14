@@ -7,7 +7,7 @@ from pendulum import Pendulum, now as pendulum_now
 from parsec.types import UUID4
 from parsec.crypto import SecretKey, HashDigest
 from parsec.serde import fields, validate, post_load, OneOfSchema
-from parsec.api.protocol import RealmRole, RealmRoleField, DeviceID
+from parsec.api.protocol import RealmRole, RealmRoleField
 from parsec.api.data.base import (
     BaseData,
     BaseSchema,
@@ -125,7 +125,6 @@ class Manifest(BaseAPISignedData):
             return obj["type"]
 
     version: int
-    author: DeviceID
 
     @classmethod
     def verify_and_load(

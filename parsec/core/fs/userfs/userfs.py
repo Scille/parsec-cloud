@@ -159,11 +159,11 @@ class UserFS:
         self.remote_devices_manager = remote_devices_manager
         self.event_bus = event_bus
 
-        self.storage: Optional[UserStorage] = None
+        self.storage: UserStorage  # Setup by UserStorage.run factory
 
         # Message processing is done in-order, hence it is pointless to do
         # it concurrently
-        self._workspace_storage_nursery: Optional[trio.Nursery] = None
+        self._workspace_storage_nursery: trio.Nursery  # Setup by UserStorage.run factory
         self._process_messages_lock = trio.Lock()
         self._update_user_manifest_lock = trio.Lock()
         self._workspace_storages: Dict[EntryID, WorkspaceFS] = {}
@@ -239,9 +239,6 @@ class UserFS:
         await self.storage.set_user_manifest(manifest)
 
     async def _instantiate_workspace_storage(self, workspace_id: EntryID) -> WorkspaceStorage:
-        if self._workspace_storage_nursery is None:
-            raise ValueError("Storage not set")
-
         path = self.path / str(workspace_id)
 
         async def workspace_storage_task(task_status=trio.TASK_STATUS_IGNORED):
@@ -768,7 +765,7 @@ class UserFS:
         except FSWorkspaceNoAccess:
             # Seems we lost the access roles anyway, nothing to do then
             return
-        print(msg)
+
         if roles.get(msg.author.user_id, None) not in (WorkspaceRole.OWNER, WorkspaceRole.MANAGER):
             raise FSSharingNotAllowedError(
                 f"User {msg.author.user_id} cannot share workspace `{msg.id}`"
