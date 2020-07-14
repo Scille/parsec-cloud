@@ -3,7 +3,7 @@
 import attr
 import trio
 from collections import defaultdict
-from typing import Union, List, Dict, Tuple, AsyncGenerator, cast
+from typing import Union, List, Dict, Tuple, AsyncIterator, cast
 from pendulum import Pendulum, now as pendulum_now
 
 from parsec.api.data import Manifest as RemoteManifest
@@ -241,7 +241,7 @@ class WorkspaceFS:
         info = await self.transactions.entry_info(FsPath(path))
         return info["type"] == "file"
 
-    async def iterdir(self, path: AnyPath) -> AsyncGenerator[FsPath, None]:
+    async def iterdir(self, path: AnyPath) -> AsyncIterator[FsPath]:
         """
         Raises:
             FSError

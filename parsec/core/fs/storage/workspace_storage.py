@@ -2,7 +2,7 @@
 
 from pathlib import Path
 from collections import defaultdict
-from typing import Dict, Tuple, Set, Optional, Union, AsyncGenerator
+from typing import Dict, Tuple, Set, Optional, Union, AsyncIterator
 
 import trio
 from trio import hazmat
@@ -74,7 +74,7 @@ class BaseWorkspaceStorage:
     # Locking helpers
 
     @asynccontextmanager
-    async def lock_entry_id(self, entry_id: EntryID) -> AsyncGenerator[EntryID, None]:
+    async def lock_entry_id(self, entry_id: EntryID) -> AsyncIterator[EntryID]:
         async with self.entry_locks[entry_id]:
             try:
                 self.locking_tasks[entry_id] = hazmat.current_task()
@@ -83,7 +83,7 @@ class BaseWorkspaceStorage:
                 del self.locking_tasks[entry_id]
 
     @asynccontextmanager
-    async def lock_manifest(self, entry_id: EntryID) -> AsyncGenerator[LocalManifest, None]:
+    async def lock_manifest(self, entry_id: EntryID) -> AsyncIterator[LocalManifest]:
         async with self.lock_entry_id(entry_id):
             yield await self.get_manifest(entry_id)
 

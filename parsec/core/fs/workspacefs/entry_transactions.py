@@ -1,7 +1,7 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
 
 from parsec.core.core_events import CoreEvent
-from typing import Tuple, cast, Optional, AsyncGenerator
+from typing import Tuple, cast, Optional, AsyncIterator
 from async_generator import asynccontextmanager
 
 from parsec.core.types import (
@@ -73,7 +73,7 @@ class EntryTransactions(FileTransactions):
             return manifest
 
     @asynccontextmanager
-    async def _lock_manifest_from_path(self, path: FsPath) -> AsyncGenerator[LocalManifest, None]:
+    async def _lock_manifest_from_path(self, path: FsPath) -> AsyncIterator[LocalManifest]:
         # Root entry_id and manifest
         entry_id = self.workspace_id
 
@@ -98,7 +98,7 @@ class EntryTransactions(FileTransactions):
     @asynccontextmanager
     async def _lock_parent_manifest_from_path(
         self, path: FsPath
-    ) -> AsyncGenerator[Tuple[LocalManifest, Optional[LocalManifest]], None]:
+    ) -> AsyncIterator[Tuple[LocalManifest, Optional[LocalManifest]]]:
         # This is the most complicated locking scenario.
         # It requires locking the parent of the given entry and the entry itself
         # if it exists.
