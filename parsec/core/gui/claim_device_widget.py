@@ -1,25 +1,20 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
 
+import trio
+from enum import IntEnum
+from structlog import get_logger
 from PyQt5.QtCore import pyqtSignal
 from PyQt5.QtGui import QFont
-from PyQt5.QtWidgets import QWidget, QDialog
-
-from enum import IntEnum
-
-import trio
-
-from structlog import get_logger
+from PyQt5.QtWidgets import QWidget
 
 from parsec.core.types import LocalDevice
 from parsec.core.local_device import save_device_with_password
-
 from parsec.core.invite import claimer_retrieve_info
 from parsec.core.backend_connection import (
     backend_invited_cmds_factory,
     BackendConnectionRefused,
     BackendNotAvailable,
 )
-
 from parsec.core.gui import validators
 from parsec.core.gui.trio_thread import JobResultError, ThreadSafeQtSignal
 from parsec.core.gui.desktop import get_default_device
@@ -30,6 +25,7 @@ from parsec.core.gui.ui.claim_device_widget import Ui_ClaimDeviceWidget
 from parsec.core.gui.ui.claim_device_code_exchange_widget import Ui_ClaimDeviceCodeExchangeWidget
 from parsec.core.gui.ui.claim_device_provide_info_widget import Ui_ClaimDeviceProvideInfoWidget
 from parsec.core.gui.ui.claim_device_instructions_widget import Ui_ClaimDeviceInstructionsWidget
+
 
 logger = get_logger()
 
@@ -603,10 +599,12 @@ class ClaimDeviceWidget(QWidget, Ui_ClaimDeviceWidget):
         self.cancel()
 
     @classmethod
-    def exec_modal(cls, jobs_ctx, config, addr, parent):
+    def exec_modal(cls, jobs_ctx, config, addr, parent, on_finished):
         w = cls(jobs_ctx=jobs_ctx, config=config, addr=addr)
         d = GreyedDialog(w, _("TEXT_CLAIM_DEVICE_TITLE"), parent=parent, width=800)
         w.dialog = d
-        if d.exec_() == QDialog.Accepted and w.status:
-            return w.status
-        return None
+
+        d.finished.connect(on_finished)
+        # Unlike exec_, show is asynchronous and works within the main Qt loop
+        d.show()
+        return w
