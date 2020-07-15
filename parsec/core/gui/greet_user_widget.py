@@ -243,6 +243,12 @@ class GreetUserCheckInfoWidget(QWidget, Ui_GreetUserCheckInfoWidget):
         self.create_user_error.connect(self._on_create_user_error)
         self.button_create_user.clicked.connect(self._on_create_user_clicked)
 
+        self.get_requests_job = self.jobs_ctx.submit_job(
+            ThreadSafeQtSignal(self, "get_requests_success"),
+            ThreadSafeQtSignal(self, "get_requests_error"),
+            self.greeter.get_claim_requests,
+        )
+
     def check_infos(self, _=""):
         if self.line_edit_user_full_name.text() and self.line_edit_device.text():
             self.button_create_user.setDisabled(False)
@@ -269,13 +275,6 @@ class GreetUserCheckInfoWidget(QWidget, Ui_GreetUserCheckInfoWidget):
             human_handle=handle,
             device_label=device_label,
             profile=self.combo_profile.currentData(),
-        )
-
-    def _run_get_claim_requests(self):
-        self.get_requests_job = self.jobs_ctx.submit_job(
-            ThreadSafeQtSignal(self, "get_requests_success"),
-            ThreadSafeQtSignal(self, "get_requests_error"),
-            self.greeter.get_claim_requests,
         )
 
     def _on_create_user_success(self):
@@ -377,7 +376,6 @@ class GreetUserCodeExchangeWidget(QWidget, Ui_GreetUserCodeExchangeWidget):
         self.get_claimer_sas_success.connect(self._on_get_claimer_sas_success)
         self.get_claimer_sas_error.connect(self._on_get_claimer_sas_error)
 
-    def _run_get_greeter_sas(self):
         self.get_greeter_sas_job = self.jobs_ctx.submit_job(
             ThreadSafeQtSignal(self, "get_greeter_sas_success"),
             ThreadSafeQtSignal(self, "get_greeter_sas_error"),
@@ -517,27 +515,6 @@ class GreetUserWidget(QWidget, Ui_GreetUserWidget):
         self.greeter_job = None
         self.greeter_success.connect(self._on_greeter_success)
         self.greeter_error.connect(self._on_greeter_error)
-
-        self.greet_user_instructions_widget = GreetUserInstructionsWidget(
-            self.jobs_ctx, self.greeter
-        )
-        self.greet_user_instructions_widget.succeeded.connect(self._goto_page2)
-        self.greet_user_instructions_widget.failed.connect(self._on_page_failure_reboot)
-
-        self.greet_user_code_exchange_widget = GreetUserCodeExchangeWidget(
-            self.jobs_ctx, self.greeter
-        )
-        self.greet_user_code_exchange_widget.succeeded.connect(self._goto_page3)
-        self.greet_user_code_exchange_widget.failed.connect(self._on_page_failure_reboot)
-
-        self.greet_user_check_info_widget = GreetUserCheckInfoWidget(self.jobs_ctx, self.greeter)
-        self.greet_user_check_info_widget.succeeded.connect(self._on_finished)
-        self.greet_user_check_info_widget.failed.connect(self._on_page_failure_reboot)
-
-        self.main_layout.addWidget(self.greet_user_instructions_widget)
-        self.main_layout.addWidget(self.greet_user_code_exchange_widget)
-        self.main_layout.addWidget(self.greet_user_check_info_widget)
-
         self._run_greeter()
 
     def _run_greeter(self):
@@ -554,19 +531,7 @@ class GreetUserWidget(QWidget, Ui_GreetUserWidget):
         self.cancel()
         # Replace moving parts
         self.greeter = Greeter()
-        self.greet_user_instructions_widget.greeter = self.greeter
-        self.greet_user_code_exchange_widget.greeter = self.greeter
-        self.greet_user_check_info_widget.greeter = self.greeter
         self._run_greeter()
-
-    def _get_current_page(self):
-        for page in (
-            self.greet_user_instructions_widget,
-            self.greet_user_code_exchange_widget,
-            self.greet_user_check_info_widget,
-        ):
-            if not page.isHidden():
-                return page
 
     def _on_page_failure_reboot(self):
         self.restart()
@@ -575,21 +540,34 @@ class GreetUserWidget(QWidget, Ui_GreetUserWidget):
         self.dialog.accept()
 
     def _goto_page1(self):
-        self.greet_user_instructions_widget.setHidden(False)
-        self.greet_user_code_exchange_widget.setHidden(True)
-        self.greet_user_check_info_widget.setHidden(True)
+        item = self.main_layout.takeAt(0)
+        if item:
+            current_page = item.widget()
+            if current_page:
+                current_page.hide()
+                current_page.setParent(None)
+        page = GreetUserInstructionsWidget(self.jobs_ctx, self.greeter)
+        page.succeeded.connect(self._goto_page2)
+        page.failed.connect(self._on_page_failure_reboot)
+        self.main_layout.addWidget(page)
 
     def _goto_page2(self):
-        self.greet_user_instructions_widget.setHidden(True)
-        self.greet_user_code_exchange_widget.setHidden(False)
-        self.greet_user_code_exchange_widget._run_get_greeter_sas()
-        self.greet_user_check_info_widget.setHidden(True)
+        current_page = self.main_layout.takeAt(0).widget()
+        current_page.hide()
+        current_page.setParent(None)
+        page = GreetUserCodeExchangeWidget(self.jobs_ctx, self.greeter)
+        page.succeeded.connect(self._goto_page3)
+        page.failed.connect(self._on_page_failure_reboot)
+        self.main_layout.addWidget(page)
 
     def _goto_page3(self):
-        self.greet_user_instructions_widget.setHidden(True)
-        self.greet_user_code_exchange_widget.setHidden(True)
-        self.greet_user_check_info_widget.setHidden(False)
-        self.greet_user_check_info_widget._run_get_claim_requests()
+        current_page = self.main_layout.takeAt(0).widget()
+        current_page.hide()
+        current_page.setParent(None)
+        page = GreetUserCheckInfoWidget(self.jobs_ctx, self.greeter)
+        page.succeeded.connect(self._on_finished)
+        page.failed.connect(self._on_page_failure_reboot)
+        self.main_layout.addWidget(page)
 
     def _on_finished(self):
         show_info(self, _("TEXT_USER_GREET_SUCCESSFUL"))
@@ -619,6 +597,11 @@ class GreetUserWidget(QWidget, Ui_GreetUserWidget):
         self._on_page_failure_stop()
 
     def cancel(self):
+        item = self.main_layout.itemAt(0)
+        if item:
+            current_page = item.widget()
+            if current_page and getattr(current_page, "cancel", None):
+                current_page.cancel()
         if self.greeter_job:
             self.greeter_job.cancel_and_join()
 

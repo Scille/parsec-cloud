@@ -29,36 +29,13 @@ async def invitation_addr(backend_addr, backend, bob):
 
 
 @pytest.fixture
-def catch_claim_device_widget(aqtbot, monkeypatch):
-    widgets = []
-
-    def _catch_init(self, *args, **kwargs):
-        widgets.append(self)
-        return self.vanilla__init__(*args, **kwargs)
-
-    for wcls in (
-        ClaimDeviceCodeExchangeWidget,
-        ClaimDeviceProvideInfoWidget,
-        ClaimDeviceInstructionsWidget,
-        ClaimDeviceWidget,
-    ):
-        monkeypatch.setattr(
-            f"parsec.core.gui.claim_device_widget.{wcls.__name__}.vanilla__init__",
-            wcls.__init__,
-            raising=False,
-        )
-        monkeypatch.setattr(
-            f"parsec.core.gui.claim_device_widget.{wcls.__name__}.__init__", _catch_init
-        )
-
-    async def _wait_next():
-        def _invitation_shown():
-            assert len(widgets) == 1
-
-        await aqtbot.wait_until(_invitation_shown)
-        return widgets.pop()
-
-    return _wait_next
+def catch_claim_device_widget(widget_catcher_factory):
+    return widget_catcher_factory(
+        "parsec.core.gui.claim_device_widget.ClaimDeviceCodeExchangeWidget",
+        "parsec.core.gui.claim_device_widget.ClaimDeviceProvideInfoWidget",
+        "parsec.core.gui.claim_device_widget.ClaimDeviceInstructionsWidget",
+        "parsec.core.gui.claim_device_widget.ClaimDeviceWidget",
+    )
 
 
 @pytest.mark.gui
@@ -86,14 +63,14 @@ async def test_claim_device(
     cdi_w = await catch_claim_device_widget()
     assert isinstance(cdi_w, ClaimDeviceInstructionsWidget)
 
-    def _register_user_displayed():
+    def _register_display_displayed():
         tab = gui.test_get_tab()
         assert tab and tab.isVisible()
         assert cd_w.isVisible()
         assert cd_w.dialog.label_title.text() == "Register a device"
         assert cdi_w.isVisible()
 
-    await aqtbot.wait_until(_register_user_displayed)
+    await aqtbot.wait_until(_register_display_displayed)
 
     # Now start greeter
 

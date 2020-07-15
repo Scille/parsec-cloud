@@ -27,40 +27,38 @@ async def test_invite_user(
     )
 
     if online:
-        async with aqtbot.wait_signal(u_w.invite_user_success):
-            await aqtbot.mouse_click(u_w.button_add_user, QtCore.Qt.LeftButton)
+        await aqtbot.mouse_click(u_w.button_add_user, QtCore.Qt.LeftButton)
 
-        def invitation_shown():
+        def _new_invitation_displayed():
             assert u_w.layout_users.count() == 4
+            inv_btn = u_w.layout_users.itemAt(3).widget()
+            assert isinstance(inv_btn, UserInvitationButton)
+            assert inv_btn.email == "hubert.farnsworth@pe.com"
+            assert email_letterbox == [(inv_btn.email, ANY)]
 
-        await aqtbot.wait_until(invitation_shown)
-        inv_btn = u_w.layout_users.itemAt(3).widget()
-        assert isinstance(inv_btn, UserInvitationButton)
-        assert inv_btn.email == "hubert.farnsworth@pe.com"
-
-        assert email_letterbox == [(inv_btn.email, ANY)]
+        await aqtbot.wait_until(_new_invitation_displayed)
+        assert not autoclose_dialog.dialogs
 
     else:
         with running_backend.offline():
-            async with aqtbot.wait_signal(u_w.invite_user_error):
-                await aqtbot.mouse_click(u_w.button_add_user, QtCore.Qt.LeftButton)
+            await aqtbot.mouse_click(u_w.button_add_user, QtCore.Qt.LeftButton)
 
-            assert autoclose_dialog.dialogs == [
-                ("Error", "The server is offline or you have no access to the internet.")
-            ]
+            def _email_send_failed():
+                assert autoclose_dialog.dialogs == [
+                    ("Error", "The server is offline or you have no access to the internet.")
+                ]
+
+            await aqtbot.wait_until(_email_send_failed)
+            assert not email_letterbox
 
 
 @pytest.mark.gui
 @pytest.mark.trio
-async def test_invite_user_not_allowed(
-    aqtbot, logged_gui, running_backend, monkeypatch, autoclose_dialog
-):
+async def test_invite_user_not_allowed(logged_gui, running_backend):
     u_w = await logged_gui.test_switch_to_users_widget()
 
-    assert u_w.layout_users.count() == 3
-
     # Just make sure the button is not available
-    assert u_w.button_add_user.isHidden()
+    assert not u_w.button_add_user.isVisible()
 
 
 @pytest.mark.gui
@@ -83,30 +81,31 @@ async def test_revoke_user(
         lambda *args: _("ACTION_USER_REVOCATION_CONFIRM"),
     )
 
-    def emit_revoke():
-        bob_w.revoke_clicked.emit(bob_w.user_info)
-
     if online:
-        async with aqtbot.wait_signal(u_w.revoke_success):
-            await aqtbot.qt_thread_gateway.send_action(emit_revoke)
+        await aqtbot.run(bob_w.revoke_clicked.emit, bob_w.user_info)
 
-        assert autoclose_dialog.dialogs == [
-            (
-                "",
-                "The user <b>Boby McBobFace</b> has been successfully revoked. Do no forget to reencrypt the workspaces that were shared with them.",
-            )
-        ]
-        assert bob_w.user_info.is_revoked is True
+        def _revocation_done():
+            assert bob_w.user_info.is_revoked is True
+            assert autoclose_dialog.dialogs == [
+                (
+                    "",
+                    "The user <b>Boby McBobFace</b> has been successfully revoked. Do no forget to reencrypt the workspaces that were shared with them.",
+                )
+            ]
+
+        await aqtbot.wait_until(_revocation_done)
 
     else:
         with running_backend.offline():
-            async with aqtbot.wait_signal(u_w.revoke_error):
-                await aqtbot.qt_thread_gateway.send_action(emit_revoke)
+            await aqtbot.run(bob_w.revoke_clicked.emit, bob_w.user_info)
 
-            assert autoclose_dialog.dialogs == [
-                ("Error", "The server is offline or you have no access to the internet.")
-            ]
-            assert bob_w.user_info.is_revoked is False
+            def _revocation_error():
+                assert bob_w.user_info.is_revoked is False
+                assert autoclose_dialog.dialogs == [
+                    ("Error", "The server is offline or you have no access to the internet.")
+                ]
+
+            await aqtbot.wait_until(_revocation_error)
 
 
 @pytest.mark.gui
@@ -128,14 +127,13 @@ async def test_revoke_user_not_allowed(
         lambda *args: _("ACTION_USER_REVOCATION_CONFIRM"),
     )
 
-    def emit_revoke():
-        alice_w.revoke_clicked.emit(alice_w.user_info)
+    await aqtbot.run(alice_w.revoke_clicked.emit, alice_w.user_info)
 
-    async with aqtbot.wait_signal(u_w.revoke_error):
-        await aqtbot.qt_thread_gateway.send_action(emit_revoke)
+    def _revocation_error():
+        assert alice_w.user_info.is_revoked is False
+        assert autoclose_dialog.dialogs == [("Error", "Could not revoke this user.")]
 
-    assert autoclose_dialog.dialogs == [("Error", "Could not revoke this user.")]
-    assert alice_w.user_info.is_revoked is False
+    await aqtbot.wait_until(_revocation_error)
 
 
 @pytest.mark.gui
@@ -163,23 +161,20 @@ async def test_cancel_user_invitation(
     u_w = await logged_gui.test_switch_to_users_widget()
 
     # Invite new user
-    async with aqtbot.wait_signals([u_w.button_add_user.clicked, u_w.list_success]):
-        await aqtbot.mouse_click(u_w.button_add_user, QtCore.Qt.LeftButton)
+    await aqtbot.mouse_click(u_w.button_add_user, QtCore.Qt.LeftButton)
 
-    # Assert user invitation widget created
-    assert u_w.layout_users.count() == 4
+    def _new_invitation_displayed():
+        assert u_w.layout_users.count() == 4
+
+    await aqtbot.wait_until(_new_invitation_displayed)
     user_invitation_w = u_w.layout_users.itemAt(3).widget()
     assert user_invitation_w.email == email
 
-    # Cancel
-    async with aqtbot.wait_signals(
-        [
-            user_invitation_w.button_cancel.clicked,
-            user_invitation_w.cancel_clicked,
-            u_w.cancel_invitation_success,
-            u_w.list_success,
-        ]
-    ):
-        await aqtbot.mouse_click(user_invitation_w.button_cancel, QtCore.Qt.LeftButton)
+    # Cancel invitation
+    await aqtbot.mouse_click(user_invitation_w.button_cancel, QtCore.Qt.LeftButton)
 
-    assert u_w.layout_users.count() == 3
+    def _new_invitation_removed():
+        assert u_w.layout_users.count() == 3
+
+    await aqtbot.wait_until(_new_invitation_removed)
+    assert not autoclose_dialog.dialogs

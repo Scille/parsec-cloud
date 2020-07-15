@@ -35,37 +35,14 @@ async def invitation_addr(backend_addr, backend, alice):
 
 
 @pytest.fixture
-def catch_claim_user_widget(aqtbot, monkeypatch):
-    widgets = []
-
-    def _catch_init(self, *args, **kwargs):
-        widgets.append(self)
-        return self.vanilla__init__(*args, **kwargs)
-
-    for wcls in (
-        ClaimUserFinalizeWidget,
-        ClaimUserCodeExchangeWidget,
-        ClaimUserProvideInfoWidget,
-        ClaimUserInstructionsWidget,
-        ClaimUserWidget,
-    ):
-        monkeypatch.setattr(
-            f"parsec.core.gui.claim_user_widget.{wcls.__name__}.vanilla__init__",
-            wcls.__init__,
-            raising=False,
-        )
-        monkeypatch.setattr(
-            f"parsec.core.gui.claim_user_widget.{wcls.__name__}.__init__", _catch_init
-        )
-
-    async def _wait_next():
-        def _invitation_shown():
-            assert len(widgets) == 1
-
-        await aqtbot.wait_until(_invitation_shown)
-        return widgets.pop()
-
-    return _wait_next
+def catch_claim_user_widget(widget_catcher_factory):
+    return widget_catcher_factory(
+        "parsec.core.gui.claim_user_widget.ClaimUserFinalizeWidget",
+        "parsec.core.gui.claim_user_widget.ClaimUserCodeExchangeWidget",
+        "parsec.core.gui.claim_user_widget.ClaimUserProvideInfoWidget",
+        "parsec.core.gui.claim_user_widget.ClaimUserInstructionsWidget",
+        "parsec.core.gui.claim_user_widget.ClaimUserWidget",
+    )
 
 
 @pytest.mark.gui

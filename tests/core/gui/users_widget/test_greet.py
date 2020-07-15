@@ -9,29 +9,24 @@ from parsec.core.types import BackendInvitationAddr
 from parsec.core.backend_connection import backend_invited_cmds_factory
 from parsec.core.invite import claimer_retrieve_info
 from parsec.core.gui.users_widget import UserInvitationButton
-from parsec.core.gui.greet_user_widget import GreetUserWidget
+from parsec.core.gui.greet_user_widget import (
+    GreetUserInstructionsWidget,
+    GreetUserCheckInfoWidget,
+    GreetUserCodeExchangeWidget,
+    GreetUserWidget,
+)
 
 from tests.common import customize_fixtures
 
 
 @pytest.fixture
-def catch_greet_user_widget(monkeypatch):
-    widgets = []
-
-    vanilla_exec_modal = GreetUserWidget.exec_modal
-
-    def _patched_exec_modal(*args, **kwargs):
-        widget = vanilla_exec_modal(*args, **kwargs)
-        widgets.append(widget)
-        return widget
-
-    monkeypatch.setattr(
-        "parsec.core.gui.greet_user_widget.GreetUserWidget.exec_modal",
-        _patched_exec_modal,
-        raising=False,
+def catch_greet_user_widget(widget_catcher_factory):
+    return widget_catcher_factory(
+        "parsec.core.gui.greet_user_widget.GreetUserInstructionsWidget",
+        "parsec.core.gui.greet_user_widget.GreetUserCheckInfoWidget",
+        "parsec.core.gui.greet_user_widget.GreetUserCodeExchangeWidget",
+        "parsec.core.gui.greet_user_widget.GreetUserWidget",
     )
-
-    return widgets
 
 
 @pytest.mark.gui
@@ -64,6 +59,8 @@ async def test_greet_user(
         token=invitation.token,
     )
 
+    # First switch to users page, and click on the invitation listed there
+
     u_w = await logged_gui.test_switch_to_users_widget()
 
     assert u_w.layout_users.count() == 4
@@ -72,34 +69,25 @@ async def test_greet_user(
     assert isinstance(inv_btn, UserInvitationButton)
     assert inv_btn.email == "fry@pe.com"
 
-    # Click on greet button and capture the dialog
-
     await aqtbot.mouse_click(inv_btn.button_greet, QtCore.Qt.LeftButton)
 
-    def invitation_shown():
-        assert len(catch_greet_user_widget) == 1
+    # User greet widget should show up now with welcome page
 
-    await aqtbot.wait_until(invitation_shown)
-
-    gu_w = catch_greet_user_widget[0]
-    gui_w = gu_w.greet_user_instructions_widget
-    guce_w = gu_w.greet_user_code_exchange_widget
-    guci_w = gu_w.greet_user_check_info_widget
-
+    gu_w = await catch_greet_user_widget()
     assert isinstance(gu_w, GreetUserWidget)
-    assert gu_w.dialog.label_title.text() == "Greet a new user"
 
-    # Welcome page should be displayed
-    assert gui_w.isVisible()
-    assert guce_w.isHidden()
-    assert guci_w.isHidden()
+    gui_w = await catch_greet_user_widget()
+    assert isinstance(gui_w, GreetUserInstructionsWidget)
 
-    await aqtbot.mouse_click(gui_w.button_start, QtCore.Qt.LeftButton)
+    def _greet_user_displayed():
+        assert gu_w.dialog.isVisible()
+        assert gu_w.isVisible()
+        assert gu_w.dialog.label_title.text() == "Greet a new user"
+        assert gui_w.isVisible()
 
-    assert not gui_w.button_start.isEnabled()
-    assert gui_w.button_start.text() == "Waiting for the other user..."
+    await aqtbot.wait_until(_greet_user_displayed)
 
-    # Now start claimer
+    # Now we can setup the boilerplates for the test
 
     start_claimer = trio.Event()
     start_claimer_trust = trio.Event()
@@ -141,54 +129,82 @@ async def test_greet_user(
     async with trio.open_nursery() as nursery:
         nursery.start_soon(_run_claimer)
 
-        async with aqtbot.wait_signal(guce_w.get_greeter_sas_success):
-            async with aqtbot.wait_signal(gui_w.wait_peer_success):
-                start_claimer.set()
+        # Start the greeting
+        await aqtbot.mouse_click(gui_w.button_start, QtCore.Qt.LeftButton)
 
-        # Next page shows up (SAS code exchange)
-        assert gui_w.isHidden()
-        assert guce_w.isVisible()
-        assert guci_w.isHidden()
+        def _greet_started():
+            assert not gui_w.button_start.isEnabled()
+            assert gui_w.button_start.text() == "Waiting for the other user..."
 
-        # We should be displaying the greeter SAS code
+        await aqtbot.wait_until(_greet_started)
+
+        # Start the claimer, this should change page to code exchange
+        start_claimer.set()
+
+        guce_w = await catch_greet_user_widget()
+        assert isinstance(guce_w, GreetUserCodeExchangeWidget)
         await greeter_sas_available.wait()
-        assert guce_w.widget_greeter_code.isVisible()
-        assert guce_w.widget_claimer_code.isHidden()
-        assert guce_w.line_edit_greeter_code.text() == greeter_sas
+
+        def _greeter_code_displayed():
+            assert not gui_w.isVisible()
+            assert guce_w.isVisible()
+            # We should be displaying the greeter SAS code
+            assert guce_w.widget_greeter_code.isVisible()
+            assert not guce_w.widget_claimer_code.isVisible()
+            assert not guce_w.code_input_widget.isVisible()
+            assert guce_w.line_edit_greeter_code.text() == greeter_sas
+
+        await aqtbot.wait_until(_greeter_code_displayed)
 
         # Now pretent the code was correctly transmitted to the claimer
-        async with aqtbot.wait_signal(guce_w.get_claimer_sas_success):
-            async with aqtbot.wait_signal(guce_w.wait_peer_trust_success):
-                start_claimer_trust.set()
+        start_claimer_trust.set()
 
-        # We now should be displaying the possible claimer SAS codes
-        assert guce_w.widget_greeter_code.isHidden()
-        assert not guce_w.widget_claimer_code.isHidden()
-        # TODO: better check on codes
+        def _claimer_code_choices_displayed():
+            assert not guce_w.widget_greeter_code.isVisible()
+            assert guce_w.widget_claimer_code.isVisible()
+            assert guce_w.code_input_widget.isVisible()
+            assert guce_w.code_input_widget.code_layout.count() == 4
+            # TODO: better check on codes
 
-        async with aqtbot.wait_signal(guci_w.get_requests_success):
-            async with aqtbot.wait_signal(guce_w.succeeded):
-                # Pretent we choose the right code
-                # TODO: click on button instead of sending the corresponding event
-                await aqtbot.run(guce_w.code_input_widget.good_code_clicked.emit)
-                start_claimer_claim_user.set()
+        await aqtbot.wait_until(_claimer_code_choices_displayed)
 
-        # Next step is retrieving the claimer informations
-        assert gui_w.isHidden()
-        assert guce_w.isHidden()
-        assert guci_w.isVisible()
+        # Pretend we have choosen the right code
+        # TODO: click on button instead of sending the corresponding event
+        await aqtbot.run(guce_w.code_input_widget.good_code_clicked.emit)
 
-        assert guci_w.line_edit_user_full_name.text() == requested_human_handle.label
-        assert guci_w.line_edit_user_email.text() == requested_human_handle.email
-        assert guci_w.line_edit_device.text() == requested_device_label
+        def _wait_claimer_info():
+            # TODO: unlike with greet_device_widget, there is no
+            # `guce_w.label_wait_info` to check for waiting message
+            assert not guce_w.widget_greeter_code.isVisible()
+            assert not guce_w.widget_claimer_code.isVisible()
 
-        async with aqtbot.wait_signal(gu_w.dialog.finished):
-            async with aqtbot.wait_signal(guci_w.succeeded):
-                await aqtbot.mouse_click(guci_w.button_create_user, QtCore.Qt.LeftButton)
+        await aqtbot.wait_until(_wait_claimer_info)
+
+        # Claimer info arrive, this should change the page to check info
+        start_claimer_claim_user.set()
+
+        guci_w = await catch_greet_user_widget()
+        assert isinstance(guci_w, GreetUserCheckInfoWidget)
+
+        def _check_info_displayed():
+            assert not guce_w.isVisible()
+            assert guci_w.isVisible()
+            # assert guci_w.line_edit_user_full_name.text() == requested_human_handle.label
+            # assert guci_w.line_edit_user_email.text() == requested_human_handle.email
+            assert guci_w.line_edit_device.text() == requested_device_label
+
+        await aqtbot.wait_until(_check_info_displayed)
+
+        # Finally confirm the claimer info and finish the greeting !
+        await aqtbot.mouse_click(guci_w.button_create_user, QtCore.Qt.LeftButton)
+
+        def _greet_done():
+            assert not gu_w.isVisible()
+            assert autoclose_dialog.dialogs == [
+                ("", "The user was successfully greeter in your organization.")
+            ]
+
+        await aqtbot.wait_until(_greet_done)
 
         with trio.fail_after(1):
             await claimer_done.wait()
-
-    assert autoclose_dialog.dialogs == [
-        ("", "The user was successfully greeter in your organization.")
-    ]

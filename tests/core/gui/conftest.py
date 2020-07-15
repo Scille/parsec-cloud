@@ -8,6 +8,7 @@ from trio.testing import trio_test as vanilla_trio_test
 import queue
 import threading
 from concurrent import futures
+from importlib import import_module
 from PyQt5 import QtCore
 
 from parsec.event_bus import EventBus
@@ -232,6 +233,37 @@ def autoclose_dialog(monkeypatch):
         "parsec.core.gui.custom_dialogs.GreyedDialog.exec_", _dialog_exec, raising=False
     )
     return spy
+
+
+@pytest.fixture
+def widget_catcher_factory(aqtbot, monkeypatch):
+    """Useful to capture lazily created widget such as modals"""
+
+    def _widget_catcher_factory(*widget_cls_pathes):
+        widgets = []
+
+        def _catch_init(self, *args, **kwargs):
+            widgets.append(self)
+            return self.vanilla__init__(*args, **kwargs)
+
+        for widget_cls_path in widget_cls_pathes:
+            module_path, widget_cls_name = widget_cls_path.rsplit(".", 1)
+            widget_cls = getattr(import_module(module_path), widget_cls_name)
+            monkeypatch.setattr(
+                f"{widget_cls_path}.vanilla__init__", widget_cls.__init__, raising=False
+            )
+            monkeypatch.setattr(f"{widget_cls_path}.__init__", _catch_init)
+
+        async def _wait_next():
+            def _invitation_shown():
+                assert len(widgets)
+
+            await aqtbot.wait_until(_invitation_shown)
+            return widgets.pop(0)
+
+        return _wait_next
+
+    return _widget_catcher_factory
 
 
 @pytest.fixture

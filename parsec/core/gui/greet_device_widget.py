@@ -254,7 +254,6 @@ class GreetDeviceCodeExchangeWidget(QWidget, Ui_GreetDeviceCodeExchangeWidget):
 
         self.label_wait_info.hide()
 
-    def _run_get_greeter_sas(self):
         self.get_greeter_sas_job = self.jobs_ctx.submit_job(
             ThreadSafeQtSignal(self, "get_greeter_sas_success"),
             ThreadSafeQtSignal(self, "get_greeter_sas_error"),
@@ -395,22 +394,6 @@ class GreetDeviceWidget(QWidget, Ui_GreetDeviceWidget):
         self.greeter_job = None
         self.greeter_success.connect(self._on_greeter_success)
         self.greeter_error.connect(self._on_greeter_error)
-
-        self.greet_device_instructions_widget = GreetDeviceInstructionsWidget(
-            self.jobs_ctx, self.greeter, self.invite_addr, self.core
-        )
-        self.greet_device_instructions_widget.succeeded.connect(self._goto_page2)
-        self.greet_device_instructions_widget.failed.connect(self._on_page_failure_reboot)
-
-        self.greet_device_code_exchange_widget = GreetDeviceCodeExchangeWidget(
-            self.jobs_ctx, self.greeter
-        )
-        self.greet_device_code_exchange_widget.succeeded.connect(self._on_finished)
-        self.greet_device_code_exchange_widget.failed.connect(self._on_page_failure_reboot)
-
-        self.main_layout.addWidget(self.greet_device_instructions_widget)
-        self.main_layout.addWidget(self.greet_device_code_exchange_widget)
-
         self._run_greeter()
 
     def _run_greeter(self):
@@ -427,14 +410,7 @@ class GreetDeviceWidget(QWidget, Ui_GreetDeviceWidget):
         self.cancel()
         # Replace moving parts
         self.greeter = Greeter()
-        self.greet_device_instructions_widget.greeter = self.greeter
-        self.greet_device_code_exchange_widget.greeter = self.greeter
         self._run_greeter()
-
-    def _get_current_page(self):
-        for page in (self.greet_device_instructions_widget, self.greet_device_code_exchange_widget):
-            if not page.isHidden():
-                return page
 
     def _on_page_failure_reboot(self):
         self.restart()
@@ -443,13 +419,27 @@ class GreetDeviceWidget(QWidget, Ui_GreetDeviceWidget):
         self.dialog.accept()
 
     def _goto_page1(self):
-        self.greet_device_instructions_widget.setHidden(False)
-        self.greet_device_code_exchange_widget.setHidden(True)
+        item = self.main_layout.takeAt(0)
+        if item:
+            current_page = item.widget()
+            if current_page:
+                current_page.hide()
+                current_page.setParent(None)
+        page = GreetDeviceInstructionsWidget(
+            self.jobs_ctx, self.greeter, self.invite_addr, core=self.core
+        )
+        page.succeeded.connect(self._goto_page2)
+        page.failed.connect(self._on_page_failure_reboot)
+        self.main_layout.addWidget(page)
 
     def _goto_page2(self):
-        self.greet_device_instructions_widget.setHidden(True)
-        self.greet_device_code_exchange_widget.setHidden(False)
-        self.greet_device_code_exchange_widget._run_get_greeter_sas()
+        current_page = self.main_layout.takeAt(0).widget()
+        current_page.hide()
+        current_page.setParent(None)
+        page = GreetDeviceCodeExchangeWidget(self.jobs_ctx, self.greeter)
+        page.succeeded.connect(self._on_finished)
+        page.failed.connect(self._on_page_failure_reboot)
+        self.main_layout.addWidget(page)
 
     def _on_finished(self):
         show_info(self, _("TEXT_DEVICE_GREET_SUCCESSFUL"))
