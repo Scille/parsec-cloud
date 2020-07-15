@@ -1,36 +1,26 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
 
-import re
-
 import pytest
-
-from parsec.backend.config import PostgreSQLBlockStoreConfig
+import trio
 
 
 @pytest.mark.trio
 @pytest.mark.postgresql
-async def test_postgresql_connection_ok(
-    postgresql_url, alice, bob, backend_factory, backend_sock_factory
-):
-    async with backend_factory(
-        config={"blockstore_config": PostgreSQLBlockStoreConfig(), "db_url": postgresql_url}
-    ):
+async def test_postgresql_connection_ok(postgresql_url, backend_factory, blockstore):
+    async with backend_factory(config={"db_url": postgresql_url}):
         pass
 
 
 @pytest.mark.trio
 @pytest.mark.postgresql
 async def test_postgresql_connection_not_ok(
-    postgresql_url, alice, bob, backend_factory, backend_sock_factory, caplog
+    postgresql_url, backend_factory, caplog, unused_tcp_port
 ):
-    postgresql_url = re.sub(
-        ":(\\d+)/", lambda m: f":{str(int(m.group()[1:-1])+1)}/", postgresql_url
-    )
-    with pytest.raises(OSError):
-        async with backend_factory(
-            config={"blockstore_config": PostgreSQLBlockStoreConfig(), "db_url": postgresql_url}
-        ):
+    postgresql_url = f"postgresql://localhost:{unused_tcp_port}/dummy"
+    with pytest.raises(OSError) as exc:
+        async with backend_factory(config={"db_url": postgresql_url}):
             pass
+    assert "[Errno 111] Connect call failed" in str(exc.value)
     assert len(caplog.records) == 1
     assert caplog.records[0].levelname == "ERROR"
     assert "initial db connection failed" in caplog.records[0].message
@@ -39,21 +29,19 @@ async def test_postgresql_connection_not_ok(
 @pytest.mark.trio
 @pytest.mark.postgresql
 async def test_postgresql_connection_not_ok_retrying(
-    postgresql_url, alice, bob, backend_factory, backend_sock_factory, recwarn, caplog
+    postgresql_url, backend_factory, caplog, unused_tcp_port, autojump_clock
 ):
-    postgresql_url = re.sub(
-        ":(\\d+)/", lambda m: f":{str(int(m.group()[1:-1])+1)}/", postgresql_url
-    )
+    postgresql_url = f"postgresql://localhost:{unused_tcp_port}/dummy"
     with pytest.raises(OSError):
-        async with backend_factory(
-            config={
-                "blockstore_config": PostgreSQLBlockStoreConfig(),
-                "db_url": postgresql_url,
-                "db_first_tries_number": 4,
-                "db_first_tries_sleep": 0,
-            }
-        ):
-            pass
+        with trio.fail_after(3 * 3 + 1):
+            async with backend_factory(
+                config={
+                    "db_url": postgresql_url,
+                    "db_first_tries_number": 4,
+                    "db_first_tries_sleep": 3,
+                }
+            ):
+                pass
     assert len(caplog.records) == 4
     for record in caplog.records[:3]:
         assert record.levelname == "WARNING"
