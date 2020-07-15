@@ -2,7 +2,7 @@
 
 from pathlib import Path
 from collections import defaultdict
-from typing import Dict, Tuple, Set, Optional, Union, AsyncIterator
+from typing import Dict, Tuple, Set, Optional, Union, AsyncIterator, NoReturn
 
 import trio
 from trio import hazmat
@@ -226,7 +226,7 @@ class WorkspaceStorage(BaseWorkspaceStorage):
 
     # Helpers
 
-    async def clear_memory_cache(self, flush=True):
+    async def clear_memory_cache(self, flush=True) -> None:
         await self.manifest_storage.clear_memory_cache(flush=flush)
 
     # Checkpoint interface
@@ -308,33 +308,33 @@ class WorkspaceStorageTimestamped(BaseWorkspaceStorage):
         self.timestamp = timestamp
         self.manifest_storage = None
 
-    async def set_chunk(self, chunk_id: ChunkID, block: bytes) -> None:
+    async def set_chunk(self, chunk_id: ChunkID, block: bytes) -> NoReturn:
         self._throw_permission_error()
 
-    async def clear_chunk(self, chunk_id: ChunkID, miss_ok: bool = False) -> None:
+    async def clear_chunk(self, chunk_id: ChunkID, miss_ok: bool = False) -> NoReturn:
         self._throw_permission_error()
 
-    async def clear_manifest(self, entry_id: EntryID) -> None:
+    async def clear_manifest(self, entry_id: EntryID) -> NoReturn:
         self._throw_permission_error()
 
-    async def run_vacuum(self):
+    async def run_vacuum(self) -> NoReturn:
         self._throw_permission_error()
 
-    async def get_need_sync_entries(self) -> None:
+    async def get_need_sync_entries(self) -> NoReturn:
         self._throw_permission_error()
 
-    async def get_realm_checkpoint(self) -> None:
+    async def get_realm_checkpoint(self) -> NoReturn:
         self._throw_permission_error()
 
-    async def clear_memory_cache(self, flush=True):
+    async def clear_memory_cache(self, flush=True) -> NoReturn:
         self._throw_permission_error()
 
     async def update_realm_checkpoint(
         self, new_checkpoint: int, changed_vlobs: Dict[EntryID, int]
-    ) -> None:
+    ) -> NoReturn:
         self._throw_permission_error()
 
-    def _throw_permission_error(*args, **kwargs):
+    def _throw_permission_error(*args, **kwargs) -> NoReturn:
         raise FSError("Not implemented : WorkspaceStorage is timestamped")
 
     # Manifest interface
@@ -352,7 +352,7 @@ class WorkspaceStorageTimestamped(BaseWorkspaceStorage):
     ) -> None:  # initially for clean
         assert isinstance(entry_id, EntryID)
         if manifest.need_sync:
-            return self._throw_permission_error()
+            self._throw_permission_error()
         self._check_lock_status(entry_id)
         self._cache[entry_id] = manifest
 
