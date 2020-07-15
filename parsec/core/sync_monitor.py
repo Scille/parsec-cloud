@@ -231,7 +231,7 @@ class SyncContext:
                 del self._local_changes[entry_id]
                 try:
                     await self._sync(entry_id)
-                except FSBackendOfflineError as exc:
+                except (FSBackendOfflineError, BackendConnectionError) as exc:
                     raise BackendNotAvailable from exc
                 except (FSWorkspaceNoReadAccess, FSWorkspaceNoWriteAccess):
                     # We've just lost the write access to the workspace, and
