@@ -136,3 +136,50 @@ async def test_revoke_user_not_allowed(
 
     assert autoclose_dialog.dialogs == [("Error", "Could not revoke this user.")]
     assert alice_w.user_info.is_revoked is False
+
+
+@pytest.mark.gui
+@pytest.mark.trio
+@customize_fixtures(backend_has_email=True, logged_gui_as_admin=True)
+async def test_cancel_user_invitation(
+    aqtbot,
+    logged_gui,
+    running_backend,
+    backend,
+    autoclose_dialog,
+    monkeypatch,
+    alice,
+    email_letterbox,
+):
+
+    email = "i@like.coffee"
+
+    # Patch dialogs
+    monkeypatch.setattr("parsec.core.gui.users_widget.get_text_input", lambda *x, **y: email)
+    monkeypatch.setattr(
+        "parsec.core.gui.users_widget.ask_question",
+        lambda *x, **y: _("TEXT_USER_INVITE_CANCEL_INVITE_ACCEPT"),
+    )
+    u_w = await logged_gui.test_switch_to_users_widget()
+
+    # Invite new user
+    async with aqtbot.wait_signals([u_w.button_add_user.clicked, u_w.list_success]):
+        await aqtbot.mouse_click(u_w.button_add_user, QtCore.Qt.LeftButton)
+
+    # Assert user invitation widget created
+    assert u_w.layout_users.count() == 4
+    user_invitation_w = u_w.layout_users.itemAt(3).widget()
+    assert user_invitation_w.email == email
+
+    # Cancel
+    async with aqtbot.wait_signals(
+        [
+            user_invitation_w.button_cancel.clicked,
+            user_invitation_w.cancel_clicked,
+            u_w.cancel_invitation_success,
+            u_w.list_success,
+        ]
+    ):
+        await aqtbot.mouse_click(user_invitation_w.button_cancel, QtCore.Qt.LeftButton)
+
+    assert u_w.layout_users.count() == 3

@@ -198,14 +198,14 @@ class LoggedCore:
             token=rep["token"],
         )
 
-    async def delete_invitation(self, token: UUID, reason: InvitationDeletedReason) -> None:
+    async def delete_invitation(
+        self, token: UUID, reason: InvitationDeletedReason = InvitationDeletedReason.CANCELLED
+    ) -> None:
         """
         Raises:
             BackendConnectionError
         """
-        rep = await self._backend_conn.cmds.invite_delete(
-            token=token, reason=InvitationDeletedReason.CANCELLED
-        )
+        rep = await self._backend_conn.cmds.invite_delete(token=token, reason=reason)
         if rep["status"] != "ok":
             raise BackendConnectionError(f"Backend error: {rep}")
 
