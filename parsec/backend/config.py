@@ -81,6 +81,8 @@ class BackendConfig:
     db_url: str
     db_min_connections: int
     db_max_connections: int
+    db_first_tries_number: int
+    db_first_tries_sleep: int
 
     blockstore_config: BaseBlockStoreConfig
 

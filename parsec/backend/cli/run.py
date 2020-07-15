@@ -222,6 +222,20 @@ Allowed values:
     help="Maximum number of connections to the database if using PostgreSQL",
 )
 @click.option(
+    "--db-first-tries-number",
+    default=1,
+    show_default=True,
+    envvar="PARSEC_DB_FIRST_TRIES_NUMBER",
+    help="Number of tries allowed during initial database connection (0 is unlimited)",
+)
+@click.option(
+    "--db-first-tries-sleep",
+    default=1,
+    show_default=True,
+    envvar="PARSEC_DB_FIRST_TRIES_SLEEP",
+    help="Number of second waited between tries during initial database connection",
+)
+@click.option(
     "--blockstore",
     "-b",
     required=True,
@@ -350,6 +364,8 @@ def run_cmd(
     db,
     db_min_connections,
     db_max_connections,
+    db_first_tries_number,
+    db_first_tries_sleep,
     blockstore,
     administration_token,
     backend_addr,
@@ -405,6 +421,8 @@ def run_cmd(
             db_url=db,
             db_min_connections=db_min_connections,
             db_max_connections=db_max_connections,
+            db_first_tries_number=db_first_tries_number,
+            db_first_tries_sleep=db_first_tries_sleep,
             blockstore_config=blockstore,
             email_config=email_config,
             backend_addr=backend_addr,

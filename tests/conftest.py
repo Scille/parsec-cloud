@@ -504,6 +504,8 @@ def backend_factory(
                 "administration_token": "s3cr3t",
                 "db_min_connections": 1,
                 "db_max_connections": 5,
+                "db_first_tries_number": 1,
+                "db_first_tries_sleep": 1,
                 "debug": False,
                 "db_url": backend_store,
                 "blockstore_config": blockstore,
