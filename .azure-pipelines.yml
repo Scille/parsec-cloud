@@ -467,6 +467,7 @@ jobs:
     displayName: 'Install'
 # Postgresql tests almost working, but _run function in tests/test_cli.py gives
 # returncode of 1 instead of 0. Removed test_cli.py from this call as temporary fix
+# doing tests only on tests/backend/*
   - bash: |
       set -eux
       py.test $(pytest.base_args) \
