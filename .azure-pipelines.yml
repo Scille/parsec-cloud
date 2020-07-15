@@ -71,78 +71,78 @@ jobs:
 #################################################################################
 
 
-- job: 'linux_test'
-  displayName: 'Linux tests'
-  timeoutInMinutes: 60
-  pool:
-    vmImage: 'ubuntu-latest'
-  variables:
-    PGINSTALLATION: '/usr/lib/postgresql/$(postgresql.version)/bin'
-  steps:
-  - checkout: self
-    submodules: true
-  - task: UsePythonVersion@0
-    inputs:
-      versionSpec: '$(python.version)'
-  - bash: |
-      set -eux
-      python --version
-      pip install -U wheel pip setuptools
-      sudo apt-get install \
-        postgresql-$(postgresql.version) \
-        desktop-file-utils  # Provides `update-desktop-database` used by `tests/scripts/run_testenv.sh`
-      psql --version
-    displayName: 'Bootstrap'
-  - bash: |
-      set -eux
-      # Build the parsec wheel
-      python setup.py bdist_wheel
-      # Install the parsec wheel with all dependencies
-      pip install $(ls dist/parsec_cloud-*.whl)[all]
-      # Check dependency compatibility
-      pip check parsec[all]
-      # Create isolated test directory
-      mkdir -p $(Agent.TempDirectory)/empty
-      cp -R tests $(Agent.TempDirectory)/empty
-      cp setup.cfg $(Agent.TempDirectory)/empty
-    displayName: 'Install'
-  - bash: |
-      set -eux
-      py.test $(pytest.base_args) \
-        tests --runmountpoint --runslow \
-        -n auto --max-worker-restart=0 -x \
-        --junitxml=test-results-memory.xml
-    workingDirectory: $(Agent.TempDirectory)/empty
-    displayName: 'Tests memory'
-  - bash: |
-      set -eux
-      py.test $(pytest.base_args) \
-        tests/backend tests/test_cli.py --postgresql --runslow \
-        -n auto --max-worker-restart=0 -x \
-        --junitxml=test-results-postgresql.xml
-    workingDirectory: $(Agent.TempDirectory)/empty
-    displayName: 'Tests postgresql'
-  # TODO: run gui tests with xvfb
-  # - bash: |
-  #     set -eux
-  #     py.test $(pytest.base_args) \
-  #       tests -m gui --runmountpoint --runslow --rungui -x \
-  #       --junitxml=test-results-gui.xml
-  #   workingDirectory: $(Agent.TempDirectory)/empty
-  #   displayName: 'Tests GUI'
-  - bash: |
-      set -eux
-      pip install -U codecov
-      coverage xml -o coverage.xml
-      grep -E '( filename=|<package )' coverage.xml
-      codecov --file=coverage.xml --commit=$(Build.SourceVersion)
-    workingDirectory: $(Agent.TempDirectory)/empty
-    displayName: 'Codecov upload'
-  - task: PublishTestResults@2
-    inputs:
-      testResultsFiles: '$(Agent.TempDirectory)/empty/test-results-*.xml'
-      testRunTitle: 'Linux'
-    condition: succeededOrFailed()
+    # - job: 'linux_test'
+    #   displayName: 'Linux tests'
+    #   timeoutInMinutes: 60
+    #   pool:
+    #     vmImage: 'ubuntu-latest'
+    #   variables:
+    #     PGINSTALLATION: '/usr/lib/postgresql/$(postgresql.version)/bin'
+    #   steps:
+    #   - checkout: self
+    #     submodules: true
+    #   - task: UsePythonVersion@0
+    #     inputs:
+    #       versionSpec: '$(python.version)'
+    #   - bash: |
+    #       set -eux
+    #       python --version
+    #       pip install -U wheel pip setuptools
+    #       sudo apt-get install \
+    #         postgresql-$(postgresql.version) \
+    #         desktop-file-utils  # Provides `update-desktop-database` used by `tests/scripts/run_testenv.sh`
+    #       psql --version
+    #     displayName: 'Bootstrap'
+    #   - bash: |
+    #       set -eux
+    #       # Build the parsec wheel
+    #       python setup.py bdist_wheel
+    #       # Install the parsec wheel with all dependencies
+    #       pip install $(ls dist/parsec_cloud-*.whl)[all]
+    #       # Check dependency compatibility
+    #       pip check parsec[all]
+    #       # Create isolated test directory
+    #       mkdir -p $(Agent.TempDirectory)/empty
+    #       cp -R tests $(Agent.TempDirectory)/empty
+    #       cp setup.cfg $(Agent.TempDirectory)/empty
+    #     displayName: 'Install'
+    #   - bash: |
+    #       set -eux
+    #       py.test $(pytest.base_args) \
+    #         tests --runmountpoint --runslow \
+    #         -n auto --max-worker-restart=0 -x \
+    #         --junitxml=test-results-memory.xml
+    #     workingDirectory: $(Agent.TempDirectory)/empty
+    #     displayName: 'Tests memory'
+    #   - bash: |
+    #       set -eux
+    #       py.test $(pytest.base_args) \
+    #         tests/backend tests/test_cli.py --postgresql --runslow \
+    #         -n auto --max-worker-restart=0 -x \
+    #         --junitxml=test-results-postgresql.xml
+    #     workingDirectory: $(Agent.TempDirectory)/empty
+    #     displayName: 'Tests postgresql'
+    #   # TODO: run gui tests with xvfb
+    #   # - bash: |
+    #   #     set -eux
+    #   #     py.test $(pytest.base_args) \
+    #   #       tests -m gui --runmountpoint --runslow --rungui -x \
+    #   #       --junitxml=test-results-gui.xml
+    #   #   workingDirectory: $(Agent.TempDirectory)/empty
+    #   #   displayName: 'Tests GUI'
+    #   - bash: |
+    #       set -eux
+    #       pip install -U codecov
+    #       coverage xml -o coverage.xml
+    #       grep -E '( filename=|<package )' coverage.xml
+    #       codecov --file=coverage.xml --commit=$(Build.SourceVersion)
+    #     workingDirectory: $(Agent.TempDirectory)/empty
+    #     displayName: 'Codecov upload'
+    #   - task: PublishTestResults@2
+    #     inputs:
+    #       testResultsFiles: '$(Agent.TempDirectory)/empty/test-results-*.xml'
+    #       testRunTitle: 'Linux'
+    #     condition: succeededOrFailed()
 
 
 #################################################################################
@@ -197,35 +197,36 @@ jobs:
     workingDirectory: $(Agent.TempDirectory)/empty
     displayName: 'Debug: stress flaky tests'
     condition: and(succeeded(), gt(variables['debug.stress_flaky_tests'], 0))
+    # - bash: |
+    #     set -eux
+    #     py.test $(pytest.base_args) \
+    #       tests -n auto --max-worker-restart=0 -x \
+    #       --junitxml=test-results-fast.xml
+    #   workingDirectory: $(Agent.TempDirectory)/empty
+    #   displayName: 'Tests fast'
+    # - bash: |
+    #     set -eux
+    #     py.test $(pytest.base_args) \
+    #       tests --runmountpoint --runslow -m mountpoint -x \
+    #       --junitxml=test-results-mountpoint.xml
+    #   workingDirectory: $(Agent.TempDirectory)/empty
+    #   displayName: 'Tests mountpoint'
   - bash: |
       set -eux
+      pip install pytest-repeat
       py.test $(pytest.base_args) \
-        tests -n auto --max-worker-restart=0 -x \
-        --junitxml=test-results-fast.xml
-    workingDirectory: $(Agent.TempDirectory)/empty
-    displayName: 'Tests fast'
-  - bash: |
-      set -eux
-      py.test $(pytest.base_args) \
-        tests --runmountpoint --runslow -m mountpoint -x \
-        --junitxml=test-results-mountpoint.xml
-    workingDirectory: $(Agent.TempDirectory)/empty
-    displayName: 'Tests mountpoint'
-  - bash: |
-      set -eux
-      py.test $(pytest.base_args) \
-        tests --runmountpoint --runslow --rungui -m gui -x \
-        --junitxml=test-results-gui.xml
+        tests --runmountpoint --runslow --rungui -m gui -x -k test_revoked_notification\
+        --junitxml=test-results-gui.xml --count 50
     workingDirectory: $(Agent.TempDirectory)/empty
     displayName: 'Tests GUI'
-  - bash: |
-      set -eux
-      py.test $(pytest.base_args) \
-        tests --runslow -m slow \
-        -n auto --max-worker-restart=0 -x \
-        --junitxml=test-results-slow.xml
-    workingDirectory: $(Agent.TempDirectory)/empty
-    displayName: 'Tests slow'
+    # - bash: |
+    #     set -eux
+    #     py.test $(pytest.base_args) \
+    #       tests --runslow -m slow \
+    #       -n auto --max-worker-restart=0 -x \
+    #       --junitxml=test-results-slow.xml
+    #   workingDirectory: $(Agent.TempDirectory)/empty
+    #   displayName: 'Tests slow'
   - bash: |
       set -eux
       pip install -U codecov
