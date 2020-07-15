@@ -36,10 +36,8 @@ async def test_revoked_notification(
     ).dump_and_sign(alice_user_fs.device.signing_key)
     central_widget = logged_gui.test_get_central_widget()
     assert central_widget is not None
-    async with aqtbot.wait_signal(central_widget.new_notification):
+    async with aqtbot.wait_signal(central_widget.new_notification, timeout=3000):
         await alice_user_fs.backend_cmds.user_revoke(revoked_device_certificate)
-        await aqtbot.mouse_click(central_widget.menu.button_users, QtCore.Qt.LeftButton)
-        await aqtbot.mouse_click(central_widget.menu.button_devices, QtCore.Qt.LeftButton)
 
     # Assert dialog
     assert len(autoclose_dialog.dialogs) == 1
@@ -47,10 +45,19 @@ async def test_revoked_notification(
     assert dialog[0] == "Error"
     assert dialog[1] == "This device is revoked"
 
-    # Assert device and user widgets
-    devices_w = logged_gui.test_get_devices_widget()
     users_w = logged_gui.test_get_users_widget()
-    assert devices_w.layout_devices.count() == 1
-    assert isinstance(devices_w.layout_devices.itemAt(0).widget(), QLabel)
+    async with aqtbot.wait_signals(
+        [central_widget.menu.button_users.clicked, users_w.list_error], timeout=3000
+    ):
+        await aqtbot.mouse_click(central_widget.menu.button_users, QtCore.Qt.LeftButton)
+
     assert users_w.layout_users.count() == 1
     assert isinstance(users_w.layout_users.itemAt(0).widget(), QLabel)
+
+    devices_w = logged_gui.test_get_devices_widget()
+    async with aqtbot.wait_signals(
+        [central_widget.menu.button_devices.clicked, devices_w.list_error], timeout=3000
+    ):
+        await aqtbot.mouse_click(central_widget.menu.button_devices, QtCore.Qt.LeftButton)
+
+    assert isinstance(devices_w.layout_devices.itemAt(0).widget(), QLabel)
