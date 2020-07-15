@@ -176,6 +176,7 @@ class PGHandler:
         self._task_status = await start_task(nursery, self._run_connections)
 
     async def _run_connections(self, task_status=trio.TASK_STATUS_IGNORED):
+        postgres_initial_connect_failed = False
         while True:
             try:
                 async with triopg.create_pool(
@@ -188,8 +189,11 @@ class PGHandler:
                             "app_notification", self._on_notification
                         )
                         task_status.started()
+                        if postgres_initial_connect_failed:
+                            logger.warning("db connection established after initial failure")
                         await trio.sleep_forever()
             except OSError:
+                postgres_initial_connect_failed = True
                 if self.first_tries_number == 1:
                     raise
                 if self.first_tries_number > 1:
