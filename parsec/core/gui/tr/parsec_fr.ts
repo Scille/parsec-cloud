@@ -355,12 +355,12 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../forms/create_org_chose_action_widget.ui" line="42"/>
+        <location filename="../forms/create_org_chose_action_widget.ui" line="45"/>
         <source>TEXT_ORG_WIZARD_CREATE_ON_WEBSITE</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../forms/create_org_chose_action_widget.ui" line="49"/>
+        <location filename="../forms/create_org_chose_action_widget.ui" line="52"/>
         <source>TEXT_ORG_WIZARD_CREATE_ON_CUSTOM</source>
         <translation type="unfinished"></translation>
     </message>
@@ -378,36 +378,35 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../forms/create_org_custom_widget.ui" line="54"/>
+        <location filename="../forms/create_org_custom_widget.ui" line="57"/>
         <source>TEXT_LABEL_ORG_NAME</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../forms/create_org_custom_widget.ui" line="96"/>
+        <location filename="../forms/create_org_custom_widget.ui" line="106"/>
         <source>TEXT_LABEL_SERVER_URL</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../forms/create_org_custom_widget.ui" line="117"/>
+        <location filename="../forms/create_org_custom_widget.ui" line="127"/>
         <source>TEXT_CREATE_ORG_BACKEND_URL_PLACEHOLDER</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../forms/create_org_custom_widget.ui" line="138"/>
+        <location filename="../forms/create_org_custom_widget.ui" line="148"/>
         <source>TEXT_LABEL_SERVER_ADMIN_TOKEN</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../forms/create_org_custom_widget.ui" line="159"/>
-        <source>TEXT_CREATE_ORG_ADMIN_TOKEN</source>
+        <location filename="../forms/create_org_custom_widget.ui" line="169"/>
+        <source>TEXT_CREATE_ORG_ADMIN_TOKEN_PLACEHOLDER</source>
         <translation type="unfinished"></translation>
     </message>
-</context>
-<context>
-    <name>CreateOrgFirstPageWidget</name>
-</context>
-<context>
-    <name>CreateOrgSecondPageWidget</name>
+    <message>
+        <location filename="../forms/create_org_custom_widget.ui" line="85"/>
+        <source>TEXT_LABEL_ORG_NAME_RECOMMANDATIONS</source>
+        <translation type="unfinished"></translation>
+    </message>
 </context>
 <context>
     <name>CreateOrgWebsiteWidget</name>
@@ -422,18 +421,23 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../forms/create_org_website_widget.ui" line="54"/>
+        <location filename="../forms/create_org_website_widget.ui" line="57"/>
         <source>TEXT_LABEL_USER_EMAIL</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../forms/create_org_website_widget.ui" line="96"/>
+        <location filename="../forms/create_org_website_widget.ui" line="99"/>
         <source>TEXT_LABEL_ORG_NAME</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../forms/create_org_website_widget.ui" line="187"/>
+        <location filename="../forms/create_org_website_widget.ui" line="197"/>
         <source>ACTION_ACCEPT_CONTRACT</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../forms/create_org_website_widget.ui" line="127"/>
+        <source>TEXT_LABEL_ORG_NAME_RECOMMANDATIONS</source>
         <translation type="unfinished"></translation>
     </message>
 </context>

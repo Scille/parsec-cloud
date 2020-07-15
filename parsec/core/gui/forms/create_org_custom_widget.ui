@@ -79,6 +79,22 @@
        </property>
       </widget>
      </item>
+     <item>
+      <widget class="QLabel" name="label_2">
+       <property name="font">
+        <font>
+         <pointsize>9</pointsize>
+         <italic>true</italic>
+        </font>
+       </property>
+       <property name="text">
+        <string>TEXT_LABEL_ORG_NAME_RECOMMANDATIONS</string>
+       </property>
+       <property name="wordWrap">
+        <bool>true</bool>
+       </property>
+      </widget>
+     </item>
     </layout>
    </item>
    <item>
