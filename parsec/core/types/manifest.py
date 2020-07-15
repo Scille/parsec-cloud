@@ -234,7 +234,7 @@ class LocalManifest(BaseLocalData):
 
     need_sync: bool
     updated: Pendulum
-    base: RemoteManifest
+    base: RemoteManifest  # base must be overwritten in subclass
 
     # Properties
 

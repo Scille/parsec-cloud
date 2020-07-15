@@ -44,8 +44,6 @@ class DataMeta(type):
             raise RuntimeError("Missing attribute `SCHEMA_CLS` in class definition")
         if not issubclass(nmspc["SCHEMA_CLS"], cls.BASE_SCHEMA_CLS):
             raise RuntimeError(f"Attribute `SCHEMA_CLS` must inherit {BaseSignedDataSchema!r}")
-        # if "SERIALIZER" in nmspc:
-        #     raise RuntimeError("Attribute `SERIALIZER` is reserved")
 
         raw_cls = type.__new__(cls, name, bases, nmspc)
 

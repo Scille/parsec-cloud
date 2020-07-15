@@ -7,7 +7,7 @@ import attr
 from parsec.crypto import SecretKey
 from parsec.serde import fields, post_load, OneOfSchema
 from parsec.api.data.entry import EntryID, EntryIDField
-from parsec.api.data.base import BaseAPISignedData, BaseSignedDataSchema
+from parsec.api.data.base import BaseAPISignedData, BaseSignedDataSchema, DeviceIDField
 from parsec.api.protocol import DeviceID
 
 
@@ -22,6 +22,7 @@ class MessageContentType(Enum):
 class MessageContent(BaseAPISignedData):
     class SCHEMA_CLS(OneOfSchema, BaseSignedDataSchema):
         type_field = "type"
+        author = DeviceIDField(required=True, allow_none=False)
 
         @property
         def type_schemas(self):
@@ -43,6 +44,7 @@ class SharingGrantedMessageContent(MessageContent):
     class SCHEMA_CLS(BaseSignedDataSchema):
         type = fields.EnumCheckedConstant(MessageContentType.SHARING_GRANTED, required=True)
         name = fields.String(required=True)
+        author = DeviceIDField(required=True, allow_none=False)
         id = EntryIDField(required=True)
         encryption_revision = fields.Integer(required=True)
         encrypted_on = fields.DateTime(required=True)
