@@ -396,8 +396,11 @@ msgstr "current"
 msgid "ACTION_DEVICE_MENU_CHANGE_PASSWORD"
 msgstr "Change password"
 
-msgid "TEXT_DEVICES_CANNOT_INVITE_DEVICE"
-msgstr "Cannot invite a new device."
+msgid "TEXT_INVITE_DEVICE_INVITE_ERROR"
+msgstr "Could not invite the device."
+
+msgid "TEXT_INVITE_DEVICE_INVITE_OFFLINE"
+msgstr "The server is offline or you have no access to the internet."
 
 msgid "TEXT_DEVICE_LIST_RETRIEVABLE_FAILURE"
 msgstr "Failed to retrieve the device list from the server."
@@ -503,6 +506,9 @@ msgid "ACTION_WORKSPACE_NEW_CREATE"
 msgstr "Create"
 
 msgid "TEXT_GREET_USER_ADDR_COPIED_TO_CLIPBOARD"
+msgstr "The invitation link has been copied to the clipboard"
+
+msgid "TEXT_GREET_DEVICE_ADDR_COPIED_TO_CLIPBOARD"
 msgstr "The invitation link has been copied to the clipboard"
 
 msgid "TEXT_GREET_DEVICE_EMAIL_SENT"
@@ -636,6 +642,9 @@ msgstr "Could not cancel the invitation."
 
 msgid "TEXT_INVITE_USER_INVITE_ERROR"
 msgstr "Could not invite the user."
+
+msgid "TEXT_INVITE_USER_INVITE_OFFLINE"
+msgstr "The server is offline or you have no access to the internet."
 
 msgid "TEXT_PARSEC_LICENSE"
 msgstr ""
