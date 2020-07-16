@@ -89,6 +89,9 @@ class BackendConfig:
     email_config: Optional[EmailConfig]
     backend_addr: Optional[BackendAddr]
 
+    spontaneous_organization_bootstrap: bool
+    organization_bootstrap_webhook_url: Optional[str]
+
     debug: bool
 
     @property

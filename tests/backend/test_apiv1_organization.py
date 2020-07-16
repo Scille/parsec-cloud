@@ -12,7 +12,7 @@ from parsec.api.protocol import (
 )
 from parsec.api.protocol.handshake import HandshakeOrganizationExpired
 
-from tests.common import freeze_time
+from tests.common import freeze_time, customize_fixtures
 from tests.backend.common import ping
 from tests.fixtures import local_device_to_backend_user
 
@@ -123,7 +123,9 @@ async def test_organization_recreate_and_bootstrap(
 
 
 @pytest.mark.trio
+@customize_fixtures(backend_has_webhook=True)
 async def test_organization_create_and_bootstrap(
+    webhook_spy,
     backend,
     organization_factory,
     local_device_factory,
@@ -157,6 +159,20 @@ async def test_organization_create_and_bootstrap(
             redacted_device_certificate=backend_newalice_first_device.redacted_device_certificate,
         )
     assert rep == {"status": "ok"}
+
+    # Ensure webhook has been triggered
+    assert webhook_spy == [
+        (
+            "http://example.com:888888/webhook",
+            {
+                "device_id": "alice@dev1",
+                "device_label": "My dev1 machine",
+                "human_email": "alice@example.com",
+                "human_label": "Alicey McAliceFace",
+                "organization_id": "NewOrg",
+            },
+        )
+    ]
 
     # 3) Now our new device can connect the backend
 
@@ -517,3 +533,63 @@ async def test_organization_bootstrap_bad_data(
             good_redacted_cd,
         )
     assert rep["status"] == "ok"
+
+
+@pytest.mark.trio
+@pytest.mark.parametrize("flavour", ["no_create", "create_different_token", "create_same_token"])
+@customize_fixtures(backend_spontaneous_organization_boostrap=True)
+async def test_organization_spontaneous_bootstrap(
+    backend, organization_factory, local_device_factory, apiv1_backend_sock_factory, flavour
+):
+    neworg = organization_factory("NewOrg")
+    # Spontaneous bootstrap must have empty token
+    empty_token = ""
+
+    # Step 1: organization creation (if needed)
+
+    if flavour == "create_same_token":
+        # Basically pretent we already tried the spontaneous
+        # bootstrap but got interrupted
+        step1_token = empty_token
+        step1_expiration_date = None
+    else:
+        # Administration explicitly created an organization,
+        # we shouldn't be able to overwrite it
+        step1_token = "123"
+        step1_expiration_date = pendulum.now().add(days=1)
+    if flavour != "no_create":
+        await backend.organization.create(
+            id=neworg.organization_id,
+            bootstrap_token=step1_token,
+            expiration_date=step1_expiration_date,
+        )
+
+    # Step 2: organization bootstrap
+
+    newalice = local_device_factory(org=neworg, profile=UserProfile.ADMIN)
+    backend_newalice, backend_newalice_first_device = local_device_to_backend_user(newalice, neworg)
+
+    async with apiv1_backend_sock_factory(backend, neworg.organization_id) as sock:
+        rep = await organization_bootstrap(
+            sock,
+            empty_token,
+            backend_newalice.user_certificate,
+            backend_newalice_first_device.device_certificate,
+            neworg.root_verify_key,
+        )
+        if flavour == "create_different_token":
+            assert rep == {"status": "not_found"}
+        else:
+            assert rep == {"status": "ok"}
+
+    # Check organization informations
+
+    org = await backend.organization.get(id=neworg.organization_id)
+    if flavour == "create_different_token":
+        assert org.root_verify_key is None
+        assert org.bootstrap_token == step1_token
+        assert org.expiration_date == step1_expiration_date
+    else:
+        assert org.root_verify_key == neworg.root_verify_key
+        assert org.bootstrap_token == empty_token
+        assert org.expiration_date is None

@@ -234,8 +234,10 @@ _FIXTURES_CUSTOMIZATIONS = {
     "mallory_profile",
     "mallory_has_human_handle",
     "mallory_has_device_label",
-    "backend_has_email",
     "backend_not_populated",
+    "backend_has_email",
+    "backend_has_webhook",
+    "backend_spontaneous_organization_boostrap",
     "logged_gui_as_admin",
 }
 

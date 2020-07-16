@@ -6,7 +6,12 @@ from parsec.serde import fields
 from parsec.serde.exceptions import SerdeError, SerdeValidationError, SerdePackingError
 from parsec.serde.schema import BaseSchema, OneOfSchema, BaseCmdSchema
 from parsec.serde.packing import packb, unpackb, Unpacker
-from parsec.serde.serializer import BaseSerializer, MsgpackSerializer, ZipMsgpackSerializer
+from parsec.serde.serializer import (
+    BaseSerializer,
+    JSONSerializer,
+    MsgpackSerializer,
+    ZipMsgpackSerializer,
+)
 
 __all__ = (
     "SerdeError",
@@ -23,6 +28,7 @@ __all__ = (
     "unpackb",
     "Unpacker",
     "BaseSerializer",
+    "JSONSerializer",
     "MsgpackSerializer",
     "ZipMsgpackSerializer",
 )
