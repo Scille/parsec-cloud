@@ -195,6 +195,7 @@ class PGHandler:
             except OSError:
                 postgres_initial_connect_failed = True
                 if self.first_tries_number == 1:
+                    logger.error("initial db connection failed", tries_remaining=0)
                     raise
                 if self.first_tries_number > 1:
                     self.first_tries_number -= 1
