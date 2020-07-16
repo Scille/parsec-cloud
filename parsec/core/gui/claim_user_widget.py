@@ -626,7 +626,7 @@ class ClaimUserWidget(QWidget, Ui_ClaimUserWidget):
             exc = None
             if self.claimer_job.status == "invitation-not-found":
                 msg = _("TEXT_CLAIM_USER_INVITATION_NOT_FOUND")
-            elif self.claim_job.status == "backend-not-available":
+            elif self.claimer_job.status == "backend-not-available":
                 msg = _("TEXT_INVITATION_BACKEND_NOT_AVAILABLE")
             else:
                 msg = _("TEXT_CLAIM_USER_UNKNOWN_ERROR")
