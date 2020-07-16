@@ -4,6 +4,10 @@ import pytest
 import trio
 
 
+def records_filter_debug(records):
+    return [record for record in records if record.levelname != "DEBUG"]
+
+
 @pytest.mark.trio
 @pytest.mark.postgresql
 async def test_postgresql_connection_ok(postgresql_url, backend_factory, blockstore):
@@ -21,10 +25,10 @@ async def test_postgresql_connection_not_ok(
         async with backend_factory(config={"db_url": postgresql_url}):
             pass
     assert "[Errno 111] Connect call failed" in str(exc.value)
-    # assert len(caplog.records) == 1
-    assert [caplog.records[0].msg, caplog.records[1].levelname] == "test"  # TODO DELETE
-    assert caplog.records[0].levelname == "ERROR"
-    assert "initial db connection failed" in caplog.records[0].message
+    records = records_filter_debug(caplog.records)
+    assert len(records) == 1
+    assert records[0].levelname == "ERROR"
+    assert "initial db connection failed" in records[0].message
 
 
 @pytest.mark.trio
@@ -46,9 +50,10 @@ async def test_postgresql_connection_not_ok_retrying(
             ):
                 pass
     assert "[Errno 111] Connect call failed" in str(exc.value)
-    assert len(caplog.records) == 4
-    for record in caplog.records[:3]:
+    records = records_filter_debug(caplog.records)
+    assert len(records) == 4
+    for record in records[:3]:
         assert record.levelname == "WARNING"
         assert "initial db connection failed" in record.message
-    assert caplog.records[3].levelname == "ERROR"
-    assert "initial db connection failed" in caplog.records[3].message
+    assert records[3].levelname == "ERROR"
+    assert "initial db connection failed" in records[3].message
