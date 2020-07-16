@@ -17,7 +17,7 @@ from parsec.core.gui.ui.device_button import Ui_DeviceButton
 
 
 class DeviceButton(QWidget, Ui_DeviceButton):
-    change_password_clicked = pyqtSignal(str)
+    change_password_clicked = pyqtSignal()
 
     def __init__(self, device_info, is_current_device):
         super().__init__()
@@ -51,7 +51,7 @@ class DeviceButton(QWidget, Ui_DeviceButton):
         menu.exec_(global_pos)
 
     def change_password(self):
-        self.change_password_clicked.emit(self.device_name)
+        self.change_password_clicked.emit()
 
 
 async def _do_invite_device(core):
@@ -117,7 +117,7 @@ class DevicesWidget(QWidget, Ui_DevicesWidget):
                 else:
                     w.show()
 
-    def change_password(self, device_name):
+    def change_password(self):
         PasswordChangeWidget.exec_modal(core=self.core, parent=self)
 
     def invite_device(self):
