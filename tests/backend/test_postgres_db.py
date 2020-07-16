@@ -22,7 +22,7 @@ async def test_postgresql_connection_not_ok(
             pass
     assert "[Errno 111] Connect call failed" in str(exc.value)
     # assert len(caplog.records) == 1
-    assert [caplog.records[0].msg, caplog.records[1].msg] == "test"  # TODO DELETE
+    assert [caplog.records[0].msg, caplog.records[1].levelname] == "test"  # TODO DELETE
     assert caplog.records[0].levelname == "ERROR"
     assert "initial db connection failed" in caplog.records[0].message
 
