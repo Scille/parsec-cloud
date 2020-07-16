@@ -227,7 +227,7 @@ class ErrorWidget(QWidget, Ui_ErrorWidget):
         else:
             import traceback
 
-            stack = traceback.format_tb(exception.__traceback__)
+            stack = traceback.format_exception(None, exception, None)
             if not stack:
                 self.button_details.hide()
             else:
