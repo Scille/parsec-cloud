@@ -251,6 +251,8 @@ class SyncTransactions(EntryTransactions):
                 if local_manifest.need_sync:
                     new_local_manifest = local_manifest.evolve(need_sync=False)
                     await self.local_storage.set_manifest(entry_id, new_local_manifest)
+                # Send synced event
+                self._send_event(CoreEvent.FS_ENTRY_CONFINED, id=entry_id)
                 return None
 
             # Sync cannot be performed yet
