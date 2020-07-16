@@ -187,6 +187,7 @@ def generate_invite_email(
     organization_id: OrganizationID,
     invitation: UserInvitation,
     sender_name: str,
+    receiver_email=None,
 ) -> Message:
     mail_text = MAIL_TEXT[email_config.language]
     parsec_url = "https://parsec.cloud/get-parsec"
@@ -229,7 +230,7 @@ def generate_invite_email(
     message = MIMEMultipart("alternative")
     message["Subject"] = mail_text["title"]
     message["From"] = email_config.user
-    message["To"] = invitation.claimer_email
+    message["To"] = receiver_email or invitation.claimer_email
 
     # Turn parts into MIMEText objects
     part1 = MIMEText(text, "plain")
@@ -304,6 +305,10 @@ class BaseInviteComponent:
     async def api_invite_new(self, client_ctx, msg):
         msg = invite_new_serializer.req_load(msg)
 
+        if msg["send_email"]:
+            if not self._config.email_config or not self._config.backend_addr:
+                return invite_new_serializer.rep_dump({"status": "not_available"})
+
         if msg["type"] == InvitationType.USER:
             if client_ctx.profile != UserProfile.ADMIN:
                 return invite_new_serializer.rep_dump({"status": "not_allowed"})
@@ -315,8 +320,6 @@ class BaseInviteComponent:
             )
 
             if msg["send_email"]:
-                if not self._config.email_config or not self._config.backend_addr:
-                    return invite_new_serializer.rep_dump({"status": "not_available"})
                 message = generate_invite_email(
                     email_config=self._config.email_config,
                     backend_addr=self._config.backend_addr,
@@ -331,9 +334,27 @@ class BaseInviteComponent:
                 )
 
         else:  # Device
+            if msg["send_email"] and not client_ctx.human_handle:
+                return invite_new_serializer.rep_dump({"status": "not_available"})
+
             invitation = await self.new_for_device(
                 organization_id=client_ctx.organization_id, greeter_user_id=client_ctx.user_id
             )
+
+            if msg["send_email"]:
+                message = generate_invite_email(
+                    email_config=self._config.email_config,
+                    backend_addr=self._config.backend_addr,
+                    organization_id=client_ctx.organization_id,
+                    invitation=invitation,
+                    sender_name=client_ctx.user_display,
+                    receiver_email=client_ctx.human_handle.email,
+                )
+                await send_email(
+                    email_config=self._config.email_config,
+                    to_addr=client_ctx.human_handle.email,
+                    message=message,
+                )
 
         return invite_new_serializer.rep_dump({"status": "ok", "token": invitation.token})
 

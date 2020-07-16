@@ -1,22 +1,18 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
 
+import trio
+from enum import IntEnum
 from PyQt5.QtCore import pyqtSignal
 from PyQt5.QtGui import QFont
-from PyQt5.QtWidgets import QWidget, QDialog
-
-from enum import IntEnum
-
-import trio
+from PyQt5.QtWidgets import QWidget
 
 from parsec.api.data import UserProfile
 from parsec.api.protocol import HumanHandle
-from parsec.core.backend_connection import backend_authenticated_cmds_factory, BackendNotAvailable
-from parsec.core.invite import UserGreetInitialCtx, InviteError
-
+from parsec.core.backend_connection import BackendNotAvailable
+from parsec.core.invite import InviteError, InvitePeerResetError
 from parsec.core.gui.trio_thread import JobResultError, ThreadSafeQtSignal
 from parsec.core.gui.custom_dialogs import show_error, GreyedDialog, show_info
 from parsec.core.gui.lang import translate as _
-
 from parsec.core.gui.ui.greet_user_widget import Ui_GreetUserWidget
 from parsec.core.gui.ui.greet_user_code_exchange_widget import Ui_GreetUserCodeExchangeWidget
 from parsec.core.gui.ui.greet_user_check_info_widget import Ui_GreetUserCheckInfoWidget
@@ -37,92 +33,84 @@ class Greeter:
         self.main_mc_send, self.main_mc_recv = trio.open_memory_channel(0)
         self.job_mc_send, self.job_mc_recv = trio.open_memory_channel(0)
 
-    async def run(self, device, config, token):
+    async def run(self, core, token):
         try:
-            async with backend_authenticated_cmds_factory(
-                addr=device.organization_addr,
-                device_id=device.device_id,
-                signing_key=device.signing_key,
-                keepalive=config.backend_connection_keepalive,
-            ) as cmds:
-                initial_ctx = UserGreetInitialCtx(cmds=cmds, token=token)
-                r = await self.main_mc_recv.receive()
+            r = await self.main_mc_recv.receive()
 
-                assert r == self.Step.WaitPeer
-                try:
-                    in_progress_ctx = await initial_ctx.do_wait_peer()
-                    await self.job_mc_send.send((True, None))
-                except Exception as exc:
-                    await self.job_mc_send.send((False, exc))
+            assert r == self.Step.WaitPeer
+            try:
+                in_progress_ctx = await core.start_greeting_user(token=token)
+                await self.job_mc_send.send((True, None))
+            except Exception as exc:
+                await self.job_mc_send.send((False, exc))
 
-                r = await self.main_mc_recv.receive()
+            r = await self.main_mc_recv.receive()
 
-                assert r == self.Step.GetGreeterSas
-                await self.job_mc_send.send(in_progress_ctx.greeter_sas)
+            assert r == self.Step.GetGreeterSas
+            await self.job_mc_send.send(in_progress_ctx.greeter_sas)
 
-                r = await self.main_mc_recv.receive()
+            r = await self.main_mc_recv.receive()
 
-                assert r == self.Step.WaitPeerTrust
-                try:
-                    in_progress_ctx = await in_progress_ctx.do_wait_peer_trust()
-                    await self.job_mc_send.send((True, None))
-                except Exception as exc:
-                    await self.job_mc_send.send((False, exc))
+            assert r == self.Step.WaitPeerTrust
+            try:
+                in_progress_ctx = await in_progress_ctx.do_wait_peer_trust()
+                await self.job_mc_send.send((True, None))
+            except Exception as exc:
+                await self.job_mc_send.send((False, exc))
 
-                r = await self.main_mc_recv.receive()
+            r = await self.main_mc_recv.receive()
 
-                assert r == self.Step.GetClaimerSas
-                try:
-                    choices = in_progress_ctx.generate_claimer_sas_choices(size=4)
-                    await self.job_mc_send.send((True, None, in_progress_ctx.claimer_sas, choices))
-                except Exception as exc:
-                    await self.job_mc_send.send((False, exc, None, None))
+            assert r == self.Step.GetClaimerSas
+            try:
+                choices = in_progress_ctx.generate_claimer_sas_choices(size=4)
+                await self.job_mc_send.send((True, None, in_progress_ctx.claimer_sas, choices))
+            except Exception as exc:
+                await self.job_mc_send.send((False, exc, None, None))
 
-                r = await self.main_mc_recv.receive()
+            r = await self.main_mc_recv.receive()
 
-                assert r == self.Step.SignifyTrust
-                try:
-                    in_progress_ctx = await in_progress_ctx.do_signify_trust()
-                    await self.job_mc_send.send((True, None))
-                except Exception as exc:
-                    await self.job_mc_send.send(False, exc)
+            assert r == self.Step.SignifyTrust
+            try:
+                in_progress_ctx = await in_progress_ctx.do_signify_trust()
+                await self.job_mc_send.send((True, None))
+            except Exception as exc:
+                await self.job_mc_send.send(False, exc)
 
-                r = await self.main_mc_recv.receive()
+            r = await self.main_mc_recv.receive()
 
-                assert r == self.Step.GetClaimRequests
-                try:
-                    in_progress_ctx = await in_progress_ctx.do_get_claim_requests()
-                    await self.job_mc_send.send(
-                        (
-                            True,
-                            None,
-                            in_progress_ctx.requested_human_handle,
-                            in_progress_ctx.requested_device_label,
-                        )
+            assert r == self.Step.GetClaimRequests
+            try:
+                in_progress_ctx = await in_progress_ctx.do_get_claim_requests()
+                await self.job_mc_send.send(
+                    (
+                        True,
+                        None,
+                        in_progress_ctx.requested_human_handle,
+                        in_progress_ctx.requested_device_label,
                     )
-                except Exception as exc:
-                    await self.job_mc_send.send((False, exc, None, None))
+                )
+            except Exception as exc:
+                await self.job_mc_send.send((False, exc, None, None))
 
-                r = await self.main_mc_recv.receive()
+            r = await self.main_mc_recv.receive()
 
-                assert r == self.Step.CreateNewUser
-                try:
-                    human_handle, device_label, profile = await self.main_mc_recv.receive()
-                    await in_progress_ctx.do_create_new_user(
-                        author=device,
-                        device_label=device_label,
-                        human_handle=human_handle,
-                        profile=profile,
-                    )
-                    await self.job_mc_send.send((True, None))
-                except InviteError as exc:
-                    await self.job_mc_send.send((False, exc))
-                except Exception as exc:
-                    await self.job_mc_send.send((False, exc))
+            assert r == self.Step.CreateNewUser
+            try:
+                human_handle, device_label, profile = await self.main_mc_recv.receive()
+                await in_progress_ctx.do_create_new_user(
+                    author=core.device,
+                    device_label=device_label,
+                    human_handle=human_handle,
+                    profile=profile,
+                )
+                await self.job_mc_send.send((True, None))
+            except InviteError as exc:
+                await self.job_mc_send.send((False, exc))
+            except Exception as exc:
+                await self.job_mc_send.send((False, exc))
+
         except BackendNotAvailable as exc:
             raise JobResultError(status="backend-not-available", origin=exc)
-        except Exception as exc:
-            raise JobResultError(status="unknown", origin=exc)
 
     async def wait_peer(self):
         await self.main_mc_send.send(self.Step.WaitPeer)
@@ -186,7 +174,7 @@ class GreetUserInstructionsWidget(QWidget, Ui_GreetUserInstructionsWidget):
         self.wait_peer_error.connect(self._on_wait_peer_error)
         self.button_start.clicked.connect(self._on_button_start_clicked)
 
-    def _on_button_start_clicked(self):
+    def _on_button_start_clicked(self, checked):
         self.button_start.setDisabled(True)
         self.button_start.setText(_("TEXT_GREET_USER_WAITING"))
         self.wait_peer_job = self.jobs_ctx.submit_job(
@@ -212,6 +200,8 @@ class GreetUserInstructionsWidget(QWidget, Ui_GreetUserInstructionsWidget):
             exc = None
             if self.wait_peer_job.exc:
                 exc = self.wait_peer_job.exc.params.get("origin", None)
+                if isinstance(exc, InvitePeerResetError):
+                    msg = _("TEXT_GREET_USER_PEER_RESET")
             show_error(self, msg, exception=exc)
             self.wait_peer_job = None
             self.failed.emit()
@@ -253,8 +243,13 @@ class GreetUserCheckInfoWidget(QWidget, Ui_GreetUserCheckInfoWidget):
         self.get_requests_error.connect(self._on_get_requests_error)
         self.create_user_success.connect(self._on_create_user_success)
         self.create_user_error.connect(self._on_create_user_error)
-        self._get_claim_requests()
         self.button_create_user.clicked.connect(self._on_create_user_clicked)
+
+        self.get_requests_job = self.jobs_ctx.submit_job(
+            ThreadSafeQtSignal(self, "get_requests_success"),
+            ThreadSafeQtSignal(self, "get_requests_error"),
+            self.greeter.get_claim_requests,
+        )
 
     def check_infos(self, _=""):
         if self.line_edit_user_full_name.text() and self.line_edit_device.text():
@@ -284,13 +279,6 @@ class GreetUserCheckInfoWidget(QWidget, Ui_GreetUserCheckInfoWidget):
             profile=self.combo_profile.currentData(),
         )
 
-    def _get_claim_requests(self):
-        self.get_requests_job = self.jobs_ctx.submit_job(
-            ThreadSafeQtSignal(self, "get_requests_success"),
-            ThreadSafeQtSignal(self, "get_requests_error"),
-            self.greeter.get_claim_requests,
-        )
-
     def _on_create_user_success(self):
         assert self.create_user_job
         assert self.create_user_job.is_finished()
@@ -307,6 +295,8 @@ class GreetUserCheckInfoWidget(QWidget, Ui_GreetUserCheckInfoWidget):
             exc = None
             if self.create_user_job.exc:
                 exc = self.create_user_job.exc.params.get("origin", None)
+                if isinstance(exc, InvitePeerResetError):
+                    msg = _("TEXT_GREET_USER_PEER_RESET")
             show_error(self, msg, exception=exc)
             self.create_user_job = None
             self.failed.emit()
@@ -336,6 +326,8 @@ class GreetUserCheckInfoWidget(QWidget, Ui_GreetUserCheckInfoWidget):
             exc = None
             if self.get_requests_job.exc:
                 exc = self.get_requests_job.exc.params.get("origin", None)
+                if isinstance(exc, InvitePeerResetError):
+                    msg = _("TEXT_GREET_USER_PEER_RESET")
             show_error(self, msg, exception=exc)
             self.failed.emit()
             self.get_requests_job = None
@@ -428,12 +420,14 @@ class GreetUserCodeExchangeWidget(QWidget, Ui_GreetUserCodeExchangeWidget):
     def _on_get_greeter_sas_error(self):
         assert self.get_greeter_sas_job
         assert self.get_greeter_sas_job.is_finished()
-        assert self.get_greeter_sas_job.status == "ok"
+        assert self.get_greeter_sas_job.status != "ok"
         if self.get_greeter_sas_job.status != "cancelled":
             msg = _("TEXT_GREET_USER_GET_GREETER_SAS_ERROR")
             exc = None
             if self.get_greeter_sas_job.exc:
                 exc = self.get_greeter_sas_job.exc.params.get("origin", None)
+                if isinstance(exc, InvitePeerResetError):
+                    msg = _("TEXT_GREET_USER_PEER_RESET")
             show_error(self, msg, exception=exc)
             self.failed.emit()
             self.get_greeter_sas_job = None
@@ -453,12 +447,14 @@ class GreetUserCodeExchangeWidget(QWidget, Ui_GreetUserCodeExchangeWidget):
     def _on_get_claimer_sas_error(self):
         assert self.get_claimer_sas_job
         assert self.get_claimer_sas_job.is_finished()
-        assert self.get_claimer_sas_job.status == "ok"
+        assert self.get_claimer_sas_job.status != "ok"
         if self.get_claimer_sas_job.status != "cancelled":
             msg = _("TEXT_GREET_USER_GET_CLAIMER_SAS_ERROR")
             exc = None
             if self.get_claimer_sas_job.exc:
                 exc = self.get_claimer_sas_job.exc.params.get("origin", None)
+                if isinstance(exc, InvitePeerResetError):
+                    msg = _("TEXT_GREET_USER_PEER_RESET")
             show_error(self, msg, exception=exc)
             self.failed.emit()
             self.get_claimer_sas_job = None
@@ -481,6 +477,8 @@ class GreetUserCodeExchangeWidget(QWidget, Ui_GreetUserCodeExchangeWidget):
             exc = None
             if self.signify_trust_job.exc:
                 exc = self.signify_trust_job.exc.params.get("origin", None)
+                if isinstance(exc, InvitePeerResetError):
+                    msg = _("TEXT_GREET_USER_PEER_RESET")
             show_error(self, msg, exception=exc)
             self.failed.emit()
             self.signify_trust_job = None
@@ -507,6 +505,8 @@ class GreetUserCodeExchangeWidget(QWidget, Ui_GreetUserCodeExchangeWidget):
             exc = None
             if self.wait_peer_trust_job.exc:
                 exc = self.wait_peer_trust_job.exc.params.get("origin", None)
+                if isinstance(exc, InvitePeerResetError):
+                    msg = _("TEXT_GREET_USER_PEER_RESET")
             show_error(self, msg, exception=exc)
             self.failed.emit()
             self.wait_peer_trust_job = None
@@ -524,7 +524,6 @@ class GreetUserWidget(QWidget, Ui_GreetUserWidget):
         self.core = core
         self.jobs_ctx = jobs_ctx
         self.token = token
-        self.status = None
         self.dialog = None
         self.greeter = Greeter()
         self.greeter_job = None
@@ -537,15 +536,14 @@ class GreetUserWidget(QWidget, Ui_GreetUserWidget):
             ThreadSafeQtSignal(self, "greeter_success"),
             ThreadSafeQtSignal(self, "greeter_error"),
             self.greeter.run,
-            device=self.core.device,
-            config=self.core.config,
+            core=self.core,
             token=self.token,
         )
         self._goto_page1()
 
     def restart(self):
         self.cancel()
-        self.status = None
+        # Replace moving parts
         self.greeter = Greeter()
         self._run_greeter()
 
@@ -625,10 +623,12 @@ class GreetUserWidget(QWidget, Ui_GreetUserWidget):
         self.cancel()
 
     @classmethod
-    def exec_modal(cls, core, jobs_ctx, token, parent):
+    def exec_modal(cls, core, jobs_ctx, token, parent, on_finished):
         w = cls(core=core, jobs_ctx=jobs_ctx, token=token)
         d = GreyedDialog(w, _("TEXT_GREET_USER_TITLE"), parent=parent, width=1000)
         w.dialog = d
-        if d.exec_() == QDialog.Accepted and w.status:
-            return w.status
-        return None
+
+        d.finished.connect(on_finished)
+        # Unlike exec_, show is asynchronous and works within the main Qt loop
+        d.show()
+        return w

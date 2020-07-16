@@ -312,20 +312,42 @@ class MainWindow(QMainWindow, Ui_MainWindow):
             self.try_login(ret[0], ret[1])
 
     def _on_claim_user_clicked(self, action_addr):
-        ret = ClaimUserWidget.exec_modal(
-            jobs_ctx=self.jobs_ctx, config=self.config, addr=action_addr, parent=self
-        )
-        if ret:
+        widget = None
+
+        def _on_finished():
+            nonlocal widget
+            if not widget.status:
+                return
+            login, password = widget.status
             self.reload_login_devices()
-            self.try_login(ret[0], ret[1])
+            self.try_login(login, password)
+
+        widget = ClaimUserWidget.exec_modal(
+            jobs_ctx=self.jobs_ctx,
+            config=self.config,
+            addr=action_addr,
+            parent=self,
+            on_finished=_on_finished,
+        )
 
     def _on_claim_device_clicked(self, action_addr):
-        ret = ClaimDeviceWidget.exec_modal(
-            jobs_ctx=self.jobs_ctx, config=self.config, addr=action_addr, parent=self
-        )
-        if ret:
+        widget = None
+
+        def _on_finished():
+            nonlocal widget
+            if not widget.status:
+                return
+            login, password = widget.status
             self.reload_login_devices()
-            self.try_login(ret[0], ret[1])
+            self.try_login(login, password)
+
+        widget = ClaimDeviceWidget.exec_modal(
+            jobs_ctx=self.jobs_ctx,
+            config=self.config,
+            addr=action_addr,
+            parent=self,
+            on_finished=_on_finished,
+        )
 
     def try_login(self, device, password):
         idx = self._get_login_tab_index()

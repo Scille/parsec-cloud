@@ -236,6 +236,7 @@ _FIXTURES_CUSTOMIZATIONS = {
     "mallory_has_device_label",
     "backend_has_email",
     "backend_not_populated",
+    "logged_gui_as_admin",
 }
 
 

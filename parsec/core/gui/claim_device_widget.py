@@ -1,25 +1,20 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
 
+import trio
+from enum import IntEnum
+from structlog import get_logger
 from PyQt5.QtCore import pyqtSignal
 from PyQt5.QtGui import QFont
-from PyQt5.QtWidgets import QWidget, QDialog
-
-from enum import IntEnum
-
-import trio
-
-from structlog import get_logger
+from PyQt5.QtWidgets import QWidget
 
 from parsec.core.types import LocalDevice
 from parsec.core.local_device import save_device_with_password
-
-from parsec.core.invite import claimer_retrieve_info
+from parsec.core.invite import claimer_retrieve_info, InvitePeerResetError
 from parsec.core.backend_connection import (
     backend_invited_cmds_factory,
     BackendConnectionRefused,
     BackendNotAvailable,
 )
-
 from parsec.core.gui import validators
 from parsec.core.gui.trio_thread import JobResultError, ThreadSafeQtSignal
 from parsec.core.gui.desktop import get_default_device
@@ -30,6 +25,7 @@ from parsec.core.gui.ui.claim_device_widget import Ui_ClaimDeviceWidget
 from parsec.core.gui.ui.claim_device_code_exchange_widget import Ui_ClaimDeviceCodeExchangeWidget
 from parsec.core.gui.ui.claim_device_provide_info_widget import Ui_ClaimDeviceProvideInfoWidget
 from parsec.core.gui.ui.claim_device_instructions_widget import Ui_ClaimDeviceInstructionsWidget
+
 
 logger = get_logger()
 
@@ -248,9 +244,12 @@ class ClaimDeviceCodeExchangeWidget(QWidget, Ui_ClaimDeviceCodeExchangeWidget):
         assert self.get_greeter_sas_job.status != "ok"
         if self.get_greeter_sas_job.status != "cancelled":
             exc = None
+            msg = _("TEXT_CLAIM_DEVICE_GET_GREETER_SAS_ERROR")
             if self.get_greeter_sas_job.exc:
                 exc = self.get_greeter_sas_job.exc.params.get("origin", None)
-            show_error(self, _("TEXT_CLAIM_DEVICE_GET_GREETER_SAS_ERROR"), exception=exc)
+                if isinstance(exc, InvitePeerResetError):
+                    msg = _("TEXT_CLAIM_DEVICE_PEER_RESET")
+            show_error(self, msg, exception=exc)
         self.get_greeter_sas_job = None
         self.failed.emit()
 
@@ -293,9 +292,12 @@ class ClaimDeviceCodeExchangeWidget(QWidget, Ui_ClaimDeviceCodeExchangeWidget):
         assert self.signify_trust_job.status != "ok"
         if self.signify_trust_job.status != "cancelled":
             exc = None
+            msg = _("TEXT_CLAIM_DEVICE_WAIT_TRUST_ERROR")
             if self.signify_trust_job.exc:
                 exc = self.signify_trust_job.exc.params.get("origin", None)
-            show_error(self, _("TEXT_CLAIM_DEVICE_WAIT_TRUST_ERROR"), exception=exc)
+                if isinstance(exc, InvitePeerResetError):
+                    msg = _("TEXT_CLAIM_DEVICE_PEER_RESET")
+            show_error(self, msg, exception=exc)
         self.signify_trust_job = None
         self.failed.emit()
 
@@ -393,9 +395,12 @@ class ClaimDeviceProvideInfoWidget(QWidget, Ui_ClaimDeviceProvideInfoWidget):
         assert self.claim_job.status != "ok"
         if self.claim_job.status != "cancelled":
             exc = None
+            msg = _("TEXT_CLAIM_DEVICE_CLAIM_ERROR")
             if self.claim_job.exc:
                 exc = self.claim_job.exc.params.get("origin", None)
-            show_error(self, _("TEXT_CLAIM_DEVICE_CLAIM_ERROR"), exception=exc)
+                if isinstance(exc, InvitePeerResetError):
+                    msg = _("TEXT_CLAIM_DEVICE_PEER_RESET")
+            show_error(self, msg, exception=exc)
         self.claim_job = None
         self.check_infos()
         self.widget_info.setDisabled(False)
@@ -446,11 +451,14 @@ class ClaimDeviceInstructionsWidget(QWidget, Ui_ClaimDeviceInstructionsWidget):
         assert self.wait_peer_job.status != "ok"
         if self.wait_peer_job.status != "cancelled":
             exc = None
+            msg = _("TEXT_CLAIM_DEVICE_WAIT_PEER_ERROR")
             if self.wait_peer_job.exc:
                 exc = self.wait_peer_job.exc.params.get("origin", None)
+                if isinstance(exc, InvitePeerResetError):
+                    msg = _("TEXT_CLAIM_DEVICE_PEER_RESET")
             self.button_start.setDisabled(False)
             self.button_start.setText(_("ACTION_START"))
-            show_error(self, _("TEXT_CLAIM_DEVICE_WAIT_PEER_ERROR"), exception=exc)
+            show_error(self, msg, exception=exc)
         self.wait_peer_job = None
 
     def cancel(self):
@@ -603,10 +611,12 @@ class ClaimDeviceWidget(QWidget, Ui_ClaimDeviceWidget):
         self.cancel()
 
     @classmethod
-    def exec_modal(cls, jobs_ctx, config, addr, parent):
+    def exec_modal(cls, jobs_ctx, config, addr, parent, on_finished):
         w = cls(jobs_ctx=jobs_ctx, config=config, addr=addr)
         d = GreyedDialog(w, _("TEXT_CLAIM_DEVICE_TITLE"), parent=parent, width=800)
         w.dialog = d
-        if d.exec_() == QDialog.Accepted and w.status:
-            return w.status
-        return None
+
+        d.finished.connect(on_finished)
+        # Unlike exec_, show is asynchronous and works within the main Qt loop
+        d.show()
+        return w
