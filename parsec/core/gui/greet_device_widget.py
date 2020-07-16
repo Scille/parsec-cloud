@@ -7,7 +7,7 @@ from PyQt5.QtGui import QFont
 from PyQt5.QtWidgets import QWidget
 
 from parsec.core.backend_connection import BackendNotAvailable, BackendConnectionError
-from parsec.core.invite import InviteError
+from parsec.core.invite import InviteError, InvitePeerResetError
 from parsec.core.gui.trio_thread import JobResultError, ThreadSafeQtSignal, QtToTrioJob
 from parsec.core.gui.custom_dialogs import show_error, GreyedDialog, show_info
 from parsec.core.gui.lang import translate as _
@@ -198,6 +198,8 @@ class GreetDeviceInstructionsWidget(QWidget, Ui_GreetDeviceInstructionsWidget):
             exc = None
             if self.wait_peer_job.exc:
                 exc = self.wait_peer_job.exc.params.get("origin", None)
+                if isinstance(exc, InvitePeerResetError):
+                    msg = _("TEXT_GREET_DEVICE_PEER_RESET")
             show_error(self, msg, exception=exc)
             self.wait_peer_job = None
             self.failed.emit()
@@ -299,6 +301,8 @@ class GreetDeviceCodeExchangeWidget(QWidget, Ui_GreetDeviceCodeExchangeWidget):
             exc = None
             if self.get_greeter_sas_job.exc:
                 exc = self.get_greeter_sas_job.exc.params.get("origin", None)
+                if isinstance(exc, InvitePeerResetError):
+                    msg = _("TEXT_GREET_DEVICE_PEER_RESET")
             show_error(self, msg, exception=exc)
             self.failed.emit()
             self.get_greeter_sas_job = None
@@ -324,6 +328,8 @@ class GreetDeviceCodeExchangeWidget(QWidget, Ui_GreetDeviceCodeExchangeWidget):
             exc = None
             if self.get_claimer_sas_job.exc:
                 exc = self.get_claimer_sas_job.exc.params.get("origin", None)
+                if isinstance(exc, InvitePeerResetError):
+                    msg = _("TEXT_GREET_DEVICE_PEER_RESET")
             show_error(self, msg, exception=exc)
             self.failed.emit()
             self.get_claimer_sas_job = None
@@ -346,6 +352,8 @@ class GreetDeviceCodeExchangeWidget(QWidget, Ui_GreetDeviceCodeExchangeWidget):
             exc = None
             if self.signify_trust_job.exc:
                 exc = self.signify_trust_job.exc.params.get("origin", None)
+                if isinstance(exc, InvitePeerResetError):
+                    msg = _("TEXT_GREET_DEVICE_PEER_RESET")
             show_error(self, msg, exception=exc)
             self.failed.emit()
             self.signify_trust_job = None
@@ -372,6 +380,8 @@ class GreetDeviceCodeExchangeWidget(QWidget, Ui_GreetDeviceCodeExchangeWidget):
             exc = None
             if self.wait_peer_trust_job.exc:
                 exc = self.wait_peer_trust_job.exc.params.get("origin", None)
+                if isinstance(exc, InvitePeerResetError):
+                    msg = _("TEXT_GREET_DEVICE_PEER_RESET")
             show_error(self, msg, exception=exc)
             self.failed.emit()
             self.wait_peer_trust_job = None

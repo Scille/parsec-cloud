@@ -9,7 +9,7 @@ from PyQt5.QtWidgets import QWidget
 from parsec.api.data import UserProfile
 from parsec.api.protocol import HumanHandle
 from parsec.core.backend_connection import BackendNotAvailable
-from parsec.core.invite import InviteError
+from parsec.core.invite import InviteError, InvitePeerResetError
 from parsec.core.gui.trio_thread import JobResultError, ThreadSafeQtSignal
 from parsec.core.gui.custom_dialogs import show_error, GreyedDialog, show_info
 from parsec.core.gui.lang import translate as _
@@ -200,6 +200,8 @@ class GreetUserInstructionsWidget(QWidget, Ui_GreetUserInstructionsWidget):
             exc = None
             if self.wait_peer_job.exc:
                 exc = self.wait_peer_job.exc.params.get("origin", None)
+                if isinstance(exc, InvitePeerResetError):
+                    msg = _("TEXT_GREET_USER_PEER_RESET")
             show_error(self, msg, exception=exc)
             self.wait_peer_job = None
             self.failed.emit()
@@ -293,6 +295,8 @@ class GreetUserCheckInfoWidget(QWidget, Ui_GreetUserCheckInfoWidget):
             exc = None
             if self.create_user_job.exc:
                 exc = self.create_user_job.exc.params.get("origin", None)
+                if isinstance(exc, InvitePeerResetError):
+                    msg = _("TEXT_GREET_USER_PEER_RESET")
             show_error(self, msg, exception=exc)
             self.create_user_job = None
             self.failed.emit()
@@ -322,6 +326,8 @@ class GreetUserCheckInfoWidget(QWidget, Ui_GreetUserCheckInfoWidget):
             exc = None
             if self.get_requests_job.exc:
                 exc = self.get_requests_job.exc.params.get("origin", None)
+                if isinstance(exc, InvitePeerResetError):
+                    msg = _("TEXT_GREET_USER_PEER_RESET")
             show_error(self, msg, exception=exc)
             self.failed.emit()
             self.get_requests_job = None
@@ -420,6 +426,8 @@ class GreetUserCodeExchangeWidget(QWidget, Ui_GreetUserCodeExchangeWidget):
             exc = None
             if self.get_greeter_sas_job.exc:
                 exc = self.get_greeter_sas_job.exc.params.get("origin", None)
+                if isinstance(exc, InvitePeerResetError):
+                    msg = _("TEXT_GREET_USER_PEER_RESET")
             show_error(self, msg, exception=exc)
             self.failed.emit()
             self.get_greeter_sas_job = None
@@ -445,6 +453,8 @@ class GreetUserCodeExchangeWidget(QWidget, Ui_GreetUserCodeExchangeWidget):
             exc = None
             if self.get_claimer_sas_job.exc:
                 exc = self.get_claimer_sas_job.exc.params.get("origin", None)
+                if isinstance(exc, InvitePeerResetError):
+                    msg = _("TEXT_GREET_USER_PEER_RESET")
             show_error(self, msg, exception=exc)
             self.failed.emit()
             self.get_claimer_sas_job = None
@@ -467,6 +477,8 @@ class GreetUserCodeExchangeWidget(QWidget, Ui_GreetUserCodeExchangeWidget):
             exc = None
             if self.signify_trust_job.exc:
                 exc = self.signify_trust_job.exc.params.get("origin", None)
+                if isinstance(exc, InvitePeerResetError):
+                    msg = _("TEXT_GREET_USER_PEER_RESET")
             show_error(self, msg, exception=exc)
             self.failed.emit()
             self.signify_trust_job = None
@@ -493,6 +505,8 @@ class GreetUserCodeExchangeWidget(QWidget, Ui_GreetUserCodeExchangeWidget):
             exc = None
             if self.wait_peer_trust_job.exc:
                 exc = self.wait_peer_trust_job.exc.params.get("origin", None)
+                if isinstance(exc, InvitePeerResetError):
+                    msg = _("TEXT_GREET_USER_PEER_RESET")
             show_error(self, msg, exception=exc)
             self.failed.emit()
             self.wait_peer_trust_job = None
