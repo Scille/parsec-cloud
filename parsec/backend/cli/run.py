@@ -208,12 +208,6 @@ Allowed values:
 """,
 )
 @click.option(
-    "--db-drop-deleted-data",
-    is_flag=True,
-    envvar="PARSEC_DB_DROP_DELETED_DATA",
-    help="Actually delete data database instead of just marking it has deleted",
-)
-@click.option(
     "--db-min-connections",
     default=5,
     show_default=True,
@@ -226,6 +220,20 @@ Allowed values:
     show_default=True,
     envvar="PARSEC_DB_MAX_CONNECTIONS",
     help="Maximum number of connections to the database if using PostgreSQL",
+)
+@click.option(
+    "--db-first-tries-number",
+    default=1,
+    show_default=True,
+    envvar="PARSEC_DB_FIRST_TRIES_NUMBER",
+    help="Number of tries allowed during initial database connection (0 is unlimited)",
+)
+@click.option(
+    "--db-first-tries-sleep",
+    default=1,
+    show_default=True,
+    envvar="PARSEC_DB_FIRST_TRIES_SLEEP",
+    help="Number of second waited between tries during initial database connection",
 )
 @click.option(
     "--blockstore",
@@ -354,9 +362,10 @@ def run_cmd(
     host,
     port,
     db,
-    db_drop_deleted_data,
     db_min_connections,
     db_max_connections,
+    db_first_tries_number,
+    db_first_tries_sleep,
     blockstore,
     administration_token,
     backend_addr,
@@ -410,9 +419,10 @@ def run_cmd(
         config = BackendConfig(
             administration_token=administration_token,
             db_url=db,
-            db_drop_deleted_data=db_drop_deleted_data,
             db_min_connections=db_min_connections,
             db_max_connections=db_max_connections,
+            db_first_tries_number=db_first_tries_number,
+            db_first_tries_sleep=db_first_tries_sleep,
             blockstore_config=blockstore,
             email_config=email_config,
             backend_addr=backend_addr,

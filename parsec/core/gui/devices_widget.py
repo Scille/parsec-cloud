@@ -4,14 +4,7 @@ from PyQt5.QtCore import pyqtSignal, Qt, QTimer
 from PyQt5.QtWidgets import QWidget, QMenu, QGraphicsDropShadowEffect, QLabel
 from PyQt5.QtGui import QColor
 
-from parsec.api.protocol import InvitationType
-from parsec.core.backend_connection import (
-    BackendNotAvailable,
-    backend_authenticated_cmds_factory,
-    BackendConnectionError,
-)
-from parsec.core.types import BackendInvitationAddr
-
+from parsec.core.backend_connection import BackendNotAvailable, BackendConnectionError
 from parsec.core.gui.trio_thread import JobResultError, ThreadSafeQtSignal, QtToTrioJob
 from parsec.core.gui.greet_device_widget import GreetDeviceWidget
 from parsec.core.gui.lang import translate as _
@@ -24,7 +17,7 @@ from parsec.core.gui.ui.device_button import Ui_DeviceButton
 
 
 class DeviceButton(QWidget, Ui_DeviceButton):
-    change_password_clicked = pyqtSignal(str)
+    change_password_clicked = pyqtSignal()
 
     def __init__(self, device_info, is_current_device):
         super().__init__()
@@ -58,26 +51,16 @@ class DeviceButton(QWidget, Ui_DeviceButton):
         menu.exec_(global_pos)
 
     def change_password(self):
-        self.change_password_clicked.emit(self.device_name)
+        self.change_password_clicked.emit()
 
 
-async def _do_invite_device(device, config):
-    async with backend_authenticated_cmds_factory(
-        addr=device.organization_addr,
-        device_id=device.device_id,
-        signing_key=device.signing_key,
-        keepalive=config.backend_connection_keepalive,
-    ) as cmds:
-        rep = await cmds.invite_new(type=InvitationType.DEVICE, send_email=False)
-        if rep["status"] != "ok":
-            raise JobResultError(rep["status"])
-        action_addr = BackendInvitationAddr.build(
-            backend_addr=device.organization_addr,
-            organization_id=device.organization_id,
-            invitation_type=InvitationType.DEVICE,
-            token=rep["token"],
-        )
-        return action_addr
+async def _do_invite_device(core):
+    try:
+        return await core.new_device_invitation(send_email=False)
+    except BackendNotAvailable as exc:
+        raise JobResultError("offline") from exc
+    except BackendConnectionError as exc:
+        raise JobResultError("error") from exc
 
 
 async def _do_list_devices(core):
@@ -109,8 +92,8 @@ class DevicesWidget(QWidget, Ui_DevicesWidget):
         self.button_add_device.apply_style()
         self.filter_timer = QTimer()
         self.filter_timer.setInterval(300)
-        self.list_success.connect(self.on_list_success)
-        self.list_error.connect(self.on_list_error)
+        self.list_success.connect(self._on_list_success)
+        self.list_error.connect(self._on_list_error)
         self.invite_success.connect(self._on_invite_success)
         self.invite_error.connect(self._on_invite_error)
         self.line_edit_search.textChanged.connect(self.filter_timer.start)
@@ -134,7 +117,7 @@ class DevicesWidget(QWidget, Ui_DevicesWidget):
                 else:
                     w.show()
 
-    def change_password(self, device_name):
+    def change_password(self):
         PasswordChangeWidget.exec_modal(core=self.core, parent=self)
 
     def invite_device(self):
@@ -142,18 +125,32 @@ class DevicesWidget(QWidget, Ui_DevicesWidget):
             ThreadSafeQtSignal(self, "invite_success", QtToTrioJob),
             ThreadSafeQtSignal(self, "invite_error", QtToTrioJob),
             _do_invite_device,
-            device=self.core.device,
-            config=self.core.config,
+            core=self.core,
         )
 
     def _on_invite_success(self, job):
+        assert job.is_finished()
+        assert job.status == "ok"
+
         GreetDeviceWidget.exec_modal(
-            core=self.core, jobs_ctx=self.jobs_ctx, invite_addr=job.ret, parent=self
+            core=self.core,
+            jobs_ctx=self.jobs_ctx,
+            invite_addr=job.ret,
+            parent=self,
+            on_finished=self.reset,
         )
-        self.reset()
 
     def _on_invite_error(self, job):
-        show_error(_("TEXT_DEVICES_CANNOT_INVITE_DEVICE"))
+        assert job.is_finished()
+        assert job.status != "ok"
+
+        status = job.status
+        if status == "offline":
+            errmsg = _("TEXT_INVITE_DEVICE_INVITE_OFFLINE")
+        else:
+            errmsg = _("TEXT_INVITE_DEVICE_INVITE_ERROR")
+
+        show_error(self, errmsg, exception=job.exc)
 
     def add_device(self, device_info, is_current_device):
         button = DeviceButton(device_info, is_current_device)
@@ -164,14 +161,20 @@ class DevicesWidget(QWidget, Ui_DevicesWidget):
     def _flush_devices_list(self):
         self.layout_devices.clear()
 
-    def on_list_success(self, job):
+    def _on_list_success(self, job):
+        assert job.is_finished()
+        assert job.status == "ok"
+
         devices = job.ret
         current_device = self.core.device
         self._flush_devices_list()
         for device in devices:
             self.add_device(device, is_current_device=current_device.device_id == device.device_id)
 
-    def on_list_error(self, job):
+    def _on_list_error(self, job):
+        assert job.is_finished()
+        assert job.status != "ok"
+
         status = job.status
         if status == "error":
             self._flush_devices_list()

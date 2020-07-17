@@ -153,10 +153,20 @@ def retry_on_unique_violation(fn):
 
 # TODO: replace by a fonction
 class PGHandler:
-    def __init__(self, url: str, min_connections: int, max_connections: int, event_bus: EventBus):
+    def __init__(
+        self,
+        url: str,
+        min_connections: int,
+        max_connections: int,
+        first_tries_number: int,
+        first_tries_sleep: int,
+        event_bus: EventBus,
+    ):
         self.url = url
         self.min_connections = min_connections
         self.max_connections = max_connections
+        self.first_tries_number = first_tries_number
+        self.first_tries_sleep = first_tries_sleep
         self.event_bus = event_bus
         self.pool: triopg.TrioPoolProxy
         self.notification_conn: triopg.TrioConnectionProxy
@@ -166,15 +176,37 @@ class PGHandler:
         self._task_status = await start_task(nursery, self._run_connections)
 
     async def _run_connections(self, task_status=trio.TASK_STATUS_IGNORED):
-        async with triopg.create_pool(
-            self.url, min_size=self.min_connections, max_size=self.max_connections
-        ) as self.pool:
-            # This connection is dedicated to the notifications listening, so it
-            # would only complicate stuff to include it into the connection pool
-            async with triopg.connect(self.url) as self.notification_conn:
-                await self.notification_conn.add_listener("app_notification", self._on_notification)
-                task_status.started()
-                await trio.sleep_forever()
+        postgres_initial_connect_failed = False
+        while True:
+            try:
+                async with triopg.create_pool(
+                    self.url, min_size=self.min_connections, max_size=self.max_connections
+                ) as self.pool:
+                    # This connection is dedicated to the notifications listening, so it
+                    # would only complicate stuff to include it into the connection pool
+                    async with triopg.connect(self.url) as self.notification_conn:
+                        await self.notification_conn.add_listener(
+                            "app_notification", self._on_notification
+                        )
+                        task_status.started()
+                        if postgres_initial_connect_failed:
+                            logger.warning("db connection established after initial failure")
+                        await trio.sleep_forever()
+            except OSError:
+                postgres_initial_connect_failed = True
+                if self.first_tries_number == 1:
+                    logger.error("initial db connection failed", tries_remaining=0)
+                    raise
+                if self.first_tries_number > 1:
+                    self.first_tries_number -= 1
+                logger.warning(
+                    "initial db connection failed",
+                    tries_remaining=self.first_tries_number
+                    if self.first_tries_number
+                    else "unlimited",
+                    wait_time=self.first_tries_sleep,
+                )
+                await trio.sleep(self.first_tries_sleep)
 
     def _on_notification(self, connection, pid, channel, payload):
         data = unpackb(b64decode(payload.encode("ascii")))

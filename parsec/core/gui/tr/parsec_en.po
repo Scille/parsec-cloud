@@ -7,8 +7,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PROJECT VERSION\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2020-07-15 12:04+0200\n"
-"PO-Revision-Date: 2020-07-15 12:10+0200\n"
+"POT-Creation-Date: 2020-07-16 14:18+0200\n"
+"PO-Revision-Date: 2020-07-16 14:36+0200\n"
 "Last-Translator: \n"
 "Language: en\n"
 "Language-Team: en <LL@li.org>\n"
@@ -177,6 +177,9 @@ msgid "TEXT_GREET_USER_WAIT_PEER_ERROR"
 msgstr ""
 "An error occured while waiting for the other user. Please restart the "
 "process."
+
+msgid "TEXT_GREET_USER_PEER_RESET"
+msgstr "The invitee has reset the process. We will restart from the beginning."
 
 msgid "TEXT_USER_PROFILE_STANDARD"
 msgstr "Standard"
@@ -352,6 +355,9 @@ msgstr ""
 "You can retry the invitation process. If this problem persists, your "
 "network may not be safe."
 
+msgid "TEXT_CLAIM_USER_PEER_RESET"
+msgstr "The host has reset the process. We will restart from the beginning."
+
 msgid "TEXT_CLAIM_USER_GET_GREETER_SAS_ERROR"
 msgstr "Internal error. Please restart the process."
 
@@ -399,8 +405,11 @@ msgstr "current"
 msgid "ACTION_DEVICE_MENU_CHANGE_PASSWORD"
 msgstr "Change password"
 
-msgid "TEXT_DEVICES_CANNOT_INVITE_DEVICE"
-msgstr "Cannot invite a new device."
+msgid "TEXT_INVITE_DEVICE_INVITE_OFFLINE"
+msgstr "The server is offline or you have no access to the internet."
+
+msgid "TEXT_INVITE_DEVICE_INVITE_ERROR"
+msgstr "Could not invite the device."
 
 msgid "TEXT_DEVICE_LIST_RETRIEVABLE_FAILURE"
 msgstr "Failed to retrieve the device list from the server."
@@ -507,7 +516,7 @@ msgstr "Workspace"
 msgid "ACTION_WORKSPACE_NEW_CREATE"
 msgstr "Create"
 
-msgid "TEXT_GREET_USER_ADDR_COPIED_TO_CLIPBOARD"
+msgid "TEXT_GREET_DEVICE_ADDR_COPIED_TO_CLIPBOARD"
 msgstr "The invitation link has been copied to the clipboard"
 
 msgid "TEXT_GREET_DEVICE_EMAIL_SENT"
@@ -521,6 +530,9 @@ msgstr "Waiting for the new device..."
 
 msgid "TEXT_GREET_DEVICE_WAIT_PEER_ERROR"
 msgstr "Error while waiting for the new device."
+
+msgid "TEXT_GREET_DEVICE_PEER_RESET"
+msgstr "The process has been reset. We will restart from the beginning."
 
 msgid "TEXT_GREET_DEVICE_INVALID_CODE_CLICKED"
 msgstr ""
@@ -638,6 +650,9 @@ msgstr "Failed to retrieve the user list from the server."
 
 msgid "TEXT_INVITE_USER_CANCEL_ERROR"
 msgstr "Could not cancel the invitation."
+
+msgid "TEXT_INVITE_USER_INVITE_OFFLINE"
+msgstr "The server is offline or you have no access to the internet."
 
 msgid "TEXT_INVITE_USER_INVITE_ERROR"
 msgstr "Could not invite the user."
@@ -1631,6 +1646,9 @@ msgstr ""
 "You can retry the invitation process. If this problem persists, your "
 "network may not be safe."
 
+msgid "TEXT_CLAIM_DEVICE_PEER_RESET"
+msgstr "The process has been reset. We will restart from the beginning."
+
 msgid "TEXT_CLAIM_DEVICE_GET_GREETER_SAS_ERROR"
 msgstr "Internal error. Please restart the process."
 
@@ -2000,6 +2018,16 @@ msgstr "Create a new PARSEC organization on the PARSEC website (recommanded)"
 msgid "TEXT_ORG_WIZARD_CREATE_ON_CUSTOM"
 msgstr "I have my own PARSEC server and want to create an organization on it"
 
+msgid "TEXT_ORG_WIZARD_CREATE_FROM_SCRATCH"
+msgstr ""
+"I don't have an account on the website and want to create a new "
+"organization"
+
+msgid "TEXT_ORG_WIZARD_ALREADY_HAS_URL"
+msgstr ""
+"I already have an account on the website and a link to bootstrap my "
+"organization"
+
 msgid "TEXT_ORG_WIZARD_CREATE_ORG_CUSTOM_INSTRUCTIONS"
 msgstr ""
 "Please provide the name of your new organization, your server address, "
@@ -2334,22 +2362,3 @@ msgstr "Create a new workspace"
 
 msgid "ACTION_WORKSPACE_GOTO_FILE_LINK"
 msgstr "Go to a file using a link"
-
-#~ msgid "ACTION_CREATE_ORGANIZATION"
-#~ msgstr "Create the organization"
-
-#~ msgid "TEXT_ORG_WIZARD_CREATE_FROM_SCRATCH"
-#~ msgstr ""
-#~ "I don't have an account on the "
-#~ "website and want to create a new"
-#~ " organization"
-
-#~ msgid "TEXT_ORG_WIZARD_ALREADY_HAS_URL"
-#~ msgstr ""
-#~ "I already have an account on the"
-#~ " website and a link to bootstrap "
-#~ "my organization"
-
-#~ msgid "TEXT_CREATE_ORG_ADMIN_TOKEN"
-#~ msgstr "abcdef123456"
-

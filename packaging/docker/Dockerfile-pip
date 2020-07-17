@@ -1,7 +1,6 @@
 FROM python:3.7-slim-buster
 
-ADD . .
-RUN pip install --no-cache-dir -e .[backend]
+RUN pip install --no-cache-dir parsec-cloud[backend]
 EXPOSE 6777
 ENTRYPOINT ["parsec", "backend"]
 CMD ["run"]

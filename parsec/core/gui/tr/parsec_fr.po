@@ -7,8 +7,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PROJECT VERSION\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2020-07-15 12:04+0200\n"
-"PO-Revision-Date: 2020-07-15 12:10+0200\n"
+"POT-Creation-Date: 2020-07-16 14:18+0200\n"
+"PO-Revision-Date: 2020-07-16 14:38+0200\n"
 "Last-Translator: \n"
 "Language: fr\n"
 "Language-Team: fr <LL@li.org>\n"
@@ -180,6 +180,9 @@ msgstr "En attente de l'autre utilisateur..."
 
 msgid "TEXT_GREET_USER_WAIT_PEER_ERROR"
 msgstr "Erreur interne. Veuillez redémarrer le processus."
+
+msgid "TEXT_GREET_USER_PEER_RESET"
+msgstr "Suite à une annulation de l'invité, il faut redémarrer le processus."
 
 msgid "TEXT_USER_PROFILE_STANDARD"
 msgstr "Standard"
@@ -367,6 +370,9 @@ msgstr ""
 "Veuillez redémarrer le processus. Si le problème persiste, votre réseau "
 "n'est peut-être pas sécurisé."
 
+msgid "TEXT_CLAIM_USER_PEER_RESET"
+msgstr "Suite à une annulation de l'hôte, il faut redémarrer le processus."
+
 msgid "TEXT_CLAIM_USER_GET_GREETER_SAS_ERROR"
 msgstr "Erreur interne. Veuillez redémarrer le processus."
 
@@ -415,7 +421,10 @@ msgstr "actuel"
 msgid "ACTION_DEVICE_MENU_CHANGE_PASSWORD"
 msgstr "Changer le mot de passe"
 
-msgid "TEXT_DEVICES_CANNOT_INVITE_DEVICE"
+msgid "TEXT_INVITE_DEVICE_INVITE_OFFLINE"
+msgstr "Le serveur est hors-ligne ou vous n'avez pas de connexion internet."
+
+msgid "TEXT_INVITE_DEVICE_INVITE_ERROR"
 msgstr "Impossible d'inviter un nouvel appareil"
 
 msgid "TEXT_DEVICE_LIST_RETRIEVABLE_FAILURE"
@@ -528,7 +537,7 @@ msgstr "Espace de travail"
 msgid "ACTION_WORKSPACE_NEW_CREATE"
 msgstr "Créer"
 
-msgid "TEXT_GREET_USER_ADDR_COPIED_TO_CLIPBOARD"
+msgid "TEXT_GREET_DEVICE_ADDR_COPIED_TO_CLIPBOARD"
 msgstr "Le lien d'invitation a été copié dans le presse-papier."
 
 msgid "TEXT_GREET_DEVICE_EMAIL_SENT"
@@ -542,6 +551,9 @@ msgstr "En attente du nouvel appareil..."
 
 msgid "TEXT_GREET_DEVICE_WAIT_PEER_ERROR"
 msgstr "Erreur interne. Veuillez redémarrer le processus."
+
+msgid "TEXT_GREET_DEVICE_PEER_RESET"
+msgstr "Le processus va redémarrer suite à une annulation."
 
 msgid "TEXT_GREET_DEVICE_INVALID_CODE_CLICKED"
 msgstr ""
@@ -661,6 +673,9 @@ msgstr "Impossible de récupérer la liste des utilisateurs depuis le serveur."
 
 msgid "TEXT_INVITE_USER_CANCEL_ERROR"
 msgstr "Impossible d'annuler l'invitation."
+
+msgid "TEXT_INVITE_USER_INVITE_OFFLINE"
+msgstr "Le serveur est hors-ligne ou vous n'avez pas de connexion internet."
 
 msgid "TEXT_INVITE_USER_INVITE_ERROR"
 msgstr "Impossible d'inviter l'utilisateur."
@@ -1595,6 +1610,9 @@ msgstr ""
 "Impossible de se connecter. Les espaces de travail n'ont pas pu être "
 "montés."
 
+msgid "TEXT_ORG_WIZARD_EMAIL_ALREADY_EXISTS"
+msgstr "Cet email est déjà utilisé."
+
 msgid "TEXT_ORG_WIZARD_ORGANIZATION_ALREADY_EXISTS"
 msgstr "Une organisation du même nom existe déjà."
 
@@ -1659,6 +1677,9 @@ msgstr ""
 "\n"
 "Veuillez redémarrer le processus. Si le problème persiste, votre réseau "
 "n'est peut-être pas sécurisé."
+
+msgid "TEXT_CLAIM_DEVICE_PEER_RESET"
+msgstr "Le processus va redémarrer suite à une annulation."
 
 msgid "TEXT_CLAIM_DEVICE_GET_GREETER_SAS_ERROR"
 msgstr "Erreur interne. Veuillez redémarrer le processus."
@@ -2032,6 +2053,21 @@ msgstr ""
 "Veuillez fournir le nom de votre nouvelle organisation, l'adresse de "
 "votre serveur ainsi que son jeton d'administration."
 
+msgid "TEXT_ORG_WIZARD_CREATE_FROM_SCRATCH"
+msgstr ""
+"Je n'ai pas de compte sur le site web et veux créer une nouvelle "
+"organisation"
+
+msgid "TEXT_ORG_WIZARD_ALREADY_HAS_URL"
+msgstr ""
+"J'ai déjà un compte sur le site web et une URL pour démarrer mon "
+"organisation"
+
+msgid "TEXT_ORG_WIZARD_CREATE_ORG_INSTRUCTIONS"
+msgstr ""
+"Veuillez saisir votre adresse email et le nom désiré de votre "
+"organisation."
+
 msgid "TEXT_LABEL_ORG_NAME"
 msgstr "Nom de l'organisation"
 
@@ -2370,21 +2406,4 @@ msgstr "Créer un nouvel espace de travail"
 msgid "ACTION_WORKSPACE_GOTO_FILE_LINK"
 msgstr "Trouver un fichier via son lien"
 
-#~ msgid "ACTION_CREATE_ORGANIZATION"
-#~ msgstr "Créer l'organisation"
-
-#~ msgid "TEXT_ORG_WIZARD_CREATE_FROM_SCRATCH"
-#~ msgstr ""
-#~ "Je n'ai pas de compte sur le "
-#~ "site web et veux créer une "
-#~ "nouvelle organisation"
-
-#~ msgid "TEXT_ORG_WIZARD_ALREADY_HAS_URL"
-#~ msgstr ""
-#~ "J'ai déjà un compte sur le site"
-#~ " web et une URL pour démarrer "
-#~ "mon organisation"
-
-#~ msgid "TEXT_CREATE_ORG_ADMIN_TOKEN"
-#~ msgstr "abcdef123456"
 

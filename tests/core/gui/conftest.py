@@ -8,9 +8,12 @@ from trio.testing import trio_test as vanilla_trio_test
 import queue
 import threading
 from concurrent import futures
+from importlib import import_module
+from PyQt5 import QtCore
 
 from parsec.event_bus import EventBus
 from parsec import __version__ as parsec_version
+from parsec.core.local_device import save_device_with_password
 from parsec.core.gui.main_window import MainWindow
 from parsec.core.gui.trio_thread import QtToTrioJobScheduler
 from parsec.core.gui.login_widget import LoginWidget
@@ -233,6 +236,37 @@ def autoclose_dialog(monkeypatch):
 
 
 @pytest.fixture
+def widget_catcher_factory(aqtbot, monkeypatch):
+    """Useful to capture lazily created widget such as modals"""
+
+    def _widget_catcher_factory(*widget_cls_pathes):
+        widgets = []
+
+        def _catch_init(self, *args, **kwargs):
+            widgets.append(self)
+            return self.vanilla__init__(*args, **kwargs)
+
+        for widget_cls_path in widget_cls_pathes:
+            module_path, widget_cls_name = widget_cls_path.rsplit(".", 1)
+            widget_cls = getattr(import_module(module_path), widget_cls_name)
+            monkeypatch.setattr(
+                f"{widget_cls_path}.vanilla__init__", widget_cls.__init__, raising=False
+            )
+            monkeypatch.setattr(f"{widget_cls_path}.__init__", _catch_init)
+
+        async def _wait_next():
+            def _invitation_shown():
+                assert len(widgets)
+
+            await aqtbot.wait_until(_invitation_shown)
+            return widgets.pop(0)
+
+        return _wait_next
+
+    return _widget_catcher_factory
+
+
+@pytest.fixture
 def gui_factory(qtbot, qt_thread_gateway, core_config, monkeypatch):
     windows = []
 
@@ -286,6 +320,52 @@ def gui_factory(qtbot, qt_thread_gateway, core_config, monkeypatch):
 @pytest.fixture
 async def gui(gui_factory, event_bus, core_config):
     return await gui_factory(event_bus, core_config)
+
+
+@pytest.fixture
+async def logged_gui(aqtbot, gui_factory, core_config, alice, bob, fixtures_customization):
+    # Logged as bob (i.e. standard profile) by default
+    if fixtures_customization.get("logged_gui_as_admin", False):
+        device = alice
+    else:
+        device = bob
+
+    save_device_with_password(core_config.config_dir, device, "P@ssw0rd")
+
+    gui = await gui_factory()
+    lw = gui.test_get_login_widget()
+    tabw = gui.test_get_tab()
+
+    await aqtbot.key_clicks(lw.line_edit_password, "P@ssw0rd")
+
+    async with aqtbot.wait_signals([lw.login_with_password_clicked, tabw.logged_in]):
+        await aqtbot.mouse_click(lw.button_login, QtCore.Qt.LeftButton)
+
+    central_widget = gui.test_get_central_widget()
+    assert central_widget is not None
+
+    # Add helpers
+
+    async def test_switch_to_devices_widget(error=False):
+        central_widget = gui.test_get_central_widget()
+        d_w = gui.test_get_devices_widget()
+        signal = d_w.list_error if error else d_w.list_success
+        async with aqtbot.wait_exposed(d_w), aqtbot.wait_signal(signal):
+            await aqtbot.mouse_click(central_widget.menu.button_devices, QtCore.Qt.LeftButton)
+        return d_w
+
+    async def test_switch_to_users_widget(error=False):
+        central_widget = gui.test_get_central_widget()
+        u_w = gui.test_get_users_widget()
+        signal = u_w.list_error if error else u_w.list_success
+        async with aqtbot.wait_exposed(u_w), aqtbot.wait_signal(signal):
+            await aqtbot.mouse_click(central_widget.menu.button_users, QtCore.Qt.LeftButton)
+        return u_w
+
+    gui.test_switch_to_devices_widget = test_switch_to_devices_widget
+    gui.test_switch_to_users_widget = test_switch_to_users_widget
+
+    return gui
 
 
 # Decorator to add a method to a class

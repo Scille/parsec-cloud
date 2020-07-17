@@ -149,3 +149,27 @@ async def test_change_password_success(
 
     async with aqtbot.wait_signals([lw.login_with_password_clicked, tabw.logged_in]):
         await aqtbot.mouse_click(lw.button_login, QtCore.Qt.LeftButton)
+
+
+@pytest.mark.gui
+@pytest.mark.trio
+async def test_change_password_canceled(
+    aqtbot, running_backend, logged_gui, qt_thread_gateway, autoclose_dialog
+):
+    d_w = logged_gui.test_get_devices_widget()
+
+    assert d_w is not None
+
+    def _devices_displayed():
+        assert d_w.isVisible()
+        assert d_w.layout_devices.count() == 2
+
+    await aqtbot.wait_until(_devices_displayed)
+    item = d_w.layout_devices.itemAt(0)
+
+    async with aqtbot.wait_signal(item.widget().change_password_clicked):
+        item.widget().change_password()
+
+    assert len(autoclose_dialog.dialogs) == 1
+    assert autoclose_dialog.dialogs[0][0] == "Change password"
+    assert isinstance(autoclose_dialog.dialogs[0][1], PasswordChangeWidget)
