@@ -18,7 +18,7 @@ from parsec.backend.postgresql.queries import (
     q_realm,
     q_realm_internal_id,
 )
-
+from parsec.backend.realm import RealmStats
 
 _q_get_realm_status = Q(
     f"""
@@ -35,6 +35,39 @@ _q_get_realm_status = Q(
 """
 )
 
+_q_has_realm_access = Q(
+    f"""
+    SELECT
+        { q_user_can_read_vlob(organization_id="$organization_id", realm_id="$realm_id", user_id="$user_id") } has_access
+    FROM realm
+    WHERE
+        organization = { q_organization_internal_id("$organization_id") }
+        AND realm_id = $realm_id
+"""
+)
+
+_q_get_blocks_size_from_realm = Q(
+    f"""
+    SELECT
+        size
+    FROM block
+    WHERE
+        realm = { q_realm_internal_id(organization_id="$organization_id", realm_id="$realm_id") }
+"""
+)
+
+_q_get_vlob_size_from_realm = Q(
+    f"""
+    SELECT
+        size
+    FROM
+        vlob_atom
+    INNER JOIN
+        realm_vlob_update ON vlob_atom._id = realm_vlob_update.vlob_atom
+    WHERE
+        realm_vlob_update.realm = { q_realm_internal_id(organization_id="$organization_id", realm_id="$realm_id") }
+"""
+)
 
 _q_get_current_roles = Q(
     f"""
@@ -87,6 +120,38 @@ async def query_get_status(
         maintenance_started_by=ret["maintenance_started_by"],
         encryption_revision=ret["encryption_revision"],
     )
+
+
+@query()
+async def query_get_stats(
+    conn, organization_id: OrganizationID, author: DeviceID, realm_id: UUID
+) -> RealmStats:
+    ret = await conn.fetchrow(
+        *_q_has_realm_access(
+            organization_id=organization_id, realm_id=realm_id, user_id=author.user_id
+        )
+    )
+    if not ret:
+        raise RealmNotFoundError(f"Realm `{realm_id}` doesn't exist")
+
+    if not ret["has_access"]:
+        raise RealmAccessError()
+    blocks = await conn.fetch(
+        *_q_get_blocks_size_from_realm(organization_id=organization_id, realm_id=realm_id)
+    )
+    vlobs = await conn.fetch(
+        *_q_get_vlob_size_from_realm(organization_id=organization_id, realm_id=realm_id)
+    )
+    RealmStats.blocks_size = 0
+    RealmStats.vlobs_size = 0
+
+    for block in blocks:
+        if "size" in block:
+            RealmStats.blocks_size += block["size"]
+    for vlob in vlobs:
+        if "size" in vlob:
+            RealmStats.vlobs_size += vlob["size"]
+    return RealmStats
 
 
 @query()
