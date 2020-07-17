@@ -109,6 +109,7 @@ async def apply_migrations(
 
     await retry_postgres(
         _retryable,
+        url,
         migrations,
         dry_run,
         tries_number=first_tries_number,
