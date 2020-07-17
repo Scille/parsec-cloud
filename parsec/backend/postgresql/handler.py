@@ -32,6 +32,32 @@ CREATE_MIGRATION_TABLE_ID = 2
 MIGRATION_FILE_PATTERN = r"^(?P<id>\d{4})_(?P<name>\w*).sql$"
 
 
+async def retry_postgres(function, *args, **kwargs):
+    postgres_initial_connect_failed = False
+    tries_number = kwargs["tries_number"]
+    tries_sleep = kwargs["tries_sleep"]
+    kwargs = {k: v for k, v in kwargs.items() if k not in ["tries_number", "tries_sleep"]}
+    while True:
+        try:
+            return await function(
+                *args, **kwargs, postgres_initial_connect_failed=postgres_initial_connect_failed
+            )
+
+        except OSError:
+            postgres_initial_connect_failed = True
+            if tries_number == 1:
+                logger.error("initial db connection failed", tries_remaining=0)
+                raise
+            if tries_number > 1:
+                tries_number -= 1
+            logger.warning(
+                "initial db connection failed",
+                tries_remaining=tries_number if tries_number else "unlimited",
+                wait_time=tries_sleep,
+            )
+            await trio.sleep(tries_sleep)
+
+
 @attr.s(slots=True, auto_attribs=True)
 class MigrationItem:
     idx: int
@@ -71,13 +97,30 @@ class MigrationResult:
 
 
 async def apply_migrations(
-    url: str, migrations: List[MigrationItem], dry_run: bool
+    url: str,
+    first_tries_number: int,
+    first_tries_sleep: int,
+    migrations: List[MigrationItem],
+    dry_run: bool,
 ) -> MigrationResult:
     """
     Returns: MigrationResult
     """
-    async with triopg.connect(url) as conn:
-        return await _apply_migrations(conn, migrations, dry_run)
+
+    async def _retryable(url, migrations, dry_run, postgres_initial_connect_failed=False):
+        async with triopg.connect(url) as conn:
+            if postgres_initial_connect_failed:
+                logger.warning("db connection established after initial failure")
+            return await _apply_migrations(conn, migrations, dry_run)
+
+    return await retry_postgres(
+        _retryable,
+        url,
+        migrations,
+        dry_run,
+        tries_number=first_tries_number,
+        tries_sleep=first_tries_sleep,
+    )
 
 
 async def _apply_migrations(
@@ -176,37 +219,28 @@ class PGHandler:
         self._task_status = await start_task(nursery, self._run_connections)
 
     async def _run_connections(self, task_status=trio.TASK_STATUS_IGNORED):
-        postgres_initial_connect_failed = False
-        while True:
-            try:
-                async with triopg.create_pool(
-                    self.url, min_size=self.min_connections, max_size=self.max_connections
-                ) as self.pool:
-                    # This connection is dedicated to the notifications listening, so it
-                    # would only complicate stuff to include it into the connection pool
-                    async with triopg.connect(self.url) as self.notification_conn:
-                        await self.notification_conn.add_listener(
-                            "app_notification", self._on_notification
-                        )
-                        task_status.started()
-                        if postgres_initial_connect_failed:
-                            logger.warning("db connection established after initial failure")
-                        await trio.sleep_forever()
-            except OSError:
-                postgres_initial_connect_failed = True
-                if self.first_tries_number == 1:
-                    logger.error("initial db connection failed", tries_remaining=0)
-                    raise
-                if self.first_tries_number > 1:
-                    self.first_tries_number -= 1
-                logger.warning(
-                    "initial db connection failed",
-                    tries_remaining=self.first_tries_number
-                    if self.first_tries_number
-                    else "unlimited",
-                    wait_time=self.first_tries_sleep,
-                )
-                await trio.sleep(self.first_tries_sleep)
+        async def _retryable(self, task_status, postgres_initial_connect_failed=False):
+            async with triopg.create_pool(
+                self.url, min_size=self.min_connections, max_size=self.max_connections
+            ) as self.pool:
+                # This connection is dedicated to the notifications listening, so it
+                # would only complicate stuff to include it into the connection pool
+                async with triopg.connect(self.url) as self.notification_conn:
+                    await self.notification_conn.add_listener(
+                        "app_notification", self._on_notification
+                    )
+                    task_status.started()
+                    if postgres_initial_connect_failed:
+                        logger.warning("db connection established after initial failure")
+                    await trio.sleep_forever()
+
+        await retry_postgres(
+            _retryable,
+            self,
+            task_status,
+            tries_number=self.first_tries_number,
+            tries_sleep=self.first_tries_sleep,
+        )
 
     def _on_notification(self, connection, pid, channel, payload):
         data = unpackb(b64decode(payload.encode("ascii")))

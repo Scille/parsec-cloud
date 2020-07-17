@@ -16,6 +16,8 @@ services:
       - 6777:6777
     depends_on:
       - "postgres"
+    entrypoint: []
+    command: ["/bin/sh", "-c", "parsec backend migrate && parsec backend run"]
 
   postgres:
     image: "postgres"
