@@ -97,7 +97,11 @@ class MigrationResult:
 
 
 async def apply_migrations(
-    url: str, first_tries_number, first_tries_sleep, migrations: List[MigrationItem], dry_run: bool
+    url: str,
+    first_tries_number: int,
+    first_tries_sleep: int,
+    migrations: List[MigrationItem],
+    dry_run: bool,
 ) -> MigrationResult:
     """
     Returns: MigrationResult
