@@ -39,10 +39,9 @@ async def retry_postgres(function, *args, **kwargs):
     kwargs = {k: v for k, v in kwargs.items() if k not in ["tries_number", "tries_sleep"]}
     while True:
         try:
-            await function(
+            return await function(
                 *args, **kwargs, postgres_initial_connect_failed=postgres_initial_connect_failed
             )
-            break
 
         except OSError:
             postgres_initial_connect_failed = True
