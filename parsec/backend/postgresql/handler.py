@@ -109,7 +109,7 @@ async def apply_migrations(
                 logger.warning("db connection established after initial failure")
             return await _apply_migrations(conn, migrations, dry_run)
 
-    await retry_postgres(
+    return await retry_postgres(
         _retryable,
         url,
         migrations,
