@@ -5,6 +5,9 @@ include README.rst
 
 recursive-include parsec/backend *.sql
 recursive-include parsec/backend/mail *.html
+recursive-include parsec/backend/http/templates *.html
+recursive-include parsec/backend/http/static/ *.css
+recursive-include parsec/backend/http/static/ *.ico
 recursive-include tests *.py *.bat *.sh *.md
 recursive-include docs *.rst conf.py Makefile make.bat
 recursive-include parsec/core/resources *.ico

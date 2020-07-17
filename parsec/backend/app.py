@@ -6,7 +6,6 @@ import trio
 from structlog import get_logger
 from logging import DEBUG as LOG_LEVEL_DEBUG
 from async_generator import asynccontextmanager
-
 from parsec.event_bus import EventBus
 from parsec.logging import get_log_level
 from parsec.api.transport import TransportError, TransportClosedByPeer, Transport
@@ -24,7 +23,9 @@ from parsec.backend.client_context import AuthenticatedClientContext, InvitedCli
 from parsec.backend.handshake import do_handshake
 from parsec.backend.memory import components_factory as mocked_components_factory
 from parsec.backend.postgresql import components_factory as postgresql_components_factory
+from parsec.backend.http.router import get_method_and_execute
 
+import h11
 
 logger = get_logger()
 
@@ -93,11 +94,13 @@ class BackendApp:
             user, invite, organization, message, realm, vlob, ping, blockstore, block, events
         )
 
-    async def handle_client(self, stream):
+    async def handle_client_websocket(self, stream, event, first_request_data=None):
         selected_logger = logger
 
         try:
-            transport = await Transport.init_for_server(stream)
+            transport = await Transport.init_for_server(
+                stream, first_request_data=first_request_data
+            )
 
         except TransportClosedByPeer as exc:
             selected_logger.info("Connection dropped: client has left", reason=str(exc))
@@ -119,7 +122,6 @@ class BackendApp:
 
             try:
                 await stream.send_all(content + content_body)
-                await stream.aclose()
 
             except trio.BrokenResourceError:
                 # Stream is really dead, nothing else to do...
@@ -134,7 +136,6 @@ class BackendApp:
             client_ctx, error_infos = await do_handshake(self, transport)
             if not client_ctx:
                 # Invalid handshake
-                await stream.aclose()
                 selected_logger.info("Connection dropped: bad handshake", **error_infos)
                 return
 
@@ -203,6 +204,54 @@ class BackendApp:
                 pass
             await transport.aclose()
             selected_logger.info("Connection dropped: invalid data", reason=str(exc))
+
+    async def handle_client(self, stream):
+        MAX_RECV = 5
+        conn = h11.Connection(h11.SERVER)
+        first_request_data = b""
+        while True:
+            if conn.they_are_waiting_for_100_continue:
+                self.info("Sending 100 Continue")
+                go_ahead = h11.InformationalResponse(status_code=100, headers=self.basic_headers())
+                await self.send(go_ahead)
+            try:
+                data = await stream.receive_some(MAX_RECV)
+                first_request_data += data
+
+            except ConnectionError:
+                # They've stopped listening. Not much we can do about it here.
+                data = b""
+            conn.receive_data(data)
+
+            event = conn.next_event()
+            if event is not h11.NEED_DATA:
+                break
+
+        if not isinstance(event, h11.Request):
+            await stream.aclose()
+            return
+
+        try:
+            # Websocket upgrade, else HTTP
+            if (b"connection", b"Upgrade") in event.headers:
+                await self.handle_client_websocket(
+                    stream, event, first_request_data=first_request_data
+                )
+            else:
+                await self.handle_client_http(stream, event, conn)
+        finally:
+            try:
+                await stream.aclose()
+            except trio.BrokenResourceError:
+                # They're already gone, nothing to do
+                pass
+
+    async def handle_client_http(self, stream, event, conn):
+        status_code, headers, data = get_method_and_execute(event.target, self.backend_addr)
+        res = h11.Response(status_code=status_code, headers=headers)
+        await stream.send_all(conn.send(res))
+        await stream.send_all(conn.send(h11.Data(data=data)))
+        await stream.send_all(conn.send(h11.EndOfMessage()))
 
     async def _handle_client_loop(self, transport, client_ctx):
         # Retrieve the allowed commands according to api version and auth type
