@@ -105,6 +105,8 @@ async def apply_migrations(
 
     async def _retryable(url, migrations, dry_run, postgres_initial_connect_failed=False):
         async with triopg.connect(url) as conn:
+            if postgres_initial_connect_failed:
+                logger.warning("db connection established after initial failure")
             return await _apply_migrations(conn, migrations, dry_run)
 
     await retry_postgres(
