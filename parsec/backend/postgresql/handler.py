@@ -42,6 +42,7 @@ async def retry_postgres(function, *args, **kwargs):
             await function(
                 *args, **kwargs, postgres_initial_connect_failed=postgres_initial_connect_failed
             )
+            break
 
         except OSError:
             postgres_initial_connect_failed = True
