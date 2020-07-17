@@ -103,7 +103,7 @@ async def apply_migrations(
     Returns: MigrationResult
     """
 
-    async def _retryable(url, migrations, dry_run):
+    async def _retryable(url, migrations, dry_run, postgres_initial_connect_failed=False):
         async with triopg.connect(url) as conn:
             return await _apply_migrations(conn, migrations, dry_run)
 
