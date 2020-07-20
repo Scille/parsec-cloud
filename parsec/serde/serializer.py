@@ -1,6 +1,7 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
 
 import zlib
+import json
 
 from marshmallow import ValidationError
 
@@ -51,6 +52,28 @@ class BaseSerializer:
 
     def dumps(self, data: dict) -> bytes:
         raise NotImplementedError
+
+
+class JSONSerializer(BaseSerializer):
+    def loads(self, data: bytes) -> dict:
+        """
+        Raises:
+            SerdeValidationError
+            SerdePackingError
+        """
+        try:
+            decoded_data = json.loads(data.decode("utf-8"))
+        except (json.JSONDecodeError, UnicodeDecodeError) as exc:
+            raise self.packing_exc from exc
+        return self.load(decoded_data)
+
+    def dumps(self, data: dict) -> bytes:
+        """
+        Raises:
+            SerdeValidationError
+            SerdePackingError
+        """
+        return json.dumps(self.dump(data)).encode("utf-8")
 
 
 class MsgpackSerializer(BaseSerializer):

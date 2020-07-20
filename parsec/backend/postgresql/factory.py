@@ -7,6 +7,7 @@ from parsec.event_bus import EventBus
 from parsec.backend.config import BackendConfig
 from parsec.backend.events import EventsComponent
 from parsec.backend.blockstore import blockstore_factory
+from parsec.backend.webhooks import WebhooksComponent
 from parsec.backend.postgresql.handler import PGHandler
 from parsec.backend.postgresql.organization import PGOrganizationComponent
 from parsec.backend.postgresql.ping import PGPingComponent
@@ -29,7 +30,8 @@ async def components_factory(config: BackendConfig, event_bus: EventBus):
         event_bus,
     )
 
-    organization = PGOrganizationComponent(dbh)
+    webhooks = WebhooksComponent(config)
+    organization = PGOrganizationComponent(dbh, webhooks)
     user = PGUserComponent(dbh, event_bus)
     invite = PGInviteComponent(dbh, event_bus, config)
     message = PGMessageComponent(dbh)

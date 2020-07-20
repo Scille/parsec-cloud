@@ -16,6 +16,7 @@ from parsec.backend.memory.message import MemoryMessageComponent
 from parsec.backend.memory.realm import MemoryRealmComponent
 from parsec.backend.memory.vlob import MemoryVlobComponent
 from parsec.backend.memory.block import MemoryBlockComponent
+from parsec.backend.webhooks import WebhooksComponent
 
 
 @asynccontextmanager
@@ -30,7 +31,8 @@ async def components_factory(config: BackendConfig, event_bus: EventBus):
             await trio.sleep(0)
             event_bus.send(event, **kwargs)
 
-    organization = MemoryOrganizationComponent()
+    webhooks = WebhooksComponent(config)
+    organization = MemoryOrganizationComponent(webhooks)
     user = MemoryUserComponent(_send_event, event_bus)
     invite = MemoryInviteComponent(_send_event, event_bus, config)
     message = MemoryMessageComponent(_send_event)
@@ -43,6 +45,7 @@ async def components_factory(config: BackendConfig, event_bus: EventBus):
 
     components = {
         "events": events,
+        "webhooks": webhooks,
         "organization": organization,
         "user": user,
         "invite": invite,

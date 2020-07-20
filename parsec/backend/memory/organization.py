@@ -22,8 +22,8 @@ from parsec.backend.memory.block import MemoryBlockComponent
 
 
 class MemoryOrganizationComponent(BaseOrganizationComponent):
-    def __init__(self, **kwargs):
-        super().__init__(**kwargs)
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
         self._user_component = None
         self._vlob_component = None
         self._block_component = None

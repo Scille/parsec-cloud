@@ -6,6 +6,7 @@ import os
 import re
 import sys
 import attr
+import json
 import socket
 import contextlib
 import pendulum
@@ -14,6 +15,7 @@ import structlog
 import trio
 from trio.testing import MockClock
 import trio_asyncio
+from contextlib import contextmanager
 from async_generator import asynccontextmanager
 import hypothesis
 from pathlib import Path
@@ -511,6 +513,8 @@ def backend_factory(
                 "blockstore_config": blockstore,
                 "email_config": None,
                 "backend_addr": None,
+                "spontaneous_organization_bootstrap": False,
+                "organization_bootstrap_webhook_url": None,
                 **config,
             }
         )
@@ -539,23 +543,26 @@ def backend_factory(
 @pytest.fixture
 async def backend(backend_factory, request, fixtures_customization, backend_addr):
     populated = not fixtures_customization.get("backend_not_populated", False)
+    config = {}
     if fixtures_customization.get("backend_has_email", False):
-        config = {
-            "email_config": EmailConfig(
-                host="example.com",
-                # Invalid port, hence we should crash if by mistake we try
-                # to reach this SMTP server
-                port=999999,
-                user="mail_user",
-                password=None,
-                use_ssl=False,
-                use_tls=False,
-                language="en",
-            ),
-            "backend_addr": backend_addr,
-        }
-    else:
-        config = {}
+        config["email_config"] = EmailConfig(
+            host="example.com",
+            # Invalid port, hence we should crash if by mistake we try
+            # to reach this SMTP server
+            port=999999,
+            user="mail_user",
+            password=None,
+            use_ssl=False,
+            use_tls=False,
+            language="en",
+        )
+        config["backend_addr"] = backend_addr
+    if fixtures_customization.get("backend_spontaneous_organization_boostrap", False):
+        config["spontaneous_organization_bootstrap"] = True
+    if fixtures_customization.get("backend_has_webhook", False):
+        # Invalid port, hence we should crash if by mistake we try to reach this url
+        config["organization_bootstrap_webhook_url"] = "http://example.com:888888/webhook"
+
     async with backend_factory(populated=populated, config=config) as backend:
         yield backend
 
@@ -574,6 +581,27 @@ def email_letterbox(monkeypatch):
 
     monkeypatch.setattr("parsec.backend.invite.send_email", _mocked_send_email)
     return emails
+
+
+@pytest.fixture
+def webhook_spy(monkeypatch):
+    events = []
+
+    class MockedRep:
+        def getcode(self):
+            return 200
+
+    @contextmanager
+    def _mock_urlopen(req, **kwargs):
+        # Webhook are alway POST with utf-8 JSON body
+        assert req.method == "POST"
+        assert req.headers == {"Content-type": "application/json; charset=utf-8"}
+        cooked_data = json.loads(req.data.decode("utf-8"))
+        events.append((req.full_url, cooked_data))
+        yield MockedRep()
+
+    monkeypatch.setattr("parsec.backend.webhooks.urlopen", _mock_urlopen)
+    return events
 
 
 @pytest.fixture

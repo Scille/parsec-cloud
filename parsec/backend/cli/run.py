@@ -273,6 +273,32 @@ integer and `<config>` the MOCKED/POSTGRESQL/S3/SWIFT config.
     type=BackendAddr.from_url,
     help="URL to reach this server (typically used in invitation emails)",
 )
+@click.option(
+    "--spontaneous-organization-bootstrap",
+    envvar="PARSEC_SPONTANEOUS_ORGANIZATION_BOOTSTRAP",
+    is_flag=True,
+    help="Allow organization bootstrap without prior creation",
+)
+@click.option(
+    "--organization-bootstrap-webhook",
+    envvar="PARSEC_ORGANIZATION_BOOTSTRAP_WEBHOOK",
+    help="""URL to notify when a new organization is bootstrapped.
+
+Each time an organization is bootstrapped, an HTTP POST will be send
+with a application/json body with the following fields:
+
++-------------------+---------------------+
+| field             | value type          |
++-------------------+---------------------+
+|organization_id    |  OrganizationID     |
+|expiration_date    |  Datetime | None    |
+|device_id          |  DeviceID           |
+|device_label       |  str | None         |
+|human_email        |  str | None         |
+|human_label        |  str | None         |
++-------------------+---------------------+
+""",
+)
 @click.option("--email-host", envvar="PARSEC_EMAIL_HOST", help="The host to use for sending email")
 @click.option(
     "--email-port",
@@ -369,6 +395,8 @@ def run_cmd(
     blockstore,
     administration_token,
     backend_addr,
+    spontaneous_organization_bootstrap,
+    organization_bootstrap_webhook,
     email_host,
     email_port,
     email_host_user,
@@ -423,6 +451,8 @@ def run_cmd(
             db_max_connections=db_max_connections,
             db_first_tries_number=db_first_tries_number,
             db_first_tries_sleep=db_first_tries_sleep,
+            spontaneous_organization_bootstrap=spontaneous_organization_bootstrap,
+            organization_bootstrap_webhook_url=organization_bootstrap_webhook,
             blockstore_config=blockstore,
             email_config=email_config,
             backend_addr=backend_addr,
