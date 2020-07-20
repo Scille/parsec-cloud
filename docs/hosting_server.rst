@@ -242,6 +242,42 @@ Note that ``--email-use-tls``/``--email-use-ssl`` are mutually exclusive, so onl
 
 Language used in email (Allowed values: ``en`` or ``fr``).
 
+Webhooks
+--------
+
+* ``--spontaneous-organization-bootstrap``
+* Environ: ``PARSEC_SPONTANEOUS_ORGANIZATION_BOOTSTRAP``
+
+Allow organization bootstrap without prior creation.
+
+Without this flag, an organization must be created by administration (see
+ `parsec core create_organization` command) before bootstrap can occur.
+
+With this flag, the server allows anybody to bootstrap an organanization
+by providing an empty bootstrap token given 1) the organization is not boostrapped yet
+and 2) the organization hasn't been created by administration (which would act as a
+reservation and change the bootstrap token)
+
+* ``--organization-bootstrap-webhook``
+* Environ: ``PARSEC_ORGANIZATION_BOOTSTRAP_WEBHOOK``
+
+URL to notify 3rd party service that a new organization has been bootstrapped.
+
+Each time an organization is bootstrapped, an HTTP POST will be send to the URL
+with an `application/json` body with the following fields:
+``organization_id``, ``device_id``, ``device_label`` (can be null), ``human_email`` (can be null), ``human_label`` (can be null).
+
+Example:
+
+.. code:: json
+
+    {
+      "organization_id": "MyOrg",
+      "device_id": "123@abc",
+      "device_label": "laptop",
+      "human_email": "j.doe@example.com",
+      "human_label": "John Doe"
+    }
 
 Sentry
 ------

@@ -268,36 +268,35 @@ integer and `<config>` the MOCKED/POSTGRESQL/S3/SWIFT config.
     help="Secret token to access the administration api",
 )
 @click.option(
-    "--backend-addr",
-    envvar="PARSEC_BACKEND_ADDR",
-    type=BackendAddr.from_url,
-    help="URL to reach this server (typically used in invitation emails)",
-)
-@click.option(
     "--spontaneous-organization-bootstrap",
     envvar="PARSEC_SPONTANEOUS_ORGANIZATION_BOOTSTRAP",
     is_flag=True,
-    help="Allow organization bootstrap without prior creation",
+    help="""Allow organization bootstrap without prior creation.
+
+Without this flag, an organization must be created by administration (see
+ `parsec core create_organization` command) before bootstrap can occur.
+
+With this flag, the server allows anybody to bootstrap an organanization
+by providing an empty bootstrap token given 1) the organization is not boostrapped yet
+and 2) the organization hasn't been created by administration (which would act as a
+reservation and change the bootstrap token)
+""",
 )
 @click.option(
     "--organization-bootstrap-webhook",
     envvar="PARSEC_ORGANIZATION_BOOTSTRAP_WEBHOOK",
-    help="""URL to notify when a new organization is bootstrapped.
+    help="""URL to notify 3rd party service that a new organization has been bootstrapped.
 
-Each time an organization is bootstrapped, an HTTP POST will be send
-with a application/json body with the following fields:
-
-+-------------------+---------------------+
-| field             | value type          |
-+-------------------+---------------------+
-|organization_id    |  OrganizationID     |
-|expiration_date    |  Datetime | None    |
-|device_id          |  DeviceID           |
-|device_label       |  str | None         |
-|human_email        |  str | None         |
-|human_label        |  str | None         |
-+-------------------+---------------------+
+Each time an organization is bootstrapped, an HTTP POST will be send to the URL
+with an `application/json` body with the following fields:
+organization_id, device_id, device_label (can be null), human_email (can be null), human_label (can be null)
 """,
+)
+@click.option(
+    "--backend-addr",
+    envvar="PARSEC_BACKEND_ADDR",
+    type=BackendAddr.from_url,
+    help="URL to reach this server (typically used in invitation emails)",
 )
 @click.option("--email-host", envvar="PARSEC_EMAIL_HOST", help="The host to use for sending email")
 @click.option(
@@ -394,9 +393,9 @@ def run_cmd(
     db_first_tries_sleep,
     blockstore,
     administration_token,
-    backend_addr,
     spontaneous_organization_bootstrap,
     organization_bootstrap_webhook,
+    backend_addr,
     email_host,
     email_port,
     email_host_user,
