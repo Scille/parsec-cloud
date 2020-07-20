@@ -48,8 +48,7 @@ _q_has_realm_access = Q(
 
 _q_get_blocks_size_from_realm = Q(
     f"""
-    SELECT
-        size
+    SELECT SUM(size)
     FROM block
     WHERE
         realm = { q_realm_internal_id(organization_id="$organization_id", realm_id="$realm_id") }
@@ -58,8 +57,7 @@ _q_get_blocks_size_from_realm = Q(
 
 _q_get_vlob_size_from_realm = Q(
     f"""
-    SELECT
-        size
+    SELECT SUM(size)
     FROM
         vlob_atom
     INNER JOIN
@@ -136,21 +134,19 @@ async def query_get_stats(
 
     if not ret["has_access"]:
         raise RealmAccessError()
-    blocks = await conn.fetch(
+    blocks_size = await conn.fetch(
         *_q_get_blocks_size_from_realm(organization_id=organization_id, realm_id=realm_id)
     )
-    vlobs = await conn.fetch(
+    vlobs_size = await conn.fetch(
         *_q_get_vlob_size_from_realm(organization_id=organization_id, realm_id=realm_id)
     )
     RealmStats.blocks_size = 0
     RealmStats.vlobs_size = 0
+    if "sum" in blocks_size[0] and blocks_size[0]["sum"] is not None:
+        RealmStats.blocks_size = blocks_size[0]["sum"]
+    if "sum" in vlobs_size[0] and vlobs_size[0]["sum"] is not None:
+        RealmStats.vlobs_size = vlobs_size[0]["sum"]
 
-    for block in blocks:
-        if "size" in block:
-            RealmStats.blocks_size += block["size"]
-    for vlob in vlobs:
-        if "size" in vlob:
-            RealmStats.vlobs_size += vlob["size"]
     return RealmStats
 
 
