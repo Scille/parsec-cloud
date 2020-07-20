@@ -125,6 +125,17 @@ def GreetUserTestBed(
             self.greet_user_widget = greet_user_widget
             self.greet_user_information_widget = greet_user_information_widget
 
+            self.assert_initial_state()  # Sanity check
+
+        async def assert_initial_state(self):
+            assert self.greet_user_widget.isVisible()
+            assert self.greet_user_information_widget.isVisible()
+            assert self.greet_user_information_widget.button_start.isEnabled()
+            if self.greet_user_code_exchange_widget:
+                assert not self.greet_user_code_exchange_widget.isVisible()
+            if self.greet_user_widget:
+                assert not self.greet_user_widget.isVisible()
+
         async def step_1_start_greet(self):
             gui_w = self.greet_user_information_widget
 
@@ -183,7 +194,7 @@ def GreetUserTestBed(
         async def step_4_exchange_claimer_sas(self):
             guce_w = self.greet_user_code_exchange_widget
 
-            # Pretent we have click on the right choice
+            # Pretent we have clicked on the right choice
             await aqtbot.run(guce_w.code_input_widget.good_code_clicked.emit)
 
             self.claimer_in_progress_ctx = await self.claimer_in_progress_ctx.do_wait_peer_trust()
@@ -274,6 +285,7 @@ async def test_greet_user(GreetUserTestBed):
     [
         "step_1_start_greet",
         "step_2_start_claimer",
+        "step_3_exchange_greeter_sas",
         "step_4_exchange_claimer_sas",
         "step_5_provide_claim_info",
         "step_6_validate_claim_info",
@@ -289,7 +301,7 @@ async def test_greet_user_offline(
             assert autoclose_dialog.dialogs == [
                 ("Error", "Internal error. Please restart the process.")
             ]
-            assert not self.greet_user_widget.isVisible()
+            self.assert_initial_state()
 
         async def offline_step_1_start_greet(self):
             gui_w = self.greet_user_information_widget
@@ -306,7 +318,11 @@ async def test_greet_user_offline(
 
             return None
 
-        # Step 3 doesn't currently depend on backend connection
+        async def offline_step_3_exchange_greeter_sas(self):
+            with running_backend.offline():
+                await aqtbot.wait_until(self._greet_aborted)
+
+            return None
 
         async def offline_step_4_exchange_claimer_sas(self):
             guce_w = self.greet_user_code_exchange_widget
@@ -362,7 +378,11 @@ async def test_greet_user_reset_by_peer(aqtbot, GreetUserTestBed, autoclose_dial
 
         # Step 1&2 are before peer wait, so reset is meaningless
 
-        # Step 3 doesn't currently depend on backend connection
+        async def reset_step_3_exchange_greeter_sas(self):
+            async with self._reset_claimer():
+                await aqtbot.wait_until(self._greet_restart)
+
+            return None
 
         async def reset_step_4_exchange_claimer_sas(self):
             guce_w = self.greet_user_code_exchange_widget
@@ -425,12 +445,12 @@ async def test_greet_user_invitation_cancelled(
 
         def _greet_restart(self):
             assert autoclose_dialog.dialogs == [
-                ("Error", "Internal error. Please restart the process.")
+                ("Error", "An error occured while creating the user. Please restart the process.")
             ]
             assert self.greet_user_widget.isVisible()
             assert self.greet_user_information_widget.isVisible()
 
-        async def reset_step_1_start_greet(self):
+        async def cancelled_step_1_start_greet(self):
             gui_w = self.greet_user_information_widget
 
             await self._cancel_invitation()
@@ -440,16 +460,21 @@ async def test_greet_user_invitation_cancelled(
 
             return None
 
-        async def reset_step_2_start_claimer(self):
+        async def cancelled_step_2_start_claimer(self):
             await self._cancel_invitation()
 
             await aqtbot.wait_until(self._greet_restart)
 
             return None
 
-        # Step 3 doesn't currently depend on backend connection
+        async def cancelled_step_3_exchange_greeter_sas(self):
+            await self._cancel_invitation()
 
-        async def reset_step_4_exchange_claimer_sas(self):
+            await aqtbot.wait_until(self._greet_restart)
+
+            return None
+
+        async def cancelled_step_4_exchange_claimer_sas(self):
             guce_w = self.greet_user_code_exchange_widget
 
             await self._cancel_invitation()
@@ -459,14 +484,14 @@ async def test_greet_user_invitation_cancelled(
 
             return None
 
-        async def reset_step_5_provide_claim_info(self):
+        async def cancelled_step_5_provide_claim_info(self):
             await self._cancel_invitation()
 
             await aqtbot.wait_until(self._greet_restart)
 
             return None
 
-        async def reset_step_6_validate_claim_info(self):
+        async def cancelled_step_6_validate_claim_info(self):
             guci_w = self.greet_user_check_informations_widget
             await self.claimer_claim_task.cancel_and_join()
             await self._cancel_invitation()
@@ -476,6 +501,8 @@ async def test_greet_user_invitation_cancelled(
 
             return None
 
-    setattr(CancelledTestBed, cancelled_step, getattr(CancelledTestBed, f"reset_{cancelled_step}"))
+    setattr(
+        CancelledTestBed, cancelled_step, getattr(CancelledTestBed, f"cancelled_{cancelled_step}")
+    )
 
     await CancelledTestBed().run()

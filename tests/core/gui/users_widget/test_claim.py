@@ -2,10 +2,12 @@
 
 import pytest
 import trio
+from pendulum import now as pendulum_now
 from PyQt5 import QtCore
+from async_generator import asynccontextmanager
 
 from parsec.api.data import UserProfile
-from parsec.api.protocol import InvitationType, HumanHandle
+from parsec.api.protocol import InvitationType, HumanHandle, InvitationDeletedReason
 from parsec.core.types import BackendInvitationAddr
 from parsec.core.invite import UserGreetInitialCtx
 from parsec.core.gui.claim_user_widget import (
@@ -15,8 +17,6 @@ from parsec.core.gui.claim_user_widget import (
     ClaimUserInstructionsWidget,
     ClaimUserWidget,
 )
-
-from tests.common import customize_fixtures
 
 
 @pytest.fixture
@@ -129,6 +129,16 @@ def ClaimUserTestBed(
             self.invitation_addr = invitation_addr
             self.claim_user_widget = cu_w
             self.claim_user_instructions_widget = cui_w
+
+            self.assert_initial_state()  # Sanity check
+
+        def assert_initial_state(self):
+            assert self.claim_user_widget.isVisible()
+            assert self.claim_user_instructions_widget.isVisible()
+            assert self.claim_user_instructions_widget.button_start.isEnabled()
+            if self.claimer_user_code_exchange_widget:
+                assert not self.claimer_user_code_exchange_widget.isVisible()
+                assert not self.greet_user_check_informations_widget.isVisible()
 
         async def step_1_start_claim(self):
             cui_w = self.claim_user_instructions_widget
@@ -292,6 +302,261 @@ def ClaimUserTestBed(
 
 @pytest.mark.gui
 @pytest.mark.trio
-@customize_fixtures(logged_gui_as_admin=True)
 async def test_claim_user(ClaimUserTestBed):
     await ClaimUserTestBed().run()
+
+
+@pytest.mark.gui
+@pytest.mark.trio
+@pytest.mark.parametrize(
+    "offline_step",
+    [
+        "step_1_start_claim",
+        "step_2_start_greeter",
+        "step_3_exchange_greeter_sas",
+        "step_4_exchange_claimer_sas",
+        "step_5_provide_claim_info",
+        "step_6_validate_claim_info",
+    ],
+)
+async def test_claim_user_offline(
+    aqtbot, ClaimUserTestBed, running_backend, autoclose_dialog, offline_step
+):
+    class OfflineTestBed(ClaimUserTestBed):
+        def _claim_aborted(self):
+            # TODO: error message should be improved...
+            assert autoclose_dialog.dialogs == [
+                ("Error", "Error while waiting for the other user. Please restart the process.")
+            ]
+            self.assert_initial_state()
+
+        async def offline_step_1_start_claim(self):
+            cui_w = self.claim_user_instructions_widget
+
+            with running_backend.offline():
+                await aqtbot.mouse_click(cui_w.button_start, QtCore.Qt.LeftButton)
+                await aqtbot.wait_until(self._claim_aborted)
+
+            return None
+
+        async def offline_step_2_start_greeter(self):
+            with running_backend.offline():
+                await aqtbot.wait_until(self._claim_aborted)
+
+            return None
+
+        async def offline_step_3_exchange_greeter_sas(self):
+            cuce_w = self.claimer_user_code_exchange_widget
+
+            with running_backend.offline():
+                await aqtbot.run(cuce_w.code_input_widget.good_code_clicked.emit)
+                await aqtbot.wait_until(self._claim_aborted)
+
+            return None
+
+        async def offline_step_4_exchange_claimer_sas(self):
+            with running_backend.offline():
+                await aqtbot.wait_until(self._claim_aborted)
+
+            return None
+
+        async def offline_step_5_provide_claim_info(self):
+            cupi_w = self.greet_user_provide_info_widget
+            human_email = self.requested_human_handle.email
+            human_label = self.requested_human_handle.label
+            device_label = self.requested_device_label
+
+            with running_backend.offline():
+                await aqtbot.key_clicks(cupi_w.line_edit_user_email, human_email)
+                await aqtbot.key_clicks(cupi_w.line_edit_user_full_name, human_label)
+                await aqtbot.run(cupi_w.line_edit_device.clear)
+                await aqtbot.key_clicks(cupi_w.line_edit_device, device_label)
+                await aqtbot.mouse_click(cupi_w.button_ok, QtCore.Qt.LeftButton)
+
+                await aqtbot.wait_until(self._claim_aborted)
+
+            return None
+
+        async def offline_step_6_validate_claim_info(self):
+            with running_backend.offline():
+                await aqtbot.wait_until(self._claim_aborted)
+
+            return None
+
+        # Step 7 doesn't depend on backend connection
+
+    setattr(OfflineTestBed, offline_step, getattr(OfflineTestBed, f"offline_{offline_step}"))
+
+    await OfflineTestBed().run()
+
+
+@pytest.mark.gui
+@pytest.mark.trio
+@pytest.mark.parametrize(
+    "reset_step",
+    [
+        "step_3_exchange_greeter_sas",
+        "step_4_exchange_claimer_sas",
+        "step_5_provide_claim_info",
+        "step_6_validate_claim_info",
+    ],
+)
+async def test_claim_user_reset_by_peer(
+    aqtbot, ClaimUserTestBed, running_backend, autoclose_dialog, reset_step
+):
+    class ResetTestBed(ClaimUserTestBed):
+        @asynccontextmanager
+        async def _reset_greeter(self):
+            async with trio.open_nursery() as nursery:
+                nursery.start_soon(self.greeter_initial_ctx.do_wait_peer)
+                yield
+                nursery.cancel_scope.cancel()
+
+        def _claim_restart(self):
+            assert autoclose_dialog.dialogs == [
+                ("Error", "Internal error. Please restart the process.")
+            ]
+            self.assert_initial_state()
+
+        # Step 1&2 are before peer wait, so reset is meaningless
+
+        async def reset_step_3_exchange_greeter_sas(self):
+            cuce_w = self.claimer_user_code_exchange_widget
+
+            async with self._reset_greeter():
+                await aqtbot.run(cuce_w.code_input_widget.good_code_clicked.emit)
+                await aqtbot.wait_until(self._claim_restart)
+
+            return None
+
+        async def reset_step_4_exchange_claimer_sas(self):
+            async with self._reset_greeter():
+                await aqtbot.wait_until(self._claim_restart)
+
+            return None
+
+        async def reset_step_5_provide_claim_info(self):
+            cupi_w = self.greet_user_provide_info_widget
+            human_email = self.requested_human_handle.email
+            human_label = self.requested_human_handle.label
+            device_label = self.requested_device_label
+
+            async with self._reset_greeter():
+                await aqtbot.key_clicks(cupi_w.line_edit_user_email, human_email)
+                await aqtbot.key_clicks(cupi_w.line_edit_user_full_name, human_label)
+                await aqtbot.run(cupi_w.line_edit_device.clear)
+                await aqtbot.key_clicks(cupi_w.line_edit_device, device_label)
+                await aqtbot.mouse_click(cupi_w.button_ok, QtCore.Qt.LeftButton)
+                await aqtbot.wait_until(self._claim_restart)
+
+            return None
+
+        async def reset_step_6_validate_claim_info(self):
+            async with self._reset_greeter():
+                await aqtbot.wait_until(self._claim_restart)
+
+            return None
+
+        # Step 7 doesn't depend on backend connection
+
+    setattr(ResetTestBed, reset_step, getattr(ResetTestBed, f"reset_{reset_step}"))
+
+    await ResetTestBed().run()
+
+
+@pytest.mark.gui
+@pytest.mark.trio
+@pytest.mark.parametrize(
+    "cancelled_step",
+    [
+        "step_1_start_claim",
+        "step_2_start_greeter",
+        "step_3_exchange_greeter_sas",
+        "step_4_exchange_claimer_sas",
+        "step_5_provide_claim_info",
+        "step_6_validate_claim_info",
+    ],
+)
+async def test_claim_user_invitation_cancelled(
+    aqtbot, ClaimUserTestBed, running_backend, backend, autoclose_dialog, cancelled_step
+):
+    class CancelledTestBed(ClaimUserTestBed):
+        async def _cancel_invitation(self):
+            await backend.invite.delete(
+                organization_id=self.author.organization_id,
+                greeter=self.author.user_id,
+                token=self.invitation_addr.token,
+                on=pendulum_now(),
+                reason=InvitationDeletedReason.CANCELLED,
+            )
+
+        def _claim_restart(self):
+            assert autoclose_dialog.dialogs == [
+                ("Error", "Error while waiting for the other user. Please restart the process.")
+            ]
+            self.assert_initial_state()
+
+        async def cancelled_step_1_start_claim(self):
+            cui_w = self.claim_user_instructions_widget
+
+            await self._cancel_invitation()
+
+            await aqtbot.mouse_click(cui_w.button_start, QtCore.Qt.LeftButton)
+            await aqtbot.wait_until(self._claim_restart)
+
+            return None
+
+        async def cancelled_step_2_start_greeter(self):
+            await self._cancel_invitation()
+
+            await aqtbot.wait_until(self._claim_restart)
+
+            return None
+
+        async def cancelled_step_3_exchange_greeter_sas(self):
+            cuce_w = self.claimer_user_code_exchange_widget
+            await self._cancel_invitation()
+
+            await aqtbot.run(cuce_w.code_input_widget.good_code_clicked.emit)
+            await aqtbot.wait_until(self._claim_restart)
+
+            return None
+
+        async def cancelled_step_4_exchange_claimer_sas(self):
+            await self._cancel_invitation()
+
+            await aqtbot.wait_until(self._claim_restart)
+
+            return None
+
+        async def cancelled_step_5_provide_claim_info(self):
+            cupi_w = self.greet_user_provide_info_widget
+            human_email = self.requested_human_handle.email
+            human_label = self.requested_human_handle.label
+            device_label = self.requested_device_label
+
+            await self._cancel_invitation()
+
+            await aqtbot.key_clicks(cupi_w.line_edit_user_email, human_email)
+            await aqtbot.key_clicks(cupi_w.line_edit_user_full_name, human_label)
+            await aqtbot.run(cupi_w.line_edit_device.clear)
+            await aqtbot.key_clicks(cupi_w.line_edit_device, device_label)
+            await aqtbot.mouse_click(cupi_w.button_ok, QtCore.Qt.LeftButton)
+            await aqtbot.wait_until(self._claim_restart)
+
+            return None
+
+        async def cancelled_step_6_validate_claim_info(self):
+            await self._cancel_invitation()
+
+            await aqtbot.wait_until(self._claim_restart)
+
+            return None
+
+        # Step 7 doesn't depend on backend connection
+
+    setattr(
+        CancelledTestBed, cancelled_step, getattr(CancelledTestBed, f"cancelled_{cancelled_step}")
+    )
+
+    await CancelledTestBed().run()
