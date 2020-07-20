@@ -2,6 +2,7 @@
 
 import pytest
 import trio
+from tests.common import customize_fixtures
 
 
 @pytest.mark.trio
@@ -26,6 +27,7 @@ async def test_send_http_request_invalid_route(running_backend):
 
 
 @pytest.mark.trio
+@customize_fixtures(backend_has_email=True)
 async def test_send_http_request_to_redirect(running_backend):
     stream = await trio.open_tcp_stream(running_backend.addr.hostname, running_backend.addr.port)
     await stream.send_all(
@@ -33,7 +35,8 @@ async def test_send_http_request_to_redirect(running_backend):
     )
     rep = await stream.receive_some()
     rep = rep.decode("utf-8")
-    assert str(running_backend.addr) in rep
+    test = str(running_backend.addr).split("?")
+    assert test[0] in rep
     assert "HTTP/1.1 302" in rep
 
 

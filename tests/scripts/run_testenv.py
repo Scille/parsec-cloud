@@ -128,7 +128,7 @@ async def restart_local_backend(administration_token, backend_port):
     pattern = f"parsec.* backend.* run.* -P {backend_port}"
     command = (
         f"{sys.executable} -Wignore -m parsec.cli backend run -b MOCKED --db MOCKED "
-        f"-P {backend_port} --administration-token {administration_token}"
+        f"-P {backend_port} --administration-token {administration_token} --backend-addr parsec://localhost:{backend_port}?no_ssl=true"
     )
 
     # Trio does not support subprocess in windows yet
