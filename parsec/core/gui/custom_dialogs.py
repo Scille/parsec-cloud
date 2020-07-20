@@ -57,7 +57,7 @@ class GreyedDialog(QDialog, Ui_GreyedDialog):
         main_win = ParsecApp.get_main_window()
         if width:
             if width < main_win.size().width():
-                spacing = (main_win.size().width() - width) / 2
+                spacing = int((main_win.size().width() - width) / 2)
                 self._get_spacer_right().changeSize(
                     spacing, 0, QSizePolicy.Preferred, QSizePolicy.Preferred
                 )
