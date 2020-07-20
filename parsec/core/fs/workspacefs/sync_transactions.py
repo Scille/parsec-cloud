@@ -23,7 +23,7 @@ from parsec.core.fs.exceptions import (
     FSLocalMissError,
 )
 
-from parsec.core.fs.utils import is_file_manifest, is_workspace_manifest
+from parsec.core.fs.utils import is_file_manifest, is_workspace_manifest, is_folderish_manifest
 
 __all__ = "SyncTransactions"
 
@@ -137,10 +137,13 @@ def merge_folder_children(
 
 def merge_manifests(
     local_author: DeviceID,
+    pattern_filter: Callable[[str], bool],
     local_manifest: LocalManifest,
     remote_manifest: Optional[RemoteManifest] = None,
-    pattern_filter: Optional[Callable[[str], bool]] = None,
 ):
+    # Start by re-applying filter (idempotent)
+    if is_folderish_manifest(local_manifest):
+        local_manifest = local_manifest.apply_filter(pattern_filter)
 
     # The remote hasn't changed
     if remote_manifest is None or remote_manifest.version <= local_manifest.base_version:
@@ -150,18 +153,18 @@ def merge_manifests(
     assert remote_manifest is not None
     remote_version = remote_manifest.version
     local_version = local_manifest.base_version
-    local_from_remote = LocalManifest.from_remote(remote_manifest).filter_names(pattern_filter)
+    local_from_remote = LocalManifest.from_remote(remote_manifest, pattern_filter, local_manifest)
 
     # Only the remote has changed
     if not local_manifest.need_sync:
-        return local_from_remote.restore_confined_entries(local_manifest)
+        return local_from_remote
 
     # Both the remote and the local have changed
     assert remote_version > local_version and local_manifest.need_sync
 
     # All the local changes have been successfully uploaded
     if local_manifest.match_remote(remote_manifest):
-        return local_from_remote.restore_confined_entries(local_manifest)
+        return local_from_remote
 
     # The remote changes are ours, simply acknowledge them and keep our local changes
     if remote_manifest.author == local_author:
@@ -174,22 +177,15 @@ def merge_manifests(
     if is_file_manifest(local_manifest):
         raise FSFileConflictError(local_manifest, remote_manifest)
 
-    # Filter the base
-    filtered_base_children = {
-        name: entry_id
-        for name, entry_id in local_manifest.base.children.items()
-        if entry_id not in local_manifest.filtered_entries
-    }
-
     # Solve the folder conflict
     new_children = merge_folder_children(
-        filtered_base_children,
+        local_manifest.base.children,
         local_manifest.children,
         local_from_remote.children,
         remote_manifest.author,
     )
 
-    # Restore confined entries
+    # Mark as updated
     return local_from_remote.evolve_and_mark_updated(children=new_children)
 
 
@@ -247,12 +243,8 @@ class SyncTransactions(EntryTransactions):
                     current_manifest = parent_manifest
                     continue
 
-                # The entry is (maybe indirectly) confined
-                if local_manifest.need_sync:
-                    new_local_manifest = local_manifest.evolve(need_sync=False)
-                    await self.local_storage.set_manifest(entry_id, new_local_manifest)
                 # Send synced event
-                self._send_event(CoreEvent.FS_ENTRY_CONFINED, id=entry_id)
+                self._send_event(CoreEvent.FS_ENTRY_CONFINED, id=entry_id, cause=parent_manifest.id)
                 return None
 
             # Sync cannot be performed yet
@@ -271,7 +263,7 @@ class SyncTransactions(EntryTransactions):
 
             # Merge manifests
             new_local_manifest = merge_manifests(
-                self.local_author, local_manifest, remote_manifest, self.pattern_filter
+                self.local_author, self.pattern_filter, local_manifest, remote_manifest
             )
 
             # Extract authors
@@ -360,7 +352,7 @@ class SyncTransactions(EntryTransactions):
                     size=current_manifest.size, blocks=new_blocks
                 )
                 new_parent_manifest = parent_manifest.evolve_children_and_mark_updated(
-                    {new_name: new_manifest.id}
+                    {new_name: new_manifest.id}, self.pattern_filter
                 )
                 other_manifest = LocalManifest.from_remote(remote_manifest)
 

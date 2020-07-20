@@ -2,7 +2,7 @@
 
 import attr
 import functools
-from typing import Optional, Tuple, FrozenSet, Callable
+from typing import Optional, Tuple, FrozenSet, Callable, TypeVar
 from pendulum import Pendulum, now as pendulum_now
 
 from parsec.types import UUID4, FrozenDict
@@ -240,13 +240,20 @@ class LocalManifest(BaseLocalData):
     # Remote methods
 
     @classmethod
-    def from_remote(cls, remote: RemoteManifest) -> "LocalManifest":
+    def from_remote(
+        cls,
+        remote: RemoteManifest,
+        pattern_filter: Optional[Callable[[str], bool]] = None,
+        local_manifest: Optional["LocalManifest"] = None,
+    ) -> "LocalManifest":
         if isinstance(remote, RemoteFileManifest):
             return LocalFileManifest.from_remote(remote)
         elif isinstance(remote, RemoteFolderManifest):
-            return LocalFolderManifest.from_remote(remote)
+            assert pattern_filter is not None
+            return LocalFolderManifest.from_remote(remote, pattern_filter, local_manifest)
         elif isinstance(remote, RemoteWorkspaceManifest):
-            return LocalWorkspaceManifest.from_remote(remote)
+            assert pattern_filter is not None
+            return LocalWorkspaceManifest.from_remote(remote, pattern_filter, local_manifest)
         elif isinstance(remote, RemoteUserManifest):
             return LocalUserManifest.from_remote(remote)
 
@@ -258,22 +265,6 @@ class LocalManifest(BaseLocalData):
             author=remote_manifest.author, timestamp=remote_manifest.timestamp
         )
         return reference.evolve(version=remote_manifest.version) == remote_manifest
-
-    # Filtering methods
-
-    def filter_confined_entries(self) -> "LocalManifest":
-        return self
-
-    def restore_confined_entries(self, other: "LocalManifest") -> "LocalManifest":
-        return self
-
-    def filter_names(
-        self, pattern_filter: Optional[Callable[[str], bool]] = None
-    ) -> "LocalManifest":
-        return self
-
-    def restore_filtered_entries(self) -> "LocalManifest":
-        return self
 
     # Stat method
 
@@ -434,7 +425,114 @@ class LocalFileManifest(LocalManifest):
         return super().match_remote(remote_manifest)
 
 
-class LocalFolderManifest(LocalManifest):
+LocalFolderishManifestTypeVar = TypeVar("LocalManifestTypeVar", bound="LocalFolderishManifestMixin")
+
+
+class LocalFolderishManifestMixin:
+    """Common methods for LocalFolderManifest and LocalWorkspaceManifest"""
+
+    # Evolve methods
+
+    def evolve_children_and_mark_updated(
+        self: LocalFolderishManifestTypeVar, data, pattern_filter: Callable[[str], bool]
+    ) -> LocalFolderishManifestTypeVar:
+        updated = False
+        new_children = dict(self.children)
+        new_confined_entries = set(self.confined_entries)
+        for name, entry_id in data.items():
+            # Remove old entry
+            old_entry_id = new_children.pop(name, None)
+            if old_entry_id in self.confined_entries:
+                new_confined_entries.discard(old_entry_id)
+            else:
+                updated = True
+            # No entry to add
+            if entry_id is None:
+                continue
+            # Add new entry
+            new_children[name] = entry_id
+            if pattern_filter(name):
+                new_confined_entries.add(entry_id)
+            else:
+                updated = True
+
+        new_confined_entries = frozenset(new_confined_entries)
+        if not updated:
+            return self.evolve(children=new_children, confined_entries=new_confined_entries)
+        return self.evolve_and_mark_updated(
+            children=new_children, confined_entries=new_confined_entries
+        )
+
+    # Filtering and confinement helpers
+
+    def _filter_confined_entries(
+        self: LocalFolderishManifestTypeVar
+    ) -> LocalFolderishManifestTypeVar:
+        if not self.confined_entries:
+            return self
+        children = {
+            name: entry_id
+            for name, entry_id in self.children.items()
+            if entry_id not in self.confined_entries
+        }
+        return self.evolve(confined_entries=frozenset(), children=children)
+
+    def _restore_confined_entries(
+        self: LocalFolderishManifestTypeVar,
+        other: LocalFolderishManifestTypeVar,
+        pattern_filter: Callable[[str], bool],
+    ) -> LocalFolderishManifestTypeVar:
+        if not other.confined_entries:
+            return self
+        previously_confined_entries = {
+            name: entry_id
+            for name, entry_id in other.children.items()
+            if entry_id in other.confined_entries
+        }
+        return self.evolve_children_and_mark_updated(previously_confined_entries, pattern_filter)
+
+    def _filter_remote_entries(
+        self: LocalFolderishManifestTypeVar, pattern_filter: Callable[[str], bool]
+    ) -> LocalFolderishManifestTypeVar:
+        filtered_entries = frozenset(
+            {entry_id for name, entry_id in self.children.items() if pattern_filter(name)}
+        )
+        if not filtered_entries:
+            return self
+        children = {
+            name: entry_id
+            for name, entry_id in self.children.items()
+            if entry_id not in filtered_entries
+        }
+        return self.evolve(children=children, filtered_entries=filtered_entries)
+
+    def _restore_filtered_entries(
+        self: LocalFolderishManifestTypeVar
+    ) -> LocalFolderishManifestTypeVar:
+        if not self.filtered_entries:
+            return self
+        children = dict(self.children)
+        for name, entry_id in self.base.children.items():
+            if entry_id in self.filtered_entries:
+                children[name] = entry_id
+        return self.evolve(filtered_entries=frozenset(), children=children)
+
+    # Apply filter
+
+    def apply_filter(
+        self: LocalFolderishManifestTypeVar, pattern_filter: Callable[[str], bool]
+    ) -> LocalFolderishManifestTypeVar:
+        # Filter confined entries
+        result = self._filter_confined_entries()
+        # Restore filtered entries
+        result = result._restore_filtered_entries()
+        # Filter remote entries
+        result = result._filter_remote_entries(pattern_filter)
+        # Restore confined entries
+        return result._restore_confined_entries(self, pattern_filter)
+
+
+class LocalFolderManifest(LocalManifest, LocalFolderishManifestMixin):
     class SCHEMA_CLS(BaseSchema):
         type = fields.EnumCheckedConstant(LocalManifestType.LOCAL_FOLDER_MANIFEST, required=True)
         base = fields.Nested(RemoteFolderManifest.SCHEMA_CLS, required=True)
@@ -481,6 +579,7 @@ class LocalFolderManifest(LocalManifest):
         )
 
     # Properties
+
     def to_stats(self):
         stats = super().to_stats()
         stats["type"] = "folder"
@@ -491,23 +590,17 @@ class LocalFolderManifest(LocalManifest):
     def parent(self):
         return self.base.parent
 
-    # Evolve methods
-
-    def evolve_children_and_mark_updated(self, data) -> "LocalFolderManifest":
-        return self.evolve_and_mark_updated(
-            children={k: v for k, v in {**self.children, **data}.items() if v is not None}
-        )
-
-    def evolve_children(self, data) -> "LocalFolderManifest":
-        return self.evolve(
-            children={k: v for k, v in {**self.children, **data}.items() if v is not None}
-        )
-
     # Remote methods
 
     @classmethod
-    def from_remote(cls, remote: RemoteFolderManifest) -> "LocalFolderManifest":
-        return cls(
+    def from_remote(
+        cls,
+        remote: RemoteFolderManifest,
+        pattern_filter: Callable[[str], bool],
+        local_manifest: Optional["LocalFolderManifest"] = None,
+    ) -> "LocalFolderManifest":
+        # Create local manifest
+        result = cls(
             base=remote,
             need_sync=False,
             updated=remote.updated,
@@ -515,12 +608,19 @@ class LocalFolderManifest(LocalManifest):
             confined_entries=frozenset(),
             filtered_entries=frozenset(),
         )
+        # Filter remote entries
+        result = result._filter_remote_entries(pattern_filter)
+        # Restore confined entries
+        if local_manifest is None:
+            return result
+        return result._restore_confined_entries(local_manifest, pattern_filter)
 
     def to_remote(self, author: DeviceID, timestamp: Pendulum = None) -> RemoteFolderManifest:
-        if self.confined_entries:
-            return self.filter_confined_entries().to_remote(author, timestamp)
-        if self.filtered_entries:
-            return self.restore_filtered_entries().to_remote(author, timestamp)
+        # Filter confined entries
+        processed_manifest = self._filter_confined_entries()
+        # Restore filtered entries
+        processed_manifest = processed_manifest._restore_filtered_entries()
+        # Create remote manifest
         return RemoteFolderManifest(
             author=author,
             timestamp=timestamp or pendulum_now(),
@@ -529,58 +629,11 @@ class LocalFolderManifest(LocalManifest):
             version=self.base_version + 1,
             created=self.created,
             updated=self.updated,
-            children=self.children,
+            children=processed_manifest.children,
         )
 
-    # Filtering methods
 
-    def filter_confined_entries(self) -> "LocalFolderManifest":
-        children = {
-            name: entry_id
-            for name, entry_id in self.children.items()
-            if entry_id not in self.confined_entries
-        }
-        return self.evolve(confined_entries=frozenset(), children=children)
-
-    def restore_confined_entries(self, other: "LocalFolderManifest") -> "LocalFolderManifest":
-        # This method is meant to be used right after `from_remote`
-        assert not self.confined_entries
-        if not other.confined_entries:
-            return self
-        children = dict(self.children)
-        for name, entry_id in other.children.items():
-            if entry_id in other.confined_entries:
-                children[name] = entry_id
-        return self.evolve(children=children, confined_entries=other.confined_entries)
-
-    def filter_names(
-        self, pattern_filter: Optional[Callable[[str], bool]] = None
-    ) -> "LocalFolderManifest":
-        # This method is meant to be used right after `from_remote`
-        assert not self.filtered_entries and not self.confined_entries
-        if pattern_filter is None:
-            return self
-        filtered_entries = frozenset(
-            {entry_id for name, entry_id in self.children.items() if pattern_filter(name)}
-        )
-        if not filtered_entries:
-            return self
-        children = {
-            name: entry_id
-            for name, entry_id in self.children.items()
-            if entry_id not in filtered_entries
-        }
-        return self.evolve(children=children, filtered_entries=filtered_entries)
-
-    def restore_filtered_entries(self) -> "LocalFolderManifest":
-        children = dict(self.children)
-        for name, entry_id in self.base.children.items():
-            if entry_id in self.filtered_entries:
-                children[name] = entry_id
-        return self.evolve(filtered_entries=frozenset(), children=children)
-
-
-class LocalWorkspaceManifest(LocalManifest):
+class LocalWorkspaceManifest(LocalManifest, LocalFolderishManifestMixin):
     class SCHEMA_CLS(BaseSchema):
         type = fields.EnumCheckedConstant(LocalManifestType.LOCAL_WORKSPACE_MANIFEST, required=True)
         base = fields.Nested(RemoteWorkspaceManifest.SCHEMA_CLS, required=True)
@@ -634,21 +687,17 @@ class LocalWorkspaceManifest(LocalManifest):
         stats["children"] = sorted(self.children.keys())
         return stats
 
-    def evolve_children_and_mark_updated(self, data) -> "LocalWorkspaceManifest":
-        return self.evolve_and_mark_updated(
-            children={k: v for k, v in {**self.children, **data}.items() if v is not None}
-        )
-
-    def evolve_children(self, data) -> "LocalWorkspaceManifest":
-        return self.evolve(
-            children={k: v for k, v in {**self.children, **data}.items() if v is not None}
-        )
-
     # Remote methods
 
     @classmethod
-    def from_remote(cls, remote: RemoteFolderManifest) -> "LocalWorkspaceManifest":
-        return cls(
+    def from_remote(
+        cls,
+        remote: RemoteFolderManifest,
+        pattern_filter: Callable[[str], bool],
+        local_manifest: Optional["LocalWorkspaceManifest"] = None,
+    ) -> "LocalWorkspaceManifest":
+        # Create local manifest
+        result = cls(
             base=remote,
             need_sync=False,
             updated=remote.updated,
@@ -656,12 +705,19 @@ class LocalWorkspaceManifest(LocalManifest):
             confined_entries=frozenset(),
             filtered_entries=frozenset(),
         )
+        # Filter remote entries
+        result = result._filter_remote_entries(pattern_filter)
+        # Restore confined entries
+        if local_manifest is None:
+            return result
+        return result._restore_confined_entries(local_manifest, pattern_filter)
 
     def to_remote(self, author: DeviceID, timestamp: Pendulum = None) -> RemoteWorkspaceManifest:
-        if self.confined_entries:
-            return self.filter_confined_entries().to_remote(author, timestamp)
-        if self.filtered_entries:
-            return self.restore_filtered_entries().to_remote(author, timestamp)
+        # Filter confined entries
+        processed_manifest = self._filter_confined_entries()
+        # Restore filtered entries
+        processed_manifest = processed_manifest._restore_filtered_entries()
+        # Create remote manifest
         return RemoteWorkspaceManifest(
             author=author,
             timestamp=timestamp or pendulum_now(),
@@ -669,55 +725,8 @@ class LocalWorkspaceManifest(LocalManifest):
             version=self.base_version + 1,
             created=self.created,
             updated=self.updated,
-            children=self.children,
+            children=processed_manifest.children,
         )
-
-    # Filtering methods
-
-    def filter_confined_entries(self) -> "LocalWorkspaceManifest":
-        children = {
-            name: entry_id
-            for name, entry_id in self.children.items()
-            if entry_id not in self.confined_entries
-        }
-        return self.evolve(confined_entries=frozenset(), children=children)
-
-    def restore_confined_entries(self, other: "LocalWorkspaceManifest") -> "LocalWorkspaceManifest":
-        # This method is meant to be used right after `from_remote`
-        assert not self.confined_entries
-        if not other.confined_entries:
-            return self
-        children = dict(self.children)
-        for name, entry_id in other.children.items():
-            if entry_id in other.confined_entries:
-                children[name] = entry_id
-        return self.evolve(children=children, confined_entries=other.confined_entries)
-
-    def filter_names(
-        self, pattern_filter: Optional[Callable[[str], bool]] = None
-    ) -> "LocalWorkspaceManifest":
-        # This method is meant to be used right after `from_remote`
-        assert not self.filtered_entries and not self.confined_entries
-        if pattern_filter is None:
-            return self
-        filtered_entries = frozenset(
-            {entry_id for name, entry_id in self.children.items() if pattern_filter(name)}
-        )
-        if not filtered_entries:
-            return self
-        children = {
-            name: entry_id
-            for name, entry_id in self.children.items()
-            if entry_id not in filtered_entries
-        }
-        return self.evolve(children=children, filtered_entries=filtered_entries)
-
-    def restore_filtered_entries(self) -> "LocalWorkspaceManifest":
-        children = dict(self.children)
-        for name, entry_id in self.base.children.items():
-            if entry_id in self.filtered_entries:
-                children[name] = entry_id
-        return self.evolve(filtered_entries=frozenset(), children=children)
 
 
 class LocalUserManifest(LocalManifest):
