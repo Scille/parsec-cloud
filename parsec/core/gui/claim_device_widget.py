@@ -16,7 +16,7 @@ from parsec.core.backend_connection import (
     BackendNotAvailable,
 )
 from parsec.core.gui import validators
-from parsec.core.gui.trio_thread import JobResultError, ThreadSafeQtSignal
+from parsec.core.gui.trio_thread import JobResultError, ThreadSafeQtSignal, QtToTrioJob
 from parsec.core.gui.desktop import get_default_device
 from parsec.core.gui.custom_dialogs import show_error, GreyedDialog, show_info
 from parsec.core.gui.lang import translate as _
@@ -165,17 +165,17 @@ class ClaimDeviceCodeExchangeWidget(QWidget, Ui_ClaimDeviceCodeExchangeWidget):
     succeeded = pyqtSignal()
     failed = pyqtSignal()
 
-    signify_trust_success = pyqtSignal()
-    signify_trust_error = pyqtSignal()
+    signify_trust_success = pyqtSignal(QtToTrioJob)
+    signify_trust_error = pyqtSignal(QtToTrioJob)
 
-    wait_peer_trust_success = pyqtSignal()
-    wait_peer_trust_error = pyqtSignal()
+    wait_peer_trust_success = pyqtSignal(QtToTrioJob)
+    wait_peer_trust_error = pyqtSignal(QtToTrioJob)
 
-    get_greeter_sas_success = pyqtSignal()
-    get_greeter_sas_error = pyqtSignal()
+    get_greeter_sas_success = pyqtSignal(QtToTrioJob)
+    get_greeter_sas_error = pyqtSignal(QtToTrioJob)
 
-    get_claimer_sas_success = pyqtSignal()
-    get_claimer_sas_error = pyqtSignal()
+    get_claimer_sas_success = pyqtSignal(QtToTrioJob)
+    get_claimer_sas_error = pyqtSignal(QtToTrioJob)
 
     def __init__(self, jobs_ctx, claimer):
         super().__init__()
@@ -209,16 +209,16 @@ class ClaimDeviceCodeExchangeWidget(QWidget, Ui_ClaimDeviceCodeExchangeWidget):
         self.wait_peer_trust_error.connect(self._on_wait_peer_trust_error)
 
         self.get_greeter_sas_job = self.jobs_ctx.submit_job(
-            ThreadSafeQtSignal(self, "get_greeter_sas_success"),
-            ThreadSafeQtSignal(self, "get_greeter_sas_error"),
+            ThreadSafeQtSignal(self, "get_greeter_sas_success", QtToTrioJob),
+            ThreadSafeQtSignal(self, "get_greeter_sas_error", QtToTrioJob),
             self.claimer.get_greeter_sas,
         )
 
     def _on_good_greeter_code_clicked(self):
         self.widget_greeter_code.setDisabled(True)
         self.signify_trust_job = self.jobs_ctx.submit_job(
-            ThreadSafeQtSignal(self, "signify_trust_success"),
-            ThreadSafeQtSignal(self, "signify_trust_error"),
+            ThreadSafeQtSignal(self, "signify_trust_success", QtToTrioJob),
+            ThreadSafeQtSignal(self, "signify_trust_error", QtToTrioJob),
             self.claimer.signify_trust,
         )
 
@@ -230,7 +230,9 @@ class ClaimDeviceCodeExchangeWidget(QWidget, Ui_ClaimDeviceCodeExchangeWidget):
         show_info(self, _("TEXT_CLAIM_DEVICE_NONE_CODE_CLICKED"))
         self.failed.emit()
 
-    def _on_get_greeter_sas_success(self):
+    def _on_get_greeter_sas_success(self, job):
+        if self.get_greeter_sas_job is not job:
+            return
         assert self.get_greeter_sas_job
         assert self.get_greeter_sas_job.is_finished()
         assert self.get_greeter_sas_job.status == "ok"
@@ -238,7 +240,9 @@ class ClaimDeviceCodeExchangeWidget(QWidget, Ui_ClaimDeviceCodeExchangeWidget):
         self.code_input_widget.set_choices(choices, greeter_sas)
         self.get_greeter_sas_job = None
 
-    def _on_get_greeter_sas_error(self):
+    def _on_get_greeter_sas_error(self, job):
+        if self.get_greeter_sas_job is not job:
+            return
         assert self.get_greeter_sas_job
         assert self.get_greeter_sas_job.is_finished()
         assert self.get_greeter_sas_job.status != "ok"
@@ -253,7 +257,9 @@ class ClaimDeviceCodeExchangeWidget(QWidget, Ui_ClaimDeviceCodeExchangeWidget):
         self.get_greeter_sas_job = None
         self.failed.emit()
 
-    def _on_get_claimer_sas_success(self):
+    def _on_get_claimer_sas_success(self, job):
+        if self.get_claimer_sas_job is not job:
+            return
         assert self.get_claimer_sas_job
         assert self.get_claimer_sas_job.is_finished()
         assert self.get_claimer_sas_job.status == "ok"
@@ -263,30 +269,36 @@ class ClaimDeviceCodeExchangeWidget(QWidget, Ui_ClaimDeviceCodeExchangeWidget):
         self.widget_claimer_code.setVisible(True)
         self.line_edit_claimer_code.setText(str(claimer_sas))
         self.wait_peer_trust_job = self.jobs_ctx.submit_job(
-            ThreadSafeQtSignal(self, "wait_peer_trust_success"),
-            ThreadSafeQtSignal(self, "wait_peer_trust_error"),
+            ThreadSafeQtSignal(self, "wait_peer_trust_success", QtToTrioJob),
+            ThreadSafeQtSignal(self, "wait_peer_trust_error", QtToTrioJob),
             self.claimer.wait_peer_trust,
         )
 
-    def _on_get_claimer_sas_error(self):
+    def _on_get_claimer_sas_error(self, job):
+        if self.get_claimer_sas_job is not job:
+            return
         assert self.get_claimer_sas_job
         assert self.get_claimer_sas_job.is_finished()
         assert self.get_claimer_sas_job.status != "ok"
         self.get_claimer_sas_job = None
         self.failed.emit()
 
-    def _on_signify_trust_success(self):
+    def _on_signify_trust_success(self, job):
+        if self.signify_trust_job is not job:
+            return
         assert self.signify_trust_job
         assert self.signify_trust_job.is_finished()
         assert self.signify_trust_job.status == "ok"
         self.signify_trust_job = None
         self.get_claimer_sas_job = self.jobs_ctx.submit_job(
-            ThreadSafeQtSignal(self, "get_claimer_sas_success"),
-            ThreadSafeQtSignal(self, "get_claimer_sas_error"),
+            ThreadSafeQtSignal(self, "get_claimer_sas_success", QtToTrioJob),
+            ThreadSafeQtSignal(self, "get_claimer_sas_error", QtToTrioJob),
             self.claimer.get_claimer_sas,
         )
 
-    def _on_signify_trust_error(self):
+    def _on_signify_trust_error(self, job):
+        if self.signify_trust_job is not job:
+            return
         assert self.signify_trust_job
         assert self.signify_trust_job.is_finished()
         assert self.signify_trust_job.status != "ok"
@@ -301,14 +313,18 @@ class ClaimDeviceCodeExchangeWidget(QWidget, Ui_ClaimDeviceCodeExchangeWidget):
         self.signify_trust_job = None
         self.failed.emit()
 
-    def _on_wait_peer_trust_success(self):
+    def _on_wait_peer_trust_success(self, job):
+        if self.wait_peer_trust_job is not job:
+            return
         assert self.wait_peer_trust_job
         assert self.wait_peer_trust_job.is_finished()
         assert self.wait_peer_trust_job.status == "ok"
         self.wait_peer_trust_job = None
         self.succeeded.emit()
 
-    def _on_wait_peer_trust_error(self):
+    def _on_wait_peer_trust_error(self, job):
+        if self.wait_peer_trust_job is not job:
+            return
         assert self.wait_peer_trust_job
         assert self.wait_peer_trust_job.is_finished()
         assert self.wait_peer_trust_job.status != "ok"
@@ -335,8 +351,8 @@ class ClaimDeviceProvideInfoWidget(QWidget, Ui_ClaimDeviceProvideInfoWidget):
     succeeded = pyqtSignal(LocalDevice, str)
     failed = pyqtSignal()
 
-    claim_success = pyqtSignal()
-    claim_error = pyqtSignal()
+    claim_success = pyqtSignal(QtToTrioJob)
+    claim_error = pyqtSignal(QtToTrioJob)
 
     def __init__(self, jobs_ctx, claimer, device_email):
         super().__init__()
@@ -375,13 +391,15 @@ class ClaimDeviceProvideInfoWidget(QWidget, Ui_ClaimDeviceProvideInfoWidget):
         self.widget_info.setDisabled(True)
         self.label_wait.show()
         self.claim_job = self.jobs_ctx.submit_job(
-            ThreadSafeQtSignal(self, "claim_success"),
-            ThreadSafeQtSignal(self, "claim_error"),
+            ThreadSafeQtSignal(self, "claim_success", QtToTrioJob),
+            ThreadSafeQtSignal(self, "claim_error", QtToTrioJob),
             self.claimer.claim_device,
             device_label=device_label,
         )
 
-    def _on_claim_success(self):
+    def _on_claim_success(self, job):
+        if self.claim_job is not job:
+            return
         assert self.claim_job
         assert self.claim_job.is_finished()
         assert self.claim_job.status == "ok"
@@ -389,7 +407,9 @@ class ClaimDeviceProvideInfoWidget(QWidget, Ui_ClaimDeviceProvideInfoWidget):
         self.claim_job = None
         self.succeeded.emit(new_device, self.line_edit_password.text())
 
-    def _on_claim_error(self):
+    def _on_claim_error(self, job):
+        if self.claim_job is not job:
+            return
         assert self.claim_job
         assert self.claim_job.is_finished()
         assert self.claim_job.status != "ok"
@@ -416,8 +436,8 @@ class ClaimDeviceInstructionsWidget(QWidget, Ui_ClaimDeviceInstructionsWidget):
     succeeded = pyqtSignal()
     failed = pyqtSignal()
 
-    wait_peer_success = pyqtSignal()
-    wait_peer_error = pyqtSignal()
+    wait_peer_success = pyqtSignal(QtToTrioJob)
+    wait_peer_error = pyqtSignal(QtToTrioJob)
 
     def __init__(self, jobs_ctx, claimer):
         super().__init__()
@@ -433,19 +453,23 @@ class ClaimDeviceInstructionsWidget(QWidget, Ui_ClaimDeviceInstructionsWidget):
         self.button_start.setDisabled(True)
         self.button_start.setText(_("TEXT_CLAIM_DEVICE_WAITING"))
         self.wait_peer_job = self.jobs_ctx.submit_job(
-            ThreadSafeQtSignal(self, "wait_peer_success"),
-            ThreadSafeQtSignal(self, "wait_peer_error"),
+            ThreadSafeQtSignal(self, "wait_peer_success", QtToTrioJob),
+            ThreadSafeQtSignal(self, "wait_peer_error", QtToTrioJob),
             self.claimer.wait_peer,
         )
 
-    def _on_wait_peer_success(self):
+    def _on_wait_peer_success(self, job):
+        if self.wait_peer_job is not job:
+            return
         assert self.wait_peer_job
         assert self.wait_peer_job.is_finished()
         assert self.wait_peer_job.status == "ok"
         self.wait_peer_job = None
         self.succeeded.emit()
 
-    def _on_wait_peer_error(self):
+    def _on_wait_peer_error(self, job):
+        if self.wait_peer_job is not job:
+            return
         assert self.wait_peer_job
         assert self.wait_peer_job.is_finished()
         assert self.wait_peer_job.status != "ok"
@@ -467,10 +491,10 @@ class ClaimDeviceInstructionsWidget(QWidget, Ui_ClaimDeviceInstructionsWidget):
 
 
 class ClaimDeviceWidget(QWidget, Ui_ClaimDeviceWidget):
-    claimer_success = pyqtSignal()
-    claimer_error = pyqtSignal()
-    retrieve_info_success = pyqtSignal()
-    retrieve_info_error = pyqtSignal()
+    claimer_success = pyqtSignal(QtToTrioJob)
+    claimer_error = pyqtSignal(QtToTrioJob)
+    retrieve_info_success = pyqtSignal(QtToTrioJob)
+    retrieve_info_error = pyqtSignal(QtToTrioJob)
 
     def __init__(self, jobs_ctx, config, addr):
         super().__init__()
@@ -492,26 +516,30 @@ class ClaimDeviceWidget(QWidget, Ui_ClaimDeviceWidget):
 
     def _run_claimer(self):
         self.claimer_job = self.jobs_ctx.submit_job(
-            ThreadSafeQtSignal(self, "claimer_success"),
-            ThreadSafeQtSignal(self, "claimer_error"),
+            ThreadSafeQtSignal(self, "claimer_success", QtToTrioJob),
+            ThreadSafeQtSignal(self, "claimer_error", QtToTrioJob),
             self.claimer.run,
             addr=self.addr,
             config=self.config,
         )
         self.retrieve_info_job = self.jobs_ctx.submit_job(
-            ThreadSafeQtSignal(self, "retrieve_info_success"),
-            ThreadSafeQtSignal(self, "retrieve_info_error"),
+            ThreadSafeQtSignal(self, "retrieve_info_success", QtToTrioJob),
+            ThreadSafeQtSignal(self, "retrieve_info_error", QtToTrioJob),
             self.claimer.retrieve_info,
         )
 
-    def _on_retrieve_info_success(self):
+    def _on_retrieve_info_success(self, job):
+        if self.retrieve_info_job is not job:
+            return
         assert self.retrieve_info_job
         assert self.retrieve_info_job.is_finished()
         assert self.retrieve_info_job.status == "ok"
         self.retrieve_info_job = None
         self._goto_page1()
 
-    def _on_retrieve_info_error(self):
+    def _on_retrieve_info_error(self, job):
+        if self.retrieve_info_job is not job:
+            return
         assert self.retrieve_info_job
         assert self.retrieve_info_job.is_finished()
         assert self.retrieve_info_job.status != "ok"
@@ -571,13 +599,17 @@ class ClaimDeviceWidget(QWidget, Ui_ClaimDeviceWidget):
         self.status = (device, password)
         self.dialog.accept()
 
-    def _on_claimer_success(self):
+    def _on_claimer_success(self, job):
+        if self.claimer_job is not job:
+            return
         assert self.claimer_job
         assert self.claimer_job.is_finished()
         assert self.claimer_job.status == "ok"
         self.claimer_job = None
 
-    def _on_claimer_error(self):
+    def _on_claimer_error(self, job):
+        if self.claimer_job is not job:
+            return
         assert self.claimer_job
         assert self.claimer_job.is_finished()
         assert self.claimer_job.status != "ok"

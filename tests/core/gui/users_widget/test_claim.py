@@ -326,7 +326,8 @@ async def test_claim_user_offline(
         def _claim_aborted(self):
             # TODO: error message should be improved...
             assert autoclose_dialog.dialogs == [
-                ("Error", "Error while waiting for the other user. Please restart the process.")
+                # ("Error", "Error while waiting for the other user. Please restart the process.")
+                ("Error", "Internal error. Please restart the process.")
             ]
             self.assert_initial_state()
 

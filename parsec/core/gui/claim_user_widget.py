@@ -17,7 +17,7 @@ from parsec.core.backend_connection import (
     BackendNotAvailable,
 )
 from parsec.core.gui import validators
-from parsec.core.gui.trio_thread import JobResultError, ThreadSafeQtSignal
+from parsec.core.gui.trio_thread import JobResultError, ThreadSafeQtSignal, QtToTrioJob
 from parsec.core.gui.desktop import get_default_device
 from parsec.core.gui.custom_dialogs import show_error, GreyedDialog, show_info
 from parsec.core.gui.lang import translate as _
@@ -511,10 +511,10 @@ class ClaimUserInstructionsWidget(QWidget, Ui_ClaimUserInstructionsWidget):
 
 
 class ClaimUserWidget(QWidget, Ui_ClaimUserWidget):
-    claimer_success = pyqtSignal()
-    claimer_error = pyqtSignal()
-    retrieve_info_success = pyqtSignal()
-    retrieve_info_error = pyqtSignal()
+    claimer_success = pyqtSignal(QtToTrioJob)
+    claimer_error = pyqtSignal(QtToTrioJob)
+    retrieve_info_success = pyqtSignal(QtToTrioJob)
+    retrieve_info_error = pyqtSignal(QtToTrioJob)
 
     def __init__(self, jobs_ctx, config, addr):
         super().__init__()
@@ -536,19 +536,21 @@ class ClaimUserWidget(QWidget, Ui_ClaimUserWidget):
 
     def _run_claimer(self):
         self.claimer_job = self.jobs_ctx.submit_job(
-            ThreadSafeQtSignal(self, "claimer_success"),
-            ThreadSafeQtSignal(self, "claimer_error"),
+            ThreadSafeQtSignal(self, "claimer_success", QtToTrioJob),
+            ThreadSafeQtSignal(self, "claimer_error", QtToTrioJob),
             self.claimer.run,
             addr=self.addr,
             config=self.config,
         )
         self.retrieve_info_job = self.jobs_ctx.submit_job(
-            ThreadSafeQtSignal(self, "retrieve_info_success"),
-            ThreadSafeQtSignal(self, "retrieve_info_error"),
+            ThreadSafeQtSignal(self, "retrieve_info_success", QtToTrioJob),
+            ThreadSafeQtSignal(self, "retrieve_info_error", QtToTrioJob),
             self.claimer.retrieve_info,
         )
 
-    def _on_retrieve_info_success(self):
+    def _on_retrieve_info_success(self, job):
+        if self.retrieve_info_job is not job:
+            return
         assert self.retrieve_info_job
         assert self.retrieve_info_job.is_finished()
         assert self.retrieve_info_job.status == "ok"
@@ -556,7 +558,9 @@ class ClaimUserWidget(QWidget, Ui_ClaimUserWidget):
         self.retrieve_info_job = None
         self._goto_page1()
 
-    def _on_retrieve_info_error(self):
+    def _on_retrieve_info_error(self, job):
+        if self.retrieve_info_job is not job:
+            return
         assert self.retrieve_info_job
         assert self.retrieve_info_job.is_finished()
         assert self.retrieve_info_job.status != "ok"
@@ -629,13 +633,17 @@ class ClaimUserWidget(QWidget, Ui_ClaimUserWidget):
         self.status = (device, password)
         self.dialog.accept()
 
-    def _on_claimer_success(self):
+    def _on_claimer_success(self, job):
+        if self.claimer_job is not job:
+            return
         assert self.claimer_job
         assert self.claimer_job.is_finished()
         assert self.claimer_job.status == "ok"
         self.claimer_job = None
 
-    def _on_claimer_error(self):
+    def _on_claimer_error(self, job):
+        if self.claimer_job is not job:
+            return
         assert self.claimer_job
         assert self.claimer_job.is_finished()
         assert self.claimer_job.status != "ok"
