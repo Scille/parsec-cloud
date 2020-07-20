@@ -250,8 +250,8 @@ Webhooks
 
 Allow organization bootstrap without prior creation.
 
-Without this flag, an organization must be created by administration (see
- `parsec core create_organization` command) before bootstrap can occur.
+Without this flag, an organization must be created by administration
+(see ``parsec core create_organization`` command) before bootstrap can occur.
 
 With this flag, the server allows anybody to bootstrap an organanization
 by providing an empty bootstrap token given 1) the organization is not boostrapped yet
@@ -264,7 +264,7 @@ reservation and change the bootstrap token)
 URL to notify 3rd party service that a new organization has been bootstrapped.
 
 Each time an organization is bootstrapped, an HTTP POST will be send to the URL
-with an `application/json` body with the following fields:
+with an ``application/json`` body with the following fields:
 ``organization_id``, ``device_id``, ``device_label`` (can be null), ``human_email`` (can be null), ``human_label`` (can be null).
 
 Example:
