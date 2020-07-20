@@ -3,7 +3,6 @@
 from PyQt5.QtCore import Qt, pyqtSignal
 from PyQt5.QtWidgets import QWidget
 from PyQt5.QtSvg import QSvgWidget
-
 from parsec.core.gui.lang import translate as _, format_datetime
 from parsec.core.gui.custom_dialogs import show_error, GreyedDialog
 from parsec.core.gui.trio_thread import ThreadSafeQtSignal
@@ -12,8 +11,20 @@ from parsec.core.gui.ui.file_history_widget import Ui_FileHistoryWidget
 from parsec.core.gui.ui.file_history_button import Ui_FileHistoryButton
 
 
-async def _do_workspace_version(version_lister, path):
-    return await version_lister.list(path, max_manifest_queries=100)
+async def _do_workspace_version(version_lister, path, core):
+    versions_list, download_limit_reached = await version_lister.list(
+        path, max_manifest_queries=100
+    )
+
+    _cache = {}
+
+    async def get_user_info(user_id):
+        return _cache.setdefault(user_id, await core.get_user_info(user_id))
+
+    return (
+        [(await get_user_info(v.creator.user_id), v) for v in versions_list],
+        download_limit_reached,
+    )
     # TODO : check no exception raised, create tests...
 
 
@@ -47,11 +58,13 @@ class FileHistoryWidget(QWidget, Ui_FileHistoryWidget):
         reload_timestamped_signal,
         update_version_list,
         close_version_list,
+        core,
     ):
         super().__init__()
         self.setupUi(self)
         self.jobs_ctx = jobs_ctx
         self.dialog = None
+        self.core = core
         update_version_list.connect(self.reset_dialog)
         self.get_versions_success.connect(self.on_get_version_success)
         self.get_versions_error.connect(self.on_get_version_error)
@@ -98,6 +111,7 @@ class FileHistoryWidget(QWidget, Ui_FileHistoryWidget):
             _do_workspace_version,
             version_lister=self.version_lister,
             path=self.path,
+            core=self.core,
         )
 
     def add_history_item(self, version, path, creator, size, timestamp, src_path, dst_path):
@@ -118,15 +132,15 @@ class FileHistoryWidget(QWidget, Ui_FileHistoryWidget):
         if download_limit_reached:
             self.button_load_more_entries.setVisible(False)
         self.versions_job = None
-        for v in versions_list:
+        for author, version in versions_list:
             self.add_history_item(
-                version=v.version,
+                version=version.version,
                 path=self.path,
-                creator=v.creator,
-                size=v.size,
-                timestamp=v.early,
-                src_path=v.source,
-                dst_path=v.destination,
+                creator=author.short_user_display,
+                size=version.size,
+                timestamp=version.early,
+                src_path=version.source,
+                dst_path=version.destination,
             )
         self.set_loading_in_progress(False)
 
@@ -149,6 +163,7 @@ class FileHistoryWidget(QWidget, Ui_FileHistoryWidget):
         reload_timestamped_signal,
         update_version_list,
         close_version_list,
+        core,
         parent,
     ):
         w = cls(
@@ -158,6 +173,7 @@ class FileHistoryWidget(QWidget, Ui_FileHistoryWidget):
             reload_timestamped_signal=reload_timestamped_signal,
             update_version_list=update_version_list,
             close_version_list=close_version_list,
+            core=core,
         )
         d = GreyedDialog(
             w, title=_("TEXT_FILE_HISTORY_TITLE_name").format(name=path.name), parent=parent
