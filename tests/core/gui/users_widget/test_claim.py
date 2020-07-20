@@ -45,184 +45,253 @@ def catch_claim_user_widget(widget_catcher_factory):
     )
 
 
-@pytest.mark.gui
-@pytest.mark.trio
-@customize_fixtures(logged_gui_as_admin=True)
-async def test_claim_device(
+@pytest.fixture
+def ClaimUserTestBed(
     aqtbot,
-    gui,
-    running_backend,
-    autoclose_dialog,
     catch_claim_user_widget,
-    invitation_addr,
+    autoclose_dialog,
+    backend,
+    running_backend,
+    gui,
     alice,
     alice_backend_cmds,
 ):
-    password = "P@ssw0rd."
-    device_name = "PC1"
-    human_email = "philip.j.fry@pe.com"
-    human_label = "Philip J. Fry"
+    class _ClaimUserTestBed:
+        def __init__(self):
+            self.requested_human_handle = HumanHandle(email="pfry@pe.com", label="Philip J. Fry")
+            self.requested_device_label = "PC1"
+            self.password = "P@ssw0rd."
+            self.steps_done = []
 
-    await aqtbot.run(gui.add_instance, invitation_addr.to_url())
+            self.author = alice
+            self.cmds = alice_backend_cmds
 
-    # We should have a new tab with the invitation ready to be claimed now
+            # Set during bootstrap
+            self.invitation_addr = None
+            self.claim_user_widget = None
+            self.claim_user_instructions_widget = None
 
-    cu_w = await catch_claim_user_widget()
-    assert isinstance(cu_w, ClaimUserWidget)
-    cui_w = await catch_claim_user_widget()
-    assert isinstance(cui_w, ClaimUserInstructionsWidget)
+            # Set by step 2
+            self.claimer_user_code_exchange_widget = None
 
-    def _register_user_displayed():
-        tab = gui.test_get_tab()
-        assert tab and tab.isVisible()
-        assert cu_w.isVisible()
-        assert cu_w.dialog.label_title.text() == "Register a user"
-        assert cui_w.isVisible()
+            # Set by step 5
+            self.claimer_claim_task = None
+            self.greet_user_check_informations_widget = None
 
-    await aqtbot.wait_until(_register_user_displayed)
+        async def run(self):
+            await self.bootstrap()
+            async with trio.open_nursery() as self.nursery:
+                next_step = "step_1_start_claim"
+                while True:
+                    current_step = next_step
+                    next_step = await getattr(self, current_step)()
+                    self.steps_done.append(current_step)
+                    if next_step is None:
+                        break
+                if self.claimer_claim_task:
+                    await self.claimer_claim_task.cancel_and_join()
 
-    # Now start greeter
+        async def bootstrap(self):
+            claimer_email = self.requested_human_handle.email
 
-    start_greeter = trio.Event()
-    start_greeter_trust = trio.Event()
-    start_greeter_create_device = trio.Event()
+            # Create new invitation
 
-    greeter_sas = None
-    greeter_sas_available = trio.Event()
-    claimer_sas = None
-    claimer_sas_available = trio.Event()
-    greeter_done = trio.Event()
+            invitation = await backend.invite.new_for_user(
+                organization_id=self.author.organization_id,
+                greeter_user_id=self.author.user_id,
+                claimer_email=claimer_email,
+            )
+            invitation_addr = BackendInvitationAddr.build(
+                backend_addr=self.author.organization_addr,
+                organization_id=self.author.organization_id,
+                invitation_type=InvitationType.USER,
+                token=invitation.token,
+            )
 
-    async def _run_greeter():
-        nonlocal greeter_sas
-        nonlocal claimer_sas
-        await start_greeter.wait()
+            # Switch to users claim page
 
-        initial_ctx = UserGreetInitialCtx(cmds=alice_backend_cmds, token=invitation_addr.token)
-        in_progress_ctx = await initial_ctx.do_wait_peer()
-        greeter_sas = in_progress_ctx.greeter_sas
-        greeter_sas_available.set()
+            await aqtbot.run(gui.add_instance, invitation_addr.to_url())
 
-        in_progress_ctx = await in_progress_ctx.do_wait_peer_trust()
-        claimer_sas = in_progress_ctx.claimer_sas
-        claimer_sas_available.set()
+            cu_w = await catch_claim_user_widget()
+            assert isinstance(cu_w, ClaimUserWidget)
+            cui_w = await catch_claim_user_widget()
+            assert isinstance(cui_w, ClaimUserInstructionsWidget)
 
-        await start_greeter_trust.wait()
-        in_progress_ctx = await in_progress_ctx.do_signify_trust()
+            def _register_user_displayed():
+                tab = gui.test_get_tab()
+                assert tab and tab.isVisible()
+                assert cu_w.isVisible()
+                assert cu_w.dialog.label_title.text() == "Register a user"
+                assert cui_w.isVisible()
 
-        await start_greeter_create_device.wait()
+            await aqtbot.wait_until(_register_user_displayed)
 
-        in_progress_ctx = await in_progress_ctx.do_get_claim_requests()
+            self.invitation_addr = invitation_addr
+            self.claim_user_widget = cu_w
+            self.claim_user_instructions_widget = cui_w
 
-        await in_progress_ctx.do_create_new_user(
-            author=alice,
-            device_label=in_progress_ctx.requested_device_label,
-            human_handle=HumanHandle(email=human_email, label=human_label),
-            profile=UserProfile.STANDARD,
-        )
-        greeter_done.set()
+        async def step_1_start_claim(self):
+            cui_w = self.claim_user_instructions_widget
+            await aqtbot.mouse_click(cui_w.button_start, QtCore.Qt.LeftButton)
 
-    async with trio.open_nursery() as nursery:
-        nursery.start_soon(_run_greeter)
+            def _claimer_started():
+                assert not cui_w.button_start.isEnabled()
+                assert cui_w.button_start.text() == "Waiting for the other user"
 
-        # Start the claim
+            await aqtbot.wait_until(_claimer_started)
 
-        await aqtbot.mouse_click(cui_w.button_start, QtCore.Qt.LeftButton)
+            return "step_2_start_greeter"
 
-        def _claimer_started():
-            assert not cui_w.button_start.isEnabled()
-            assert cui_w.button_start.text() == "Waiting for the other user"
+        async def step_2_start_greeter(self):
+            cui_w = self.claim_user_instructions_widget
 
-        await aqtbot.wait_until(_claimer_started)
+            self.greeter_initial_ctx = UserGreetInitialCtx(
+                cmds=self.cmds, token=self.invitation_addr.token
+            )
+            self.greeter_in_progress_ctx = await self.greeter_initial_ctx.do_wait_peer()
 
-        # Greeter also starts, page should switch to greet SAS code selection
+            cuce_w = await catch_claim_user_widget()
+            assert isinstance(cuce_w, ClaimUserCodeExchangeWidget)
 
-        start_greeter.set()
-        await greeter_sas_available.wait()
+            def _greeter_sas_code_choices_displayed():
+                assert not cui_w.isVisible()
+                assert cuce_w.isVisible()
+                assert cuce_w.widget_greeter_code.isVisible()
+                assert cuce_w.code_input_widget.isVisible()
+                assert cuce_w.code_input_widget.code_layout.count() == 4
+                # TODO: better check on codes
 
-        cuce_w = await catch_claim_user_widget()
-        assert isinstance(cuce_w, ClaimUserCodeExchangeWidget)
+            await aqtbot.wait_until(_greeter_sas_code_choices_displayed)
 
-        def _greeter_sas_code_choices_displayed():
-            assert not cui_w.isVisible()
-            assert cuce_w.isVisible()
-            assert cuce_w.widget_greeter_code.isVisible()
-            assert cuce_w.code_input_widget.isVisible()
-            assert cuce_w.code_input_widget.code_layout.count() == 4
+            self.claimer_user_code_exchange_widget = cuce_w
 
-        await aqtbot.wait_until(_greeter_sas_code_choices_displayed)
+            return "step_3_exchange_greeter_sas"
 
-        # Pretend we have choosen the right code, page should switch to claimer SAS code display
+        async def step_3_exchange_greeter_sas(self):
+            cuce_w = self.claimer_user_code_exchange_widget
 
-        await aqtbot.run(cuce_w.code_input_widget.good_code_clicked.emit)
+            # Pretend we have choosen the right code
+            await aqtbot.run(cuce_w.code_input_widget.good_code_clicked.emit)
 
-        def _claimer_sas_code_displayed():
-            assert not cuce_w.widget_greeter_code.isVisible()
-            assert not cuce_w.code_input_widget.isVisible()
-            assert cuce_w.widget_claimer_code.isVisible()
-            assert cuce_w.line_edit_claimer_code.isVisible()
+            self.greeter_in_progress_ctx = await self.greeter_in_progress_ctx.do_wait_peer_trust()
+            claimer_sas = self.greeter_in_progress_ctx.claimer_sas
 
-        await aqtbot.wait_until(_claimer_sas_code_displayed)
+            def _claimer_sas_code_displayed():
+                assert not cuce_w.widget_greeter_code.isVisible()
+                assert not cuce_w.code_input_widget.isVisible()
+                assert cuce_w.widget_claimer_code.isVisible()
+                assert cuce_w.line_edit_claimer_code.isVisible()
+                assert cuce_w.line_edit_claimer_code.text() == claimer_sas
 
-        # Greeter received the right code, page should switch to claim info
+            await aqtbot.wait_until(_claimer_sas_code_displayed)
 
-        start_greeter_trust.set()
+            return "step_4_exchange_claimer_sas"
 
-        cupi_w = await catch_claim_user_widget()
-        assert isinstance(cupi_w, ClaimUserProvideInfoWidget)
+        async def step_4_exchange_claimer_sas(self):
+            cuce_w = self.claimer_user_code_exchange_widget
 
-        def _claim_info_displayed():
-            assert not cuce_w.isVisible()
-            assert cupi_w.isVisible()
-            assert cupi_w.line_edit_device.text()  # Should have a default value
+            self.greeter_in_progress_ctx = await self.greeter_in_progress_ctx.do_signify_trust()
 
-        await aqtbot.wait_until(_claim_info_displayed)
+            cupi_w = await catch_claim_user_widget()
+            assert isinstance(cupi_w, ClaimUserProvideInfoWidget)
 
-        # Fill claim info and submit them to the greeter
+            def _claim_info_displayed():
+                assert not cuce_w.isVisible()
+                assert cupi_w.isVisible()
+                assert cupi_w.line_edit_device.text()  # Should have a default value
 
-        await aqtbot.key_clicks(cupi_w.line_edit_user_email, human_email)
-        await aqtbot.key_clicks(cupi_w.line_edit_user_full_name, human_label)
-        await aqtbot.key_clicks(cupi_w.line_edit_device, device_name)
-        await aqtbot.mouse_click(cupi_w.button_ok, QtCore.Qt.LeftButton)
+            await aqtbot.wait_until(_claim_info_displayed)
 
-        def _claim_info_submitted():
-            assert not cupi_w.button_ok.isEnabled()
-            assert cupi_w.label_wait.isVisible()
+            self.greet_user_provide_info_widget = cupi_w
 
-        await aqtbot.wait_until(_claim_info_submitted)
+            return "step_5_provide_claim_info"
 
-        # Greeter accept our claim info, page should switch to finalization
+        async def step_5_provide_claim_info(self):
+            cupi_w = self.greet_user_provide_info_widget
+            human_email = self.requested_human_handle.email
+            human_label = self.requested_human_handle.label
+            device_label = self.requested_device_label
 
-        start_greeter_create_device.set()
+            await aqtbot.key_clicks(cupi_w.line_edit_user_email, human_email)
+            await aqtbot.key_clicks(cupi_w.line_edit_user_full_name, human_label)
+            await aqtbot.run(cupi_w.line_edit_device.clear)
+            await aqtbot.key_clicks(cupi_w.line_edit_device, device_label)
+            await aqtbot.mouse_click(cupi_w.button_ok, QtCore.Qt.LeftButton)
 
-        # breakpoint()
-        cuf_w = await catch_claim_user_widget()
-        assert isinstance(cuf_w, ClaimUserFinalizeWidget)
+            def _claim_info_submitted():
+                assert not cupi_w.button_ok.isEnabled()
+                assert cupi_w.label_wait.isVisible()
 
-        def _claim_finish_displayed():
-            assert not cupi_w.isVisible()
-            assert cuf_w.isVisible()
+            await aqtbot.wait_until(_claim_info_submitted)
 
-        await aqtbot.wait_until(_claim_finish_displayed)
+            self.greeter_in_progress_ctx = (
+                await self.greeter_in_progress_ctx.do_get_claim_requests()
+            )
+            assert (
+                self.greeter_in_progress_ctx.requested_device_label == self.requested_device_label
+            )
+            assert (
+                self.greeter_in_progress_ctx.requested_human_handle == self.requested_human_handle
+            )
 
-        # Fill password and we're good to go ;-)
+            return "step_6_validate_claim_info"
 
-        await aqtbot.key_clicks(cuf_w.line_edit_password, password)
-        await aqtbot.key_clicks(cuf_w.line_edit_password_check, password)
-        await aqtbot.mouse_click(cuf_w.button_finalize, QtCore.Qt.LeftButton)
+        async def step_6_validate_claim_info(self):
+            cupi_w = self.greet_user_provide_info_widget
 
-        def _claim_done():
-            assert not cu_w.isVisible()
-            assert not cuf_w.isVisible()
-            # Should be logged in with the new device
-            central_widget = gui.test_get_central_widget()
-            assert central_widget and central_widget.isVisible()
+            await self.greeter_in_progress_ctx.do_create_new_user(
+                author=self.author,
+                device_label=self.greeter_in_progress_ctx.requested_device_label,
+                human_handle=self.requested_human_handle,
+                profile=UserProfile.STANDARD,
+            )
 
-        await aqtbot.wait_until(_claim_done)
+            cuf_w = await catch_claim_user_widget()
+            assert isinstance(cuf_w, ClaimUserFinalizeWidget)
 
-        with trio.fail_after(1):
-            await greeter_done.wait()
+            def _claim_finish_displayed():
+                assert not cupi_w.isVisible()
+                assert cuf_w.isVisible()
 
-    assert autoclose_dialog.dialogs == [
-        ("", "The user was successfully created. You will now be logged in.\nWelcome to Parsec!")
-    ]
+            await aqtbot.wait_until(_claim_finish_displayed)
+
+            self.claim_user_finalize = cuf_w
+
+            return "step_7_finalize"
+
+        async def step_7_finalize(self):
+            cu_w = self.claim_user_widget
+            cuf_w = self.claim_user_finalize
+
+            # Fill password and we're good to go ;-)
+
+            await aqtbot.key_clicks(cuf_w.line_edit_password, self.password)
+            await aqtbot.key_clicks(cuf_w.line_edit_password_check, self.password)
+            await aqtbot.mouse_click(cuf_w.button_finalize, QtCore.Qt.LeftButton)
+
+            def _claim_done():
+                assert not cu_w.isVisible()
+                assert not cuf_w.isVisible()
+                # Should be logged in with the new device
+                central_widget = gui.test_get_central_widget()
+                assert central_widget and central_widget.isVisible()
+
+            await aqtbot.wait_until(_claim_done)
+
+            assert autoclose_dialog.dialogs == [
+                (
+                    "",
+                    "The user was successfully created. You will now be logged in.\nWelcome to Parsec!",
+                )
+            ]
+
+            return None  # Test is done \o/
+
+    return _ClaimUserTestBed
+
+
+@pytest.mark.gui
+@pytest.mark.trio
+@customize_fixtures(logged_gui_as_admin=True)
+async def test_claim_user(ClaimUserTestBed):
+    await ClaimUserTestBed().run()
