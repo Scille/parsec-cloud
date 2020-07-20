@@ -127,7 +127,7 @@ def GreetUserTestBed(
 
             self.assert_initial_state()  # Sanity check
 
-        async def assert_initial_state(self):
+        def assert_initial_state(self):
             assert self.greet_user_widget.isVisible()
             assert self.greet_user_information_widget.isVisible()
             assert self.greet_user_information_widget.button_start.isEnabled()
