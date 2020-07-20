@@ -11,6 +11,7 @@ from parsec.api.protocol import (
     block_read_serializer,
     realm_create_serializer,
     realm_status_serializer,
+    realm_stats_serializer,
     realm_get_role_certificates_serializer,
     realm_update_roles_serializer,
     realm_start_reencryption_maintenance_serializer,
@@ -144,6 +145,9 @@ realm_status = CmdSock(
     "realm_status",
     realm_status_serializer,
     parse_args=lambda self, realm_id: {"realm_id": realm_id},
+)
+realm_stats = CmdSock(
+    "realm_stats", realm_stats_serializer, parse_args=lambda self, realm_id: {"realm_id": realm_id}
 )
 realm_get_role_certificates = CmdSock(
     "realm_get_role_certificates",
