@@ -62,8 +62,11 @@ async def _do_create_custom(organization_id, server_url, admin_token):
                 server_url, organization_id, bootstrap_token
             )
     except BackendConnectionError as exc:
+        print(type(exc), exc)
         if "Invalid url format" in str(exc):
             raise JobResultError("invalid-url")
+        elif "Invalid administration token" in str(exc):
+            raise JobResultError("invalid-token")
         else:
             raise JobResultError("offline")
 
@@ -156,6 +159,8 @@ class CreateOrgWidget(QWidget, Ui_CreateOrgWidget):
             errmsg = _("TEXT_ORG_WIZARD_INVALID_BACKEND_ADDR")
         elif status == "offline":
             errmsg = _("TEXT_ORG_WIZARD_OFFLINE")
+        elif status == "invalid-token":
+            errmsg = _("TEXT_ORG_WIZARD_INVALID_ADMIN_TOKEN")
         else:
             errmsg = _("TEXT_ORG_WIZARD_UNKNOWN_FAILURE")
         exc = self.create_custom_job.exc
