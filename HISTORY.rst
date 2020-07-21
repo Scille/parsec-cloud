@@ -5,6 +5,134 @@ History
 .. towncrier release notes start
 
 
+Parsec 1.14.0 (2020-07-21)
+--------------------------
+
+Features
+~~~~~~~~
+
+* Workspaces can now be enabled/disabled from the application. The workspace
+  status is stored in the configuration in order to be restored at the next
+  application startup.  (`#1159 <https://github.com/Scille/parsec-
+  cloud/issues/1159>`__)
+* Updated user list to look more like the device list  (`#1154
+  <https://github.com/Scille/parsec-cloud/issues/1154>`__)
+* Added additional text for the main menu  (`#1150
+  <https://github.com/Scille/parsec-cloud/issues/1150>`__)
+* Added some keyboard shortcuts  (`#1151 <https://github.com/Scille/parsec-
+  cloud/issues/1151>`__)
+* Added a "+" button to add a new tab  (`#1155
+  <https://github.com/Scille/parsec-cloud/issues/1155>`__)
+* Hide an already connected device from the list of available devices  (`#1139
+  <https://github.com/Scille/parsec-cloud/issues/1139>`__)
+* Allows join organization to take a bootstrap org link  (`#1170
+  <https://github.com/Scille/parsec-cloud/issues/1170>`__)
+* Switched app font to Montserrat  (`#1147 <https://github.com/Scille/parsec-
+  cloud/issues/1147>`__)
+* Added an automated email sending function on user invite to workspace  (`#1177
+  <https://github.com/Scille/parsec-cloud/issues/1177>`__)
+
+Bugfixes
+~~~~~~~~
+
+* The workspaces are now mounted as separated drives on Windows. Also,
+  workspaces with reader access are mounted as read-only volumes. This allows
+  proper compatibility with Acrobat Reader and avoid path-length issues.
+  (`#1081 <https://github.com/Scille/parsec-cloud/issues/1081>`__)
+* Fix Python 3.8 incompatibility (bug in trio_asyncio with postgresql)  (`#1194
+  <https://github.com/Scille/parsec-cloud/issues/1194>`__)
+* Fixed deadlock when importing a file from a parsec workspace  (`#1188
+  <https://github.com/Scille/parsec-cloud/issues/1188>`__)
+* Fix error on Windows when using the mountpoint right after (<0.01s) it has
+  been mounted. (`#1210 <https://github.com/Scille/parsec-cloud/issues/1210>`__)
+* Fixed revoked user exception handling and notification.  (`#1205
+  <https://github.com/Scille/parsec-cloud/issues/1205>`__)
+* Fixed history window not showing when a file has a source.  (`#1182
+  <https://github.com/Scille/parsec-cloud/issues/1182>`__)
+* Fixed some hidden windows staying in memory  (`#1156
+  <https://github.com/Scille/parsec-cloud/issues/1156>`__)
+* Fix sharing error message causing unhandled exception in the GUI  (`#1241
+  <https://github.com/Scille/parsec-cloud/issues/1241>`__)
+* Updating pynacl to 1.4.0 (`#1172 <https://github.com/Scille/parsec-
+  cloud/issues/1172>`__)
+* Fix GUI behavior when trying to share a workspace while not connected to the
+  backend or wen providing an invalid user name  (`#1242
+  <https://github.com/Scille/parsec-cloud/issues/1242>`__)
+* Fix realm access check in backend for user who has lost it role to this realm.
+  (`#1184 <https://github.com/Scille/parsec-cloud/issues/1184>`__)
+* Fix history button in GUI  (`#1243 <https://github.com/Scille/parsec-
+  cloud/issues/1243>`__)
+* Bootstrap organization widget made more responsive on low resolutions  (`#1169
+  <https://github.com/Scille/parsec-cloud/issues/1169>`__)
+* Added clearer messages on failure to access a file by its link  (`#1167
+  <https://github.com/Scille/parsec-cloud/issues/1167>`__)
+* Fixed missing reject method on file history  (`#1239
+  <https://github.com/Scille/parsec-cloud/issues/1239>`__)
+* Path display no longer makes the window expand  (`#1162
+  <https://github.com/Scille/parsec-cloud/issues/1162>`__)
+* Improve high DPI support for the parsec application.  (`#1245
+  <https://github.com/Scille/parsec-cloud/issues/1245>`__)
+* Fixed menu icons alignement and colors  (`#1149
+  <https://github.com/Scille/parsec-cloud/issues/1149>`__)
+
+Client/Backend API evolutions
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+* API can now return stats about workspace such as metadata size and data size.
+  (`#1176 <https://github.com/Scille/parsec-cloud/issues/1176>`__)
+* Introduce outsider profil for user. Outsider users can read/write on
+  workspaces they are invited to, but are not allowed to create workspaces. On
+  top of that outsider users cannot see personnal informations (email &
+  user/device name) of other users.  (`#1163 <https://github.com/Scille/parsec-
+  cloud/issues/1163>`__)
+* Add --spontaneous-organization-bootstrap option to backend to allow
+  bootstrapping an organization that haven't been created by administration
+  beforehand. Add --oganization-bootstrap-webhook option to backend to notify a
+  webhook URL on organization bootstrap.  (`#1281
+  <https://github.com/Scille/parsec-cloud/issues/1281>`__)
+* Update API to version 2.0 which improve handshake system and rework enrollment
+  system for a SAS-based asynchronous one (better usability and security)
+  (`#1119 <https://github.com/Scille/parsec-cloud/issues/1119>`__)
+* Adding some http request managment.  (`#1171
+  <https://github.com/Scille/parsec-cloud/issues/1171>`__)
+
+Miscellaneous internal changes
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+* Restrict read access for parsec directories to the current user. This includes
+  configuration, data, config and workspace directories.  (`#940
+  <https://github.com/Scille/parsec-cloud/issues/940>`__)
+* Added docker-compose as a backend deployment option  (`#1233
+  <https://github.com/Scille/parsec-cloud/issues/1233>`__)
+* Turn user_id and device_name fields into UUID to anonymize them. Personal
+  informations are instead stored in human_handle and device_label fields which
+  are not available to users with OUTSIDER profile.  (`#1174
+  <https://github.com/Scille/parsec-cloud/issues/1174>`__)
+* Use 4 symbols from a 32-symbol alphabet as SAS code. The alphatbet is:
+  ``ABCDEFGHJKLMNPQRSTUVWXYZ23456789``.  (`#1165
+  <https://github.com/Scille/parsec-cloud/issues/1165>`__)
+* Backend now able to retry first db connection  (`#1258
+  <https://github.com/Scille/parsec-cloud/issues/1258>`__)
+* Remove noop --db-drop-deleted-data option from backend run command  (`#1246
+  <https://github.com/Scille/parsec-cloud/issues/1246>`__)
+* Update WinFSP embedded package  (`#1223 <https://github.com/Scille/parsec-
+  cloud/issues/1223>`__)
+* Add a high-level interface for workspace files.  (`#1190
+  <https://github.com/Scille/parsec-cloud/issues/1190>`__)
+* Update windows installer to be less verbose. In particular: skip the
+  components panel, hide installation details and advance automatically after
+  completion.  (`#1126 <https://github.com/Scille/parsec-cloud/issues/1126>`__)
+* Consider https as default endpoint scheme for blockstore config in backend run
+  cli (`#1143 <https://github.com/Scille/parsec-cloud/issues/1143>`__)
+* Change bytes symbol in English  (`#1221 <https://github.com/Scille/parsec-
+  cloud/issues/1221>`__)
+* Add DPI aware option in the Windows installer options to fix blurry texts on
+  some high-DPI screens.  (`#1203 <https://github.com/Scille/parsec-
+  cloud/issues/1203>`__)
+* Remove ``(shared by X)`` messages from workspace name.  (`#928
+  <https://github.com/Scille/parsec-cloud/issues/928>`__)
+
+
 Parsec 1.13.0 (2020-04-29)
 --------------------------
 

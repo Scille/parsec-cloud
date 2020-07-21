@@ -1,1 +1,0 @@
-Allows join organization to take a bootstrap org link

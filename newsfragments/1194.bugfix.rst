@@ -1,1 +1,0 @@
-Fix Python 3.8 incompatibility (bug in trio_asyncio with postgresql)
