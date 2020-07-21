@@ -183,6 +183,8 @@ class CentralWidget(QWidget, Ui_CentralWidget):
                 self.new_notification.emit(*notif)
             elif isinstance(cause, HandshakeOrganizationExpired):
                 tooltip = _("TEXT_BACKEND_STATE_ORGANIZATION_EXPIRED")
+                notif = ("EXPIRED", tooltip)
+                self.new_notification.emit(*notif)
             else:
                 tooltip = _("TEXT_BACKEND_STATE_UNKNOWN")
             text = _("TEXT_BACKEND_STATE_DISCONNECTED")
@@ -200,7 +202,7 @@ class CentralWidget(QWidget, Ui_CentralWidget):
             self.new_notification.emit(*notif)
 
     def on_new_notification(self, notif_type, msg):
-        if notif_type == "REVOKED":
+        if notif_type in ["REVOKED", "EXPIRED"]:
             show_error(self, msg)
 
     def show_mount_widget(self):
