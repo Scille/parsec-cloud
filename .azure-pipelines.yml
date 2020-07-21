@@ -257,7 +257,7 @@ jobs:
 
 - job: 'linux_snap_build'
   displayName: 'Linux snap build'
-  condition: startsWith(variables['build.sourceBranch'], 'refs/tags/')
+  # condition: startsWith(variables['build.sourceBranch'], 'refs/tags/')
   timeoutInMinutes: 60
   pool:
     vmImage: 'ubuntu-18.04'
@@ -285,7 +285,7 @@ jobs:
       VERBOSE_TAG=`git -C $(Build.SourcesDirectory) describe --tag`
       sed -i "s#^\\(__version__ = \\).*\$#\\1'$VERBOSE_TAG'#" src/parsec/_version.py
       sed -i "s/__PARSEC_VERSION__/$VERBOSE_TAG/" snap/snapcraft.yaml
-      sudo snapcraft --use-lxd
+      sudo sg lxd -c "snapcraft --use-lxd"
       mkdir dist
       cp parsec*.snap dist
     displayName: 'Build snap'
@@ -299,38 +299,44 @@ jobs:
 
 - job: 'linux_pypi_build'
   displayName: 'Linux PyPI build'
-  condition: startsWith(variables['build.sourceBranch'], 'refs/tags/')
+  # condition: startsWith(variables['build.sourceBranch'], 'refs/tags/')
   timeoutInMinutes: 60
   pool:
     vmImage: 'ubuntu-latest'
   steps:
   - checkout: self
     submodules: true
+  - task: UsePythonVersion@0
+    inputs:
+      versionSpec: '$(python.version)'
   - bash: |
       set -eux
-      sudo apt-get install -y python python-pip xvfb xorg
-      pip install twine
+      sudo apt-get update
+      sudo apt-get install -y xvfb xorg
+      pip install -r pre-requirements.txt
     displayName: 'Bootstrap'
   - bash: |
       set -eux
-      python setup.py sdist bdist_wheel
+      # Build in a venv to isolate from tests
+      python -m venv venv_build
+      ./venv_build/bin/python -m pip install -r pre-requirements.txt
+      # Build the parsec wheel
+      ./venv_build/bin/python setup.py bdist_wheel
+    displayName: 'Build Wheel'
   - bash: |
       set -eux
       pip install --user virtualenv
       python -m venv venv
       source venv/bin/activate
+      ls -lh dist/
       pip install dist/*.whl[all]
+    displayName: 'Install Wheel'
   - bash: |
       set -eux
       source venv/bin/activate
       # Run Parsec GUI in background and log it return code
-      xvfb-run parsec core gui &
-      # Make sure the GUI hasn't crashed during startup
-      sleep 3
-      jobs | grep Running
-      # Only way to close the GUI from the command line...
-      killall xvfb-run
-    displayName: 'Test GUI do launch'
+      xvfb-run parsec core gui --diagnose
+    displayName: 'Test GUI startup'
   - publish: $(Agent.TempDirectory)/dist
     artifact: pypi
   - bash: |
@@ -386,7 +392,7 @@ jobs:
 
 - job: 'windows_installer_build'
   displayName: 'Windows installer build'
-  condition: startsWith(variables['build.sourceBranch'], 'refs/tags/')
+  # condition: startsWith(variables['build.sourceBranch'], 'refs/tags/')
   timeoutInMinutes: 60
   pool:
     vmImage: 'windows-latest'
