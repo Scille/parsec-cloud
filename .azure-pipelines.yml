@@ -24,232 +24,232 @@ jobs:
 #################################################################################
 
 
-- job: 'qa'
-  displayName: 'Q&A'
-  timeoutInMinutes: 5
-  pool:
-    vmImage: 'ubuntu-latest'
-  steps:
-  - checkout: self
-    submodules: true
-  - task: UsePythonVersion@0
-    inputs:
-      versionSpec: '$(python.version)'
-  - bash: |
-      set -eux
-      python --version
-      pip install pre-commit
-    displayName: 'Bootstrap'
-  - bash: |
-      set -eux
-      # Patch .pre-commit-config.yaml to force mixed-line-ending checks to LF
-      sed -i '/id: mixed-line-ending/a\      args:\n\        - "--fix=lf"' .pre-commit-config.yaml
-      cat .pre-commit-config.yaml
-      # Run all pre-commit hooks on all files
-      pre-commit run --all-files --show-diff-on-failure
-    displayName: 'Pre-commit hooks check'
-  - bash: |
-      if ([[ $(Build.SourceBranch) = "refs/heads/master" ]] || [[ $(Build.SourceBranch) = "refs/tags/"* ]])
-      then exit 0; fi
-      for FILENAME in newsfragments/*
-      do
-        # If file never existed in master, consider as a new newsfragment
-        # Cannot git diff against master branch here given newsfragments removed in master will be considered as
-        # new items in our branch
-        if git log origin/master --exit-code -- "$FILENAME" > /dev/null
-        then exit 0; fi
-      done
-      echo "NO NEW NEWSFRAGMENT FOUND" >&2
-    displayName: 'Newsfragment'
-    failOnStderr: true
-  - bash: |
-      git fetch --tags  # Needed by releaser.py to have a consistent `git describe`
-      python ./misc/releaser.py check --verbose
-    displayName: 'Version check'
+# - job: 'qa'
+#   displayName: 'Q&A'
+#   timeoutInMinutes: 5
+#   pool:
+#     vmImage: 'ubuntu-latest'
+#   steps:
+#   - checkout: self
+#     submodules: true
+#   - task: UsePythonVersion@0
+#     inputs:
+#       versionSpec: '$(python.version)'
+#   - bash: |
+#       set -eux
+#       python --version
+#       pip install pre-commit
+#     displayName: 'Bootstrap'
+#   - bash: |
+#       set -eux
+#       # Patch .pre-commit-config.yaml to force mixed-line-ending checks to LF
+#       sed -i '/id: mixed-line-ending/a\      args:\n\        - "--fix=lf"' .pre-commit-config.yaml
+#       cat .pre-commit-config.yaml
+#       # Run all pre-commit hooks on all files
+#       pre-commit run --all-files --show-diff-on-failure
+#     displayName: 'Pre-commit hooks check'
+#   - bash: |
+#       if ([[ $(Build.SourceBranch) = "refs/heads/master" ]] || [[ $(Build.SourceBranch) = "refs/tags/"* ]])
+#       then exit 0; fi
+#       for FILENAME in newsfragments/*
+#       do
+#         # If file never existed in master, consider as a new newsfragment
+#         # Cannot git diff against master branch here given newsfragments removed in master will be considered as
+#         # new items in our branch
+#         if git log origin/master --exit-code -- "$FILENAME" > /dev/null
+#         then exit 0; fi
+#       done
+#       echo "NO NEW NEWSFRAGMENT FOUND" >&2
+#     displayName: 'Newsfragment'
+#     failOnStderr: true
+#   - bash: |
+#       git fetch --tags  # Needed by releaser.py to have a consistent `git describe`
+#       python ./misc/releaser.py check --verbose
+#     displayName: 'Version check'
 
 
-#################################################################################
+# #################################################################################
 
 
-- job: 'linux_test'
-  displayName: 'Linux tests'
-  timeoutInMinutes: 60
-  pool:
-    vmImage: 'ubuntu-latest'
-  variables:
-    PGINSTALLATION: '/usr/lib/postgresql/$(postgresql.version)/bin'
-  steps:
-  - checkout: self
-    submodules: true
-  - task: UsePythonVersion@0
-    inputs:
-      versionSpec: '$(python.version)'
-  - bash: |
-      set -eux
-      python --version
-      pip install -r pre-requirements.txt
-      sudo apt-get install \
-        postgresql-$(postgresql.version) \
-        desktop-file-utils  # Provides `update-desktop-database` used by `tests/scripts/run_testenv.sh`
-      psql --version
-    displayName: 'Bootstrap'
-  - bash: |
-      set -eux
-      # Build in a venv to isolate from tests
-      python -m venv venv_build
-      ./venv_build/bin/python -m pip install -r pre-requirements.txt
-      # Build the parsec wheel
-      ./venv_build/bin/python setup.py bdist_wheel
-    displayName: 'Build Wheel'
-  - bash: |
-      set -eux
-      # Install the parsec wheel with all dependencies
-      pip install $(ls dist/parsec_cloud-*.whl)[all]
-      # Check dependency compatibility
-      pip check parsec[all]
-      # Create isolated test directory
-      mkdir -p $(Agent.TempDirectory)/empty
-      cp -R tests $(Agent.TempDirectory)/empty
-      cp setup.cfg $(Agent.TempDirectory)/empty
-    displayName: 'Install'
-  - bash: |
-      set -eux
-      py.test $(pytest.base_args) \
-        tests --runmountpoint --runslow \
-        -n auto --max-worker-restart=0 -x \
-        --junitxml=test-results-memory.xml
-    workingDirectory: $(Agent.TempDirectory)/empty
-    displayName: 'Tests memory'
-  - bash: |
-      set -eux
-      py.test $(pytest.base_args) \
-        tests/backend tests/test_cli.py --postgresql --runslow \
-        -n auto --max-worker-restart=0 -x \
-        --junitxml=test-results-postgresql.xml
-    workingDirectory: $(Agent.TempDirectory)/empty
-    displayName: 'Tests postgresql'
-  # TODO: run gui tests with xvfb
-  # - bash: |
-  #     set -eux
-  #     py.test $(pytest.base_args) \
-  #       tests -m gui --runmountpoint --runslow --rungui -x \
-  #       --junitxml=test-results-gui.xml
-  #   workingDirectory: $(Agent.TempDirectory)/empty
-  #   displayName: 'Tests GUI'
-  - bash: |
-      set -eux
-      pip install -U codecov
-      coverage xml -o coverage.xml
-      grep -E '( filename=|<package )' coverage.xml
-      codecov --file=coverage.xml --commit=$(Build.SourceVersion)
-    workingDirectory: $(Agent.TempDirectory)/empty
-    displayName: 'Codecov upload'
-  - task: PublishTestResults@2
-    inputs:
-      testResultsFiles: '$(Agent.TempDirectory)/empty/test-results-*.xml'
-      testRunTitle: 'Linux'
-    condition: succeededOrFailed()
+# - job: 'linux_test'
+#   displayName: 'Linux tests'
+#   timeoutInMinutes: 60
+#   pool:
+#     vmImage: 'ubuntu-latest'
+#   variables:
+#     PGINSTALLATION: '/usr/lib/postgresql/$(postgresql.version)/bin'
+#   steps:
+#   - checkout: self
+#     submodules: true
+#   - task: UsePythonVersion@0
+#     inputs:
+#       versionSpec: '$(python.version)'
+#   - bash: |
+#       set -eux
+#       python --version
+#       pip install -r pre-requirements.txt
+#       sudo apt-get install \
+#         postgresql-$(postgresql.version) \
+#         desktop-file-utils  # Provides `update-desktop-database` used by `tests/scripts/run_testenv.sh`
+#       psql --version
+#     displayName: 'Bootstrap'
+#   - bash: |
+#       set -eux
+#       # Build in a venv to isolate from tests
+#       python -m venv venv_build
+#       ./venv_build/bin/python -m pip install -r pre-requirements.txt
+#       # Build the parsec wheel
+#       ./venv_build/bin/python setup.py bdist_wheel
+#     displayName: 'Build Wheel'
+#   - bash: |
+#       set -eux
+#       # Install the parsec wheel with all dependencies
+#       pip install $(ls dist/parsec_cloud-*.whl)[all]
+#       # Check dependency compatibility
+#       pip check parsec[all]
+#       # Create isolated test directory
+#       mkdir -p $(Agent.TempDirectory)/empty
+#       cp -R tests $(Agent.TempDirectory)/empty
+#       cp setup.cfg $(Agent.TempDirectory)/empty
+#     displayName: 'Install'
+#   - bash: |
+#       set -eux
+#       py.test $(pytest.base_args) \
+#         tests --runmountpoint --runslow \
+#         -n auto --max-worker-restart=0 -x \
+#         --junitxml=test-results-memory.xml
+#     workingDirectory: $(Agent.TempDirectory)/empty
+#     displayName: 'Tests memory'
+#   - bash: |
+#       set -eux
+#       py.test $(pytest.base_args) \
+#         tests/backend tests/test_cli.py --postgresql --runslow \
+#         -n auto --max-worker-restart=0 -x \
+#         --junitxml=test-results-postgresql.xml
+#     workingDirectory: $(Agent.TempDirectory)/empty
+#     displayName: 'Tests postgresql'
+#   # TODO: run gui tests with xvfb
+#   # - bash: |
+#   #     set -eux
+#   #     py.test $(pytest.base_args) \
+#   #       tests -m gui --runmountpoint --runslow --rungui -x \
+#   #       --junitxml=test-results-gui.xml
+#   #   workingDirectory: $(Agent.TempDirectory)/empty
+#   #   displayName: 'Tests GUI'
+#   - bash: |
+#       set -eux
+#       pip install -U codecov
+#       coverage xml -o coverage.xml
+#       grep -E '( filename=|<package )' coverage.xml
+#       codecov --file=coverage.xml --commit=$(Build.SourceVersion)
+#     workingDirectory: $(Agent.TempDirectory)/empty
+#     displayName: 'Codecov upload'
+#   - task: PublishTestResults@2
+#     inputs:
+#       testResultsFiles: '$(Agent.TempDirectory)/empty/test-results-*.xml'
+#       testRunTitle: 'Linux'
+#     condition: succeededOrFailed()
 
 
-#################################################################################
+# #################################################################################
 
 
-- job: 'windows_test'
-  displayName: 'Windows tests'
-  timeoutInMinutes: 60
-  pool:
-    vmImage: 'windows-latest'
-  variables:
-    PGINSTALLATION: C:\\Program Files\\PostgreSQL\\$(postgresql.version)\\bin
-  steps:
-  - checkout: self
-    submodules: true
-  - task: UsePythonVersion@0
-    inputs:
-      versionSpec: '$(python.version)'
-      architecture: 'x64'
-  - bash: |
-      set -eux
-      python.exe --version
-      pip install -r pre-requirements.txt
-      choco install -y --limit-output winfsp --pre --version=$(winfsp.version)
-      # Install winfsp-test and put it in PATH
-      mkdir winfsp-test
-      curl -L https://github.com/billziss-gh/winfsp/releases/download/v1.7/winfsp-tests-1.7.20172.zip -o winfsp-test/winfsp-tests.zip
-      unzip winfsp-test/winfsp-tests.zip -d winfsp-test
-      echo "##vso[task.prependpath]$(Build.SourcesDirectory)\\winfsp-test"
-    displayName: 'Bootstrap'
-  - bash: |
-      set -eux
-      python -m venv venv_build
-      ./venv_build/Scripts/python.exe -m pip install -r pre-requirements.txt
-      # Build the parsec wheel
-      ./venv_build/Scripts/python.exe setup.py bdist_wheel
-    displayName: 'Build Wheel'
-  - bash: |
-      set -eux
-      # Install the parsec wheel with all dependencies
-      pip install $(ls dist/parsec_cloud-*.whl)[all]
-      # Check dependency compatibility
-      pip check parsec[all]
-      # Check winfsp-tests availability
-      python.exe -c "import winfspy.tests.winfsp_tests"
-      # Create isolated test directory
-      mkdir -p "$(Agent.TempDirectory)"\\empty
-      cp -R tests "$(Agent.TempDirectory)"\\empty
-      cp setup.cfg "$(Agent.TempDirectory)"\\empty
-    displayName: 'Install'
-  - bash: |
-      set -eux
-      # Install pytest-repeat
-      pip install pytest-repeat
-      # Repeat flaky tests X times
-      py.test tests --runmountpoint --runslow --rungui -m flaky --count $(debug.stress_flaky_tests) -v
-    workingDirectory: $(Agent.TempDirectory)/empty
-    displayName: 'Debug: stress flaky tests'
-    condition: and(succeeded(), gt(variables['debug.stress_flaky_tests'], 0))
-  - bash: |
-      set -eux
-      py.test $(pytest.base_args) \
-        tests -n auto --max-worker-restart=0 -x \
-        --junitxml=test-results-fast.xml
-    workingDirectory: $(Agent.TempDirectory)/empty
-    displayName: 'Tests fast'
-  - bash: |
-      set -eux
-      py.test $(pytest.base_args) \
-        tests --runmountpoint --runslow -m mountpoint -x \
-        --junitxml=test-results-mountpoint.xml
-    workingDirectory: $(Agent.TempDirectory)/empty
-    displayName: 'Tests mountpoint'
-  - bash: |
-      set -eux
-      py.test $(pytest.base_args) \
-        tests --runmountpoint --runslow --rungui -m gui -x \
-        --junitxml=test-results-gui.xml
-    workingDirectory: $(Agent.TempDirectory)/empty
-    displayName: 'Tests GUI'
-  - bash: |
-      set -eux
-      py.test $(pytest.base_args) \
-        tests --runslow -m slow \
-        -n auto --max-worker-restart=0 -x \
-        --junitxml=test-results-slow.xml
-    workingDirectory: $(Agent.TempDirectory)/empty
-    displayName: 'Tests slow'
-  - bash: |
-      set -eux
-      pip install -U codecov
-      coverage xml -o coverage.xml
-      grep -E '( filename=|<package )' coverage.xml
-      codecov --file=coverage.xml --commit=$(Build.SourceVersion)
-    workingDirectory: $(Agent.TempDirectory)/empty
-    displayName: 'Codecov upload'
-  - task: PublishTestResults@2
-    inputs:
-      testResultsFiles: '$(Agent.TempDirectory)/empty/test-results-*.xml'
-      testRunTitle: 'Windows'
-    condition: succeededOrFailed()
+# - job: 'windows_test'
+#   displayName: 'Windows tests'
+#   timeoutInMinutes: 60
+#   pool:
+#     vmImage: 'windows-latest'
+#   variables:
+#     PGINSTALLATION: C:\\Program Files\\PostgreSQL\\$(postgresql.version)\\bin
+#   steps:
+#   - checkout: self
+#     submodules: true
+#   - task: UsePythonVersion@0
+#     inputs:
+#       versionSpec: '$(python.version)'
+#       architecture: 'x64'
+#   - bash: |
+#       set -eux
+#       python.exe --version
+#       pip install -r pre-requirements.txt
+#       choco install -y --limit-output winfsp --pre --version=$(winfsp.version)
+#       # Install winfsp-test and put it in PATH
+#       mkdir winfsp-test
+#       curl -L https://github.com/billziss-gh/winfsp/releases/download/v1.7/winfsp-tests-1.7.20172.zip -o winfsp-test/winfsp-tests.zip
+#       unzip winfsp-test/winfsp-tests.zip -d winfsp-test
+#       echo "##vso[task.prependpath]$(Build.SourcesDirectory)\\winfsp-test"
+#     displayName: 'Bootstrap'
+#   - bash: |
+#       set -eux
+#       python -m venv venv_build
+#       ./venv_build/Scripts/python.exe -m pip install -r pre-requirements.txt
+#       # Build the parsec wheel
+#       ./venv_build/Scripts/python.exe setup.py bdist_wheel
+#     displayName: 'Build Wheel'
+#   - bash: |
+#       set -eux
+#       # Install the parsec wheel with all dependencies
+#       pip install $(ls dist/parsec_cloud-*.whl)[all]
+#       # Check dependency compatibility
+#       pip check parsec[all]
+#       # Check winfsp-tests availability
+#       python.exe -c "import winfspy.tests.winfsp_tests"
+#       # Create isolated test directory
+#       mkdir -p "$(Agent.TempDirectory)"\\empty
+#       cp -R tests "$(Agent.TempDirectory)"\\empty
+#       cp setup.cfg "$(Agent.TempDirectory)"\\empty
+#     displayName: 'Install'
+#   - bash: |
+#       set -eux
+#       # Install pytest-repeat
+#       pip install pytest-repeat
+#       # Repeat flaky tests X times
+#       py.test tests --runmountpoint --runslow --rungui -m flaky --count $(debug.stress_flaky_tests) -v
+#     workingDirectory: $(Agent.TempDirectory)/empty
+#     displayName: 'Debug: stress flaky tests'
+#     condition: and(succeeded(), gt(variables['debug.stress_flaky_tests'], 0))
+#   - bash: |
+#       set -eux
+#       py.test $(pytest.base_args) \
+#         tests -n auto --max-worker-restart=0 -x \
+#         --junitxml=test-results-fast.xml
+#     workingDirectory: $(Agent.TempDirectory)/empty
+#     displayName: 'Tests fast'
+#   - bash: |
+#       set -eux
+#       py.test $(pytest.base_args) \
+#         tests --runmountpoint --runslow -m mountpoint -x \
+#         --junitxml=test-results-mountpoint.xml
+#     workingDirectory: $(Agent.TempDirectory)/empty
+#     displayName: 'Tests mountpoint'
+#   - bash: |
+#       set -eux
+#       py.test $(pytest.base_args) \
+#         tests --runmountpoint --runslow --rungui -m gui -x \
+#         --junitxml=test-results-gui.xml
+#     workingDirectory: $(Agent.TempDirectory)/empty
+#     displayName: 'Tests GUI'
+#   - bash: |
+#       set -eux
+#       py.test $(pytest.base_args) \
+#         tests --runslow -m slow \
+#         -n auto --max-worker-restart=0 -x \
+#         --junitxml=test-results-slow.xml
+#     workingDirectory: $(Agent.TempDirectory)/empty
+#     displayName: 'Tests slow'
+#   - bash: |
+#       set -eux
+#       pip install -U codecov
+#       coverage xml -o coverage.xml
+#       grep -E '( filename=|<package )' coverage.xml
+#       codecov --file=coverage.xml --commit=$(Build.SourceVersion)
+#     workingDirectory: $(Agent.TempDirectory)/empty
+#     displayName: 'Codecov upload'
+#   - task: PublishTestResults@2
+#     inputs:
+#       testResultsFiles: '$(Agent.TempDirectory)/empty/test-results-*.xml'
+#       testRunTitle: 'Windows'
+#     condition: succeededOrFailed()
 
 
 #################################################################################
@@ -340,7 +340,7 @@ jobs:
       username = __token__
       password = $PYPI_CREDENTIALS
       " > ~/.pypirc
-      twine upload dist/*
+      # twine upload dist/*
     env:
       PYPI_CREDENTIALS: $(PYPI_CREDENTIALS)
     displayName: 'Build PyPI'
@@ -375,7 +375,7 @@ jobs:
   - bash: |
       sudo snap install snapcraft --classic
       echo $SNAPCRAFT_CREDENTIALS | snapcraft login --with -
-      snapcraft push --release=edge $(Pipeline.Workspace)/linux_amd64_snap/parsec*.snap
+      # snapcraft push --release=edge $(Pipeline.Workspace)/linux_amd64_snap/parsec*.snap
     env:
       SNAPCRAFT_CREDENTIALS: $(SNAPCRAFT_CREDENTIALS)
     displayName: 'Upload Snap'
