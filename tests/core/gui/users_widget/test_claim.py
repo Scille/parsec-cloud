@@ -403,13 +403,16 @@ async def test_claim_user_offline(
     ],
 )
 async def test_claim_user_reset_by_peer(
-    aqtbot, ClaimUserTestBed, running_backend, autoclose_dialog, reset_step
+    aqtbot, ClaimUserTestBed, running_backend, autoclose_dialog, reset_step, alice2_backend_cmds
 ):
     class ResetTestBed(ClaimUserTestBed):
         @asynccontextmanager
         async def _reset_greeter(self):
             async with trio.open_nursery() as nursery:
-                nursery.start_soon(self.greeter_initial_ctx.do_wait_peer)
+                greeter_initial_ctx = UserGreetInitialCtx(
+                    cmds=alice2_backend_cmds, token=self.invitation_addr.token
+                )
+                nursery.start_soon(greeter_initial_ctx.do_wait_peer)
                 yield
                 nursery.cancel_scope.cancel()
 
