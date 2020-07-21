@@ -1,2 +1,0 @@
-Add --spontaneous-organization-bootstrap option to backend to allow bootstrapping an organization that haven't been created by administration beforehand.
-Add --oganization-bootstrap-webhook option to backend to notify a webhook URL on organization bootstrap.

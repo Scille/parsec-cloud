@@ -1,1 +1,0 @@
-API can now return stats about workspace such as metadata size and data size.

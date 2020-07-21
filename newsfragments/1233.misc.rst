@@ -1,1 +1,0 @@
-Added docker-compose as a backend deployment option

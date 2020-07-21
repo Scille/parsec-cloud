@@ -1,1 +1,0 @@
-Added a "+" button to add a new tab
