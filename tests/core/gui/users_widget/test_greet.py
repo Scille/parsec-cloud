@@ -364,10 +364,12 @@ async def test_greet_user_reset_by_peer(aqtbot, GreetUserTestBed, autoclose_dial
     class ResetTestBed(GreetUserTestBed):
         @asynccontextmanager
         async def _reset_claimer(self):
-            async with trio.open_nursery() as nursery:
-                nursery.start_soon(self.claimer_initial_ctx.do_wait_peer)
-                yield
-                nursery.cancel_scope.cancel()
+            async with backend_invited_cmds_factory(addr=self.invitation_addr) as cmds:
+                claimer_initial_ctx = await claimer_retrieve_info(cmds)
+                async with trio.open_nursery() as nursery:
+                    nursery.start_soon(claimer_initial_ctx.do_wait_peer)
+                    yield
+                    nursery.cancel_scope.cancel()
 
         def _greet_restart(self):
             assert autoclose_dialog.dialogs == [
