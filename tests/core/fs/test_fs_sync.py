@@ -61,6 +61,7 @@ async def test_new_workspace(running_backend, alice, alice_user_fs, alice2_user_
         "children": [],
         "created": Pendulum(2000, 1, 2),
         "updated": Pendulum(2000, 1, 2),
+        "confined": False,
     }
     assert workspace_entry == WorkspaceEntry(
         name="w",
@@ -120,6 +121,7 @@ async def test_new_empty_entry(type, running_backend, alice_user_fs, alice2_user
             "created": Pendulum(2000, 1, 2),
             "updated": Pendulum(2000, 1, 2),
             "size": 0,
+            "confined": False,
         }
     else:
         assert info == {
@@ -131,6 +133,7 @@ async def test_new_empty_entry(type, running_backend, alice_user_fs, alice2_user
             "created": Pendulum(2000, 1, 2),
             "updated": Pendulum(2000, 1, 2),
             "children": [],
+            "confined": False,
         }
     info2 = await workspace2.path_info("/foo")
     assert info == info2
@@ -455,6 +458,7 @@ async def test_create_already_existing_folder_vlob(running_backend, alice_user_f
         "created": Pendulum(2000, 1, 2),
         "updated": Pendulum(2000, 1, 2),
         "children": ["x"],
+        "confined": False,
     }
 
     workspace2 = alice2_user_fs.get_workspace(wid)
@@ -500,6 +504,7 @@ async def test_create_already_existing_file_vlob(running_backend, alice_user_fs,
         "updated": Pendulum(2000, 1, 2),
         "base_version": 1,
         "size": 0,
+        "confined": False,
     }
 
     await workspace2.sync()
@@ -562,6 +567,7 @@ async def test_create_already_existing_block(running_backend, alice_user_fs, ali
         "updated": Pendulum(2000, 1, 3),
         "base_version": 2,
         "size": 4,
+        "confined": False,
     }
 
     await workspace2.sync()
@@ -599,6 +605,7 @@ async def test_sync_data_before_workspace(running_backend, alice_user_fs):
         "is_placeholder": False,
         "need_sync": False,
         "size": 2,
+        "confined": False,
     }
     root_info = await w.path_info("/")
     assert root_info == {
@@ -610,6 +617,7 @@ async def test_sync_data_before_workspace(running_backend, alice_user_fs):
         "is_placeholder": False,
         "need_sync": True,
         "children": ["bar"],
+        "confined": False,
     }
 
 

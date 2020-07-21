@@ -19,6 +19,7 @@ async def test_root_entry_info(alice_workspace_t2, alice_workspace_t4):
         "created": Pendulum(1999, 12, 31),
         "updated": Pendulum(1999, 12, 31),
         "children": ["foo"],
+        "confined": False,
     }
 
     stat4 = await alice_workspace_t4.transactions.entry_info(FsPath("/"))
@@ -31,6 +32,7 @@ async def test_root_entry_info(alice_workspace_t2, alice_workspace_t4):
         "created": Pendulum(1999, 12, 31),
         "updated": Pendulum(2000, 1, 4),
         "children": ["files", "foo"],
+        "confined": False,
     }
 
 

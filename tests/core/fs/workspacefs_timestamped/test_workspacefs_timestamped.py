@@ -22,6 +22,7 @@ async def test_path_info(alice_workspace, timestamp_0, alice_workspace_t1, alice
         "need_sync": False,
         "type": "folder",
         "updated": ANY,
+        "confined": False,
     }
 
     info = await alice_workspace_t1.path_info("/foo")
@@ -34,6 +35,7 @@ async def test_path_info(alice_workspace, timestamp_0, alice_workspace_t1, alice
         "need_sync": False,
         "type": "folder",
         "updated": ANY,
+        "confined": False,
     }
 
     with pytest.raises(FileNotFoundError):
@@ -49,6 +51,7 @@ async def test_path_info(alice_workspace, timestamp_0, alice_workspace_t1, alice
         "need_sync": False,
         "type": "folder",
         "updated": ANY,
+        "confined": False,
     }
 
     info = await alice_workspace_t2.path_info("/foo/bar")
@@ -61,6 +64,7 @@ async def test_path_info(alice_workspace, timestamp_0, alice_workspace_t1, alice
         "need_sync": False,
         "type": "file",
         "updated": ANY,
+        "confined": False,
     }
 
     with pytest.raises(FileNotFoundError):

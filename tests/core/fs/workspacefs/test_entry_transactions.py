@@ -38,6 +38,7 @@ async def test_root_entry_info(alice_entry_transactions):
         "created": Pendulum(2000, 1, 1),
         "updated": Pendulum(2000, 1, 1),
         "children": [],
+        "confined": False,
     }
 
 
@@ -61,6 +62,7 @@ async def test_file_create(alice_entry_transactions, alice_file_transactions, al
         "created": Pendulum(2000, 1, 1),
         "updated": Pendulum(2000, 1, 2),
         "children": ["foo.txt"],
+        "confined": False,
     }
 
     foo_stat = await entry_transactions.entry_info(FsPath("/foo.txt"))
@@ -73,6 +75,7 @@ async def test_file_create(alice_entry_transactions, alice_file_transactions, al
         "created": Pendulum(2000, 1, 2),
         "updated": Pendulum(2000, 1, 2),
         "size": 0,
+        "confined": False,
     }
 
 
@@ -196,6 +199,7 @@ async def test_access_not_loaded_entry(alice, bob, alice_entry_transactions):
         "is_placeholder": True,
         "need_sync": True,
         "children": [],
+        "confined": False,
     }
 
 

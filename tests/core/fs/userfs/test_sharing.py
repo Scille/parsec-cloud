@@ -488,6 +488,7 @@ async def test_share_workspace_then_conflict_on_rights(
         "base_version": 1,
         "need_sync": False,
         "children": [],
+        "confined": False,
     }
     assert a_w_stat == a2_w_stat
 

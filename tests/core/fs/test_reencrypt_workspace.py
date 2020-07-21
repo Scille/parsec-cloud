@@ -189,6 +189,7 @@ async def test_no_access_during_reencryption(running_backend, alice2_user_fs, wo
         "is_placeholder": False,
         "need_sync": False,
         "children": ["foo.txt"],
+        "confined": False,
     }
     with pytest.raises(FSWorkspaceInMaintenance):
         await aw.path_info("/foo.txt")
@@ -217,6 +218,7 @@ async def test_no_access_during_reencryption(running_backend, alice2_user_fs, wo
         "is_placeholder": False,
         "need_sync": True,
         "children": ["bar.txt", "foo.txt"],
+        "confined": False,
     }
     with pytest.raises(FSBadEncryptionRevision):
         await aw.path_info("/foo.txt")
@@ -238,6 +240,7 @@ async def test_no_access_during_reencryption(running_backend, alice2_user_fs, wo
         "is_placeholder": False,
         "need_sync": False,
         "size": 2,
+        "confined": False,
     }
 
     # Finally sync is ok
