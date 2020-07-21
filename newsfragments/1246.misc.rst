@@ -1,0 +1,1 @@
+Remove noop --db-drop-deleted-data option from backend run command

@@ -1,0 +1,1 @@
+Fixed deadlock when importing a file from a parsec workspace

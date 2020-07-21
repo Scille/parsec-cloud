@@ -1,0 +1,1 @@
+Fix GUI behavior when trying to share a workspace while not connected to the backend or wen providing an invalid user name

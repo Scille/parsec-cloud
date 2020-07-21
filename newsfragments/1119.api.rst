@@ -1,0 +1,1 @@
+Update API to version 2.0 which improve handshake system and rework enrollment system for a SAS-based asynchronous one (better usability and security)

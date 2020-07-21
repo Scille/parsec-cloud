@@ -1,0 +1,1 @@
+Fix error on Windows when using the mountpoint right after (<0.01s) it has been mounted.
