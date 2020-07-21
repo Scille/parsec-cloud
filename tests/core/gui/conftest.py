@@ -362,8 +362,17 @@ async def logged_gui(aqtbot, gui_factory, core_config, alice, bob, fixtures_cust
             await aqtbot.mouse_click(central_widget.menu.button_users, QtCore.Qt.LeftButton)
         return u_w
 
+    async def test_switch_to_workspaces_widget(error=False):
+        central_widget = gui.test_get_central_widget()
+        f_w = gui.test_get_workspaces_widget()
+        signal = f_w.list_error if error else f_w.list_success
+        async with aqtbot.wait_exposed(f_w), aqtbot.wait_signal(signal):
+            await aqtbot.mouse_click(central_widget.menu.button_files, QtCore.Qt.LeftButton)
+        return f_w
+
     gui.test_switch_to_devices_widget = test_switch_to_devices_widget
     gui.test_switch_to_users_widget = test_switch_to_users_widget
+    gui.test_switch_to_workspaces_widget = test_switch_to_workspaces_widget
 
     return gui
 
