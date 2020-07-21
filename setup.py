@@ -327,6 +327,7 @@ extra_requirements = {
         "psutil==5.6.3",
     ],
     "backend": [
+        "jinja2==2.11.2",
         # PostgreSQL
         "triopg==0.3.0",
         "trio-asyncio==0.11.0",
