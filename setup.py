@@ -327,6 +327,7 @@ extra_requirements = {
         "psutil==5.6.3",
     ],
     "backend": [
+        "jinja2==2.11.2",
         # PostgreSQL
         "triopg==0.3.0",
         "trio-asyncio==0.11.0",
@@ -352,7 +353,7 @@ setup(
     url="https://github.com/Scille/parsec-cloud",
     packages=find_packages(include=["parsec", "parsec.*"]),
     package_dir={"parsec": "parsec"},
-    setup_requires=[WHEEL_DEP, PYQT_DEP, BABEL_DEP, DOCUTILS_DEP],  # To generate resources bundle
+    setup_requires=[WHEEL_DEP, BABEL_DEP, DOCUTILS_DEP],  # To generate resources bundle
     install_requires=requirements,
     extras_require=extra_requirements,
     cmdclass={
