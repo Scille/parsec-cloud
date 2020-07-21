@@ -41,7 +41,7 @@ class IconTableItem(CustomTableItem):
     SYNCED_ICON = None
     UNSYNCED_ICON = None
 
-    def __init__(self, is_synced, pixmap, *args, **kwargs):
+    def __init__(self, is_synced, is_confined, pixmap, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.source = pixmap
         if not IconTableItem.SYNCED_ICON:
@@ -51,13 +51,14 @@ class IconTableItem(CustomTableItem):
             IconTableItem.UNSYNCED_ICON = Pixmap(":/icons/images/material/cached.svg")
             IconTableItem.UNSYNCED_ICON.replace_color(QColor(0, 0, 0), QColor(219, 20, 20))
         self._is_synced = is_synced
+        self._is_confined = is_confined
         self.switch_icon()
 
     def switch_icon(self):
-        icon = self._draw_pixmap(self.source, self.isSelected(), self.is_synced)
+        icon = self._draw_pixmap(self.source, self.isSelected(), self.is_synced, self.is_confined)
         self.setIcon(QIcon(icon))
 
-    def _draw_pixmap(self, source, selected, synced):
+    def _draw_pixmap(self, source, selected, synced, confined):
         color = QColor(0x33, 0x33, 0x33) if selected else QColor(0x99, 0x99, 0x99)
         p = Pixmap(source)
         if p.isNull():
@@ -67,7 +68,7 @@ class IconTableItem(CustomTableItem):
         painter = QPainter(p)
         if synced:
             painter.drawPixmap(p.width() - 90, 0, 100, 100, IconTableItem.SYNCED_ICON)
-        else:
+        elif not confined:
             painter.drawPixmap(p.width() - 90, 0, 100, 100, IconTableItem.UNSYNCED_ICON)
         painter.end()
         return p
@@ -79,6 +80,15 @@ class IconTableItem(CustomTableItem):
     @is_synced.setter
     def is_synced(self, value):
         self._is_synced = value
+        self.switch_icon()
+
+    @property
+    def is_confined(self):
+        return self._is_confined
+
+    @is_confined.setter
+    def is_confined(self, value):
+        self._is_confined = value
         self.switch_icon()
 
 
@@ -291,24 +301,33 @@ class FileTableItem(IconTableItem):
         ".zip": "zip-compressed-files-extension",
     }
 
-    def __init__(self, is_synced, file_name, *args, **kwargs):
+    def __init__(self, is_synced, is_confined, file_name, *args, **kwargs):
         ext = pathlib.Path(file_name).suffix
         icon = self.EXTENSIONS.get(ext.lower(), "blank-file")
         super().__init__(
-            is_synced, f":/file_ext/images/file_formats/{icon}.svg", "", *args, **kwargs
+            is_synced,
+            is_confined,
+            f":/file_ext/images/file_formats/{icon}.svg",
+            "",
+            *args,
+            **kwargs,
         )
         self.setData(TYPE_DATA_INDEX, FileType.File)
 
 
 class FolderTableItem(IconTableItem):
-    def __init__(self, is_synced, *args, **kwargs):
-        super().__init__(is_synced, ":/icons/images/material/folder_open.svg", "", *args, **kwargs)
+    def __init__(self, is_synced, is_confined, *args, **kwargs):
+        super().__init__(
+            is_synced, is_confined, ":/icons/images/material/folder_open.svg", "", *args, **kwargs
+        )
         self.setData(NAME_DATA_INDEX, 0)
         self.setData(TYPE_DATA_INDEX, FileType.Folder)
 
 
 class InconsistencyTableItem(IconTableItem):
-    def __init__(self, is_synced, *args, **kwargs):
-        super().__init__(is_synced, ":/icons/images/material/warning.svg", "", *args, **kwargs)
+    def __init__(self, is_synced, is_confined, *args, **kwargs):
+        super().__init__(
+            is_synced, is_confined, ":/icons/images/material/warning.svg", "", *args, **kwargs
+        )
         self.setData(NAME_DATA_INDEX, 0)
         self.setData(TYPE_DATA_INDEX, FileType.Inconsistency)

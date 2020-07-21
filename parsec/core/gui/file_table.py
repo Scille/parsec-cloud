@@ -294,10 +294,10 @@ class FileTable(QTableWidget):
             item.setFlags(Qt.ItemIsEnabled)
             self.setItem(row_idx, col, item)
 
-    def add_folder(self, folder_name, uuid, is_synced, selected=False):
+    def add_folder(self, folder_name, uuid, is_synced, is_confined, selected=False):
         row_idx = self.rowCount()
         self.insertRow(row_idx)
-        item = FolderTableItem(is_synced)
+        item = FolderTableItem(is_synced, is_confined)
         item.setData(UUID_DATA_INDEX, uuid)
         self.setItem(row_idx, Column.ICON, item)
         item = CustomTableItem(folder_name)
@@ -327,11 +327,19 @@ class FileTable(QTableWidget):
             )
 
     def add_file(
-        self, file_name, uuid, file_size, created_on, updated_on, is_synced, selected=False
+        self,
+        file_name,
+        uuid,
+        file_size,
+        created_on,
+        updated_on,
+        is_synced,
+        is_confined,
+        selected=False,
     ):
         row_idx = self.rowCount()
         self.insertRow(row_idx)
-        item = FileTableItem(is_synced, file_name)
+        item = FileTableItem(is_synced, is_confined, file_name)
         item.setData(NAME_DATA_INDEX, 1)
         item.setData(TYPE_DATA_INDEX, FileType.File)
         item.setData(UUID_DATA_INDEX, uuid)
@@ -366,7 +374,7 @@ class FileTable(QTableWidget):
         inconsistency_color = QColor(255, 144, 155)
         row_idx = self.rowCount()
         self.insertRow(row_idx)
-        item = InconsistencyTableItem(False)
+        item = InconsistencyTableItem(False, False)
         item.setData(NAME_DATA_INDEX, 1)
         item.setData(TYPE_DATA_INDEX, FileType.Inconsistency)
         item.setData(UUID_DATA_INDEX, uuid)
