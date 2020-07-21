@@ -7,8 +7,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PROJECT VERSION\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2020-07-16 14:18+0200\n"
-"PO-Revision-Date: 2020-07-16 14:36+0200\n"
+"POT-Creation-Date: 2020-07-21 09:21+0200\n"
+"PO-Revision-Date: 2020-07-21 09:23+0200\n"
 "Last-Translator: \n"
 "Language: en\n"
 "Language-Team: en <LL@li.org>\n"
@@ -355,11 +355,11 @@ msgstr ""
 "You can retry the invitation process. If this problem persists, your "
 "network may not be safe."
 
-msgid "TEXT_CLAIM_USER_PEER_RESET"
-msgstr "The host has reset the process. We will restart from the beginning."
-
 msgid "TEXT_CLAIM_USER_GET_GREETER_SAS_ERROR"
 msgstr "Internal error. Please restart the process."
+
+msgid "TEXT_CLAIM_USER_PEER_RESET"
+msgstr "The host has reset the process. We will restart from the beginning."
 
 msgid "TEXT_CLAIM_USER_WAIT_TRUST_ERROR"
 msgstr "Internal error. Please restart the process."
@@ -376,11 +376,11 @@ msgstr "Internal error. Please restart the process."
 msgid "TEXT_CLAIM_USER_WAITING"
 msgstr "Waiting for the other user"
 
-msgid "ACTION_START"
-msgstr "Start"
-
 msgid "TEXT_CLAIM_USER_WAIT_PEER_ERROR"
 msgstr "Error while waiting for the other user. Please restart the process."
+
+msgid "ACTION_START"
+msgstr "Start"
 
 msgid "TEXT_CLAIM_USER_FAILED_TO_RETRIEVE_INFO"
 msgstr "Failed to retrieve information about the invitation."
@@ -1597,6 +1597,9 @@ msgstr "Server URL is invalid."
 msgid "TEXT_ORG_WIZARD_OFFLINE"
 msgstr "The server is offline or you have no access to the internet."
 
+msgid "TEXT_ORG_WIZARD_INVALID_ADMIN_TOKEN"
+msgstr "The token is not the right one."
+
 msgid "TEXT_ORG_WIZARD_UNKNOWN_FAILURE"
 msgstr "Could not create the organization."
 
@@ -1646,11 +1649,11 @@ msgstr ""
 "You can retry the invitation process. If this problem persists, your "
 "network may not be safe."
 
-msgid "TEXT_CLAIM_DEVICE_PEER_RESET"
-msgstr "The process has been reset. We will restart from the beginning."
-
 msgid "TEXT_CLAIM_DEVICE_GET_GREETER_SAS_ERROR"
 msgstr "Internal error. Please restart the process."
+
+msgid "TEXT_CLAIM_DEVICE_PEER_RESET"
+msgstr "The process has been reset. We will restart from the beginning."
 
 msgid "TEXT_CLAIM_DEVICE_WAIT_TRUST_ERROR"
 msgstr "Internal error. Please restart the process."
@@ -2018,16 +2021,6 @@ msgstr "Create a new PARSEC organization on the PARSEC website (recommanded)"
 msgid "TEXT_ORG_WIZARD_CREATE_ON_CUSTOM"
 msgstr "I have my own PARSEC server and want to create an organization on it"
 
-msgid "TEXT_ORG_WIZARD_CREATE_FROM_SCRATCH"
-msgstr ""
-"I don't have an account on the website and want to create a new "
-"organization"
-
-msgid "TEXT_ORG_WIZARD_ALREADY_HAS_URL"
-msgstr ""
-"I already have an account on the website and a link to bootstrap my "
-"organization"
-
 msgid "TEXT_ORG_WIZARD_CREATE_ORG_CUSTOM_INSTRUCTIONS"
 msgstr ""
 "Please provide the name of your new organization, your server address, "
@@ -2046,7 +2039,7 @@ msgid "TEXT_LABEL_SERVER_ADMIN_TOKEN"
 msgstr "Administration token"
 
 msgid "TEXT_CREATE_ORG_ADMIN_TOKEN_PLACEHOLDER"
-msgstr ""
+msgstr "abcdef0123456"
 
 msgid "TEXT_LABEL_ORG_NAME_RECOMMANDATIONS"
 msgstr "Letters, digits, underscores and hyphens only. No spaces."
@@ -2362,3 +2355,16 @@ msgstr "Create a new workspace"
 
 msgid "ACTION_WORKSPACE_GOTO_FILE_LINK"
 msgstr "Go to a file using a link"
+
+#~ msgid "TEXT_ORG_WIZARD_CREATE_FROM_SCRATCH"
+#~ msgstr ""
+#~ "I don't have an account on the "
+#~ "website and want to create a new"
+#~ " organization"
+
+#~ msgid "TEXT_ORG_WIZARD_ALREADY_HAS_URL"
+#~ msgstr ""
+#~ "I already have an account on the"
+#~ " website and a link to bootstrap "
+#~ "my organization"
+

@@ -82,7 +82,7 @@ async def test_create_organization_wrong_token(
     async with aqtbot.wait_signal(co_w.create_custom_error):
         await aqtbot.mouse_click(co_w.button_validate, QtCore.Qt.LeftButton)
 
-    assert autoclose_dialog.dialogs[1] == ("Error", "TEXT_ORG_WIZARD_INVALID_ADMIN_TOKEN")
+    assert autoclose_dialog.dialogs[1] == ("Error", "The token is not the right one.")
 
 
 @pytest.mark.gui

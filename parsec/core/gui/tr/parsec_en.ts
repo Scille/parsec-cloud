@@ -383,27 +383,27 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../forms/create_org_custom_widget.ui" line="106"/>
+        <location filename="../forms/create_org_custom_widget.ui" line="115"/>
         <source>TEXT_LABEL_SERVER_URL</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../forms/create_org_custom_widget.ui" line="127"/>
+        <location filename="../forms/create_org_custom_widget.ui" line="136"/>
         <source>TEXT_CREATE_ORG_BACKEND_URL_PLACEHOLDER</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../forms/create_org_custom_widget.ui" line="148"/>
+        <location filename="../forms/create_org_custom_widget.ui" line="157"/>
         <source>TEXT_LABEL_SERVER_ADMIN_TOKEN</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../forms/create_org_custom_widget.ui" line="169"/>
+        <location filename="../forms/create_org_custom_widget.ui" line="178"/>
         <source>TEXT_CREATE_ORG_ADMIN_TOKEN_PLACEHOLDER</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../forms/create_org_custom_widget.ui" line="85"/>
+        <location filename="../forms/create_org_custom_widget.ui" line="91"/>
         <source>TEXT_LABEL_ORG_NAME_RECOMMANDATIONS</source>
         <translation type="unfinished"></translation>
     </message>
@@ -431,12 +431,12 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../forms/create_org_website_widget.ui" line="197"/>
+        <location filename="../forms/create_org_website_widget.ui" line="206"/>
         <source>ACTION_ACCEPT_CONTRACT</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../forms/create_org_website_widget.ui" line="127"/>
+        <location filename="../forms/create_org_website_widget.ui" line="133"/>
         <source>TEXT_LABEL_ORG_NAME_RECOMMANDATIONS</source>
         <translation type="unfinished"></translation>
     </message>
