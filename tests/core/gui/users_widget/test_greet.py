@@ -33,8 +33,19 @@ def catch_greet_user_widget(widget_catcher_factory):
 
 
 @pytest.fixture
+def catch_error_widget(widget_catcher_factory):
+    return widget_catcher_factory("parsec.core.gui.custom_dialogs.ErrorWidget")
+
+
+@pytest.fixture
 def GreetUserTestBed(
-    aqtbot, catch_greet_user_widget, autoclose_dialog, backend, running_backend, logged_gui
+    aqtbot,
+    catch_greet_user_widget,
+    autoclose_dialog,
+    backend,
+    running_backend,
+    logged_gui,
+    catch_error_widget,
 ):
     class _GreetUserTestBed:
         def __init__(self):
@@ -133,8 +144,8 @@ def GreetUserTestBed(
             assert self.greet_user_information_widget.button_start.isEnabled()
             if self.greet_user_code_exchange_widget:
                 assert not self.greet_user_code_exchange_widget.isVisible()
-            if self.greet_user_widget:
-                assert not self.greet_user_widget.isVisible()
+            if self.greet_user_check_informations_widget:
+                assert not self.greet_user_check_informations_widget.isVisible()
 
         async def step_1_start_greet(self):
             gui_w = self.greet_user_information_widget
@@ -293,14 +304,17 @@ async def test_greet_user(GreetUserTestBed):
 )
 @customize_fixtures(logged_gui_as_admin=True)
 async def test_greet_user_offline(
-    aqtbot, GreetUserTestBed, running_backend, autoclose_dialog, offline_step
+    aqtbot,
+    GreetUserTestBed,
+    running_backend,
+    autoclose_dialog,
+    offline_step,
+    catch_error_widget,
+    catch_greet_user_widget,
 ):
     class OfflineTestBed(GreetUserTestBed):
         def _greet_aborted(self):
             # TODO: error message should be improved...
-            assert autoclose_dialog.dialogs == [
-                ("Error", "Internal error. Please restart the process.")
-            ]
             self.assert_initial_state()
 
         async def offline_step_1_start_greet(self):
@@ -308,18 +322,33 @@ async def test_greet_user_offline(
 
             with running_backend.offline():
                 await aqtbot.mouse_click(gui_w.button_start, QtCore.Qt.LeftButton)
+                self.error_widget = await catch_error_widget()
+                assert (
+                    self.error_widget.label_message.text()
+                    == "An error occured while waiting for the other user. Please restart the process."
+                )
                 await aqtbot.wait_until(self._greet_aborted)
 
             return None
 
         async def offline_step_2_start_claimer(self):
             with running_backend.offline():
+                self.error_widget = await catch_error_widget()
+                assert (
+                    self.error_widget.label_message.text()
+                    == "An error occured while waiting for the other user. Please restart the process."
+                )
                 await aqtbot.wait_until(self._greet_aborted)
 
             return None
 
         async def offline_step_3_exchange_greeter_sas(self):
             with running_backend.offline():
+                self.error_widget = await catch_error_widget()
+                assert (
+                    self.error_widget.label_message.text()
+                    == "An error occured while waiting for the other user. Please restart the process."
+                )
                 await aqtbot.wait_until(self._greet_aborted)
 
             return None
@@ -329,12 +358,23 @@ async def test_greet_user_offline(
 
             with running_backend.offline():
                 await aqtbot.run(guce_w.code_input_widget.good_code_clicked.emit)
+                self.error_widget = await catch_error_widget()
+                assert (
+                    self.error_widget.label_message.text()
+                    == "Internal error. Please restart the process."
+                )
+
                 await aqtbot.wait_until(self._greet_aborted)
 
             return None
 
         async def offline_step_5_provide_claim_info(self):
             with running_backend.offline():
+                self.error_widget = await catch_error_widget()
+                assert (
+                    self.error_widget.label_message.text()
+                    == "Internal error. Please restart the process."
+                )
                 await aqtbot.wait_until(self._greet_aborted)
 
             return None
@@ -344,6 +384,11 @@ async def test_greet_user_offline(
 
             with running_backend.offline():
                 await aqtbot.mouse_click(guci_w.button_create_user, QtCore.Qt.LeftButton)
+                self.error_widget = await catch_error_widget()
+                assert (
+                    self.error_widget.label_message.text()
+                    == "An error occured while waiting for the other user. Please restart the process."
+                )
                 await aqtbot.wait_until(self._greet_aborted)
 
             return None
@@ -360,7 +405,14 @@ async def test_greet_user_offline(
     ["step_4_exchange_claimer_sas", "step_5_provide_claim_info", "step_6_validate_claim_info"],
 )
 @customize_fixtures(logged_gui_as_admin=True)
-async def test_greet_user_reset_by_peer(aqtbot, GreetUserTestBed, autoclose_dialog, reset_step):
+async def test_greet_user_reset_by_peer(
+    aqtbot,
+    GreetUserTestBed,
+    autoclose_dialog,
+    reset_step,
+    catch_error_widget,
+    catch_greet_user_widget,
+):
     class ResetTestBed(GreetUserTestBed):
         @asynccontextmanager
         async def _reset_claimer(self):
@@ -370,9 +422,6 @@ async def test_greet_user_reset_by_peer(aqtbot, GreetUserTestBed, autoclose_dial
                 nursery.cancel_scope.cancel()
 
         def _greet_restart(self):
-            assert autoclose_dialog.dialogs == [
-                ("Error", "Internal error. Please restart the process.")
-            ]
             assert self.greet_user_widget.isVisible()
             assert self.greet_user_information_widget.isVisible()
 
@@ -380,6 +429,13 @@ async def test_greet_user_reset_by_peer(aqtbot, GreetUserTestBed, autoclose_dial
 
         async def reset_step_3_exchange_greeter_sas(self):
             async with self._reset_claimer():
+                self.error_widget = await catch_error_widget()
+                assert (
+                    self.error_widget.label_message.text()
+                    == "An error occured while waiting for the other user. Please restart the process."
+                )
+                self.greet_user_information_widget = await catch_greet_user_widget()
+                assert isinstance(self.greet_user_information_widget, GreetUserInstructionsWidget)
                 await aqtbot.wait_until(self._greet_restart)
 
             return None
@@ -391,12 +447,26 @@ async def test_greet_user_reset_by_peer(aqtbot, GreetUserTestBed, autoclose_dial
             await aqtbot.run(guce_w.code_input_widget.good_code_clicked.emit)
 
             async with self._reset_claimer():
+                self.error_widget = await catch_error_widget()
+                assert (
+                    self.error_widget.label_message.text()
+                    == "The invitee has reset the process. We will restart from the beginning."
+                )
+                self.greet_user_information_widget = await catch_greet_user_widget()
+                assert isinstance(self.greet_user_information_widget, GreetUserInstructionsWidget)
                 await aqtbot.wait_until(self._greet_restart)
 
             return None
 
         async def reset_step_5_provide_claim_info(self):
             async with self._reset_claimer():
+                self.error_widget = await catch_error_widget()
+                assert (
+                    self.error_widget.label_message.text()
+                    == "The invitee has reset the process. We will restart from the beginning."
+                )
+                self.greet_user_information_widget = await catch_greet_user_widget()
+                assert isinstance(self.greet_user_information_widget, GreetUserInstructionsWidget)
                 await aqtbot.wait_until(self._greet_restart)
 
             return None
@@ -406,8 +476,14 @@ async def test_greet_user_reset_by_peer(aqtbot, GreetUserTestBed, autoclose_dial
 
             await self.claimer_claim_task.cancel_and_join()
             async with self._reset_claimer():
-
                 await aqtbot.mouse_click(guci_w.button_create_user, QtCore.Qt.LeftButton)
+                self.error_widget = await catch_error_widget()
+                assert (
+                    self.error_widget.label_message.text()
+                    == "An error occured while waiting for the other user. Please restart the process."
+                )
+                self.greet_user_information_widget = await catch_greet_user_widget()
+                assert isinstance(self.greet_user_information_widget, GreetUserInstructionsWidget)
                 await aqtbot.wait_until(self._greet_restart)
 
             return None
@@ -431,7 +507,13 @@ async def test_greet_user_reset_by_peer(aqtbot, GreetUserTestBed, autoclose_dial
 )
 @customize_fixtures(logged_gui_as_admin=True)
 async def test_greet_user_invitation_cancelled(
-    aqtbot, GreetUserTestBed, backend, autoclose_dialog, cancelled_step
+    aqtbot,
+    GreetUserTestBed,
+    backend,
+    autoclose_dialog,
+    cancelled_step,
+    catch_greet_user_widget,
+    catch_error_widget,
 ):
     class CancelledTestBed(GreetUserTestBed):
         async def _cancel_invitation(self):
@@ -444,9 +526,6 @@ async def test_greet_user_invitation_cancelled(
             )
 
         def _greet_restart(self):
-            assert autoclose_dialog.dialogs == [
-                ("Error", "An error occured while creating the user. Please restart the process.")
-            ]
             assert self.greet_user_widget.isVisible()
             assert self.greet_user_information_widget.isVisible()
 
@@ -456,6 +535,16 @@ async def test_greet_user_invitation_cancelled(
             await self._cancel_invitation()
 
             await aqtbot.mouse_click(gui_w.button_start, QtCore.Qt.LeftButton)
+
+            self.error_widget = await catch_error_widget()
+            assert (
+                self.error_widget.label_message.text()
+                == "An error occured while waiting for the other user. Please restart the process."
+            )
+
+            self.greet_user_information_widget = await catch_greet_user_widget()
+            assert isinstance(self.greet_user_information_widget, GreetUserInstructionsWidget)
+
             await aqtbot.wait_until(self._greet_restart)
 
             return None
@@ -463,12 +552,30 @@ async def test_greet_user_invitation_cancelled(
         async def cancelled_step_2_start_claimer(self):
             await self._cancel_invitation()
 
+            self.error_widget = await catch_error_widget()
+            assert (
+                self.error_widget.label_message.text()
+                == "An error occured while waiting for the other user. Please restart the process."
+            )
+
+            self.greet_user_information_widget = await catch_greet_user_widget()
+            assert isinstance(self.greet_user_information_widget, GreetUserInstructionsWidget)
+
             await aqtbot.wait_until(self._greet_restart)
 
             return None
 
         async def cancelled_step_3_exchange_greeter_sas(self):
             await self._cancel_invitation()
+
+            self.error_widget = await catch_error_widget()
+            assert (
+                self.error_widget.label_message.text()
+                == "An error occured while waiting for the other user. Please restart the process."
+            )
+
+            self.greet_user_information_widget = await catch_greet_user_widget()
+            assert isinstance(self.greet_user_information_widget, GreetUserInstructionsWidget)
 
             await aqtbot.wait_until(self._greet_restart)
 
@@ -480,12 +587,31 @@ async def test_greet_user_invitation_cancelled(
             await self._cancel_invitation()
 
             await aqtbot.run(guce_w.code_input_widget.good_code_clicked.emit)
+
+            self.error_widget = await catch_error_widget()
+            assert (
+                self.error_widget.label_message.text()
+                == "Internal error. Please restart the process."
+            )
+
+            self.greet_user_information_widget = await catch_greet_user_widget()
+            assert isinstance(self.greet_user_information_widget, GreetUserInstructionsWidget)
+
             await aqtbot.wait_until(self._greet_restart)
 
             return None
 
         async def cancelled_step_5_provide_claim_info(self):
             await self._cancel_invitation()
+
+            self.error_widget = await catch_error_widget()
+            assert (
+                self.error_widget.label_message.text()
+                == "An error occured while waiting for the other user. Please restart the process."
+            )
+
+            self.greet_user_information_widget = await catch_greet_user_widget()
+            assert isinstance(self.greet_user_information_widget, GreetUserInstructionsWidget)
 
             await aqtbot.wait_until(self._greet_restart)
 
@@ -497,6 +623,16 @@ async def test_greet_user_invitation_cancelled(
             await self._cancel_invitation()
 
             await aqtbot.mouse_click(guci_w.button_create_user, QtCore.Qt.LeftButton)
+
+            self.error_widget = await catch_error_widget()
+            assert (
+                self.error_widget.label_message.text()
+                == "An error occured while creating the user. Please restart the process."
+            )
+
+            self.greet_user_information_widget = await catch_greet_user_widget()
+            assert isinstance(self.greet_user_information_widget, GreetUserInstructionsWidget)
+
             await aqtbot.wait_until(self._greet_restart)
 
             return None

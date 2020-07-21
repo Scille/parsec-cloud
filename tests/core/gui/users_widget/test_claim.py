@@ -414,9 +414,6 @@ async def test_claim_user_reset_by_peer(
                 nursery.cancel_scope.cancel()
 
         def _claim_restart(self):
-            assert autoclose_dialog.dialogs == [
-                ("Error", "Internal error. Please restart the process.")
-            ]
             self.assert_initial_state()
 
         # Step 1&2 are before peer wait, so reset is meaningless
@@ -426,12 +423,18 @@ async def test_claim_user_reset_by_peer(
 
             async with self._reset_greeter():
                 await aqtbot.run(cuce_w.code_input_widget.good_code_clicked.emit)
+                assert autoclose_dialog.dialogs == [
+                    ("Error", "Internal error. Please restart the process.")
+                ]
                 await aqtbot.wait_until(self._claim_restart)
 
             return None
 
         async def reset_step_4_exchange_claimer_sas(self):
             async with self._reset_greeter():
+                assert autoclose_dialog.dialogs == [
+                    ("Error", "Internal error. Please restart the process.")
+                ]
                 await aqtbot.wait_until(self._claim_restart)
 
             return None
@@ -448,12 +451,18 @@ async def test_claim_user_reset_by_peer(
                 await aqtbot.run(cupi_w.line_edit_device.clear)
                 await aqtbot.key_clicks(cupi_w.line_edit_device, device_label)
                 await aqtbot.mouse_click(cupi_w.button_ok, QtCore.Qt.LeftButton)
+                assert autoclose_dialog.dialogs == [
+                    ("Error", "Internal error. Please restart the process.")
+                ]
                 await aqtbot.wait_until(self._claim_restart)
 
             return None
 
         async def reset_step_6_validate_claim_info(self):
             async with self._reset_greeter():
+                assert autoclose_dialog.dialogs == [
+                    ("Error", "Internal error. Please restart the process.")
+                ]
                 await aqtbot.wait_until(self._claim_restart)
 
             return None
@@ -492,9 +501,6 @@ async def test_claim_user_invitation_cancelled(
             )
 
         def _claim_restart(self):
-            assert autoclose_dialog.dialogs == [
-                ("Error", "Error while waiting for the other user. Please restart the process.")
-            ]
             self.assert_initial_state()
 
         async def cancelled_step_1_start_claim(self):
@@ -503,13 +509,18 @@ async def test_claim_user_invitation_cancelled(
             await self._cancel_invitation()
 
             await aqtbot.mouse_click(cui_w.button_start, QtCore.Qt.LeftButton)
+            assert autoclose_dialog.dialogs == [
+                ("Error", "Error while waiting for the other user. Please restart the process.")
+            ]
             await aqtbot.wait_until(self._claim_restart)
 
             return None
 
         async def cancelled_step_2_start_greeter(self):
             await self._cancel_invitation()
-
+            assert autoclose_dialog.dialogs == [
+                ("Error", "Error while waiting for the other user. Please restart the process.")
+            ]
             await aqtbot.wait_until(self._claim_restart)
 
             return None
@@ -519,13 +530,18 @@ async def test_claim_user_invitation_cancelled(
             await self._cancel_invitation()
 
             await aqtbot.run(cuce_w.code_input_widget.good_code_clicked.emit)
+            assert autoclose_dialog.dialogs == [
+                ("Error", "Error while waiting for the other user. Please restart the process.")
+            ]
             await aqtbot.wait_until(self._claim_restart)
 
             return None
 
         async def cancelled_step_4_exchange_claimer_sas(self):
             await self._cancel_invitation()
-
+            assert autoclose_dialog.dialogs == [
+                ("Error", "Error while waiting for the other user. Please restart the process.")
+            ]
             await aqtbot.wait_until(self._claim_restart)
 
             return None
@@ -543,12 +559,21 @@ async def test_claim_user_invitation_cancelled(
             await aqtbot.run(cupi_w.line_edit_device.clear)
             await aqtbot.key_clicks(cupi_w.line_edit_device, device_label)
             await aqtbot.mouse_click(cupi_w.button_ok, QtCore.Qt.LeftButton)
+
+            assert autoclose_dialog.dialogs == [
+                ("Error", "Error while waiting for the other user. Please restart the process.")
+            ]
+
             await aqtbot.wait_until(self._claim_restart)
 
             return None
 
         async def cancelled_step_6_validate_claim_info(self):
             await self._cancel_invitation()
+
+            assert autoclose_dialog.dialogs == [
+                ("Error", "Error while waiting for the other user. Please restart the process.")
+            ]
 
             await aqtbot.wait_until(self._claim_restart)
 
