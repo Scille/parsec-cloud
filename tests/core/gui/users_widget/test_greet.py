@@ -133,8 +133,8 @@ def GreetUserTestBed(
             assert self.greet_user_information_widget.button_start.isEnabled()
             if self.greet_user_code_exchange_widget:
                 assert not self.greet_user_code_exchange_widget.isVisible()
-            if self.greet_user_widget:
-                assert not self.greet_user_widget.isVisible()
+            if self.greet_user_check_informations_widget:
+                assert not self.greet_user_check_informations_widget.isVisible()
 
         async def step_1_start_greet(self):
             gui_w = self.greet_user_information_widget
