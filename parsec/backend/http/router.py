@@ -2,32 +2,37 @@
 
 import re
 import mimetypes
-from urllib.parse import urlparse
+from urllib.parse import parse_qs, urlsplit, urlunsplit, urlencode
 from wsgiref.handlers import format_date_time
 from importlib import import_module
 import importlib_resources
 import jinja2
-import h11
 
-from parsec._version import __version__ as parsec_version
 from parsec.backend.http.package_loader import PackageLoader
-from parsec.core.types import BackendAddr
+from parsec.core.types.backend_address import BackendAddr
 
 
 _JINJA2_ENV = jinja2.Environment(loader=PackageLoader("parsec.backend.http.templates"))
 
 
-def get_method(url: bytes):
+def _get_method(target: str):
     """ Same as is_route but get 404 method if no other route found"""
-    method = is_route(url)
+    method = _is_route(target)
     if not method:
         method = get_404_method()
     return method
 
 
-def get_method_and_execute(url: bytes, backend_addr: BackendAddr):
-    method = get_method(url)
-    return method(url=url, backend_addr=backend_addr)
+def _cook_target(target: bytes) -> str:
+    target = target.decode("utf-8")
+    return target
+
+
+def get_method_and_execute(target: bytes, backend_addr: BackendAddr):
+    """Entry point"""
+    target = _cook_target(target)
+    method = _get_method(target)
+    return method(target=target, backend_addr=backend_addr)
 
 
 def get_404_method():
@@ -35,19 +40,18 @@ def get_404_method():
     return _http_404
 
 
-def _http_static(url: bytes, *arg, **kwarg):
+def _http_static(target: str, *arg, **kwarg):
     """Return static resources"""
-    url = url.decode("utf-8")
-    url_split = url.split("/")
+    target_split = target.split("/")
     path = "parsec.backend.http"
     # get all path except file name
     index = 0
-    while index < len(url_split) - 1:
+    while index < len(target_split) - 1:
         # prevent adding a dot when empty string
-        if len(url_split[index]) > 0:
-            path = path + "." + url_split[index]
+        if len(target_split[index]) > 0:
+            path = path + "." + target_split[index]
         index = index + 1
-    file_name = url_split[len(url_split) - 1]
+    file_name = target_split[len(target_split) - 1]
     try:
         package = import_module(".static", "parsec.backend.http")
         if not importlib_resources.is_resource(package, file_name):
@@ -59,7 +63,7 @@ def _http_static(url: bytes, *arg, **kwarg):
             return 200, _set_headers(data=data, content_type=content_type), data
         else:
             return 200, _set_headers(data=data), data
-    except (ValueError, RuntimeError, TypeError, NameError, Exception):
+    except (ValueError, UnboundLocalError, TypeError, ModuleNotFoundError):
         return 404, {}, b""
 
 
@@ -70,27 +74,34 @@ def _http_404(*arg, **kwarg):
     return status_code, _set_headers(data=data), data.encode("utf-8")
 
 
-def is_route(url: bytes):
+def _is_route(target: str):
     """Return the corresponding method if the url match a mapping route.
     if no route found, return None
     """
     match = None
     for regex, method in _MAPPING.items():
-        match = re.match(regex, url)
+        match = re.match(regex, target)
         if match:
             return method
     return None
 
 
-def _redirect_to_parsec(url: bytes, backend_addr, *arg, **kwarg):
+def _redirect_to_parsec(target: str, backend_addr, *arg, **kwarg):
     """Redirect the http invite request to a parsec url request"""
     if not backend_addr:
         return 501, {}, b"Url redirection is not available"
-    location = backend_addr.to_url()
-    parsed_url = urlparse(url)
-    query_string = parsed_url.query.decode("utf-8")
-    location = location + "?" + query_string if query_string else location
-    headers = [("location", location)]
+    backend_addr_split = urlsplit(backend_addr.to_url())
+    target_split = urlsplit(target)
+    # Merge params with backend priority in case no_ssl param is provided in both parts.
+    query_params = {**parse_qs(backend_addr_split.query), **parse_qs(target_split.query)}
+    query = urlencode(query=query_params, doseq=True)
+    path = target_split.path
+    if path.startswith("/api/redirect"):
+        path = path[len("/api/redirect") :]
+    location_url = urlunsplit(
+        (backend_addr_split.scheme, backend_addr_split.netloc, path, query, None)
+    )
+    headers = [("location", location_url)]
     return 302, _set_headers(headers=headers), b""
 
 
@@ -99,10 +110,12 @@ def _set_headers(data=b"", headers=(), content_type="text/html;charset=utf-8"):
     return [
         *headers,
         ("Date", format_date_time(None).encode("ascii")),
-        ("Server", f"parsec/{parsec_version} {h11.PRODUCT_ID}"),
+        ("Server", "parsec"),
+        # TODO use config.debug
+        # ("Server", f"parsec/{parsec_version} {h11.PRODUCT_ID}"),
         ("Content-Length", str(len(data))),
         ("Content-type", content_type),
     ]
 
 
-_MAPPING = {rb"^/api/redirect(.*)$": _redirect_to_parsec, rb"^/static/(.*)$": _http_static}
+_MAPPING = {r"^/api/redirect(.*)$": _redirect_to_parsec, r"^/static/(.*)$": _http_static}
