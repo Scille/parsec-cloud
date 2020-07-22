@@ -392,6 +392,7 @@ class FilesWidget(QWidget, Ui_FilesWidget):
             reload_timestamped_signal=self.reload_timestamped_requested,
             update_version_list=self.update_version_list,
             close_version_list=self.close_version_list,
+            core=self.core,
             parent=self,
         )
 

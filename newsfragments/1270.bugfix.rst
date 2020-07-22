@@ -1,0 +1,1 @@
+Display author name in file history instead of DeviceID
