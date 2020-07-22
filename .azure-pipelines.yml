@@ -260,18 +260,15 @@ jobs:
   condition: startsWith(variables['build.sourceBranch'], 'refs/tags/')
   timeoutInMinutes: 60
   pool:
+    # 18.04 requested to build a core18 image with --destructive-mode
     vmImage: 'ubuntu-18.04'
   steps:
   - checkout: self
     submodules: true
   - bash: |
       set -eux
-      sudo snap install lxd  # Multipass requires KVM which is not supported
       sudo snap install snapcraft --classic
-      lxd --version
       snapcraft --version
-      sudo lxd init --auto
-      sudo lxd.migrate -yes
     displayName: 'Bootstrap'
   - bash: |
       set -eux
@@ -285,7 +282,7 @@ jobs:
       VERBOSE_TAG=`git -C $(Build.SourcesDirectory) describe --tag`
       sed -i "s#^\\(__version__ = \\).*\$#\\1'$VERBOSE_TAG'#" src/parsec/_version.py
       sed -i "s/__PARSEC_VERSION__/$VERBOSE_TAG/" snap/snapcraft.yaml
-      sudo snapcraft --use-lxd
+      snapcraft --destructive-mode
       mkdir dist
       cp parsec*.snap dist
     displayName: 'Build snap'
@@ -306,32 +303,42 @@ jobs:
   steps:
   - checkout: self
     submodules: true
+  - task: UsePythonVersion@0
+    inputs:
+      versionSpec: '$(python.version)'
   - bash: |
       set -eux
-      sudo apt-get install -y python python-pip xvfb xorg
-      pip install twine
+      sudo apt-get update
+      # sudo apt-get install -y xvfb xorg
+      pip install -r pre-requirements.txt
     displayName: 'Bootstrap'
   - bash: |
       set -eux
-      python setup.py sdist bdist_wheel
+      # Build in a venv to isolate from tests
+      python -m venv venv_build
+      ./venv_build/bin/python -m pip install -r pre-requirements.txt
+      # Build the parsec wheel
+      ./venv_build/bin/python setup.py bdist_wheel
+    displayName: 'Build Wheel'
   - bash: |
       set -eux
       pip install --user virtualenv
-      python -m venv venv
-      source venv/bin/activate
-      pip install dist/*.whl[all]
+      python -m venv venv_test
+      source venv_test/bin/activate
+      pip install -r pre-requirements.txt
+      pip install $(ls dist/parsec_cloud-*.whl)[all]
+    displayName: 'Install Wheel'
   - bash: |
       set -eux
-      source venv/bin/activate
+      source venv_test/bin/activate
+      mkdir empty
+      cd empty
+      # Simple cli test
+      parsec --version
       # Run Parsec GUI in background and log it return code
-      xvfb-run parsec core gui &
-      # Make sure the GUI hasn't crashed during startup
-      sleep 3
-      jobs | grep Running
-      # Only way to close the GUI from the command line...
-      killall xvfb-run
-    displayName: 'Test GUI do launch'
-  - publish: $(Agent.TempDirectory)/dist
+      # xvfb-run parsec core gui --diagnose
+    displayName: 'Test Wheel'
+  - publish: dist/
     artifact: pypi
   - bash: |
       set -eux
@@ -340,11 +347,10 @@ jobs:
       username = __token__
       password = $PYPI_CREDENTIALS
       " > ~/.pypirc
-      twine upload dist/*
+      twine upload dist/parsec_cloud-*.whl
     env:
       PYPI_CREDENTIALS: $(PYPI_CREDENTIALS)
-    displayName: 'Build PyPI'
-    workingDirectory: $(Agent.TempDirectory)
+    displayName: 'Upload to PyPI'
 
 
 #################################################################################
