@@ -266,12 +266,15 @@ jobs:
     submodules: true
   - bash: |
       set -eux
-      sudo snap install lxd  # Multipass requires KVM which is not supported
+      # sudo snap install lxd  # Multipass requires KVM which is not supported
+      groups
+      sudo usermod -aG kvm $(whoami)
+      groups
       sudo snap install snapcraft --classic
-      lxd --version
+      # lxd --version
       snapcraft --version
-      sudo lxd init --auto
-      sudo lxd.migrate -yes
+      # sudo lxd init --auto
+      # sudo lxd.migrate -yes
     displayName: 'Bootstrap'
   - bash: |
       set -eux
@@ -285,7 +288,8 @@ jobs:
       VERBOSE_TAG=`git -C $(Build.SourcesDirectory) describe --tag`
       sed -i "s#^\\(__version__ = \\).*\$#\\1'$VERBOSE_TAG'#" src/parsec/_version.py
       sed -i "s/__PARSEC_VERSION__/$VERBOSE_TAG/" snap/snapcraft.yaml
-      sudo sg lxd -c "snapcraft --use-lxd"
+      # sudo sg lxd -c "snapcraft --use-lxd"
+      snapcraft
       mkdir dist
       cp parsec*.snap dist
     displayName: 'Build snap'
