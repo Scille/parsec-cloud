@@ -517,8 +517,8 @@ class GreetUserCodeExchangeWidget(QWidget, Ui_GreetUserCodeExchangeWidget):
         assert self.wait_peer_trust_job.status == "ok"
         self.wait_peer_trust_job = None
         self.get_claimer_sas_job = self.jobs_ctx.submit_job(
-            ThreadSafeQtSignal(self, "get_claimer_sas_success"),
-            ThreadSafeQtSignal(self, "get_claimer_sas_error"),
+            ThreadSafeQtSignal(self, "get_claimer_sas_success", QtToTrioJob),
+            ThreadSafeQtSignal(self, "get_claimer_sas_error", QtToTrioJob),
             self.greeter.get_claimer_sas,
         )
 
