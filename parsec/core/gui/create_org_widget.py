@@ -28,7 +28,10 @@ logger = get_logger()
 async def _do_api_request(email, organization_id):
     data = json.dumps({"email": email, "organization_id": organization_id}).encode("utf-8")
     url = os.environ.get("BOOTSTRAP_API_URL", "https://bms.parsec.cloud/api/quickjoin")
-    req = Request(url, method="POST", data=data, headers={"Content-Type": "application/json"})
+    try:
+        req = Request(url, method="POST", data=data, headers={"Content-Type": "application/json"})
+    except ValueError as exc:
+        raise JobResultError("invalid_url", exc=exc)
     try:
         response = await trio.to_thread.run_sync(lambda: urlopen(req))
         if response.status != 200:
@@ -132,6 +135,8 @@ class CreateOrgWidget(QWidget, Ui_CreateOrgWidget):
             errmsg = _("TEXT_ORG_WIZARD_INVALID_ORGANIZATION_ID")
         elif status == "invalid_response":
             errmsg = _("TEXT_ORG_WIZARD_INVALID_RESPONSE")
+        elif status == "invalid_url":
+            errmsg = _("TEXT_ORG_WIZARD_INVALID_URL")
         elif status == "offline":
             errmsg = _("TEXT_ORG_WIZARD_OFFLINE")
         else:

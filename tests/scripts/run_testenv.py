@@ -51,9 +51,11 @@ async def new_environment(source_file=None):
             "XDG_CACHE_HOME": f"{tempdir}/cache",
             "XDG_DATA_HOME": f"{tempdir}/share",
             "XDG_CONFIG_HOME": f"{tempdir}/config",
+            "BOOTSTRAP_API_URL": "invalid-url",
         }
     for key, value in env.items():
-        await trio.Path(value).mkdir(exist_ok=True)
+        if key != "BOOTSTRAP_API_URL":
+            await trio.Path(value).mkdir(exist_ok=True)
         os.environ[key] = value
         export_lines.append(f"{export} {key}={value}")
 

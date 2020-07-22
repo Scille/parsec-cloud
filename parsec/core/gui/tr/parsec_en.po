@@ -7,8 +7,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PROJECT VERSION\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2020-07-16 14:18+0200\n"
-"PO-Revision-Date: 2020-07-16 14:36+0200\n"
+"POT-Creation-Date: 2020-07-22 12:34+0200\n"
+"PO-Revision-Date: 2020-07-22 12:35+0200\n"
 "Last-Translator: \n"
 "Language: en\n"
 "Language-Team: en <LL@li.org>\n"
@@ -355,11 +355,11 @@ msgstr ""
 "You can retry the invitation process. If this problem persists, your "
 "network may not be safe."
 
-msgid "TEXT_CLAIM_USER_PEER_RESET"
-msgstr "The host has reset the process. We will restart from the beginning."
-
 msgid "TEXT_CLAIM_USER_GET_GREETER_SAS_ERROR"
 msgstr "Internal error. Please restart the process."
+
+msgid "TEXT_CLAIM_USER_PEER_RESET"
+msgstr "The host has reset the process. We will restart from the beginning."
 
 msgid "TEXT_CLAIM_USER_WAIT_TRUST_ERROR"
 msgstr "Internal error. Please restart the process."
@@ -376,11 +376,11 @@ msgstr "Internal error. Please restart the process."
 msgid "TEXT_CLAIM_USER_WAITING"
 msgstr "Waiting for the other user"
 
-msgid "ACTION_START"
-msgstr "Start"
-
 msgid "TEXT_CLAIM_USER_WAIT_PEER_ERROR"
 msgstr "Error while waiting for the other user. Please restart the process."
+
+msgid "ACTION_START"
+msgstr "Start"
 
 msgid "TEXT_CLAIM_USER_FAILED_TO_RETRIEVE_INFO"
 msgstr "Failed to retrieve information about the invitation."
@@ -1600,6 +1600,9 @@ msgstr "The organization name is invalid."
 msgid "TEXT_ORG_WIZARD_INVALID_RESPONSE"
 msgstr "Could not create the organization."
 
+msgid "TEXT_ORG_WIZARD_INVALID_URL"
+msgstr "The provided URL is invalid. Either your BOOTSTRAP_API_URL environment variable is incorrect or you're in a debug environment."
+
 msgid "TEXT_ORG_WIZARD_OFFLINE"
 msgstr "The server is offline or you have no access to the internet."
 
@@ -1646,11 +1649,11 @@ msgstr ""
 "You can retry the invitation process. If this problem persists, your "
 "network may not be safe."
 
-msgid "TEXT_CLAIM_DEVICE_PEER_RESET"
-msgstr "The process has been reset. We will restart from the beginning."
-
 msgid "TEXT_CLAIM_DEVICE_GET_GREETER_SAS_ERROR"
 msgstr "Internal error. Please restart the process."
+
+msgid "TEXT_CLAIM_DEVICE_PEER_RESET"
+msgstr "The process has been reset. We will restart from the beginning."
 
 msgid "TEXT_CLAIM_DEVICE_WAIT_TRUST_ERROR"
 msgstr "Internal error. Please restart the process."

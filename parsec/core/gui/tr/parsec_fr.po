@@ -7,8 +7,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PROJECT VERSION\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2020-07-16 14:18+0200\n"
-"PO-Revision-Date: 2020-07-16 14:38+0200\n"
+"POT-Creation-Date: 2020-07-22 12:34+0200\n"
+"PO-Revision-Date: 2020-07-22 12:38+0200\n"
 "Last-Translator: \n"
 "Language: fr\n"
 "Language-Team: fr <LL@li.org>\n"
@@ -370,11 +370,11 @@ msgstr ""
 "Veuillez redémarrer le processus. Si le problème persiste, votre réseau "
 "n'est peut-être pas sécurisé."
 
-msgid "TEXT_CLAIM_USER_PEER_RESET"
-msgstr "Suite à une annulation de l'hôte, il faut redémarrer le processus."
-
 msgid "TEXT_CLAIM_USER_GET_GREETER_SAS_ERROR"
 msgstr "Erreur interne. Veuillez redémarrer le processus."
+
+msgid "TEXT_CLAIM_USER_PEER_RESET"
+msgstr "Suite à une annulation de l'hôte, il faut redémarrer le processus."
 
 msgid "TEXT_CLAIM_USER_WAIT_TRUST_ERROR"
 msgstr "Erreur interne. Veuillez redémarrer le processus."
@@ -391,11 +391,11 @@ msgstr "Erreur interne. Veuillez redémarrer le processus."
 msgid "TEXT_CLAIM_USER_WAITING"
 msgstr "En attente..."
 
-msgid "ACTION_START"
-msgstr "Démarrer"
-
 msgid "TEXT_CLAIM_USER_WAIT_PEER_ERROR"
 msgstr "Erreur interne. Veuillez redémarrer le processus."
+
+msgid "ACTION_START"
+msgstr "Démarrer"
 
 msgid "TEXT_CLAIM_USER_FAILED_TO_RETRIEVE_INFO"
 msgstr "Impossible de récupérer les informations de l'invitation."
@@ -1625,6 +1625,9 @@ msgstr "Le nom d'organisation n'est pas valide."
 msgid "TEXT_ORG_WIZARD_INVALID_RESPONSE"
 msgstr "Impossible de créer l'organisation."
 
+msgid "TEXT_ORG_WIZARD_INVALID_URL"
+msgstr "L'adresse fournie n'est pas valide. Soit votre variable d'environnement BOOTSTRAP_API_URL est incorrecte, soit vous êtes dans un environnement de test."
+
 msgid "TEXT_ORG_WIZARD_OFFLINE"
 msgstr "Le serveur est hors-ligne ou vous n'avez pas de connexion internet."
 
@@ -1675,11 +1678,11 @@ msgstr ""
 "Veuillez redémarrer le processus. Si le problème persiste, votre réseau "
 "n'est peut-être pas sécurisé."
 
-msgid "TEXT_CLAIM_DEVICE_PEER_RESET"
-msgstr "Le processus va redémarrer suite à une annulation."
-
 msgid "TEXT_CLAIM_DEVICE_GET_GREETER_SAS_ERROR"
 msgstr "Erreur interne. Veuillez redémarrer le processus."
+
+msgid "TEXT_CLAIM_DEVICE_PEER_RESET"
+msgstr "Le processus va redémarrer suite à une annulation."
 
 msgid "TEXT_CLAIM_DEVICE_WAIT_TRUST_ERROR"
 msgstr "Erreur interne. Veuillez redémarrer le processus."
