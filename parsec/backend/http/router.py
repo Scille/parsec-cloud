@@ -3,28 +3,18 @@
 import re
 import mimetypes
 from urllib.parse import urlparse
-from parsec._version import __version__ as parsec_version
 from wsgiref.handlers import format_date_time
-from parsec.core.types import BackendAddr
 from importlib import import_module
 import importlib_resources
-
-from parsec.backend.http import PackageLoader
-
 import jinja2
 import h11
 
+from parsec._version import __version__ as parsec_version
+from parsec.backend.http.package_loader import PackageLoader
+from parsec.core.types import BackendAddr
+
+
 _JINJA2_ENV = jinja2.Environment(loader=PackageLoader("parsec.backend.http.templates"))
-
-
-def _create_parsec_url(backend_addr):
-    """Return parsec url from backend_addr if exist, otherwise create one"""
-    if not backend_addr:
-        backend_addr = BackendAddr(hostname="localhost", port=6888).to_url()
-    else:
-        backend_addr = backend_addr
-
-    return backend_addr.to_url()
 
 
 def get_method(url: bytes):
@@ -35,9 +25,9 @@ def get_method(url: bytes):
     return method
 
 
-def get_method_and_execute(url: bytes, backend_addr):
+def get_method_and_execute(url: bytes, backend_addr: BackendAddr):
     method = get_method(url)
-    return method(url, backend_addr=backend_addr)
+    return method(url=url, backend_addr=backend_addr)
 
 
 def get_404_method():
@@ -94,10 +84,12 @@ def is_route(url: bytes):
 
 def _redirect_to_parsec(url: bytes, backend_addr, *arg, **kwarg):
     """Redirect the http invite request to a parsec url request"""
-    location = _create_parsec_url(backend_addr=backend_addr) + "/"
+    if not backend_addr:
+        return 501, {}, b"Url redirection is not available"
+    location = backend_addr.to_url()
     parsed_url = urlparse(url)
     query_string = parsed_url.query.decode("utf-8")
-    location = location + query_string
+    location = location + "?" + query_string if query_string else location
     headers = [("location", location)]
     return 302, _set_headers(headers=headers), b""
 
