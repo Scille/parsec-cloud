@@ -347,6 +347,7 @@ jobs:
       username = __token__
       password = $PYPI_CREDENTIALS
       " > ~/.pypirc
+      pip install twine
       twine upload dist/parsec_cloud-*.whl
     env:
       PYPI_CREDENTIALS: $(PYPI_CREDENTIALS)
