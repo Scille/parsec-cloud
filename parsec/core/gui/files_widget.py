@@ -212,6 +212,7 @@ class FilesWidget(QWidget, Ui_FilesWidget):
         self.update_timer.setSingleShot(True)
         self.update_timer.timeout.connect(self.reload)
         self.default_import_path = str(pathlib.Path.home())
+        self.table_files.config = self.core.config
         self.table_files.file_moved.connect(self.on_file_moved)
         self.table_files.item_activated.connect(self.item_activated)
         self.table_files.rename_clicked.connect(self.rename_files)

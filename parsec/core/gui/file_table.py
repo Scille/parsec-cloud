@@ -79,6 +79,7 @@ class FileTable(QTableWidget):
         super().__init__(*args, **kwargs)
         self.previous_selection = []
         self.setColumnCount(len(Column))
+        self.config = None
 
         h_header = self.horizontalHeader()
         h_header.setDefaultAlignment(Qt.AlignLeft | Qt.AlignVCenter)
@@ -295,6 +296,8 @@ class FileTable(QTableWidget):
             self.setItem(row_idx, col, item)
 
     def add_folder(self, folder_name, uuid, is_synced, is_confined, selected=False):
+        if is_confined and not self.config.gui_show_confined:
+            return
         row_idx = self.rowCount()
         self.insertRow(row_idx)
         item = FolderTableItem(is_synced, is_confined)
@@ -337,6 +340,8 @@ class FileTable(QTableWidget):
         is_confined,
         selected=False,
     ):
+        if is_confined and not self.config.gui_show_confined:
+            return
         row_idx = self.rowCount()
         self.insertRow(row_idx)
         item = FileTableItem(is_synced, is_confined, file_name)

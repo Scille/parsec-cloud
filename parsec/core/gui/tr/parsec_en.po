@@ -1522,6 +1522,15 @@ msgstr "Parent folder"
 msgid "TEXT_FILE_TREE_PARENT_WORKSPACE"
 msgstr "Workspaces list"
 
+msgid "TEXT_FILE_ITEM_IS_CONFINED_TOOLTIP"
+msgstr "The file will not be synced."
+
+msgid "TEXT_FILE_ITEM_IS_SYNCED_TOOLTIP"
+msgstr "The file is synced."
+
+msgid "TEXT_FILE_ITEM_IS_NOT_SYNCED_TOOLTIP"
+msgstr "The file is not synced yet."
+
 msgid "TEXT_BOOTSTRAP_ORG_INSTRUCTIONS_url-organization"
 msgstr ""
 "You are about to bootstrap the organization <b>{organization}</b>. You "
@@ -2296,6 +2305,9 @@ msgstr "Use colors for workspaces"
 
 msgid "ACTION_SAVE"
 msgstr "Save"
+
+msgid "TEXT_SETTINGS_CHECK_SHOW_CONFINED_FILES"
+msgstr "Display files that will not be synced"
 
 msgid "TEXT_WORKSPACE_SHARING_REMOVE_USER_TOOLTIP"
 msgstr "Remove the user from this workspace."

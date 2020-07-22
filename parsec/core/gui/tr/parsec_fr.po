@@ -1567,6 +1567,15 @@ msgstr "Répertoire parent"
 msgid "TEXT_FILE_TREE_PARENT_WORKSPACE"
 msgstr "Liste des espaces de travail"
 
+msgid "TEXT_FILE_ITEM_IS_CONFINED_TOOLTIP"
+msgstr "Ce fichier ne sera pas synchronisé."
+
+msgid "TEXT_FILE_ITEM_IS_SYNCED_TOOLTIP"
+msgstr "Ce fichier est synchronisé."
+
+msgid "TEXT_FILE_ITEM_IS_NOT_SYNCED_TOOLTIP"
+msgstr "Ce fichier n'est pas encore synchronisé."
+
 msgid "TEXT_BOOTSTRAP_ORG_INSTRUCTIONS_url-organization"
 msgstr ""
 "Vous allez démarrer l'organisation <b>{organization}</b>. Vous serez le "
@@ -2353,6 +2362,9 @@ msgstr "Utiliser des couleurs pour les espaces de travail"
 msgid "ACTION_SAVE"
 msgstr "Sauvegarder"
 
+msgid "TEXT_SETTINGS_CHECK_SHOW_CONFINED_FILES"
+msgstr "Afficher les fichiers exclus de la synchronisation"
+
 msgid "TEXT_WORKSPACE_SHARING_REMOVE_USER_TOOLTIP"
 msgstr "Retirer l'utilisateur de cet espace de travail."
 
@@ -2426,4 +2438,3 @@ msgstr "Créer un nouvel espace de travail"
 
 msgid "ACTION_WORKSPACE_GOTO_FILE_LINK"
 msgstr "Trouver un fichier via son lien"
-

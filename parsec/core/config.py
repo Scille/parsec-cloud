@@ -80,6 +80,7 @@ class CoreConfig:
     gui_confirmation_before_close: bool = True
     gui_workspace_color: bool = False
     gui_allow_multiple_instances: bool = False
+    gui_show_confined: bool = False
 
     ipc_socket_file: Path = None
     ipc_win32_mutex_name: str = "parsec-cloud"
@@ -109,6 +110,7 @@ def config_factory(
     gui_check_version_allow_pre_release: bool = False,
     gui_workspace_color: bool = False,
     gui_allow_multiple_instances: bool = False,
+    gui_show_confined: bool = False,
     environ: dict = {},
     **_,
 ) -> CoreConfig:
@@ -135,6 +137,7 @@ def config_factory(
         gui_check_version_allow_pre_release=gui_check_version_allow_pre_release,
         gui_workspace_color=gui_workspace_color,
         gui_allow_multiple_instances=gui_allow_multiple_instances,
+        gui_show_confined=gui_show_confined,
         ipc_socket_file=data_base_dir / "parsec-cloud.lock",
         ipc_win32_mutex_name="parsec-cloud",
     )
@@ -219,6 +222,7 @@ def save_config(config: CoreConfig):
                 "gui_check_version_allow_pre_release": config.gui_check_version_allow_pre_release,
                 "gui_workspace_color": config.gui_workspace_color,
                 "gui_allow_multiple_instances": config.gui_allow_multiple_instances,
+                "gui_show_confined": config.gui_show_confined,
             },
             indent=True,
         )

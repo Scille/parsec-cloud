@@ -1063,13 +1063,18 @@ p, li { white-space: pre-wrap; }
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../forms/settings_widget.ui" line="414"/>
+        <location filename="../forms/settings_widget.ui" line="425"/>
         <source>TEXT_SETTINGS_CHECK_USE_WORKSPACES_COLORS</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../forms/settings_widget.ui" line="504"/>
+        <location filename="../forms/settings_widget.ui" line="515"/>
         <source>ACTION_SAVE</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../forms/settings_widget.ui" line="411"/>
+        <source>TEXT_SETTINGS_CHECK_SHOW_CONFINED_FILES</source>
         <translation type="unfinished"></translation>
     </message>
 </context>
