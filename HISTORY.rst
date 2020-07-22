@@ -5,7 +5,7 @@ History
 .. towncrier release notes start
 
 
-Parsec v1.14.0-rc1 (2020-07-21)
+Parsec v1.14.0-rc2 (2020-07-22)
 -------------------------------
 
 Features
@@ -35,6 +35,8 @@ Features
 Bugfixes
 ~~~~~~~~
 
+* Display author name in file history instead of DeviceID  (`#1270
+  <https://github.com/Scille/parsec-cloud/issues/1270>`__)
 * Fix GUI behavior when trying to share a workspace while not connected to the
   backend or wen providing an invalid user name  (`#1242
   <https://github.com/Scille/parsec-cloud/issues/1242>`__)
