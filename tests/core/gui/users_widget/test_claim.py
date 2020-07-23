@@ -22,21 +22,6 @@ from parsec.core.gui.claim_user_widget import (
 
 
 @pytest.fixture
-async def invitation_addr(backend_addr, backend, alice):
-    invitation = await backend.invite.new_for_user(
-        organization_id=alice.organization_id,
-        greeter_user_id=alice.user_id,
-        claimer_email="philip.j.fry@pe.com",
-    )
-    return BackendInvitationAddr.build(
-        backend_addr=backend_addr,
-        organization_id=alice.organization_id,
-        invitation_type=InvitationType.USER,
-        token=invitation.token,
-    )
-
-
-@pytest.fixture
 def catch_claim_user_widget(widget_catcher_factory):
     return widget_catcher_factory(
         "parsec.core.gui.claim_user_widget.ClaimUserFinalizeWidget",
@@ -74,11 +59,10 @@ def ClaimUserTestBed(
             self.claim_user_instructions_widget = None
 
             # Set by step 2
-            self.claimer_user_code_exchange_widget = None
+            self.claim_user_code_exchange_widget = None
 
-            # Set by step 5
-            self.claimer_claim_task = None
-            self.greet_user_check_informations_widget = None
+            # Set by step 4
+            self.claim_user_provide_info_widget = None
 
         async def run(self):
             await self.bootstrap()
@@ -90,8 +74,6 @@ def ClaimUserTestBed(
                     self.steps_done.append(current_step)
                     if next_step is None:
                         break
-                if self.claimer_claim_task:
-                    await self.claimer_claim_task.cancel_and_join()
 
         async def bootstrap(self):
             claimer_email = self.requested_human_handle.email
@@ -138,9 +120,10 @@ def ClaimUserTestBed(
             assert self.claim_user_widget.isVisible()
             assert self.claim_user_instructions_widget.isVisible()
             assert self.claim_user_instructions_widget.button_start.isEnabled()
-            if self.claimer_user_code_exchange_widget:
-                assert not self.claimer_user_code_exchange_widget.isVisible()
-                assert not self.greet_user_check_informations_widget.isVisible()
+            if self.claim_user_code_exchange_widget:
+                assert not self.claim_user_code_exchange_widget.isVisible()
+            if self.claim_user_provide_info_widget:
+                assert not self.claim_user_provide_info_widget.isVisible()
 
         async def step_1_start_claim(self):
             cui_w = self.claim_user_instructions_widget
@@ -175,12 +158,12 @@ def ClaimUserTestBed(
 
             await aqtbot.wait_until(_greeter_sas_code_choices_displayed)
 
-            self.claimer_user_code_exchange_widget = cuce_w
+            self.claim_user_code_exchange_widget = cuce_w
 
             return "step_3_exchange_greeter_sas"
 
         async def step_3_exchange_greeter_sas(self):
-            cuce_w = self.claimer_user_code_exchange_widget
+            cuce_w = self.claim_user_code_exchange_widget
 
             # Pretend we have choosen the right code
             await aqtbot.run(cuce_w.code_input_widget.good_code_clicked.emit)
@@ -200,7 +183,7 @@ def ClaimUserTestBed(
             return "step_4_exchange_claimer_sas"
 
         async def step_4_exchange_claimer_sas(self):
-            cuce_w = self.claimer_user_code_exchange_widget
+            cuce_w = self.claim_user_code_exchange_widget
 
             self.greeter_in_progress_ctx = await self.greeter_in_progress_ctx.do_signify_trust()
 
@@ -214,12 +197,12 @@ def ClaimUserTestBed(
 
             await aqtbot.wait_until(_claim_info_displayed)
 
-            self.greet_user_provide_info_widget = cupi_w
+            self.claim_user_provide_info_widget = cupi_w
 
             return "step_5_provide_claim_info"
 
         async def step_5_provide_claim_info(self):
-            cupi_w = self.greet_user_provide_info_widget
+            cupi_w = self.claim_user_provide_info_widget
             human_email = self.requested_human_handle.email
             human_label = self.requested_human_handle.label
             device_label = self.requested_device_label
@@ -249,7 +232,7 @@ def ClaimUserTestBed(
             return "step_6_validate_claim_info"
 
         async def step_6_validate_claim_info(self):
-            cupi_w = self.greet_user_provide_info_widget
+            cupi_w = self.claim_user_provide_info_widget
 
             await self.greeter_in_progress_ctx.do_create_new_user(
                 author=self.author,
@@ -349,7 +332,7 @@ async def test_claim_user_offline(
             return None
 
         async def offline_step_3_exchange_greeter_sas(self):
-            cuce_w = self.claimer_user_code_exchange_widget
+            cuce_w = self.claim_user_code_exchange_widget
 
             with running_backend.offline():
                 assert not autoclose_dialog.dialogs
@@ -364,7 +347,7 @@ async def test_claim_user_offline(
             return None
 
         async def offline_step_5_provide_claim_info(self):
-            cupi_w = self.greet_user_provide_info_widget
+            cupi_w = self.claim_user_provide_info_widget
             human_email = self.requested_human_handle.email
             human_label = self.requested_human_handle.label
             device_label = self.requested_device_label
@@ -426,7 +409,7 @@ async def test_claim_user_reset_by_peer(
         # Step 1&2 are before peer wait, so reset is meaningless
 
         async def reset_step_3_exchange_greeter_sas(self):
-            cuce_w = self.claimer_user_code_exchange_widget
+            cuce_w = self.claim_user_code_exchange_widget
 
             async with self._reset_greeter():
                 await aqtbot.run(cuce_w.code_input_widget.good_code_clicked.emit)
@@ -441,7 +424,7 @@ async def test_claim_user_reset_by_peer(
             return None
 
         async def reset_step_5_provide_claim_info(self):
-            cupi_w = self.greet_user_provide_info_widget
+            cupi_w = self.claim_user_provide_info_widget
             human_email = self.requested_human_handle.email
             human_label = self.requested_human_handle.label
             device_label = self.requested_device_label
@@ -519,7 +502,7 @@ async def test_claim_user_invitation_cancelled(
             return None
 
         async def cancelled_step_3_exchange_greeter_sas(self):
-            cuce_w = self.claimer_user_code_exchange_widget
+            cuce_w = self.claim_user_code_exchange_widget
             await self._cancel_invitation()
 
             await aqtbot.run(cuce_w.code_input_widget.good_code_clicked.emit)
@@ -535,7 +518,7 @@ async def test_claim_user_invitation_cancelled(
             return None
 
         async def cancelled_step_5_provide_claim_info(self):
-            cupi_w = self.greet_user_provide_info_widget
+            cupi_w = self.claim_user_provide_info_widget
             human_email = self.requested_human_handle.email
             human_label = self.requested_human_handle.label
             device_label = self.requested_device_label
