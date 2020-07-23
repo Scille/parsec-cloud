@@ -5,8 +5,10 @@ import trio
 from pendulum import now as pendulum_now
 from PyQt5 import QtCore
 from async_generator import asynccontextmanager
+from functools import partial
 
 from parsec.utils import start_task
+from parsec.core.gui.lang import translate
 from parsec.api.protocol import InvitationType, HumanHandle, InvitationDeletedReason
 from parsec.core.types import BackendInvitationAddr
 from parsec.core.backend_connection import backend_invited_cmds_factory
@@ -296,55 +298,59 @@ async def test_greet_user_offline(
     aqtbot, GreetUserTestBed, running_backend, autoclose_dialog, offline_step
 ):
     class OfflineTestBed(GreetUserTestBed):
-        def _greet_aborted(self):
-            # TODO: error message should be improved...
-            assert autoclose_dialog.dialogs == [
-                ("Error", "Internal error. Please restart the process.")
-            ]
-            self.assert_initial_state()
+        def _greet_aborted(self, expected_message):
+            assert len(autoclose_dialog.dialogs) == 1
+            assert autoclose_dialog.dialogs == [("Error", expected_message)]
+            assert not self.greet_user_widget.isVisible()
+            assert not self.greet_user_information_widget.isVisible()
 
         async def offline_step_1_start_greet(self):
+            expected_message = translate("TEXT_GREET_USER_WAIT_PEER_ERROR")
             gui_w = self.greet_user_information_widget
 
             with running_backend.offline():
                 await aqtbot.mouse_click(gui_w.button_start, QtCore.Qt.LeftButton)
-                await aqtbot.wait_until(self._greet_aborted)
-
+                await aqtbot.wait_until(partial(self._greet_aborted, expected_message))
             return None
 
         async def offline_step_2_start_claimer(self):
+            expected_message = translate("TEXT_GREET_USER_WAIT_PEER_ERROR")
             with running_backend.offline():
-                await aqtbot.wait_until(self._greet_aborted)
+                await aqtbot.wait_until(partial(self._greet_aborted, expected_message))
 
             return None
 
         async def offline_step_3_exchange_greeter_sas(self):
+            expected_message = translate("TEXT_GREET_USER_WAIT_PEER_TRUST_ERROR")
             with running_backend.offline():
-                await aqtbot.wait_until(self._greet_aborted)
+                await aqtbot.wait_until(partial(self._greet_aborted, expected_message))
 
             return None
 
         async def offline_step_4_exchange_claimer_sas(self):
+            expected_message = translate("TEXT_GREET_USER_SIGNIFY_TRUST_ERROR")
             guce_w = self.greet_user_code_exchange_widget
 
             with running_backend.offline():
                 await aqtbot.run(guce_w.code_input_widget.good_code_clicked.emit)
-                await aqtbot.wait_until(self._greet_aborted)
+                await aqtbot.wait_until(partial(self._greet_aborted, expected_message))
 
             return None
 
         async def offline_step_5_provide_claim_info(self):
+            expected_message = translate("TEXT_GREET_USER_GET_REQUESTS_ERROR")
             with running_backend.offline():
-                await aqtbot.wait_until(self._greet_aborted)
+                await aqtbot.wait_until(partial(self._greet_aborted, expected_message))
 
             return None
 
         async def offline_step_6_validate_claim_info(self):
+            expected_message = translate("TEXT_GREET_USER_WAIT_PEER_TRUST_ERROR")
             guci_w = self.greet_user_check_informations_widget
 
             with running_backend.offline():
                 await aqtbot.mouse_click(guci_w.button_create_user, QtCore.Qt.LeftButton)
-                await aqtbot.wait_until(self._greet_aborted)
+                await aqtbot.wait_until(partial(self._greet_aborted, expected_message))
 
             return None
 
