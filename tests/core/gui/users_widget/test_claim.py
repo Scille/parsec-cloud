@@ -5,8 +5,10 @@ import trio
 from pendulum import now as pendulum_now
 from PyQt5 import QtCore
 from async_generator import asynccontextmanager
+from functools import partial
 
 from parsec.api.data import UserProfile
+from parsec.core.gui.lang import translate
 from parsec.api.protocol import InvitationType, HumanHandle, InvitationDeletedReason
 from parsec.core.types import BackendInvitationAddr
 from parsec.core.invite import UserGreetInitialCtx
@@ -309,40 +311,40 @@ async def test_claim_user(ClaimUserTestBed):
 @pytest.mark.gui
 @pytest.mark.trio
 @pytest.mark.parametrize(
-    "offline_step",
+    "offline_step, expected_message",
     [
-        "step_1_start_claim",
-        "step_2_start_greeter",
-        "step_3_exchange_greeter_sas",
-        "step_4_exchange_claimer_sas",
-        "step_5_provide_claim_info",
-        "step_6_validate_claim_info",
+        ("step_1_start_claim", "TEXT_CLAIM_USER_WAIT_PEER_ERROR"),
+        ("step_2_start_greeter", "TEXT_CLAIM_USER_WAIT_PEER_ERROR"),
+        ("step_3_exchange_greeter_sas", "TEXT_CLAIM_USER_WAIT_TRUST_ERROR"),
+        ("step_4_exchange_claimer_sas", "TEXT_CLAIM_USER_WAIT_PEER_TRUST_ERROR"),
+        ("step_5_provide_claim_info", "TEXT_CLAIM_USER_CLAIM_ERROR"),
+        ("step_6_validate_claim_info", "TEXT_CLAIM_USER_CLAIM_ERROR"),
     ],
 )
 async def test_claim_user_offline(
-    aqtbot, ClaimUserTestBed, running_backend, autoclose_dialog, offline_step
+    aqtbot, ClaimUserTestBed, running_backend, autoclose_dialog, offline_step, expected_message
 ):
+    expected_message = translate(expected_message)
+
     class OfflineTestBed(ClaimUserTestBed):
-        def _claim_aborted(self):
-            # TODO: error message should be improved...
-            assert autoclose_dialog.dialogs == [
-                # ("Error", "Error while waiting for the other user. Please restart the process.")
-                ("Error", "Internal error. Please restart the process.")
-            ]
-            self.assert_initial_state()
+        def _claim_aborted(self, expected_message):
+            assert len(autoclose_dialog.dialogs) == 1
+            assert autoclose_dialog.dialogs == [("Error", expected_message)]
+            assert not self.claim_user_widget.isVisible()
+            assert not self.claim_user_instructions_widget.isVisible()
 
         async def offline_step_1_start_claim(self):
             cui_w = self.claim_user_instructions_widget
 
             with running_backend.offline():
                 await aqtbot.mouse_click(cui_w.button_start, QtCore.Qt.LeftButton)
-                await aqtbot.wait_until(self._claim_aborted)
+                await aqtbot.wait_until(partial(self._claim_aborted, expected_message))
 
             return None
 
         async def offline_step_2_start_greeter(self):
             with running_backend.offline():
-                await aqtbot.wait_until(self._claim_aborted)
+                await aqtbot.wait_until(partial(self._claim_aborted, expected_message))
 
             return None
 
@@ -350,14 +352,14 @@ async def test_claim_user_offline(
             cuce_w = self.claimer_user_code_exchange_widget
 
             with running_backend.offline():
+                assert not autoclose_dialog.dialogs
                 await aqtbot.run(cuce_w.code_input_widget.good_code_clicked.emit)
-                await aqtbot.wait_until(self._claim_aborted)
-
+                await aqtbot.wait_until(partial(self._claim_aborted, expected_message))
             return None
 
         async def offline_step_4_exchange_claimer_sas(self):
             with running_backend.offline():
-                await aqtbot.wait_until(self._claim_aborted)
+                await aqtbot.wait_until(partial(self._claim_aborted, expected_message))
 
             return None
 
@@ -373,14 +375,13 @@ async def test_claim_user_offline(
                 await aqtbot.run(cupi_w.line_edit_device.clear)
                 await aqtbot.key_clicks(cupi_w.line_edit_device, device_label)
                 await aqtbot.mouse_click(cupi_w.button_ok, QtCore.Qt.LeftButton)
-
-                await aqtbot.wait_until(self._claim_aborted)
+                await aqtbot.wait_until(partial(self._claim_aborted, expected_message))
 
             return None
 
         async def offline_step_6_validate_claim_info(self):
             with running_backend.offline():
-                await aqtbot.wait_until(self._claim_aborted)
+                await aqtbot.wait_until(partial(self._claim_aborted, expected_message))
 
             return None
 
