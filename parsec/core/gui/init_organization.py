@@ -21,13 +21,11 @@ class InitUsersWidget(QWidget, Ui_InitUsersWidget):
         super().__init__()
         self.setupUi(self)
 
-        self.init_message.setText(
-            "Votre premier espace de travail a été correctement créé. Vous pouvez maintenant inviter vos collaborateurs à rejoindre votre organisation."
-        )
-        self.button_invit.setText("Inviter")
+        self.init_message.setText(_("TEXT_INIT_FIRST_WORKSPACE_SUCCESSED"))
+        self.button_invit.setText(_("ACTION_USER_INVITE_DO_INVITE"))
         self.button_invit.clicked.connect(self._invit_user)
 
-        self.email_edit_text.setPlaceholderText("Email du collaborateur")
+        self.email_edit_text.setPlaceholderText(_("TEXT_LABEL_USER_EMAIL_PLACEHOLDER"))
         self.email_edit_text.textChanged.connect(self._on_change_email)
 
         self.button_validate = button_validate
@@ -98,12 +96,10 @@ class InitWorkspaceWidget(QWidget, Ui_InitWorkspaceWidget):
         super().__init__()
         self.setupUi(self)
 
-        self.init_message.setText(
-            "Votre organisation a été correctement créée. Afin de partager vos documents de façon sécurisée, il est nécessaire de créer votre premier espace de travail."
-        )
-        self.name_message.setText("Veuillez fournir le nom de votre nouvel espace de travail")
+        self.init_message.setText(_("TEXT_INIT_ORGANZATION_SUCCESSED"))
+        self.name_message.setText(_("TEXT_WORKSPACE_NEW_INSTRUCTIONS"))
 
-        self.name_edit_text.setPlaceholderText("Espace de travail")
+        self.name_edit_text.setPlaceholderText(_("TEXT_WORKSPACE_NEW_PLACEHOLDER"))
         self.name_edit_text.textChanged.connect(self._on_change_name)
 
         self.button_validate = button_validate
@@ -200,15 +196,15 @@ class InitOrganizationWidget(QWidget, Ui_InitOrganizationWidget):
         self.main_layout.addWidget(self.current_widget)
         self.parent.parent.parent.menu.users_clicked.emit()
         self.parent = self.parent.parent.parent.users_widget
-        self.dialog.label_title.setText("Finalisation de votre organisation (2 / 2)")
+        self.dialog.label_title.setText(_("TEXT_FINALIZE_ORGANIZATION_SECOND_STEP_TITLE"))
         self.button_validate.setEnabled(True)
-        self.button_validate.setText("Fermer")
+        self.button_validate.setText(_("ACTION_CLOSE"))
 
     @classmethod
     def exec_modal(cls, jobs_ctx, core, parent):
         w = cls(jobs_ctx, core, parent)
         d = GreyedDialog(
-            w, _("Finalisation de votre organisation (1 / 2)"), parent=parent, width=1000
+            w, _("TEXT_FINALIZE_ORGANIZATION_FIRST_STEP_TITLE"), parent=parent, width=1000
         )
         w.dialog = d
         if d.exec_() == QDialog.Accepted:
