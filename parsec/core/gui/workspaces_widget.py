@@ -13,6 +13,7 @@ from parsec.core.fs import WorkspaceFS, WorkspaceFSTimestamped
 from parsec.core.mountpoint.exceptions import MountpointError
 
 from parsec.core.gui.trio_thread import ThreadSafeQtSignal, QtToTrioJob, JobSchedulerNotAvailable
+
 from parsec.core.gui import desktop
 from parsec.core.gui.custom_dialogs import show_error, get_text_input, ask_question
 from parsec.core.gui.flow_layout import FlowLayout
@@ -21,6 +22,7 @@ from parsec.core.gui.workspace_button import WorkspaceButton
 from parsec.core.gui.timestamped_workspace_widget import TimestampedWorkspaceWidget
 from parsec.core.gui.ui.workspaces_widget import Ui_WorkspacesWidget
 from parsec.core.gui.workspace_sharing_widget import WorkspaceSharingWidget
+from parsec.core.gui.init_organization import InitOrganizationWidget
 from parsec.core.gui.jobs.workspace import (
     _get_reencryption_needs,
     _do_workspace_create,
@@ -63,9 +65,10 @@ class WorkspacesWidget(QWidget, Ui_WorkspacesWidget):
     ignore_success = pyqtSignal(QtToTrioJob)
     ignore_error = pyqtSignal(QtToTrioJob)
 
-    def __init__(self, core, jobs_ctx, event_bus, **kwargs):
+    def __init__(self, core, jobs_ctx, event_bus, parent, **kwargs):
         super().__init__(**kwargs)
         self.setupUi(self)
+        self.parent = parent
         self.core = core
         self.jobs_ctx = jobs_ctx
         self.event_bus = event_bus
@@ -104,6 +107,7 @@ class WorkspacesWidget(QWidget, Ui_WorkspacesWidget):
         self.workspace_reencryption_success.connect(self._on_workspace_reencryption_success)
         self.workspace_reencryption_error.connect(self._on_workspace_reencryption_error)
 
+        self.initial_list_workspaces = True
         self.reset_required = False
         self.reset_timer = QTimer()
         self.reset_timer.setInterval(self.RESET_TIMER_THRESHOLD)
@@ -208,6 +212,9 @@ class WorkspacesWidget(QWidget, Ui_WorkspacesWidget):
             label = QLabel(_("TEXT_WORKSPACE_NO_WORKSPACES"))
             label.setAlignment(Qt.AlignHCenter | Qt.AlignVCenter)
             self.layout_workspaces.addWidget(label)
+            if self.initial_list_workspaces:
+                self.initial_list_workspaces = False
+                InitOrganizationWidget.exec_modal(self.jobs_ctx, self.core, self)
             return
 
         self.line_edit_search.show()
