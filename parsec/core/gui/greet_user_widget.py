@@ -159,7 +159,7 @@ class Greeter:
 
 class GreetUserInstructionsWidget(QWidget, Ui_GreetUserInstructionsWidget):
     succeeded = pyqtSignal()
-    failed = pyqtSignal()
+    failed = pyqtSignal(object)  # QtToTrioJob or None
 
     wait_peer_success = pyqtSignal(QtToTrioJob)
     wait_peer_error = pyqtSignal(QtToTrioJob)
@@ -186,36 +186,34 @@ class GreetUserInstructionsWidget(QWidget, Ui_GreetUserInstructionsWidget):
     def _on_wait_peer_success(self, job):
         if self.wait_peer_job != job:
             return
-        assert self.wait_peer_job
-        assert self.wait_peer_job.is_finished()
-        assert self.wait_peer_job.status == "ok"
-        self.greeter_sas = self.wait_peer_job.ret
         self.wait_peer_job = None
+        assert job
+        assert job.is_finished()
+        assert job.status == "ok"
+        self.greeter_sas = job.ret
         self.succeeded.emit()
 
     def _on_wait_peer_error(self, job):
         if self.wait_peer_job != job:
             return
-        assert self.wait_peer_job
-        assert self.wait_peer_job.is_finished()
-        assert self.wait_peer_job.status != "ok"
-        if self.wait_peer_job.status != "cancelled":
+        self.wait_peer_job = None
+        assert job
+        assert job.is_finished()
+        assert job.status != "ok"
+        if job.status != "cancelled":
             msg = _("TEXT_GREET_USER_WAIT_PEER_ERROR")
             exc = None
-            if self.wait_peer_job.exc:
-                exc = self.wait_peer_job.exc.params.get("origin", None)
+            if job.exc:
+                exc = job.exc.params.get("origin", None)
                 if isinstance(exc, InvitePeerResetError):
                     msg = _("TEXT_GREET_USER_PEER_RESET")
             show_error(self, msg, exception=exc)
-            self.wait_peer_job = None
-            self.failed.emit()
-        else:
-            self.wait_peer_job = None
+        self.failed.emit(job)
 
 
 class GreetUserCheckInfoWidget(QWidget, Ui_GreetUserCheckInfoWidget):
     succeeded = pyqtSignal()
-    failed = pyqtSignal()
+    failed = pyqtSignal(object)
 
     get_requests_success = pyqtSignal(QtToTrioJob)
     get_requests_error = pyqtSignal(QtToTrioJob)
@@ -295,21 +293,19 @@ class GreetUserCheckInfoWidget(QWidget, Ui_GreetUserCheckInfoWidget):
     def _on_create_user_error(self, job):
         if self.create_user_job != job:
             return
-        assert self.create_user_job
-        assert self.create_user_job.is_finished()
-        assert self.create_user_job.status != "ok"
-        if self.create_user_job.status != "cancelled":
+        self.create_user_job = None
+        assert job
+        assert job.is_finished()
+        assert job.status != "ok"
+        if job.status != "cancelled":
             msg = _("TEXT_GREET_USER_CREATE_USER_ERROR")
             exc = None
-            if self.create_user_job.exc:
-                exc = self.create_user_job.exc.params.get("origin", None)
+            if job.exc:
+                exc = job.exc.params.get("origin", None)
                 if isinstance(exc, InvitePeerResetError):
                     msg = _("TEXT_GREET_USER_PEER_RESET")
             show_error(self, msg, exception=exc)
-            self.create_user_job = None
-            self.failed.emit()
-        else:
-            self.create_user_job = None
+        self.failed.emit(job)
 
     def _on_get_requests_success(self, job):
         if self.get_requests_job != job:
@@ -330,26 +326,24 @@ class GreetUserCheckInfoWidget(QWidget, Ui_GreetUserCheckInfoWidget):
     def _on_get_requests_error(self, job):
         if self.get_requests_job != job:
             return
-        assert self.get_requests_job
-        assert self.get_requests_job.is_finished()
-        assert self.get_requests_job.status != "ok"
-        if self.get_requests_job.status != "cancelled":
+        self.get_requests_job = None
+        assert job
+        assert job.is_finished()
+        assert job.status != "ok"
+        if job.status != "cancelled":
             msg = _("TEXT_GREET_USER_GET_REQUESTS_ERROR")
             exc = None
-            if self.get_requests_job.exc:
-                exc = self.get_requests_job.exc.params.get("origin", None)
+            if job.exc:
+                exc = job.exc.params.get("origin", None)
                 if isinstance(exc, InvitePeerResetError):
                     msg = _("TEXT_GREET_USER_PEER_RESET")
             show_error(self, msg, exception=exc)
-            self.failed.emit()
-            self.get_requests_job = None
-        else:
-            self.get_requests_job = None
+        self.failed.emit(job)
 
 
 class GreetUserCodeExchangeWidget(QWidget, Ui_GreetUserCodeExchangeWidget):
     succeeded = pyqtSignal()
-    failed = pyqtSignal()
+    failed = pyqtSignal(object)
 
     signify_trust_success = pyqtSignal(QtToTrioJob)
     signify_trust_error = pyqtSignal(QtToTrioJob)
@@ -410,11 +404,11 @@ class GreetUserCodeExchangeWidget(QWidget, Ui_GreetUserCodeExchangeWidget):
 
     def _on_wrong_claimer_code_clicked(self):
         show_error(self, _("TEXT_GREET_USER_INVALID_CODE_CLICKED"))
-        self.failed.emit()
+        self.failed.emit(None)
 
     def _on_none_clicked(self):
         show_info(self, _("TEXT_GREET_USER_NONE_CODE_CLICKED"))
-        self.failed.emit()
+        self.failed.emit(None)
 
     def _on_get_greeter_sas_success(self, job):
         if self.get_greeter_sas_job != job:
@@ -434,21 +428,19 @@ class GreetUserCodeExchangeWidget(QWidget, Ui_GreetUserCodeExchangeWidget):
     def _on_get_greeter_sas_error(self, job):
         if self.get_greeter_sas_job != job:
             return
-        assert self.get_greeter_sas_job
-        assert self.get_greeter_sas_job.is_finished()
-        assert self.get_greeter_sas_job.status != "ok"
-        if self.get_greeter_sas_job.status != "cancelled":
+        self.get_greeter_sas_job = None
+        assert job
+        assert job.is_finished()
+        assert job.status != "ok"
+        if job.status != "cancelled":
             msg = _("TEXT_GREET_USER_GET_GREETER_SAS_ERROR")
             exc = None
-            if self.get_greeter_sas_job.exc:
-                exc = self.get_greeter_sas_job.exc.params.get("origin", None)
+            if job.exc:
+                exc = job.exc.params.get("origin", None)
                 if isinstance(exc, InvitePeerResetError):
                     msg = _("TEXT_GREET_USER_PEER_RESET")
             show_error(self, msg, exception=exc)
-            self.failed.emit()
-            self.get_greeter_sas_job = None
-        else:
-            self.get_greeter_sas_job = None
+        self.failed.emit(job)
 
     def _on_get_claimer_sas_success(self, job):
         if self.get_claimer_sas_job != job:
@@ -465,21 +457,19 @@ class GreetUserCodeExchangeWidget(QWidget, Ui_GreetUserCodeExchangeWidget):
     def _on_get_claimer_sas_error(self, job):
         if self.get_claimer_sas_job != job:
             return
-        assert self.get_claimer_sas_job
-        assert self.get_claimer_sas_job.is_finished()
-        assert self.get_claimer_sas_job.status != "ok"
-        if self.get_claimer_sas_job.status != "cancelled":
+        self.get_claimer_sas_job = None
+        assert job
+        assert job.is_finished()
+        assert job.status != "ok"
+        if job.status != "cancelled":
             msg = _("TEXT_GREET_USER_GET_CLAIMER_SAS_ERROR")
             exc = None
-            if self.get_claimer_sas_job.exc:
-                exc = self.get_claimer_sas_job.exc.params.get("origin", None)
+            if job.exc:
+                exc = job.exc.params.get("origin", None)
                 if isinstance(exc, InvitePeerResetError):
                     msg = _("TEXT_GREET_USER_PEER_RESET")
             show_error(self, msg, exception=exc)
-            self.failed.emit()
-            self.get_claimer_sas_job = None
-        else:
-            self.get_claimer_sas_job = None
+        self.failed.emit(job)
 
     def _on_signify_trust_success(self, job):
         if self.signify_trust_job != job:
@@ -493,21 +483,19 @@ class GreetUserCodeExchangeWidget(QWidget, Ui_GreetUserCodeExchangeWidget):
     def _on_signify_trust_error(self, job):
         if self.signify_trust_job != job:
             return
-        assert self.signify_trust_job
-        assert self.signify_trust_job.is_finished()
-        assert self.signify_trust_job.status != "ok"
-        if self.signify_trust_job.status != "cancelled":
+        self.signify_trust_job = None
+        assert job
+        assert job.is_finished()
+        assert job.status != "ok"
+        if job.status != "cancelled":
             msg = _("TEXT_GREET_USER_SIGNIFY_TRUST_ERROR")
             exc = None
-            if self.signify_trust_job.exc:
-                exc = self.signify_trust_job.exc.params.get("origin", None)
+            if job.exc:
+                exc = job.exc.params.get("origin", None)
                 if isinstance(exc, InvitePeerResetError):
                     msg = _("TEXT_GREET_USER_PEER_RESET")
             show_error(self, msg, exception=exc)
-            self.failed.emit()
-            self.signify_trust_job = None
-        else:
-            self.signify_trust_job = None
+        self.failed.emit(job)
 
     def _on_wait_peer_trust_success(self, job):
         if self.wait_peer_trust_job != job:
@@ -525,21 +513,19 @@ class GreetUserCodeExchangeWidget(QWidget, Ui_GreetUserCodeExchangeWidget):
     def _on_wait_peer_trust_error(self, job):
         if self.wait_peer_trust_job != job:
             return
-        assert self.wait_peer_trust_job
-        assert self.wait_peer_trust_job.is_finished()
-        assert self.wait_peer_trust_job.status != "ok"
-        if self.wait_peer_trust_job.status != "cancelled":
+        self.wait_peer_trust_job = None
+        assert job
+        assert job.is_finished()
+        assert job.status != "ok"
+        if job.status != "cancelled":
             msg = _("TEXT_GREET_USER_WAIT_PEER_TRUST_ERROR")
             exc = None
-            if self.wait_peer_trust_job.exc:
-                exc = self.wait_peer_trust_job.exc.params.get("origin", None)
+            if job.exc:
+                exc = job.exc.params.get("origin", None)
                 if isinstance(exc, InvitePeerResetError):
                     msg = _("TEXT_GREET_USER_PEER_RESET")
             show_error(self, msg, exception=exc)
-            self.failed.emit()
-            self.wait_peer_trust_job = None
-        else:
-            self.wait_peer_trust_job = None
+        self.failed.emit(job)
 
 
 class GreetUserWidget(QWidget, Ui_GreetUserWidget):
@@ -575,11 +561,23 @@ class GreetUserWidget(QWidget, Ui_GreetUserWidget):
         self.greeter = Greeter()
         self._run_greeter()
 
-    def _on_page_failure_reboot(self):
+    def _on_page_failed(self, job):
+        if not self.isVisible():
+            return
+        if job is not None and job.status == "cancelled":
+            self.dialog.reject()
+            return
+        if job is not None and isinstance(job.exc.params.get("origin", None), BackendNotAvailable):
+            self.dialog.reject()
+            return
         self.restart()
 
-    def _on_page_failure_stop(self):
-        self.dialog.accept()
+    def _on_page_failed_force_reject(self):
+        # The dialog has already been rejected
+        if not self.isVisible():
+            return
+        # Do not retry after a failure on page 4, simply close the dialog
+        self.dialog.reject()
 
     def _goto_page1(self):
         item = self.main_layout.takeAt(0)
@@ -590,7 +588,7 @@ class GreetUserWidget(QWidget, Ui_GreetUserWidget):
                 current_page.setParent(None)
         page = GreetUserInstructionsWidget(self.jobs_ctx, self.greeter)
         page.succeeded.connect(self._goto_page2)
-        page.failed.connect(self._on_page_failure_reboot)
+        page.failed.connect(self._on_page_failed)
         self.main_layout.addWidget(page)
 
     def _goto_page2(self):
@@ -599,7 +597,7 @@ class GreetUserWidget(QWidget, Ui_GreetUserWidget):
         current_page.setParent(None)
         page = GreetUserCodeExchangeWidget(self.jobs_ctx, self.greeter)
         page.succeeded.connect(self._goto_page3)
-        page.failed.connect(self._on_page_failure_reboot)
+        page.failed.connect(self._on_page_failed)
         self.main_layout.addWidget(page)
 
     def _goto_page3(self):
@@ -608,7 +606,7 @@ class GreetUserWidget(QWidget, Ui_GreetUserWidget):
         current_page.setParent(None)
         page = GreetUserCheckInfoWidget(self.jobs_ctx, self.greeter)
         page.succeeded.connect(self._on_finished)
-        page.failed.connect(self._on_page_failure_reboot)
+        page.failed.connect(self._on_page_failed)
         self.main_layout.addWidget(page)
 
     def _on_finished(self):
@@ -624,23 +622,25 @@ class GreetUserWidget(QWidget, Ui_GreetUserWidget):
         self.greeter_job = None
 
     def _on_greeter_error(self, job):
+        assert job
+        assert job.is_finished()
+        assert job.status != "ok"
+        if job.status == "cancelled":
+            return
         if self.greeter_job != job:
             return
-        assert self.greeter_job
-        assert self.greeter_job.is_finished()
-        assert self.greeter_job.status != "ok"
-        if self.greeter_job.status != "cancelled":
-            msg = ""
-            if self.greeter_job.status == "backend-not-available":
-                msg = _("TEXT_INVITATION_BACKEND_NOT_AVAILABLE")
-            else:
-                msg = _("TEXT_GREET_USER_UNKNOWN_ERROR")
-            exc = None
-            if self.greeter_job.exc:
-                exc = self.greeter_job.exc.params.get("origin", None)
-            show_error(self, msg, exception=exc)
         self.greeter_job = None
-        self._on_page_failure_stop()
+        msg = ""
+        exc = None
+        if job.status == "backend-not-available":
+            msg = _("TEXT_INVITATION_BACKEND_NOT_AVAILABLE")
+        else:
+            msg = _("TEXT_GREET_USER_UNKNOWN_ERROR")
+        if job.exc:
+            exc = job.exc.params.get("origin", None)
+        show_error(self, msg, exception=exc)
+        # TODO: or dialog.reject ?
+        self.dialog.reject()
 
     def cancel(self):
         item = self.main_layout.itemAt(0)
