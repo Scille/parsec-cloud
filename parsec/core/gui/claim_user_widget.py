@@ -583,33 +583,41 @@ class ClaimUserWidget(QWidget, Ui_ClaimUserWidget):
     def _on_retrieve_info_error(self, job):
         if self.retrieve_info_job is not job:
             return
-        assert self.retrieve_info_job
-        assert self.retrieve_info_job.is_finished()
-        assert self.retrieve_info_job.status != "ok"
-        if self.retrieve_info_job.status != "cancelled":
+        self.retrieve_info_job = None
+        assert job
+        assert job.is_finished()
+        assert job.status != "ok"
+        if job.status != "cancelled":
             exc = None
             msg = _("TEXT_CLAIM_USER_FAILED_TO_RETRIEVE_INFO")
-            if self.retrieve_info_job.exc:
-                exc = self.retrieve_info_job.exc.params.get("origin", None)
+            if job.exc:
+                exc = job.exc.params.get("origin", None)
                 if isinstance(exc, InvitePeerResetError):
                     msg = _("TEXT_CLAIM_USER_PEER_RESET")
             show_error(self, msg, exception=exc)
-        self.retrieve_info_job = None
+        # No point in retrying the process here, simply close the dialog
         self.dialog.reject()
 
     def _on_page_failed_force_reject(self, job):
+        # The dialog has already been rejected
+        if not self.isVisible():
+            return
+        # Do not retry after a failure on page 4, simply close the dialog
         self.dialog.reject()
 
     def _on_page_failed(self, job):
-        # No reason to restart the process if cancelled
+        # The dialog has already been rejected
+        if not self.isVisible():
+            return
+        # No reason to restart the process if cancelled, simply close the dialog
         if job is not None and job.status == "cancelled":
             self.dialog.reject()
             return
-        # No reason to restart the process if offline
+        # No reason to restart the process if offline, simply close the dialog
         if job is not None and isinstance(job.exc.params.get("origin", None), BackendNotAvailable):
             self.dialog.reject()
             return
-        # Restart the process
+        # Let's try one more time with the same dialog
         self.restart()
 
     def restart(self):
@@ -673,24 +681,30 @@ class ClaimUserWidget(QWidget, Ui_ClaimUserWidget):
         self.claimer_job = None
 
     def _on_claimer_error(self, job):
+        assert job
+        assert job.is_finished()
+        assert job.status != "ok"
+        # This callback can be called after the creation of a new claimer job in the case
+        # of a restart, due to Qt signals being called later.
+        if job.status == "cancelled":
+            return
+        # Safety net for concurrency issues
         if self.claimer_job is not job:
             return
-        assert self.claimer_job
-        assert self.claimer_job.is_finished()
-        assert self.claimer_job.status != "ok"
-        if self.claimer_job.status != "cancelled":
-            msg = ""
-            exc = None
-            if self.claimer_job.status == "invitation-not-found":
-                msg = _("TEXT_CLAIM_USER_INVITATION_NOT_FOUND")
-            elif self.claimer_job.status == "backend-not-available":
-                msg = _("TEXT_INVITATION_BACKEND_NOT_AVAILABLE")
-            else:
-                msg = _("TEXT_CLAIM_USER_UNKNOWN_ERROR")
-            if self.claimer_job.exc:
-                exc = self.claimer_job.exc.params.get("origin", None)
-            show_error(self, msg, exception=exc)
         self.claimer_job = None
+        msg = ""
+        exc = None
+        if job.status == "invitation-not-found":
+            msg = _("TEXT_CLAIM_USER_INVITATION_NOT_FOUND")
+        elif job.status == "backend-not-available":
+            msg = _("TEXT_INVITATION_BACKEND_NOT_AVAILABLE")
+        else:
+            msg = _("TEXT_CLAIM_USER_UNKNOWN_ERROR")
+        if job.exc:
+            exc = job.exc.params.get("origin", None)
+        show_error(self, msg, exception=exc)
+        # The claimer itself failed, no point in retrying
+        # Simple close the widget
         self.dialog.reject()
 
     def cancel(self):
