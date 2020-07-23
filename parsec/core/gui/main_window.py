@@ -607,6 +607,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
             self.close_tab(idx, force=force)
 
     def close_app(self, force=False):
+        self.show_top()
         self.need_close = True
         self.force_close = force
         self.close()
