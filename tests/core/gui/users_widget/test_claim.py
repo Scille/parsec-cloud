@@ -116,6 +116,28 @@ def ClaimUserTestBed(
 
             self.assert_initial_state()  # Sanity check
 
+        async def bootstrap_after_restart(self):
+            self.claim_user_instructions_widget = None
+            self.claim_user_code_exchange_widget = None
+            self.claim_user_provide_info_widget = None
+
+            cu_w = self.claim_user_widget
+            cui_w = await catch_claim_user_widget()
+            assert isinstance(cui_w, ClaimUserInstructionsWidget)
+
+            def _register_user_displayed():
+                tab = gui.test_get_tab()
+                assert tab and tab.isVisible()
+                assert cu_w.isVisible()
+                assert cu_w.dialog.label_title.text() == "Register a user"
+                assert cui_w.isVisible()
+
+            await aqtbot.wait_until(_register_user_displayed)
+
+            self.claim_user_widget = cu_w
+            self.claim_user_instructions_widget = cui_w
+            self.assert_initial_state()  # Sanity check
+
         def assert_initial_state(self):
             assert self.claim_user_widget.isVisible()
             assert self.claim_user_instructions_widget.isVisible()
@@ -404,30 +426,32 @@ async def test_claim_user_reset_by_peer(
                 yield
                 nursery.cancel_scope.cancel()
 
-        def _claim_restart(self):
-            assert autoclose_dialog.dialogs == [
-                ("Error", "Internal error. Please restart the process.")
-            ]
-            self.assert_initial_state()
+        def _claim_restart(self, expected_message):
+            assert autoclose_dialog.dialogs == [("Error", expected_message)]
 
         # Step 1&2 are before peer wait, so reset is meaningless
 
         async def reset_step_3_exchange_greeter_sas(self):
+            expected_message = translate("TEXT_CLAIM_USER_PEER_RESET")
             cuce_w = self.claim_user_code_exchange_widget
 
             async with self._reset_greeter():
                 await aqtbot.run(cuce_w.code_input_widget.good_code_clicked.emit)
-                await aqtbot.wait_until(self._claim_restart)
+                await aqtbot.wait_until(partial(self._claim_restart, expected_message))
 
+            await self.bootstrap_after_restart()
             return None
 
         async def reset_step_4_exchange_claimer_sas(self):
+            expected_message = translate("TEXT_CLAIM_USER_PEER_RESET")
             async with self._reset_greeter():
-                await aqtbot.wait_until(self._claim_restart)
+                await aqtbot.wait_until(partial(self._claim_restart, expected_message))
 
+            await self.bootstrap_after_restart()
             return None
 
         async def reset_step_5_provide_claim_info(self):
+            expected_message = translate("TEXT_CLAIM_USER_PEER_RESET")
             cupi_w = self.claim_user_provide_info_widget
             human_email = self.requested_human_handle.email
             human_label = self.requested_human_handle.label
@@ -439,14 +463,17 @@ async def test_claim_user_reset_by_peer(
                 await aqtbot.run(cupi_w.line_edit_device.clear)
                 await aqtbot.key_clicks(cupi_w.line_edit_device, device_label)
                 await aqtbot.mouse_click(cupi_w.button_ok, QtCore.Qt.LeftButton)
-                await aqtbot.wait_until(self._claim_restart)
+                await aqtbot.wait_until(partial(self._claim_restart, expected_message))
 
+            await self.bootstrap_after_restart()
             return None
 
         async def reset_step_6_validate_claim_info(self):
+            expected_message = translate("TEXT_CLAIM_USER_PEER_RESET")
             async with self._reset_greeter():
-                await aqtbot.wait_until(self._claim_restart)
+                await aqtbot.wait_until(partial(self._claim_restart, expected_message))
 
+            await self.bootstrap_after_restart()
             return None
 
         # Step 7 doesn't depend on backend connection
