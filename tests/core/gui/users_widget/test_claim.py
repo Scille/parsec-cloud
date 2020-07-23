@@ -509,46 +509,51 @@ async def test_claim_user_invitation_cancelled(
                 reason=InvitationDeletedReason.CANCELLED,
             )
 
-        def _claim_restart(self):
-            assert autoclose_dialog.dialogs == [
-                ("Error", "Error while waiting for the other user. Please restart the process.")
-            ]
-            self.assert_initial_state()
+        def _claim_restart(self, expected_message):
+            assert len(autoclose_dialog.dialogs) == 1
+            assert autoclose_dialog.dialogs == [("Error", expected_message)]
+            assert not self.claim_user_widget.isVisible()
+            assert not self.claim_user_instructions_widget.isVisible()
 
         async def cancelled_step_1_start_claim(self):
+            expected_message = translate("TEXT_CLAIM_USER_WAIT_PEER_ERROR")
             cui_w = self.claim_user_instructions_widget
 
             await self._cancel_invitation()
 
             await aqtbot.mouse_click(cui_w.button_start, QtCore.Qt.LeftButton)
-            await aqtbot.wait_until(self._claim_restart)
+            await aqtbot.wait_until(partial(self._claim_restart, expected_message))
 
             return None
 
         async def cancelled_step_2_start_greeter(self):
+            expected_message = translate("TEXT_CLAIM_USER_WAIT_PEER_ERROR")
             await self._cancel_invitation()
 
-            await aqtbot.wait_until(self._claim_restart)
+            await aqtbot.wait_until(partial(self._claim_restart, expected_message))
 
             return None
 
         async def cancelled_step_3_exchange_greeter_sas(self):
+            expected_message = translate("TEXT_CLAIM_USER_SIGNIFY_TRUST_ERROR")
             cuce_w = self.claim_user_code_exchange_widget
             await self._cancel_invitation()
 
             await aqtbot.run(cuce_w.code_input_widget.good_code_clicked.emit)
-            await aqtbot.wait_until(self._claim_restart)
+            await aqtbot.wait_until(partial(self._claim_restart, expected_message))
 
             return None
 
         async def cancelled_step_4_exchange_claimer_sas(self):
+            expected_message = translate("TEXT_CLAIM_USER_WAIT_PEER_TRUST_ERROR")
             await self._cancel_invitation()
 
-            await aqtbot.wait_until(self._claim_restart)
+            await aqtbot.wait_until(partial(self._claim_restart, expected_message))
 
             return None
 
         async def cancelled_step_5_provide_claim_info(self):
+            expected_message = translate("TEXT_CLAIM_USER_CLAIM_ERROR")
             cupi_w = self.claim_user_provide_info_widget
             human_email = self.requested_human_handle.email
             human_label = self.requested_human_handle.label
@@ -561,14 +566,15 @@ async def test_claim_user_invitation_cancelled(
             await aqtbot.run(cupi_w.line_edit_device.clear)
             await aqtbot.key_clicks(cupi_w.line_edit_device, device_label)
             await aqtbot.mouse_click(cupi_w.button_ok, QtCore.Qt.LeftButton)
-            await aqtbot.wait_until(self._claim_restart)
+            await aqtbot.wait_until(partial(self._claim_restart, expected_message))
 
             return None
 
         async def cancelled_step_6_validate_claim_info(self):
+            expected_message = translate("TEXT_CLAIM_USER_CLAIM_ERROR")
             await self._cancel_invitation()
 
-            await aqtbot.wait_until(self._claim_restart)
+            await aqtbot.wait_until(partial(self._claim_restart, expected_message))
 
             return None
 
