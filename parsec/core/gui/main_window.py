@@ -62,6 +62,8 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         self.event_bus = event_bus
         self.config = config
         self.minimize_on_close = minimize_on_close
+        # Explain only once that the app stays in background
+        self.minimize_on_close_notif_already_send = False
         self.force_close = False
         self.need_close = False
         self.event_bus.connect(CoreEvent.GUI_CONFIG_CHANGED, self.on_config_updated)
@@ -607,6 +609,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
             self.close_tab(idx, force=force)
 
     def close_app(self, force=False):
+        self.show_top()
         self.need_close = True
         self.force_close = force
         self.close()
@@ -643,7 +646,11 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         if self.minimize_on_close and not self.need_close:
             self.hide()
             event.ignore()
-            self.systray_notification.emit("Parsec", _("TEXT_TRAY_PARSEC_STILL_RUNNING_MESSAGE"))
+            if not self.minimize_on_close_notif_already_send:
+                self.minimize_on_close_notif_already_send = True
+                self.systray_notification.emit(
+                    "Parsec", _("TEXT_TRAY_PARSEC_STILL_RUNNING_MESSAGE")
+                )
         else:
             if self.config.gui_confirmation_before_close and not self.force_close:
                 result = ask_question(
