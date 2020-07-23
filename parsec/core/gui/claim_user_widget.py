@@ -340,7 +340,7 @@ class ClaimUserCodeExchangeWidget(QWidget, Ui_ClaimUserCodeExchangeWidget):
         assert job.status != "ok"
         if job.status != "cancelled":
             exc = None
-            msg = _("TEXT_CLAIM_USER_WAIT_TRUST_ERROR")
+            msg = _("TEXT_CLAIM_USER_SIGNIFY_TRUST_ERROR")
             if job.exc:
                 exc = job.exc.params.get("origin", None)
                 if isinstance(exc, InvitePeerResetError):

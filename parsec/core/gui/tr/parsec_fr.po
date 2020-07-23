@@ -371,28 +371,28 @@ msgstr ""
 "n'est peut-être pas sécurisé."
 
 msgid "TEXT_CLAIM_USER_GET_GREETER_SAS_ERROR"
-msgstr "Erreur interne. Veuillez redémarrer le processus."
+msgstr "Erreur pendant la négociation du code SAS. Veuillez redémarrer le processus."
 
 msgid "TEXT_CLAIM_USER_PEER_RESET"
 msgstr "Suite à une annulation de l'hôte, il faut redémarrer le processus."
 
-msgid "TEXT_CLAIM_USER_WAIT_TRUST_ERROR"
-msgstr "Erreur interne. Veuillez redémarrer le processus."
+msgid "TEXT_CLAIM_USER_SIGNIFY_TRUST_ERROR"
+msgstr "Erreur pendant la confirmation du code SAS. Veuillez redémarrer le processus."
 
 msgid "TEXT_CLAIM_USER_WAIT_PEER_TRUST_ERROR"
-msgstr "Erreur interne. Veuillez redémarrer le processus."
+msgstr "Erreur pendant l'attente de confirmation du code SAS. Veuillez redémarrer le processus."
 
 msgid "TEXT_CLAIM_USER_INVALID_HUMAN_HANDLE"
 msgstr "L'email est invalide."
 
 msgid "TEXT_CLAIM_USER_CLAIM_ERROR"
-msgstr "Erreur interne. Veuillez redémarrer le processus."
+msgstr "Erreur pendant la validation des informations d'invitation. Veuillez redémarrer le processus."
 
 msgid "TEXT_CLAIM_USER_WAITING"
 msgstr "En attente..."
 
 msgid "TEXT_CLAIM_USER_WAIT_PEER_ERROR"
-msgstr "Erreur interne. Veuillez redémarrer le processus."
+msgstr "Erreur pendant l'attente de l'autre utilisateur. Veuillez redémarrer le processus."
 
 msgid "ACTION_START"
 msgstr "Démarrer"
@@ -2372,4 +2372,3 @@ msgstr "Trouver un fichier via son lien"
 
 #~ msgid "TEXT_GREET_USER_ADDR_COPIED_TO_CLIPBOARD"
 #~ msgstr "Le lien d'invitation a été copié dans le presse-papier."
-

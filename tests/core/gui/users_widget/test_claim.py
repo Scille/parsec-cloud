@@ -332,7 +332,7 @@ async def test_claim_user_offline(
             return None
 
         async def offline_step_3_exchange_greeter_sas(self):
-            expected_message = translate("TEXT_CLAIM_USER_WAIT_TRUST_ERROR")
+            expected_message = translate("TEXT_CLAIM_USER_SIGNIFY_TRUST_ERROR")
             cuce_w = self.claim_user_code_exchange_widget
 
             with running_backend.offline():

@@ -356,22 +356,22 @@ msgstr ""
 "network may not be safe."
 
 msgid "TEXT_CLAIM_USER_GET_GREETER_SAS_ERROR"
-msgstr "Internal error. Please restart the process."
+msgstr "Error while negociating SAS code. Please restart the process."
 
 msgid "TEXT_CLAIM_USER_PEER_RESET"
 msgstr "The host has reset the process. We will restart from the beginning."
 
-msgid "TEXT_CLAIM_USER_WAIT_TRUST_ERROR"
-msgstr "Internal error. Please restart the process."
+msgid "TEXT_CLAIM_USER_SIGNIFY_TRUST_ERROR"
+msgstr "Error while acknowledging SAS code. Please restart the process."
 
 msgid "TEXT_CLAIM_USER_WAIT_PEER_TRUST_ERROR"
-msgstr "Internal error. Please restart the process."
+msgstr "Error while waiting for peer SAS code acknowledgment. Please restart the process."
 
 msgid "TEXT_CLAIM_USER_INVALID_HUMAN_HANDLE"
 msgstr "The email is invalid."
 
 msgid "TEXT_CLAIM_USER_CLAIM_ERROR"
-msgstr "Internal error. Please restart the process."
+msgstr "Error while validating invite information. Please restart the process."
 
 msgid "TEXT_CLAIM_USER_WAITING"
 msgstr "Waiting for the other user"
@@ -394,7 +394,7 @@ msgid "TEXT_CLAIM_USER_INVITATION_NOT_FOUND"
 msgstr "The invitation was not found."
 
 msgid "TEXT_CLAIM_USER_UNKNOWN_ERROR"
-msgstr "Internal error. Please restart the process."
+msgstr "Unexpected error. Please restart the process."
 
 msgid "TEXT_CLAIM_USER_TITLE"
 msgstr "Register a user"
@@ -2339,4 +2339,3 @@ msgstr "Go to a file using a link"
 
 #~ msgid "TEXT_GREET_USER_ADDR_COPIED_TO_CLIPBOARD"
 #~ msgstr "The invitation link has been copied to the clipboard"
-
