@@ -8,10 +8,10 @@ from async_generator import asynccontextmanager
 from functools import partial
 
 from parsec.api.data import UserProfile
-from parsec.core.gui.lang import translate
 from parsec.api.protocol import InvitationType, HumanHandle, InvitationDeletedReason
 from parsec.core.types import BackendInvitationAddr
 from parsec.core.invite import UserGreetInitialCtx
+from parsec.core.gui.lang import translate
 from parsec.core.gui.claim_user_widget import (
     ClaimUserFinalizeWidget,
     ClaimUserCodeExchangeWidget,
@@ -294,21 +294,19 @@ async def test_claim_user(ClaimUserTestBed):
 @pytest.mark.gui
 @pytest.mark.trio
 @pytest.mark.parametrize(
-    "offline_step, expected_message",
+    "offline_step",
     [
-        ("step_1_start_claim", "TEXT_CLAIM_USER_WAIT_PEER_ERROR"),
-        ("step_2_start_greeter", "TEXT_CLAIM_USER_WAIT_PEER_ERROR"),
-        ("step_3_exchange_greeter_sas", "TEXT_CLAIM_USER_WAIT_TRUST_ERROR"),
-        ("step_4_exchange_claimer_sas", "TEXT_CLAIM_USER_WAIT_PEER_TRUST_ERROR"),
-        ("step_5_provide_claim_info", "TEXT_CLAIM_USER_CLAIM_ERROR"),
-        ("step_6_validate_claim_info", "TEXT_CLAIM_USER_CLAIM_ERROR"),
+        "step_1_start_claim",
+        "step_2_start_greeter",
+        "step_3_exchange_greeter_sas",
+        "step_4_exchange_claimer_sas",
+        "step_5_provide_claim_info",
+        "step_6_validate_claim_info",
     ],
 )
 async def test_claim_user_offline(
-    aqtbot, ClaimUserTestBed, running_backend, autoclose_dialog, offline_step, expected_message
+    aqtbot, ClaimUserTestBed, running_backend, autoclose_dialog, offline_step
 ):
-    expected_message = translate(expected_message)
-
     class OfflineTestBed(ClaimUserTestBed):
         def _claim_aborted(self, expected_message):
             assert len(autoclose_dialog.dialogs) == 1
@@ -317,6 +315,7 @@ async def test_claim_user_offline(
             assert not self.claim_user_instructions_widget.isVisible()
 
         async def offline_step_1_start_claim(self):
+            expected_message = translate("TEXT_CLAIM_USER_WAIT_PEER_ERROR")
             cui_w = self.claim_user_instructions_widget
 
             with running_backend.offline():
@@ -326,12 +325,14 @@ async def test_claim_user_offline(
             return None
 
         async def offline_step_2_start_greeter(self):
+            expected_message = translate("TEXT_CLAIM_USER_WAIT_PEER_ERROR")
             with running_backend.offline():
                 await aqtbot.wait_until(partial(self._claim_aborted, expected_message))
 
             return None
 
         async def offline_step_3_exchange_greeter_sas(self):
+            expected_message = translate("TEXT_CLAIM_USER_WAIT_TRUST_ERROR")
             cuce_w = self.claim_user_code_exchange_widget
 
             with running_backend.offline():
@@ -341,12 +342,14 @@ async def test_claim_user_offline(
             return None
 
         async def offline_step_4_exchange_claimer_sas(self):
+            expected_message = translate("TEXT_CLAIM_USER_WAIT_PEER_TRUST_ERROR")
             with running_backend.offline():
                 await aqtbot.wait_until(partial(self._claim_aborted, expected_message))
 
             return None
 
         async def offline_step_5_provide_claim_info(self):
+            expected_message = translate("TEXT_CLAIM_USER_CLAIM_ERROR")
             cupi_w = self.claim_user_provide_info_widget
             human_email = self.requested_human_handle.email
             human_label = self.requested_human_handle.label
@@ -363,6 +366,7 @@ async def test_claim_user_offline(
             return None
 
         async def offline_step_6_validate_claim_info(self):
+            expected_message = translate("TEXT_CLAIM_USER_CLAIM_ERROR")
             with running_backend.offline():
                 await aqtbot.wait_until(partial(self._claim_aborted, expected_message))
 
