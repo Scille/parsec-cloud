@@ -36,6 +36,10 @@ DEFAULT_ARGS = {
 }
 
 
+def add_args_to_url(url, *args):
+    return url + ("&" if "?" in url else "?") + "&".join(args)
+
+
 class AddrTestbed:
     def __init__(self, name, cls, template):
         self.name = name
@@ -171,7 +175,7 @@ def test_addr_with_bad_port(addr_testbed, bad_port):
 
 def test_good_addr_with_unknown_field(addr_testbed):
     url = addr_testbed.url
-    url_with_unknown_field = url + ("&" if "?" in url else "?") + "unknown_field=ok"
+    url_with_unknown_field = add_args_to_url(url, "unknown_field=ok")
     addr = addr_testbed.cls.from_url(url_with_unknown_field)
     url2 = addr.to_url()
     assert url2 == url
@@ -247,3 +251,21 @@ def test_invitation_addr_types(addr_invitation_testbed, invitation_type, invitat
     url = addr_invitation_testbed.generate_url(INVITATION_TYPE=invitation_type_str)
     addr = addr_invitation_testbed.cls.from_url(url)
     assert addr.invitation_type == invitation_type
+
+
+@pytest.mark.parametrize("no_ssl", [False, True])
+def test_invitation_addr_to_http_url(addr_invitation_testbed, no_ssl):
+    url = addr_invitation_testbed.url
+    # no_ssl param should be ignored given it is already provided in the scheme
+    if no_ssl:
+        url = add_args_to_url(url, "no_ssl=true")
+        http_scheme = "http://"
+    else:
+        http_scheme = "https://"
+
+    addr = addr_invitation_testbed.cls.from_url(url)
+    http_url = addr.to_http_redirection_url()
+    assert (
+        http_url
+        == f"{http_scheme}{DOMAIN}/api/redirect/{ORG}?action={INVITATION_TYPE}&token={TOKEN}"
+    )
