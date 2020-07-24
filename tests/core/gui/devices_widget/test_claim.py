@@ -108,6 +108,29 @@ def ClaimDeviceTestBed(
 
             self.assert_initial_state()  # Sanity check
 
+        async def bootstrap_after_restart(self):
+            self.claim_device_instructions_widget = None
+            self.claim_device_code_exchange_widget = None
+            self.claim_device_provide_info_widget = None
+
+            cd_w = self.claim_device_widget
+            cdi_w = await catch_claim_device_widget()
+            assert isinstance(cdi_w, ClaimDeviceInstructionsWidget)
+
+            def _register_device_displayed():
+                tab = gui.test_get_tab()
+                assert tab and tab.isVisible()
+                assert cd_w.isVisible()
+                assert cd_w.dialog.label_title.text() == "Register a device"
+                assert cdi_w.isVisible()
+
+            await aqtbot.wait_until(_register_device_displayed)
+
+            self.claim_device_widget = cd_w
+            self.claim_device_instructions_widget = cdi_w
+
+            self.assert_initial_state()  # Sanity check
+
         def assert_initial_state(self):
             assert self.claim_device_widget.isVisible()
             assert self.claim_device_instructions_widget.isVisible()
@@ -356,30 +379,33 @@ async def test_claim_device_reset_by_peer(
                 yield
                 nursery.cancel_scope.cancel()
 
-        def _claim_restart(self):
-            assert autoclose_dialog.dialogs == [
-                ("Error", "Internal error. Please restart the process.")
-            ]
-            self.assert_initial_state()
+        def _claim_restart(self, expected_message):
+            assert len(autoclose_dialog.dialogs) == 1
+            assert autoclose_dialog.dialogs == [("Error", expected_message)]
 
         # Step 1&2 are before peer wait, so reset is meaningless
 
         async def reset_step_3_exchange_greeter_sas(self):
             cdce_w = self.claim_device_code_exchange_widget
+            expected_message = translate("TEXT_CLAIM_DEVICE_PEER_RESET")
 
             async with self._reset_greeter():
                 await aqtbot.run(cdce_w.code_input_widget.good_code_clicked.emit)
-                await aqtbot.wait_until(self._claim_restart)
+                await aqtbot.wait_until(partial(self._claim_restart, expected_message))
 
+            await self.bootstrap_after_restart()
             return None
 
         async def reset_step_4_exchange_claimer_sas(self):
+            expected_message = translate("TEXT_CLAIM_DEVICE_WAIT_PEER_TRUST_ERROR")
             async with self._reset_greeter():
-                await aqtbot.wait_until(self._claim_restart)
+                await aqtbot.wait_until(partial(self._claim_restart, expected_message))
 
+            await self.bootstrap_after_restart()
             return None
 
         async def reset_step_5_provide_claim_info(self):
+            expected_message = translate("TEXT_CLAIM_DEVICE_PEER_RESET")
             cdpi_w = self.claim_device_provide_info_widget
             device_label = self.requested_device_label
 
@@ -389,14 +415,17 @@ async def test_claim_device_reset_by_peer(
                 await aqtbot.key_clicks(cdpi_w.line_edit_password, self.password)
                 await aqtbot.key_clicks(cdpi_w.line_edit_password_check, self.password)
                 await aqtbot.mouse_click(cdpi_w.button_ok, QtCore.Qt.LeftButton)
-                await aqtbot.wait_until(self._claim_restart)
+                await aqtbot.wait_until(partial(self._claim_restart, expected_message))
 
+            await self.bootstrap_after_restart()
             return None
 
         async def reset_step_6_validate_claim_info(self):
+            expected_message = translate("TEXT_CLAIM_DEVICE_PEER_RESET")
             async with self._reset_greeter():
-                await aqtbot.wait_until(self._claim_restart)
+                await aqtbot.wait_until(partial(self._claim_restart, expected_message))
 
+            await self.bootstrap_after_restart()
             return None
 
     setattr(ResetTestBed, reset_step, getattr(ResetTestBed, f"reset_{reset_step}"))
@@ -430,46 +459,51 @@ async def test_claim_device_invitation_cancelled(
                 reason=InvitationDeletedReason.CANCELLED,
             )
 
-        def _claim_restart(self):
-            assert autoclose_dialog.dialogs == [
-                ("Error", "Error while waiting for the other user. Please restart the process.")
-            ]
-            self.assert_initial_state()
+        def _claim_restart(self, expected_message):
+            assert len(autoclose_dialog.dialogs) == 1
+            assert autoclose_dialog.dialogs == [("Error", expected_message)]
+            assert not self.claim_device_widget.isVisible()
+            assert not self.claim_device_instructions_widget.isVisible()
 
         async def cancelled_step_1_start_claim(self):
+            expected_message = translate("TEXT_CLAIM_DEVICE_WAIT_PEER_ERROR")
             cdi_w = self.claim_device_instructions_widget
 
             await self._cancel_invitation()
 
             await aqtbot.mouse_click(cdi_w.button_start, QtCore.Qt.LeftButton)
-            await aqtbot.wait_until(self._claim_restart)
+            await aqtbot.wait_until(partial(self._claim_restart, expected_message))
 
             return None
 
         async def cancelled_step_2_start_greeter(self):
+            expected_message = translate("TEXT_CLAIM_DEVICE_WAIT_PEER_ERROR")
             await self._cancel_invitation()
 
-            await aqtbot.wait_until(self._claim_restart)
+            await aqtbot.wait_until(partial(self._claim_restart, expected_message))
 
             return None
 
         async def cancelled_step_3_exchange_greeter_sas(self):
+            expected_message = translate("TEXT_CLAIM_DEVICE_WAIT_TRUST_ERROR")
             cdce_w = self.claim_device_code_exchange_widget
             await self._cancel_invitation()
 
             await aqtbot.run(cdce_w.code_input_widget.good_code_clicked.emit)
-            await aqtbot.wait_until(self._claim_restart)
+            await aqtbot.wait_until(partial(self._claim_restart, expected_message))
 
             return None
 
         async def cancelled_step_4_exchange_claimer_sas(self):
+            expected_message = translate("TEXT_CLAIM_DEVICE_WAIT_PEER_TRUST_ERROR")
             await self._cancel_invitation()
 
-            await aqtbot.wait_until(self._claim_restart)
+            await aqtbot.wait_until(partial(self._claim_restart, expected_message))
 
             return None
 
         async def cancelled_step_5_provide_claim_info(self):
+            expected_message = translate("TEXT_CLAIM_DEVICE_CLAIM_ERROR")
             cdpi_w = self.claim_device_provide_info_widget
             device_label = self.requested_device_label
 
@@ -480,14 +514,15 @@ async def test_claim_device_invitation_cancelled(
             await aqtbot.key_clicks(cdpi_w.line_edit_password, self.password)
             await aqtbot.key_clicks(cdpi_w.line_edit_password_check, self.password)
             await aqtbot.mouse_click(cdpi_w.button_ok, QtCore.Qt.LeftButton)
-            await aqtbot.wait_until(self._claim_restart)
+            await aqtbot.wait_until(partial(self._claim_restart, expected_message))
 
             return None
 
         async def cancelled_step_6_validate_claim_info(self):
+            expected_message = translate("TEXT_CLAIM_DEVICE_CLAIM_ERROR")
             await self._cancel_invitation()
 
-            await aqtbot.wait_until(self._claim_restart)
+            await aqtbot.wait_until(partial(self._claim_restart, expected_message))
 
             return None
 
