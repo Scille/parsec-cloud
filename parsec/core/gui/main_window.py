@@ -509,8 +509,8 @@ class MainWindow(QMainWindow, Ui_MainWindow):
     def go_to_file_link(self, action_addr):
         devices = list_available_devices(self.config.config_dir)
         found_org = False
-        for org, d, t, kf in devices:
-            if org == action_addr.organization_id:
+        for available_device in devices:
+            if available_device.organization_id == action_addr.organization_id:
                 found_org = True
                 break
 
