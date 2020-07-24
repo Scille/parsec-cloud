@@ -358,13 +358,13 @@ class WinFSPOperations(BaseFileSystemOperations):
 
     @handle_error
     def cleanup(self, file_context, file_name, flags) -> None:
-        file_name = _winpath_to_parsec(file_name)
-
         # Cleanup operation is causal but close is not, so it's important
         # to delete file and folder here in order to make sure the file/folder
         # is actually deleted by the time the API call returns.
         FspCleanupDelete = 0x1
         if flags & FspCleanupDelete:
+            # The file name is only provided for a delete operation, it is `None` otherwise
+            file_name = _winpath_to_parsec(file_name)
             if isinstance(file_context, OpenedFile):
                 self.fs_access.file_delete(file_name)
             else:
