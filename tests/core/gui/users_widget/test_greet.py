@@ -225,19 +225,22 @@ def GreetUserTestBed(
 
             guci_w = await catch_greet_user_widget()
             assert isinstance(guci_w, GreetUserCheckInfoWidget)
+            self.greet_user_check_informations_widget = guci_w
 
             def _wait_claimer_info():
                 # TODO: unlike with greet_device_widget, there is no
                 # `guce_w.label_wait_info` to check for waiting message
                 assert not guce_w.widget_greeter_code.isVisible()
                 assert not guce_w.widget_claimer_code.isVisible()
+                assert not guce_w.isVisible()
+                assert guci_w.isVisible()
 
             await aqtbot.wait_until(_wait_claimer_info)
 
             return "step_5_provide_claim_info"
 
         async def step_5_provide_claim_info(self):
-            guce_w = self.greet_user_code_exchange_widget
+            guci_w = self.greet_user_check_informations_widget
 
             # Must put this into a nursery given it will return during step 6
 
@@ -251,19 +254,14 @@ def GreetUserTestBed(
             self.claimer_claim_task = await start_task(
                 self.nursery, _claimer_claim, self.claimer_in_progress_ctx
             )
-            guci_w = await catch_greet_user_widget()
-            assert isinstance(guci_w, GreetUserCheckInfoWidget)
 
             def _check_info_displayed():
-                assert not guce_w.isVisible()
                 assert guci_w.isVisible()
                 assert guci_w.line_edit_user_full_name.text() == self.requested_human_handle.label
                 assert guci_w.line_edit_user_email.text() == self.requested_human_handle.email
                 assert guci_w.line_edit_device.text() == self.requested_device_label
 
             await aqtbot.wait_until(_check_info_displayed)
-
-            self.greet_user_check_informations_widget = guci_w
 
             return "step_6_validate_claim_info"
 
@@ -314,7 +312,7 @@ async def test_greet_user(GreetUserTestBed):
         "step_3_exchange_greeter_sas",
         "step_4_exchange_claimer_sas",
         "step_5_provide_claim_info",
-        # "step_6_validate_claim_info",
+        "step_6_validate_claim_info",
     ],
 )
 @customize_fixtures(logged_gui_as_admin=True)
@@ -374,6 +372,7 @@ async def test_greet_user_offline(
             guci_w = self.greet_user_check_informations_widget
 
             with running_backend.offline():
+                self.nursery.cancel_scope.cancel()
                 await aqtbot.mouse_click(guci_w.button_create_user, QtCore.Qt.LeftButton)
                 await aqtbot.wait_until(partial(self._greet_aborted, expected_message))
 
@@ -442,7 +441,7 @@ async def test_greet_user_reset_by_peer(aqtbot, GreetUserTestBed, autoclose_dial
             return None
 
         async def reset_step_6_validate_claim_info(self):
-            expected_message = translate("")
+            expected_message = translate("TEXT_GREET_USER_PEER_RESET")
             guci_w = self.greet_user_check_informations_widget
 
             await self.claimer_claim_task.cancel_and_join()
@@ -465,10 +464,11 @@ async def test_greet_user_reset_by_peer(aqtbot, GreetUserTestBed, autoclose_dial
     "cancelled_step",
     [
         "step_1_start_greet",
-        "step_2_start_claimer",
+        pytest.param("step_2_start_claimer", marks=pytest.mark.xfail),
+        pytest.param("step_3_exchange_greeter_sas", marks=pytest.mark.xfail),
         "step_4_exchange_claimer_sas",
-        "step_5_provide_claim_info",
-        # "step_6_validate_claim_info",
+        pytest.param("step_5_provide_claim_info", marks=pytest.mark.xfail),
+        "step_6_validate_claim_info",
     ],
 )
 @customize_fixtures(logged_gui_as_admin=True)
@@ -538,7 +538,7 @@ async def test_greet_user_invitation_cancelled(
             return None
 
         async def cancelled_step_6_validate_claim_info(self):
-            expected_message = translate("TEXT_GREET_USER_WAIT_PEER_TRUST_ERROR")
+            expected_message = translate("TEXT_GREET_USER_CREATE_USER_ERROR")
             guci_w = self.greet_user_check_informations_widget
             await self.claimer_claim_task.cancel_and_join()
             await self._cancel_invitation()
