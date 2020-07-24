@@ -129,6 +129,28 @@ def GreetUserTestBed(
 
             self.assert_initial_state()  # Sanity check
 
+        async def bootstrap_after_restart(self):
+            self.greet_user_information_widget = None
+            self.greet_user_code_exchange_widget = None
+            self.greet_user_check_informations_widget = None
+
+            greet_user_widget = self.greet_user_widget
+            greet_user_information_widget = await catch_greet_user_widget()
+            assert isinstance(greet_user_information_widget, GreetUserInstructionsWidget)
+
+            def _greet_user_displayed():
+                assert greet_user_widget.dialog.isVisible()
+                assert greet_user_widget.isVisible()
+                assert greet_user_widget.dialog.label_title.text() == "Greet a new user"
+                assert greet_user_information_widget.isVisible()
+
+            await aqtbot.wait_until(_greet_user_displayed)
+
+            self.greet_user_widget = greet_user_widget
+            self.greet_user_information_widget = greet_user_information_widget
+
+            self.assert_initial_state()  # Sanity check
+
         def assert_initial_state(self):
             assert self.greet_user_widget.isVisible()
             assert self.greet_user_information_widget.isVisible()
@@ -201,6 +223,9 @@ def GreetUserTestBed(
 
             self.claimer_in_progress_ctx = await self.claimer_in_progress_ctx.do_wait_peer_trust()
 
+            guci_w = await catch_greet_user_widget()
+            assert isinstance(guci_w, GreetUserCheckInfoWidget)
+
             def _wait_claimer_info():
                 # TODO: unlike with greet_device_widget, there is no
                 # `guce_w.label_wait_info` to check for waiting message
@@ -226,7 +251,6 @@ def GreetUserTestBed(
             self.claimer_claim_task = await start_task(
                 self.nursery, _claimer_claim, self.claimer_in_progress_ctx
             )
-
             guci_w = await catch_greet_user_widget()
             assert isinstance(guci_w, GreetUserCheckInfoWidget)
 
@@ -290,7 +314,7 @@ async def test_greet_user(GreetUserTestBed):
         "step_3_exchange_greeter_sas",
         "step_4_exchange_claimer_sas",
         "step_5_provide_claim_info",
-        "step_6_validate_claim_info",
+        # "step_6_validate_claim_info",
     ],
 )
 @customize_fixtures(logged_gui_as_admin=True)
@@ -311,6 +335,7 @@ async def test_greet_user_offline(
             with running_backend.offline():
                 await aqtbot.mouse_click(gui_w.button_start, QtCore.Qt.LeftButton)
                 await aqtbot.wait_until(partial(self._greet_aborted, expected_message))
+
             return None
 
         async def offline_step_2_start_claimer(self):
@@ -363,7 +388,12 @@ async def test_greet_user_offline(
 @pytest.mark.trio
 @pytest.mark.parametrize(
     "reset_step",
-    ["step_4_exchange_claimer_sas", "step_5_provide_claim_info", "step_6_validate_claim_info"],
+    [
+        "step_3_exchange_greeter_sas",
+        "step_4_exchange_claimer_sas",
+        "step_5_provide_claim_info",
+        "step_6_validate_claim_info",
+    ],
 )
 @customize_fixtures(logged_gui_as_admin=True)
 async def test_greet_user_reset_by_peer(aqtbot, GreetUserTestBed, autoclose_dialog, reset_step):
@@ -377,47 +407,51 @@ async def test_greet_user_reset_by_peer(aqtbot, GreetUserTestBed, autoclose_dial
                     yield
                     nursery.cancel_scope.cancel()
 
-        def _greet_restart(self):
-            assert autoclose_dialog.dialogs == [
-                ("Error", "Internal error. Please restart the process.")
-            ]
-            assert self.greet_user_widget.isVisible()
-            assert self.greet_user_information_widget.isVisible()
+        def _greet_restart(self, expected_message):
+            assert autoclose_dialog.dialogs == [("Error", expected_message)]
 
         # Step 1&2 are before peer wait, so reset is meaningless
 
         async def reset_step_3_exchange_greeter_sas(self):
+            expected_message = translate("TEXT_GREET_USER_PEER_RESET")
             async with self._reset_claimer():
-                await aqtbot.wait_until(self._greet_restart)
+                await aqtbot.wait_until(partial(self._greet_restart, expected_message))
 
+            await self.bootstrap_after_restart()
             return None
 
         async def reset_step_4_exchange_claimer_sas(self):
+            expected_message = translate("TEXT_GREET_USER_PEER_RESET")
             guce_w = self.greet_user_code_exchange_widget
 
             # Pretent we have click on the right choice
             await aqtbot.run(guce_w.code_input_widget.good_code_clicked.emit)
 
             async with self._reset_claimer():
-                await aqtbot.wait_until(self._greet_restart)
+                await aqtbot.wait_until(partial(self._greet_restart, expected_message))
 
+            await self.bootstrap_after_restart()
             return None
 
         async def reset_step_5_provide_claim_info(self):
+            expected_message = translate("TEXT_GREET_USER_PEER_RESET")
             async with self._reset_claimer():
-                await aqtbot.wait_until(self._greet_restart)
+                await aqtbot.wait_until(partial(self._greet_restart, expected_message))
 
+            await self.bootstrap_after_restart()
             return None
 
         async def reset_step_6_validate_claim_info(self):
+            expected_message = translate("")
             guci_w = self.greet_user_check_informations_widget
 
             await self.claimer_claim_task.cancel_and_join()
             async with self._reset_claimer():
 
                 await aqtbot.mouse_click(guci_w.button_create_user, QtCore.Qt.LeftButton)
-                await aqtbot.wait_until(self._greet_restart)
+                await aqtbot.wait_until(partial(self._greet_restart, expected_message))
 
+            await self.bootstrap_after_restart()
             return None
 
     setattr(ResetTestBed, reset_step, getattr(ResetTestBed, f"reset_{reset_step}"))
@@ -434,7 +468,7 @@ async def test_greet_user_reset_by_peer(aqtbot, GreetUserTestBed, autoclose_dial
         "step_2_start_claimer",
         "step_4_exchange_claimer_sas",
         "step_5_provide_claim_info",
-        "step_6_validate_claim_info",
+        # "step_6_validate_claim_info",
     ],
 )
 @customize_fixtures(logged_gui_as_admin=True)
@@ -451,61 +485,66 @@ async def test_greet_user_invitation_cancelled(
                 reason=InvitationDeletedReason.CANCELLED,
             )
 
-        def _greet_restart(self):
-            assert autoclose_dialog.dialogs == [
-                ("Error", "An error occured while creating the user. Please restart the process.")
-            ]
-            assert self.greet_user_widget.isVisible()
-            assert self.greet_user_information_widget.isVisible()
+        def _greet_restart(self, expected_message):
+            assert len(autoclose_dialog.dialogs) == 1
+            assert autoclose_dialog.dialogs == [("Error", expected_message)]
+            assert not self.greet_user_widget.isVisible()
+            assert not self.greet_user_information_widget.isVisible()
 
         async def cancelled_step_1_start_greet(self):
+            expected_message = translate("TEXT_GREET_USER_WAIT_PEER_ERROR")
             gui_w = self.greet_user_information_widget
 
             await self._cancel_invitation()
 
             await aqtbot.mouse_click(gui_w.button_start, QtCore.Qt.LeftButton)
-            await aqtbot.wait_until(self._greet_restart)
+            await aqtbot.wait_until(partial(self._greet_restart, expected_message))
 
             return None
 
         async def cancelled_step_2_start_claimer(self):
+            expected_message = translate("TEXT_GREET_USER_WAIT_PEER_ERROR")
             await self._cancel_invitation()
 
-            await aqtbot.wait_until(self._greet_restart)
+            await aqtbot.wait_until(partial(self._greet_restart, expected_message))
 
             return None
 
         async def cancelled_step_3_exchange_greeter_sas(self):
+            expected_message = translate("TEXT_GREET_USER_WAIT_PEER_TRUST_ERROR")
             await self._cancel_invitation()
 
-            await aqtbot.wait_until(self._greet_restart)
+            await aqtbot.wait_until(partial(self._greet_restart, expected_message))
 
             return None
 
         async def cancelled_step_4_exchange_claimer_sas(self):
+            expected_message = translate("TEXT_GREET_USER_SIGNIFY_TRUST_ERROR")
             guce_w = self.greet_user_code_exchange_widget
 
             await self._cancel_invitation()
 
             await aqtbot.run(guce_w.code_input_widget.good_code_clicked.emit)
-            await aqtbot.wait_until(self._greet_restart)
+            await aqtbot.wait_until(partial(self._greet_restart, expected_message))
 
             return None
 
         async def cancelled_step_5_provide_claim_info(self):
+            expected_message = translate("TEXT_GREET_USER_GET_REQUESTS_ERROR")
             await self._cancel_invitation()
 
-            await aqtbot.wait_until(self._greet_restart)
+            await aqtbot.wait_until(partial(self._greet_restart, expected_message))
 
             return None
 
         async def cancelled_step_6_validate_claim_info(self):
+            expected_message = translate("TEXT_GREET_USER_WAIT_PEER_TRUST_ERROR")
             guci_w = self.greet_user_check_informations_widget
             await self.claimer_claim_task.cancel_and_join()
             await self._cancel_invitation()
 
             await aqtbot.mouse_click(guci_w.button_create_user, QtCore.Qt.LeftButton)
-            await aqtbot.wait_until(self._greet_restart)
+            await aqtbot.wait_until(partial(self._greet_restart, expected_message))
 
             return None
 
