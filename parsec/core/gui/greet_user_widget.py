@@ -9,7 +9,7 @@ from PyQt5.QtWidgets import QWidget
 from parsec.api.data import UserProfile
 from parsec.api.protocol import HumanHandle
 from parsec.core.backend_connection import BackendNotAvailable
-from parsec.core.invite import InviteError, InvitePeerResetError
+from parsec.core.invite import InviteError, InvitePeerResetError, InviteAlreadyUsedError
 from parsec.core.gui.trio_thread import JobResultError, ThreadSafeQtSignal, QtToTrioJob
 from parsec.core.gui.custom_dialogs import show_error, GreyedDialog, show_info
 from parsec.core.gui.lang import translate as _
@@ -561,22 +561,25 @@ class GreetUserWidget(QWidget, Ui_GreetUserWidget):
         self._run_greeter()
 
     def _on_page_failed(self, job):
-        if not self.isVisible():
-            return
-        if job is not None and job.status == "cancelled":
-            self.dialog.reject()
-            return
-        if job is not None and isinstance(job.exc.params.get("origin", None), BackendNotAvailable):
-            self.dialog.reject()
-            return
-        self.restart()
-
-    def _on_page_failed_force_reject(self):
         # The dialog has already been rejected
         if not self.isVisible():
             return
-        # Do not retry after a failure on page 4, simply close the dialog
-        self.dialog.reject()
+        # No reason to restart the process if cancelled, simply close the dialog
+        if job is not None and job.status == "cancelled":
+            self.dialog.reject()
+            return
+        # No reason to restart the process if offline, simply close the dialog
+        if job is not None and isinstance(job.exc.params.get("origin", None), BackendNotAvailable):
+            self.dialog.reject()
+            return
+        # No reason to restart the process if the invitation is already used, simply close the dialog
+        if job is not None and isinstance(
+            job.exc.params.get("origin", None), InviteAlreadyUsedError
+        ):
+            self.dialog.reject()
+            return
+        # Let's try one more time with the same dialog
+        self.restart()
 
     def _goto_page1(self):
         item = self.main_layout.takeAt(0)
@@ -624,8 +627,11 @@ class GreetUserWidget(QWidget, Ui_GreetUserWidget):
         assert job
         assert job.is_finished()
         assert job.status != "ok"
+        # This callback can be called after the creation of a new greeter job in the case
+        # of a restart, due to Qt signals being called later.
         if job.status == "cancelled":
             return
+        # Safety net for concurrency issues
         if self.greeter_job != job:
             return
         self.greeter_job = None
@@ -638,6 +644,7 @@ class GreetUserWidget(QWidget, Ui_GreetUserWidget):
         if job.exc:
             exc = job.exc.params.get("origin", None)
         show_error(self, msg, exception=exc)
+        # No point in retrying since the greeter job itself failed, simply close the dialog
         self.dialog.reject()
 
     def cancel(self):

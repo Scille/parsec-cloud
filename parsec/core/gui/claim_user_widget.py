@@ -703,8 +703,7 @@ class ClaimUserWidget(QWidget, Ui_ClaimUserWidget):
         if job.exc:
             exc = job.exc.params.get("origin", None)
         show_error(self, msg, exception=exc)
-        # The claimer itself failed, no point in retrying
-        # Simple close the widget
+        # No point in retrying since the claimer job itself failed, simply close the dialog
         self.dialog.reject()
 
     def cancel(self):
