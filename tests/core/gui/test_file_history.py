@@ -70,6 +70,7 @@ async def create_directories(logged_gui, aqtbot, monkeypatch, dir_names):
 
 @pytest.mark.gui
 @pytest.mark.trio
+@pytest.mark.flaky(reruns=1)
 @customize_fixtures(logged_gui_as_admin=True)
 async def test_file_history(
     aqtbot,
