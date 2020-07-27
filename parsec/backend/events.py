@@ -75,7 +75,6 @@ class EventsComponent:
         def _on_invite_status_changed(
             event, backend_event, organization_id, greeter, token, status
         ):
-            print("EVENT STATUS CHANGED ====>", organization_id, greeter, token, status)
             if organization_id != client_ctx.organization_id or greeter != client_ctx.user_id:
                 return
 

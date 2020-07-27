@@ -297,7 +297,9 @@ async def _do_claim_device(initial_ctx):
 
 
 async def _claim_invitation(config, addr, password):
-    async with backend_invited_cmds_factory(addr=addr) as cmds:
+    async with backend_invited_cmds_factory(
+        addr=addr, keepalive=config.backend_connection_keepalive
+    ) as cmds:
         try:
             async with spinner("Retrieving invitation info"):
                 initial_ctx = await claimer_retrieve_info(cmds)

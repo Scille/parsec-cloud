@@ -87,6 +87,8 @@ class WorkspaceButton(QWidget, Ui_WorkspaceButton):
             self.label_shared.hide()
             self.label_owner.hide()
             self.switch_button.hide()
+        else:
+            self.button_delete.hide()
         effect = QGraphicsDropShadowEffect(self)
         effect.setColor(QColor(0x99, 0x99, 0x99))
         effect.setBlurRadius(10)

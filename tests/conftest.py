@@ -6,6 +6,7 @@ import os
 import re
 import sys
 import attr
+import json
 import socket
 import contextlib
 import pendulum
@@ -14,6 +15,7 @@ import structlog
 import trio
 from trio.testing import MockClock
 import trio_asyncio
+from contextlib import contextmanager
 from async_generator import asynccontextmanager
 import hypothesis
 from pathlib import Path
@@ -30,6 +32,7 @@ from parsec.core.fs.storage import LocalDatabase, local_database, UserStorage
 from parsec.backend import backend_app_factory
 from parsec.backend.config import (
     BackendConfig,
+    EmailConfig,
     MockedBlockStoreConfig,
     PostgreSQLBlockStoreConfig,
     RAID0BlockStoreConfig,
@@ -501,12 +504,17 @@ def backend_factory(
         config = BackendConfig(
             **{
                 "administration_token": "s3cr3t",
-                "db_drop_deleted_data": False,
                 "db_min_connections": 1,
                 "db_max_connections": 5,
+                "db_first_tries_number": 1,
+                "db_first_tries_sleep": 1,
                 "debug": False,
                 "db_url": backend_store,
                 "blockstore_config": blockstore,
+                "email_config": None,
+                "backend_addr": None,
+                "spontaneous_organization_bootstrap": False,
+                "organization_bootstrap_webhook_url": None,
                 **config,
             }
         )
@@ -533,15 +541,67 @@ def backend_factory(
 
 
 @pytest.fixture
-async def backend(backend_factory, request):
-    populate = "backend_not_populated" not in request.keywords
-    async with backend_factory(populated=populate) as backend:
+async def backend(backend_factory, request, fixtures_customization, backend_addr):
+    populated = not fixtures_customization.get("backend_not_populated", False)
+    config = {}
+    if fixtures_customization.get("backend_has_email", False):
+        config["email_config"] = EmailConfig(
+            host="example.com",
+            # Invalid port, hence we should crash if by mistake we try
+            # to reach this SMTP server
+            port=999999,
+            user="mail_user",
+            password=None,
+            use_ssl=False,
+            use_tls=False,
+            language="en",
+        )
+        config["backend_addr"] = backend_addr
+    if fixtures_customization.get("backend_spontaneous_organization_boostrap", False):
+        config["spontaneous_organization_bootstrap"] = True
+    if fixtures_customization.get("backend_has_webhook", False):
+        # Invalid port, hence we should crash if by mistake we try to reach this url
+        config["organization_bootstrap_webhook_url"] = "http://example.com:888888/webhook"
+
+    async with backend_factory(populated=populated, config=config) as backend:
         yield backend
 
 
 @pytest.fixture
 def backend_data_binder(backend, backend_data_binder_factory):
     return backend_data_binder_factory(backend)
+
+
+@pytest.fixture
+def email_letterbox(monkeypatch):
+    emails = []
+
+    async def _mocked_send_email(email_config, to_addr, message):
+        emails.append((to_addr, message))
+
+    monkeypatch.setattr("parsec.backend.invite.send_email", _mocked_send_email)
+    return emails
+
+
+@pytest.fixture
+def webhook_spy(monkeypatch):
+    events = []
+
+    class MockedRep:
+        def getcode(self):
+            return 200
+
+    @contextmanager
+    def _mock_urlopen(req, **kwargs):
+        # Webhook are alway POST with utf-8 JSON body
+        assert req.method == "POST"
+        assert req.headers == {"Content-type": "application/json; charset=utf-8"}
+        cooked_data = json.loads(req.data.decode("utf-8"))
+        events.append((req.full_url, cooked_data))
+        yield MockedRep()
+
+    monkeypatch.setattr("parsec.backend.webhooks.urlopen", _mock_urlopen)
+    return events
 
 
 @pytest.fixture

@@ -92,6 +92,14 @@ class AuthenticatedClientContext(BaseClientContext):
         return self.device_id.device_name
 
     @property
+    def user_display(self) -> str:
+        return str(self.human_handle or self.device_id.user_id)
+
+    @property
+    def device_display(self) -> str:
+        return self.device_label or str(self.device_id.device_name)
+
+    @property
     def send_events_channel(self):
         send_channel, _ = self.channels
         return send_channel

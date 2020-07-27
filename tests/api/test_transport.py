@@ -117,34 +117,3 @@ async def test_big_buffer_bench(backend_addr):
 
 
 # TODO: test websocket can work with message sent across mutiple TCP frames
-
-
-@pytest.mark.trio
-async def test_send_http_request(running_backend):
-    stream = await trio.open_tcp_stream(running_backend.addr.hostname, running_backend.addr.port)
-    await stream.send_all(
-        b"GET / HTTP/1.1\r\n"
-        b"Host: parsec.example.com\r\n"
-        b"User-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:69.0) Gecko/20100101 Firefox/69.0\r\n"
-        b"Accept: text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8\r\n"
-        b"Accept-Language: fr,fr-FR;q=0.8,en-US;q=0.5,en;q=0.3\r\n"
-        b"Accept-Encoding: gzip, deflate\r\n"
-        b"DNT: 1\r\n"
-        b"Connection: keep-alive\r\n"
-        b"Upgrade-Insecure-Requests: 1\r\n"
-        b"Cache-Control: max-age=0\r\n"
-        b"\r\n"
-    )
-    rep = await stream.receive_some(4096)
-    assert rep == (
-        b"HTTP/1.1 426 OK\r\n"
-        b"Upgrade: WebSocket\r\n"
-        b"Content-Length: 51\r\n"
-        b"Connection: Upgrade\r\n"
-        b"Content-Type: text/html; charset=UTF-8\r\n"
-        b"\r\n"
-        b"This service requires use of the WebSocket protocol"
-    )
-    # Connection has been closed by peer
-    with pytest.raises(trio.BrokenResourceError):
-        await stream.send_all(b"dummy")

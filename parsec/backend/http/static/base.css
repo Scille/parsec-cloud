@@ -1,0 +1,25 @@
+.main-title {
+    margin: 30px, 10%, 30px;
+}
+
+.text-secondary {
+    color: #121D43 !important;
+}
+
+.text-muted {
+    color: #6c757d!important;
+}
+
+.text-center {
+    text-align: center!important;
+}
+
+.main-title-spacer {
+    width: 60px;
+    height: 2px;
+    margin: 20px auto 50px auto;
+}
+
+.bg-primary {
+    background-color: #006eff !important;
+}

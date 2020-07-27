@@ -1,1 +1,0 @@
-Fix history button in GUI

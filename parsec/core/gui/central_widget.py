@@ -10,7 +10,9 @@ from parsec.core.gui.users_widget import UsersWidget
 from parsec.core.gui.devices_widget import DevicesWidget
 from parsec.core.gui.menu_widget import MenuWidget
 from parsec.core.gui.lang import translate as _
+from parsec.core.gui.custom_dialogs import show_error
 from parsec.core.gui.ui.central_widget import Ui_CentralWidget
+
 
 from parsec.api.protocol import (
     HandshakeAPIVersionError,
@@ -54,8 +56,14 @@ class CentralWidget(QWidget, Ui_CentralWidget):
             self.event_bus.connect(e, self.handle_event)
 
         self.menu.organization = self.core.device.organization_addr.organization_id
-        self.menu.username = self.core.device.user_id
-        self.menu.device = self.core.device.device_name
+        if self.core.device.human_handle:
+            self.menu.username = self.core.device.human_handle.label
+        else:
+            self.menu.username = self.core.device.user_id
+        if self.core.device.device_label:
+            self.menu.device = self.core.device.device_label
+        else:
+            self.menu.device = self.core.device.device_name
         self.menu.organization_url = str(self.core.device.organization_addr)
 
         self.new_notification.connect(self.on_new_notification)
@@ -167,10 +175,12 @@ class CentralWidget(QWidget, Ui_CentralWidget):
             cause = status_exc.__cause__
             if isinstance(cause, HandshakeAPIVersionError):
                 tooltip = _("TEXT_BACKEND_STATE_API_MISMATCH_versions").format(
-                    versions=", ".join([v.version for v in cause.backend_versions])
+                    versions=", ".join([str(v.version) for v in cause.backend_versions])
                 )
             elif isinstance(cause, HandshakeRevokedDevice):
                 tooltip = _("TEXT_BACKEND_STATE_REVOKED_DEVICE")
+                notif = ("REVOKED", tooltip)
+                self.new_notification.emit(*notif)
             elif isinstance(cause, HandshakeOrganizationExpired):
                 tooltip = _("TEXT_BACKEND_STATE_ORGANIZATION_EXPIRED")
             else:
@@ -190,7 +200,8 @@ class CentralWidget(QWidget, Ui_CentralWidget):
             self.new_notification.emit(*notif)
 
     def on_new_notification(self, notif_type, msg):
-        pass
+        if notif_type == "REVOKED":
+            show_error(self, msg)
 
     def show_mount_widget(self):
         self.clear_widgets()

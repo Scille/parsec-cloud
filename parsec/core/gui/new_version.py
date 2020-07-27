@@ -26,18 +26,21 @@ def _extract_version_tuple(raw):
         return None
 
 
-async def _async_get(url, method="GET"):
-    return await trio.to_thread.run_sync(lambda: urlopen(Request(url, method=method)))
-
-
 async def _do_check_new_version(url, api_url):
-    # urlopen automatically follows redirections
-    resolved_url = (await _async_get(url, method="HEAD")).geturl()
-    latest_from_head = _extract_version_tuple(resolved_url)
     current_version = _extract_version_tuple(__version__)
-    if latest_from_head and current_version and current_version < latest_from_head:
-        json_releases = json.loads((await _async_get(api_url)).read())
 
+    def _fetch_json_releases():
+        # urlopen automatically follows redirections
+        with urlopen(Request(url, method="GET")) as req:
+            resolved_url = req.geturl()
+            latest_from_head = _extract_version_tuple(resolved_url)
+            if latest_from_head and current_version and current_version < latest_from_head:
+                return latest_from_head, json.loads(req.read())
+            else:
+                return latest_from_head, None
+
+    latest_from_head, json_releases = await trio.to_thread.run_sync(_fetch_json_releases)
+    if json_releases:
         current_arch = QSysInfo().currentCpuArchitecture()
         if current_arch == "x86_64":
             win_version = "win64"

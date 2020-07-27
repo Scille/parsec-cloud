@@ -1,1 +1,0 @@
-Add DPI aware option in the Windows installer options to fix blurry texts on some high-DPI screens.

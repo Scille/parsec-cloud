@@ -23,7 +23,7 @@ class SASCode(str):
             raise ValueError("Invalid SAS code")
 
     def __repr__(self):
-        return f"<OrganizationID {super().__repr__()}>"
+        return f"<SASCode {super().__repr__()}>"
 
     @classmethod
     def from_int(cls, num):

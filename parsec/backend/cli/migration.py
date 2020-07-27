@@ -21,9 +21,23 @@ def _validate_postgres_db_url(ctx, param, value):
     envvar="PARSEC_DB",
     help="PostgreSQL database url",
 )
+@click.option(
+    "--db-first-tries-number",
+    default=1,
+    show_default=True,
+    envvar="PARSEC_DB_FIRST_TRIES_NUMBER",
+    help="Number of tries allowed during initial database connection (0 is unlimited)",
+)
+@click.option(
+    "--db-first-tries-sleep",
+    default=1,
+    show_default=True,
+    envvar="PARSEC_DB_FIRST_TRIES_SLEEP",
+    help="Number of second waited between tries during initial database connection",
+)
 @click.option("--dry-run", is_flag=True)
 @click.option("--debug", is_flag=True, envvar="PARSEC_DEBUG")
-def migrate(db, debug, dry_run):
+def migrate(db, db_first_tries_number, db_first_tries_sleep, debug, dry_run):
     """
     Updates the database schema
     """
@@ -32,7 +46,9 @@ def migrate(db, debug, dry_run):
 
         async def _migrate(db):
             async with spinner("Migrate"):
-                result = await apply_migrations(db, migrations, dry_run)
+                result = await apply_migrations(
+                    db, db_first_tries_number, db_first_tries_sleep, migrations, dry_run
+                )
 
             for migration in result.already_applied:
                 click.secho(f"{migration.file_name} (already applied)", fg="white")

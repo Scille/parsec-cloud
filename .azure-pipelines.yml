@@ -87,7 +87,7 @@ jobs:
   - bash: |
       set -eux
       python --version
-      pip install -U wheel pip setuptools
+      pip install -r pre-requirements.txt
       sudo apt-get install \
         postgresql-$(postgresql.version) \
         desktop-file-utils  # Provides `update-desktop-database` used by `tests/scripts/run_testenv.sh`
@@ -95,8 +95,14 @@ jobs:
     displayName: 'Bootstrap'
   - bash: |
       set -eux
+      # Build in a venv to isolate from tests
+      python -m venv venv_build
+      ./venv_build/bin/python -m pip install -r pre-requirements.txt
       # Build the parsec wheel
-      python setup.py bdist_wheel
+      ./venv_build/bin/python setup.py bdist_wheel
+    displayName: 'Build Wheel'
+  - bash: |
+      set -eux
       # Install the parsec wheel with all dependencies
       pip install $(ls dist/parsec_cloud-*.whl)[all]
       # Check dependency compatibility
@@ -164,8 +170,8 @@ jobs:
       architecture: 'x64'
   - bash: |
       set -eux
-      python --version
-      python -m pip install -U wheel pip setuptools
+      python.exe --version
+      pip install -r pre-requirements.txt
       choco install -y --limit-output winfsp --pre --version=$(winfsp.version)
       # Install winfsp-test and put it in PATH
       mkdir winfsp-test
@@ -175,14 +181,19 @@ jobs:
     displayName: 'Bootstrap'
   - bash: |
       set -eux
+      python -m venv venv_build
+      ./venv_build/Scripts/python.exe -m pip install -r pre-requirements.txt
       # Build the parsec wheel
-      python setup.py bdist_wheel
+      ./venv_build/Scripts/python.exe setup.py bdist_wheel
+    displayName: 'Build Wheel'
+  - bash: |
+      set -eux
       # Install the parsec wheel with all dependencies
       pip install $(ls dist/parsec_cloud-*.whl)[all]
       # Check dependency compatibility
       pip check parsec[all]
       # Check winfsp-tests availability
-      python -c "import winfspy.tests.winfsp_tests"
+      python.exe -c "import winfspy.tests.winfsp_tests"
       # Create isolated test directory
       mkdir -p "$(Agent.TempDirectory)"\\empty
       cp -R tests "$(Agent.TempDirectory)"\\empty
@@ -249,18 +260,15 @@ jobs:
   condition: startsWith(variables['build.sourceBranch'], 'refs/tags/')
   timeoutInMinutes: 60
   pool:
+    # 18.04 requested to build a core18 image with --destructive-mode
     vmImage: 'ubuntu-18.04'
   steps:
   - checkout: self
     submodules: true
   - bash: |
       set -eux
-      sudo snap install lxd  # Multipass requires KVM which is not supported
       sudo snap install snapcraft --classic
-      lxd --version
       snapcraft --version
-      sudo lxd init --auto
-      sudo lxd.migrate -yes
     displayName: 'Bootstrap'
   - bash: |
       set -eux
@@ -274,7 +282,7 @@ jobs:
       VERBOSE_TAG=`git -C $(Build.SourcesDirectory) describe --tag`
       sed -i "s#^\\(__version__ = \\).*\$#\\1'$VERBOSE_TAG'#" src/parsec/_version.py
       sed -i "s/__PARSEC_VERSION__/$VERBOSE_TAG/" snap/snapcraft.yaml
-      sudo snapcraft --use-lxd
+      snapcraft --destructive-mode
       mkdir dist
       cp parsec*.snap dist
     displayName: 'Build snap'
@@ -295,32 +303,42 @@ jobs:
   steps:
   - checkout: self
     submodules: true
+  - task: UsePythonVersion@0
+    inputs:
+      versionSpec: '$(python.version)'
   - bash: |
       set -eux
-      sudo apt-get install -y python python-pip xvfb xorg
-      pip install twine
+      sudo apt-get update
+      # sudo apt-get install -y xvfb xorg
+      pip install -r pre-requirements.txt
     displayName: 'Bootstrap'
   - bash: |
       set -eux
-      python setup.py sdist bdist_wheel
+      # Build in a venv to isolate from tests
+      python -m venv venv_build
+      ./venv_build/bin/python -m pip install -r pre-requirements.txt
+      # Build the parsec wheel
+      ./venv_build/bin/python setup.py bdist_wheel
+    displayName: 'Build Wheel'
   - bash: |
       set -eux
       pip install --user virtualenv
-      python -m venv venv
-      source venv/bin/activate
-      pip install dist/*.whl[all]
+      python -m venv venv_test
+      source venv_test/bin/activate
+      pip install -r pre-requirements.txt
+      pip install $(ls dist/parsec_cloud-*.whl)[all]
+    displayName: 'Install Wheel'
   - bash: |
       set -eux
-      source venv/bin/activate
+      source venv_test/bin/activate
+      mkdir empty
+      cd empty
+      # Simple cli test
+      parsec --version
       # Run Parsec GUI in background and log it return code
-      xvfb-run parsec core gui &
-      # Make sure the GUI hasn't crashed during startup
-      sleep 3
-      jobs | grep Running
-      # Only way to close the GUI from the command line...
-      killall xvfb-run
-    displayName: 'Test GUI do launch'
-  - publish: $(Agent.TempDirectory)/dist
+      # xvfb-run parsec core gui --diagnose
+    displayName: 'Test Wheel'
+  - publish: dist/
     artifact: pypi
   - bash: |
       set -eux
@@ -329,11 +347,11 @@ jobs:
       username = __token__
       password = $PYPI_CREDENTIALS
       " > ~/.pypirc
-      twine upload dist/*
+      pip install twine
+      twine upload dist/parsec_cloud-*.whl
     env:
       PYPI_CREDENTIALS: $(PYPI_CREDENTIALS)
-    displayName: 'Build PyPI'
-    workingDirectory: $(Agent.TempDirectory)
+    displayName: 'Upload to PyPI'
 
 
 #################################################################################
@@ -342,9 +360,9 @@ jobs:
 - job: 'linux_snap_test'
   displayName: 'Never trust a snap'
   dependsOn: linux_snap_build
-  timeoutInMinutes: 5
+  timeoutInMinutes: 10
   pool:
-    vmImage: 'ubuntu-18.04'  # Shame, snap doesn't support docker...
+    vmImage: 'ubuntu-latest'
   steps:
   # Note there no point specifying Python version given snap doesn't take it into account
   - checkout: none
@@ -356,17 +374,38 @@ jobs:
       # sudo apt-get install -y xvfb xorg
       sudo snap install --classic --dangerous $(Pipeline.Workspace)/linux_amd64_snap/parsec*.snap
       parsec.cli --version
+      # Make sure snap contains core but not backend
+      NOT_AVAILABLES=$(parsec.cli --help | grep -i "not available")
+      test "$(echo $NOT_AVAILABLES | grep -i 'backend')"
+      test -z "$(echo $NOT_AVAILABLES | grep -i 'core')"
       # xvfb-run parsec &
       # sleep 5
       # jobs  # returns error if parsec is not started
       # kill %1
     displayName: 'Test Snap'
+
+
+#################################################################################
+
+
+- job: 'linux_snap_upload'
+  displayName: 'Upload snap'
+  dependsOn: linux_snap_test
+  timeoutInMinutes: 10
+  pool:
+    vmImage: 'ubuntu-latest'
+  steps:
+  - checkout: none
+  - download: current
+    artifact: linux_amd64_snap
   - bash: |
       sudo snap install snapcraft --classic
       echo $SNAPCRAFT_CREDENTIALS | snapcraft login --with -
-      snapcraft push --release=edge $(Pipeline.Workspace)/linux_amd64_snap/parsec*.snap
+    displayName: 'Bootstrap'
     env:
       SNAPCRAFT_CREDENTIALS: $(SNAPCRAFT_CREDENTIALS)
+  - bash: |
+      snapcraft upload --release=edge $(Pipeline.Workspace)/linux_amd64_snap/parsec*.snap
     displayName: 'Upload Snap'
 
 

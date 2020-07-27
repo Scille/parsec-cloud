@@ -19,7 +19,7 @@ from parsec.backend.client_context import (
     APIV1_AdministrationClientContext,
 )
 from parsec.backend.user import UserNotFoundError
-from parsec.backend.organization import OrganizationNotFoundError
+from parsec.backend.organization import OrganizationNotFoundError, OrganizationAlreadyExistsError
 from parsec.backend.invite import InvitationError, UserInvitation, DeviceInvitation
 
 
@@ -202,8 +202,19 @@ async def _apiv1_process_anonymous_answer(
         organization = await backend.organization.get(organization_id)
 
     except OrganizationNotFoundError:
-        result_req = handshake.build_bad_identity_result_req()
-        return None, result_req, _make_error_infos("Bad organization")
+        if backend.config.spontaneous_organization_bootstrap:
+            # Lazy creation of the organization with always the same empty token
+            try:
+                await backend.organization.create(
+                    id=organization_id, bootstrap_token="", expiration_date=None
+                )
+            except OrganizationAlreadyExistsError:
+                pass
+            organization = await backend.organization.get(organization_id)
+
+        else:
+            result_req = handshake.build_bad_identity_result_req()
+            return None, result_req, _make_error_infos("Bad organization")
 
     if organization.expiration_date is not None and organization.expiration_date <= pendulum_now():
         result_req = handshake.build_organization_expired_result_req()

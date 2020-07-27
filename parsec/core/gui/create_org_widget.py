@@ -196,7 +196,7 @@ class CreateOrgWidget(QWidget, Ui_CreateOrgWidget):
     @classmethod
     def exec_modal(cls, jobs_ctx, parent):
         w = cls(jobs_ctx)
-        d = GreyedDialog(w, _("TEXT_ORG_WIZARD_TITLE"), parent=parent)
+        d = GreyedDialog(w, _("TEXT_ORG_WIZARD_TITLE"), parent=parent, width=1000)
         w.dialog = d
         if d.exec_() == QDialog.Accepted:
             return w.status

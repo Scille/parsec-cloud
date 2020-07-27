@@ -6,6 +6,10 @@ from PyQt5 import QtCore
 
 from parsec.core.local_device import save_device_with_password
 from parsec.core.fs import FSWorkspaceNoReadAccess
+from unittest.mock import ANY
+from parsec.api.data import WorkspaceEntry
+from uuid import UUID
+import pendulum
 
 
 @pytest.fixture
@@ -142,3 +146,54 @@ async def test_mountpoint_remote_error_event(aqtbot, running_backend, logged_gui
         msg_widget.message
         == 'Unexpected error while performing "unlink" operation on "/bar": D\'Oh !.'
     )
+
+
+@pytest.mark.gui
+@pytest.mark.trio
+async def test_event_bus_internal_connection(aqtbot, running_backend, logged_gui, alice):
+    w_w = logged_gui.test_get_workspaces_widget()
+    uuid = UUID("1bc1e17b-157a-462f-86f2-7f64657ba16a")
+    w_entry = WorkspaceEntry(
+        name="w",
+        id=ANY,
+        key=ANY,
+        encryption_revision=1,
+        encrypted_on=ANY,
+        role_cached_on=ANY,
+        role=None,
+    )
+
+    assert w_w is not None
+    async with aqtbot.wait_signal(w_w.list_success):
+        pass
+
+    async with aqtbot.wait_signal(w_w.fs_synced_qt):
+        w_w.event_bus.send(CoreEvent.FS_ENTRY_SYNCED, workspace_id=None, id=uuid)
+
+    async with aqtbot.wait_signal(w_w.fs_updated_qt):
+        w_w.event_bus.send(CoreEvent.FS_ENTRY_UPDATED, workspace_id=uuid, id=None)
+
+    async with aqtbot.wait_signal(w_w._workspace_created_qt):
+        w_w.event_bus.send(CoreEvent.FS_WORKSPACE_CREATED, new_entry=w_entry)
+
+    async with aqtbot.wait_signal(w_w.sharing_updated_qt):
+        w_w.event_bus.send(CoreEvent.SHARING_UPDATED, new_entry=w_entry, previous_entry=None)
+
+    async with aqtbot.wait_signal(w_w.entry_downsynced_qt):
+        w_w.event_bus.send(CoreEvent.FS_ENTRY_DOWNSYNCED, workspace_id=uuid, id=uuid)
+
+    async with aqtbot.wait_signal(w_w.mountpoint_started):
+        w_w.event_bus.send(
+            CoreEvent.MOUNTPOINT_STARTED,
+            mountpoint=None,
+            workspace_id=uuid,
+            timestamp=pendulum.now(),
+        )
+
+    async with aqtbot.wait_signal(w_w.mountpoint_stopped):
+        w_w.event_bus.send(
+            CoreEvent.MOUNTPOINT_STOPPED,
+            mountpoint=None,
+            workspace_id=uuid,
+            timestamp=pendulum.now(),
+        )

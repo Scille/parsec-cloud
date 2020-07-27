@@ -38,8 +38,8 @@ def get_password_strength(password):
 
 
 class PasswordStrengthWidget(QWidget, Ui_PasswordStrengthWidget):
-    def __init__(self):
-        super().__init__()
+    def __init__(self, parent=None):
+        super().__init__(parent)
         self.setupUi(self)
 
     def on_password_change(self, text):

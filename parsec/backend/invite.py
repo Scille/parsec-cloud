@@ -2,11 +2,19 @@
 
 from parsec.backend.backend_events import BackendEvent
 import attr
+import trio
+import smtplib
+import ssl
+import importlib_resources
 from enum import Enum
 from uuid import UUID, uuid4
 from collections import defaultdict
 from typing import Dict, List, Optional, Union, Set
 from pendulum import Pendulum, now as pendulum_now
+from email.message import Message
+from email.mime.text import MIMEText
+from email.mime.multipart import MIMEMultipart
+from structlog import get_logger
 
 from parsec.crypto import PublicKey
 from parsec.event_bus import EventBus
@@ -36,8 +44,13 @@ from parsec.api.protocol import (
     invite_4_greeter_communicate_serializer,
     invite_4_claimer_communicate_serializer,
 )
+import parsec.backend.mail
 from parsec.backend.utils import catch_protocol_errors, api
+from parsec.backend.config import BackendConfig, EmailConfig
+from parsec.core.types import BackendAddr, BackendInvitationAddr
 
+
+logger = get_logger()
 
 PEER_EVENT_MAX_WAIT = 300  # 5mn
 
@@ -120,10 +133,144 @@ class DeviceInvitation:
 
 Invitation = Union[UserInvitation, DeviceInvitation]
 
+MAIL_TEXT = {
+    "en": {
+        "title": "You have received an invitation on Parsec Cloud",
+        "preheader": "Follow these steps to join your new workspace",
+        "body": [
+            (
+                "You have received an invitation from {sender_name} "
+                "to join their workspace on Parsec."
+            ),
+            "Download now via the following link : ",
+            "{parsec_url}",
+            "Once installed, open the next link with Parsec : ",
+            "{invite_link}",
+            "Or if it doesn't work, copy and paste it in the concerned section.",
+            (
+                "Lastly, get in touch with {sender_name} and follow the "
+                "next steps on Parsec to become part of their workspace."
+            ),
+        ],
+        "download_button": "Download Parsec",
+        "invite_button": "Invite Link",
+        "parsec_by": "Parsec by ",
+    },
+    "fr": {
+        "title": "Vous avez reçu une invitation sur Parsec Cloud",
+        "preheader": "Suivez ces étapes pour rejoindre votre nouvel espace de travail",
+        "body": [
+            (
+                "Vous avez reçu une invitation de la part de {sender_name} "
+                "pour rejoindre leur espace de travail sur Parsec."
+            ),
+            "Téléchargez Parsec en suivant ce lien : ",
+            "{parsec_url}",
+            "Une fois installé, ouvrez le lien suivant avec Parsec : ",
+            "{invite_link}",
+            "Si cela échoue, copiez puis collez ce lien dans la section dédiée.",
+            (
+                "Enfin, contactez {sender_name} puis suivez les étapes "
+                "indiquées sur Parsec pour rejoindre leur espace de travail."
+            ),
+        ],
+        "download_button": "Télécharger Parsec",
+        "invite_button": "Lien d'invitation",
+        "parsec_by": "Parsec par ",
+    },
+}
+
+
+def generate_invite_email(
+    email_config: EmailConfig,
+    backend_addr: BackendAddr,
+    organization_id: OrganizationID,
+    invitation: UserInvitation,
+    sender_name: str,
+    receiver_email=None,
+) -> Message:
+    mail_text = MAIL_TEXT[email_config.language]
+    parsec_url = "https://parsec.cloud/get-parsec"
+    invite_link = str(
+        BackendInvitationAddr(
+            organization_id=organization_id,
+            invitation_type=InvitationType.USER,
+            token=invitation.token,
+            hostname=backend_addr.hostname,
+            port=backend_addr.port,
+            use_ssl=backend_addr.use_ssl,
+        )
+    )
+    body = [
+        line.format(sender_name=sender_name, invite_link=invite_link, parsec_url=parsec_url)
+        for line in mail_text["body"]
+    ]
+
+    # Plain-text version used as backup if the html doesn't work for the client
+    text = "\n".join(body)
+
+    # HTML version
+    paragraph_1 = "<br>".join(body[:2])
+    paragraph_2 = body[3]
+    paragraph_3 = "<br><br>".join([body[5], invite_link, body[6]])
+    html = importlib_resources.read_text(parsec.backend.mail, "invite_mail.tmpl.html")
+    html = html.format(
+        paragraph_1=paragraph_1,
+        paragraph_2=paragraph_2,
+        paragraph_3=paragraph_3,
+        parsec_url=body[2],
+        invite_link=body[4],
+        preheader=mail_text["preheader"],
+        button1=mail_text["download_button"],
+        button2=mail_text["invite_button"],
+        parsec_by=mail_text["parsec_by"],
+    )
+
+    # mail settings
+    message = MIMEMultipart("alternative")
+    message["Subject"] = mail_text["title"]
+    message["From"] = email_config.user
+    message["To"] = receiver_email or invitation.claimer_email
+
+    # Turn parts into MIMEText objects
+    part1 = MIMEText(text, "plain")
+    part2 = MIMEText(html, "html")
+
+    # Add HTML/plain-text parts to MIMEMultipart message
+    # The email client will try to render the last part first
+    message.attach(part1)
+    message.attach(part2)
+
+    return message
+
+
+async def send_email(email_config: EmailConfig, to_addr: str, message: Message) -> None:
+    def _do():
+        try:
+            context = ssl.create_default_context()
+            if email_config.use_ssl:
+                server = smtplib.SMTP_SSL(email_config.host, email_config.port, context=context)
+            else:
+                server = smtplib.SMTP(email_config.host, email_config.port)
+
+            with server:
+                if email_config.use_tls and not email_config.use_ssl:
+                    if server.starttls(context=context)[0] != 220:
+                        logger.warning("Email TLS connexion isn't encrypted")
+                if email_config.user and email_config.password:
+                    server.login(email_config.user, email_config.password)
+                server.sendmail(email_config.user, to_addr, message.as_string())
+
+        except smtplib.SMTPException as e:
+            logger.warning("SMTP error", exc_info=e, to_addr=to_addr)
+
+    await trio.to_thread.run_sync(_do)
+
 
 class BaseInviteComponent:
-    def __init__(self, event_bus: EventBus):
+    def __init__(self, event_bus: EventBus, config: BackendConfig):
         self._event_bus = event_bus
+        self._config = config
         # We use the `invite.status_changed` event to keep a list of all the
         # invitation claimers connected accross all backends.
         #
@@ -158,13 +305,13 @@ class BaseInviteComponent:
     async def api_invite_new(self, client_ctx, msg):
         msg = invite_new_serializer.req_load(msg)
 
+        if msg["send_email"]:
+            if not self._config.email_config or not self._config.backend_addr:
+                return invite_new_serializer.rep_dump({"status": "not_available"})
+
         if msg["type"] == InvitationType.USER:
             if client_ctx.profile != UserProfile.ADMIN:
                 return invite_new_serializer.rep_dump({"status": "not_allowed"})
-
-            # TODO: implement send email feature
-            if msg["send_email"]:
-                return invite_new_serializer.rep_dump({"status": "not_implemented"})
 
             invitation = await self.new_for_user(
                 organization_id=client_ctx.organization_id,
@@ -172,10 +319,42 @@ class BaseInviteComponent:
                 claimer_email=msg["claimer_email"],
             )
 
+            if msg["send_email"]:
+                message = generate_invite_email(
+                    email_config=self._config.email_config,
+                    backend_addr=self._config.backend_addr,
+                    organization_id=client_ctx.organization_id,
+                    invitation=invitation,
+                    sender_name=client_ctx.user_display,
+                )
+                await send_email(
+                    email_config=self._config.email_config,
+                    to_addr=invitation.claimer_email,
+                    message=message,
+                )
+
         else:  # Device
+            if msg["send_email"] and not client_ctx.human_handle:
+                return invite_new_serializer.rep_dump({"status": "not_available"})
+
             invitation = await self.new_for_device(
                 organization_id=client_ctx.organization_id, greeter_user_id=client_ctx.user_id
             )
+
+            if msg["send_email"]:
+                message = generate_invite_email(
+                    email_config=self._config.email_config,
+                    backend_addr=self._config.backend_addr,
+                    organization_id=client_ctx.organization_id,
+                    invitation=invitation,
+                    sender_name=client_ctx.user_display,
+                    receiver_email=client_ctx.human_handle.email,
+                )
+                await send_email(
+                    email_config=self._config.email_config,
+                    to_addr=client_ctx.human_handle.email,
+                    message=message,
+                )
 
         return invite_new_serializer.rep_dump({"status": "ok", "token": invitation.token})
 

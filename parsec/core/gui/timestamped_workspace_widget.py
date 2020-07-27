@@ -109,7 +109,7 @@ class TimestampedWorkspaceWidget(QWidget, Ui_TimestampedWorkspaceWidget):
     def exec_modal(cls, workspace_fs, jobs_ctx, parent):
         w = cls(workspace_fs=workspace_fs, jobs_ctx=jobs_ctx)
         d = GreyedDialog(
-            center_widget=w, title=_("TEXT_WORKSPACE_TIMESTAMPED_TITLE"), parent=parent
+            center_widget=w, title=_("TEXT_WORKSPACE_TIMESTAMPED_TITLE"), parent=parent, width=1000
         )
         w.dialog = d
         r = d.exec_()

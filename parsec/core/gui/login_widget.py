@@ -36,7 +36,7 @@ class LoginWidget(QWidget, Ui_LoginWidget):
         self.button_login.setText(_("ACTION_LOG_IN"))
 
     def keyPressEvent(self, event):
-        if event.key() == Qt.Key_Return:
+        if event.key() == Qt.Key_Return and self.button_login.isEnabled():
             self.try_login()
         event.accept()
 
