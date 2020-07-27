@@ -1,0 +1,1 @@
+Fix mount error when using Snap package on Debian when fuse is not installed.
