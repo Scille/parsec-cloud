@@ -212,7 +212,7 @@ class WorkspacesWidget(QWidget, Ui_WorkspacesWidget):
             label = QLabel(_("TEXT_WORKSPACE_NO_WORKSPACES"))
             label.setAlignment(Qt.AlignHCenter | Qt.AlignVCenter)
             self.layout_workspaces.addWidget(label)
-            if self.initial_list_workspaces:
+            if self.initial_list_workspaces and self.core.config.finalization_organization_enabled:
                 self.initial_list_workspaces = False
                 InitOrganizationWidget.exec_modal(self.jobs_ctx, self.core, self)
             return

@@ -688,6 +688,7 @@ def core_config(tmpdir):
         cache_base_dir=tmpdir / "cache",
         data_base_dir=tmpdir / "data",
         mountpoint_base_dir=tmpdir / "mnt",
+        finalization_organization_enabled=False,
     )
 
 
