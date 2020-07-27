@@ -2,140 +2,125 @@
 
 import pytest
 import trio
+import ssl
 from uuid import uuid4
 from tests.common import customize_fixtures
-from urllib.parse import urlsplit
 
+from parsec.api.protocol import OrganizationID, InvitationType
 from parsec.core.types.backend_address import BackendInvitationAddr
 
 
+@pytest.fixture
+def backend_http_send(running_backend, backend_addr):
+    async def _http_send(target):
+        stream = await trio.open_tcp_stream(backend_addr.hostname, backend_addr.port)
+        if backend_addr.use_ssl:
+            ssl_context = ssl.create_default_context(ssl.Purpose.SERVER_AUTH)
+            ssl_context.load_default_certs()
+            stream = trio.SSLStream(stream, ssl_context, server_hostname=backend_addr.hostname)
+
+        # Use HTTP 1.0 given 1.1 requires Host header
+        req = f"GET {target} HTTP/1.0\r\n\r\n"
+        await stream.send_all(req.encode("utf8"))
+        rep = await stream.receive_some()
+        await stream.aclose()
+        return rep.decode("utf8")
+
+    return _http_send
+
+
+def _get_header(rep, header_name):
+    header_line = next(line for line in rep.split("\r\n") if line.startswith(f"{header_name}:"))
+    return header_line.split(": ", 1)[1]
+
+
 @pytest.mark.trio
-async def test_send_http_request_invalid_route(running_backend):
-    stream = await trio.open_tcp_stream(running_backend.addr.hostname, running_backend.addr.port)
-    await stream.send_all(
-        b"GET / HTTP/1.1\r\n"
-        b"Host: parsec.example.com\r\n"
-        b"User-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:69.0) Gecko/20100101 Firefox/69.0\r\n"
-        b"Accept: text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8\r\n"
-        b"Accept-Language: fr,fr-FR;q=0.8,en-US;q=0.5,en;q=0.3\r\n"
-        b"Accept-Encoding: gzip, deflate\r\n"
-        b"DNT: 1\r\n"
-        b"Connection: keep-alive\r\n"
-        b"Upgrade-Insecure-Requests: 1\r\n"
-        b"Cache-Control: max-age=0\r\n"
-        b"\r\n"
-    )
-    rep = await stream.receive_some()
-    rep = rep.decode("utf-8")
-    assert "HTTP/1.1 404" in rep
+async def test_get_404(backend_http_send):
+    rep = await backend_http_send("/dummy")
+    assert rep.startswith("HTTP/1.1 404 \r\n")
+
+
+@pytest.mark.trio
+async def test_get_root(backend_http_send):
+    rep = await backend_http_send("/")
+    # TODO: there should be a landing page here !
+    assert rep.startswith("HTTP/1.1 404 \r\n")
+
+
+@pytest.mark.trio
+async def test_get_static(backend_http_send):
+    # Get resource
+    rep = await backend_http_send("/static/favicon.ico")
+    assert rep.startswith("HTTP/1.1 200 \r\n")
+
+    # Also test resource in a subfolder
+    rep = await backend_http_send("/static/css/base.css")
+    assert rep.startswith("HTTP/1.1 200 \r\n")
+
+    # Finally test non-existing resource
+    rep = await backend_http_send("/static/dummy")
+    assert rep.startswith("HTTP/1.1 404 \r\n")
+
+
+@pytest.mark.trio
+async def test_get_api_redirect_not_available(backend_http_send):
+    rep = await backend_http_send(f"/api/redirect/foo/bar?a=1&b=2")
+    assert rep.startswith("HTTP/1.1 501 \r\n")
 
 
 @pytest.mark.trio
 @customize_fixtures(backend_has_email=True)
-@pytest.mark.parametrize("no_ssl", [False, True])
-async def test_send_http_invite_request_to_redirect(running_backend, no_ssl):
-    urlsplitted = urlsplit(running_backend.addr.to_url())
-    netloc = urlsplitted.netloc
-    splitted_netloc = netloc.split(":")
-    hostname = splitted_netloc[0]
-    port = splitted_netloc[1]
-    backend_invitation_addr = BackendInvitationAddr(
-        hostname=hostname,
-        port=port,
-        use_ssl=not no_ssl,
-        organization_id="organization_id",
-        invitation_type="invitation_type",
+async def test_get_api_redirect(backend_http_send, backend_addr):
+    rep = await backend_http_send(f"/api/redirect/foo/bar?a=1&b=2")
+    assert rep.startswith("HTTP/1.1 302 \r\n")
+    assert _get_header(rep, "location") == f"parsec://example.com:9999/foo/bar?a=1&b=2&no_ssl=true"
+
+
+@pytest.mark.trio
+@customize_fixtures(backend_over_ssl=True, backend_has_email=True)
+async def test_get_api_redirect_over_ssl(backend_http_send, backend_addr):
+    rep = await backend_http_send(f"/api/redirect/foo/bar?a=1&b=2")
+    assert rep.startswith("HTTP/1.1 302 \r\n")
+    assert _get_header(rep, "location") == f"parsec://example.com:9999/foo/bar?a=1&b=2"
+
+
+@pytest.mark.trio
+@customize_fixtures(backend_has_email=True)
+async def test_get_api_redirect_no_ssl_param_overwritten(backend_http_send, backend_addr):
+    rep = await backend_http_send(f"/api/redirect/spam?no_ssl=false&a=1&b=2")
+    assert rep.startswith("HTTP/1.1 302 \r\n")
+    assert _get_header(rep, "location") == f"parsec://example.com:9999/spam?a=1&b=2&no_ssl=true"
+
+
+@pytest.mark.trio
+@customize_fixtures(backend_over_ssl=True, backend_has_email=True)
+async def test_get_api_redirect_no_ssl_param_overwritten_with_ssl_enabled(
+    backend_http_send, backend_addr
+):
+    rep = await backend_http_send(f"/api/redirect/spam?a=1&b=2&no_ssl=true")
+    assert rep.startswith("HTTP/1.1 302 \r\n")
+    assert _get_header(rep, "location") == f"parsec://example.com:9999/spam?a=1&b=2"
+
+
+@pytest.mark.trio
+@customize_fixtures(backend_has_email=True)
+async def test_get_api_redirect_invitation(backend_http_send, backend_addr):
+    invitation_addr = BackendInvitationAddr.build(
+        backend_addr=backend_addr,
+        organization_id=OrganizationID("Org"),
+        invitation_type=InvitationType.USER,
         token=uuid4(),
     )
-
-    stream = await trio.open_tcp_stream(
-        backend_invitation_addr.hostname, backend_invitation_addr.port
-    )
-    req = (
-        "GET /api/redirect"
-        f"?organization_id={backend_invitation_addr.organization_id}"
-        f"&invitation_type={backend_invitation_addr.invitation_type}&"
-        f"token={backend_invitation_addr.token}"
-        f"&no_ssl={ not backend_invitation_addr.use_ssl} HTTP/1.0\r\n\r\n"
-    ).encode("utf-8")
-
-    await stream.send_all(req)
-    rep = await stream.receive_some()
-    rep = rep.decode("utf-8")
-    rep_lines = rep.split("\n")
-    assert "HTTP/1.1 302" in rep_lines[0]
-    location_header_line = next(line for line in rep_lines if line.startswith("location:"))
-    assert (
-        f"parsec://example.com:9999?no_ssl={ no_ssl }&organization_id={backend_invitation_addr.organization_id}&invitation_type={backend_invitation_addr.invitation_type}&token={backend_invitation_addr.token}"
-        == location_header_line[len("location: ") :].strip()
-    )
+    # TODO: should use invitation_addr.to_redirection_url() when available !
+    *_, target = invitation_addr.to_url().split("/")
+    rep = await backend_http_send(f"/api/redirect/{target}")
+    assert rep.startswith("HTTP/1.1 302 \r\n")
+    location = _get_header(rep, "location")
+    location_addr = BackendInvitationAddr.from_url(location)
+    assert location_addr == invitation_addr
 
 
 @pytest.mark.trio
-@pytest.mark.parametrize("no_ssl", [False, True])
-@customize_fixtures(backend_has_email=True)
-async def test_send_http_request_to_redirect(running_backend, no_ssl):
-    urlsplitted = urlsplit(running_backend.addr.to_url())
-    netloc = urlsplitted.netloc
-    splitted_netloc = netloc.split(":")
-    hostname = splitted_netloc[0]
-    port = splitted_netloc[1]
-
-    stream = await trio.open_tcp_stream(hostname, port)
-    token = uuid4()
-    req = (
-        "GET /api/redirect"
-        "?some_args=thisisthefirstarg"
-        "&emptyone=&"
-        f"token={token}"
-        f"&no_ssl={ no_ssl } HTTP/1.0\r\n\r\n"
-        "foo=bar#touille"
-    ).encode("utf-8")
-
-    await stream.send_all(req)
-    rep = await stream.receive_some()
-    rep = rep.decode("utf-8")
-    rep_lines = rep.split("\n")
-    assert "HTTP/1.1 302" in rep_lines[0]
-    location_header_line = next(line for line in rep_lines if line.startswith("location:"))
-    assert (
-        f"parsec://example.com:9999?no_ssl={ no_ssl }&some_args=thisisthefirstarg&token={ token }"
-        == location_header_line[len("location: ") :].strip()
-    )
-
-
-@pytest.mark.trio
-async def test_static(running_backend):
-    # test get favicon.ico
-    stream = await trio.open_tcp_stream(running_backend.addr.hostname, running_backend.addr.port)
-    await stream.send_all(b"GET /static/favicon.ico HTTP/1.0\r\n\r\n")
-    rep = await stream.receive_some()
-    rep = rep.decode("utf-8")
-    assert "HTTP/1.1 200" in rep
-    # same test but inside css folder
-    stream = await trio.open_tcp_stream(running_backend.addr.hostname, running_backend.addr.port)
-    await stream.send_all(b"GET /static/css/base.css HTTP/1.0\r\n\r\n")
-    rep = await stream.receive_some()
-    data = await stream.receive_some()
-    rep = rep.decode("utf-8")
-    data = data.decode("utf-8")
-    assert "HTTP/1.1 200" in rep
-    data = data.replace("\r", "")
-    assert (
-        ".main-title {\n    margin: 30px, 10%, 30px;\n}\n\n"
-        ".text-secondary {\n    color: #121D43 !important;\n}\n\n"
-        ".text-muted {\n    color: #6c757d!important;\n}\n\n"
-        ".text-center {\n    text-align: center!important;\n}\n\n"
-        ".main-title-spacer {\n    width: 60px;\n    height: 2px;\n    "
-        "margin: 20px auto 50px auto;\n}\n\n"
-        ".bg-primary {\n    background-color: #006eff !important"
-    ) in data
-    # same test but resource doesn't exist
-    stream = await trio.open_tcp_stream(running_backend.addr.hostname, running_backend.addr.port)
-    await stream.send_all(b"GET /static/css/nonexistent1234.css HTTP/1.0\r\n\r\n")
-    rep = await stream.receive_some()
-    data = await stream.receive_some()
-    rep = rep.decode("utf-8")
-    data = data.decode("utf-8")
-    assert "HTTP/1.1 404" in rep
-    assert data == ""
+@customize_fixtures(backend_over_ssl=True, backend_has_email=True)
+async def test_get_api_redirect_invitation_over_ssl(backend_http_send, backend_addr):
+    await test_get_api_redirect_invitation(backend_http_send, backend_addr)

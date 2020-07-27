@@ -93,7 +93,10 @@ def _redirect_to_parsec(target: str, backend_addr, *arg, **kwarg):
     backend_addr_split = urlsplit(backend_addr.to_url())
     target_split = urlsplit(target)
     # Merge params with backend priority in case no_ssl param is provided in both parts.
-    query_params = {**parse_qs(backend_addr_split.query), **parse_qs(target_split.query)}
+    query_params = parse_qs(target_split.query)
+    # `no_ssl` param depends of backend_addr, hence it cannot be overwritten !
+    query_params.pop("no_ssl", None)
+    query_params.update(parse_qs(backend_addr_split.query))
     query = urlencode(query=query_params, doseq=True)
     path = target_split.path
     if path.startswith("/api/redirect"):

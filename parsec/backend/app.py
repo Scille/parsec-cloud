@@ -250,10 +250,15 @@ class BackendApp:
         status_code, headers, data = get_method_and_execute(
             target=event.target, backend_addr=self.config.backend_addr
         )
+        # TODO: Specify reason ? (currently we have `HTTP/1.1 200 \r\n` instead of `HTTP/1.1 200 OK\r\n`)
         res = h11.Response(status_code=status_code, headers=headers)
-        await stream.send_all(conn.send(res))
-        await stream.send_all(conn.send(h11.Data(data=data)))
-        await stream.send_all(conn.send(h11.EndOfMessage()))
+        try:
+            await stream.send_all(conn.send(res))
+            await stream.send_all(conn.send(h11.Data(data=data)))
+            await stream.send_all(conn.send(h11.EndOfMessage()))
+        except trio.BrokenResourceError:
+            # Peer is already gone, nothing to do
+            pass
 
     async def _handle_client_loop(self, transport, client_ctx):
         # Retrieve the allowed commands according to api version and auth type
