@@ -2030,18 +2030,10 @@ msgstr "Organization name"
 
 msgid "ACTION_ACCEPT_CONTRACT"
 msgstr ""
-<<<<<<< HEAD
 "I accept the <a href=\"https://parsec.cloud/pdf/Parsec-Privacy-Policy-fr.pdf\" title="
 "\"Contract\">contract</a> and PARSEC's <a href=\"https://my.parsec.cloud/assets/"
-"termsandconditions.pdf\" title=\"Condition Générales d'Utilisation\">conditions "
-"générales d'utilisation</a>"
-=======
-"I accept the <a href=\"https://my.parsec.cloud/assets/privacypolicy.pdf\""
-" title=\"Contract\">contract</a> and PARSEC's <a "
-"href=\"https://my.parsec.cloud/assets/termsandconditions.pdf\" "
-"title=\"Condition Générales d'Utilisation\">conditions générales "
-"d'utilisation</a>"
->>>>>>> 15a67a2a4ddb7152c42d86aec1fd255741e9a697
+"termsandconditions.pdf\" title=\"Condition Générales de Vente ou d'Utilisation\">conditions "
+"générales de vente ou d'utilisation</a>"
 
 msgid "ACTION_PREVIOUS"
 msgstr "Previous"
@@ -2346,4 +2338,3 @@ msgstr "Go to a file using a link"
 
 #~ msgid "TEXT_GREET_USER_ADDR_COPIED_TO_CLIPBOARD"
 #~ msgstr "The invitation link has been copied to the clipboard"
-
