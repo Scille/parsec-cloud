@@ -34,6 +34,7 @@ class Greeter:
             r = await self.main_mc_recv.receive()
 
             assert r == self.Step.WaitPeer
+            print("Wait peer")
             try:
                 in_progress_ctx = await core.start_greeting_device(token=token)
                 await self.job_mc_send.send((True, None))
@@ -48,6 +49,7 @@ class Greeter:
             r = await self.main_mc_recv.receive()
 
             assert r == self.Step.WaitPeerTrust
+            print("WaitPeerTrust")
             try:
                 in_progress_ctx = await in_progress_ctx.do_wait_peer_trust()
                 await self.job_mc_send.send((True, None))
@@ -57,6 +59,7 @@ class Greeter:
             r = await self.main_mc_recv.receive()
 
             assert r == self.Step.GetClaimerSas
+            print("GetClaiumerSas")
             try:
                 choices = in_progress_ctx.generate_claimer_sas_choices(size=4)
                 await self.job_mc_send.send((True, None, in_progress_ctx.claimer_sas, choices))
@@ -66,6 +69,7 @@ class Greeter:
             r = await self.main_mc_recv.receive()
 
             assert r == self.Step.SignifyTrust
+            print("SignifyTrust")
             try:
                 in_progress_ctx = await in_progress_ctx.do_signify_trust()
                 in_progress_ctx = await in_progress_ctx.do_get_claim_requests()
@@ -376,8 +380,8 @@ class GreetDeviceCodeExchangeWidget(QWidget, Ui_GreetDeviceCodeExchangeWidget):
         assert job.is_finished()
         assert job.status == "ok"
         self.get_claimer_sas_job = self.jobs_ctx.submit_job(
-            ThreadSafeQtSignal(self, "get_claimer_sas_success"),
-            ThreadSafeQtSignal(self, "get_claimer_sas_error"),
+            ThreadSafeQtSignal(self, "get_claimer_sas_success", QtToTrioJob),
+            ThreadSafeQtSignal(self, "get_claimer_sas_error", QtToTrioJob),
             self.greeter.get_claimer_sas,
         )
 
