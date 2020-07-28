@@ -107,26 +107,6 @@ class BackendApp:
             return
 
         except TransportError as exc:
-            # A crash during transport setup could mean the client tried to
-            # access us from a web browser (hence sending http request).
-
-            content_body = b"This service requires use of the WebSocket protocol"
-            content = (
-                b"HTTP/1.1 426 OK\r\n"
-                b"Upgrade: WebSocket\r\n"
-                b"Content-Length: %d\r\n"
-                b"Connection: Upgrade\r\n"
-                b"Content-Type: text/html; charset=UTF-8\r\n"
-                b"\r\n"
-            ) % len(content_body)
-
-            try:
-                await stream.send_all(content + content_body)
-
-            except trio.BrokenResourceError:
-                # Stream is really dead, nothing else to do...
-                pass
-
             selected_logger.info("Connection dropped: websocket error", reason=str(exc))
             return
 

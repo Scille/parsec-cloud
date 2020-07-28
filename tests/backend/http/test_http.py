@@ -43,8 +43,7 @@ async def test_get_404(backend_http_send):
 @pytest.mark.trio
 async def test_get_root(backend_http_send):
     rep = await backend_http_send("/")
-    # TODO: there should be a landing page here !
-    assert rep.startswith("HTTP/1.1 404 \r\n")
+    assert rep.startswith("HTTP/1.1 200 \r\n")
 
 
 @pytest.mark.trio

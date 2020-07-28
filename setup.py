@@ -371,7 +371,7 @@ setup(
         "parsec.backend.postgresql.migrations": ["*.sql"],
         "parsec.backend.mail": ["*.html"],
         "parsec.backend.http.templates": ["*.html"],
-        "parsec.backend.http.static": ["*.css", "*.ico"],
+        "parsec.backend.http.static": ["*"],
         "parsec.core.resources": ["*.ico"],
     },
     entry_points={

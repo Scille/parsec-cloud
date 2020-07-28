@@ -40,7 +40,7 @@ def get_404_method():
     return _http_404
 
 
-def _http_static(target: str, *arg, **kwarg):
+def _http_static(target: str, *args, **kwargs):
     """Return static resources"""
     target_split = target.split("/")
     path = "parsec.backend.http"
@@ -55,7 +55,7 @@ def _http_static(target: str, *arg, **kwarg):
     try:
         package = import_module(".static", "parsec.backend.http")
         if not importlib_resources.is_resource(package, file_name):
-            return 404, {}, b""
+            return _http_404(target, *args, **kwargs)
         data = importlib_resources.read_binary(package, file_name)
 
         content_type, _ = mimetypes.guess_type(file_name)
@@ -64,14 +64,18 @@ def _http_static(target: str, *arg, **kwarg):
         else:
             return 200, _set_headers(data=data), data
     except (ValueError, UnboundLocalError, TypeError, ModuleNotFoundError):
-        return 404, {}, b""
+        return _http_404(target, *args, **kwargs)
 
 
-def _http_404(*arg, **kwarg):
+def _http_404(*args, **kwargs):
     """Return the 404 view"""
-    status_code = 404
     data = _JINJA2_ENV.get_template("404.html").render()
-    return status_code, _set_headers(data=data), data.encode("utf-8")
+    return 404, _set_headers(data=data), data.encode("utf-8")
+
+
+def _http_root(*args, **kwargs):
+    data = _JINJA2_ENV.get_template("index.html").render()
+    return 200, _set_headers(data=data), data.encode("utf-8")
 
 
 def _is_route(target: str):
@@ -79,14 +83,14 @@ def _is_route(target: str):
     if no route found, return None
     """
     match = None
-    for regex, method in _MAPPING.items():
+    for regex, method in _MAPPING:
         match = re.match(regex, target)
         if match:
             return method
     return None
 
 
-def _redirect_to_parsec(target: str, backend_addr, *arg, **kwarg):
+def _redirect_to_parsec(target: str, backend_addr, *args, **kwargs):
     """Redirect the http invite request to a parsec url request"""
     if not backend_addr:
         return 501, {}, b"Url redirection is not available"
@@ -121,4 +125,8 @@ def _set_headers(data=b"", headers=(), content_type="text/html;charset=utf-8"):
     ]
 
 
-_MAPPING = {r"^/api/redirect(.*)$": _redirect_to_parsec, r"^/static/(.*)$": _http_static}
+_MAPPING = [
+    (r"^/$", _http_root),
+    (r"^/api/redirect(.*)$", _redirect_to_parsec),
+    (r"^/static/(.*)$", _http_static),
+]
