@@ -4,6 +4,7 @@ import pytest
 import trio
 from PyQt5 import QtCore
 from functools import partial
+from async_generator import asynccontextmanager
 
 from parsec.core.gui.lang import translate
 from parsec.api.protocol import InvitationType, HumanHandle
@@ -65,7 +66,6 @@ def GreetDeviceTestBed(
 
         async def bootstrap(self):
             author = logged_gui.test_get_central_widget().core.device
-
             # Create new invitation
 
             invitation = await backend.invite.new_for_device(
@@ -105,6 +105,27 @@ def GreetDeviceTestBed(
             self.author = author
             self.devices_widget = devices_widget
             self.invitation_addr = invitation_addr
+            self.greet_device_widget = greet_device_widget
+            self.greet_device_information_widget = greet_device_information_widget
+
+            self.assert_initial_state()  # Sanity check
+
+        async def bootstrap_after_restart(self):
+            self.greet_device_information_widget = None
+            self.greet_device_code_exchange_widget = None
+
+            greet_device_widget = self.greet_device_widget
+            greet_device_information_widget = await catch_greet_device_widget()
+            assert isinstance(greet_device_information_widget, GreetDeviceInstructionsWidget)
+
+            def _greet_device_displayed():
+                assert greet_device_widget.dialog.isVisible()
+                assert greet_device_widget.isVisible()
+                assert greet_device_widget.dialog.label_title.text() == "Greet a new device"
+                assert greet_device_information_widget.isVisible()
+
+            await aqtbot.wait_until(_greet_device_displayed)
+
             self.greet_device_widget = greet_device_widget
             self.greet_device_information_widget = greet_device_information_widget
 
@@ -255,7 +276,54 @@ async def test_greet_device_offline(
 
             return None
 
-    print(offline_step)
     setattr(OfflineTestBed, offline_step, getattr(OfflineTestBed, f"offline_{offline_step}"))
 
     await OfflineTestBed().run()
+
+
+@pytest.mark.gui
+@pytest.mark.trio
+@pytest.mark.parametrize(
+    "reset_step", ["step_3_exchange_greeter_sas", "step_4_exchange_claimer_sas"]
+)
+@customize_fixtures(logged_gui_as_admin=True)
+async def test_greet_device_reset_by_peer(aqtbot, GreetDeviceTestBed, autoclose_dialog, reset_step):
+    class ResetTestBed(GreetDeviceTestBed):
+        @asynccontextmanager
+        async def _reset_claimer(self):
+            async with backend_invited_cmds_factory(addr=self.invitation_addr) as cmds:
+                claimer_initial_ctx = await claimer_retrieve_info(cmds)
+                async with trio.open_nursery() as nursery:
+                    nursery.start_soon(claimer_initial_ctx.do_wait_peer)
+                    yield
+                    nursery.cancel_scope.cancel()
+
+        def _greet_restart(self, expected_message):
+            assert autoclose_dialog.dialogs == [("Error", expected_message)]
+
+        # Step 1&2 are before peer wait, so reset is meaningless
+
+        async def reset_step_3_exchange_greeter_sas(self):
+            expected_message = translate("TEXT_GREET_DEVICE_PEER_RESET")
+            async with self._reset_claimer():
+                await aqtbot.wait_until(partial(self._greet_restart, expected_message))
+
+            await self.bootstrap_after_restart()
+            return None
+
+        async def reset_step_4_exchange_claimer_sas(self):
+            expected_message = translate("TEXT_GREET_DEVICE_PEER_RESET")
+            guce_w = self.greet_device_code_exchange_widget
+
+            # Pretent we have click on the right choice
+            await aqtbot.run(guce_w.code_input_widget.good_code_clicked.emit)
+
+            async with self._reset_claimer():
+                await aqtbot.wait_until(partial(self._greet_restart, expected_message))
+
+            await self.bootstrap_after_restart()
+            return None
+
+    setattr(ResetTestBed, reset_step, getattr(ResetTestBed, f"reset_{reset_step}"))
+
+    await ResetTestBed().run()

@@ -451,7 +451,7 @@ class GreetDeviceWidget(QWidget, Ui_GreetDeviceWidget):
             self.dialog.reject()
             return
         # Let's try one more time with the same dialog
-        self.dialog.accept()
+        self.restart()
 
     def _goto_page1(self):
         item = self.main_layout.takeAt(0)
@@ -501,11 +501,11 @@ class GreetDeviceWidget(QWidget, Ui_GreetDeviceWidget):
             return
         self.greeter_job = None
         msg = ""
+        exc = None
         if job.status == "backend-not-available":
             msg = _("TEXT_INVITATION_BACKEND_NOT_AVAILABLE")
         else:
             msg = _("TEXT_GREET_DEVICE_UNKNOWN_ERROR")
-        exc = None
         if job.exc:
             exc = job.exc.params.get("origin", None)
         show_error(self, msg, exception=exc)
