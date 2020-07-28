@@ -6,12 +6,18 @@ from PyQt5.QtWidgets import QLabel
 
 @pytest.mark.gui
 @pytest.mark.trio
+@pytest.mark.parametrize("wait_time", [0, 10, 100, 1000])
 async def test_revoked_notification(
-    aqtbot, running_backend, backend, autoclose_dialog, logged_gui, alice, bob
+    aqtbot, running_backend, backend, autoclose_dialog, logged_gui, alice, bob, wait_time
 ):
 
     central_widget = logged_gui.test_get_central_widget()
     assert central_widget is not None
+
+    # Revokation might come when the GUI is busy, or idle
+    # We're testing this because the internal detection of the revokation might differ,
+    # but we still want to make sure the dialog pops up properly
+    await aqtbot.wait(wait_time)
 
     await backend.user.revoke_user(
         organization_id=alice.organization_id,
