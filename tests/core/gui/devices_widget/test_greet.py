@@ -7,6 +7,7 @@ from functools import partial
 from async_generator import asynccontextmanager
 from pendulum import now as pendulum_now
 
+from parsec.utils import start_task
 from parsec.core.gui.lang import translate
 from parsec.api.protocol import InvitationType, HumanHandle, InvitationDeletedReason
 from parsec.core.types import BackendInvitationAddr
@@ -17,6 +18,7 @@ from parsec.core.gui.greet_device_widget import (
     GreetDeviceInstructionsWidget,
     GreetDeviceWidget,
 )
+from parsec.core.gui.devices_widget import DeviceButton
 
 from tests.common import customize_fixtures
 
@@ -53,6 +55,9 @@ def GreetDeviceTestBed(
             # Set by step 2
             self.greet_device_code_exchange_widget = None
 
+            # Set by step 5
+            self.claimer_claim_task = None
+
         async def run(self):
             await self.bootstrap()
             async with trio.open_nursery() as self.nursery:
@@ -64,6 +69,8 @@ def GreetDeviceTestBed(
                         self.steps_done.append(current_step)
                         if next_step is None:
                             break
+                    if self.claimer_claim_task:
+                        await self.claimer_claim_task.cancel_and_join()
 
         async def bootstrap(self):
             author = logged_gui.test_get_central_widget().core.device
@@ -80,15 +87,11 @@ def GreetDeviceTestBed(
             )
 
             # Switch to devices page
-
             devices_widget = await logged_gui.test_switch_to_devices_widget()
-
             assert devices_widget.layout_devices.count() == 2
 
             # Click on the invitation button
-
             await aqtbot.mouse_click(devices_widget.button_add_device, QtCore.Qt.LeftButton)
-
             greet_device_widget = await catch_greet_device_widget()
             assert isinstance(greet_device_widget, GreetDeviceWidget)
 
@@ -206,10 +209,34 @@ def GreetDeviceTestBed(
                 assert gdce_w.isVisible()
 
             await aqtbot.wait_until(_wait_claimer_info)
+            return "step_5_provide_claim_info"
 
+        async def step_5_provide_claim_info(self):
+            gdce_w = self.greet_device_code_exchange_widget
+
+            async def _claimer_claim(in_progress_ctx, task_status=trio.TASK_STATUS_IGNORED):
+                task_status.started()
+                await in_progress_ctx.do_claim_device(
+                    requested_device_label=self.requested_device_label
+                )
+
+            self.claimer_claim_task = await start_task(
+                self.nursery, _claimer_claim, self.claimer_in_progress_ctx
+            )
+            with trio.fail_after(1):
+                await self.claimer_claim_task.join()
+
+            def _greet_done():
+                assert not gdce_w.isVisible()
+                assert autoclose_dialog.dialogs == [("", "The device was successfully created.")]
+                assert self.devices_widget.layout_devices.count() == 3
+                device_button = self.devices_widget.layout_devices.itemAt(2).widget()
+                assert isinstance(device_button, DeviceButton)
+                assert device_button.device_info.device_label == "PC1"
+                assert device_button.label_device_name.text() == "PC1"
+
+            await aqtbot.wait_until(_greet_done)
             return
-
-        # TODO step 5: just waiting for information
 
     return _GreetDeviceTestBed
 
@@ -230,6 +257,7 @@ async def test_greet_device(GreetDeviceTestBed):
         "step_2_start_claimer",
         "step_3_exchange_greeter_sas",
         "step_4_exchange_claimer_sas",
+        "step_5_provide_claim_info",
     ],
 )
 @customize_fixtures(logged_gui_as_admin=True)
@@ -277,6 +305,14 @@ async def test_greet_device_offline(
 
             return None
 
+        async def offline_step_5_provide_claim_info(self):
+            expected_message = translate("TEXT_GREET_DEVICE_WAIT_PEER_TRUST_ERROR")
+
+            with running_backend.offline():
+                await aqtbot.wait_until(partial(self._greet_aborted, expected_message))
+
+            return None
+
     setattr(OfflineTestBed, offline_step, getattr(OfflineTestBed, f"offline_{offline_step}"))
 
     await OfflineTestBed().run()
@@ -285,7 +321,8 @@ async def test_greet_device_offline(
 @pytest.mark.gui
 @pytest.mark.trio
 @pytest.mark.parametrize(
-    "reset_step", ["step_3_exchange_greeter_sas", "step_4_exchange_claimer_sas"]
+    "reset_step",
+    ["step_3_exchange_greeter_sas", "step_4_exchange_claimer_sas", "step_5_provide_claim_info"],
 )
 @customize_fixtures(logged_gui_as_admin=True)
 async def test_greet_device_reset_by_peer(aqtbot, GreetDeviceTestBed, autoclose_dialog, reset_step):
@@ -325,6 +362,13 @@ async def test_greet_device_reset_by_peer(aqtbot, GreetDeviceTestBed, autoclose_
             await self.bootstrap_after_restart()
             return None
 
+        async def reset_step_5_provide_claim_info(self):
+            expected_message = translate("TEXT_GREET_DEVICE_PEER_RESET")
+
+            async with self._reset_claimer():
+                await aqtbot.wait_until(partial(self._greet_restart, expected_message))
+            await self.bootstrap_after_restart()
+
     setattr(ResetTestBed, reset_step, getattr(ResetTestBed, f"reset_{reset_step}"))
 
     await ResetTestBed().run()
@@ -339,6 +383,7 @@ async def test_greet_device_reset_by_peer(aqtbot, GreetDeviceTestBed, autoclose_
         pytest.param("step_2_start_claimer", marks=pytest.mark.xfail),
         pytest.param("step_3_exchange_greeter_sas", marks=pytest.mark.xfail),
         "step_4_exchange_claimer_sas",
+        pytest.param("step_5_provide_claim_info", marks=pytest.mark.xfail),
     ],
 )
 @customize_fixtures(logged_gui_as_admin=True)
@@ -395,6 +440,14 @@ async def test_greet_device_invitation_cancelled(
             await self._cancel_invitation()
 
             await aqtbot.run(guce_w.code_input_widget.good_code_clicked.emit)
+            await aqtbot.wait_until(partial(self._greet_restart, expected_message))
+
+            return None
+
+        async def cancelled_step_5_provide_claim_info(self):
+            expected_message = translate("TEXT_GREET_DEVICE_WAIT_PEER_TRUST_ERROR")
+
+            await self._cancel_invitation()
             await aqtbot.wait_until(partial(self._greet_restart, expected_message))
 
             return None
