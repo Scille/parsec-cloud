@@ -132,6 +132,7 @@ async def test_bootstrap_org_missing_fields(
 
 @pytest.mark.gui
 @pytest.mark.trio
+@pytest.mark.flaky(reruns=1)
 async def test_bootstrap_organization_backend_offline(
     aqtbot, running_backend, gui, autoclose_dialog, monkeypatch, qt_thread_gateway
 ):

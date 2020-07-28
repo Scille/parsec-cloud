@@ -45,6 +45,7 @@ class AuthenticatedClientContext(BaseClientContext):
         "event_bus_ctx",
         "channels",
         "realms",
+        "events_subscribed",
         "conn_id",
         "logger",
     )
@@ -71,6 +72,7 @@ class AuthenticatedClientContext(BaseClientContext):
         self.event_bus_ctx = None  # Overwritten in BackendApp.handle_client
         self.channels = trio.open_memory_channel(100)
         self.realms = set()
+        self.events_subscribed = False
 
         self.conn_id = self.transport.conn_id
         self.logger = self.transport.logger = self.transport.logger.bind(
