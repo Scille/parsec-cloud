@@ -1,11 +1,13 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
 
-from parsec.backend.backend_events import BackendEvent
 from typing import Optional
 import trio
 from structlog import get_logger
 from logging import DEBUG as LOG_LEVEL_DEBUG
 from async_generator import asynccontextmanager
+import h11
+
+from parsec.backend.backend_events import BackendEvent
 from parsec.event_bus import EventBus
 from parsec.logging import get_log_level
 from parsec.api.transport import TransportError, TransportClosedByPeer, Transport
@@ -24,7 +26,6 @@ from parsec.backend.handshake import do_handshake
 from parsec.backend.memory import components_factory as mocked_components_factory
 from parsec.backend.postgresql import components_factory as postgresql_components_factory
 from parsec.backend.http.router import get_method_and_execute
-import h11
 
 logger = get_logger()
 
@@ -247,12 +248,17 @@ class BackendApp:
 
     async def handle_client_http(self, stream, event, conn):
         status_code, headers, data = get_method_and_execute(
-            url=event.target, backend_addr=self.config.backend_addr
+            target=event.target, backend_addr=self.config.backend_addr
         )
+        # TODO: Specify reason ? (currently we have `HTTP/1.1 200 \r\n` instead of `HTTP/1.1 200 OK\r\n`)
         res = h11.Response(status_code=status_code, headers=headers)
-        await stream.send_all(conn.send(res))
-        await stream.send_all(conn.send(h11.Data(data=data)))
-        await stream.send_all(conn.send(h11.EndOfMessage()))
+        try:
+            await stream.send_all(conn.send(res))
+            await stream.send_all(conn.send(h11.Data(data=data)))
+            await stream.send_all(conn.send(h11.EndOfMessage()))
+        except trio.BrokenResourceError:
+            # Peer is already gone, nothing to do
+            pass
 
     async def _handle_client_loop(self, transport, client_ctx):
         # Retrieve the allowed commands according to api version and auth type

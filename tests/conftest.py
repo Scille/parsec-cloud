@@ -7,6 +7,8 @@ import re
 import sys
 import attr
 import json
+import ssl
+import trustme
 import socket
 import contextlib
 import pendulum
@@ -329,11 +331,19 @@ def server_factory(tcp_stream_spy):
         if not addr:
             addr = BackendAddr(hostname=f"server-{count}.localhost", port=9999, use_ssl=False)
 
+        async def _serve_client(stream):
+            if addr.use_ssl:
+                ssl_context = ssl.create_default_context()
+                stream = trio.SSLStream(
+                    stream, ssl_context, server_hostname=addr.hostname, server_side=True
+                )
+            await entry_point(stream)
+
         async with trio.open_service_nursery() as nursery:
 
             def connection_factory(*args, **kwargs):
                 client_stream, server_stream = trio.testing.memory_stream_pair()
-                nursery.start_soon(entry_point, server_stream)
+                nursery.start_soon(_serve_client, server_stream)
                 return client_stream
 
             tcp_stream_spy.push_hook(addr, connection_factory)
@@ -352,10 +362,31 @@ def server_factory(tcp_stream_spy):
 
 
 @pytest.fixture()
-def backend_addr(tcp_stream_spy):
+def backend_addr(tcp_stream_spy, fixtures_customization, monkeypatch):
     # Depending on tcp_stream_spy fixture prevent from doing real connection
     # attempt (which can be long to resolve) when backend is not running
-    return BackendAddr(hostname="example.com", port=9999, use_ssl=False)
+    use_ssl = fixtures_customization.get("backend_over_ssl", False)
+    addr = BackendAddr(hostname="example.com", port=9999, use_ssl=use_ssl)
+    if use_ssl:
+        # TODO: Trustme & Windows doesn't seem to play well
+        # (that and Python < 3.7 & Windows bug https://bugs.python.org/issue35941)
+        if sys.platform == "win32":
+            pytest.skip("Windows and Trustme are not friends :'(")
+
+        # Create a ssl certificate and overload default ssl context generation
+        ca = trustme.CA()
+        cert = ca.issue_cert("*.example.com", "example.com")
+        vanilla_create_default_context = ssl.create_default_context
+
+        def patched_create_default_context(*args, **kwargs):
+            ctx = vanilla_create_default_context(*args, **kwargs)
+            ca.configure_trust(ctx)
+            cert.configure_cert(ctx)  # TODO: only server should load this part ?
+            return ctx
+
+        monkeypatch.setattr("ssl.create_default_context", patched_create_default_context)
+
+    return addr
 
 
 @pytest.fixture
