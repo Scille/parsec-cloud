@@ -3,7 +3,9 @@
 import pytest
 import trio
 from PyQt5 import QtCore
+from functools import partial
 
+from parsec.core.gui.lang import translate
 from parsec.api.protocol import InvitationType, HumanHandle
 from parsec.core.types import BackendInvitationAddr
 from parsec.core.backend_connection import backend_invited_cmds_factory
@@ -49,9 +51,6 @@ def GreetDeviceTestBed(
             # Set by step 2
             self.greet_device_code_exchange_widget = None
 
-            # Set by step 5
-            self.claimer_claim_task = None
-
         async def run(self):
             await self.bootstrap()
             async with trio.open_nursery() as self.nursery:
@@ -63,8 +62,6 @@ def GreetDeviceTestBed(
                         self.steps_done.append(current_step)
                         if next_step is None:
                             break
-                    if self.claimer_claim_task:
-                        await self.claimer_claim_task.cancel_and_join()
 
         async def bootstrap(self):
             author = logged_gui.test_get_central_widget().core.device
@@ -133,7 +130,6 @@ def GreetDeviceTestBed(
             return "step_2_start_claimer"
 
         async def step_2_start_claimer(self):
-            print("Step2")
             gdi_w = self.greet_device_information_widget
 
             self.claimer_initial_ctx = await claimer_retrieve_info(self.cmds)
@@ -159,7 +155,6 @@ def GreetDeviceTestBed(
             return "step_3_exchange_greeter_sas"
 
         async def step_3_exchange_greeter_sas(self):
-            print("Step3")
             gdce_w = self.greet_device_code_exchange_widget
 
             self.claimer_in_progress_ctx = await self.claimer_in_progress_ctx.do_signify_trust()
@@ -219,4 +214,48 @@ async def test_greet_device(GreetDeviceTestBed):
 async def test_greet_device_offline(
     aqtbot, GreetDeviceTestBed, running_backend, autoclose_dialog, offline_step
 ):
-    await GreetDeviceTestBed().run()
+    class OfflineTestBed(GreetDeviceTestBed):
+        def _greet_aborted(self, expected_message):
+            assert len(autoclose_dialog.dialogs) == 1
+            assert autoclose_dialog.dialogs == [("Error", expected_message)]
+            assert not self.greet_device_widget.isVisible()
+            assert not self.greet_device_information_widget.isVisible()
+
+        async def offline_step_1_start_greet(self):
+            expected_message = translate("TEXT_GREET_DEVICE_WAIT_PEER_ERROR")
+            gui_w = self.greet_device_information_widget
+
+            with running_backend.offline():
+                await aqtbot.mouse_click(gui_w.button_start, QtCore.Qt.LeftButton)
+                await aqtbot.wait_until(partial(self._greet_aborted, expected_message))
+
+            return None
+
+        async def offline_step_2_start_claimer(self):
+            expected_message = translate("TEXT_GREET_DEVICE_WAIT_PEER_ERROR")
+            with running_backend.offline():
+                await aqtbot.wait_until(partial(self._greet_aborted, expected_message))
+
+            return None
+
+        async def offline_step_3_exchange_greeter_sas(self):
+            expected_message = translate("TEXT_GREET_DEVICE_WAIT_PEER_TRUST_ERROR")
+            with running_backend.offline():
+                await aqtbot.wait_until(partial(self._greet_aborted, expected_message))
+
+            return None
+
+        async def offline_step_4_exchange_claimer_sas(self):
+            expected_message = translate("TEXT_GREET_DEVICE_SIGNIFY_TRUST_ERROR")
+            guce_w = self.greet_device_code_exchange_widget
+
+            with running_backend.offline():
+                await aqtbot.run(guce_w.code_input_widget.good_code_clicked.emit)
+                await aqtbot.wait_until(partial(self._greet_aborted, expected_message))
+
+            return None
+
+    print(offline_step)
+    setattr(OfflineTestBed, offline_step, getattr(OfflineTestBed, f"offline_{offline_step}"))
+
+    await OfflineTestBed().run()

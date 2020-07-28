@@ -34,12 +34,11 @@ class Greeter:
             r = await self.main_mc_recv.receive()
 
             assert r == self.Step.WaitPeer
-            print("Wait peer")
             try:
                 in_progress_ctx = await core.start_greeting_device(token=token)
                 await self.job_mc_send.send((True, None))
             except Exception as exc:
-                await self.job_send.send((False, exc))
+                await self.job_mc_send.send((False, exc))
 
             r = await self.main_mc_recv.receive()
 
@@ -49,7 +48,6 @@ class Greeter:
             r = await self.main_mc_recv.receive()
 
             assert r == self.Step.WaitPeerTrust
-            print("WaitPeerTrust")
             try:
                 in_progress_ctx = await in_progress_ctx.do_wait_peer_trust()
                 await self.job_mc_send.send((True, None))
@@ -59,7 +57,6 @@ class Greeter:
             r = await self.main_mc_recv.receive()
 
             assert r == self.Step.GetClaimerSas
-            print("GetClaiumerSas")
             try:
                 choices = in_progress_ctx.generate_claimer_sas_choices(size=4)
                 await self.job_mc_send.send((True, None, in_progress_ctx.claimer_sas, choices))
@@ -69,7 +66,6 @@ class Greeter:
             r = await self.main_mc_recv.receive()
 
             assert r == self.Step.SignifyTrust
-            print("SignifyTrust")
             try:
                 in_progress_ctx = await in_progress_ctx.do_signify_trust()
                 in_progress_ctx = await in_progress_ctx.do_get_claim_requests()
