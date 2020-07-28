@@ -80,7 +80,7 @@ async def test_invite_device_send_email(
         await aqtbot.mouse_click(gdi_w.button_send_email, QtCore.Qt.LeftButton)
 
         def _email_sent():
-            assert email_letterbox == [(bob.human_handle.email, ANY)]
+            assert email_letterbox.emails == [(bob.human_handle.email, ANY)]
 
         await aqtbot.wait_until(_email_sent)
         assert not autoclose_dialog.dialogs
@@ -93,7 +93,7 @@ async def test_invite_device_send_email(
                 assert autoclose_dialog.dialogs == [("Error", "Could not send the email.")]
 
             await aqtbot.wait_until(_email_send_failed)
-            assert not email_letterbox
+            assert not email_letterbox.emails
 
 
 # TODO: test copy invitation link

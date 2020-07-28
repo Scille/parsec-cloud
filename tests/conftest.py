@@ -603,15 +603,33 @@ def backend_data_binder(backend, backend_data_binder_factory):
     return backend_data_binder_factory(backend)
 
 
+class LetterBox:
+    def __init__(self):
+        self._send_email, self._recv_email = trio.open_memory_channel(10)
+        self.emails = []
+
+    async def get_next_with_timeout(self, timeout=1):
+        with trio.fail_after(timeout):
+            return await self.get_next()
+
+    async def get_next(self):
+        return await self._recv_email.receive()
+
+    def _push(self, to_addr, message):
+        email = (to_addr, message)
+        self._send_email.send_nowait(email)
+        self.emails.append(email)
+
+
 @pytest.fixture
 def email_letterbox(monkeypatch):
-    emails = []
+    letterbox = LetterBox()
 
     async def _mocked_send_email(email_config, to_addr, message):
-        emails.append((to_addr, message))
+        letterbox._push(to_addr, message)
 
     monkeypatch.setattr("parsec.backend.invite.send_email", _mocked_send_email)
-    return emails
+    return letterbox
 
 
 @pytest.fixture

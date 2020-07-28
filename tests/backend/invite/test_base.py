@@ -175,6 +175,41 @@ async def test_device_create_and_info(
 
 
 @pytest.mark.trio
+@customize_fixtures(backend_has_email=True)
+async def test_invite_with_send_mail(alice, alice_backend_sock, email_letterbox):
+    # User invitation
+    rep = await invite_new(
+        alice_backend_sock,
+        type=InvitationType.USER,
+        claimer_email="zack@example.com",
+        send_email=True,
+    )
+    assert rep == {"status": "ok", "token": ANY}
+    email = await email_letterbox.get_next_with_timeout()
+    assert email == ("zack@example.com", ANY)
+
+    # Device invitation
+    rep = await invite_new(alice_backend_sock, type=InvitationType.DEVICE, send_email=True)
+    assert rep == {"status": "ok", "token": ANY}
+    email = await email_letterbox.get_next_with_timeout()
+    assert email == (alice.human_handle.email, ANY)
+
+
+@pytest.mark.trio
+async def test_invite_with_send_mail_not_available(alice_backend_sock):
+    rep = await invite_new(
+        alice_backend_sock,
+        type=InvitationType.USER,
+        claimer_email="zack@example.com",
+        send_email=True,
+    )
+    assert rep == {"status": "not_available"}
+
+    rep = await invite_new(alice_backend_sock, type=InvitationType.DEVICE, send_email=True)
+    assert rep == {"status": "not_available"}
+
+
+@pytest.mark.trio
 @customize_fixtures(alice_profile=UserProfile.OUTSIDER)
 async def test_invite_new_limited_for_outsider(alice_backend_sock):
     rep = await invite_new(alice_backend_sock, type=InvitationType.DEVICE)

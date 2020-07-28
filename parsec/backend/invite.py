@@ -108,6 +108,7 @@ class ConduitListenCtx:
 
 @attr.s(slots=True, frozen=True, auto_attribs=True)
 class UserInvitation:
+    TYPE = InvitationType.USER
     greeter_user_id: UserID
     greeter_human_handle: Optional[HumanHandle]
     claimer_email: str
@@ -121,6 +122,7 @@ class UserInvitation:
 
 @attr.s(slots=True, frozen=True, auto_attribs=True)
 class DeviceInvitation:
+    TYPE = InvitationType.DEVICE
     greeter_user_id: UserID
     greeter_human_handle: Optional[HumanHandle]
     token: UUID = attr.ib(factory=uuid4)
@@ -145,8 +147,9 @@ MAIL_TEXT = {
             "Download now via the following link : ",
             "{parsec_url}",
             "Once installed, open the next link with Parsec : ",
-            "{invite_link}",
-            "Or if it doesn't work, copy and paste it in the concerned section.",
+            "{http_invite_link}",
+            "Or if it doesn't work, copy and paste this link in the concerned section : ",
+            "{parsec_invite_link}",
             (
                 "Lastly, get in touch with {sender_name} and follow the "
                 "next steps on Parsec to become part of their workspace."
@@ -167,8 +170,9 @@ MAIL_TEXT = {
             "Téléchargez Parsec en suivant ce lien : ",
             "{parsec_url}",
             "Une fois installé, ouvrez le lien suivant avec Parsec : ",
-            "{invite_link}",
-            "Si cela échoue, copiez puis collez ce lien dans la section dédiée.",
+            "{http_invite_link}",
+            "Si cela échoue, copiez puis collez ce lien dans la section dédiée : ",
+            "{parsec_invite_link}",
             (
                 "Enfin, contactez {sender_name} puis suivez les étapes "
                 "indiquées sur Parsec pour rejoindre leur espace de travail."
@@ -191,18 +195,19 @@ def generate_invite_email(
 ) -> Message:
     mail_text = MAIL_TEXT[email_config.language]
     parsec_url = "https://parsec.cloud/get-parsec"
-    invite_link = str(
-        BackendInvitationAddr(
-            organization_id=organization_id,
-            invitation_type=InvitationType.USER,
-            token=invitation.token,
-            hostname=backend_addr.hostname,
-            port=backend_addr.port,
-            use_ssl=backend_addr.use_ssl,
-        )
+    backend_invitation_addr = BackendInvitationAddr.build(
+        backend_addr=backend_addr,
+        organization_id=organization_id,
+        invitation_type=invitation.TYPE,
+        token=invitation.token,
     )
     body = [
-        line.format(sender_name=sender_name, invite_link=invite_link, parsec_url=parsec_url)
+        line.format(
+            sender_name=sender_name,
+            http_invite_link=backend_invitation_addr.to_http_redirection_url(),
+            parsec_invite_link=backend_invitation_addr.to_url(),
+            parsec_url=parsec_url,
+        )
         for line in mail_text["body"]
     ]
 
@@ -212,14 +217,14 @@ def generate_invite_email(
     # HTML version
     paragraph_1 = "<br>".join(body[:2])
     paragraph_2 = body[3]
-    paragraph_3 = "<br><br>".join([body[5], invite_link, body[6]])
+    paragraph_3 = "<br><br>".join(body[5:])
     html = importlib_resources.read_text(parsec.backend.mail, "invite_mail.tmpl.html")
     html = html.format(
         paragraph_1=paragraph_1,
         paragraph_2=paragraph_2,
         paragraph_3=paragraph_3,
         parsec_url=body[2],
-        invite_link=body[4],
+        http_invite_link=body[4],
         preheader=mail_text["preheader"],
         button1=mail_text["download_button"],
         button2=mail_text["invite_button"],
