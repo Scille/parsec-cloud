@@ -128,8 +128,8 @@ class GreetDeviceInstructionsWidget(QWidget, Ui_GreetDeviceInstructionsWidget):
     wait_peer_success = pyqtSignal(QtToTrioJob)
     wait_peer_error = pyqtSignal(QtToTrioJob)
 
-    send_email_success = pyqtSignal()
-    send_email_error = pyqtSignal()
+    send_email_success = pyqtSignal(QtToTrioJob)
+    send_email_error = pyqtSignal(QtToTrioJob)
 
     def __init__(self, jobs_ctx, greeter, invite_addr, core):
         super().__init__()
@@ -155,8 +155,8 @@ class GreetDeviceInstructionsWidget(QWidget, Ui_GreetDeviceInstructionsWidget):
     def _on_button_send_email_clicked(self):
         self.button_send_email.setDisabled(True)
         self.jobs_ctx.submit_job(
-            ThreadSafeQtSignal(self, "send_email_success"),
-            ThreadSafeQtSignal(self, "send_email_error"),
+            ThreadSafeQtSignal(self, "send_email_success", QtToTrioJob),
+            ThreadSafeQtSignal(self, "send_email_error", QtToTrioJob),
             _do_send_email,
             core=self.core,
         )
@@ -275,11 +275,11 @@ class GreetDeviceCodeExchangeWidget(QWidget, Ui_GreetDeviceCodeExchangeWidget):
 
     def _on_wrong_claimer_code_clicked(self):
         show_error(self, _("TEXT_GREET_DEVICE_INVALID_CODE_CLICKED"))
-        self.failed.emit()
+        self.failed.emit(None)
 
     def _on_none_clicked(self):
         show_info(self, _("TEXT_GREET_DEVICE_NONE_CODE_CLICKED"))
-        self.failed.emit()
+        self.failed.emit(None)
 
     def _on_get_greeter_sas_success(self, job):
         if self.get_greeter_sas_job != job:
