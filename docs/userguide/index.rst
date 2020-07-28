@@ -15,4 +15,4 @@ User Guide
    share_data
    revoke_user
 
-You can also use the simplified `Guide d'utilisation Parsec<https://parsec.cloud/pdf/Guide-d-utilisation-Parsec.pdf>`_
+You can also use the simplified `Guide d'utilisation Parsec <https://parsec.cloud/pdf/Guide-d-utilisation-Parsec.pdf>`_
