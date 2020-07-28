@@ -85,42 +85,46 @@ class EventsComponent:
             except trio.WouldBlock:
                 client_ctx.logger.warning(f"event queue is full for {client_ctx}")
 
-        # Drop previous event callbacks if any
-        client_ctx.event_bus_ctx.clear()
+        # Command should be idempotent
+        if not client_ctx.events_subscribed:
 
-        # Connect the new callbacks
-        client_ctx.event_bus_ctx.connect(BackendEvent.PINGED, partial(_on_pinged, APIEvent.PINGED))
-        client_ctx.event_bus_ctx.connect(
-            BackendEvent.REALM_VLOBS_UPDATED,
-            partial(_on_realm_events, APIEvent.REALM_VLOBS_UPDATED),
-        )
-        client_ctx.event_bus_ctx.connect(
-            BackendEvent.REALM_MAINTENANCE_STARTED,
-            partial(_on_realm_events, APIEvent.REALM_MAINTENANCE_STARTED),
-        )
-        client_ctx.event_bus_ctx.connect(
-            BackendEvent.REALM_MAINTENANCE_FINISHED,
-            partial(_on_realm_events, APIEvent.REALM_MAINTENANCE_FINISHED),
-        )
-        client_ctx.event_bus_ctx.connect(
-            BackendEvent.MESSAGE_RECEIVED, partial(_on_message_received, APIEvent.MESSAGE_RECEIVED)
-        )
-        client_ctx.event_bus_ctx.connect(
-            BackendEvent.INVITE_STATUS_CHANGED,
-            partial(_on_invite_status_changed, APIEvent.INVITE_STATUS_CHANGED),
-        )
+            # Connect the new callbacks
+            client_ctx.event_bus_ctx.connect(
+                BackendEvent.PINGED, partial(_on_pinged, APIEvent.PINGED)
+            )
+            client_ctx.event_bus_ctx.connect(
+                BackendEvent.REALM_VLOBS_UPDATED,
+                partial(_on_realm_events, APIEvent.REALM_VLOBS_UPDATED),
+            )
+            client_ctx.event_bus_ctx.connect(
+                BackendEvent.REALM_MAINTENANCE_STARTED,
+                partial(_on_realm_events, APIEvent.REALM_MAINTENANCE_STARTED),
+            )
+            client_ctx.event_bus_ctx.connect(
+                BackendEvent.REALM_MAINTENANCE_FINISHED,
+                partial(_on_realm_events, APIEvent.REALM_MAINTENANCE_FINISHED),
+            )
+            client_ctx.event_bus_ctx.connect(
+                BackendEvent.MESSAGE_RECEIVED,
+                partial(_on_message_received, APIEvent.MESSAGE_RECEIVED),
+            )
+            client_ctx.event_bus_ctx.connect(
+                BackendEvent.INVITE_STATUS_CHANGED,
+                partial(_on_invite_status_changed, APIEvent.INVITE_STATUS_CHANGED),
+            )
 
-        # Final event to keep up to date the list of realm we should listen on
-        client_ctx.event_bus_ctx.connect(
-            BackendEvent.REALM_ROLES_UPDATED,
-            partial(_on_roles_updated, APIEvent.REALM_ROLES_UPDATED),
-        )
+            # Final event to keep up to date the list of realm we should listen on
+            client_ctx.event_bus_ctx.connect(
+                BackendEvent.REALM_ROLES_UPDATED,
+                partial(_on_roles_updated, APIEvent.REALM_ROLES_UPDATED),
+            )
 
-        # Finally populate the list of realm we should listen on
-        realms_for_user = await self._realm_component.get_realms_for_user(
-            client_ctx.organization_id, client_ctx.user_id
-        )
-        client_ctx.realms = set(realms_for_user.keys())
+            # Finally populate the list of realm we should listen on
+            realms_for_user = await self._realm_component.get_realms_for_user(
+                client_ctx.organization_id, client_ctx.user_id
+            )
+            client_ctx.realms = set(realms_for_user.keys())
+            client_ctx.events_subscribed = True
 
         return events_subscribe_serializer.rep_dump({"status": "ok"})
 
