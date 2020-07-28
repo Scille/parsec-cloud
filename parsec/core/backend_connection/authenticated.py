@@ -106,6 +106,7 @@ class BackendAuthenticatedConn:
         )
         self._status = BackendConnStatus.LOST
         self._status_exc = None
+        self._status_event_sent = False
         self._cmds = BackendAuthenticatedCmds(addr, self._acquire_transport)
         self._manager_connect_cancel_scope = None
         self._monitors_cbs: List[Callable[..., None]] = []
@@ -130,12 +131,16 @@ class BackendAuthenticatedConn:
     def set_status(self, status: BackendConnStatus, status_exc: Optional[Exception] = None) -> None:
         old_status, self._status = self._status, status
         self._status_exc = status_exc
-        if old_status != status:
+        if not self._status_event_sent or old_status != status:
             self.event_bus.send(
                 CoreEvent.BACKEND_CONNECTION_CHANGED,
                 status=self._status,
                 status_exc=self._status_exc,
             )
+        # This is a fix to make sure an event is sent on the first call to set_status
+        # A better approach would be to make sure that components using this status
+        # do not rely on this redundant event.
+        self._status_event_sent = True
 
     def register_monitor(self, monitor_cb) -> None:
         if self._started:
@@ -174,12 +179,16 @@ class BackendAuthenticatedConn:
             finally:
                 self._manager_connect_cancel_scope = None
 
-            assert self._status not in (BackendConnStatus.READY, BackendConnStatus.INITIALIZING)
-            if self._status == BackendConnStatus.LOST:
+            assert self.status not in (BackendConnStatus.READY, BackendConnStatus.INITIALIZING)
+            if self.status == BackendConnStatus.LOST:
                 # Start with a 0s cooldown and increase by power of 2 until
                 # max cooldown every time the connection trial fails
                 # (e.g. 0, 1, 2, 4, 8, 15, 15, 15 etc. if max cooldown is 15s)
                 if self._backend_connection_failures < 1:
+                    # A cooldown time of 0 second is useful for the specific case of a
+                    # revokation when the event listener is the only running transport.
+                    # This way, we don't have to wait 1 second before the revokation is
+                    # detected.
                     cooldown_time = 0
                 else:
                     cooldown_time = 2 ** (self._backend_connection_failures - 1)
@@ -190,7 +199,7 @@ class BackendAuthenticatedConn:
                 await trio.sleep(cooldown_time)
             else:
                 # It's most likely useless to retry connection anyway
-                logger.info("Backend connection refused", status=self._status)
+                logger.info("Backend connection refused", status=self.status)
                 await trio.sleep_forever()
 
     def _cancel_manager_connect(self):
@@ -247,8 +256,8 @@ class BackendAuthenticatedConn:
         self, force_fresh=False, ignore_status=False, allow_not_available=False
     ):
         if not ignore_status:
-            if self._status_exc:
-                raise self._status_exc
+            if self.status_exc:
+                raise self.status_exc
 
         try:
             async with self._transport_pool.acquire(force_fresh=force_fresh) as transport:
