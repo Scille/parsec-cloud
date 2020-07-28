@@ -172,10 +172,13 @@ class BackendAuthenticatedConn:
                     status_exc=self._status_exc,
                 )
             if self._status == BackendConnStatus.LOST:
-                # Start with a 1s cooldown and increase by power of 2 until
+                # Start with a 0s cooldown and increase by power of 2 until
                 # max cooldown every time the connection trial fails
-                # (e.g. 1, 2, 4, 8, 15, 15, 15 etc. if max cooldown is 15s)
-                cooldown_time = 2 ** self._backend_connection_failures
+                # (e.g. 0, 1, 2, 4, 8, 15, 15, 15 etc. if max cooldown is 15s)
+                if self._backend_connection_failures < 1:
+                    cooldown_time = 0
+                else:
+                    cooldown_time = 2 ** (self._backend_connection_failures - 1)
                 if cooldown_time > self.max_cooldown:
                     cooldown_time = self.max_cooldown
                 self._backend_connection_failures += 1
