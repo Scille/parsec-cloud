@@ -127,6 +127,16 @@ class BackendAuthenticatedConn:
     def cmds(self) -> BackendAuthenticatedCmds:
         return self._cmds
 
+    def set_status(self, status: BackendConnStatus, status_exc: Optional[Exception] = None) -> None:
+        old_status, self._status = self._status, status
+        self._status_exc = status_exc
+        if old_status != status:
+            self.event_bus.send(
+                CoreEvent.BACKEND_CONNECTION_CHANGED,
+                status=self._status,
+                status_exc=self._status_exc,
+            )
+
     def register_monitor(self, monitor_cb) -> None:
         if self._started:
             raise RuntimeError("Cannot register monitor once started !")
@@ -156,21 +166,15 @@ class BackendAuthenticatedConn:
                     except (BackendNotAvailable, BackendConnectionRefused):
                         pass
                     except Exception as exc:
-                        self._status = BackendConnStatus.CRASHED
-                        self._status_exc = BackendNotAvailable(
-                            f"Backend connection manager has crashed: {exc}"
+                        self.set_status(
+                            BackendConnStatus.CRASHED,
+                            BackendNotAvailable(f"Backend connection manager has crashed: {exc}"),
                         )
                         logger.exception("Unhandled exception")
             finally:
                 self._manager_connect_cancel_scope = None
 
             assert self._status not in (BackendConnStatus.READY, BackendConnStatus.INITIALIZING)
-            if self._backend_connection_failures == 0:
-                self.event_bus.send(
-                    CoreEvent.BACKEND_CONNECTION_CHANGED,
-                    status=self._status,
-                    status_exc=self._status_exc,
-                )
             if self._status == BackendConnStatus.LOST:
                 # Start with a 0s cooldown and increase by power of 2 until
                 # max cooldown every time the connection trial fails
@@ -195,14 +199,8 @@ class BackendAuthenticatedConn:
 
     async def _manager_connect(self):
         async with self._acquire_transport(ignore_status=True, force_fresh=True) as transport:
-            self._status = BackendConnStatus.INITIALIZING
-            self._status_exc = None
+            self.set_status(BackendConnStatus.INITIALIZING)
             self._backend_connection_failures = 0
-            self.event_bus.send(
-                CoreEvent.BACKEND_CONNECTION_CHANGED,
-                status=self._status,
-                status_exc=self._status_exc,
-            )
             logger.info("Backend online")
 
             await cmds.events_subscribe(transport)
@@ -234,10 +232,7 @@ class BackendAuthenticatedConn:
                                 monitors_nursery.start, partial(_wrap_monitor_cb, monitor_cb, idx)
                             )
 
-                    self._status = BackendConnStatus.READY
-                    self.event_bus.send(
-                        CoreEvent.BACKEND_CONNECTION_CHANGED, status=self._status, status_exc=None
-                    )
+                    self.set_status(BackendConnStatus.READY)
 
                     while True:
                         rep = await cmds.events_listen(transport, wait=True)
@@ -261,14 +256,12 @@ class BackendAuthenticatedConn:
 
         except BackendNotAvailable as exc:
             if not allow_not_available:
-                self._status = BackendConnStatus.LOST
-                self._status_exc = exc
+                self.set_status(BackendConnStatus.LOST, exc)
                 self._cancel_manager_connect()
             raise
 
         except BackendConnectionRefused as exc:
-            self._status = BackendConnStatus.REFUSED
-            self._status_exc = exc
+            self.set_status(BackendConnStatus.REFUSED, exc)
             self._cancel_manager_connect()
             raise
 
