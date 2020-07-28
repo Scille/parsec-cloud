@@ -305,7 +305,7 @@ class ClaimDeviceCodeExchangeWidget(QWidget, Ui_ClaimDeviceCodeExchangeWidget):
         assert job.status != "ok"
         if job.status != "cancelled":
             exc = None
-            msg = _("TEXT_CLAIM_DEVICE_WAIT_TRUST_ERROR")
+            msg = _("TEXT_CLAIM_DEVICE_SIGNIFY_TRUST_ERROR")
             if job.exc:
                 exc = job.exc.params.get("origin", None)
                 if isinstance(exc, InvitePeerResetError):

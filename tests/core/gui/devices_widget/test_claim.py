@@ -311,7 +311,7 @@ async def test_claim_device_offline(
             return None
 
         async def offline_step_3_exchange_greeter_sas(self):
-            expected_message = translate("TEXT_CLAIM_DEVICE_WAIT_TRUST_ERROR")
+            expected_message = translate("TEXT_CLAIM_DEVICE_SIGNIFY_TRUST_ERROR")
             cdce_w = self.claim_device_code_exchange_widget
 
             with running_backend.offline():
@@ -485,7 +485,7 @@ async def test_claim_device_invitation_cancelled(
             return None
 
         async def cancelled_step_3_exchange_greeter_sas(self):
-            expected_message = translate("TEXT_CLAIM_DEVICE_WAIT_TRUST_ERROR")
+            expected_message = translate("TEXT_CLAIM_DEVICE_SIGNIFY_TRUST_ERROR")
             cdce_w = self.claim_device_code_exchange_widget
             await self._cancel_invitation()
 

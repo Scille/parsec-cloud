@@ -306,7 +306,7 @@ async def test_greet_device_offline(
             return None
 
         async def offline_step_5_provide_claim_info(self):
-            expected_message = translate("TEXT_GREET_DEVICE_WAIT_PEER_TRUST_ERROR")
+            expected_message = translate("TEXT_GREET_DEVICE_SIGNIFY_TRUST_ERROR")
 
             with running_backend.offline():
                 await aqtbot.wait_until(partial(self._greet_aborted, expected_message))
