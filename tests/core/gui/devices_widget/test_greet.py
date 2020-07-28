@@ -5,9 +5,10 @@ import trio
 from PyQt5 import QtCore
 from functools import partial
 from async_generator import asynccontextmanager
+from pendulum import now as pendulum_now
 
 from parsec.core.gui.lang import translate
-from parsec.api.protocol import InvitationType, HumanHandle
+from parsec.api.protocol import InvitationType, HumanHandle, InvitationDeletedReason
 from parsec.core.types import BackendInvitationAddr
 from parsec.core.backend_connection import backend_invited_cmds_factory
 from parsec.core.invite import claimer_retrieve_info
@@ -327,3 +328,79 @@ async def test_greet_device_reset_by_peer(aqtbot, GreetDeviceTestBed, autoclose_
     setattr(ResetTestBed, reset_step, getattr(ResetTestBed, f"reset_{reset_step}"))
 
     await ResetTestBed().run()
+
+
+@pytest.mark.gui
+@pytest.mark.trio
+@pytest.mark.parametrize(
+    "cancelled_step",
+    [
+        "step_1_start_greet",
+        pytest.param("step_2_start_claimer", marks=pytest.mark.xfail),
+        pytest.param("step_3_exchange_greeter_sas", marks=pytest.mark.xfail),
+        "step_4_exchange_claimer_sas",
+    ],
+)
+@customize_fixtures(logged_gui_as_admin=True)
+async def test_greet_device_invitation_cancelled(
+    aqtbot, GreetDeviceTestBed, backend, autoclose_dialog, cancelled_step
+):
+    class CancelledTestBed(GreetDeviceTestBed):
+        async def _cancel_invitation(self):
+            await backend.invite.delete(
+                organization_id=self.author.organization_id,
+                greeter=self.author.user_id,
+                token=self.invitation_addr.token,
+                on=pendulum_now(),
+                reason=InvitationDeletedReason.CANCELLED,
+            )
+
+        def _greet_restart(self, expected_message):
+            assert len(autoclose_dialog.dialogs) == 1
+            assert autoclose_dialog.dialogs == [("Error", expected_message)]
+            assert not self.greet_device_widget.isVisible()
+            assert not self.greet_device_information_widget.isVisible()
+
+        async def cancelled_step_1_start_greet(self):
+            expected_message = translate("TEXT_GREET_DEVICE_WAIT_PEER_ERROR")
+            gui_w = self.greet_device_information_widget
+
+            await self._cancel_invitation()
+
+            await aqtbot.mouse_click(gui_w.button_start, QtCore.Qt.LeftButton)
+            await aqtbot.wait_until(partial(self._greet_restart, expected_message))
+
+            return None
+
+        async def cancelled_step_2_start_claimer(self):
+            expected_message = translate("TEXT_GREET_DEVICE_WAIT_PEER_ERROR")
+            await self._cancel_invitation()
+
+            await aqtbot.wait_until(partial(self._greet_restart, expected_message))
+
+            return None
+
+        async def cancelled_step_3_exchange_greeter_sas(self):
+            expected_message = translate("TEXT_GREET_DEVICE_WAIT_PEER_TRUST_ERROR")
+            await self._cancel_invitation()
+
+            await aqtbot.wait_until(partial(self._greet_restart, expected_message))
+
+            return None
+
+        async def cancelled_step_4_exchange_claimer_sas(self):
+            expected_message = translate("TEXT_GREET_DEVICE_SIGNIFY_TRUST_ERROR")
+            guce_w = self.greet_device_code_exchange_widget
+
+            await self._cancel_invitation()
+
+            await aqtbot.run(guce_w.code_input_widget.good_code_clicked.emit)
+            await aqtbot.wait_until(partial(self._greet_restart, expected_message))
+
+            return None
+
+    setattr(
+        CancelledTestBed, cancelled_step, getattr(CancelledTestBed, f"cancelled_{cancelled_step}")
+    )
+
+    await CancelledTestBed().run()
