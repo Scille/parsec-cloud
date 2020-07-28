@@ -7,6 +7,7 @@ from parsec.core.gui.lang import translate as _
 
 async def _do_revoke_user(core, user_info):
     try:
+        await core.revoke_user(user_info.user_id)
         user_info = await core.get_user_info(user_info.user_id)
         return user_info
     except BackendNotAvailable as exc:
