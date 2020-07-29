@@ -266,6 +266,5 @@ def test_invitation_addr_to_http_url(addr_invitation_testbed, no_ssl):
     addr = addr_invitation_testbed.cls.from_url(url)
     http_url = addr.to_http_redirection_url()
     assert (
-        http_url
-        == f"{http_scheme}{DOMAIN}/api/redirect/{ORG}?action={INVITATION_TYPE}&token={TOKEN}"
+        http_url == f"{http_scheme}{DOMAIN}/redirect/{ORG}?action={INVITATION_TYPE}&token={TOKEN}"
     )

@@ -132,7 +132,7 @@ class HTTPComponent:
 
     ROUTE_MAPPING = [
         (r"^/?$", _http_root),
-        (r"^/api/redirect(?P<path>.*)$", _http_redirect),
+        (r"^/redirect(?P<path>.*)$", _http_redirect),
         (r"^/static/(?P<path>.*)$", _http_static),
     ]
 

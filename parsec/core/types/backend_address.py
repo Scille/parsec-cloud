@@ -603,7 +603,7 @@ class BackendInvitationAddr(BackendActionAddr):
             netloc = self.hostname
         # Skipping no_ssl param because it is already in the scheme
         query = urlencode({k: v for k, v in self._to_url_get_params() if k != "no_ssl"})
-        path = "api/redirect/" + quote_plus(self._to_url_get_path())
+        path = "/redirect/" + quote_plus(self._to_url_get_path())
         if self._use_ssl:
             scheme = "https"
         else:
