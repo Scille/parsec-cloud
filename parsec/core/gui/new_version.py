@@ -17,24 +17,31 @@ from parsec.core.gui.ui.new_version_dialog import Ui_NewVersionDialog
 from parsec.core.gui.ui.new_version_info import Ui_NewVersionInfo
 from parsec.core.gui.ui.new_version_available import Ui_NewVersionAvailable
 
+from misc.releaser import Version, RELEASE_REGEX
 
-def _extract_version_tuple(raw):
-    match = re.match(r"^.*([0-9]+)\.([0-9]+)\.([0-9]+)", raw)
+
+def _extract_version(raw):
+    match = re.search(RELEASE_REGEX, raw)
     if match:
-        return tuple(int(x) for x in match.groups())
+        return Version(match.group())
     else:
         return None
 
 
-async def _do_check_new_version(url, api_url):
-    current_version = _extract_version_tuple(__version__)
+async def _do_check_new_version(url, api_url, check_rc=False):
+    current_version = _extract_version(__version__)
 
     def _fetch_json_releases():
         # urlopen automatically follows redirections
         with urlopen(Request(url, method="GET")) as req:
             resolved_url = req.geturl()
-            latest_from_head = _extract_version_tuple(resolved_url)
-            if latest_from_head and current_version and current_version < latest_from_head:
+            latest_from_head = _extract_version(resolved_url)
+            if (
+                latest_from_head
+                and current_version
+                and current_version < latest_from_head
+                or check_rc  # As latest doesn't include GitHub prerelease
+            ):
                 return latest_from_head, json.loads(req.read())
             else:
                 return latest_from_head, None
@@ -47,28 +54,32 @@ async def _do_check_new_version(url, api_url):
         elif current_arch == "i386":
             win_version = "win32"
         else:
-            return (latest_from_head, url)
+            return latest_from_head, url
 
-        latest_version = (0, 0, 0)
+        latest_version = Version("0.0.0")
         latest_url = ""
 
-        for release in json_releases:
-            try:
+        try:
+            for release in json_releases:
                 if release["draft"]:
                     continue
-                if release["prerelease"]:
+                if release["prerelease"] and not check_rc:
                     continue
                 for asset in release["assets"]:
                     if asset["name"].endswith(f"-{win_version}-setup.exe"):
-                        asset_version = _extract_version_tuple(release["tag_name"])
-                        if asset_version > latest_version:
+                        asset_version = _extract_version(release["tag_name"])
+                        if (
+                            asset_version
+                            and asset_version > latest_version
+                            and (not asset_version.is_preversion or check_rc)
+                        ):
                             latest_version = asset_version
                             latest_url = asset["browser_download_url"]
-            # In case something went wrong, still better to redirect to GitHub
-            except (KeyError, TypeError):
-                return (latest_from_head, url)
+        # In case something went wrong, still better to redirect to GitHub
+        except (KeyError, TypeError):
+            return latest_from_head, url
         if latest_version > current_version:
-            return (latest_version, latest_url)
+            return latest_version, latest_url
     return None
 
 
@@ -110,9 +121,7 @@ class NewVersionAvailable(QWidget, Ui_NewVersionAvailable):
     def set_version(self, version):
         if version:
             self.label.setText(
-                _("TEXT_PARSEC_NEW_VERSION_AVAILABLE_version").format(
-                    version=".".join([str(_) for _ in version])
-                )
+                _("TEXT_PARSEC_NEW_VERSION_AVAILABLE_version").format(version=str(version))
             )
 
 
@@ -150,6 +159,7 @@ class CheckNewVersion(QDialog, Ui_NewVersionDialog):
             _do_check_new_version,
             url=self.config.gui_check_version_url,
             api_url=self.config.gui_check_version_api_url,
+            check_rc=self.config.rc_update,
         )
         self.setWindowFlags(Qt.SplashScreen)
 

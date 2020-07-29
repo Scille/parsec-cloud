@@ -22,6 +22,7 @@ else:
     # Let the GUI handle the parsing of the url to display dialog on error
     @click.argument("url", required=False)
     @click.option("--diagnose", "-d", is_flag=True)
+    @click.option("--rc-update", "-r", is_flag=True)
     @core_config_options
     def run_gui(config, url, diagnose, **kwargs):
         """
