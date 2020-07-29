@@ -342,12 +342,7 @@ organization_id, device_id, device_label (can be null), human_email (can be null
     ),
 )
 @click.option(
-    "--email-language",
-    envvar="PARSEC_EMAIL_LANGUAGE",
-    type=click.Choice(("en", "fr")),
-    default="en",
-    show_default=True,
-    help="Language used in email",
+    "--email-sender", envvar="PARSEC_EMAIL_SENDER", help="Sender address used in sent emails"
 )
 @click.option(
     "--ssl-keyfile",
@@ -402,7 +397,7 @@ def run_cmd(
     email_host_password,
     email_use_ssl,
     email_use_tls,
-    email_language,
+    email_sender,
     ssl_keyfile,
     ssl_certfile,
     log_level,
@@ -429,16 +424,16 @@ def run_cmd(
             ssl_context = None
 
         if email_host:
-            if not email_host_user:
-                raise ValueError("--email-host-user is required when --email-host is provided")
+            if not email_sender:
+                raise ValueError("--email-sender is required when --email-host is provided")
             email_config = EmailConfig(
                 host=email_host,
                 port=email_port,
-                user=email_host_user,
-                password=email_host_password,
+                host_user=email_host_user,
+                host_password=email_host_password,
                 use_ssl=email_use_ssl,
                 use_tls=email_use_tls,
-                language=email_language,
+                sender=email_sender,
             )
         else:
             email_config = None

@@ -581,11 +581,11 @@ async def backend(backend_factory, request, fixtures_customization, backend_addr
             # Invalid port, hence we should crash if by mistake we try
             # to reach this SMTP server
             port=999999,
-            user="mail_user",
-            password=None,
+            host_user="mail_user",
+            host_password=None,
             use_ssl=False,
             use_tls=False,
-            language="en",
+            sender="Parsec <no-reply@parsec.com>",
         )
         config["backend_addr"] = backend_addr
     if fixtures_customization.get("backend_spontaneous_organization_boostrap", False):
