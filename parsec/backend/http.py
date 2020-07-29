@@ -7,12 +7,11 @@ import mimetypes
 from urllib.parse import parse_qs, urlsplit, urlunsplit, urlencode
 from wsgiref.handlers import format_date_time
 import importlib_resources
-import jinja2
 import h11
 
 from parsec.backend.config import BackendConfig
-from parsec.backend.http import static as http_static_module
-from parsec.backend.http.package_loader import PackageLoader
+from parsec.backend import static as http_static_module
+from parsec.backend.templates import get_template
 
 
 @attr.s(slots=True, auto_attribs=True)
@@ -83,17 +82,15 @@ class HTTPResponse:
 
 
 class HTTPComponent:
-    JINJA2_ENV = jinja2.Environment(loader=PackageLoader("parsec.backend.http.templates"))
-
     def __init__(self, config: BackendConfig):
         self._config = config
 
     async def _http_404(self, req: HTTPRequest) -> HTTPResponse:
-        data = self.JINJA2_ENV.get_template("404.html").render()
+        data = get_template("404.html").render()
         return HTTPResponse.build_html(404, data=data)
 
     async def _http_root(self, req: HTTPRequest) -> HTTPResponse:
-        data = self.JINJA2_ENV.get_template("index.html").render()
+        data = get_template("index.html").render()
         return HTTPResponse.build_html(200, data=data)
 
     async def _http_redirect(self, req: HTTPRequest, path: str) -> HTTPResponse:

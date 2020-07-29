@@ -5,7 +5,6 @@ import attr
 import trio
 import smtplib
 import ssl
-import importlib_resources
 from enum import Enum
 from uuid import UUID, uuid4
 from collections import defaultdict
@@ -44,10 +43,10 @@ from parsec.api.protocol import (
     invite_4_greeter_communicate_serializer,
     invite_4_claimer_communicate_serializer,
 )
-import parsec.backend.mail
+from parsec.backend.templates import get_template
 from parsec.backend.utils import catch_protocol_errors, api
 from parsec.backend.config import BackendConfig, EmailConfig
-from parsec.core.types import BackendAddr, BackendInvitationAddr
+from parsec.core.types import BackendInvitationAddr
 
 
 logger = get_logger()
@@ -135,107 +134,34 @@ class DeviceInvitation:
 
 Invitation = Union[UserInvitation, DeviceInvitation]
 
-MAIL_TEXT = {
-    "en": {
-        "title": "You have received an invitation on Parsec Cloud",
-        "preheader": "Follow these steps to join your new workspace",
-        "body": [
-            (
-                "You have received an invitation from {sender_name} "
-                "to join their workspace on Parsec."
-            ),
-            "Download now via the following link : ",
-            "{parsec_url}",
-            "Once installed, open the next link with Parsec : ",
-            "{http_invite_link}",
-            "Or if it doesn't work, copy and paste this link in the concerned section : ",
-            "{parsec_invite_link}",
-            (
-                "Lastly, get in touch with {sender_name} and follow the "
-                "next steps on Parsec to become part of their workspace."
-            ),
-        ],
-        "download_button": "Download Parsec",
-        "invite_button": "Invite Link",
-        "parsec_by": "Parsec by ",
-    },
-    "fr": {
-        "title": "Vous avez reçu une invitation sur Parsec Cloud",
-        "preheader": "Suivez ces étapes pour rejoindre votre nouvel espace de travail",
-        "body": [
-            (
-                "Vous avez reçu une invitation de la part de {sender_name} "
-                "pour rejoindre leur espace de travail sur Parsec."
-            ),
-            "Téléchargez Parsec en suivant ce lien : ",
-            "{parsec_url}",
-            "Une fois installé, ouvrez le lien suivant avec Parsec : ",
-            "{http_invite_link}",
-            "Si cela échoue, copiez puis collez ce lien dans la section dédiée : ",
-            "{parsec_invite_link}",
-            (
-                "Enfin, contactez {sender_name} puis suivez les étapes "
-                "indiquées sur Parsec pour rejoindre leur espace de travail."
-            ),
-        ],
-        "download_button": "Télécharger Parsec",
-        "invite_button": "Lien d'invitation",
-        "parsec_by": "Parsec par ",
-    },
-}
-
 
 def generate_invite_email(
-    email_config: EmailConfig,
-    backend_addr: BackendAddr,
+    from_addr: str,
+    to_addr: str,
+    reply_to: Optional[str],
+    greeter_name: Optional[str],  # Noe for device invitation
     organization_id: OrganizationID,
-    invitation: UserInvitation,
-    sender_name: str,
-    receiver_email=None,
+    invitation_url: str,
 ) -> Message:
-    mail_text = MAIL_TEXT[email_config.language]
-    parsec_url = "https://parsec.cloud/get-parsec"
-    backend_invitation_addr = BackendInvitationAddr.build(
-        backend_addr=backend_addr,
-        organization_id=organization_id,
-        invitation_type=invitation.TYPE,
-        token=invitation.token,
+    html = get_template("invitation_mail.html").render(
+        greeter_name=greeter_name, organization_id=organization_id, invitation_url=invitation_url
     )
-    body = [
-        line.format(
-            sender_name=sender_name,
-            http_invite_link=backend_invitation_addr.to_http_redirection_url(),
-            parsec_invite_link=backend_invitation_addr.to_url(),
-            parsec_url=parsec_url,
-        )
-        for line in mail_text["body"]
-    ]
-
-    # Plain-text version used as backup if the html doesn't work for the client
-    text = "\n".join(body)
-
-    # HTML version
-    paragraph_1 = "<br>".join(body[:2])
-    paragraph_2 = body[3]
-    paragraph_3 = "<br><br>".join(body[5:])
-    html = importlib_resources.read_text(parsec.backend.mail, "invite_mail.tmpl.html")
-    html = html.format(
-        paragraph_1=paragraph_1,
-        paragraph_2=paragraph_2,
-        paragraph_3=paragraph_3,
-        parsec_url=body[2],
-        http_invite_link=body[4],
-        preheader=mail_text["preheader"],
-        button1=mail_text["download_button"],
-        button2=mail_text["invite_button"],
-        parsec_by=mail_text["parsec_by"],
+    text = get_template("invitation_mail.txt").render(
+        greeter_name=greeter_name, organization_id=organization_id, invitation_url=invitation_url
     )
 
     # mail settings
     message = MIMEMultipart("alternative")
-    message["Subject"] = mail_text["title"]
-    message["From"] = email_config.user
-    message["To"] = receiver_email or invitation.claimer_email
+    if greeter_name:
+        message[
+            "Subject"
+        ] = f"[Parsec] { greeter_name } invited you to organization { organization_id}"
+    else:
+        message["Subject"] = f"[Parsec] New device invitation to organization { organization_id }"
+    message["From"] = from_addr
+    message["To"] = to_addr
+    if reply_to:
+        message["Reply-To"] = reply_to
 
     # Turn parts into MIMEText objects
     part1 = MIMEText(text, "plain")
@@ -262,9 +188,9 @@ async def send_email(email_config: EmailConfig, to_addr: str, message: Message) 
                 if email_config.use_tls and not email_config.use_ssl:
                     if server.starttls(context=context)[0] != 220:
                         logger.warning("Email TLS connexion isn't encrypted")
-                if email_config.user and email_config.password:
-                    server.login(email_config.user, email_config.password)
-                server.sendmail(email_config.user, to_addr, message.as_string())
+                if email_config.host_user and email_config.host_password:
+                    server.login(email_config.host_user, email_config.host_password)
+                server.sendmail(email_config.sender, to_addr, message.as_string())
 
         except smtplib.SMTPException as e:
             logger.warning("SMTP error", exc_info=e, to_addr=to_addr)
@@ -310,6 +236,14 @@ class BaseInviteComponent:
     async def api_invite_new(self, client_ctx, msg):
         msg = invite_new_serializer.req_load(msg)
 
+        def _to_http_redirection_url(client_ctx, invitation):
+            return BackendInvitationAddr.build(
+                backend_addr=self._config.backend_addr,
+                organization_id=client_ctx.organization_id,
+                invitation_type=invitation.TYPE,
+                token=invitation.token,
+            ).to_http_redirection_url()
+
         if msg["send_email"]:
             if not self._config.email_config or not self._config.backend_addr:
                 return invite_new_serializer.rep_dump({"status": "not_available"})
@@ -325,12 +259,19 @@ class BaseInviteComponent:
             )
 
             if msg["send_email"]:
+                if client_ctx.human_handle:
+                    greeter_name = client_ctx.human_handle.label
+                    reply_to = f"{client_ctx.human_handle.label} <{client_ctx.human_handle.email}>"
+                else:
+                    greeter_name = str(client_ctx.user_id)
+                    reply_to = None
                 message = generate_invite_email(
-                    email_config=self._config.email_config,
-                    backend_addr=self._config.backend_addr,
+                    from_addr=self._config.email_config.sender,
+                    to_addr=invitation.claimer_email,
+                    greeter_name=greeter_name,
+                    reply_to=reply_to,
                     organization_id=client_ctx.organization_id,
-                    invitation=invitation,
-                    sender_name=client_ctx.user_display,
+                    invitation_url=_to_http_redirection_url(client_ctx, invitation),
                 )
                 await send_email(
                     email_config=self._config.email_config,
@@ -348,12 +289,12 @@ class BaseInviteComponent:
 
             if msg["send_email"]:
                 message = generate_invite_email(
-                    email_config=self._config.email_config,
-                    backend_addr=self._config.backend_addr,
+                    from_addr=self._config.email_config.sender,
+                    to_addr=client_ctx.human_handle.email,
+                    greeter_name=None,
+                    reply_to=None,
                     organization_id=client_ctx.organization_id,
-                    invitation=invitation,
-                    sender_name=client_ctx.user_display,
-                    receiver_email=client_ctx.human_handle.email,
+                    invitation_url=_to_http_redirection_url(client_ctx, invitation),
                 )
                 await send_email(
                     email_config=self._config.email_config,

@@ -67,11 +67,11 @@ class MockedBlockStoreConfig(BaseBlockStoreConfig):
 class EmailConfig:
     host: str
     port: int
-    user: str
-    password: Optional[str]
+    host_user: Optional[str]
+    host_password: Optional[str]
     use_ssl: bool
     use_tls: bool
-    language: str
+    sender: str
 
 
 @attr.s(slots=True, frozen=True, auto_attribs=True)
