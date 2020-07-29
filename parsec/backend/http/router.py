@@ -1,132 +1,152 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
 
 import re
+import attr
+from typing import List, Dict, Tuple, Optional
 import mimetypes
 from urllib.parse import parse_qs, urlsplit, urlunsplit, urlencode
 from wsgiref.handlers import format_date_time
-from importlib import import_module
 import importlib_resources
 import jinja2
+import h11
 
+from parsec.backend.config import BackendConfig
+from parsec.backend.http import static as http_static_module
 from parsec.backend.http.package_loader import PackageLoader
-from parsec.core.types.backend_address import BackendAddr
 
 
-_JINJA2_ENV = jinja2.Environment(loader=PackageLoader("parsec.backend.http.templates"))
+@attr.s(slots=True, auto_attribs=True)
+class HTTPRequest:
+    method: str
+    path: str
+    query: Dict[str, List[str]]
+    headers: Dict[bytes, bytes]
+
+    async def get_data(self) -> bytes:
+        # TODO: we don't need this yet ;-)
+        raise NotImplementedError()
+
+    @classmethod
+    def from_h11_req(cls, h11_req: h11.Request) -> "HTTPRequest":
+        # h11 make sur the headers and target are ISO-8859-1
+        target_split = urlsplit(h11_req.target.decode("ISO-8859-1"))
+        query_params = parse_qs(target_split.query)
+
+        return cls(
+            method=h11_req.method.decode(),
+            path=target_split.path,
+            query=query_params,
+            headers=h11_req.headers,
+        )
 
 
-def _get_method(target: str):
-    """ Same as is_route but get 404 method if no other route found"""
-    method = _is_route(target)
-    if not method:
-        method = get_404_method()
-    return method
+@attr.s(slots=True, auto_attribs=True)
+class HTTPResponse:
+    status_code: int
+    headers: List[Tuple[bytes, bytes]]
+    data: Optional[bytes]
+
+    STATUS_CODE_TO_REASON = {
+        200: b"OK",
+        302: b"Found",
+        400: b"Bad Request",
+        404: b"Not Found",
+        405: b"Method Not Allowed",
+        501: b"Not Implemented",
+    }
+
+    @property
+    def reason(self) -> bytes:
+        return self.STATUS_CODE_TO_REASON.get(self.status_code, b"")
+
+    @classmethod
+    def build_html(
+        cls, status_code: int, data: str, headers: Dict[str, str] = None
+    ) -> "HTTPResponse":
+        headers = headers or {}
+        headers["content-type"] = "text/html;charset=utf-8"
+        return cls.build(status_code=status_code, headers=headers, data=data.encode("utf-8"))
+
+    @classmethod
+    def build(
+        cls, status_code: int, headers: Dict[str, str] = None, data: Optional[bytes] = None
+    ) -> "HTTPResponse":
+        headers = headers or {}
+        if data:
+            headers["content-Length"] = str(len(data))
+        headers["date"] = format_date_time(None)
+
+        def _encode(val):
+            return val.encode("ISO-8859-1")
+
+        return cls(status_code=status_code, headers=[(k, v) for k, v in headers.items()], data=data)
 
 
-def _cook_target(target: bytes) -> str:
-    target = target.decode("utf-8")
-    return target
+class HTTPComponent:
+    JINJA2_ENV = jinja2.Environment(loader=PackageLoader("parsec.backend.http.templates"))
 
+    def __init__(self, config: BackendConfig):
+        self._config = config
 
-def get_method_and_execute(target: bytes, backend_addr: BackendAddr):
-    """Entry point"""
-    target = _cook_target(target)
-    method = _get_method(target)
-    return method(target=target, backend_addr=backend_addr)
+    async def _http_404(self, req: HTTPRequest) -> HTTPResponse:
+        data = self.JINJA2_ENV.get_template("404.html").render()
+        return HTTPResponse.build_html(404, data=data)
 
+    async def _http_root(self, req: HTTPRequest) -> HTTPResponse:
+        data = self.JINJA2_ENV.get_template("index.html").render()
+        return HTTPResponse.build_html(200, data=data)
 
-def get_404_method():
-    """Return the 404 method"""
-    return _http_404
+    async def _http_redirect(self, req: HTTPRequest, path: str) -> HTTPResponse:
+        if not self._config.backend_addr:
+            return HTTPResponse.build(501, data=b"Url redirection is not available")
+        backend_addr_split = urlsplit(self._config.backend_addr.to_url())
 
+        # Build location url by merging provided path and query params with backend addr
+        location_url_query_params = req.query.copy()
+        # `no_ssl` param depends of backend_addr, hence it cannot be overwritten !
+        location_url_query_params.pop("no_ssl", None)
+        location_url_query_params.update(parse_qs(backend_addr_split.query))
+        location_url_query = urlencode(query=location_url_query_params, doseq=True)
+        location_url = urlunsplit(
+            (backend_addr_split.scheme, backend_addr_split.netloc, path, location_url_query, None)
+        )
 
-def _http_static(target: str, *args, **kwargs):
-    """Return static resources"""
-    target_split = target.split("/")
-    path = "parsec.backend.http"
-    # get all path except file name
-    index = 0
-    while index < len(target_split) - 1:
-        # prevent adding a dot when empty string
-        if len(target_split[index]) > 0:
-            path = path + "." + target_split[index]
-        index = index + 1
-    file_name = target_split[len(target_split) - 1]
-    try:
-        package = import_module(".static", "parsec.backend.http")
-        if not importlib_resources.is_resource(package, file_name):
-            return _http_404(target, *args, **kwargs)
-        data = importlib_resources.read_binary(package, file_name)
+        return HTTPResponse.build(302, headers={"location": location_url})
 
-        content_type, _ = mimetypes.guess_type(file_name)
+    async def _http_static(self, req: HTTPRequest, path: str) -> HTTPResponse:
+        if path == "__init__.py":
+            return HTTPResponse.build(404)
+
+        try:
+            # Note we don't support nested resources, this is fine for the moment
+            # and it prevent us from malicious path containing `..`
+            data = importlib_resources.read_binary(http_static_module, path)
+        except (FileNotFoundError, ValueError):
+            return HTTPResponse.build(404)
+
+        headers = {}
+        content_type, _ = mimetypes.guess_type(path)
         if content_type:
-            return 200, _set_headers(data=data, content_type=content_type), data
-        else:
-            return 200, _set_headers(data=data), data
-    except (ValueError, UnboundLocalError, TypeError, ModuleNotFoundError):
-        return _http_404(target, *args, **kwargs)
+            headers = {"content-Type": content_type}
+        return HTTPResponse.build(200, headers=headers, data=data)
 
-
-def _http_404(*args, **kwargs):
-    """Return the 404 view"""
-    data = _JINJA2_ENV.get_template("404.html").render()
-    return 404, _set_headers(data=data), data.encode("utf-8")
-
-
-def _http_root(*args, **kwargs):
-    data = _JINJA2_ENV.get_template("index.html").render()
-    return 200, _set_headers(data=data), data.encode("utf-8")
-
-
-def _is_route(target: str):
-    """Return the corresponding method if the url match a mapping route.
-    if no route found, return None
-    """
-    match = None
-    for regex, method in _MAPPING:
-        match = re.match(regex, target)
-        if match:
-            return method
-    return None
-
-
-def _redirect_to_parsec(target: str, backend_addr, *args, **kwargs):
-    """Redirect the http invite request to a parsec url request"""
-    if not backend_addr:
-        return 501, {}, b"Url redirection is not available"
-    backend_addr_split = urlsplit(backend_addr.to_url())
-    target_split = urlsplit(target)
-    # Merge params with backend priority in case no_ssl param is provided in both parts.
-    query_params = parse_qs(target_split.query)
-    # `no_ssl` param depends of backend_addr, hence it cannot be overwritten !
-    query_params.pop("no_ssl", None)
-    query_params.update(parse_qs(backend_addr_split.query))
-    query = urlencode(query=query_params, doseq=True)
-    path = target_split.path
-    if path.startswith("/api/redirect"):
-        path = path[len("/api/redirect") :]
-    location_url = urlunsplit(
-        (backend_addr_split.scheme, backend_addr_split.netloc, path, query, None)
-    )
-    headers = [("location", location_url)]
-    return 302, _set_headers(headers=headers), b""
-
-
-def _set_headers(data=b"", headers=(), content_type="text/html;charset=utf-8"):
-    """Return headers after adding date, server infos and Content-Length"""
-    return [
-        *headers,
-        ("Date", format_date_time(None).encode("ascii")),
-        ("Server", "parsec"),
-        # TODO use config.debug
-        # ("Server", f"parsec/{parsec_version} {h11.PRODUCT_ID}"),
-        ("Content-Length", str(len(data))),
-        ("Content-type", content_type),
+    ROUTE_MAPPING = [
+        (r"^/?$", _http_root),
+        (r"^/api/redirect(?P<path>.*)$", _http_redirect),
+        (r"^/static/(?P<path>.*)$", _http_static),
     ]
 
+    async def handle_request(self, req: HTTPRequest) -> HTTPResponse:
+        if req.method != "GET":
+            return HTTPResponse.build(405)
 
-_MAPPING = [
-    (r"^/$", _http_root),
-    (r"^/api/redirect(.*)$", _redirect_to_parsec),
-    (r"^/static/(.*)$", _http_static),
-]
+        for path_pattern, route in self.ROUTE_MAPPING:
+            match = re.match(path_pattern, req.path)
+            if match:
+                route_args = match.groupdict()
+                break
+        else:
+            route = HTTPComponent._http_404
+            route_args = {}
+
+        return await route(self, req, **route_args)
