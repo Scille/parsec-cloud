@@ -226,6 +226,11 @@ async def test_invite_and_greet_device(
         def _greet_done():
             assert not gd_w.isVisible()
             assert autoclose_dialog.dialogs == [("", "The device was successfully created.")]
+            # Devices list should be updated
+            assert d_w.layout_devices.count() == 2
+            item = d_w.layout_devices.itemAt(1)
+            assert item.widget().label_device_name.text() == requested_device_label
+            assert item.widget().label_is_current.text() == ""
 
         await aqtbot.wait_until(_greet_done)
 

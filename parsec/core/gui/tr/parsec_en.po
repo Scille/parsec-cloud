@@ -210,16 +210,16 @@ msgstr ""
 "network may not be safe."
 
 msgid "TEXT_GREET_USER_GET_GREETER_SAS_ERROR"
-msgstr "Internal error. Please restart the process."
+msgstr "Error while negociating SAS code. Please restart the process."
 
 msgid "TEXT_GREET_USER_GET_CLAIMER_SAS_ERROR"
-msgstr "Internal error. Please restart the process."
+msgstr "Error while negociating claimer SAS code. Please restart the process."
 
 msgid "TEXT_GREET_USER_SIGNIFY_TRUST_ERROR"
-msgstr "Internal error. Please restart the process."
+msgstr "Error while acknowledging SAS code. Please restart the process."
 
 msgid "TEXT_GREET_USER_WAIT_PEER_TRUST_ERROR"
-msgstr "Internal error. Please restart the process."
+msgstr "Error while waiting for peer SAS code acknowledgment. Please restart the process."
 
 msgid "TEXT_USER_GREET_SUCCESSFUL"
 msgstr "The user was successfully greeter in your organization."
@@ -356,22 +356,22 @@ msgstr ""
 "network may not be safe."
 
 msgid "TEXT_CLAIM_USER_GET_GREETER_SAS_ERROR"
-msgstr "Internal error. Please restart the process."
+msgstr "Error while negociating SAS code. Please restart the process."
 
 msgid "TEXT_CLAIM_USER_PEER_RESET"
 msgstr "The host has reset the process. We will restart from the beginning."
 
-msgid "TEXT_CLAIM_USER_WAIT_TRUST_ERROR"
-msgstr "Internal error. Please restart the process."
+msgid "TEXT_CLAIM_USER_SIGNIFY_TRUST_ERROR"
+msgstr "Error while acknowledging SAS code. Please restart the process."
 
 msgid "TEXT_CLAIM_USER_WAIT_PEER_TRUST_ERROR"
-msgstr "Internal error. Please restart the process."
+msgstr "Error while waiting for peer SAS code acknowledgment. Please restart the process."
 
 msgid "TEXT_CLAIM_USER_INVALID_HUMAN_HANDLE"
 msgstr "The email is invalid."
 
 msgid "TEXT_CLAIM_USER_CLAIM_ERROR"
-msgstr "Internal error. Please restart the process."
+msgstr "Error while validating invite information. Please restart the process."
 
 msgid "TEXT_CLAIM_USER_WAITING"
 msgstr "Waiting for the other user"
@@ -394,7 +394,7 @@ msgid "TEXT_CLAIM_USER_INVITATION_NOT_FOUND"
 msgstr "The invitation was not found."
 
 msgid "TEXT_CLAIM_USER_UNKNOWN_ERROR"
-msgstr "Internal error. Please restart the process."
+msgstr "Unexpected error. Please restart the process."
 
 msgid "TEXT_CLAIM_USER_TITLE"
 msgstr "Register a user"
@@ -529,10 +529,10 @@ msgid "TEXT_GREET_DEVICE_WAITING"
 msgstr "Waiting for the new device..."
 
 msgid "TEXT_GREET_DEVICE_WAIT_PEER_ERROR"
-msgstr "Error while waiting for the new device."
+msgstr "An error occured while waiting for the other user. Please restart the process "
 
 msgid "TEXT_GREET_DEVICE_PEER_RESET"
-msgstr "The process has been reset. We will restart from the beginning."
+msgstr "The invitee has reset the process.. We will restart from the beginning."
 
 msgid "TEXT_GREET_DEVICE_INVALID_CODE_CLICKED"
 msgstr ""
@@ -548,16 +548,16 @@ msgstr ""
 "network may not be safe."
 
 msgid "TEXT_GREET_DEVICE_GET_GREETER_SAS_ERROR"
-msgstr "Internal error. Please restart the process."
+msgstr "Error while negociating SAS code. Please restart the process."
 
 msgid "TEXT_GREET_DEVICE_GET_CLAIMER_SAS_ERROR"
-msgstr "Internal error. Please restart the process."
+msgstr "Error while negociating claimer SAS code. Please restart the process."
 
 msgid "TEXT_GREET_DEVICE_SIGNIFY_TRUST_ERROR"
-msgstr "Internal error. Please restart the process."
+msgstr "Error while acknowledging SAS code. Please restart the process."
 
 msgid "TEXT_GREET_DEVICE_WAIT_PEER_TRUST_ERROR"
-msgstr "Internal error. Please restart the process."
+msgstr "Error while waiting for peer SAS code acknowledgment. Please restart the process."
 
 msgid "TEXT_DEVICE_GREET_SUCCESSFUL"
 msgstr "The device was successfully created."
@@ -1647,19 +1647,19 @@ msgstr ""
 "network may not be safe."
 
 msgid "TEXT_CLAIM_DEVICE_GET_GREETER_SAS_ERROR"
-msgstr "Internal error. Please restart the process."
+msgstr "Error while negociationg SAS code. Please restart the process."
 
 msgid "TEXT_CLAIM_DEVICE_PEER_RESET"
-msgstr "The process has been reset. We will restart from the beginning."
+msgstr "The host has reset the process. We will restart from the beginning."
 
-msgid "TEXT_CLAIM_DEVICE_WAIT_TRUST_ERROR"
-msgstr "Internal error. Please restart the process."
+msgid "TEXT_CLAIM_DEVICE_SIGNIFY_TRUST_ERROR"
+msgstr "Error while acknowledging SAS code. Please restart the process."
 
 msgid "TEXT_CLAIM_DEVICE_WAIT_PEER_TRUST_ERROR"
-msgstr "Internal error. Please restart the process."
+msgstr "Error while waiting for peer SAS code acknowledgment. Please restart the process."
 
 msgid "TEXT_CLAIM_DEVICE_CLAIM_ERROR"
-msgstr "Internal error. Please restart the process."
+msgstr "Error while validating invite information. Please restart the process."
 
 msgid "TEXT_CLAIM_DEVICE_WAITING"
 msgstr "Waiting..."
@@ -2339,4 +2339,3 @@ msgstr "Go to a file using a link"
 
 #~ msgid "TEXT_GREET_USER_ADDR_COPIED_TO_CLIPBOARD"
 #~ msgstr "The invitation link has been copied to the clipboard"
-
