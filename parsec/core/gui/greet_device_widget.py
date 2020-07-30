@@ -525,7 +525,7 @@ class GreetDeviceWidget(QWidget, Ui_GreetDeviceWidget):
         self.cancel()
 
     @classmethod
-    def exec_modal(cls, core, jobs_ctx, invite_addr, parent, on_finished):
+    def show_modal(cls, core, jobs_ctx, invite_addr, parent, on_finished):
         w = cls(core=core, jobs_ctx=jobs_ctx, invite_addr=invite_addr)
         d = GreyedDialog(w, _("TEXT_GREET_DEVICE_TITLE"), parent=parent, width=1000)
         w.dialog = d

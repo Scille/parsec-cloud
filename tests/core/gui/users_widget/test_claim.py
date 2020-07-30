@@ -585,3 +585,15 @@ async def test_claim_user_invitation_cancelled(
     )
 
     await CancelledTestBed().run()
+
+
+@pytest.mark.gui
+@pytest.mark.trio
+async def test_claim_user_with_bad_start_arg(event_bus, core_config, gui_factory, autoclose_dialog):
+    bad_start_arg = "parsec://parsec.example.com/my_org?action=dummy&rvk=P25GRG3XPSZKBEKXYQFBOLERWQNEDY3AO43MVNZCLPXPKN63JRYQssss&token=1234ABCD&user_id=John"
+
+    await gui_factory(event_bus=event_bus, core_config=core_config, start_arg=bad_start_arg)
+
+    assert len(autoclose_dialog.dialogs) == 1
+    assert autoclose_dialog.dialogs[0][0] == "Error"
+    assert autoclose_dialog.dialogs[0][1] == "The link is invalid."
