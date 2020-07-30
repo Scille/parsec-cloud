@@ -125,6 +125,15 @@ class BackendApp:
             client_ctx, error_infos = await do_handshake(self, transport)
             if not client_ctx:
                 # Invalid handshake
+                if error_infos.get("reason", "") == "Expired organization":
+                    organization_id = error_infos["organization_id"]
+                    self.event_bus.send(
+                        BackendEvent.ORGANIZATION_EXPIRED, organization_id=organization_id
+                    )
+                    selected_logger.debug(
+                        f"Oranization {organization_id} has expired, diconnect clients",
+                        **error_infos,
+                    )
                 selected_logger.info("Connection dropped: bad handshake", **error_infos)
                 return
 
@@ -142,7 +151,14 @@ class BackendApp:
                             ):
                                 cancel_scope.cancel()
 
+                        def _on_expired(event, organization_id):
+                            if organization_id == client_ctx.organization_id:
+                                cancel_scope.cancel()
+
                         client_ctx.event_bus_ctx.connect(BackendEvent.USER_REVOKED, _on_revoked)
+                        client_ctx.event_bus_ctx.connect(
+                            BackendEvent.ORGANIZATION_EXPIRED, _on_expired
+                        )
                         await self._handle_client_loop(transport, client_ctx)
 
             elif isinstance(client_ctx, InvitedClientContext):

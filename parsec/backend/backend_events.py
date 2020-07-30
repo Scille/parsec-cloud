@@ -16,6 +16,7 @@ class BackendEvent(Enum):
     USER_CREATED = "user.created"
     USER_REVOKED = "user.revoked"
     USER_INVITATION_CANCELLED = "user.invitation.cancelled"
+    ORGANIZATION_EXPIRED = "organization.expired"
     # api Event mirror
     PINGED = "pinged"
     MESSAGE_RECEIVED = "message.received"

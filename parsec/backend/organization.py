@@ -64,7 +64,7 @@ class Organization:
 
     @property
     def is_expired(self):
-        return self.expiration_date is not None and self.expiration_date < Pendulum.now()
+        return self.expiration_date is not None and self.expiration_date <= Pendulum.now()
 
     def evolve(self, **kwargs):
         return attr.evolve(self, **kwargs)
