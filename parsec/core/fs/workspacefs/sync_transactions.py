@@ -244,7 +244,9 @@ class SyncTransactions(EntryTransactions):
                     continue
 
                 # Send synced event
-                self._send_event(CoreEvent.FS_ENTRY_CONFINED, id=entry_id, cause=parent_manifest.id)
+                self._send_event(
+                    CoreEvent.FS_ENTRY_CONFINED, entry_id=entry_id, cause_id=parent_manifest.id
+                )
                 return None
 
             # Sync cannot be performed yet
