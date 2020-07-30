@@ -439,14 +439,23 @@ class LocalFolderishManifestMixin:
         updated = False
         new_children = dict(self.children)
         new_confined_entries = set(self.confined_entries)
+
+        # Deal with removal first
         for name, entry_id in data.items():
+            if name not in new_children:
+                continue
             # Remove old entry
-            old_entry_id = new_children.pop(name, None)
-            if old_entry_id in self.confined_entries:
+            old_entry_id = new_children.pop(name)
+            if old_entry_id in new_confined_entries:
                 new_confined_entries.discard(old_entry_id)
             else:
                 updated = True
-            # No entry to add
+
+        # Make sure no entry_id is duplicated
+        assert not set(data.values()).intersection(new_children.values())
+
+        # Deal with additions second
+        for name, entry_id in data.items():
             if entry_id is None:
                 continue
             # Add new entry
