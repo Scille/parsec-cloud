@@ -28,7 +28,9 @@ else:
         """
         Run parsec GUI
         """
-        config = config.evolve(mountpoint_enabled=True, gui_rc_update_enabled=rc_update)
+        config = config.evolve(mountpoint_enabled=True)
+        if rc_update:
+            config = config.evolve(gui_rc_update_enabled=True)
         _run_gui(config, start_arg=url, diagnose=diagnose)
 
 

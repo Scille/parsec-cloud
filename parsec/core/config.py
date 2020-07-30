@@ -132,6 +132,7 @@ def config_factory(
         gui_first_launch=gui_first_launch,
         gui_last_version=gui_last_version,
         gui_check_version_at_startup=gui_check_version_at_startup,
+        gui_rc_update_enabled=gui_rc_update_enabled,
         gui_workspace_color=gui_workspace_color,
         gui_allow_multiple_instances=gui_allow_multiple_instances,
         ipc_socket_file=data_base_dir / "parsec-cloud.lock",
