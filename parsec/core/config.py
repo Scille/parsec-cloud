@@ -76,6 +76,7 @@ class CoreConfig:
     gui_check_version_at_startup: bool = True
     gui_check_version_url: str = "https://github.com/Scille/parsec-cloud/releases/latest"
     gui_check_version_api_url: str = "https://api.github.com/repos/Scille/parsec-cloud/releases"
+    gui_rc_update_enabled: bool = False
     gui_confirmation_before_close: bool = True
     gui_workspace_color: bool = False
     gui_allow_multiple_instances: bool = False
@@ -105,6 +106,7 @@ def config_factory(
     gui_first_launch: bool = True,
     gui_last_version: str = None,
     gui_check_version_at_startup: bool = True,
+    gui_rc_update_enabled: bool = False,
     gui_workspace_color: bool = False,
     gui_allow_multiple_instances: bool = False,
     environ: dict = {},

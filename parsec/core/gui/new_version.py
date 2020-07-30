@@ -159,7 +159,7 @@ class CheckNewVersion(QDialog, Ui_NewVersionDialog):
             _do_check_new_version,
             url=self.config.gui_check_version_url,
             api_url=self.config.gui_check_version_api_url,
-            check_rc=self.config.rc_update,
+            check_rc=self.config.gui_rc_update_enabled,
         )
         self.setWindowFlags(Qt.SplashScreen)
 

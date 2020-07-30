@@ -24,11 +24,11 @@ else:
     @click.option("--diagnose", "-d", is_flag=True)
     @click.option("--rc-update", "-r", is_flag=True)
     @core_config_options
-    def run_gui(config, url, diagnose, **kwargs):
+    def run_gui(config, url, diagnose, rc_update, **kwargs):
         """
         Run parsec GUI
         """
-        config = config.evolve(mountpoint_enabled=True)
+        config = config.evolve(mountpoint_enabled=True, gui_rc_update_enabled=rc_update)
         _run_gui(config, start_arg=url, diagnose=diagnose)
 
 
