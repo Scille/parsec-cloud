@@ -153,11 +153,9 @@ def generate_invite_email(
     # mail settings
     message = MIMEMultipart("alternative")
     if greeter_name:
-        message[
-            "Subject"
-        ] = f"[Parsec] { greeter_name } invited you to organization { organization_id}"
+        message["Subject"] = f"[Parsec] { greeter_name } invited you to { organization_id}"
     else:
-        message["Subject"] = f"[Parsec] New device invitation to organization { organization_id }"
+        message["Subject"] = f"[Parsec] New device invitation to { organization_id }"
     message["From"] = from_addr
     message["To"] = to_addr
     if reply_to:

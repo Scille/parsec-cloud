@@ -194,7 +194,7 @@ async def test_invite_with_send_mail(alice, alice_backend_sock, email_letterbox)
     assert body.startswith("Content-Type: multipart/alternative;")
     assert 'Content-Type: text/plain; charset="us-ascii"' in body
     assert 'Content-Type: text/html; charset="us-ascii"' in body
-    assert "Subject: [Parsec] Alicey McAliceFace invited you to organization CoolOrg" in body
+    assert "Subject: [Parsec] Alicey McAliceFace invited you to CoolOrg" in body
     assert "From: Parsec <no-reply@parsec.com>" in body
     assert "To: zack@example.com" in body
     assert "Reply-To: Alicey McAliceFace <alice@example.com>" in body
@@ -212,7 +212,7 @@ async def test_invite_with_send_mail(alice, alice_backend_sock, email_letterbox)
     assert body.startswith("Content-Type: multipart/alternative;")
     assert 'Content-Type: text/plain; charset="us-ascii"' in body
     assert 'Content-Type: text/html; charset="us-ascii"' in body
-    assert "Subject: [Parsec] New device invitation to organization CoolOrg" in body
+    assert "Subject: [Parsec] New device invitation to CoolOrg" in body
     assert "From: Parsec <no-reply@parsec.com>" in body
     assert "To: alice@example.com" in body
     assert "Reply-To: " not in body
@@ -241,7 +241,7 @@ async def test_invite_with_send_mail_and_greeter_without_human_handle(
     assert body.startswith("Content-Type: multipart/alternative;")
     assert 'Content-Type: text/plain; charset="us-ascii"' in body
     assert 'Content-Type: text/html; charset="us-ascii"' in body
-    assert "Subject: [Parsec] alice invited you to organization CoolOrg" in body
+    assert "Subject: [Parsec] alice invited you to CoolOrg" in body
     assert "From: Parsec <no-reply@parsec.com>" in body
     assert "To: zack@example.com" in body
     assert "Reply-To: " not in body
