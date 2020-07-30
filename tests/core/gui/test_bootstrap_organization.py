@@ -54,7 +54,7 @@ async def proceed_to_bootstrap(aqtbot, bo_w):
 
 @pytest.mark.gui
 @pytest.mark.trio
-async def test_bootstrap_organization(aqtbot, gui_ready_for_bootstrap, autoclose_dialog):
+async def test_bootstrap_organization(aqtbot, backend, gui_ready_for_bootstrap, autoclose_dialog):
     gui, bo_w = gui_ready_for_bootstrap
     await proceed_to_bootstrap(aqtbot, bo_w)
 
@@ -74,6 +74,15 @@ async def test_bootstrap_organization(aqtbot, gui_ready_for_bootstrap, autoclose
         ]
 
     await aqtbot.wait_until(_bootstrap_done)
+
+    # Also make sure the backend has received a device/user with human_handle and device_label
+    device = gui.test_get_core().device
+    remote_user, remote_device = await backend.user.get_user_with_device(
+        organization_id=device.organization_id, device_id=device.device_id
+    )
+    assert remote_user.human_handle.email == device.human_handle.email
+    assert remote_user.human_handle.label == device.human_handle.label
+    assert remote_device.device_label == device.device_label
 
 
 @pytest.mark.gui
