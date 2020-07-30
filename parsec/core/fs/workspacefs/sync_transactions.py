@@ -275,10 +275,9 @@ class SyncTransactions(EntryTransactions):
             # Extract versions
             base_version = local_manifest.base_version
             new_base_version = new_local_manifest.base_version
-            remote_version = base_version if remote_manifest is None else remote_manifest.version
 
             # Set the new base manifest
-            if base_version != remote_version or new_local_manifest.need_sync:
+            if new_local_manifest != local_manifest:
                 await self.local_storage.set_manifest(entry_id, new_local_manifest)
 
             # Send downsynced event
