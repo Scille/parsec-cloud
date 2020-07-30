@@ -28,7 +28,6 @@ async def test_file_history(
     f_w = await logged_gui.test_switch_to_files_widget("wksp1")
 
     # Add an entry to the workspace
-    # await wfs.mkdir("/dir1")
     await wfs.touch("/file.txt")
     await wfs.sync()
     await wfs.write_bytes("/file.txt", data=b"v2")
