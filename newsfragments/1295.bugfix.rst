@@ -1,2 +1,0 @@
-Fix GUI main windows not showing when use close button from the systray.
-Notif explaining Parsec is still running on GUI windows close only triggered once.

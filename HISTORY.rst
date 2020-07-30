@@ -4,7 +4,8 @@ History
 
 .. towncrier release notes start
 
-Parsec v1.14.0-rc4 (2020-07-22)
+
+Parsec v1.14.0-rc5 (2020-07-30)
 -------------------------------
 
 Features
@@ -75,6 +76,12 @@ Bugfixes
   (`#1081 <https://github.com/Scille/parsec-cloud/issues/1081>`__)
 * Fixed deadlock when importing a file from a parsec workspace  (`#1188
   <https://github.com/Scille/parsec-cloud/issues/1188>`__)
+* Fix GUI main windows not showing when use close button from the systray. Notif
+  explaining Parsec is still running on GUI windows close only triggered once.
+  (`#1295 <https://github.com/Scille/parsec-cloud/issues/1295>`__)
+* Fix backend side connection auto-close on user revocation when the connection
+  has been used to listen events. (`#1314 <https://github.com/Scille/parsec-
+  cloud/issues/1314>`__)
 
 Client/Backend API evolutions
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -132,6 +139,11 @@ Miscellaneous internal changes
 * Restrict read access for parsec directories to the current user. This includes
   configuration, data, config and workspace directories.  (`#940
   <https://github.com/Scille/parsec-cloud/issues/940>`__)
+* Fix mount error when using Snap package on Debian when fuse is not installed.
+  (`#1296 <https://github.com/Scille/parsec-cloud/issues/1296>`__)
+* Run Parsec with regular user priviledges when the "Run Parsec" checkbox is
+  ticked at the end of the windows installation.  (`#1303
+  <https://github.com/Scille/parsec-cloud/issues/1303>`__)
 
 
 Parsec 1.13.0 (2020-04-29)

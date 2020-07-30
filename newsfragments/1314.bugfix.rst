@@ -1,2 +1,0 @@
-Fix backend side connection auto-close on user revocation when the connection
-has been used to listen events.
