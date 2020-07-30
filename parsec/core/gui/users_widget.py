@@ -283,7 +283,7 @@ class UsersWidget(QWidget, Ui_UsersWidget):
         button.show()
 
     def greet_user(self, token):
-        GreetUserWidget.exec_modal(
+        GreetUserWidget.show_modal(
             core=self.core, jobs_ctx=self.jobs_ctx, token=token, parent=self, on_finished=self.reset
         )
 

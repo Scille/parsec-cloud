@@ -132,7 +132,7 @@ class DevicesWidget(QWidget, Ui_DevicesWidget):
         assert job.is_finished()
         assert job.status == "ok"
 
-        GreetDeviceWidget.exec_modal(
+        GreetDeviceWidget.show_modal(
             core=self.core,
             jobs_ctx=self.jobs_ctx,
             invite_addr=job.ret,

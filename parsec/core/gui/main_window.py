@@ -324,7 +324,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
             self.reload_login_devices()
             self.try_login(login, password)
 
-        widget = ClaimUserWidget.exec_modal(
+        widget = ClaimUserWidget.show_modal(
             jobs_ctx=self.jobs_ctx,
             config=self.config,
             addr=action_addr,
@@ -343,7 +343,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
             self.reload_login_devices()
             self.try_login(login, password)
 
-        widget = ClaimDeviceWidget.exec_modal(
+        widget = ClaimDeviceWidget.show_modal(
             jobs_ctx=self.jobs_ctx,
             config=self.config,
             addr=action_addr,

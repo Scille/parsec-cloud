@@ -721,7 +721,7 @@ class ClaimUserWidget(QWidget, Ui_ClaimUserWidget):
         self.cancel()
 
     @classmethod
-    def exec_modal(cls, jobs_ctx, config, addr, parent, on_finished):
+    def show_modal(cls, jobs_ctx, config, addr, parent, on_finished):
         w = cls(jobs_ctx=jobs_ctx, config=config, addr=addr)
         d = GreyedDialog(w, _("TEXT_CLAIM_USER_TITLE"), parent=parent, width=800)
         w.dialog = d
