@@ -3,162 +3,136 @@
 import pytest
 from PyQt5 import QtCore
 
-from parsec.core.invite.exceptions import InviteNotFoundError, InviteAlreadyUsedError
+from parsec.api.protocol import OrganizationID
 from parsec.core.types import BackendOrganizationBootstrapAddr
+from parsec.core.invite.exceptions import InviteNotFoundError, InviteAlreadyUsedError
+from parsec.core.gui.bootstrap_organization_widget import BootstrapOrganizationWidget
 
 
-async def _gui_ready_for_bootstrap(aqtbot, gui, running_backend, monkeypatch, qt_thread_gateway):
-    org_id = "NewOrg"
+@pytest.fixture
+def catch_bootstrap_organization_widget(widget_catcher_factory):
+    return widget_catcher_factory(
+        "parsec.core.gui.bootstrap_organization_widget.BootstrapOrganizationWidget"
+    )
+
+
+@pytest.fixture
+async def organization_bootstrap_addr(running_backend):
+    org_id = OrganizationID("NewOrg")
     org_token = "123456"
-    user_id = "Zack"
-    user_email = "zack@host.com"
-    device_name = "pc1"
-    password = "S3cr3tP@ss"
-    organization_addr = BackendOrganizationBootstrapAddr.build(
-        running_backend.addr, org_id, org_token
-    )
-
-    # Create organization in the backend
     await running_backend.backend.organization.create(org_id, org_token)
-
-    def open_dialog():
-        monkeypatch.setattr(
-            "parsec.core.gui.main_window.get_text_input",
-            lambda *args, **kwargs: (organization_addr.to_url()),
-        )
-        gui._on_bootstrap_org_clicked()
-
-    await qt_thread_gateway.send_action(open_dialog)
-
-    dialog = None
-    for win in gui.children():
-        if win.objectName() == "GreyedDialog":
-            dialog = win
-            break
-
-    assert dialog
-    bw = dialog.center_widget
-    await aqtbot.key_clicks(bw.line_edit_login, user_id)
-    await aqtbot.key_clicks(bw.line_edit_email, user_email)
-    await aqtbot.key_clicks(bw.line_edit_password, password)
-    await aqtbot.key_clicks(bw.line_edit_password_check, password)
-    await aqtbot.key_clicks(bw.line_edit_device, device_name)
-    return bw
+    return BackendOrganizationBootstrapAddr.build(running_backend.addr, org_id, org_token)
 
 
-@pytest.mark.gui
-@pytest.mark.trio
-async def test_bootstrap_organization(
-    aqtbot, running_backend, gui, autoclose_dialog, monkeypatch, qt_thread_gateway
+@pytest.fixture
+async def gui_ready_for_bootstrap(
+    aqtbot, gui_factory, organization_bootstrap_addr, catch_bootstrap_organization_widget
 ):
-    bw = await _gui_ready_for_bootstrap(
-        aqtbot, gui, running_backend, monkeypatch, qt_thread_gateway
-    )
+    gui = await gui_factory(start_arg=organization_bootstrap_addr.to_url())
 
-    async with aqtbot.wait_signal(bw.bootstrap_success):
-        await aqtbot.mouse_click(bw.button_bootstrap, QtCore.Qt.LeftButton)
+    bo_w = await catch_bootstrap_organization_widget()
+    assert isinstance(bo_w, BootstrapOrganizationWidget)
 
-    assert len(autoclose_dialog.dialogs) == 2
-    assert autoclose_dialog.dialogs[1][0] == ""
-    assert (
-        autoclose_dialog.dialogs[1][1]
-        == "You organization <b>NewOrg</b> has been created!<br />\n<br />\n"
-        "You will now be automatically logged in.<br />\n<br />\n"
-        "To help you start with PARSEC, you can read the "
-        '<a href="https://docs.parsec.cloud/en/stable/" title="User guide">user guide</a>.'
-    )
+    def _bootstrap_org_displayed():
+        tab = gui.test_get_tab()
+        assert tab and tab.isVisible()
+        assert bo_w.isVisible()
+        assert bo_w.dialog.label_title.text() == "Bootstrap the organization"
+
+    await aqtbot.wait_until(_bootstrap_org_displayed)
+    return gui, bo_w
 
 
-@pytest.mark.skip("Failing sometimes")
-@pytest.mark.gui
-@pytest.mark.trio
-async def test_bootstrap_org_missing_fields(
-    aqtbot, qt_thread_gateway, gui, autoclose_dialog, core_config, monkeypatch
-):
-    def open_dialog():
-        monkeypatch.setattr(
-            "parsec.core.gui.main_window.get_text_input",
-            lambda *args, **kwargs: (
-                "parsec://host/org?action=bootstrap_organization&no_ssl=true&token=2eead2c011e4ad9878ffc5854a38b395ecd22279b86994f804bdfc7cad81ed66"
-            ),
-        )
-        gui._on_bootstrap_org_clicked()
-
-    await qt_thread_gateway.send_action(open_dialog)
-
-    def dialog_shown():
-        dialog = None
-        for win in gui.children():
-            if win.objectName() == "GreyedDialog":
-                dialog = win
-                break
-        assert dialog is not None
-
-    await aqtbot.wait_until(dialog_shown)
-
-    dialog = None
-    for win in gui.children():
-        if win.objectName() == "GreyedDialog":
-            dialog = win
-            break
-    assert dialog is not None
-
-    bw = dialog.center_widget
-    assert bw is not None
-
-    assert bw.button_bootstrap.isEnabled() is False
-
-    await aqtbot.key_clicks(bw.line_edit_login, "login")
-    assert bw.button_bootstrap.isEnabled() is False
-
-    await aqtbot.key_clicks(bw.line_edit_device, "device")
-    assert bw.button_bootstrap.isEnabled() is False
-
-    await aqtbot.key_clicks(bw.line_edit_email, "user@host.com")
-    assert bw.button_bootstrap.isEnabled() is False
-
-    await aqtbot.key_clicks(bw.line_edit_password, "passwor")
-    assert bw.button_bootstrap.isEnabled() is False
-
-    await aqtbot.key_clicks(bw.line_edit_password, "d")
-    assert bw.button_bootstrap.isEnabled() is False
-
-    await aqtbot.key_clicks(bw.line_edit_password_check, "password")
-    assert bw.button_bootstrap.isEnabled() is True
-
-    await aqtbot.key_click(bw.line_edit_password, QtCore.Qt.Key_Backspace)
-    assert bw.button_bootstrap.isEnabled() is False
+async def proceed_to_bootstrap(aqtbot, bo_w):
+    await aqtbot.key_clicks(bo_w.line_edit_login, "Zack")
+    await aqtbot.key_clicks(bo_w.line_edit_email, "zack@host.com")
+    await aqtbot.key_clicks(bo_w.line_edit_device, "pc1")
+    await aqtbot.key_clicks(bo_w.line_edit_password, "S3cr3tP@ss")
+    await aqtbot.key_clicks(bo_w.line_edit_password_check, "S3cr3tP@ss")
+    await aqtbot.mouse_click(bo_w.button_bootstrap, QtCore.Qt.LeftButton)
 
 
 @pytest.mark.gui
 @pytest.mark.trio
-@pytest.mark.flaky(reruns=1)
+async def test_bootstrap_organization(aqtbot, gui_ready_for_bootstrap, autoclose_dialog):
+    gui, bo_w = gui_ready_for_bootstrap
+    await proceed_to_bootstrap(aqtbot, bo_w)
+
+    def _bootstrap_done():
+        assert not bo_w.isVisible()
+        # Should be logged in with the new device
+        central_widget = gui.test_get_central_widget()
+        assert central_widget and central_widget.isVisible()
+        assert autoclose_dialog.dialogs == [
+            (
+                "",
+                "You organization <b>NewOrg</b> has been created!<br />\n<br />\n"
+                "You will now be automatically logged in.<br />\n<br />\n"
+                "To help you start with PARSEC, you can read the "
+                '<a href="https://docs.parsec.cloud/en/stable/" title="User guide">user guide</a>.',
+            )
+        ]
+
+    await aqtbot.wait_until(_bootstrap_done)
+
+
+@pytest.mark.gui
+@pytest.mark.trio
+async def test_bootstrap_org_missing_fields(aqtbot, gui_ready_for_bootstrap, autoclose_dialog):
+    gui, bo_w = gui_ready_for_bootstrap
+
+    assert bo_w.button_bootstrap.isEnabled() is False
+
+    await aqtbot.key_clicks(bo_w.line_edit_login, "login")
+    assert bo_w.button_bootstrap.isEnabled() is False
+
+    await aqtbot.key_clicks(bo_w.line_edit_device, "device")
+    assert bo_w.button_bootstrap.isEnabled() is False
+
+    await aqtbot.key_clicks(bo_w.line_edit_email, "user@host.com")
+    assert bo_w.button_bootstrap.isEnabled() is False
+
+    await aqtbot.key_clicks(bo_w.line_edit_password, "passwor")
+    assert bo_w.button_bootstrap.isEnabled() is False
+
+    await aqtbot.key_clicks(bo_w.line_edit_password, "d")
+    assert bo_w.button_bootstrap.isEnabled() is False
+
+    await aqtbot.key_clicks(bo_w.line_edit_password_check, "password")
+    assert bo_w.button_bootstrap.isEnabled() is True
+
+    await aqtbot.key_click(bo_w.line_edit_password, QtCore.Qt.Key_Backspace)
+    assert bo_w.button_bootstrap.isEnabled() is False
+
+
+@pytest.mark.gui
+@pytest.mark.trio
 async def test_bootstrap_organization_backend_offline(
-    aqtbot, running_backend, gui, autoclose_dialog, monkeypatch, qt_thread_gateway
+    aqtbot, running_backend, gui_ready_for_bootstrap, autoclose_dialog
 ):
-    bw = await _gui_ready_for_bootstrap(
-        aqtbot, gui, running_backend, monkeypatch, qt_thread_gateway
-    )
+    gui, bo_w = gui_ready_for_bootstrap
 
     with running_backend.offline():
-        async with aqtbot.wait_signal(bw.bootstrap_error):
-            await aqtbot.mouse_click(bw.button_bootstrap, QtCore.Qt.LeftButton)
-        assert len(autoclose_dialog.dialogs) == 2
-        assert autoclose_dialog.dialogs[1][0] == "Error"
-        assert (
-            autoclose_dialog.dialogs[1][1]
-            == "The server is offline or you have no access to the internet."
-        )
+        await proceed_to_bootstrap(aqtbot, bo_w)
+
+        def _bootstrap_done():
+            # No logged in should have occured, should go back to login page
+            assert not bo_w.isVisible()
+            l_w = gui.test_get_login_widget()
+            assert l_w.isVisible()
+            assert autoclose_dialog.dialogs == [
+                ("Error", "The server is offline or you have no access to the internet.")
+            ]
+
+        await aqtbot.wait_until(_bootstrap_done)
 
 
 @pytest.mark.gui
 @pytest.mark.trio
 async def test_bootstrap_organization_invite_already_used(
-    monkeypatch, aqtbot, running_backend, gui, autoclose_dialog, qt_thread_gateway
+    aqtbot, gui_ready_for_bootstrap, autoclose_dialog, monkeypatch
 ):
-    bw = await _gui_ready_for_bootstrap(
-        aqtbot, gui, running_backend, monkeypatch, qt_thread_gateway
-    )
+    gui, bo_w = gui_ready_for_bootstrap
 
     def _raise_already_used(*args, **kwargs):
         raise InviteAlreadyUsedError()
@@ -167,80 +141,85 @@ async def test_bootstrap_organization_invite_already_used(
         "parsec.core.gui.bootstrap_organization_widget.bootstrap_organization", _raise_already_used
     )
 
-    def error_shown():
-        assert len(autoclose_dialog.dialogs) == 2
+    await proceed_to_bootstrap(aqtbot, bo_w)
 
-    async with aqtbot.wait_signal(bw.bootstrap_error):
-        await aqtbot.mouse_click(bw.button_bootstrap, QtCore.Qt.LeftButton)
-        await aqtbot.wait_until(error_shown)
-        assert autoclose_dialog.dialogs[1][0] == "Error"
-        assert autoclose_dialog.dialogs[1][1] == "This organization has already been bootstrapped."
+    def _bootstrap_done():
+        # No logged in should have occured, should go back to login page
+        assert not bo_w.isVisible()
+        l_w = gui.test_get_login_widget()
+        assert l_w.isVisible()
+        assert autoclose_dialog.dialogs == [
+            ("Error", "This organization has already been bootstrapped.")
+        ]
+
+    await aqtbot.wait_until(_bootstrap_done)
 
 
 @pytest.mark.gui
 @pytest.mark.trio
 async def test_bootstrap_organization_invite_not_found(
-    monkeypatch, aqtbot, running_backend, gui, autoclose_dialog, qt_thread_gateway
+    aqtbot, gui_ready_for_bootstrap, autoclose_dialog, monkeypatch
 ):
-    bw = await _gui_ready_for_bootstrap(
-        aqtbot, gui, running_backend, monkeypatch, qt_thread_gateway
-    )
+    gui, bo_w = gui_ready_for_bootstrap
 
-    def _raise_not_found(*args, **kwargs):
+    def _raise_already_used(*args, **kwargs):
         raise InviteNotFoundError()
 
     monkeypatch.setattr(
-        "parsec.core.gui.bootstrap_organization_widget.bootstrap_organization", _raise_not_found
+        "parsec.core.gui.bootstrap_organization_widget.bootstrap_organization", _raise_already_used
     )
 
-    def error_shown():
-        assert len(autoclose_dialog.dialogs) == 2
+    await proceed_to_bootstrap(aqtbot, bo_w)
 
-    async with aqtbot.wait_signal(bw.bootstrap_error):
-        await aqtbot.mouse_click(bw.button_bootstrap, QtCore.Qt.LeftButton)
-        await aqtbot.wait_until(error_shown)
-        assert autoclose_dialog.dialogs[1][0] == "Error"
-        assert (
-            autoclose_dialog.dialogs[1][1]
-            == "There are no organization to bootstrap with this link."
-        )
+    def _bootstrap_done():
+        # No logged in should have occured, should go back to login page
+        assert not bo_w.isVisible()
+        l_w = gui.test_get_login_widget()
+        assert l_w.isVisible()
+        assert autoclose_dialog.dialogs == [
+            ("Error", "There are no organization to bootstrap with this link.")
+        ]
+
+    await aqtbot.wait_until(_bootstrap_done)
 
 
 @pytest.mark.gui
 @pytest.mark.trio
 async def test_bootstrap_organization_unknown_error(
-    monkeypatch, aqtbot, running_backend, gui, autoclose_dialog, qt_thread_gateway
+    aqtbot, gui_ready_for_bootstrap, autoclose_dialog, monkeypatch
 ):
-    bw = await _gui_ready_for_bootstrap(
-        aqtbot, gui, running_backend, monkeypatch, qt_thread_gateway
-    )
+    gui, bo_w = gui_ready_for_bootstrap
 
-    def _raise_broken(*args, **kwargs):
+    def _raise_already_used(*args, **kwargs):
         raise RuntimeError()
 
     monkeypatch.setattr(
-        "parsec.core.gui.bootstrap_organization_widget.bootstrap_organization", _raise_broken
+        "parsec.core.gui.bootstrap_organization_widget.bootstrap_organization", _raise_already_used
     )
 
-    def error_shown():
-        assert len(autoclose_dialog.dialogs) == 2
+    await proceed_to_bootstrap(aqtbot, bo_w)
 
-    async with aqtbot.wait_signal(bw.bootstrap_error):
-        await aqtbot.mouse_click(bw.button_bootstrap, QtCore.Qt.LeftButton)
-        await aqtbot.wait_until(error_shown)
-        assert autoclose_dialog.dialogs[1][0] == "Error"
-        assert autoclose_dialog.dialogs[1][1] == "Could not bootstrap the organization."
+    def _bootstrap_done():
+        # No logged in should have occured, should go back to login page
+        assert not bo_w.isVisible()
+        l_w = gui.test_get_login_widget()
+        assert l_w.isVisible()
+        assert autoclose_dialog.dialogs == [("Error", "Could not bootstrap the organization.")]
+
+    await aqtbot.wait_until(_bootstrap_done)
 
 
 @pytest.mark.gui
 @pytest.mark.trio
-async def test_bootstrap_organization_with_bad_start_arg(
-    event_bus, core_config, gui_factory, autoclose_dialog
-):
+async def test_bootstrap_organization_with_bad_start_arg(aqtbot, gui_factory, autoclose_dialog):
     bad_start_arg = "parsec://example.com:9999/NewOrg?action=dummy&token=123456&no_ssl=true"
 
-    _ = await gui_factory(event_bus=event_bus, core_config=core_config, start_arg=bad_start_arg)
+    gui = await gui_factory(start_arg=bad_start_arg)
 
-    assert len(autoclose_dialog.dialogs) == 1
-    assert autoclose_dialog.dialogs[0][0] == "Error"
-    assert autoclose_dialog.dialogs[0][1] == "The link is invalid."
+    def _bootstrap_aborted():
+        # Should go back to login page
+        l_w = gui.test_get_login_widget()
+        assert l_w.isVisible()
+        assert autoclose_dialog.dialogs == [("Error", "The link is invalid.")]
+
+    await aqtbot.wait_until(_bootstrap_aborted)
