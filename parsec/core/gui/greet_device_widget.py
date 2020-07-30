@@ -146,6 +146,9 @@ class GreetDeviceInstructionsWidget(QWidget, Ui_GreetDeviceInstructionsWidget):
         self.send_email_error.connect(self._on_send_email_error)
         self.button_start.clicked.connect(self._on_button_start_clicked)
         self.button_send_email.clicked.connect(self._on_button_send_email_clicked)
+        # Hide the send email button if the user has no human_handle (hand hence no email)
+        if not self.core.device.human_handle:
+            self.button_send_email.hide()
         self.button_copy_addr.clicked.connect(self._on_copy_addr_clicked)
 
     def _on_copy_addr_clicked(self):
