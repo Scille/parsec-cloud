@@ -42,7 +42,8 @@ async def _do_check_new_version(url, api_url, check_rc=False):
                 and current_version < latest_from_head
                 or check_rc  # As latest doesn't include GitHub prerelease
             ):
-                return latest_from_head, json.loads(req.read())
+                with urlopen(Request(api_url, method="GET")) as req_api:
+                    return latest_from_head, json.loads(req_api.read())
             else:
                 return latest_from_head, None
 
