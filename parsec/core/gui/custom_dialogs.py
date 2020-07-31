@@ -139,7 +139,7 @@ class TextInputWidget(QWidget, Ui_InputWidget):
         return self.line_edit_text.text()
 
     def keyPressEvent(self, event):
-        if event.key() == Qt.Key_Return:
+        if event.key() in (Qt.Key_Return, Qt.Key_Enter):
             self._on_button_clicked()
         event.accept()
 
