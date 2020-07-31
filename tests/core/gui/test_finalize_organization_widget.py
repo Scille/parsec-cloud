@@ -266,7 +266,7 @@ async def test_on_create_error():
     init_workspace_widget._create_job.exc = exc
     with patch("parsec.core.gui.init_organization.show_error") as show_error_mock:
         with patch(
-            "parsec.core.gui.init_organization.handle_workspace_errors"
+            "parsec.core.gui.init_organization.handle_create_workspace_errors"
         ) as handle_invite_errors:
             handle_invite_errors.return_value = "fake_errors"
             init_workspace_widget._on_create_error()

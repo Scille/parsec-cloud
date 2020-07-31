@@ -30,7 +30,8 @@ from parsec.core.gui.jobs.workspace import (
     _do_workspace_list,
     _do_workspace_mount,
     _do_workspace_unmount,
-    handle_workspace_errors,
+    handle_create_workspace_errors,
+    handle_rename_workspace_errors,
 )
 
 
@@ -195,14 +196,14 @@ class WorkspacesWidget(QWidget, Ui_WorkspacesWidget):
         pass
 
     def on_create_error(self, job):
-        handle_workspace_errors(job)
+        show_error(self, handle_create_workspace_errors(job.status), exception=job.exc)
 
     def on_rename_success(self, job):
         workspace_button, workspace_name = job.ret
         workspace_button.reload_workspace_name(workspace_name)
 
     def on_rename_error(self, job):
-        handle_workspace_errors(job)
+        show_error(self, handle_rename_workspace_errors(job.status), exception=job.exc)
 
     def on_list_success(self, job):
         self.layout_workspaces.clear()

@@ -8,7 +8,7 @@ from parsec.core.gui.custom_dialogs import GreyedDialog, show_error
 from parsec.core.gui.ui.init_organization_widget import Ui_InitOrganizationWidget
 from parsec.core.gui.ui.init_workspace_widget import Ui_InitWorkspaceWidget
 from parsec.core.gui.ui.init_users_widget import Ui_InitUsersWidget
-from parsec.core.gui.jobs.workspace import _do_workspace_create, handle_workspace_errors
+from parsec.core.gui.jobs.workspace import _do_workspace_create, handle_create_workspace_errors
 from parsec.core.gui.jobs.user import _do_invite_user, handle_invite_errors
 from parsec.core.gui.lang import translate as _
 
@@ -130,7 +130,7 @@ class InitWorkspaceWidget(QWidget, Ui_InitWorkspaceWidget):
 
         if status == "cancelled":
             return
-        show_error(self, handle_workspace_errors(status), exception=job.exc)
+        show_error(self, handle_create_workspace_errors(status), exception=job.exc)
 
     def _on_change_name(self):
         if self.name_edit_text.text():

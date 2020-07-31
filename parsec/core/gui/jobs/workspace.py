@@ -16,11 +16,18 @@ async def _get_reencryption_needs(workspace_fs):
     return workspace_fs.workspace_id, reenc_needs
 
 
-def handle_workspace_errors(status):
+def handle_create_workspace_errors(status):
     if status == "invalid-name":
         return _("TEXT_WORKSPACE_CREATE_NEW_INVALID_NAME")
     else:
         return _("TEXT_WORKSPACE_CREATE_NEW_UNKNOWN_ERROR")
+
+
+def handle_rename_workspace_errors(status):
+    if status == "invalid-name":
+        return _("TEXT_WORKSPACE_RENAME_INVALID_NAME")
+    else:
+        return _("TEXT_WORKSPACE_RENAME_UNKNOWN_ERROR")
 
 
 async def _do_workspace_create(core, workspace_name):

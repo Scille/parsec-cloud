@@ -2440,15 +2440,12 @@ msgstr "Trouver un fichier via son lien"
 
 #~ msgid "TEXT_GREET_USER_ADDR_COPIED_TO_CLIPBOARD"
 #~ msgstr "Le lien d'invitation a été copié dans le presse-papier."
-<<<<<<< HEAD
-=======
 
-#~ msgid "TEXT_WORKSPACE_RENAME_INVALID_NAME"
-#~ msgstr ""
-#~ "Impossible de renommer l'espace de "
-#~ "travail. Le nom fourni n'est pas "
-#~ "un nom d'espace de travail valide."
+msgid "TEXT_WORKSPACE_RENAME_INVALID_NAME"
+msgstr ""
+"Impossible de renommer l'espace de "
+"travail. Le nom fourni n'est pas "
+"un nom d'espace de travail valide."
 
-#~ msgid "TEXT_WORKSPACE_RENAME_UNKNOWN_ERROR"
-#~ msgstr "Impossible de renommer l'espace de travail."
->>>>>>> Add the finalization setup organization translations
+msgid "TEXT_WORKSPACE_RENAME_UNKNOWN_ERROR"
+msgstr "Impossible de renommer l'espace de travail."
