@@ -30,7 +30,6 @@ class InitUsersWidget(QWidget, Ui_InitUsersWidget):
 
         self.button_validate = button_validate
         self.button_validate.clicked.connect(self._close)
-
         self.dialog = None
         self.invit_status = None
         self._invit_job = None
@@ -131,7 +130,7 @@ class InitWorkspaceWidget(QWidget, Ui_InitWorkspaceWidget):
 
         if status == "cancelled":
             return
-        show_error(self, handle_workspace_errors(status), exception=self._create_job.exc)
+        show_error(self, handle_workspace_errors(status), exception=job.exc)
 
     def _on_change_name(self):
         if self.name_edit_text.text():
@@ -162,7 +161,6 @@ class InitOrganizationWidget(QWidget, Ui_InitOrganizationWidget):
         super().__init__()
         self.setupUi(self)
         self.dialog = None
-
         self.current_widget = InitWorkspaceWidget(jobs_ctx, core, self.button_validate)
         self.current_widget.create_success.connect(self.on_workspace_created)
         self.jobs_ctx = jobs_ctx
@@ -188,7 +186,6 @@ class InitOrganizationWidget(QWidget, Ui_InitOrganizationWidget):
         self.parent.reset()
 
     def on_workspace_created(self):
-
         self._clear_current_widget()
         self.current_widget = InitUsersWidget(self.jobs_ctx, self.core, self.button_validate)
         self.current_widget.invit_success.connect(self.on_invit_successed)
