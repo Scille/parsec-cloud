@@ -216,6 +216,7 @@ def save_config(config: CoreConfig):
                 "gui_first_launch": config.gui_first_launch,
                 "gui_last_version": config.gui_last_version,
                 "gui_check_version_at_startup": config.gui_check_version_at_startup,
+                "gui_rc_update_enabled": config.gui_rc_update_enabled,
                 "gui_workspace_color": config.gui_workspace_color,
                 "gui_allow_multiple_instances": config.gui_allow_multiple_instances,
             },
