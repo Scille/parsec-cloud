@@ -130,10 +130,6 @@ class BackendApp:
                     self.event_bus.send(
                         BackendEvent.ORGANIZATION_EXPIRED, organization_id=organization_id
                     )
-                    selected_logger.debug(
-                        f"Oranization {organization_id} has expired, diconnect clients",
-                        **error_infos,
-                    )
                 selected_logger.info("Connection dropped: bad handshake", **error_infos)
                 return
 
