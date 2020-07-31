@@ -1,8 +1,9 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
 
+import re
 from pathlib import Path
 from collections import defaultdict
-from typing import Dict, Tuple, Set, Optional
+from typing import Dict, Tuple, Set, Optional, Callable
 
 import trio
 from trio import hazmat
@@ -74,6 +75,10 @@ class WorkspaceStorage:
         self.block_storage = block_storage
         self.chunk_storage = chunk_storage
 
+        # Pattern attributes
+        self._pattern_filter = None
+        self._pattern_filter_fully_applied = None
+
     @classmethod
     @asynccontextmanager
     async def run(
@@ -109,7 +114,7 @@ class WorkspaceStorage:
                         async with ChunkStorage.run(device, data_localdb) as chunk_storage:
 
                             # Instanciate workspace storage
-                            yield cls(
+                            instance = cls(
                                 device,
                                 path,
                                 workspace_id,
@@ -119,6 +124,12 @@ class WorkspaceStorage:
                                 chunk_storage=chunk_storage,
                                 manifest_storage=manifest_storage,
                             )
+
+                            # Load pattern filter
+                            await instance._load_pattern_filter()
+
+                            # Yield point
+                            yield instance
 
     # Helpers
 
@@ -254,6 +265,27 @@ class WorkspaceStorage:
         except KeyError:
             raise FSInvalidFileDescriptor(fd)
 
+    # Pattern filter interface
+
+    async def _load_pattern_filter(self) -> None:
+        self._pattern_filter, self._pattern_filter_fully_applied = (
+            await self.manifest_storage.get_pattern_filter()
+        )
+
+    def get_pattern_filter(self) -> Tuple[bool, Callable[[str], bool]]:
+        return self._pattern_filter
+
+    def get_pattern_filter_fully_applied(self) -> bool:
+        return self._pattern_filter_fully_applied
+
+    async def set_pattern_filter(self, pattern: re.Pattern) -> None:
+        await self.manifest_storage.set_pattern_filter(pattern)
+        await self._load_pattern_filter()
+
+    async def set_pattern_filter_fully_applied(self, pattern: re.Pattern):
+        await self.manifest_storage.set_pattern_filter_fully_applied(pattern)
+        await self._load_pattern_filter()
+
     # Vacuum
 
     async def run_vacuum(self):
@@ -294,6 +326,9 @@ class WorkspaceStorageTimestamped(WorkspaceStorage):
         self.set_chunk = self._throw_permission_error
         self.clear_chunk = self._throw_permission_error
         self.clear_manifest = self._throw_permission_error
+
+        self._pattern_filter = workspace_storage._pattern_filter
+        self._pattern_filter_fully_applied = workspace_storage._pattern_filter_fully_applied
 
     def _throw_permission_error(*args, **kwargs):
         raise FSError("Not implemented : WorkspaceStorage is timestamped")

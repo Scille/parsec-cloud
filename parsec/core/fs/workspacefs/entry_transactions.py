@@ -1,6 +1,5 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
 
-import re
 from typing import Tuple
 from async_generator import asynccontextmanager
 
@@ -38,8 +37,6 @@ WRITE_RIGHT_ROLES = (WorkspaceRole.OWNER, WorkspaceRole.MANAGER, WorkspaceRole.C
 class EntryTransactions(FileTransactions):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        pattern = r"\~\$|\.\~|.*\.tmp$"
-        self.pattern_filter = re.compile(pattern).match
 
     # Right management helper
 
@@ -59,7 +56,9 @@ class EntryTransactions(FileTransactions):
             return await self.local_storage.get_manifest(entry_id)
         except FSLocalMissError as exc:
             remote_manifest = await self.remote_loader.load_manifest(exc.id)
-            return LocalManifest.from_remote(remote_manifest, self.pattern_filter)
+            return LocalManifest.from_remote(
+                remote_manifest, pattern_filter=self.local_storage.get_pattern_filter()
+            )
 
     @asynccontextmanager
     async def _load_and_lock_manifest(self, entry_id: EntryID):
@@ -68,7 +67,9 @@ class EntryTransactions(FileTransactions):
                 local_manifest = await self.local_storage.get_manifest(entry_id)
             except FSLocalMissError as exc:
                 remote_manifest = await self.remote_loader.load_manifest(exc.id)
-                local_manifest = LocalManifest.from_remote(remote_manifest, self.pattern_filter)
+                local_manifest = LocalManifest.from_remote(
+                    remote_manifest, pattern_filter=self.local_storage.get_pattern_filter()
+                )
                 await self.local_storage.set_manifest(entry_id, local_manifest)
             yield local_manifest
 
@@ -237,7 +238,7 @@ class EntryTransactions(FileTransactions):
             # Create new manifest
             new_parent = parent.evolve_children_and_mark_updated(
                 {destination.name: source_entry_id, source.name: None},
-                pattern_filter=self.pattern_filter,
+                pattern_filter=self.local_storage.get_pattern_filter(),
             )
 
             # Atomic change
@@ -270,7 +271,7 @@ class EntryTransactions(FileTransactions):
 
             # Create new manifest
             new_parent = parent.evolve_children_and_mark_updated(
-                {path.name: None}, self.pattern_filter
+                {path.name: None}, pattern_filter=self.local_storage.get_pattern_filter()
             )
 
             # Atomic change
@@ -299,7 +300,7 @@ class EntryTransactions(FileTransactions):
 
             # Create new manifest
             new_parent = parent.evolve_children_and_mark_updated(
-                {path.name: None}, self.pattern_filter
+                {path.name: None}, pattern_filter=self.local_storage.get_pattern_filter()
             )
 
             # Atomic change
@@ -327,7 +328,7 @@ class EntryTransactions(FileTransactions):
 
             # New parent manifest
             new_parent = parent.evolve_children_and_mark_updated(
-                {path.name: child.id}, pattern_filter=self.pattern_filter
+                {path.name: child.id}, pattern_filter=self.local_storage.get_pattern_filter()
             )
 
             # ~ Atomic change
@@ -357,7 +358,7 @@ class EntryTransactions(FileTransactions):
 
             # New parent manifest
             new_parent = parent.evolve_children_and_mark_updated(
-                {path.name: child.id}, pattern_filter=self.pattern_filter
+                {path.name: child.id}, pattern_filter=self.local_storage.get_pattern_filter()
             )
 
             # ~ Atomic change

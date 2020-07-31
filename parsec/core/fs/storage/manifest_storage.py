@@ -1,5 +1,7 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
 
+import re
+
 import trio
 from structlog import get_logger
 from typing import Dict, Tuple, Set, Optional
@@ -10,6 +12,8 @@ from parsec.core.types import EntryID, ChunkID, LocalDevice, LocalManifest
 from parsec.core.fs.storage.local_database import LocalDatabase
 
 logger = get_logger()
+
+DEFAULT_FILTER_PATTERN = r"^/b$"  # Do not match anything
 
 
 class ManifestStorage:
@@ -87,6 +91,47 @@ class ManifestStorage:
                   checkpoint INTEGER NOT NULL
                 );
                 """
+            )
+            # Singleton storing the pattern_filter
+            cursor.execute(
+                """
+                CREATE TABLE IF NOT EXISTS pattern_filter
+                (
+                  _id INTEGER PRIMARY KEY NOT NULL,
+                  pattern TEXT NOT NULL,
+                  fully_applied INTEGER NOT NULL  -- Boolean
+                );
+                """
+            )
+            # Set the default pattern filter if it doesn't exist
+            cursor.execute(
+                """
+                INSERT OR IGNORE INTO pattern_filter(_id, pattern, fully_applied)
+                VALUES (0, ?, 0)""",
+                (DEFAULT_FILTER_PATTERN,),
+            )
+
+    # Pattern filter operations
+
+    async def get_pattern_filter(self) -> Tuple[re.Pattern, bool]:
+        async with self._open_cursor() as cursor:
+            cursor.execute("SELECT pattern, fully_applied FROM pattern_filter WHERE _id = 0")
+            reply = cursor.fetchone()
+            pattern, fully_applied = reply
+            return (re.compile(pattern), bool(fully_applied))
+
+    async def set_pattern_filter(self, pattern: re.Pattern):
+        async with self._open_cursor() as cursor:
+            cursor.execute(
+                """UPDATE pattern_filter SET pattern = ?, fully_applied = 0 WHERE _id = 0 AND pattern != ?""",
+                (pattern.pattern, pattern.pattern),
+            )
+
+    async def set_pattern_filter_fully_applied(self, pattern):
+        async with self._open_cursor() as cursor:
+            cursor.execute(
+                """UPDATE pattern_filter SET fully_applied = 1 WHERE _id = 0 AND pattern = ?""",
+                (pattern.pattern,),
             )
 
     # Checkpoint operations

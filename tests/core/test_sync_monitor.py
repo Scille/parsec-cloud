@@ -1,5 +1,6 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
 
+import re
 import trio
 import pytest
 from unittest.mock import ANY
@@ -254,6 +255,10 @@ async def test_sync_confined_children_after_rename(
     # Create a workspace
     wid = await alice_core.user_fs.workspace_create("w")
     alice_w = alice_core.user_fs.get_workspace(wid)
+
+    # Set a filter
+    pattern = re.compile(r".*\.tmp$")
+    await alice_w.set_and_apply_pattern_filter(pattern)
 
     # Create a confined path
     await alice_w.mkdir("/test.tmp/a/b/c", parents=True)

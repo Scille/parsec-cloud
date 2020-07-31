@@ -1,5 +1,6 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
 
+import re
 import pytest
 
 
@@ -11,6 +12,12 @@ async def assert_path_info(workspace, path, **kwargs):
 
 @pytest.mark.trio
 async def test_confined_entries(alice_workspace, running_backend):
+
+    # Apply a *.tmp filter
+    pattern = re.compile(r".*\.tmp$")
+    await alice_workspace.set_and_apply_pattern_filter(pattern)
+    assert alice_workspace.local_storage.get_pattern_filter() == pattern
+    assert alice_workspace.local_storage.get_pattern_filter_fully_applied()
 
     # Use foo as working directory
     await assert_path_info(alice_workspace, "/foo", confined=False, need_sync=False)
