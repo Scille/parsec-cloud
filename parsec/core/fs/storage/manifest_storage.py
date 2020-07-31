@@ -13,7 +13,7 @@ from parsec.core.fs.storage.local_database import LocalDatabase
 
 logger = get_logger()
 
-DEFAULT_FILTER_PATTERN = r"^/b$"  # Do not match anything
+EMPTY_PATTERN = r"^/b$"  # Do not match anything
 
 
 class ManifestStorage:
@@ -108,7 +108,7 @@ class ManifestStorage:
                 """
                 INSERT OR IGNORE INTO pattern_filter(_id, pattern, fully_applied)
                 VALUES (0, ?, 0)""",
-                (DEFAULT_FILTER_PATTERN,),
+                (EMPTY_PATTERN,),
             )
 
     # Pattern filter operations

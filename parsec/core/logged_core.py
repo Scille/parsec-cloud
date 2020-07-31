@@ -1,5 +1,6 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
 
+import re
 import attr
 from uuid import UUID
 from pendulum import now as pendulum_now
@@ -39,6 +40,8 @@ from parsec.core.fs import UserFS
 
 
 logger = get_logger()
+
+DEFAULT_PATTERN_FILTER = re.compile(r"\~\$|\.\~|.*\.tmp$")
 
 
 @attr.s(frozen=True, slots=True)
@@ -244,6 +247,15 @@ async def logged_core_factory(
 ):
     event_bus = event_bus or EventBus()
 
+    # Get the pattern filter
+    if config.pattern_filter is None:
+        pattern_filter = DEFAULT_PATTERN_FILTER
+    else:
+        try:
+            pattern_filter = re.compile(config.pattern_filter)
+        except re.error:
+            pattern_filter = DEFAULT_PATTERN_FILTER
+
     backend_conn = BackendAuthenticatedConn(
         addr=device.organization_addr,
         device_id=device.device_id,
@@ -257,7 +269,7 @@ async def logged_core_factory(
     path = config.data_base_dir / device.slug
     remote_devices_manager = RemoteDevicesManager(backend_conn.cmds, device.root_verify_key)
     async with UserFS.run(
-        device, path, backend_conn.cmds, remote_devices_manager, event_bus
+        device, path, backend_conn.cmds, remote_devices_manager, event_bus, pattern_filter
     ) as user_fs:
 
         backend_conn.register_monitor(partial(monitor_messages, user_fs, event_bus))

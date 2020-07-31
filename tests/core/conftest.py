@@ -11,6 +11,7 @@ from parsec.core.backend_connection import (
 )
 from parsec.core.remote_devices_manager import RemoteDevicesManager
 from parsec.core.fs import UserFS
+from parsec.core.logged_core import DEFAULT_PATTERN_FILTER
 
 
 @pytest.fixture
@@ -115,7 +116,9 @@ def user_fs_factory(local_storage_path, event_bus_factory, initialize_userfs_sto
         ) as cmds:
             path = local_storage_path(device)
             rdm = RemoteDevicesManager(cmds, device.root_verify_key)
-            async with UserFS.run(device, path, cmds, rdm, event_bus) as user_fs:
+            async with UserFS.run(
+                device, path, cmds, rdm, event_bus, DEFAULT_PATTERN_FILTER
+            ) as user_fs:
                 if not initialize_in_v0:
                     await initialize_userfs_storage_v1(user_fs.storage)
                 yield user_fs
