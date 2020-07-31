@@ -305,3 +305,20 @@ async def test_sync_confined_children_after_rename(
         info = await alice_w.path_info(path)
         assert not info["need_sync"]
         assert not info["confined"]
+
+    # Rename to a confined path
+    await alice_w.rename("/test2", "/test3.tmp")
+
+    # Wait for sync monitor to be idle
+    await alice_core.wait_idle_monitors()
+
+    # Make sure the root is synced
+    info = await alice_w.path_info("/")
+    assert not info["need_sync"]
+    assert not info["confined"]
+
+    # Make sure the rest of the path is confined
+    for path in ["/test3.tmp", "/test3.tmp/a", "/test3.tmp/a/b", "/test3.tmp/a/b/c"]:
+        info = await alice_w.path_info(path)
+        assert not info["need_sync"]
+        assert info["confined"]
