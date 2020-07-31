@@ -246,10 +246,12 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         self.add_instance()
 
     def _on_create_org_clicked(self):
-        r = CreateOrgWidget.exec_modal(self.jobs_ctx, self)
-        if r is None:
-            return
-        self._on_bootstrap_org_clicked(r)
+        def _on_finished(action_addr):
+            if action_addr is None:
+                return
+            self._on_bootstrap_org_clicked(action_addr)
+
+        CreateOrgWidget.show_modal(self.jobs_ctx, self, on_finished=_on_finished)
 
     def _on_join_org_clicked(self):
         url = get_text_input(
@@ -306,12 +308,19 @@ class MainWindow(QMainWindow, Ui_MainWindow):
             except ValueError as exc:
                 show_error(self, _("TEXT_BOOTSTRAP_ORG_INVALID_URL"), exception=exc)
                 return
-        ret = BootstrapOrganizationWidget.exec_modal(
-            jobs_ctx=self.jobs_ctx, config=self.config, addr=action_addr, parent=self
+
+        def _on_finished(ret):
+            if ret:
+                self.reload_login_devices()
+                self.try_login(ret[0], ret[1])
+
+        BootstrapOrganizationWidget.show_modal(
+            jobs_ctx=self.jobs_ctx,
+            config=self.config,
+            addr=action_addr,
+            parent=self,
+            on_finished=_on_finished,
         )
-        if ret:
-            self.reload_login_devices()
-            self.try_login(ret[0], ret[1])
 
     def _on_claim_user_clicked(self, action_addr):
         widget = None
@@ -324,7 +333,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
             self.reload_login_devices()
             self.try_login(login, password)
 
-        widget = ClaimUserWidget.exec_modal(
+        widget = ClaimUserWidget.show_modal(
             jobs_ctx=self.jobs_ctx,
             config=self.config,
             addr=action_addr,
@@ -343,7 +352,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
             self.reload_login_devices()
             self.try_login(login, password)
 
-        widget = ClaimDeviceWidget.exec_modal(
+        widget = ClaimDeviceWidget.show_modal(
             jobs_ctx=self.jobs_ctx,
             config=self.config,
             addr=action_addr,

@@ -2,7 +2,7 @@
 
 from uuid import UUID
 from typing import Tuple, Optional
-from urllib.parse import urlsplit, urlunsplit, parse_qs, quote_plus, unquote_plus
+from urllib.parse import urlsplit, urlunsplit, parse_qs, quote_plus, unquote_plus, urlencode
 from marshmallow import ValidationError
 
 from parsec.serde import fields
@@ -104,7 +104,7 @@ class BackendAddr:
             netloc = f"{self._hostname}:{custom_port}"
         else:
             netloc = self.hostname
-        query = "&".join(f"{k}={quote_plus(v)}" for k, v in self._to_url_get_params())
+        query = urlencode(self._to_url_get_params())
         return urlunsplit((PARSEC_SCHEME, netloc, quote_plus(self._to_url_get_path()), query, None))
 
     def _to_url_get_path(self):
@@ -594,6 +594,22 @@ class BackendInvitationAddr(BackendActionAddr):
     def _to_url_get_params(self):
         action = "claim_user" if self._invitation_type == InvitationType.USER else "claim_device"
         return [("action", action), ("token", self._token.hex), *super()._to_url_get_params()]
+
+    def to_http_redirection_url(self) -> str:
+        _, custom_port = self._parse_port(self._port, self._use_ssl)
+        if custom_port:
+            netloc = f"{self._hostname}:{custom_port}"
+        else:
+            netloc = self.hostname
+        # Skipping no_ssl param because it is already in the scheme
+        query = urlencode({k: v for k, v in self._to_url_get_params() if k != "no_ssl"})
+        path = "/redirect/" + quote_plus(self._to_url_get_path())
+        if self._use_ssl:
+            scheme = "https"
+        else:
+            scheme = "http"
+
+        return urlunsplit((scheme, netloc, path, query, None))
 
     @classmethod
     def build(

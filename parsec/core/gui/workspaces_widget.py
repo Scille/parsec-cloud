@@ -419,23 +419,24 @@ class WorkspacesWidget(QWidget, Ui_WorkspacesWidget):
         desktop.open_file(str(path))
 
     def remount_workspace_ts(self, workspace_fs):
-        date, time = TimestampedWorkspaceWidget.exec_modal(
-            workspace_fs=workspace_fs, jobs_ctx=self.jobs_ctx, parent=self
-        )
+        def _on_finished(date, time):
+            if not date or not time:
+                return
 
-        if not date or not time:
-            return
+            datetime = pendulum.datetime(
+                date.year(),
+                date.month(),
+                date.day(),
+                time.hour(),
+                time.minute(),
+                time.second(),
+                tzinfo="local",
+            )
+            self.mount_workspace(workspace_fs.workspace_id, datetime)
 
-        datetime = pendulum.datetime(
-            date.year(),
-            date.month(),
-            date.day(),
-            time.hour(),
-            time.minute(),
-            time.second(),
-            tzinfo="local",
+        TimestampedWorkspaceWidget.show_modal(
+            workspace_fs=workspace_fs, jobs_ctx=self.jobs_ctx, parent=self, on_finished=_on_finished
         )
-        self.mount_workspace(workspace_fs.workspace_id, datetime)
 
     def mount_workspace(self, workspace_id, timestamp=None):
         self.jobs_ctx.submit_job(
@@ -509,14 +510,14 @@ class WorkspacesWidget(QWidget, Ui_WorkspacesWidget):
         )
 
     def share_workspace(self, workspace_fs):
-        WorkspaceSharingWidget.exec_modal(
+        WorkspaceSharingWidget.show_modal(
             user_fs=self.core.user_fs,
             workspace_fs=workspace_fs,
             core=self.core,
             jobs_ctx=self.jobs_ctx,
             parent=self,
+            on_finished=self.reset,
         )
-        self.reset()
 
     def reencrypt_workspace(self, workspace_id, user_revoked, role_revoked):
         if workspace_id in self.reencrypting or (not user_revoked and not role_revoked):
