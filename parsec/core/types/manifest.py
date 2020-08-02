@@ -1,9 +1,8 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
 
-import re
 import attr
 import functools
-from typing import Optional, Tuple, FrozenSet, TypeVar
+from typing import Optional, Tuple, FrozenSet, TypeVar, Pattern
 from pendulum import Pendulum, now as pendulum_now
 
 from parsec.types import UUID4, FrozenDict
@@ -244,7 +243,7 @@ class LocalManifest(BaseLocalData):
     def from_remote(
         cls,
         remote: RemoteManifest,
-        pattern_filter: Optional[re.Pattern] = None,
+        pattern_filter: Optional[Pattern] = None,
         local_manifest: Optional["LocalManifest"] = None,
     ) -> "LocalManifest":
         if isinstance(remote, RemoteFileManifest):
@@ -435,7 +434,7 @@ class LocalFolderishManifestMixin:
     # Evolve methods
 
     def evolve_children_and_mark_updated(
-        self: LocalFolderishManifestTypeVar, data, pattern_filter: re.Pattern
+        self: LocalFolderishManifestTypeVar, data, pattern_filter: Pattern
     ) -> LocalFolderishManifestTypeVar:
         updated = False
         new_children = dict(self.children)
@@ -490,7 +489,7 @@ class LocalFolderishManifestMixin:
     def _restore_confined_entries(
         self: LocalFolderishManifestTypeVar,
         other: LocalFolderishManifestTypeVar,
-        pattern_filter: re.Pattern,
+        pattern_filter: Pattern,
     ) -> LocalFolderishManifestTypeVar:
         if not other.confined_entries:
             return self
@@ -502,7 +501,7 @@ class LocalFolderishManifestMixin:
         return self.evolve_children_and_mark_updated(previously_confined_entries, pattern_filter)
 
     def _filter_remote_entries(
-        self: LocalFolderishManifestTypeVar, pattern_filter: re.Pattern
+        self: LocalFolderishManifestTypeVar, pattern_filter: Pattern
     ) -> LocalFolderishManifestTypeVar:
         filtered_entries = frozenset(
             {entry_id for name, entry_id in self.children.items() if pattern_filter.match(name)}
@@ -530,7 +529,7 @@ class LocalFolderishManifestMixin:
     # Apply filter
 
     def apply_filter(
-        self: LocalFolderishManifestTypeVar, pattern_filter: re.Pattern
+        self: LocalFolderishManifestTypeVar, pattern_filter: Pattern
     ) -> LocalFolderishManifestTypeVar:
         # Filter confined entries
         result = self._filter_confined_entries()
@@ -606,7 +605,7 @@ class LocalFolderManifest(LocalManifest, LocalFolderishManifestMixin):
     def from_remote(
         cls,
         remote: RemoteFolderManifest,
-        pattern_filter: re.Pattern,
+        pattern_filter: Pattern,
         local_manifest: Optional["LocalFolderManifest"] = None,
     ) -> "LocalFolderManifest":
         # Create local manifest
@@ -703,7 +702,7 @@ class LocalWorkspaceManifest(LocalManifest, LocalFolderishManifestMixin):
     def from_remote(
         cls,
         remote: RemoteFolderManifest,
-        pattern_filter: re.Pattern,
+        pattern_filter: Pattern,
         local_manifest: Optional["LocalWorkspaceManifest"] = None,
     ) -> "LocalWorkspaceManifest":
         # Create local manifest

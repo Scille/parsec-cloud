@@ -4,7 +4,7 @@ import re
 
 import trio
 from structlog import get_logger
-from typing import Dict, Tuple, Set, Optional
+from typing import Dict, Tuple, Set, Optional, Pattern
 from async_generator import asynccontextmanager
 
 from parsec.core.fs.exceptions import FSLocalMissError
@@ -113,14 +113,14 @@ class ManifestStorage:
 
     # Pattern filter operations
 
-    async def get_pattern_filter(self) -> Tuple[re.Pattern, bool]:
+    async def get_pattern_filter(self) -> Tuple[Pattern, bool]:
         async with self._open_cursor() as cursor:
             cursor.execute("SELECT pattern, fully_applied FROM pattern_filter WHERE _id = 0")
             reply = cursor.fetchone()
             pattern, fully_applied = reply
             return (re.compile(pattern), bool(fully_applied))
 
-    async def set_pattern_filter(self, pattern: re.Pattern):
+    async def set_pattern_filter(self, pattern: Pattern):
         async with self._open_cursor() as cursor:
             cursor.execute(
                 """UPDATE pattern_filter SET pattern = ?, fully_applied = 0 WHERE _id = 0 AND pattern != ?""",

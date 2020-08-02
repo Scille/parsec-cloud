@@ -1,10 +1,9 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
 
-import re
 import trio
 from pathlib import Path
 from pendulum import Pendulum, now as pendulum_now
-from typing import List, Tuple, Optional, Union
+from typing import List, Tuple, Optional, Union, Pattern
 from structlog import get_logger
 
 from async_generator import asynccontextmanager
@@ -152,7 +151,7 @@ class UserFS:
         backend_cmds: APIV1_BackendAuthenticatedCmds,
         remote_devices_manager: RemoteDevicesManager,
         event_bus: EventBus,
-        pattern_filter: re.Pattern,
+        pattern_filter: Pattern,
     ):
         self.device = device
         self.path = path

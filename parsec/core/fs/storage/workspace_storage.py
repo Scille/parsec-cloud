@@ -1,9 +1,8 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
 
-import re
 from pathlib import Path
 from collections import defaultdict
-from typing import Dict, Tuple, Set, Optional, Callable
+from typing import Dict, Tuple, Set, Optional, Callable, Pattern
 
 import trio
 from trio import hazmat
@@ -278,11 +277,11 @@ class WorkspaceStorage:
     def get_pattern_filter_fully_applied(self) -> bool:
         return self._pattern_filter_fully_applied
 
-    async def set_pattern_filter(self, pattern: re.Pattern) -> None:
+    async def set_pattern_filter(self, pattern: Pattern) -> None:
         await self.manifest_storage.set_pattern_filter(pattern)
         await self._load_pattern_filter()
 
-    async def set_pattern_filter_fully_applied(self, pattern: re.Pattern):
+    async def set_pattern_filter_fully_applied(self, pattern: Pattern):
         await self.manifest_storage.set_pattern_filter_fully_applied(pattern)
         await self._load_pattern_filter()
 

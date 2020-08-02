@@ -1,8 +1,7 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
 
-import re
 from itertools import count
-from typing import Optional, List, Dict, Iterator
+from typing import Optional, List, Dict, Iterator, Pattern
 
 from pendulum import now as pendulum_now
 from parsec.api.protocol import DeviceID
@@ -138,7 +137,7 @@ def merge_folder_children(
 
 def merge_manifests(
     local_author: DeviceID,
-    pattern_filter: re.Pattern,
+    pattern_filter: Pattern,
     local_manifest: LocalManifest,
     remote_manifest: Optional[RemoteManifest] = None,
     force_filter: Optional[bool] = False,
@@ -215,7 +214,7 @@ class SyncTransactions(EntryTransactions):
 
     # Atomic transactions
 
-    async def apply_filter(self, entry_id: EntryID, pattern_filter: re.Pattern) -> None:
+    async def apply_filter(self, entry_id: EntryID, pattern_filter: Pattern) -> None:
         # Fetch and lock
         async with self.local_storage.lock_manifest(entry_id) as local_manifest:
 
