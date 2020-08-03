@@ -3,6 +3,8 @@
 import pytest
 
 from tests.common import customize_fixtures
+from PyQt5.QtWidgets import QLabel
+from parsec.core.gui.lang import translate
 
 
 @pytest.mark.gui
@@ -82,7 +84,10 @@ async def test_list_users_and_invitations(
 @pytest.mark.trio
 async def test_list_users_offline(aqtbot, logged_gui, autoclose_dialog):
     u_w = await logged_gui.test_switch_to_users_widget(error=True)
-    assert u_w.layout_users.count() == 0
+    assert u_w.layout_users.count() == 1
+    error_msg = u_w.layout_users.itemAt(0).widget()
+    assert isinstance(error_msg, QLabel)
+    assert error_msg.text() == translate("TEXT_USER_LIST_RETRIEVABLE_FAILURE")
     assert not autoclose_dialog.dialogs
 
 
