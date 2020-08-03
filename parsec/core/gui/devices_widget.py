@@ -176,7 +176,7 @@ class DevicesWidget(QWidget, Ui_DevicesWidget):
         assert job.status != "ok"
 
         status = job.status
-        if status == "error":
+        if status in ["error", "offline"]:
             self._flush_devices_list()
             label = QLabel(_("TEXT_DEVICE_LIST_RETRIEVABLE_FAILURE"))
             label.setAlignment(Qt.AlignHCenter | Qt.AlignVCenter)
