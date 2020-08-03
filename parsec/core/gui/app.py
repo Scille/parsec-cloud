@@ -167,7 +167,7 @@ def run_gui(config: CoreConfig, start_arg: str = None, diagnose: bool = False):
         if config.gui_check_version_at_startup and not diagnose:
             CheckNewVersion(jobs_ctx=jobs_ctx, event_bus=event_bus, config=config, parent=win)
 
-        win.showMaximized(skip_dialogs=diagnose)
+        win.showMaximized(skip_dialogs=diagnose, invitation_link=start_arg)
         win.show_top()
         win.new_instance_needed.emit(start_arg)
 

@@ -399,7 +399,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         save_config(self.config)
         telemetry.init(self.config)
 
-    def showMaximized(self, skip_dialogs=False):
+    def showMaximized(self, skip_dialogs=False, invitation_link=""):
         super().showMaximized()
         QCoreApplication.processEvents()
 
@@ -444,7 +444,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         telemetry.init(self.config)
 
         devices = list_available_devices(self.config.config_dir)
-        if not len(devices):
+        if not len(devices) and not invitation_link:
             r = ask_question(
                 self,
                 _("TEXT_KICKSTART_PARSEC_WHAT_TO_DO_TITLE"),
