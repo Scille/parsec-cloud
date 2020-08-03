@@ -28,6 +28,11 @@ FRAGMENT_TYPES = {
 }
 
 
+RELEASE_REGEX = (
+    r"([0-9]+)\.([0-9]+)\.([0-9]+)" r"(?:-((?:a|b|rc)[0-9]+))?" r"(\+dev|(?:-[0-9]+-g[0-9a-f]+))?"
+)
+
+
 class ReleaseError(Exception):
     pass
 
@@ -39,14 +44,7 @@ class Version:
             raw = raw[1:]
         # Git describe (e.g. `-g3b5f5762`) show our position relative to and
         # existing release, hence this is equivalent to the `+dev` suffix
-        match = re.match(
-            (
-                r"^([0-9]+)\.([0-9]+)\.([0-9]+)"
-                r"(?:-((?:a|b|rc)[0-9]+))?"
-                r"(\+dev|(?:-[0-9]+-g[0-9a-f]+))?$"
-            ),
-            raw,
-        )
+        match = re.match(f"^{RELEASE_REGEX}$", raw)
         if not match:
             raise ValueError(
                 f"Invalid version format {raw!r}, should be `[v]<major>.<minor>.<patch>[-<post>][+dev|-<X>-g<commit>]` (e.g. `v1.0.0`, `1.2.3+dev`, `1.6.7-rc1`)"
@@ -82,6 +80,12 @@ class Version:
         return self.pre_type is not None
 
     def __eq__(self, other):
+        if type(other) == tuple:
+            other = (
+                "v"
+                + ".".join([str(i) for i in other[:3]])
+                + (f"-{str().join(other[3:])}" if len(other) > 3 else "")
+            )
         return str(self) == str(other)
 
     def __lt__(self, other):
