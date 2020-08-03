@@ -1,20 +1,22 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
 
+import pendulum
 import pytest
 from PyQt5 import QtCore
 
+from parsec.backend.backend_events import BackendEvent
 from parsec.core.backend_connection import (
     BackendConnectionRefused,
     backend_authenticated_cmds_factory,
 )
 from parsec.core.local_device import save_device_with_password
-from tests.common import freeze_time
+from tests.common import customize_fixtures, freeze_time
 
 
 @pytest.mark.gui
 @pytest.mark.trio
 async def test_expired_notification_logging(
-    aqtbot, running_backend, backend, autoclose_dialog, expiredorgalice, gui_factory, core_config
+    aqtbot, running_backend, autoclose_dialog, expiredorgalice, gui_factory, core_config
 ):
 
     # Log has alice on an expired organization
@@ -41,8 +43,8 @@ async def test_expired_notification_logging(
 
 @pytest.mark.gui
 @pytest.mark.trio
-async def test_on_expired_notification(
-    aqtbot, running_backend, backend, autoclose_dialog, expiredorgalice, gui_factory, core_config
+async def test_expired_notification_from_connection(
+    aqtbot, running_backend, autoclose_dialog, expiredorgalice, gui_factory, core_config
 ):
     save_device_with_password(core_config.config_dir, expiredorgalice, "P@ssw0rd")
     gui = await gui_factory()
@@ -77,6 +79,26 @@ async def test_on_expired_notification(
                 assert False
 
     # Assert dialog
+    def _expired_notified():
+        assert autoclose_dialog.dialogs == [("Error", "The organization has expired")]
+
+    await aqtbot.wait_until(_expired_notified)
+
+
+@pytest.mark.gui
+@pytest.mark.trio
+@customize_fixtures(logged_gui_as_admin=True)
+async def test_expired_notification_from_update(
+    aqtbot, logged_gui, running_backend, autoclose_dialog, alice
+):
+
+    # Set expiration date
+    with running_backend.backend.event_bus.listen() as spy:
+        await running_backend.backend.organization.set_expiration_date(
+            alice.organization_id, pendulum.datetime(1989, 1, 1)
+        )
+    spy.assert_event_occured(BackendEvent.ORGANIZATION_EXPIRED)
+
     def _expired_notified():
         assert autoclose_dialog.dialogs == [("Error", "The organization has expired")]
 
