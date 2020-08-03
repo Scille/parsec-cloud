@@ -5,6 +5,7 @@ import platform
 import trio
 import json
 from urllib.request import urlopen, Request
+from packaging.version import Version
 
 from PyQt5.QtCore import Qt, pyqtSignal, QSysInfo
 from PyQt5.QtWidgets import QDialog, QWidget
@@ -17,7 +18,10 @@ from parsec.core.gui.ui.new_version_dialog import Ui_NewVersionDialog
 from parsec.core.gui.ui.new_version_info import Ui_NewVersionInfo
 from parsec.core.gui.ui.new_version_available import Ui_NewVersionAvailable
 
-from misc.releaser import Version, RELEASE_REGEX
+
+RELEASE_REGEX = (
+    r"([0-9]+)\.([0-9]+)\.([0-9]+)" r"(?:-((?:a|b|rc)[0-9]+))?" r"(\+dev|(?:-[0-9]+-g[0-9a-f]+))?"
+)
 
 
 def _extract_version(raw):
@@ -72,7 +76,7 @@ async def _do_check_new_version(url, api_url, check_pre=False):
                         if (
                             asset_version
                             and asset_version > latest_version
-                            and (not asset_version.is_preversion or check_pre)
+                            and (not asset_version.is_prerelease or check_pre)
                         ):
                             latest_version = asset_version
                             latest_url = asset["browser_download_url"]
