@@ -14,6 +14,7 @@ from parsec.core.backend_connection import (
     backend_authenticated_cmds_factory,
 )
 
+from parsec.backend.backend_events import BackendEvent
 from tests.core.backend_connection.common import ALL_CMDS
 
 
@@ -118,11 +119,14 @@ async def test_handshake_revoked_device(running_backend, alice, bob):
 
 @pytest.mark.trio
 async def test_organization_expired(running_backend, alice, expiredorg):
-    with pytest.raises(BackendConnectionRefused) as exc:
-        async with backend_authenticated_cmds_factory(
-            expiredorg.addr, alice.device_id, alice.signing_key
-        ) as cmds:
-            await cmds.ping()
+
+    with running_backend.backend.event_bus.listen() as spy:
+        with pytest.raises(BackendConnectionRefused) as exc:
+            async with backend_authenticated_cmds_factory(
+                expiredorg.addr, alice.device_id, alice.signing_key
+            ) as cmds:
+                await cmds.ping()
+    spy.assert_event_occured(BackendEvent.ORGANIZATION_EXPIRED)
     assert str(exc.value) == "Trial organization has expired"
 
 

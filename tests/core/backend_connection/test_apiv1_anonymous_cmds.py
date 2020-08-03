@@ -11,6 +11,7 @@ from parsec.core.backend_connection import (
     apiv1_backend_anonymous_cmds_factory,
 )
 
+from parsec.backend.backend_events import BackendEvent
 from tests.core.backend_connection.common import ALL_CMDS
 
 
@@ -47,9 +48,11 @@ async def test_ping(running_backend, coolorg):
 
 @pytest.mark.trio
 async def test_handshake_organization_expired(running_backend, expiredorg):
-    with pytest.raises(BackendConnectionRefused) as exc:
-        async with apiv1_backend_anonymous_cmds_factory(expiredorg.addr) as cmds:
-            await cmds.ping()
+    with running_backend.backend.event_bus.listen() as spy:
+        with pytest.raises(BackendConnectionRefused) as exc:
+            async with apiv1_backend_anonymous_cmds_factory(expiredorg.addr) as cmds:
+                await cmds.ping()
+    spy.assert_event_occured(BackendEvent.ORGANIZATION_EXPIRED)
     assert str(exc.value) == "Trial organization has expired"
 
 
