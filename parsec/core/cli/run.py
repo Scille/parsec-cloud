@@ -22,15 +22,12 @@ else:
     # Let the GUI handle the parsing of the url to display dialog on error
     @click.argument("url", required=False)
     @click.option("--diagnose", "-d", is_flag=True)
-    @click.option("--rc-update", "-r", is_flag=True)
     @core_config_options
-    def run_gui(config, url, diagnose, rc_update, **kwargs):
+    def run_gui(config, url, diagnose, **kwargs):
         """
         Run parsec GUI
         """
         config = config.evolve(mountpoint_enabled=True)
-        if rc_update:
-            config = config.evolve(gui_rc_update_enabled=True)
         _run_gui(config, start_arg=url, diagnose=diagnose)
 
 
