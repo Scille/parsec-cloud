@@ -4,8 +4,7 @@ import pytest
 
 from PyQt5 import QtCore
 
-
-from parsec.core.types import WorkspaceRole
+from parsec.core.types import WorkspaceRole, UserInfo
 from parsec.core.gui.workspace_button import WorkspaceButton
 from parsec.core.gui.lang import switch_language
 
@@ -18,12 +17,34 @@ async def workspace_fs(alice_user_fs, running_backend):
     return workspace
 
 
+@pytest.fixture
+def alice_user_info(alice):
+    return UserInfo(
+        user_id=alice.user_id,
+        human_handle=alice.human_handle,
+        profile=alice.profile,
+        revoked_on=None,
+        created_on=None,
+    )
+
+
+@pytest.fixture
+def bob_user_info(bob):
+    return UserInfo(
+        user_id=bob.user_id,
+        human_handle=bob.human_handle,
+        profile=bob.profile,
+        revoked_on=None,
+        created_on=None,
+    )
+
+
 @pytest.mark.gui
 @pytest.mark.trio
-async def test_workspace_button(qtbot, workspace_fs, core_config):
+async def test_workspace_button(qtbot, workspace_fs, core_config, alice_user_info):
     switch_language(core_config, "en")
 
-    roles = {workspace_fs.device.user_id: WorkspaceRole.OWNER}
+    roles = {alice_user_info.user_id: (WorkspaceRole.OWNER, alice_user_info)}
     w = WorkspaceButton(
         workspace_name="Workspace",
         workspace_fs=workspace_fs,
@@ -45,10 +66,15 @@ async def test_workspace_button(qtbot, workspace_fs, core_config):
 
 @pytest.mark.gui
 @pytest.mark.trio
-async def test_workspace_button_owned_by(qtbot, workspace_fs, core_config, bob):
+async def test_workspace_button_owned_by(
+    qtbot, workspace_fs, core_config, bob, alice_user_info, bob_user_info
+):
     switch_language(core_config, "en")
 
-    roles = {bob.user_id: WorkspaceRole.OWNER, workspace_fs.device.user_id: WorkspaceRole.READER}
+    roles = {
+        bob.user_id: (WorkspaceRole.OWNER, bob_user_info),
+        alice_user_info.user_id: (WorkspaceRole.READER, alice_user_info),
+    }
     w = WorkspaceButton(
         workspace_name="Workspace",
         workspace_fs=workspace_fs,
@@ -65,15 +91,20 @@ async def test_workspace_button_owned_by(qtbot, workspace_fs, core_config, bob):
     assert w.label_shared.isVisible() is True
     assert w.name == "Workspace"
     assert w.label_title.text().startswith("Workspace")
-    assert w.label_title.toolTip() == "Workspace (owned by bob)"
+    assert w.label_title.toolTip() == "Workspace (owned by Boby McBobFace)"
 
 
 @pytest.mark.gui
 @pytest.mark.trio
-async def test_workspace_button_shared_with(qtbot, workspace_fs, core_config, bob):
+async def test_workspace_button_shared_with(
+    qtbot, workspace_fs, core_config, bob, alice_user_info, bob_user_info
+):
     switch_language(core_config, "en")
 
-    roles = {bob.user_id: WorkspaceRole.READER, workspace_fs.device.user_id: WorkspaceRole.OWNER}
+    roles = {
+        bob.user_id: (WorkspaceRole.READER, bob_user_info),
+        alice_user_info.user_id: (WorkspaceRole.OWNER, alice_user_info),
+    }
     w = WorkspaceButton(
         workspace_name="Workspace",
         workspace_fs=workspace_fs,
@@ -90,15 +121,15 @@ async def test_workspace_button_shared_with(qtbot, workspace_fs, core_config, bo
     assert w.label_shared.isVisible() is True
     assert w.name == "Workspace"
     assert w.label_title.text().startswith("Workspace")
-    assert w.label_title.toolTip() == "Workspace (shared with bob)"
+    assert w.label_title.toolTip() == "Workspace (shared with Boby McBobFace)"
 
 
 @pytest.mark.gui
 @pytest.mark.trio
-async def test_workspace_button_files(qtbot, workspace_fs, core_config):
+async def test_workspace_button_files(qtbot, workspace_fs, core_config, alice_user_info):
     switch_language(core_config, "en")
 
-    roles = {workspace_fs.device.user_id: WorkspaceRole.OWNER}
+    roles = {alice_user_info.user_id: (WorkspaceRole.OWNER, alice_user_info)}
     w = WorkspaceButton(
         workspace_name="Workspace",
         workspace_fs=workspace_fs,
@@ -122,10 +153,10 @@ async def test_workspace_button_files(qtbot, workspace_fs, core_config):
 
 @pytest.mark.gui
 @pytest.mark.trio
-async def test_workspace_button_clicked(qtbot, workspace_fs, core_config):
+async def test_workspace_button_clicked(qtbot, workspace_fs, core_config, alice_user_info):
     switch_language(core_config, "en")
 
-    roles = {workspace_fs.device.user_id: WorkspaceRole.OWNER}
+    roles = {alice_user_info.user_id: (WorkspaceRole.OWNER, alice_user_info)}
     w = WorkspaceButton(
         workspace_name="Workspace",
         workspace_fs=workspace_fs,
@@ -142,10 +173,10 @@ async def test_workspace_button_clicked(qtbot, workspace_fs, core_config):
 
 @pytest.mark.gui
 @pytest.mark.trio
-async def test_workspace_button_share_clicked(qtbot, workspace_fs, core_config):
+async def test_workspace_button_share_clicked(qtbot, workspace_fs, core_config, alice_user_info):
     switch_language(core_config, "en")
 
-    roles = {workspace_fs.device.user_id: WorkspaceRole.OWNER}
+    roles = {alice_user_info.user_id: (WorkspaceRole.OWNER, alice_user_info)}
     w = WorkspaceButton(
         workspace_name="Workspace",
         workspace_fs=workspace_fs,
@@ -161,10 +192,10 @@ async def test_workspace_button_share_clicked(qtbot, workspace_fs, core_config):
 
 @pytest.mark.gui
 @pytest.mark.trio
-async def test_workspace_button_rename_clicked(qtbot, workspace_fs, core_config):
+async def test_workspace_button_rename_clicked(qtbot, workspace_fs, core_config, alice_user_info):
     switch_language(core_config, "en")
 
-    roles = {workspace_fs.device.user_id: WorkspaceRole.OWNER}
+    roles = {alice_user_info.user_id: (WorkspaceRole.OWNER, alice_user_info)}
     w = WorkspaceButton(
         workspace_name="Workspace",
         workspace_fs=workspace_fs,
@@ -180,10 +211,10 @@ async def test_workspace_button_rename_clicked(qtbot, workspace_fs, core_config)
 
 @pytest.mark.gui
 @pytest.mark.trio
-async def test_workspace_button_delete_clicked(qtbot, workspace_fs, core_config):
+async def test_workspace_button_delete_clicked(qtbot, workspace_fs, core_config, alice_user_info):
     switch_language(core_config, "en")
 
-    roles = {workspace_fs.device.user_id: WorkspaceRole.OWNER}
+    roles = {alice_user_info.user_id: (WorkspaceRole.OWNER, alice_user_info)}
     w = WorkspaceButton(
         workspace_name="Workspace",
         workspace_fs=workspace_fs,

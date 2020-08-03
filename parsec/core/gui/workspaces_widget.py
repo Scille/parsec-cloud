@@ -72,10 +72,15 @@ async def _do_workspace_list(core):
 
     async def _add_workspacefs(workspace_fs, timestamped):
         ws_entry = workspace_fs.get_workspace_entry()
+        users_roles = {}
         try:
-            users_roles = await workspace_fs.get_user_roles()
+            roles = await workspace_fs.get_user_roles()
+            for user, role in roles.items():
+                user_info = await core.get_user_info(user)
+                users_roles[user_info.user_id] = (role, user_info)
         except FSBackendOfflineError:
-            users_roles = {workspace_fs.device.user_id: ws_entry.role}
+            user_info = await core.get_user_info(workspace_fs.device.user_id)
+            users_roles[user_info.user_id] = (ws_entry.role, user_info)
 
         try:
             root_info = await workspace_fs.path_info("/")
@@ -366,7 +371,6 @@ class WorkspacesWidget(QWidget, Ui_WorkspacesWidget):
                 new_name=workspace_name,
                 button=None,
             )
-
         button = WorkspaceButton(
             workspace_name=workspace_name,
             workspace_fs=workspace_fs,
