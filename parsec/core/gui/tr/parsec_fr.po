@@ -1775,8 +1775,6 @@ msgstr "Erreur pendant la validation des informations d'invitation. Veuillez red
 msgid "TEXT_CLAIM_DEVICE_WAITING"
 msgstr "En attente..."
 
-msgid "TEXT_CLAIM_DEVICE_WAIT_PEER_ERROR"
-
 
 msgid "TEXT_USER_GREET_SUCCESSFUL"
 msgstr "L'utilisateur a été créé avec succès !"

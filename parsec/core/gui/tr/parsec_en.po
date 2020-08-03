@@ -673,6 +673,9 @@ msgstr "Waiting..."
 msgid "TEXT_CLAIM_DEVICE_WAIT_PEER_ERROR"
 msgstr "Error while waiting for the other device. Please restart the process."
 
+msgid "TEXT_FILE_FOLDER_CREATE_ERROR_ALREADY_EXISTS"
+msgstr "A folder with the same name already exists."
+
 msgid "ACTION_START"
 msgstr "Start"
 
