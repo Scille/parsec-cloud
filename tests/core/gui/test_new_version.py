@@ -112,7 +112,9 @@ def urlopener(head_version, api_json):
             if the_request.full_url == gui_check_version_url
             else gui_check_version_url
         )
-        the_response.read = lambda: json.dumps(generate_json_data(api_json))
+        the_response.read = lambda: (
+            json.dumps(generate_json_data(api_json)) if type(api_json) is dict else api_json
+        )
         yield the_response
 
     return urlopen
@@ -409,6 +411,15 @@ def test_windows_update_newest_announced_is_draft():
 )
 @patch("parsec.core.gui.new_version.QSysInfo.currentCpuArchitecture", new=mocked_CPU(64))
 def test_windows_update_newest_announced_is_malformed():
+    assert smallcheck() == (Version("1.9.0"), gui_check_version_url)
+
+
+@patch("parsec.core.gui.new_version.__version__", new="1.7.0")
+@patch(
+    "parsec.core.gui.new_version.urlopen", new=urlopener(head_version="1.9.0", api_json="malformed")
+)
+@patch("parsec.core.gui.new_version.QSysInfo.currentCpuArchitecture", new=mocked_CPU(64))
+def test_windows_update_whole_json_is_malformed():
     assert smallcheck() == (Version("1.9.0"), gui_check_version_url)
 
 

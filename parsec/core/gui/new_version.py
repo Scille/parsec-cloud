@@ -4,6 +4,7 @@ import re
 import platform
 import trio
 import json
+from json import JSONDecodeError
 from urllib.request import urlopen, Request
 from packaging.version import Version
 
@@ -47,7 +48,10 @@ async def _do_check_new_version(url, api_url, check_pre=False):
                 or check_pre  # As latest doesn't include GitHub prerelease
             ):
                 with urlopen(Request(api_url, method="GET")) as req_api:
-                    return latest_from_head, json.loads(req_api.read())
+                    try:
+                        return latest_from_head, json.loads(req_api.read())
+                    except JSONDecodeError:
+                        return latest_from_head, None
             else:
                 return latest_from_head, None
 
@@ -85,6 +89,9 @@ async def _do_check_new_version(url, api_url, check_pre=False):
             return latest_from_head, url
         if latest_version > current_version:
             return latest_version, latest_url
+    elif latest_from_head > current_version:
+        # There is a new release flagged as stable on GitHub, but we failed to load the json
+        return latest_from_head, url
     return None
 
 
