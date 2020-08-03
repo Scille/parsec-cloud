@@ -1,0 +1,1 @@
+Fix internal exception handling of the remote devices manager errors.

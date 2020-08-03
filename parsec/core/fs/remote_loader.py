@@ -1,7 +1,9 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
 
-from pendulum import Pendulum, now as pendulum_now
+from contextlib import contextmanager
 from typing import Dict, Optional, List, Tuple
+
+from pendulum import Pendulum, now as pendulum_now
 
 from parsec.utils import timestamps_in_the_ballpark
 from parsec.crypto import HashDigest, CryptoError
@@ -12,11 +14,20 @@ from parsec.api.data import (
     RealmRoleCertificateContent,
     Manifest as RemoteManifest,
 )
-from parsec.core.backend_connection import BackendConnectionError, BackendNotAvailable
+
 from parsec.core.types import EntryID, ChunkID
+from parsec.core.backend_connection import BackendConnectionError, BackendNotAvailable
+from parsec.core.remote_devices_manager import (
+    RemoteDevicesManagerBackendOfflineError,
+    RemoteDevicesManagerError,
+    RemoteDevicesManagerUserNotFoundError,
+    RemoteDevicesManagerDeviceNotFoundError,
+    RemoteDevicesManagerInvalidTrustchainError,
+)
 from parsec.core.fs.exceptions import (
     FSError,
     FSRemoteSyncError,
+    FSRemoteOperationError,
     FSRemoteManifestNotFound,
     FSRemoteManifestNotFoundBadVersion,
     FSRemoteManifestNotFoundBadTimestamp,
@@ -26,7 +37,26 @@ from parsec.core.fs.exceptions import (
     FSBadEncryptionRevision,
     FSWorkspaceNoReadAccess,
     FSWorkspaceNoWriteAccess,
+    FSUserNotFoundError,
+    FSDeviceNotFoundError,
+    FSInvalidTrustchainEror,
 )
+
+
+@contextmanager
+def translate_remote_device_manager_errors():
+    try:
+        yield
+    except RemoteDevicesManagerError as exc:
+        raise FSRemoteOperationError(str(exc))
+    except RemoteDevicesManagerBackendOfflineError as exc:
+        raise FSBackendOfflineError(str(exc)) from exc
+    except RemoteDevicesManagerUserNotFoundError as exc:
+        raise FSUserNotFoundError(str(exc)) from exc
+    except RemoteDevicesManagerDeviceNotFoundError as exc:
+        raise FSDeviceNotFoundError(str(exc)) from exc
+    except RemoteDevicesManagerInvalidTrustchainError as exc:
+        raise FSInvalidTrustchainEror(str(exc)) from exc
 
 
 class RemoteLoader:
@@ -98,7 +128,9 @@ class RemoteLoader:
 
             # Now verify each certif
             for unsecure_certif, raw_certif in unsecure_certifs:
-                author = await self.remote_device_manager.get_device(unsecure_certif.author)
+
+                with translate_remote_device_manager_errors():
+                    author = await self.remote_device_manager.get_device(unsecure_certif.author)
 
                 RealmRoleCertificateContent.verify_and_load(
                     raw_certif,
@@ -315,7 +347,8 @@ class RemoteLoader:
                 f"{version} (expecting {expected_backend_timestamp}, got {expected_timestamp})"
             )
 
-        author = await self.remote_device_manager.get_device(expected_author)
+        with translate_remote_device_manager_errors():
+            author = await self.remote_device_manager.get_device(expected_author)
 
         try:
             remote_manifest = RemoteManifest.decrypt_verify_and_load(
