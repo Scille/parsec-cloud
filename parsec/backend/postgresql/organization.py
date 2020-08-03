@@ -7,6 +7,8 @@ from triopg import UniqueViolationError
 
 from parsec.api.protocol import OrganizationID
 from parsec.crypto import VerifyKey
+from parsec.event_bus import EventBus
+from parsec.backend.events import BackendEvent
 from parsec.backend.user import UserError, User, Device
 from parsec.backend.organization import (
     BaseOrganizationComponent,
@@ -92,9 +94,10 @@ WHERE organization_id = $organization_id
 
 
 class PGOrganizationComponent(BaseOrganizationComponent):
-    def __init__(self, dbh: PGHandler, *args, **kwargs):
+    def __init__(self, dbh: PGHandler, event_bus: EventBus, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.dbh = dbh
+        self.event_bus = event_bus
 
     async def create(
         self, id: OrganizationID, bootstrap_token: str, expiration_date: Optional[Pendulum] = None
@@ -190,3 +193,7 @@ class PGOrganizationComponent(BaseOrganizationComponent):
 
             if result != "UPDATE 1":
                 raise OrganizationError(f"Update error: {result}")
+
+            organization = await self._get(conn, id)
+            if organization.is_expired:
+                self.event_bus.send(BackendEvent.ORGANIZATION_EXPIRED, organization_id=id)
