@@ -65,7 +65,7 @@ class WorkspaceFS:
         local_storage,
         backend_cmds,
         event_bus,
-        remote_device_manager,
+        remote_devices_manager,
     ):
         self.workspace_id = workspace_id
         self.get_workspace_entry = get_workspace_entry
@@ -73,7 +73,7 @@ class WorkspaceFS:
         self.local_storage = local_storage
         self.backend_cmds = backend_cmds
         self.event_bus = event_bus
-        self.remote_device_manager = remote_device_manager
+        self.remote_devices_manager = remote_devices_manager
         self.sync_locks = defaultdict(trio.Lock)
 
         self.remote_loader = RemoteLoader(
@@ -81,7 +81,7 @@ class WorkspaceFS:
             self.workspace_id,
             self.get_workspace_entry,
             self.backend_cmds,
-            self.remote_device_manager,
+            self.remote_devices_manager,
             self.local_storage,
         )
         self.transactions = SyncTransactions(
@@ -181,7 +181,7 @@ class WorkspaceFS:
         user_revoked = []
         try:
             for user_id in has_role:
-                _, revoked_user = await self.remote_device_manager.get_user(user_id, no_cache=True)
+                _, revoked_user = await self.remote_devices_manager.get_user(user_id, no_cache=True)
                 if revoked_user and revoked_user.timestamp > wentry.encrypted_on:
                     user_revoked.append(user_id)
 

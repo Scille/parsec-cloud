@@ -267,7 +267,7 @@ class UserFS:
             local_storage=local_storage,
             backend_cmds=self.backend_cmds,
             event_bus=self.event_bus,
-            remote_device_manager=self.remote_devices_manager,
+            remote_devices_manager=self.remote_devices_manager,
         )
 
     async def _create_workspace(
