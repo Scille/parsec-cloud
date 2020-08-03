@@ -28,7 +28,7 @@ def _extract_version(raw):
         return None
 
 
-async def _do_check_new_version(url, api_url, check_rc=False):
+async def _do_check_new_version(url, api_url, check_pre=False):
     current_version = _extract_version(__version__)
 
     def _fetch_json_releases():
@@ -40,7 +40,7 @@ async def _do_check_new_version(url, api_url, check_rc=False):
                 latest_from_head
                 and current_version
                 and current_version < latest_from_head
-                or check_rc  # As latest doesn't include GitHub prerelease
+                or check_pre  # As latest doesn't include GitHub prerelease
             ):
                 with urlopen(Request(api_url, method="GET")) as req_api:
                     return latest_from_head, json.loads(req_api.read())
@@ -64,7 +64,7 @@ async def _do_check_new_version(url, api_url, check_rc=False):
             for release in json_releases:
                 if release["draft"]:
                     continue
-                if release["prerelease"] and not check_rc:
+                if release["prerelease"] and not check_pre:
                     continue
                 for asset in release["assets"]:
                     if asset["name"].endswith(f"-{win_version}-setup.exe"):
@@ -72,7 +72,7 @@ async def _do_check_new_version(url, api_url, check_rc=False):
                         if (
                             asset_version
                             and asset_version > latest_version
-                            and (not asset_version.is_preversion or check_rc)
+                            and (not asset_version.is_preversion or check_pre)
                         ):
                             latest_version = asset_version
                             latest_url = asset["browser_download_url"]
@@ -160,7 +160,7 @@ class CheckNewVersion(QDialog, Ui_NewVersionDialog):
             _do_check_new_version,
             url=self.config.gui_check_version_url,
             api_url=self.config.gui_check_version_api_url,
-            check_rc=self.config.gui_check_version_allow_pre_release,
+            check_pre=self.config.gui_check_version_allow_pre_release,
         )
         self.setWindowFlags(Qt.SplashScreen)
 

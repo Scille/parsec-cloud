@@ -117,16 +117,16 @@ def urlopener(head_version, api_json):
     return urlopen
 
 
-def smallcheck(check_rc=False):
+def smallcheck(check_pre=False):
     async def _do_check_new_version_wrapper(
-        gui_check_version_url, gui_check_version_api_url, check_rc
+        gui_check_version_url, gui_check_version_api_url, check_pre
     ):
         return await _do_check_new_version(
-            gui_check_version_url, gui_check_version_api_url, check_rc=check_rc
+            gui_check_version_url, gui_check_version_api_url, check_pre=check_pre
         )
 
     return trio.run(
-        _do_check_new_version_wrapper, gui_check_version_url, gui_check_version_api_url, check_rc
+        _do_check_new_version_wrapper, gui_check_version_url, gui_check_version_api_url, check_pre
     )
 
 
@@ -464,8 +464,8 @@ def test_windows_update_newest_announced_is_rc_marked_as_prerelease():
     ),
 )
 @patch("parsec.core.gui.new_version.QSysInfo.currentCpuArchitecture", new=mocked_CPU(64))
-def test_windows_update_newest_announced_is_rc_marked_as_prerelease_and_rc_enabled():
-    assert smallcheck(check_rc=True) == (
+def test_windows_update_newest_announced_is_rc_marked_as_prerelease_and_pre_enabled():
+    assert smallcheck(check_pre=True) == (
         (1, 9, 0, "rc3"),
         generate_brower_download_url("v1.9.0-rc3", 64),
     )
