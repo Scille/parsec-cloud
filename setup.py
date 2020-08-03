@@ -286,6 +286,7 @@ requirements = [
     "PyPika==0.36.5",
     "async_exit_stack==1.0.1",
     "outcome==1.0.0",
+    "packaging==20.4",
 ]
 
 
