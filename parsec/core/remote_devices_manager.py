@@ -84,7 +84,7 @@ class RemoteDevicesManager:
         Raises:
             RemoteDevicesManagerError
             RemoteDevicesManagerBackendOfflineError
-            RemoteDevicesManagerNotFoundError
+            RemoteDevicesManagerUserNotFoundError
             RemoteDevicesManagerInvalidTrustchainError
         """
         try:

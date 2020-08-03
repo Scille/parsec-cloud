@@ -17,6 +17,11 @@ from parsec.api.data import (
 
 from parsec.core.types import EntryID, ChunkID
 from parsec.core.backend_connection import BackendConnectionError, BackendNotAvailable
+from parsec.api.data import (
+    UserCertificateContent,
+    DeviceCertificateContent,
+    RevokedUserCertificateContent,
+)
 from parsec.core.remote_devices_manager import (
     RemoteDevicesManagerBackendOfflineError,
     RemoteDevicesManagerError,
@@ -47,8 +52,6 @@ from parsec.core.fs.exceptions import (
 def translate_remote_devices_manager_errors():
     try:
         yield
-    except RemoteDevicesManagerError as exc:
-        raise FSRemoteOperationError(str(exc))
     except RemoteDevicesManagerBackendOfflineError as exc:
         raise FSBackendOfflineError(str(exc)) from exc
     except RemoteDevicesManagerUserNotFoundError as exc:
@@ -57,6 +60,8 @@ def translate_remote_devices_manager_errors():
         raise FSDeviceNotFoundError(str(exc)) from exc
     except RemoteDevicesManagerInvalidTrustchainError as exc:
         raise FSInvalidTrustchainEror(str(exc)) from exc
+    except RemoteDevicesManagerError as exc:
+        raise FSRemoteOperationError(str(exc))
 
 
 class RemoteLoader:
@@ -178,6 +183,9 @@ class RemoteLoader:
             FSError
             FSBackendOfflineError
             FSWorkspaceNoAccess
+            FSUserNotFoundError
+            FSDeviceNotFoundError
+            FSInvalidTrustchainError
         """
         certificates, _ = await self._load_realm_role_certificates(realm_id)
         return certificates
@@ -190,9 +198,39 @@ class RemoteLoader:
             FSError
             FSBackendOfflineError
             FSWorkspaceNoAccess
+            FSUserNotFoundError
+            FSDeviceNotFoundError
+            FSInvalidTrustchainError
         """
         _, current_roles = await self._load_realm_role_certificates(realm_id)
         return current_roles
+
+    async def get_user(
+        self, user_id: UserID, no_cache: bool = False
+    ) -> Tuple[UserCertificateContent, Optional[RevokedUserCertificateContent]]:
+        """
+        Raises:
+            FSRemoteOperationError
+            FSBackendOfflineError
+            FSUserNotFoundError
+            FSInvalidTrustchainError
+        """
+        with translate_remote_devices_manager_errors():
+            return await self.remote_devices_manager.get_user(user_id, no_cache=no_cache)
+
+    async def get_device(
+        self, device_id: DeviceID, no_cache: bool = False
+    ) -> DeviceCertificateContent:
+        """
+        Raises:
+            FSRemoteOperationError
+            FSBackendOfflineError
+            FSUserNotFoundError
+            FSDeviceNotFoundError
+            FSInvalidTrustchainError
+        """
+        with translate_remote_devices_manager_errors():
+            return await self.remote_devices_manager.get_device(device_id, no_cache=no_cache)
 
     async def load_blocks(self, accesses: List[BlockAccess]) -> None:
         """
@@ -297,6 +335,9 @@ class RemoteLoader:
             FSRemoteManifestNotFound
             FSBadEncryptionRevision
             FSWorkspaceNoAccess
+            FSUserNotFoundError
+            FSDeviceNotFoundError
+            FSInvalidTrustchainError
         """
         if timestamp is not None and version is not None:
             raise FSError(

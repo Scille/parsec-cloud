@@ -17,11 +17,6 @@ from parsec.core.types import (
     LocalFileManifest,
     DEFAULT_BLOCK_SIZE,
 )
-from parsec.core.remote_devices_manager import (
-    RemoteDevicesManagerBackendOfflineError,
-    RemoteDevicesManagerError,
-)
-from parsec.core.fs.exceptions import FSError, FSBackendOfflineError
 from parsec.core.fs.remote_loader import RemoteLoader
 from parsec.core.fs import workspacefs  # Needed to break cyclic import with WorkspaceFSTimestamped
 from parsec.core.fs.workspacefs.sync_transactions import SyncTransactions
@@ -179,17 +174,10 @@ class WorkspaceFS:
                 has_role.add(certif.user_id)
 
         user_revoked = []
-        try:
-            for user_id in has_role:
-                _, revoked_user = await self.remote_devices_manager.get_user(user_id, no_cache=True)
-                if revoked_user and revoked_user.timestamp > wentry.encrypted_on:
-                    user_revoked.append(user_id)
-
-        except RemoteDevicesManagerBackendOfflineError as exc:
-            raise FSBackendOfflineError(str(exc)) from exc
-
-        except RemoteDevicesManagerError as exc:
-            raise FSError(f"Cannot retrieve workspace participant {user_id}: {exc}") from exc
+        for user_id in has_role:
+            _, revoked_user = await self.remote_loader.get_user(user_id, no_cache=True)
+            if revoked_user and revoked_user.timestamp > wentry.encrypted_on:
+                user_revoked.append(user_id)
 
         return ReencryptionNeed(user_revoked=tuple(user_revoked), role_revoked=tuple(role_revoked))
 

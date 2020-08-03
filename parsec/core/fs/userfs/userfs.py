@@ -38,11 +38,7 @@ from parsec.core.backend_connection import (
     BackendConnectionError,
     BackendNotAvailable,
 )
-from parsec.core.remote_devices_manager import (
-    RemoteDevicesManager,
-    RemoteDevicesManagerError,
-    RemoteDevicesManagerBackendOfflineError,
-)
+from parsec.core.remote_devices_manager import RemoteDevicesManager
 
 from parsec.core.fs.workspacefs import WorkspaceFS
 from parsec.core.fs.remote_loader import RemoteLoader
@@ -375,14 +371,7 @@ class UserFS:
         expected_version = rep["version"]
         blob = rep["blob"]
 
-        try:
-            author = await self.remote_devices_manager.get_device(expected_author)
-
-        except RemoteDevicesManagerBackendOfflineError as exc:
-            raise FSBackendOfflineError(str(exc)) from exc
-
-        except RemoteDevicesManagerError as exc:
-            raise FSError(f"Cannot retrieve author public key: {exc}") from exc
+        author = await self.remote_loader.get_device(expected_author)
 
         try:
             manifest = UserManifest.decrypt_verify_and_load(
@@ -592,16 +581,7 @@ class UserFS:
         await self._workspace_minimal_sync(workspace_entry)
 
         # Retrieve the user
-        try:
-            recipient_user, revoked_recipient_user = await self.remote_devices_manager.get_user(
-                recipient
-            )
-
-        except RemoteDevicesManagerBackendOfflineError as exc:
-            raise FSBackendOfflineError(str(exc)) from exc
-
-        except RemoteDevicesManagerError as exc:
-            raise FSError(f"Cannot retrieve recipient: {exc}") from exc
+        recipient_user, revoked_recipient_user = await self.remote_loader.get_user(recipient)
 
         if revoked_recipient_user:
             raise FSError(f"User {recipient} revoked")
@@ -732,14 +712,7 @@ class UserFS:
             FSSharingNotAllowedError
         """
         # Retrieve the sender
-        try:
-            sender = await self.remote_devices_manager.get_device(sender_id)
-
-        except RemoteDevicesManagerBackendOfflineError as exc:
-            raise FSBackendOfflineError(str(exc)) from exc
-
-        except RemoteDevicesManagerError as exc:
-            raise FSError(f"Cannot retrieve message sender `{sender_id}`: {exc}") from exc
+        sender = await self.remote_loader.get_device(sender_id)
 
         # Decrypt&verify message
         try:
@@ -891,18 +864,11 @@ class UserFS:
         roles = await self.remote_loader.load_realm_current_roles(workspace_id)
 
         # Then retrieve each participant user data
-        try:
-            users = []
-            for user_id in roles.keys():
-                user, revoked_user = await self.remote_devices_manager.get_user(user_id)
-                if not revoked_user:
-                    users.append(user)
-
-        except RemoteDevicesManagerBackendOfflineError as exc:
-            raise FSBackendOfflineError(str(exc)) from exc
-
-        except RemoteDevicesManagerError as exc:
-            raise FSError(f"Cannot retrieve workspace {workspace_id} participants: {exc}") from exc
+        users = []
+        for user_id in roles.keys():
+            user, revoked_user = await self.remote_loader.get_user(user_id)
+            if not revoked_user:
+                users.append(user)
 
         return users
 
