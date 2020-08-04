@@ -35,7 +35,7 @@ async def components_factory(config: BackendConfig, event_bus: EventBus):
     http = HTTPComponent(config)
     organization = PGOrganizationComponent(dbh, webhooks)
     user = PGUserComponent(dbh, event_bus)
-    invite = PGInviteComponent(dbh, event_bus, config)
+    invite = PGInviteComponent(dbh, user, event_bus, config)
     message = PGMessageComponent(dbh)
     realm = PGRealmComponent(dbh)
     vlob = PGVlobComponent(dbh)

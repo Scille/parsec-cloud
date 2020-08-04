@@ -60,6 +60,9 @@ class MemoryInviteComponent(BaseInviteComponent):
             raise InvitationAlreadyDeletedError(token)
         return invitation, org.conduits[token]
 
+    async def user_already_member(self, organization_id: OrganizationID, email: str) -> bool:
+        return await self._user_component.retrieve_human(organization_id, email) is not None
+
     async def _conduit_talk(
         self,
         organization_id: OrganizationID,

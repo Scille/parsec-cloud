@@ -1,5 +1,4 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
-
 from pendulum import now as pendulum_now
 from functools import lru_cache
 from typing import Tuple, List
@@ -53,6 +52,27 @@ WHERE
     )
 
 
+@lru_cache()
+def _q_retrieve_human_factory(*arguments):
+    conditions = []
+    for (field, operator, value) in arguments:
+        conditions.append(f"AND {field} {operator} {value}")
+    return Q(
+        f"""
+SELECT
+    user_.user_id,
+    human.email,
+    human.label,
+    user_.revoked_on IS NOT NULL AND user_.revoked_on <= $now as revoked
+FROM user_ LEFT JOIN human ON user_.human=human._id
+WHERE
+    user_.organization = { q_organization_internal_id("$organization_id") }
+    { " ".join(conditions) }
+LIMIT 1
+    """
+    )
+
+
 @query()
 async def query_find(
     conn, organization_id: OrganizationID, query: str, page: int, per_page: int, omit_revoked: bool
@@ -86,6 +106,32 @@ async def query_find(
     # TODO: should user LIMIT and OFFSET in the SQL query instead
     results = [UserID(x[0]) for x in all_results[(page - 1) * per_page : page * per_page]]
     return results, len(all_results)
+
+
+@query()
+async def query_retrieve_human(
+    conn, organization_id: OrganizationID, arguments: List[Tuple[str, str, str]]
+) -> HumanFindResultItem:
+    if len(arguments) == 0:
+        return
+
+    kwargs = {"organization_id": organization_id, "now": pendulum_now()}
+    factory_arguments = tuple()
+    for (field, operator, value) in arguments:
+        key = field.replace(".", "_")
+        factory_arguments += (field, operator, f"${key}")
+        kwargs[key] = value
+    else:
+        q = _q_retrieve_human_factory(factory_arguments)
+        args = q(**kwargs)
+        result = await conn.fetchrow(*args)
+        if result:
+            return HumanFindResultItem(
+                user_id=UserID(result["user_id"]),
+                human_handle=HumanHandle(email=result["email"], label=result["label"]),
+                revoked=result["revoked"],
+            )
+    return None
 
 
 @query()

@@ -338,6 +338,14 @@ async def test_delete(
 
 
 @pytest.mark.trio
+async def test_user_invitation_already_member(alice, bob, backend, alice_backend_sock):
+    rep = await invite_new(
+        alice_backend_sock, type=InvitationType.USER, claimer_email="bob@example.com"
+    )
+    assert rep == {"status": "already_member"}
+
+
+@pytest.mark.trio
 async def test_user_invitation_double_create(alice, backend, alice_backend_sock):
     claimer_email = "zack@example.com"
 

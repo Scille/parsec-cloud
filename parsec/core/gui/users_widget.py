@@ -11,6 +11,7 @@ from parsec.api.protocol import InvitationType
 from parsec.api.data import UserProfile
 from parsec.core.types import BackendInvitationAddr, UserInfo
 
+from parsec.core.invite import InviteAlreadyMemberError
 from parsec.core.backend_connection import BackendConnectionError, BackendNotAvailable
 
 from parsec.core.gui.trio_thread import JobResultError, ThreadSafeQtSignal, QtToTrioJob
@@ -184,6 +185,8 @@ async def _do_invite_user(core, email):
         raise JobResultError("offline") from exc
     except BackendConnectionError as exc:
         raise JobResultError("error") from exc
+    except InviteAlreadyMemberError as exc:
+        raise JobResultError("already_member") from exc
 
 
 class UsersWidget(QWidget, Ui_UsersWidget):
@@ -427,6 +430,8 @@ class UsersWidget(QWidget, Ui_UsersWidget):
         status = job.status
         if status == "offline":
             errmsg = _("TEXT_INVITE_USER_INVITE_OFFLINE")
+        elif status == "already_member":
+            errmsg = _("TEXT_INVITE_USER_ALREADY_MEMBER_ERROR")
         else:
             errmsg = _("TEXT_INVITE_USER_INVITE_ERROR")
 

@@ -15,7 +15,7 @@ from tests.common import customize_fixtures
 @pytest.mark.parametrize("online", (True, False))
 @customize_fixtures(backend_has_email=True, logged_gui_as_admin=True)
 async def test_invite_user(
-    aqtbot, logged_gui, running_backend, monkeypatch, autoclose_dialog, email_letterbox, online
+    aqtbot, logged_gui, bob, running_backend, monkeypatch, autoclose_dialog, email_letterbox, online
 ):
     u_w = await logged_gui.test_switch_to_users_widget()
 
@@ -38,6 +38,18 @@ async def test_invite_user(
 
         await aqtbot.wait_until(_new_invitation_displayed)
         assert not autoclose_dialog.dialogs
+
+        monkeypatch.setattr(
+            "parsec.core.gui.users_widget.get_text_input", lambda *args, **kwargs: "bob@example.com"
+        )
+        await aqtbot.mouse_click(u_w.button_add_user, QtCore.Qt.LeftButton)
+
+        def _already_member():
+            assert autoclose_dialog.dialogs == [
+                ("Error", _("TEXT_INVITE_USER_ALREADY_MEMBER_ERROR"))
+            ]
+
+        await aqtbot.wait_until(_already_member)
 
     else:
         with running_backend.offline():

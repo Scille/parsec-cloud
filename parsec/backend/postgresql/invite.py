@@ -33,7 +33,7 @@ from parsec.backend.postgresql.queries import (
     q_user,
     q_user_internal_id,
 )
-
+from parsec.backend.postgresql.user import PGUserComponent
 
 _q_retrieve_compatible_user_invitation = Q(
     f"""
@@ -462,9 +462,15 @@ async def _do_new_user_invitation(
 
 
 class PGInviteComponent(BaseInviteComponent):
-    def __init__(self, dbh: PGHandler, *args, **kwargs):
+    def __init__(self, dbh: PGHandler, user_component: PGUserComponent, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.dbh = dbh
+        self.user_component = user_component
+
+    async def user_already_member(self, organization_id: OrganizationID, email: str) -> bool:
+        async with self.dbh.pool.acquire() as conn, conn.transaction():
+            r = await self.user_component.retrieve_human(organization_id, email)
+            return r is not None
 
     async def new_for_user(
         self,

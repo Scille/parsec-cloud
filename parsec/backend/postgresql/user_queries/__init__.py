@@ -1,7 +1,11 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
 
 from parsec.backend.postgresql.user_queries.create import query_create_user, query_create_device
-from parsec.backend.postgresql.user_queries.find import query_find, query_find_humans
+from parsec.backend.postgresql.user_queries.find import (
+    query_find,
+    query_find_humans,
+    query_retrieve_human,
+)
 from parsec.backend.postgresql.user_queries.get import (
     query_get_user,
     query_get_user_with_trustchain,
@@ -25,6 +29,7 @@ from parsec.backend.postgresql.user_queries.revoke import query_revoke_user
 
 
 __all__ = (
+    "query_retrieve_human",
     "query_create_user",
     "query_create_device",
     "query_find",

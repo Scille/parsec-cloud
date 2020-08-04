@@ -249,6 +249,8 @@ class BaseInviteComponent:
         if msg["type"] == InvitationType.USER:
             if client_ctx.profile != UserProfile.ADMIN:
                 return invite_new_serializer.rep_dump({"status": "not_allowed"})
+            if await self.user_already_member(client_ctx.organization_id, msg["claimer_email"]):
+                return invite_new_serializer.rep_dump({"status": "already_member"})
 
             invitation = await self.new_for_user(
                 organization_id=client_ctx.organization_id,
@@ -756,6 +758,12 @@ class BaseInviteComponent:
             InvitationNotFoundError
             InvitationAlreadyDeletedError
             InvitationInvalidStateError
+        """
+        raise NotImplementedError()
+
+    async def user_already_member(self, organization_id: OrganizationID, email: str) -> bool:
+        """
+        Raise: Nothing
         """
         raise NotImplementedError()
 

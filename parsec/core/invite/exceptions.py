@@ -18,3 +18,8 @@ class InviteNotFoundError(InviteError):
 class InviteAlreadyUsedError(InviteError):
     def __init__(self, msg="Invitation already used"):
         super().__init__(msg)
+
+
+class InviteAlreadyMemberError(InviteError):
+    def __init__(self, msg="Invitation is already a member"):
+        super().__init__(msg)

@@ -25,6 +25,7 @@ from parsec.core.invite import (
     UserGreetInProgress1Ctx,
     DeviceGreetInitialCtx,
     DeviceGreetInProgress1Ctx,
+    InviteAlreadyMemberError,
 )
 from parsec.core.remote_devices_manager import (
     RemoteDevicesManager,
@@ -172,7 +173,9 @@ class LoggedCore:
         rep = await self._backend_conn.cmds.invite_new(
             type=InvitationType.USER, claimer_email=email, send_email=send_email
         )
-        if rep["status"] != "ok":
+        if rep["status"] == "already_member":
+            raise InviteAlreadyMemberError()
+        elif rep["status"] != "ok":
             raise BackendConnectionError(f"Backend error: {rep}")
         return BackendInvitationAddr.build(
             backend_addr=self.device.organization_addr,
