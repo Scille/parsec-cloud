@@ -261,3 +261,18 @@ class FSWorkspaceNotInMaintenance(FSRemoteOperationError):
 
 class FSWorkspaceInMaintenance(FSRemoteOperationError):
     pass
+
+
+# RemoteDevicesManager errors
+
+
+class FSUserNotFoundError(FSRemoteOperationError):
+    pass
+
+
+class FSDeviceNotFoundError(FSRemoteOperationError):
+    pass
+
+
+class FSInvalidTrustchainEror(FSRemoteOperationError):
+    pass

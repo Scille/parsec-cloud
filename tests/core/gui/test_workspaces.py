@@ -14,6 +14,7 @@ from parsec.core.gui.workspace_button import WorkspaceButton
 
 @pytest.mark.gui
 @pytest.mark.trio
+@pytest.mark.flaky(reruns=1)
 @pytest.mark.parametrize("invalid_name", (False, True))
 async def test_add_workspace(
     aqtbot, running_backend, logged_gui, monkeypatch, autoclose_dialog, invalid_name
@@ -55,6 +56,7 @@ async def test_add_workspace(
 
 @pytest.mark.gui
 @pytest.mark.trio
+@pytest.mark.flaky(reruns=1)
 @pytest.mark.parametrize("invalid_name", (False, True))
 async def test_rename_workspace(
     aqtbot, running_backend, logged_gui, monkeypatch, autoclose_dialog, invalid_name

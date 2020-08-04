@@ -18,7 +18,7 @@ class WorkspaceFSTimestamped(WorkspaceFS):
         self.local_storage = workspacefs.local_storage.to_timestamped(timestamp)
         self.backend_cmds = workspacefs.backend_cmds
         self.event_bus = workspacefs.event_bus
-        self.remote_device_manager = workspacefs.remote_device_manager
+        self.remote_devices_manager = workspacefs.remote_devices_manager
 
         self.timestamp = timestamp
 
