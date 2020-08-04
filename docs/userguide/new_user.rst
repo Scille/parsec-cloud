@@ -41,11 +41,11 @@ The token exchange is a verification process that aims at ensuring that the two 
 
 The inviting and the invitee will have to exchange tokens in person or on an already verified canal. For that, they will both be given a token, or a list of tokens : the user with the list must click on the token displayed by the Parsec client of the other user. If the token one of them is given is not present in the list, it means there is a very high probability that one of the user is victim of a `Man-in-the-middle attack <https://en.wikipedia.org/wiki/Man-in-the-middle_attack>`_.
 
-.. image:: screens/token_echange_token_display.png
+.. image:: screens/user_token_echange_token_display.png
     :align: center
     :alt: Display of a token that has to be transmitted during a token exchange
 
-.. image:: screens/token_echange_token_list.png
+.. image:: screens/user_token_echange_token_list.png
     :align: center
     :alt: List of tokens displayed during a token exchange
 
