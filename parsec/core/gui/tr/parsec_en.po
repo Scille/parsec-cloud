@@ -7,8 +7,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PROJECT VERSION\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2020-07-24 11:13+0200\n"
-"PO-Revision-Date: 2020-07-24 11:17+0200\n"
+"POT-Creation-Date: 2020-08-05 13:41+0200\n"
+"PO-Revision-Date: 2020-08-05 13:44+0200\n"
 "Last-Translator: \n"
 "Language: en\n"
 "Language-Team: en <LL@li.org>\n"
@@ -219,7 +219,9 @@ msgid "TEXT_GREET_USER_SIGNIFY_TRUST_ERROR"
 msgstr "Error while acknowledging SAS code. Please restart the process."
 
 msgid "TEXT_GREET_USER_WAIT_PEER_TRUST_ERROR"
-msgstr "Error while waiting for peer SAS code acknowledgment. Please restart the process."
+msgstr ""
+"Error while waiting for peer SAS code acknowledgment. Please restart the "
+"process."
 
 msgid "TEXT_USER_GREET_SUCCESSFUL"
 msgstr "The user was successfully greeter in your organization."
@@ -365,7 +367,9 @@ msgid "TEXT_CLAIM_USER_SIGNIFY_TRUST_ERROR"
 msgstr "Error while acknowledging SAS code. Please restart the process."
 
 msgid "TEXT_CLAIM_USER_WAIT_PEER_TRUST_ERROR"
-msgstr "Error while waiting for peer SAS code acknowledgment. Please restart the process."
+msgstr ""
+"Error while waiting for peer SAS code acknowledgment. Please restart the "
+"process."
 
 msgid "TEXT_CLAIM_USER_INVALID_HUMAN_HANDLE"
 msgstr "The email is invalid."
@@ -529,7 +533,9 @@ msgid "TEXT_GREET_DEVICE_WAITING"
 msgstr "Waiting for the new device..."
 
 msgid "TEXT_GREET_DEVICE_WAIT_PEER_ERROR"
-msgstr "An error occured while waiting for the other user. Please restart the process "
+msgstr ""
+"An error occured while waiting for the other user. Please restart the "
+"process "
 
 msgid "TEXT_GREET_DEVICE_PEER_RESET"
 msgstr "The invitee has reset the process.. We will restart from the beginning."
@@ -557,7 +563,9 @@ msgid "TEXT_GREET_DEVICE_SIGNIFY_TRUST_ERROR"
 msgstr "Error while acknowledging SAS code. Please restart the process."
 
 msgid "TEXT_GREET_DEVICE_WAIT_PEER_TRUST_ERROR"
-msgstr "Error while waiting for peer SAS code acknowledgment. Please restart the process."
+msgstr ""
+"Error while waiting for peer SAS code acknowledgment. Please restart the "
+"process."
 
 msgid "TEXT_DEVICE_GREET_SUCCESSFUL"
 msgstr "The device was successfully created."
@@ -1492,73 +1500,14 @@ msgstr "Parent folder"
 msgid "TEXT_FILE_TREE_PARENT_WORKSPACE"
 msgstr "Workspaces list"
 
-msgid "TEXT_BOOTSTRAP_ORG_INSTRUCTIONS_url-organization"
-msgstr ""
-"You are about to bootstrap the organization <b>{organization}</b>. You "
-"will be the first administrator of the organization.<br /><br />\n"
-"\n"
-"To proceed, please provide your name, your email address, a name for this"
-" device, and a password."
-
-msgid "TEXT_BOOTSTRAP_ORG_INVALID_URL"
-msgstr "This is not a valid bootstrap link."
-
-msgid "TEXT_BOOTSTRAP_ORG_INVITE_NOT_FOUND"
-msgstr "There are no organization to bootstrap with this link."
-
-msgid "TEXT_BOOTSTRAP_ORG_ALREADY_BOOTSTRAPPED"
-msgstr "This organization has already been bootstrapped."
-
-msgid "TEXT_BOOTSTRAP_ORG_USER_EXISTS"
-msgstr "This user already exists within this organization."
-
-msgid "TEXT_BOOTSTRAP_ORG_PASSWORD_MISMATCH"
-msgstr "The password and the password confirmation do no match."
-
-msgid "TEXT_BOOTSTRAP_ORG_PASSWORD_COMPLEXITY_TOO_LOW"
-msgstr "The password is not complex enough."
-
-msgid "TEXT_BOOTSTRAP_ORG_BAD_DEVICE_NAME"
-msgstr "The device name is invalid."
-
-msgid "TEXT_BOOTSTRAP_ORG_BAD_API_VERSION"
-msgstr ""
-"Your application is not compatible with this server. Try to update it to "
-"the latest version."
-
-msgid "TEXT_BOOTSTRAP_ORG_BACKEND_REFUSAL"
-msgstr "Could not bootstrap the organization."
-
-msgid "TEXT_BOOTSTRAP_ORG_BACKEND_OFFLINE"
-msgstr "The server is offline or you have no access to the internet."
-
-msgid "TEXT_BOOTSTRAP_ORG_UNKNOWN_FAILURE"
-msgstr "Could not bootstrap the organization."
-
-msgid "TEXT_BOOTSTRAP_ORG_SUCCESS_organization"
-msgstr ""
-"You organization <b>{organization}</b> has been created!<br />\n"
-"<br />\n"
-"You will now be automatically logged in.<br />\n"
-"<br />\n"
-"To help you start with PARSEC, you can read the <a "
-"href=\"https://docs.parsec.cloud/en/stable/\" title=\"User guide\">user "
-"guide</a>."
-
-msgid "ACTION_CONTINUE"
-msgstr "Continue"
-
-msgid "TEXT_BOOTSTRAP_ORG_INVALID_EMAIL"
-msgstr "The email is invalid."
-
-msgid "TEXT_BOOTSTRAP_ORG_TITLE"
-msgstr "Bootstrap the organization"
-
 msgid "ACTION_OK"
 msgstr "OK"
 
 msgid "TEXT_ERR_DIALOG_TITLE"
 msgstr "Error"
+
+msgid "ACTION_CONTINUE"
+msgstr "Continue"
 
 msgid "TEXT_LOGIN_ERROR_DEVICE_REVOKED"
 msgstr "This device has been revoked and can no longer be used to log in."
@@ -1585,8 +1534,36 @@ msgstr "The password is incorrect."
 msgid "TEXT_LOGIN_MOUNTPOINT_ERROR"
 msgstr "Cannot log in. The workspaces could not be mounted."
 
-msgid "TEXT_ORG_WIZARD_EMAIL_ALREADY_EXISTS"
-msgstr "This email is already used."
+msgid "TEXT_BOOTSTRAP_ORGANIZATION_INSTRUCTIONS_organization"
+msgstr "Please fill out the following information to bootstrap the organization <b>{organization}</b>."
+
+msgid "ACTION_NEXT"
+msgstr "Next"
+
+msgid "ACTION_CREATE_ORG"
+msgstr "Create the organization"
+
+msgid "TEXT_ORG_WIZARD_INVALID_ORGANIZATION_ID"
+msgstr "The organization name is invalid."
+
+msgid "TEXT_ORG_WIZARD_INVALID_BACKEND_ADDR"
+msgstr "The server address is invalid."
+
+msgid "TEXT_ORG_WIZARD_INVALID_DEVICE_NAME"
+msgstr "The device name is invalid."
+
+msgid "TEXT_ORG_WIZARD_INVALID_HUMAN_HANDLE"
+msgstr "The email address is invalid."
+
+msgid "TEXT_BOOTSTRAP_ORG_SUCCESS_organization"
+msgstr ""
+"You organization <b>{organization}</b> has been created!<br />\n"
+"<br />\n"
+"You will now be automatically logged in.<br />\n"
+"<br />\n"
+"To help you start with PARSEC, you can read the <a "
+"href=\"https://docs.parsec.cloud/en/stable/\" title=\"User guide\">user "
+"guide</a>."
 
 msgid "TEXT_ORG_WIZARD_ORGANIZATION_ALREADY_EXISTS"
 msgstr "This organization name is already used."
@@ -1594,23 +1571,20 @@ msgstr "This organization name is already used."
 msgid "TEXT_ORG_WIZARD_INVALID_EMAIL"
 msgstr "The email is invalid."
 
-msgid "TEXT_ORG_WIZARD_INVALID_ORGANIZATION_ID"
-msgstr "The organization name is invalid."
-
-msgid "TEXT_ORG_WIZARD_INVALID_RESPONSE"
-msgstr "Could not create the organization."
-
 msgid "TEXT_ORG_WIZARD_OFFLINE"
 msgstr "The server is offline or you have no access to the internet."
 
+msgid "TEXT_ORG_WIZARD_INVITE_ALREADY_USED"
+msgstr "This bootstrap link was already used."
+
+msgid "TEXT_ORG_WIZARD_CONNECTION_REFUSED"
+msgstr "The server refused the connection."
+
+msgid "TEXT_ORG_WIZARD_CONNECTION_ERROR"
+msgstr "Cannot connect to the server."
+
 msgid "TEXT_ORG_WIZARD_UNKNOWN_FAILURE"
 msgstr "Could not create the organization."
-
-msgid "ACTION_CREATE_ORGANIZATION"
-msgstr "Create the organization"
-
-msgid "ACTION_NEXT"
-msgstr "Next"
 
 msgid "TEXT_ORG_WIZARD_TITLE"
 msgstr "Create a new organization"
@@ -1656,7 +1630,9 @@ msgid "TEXT_CLAIM_DEVICE_SIGNIFY_TRUST_ERROR"
 msgstr "Error while acknowledging SAS code. Please restart the process."
 
 msgid "TEXT_CLAIM_DEVICE_WAIT_PEER_TRUST_ERROR"
-msgstr "Error while waiting for peer SAS code acknowledgment. Please restart the process."
+msgstr ""
+"Error while waiting for peer SAS code acknowledgment. Please restart the "
+"process."
 
 msgid "TEXT_CLAIM_DEVICE_CLAIM_ERROR"
 msgstr "Error while validating invite information. Please restart the process."
@@ -1811,15 +1787,6 @@ msgstr "The link is invalid."
 msgid "TEXT_INVALID_URL"
 msgstr "The link is invalid."
 
-msgid "TEXT_BOOTSTRAP_ORG_URL_TITLE"
-msgstr "Bootstrap an organization"
-
-msgid "TEXT_BOOTSTRAP_ORG_URL_INSTRUCTIONS"
-msgstr "Please provide the link to bootstrap the organization."
-
-msgid "TEXT_BOOTSTRAP_ORG_URL_PLACEHOLDER"
-msgstr "parsec://parsec.example.com/my_org?action=bootstrap_organization&token=1234ABCD"
-
 msgid "TEXT_ERROR_REPORTING_TITLE"
 msgstr "Error reporting"
 
@@ -1900,33 +1867,6 @@ msgstr ""
 "title=\"Flaticon\" style=\"color: #0092FF; font-weight: "
 "bold;\">www.flaticon.com</a>"
 
-msgid "TEXT_LABEL_DEVICE_NAME"
-msgstr "Device name"
-
-msgid "TEXT_LABEL_PASSWORD"
-msgstr "Password"
-
-msgid "TEXT_LABEL_PASSWORD_CONFIRMATION"
-msgstr "Password confirmation"
-
-msgid "TEXT_BOOTSTRAP_ORG_TOOLTIP"
-msgstr "Bootstrap the organization"
-
-msgid "ACTION_BOOTSTRAP_ORG"
-msgstr "Bootstrap the organization"
-
-msgid "TEXT_LABEL_USER_EMAIL"
-msgstr "Email"
-
-msgid "TEXT_LABEL_USER_FULL_NAME"
-msgstr "Full name"
-
-msgid "TEXT_LABEL_USER_FULL_NAME_PLACEHOLDER"
-msgstr "John Smith"
-
-msgid "TEXT_LABEL_USER_EMAIL_PLACEHOLDER"
-msgstr "user@host.com"
-
 msgid "TEXT_CLAIM_DEVICE_CODE_EXCHANGE_GET_CODE_INSTRUCTIONS"
 msgstr "Get the code from your other device."
 
@@ -1952,8 +1892,14 @@ msgstr "Device name"
 msgid "TEXT_LABEL_DEVICE_PLACEHOLDER"
 msgstr "device"
 
+msgid "TEXT_LABEL_PASSWORD"
+msgstr "Password"
+
 msgid "TEXT_LABEL_PASSWORD_PLACEHOLDER"
 msgstr "Password"
+
+msgid "TEXT_LABEL_PASSWORD_CONFIRMATION"
+msgstr "Password confirmation"
 
 msgid "TEXT_LABEL_PASSWORD_CONFIRMATION_PLACEHOLDER"
 msgstr "Password confirmation"
@@ -1999,6 +1945,18 @@ msgstr ""
 msgid "TEXT_CLAIM_USER_PROVIDE_INFO_INSTRUCTIONS"
 msgstr "Please provide the following information:"
 
+msgid "TEXT_LABEL_USER_FULL_NAME"
+msgstr "Full name"
+
+msgid "TEXT_LABEL_USER_FULL_NAME_PLACEHOLDER"
+msgstr "John Smith"
+
+msgid "TEXT_LABEL_USER_EMAIL"
+msgstr "Email"
+
+msgid "TEXT_LABEL_USER_EMAIL_PLACEHOLDER"
+msgstr "user@host.com"
+
 msgid "TEXT_CLAIM_USER_WAIT_FOR_USER_INFO"
 msgstr ""
 "We are waiting for the person who invited you to confirm these "
@@ -2009,24 +1967,14 @@ msgstr ""
 "None of\n"
 "these codes"
 
-msgid "TEXT_ORG_WIZARD_CHOICE_INSTRUCTIONS"
-msgstr "Please choose:"
-
-msgid "TEXT_ORG_WIZARD_CREATE_FROM_SCRATCH"
-msgstr ""
-"I don't have an account on the website and want to create a new "
-"organization"
-
-msgid "TEXT_ORG_WIZARD_ALREADY_HAS_URL"
-msgstr ""
-"I already have an account on the website and a link to bootstrap my "
-"organization"
-
-msgid "TEXT_ORG_WIZARD_CREATE_ORG_INSTRUCTIONS"
-msgstr "Please enter your email and the name you want for your organization."
+msgid "TEXT_LABEL_DEVICE_NAME"
+msgstr "Device name"
 
 msgid "TEXT_LABEL_ORG_NAME"
 msgstr "Organization name"
+
+msgid "TEXT_LABEL_ORG_NAME_RECOMMANDATIONS"
+msgstr "Letters, digits, underscores and hyphens only. No spaces."
 
 msgid "ACTION_ACCEPT_CONTRACT"
 msgstr ""
@@ -2038,6 +1986,9 @@ msgstr ""
 
 msgid "ACTION_PREVIOUS"
 msgstr "Previous"
+
+msgid "TEXT_CREATE_ORGANIZATION_INSTRUCTIONS"
+msgstr "Please fill out the following information to create your organization."
 
 msgid "TEXT_DEVICE_ADD_NEW_TOOLTIP"
 msgstr "Invite a new device"
@@ -2339,3 +2290,99 @@ msgstr "Go to a file using a link"
 
 #~ msgid "TEXT_GREET_USER_ADDR_COPIED_TO_CLIPBOARD"
 #~ msgstr "The invitation link has been copied to the clipboard"
+
+#~ msgid "TEXT_BOOTSTRAP_ORG_INSTRUCTIONS_url-organization"
+#~ msgstr ""
+#~ "You are about to bootstrap the "
+#~ "organization <b>{organization}</b>. You will "
+#~ "be the first administrator of the "
+#~ "organization.<br /><br />\n"
+#~ "\n"
+#~ "To proceed, please provide your name,"
+#~ " your email address, a name for "
+#~ "this device, and a password."
+
+#~ msgid "TEXT_BOOTSTRAP_ORG_INVALID_URL"
+#~ msgstr "This is not a valid bootstrap link."
+
+#~ msgid "TEXT_BOOTSTRAP_ORG_INVITE_NOT_FOUND"
+#~ msgstr "There are no organization to bootstrap with this link."
+
+#~ msgid "TEXT_BOOTSTRAP_ORG_ALREADY_BOOTSTRAPPED"
+#~ msgstr "This organization has already been bootstrapped."
+
+#~ msgid "TEXT_BOOTSTRAP_ORG_USER_EXISTS"
+#~ msgstr "This user already exists within this organization."
+
+#~ msgid "TEXT_BOOTSTRAP_ORG_PASSWORD_MISMATCH"
+#~ msgstr "The password and the password confirmation do no match."
+
+#~ msgid "TEXT_BOOTSTRAP_ORG_PASSWORD_COMPLEXITY_TOO_LOW"
+#~ msgstr "The password is not complex enough."
+
+#~ msgid "TEXT_BOOTSTRAP_ORG_BAD_DEVICE_NAME"
+#~ msgstr "The device name is invalid."
+
+#~ msgid "TEXT_BOOTSTRAP_ORG_BAD_API_VERSION"
+#~ msgstr ""
+#~ "Your application is not compatible with"
+#~ " this server. Try to update it "
+#~ "to the latest version."
+
+#~ msgid "TEXT_BOOTSTRAP_ORG_BACKEND_REFUSAL"
+#~ msgstr "Could not bootstrap the organization."
+
+#~ msgid "TEXT_BOOTSTRAP_ORG_BACKEND_OFFLINE"
+#~ msgstr "The server is offline or you have no access to the internet."
+
+#~ msgid "TEXT_BOOTSTRAP_ORG_UNKNOWN_FAILURE"
+#~ msgstr "Could not bootstrap the organization."
+
+#~ msgid "TEXT_BOOTSTRAP_ORG_INVALID_EMAIL"
+#~ msgstr "The email is invalid."
+
+#~ msgid "TEXT_BOOTSTRAP_ORG_TITLE"
+#~ msgstr "Bootstrap the organization"
+
+#~ msgid "ACTION_CREATE_ORGANIZATION"
+#~ msgstr "Create the organization"
+
+#~ msgid "TEXT_BOOTSTRAP_ORG_URL_TITLE"
+#~ msgstr "Bootstrap an organization"
+
+#~ msgid "TEXT_BOOTSTRAP_ORG_URL_INSTRUCTIONS"
+#~ msgstr "Please provide the link to bootstrap the organization."
+
+#~ msgid "TEXT_BOOTSTRAP_ORG_URL_PLACEHOLDER"
+#~ msgstr "parsec://parsec.example.com/my_org?action=bootstrap_organization&token=1234ABCD"
+
+#~ msgid "TEXT_BOOTSTRAP_ORG_TOOLTIP"
+#~ msgstr "Bootstrap the organization"
+
+#~ msgid "ACTION_BOOTSTRAP_ORG"
+#~ msgstr "Bootstrap the organization"
+
+#~ msgid "TEXT_ORG_WIZARD_CHOICE_INSTRUCTIONS"
+#~ msgstr "Please choose:"
+
+#~ msgid "TEXT_ORG_WIZARD_CREATE_FROM_SCRATCH"
+#~ msgstr ""
+#~ "I don't have an account on the "
+#~ "website and want to create a new"
+#~ " organization"
+
+#~ msgid "TEXT_ORG_WIZARD_ALREADY_HAS_URL"
+#~ msgstr ""
+#~ "I already have an account on the"
+#~ " website and a link to bootstrap "
+#~ "my organization"
+
+#~ msgid "TEXT_ORG_WIZARD_CREATE_ORG_INSTRUCTIONS"
+#~ msgstr "Please enter your email and the name you want for your organization."
+
+#~ msgid "TEXT_ORG_WIZARD_EMAIL_ALREADY_EXISTS"
+#~ msgstr "This email is already used."
+
+#~ msgid "TEXT_ORG_WIZARD_INVALID_RESPONSE"
+#~ msgstr "Could not create the organization."
+

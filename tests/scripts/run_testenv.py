@@ -83,7 +83,7 @@ Your environment will be configured with the following commands:
             await f.write(line + "\n")
 
 
-async def generate_gui_config():
+async def generate_gui_config(backend_address):
     config_dir = None
     if os.name == "nt":
         config_dir = trio.Path(os.environ["APPDATA"]) / "parsec/config"
@@ -98,6 +98,7 @@ async def generate_gui_config():
         "gui_check_version_at_startup": False,
         "gui_tray_enabled": False,
         "gui_last_version": PARSEC_VERSION,
+        "default_backend_addr": str(backend_address),
     }
     await config_file.write_text(json.dumps(config, indent=4))
 
@@ -127,7 +128,7 @@ MimeType=x-scheme-handler/parsec;
 async def restart_local_backend(administration_token, backend_port):
     pattern = f"parsec.* backend.* run.* -P {backend_port}"
     command = (
-        f"{sys.executable} -Wignore -m parsec.cli backend run -b MOCKED --db MOCKED "
+        f"{sys.executable} -Wignore -m parsec.cli backend run -b MOCKED --db MOCKED --spontaneous-organization-bootstrap "
         f"-P {backend_port} --administration-token {administration_token} --backend-addr parsec://localhost:{backend_port}?no_ssl=true"
     )
 
@@ -232,9 +233,6 @@ async def amain(
     if empty:
         return
 
-    # Generate dummy config file for gui
-    await generate_gui_config()
-
     # Start a local backend
     if backend_address is None:
         backend_address = await restart_local_backend(administration_token, backend_port)
@@ -249,6 +247,9 @@ A fresh backend server is now running: {backend_address}
 Using existing backend: {backend_address}
 """
         )
+
+    # Generate dummy config file for gui
+    await generate_gui_config(backend_address)
 
     # Initialize the test organization
     config_dir = get_default_config_dir(os.environ)

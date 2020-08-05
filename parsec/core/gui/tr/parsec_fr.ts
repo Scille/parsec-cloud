@@ -19,59 +19,6 @@
     </message>
 </context>
 <context>
-    <name>BootstrapOrganizationWidget</name>
-    <message>
-        <location filename="../forms/bootstrap_organization_widget.ui" line="14"/>
-        <source>Form</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../forms/bootstrap_organization_widget.ui" line="228"/>
-        <source>TEXT_LABEL_DEVICE_NAME</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../forms/bootstrap_organization_widget.ui" line="288"/>
-        <source>TEXT_LABEL_PASSWORD</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../forms/bootstrap_organization_widget.ui" line="336"/>
-        <source>TEXT_LABEL_PASSWORD_CONFIRMATION</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../forms/bootstrap_organization_widget.ui" line="399"/>
-        <source>TEXT_BOOTSTRAP_ORG_TOOLTIP</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../forms/bootstrap_organization_widget.ui" line="405"/>
-        <source>ACTION_BOOTSTRAP_ORG</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../forms/bootstrap_organization_widget.ui" line="189"/>
-        <source>TEXT_LABEL_USER_EMAIL</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../forms/bootstrap_organization_widget.ui" line="147"/>
-        <source>TEXT_LABEL_USER_FULL_NAME</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../forms/bootstrap_organization_widget.ui" line="168"/>
-        <source>TEXT_LABEL_USER_FULL_NAME_PLACEHOLDER</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../forms/bootstrap_organization_widget.ui" line="207"/>
-        <source>TEXT_LABEL_USER_EMAIL_PLACEHOLDER</source>
-        <translation type="unfinished"></translation>
-    </message>
-</context>
-<context>
     <name>CentralWidget</name>
     <message>
         <location filename="../forms/central_widget.ui" line="14"/>
@@ -343,52 +290,67 @@
     </message>
 </context>
 <context>
-    <name>CreateOrgFirstPageWidget</name>
+    <name>CreateOrgDeviceInfoWidget</name>
     <message>
-        <location filename="../forms/create_org_first_page_widget.ui" line="14"/>
+        <location filename="../forms/create_org_device_info_widget.ui" line="14"/>
         <source>Form</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../forms/create_org_first_page_widget.ui" line="35"/>
-        <source>TEXT_ORG_WIZARD_CHOICE_INSTRUCTIONS</source>
+        <location filename="../forms/create_org_device_info_widget.ui" line="47"/>
+        <source>TEXT_LABEL_DEVICE_NAME</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../forms/create_org_first_page_widget.ui" line="42"/>
-        <source>TEXT_ORG_WIZARD_CREATE_FROM_SCRATCH</source>
+        <location filename="../forms/create_org_device_info_widget.ui" line="102"/>
+        <source>TEXT_LABEL_PASSWORD</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../forms/create_org_first_page_widget.ui" line="49"/>
-        <source>TEXT_ORG_WIZARD_ALREADY_HAS_URL</source>
+        <location filename="../forms/create_org_device_info_widget.ui" line="145"/>
+        <source>TEXT_LABEL_PASSWORD_CONFIRMATION</source>
         <translation type="unfinished"></translation>
     </message>
 </context>
 <context>
-    <name>CreateOrgSecondPageWidget</name>
+    <name>CreateOrgUserInfoWidget</name>
     <message>
-        <location filename="../forms/create_org_second_page_widget.ui" line="14"/>
+        <location filename="../forms/create_org_user_info_widget.ui" line="14"/>
         <source>Form</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../forms/create_org_second_page_widget.ui" line="35"/>
-        <source>TEXT_ORG_WIZARD_CREATE_ORG_INSTRUCTIONS</source>
+        <location filename="../forms/create_org_user_info_widget.ui" line="52"/>
+        <source>TEXT_LABEL_USER_FULL_NAME</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../forms/create_org_second_page_widget.ui" line="54"/>
+        <location filename="../forms/create_org_user_info_widget.ui" line="59"/>
+        <source>TEXT_LABEL_USER_FULL_NAME_PLACEHOLDER</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../forms/create_org_user_info_widget.ui" line="80"/>
         <source>TEXT_LABEL_USER_EMAIL</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../forms/create_org_second_page_widget.ui" line="96"/>
+        <location filename="../forms/create_org_user_info_widget.ui" line="87"/>
+        <source>TEXT_LABEL_USER_EMAIL_PLACEHOLDER</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../forms/create_org_user_info_widget.ui" line="108"/>
         <source>TEXT_LABEL_ORG_NAME</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../forms/create_org_second_page_widget.ui" line="187"/>
+        <location filename="../forms/create_org_user_info_widget.ui" line="124"/>
+        <source>TEXT_LABEL_ORG_NAME_RECOMMANDATIONS</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../forms/create_org_user_info_widget.ui" line="148"/>
         <source>ACTION_ACCEPT_CONTRACT</source>
         <translation type="unfinished"></translation>
     </message>
@@ -401,13 +363,18 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../forms/create_org_widget.ui" line="119"/>
+        <location filename="../forms/create_org_widget.ui" line="143"/>
         <source>ACTION_PREVIOUS</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../forms/create_org_widget.ui" line="129"/>
+        <location filename="../forms/create_org_widget.ui" line="153"/>
         <source>ACTION_NEXT</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../forms/create_org_widget.ui" line="42"/>
+        <source>TEXT_CREATE_ORGANIZATION_INSTRUCTIONS</source>
         <translation type="unfinished"></translation>
     </message>
 </context>

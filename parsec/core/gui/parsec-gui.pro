@@ -21,7 +21,6 @@ FORMS += forms/main_window.ui \
          forms/notification_center_widget.ui \
          forms/menu_widget.ui \
          forms/notification_widget.ui \
-         forms/bootstrap_organization_widget.ui \
          forms/sharing_widget.ui \
          forms/new_version_dialog.ui \
          forms/new_version_info.ui \
@@ -42,9 +41,7 @@ FORMS += forms/main_window.ui \
     forms/loading_widget.ui \
     forms/password_strength_widget.ui \
     forms/file_history_button.ui \
-    forms/create_org_first_page_widget.ui \
     forms/create_org_widget.ui \
-    forms/create_org_second_page_widget.ui \
     forms/greet_user_widget.ui \
     forms/claim_user_code_exchange_widget.ui \
     forms/claim_user_finalize_widget.ui \
@@ -60,7 +57,9 @@ FORMS += forms/main_window.ui \
     forms/greet_device_widget.ui \
     forms/claim_device_instructions_widget.ui \
     forms/claim_device_code_exchange_widget.ui \
-    forms/claim_device_provide_info_widget.ui
+    forms/claim_device_provide_info_widget.ui \
+    forms/create_org_user_info_widget.ui \
+    forms/create_org_device_info_widget.ui
 
 RESOURCES += rc/resources.qrc \
     forms/rc/resources.qrc

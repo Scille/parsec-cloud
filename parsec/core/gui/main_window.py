@@ -28,7 +28,6 @@ from parsec.core.gui import telemetry
 from parsec.core.gui import desktop
 from parsec.core import win_registry
 from parsec.core.gui.changelog_widget import ChangelogWidget
-from parsec.core.gui.bootstrap_organization_widget import BootstrapOrganizationWidget
 from parsec.core.gui.claim_user_widget import ClaimUserWidget
 from parsec.core.gui.claim_device_widget import ClaimDeviceWidget
 from parsec.core.gui.license_widget import LicenseWidget
@@ -37,7 +36,6 @@ from parsec.core.gui.settings_widget import SettingsWidget
 from parsec.core.gui.custom_dialogs import ask_question, show_error, GreyedDialog, get_text_input
 from parsec.core.gui.custom_widgets import Button
 from parsec.core.gui.create_org_widget import CreateOrgWidget
-from parsec.core.gui import validators
 from parsec.core.gui.ui.main_window import Ui_MainWindow
 
 
@@ -245,13 +243,16 @@ class MainWindow(QMainWindow, Ui_MainWindow):
     def _on_add_instance_clicked(self):
         self.add_instance()
 
-    def _on_create_org_clicked(self):
-        def _on_finished(action_addr):
-            if action_addr is None:
+    def _on_create_org_clicked(self, addr=None):
+        def _on_finished(ret):
+            if ret is None:
                 return
-            self._on_bootstrap_org_clicked(action_addr)
+            self.reload_login_devices()
+            self.try_login(ret[0], ret[1])
 
-        CreateOrgWidget.show_modal(self.jobs_ctx, self, on_finished=_on_finished)
+        CreateOrgWidget.show_modal(
+            self.jobs_ctx, self.config, self, on_finished=_on_finished, start_addr=addr
+        )
 
     def _on_join_org_clicked(self):
         url = get_text_input(
@@ -273,8 +274,9 @@ class MainWindow(QMainWindow, Ui_MainWindow):
             show_error(self, _("TEXT_INVALID_URL"), exception=exc)
             return
 
+        print(action_addr)
         if isinstance(action_addr, BackendOrganizationBootstrapAddr):
-            self._on_bootstrap_org_clicked(action_addr)
+            self._on_create_org_clicked(action_addr)
         elif isinstance(action_addr, BackendInvitationAddr):
             if action_addr.invitation_type == InvitationType.USER:
                 self._on_claim_user_clicked(action_addr)
@@ -286,41 +288,6 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         else:
             show_error(self, _("TEXT_INVALID_URL"))
             return
-
-    def _on_bootstrap_org_clicked(self, action_addr=None):
-        if not action_addr:
-            url = get_text_input(
-                parent=self,
-                title=_("TEXT_BOOTSTRAP_ORG_URL_TITLE"),
-                message=_("TEXT_BOOTSTRAP_ORG_URL_INSTRUCTIONS"),
-                placeholder=_("TEXT_BOOTSTRAP_ORG_URL_PLACEHOLDER"),
-                validator=validators.BackendOrganizationBootstrapAddrValidator(),
-            )
-            if url is None:
-                return
-            elif url == "":
-                show_error(self, _("TEXT_BOOTSTRAP_ORG_INVALID_URL"))
-                return
-
-            action_addr = None
-            try:
-                action_addr = BackendOrganizationBootstrapAddr.from_url(url)
-            except ValueError as exc:
-                show_error(self, _("TEXT_BOOTSTRAP_ORG_INVALID_URL"), exception=exc)
-                return
-
-        def _on_finished(ret):
-            if ret:
-                self.reload_login_devices()
-                self.try_login(ret[0], ret[1])
-
-        BootstrapOrganizationWidget.show_modal(
-            jobs_ctx=self.jobs_ctx,
-            config=self.config,
-            addr=action_addr,
-            parent=self,
-            on_finished=_on_finished,
-        )
 
     def _on_claim_user_clicked(self, action_addr):
         widget = None
@@ -600,7 +567,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
             self.go_to_file_link(action_addr)
         elif action_addr:
             if isinstance(action_addr, BackendOrganizationBootstrapAddr):
-                self._on_bootstrap_org_clicked(action_addr)
+                self._on_create_org_clicked(action_addr)
             elif isinstance(action_addr, BackendInvitationAddr):
                 if action_addr.invitation_type == InvitationType.USER:
                     self._on_claim_user_clicked(action_addr)

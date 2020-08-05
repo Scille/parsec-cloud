@@ -6,12 +6,17 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>558</width>
-    <height>395</height>
+    <width>634</width>
+    <height>539</height>
    </rect>
   </property>
   <property name="windowTitle">
    <string>Form</string>
+  </property>
+  <property name="styleSheet">
+   <string notr="true">#widget {
+    background-color: #F4F4F4;
+}</string>
   </property>
   <layout class="QVBoxLayout" name="verticalLayout">
    <property name="spacing">
@@ -30,7 +35,24 @@
     <number>0</number>
    </property>
    <item>
+    <layout class="QHBoxLayout" name="horizontalLayout_4">
+     <item>
+      <widget class="QLabel" name="label_instructions">
+       <property name="text">
+        <string>TEXT_CREATE_ORGANIZATION_INSTRUCTIONS</string>
+       </property>
+       <property name="wordWrap">
+        <bool>true</bool>
+       </property>
+      </widget>
+     </item>
+    </layout>
+   </item>
+   <item>
     <layout class="QHBoxLayout" name="horizontalLayout">
+     <property name="spacing">
+      <number>15</number>
+     </property>
      <item>
       <widget class="QLabel" name="label">
        <property name="minimumSize">
@@ -58,6 +80,12 @@
      </item>
      <item>
       <widget class="QWidget" name="widget" native="true">
+       <property name="sizePolicy">
+        <sizepolicy hsizetype="Preferred" vsizetype="Expanding">
+         <horstretch>0</horstretch>
+         <verstretch>0</verstretch>
+        </sizepolicy>
+       </property>
        <property name="minimumSize">
         <size>
          <width>350</width>
@@ -66,26 +94,22 @@
        </property>
        <layout class="QVBoxLayout" name="verticalLayout_3">
         <property name="spacing">
-         <number>0</number>
+         <number>10</number>
         </property>
         <property name="leftMargin">
-         <number>20</number>
+         <number>0</number>
         </property>
         <property name="topMargin">
-         <number>40</number>
+         <number>0</number>
         </property>
         <property name="rightMargin">
-         <number>20</number>
+         <number>0</number>
         </property>
         <property name="bottomMargin">
-         <number>40</number>
+         <number>0</number>
         </property>
         <item>
-         <layout class="QVBoxLayout" name="main_layout">
-          <property name="spacing">
-           <number>0</number>
-          </property>
-         </layout>
+         <layout class="QVBoxLayout" name="main_layout"/>
         </item>
        </layout>
       </widget>
