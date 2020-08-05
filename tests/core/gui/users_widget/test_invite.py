@@ -40,7 +40,8 @@ async def test_invite_user(
         assert not autoclose_dialog.dialogs
 
         monkeypatch.setattr(
-            "parsec.core.gui.users_widget.get_text_input", lambda *args, **kwargs: "bob@example.com"
+            "parsec.core.gui.users_widget.get_text_input",
+            lambda *args, **kwargs: bob.human_handle.email,
         )
         await aqtbot.mouse_click(u_w.button_add_user, QtCore.Qt.LeftButton)
 
