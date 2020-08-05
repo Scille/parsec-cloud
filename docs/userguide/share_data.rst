@@ -11,14 +11,14 @@ for read and write access.
 
 So before adding data to Parsec we must create a workspace:
 
-.. image:: screen/create_workspace.png
+.. image:: screens/create_workspace.png
     :align: center
     :alt: Creating workspace process
 
 The creator of the workspace automatically gets the ``Owner`` role, as shown
 above, and can then share the workspace with other users.
 
-.. image:: screen/share_workspace.png
+.. image:: screens/share_workspace.png
     :align: center
     :alt: Sharing workspace process
 
