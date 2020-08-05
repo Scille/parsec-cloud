@@ -39,21 +39,6 @@ class MemoryUserComponent(BaseUserComponent):
     def register_components(self, **other_components):
         pass
 
-    async def retrieve_human(
-        self, organization_id: OrganizationID, email: str
-    ) -> HumanFindResultItem:
-        org = self._organizations[organization_id]
-        for _, user in org.users.items():
-            if user.human_handle and user.human_handle.email == email:
-                break
-        else:
-            return None
-        return HumanFindResultItem(
-            user_id=user.user_id,
-            human_handle=HumanHandle(email=user.human_handle.email, label=user.human_handle.label),
-            revoked=(user.revoked_on is not None and user.revoked_on <= pendulum.now()),
-        )
-
     async def create_user(
         self, organization_id: OrganizationID, user: User, first_device: Device
     ) -> None:

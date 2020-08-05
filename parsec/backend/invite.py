@@ -70,6 +70,10 @@ class InvitationInvalidStateError(InvitationError):
     pass
 
 
+class InvitationAlreadyMemberError(InvitationError):
+    pass
+
+
 class ConduitState(Enum):
     STATE_1_WAIT_PEERS = "1_WAIT_PEERS"
     STATE_2_1_CLAIMER_HASHED_NONCE = "2_1_CLAIMER_HASHED_NONCE"
@@ -249,14 +253,14 @@ class BaseInviteComponent:
         if msg["type"] == InvitationType.USER:
             if client_ctx.profile != UserProfile.ADMIN:
                 return invite_new_serializer.rep_dump({"status": "not_allowed"})
-            if await self.user_already_member(client_ctx.organization_id, msg["claimer_email"]):
+            try:
+                invitation = await self.new_for_user(
+                    organization_id=client_ctx.organization_id,
+                    greeter_user_id=client_ctx.user_id,
+                    claimer_email=msg["claimer_email"],
+                )
+            except InvitationAlreadyMemberError:
                 return invite_new_serializer.rep_dump({"status": "already_member"})
-
-            invitation = await self.new_for_user(
-                organization_id=client_ctx.organization_id,
-                greeter_user_id=client_ctx.user_id,
-                claimer_email=msg["claimer_email"],
-            )
 
             if msg["send_email"]:
                 if client_ctx.human_handle:
@@ -758,12 +762,6 @@ class BaseInviteComponent:
             InvitationNotFoundError
             InvitationAlreadyDeletedError
             InvitationInvalidStateError
-        """
-        raise NotImplementedError()
-
-    async def user_already_member(self, organization_id: OrganizationID, email: str) -> bool:
-        """
-        Raise: Nothing
         """
         raise NotImplementedError()
 

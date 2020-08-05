@@ -957,11 +957,6 @@ class BaseUserComponent:
     ) -> Tuple[List[HumanFindResultItem], int]:
         raise NotImplementedError()
 
-    async def retrieve_human(
-        self, organization_id: OrganizationID, email: str
-    ) -> HumanFindResultItem:
-        raise NotImplementedError()
-
     async def create_user_invitation(
         self, organization_id: OrganizationID, invitation: UserInvitation
     ) -> None:

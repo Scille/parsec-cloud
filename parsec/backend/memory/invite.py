@@ -19,6 +19,7 @@ from parsec.backend.invite import (
     InvitationNotFoundError,
     InvitationAlreadyDeletedError,
     InvitationInvalidStateError,
+    InvitationAlreadyMemberError,
 )
 
 
@@ -59,9 +60,6 @@ class MemoryInviteComponent(BaseInviteComponent):
         if token in org.deleted_invitations:
             raise InvitationAlreadyDeletedError(token)
         return invitation, org.conduits[token]
-
-    async def user_already_member(self, organization_id: OrganizationID, email: str) -> bool:
-        return await self._user_component.retrieve_human(organization_id, email) is not None
 
     async def _conduit_talk(
         self,
@@ -176,6 +174,14 @@ class MemoryInviteComponent(BaseInviteComponent):
         claimer_email: str,
         created_on: Optional[Pendulum] = None,
     ) -> UserInvitation:
+        """
+        Raise: InvitationAlreadyMemberError
+        """
+        org = self._user_component._organizations[organization_id]
+        for _, user in org.users.items():
+            is_revoked = user.revoked_on and user.revoked_on <= pendulum_now()
+            if user.human_handle and not is_revoked and user.human_handle.email == claimer_email:
+                raise InvitationAlreadyMemberError()
         return await self._new(
             organization_id=organization_id,
             greeter_user_id=greeter_user_id,

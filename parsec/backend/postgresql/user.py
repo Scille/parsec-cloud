@@ -20,7 +20,6 @@ from parsec.backend.postgresql.user_queries import (
     query_create_device,
     query_find,
     query_find_humans,
-    query_retrieve_human,
     query_get_user,
     query_get_user_with_trustchain,
     query_get_user_with_device_and_trustchain,
@@ -109,12 +108,6 @@ class PGUserComponent(BaseUserComponent):
             return await query_find_humans(
                 conn, organization_id, query, page, per_page, omit_revoked, omit_non_human
             )
-
-    async def retrieve_human(
-        self, organization_id: OrganizationID, email: str
-    ) -> HumanFindResultItem:
-        async with self.dbh.pool.acquire() as conn, conn.transaction():
-            return await query_retrieve_human(conn, organization_id, [("human.email", "=", email)])
 
     async def create_user_invitation(
         self, organization_id: OrganizationID, invitation: UserInvitation

@@ -26,6 +26,7 @@ from parsec.backend.invite import (
     InvitationNotFoundError,
     InvitationAlreadyDeletedError,
     InvitationInvalidStateError,
+    InvitationAlreadyMemberError,
 )
 from parsec.backend.postgresql.queries import (
     Q,
@@ -33,7 +34,7 @@ from parsec.backend.postgresql.queries import (
     q_user,
     q_user_internal_id,
 )
-from parsec.backend.postgresql.user import PGUserComponent
+from parsec.backend.postgresql.user_queries.find import query_retrieve_active_human_by_email
 
 _q_retrieve_compatible_user_invitation = Q(
     f"""
@@ -462,15 +463,9 @@ async def _do_new_user_invitation(
 
 
 class PGInviteComponent(BaseInviteComponent):
-    def __init__(self, dbh: PGHandler, user_component: PGUserComponent, *args, **kwargs):
+    def __init__(self, dbh: PGHandler, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.dbh = dbh
-        self.user_component = user_component
-
-    async def user_already_member(self, organization_id: OrganizationID, email: str) -> bool:
-        async with self.dbh.pool.acquire() as conn, conn.transaction():
-            r = await self.user_component.retrieve_human(organization_id, email)
-            return r is not None
 
     async def new_for_user(
         self,
@@ -480,10 +475,13 @@ class PGInviteComponent(BaseInviteComponent):
         created_on: Optional[Pendulum] = None,
     ) -> UserInvitation:
         """
-        Raise: Nothing
+        Raise: InvitationAlreadyMemberError
         """
         created_on = created_on or pendulum_now()
         async with self.dbh.pool.acquire() as conn, conn.transaction():
+            human = await query_retrieve_active_human_by_email(conn, organization_id, claimer_email)
+            if human and not human.revoked:
+                raise InvitationAlreadyMemberError()
             token = await _do_new_user_invitation(
                 conn,
                 organization_id=organization_id,
