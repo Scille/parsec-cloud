@@ -242,7 +242,7 @@ async def test_handshake_expired_organization(backend, server_factory, expiredor
             result_req = await transport.recv()
             with pytest.raises(HandshakeOrganizationExpired):
                 ch.process_result_req(result_req)
-    spy.assert_event_occured(BackendEvent.ORGANIZATION_EXPIRED)
+            await spy.wait_with_timeout(BackendEvent.ORGANIZATION_EXPIRED)
 
 
 @pytest.mark.trio

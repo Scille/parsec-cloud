@@ -97,7 +97,7 @@ async def test_expired_notification_from_update(
         await running_backend.backend.organization.set_expiration_date(
             alice.organization_id, pendulum.datetime(1989, 1, 1)
         )
-    spy.assert_event_occured(BackendEvent.ORGANIZATION_EXPIRED)
+        await spy.wait_with_timeout(BackendEvent.ORGANIZATION_EXPIRED)
 
     def _expired_notified():
         assert autoclose_dialog.dialogs == [("Error", "The organization has expired")]

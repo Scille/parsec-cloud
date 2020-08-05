@@ -23,13 +23,13 @@ from parsec.backend.events import BackendEvent
 
 
 class MemoryOrganizationComponent(BaseOrganizationComponent):
-    def __init__(self, event_bus, *args, **kwargs):
+    def __init__(self, send_event, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self._user_component = None
         self._vlob_component = None
         self._block_component = None
         self._organizations = {}
-        self.event_bus = event_bus
+        self._send_event = send_event
 
     def register_components(
         self,
@@ -110,6 +110,6 @@ class MemoryOrganizationComponent(BaseOrganizationComponent):
                 expiration_date=expiration_date
             )
             if self._organizations[id].is_expired:
-                self.event_bus.send(BackendEvent.ORGANIZATION_EXPIRED, organization_id=id)
+                await self._send_event(BackendEvent.ORGANIZATION_EXPIRED, organization_id=id)
         except KeyError:
             raise OrganizationNotFoundError()

@@ -7,7 +7,6 @@ from triopg import UniqueViolationError
 
 from parsec.api.protocol import OrganizationID
 from parsec.crypto import VerifyKey
-from parsec.event_bus import EventBus
 from parsec.backend.events import BackendEvent
 from parsec.backend.user import UserError, User, Device
 from parsec.backend.organization import (
@@ -24,6 +23,7 @@ from parsec.backend.organization import (
 from parsec.backend.postgresql.handler import PGHandler
 from parsec.backend.postgresql.user_queries.create import _create_user
 from parsec.backend.postgresql.utils import Q, q_organization_internal_id
+from parsec.backend.postgresql.handler import send_signal
 
 
 _q_insert_organization = Q(
@@ -94,10 +94,9 @@ WHERE organization_id = $organization_id
 
 
 class PGOrganizationComponent(BaseOrganizationComponent):
-    def __init__(self, dbh: PGHandler, event_bus: EventBus, *args, **kwargs):
+    def __init__(self, dbh: PGHandler, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.dbh = dbh
-        self.event_bus = event_bus
 
     async def create(
         self, id: OrganizationID, bootstrap_token: str, expiration_date: Optional[Pendulum] = None
@@ -194,6 +193,5 @@ class PGOrganizationComponent(BaseOrganizationComponent):
             if result != "UPDATE 1":
                 raise OrganizationError(f"Update error: {result}")
 
-            organization = await self._get(conn, id)
-            if organization.is_expired:
-                self.event_bus.send(BackendEvent.ORGANIZATION_EXPIRED, organization_id=id)
+            if expiration_date is not None and expiration_date <= Pendulum.now():
+                await send_signal(conn, BackendEvent.ORGANIZATION_EXPIRED, organization_id=id)

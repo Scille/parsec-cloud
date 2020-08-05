@@ -131,7 +131,7 @@ async def test_organization_expired(running_backend, alice, expiredorg):
                 expiredorg.addr, alice.device_id, alice.signing_key
             ) as cmds:
                 await cmds.ping()
-    spy.assert_event_occured(BackendEvent.ORGANIZATION_EXPIRED)
+        await spy.wait_with_timeout(BackendEvent.ORGANIZATION_EXPIRED)
     assert str(exc.value) == "Trial organization has expired"
 
 

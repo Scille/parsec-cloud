@@ -125,9 +125,10 @@ class BackendApp:
             client_ctx, error_infos = await do_handshake(self, transport)
             if not client_ctx:
                 # Invalid handshake
-                if error_infos.get("reason", "") == "Expired organization":
+                # TODO Fragile test based on reason, make it more robust
+                if error_infos and error_infos.get("reason", "") == "Expired organization":
                     organization_id = error_infos["organization_id"]
-                    self.event_bus.send(
+                    await self.events.send(
                         BackendEvent.ORGANIZATION_EXPIRED, organization_id=organization_id
                     )
                 selected_logger.info("Connection dropped: bad handshake", **error_infos)

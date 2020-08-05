@@ -52,7 +52,7 @@ async def test_handshake_organization_expired(running_backend, expiredorg):
         with pytest.raises(BackendConnectionRefused) as exc:
             async with apiv1_backend_anonymous_cmds_factory(expiredorg.addr) as cmds:
                 await cmds.ping()
-    spy.assert_event_occured(BackendEvent.ORGANIZATION_EXPIRED)
+        await spy.wait_with_timeout(BackendEvent.ORGANIZATION_EXPIRED)
     assert str(exc.value) == "Trial organization has expired"
 
 
