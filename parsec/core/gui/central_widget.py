@@ -206,7 +206,9 @@ class CentralWidget(QWidget, Ui_CentralWidget):
         if disconnected:
             self.systray_notification.emit(
                 "Parsec",
-                f"{self.core.device.organization_id}:" + _("TEXT_BACKEND_STATE_DISCONNECTED"),
+                _("TEXT_SYSTRAY_BACKEND_DISCONNECT_organization").format(
+                    organization=self.core.device.organization_id
+                ),
                 5000,
             )
 
