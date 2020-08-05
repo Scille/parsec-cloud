@@ -1,0 +1,1 @@
+Display systray notification to make offline mode more obvious to the users

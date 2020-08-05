@@ -1721,6 +1721,9 @@ msgstr "Connected"
 msgid "TEXT_BACKEND_STATE_DISCONNECTED"
 msgstr "Disconnected"
 
+msgid "TEXT_SYSTRAY_BACKEND_DISCONNECT_organization"
+msgstr "{organization}: Disconnected"
+
 msgid "TEXT_BACKEND_STATE_API_MISMATCH_versions"
 msgstr "Application incompatible with the server"
 
