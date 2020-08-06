@@ -51,10 +51,10 @@ msgid "User : represents a natural person in Parsec. An user owns an asymmetric 
 msgstr "Utilisateur : représente une personne physique dans Parsec. Un utilisateur dispose d’une clé asymétrique (USER_ENC_S_KEY / USER_ENC_P_KEY) lui permettant de chiffrer des données uniquement pour lui tel que son User Manifest (voir ci-dessous)."
 
 msgid "The Workstation : the physical support -- desktop or mobile computer."
-msgstr "Le Poste de Travail : support physique -- ordinateur desktop ou portable."
+msgstr "Le Poste de Travail : support physique -- ordinateur fixe ou portable."
 
 msgid "Device : it is through a Device that the user accesses Parsec. Each user potentially has multiple devices (e.g. one for his desktop and one for his laptop). Each terminal owns it's own asymmetric signature key (DEVICE_SIG_S_KEY / DEVICE_SIG_P_KEY) enabling him to sign the modification he has made."
-msgstr "Terminal : c’est par l’intermédiaire d’un terminal (ou device) que l’utilisateur accède à Parsec. Chaque utilisateur a potentiellement plusieurs terminaux (ex: un pour son ordinateur fixe et un autre sur son portable). Chaque terminal possède sa propre clé asymétrique de signature (DEVICE_SIG_S_KEY / DEVICE_SIG_P_KEY) permettant de signer les modifications qu’il a réalisé."
+msgstr "Terminal : c’est par l’intermédiaire d’un terminal (ou device) que l’utilisateur accède à Parsec. Chaque utilisateur a potentiellement plusieurs terminaux (ex: un pour son ordinateur fixe et un autre sur son portable). Chaque terminal possède sa propre clé asymétrique de signature (DEVICE_SIG_S_KEY / DEVICE_SIG_P_KEY) permettant de signer les modifications qu’il a réalisées."
 
 msgid "Parsec data model"
 msgstr "Modèle de données Parsec"

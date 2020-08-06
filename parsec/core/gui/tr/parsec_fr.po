@@ -2426,9 +2426,3 @@ msgstr "Créer un nouvel espace de travail"
 
 msgid "ACTION_WORKSPACE_GOTO_FILE_LINK"
 msgstr "Trouver un fichier via son lien"
-
-<<<<<<< HEAD
-#~ msgid "TEXT_GREET_USER_ADDR_COPIED_TO_CLIPBOARD"
-#~ msgstr "Le lien d'invitation a été copié dans le presse-papier."
-=======
->>>>>>> b0a9c4dcf73bd22cd4bc4af9030779e75fe28932
