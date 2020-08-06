@@ -26,7 +26,9 @@ The Administrator profile enables
 - the creation of other users (whether Administrator or User)
 - the deletion of whichever User whatever his profile.
 
-It isn't possible to modify a profile : an Administrator will stay an Administrator; an User will stay an User. In that case of modification, it is required, after deletion, to create a new user and allocate him the new role.
+.. note::
+
+    It isn't possible to modify a profile : an Administrator will stay an Administrator; an User will stay an User. In that case of modification, it is required, after deletion, to create a new user and allocate him the new role.
 
 
 Device management
