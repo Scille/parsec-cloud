@@ -183,7 +183,7 @@ msgid "Once started the invitation is pending (note you can cancel it though) an
 msgstr "Une fois commencée, l'invitation apparait comme en attente (notez qu'il est toutefois possible de l'annuler) et l'utilisateur doit recevoir un lien d'invitation par email."
 
 msgid "The user should receive a link by email enabling him to register his device. Clicking on the invitation URL on the new computer should open up the Parsec client (it must have been installed previously). The token exchange will now start."
-msgstr "L'utilisateur reçoit alors par email un lien d'activation lui permettant d'enregistrer son appareil. Cliquer sur ce lien d'activation sur le nouvel appareil devrait ouvrir le client Parsec (qui doit avoir été installé préalablement). L'échange de token va ensuite commencer."
+msgstr "L'utilisateur reçoit alors par email un lien d'activation lui permettant d'enregistrer son appareil. Cliquer sur ce lien d'activation sur le nouvel appareil devrait ouvrir le client Parsec (qui doit avoir été installé préalablement). L'échange de jeton va ensuite commencer."
 
 #: ../../userguide/new_device.rst:57
 msgid "If clicking on the URL doesn't work, you can also use the ``Enter a URL manually`` dialog inside Parsec."
@@ -194,14 +194,14 @@ msgid "Given the password is only used locally, it doesn't have to be the same a
 msgstr "Le mot de passe n'étant utilisé que localement, il n'a pas besoin d'être le même pour les deux périphériques."
 
 msgid "Token exchange"
-msgstr "Échange de tokens"
+msgstr "Échange de jetons"
 
 #: ../../userguide/new_user.rst:60
 msgid "The token exchange is a verification process that aims at ensuring that the two devices are not victim of a `Man-in-the-middle attack <https://en.wikipedia.org/wiki/Man-in-the-middle_attack>`_. You can read more about that process at the :ref:`Cryptography <doc_cryptography>` section."
-msgstr "L'échange de token est un processus de vérification qui a pour but de s'assurer que les deux appareils ne sont pas victimes d'une `Attaque de l'homme du milieu <https://fr.wikipedia.org/wiki/Attaque_de_l%27homme_du_milieu>`_. Il est possible d'en apprendre plus à la section :ref:`Cryptographie <doc_cryptography>`"
+msgstr "L'échange de jeton est un processus de vérification qui a pour but de s'assurer que les deux appareils ne sont pas victimes d'une `Attaque de l'homme du milieu <https://fr.wikipedia.org/wiki/Attaque_de_l%27homme_du_milieu>`_. Il est possible d'en apprendre plus à la section :ref:`Cryptographie <doc_cryptography>`"
 
 msgid "The user will have to proceed to a token exchange between the two devices. For that, the devices will both display a token, or a list of tokens : on the device with the list, the user must click on the token displayed by the Parsec client of the other device. If the token one of them is given is not present in the list, it means there is a very high probability that the user is victim of a `Man-in-the-middle attack <https://en.wikipedia.org/wiki/Man-in-the-middle_attack>`_."
-msgstr "L'utilisateur doit procéder à un échange de tokens entre ses deux appareils. Pour cela, les appareils afficheront chacun à leur tour un token, ou une liste de token : sur l'appareil sur lequel une liste est présentée, l'utilisateur doit cliquer sur le token affiché par le client Parsec de l'autre appareil. Si le token affiché par l'un des deux appareils ne se trouve pas dans la liste affichée par à l'autre, cela signifie qu'il y a une très forte probabilité que l'un des deux appareils soit victime d'une `Attaque de l'homme du milieu <https://fr.wikipedia.org/wiki/Attaque_de_l%27homme_du_milieu>`_."
+msgstr "L'utilisateur doit procéder à un échange de jetons entre ses deux appareils. Pour cela, les appareils afficheront chacun à leur tour un jeton, ou une liste de jetons : sur l'appareil sur lequel une liste est présentée, l'utilisateur doit cliquer sur le jeton affiché par le client Parsec de l'autre appareil. Si le jeton affiché par l'un des deux appareils ne se trouve pas dans la liste affichée par à l'autre, cela signifie qu'il y a une très forte probabilité que l'un des deux appareils soit victime d'une `Attaque de l'homme du milieu <https://fr.wikipedia.org/wiki/Attaque_de_l%27homme_du_milieu>`_."
 
 msgid "The user’s new Parsec client has been configured and is ready to log in."
 msgstr "Le nouveau client Parsec de l'utilisateur a été configuré et est maintenant prêt à s'authentifier."
@@ -247,7 +247,7 @@ msgstr "Réception de l'invitation"
 
 #: ../../userguide/new_user.rst:32
 msgid "The invitee should receive a link by email enabling him to register. Clicking on the invitation URL should open up the Parsec client. The token exchange will now start."
-msgstr "L'invité a du recevoir par email le code lui permettant de s'inscrire. Cliquer sur cette URL d'activation devrait ouvrir le client Parsec. L'échange de token peut maintenant commencer."
+msgstr "L'invité a du recevoir par email le code lui permettant de s'inscrire. Cliquer sur cette URL d'activation devrait ouvrir le client Parsec. L'échange de jeton peut maintenant commencer."
 
 #: ../../userguide/new_user.rst:46
 msgid "If clicking on the URL doesn't work, you can also use the ``Enter a URL manually`` dialog."
@@ -255,11 +255,11 @@ msgstr "Si cliquer sur le lien d'invitation ne fonctionne pas, il est possible d
 
 #: ../../userguide/new_user.rst:60
 msgid "The token exchange is a verification process that aims at ensuring that the two users are not victim of a `Man-in-the-middle attack <https://en.wikipedia.org/wiki/Man-in-the-middle_attack>`_. You can read more about that process at the :ref:`Cryptography <doc_cryptography>` section."
-msgstr "L'échange de token est un processus de vérification qui a pour but de s'assurer que les deux utilisateurs ne sont pas victimes d'une `Attaque de l'homme du milieu <https://fr.wikipedia.org/wiki/Attaque_de_l%27homme_du_milieu>`_. Il est possible d'en apprendre plus à la section :ref:`Cryptography <doc_cryptography>`"
+msgstr "L'échange de jeton est un processus de vérification qui a pour but de s'assurer que les deux utilisateurs ne sont pas victimes d'une `Attaque de l'homme du milieu <https://fr.wikipedia.org/wiki/Attaque_de_l%27homme_du_milieu>`_. Il est possible d'en apprendre plus à la section :ref:`Cryptography <doc_cryptography>`"
 
 #: ../../userguide/new_user.rst:60
 msgid "The inviting and the invitee will have to exchange tokens in person or on an already verified canal. For that, they will both be given a token, or a list of tokens : the user with the list must click on the token displayed by the Parsec client of the other user. If the token one of them is given is not present in the list, it means there is a very high probability that one of the user is victim of a `Man-in-the-middle attack <https://en.wikipedia.org/wiki/Man-in-the-middle_attack>`_."
-msgstr "L'inviteur et l'invité doivent échanger les tokens en personne où par un canal considéré comme sûr. Pour cela, ils obtiendront chacun à leur tour un token, ou une liste de token : l'utilisateur auquel une liste est présentée doit cliquer sur le token affiché par le client Parsec de l'autre utilisateur. Si le token donné à l'un des deux ne se trouve pas dans la liste présenté à l'autre, cela signifie qu'il y a une très forte probabilité que l'un des deux utilisateur soit victime d'une `Attaque de l'homme du milieu <https://fr.wikipedia.org/wiki/Attaque_de_l%27homme_du_milieu>`_."
+msgstr "L'inviteur et l'invité doivent échanger les jetons en personne ou par un canal considéré comme sûr. Pour cela, ils obtiendront chacun à leur tour un jeton, ou une liste de jeton : l'utilisateur auquel une liste est présentée doit cliquer sur le jeton affiché par le client Parsec de l'autre utilisateur. Si le jeton donné à l'un des deux ne se trouve pas dans la liste présenté à l'autre, cela signifie qu'il y a une très forte probabilité que l'un des deux utilisateur soit victime d'une `Attaque de l'homme du milieu <https://fr.wikipedia.org/wiki/Attaque_de_l%27homme_du_milieu>`_."
 
 #: ../../userguide/new_user.rst:53
 msgid "The invitee user’s Parsec client has been configured and is ready to log in."
