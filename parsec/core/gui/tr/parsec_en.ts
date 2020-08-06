@@ -637,23 +637,28 @@ p, li { white-space: pre-wrap; }
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../forms/greet_device_instructions_widget.ui" line="66"/>
+        <location filename="../forms/greet_device_instructions_widget.ui" line="79"/>
         <source>ACTION_COPY_ADDR</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../forms/greet_device_instructions_widget.ui" line="73"/>
+        <location filename="../forms/greet_device_instructions_widget.ui" line="72"/>
         <source>ACTION_SEND_EMAIL</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../forms/greet_device_instructions_widget.ui" line="110"/>
+        <location filename="../forms/greet_device_instructions_widget.ui" line="132"/>
         <source>ACTION_START</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
+        <location filename="../forms/greet_device_instructions_widget.ui" line="101"/>
+        <source>TEXT_GREET_DEVICE_INSTRUCTIONS_START</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <location filename="../forms/greet_device_instructions_widget.ui" line="41"/>
-        <source>TEXT_GREET_DEVICE_INSTRUCTIONS</source>
+        <source>TEXT_GREET_DEVICE_INSTRUCTIONS_email</source>
         <translation type="unfinished"></translation>
     </message>
 </context>
