@@ -182,6 +182,9 @@ msgstr "Inviter un nouveau périphérique se fait via le client Parsec:"
 msgid "Once started the invitation is pending (note you can cancel it though) and the user must check his emails for an invitation link that has been sent to him."
 msgstr "Une fois commencée, l'invitation apparait comme en attente (notez qu'il est toutefois possible de l'annuler) et l'utilisateur doit recevoir un lien d'invitation par email."
 
+msgid "For cryptographic reasons, a user can only create new devices for himself."
+msgstr "Pour des raisons liées aux procédés cryptographiques, un utilisateur ne peut créer de nouveaux terminaux que pour lui-même."
+
 msgid "The user should receive a link by email enabling him to register his device. Clicking on the invitation URL on the new computer should open up the Parsec client (it must have been installed previously). The token exchange will now start."
 msgstr "L'utilisateur reçoit alors par email un lien d'activation lui permettant d'enregistrer son appareil. Cliquer sur ce lien d'activation sur le nouvel appareil devrait ouvrir le client Parsec (qui doit avoir été installé préalablement). L'échange de jeton va ensuite commencer."
 

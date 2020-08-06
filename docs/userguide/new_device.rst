@@ -25,7 +25,7 @@ Once started the invitation is pending (note you can cancel it though) and the u
 
 .. note::
 
-    For cryptographic reasons, a user can only create new devices for himself
+    For cryptographic reasons, a user can only create new devices for himself.
 
 
 Receive invite
