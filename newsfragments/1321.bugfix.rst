@@ -1,1 +1,0 @@
-Fixed workspace title showing id instead of name
