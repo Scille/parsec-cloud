@@ -396,7 +396,7 @@ msgstr "Parsec propose aussi son propre système de fichier, accessible par un c
 
 #: ../../userguide/share_data.rst:50
 msgid "Data copied from file explorer also appear into the Parsec client. On top of that the Parsec client also displays the current synchronization state of each file (showing whether the modification are only present locally or if they have been synced with the server and hence are visible by everybody with access to the workspace)."
-msgstr "Les données copiées depuis l'explorateur de fichiers apparaissent dans le client Parsec. En plus de ça le client Parsec affiche aussi l'état de la synchronisation de chaque fichier (c'est à dire si les modifications d'un fichier sont présentent uniquement en local ou bien si elles ont été synchronisées avec le serveur Parsec et sont donc visibles par les autres utilisateurs ayant accès à l'espace de travail)"
+msgstr "Les données copiées depuis l'explorateur de fichiers apparaissent dans le client Parsec. En plus de ça le client Parsec affiche aussi l'état de la synchronisation de chaque fichier (c'est à dire si les modifications d'un fichier sont présentent uniquement en local ou bien si elles ont été synchronisées avec le serveur Parsec et sont donc visibles par les autres utilisateurs ayant accès à l'espace de travail)."
 
 #: ../../userguide/share_data.rst:58
 msgid "Parsec client can work while offline (however only the data present locally are available), synchronization will occur automatically as soon as the connection with the server is achieved."

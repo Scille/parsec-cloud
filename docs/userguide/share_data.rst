@@ -43,10 +43,6 @@ Upload data
 
 Once the workspace is created, it appears in the file explorer as a regular folder.
 
-.. image:: screens/parsec_in_file_explorer.png
-    :align: center
-    :alt: Working with files in the workspace through system file explorer
-
 .. note::
 
     Although workspaces are mounted by default, they can be unmounted or mounted back using the toggle at the bottom left of the workspace card. When a workspace is unmounted, his data are not accessible in Parsec, and it is not reachable through the regular file explorer of the computer.
