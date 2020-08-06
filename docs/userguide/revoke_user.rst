@@ -39,7 +39,7 @@ However from a cryptographic point of view this user still knows the encryption 
 
 Concretely, once a user is revoked, each owner of a previously shared workspace will be notified a re-encryption operation is needed. Each owner can then choose to do the operation on the spot, or to wait until a better time to do it (for instance if multiple user are getting revoked in one batch).
 
-.. image:: screen/reencrypt_workspace.png
+.. image:: screens/reencrypt_workspace.png
     :align: center
     :alt: Workspace re-encryption process
 
