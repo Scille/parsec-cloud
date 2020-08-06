@@ -193,6 +193,9 @@ msgstr "Si cliquer sur le lien ne fait rien, vous pouvez aussi utiliser le bouto
 msgid "Given the password is only used locally, it doesn't have to be the same across devices."
 msgstr "Le mot de passe n'étant utilisé que localement, il n'a pas besoin d'être le même pour les deux périphériques."
 
+msgid "Token exchange"
+msgstr "Échange de tokens"
+
 #: ../../userguide/new_user.rst:60
 msgid "The token exchange is a verification process that aims at ensuring that the two devices are not victim of a `Man-in-the-middle attack <https://en.wikipedia.org/wiki/Man-in-the-middle_attack>`_. You can read more about that process at the :ref:`Cryptography <doc_cryptography>` section."
 msgstr "L'échange de token est un processus de vérification qui a pour but de s'assurer que les deux appareils ne sont pas victimes d'une `Attaque de l'homme du milieu <https://fr.wikipedia.org/wiki/Attaque_de_l%27homme_du_milieu>`_. Il est possible d'en apprendre plus à la section :ref:`Cryptographie <doc_cryptography>`"
