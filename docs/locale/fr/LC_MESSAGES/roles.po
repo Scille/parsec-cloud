@@ -70,7 +70,7 @@ msgstr "Il existe quatre rôles ayant des droits différents au sein d’un work
 msgid "Reader : he only has read access."
 msgstr "Lecteur : il ne dispose des accès qu’en lecture."
 
-msgid "Contributor : he only has read and write access.
+msgid "Contributor : he only has read and write access."
 msgstr "Contributeur : il dispose des accès en écriture et en lecture."
 
 msgid "Manager : he can give rights except the one of owner. He has read and write access."
