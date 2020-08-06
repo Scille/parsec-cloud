@@ -53,7 +53,7 @@ msgid "the deletion of whichever User whatever his profile."
 msgstr "la suppression de n’importe quel Utilisateur quelque soit son profil."
 
 msgid "It isn't possible to modify a profile : an Administrator will stay an Administrator; an User will stay an User. In that case of modification, it is required, after deletion, to create a new user and allocate him the new role."
-msgstr "Il n’est pas possible de modifier un profil : un Administrateur restera un Administrateur; un Utilisateur restera un Utilisateur. Le profile est défini à la création de l'utilisateur et n'est pas modifiable par la suite. Ainsi pour en changer il faut revoquer l'utilisateur en question puis le recréer en spécifiant le nouveau profile."
+msgstr "Le profile est défini à la création de l'utilisateur et n'est pas modifiable par la suite. Ainsi pour en changer il faut revoquer l'utilisateur en question puis le recréer en spécifiant le nouveau profil."
 
 msgid "Device management"
 msgstr "Gestion des terminaux"
