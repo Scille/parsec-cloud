@@ -59,7 +59,7 @@ msgid "Device management"
 msgstr "Gestion des terminaux"
 
 msgid "Only the user, whatever his profile, can create an undetermined number of devices for himself. Every devices are clones. The number of devices by user is usually small. The deletion of on device only is not possible. When a user is deleted, all his devices are deleted."
-msgstr "Seul l’utilisateur, quelque soit son profil, peut se créer un un nombre quelconque de terminaux (ou device). Tous les terminaux sont des clones. Le nombre de terminaux par utilisateur est généralement faible. La suppression d’un seul terminal est impossible. Lorsqu'un utilisateur est supprimé, tous ses terminaux sont supprimés."
+msgstr "Seul l’utilisateur, quelque soit son profil, peut se créer un nombre quelconque de terminaux (ou device). Tous les terminaux sont des clones. Le nombre de terminaux par utilisateur est généralement faible. La suppression d’un seul terminal est impossible. Lorsqu'un utilisateur est supprimé, tous ses terminaux sont supprimés."
 
 msgid "Management of Workspaces and Documents"
 msgstr "Gestion des workspaces et des documents"
