@@ -286,6 +286,7 @@ requirements = [
     "PyPika==0.36.5",
     "async_exit_stack==1.0.1",
     "outcome==1.0.0",
+    "packaging==20.4",
 ]
 
 
@@ -369,9 +370,8 @@ setup(
     # Omitting GUI resources given they end up packaged in `parsec/core/gui/_resources_rc.py`
     package_data={
         "parsec.backend.postgresql.migrations": ["*.sql"],
-        "parsec.backend.mail": ["*.html"],
-        "parsec.backend.http.templates": ["*.html"],
-        "parsec.backend.http.static": ["*.css", "*.ico"],
+        "parsec.backend.templates": ["*"],
+        "parsec.backend.static": ["*"],
         "parsec.core.resources": ["*.ico"],
     },
     entry_points={

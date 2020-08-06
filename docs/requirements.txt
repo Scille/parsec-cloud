@@ -1,2 +1,0 @@
-# Ensures setuptools version otherwise PyQt recipe fail
-setuptools>=49.1.0

@@ -34,7 +34,7 @@ async def test_invite_user(
             inv_btn = u_w.layout_users.itemAt(3).widget()
             assert isinstance(inv_btn, UserInvitationButton)
             assert inv_btn.email == "hubert.farnsworth@pe.com"
-            assert email_letterbox == [(inv_btn.email, ANY)]
+            assert email_letterbox.emails == [(inv_btn.email, ANY)]
 
         await aqtbot.wait_until(_new_invitation_displayed)
         assert not autoclose_dialog.dialogs
@@ -49,7 +49,7 @@ async def test_invite_user(
                 ]
 
             await aqtbot.wait_until(_email_send_failed)
-            assert not email_letterbox
+            assert not email_letterbox.emails
 
 
 @pytest.mark.gui

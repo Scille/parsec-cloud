@@ -4,8 +4,9 @@ History
 
 .. towncrier release notes start
 
-Parsec v1.14.0-rc4 (2020-07-22)
--------------------------------
+
+Parsec v1.14.0 (2020-08-06)
+---------------------------
 
 Features
 ~~~~~~~~
@@ -30,6 +31,10 @@ Features
   <https://github.com/Scille/parsec-cloud/issues/1177>`__)
 * Added additional text for the main menu  (`#1150
   <https://github.com/Scille/parsec-cloud/issues/1150>`__)
+* Added optional RC channel updater  (`#1324 <https://github.com/Scille/parsec-
+  cloud/issues/1324>`__)
+* Display systray notification to make offline mode more obvious to the users
+  (`#1330 <https://github.com/Scille/parsec-cloud/issues/1330>`__)
 
 Bugfixes
 ~~~~~~~~
@@ -75,6 +80,16 @@ Bugfixes
   (`#1081 <https://github.com/Scille/parsec-cloud/issues/1081>`__)
 * Fixed deadlock when importing a file from a parsec workspace  (`#1188
   <https://github.com/Scille/parsec-cloud/issues/1188>`__)
+* Fix GUI main windows not showing when use close button from the systray. Notif
+  explaining Parsec is still running on GUI windows close only triggered once.
+  (`#1295 <https://github.com/Scille/parsec-cloud/issues/1295>`__)
+* Fix backend side connection auto-close on user revocation when the connection
+  has been used to listen events. (`#1314 <https://github.com/Scille/parsec-
+  cloud/issues/1314>`__)
+* Fixed workspace title showing id instead of name  (`#1321
+  <https://github.com/Scille/parsec-cloud/issues/1321>`__)
+* Fix internal exception handling of the remote devices manager errors.  (`#1335
+  <https://github.com/Scille/parsec-cloud/issues/1335>`__)
 
 Client/Backend API evolutions
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -132,6 +147,13 @@ Miscellaneous internal changes
 * Restrict read access for parsec directories to the current user. This includes
   configuration, data, config and workspace directories.  (`#940
   <https://github.com/Scille/parsec-cloud/issues/940>`__)
+* Fix mount error when using Snap package on Debian when fuse is not installed.
+  (`#1296 <https://github.com/Scille/parsec-cloud/issues/1296>`__)
+* Run Parsec with regular user priviledges when the "Run Parsec" checkbox is
+  ticked at the end of the windows installation.  (`#1303
+  <https://github.com/Scille/parsec-cloud/issues/1303>`__)
+* Updated instructions texts for the device invitation process  (`#1304
+  <https://github.com/Scille/parsec-cloud/issues/1304>`__)
 
 
 Parsec 1.13.0 (2020-04-29)

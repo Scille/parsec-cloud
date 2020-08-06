@@ -1,7 +1,9 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
 
-from pendulum import Pendulum, now as pendulum_now
+from contextlib import contextmanager
 from typing import Dict, Optional, List, Tuple
+
+from pendulum import Pendulum, now as pendulum_now
 
 from parsec.utils import timestamps_in_the_ballpark
 from parsec.crypto import HashDigest, CryptoError
@@ -12,11 +14,25 @@ from parsec.api.data import (
     RealmRoleCertificateContent,
     Manifest as RemoteManifest,
 )
-from parsec.core.backend_connection import BackendConnectionError, BackendNotAvailable
+
 from parsec.core.types import EntryID, ChunkID
+from parsec.core.backend_connection import BackendConnectionError, BackendNotAvailable
+from parsec.api.data import (
+    UserCertificateContent,
+    DeviceCertificateContent,
+    RevokedUserCertificateContent,
+)
+from parsec.core.remote_devices_manager import (
+    RemoteDevicesManagerBackendOfflineError,
+    RemoteDevicesManagerError,
+    RemoteDevicesManagerUserNotFoundError,
+    RemoteDevicesManagerDeviceNotFoundError,
+    RemoteDevicesManagerInvalidTrustchainError,
+)
 from parsec.core.fs.exceptions import (
     FSError,
     FSRemoteSyncError,
+    FSRemoteOperationError,
     FSRemoteManifestNotFound,
     FSRemoteManifestNotFoundBadVersion,
     FSRemoteManifestNotFoundBadTimestamp,
@@ -26,7 +42,26 @@ from parsec.core.fs.exceptions import (
     FSBadEncryptionRevision,
     FSWorkspaceNoReadAccess,
     FSWorkspaceNoWriteAccess,
+    FSUserNotFoundError,
+    FSDeviceNotFoundError,
+    FSInvalidTrustchainEror,
 )
+
+
+@contextmanager
+def translate_remote_devices_manager_errors():
+    try:
+        yield
+    except RemoteDevicesManagerBackendOfflineError as exc:
+        raise FSBackendOfflineError(str(exc)) from exc
+    except RemoteDevicesManagerUserNotFoundError as exc:
+        raise FSUserNotFoundError(str(exc)) from exc
+    except RemoteDevicesManagerDeviceNotFoundError as exc:
+        raise FSDeviceNotFoundError(str(exc)) from exc
+    except RemoteDevicesManagerInvalidTrustchainError as exc:
+        raise FSInvalidTrustchainEror(str(exc)) from exc
+    except RemoteDevicesManagerError as exc:
+        raise FSRemoteOperationError(str(exc))
 
 
 class RemoteLoader:
@@ -36,14 +71,14 @@ class RemoteLoader:
         workspace_id,
         get_workspace_entry,
         backend_cmds,
-        remote_device_manager,
+        remote_devices_manager,
         local_storage,
     ):
         self.device = device
         self.workspace_id = workspace_id
         self.get_workspace_entry = get_workspace_entry
         self.backend_cmds = backend_cmds
-        self.remote_device_manager = remote_device_manager
+        self.remote_devices_manager = remote_devices_manager
         self.local_storage = local_storage
         self._realm_role_certificates_cache = None
         self._realm_role_certificates_cache_timestamp = None
@@ -98,7 +133,9 @@ class RemoteLoader:
 
             # Now verify each certif
             for unsecure_certif, raw_certif in unsecure_certifs:
-                author = await self.remote_device_manager.get_device(unsecure_certif.author)
+
+                with translate_remote_devices_manager_errors():
+                    author = await self.remote_devices_manager.get_device(unsecure_certif.author)
 
                 RealmRoleCertificateContent.verify_and_load(
                     raw_certif,
@@ -146,6 +183,9 @@ class RemoteLoader:
             FSError
             FSBackendOfflineError
             FSWorkspaceNoAccess
+            FSUserNotFoundError
+            FSDeviceNotFoundError
+            FSInvalidTrustchainError
         """
         certificates, _ = await self._load_realm_role_certificates(realm_id)
         return certificates
@@ -158,9 +198,39 @@ class RemoteLoader:
             FSError
             FSBackendOfflineError
             FSWorkspaceNoAccess
+            FSUserNotFoundError
+            FSDeviceNotFoundError
+            FSInvalidTrustchainError
         """
         _, current_roles = await self._load_realm_role_certificates(realm_id)
         return current_roles
+
+    async def get_user(
+        self, user_id: UserID, no_cache: bool = False
+    ) -> Tuple[UserCertificateContent, Optional[RevokedUserCertificateContent]]:
+        """
+        Raises:
+            FSRemoteOperationError
+            FSBackendOfflineError
+            FSUserNotFoundError
+            FSInvalidTrustchainError
+        """
+        with translate_remote_devices_manager_errors():
+            return await self.remote_devices_manager.get_user(user_id, no_cache=no_cache)
+
+    async def get_device(
+        self, device_id: DeviceID, no_cache: bool = False
+    ) -> DeviceCertificateContent:
+        """
+        Raises:
+            FSRemoteOperationError
+            FSBackendOfflineError
+            FSUserNotFoundError
+            FSDeviceNotFoundError
+            FSInvalidTrustchainError
+        """
+        with translate_remote_devices_manager_errors():
+            return await self.remote_devices_manager.get_device(device_id, no_cache=no_cache)
 
     async def load_blocks(self, accesses: List[BlockAccess]) -> None:
         """
@@ -265,6 +335,9 @@ class RemoteLoader:
             FSRemoteManifestNotFound
             FSBadEncryptionRevision
             FSWorkspaceNoAccess
+            FSUserNotFoundError
+            FSDeviceNotFoundError
+            FSInvalidTrustchainError
         """
         if timestamp is not None and version is not None:
             raise FSError(
@@ -315,7 +388,8 @@ class RemoteLoader:
                 f"{version} (expecting {expected_backend_timestamp}, got {expected_timestamp})"
             )
 
-        author = await self.remote_device_manager.get_device(expected_author)
+        with translate_remote_devices_manager_errors():
+            author = await self.remote_devices_manager.get_device(expected_author)
 
         try:
             remote_manifest = RemoteManifest.decrypt_verify_and_load(
@@ -510,7 +584,7 @@ class RemoteLoaderTimestamped(RemoteLoader):
         self.workspace_id = remote_loader.workspace_id
         self.get_workspace_entry = remote_loader.get_workspace_entry
         self.backend_cmds = remote_loader.backend_cmds
-        self.remote_device_manager = remote_loader.remote_device_manager
+        self.remote_devices_manager = remote_loader.remote_devices_manager
         self.local_storage = remote_loader.local_storage.to_timestamped(timestamp)
         self._realm_role_certificates_cache = None
         self._realm_role_certificates_cache_timestamp = None

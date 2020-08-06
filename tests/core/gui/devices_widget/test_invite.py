@@ -73,6 +73,8 @@ async def test_invite_device_send_email(
         assert gd_w.isVisible()
         assert gd_w.dialog.label_title.text() == "Greet a new device"
         assert gdi_w.isVisible()
+        assert gdi_w.button_send_email.isVisible()
+        assert gdi_w.button_copy_addr.isVisible()
 
     await aqtbot.wait_until(_greet_device_displayed)
 
@@ -80,7 +82,7 @@ async def test_invite_device_send_email(
         await aqtbot.mouse_click(gdi_w.button_send_email, QtCore.Qt.LeftButton)
 
         def _email_sent():
-            assert email_letterbox == [(bob.human_handle.email, ANY)]
+            assert email_letterbox.emails == [(bob.human_handle.email, ANY)]
 
         await aqtbot.wait_until(_email_sent)
         assert not autoclose_dialog.dialogs
@@ -93,7 +95,37 @@ async def test_invite_device_send_email(
                 assert autoclose_dialog.dialogs == [("Error", "Could not send the email.")]
 
             await aqtbot.wait_until(_email_send_failed)
-            assert not email_letterbox
+            assert not email_letterbox.emails
+
+
+@pytest.mark.gui
+@pytest.mark.trio
+@customize_fixtures(bob_has_human_handle=False)
+async def test_invite_device_without_human_handle_cannot_send_email(
+    aqtbot, logged_gui, running_backend, autoclose_dialog, catch_greet_device_widget
+):
+    d_w = await logged_gui.test_switch_to_devices_widget()
+
+    await aqtbot.mouse_click(d_w.button_add_device, QtCore.Qt.LeftButton)
+
+    # Device invitation widget should show up now
+
+    gd_w = await catch_greet_device_widget()
+    assert isinstance(gd_w, GreetDeviceWidget)
+
+    gdi_w = await catch_greet_device_widget()
+    assert isinstance(gdi_w, GreetDeviceInstructionsWidget)
+
+    def _greet_device_displayed():
+        assert gd_w.dialog.isVisible()
+        assert gd_w.isVisible()
+        assert gd_w.dialog.label_title.text() == "Greet a new device"
+        assert gdi_w.isVisible()
+        assert not gdi_w.button_send_email.isVisible()
+        assert gdi_w.button_copy_addr.isVisible()
+
+    await aqtbot.wait_until(_greet_device_displayed)
+    assert not autoclose_dialog.dialogs
 
 
 # TODO: test copy invitation link
@@ -226,6 +258,11 @@ async def test_invite_and_greet_device(
         def _greet_done():
             assert not gd_w.isVisible()
             assert autoclose_dialog.dialogs == [("", "The device was successfully created.")]
+            # Devices list should be updated
+            assert d_w.layout_devices.count() == 2
+            item = d_w.layout_devices.itemAt(1)
+            assert item.widget().label_device_name.text() == requested_device_label
+            assert item.widget().label_is_current.text() == ""
 
         await aqtbot.wait_until(_greet_done)
 

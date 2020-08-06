@@ -3,9 +3,55 @@
 import pytest
 import trio
 
-from tests.backend.common import events_subscribe, events_listen, events_listen_nowait, ping
 from parsec.api.protocol import APIEvent
+from parsec.api.transport import TransportError
 from parsec.backend.backend_events import BackendEvent
+
+from tests.backend.common import (
+    events_subscribe,
+    events_listen,
+    events_listen_wait,
+    events_listen_nowait,
+    ping,
+)
+
+
+@pytest.mark.trio
+@pytest.mark.parametrize("revoked_during", ("idle", "listen_event"))
+async def test_cancel_connection_after_events_subscribe(
+    backend, backend_sock_factory, bob, alice, revoked_during
+):
+    # The event system is also used to detect a connection should be dropped
+    # given the corresponding device has been revoked.
+    # Let's make sure `events_subscribe` command plays well with this behavior.
+
+    async def _do_revoke():
+        await backend.user.revoke_user(
+            organization_id=bob.organization_id,
+            user_id=bob.user_id,
+            revoked_user_certificate=b"wathever",
+            revoked_user_certifier=alice.device_id,
+        )
+        # connection cancellation is handled through events, so wait
+        # for things to settle down to make sure there is no pending event
+        await trio.testing.wait_all_tasks_blocked()
+
+    async with backend_sock_factory(
+        backend, bob, freeze_on_transport_error=False
+    ) as bob_backend_sock:
+
+        await events_subscribe(bob_backend_sock)
+
+        if revoked_during == "listen_event":
+            with pytest.raises(TransportError):
+                async with events_listen(bob_backend_sock):
+                    await _do_revoke()
+
+        else:
+            await _do_revoke()
+            with pytest.raises(TransportError):
+                with trio.fail_after(1):
+                    await events_listen_wait(bob_backend_sock)
 
 
 @pytest.mark.trio

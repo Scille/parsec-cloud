@@ -155,7 +155,7 @@ class FileHistoryWidget(QWidget, Ui_FileHistoryWidget):
             self.versions_job.cancel_and_join()
 
     @classmethod
-    def exec_modal(
+    def show_modal(
         cls,
         jobs_ctx,
         workspace_fs,
@@ -165,6 +165,7 @@ class FileHistoryWidget(QWidget, Ui_FileHistoryWidget):
         close_version_list,
         core,
         parent,
+        on_finished,
     ):
         w = cls(
             jobs_ctx=jobs_ctx,
@@ -179,4 +180,8 @@ class FileHistoryWidget(QWidget, Ui_FileHistoryWidget):
             w, title=_("TEXT_FILE_HISTORY_TITLE_name").format(name=path.name), parent=parent
         )
         w.dialog = d
-        return d.exec_()
+        if on_finished:
+            d.finished.connect(on_finished)
+        # Unlike exec_, show is asynchronous and works within the main Qt loop
+        d.show()
+        return w

@@ -118,7 +118,7 @@ class DevicesWidget(QWidget, Ui_DevicesWidget):
                     w.show()
 
     def change_password(self):
-        PasswordChangeWidget.exec_modal(core=self.core, parent=self)
+        PasswordChangeWidget.show_modal(core=self.core, parent=self, on_finished=None)
 
     def invite_device(self):
         self.jobs_ctx.submit_job(
@@ -132,7 +132,7 @@ class DevicesWidget(QWidget, Ui_DevicesWidget):
         assert job.is_finished()
         assert job.status == "ok"
 
-        GreetDeviceWidget.exec_modal(
+        GreetDeviceWidget.show_modal(
             core=self.core,
             jobs_ctx=self.jobs_ctx,
             invite_addr=job.ret,
@@ -176,7 +176,7 @@ class DevicesWidget(QWidget, Ui_DevicesWidget):
         assert job.status != "ok"
 
         status = job.status
-        if status == "error":
+        if status in ["error", "offline"]:
             self._flush_devices_list()
             label = QLabel(_("TEXT_DEVICE_LIST_RETRIEVABLE_FAILURE"))
             label.setAlignment(Qt.AlignHCenter | Qt.AlignVCenter)

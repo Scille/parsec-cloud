@@ -1,1 +1,0 @@
-Run Parsec with regular user priviledges when the "Run Parsec" checkbox is ticked at the end of the windows installation.

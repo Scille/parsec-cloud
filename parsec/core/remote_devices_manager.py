@@ -41,6 +41,14 @@ class RemoteDevicesManagerNotFoundError(RemoteDevicesManagerError):
     pass
 
 
+class RemoteDevicesManagerUserNotFoundError(RemoteDevicesManagerNotFoundError):
+    pass
+
+
+class RemoteDevicesManagerDeviceNotFoundError(RemoteDevicesManagerNotFoundError):
+    pass
+
+
 class RemoteDevicesManagerInvalidTrustchainError(RemoteDevicesManagerError):
     pass
 
@@ -76,7 +84,7 @@ class RemoteDevicesManager:
         Raises:
             RemoteDevicesManagerError
             RemoteDevicesManagerBackendOfflineError
-            RemoteDevicesManagerNotFoundError
+            RemoteDevicesManagerUserNotFoundError
             RemoteDevicesManagerInvalidTrustchainError
         """
         try:
@@ -99,7 +107,8 @@ class RemoteDevicesManager:
         Raises:
             RemoteDevicesManagerError
             RemoteDevicesManagerBackendOfflineError
-            RemoteDevicesManagerNotFoundError
+            RemoteDevicesManagerUserNotFoundError
+            RemoteDevicesManagerDeviceNotFoundError
             RemoteDevicesManagerInvalidTrustchainError
         """
         try:
@@ -114,7 +123,7 @@ class RemoteDevicesManager:
                 verified_device = next(vd for vd in verified_devices if vd.device_id == device_id)
 
             except StopIteration:
-                raise RemoteDevicesManagerNotFoundError(
+                raise RemoteDevicesManagerDeviceNotFoundError(
                     f"User `{device_id.user_id}` doesn't have a device `{device_id}`"
                 )
         return verified_device
@@ -132,7 +141,7 @@ class RemoteDevicesManager:
         Raises:
             RemoteDevicesManagerError
             RemoteDevicesManagerBackendOfflineError
-            RemoteDevicesManagerNotFoundError
+            RemoteDevicesManagerUserNotFoundError
             RemoteDevicesManagerInvalidTrustchainError
         """
         try:
@@ -147,7 +156,9 @@ class RemoteDevicesManager:
             ) from exc
 
         if rep["status"] == "not_found":
-            raise RemoteDevicesManagerNotFoundError(f"User `{user_id}` doesn't exist in backend")
+            raise RemoteDevicesManagerUserNotFoundError(
+                f"User `{user_id}` doesn't exist in backend"
+            )
         elif rep["status"] != "ok":
             raise RemoteDevicesManagerError(f"Cannot fetch user {user_id}: `{rep['status']}`")
 
@@ -172,7 +183,7 @@ async def get_device_invitation_creator(
     Raises:
         RemoteDevicesManagerError
         RemoteDevicesManagerBackendOfflineError
-        RemoteDevicesManagerNotFoundError
+        RemoteDevicesManagerUserNotFoundError
         RemoteDevicesManagerInvalidTrustchainError
     """
     try:
@@ -186,7 +197,9 @@ async def get_device_invitation_creator(
         ) from exc
 
     if rep["status"] == "not_found":
-        raise RemoteDevicesManagerNotFoundError(f"User `{new_device_id}` doesn't exist in backend")
+        raise RemoteDevicesManagerUserNotFoundError(
+            f"User `{new_device_id}` doesn't exist in backend"
+        )
     elif rep["status"] != "ok":
         raise RemoteDevicesManagerError(
             f"Cannot fetch invitation creator for device `{new_device_id}`: `{rep['status']}`"
@@ -212,7 +225,7 @@ async def get_user_invitation_creator(
     Raises:
         RemoteDevicesManagerError
         RemoteDevicesManagerBackendOfflineError
-        RemoteDevicesManagerNotFoundError
+        RemoteDevicesManagerUserNotFoundError
         RemoteDevicesManagerInvalidTrustchainError
     """
     try:
@@ -226,7 +239,9 @@ async def get_user_invitation_creator(
         ) from exc
 
     if rep["status"] == "not_found":
-        raise RemoteDevicesManagerNotFoundError(f"User `{new_user_id}` doesn't exist in backend")
+        raise RemoteDevicesManagerUserNotFoundError(
+            f"User `{new_user_id}` doesn't exist in backend"
+        )
     elif rep["status"] != "ok":
         raise RemoteDevicesManagerError(
             f"Cannot fetch invitation creator for device `{new_user_id}`: `{rep['status']}`"

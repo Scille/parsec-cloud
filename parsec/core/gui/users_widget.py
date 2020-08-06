@@ -283,7 +283,7 @@ class UsersWidget(QWidget, Ui_UsersWidget):
         button.show()
 
     def greet_user(self, token):
-        GreetUserWidget.exec_modal(
+        GreetUserWidget.show_modal(
             core=self.core, jobs_ctx=self.jobs_ctx, token=token, parent=self, on_finished=self.reset
         )
 
@@ -392,9 +392,7 @@ class UsersWidget(QWidget, Ui_UsersWidget):
         assert job.status != "ok"
 
         status = job.status
-        if status == "offline":
-            return
-        elif status == "error":
+        if status in ["error", "offline"]:
             self._flush_users_list()
             label = QLabel(_("TEXT_USER_LIST_RETRIEVABLE_FAILURE"))
             label.setAlignment(Qt.AlignHCenter | Qt.AlignVCenter)

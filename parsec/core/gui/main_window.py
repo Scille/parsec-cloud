@@ -47,7 +47,7 @@ logger = get_logger()
 class MainWindow(QMainWindow, Ui_MainWindow):
     foreground_needed = pyqtSignal()
     new_instance_needed = pyqtSignal(object)
-    systray_notification = pyqtSignal(str, str)
+    systray_notification = pyqtSignal(str, str, int)
 
     TAB_NOTIFICATION_COLOR = QColor(46, 146, 208)
     TAB_NOT_SELECTED_COLOR = QColor(123, 132, 163)
@@ -246,10 +246,12 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         self.add_instance()
 
     def _on_create_org_clicked(self):
-        r = CreateOrgWidget.exec_modal(self.jobs_ctx, self)
-        if r is None:
-            return
-        self._on_bootstrap_org_clicked(r)
+        def _on_finished(action_addr):
+            if action_addr is None:
+                return
+            self._on_bootstrap_org_clicked(action_addr)
+
+        CreateOrgWidget.show_modal(self.jobs_ctx, self, on_finished=_on_finished)
 
     def _on_join_org_clicked(self):
         url = get_text_input(
@@ -306,12 +308,19 @@ class MainWindow(QMainWindow, Ui_MainWindow):
             except ValueError as exc:
                 show_error(self, _("TEXT_BOOTSTRAP_ORG_INVALID_URL"), exception=exc)
                 return
-        ret = BootstrapOrganizationWidget.exec_modal(
-            jobs_ctx=self.jobs_ctx, config=self.config, addr=action_addr, parent=self
+
+        def _on_finished(ret):
+            if ret:
+                self.reload_login_devices()
+                self.try_login(ret[0], ret[1])
+
+        BootstrapOrganizationWidget.show_modal(
+            jobs_ctx=self.jobs_ctx,
+            config=self.config,
+            addr=action_addr,
+            parent=self,
+            on_finished=_on_finished,
         )
-        if ret:
-            self.reload_login_devices()
-            self.try_login(ret[0], ret[1])
 
     def _on_claim_user_clicked(self, action_addr):
         widget = None
@@ -324,7 +333,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
             self.reload_login_devices()
             self.try_login(login, password)
 
-        widget = ClaimUserWidget.exec_modal(
+        widget = ClaimUserWidget.show_modal(
             jobs_ctx=self.jobs_ctx,
             config=self.config,
             addr=action_addr,
@@ -343,7 +352,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
             self.reload_login_devices()
             self.try_login(login, password)
 
-        widget = ClaimDeviceWidget.exec_modal(
+        widget = ClaimDeviceWidget.show_modal(
             jobs_ctx=self.jobs_ctx,
             config=self.config,
             addr=action_addr,
@@ -390,7 +399,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         save_config(self.config)
         telemetry.init(self.config)
 
-    def showMaximized(self, skip_dialogs=False):
+    def showMaximized(self, skip_dialogs=False, invitation_link=""):
         super().showMaximized()
         QCoreApplication.processEvents()
 
@@ -435,7 +444,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         telemetry.init(self.config)
 
         devices = list_available_devices(self.config.config_dir)
-        if not len(devices):
+        if not len(devices) and not invitation_link:
             r = ask_question(
                 self,
                 _("TEXT_KICKSTART_PARSEC_WHAT_TO_DO_TITLE"),
@@ -490,7 +499,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         return -1
 
     def add_new_tab(self):
-        tab = InstanceWidget(self.jobs_ctx, self.event_bus, self.config)
+        tab = InstanceWidget(self.jobs_ctx, self.event_bus, self.config, self.systray_notification)
         tab.join_organization_clicked.connect(self._on_join_org_clicked)
         tab.create_organization_clicked.connect(self._on_create_org_clicked)
         idx = self.tab_center.addTab(tab, "")
@@ -649,7 +658,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
             if not self.minimize_on_close_notif_already_send:
                 self.minimize_on_close_notif_already_send = True
                 self.systray_notification.emit(
-                    "Parsec", _("TEXT_TRAY_PARSEC_STILL_RUNNING_MESSAGE")
+                    "Parsec", _("TEXT_TRAY_PARSEC_STILL_RUNNING_MESSAGE"), 2000
                 )
         else:
             if self.config.gui_confirmation_before_close and not self.force_close:
