@@ -292,8 +292,8 @@ msgid "Revocation"
 msgstr "Révocation"
 
 #: ../../userguide/revoke_user.rst:22
-msgid "Revocation is done from the client:"
-msgstr "La révocation se fait depuis le client :"
+msgid "Revocation is done from the client, this option is accessible by right-clicking on a user:"
+msgstr "La révocation se fait depuis le client, cette option apparaît après un clic droit sur un utilisateur :"
 
 #: ../../userguide/revoke_user.rst:30
 msgid "Only an administrator of the organization can revoke a user"

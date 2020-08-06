@@ -18,7 +18,7 @@ Revoking a user is the operation that aims at removing his access rights to the 
 Revocation
 ----------
 
-Revocation is done from the client:
+Revocation is done from the client, this option is accessible by right-clicking on a user:
 
 .. image:: screens/revoke_user.png
     :align: center
