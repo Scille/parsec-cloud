@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PROJECT VERSION\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2020-08-06 10:09+0200\n"
+"POT-Creation-Date: 2020-08-07 10:32+0200\n"
 "PO-Revision-Date: 2020-08-06 09:59+0200\n"
 "Last-Translator: \n"
 "Language: fr\n"
@@ -1776,9 +1776,6 @@ msgstr "Connecté"
 msgid "TEXT_BACKEND_STATE_DISCONNECTED"
 msgstr "Déconnecté"
 
-msgid "TEXT_SYSTRAY_BACKEND_DISCONNECT_organization"
-msgstr "{organization}: Déconnecté"
-
 msgid "TEXT_BACKEND_STATE_API_MISMATCH_versions"
 msgstr "L'application n'est pas compatible avec le serveur"
 
@@ -1793,6 +1790,9 @@ msgstr "Inconnu"
 
 msgid "TEXT_BACKEND_STATE_CRASHED_cause"
 msgstr "La connexion au serveur a été perdue"
+
+msgid "TEXT_SYSTRAY_BACKEND_DISCONNECT_organization"
+msgstr "{organization}: Déconnecté"
 
 msgid "ACTION_MENU_DOCUMENTS"
 msgstr "Documents"
@@ -2367,3 +2367,4 @@ msgstr "Créer un nouvel espace de travail"
 
 msgid "ACTION_WORKSPACE_GOTO_FILE_LINK"
 msgstr "Trouver un fichier via son lien"
+
