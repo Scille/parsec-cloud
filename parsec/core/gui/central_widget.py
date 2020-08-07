@@ -96,7 +96,9 @@ class CentralWidget(QWidget, Ui_CentralWidget):
         self.devices_widget = DevicesWidget(self.core, self.jobs_ctx, self.event_bus, parent=self)
         self.widget_central.layout().insertWidget(0, self.devices_widget)
 
-        self._on_connection_state_changed(self.core.backend_status, self.core.backend_status_exc)
+        self._on_connection_state_changed(
+            self.core.backend_status, self.core.backend_status_exc, allow_systray=False
+        )
         self.show_mount_widget()
 
     def _on_folder_changed(self, workspace_name, path):
@@ -158,7 +160,7 @@ class CentralWidget(QWidget, Ui_CentralWidget):
                 "WARNING", _("NOTIF_WARN_SYNC_CONFLICT_{}").format(kwargs["path"])
             )
 
-    def _on_connection_state_changed(self, status, status_exc):
+    def _on_connection_state_changed(self, status, status_exc, allow_systray=True):
         text = None
         icon = None
         tooltip = None
@@ -203,7 +205,7 @@ class CentralWidget(QWidget, Ui_CentralWidget):
         self.menu.set_connection_state(text, tooltip, icon)
         if notif:
             self.new_notification.emit(*notif)
-        if disconnected:
+        if allow_systray and disconnected:
             self.systray_notification.emit(
                 "Parsec",
                 _("TEXT_SYSTRAY_BACKEND_DISCONNECT_organization").format(
