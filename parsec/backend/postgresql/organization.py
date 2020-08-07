@@ -92,8 +92,8 @@ WHERE organization_id = $organization_id
 
 
 class PGOrganizationComponent(BaseOrganizationComponent):
-    def __init__(self, dbh: PGHandler, **kwargs):
-        super().__init__(**kwargs)
+    def __init__(self, dbh: PGHandler, *args, **kwargs):
+        super().__init__(*args, **kwargs)
         self.dbh = dbh
 
     async def create(

@@ -20,7 +20,7 @@ def addr_with_device_subdomain(addr, device_id):
     Useful to have each device access the same backend with a different hostname
     so tcp_stream_spy can put some offline and leave others online
     """
-    device_specific_hostname = f"{device_id.user_id}.{device_id.device_name}.{addr.hostname}"
+    device_specific_hostname = f"{device_id.user_id}_{device_id.device_name}.{addr.hostname}"
     return type(addr).from_url(addr.to_url().replace(addr.hostname, device_specific_hostname, 1))
 
 
@@ -234,8 +234,12 @@ _FIXTURES_CUSTOMIZATIONS = {
     "mallory_profile",
     "mallory_has_human_handle",
     "mallory_has_device_label",
-    "backend_has_email",
     "backend_not_populated",
+    "backend_has_email",
+    "backend_has_webhook",
+    "backend_over_ssl",
+    "backend_spontaneous_organization_boostrap",
+    "logged_gui_as_admin",
 }
 
 

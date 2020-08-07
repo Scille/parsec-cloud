@@ -208,12 +208,6 @@ Allowed values:
 """,
 )
 @click.option(
-    "--db-drop-deleted-data",
-    is_flag=True,
-    envvar="PARSEC_DB_DROP_DELETED_DATA",
-    help="Actually delete data database instead of just marking it has deleted",
-)
-@click.option(
     "--db-min-connections",
     default=5,
     show_default=True,
@@ -226,6 +220,20 @@ Allowed values:
     show_default=True,
     envvar="PARSEC_DB_MAX_CONNECTIONS",
     help="Maximum number of connections to the database if using PostgreSQL",
+)
+@click.option(
+    "--db-first-tries-number",
+    default=1,
+    show_default=True,
+    envvar="PARSEC_DB_FIRST_TRIES_NUMBER",
+    help="Number of tries allowed during initial database connection (0 is unlimited)",
+)
+@click.option(
+    "--db-first-tries-sleep",
+    default=1,
+    show_default=True,
+    envvar="PARSEC_DB_FIRST_TRIES_SLEEP",
+    help="Number of second waited between tries during initial database connection",
 )
 @click.option(
     "--blockstore",
@@ -258,6 +266,31 @@ integer and `<config>` the MOCKED/POSTGRESQL/S3/SWIFT config.
     required=True,
     envvar="PARSEC_ADMINISTRATION_TOKEN",
     help="Secret token to access the administration api",
+)
+@click.option(
+    "--spontaneous-organization-bootstrap",
+    envvar="PARSEC_SPONTANEOUS_ORGANIZATION_BOOTSTRAP",
+    is_flag=True,
+    help="""Allow organization bootstrap without prior creation.
+
+Without this flag, an organization must be created by administration (see
+ `parsec core create_organization` command) before bootstrap can occur.
+
+With this flag, the server allows anybody to bootstrap an organanization
+by providing an empty bootstrap token given 1) the organization is not boostrapped yet
+and 2) the organization hasn't been created by administration (which would act as a
+reservation and change the bootstrap token)
+""",
+)
+@click.option(
+    "--organization-bootstrap-webhook",
+    envvar="PARSEC_ORGANIZATION_BOOTSTRAP_WEBHOOK",
+    help="""URL to notify 3rd party service that a new organization has been bootstrapped.
+
+Each time an organization is bootstrapped, an HTTP POST will be send to the URL
+with an `application/json` body with the following fields:
+organization_id, device_id, device_label (can be null), human_email (can be null), human_label (can be null)
+""",
 )
 @click.option(
     "--backend-addr",
@@ -309,12 +342,7 @@ integer and `<config>` the MOCKED/POSTGRESQL/S3/SWIFT config.
     ),
 )
 @click.option(
-    "--email-language",
-    envvar="PARSEC_EMAIL_LANGUAGE",
-    type=click.Choice(("en", "fr")),
-    default="en",
-    show_default=True,
-    help="Language used in email",
+    "--email-sender", envvar="PARSEC_EMAIL_SENDER", help="Sender address used in sent emails"
 )
 @click.option(
     "--ssl-keyfile",
@@ -354,11 +382,14 @@ def run_cmd(
     host,
     port,
     db,
-    db_drop_deleted_data,
     db_min_connections,
     db_max_connections,
+    db_first_tries_number,
+    db_first_tries_sleep,
     blockstore,
     administration_token,
+    spontaneous_organization_bootstrap,
+    organization_bootstrap_webhook,
     backend_addr,
     email_host,
     email_port,
@@ -366,7 +397,7 @@ def run_cmd(
     email_host_password,
     email_use_ssl,
     email_use_tls,
-    email_language,
+    email_sender,
     ssl_keyfile,
     ssl_certfile,
     log_level,
@@ -393,16 +424,16 @@ def run_cmd(
             ssl_context = None
 
         if email_host:
-            if not email_host_user:
-                raise ValueError("--email-host-user is required when --email-host is provided")
+            if not email_sender:
+                raise ValueError("--email-sender is required when --email-host is provided")
             email_config = EmailConfig(
                 host=email_host,
                 port=email_port,
-                user=email_host_user,
-                password=email_host_password,
+                host_user=email_host_user,
+                host_password=email_host_password,
                 use_ssl=email_use_ssl,
                 use_tls=email_use_tls,
-                language=email_language,
+                sender=email_sender,
             )
         else:
             email_config = None
@@ -410,9 +441,12 @@ def run_cmd(
         config = BackendConfig(
             administration_token=administration_token,
             db_url=db,
-            db_drop_deleted_data=db_drop_deleted_data,
             db_min_connections=db_min_connections,
             db_max_connections=db_max_connections,
+            db_first_tries_number=db_first_tries_number,
+            db_first_tries_sleep=db_first_tries_sleep,
+            spontaneous_organization_bootstrap=spontaneous_organization_bootstrap,
+            organization_bootstrap_webhook_url=organization_bootstrap_webhook,
             blockstore_config=blockstore,
             email_config=email_config,
             backend_addr=backend_addr,

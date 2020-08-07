@@ -84,7 +84,6 @@ class BootstrapOrganizationWidget(QWidget, Ui_BootstrapOrganizationWidget):
         self.line_edit_device.textChanged.connect(self.check_infos)
         self.line_edit_password.textChanged.connect(self.check_infos)
         self.line_edit_password_check.textChanged.connect(self.check_infos)
-        self.line_edit_login.setValidator(validators.UserIDValidator())
         self.line_edit_device.setValidator(validators.DeviceNameValidator())
         self.bootstrap_success.connect(self.on_bootstrap_success)
         self.bootstrap_error.connect(self.on_bootstrap_error)
@@ -201,11 +200,18 @@ class BootstrapOrganizationWidget(QWidget, Ui_BootstrapOrganizationWidget):
             self.button_bootstrap.setDisabled(True)
 
     @classmethod
-    def exec_modal(cls, jobs_ctx, config, addr, parent):
+    def show_modal(cls, jobs_ctx, config, addr, parent, on_finished):
         w = cls(jobs_ctx=jobs_ctx, config=config, addr=addr)
         d = GreyedDialog(w, _("TEXT_BOOTSTRAP_ORG_TITLE"), parent=parent, width=1000)
         w.dialog = d
         w.line_edit_login.setFocus()
-        if d.exec_() == QDialog.Accepted and w.status:
-            return w.status
-        return None
+
+        def _on_finished(result):
+            if result == QDialog.Accepted:
+                return on_finished(w.status)
+            return on_finished(None)
+
+        d.finished.connect(_on_finished)
+        # Unlike exec_, show is asynchronous and works within the main Qt loop
+        d.show()
+        return w

@@ -7,8 +7,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PROJECT VERSION\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2020-07-10 09:18+0200\n"
-"PO-Revision-Date: 2020-07-10 09:27+0200\n"
+"POT-Creation-Date: 2020-08-06 10:09+0200\n"
+"PO-Revision-Date: 2020-08-03 13:43+0200\n"
 "Last-Translator: \n"
 "Language: en\n"
 "Language-Team: en <LL@li.org>\n"
@@ -178,6 +178,9 @@ msgstr ""
 "An error occured while waiting for the other user. Please restart the "
 "process."
 
+msgid "TEXT_GREET_USER_PEER_RESET"
+msgstr "The invitee has reset the process. We will restart from the beginning."
+
 msgid "TEXT_USER_PROFILE_STANDARD"
 msgstr "Standard"
 
@@ -207,16 +210,18 @@ msgstr ""
 "network may not be safe."
 
 msgid "TEXT_GREET_USER_GET_GREETER_SAS_ERROR"
-msgstr "Internal error. Please restart the process."
+msgstr "Error while negociating SAS code. Please restart the process."
 
 msgid "TEXT_GREET_USER_GET_CLAIMER_SAS_ERROR"
-msgstr "Internal error. Please restart the process."
+msgstr "Error while negociating claimer SAS code. Please restart the process."
 
 msgid "TEXT_GREET_USER_SIGNIFY_TRUST_ERROR"
-msgstr "Internal error. Please restart the process."
+msgstr "Error while acknowledging SAS code. Please restart the process."
 
 msgid "TEXT_GREET_USER_WAIT_PEER_TRUST_ERROR"
-msgstr "Internal error. Please restart the process."
+msgstr ""
+"Error while waiting for peer SAS code acknowledgment. Please restart the "
+"process."
 
 msgid "TEXT_USER_GREET_SUCCESSFUL"
 msgstr "The user was successfully greeter in your organization."
@@ -353,28 +358,33 @@ msgstr ""
 "network may not be safe."
 
 msgid "TEXT_CLAIM_USER_GET_GREETER_SAS_ERROR"
-msgstr "Internal error. Please restart the process."
+msgstr "Error while negociating SAS code. Please restart the process."
 
-msgid "TEXT_CLAIM_USER_WAIT_TRUST_ERROR"
-msgstr "Internal error. Please restart the process."
+msgid "TEXT_CLAIM_USER_PEER_RESET"
+msgstr "The host has reset the process. We will restart from the beginning."
+
+msgid "TEXT_CLAIM_USER_SIGNIFY_TRUST_ERROR"
+msgstr "Error while acknowledging SAS code. Please restart the process."
 
 msgid "TEXT_CLAIM_USER_WAIT_PEER_TRUST_ERROR"
-msgstr "Internal error. Please restart the process."
+msgstr ""
+"Error while waiting for peer SAS code acknowledgment. Please restart the "
+"process."
 
 msgid "TEXT_CLAIM_USER_INVALID_HUMAN_HANDLE"
 msgstr "The email is invalid."
 
 msgid "TEXT_CLAIM_USER_CLAIM_ERROR"
-msgstr "Internal error. Please restart the process."
+msgstr "Error while validating invite information. Please restart the process."
 
 msgid "TEXT_CLAIM_USER_WAITING"
 msgstr "Waiting for the other user"
 
-msgid "ACTION_START"
-msgstr "Start"
-
 msgid "TEXT_CLAIM_USER_WAIT_PEER_ERROR"
 msgstr "Error while waiting for the other user. Please restart the process."
+
+msgid "ACTION_START"
+msgstr "Start"
 
 msgid "TEXT_CLAIM_USER_FAILED_TO_RETRIEVE_INFO"
 msgstr "Failed to retrieve information about the invitation."
@@ -388,7 +398,7 @@ msgid "TEXT_CLAIM_USER_INVITATION_NOT_FOUND"
 msgstr "The invitation was not found."
 
 msgid "TEXT_CLAIM_USER_UNKNOWN_ERROR"
-msgstr "Internal error. Please restart the process."
+msgstr "Unexpected error. Please restart the process."
 
 msgid "TEXT_CLAIM_USER_TITLE"
 msgstr "Register a user"
@@ -399,8 +409,11 @@ msgstr "current"
 msgid "ACTION_DEVICE_MENU_CHANGE_PASSWORD"
 msgstr "Change password"
 
-msgid "TEXT_DEVICES_CANNOT_INVITE_DEVICE"
-msgstr "Cannot invite a new device."
+msgid "TEXT_INVITE_DEVICE_INVITE_OFFLINE"
+msgstr "The server is offline or you have no access to the internet."
+
+msgid "TEXT_INVITE_DEVICE_INVITE_ERROR"
+msgstr "Could not invite the device."
 
 msgid "TEXT_DEVICE_LIST_RETRIEVABLE_FAILURE"
 msgstr "Failed to retrieve the device list from the server."
@@ -507,7 +520,29 @@ msgstr "Workspace"
 msgid "ACTION_WORKSPACE_NEW_CREATE"
 msgstr "Create"
 
-msgid "TEXT_GREET_USER_ADDR_COPIED_TO_CLIPBOARD"
+msgid "TEXT_GREET_DEVICE_INSTRUCTIONS_NO_EMAIL"
+msgstr ""
+"To greet your new device, Parsec needs to be started on both devices.\n"
+"<br /><br />\n"
+"You will have to exchange codes between the two devices. This way, we can"
+" be certain that the process is secure.\n"
+"<br /><br />\n"
+"To get the invitation link, click the <i>Copy invitation link to the "
+"clipboard</i> button below and transfer it to your new device."
+
+msgid "TEXT_GREET_DEVICE_INSTRUCTIONS_email"
+msgstr ""
+"To greet your new device, Parsec needs to be started on both devices.\n"
+"<br /><br />\n"
+"You will have to exchange codes between the two devices. This way, we can"
+" be certain that the process is secure.\n"
+"<br /><br />\n"
+"To get the invitation link to you new device, you can either transfer it "
+"manually by clicking the <i>Copy invitation link to the clipboard</i> "
+"button, or we can send an email with the link to <b>{email}</b> by "
+"clicking the <i>Send an email</i> button."
+
+msgid "TEXT_GREET_DEVICE_ADDR_COPIED_TO_CLIPBOARD"
 msgstr "The invitation link has been copied to the clipboard"
 
 msgid "TEXT_GREET_DEVICE_EMAIL_SENT"
@@ -520,7 +555,12 @@ msgid "TEXT_GREET_DEVICE_WAITING"
 msgstr "Waiting for the new device..."
 
 msgid "TEXT_GREET_DEVICE_WAIT_PEER_ERROR"
-msgstr "Error while waiting for the new device."
+msgstr ""
+"An error occured while waiting for the other user. Please restart the "
+"process "
+
+msgid "TEXT_GREET_DEVICE_PEER_RESET"
+msgstr "The invitee has reset the process.. We will restart from the beginning."
 
 msgid "TEXT_GREET_DEVICE_INVALID_CODE_CLICKED"
 msgstr ""
@@ -536,16 +576,18 @@ msgstr ""
 "network may not be safe."
 
 msgid "TEXT_GREET_DEVICE_GET_GREETER_SAS_ERROR"
-msgstr "Internal error. Please restart the process."
+msgstr "Error while negociating SAS code. Please restart the process."
 
 msgid "TEXT_GREET_DEVICE_GET_CLAIMER_SAS_ERROR"
-msgstr "Internal error. Please restart the process."
+msgstr "Error while negociating claimer SAS code. Please restart the process."
 
 msgid "TEXT_GREET_DEVICE_SIGNIFY_TRUST_ERROR"
-msgstr "Internal error. Please restart the process."
+msgstr "Error while acknowledging SAS code. Please restart the process."
 
 msgid "TEXT_GREET_DEVICE_WAIT_PEER_TRUST_ERROR"
-msgstr "Internal error. Please restart the process."
+msgstr ""
+"Error while waiting for peer SAS code acknowledgment. Please restart the "
+"process."
 
 msgid "TEXT_DEVICE_GREET_SUCCESSFUL"
 msgstr "The device was successfully created."
@@ -638,6 +680,9 @@ msgstr "Failed to retrieve the user list from the server."
 
 msgid "TEXT_INVITE_USER_CANCEL_ERROR"
 msgstr "Could not cancel the invitation."
+
+msgid "TEXT_INVITE_USER_INVITE_OFFLINE"
+msgstr "The server is offline or you have no access to the internet."
 
 msgid "TEXT_INVITE_USER_INVITE_ERROR"
 msgstr "Could not invite the user."
@@ -1635,16 +1680,21 @@ msgstr ""
 "network may not be safe."
 
 msgid "TEXT_CLAIM_DEVICE_GET_GREETER_SAS_ERROR"
-msgstr "Internal error. Please restart the process."
+msgstr "Error while negociationg SAS code. Please restart the process."
 
-msgid "TEXT_CLAIM_DEVICE_WAIT_TRUST_ERROR"
-msgstr "Internal error. Please restart the process."
+msgid "TEXT_CLAIM_DEVICE_PEER_RESET"
+msgstr "The host has reset the process. We will restart from the beginning."
+
+msgid "TEXT_CLAIM_DEVICE_SIGNIFY_TRUST_ERROR"
+msgstr "Error while acknowledging SAS code. Please restart the process."
 
 msgid "TEXT_CLAIM_DEVICE_WAIT_PEER_TRUST_ERROR"
-msgstr "Internal error. Please restart the process."
+msgstr ""
+"Error while waiting for peer SAS code acknowledgment. Please restart the "
+"process."
 
 msgid "TEXT_CLAIM_DEVICE_CLAIM_ERROR"
-msgstr "Internal error. Please restart the process."
+msgstr "Error while validating invite information. Please restart the process."
 
 msgid "TEXT_CLAIM_DEVICE_WAITING"
 msgstr "Waiting..."
@@ -1706,6 +1756,9 @@ msgstr "Connected"
 msgid "TEXT_BACKEND_STATE_DISCONNECTED"
 msgstr "Disconnected"
 
+msgid "TEXT_SYSTRAY_BACKEND_DISCONNECT_organization"
+msgstr "{organization}: Disconnected"
+
 msgid "TEXT_BACKEND_STATE_API_MISMATCH_versions"
 msgstr "Application incompatible with the server"
 
@@ -1755,7 +1808,7 @@ msgid "ACTION_MAIN_MENU_SETTINGS"
 msgstr "Settings"
 
 msgid "ACTION_MAIN_MENU_OPEN_DOCUMENTATION"
-msgstr "User guide"
+msgstr "Documentation"
 
 msgid "ACTION_MAIN_MENU_ABOUT"
 msgstr "About PARSEC"
@@ -2127,13 +2180,14 @@ msgstr "Copy invitation link to the clipboard"
 msgid "ACTION_SEND_EMAIL"
 msgstr "Send an email"
 
-msgid "TEXT_GREET_DEVICE_INSTRUCTIONS"
+msgid "TEXT_GREET_DEVICE_INSTRUCTIONS_START"
 msgstr ""
 "To greet your new device, Parsec needs to be started on both devices.\n"
 "\n"
 "You will have to exchange codes between the two devices. This way, we can"
-" be certain that the process is secure.\n"
-"When you are ready, click Start."
+" be certain that the process is secure.\n\n"
+"Once Parsec is installed on your other device and you've clicked on the "
+"invitation link, you can click <i>Start</i> to begin the process."
 
 msgid "TEXT_GREET_USER_WAITING_FOR_INFO"
 msgstr ""
@@ -2321,7 +2375,4 @@ msgstr "Create a new workspace"
 
 msgid "ACTION_WORKSPACE_GOTO_FILE_LINK"
 msgstr "Go to a file using a link"
-
-#~ msgid "TEXT_LABEL_USER_NAME"
-#~ msgstr "Username"
 

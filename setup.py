@@ -286,6 +286,7 @@ requirements = [
     "PyPika==0.36.5",
     "async_exit_stack==1.0.1",
     "outcome==1.0.0",
+    "packaging==20.4",
 ]
 
 
@@ -313,7 +314,7 @@ test_requirements = [
 ]
 
 
-PYQT_DEP = "PyQt5==5.15.0"
+PYQT_DEP = "PyQt5==5.14.2"
 BABEL_DEP = "Babel==2.6.0"
 WHEEL_DEP = "wheel==0.34.2"
 DOCUTILS_DEP = "docutils==0.15"
@@ -327,6 +328,7 @@ extra_requirements = {
         "psutil==5.6.3",
     ],
     "backend": [
+        "jinja2==2.11.2",
         # PostgreSQL
         "triopg==0.3.0",
         "trio-asyncio==0.11.0",
@@ -350,6 +352,7 @@ setup(
     author="Scille SAS",
     author_email="contact@scille.fr",
     url="https://github.com/Scille/parsec-cloud",
+    python_requires="~=3.6",
     packages=find_packages(include=["parsec", "parsec.*"]),
     package_dir={"parsec": "parsec"},
     setup_requires=[WHEEL_DEP, PYQT_DEP, BABEL_DEP, DOCUTILS_DEP],  # To generate resources bundle
@@ -367,7 +370,8 @@ setup(
     # Omitting GUI resources given they end up packaged in `parsec/core/gui/_resources_rc.py`
     package_data={
         "parsec.backend.postgresql.migrations": ["*.sql"],
-        "parsec.backend.mail": ["*.html"],
+        "parsec.backend.templates": ["*"],
+        "parsec.backend.static": ["*"],
         "parsec.core.resources": ["*.ico"],
     },
     entry_points={
@@ -378,7 +382,7 @@ setup(
     zip_safe=False,
     keywords="parsec",
     classifiers=[
-        "Development Status :: 4 - Beta",
+        "Development Status :: 5 - Production/Stable",
         "Intended Audience :: Developers",
         "Operating System :: POSIX :: Linux",
         "Operating System :: Microsoft :: Windows",
@@ -386,6 +390,7 @@ setup(
         "Natural Language :: English",
         "Programming Language :: Python :: 3.6",
         "Programming Language :: Python :: 3.7",
+        "Programming Language :: Python :: 3.8",
     ],
     test_suite="tests",
     tests_require=test_requirements,

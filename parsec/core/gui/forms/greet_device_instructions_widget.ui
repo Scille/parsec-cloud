@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>400</width>
-    <height>227</height>
+    <height>259</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -15,7 +15,7 @@
   </property>
   <layout class="QVBoxLayout" name="verticalLayout">
    <property name="spacing">
-    <number>10</number>
+    <number>15</number>
    </property>
    <property name="leftMargin">
     <number>0</number>
@@ -38,7 +38,13 @@
       </sizepolicy>
      </property>
      <property name="text">
-      <string>TEXT_GREET_DEVICE_INSTRUCTIONS</string>
+      <string>TEXT_GREET_DEVICE_INSTRUCTIONS_email</string>
+     </property>
+     <property name="textFormat">
+      <enum>Qt::RichText</enum>
+     </property>
+     <property name="alignment">
+      <set>Qt::AlignJustify|Qt::AlignVCenter</set>
      </property>
      <property name="wordWrap">
       <bool>true</bool>
@@ -61,16 +67,16 @@
       </spacer>
      </item>
      <item>
-      <widget class="QPushButton" name="button_copy_addr">
+      <widget class="QPushButton" name="button_send_email">
        <property name="text">
-        <string>ACTION_COPY_ADDR</string>
+        <string>ACTION_SEND_EMAIL</string>
        </property>
       </widget>
      </item>
      <item>
-      <widget class="QPushButton" name="button_send_email">
+      <widget class="QPushButton" name="button_copy_addr">
        <property name="text">
-        <string>ACTION_SEND_EMAIL</string>
+        <string>ACTION_COPY_ADDR</string>
        </property>
       </widget>
      </item>
@@ -88,6 +94,22 @@
       </spacer>
      </item>
     </layout>
+   </item>
+   <item>
+    <widget class="QLabel" name="label">
+     <property name="text">
+      <string>TEXT_GREET_DEVICE_INSTRUCTIONS_START</string>
+     </property>
+     <property name="textFormat">
+      <enum>Qt::RichText</enum>
+     </property>
+     <property name="alignment">
+      <set>Qt::AlignJustify|Qt::AlignVCenter</set>
+     </property>
+     <property name="wordWrap">
+      <bool>true</bool>
+     </property>
+    </widget>
    </item>
    <item>
     <layout class="QHBoxLayout" name="horizontalLayout">

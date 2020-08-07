@@ -1,12 +1,14 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
 
-from parsec.backend.backend_events import BackendEvent
 from typing import Optional
 import trio
 from structlog import get_logger
 from logging import DEBUG as LOG_LEVEL_DEBUG
 from async_generator import asynccontextmanager
+import h11
 
+from parsec._version import __version__ as parsec_version
+from parsec.backend.backend_events import BackendEvent
 from parsec.event_bus import EventBus
 from parsec.logging import get_log_level
 from parsec.api.transport import TransportError, TransportClosedByPeer, Transport
@@ -24,6 +26,7 @@ from parsec.backend.client_context import AuthenticatedClientContext, InvitedCli
 from parsec.backend.handshake import do_handshake
 from parsec.backend.memory import components_factory as mocked_components_factory
 from parsec.backend.postgresql import components_factory as postgresql_components_factory
+from parsec.backend.http import HTTPRequest
 
 
 logger = get_logger()
@@ -46,6 +49,8 @@ async def backend_app_factory(config: BackendConfig, event_bus: Optional[EventBu
         yield BackendApp(
             config=config,
             event_bus=event_bus,
+            webhooks=components["webhooks"],
+            http=components["http"],
             user=components["user"],
             invite=components["invite"],
             organization=components["organization"],
@@ -64,6 +69,8 @@ class BackendApp:
         self,
         config,
         event_bus,
+        webhooks,
+        http,
         user,
         invite,
         organization,
@@ -78,6 +85,8 @@ class BackendApp:
         self.config = config
         self.event_bus = event_bus
 
+        self.webhooks = webhooks
+        self.http = http
         self.user = user
         self.invite = invite
         self.organization = organization
@@ -93,38 +102,19 @@ class BackendApp:
             user, invite, organization, message, realm, vlob, ping, blockstore, block, events
         )
 
-    async def handle_client(self, stream):
+    async def handle_client_websocket(self, stream, event, first_request_data=None):
         selected_logger = logger
 
         try:
-            transport = await Transport.init_for_server(stream)
+            transport = await Transport.init_for_server(
+                stream, first_request_data=first_request_data
+            )
 
         except TransportClosedByPeer as exc:
             selected_logger.info("Connection dropped: client has left", reason=str(exc))
             return
 
         except TransportError as exc:
-            # A crash during transport setup could mean the client tried to
-            # access us from a web browser (hence sending http request).
-
-            content_body = b"This service requires use of the WebSocket protocol"
-            content = (
-                b"HTTP/1.1 426 OK\r\n"
-                b"Upgrade: WebSocket\r\n"
-                b"Content-Length: %d\r\n"
-                b"Connection: Upgrade\r\n"
-                b"Content-Type: text/html; charset=UTF-8\r\n"
-                b"\r\n"
-            ) % len(content_body)
-
-            try:
-                await stream.send_all(content + content_body)
-                await stream.aclose()
-
-            except trio.BrokenResourceError:
-                # Stream is really dead, nothing else to do...
-                pass
-
             selected_logger.info("Connection dropped: websocket error", reason=str(exc))
             return
 
@@ -134,7 +124,6 @@ class BackendApp:
             client_ctx, error_infos = await do_handshake(self, transport)
             if not client_ctx:
                 # Invalid handshake
-                await stream.aclose()
                 selected_logger.info("Connection dropped: bad handshake", **error_infos)
                 return
 
@@ -203,6 +192,83 @@ class BackendApp:
                 pass
             await transport.aclose()
             selected_logger.info("Connection dropped: invalid data", reason=str(exc))
+
+    async def handle_client(self, stream):
+        MAX_RECV = 5
+        try:
+            conn = h11.Connection(h11.SERVER)
+            first_request_data = b""
+
+            while True:
+                if conn.they_are_waiting_for_100_continue:
+                    self.info("Sending 100 Continue")
+                    go_ahead = h11.InformationalResponse(
+                        status_code=100, headers=self.basic_headers()
+                    )
+                    await self.send(go_ahead)
+                try:
+                    data = await stream.receive_some(MAX_RECV)
+                    first_request_data += data
+
+                except ConnectionError:
+                    # They've stopped listening. Not much we can do about it here.
+                    data = b""
+                conn.receive_data(data)
+
+                event = conn.next_event()
+                if event is not h11.NEED_DATA:
+                    break
+
+            if not isinstance(event, h11.Request):
+                await stream.aclose()
+                return
+
+            # Websocket upgrade, else HTTP
+            if (b"connection", b"Upgrade") in event.headers:
+                await self.handle_client_websocket(
+                    stream, event, first_request_data=first_request_data
+                )
+            else:
+                await self.handle_client_http(stream, event, conn)
+
+        except h11.RemoteProtocolError:
+            # Peer is drunk...
+            pass
+
+        finally:
+            try:
+                await stream.aclose()
+            except trio.BrokenResourceError:
+                # They're already gone, nothing to do
+                pass
+
+    async def handle_client_http(self, stream, event, conn):
+        # TODO: right now we handle a single request then close the connection
+        # hence HTTP 1.1 keep-alive is not supported
+        req = HTTPRequest.from_h11_req(event)
+        rep = await self.http.handle_request(req)
+
+        if self.config.debug:
+            server_header = f"parsec/{parsec_version} {h11.PRODUCT_ID}"
+        else:
+            server_header = "parsec"
+        rep.headers.append(("server", server_header))
+
+        # TODO: Specify reason ? (currently we have `HTTP/1.1 200 \r\n` instead of `HTTP/1.1 200 OK\r\n`)
+        try:
+            await stream.send_all(
+                conn.send(
+                    h11.Response(
+                        status_code=rep.status_code, headers=rep.headers, reason=rep.reason
+                    )
+                )
+            )
+            if rep.data:
+                await stream.send_all(conn.send(h11.Data(data=rep.data)))
+            await stream.send_all(conn.send(h11.EndOfMessage()))
+        except trio.BrokenResourceError:
+            # Peer is already gone, nothing to do
+            pass
 
     async def _handle_client_loop(self, transport, client_ctx):
         # Retrieve the allowed commands according to api version and auth type

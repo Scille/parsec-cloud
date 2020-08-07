@@ -20,6 +20,7 @@ from parsec.api.protocol import (
 )
 from parsec.api.data import UserCertificateContent, DeviceCertificateContent, DataError, UserProfile
 from parsec.backend.user import User, Device
+from parsec.backend.webhooks import WebhooksComponent
 from parsec.backend.utils import catch_protocol_errors, api
 
 
@@ -76,7 +77,8 @@ class OrganizationStats:
 
 
 class BaseOrganizationComponent:
-    def __init__(self, bootstrap_token_size: int = 32):
+    def __init__(self, webhooks: WebhooksComponent, bootstrap_token_size: int = 32):
+        self.webhooks = webhooks
         self.bootstrap_token_size = bootstrap_token_size
 
     @api("organization_create", handshake_types=[APIV1_HandshakeType.ADMINISTRATION])
@@ -277,6 +279,15 @@ class BaseOrganizationComponent:
 
         # Note: we let OrganizationFirstUserCreationError bobbles up given
         # it should not occurs under normal circumstances
+
+        # Finally notify webhook
+        await self.webhooks.on_organization_bootstrap(
+            organization_id=client_ctx.organization_id,
+            device_id=first_device.device_id,
+            device_label=first_device.device_label,
+            human_email=user.human_handle.email if user.human_handle else None,
+            human_label=user.human_handle.label if user.human_handle else None,
+        )
 
         return apiv1_organization_bootstrap_serializer.rep_dump({"status": "ok"})
 

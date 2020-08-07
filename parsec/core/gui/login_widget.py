@@ -119,6 +119,11 @@ class LoginWidget(QWidget, Ui_LoginWidget):
             lw = item.widget()
             lw.reset()
 
+    def keyPressEvent(self, event):
+        if event.key() in (Qt.Key_Return, Qt.Key_Enter) and self.button_login.isEnabled():
+            self.try_login()
+        event.accept()
+
     def reload_devices(self):
         self._clear_widget()
         devices = list_available_devices(self.config.config_dir)

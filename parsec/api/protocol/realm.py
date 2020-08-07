@@ -14,6 +14,7 @@ __all__ = (
     "MaintenanceTypeField",
     "realm_create_serializer",
     "realm_status_serializer",
+    "realm_stats_serializer",
     "realm_get_role_certificates_serializer",
     "realm_update_roles_serializer",
     "realm_start_reencryption_maintenance_serializer",
@@ -61,6 +62,18 @@ class RealmStatusRepSchema(BaseRepSchema):
 
 
 realm_status_serializer = CmdSerializer(RealmStatusReqSchema, RealmStatusRepSchema)
+
+
+class RealmStatsReqSchema(BaseReqSchema):
+    realm_id = fields.UUID(required=True)
+
+
+class RealmStatsRepSchema(BaseRepSchema):
+    blocks_size = fields.Integer(required=True)
+    vlobs_size = fields.Integer(required=True)
+
+
+realm_stats_serializer = CmdSerializer(RealmStatsReqSchema, RealmStatsRepSchema)
 
 
 class RealmGetRoleCertificatesReqSchema(BaseReqSchema):

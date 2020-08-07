@@ -345,7 +345,7 @@ class WorkspaceSharingWidget(QWidget, Ui_WorkspaceSharingWidget):
 
     def _on_share_success(self, job):
         workspace_name, user_info, role = job.ret
-        self.line_edit_share.setText()
+        self.line_edit_share.setText("")
         self.add_participant(user_info, is_current_user=False, role=role)
 
     def _on_share_error(self, job):
@@ -440,7 +440,11 @@ class WorkspaceSharingWidget(QWidget, Ui_WorkspaceSharingWidget):
         )
 
     @classmethod
-    def exec_modal(cls, user_fs, workspace_fs, core, jobs_ctx, parent):
+    def show_modal(cls, user_fs, workspace_fs, core, jobs_ctx, parent, on_finished):
         w = cls(user_fs=user_fs, workspace_fs=workspace_fs, core=core, jobs_ctx=jobs_ctx)
         d = GreyedDialog(w, title=_("TEXT_WORKSPACE_SHARING_TITLE"), parent=parent, width=1000)
-        return d.exec_()
+
+        d.finished.connect(on_finished)
+        # Unlike exec_, show is asynchronous and works within the main Qt loop
+        d.show()
+        return w

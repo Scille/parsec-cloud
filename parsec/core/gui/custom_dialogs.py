@@ -57,7 +57,7 @@ class GreyedDialog(QDialog, Ui_GreyedDialog):
         main_win = ParsecApp.get_main_window()
         if width:
             if width < main_win.size().width():
-                spacing = (main_win.size().width() - width) / 2
+                spacing = int((main_win.size().width() - width) / 2)
                 self._get_spacer_right().changeSize(
                     spacing, 0, QSizePolicy.Preferred, QSizePolicy.Preferred
                 )
@@ -139,7 +139,7 @@ class TextInputWidget(QWidget, Ui_InputWidget):
         return self.line_edit_text.text()
 
     def keyPressEvent(self, event):
-        if event.key() == Qt.Key_Return:
+        if event.key() in (Qt.Key_Return, Qt.Key_Enter):
             self._on_button_clicked()
         event.accept()
 
@@ -227,7 +227,7 @@ class ErrorWidget(QWidget, Ui_ErrorWidget):
         else:
             import traceback
 
-            stack = traceback.format_tb(exception.__traceback__)
+            stack = traceback.format_exception(None, exception, None)
             if not stack:
                 self.button_details.hide()
             else:

@@ -385,14 +385,16 @@ class FilesWidget(QWidget, Ui_FilesWidget):
             show_error(self, _("TEXT_FILE_HISTORY_MULTIPLE_FILES_SELECTED_ERROR"))
             return
         selected_path = self.current_directory / files[0].name
-        FileHistoryWidget.exec_modal(
+        FileHistoryWidget.show_modal(
             jobs_ctx=self.jobs_ctx,
             workspace_fs=self.workspace_fs,
             path=selected_path,
             reload_timestamped_signal=self.reload_timestamped_requested,
             update_version_list=self.update_version_list,
             close_version_list=self.close_version_list,
+            core=self.core,
             parent=self,
+            on_finished=None,
         )
 
     def rename_files(self):

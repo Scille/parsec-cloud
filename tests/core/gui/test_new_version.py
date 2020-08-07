@@ -6,6 +6,7 @@ from http.client import HTTPResponse
 import hashlib
 import json
 from contextlib import contextmanager
+from packaging.version import Version
 
 from parsec.core.gui.new_version import _do_check_new_version
 
@@ -111,14 +112,25 @@ def urlopener(head_version, api_json):
             if the_request.full_url == gui_check_version_url
             else gui_check_version_url
         )
-        the_response.read = lambda: json.dumps(generate_json_data(api_json))
+        the_response.read = lambda: (
+            json.dumps(generate_json_data(api_json)) if type(api_json) is dict else api_json
+        )
         yield the_response
 
     return urlopen
 
 
-def smallcheck():
-    return trio.run(_do_check_new_version, gui_check_version_url, gui_check_version_api_url)
+def smallcheck(check_pre=False):
+    async def _do_check_new_version_wrapper(
+        gui_check_version_url, gui_check_version_api_url, check_pre
+    ):
+        return await _do_check_new_version(
+            gui_check_version_url, gui_check_version_api_url, check_pre=check_pre
+        )
+
+    return trio.run(
+        _do_check_new_version_wrapper, gui_check_version_url, gui_check_version_api_url, check_pre
+    )
 
 
 def mocked_CPU(arch):
@@ -144,7 +156,7 @@ def mocked_CPU(arch):
 )
 @patch("parsec.core.gui.new_version.QSysInfo.currentCpuArchitecture", new=mocked_CPU(64))
 def test_windows_update_updateable():
-    assert smallcheck() == ((1, 9, 0), generate_brower_download_url("v1.9.0", 64))
+    assert smallcheck() == (Version("1.9.0"), generate_brower_download_url("v1.9.0", 64))
 
 
 @patch("parsec.core.gui.new_version.__version__", new="1.8.0+dev")
@@ -161,7 +173,7 @@ def test_windows_update_updateable():
 )
 @patch("parsec.core.gui.new_version.QSysInfo.currentCpuArchitecture", new=mocked_CPU(64))
 def test_windows_update_updateable_with_dev():
-    assert smallcheck() == ((1, 9, 0), generate_brower_download_url("v1.9.0", 64))
+    assert smallcheck() == (Version("1.9.0"), generate_brower_download_url("v1.9.0", 64))
 
 
 @patch("parsec.core.gui.new_version.__version__", new="1.9.0")
@@ -227,7 +239,7 @@ def test_windows_update_newest_announced_not_in_json_not_updateable():
 )
 @patch("parsec.core.gui.new_version.QSysInfo.currentCpuArchitecture", new=mocked_CPU(64))
 def test_windows_update_newest_announced_not_in_json_but_updateable():
-    assert smallcheck() == ((1, 8, 0), generate_brower_download_url("v1.8.0", 64))
+    assert smallcheck() == (Version("1.8.0"), generate_brower_download_url("v1.8.0", 64))
 
 
 @patch("parsec.core.gui.new_version.__version__", new="1.8.0+dev")
@@ -261,7 +273,7 @@ def test_windows_update_newest_announced_no_compatible_asset():
 )
 @patch("parsec.core.gui.new_version.QSysInfo.currentCpuArchitecture", new=mocked_CPU(64))
 def test_windows_update_newest_announced_no_compatible_asset_but_newer_available():
-    assert smallcheck() == ((1, 8, 0), generate_brower_download_url("v1.8.0", 64))
+    assert smallcheck() == (Version("1.8.0"), generate_brower_download_url("v1.8.0", 64))
 
 
 @patch("parsec.core.gui.new_version.__version__", new="1.7.0")
@@ -295,7 +307,7 @@ def test_windows_update_newest_announced_no_x86_compatible_asset():
 )
 @patch("parsec.core.gui.new_version.QSysInfo.currentCpuArchitecture", new=mocked_CPU(32))
 def test_windows_update_newest_announced_no_x86_compatible_asset_but_newer_available():
-    assert smallcheck() == ((1, 8, 0), generate_brower_download_url("v1.8.0", 32))
+    assert smallcheck() == (Version("1.8.0"), generate_brower_download_url("v1.8.0", 32))
 
 
 @patch("parsec.core.gui.new_version.__version__", new="1.7.0")
@@ -329,7 +341,7 @@ def test_windows_update_newest_announced_no_x64_compatible_asset():
 )
 @patch("parsec.core.gui.new_version.QSysInfo.currentCpuArchitecture", new=mocked_CPU(64))
 def test_windows_update_newest_announced_no_x64_compatible_asset_but_newer_available():
-    assert smallcheck() == ((1, 8, 0), generate_brower_download_url("v1.8.0", 64))
+    assert smallcheck() == (Version("1.8.0"), generate_brower_download_url("v1.8.0", 64))
 
 
 @patch("parsec.core.gui.new_version.__version__", new="1.7.0")
@@ -346,8 +358,8 @@ def test_windows_update_newest_announced_no_x64_compatible_asset_but_newer_avail
 )
 def test_windows_update_newest_announced_no_cpu_mock_dont_raise_exception():
     assert smallcheck() in (
-        ((1, 9, 0), generate_brower_download_url("v1.9.0", 32)),
-        ((1, 9, 0), generate_brower_download_url("v1.9.0", 64)),
+        (Version("1.9.0"), generate_brower_download_url("v1.9.0", 32)),
+        (Version("1.9.0"), generate_brower_download_url("v1.9.0", 64)),
     )
 
 
@@ -365,7 +377,7 @@ def test_windows_update_newest_announced_no_cpu_mock_dont_raise_exception():
 )
 @patch("parsec.core.gui.new_version.QSysInfo.currentCpuArchitecture", new=mocked_CPU(64))
 def test_windows_update_newest_announced_is_prerelease():
-    assert smallcheck() == ((1, 8, 0), generate_brower_download_url("v1.8.0", 64))
+    assert smallcheck() == (Version("1.8.0"), generate_brower_download_url("v1.8.0", 64))
 
 
 @patch("parsec.core.gui.new_version.__version__", new="1.7.0")
@@ -382,7 +394,7 @@ def test_windows_update_newest_announced_is_prerelease():
 )
 @patch("parsec.core.gui.new_version.QSysInfo.currentCpuArchitecture", new=mocked_CPU(64))
 def test_windows_update_newest_announced_is_draft():
-    assert smallcheck() == ((1, 8, 0), generate_brower_download_url("v1.8.0", 64))
+    assert smallcheck() == (Version("1.8.0"), generate_brower_download_url("v1.8.0", 64))
 
 
 @patch("parsec.core.gui.new_version.__version__", new="1.7.0")
@@ -399,4 +411,114 @@ def test_windows_update_newest_announced_is_draft():
 )
 @patch("parsec.core.gui.new_version.QSysInfo.currentCpuArchitecture", new=mocked_CPU(64))
 def test_windows_update_newest_announced_is_malformed():
-    assert smallcheck() == ((1, 9, 0), "https://github.com/Scille/parsec-cloud/releases/latest")
+    assert smallcheck() == (Version("1.9.0"), gui_check_version_url)
+
+
+@patch("parsec.core.gui.new_version.__version__", new="1.7.0")
+@patch(
+    "parsec.core.gui.new_version.urlopen", new=urlopener(head_version="1.9.0", api_json="malformed")
+)
+@patch("parsec.core.gui.new_version.QSysInfo.currentCpuArchitecture", new=mocked_CPU(64))
+def test_windows_update_whole_json_is_malformed():
+    assert smallcheck() == (Version("1.9.0"), gui_check_version_url)
+
+
+@patch("parsec.core.gui.new_version.__version__", new="1.7.0")
+@patch(
+    "parsec.core.gui.new_version.urlopen",
+    new=urlopener(
+        head_version="1.9.0-rc3",
+        api_json={
+            "v1.9.0-rc3": {"draft": False, "prerelease": False, "32": True, "64": True},
+            "v1.9.0-rc2": {"draft": False, "prerelease": False, "32": True, "64": True},
+            "v1.9.0-rc1": {"draft": False, "prerelease": False, "32": True, "64": True},
+            "v1.8.0": {"draft": False, "prerelease": False, "32": True, "64": True},
+            "v1.7.0": {"draft": False, "prerelease": False, "32": True, "64": True},
+        },
+    ),
+)
+@patch("parsec.core.gui.new_version.QSysInfo.currentCpuArchitecture", new=mocked_CPU(64))
+def test_windows_update_newest_announced_is_rc_forgotten_to_set_as_prerelease():
+    assert smallcheck() == (Version("1.8.0"), generate_brower_download_url("v1.8.0", 64))
+
+
+@patch("parsec.core.gui.new_version.__version__", new="1.8.0")
+@patch(
+    "parsec.core.gui.new_version.urlopen",
+    new=urlopener(
+        head_version="1.9.0-rc3",
+        api_json={
+            "v1.9.0-rc3": {"draft": False, "prerelease": False, "32": True, "64": True},
+            "v1.9.0-rc2": {"draft": False, "prerelease": False, "32": True, "64": True},
+            "v1.9.0-rc1": {"draft": False, "prerelease": False, "32": True, "64": True},
+            "v1.8.0": {"draft": False, "prerelease": False, "32": True, "64": True},
+            "v1.7.0": {"draft": False, "prerelease": False, "32": True, "64": True},
+        },
+    ),
+)
+@patch("parsec.core.gui.new_version.QSysInfo.currentCpuArchitecture", new=mocked_CPU(64))
+def test_windows_update_newest_announced_is_rc_forgotten_to_set_as_prerelease_not_updateable():
+    assert smallcheck() is None
+
+
+@patch("parsec.core.gui.new_version.__version__", new="1.7.0")
+@patch(
+    "parsec.core.gui.new_version.urlopen",
+    new=urlopener(
+        head_version="1.9.0",
+        api_json={
+            "v1.9.0-rc3": {"draft": False, "prerelease": True, "32": True, "64": True},
+            "v1.9.0-rc2": {"draft": False, "prerelease": True, "32": True, "64": True},
+            "v1.9.0-rc1": {"draft": False, "prerelease": True, "32": True, "64": True},
+            "v1.8.0": {"draft": False, "prerelease": False, "32": True, "64": True},
+            "v1.7.0": {"draft": False, "prerelease": False, "32": True, "64": True},
+        },
+    ),
+)
+@patch("parsec.core.gui.new_version.QSysInfo.currentCpuArchitecture", new=mocked_CPU(64))
+def test_windows_update_newest_announced_is_rc_marked_as_prerelease():
+    assert smallcheck() == (Version("1.8.0"), generate_brower_download_url("v1.8.0", 64))
+
+
+@patch("parsec.core.gui.new_version.__version__", new="1.7.0")
+@patch(
+    "parsec.core.gui.new_version.urlopen",
+    new=urlopener(
+        head_version="1.8.0",
+        api_json={
+            "v1.9.0-rc3": {"draft": False, "prerelease": True, "32": True, "64": True},
+            "v1.9.0-rc2": {"draft": False, "prerelease": True, "32": True, "64": True},
+            "v1.9.0-rc1": {"draft": False, "prerelease": True, "32": True, "64": True},
+            "v1.8.0": {"draft": False, "prerelease": False, "32": True, "64": True},
+            "v1.7.0": {"draft": False, "prerelease": False, "32": True, "64": True},
+        },
+    ),
+)
+@patch("parsec.core.gui.new_version.QSysInfo.currentCpuArchitecture", new=mocked_CPU(64))
+def test_windows_update_newest_announced_is_rc_marked_as_prerelease_and_pre_enabled():
+    assert smallcheck(check_pre=True) == (
+        Version("1.9.0-rc3"),
+        generate_brower_download_url("v1.9.0-rc3", 64),
+    )
+
+
+@patch("parsec.core.gui.new_version.__version__", new="1.7.0")
+@patch(
+    "parsec.core.gui.new_version.urlopen",
+    new=urlopener(
+        head_version="1.9.0-rc3",
+        api_json={
+            "v1.9.0-rc3": {"draft": False, "prerelease": False, "32": True, "64": True},
+            "v1.9.0-rc2": {"draft": False, "prerelease": False, "32": True, "64": True},
+            "v1.9.0-rc1": {"draft": False, "prerelease": False, "32": True, "64": True},
+            "v1.8.0": {"draft": False, "prerelease": False, "32": True, "64": True},
+            "v1.7.0": {"draft": False, "prerelease": False, "32": True, "64": True},
+        },
+    ),
+)
+@patch("parsec.core.gui.new_version.QSysInfo.currentCpuArchitecture", new=mocked_CPU(64))
+def test_windows_update_newest_announced_is_rc_forgot_marked_as_prerelease_and_pre_enabled():
+    assert smallcheck(check_pre=True) == (
+        Version("1.9.0-rc3"),
+        generate_brower_download_url("v1.9.0-rc3", 64),
+    )
