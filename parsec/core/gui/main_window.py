@@ -45,7 +45,7 @@ logger = get_logger()
 class MainWindow(QMainWindow, Ui_MainWindow):
     foreground_needed = pyqtSignal()
     new_instance_needed = pyqtSignal(object)
-    systray_notification = pyqtSignal(str, str)
+    systray_notification = pyqtSignal(str, str, int)
 
     TAB_NOTIFICATION_COLOR = QColor(46, 146, 208)
     TAB_NOT_SELECTED_COLOR = QColor(123, 132, 163)
@@ -466,7 +466,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         return -1
 
     def add_new_tab(self):
-        tab = InstanceWidget(self.jobs_ctx, self.event_bus, self.config)
+        tab = InstanceWidget(self.jobs_ctx, self.event_bus, self.config, self.systray_notification)
         tab.join_organization_clicked.connect(self._on_join_org_clicked)
         tab.create_organization_clicked.connect(self._on_create_org_clicked)
         idx = self.tab_center.addTab(tab, "")
@@ -625,7 +625,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
             if not self.minimize_on_close_notif_already_send:
                 self.minimize_on_close_notif_already_send = True
                 self.systray_notification.emit(
-                    "Parsec", _("TEXT_TRAY_PARSEC_STILL_RUNNING_MESSAGE")
+                    "Parsec", _("TEXT_TRAY_PARSEC_STILL_RUNNING_MESSAGE"), 2000
                 )
         else:
             if self.config.gui_confirmation_before_close and not self.force_close:

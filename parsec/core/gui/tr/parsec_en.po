@@ -7,8 +7,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PROJECT VERSION\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2020-08-05 13:41+0200\n"
-"PO-Revision-Date: 2020-08-05 13:44+0200\n"
+"POT-Creation-Date: 2020-08-06 10:09+0200\n"
+"PO-Revision-Date: 2020-08-03 13:43+0200\n"
 "Last-Translator: \n"
 "Language: en\n"
 "Language-Team: en <LL@li.org>\n"
@@ -519,6 +519,28 @@ msgstr "Workspace"
 
 msgid "ACTION_WORKSPACE_NEW_CREATE"
 msgstr "Create"
+
+msgid "TEXT_GREET_DEVICE_INSTRUCTIONS_NO_EMAIL"
+msgstr ""
+"To greet your new device, Parsec needs to be started on both devices.\n"
+"<br /><br />\n"
+"You will have to exchange codes between the two devices. This way, we can"
+" be certain that the process is secure.\n"
+"<br /><br />\n"
+"To get the invitation link, click the <i>Copy invitation link to the "
+"clipboard</i> button below and transfer it to your new device."
+
+msgid "TEXT_GREET_DEVICE_INSTRUCTIONS_email"
+msgstr ""
+"To greet your new device, Parsec needs to be started on both devices.\n"
+"<br /><br />\n"
+"You will have to exchange codes between the two devices. This way, we can"
+" be certain that the process is secure.\n"
+"<br /><br />\n"
+"To get the invitation link to you new device, you can either transfer it "
+"manually by clicking the <i>Copy invitation link to the clipboard</i> "
+"button, or we can send an email with the link to <b>{email}</b> by "
+"clicking the <i>Send an email</i> button."
 
 msgid "TEXT_GREET_DEVICE_ADDR_COPIED_TO_CLIPBOARD"
 msgstr "The invitation link has been copied to the clipboard"
@@ -1697,6 +1719,9 @@ msgstr "Connected"
 msgid "TEXT_BACKEND_STATE_DISCONNECTED"
 msgstr "Disconnected"
 
+msgid "TEXT_SYSTRAY_BACKEND_DISCONNECT_organization"
+msgstr "{organization}: Disconnected"
+
 msgid "TEXT_BACKEND_STATE_API_MISMATCH_versions"
 msgstr "Application incompatible with the server"
 
@@ -2093,13 +2118,10 @@ msgstr "Copy invitation link to the clipboard"
 msgid "ACTION_SEND_EMAIL"
 msgstr "Send an email"
 
-msgid "TEXT_GREET_DEVICE_INSTRUCTIONS"
+msgid "TEXT_GREET_DEVICE_INSTRUCTIONS_START"
 msgstr ""
-"To greet your new device, Parsec needs to be started on both devices.\n"
-"\n"
-"You will have to exchange codes between the two devices. This way, we can"
-" be certain that the process is secure.\n"
-"When you are ready, click Start."
+"Once Parsec is installed on your other device and you've clicked on the "
+"invitation link, you can click <i>Start</i> to begin the process."
 
 msgid "TEXT_GREET_USER_WAITING_FOR_INFO"
 msgstr ""
@@ -2287,102 +2309,3 @@ msgstr "Create a new workspace"
 
 msgid "ACTION_WORKSPACE_GOTO_FILE_LINK"
 msgstr "Go to a file using a link"
-
-#~ msgid "TEXT_GREET_USER_ADDR_COPIED_TO_CLIPBOARD"
-#~ msgstr "The invitation link has been copied to the clipboard"
-
-#~ msgid "TEXT_BOOTSTRAP_ORG_INSTRUCTIONS_url-organization"
-#~ msgstr ""
-#~ "You are about to bootstrap the "
-#~ "organization <b>{organization}</b>. You will "
-#~ "be the first administrator of the "
-#~ "organization.<br /><br />\n"
-#~ "\n"
-#~ "To proceed, please provide your name,"
-#~ " your email address, a name for "
-#~ "this device, and a password."
-
-#~ msgid "TEXT_BOOTSTRAP_ORG_INVALID_URL"
-#~ msgstr "This is not a valid bootstrap link."
-
-#~ msgid "TEXT_BOOTSTRAP_ORG_INVITE_NOT_FOUND"
-#~ msgstr "There are no organization to bootstrap with this link."
-
-#~ msgid "TEXT_BOOTSTRAP_ORG_ALREADY_BOOTSTRAPPED"
-#~ msgstr "This organization has already been bootstrapped."
-
-#~ msgid "TEXT_BOOTSTRAP_ORG_USER_EXISTS"
-#~ msgstr "This user already exists within this organization."
-
-#~ msgid "TEXT_BOOTSTRAP_ORG_PASSWORD_MISMATCH"
-#~ msgstr "The password and the password confirmation do no match."
-
-#~ msgid "TEXT_BOOTSTRAP_ORG_PASSWORD_COMPLEXITY_TOO_LOW"
-#~ msgstr "The password is not complex enough."
-
-#~ msgid "TEXT_BOOTSTRAP_ORG_BAD_DEVICE_NAME"
-#~ msgstr "The device name is invalid."
-
-#~ msgid "TEXT_BOOTSTRAP_ORG_BAD_API_VERSION"
-#~ msgstr ""
-#~ "Your application is not compatible with"
-#~ " this server. Try to update it "
-#~ "to the latest version."
-
-#~ msgid "TEXT_BOOTSTRAP_ORG_BACKEND_REFUSAL"
-#~ msgstr "Could not bootstrap the organization."
-
-#~ msgid "TEXT_BOOTSTRAP_ORG_BACKEND_OFFLINE"
-#~ msgstr "The server is offline or you have no access to the internet."
-
-#~ msgid "TEXT_BOOTSTRAP_ORG_UNKNOWN_FAILURE"
-#~ msgstr "Could not bootstrap the organization."
-
-#~ msgid "TEXT_BOOTSTRAP_ORG_INVALID_EMAIL"
-#~ msgstr "The email is invalid."
-
-#~ msgid "TEXT_BOOTSTRAP_ORG_TITLE"
-#~ msgstr "Bootstrap the organization"
-
-#~ msgid "ACTION_CREATE_ORGANIZATION"
-#~ msgstr "Create the organization"
-
-#~ msgid "TEXT_BOOTSTRAP_ORG_URL_TITLE"
-#~ msgstr "Bootstrap an organization"
-
-#~ msgid "TEXT_BOOTSTRAP_ORG_URL_INSTRUCTIONS"
-#~ msgstr "Please provide the link to bootstrap the organization."
-
-#~ msgid "TEXT_BOOTSTRAP_ORG_URL_PLACEHOLDER"
-#~ msgstr "parsec://parsec.example.com/my_org?action=bootstrap_organization&token=1234ABCD"
-
-#~ msgid "TEXT_BOOTSTRAP_ORG_TOOLTIP"
-#~ msgstr "Bootstrap the organization"
-
-#~ msgid "ACTION_BOOTSTRAP_ORG"
-#~ msgstr "Bootstrap the organization"
-
-#~ msgid "TEXT_ORG_WIZARD_CHOICE_INSTRUCTIONS"
-#~ msgstr "Please choose:"
-
-#~ msgid "TEXT_ORG_WIZARD_CREATE_FROM_SCRATCH"
-#~ msgstr ""
-#~ "I don't have an account on the "
-#~ "website and want to create a new"
-#~ " organization"
-
-#~ msgid "TEXT_ORG_WIZARD_ALREADY_HAS_URL"
-#~ msgstr ""
-#~ "I already have an account on the"
-#~ " website and a link to bootstrap "
-#~ "my organization"
-
-#~ msgid "TEXT_ORG_WIZARD_CREATE_ORG_INSTRUCTIONS"
-#~ msgstr "Please enter your email and the name you want for your organization."
-
-#~ msgid "TEXT_ORG_WIZARD_EMAIL_ALREADY_EXISTS"
-#~ msgstr "This email is already used."
-
-#~ msgid "TEXT_ORG_WIZARD_INVALID_RESPONSE"
-#~ msgstr "Could not create the organization."
-

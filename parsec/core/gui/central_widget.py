@@ -41,13 +41,14 @@ class CentralWidget(QWidget, Ui_CentralWidget):
     logout_requested = pyqtSignal()
     new_notification = pyqtSignal(str, str)
 
-    def __init__(self, core, jobs_ctx, event_bus, **kwargs):
+    def __init__(self, core, jobs_ctx, event_bus, systray_notification, **kwargs):
         super().__init__(**kwargs)
         self.setupUi(self)
 
         self.jobs_ctx = jobs_ctx
         self.core = core
         self.event_bus = event_bus
+        self.systray_notification = systray_notification
 
         self.menu = MenuWidget(parent=self)
         self.widget_menu.layout().addWidget(self.menu)
@@ -162,6 +163,7 @@ class CentralWidget(QWidget, Ui_CentralWidget):
         icon = None
         tooltip = None
         notif = None
+        disconnected = None
 
         if status in (BackendConnStatus.READY, BackendConnStatus.INITIALIZING):
             tooltip = text = _("TEXT_BACKEND_STATE_CONNECTED")
@@ -170,8 +172,10 @@ class CentralWidget(QWidget, Ui_CentralWidget):
         elif status == BackendConnStatus.LOST:
             tooltip = text = _("TEXT_BACKEND_STATE_DISCONNECTED")
             icon = QPixmap(":/icons/images/material/cloud_off.svg")
+            disconnected = True
 
         elif status == BackendConnStatus.REFUSED:
+            disconnected = True
             cause = status_exc.__cause__
             if isinstance(cause, HandshakeAPIVersionError):
                 tooltip = _("TEXT_BACKEND_STATE_API_MISMATCH_versions").format(
@@ -194,10 +198,19 @@ class CentralWidget(QWidget, Ui_CentralWidget):
             tooltip = _("TEXT_BACKEND_STATE_CRASHED_cause").format(cause=str(status_exc.__cause__))
             icon = QPixmap(":/icons/images/material/cloud_off.svg")
             notif = ("ERROR", tooltip)
+            disconnected = True
 
         self.menu.set_connection_state(text, tooltip, icon)
         if notif:
             self.new_notification.emit(*notif)
+        if disconnected:
+            self.systray_notification.emit(
+                "Parsec",
+                _("TEXT_SYSTRAY_BACKEND_DISCONNECT_organization").format(
+                    organization=self.core.device.organization_id
+                ),
+                5000,
+            )
 
     def on_new_notification(self, notif_type, msg):
         if notif_type == "REVOKED":

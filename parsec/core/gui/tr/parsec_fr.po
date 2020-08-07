@@ -7,8 +7,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PROJECT VERSION\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2020-08-05 13:41+0200\n"
-"PO-Revision-Date: 2020-08-05 13:41+0200\n"
+"POT-Creation-Date: 2020-08-06 10:09+0200\n"
+"PO-Revision-Date: 2020-08-06 09:59+0200\n"
 "Last-Translator: \n"
 "Language: fr\n"
 "Language-Team: fr <LL@li.org>\n"
@@ -554,6 +554,32 @@ msgstr "Espace de travail"
 
 msgid "ACTION_WORKSPACE_NEW_CREATE"
 msgstr "Créer"
+
+msgid "TEXT_GREET_DEVICE_INSTRUCTIONS_NO_EMAIL"
+msgstr ""
+"Pour accueillir votre nouvel appareil, PARSEC doit être démarré sur les "
+"deux appareils.\n"
+"<br /><br />\n"
+"Vous devrez échanger un code entre les appareils. De cette manière, nous "
+"pouvons nous assurer que le processus se déroule en toute sécurité.\n"
+"<br /><br />\n"
+"Pour obtenir le lien d'invitation, cliquez sur le bouton <i>Copier le "
+"lien d'invitation</i> ci-dessous et transférez-le sur votre nouvel "
+"appareil."
+
+msgid "TEXT_GREET_DEVICE_INSTRUCTIONS_email"
+msgstr ""
+"Pour accueillir votre nouvel appareil, PARSEC doit être démarré sur les "
+"deux appareils.\n"
+"<br /><br />\n"
+"Vous devrez échanger un code entre les appareils. De cette manière, nous "
+"pouvons nous assurer que le processus se déroule en toute sécurité.\n"
+"<br /><br />\n"
+"Pour transférer le lien d'invitation sur votre nouvel appareil, vous "
+"pouvez le faire manuellement en cliquant sur le bouton <i>Copier le lien "
+"d'invitation</i>, ou nous pouvons envoyer un email contenant le lien à "
+"l'adresse <b>{email}</b> en cliquant sur le bouton <i>Envoyer un "
+"email</i>."
 
 msgid "TEXT_GREET_DEVICE_ADDR_COPIED_TO_CLIPBOARD"
 msgstr "Le lien d'invitation a été copié dans le presse-papier."
@@ -1750,6 +1776,9 @@ msgstr "Connecté"
 msgid "TEXT_BACKEND_STATE_DISCONNECTED"
 msgstr "Déconnecté"
 
+msgid "TEXT_SYSTRAY_BACKEND_DISCONNECT_organization"
+msgstr "{organization}: Déconnecté"
+
 msgid "TEXT_BACKEND_STATE_API_MISMATCH_versions"
 msgstr "L'application n'est pas compatible avec le serveur"
 
@@ -2142,15 +2171,11 @@ msgstr "Copier le lien d'invitation"
 msgid "ACTION_SEND_EMAIL"
 msgstr "Envoyer un email"
 
-msgid "TEXT_GREET_DEVICE_INSTRUCTIONS"
+msgid "TEXT_GREET_DEVICE_INSTRUCTIONS_START"
 msgstr ""
-"Pour accueillir votre nouvel appareil, PARSEC doit être démarré sur les "
-"deux appareils.\n"
-"\n"
-"Vous devrez échanger un code entre les appareils. De cette manière, nous "
-"pouvons nous assurer que le processus se déroule en toute sécurité.\n"
-"\n"
-"Quand vous être prêt, cliquez sur Démarrer."
+"Une fois que Parsec est installé sur votre nouvel appareil et que vous "
+"avez cliqué sur le lien d'invitation, vous pouvez cliquer sur "
+"<i>Démarrer</i> pour commencer le processus."
 
 msgid "TEXT_GREET_USER_WAITING_FOR_INFO"
 msgstr ""
@@ -2342,104 +2367,3 @@ msgstr "Créer un nouvel espace de travail"
 
 msgid "ACTION_WORKSPACE_GOTO_FILE_LINK"
 msgstr "Trouver un fichier via son lien"
-
-#~ msgid "TEXT_GREET_USER_ADDR_COPIED_TO_CLIPBOARD"
-#~ msgstr "Le lien d'invitation a été copié dans le presse-papier."
-
-#~ msgid "TEXT_BOOTSTRAP_ORG_INSTRUCTIONS_url-organization"
-#~ msgstr ""
-#~ "Vous allez démarrer l'organisation "
-#~ "<b>{organization}</b>. Vous serez le premier"
-#~ " administrateur de l'organisation.<br /><br "
-#~ "/>\n"
-#~ "\n"
-#~ "Pour continuer, veuillez choisir un nom"
-#~ " d'utilisateur, un nom d'appareil, ainsi"
-#~ " qu'un mot de passe."
-
-#~ msgid "TEXT_BOOTSTRAP_ORG_INVALID_URL"
-#~ msgstr "L'URL n'est pas valide pour démarrer l'organisation."
-
-#~ msgid "TEXT_BOOTSTRAP_ORG_INVITE_NOT_FOUND"
-#~ msgstr "Aucune organisation ne peut être démarrée avec ce lien."
-
-#~ msgid "TEXT_BOOTSTRAP_ORG_ALREADY_BOOTSTRAPPED"
-#~ msgstr "Cette organisation a déjà été démarrée."
-
-#~ msgid "TEXT_BOOTSTRAP_ORG_USER_EXISTS"
-#~ msgstr "Ce nom d'utilisateur existe déjà au sein de cette organisation."
-
-#~ msgid "TEXT_BOOTSTRAP_ORG_PASSWORD_MISMATCH"
-#~ msgstr "Le mot de passe et la confirmation ne correspondent pas."
-
-#~ msgid "TEXT_BOOTSTRAP_ORG_PASSWORD_COMPLEXITY_TOO_LOW"
-#~ msgstr "Le mot de passe n'est pas assez complete."
-
-#~ msgid "TEXT_BOOTSTRAP_ORG_BAD_DEVICE_NAME"
-#~ msgstr "Le nom d'appareil n'est pas valide."
-
-#~ msgid "TEXT_BOOTSTRAP_ORG_BAD_API_VERSION"
-#~ msgstr ""
-#~ "Votre application n'est pas compatible "
-#~ "avec ce serveur. Veuillez la mettre "
-#~ "à jour."
-
-#~ msgid "TEXT_BOOTSTRAP_ORG_BACKEND_REFUSAL"
-#~ msgstr "Impossible de démarrer l'organisation."
-
-#~ msgid "TEXT_BOOTSTRAP_ORG_BACKEND_OFFLINE"
-#~ msgstr "Le serveur est hors-ligne ou vous n'avez pas de connexion internet."
-
-#~ msgid "TEXT_BOOTSTRAP_ORG_UNKNOWN_FAILURE"
-#~ msgstr "Impossible de démarrer l'organisation."
-
-#~ msgid "TEXT_BOOTSTRAP_ORG_INVALID_EMAIL"
-#~ msgstr "L'email n'est pas valide."
-
-#~ msgid "TEXT_BOOTSTRAP_ORG_TITLE"
-#~ msgstr "Démarrer l'organisation"
-
-#~ msgid "ACTION_CREATE_ORGANIZATION"
-#~ msgstr "Créer l'organisation"
-
-#~ msgid "TEXT_BOOTSTRAP_ORG_URL_TITLE"
-#~ msgstr "Démarrer une organisation"
-
-#~ msgid "TEXT_BOOTSTRAP_ORG_URL_INSTRUCTIONS"
-#~ msgstr "Veuillez fournir le lien pour démarrer l'organisation."
-
-#~ msgid "TEXT_BOOTSTRAP_ORG_URL_PLACEHOLDER"
-#~ msgstr "parsec://parsec.example.com/my_org?action=bootstrap_organization&token=1234ABCD"
-
-#~ msgid "TEXT_BOOTSTRAP_ORG_TOOLTIP"
-#~ msgstr "Démarrer l'organisation"
-
-#~ msgid "ACTION_BOOTSTRAP_ORG"
-#~ msgstr "Démarrer l'organisation"
-
-#~ msgid "TEXT_ORG_WIZARD_CHOICE_INSTRUCTIONS"
-#~ msgstr "Veuillez choisir :"
-
-#~ msgid "TEXT_ORG_WIZARD_CREATE_FROM_SCRATCH"
-#~ msgstr ""
-#~ "Je n'ai pas de compte sur le "
-#~ "site web et veux créer une "
-#~ "nouvelle organisation"
-
-#~ msgid "TEXT_ORG_WIZARD_ALREADY_HAS_URL"
-#~ msgstr ""
-#~ "J'ai déjà un compte sur le site"
-#~ " web et une URL pour démarrer "
-#~ "mon organisation"
-
-#~ msgid "TEXT_ORG_WIZARD_CREATE_ORG_INSTRUCTIONS"
-#~ msgstr ""
-#~ "Veuillez saisir votre adresse email et"
-#~ " le nom désiré de votre organisation."
-
-#~ msgid "TEXT_ORG_WIZARD_EMAIL_ALREADY_EXISTS"
-#~ msgstr "Cet email est déjà utilisé."
-
-#~ msgid "TEXT_ORG_WIZARD_INVALID_RESPONSE"
-#~ msgstr "Impossible de créer l'organisation."
-
