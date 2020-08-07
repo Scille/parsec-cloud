@@ -1,6 +1,5 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
 
-from parsec.core.core_events import CoreEvent
 import math
 import trio
 import unicodedata
@@ -9,8 +8,9 @@ from pathlib import Path
 from functools import partial
 from structlog import get_logger
 from winfspy import FileSystem, enable_debug_log
-from winfspy.plumbing.winstuff import filetime_now
+from winfspy.plumbing import filetime_now
 
+from parsec.core.core_events import CoreEvent
 from parsec.core.win_registry import parsec_drive_icon_context
 from parsec.core.mountpoint.thread_fs_access import ThreadFSAccess
 from parsec.core.mountpoint.winfsp_operations import WinFSPOperations, winify_entry_name

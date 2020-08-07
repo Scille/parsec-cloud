@@ -218,7 +218,7 @@ def test_iterdir_with_marker(mountpoint_service):
 @pytest.mark.win32
 @pytest.mark.mountpoint
 def test_ntstatus_in_fs_errors():
-    from winfspy.plumbing.winstuff import NTSTATUS
+    from winfspy.plumbing import NTSTATUS
 
     for status in ntstatus:
         assert getattr(NTSTATUS, status.name) == status
