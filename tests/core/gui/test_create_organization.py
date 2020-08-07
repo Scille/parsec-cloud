@@ -89,7 +89,7 @@ async def test_create_organization(
                 )
             ]
         else:
-            assert autoclose_dialog.dialogs == [("Error", "TEXT_ORG_WIZARD_CONNECTION_ERROR")]
+            assert autoclose_dialog.dialogs == [("Error", "Cannot connect to the server.")]
 
     await aqtbot.wait_until(_modal_shown)
 
@@ -243,6 +243,6 @@ async def test_create_organization_bootstrap_only(
     await aqtbot.mouse_click(co_w.button_validate, QtCore.Qt.LeftButton)
 
     def _modal_shown():
-        assert autoclose_dialog.dialogs == [("Error", "TEXT_ORG_WIZARD_INVITE_ALREADY_USED")]
+        assert autoclose_dialog.dialogs == [("Error", "This bootstrap link was already used.")]
 
     await aqtbot.wait_until(_modal_shown)
