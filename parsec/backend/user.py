@@ -99,6 +99,9 @@ class User:
     def evolve(self, **kwargs):
         return attr.evolve(self, **kwargs)
 
+    def is_revoked(self):
+        return self.revoked_on and self.revoked_on <= pendulum.now()
+
     @property
     def public_key(self) -> PublicKey:
         return UserCertificateContent.unsecure_load(self.user_certificate).public_key

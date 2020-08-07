@@ -11,14 +11,12 @@ from parsec.backend.postgresql.queries import Q, q_organization_internal_id
 _q_retrieve_active_human_by_email = Q(
     f"""
 SELECT
-    user_.user_id,
-    human.email,
-    human.label,
-    user_.revoked_on IS NOT NULL AND user_.revoked_on <= $now as revoked
+    user_.user_id
 FROM user_ LEFT JOIN human ON user_.human=human._id
 WHERE
     user_.organization = { q_organization_internal_id("$organization_id") }
     AND human.email = $email
+    AND (user_.revoked_on IS NULL OR user_.revoked_on > $now)
 LIMIT 1
 """
 )
@@ -105,18 +103,14 @@ async def query_find(
 @query()
 async def query_retrieve_active_human_by_email(
     conn, organization_id: OrganizationID, email: str
-) -> Optional[HumanFindResultItem]:
+) -> Optional[UserID]:
     result = await conn.fetchrow(
         *_q_retrieve_active_human_by_email(
             organization_id=organization_id, now=pendulum_now(), email=email
         )
     )
     if result:
-        return HumanFindResultItem(
-            user_id=UserID(result["user_id"]),
-            human_handle=HumanHandle(email=result["email"], label=result["label"]),
-            revoked=result["revoked"],
-        )
+        return UserID(result["user_id"])
 
 
 @query()

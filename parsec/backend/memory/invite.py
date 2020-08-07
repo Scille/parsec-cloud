@@ -179,8 +179,11 @@ class MemoryInviteComponent(BaseInviteComponent):
         """
         org = self._user_component._organizations[organization_id]
         for _, user in org.users.items():
-            is_revoked = user.revoked_on and user.revoked_on <= pendulum_now()
-            if user.human_handle and not is_revoked and user.human_handle.email == claimer_email:
+            if (
+                user.human_handle
+                and user.human_handle.email == claimer_email
+                and not user.is_revoked()
+            ):
                 raise InvitationAlreadyMemberError()
         return await self._new(
             organization_id=organization_id,

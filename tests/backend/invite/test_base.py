@@ -2,9 +2,10 @@
 
 import pytest
 import trio
-from unittest.mock import ANY
+from unittest.mock import ANY, patch, Mock
 from pendulum import Pendulum
 
+from parsec.backend.user import User
 from parsec.backend.backend_events import BackendEvent
 from parsec.api.transport import TransportError
 from parsec.api.data import UserProfile
@@ -16,7 +17,7 @@ from parsec.api.protocol import (
     APIEvent,
 )
 
-from tests.common import freeze_time, customize_fixtures
+from tests.common import freeze_time, customize_fixtures, AsyncMock
 from tests.backend.common import (
     invite_new,
     invite_list,
@@ -338,11 +339,22 @@ async def test_delete(
 
 
 @pytest.mark.trio
-async def test_user_invitation_already_member(alice, bob, backend, alice_backend_sock):
-    rep = await invite_new(
-        alice_backend_sock, type=InvitationType.USER, claimer_email=bob.human_handle.email
-    )
-    assert rep == {"status": "already_member"}
+@pytest.mark.parametrize("is_revoked", [True, False])
+async def test_user_invitation_already_member(alice, bob, backend, alice_backend_sock, is_revoked):
+    with patch.object(User, "is_revoked") as is_revoked_mock:
+        with patch(
+            "parsec.backend.postgresql.invite.query_retrieve_active_human_by_email"
+        ) as psql_mock:
+            psql_mock.side_effect = AsyncMock(spec=Mock(), return_value=not is_revoked)
+            psql_mock = not is_revoked
+            is_revoked_mock.return_value = is_revoked
+            rep = await invite_new(
+                alice_backend_sock, type=InvitationType.USER, claimer_email=bob.human_handle.email
+            )
+            if not is_revoked:
+                assert rep == {"status": "already_member"}
+            else:
+                assert rep == {"status": "ok", "token": ANY}
 
 
 @pytest.mark.trio
