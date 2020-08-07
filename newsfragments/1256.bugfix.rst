@@ -1,0 +1,1 @@
+Do no allowed to create organization names containing spaces.
