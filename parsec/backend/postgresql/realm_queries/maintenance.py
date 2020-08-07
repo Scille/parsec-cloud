@@ -79,7 +79,7 @@ ORDER BY user_, certified_on DESC
 )
 
 
-async def get_realm_role_for_not_revoked(conn, organization_id, realm_id, users=None):
+async def _get_realm_role_for_not_revoked(conn, organization_id, realm_id, users=None):
     now = pendulum.now()
 
     def _cook_role(row):
@@ -153,7 +153,7 @@ async def query_start_reencryption_maintenance(
     if encryption_revision != rep["encryption_revision"] + 1:
         raise RealmEncryptionRevisionError("Invalid encryption revision")
 
-    roles = await get_realm_role_for_not_revoked(conn, organization_id, realm_id)
+    roles = await _get_realm_role_for_not_revoked(conn, organization_id, realm_id)
 
     if roles.get(author.user_id) != RealmRole.OWNER:
         raise RealmAccessError()
@@ -237,7 +237,7 @@ async def query_finish_reencryption_maintenance(
 ) -> None:
     # Retrieve realm and make sure it is not under maintenance
     rep = await get_realm_status(conn, organization_id, realm_id)
-    roles = await get_realm_role_for_not_revoked(conn, organization_id, realm_id, [author.user_id])
+    roles = await _get_realm_role_for_not_revoked(conn, organization_id, realm_id, [author.user_id])
     if roles.get(author.user_id) != RealmRole.OWNER:
         raise RealmAccessError()
     if not rep["maintenance_type"]:

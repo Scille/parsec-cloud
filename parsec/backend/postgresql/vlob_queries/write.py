@@ -45,30 +45,28 @@ RETURNING index
 )
 
 
-@query()
+@query(in_transaction=True)
 async def query_vlob_updated(
     conn, vlob_atom_internal_id, organization_id, author, realm_id, src_id, src_version=1
 ):
-    async with conn.transaction():
-
-        index = await conn.fetchval(
-            *q_vlob_updated(
-                organization_id=organization_id,
-                realm_id=realm_id,
-                vlob_atom_internal_id=vlob_atom_internal_id,
-            )
-        )
-
-        await send_signal(
-            conn,
-            BackendEvent.REALM_VLOBS_UPDATED,
+    index = await conn.fetchval(
+        *q_vlob_updated(
             organization_id=organization_id,
-            author=author,
             realm_id=realm_id,
-            checkpoint=index,
-            src_id=src_id,
-            src_version=src_version,
+            vlob_atom_internal_id=vlob_atom_internal_id,
         )
+    )
+
+    await send_signal(
+        conn,
+        BackendEvent.REALM_VLOBS_UPDATED,
+        organization_id=organization_id,
+        author=author,
+        realm_id=realm_id,
+        checkpoint=index,
+        src_id=src_id,
+        src_version=src_version,
+    )
 
 
 _q_get_vlob_version = Q(
@@ -83,6 +81,7 @@ WHERE
 ORDER BY version DESC LIMIT 1
 """
 )
+
 
 _q_insert_vlob_atom = Q(
     f"""
@@ -116,7 +115,7 @@ RETURNING _id
 )
 
 
-@query()
+@query(in_transaction=True)
 async def query_update(
     conn,
     organization_id: OrganizationID,
@@ -127,46 +126,45 @@ async def query_update(
     timestamp: pendulum.Pendulum,
     blob: bytes,
 ) -> None:
-    async with conn.transaction():
-        realm_id = await _get_realm_id_from_vlob_id(conn, organization_id, vlob_id)
-        await _check_realm_and_write_access(
-            conn, organization_id, author, realm_id, encryption_revision
-        )
+    realm_id = await _get_realm_id_from_vlob_id(conn, organization_id, vlob_id)
+    await _check_realm_and_write_access(
+        conn, organization_id, author, realm_id, encryption_revision
+    )
 
-        previous = await conn.fetchrow(
-            *_q_get_vlob_version(organization_id=organization_id, vlob_id=vlob_id)
-        )
-        if not previous:
-            raise VlobNotFoundError(f"Vlob `{vlob_id}` doesn't exist")
+    previous = await conn.fetchrow(
+        *_q_get_vlob_version(organization_id=organization_id, vlob_id=vlob_id)
+    )
+    if not previous:
+        raise VlobNotFoundError(f"Vlob `{vlob_id}` doesn't exist")
 
-        elif previous["version"] != version - 1:
-            raise VlobVersionError()
+    elif previous["version"] != version - 1:
+        raise VlobVersionError()
 
-        elif previous["created_on"] > timestamp:
-            raise VlobTimestampError()
+    elif previous["created_on"] > timestamp:
+        raise VlobTimestampError()
 
-        try:
-            vlob_atom_internal_id = await conn.fetchval(
-                *_q_insert_vlob_atom(
-                    organization_id=organization_id,
-                    author=author,
-                    realm_id=realm_id,
-                    encryption_revision=encryption_revision,
-                    vlob_id=vlob_id,
-                    blob=blob,
-                    blob_len=len(blob),
-                    timestamp=timestamp,
-                    version=version,
-                )
+    try:
+        vlob_atom_internal_id = await conn.fetchval(
+            *_q_insert_vlob_atom(
+                organization_id=organization_id,
+                author=author,
+                realm_id=realm_id,
+                encryption_revision=encryption_revision,
+                vlob_id=vlob_id,
+                blob=blob,
+                blob_len=len(blob),
+                timestamp=timestamp,
+                version=version,
             )
-
-        except UniqueViolationError:
-            # Should not occur in theory given we are in a transaction
-            raise VlobVersionError()
-
-        await query_vlob_updated(
-            conn, vlob_atom_internal_id, organization_id, author, realm_id, vlob_id, version
         )
+
+    except UniqueViolationError:
+        # Should not occur in theory given we are in a transaction
+        raise VlobVersionError()
+
+    await query_vlob_updated(
+        conn, vlob_atom_internal_id, organization_id, author, realm_id, vlob_id, version
+    )
 
 
 _q_create = Q(
@@ -201,7 +199,7 @@ RETURNING _id
 )
 
 
-@query()
+@query(in_transaction=True)
 async def query_create(
     conn,
     organization_id: OrganizationID,
@@ -212,30 +210,28 @@ async def query_create(
     timestamp: pendulum.Pendulum,
     blob: bytes,
 ) -> None:
-    async with conn.transaction():
+    await _check_realm_and_write_access(
+        conn, organization_id, author, realm_id, encryption_revision
+    )
 
-        await _check_realm_and_write_access(
-            conn, organization_id, author, realm_id, encryption_revision
-        )
-
-        # Actually create the vlob
-        try:
-            vlob_atom_internal_id = await conn.fetchval(
-                *_q_create(
-                    organization_id=organization_id,
-                    author=author,
-                    realm_id=realm_id,
-                    encryption_revision=encryption_revision,
-                    vlob_id=vlob_id,
-                    blob=blob,
-                    blob_len=len(blob),
-                    timestamp=timestamp,
-                )
+    # Actually create the vlob
+    try:
+        vlob_atom_internal_id = await conn.fetchval(
+            *_q_create(
+                organization_id=organization_id,
+                author=author,
+                realm_id=realm_id,
+                encryption_revision=encryption_revision,
+                vlob_id=vlob_id,
+                blob=blob,
+                blob_len=len(blob),
+                timestamp=timestamp,
             )
-
-        except UniqueViolationError:
-            raise VlobAlreadyExistsError()
-
-        await query_vlob_updated(
-            conn, vlob_atom_internal_id, organization_id, author, realm_id, vlob_id
         )
+
+    except UniqueViolationError:
+        raise VlobAlreadyExistsError()
+
+    await query_vlob_updated(
+        conn, vlob_atom_internal_id, organization_id, author, realm_id, vlob_id
+    )

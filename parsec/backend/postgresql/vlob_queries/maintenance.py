@@ -128,7 +128,7 @@ async def _check_realm_and_maintenance_access(
     await _check_realm_access(conn, organization_id, realm_id, author, can_write_roles)
 
 
-@query()
+@query(in_transaction=True)
 async def query_maintenance_get_reencryption_batch(
     conn,
     organization_id: OrganizationID,
@@ -137,23 +137,21 @@ async def query_maintenance_get_reencryption_batch(
     encryption_revision: int,
     size: int,
 ) -> List[Tuple[UUID, int, bytes]]:
-    async with conn.transaction():
-
-        await _check_realm_and_maintenance_access(
-            conn, organization_id, author, realm_id, encryption_revision
+    await _check_realm_and_maintenance_access(
+        conn, organization_id, author, realm_id, encryption_revision
+    )
+    rep = await conn.fetch(
+        *_q_maintenance_get_reencryption_batch(
+            organization_id=organization_id,
+            realm_id=realm_id,
+            encryption_revision=encryption_revision,
+            size=size,
         )
-        rep = await conn.fetch(
-            *_q_maintenance_get_reencryption_batch(
-                organization_id=organization_id,
-                realm_id=realm_id,
-                encryption_revision=encryption_revision,
-                size=size,
-            )
-        )
-        return [(row["vlob_id"], row["version"], row["blob"]) for row in rep]
+    )
+    return [(row["vlob_id"], row["version"], row["blob"]) for row in rep]
 
 
-@query()
+@query(in_transaction=True)
 async def query_maintenance_save_reencryption_batch(
     conn,
     organization_id: OrganizationID,
@@ -162,30 +160,28 @@ async def query_maintenance_save_reencryption_batch(
     encryption_revision: int,
     batch: List[Tuple[UUID, int, bytes]],
 ) -> Tuple[int, int]:
-    async with conn.transaction():
-
-        await _check_realm_and_maintenance_access(
-            conn, organization_id, author, realm_id, encryption_revision
-        )
-        for vlob_id, version, blob in batch:
-            await conn.execute(
-                *_q_maintenance_save_reencryption_batch(
-                    organization_id=organization_id,
-                    realm_id=realm_id,
-                    vlob_id=vlob_id,
-                    version=version,
-                    encryption_revision=encryption_revision,
-                    blob=blob,
-                    blob_len=len(blob),
-                )
-            )
-
-        rep = await conn.fetchrow(
-            *_q_maintenance_save_reencryption_batch_get_stat(
+    await _check_realm_and_maintenance_access(
+        conn, organization_id, author, realm_id, encryption_revision
+    )
+    for vlob_id, version, blob in batch:
+        await conn.execute(
+            *_q_maintenance_save_reencryption_batch(
                 organization_id=organization_id,
                 realm_id=realm_id,
+                vlob_id=vlob_id,
+                version=version,
                 encryption_revision=encryption_revision,
+                blob=blob,
+                blob_len=len(blob),
             )
         )
 
-        return rep[0], rep[1]
+    rep = await conn.fetchrow(
+        *_q_maintenance_save_reencryption_batch_get_stat(
+            organization_id=organization_id,
+            realm_id=realm_id,
+            encryption_revision=encryption_revision,
+        )
+    )
+
+    return rep[0], rep[1]

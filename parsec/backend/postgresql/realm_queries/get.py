@@ -121,7 +121,7 @@ async def query_get_status(
     )
 
 
-@query()
+@query(in_transaction=True)
 async def query_get_stats(
     conn, organization_id: OrganizationID, author: DeviceID, realm_id: UUID
 ) -> RealmStats:

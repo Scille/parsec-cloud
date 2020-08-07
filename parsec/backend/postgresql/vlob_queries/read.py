@@ -98,7 +98,7 @@ async def _check_realm_and_read_access(
     await _check_realm_access(conn, organization_id, realm_id, author, can_read_roles)
 
 
-@query()
+@query(in_transaction=True)
 async def query_read(
     conn,
     organization_id: OrganizationID,
@@ -108,51 +108,46 @@ async def query_read(
     version: Optional[int] = None,
     timestamp: Optional[pendulum.Pendulum] = None,
 ) -> Tuple[int, bytes, DeviceID, pendulum.Pendulum]:
+    realm_id = await _get_realm_id_from_vlob_id(conn, organization_id, vlob_id)
+    await _check_realm_and_read_access(conn, organization_id, author, realm_id, encryption_revision)
 
-    async with conn.transaction():
-
-        realm_id = await _get_realm_id_from_vlob_id(conn, organization_id, vlob_id)
-        await _check_realm_and_read_access(
-            conn, organization_id, author, realm_id, encryption_revision
-        )
-
-        if version is None:
-            if timestamp is None:
-                data = await conn.fetchrow(
-                    *_q_read_data_without_timestamp(
-                        organization_id=organization_id,
-                        realm_id=realm_id,
-                        encryption_revision=encryption_revision,
-                        vlob_id=vlob_id,
-                    )
-                )
-                assert data  # _get_realm_id_from_vlob_id checks vlob presence
-
-            else:
-                data = await conn.fetchrow(
-                    *_q_read_data_with_timestamp(
-                        organization_id=organization_id,
-                        realm_id=realm_id,
-                        encryption_revision=encryption_revision,
-                        vlob_id=vlob_id,
-                        timestamp=timestamp,
-                    )
-                )
-                if not data:
-                    raise VlobVersionError()
-
-        else:
+    if version is None:
+        if timestamp is None:
             data = await conn.fetchrow(
-                *_q_read_data_with_version(
+                *_q_read_data_without_timestamp(
                     organization_id=organization_id,
                     realm_id=realm_id,
                     encryption_revision=encryption_revision,
                     vlob_id=vlob_id,
-                    version=version,
+                )
+            )
+            assert data  # _get_realm_id_from_vlob_id checks vlob presence
+
+        else:
+            data = await conn.fetchrow(
+                *_q_read_data_with_timestamp(
+                    organization_id=organization_id,
+                    realm_id=realm_id,
+                    encryption_revision=encryption_revision,
+                    vlob_id=vlob_id,
+                    timestamp=timestamp,
                 )
             )
             if not data:
                 raise VlobVersionError()
+
+    else:
+        data = await conn.fetchrow(
+            *_q_read_data_with_version(
+                organization_id=organization_id,
+                realm_id=realm_id,
+                encryption_revision=encryption_revision,
+                vlob_id=vlob_id,
+                version=version,
+            )
+        )
+        if not data:
+            raise VlobVersionError()
 
     return list(data)
 
@@ -188,37 +183,30 @@ ORDER BY version DESC
 )
 
 
-@query()
+@query(in_transaction=True)
 async def query_poll_changes(
     conn, organization_id: OrganizationID, author: DeviceID, realm_id: UUID, checkpoint: int
 ) -> Tuple[int, Dict[UUID, int]]:
-    async with conn.transaction():
-        await _check_realm_and_read_access(conn, organization_id, author, realm_id, None)
+    await _check_realm_and_read_access(conn, organization_id, author, realm_id, None)
 
-        ret = await conn.fetch(
-            *_q_poll_changes(
-                organization_id=organization_id, realm_id=realm_id, checkpoint=checkpoint
-            )
-        )
+    ret = await conn.fetch(
+        *_q_poll_changes(organization_id=organization_id, realm_id=realm_id, checkpoint=checkpoint)
+    )
 
     changes_since_checkpoint = {src_id: src_version for _, src_id, src_version in ret}
     new_checkpoint = ret[-1][0] if ret else checkpoint
     return (new_checkpoint, changes_since_checkpoint)
 
 
-@query()
+@query(in_transaction=True)
 async def query_list_versions(
-    pool, organization_id: OrganizationID, author: DeviceID, vlob_id: UUID
+    conn, organization_id: OrganizationID, author: DeviceID, vlob_id: UUID
 ) -> Dict[int, Tuple[pendulum.Pendulum, DeviceID]]:
-    async with pool.acquire() as conn:
-        async with conn.transaction():
-            realm_id = await _get_realm_id_from_vlob_id(conn, organization_id, vlob_id)
-            await _check_realm_and_read_access(conn, organization_id, author, realm_id, None)
+    realm_id = await _get_realm_id_from_vlob_id(conn, organization_id, vlob_id)
+    await _check_realm_and_read_access(conn, organization_id, author, realm_id, None)
 
-            rows = await conn.fetch(
-                *_q_list_versions(organization_id=organization_id, vlob_id=vlob_id)
-            )
-            assert rows
+    rows = await conn.fetch(*_q_list_versions(organization_id=organization_id, vlob_id=vlob_id))
+    assert rows
 
     if not rows:
         raise VlobNotFoundError(f"Vlob `{vlob_id}` doesn't exist")

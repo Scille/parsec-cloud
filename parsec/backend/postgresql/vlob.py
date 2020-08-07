@@ -91,7 +91,8 @@ class PGVlobComponent(BaseVlobComponent):
     async def list_versions(
         self, organization_id: OrganizationID, author: DeviceID, vlob_id: UUID
     ) -> Dict[int, Tuple[pendulum.Pendulum, DeviceID]]:
-        return await query_list_versions(self.dbh.pool, organization_id, author, vlob_id)
+        async with self.dbh.pool.acquire() as conn:
+            return await query_list_versions(conn, organization_id, author, vlob_id)
 
     async def maintenance_get_reencryption_batch(
         self,

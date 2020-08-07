@@ -97,7 +97,6 @@ LIMIT 1
 
 
 async def _get_realm_id_from_vlob_id(conn, organization_id, vlob_id):
-
     realm_id = await conn.fetchval(
         *_q_get_realm_id_from_vlob_id(organization_id=organization_id, vlob_id=vlob_id)
     )
