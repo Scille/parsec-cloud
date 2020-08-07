@@ -2060,6 +2060,9 @@ msgstr ""
 msgid "TEXT_ORG_WIZARD_CREATE_ORG_INSTRUCTIONS"
 msgstr "Please enter your email and the name you want for your organization."
 
+msgid "TEXT_ORG_WIZARD_ORG_NAME_RULE"
+msgstr "(letters and digits, no spaces)"
+
 msgid "TEXT_LABEL_ORG_NAME"
 msgstr "Organization name"
 

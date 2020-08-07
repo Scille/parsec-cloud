@@ -101,6 +101,19 @@
       </widget>
      </item>
      <item>
+      <widget class="QLabel" name="label_3">
+       <property name="font">
+        <font>
+         <pointsize>10</pointsize>
+         <italic>true</italic>
+        </font>
+       </property>
+       <property name="text">
+        <string>TEXT_ORG_WIZARD_ORG_NAME_RULE</string>
+       </property>
+      </widget>
+     </item>
+     <item>
       <widget class="QLineEdit" name="line_edit_org_name">
        <property name="minimumSize">
         <size>

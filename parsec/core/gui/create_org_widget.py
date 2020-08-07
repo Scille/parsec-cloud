@@ -8,8 +8,9 @@ from urllib.request import Request, urlopen
 from urllib.error import URLError
 from http.client import HTTPException
 
-from PyQt5.QtCore import pyqtSignal
+from PyQt5.QtCore import pyqtSignal, QRegExp
 from PyQt5.QtWidgets import QWidget, QApplication, QDialog
+from PyQt5.QtGui import QRegExpValidator
 
 from parsec.core.types import BackendOrganizationBootstrapAddr
 
@@ -83,6 +84,17 @@ class CreateOrgWidget(QWidget, Ui_CreateOrgWidget):
         self.button_validate.setEnabled(False)
         self.req_success.connect(self._on_req_success)
         self.req_error.connect(self._on_req_error)
+        # Validator
+        no_spaces_regex = QRegExp("[^\\s-]*")  # No spaces
+        organization_input_validator = QRegExpValidator(
+            no_spaces_regex, self.current_widget.line_edit_org_name
+        )
+        email_input_validator = QRegExpValidator(
+            no_spaces_regex, self.current_widget.line_edit_org_name
+        )
+        self.current_widget.line_edit_org_name.setValidator(organization_input_validator)
+        # TODO: Fully validate email.
+        self.current_widget.line_edit_user_email.setValidator(email_input_validator)
 
     def _clear_page(self):
         item = self.main_layout.takeAt(0)

@@ -2113,6 +2113,9 @@ msgstr ""
 "Veuillez saisir votre adresse email et le nom désiré de votre "
 "organisation."
 
+msgid "TEXT_ORG_WIZARD_ORG_NAME_RULE"
+msgstr "(Lettres et chiffres, pas d'espace)"
+
 msgid "TEXT_LABEL_ORG_NAME"
 msgstr "Nom de l'organisation"
 
