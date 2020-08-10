@@ -345,12 +345,6 @@ organization_id, device_id, device_label (can be null), human_email (can be null
     "--email-sender", envvar="PARSEC_EMAIL_SENDER", help="Sender address used in sent emails"
 )
 @click.option(
-    "--email-active",
-    envvar="PARSEC_EMAIL_ACTIVE",
-    help="Whether activate sending email or not",
-    default=True,
-)
-@click.option(
     "--ssl-keyfile",
     type=click.Path(exists=True, dir_okay=False),
     envvar="PARSEC_SSL_KEYFILE",
@@ -382,7 +376,7 @@ organization_id, device_id, device_label (can be null), human_email (can be null
     cls=DevOption,
     is_flag=True,
     is_eager=True,
-    help="Equivalent to `--debug --db=MOCKED --blockstore=MOCKED --administration-token=s3cr3t`",
+    help="Equivalent to `--debug --db=MOCKED --email-host=MOCKED --blockstore=MOCKED --administration-token=s3cr3t`",
 )
 def run_cmd(
     host,
@@ -404,7 +398,6 @@ def run_cmd(
     email_use_ssl,
     email_use_tls,
     email_sender,
-    email_active,
     ssl_keyfile,
     ssl_certfile,
     log_level,
@@ -415,11 +408,8 @@ def run_cmd(
     debug,
     dev,
 ):
-    import sys
 
     # Start a local backend
-    if email_active == "False":
-        email_active = False
     configure_logging(log_level, log_format, log_file, log_filter)
     if sentry_url:
         configure_sentry_logging(sentry_url)
@@ -461,13 +451,9 @@ def run_cmd(
             organization_bootstrap_webhook_url=organization_bootstrap_webhook,
             blockstore_config=blockstore,
             email_config=email_config,
-            email_active=email_active,
             backend_addr=backend_addr,
             debug=debug,
         )
-
-        sys.stderr.write(str(email_active))
-        sys.stderr.write("\n\n\n")
 
         async def _run_backend():
             async with backend_app_factory(config=config) as backend:

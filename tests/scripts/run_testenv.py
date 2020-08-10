@@ -124,11 +124,11 @@ MimeType=x-scheme-handler/parsec;
     await trio.run_process("xdg-mime default parsec.desktop x-scheme-handler/parsec".split())
 
 
-async def restart_local_backend(administration_token, backend_port, email_active=False):
+async def restart_local_backend(administration_token, backend_port, email_host=False):
     pattern = f"parsec.* backend.* run.* -P {backend_port}"
     command = (
         f"{sys.executable} -Wignore -m parsec.cli backend run -b MOCKED --db MOCKED "
-        f"--email-active={email_active} -P {backend_port} "
+        f"--email-host={email_host} -P {backend_port} "
         f"--administration-token {administration_token} --backend-addr parsec://localhost:{backend_port}?no_ssl=true"
     )
 
@@ -174,7 +174,7 @@ async def restart_local_backend(administration_token, backend_port, email_active
     "-T", "--administration-token", show_default=True, default=DEFAULT_ADMINISTRATION_TOKEN
 )
 @click.option("--force/--no-force", show_default=True, default=False)
-@click.option("--email-active", show_default=True, default=False, is_flag=True)
+@click.option("--email-host", show_default=True, default="MOCKED", is_flag=True)
 @click.option("-e", "--empty", is_flag=True)
 @click.option("--source-file", hidden=True)
 def main(**kwargs):
@@ -226,7 +226,7 @@ async def amain(
     password,
     administration_token,
     force,
-    email_active,
+    email_host,
     empty,
     source_file,
 ):
@@ -247,7 +247,7 @@ async def amain(
     # Start a local backend
     if backend_address is None:
         backend_address = await restart_local_backend(
-            administration_token, backend_port, email_active
+            administration_token, backend_port, email_host
         )
         click.echo(
             f"""\
