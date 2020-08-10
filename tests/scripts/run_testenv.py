@@ -124,7 +124,7 @@ MimeType=x-scheme-handler/parsec;
     await trio.run_process("xdg-mime default parsec.desktop x-scheme-handler/parsec".split())
 
 
-async def restart_local_backend(administration_token, backend_port):
+async def restart_local_backend(administration_token, backend_port, email_active):
     pattern = f"parsec.* backend.* run.* -P {backend_port}"
     command = (
         f"{sys.executable} -Wignore -m parsec.cli backend run -b MOCKED --db MOCKED "
@@ -173,6 +173,7 @@ async def restart_local_backend(administration_token, backend_port):
     "-T", "--administration-token", show_default=True, default=DEFAULT_ADMINISTRATION_TOKEN
 )
 @click.option("--force/--no-force", show_default=True, default=False)
+@click.option("--email-active", show_default=True, default=False, is_flag=True)
 @click.option("-e", "--empty", is_flag=True)
 @click.option("--source-file", hidden=True)
 def main(**kwargs):
@@ -219,7 +220,14 @@ def main(**kwargs):
 
 
 async def amain(
-    backend_address, backend_port, password, administration_token, force, empty, source_file
+    backend_address,
+    backend_port,
+    password,
+    administration_token,
+    force,
+    email_active,
+    empty,
+    source_file,
 ):
     # Set up the temporary environment
     click.echo()
@@ -237,7 +245,9 @@ async def amain(
 
     # Start a local backend
     if backend_address is None:
-        backend_address = await restart_local_backend(administration_token, backend_port)
+        backend_address = await restart_local_backend(
+            administration_token, backend_port, email_active
+        )
         click.echo(
             f"""\
 A fresh backend server is now running: {backend_address}
