@@ -7,7 +7,7 @@ import importlib
 from parsec.serde import BaseSerializer, JSONSerializer, MsgpackSerializer, ZipMsgpackSerializer
 from parsec.serde.fields import List, Map, Tuple, Nested, CheckedConstant, EnumCheckedConstant
 
-from parsec.api.data.base import BaseSignedData, BaseData
+from parsec.api.data.base import BaseData, BaseAPIData, BaseSignedData, BaseAPISignedData
 from parsec.api.data.manifest import BaseManifest
 from parsec.api.data.message import BaseMessageContent
 
@@ -23,7 +23,9 @@ _SERIALIZER_TO_STR = {
 }
 _BASE_DATA_CLASSES = (
     BaseData,
+    BaseAPIData,
     BaseSignedData,
+    BaseAPISignedData,
     BaseLocalData,
     BaseManifest,
     BaseLocalManifest,

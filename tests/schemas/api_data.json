@@ -87,25 +87,6 @@
         },
         "serializing": "zip+msgpack"
     },
-    "BaseAPIData": {
-        "fields": {},
-        "serializing": "zip+msgpack"
-    },
-    "BaseAPISignedData": {
-        "fields": {
-            "author": {
-                "allow_none": true,
-                "required": true,
-                "type": "DeviceIDField"
-            },
-            "timestamp": {
-                "allow_none": false,
-                "required": true,
-                "type": "DateTime"
-            }
-        },
-        "serializing": "zip+msgpack"
-    },
     "DeviceCertificateContent": {
         "fields": {
             "author": {
