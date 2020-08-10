@@ -476,7 +476,7 @@
     "MessageContent": {
         "fields": {
             "author": {
-                "allow_none": true,
+                "allow_none": false,
                 "required": true,
                 "type": "DeviceIDField"
             },
@@ -579,7 +579,7 @@
     "SharingGrantedMessageContent": {
         "fields": {
             "author": {
-                "allow_none": true,
+                "allow_none": false,
                 "required": true,
                 "type": "DeviceIDField"
             },
@@ -625,7 +625,7 @@
     "SharingReencryptedMessageContent": {
         "fields": {
             "author": {
-                "allow_none": true,
+                "allow_none": false,
                 "required": true,
                 "type": "DeviceIDField"
             },
