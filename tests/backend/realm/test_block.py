@@ -53,6 +53,20 @@ async def test_block_read_check_access_rights(backend, alice, bob, bob_backend_s
         rep = await block_read(bob_backend_sock, block)
         assert rep == {"status": "ok", "block": b"Hodi ho !"}
 
+    # Ensure user that used to be part of the realm have no longer access
+    await backend.realm.update_roles(
+        alice.organization_id,
+        RealmGrantedRole(
+            certificate=b"<dummy>",
+            realm_id=realm,
+            user_id=bob.user_id,
+            role=None,
+            granted_by=alice.device_id,
+        ),
+    )
+    rep = await block_read(bob_backend_sock, block)
+    assert rep == {"status": "not_allowed"}
+
 
 @pytest.mark.trio
 async def test_block_create_check_access_rights(backend, alice, bob, bob_backend_sock, realm):
@@ -86,6 +100,20 @@ async def test_block_create_check_access_rights(backend, alice, bob, bob_backend
 
         else:
             assert rep == {"status": "not_allowed"}
+
+    # Ensure user that used to be part of the realm have no longer access
+    await backend.realm.update_roles(
+        alice.organization_id,
+        RealmGrantedRole(
+            certificate=b"<dummy>",
+            realm_id=realm,
+            user_id=bob.user_id,
+            role=None,
+            granted_by=alice.device_id,
+        ),
+    )
+    rep = await block_create(bob_backend_sock, block_id, realm, BLOCK_DATA, check_rep=False)
+    assert rep == {"status": "not_allowed"}
 
 
 @pytest.mark.trio

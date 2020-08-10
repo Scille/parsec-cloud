@@ -47,6 +47,7 @@ __all__ = (
     "Bytes",
     "DateTime",
     "CheckedConstant",
+    "EnumCheckedConstant",
     "Map",
     "VerifyKey",
     "SigningKey",
@@ -189,6 +190,9 @@ class EnumCheckedConstant(Field):
         super().__init__(**kwargs)
         self.constant = constant
 
+    def _serialize(self, value, attr, obj):
+        return self.constant.value
+
     def _deserialize(self, value, attr, data):
         if value != self.constant.value:
             raise ValidationError(f"Invalid value, should be `{self.constant.value}`")
@@ -203,6 +207,9 @@ class CheckedConstant(Field):
         kwargs.setdefault("default", constant)
         super().__init__(**kwargs)
         self.constant = constant
+
+    def _serialize(self, value, attr, obj):
+        return self.constant
 
     def _deserialize(self, value, attr, data):
         if value != self.constant:

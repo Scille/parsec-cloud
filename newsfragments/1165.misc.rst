@@ -1,2 +1,0 @@
-Use 4 symbols from a 32-symbol alphabet as SAS code.
-The alphatbet is: ``ABCDEFGHJKLMNPQRSTUVWXYZ23456789``.

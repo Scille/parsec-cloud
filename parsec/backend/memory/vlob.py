@@ -6,6 +6,7 @@ from uuid import UUID
 from typing import List, Tuple, Dict, Optional
 from collections import defaultdict
 
+from parsec.backend.backend_events import BackendEvent
 from parsec.api.protocol import DeviceID, OrganizationID
 from parsec.api.protocol import RealmRole
 from parsec.backend.realm import BaseRealmComponent, RealmNotFoundError
@@ -197,7 +198,7 @@ class MemoryVlobComponent(BaseVlobComponent):
         changes.checkpoint += 1
         changes.changes[src_id] = (author, changes.checkpoint, src_version)
         await self._send_event(
-            "realm.vlobs_updated",
+            BackendEvent.REALM_VLOBS_UPDATED,
             organization_id=organization_id,
             author=author,
             realm_id=realm_id,
@@ -282,33 +283,6 @@ class MemoryVlobComponent(BaseVlobComponent):
         vlob.data.append((blob, author, timestamp))
 
         await self._update_changes(organization_id, author, vlob.realm_id, vlob_id, version)
-
-    async def group_check(
-        self, organization_id: OrganizationID, author: DeviceID, to_check: List[dict]
-    ) -> List[dict]:
-        changed = []
-        for item in to_check:
-            vlob_id = item["vlob_id"]
-            version = item["version"]
-            if version == 0:
-                changed.append({"vlob_id": vlob_id, "version": version})
-            else:
-                try:
-                    vlob = self._get_vlob(organization_id, vlob_id)
-                except VlobNotFoundError:
-                    continue
-
-                try:
-                    self._check_realm_read_access(
-                        organization_id, vlob.realm_id, author.user_id, None
-                    )
-                except (VlobNotFoundError, VlobAccessError, VlobInMaintenanceError):
-                    continue
-
-                if vlob.current_version != version:
-                    changed.append({"vlob_id": vlob_id, "version": vlob.current_version})
-
-        return changed
 
     async def poll_changes(
         self, organization_id: OrganizationID, author: DeviceID, realm_id: UUID, checkpoint: int

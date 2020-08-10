@@ -3,125 +3,80 @@
 import pytest
 from PyQt5 import QtCore
 
-from parsec.core.local_device import save_device_with_password
-from parsec.core.gui.password_change_widget import PasswordChangeWidget
-
 
 @pytest.fixture
-async def logged_gui(aqtbot, gui_factory, running_backend, autoclose_dialog, core_config, alice):
-    save_device_with_password(core_config.config_dir, alice, "P@ssw0rd")
-
-    gui = await gui_factory()
-    lw = gui.test_get_login_widget()
-    tabw = gui.test_get_tab()
-
-    assert lw is not None
-
-    await aqtbot.key_clicks(lw.line_edit_password, "P@ssw0rd")
-
-    async with aqtbot.wait_signals([lw.login_with_password_clicked, tabw.logged_in]):
-        await aqtbot.mouse_click(lw.button_login, QtCore.Qt.LeftButton)
-
-    central_widget = gui.test_get_central_widget()
-    assert central_widget is not None
-
-    await aqtbot.mouse_click(central_widget.menu.button_devices, QtCore.Qt.LeftButton)
-
-    yield gui
+def catch_password_change_widget(widget_catcher_factory):
+    return widget_catcher_factory("parsec.core.gui.password_change_widget.PasswordChangeWidget")
 
 
 @pytest.mark.gui
 @pytest.mark.trio
 async def test_change_password_invalid_old_password(
-    aqtbot, running_backend, logged_gui, qt_thread_gateway, autoclose_dialog
+    aqtbot, running_backend, logged_gui, catch_password_change_widget, autoclose_dialog
 ):
-    d_w = logged_gui.test_get_devices_widget()
+    d_w = await logged_gui.test_switch_to_devices_widget()
 
-    assert d_w is not None
-    async with aqtbot.wait_signal(d_w.list_success):
-        pass
-    assert d_w.layout_devices.count() == 2
-    item = d_w.layout_devices.itemAt(0)
-    assert item.widget().is_current_device is True
+    assert d_w.layout_devices.count() == 1
+    db_w = d_w.layout_devices.itemAt(0).widget()
+    assert db_w.is_current_device is True
 
-    def _create_change_password_dialog():
-        dlg = PasswordChangeWidget(core=d_w.core, parent=d_w)
-        dlg.line_edit_old_password.setText("0123456789")
-        dlg.line_edit_password.setText("P@ssw0rd2")
-        dlg.line_edit_password_check.setText("P@ssw0rd2")
-        return dlg
+    await aqtbot.run(db_w.change_password_clicked.emit)
+    pc_w = await catch_password_change_widget()
 
-    dlg = await qt_thread_gateway.send_action(_create_change_password_dialog)
+    await aqtbot.key_clicks(pc_w.line_edit_old_password, "0123456789")
+    await aqtbot.key_clicks(pc_w.line_edit_password, "P@ssw0rd2")
+    await aqtbot.key_clicks(pc_w.line_edit_password_check, "P@ssw0rd2")
+    await aqtbot.mouse_click(pc_w.button_change, QtCore.Qt.LeftButton)
 
-    await aqtbot.mouse_click(dlg.button_change, QtCore.Qt.LeftButton)
-
-    assert len(autoclose_dialog.dialogs) == 1
-    assert autoclose_dialog.dialogs[0][0] == "Error"
-    assert (
-        autoclose_dialog.dialogs[0][1] == "You did not provide the right password for this device."
-    )
+    assert autoclose_dialog.dialogs == [
+        ("Error", "You did not provide the right password for this device.")
+    ]
 
 
 @pytest.mark.gui
 @pytest.mark.trio
 async def test_change_password_invalid_password_check(
-    aqtbot, running_backend, logged_gui, qt_thread_gateway, autoclose_dialog
+    aqtbot, running_backend, logged_gui, catch_password_change_widget, autoclose_dialog
 ):
-    d_w = logged_gui.test_get_devices_widget()
+    d_w = await logged_gui.test_switch_to_devices_widget()
 
-    assert d_w is not None
-    async with aqtbot.wait_signal(d_w.list_success):
-        pass
-    assert d_w.layout_devices.count() == 2
-    item = d_w.layout_devices.itemAt(0)
-    assert item.widget().is_current_device is True
+    assert d_w.layout_devices.count() == 1
+    db_w = d_w.layout_devices.itemAt(0).widget()
+    assert db_w.is_current_device is True
 
-    def _create_change_password_dialog():
-        dlg = PasswordChangeWidget(core=d_w.core, parent=d_w)
-        dlg.line_edit_old_password.setText("P@ssw0rd")
-        dlg.line_edit_password.setText("P@ssw0rd2")
-        dlg.line_edit_password_check.setText("P@ssw0rd3")
-        return dlg
+    await aqtbot.run(db_w.change_password_clicked.emit)
+    pc_w = await catch_password_change_widget()
 
-    dlg = await qt_thread_gateway.send_action(_create_change_password_dialog)
+    await aqtbot.key_clicks(pc_w.line_edit_old_password, "P@ssw0rd")
+    await aqtbot.key_clicks(pc_w.line_edit_password, "P@ssw0rd2")
+    await aqtbot.key_clicks(pc_w.line_edit_password_check, "P@ssw0rd3")
+    await aqtbot.mouse_click(pc_w.button_change, QtCore.Qt.LeftButton)
 
-    await aqtbot.mouse_click(dlg.button_change, QtCore.Qt.LeftButton)
-
-    assert len(autoclose_dialog.dialogs) == 1
-    assert autoclose_dialog.dialogs[0][0] == "Error"
-    assert (
-        autoclose_dialog.dialogs[0][1] == "The password and the password confirmation do no match."
-    )
+    assert autoclose_dialog.dialogs == [
+        ("Error", "The password and the password confirmation do no match.")
+    ]
 
 
 @pytest.mark.gui
 @pytest.mark.trio
 async def test_change_password_success(
-    aqtbot, running_backend, logged_gui, qt_thread_gateway, autoclose_dialog
+    aqtbot, running_backend, logged_gui, catch_password_change_widget, autoclose_dialog
 ):
-    d_w = logged_gui.test_get_devices_widget()
+    d_w = await logged_gui.test_switch_to_devices_widget()
 
-    assert d_w is not None
-    async with aqtbot.wait_signal(d_w.list_success):
-        pass
-    assert d_w.layout_devices.count() == 2
-    item = d_w.layout_devices.itemAt(0)
-    assert item.widget().is_current_device is True
+    assert d_w.layout_devices.count() == 1
+    db_w = d_w.layout_devices.itemAt(0).widget()
+    assert db_w.is_current_device is True
 
-    def _create_change_password_dialog():
-        dlg = PasswordChangeWidget(core=d_w.core, parent=d_w)
-        dlg.line_edit_old_password.setText("P@ssw0rd")
-        dlg.line_edit_password.setText("P@ssw0rd2")
-        dlg.line_edit_password_check.setText("P@ssw0rd2")
-        return dlg
+    await aqtbot.run(db_w.change_password_clicked.emit)
+    pc_w = await catch_password_change_widget()
 
-    dlg = await qt_thread_gateway.send_action(_create_change_password_dialog)
+    await aqtbot.key_clicks(pc_w.line_edit_old_password, "P@ssw0rd")
+    await aqtbot.key_clicks(pc_w.line_edit_password, "P@ssw0rd2")
+    await aqtbot.key_clicks(pc_w.line_edit_password_check, "P@ssw0rd2")
+    await aqtbot.mouse_click(pc_w.button_change, QtCore.Qt.LeftButton)
 
-    await aqtbot.mouse_click(dlg.button_change, QtCore.Qt.LeftButton)
-
-    assert len(autoclose_dialog.dialogs) == 1
-    assert autoclose_dialog.dialogs[0][0] == ""
-    assert autoclose_dialog.dialogs[0][1] == "The password has been successfully changed."
+    assert autoclose_dialog.dialogs == [("", "The password has been successfully changed.")]
     autoclose_dialog.reset()
 
     central_widget = logged_gui.test_get_central_widget()
@@ -148,7 +103,12 @@ async def test_change_password_success(
     assert autoclose_dialog.dialogs[0][0] == "Error"
     assert autoclose_dialog.dialogs[0][1] == "The password is incorrect."
 
-    await aqtbot.key_clicks(lw.line_edit_password, "2")
+    # Retry to login...
+    await logged_gui.test_logout_and_switch_to_login_widget()
 
-    async with aqtbot.wait_signals([lw.login_with_password_clicked, tabw.logged_in]):
-        await aqtbot.mouse_click(lw.button_login, QtCore.Qt.LeftButton)
+    # ...with old password...
+    await logged_gui.test_proceed_to_login("P@ssw0rd", error=True)
+    assert autoclose_dialog.dialogs == [("Error", "The password is incorrect.")]
+
+    # ...and new password
+    await logged_gui.test_proceed_to_login("P@ssw0rd2")

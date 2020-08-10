@@ -289,7 +289,7 @@ msgstr ""
 
 #: ../../hosting_server.rst:147
 msgid "Administration token"
-msgstr "Token d'administration"
+msgstr "Jeton d'administration"
 
 #: ../../hosting_server.rst:149
 msgid "``--administration-token <token>``"
@@ -301,7 +301,7 @@ msgstr ""
 
 #: ../../hosting_server.rst:152
 msgid "Secret token to access the administration api."
-msgstr "Token secret pour accéder à l'api d'administration."
+msgstr "Jeton secret pour accéder à l'api d'administration."
 
 #: ../../hosting_server.rst:155
 msgid "SSL"

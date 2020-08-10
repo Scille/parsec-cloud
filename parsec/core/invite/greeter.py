@@ -30,7 +30,23 @@ from parsec.api.data import (
 from parsec.api.protocol import DeviceName, DeviceID, HumanHandle, InvitationDeletedReason
 from parsec.core.backend_connection import BackendInvitedCmds
 from parsec.core.types import LocalDevice
-from parsec.core.invite.exceptions import InviteError, InvitePeerResetError, InviteNotAvailableError
+from parsec.core.invite.exceptions import (
+    InviteError,
+    InvitePeerResetError,
+    InviteNotFoundError,
+    InviteAlreadyUsedError,
+)
+
+
+def _check_rep(rep, step_name):
+    if rep["status"] == "not_found":
+        raise InviteNotFoundError
+    elif rep["status"] == "already_deleted":
+        raise InviteAlreadyUsedError
+    elif rep["status"] == "invalid_state":
+        raise InvitePeerResetError
+    elif rep["status"] != "ok":
+        raise InviteError(f"Backend error during {step_name}: {rep}")
 
 
 @attr.s(slots=True, frozen=True, auto_attribs=True)
@@ -43,8 +59,10 @@ class BaseGreetInitialCtx:
         rep = await self._cmds.invite_1_greeter_wait_peer(
             token=self.token, greeter_public_key=greeter_private_key.public_key
         )
-        if rep["status"] in ("not_found", "already_deleted"):
-            raise InviteNotAvailableError()
+        if rep["status"] == "not_found":
+            raise InviteNotFoundError
+        elif rep["status"] == "already_deleted":
+            raise InviteAlreadyUsedError()
         elif rep["status"] != "ok":
             raise InviteError(f"Backend error during step 1: {rep}")
 
@@ -54,24 +72,14 @@ class BaseGreetInitialCtx:
         greeter_nonce = generate_nonce()
 
         rep = await self._cmds.invite_2a_greeter_get_hashed_nonce(token=self.token)
-        if rep["status"] in ("not_found", "already_deleted"):
-            raise InviteNotAvailableError()
-        elif rep["status"] == "invalid_state":
-            raise InvitePeerResetError()
-        elif rep["status"] != "ok":
-            raise InviteError(f"Backend error during step 2a: {rep}")
+        _check_rep(rep, step_name="step 2a")
 
         claimer_hashed_nonce = rep["claimer_hashed_nonce"]
 
         rep = await self._cmds.invite_2b_greeter_send_nonce(
             token=self.token, greeter_nonce=greeter_nonce
         )
-        if rep["status"] in ("not_found", "already_deleted"):
-            raise InviteNotAvailableError()
-        elif rep["status"] == "invalid_state":
-            raise InvitePeerResetError()
-        elif rep["status"] != "ok":
-            raise InviteError(f"Backend error during step 2b: {rep}")
+        _check_rep(rep, step_name="step 2b")
 
         if HashDigest.from_data(rep["claimer_nonce"]) != claimer_hashed_nonce:
             raise InviteError("Invitee nonce and hashed nonce doesn't match")
@@ -124,12 +132,7 @@ class BaseGreetInProgress1Ctx:
 
     async def _do_wait_peer_trust(self) -> None:
         rep = await self._cmds.invite_3a_greeter_wait_peer_trust(token=self.token)
-        if rep["status"] in ("not_found", "already_deleted"):
-            raise InviteNotAvailableError()
-        elif rep["status"] == "invalid_state":
-            raise InvitePeerResetError()
-        elif rep["status"] != "ok":
-            raise InviteError(f"Backend error during step 3b: {rep}")
+        _check_rep(rep, step_name="step 3b")
 
 
 @attr.s(slots=True, frozen=True, auto_attribs=True)
@@ -171,12 +174,7 @@ class BaseGreetInProgress2Ctx:
 
     async def _do_signify_trust(self) -> None:
         rep = await self._cmds.invite_3b_greeter_signify_trust(token=self.token)
-        if rep["status"] in ("not_found", "already_deleted"):
-            raise InviteNotAvailableError()
-        elif rep["status"] == "invalid_state":
-            raise InvitePeerResetError()
-        elif rep["status"] != "ok":
-            raise InviteError(f"Backend error during step 3a: {rep}")
+        _check_rep(rep, step_name="step 3a")
 
 
 @attr.s(slots=True, frozen=True, auto_attribs=True)
@@ -208,12 +206,7 @@ class UserGreetInProgress3Ctx:
 
     async def do_get_claim_requests(self) -> "UserGreetInProgress4Ctx":
         rep = await self._cmds.invite_4_greeter_communicate(token=self.token, payload=b"")
-        if rep["status"] in ("not_found", "already_deleted"):
-            raise InviteNotAvailableError()
-        elif rep["status"] == "invalid_state":
-            raise InvitePeerResetError()
-        elif rep["status"] != "ok":
-            raise InviteError(f"Backend error during step 4 (data exchange): {rep}")
+        _check_rep(rep, step_name="step 4 (data exchange)")
 
         if rep["payload"] is None:
             raise InviteError("Missing InviteUserData payload")
@@ -225,7 +218,6 @@ class UserGreetInProgress3Ctx:
 
         return UserGreetInProgress4Ctx(
             token=self.token,
-            requested_device_id=data.requested_device_id,
             requested_device_label=data.requested_device_label,
             requested_human_handle=data.requested_human_handle,
             public_key=data.public_key,
@@ -244,12 +236,7 @@ class DeviceGreetInProgress3Ctx:
 
     async def do_get_claim_requests(self) -> "DeviceGreetInProgress4Ctx":
         rep = await self._cmds.invite_4_greeter_communicate(token=self.token, payload=b"")
-        if rep["status"] in ("not_found", "already_deleted"):
-            raise InviteNotAvailableError()
-        elif rep["status"] == "invalid_state":
-            raise InvitePeerResetError()
-        elif rep["status"] != "ok":
-            raise InviteError(f"Backend error during step 4 (data exchange): {rep}")
+        _check_rep(rep, step_name="step 4 (data exchange)")
 
         if rep["payload"] is None:
             raise InviteError("Missing InviteDeviceData payload")
@@ -261,7 +248,6 @@ class DeviceGreetInProgress3Ctx:
 
         return DeviceGreetInProgress4Ctx(
             token=self.token,
-            requested_device_name=data.requested_device_name,
             requested_device_label=data.requested_device_label,
             verify_key=data.verify_key,
             shared_secret_key=self._shared_secret_key,
@@ -272,7 +258,6 @@ class DeviceGreetInProgress3Ctx:
 @attr.s(slots=True, frozen=True, auto_attribs=True)
 class UserGreetInProgress4Ctx:
     token: UUID
-    requested_device_id: DeviceID
     requested_device_label: Optional[str]
     requested_human_handle: Optional[HumanHandle]
 
@@ -284,11 +269,11 @@ class UserGreetInProgress4Ctx:
     async def do_create_new_user(
         self,
         author: LocalDevice,
-        device_id: DeviceID,
         device_label: Optional[str],
         human_handle: Optional[HumanHandle],
         profile: UserProfile,
     ) -> None:
+        device_id = DeviceID.new()
         try:
             now = pendulum_now()
 
@@ -306,8 +291,8 @@ class UserGreetInProgress4Ctx:
                 author=author.device_id,
                 timestamp=now,
                 device_id=device_id,
-                verify_key=self._verify_key,
                 device_label=device_label,
+                verify_key=self._verify_key,
             )
             redacted_device_certificate = device_certificate.evolve(device_label=None)
 
@@ -342,12 +327,7 @@ class UserGreetInProgress4Ctx:
             raise InviteError("Cannot generate InviteUserConfirmation payload") from exc
 
         rep = await self._cmds.invite_4_greeter_communicate(token=self.token, payload=payload)
-        if rep["status"] in ("not_found", "already_deleted"):
-            raise InviteNotAvailableError()
-        elif rep["status"] == "invalid_state":
-            raise InvitePeerResetError()
-        elif rep["status"] != "ok":
-            raise InviteError(f"Backend error during step 4 (confirmation exchange): {rep}")
+        _check_rep(rep, step_name="step 4 (confirmation exchange)")
 
         await self._cmds.invite_delete(token=self.token, reason=InvitationDeletedReason.FINISHED)
 
@@ -355,17 +335,14 @@ class UserGreetInProgress4Ctx:
 @attr.s(slots=True, frozen=True, auto_attribs=True)
 class DeviceGreetInProgress4Ctx:
     token: UUID
-    requested_device_name: DeviceName
     requested_device_label: Optional[str]
 
     _verify_key: VerifyKey
     _shared_secret_key: SecretKey
     _cmds: BackendInvitedCmds
 
-    async def do_create_new_device(
-        self, author: LocalDevice, device_name: DeviceName, device_label: Optional[str]
-    ) -> None:
-        device_id = DeviceID(f"{author.user_id}@{device_name}")
+    async def do_create_new_device(self, author: LocalDevice, device_label: Optional[str]) -> None:
+        device_id = author.user_id.to_device_id(DeviceName.new())
         try:
             now = pendulum_now()
 
@@ -373,8 +350,8 @@ class DeviceGreetInProgress4Ctx:
                 author=author.device_id,
                 timestamp=now,
                 device_id=device_id,
-                verify_key=self._verify_key,
                 device_label=device_label,
+                verify_key=self._verify_key,
             )
             redacted_device_certificate = device_certificate.evolve(device_label=None)
 
@@ -390,8 +367,7 @@ class DeviceGreetInProgress4Ctx:
             device_certificate=device_certificate,
             redacted_device_certificate=redacted_device_certificate,
         )
-        if rep["status"] != "ok":
-            raise InviteError(f"Cannot create device: {rep}")
+        _check_rep(rep, step_name="device creation")
 
         try:
             payload = InviteDeviceConfirmation(
@@ -408,11 +384,6 @@ class DeviceGreetInProgress4Ctx:
             raise InviteError("Cannot generate InviteUserConfirmation payload") from exc
 
         rep = await self._cmds.invite_4_greeter_communicate(token=self.token, payload=payload)
-        if rep["status"] in ("not_found", "already_deleted"):
-            raise InviteNotAvailableError()
-        elif rep["status"] == "invalid_state":
-            raise InvitePeerResetError()
-        elif rep["status"] != "ok":
-            raise InviteError(f"Backend error during step 4 (confirmation exchange): {rep}")
+        _check_rep(rep, step_name="step 4 (confirmation exchange)")
 
         await self._cmds.invite_delete(token=self.token, reason=InvitationDeletedReason.FINISHED)

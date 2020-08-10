@@ -1,5 +1,6 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
 
+from parsec.backend.backend_events import BackendEvent
 import trio
 import attr
 from typing import List, Optional, Tuple
@@ -83,6 +84,7 @@ class Device:
         return DeviceCertificateContent.unsecure_load(self.device_certificate).verify_key
 
     device_id: DeviceID
+    device_label: Optional[str]
     device_certificate: bytes
     redacted_device_certificate: bytes
     device_certifier: Optional[DeviceID]
@@ -102,15 +104,15 @@ class User:
         return UserCertificateContent.unsecure_load(self.user_certificate).public_key
 
     user_id: UserID
+    human_handle: Optional[HumanHandle]
     user_certificate: bytes
     redacted_user_certificate: bytes
     user_certifier: Optional[DeviceID]
     profile: UserProfile = UserProfile.STANDARD
-    human_handle: Optional[HumanHandle] = None
     created_on: pendulum.Pendulum = attr.ib(factory=pendulum.now)
-    revoked_on: pendulum.Pendulum = None
-    revoked_user_certificate: bytes = None
-    revoked_user_certifier: DeviceID = None
+    revoked_on: Optional[pendulum.Pendulum] = None
+    revoked_user_certificate: Optional[bytes] = None
+    revoked_user_certifier: Optional[DeviceID] = None
 
 
 @attr.s(slots=True, frozen=True, auto_attribs=True)
@@ -276,7 +278,9 @@ class BaseUserComponent:
         def _filter_on_user_claimed(event, organization_id, user_id, encrypted_claim):
             return organization_id == client_ctx.organization_id and user_id == invitation.user_id
 
-        with self._event_bus.waiter_on("user.claimed", filter=_filter_on_user_claimed) as waiter:
+        with self._event_bus.waiter_on(
+            BackendEvent.USER_CLAIMED, filter=_filter_on_user_claimed
+        ) as waiter:
 
             try:
                 await self.create_user_invitation(client_ctx.organization_id, invitation)
@@ -364,8 +368,8 @@ class BaseUserComponent:
                 )
 
         with self._event_bus.connect_in_context(
-            ("user.created", _on_organization_events),
-            ("user.invitation.cancelled", _on_organization_events),
+            (BackendEvent.USER_CREATED, _on_organization_events),
+            (BackendEvent.USER_INVITATION_CANCELLED, _on_organization_events),
         ):
             try:
                 invitation = await self.claim_user_invitation(
@@ -383,7 +387,7 @@ class BaseUserComponent:
             # Wait for creator user to accept (or refuse) our claim
             async for event, user_id, first_device_id, user_certificate, first_device_certificate in recv_channel:
                 if user_id == invitation.user_id:
-                    replied_ok = event == "user.created"
+                    replied_ok = event == BackendEvent.USER_CREATED
                     break
 
         if not replied_ok:
@@ -449,20 +453,16 @@ class BaseUserComponent:
                 author_verify_key=client_ctx.verify_key,
                 expected_author=client_ctx.device_id,
             )
-
-            ru_data = rd_data = None
-            if msg["redacted_user_certificate"]:
-                ru_data = UserCertificateContent.verify_and_load(
-                    msg["redacted_user_certificate"],
-                    author_verify_key=client_ctx.verify_key,
-                    expected_author=client_ctx.device_id,
-                )
-            if msg["redacted_device_certificate"]:
-                rd_data = DeviceCertificateContent.verify_and_load(
-                    msg["redacted_device_certificate"],
-                    author_verify_key=client_ctx.verify_key,
-                    expected_author=client_ctx.device_id,
-                )
+            ru_data = UserCertificateContent.verify_and_load(
+                msg["redacted_user_certificate"],
+                author_verify_key=client_ctx.verify_key,
+                expected_author=client_ctx.device_id,
+            )
+            rd_data = DeviceCertificateContent.verify_and_load(
+                msg["redacted_device_certificate"],
+                author_verify_key=client_ctx.verify_key,
+                expected_author=client_ctx.device_id,
+            )
 
         except DataError as exc:
             return {
@@ -489,29 +489,27 @@ class BaseUserComponent:
                 "reason": "Device and User must have the same user ID.",
             }
 
-        if ru_data:
-            if ru_data.evolve(human_handle=u_data.human_handle) != u_data:
-                return {
-                    "status": "invalid_data",
-                    "reason": "Redacted User certificate differs from User certificate.",
-                }
-            if ru_data.human_handle:
-                return {
-                    "status": "invalid_data",
-                    "reason": "Redacted User certificate must not contain a human_handle field.",
-                }
+        if ru_data.evolve(human_handle=u_data.human_handle) != u_data:
+            return {
+                "status": "invalid_data",
+                "reason": "Redacted User certificate differs from User certificate.",
+            }
+        if ru_data.human_handle:
+            return {
+                "status": "invalid_data",
+                "reason": "Redacted User certificate must not contain a human_handle field.",
+            }
 
-        if rd_data:
-            if rd_data.evolve(device_label=d_data.device_label) != d_data:
-                return {
-                    "status": "invalid_data",
-                    "reason": "Redacted Device certificate differs from Device certificate.",
-                }
-            if rd_data.device_label:
-                return {
-                    "status": "invalid_data",
-                    "reason": "Redacted Device certificate must not contain a device_label field.",
-                }
+        if rd_data.evolve(device_label=d_data.device_label) != d_data:
+            return {
+                "status": "invalid_data",
+                "reason": "Redacted Device certificate differs from Device certificate.",
+            }
+        if rd_data.device_label:
+            return {
+                "status": "invalid_data",
+                "reason": "Redacted Device certificate must not contain a device_label field.",
+            }
 
         try:
             user = User(
@@ -526,6 +524,7 @@ class BaseUserComponent:
             )
             first_device = Device(
                 device_id=d_data.device_id,
+                device_label=d_data.device_label,
                 device_certificate=msg["device_certificate"],
                 redacted_device_certificate=msg["redacted_device_certificate"]
                 or msg["device_certificate"],
@@ -612,14 +611,14 @@ class BaseUserComponent:
         return apiv1_device_invite_serializer.rep_dump(rep)
 
     async def _api_device_invite(self, client_ctx, msg):
-        invited_device_id = DeviceID(f"{client_ctx.device_id.user_id}@{msg['invited_device_name']}")
+        invited_device_id = client_ctx.device_id.user_id.to_device_id(msg["invited_device_name"])
         invitation = DeviceInvitation(invited_device_id, client_ctx.device_id)
 
         def _filter_on_device_claimed(event, organization_id, device_id, encrypted_claim):
             return organization_id == client_ctx.organization_id and device_id == invited_device_id
 
         with self._event_bus.waiter_on(
-            "device.claimed", filter=_filter_on_device_claimed
+            BackendEvent.DEVICE_CLAIMED, filter=_filter_on_device_claimed
         ) as waiter:
 
             try:
@@ -701,8 +700,8 @@ class BaseUserComponent:
                 send_channel.send_nowait((event, device_id, device_certificate, encrypted_answer))
 
         with self._event_bus.connect_in_context(
-            ("device.created", _on_organization_events),
-            ("device.invitation.cancelled", _on_organization_events),
+            (BackendEvent.DEVICE_CREATED, _on_organization_events),
+            (BackendEvent.DEVICE_INVITATION_CANCELLED, _on_organization_events),
         ):
             try:
                 invitation = await self.claim_device_invitation(
@@ -720,7 +719,7 @@ class BaseUserComponent:
             # Wait for creator device to accept (or refuse) our claim
             async for event, device_id, device_certificate, encrypted_answer in recv_channel:
                 if device_id == invitation.device_id:
-                    replied_ok = event == "device.created"
+                    replied_ok = event == BackendEvent.DEVICE_CREATED
                     break
 
         if not replied_ok:
@@ -740,7 +739,7 @@ class BaseUserComponent:
     async def api_device_cancel_invitation(self, client_ctx, msg):
         msg = apiv1_device_cancel_invitation_serializer.req_load(msg)
 
-        invited_device_id = DeviceID(f"{client_ctx.device_id.user_id}@{msg['invited_device_name']}")
+        invited_device_id = client_ctx.device_id.user_id.to_device_id(msg["invited_device_name"])
 
         await self.cancel_device_invitation(client_ctx.organization_id, invited_device_id)
 
@@ -770,12 +769,19 @@ class BaseUserComponent:
                 "reason": f"Invalid timestamp in certification.",
             }
 
+        if data.device_label:
+            return {
+                "status": "invalid_data",
+                "reason": "Redacted Device certificate must not contain a device_label field.",
+            }
+
         if data.device_id.user_id != client_ctx.user_id:
             return {"status": "bad_user_id", "reason": "Device must be handled by it own user."}
 
         try:
             device = Device(
                 device_id=data.device_id,
+                device_label=None,
                 device_certificate=msg["device_certificate"],
                 redacted_device_certificate=msg["device_certificate"],
                 device_certifier=data.author,
@@ -839,6 +845,7 @@ class BaseUserComponent:
         try:
             device = Device(
                 device_id=data.device_id,
+                device_label=data.device_label,
                 device_certificate=msg["device_certificate"],
                 redacted_device_certificate=msg["redacted_device_certificate"]
                 or msg["device_certificate"],

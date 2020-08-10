@@ -48,14 +48,13 @@ class InviteNewDeviceReqSchema(BaseReqSchema):
 
 class InviteNewReqSchema(OneOfSchema):
     type_field = "type"
-    type_field_remove = False
     type_schemas = {
-        InvitationType.USER.value: InviteNewUserReqSchema(),
-        InvitationType.DEVICE.value: InviteNewDeviceReqSchema(),
+        InvitationType.USER: InviteNewUserReqSchema(),
+        InvitationType.DEVICE: InviteNewDeviceReqSchema(),
     }
 
     def get_obj_type(self, obj):
-        return obj["type"].value
+        return obj["type"]
 
 
 class InviteNewRepSchema(BaseRepSchema):
@@ -116,14 +115,13 @@ class InviteListItemDeviceSchema(BaseSchema):
 
 class InviteListItemSchema(OneOfSchema):
     type_field = "type"
-    type_field_remove = False
     type_schemas = {
-        InvitationType.USER.value: InviteListItemUserSchema(),
-        InvitationType.DEVICE.value: InviteListItemDeviceSchema(),
+        InvitationType.USER: InviteListItemUserSchema(),
+        InvitationType.DEVICE: InviteListItemDeviceSchema(),
     }
 
     def get_obj_type(self, obj):
-        return obj["type"].value
+        return obj["type"]
 
 
 class InviteListRepSchema(BaseRepSchema):
@@ -152,14 +150,13 @@ class InviteInfoDeviceRepSchema(BaseRepSchema):
 
 class InviteInfoRepSchema(OneOfSchema):
     type_field = "type"
-    type_field_remove = False
     type_schemas = {
-        InvitationType.USER.value: InviteInfoUserRepSchema(),
-        InvitationType.DEVICE.value: InviteInfoDeviceRepSchema(),
+        InvitationType.USER: InviteInfoUserRepSchema(),
+        InvitationType.DEVICE: InviteInfoDeviceRepSchema(),
     }
 
     def get_obj_type(self, obj):
-        return obj["type"].value
+        return obj["type"]
 
 
 invite_info_serializer = CmdSerializer(InviteInfoReqSchema, InviteInfoRepSchema)

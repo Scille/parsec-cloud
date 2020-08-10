@@ -6,7 +6,6 @@ import trio
 
 from parsec.backend.user import DeviceInvitation
 from parsec.api.protocol import (
-    DeviceID,
     apiv1_device_cancel_invitation_serializer,
     apiv1_device_claim_serializer,
 )
@@ -17,7 +16,7 @@ from tests.common import freeze_time
 @pytest.fixture
 async def alice_nd_invitation(backend, alice):
     invitation = DeviceInvitation(
-        DeviceID(f"{alice.user_id}@new_device"), alice.device_id, Pendulum(2000, 1, 2)
+        alice.user_id.to_device_id("new_device"), alice.device_id, Pendulum(2000, 1, 2)
     )
     await backend.user.create_device_invitation(alice.organization_id, invitation)
     return invitation

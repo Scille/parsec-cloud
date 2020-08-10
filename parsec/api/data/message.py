@@ -6,20 +6,27 @@ from parsec.crypto import SecretKey
 from parsec.serde import fields, post_load, OneOfSchema
 from parsec.api.data.entry import EntryID, EntryIDField
 from parsec.api.data.base import BaseAPISignedData, BaseSignedDataSchema
+from enum import Enum
+
+
+class MessageContentType(Enum):
+    SHARING_GRANTED = "sharing.granted"
+    SHARING_REENCRYPTED = "sharing.reencrypted"
+    SHARING_REVOKED = "sharing.revoked"
+    PING = "ping"
 
 
 class MessageContent(BaseAPISignedData):
     class SCHEMA_CLS(OneOfSchema, BaseSignedDataSchema):
         type_field = "type"
-        type_field_remove = False
 
         @property
         def type_schemas(self):
             return {
-                "sharing.granted": SharingGrantedMessageContent.SCHEMA_CLS,
-                "sharing.reencrypted": SharingReencryptedMessageContent.SCHEMA_CLS,
-                "sharing.revoked": SharingRevokedMessageContent.SCHEMA_CLS,
-                "ping": PingMessageContent.SCHEMA_CLS,
+                MessageContentType.SHARING_GRANTED: SharingGrantedMessageContent.SCHEMA_CLS,
+                MessageContentType.SHARING_REENCRYPTED: SharingReencryptedMessageContent.SCHEMA_CLS,
+                MessageContentType.SHARING_REVOKED: SharingRevokedMessageContent.SCHEMA_CLS,
+                MessageContentType.PING: PingMessageContent.SCHEMA_CLS,
             }
 
         def get_obj_type(self, obj):
@@ -28,7 +35,7 @@ class MessageContent(BaseAPISignedData):
 
 class SharingGrantedMessageContent(MessageContent):
     class SCHEMA_CLS(BaseSignedDataSchema):
-        type = fields.CheckedConstant("sharing.granted", required=True)
+        type = fields.EnumCheckedConstant(MessageContentType.SHARING_GRANTED, required=True)
         name = fields.String(required=True)
         id = EntryIDField(required=True)
         encryption_revision = fields.Integer(required=True)
@@ -53,7 +60,7 @@ class SharingGrantedMessageContent(MessageContent):
 
 class SharingReencryptedMessageContent(SharingGrantedMessageContent):
     class SCHEMA_CLS(SharingGrantedMessageContent.SCHEMA_CLS):
-        type = fields.CheckedConstant("sharing.reencrypted", required=True)
+        type = fields.EnumCheckedConstant(MessageContentType.SHARING_REENCRYPTED, required=True)
         # This message is similar to `sharing.granted`. Hence both can be processed
         # interchangeably, which avoid possible concurrency issues when a sharing
         # occurs right before a reencryption.
@@ -66,7 +73,7 @@ class SharingReencryptedMessageContent(SharingGrantedMessageContent):
 
 class SharingRevokedMessageContent(MessageContent):
     class SCHEMA_CLS(BaseSignedDataSchema):
-        type = fields.CheckedConstant("sharing.revoked", required=True)
+        type = fields.EnumCheckedConstant(MessageContentType.SHARING_REVOKED, required=True)
         id = EntryIDField(required=True)
 
         @post_load
@@ -79,7 +86,7 @@ class SharingRevokedMessageContent(MessageContent):
 
 class PingMessageContent(MessageContent):
     class SCHEMA_CLS(BaseSignedDataSchema):
-        type = fields.CheckedConstant("ping", required=True)
+        type = fields.EnumCheckedConstant(MessageContentType.PING, required=True)
         ping = fields.String(required=True)
 
         @post_load

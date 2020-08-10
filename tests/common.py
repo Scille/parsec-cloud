@@ -1,5 +1,6 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
 
+from parsec.core.core_events import CoreEvent
 from unittest.mock import Mock
 from inspect import iscoroutinefunction
 from contextlib import ExitStack, contextmanager
@@ -19,7 +20,7 @@ def addr_with_device_subdomain(addr, device_id):
     Useful to have each device access the same backend with a different hostname
     so tcp_stream_spy can put some offline and leave others online
     """
-    device_specific_hostname = f"{device_id.user_id}.{device_id.device_name}.{addr.hostname}"
+    device_specific_hostname = f"{device_id.user_id}_{device_id.device_name}.{addr.hostname}"
     return type(addr).from_url(addr.to_url().replace(addr.hostname, device_specific_hostname, 1))
 
 
@@ -179,11 +180,15 @@ async def create_shared_workspace(name, creator, *shared_with):
         with trio.fail_after(1):
             if creator_spy:
                 await creator_spy.wait_multiple(
-                    ["fs.workspace.created", "backend.realm.roles_updated"]
+                    [CoreEvent.FS_WORKSPACE_CREATED, CoreEvent.BACKEND_REALM_ROLES_UPDATED]
                 )
             for spy in shared_with_spies:
                 await spy.wait_multiple(
-                    ["backend.realm.roles_updated", "backend.message.received", "sharing.updated"]
+                    [
+                        CoreEvent.BACKEND_REALM_ROLES_UPDATED,
+                        CoreEvent.BACKEND_MESSAGE_RECEIVED,
+                        CoreEvent.SHARING_UPDATED,
+                    ]
                 )
 
         for user_fs in all_user_fss:
@@ -216,20 +221,39 @@ def compare_fs_dumps(entry_1, entry_2):
             compare_fs_dumps(child_for_entry_1, child_for_entry_2)
 
 
-_FIXTURES_CUSTOMIZATIONS = {"alice_profile", "bob_profile", "adam_profile", "mallory_profile"}
+_FIXTURES_CUSTOMIZATIONS = {
+    "alice_profile",
+    "alice_has_human_handle",
+    "alice_has_device_label",
+    "bob_profile",
+    "bob_has_human_handle",
+    "bob_has_device_label",
+    "adam_profile",
+    "adam_has_human_handle",
+    "adam_has_device_label",
+    "mallory_profile",
+    "mallory_has_human_handle",
+    "mallory_has_device_label",
+    "backend_not_populated",
+    "backend_has_email",
+    "backend_has_webhook",
+    "backend_over_ssl",
+    "backend_spontaneous_organization_boostrap",
+    "logged_gui_as_admin",
+}
 
 
-def customize_fixture(key, value):
+def customize_fixtures(**customizations):
     """
     Should be used as a decorator on tests to provide custom settings to fixtures.
     """
-    assert key in _FIXTURES_CUSTOMIZATIONS
+    assert not customizations.keys() - _FIXTURES_CUSTOMIZATIONS
 
     def wrapper(fn):
         try:
-            getattr(fn, "_fixtures_customization")[key] = value
+            getattr(fn, "_fixtures_customization").update(customizations)
         except AttributeError:
-            setattr(fn, "_fixtures_customization", {key: value})
+            setattr(fn, "_fixtures_customization", customizations)
         return fn
 
     return wrapper

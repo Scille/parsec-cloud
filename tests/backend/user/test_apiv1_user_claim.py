@@ -1,5 +1,7 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
 
+from parsec.backend.backend_events import BackendEvent
+from parsec.event_bus import MetaEvent
 import pytest
 import trio
 from pendulum import Pendulum
@@ -75,12 +77,14 @@ async def test_user_claim_ok(
                 alice.organization_id,
                 User(
                     user_id=UserID("dummy"),
+                    human_handle=None,
                     user_certificate=b"<user certif>",
                     redacted_user_certificate=b"<redacted user certif>",
                     user_certifier=alice.device_id,
                 ),
                 Device(
                     device_id=DeviceID("dummy@pc1"),
+                    device_label=None,
                     device_certificate=b"<device certif>",
                     redacted_device_certificate=b"<redacted device certif>",
                     device_certifier=alice.device_id,
@@ -91,12 +95,14 @@ async def test_user_claim_ok(
                 alice.organization_id,
                 User(
                     user_id=mallory_invitation.user_id,
+                    human_handle=None,
                     user_certificate=b"<user certif>",
                     redacted_user_certificate=b"<redacted user certif>",
                     user_certifier=alice.device_id,
                 ),
                 Device(
-                    device_id=DeviceID(f"{mallory_invitation.user_id}@pc1"),
+                    device_id=mallory_invitation.user_id.to_device_id("pc1"),
+                    device_label=None,
                     device_certificate=b"<device certif>",
                     redacted_device_certificate=b"<redacted device certif>",
                     device_certifier=alice.device_id,
@@ -121,7 +127,9 @@ async def test_user_claim_timeout(
             encrypted_claim=b"<foo>",
         ) as prep:
 
-            await spy.wait_with_timeout("event.connected", {"event_name": "user.created"})
+            await spy.wait_with_timeout(
+                MetaEvent.EVENT_CONNECTED, {"event_type": BackendEvent.USER_CREATED}
+            )
             mock_clock.jump(PEER_EVENT_MAX_WAIT + 1)
 
     assert prep[0] == {
@@ -142,10 +150,10 @@ async def test_user_claim_denied(
         ) as prep:
 
             await spy.wait_with_timeout(
-                "event.connected", {"event_name": "user.invitation.cancelled"}
+                MetaEvent.EVENT_CONNECTED, {"event_type": BackendEvent.USER_INVITATION_CANCELLED}
             )
             backend.event_bus.send(
-                "user.created",
+                BackendEvent.USER_CREATED,
                 organization_id=coolorg.organization_id,
                 user_id="dummy",
                 user_certificate=b"<dummy user certif>",
@@ -153,7 +161,7 @@ async def test_user_claim_denied(
                 first_device_certificate=b"<dummy device certif>",
             )
             backend.event_bus.send(
-                "user.invitation.cancelled",
+                BackendEvent.USER_INVITATION_CANCELLED,
                 organization_id=coolorg.organization_id,
                 user_id=mallory_invitation.user_id,
             )
@@ -180,12 +188,14 @@ async def test_user_claim_already_exists(
         alice.organization_id,
         User(
             user_id=mallory_invitation.user_id,
+            human_handle=None,
             user_certificate=b"<foo>",
             redacted_user_certificate=b"<foo>",
             user_certifier=alice.device_id,
         ),
         Device(
-            device_id=DeviceID(f"{mallory_invitation.user_id}@pc1"),
+            device_id=mallory_invitation.user_id.to_device_id("pc1"),
+            device_label=None,
             device_certificate=b"<bar>",
             redacted_device_certificate=b"<bar>",
             device_certifier=alice.device_id,

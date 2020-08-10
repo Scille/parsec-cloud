@@ -350,14 +350,6 @@ class BaseVlobComponent:
         """
         raise NotImplementedError()
 
-    async def group_check(
-        self, organization_id: OrganizationID, author: DeviceID, to_check: List[dict]
-    ) -> List[dict]:
-        """
-        Raises: Nothing !
-        """
-        raise NotImplementedError()
-
     async def poll_changes(
         self, organization_id: OrganizationID, author: DeviceID, realm_id: UUID, checkpoint: int
     ) -> Tuple[int, Dict[UUID, int]]:

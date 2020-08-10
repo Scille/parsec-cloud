@@ -19,6 +19,7 @@ from parsec.api.data import (
     RealmRoleCertificateContent,
 )
 from parsec.api.protocol import OrganizationID, UserID, DeviceID, HumanHandle, RealmRole
+from parsec.backend.backend_events import BackendEvent
 from parsec.core.types import LocalDevice, LocalUserManifest, BackendOrganizationBootstrapAddr
 from parsec.core.local_device import generate_new_device
 from parsec.backend.user import User as BackendUser, Device as BackendDevice
@@ -190,15 +191,24 @@ def expiredorg(organization_factory):
 
 @pytest.fixture
 def otheralice(fixtures_customization, local_device_factory, otherorg):
-    # otheralice should also mimic alice role
-    profile = fixtures_customization.get("alice_profile", UserProfile.ADMIN)
-    return local_device_factory("alice@dev1", otherorg, profile=profile)
+    return local_device_factory(
+        "alice@dev1",
+        otherorg,
+        # otheralice mimics alice
+        profile=fixtures_customization.get("alice_profile", UserProfile.ADMIN),
+        has_human_handle=fixtures_customization.get("alice_has_human_handle", True),
+        has_device_label=fixtures_customization.get("alice_has_device_label", True),
+    )
 
 
 @pytest.fixture
 def alice(fixtures_customization, local_device_factory, initial_user_manifest_state):
-    profile = fixtures_customization.get("alice_profile", UserProfile.ADMIN)
-    device = local_device_factory("alice@dev1", profile=profile)
+    device = local_device_factory(
+        "alice@dev1",
+        profile=fixtures_customization.get("alice_profile", UserProfile.ADMIN),
+        has_human_handle=fixtures_customization.get("alice_has_human_handle", True),
+        has_device_label=fixtures_customization.get("alice_has_device_label", True),
+    )
     # Force alice user manifest v1 to be signed by user alice@dev1
     # This is needed given backend_factory bind alice@dev1 then alice@dev2,
     # hence user manifest v1 is stored in backend at a time when alice@dev2
@@ -212,9 +222,14 @@ def alice(fixtures_customization, local_device_factory, initial_user_manifest_st
 def expiredorgalice(
     fixtures_customization, local_device_factory, initial_user_manifest_state, expiredorg
 ):
-    # expiredorgalice should also mimic alice role
-    profile = fixtures_customization.get("alice_profile", UserProfile.ADMIN)
-    device = local_device_factory("alice@dev1", expiredorg, profile=profile)
+    device = local_device_factory(
+        "alice@dev1",
+        expiredorg,
+        # expiredorgalice mimics alice
+        profile=fixtures_customization.get("alice_profile", UserProfile.ADMIN),
+        has_human_handle=fixtures_customization.get("alice_has_human_handle", True),
+        has_device_label=fixtures_customization.get("alice_has_device_label", True),
+    )
     # Force alice user manifest v1 to be signed by user alice@dev1
     # This is needed given backend_factory bind alice@dev1 then alice@dev2,
     # hence user manifest v1 is stored in backend at a time when alice@dev2
@@ -226,26 +241,42 @@ def expiredorgalice(
 
 @pytest.fixture
 def alice2(fixtures_customization, local_device_factory):
-    profile = fixtures_customization.get("alice_profile", UserProfile.ADMIN)
-    return local_device_factory("alice@dev2", profile=profile)
+    return local_device_factory(
+        "alice@dev2",
+        profile=fixtures_customization.get("alice_profile", UserProfile.ADMIN),
+        has_human_handle=fixtures_customization.get("alice_has_human_handle", True),
+        has_device_label=fixtures_customization.get("alice_has_device_label", True),
+    )
 
 
 @pytest.fixture
 def adam(fixtures_customization, local_device_factory):
-    profile = fixtures_customization.get("adam_profile", UserProfile.ADMIN)
-    return local_device_factory("adam@dev1", profile=profile)
+    return local_device_factory(
+        "adam@dev1",
+        profile=fixtures_customization.get("adam_profile", UserProfile.ADMIN),
+        has_human_handle=fixtures_customization.get("adam_has_human_handle", True),
+        has_device_label=fixtures_customization.get("adam_has_device_label", True),
+    )
 
 
 @pytest.fixture
 def bob(fixtures_customization, local_device_factory):
-    profile = fixtures_customization.get("bob_profile", UserProfile.STANDARD)
-    return local_device_factory("bob@dev1", profile=profile)
+    return local_device_factory(
+        "bob@dev1",
+        profile=fixtures_customization.get("bob_profile", UserProfile.STANDARD),
+        has_human_handle=fixtures_customization.get("bob_has_human_handle", True),
+        has_device_label=fixtures_customization.get("bob_has_device_label", True),
+    )
 
 
 @pytest.fixture
 def mallory(fixtures_customization, local_device_factory):
-    profile = fixtures_customization.get("mallory_profile", UserProfile.STANDARD)
-    return local_device_factory("mallory@dev1", profile=profile)
+    return local_device_factory(
+        "mallory@dev1",
+        profile=fixtures_customization.get("mallory_profile", UserProfile.STANDARD),
+        has_human_handle=fixtures_customization.get("mallory_has_human_handle", True),
+        has_device_label=fixtures_customization.get("mallory_has_device_label", True),
+    )
 
 
 class InitialUserManifestState:
@@ -355,6 +386,7 @@ def local_device_to_backend_user(
 
     first_device = BackendDevice(
         device_id=device.device_id,
+        device_label=device.device_label,
         device_certificate=device_certificate.dump_and_sign(certifier_signing_key),
         redacted_device_certificate=redacted_device_certificate.dump_and_sign(
             certifier_signing_key
@@ -490,7 +522,7 @@ def backend_data_binder_factory(request, backend_addr, initial_user_manifest_sta
                 await spy.wait_multiple_with_timeout(
                     [
                         (
-                            "realm.roles_updated",
+                            BackendEvent.REALM_ROLES_UPDATED,
                             {
                                 "organization_id": author.organization_id,
                                 "author": author.device_id,
@@ -500,7 +532,7 @@ def backend_data_binder_factory(request, backend_addr, initial_user_manifest_sta
                             },
                         ),
                         (
-                            "realm.vlobs_updated",
+                            BackendEvent.REALM_VLOBS_UPDATED,
                             {
                                 "organization_id": author.organization_id,
                                 "author": author.device_id,

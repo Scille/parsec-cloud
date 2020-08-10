@@ -10,13 +10,13 @@ from functools import partial
 from parsec.crypto import SigningKey
 from parsec.event_bus import EventBus
 from parsec.api.data import EntryID
-from parsec.api.protocol import DeviceID
+from parsec.api.protocol import DeviceID, APIEvent, AUTHENTICATED_CMDS
 from parsec.core.types import BackendOrganizationAddr
 from parsec.core.backend_connection import cmds
 from parsec.core.backend_connection.transport import connect_as_authenticated, TransportPool
 from parsec.core.backend_connection.exceptions import BackendNotAvailable, BackendConnectionRefused
 from parsec.core.backend_connection.expose_cmds import expose_cmds_with_retrier
-from parsec.api.protocol import AUTHENTICATED_CMDS
+from parsec.core.core_events import CoreEvent
 
 
 logger = get_logger()
@@ -39,37 +39,37 @@ def _handle_event(event_bus: EventBus, rep: dict) -> None:
         logger.warning("Bad response to `events_listen` command", rep=rep)
         return
 
-    if rep["event"] == "message.received":
-        event_bus.send("backend.message.received", index=rep["index"])
+    if rep["event"] == APIEvent.MESSAGE_RECEIVED:
+        event_bus.send(CoreEvent.BACKEND_MESSAGE_RECEIVED, index=rep["index"])
 
-    elif rep["event"] == "pinged":
-        event_bus.send("backend.pinged", ping=rep["ping"])
+    elif rep["event"] == APIEvent.PINGED:
+        event_bus.send(CoreEvent.BACKEND_PINGED, ping=rep["ping"])
 
-    elif rep["event"] == "realm.roles_updated":
+    elif rep["event"] == APIEvent.REALM_ROLES_UPDATED:
         realm_id = EntryID(rep["realm_id"])
-        event_bus.send("backend.realm.roles_updated", realm_id=realm_id, role=rep["role"])
+        event_bus.send(CoreEvent.BACKEND_REALM_ROLES_UPDATED, realm_id=realm_id, role=rep["role"])
 
-    elif rep["event"] == "realm.vlobs_updated":
+    elif rep["event"] == APIEvent.REALM_VLOBS_UPDATED:
         src_id = EntryID(rep["src_id"])
         realm_id = EntryID(rep["realm_id"])
         event_bus.send(
-            "backend.realm.vlobs_updated",
+            CoreEvent.BACKEND_REALM_VLOBS_UPDATED,
             realm_id=realm_id,
             checkpoint=rep["checkpoint"],
             src_id=src_id,
             src_version=rep["src_version"],
         )
 
-    elif rep["event"] == "realm.maintenance_started":
+    elif rep["event"] == APIEvent.REALM_MAINTENANCE_STARTED:
         event_bus.send(
-            "backend.realm.maintenance_started",
+            CoreEvent.BACKEND_REALM_MAINTENANCE_STARTED,
             realm_id=rep["realm_id"],
             encryption_revision=rep["encryption_revision"],
         )
 
-    elif rep["event"] == "realm.maintenance_finished":
+    elif rep["event"] == APIEvent.REALM_MAINTENANCE_FINISHED:
         event_bus.send(
-            "backend.realm.maintenance_finished",
+            CoreEvent.BACKEND_REALM_MAINTENANCE_FINISHED,
             realm_id=rep["realm_id"],
             encryption_revision=rep["encryption_revision"],
         )
@@ -106,6 +106,7 @@ class BackendAuthenticatedConn:
         )
         self._status = BackendConnStatus.LOST
         self._status_exc = None
+        self._status_event_sent = False
         self._cmds = BackendAuthenticatedCmds(addr, self._acquire_transport)
         self._manager_connect_cancel_scope = None
         self._monitors_cbs: List[Callable[..., None]] = []
@@ -126,6 +127,20 @@ class BackendAuthenticatedConn:
     @property
     def cmds(self) -> BackendAuthenticatedCmds:
         return self._cmds
+
+    def set_status(self, status: BackendConnStatus, status_exc: Optional[Exception] = None) -> None:
+        old_status, self._status = self._status, status
+        self._status_exc = status_exc
+        if not self._status_event_sent or old_status != status:
+            self.event_bus.send(
+                CoreEvent.BACKEND_CONNECTION_CHANGED,
+                status=self._status,
+                status_exc=self._status_exc,
+            )
+        # This is a fix to make sure an event is sent on the first call to set_status
+        # A better approach would be to make sure that components using this status
+        # do not rely on this redundant event.
+        self._status_event_sent = True
 
     def register_monitor(self, monitor_cb) -> None:
         if self._started:
@@ -156,24 +171,27 @@ class BackendAuthenticatedConn:
                     except (BackendNotAvailable, BackendConnectionRefused):
                         pass
                     except Exception as exc:
-                        self._status = BackendConnStatus.CRASHED
-                        self._status_exc = BackendNotAvailable(
-                            f"Backend connection manager has crashed: {exc}"
+                        self.set_status(
+                            BackendConnStatus.CRASHED,
+                            BackendNotAvailable(f"Backend connection manager has crashed: {exc}"),
                         )
                         logger.exception("Unhandled exception")
             finally:
                 self._manager_connect_cancel_scope = None
 
-            assert self._status not in (BackendConnStatus.READY, BackendConnStatus.INITIALIZING)
-            if self._backend_connection_failures == 0:
-                self.event_bus.send(
-                    "backend.connection.changed", status=self._status, status_exc=self._status_exc
-                )
-            if self._status == BackendConnStatus.LOST:
-                # Start with a 1s cooldown and increase by power of 2 until
+            assert self.status not in (BackendConnStatus.READY, BackendConnStatus.INITIALIZING)
+            if self.status == BackendConnStatus.LOST:
+                # Start with a 0s cooldown and increase by power of 2 until
                 # max cooldown every time the connection trial fails
-                # (e.g. 1, 2, 4, 8, 15, 15, 15 etc. if max cooldown is 15s)
-                cooldown_time = 2 ** self._backend_connection_failures
+                # (e.g. 0, 1, 2, 4, 8, 15, 15, 15 etc. if max cooldown is 15s)
+                if self._backend_connection_failures < 1:
+                    # A cooldown time of 0 second is useful for the specific case of a
+                    # revokation when the event listener is the only running transport.
+                    # This way, we don't have to wait 1 second before the revokation is
+                    # detected.
+                    cooldown_time = 0
+                else:
+                    cooldown_time = 2 ** (self._backend_connection_failures - 1)
                 if cooldown_time > self.max_cooldown:
                     cooldown_time = self.max_cooldown
                 self._backend_connection_failures += 1
@@ -181,7 +199,7 @@ class BackendAuthenticatedConn:
                 await trio.sleep(cooldown_time)
             else:
                 # It's most likely useless to retry connection anyway
-                logger.info("Backend connection refused", status=self._status)
+                logger.info("Backend connection refused", status=self.status)
                 await trio.sleep_forever()
 
     def _cancel_manager_connect(self):
@@ -190,12 +208,8 @@ class BackendAuthenticatedConn:
 
     async def _manager_connect(self):
         async with self._acquire_transport(ignore_status=True, force_fresh=True) as transport:
-            self._status = BackendConnStatus.INITIALIZING
-            self._status_exc = None
+            self.set_status(BackendConnStatus.INITIALIZING)
             self._backend_connection_failures = 0
-            self.event_bus.send(
-                "backend.connection.changed", status=self._status, status_exc=self._status_exc
-            )
             logger.info("Backend online")
 
             await cmds.events_subscribe(transport)
@@ -227,10 +241,7 @@ class BackendAuthenticatedConn:
                                 monitors_nursery.start, partial(_wrap_monitor_cb, monitor_cb, idx)
                             )
 
-                    self._status = BackendConnStatus.READY
-                    self.event_bus.send(
-                        "backend.connection.changed", status=self._status, status_exc=None
-                    )
+                    self.set_status(BackendConnStatus.READY)
 
                     while True:
                         rep = await cmds.events_listen(transport, wait=True)
@@ -245,8 +256,8 @@ class BackendAuthenticatedConn:
         self, force_fresh=False, ignore_status=False, allow_not_available=False
     ):
         if not ignore_status:
-            if self._status_exc:
-                raise self._status_exc
+            if self.status_exc:
+                raise self.status_exc
 
         try:
             async with self._transport_pool.acquire(force_fresh=force_fresh) as transport:
@@ -254,14 +265,12 @@ class BackendAuthenticatedConn:
 
         except BackendNotAvailable as exc:
             if not allow_not_available:
-                self._status = BackendConnStatus.LOST
-                self._status_exc = exc
+                self.set_status(BackendConnStatus.LOST, exc)
                 self._cancel_manager_connect()
             raise
 
         except BackendConnectionRefused as exc:
-            self._status = BackendConnStatus.REFUSED
-            self._status_exc = exc
+            self.set_status(BackendConnStatus.REFUSED, exc)
             self._cancel_manager_connect()
             raise
 

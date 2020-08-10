@@ -1,14 +1,15 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
 
+from parsec.core.core_events import CoreEvent
 import pytest
 from pendulum import Pendulum
 from unittest.mock import ANY
 
-from tests.common import freeze_time
+from tests.common import freeze_time, customize_fixtures
 
 
 @pytest.mark.trio
-@pytest.mark.backend_not_populated
+@customize_fixtures(backend_not_populated=True)
 @pytest.mark.skip  #  TODO refactoring?
 async def test_lazy_root_manifest_generation(
     running_backend, backend_data_binder, local_storage_factory, user_fs_factory, coolorg, alice
@@ -55,7 +56,7 @@ async def test_lazy_root_manifest_generation(
 
 
 @pytest.mark.trio
-@pytest.mark.backend_not_populated
+@customize_fixtures(backend_not_populated=True)
 @pytest.mark.xfail
 async def test_concurrent_devices_agreed_on_root_manifest(
     running_backend,
@@ -92,10 +93,10 @@ async def test_concurrent_devices_agreed_on_root_manifest(
         date_sync = Pendulum(2000, 1, 5)
         spy.assert_events_exactly_occured(
             [
-                ("fs.entry.minimal_synced", {"id": alice.user_manifest_id}, date_sync),
-                ("fs.entry.minimal_synced", {"id": wid1}, date_sync),
-                ("fs.entry.synced", {"id": alice.user_manifest_id}, date_sync),
-                ("fs.entry.synced", {"id": wid1}, date_sync),
+                (CoreEvent.FS_ENTRY_MINIMAL_SYNCED, {"id": alice.user_manifest_id}, date_sync),
+                (CoreEvent.FS_ENTRY_MINIMAL_SYNCED, {"id": wid1}, date_sync),
+                (CoreEvent.FS_ENTRY_SYNCED, {"id": alice.user_manifest_id}, date_sync),
+                (CoreEvent.FS_ENTRY_SYNCED, {"id": wid1}, date_sync),
             ]
         )
 
@@ -105,10 +106,10 @@ async def test_concurrent_devices_agreed_on_root_manifest(
         date_sync = Pendulum(2000, 1, 6)
         spy.assert_events_exactly_occured(
             [
-                ("fs.entry.minimal_synced", {"id": alice.user_manifest_id}, date_sync),
-                ("fs.entry.minimal_synced", {"id": wid2}, date_sync),
-                ("fs.entry.synced", {"id": alice.user_manifest_id}, date_sync),
-                ("fs.entry.synced", {"id": wid2}, date_sync),
+                (CoreEvent.FS_ENTRY_MINIMAL_SYNCED, {"id": alice.user_manifest_id}, date_sync),
+                (CoreEvent.FS_ENTRY_MINIMAL_SYNCED, {"id": wid2}, date_sync),
+                (CoreEvent.FS_ENTRY_SYNCED, {"id": alice.user_manifest_id}, date_sync),
+                (CoreEvent.FS_ENTRY_SYNCED, {"id": wid2}, date_sync),
             ]
         )
 
@@ -119,7 +120,7 @@ async def test_concurrent_devices_agreed_on_root_manifest(
         spy.assert_events_exactly_occured(
             [
                 (
-                    "fs.entry.remote_changed",
+                    CoreEvent.FS_ENTRY_REMOTE_CHANGED,
                     {"path": "/", "id": spy.ANY},
                     date_sync,
                 )  # TODO: really needed ?
@@ -143,7 +144,7 @@ async def test_concurrent_devices_agreed_on_root_manifest(
 
 
 @pytest.mark.trio
-@pytest.mark.backend_not_populated
+@customize_fixtures(backend_not_populated=True)
 @pytest.mark.skip  #  TODO refactoring?
 async def test_reloading_v0_user_manifest(
     running_backend, backend_data_binder, local_storage_factory, user_fs_factory, coolorg, alice

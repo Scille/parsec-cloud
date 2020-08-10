@@ -62,8 +62,13 @@ class PasswordChangeWidget(QWidget, Ui_PasswordChangeWidget):
                 show_error(self, _("TEXT_CHANGE_PASSWORD_INVALID_PASSWORD"), exception=exc)
 
     @classmethod
-    def exec_modal(cls, core, parent):
+    def show_modal(cls, core, parent, on_finished):
         w = cls(core=core)
         d = GreyedDialog(w, title=_("TEXT_CHANGE_PASSWORD_TITLE"), parent=parent)
         w.dialog = d
-        return d.exec_()
+
+        if on_finished:
+            d.finished.connect(on_finished)
+        # Unlike exec_, show is asynchronous and works within the main Qt loop
+        d.show()
+        return w

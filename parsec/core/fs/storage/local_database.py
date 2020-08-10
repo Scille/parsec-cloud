@@ -103,7 +103,7 @@ class LocalDatabase:
 
     async def _create_connection(self):
         # Create directories
-        self.path.parent.mkdir(parents=True, exist_ok=True)
+        self.path.parent.mkdir(mode=0o700, parents=True, exist_ok=True)
 
         # Create sqlite connection
         conn = sqlite_connect(str(self.path), check_same_thread=False)

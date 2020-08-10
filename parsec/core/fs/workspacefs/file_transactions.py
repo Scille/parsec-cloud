@@ -1,5 +1,6 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
 
+from parsec.core.core_events import CoreEvent
 from typing import Tuple, List, Callable
 
 from collections import defaultdict
@@ -18,6 +19,7 @@ from parsec.core.fs.workspacefs.file_operations import (
     prepare_resize,
     prepare_reshape,
 )
+
 
 __all__ = ("FSInvalidFileDescriptor", "FileTransactions")
 
@@ -133,6 +135,11 @@ class FileTransactions:
 
     # Atomic transactions
 
+    async def fd_info(self, fd: FileDescriptor, path) -> dict:
+
+        manifest = await self.local_storage.load_file_descriptor(fd)
+        return manifest.to_stats()
+
     async def fd_close(self, fd: FileDescriptor) -> None:
         # Fetch and lock
         async with self._load_and_lock_file(fd) as manifest:
@@ -181,7 +188,7 @@ class FileTransactions:
                 self._write_count.pop(fd, None)
 
         # Notify
-        self._send_event("fs.entry.updated", id=manifest.id)
+        self._send_event(CoreEvent.FS_ENTRY_UPDATED, id=manifest.id)
         return len(content)
 
     async def fd_resize(self, fd: FileDescriptor, length: int, truncate_only=False) -> None:
@@ -196,7 +203,7 @@ class FileTransactions:
             await self._manifest_resize(manifest, length)
 
         # Notify
-        self._send_event("fs.entry.updated", id=manifest.id)
+        self._send_event(CoreEvent.FS_ENTRY_UPDATED, id=manifest.id)
 
     async def fd_read(self, fd: FileDescriptor, size: int, offset: int, raise_eof=False) -> bytes:
         # Loop over attemps

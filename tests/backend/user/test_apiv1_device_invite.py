@@ -1,16 +1,18 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
 
+from parsec.backend.backend_events import BackendEvent
+from parsec.event_bus import MetaEvent
 import pytest
 import trio
 from async_generator import asynccontextmanager
 
 from parsec.backend.user import PEER_EVENT_MAX_WAIT, DeviceInvitation
-from parsec.api.protocol import DeviceID, apiv1_device_invite_serializer
+from parsec.api.protocol import apiv1_device_invite_serializer
 
 
 @pytest.fixture
 def alice_nd_id(alice):
-    return DeviceID(f"{alice.user_id}@new_device")
+    return alice.user_id.to_device_id("new_device")
 
 
 @asynccontextmanager
@@ -25,7 +27,7 @@ async def device_invite(sock, **kwargs):
 
 @pytest.mark.trio
 async def test_device_invite(monkeypatch, backend, apiv1_alice_backend_sock, alice, alice_nd_id):
-    dummy_device_id = DeviceID(f"{alice.user_id}@pc1")
+    dummy_device_id = alice.user_id.to_device_id("pc1")
     await backend.user.create_device_invitation(
         alice.organization_id, DeviceInvitation(dummy_device_id, alice.device_id)
     )
@@ -82,7 +84,9 @@ async def test_device_invite_timeout(
         async with device_invite(
             apiv1_alice_backend_sock, invited_device_name=alice_nd_id.device_name
         ) as prep:
-            await spy.wait_with_timeout("event.connected", {"event_name": "device.claimed"})
+            await spy.wait_with_timeout(
+                MetaEvent.EVENT_CONNECTED, {"event_type": BackendEvent.DEVICE_CLAIMED}
+            )
             mock_clock.jump(PEER_EVENT_MAX_WAIT + 1)
 
     assert prep[0] == {
@@ -100,17 +104,19 @@ async def test_concurrent_device_invite(
             apiv1_alice_backend_sock, invited_device_name=alice_nd_id.device_name
         ) as prep:
 
-            await spy.wait("event.connected", {"event_name": "device.claimed"})
+            await spy.wait(MetaEvent.EVENT_CONNECTED, {"event_type": BackendEvent.DEVICE_CLAIMED})
             spy.clear()
 
             async with device_invite(
                 apiv1_alice2_backend_sock, invited_device_name=alice_nd_id.device_name
             ) as prep2:
 
-                await spy.wait("event.connected", {"event_name": "device.claimed"})
+                await spy.wait(
+                    MetaEvent.EVENT_CONNECTED, {"event_type": BackendEvent.DEVICE_CLAIMED}
+                )
 
                 backend.event_bus.send(
-                    "device.claimed",
+                    BackendEvent.DEVICE_CLAIMED,
                     organization_id=alice.organization_id,
                     device_id=alice_nd_id,
                     encrypted_claim=b"<good>",
@@ -129,17 +135,17 @@ async def test_device_invite_same_name_different_organizations(
             apiv1_alice_backend_sock, invited_device_name=alice_nd_id.device_name
         ) as prep:
 
-            await spy.wait("event.connected", {"event_name": "device.claimed"})
+            await spy.wait(MetaEvent.EVENT_CONNECTED, {"event_type": BackendEvent.DEVICE_CLAIMED})
 
             backend.event_bus.send(
-                "device.claimed",
+                BackendEvent.DEVICE_CLAIMED,
                 organization_id=otheralice.organization_id,
                 device_id=alice_nd_id,
                 encrypted_claim=b"<from OtherOrg>",
             )
             await trio.sleep(0)
             backend.event_bus.send(
-                "device.claimed",
+                BackendEvent.DEVICE_CLAIMED,
                 organization_id=alice.organization_id,
                 device_id=alice_nd_id,
                 encrypted_claim=b"<from CoolOrg>",

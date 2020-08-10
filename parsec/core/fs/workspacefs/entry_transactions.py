@@ -1,5 +1,6 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
 
+from parsec.core.core_events import CoreEvent
 from typing import Tuple
 from async_generator import asynccontextmanager
 
@@ -156,26 +157,7 @@ class EntryTransactions(FileTransactions):
 
         # Fetch data
         manifest = await self._get_manifest_from_path(path)
-
-        # General stats
-        stats = {
-            "id": manifest.id,
-            "created": manifest.created,
-            "updated": manifest.updated,
-            "base_version": manifest.base_version,
-            "is_placeholder": manifest.is_placeholder,
-            "need_sync": manifest.need_sync,
-        }
-
-        # File/folder specific stats
-        if is_file_manifest(manifest):
-            stats["type"] = "file"
-            stats["size"] = manifest.size
-        else:
-            stats["type"] = "folder"
-            stats["children"] = sorted(manifest.children.keys())
-
-        return stats
+        return manifest.to_stats()
 
     async def entry_rename(
         self, source: FsPath, destination: FsPath, overwrite: bool = True
@@ -246,7 +228,7 @@ class EntryTransactions(FileTransactions):
             await self.local_storage.set_manifest(parent.id, new_parent)
 
         # Send event
-        self._send_event("fs.entry.updated", id=parent.id)
+        self._send_event(CoreEvent.FS_ENTRY_UPDATED, id=parent.id)
 
         # Return the entry id of the renamed entry
         return parent.children[source.name]
@@ -277,7 +259,7 @@ class EntryTransactions(FileTransactions):
             await self.local_storage.set_manifest(parent.id, new_parent)
 
         # Send event
-        self._send_event("fs.entry.updated", id=parent.id)
+        self._send_event(CoreEvent.FS_ENTRY_UPDATED, id=parent.id)
 
         # Return the entry id of the removed folder
         return child.id
@@ -304,7 +286,7 @@ class EntryTransactions(FileTransactions):
             await self.local_storage.set_manifest(parent.id, new_parent)
 
         # Send event
-        self._send_event("fs.entry.updated", id=parent.id)
+        self._send_event(CoreEvent.FS_ENTRY_UPDATED, id=parent.id)
 
         # Return the entry id of the deleted file
         return child.id
@@ -331,8 +313,8 @@ class EntryTransactions(FileTransactions):
             await self.local_storage.set_manifest(parent.id, new_parent)
 
         # Send events
-        self._send_event("fs.entry.updated", id=parent.id)
-        self._send_event("fs.entry.updated", id=child.id)
+        self._send_event(CoreEvent.FS_ENTRY_UPDATED, id=parent.id)
+        self._send_event(CoreEvent.FS_ENTRY_UPDATED, id=child.id)
 
         # Return the entry id of the created folder
         return child.id
@@ -360,8 +342,8 @@ class EntryTransactions(FileTransactions):
             fd = self.local_storage.create_file_descriptor(child) if open else None
 
         # Send events
-        self._send_event("fs.entry.updated", id=parent.id)
-        self._send_event("fs.entry.updated", id=child.id)
+        self._send_event(CoreEvent.FS_ENTRY_UPDATED, id=parent.id)
+        self._send_event(CoreEvent.FS_ENTRY_UPDATED, id=child.id)
 
         # Return the entry id of the created file and the file descriptor
         return child.id, fd

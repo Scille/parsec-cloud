@@ -3,6 +3,8 @@
 import attr
 from typing import List, Optional
 
+from parsec.core.types import BackendAddr
+
 
 class BaseBlockStoreConfig:
     pass
@@ -62,16 +64,33 @@ class MockedBlockStoreConfig(BaseBlockStoreConfig):
 
 
 @attr.s(slots=True, frozen=True, auto_attribs=True)
+class EmailConfig:
+    host: str
+    port: int
+    host_user: Optional[str]
+    host_password: Optional[str]
+    use_ssl: bool
+    use_tls: bool
+    sender: str
+
+
+@attr.s(slots=True, frozen=True, auto_attribs=True)
 class BackendConfig:
     administration_token: str
 
     db_url: str
-    # If False, deleted data are only marked for deletion
-    db_drop_deleted_data: bool
     db_min_connections: int
     db_max_connections: int
+    db_first_tries_number: int
+    db_first_tries_sleep: int
 
     blockstore_config: BaseBlockStoreConfig
+
+    email_config: Optional[EmailConfig]
+    backend_addr: Optional[BackendAddr]
+
+    spontaneous_organization_bootstrap: bool
+    organization_bootstrap_webhook_url: Optional[str]
 
     debug: bool
 

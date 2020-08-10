@@ -5,7 +5,7 @@ import pytest
 from parsec.api.data import UserProfile
 from parsec.api.protocol import packb, apiv1_user_find_serializer
 
-from tests.common import freeze_time, customize_fixture
+from tests.common import freeze_time, customize_fixtures
 
 
 async def user_find(sock, **kwargs):
@@ -34,7 +34,7 @@ async def access_testbed(
 
 
 @pytest.mark.trio
-@customize_fixture("alice_profile", UserProfile.OUTSIDER)
+@customize_fixtures(alice_profile=UserProfile.OUTSIDER)
 async def test_not_allowed_for_outsider(apiv1_alice_backend_sock):
     rep = await user_find(apiv1_alice_backend_sock, query="whatever")
     assert rep == {"status": "not_allowed", "reason": "Not allowed for user with OUTSIDER profile."}

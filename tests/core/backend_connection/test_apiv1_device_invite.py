@@ -1,5 +1,7 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
 
+from parsec.backend.backend_events import BackendEvent
+from parsec.event_bus import MetaEvent
 import pytest
 import trio
 import pendulum
@@ -10,7 +12,6 @@ from parsec.api.data import (
     APIV1_DeviceClaimContent,
     APIV1_DeviceClaimAnswerContent,
 )
-from parsec.api.protocol import DeviceID
 from parsec.crypto import PrivateKey, SigningKey
 from parsec.core.backend_connection import (
     backend_authenticated_cmds_factory,
@@ -20,7 +21,7 @@ from parsec.core.backend_connection import (
 
 @pytest.mark.trio
 async def test_device_invite_then_claim_ok(alice, apiv1_alice_backend_cmds, running_backend):
-    nd_id = DeviceID(f"{alice.user_id}@new_device")
+    nd_id = alice.user_id.to_device_id("new_device")
     nd_signing_key = SigningKey.generate()
     token = "123456"
     device_certificate = None
@@ -40,6 +41,7 @@ async def test_device_invite_then_claim_ok(alice, apiv1_alice_backend_cmds, runn
             author=alice.device_id,
             timestamp=pendulum.now(),
             device_id=claim.device_id,
+            device_label=None,
             verify_key=claim.verify_key,
         ).dump_and_sign(alice.signing_key)
         encrypted_answer = APIV1_DeviceClaimAnswerContent(
@@ -84,7 +86,9 @@ async def test_device_invite_then_claim_ok(alice, apiv1_alice_backend_cmds, runn
     with running_backend.backend.event_bus.listen() as spy:
         async with trio.open_service_nursery() as nursery:
             nursery.start_soon(_alice_invite)
-            await spy.wait_with_timeout("event.connected", {"event_name": "device.claimed"})
+            await spy.wait_with_timeout(
+                MetaEvent.EVENT_CONNECTED, {"event_type": BackendEvent.DEVICE_CLAIMED}
+            )
             nursery.start_soon(_alice_nd_claim)
 
     # Now alice's new device should be able to connect to backend

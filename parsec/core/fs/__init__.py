@@ -37,6 +37,9 @@ from parsec.core.fs.exceptions import (
     FSWorkspaceNoWriteAccess,
     FSWorkspaceNotInMaintenance,
     FSWorkspaceInMaintenance,
+    FSUserNotFoundError,
+    FSDeviceNotFoundError,
+    FSInvalidTrustchainEror,
 )
 from parsec.core.fs.workspacefs import WorkspaceFS, WorkspaceFSTimestamped
 
@@ -80,4 +83,7 @@ __all__ = (
     "FSWorkspaceNoWriteAccess",
     "FSWorkspaceNotInMaintenance",
     "FSWorkspaceInMaintenance",
+    "FSUserNotFoundError",
+    "FSDeviceNotFoundError",
+    "FSInvalidTrustchainEror",
 )

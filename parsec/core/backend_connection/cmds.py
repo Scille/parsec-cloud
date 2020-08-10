@@ -669,6 +669,8 @@ async def organization_bootstrap(
     root_verify_key: VerifyKey,
     user_certificate: bytes,
     device_certificate: bytes,
+    redacted_user_certificate: bytes,
+    redacted_device_certificate: bytes,
 ) -> dict:
     return await _send_cmd(
         transport,
@@ -679,6 +681,8 @@ async def organization_bootstrap(
         root_verify_key=root_verify_key,
         user_certificate=user_certificate,
         device_certificate=device_certificate,
+        redacted_user_certificate=redacted_user_certificate,
+        redacted_device_certificate=redacted_device_certificate,
     )
 
 

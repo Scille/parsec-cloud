@@ -1,11 +1,12 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
 
+from parsec.core.core_events import CoreEvent
 import os
 import errno
 from typing import Optional
 from structlog import get_logger
 from contextlib import contextmanager
-from stat import S_IRWXU, S_IRWXG, S_IRWXO, S_IFDIR, S_IFREG
+from stat import S_IRWXU, S_IFDIR, S_IFREG
 from fuse import FuseOSError, Operations, LoggingMixIn, fuse_get_context, fuse_exit
 
 
@@ -43,12 +44,14 @@ def translate_error(event_bus, operation, path):
         raise FuseOSError(exc.errno) from exc
 
     except FSRemoteOperationError as exc:
-        event_bus.send("mountpoint.remote_error", exc=exc, operation=operation, path=path)
+        event_bus.send(CoreEvent.MOUNTPOINT_REMOTE_ERROR, exc=exc, operation=operation, path=path)
         raise FuseOSError(exc.errno) from exc
 
     except Exception as exc:
         logger.exception("Unhandled exception in fuse mountpoint")
-        event_bus.send("mountpoint.unhandled_error", exc=exc, operation=operation, path=path)
+        event_bus.send(
+            CoreEvent.MOUNTPOINT_UNHANDLED_ERROR, exc=exc, operation=operation, path=path
+        )
         # Use EINVAL as fallback error code, since this is what fusepy does.
         raise FuseOSError(errno.EINVAL) from exc
 
@@ -98,7 +101,7 @@ class FuseOperations(LoggingMixIn, Operations):
         fuse_stat["st_blocks"] = fuse_stat["st_size"] // 512
         if fuse_stat["st_size"] % 512:
             fuse_stat["st_blocks"] += 1
-        fuse_stat["st_mode"] |= S_IRWXU | S_IRWXG | S_IRWXO
+        fuse_stat["st_mode"] |= S_IRWXU
         fuse_stat["st_ctime"] = stat["created"].timestamp()  # TODO change to local timezone
         fuse_stat["st_mtime"] = stat["updated"].timestamp()
         fuse_stat["st_atime"] = stat["updated"].timestamp()  # TODO not supported ?

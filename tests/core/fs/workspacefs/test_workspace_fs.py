@@ -7,19 +7,8 @@ from unittest.mock import ANY
 from parsec.api.protocol import DeviceID, RealmRole
 from parsec.api.data import Manifest as RemoteManifest
 from parsec.core.types import FsPath, EntryID
-from parsec.core.fs.exceptions import FSError
-
-
-@pytest.fixture
-@pytest.mark.trio
-async def alice_workspace(alice_user_fs, running_backend):
-    wid = await alice_user_fs.workspace_create("w")
-    workspace = alice_user_fs.get_workspace(wid)
-    await workspace.mkdir("/foo")
-    await workspace.touch("/foo/bar")
-    await workspace.touch("/foo/baz")
-    await workspace.sync()
-    return workspace
+from parsec.core.fs.exceptions import FSError, FSBackendOfflineError
+from parsec.core.fs.workspacefs.workspacefs import ReencryptionNeed
 
 
 @pytest.mark.trio
@@ -430,3 +419,30 @@ async def test_path_info_remote_loader_exceptions(monkeypatch, alice_workspace, 
     with pytest.raises(FSError) as exc:
         await alice_workspace.path_info(FsPath("/foo/bar"))
     assert "Invalid author: expected `alice@dev1`, got `mallory@pc1`" in str(exc.value)
+
+
+@pytest.mark.trio
+async def test_get_reencryption_need(alice_workspace, running_backend, monkeypatch):
+    expected = ReencryptionNeed(user_revoked=(), role_revoked=())
+    assert await alice_workspace.get_reencryption_need() == expected
+
+    with running_backend.offline():
+        with pytest.raises(FSBackendOfflineError):
+            await alice_workspace.get_reencryption_need()
+
+    # Reproduce a backend offline after the certificates have been retrieved (see issue #1335)
+    reply = await alice_workspace.remote_loader._backend_cmds(
+        "realm_get_role_certificates", alice_workspace.workspace_id
+    )
+    original = alice_workspace.remote_loader._backend_cmds
+
+    async def mockup(name, *args):
+        if name == "realm_get_role_certificates" and args == (alice_workspace.workspace_id,):
+            return reply
+        return await original(name, *args)
+
+    monkeypatch.setattr(alice_workspace.remote_loader, "_backend_cmds", mockup)
+
+    with running_backend.offline():
+        with pytest.raises(FSBackendOfflineError):
+            await alice_workspace.get_reencryption_need()

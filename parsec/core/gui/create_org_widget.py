@@ -194,10 +194,17 @@ class CreateOrgWidget(QWidget, Ui_CreateOrgWidget):
             self.button_validate.setEnabled(False)
 
     @classmethod
-    def exec_modal(cls, jobs_ctx, parent):
+    def show_modal(cls, jobs_ctx, parent, on_finished):
         w = cls(jobs_ctx)
-        d = GreyedDialog(w, _("TEXT_ORG_WIZARD_TITLE"), parent=parent)
+        d = GreyedDialog(w, _("TEXT_ORG_WIZARD_TITLE"), parent=parent, width=1000)
         w.dialog = d
-        if d.exec_() == QDialog.Accepted:
-            return w.status
-        return None
+
+        def _on_finished(result):
+            if result == QDialog.Accepted:
+                return on_finished(w.status)
+            return on_finished(None)
+
+        d.finished.connect(_on_finished)
+        # Unlike exec_, show is asynchronous and works within the main Qt loop
+        d.show()
+        return w

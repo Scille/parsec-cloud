@@ -7,6 +7,7 @@ from contextlib import contextmanager
 from async_generator import asynccontextmanager
 from structlog import get_logger
 from pathlib import Path
+from enum import Enum
 
 from parsec.serde import (
     BaseSchema,
@@ -20,6 +21,11 @@ from parsec.serde import (
 
 
 logger = get_logger()
+
+
+class IPCCommand(Enum):
+    FOREGROUND = "foreground"
+    NEW_INSTANCE = "new_instance"
 
 
 class IPCServerError(Exception):
@@ -43,18 +49,20 @@ class IPCServerAlreadyRunning(IPCServerError):
 
 
 class ForegroundReqSchema(BaseSchema):
-    cmd = fields.CheckedConstant("foreground", required=True)
+    cmd = fields.EnumCheckedConstant(IPCCommand.FOREGROUND, required=True)
 
 
 class NewInstanceReqSchema(BaseSchema):
-    cmd = fields.CheckedConstant("new_instance", required=True)
+    cmd = fields.EnumCheckedConstant(IPCCommand.NEW_INSTANCE, required=True)
     start_arg = fields.String(allow_none=True)
 
 
 class CommandReqSchema(OneOfSchema):
     type_field = "cmd"
-    type_field_remove = False
-    type_schemas = {"foreground": ForegroundReqSchema, "new_instance": NewInstanceReqSchema}
+    type_schemas = {
+        IPCCommand.FOREGROUND: ForegroundReqSchema,
+        IPCCommand.NEW_INSTANCE: NewInstanceReqSchema,
+    }
 
     def get_obj_type(self, obj):
         return obj["cmd"]
@@ -99,7 +107,7 @@ def _install_posix_file_lock(socket_file: Path):
     import fcntl
 
     try:
-        socket_file.parent.mkdir(parents=True, exist_ok=True)
+        socket_file.parent.mkdir(mode=0o700, parents=True, exist_ok=True)
         with open(socket_file, "a") as fd:
             try:
                 fcntl.flock(fd, fcntl.LOCK_EX | fcntl.LOCK_NB)
@@ -165,7 +173,7 @@ async def _run_tcp_server(socket_file: Path, cmd_handler):
             port = listeners[0].socket.getsockname()[1]
 
             # Make sure the path exists and write the socket file
-            socket_file.parent.mkdir(parents=True, exist_ok=True)
+            socket_file.parent.mkdir(mode=0o700, parents=True, exist_ok=True)
             socket_file.write_text(str(port))
 
             logger.info("IPC server ready", port=port)

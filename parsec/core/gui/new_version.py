@@ -4,7 +4,9 @@ import re
 import platform
 import trio
 import json
+from json import JSONDecodeError
 from urllib.request import urlopen, Request
+from packaging.version import Version
 
 from PyQt5.QtCore import Qt, pyqtSignal, QSysInfo
 from PyQt5.QtWidgets import QDialog, QWidget
@@ -18,54 +20,78 @@ from parsec.core.gui.ui.new_version_info import Ui_NewVersionInfo
 from parsec.core.gui.ui.new_version_available import Ui_NewVersionAvailable
 
 
-def _extract_version_tuple(raw):
-    match = re.match(r"^.*([0-9]+)\.([0-9]+)\.([0-9]+)", raw)
+RELEASE_REGEX = (
+    r"([0-9]+)\.([0-9]+)\.([0-9]+)" r"(?:-((?:a|b|rc)[0-9]+))?" r"(\+dev|(?:-[0-9]+-g[0-9a-f]+))?"
+)
+
+
+def _extract_version(raw):
+    match = re.search(RELEASE_REGEX, raw)
     if match:
-        return tuple(int(x) for x in match.groups())
+        return Version(match.group())
     else:
         return None
 
 
-async def _async_get(url, method="GET"):
-    return await trio.to_thread.run_sync(lambda: urlopen(Request(url, method=method)))
+async def _do_check_new_version(url, api_url, check_pre=False):
+    current_version = _extract_version(__version__)
 
+    def _fetch_json_releases():
+        # urlopen automatically follows redirections
+        with urlopen(Request(url, method="GET")) as req:
+            resolved_url = req.geturl()
+            latest_from_head = _extract_version(resolved_url)
+            if (
+                latest_from_head
+                and current_version
+                and current_version < latest_from_head
+                or check_pre  # As latest doesn't include GitHub prerelease
+            ):
+                with urlopen(Request(api_url, method="GET")) as req_api:
+                    try:
+                        return latest_from_head, json.loads(req_api.read())
+                    except JSONDecodeError:
+                        return latest_from_head, None
+            else:
+                return latest_from_head, None
 
-async def _do_check_new_version(url, api_url):
-    # urlopen automatically follows redirections
-    resolved_url = (await _async_get(url, method="HEAD")).geturl()
-    latest_from_head = _extract_version_tuple(resolved_url)
-    current_version = _extract_version_tuple(__version__)
-    if latest_from_head and current_version and current_version < latest_from_head:
-        json_releases = json.loads((await _async_get(api_url)).read())
-
+    latest_from_head, json_releases = await trio.to_thread.run_sync(_fetch_json_releases)
+    if json_releases:
         current_arch = QSysInfo().currentCpuArchitecture()
         if current_arch == "x86_64":
             win_version = "win64"
         elif current_arch == "i386":
             win_version = "win32"
         else:
-            return (latest_from_head, url)
+            return latest_from_head, url
 
-        latest_version = (0, 0, 0)
+        latest_version = Version("0.0.0")
         latest_url = ""
 
-        for release in json_releases:
-            try:
+        try:
+            for release in json_releases:
                 if release["draft"]:
                     continue
-                if release["prerelease"]:
+                if release["prerelease"] and not check_pre:
                     continue
                 for asset in release["assets"]:
                     if asset["name"].endswith(f"-{win_version}-setup.exe"):
-                        asset_version = _extract_version_tuple(release["tag_name"])
-                        if asset_version > latest_version:
+                        asset_version = _extract_version(release["tag_name"])
+                        if (
+                            asset_version
+                            and asset_version > latest_version
+                            and (not asset_version.is_prerelease or check_pre)
+                        ):
                             latest_version = asset_version
                             latest_url = asset["browser_download_url"]
-            # In case something went wrong, still better to redirect to GitHub
-            except (KeyError, TypeError):
-                return (latest_from_head, url)
+        # In case something went wrong, still better to redirect to GitHub
+        except (KeyError, TypeError):
+            return latest_from_head, url
         if latest_version > current_version:
-            return (latest_version, latest_url)
+            return latest_version, latest_url
+    elif latest_from_head > current_version:
+        # There is a new release flagged as stable on GitHub, but we failed to load the json
+        return latest_from_head, url
     return None
 
 
@@ -107,9 +133,7 @@ class NewVersionAvailable(QWidget, Ui_NewVersionAvailable):
     def set_version(self, version):
         if version:
             self.label.setText(
-                _("TEXT_PARSEC_NEW_VERSION_AVAILABLE_version").format(
-                    version=".".join([str(_) for _ in version])
-                )
+                _("TEXT_PARSEC_NEW_VERSION_AVAILABLE_version").format(version=str(version))
             )
 
 
@@ -147,6 +171,7 @@ class CheckNewVersion(QDialog, Ui_NewVersionDialog):
             _do_check_new_version,
             url=self.config.gui_check_version_url,
             api_url=self.config.gui_check_version_api_url,
+            check_pre=self.config.gui_check_version_allow_pre_release,
         )
         self.setWindowFlags(Qt.SplashScreen)
 

@@ -8,10 +8,14 @@ from trio.testing import trio_test as vanilla_trio_test
 import queue
 import threading
 from concurrent import futures
+from importlib import import_module
+from PyQt5 import QtCore
 
 from parsec.event_bus import EventBus
 from parsec import __version__ as parsec_version
+from parsec.core.local_device import save_device_with_password
 from parsec.core.gui.main_window import MainWindow
+from parsec.core.gui.workspaces_widget import WorkspaceButton
 from parsec.core.gui.trio_thread import QtToTrioJobScheduler
 from parsec.core.gui.login_widget import LoginWidget
 from parsec.core.gui.central_widget import CentralWidget
@@ -79,7 +83,6 @@ class ThreadedTrioTestRunner:
 
     async def _test_target(self, fn, **kwargs):
         # Initialize trio objects
-        self._lock = trio.Lock()
         self._stopping = trio.Event()
         self._trio_token = trio.hazmat.current_trio_token()
 
@@ -233,7 +236,40 @@ def autoclose_dialog(monkeypatch):
 
 
 @pytest.fixture
-def gui_factory(qtbot, qt_thread_gateway, core_config, monkeypatch):
+def widget_catcher_factory(aqtbot, monkeypatch):
+    """Useful to capture lazily created widget such as modals"""
+
+    def _widget_catcher_factory(*widget_cls_pathes):
+        widgets = []
+
+        def _catch_init(self, *args, **kwargs):
+            widgets.append(self)
+            return self.vanilla__init__(*args, **kwargs)
+
+        for widget_cls_path in widget_cls_pathes:
+            module_path, widget_cls_name = widget_cls_path.rsplit(".", 1)
+            widget_cls = getattr(import_module(module_path), widget_cls_name)
+            monkeypatch.setattr(
+                f"{widget_cls_path}.vanilla__init__", widget_cls.__init__, raising=False
+            )
+            monkeypatch.setattr(f"{widget_cls_path}.__init__", _catch_init)
+
+        async def _wait_next():
+            def _invitation_shown():
+                assert len(widgets)
+
+            await aqtbot.wait_until(_invitation_shown)
+            return widgets.pop(0)
+
+        return _wait_next
+
+    return _widget_catcher_factory
+
+
+@pytest.fixture
+def gui_factory(
+    aqtbot, qtbot, qt_thread_gateway, testing_main_window_cls, core_config, monkeypatch
+):
     windows = []
 
     async def _gui_factory(event_bus=None, core_config=core_config, start_arg=None):
@@ -259,7 +295,7 @@ def gui_factory(qtbot, qt_thread_gateway, core_config, monkeypatch):
                 "parsec.core.gui.main_window.list_available_devices",
                 lambda *args, **kwargs: (["a"]),
             )
-            main_w = MainWindow(
+            main_w = testing_main_window_cls(
                 qt_thread_gateway._job_scheduler, event_bus, core_config, minimize_on_close=True
             )
             qtbot.add_widget(main_w)
@@ -288,79 +324,157 @@ async def gui(gui_factory, event_bus, core_config):
     return await gui_factory(event_bus, core_config)
 
 
-# Decorator to add a method to a class
-def add_method(cls):
-    def _add_method(func):
-        @wraps(func)
-        def wrapper(self, *args, **kwargs):
-            return func(*args, **kwargs)
+@pytest.fixture
+async def logged_gui(aqtbot, gui_factory, core_config, alice, bob, fixtures_customization):
+    # Logged as bob (i.e. standard profile) by default
+    if fixtures_customization.get("logged_gui_as_admin", False):
+        device = alice
+    else:
+        device = bob
 
-        setattr(cls, func.__name__, func)
-        return func
+    save_device_with_password(core_config.config_dir, device, "P@ssw0rd")
 
-    return _add_method
+    gui = await gui_factory()
+    lw = gui.test_get_login_widget()
+    tabw = gui.test_get_tab()
 
+    await aqtbot.key_clicks(lw.line_edit_password, "P@ssw0rd")
 
-# Since widgets are not longer persistent and are instantiated only when needed,
-# we can no longer simply access them.
-# These methods help to retrieve a widget according to the current state of the GUI.
-# They're prefixed by "test_" to ensure that they do not erase any "real" methods.
+    async with aqtbot.wait_signals([lw.login_with_password_clicked, tabw.logged_in]):
+        await aqtbot.mouse_click(lw.button_login, QtCore.Qt.LeftButton)
 
+    central_widget = gui.test_get_central_widget()
+    assert central_widget is not None
 
-@add_method(MainWindow)
-def test_get_tab(self):
-    w = self.tab_center.currentWidget()
-    return w
-
-
-@add_method(MainWindow)
-def test_get_main_widget(self):
-    tabw = self.test_get_tab()
-    item = tabw.layout().itemAt(0)
-    return item.widget()
+    return gui
 
 
-@add_method(MainWindow)
-def test_get_central_widget(self):
-    main_widget = self.test_get_main_widget()
-    if not isinstance(main_widget, CentralWidget):
-        return None
-    return main_widget
+@pytest.fixture
+def testing_main_window_cls(aqtbot):
+    # Since widgets are not longer persistent and are instantiated only when needed,
+    # we can no longer simply access them.
+    # These methods help to retrieve a widget according to the current state of the GUI.
+    # They're prefixed by "test_" to ensure that they do not erase any "real" methods.
 
+    class TestingMainWindow(MainWindow):
+        def test_get_tab(self):
+            w = self.tab_center.currentWidget()
+            return w
 
-@add_method(MainWindow)
-def test_get_login_widget(self):
-    main_widget = self.test_get_main_widget()
-    if not isinstance(main_widget, LoginWidget):
-        return None
-    return main_widget
+        def test_get_main_widget(self):
+            tabw = self.test_get_tab()
+            item = tabw.layout().itemAt(0)
+            return item.widget()
 
+        def test_get_central_widget(self):
+            main_widget = self.test_get_main_widget()
+            if not isinstance(main_widget, CentralWidget):
+                return None
+            return main_widget
 
-@add_method(MainWindow)
-def test_get_users_widget(self):
-    central_widget = self.test_get_central_widget()
-    return central_widget.users_widget
+        def test_get_login_widget(self):
+            main_widget = self.test_get_main_widget()
+            if not isinstance(main_widget, LoginWidget):
+                return None
+            return main_widget
 
+        def test_get_users_widget(self):
+            central_widget = self.test_get_central_widget()
+            return central_widget.users_widget
 
-@add_method(MainWindow)
-def test_get_devices_widget(self):
-    central_widget = self.test_get_central_widget()
-    return central_widget.devices_widget
+        def test_get_devices_widget(self):
+            central_widget = self.test_get_central_widget()
+            return central_widget.devices_widget
 
+        def test_get_mount_widget(self):
+            central_widget = self.test_get_central_widget()
+            return central_widget.mount_widget
 
-@add_method(MainWindow)
-def test_get_mount_widget(self):
-    central_widget = self.test_get_central_widget()
-    return central_widget.mount_widget
+        def test_get_workspaces_widget(self):
+            mount_widget = self.test_get_mount_widget()
+            return mount_widget.workspaces_widget
 
+        def test_get_files_widget(self):
+            mount_widget = self.test_get_mount_widget()
+            return mount_widget.files_widget
 
-@add_method(MainWindow)
-def test_get_workspaces_widget(self):
-    mount_widget = self.test_get_mount_widget()
-    return mount_widget.workspaces_widget
+        def test_get_core(self):
+            return self.test_get_central_widget().core
 
+        async def test_logout_and_switch_to_login_widget(self):
+            central_widget = self.test_get_central_widget()
+            await aqtbot.mouse_click(central_widget.menu.button_logout, QtCore.Qt.LeftButton)
 
-@add_method(MainWindow)
-def test_get_files_widget(self):
-    mount_widget = self.test_get_mount_widget()
-    return mount_widget.files_widget
+            def _wait_logged_out():
+                assert not central_widget.isVisible()
+                l_w = self.test_get_login_widget()
+                assert l_w is not None
+                assert l_w.isVisible()
+
+            await aqtbot.wait_until(_wait_logged_out)
+            return self.test_get_login_widget()
+
+        async def test_proceed_to_login(self, password, error=False):
+            l_w = self.test_get_login_widget()
+
+            await aqtbot.run(l_w.line_edit_password.clear)
+            await aqtbot.key_clicks(l_w.line_edit_password, password)
+            await aqtbot.mouse_click(l_w.button_login, QtCore.Qt.LeftButton)
+
+            def _wait_logged_in():
+                assert not l_w.isVisible()
+                c_w = self.test_get_central_widget()
+                assert c_w.isVisible()
+
+            if not error:
+                await aqtbot.wait_until(_wait_logged_in)
+            return self.test_get_central_widget()
+
+        async def test_switch_to_devices_widget(self, error=False):
+            central_widget = self.test_get_central_widget()
+            d_w = self.test_get_devices_widget()
+            signal = d_w.list_error if error else d_w.list_success
+            async with aqtbot.wait_exposed(d_w), aqtbot.wait_signal(signal):
+                await aqtbot.mouse_click(central_widget.menu.button_devices, QtCore.Qt.LeftButton)
+            return d_w
+
+        async def test_switch_to_users_widget(self, error=False):
+            central_widget = self.test_get_central_widget()
+            u_w = self.test_get_users_widget()
+            signal = u_w.list_error if error else u_w.list_success
+            async with aqtbot.wait_exposed(u_w), aqtbot.wait_signal(signal):
+                await aqtbot.mouse_click(central_widget.menu.button_users, QtCore.Qt.LeftButton)
+            return u_w
+
+        async def test_switch_to_workspaces_widget(self, error=False):
+            central_widget = self.test_get_central_widget()
+            w_w = self.test_get_workspaces_widget()
+            signal = w_w.list_error if error else w_w.list_success
+            async with aqtbot.wait_exposed(w_w), aqtbot.wait_signal(signal):
+                await aqtbot.mouse_click(central_widget.menu.button_files, QtCore.Qt.LeftButton)
+            return w_w
+
+        async def test_switch_to_files_widget(self, workspace_name, error=False):
+            w_w = await self.test_switch_to_workspaces_widget()
+
+            for i in range(w_w.layout_workspaces.count()):
+                wk_button = w_w.layout_workspaces.itemAt(0).widget()
+                if isinstance(wk_button, WorkspaceButton) and wk_button.name == workspace_name:
+                    break
+            else:
+                raise AssertionError(f"Workspace `{workspace_name}` not found")
+
+            f_w = self.test_get_files_widget()
+            async with aqtbot.wait_exposed(f_w), aqtbot.wait_signal(f_w.folder_changed):
+                await aqtbot.mouse_click(wk_button, QtCore.Qt.LeftButton)
+
+            # Sanity check just to be sure...
+            def _entry_available():
+                assert f_w.workspace_fs.get_workspace_name() == workspace_name
+                assert f_w.table_files.rowCount() == 1
+
+            await aqtbot.wait_until(_entry_available)
+
+            return f_w
+
+    return TestingMainWindow

@@ -1,5 +1,6 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
 
+from parsec.core.core_events import CoreEvent
 import os
 import trio
 import pytest
@@ -54,7 +55,7 @@ async def test_unmount_with_fusermount(base_mountpoint, alice, alice_user_fs, ev
                 # fusermount might fail for some reasons
                 while completed_process.returncode:
                     completed_process = await trio.run_process(command)
-                await spy.wait("mountpoint.stopped", expected)
+                await spy.wait(CoreEvent.MOUNTPOINT_STOPPED, expected)
 
         assert not await trio.Path(mountpoint_path / "bar.txt").exists()
 

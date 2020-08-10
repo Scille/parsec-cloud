@@ -1,5 +1,6 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
 
+from parsec.core.core_events import CoreEvent
 import platform
 
 from PyQt5.QtWidgets import QWidget
@@ -42,7 +43,7 @@ class SettingsWidget(QWidget, Ui_SettingsWidget):
 
     def save(self):
         self.event_bus.send(
-            "gui.config.changed",
+            CoreEvent.GUI_CONFIG_CHANGED,
             telemetry_enabled=self.check_box_send_data.isChecked(),
             gui_tray_enabled=self.check_box_tray.isChecked(),
             gui_language=self.combo_languages.currentData(),

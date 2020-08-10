@@ -1,43 +1,51 @@
 .. _doc_userguide_installation:
 
-Create&Bootstrap your own organization
-======================================
+Create your own organization
+============================
 
-Once installed, the Parsec client must be connected to an organization that have
-been created on a Parsec server.
+Once installed, the Parsec client must be connected to an organization that have been created on a Parsec server.
 
-The simplest way to do that is to join the `Parsec SAAS service <https://my.parsec.cloud/>`_
-and create an organization from there. This should provides you with an organization bootstrap
-URL in the style ``parsec://saas.parsec.cloud/TestOrg?action=bootstrap_organization&token=e5d61d7eb1d94fd32``.
+The simplest way to do that is to create one directly from the Parsec client. It automatically handles all the process securely, and create a temporary account on the `Parsec SAAS service <https://my.parsec.cloud/>`_, sending an invitation link to end registration through email.
+
+Creating an organization is proposed automatically if you have no account linked to your Parsec client.
+
+.. image:: screens/welcome_to_parsec.png
+    :align: center
+    :alt: Parsec welcome screen
+
+Otherwise, you can click on `Create an organization` in the Menu of the login screen.
+
+.. image:: screens/menu_create_an_organization.png
+    :align: center
+    :alt: Create an organization in menu
 
 .. note::
 
-    Another possibility (though more technical) is to host you own Parsec server
-    and create the organization on it using the Parsec CLI.
-    You can read about this in the :ref:`the Hosting server <doc_hosting_server>`
-    part.
+    Another possibility (though more technical) is to host you own Parsec server and create the organization on it using the Parsec CLI. You can then join that organization using an organization bootstrap URL.
+    You can read about this in the :ref:`the Hosting server <doc_hosting_server>` part.
 
-This URL is needed to bootstrap the organization by registering yourself as its
-first user and device. Clicking on the URL should bring up Parsec client
-(starting it if needed) with the following view:
+Once you start the process, you are asked for an Email and an Organization Name. This email address will be used to contact you later.
 
-.. image:: organization_bootstrap.gif
+.. image:: screens/create_org.png
+    :align: center
+    :alt: Organization create process
+
+Creating an organization through the Parsec client register yourself as its first user and device (this step is called the bootstrap). This is why you must enter your Username, Device name, and your Password.
+
+.. image:: screens/bootstrap_screen.png
     :align: center
     :alt: Organization bootstrap process
-
-.. note::
-
-    If clicking on the URL doesn't work, you can also use the
-    ``Enter a URL manually`` dialog.
 
 Few key points here:
 
 - User name is the name you'll be referenced by from within the organization
 - Device name is the name your current hardware will be referenced by (e.g.
-  people will see the work you've done on this computer as from ``Alice@laptop``)
+  people will see the work you've done on this computer as from ``my_user@my_device``)
 - The password is used to encrypt your user&device private keys on your computer.
 
-.. note::
+Once this process is completed, you can log-in to the organization you just created.
+
+.. warning::
 
     The keys stored encrypted on your computer are what makes Parsec secure.
     Hence there is no way to recover if you lost them (e.g. if you computer is

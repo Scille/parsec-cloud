@@ -14,6 +14,7 @@ import pkg_resources
 pkg_resources.require("parsec-cloud[all]")
 
 import os
+import sys
 import re
 import tempfile
 import subprocess
@@ -23,14 +24,16 @@ import trio
 import click
 import psutil
 
+from parsec import __version__ as PARSEC_VERSION
 from parsec.utils import trio_run
 from parsec.core.types import BackendAddr
-from parsec import __version__ as PARSEC_VERSION
-from parsec.api.protocol import OrganizationID, DeviceID
+from parsec.core.config import get_default_config_dir
 from parsec.test_utils import initialize_test_organization
+
 
 DEFAULT_BACKEND_PORT = 6888
 DEFAULT_ADMINISTRATION_TOKEN = "V8VjaXrOz6gUC6ZEHPab0DSsjfq6DmcJ"
+DEFAULT_DEVICE_PASSWORD = "test"
 
 
 # Helpers
@@ -124,8 +127,8 @@ MimeType=x-scheme-handler/parsec;
 async def restart_local_backend(administration_token, backend_port):
     pattern = f"parsec.* backend.* run.* -P {backend_port}"
     command = (
-        f"python -Wignore -m parsec.cli backend run -b MOCKED --db MOCKED "
-        f"-P {backend_port} --administration-token {administration_token}"
+        f"{sys.executable} -Wignore -m parsec.cli backend run -b MOCKED --db MOCKED "
+        f"-P {backend_port} --administration-token {administration_token} --backend-addr parsec://localhost:{backend_port}?no_ssl=true"
     )
 
     # Trio does not support subprocess in windows yet
@@ -165,13 +168,7 @@ async def restart_local_backend(administration_token, backend_port):
 @click.command()
 @click.option("-B", "--backend-address", type=BackendAddr.from_url)
 @click.option("-p", "--backend-port", show_default=True, type=int, default=DEFAULT_BACKEND_PORT)
-@click.option("-O", "--organization-id", show_default=True, type=OrganizationID, default="corp")
-@click.option("-a", "--alice-device-id", show_default=True, type=DeviceID, default="alice@laptop")
-@click.option("-b", "--bob-device-id", show_default=True, type=DeviceID, default="bob@laptop")
-@click.option("-o", "--other-device-name", show_default=True, default="pc")
-@click.option("-x", "--alice-workspace", show_default=True, default="alice_workspace")
-@click.option("-y", "--bob-workspace", show_default=True, default="bob_workspace")
-@click.option("-P", "--password", show_default=True, default="test")
+@click.option("-P", "--password", show_default=True, default=DEFAULT_DEVICE_PASSWORD)
 @click.option(
     "-T", "--administration-token", show_default=True, default=DEFAULT_ADMINISTRATION_TOKEN
 )
@@ -190,7 +187,7 @@ def main(**kwargs):
         \b
         $ source tests/scripts/run_testenv.sh
 
-    This scripts create two users, alice and bob who both own two devices,
+    This scripts create two users, Alice and Bob who both own two devices,
     laptop and pc. They each have their workspace, respectively
     alice_workspace and bob_workspace, that their sharing with each other.
 
@@ -222,19 +219,7 @@ def main(**kwargs):
 
 
 async def amain(
-    backend_address,
-    backend_port,
-    organization_id,
-    alice_device_id,
-    bob_device_id,
-    other_device_name,
-    alice_workspace,
-    bob_workspace,
-    password,
-    administration_token,
-    force,
-    empty,
-    source_file,
+    backend_address, backend_port, password, administration_token, force, empty, source_file
 ):
     # Set up the temporary environment
     click.echo()
@@ -266,17 +251,9 @@ Using existing backend: {backend_address}
         )
 
     # Initialize the test organization
-    alice_slugid, other_alice_slugid, bob_slugid = await initialize_test_organization(
-        backend_address,
-        organization_id,
-        alice_device_id,
-        bob_device_id,
-        other_device_name,
-        alice_workspace,
-        bob_workspace,
-        password,
-        administration_token,
-        force,
+    config_dir = get_default_config_dir(os.environ)
+    alice_device, other_alice_device, bob_device = await initialize_test_organization(
+        config_dir, backend_address, password, administration_token, force
     )
 
     # Report
@@ -284,9 +261,9 @@ Using existing backend: {backend_address}
         f"""\
 Mount alice and bob drives using:
 
-    $ parsec core run -P {password} -D {alice_slugid}
-    $ parsec core run -P {password} -D {other_alice_slugid}
-    $ parsec core run -P {password} -D {bob_slugid}
+    $ parsec core run -P {password} -D {alice_device.slughash[:3]}  # Alice
+    $ parsec core run -P {password} -D {other_alice_device.slughash[:3]}  # Alice 2nd device
+    $ parsec core run -P {password} -D {bob_device.slughash[:3]}  # Bob
 """
     )
 

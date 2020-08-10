@@ -1,5 +1,6 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
 
+from parsec.core.core_events import CoreEvent
 import trio
 
 from structlog import get_logger
@@ -52,11 +53,12 @@ class InstanceWidget(QWidget):
     join_organization_clicked = pyqtSignal()
     create_organization_clicked = pyqtSignal()
 
-    def __init__(self, jobs_ctx, event_bus, config, **kwargs):
+    def __init__(self, jobs_ctx, event_bus, config, systray_notification, **kwargs):
         super().__init__(**kwargs)
         self.jobs_ctx = jobs_ctx
         self.event_bus = event_bus
         self.config = config
+        self.systray_notification = systray_notification
 
         self.core = None
         self.core_jobs_ctx = None
@@ -87,7 +89,7 @@ class InstanceWidget(QWidget):
         return self.running_core_job is not None
 
     def on_core_config_updated(self, event, **kwargs):
-        self.event_bus.send("gui.config.changed", **kwargs)
+        self.event_bus.send(CoreEvent.GUI_CONFIG_CHANGED, **kwargs)
 
     def start_core(self, device):
         assert not self.running_core_job
@@ -108,9 +110,9 @@ class InstanceWidget(QWidget):
     def on_run_core_ready(self, core, core_jobs_ctx):
         self.core = core
         self.core_jobs_ctx = core_jobs_ctx
-        self.core.event_bus.connect("gui.config.changed", self.on_core_config_updated)
+        self.core.event_bus.connect(CoreEvent.GUI_CONFIG_CHANGED, self.on_core_config_updated)
         self.event_bus.send(
-            "gui.config.changed",
+            CoreEvent.GUI_CONFIG_CHANGED,
             gui_last_device="{}:{}".format(
                 self.core.device.organization_addr.organization_id, self.core.device.device_id
             ),
@@ -123,7 +125,9 @@ class InstanceWidget(QWidget):
     def on_core_run_error(self):
         assert self.running_core_job.is_finished()
         if self.core:
-            self.core.event_bus.disconnect("gui.config.changed", self.on_core_config_updated)
+            self.core.event_bus.disconnect(
+                CoreEvent.GUI_CONFIG_CHANGED, self.on_core_config_updated
+            )
         if self.running_core_job.status is not None:
             if isinstance(self.running_core_job.exc, HandshakeRevokedDevice):
                 show_error(
@@ -155,7 +159,9 @@ class InstanceWidget(QWidget):
             ParsecApp.remove_connected_device(
                 self.core.device.organization_addr.organization_id, self.core.device.device_id
             )
-            self.core.event_bus.disconnect("gui.config.changed", self.on_core_config_updated)
+            self.core.event_bus.disconnect(
+                CoreEvent.GUI_CONFIG_CHANGED, self.on_core_config_updated
+            )
         self.running_core_job = None
         self.core_jobs_ctx = None
         self.core = None
@@ -207,7 +213,11 @@ class InstanceWidget(QWidget):
     def show_central_widget(self):
         self.clear_widgets()
         central_widget = CentralWidget(
-            self.core, self.core_jobs_ctx, self.core.event_bus, parent=self
+            self.core,
+            self.core_jobs_ctx,
+            self.core.event_bus,
+            systray_notification=self.systray_notification,
+            parent=self,
         )
         self.layout().addWidget(central_widget)
         central_widget.logout_requested.connect(self.logout)

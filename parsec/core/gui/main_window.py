@@ -1,5 +1,6 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
 
+from parsec.core.core_events import CoreEvent
 import platform
 from typing import Optional
 from structlog import get_logger
@@ -15,11 +16,11 @@ from parsec.core.local_device import list_available_devices, get_key_file
 from parsec.core.config import save_config
 from parsec.core.types import (
     BackendActionAddr,
+    BackendInvitationAddr,
     BackendOrganizationBootstrapAddr,
-    BackendOrganizationClaimUserAddr,
-    BackendOrganizationClaimDeviceAddr,
     BackendOrganizationFileLinkAddr,
 )
+from parsec.api.protocol import InvitationType
 from parsec.core.gui.lang import translate as _
 from parsec.core.gui.instance_widget import InstanceWidget
 from parsec.core.gui.parsec_application import ParsecApp
@@ -46,7 +47,7 @@ logger = get_logger()
 class MainWindow(QMainWindow, Ui_MainWindow):
     foreground_needed = pyqtSignal()
     new_instance_needed = pyqtSignal(object)
-    systray_notification = pyqtSignal(str, str)
+    systray_notification = pyqtSignal(str, str, int)
 
     TAB_NOTIFICATION_COLOR = QColor(46, 146, 208)
     TAB_NOT_SELECTED_COLOR = QColor(123, 132, 163)
@@ -61,9 +62,11 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         self.event_bus = event_bus
         self.config = config
         self.minimize_on_close = minimize_on_close
+        # Explain only once that the app stays in background
+        self.minimize_on_close_notif_already_send = False
         self.force_close = False
         self.need_close = False
-        self.event_bus.connect("gui.config.changed", self.on_config_updated)
+        self.event_bus.connect(CoreEvent.GUI_CONFIG_CHANGED, self.on_config_updated)
         self.setWindowTitle(_("TEXT_PARSEC_WINDOW_TITLE_version").format(version=PARSEC_VERSION))
         self.foreground_needed.connect(self._on_foreground_needed)
         self.new_instance_needed.connect(self._on_new_instance_needed)
@@ -215,22 +218,22 @@ class MainWindow(QMainWindow, Ui_MainWindow):
 
     def _show_about(self):
         w = AboutWidget()
-        d = GreyedDialog(w, title="", parent=self)
+        d = GreyedDialog(w, title="", parent=self, width=1000)
         d.exec_()
 
     def _show_license(self):
         w = LicenseWidget()
-        d = GreyedDialog(w, title=_("TEXT_LICENSE_TITLE"), parent=self)
+        d = GreyedDialog(w, title=_("TEXT_LICENSE_TITLE"), parent=self, width=1000)
         d.exec_()
 
     def _show_changelog(self):
         w = ChangelogWidget()
-        d = GreyedDialog(w, title=_("TEXT_CHANGELOG_TITLE"), parent=self)
+        d = GreyedDialog(w, title=_("TEXT_CHANGELOG_TITLE"), parent=self, width=1000)
         d.exec_()
 
     def _show_settings(self):
         w = SettingsWidget(self.config, self.jobs_ctx, self.event_bus)
-        d = GreyedDialog(w, title=_("TEXT_SETTINGS_TITLE"), parent=self)
+        d = GreyedDialog(w, title=_("TEXT_SETTINGS_TITLE"), parent=self, width=1000)
         d.exec_()
 
     def _on_show_doc_clicked(self):
@@ -243,10 +246,12 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         self.add_instance()
 
     def _on_create_org_clicked(self):
-        r = CreateOrgWidget.exec_modal(self.jobs_ctx, self)
-        if r is None:
-            return
-        self._on_bootstrap_org_clicked(r)
+        def _on_finished(action_addr):
+            if action_addr is None:
+                return
+            self._on_bootstrap_org_clicked(action_addr)
+
+        CreateOrgWidget.show_modal(self.jobs_ctx, self, on_finished=_on_finished)
 
     def _on_join_org_clicked(self):
         url = get_text_input(
@@ -267,12 +272,17 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         except ValueError as exc:
             show_error(self, _("TEXT_INVALID_URL"), exception=exc)
             return
-        if isinstance(action_addr, BackendOrganizationClaimUserAddr):
-            self._on_claim_user_clicked(action_addr)
-        elif isinstance(action_addr, BackendOrganizationClaimDeviceAddr):
-            self._on_claim_device_clicked(action_addr)
-        elif isinstance(action_addr, BackendOrganizationBootstrapAddr):
+
+        if isinstance(action_addr, BackendOrganizationBootstrapAddr):
             self._on_bootstrap_org_clicked(action_addr)
+        elif isinstance(action_addr, BackendInvitationAddr):
+            if action_addr.invitation_type == InvitationType.USER:
+                self._on_claim_user_clicked(action_addr)
+            elif action_addr.invitation_type == InvitationType.DEVICE:
+                self._on_claim_device_clicked(action_addr)
+            else:
+                show_error(self, _("TEXT_INVALID_URL"))
+                return
         else:
             show_error(self, _("TEXT_INVALID_URL"))
             return
@@ -298,28 +308,57 @@ class MainWindow(QMainWindow, Ui_MainWindow):
             except ValueError as exc:
                 show_error(self, _("TEXT_BOOTSTRAP_ORG_INVALID_URL"), exception=exc)
                 return
-        ret = BootstrapOrganizationWidget.exec_modal(
-            jobs_ctx=self.jobs_ctx, config=self.config, addr=action_addr, parent=self
+
+        def _on_finished(ret):
+            if ret:
+                self.reload_login_devices()
+                self.try_login(ret[0], ret[1])
+
+        BootstrapOrganizationWidget.show_modal(
+            jobs_ctx=self.jobs_ctx,
+            config=self.config,
+            addr=action_addr,
+            parent=self,
+            on_finished=_on_finished,
         )
-        if ret:
-            self.reload_login_devices()
-            self.try_login(ret[0], ret[1])
 
     def _on_claim_user_clicked(self, action_addr):
-        ret = ClaimUserWidget.exec_modal(
-            jobs_ctx=self.jobs_ctx, config=self.config, addr=action_addr, parent=self
-        )
-        if ret:
+        widget = None
+
+        def _on_finished():
+            nonlocal widget
+            if not widget.status:
+                return
+            login, password = widget.status
             self.reload_login_devices()
-            self.try_login(ret[0], ret[1])
+            self.try_login(login, password)
+
+        widget = ClaimUserWidget.show_modal(
+            jobs_ctx=self.jobs_ctx,
+            config=self.config,
+            addr=action_addr,
+            parent=self,
+            on_finished=_on_finished,
+        )
 
     def _on_claim_device_clicked(self, action_addr):
-        ret = ClaimDeviceWidget.exec_modal(
-            jobs_ctx=self.jobs_ctx, config=self.config, addr=action_addr, parent=self
-        )
-        if ret:
+        widget = None
+
+        def _on_finished():
+            nonlocal widget
+            if not widget.status:
+                return
+            login, password = widget.status
             self.reload_login_devices()
-            self.try_login(ret[0], ret[1])
+            self.try_login(login, password)
+
+        widget = ClaimDeviceWidget.show_modal(
+            jobs_ctx=self.jobs_ctx,
+            config=self.config,
+            addr=action_addr,
+            parent=self,
+            on_finished=_on_finished,
+        )
 
     def try_login(self, device, password):
         idx = self._get_login_tab_index()
@@ -360,7 +399,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         save_config(self.config)
         telemetry.init(self.config)
 
-    def showMaximized(self, skip_dialogs=False):
+    def showMaximized(self, skip_dialogs=False, invitation_link=""):
         super().showMaximized()
         QCoreApplication.processEvents()
 
@@ -379,7 +418,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
 
             # Acknowledge the changes
             self.event_bus.send(
-                "gui.config.changed",
+                CoreEvent.GUI_CONFIG_CHANGED,
                 gui_first_launch=False,
                 gui_last_version=PARSEC_VERSION,
                 telemetry_enabled=r == _("ACTION_ERROR_REPORTING_ACCEPT"),
@@ -400,12 +439,12 @@ class MainWindow(QMainWindow, Ui_MainWindow):
                     win_registry.del_acrobat_app_container_enabled()
 
             # Acknowledge the changes
-            self.event_bus.send("gui.config.changed", gui_last_version=PARSEC_VERSION)
+            self.event_bus.send(CoreEvent.GUI_CONFIG_CHANGED, gui_last_version=PARSEC_VERSION)
 
         telemetry.init(self.config)
 
         devices = list_available_devices(self.config.config_dir)
-        if not len(devices):
+        if not len(devices) and not invitation_link:
             r = ask_question(
                 self,
                 _("TEXT_KICKSTART_PARSEC_WHAT_TO_DO_TITLE"),
@@ -439,7 +478,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
                 self.tab_center.setTabText(idx, _("TEXT_TAB_TITLE_LOG_IN_SCREEN"))
         elif state == "connected":
             device = tab.current_device
-            tab_name = f"{device.organization_id}:{device.user_id}@{device.device_name}"
+            tab_name = f"{device.organization_id} - {device.short_user_display}"
             self.tab_center.setTabToolTip(idx, tab_name)
             self.tab_center.setTabText(idx, tab_name)
         if self.tab_center.count() == 1:
@@ -450,7 +489,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         idx = self.tab_center.indexOf(widget)
         if idx == -1 or idx == self.tab_center.currentIndex():
             return
-        if event in ["sharing.updated"]:
+        if event == CoreEvent.SHARING_UPDATED:
             self.tab_center.tabBar().setTabTextColor(idx, MainWindow.TAB_NOTIFICATION_COLOR)
 
     def _get_login_tab_index(self):
@@ -460,7 +499,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         return -1
 
     def add_new_tab(self):
-        tab = InstanceWidget(self.jobs_ctx, self.event_bus, self.config)
+        tab = InstanceWidget(self.jobs_ctx, self.event_bus, self.config, self.systray_notification)
         tab.join_organization_clicked.connect(self._on_join_org_clicked)
         tab.create_organization_clicked.connect(self._on_create_org_clicked)
         idx = self.tab_center.addTab(tab, "")
@@ -479,8 +518,8 @@ class MainWindow(QMainWindow, Ui_MainWindow):
     def go_to_file_link(self, action_addr):
         devices = list_available_devices(self.config.config_dir)
         found_org = False
-        for org, d, t, kf in devices:
-            if org == action_addr.organization_id:
+        for available_device in devices:
+            if available_device.organization_id == action_addr.organization_id:
                 found_org = True
                 break
 
@@ -562,10 +601,14 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         elif action_addr:
             if isinstance(action_addr, BackendOrganizationBootstrapAddr):
                 self._on_bootstrap_org_clicked(action_addr)
-            elif isinstance(action_addr, BackendOrganizationClaimUserAddr):
-                self._on_claim_user_clicked(action_addr)
-            elif isinstance(action_addr, BackendOrganizationClaimDeviceAddr):
-                self._on_claim_device_clicked(action_addr)
+            elif isinstance(action_addr, BackendInvitationAddr):
+                if action_addr.invitation_type == InvitationType.USER:
+                    self._on_claim_user_clicked(action_addr)
+                elif action_addr.invitation_type == InvitationType.DEVICE:
+                    self._on_claim_device_clicked(action_addr)
+                else:
+                    show_error(self, _("TEXT_INVALID_URL"))
+                    return
 
     def close_current_tab(self, force=False):
         if self.tab_center.count() == 1:
@@ -575,6 +618,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
             self.close_tab(idx, force=force)
 
     def close_app(self, force=False):
+        self.show_top()
         self.need_close = True
         self.force_close = force
         self.close()
@@ -611,7 +655,11 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         if self.minimize_on_close and not self.need_close:
             self.hide()
             event.ignore()
-            self.systray_notification.emit("Parsec", _("TEXT_TRAY_PARSEC_STILL_RUNNING_MESSAGE"))
+            if not self.minimize_on_close_notif_already_send:
+                self.minimize_on_close_notif_already_send = True
+                self.systray_notification.emit(
+                    "Parsec", _("TEXT_TRAY_PARSEC_STILL_RUNNING_MESSAGE"), 2000
+                )
         else:
             if self.config.gui_confirmation_before_close and not self.force_close:
                 result = ask_question(

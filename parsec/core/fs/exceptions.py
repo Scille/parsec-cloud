@@ -13,6 +13,7 @@ Define all the FSError classes, using the following hierarchy:
 
 import os
 import errno
+import io
 
 from parsec.core.types import EntryID
 from parsec.core.fs.utils import ntstatus
@@ -132,6 +133,17 @@ class FSNoSynchronizationRequired(FSInternalError):
     pass
 
 
+# WorkspaceFile errors
+
+
+class FSUnsupportedOperation(FSLocalOperationError, io.UnsupportedOperation):
+    pass
+
+
+class FSOffsetError(FSLocalOperationError, OSError):
+    pass
+
+
 # Local operation errors
 
 
@@ -248,4 +260,19 @@ class FSWorkspaceNotInMaintenance(FSRemoteOperationError):
 
 
 class FSWorkspaceInMaintenance(FSRemoteOperationError):
+    pass
+
+
+# RemoteDevicesManager errors
+
+
+class FSUserNotFoundError(FSRemoteOperationError):
+    pass
+
+
+class FSDeviceNotFoundError(FSRemoteOperationError):
+    pass
+
+
+class FSInvalidTrustchainEror(FSRemoteOperationError):
     pass

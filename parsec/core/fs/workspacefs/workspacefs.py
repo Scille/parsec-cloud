@@ -3,7 +3,7 @@
 import attr
 import trio
 from collections import defaultdict
-from typing import Union, Iterator, Dict, Tuple
+from typing import Union, List, Dict, Tuple, AsyncGenerator
 from pendulum import Pendulum, now as pendulum_now
 
 from parsec.api.data import Manifest as RemoteManifest
@@ -17,11 +17,6 @@ from parsec.core.types import (
     LocalFileManifest,
     DEFAULT_BLOCK_SIZE,
 )
-from parsec.core.remote_devices_manager import (
-    RemoteDevicesManagerBackendOfflineError,
-    RemoteDevicesManagerError,
-)
-from parsec.core.fs.exceptions import FSError, FSBackendOfflineError
 from parsec.core.fs.remote_loader import RemoteLoader
 from parsec.core.fs import workspacefs  # Needed to break cyclic import with WorkspaceFSTimestamped
 from parsec.core.fs.workspacefs.sync_transactions import SyncTransactions
@@ -41,13 +36,15 @@ from parsec.core.fs.exceptions import (
     FSNotADirectoryError,
 )
 
+from parsec.core.fs.workspacefs.workspacefile import WorkspaceFile
+
 AnyPath = Union[FsPath, str]
 
 
-@attr.s(frozen=True)
+@attr.s(slots=True, frozen=True, auto_attribs=True)
 class ReencryptionNeed:
-    user_revoked: Tuple[UserID] = attr.ib(factory=tuple)
-    role_revoked: Tuple[UserID] = attr.ib(factory=tuple)
+    user_revoked: Tuple[UserID]
+    role_revoked: Tuple[UserID]
 
     @property
     def need_reencryption(self):
@@ -63,7 +60,7 @@ class WorkspaceFS:
         local_storage,
         backend_cmds,
         event_bus,
-        remote_device_manager,
+        remote_devices_manager,
     ):
         self.workspace_id = workspace_id
         self.get_workspace_entry = get_workspace_entry
@@ -71,7 +68,7 @@ class WorkspaceFS:
         self.local_storage = local_storage
         self.backend_cmds = backend_cmds
         self.event_bus = event_bus
-        self.remote_device_manager = remote_device_manager
+        self.remote_devices_manager = remote_devices_manager
         self.sync_locks = defaultdict(trio.Lock)
 
         self.remote_loader = RemoteLoader(
@@ -79,7 +76,7 @@ class WorkspaceFS:
             self.workspace_id,
             self.get_workspace_entry,
             self.backend_cmds,
-            self.remote_device_manager,
+            self.remote_devices_manager,
             self.local_storage,
         )
         self.transactions = SyncTransactions(
@@ -159,7 +156,7 @@ class WorkspaceFS:
         try:
             workspace_manifest = await self.local_storage.get_manifest(self.workspace_id)
             if workspace_manifest.is_placeholder:
-                return ReencryptionNeed()
+                return ReencryptionNeed(user_revoked=(), role_revoked=())
 
         except FSLocalMissError:
             pass
@@ -177,17 +174,10 @@ class WorkspaceFS:
                 has_role.add(certif.user_id)
 
         user_revoked = []
-        try:
-            for user_id in has_role:
-                _, revoked_user = await self.remote_device_manager.get_user(user_id, no_cache=True)
-                if revoked_user and revoked_user.timestamp > wentry.encrypted_on:
-                    user_revoked.append(user_id)
-
-        except RemoteDevicesManagerBackendOfflineError as exc:
-            raise FSBackendOfflineError(str(exc)) from exc
-
-        except RemoteDevicesManagerError as exc:
-            raise FSError(f"Cannot retrieve workspace participant {user_id}: {exc}") from exc
+        for user_id in has_role:
+            _, revoked_user = await self.remote_loader.get_user(user_id, no_cache=True)
+            if revoked_user and revoked_user.timestamp > wentry.encrypted_on:
+                user_revoked.append(user_id)
 
         return ReencryptionNeed(user_revoked=tuple(user_revoked), role_revoked=tuple(role_revoked))
 
@@ -251,7 +241,7 @@ class WorkspaceFS:
         info = await self.transactions.entry_info(FsPath(path))
         return info["type"] == "file"
 
-    async def iterdir(self, path: AnyPath) -> Iterator[FsPath]:
+    async def iterdir(self, path: AnyPath) -> AsyncGenerator[FsPath, None]:
         """
         Raises:
             FSError
@@ -263,7 +253,7 @@ class WorkspaceFS:
         for child in info["children"]:
             yield path / child
 
-    async def listdir(self, path: AnyPath) -> Iterator[FsPath]:
+    async def listdir(self, path: AnyPath) -> List[FsPath]:
         """
         Raises:
             FSError
@@ -345,6 +335,13 @@ class WorkspaceFS:
             return await self.transactions.fd_read(fd, size, offset)
         finally:
             await self.transactions.fd_close(fd)
+
+    async def open_file(self, path: AnyPath, mode="r"):
+        path = FsPath(path)
+        _, fd = await self.transactions.file_open(path, mode)
+        f = WorkspaceFile(fd, self.transactions, mode=mode, path=path)
+        await f.ainit()
+        return f
 
     async def write_bytes(
         self, path: AnyPath, data: bytes, offset: int = 0, truncate: bool = True

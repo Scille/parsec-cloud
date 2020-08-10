@@ -4,7 +4,7 @@ import click
 
 from parsec.utils import trio_run
 from parsec.cli_utils import spinner, cli_exception_handler
-from parsec.api.protocol import DeviceID, DeviceName
+from parsec.api.protocol import DeviceName
 from parsec.core.types import BackendOrganizationClaimDeviceAddr
 from parsec.core.invite_claim import generate_invitation_token, invite_and_create_device
 from parsec.core.cli.utils import core_config_and_device_options
@@ -13,7 +13,7 @@ from parsec.core.cli.utils import core_config_and_device_options
 async def _invite_device(config, device, new_device_name):
     action_addr = BackendOrganizationClaimDeviceAddr.build(
         organization_addr=device.organization_addr,
-        device_id=DeviceID(f"{device.user_id}@{new_device_name}"),
+        device_id=device.user_id.to_device_id(new_device_name),
     )
     token = generate_invitation_token()
 

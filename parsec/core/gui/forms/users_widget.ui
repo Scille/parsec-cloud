@@ -157,7 +157,7 @@
         <number>0</number>
        </property>
        <item>
-        <layout class="QVBoxLayout" name="layout_users">
+        <layout class="QVBoxLayout" name="layout_content">
          <property name="spacing">
           <number>20</number>
          </property>

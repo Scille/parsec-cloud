@@ -17,7 +17,7 @@ from parsec.core.types.backend_address import (
     BackendOrganizationFileLinkAddr,
     BackendInvitationAddr,
 )
-from parsec.core.types.local_device import LocalDevice
+from parsec.core.types.local_device import LocalDevice, UserInfo, DeviceInfo
 from parsec.core.types.manifest import (
     DEFAULT_BLOCK_SIZE,
     LocalFileManifest,
@@ -62,6 +62,8 @@ __all__ = (
     "BackendInvitationAddr",
     # local_device
     "LocalDevice",
+    "UserInfo",
+    "DeviceInfo",
     # "manifest"
     "DEFAULT_BLOCK_SIZE",
     "LocalFileManifest",

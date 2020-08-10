@@ -1,6 +1,11 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
 
-from parsec.core.invite.exceptions import InviteError, InvitePeerResetError, InviteNotAvailableError
+from parsec.core.invite.exceptions import (
+    InviteError,
+    InvitePeerResetError,
+    InviteNotFoundError,
+    InviteAlreadyUsedError,
+)
 from parsec.core.invite.claimer import (
     claimer_retrieve_info,
     BaseClaimInitialCtx,
@@ -30,13 +35,15 @@ from parsec.core.invite.greeter import (
     UserGreetInProgress4Ctx,
     DeviceGreetInProgress4Ctx,
 )
+from parsec.core.invite.organization import bootstrap_organization
 
 
 __all__ = (
     # Exceptions
     "InviteError",
     "InvitePeerResetError",
-    "InviteNotAvailableError",
+    "InviteNotFoundError",
+    "InviteAlreadyUsedError",
     # Claimer
     "claimer_retrieve_info",
     "BaseClaimInitialCtx",
@@ -64,4 +71,6 @@ __all__ = (
     "DeviceGreetInProgress3Ctx",
     "UserGreetInProgress4Ctx",
     "DeviceGreetInProgress4Ctx",
+    # Organization
+    "bootstrap_organization",
 )

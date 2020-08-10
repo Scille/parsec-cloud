@@ -283,22 +283,22 @@ requirements = [
     "structlog==19.2.0",
     "importlib_resources==1.0.2",
     "colorama==0.4.0",  # structlog colored output
-    "PyPika==0.36.5",
     "async_exit_stack==1.0.1",
     "outcome==1.0.0",
+    "packaging==20.4",
 ]
 
 
 test_requirements = [
-    "pytest==4.4.0",
-    "pytest-cov==2.6.1",
-    "pytest-xdist==1.28.0",
+    "pytest==5.4.3",
+    "pytest-cov==2.10.0",
+    "pytest-xdist==1.32.0",
     "pytest-trio==0.5.2",
-    "pytest-qt==3.2.2",
-    "pluggy==0.9.0",  # see https://github.com/pytest-dev/pytest/issues/3753
+    "pytest-qt==3.3.0",
+    "pytest-rerunfailures==9.0",
     "hypothesis==5.3.0",
     "hypothesis-trio==0.5.0",
-    "trustme==0.5.2",
+    "trustme==0.6.0",
     # Winfsptest requirements
     # We can't use `winfspy[test]` because of some pip limitations
     # - see pip issues #7096/#6239/#4391/#988
@@ -313,7 +313,7 @@ test_requirements = [
 ]
 
 
-PYQT_DEP = "PyQt5==5.13.1"
+PYQT_DEP = "PyQt5==5.14.2"
 BABEL_DEP = "Babel==2.6.0"
 WHEEL_DEP = "wheel==0.34.2"
 DOCUTILS_DEP = "docutils==0.15"
@@ -327,9 +327,10 @@ extra_requirements = {
         "psutil==5.6.3",
     ],
     "backend": [
+        "jinja2==2.11.2",
         # PostgreSQL
         "triopg==0.3.0",
-        "trio-asyncio==0.10.0",
+        "trio-asyncio==0.11.0",
         # S3
         "boto3==1.12.34",
         "botocore==1.15.34",
@@ -350,6 +351,7 @@ setup(
     author="Scille SAS",
     author_email="contact@scille.fr",
     url="https://github.com/Scille/parsec-cloud",
+    python_requires="~=3.6",
     packages=find_packages(include=["parsec", "parsec.*"]),
     package_dir={"parsec": "parsec"},
     setup_requires=[WHEEL_DEP, PYQT_DEP, BABEL_DEP, DOCUTILS_DEP],  # To generate resources bundle
@@ -367,6 +369,8 @@ setup(
     # Omitting GUI resources given they end up packaged in `parsec/core/gui/_resources_rc.py`
     package_data={
         "parsec.backend.postgresql.migrations": ["*.sql"],
+        "parsec.backend.templates": ["*"],
+        "parsec.backend.static": ["*"],
         "parsec.core.resources": ["*.ico"],
     },
     entry_points={
@@ -377,7 +381,7 @@ setup(
     zip_safe=False,
     keywords="parsec",
     classifiers=[
-        "Development Status :: 4 - Beta",
+        "Development Status :: 5 - Production/Stable",
         "Intended Audience :: Developers",
         "Operating System :: POSIX :: Linux",
         "Operating System :: Microsoft :: Windows",
@@ -385,6 +389,7 @@ setup(
         "Natural Language :: English",
         "Programming Language :: Python :: 3.6",
         "Programming Language :: Python :: 3.7",
+        "Programming Language :: Python :: 3.8",
     ],
     test_suite="tests",
     tests_require=test_requirements,

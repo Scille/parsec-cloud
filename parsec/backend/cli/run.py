@@ -13,6 +13,7 @@ from parsec.logging import configure_logging, configure_sentry_logging
 from parsec.backend import backend_app_factory
 from parsec.backend.config import (
     BackendConfig,
+    EmailConfig,
     MockedBlockStoreConfig,
     PostgreSQLBlockStoreConfig,
     S3BlockStoreConfig,
@@ -21,6 +22,7 @@ from parsec.backend.config import (
     RAID1BlockStoreConfig,
     RAID5BlockStoreConfig,
 )
+from parsec.core.types import BackendAddr
 
 
 logger = get_logger()
@@ -206,13 +208,6 @@ Allowed values:
 """,
 )
 @click.option(
-    "--db-drop-deleted-data",
-    is_flag=True,
-    show_default=True,
-    envvar="PARSEC_DB_DROP_DELETED_DATA",
-    help="Actually delete data database instead of just marking it has deleted",
-)
-@click.option(
     "--db-min-connections",
     default=5,
     show_default=True,
@@ -225,6 +220,20 @@ Allowed values:
     show_default=True,
     envvar="PARSEC_DB_MAX_CONNECTIONS",
     help="Maximum number of connections to the database if using PostgreSQL",
+)
+@click.option(
+    "--db-first-tries-number",
+    default=1,
+    show_default=True,
+    envvar="PARSEC_DB_FIRST_TRIES_NUMBER",
+    help="Number of tries allowed during initial database connection (0 is unlimited)",
+)
+@click.option(
+    "--db-first-tries-sleep",
+    default=1,
+    show_default=True,
+    envvar="PARSEC_DB_FIRST_TRIES_SLEEP",
+    help="Number of second waited between tries during initial database connection",
 )
 @click.option(
     "--blockstore",
@@ -259,6 +268,83 @@ integer and `<config>` the MOCKED/POSTGRESQL/S3/SWIFT config.
     help="Secret token to access the administration api",
 )
 @click.option(
+    "--spontaneous-organization-bootstrap",
+    envvar="PARSEC_SPONTANEOUS_ORGANIZATION_BOOTSTRAP",
+    is_flag=True,
+    help="""Allow organization bootstrap without prior creation.
+
+Without this flag, an organization must be created by administration (see
+ `parsec core create_organization` command) before bootstrap can occur.
+
+With this flag, the server allows anybody to bootstrap an organanization
+by providing an empty bootstrap token given 1) the organization is not boostrapped yet
+and 2) the organization hasn't been created by administration (which would act as a
+reservation and change the bootstrap token)
+""",
+)
+@click.option(
+    "--organization-bootstrap-webhook",
+    envvar="PARSEC_ORGANIZATION_BOOTSTRAP_WEBHOOK",
+    help="""URL to notify 3rd party service that a new organization has been bootstrapped.
+
+Each time an organization is bootstrapped, an HTTP POST will be send to the URL
+with an `application/json` body with the following fields:
+organization_id, device_id, device_label (can be null), human_email (can be null), human_label (can be null)
+""",
+)
+@click.option(
+    "--backend-addr",
+    envvar="PARSEC_BACKEND_ADDR",
+    type=BackendAddr.from_url,
+    help="URL to reach this server (typically used in invitation emails)",
+)
+@click.option("--email-host", envvar="PARSEC_EMAIL_HOST", help="The host to use for sending email")
+@click.option(
+    "--email-port",
+    envvar="PARSEC_EMAIL_PORT",
+    type=int,
+    default=25,
+    show_default=True,
+    help="Port to use for the SMTP server defined in EMAIL_HOST",
+)
+@click.option(
+    "--email-host-user",
+    envvar="PARSEC_EMAIL_HOST_USER",
+    help="Username to use for the SMTP server defined in EMAIL_HOST",
+)
+@click.option(
+    "--email-host-password",
+    envvar="PARSEC_EMAIL_HOST_PASSWORD",
+    help=(
+        "Password to use for the SMTP server defined in EMAIL_HOST."
+        " This setting is used in conjunction with EMAIL_HOST_USER when authenticating to the SMTP server."
+    ),
+)
+@click.option(
+    "--email-use-ssl",
+    envvar="PARSEC_EMAIL_USE_SSL",
+    is_flag=True,
+    help=(
+        "Whether to use a TLS (secure) connection when talking to the SMTP server."
+        " This is used for explicit TLS connections, generally on port 587."
+    ),
+)
+@click.option(
+    "--email-use-tls",
+    envvar="PARSEC_EMAIL_USE_TLS",
+    is_flag=True,
+    help=(
+        "Whether to use an implicit TLS (secure) connection when talking to the SMTP server."
+        " In most email documentation this type of TLS connection is referred to as SSL."
+        " It is generally used on port 465."
+        " Note that --email-use-tls/--email-use-ssl are mutually exclusive,"
+        " so only set one of those settings to True."
+    ),
+)
+@click.option(
+    "--email-sender", envvar="PARSEC_EMAIL_SENDER", help="Sender address used in sent emails"
+)
+@click.option(
     "--ssl-keyfile",
     type=click.Path(exists=True, dir_okay=False),
     envvar="PARSEC_SSL_KEYFILE",
@@ -274,6 +360,7 @@ integer and `<config>` the MOCKED/POSTGRESQL/S3/SWIFT config.
     "--log-level",
     "-l",
     default="WARNING",
+    show_default=True,
     type=click.Choice(("DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL")),
     envvar="PARSEC_LOG_LEVEL",
 )
@@ -295,11 +382,22 @@ def run_cmd(
     host,
     port,
     db,
-    db_drop_deleted_data,
     db_min_connections,
     db_max_connections,
+    db_first_tries_number,
+    db_first_tries_sleep,
     blockstore,
     administration_token,
+    spontaneous_organization_bootstrap,
+    organization_bootstrap_webhook,
+    backend_addr,
+    email_host,
+    email_port,
+    email_host_user,
+    email_host_password,
+    email_use_ssl,
+    email_use_tls,
+    email_sender,
     ssl_keyfile,
     ssl_certfile,
     log_level,
@@ -316,16 +414,6 @@ def run_cmd(
 
     with cli_exception_handler(debug):
 
-        config = BackendConfig(
-            administration_token=administration_token,
-            db_url=db,
-            db_drop_deleted_data=db_drop_deleted_data,
-            db_min_connections=db_min_connections,
-            db_max_connections=db_max_connections,
-            blockstore_config=blockstore,
-            debug=debug,
-        )
-
         if ssl_certfile or ssl_keyfile:
             ssl_context = ssl.create_default_context(ssl.Purpose.CLIENT_AUTH)
             if ssl_certfile:
@@ -334,6 +422,36 @@ def run_cmd(
                 ssl_context.load_default_certs()
         else:
             ssl_context = None
+
+        if email_host:
+            if not email_sender:
+                raise ValueError("--email-sender is required when --email-host is provided")
+            email_config = EmailConfig(
+                host=email_host,
+                port=email_port,
+                host_user=email_host_user,
+                host_password=email_host_password,
+                use_ssl=email_use_ssl,
+                use_tls=email_use_tls,
+                sender=email_sender,
+            )
+        else:
+            email_config = None
+
+        config = BackendConfig(
+            administration_token=administration_token,
+            db_url=db,
+            db_min_connections=db_min_connections,
+            db_max_connections=db_max_connections,
+            db_first_tries_number=db_first_tries_number,
+            db_first_tries_sleep=db_first_tries_sleep,
+            spontaneous_organization_bootstrap=spontaneous_organization_bootstrap,
+            organization_bootstrap_webhook_url=organization_bootstrap_webhook,
+            blockstore_config=blockstore,
+            email_config=email_config,
+            backend_addr=backend_addr,
+            debug=debug,
+        )
 
         async def _run_backend():
             async with backend_app_factory(config=config) as backend:

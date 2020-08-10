@@ -242,7 +242,7 @@ apiv1_device_create_serializer = CmdSerializer(
 class DeviceCreateReqSchema(BaseReqSchema):
     device_certificate = fields.Bytes(required=True)
     # Same certificate than above, but expurged of device_label
-    redacted_device_certificate = fields.Bytes(allow_none=True, missing=None)
+    redacted_device_certificate = fields.Bytes(required=True)
 
 
 class DeviceCreateRepSchema(BaseRepSchema):

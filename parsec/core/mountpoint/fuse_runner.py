@@ -1,5 +1,6 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
 
+from parsec.core.core_events import CoreEvent
 import sys
 import trio
 import errno
@@ -56,7 +57,7 @@ async def _bootstrap_mountpoint(base_mountpoint_path: PurePath, workspace_fs) ->
         try:
             # On POSIX systems, mounting target must exists
             trio_mountpoint_path = trio.Path(mountpoint_path)
-            await trio_mountpoint_path.mkdir(exist_ok=True, parents=True)
+            await trio_mountpoint_path.mkdir(mode=0o700, exist_ok=True, parents=True)
             base_st_dev = (await trio.Path(base_mountpoint_path).stat()).st_dev
             initial_st_dev = (await trio_mountpoint_path.stat()).st_dev
             if initial_st_dev != base_st_dev:
@@ -113,7 +114,7 @@ async def fuse_mountpoint_runner(
         "timestamp": getattr(workspace_fs, "timestamp", None),
     }
     try:
-        event_bus.send("mountpoint.starting", **event_kwargs)
+        event_bus.send(CoreEvent.MOUNTPOINT_STARTING, **event_kwargs)
 
         async with trio.open_service_nursery() as nursery:
 
@@ -162,12 +163,12 @@ async def fuse_mountpoint_runner(
                 )
                 await _wait_for_fuse_ready(mountpoint_path, fuse_thread_started, initial_st_dev)
 
-            event_bus.send("mountpoint.started", **event_kwargs)
+            event_bus.send(CoreEvent.MOUNTPOINT_STARTED, **event_kwargs)
             task_status.started(mountpoint_path)
 
     finally:
         await _stop_fuse_thread(mountpoint_path, fuse_operations, fuse_thread_stopped)
-        event_bus.send("mountpoint.stopped", **event_kwargs)
+        event_bus.send(CoreEvent.MOUNTPOINT_STOPPED, **event_kwargs)
         await _teardown_mountpoint(mountpoint_path)
 
 

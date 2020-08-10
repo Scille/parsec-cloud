@@ -1,11 +1,19 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
 
+from parsec.backend.backend_events import BackendEvent
 import attr
+import trio
+import smtplib
+import ssl
 from enum import Enum
 from uuid import UUID, uuid4
 from collections import defaultdict
 from typing import Dict, List, Optional, Union, Set
 from pendulum import Pendulum, now as pendulum_now
+from email.message import Message
+from email.mime.text import MIMEText
+from email.mime.multipart import MIMEMultipart
+from structlog import get_logger
 
 from parsec.crypto import PublicKey
 from parsec.event_bus import EventBus
@@ -35,8 +43,13 @@ from parsec.api.protocol import (
     invite_4_greeter_communicate_serializer,
     invite_4_claimer_communicate_serializer,
 )
+from parsec.backend.templates import get_template
 from parsec.backend.utils import catch_protocol_errors, api
+from parsec.backend.config import BackendConfig, EmailConfig
+from parsec.core.types import BackendInvitationAddr
 
+
+logger = get_logger()
 
 PEER_EVENT_MAX_WAIT = 300  # 5mn
 
@@ -94,6 +107,7 @@ class ConduitListenCtx:
 
 @attr.s(slots=True, frozen=True, auto_attribs=True)
 class UserInvitation:
+    TYPE = InvitationType.USER
     greeter_user_id: UserID
     greeter_human_handle: Optional[HumanHandle]
     claimer_email: str
@@ -107,6 +121,7 @@ class UserInvitation:
 
 @attr.s(slots=True, frozen=True, auto_attribs=True)
 class DeviceInvitation:
+    TYPE = InvitationType.DEVICE
     greeter_user_id: UserID
     greeter_human_handle: Optional[HumanHandle]
     token: UUID = attr.ib(factory=uuid4)
@@ -120,9 +135,71 @@ class DeviceInvitation:
 Invitation = Union[UserInvitation, DeviceInvitation]
 
 
+def generate_invite_email(
+    from_addr: str,
+    to_addr: str,
+    reply_to: Optional[str],
+    greeter_name: Optional[str],  # Noe for device invitation
+    organization_id: OrganizationID,
+    invitation_url: str,
+) -> Message:
+    html = get_template("invitation_mail.html").render(
+        greeter_name=greeter_name, organization_id=organization_id, invitation_url=invitation_url
+    )
+    text = get_template("invitation_mail.txt").render(
+        greeter_name=greeter_name, organization_id=organization_id, invitation_url=invitation_url
+    )
+
+    # mail settings
+    message = MIMEMultipart("alternative")
+    if greeter_name:
+        message["Subject"] = f"[Parsec] { greeter_name } invited you to { organization_id}"
+    else:
+        message["Subject"] = f"[Parsec] New device invitation to { organization_id }"
+    message["From"] = from_addr
+    message["To"] = to_addr
+    if reply_to:
+        message["Reply-To"] = reply_to
+
+    # Turn parts into MIMEText objects
+    part1 = MIMEText(text, "plain")
+    part2 = MIMEText(html, "html")
+
+    # Add HTML/plain-text parts to MIMEMultipart message
+    # The email client will try to render the last part first
+    message.attach(part1)
+    message.attach(part2)
+
+    return message
+
+
+async def send_email(email_config: EmailConfig, to_addr: str, message: Message) -> None:
+    def _do():
+        try:
+            context = ssl.create_default_context()
+            if email_config.use_ssl:
+                server = smtplib.SMTP_SSL(email_config.host, email_config.port, context=context)
+            else:
+                server = smtplib.SMTP(email_config.host, email_config.port)
+
+            with server:
+                if email_config.use_tls and not email_config.use_ssl:
+                    if server.starttls(context=context)[0] != 220:
+                        logger.warning("Email TLS connexion isn't encrypted")
+                if email_config.host_user and email_config.host_password:
+                    server.login(email_config.host_user, email_config.host_password)
+                server.sendmail(email_config.sender, to_addr, message.as_string())
+
+        except smtplib.SMTPException as e:
+            logger.warning("SMTP error", exc_info=e, to_addr=to_addr)
+
+    await trio.to_thread.run_sync(_do)
+
+
 class BaseInviteComponent:
-    def __init__(self, event_bus: EventBus):
+    def __init__(self, event_bus: EventBus, config: BackendConfig):
         self._event_bus = event_bus
+        self._config = config
         # We use the `invite.status_changed` event to keep a list of all the
         # invitation claimers connected accross all backends.
         #
@@ -150,20 +227,28 @@ class BaseInviteComponent:
             else:  # Invitation deleted or back to idle
                 self._claimers_ready[organization_id].discard(token)
 
-        self._event_bus.connect("invite.status_changed", _on_status_changed)
+        self._event_bus.connect(BackendEvent.INVITE_STATUS_CHANGED, _on_status_changed)
 
     @api("invite_new", handshake_types=[HandshakeType.AUTHENTICATED])
     @catch_protocol_errors
     async def api_invite_new(self, client_ctx, msg):
         msg = invite_new_serializer.req_load(msg)
 
+        def _to_http_redirection_url(client_ctx, invitation):
+            return BackendInvitationAddr.build(
+                backend_addr=self._config.backend_addr,
+                organization_id=client_ctx.organization_id,
+                invitation_type=invitation.TYPE,
+                token=invitation.token,
+            ).to_http_redirection_url()
+
+        if msg["send_email"]:
+            if not self._config.email_config or not self._config.backend_addr:
+                return invite_new_serializer.rep_dump({"status": "not_available"})
+
         if msg["type"] == InvitationType.USER:
             if client_ctx.profile != UserProfile.ADMIN:
                 return invite_new_serializer.rep_dump({"status": "not_allowed"})
-
-            # TODO: implement send email feature
-            if msg["send_email"]:
-                return invite_new_serializer.rep_dump({"status": "not_implemented"})
 
             invitation = await self.new_for_user(
                 organization_id=client_ctx.organization_id,
@@ -171,10 +256,49 @@ class BaseInviteComponent:
                 claimer_email=msg["claimer_email"],
             )
 
+            if msg["send_email"]:
+                if client_ctx.human_handle:
+                    greeter_name = client_ctx.human_handle.label
+                    reply_to = f"{client_ctx.human_handle.label} <{client_ctx.human_handle.email}>"
+                else:
+                    greeter_name = str(client_ctx.user_id)
+                    reply_to = None
+                message = generate_invite_email(
+                    from_addr=self._config.email_config.sender,
+                    to_addr=invitation.claimer_email,
+                    greeter_name=greeter_name,
+                    reply_to=reply_to,
+                    organization_id=client_ctx.organization_id,
+                    invitation_url=_to_http_redirection_url(client_ctx, invitation),
+                )
+                await send_email(
+                    email_config=self._config.email_config,
+                    to_addr=invitation.claimer_email,
+                    message=message,
+                )
+
         else:  # Device
+            if msg["send_email"] and not client_ctx.human_handle:
+                return invite_new_serializer.rep_dump({"status": "not_available"})
+
             invitation = await self.new_for_device(
                 organization_id=client_ctx.organization_id, greeter_user_id=client_ctx.user_id
             )
+
+            if msg["send_email"]:
+                message = generate_invite_email(
+                    from_addr=self._config.email_config.sender,
+                    to_addr=client_ctx.human_handle.email,
+                    greeter_name=None,
+                    reply_to=None,
+                    organization_id=client_ctx.organization_id,
+                    invitation_url=_to_http_redirection_url(client_ctx, invitation),
+                )
+                await send_email(
+                    email_config=self._config.email_config,
+                    to_addr=client_ctx.human_handle.email,
+                    message=message,
+                )
 
         return invite_new_serializer.rep_dump({"status": "ok", "token": invitation.token})
 
@@ -598,7 +722,7 @@ class BaseInviteComponent:
             return organization_id == filter_organization_id and token == filter_token
 
         with self._event_bus.waiter_on(
-            "invite.conduit_updated", filter=_conduit_updated_filter
+            BackendEvent.INVITE_CONDUIT_UPDATED, filter=_conduit_updated_filter
         ) as waiter:
             listen_ctx = await self._conduit_talk(organization_id, greeter, token, state, payload)
 

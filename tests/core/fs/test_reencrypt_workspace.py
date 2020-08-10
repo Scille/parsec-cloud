@@ -12,7 +12,7 @@ from parsec.core.fs import (
     FSWorkspaceInMaintenance,
     FSBadEncryptionRevision,
 )
-
+from parsec.backend.backend_events import BackendEvent
 from tests.common import freeze_time
 
 
@@ -44,7 +44,7 @@ async def test_do_reencryption(running_backend, workspace, alice, alice_user_fs)
         await spy.wait_multiple_with_timeout(
             [
                 (
-                    "realm.maintenance_started",
+                    BackendEvent.REALM_MAINTENANCE_STARTED,
                     {
                         "organization_id": alice.organization_id,
                         "author": alice.device_id,
@@ -53,7 +53,7 @@ async def test_do_reencryption(running_backend, workspace, alice, alice_user_fs)
                     },
                 ),
                 (
-                    "message.received",
+                    BackendEvent.MESSAGE_RECEIVED,
                     {
                         "organization_id": alice.organization_id,
                         "author": alice.device_id,
@@ -125,7 +125,7 @@ async def test_concurrent_continue_reencryption(running_backend, workspace, alic
     with running_backend.backend.event_bus.listen() as spy:
         job1 = await alice_user_fs.workspace_start_reencryption(workspace)
 
-        await spy.wait_with_timeout("message.received")
+        await spy.wait_with_timeout(BackendEvent.MESSAGE_RECEIVED)
 
     # Update encryption_revision in user manifest
     await alice_user_fs.process_last_messages()

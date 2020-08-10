@@ -1,12 +1,15 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
 
+import attr
 from typing import Tuple, Optional
 from hashlib import sha256
 from marshmallow import ValidationError
+from pendulum import Pendulum, now as pendulum_now
 
 from parsec.crypto import SecretKey, PrivateKey, SigningKey
 from parsec.serde import fields, post_load
 from parsec.api.protocol import (
+    UserID,
     DeviceID,
     OrganizationID,
     HumanHandle,
@@ -22,6 +25,8 @@ class LocalDevice(BaseLocalData):
     class SCHEMA_CLS(BaseSchema):
         organization_addr = BackendOrganizationAddrField(required=True)
         device_id = DeviceIDField(required=True)
+        device_label = fields.String(allow_none=True, missing=None)
+        human_handle = HumanHandleField(allow_none=True, missing=None)
         signing_key = fields.SigningKey(required=True)
         private_key = fields.PrivateKey(required=True)
         # `profile` replaces `is_admin` field (which is still required for backward
@@ -31,8 +36,6 @@ class LocalDevice(BaseLocalData):
         user_manifest_id = EntryIDField(required=True)
         user_manifest_key = fields.SecretKey(required=True)
         local_symkey = fields.SecretKey(required=True)
-        human_handle = HumanHandleField(allow_none=True, missing=None)
-        device_label = fields.String(allow_none=True, missing=None)
 
         @post_load
         def make_obj(self, data):
@@ -52,14 +55,14 @@ class LocalDevice(BaseLocalData):
 
     organization_addr: BackendOrganizationAddr
     device_id: DeviceID
+    device_label: Optional[str]
+    human_handle: Optional[HumanHandle]
     signing_key: SigningKey
     private_key: PrivateKey
     profile: UserProfile
     user_manifest_id: EntryID
     user_manifest_key: SecretKey
     local_symkey: SecretKey
-    human_handle: Optional[HumanHandle] = None
-    device_label: Optional[str] = None
 
     # Only used during schema serialization
     @property
@@ -70,12 +73,21 @@ class LocalDevice(BaseLocalData):
         return f"{self.__class__.__name__}({self.device_id})"
 
     @property
-    def slug(self):
+    def slug(self) -> str:
         # Add a hash to avoid clash when the backend is reseted
         # and we recreate a device with same organization/device_id
         # organization and device_id than a previous one
         hash_part = sha256(self.root_verify_key.encode()).hexdigest()[:10]
         return f"{hash_part}#{self.organization_id}#{self.device_id}"
+
+    @property
+    def slughash(self) -> str:
+        """
+        Slug is long and not readable enough (given device_id is made of uuids).
+        Hence it's often simpler to rely on it hash instead (e.g. select the
+        device to use in the CLI by providing the beginning of the hash)
+        """
+        return sha256(self.slug.encode()).hexdigest()
 
     @staticmethod
     def load_slug(slug: str) -> Tuple[OrganizationID, DeviceID]:
@@ -108,3 +120,57 @@ class LocalDevice(BaseLocalData):
     @property
     def public_key(self):
         return self.private_key.public_key
+
+    @property
+    def user_display(self) -> str:
+        return str(self.human_handle or self.user_id)
+
+    @property
+    def short_user_display(self) -> str:
+        return str(self.human_handle.label if self.human_handle else self.user_id)
+
+    @property
+    def device_display(self) -> str:
+        return str(self.device_label or self.device_id.device_name)
+
+
+@attr.s(slots=True, frozen=True, auto_attribs=True)
+class UserInfo:
+    user_id: UserID
+    human_handle: Optional[HumanHandle]
+    profile: UserProfile
+    created_on: Pendulum
+    revoked_on: Optional[Pendulum]
+
+    @property
+    def user_display(self) -> str:
+        return str(self.human_handle or self.user_id)
+
+    @property
+    def short_user_display(self) -> str:
+        return str(self.human_handle.label if self.human_handle else self.user_id)
+
+    @property
+    def is_revoked(self):
+        return pendulum_now() >= self.revoked_on if self.revoked_on else False
+
+    def __repr__(self):
+        return f"<UserInfo {self.user_display}>"
+
+
+@attr.s(slots=True, frozen=True, auto_attribs=True)
+class DeviceInfo:
+    device_id: DeviceID
+    device_label: Optional[str]
+    created_on: Pendulum
+
+    @property
+    def device_name(self):
+        return self.device_id.device_name
+
+    @property
+    def device_display(self) -> str:
+        return str(self.device_label or self.device_id.device_name)
+
+    def __repr__(self):
+        return f"DeviceInfo({self.device_display})"

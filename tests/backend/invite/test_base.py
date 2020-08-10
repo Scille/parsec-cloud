@@ -5,6 +5,7 @@ import trio
 from unittest.mock import ANY
 from pendulum import Pendulum
 
+from parsec.backend.backend_events import BackendEvent
 from parsec.api.transport import TransportError
 from parsec.api.data import UserProfile
 from parsec.api.protocol import (
@@ -12,9 +13,10 @@ from parsec.api.protocol import (
     InvitationDeletedReason,
     InvitationType,
     HandshakeBadIdentity,
+    APIEvent,
 )
 
-from tests.common import freeze_time, customize_fixture
+from tests.common import freeze_time, customize_fixtures
 from tests.backend.common import (
     invite_new,
     invite_list,
@@ -42,7 +44,9 @@ async def test_user_create_and_info(
             claimer_email="other@example.com",
             created_on=Pendulum(2000, 1, 3),
         )
-        await spy.wait_multiple_with_timeout(["invite.status_changed", "invite.status_changed"])
+        await spy.wait_multiple_with_timeout(
+            [BackendEvent.INVITE_STATUS_CHANGED, BackendEvent.INVITE_STATUS_CHANGED]
+        )
 
     await events_subscribe(alice2_backend_sock)
 
@@ -57,7 +61,7 @@ async def test_user_create_and_info(
         rep = await events_listen_wait(alice2_backend_sock)
     assert rep == {
         "status": "ok",
-        "event": "invite.status_changed",
+        "event": APIEvent.INVITE_STATUS_CHANGED,
         "invitation_status": InvitationStatus.IDLE,
         "token": token,
     }
@@ -117,7 +121,7 @@ async def test_device_create_and_info(
             claimer_email="other@example.com",
             created_on=Pendulum(2000, 1, 2),
         )
-        await spy.wait_multiple_with_timeout(["invite.status_changed"])
+        await spy.wait_multiple_with_timeout([BackendEvent.INVITE_STATUS_CHANGED])
 
     await events_subscribe(alice2_backend_sock)
 
@@ -130,7 +134,7 @@ async def test_device_create_and_info(
         rep = await events_listen_wait(alice2_backend_sock)
     assert rep == {
         "status": "ok",
-        "event": "invite.status_changed",
+        "event": APIEvent.INVITE_STATUS_CHANGED,
         "invitation_status": InvitationStatus.IDLE,
         "token": token,
     }
@@ -171,7 +175,99 @@ async def test_device_create_and_info(
 
 
 @pytest.mark.trio
-@customize_fixture("alice_profile", UserProfile.OUTSIDER)
+@customize_fixtures(backend_has_email=True)
+async def test_invite_with_send_mail(alice, alice_backend_sock, email_letterbox):
+    # User invitation
+    rep = await invite_new(
+        alice_backend_sock,
+        type=InvitationType.USER,
+        claimer_email="zack@example.com",
+        send_email=True,
+    )
+    assert rep == {"status": "ok", "token": ANY}
+    token = rep["token"]
+    email = await email_letterbox.get_next_with_timeout()
+    assert email == ("zack@example.com", ANY)
+
+    # Lame checks on the sent email
+    body = str(email[1])
+    assert body.startswith("Content-Type: multipart/alternative;")
+    assert 'Content-Type: text/plain; charset="us-ascii"' in body
+    assert 'Content-Type: text/html; charset="us-ascii"' in body
+    assert "Subject: [Parsec] Alicey McAliceFace invited you to CoolOrg" in body
+    assert "From: Parsec <no-reply@parsec.com>" in body
+    assert "To: zack@example.com" in body
+    assert "Reply-To: Alicey McAliceFace <alice@example.com>" in body
+    assert token.hex in body
+
+    # Device invitation
+    rep = await invite_new(alice_backend_sock, type=InvitationType.DEVICE, send_email=True)
+    assert rep == {"status": "ok", "token": ANY}
+    token = rep["token"]
+    email = await email_letterbox.get_next_with_timeout()
+    assert email == (alice.human_handle.email, ANY)
+
+    # Lame checks on the sent email
+    body = str(email[1])
+    assert body.startswith("Content-Type: multipart/alternative;")
+    assert 'Content-Type: text/plain; charset="us-ascii"' in body
+    assert 'Content-Type: text/html; charset="us-ascii"' in body
+    assert "Subject: [Parsec] New device invitation to CoolOrg" in body
+    assert "From: Parsec <no-reply@parsec.com>" in body
+    assert "To: alice@example.com" in body
+    assert "Reply-To: " not in body
+    assert token.hex in body
+
+
+@pytest.mark.trio
+@customize_fixtures(backend_has_email=True, alice_has_human_handle=False)
+async def test_invite_with_send_mail_and_greeter_without_human_handle(
+    alice, alice_backend_sock, email_letterbox
+):
+    # User invitation
+    rep = await invite_new(
+        alice_backend_sock,
+        type=InvitationType.USER,
+        claimer_email="zack@example.com",
+        send_email=True,
+    )
+    assert rep == {"status": "ok", "token": ANY}
+    token = rep["token"]
+    email = await email_letterbox.get_next_with_timeout()
+    assert email == ("zack@example.com", ANY)
+
+    # Lame checks on the sent email
+    body = str(email[1])
+    assert body.startswith("Content-Type: multipart/alternative;")
+    assert 'Content-Type: text/plain; charset="us-ascii"' in body
+    assert 'Content-Type: text/html; charset="us-ascii"' in body
+    assert "Subject: [Parsec] alice invited you to CoolOrg" in body
+    assert "From: Parsec <no-reply@parsec.com>" in body
+    assert "To: zack@example.com" in body
+    assert "Reply-To: " not in body
+    assert token.hex in body
+
+    # Device invitation (not avaible given no human_handle means no email !)
+    rep = await invite_new(alice_backend_sock, type=InvitationType.DEVICE, send_email=True)
+    assert rep == {"status": "not_available"}
+
+
+@pytest.mark.trio
+async def test_invite_with_send_mail_not_available(alice_backend_sock):
+    rep = await invite_new(
+        alice_backend_sock,
+        type=InvitationType.USER,
+        claimer_email="zack@example.com",
+        send_email=True,
+    )
+    assert rep == {"status": "not_available"}
+
+    rep = await invite_new(alice_backend_sock, type=InvitationType.DEVICE, send_email=True)
+    assert rep == {"status": "not_available"}
+
+
+@pytest.mark.trio
+@customize_fixtures(alice_profile=UserProfile.OUTSIDER)
 async def test_invite_new_limited_for_outsider(alice_backend_sock):
     rep = await invite_new(alice_backend_sock, type=InvitationType.DEVICE)
     assert rep == {"status": "ok", "token": ANY}
@@ -184,7 +280,7 @@ async def test_invite_new_limited_for_outsider(alice_backend_sock):
 
 
 @pytest.mark.trio
-@customize_fixture("alice_profile", UserProfile.STANDARD)
+@customize_fixtures(alice_profile=UserProfile.STANDARD)
 async def test_invite_new_limited_for_standard(alice_backend_sock):
     # Outsider can only invite new devices
     rep = await invite_new(alice_backend_sock, type=InvitationType.DEVICE)
@@ -207,7 +303,7 @@ async def test_delete(
             greeter_user_id=alice.user_id,
             created_on=Pendulum(2000, 1, 2),
         )
-        await spy.wait_multiple_with_timeout(["invite.status_changed"])
+        await spy.wait_multiple_with_timeout([BackendEvent.INVITE_STATUS_CHANGED])
 
     await events_subscribe(alice2_backend_sock)
 
@@ -221,7 +317,7 @@ async def test_delete(
         rep = await events_listen_wait(alice2_backend_sock)
     assert rep == {
         "status": "ok",
-        "event": "invite.status_changed",
+        "event": APIEvent.INVITE_STATUS_CHANGED,
         "invitation_status": InvitationStatus.DELETED,
         "token": invitation.token,
     }

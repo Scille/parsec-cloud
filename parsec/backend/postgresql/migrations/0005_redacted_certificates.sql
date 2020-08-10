@@ -17,3 +17,5 @@ ALTER TABLE user_ DROP COLUMN is_admin;
 ALTER TABLE device ADD redacted_device_certificate BYTEA;
 UPDATE device SET redacted_device_certificate = device_certificate;
 ALTER TABLE device ALTER COLUMN redacted_device_certificate SET NOT NULL;
+
+ALTER TABLE device ADD device_label VARCHAR(254);

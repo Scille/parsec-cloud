@@ -1,11 +1,8 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
 
-from parsec.serde import fields
+from parsec.serde import fields, BaseSchema, JSONSerializer
 from parsec.api.protocol.base import BaseReqSchema, BaseRepSchema, CmdSerializer
-from parsec.api.protocol.types import OrganizationIDField
-
-
-__all__ = "organization_bootstrap_serializer"
+from parsec.api.protocol.types import OrganizationIDField, DeviceIDField
 
 
 class APIV1_OrganizationCreateReqSchema(BaseReqSchema):
@@ -49,6 +46,17 @@ class APIV1_OrganizationBootstrapRepSchema(BaseRepSchema):
 apiv1_organization_bootstrap_serializer = CmdSerializer(
     APIV1_OrganizationBootstrapReqSchema, APIV1_OrganizationBootstrapRepSchema
 )
+
+
+class OrganizationBootstrapWebhookSchema(BaseSchema):
+    organization_id = OrganizationIDField(required=True)
+    device_id = DeviceIDField(required=True)
+    device_label = fields.String(allow_none=True, required=True)
+    human_email = fields.String(allow_none=True, required=True)
+    human_label = fields.String(allow_none=True, required=True)
+
+
+organization_bootstrap_webhook_serializer = JSONSerializer(OrganizationBootstrapWebhookSchema)
 
 
 class APIV1_OrganizationStatsReqSchema(BaseReqSchema):

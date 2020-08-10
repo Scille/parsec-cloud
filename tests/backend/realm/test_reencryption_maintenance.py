@@ -4,7 +4,8 @@ import pytest
 import trio
 from pendulum import Pendulum, now as pendulum_now
 
-from parsec.api.protocol import RealmRole, MaintenanceType
+from parsec.backend.backend_events import BackendEvent
+from parsec.api.protocol import RealmRole, MaintenanceType, APIEvent
 from parsec.backend.realm import RealmGrantedRole
 
 from tests.common import freeze_time
@@ -180,7 +181,7 @@ async def test_start_check_access_rights(backend, bob_backend_sock, alice, bob, 
     assert rep == {"status": "not_allowed"}
 
     # User part of the realm with various role
-    for not_allowed_role in (RealmRole.READER, RealmRole.CONTRIBUTOR, RealmRole.MANAGER):
+    for not_allowed_role in (RealmRole.READER, RealmRole.CONTRIBUTOR, RealmRole.MANAGER, None):
         await backend.realm.update_roles(
             alice.organization_id,
             RealmGrantedRole(
@@ -274,16 +275,18 @@ async def test_reencrypt_and_finish_check_access_rights(
     backend, alice_backend_sock, bob_backend_sock, alice, bob, realm, vlobs
 ):
     encryption_revision = 1
-    start_reencryption_msgs = {"alice": b"foo"}
 
     # Changing realm roles is not possible during maintenance,
     # hence those helpers to easily jump in/out of maintenance
 
-    async def _ready_to_finish():
+    async def _ready_to_finish(bob_in_workspace):
         nonlocal encryption_revision
         encryption_revision += 1
+        reencryption_msgs = {"alice": b"foo"}
+        if bob_in_workspace:
+            reencryption_msgs["bob"] = b"bar"
         await realm_start_reencryption_maintenance(
-            alice_backend_sock, realm, encryption_revision, pendulum_now(), start_reencryption_msgs
+            alice_backend_sock, realm, encryption_revision, pendulum_now(), reencryption_msgs
         )
         updated_batch = [
             {
@@ -315,13 +318,12 @@ async def test_reencrypt_and_finish_check_access_rights(
         assert rep["status"] == expected_status
 
     # User not part of the realm
-    await _ready_to_finish()
+    await _ready_to_finish(bob_in_workspace=False)
     await _assert_bob_maintenance_access(allowed=False)
     await _finish()
 
     # User part of the realm with various role
-    start_reencryption_msgs["bob"] = b"bar"
-    for not_allowed_role in (RealmRole.READER, RealmRole.CONTRIBUTOR, RealmRole.MANAGER):
+    for not_allowed_role in (RealmRole.READER, RealmRole.CONTRIBUTOR, RealmRole.MANAGER, None):
         await backend.realm.update_roles(
             alice.organization_id,
             RealmGrantedRole(
@@ -332,7 +334,7 @@ async def test_reencrypt_and_finish_check_access_rights(
                 granted_by=alice.device_id,
             ),
         )
-        await _ready_to_finish()
+        await _ready_to_finish(bob_in_workspace=not_allowed_role is not None)
         await _assert_bob_maintenance_access(allowed=False)
         await _finish()
 
@@ -347,7 +349,7 @@ async def test_reencrypt_and_finish_check_access_rights(
             granted_by=alice.device_id,
         ),
     )
-    await _ready_to_finish()
+    await _ready_to_finish(bob_in_workspace=True)
     await _assert_bob_maintenance_access(allowed=True)
 
 
@@ -449,17 +451,19 @@ async def test_reencryption_events(
 
         with trio.fail_after(1):
             # No guarantees those events occur before the commands' return
-            await spy.wait_multiple(["realm.maintenance_started", "message.received"])
+            await spy.wait_multiple(
+                [BackendEvent.REALM_MAINTENANCE_STARTED, BackendEvent.MESSAGE_RECEIVED]
+            )
 
         rep = await events_listen_nowait(alice_backend_sock)
         assert rep == {
             "status": "ok",
-            "event": "realm.maintenance_started",
+            "event": APIEvent.REALM_MAINTENANCE_STARTED,
             "realm_id": realm,
             "encryption_revision": 2,
         }
         rep = await events_listen_nowait(alice_backend_sock)
-        assert rep == {"status": "ok", "event": "message.received", "index": 1}
+        assert rep == {"status": "ok", "event": APIEvent.MESSAGE_RECEIVED, "index": 1}
 
         # Do the reencryption
         rep = await vlob_maintenance_get_reencryption_batch(alice_backend_sock, realm, 2, size=100)
@@ -469,12 +473,12 @@ async def test_reencryption_events(
         await realm_finish_reencryption_maintenance(alice2_backend_sock, realm, 2)
 
         # No guarantees those events occur before the commands' return
-        await spy.wait_with_timeout("realm.maintenance_finished")
+        await spy.wait_with_timeout(BackendEvent.REALM_MAINTENANCE_FINISHED)
 
         rep = await events_listen_nowait(alice_backend_sock)
         assert rep == {
             "status": "ok",
-            "event": "realm.maintenance_finished",
+            "event": APIEvent.REALM_MAINTENANCE_FINISHED,
             "realm_id": realm,
             "encryption_revision": 2,
         }

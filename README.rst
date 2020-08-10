@@ -1,4 +1,4 @@
-.. image:: docs/parsec_banner.png
+.. image:: docs/parsec_doc_logo.png
     :align: center
 
 

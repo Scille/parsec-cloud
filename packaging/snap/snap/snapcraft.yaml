@@ -42,6 +42,9 @@ parts:
       # Ugly hack given snapcraft doesn't support extra requirements...
       sed -i "s#install_requires=requirements#install_requires=requirements + extra_requirements['core']#g" setup.py
     stage-packages:
+      # fuse package contains fusermount which is sometime needed by libfuse2
+      # (see: https://github.com/Scille/parsec-cloud/issues/1253)
+      - fuse
       - libfuse2
       - libxext6
       - libx11-6

@@ -1,5 +1,6 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
 
+from parsec.core.core_events import CoreEvent
 import pytest
 
 from parsec.api.protocol import DeviceID
@@ -313,16 +314,19 @@ async def test_file_conflict(alice_sync_transactions):
     assert await sync_transactions.fd_read(fd2, size=-1, offset=0) == b"abcdefghi"
     spy.assert_events_exactly_occured(
         [
-            ("fs.entry.updated", {"workspace_id": sync_transactions.workspace_id, "id": a2_id}),
             (
-                "fs.entry.updated",
+                CoreEvent.FS_ENTRY_UPDATED,
+                {"workspace_id": sync_transactions.workspace_id, "id": a2_id},
+            ),
+            (
+                CoreEvent.FS_ENTRY_UPDATED,
                 {
                     "workspace_id": sync_transactions.workspace_id,
                     "id": sync_transactions.workspace_id,
                 },
             ),
             (
-                "fs.entry.file_conflict_resolved",
+                CoreEvent.FS_ENTRY_FILE_CONFLICT_RESOLVED,
                 {"workspace_id": sync_transactions.workspace_id, "id": a_id, "backup_id": a2_id},
             ),
         ]

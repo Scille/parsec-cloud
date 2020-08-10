@@ -41,6 +41,7 @@ def test_build_user_certificate(alice, bob, mallory):
         author=alice.device_id,
         timestamp=now,
         user_id=bob.user_id,
+        human_handle=bob.human_handle,
         public_key=bob.public_key,
         profile=UserProfile.ADMIN,
     ).dump_and_sign(alice.signing_key)
@@ -87,6 +88,7 @@ def test_user_certificate_supports_legacy_is_admin_field(alice, bob):
         author=bob.device_id,
         timestamp=now,
         user_id=alice.user_id,
+        human_handle=None,
         public_key=alice.public_key,
         profile=alice.profile,
     )
@@ -121,7 +123,11 @@ def test_user_certificate_supports_legacy_is_admin_field(alice, bob):
 def test_build_device_certificate(alice, bob, mallory):
     now = pendulum_now()
     certif = DeviceCertificateContent(
-        author=alice.device_id, timestamp=now, device_id=bob.device_id, verify_key=bob.verify_key
+        author=alice.device_id,
+        timestamp=now,
+        device_id=bob.device_id,
+        device_label=bob.device_label,
+        verify_key=bob.verify_key,
     ).dump_and_sign(alice.signing_key)
     assert isinstance(certif, bytes)
 

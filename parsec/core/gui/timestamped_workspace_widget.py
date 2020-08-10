@@ -106,13 +106,19 @@ class TimestampedWorkspaceWidget(QWidget, Ui_TimestampedWorkspaceWidget):
         self.cancel()
 
     @classmethod
-    def exec_modal(cls, workspace_fs, jobs_ctx, parent):
+    def show_modal(cls, workspace_fs, jobs_ctx, parent, on_finished):
         w = cls(workspace_fs=workspace_fs, jobs_ctx=jobs_ctx)
         d = GreyedDialog(
-            center_widget=w, title=_("TEXT_WORKSPACE_TIMESTAMPED_TITLE"), parent=parent
+            center_widget=w, title=_("TEXT_WORKSPACE_TIMESTAMPED_TITLE"), parent=parent, width=1000
         )
         w.dialog = d
-        r = d.exec_()
-        if r == QDialog.Rejected:
-            return None, None
-        return w.date, w.time
+
+        def _on_finished(result):
+            if result == QDialog.Rejected:
+                return on_finished(None, None)
+            return on_finished(w.date, w.time)
+
+        d.finished.connect(_on_finished)
+        # Unlike exec_, show is asynchronous and works within the main Qt loop
+        d.show()
+        return w

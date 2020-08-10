@@ -11,19 +11,49 @@ trigger:
 variables:
   python.version: '3.6'
   postgresql.version: '10'
-  winfsp.version: '1.7.20038-pre'
+  winfsp.version: '1.7.20172'
   pytest.base_args: |
     --log-level=DEBUG \
     --durations=10 -v \
     --cov=parsec --cov-config=setup.cfg --cov-append --cov-report= \
+  debug.stress_flaky_tests: 0  # Repeat all flaky tests X times
 
 jobs:
 
 
 #################################################################################
+# Step 0: Wheel build
 
 
-- job: 'qa'
+- job: 's0_build_wheel'
+  displayName: 'Build wheel'
+  timeoutInMinutes: 10
+  pool:
+    vmImage: 'ubuntu-latest'
+  steps:
+  - checkout: self
+    submodules: true
+  - task: UsePythonVersion@0
+    inputs:
+      versionSpec: '$(python.version)'
+  - bash: |
+      set -eux
+      python --version
+      pip install -r pre-requirements.txt
+    displayName: 'Bootstrap'
+  - bash: |
+      set -eux
+      python setup.py bdist_wheel
+    displayName: 'Build Wheel'
+  - publish: dist/
+    artifact: wheel
+
+
+#################################################################################
+# Step 1: Tests
+
+
+- job: 's1_qa'
   displayName: 'Q&A'
   timeoutInMinutes: 5
   pool:
@@ -40,6 +70,11 @@ jobs:
       pip install pre-commit
     displayName: 'Bootstrap'
   - bash: |
+      set -eux
+      # Patch .pre-commit-config.yaml to force mixed-line-ending checks to LF
+      sed -i '/id: mixed-line-ending/a\      args:\n\        - "--fix=lf"' .pre-commit-config.yaml
+      cat .pre-commit-config.yaml
+      # Run all pre-commit hooks on all files
       pre-commit run --all-files --show-diff-on-failure
     displayName: 'Pre-commit hooks check'
   - bash: |
@@ -65,8 +100,9 @@ jobs:
 #################################################################################
 
 
-- job: 'linux_test'
+- job: 's1_linux_test'
   displayName: 'Linux tests'
+  dependsOn: s0_build_wheel
   timeoutInMinutes: 60
   pool:
     vmImage: 'ubuntu-latest'
@@ -75,13 +111,15 @@ jobs:
   steps:
   - checkout: self
     submodules: true
+  - download: current
+    artifact: wheel
   - task: UsePythonVersion@0
     inputs:
       versionSpec: '$(python.version)'
   - bash: |
       set -eux
       python --version
-      pip install -U wheel pip setuptools
+      pip install -r pre-requirements.txt
       sudo apt-get install \
         postgresql-$(postgresql.version) \
         desktop-file-utils  # Provides `update-desktop-database` used by `tests/scripts/run_testenv.sh`
@@ -89,16 +127,14 @@ jobs:
     displayName: 'Bootstrap'
   - bash: |
       set -eux
-      # Build the parsec wheel
-      python setup.py bdist_wheel
+      # Remove the parsec folder from the source to force use of the wheel
+      rm -rf parsec
       # Install the parsec wheel with all dependencies
-      pip install $(ls dist/parsec_cloud-*.whl)[all]
+      WHEEL=$(ls $(Pipeline.Workspace)/wheel/parsec_cloud-*.whl)
+      echo $WHEEL
+      pip install $WHEEL[all]
       # Check dependency compatibility
       pip check parsec[all]
-      # Create isolated test directory
-      mkdir -p $(Agent.TempDirectory)/empty
-      cp -R tests $(Agent.TempDirectory)/empty
-      cp setup.cfg $(Agent.TempDirectory)/empty
     displayName: 'Install'
   - bash: |
       set -eux
@@ -106,7 +142,6 @@ jobs:
         tests --runmountpoint --runslow \
         -n auto --max-worker-restart=0 -x \
         --junitxml=test-results-memory.xml
-    workingDirectory: $(Agent.TempDirectory)/empty
     displayName: 'Tests memory'
   - bash: |
       set -eux
@@ -114,7 +149,6 @@ jobs:
         tests/backend tests/test_cli.py --postgresql --runslow \
         -n auto --max-worker-restart=0 -x \
         --junitxml=test-results-postgresql.xml
-    workingDirectory: $(Agent.TempDirectory)/empty
     displayName: 'Tests postgresql'
   # TODO: run gui tests with xvfb
   # - bash: |
@@ -122,7 +156,6 @@ jobs:
   #     py.test $(pytest.base_args) \
   #       tests -m gui --runmountpoint --runslow --rungui -x \
   #       --junitxml=test-results-gui.xml
-  #   workingDirectory: $(Agent.TempDirectory)/empty
   #   displayName: 'Tests GUI'
   - bash: |
       set -eux
@@ -130,11 +163,10 @@ jobs:
       coverage xml -o coverage.xml
       grep -E '( filename=|<package )' coverage.xml
       codecov --file=coverage.xml --commit=$(Build.SourceVersion)
-    workingDirectory: $(Agent.TempDirectory)/empty
     displayName: 'Codecov upload'
   - task: PublishTestResults@2
     inputs:
-      testResultsFiles: '$(Agent.TempDirectory)/empty/test-results-*.xml'
+      testResultsFiles: '$(Agent.TempDirectory)/test-results-*.xml'
       testRunTitle: 'Linux'
     condition: succeededOrFailed()
 
@@ -142,8 +174,9 @@ jobs:
 #################################################################################
 
 
-- job: 'windows_test'
+- job: 's1_windows_test'
   displayName: 'Windows tests'
+  dependsOn: s0_build_wheel
   timeoutInMinutes: 60
   pool:
     vmImage: 'windows-latest'
@@ -152,54 +185,62 @@ jobs:
   steps:
   - checkout: self
     submodules: true
+  - download: current
+    artifact: wheel
   - task: UsePythonVersion@0
     inputs:
       versionSpec: '$(python.version)'
       architecture: 'x64'
   - bash: |
       set -eux
-      python --version
-      python -m pip install -U wheel pip setuptools
+      python.exe --version
+      pip install -r pre-requirements.txt
       choco install -y --limit-output winfsp --pre --version=$(winfsp.version)
       # Install winfsp-test and put it in PATH
       mkdir winfsp-test
-      curl -L https://github.com/billziss-gh/winfsp/releases/download/v1.5/winfsp-tests-1.5.20002.zip -o winfsp-test/winfsp-tests.zip
+      curl -L https://github.com/billziss-gh/winfsp/releases/download/v1.7/winfsp-tests-1.7.20172.zip -o winfsp-test/winfsp-tests.zip
       unzip winfsp-test/winfsp-tests.zip -d winfsp-test
-      ##vso[task.prependpath]$(Build.SourcesDirectory)/winfsp-test
+      echo "##vso[task.prependpath]$(Build.SourcesDirectory)\\winfsp-test"
     displayName: 'Bootstrap'
   - bash: |
       set -eux
-      # Build the parsec wheel
-      python setup.py bdist_wheel
+      # Remove the parsec folder from the source to force use of the wheel
+      rm -rf parsec
       # Install the parsec wheel with all dependencies
-      pip install $(ls dist/parsec_cloud-*.whl)[all]
+      WHEEL_DIRECTORY=`python -c 'print(r"$(Pipeline.Workspace)/wheel".replace("\\\\", "/"))'`
+      WHEEL=$(ls $WHEEL_DIRECTORY/parsec_cloud-*.whl)
+      echo $WHEEL
+      pip install $WHEEL[all]
       # Check dependency compatibility
       pip check parsec[all]
-      # Create isolated test directory
-      mkdir -p "$(Agent.TempDirectory)"\\empty
-      cp -R tests "$(Agent.TempDirectory)"\\empty
-      cp setup.cfg "$(Agent.TempDirectory)"\\empty
+      # Check winfsp-tests availability
+      python.exe -c "import winfspy.tests.winfsp_tests"
     displayName: 'Install'
+  - bash: |
+      set -eux
+      # Install pytest-repeat
+      pip install pytest-repeat
+      # Repeat flaky tests X times
+      py.test tests --runmountpoint --runslow --rungui -m flaky --count $(debug.stress_flaky_tests) -v
+    displayName: 'Debug: stress flaky tests'
+    condition: and(succeeded(), gt(variables['debug.stress_flaky_tests'], 0))
   - bash: |
       set -eux
       py.test $(pytest.base_args) \
         tests -n auto --max-worker-restart=0 -x \
         --junitxml=test-results-fast.xml
-    workingDirectory: $(Agent.TempDirectory)/empty
     displayName: 'Tests fast'
   - bash: |
       set -eux
       py.test $(pytest.base_args) \
         tests --runmountpoint --runslow -m mountpoint -x \
         --junitxml=test-results-mountpoint.xml
-    workingDirectory: $(Agent.TempDirectory)/empty
     displayName: 'Tests mountpoint'
   - bash: |
       set -eux
       py.test $(pytest.base_args) \
         tests --runmountpoint --runslow --rungui -m gui -x \
         --junitxml=test-results-gui.xml
-    workingDirectory: $(Agent.TempDirectory)/empty
     displayName: 'Tests GUI'
   - bash: |
       set -eux
@@ -207,7 +248,6 @@ jobs:
         tests --runslow -m slow \
         -n auto --max-worker-restart=0 -x \
         --junitxml=test-results-slow.xml
-    workingDirectory: $(Agent.TempDirectory)/empty
     displayName: 'Tests slow'
   - bash: |
       set -eux
@@ -215,35 +255,32 @@ jobs:
       coverage xml -o coverage.xml
       grep -E '( filename=|<package )' coverage.xml
       codecov --file=coverage.xml --commit=$(Build.SourceVersion)
-    workingDirectory: $(Agent.TempDirectory)/empty
     displayName: 'Codecov upload'
   - task: PublishTestResults@2
     inputs:
-      testResultsFiles: '$(Agent.TempDirectory)/empty/test-results-*.xml'
+      testResultsFiles: '$(Agent.TempDirectory)/test-results-*.xml'
       testRunTitle: 'Windows'
     condition: succeededOrFailed()
 
 
 #################################################################################
+# Step 2: Release packages build
 
 
-- job: 'linux_snap_build'
+- job: 's2_linux_snap_build'
   displayName: 'Linux snap build'
   condition: startsWith(variables['build.sourceBranch'], 'refs/tags/')
   timeoutInMinutes: 60
   pool:
+    # 18.04 requested to build a core18 image with --destructive-mode
     vmImage: 'ubuntu-18.04'
   steps:
   - checkout: self
     submodules: true
   - bash: |
       set -eux
-      sudo snap install lxd  # Multipass requires KVM which is not supported
       sudo snap install snapcraft --classic
-      lxd --version
       snapcraft --version
-      sudo lxd init --auto
-      sudo lxd.migrate -yes
     displayName: 'Bootstrap'
   - bash: |
       set -eux
@@ -257,7 +294,7 @@ jobs:
       VERBOSE_TAG=`git -C $(Build.SourcesDirectory) describe --tag`
       sed -i "s#^\\(__version__ = \\).*\$#\\1'$VERBOSE_TAG'#" src/parsec/_version.py
       sed -i "s/__PARSEC_VERSION__/$VERBOSE_TAG/" snap/snapcraft.yaml
-      sudo snapcraft --use-lxd
+      snapcraft --destructive-mode
       mkdir dist
       cp parsec*.snap dist
     displayName: 'Build snap'
@@ -269,41 +306,7 @@ jobs:
 #################################################################################
 
 
-- job: 'linux_snap_test'
-  displayName: 'Never trust a snap'
-  dependsOn: linux_snap_build
-  timeoutInMinutes: 5
-  pool:
-    vmImage: 'ubuntu-18.04'  # Shame, snap doesn't support docker...
-  steps:
-  # Note there no point specifying Python version given snap doesn't take it into account
-  - checkout: none
-  - download: current
-    artifact: linux_amd64_snap
-  - bash: |
-      set -eux
-      # TODO: xvfb doesn't currently work
-      # sudo apt-get install -y xvfb xorg
-      sudo snap install --classic --dangerous $(Pipeline.Workspace)/linux_amd64_snap/parsec*.snap
-      parsec.cli --version
-      # xvfb-run parsec &
-      # sleep 5
-      # jobs  # returns error if parsec is not started
-      # kill %1
-    displayName: 'Test Snap'
-  - bash: |
-      sudo snap install snapcraft --classic
-      echo $SNAPCRAFT_CREDENTIALS | snapcraft login --with -
-      snapcraft push --release=edge $(Pipeline.Workspace)/linux_amd64_snap/parsec*.snap
-    env:
-      SNAPCRAFT_CREDENTIALS: $(SNAPCRAFT_CREDENTIALS)
-    displayName: 'Upload Snap'
-
-
-#################################################################################
-
-
-- job: 'windows_installer_build'
+- job: 's2_windows_installer_build'
   displayName: 'Windows installer build'
   condition: startsWith(variables['build.sourceBranch'], 'refs/tags/')
   timeoutInMinutes: 60
@@ -347,7 +350,7 @@ jobs:
     workingDirectory: $(Agent.TempDirectory)/winbuild
   - bash: |
       set -eux
-      curl -L https://github.com/billziss-gh/winfsp/releases/download/v1.7B1/winfsp-1.7.20038.msi -o winfsp-1.7.20038.msi
+      curl -L https://github.com/billziss-gh/winfsp/releases/download/v1.7/winfsp-1.7.20172.msi -o winfsp-1.7.20172.msi
       makensis.exe installer.nsi
       mkdir dist
       cp build/parsec*-setup.exe dist
@@ -355,3 +358,97 @@ jobs:
     workingDirectory: $(Agent.TempDirectory)/winbuild
   - publish: $(Agent.TempDirectory)/winbuild/dist
     artifact: win_$(vs.arch)_installer
+
+
+#################################################################################
+# Step 3: Release packages tests
+
+
+- job: 's3_linux_snap_test'
+  displayName: 'Never trust a snap'
+  dependsOn: s2_linux_snap_build
+  timeoutInMinutes: 10
+  pool:
+    vmImage: 'ubuntu-latest'
+  steps:
+  # Note there no point specifying Python version given snap doesn't take it into account
+  - checkout: none
+  - download: current
+    artifact: linux_amd64_snap
+  - bash: |
+      set -eux
+      # TODO: xvfb doesn't currently work
+      # sudo apt-get install -y xvfb xorg
+      sudo snap install --classic --dangerous $(Pipeline.Workspace)/linux_amd64_snap/parsec*.snap
+      parsec.cli --version
+      # Make sure snap contains core but not backend
+      NOT_AVAILABLES=$(parsec.cli --help | grep -i "not available")
+      test "$(echo $NOT_AVAILABLES | grep -i 'backend')"
+      test -z "$(echo $NOT_AVAILABLES | grep -i 'core')"
+      # xvfb-run parsec &
+      # sleep 5
+      # jobs  # returns error if parsec is not started
+      # kill %1
+    displayName: 'Test Snap'
+
+
+#################################################################################
+# Step 4: Release packages upload
+
+
+- job: 's4_linux_snap_upload'
+  displayName: 'Upload snap'
+  condition: startsWith(variables['build.sourceBranch'], 'refs/tags/')
+  dependsOn: [s0_build_wheel, s1_qa, s1_linux_test, s1_windows_test, s2_linux_snap_build, s2_windows_installer_build, s3_linux_snap_test]
+  timeoutInMinutes: 10
+  pool:
+    vmImage: 'ubuntu-latest'
+  steps:
+  - checkout: none
+  - download: current
+    artifact: linux_amd64_snap
+  - bash: |
+      sudo snap install snapcraft --classic
+      echo $SNAPCRAFT_CREDENTIALS | snapcraft login --with -
+    displayName: 'Bootstrap'
+    env:
+      SNAPCRAFT_CREDENTIALS: $(SNAPCRAFT_CREDENTIALS)
+  - bash: |
+      snapcraft upload --release=edge $(Pipeline.Workspace)/linux_amd64_snap/parsec*.snap
+    displayName: 'Upload Snap'
+
+
+#################################################################################
+
+
+- job: 's4_wheel_pypi_upload'
+  displayName: 'Upload wheel on PyPI'
+  condition: startsWith(variables['build.sourceBranch'], 'refs/tags/')
+  dependsOn: [s0_build_wheel, s1_qa, s1_linux_test, s1_windows_test, s2_linux_snap_build, s2_windows_installer_build, s3_linux_snap_test]
+  timeoutInMinutes: 10
+  pool:
+    vmImage: 'ubuntu-latest'
+  steps:
+  - checkout: none
+  - download: current
+    artifact: wheel
+  - task: UsePythonVersion@0
+    inputs:
+      versionSpec: '$(python.version)'
+  - bash: |
+      set -eux
+      pip install twine
+    displayName: 'Bootstrap'
+  - bash: |
+      set -eux
+      echo "
+      [pypi]
+      username = __token__
+      password = $PYPI_CREDENTIALS
+      " > ~/.pypirc
+      WHEEL=$(ls $(Pipeline.Workspace)/wheel/parsec_cloud-*.whl)
+      echo $WHEEL
+      twine upload $WHEEL
+    env:
+      PYPI_CREDENTIALS: $(PYPI_CREDENTIALS)
+    displayName: 'Upload to PyPI'

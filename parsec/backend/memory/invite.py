@@ -1,5 +1,6 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
 
+from parsec.backend.backend_events import BackendEvent
 import attr
 from uuid import UUID
 from typing import List, Optional, Tuple
@@ -103,7 +104,7 @@ class MemoryInviteComponent(BaseInviteComponent):
         # Note that in case of conduit reset, this signal will lure the peer into
         # thinking we have answered so he will wakeup and take into account the reset
         await self._send_event(
-            "invite.conduit_updated", organization_id=organization_id, token=token
+            BackendEvent.INVITE_CONDUIT_UPDATED, organization_id=organization_id, token=token
         )
 
         return ConduitListenCtx(
@@ -141,7 +142,9 @@ class MemoryInviteComponent(BaseInviteComponent):
                 conduit.greeter_payload = None
                 conduit.claimer_payload = None
                 await self._send_event(
-                    "invite.conduit_updated", organization_id=ctx.organization_id, token=ctx.token
+                    BackendEvent.INVITE_CONDUIT_UPDATED,
+                    organization_id=ctx.organization_id,
+                    token=ctx.token,
                 )
                 return curr_peer_payload
 
@@ -226,7 +229,7 @@ class MemoryInviteComponent(BaseInviteComponent):
             org.invitations[invitation.token] = invitation
 
         await self._send_event(
-            "invite.status_changed",
+            BackendEvent.INVITE_STATUS_CHANGED,
             organization_id=organization_id,
             greeter=invitation.greeter_user_id,
             token=invitation.token,
@@ -246,7 +249,7 @@ class MemoryInviteComponent(BaseInviteComponent):
         org = self._organizations[organization_id]
         org.deleted_invitations[token] = (on, reason)
         await self._send_event(
-            "invite.status_changed",
+            BackendEvent.INVITE_STATUS_CHANGED,
             organization_id=organization_id,
             greeter=greeter,
             token=token,
@@ -274,7 +277,7 @@ class MemoryInviteComponent(BaseInviteComponent):
         self, organization_id: OrganizationID, greeter: UserID, token: UUID
     ) -> None:
         await self._send_event(
-            "invite.status_changed",
+            BackendEvent.INVITE_STATUS_CHANGED,
             organization_id=organization_id,
             greeter=greeter,
             token=token,
@@ -285,7 +288,7 @@ class MemoryInviteComponent(BaseInviteComponent):
         self, organization_id: OrganizationID, greeter: UserID, token: UUID
     ) -> None:
         await self._send_event(
-            "invite.status_changed",
+            BackendEvent.INVITE_STATUS_CHANGED,
             organization_id=organization_id,
             greeter=greeter,
             token=token,

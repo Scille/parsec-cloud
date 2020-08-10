@@ -13,7 +13,7 @@ from parsec.api.data import EntryID
 logger = get_logger()
 
 
-def get_default_data_base_dir(environ: dict):
+def get_default_data_base_dir(environ: dict) -> Path:
     if os.name == "nt":
         return Path(environ["APPDATA"]) / "parsec/data"
     else:
@@ -23,7 +23,7 @@ def get_default_data_base_dir(environ: dict):
         return Path(path) / "parsec"
 
 
-def get_default_cache_base_dir(environ: dict):
+def get_default_cache_base_dir(environ: dict) -> Path:
     if os.name == "nt":
         return Path(environ["APPDATA"]) / "parsec/cache"
     else:
@@ -33,7 +33,7 @@ def get_default_cache_base_dir(environ: dict):
         return Path(path) / "parsec"
 
 
-def get_default_config_dir(environ: dict):
+def get_default_config_dir(environ: dict) -> Path:
     if os.name == "nt":
         return Path(environ["APPDATA"]) / "parsec/config"
     else:
@@ -43,7 +43,7 @@ def get_default_config_dir(environ: dict):
         return Path(path) / "parsec"
 
 
-def get_default_mountpoint_base_dir(environ: dict):
+def get_default_mountpoint_base_dir(environ: dict) -> Path:
     return Path.home() / "Parsec"
 
 
@@ -76,6 +76,7 @@ class CoreConfig:
     gui_check_version_at_startup: bool = True
     gui_check_version_url: str = "https://github.com/Scille/parsec-cloud/releases/latest"
     gui_check_version_api_url: str = "https://api.github.com/repos/Scille/parsec-cloud/releases"
+    gui_check_version_allow_pre_release: bool = False
     gui_confirmation_before_close: bool = True
     gui_workspace_color: bool = False
     gui_allow_multiple_instances: bool = False
@@ -105,6 +106,7 @@ def config_factory(
     gui_first_launch: bool = True,
     gui_last_version: str = None,
     gui_check_version_at_startup: bool = True,
+    gui_check_version_allow_pre_release: bool = False,
     gui_workspace_color: bool = False,
     gui_allow_multiple_instances: bool = False,
     environ: dict = {},
@@ -130,6 +132,7 @@ def config_factory(
         gui_first_launch=gui_first_launch,
         gui_last_version=gui_last_version,
         gui_check_version_at_startup=gui_check_version_at_startup,
+        gui_check_version_allow_pre_release=gui_check_version_allow_pre_release,
         gui_workspace_color=gui_workspace_color,
         gui_allow_multiple_instances=gui_allow_multiple_instances,
         ipc_socket_file=data_base_dir / "parsec-cloud.lock",
@@ -137,10 +140,13 @@ def config_factory(
     )
 
     # Make sure the directories exist on the system
-    core_config.config_dir.mkdir(parents=True, exist_ok=True)
-    core_config.data_base_dir.mkdir(parents=True, exist_ok=True)
-    core_config.cache_base_dir.mkdir(parents=True, exist_ok=True)
-    core_config.mountpoint_base_dir.mkdir(parents=True, exist_ok=True)
+    core_config.config_dir.mkdir(mode=0o700, parents=True, exist_ok=True)
+    core_config.data_base_dir.mkdir(mode=0o700, parents=True, exist_ok=True)
+    core_config.cache_base_dir.mkdir(mode=0o700, parents=True, exist_ok=True)
+
+    # Mountpoint base directory is not used on windows
+    if os.name != "nt":
+        core_config.mountpoint_base_dir.mkdir(mode=0o700, parents=True, exist_ok=True)
 
     return core_config
 
@@ -192,7 +198,7 @@ def reload_config(config: CoreConfig) -> CoreConfig:
 
 def save_config(config: CoreConfig):
     config_path = config.config_dir
-    config_path.mkdir(parents=True, exist_ok=True)
+    config_path.mkdir(mode=0o700, parents=True, exist_ok=True)
     config_path /= "config.json"
     config_path.touch(exist_ok=True)
     config_path.write_text(
@@ -210,6 +216,7 @@ def save_config(config: CoreConfig):
                 "gui_first_launch": config.gui_first_launch,
                 "gui_last_version": config.gui_last_version,
                 "gui_check_version_at_startup": config.gui_check_version_at_startup,
+                "gui_check_version_allow_pre_release": config.gui_check_version_allow_pre_release,
                 "gui_workspace_color": config.gui_workspace_color,
                 "gui_allow_multiple_instances": config.gui_allow_multiple_instances,
             },

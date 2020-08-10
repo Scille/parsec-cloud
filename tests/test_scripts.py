@@ -70,6 +70,6 @@ def run_testenv():
 @pytest.mark.slow
 @pytest.mark.skipif(os.name == "nt", reason="causes a freeze in appveyor for some reasons")
 def test_run_testenv(run_testenv):
-    devices = list_available_devices(run_testenv.config_dir)
-    _, devices, _, _ = zip(*devices)
-    assert sorted(devices) == ["alice@laptop", "alice@pc", "bob@laptop"]
+    available_devices = list_available_devices(run_testenv.config_dir)
+    devices = [(d.human_handle.label, d.device_label) for d in available_devices]
+    assert sorted(devices) == [("Alice", "laptop"), ("Alice", "pc"), ("Bob", "laptop")]

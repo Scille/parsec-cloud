@@ -87,6 +87,8 @@ class WorkspaceButton(QWidget, Ui_WorkspaceButton):
             self.label_shared.hide()
             self.label_owner.hide()
             self.switch_button.hide()
+        else:
+            self.button_delete.hide()
         effect = QGraphicsDropShadowEffect(self)
         effect.setColor(QColor(0x99, 0x99, 0x99))
         effect.setBlurRadius(10)
@@ -124,21 +126,23 @@ class WorkspaceButton(QWidget, Ui_WorkspaceButton):
 
     @property
     def owner(self):
-        for user_id, role in self.users_roles.items():
+        for user_id, (role, user_info) in self.users_roles.items():
             if role == WorkspaceRole.OWNER:
-                return user_id
+                return user_info
         raise ValueError
 
     @property
     def others(self):
         return [
-            user_id for user_id in self.users_roles if user_id != self.workspace_fs.device.user_id
+            user_info
+            for user_id, (role, user_info) in self.users_roles.items()
+            if user_id != self.workspace_fs.device.user_id
         ]
 
     @property
     def is_owner(self):
         user_id = self.workspace_fs.device.user_id
-        return self.users_roles[user_id] == WorkspaceRole.OWNER
+        return self.users_roles[user_id][0] == WorkspaceRole.OWNER
 
     def show_context_menu(self, pos):
         global_pos = self.mapToGlobal(pos)
@@ -171,7 +175,7 @@ class WorkspaceButton(QWidget, Ui_WorkspaceButton):
     def button_reencrypt_clicked(self):
         if self.reencryption_needs:
             if not self.is_owner:
-                show_info(self.parent(), message=_("TEXT_WORKSPACE_ONLY_OWNER_CAN_REENCRYPT"))
+                show_info(self, message=_("TEXT_WORKSPACE_ONLY_OWNER_CAN_REENCRYPT"))
                 return
             self.reencrypt_clicked.emit(
                 self.workspace_id,
@@ -250,10 +254,14 @@ class WorkspaceButton(QWidget, Ui_WorkspaceButton):
             if not self.is_shared:
                 shared_message = _("TEXT_WORKSPACE_IS_PRIVATE")
             elif not self.is_owner:
-                shared_message = _("TEXT_WORKSPACE_IS_OWNED_BY_user").format(user=self.owner)
+                shared_message = _("TEXT_WORKSPACE_IS_OWNED_BY_user").format(
+                    user=self.owner.short_user_display
+                )
             elif len(self.others) == 1:
                 user, = self.others
-                shared_message = _("TEXT_WORKSPACE_IS_SHARED_WITH_user").format(user=user)
+                shared_message = _("TEXT_WORKSPACE_IS_SHARED_WITH_user").format(
+                    user=user.short_user_display
+                )
             else:
                 n = len(self.others)
                 assert n > 1

@@ -192,6 +192,93 @@ Must be one of ``CONSOLE``, ``JSON``.
 
 The log file to write to.
 
+Email
+-----
+
+* ``--backend-addr``
+* Environ: ``PARSEC_BACKEND_ADDR``
+
+URL to reach this server (typically used in invitation emails).
+
+* ``--email-host``
+* Environ: ``PARSEC_EMAIL_HOST``
+
+The host to use for sending email.
+
+* ``--email-port``
+* Environ: ``PARSEC_EMAIL_PORT``
+* Default: ``25``
+
+Port to use for the SMTP server defined in EMAIL_HOST.
+
+* ``--email-host-user``
+* Environ: ``PARSEC_EMAIL_HOST_USER``
+
+Username to use for the SMTP server defined in EMAIL_HOST.
+
+* ``--email-host-password``
+* Environ: ``PARSEC_EMAIL_HOST_PASSWORD``
+
+Password to use for the SMTP server defined in EMAIL_HOST.
+This setting is used in conjunction with EMAIL_HOST_USER when authenticating to the SMTP server.
+
+* ``--email-use-ssl``
+* Environ: ``PARSEC_EMAIL_USE_SSL``
+
+Whether to use a TLS (secure) connection when talking to the SMTP server.
+This is used for explicit TLS connections, generally on port 587.
+
+* ``--email-use-tls``
+* Environ: ``PARSEC_EMAIL_USE_TLS``
+
+Whether to use an implicit TLS (secure) connection when talking to the SMTP server.
+In most email documentation this type of TLS connection is referred to as SSL.
+It is generally used on port 465.
+Note that ``--email-use-tls``/``--email-use-ssl`` are mutually exclusive, so only set one of those settings to True.
+
+* ``--email-language``
+* Environ: ``PARSEC_EMAIL_LANGUAGE``
+* Default: ``en``
+
+Language used in email (Allowed values: ``en`` or ``fr``).
+
+Webhooks
+--------
+
+* ``--spontaneous-organization-bootstrap``
+* Environ: ``PARSEC_SPONTANEOUS_ORGANIZATION_BOOTSTRAP``
+
+Allow organization bootstrap without prior creation.
+
+Without this flag, an organization must be created by administration
+(see ``parsec core create_organization`` command) before bootstrap can occur.
+
+With this flag, the server allows anybody to bootstrap an organanization
+by providing an empty bootstrap token given 1) the organization is not boostrapped yet
+and 2) the organization hasn't been created by administration (which would act as a
+reservation and change the bootstrap token)
+
+* ``--organization-bootstrap-webhook``
+* Environ: ``PARSEC_ORGANIZATION_BOOTSTRAP_WEBHOOK``
+
+URL to notify 3rd party service that a new organization has been bootstrapped.
+
+Each time an organization is bootstrapped, an HTTP POST will be send to the URL
+with an ``application/json`` body with the following fields:
+``organization_id``, ``device_id``, ``device_label`` (can be null), ``human_email`` (can be null), ``human_label`` (can be null).
+
+Example:
+
+.. code:: json
+
+    {
+      "organization_id": "MyOrg",
+      "device_id": "123@abc",
+      "device_label": "laptop",
+      "human_email": "j.doe@example.com",
+      "human_label": "John Doe"
+    }
+
 Sentry
 ------
 

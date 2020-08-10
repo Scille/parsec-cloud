@@ -1,5 +1,6 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
 
+from parsec.core.core_events import CoreEvent
 import pytest
 import trio
 from async_generator import asynccontextmanager
@@ -29,13 +30,13 @@ async def wait_for_entries_synced(core, entries_pathes):
         if synced == to_sync:
             event.set()
 
-    core.signal_ns.connect("fs.entry.synced", _on_entry_synced)
+    core.signal_ns.connect(CoreEvent.FS_ENTRY_SYNCED, _on_entry_synced)
     try:
         yield event
         await event.wait()
 
     finally:
-        core.signal_ns.disconnect("fs.entry.synced", _on_entry_synced)
+        core.signal_ns.disconnect(CoreEvent.FS_ENTRY_SYNCED, _on_entry_synced)
 
 
 # @pytest.mark.trio
@@ -64,9 +65,7 @@ async def wait_for_entries_synced(core, entries_pathes):
 
 @pytest.mark.trio
 @pytest.mark.skip(reason="Recursive sync strategy need to be reworked")
-async def test_online_sync2(mock_clock, running_backend, core_factory, alice, alice2):
-    mock_clock.autojump_threshold = 0.1
-
+async def test_online_sync2(autojump_clock, running_backend, core_factory, alice, alice2):
     # Given the cores are initialized while the backend is online, we are
     # guaranteed they are connected
     async with core_factory() as alice_core, core_factory() as alice2_core2:
@@ -96,9 +95,7 @@ async def test_online_sync2(mock_clock, running_backend, core_factory, alice, al
 
 @pytest.mark.trio
 @pytest.mark.skip(reason="Recursive sync strategy need to be reworked")
-async def test_sync_then_clean_start(mock_clock, running_backend, core_factory, alice, alice2):
-    mock_clock.autojump_threshold = 0.1
-
+async def test_sync_then_clean_start(autojump_clock, running_backend, core_factory, alice, alice2):
     # Given the cores are initialized while the backend is online, we are
     # guaranteed they are connected
     async with core_factory() as alice_core:
@@ -126,10 +123,8 @@ async def test_sync_then_clean_start(mock_clock, running_backend, core_factory, 
 @pytest.mark.trio
 @pytest.mark.skip(reason="Recursive sync strategy need to be reworked")
 async def test_sync_then_fast_forward_on_start(
-    mock_clock, running_backend, core_factory, alice, alice2
+    autojump_clock, running_backend, core_factory, alice, alice2
 ):
-    mock_clock.autojump_threshold = 0.1
-
     # Given the cores are initialized while the backend is online, we are
     # guaranteed they are connected
     async with core_factory() as alice_core, core_factory() as alice2_core2:
@@ -168,10 +163,8 @@ async def test_sync_then_fast_forward_on_start(
 @pytest.mark.trio
 @pytest.mark.skip(reason="Recursive sync strategy need to be reworked")
 async def test_fast_forward_on_offline_during_sync(
-    mock_clock, server_factory, backend, core_factory, alice, alice2
+    autojump_clock, server_factory, backend, core_factory, alice, alice2
 ):
-    mock_clock.rate = 10
-
     # Create two servers to be able to turn offline a single one
     async with server_factory(backend.handle_client) as server1, server_factory(
         backend.handle_client
