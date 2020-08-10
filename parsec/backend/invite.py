@@ -243,7 +243,9 @@ class BaseInviteComponent:
             ).to_http_redirection_url()
 
         if msg["send_email"]:
-            if not self._config.email_config or not self._config.backend_addr:
+            if self._config.email_active == "False":
+                return invite_new_serializer.rep_dump({"status": "ok", "token": uuid4()})
+            elif not self._config.email_config or not self._config.backend_addr:
                 return invite_new_serializer.rep_dump({"status": "not_available"})
 
         if msg["type"] == InvitationType.USER:

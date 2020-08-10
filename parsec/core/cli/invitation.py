@@ -96,6 +96,8 @@ def invite_user(config, device, email, send_email, **kwargs):
     """
     Create new user invitation
     """
+    if not config.email_active:
+        send_email = False
     with cli_exception_handler(config.debug):
         trio_run(_invite_user, config, device, email, send_email)
 

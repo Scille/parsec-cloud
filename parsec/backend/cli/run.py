@@ -417,6 +417,9 @@ def run_cmd(
 ):
     import sys
 
+    # Start a local backend
+    if email_active == "False":
+        email_active = False
     configure_logging(log_level, log_format, log_file, log_filter)
     if sentry_url:
         configure_sentry_logging(sentry_url)
@@ -462,6 +465,9 @@ def run_cmd(
             backend_addr=backend_addr,
             debug=debug,
         )
+
+        sys.stderr.write(str(email_active))
+        sys.stderr.write("\n\n\n")
 
         async def _run_backend():
             async with backend_app_factory(config=config) as backend:
