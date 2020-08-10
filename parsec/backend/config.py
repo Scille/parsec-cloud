@@ -87,7 +87,7 @@ class BackendConfig:
     blockstore_config: BaseBlockStoreConfig
 
     email_config: Optional[EmailConfig]
-    email_actives: bool
+    email_active: bool
     backend_addr: Optional[BackendAddr]
 
     spontaneous_organization_bootstrap: bool
