@@ -1,0 +1,921 @@
+{
+    "APIV1_DeviceClaimAnswerContent": {
+        "fields": {
+            "private_key": {
+                "allow_none": false,
+                "required": true,
+                "type": "PrivateKey"
+            },
+            "type": {
+                "allow_none": false,
+                "required": true,
+                "type": "CheckedConstant",
+                "value": "device_claim_answer"
+            },
+            "user_manifest_id": {
+                "allow_none": false,
+                "required": true,
+                "type": "EntryIDField"
+            },
+            "user_manifest_key": {
+                "allow_none": false,
+                "required": true,
+                "type": "SecretKeyField"
+            }
+        },
+        "serializing": "zip+msgpack"
+    },
+    "APIV1_DeviceClaimContent": {
+        "fields": {
+            "answer_public_key": {
+                "allow_none": false,
+                "required": true,
+                "type": "PublicKey"
+            },
+            "device_id": {
+                "allow_none": false,
+                "required": true,
+                "type": "DeviceIDField"
+            },
+            "token": {
+                "allow_none": false,
+                "required": true,
+                "type": "String"
+            },
+            "type": {
+                "allow_none": false,
+                "required": true,
+                "type": "CheckedConstant",
+                "value": "device_claim"
+            },
+            "verify_key": {
+                "allow_none": false,
+                "required": true,
+                "type": "VerifyKey"
+            }
+        },
+        "serializing": "zip+msgpack"
+    },
+    "APIV1_UserClaimContent": {
+        "fields": {
+            "device_id": {
+                "allow_none": false,
+                "required": true,
+                "type": "DeviceIDField"
+            },
+            "public_key": {
+                "allow_none": false,
+                "required": true,
+                "type": "PublicKey"
+            },
+            "token": {
+                "allow_none": false,
+                "required": true,
+                "type": "String"
+            },
+            "type": {
+                "allow_none": false,
+                "required": true,
+                "type": "CheckedConstant",
+                "value": "user_claim"
+            },
+            "verify_key": {
+                "allow_none": false,
+                "required": true,
+                "type": "VerifyKey"
+            }
+        },
+        "serializing": "zip+msgpack"
+    },
+    "BaseAPIData": {
+        "fields": {},
+        "serializing": "zip+msgpack"
+    },
+    "BaseAPISignedData": {
+        "fields": {
+            "author": {
+                "allow_none": true,
+                "required": true,
+                "type": "DeviceIDField"
+            },
+            "timestamp": {
+                "allow_none": false,
+                "required": true,
+                "type": "DateTime"
+            }
+        },
+        "serializing": "zip+msgpack"
+    },
+    "DeviceCertificateContent": {
+        "fields": {
+            "author": {
+                "allow_none": true,
+                "required": true,
+                "type": "DeviceIDField"
+            },
+            "device_id": {
+                "allow_none": false,
+                "required": true,
+                "type": "DeviceIDField"
+            },
+            "device_label": {
+                "allow_none": true,
+                "required": false,
+                "type": "String"
+            },
+            "timestamp": {
+                "allow_none": false,
+                "required": true,
+                "type": "DateTime"
+            },
+            "type": {
+                "allow_none": false,
+                "required": true,
+                "type": "CheckedConstant",
+                "value": "device_certificate"
+            },
+            "verify_key": {
+                "allow_none": false,
+                "required": true,
+                "type": "VerifyKey"
+            }
+        },
+        "serializing": "zip+msgpack"
+    },
+    "FileManifest": {
+        "fields": {
+            "author": {
+                "allow_none": true,
+                "required": true,
+                "type": "DeviceIDField"
+            },
+            "blocks": {
+                "allow_none": false,
+                "container_type": {
+                    "allow_none": false,
+                    "required": false,
+                    "schema": {
+                        "fields": {
+                            "digest": {
+                                "allow_none": false,
+                                "required": true,
+                                "type": "HashDigestField"
+                            },
+                            "id": {
+                                "allow_none": false,
+                                "required": true,
+                                "type": "BlockIDField"
+                            },
+                            "key": {
+                                "allow_none": false,
+                                "required": true,
+                                "type": "SecretKeyField"
+                            },
+                            "offset": {
+                                "allow_none": false,
+                                "required": true,
+                                "type": "Integer"
+                            },
+                            "size": {
+                                "allow_none": false,
+                                "required": true,
+                                "type": "Integer"
+                            }
+                        }
+                    },
+                    "type": "Nested"
+                },
+                "required": true,
+                "type": "FrozenList"
+            },
+            "blocksize": {
+                "allow_none": false,
+                "required": true,
+                "type": "Integer"
+            },
+            "created": {
+                "allow_none": false,
+                "required": true,
+                "type": "DateTime"
+            },
+            "id": {
+                "allow_none": false,
+                "required": true,
+                "type": "EntryIDField"
+            },
+            "parent": {
+                "allow_none": false,
+                "required": true,
+                "type": "EntryIDField"
+            },
+            "size": {
+                "allow_none": false,
+                "required": true,
+                "type": "Integer"
+            },
+            "timestamp": {
+                "allow_none": false,
+                "required": true,
+                "type": "DateTime"
+            },
+            "type": {
+                "allow_none": false,
+                "required": true,
+                "type": "EnumCheckedConstant",
+                "value": "file_manifest"
+            },
+            "updated": {
+                "allow_none": false,
+                "required": true,
+                "type": "DateTime"
+            },
+            "version": {
+                "allow_none": false,
+                "required": true,
+                "type": "Integer"
+            }
+        },
+        "serializing": "zip+msgpack"
+    },
+    "FolderManifest": {
+        "fields": {
+            "author": {
+                "allow_none": true,
+                "required": true,
+                "type": "DeviceIDField"
+            },
+            "children": {
+                "allow_none": false,
+                "key_type": {
+                    "allow_none": false,
+                    "required": false,
+                    "type": "EntryNameField"
+                },
+                "nested_type": {
+                    "allow_none": false,
+                    "required": true,
+                    "type": "EntryIDField"
+                },
+                "required": true,
+                "type": "FrozenMap"
+            },
+            "created": {
+                "allow_none": false,
+                "required": true,
+                "type": "DateTime"
+            },
+            "id": {
+                "allow_none": false,
+                "required": true,
+                "type": "EntryIDField"
+            },
+            "parent": {
+                "allow_none": false,
+                "required": true,
+                "type": "EntryIDField"
+            },
+            "timestamp": {
+                "allow_none": false,
+                "required": true,
+                "type": "DateTime"
+            },
+            "type": {
+                "allow_none": false,
+                "required": true,
+                "type": "EnumCheckedConstant",
+                "value": "folder_manifest"
+            },
+            "updated": {
+                "allow_none": false,
+                "required": true,
+                "type": "DateTime"
+            },
+            "version": {
+                "allow_none": false,
+                "required": true,
+                "type": "Integer"
+            }
+        },
+        "serializing": "zip+msgpack"
+    },
+    "InviteDeviceConfirmation": {
+        "fields": {
+            "device_id": {
+                "allow_none": false,
+                "required": true,
+                "type": "DeviceIDField"
+            },
+            "device_label": {
+                "allow_none": true,
+                "required": false,
+                "type": "String"
+            },
+            "human_handle": {
+                "allow_none": true,
+                "args_types": [
+                    {
+                        "allow_none": false,
+                        "required": true,
+                        "type": "String"
+                    },
+                    {
+                        "allow_none": false,
+                        "required": true,
+                        "type": "String"
+                    }
+                ],
+                "required": false,
+                "type": "HumanHandleField"
+            },
+            "private_key": {
+                "allow_none": false,
+                "required": true,
+                "type": "PrivateKey"
+            },
+            "profile": {
+                "allow_none": false,
+                "required": true,
+                "type": "UserProfileField"
+            },
+            "root_verify_key": {
+                "allow_none": false,
+                "required": true,
+                "type": "VerifyKey"
+            },
+            "type": {
+                "allow_none": false,
+                "required": true,
+                "type": "CheckedConstant",
+                "value": "invite_device_confirmation"
+            },
+            "user_manifest_id": {
+                "allow_none": false,
+                "required": true,
+                "type": "EntryIDField"
+            },
+            "user_manifest_key": {
+                "allow_none": false,
+                "required": true,
+                "type": "SecretKeyField"
+            }
+        },
+        "serializing": "zip+msgpack"
+    },
+    "InviteDeviceData": {
+        "fields": {
+            "requested_device_label": {
+                "allow_none": true,
+                "required": false,
+                "type": "String"
+            },
+            "type": {
+                "allow_none": false,
+                "required": true,
+                "type": "CheckedConstant",
+                "value": "invite_device_data"
+            },
+            "verify_key": {
+                "allow_none": false,
+                "required": true,
+                "type": "VerifyKey"
+            }
+        },
+        "serializing": "zip+msgpack"
+    },
+    "InviteUserConfirmation": {
+        "fields": {
+            "device_id": {
+                "allow_none": false,
+                "required": true,
+                "type": "DeviceIDField"
+            },
+            "device_label": {
+                "allow_none": true,
+                "required": false,
+                "type": "String"
+            },
+            "human_handle": {
+                "allow_none": true,
+                "args_types": [
+                    {
+                        "allow_none": false,
+                        "required": true,
+                        "type": "String"
+                    },
+                    {
+                        "allow_none": false,
+                        "required": true,
+                        "type": "String"
+                    }
+                ],
+                "required": false,
+                "type": "HumanHandleField"
+            },
+            "profile": {
+                "allow_none": false,
+                "required": true,
+                "type": "UserProfileField"
+            },
+            "root_verify_key": {
+                "allow_none": false,
+                "required": true,
+                "type": "VerifyKey"
+            },
+            "type": {
+                "allow_none": false,
+                "required": true,
+                "type": "CheckedConstant",
+                "value": "invite_user_confirmation"
+            }
+        },
+        "serializing": "zip+msgpack"
+    },
+    "InviteUserData": {
+        "fields": {
+            "public_key": {
+                "allow_none": false,
+                "required": true,
+                "type": "PublicKey"
+            },
+            "requested_device_label": {
+                "allow_none": true,
+                "required": false,
+                "type": "String"
+            },
+            "requested_human_handle": {
+                "allow_none": true,
+                "args_types": [
+                    {
+                        "allow_none": false,
+                        "required": true,
+                        "type": "String"
+                    },
+                    {
+                        "allow_none": false,
+                        "required": true,
+                        "type": "String"
+                    }
+                ],
+                "required": false,
+                "type": "HumanHandleField"
+            },
+            "type": {
+                "allow_none": false,
+                "required": true,
+                "type": "CheckedConstant",
+                "value": "invite_user_data"
+            },
+            "verify_key": {
+                "allow_none": false,
+                "required": true,
+                "type": "VerifyKey"
+            }
+        },
+        "serializing": "zip+msgpack"
+    },
+    "Manifest": {
+        "fields": {
+            "author": {
+                "allow_none": true,
+                "required": true,
+                "type": "DeviceIDField"
+            },
+            "timestamp": {
+                "allow_none": false,
+                "required": true,
+                "type": "DateTime"
+            }
+        },
+        "serializing": "zip+msgpack"
+    },
+    "MessageContent": {
+        "fields": {
+            "author": {
+                "allow_none": true,
+                "required": true,
+                "type": "DeviceIDField"
+            },
+            "timestamp": {
+                "allow_none": false,
+                "required": true,
+                "type": "DateTime"
+            }
+        },
+        "serializing": "zip+msgpack"
+    },
+    "PingMessageContent": {
+        "fields": {
+            "author": {
+                "allow_none": true,
+                "required": true,
+                "type": "DeviceIDField"
+            },
+            "ping": {
+                "allow_none": false,
+                "required": true,
+                "type": "String"
+            },
+            "timestamp": {
+                "allow_none": false,
+                "required": true,
+                "type": "DateTime"
+            },
+            "type": {
+                "allow_none": false,
+                "required": true,
+                "type": "EnumCheckedConstant",
+                "value": "ping"
+            }
+        },
+        "serializing": "zip+msgpack"
+    },
+    "RealmRoleCertificateContent": {
+        "fields": {
+            "author": {
+                "allow_none": true,
+                "required": true,
+                "type": "DeviceIDField"
+            },
+            "realm_id": {
+                "allow_none": false,
+                "required": true,
+                "type": "UUID"
+            },
+            "role": {
+                "allow_none": true,
+                "required": true,
+                "type": "RealmRoleField"
+            },
+            "timestamp": {
+                "allow_none": false,
+                "required": true,
+                "type": "DateTime"
+            },
+            "type": {
+                "allow_none": false,
+                "required": true,
+                "type": "CheckedConstant",
+                "value": "realm_role_certificate"
+            },
+            "user_id": {
+                "allow_none": false,
+                "required": true,
+                "type": "UserIDField"
+            }
+        },
+        "serializing": "zip+msgpack"
+    },
+    "RevokedUserCertificateContent": {
+        "fields": {
+            "author": {
+                "allow_none": true,
+                "required": true,
+                "type": "DeviceIDField"
+            },
+            "timestamp": {
+                "allow_none": false,
+                "required": true,
+                "type": "DateTime"
+            },
+            "type": {
+                "allow_none": false,
+                "required": true,
+                "type": "CheckedConstant",
+                "value": "revoked_user_certificate"
+            },
+            "user_id": {
+                "allow_none": false,
+                "required": true,
+                "type": "UserIDField"
+            }
+        },
+        "serializing": "zip+msgpack"
+    },
+    "SharingGrantedMessageContent": {
+        "fields": {
+            "author": {
+                "allow_none": true,
+                "required": true,
+                "type": "DeviceIDField"
+            },
+            "encrypted_on": {
+                "allow_none": false,
+                "required": true,
+                "type": "DateTime"
+            },
+            "encryption_revision": {
+                "allow_none": false,
+                "required": true,
+                "type": "Integer"
+            },
+            "id": {
+                "allow_none": false,
+                "required": true,
+                "type": "EntryIDField"
+            },
+            "key": {
+                "allow_none": false,
+                "required": true,
+                "type": "SecretKeyField"
+            },
+            "name": {
+                "allow_none": false,
+                "required": true,
+                "type": "String"
+            },
+            "timestamp": {
+                "allow_none": false,
+                "required": true,
+                "type": "DateTime"
+            },
+            "type": {
+                "allow_none": false,
+                "required": true,
+                "type": "EnumCheckedConstant",
+                "value": "sharing.granted"
+            }
+        },
+        "serializing": "zip+msgpack"
+    },
+    "SharingReencryptedMessageContent": {
+        "fields": {
+            "author": {
+                "allow_none": true,
+                "required": true,
+                "type": "DeviceIDField"
+            },
+            "encrypted_on": {
+                "allow_none": false,
+                "required": true,
+                "type": "DateTime"
+            },
+            "encryption_revision": {
+                "allow_none": false,
+                "required": true,
+                "type": "Integer"
+            },
+            "id": {
+                "allow_none": false,
+                "required": true,
+                "type": "EntryIDField"
+            },
+            "key": {
+                "allow_none": false,
+                "required": true,
+                "type": "SecretKeyField"
+            },
+            "name": {
+                "allow_none": false,
+                "required": true,
+                "type": "String"
+            },
+            "timestamp": {
+                "allow_none": false,
+                "required": true,
+                "type": "DateTime"
+            },
+            "type": {
+                "allow_none": false,
+                "required": true,
+                "type": "EnumCheckedConstant",
+                "value": "sharing.reencrypted"
+            }
+        },
+        "serializing": "zip+msgpack"
+    },
+    "SharingRevokedMessageContent": {
+        "fields": {
+            "author": {
+                "allow_none": true,
+                "required": true,
+                "type": "DeviceIDField"
+            },
+            "id": {
+                "allow_none": false,
+                "required": true,
+                "type": "EntryIDField"
+            },
+            "timestamp": {
+                "allow_none": false,
+                "required": true,
+                "type": "DateTime"
+            },
+            "type": {
+                "allow_none": false,
+                "required": true,
+                "type": "EnumCheckedConstant",
+                "value": "sharing.revoked"
+            }
+        },
+        "serializing": "zip+msgpack"
+    },
+    "UserCertificateContent": {
+        "fields": {
+            "author": {
+                "allow_none": true,
+                "required": true,
+                "type": "DeviceIDField"
+            },
+            "human_handle": {
+                "allow_none": true,
+                "args_types": [
+                    {
+                        "allow_none": false,
+                        "required": true,
+                        "type": "String"
+                    },
+                    {
+                        "allow_none": false,
+                        "required": true,
+                        "type": "String"
+                    }
+                ],
+                "required": false,
+                "type": "HumanHandleField"
+            },
+            "is_admin": {
+                "allow_none": false,
+                "required": true,
+                "type": "Boolean"
+            },
+            "profile": {
+                "allow_none": false,
+                "required": false,
+                "type": "UserProfileField"
+            },
+            "public_key": {
+                "allow_none": false,
+                "required": true,
+                "type": "PublicKey"
+            },
+            "timestamp": {
+                "allow_none": false,
+                "required": true,
+                "type": "DateTime"
+            },
+            "type": {
+                "allow_none": false,
+                "required": true,
+                "type": "CheckedConstant",
+                "value": "user_certificate"
+            },
+            "user_id": {
+                "allow_none": false,
+                "required": true,
+                "type": "UserIDField"
+            }
+        },
+        "serializing": "zip+msgpack"
+    },
+    "UserManifest": {
+        "fields": {
+            "author": {
+                "allow_none": true,
+                "required": true,
+                "type": "DeviceIDField"
+            },
+            "created": {
+                "allow_none": false,
+                "required": true,
+                "type": "DateTime"
+            },
+            "id": {
+                "allow_none": false,
+                "required": true,
+                "type": "EntryIDField"
+            },
+            "last_processed_message": {
+                "allow_none": false,
+                "required": true,
+                "type": "Integer"
+            },
+            "timestamp": {
+                "allow_none": false,
+                "required": true,
+                "type": "DateTime"
+            },
+            "type": {
+                "allow_none": false,
+                "required": true,
+                "type": "EnumCheckedConstant",
+                "value": "user_manifest"
+            },
+            "updated": {
+                "allow_none": false,
+                "required": true,
+                "type": "DateTime"
+            },
+            "version": {
+                "allow_none": false,
+                "required": true,
+                "type": "Integer"
+            },
+            "workspaces": {
+                "allow_none": false,
+                "container_type": {
+                    "allow_none": false,
+                    "required": false,
+                    "schema": {
+                        "fields": {
+                            "encrypted_on": {
+                                "allow_none": false,
+                                "required": true,
+                                "type": "DateTime"
+                            },
+                            "encryption_revision": {
+                                "allow_none": false,
+                                "required": true,
+                                "type": "Integer"
+                            },
+                            "id": {
+                                "allow_none": false,
+                                "required": true,
+                                "type": "EntryIDField"
+                            },
+                            "key": {
+                                "allow_none": false,
+                                "required": true,
+                                "type": "SecretKeyField"
+                            },
+                            "name": {
+                                "allow_none": false,
+                                "required": true,
+                                "type": "EntryNameField"
+                            },
+                            "role": {
+                                "allow_none": true,
+                                "required": true,
+                                "type": "RealmRoleField"
+                            },
+                            "role_cached_on": {
+                                "allow_none": false,
+                                "required": true,
+                                "type": "DateTime"
+                            }
+                        }
+                    },
+                    "type": "Nested"
+                },
+                "required": true,
+                "type": "List"
+            }
+        },
+        "serializing": "zip+msgpack"
+    },
+    "WorkspaceManifest": {
+        "fields": {
+            "author": {
+                "allow_none": true,
+                "required": true,
+                "type": "DeviceIDField"
+            },
+            "children": {
+                "allow_none": false,
+                "key_type": {
+                    "allow_none": false,
+                    "required": false,
+                    "type": "EntryNameField"
+                },
+                "nested_type": {
+                    "allow_none": false,
+                    "required": true,
+                    "type": "EntryIDField"
+                },
+                "required": true,
+                "type": "FrozenMap"
+            },
+            "created": {
+                "allow_none": false,
+                "required": true,
+                "type": "DateTime"
+            },
+            "id": {
+                "allow_none": false,
+                "required": true,
+                "type": "EntryIDField"
+            },
+            "timestamp": {
+                "allow_none": false,
+                "required": true,
+                "type": "DateTime"
+            },
+            "type": {
+                "allow_none": false,
+                "required": true,
+                "type": "EnumCheckedConstant",
+                "value": "workspace_manifest"
+            },
+            "updated": {
+                "allow_none": false,
+                "required": true,
+                "type": "DateTime"
+            },
+            "version": {
+                "allow_none": false,
+                "required": true,
+                "type": "Integer"
+            }
+        },
+        "serializing": "zip+msgpack"
+    }
+}
