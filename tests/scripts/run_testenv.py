@@ -125,15 +125,18 @@ MimeType=x-scheme-handler/parsec;
 
 
 async def restart_local_backend(administration_token, backend_port, email_active):
+    sys.stderr.write("Restart local backend\n")
     pattern = f"parsec.* backend.* run.* -P {backend_port}"
     command = (
         f"{sys.executable} -Wignore -m parsec.cli backend run -b MOCKED --db MOCKED "
-        f"-P {backend_port} --administration-token {administration_token} --backend-addr parsec://localhost:{backend_port}?no_ssl=true"
+        f"--email-active {email_active} -P {backend_port} "
+        f"--administration-token {administration_token} --backend-addr parsec://localhost:{backend_port}?no_ssl=true"
     )
 
     # Trio does not support subprocess in windows yet
 
     def _windows_target():
+        sys.stderr.write("Windows target\n")
         for proc in psutil.process_iter():
             if "python" in proc.name():
                 arguments = " ".join(proc.cmdline())
