@@ -47,6 +47,15 @@ class DataMeta(type):
 
         raw_cls = type.__new__(cls, name, bases, nmspc)
 
+        # Sanity checks: class SCHEMA_CLS needs to define parents SCHEMA_CLS fields
+        schema_cls_fields = set(nmspc["SCHEMA_CLS"]._declared_fields)
+        bases_schema_cls = (base for base in bases if hasattr(base, "SCHEMA_CLS"))
+        for base in bases_schema_cls:
+            assert base.SCHEMA_CLS._declared_fields.keys() <= schema_cls_fields
+
+        # Sanity check: attr fields need to be defined in SCHEMA_CLS
+        if "__attrs_attrs__" in nmspc:
+            assert {att.name for att in nmspc["__attrs_attrs__"]} <= schema_cls_fields
         try:
             serializer_cls = raw_cls.SERIALIZER_CLS
         except AttributeError:
