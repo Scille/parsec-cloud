@@ -14,7 +14,6 @@ from parsec.core.gui.workspace_button import WorkspaceButton
 
 @pytest.mark.gui
 @pytest.mark.trio
-@pytest.mark.flaky(reruns=1)
 @pytest.mark.parametrize("invalid_name", (False, True))
 async def test_add_workspace(
     aqtbot, running_backend, logged_gui, monkeypatch, autoclose_dialog, invalid_name
@@ -30,7 +29,8 @@ async def test_add_workspace(
     monkeypatch.setattr(
         "parsec.core.gui.workspaces_widget.get_text_input", lambda *args, **kwargs: (workspace_name)
     )
-    await aqtbot.mouse_click(w_w.button_add_workspace, QtCore.Qt.LeftButton)
+    async with aqtbot.wait_signal(w_w.list_success, timeout=2000):
+        await aqtbot.mouse_click(w_w.button_add_workspace, QtCore.Qt.LeftButton)
 
     def _outcome_occured():
         assert w_w.layout_workspaces.count() == 1
@@ -56,7 +56,6 @@ async def test_add_workspace(
 
 @pytest.mark.gui
 @pytest.mark.trio
-@pytest.mark.flaky(reruns=1)
 @pytest.mark.parametrize("invalid_name", (False, True))
 async def test_rename_workspace(
     aqtbot, running_backend, logged_gui, monkeypatch, autoclose_dialog, invalid_name
@@ -65,7 +64,8 @@ async def test_rename_workspace(
 
     # Create a workspace and make sure the workspace is displayed
     core = logged_gui.test_get_core()
-    await core.user_fs.workspace_create("Workspace1")
+    async with aqtbot.wait_signal(w_w.list_success, timeout=2000):
+        await core.user_fs.workspace_create("Workspace1")
 
     def _workspace_displayed():
         assert w_w.layout_workspaces.count() == 1

@@ -82,7 +82,7 @@ QLabel {
        <number>10</number>
       </property>
       <item>
-       <widget class="QLabel" name="label_name">
+       <widget class="QLabel" name="label_organization">
         <property name="font">
          <font>
           <pointsize>11</pointsize>
@@ -96,7 +96,7 @@ QLabel {
        </widget>
       </item>
       <item>
-       <widget class="QLabel" name="label_organization">
+       <widget class="QLabel" name="label_name">
         <property name="font">
          <font>
           <pointsize>11</pointsize>
