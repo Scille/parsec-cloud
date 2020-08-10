@@ -7,8 +7,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PROJECT VERSION\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2020-08-06 10:09+0200\n"
-"PO-Revision-Date: 2020-08-06 09:59+0200\n"
+"POT-Creation-Date: 2020-08-10 13:34+0200\n"
+"PO-Revision-Date: 2020-08-10 13:35+0200\n"
 "Last-Translator: \n"
 "Language: fr\n"
 "Language-Team: fr <LL@li.org>\n"
@@ -1808,9 +1808,6 @@ msgstr "Connecté"
 msgid "TEXT_BACKEND_STATE_DISCONNECTED"
 msgstr "Déconnecté"
 
-msgid "TEXT_SYSTRAY_BACKEND_DISCONNECT_organization"
-msgstr "{organization}: Déconnecté"
-
 msgid "TEXT_BACKEND_STATE_API_MISMATCH_versions"
 msgstr "L'application n'est pas compatible avec le serveur"
 
@@ -1825,6 +1822,9 @@ msgstr "Inconnu"
 
 msgid "TEXT_BACKEND_STATE_CRASHED_cause"
 msgstr "La connexion au serveur a été perdue"
+
+msgid "TEXT_SYSTRAY_BACKEND_DISCONNECT_organization"
+msgstr "{organization}: Déconnecté"
 
 msgid "ACTION_MENU_DOCUMENTS"
 msgstr "Documents"
@@ -2118,11 +2118,12 @@ msgstr "Nom de l'organisation"
 
 msgid "ACTION_ACCEPT_CONTRACT"
 msgstr ""
-"J'accepte la <a href=\"https://parsec.cloud/pdf/Parsec-Privacy-Policy-fr.pdf\""
-" title=\"Politique de confidentialité\">Politique de Confidentialité</a> et les <a "
-"href=\"https://parsec.cloud/pdf/Parsec-CGVU-fr.pdf\" "
-"title=\"Condition Générales de vente ou d'Utilisation\">conditions générales de vente ou "
-"d'utilisation</a> de PARSEC"
+"J'accepte la <a href=\"https://parsec.cloud/pdf/Parsec-Privacy-Policy-"
+"fr.pdf\" title=\"Politique de confidentialité\">Politique de "
+"Confidentialité</a> et les <a href=\"https://parsec.cloud/pdf/Parsec-"
+"CGVU-fr.pdf\" title=\"Condition Générales de vente ou "
+"d'Utilisation\">conditions générales de vente ou d'utilisation</a> de "
+"PARSEC"
 
 msgid "ACTION_PREVIOUS"
 msgstr "Précédent"
@@ -2254,6 +2255,9 @@ msgstr ""
 "Standard : peut créer des espaces des travail et voir les autres "
 "utilisateurs, mais ne peut pas inviter de nouveaux utilisateurs\n"
 "Administrateur : peut inviter et supprimer des utilisateurs"
+
+msgid "TEXT_LABEL_USER_ROLE_RECOMMANDATIONS"
+msgstr "Veuillez choisir le rôle de l'utilisateur dans l'organisation. Il ne pourra pas être changé plus tard."
 
 msgid "TEXT_GREET_USER_CODE_EXCHANGE_GIVE_CODE_INSTRUCTIONS"
 msgstr "Veuillez donner le code suivant à l'utilisateur :"
@@ -2426,3 +2430,4 @@ msgstr "Créer un nouvel espace de travail"
 
 msgid "ACTION_WORKSPACE_GOTO_FILE_LINK"
 msgstr "Trouver un fichier via son lien"
+

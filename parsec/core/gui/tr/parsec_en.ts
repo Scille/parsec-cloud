@@ -678,38 +678,43 @@ p, li { white-space: pre-wrap; }
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../forms/greet_user_check_info_widget.ui" line="35"/>
+        <location filename="../forms/greet_user_check_info_widget.ui" line="40"/>
         <source>TEXT_GREET_USER_WAITING_FOR_INFO</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../forms/greet_user_check_info_widget.ui" line="75"/>
+        <location filename="../forms/greet_user_check_info_widget.ui" line="80"/>
         <source>TEXT_LABEL_USER_FULL_NAME</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../forms/greet_user_check_info_widget.ui" line="165"/>
+        <location filename="../forms/greet_user_check_info_widget.ui" line="170"/>
         <source>TEXT_LABEL_DEVICE</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../forms/greet_user_check_info_widget.ui" line="117"/>
+        <location filename="../forms/greet_user_check_info_widget.ui" line="122"/>
         <source>TEXT_LABEL_USER_EMAIL</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../forms/greet_user_check_info_widget.ui" line="252"/>
+        <location filename="../forms/greet_user_check_info_widget.ui" line="272"/>
         <source>ACTION_CREATE_USER</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../forms/greet_user_check_info_widget.ui" line="207"/>
+        <location filename="../forms/greet_user_check_info_widget.ui" line="212"/>
         <source>TEXT_LABEL_USER_ROLE</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../forms/greet_user_check_info_widget.ui" line="225"/>
+        <location filename="../forms/greet_user_check_info_widget.ui" line="230"/>
         <source>TEXT_USER_ROLES_TOOLTIP</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../forms/greet_user_check_info_widget.ui" line="245"/>
+        <source>TEXT_LABEL_USER_ROLE_RECOMMANDATIONS</source>
         <translation type="unfinished"></translation>
     </message>
 </context>

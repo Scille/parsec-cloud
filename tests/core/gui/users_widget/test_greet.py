@@ -260,6 +260,9 @@ def GreetUserTestBed(
                 assert guci_w.line_edit_user_full_name.text() == self.requested_human_handle.label
                 assert guci_w.line_edit_user_email.text() == self.requested_human_handle.email
                 assert guci_w.line_edit_device.text() == self.requested_device_label
+                assert guci_w.label_warning.text() == translate(
+                    "TEXT_LABEL_USER_ROLE_RECOMMANDATIONS"
+                )
 
             await aqtbot.wait_until(_check_info_displayed)
 
