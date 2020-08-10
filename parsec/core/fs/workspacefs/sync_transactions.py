@@ -329,9 +329,9 @@ class SyncTransactions(EntryTransactions):
                 new_name = get_conflict_filename(
                     filename, list(parent_manifest.children), remote_manifest.author
                 )
-                new_manifest = LocalFileManifest.new_placeholder(parent=parent_id).evolve(
-                    size=current_manifest.size, blocks=new_blocks
-                )
+                new_manifest = LocalFileManifest.new_placeholder(
+                    self.local_author, parent=parent_id
+                ).evolve(size=current_manifest.size, blocks=new_blocks)
                 new_parent_manifest = parent_manifest.evolve_children_and_mark_updated(
                     {new_name: new_manifest.id}
                 )

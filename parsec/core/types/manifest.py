@@ -337,6 +337,7 @@ class LocalFileManifest(BaseLocalManifest):
     @classmethod
     def new_placeholder(
         cls,
+        author: DeviceID,
         parent: EntryID,
         id: Optional[EntryID] = None,
         now: Pendulum = None,
@@ -346,7 +347,7 @@ class LocalFileManifest(BaseLocalManifest):
         blocks = ()
         return cls(
             base=RemoteFileManifest(
-                author=None,
+                author=author,
                 timestamp=now,
                 id=id or EntryID(),
                 parent=parent,
@@ -467,12 +468,14 @@ class LocalFolderManifest(BaseLocalManifest):
     children: FrozenDict[EntryName, EntryID]
 
     @classmethod
-    def new_placeholder(cls, parent: EntryID, id: EntryID = None, now: Pendulum = None):
+    def new_placeholder(
+        cls, author: DeviceID, parent: EntryID, id: EntryID = None, now: Pendulum = None
+    ):
         now = now or pendulum_now()
         children = FrozenDict()
         return cls(
             base=RemoteFolderManifest(
-                author=None,
+                author=author,
                 timestamp=now,
                 id=id or EntryID(),
                 parent=parent,
@@ -546,12 +549,12 @@ class LocalWorkspaceManifest(BaseLocalManifest):
     children: FrozenDict[EntryName, EntryID]
 
     @classmethod
-    def new_placeholder(cls, id: EntryID = None, now: Pendulum = None):
+    def new_placeholder(cls, author: DeviceID, id: EntryID = None, now: Pendulum = None):
         now = now or pendulum_now()
         children = FrozenDict()
         return cls(
             base=RemoteWorkspaceManifest(
-                author=None,
+                author=author,
                 timestamp=now,
                 id=id or EntryID(),
                 version=0,
@@ -621,12 +624,14 @@ class LocalUserManifest(BaseLocalManifest):
     workspaces: Tuple[WorkspaceEntry, ...]
 
     @classmethod
-    def new_placeholder(cls, id: EntryID = None, now: Pendulum = None) -> "LocalUserManifest":
+    def new_placeholder(
+        cls, author: DeviceID, id: EntryID = None, now: Pendulum = None
+    ) -> "LocalUserManifest":
         workspaces = ()
         now = now or pendulum_now()
         return cls(
             base=RemoteUserManifest(
-                author=None,
+                author=author,
                 timestamp=now,
                 id=id or EntryID(),
                 version=0,

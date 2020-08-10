@@ -304,7 +304,7 @@ class EntryTransactions(FileTransactions):
                 raise FSFileExistsError(filename=path)
 
             # Create folder
-            child = LocalFolderManifest.new_placeholder(parent=parent.id)
+            child = LocalFolderManifest.new_placeholder(self.local_author, parent=parent.id)
 
             # New parent manifest
             new_parent = parent.evolve_children_and_mark_updated({path.name: child.id})
@@ -334,7 +334,7 @@ class EntryTransactions(FileTransactions):
                 raise FSFileExistsError(filename=path)
 
             # Create file
-            child = LocalFileManifest.new_placeholder(parent=parent.id)
+            child = LocalFileManifest.new_placeholder(self.local_author, parent=parent.id)
 
             # New parent manifest
             new_parent = parent.evolve_children_and_mark_updated({path.name: child.id})

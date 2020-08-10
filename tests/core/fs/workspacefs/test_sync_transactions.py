@@ -56,7 +56,9 @@ def test_merge_folder_manifests():
     my_device = DeviceID("b@b")
     other_device = DeviceID("a@a")
     parent = EntryID()
-    v1 = LocalFolderManifest.new_placeholder(parent=parent).to_remote(author=other_device)
+    v1 = LocalFolderManifest.new_placeholder(my_device, parent=parent).to_remote(
+        author=other_device
+    )
 
     # Initial base manifest
     m1 = LocalFolderManifest.from_remote(v1)
@@ -105,7 +107,7 @@ def test_merge_manifests_with_a_placeholder():
     other_device = DeviceID("a@a")
     parent = EntryID()
 
-    m1 = LocalFolderManifest.new_placeholder(parent=parent)
+    m1 = LocalFolderManifest.new_placeholder(my_device, parent=parent)
     m2 = merge_manifests(my_device, m1)
     assert m2 == m1
     v1 = m1.to_remote(author=my_device)
@@ -128,7 +130,7 @@ def test_merge_file_manifests():
     my_device = DeviceID("b@b")
     other_device = DeviceID("a@a")
     parent = EntryID()
-    v1 = LocalFileManifest.new_placeholder(parent=parent).to_remote(author=other_device)
+    v1 = LocalFileManifest.new_placeholder(my_device, parent=parent).to_remote(author=other_device)
 
     def evolve(m, n):
         chunk = Chunk.new(0, n).evolve_as_block(b"a" * n)
