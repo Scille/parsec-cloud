@@ -19,7 +19,7 @@ class MessageContentType(Enum):
 
 
 @attr.s(slots=True, frozen=True, auto_attribs=True, kw_only=True, eq=False)
-class MessageContent(BaseAPISignedData):
+class BaseMessageContent(BaseAPISignedData):
     class SCHEMA_CLS(OneOfSchema, BaseSignedDataSchema):
         type_field = "type"
         author = DeviceIDField(required=True, allow_none=False)
@@ -40,7 +40,7 @@ class MessageContent(BaseAPISignedData):
 
 
 @attr.s(slots=True, frozen=True, auto_attribs=True, kw_only=True, eq=False)
-class SharingGrantedMessageContent(MessageContent):
+class SharingGrantedMessageContent(BaseMessageContent):
     class SCHEMA_CLS(BaseSignedDataSchema):
         type = fields.EnumCheckedConstant(MessageContentType.SHARING_GRANTED, required=True)
         name = fields.String(required=True)
@@ -81,7 +81,7 @@ class SharingReencryptedMessageContent(SharingGrantedMessageContent):
 
 
 @attr.s(slots=True, frozen=True, auto_attribs=True, kw_only=True, eq=False)
-class SharingRevokedMessageContent(MessageContent):
+class SharingRevokedMessageContent(BaseMessageContent):
     class SCHEMA_CLS(BaseSignedDataSchema):
         type = fields.EnumCheckedConstant(MessageContentType.SHARING_REVOKED, required=True)
         id = EntryIDField(required=True)
@@ -96,7 +96,7 @@ class SharingRevokedMessageContent(MessageContent):
 
 
 @attr.s(slots=True, frozen=True, auto_attribs=True, kw_only=True, eq=False)
-class PingMessageContent(MessageContent):
+class PingMessageContent(BaseMessageContent):
     class SCHEMA_CLS(BaseSignedDataSchema):
         type = fields.EnumCheckedConstant(MessageContentType.PING, required=True)
         ping = fields.String(required=True)

@@ -14,7 +14,7 @@ from parsec.crypto import SecretKey
 from parsec.api.data import (
     DataError,
     RealmRoleCertificateContent,
-    MessageContent,
+    BaseMessageContent,
     SharingGrantedMessageContent,
     SharingReencryptedMessageContent,
     SharingRevokedMessageContent,
@@ -724,7 +724,7 @@ class UserFS:
 
         # Decrypt&verify message
         try:
-            msg = MessageContent.decrypt_verify_and_load_for(
+            msg = BaseMessageContent.decrypt_verify_and_load_for(
                 ciphered,
                 recipient_privkey=self.device.private_key,
                 author_verify_key=sender.verify_key,

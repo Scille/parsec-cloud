@@ -107,7 +107,7 @@ class VerifyParentMixin:
 
 
 @attr.s(slots=True, frozen=True, auto_attribs=True, kw_only=True, eq=False)
-class Manifest(BaseAPISignedData):
+class BaseManifest(BaseAPISignedData):
     class SCHEMA_CLS(OneOfSchema, BaseSignedDataSchema):
         type_field = "type"
         version = fields.Integer(required=True, validate=validate.Range(min=0))
@@ -133,7 +133,7 @@ class Manifest(BaseAPISignedData):
         expected_id: Optional[EntryID] = None,
         expected_version: Optional[int] = None,
         **kwargs,
-    ) -> "Manifest":
+    ) -> "BaseManifest":
         data = super().verify_and_load(*args, **kwargs)
         if data.author is None and data.version != 0:
             raise DataValidationError("Manifest cannot be signed by root verify key")
@@ -149,7 +149,7 @@ class Manifest(BaseAPISignedData):
 
 
 @attr.s(slots=True, frozen=True, auto_attribs=True, kw_only=True, eq=False)
-class FolderManifest(VerifyParentMixin, Manifest):
+class FolderManifest(VerifyParentMixin, BaseManifest):
     class SCHEMA_CLS(BaseSignedDataSchema):
         type = fields.EnumCheckedConstant(ManifestType.FOLDER_MANIFEST, required=True)
         id = EntryIDField(required=True)
@@ -177,7 +177,7 @@ class FolderManifest(VerifyParentMixin, Manifest):
 
 
 @attr.s(slots=True, frozen=True, auto_attribs=True, kw_only=True, eq=False)
-class FileManifest(VerifyParentMixin, Manifest):
+class FileManifest(VerifyParentMixin, BaseManifest):
     class SCHEMA_CLS(BaseSignedDataSchema):
         type = fields.EnumCheckedConstant(ManifestType.FILE_MANIFEST, required=True)
         id = EntryIDField(required=True)
@@ -205,7 +205,7 @@ class FileManifest(VerifyParentMixin, Manifest):
 
 
 @attr.s(slots=True, frozen=True, auto_attribs=True, kw_only=True, eq=False)
-class WorkspaceManifest(Manifest):
+class WorkspaceManifest(BaseManifest):
     class SCHEMA_CLS(BaseSignedDataSchema):
         type = fields.EnumCheckedConstant(ManifestType.WORKSPACE_MANIFEST, required=True)
         id = EntryIDField(required=True)
@@ -231,7 +231,7 @@ class WorkspaceManifest(Manifest):
 
 
 @attr.s(slots=True, frozen=True, auto_attribs=True, kw_only=True, eq=False)
-class UserManifest(Manifest):
+class UserManifest(BaseManifest):
     class SCHEMA_CLS(BaseSignedDataSchema):
         type = fields.EnumCheckedConstant(ManifestType.USER_MANIFEST, required=True)
         id = EntryIDField(required=True)

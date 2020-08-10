@@ -26,7 +26,7 @@ from parsec.core.types.manifest import (
 )
 from parsec.core.types.manifest import (
     LocalUserManifest,
-    LocalManifest,
+    BaseLocalManifest,
     WorkspaceEntry,
     WorkspaceRole,
     BlockAccess,
@@ -73,7 +73,7 @@ __all__ = (
     "LocalFolderManifest",
     "LocalWorkspaceManifest",
     "LocalUserManifest",
-    "LocalManifest",
+    "BaseLocalManifest",
     "WorkspaceEntry",
     "WorkspaceRole",
     "BlockAccess",

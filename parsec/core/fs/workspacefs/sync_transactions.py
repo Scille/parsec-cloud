@@ -6,12 +6,12 @@ from typing import Optional, List, Dict, AsyncIterator, cast, Tuple, Any, Union
 
 from pendulum import now as pendulum_now
 from parsec.api.protocol import DeviceID
-from parsec.api.data import Manifest as RemoteManifest
+from parsec.api.data import BaseManifest as BaseRemoteManifest
 from parsec.core.types import (
     Chunk,
     EntryID,
     EntryName,
-    LocalManifest,
+    BaseLocalManifest,
     LocalFileManifest,
     LocalFolderManifest,
     LocalFolderishManifests,
@@ -141,8 +141,8 @@ def merge_folder_children(
 
 def merge_manifests(
     local_author: DeviceID,
-    local_manifest: LocalManifest,
-    remote_manifest: Optional[RemoteManifest] = None,
+    local_manifest: BaseLocalManifest,
+    remote_manifest: Optional[BaseRemoteManifest] = None,
 ):
     # Exctract versions
     local_version = local_manifest.base_version
@@ -152,17 +152,17 @@ def merge_manifests(
     if remote_version <= local_version:
         return local_manifest
 
-    remote_manifest = cast(RemoteManifest, remote_manifest)
+    remote_manifest = cast(BaseRemoteManifest, remote_manifest)
     # Only the remote has changed
     if not local_manifest.need_sync:
-        return LocalManifest.from_remote(remote_manifest)
+        return BaseLocalManifest.from_remote(remote_manifest)
 
     # Both the remote and the local have changed
     assert remote_version > local_version and local_manifest.need_sync
 
     # All the local changes have been successfully uploaded
     if local_manifest.match_remote(remote_manifest):
-        return LocalManifest.from_remote(remote_manifest)
+        return BaseLocalManifest.from_remote(remote_manifest)
 
     # The remote changes are ours, simply acknowledge them and keep our local changes
     if remote_manifest.author == local_author:
@@ -201,7 +201,7 @@ class SyncTransactions(EntryTransactions):
             if child_manifest.is_placeholder:
                 yield chield_entry_id
 
-    async def get_minimal_remote_manifest(self, entry_id: EntryID) -> Optional[RemoteManifest]:
+    async def get_minimal_remote_manifest(self, entry_id: EntryID) -> Optional[BaseRemoteManifest]:
         manifest = await self.local_storage.get_manifest(entry_id)
         if not manifest.is_placeholder:
             return None
@@ -212,9 +212,9 @@ class SyncTransactions(EntryTransactions):
     async def synchronization_step(
         self,
         entry_id: EntryID,
-        remote_manifest: Optional[RemoteManifest] = None,
+        remote_manifest: Optional[BaseRemoteManifest] = None,
         final: bool = False,
-    ) -> Optional[RemoteManifest]:
+    ) -> Optional[BaseRemoteManifest]:
         """Perform a synchronization step.
 
         This step is meant to be called several times until the right state is reached.
@@ -296,7 +296,7 @@ class SyncTransactions(EntryTransactions):
         self,
         entry_id: EntryID,
         local_manifest: Union[LocalFolderManifest, LocalFileManifest],
-        remote_manifest: RemoteManifest,
+        remote_manifest: BaseRemoteManifest,
     ) -> None:
         # This is the only transaction that affects more than one manifests
         # That's because the local version of the file has to be registered in the
@@ -337,7 +337,7 @@ class SyncTransactions(EntryTransactions):
                 new_parent_manifest = parent_manifest.evolve_children_and_mark_updated(
                     {new_name: new_manifest.id}
                 )
-                other_manifest = LocalManifest.from_remote(remote_manifest)
+                other_manifest = BaseLocalManifest.from_remote(remote_manifest)
 
                 # Set manifests
                 await self.local_storage.set_manifest(

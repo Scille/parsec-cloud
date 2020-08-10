@@ -6,7 +6,7 @@ from typing import Dict, Tuple, Set, Optional, Union
 from async_generator import asynccontextmanager
 
 from parsec.core.fs.exceptions import FSLocalMissError
-from parsec.core.types import EntryID, ChunkID, LocalDevice, LocalManifest, BlockID
+from parsec.core.types import EntryID, ChunkID, LocalDevice, BaseLocalManifest, BlockID
 from parsec.core.fs.storage.local_database import LocalDatabase
 
 logger = get_logger()
@@ -25,7 +25,7 @@ class ManifestStorage:
 
         # This cache contains all the manifests that have been set or accessed
         # since the last call to `clear_memory_cache`
-        self._cache: Dict[EntryID, LocalManifest] = {}
+        self._cache: Dict[EntryID, BaseLocalManifest] = {}
 
         # This dictionnary keeps track of all the entry ids of the manifests
         # that have been added to the cache but still needs to be written to
@@ -138,7 +138,7 @@ class ManifestStorage:
 
     # Manifest operations
 
-    async def get_manifest(self, entry_id: EntryID) -> LocalManifest:
+    async def get_manifest(self, entry_id: EntryID) -> BaseLocalManifest:
         """
         Raises:
             FSLocalMissError
@@ -160,7 +160,7 @@ class ManifestStorage:
 
         # Safely fill the cache
         if entry_id not in self._cache:
-            self._cache[entry_id] = LocalManifest.decrypt_and_load(
+            self._cache[entry_id] = BaseLocalManifest.decrypt_and_load(
                 manifest_row[0], key=self.device.local_symkey
             )
 
@@ -170,7 +170,7 @@ class ManifestStorage:
     async def set_manifest(
         self,
         entry_id: EntryID,
-        manifest: LocalManifest,
+        manifest: BaseLocalManifest,
         cache_only: bool = False,
         removed_ids: Optional[Set[Union[ChunkID, BlockID]]] = None,
     ) -> None:

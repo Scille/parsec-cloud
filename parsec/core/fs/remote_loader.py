@@ -12,7 +12,7 @@ from parsec.api.data import (
     DataError,
     BlockAccess,
     RealmRoleCertificateContent,
-    Manifest as RemoteManifest,
+    BaseManifest as BaseRemoteManifest,
 )
 
 from parsec.core.types import EntryID, ChunkID
@@ -322,7 +322,7 @@ class RemoteLoader:
         version: Optional[int] = None,
         timestamp: Optional[Pendulum] = None,
         expected_backend_timestamp: Optional[Pendulum] = None,
-    ) -> RemoteManifest:
+    ) -> BaseRemoteManifest:
         """
         Download a manifest.
 
@@ -394,7 +394,7 @@ class RemoteLoader:
             author = await self.remote_devices_manager.get_device(expected_author)
 
         try:
-            remote_manifest = RemoteManifest.decrypt_verify_and_load(
+            remote_manifest = BaseRemoteManifest.decrypt_verify_and_load(
                 rep["blob"],
                 key=workspace_entry.key,
                 author_verify_key=author.verify_key,
@@ -465,7 +465,7 @@ class RemoteLoader:
         elif rep["status"] != "ok":
             raise FSError(f"Cannot create realm {realm_id}: `{rep['status']}`")
 
-    async def upload_manifest(self, entry_id: EntryID, manifest: RemoteManifest):
+    async def upload_manifest(self, entry_id: EntryID, manifest: BaseRemoteManifest):
         """
         Raises:
             FSError
@@ -601,7 +601,7 @@ class RemoteLoaderTimestamped(RemoteLoader):
         version: Optional[int] = None,
         timestamp: Optional[Pendulum] = None,
         expected_backend_timestamp: Optional[Pendulum] = None,
-    ) -> RemoteManifest:
+    ) -> BaseRemoteManifest:
         """
         Allows to have manifests at all timestamps as it is needed by the versions method of either
         a WorkspaceFS or a WorkspaceFSTimestamped

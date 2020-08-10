@@ -6,7 +6,7 @@ from collections import defaultdict
 from typing import Union, List, Dict, Tuple, AsyncIterator, cast
 from pendulum import Pendulum, now as pendulum_now
 
-from parsec.api.data import Manifest as RemoteManifest
+from parsec.api.data import BaseManifest as BaseRemoteManifest
 from parsec.api.data import FileManifest as RemoteFileManifest
 from parsec.api.protocol import UserID
 from parsec.core.types import (
@@ -494,7 +494,9 @@ class WorkspaceFS:
         except FSLocalMissError:
             pass
 
-    async def _sync_by_id(self, entry_id: EntryID, remote_changed: bool = True) -> RemoteManifest:
+    async def _sync_by_id(
+        self, entry_id: EntryID, remote_changed: bool = True
+    ) -> BaseRemoteManifest:
         """
         Synchronize the entry corresponding to a specific ID.
 

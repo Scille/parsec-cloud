@@ -8,10 +8,11 @@ from parsec.serde import BaseSerializer, JSONSerializer, MsgpackSerializer, ZipM
 from parsec.serde.fields import List, Map, Tuple, Nested, CheckedConstant, EnumCheckedConstant
 
 from parsec.api.data.base import BaseSignedData, BaseData
-from parsec.api.data.manifest import Manifest
+from parsec.api.data.manifest import BaseManifest
+from parsec.api.data.message import BaseMessageContent
 
 from parsec.core.types.base import BaseLocalData
-from parsec.core.types.manifest import LocalManifest
+from parsec.core.types.manifest import BaseLocalManifest
 
 
 _SERIALIZER_TO_STR = {
@@ -20,7 +21,14 @@ _SERIALIZER_TO_STR = {
     ZipMsgpackSerializer: "zip+msgpack",
     BaseSerializer: None,  # Not serializable
 }
-_BASE_DATA_CLASSES = (BaseData, BaseSignedData, BaseLocalData, Manifest, LocalManifest)
+_BASE_DATA_CLASSES = (
+    BaseData,
+    BaseSignedData,
+    BaseLocalData,
+    BaseManifest,
+    BaseLocalManifest,
+    BaseMessageContent,
+)
 
 
 def field_to_spec(field):

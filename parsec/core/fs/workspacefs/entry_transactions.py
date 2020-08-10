@@ -8,7 +8,7 @@ from parsec.core.types import (
     EntryID,
     FsPath,
     WorkspaceRole,
-    LocalManifest,
+    BaseLocalManifest,
     LocalFileManifest,
     LocalFolderManifest,
     FileDescriptor,
@@ -50,12 +50,12 @@ class EntryTransactions(FileTransactions):
 
     # Look-up helpers
 
-    async def _get_manifest(self, entry_id: EntryID) -> LocalManifest:
+    async def _get_manifest(self, entry_id: EntryID) -> BaseLocalManifest:
         try:
             return await self.local_storage.get_manifest(entry_id)
         except FSLocalMissError as exc:
             remote_manifest = await self.remote_loader.load_manifest(cast(EntryID, exc.id))
-            return LocalManifest.from_remote(remote_manifest)
+            return BaseLocalManifest.from_remote(remote_manifest)
 
     @asynccontextmanager
     async def _load_and_lock_manifest(self, entry_id: EntryID):
@@ -64,16 +64,16 @@ class EntryTransactions(FileTransactions):
                 local_manifest = await self.local_storage.get_manifest(entry_id)
             except FSLocalMissError as exc:
                 remote_manifest = await self.remote_loader.load_manifest(cast(EntryID, exc.id))
-                local_manifest = LocalManifest.from_remote(remote_manifest)
+                local_manifest = BaseLocalManifest.from_remote(remote_manifest)
                 await self.local_storage.set_manifest(entry_id, local_manifest)
             yield local_manifest
 
-    async def _load_manifest(self, entry_id: EntryID) -> LocalManifest:
+    async def _load_manifest(self, entry_id: EntryID) -> BaseLocalManifest:
         async with self._load_and_lock_manifest(entry_id) as manifest:
             return manifest
 
     @asynccontextmanager
-    async def _lock_manifest_from_path(self, path: FsPath) -> AsyncIterator[LocalManifest]:
+    async def _lock_manifest_from_path(self, path: FsPath) -> AsyncIterator[BaseLocalManifest]:
         # Root entry_id and manifest
         entry_id = self.workspace_id
 
@@ -91,14 +91,14 @@ class EntryTransactions(FileTransactions):
         async with self._load_and_lock_manifest(entry_id) as manifest:
             yield manifest
 
-    async def _get_manifest_from_path(self, path: FsPath) -> LocalManifest:
+    async def _get_manifest_from_path(self, path: FsPath) -> BaseLocalManifest:
         async with self._lock_manifest_from_path(path) as manifest:
             return manifest
 
     @asynccontextmanager
     async def _lock_parent_manifest_from_path(
         self, path: FsPath
-    ) -> AsyncIterator[Tuple[LocalManifest, Optional[LocalManifest]]]:
+    ) -> AsyncIterator[Tuple[BaseLocalManifest, Optional[BaseLocalManifest]]]:
         # This is the most complicated locking scenario.
         # It requires locking the parent of the given entry and the entry itself
         # if it exists.
