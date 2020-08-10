@@ -473,25 +473,10 @@
         },
         "serializing": "zip+msgpack"
     },
-    "MessageContent": {
-        "fields": {
-            "author": {
-                "allow_none": false,
-                "required": true,
-                "type": "DeviceIDField"
-            },
-            "timestamp": {
-                "allow_none": false,
-                "required": true,
-                "type": "DateTime"
-            }
-        },
-        "serializing": "zip+msgpack"
-    },
     "PingMessageContent": {
         "fields": {
             "author": {
-                "allow_none": true,
+                "allow_none": false,
                 "required": true,
                 "type": "DeviceIDField"
             },
@@ -671,7 +656,7 @@
     "SharingRevokedMessageContent": {
         "fields": {
             "author": {
-                "allow_none": true,
+                "allow_none": false,
                 "required": true,
                 "type": "DeviceIDField"
             },

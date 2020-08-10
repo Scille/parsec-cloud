@@ -44,11 +44,11 @@ class SharingGrantedMessageContent(MessageContent):
     class SCHEMA_CLS(BaseSignedDataSchema):
         type = fields.EnumCheckedConstant(MessageContentType.SHARING_GRANTED, required=True)
         name = fields.String(required=True)
-        author = DeviceIDField(required=True, allow_none=False)
         id = EntryIDField(required=True)
         encryption_revision = fields.Integer(required=True)
         encrypted_on = fields.DateTime(required=True)
         key = fields.SecretKey(required=True)
+        author = DeviceIDField(required=True, allow_none=False)
         # Don't include role given the only reliable way to get this information
         # is to fetch the realm role certificate from the backend.
         # Besides, we will also need the message sender's realm role certificate
@@ -85,6 +85,7 @@ class SharingRevokedMessageContent(MessageContent):
     class SCHEMA_CLS(BaseSignedDataSchema):
         type = fields.EnumCheckedConstant(MessageContentType.SHARING_REVOKED, required=True)
         id = EntryIDField(required=True)
+        author = DeviceIDField(required=True, allow_none=False)
 
         @post_load
         def make_obj(self, data):
@@ -99,6 +100,7 @@ class PingMessageContent(MessageContent):
     class SCHEMA_CLS(BaseSignedDataSchema):
         type = fields.EnumCheckedConstant(MessageContentType.PING, required=True)
         ping = fields.String(required=True)
+        author = DeviceIDField(required=True, allow_none=False)
 
         @post_load
         def make_obj(self, data):

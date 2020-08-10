@@ -78,7 +78,9 @@ def collect_data_classes_from_module(mod):
         # to check them (note they will be checked if they used in Nested field)
         if item.SERIALIZER_CLS is BaseSerializer:
             continue
-        # Ignore imported classes
+        # Ignore imported classes (avoid to populate current module collection
+        # with extenal imported schema.
+        # Example: Avoid to add imported api schemas while generating parsec.core.types)
         if not item.__module__.startswith(mod.__name__):
             continue
         data_classes.append(item)
