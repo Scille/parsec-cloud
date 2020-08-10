@@ -322,7 +322,7 @@ extra_requirements = {
         PYQT_DEP,
         BABEL_DEP,
         'fusepy==3.0.1;platform_system=="Linux"',
-        'winfspy==0.7.5;platform_system=="Windows"',
+        'winfspy==0.8.0;platform_system=="Windows"',
         "zxcvbn==4.4.27",
         "psutil==5.6.3",
     ],
