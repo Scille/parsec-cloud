@@ -126,7 +126,7 @@
     "FileManifest": {
         "fields": {
             "author": {
-                "allow_none": true,
+                "allow_none": false,
                 "required": true,
                 "type": "DeviceIDField"
             },
@@ -221,7 +221,7 @@
     "FolderManifest": {
         "fields": {
             "author": {
-                "allow_none": true,
+                "allow_none": false,
                 "required": true,
                 "type": "DeviceIDField"
             },
@@ -483,7 +483,7 @@
     "RealmRoleCertificateContent": {
         "fields": {
             "author": {
-                "allow_none": true,
+                "allow_none": false,
                 "required": true,
                 "type": "DeviceIDField"
             },
@@ -519,7 +519,7 @@
     "RevokedUserCertificateContent": {
         "fields": {
             "author": {
-                "allow_none": true,
+                "allow_none": false,
                 "required": true,
                 "type": "DeviceIDField"
             },
@@ -721,7 +721,7 @@
     "UserManifest": {
         "fields": {
             "author": {
-                "allow_none": true,
+                "allow_none": false,
                 "required": true,
                 "type": "DeviceIDField"
             },
@@ -816,7 +816,7 @@
     "WorkspaceManifest": {
         "fields": {
             "author": {
-                "allow_none": true,
+                "allow_none": false,
                 "required": true,
                 "type": "DeviceIDField"
             },
