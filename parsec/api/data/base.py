@@ -29,7 +29,7 @@ class DataSerializationError(SerdePackingError, DataError):
 
 
 class BaseSignedDataSchema(BaseSchema):
-    author = DeviceIDField(required=True, allow_none=True)
+    author = DeviceIDField(required=True, allow_none=False)
     timestamp = fields.DateTime(required=True)
 
 
@@ -90,7 +90,7 @@ class BaseSignedData(metaclass=SignedDataMeta):
     SCHEMA_CLS = BaseSignedDataSchema
     SERIALIZER_CLS = BaseSerializer
 
-    author: Optional[DeviceID]  # Set to None if signed by the root key
+    author: DeviceID
     timestamp: Pendulum
 
     def __eq__(self, other: Any) -> bool:

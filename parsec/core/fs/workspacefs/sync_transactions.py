@@ -40,9 +40,7 @@ def get_filename(manifest: LocalFolderishManifests, entry_id: EntryID) -> Option
     return next(gen, None)
 
 
-def get_conflict_filename(
-    filename: EntryName, filenames: List[EntryName], author: Optional[DeviceID]
-):
+def get_conflict_filename(filename: EntryName, filenames: List[EntryName], author: DeviceID):
     counter = count(2)
     new_filename = full_name(filename, [f"conflicting with {author}"])
     while new_filename in filenames:
@@ -72,7 +70,7 @@ def merge_folder_children(
     base_children: Dict[EntryName, EntryID],
     local_children: Dict[EntryName, EntryID],
     remote_children: Dict[EntryName, EntryID],
-    remote_device_name: Optional[DeviceID],
+    remote_device_name: DeviceID,
 ):
     # Prepare lookups
     base_reversed = {entry_id: name for name, entry_id in base_children.items()}
