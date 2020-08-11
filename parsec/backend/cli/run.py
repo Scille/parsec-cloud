@@ -14,6 +14,7 @@ from parsec.backend import backend_app_factory
 from parsec.backend.config import (
     BackendConfig,
     EmailConfig,
+    MockedEmailConfig,
     MockedBlockStoreConfig,
     PostgreSQLBlockStoreConfig,
     S3BlockStoreConfig,
@@ -170,6 +171,9 @@ class DevOption(click.Option):
             for key, value in (
                 ("debug", True),
                 ("db", "MOCKED"),
+                ("backend_addr", "parsec://localhost"),
+                ("email_sender", "no-reply@parsec.com"),
+                ("email_host", "MOCKED"),
                 ("blockstore", ("MOCKED",)),
                 ("administration_token", "s3cr3t"),
             ):
@@ -295,10 +299,16 @@ organization_id, device_id, device_label (can be null), human_email (can be null
 @click.option(
     "--backend-addr",
     envvar="PARSEC_BACKEND_ADDR",
+    required=True,
     type=BackendAddr.from_url,
     help="URL to reach this server (typically used in invitation emails)",
 )
-@click.option("--email-host", envvar="PARSEC_EMAIL_HOST", help="The host to use for sending email")
+@click.option(
+    "--email-host",
+    envvar="PARSEC_EMAIL_HOST",
+    required=True,
+    help="The host to use for sending email",
+)
 @click.option(
     "--email-port",
     envvar="PARSEC_EMAIL_PORT",
@@ -342,7 +352,10 @@ organization_id, device_id, device_label (can be null), human_email (can be null
     ),
 )
 @click.option(
-    "--email-sender", envvar="PARSEC_EMAIL_SENDER", help="Sender address used in sent emails"
+    "--email-sender",
+    envvar="PARSEC_EMAIL_SENDER",
+    required=True,
+    help="Sender address used in sent emails",
 )
 @click.option(
     "--ssl-keyfile",
@@ -376,7 +389,7 @@ organization_id, device_id, device_label (can be null), human_email (can be null
     cls=DevOption,
     is_flag=True,
     is_eager=True,
-    help="Equivalent to `--debug --db=MOCKED --email-host=MOCKED --blockstore=MOCKED --administration-token=s3cr3t`",
+    help="Equivalent to `--debug --db=MOCKED --backend-addr=localhost --email-sender=no-reply@parsec.com --email-host=MOCKED --blockstore=MOCKED --administration-token=s3cr3t`",
 )
 def run_cmd(
     host,
@@ -425,7 +438,9 @@ def run_cmd(
         else:
             ssl_context = None
 
-        if email_host:
+        if email_host == "MOCKED":
+            email_config = MockedEmailConfig(sender=email_sender)
+        else:
             if not email_sender:
                 raise ValueError("--email-sender is required when --email-host is provided")
             email_config = EmailConfig(
@@ -437,8 +452,6 @@ def run_cmd(
                 use_tls=email_use_tls,
                 sender=email_sender,
             )
-        else:
-            email_config = None
 
         config = BackendConfig(
             administration_token=administration_token,
@@ -474,7 +487,7 @@ def run_cmd(
 
         click.echo(
             f"Starting Parsec Backend on {host}:{port} (db={config.db_type}, "
-            f"blockstore={config.blockstore_config.type})"
+            f"blockstore={config.blockstore_config.type}, backend_addr={config.backend_addr}"
         )
         try:
             trio_run(_run_backend, use_asyncio=True)

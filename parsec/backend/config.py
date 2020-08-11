@@ -75,6 +75,11 @@ class EmailConfig:
 
 
 @attr.s(slots=True, frozen=True, auto_attribs=True)
+class MockedEmailConfig:
+    sender: str
+
+
+@attr.s(slots=True, frozen=True, auto_attribs=True)
 class BackendConfig:
     administration_token: str
 
