@@ -15,6 +15,7 @@ from parsec.core.backend_connection import (
     BackendConnectionRefused,
     BackendNotAvailable,
 )
+from parsec.core.invite.claimer import InviteAlreadyUsedError
 from parsec.core.gui import validators
 from parsec.core.gui.trio_thread import JobResultError, ThreadSafeQtSignal, QtToTrioJob
 from parsec.core.gui.desktop import get_default_device
@@ -561,7 +562,9 @@ class ClaimDeviceWidget(QWidget, Ui_ClaimDeviceWidget):
             self.dialog.reject()
             return
         # No reason to restart the process if offline, simply close the dialog
-        if job is not None and isinstance(job.exc.params.get("origin", None), BackendNotAvailable):
+        if job is not None and isinstance(
+            job.exc.params.get("origin", None), (BackendNotAvailable, InviteAlreadyUsedError)
+        ):
             self.dialog.reject()
             return
         # Let's try one more time with the same dialog
