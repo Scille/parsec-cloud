@@ -2,7 +2,7 @@
 
 import attr
 import functools
-from typing import Optional, Tuple
+from typing import Optional, Tuple, TypeVar, Type, Union, NoReturn
 from pendulum import Pendulum, now as pendulum_now
 
 from parsec.types import UUID4, FrozenDict
@@ -15,7 +15,7 @@ from parsec.api.data import (
     WorkspaceEntry,
     BlockAccess,
     BlockID,
-    Manifest as RemoteManifest,
+    BaseManifest as BaseRemoteManifest,
     UserManifest as RemoteUserManifest,
     WorkspaceManifest as RemoteWorkspaceManifest,
     FolderManifest as RemoteFolderManifest,
@@ -51,6 +51,7 @@ ChunkIDField = fields.uuid_based_field_factory(ChunkID)
 
 
 @functools.total_ordering
+@attr.s(slots=True, frozen=True, auto_attribs=True, kw_only=True, eq=False)
 class Chunk(BaseData):
     """Represents a chunk of a data in file manifest.
 
@@ -179,7 +180,7 @@ class Chunk(BaseData):
 
     # Export
 
-    def get_block_access(self) -> BlockAccess:
+    def get_block_access(self) -> Optional[BlockAccess]:
         if not self.is_block:
             raise TypeError("This chunk does not correspond to a block")
         return self.access
@@ -195,9 +196,29 @@ class LocalManifestType(Enum):
     LOCAL_USER_MANIFEST = "local_user_manifest"
 
 
-class LocalManifest(BaseLocalData):
+LocalManifestTypeVar = TypeVar("LocalManifestTypeVar", bound="BaseLocalManifest")
+LocalFileManifestTypeVar = TypeVar("LocalFileManifestTypeVar", bound="LocalFileManifest")
+LocalFolderManifestTypeVar = TypeVar("LocalFolderManifestTypeVar", bound="LocalFolderManifest")
+LocalWorkspaceManifestTypeVar = TypeVar(
+    "LocalWorkspaceManifestTypeVar", bound="LocalWorkspaceManifest"
+)
+LocalUserManifestTypeVar = TypeVar("LocalUserManifestTypeVar", bound="LocalUserManifest")
+LocalManifestsTypeVar = Union[
+    LocalManifestTypeVar,
+    LocalFileManifestTypeVar,
+    LocalFolderManifestTypeVar,
+    LocalWorkspaceManifestTypeVar,
+    LocalUserManifestTypeVar,
+]
+
+
+@attr.s(slots=True, frozen=True, auto_attribs=True, kw_only=True, eq=False)
+class BaseLocalManifest(BaseLocalData):
     class SCHEMA_CLS(OneOfSchema, BaseSchema):
         type_field = "type"
+        base = fields.Nested(BaseRemoteManifest.SCHEMA_CLS, required=True)
+        need_sync = fields.Boolean(required=True)
+        updated = fields.DateTime(required=True)
 
         @property
         def type_schemas(self):
@@ -210,6 +231,10 @@ class LocalManifest(BaseLocalData):
 
         def get_obj_type(self, obj):
             return obj["type"]
+
+    need_sync: bool
+    updated: Pendulum
+    base: BaseRemoteManifest  # base must be overwritten in subclass
 
     # Properties
 
@@ -231,7 +256,7 @@ class LocalManifest(BaseLocalData):
 
     # Evolve methods
 
-    def evolve_and_mark_updated(self, **data) -> "LocalManifest":
+    def evolve_and_mark_updated(self: LocalManifestTypeVar, **data) -> LocalManifestTypeVar:
         if "updated" not in data:
             data["updated"] = pendulum_now()
         data.setdefault("need_sync", True)
@@ -240,7 +265,9 @@ class LocalManifest(BaseLocalData):
     # Remote methods
 
     @classmethod
-    def from_remote(cls, remote: RemoteManifest) -> "LocalManifest":
+    def from_remote(
+        cls: Type[LocalManifestTypeVar], remote: BaseRemoteManifest
+    ) -> LocalManifestsTypeVar:
         if isinstance(remote, RemoteFileManifest):
             return LocalFileManifest.from_remote(remote)
         elif isinstance(remote, RemoteFolderManifest):
@@ -249,12 +276,13 @@ class LocalManifest(BaseLocalData):
             return LocalWorkspaceManifest.from_remote(remote)
         elif isinstance(remote, RemoteUserManifest):
             return LocalUserManifest.from_remote(remote)
+        raise ValueError("Wrong remote type")
 
-    def to_remote(self) -> RemoteManifest:
+    def to_remote(self, author: Optional[DeviceID], timestamp: Pendulum = None) -> NoReturn:
         raise NotImplementedError
 
-    def match_remote(self, remote_manifest: RemoteFileManifest) -> bool:
-        reference = self.to_remote(
+    def match_remote(self, remote_manifest: BaseRemoteManifest) -> bool:
+        reference: BaseRemoteManifest = self.to_remote(
             author=remote_manifest.author, timestamp=remote_manifest.timestamp
         )
         return reference.evolve(version=remote_manifest.version) == remote_manifest
@@ -283,7 +311,8 @@ class LocalManifest(BaseLocalData):
         return dct
 
 
-class LocalFileManifest(LocalManifest):
+@attr.s(slots=True, frozen=True, auto_attribs=True, kw_only=True, eq=False)
+class LocalFileManifest(BaseLocalManifest):
     class SCHEMA_CLS(BaseSchema):
         type = fields.EnumCheckedConstant(LocalManifestType.LOCAL_FILE_MANIFEST, required=True)
         base = fields.Nested(RemoteFileManifest.SCHEMA_CLS, required=True)
@@ -301,15 +330,17 @@ class LocalFileManifest(LocalManifest):
             return LocalFileManifest(**data)
 
     base: RemoteFileManifest
-    need_sync: bool
-    updated: Pendulum
     size: int
     blocksize: int
-    blocks: Tuple[Tuple[Chunk], ...]
+    blocks: Tuple[Tuple[Chunk, ...], ...]
 
     @classmethod
     def new_placeholder(
-        cls, parent: EntryID, id: EntryID = None, now: Pendulum = None, blocksize=DEFAULT_BLOCK_SIZE
+        cls,
+        parent: EntryID,
+        id: Optional[EntryID] = None,
+        now: Pendulum = None,
+        blocksize=DEFAULT_BLOCK_SIZE,
     ):
         now = now or pendulum_now()
         blocks = ()
@@ -379,7 +410,9 @@ class LocalFileManifest(LocalManifest):
     # Remote methods
 
     @classmethod
-    def from_remote(cls, remote: RemoteFileManifest) -> "LocalFileManifest":
+    def from_remote(
+        cls: Type[LocalFileManifestTypeVar], remote: RemoteFileManifest
+    ) -> LocalFileManifestTypeVar:
         return cls(
             base=remote,
             need_sync=False,
@@ -416,7 +449,8 @@ class LocalFileManifest(LocalManifest):
         return super().match_remote(remote_manifest)
 
 
-class LocalFolderManifest(LocalManifest):
+@attr.s(slots=True, frozen=True, auto_attribs=True, kw_only=True, eq=False)
+class LocalFolderManifest(BaseLocalManifest):
     class SCHEMA_CLS(BaseSchema):
         type = fields.EnumCheckedConstant(LocalManifestType.LOCAL_FOLDER_MANIFEST, required=True)
         base = fields.Nested(RemoteFolderManifest.SCHEMA_CLS, required=True)
@@ -430,8 +464,6 @@ class LocalFolderManifest(LocalManifest):
             return LocalFolderManifest(**data)
 
     base: RemoteFolderManifest
-    need_sync: bool
-    updated: Pendulum
     children: FrozenDict[EntryName, EntryID]
 
     @classmethod
@@ -496,7 +528,8 @@ class LocalFolderManifest(LocalManifest):
         )
 
 
-class LocalWorkspaceManifest(LocalManifest):
+@attr.s(slots=True, frozen=True, auto_attribs=True, kw_only=True, eq=False)
+class LocalWorkspaceManifest(BaseLocalManifest):
     class SCHEMA_CLS(BaseSchema):
         type = fields.EnumCheckedConstant(LocalManifestType.LOCAL_WORKSPACE_MANIFEST, required=True)
         base = fields.Nested(RemoteWorkspaceManifest.SCHEMA_CLS, required=True)
@@ -510,8 +543,6 @@ class LocalWorkspaceManifest(LocalManifest):
             return LocalWorkspaceManifest(**data)
 
     base: RemoteWorkspaceManifest
-    need_sync: bool
-    updated: Pendulum
     children: FrozenDict[EntryName, EntryID]
 
     @classmethod
@@ -569,7 +600,8 @@ class LocalWorkspaceManifest(LocalManifest):
         )
 
 
-class LocalUserManifest(LocalManifest):
+@attr.s(slots=True, frozen=True, auto_attribs=True, kw_only=True, eq=False)
+class LocalUserManifest(BaseLocalManifest):
     class SCHEMA_CLS(BaseSchema):
         type = fields.EnumCheckedConstant(LocalManifestType.LOCAL_USER_MANIFEST, required=True)
         base = fields.Nested(RemoteUserManifest.SCHEMA_CLS, required=True)
@@ -584,8 +616,7 @@ class LocalUserManifest(LocalManifest):
             return LocalUserManifest(**data)
 
     base: RemoteUserManifest
-    need_sync: bool
-    updated: Pendulum
+
     last_processed_message: int
     workspaces: Tuple[WorkspaceEntry, ...]
 

@@ -2,13 +2,14 @@
 
 import enum
 
-from parsec.api.data import WorkspaceManifest, FileManifest, FolderManifest, Manifest
+from typing import Union
+from parsec.api.data import WorkspaceManifest, FileManifest, FolderManifest, BaseManifest
 from parsec.core.types import (
     LocalUserManifest,
     LocalWorkspaceManifest,
     LocalFolderManifest,
     LocalFileManifest,
-    LocalManifest,
+    BaseLocalManifest,
 )
 
 
@@ -33,23 +34,23 @@ class ntstatus(enum.IntEnum):
 # TODO: remove those methods ?
 
 
-def is_placeholder_manifest(manifest: LocalManifest) -> bool:
+def is_placeholder_manifest(manifest: BaseLocalManifest) -> bool:
     return manifest.is_placeholder
 
 
-def is_file_manifest(manifest: Manifest) -> bool:
+def is_file_manifest(manifest: Union[BaseManifest, BaseLocalManifest]) -> bool:
     return isinstance(manifest, (FileManifest, LocalFileManifest))
 
 
-def is_folder_manifest(manifest: Manifest) -> bool:
+def is_folder_manifest(manifest: Union[BaseManifest, BaseLocalManifest]) -> bool:
     return isinstance(manifest, (FolderManifest, LocalFolderManifest))
 
 
-def is_workspace_manifest(manifest: Manifest) -> bool:
+def is_workspace_manifest(manifest: Union[BaseManifest, BaseLocalManifest]) -> bool:
     return isinstance(manifest, (WorkspaceManifest, LocalWorkspaceManifest))
 
 
-def is_folderish_manifest(manifest: Manifest) -> bool:
+def is_folderish_manifest(manifest: BaseManifest) -> bool:
     return isinstance(
         manifest,
         (

@@ -4,9 +4,9 @@
 
 import bisect
 from functools import partial
-from typing import Tuple, List, Set, Iterator, Callable
+from typing import Tuple, List, Set, Iterator, Callable, Union
 
-from parsec.core.types import BlockID, LocalFileManifest, Chunk
+from parsec.core.types import BlockID, LocalFileManifest, Chunk, ChunkID
 
 
 Chunks = Tuple[Chunk, ...]
@@ -87,7 +87,7 @@ def split_write(size: int, offset: int, blocksize: int) -> Iterator[Tuple[int, i
 
 def block_write(
     chunks: Chunks, size: int, start: int, new_chunk: Chunk
-) -> Tuple[Chunks, Set[BlockID]]:
+) -> Tuple[Chunks, Set[Union[BlockID, ChunkID]]]:
     # Init
     stop = start + size
 
@@ -133,10 +133,10 @@ def block_write(
 
 def prepare_write(
     manifest: LocalFileManifest, size: int, offset: int
-) -> Tuple[LocalFileManifest, List[Tuple[Chunk, int]], Set[BlockID]]:
+) -> Tuple[LocalFileManifest, List[Tuple[Chunk, int]], Set[Union[BlockID, ChunkID]]]:
     # Prepare
     padding = 0
-    removed_ids: Set[BlockID] = set()
+    removed_ids: Set[Union[BlockID, ChunkID]] = set()
     write_operations: List[Tuple[Chunk, int]] = []
 
     # Padding
@@ -179,7 +179,7 @@ def prepare_write(
 
 def prepare_truncate(
     manifest: LocalFileManifest, size: int
-) -> Tuple[LocalFileManifest, Set[BlockID]]:
+) -> Tuple[LocalFileManifest, Set[Union[BlockID, ChunkID]]]:
     # Prepare
     block, remainder = locate(size, manifest.blocksize)
     removed_ids = chunk_id_set(manifest.blocks[block])
@@ -208,7 +208,7 @@ def prepare_truncate(
 
 def prepare_resize(
     manifest: LocalFileManifest, size: int
-) -> Tuple[LocalFileManifest, List[Tuple[Chunk, int]], Set[BlockID]]:
+) -> Tuple[LocalFileManifest, List[Tuple[Chunk, int]], Set[Union[BlockID, ChunkID]]]:
     if size >= manifest.size:
         return prepare_write(manifest, 0, size)
     manifest, removed_ids = prepare_truncate(manifest, size)
@@ -220,7 +220,7 @@ def prepare_resize(
 
 def prepare_reshape(
     manifest: LocalFileManifest
-) -> Iterator[Tuple[Chunks, Chunk, Callable, Set[BlockID]]]:
+) -> Iterator[Tuple[Chunks, Chunk, Callable, Set[Union[BlockID, ChunkID]]]]:
 
     # Update manifest
     def update_manifest(

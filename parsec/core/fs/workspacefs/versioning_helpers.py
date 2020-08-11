@@ -21,15 +21,17 @@ import math
 import trio
 import typing
 from functools import partial
-from typing import List, Tuple, NamedTuple, Optional
+from typing import List, Tuple, NamedTuple, Optional, Union, cast, Dict
 from pendulum import Pendulum
 from collections import defaultdict
 
-from parsec.api.data import Manifest as RemoteManifest
 from parsec.api.protocol import DeviceID
 from parsec.core.types import FsPath, EntryID
 from parsec.core.fs.utils import is_file_manifest, is_folder_manifest, is_workspace_manifest
 from parsec.core.fs.exceptions import FSRemoteManifestNotFound
+from parsec.api.data import FileManifest, UserManifest, FolderManifest, WorkspaceManifest
+
+RemoteManifest = Union[FileManifest, FolderManifest, UserManifest, WorkspaceManifest]
 
 
 class EntryNotFound(Exception):
@@ -55,9 +57,9 @@ class TimestampBoundedData(NamedTuple):
     creator: DeviceID
     updated: Pendulum
     is_folder: bool
-    size: int
-    source: FsPath
-    destination: FsPath
+    size: Optional[int]
+    source: Optional[FsPath]
+    destination: Optional[FsPath]
 
 
 class TimestampBoundedEntry(NamedTuple):
@@ -71,13 +73,13 @@ class ManifestData(NamedTuple):
     creator: DeviceID
     updated: Pendulum
     is_folder: bool
-    size: int
+    size: Optional[int]
 
 
 class ManifestDataAndPaths(NamedTuple):
     data: ManifestData
-    source: FsPath
-    destination: FsPath
+    source: Optional[FsPath]
+    destination: Optional[FsPath]
 
 
 @attr.s
@@ -159,7 +161,7 @@ class ManifestCache:
                 return self._manifest_cache[entry_id][version].manifest
             except KeyError:
                 raise ManifestCacheNotFound
-        if timestamp:
+        elif timestamp:
             try:
                 return next(
                     t.manifest
@@ -168,6 +170,8 @@ class ManifestCache:
                 )
             except (KeyError, StopIteration):
                 raise ManifestCacheNotFound
+        else:
+            raise ManifestCacheNotFound
 
     def update(self, manifest: RemoteManifest, entry_id: EntryID, version=None, timestamp=None):
         """
@@ -201,7 +205,7 @@ class ManifestCache:
     async def load(
         self,
         entry_id: EntryID,
-        version: int = None,
+        version: Optional[int] = None,
         timestamp: Pendulum = None,
         expected_backend_timestamp: Pendulum = None,
     ) -> Tuple[RemoteManifest, bool]:
@@ -266,10 +270,11 @@ class ManifestCache:
         # Loop over parts
         parts = []
         while not is_workspace_manifest(current_manifest):
-
             # Get the manifest
             try:
+                current_manifest = cast(Union[FolderManifest, FileManifest], current_manifest)
                 parent_manifest, _ = await self.load(current_manifest.parent, timestamp=timestamp)
+                parent_manifest = cast(Union[FolderManifest, WorkspaceManifest], parent_manifest)
             except FSRemoteManifestNotFound:
                 raise EntryNotFound(entry_id)
 
@@ -299,14 +304,14 @@ class ManifestCacheCounter:
         ManifestCacheDownloadLimitReached
     """
 
-    def __init__(self, manifest_cache: ManifestCache, limit: int):
+    def __init__(self, manifest_cache: ManifestCache, limit: Optional[int]):
         self._manifest_cache = manifest_cache
         self.counter = 0
         self.limit = limit or math.inf
 
     async def load(
         self, entry_id: EntryID, version=None, timestamp=None, expected_backend_timestamp=None
-    ) -> Tuple[RemoteManifest, bool]:
+    ) -> RemoteManifest:
         if self.limit == self.counter:
             raise ManifestCacheDownloadLimitReached
         manifest, was_downloaded = await self._manifest_cache.load(
@@ -404,8 +409,8 @@ class VersionLister:
     def __init__(
         self,
         workspace_fs,
-        manifest_cache: ManifestCache = None,
-        versions_list_cache: VersionsListCache = None,
+        manifest_cache: Optional[ManifestCache] = None,
+        versions_list_cache: Optional[VersionsListCache] = None,
     ):
         self.manifest_cache = manifest_cache or ManifestCache(workspace_fs.remote_loader)
         self.versions_list_cache = versions_list_cache or VersionsListCache(
@@ -417,9 +422,9 @@ class VersionLister:
         self,
         path: FsPath,
         skip_minimal_sync: bool = True,
-        starting_timestamp: Pendulum = None,
-        ending_timestamp: Pendulum = None,
-        max_manifest_queries: int = None,
+        starting_timestamp: Optional[Pendulum] = None,
+        ending_timestamp: Optional[Pendulum] = None,
+        max_manifest_queries: Optional[int] = None,
     ) -> Tuple[List[TimestampBoundedData], bool]:
         """
         Returns:
@@ -448,8 +453,8 @@ class VersionListerOneShot:
         self,
         workspace_fs,
         path,
-        manifest_cache: ManifestCache = None,
-        versions_list_cache: VersionsListCache = None,
+        manifest_cache: Optional[ManifestCache] = None,
+        versions_list_cache: Optional[VersionsListCache] = None,
     ):
         self.manifest_cache = manifest_cache or ManifestCache(workspace_fs.remote_loader)
         self.versions_list_cache = versions_list_cache or VersionsListCache(
@@ -457,15 +462,15 @@ class VersionListerOneShot:
         )
         self.workspace_fs = workspace_fs
         self.target = path
-        self.return_dict = {}
+        self.return_dict: Dict[TimestampBoundedEntry, ManifestDataAndPaths] = {}
 
     async def list(
         self,
         path: FsPath,
         skip_minimal_sync: bool = True,
-        starting_timestamp: Pendulum = None,
-        ending_timestamp: Pendulum = None,
-        max_manifest_queries: int = None,
+        starting_timestamp: Optional[Pendulum] = None,
+        ending_timestamp: Optional[Pendulum] = None,
+        max_manifest_queries: Optional[int] = None,
     ) -> Tuple[List[TimestampBoundedData], bool]:
         """
         Returns:

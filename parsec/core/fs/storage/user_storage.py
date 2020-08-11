@@ -70,7 +70,7 @@ class UserStorage:
         """
         return self.manifest_storage._cache[self.user_manifest_id]
 
-    async def _load_user_manifest(self) -> LocalUserManifest:
+    async def _load_user_manifest(self) -> None:
         try:
             await self.manifest_storage.get_manifest(self.user_manifest_id)
         except FSLocalMissError:

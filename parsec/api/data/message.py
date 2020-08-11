@@ -2,11 +2,13 @@
 
 from pendulum import Pendulum
 
+from enum import Enum
+import attr
 from parsec.crypto import SecretKey
 from parsec.serde import fields, post_load, OneOfSchema
 from parsec.api.data.entry import EntryID, EntryIDField
-from parsec.api.data.base import BaseAPISignedData, BaseSignedDataSchema
-from enum import Enum
+from parsec.api.data.base import BaseAPISignedData, BaseSignedDataSchema, DeviceIDField
+from parsec.api.protocol import DeviceID
 
 
 class MessageContentType(Enum):
@@ -16,9 +18,11 @@ class MessageContentType(Enum):
     PING = "ping"
 
 
-class MessageContent(BaseAPISignedData):
+@attr.s(slots=True, frozen=True, auto_attribs=True, kw_only=True, eq=False)
+class BaseMessageContent(BaseAPISignedData):
     class SCHEMA_CLS(OneOfSchema, BaseSignedDataSchema):
         type_field = "type"
+        author = DeviceIDField(required=True, allow_none=False)
 
         @property
         def type_schemas(self):
@@ -32,8 +36,11 @@ class MessageContent(BaseAPISignedData):
         def get_obj_type(self, obj):
             return obj["type"]
 
+    author: DeviceID
 
-class SharingGrantedMessageContent(MessageContent):
+
+@attr.s(slots=True, frozen=True, auto_attribs=True, kw_only=True, eq=False)
+class SharingGrantedMessageContent(BaseMessageContent):
     class SCHEMA_CLS(BaseSignedDataSchema):
         type = fields.EnumCheckedConstant(MessageContentType.SHARING_GRANTED, required=True)
         name = fields.String(required=True)
@@ -41,6 +48,7 @@ class SharingGrantedMessageContent(MessageContent):
         encryption_revision = fields.Integer(required=True)
         encrypted_on = fields.DateTime(required=True)
         key = fields.SecretKey(required=True)
+        author = DeviceIDField(required=True, allow_none=False)
         # Don't include role given the only reliable way to get this information
         # is to fetch the realm role certificate from the backend.
         # Besides, we will also need the message sender's realm role certificate
@@ -58,6 +66,7 @@ class SharingGrantedMessageContent(MessageContent):
     key: SecretKey
 
 
+@attr.s(slots=True, frozen=True, auto_attribs=True, kw_only=True, eq=False)
 class SharingReencryptedMessageContent(SharingGrantedMessageContent):
     class SCHEMA_CLS(SharingGrantedMessageContent.SCHEMA_CLS):
         type = fields.EnumCheckedConstant(MessageContentType.SHARING_REENCRYPTED, required=True)
@@ -71,10 +80,12 @@ class SharingReencryptedMessageContent(SharingGrantedMessageContent):
             return SharingReencryptedMessageContent(**data)
 
 
-class SharingRevokedMessageContent(MessageContent):
+@attr.s(slots=True, frozen=True, auto_attribs=True, kw_only=True, eq=False)
+class SharingRevokedMessageContent(BaseMessageContent):
     class SCHEMA_CLS(BaseSignedDataSchema):
         type = fields.EnumCheckedConstant(MessageContentType.SHARING_REVOKED, required=True)
         id = EntryIDField(required=True)
+        author = DeviceIDField(required=True, allow_none=False)
 
         @post_load
         def make_obj(self, data):
@@ -84,10 +95,12 @@ class SharingRevokedMessageContent(MessageContent):
     id: EntryID
 
 
-class PingMessageContent(MessageContent):
+@attr.s(slots=True, frozen=True, auto_attribs=True, kw_only=True, eq=False)
+class PingMessageContent(BaseMessageContent):
     class SCHEMA_CLS(BaseSignedDataSchema):
         type = fields.EnumCheckedConstant(MessageContentType.PING, required=True)
         ping = fields.String(required=True)
+        author = DeviceIDField(required=True, allow_none=False)
 
         @post_load
         def make_obj(self, data):
