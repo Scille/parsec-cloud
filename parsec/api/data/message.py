@@ -7,8 +7,7 @@ import attr
 from parsec.crypto import SecretKey
 from parsec.serde import fields, post_load, OneOfSchema
 from parsec.api.data.entry import EntryID, EntryIDField
-from parsec.api.data.base import BaseAPISignedData, BaseSignedDataSchema, DeviceIDField
-from parsec.api.protocol import DeviceID
+from parsec.api.data.base import BaseAPISignedData, BaseSignedDataSchema
 
 
 class MessageContentType(Enum):
@@ -22,7 +21,6 @@ class MessageContentType(Enum):
 class BaseMessageContent(BaseAPISignedData):
     class SCHEMA_CLS(OneOfSchema, BaseSignedDataSchema):
         type_field = "type"
-        author = DeviceIDField(required=True, allow_none=False)
 
         @property
         def type_schemas(self):
@@ -36,8 +34,6 @@ class BaseMessageContent(BaseAPISignedData):
         def get_obj_type(self, obj):
             return obj["type"]
 
-    author: DeviceID
-
 
 @attr.s(slots=True, frozen=True, auto_attribs=True, kw_only=True, eq=False)
 class SharingGrantedMessageContent(BaseMessageContent):
@@ -48,7 +44,6 @@ class SharingGrantedMessageContent(BaseMessageContent):
         encryption_revision = fields.Integer(required=True)
         encrypted_on = fields.DateTime(required=True)
         key = fields.SecretKey(required=True)
-        author = DeviceIDField(required=True, allow_none=False)
         # Don't include role given the only reliable way to get this information
         # is to fetch the realm role certificate from the backend.
         # Besides, we will also need the message sender's realm role certificate
@@ -85,7 +80,6 @@ class SharingRevokedMessageContent(BaseMessageContent):
     class SCHEMA_CLS(BaseSignedDataSchema):
         type = fields.EnumCheckedConstant(MessageContentType.SHARING_REVOKED, required=True)
         id = EntryIDField(required=True)
-        author = DeviceIDField(required=True, allow_none=False)
 
         @post_load
         def make_obj(self, data):
@@ -100,7 +94,6 @@ class PingMessageContent(BaseMessageContent):
     class SCHEMA_CLS(BaseSignedDataSchema):
         type = fields.EnumCheckedConstant(MessageContentType.PING, required=True)
         ping = fields.String(required=True)
-        author = DeviceIDField(required=True, allow_none=False)
 
         @post_load
         def make_obj(self, data):

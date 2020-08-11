@@ -79,7 +79,7 @@
                 "schema": {
                     "fields": {
                         "author": {
-                            "allow_none": true,
+                            "allow_none": false,
                             "required": true,
                             "type": "DeviceIDField"
                         },
@@ -287,7 +287,7 @@
                 "schema": {
                     "fields": {
                         "author": {
-                            "allow_none": true,
+                            "allow_none": false,
                             "required": true,
                             "type": "DeviceIDField"
                         },
@@ -388,7 +388,7 @@
                 "schema": {
                     "fields": {
                         "author": {
-                            "allow_none": true,
+                            "allow_none": false,
                             "required": true,
                             "type": "DeviceIDField"
                         },
@@ -562,7 +562,7 @@
                 "schema": {
                     "fields": {
                         "author": {
-                            "allow_none": true,
+                            "allow_none": false,
                             "required": true,
                             "type": "DeviceIDField"
                         },

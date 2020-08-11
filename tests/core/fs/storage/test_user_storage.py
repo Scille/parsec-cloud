@@ -10,7 +10,7 @@ from parsec.core.types import LocalUserManifest, EntryID
 
 @pytest.fixture
 def user_manifest(alice):
-    return LocalUserManifest.new_placeholder(id=alice.user_manifest_id)
+    return LocalUserManifest.new_placeholder(alice.device_id, id=alice.user_manifest_id)
 
 
 @pytest.fixture
@@ -27,7 +27,7 @@ async def test_initialization(alice, alice_user_storage, user_manifest):
     user_manifest_v0 = aus.get_user_manifest()
     assert user_manifest_v0.id == alice.user_manifest_id
     assert user_manifest_v0.need_sync
-    assert user_manifest_v0.base.author is None
+    assert user_manifest_v0.base.author == alice.device_id
     assert user_manifest_v0.base.id == alice.user_manifest_id
     assert user_manifest_v0.base.version == 0
 

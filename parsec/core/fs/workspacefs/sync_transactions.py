@@ -40,9 +40,7 @@ def get_filename(manifest: LocalFolderishManifests, entry_id: EntryID) -> Option
     return next(gen, None)
 
 
-def get_conflict_filename(
-    filename: EntryName, filenames: List[EntryName], author: Optional[DeviceID]
-):
+def get_conflict_filename(filename: EntryName, filenames: List[EntryName], author: DeviceID):
     counter = count(2)
     new_filename = full_name(filename, [f"conflicting with {author}"])
     while new_filename in filenames:
@@ -72,7 +70,7 @@ def merge_folder_children(
     base_children: Dict[EntryName, EntryID],
     local_children: Dict[EntryName, EntryID],
     remote_children: Dict[EntryName, EntryID],
-    remote_device_name: Optional[DeviceID],
+    remote_device_name: DeviceID,
 ):
     # Prepare lookups
     base_reversed = {entry_id: name for name, entry_id in base_children.items()}
@@ -331,9 +329,9 @@ class SyncTransactions(EntryTransactions):
                 new_name = get_conflict_filename(
                     filename, list(parent_manifest.children), remote_manifest.author
                 )
-                new_manifest = LocalFileManifest.new_placeholder(parent=parent_id).evolve(
-                    size=current_manifest.size, blocks=new_blocks
-                )
+                new_manifest = LocalFileManifest.new_placeholder(
+                    self.local_author, parent=parent_id
+                ).evolve(size=current_manifest.size, blocks=new_blocks)
                 new_parent_manifest = parent_manifest.evolve_children_and_mark_updated(
                     {new_name: new_manifest.id}
                 )

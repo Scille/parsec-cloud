@@ -320,7 +320,9 @@ class UserFS:
         """
         name = EntryName(name)
         workspace_entry = WorkspaceEntry.new(name)
-        workspace_manifest = LocalWorkspaceManifest.new_placeholder(id=workspace_entry.id)
+        workspace_manifest = LocalWorkspaceManifest.new_placeholder(
+            self.device.device_id, id=workspace_entry.id
+        )
         async with self._update_user_manifest_lock:
             user_manifest = self.get_user_manifest()
             user_manifest = user_manifest.evolve_workspaces_and_mark_updated(workspace_entry)

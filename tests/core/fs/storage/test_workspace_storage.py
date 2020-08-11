@@ -5,6 +5,7 @@ from pathlib import Path
 import pytest
 from pendulum import now
 
+from parsec.api.data.manifest import LOCAL_AUTHOR_LEGACY_PLACEHOLDER
 from parsec.core.fs.storage import WorkspaceStorage
 from parsec.core.fs import FSError, FSInvalidFileDescriptor
 from parsec.core.fs.exceptions import FSLocalMissError
@@ -19,13 +20,17 @@ from parsec.core.types import (
 )
 
 
-def create_manifest(device, type=LocalWorkspaceManifest):
+def create_manifest(device, type=LocalWorkspaceManifest, use_legacy_none_author=False):
+    author = device.device_id
     if type is LocalUserManifest:
-        manifest = LocalUserManifest.new_placeholder(parent=EntryID())
+        manifest = LocalUserManifest.new_placeholder(author)
     elif type is LocalWorkspaceManifest:
-        manifest = type.new_placeholder()
+        manifest = type.new_placeholder(author)
     else:
-        manifest = type.new_placeholder(parent=EntryID())
+        manifest = type.new_placeholder(author, parent=EntryID())
+    if use_legacy_none_author:
+        base = manifest.base.evolve(author=None)
+        manifest = manifest.evolve(base=base)
     return manifest
 
 
@@ -222,7 +227,9 @@ async def test_clear_cache(alice_workspace_storage):
     assert await aws.get_manifest(manifest2.id) == manifest2
 
 
-@pytest.mark.parametrize("type", [LocalWorkspaceManifest, LocalFolderManifest, LocalFileManifest])
+@pytest.mark.parametrize(
+    "type", [LocalWorkspaceManifest, LocalFolderManifest, LocalFileManifest, LocalUserManifest]
+)
 @pytest.mark.trio
 async def test_serialize_types(tmpdir, alice, workspace_id, type):
     manifest = create_manifest(alice, type)
@@ -232,6 +239,28 @@ async def test_serialize_types(tmpdir, alice, workspace_id, type):
 
     async with WorkspaceStorage.run(alice, tmpdir, workspace_id) as aws2:
         assert await aws2.get_manifest(manifest.id) == manifest
+
+
+@pytest.mark.parametrize(
+    "type", [LocalWorkspaceManifest, LocalFolderManifest, LocalFileManifest, LocalUserManifest]
+)
+@pytest.mark.trio
+async def test_deserialize_legacy_types(tmpdir, alice, workspace_id, type):
+    # In parsec < 1.15, the author field used to be None for placeholders
+    # That means those manifests can still exist in the local storage
+    # However, they should not appear anywhere in the new code bases
+
+    # Create legacy manifests to dump and save them in the local storage
+    manifest = create_manifest(alice, type, use_legacy_none_author=True)
+    async with WorkspaceStorage.run(alice, tmpdir, workspace_id) as aws:
+        async with aws.lock_entry_id(manifest.id):
+            await aws.set_manifest(manifest.id, manifest)
+
+    # Make sure they come out with the author field set to LOCAL_AUTHOR_LEGACY_PLACEHOLDER
+    expected_base = manifest.base.evolve(author=LOCAL_AUTHOR_LEGACY_PLACEHOLDER)
+    expected = manifest.evolve(base=expected_base)
+    async with WorkspaceStorage.run(alice, tmpdir, workspace_id) as aws2:
+        assert await aws2.get_manifest(manifest.id) == expected
 
 
 @pytest.mark.trio
