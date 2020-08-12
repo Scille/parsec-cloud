@@ -33,7 +33,7 @@ from parsec.api.data.invite import (
     InviteDeviceConfirmation,
 )
 from parsec.api.data.message import (
-    MessageContent,
+    BaseMessageContent,
     SharingGrantedMessageContent,
     SharingReencryptedMessageContent,
     SharingRevokedMessageContent,
@@ -44,7 +44,7 @@ from parsec.api.data.manifest import (
     BlockIDField,
     BlockAccess,
     WorkspaceEntry,
-    Manifest,
+    BaseManifest,
     UserManifest,
     WorkspaceManifest,
     FolderManifest,
@@ -86,7 +86,7 @@ __all__ = (
     "InviteDeviceData",
     "InviteDeviceConfirmation",
     # Messages
-    "MessageContent",
+    "BaseMessageContent",
     "SharingGrantedMessageContent",
     "SharingReencryptedMessageContent",
     "SharingRevokedMessageContent",
@@ -96,7 +96,7 @@ __all__ = (
     "BlockIDField",
     "BlockAccess",
     "WorkspaceEntry",
-    "Manifest",
+    "BaseManifest",
     "UserManifest",
     "WorkspaceManifest",
     "FolderManifest",

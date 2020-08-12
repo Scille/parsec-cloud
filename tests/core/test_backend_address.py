@@ -208,6 +208,28 @@ def test_good_addr_with_unicode_token(addr_with_token_testbed):
     assert url2 == url
 
 
+def test_good_addr_with_no_token(addr_with_token_testbed):
+    def _assert_addr_token_is_empty(addr):
+        # Special case for organization bootstrap: token must always be defined
+        if addr_with_token_testbed is BackendOrganizationBootstrapAddrTestbed:
+            assert addr.token == ""
+        else:
+            assert addr.token is None
+
+    # Token param present in the url but with and empty value
+    url_with_param = addr_with_token_testbed.generate_url(TOKEN="")
+
+    addr = addr_with_token_testbed.cls.from_url(url_with_param)
+    _assert_addr_token_is_empty(addr)
+
+    # Token param not present in the url
+    url_without_param = addr.to_url()
+    assert "token=" not in url_without_param
+    addr2 = addr_with_token_testbed.cls.from_url(url_without_param)
+    _assert_addr_token_is_empty(addr2)
+    assert addr2 == addr
+
+
 def test_addr_with_bad_percent_encoded_token(addr_with_token_testbed):
     bad_percent_quoted = "%E5%BA%B7%E7"  # Not a valid utf8 string
     url = addr_with_token_testbed.generate_url(TOKEN=bad_percent_quoted)

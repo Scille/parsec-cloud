@@ -1,7 +1,7 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
 
 import attr
-from typing import Optional
+from typing import Optional, Any, TypeVar, Type
 from pendulum import Pendulum
 
 from parsec.serde import (
@@ -29,7 +29,7 @@ class DataSerializationError(SerdePackingError, DataError):
 
 
 class BaseSignedDataSchema(BaseSchema):
-    author = DeviceIDField(required=True, allow_none=True)
+    author = DeviceIDField(required=True, allow_none=False)
     timestamp = fields.DateTime(required=True)
 
 
@@ -39,25 +39,23 @@ class DataMeta(type):
     CLS_ATTR_COOKING = attr.s(slots=True, frozen=True, auto_attribs=True, kw_only=True, eq=False)
 
     def __new__(cls, name, bases, nmspc):
-
         # Sanity checks
         if "SCHEMA_CLS" not in nmspc:
             raise RuntimeError("Missing attribute `SCHEMA_CLS` in class definition")
         if not issubclass(nmspc["SCHEMA_CLS"], cls.BASE_SCHEMA_CLS):
             raise RuntimeError(f"Attribute `SCHEMA_CLS` must inherit {BaseSignedDataSchema!r}")
 
-        # During the creation of a class, we wrap it with `attr.s`.
-        # Under the hood, attr recreate a class so this metaclass is going to
-        # be called a second time.
-        # We must detect this second call to avoid infinie loop.
-        if "__attrs_attrs__" in nmspc:
-            return type.__new__(cls, name, bases, nmspc)
-
-        if "SERIALIZER" in nmspc:
-            raise RuntimeError("Attribute `SERIALIZER` is reserved")
-
         raw_cls = type.__new__(cls, name, bases, nmspc)
 
+        # Sanity checks: class SCHEMA_CLS needs to define parents SCHEMA_CLS fields
+        schema_cls_fields = set(nmspc["SCHEMA_CLS"]._declared_fields)
+        bases_schema_cls = (base for base in bases if hasattr(base, "SCHEMA_CLS"))
+        for base in bases_schema_cls:
+            assert base.SCHEMA_CLS._declared_fields.keys() <= schema_cls_fields
+
+        # Sanity check: attr fields need to be defined in SCHEMA_CLS
+        if "__attrs_attrs__" in nmspc:
+            assert {att.name for att in nmspc["__attrs_attrs__"]} <= schema_cls_fields
         try:
             serializer_cls = raw_cls.SERIALIZER_CLS
         except AttributeError:
@@ -70,13 +68,17 @@ class DataMeta(type):
             nmspc["SCHEMA_CLS"], DataValidationError, DataSerializationError
         )
 
-        return cls.CLS_ATTR_COOKING(raw_cls)
+        return raw_cls
 
 
 class SignedDataMeta(DataMeta):
     BASE_SCHEMA_CLS = BaseSignedDataSchema
 
 
+BaseSignedDataTypeVar = TypeVar("BaseSignedDataTypeVar", bound="BaseSignedData")
+
+
+@attr.s(slots=True, frozen=True, auto_attribs=True, kw_only=True, eq=False)
 class BaseSignedData(metaclass=SignedDataMeta):
     """
     Most data within the api should inherit this class. The goal is to have
@@ -88,15 +90,15 @@ class BaseSignedData(metaclass=SignedDataMeta):
     SCHEMA_CLS = BaseSignedDataSchema
     SERIALIZER_CLS = BaseSerializer
 
-    author: Optional[DeviceID]  # Set to None if signed by the root key
+    author: DeviceID
     timestamp: Pendulum
 
-    def __eq__(self, other: "BaseSignedData") -> bool:
+    def __eq__(self, other: Any) -> bool:
         if isinstance(other, type(self)):
             return attr.astuple(self).__eq__(attr.astuple(other))
         return NotImplemented
 
-    def evolve(self, **kwargs):
+    def evolve(self, **kwargs) -> BaseSignedDataTypeVar:
         return attr.evolve(self, **kwargs)
 
     def _serialize(self) -> bytes:
@@ -107,7 +109,7 @@ class BaseSignedData(metaclass=SignedDataMeta):
         return self.SERIALIZER.dumps(self)
 
     @classmethod
-    def _deserialize(cls, raw: bytes) -> "BaseSignedData":
+    def _deserialize(cls: Type[BaseSignedDataTypeVar], raw: bytes) -> BaseSignedDataTypeVar:
         """
         Raises:
             DataError
@@ -155,22 +157,22 @@ class BaseSignedData(metaclass=SignedDataMeta):
             raise DataError(str(exc)) from exc
 
     @classmethod
-    def unsecure_load(self, signed: bytes) -> "BaseSignedData":
+    def unsecure_load(cls: Type[BaseSignedDataTypeVar], signed: bytes) -> BaseSignedDataTypeVar:
         """
         Raises:
             DataError
         """
         raw = VerifyKey.unsecure_unwrap(signed)
-        return self._deserialize(raw)
+        return cls._deserialize(raw)
 
     @classmethod
     def verify_and_load(
-        cls,
+        cls: Type[BaseSignedDataTypeVar],
         signed: bytes,
         author_verify_key: VerifyKey,
         expected_author: Optional[DeviceID],
         expected_timestamp: Pendulum = None,
-    ) -> "BaseSignedData":
+    ) -> BaseSignedDataTypeVar:
         """
         Raises:
             DataError
@@ -195,14 +197,14 @@ class BaseSignedData(metaclass=SignedDataMeta):
 
     @classmethod
     def decrypt_verify_and_load(
-        self,
+        cls: Type[BaseSignedDataTypeVar],
         encrypted: bytes,
         key: bytes,
         author_verify_key: VerifyKey,
         expected_author: DeviceID,
         expected_timestamp: Pendulum,
         **kwargs,
-    ) -> "BaseSignedData":
+    ) -> BaseSignedDataTypeVar:
         """
         Raises:
             DataError
@@ -213,7 +215,7 @@ class BaseSignedData(metaclass=SignedDataMeta):
         except CryptoError as exc:
             raise DataError(str(exc)) from exc
 
-        return self.verify_and_load(
+        return cls.verify_and_load(
             signed,
             author_verify_key=author_verify_key,
             expected_author=expected_author,
@@ -223,14 +225,14 @@ class BaseSignedData(metaclass=SignedDataMeta):
 
     @classmethod
     def decrypt_verify_and_load_for(
-        self,
+        cls: Type[BaseSignedDataTypeVar],
         encrypted: bytes,
         recipient_privkey: PrivateKey,
         author_verify_key: VerifyKey,
         expected_author: DeviceID,
         expected_timestamp: Pendulum,
         **kwargs,
-    ) -> "BaseSignedData":
+    ) -> BaseSignedDataTypeVar:
         """
         Raises:
             DataError
@@ -241,13 +243,16 @@ class BaseSignedData(metaclass=SignedDataMeta):
         except CryptoError as exc:
             raise DataError(str(exc)) from exc
 
-        return self.verify_and_load(
+        return cls.verify_and_load(
             signed,
             author_verify_key=author_verify_key,
             expected_author=expected_author,
             expected_timestamp=expected_timestamp,
             **kwargs,
         )
+
+
+BaseDataTypeVar = TypeVar("BaseDataTypeVar", bound="BaseData")
 
 
 class BaseData(metaclass=DataMeta):
@@ -262,7 +267,7 @@ class BaseData(metaclass=DataMeta):
     SCHEMA_CLS = BaseSchema
     SERIALIZER_CLS = BaseSerializer
 
-    def __eq__(self, other: "BaseData") -> bool:
+    def __eq__(self, other: Any) -> bool:
         if isinstance(other, type(self)):
             return attr.astuple(self).__eq__(attr.astuple(other))
         return NotImplemented
@@ -278,7 +283,7 @@ class BaseData(metaclass=DataMeta):
         return self.SERIALIZER.dumps(self)
 
     @classmethod
-    def load(cls, raw: bytes) -> "BaseData":
+    def load(cls: Type[BaseDataTypeVar], raw: bytes) -> BaseDataTypeVar:
         """
         Raises:
             DataError
@@ -310,7 +315,9 @@ class BaseData(metaclass=DataMeta):
             raise DataError(str(exc)) from exc
 
     @classmethod
-    def decrypt_and_load(cls, encrypted: bytes, key: SecretKey, **kwargs) -> "BaseData":
+    def decrypt_and_load(
+        cls: Type[BaseDataTypeVar], encrypted: bytes, key: SecretKey, **kwargs
+    ) -> BaseDataTypeVar:
         """
         Raises:
             DataError
@@ -325,8 +332,8 @@ class BaseData(metaclass=DataMeta):
 
     @classmethod
     def decrypt_and_load_for(
-        self, encrypted: bytes, recipient_privkey: PrivateKey, **kwargs
-    ) -> "BaseData":
+        cls: Type[BaseDataTypeVar], encrypted: bytes, recipient_privkey: PrivateKey, **kwargs
+    ) -> BaseDataTypeVar:
         """
         Raises:
             DataError
@@ -337,12 +344,13 @@ class BaseData(metaclass=DataMeta):
         except CryptoError as exc:
             raise DataError(str(exc)) from exc
 
-        return self.load(raw, **kwargs)
+        return cls.load(raw, **kwargs)
 
 
 # Data class with serializers
 
 
+@attr.s(slots=True, frozen=True, auto_attribs=True, kw_only=True, eq=False)
 class BaseAPISignedData(BaseSignedData):
     """Signed and compressed base class for API data"""
 
@@ -350,6 +358,7 @@ class BaseAPISignedData(BaseSignedData):
     SERIALIZER_CLS = ZipMsgpackSerializer
 
 
+@attr.s(slots=True, frozen=True, auto_attribs=True, kw_only=True, eq=False)
 class BaseAPIData(BaseData):
     """Unsigned and compressed base class for API data"""
 

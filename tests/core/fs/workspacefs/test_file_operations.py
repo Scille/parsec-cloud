@@ -5,6 +5,7 @@ from typing import Tuple
 from hypothesis import strategies
 from hypothesis.stateful import RuleBasedStateMachine, rule, invariant, run_state_machine_as_test
 
+from parsec.api.protocol import DeviceID
 from parsec.core.types import EntryID, ChunkID, Chunk, LocalFileManifest
 from parsec.core.fs.workspacefs.file_transactions import padded_data
 from parsec.core.fs.workspacefs.file_operations import (
@@ -102,7 +103,9 @@ def test_complete_scenario():
     storage = Storage()
 
     with freeze_time("2000-01-01"):
-        base = manifest = LocalFileManifest.new_placeholder(parent=EntryID(), blocksize=16)
+        base = manifest = LocalFileManifest.new_placeholder(
+            DeviceID.new(), parent=EntryID(), blocksize=16
+        )
         assert manifest == base.evolve(size=0)
 
     with freeze_time("2000-01-02") as t2:
@@ -189,7 +192,9 @@ def test_file_operations(hypothesis_settings, tmpdir):
         def __init__(self) -> None:
             super().__init__()
             self.oracle = open(tmpdir / "oracle.txt", "w+b")
-            self.manifest = LocalFileManifest.new_placeholder(parent=EntryID(), blocksize=8)
+            self.manifest = LocalFileManifest.new_placeholder(
+                DeviceID.new(), parent=EntryID(), blocksize=8
+            )
             self.storage = Storage()
 
         def teardown(self) -> None:

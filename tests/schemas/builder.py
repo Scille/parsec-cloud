@@ -6,8 +6,13 @@ import importlib
 
 from parsec.serde import BaseSerializer, JSONSerializer, MsgpackSerializer, ZipMsgpackSerializer
 from parsec.serde.fields import List, Map, Tuple, Nested, CheckedConstant, EnumCheckedConstant
-from parsec.api.data.base import BaseSignedData, BaseData
+
+from parsec.api.data.base import BaseData, BaseAPIData, BaseSignedData, BaseAPISignedData
+from parsec.api.data.manifest import BaseManifest
+from parsec.api.data.message import BaseMessageContent
+
 from parsec.core.types.base import BaseLocalData
+from parsec.core.types.manifest import BaseLocalManifest
 
 
 _SERIALIZER_TO_STR = {
@@ -16,7 +21,16 @@ _SERIALIZER_TO_STR = {
     ZipMsgpackSerializer: "zip+msgpack",
     BaseSerializer: None,  # Not serializable
 }
-_BASE_DATA_CLASSES = (BaseData, BaseSignedData, BaseLocalData)
+_BASE_DATA_CLASSES = (
+    BaseData,
+    BaseAPIData,
+    BaseSignedData,
+    BaseAPISignedData,
+    BaseLocalData,
+    BaseManifest,
+    BaseLocalManifest,
+    BaseMessageContent,
+)
 
 
 def field_to_spec(field):
@@ -73,6 +87,11 @@ def collect_data_classes_from_module(mod):
         # Data classes with default serializer cannot be serialized, hence no need
         # to check them (note they will be checked if they used in Nested field)
         if item.SERIALIZER_CLS is BaseSerializer:
+            continue
+        # Ignore imported classes (avoid to populate current module collection
+        # with extenal imported schema.
+        # Example: Avoid to add imported api schemas while generating parsec.core.types)
+        if not item.__module__.startswith(mod.__name__):
             continue
         data_classes.append(item)
     return data_classes

@@ -275,16 +275,6 @@ def test_backend_organization_bootstrap_addr_good(base_url, expected, verify_key
             "Expected `action=bootstrap_organization` value",
         ),
         (
-            # missing mandatory token param
-            "parsec://foo:42/org?action=bootstrap_organization&",
-            "bad query field: ''",
-        ),
-        (
-            # missing value for param
-            "parsec://foo:42/org?action=bootstrap_organization&token=",
-            "Empty value in `token` param",
-        ),
-        (
             # missing org name
             "parsec://foo:42?action=bootstrap_organization&token=123",
             "Invalid organization ID",

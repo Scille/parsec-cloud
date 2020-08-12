@@ -216,7 +216,7 @@ class WorkspaceFile:
         elif size == 0:
             await self._transactions.fd_resize(self._fd, size, truncate_only=True)
             return size
-        elif size > 0:
+        else:  # size > 0:
             await self._transactions.fd_resize(self._fd, size, truncate_only=False)
             return size
 

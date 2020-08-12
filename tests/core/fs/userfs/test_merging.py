@@ -66,9 +66,9 @@ def test_merge_local_user_manifest_changes_placeholder(gen_date, alice):
     w2 = WorkspaceEntry.new(name="w2")
     w3 = WorkspaceEntry.new(name="w3")
 
-    diverged = LocalUserManifest.new_placeholder(id=alice.user_manifest_id, now=d4).evolve(
-        last_processed_message=30, workspaces=(w1, w3)
-    )
+    diverged = LocalUserManifest.new_placeholder(
+        alice.device_id, id=alice.user_manifest_id, now=d4
+    ).evolve(last_processed_message=30, workspaces=(w1, w3))
     target = UserManifest(
         author=alice.device_id,
         timestamp=d2,

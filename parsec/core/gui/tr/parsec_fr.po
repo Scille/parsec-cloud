@@ -7,8 +7,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PROJECT VERSION\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2020-08-06 10:09+0200\n"
-"PO-Revision-Date: 2020-08-06 09:59+0200\n"
+"POT-Creation-Date: 2020-08-10 13:34+0200\n"
+"PO-Revision-Date: 2020-08-10 13:35+0200\n"
 "Last-Translator: \n"
 "Language: fr\n"
 "Language-Team: fr <LL@li.org>\n"
@@ -1698,6 +1698,12 @@ msgstr "Afficher PARSEC"
 msgid "ACTION_SYSTRAY_QUIT_PARSEC"
 msgstr "Quitter"
 
+msgid "TEXT_LOGIN_ENTER_PASSWORD_INSTRUCTIONS_organization-device-user-email"
+msgstr "Content de vous revoir <b>{user}</b> ! Veuillez entrer le mot de passe de votre appareil <b>{device}</b>."
+
+msgid "ACTION_LOGGING_IN"
+msgstr "En cours de connexion..."
+
 msgid "ACTION_LOG_IN"
 msgstr "Se connecter"
 
@@ -1708,9 +1714,6 @@ msgstr ""
 
 msgid "TEXT_LOGIN_NO_DEVICE_ON_MACHINE"
 msgstr "Vous n'avez aucun appareil sur cet ordinateur."
-
-msgid "ACTION_LOGGING_IN"
-msgstr "En cours de connexion..."
 
 msgid "TEXT_CLAIM_DEVICE_INVALID_CODE_CLICKED"
 msgstr ""
@@ -1808,9 +1811,6 @@ msgstr "Connecté"
 msgid "TEXT_BACKEND_STATE_DISCONNECTED"
 msgstr "Déconnecté"
 
-msgid "TEXT_SYSTRAY_BACKEND_DISCONNECT_organization"
-msgstr "{organization}: Déconnecté"
-
 msgid "TEXT_BACKEND_STATE_API_MISMATCH_versions"
 msgstr "L'application n'est pas compatible avec le serveur"
 
@@ -1825,6 +1825,9 @@ msgstr "Inconnu"
 
 msgid "TEXT_BACKEND_STATE_CRASHED_cause"
 msgstr "La connexion au serveur a été perdue"
+
+msgid "TEXT_SYSTRAY_BACKEND_DISCONNECT_organization"
+msgstr "{organization}: Déconnecté"
 
 msgid "ACTION_MENU_DOCUMENTS"
 msgstr "Documents"
@@ -2118,11 +2121,12 @@ msgstr "Nom de l'organisation"
 
 msgid "ACTION_ACCEPT_CONTRACT"
 msgstr ""
-"J'accepte la <a href=\"https://parsec.cloud/pdf/Parsec-Privacy-Policy-fr.pdf\""
-" title=\"Politique de confidentialité\">Politique de Confidentialité</a> et les <a "
-"href=\"https://parsec.cloud/pdf/Parsec-CGVU-fr.pdf\" "
-"title=\"Condition Générales de vente ou d'Utilisation\">conditions générales de vente ou "
-"d'utilisation</a> de PARSEC"
+"J'accepte la <a href=\"https://parsec.cloud/pdf/Parsec-Privacy-Policy-"
+"fr.pdf\" title=\"Politique de confidentialité\">Politique de "
+"Confidentialité</a> et les <a href=\"https://parsec.cloud/pdf/Parsec-"
+"CGVU-fr.pdf\" title=\"Condition Générales de vente ou "
+"d'Utilisation\">conditions générales de vente ou d'utilisation</a> de "
+"PARSEC"
 
 msgid "ACTION_PREVIOUS"
 msgstr "Précédent"
@@ -2232,6 +2236,12 @@ msgstr "Envoyer un email"
 
 msgid "TEXT_GREET_DEVICE_INSTRUCTIONS_START"
 msgstr ""
+"Pour accueillir votre nouvel appareil, PARSEC doit être démarré sur les "
+"deux appareils.\n"
+"\n"
+"Vous devrez échanger un code entre les appareils. De cette manière, nous "
+"pouvons nous assurer que le processus se déroule en toute sécurité.\n"
+"\n"
 "Une fois que Parsec est installé sur votre nouvel appareil et que vous "
 "avez cliqué sur le lien d'invitation, vous pouvez cliquer sur "
 "<i>Démarrer</i> pour commencer le processus."
@@ -2254,6 +2264,9 @@ msgstr ""
 "Standard : peut créer des espaces des travail et voir les autres "
 "utilisateurs, mais ne peut pas inviter de nouveaux utilisateurs\n"
 "Administrateur : peut inviter et supprimer des utilisateurs"
+
+msgid "TEXT_LABEL_USER_ROLE_RECOMMANDATIONS"
+msgstr "Veuillez choisir le rôle de l'utilisateur dans l'organisation. Il ne pourra pas être changé plus tard."
 
 msgid "TEXT_GREET_USER_CODE_EXCHANGE_GIVE_CODE_INSTRUCTIONS"
 msgstr "Veuillez donner le code suivant à l'utilisateur :"
@@ -2284,8 +2297,8 @@ msgstr "Fermer la fenêtre."
 msgid "TEXT_IMPORT_FILES_PROGRESS"
 msgstr "Import du fichier"
 
-msgid "TEXT_LABEL_USER_NAME"
-msgstr "Nom d'utilisateur"
+msgid "ACTION_BACK"
+msgstr "Retour"
 
 msgid "ACTION_LOG_OUT"
 msgstr "Se déconnecter"
@@ -2426,3 +2439,4 @@ msgstr "Créer un nouvel espace de travail"
 
 msgid "ACTION_WORKSPACE_GOTO_FILE_LINK"
 msgstr "Trouver un fichier via son lien"
+

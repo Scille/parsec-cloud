@@ -18,6 +18,7 @@ from parsec.api.protocol import (
     RealmRoleField,
 )
 from parsec.api.data.base import DataValidationError, BaseAPISignedData, BaseSignedDataSchema
+import attr
 
 
 class UserProfile(Enum):
@@ -39,8 +40,12 @@ class UserProfile(Enum):
 UserProfileField = fields.enum_field_factory(UserProfile)
 
 
+@attr.s(slots=True, frozen=True, auto_attribs=True, kw_only=True, eq=False)
 class UserCertificateContent(BaseAPISignedData):
     class SCHEMA_CLS(BaseSignedDataSchema):
+        # Override author field to allow for None value if signed by the root key
+        author = DeviceIDField(required=True, allow_none=True)
+
         type = fields.CheckedConstant("user_certificate", required=True)
         user_id = UserIDField(required=True)
         # Human handle can be none in case of redacted certificate
@@ -68,6 +73,9 @@ class UserCertificateContent(BaseAPISignedData):
                     )
 
             return UserCertificateContent(**data)
+
+    # Override author attribute to allow for None value if signed by the root key
+    author: Optional[DeviceID]
 
     user_id: UserID
     human_handle: Optional[HumanHandle]
@@ -99,6 +107,7 @@ class UserCertificateContent(BaseAPISignedData):
         return data
 
 
+@attr.s(slots=True, frozen=True, auto_attribs=True, kw_only=True, eq=False)
 class RevokedUserCertificateContent(BaseAPISignedData):
     class SCHEMA_CLS(BaseSignedDataSchema):
         type = fields.CheckedConstant("revoked_user_certificate", required=True)
@@ -123,8 +132,12 @@ class RevokedUserCertificateContent(BaseAPISignedData):
         return data
 
 
+@attr.s(slots=True, frozen=True, auto_attribs=True, kw_only=True, eq=False)
 class DeviceCertificateContent(BaseAPISignedData):
     class SCHEMA_CLS(BaseSignedDataSchema):
+        # Override author field to allow for None value if signed by the root key
+        author = DeviceIDField(required=True, allow_none=True)
+
         type = fields.CheckedConstant("device_certificate", required=True)
         device_id = DeviceIDField(required=True)
         # Device label can be none in case of redacted certificate
@@ -135,6 +148,9 @@ class DeviceCertificateContent(BaseAPISignedData):
         def make_obj(self, data):
             data.pop("type")
             return DeviceCertificateContent(**data)
+
+    # Override author attribute to allow for None value if signed by the root key
+    author: Optional[DeviceID]
 
     device_id: DeviceID
     device_label: Optional[str]
@@ -152,6 +168,7 @@ class DeviceCertificateContent(BaseAPISignedData):
         return data
 
 
+@attr.s(slots=True, frozen=True, auto_attribs=True, kw_only=True, eq=False)
 class RealmRoleCertificateContent(BaseAPISignedData):
     class SCHEMA_CLS(BaseSignedDataSchema):
         type = fields.CheckedConstant("realm_role_certificate", required=True)

@@ -87,25 +87,6 @@
         },
         "serializing": "zip+msgpack"
     },
-    "BaseAPIData": {
-        "fields": {},
-        "serializing": "zip+msgpack"
-    },
-    "BaseAPISignedData": {
-        "fields": {
-            "author": {
-                "allow_none": true,
-                "required": true,
-                "type": "DeviceIDField"
-            },
-            "timestamp": {
-                "allow_none": false,
-                "required": true,
-                "type": "DateTime"
-            }
-        },
-        "serializing": "zip+msgpack"
-    },
     "DeviceCertificateContent": {
         "fields": {
             "author": {
@@ -145,7 +126,7 @@
     "FileManifest": {
         "fields": {
             "author": {
-                "allow_none": true,
+                "allow_none": false,
                 "required": true,
                 "type": "DeviceIDField"
             },
@@ -240,7 +221,7 @@
     "FolderManifest": {
         "fields": {
             "author": {
-                "allow_none": true,
+                "allow_none": false,
                 "required": true,
                 "type": "DeviceIDField"
             },
@@ -473,40 +454,10 @@
         },
         "serializing": "zip+msgpack"
     },
-    "Manifest": {
-        "fields": {
-            "author": {
-                "allow_none": true,
-                "required": true,
-                "type": "DeviceIDField"
-            },
-            "timestamp": {
-                "allow_none": false,
-                "required": true,
-                "type": "DateTime"
-            }
-        },
-        "serializing": "zip+msgpack"
-    },
-    "MessageContent": {
-        "fields": {
-            "author": {
-                "allow_none": true,
-                "required": true,
-                "type": "DeviceIDField"
-            },
-            "timestamp": {
-                "allow_none": false,
-                "required": true,
-                "type": "DateTime"
-            }
-        },
-        "serializing": "zip+msgpack"
-    },
     "PingMessageContent": {
         "fields": {
             "author": {
-                "allow_none": true,
+                "allow_none": false,
                 "required": true,
                 "type": "DeviceIDField"
             },
@@ -532,7 +483,7 @@
     "RealmRoleCertificateContent": {
         "fields": {
             "author": {
-                "allow_none": true,
+                "allow_none": false,
                 "required": true,
                 "type": "DeviceIDField"
             },
@@ -568,7 +519,7 @@
     "RevokedUserCertificateContent": {
         "fields": {
             "author": {
-                "allow_none": true,
+                "allow_none": false,
                 "required": true,
                 "type": "DeviceIDField"
             },
@@ -594,7 +545,7 @@
     "SharingGrantedMessageContent": {
         "fields": {
             "author": {
-                "allow_none": true,
+                "allow_none": false,
                 "required": true,
                 "type": "DeviceIDField"
             },
@@ -640,7 +591,7 @@
     "SharingReencryptedMessageContent": {
         "fields": {
             "author": {
-                "allow_none": true,
+                "allow_none": false,
                 "required": true,
                 "type": "DeviceIDField"
             },
@@ -686,7 +637,7 @@
     "SharingRevokedMessageContent": {
         "fields": {
             "author": {
-                "allow_none": true,
+                "allow_none": false,
                 "required": true,
                 "type": "DeviceIDField"
             },
@@ -770,7 +721,7 @@
     "UserManifest": {
         "fields": {
             "author": {
-                "allow_none": true,
+                "allow_none": false,
                 "required": true,
                 "type": "DeviceIDField"
             },
@@ -865,7 +816,7 @@
     "WorkspaceManifest": {
         "fields": {
             "author": {
-                "allow_none": true,
+                "allow_none": false,
                 "required": true,
                 "type": "DeviceIDField"
             },

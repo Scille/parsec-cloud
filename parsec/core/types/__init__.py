@@ -26,7 +26,7 @@ from parsec.core.types.manifest import (
 )
 from parsec.core.types.manifest import (
     LocalUserManifest,
-    LocalManifest,
+    BaseLocalManifest,
     WorkspaceEntry,
     WorkspaceRole,
     BlockAccess,
@@ -34,15 +34,18 @@ from parsec.core.types.manifest import (
     Chunk,
     ChunkID,
 )
-
+from parsec.api.data import WorkspaceManifest as RemoteWorkspaceManifest
+from parsec.api.data import FolderManifest as RemoteFolderManifest
 
 FileDescriptor = NewType("FileDescriptor", int)
 LocalFolderishManifests = Union[LocalFolderManifest, LocalWorkspaceManifest]
+RemoteFolderishManifests = Union[RemoteFolderManifest, RemoteWorkspaceManifest]
 
 
 __all__ = (
     "FileDescriptor",
     "LocalFolderishManifests",
+    "RemoteFolderishManifests",
     # Base
     "FsPath",
     # Entry
@@ -70,7 +73,7 @@ __all__ = (
     "LocalFolderManifest",
     "LocalWorkspaceManifest",
     "LocalUserManifest",
-    "LocalManifest",
+    "BaseLocalManifest",
     "WorkspaceEntry",
     "WorkspaceRole",
     "BlockAccess",
