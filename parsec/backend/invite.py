@@ -375,7 +375,7 @@ class BaseInviteComponent:
     @catch_protocol_errors
     async def api_invite_1_claimer_wait_peer(self, client_ctx, msg):
         msg = invite_1_claimer_wait_peer_serializer.req_load(msg)
-
+        print("Backend invite: wait peer")
         try:
             greeter_public_key = await self.conduit_exchange(
                 organization_id=client_ctx.organization_id,
@@ -389,11 +389,13 @@ class BaseInviteComponent:
             return {"status": "not_found"}
 
         except InvitationAlreadyDeletedError:
+            print("Backend invite: already deleted")
             return {"status": "already_deleted"}
 
         except InvitationInvalidStateError:
             return {"status": "invalid_state"}
 
+        print("Backend invite: wait peer Done")
         return invite_1_claimer_wait_peer_serializer.rep_dump(
             {"status": "ok", "greeter_public_key": PublicKey(greeter_public_key)}
         )
