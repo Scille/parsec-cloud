@@ -85,30 +85,6 @@ async def test_change_password_success(
     assert autoclose_dialog.dialogs == [("", "The password has been successfully changed.")]
     autoclose_dialog.reset()
 
-    central_widget = logged_gui.test_get_central_widget()
-    tabw = logged_gui.test_get_tab()
-    assert central_widget is not None
-
-    def _trigger_logout_menu():
-        central_widget.button_user.menu().actions()[0].trigger()
-
-    async with aqtbot.wait_signal(tabw.logged_out):
-        await qt_thread_gateway.send_action(_trigger_logout_menu)
-
-    lw = logged_gui.test_get_login_widget()
-    tabw = logged_gui.test_get_tab()
-
-    assert lw is not None
-
-    await aqtbot.key_clicks(lw.line_edit_password, "P@ssw0rd")
-
-    async with aqtbot.wait_signal(lw.login_with_password_clicked):
-        await aqtbot.mouse_click(lw.button_login, QtCore.Qt.LeftButton)
-
-    assert len(autoclose_dialog.dialogs) == 1
-    assert autoclose_dialog.dialogs[0][0] == "Error"
-    assert autoclose_dialog.dialogs[0][1] == "The password is incorrect."
-
     # Retry to login...
     await logged_gui.test_logout_and_switch_to_login_widget()
 
