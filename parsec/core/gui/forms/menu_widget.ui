@@ -125,21 +125,21 @@
             <widget class="QLabel" name="label">
              <property name="minimumSize">
               <size>
-               <width>210</width>
-               <height>32</height>
+               <width>208</width>
+               <height>36</height>
               </size>
              </property>
              <property name="maximumSize">
               <size>
-               <width>210</width>
-               <height>32</height>
+               <width>208</width>
+               <height>36</height>
               </size>
              </property>
              <property name="text">
               <string/>
              </property>
              <property name="pixmap">
-              <pixmap resource="../rc/resources.qrc">:/logos/images/logos/parsec.png</pixmap>
+              <pixmap resource="../rc/resources.qrc">:/logos/images/logos/parsec_vert.png</pixmap>
              </property>
              <property name="scaledContents">
               <bool>true</bool>
