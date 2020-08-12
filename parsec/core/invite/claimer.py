@@ -74,9 +74,11 @@ class BaseClaimInitialCtx:
 
     async def _do_wait_peer(self) -> Tuple[SASCode, SASCode, SecretKey]:
         claimer_private_key = PrivateKey.generate()
+        print("Client: do wait peer")
         rep = await self._cmds.invite_1_claimer_wait_peer(
             claimer_public_key=claimer_private_key.public_key
         )
+        print("Client: Do wait peer done", rep)
         _check_rep(rep, step_name="step 1")
 
         shared_secret_key = generate_shared_secret_key(

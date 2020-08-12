@@ -433,6 +433,11 @@ async def test_claim_device_reset_by_peer(
     await ResetTestBed().run()
 
 
+import logging
+
+logging.basicConfig(level=logging.DEBUG)
+
+
 @pytest.mark.gui
 @pytest.mark.trio
 @pytest.mark.parametrize(
@@ -478,7 +483,9 @@ async def test_claim_device_invitation_cancelled(
 
         async def cancelled_step_2_start_greeter(self):
             expected_message = translate("TEXT_CLAIM_DEVICE_WAIT_PEER_ERROR")
+            print("Test: Cancelling invitation")
             await self._cancel_invitation()
+            print("Test: Invitation cancelled")
 
             await aqtbot.wait_until(partial(self._claim_restart, expected_message))
 

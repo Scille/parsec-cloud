@@ -162,7 +162,9 @@ class BackendApp:
                                     and organization_id == client_ctx.organization_id
                                     and token == client_ctx.invitation.token
                                 ):
+                                    print("Backend cancelling connection")
                                     cancel_scope.cancel()
+                                    print("Backend connection cancelled")
 
                             event_bus_ctx.connect(
                                 BackendEvent.INVITE_STATUS_CHANGED, _on_invite_status_changed

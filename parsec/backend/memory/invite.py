@@ -245,6 +245,7 @@ class MemoryInviteComponent(BaseInviteComponent):
         on: Pendulum,
         reason: InvitationDeletedReason,
     ) -> None:
+        print("MemoryDB: Deleting invitation")
         self._get_invitation_and_conduit(organization_id, token, expected_greeter=greeter)
         org = self._organizations[organization_id]
         org.deleted_invitations[token] = (on, reason)
@@ -255,6 +256,7 @@ class MemoryInviteComponent(BaseInviteComponent):
             token=token,
             status=InvitationStatus.DELETED,
         )
+        print("MemoryDB: Invitation deleted")
 
     async def list(self, organization_id: OrganizationID, greeter: UserID) -> List[Invitation]:
         org = self._organizations[organization_id]
