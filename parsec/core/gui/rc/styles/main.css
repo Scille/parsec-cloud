@@ -180,10 +180,12 @@ QTimeEdit::up-button, QTimeEdit::down-button {
 
 QScrollBar:vertical {
     background-color: #FFFFFF;
+    width: 20px;
+    border: 1px solid #CCCCCC;
 }
 
 QScrollBar::handle:vertical {
-    background: #DDDDDD;
+    background: #CCCCCC;
     border-radius: 4px;
 }
 

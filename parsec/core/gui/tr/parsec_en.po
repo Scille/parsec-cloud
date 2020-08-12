@@ -1651,6 +1651,12 @@ msgstr "Show PARSEC"
 msgid "ACTION_SYSTRAY_QUIT_PARSEC"
 msgstr "Quit"
 
+msgid "TEXT_LOGIN_ENTER_PASSWORD_INSTRUCTIONS_organization-device-user-email"
+msgstr "Welcome back to PARSEC <b>{user}</b>! Please enter the password of your <b>{device}</b> device."
+
+msgid "ACTION_LOGGING_IN"
+msgstr "Logging in..."
+
 msgid "ACTION_LOG_IN"
 msgstr "Log In"
 
@@ -1659,9 +1665,6 @@ msgstr "No other device is available on this computer."
 
 msgid "TEXT_LOGIN_NO_DEVICE_ON_MACHINE"
 msgstr "You do not have any device on this computer."
-
-msgid "ACTION_LOGGING_IN"
-msgstr "Logging in..."
 
 msgid "TEXT_CLAIM_DEVICE_INVALID_CODE_CLICKED"
 msgstr ""
@@ -2179,6 +2182,10 @@ msgstr "Send an email"
 
 msgid "TEXT_GREET_DEVICE_INSTRUCTIONS_START"
 msgstr ""
+"To greet your new device, Parsec needs to be started on both devices.\n"
+"\n"
+"You will have to exchange codes between the two devices. This way, we can"
+" be certain that the process is secure.\n\n"
 "Once Parsec is installed on your other device and you've clicked on the "
 "invitation link, you can click <i>Start</i> to begin the process."
 
@@ -2231,8 +2238,8 @@ msgstr "Close the window."
 msgid "TEXT_IMPORT_FILES_PROGRESS"
 msgstr "Importing file"
 
-msgid "TEXT_LABEL_USER_NAME"
-msgstr "Username"
+msgid "ACTION_BACK"
+msgstr "Back"
 
 msgid "ACTION_LOG_OUT"
 msgstr "Log Out"

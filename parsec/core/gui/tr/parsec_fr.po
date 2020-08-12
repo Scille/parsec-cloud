@@ -1698,6 +1698,12 @@ msgstr "Afficher PARSEC"
 msgid "ACTION_SYSTRAY_QUIT_PARSEC"
 msgstr "Quitter"
 
+msgid "TEXT_LOGIN_ENTER_PASSWORD_INSTRUCTIONS_organization-device-user-email"
+msgstr "Content de vous revoir <b>{user}</b> ! Veuillez entrer le mot de passe de votre appareil <b>{device}</b>."
+
+msgid "ACTION_LOGGING_IN"
+msgstr "En cours de connexion..."
+
 msgid "ACTION_LOG_IN"
 msgstr "Se connecter"
 
@@ -1708,9 +1714,6 @@ msgstr ""
 
 msgid "TEXT_LOGIN_NO_DEVICE_ON_MACHINE"
 msgstr "Vous n'avez aucun appareil sur cet ordinateur."
-
-msgid "ACTION_LOGGING_IN"
-msgstr "En cours de connexion..."
 
 msgid "TEXT_CLAIM_DEVICE_INVALID_CODE_CLICKED"
 msgstr ""
@@ -2233,6 +2236,12 @@ msgstr "Envoyer un email"
 
 msgid "TEXT_GREET_DEVICE_INSTRUCTIONS_START"
 msgstr ""
+"Pour accueillir votre nouvel appareil, PARSEC doit être démarré sur les "
+"deux appareils.\n"
+"\n"
+"Vous devrez échanger un code entre les appareils. De cette manière, nous "
+"pouvons nous assurer que le processus se déroule en toute sécurité.\n"
+"\n"
 "Une fois que Parsec est installé sur votre nouvel appareil et que vous "
 "avez cliqué sur le lien d'invitation, vous pouvez cliquer sur "
 "<i>Démarrer</i> pour commencer le processus."
@@ -2288,8 +2297,8 @@ msgstr "Fermer la fenêtre."
 msgid "TEXT_IMPORT_FILES_PROGRESS"
 msgstr "Import du fichier"
 
-msgid "TEXT_LABEL_USER_NAME"
-msgstr "Nom d'utilisateur"
+msgid "ACTION_BACK"
+msgstr "Retour"
 
 msgid "ACTION_LOG_OUT"
 msgstr "Se déconnecter"
