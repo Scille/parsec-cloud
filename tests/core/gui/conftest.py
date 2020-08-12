@@ -365,7 +365,7 @@ async def logged_gui(aqtbot, gui_factory, core_config, alice, bob, fixtures_cust
 
 
 @pytest.fixture
-def testing_main_window_cls(aqtbot):
+def testing_main_window_cls(aqtbot, qt_thread_gateway):
     # Since widgets are not longer persistent and are instantiated only when needed,
     # we can no longer simply access them.
     # These methods help to retrieve a widget according to the current state of the GUI.
@@ -418,7 +418,14 @@ def testing_main_window_cls(aqtbot):
 
         async def test_logout_and_switch_to_login_widget(self):
             central_widget = self.test_get_central_widget()
-            await aqtbot.mouse_click(central_widget.menu.button_logout, QtCore.Qt.LeftButton)
+
+            def _trigger_logout_menu():
+                central_widget.button_user.menu().actions()[0].trigger()
+
+            tabw = self.test_get_tab()
+
+            async with aqtbot.wait_signal(tabw.logged_out):
+                await qt_thread_gateway.send_action(_trigger_logout_menu)
 
             def _wait_logged_out():
                 assert not central_widget.isVisible()

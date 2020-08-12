@@ -58,24 +58,6 @@ def test_activate_devices(qtbot):
 
 
 @pytest.mark.gui
-def test_set_info(qtbot):
-    w = MenuWidget(parent=None)
-    qtbot.addWidget(w)
-
-    assert w.label_username.text() == ""
-    assert w.label_device.text() == ""
-    assert w.label_organization.text() == ""
-
-    w.username = "User"
-    w.device = "Device"
-    w.organization = "Organization"
-
-    assert w.label_username.text() == "User"
-    assert w.label_device.text() == "Device"
-    assert w.label_organization.text() == "Organization"
-
-
-@pytest.mark.gui
 def test_clicked(qtbot):
     w = MenuWidget(parent=None)
     qtbot.addWidget(w)
@@ -92,6 +74,3 @@ def test_clicked(qtbot):
 
     with qtbot.waitSignal(w.devices_clicked, timeout=500):
         qtbot.mouseClick(w.button_devices, QtCore.Qt.LeftButton)
-
-    with qtbot.waitSignal(w.logout_clicked, timeout=500):
-        qtbot.mouseClick(w.button_logout, QtCore.Qt.LeftButton)

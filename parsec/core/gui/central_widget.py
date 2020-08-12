@@ -2,14 +2,15 @@
 
 from parsec.core.core_events import CoreEvent
 from PyQt5.QtCore import pyqtSignal
-from PyQt5.QtGui import QPixmap, QColor
-from PyQt5.QtWidgets import QGraphicsDropShadowEffect, QWidget
+from PyQt5.QtGui import QPixmap, QColor, QIcon
+from PyQt5.QtWidgets import QGraphicsDropShadowEffect, QWidget, QMenu
 
 from parsec.core.gui.mount_widget import MountWidget
 from parsec.core.gui.users_widget import UsersWidget
 from parsec.core.gui.devices_widget import DevicesWidget
 from parsec.core.gui.menu_widget import MenuWidget
 from parsec.core.gui.lang import translate as _
+from parsec.core.gui.custom_widgets import Pixmap
 from parsec.core.gui.custom_dialogs import show_error
 from parsec.core.gui.ui.central_widget import Ui_CentralWidget
 
@@ -56,28 +57,27 @@ class CentralWidget(QWidget, Ui_CentralWidget):
         for e in self.NOTIFICATION_EVENTS:
             self.event_bus.connect(e, self.handle_event)
 
-        self.menu.organization = self.core.device.organization_addr.organization_id
-        if self.core.device.human_handle:
-            self.menu.username = self.core.device.human_handle.label
-        else:
-            self.menu.username = self.core.device.user_id
-        if self.core.device.device_label:
-            self.menu.device = self.core.device.device_label
-        else:
-            self.menu.device = self.core.device.device_name
-        self.menu.organization_url = str(self.core.device.organization_addr)
+        self.set_user_info()
+        menu = QMenu()
+        log_out_act = menu.addAction(_("ACTION_LOG_OUT"))
+        log_out_act.triggered.connect(self.logout_requested.emit)
+        self.button_user.setMenu(menu)
+        pix = Pixmap(":/icons/images/material/person.svg")
+        pix.replace_color(QColor(0, 0, 0), QColor(0x00, 0x92, 0xFF))
+        self.button_user.setIcon(QIcon(pix))
+        self.button_user.clicked.connect(self._show_user_menu)
 
         self.new_notification.connect(self.on_new_notification)
         self.menu.files_clicked.connect(self.show_mount_widget)
         self.menu.users_clicked.connect(self.show_users_widget)
         self.menu.devices_clicked.connect(self.show_devices_widget)
-        self.menu.logout_clicked.connect(self.logout_requested.emit)
         self.connection_state_changed.connect(self._on_connection_state_changed)
 
         self.widget_title2.hide()
-        self.widget_title3.hide()
-        self.title2_icon.apply_style()
-        self.title3_icon.apply_style()
+        self.icon_title3.hide()
+        self.label_title3.setText("")
+        self.icon_title3.apply_style()
+        self.icon_title3.apply_style()
 
         effect = QGraphicsDropShadowEffect(self)
         effect.setColor(QColor(100, 100, 100))
@@ -101,15 +101,25 @@ class CentralWidget(QWidget, Ui_CentralWidget):
         )
         self.show_mount_widget()
 
+    def _show_user_menu(self):
+        self.button_user.showMenu()
+
+    def set_user_info(self):
+        org = self.core.device.organization_id
+        username = self.core.device.short_user_display
+        user_text = f"{org}\n{username}"
+        self.button_user.setText(user_text)
+
     def _on_folder_changed(self, workspace_name, path):
         if workspace_name and path:
             self.widget_title2.show()
             self.label_title2.setText(workspace_name)
-            self.widget_title3.show()
+            self.icon_title3.show()
             self.label_title3.setText(path)
         else:
             self.widget_title2.hide()
-            self.widget_title3.hide()
+            self.icon_title3.hide()
+            self.label_title3.setText("")
 
     def handle_event(self, event, **kwargs):
         if event == CoreEvent.BACKEND_CONNECTION_CHANGED:
@@ -239,7 +249,8 @@ class CentralWidget(QWidget, Ui_CentralWidget):
 
     def clear_widgets(self):
         self.widget_title2.hide()
-        self.widget_title3.hide()
+        self.icon_title3.hide()
+        self.label_title3.setText("")
         self.users_widget.hide()
         self.mount_widget.hide()
         self.devices_widget.hide()

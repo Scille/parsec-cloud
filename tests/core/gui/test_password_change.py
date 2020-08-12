@@ -61,7 +61,12 @@ async def test_change_password_invalid_password_check(
 @pytest.mark.gui
 @pytest.mark.trio
 async def test_change_password_success(
-    aqtbot, running_backend, logged_gui, catch_password_change_widget, autoclose_dialog
+    aqtbot,
+    running_backend,
+    logged_gui,
+    catch_password_change_widget,
+    autoclose_dialog,
+    qt_thread_gateway,
 ):
     d_w = await logged_gui.test_switch_to_devices_widget()
 

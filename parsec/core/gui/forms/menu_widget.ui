@@ -30,7 +30,7 @@
 	background-color: #222222;
 }
 
-#button_devices, #button_files, #button_users, #button_logout {
+#button_devices, #button_files, #button_users {
 	color: #999999;
 	background-color: #222222;
 	text-align: left;
@@ -44,15 +44,11 @@
 	color: #FFFFFF;
 }
 
-#button_devices:hover, #button_files:hover, #button_users:hover, #button_logout:hover {
+#button_devices:hover, #button_files:hover, #button_users:hover {
 	color: #EEEEEE;
 }
 
-QWidget#widget_misc {
-	background-color: #333333;
-}
-
-#label_connection_state, #label_device, #label_organization, #label_username {
+#label_connection_state {
 	color: #FFFFFF;
 }</string>
   </property>
@@ -352,67 +348,16 @@ QWidget#widget_misc {
           <property name="orientation">
            <enum>Qt::Vertical</enum>
           </property>
+          <property name="sizeType">
+           <enum>QSizePolicy::Preferred</enum>
+          </property>
           <property name="sizeHint" stdset="0">
            <size>
             <width>20</width>
-            <height>40</height>
+            <height>60</height>
            </size>
           </property>
          </spacer>
-        </item>
-        <item>
-         <widget class="Button" name="button_logout">
-          <property name="enabled">
-           <bool>true</bool>
-          </property>
-          <property name="minimumSize">
-           <size>
-            <width>0</width>
-            <height>64</height>
-           </size>
-          </property>
-          <property name="maximumSize">
-           <size>
-            <width>16777215</width>
-            <height>64</height>
-           </size>
-          </property>
-          <property name="baseSize">
-           <size>
-            <width>0</width>
-            <height>64</height>
-           </size>
-          </property>
-          <property name="cursor">
-           <cursorShape>PointingHandCursor</cursorShape>
-          </property>
-          <property name="text">
-           <string>ACTION_LOG_OUT</string>
-          </property>
-          <property name="icon">
-           <iconset resource="../rc/resources.qrc">
-            <normaloff>:/icons/images/material/exit_to_app.svg</normaloff>:/icons/images/material/exit_to_app.svg</iconset>
-          </property>
-          <property name="iconSize">
-           <size>
-            <width>24</width>
-            <height>24</height>
-           </size>
-          </property>
-          <property name="checkable">
-           <bool>false</bool>
-          </property>
-          <property name="flat">
-           <bool>true</bool>
-          </property>
-          <property name="color" stdset="0">
-           <color>
-            <red>153</red>
-            <green>153</green>
-            <blue>153</blue>
-           </color>
-          </property>
-         </widget>
         </item>
         <item>
          <spacer name="verticalSpacer_2">
@@ -510,122 +455,24 @@ QWidget#widget_misc {
              </layout>
             </widget>
            </item>
-           <item>
-            <widget class="QWidget" name="widget_info" native="true">
-             <property name="minimumSize">
-              <size>
-               <width>0</width>
-               <height>88</height>
-              </size>
-             </property>
-             <property name="maximumSize">
-              <size>
-               <width>16777215</width>
-               <height>88</height>
-              </size>
-             </property>
-             <layout class="QHBoxLayout" name="horizontalLayout_9">
-              <property name="spacing">
-               <number>10</number>
-              </property>
-              <property name="leftMargin">
-               <number>0</number>
-              </property>
-              <property name="topMargin">
-               <number>0</number>
-              </property>
-              <property name="rightMargin">
-               <number>0</number>
-              </property>
-              <property name="bottomMargin">
-               <number>0</number>
-              </property>
-              <item>
-               <widget class="IconLabel" name="icon_user">
-                <property name="minimumSize">
-                 <size>
-                  <width>32</width>
-                  <height>32</height>
-                 </size>
-                </property>
-                <property name="maximumSize">
-                 <size>
-                  <width>32</width>
-                  <height>32</height>
-                 </size>
-                </property>
-                <property name="text">
-                 <string/>
-                </property>
-                <property name="pixmap">
-                 <pixmap resource="../rc/resources.qrc">:/icons/images/material/person.svg</pixmap>
-                </property>
-                <property name="scaledContents">
-                 <bool>true</bool>
-                </property>
-                <property name="alignment">
-                 <set>Qt::AlignCenter</set>
-                </property>
-                <property name="color" stdset="0">
-                 <color>
-                  <red>27</red>
-                  <green>141</green>
-                  <blue>215</blue>
-                 </color>
-                </property>
-               </widget>
-              </item>
-              <item>
-               <layout class="QVBoxLayout" name="verticalLayout_7">
-                <property name="spacing">
-                 <number>0</number>
-                </property>
-                <property name="leftMargin">
-                 <number>0</number>
-                </property>
-                <item>
-                 <widget class="QLabel" name="label_organization">
-                  <property name="font">
-                   <font>
-                    <pointsize>11</pointsize>
-                   </font>
-                  </property>
-                  <property name="text">
-                   <string/>
-                  </property>
-                 </widget>
-                </item>
-                <item>
-                 <widget class="QLabel" name="label_username">
-                  <property name="font">
-                   <font>
-                    <pointsize>11</pointsize>
-                   </font>
-                  </property>
-                  <property name="text">
-                   <string/>
-                  </property>
-                 </widget>
-                </item>
-                <item>
-                 <widget class="QLabel" name="label_device">
-                  <property name="font">
-                   <font>
-                    <pointsize>11</pointsize>
-                   </font>
-                  </property>
-                  <property name="text">
-                   <string/>
-                  </property>
-                 </widget>
-                </item>
-               </layout>
-              </item>
-             </layout>
-            </widget>
-           </item>
           </layout>
          </widget>
+        </item>
+        <item>
+         <spacer name="verticalSpacer_3">
+          <property name="orientation">
+           <enum>Qt::Vertical</enum>
+          </property>
+          <property name="sizeType">
+           <enum>QSizePolicy::Expanding</enum>
+          </property>
+          <property name="sizeHint" stdset="0">
+           <size>
+            <width>20</width>
+            <height>40</height>
+           </size>
+          </property>
+         </spacer>
         </item>
        </layout>
       </item>
@@ -638,11 +485,6 @@ QWidget#widget_misc {
   <customwidget>
    <class>IconLabel</class>
    <extends>QLabel</extends>
-   <header>parsec.core.gui.custom_widgets</header>
-  </customwidget>
-  <customwidget>
-   <class>Button</class>
-   <extends>QPushButton</extends>
    <header>parsec.core.gui.custom_widgets</header>
   </customwidget>
   <customwidget>
