@@ -105,8 +105,8 @@ class CentralWidget(QWidget, Ui_CentralWidget):
         self.button_user.showMenu()
 
     def set_user_info(self):
-        org = self.core.device.organization_addr.organization_id
-        username = self.core.device.user_id
+        org = self.core.device.organization_id
+        username = self.core.device.short_user_display
         user_text = f"{org}\n{username}"
         self.button_user.setText(user_text)
 
