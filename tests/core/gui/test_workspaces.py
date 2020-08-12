@@ -29,8 +29,7 @@ async def test_add_workspace(
     monkeypatch.setattr(
         "parsec.core.gui.workspaces_widget.get_text_input", lambda *args, **kwargs: (workspace_name)
     )
-    async with aqtbot.wait_signal(w_w.list_success, timeout=2000):
-        await aqtbot.mouse_click(w_w.button_add_workspace, QtCore.Qt.LeftButton)
+    await aqtbot.mouse_click(w_w.button_add_workspace, QtCore.Qt.LeftButton)
 
     def _outcome_occured():
         assert w_w.layout_workspaces.count() == 1
@@ -51,7 +50,7 @@ async def test_add_workspace(
             assert wk_button.name == "Workspace1"
             assert not autoclose_dialog.dialogs
 
-    await aqtbot.wait_until(_outcome_occured)
+    await aqtbot.wait_until(_outcome_occured, timeout=2000)
 
 
 @pytest.mark.gui
@@ -64,8 +63,7 @@ async def test_rename_workspace(
 
     # Create a workspace and make sure the workspace is displayed
     core = logged_gui.test_get_core()
-    async with aqtbot.wait_signal(w_w.list_success, timeout=2000):
-        await core.user_fs.workspace_create("Workspace1")
+    await core.user_fs.workspace_create("Workspace1")
 
     def _workspace_displayed():
         assert w_w.layout_workspaces.count() == 1
@@ -73,7 +71,7 @@ async def test_rename_workspace(
         assert isinstance(wk_button, WorkspaceButton)
         assert wk_button.name == "Workspace1"
 
-    await aqtbot.wait_until(_workspace_displayed)
+    await aqtbot.wait_until(_workspace_displayed, timeout=2000)
     wk_button = w_w.layout_workspaces.itemAt(0).widget()
 
     # Now do the rename
