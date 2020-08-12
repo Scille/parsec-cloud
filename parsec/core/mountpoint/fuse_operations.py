@@ -3,11 +3,12 @@
 from parsec.core.core_events import CoreEvent
 import os
 import errno
+import ctypes
 from typing import Optional
 from structlog import get_logger
 from contextlib import contextmanager
 from stat import S_IRWXU, S_IFDIR, S_IFREG
-from fuse import FuseOSError, Operations, LoggingMixIn, fuse_get_context, fuse_exit
+from fuse import FuseOSError, Operations, LoggingMixIn, fuse_get_context, fuse_exit, _libfuse
 
 
 from parsec.core.types import FsPath
@@ -54,6 +55,7 @@ def translate_error(event_bus, operation, path):
         # Use EINVAL as fallback error code, since this is what fusepy does.
         raise FuseOSError(errno.EINVAL) from exc
 
+count = 0
 
 class FuseOperations(LoggingMixIn, Operations):
     def __init__(self, event_bus, fs_access):
@@ -64,13 +66,20 @@ class FuseOperations(LoggingMixIn, Operations):
         self._need_exit = False
 
     def __call__(self, name, path, *args, **kwargs):
+        global count
         # The path argument might be None or "-" in some special cases
         # related to `release` and `releasedir` (when the file descriptor
         # is available but the corresponding path is not). In those cases,
         # we can simply ignore the path.
-        path = FsPath(path) if path not in (None, "-") else None
-        with translate_error(self.event_bus, name, path):
-            return super().__call__(name, path, *args, **kwargs)
+        try:
+            count += 1
+            print(f"{count} : {name} {path} started")
+            path = FsPath(path) if path not in (None, "-") else None
+            with translate_error(self.event_bus, name, path):
+                return super().__call__(name, path, *args, **kwargs)
+        finally:
+            count -= 1
+            print(f"{count} : {name} {path} finished")
 
     def schedule_exit(self):
         # TODO: Currently call fuse_exit from a non fuse thread is not possible
@@ -94,7 +103,9 @@ class FuseOperations(LoggingMixIn, Operations):
 
     def getattr(self, path: FsPath, fh: Optional[int] = None):
         if self._need_exit:
+            print("fuse_exiting")
             fuse_exit()
+            print("fuse_exited")
 
         stat = self.fs_access.entry_info(path)
 
