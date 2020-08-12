@@ -101,6 +101,6 @@ jobs:
       set -eux
       pip install pytest-repeat
       py.test $(pytest.base_args) \
-        tests --runmountpoint --runslow --rungui -m gui -x -k test_claim_device_invitation_cancelled --count 50
+        tests --runmountpoint --runslow --rungui -m gui -x -k test_claim_device --count 100
     displayName: 'Tests GUI'
 
