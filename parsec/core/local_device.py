@@ -4,6 +4,8 @@ import attr
 from typing import List, Optional
 from pathlib import Path
 from hashlib import sha256
+from os import fspath
+from os import name as osname
 
 from parsec.serde import BaseSchema, fields, MsgpackSerializer
 from parsec.crypto import (
@@ -83,11 +85,28 @@ def generate_new_device(
     )
 
 
+def fix_dir_win(path: Path) -> Path:
+    if osname == "nt":
+        return Path("\\\\?\\" + fspath(path.resolve()))
+    else:
+        return path
+
+
+def decorator_fix_windir(func):
+    def wrapper(*args, **kwargs):
+        path = func(*args, **kwargs)
+        return fix_dir_win(path)
+
+    return wrapper
+
+
+@decorator_fix_windir
 def get_key_file(config_dir: Path, device: LocalDevice) -> Path:
     slug = device.slug
     return get_devices_dir(config_dir) / slug / f"{slug}.keys"
 
 
+@decorator_fix_windir
 def get_devices_dir(config_dir: Path) -> Path:
     return config_dir / "devices"
 
@@ -132,7 +151,7 @@ def list_available_devices(config_dir: Path) -> List[AvailableDevice]:
     devices = []
     for device_folder_path in candidate_pathes:
         slug = device_folder_path.name
-        key_file_path = device_folder_path / f"{slug}.keys"
+        key_file_path = fix_dir_win(device_folder_path / f"{slug}.keys")
 
         try:
             organization_id, device_id = LocalDevice.load_slug(slug)

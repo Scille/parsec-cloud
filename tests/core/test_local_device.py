@@ -3,6 +3,8 @@
 import pytest
 from uuid import UUID
 from pathlib import Path
+from os import fspath
+from os import name as osname
 
 from parsec.crypto import SigningKey
 from parsec.serde import packb, unpackb
@@ -25,6 +27,12 @@ from parsec.core.local_device import (
 from tests.common import customize_fixtures
 
 
+def fix_dir(path):
+    if osname == "nt":
+        return Path("\\\\?\\" + fspath(path.resolve()))
+    return path
+
+
 @pytest.fixture(autouse=True, scope="module")
 def realcrypto(unmock_crypto):
     with unmock_crypto():
@@ -33,12 +41,12 @@ def realcrypto(unmock_crypto):
 
 @pytest.fixture
 def config_dir(tmpdir):
-    return Path(tmpdir)
+    return fix_dir(Path(tmpdir))
 
 
 @pytest.mark.parametrize("path_exists", (True, False))
 def test_list_no_devices(path_exists, config_dir):
-    config_dir = config_dir if path_exists else config_dir / "dummy"
+    config_dir = config_dir if path_exists else fix_dir(config_dir / "dummy")
     devices = list_available_devices(config_dir)
     assert not devices
 
@@ -88,7 +96,7 @@ def test_list_devices_support_legacy_file_without_labels(config_dir):
     # Craft file data without the labels fields
     key_file_data = packb({"type": "password", "salt": b"12345", "ciphertext": b"whatever"})
     slug = "9d84fbd57a#Org#Zack@PC1"
-    key_file_path = get_devices_dir(config_dir) / slug / f"{slug}.keys"
+    key_file_path = fix_dir(get_devices_dir(config_dir) / slug / f"{slug}.keys")
     key_file_path.parent.mkdir(parents=True)
     key_file_path.write_bytes(key_file_data)
 
@@ -185,7 +193,7 @@ def test_available_devices_slughash_uniqueness(
 
 @pytest.mark.parametrize("path_exists", (True, False))
 def test_password_save_and_load(path_exists, config_dir, alice):
-    config_dir = config_dir if path_exists else config_dir / "dummy"
+    config_dir = config_dir if path_exists else fix_dir(config_dir / "dummy")
     save_device_with_password(config_dir, alice, "S3Cr37")
 
     key_file = get_key_file(config_dir, alice)
