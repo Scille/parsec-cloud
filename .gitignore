@@ -80,3 +80,7 @@ parsec/core/gui/rc/generated_misc/
 *~
 *#
 .#*
+
+# macOS-specific files
+*.DS_Store
+*._DS_Store

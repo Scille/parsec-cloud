@@ -17,6 +17,9 @@ from parsec.core.mountpoint.fuse_operations import FuseOperations
 from parsec.core.mountpoint.thread_fs_access import ThreadFSAccess
 from parsec.core.mountpoint.exceptions import MountpointDriverCrash
 
+from parsec.core import resources
+from pathlib import Path
+
 
 __all__ = ("fuse_mountpoint_runner",)
 
@@ -139,10 +142,19 @@ async def fuse_mountpoint_runner(
                         fuse_operations,
                         str(mountpoint_path.absolute()),
                         foreground=True,
-                        auto_unmount=True,
+                        auto_unmount=False,
+                        local=True, # Might have some unintended side effects, see https://github.com/osxfuse/osxfuse/wiki/Mount-options
+                        daemon_timeout=1,
+                        volname=workspace_fs.get_workspace_name(),
+                        volicon=Path(resources.__file__).absolute().parent / "parsec.icns",
                         encoding=encoding,
                         **config,
                     )
+                    # osxfuse-specific options :
+                    # - daemon_timeout : temp fix to reduce unmount time
+                    # - local : allows mountpoint to show up correctly in finder (+ desktop)
+                    # - volname : specify volume name (default OSXFUSE [...])
+                    # - volicon : specify volume icon (default macOS drive icon)
 
                 except Exception as exc:
                     try:
@@ -154,7 +166,12 @@ async def fuse_mountpoint_runner(
                     ) from exc
 
                 finally:
+                    print("finally")
                     fuse_thread_stopped.set()
+                    print("/finally")
+                    print(workspace_fs.get_workspace_name())
+
+
 
             # The fusepy runner (FUSE) relies on the `fuse_main_real` function from libfuse
             # This function is high-level helper on top of the libfuse API that is intended
