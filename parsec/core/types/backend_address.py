@@ -222,7 +222,7 @@ class BackendOrganizationBootstrapAddr(BackendActionAddr):
 
     __slots__ = ("_organization_id", "_token")
 
-    def __init__(self, organization_id: OrganizationID, token: str, **kwargs):
+    def __init__(self, organization_id: OrganizationID, token: Optional[str], **kwargs):
         super().__init__(**kwargs)
         self._organization_id = organization_id
         self._token = token
@@ -242,14 +242,12 @@ class BackendOrganizationBootstrapAddr(BackendActionAddr):
             raise ValueError("Expected `action=bootstrap_organization` value")
 
         value = params.pop("token", ())
-        if len(value) != 1:
-            raise ValueError("Missing mandatory `token` param")
-        try:
+        if len(value) > 1:
+            raise ValueError("Multiple values for param `token`")
+        elif value and value[0]:
             kwargs["token"] = value[0]
-        except ValueError:
-            raise ValueError("Invalid `token` param value")
-        if not kwargs["token"]:
-            raise ValueError("Empty value in `token` param")
+        else:
+            kwargs["token"] = None
 
         return kwargs
 
@@ -257,15 +255,14 @@ class BackendOrganizationBootstrapAddr(BackendActionAddr):
         return str(self.organization_id)
 
     def _to_url_get_params(self):
-        return [
-            ("action", "bootstrap_organization"),
-            ("token", self._token),
-            *super()._to_url_get_params(),
-        ]
+        params = [("action", "bootstrap_organization")]
+        if self._token:
+            params.append(("token", self._token))
+        return [*params, *super()._to_url_get_params()]
 
     @classmethod
     def build(
-        cls, backend_addr: BackendAddr, organization_id: OrganizationID, token: str
+        cls, backend_addr: BackendAddr, organization_id: OrganizationID, token: Optional[str] = None
     ) -> "BackendOrganizationBootstrapAddr":
         return cls(
             hostname=backend_addr.hostname,
@@ -285,8 +282,11 @@ class BackendOrganizationBootstrapAddr(BackendActionAddr):
         return self._organization_id
 
     @property
-    def token(self) -> Optional[str]:
-        return self._token
+    def token(self) -> str:
+        # For legacy reasons, token must always be provided, hence default
+        # token is the empty one (which is used for spontaneous organization
+        # bootstrap without prior organization creation)
+        return self._token if self._token is not None else ""
 
 
 class BackendOrganizationClaimUserAddr(OrganizationParamsFixture, BackendActionAddr):
@@ -297,7 +297,7 @@ class BackendOrganizationClaimUserAddr(OrganizationParamsFixture, BackendActionA
 
     __slots__ = ("_user_id", "_token")
 
-    def __init__(self, user_id: UserID, token: Optional[str] = None, **kwargs):
+    def __init__(self, user_id: UserID, token: Optional[str], **kwargs):
         super().__init__(**kwargs)
         self._user_id = user_id
         self._token = token
@@ -321,11 +321,12 @@ class BackendOrganizationClaimUserAddr(OrganizationParamsFixture, BackendActionA
             raise ValueError("Invalid `user_id` param value") from exc
 
         value = params.pop("token", ())
-        if len(value) > 0:
-            try:
-                kwargs["token"] = value[0]
-            except ValueError:
-                raise ValueError("Invalid `token` param value")
+        if len(value) > 1:
+            raise ValueError("Multiple values for param `token`")
+        elif value and value[0]:
+            kwargs["token"] = value[0]
+        else:
+            kwargs["token"] = None
 
         return kwargs
 
@@ -376,7 +377,7 @@ class BackendOrganizationClaimDeviceAddr(OrganizationParamsFixture, BackendActio
 
     __slots__ = ("_device_id", "_token")
 
-    def __init__(self, device_id: DeviceID, token: Optional[str] = None, **kwargs):
+    def __init__(self, device_id: DeviceID, token: Optional[str], **kwargs):
         super().__init__(**kwargs)
         self._device_id = device_id
         self._token = token
@@ -400,11 +401,12 @@ class BackendOrganizationClaimDeviceAddr(OrganizationParamsFixture, BackendActio
             raise ValueError("Invalid `device_id` param value") from exc
 
         value = params.pop("token", ())
-        if len(value) > 0:
-            try:
-                kwargs["token"] = value[0]
-            except ValueError:
-                raise ValueError("Invalid `token` param value")
+        if len(value) > 1:
+            raise ValueError("Multiple values for param `token`")
+        elif value and value[0]:
+            kwargs["token"] = value[0]
+        else:
+            kwargs["token"] = None
 
         return kwargs
 
@@ -543,7 +545,7 @@ class BackendOrganizationAddrField(fields.Field):
 class BackendInvitationAddr(BackendActionAddr):
     """
     Represent the URL to invite a user or a device
-    (e.g. ``parsec://parsec.example.com/my_org?action=claim_user&token=1234ABCD``)
+    (e.g. ``parsec://parsec.example.com/my_org?action=claim_user&token=3a50b191122b480ebb113b10216ef343``)
     """
 
     __slots__ = ("_organization_id", "_invitation_type", "_token")

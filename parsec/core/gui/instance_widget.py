@@ -53,11 +53,12 @@ class InstanceWidget(QWidget):
     join_organization_clicked = pyqtSignal()
     create_organization_clicked = pyqtSignal()
 
-    def __init__(self, jobs_ctx, event_bus, config, **kwargs):
+    def __init__(self, jobs_ctx, event_bus, config, systray_notification, **kwargs):
         super().__init__(**kwargs)
         self.jobs_ctx = jobs_ctx
         self.event_bus = event_bus
         self.config = config
+        self.systray_notification = systray_notification
 
         self.core = None
         self.core_jobs_ctx = None
@@ -212,7 +213,11 @@ class InstanceWidget(QWidget):
     def show_central_widget(self):
         self.clear_widgets()
         central_widget = CentralWidget(
-            self.core, self.core_jobs_ctx, self.core.event_bus, parent=self
+            self.core,
+            self.core_jobs_ctx,
+            self.core.event_bus,
+            systray_notification=self.systray_notification,
+            parent=self,
         )
         self.layout().addWidget(central_widget)
         central_widget.logout_requested.connect(self.logout)

@@ -7,7 +7,7 @@ from parsec.backend.backend_events import BackendEvent
 from parsec.api.protocol import UserID, DeviceID, OrganizationID
 from parsec.backend.message import BaseMessageComponent
 from parsec.backend.postgresql.handler import send_signal, PGHandler
-from parsec.backend.postgresql.queries import (
+from parsec.backend.postgresql.utils import (
     Q,
     q_organization_internal_id,
     q_user_internal_id,

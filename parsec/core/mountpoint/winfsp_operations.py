@@ -11,7 +11,7 @@ from winfspy import (
     FILE_ATTRIBUTE,
     CREATE_FILE_CREATE_OPTIONS,
 )
-from winfspy.plumbing.winstuff import dt_to_filetime, NTSTATUS, SecurityDescriptor
+from winfspy.plumbing import dt_to_filetime, NTSTATUS, SecurityDescriptor
 
 from parsec.core.types import FsPath
 from parsec.core.fs import FSLocalOperationError, FSRemoteOperationError

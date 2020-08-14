@@ -17,7 +17,7 @@ from parsec.core.local_device import save_device_with_password
 from parsec.core.gui.main_window import MainWindow
 from parsec.core.gui.workspaces_widget import WorkspaceButton
 from parsec.core.gui.trio_thread import QtToTrioJobScheduler
-from parsec.core.gui.login_widget import LoginWidget
+from parsec.core.gui.login_widget import LoginWidget, LoginPasswordInputWidget, LoginAccountsWidget
 from parsec.core.gui.central_widget import CentralWidget
 from parsec.core.gui.lang import switch_language
 from parsec.core.gui.parsec_application import ParsecApp
@@ -338,10 +338,25 @@ async def logged_gui(aqtbot, gui_factory, core_config, alice, bob, fixtures_cust
     lw = gui.test_get_login_widget()
     tabw = gui.test_get_tab()
 
-    await aqtbot.key_clicks(lw.line_edit_password, "P@ssw0rd")
+    accounts_w = lw.widget.layout().itemAt(0).widget()
+    assert accounts_w
+
+    async with aqtbot.wait_signal(accounts_w.account_clicked):
+        await aqtbot.mouse_click(
+            accounts_w.accounts_widget.layout().itemAt(0).widget(), QtCore.Qt.LeftButton
+        )
+
+    def _password_widget_shown():
+        assert isinstance(lw.widget.layout().itemAt(0).widget(), LoginPasswordInputWidget)
+
+    await aqtbot.wait_until(_password_widget_shown)
+
+    password_w = lw.widget.layout().itemAt(0).widget()
+
+    await aqtbot.key_clicks(password_w.line_edit_password, "P@ssw0rd")
 
     async with aqtbot.wait_signals([lw.login_with_password_clicked, tabw.logged_in]):
-        await aqtbot.mouse_click(lw.button_login, QtCore.Qt.LeftButton)
+        await aqtbot.mouse_click(password_w.button_login, QtCore.Qt.LeftButton)
 
     central_widget = gui.test_get_central_widget()
     assert central_widget is not None
@@ -350,7 +365,7 @@ async def logged_gui(aqtbot, gui_factory, core_config, alice, bob, fixtures_cust
 
 
 @pytest.fixture
-def testing_main_window_cls(aqtbot):
+def testing_main_window_cls(aqtbot, qt_thread_gateway):
     # Since widgets are not longer persistent and are instantiated only when needed,
     # we can no longer simply access them.
     # These methods help to retrieve a widget according to the current state of the GUI.
@@ -403,7 +418,14 @@ def testing_main_window_cls(aqtbot):
 
         async def test_logout_and_switch_to_login_widget(self):
             central_widget = self.test_get_central_widget()
-            await aqtbot.mouse_click(central_widget.menu.button_logout, QtCore.Qt.LeftButton)
+
+            def _trigger_logout_menu():
+                central_widget.button_user.menu().actions()[0].trigger()
+
+            tabw = self.test_get_tab()
+
+            async with aqtbot.wait_signal(tabw.logged_out):
+                await qt_thread_gateway.send_action(_trigger_logout_menu)
 
             def _wait_logged_out():
                 assert not central_widget.isVisible()
@@ -417,9 +439,25 @@ def testing_main_window_cls(aqtbot):
         async def test_proceed_to_login(self, password, error=False):
             l_w = self.test_get_login_widget()
 
-            await aqtbot.run(l_w.line_edit_password.clear)
-            await aqtbot.key_clicks(l_w.line_edit_password, password)
-            await aqtbot.mouse_click(l_w.button_login, QtCore.Qt.LeftButton)
+            accounts_w = l_w.widget.layout().itemAt(0).widget()
+            tabw = self.test_get_tab()
+
+            if isinstance(accounts_w, LoginAccountsWidget):
+                async with aqtbot.wait_signal(accounts_w.account_clicked):
+                    await aqtbot.mouse_click(
+                        accounts_w.accounts_widget.layout().itemAt(0).widget(), QtCore.Qt.LeftButton
+                    )
+
+            def _password_widget_shown():
+                assert isinstance(l_w.widget.layout().itemAt(0).widget(), LoginPasswordInputWidget)
+
+            await aqtbot.wait_until(_password_widget_shown)
+            password_w = l_w.widget.layout().itemAt(0).widget()
+            await aqtbot.key_clicks(password_w.line_edit_password, "P@ssw0rd")
+
+            signal = tabw.logged_in if not error else tabw.login_failed
+            async with aqtbot.wait_signals([l_w.login_with_password_clicked, signal]):
+                await aqtbot.mouse_click(password_w.button_login, QtCore.Qt.LeftButton)
 
             def _wait_logged_in():
                 assert not l_w.isVisible()

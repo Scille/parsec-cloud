@@ -10,6 +10,7 @@ from parsec.api.protocol import DeviceID, DeviceIDField, HumanHandle, HumanHandl
 from parsec.api.data.base import BaseAPIData, BaseSchema
 from parsec.api.data.entry import EntryID, EntryIDField
 from parsec.api.data.certif import UserProfile, UserProfileField
+import attr
 
 
 class SASCode(str):
@@ -64,6 +65,7 @@ def generate_sas_code_candidates(valid_sas: SASCode, size: int = 3) -> List[SASC
     return ordered_candidates
 
 
+@attr.s(slots=True, frozen=True, auto_attribs=True, kw_only=True, eq=False)
 class InviteUserData(BaseAPIData):
     class SCHEMA_CLS(BaseSchema):
         type = fields.CheckedConstant("invite_user_data", required=True)
@@ -85,6 +87,7 @@ class InviteUserData(BaseAPIData):
     verify_key: VerifyKey
 
 
+@attr.s(slots=True, frozen=True, auto_attribs=True, kw_only=True, eq=False)
 class InviteUserConfirmation(BaseAPIData):
     class SCHEMA_CLS(BaseSchema):
         type = fields.CheckedConstant("invite_user_confirmation", required=True)
@@ -106,6 +109,7 @@ class InviteUserConfirmation(BaseAPIData):
     root_verify_key: VerifyKey
 
 
+@attr.s(slots=True, frozen=True, auto_attribs=True, kw_only=True, eq=False)
 class InviteDeviceData(BaseAPIData):
     class SCHEMA_CLS(BaseSchema):
         type = fields.CheckedConstant("invite_device_data", required=True)
@@ -122,6 +126,7 @@ class InviteDeviceData(BaseAPIData):
     verify_key: VerifyKey
 
 
+@attr.s(slots=True, frozen=True, auto_attribs=True, kw_only=True, eq=False)
 class InviteDeviceConfirmation(BaseAPIData):
     class SCHEMA_CLS(BaseSchema):
         type = fields.CheckedConstant("invite_device_confirmation", required=True)

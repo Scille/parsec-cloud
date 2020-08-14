@@ -4,9 +4,9 @@ from parsec.api.protocol import OrganizationID, UserID, DeviceID
 from parsec.backend.backend_events import BackendEvent
 from parsec.backend.user import UserError, UserNotFoundError, UserAlreadyExistsError, UserInvitation
 from parsec.backend.postgresql.handler import send_signal
-from parsec.backend.postgresql.utils import query
-from parsec.backend.postgresql.queries import (
+from parsec.backend.postgresql.utils import (
     Q,
+    query,
     q_organization_internal_id,
     q_device,
     q_device_internal_id,

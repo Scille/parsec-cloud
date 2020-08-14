@@ -105,6 +105,10 @@ class AvailableDevice:
         return str(self.human_handle or self.device_id.user_id)
 
     @property
+    def short_user_display(self) -> str:
+        return str(self.human_handle.label if self.human_handle else self.device_id.user_id)
+
+    @property
     def device_display(self) -> str:
         return self.device_label or str(self.device_id.device_name)
 

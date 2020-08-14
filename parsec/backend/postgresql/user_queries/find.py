@@ -6,8 +6,7 @@ from typing import Tuple, List
 
 from parsec.api.protocol import UserID, OrganizationID, HumanHandle
 from parsec.backend.user import HumanFindResultItem
-from parsec.backend.postgresql.utils import query
-from parsec.backend.postgresql.queries import Q, q_organization_internal_id
+from parsec.backend.postgresql.utils import Q, q_organization_internal_id, query
 
 
 @lru_cache()

@@ -70,7 +70,7 @@ class UserStorage:
         """
         return self.manifest_storage._cache[self.user_manifest_id]
 
-    async def _load_user_manifest(self) -> LocalUserManifest:
+    async def _load_user_manifest(self) -> None:
         try:
             await self.manifest_storage.get_manifest(self.user_manifest_id)
         except FSLocalMissError:
@@ -79,7 +79,9 @@ class UserStorage:
             # back on an empty manifest which is a good aproximation of
             # the very first version of the manifest (field `created` is
             # invalid, but it will be corrected by the merge during sync).
-            manifest = LocalUserManifest.new_placeholder(id=self.device.user_manifest_id)
+            manifest = LocalUserManifest.new_placeholder(
+                self.device.device_id, id=self.device.user_manifest_id
+            )
             await self.manifest_storage.set_manifest(self.user_manifest_id, manifest)
 
     async def set_user_manifest(self, user_manifest: LocalUserManifest):

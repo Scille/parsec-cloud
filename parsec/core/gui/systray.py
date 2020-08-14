@@ -26,8 +26,8 @@ class Systray(QSystemTrayIcon):
         self.activated.connect(self.on_activated)
         self.show()
 
-    def on_systray_notification(self, title, msg):
-        self.showMessage(title, msg, msecs=2000)
+    def on_systray_notification(self, title, msg, msec=2000):
+        self.showMessage(title, msg, msecs=msec)
 
     def on_activated(self, reason):
         if reason == QSystemTrayIcon.DoubleClick:

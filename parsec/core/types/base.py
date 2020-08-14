@@ -1,14 +1,15 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
 
+import attr
 from typing import Tuple
 
 from parsec.serde import BaseSchema, MsgpackSerializer
 from parsec.api.data import BaseData, EntryName
 
-
 __all__ = ("BaseLocalData", "FsPath")
 
 
+@attr.s(slots=True, frozen=True, auto_attribs=True, kw_only=True, eq=False)
 class BaseLocalData(BaseData):
     """Unsigned and uncompressed base class for local data"""
 

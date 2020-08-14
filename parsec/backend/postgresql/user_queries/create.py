@@ -10,9 +10,9 @@ from pendulum import now as pendulum_now
 from parsec.api.protocol import OrganizationID
 from parsec.backend.user import User, Device, UserError, UserNotFoundError, UserAlreadyExistsError
 from parsec.backend.postgresql.handler import send_signal
-from parsec.backend.postgresql.utils import query
-from parsec.backend.postgresql.queries import (
+from parsec.backend.postgresql.utils import (
     Q,
+    query,
     q_organization_internal_id,
     q_device_internal_id,
     q_user_internal_id,

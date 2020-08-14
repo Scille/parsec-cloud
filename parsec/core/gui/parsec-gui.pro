@@ -60,7 +60,11 @@ FORMS += forms/main_window.ui \
     forms/greet_device_widget.ui \
     forms/claim_device_instructions_widget.ui \
     forms/claim_device_code_exchange_widget.ui \
-    forms/claim_device_provide_info_widget.ui
+    forms/claim_device_provide_info_widget.ui \
+    forms/account_button.ui \
+    forms/login_accounts_widget.ui \
+    forms/login_password_input_widget.ui \
+    forms/login_no_devices_widget.ui
 
 RESOURCES += rc/resources.qrc \
     forms/rc/resources.qrc

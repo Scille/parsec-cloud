@@ -1,17 +1,18 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
 
 from parsec.core.core_events import CoreEvent
-from typing import Tuple
+from typing import Tuple, cast, Optional, AsyncIterator
 from async_generator import asynccontextmanager
 
 from parsec.core.types import (
     EntryID,
     FsPath,
     WorkspaceRole,
-    LocalManifest,
+    BaseLocalManifest,
     LocalFileManifest,
     LocalFolderManifest,
     FileDescriptor,
+    LocalFolderishManifests,
 )
 
 
@@ -49,12 +50,12 @@ class EntryTransactions(FileTransactions):
 
     # Look-up helpers
 
-    async def _get_manifest(self, entry_id: EntryID) -> LocalManifest:
+    async def _get_manifest(self, entry_id: EntryID) -> BaseLocalManifest:
         try:
             return await self.local_storage.get_manifest(entry_id)
         except FSLocalMissError as exc:
-            remote_manifest = await self.remote_loader.load_manifest(exc.id)
-            return LocalManifest.from_remote(remote_manifest)
+            remote_manifest = await self.remote_loader.load_manifest(cast(EntryID, exc.id))
+            return BaseLocalManifest.from_remote(remote_manifest)
 
     @asynccontextmanager
     async def _load_and_lock_manifest(self, entry_id: EntryID):
@@ -62,17 +63,17 @@ class EntryTransactions(FileTransactions):
             try:
                 local_manifest = await self.local_storage.get_manifest(entry_id)
             except FSLocalMissError as exc:
-                remote_manifest = await self.remote_loader.load_manifest(exc.id)
-                local_manifest = LocalManifest.from_remote(remote_manifest)
+                remote_manifest = await self.remote_loader.load_manifest(cast(EntryID, exc.id))
+                local_manifest = BaseLocalManifest.from_remote(remote_manifest)
                 await self.local_storage.set_manifest(entry_id, local_manifest)
             yield local_manifest
 
-    async def _load_manifest(self, entry_id: EntryID) -> LocalManifest:
+    async def _load_manifest(self, entry_id: EntryID) -> BaseLocalManifest:
         async with self._load_and_lock_manifest(entry_id) as manifest:
             return manifest
 
     @asynccontextmanager
-    async def _lock_manifest_from_path(self, path: FsPath) -> LocalManifest:
+    async def _lock_manifest_from_path(self, path: FsPath) -> AsyncIterator[BaseLocalManifest]:
         # Root entry_id and manifest
         entry_id = self.workspace_id
 
@@ -82,7 +83,7 @@ class EntryTransactions(FileTransactions):
             if is_file_manifest(manifest):
                 raise FSNotADirectoryError(filename=path)
             try:
-                entry_id = manifest.children[name]
+                entry_id = cast(LocalFolderishManifests, manifest).children[name]
             except (AttributeError, KeyError):
                 raise FSFileNotFoundError(filename=path)
 
@@ -90,14 +91,14 @@ class EntryTransactions(FileTransactions):
         async with self._load_and_lock_manifest(entry_id) as manifest:
             yield manifest
 
-    async def _get_manifest_from_path(self, path: FsPath) -> LocalManifest:
+    async def _get_manifest_from_path(self, path: FsPath) -> BaseLocalManifest:
         async with self._lock_manifest_from_path(path) as manifest:
             return manifest
 
     @asynccontextmanager
     async def _lock_parent_manifest_from_path(
         self, path: FsPath
-    ) -> Tuple[LocalManifest, LocalManifest]:
+    ) -> AsyncIterator[Tuple[BaseLocalManifest, Optional[BaseLocalManifest]]]:
         # This is the most complicated locking scenario.
         # It requires locking the parent of the given entry and the entry itself
         # if it exists.
@@ -161,7 +162,7 @@ class EntryTransactions(FileTransactions):
 
     async def entry_rename(
         self, source: FsPath, destination: FsPath, overwrite: bool = True
-    ) -> EntryID:
+    ) -> Optional[EntryID]:
         # Check write rights
         self.check_write_rights(source)
 
@@ -191,7 +192,7 @@ class EntryTransactions(FileTransactions):
 
             # Source and destination are the same
             if source.name == destination.name:
-                return
+                return None
 
             # Destination already exists
             if not overwrite and child is not None:
@@ -303,7 +304,7 @@ class EntryTransactions(FileTransactions):
                 raise FSFileExistsError(filename=path)
 
             # Create folder
-            child = LocalFolderManifest.new_placeholder(parent=parent.id)
+            child = LocalFolderManifest.new_placeholder(self.local_author, parent=parent.id)
 
             # New parent manifest
             new_parent = parent.evolve_children_and_mark_updated({path.name: child.id})
@@ -319,7 +320,9 @@ class EntryTransactions(FileTransactions):
         # Return the entry id of the created folder
         return child.id
 
-    async def file_create(self, path: FsPath, open=True) -> Tuple[EntryID, FileDescriptor]:
+    async def file_create(
+        self, path: FsPath, open=True
+    ) -> Tuple[EntryID, Optional[FileDescriptor]]:
         # Check write rights
         self.check_write_rights(path)
 
@@ -331,7 +334,7 @@ class EntryTransactions(FileTransactions):
                 raise FSFileExistsError(filename=path)
 
             # Create file
-            child = LocalFileManifest.new_placeholder(parent=parent.id)
+            child = LocalFileManifest.new_placeholder(self.local_author, parent=parent.id)
 
             # New parent manifest
             new_parent = parent.evolve_children_and_mark_updated({path.name: child.id})

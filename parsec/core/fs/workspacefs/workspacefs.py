@@ -3,18 +3,18 @@
 import attr
 import trio
 from collections import defaultdict
-from typing import Union, List, Dict, Tuple, AsyncGenerator, Optional
+from typing import Union, List, Dict, Tuple, AsyncIterator, cast, Optional
 from pendulum import Pendulum, now as pendulum_now
 
-from parsec.api.data import Manifest as RemoteManifest
+from parsec.api.data import BaseManifest as BaseRemoteManifest
+from parsec.api.data import FileManifest as RemoteFileManifest
 from parsec.api.protocol import UserID
 from parsec.core.types import (
     FsPath,
     EntryID,
     LocalDevice,
     WorkspaceRole,
-    LocalFolderishManifests,
-    LocalFileManifest,
+    RemoteFolderishManifests,
     DEFAULT_BLOCK_SIZE,
 )
 from parsec.core.fs.remote_loader import RemoteLoader
@@ -43,8 +43,8 @@ AnyPath = Union[FsPath, str]
 
 @attr.s(slots=True, frozen=True, auto_attribs=True)
 class ReencryptionNeed:
-    user_revoked: Tuple[UserID]
-    role_revoked: Tuple[UserID]
+    user_revoked: Tuple[UserID, ...]
+    role_revoked: Tuple[UserID, ...]
 
     @property
     def need_reencryption(self):
@@ -69,7 +69,7 @@ class WorkspaceFS:
         self.backend_cmds = backend_cmds
         self.event_bus = event_bus
         self.remote_devices_manager = remote_devices_manager
-        self.sync_locks = defaultdict(trio.Lock)
+        self.sync_locks: Dict[EntryID, trio.Lock] = defaultdict(trio.Lock)
 
         self.remote_loader = RemoteLoader(
             self.device,
@@ -241,7 +241,7 @@ class WorkspaceFS:
         info = await self.transactions.entry_info(FsPath(path))
         return info["type"] == "file"
 
-    async def iterdir(self, path: AnyPath) -> AsyncGenerator[FsPath, None]:
+    async def iterdir(self, path: AnyPath) -> AsyncIterator[FsPath]:
         """
         Raises:
             FSError
@@ -465,11 +465,11 @@ class WorkspaceFS:
 
     # Sync helpers
 
-    async def _synchronize_placeholders(self, manifest: LocalFolderishManifests) -> None:
+    async def _synchronize_placeholders(self, manifest: RemoteFolderishManifests) -> None:
         async for child in self.transactions.get_placeholder_children(manifest):
             await self.minimal_sync(child)
 
-    async def _upload_blocks(self, manifest: LocalFileManifest) -> None:
+    async def _upload_blocks(self, manifest: RemoteFileManifest) -> None:
         for access in manifest.blocks:
             try:
                 data = await self.local_storage.get_dirty_block(access.id)
@@ -510,7 +510,9 @@ class WorkspaceFS:
         except FSLocalMissError:
             pass
 
-    async def _sync_by_id(self, entry_id: EntryID, remote_changed: bool = True) -> RemoteManifest:
+    async def _sync_by_id(
+        self, entry_id: EntryID, remote_changed: bool = True
+    ) -> BaseRemoteManifest:
         """
         Synchronize the entry corresponding to a specific ID.
 
@@ -558,11 +560,13 @@ class WorkspaceFS:
 
             # Synchronize placeholder children
             if is_folderish_manifest(new_remote_manifest):
-                await self._synchronize_placeholders(new_remote_manifest)
+                await self._synchronize_placeholders(
+                    cast(RemoteFolderishManifests, new_remote_manifest)
+                )
 
             # Upload blocks
             if is_file_manifest(new_remote_manifest):
-                await self._upload_blocks(new_remote_manifest)
+                await self._upload_blocks(cast(RemoteFileManifest, new_remote_manifest))
 
             # Restamp the remote manifest
             new_remote_manifest = new_remote_manifest.evolve(timestamp=pendulum_now())
@@ -624,7 +628,7 @@ class WorkspaceFS:
             return
 
         # Synchronize children
-        for name, entry_id in manifest.children.items():
+        for name, entry_id in cast(RemoteFolderishManifests, manifest).children.items():
             await self.sync_by_id(entry_id, remote_changed=remote_changed, recursive=True)
 
     async def sync(self, *, remote_changed: bool = True) -> None:

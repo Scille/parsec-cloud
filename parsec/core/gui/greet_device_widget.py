@@ -149,6 +149,13 @@ class GreetDeviceInstructionsWidget(QWidget, Ui_GreetDeviceInstructionsWidget):
         # Hide the send email button if the user has no human_handle (hand hence no email)
         if not self.core.device.human_handle:
             self.button_send_email.hide()
+            self.label_instructions.setText(_("TEXT_GREET_DEVICE_INSTRUCTIONS_NO_EMAIL"))
+        else:
+            self.label_instructions.setText(
+                _("TEXT_GREET_DEVICE_INSTRUCTIONS_email").format(
+                    email=self.core.device.human_handle.email
+                )
+            )
         self.button_copy_addr.clicked.connect(self._on_copy_addr_clicked)
 
     def _on_copy_addr_clicked(self):

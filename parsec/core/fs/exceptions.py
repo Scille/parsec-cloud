@@ -15,8 +15,10 @@ import os
 import errno
 import io
 
-from parsec.core.types import EntryID
+from parsec.core.types import EntryID, ChunkID
 from parsec.core.fs.utils import ntstatus
+
+from typing import Optional, Union
 
 
 # Base classes for all file system errors
@@ -49,9 +51,9 @@ class FSOperationError(OSError, FSError):
     Base class for the exceptions that may be raised during the execution of an operation
     """
 
-    ERRNO = None
-    WINERROR = None
-    NTSTATUS = None
+    ERRNO: Optional[int] = None
+    WINERROR: Optional[int] = None
+    NTSTATUS: Optional[ntstatus] = None
 
     def __init__(self, message=None, filename=None, filename2=None):
         # Get the actual message and save it
@@ -116,7 +118,7 @@ class FSWorkspaceTimestampedTooEarly(FSMiscError):
 
 
 class FSLocalMissError(FSInternalError):
-    def __init__(self, id: EntryID):
+    def __init__(self, id: Union[EntryID, ChunkID]):
         super().__init__(id)
         self.id = id
 

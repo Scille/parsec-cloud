@@ -16,16 +16,16 @@ from parsec.backend.realm import (
     RealmNotInMaintenanceError,
 )
 from parsec.backend.postgresql.handler import send_signal
-from parsec.backend.postgresql.utils import query
 from parsec.backend.postgresql.message import send_message
-from parsec.backend.postgresql.tables import STR_TO_REALM_ROLE
-from parsec.backend.postgresql.queries import (
+from parsec.backend.postgresql.utils import (
     Q,
+    query,
     q_organization_internal_id,
     q_user,
     q_device_internal_id,
     q_realm,
     q_realm_internal_id,
+    STR_TO_REALM_ROLE,
 )
 
 
@@ -79,7 +79,7 @@ ORDER BY user_, certified_on DESC
 )
 
 
-async def get_realm_role_for_not_revoked(conn, organization_id, realm_id, users=None):
+async def _get_realm_role_for_not_revoked(conn, organization_id, realm_id, users=None):
     now = pendulum.now()
 
     def _cook_role(row):
@@ -153,7 +153,7 @@ async def query_start_reencryption_maintenance(
     if encryption_revision != rep["encryption_revision"] + 1:
         raise RealmEncryptionRevisionError("Invalid encryption revision")
 
-    roles = await get_realm_role_for_not_revoked(conn, organization_id, realm_id)
+    roles = await _get_realm_role_for_not_revoked(conn, organization_id, realm_id)
 
     if roles.get(author.user_id) != RealmRole.OWNER:
         raise RealmAccessError()
@@ -237,7 +237,7 @@ async def query_finish_reencryption_maintenance(
 ) -> None:
     # Retrieve realm and make sure it is not under maintenance
     rep = await get_realm_status(conn, organization_id, realm_id)
-    roles = await get_realm_role_for_not_revoked(conn, organization_id, realm_id, [author.user_id])
+    roles = await _get_realm_role_for_not_revoked(conn, organization_id, realm_id, [author.user_id])
     if roles.get(author.user_id) != RealmRole.OWNER:
         raise RealmAccessError()
     if not rep["maintenance_type"]:

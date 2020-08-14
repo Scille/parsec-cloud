@@ -6,10 +6,9 @@ from typing import Dict, List
 
 from parsec.api.protocol import DeviceID, UserID, OrganizationID, RealmRole
 from parsec.backend.realm import RealmStatus, RealmAccessError, RealmNotFoundError
-from parsec.backend.postgresql.utils import query
-from parsec.backend.postgresql.tables import STR_TO_REALM_ROLE, STR_TO_REALM_MAINTENANCE_TYPE
-from parsec.backend.postgresql.queries import (
+from parsec.backend.postgresql.utils import (
     Q,
+    query,
     q_organization_internal_id,
     q_user,
     q_user_internal_id,
@@ -17,6 +16,8 @@ from parsec.backend.postgresql.queries import (
     q_device,
     q_realm,
     q_realm_internal_id,
+    STR_TO_REALM_ROLE,
+    STR_TO_REALM_MAINTENANCE_TYPE,
 )
 from parsec.backend.realm import RealmStats
 
@@ -120,7 +121,7 @@ async def query_get_status(
     )
 
 
-@query()
+@query(in_transaction=True)
 async def query_get_stats(
     conn, organization_id: OrganizationID, author: DeviceID, realm_id: UUID
 ) -> RealmStats:
