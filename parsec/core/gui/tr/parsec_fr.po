@@ -7,8 +7,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PROJECT VERSION\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2020-08-10 13:34+0200\n"
-"PO-Revision-Date: 2020-08-10 13:35+0200\n"
+"POT-Creation-Date: 2020-08-14 06:36+0200\n"
+"PO-Revision-Date: 2020-08-14 06:39+0200\n"
 "Last-Translator: \n"
 "Language: fr\n"
 "Language-Team: fr <LL@li.org>\n"
@@ -248,45 +248,24 @@ msgstr "Erreur interne. Veuillez redémarrer le processus."
 msgid "TEXT_GREET_USER_TITLE"
 msgstr "Accueillir un nouvel utilisateur"
 
+msgid "TEXT_WORKSPACE_ROLE_NOT_SHARED"
+msgstr "Le serveur est hors-ligne ou vous n'avez pas de connexion internet."
+
 msgid "TEXT_WORKSPACE_SHARING_USER_IS_REVOKED"
 msgstr "Cet utilisateur est révoqué."
 
-msgid "TEXT_WORKSPACE_SHARING_USER_NOT_FOUND"
-msgstr "L'utilisateur n'a pas été trouvé."
-
-msgid "TEXT_WORKSPACE_SHARING_ALREADY_SHARED_user"
-msgstr "Cet espace de travail est déjà partagé avec <b>{user}</b>."
-
-msgid "TEXT_WORKSPACE_SHARING_UNSHARE_TITLE"
-msgstr "Annuler le partage"
-
-msgid "TEXT_WORKSPACE_SHARING_UNSHARE_INSTRUCTIONS_user"
+msgid "TEXT_WORKSPACE_SHARING_OFFLINE"
 msgstr ""
-"Êtes-vous sûr de vouloir annuler le partage de cet espace de travail avec"
-" <b>{user}</b> ? L'utilisateur ne pourra plus voir les modifications "
-"faites sur cet espace de travail."
-
-msgid "ACTION_WORKSPACE_UNSHARE_CONFIRM"
-msgstr "Annuler le partage"
-
-msgid "TEXT_WORKSPACE_SHARING_SHARE_ERROR_workspace-user"
-msgstr ""
-"Impossible de partager l'espace de travail <b>{workspace}</b> avec "
-"l'utilisateur <b>{user}</b>."
 
 msgid "TEXT_WORKSPACE_SHARING_UNSHARE_ERROR_workspace-user"
 msgstr ""
 "Impossible d'annuler le partage de l'espace de travail <b>{workspace}</b>"
 " avec <b>{user}</b>."
 
-msgid "TEXT_WORKSPACE_SHARING_UPDATE_ROLES_ERROR_errors"
+msgid "TEXT_WORKSPACE_SHARING_SHARE_ERROR_workspace-user"
 msgstr ""
-"Un problème est survenu lors de la mise à jour des rôles utilisateurs sur"
-" cet espace de travail. Certains rôles n'ont peut-être pas été mis à "
-"jour."
-
-msgid "TEXT_WORKSPACE_SHARING_UPDATE_ROLES_SUCCESS"
-msgstr "Les rôles des utilisateurs ont été mis à jour avec succès."
+"Impossible de partager l'espace de travail <b>{workspace}</b> avec "
+"l'utilisateur <b>{user}</b>."
 
 msgid "TEXT_WORKSPACE_SHARING_TITLE"
 msgstr "Partager l'espace de travail"
@@ -1699,7 +1678,9 @@ msgid "ACTION_SYSTRAY_QUIT_PARSEC"
 msgstr "Quitter"
 
 msgid "TEXT_LOGIN_ENTER_PASSWORD_INSTRUCTIONS_organization-device-user-email"
-msgstr "Content de vous revoir <b>{user}</b> ! Veuillez entrer le mot de passe de votre appareil <b>{device}</b>."
+msgstr ""
+"Content de vous revoir <b>{user}</b> ! Veuillez entrer le mot de passe de"
+" votre appareil <b>{device}</b>."
 
 msgid "ACTION_LOGGING_IN"
 msgstr "En cours de connexion..."
@@ -1774,6 +1755,9 @@ msgstr "Enregistrer un appareil"
 
 msgid "TEXT_SETTINGS_NEED_RESTART"
 msgstr "Les modification seront prises en compte au redémarrage de l'application."
+
+msgid "ACTION_LOG_OUT"
+msgstr "Se déconnecter"
 
 msgid "NOTIF_WARN_MOUNTPOINT_UNMOUNTED"
 msgstr ""
@@ -2266,7 +2250,9 @@ msgstr ""
 "Administrateur : peut inviter et supprimer des utilisateurs"
 
 msgid "TEXT_LABEL_USER_ROLE_RECOMMANDATIONS"
-msgstr "Veuillez choisir le rôle de l'utilisateur dans l'organisation. Il ne pourra pas être changé plus tard."
+msgstr ""
+"Veuillez choisir le rôle de l'utilisateur dans l'organisation. Il ne "
+"pourra pas être changé plus tard."
 
 msgid "TEXT_GREET_USER_CODE_EXCHANGE_GIVE_CODE_INSTRUCTIONS"
 msgstr "Veuillez donner le code suivant à l'utilisateur :"
@@ -2299,9 +2285,6 @@ msgstr "Import du fichier"
 
 msgid "ACTION_BACK"
 msgstr "Retour"
-
-msgid "ACTION_LOG_OUT"
-msgstr "Se déconnecter"
 
 msgid "ACTION_PARSEC_DOWNLOAD_NEW_VERSION"
 msgstr "Télécharger la nouvelle version"
@@ -2366,9 +2349,6 @@ msgstr "Utiliser des couleurs pour les espaces de travail"
 msgid "ACTION_SAVE"
 msgstr "Sauvegarder"
 
-msgid "TEXT_WORKSPACE_SHARING_REMOVE_USER_TOOLTIP"
-msgstr "Retirer l'utilisateur de cet espace de travail."
-
 msgid "TEXT_WORKSPACE_TIMESTAMPED_INSTRUCTIONS"
 msgstr ""
 "Vous pourrez naviguer dans l'espace de travail tel qu'il était à un "
@@ -2419,18 +2399,6 @@ msgstr "Supprimer l'espace de travail"
 msgid "TEXT_WORKSPACE_OPEN_WORKSPACE_TOOLTIP"
 msgstr "Ouvrir l'espace de travail dans l'explorateur de fichiers."
 
-msgid "TEXT_WORKSPACE_SHARING_USER_SEARCH_PLACEHOLDER"
-msgstr "Trouver un utilisateur"
-
-msgid "ACTION_WORKSPACE_SHARING_SHARE"
-msgstr "Partager avec cet utilisateur"
-
-msgid "TEXT_WORKSPACE_SHARING_CHECK_SHOW_REVOKED_USER"
-msgstr "Voir les utilisateurs révoqués"
-
-msgid "ACTION_WORKSPACE_SHARING_UPDATE_ROLES"
-msgstr "Mettre à jour les rôles"
-
 msgid "TEXT_WORKSPACE_FILTER_WORKSPACES_PLACEHOLDER"
 msgstr "Filtrer les espaces de travail"
 
@@ -2439,4 +2407,3 @@ msgstr "Créer un nouvel espace de travail"
 
 msgid "ACTION_WORKSPACE_GOTO_FILE_LINK"
 msgstr "Trouver un fichier via son lien"
-

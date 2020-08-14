@@ -45,7 +45,7 @@ background: 0;
     <number>0</number>
    </property>
    <property name="rightMargin">
-    <number>0</number>
+    <number>20</number>
    </property>
    <property name="bottomMargin">
     <number>0</number>
@@ -91,55 +91,15 @@ background: 0;
      </property>
     </widget>
    </item>
-   <item>
-    <widget class="Button" name="button_delete">
-     <property name="cursor">
-      <cursorShape>PointingHandCursor</cursorShape>
-     </property>
-     <property name="toolTip">
-      <string>TEXT_WORKSPACE_SHARING_REMOVE_USER_TOOLTIP</string>
-     </property>
-     <property name="text">
-      <string/>
-     </property>
-     <property name="icon">
-      <iconset resource="../rc/resources.qrc">
-       <normaloff>:/icons/images/material/clear.svg</normaloff>:/icons/images/material/clear.svg</iconset>
-     </property>
-     <property name="iconSize">
-      <size>
-       <width>24</width>
-       <height>24</height>
-      </size>
-     </property>
-     <property name="flat">
-      <bool>true</bool>
-     </property>
-     <property name="color" stdset="0">
-      <color>
-       <red>153</red>
-       <green>153</green>
-       <blue>153</blue>
-      </color>
-     </property>
-    </widget>
-   </item>
   </layout>
  </widget>
  <customwidgets>
-  <customwidget>
-   <class>Button</class>
-   <extends>QPushButton</extends>
-   <header>parsec.core.gui.custom_widgets</header>
-  </customwidget>
   <customwidget>
    <class>ComboBox</class>
    <extends>QComboBox</extends>
    <header>parsec.core.gui.custom_widgets</header>
   </customwidget>
  </customwidgets>
- <resources>
-  <include location="../rc/resources.qrc"/>
- </resources>
+ <resources/>
  <connections/>
 </ui>

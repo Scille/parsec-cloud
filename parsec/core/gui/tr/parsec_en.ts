@@ -536,7 +536,7 @@ p, li { white-space: pre-wrap; }
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../forms/file_history_widget.ui" line="137"/>
+        <location filename="../forms/file_history_widget.ui" line="173"/>
         <source>ACTION_FILE_HISTORY_LOAD_MORE_ENTRIES</source>
         <translation type="unfinished"></translation>
     </message>
@@ -549,62 +549,62 @@ p, li { white-space: pre-wrap; }
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../forms/files_widget.ui" line="156"/>
+        <location filename="../forms/files_widget.ui" line="160"/>
         <source>ACTION_FILE_CREATE_FOLDER</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../forms/files_widget.ui" line="189"/>
+        <location filename="../forms/files_widget.ui" line="193"/>
         <source>ACTION_FILE_IMPORT_FILES</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../forms/files_widget.ui" line="222"/>
+        <location filename="../forms/files_widget.ui" line="226"/>
         <source>ACTION_FILE_IMPORT_FOLDER</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../forms/files_widget.ui" line="366"/>
+        <location filename="../forms/files_widget.ui" line="370"/>
         <source>TEXT_FILE_NAME_HEADER</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../forms/files_widget.ui" line="371"/>
+        <location filename="../forms/files_widget.ui" line="375"/>
         <source>TEXT_FILE_CREATED_HEADER</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../forms/files_widget.ui" line="376"/>
+        <location filename="../forms/files_widget.ui" line="380"/>
         <source>TEXT_FILE_UPDATED_HEADER</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../forms/files_widget.ui" line="381"/>
+        <location filename="../forms/files_widget.ui" line="385"/>
         <source>TEXT_FILE_SIZE_HEADER</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../forms/files_widget.ui" line="143"/>
+        <location filename="../forms/files_widget.ui" line="147"/>
         <source>TEXT_FILE_FILTER_PLACEHOLDER</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../forms/files_widget.ui" line="102"/>
+        <location filename="../forms/files_widget.ui" line="106"/>
         <source>TEXT_FILE_BACK_TO_WORKSPACES_TOOLTIP</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../forms/files_widget.ui" line="153"/>
+        <location filename="../forms/files_widget.ui" line="157"/>
         <source>TEXT_FILE_CREATE_FOLDER_TOOLTIP</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../forms/files_widget.ui" line="186"/>
+        <location filename="../forms/files_widget.ui" line="190"/>
         <source>TEXT_FILE_IMPORT_FILES_TOOLTIP</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../forms/files_widget.ui" line="219"/>
+        <location filename="../forms/files_widget.ui" line="223"/>
         <source>TEXT_FILE_IMPORT_FOLDER_TOOLTIP</source>
         <translation type="unfinished"></translation>
     </message>
@@ -706,7 +706,7 @@ p, li { white-space: pre-wrap; }
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../forms/greet_user_check_info_widget.ui" line="272"/>
+        <location filename="../forms/greet_user_check_info_widget.ui" line="275"/>
         <source>ACTION_CREATE_USER</source>
         <translation type="unfinished"></translation>
     </message>
@@ -890,23 +890,18 @@ p, li { white-space: pre-wrap; }
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../forms/menu_widget.ui" line="191"/>
+        <location filename="../forms/menu_widget.ui" line="187"/>
         <source>ACTION_MENU_DOCUMENTS</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../forms/menu_widget.ui" line="252"/>
+        <location filename="../forms/menu_widget.ui" line="248"/>
         <source>ACTION_MENU_USERS</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../forms/menu_widget.ui" line="313"/>
+        <location filename="../forms/menu_widget.ui" line="309"/>
         <source>ACTION_MENU_DEVICES</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../forms/menu_widget.ui" line="390"/>
-        <source>ACTION_LOG_OUT</source>
         <translation type="unfinished"></translation>
     </message>
 </context>
@@ -1112,9 +1107,12 @@ p, li { white-space: pre-wrap; }
         <source>Form</source>
         <translation type="unfinished"></translation>
     </message>
+</context>
+<context>
+    <name>SpinnerWidget</name>
     <message>
-        <location filename="../forms/sharing_widget.ui" line="100"/>
-        <source>TEXT_WORKSPACE_SHARING_REMOVE_USER_TOOLTIP</source>
+        <location filename="../forms/spinner_widget.ui" line="26"/>
+        <source>Form</source>
         <translation type="unfinished"></translation>
     </message>
 </context>
@@ -1241,23 +1239,8 @@ p, li { white-space: pre-wrap; }
 <context>
     <name>WorkspaceSharingWidget</name>
     <message>
-        <location filename="../forms/workspace_sharing_widget.ui" line="83"/>
-        <source>TEXT_WORKSPACE_SHARING_USER_SEARCH_PLACEHOLDER</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../forms/workspace_sharing_widget.ui" line="139"/>
-        <source>ACTION_WORKSPACE_SHARING_SHARE</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../forms/workspace_sharing_widget.ui" line="258"/>
-        <source>TEXT_WORKSPACE_SHARING_CHECK_SHOW_REVOKED_USER</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../forms/workspace_sharing_widget.ui" line="322"/>
-        <source>ACTION_WORKSPACE_SHARING_UPDATE_ROLES</source>
+        <location filename="../forms/workspace_sharing_widget.ui" line="54"/>
+        <source>TEXT_USERS_FILTER_USERS_PLACEHOLDER</source>
         <translation type="unfinished"></translation>
     </message>
 </context>
