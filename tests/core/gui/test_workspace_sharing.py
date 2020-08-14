@@ -62,7 +62,7 @@ async def test_workspace_sharing_list_users(
     for i in range(1, 3):
         user_w = share_w_w.scroll_content.layout().itemAt(i).widget()
         assert user_w.combo_role.currentIndex() == 0
-        assert user_w.combo_role.currentText() == "Non partagé"
+        assert user_w.combo_role.currentText() == translate("TEXT_WORKSPACE_ROLE_NOT_SHARED")
         assert user_w.isEnabled() is True
 
 
