@@ -106,10 +106,10 @@ async def test_share_workspace(
 
     for i in range(accounts_w.accounts_widget.layout().count() - 1):
         acc_w = accounts_w.accounts_widget.layout().itemAt(i).widget()
-        print(acc_w.label_name.text(), user_name)
         if acc_w.label_name.text() == user_name:
             async with aqtbot.wait_signal(accounts_w.account_clicked):
                 await aqtbot.mouse_click(acc_w, QtCore.Qt.LeftButton)
+            break
 
     def _password_widget_shown():
         assert isinstance(login_w.widget.layout().itemAt(0).widget(), LoginPasswordInputWidget)
@@ -125,7 +125,16 @@ async def test_share_workspace(
         await aqtbot.mouse_click(password_w.button_login, QtCore.Qt.LeftButton)
 
     w_w = await logged_gui.test_switch_to_workspaces_widget()
-    assert w_w.layout_workspaces.count() == 1
+
+    def _workspace_listed():
+        assert w_w.layout_workspaces.count() == 1
+        wk_button = w_w.layout_workspaces.itemAt(0).widget()
+        assert isinstance(wk_button, WorkspaceButton)
+        assert wk_button.name == "Workspace"
+        assert not autoclose_dialog.dialogs
+
+    await aqtbot.wait_until(_workspace_listed, timeout=2000)
+
     w_b = w_w.layout_workspaces.itemAt(0).widget()
     assert isinstance(w_b, WorkspaceButton)
     assert w_b.workspace_name == "Workspace"
