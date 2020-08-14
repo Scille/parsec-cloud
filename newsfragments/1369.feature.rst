@@ -1,0 +1,1 @@
+Cut / Copy / Paste enabled between workspaces, automatically rename with timestamp if from a timestamped workspace and already exists
