@@ -38,6 +38,7 @@ jobs:
       versionSpec: '$(python.version)'
   - bash: |
       set -eux
+      sudo apt-get update
       python --version
       pip install -r pre-requirements.txt
     displayName: 'Bootstrap'
@@ -66,6 +67,7 @@ jobs:
       versionSpec: '$(python.version)'
   - bash: |
       set -eux
+      sudo apt-get update
       python --version
       pip install pre-commit
     displayName: 'Bootstrap'
@@ -118,6 +120,7 @@ jobs:
       versionSpec: '$(python.version)'
   - bash: |
       set -eux
+      sudo apt-get update
       python --version
       pip install -r pre-requirements.txt
       sudo apt-get install \
@@ -279,6 +282,7 @@ jobs:
     submodules: true
   - bash: |
       set -eux
+      sudo apt-get update
       sudo snap install snapcraft --classic
       snapcraft --version
     displayName: 'Bootstrap'
@@ -377,6 +381,7 @@ jobs:
     artifact: linux_amd64_snap
   - bash: |
       set -eux
+      sudo apt-get update
       # TODO: xvfb doesn't currently work
       # sudo apt-get install -y xvfb xorg
       sudo snap install --classic --dangerous $(Pipeline.Workspace)/linux_amd64_snap/parsec*.snap
@@ -408,6 +413,7 @@ jobs:
   - download: current
     artifact: linux_amd64_snap
   - bash: |
+      sudo apt-get update
       sudo snap install snapcraft --classic
       echo $SNAPCRAFT_CREDENTIALS | snapcraft login --with -
     displayName: 'Bootstrap'
@@ -437,6 +443,7 @@ jobs:
       versionSpec: '$(python.version)'
   - bash: |
       set -eux
+      sudo apt-get update
       pip install twine
     displayName: 'Bootstrap'
   - bash: |
