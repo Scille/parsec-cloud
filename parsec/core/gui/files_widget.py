@@ -5,7 +5,6 @@ import pathlib
 from uuid import UUID
 import trio
 from pendulum import Pendulum
-from enum import IntEnum
 from structlog import get_logger
 
 from PyQt5.QtCore import Qt, pyqtSignal, QTimer
@@ -136,16 +135,6 @@ async def _do_remount_timestamped(
     return (workspace_fs, path, file_type, open_after_load, close_after_load, reload_after_remount)
 
 
-class Clipboard:
-    class Status(IntEnum):
-        Copied = 1
-        Cut = 2
-
-    def __init__(self, files, status):
-        self.files = files
-        self.status = status
-
-
 class FilesWidget(QWidget, Ui_FilesWidget):
     fs_updated_qt = pyqtSignal(CoreEvent, UUID)
     fs_synced_qt = pyqtSignal(CoreEvent, UUID)
@@ -175,7 +164,7 @@ class FilesWidget(QWidget, Ui_FilesWidget):
 
     folder_changed = pyqtSignal(str, str)
 
-    def __init__(self, core, jobs_ctx, event_bus, *args, **kwargs):
+    def __init__(self, core, jobs_ctx, event_bus, clipboard, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.setupUi(self)
         self.core = core
@@ -183,7 +172,7 @@ class FilesWidget(QWidget, Ui_FilesWidget):
         self.event_bus = event_bus
         self.workspace_fs = None
         self.import_job = None
-        self.clipboard = None
+        self.clipboard = clipboard
 
         self.ROLES_TEXTS = {
             WorkspaceRole.READER: _("TEXT_WORKSPACE_ROLE_READER"),
@@ -267,8 +256,7 @@ class FilesWidget(QWidget, Ui_FilesWidget):
             self.button_import_folder.show()
             self.button_import_files.show()
             self.button_create_folder.show()
-        self.clipboard = None
-        self.table_files.paste_disabled = True
+        self.table_files.paste_disabled = self.clipboard.status == self.clipboard.Status.Empty
         self.reset(default_selection)
 
     def reset(self, default_selection=None):
@@ -296,7 +284,7 @@ class FilesWidget(QWidget, Ui_FilesWidget):
             if f.type != FileType.Folder and f.type != FileType.File:
                 continue
             files_to_copy.append((self.current_directory / f.name, f.type))
-        self.clipboard = Clipboard(files_to_copy, Clipboard.Status.Copied)
+        self.clipboard.set(files_to_copy, self.clipboard.Status.Copied, self.workspace_fs)
         self.table_files.paste_disabled = False
 
     def on_cut_clicked(self):
@@ -310,11 +298,15 @@ class FilesWidget(QWidget, Ui_FilesWidget):
             files_to_cut.append((self.current_directory / f.name, f.type))
         self.table_files.set_rows_cut(rows)
         self.table_files.paste_disabled = False
-        self.clipboard = Clipboard(files_to_cut, Clipboard.Status.Cut)
+        self.clipboard.set(files_to_cut, self.clipboard.Status.Cut, self.workspace_fs)
 
     def on_paste_clicked(self):
-        if not self.clipboard:
+        if self.clipboard.status == self.clipboard.Status.Empty:
             return
+
+        async def workspace_fs_run_helper(method, src, dst, source_workspace):
+            return await method(src, dst, source_workspace=source_workspace)
+
         error_count = 0
         last_exc = None
         for f in self.clipboard.files:
@@ -328,24 +320,55 @@ class FilesWidget(QWidget, Ui_FilesWidget):
             while str(base_name) != base_name.stem:
                 base_name = pathlib.Path(base_name.stem)
             count = 2
+            timestamp_already_added = False
             base_name = str(base_name)
             while True:
                 try:
                     dst = self.current_directory / file_name
-                    if self.clipboard.status == Clipboard.Status.Cut:
-                        self.jobs_ctx.run(self.workspace_fs.move, src, dst)
+                    source_workspace = (
+                        self.clipboard.workspace if self.clipboard.workspace is not self else None
+                    )
+                    if self.clipboard.status == self.clipboard.Status.Cut:
+                        self.jobs_ctx.run(
+                            workspace_fs_run_helper,
+                            self.workspace_fs.move,
+                            src,
+                            dst,
+                            source_workspace,
+                        )
                     else:
                         if src_type == FileType.Folder:
-                            self.jobs_ctx.run(self.workspace_fs.copytree, src, dst)
+                            self.jobs_ctx.run(
+                                workspace_fs_run_helper,
+                                self.workspace_fs.copytree,
+                                src,
+                                dst,
+                                source_workspace,
+                            )
                         else:
-                            self.jobs_ctx.run(self.workspace_fs.copyfile, src, dst)
+                            self.jobs_ctx.run(
+                                workspace_fs_run_helper,
+                                self.workspace_fs.copyfile,
+                                src,
+                                dst,
+                                source_workspace,
+                            )
                     break
                 except FileExistsError:
-                    # File already exists, we append a counter at the end of its name
-                    file_name = "{} ({}){}".format(
-                        base_name, count, "".join(pathlib.Path(src.name).suffixes)
-                    )
-                    count += 1
+                    if (
+                        isinstance(self.clipboard.workspace, WorkspaceFSTimestamped)
+                        and not timestamp_already_added
+                    ):
+                        base_name = f"{base_name} ({str(self.clipboard.workspace.timestamp)})"
+                        file_name = "{}{}".format(
+                            base_name, "".join(pathlib.Path(src.name).suffixes)
+                        )
+                        timestamp_already_added = True
+                    else:
+                        file_name = "{} ({}){}".format(
+                            base_name, count, "".join(pathlib.Path(src.name).suffixes)
+                        )
+                        count += 1
                 except FSInvalidArgumentError as exc:
                     # Move a file onto itself
                     # Not a big deal for files, we just do nothing and pretend we
@@ -362,8 +385,8 @@ class FilesWidget(QWidget, Ui_FilesWidget):
                     last_exc = exc
                     logger.exception("Unhandled error while cut/copy file", exc_info=exc)
                     break
-        if self.clipboard.status == Clipboard.Status.Cut:
-            self.clipboard = None
+        if self.clipboard.status == self.clipboard.Status.Cut:
+            self.clipboard.status = self.clipboard.Status.Empty
             self.table_files.paste_disabled = True
 
         if last_exc:

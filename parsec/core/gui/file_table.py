@@ -188,13 +188,13 @@ class FileTable(QTableWidget):
         if len(selected):
             action = menu.addAction(_("ACTION_FILE_MENU_OPEN"))
             action.triggered.connect(self.open_clicked.emit)
+            action = menu.addAction(_("ACTION_FILE_MENU_COPY"))
+            action.triggered.connect(self.copy_clicked.emit)
             if not self.is_read_only():
                 action = menu.addAction(_("ACTION_FILE_MENU_RENAME"))
                 action.triggered.connect(self.rename_clicked.emit)
                 action = menu.addAction(_("ACTION_FILE_MENU_DELETE"))
                 action.triggered.connect(self.delete_clicked.emit)
-                action = menu.addAction(_("ACTION_FILE_MENU_COPY"))
-                action.triggered.connect(self.copy_clicked.emit)
                 action = menu.addAction(_("ACTION_FILE_MENU_CUT"))
                 action.triggered.connect(self.cut_clicked.emit)
         if len(selected) == 1:

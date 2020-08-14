@@ -5,6 +5,8 @@ from PyQt5.QtCore import pyqtSignal
 from PyQt5.QtGui import QPixmap, QColor
 from PyQt5.QtWidgets import QGraphicsDropShadowEffect, QWidget
 
+from enum import IntEnum
+
 from parsec.core.gui.mount_widget import MountWidget
 from parsec.core.gui.users_widget import UsersWidget
 from parsec.core.gui.devices_widget import DevicesWidget
@@ -25,6 +27,21 @@ from parsec.core.fs import (
     FSWorkspaceNoWriteAccess,
     FSWorkspaceInMaintenance,
 )
+
+
+class Clipboard:
+    class Status(IntEnum):
+        Empty = 0
+        Copied = 1
+        Cut = 2
+
+    def __init__(self, files, status, workspace):
+        self.set(files, status, workspace)
+
+    def set(self, files, status, workspace):
+        self.files = files
+        self.status = status
+        self.workspace = workspace
 
 
 class CentralWidget(QWidget, Ui_CentralWidget):
@@ -48,6 +65,8 @@ class CentralWidget(QWidget, Ui_CentralWidget):
         self.jobs_ctx = jobs_ctx
         self.core = core
         self.event_bus = event_bus
+
+        self.clipboard = Clipboard(None, Clipboard.Status.Empty, None)
 
         self.menu = MenuWidget(parent=self)
         self.widget_menu.layout().addWidget(self.menu)
@@ -85,7 +104,9 @@ class CentralWidget(QWidget, Ui_CentralWidget):
         effect.setYOffset(2)
         self.widget_notif.setGraphicsEffect(effect)
 
-        self.mount_widget = MountWidget(self.core, self.jobs_ctx, self.event_bus, parent=self)
+        self.mount_widget = MountWidget(
+            self.core, self.jobs_ctx, self.event_bus, self.clipboard, parent=self
+        )
         self.widget_central.layout().insertWidget(0, self.mount_widget)
         self.mount_widget.folder_changed.connect(self._on_folder_changed)
 

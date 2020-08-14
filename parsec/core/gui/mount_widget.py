@@ -13,7 +13,7 @@ class MountWidget(QWidget, Ui_MountWidget):
     widget_switched = pyqtSignal(list)
     folder_changed = pyqtSignal(str, str)
 
-    def __init__(self, core, jobs_ctx, event_bus, **kwargs):
+    def __init__(self, core, jobs_ctx, event_bus, clipboard, **kwargs):
         super().__init__(**kwargs)
         self.setupUi(self)
 
@@ -25,7 +25,9 @@ class MountWidget(QWidget, Ui_MountWidget):
         )
         self.layout_content.insertWidget(0, self.workspaces_widget)
         self.workspaces_widget.load_workspace_clicked.connect(self.load_workspace)
-        self.files_widget = FilesWidget(self.core, self.jobs_ctx, self.event_bus, parent=self)
+        self.files_widget = FilesWidget(
+            self.core, self.jobs_ctx, self.event_bus, clipboard, parent=self
+        )
         self.files_widget.folder_changed.connect(self.folder_changed.emit)
         self.layout_content.insertWidget(0, self.files_widget)
         self.files_widget.back_clicked.connect(self.show_workspaces_widget)
