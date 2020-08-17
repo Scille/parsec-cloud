@@ -13,7 +13,7 @@ from tests.common import customize_fixtures
 @pytest.mark.gui
 @pytest.mark.trio
 @pytest.mark.parametrize("online", (True, False))
-@customize_fixtures(backend_has_email=True, logged_gui_as_admin=True)
+@customize_fixtures(logged_gui_as_admin=True)
 async def test_invite_user(
     aqtbot, logged_gui, running_backend, monkeypatch, autoclose_dialog, email_letterbox, online
 ):
@@ -138,7 +138,7 @@ async def test_revoke_user_not_allowed(
 
 @pytest.mark.gui
 @pytest.mark.trio
-@customize_fixtures(backend_has_email=True, logged_gui_as_admin=True)
+@customize_fixtures(logged_gui_as_admin=True)
 async def test_cancel_user_invitation(
     aqtbot,
     logged_gui,
