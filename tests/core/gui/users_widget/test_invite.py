@@ -37,7 +37,13 @@ async def test_invite_user(
             assert email_letterbox.emails == [(inv_btn.email, ANY)]
 
         await aqtbot.wait_until(_new_invitation_displayed)
-        assert not autoclose_dialog.dialogs
+        print("\n\n\n\n\nHERE :", autoclose_dialog.dialogs, "\n\n\n\n\n")
+        assert autoclose_dialog.dialogs == [
+            (
+                "",
+                'The invitation to join your organization was successfuly sent at : <b>"hubert.farnsworth@pe.com"</b>.',
+            )
+        ]
 
     else:
         with running_backend.offline():
@@ -170,6 +176,13 @@ async def test_cancel_user_invitation(
     user_invitation_w = u_w.layout_users.itemAt(0).widget()
     assert user_invitation_w.email == email
 
+    assert autoclose_dialog.dialogs == [
+        (
+            "",
+            f'The invitation to join your organization was successfuly sent at : <b>"{ email }"</b>.',
+        )
+    ]
+    # TODO Remove confirmation pop-up
     # Cancel invitation
     await aqtbot.mouse_click(user_invitation_w.button_cancel, QtCore.Qt.LeftButton)
 

@@ -673,13 +673,14 @@ msgstr "utilisateur@hote.com"
 msgid "ACTION_USER_INVITE_DO_INVITE"
 msgstr "Inviter l'utilisateur"
 
-msgid "TEXT_USER_INVITE_CANCEL_INVITE_QUESTION_TITLE"
-msgstr "Annuler l'invitation"
-
 msgid "TEXT_USER_INVITE_CANCEL_INVITE_QUESTION_CONTENT"
 msgstr ""
 "Êtes-vous sûr de vouloir annuler cette invitation ? Le lien d'invitation "
 "qu'a reçu l'utilisateur par email deviendra invalide."
+
+msgid "TEXT_USER_INVITE_SUCCESS_email"
+msgstr ""
+"L'invitation à rejoindre votre organisation a été envoyé avec succès à l'adresse : <b>\"{email}\"</b>."
 
 msgid "TEXT_USER_INVITE_CANCEL_INVITE_ACCEPT"
 msgstr "Annuler l'invitation"
@@ -689,7 +690,7 @@ msgstr "Non"
 
 msgid "TEXT_USER_REVOKE_SUCCESS_user"
 msgstr ""
-"L'utilisateur <b>{user}</b> a été révoqué avec succès. N'oubliez pas de "
+"L'utilisateur <b>{email}</b> a été révoqué avec succès. N'oubliez pas de "
 "rechiffrer les espaces de travail qui étaient partagés avec eux."
 
 msgid "TEXT_USER_REVOCATION_USER_ALREADY_REVOKED"
@@ -2439,4 +2440,3 @@ msgstr "Créer un nouvel espace de travail"
 
 msgid "ACTION_WORKSPACE_GOTO_FILE_LINK"
 msgstr "Trouver un fichier via son lien"
-

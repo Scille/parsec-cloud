@@ -210,7 +210,7 @@ async def _mocked_send_mail(
         print(
             f"""\
 A request to send an e-mail to {to_addr} has been triggered and mocked.
-The mail file can be found here: {tmpfile.name}""",
+The mail file can be found here: {tmpfile.name}\n""",
             tmpfile.name,
             file=sys.stderr,
         )

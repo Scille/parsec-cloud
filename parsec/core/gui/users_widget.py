@@ -257,6 +257,7 @@ class UsersWidget(QWidget, Ui_UsersWidget):
         if not user_email:
             return
 
+        self._user_email = user_email
         self.jobs_ctx.submit_job(
             ThreadSafeQtSignal(self, "invite_user_success", QtToTrioJob),
             ThreadSafeQtSignal(self, "invite_user_error", QtToTrioJob),
@@ -418,6 +419,7 @@ class UsersWidget(QWidget, Ui_UsersWidget):
         assert job.is_finished()
         assert job.status == "ok"
 
+        show_info(self, _("TEXT_USER_INVITE_SUCCESS_email").format(email=self._user_email))
         self.reset()
 
     def _on_invite_user_error(self, job):
