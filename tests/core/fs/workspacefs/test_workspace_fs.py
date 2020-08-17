@@ -354,11 +354,15 @@ async def test_dump(alice_workspace):
     baz_id = await alice_workspace.path_id("/foo/baz")
     async with alice_workspace.local_storage.lock_entry_id(baz_id):
         await alice_workspace.local_storage.clear_manifest(baz_id)
-    assert await alice_workspace.dump() == {
+    x = await alice_workspace.dump()
+    assert x == {
+    # assert await alice_workspace.dump() == {
         "base_version": 1,
+        "changes": {},
         "children": {
             "foo": {
                 "base_version": 2,
+                "changes": {},
                 "children": {
                     "bar": {
                         "base_version": 1,

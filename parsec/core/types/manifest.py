@@ -457,7 +457,9 @@ class LocalFolderManifest(BaseLocalManifest):
         base = fields.Nested(RemoteFolderManifest.SCHEMA_CLS, required=True)
         need_sync = fields.Boolean(required=True)
         updated = fields.DateTime(required=True)
-        children = fields.FrozenMap(EntryNameField(), EntryIDField(required=True), required=True)
+        # children = fields.FrozenMap(EntryNameField(), EntryIDField(required=True), required=True)
+        # `None` as value indicate the entry has been removed from the base
+        changes = fields.FrozenMap(EntryNameField(), EntryIDField(required=True, allow_none=True), required=True)
 
         @post_load
         def make_obj(self, data):
@@ -465,14 +467,19 @@ class LocalFolderManifest(BaseLocalManifest):
             return LocalFolderManifest(**data)
 
     base: RemoteFolderManifest
-    children: FrozenDict[EntryName, EntryID]
+    # children: FrozenDict[EntryName, EntryID]
+    changes: FrozenDict[EntryName, Optional[EntryID]]
+
+    @property
+    def children(self) -> FrozenDict[EntryName, EntryID]:
+        return FrozenDict({k: v for k, v in {**self.base.children, **self.changes}.items() if v is not None})
 
     @classmethod
     def new_placeholder(
         cls, author: DeviceID, parent: EntryID, id: EntryID = None, now: Pendulum = None
     ):
         now = now or pendulum_now()
-        children = FrozenDict()
+        empty = FrozenDict()
         return cls(
             base=RemoteFolderManifest(
                 author=author,
@@ -482,11 +489,11 @@ class LocalFolderManifest(BaseLocalManifest):
                 version=0,
                 created=now,
                 updated=now,
-                children=children,
+                children=empty,
             ),
             need_sync=True,
             updated=now,
-            children=children,
+            changes=empty,
         )
 
     # Properties
@@ -503,20 +510,30 @@ class LocalFolderManifest(BaseLocalManifest):
     # Evolve methods
 
     def evolve_children_and_mark_updated(self, data) -> "LocalFolderManifest":
+        changes = {
+            k: v
+            for k, v in {**self.changes, **data}.items()
+            if v is not None or k in self.base.children
+        }
         return self.evolve_and_mark_updated(
-            children={k: v for k, v in {**self.children, **data}.items() if v is not None}
+            changes=changes
         )
 
     def evolve_children(self, data) -> "LocalFolderManifest":
+        changes = {
+            k: v
+            for k, v in {**self.changes, **data}.items()
+            if v is not None or k in self.base.children
+        }
         return self.evolve(
-            children={k: v for k, v in {**self.children, **data}.items() if v is not None}
+            changes=changes
         )
 
     # Remote methods
 
     @classmethod
     def from_remote(cls, remote: RemoteFolderManifest) -> "LocalFolderManifest":
-        return cls(base=remote, need_sync=False, updated=remote.updated, children=remote.children)
+        return cls(base=remote, need_sync=False, updated=remote.updated, changes=FrozenDict())
 
     def to_remote(self, author: DeviceID, timestamp: Pendulum = None) -> RemoteFolderManifest:
         return RemoteFolderManifest(
@@ -538,7 +555,9 @@ class LocalWorkspaceManifest(BaseLocalManifest):
         base = fields.Nested(RemoteWorkspaceManifest.SCHEMA_CLS, required=True)
         need_sync = fields.Boolean(required=True)
         updated = fields.DateTime(required=True)
-        children = fields.FrozenMap(EntryNameField(), EntryIDField(required=True), required=True)
+        # children = fields.FrozenMap(EntryNameField(), EntryIDField(required=True), required=True)
+        # `None` as value indicate the entry has been removed from the base
+        changes = fields.FrozenMap(EntryNameField(), EntryIDField(required=True, allow_none=True), required=True)
 
         @post_load
         def make_obj(self, data):
@@ -546,12 +565,17 @@ class LocalWorkspaceManifest(BaseLocalManifest):
             return LocalWorkspaceManifest(**data)
 
     base: RemoteWorkspaceManifest
-    children: FrozenDict[EntryName, EntryID]
+    # children: FrozenDict[EntryName, EntryID]
+    changes: FrozenDict[EntryName, Optional[EntryID]]
+
+    @property
+    def children(self) -> FrozenDict[EntryName, EntryID]:
+        return FrozenDict({k: v for k, v in {**self.base.children, **self.changes}.items() if v is not None})
 
     @classmethod
     def new_placeholder(cls, author: DeviceID, id: EntryID = None, now: Pendulum = None):
         now = now or pendulum_now()
-        children = FrozenDict()
+        empty = FrozenDict()
         return cls(
             base=RemoteWorkspaceManifest(
                 author=author,
@@ -560,11 +584,11 @@ class LocalWorkspaceManifest(BaseLocalManifest):
                 version=0,
                 created=now,
                 updated=now,
-                children=children,
+                children=empty,
             ),
             need_sync=True,
             updated=now,
-            children=children,
+            changes=empty,
         )
 
     # Evolve methods
@@ -576,20 +600,26 @@ class LocalWorkspaceManifest(BaseLocalManifest):
         return stats
 
     def evolve_children_and_mark_updated(self, data) -> "LocalWorkspaceManifest":
-        return self.evolve_and_mark_updated(
-            children={k: v for k, v in {**self.children, **data}.items() if v is not None}
-        )
+        changes = {
+            k: v
+            for k, v in {**self.changes, **data}.items()
+            if v is not None or k in self.base.children
+        }
+        return self.evolve_and_mark_updated(changes=changes)
 
     def evolve_children(self, data) -> "LocalWorkspaceManifest":
-        return self.evolve(
-            children={k: v for k, v in {**self.children, **data}.items() if v is not None}
-        )
+        changes = {
+            k: v
+            for k, v in {**self.changes, **data}.items()
+            if v is not None or k in self.base.children
+        }
+        return self.evolve(changes=changes)
 
     # Remote methods
 
     @classmethod
     def from_remote(cls, remote: RemoteWorkspaceManifest) -> "LocalWorkspaceManifest":
-        return cls(base=remote, need_sync=False, updated=remote.updated, children=remote.children)
+        return cls(base=remote, need_sync=False, updated=remote.updated, changes=FrozenDict())
 
     def to_remote(self, author: DeviceID, timestamp: Pendulum = None) -> RemoteWorkspaceManifest:
         return RemoteWorkspaceManifest(

@@ -26,8 +26,8 @@ def test_merge_folder_children():
 
     # Adding children
     assert merge_folder_children({}, a1, {}, "a@a") == a1
-    assert merge_folder_children({}, {}, a1, "a@a") == a1
-    assert merge_folder_children({}, a1, a1, "a@a") == a1
+    assert merge_folder_children({}, {}, a1, "a@a") == {}
+    assert merge_folder_children({}, a1, a1, "a@a") == {}
 
     # Removing children
     assert merge_folder_children(a1, {}, a1, "a@a") == {}
@@ -35,21 +35,21 @@ def test_merge_folder_children():
     assert merge_folder_children(a1, {}, {}, "a@a") == {}
 
     # Renaming children
-    assert merge_folder_children(a1, a1, b1, "a@a") == b1
-    assert merge_folder_children(a1, b1, a1, "a@a") == b1
-    assert merge_folder_children(a1, b1, b1, "a@a") == b1
+    assert merge_folder_children(a1, a1, b1, "a@a") == {}
+    assert merge_folder_children(a1, b1, a1, "a@a") == {"a": None, **b1}
+    assert merge_folder_children(a1, b1, b1, "a@a") == {}
 
     # Conflicting renaming
     result = merge_folder_children(a1, b1, c1, "a@a")
-    assert result == {"c (renamed by a@a).tar.gz": m1}
+    assert result == {'c.tar.gz': None, "c (renamed by a@a).tar.gz": m1}
 
     # Conflicting names
     result = merge_folder_children({}, a1, a2, "a@a")
-    assert result == {"a": m2, "a (conflicting with a@a)": m1}
+    assert result == {"a (conflicting with a@a)": m1}
     result = merge_folder_children({}, b1, b2, "a@a")
-    assert result == {"b.txt": m2, "b (conflicting with a@a).txt": m1}
+    assert result == {"b (conflicting with a@a).txt": m1}
     result = merge_folder_children({}, c1, c2, "a@a")
-    assert result == {"c.tar.gz": m2, "c (conflicting with a@a).tar.gz": m1}
+    assert result == {"c (conflicting with a@a).tar.gz": m1}
 
 
 def test_merge_folder_manifests():
@@ -120,10 +120,10 @@ def test_merge_manifests_with_a_placeholder():
     assert m3b == m2b.evolve(base=v1)
 
     v2 = v1.evolve(version=2, author=other_device, children={"b": EntryID()})
-    m2c = m1.evolve_children_and_mark_updated({"a": EntryID()})
+    changes = {"a": EntryID()}
+    m2c = m1.evolve_children_and_mark_updated(changes)
     m3c = merge_manifests(my_device, m2c, v2)
-    children = {**v2.children, **m2c.children}
-    assert m3c == m2c.evolve(base=v2, children=children, updated=m3c.updated)
+    assert m3c == m2c.evolve(base=v2, changes=changes, updated=m3c.updated)
 
 
 def test_merge_file_manifests():

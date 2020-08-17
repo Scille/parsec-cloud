@@ -1,10 +1,10 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
 
-from parsec.core.core_events import CoreEvent
-from itertools import count
 from typing import Optional, List, Dict, AsyncIterator, cast, Tuple, Any, Union
-
+from itertools import count
 from pendulum import now as pendulum_now
+
+from parsec.types import FrozenDict
 from parsec.api.protocol import DeviceID
 from parsec.api.data import BaseManifest as BaseRemoteManifest
 from parsec.core.types import (
@@ -17,17 +17,18 @@ from parsec.core.types import (
     LocalFolderishManifests,
     RemoteFolderishManifests,
 )
-
+from parsec.core.core_events import CoreEvent
 from parsec.core.fs.workspacefs.entry_transactions import EntryTransactions
 from parsec.core.fs.exceptions import (
     FSFileConflictError,
     FSReshapingRequiredError,
     FSLocalMissError,
 )
-
 from parsec.core.fs.utils import is_file_manifest
 
+
 __all__ = "SyncTransactions"
+
 
 DEFAULT_BLOCK_SIZE = 512 * 1024  # 512Ko
 
@@ -67,11 +68,13 @@ def full_name(name: EntryName, suffixes: List[str]) -> EntryName:
 
 
 def merge_folder_children(
-    base_children: Dict[EntryName, EntryID],
-    local_children: Dict[EntryName, EntryID],
-    remote_children: Dict[EntryName, EntryID],
-    remote_device_name: DeviceID,
-):
+    base_children: FrozenDict[EntryName, EntryID],
+    local_changes: FrozenDict[EntryName, Optional[EntryID]],
+    remote_children: FrozenDict[EntryName, EntryID],
+    remote_author: DeviceID,
+) -> FrozenDict[EntryName, Optional[EntryID]]:
+    local_children = {k: v for k, v in {**base_children, **local_changes}.items() if v is not None}
+
     # Prepare lookups
     base_reversed = {entry_id: name for name, entry_id in base_children.items()}
     local_reversed = {entry_id: name for name, entry_id in local_children.items()}
@@ -121,7 +124,7 @@ def merge_folder_children(
 
         # Name changed both locally and remotely
         else:
-            suffix = f"renamed by {remote_device_name}"
+            suffix = f"renamed by {remote_author}"
             solved_remote_children[remote_name] = remote_children[remote_name], suffix
 
     # Merge mappings and fix conflicting names
@@ -130,18 +133,31 @@ def merge_folder_children(
         children[full_name(name, suffixes)] = entry_id
     for name, (entry_id, *suffixes) in solved_local_children.items():
         if name in children:
-            suffixes = *suffixes, f"conflicting with {remote_device_name}"
+            suffixes = *suffixes, f"conflicting with {remote_author}"
         children[full_name(name, suffixes)] = entry_id
 
     # Return
-    return children
+    new_changes = {}
+    for name in children.keys() | remote_children.keys():
+        try:
+            new_value = children[name]
+            try:
+                old_value = remote_children[name]
+            except KeyError:
+                new_changes[name] = new_value
+            else:
+                if old_value != new_value:
+                    new_changes[name] = new_value
+        except KeyError:
+            new_changes[name] = None
+    return new_changes
 
 
 def merge_manifests(
     local_author: DeviceID,
     local_manifest: BaseLocalManifest,
     remote_manifest: Optional[BaseRemoteManifest] = None,
-):
+) -> BaseLocalManifest:
     # Exctract versions
     local_version = local_manifest.base_version
     remote_version = local_version if remote_manifest is None else remote_manifest.version
@@ -174,13 +190,13 @@ def merge_manifests(
         raise FSFileConflictError(local_manifest, remote_manifest)
 
     # Solve the folder conflict
-    new_children = merge_folder_children(
+    new_changes = merge_folder_children(
         cast(LocalFolderishManifests, local_manifest).base.children,
-        cast(LocalFolderishManifests, local_manifest).children,
+        cast(LocalFolderishManifests, local_manifest).changes,
         cast(RemoteFolderishManifests, remote_manifest).children,
         remote_manifest.author,
     )
-    return local_manifest.evolve_and_mark_updated(base=remote_manifest, children=new_children)
+    return local_manifest.evolve_and_mark_updated(base=remote_manifest, changes=new_changes)
 
 
 class SyncTransactions(EntryTransactions):

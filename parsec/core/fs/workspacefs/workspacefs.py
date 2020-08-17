@@ -638,6 +638,7 @@ class WorkspaceFS:
             except AttributeError:
                 return result
 
+            result["children"] = {}
             for key, value in children.items():
                 result["children"][key] = await rec(value)
             return result
