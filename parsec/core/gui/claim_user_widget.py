@@ -617,7 +617,8 @@ class ClaimUserWidget(QWidget, Ui_ClaimUserWidget):
         # No reason to restart the process if offline or if the invitation has been deleted
         # simply close the dialog
         if job is not None and isinstance(
-            job.exc.params.get("origin", None), (BackendNotAvailable, InviteAlreadyUsedError)
+            job.exc.params.get("origin", None),
+            (BackendNotAvailable, BackendConnectionRefused, InviteAlreadyUsedError),
         ):
             self.dialog.reject()
             return
