@@ -1,16 +1,18 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
 
+import os
 import pytest
-from uuid import UUID
 from pathlib import Path
+from uuid import UUID, uuid4
 
 from parsec.crypto import SigningKey
 from parsec.serde import packb, unpackb
-from parsec.api.protocol import OrganizationID, DeviceID
+from parsec.api.protocol import OrganizationID, DeviceID, HumanHandle
 from parsec.core.types import LocalDevice
 from parsec.core.local_device import (
     AvailableDevice,
     get_key_file,
+    get_default_key_file,
     get_devices_dir,
     list_available_devices,
     load_device_with_password,
@@ -78,6 +80,7 @@ def test_list_devices(organization_factory, local_device_factory, config_dir):
             device_id=d.device_id,
             human_handle=d.human_handle,
             device_label=d.device_label,
+            slug=d.slug,
         )
         for d in [o1d11, o1d12, o1d21, o2d11, o2d12, o2d21]
     }
@@ -99,25 +102,28 @@ def test_list_devices_support_legacy_file_without_labels(config_dir):
         device_id=DeviceID("Zack@PC1"),
         human_handle=None,
         device_label=None,
+        slug=slug,
     )
     assert devices == [expected_device]
 
 
 def test_available_device_display(config_dir, alice):
     without_labels = AvailableDevice(
-        key_file_path=get_key_file(config_dir, alice),
+        key_file_path=get_default_key_file(config_dir, alice),
         organization_id=alice.organization_id,
         device_id=alice.device_id,
         human_handle=None,
         device_label=None,
+        slug=alice.slug,
     )
 
     with_labels = AvailableDevice(
-        key_file_path=get_key_file(config_dir, alice),
+        key_file_path=get_default_key_file(config_dir, alice),
         organization_id=alice.organization_id,
         device_id=alice.device_id,
         human_handle=alice.human_handle,
         device_label=alice.device_label,
+        slug=alice.slug,
     )
 
     assert without_labels.device_display == alice.device_name
@@ -132,11 +138,12 @@ def test_available_devices_slughash_uniqueness(
 ):
     def _to_available(device):
         return AvailableDevice(
-            key_file_path=get_key_file(config_dir, device),
+            key_file_path=get_default_key_file(config_dir, device),
             organization_id=device.organization_id,
             device_id=device.device_id,
             human_handle=device.human_handle,
             device_label=device.device_label,
+            slug=device.slug,
         )
 
     def _assert_different_as_available(d1, d2):
@@ -202,13 +209,12 @@ def test_load_bad_password(config_dir, alice):
 
 
 def test_load_bad_data(config_dir, alice):
-    alice_key = get_key_file(config_dir, alice)
+    alice_key = get_default_key_file(config_dir, alice)
     alice_key.parent.mkdir(parents=True)
     alice_key.write_bytes(b"dummy")
 
     with pytest.raises(LocalDevicePackingError):
-        key_file = get_key_file(config_dir, alice)
-        load_device_with_password(key_file, "S3Cr37")
+        load_device_with_password(alice_key, "S3Cr37")
 
 
 def test_password_save_already_existing(config_dir, alice):
@@ -220,7 +226,7 @@ def test_password_save_already_existing(config_dir, alice):
 
 def test_password_load_not_found(config_dir, alice):
     with pytest.raises(LocalDeviceNotFoundError):
-        key_file = get_key_file(config_dir, alice)
+        key_file = get_default_key_file(config_dir, alice)
         load_device_with_password(key_file, "S3Cr37")
 
 
