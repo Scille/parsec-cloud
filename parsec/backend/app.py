@@ -27,6 +27,7 @@ from parsec.backend.handshake import do_handshake
 from parsec.backend.memory import components_factory as mocked_components_factory
 from parsec.backend.postgresql import components_factory as postgresql_components_factory
 from parsec.backend.http import HTTPRequest
+from parsec.backend.invite import InvitationAlreadyDeletedError
 
 
 logger = get_logger()
@@ -167,7 +168,7 @@ class BackendApp:
                             event_bus_ctx.connect(
                                 BackendEvent.INVITE_STATUS_CHANGED, _on_invite_status_changed
                             )
-                            await self._handle_client_loop(transport, client_ctx)
+                            await self._handle_client_loop(transport, client_ctx, cancel_scope)
                 finally:
                     with trio.CancelScope(shield=True):
                         await self.invite.claimer_left(
@@ -270,7 +271,7 @@ class BackendApp:
             # Peer is already gone, nothing to do
             pass
 
-    async def _handle_client_loop(self, transport, client_ctx):
+    async def _handle_client_loop(self, transport, client_ctx, cancel_scope=None):
         # Retrieve the allowed commands according to api version and auth type
         api_cmds = self.apis[client_ctx.handshake_type]
 
@@ -302,6 +303,20 @@ class BackendApp:
                         "errors": exc.errors,
                         "reason": "Invalid message.",
                     }
+
+                except InvitationAlreadyDeletedError:
+                    # If the invitation has been deleted after the invited handshake,
+                    # invitation commands can raise an InvitationAlreadyDeletedError.
+                    # The connection shall be closed due to a BackendEvent.INVITE_STATUS_CHANGED
+                    # but nothing garantie that the event will be handled before cmd_func
+                    # errors returns. If this happen, let's also trigger the cancelation from
+                    # the handle client loop
+                    if cancel_scope:
+                        raw_req = None
+                        cancel_scope.cancel()
+                        await trio.sleep(0)
+                    else:
+                        raise
 
                 except ProtocolError as exc:
                     rep = {"status": "bad_message", "reason": str(exc)}
