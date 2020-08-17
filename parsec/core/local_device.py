@@ -49,7 +49,9 @@ class LocalDevicePackingError(LocalDeviceError):
     pass
 
 
-class DeviceFileSchema(BaseSchema):
+class LegacyDeviceFileSchema(BaseSchema):
+    """Schema for legacy device files where the filename contains complementary information."""
+
     type = fields.CheckedConstant("password", required=True)
     salt = fields.Bytes(required=True)
     ciphertext = fields.Bytes(required=True)
@@ -61,12 +63,26 @@ class DeviceFileSchema(BaseSchema):
     human_handle = HumanHandleField(allow_none=True, missing=None)
     device_label = fields.String(allow_none=True, missing=None)
 
+
+class DeviceFileSchema(LegacyDeviceFileSchema):
+    """Schema for device files that does not rely on the filename for complementary information."""
+
+    # Override those fields to make them required (although `None` is still valid)
+    human_handle = HumanHandleField(required=True, allow_none=True)
+    device_label = fields.String(required=True, allow_none=True)
+
     # Store device ID, organization ID and slug in the device file
     # For legacy versions, this information is available in the file name
-    device_id = DeviceIDField(allow_none=True, missing=None)
-    organization_id = OrganizationIDField(allow_none=True, missing=None)
-    slug = fields.String(allow_none=True, missing=None)
+    device_id = DeviceIDField(required=True)
+    organization_id = OrganizationIDField(required=True)
+    slug = fields.String(required=True)
 
+
+legacy_key_file_serializer = MsgpackSerializer(
+    LegacyDeviceFileSchema,
+    validation_exc=LocalDeviceValidationError,
+    packing_exc=LocalDevicePackingError,
+)
 
 key_file_serializer = MsgpackSerializer(
     DeviceFileSchema, validation_exc=LocalDeviceValidationError, packing_exc=LocalDevicePackingError
@@ -142,41 +158,68 @@ class AvailableDevice:
         return sha256(self.slug.encode()).hexdigest()
 
 
-def _iter_available_devices(config_dir: Path) -> Iterator[AvailableDevice]:
+def _load_legacy_device_file(key_file_path: Path) -> Optional[AvailableDevice]:
+    # For the legacy device files, the slug is contained in the device filename
+    slug = key_file_path.stem
+
     try:
-        key_file_paths = list(get_devices_dir(config_dir).rglob("*.keys"))
-    except FileNotFoundError:
-        return
+        organization_id, device_id = LocalDevice.load_slug(slug)
+    except ValueError:
+        # Not a valid slug, ignore this file
+        return None
 
-    # Sanity checks
-    for key_file_path in key_file_paths:
+    try:
+        data = legacy_key_file_serializer.loads(key_file_path.read_bytes())
+    except (FileNotFoundError, LocalDeviceError):
+        # Not a valid device file, ignore this file
+        return None
 
-        try:
-            data = key_file_serializer.loads(key_file_path.read_bytes())
-        except (FileNotFoundError, LocalDeviceError):
-            # Not a valid keys file, ignore this folder
+    return AvailableDevice(
+        key_file_path=key_file_path,
+        organization_id=organization_id,
+        device_id=device_id,
+        human_handle=data["human_handle"],
+        device_label=data["device_label"],
+        slug=slug,
+    )
+
+
+def _load_device_file(key_file_path: Path) -> Optional[AvailableDevice]:
+    try:
+        data = key_file_serializer.loads(key_file_path.read_bytes())
+    except (FileNotFoundError, LocalDeviceError):
+        # Not a valid device file, ignore this folder
+        return None
+
+    return AvailableDevice(
+        key_file_path=key_file_path,
+        organization_id=data["organization_id"],
+        device_id=data["device_id"],
+        human_handle=data["human_handle"],
+        device_label=data["device_label"],
+        slug=data["slug"],
+    )
+
+
+def _iter_available_devices(config_dir: Path) -> Iterator[AvailableDevice]:
+    # Set of seen slugs
+    seen = set()
+    # Loop over `.keys` files in devices directory and subdirectories
+    for key_file_path in get_devices_dir(config_dir).rglob("*.keys"):
+        # Load the device file
+        device = _load_device_file(key_file_path)
+        # Try with the legacy deserializer if necessary
+        if device is None:
+            device = _load_legacy_device_file(key_file_path)
+        # Ignore invalid files
+        if device is None:
             continue
-
-        # Legacy device file
-        if data["organization_id"] is None or data["device_id"] is None:
-            try:
-                organization_id, device_id = LocalDevice.load_slug(key_file_path.stem)
-            except ValueError:
-                # Not a valid slug, ignore this keys file
-                continue
-            else:
-                data["organization_id"] = organization_id
-                data["device_id"] = device_id
-                data["slug"] = key_file_path.stem
-
-        yield AvailableDevice(
-            key_file_path=key_file_path,
-            organization_id=data["organization_id"],
-            device_id=data["device_id"],
-            human_handle=data["human_handle"],
-            device_label=data["device_label"],
-            slug=data["slug"],
-        )
+        # Ignore duplicate files
+        if device.slug in seen:
+            continue
+        # Yield
+        seen.add(device.slug)
+        yield device
 
 
 def list_available_devices(config_dir: Path) -> List[AvailableDevice]:
@@ -197,8 +240,8 @@ def load_device_with_password(key_file: Path, password: str) -> LocalDevice:
 
     try:
         data = key_file_serializer.loads(ciphertext)
-    except DataError as exc:
-        raise LocalDeviceValidationError(f"Cannot load local device: {exc}") from exc
+    except LocalDeviceError:
+        data = legacy_key_file_serializer.loads(ciphertext)
 
     try:
         key, _ = derivate_secret_key_from_password(password, data["salt"])
@@ -215,7 +258,7 @@ def load_device_with_password(key_file: Path, password: str) -> LocalDevice:
 
 def save_device_with_password(
     config_dir: Path, device: LocalDevice, password: str, force: bool = False
-) -> AvailableDevice:
+) -> Path:
     """
         LocalDeviceError
         LocalDeviceNotFoundError
