@@ -98,7 +98,7 @@ def GreetUserTestBed(
 
             assert users_widget.layout_users.count() == 4
 
-            invitation_widget = users_widget.layout_users.itemAt(3).widget()
+            invitation_widget = users_widget.layout_users.itemAt(0).widget()
             assert isinstance(invitation_widget, UserInvitationButton)
             assert invitation_widget.email == claimer_email
 

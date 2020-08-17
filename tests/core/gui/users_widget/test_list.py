@@ -56,28 +56,28 @@ async def test_list_users_and_invitations(
     assert u_w.layout_users.count() == 5
 
     item = u_w.layout_users.itemAt(0)
+    assert item.widget().label_email.text() == "amy@pe.com"
+
+    item = u_w.layout_users.itemAt(1)
+    assert item.widget().label_email.text() == "fry@pe.com"
+
+    item = u_w.layout_users.itemAt(2)
     assert item.widget().label_username.text() == "Adamy McAdamFace"
     assert item.widget().label_email.text() == "adam@example.com"
     assert item.widget().label_role.text() == "Administrator"
     assert item.widget().label_is_current.text() == ""
 
-    item = u_w.layout_users.itemAt(1)
+    item = u_w.layout_users.itemAt(3)
     assert item.widget().label_username.text() == "Alicey McAliceFace"
     assert item.widget().label_email.text() == "alice@example.com"
     assert item.widget().label_is_current.text() == "(you)"
     assert item.widget().label_role.text() == "Administrator"
 
-    item = u_w.layout_users.itemAt(2)
+    item = u_w.layout_users.itemAt(4)
     assert item.widget().label_username.text() == "Boby McBobFace"
     assert item.widget().label_email.text() == "bob@example.com"
     assert item.widget().label_is_current.text() == ""
     assert item.widget().label_role.text() == "Standard"
-
-    item = u_w.layout_users.itemAt(3)
-    assert item.widget().label_email.text() == "fry@pe.com"
-
-    item = u_w.layout_users.itemAt(4)
-    assert item.widget().label_email.text() == "amy@pe.com"
 
 
 @pytest.mark.gui
