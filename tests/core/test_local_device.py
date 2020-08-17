@@ -331,3 +331,22 @@ def test_list_devices_support_legacy_file_with_meaningful_name(config_dir):
     )
     assert devices == [expected_device]
     assert get_key_file(config_dir, expected_device) == key_file_path
+
+
+def test_multiple_files_same_device(config_dir, alice):
+    path = save_device_with_password(config_dir, alice, "test")
+
+    # File names contain the slughash
+    assert path.stem == alice.slughash
+
+    # .. but are no longer meaningful
+    (path.parent / "testing.keys").write_bytes(path.read_bytes())
+
+    # Make sure we don't list duplicates
+    devices = list_available_devices(config_dir)
+    assert len(devices) == 1
+
+    # Remove orignal file
+    path.unlink()
+    devices = list_available_devices(config_dir)
+    assert len(devices) == 1
