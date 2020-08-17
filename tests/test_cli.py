@@ -28,6 +28,8 @@ from parsec.core.local_device import save_device_with_password, list_available_d
 from parsec.cli import cli
 
 CWD = Path(__file__).parent.parent
+BACKEND_ADDR = "parsec://localhost"
+EMAIL_HOST = "MOCKED"
 
 
 def test_version():
@@ -272,6 +274,8 @@ def test_apiv1_full_run(unused_tcp_port, tmpdir, ssl_conf):
             f" --administration-token={administration_token}"
             f" --port={unused_tcp_port}"
             f" {ssl_conf.backend_opts}"
+            f" --backend-addr={BACKEND_ADDR}"
+            f" --email-host={EMAIL_HOST}"
         ),
         wait_for="Starting Parsec Backend",
     ):
@@ -408,6 +412,8 @@ def test_full_run(coolorg, unused_tcp_port, tmpdir, ssl_conf):
             f"backend run --db=MOCKED --blockstore=MOCKED"
             f" --administration-token={administration_token}"
             f" --port={unused_tcp_port}"
+            f" --backend-addr={BACKEND_ADDR}"
+            f" --email-host={EMAIL_HOST}"
             f" {ssl_conf.backend_opts}"
         ),
         wait_for="Starting Parsec Backend",
