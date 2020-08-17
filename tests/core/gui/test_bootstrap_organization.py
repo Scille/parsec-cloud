@@ -54,6 +54,7 @@ async def proceed_to_bootstrap(aqtbot, bo_w):
 
 @pytest.mark.gui
 @pytest.mark.trio
+@pytest.mark.flaky(reruns=1)
 async def test_bootstrap_organization(aqtbot, backend, gui_ready_for_bootstrap, autoclose_dialog):
     gui, bo_w = gui_ready_for_bootstrap
     await proceed_to_bootstrap(aqtbot, bo_w)

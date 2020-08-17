@@ -337,9 +337,7 @@ class WorkspaceFS:
             await self.transactions.fd_close(fd)
 
     async def open_file(self, path: AnyPath, mode="r"):
-        path = FsPath(path)
-        _, fd = await self.transactions.file_open(path, mode)
-        f = WorkspaceFile(fd, self.transactions, mode=mode, path=path)
+        f = WorkspaceFile(self.transactions, mode=mode, path=path)
         await f.ainit()
         return f
 

@@ -40,7 +40,7 @@ async def test_import_file(alice_workspace):
         "parsec.core.cli.rsync._chunks_from_path",
         AsyncMock(spec=mock.Mock, side_effect=[[b"random", b"chunks"]]),
     ):
-        f = await alice_workspace.open_file("/foo/bar")
+        f = await alice_workspace.open_file("/foo/bar", "wb+")
         assert await f.read() == b""
         await rsync._import_file(alice_workspace, "/src_file", "/foo/bar")
         rsync._chunks_from_path.assert_called_once_with("/src_file")
