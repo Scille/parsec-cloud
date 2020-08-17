@@ -18,11 +18,7 @@ from parsec.cli_utils import cli_exception_handler
 
 
 async def _import_file(workspace_fs: WorkspaceFS, local_path: FsPath, dest: FsPath):
-    try:
-        await workspace_fs.touch(dest)
-    except FileExistsError:
-        pass
-    dest_f = await workspace_fs.open_file(dest, "w")
+    dest_f = await workspace_fs.open_file(path=dest, mode="wb")
     async with dest_f:
         for chunk in await _chunks_from_path(local_path):
             await dest_f.write(chunk)
