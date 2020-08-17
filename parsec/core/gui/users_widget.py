@@ -375,10 +375,7 @@ class UsersWidget(QWidget, Ui_UsersWidget):
         self._flush_users_list()
 
         current_user = self.core.device.user_id
-        for user_info in users:
-            self.add_user(user_info=user_info, is_current_user=current_user == user_info.user_id)
-
-        for invitation in invitations:
+        for invitation in reversed(invitations):
             addr = BackendInvitationAddr.build(
                 backend_addr=self.core.device.organization_addr,
                 organization_id=self.core.device.organization_id,
@@ -386,6 +383,9 @@ class UsersWidget(QWidget, Ui_UsersWidget):
                 token=invitation["token"],
             )
             self.add_user_invitation(invitation["claimer_email"], addr)
+
+        for user_info in users:
+            self.add_user(user_info=user_info, is_current_user=current_user == user_info.user_id)
 
     def _on_list_error(self, job):
         assert job.is_finished()
