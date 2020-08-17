@@ -286,3 +286,48 @@ def test_supports_legacy_is_admin_field(alice):
         "human_handle": None,
         "device_label": None,
     }
+
+
+def test_list_devices_support_legacy_file_with_meaningful_name(config_dir):
+    # Legacy path might exceed the 256 characters limit in some cases (see issue #1356)
+    # So we use the `\\?\` workaround: https://stackoverflow.com/a/57502760/2846140
+    if os.name == "nt":
+        config_dir = Path("\\\\?\\" + str(config_dir.resolve()))
+
+    # Device information
+    user_id = uuid4().hex
+    device_name = uuid4().hex
+    organization_id = "Org"
+    rvk_hash = (uuid4().hex)[:10]
+    device_id = f"{user_id}@{device_name}"
+    slug = f"{rvk_hash}#{organization_id}#{device_id}"
+    human_label = "Billy Mc BillFace"
+    human_email = "billy@bill.com"
+    device_label = "My device"
+
+    # Craft file data without the user_id, organization_id and slug fields
+    key_file_data = packb(
+        {
+            "type": "password",
+            "salt": b"12345",
+            "ciphertext": b"whatever",
+            "human_handle": (human_email.encode(), human_label.encode()),
+            "device_label": device_label.encode(),
+        }
+    )
+
+    key_file_path = get_devices_dir(config_dir) / slug / f"{slug}.keys"
+    key_file_path.parent.mkdir(parents=True)
+    key_file_path.write_bytes(key_file_data)
+
+    devices = list_available_devices(config_dir)
+    expected_device = AvailableDevice(
+        key_file_path=key_file_path,
+        organization_id=OrganizationID(organization_id),
+        device_id=DeviceID(device_id),
+        human_handle=HumanHandle(human_email, human_label),
+        device_label=device_label,
+        slug=slug,
+    )
+    assert devices == [expected_device]
+    assert get_key_file(config_dir, expected_device) == key_file_path
