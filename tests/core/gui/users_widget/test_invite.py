@@ -31,7 +31,7 @@ async def test_invite_user(
 
         def _new_invitation_displayed():
             assert u_w.layout_users.count() == 4
-            inv_btn = u_w.layout_users.itemAt(3).widget()
+            inv_btn = u_w.layout_users.itemAt(0).widget()
             assert isinstance(inv_btn, UserInvitationButton)
             assert inv_btn.email == "hubert.farnsworth@pe.com"
             assert email_letterbox.emails == [(inv_btn.email, ANY)]
@@ -167,7 +167,7 @@ async def test_cancel_user_invitation(
         assert u_w.layout_users.count() == 4
 
     await aqtbot.wait_until(_new_invitation_displayed)
-    user_invitation_w = u_w.layout_users.itemAt(3).widget()
+    user_invitation_w = u_w.layout_users.itemAt(0).widget()
     assert user_invitation_w.email == email
 
     # Cancel invitation
