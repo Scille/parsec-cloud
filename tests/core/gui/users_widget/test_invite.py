@@ -35,9 +35,14 @@ async def test_invite_user(
             assert isinstance(inv_btn, UserInvitationButton)
             assert inv_btn.email == "hubert.farnsworth@pe.com"
             assert email_letterbox.emails == [(inv_btn.email, ANY)]
+            assert autoclose_dialog.dialogs == [
+                (
+                    "",
+                    "The invitation to join your organization was successfuly sent at : <b>hubert.farnsworth@pe.com</b>",
+                )
+            ]
 
         await aqtbot.wait_until(_new_invitation_displayed)
-        assert not autoclose_dialog.dialogs
 
     else:
         with running_backend.offline():
@@ -165,8 +170,15 @@ async def test_cancel_user_invitation(
 
     def _new_invitation_displayed():
         assert u_w.layout_users.count() == 4
+        assert autoclose_dialog.dialogs == [
+            (
+                "",
+                f"The invitation to join your organization was successfuly sent at : <b>{ email }</b>",
+            )
+        ]
 
     await aqtbot.wait_until(_new_invitation_displayed)
+    autoclose_dialog.reset()
     user_invitation_w = u_w.layout_users.itemAt(0).widget()
     assert user_invitation_w.email == email
 
