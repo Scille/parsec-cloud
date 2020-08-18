@@ -25,6 +25,7 @@ from parsec.backend.invite import (
     UserInvitation,
     DeviceInvitation,
     InvitationAlreadyDeletedError,
+    InvitationNotFoundError,
 )
 
 
@@ -164,7 +165,15 @@ async def _process_invited_answer(
             organization_id, token=handshake.answer_data["token"]
         )
     except InvitationAlreadyDeletedError:
-        result_req = handshake.build_bad_identity_result_req(help="InvitationAlreadyDeletedError")
+        result_req = handshake.build_bad_identity_result_req(
+            help="Invalid handshake: Invitation already deleted"
+        )
+        return None, result_req, _make_error_infos("Bad invitation")
+
+    except InvitationNotFoundError:
+        result_req = handshake.build_bad_identity_result_req(
+            help="Invalid handshake: Invitation not found"
+        )
         return None, result_req, _make_error_infos("Bad invitation")
 
     except InvitationError:

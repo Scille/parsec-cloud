@@ -451,24 +451,24 @@ async def test_claimer_handle_cancel_event(
                 async def _do_claimer_wait_peer():
                     with pytest.raises(BackendConnectionRefused) as exc_info:
                         await claimer_initial_ctx.do_wait_peer()
-                    assert exc_info.value.args[0] == "InvitationAlreadyDeletedError"
+                    assert str(exc_info.value) == "Invalid handshake: Invitation already deleted"
 
                 async def _do_claimer_signify_trust():
                     with pytest.raises(BackendConnectionRefused) as exc_info:
                         await claimer_in_progress_ctx.do_signify_trust()
-                    assert exc_info.value.args[0] == "InvitationAlreadyDeletedError"
+                    assert str(exc_info.value) == "Invalid handshake: Invitation already deleted"
 
                 async def _do_claimer_wait_peer_trust():
                     with pytest.raises(BackendConnectionRefused) as exc_info:
                         await claimer_in_progress_ctx.do_wait_peer_trust()
-                    assert exc_info.value.args[0] == "InvitationAlreadyDeletedError"
+                    assert str(exc_info.value) == "Invalid handshake: Invitation already deleted"
 
                 async def _do_claimer_claim_device():
                     with pytest.raises(BackendConnectionRefused) as exc_info:
                         await claimer_in_progress_ctx.do_claim_device(
                             requested_device_label="TheSecretDevice"
                         )
-                    assert exc_info.value.args[0] == "InvitationAlreadyDeletedError"
+                    assert str(exc_info.value) == "Invalid handshake: Invitation already deleted"
 
                 steps = {
                     "wait_peer": _do_claimer_wait_peer,
@@ -567,7 +567,7 @@ async def test_claimer_handle_command_failure(
         with trio.fail_after(1):
             await _cancel_invitation()
             await deleted_event.wait()
-            with pytest.raises(BackendConnectionRefused):
+            with pytest.raises(BackendConnectionRefused) as exc_info:
                 if fail_on_step == "wait_peer":
                     await claimer_initial_ctx.do_wait_peer()
                 elif fail_on_step == "signify_trust":
@@ -580,3 +580,4 @@ async def test_claimer_handle_command_failure(
                     )
                 else:
                     raise AssertionError(f"Unknown step {fail_on_step}")
+            assert str(exc_info.value) == "Invalid handshake: Invitation already deleted"

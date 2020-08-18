@@ -88,7 +88,7 @@ async def test_handshake_unknown_organization(running_backend, coolorg):
     with pytest.raises(BackendConnectionRefused) as exc:
         async with backend_invited_cmds_factory(invitation_addr) as cmds:
             await cmds.ping()
-    assert str(exc.value) == "Invalid handshake information"
+    assert str(exc.value) == "Invalid handshake: Invitation not found"
 
 
 @pytest.mark.trio
