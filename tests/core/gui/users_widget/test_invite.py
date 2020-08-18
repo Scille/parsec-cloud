@@ -38,7 +38,7 @@ async def test_invite_user(
             assert autoclose_dialog.dialogs == [
                 (
                     "",
-                    'The invitation to join your organization was successfuly sent at : <b>"hubert.farnsworth@pe.com"</b>.',
+                    "The invitation to join your organization was successfuly sent at : <b>hubert.farnsworth@pe.com</b>",
                 )
             ]
 
@@ -173,7 +173,7 @@ async def test_cancel_user_invitation(
         assert autoclose_dialog.dialogs == [
             (
                 "",
-                f'The invitation to join your organization was successfuly sent at : <b>"{ email }"</b>.',
+                f"The invitation to join your organization was successfuly sent at : <b>{ email }</b>",
             )
         ]
 

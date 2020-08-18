@@ -638,7 +638,7 @@ msgstr ""
 
 msgid "TEXT_USER_INVITE_SUCCESS_email"
 msgstr ""
-"The invitation to join your organization was successfuly sent at : <b>\"{email}\"</b>."
+"The invitation to join your organization was successfuly sent at : <b>{email}</b>"
 
 msgid "TEXT_USER_INVITE_CANCEL_INVITE_ACCEPT"
 msgstr "Cancel the invitation"
