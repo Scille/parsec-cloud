@@ -204,8 +204,11 @@ def _load_device_file(key_file_path: Path) -> Optional[AvailableDevice]:
 def _iter_available_devices(config_dir: Path) -> Iterator[AvailableDevice]:
     # Set of seen slugs
     seen = set()
-    # Loop over `.keys` files in devices directory and subdirectories
-    for key_file_path in get_devices_dir(config_dir).rglob("*.keys"):
+    # Consider `.keys` files in devices directory and subdirectories
+    key_file_paths = list(get_devices_dir(config_dir).rglob("*.keys"))
+    # Sort paths so the discovery order is deterministic
+    # In the case of duplicate files, that means only the first discovered device is considered
+    for key_file_path in sorted(key_file_paths):
         # Load the device file
         device = _load_device_file(key_file_path)
         # Try with the legacy deserializer if necessary
