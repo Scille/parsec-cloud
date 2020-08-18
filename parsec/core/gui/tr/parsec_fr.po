@@ -690,7 +690,7 @@ msgstr "Non"
 
 msgid "TEXT_USER_REVOKE_SUCCESS_user"
 msgstr ""
-"L'utilisateur <b>{email}</b> a été révoqué avec succès. N'oubliez pas de "
+"L'utilisateur <b>{user}</b> a été révoqué avec succès. N'oubliez pas de "
 "rechiffrer les espaces de travail qui étaient partagés avec eux."
 
 msgid "TEXT_USER_REVOCATION_USER_ALREADY_REVOKED"

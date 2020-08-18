@@ -648,7 +648,7 @@ msgstr "No"
 
 msgid "TEXT_USER_REVOKE_SUCCESS_user"
 msgstr ""
-"The user <b>{email}</b> has been successfully revoked. Do no forget to "
+"The user <b>{user}</b> has been successfully revoked. Do no forget to "
 "reencrypt the workspaces that were shared with them."
 
 msgid "TEXT_USER_REVOCATION_USER_ALREADY_REVOKED"
