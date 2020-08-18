@@ -119,7 +119,7 @@
          </widget>
         </item>
         <item>
-         <widget class="QLineEdit" name="line_edit_device">
+         <widget class="ValidatedLineEdit" name="line_edit_device">
           <property name="minimumSize">
            <size>
             <width>0</width>
@@ -164,7 +164,7 @@
          </widget>
         </item>
         <item>
-         <widget class="QLineEdit" name="line_edit_user_email">
+         <widget class="ValidatedLineEdit" name="line_edit_user_email">
           <property name="enabled">
            <bool>true</bool>
           </property>
@@ -244,6 +244,13 @@
    </item>
   </layout>
  </widget>
+ <customwidgets>
+  <customwidget>
+   <class>ValidatedLineEdit</class>
+   <extends>QLineEdit</extends>
+   <header>parsec.core.gui.input_widgets</header>
+  </customwidget>
+ </customwidgets>
  <resources/>
  <connections/>
 </ui>

@@ -31,6 +31,7 @@ from parsec.core.gui.trio_thread import (
 from parsec.core.gui import desktop
 from parsec.core.gui.custom_dialogs import show_error, get_text_input, ask_question
 from parsec.core.gui.flow_layout import FlowLayout
+from parsec.core.gui import validators
 from parsec.core.gui.lang import translate as _
 from parsec.core.gui.workspace_button import WorkspaceButton
 from parsec.core.gui.timestamped_workspace_widget import TimestampedWorkspaceWidget
@@ -501,6 +502,7 @@ class WorkspacesWidget(QWidget, Ui_WorkspacesWidget):
             placeholder=_("TEXT_WORKSPACE_RENAME_PLACEHOLDER"),
             default_text=workspace_button.name,
             button_text=_("ACTION_WORKSPACE_RENAME_CONFIRM"),
+            validator=validators.WorkspaceNameValidator(),
         )
         if not new_name:
             return
@@ -599,6 +601,7 @@ class WorkspacesWidget(QWidget, Ui_WorkspacesWidget):
             message=_("TEXT_WORKSPACE_NEW_INSTRUCTIONS"),
             placeholder=_("TEXT_WORKSPACE_NEW_PLACEHOLDER"),
             button_text=_("ACTION_WORKSPACE_NEW_CREATE"),
+            validator=validators.WorkspaceNameValidator(),
         )
         if not workspace_name:
             return

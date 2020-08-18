@@ -17,6 +17,7 @@ from parsec.core.gui.trio_thread import JobResultError, ThreadSafeQtSignal, QtTo
 from parsec.core.gui.custom_dialogs import show_error, show_info, ask_question, get_text_input
 from parsec.core.gui.custom_widgets import ensure_string_size
 from parsec.core.gui.flow_layout import FlowLayout
+from parsec.core.gui import validators
 from parsec.core.gui import desktop
 from parsec.core.gui.lang import translate as _
 from parsec.core.gui.greet_user_widget import GreetUserWidget
@@ -253,6 +254,7 @@ class UsersWidget(QWidget, Ui_UsersWidget):
             _("TEXT_USER_INVITE_EMAIL_INSTRUCTIONS"),
             placeholder=_("TEXT_USER_INVITE_EMAIL_PLACEHOLDER"),
             button_text=_("ACTION_USER_INVITE_DO_INVITE"),
+            validator=validators.EmailValidator(),
         )
         if not user_email:
             return

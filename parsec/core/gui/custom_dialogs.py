@@ -123,8 +123,9 @@ class TextInputWidget(QWidget, Ui_InputWidget):
         self.label_message.setText(message)
         self.line_edit_text.setPlaceholderText(placeholder)
         self.line_edit_text.setText(default_text)
-        if validator:
-            self.line_edit_text.setValidator(validator)
+        self.line_edit_text.set_validator(validator)
+        self.line_edit_text.validity_changed.connect(self._on_validity_changed)
+        self.button_ok.setEnabled(self.line_edit_text.is_input_valid())
         if completion:
             completer = QCompleter(completion)
             completer.setCaseSensitivity(Qt.CaseInsensitive)
@@ -138,8 +139,11 @@ class TextInputWidget(QWidget, Ui_InputWidget):
     def text(self):
         return self.line_edit_text.text()
 
+    def _on_validity_changed(self, validity):
+        self.button_ok.setEnabled(validity)
+
     def keyPressEvent(self, event):
-        if event.key() in (Qt.Key_Return, Qt.Key_Enter):
+        if self.button_ok.isEnabled() and event.key() in (Qt.Key_Return, Qt.Key_Enter):
             self._on_button_clicked()
         event.accept()
 

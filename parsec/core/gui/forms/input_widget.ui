@@ -85,7 +85,7 @@
     </layout>
    </item>
    <item>
-    <widget class="QLineEdit" name="line_edit_text"/>
+    <widget class="ValidatedLineEdit" name="line_edit_text"/>
    </item>
    <item>
     <spacer name="verticalSpacer">
@@ -138,6 +138,13 @@
    </item>
   </layout>
  </widget>
+ <customwidgets>
+  <customwidget>
+   <class>ValidatedLineEdit</class>
+   <extends>QLineEdit</extends>
+   <header>parsec.core.gui.input_widgets</header>
+  </customwidget>
+ </customwidgets>
  <resources/>
  <connections/>
 </ui>

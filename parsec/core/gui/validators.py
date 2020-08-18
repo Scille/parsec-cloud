@@ -1,5 +1,6 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
 
+from PyQt5.QtCore import QRegularExpression
 from PyQt5.QtGui import QValidator, QIntValidator
 
 from parsec.api.protocol import OrganizationID, UserID, DeviceName, DeviceID
@@ -116,3 +117,25 @@ class DeviceIDValidator(QValidator):
             return QValidator.Acceptable, string, pos
         except ValueError:
             return QValidator.Invalid, string, pos
+
+
+# Does not use QRegularExpressionValidator because it seems there's no way to tell the
+# validator how to handle partial matches.
+class EmailValidator(QValidator):
+    def __init__(self):
+        self.regex = QRegularExpression(r"^[a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+$")
+
+    def validate(self, string, pos):
+        if self.regex.match(string, pos).hasMatch():
+            return QValidator.Acceptable, string, pos
+        return QValidator.Invalid, string, pos
+
+
+class WorkspaceNameValidator(QValidator):
+    def __init__(self):
+        self.regex = QRegularExpression(r"^.{1,256}$")
+
+    def validate(self, string, pos):
+        if self.regex.match(string, pos).hasMatch():
+            return QValidator.Acceptable, string, pos
+        return QValidator.Invalid, string, pos

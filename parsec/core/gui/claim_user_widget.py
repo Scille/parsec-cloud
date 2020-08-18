@@ -402,7 +402,9 @@ class ClaimUserProvideInfoWidget(QWidget, Ui_ClaimUserProvideInfoWidget):
         self.new_device = None
         self.line_edit_user_full_name.setFocus()
         self.line_edit_user_email.setText(user_email)
+        self.line_edit_user_email.set_validator(validators.EmailValidator)
         self.line_edit_device.setText(get_default_device())
+        self.line_edit_device.set_validator(validators.DeviceIDValidator)
         self.line_edit_user_full_name.textChanged.connect(self.check_infos)
         self.line_edit_device.textChanged.connect(self.check_infos)
         self.line_edit_device.setValidator(validators.DeviceNameValidator())
