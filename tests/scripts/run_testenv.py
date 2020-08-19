@@ -178,6 +178,7 @@ async def restart_local_backend(administration_token, backend_port, email_host):
 )
 @click.option("--force/--no-force", show_default=True, default=False)
 @click.option("--email-host", show_default=True, default=DEFAULT_EMAIL_HOST)
+@click.option("--add-random-users", show_default=True, default=0)
 @click.option("-e", "--empty", is_flag=True)
 @click.option("--source-file", hidden=True)
 def main(**kwargs):
@@ -230,6 +231,7 @@ async def amain(
     administration_token,
     force,
     email_host,
+    add_random_users,
     empty,
     source_file,
 ):
@@ -267,7 +269,12 @@ Using existing backend: {backend_address}
     # Initialize the test organization
     config_dir = get_default_config_dir(os.environ)
     alice_device, other_alice_device, bob_device = await initialize_test_organization(
-        config_dir, backend_address, password, administration_token, force
+        config_dir=config_dir,
+        backend_address=backend_address,
+        password=password,
+        administration_token=administration_token,
+        force=force,
+        additional_users_number=add_random_users,
     )
 
     # Report
