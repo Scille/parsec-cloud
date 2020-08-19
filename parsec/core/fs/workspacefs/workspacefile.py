@@ -49,7 +49,7 @@ class WorkspaceFile:
     mode("r") -> read file.
     """
 
-    def __init__(self, transactions, path, mode: str = "r"):
+    def __init__(self, transactions, path, mode: str = "rb"):
         self._fd = None
         self._offset = 0
         self._state = FileState.INIT
@@ -87,7 +87,8 @@ class WorkspaceFile:
                 _, self._fd = await self._transactions.file_create(self._path, open=True)
             else:
                 try:
-                    _, self._fd = await self._transactions.file_open(self._path)
+                    mode = "rw" if self.writable() else "r"
+                    _, self._fd = await self._transactions.file_open(self._path, mode)
                 except FileNotFoundError:
                     if sum(c in self._mode for c in "aw") == 1:
                         _, self._fd = await self._transactions.file_create(self._path, open=True)
@@ -255,7 +256,7 @@ class WorkspaceFile:
         if "a" in self._mode:
             self._offset = await self.get_size()
         if "b" in self._mode:
-            if not isinstance(data, bytes):
+            if not isinstance(data, (bytes, bytearray)):
                 raise TypeError(f"a bytes-like object is required, not '{type(data).__name__}'")
             return await self._write_bytes(data)
         else:

@@ -187,7 +187,8 @@ def test_sync_monitor_stateful(
                 await wfs.touch(file_path)
             else:
                 data = self.get_next_data()
-                await wfs.write_bytes(file_path, data)
+                if await wfs.exists(file_path):
+                    await wfs.write_bytes(file_path, data)
             await wfs.sync()
 
         async def _alice_update_file(self, wid, file_path, create_file=False):
@@ -203,7 +204,8 @@ def test_sync_monitor_stateful(
             else:
                 data = self.get_next_data()
                 try:
-                    await wfs.write_bytes(file_path, data)
+                    if await wfs.exists(file_path):
+                        await wfs.write_bytes(file_path, data)
                 except (FSWorkspaceNoAccess, OSError):
                     return
 

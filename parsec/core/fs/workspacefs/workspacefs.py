@@ -324,41 +324,26 @@ class WorkspaceFS:
         path = FsPath(path)
         await self.transactions.file_resize(path, length)
 
-    async def read_bytes(self, path: AnyPath, size: int = -1, offset: int = 0) -> bytes:
+    async def open_file(self, path: AnyPath, mode="rb"):
+        workspace_file = WorkspaceFile(self.transactions, mode=mode, path=path)
+        await workspace_file.ainit()
+        return workspace_file
+
+    async def read_bytes(self, path: AnyPath) -> bytes:
         """
         Raises:
             FSError
         """
-        path = FsPath(path)
-        _, fd = await self.transactions.file_open(path, "r")
-        try:
-            return await self.transactions.fd_read(fd, size, offset)
-        finally:
-            await self.transactions.fd_close(fd)
+        async with await self.open_file(path, mode="rb") as workspace_file:
+            return await workspace_file.read()
 
-    async def open_file(self, path: AnyPath, mode="r"):
-        f = WorkspaceFile(self.transactions, mode=mode, path=path)
-        await f.ainit()
-        return f
-
-    async def write_bytes(
-        self, path: AnyPath, data: bytes, offset: int = 0, truncate: bool = True
-    ) -> int:
+    async def write_bytes(self, path: AnyPath, data: bytes) -> int:
         """
-        The offset value is used to determine the index of the writing operation.
-        If the offset is negative, we append the new bytes to the current content.
-        If the truncate argument is set to True, the offset argument is also used to resize the file.
         Raises:
             FSError
         """
-        path = FsPath(path)
-        _, fd = await self.transactions.file_open(path, "w")
-        try:
-            if offset >= 0 and truncate:
-                await self.transactions.fd_resize(fd, offset)
-            return await self.transactions.fd_write(fd, data, offset)
-        finally:
-            await self.transactions.fd_close(fd)
+        async with await self.open_file(path, mode="wb") as workspace_file:
+            return await workspace_file.write(data)
 
     # Shutil-like interface
 
@@ -423,14 +408,14 @@ class WorkspaceFS:
         Raises:
             FSError
         """
-        await self.touch(target_path, exist_ok=exist_ok)
-        offset = 0
-        while True:
-            buff = await self.read_bytes(source_path, length, offset * length)
-            if not buff:
-                break
-            await self.write_bytes(target_path, buff, offset * length)
-            offset += 1
+        write_mode = "wb" if exist_ok else "xb"
+        async with await self.open_file(source_path, mode="rb") as source:
+            async with await self.open_file(target_path, mode=write_mode) as target:
+                while True:
+                    data = await source.read(length)
+                    if not data:
+                        return
+                    await target.write(data)
 
     async def rmtree(self, path: AnyPath):
         """

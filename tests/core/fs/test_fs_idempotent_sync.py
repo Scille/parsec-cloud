@@ -115,7 +115,8 @@ def test_fs_online_idempotent_sync(
         @rule(path=BadPath)
         async def try_to_update_file(self, path):
             with pytest.raises(OSError):
-                await self.workspace.write_bytes(path, data=b"a", offset=0)
+                async with await self.workspace.open_file(path, "rb+"):
+                    pass
 
         @rule(path=BadPath)
         async def try_to_delete(self, path):
