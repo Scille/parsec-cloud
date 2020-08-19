@@ -19,7 +19,7 @@ from parsec.core.invite import (
 )
 
 from parsec.backend.backend_events import BackendEvent
-from parsec.core.backend_connection.exceptions import BackendConnectionRefused
+from parsec.core.backend_connection.exceptions import BackendInvitationAlreadyUsed
 from parsec.api.protocol import InvitationStatus
 
 
@@ -449,22 +449,22 @@ async def test_claimer_handle_cancel_event(
             async with trio.open_nursery() as nursery:
 
                 async def _do_claimer_wait_peer():
-                    with pytest.raises(BackendConnectionRefused) as exc_info:
+                    with pytest.raises(BackendInvitationAlreadyUsed) as exc_info:
                         await claimer_initial_ctx.do_wait_peer()
                     assert str(exc_info.value) == "Invalid handshake: Invitation already deleted"
 
                 async def _do_claimer_signify_trust():
-                    with pytest.raises(BackendConnectionRefused) as exc_info:
+                    with pytest.raises(BackendInvitationAlreadyUsed) as exc_info:
                         await claimer_in_progress_ctx.do_signify_trust()
                     assert str(exc_info.value) == "Invalid handshake: Invitation already deleted"
 
                 async def _do_claimer_wait_peer_trust():
-                    with pytest.raises(BackendConnectionRefused) as exc_info:
+                    with pytest.raises(BackendInvitationAlreadyUsed) as exc_info:
                         await claimer_in_progress_ctx.do_wait_peer_trust()
                     assert str(exc_info.value) == "Invalid handshake: Invitation already deleted"
 
                 async def _do_claimer_claim_device():
-                    with pytest.raises(BackendConnectionRefused) as exc_info:
+                    with pytest.raises(BackendInvitationAlreadyUsed) as exc_info:
                         await claimer_in_progress_ctx.do_claim_device(
                             requested_device_label="TheSecretDevice"
                         )
@@ -567,7 +567,7 @@ async def test_claimer_handle_command_failure(
         with trio.fail_after(1):
             await _cancel_invitation()
             await deleted_event.wait()
-            with pytest.raises(BackendConnectionRefused) as exc_info:
+            with pytest.raises(BackendInvitationAlreadyUsed) as exc_info:
                 if fail_on_step == "wait_peer":
                     await claimer_initial_ctx.do_wait_peer()
                 elif fail_on_step == "signify_trust":
