@@ -168,7 +168,7 @@ class BackendApp:
                             event_bus_ctx.connect(
                                 BackendEvent.INVITE_STATUS_CHANGED, _on_invite_status_changed
                             )
-                            await self._handle_client_loop(transport, client_ctx, cancel_scope)
+                            await self._handle_client_loop(transport, client_ctx)
                 finally:
                     with trio.CancelScope(shield=True):
                         await self.invite.claimer_left(
@@ -271,7 +271,7 @@ class BackendApp:
             # Peer is already gone, nothing to do
             pass
 
-    async def _handle_client_loop(self, transport, client_ctx, cancel_scope=None):
+    async def _handle_client_loop(self, transport, client_ctx):
         # Retrieve the allowed commands according to api version and auth type
         api_cmds = self.apis[client_ctx.handshake_type]
 
@@ -311,12 +311,7 @@ class BackendApp:
                     # but nothing garantie that the event will be handled before cmd_func
                     # errors returns. If this happen, let's also trigger the cancelation from
                     # the handle client loop
-                    if cancel_scope:
-                        raw_req = None
-                        cancel_scope.cancel()
-                        await trio.sleep(0)
-                    else:
-                        raise
+                    return
 
                 except ProtocolError as exc:
                     rep = {"status": "bad_message", "reason": str(exc)}

@@ -414,7 +414,7 @@ class BaseInviteComponent:
                 payload=msg["claimer_public_key"].encode(),
             )
 
-        # Let InvitayytionAlreadyDeletedError bunble up.
+        # Let InvitationAlreadyDeletedError bubble up.
 
         except InvitationNotFoundError:
             return {"status": "not_found"}
@@ -479,7 +479,7 @@ class BaseInviteComponent:
                 payload=b"",
             )
 
-        # Let InvitayytionAlreadyDeletedError bunble up.
+        # Let InvitationAlreadyDeletedError bubble up.
 
         except InvitationNotFoundError:
             return {"status": "not_found"}
@@ -571,7 +571,7 @@ class BaseInviteComponent:
                 payload=msg["claimer_nonce"],
             )
 
-        # Let InvitayytionAlreadyDeletedError bunble up.
+        # Let InvitationAlreadyDeletedError bubble up.
 
         except InvitationNotFoundError:
             return {"status": "not_found"}
@@ -624,7 +624,7 @@ class BaseInviteComponent:
                 payload=b"",
             )
 
-        # Let InvitayytionAlreadyDeletedError bunble up.
+        # Let InvitationAlreadyDeletedError bubble up.
 
         except InvitationNotFoundError:
             return {"status": "not_found"}
@@ -677,7 +677,7 @@ class BaseInviteComponent:
                 payload=b"",
             )
 
-        # Let InvitayytionAlreadyDeletedError bunble up.
+        # Let InvitationAlreadyDeletedError bubble up.
 
         except InvitationNotFoundError:
             return {"status": "not_found"}
@@ -732,7 +732,7 @@ class BaseInviteComponent:
                 payload=msg["payload"],
             )
 
-        # Let InvitayytionAlreadyDeletedError bunble up.
+        # Let InvitationAlreadyDeletedError bubble up.
 
         except InvitationNotFoundError:
             return {"status": "not_found"}
