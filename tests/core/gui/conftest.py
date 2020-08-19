@@ -286,6 +286,8 @@ def gui_factory(
         # Language config rely on global var, must reset it for each test !
         switch_language(core_config)
 
+        ParsecApp.connected_devices = set()
+
         def _create_main_window():
             # Pass minimize_on_close to avoid having test blocked by the
             # closing confirmation prompt

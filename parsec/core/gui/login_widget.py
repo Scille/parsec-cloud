@@ -39,12 +39,9 @@ class LoginAccountsWidget(QWidget, Ui_LoginAccountsWidget):
         super().__init__()
         self.setupUi(self)
         for available_device in devices:
-            if not ParsecApp.is_device_connected(
-                available_device.organization_id, available_device.device_id
-            ):
-                ab = AccountButton(available_device)
-                ab.clicked.connect(self.account_clicked.emit)
-                self.accounts_widget.layout().insertWidget(0, ab)
+            ab = AccountButton(available_device)
+            ab.clicked.connect(self.account_clicked.emit)
+            self.accounts_widget.layout().insertWidget(0, ab)
 
 
 class LoginPasswordInputWidget(QWidget, Ui_LoginPasswordInputWidget):
@@ -126,7 +123,11 @@ class LoginWidget(QWidget, Ui_LoginWidget):
 
     def reload_devices(self):
         self._clear_widget()
-        devices = list_available_devices(self.config.config_dir)
+        devices = [
+            device
+            for device in list_available_devices(self.config.config_dir)
+            if not ParsecApp.is_device_connected(device.organization_id, device.device_id)
+        ]
         if not len(devices):
             no_device_widget = LoginNoDevicesWidget()
             no_device_widget.create_organization_clicked.connect(
