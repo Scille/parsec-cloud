@@ -56,6 +56,10 @@ logger = get_logger()
 PEER_EVENT_MAX_WAIT = 300  # 5mn
 
 
+class CloseInviteConnection(Exception):
+    pass
+
+
 class InvitationError(Exception):
     pass
 
@@ -414,7 +418,9 @@ class BaseInviteComponent:
                 payload=msg["claimer_public_key"].encode(),
             )
 
-        # Let InvitationAlreadyDeletedError bubble up.
+        except InvitationAlreadyDeletedError as exc:
+            # Notify parent that the connection shall be close because the invitation token is no logger valide.
+            raise CloseInviteConnection from exc
 
         except InvitationNotFoundError:
             return {"status": "not_found"}
@@ -479,7 +485,9 @@ class BaseInviteComponent:
                 payload=b"",
             )
 
-        # Let InvitationAlreadyDeletedError bubble up.
+        except InvitationAlreadyDeletedError as exc:
+            # Notify parent that the connection shall be close because the invitation token is no logger valide.
+            raise CloseInviteConnection from exc
 
         except InvitationNotFoundError:
             return {"status": "not_found"}
@@ -571,7 +579,9 @@ class BaseInviteComponent:
                 payload=msg["claimer_nonce"],
             )
 
-        # Let InvitationAlreadyDeletedError bubble up.
+        except InvitationAlreadyDeletedError as exc:
+            # Notify parent that the connection shall be close because the invitation token is no logger valide.
+            raise CloseInviteConnection from exc
 
         except InvitationNotFoundError:
             return {"status": "not_found"}
@@ -624,7 +634,9 @@ class BaseInviteComponent:
                 payload=b"",
             )
 
-        # Let InvitationAlreadyDeletedError bubble up.
+        except InvitationAlreadyDeletedError as exc:
+            # Notify parent that the connection shall be close because the invitation token is no logger valide.
+            raise CloseInviteConnection from exc
 
         except InvitationNotFoundError:
             return {"status": "not_found"}
@@ -677,7 +689,9 @@ class BaseInviteComponent:
                 payload=b"",
             )
 
-        # Let InvitationAlreadyDeletedError bubble up.
+        except InvitationAlreadyDeletedError as exc:
+            # Notify parent that the connection shall be close because the invitation token is no logger valide.
+            raise CloseInviteConnection from exc
 
         except InvitationNotFoundError:
             return {"status": "not_found"}
@@ -732,7 +746,9 @@ class BaseInviteComponent:
                 payload=msg["payload"],
             )
 
-        # Let InvitationAlreadyDeletedError bubble up.
+        except InvitationAlreadyDeletedError as exc:
+            # Notify parent that the connection shall be close because the invitation token is no logger valide.
+            raise CloseInviteConnection from exc
 
         except InvitationNotFoundError:
             return {"status": "not_found"}
