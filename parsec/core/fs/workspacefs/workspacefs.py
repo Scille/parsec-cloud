@@ -324,7 +324,7 @@ class WorkspaceFS:
         path = FsPath(path)
         await self.transactions.file_resize(path, length)
 
-    async def open_file(self, path: AnyPath, mode="rb"):
+    async def open_file(self, path: AnyPath, mode="rb") -> WorkspaceFile:
         workspace_file = WorkspaceFile(self.transactions, mode=mode, path=path)
         await workspace_file.ainit()
         return workspace_file

@@ -41,12 +41,13 @@ class WorkspaceFile:
     fd -- the file descriptor.
     transactions -- object to use for file transactions.
     path -- relative path of the file.
-    mode -- the mode where the file have been opened.
+    mode -- the mode where the file have been opened. It needs to have exactly one of "awrx".
     mode("a") -> append file.
-    mode("b") -> bytes, have to be used with another mode, ignored, class is already working with
-    bytes.
-    mode("w") -> write file.
+    mode("b") -> have to be used with one of "awrx" mode, file will be write/read as bytes instead of string.
+    mode("w") -> write file. If the file doesn't exist, create one.
     mode("r") -> read file.
+    mode("x") -> If the file doesn't exist, create one, else, raise an Error. File will be opened in write mode.
+    mode("+") -> have to be used with one of "awrx" mode, file will be in read/write mode.
     """
 
     def __init__(self, transactions, path, mode: str = "rb"):
@@ -90,7 +91,7 @@ class WorkspaceFile:
                     mode = "rw" if self.writable() else "r"
                     _, self._fd = await self._transactions.file_open(self._path, mode)
                 except FileNotFoundError:
-                    if sum(c in self._mode for c in "aw") == 1:
+                    if "a" in self._mode or "w" in self._mode:
                         _, self._fd = await self._transactions.file_create(self._path, open=True)
                     else:
                         raise
@@ -165,7 +166,7 @@ class WorkspaceFile:
             return result
 
     @check_state
-    def readable(self):
+    def readable(self) -> bool:
         return "r" in self._mode or "+" in self._mode
 
     async def readline(self, size: int = -1):
@@ -203,7 +204,7 @@ class WorkspaceFile:
         return self._offset
 
     @check_state
-    def seekable(self):
+    def seekable(self) -> bool:
         return True
 
     def tell(self) -> int:
@@ -242,7 +243,7 @@ class WorkspaceFile:
             return size
 
     @check_state
-    def writable(self):
+    def writable(self) -> bool:
         return "w" in self._mode or "a" in self._mode or "x" in self._mode or "+" in self._mode
 
     async def write(self, data: Union[str, bytes]) -> int:
