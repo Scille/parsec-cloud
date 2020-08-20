@@ -99,7 +99,7 @@ async def generate_gui_config(backend_address):
         "gui_check_version_at_startup": False,
         "gui_tray_enabled": False,
         "gui_last_version": PARSEC_VERSION,
-        "default_backend_addr": str(backend_address),
+        "default_backend_addr": backend_address.to_url(),
     }
     await config_file.write_text(json.dumps(config, indent=4))
 

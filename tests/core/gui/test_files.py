@@ -250,10 +250,14 @@ async def test_navigate(aqtbot, running_backend, logged_gui_with_workspace, monk
 
     # Navigate to workspaces list
     wk_w = logged_gui_with_workspace.test_get_workspaces_widget()
-    async with aqtbot.wait_signal(wk_w.list_success):
-        w_f.table_files.item_activated.emit(FileType.ParentWorkspace, "Parent Workspace")
-    assert wk_w.isVisible() is True
-    assert w_f.isVisible() is False
+
+    w_f.table_files.item_activated.emit(FileType.ParentWorkspace, "Parent Workspace")
+
+    def _workspace_widget_visible():
+        assert wk_w.isVisible()
+        assert not w_f.isVisible()
+
+    await aqtbot.wait_until(_workspace_widget_visible)
 
 
 @pytest.mark.skip("TMP_SKIP")

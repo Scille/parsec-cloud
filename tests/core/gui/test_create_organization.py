@@ -25,9 +25,9 @@ async def organization_bootstrap_addr(running_backend):
 
 
 async def _do_creation_process(aqtbot, co_w):
-    await aqtbot.wait_until(lambda: co_w.user_widget.isVisible())
-    await aqtbot.wait_until(lambda: not co_w.device_widget.isVisible())
-    await aqtbot.wait_until(lambda: not co_w.button_previous.isVisible())
+    await aqtbot.wait_until(co_w.user_widget.isVisible)
+    await aqtbot.wait_until(co_w.device_widget.isHidden)
+    await aqtbot.wait_until(co_w.button_previous.isHidden)
     assert not co_w.button_validate.isEnabled()
 
     await aqtbot.key_clicks(co_w.user_widget.line_edit_user_full_name, "Gordon Freeman")
@@ -44,9 +44,9 @@ async def _do_creation_process(aqtbot, co_w):
 
     await aqtbot.mouse_click(co_w.button_validate, QtCore.Qt.LeftButton)
 
-    await aqtbot.wait_until(lambda: not co_w.user_widget.isVisible())
-    await aqtbot.wait_until(lambda: co_w.device_widget.isVisible())
-    await aqtbot.wait_until(lambda: co_w.button_previous.isVisible())
+    await aqtbot.wait_until(co_w.user_widget.isHidden)
+    await aqtbot.wait_until(co_w.device_widget.isVisible)
+    await aqtbot.wait_until(co_w.button_previous.isVisible)
     assert not co_w.button_validate.isEnabled()
 
     await aqtbot.key_clicks(co_w.device_widget.line_edit_device, "HEV")
@@ -123,7 +123,7 @@ async def test_create_organization_previous_clicked(
     co_w = await catch_create_org_widget()
 
     assert co_w
-    await aqtbot.wait_until(lambda: co_w.user_widget.isVisible())
+    await aqtbot.wait_until(co_w.user_widget.isVisible)
 
     await aqtbot.key_clicks(co_w.user_widget.line_edit_user_full_name, "Gordon Freeman")
     await aqtbot.key_clicks(co_w.user_widget.line_edit_user_email, "gordon.freeman@blackmesa.com")
@@ -131,7 +131,7 @@ async def test_create_organization_previous_clicked(
     await aqtbot.mouse_click(co_w.user_widget.check_accept_contract, QtCore.Qt.LeftButton)
     await aqtbot.mouse_click(co_w.button_validate, QtCore.Qt.LeftButton)
 
-    await aqtbot.wait_until(lambda: co_w.device_widget.isVisible())
+    await aqtbot.wait_until(co_w.device_widget.isVisible)
 
     await aqtbot.key_clicks(co_w.device_widget.line_edit_device, "HEV")
     await aqtbot.key_clicks(co_w.device_widget.line_edit_password, "nihilanth")
@@ -139,9 +139,9 @@ async def test_create_organization_previous_clicked(
 
     await aqtbot.mouse_click(co_w.button_previous, QtCore.Qt.LeftButton)
 
-    await aqtbot.wait_until(lambda: co_w.user_widget.isVisible())
-    await aqtbot.wait_until(lambda: not co_w.device_widget.isVisible())
-    await aqtbot.wait_until(lambda: not co_w.button_previous.isVisible())
+    await aqtbot.wait_until(co_w.user_widget.isVisible)
+    await aqtbot.wait_until(co_w.device_widget.isHidden)
+    await aqtbot.wait_until(co_w.button_previous.isHidden)
     assert co_w.button_validate.isEnabled()
 
     assert co_w.user_widget.line_edit_user_full_name.text() == "Gordon Freeman"
@@ -152,7 +152,7 @@ async def test_create_organization_previous_clicked(
     assert co_w.button_validate.isEnabled()
 
     await aqtbot.mouse_click(co_w.button_validate, QtCore.Qt.LeftButton)
-    await aqtbot.wait_until(lambda: co_w.device_widget.isVisible())
+    await aqtbot.wait_until(co_w.device_widget.isVisible)
 
     assert co_w.device_widget.line_edit_device.text() == "HEV"
     assert co_w.device_widget.line_edit_password.text() == "nihilanth"
@@ -187,7 +187,7 @@ async def test_create_organization_bootstrap_only(
 
     await aqtbot.mouse_click(co_w.button_validate, QtCore.Qt.LeftButton)
 
-    await aqtbot.wait_until(lambda: co_w.device_widget.isVisible())
+    await aqtbot.wait_until(co_w.device_widget.isVisible)
 
     await aqtbot.key_clicks(co_w.device_widget.line_edit_device, "HEV")
     await aqtbot.key_clicks(co_w.device_widget.line_edit_password, "nihilanth")
@@ -249,7 +249,7 @@ async def test_create_organization_already_bootstrapped(
     await aqtbot.key_clicks(gui, "o", QtCore.Qt.ControlModifier)
 
     co_w = await catch_create_org_widget()
-    await aqtbot.wait_until(lambda: co_w.user_widget.isVisible())
+    await aqtbot.wait_until(co_w.user_widget.isVisible)
 
     await aqtbot.key_clicks(co_w.user_widget.line_edit_user_full_name, "Gordon Freeman")
     await aqtbot.key_clicks(co_w.user_widget.line_edit_user_email, "gordon.freeman@blackmesa.com")
@@ -258,7 +258,7 @@ async def test_create_organization_already_bootstrapped(
     await aqtbot.mouse_click(co_w.user_widget.check_accept_contract, QtCore.Qt.LeftButton)
     await aqtbot.mouse_click(co_w.button_validate, QtCore.Qt.LeftButton)
 
-    await aqtbot.wait_until(lambda: co_w.device_widget.isVisible())
+    await aqtbot.wait_until(co_w.device_widget.isVisible)
 
     await aqtbot.key_clicks(co_w.device_widget.line_edit_device, "HEV")
     await aqtbot.key_clicks(co_w.device_widget.line_edit_password, "nihilanth")

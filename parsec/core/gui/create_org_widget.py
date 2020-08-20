@@ -11,7 +11,7 @@ from parsec.core.backend_connection import (
     BackendConnectionRefused,
     BackendNotAvailable,
 )
-from parsec.core.types import BackendOrganizationBootstrapAddr, BackendAddr
+from parsec.core.types import BackendOrganizationBootstrapAddr
 from parsec.core.invite import bootstrap_organization, InviteAlreadyUsedError
 from parsec.core.local_device import save_device_with_password
 
@@ -199,8 +199,7 @@ class CreateOrgWidget(QWidget, Ui_CreateOrgWidget):
                 return
             try:
                 backend_addr = BackendOrganizationBootstrapAddr.build(
-                    backend_addr=BackendAddr.from_url(self.config.default_backend_addr),
-                    organization_id=org_id,
+                    backend_addr=self.config.default_backend_addr, organization_id=org_id
                 )
             except ValueError as exc:
                 show_error(self, _("TEXT_ORG_WIZARD_INVALID_BACKEND_ADDR"), exception=exc)
