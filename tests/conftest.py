@@ -22,6 +22,7 @@ from async_generator import asynccontextmanager
 import hypothesis
 from pathlib import Path
 import sqlite3
+import tempfile
 
 from parsec.monitoring import TaskMonitoringInstrument
 from parsec.core import CoreConfig
@@ -34,7 +35,7 @@ from parsec.core.fs.storage import LocalDatabase, local_database, UserStorage
 from parsec.backend import backend_app_factory
 from parsec.backend.config import (
     BackendConfig,
-    EmailConfig,
+    MockedEmailConfig,
     MockedBlockStoreConfig,
     PostgreSQLBlockStoreConfig,
     RAID0BlockStoreConfig,
@@ -575,19 +576,9 @@ def backend_factory(
 async def backend(backend_factory, request, fixtures_customization, backend_addr):
     populated = not fixtures_customization.get("backend_not_populated", False)
     config = {}
-    if fixtures_customization.get("backend_has_email", False):
-        config["email_config"] = EmailConfig(
-            host="example.com",
-            # Invalid port, hence we should crash if by mistake we try
-            # to reach this SMTP server
-            port=999999,
-            host_user="mail_user",
-            host_password=None,
-            use_ssl=False,
-            use_tls=False,
-            sender="Parsec <no-reply@parsec.com>",
-        )
-        config["backend_addr"] = backend_addr
+    tmpdir = tempfile.mkdtemp(prefix="tmp-email-folder-")
+    config["email_config"] = MockedEmailConfig(sender="Parsec <no-reply@parsec.com>", tmpdir=tmpdir)
+    config["backend_addr"] = backend_addr
     if fixtures_customization.get("backend_spontaneous_organization_boostrap", False):
         config["spontaneous_organization_bootstrap"] = True
     if fixtures_customization.get("backend_has_webhook", False):
@@ -681,13 +672,14 @@ async def running_backend(server_factory, backend_addr, backend, running_backend
 
 
 @pytest.fixture
-def core_config(tmpdir):
+def core_config(tmpdir, backend_addr):
     tmpdir = Path(tmpdir)
     return CoreConfig(
         config_dir=tmpdir / "config",
         cache_base_dir=tmpdir / "cache",
         data_base_dir=tmpdir / "data",
         mountpoint_base_dir=tmpdir / "mnt",
+        preferred_org_creation_backend_addr=backend_addr,
     )
 
 

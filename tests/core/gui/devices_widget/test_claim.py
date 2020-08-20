@@ -7,6 +7,8 @@ from PyQt5 import QtCore
 from async_generator import asynccontextmanager
 from functools import partial
 
+from uuid import uuid4
+
 from parsec.api.protocol import InvitationType, InvitationDeletedReason
 from parsec.core.types import BackendInvitationAddr
 from parsec.core.invite import DeviceGreetInitialCtx
@@ -466,7 +468,7 @@ async def test_claim_device_invitation_cancelled(
             assert not self.claim_device_instructions_widget.isVisible()
 
         async def cancelled_step_1_start_claim(self):
-            expected_message = translate("TEXT_CLAIM_DEVICE_WAIT_PEER_ERROR")
+            expected_message = translate("TEXT_INVITATION_ALREADY_USED")
             cdi_w = self.claim_device_instructions_widget
 
             await self._cancel_invitation()
@@ -477,7 +479,7 @@ async def test_claim_device_invitation_cancelled(
             return None
 
         async def cancelled_step_2_start_greeter(self):
-            expected_message = translate("TEXT_CLAIM_DEVICE_WAIT_PEER_ERROR")
+            expected_message = translate("TEXT_INVITATION_ALREADY_USED")
             await self._cancel_invitation()
 
             await aqtbot.wait_until(partial(self._claim_restart, expected_message))
@@ -485,7 +487,7 @@ async def test_claim_device_invitation_cancelled(
             return None
 
         async def cancelled_step_3_exchange_greeter_sas(self):
-            expected_message = translate("TEXT_CLAIM_DEVICE_SIGNIFY_TRUST_ERROR")
+            expected_message = translate("TEXT_INVITATION_ALREADY_USED")
             cdce_w = self.claim_device_code_exchange_widget
             await self._cancel_invitation()
 
@@ -503,7 +505,7 @@ async def test_claim_device_invitation_cancelled(
             return None
 
         async def cancelled_step_5_provide_claim_info(self):
-            expected_message = translate("TEXT_CLAIM_DEVICE_CLAIM_ERROR")
+            expected_message = translate("TEXT_INVITATION_ALREADY_USED")
             cdpi_w = self.claim_device_provide_info_widget
             device_label = self.requested_device_label
 
@@ -519,7 +521,7 @@ async def test_claim_device_invitation_cancelled(
             return None
 
         async def cancelled_step_6_validate_claim_info(self):
-            expected_message = translate("TEXT_CLAIM_DEVICE_CLAIM_ERROR")
+            expected_message = translate("TEXT_INVITATION_ALREADY_USED")
             await self._cancel_invitation()
 
             await aqtbot.wait_until(partial(self._claim_restart, expected_message))
@@ -531,6 +533,89 @@ async def test_claim_device_invitation_cancelled(
     )
 
     await CancelledTestBed().run()
+
+
+@pytest.mark.gui
+@pytest.mark.trio
+async def test_claim_device_already_deleted(
+    aqtbot, running_backend, backend, autoclose_dialog, alice, gui
+):
+
+    invitation = await backend.invite.new_for_device(
+        organization_id=alice.organization_id, greeter_user_id=alice.user_id
+    )
+    invitation_addr = BackendInvitationAddr.build(
+        backend_addr=alice.organization_addr,
+        organization_id=alice.organization_id,
+        invitation_type=InvitationType.DEVICE,
+        token=invitation.token,
+    )
+    await backend.invite.delete(
+        organization_id=alice.organization_id,
+        greeter=alice.user_id,
+        token=invitation_addr.token,
+        on=pendulum_now(),
+        reason=InvitationDeletedReason.CANCELLED,
+    )
+
+    await aqtbot.run(gui.add_instance, invitation_addr.to_url())
+
+    def _assert_dialogs():
+        assert len(autoclose_dialog.dialogs) == 1
+        assert autoclose_dialog.dialogs == [("Error", translate("TEXT_INVITATION_ALREADY_USED"))]
+
+    await aqtbot.wait_until(_assert_dialogs)
+
+
+@pytest.mark.gui
+@pytest.mark.trio
+async def test_claim_device_offline_backend(
+    aqtbot, running_backend, backend, autoclose_dialog, alice, gui
+):
+
+    invitation = await backend.invite.new_for_device(
+        organization_id=alice.organization_id, greeter_user_id=alice.user_id
+    )
+    invitation_addr = BackendInvitationAddr.build(
+        backend_addr=alice.organization_addr,
+        organization_id=alice.organization_id,
+        invitation_type=InvitationType.DEVICE,
+        token=invitation.token,
+    )
+    with running_backend.offline():
+        await aqtbot.run(gui.add_instance, invitation_addr.to_url())
+
+    def _assert_dialogs():
+        assert len(autoclose_dialog.dialogs) == 1
+        assert autoclose_dialog.dialogs == [
+            ("Error", translate("TEXT_INVITATION_BACKEND_NOT_AVAILABLE"))
+        ]
+
+    await aqtbot.wait_until(_assert_dialogs)
+
+
+@pytest.mark.gui
+@pytest.mark.trio
+async def test_claim_device_unknown_invitation(
+    aqtbot, running_backend, backend, autoclose_dialog, alice, gui
+):
+
+    invitation_addr = BackendInvitationAddr.build(
+        backend_addr=alice.organization_addr,
+        organization_id=alice.organization_id,
+        invitation_type=InvitationType.DEVICE,
+        token=uuid4(),
+    )
+
+    await aqtbot.run(gui.add_instance, invitation_addr.to_url())
+
+    def _assert_dialogs():
+        assert len(autoclose_dialog.dialogs) == 1
+        assert autoclose_dialog.dialogs == [
+            ("Error", translate("TEXT_CLAIM_DEVICE_INVITATION_NOT_FOUND"))
+        ]
+
+    await aqtbot.wait_until(_assert_dialogs)
 
 
 @pytest.mark.gui

@@ -6,6 +6,7 @@ import click
 from structlog import get_logger
 from itertools import count
 from collections import defaultdict
+import tempfile
 
 from parsec.utils import trio_run
 from parsec.cli_utils import cli_exception_handler
@@ -13,7 +14,8 @@ from parsec.logging import configure_logging, configure_sentry_logging
 from parsec.backend import backend_app_factory
 from parsec.backend.config import (
     BackendConfig,
-    EmailConfig,
+    SmtpEmailConfig,
+    MockedEmailConfig,
     MockedBlockStoreConfig,
     PostgreSQLBlockStoreConfig,
     S3BlockStoreConfig,
@@ -26,6 +28,9 @@ from parsec.core.types import BackendAddr
 
 
 logger = get_logger()
+
+DEFAULT_BACKEND_PORT = 6777
+DEFAULT_EMAIL_SENDER = "no-reply@parsec.com"
 
 
 def _split_with_escaping(txt):
@@ -167,9 +172,17 @@ class DevOption(click.Option):
     def handle_parse_result(self, ctx, opts, args):
         value, args = super().handle_parse_result(ctx, opts, args)
         if value:
+
+            if "port" in opts:
+                backend_addr = "parsec://localhost:" + str(opts["port"])
+            else:
+                backend_addr = "parsec://localhost:" + str(DEFAULT_BACKEND_PORT)
             for key, value in (
                 ("debug", True),
                 ("db", "MOCKED"),
+                ("backend_addr", backend_addr),
+                ("email_sender", "no-reply@parsec.com"),
+                ("email_host", "MOCKED"),
                 ("blockstore", ("MOCKED",)),
                 ("administration_token", "s3cr3t"),
             ):
@@ -191,7 +204,7 @@ class DevOption(click.Option):
 @click.option(
     "--port",
     "-P",
-    default=6777,
+    default=DEFAULT_BACKEND_PORT,
     type=int,
     show_default=True,
     envvar="PARSEC_PORT",
@@ -295,10 +308,16 @@ organization_id, device_id, device_label (can be null), human_email (can be null
 @click.option(
     "--backend-addr",
     envvar="PARSEC_BACKEND_ADDR",
+    required=True,
     type=BackendAddr.from_url,
     help="URL to reach this server (typically used in invitation emails)",
 )
-@click.option("--email-host", envvar="PARSEC_EMAIL_HOST", help="The host to use for sending email")
+@click.option(
+    "--email-host",
+    envvar="PARSEC_EMAIL_HOST",
+    required=True,
+    help="The host to use for sending email",
+)
 @click.option(
     "--email-port",
     envvar="PARSEC_EMAIL_PORT",
@@ -376,7 +395,7 @@ organization_id, device_id, device_label (can be null), human_email (can be null
     cls=DevOption,
     is_flag=True,
     is_eager=True,
-    help="Equivalent to `--debug --db=MOCKED --blockstore=MOCKED --administration-token=s3cr3t`",
+    help="Equivalent to `--debug --db=MOCKED --backend-addr=parsec://localhost:<port>(?no_ssl=False if ssl_context is defined) --email-sender=no-reply@parsec.com --email-host=MOCKED --blockstore=MOCKED --administration-token=s3cr3t`",
 )
 def run_cmd(
     host,
@@ -408,6 +427,8 @@ def run_cmd(
     debug,
     dev,
 ):
+
+    # Start a local backend
     configure_logging(log_level, log_format, log_file, log_filter)
     if sentry_url:
         configure_sentry_logging(sentry_url)
@@ -422,11 +443,18 @@ def run_cmd(
                 ssl_context.load_default_certs()
         else:
             ssl_context = None
+        backend_addr = BackendAddr("localhost", port=port, use_ssl=bool(ssl_context))
 
-        if email_host:
+        if email_host == "MOCKED":
+            tmpdir = tempfile.mkdtemp(prefix="tmp-email-folder-")
+            if email_sender:
+                email_config = MockedEmailConfig(sender=email_sender, tmpdir=tmpdir)
+            else:
+                email_config = MockedEmailConfig(sender=DEFAULT_EMAIL_SENDER, tmpdir=tmpdir)
+        else:
             if not email_sender:
                 raise ValueError("--email-sender is required when --email-host is provided")
-            email_config = EmailConfig(
+            email_config = SmtpEmailConfig(
                 host=email_host,
                 port=email_port,
                 host_user=email_host_user,
@@ -435,8 +463,6 @@ def run_cmd(
                 use_tls=email_use_tls,
                 sender=email_sender,
             )
-        else:
-            email_config = None
 
         config = BackendConfig(
             administration_token=administration_token,
@@ -471,8 +497,11 @@ def run_cmd(
                 await trio.serve_tcp(_serve_client, port, host=host)
 
         click.echo(
-            f"Starting Parsec Backend on {host}:{port} (db={config.db_type}, "
-            f"blockstore={config.blockstore_config.type})"
+            f"Starting Parsec Backend on {host}:{port}"
+            f" (db={config.db_type}"
+            f" blockstore={config.blockstore_config.type}"
+            f" backend_addr={config.backend_addr}"
+            f" email_config={str(email_config)})"
         )
         try:
             trio_run(_run_backend, use_asyncio=True)

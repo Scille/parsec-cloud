@@ -242,6 +242,9 @@ msgstr "L'utilisateur a été créé avec succès !"
 msgid "TEXT_INVITATION_BACKEND_NOT_AVAILABLE"
 msgstr "La connexion au serveur a été perdue. Veuillez redémarrer le processus."
 
+msgid "TEXT_INVITATION_ALREADY_USED"
+msgstr "L'invitation n'est plus valide."
+
 msgid "TEXT_GREET_USER_UNKNOWN_ERROR"
 msgstr "Erreur interne. Veuillez redémarrer le processus."
 
@@ -652,13 +655,14 @@ msgstr "utilisateur@hote.com"
 msgid "ACTION_USER_INVITE_DO_INVITE"
 msgstr "Inviter l'utilisateur"
 
-msgid "TEXT_USER_INVITE_CANCEL_INVITE_QUESTION_TITLE"
-msgstr "Annuler l'invitation"
-
 msgid "TEXT_USER_INVITE_CANCEL_INVITE_QUESTION_CONTENT"
 msgstr ""
 "Êtes-vous sûr de vouloir annuler cette invitation ? Le lien d'invitation "
 "qu'a reçu l'utilisateur par email deviendra invalide."
+
+msgid "TEXT_USER_INVITE_SUCCESS_email"
+msgstr ""
+"L'invitation à rejoindre votre organisation a été envoyée avec succès à l'adresse : <b>{email}</b>"
 
 msgid "TEXT_USER_INVITE_CANCEL_INVITE_ACCEPT"
 msgstr "Annuler l'invitation"
@@ -1546,73 +1550,14 @@ msgstr "Répertoire parent"
 msgid "TEXT_FILE_TREE_PARENT_WORKSPACE"
 msgstr "Liste des espaces de travail"
 
-msgid "TEXT_BOOTSTRAP_ORG_INSTRUCTIONS_url-organization"
-msgstr ""
-"Vous allez démarrer l'organisation <b>{organization}</b>. Vous serez le "
-"premier administrateur de l'organisation.<br /><br />\n"
-"\n"
-"Pour continuer, veuillez choisir un nom d'utilisateur, un nom d'appareil,"
-" ainsi qu'un mot de passe."
-
-msgid "TEXT_BOOTSTRAP_ORG_INVALID_URL"
-msgstr "L'URL n'est pas valide pour démarrer l'organisation."
-
-msgid "TEXT_BOOTSTRAP_ORG_INVITE_NOT_FOUND"
-msgstr "Aucune organisation ne peut être démarrée avec ce lien."
-
-msgid "TEXT_BOOTSTRAP_ORG_ALREADY_BOOTSTRAPPED"
-msgstr "Cette organisation a déjà été démarrée."
-
-msgid "TEXT_BOOTSTRAP_ORG_USER_EXISTS"
-msgstr "Ce nom d'utilisateur existe déjà au sein de cette organisation."
-
-msgid "TEXT_BOOTSTRAP_ORG_PASSWORD_MISMATCH"
-msgstr "Le mot de passe et la confirmation ne correspondent pas."
-
-msgid "TEXT_BOOTSTRAP_ORG_PASSWORD_COMPLEXITY_TOO_LOW"
-msgstr "Le mot de passe n'est pas assez complete."
-
-msgid "TEXT_BOOTSTRAP_ORG_BAD_DEVICE_NAME"
-msgstr "Le nom d'appareil n'est pas valide."
-
-msgid "TEXT_BOOTSTRAP_ORG_BAD_API_VERSION"
-msgstr ""
-"Votre application n'est pas compatible avec ce serveur. Veuillez la "
-"mettre à jour."
-
-msgid "TEXT_BOOTSTRAP_ORG_BACKEND_REFUSAL"
-msgstr "Impossible de démarrer l'organisation."
-
-msgid "TEXT_BOOTSTRAP_ORG_BACKEND_OFFLINE"
-msgstr "Le serveur est hors-ligne ou vous n'avez pas de connexion internet."
-
-msgid "TEXT_BOOTSTRAP_ORG_UNKNOWN_FAILURE"
-msgstr "Impossible de démarrer l'organisation."
-
-msgid "TEXT_BOOTSTRAP_ORG_SUCCESS_organization"
-msgstr ""
-"Votre organisation <b>{organization}</b> a été créée !<br />\n"
-"<br />\n"
-"Vous allez maintenant être automatiquement connecté.<br />\n"
-"<br />\n"
-"Pour une meilleure prise en main du logiciel, vous pouvez vous référer au"
-" <a href=\"https://docs.parsec.cloud/fr/stable/\" title=\"Guide "
-"d'utilisation\">guide d'utilisation PARSEC."
-
-msgid "ACTION_CONTINUE"
-msgstr "Continuer"
-
-msgid "TEXT_BOOTSTRAP_ORG_INVALID_EMAIL"
-msgstr "L'email n'est pas valide."
-
-msgid "TEXT_BOOTSTRAP_ORG_TITLE"
-msgstr "Démarrer l'organisation"
-
 msgid "ACTION_OK"
 msgstr "OK"
 
 msgid "TEXT_ERR_DIALOG_TITLE"
 msgstr "Erreur"
+
+msgid "ACTION_CONTINUE"
+msgstr "Continuer"
 
 msgid "TEXT_LOGIN_ERROR_DEVICE_REVOKED"
 msgstr "Cet appareil a été révoqué et ne peut plus se connecter."
@@ -1641,8 +1586,38 @@ msgstr ""
 "Impossible de se connecter. Les espaces de travail n'ont pas pu être "
 "montés."
 
-msgid "TEXT_ORG_WIZARD_EMAIL_ALREADY_EXISTS"
-msgstr "Cet email est déjà utilisé."
+msgid "TEXT_BOOTSTRAP_ORGANIZATION_INSTRUCTIONS_organization"
+msgstr ""
+"Veuillez fournir les informations suivantes pour démarrer l'organisation "
+"<b>{organization}</b>."
+
+msgid "ACTION_NEXT"
+msgstr "Suivant"
+
+msgid "ACTION_CREATE_ORG"
+msgstr "Créer l'organisation"
+
+msgid "TEXT_ORG_WIZARD_INVALID_ORGANIZATION_ID"
+msgstr "Le nom d'organisation n'est pas valide."
+
+msgid "TEXT_ORG_WIZARD_INVALID_BACKEND_ADDR"
+msgstr "L'adresse du serveur n'est pas valide."
+
+msgid "TEXT_ORG_WIZARD_INVALID_DEVICE_NAME"
+msgstr "Le nom de d'appareil n'est pas valide."
+
+msgid "TEXT_ORG_WIZARD_INVALID_HUMAN_HANDLE"
+msgstr "L'adresse email n'est pas valide."
+
+msgid "TEXT_BOOTSTRAP_ORG_SUCCESS_organization"
+msgstr ""
+"Votre organisation <b>{organization}</b> a été créée !<br />\n"
+"<br />\n"
+"Vous allez maintenant être automatiquement connecté.<br />\n"
+"<br />\n"
+"Pour une meilleure prise en main du logiciel, vous pouvez vous référer au"
+" <a href=\"https://docs.parsec.cloud/fr/stable/\" title=\"Guide "
+"d'utilisation\">guide d'utilisation PARSEC."
 
 msgid "TEXT_ORG_WIZARD_ORGANIZATION_ALREADY_EXISTS"
 msgstr "Une organisation du même nom existe déjà."
@@ -1650,23 +1625,20 @@ msgstr "Une organisation du même nom existe déjà."
 msgid "TEXT_ORG_WIZARD_INVALID_EMAIL"
 msgstr "L'email n'est pas valide."
 
-msgid "TEXT_ORG_WIZARD_INVALID_ORGANIZATION_ID"
-msgstr "Le nom d'organisation n'est pas valide."
-
-msgid "TEXT_ORG_WIZARD_INVALID_RESPONSE"
-msgstr "Impossible de créer l'organisation."
-
 msgid "TEXT_ORG_WIZARD_OFFLINE"
 msgstr "Le serveur est hors-ligne ou vous n'avez pas de connexion internet."
 
+msgid "TEXT_ORG_WIZARD_INVITE_ALREADY_USED"
+msgstr "Le lien de démarrage de l'organisation a déjà été utilisé."
+
+msgid "TEXT_ORG_WIZARD_CONNECTION_REFUSED"
+msgstr "La connexion vers le serveur a été refusée."
+
+msgid "TEXT_ORG_WIZARD_CONNECTION_ERROR"
+msgstr "Impossible de se connecter au serveur."
+
 msgid "TEXT_ORG_WIZARD_UNKNOWN_FAILURE"
 msgstr "Impossible de créer l'organisation."
-
-msgid "ACTION_CREATE_ORGANIZATION"
-msgstr "Créer l'organisation"
-
-msgid "ACTION_NEXT"
-msgstr "Suivant"
 
 msgid "TEXT_ORG_WIZARD_TITLE"
 msgstr "Créer une nouvelle organisation"
@@ -1888,15 +1860,6 @@ msgstr "L'URL n'est pas valide."
 msgid "TEXT_INVALID_URL"
 msgstr "L'URL n'est pas valide."
 
-msgid "TEXT_BOOTSTRAP_ORG_URL_TITLE"
-msgstr "Démarrer une organisation"
-
-msgid "TEXT_BOOTSTRAP_ORG_URL_INSTRUCTIONS"
-msgstr "Veuillez fournir le lien pour démarrer l'organisation."
-
-msgid "TEXT_BOOTSTRAP_ORG_URL_PLACEHOLDER"
-msgstr "parsec://parsec.example.com/my_org?action=bootstrap_organization&token=1234ABCD"
-
 msgid "TEXT_ERROR_REPORTING_TITLE"
 msgstr "Rapport d'erreur"
 
@@ -1976,33 +1939,6 @@ msgstr ""
 "href=\"https://www.flaticon.com/\" title=\"Flaticon\" style=\"color: "
 "#0092FF; font-weight: bold;\">www.flaticon.com</a>"
 
-msgid "TEXT_LABEL_DEVICE_NAME"
-msgstr "Nom d'appareil"
-
-msgid "TEXT_LABEL_PASSWORD"
-msgstr "Mot de passe"
-
-msgid "TEXT_LABEL_PASSWORD_CONFIRMATION"
-msgstr "Confirmation du mot de passe"
-
-msgid "TEXT_BOOTSTRAP_ORG_TOOLTIP"
-msgstr "Démarrer l'organisation"
-
-msgid "ACTION_BOOTSTRAP_ORG"
-msgstr "Démarrer l'organisation"
-
-msgid "TEXT_LABEL_USER_EMAIL"
-msgstr "Email"
-
-msgid "TEXT_LABEL_USER_FULL_NAME"
-msgstr "Nom complet"
-
-msgid "TEXT_LABEL_USER_FULL_NAME_PLACEHOLDER"
-msgstr "Jean MARTIN"
-
-msgid "TEXT_LABEL_USER_EMAIL_PLACEHOLDER"
-msgstr "utilisateur@hote.com"
-
 msgid "TEXT_CLAIM_DEVICE_CODE_EXCHANGE_GET_CODE_INSTRUCTIONS"
 msgstr "Récupérer le code sur votre autre appareil."
 
@@ -2028,8 +1964,14 @@ msgstr "Nom de l'appareil"
 msgid "TEXT_LABEL_DEVICE_PLACEHOLDER"
 msgstr "portable, téléphone, travail, fixe, ..."
 
+msgid "TEXT_LABEL_PASSWORD"
+msgstr "Mot de passe"
+
 msgid "TEXT_LABEL_PASSWORD_PLACEHOLDER"
 msgstr "Mot de passe"
+
+msgid "TEXT_LABEL_PASSWORD_CONFIRMATION"
+msgstr "Confirmation du mot de passe"
 
 msgid "TEXT_LABEL_PASSWORD_CONFIRMATION_PLACEHOLDER"
 msgstr "Confirmation du mot de passe"
@@ -2074,6 +2016,18 @@ msgstr ""
 msgid "TEXT_CLAIM_USER_PROVIDE_INFO_INSTRUCTIONS"
 msgstr "Veuillez fournir les informations suivantes :"
 
+msgid "TEXT_LABEL_USER_FULL_NAME"
+msgstr "Nom complet"
+
+msgid "TEXT_LABEL_USER_FULL_NAME_PLACEHOLDER"
+msgstr "Jean MARTIN"
+
+msgid "TEXT_LABEL_USER_EMAIL"
+msgstr "Email"
+
+msgid "TEXT_LABEL_USER_EMAIL_PLACEHOLDER"
+msgstr "utilisateur@hote.com"
+
 msgid "TEXT_CLAIM_USER_WAIT_FOR_USER_INFO"
 msgstr "Nous attendons que l'autre personne confirme ces informations."
 
@@ -2082,26 +2036,14 @@ msgstr ""
 "Aucun de\n"
 "ces codes"
 
-msgid "TEXT_ORG_WIZARD_CHOICE_INSTRUCTIONS"
-msgstr "Veuillez choisir :"
-
-msgid "TEXT_ORG_WIZARD_CREATE_FROM_SCRATCH"
-msgstr ""
-"Je n'ai pas de compte sur le site web et veux créer une nouvelle "
-"organisation"
-
-msgid "TEXT_ORG_WIZARD_ALREADY_HAS_URL"
-msgstr ""
-"J'ai déjà un compte sur le site web et une URL pour démarrer mon "
-"organisation"
-
-msgid "TEXT_ORG_WIZARD_CREATE_ORG_INSTRUCTIONS"
-msgstr ""
-"Veuillez saisir votre adresse email et le nom désiré de votre "
-"organisation."
+msgid "TEXT_LABEL_DEVICE_NAME"
+msgstr "Nom d'appareil"
 
 msgid "TEXT_LABEL_ORG_NAME"
 msgstr "Nom de l'organisation"
+
+msgid "TEXT_LABEL_ORG_NAME_RECOMMANDATIONS"
+msgstr "Lettres, chiffres, underscores et tirets seulement. Aucun espace."
 
 msgid "ACTION_ACCEPT_CONTRACT"
 msgstr ""
@@ -2114,6 +2056,9 @@ msgstr ""
 
 msgid "ACTION_PREVIOUS"
 msgstr "Précédent"
+
+msgid "TEXT_CREATE_ORGANIZATION_INSTRUCTIONS"
+msgstr "Veuillez fournir les informations suivantes pour créer votre organisation."
 
 msgid "TEXT_DEVICE_ADD_NEW_TOOLTIP"
 msgstr "Inviter un nouvel appareil"
@@ -2367,7 +2312,7 @@ msgid "ACTION_CANCEL_USER_INVITATION_TOOLTIP"
 msgstr "Annuler l'invitation"
 
 msgid "ACTION_GREET_USER"
-msgstr "Accueil l'utilisateur"
+msgstr "Accueillir l'utilisateur"
 
 msgid "TEXT_USERS_FILTER_USERS_PLACEHOLDER"
 msgstr "Filtrer les utilisateurs"

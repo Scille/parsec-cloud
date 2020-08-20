@@ -92,14 +92,10 @@ async def _do_import(workspace_fs, files, total_size, progress_signal):
         try:
             if dst.parent != FsPath("/"):
                 await workspace_fs.mkdir(dst.parent, parents=True, exist_ok=True)
-            try:
-                await workspace_fs.touch(dst)
-            except FileExistsError:
-                await workspace_fs.truncate(dst, 0)
             progress_signal.emit(src.name, current_size)
 
             async with await trio.open_file(src, "rb") as f:
-                async with await workspace_fs.open_file(dst, "w") as dest_file:
+                async with await workspace_fs.open_file(dst, "wb") as dest_file:
                     read_size = 0
                     while True:
                         chunk = await f.read(DEFAULT_BLOCK_SIZE)
