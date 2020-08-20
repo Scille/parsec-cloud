@@ -405,7 +405,7 @@ class BaseInviteComponent:
     async def api_invite_1_claimer_wait_peer(self, client_ctx, msg):
         """
         Raises:
-            InvitationAlreadyDeletedError
+            CloseInviteConnection
         """
         msg = invite_1_claimer_wait_peer_serializer.req_load(msg)
 
@@ -464,7 +464,7 @@ class BaseInviteComponent:
     async def api_invite_2a_claimer_send_hashed_nonce(self, client_ctx, msg):
         """
         Raises:
-            InvitationAlreadyDeletedError
+            CloseInviteConnection
         """
         msg = invite_2a_claimer_send_hashed_nonce_serializer.req_load(msg)
 
@@ -566,7 +566,7 @@ class BaseInviteComponent:
     async def api_invite_2b_claimer_send_nonce(self, client_ctx, msg):
         """
         Raises:
-            InvitationAlreadyDeletedError
+            CloseInviteConnection
         """
         msg = invite_2b_claimer_send_nonce_serializer.req_load(msg)
 
@@ -621,7 +621,7 @@ class BaseInviteComponent:
     async def api_invite_3b_claimer_wait_peer_trust(self, client_ctx, msg):
         """
         Raises:
-            InvitationAlreadyDeletedError
+            CloseInviteConnection
         """
         msg = invite_3b_claimer_wait_peer_trust_serializer.req_load(msg)
 
@@ -676,7 +676,7 @@ class BaseInviteComponent:
     async def api_invite_3a_claimer_signify_trust(self, client_ctx, msg):
         """
         Raises:
-            InvitationAlreadyDeletedError
+            CloseInviteConnection
         """
         msg = invite_3a_claimer_signify_trust_serializer.req_load(msg)
 
@@ -733,7 +733,7 @@ class BaseInviteComponent:
     async def api_invite_4_claimer_communicate(self, client_ctx, msg):
         """
         Raises:
-            InvitationAlreadyDeletedError
+            CloseInviteConnection
         """
         msg = invite_4_claimer_communicate_serializer.req_load(msg)
 

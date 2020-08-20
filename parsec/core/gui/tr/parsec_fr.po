@@ -242,6 +242,9 @@ msgstr "L'utilisateur a été créé avec succès !"
 msgid "TEXT_INVITATION_BACKEND_NOT_AVAILABLE"
 msgstr "La connexion au serveur a été perdue. Veuillez redémarrer le processus."
 
+msgid "TEXT_INVITATION_ALREADY_USED"
+msgstr "L'invitation n'est plus valide."
+
 msgid "TEXT_GREET_USER_UNKNOWN_ERROR"
 msgstr "Erreur interne. Veuillez redémarrer le processus."
 

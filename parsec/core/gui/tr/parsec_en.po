@@ -229,6 +229,9 @@ msgstr "The user was successfully greeter in your organization."
 msgid "TEXT_INVITATION_BACKEND_NOT_AVAILABLE"
 msgstr "The connection to the server has been lost. Please restart the process."
 
+msgid "TEXT_INVITATION_ALREADY_USED"
+msgstr "The invitation is no longer valid."
+
 msgid "TEXT_GREET_USER_UNKNOWN_ERROR"
 msgstr "Internal error. Please restart the process."
 
