@@ -29,7 +29,7 @@ from parsec.core.types import BackendAddr
 
 logger = get_logger()
 
-DEFAULT_BACKEND_PORT = 6888
+DEFAULT_BACKEND_PORT = 6777
 DEFAULT_EMAIL_SENDER = "no-reply@parsec.com"
 
 
@@ -204,7 +204,7 @@ class DevOption(click.Option):
 @click.option(
     "--port",
     "-P",
-    default=6777,
+    default=DEFAULT_BACKEND_PORT,
     type=int,
     show_default=True,
     envvar="PARSEC_PORT",
