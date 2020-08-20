@@ -2,8 +2,8 @@
 
 from collections import namedtuple
 
-from PyQt5.QtCore import QCoreApplication, pyqtSignal
-from PyQt5.QtWidgets import QWidget
+from PyQt5.QtCore import QCoreApplication, pyqtSignal, QEvent
+from PyQt5.QtWidgets import QWidget, QComboBox
 
 from parsec.core.types import UserInfo
 from parsec.core.fs import FSError, FSBackendOfflineError
@@ -85,6 +85,9 @@ class SharingWidget(QWidget, Ui_SharingWidget):
     def __init__(self, user_info, is_current_user, current_user_role, role, enabled):
         super().__init__()
         self.setupUi(self)
+
+        self.combo_role.installEventFilter(self)
+
         self.ROLES_TRANSLATIONS = {
             WorkspaceRole.READER: _("TEXT_WORKSPACE_ROLE_READER"),
             WorkspaceRole.CONTRIBUTOR: _("TEXT_WORKSPACE_ROLE_CONTRIBUTOR"),
@@ -96,7 +99,7 @@ class SharingWidget(QWidget, Ui_SharingWidget):
         self.current_user_role = current_user_role
         self.is_current_user = is_current_user
         self.user_info = user_info
-        if self.role == WorkspaceRole.OWNER:
+        if self.is_current_user:
             self.label_name.setText(f"<b>{self.user_info.short_user_display}</b>")
         else:
             self.label_name.setText(self.user_info.short_user_display)
@@ -123,6 +126,12 @@ class SharingWidget(QWidget, Ui_SharingWidget):
 
     def on_role_changed(self, index):
         self.role_changed.emit(self.user_info, _index_to_role(index))
+
+    def eventFilter(self, obj_src, event):
+        if event.type() == QEvent.Wheel and isinstance(obj_src, QComboBox):
+            event.ignore()
+            return True
+        return super().eventFilter(obj_src, event)
 
 
 class WorkspaceSharingWidget(QWidget, Ui_WorkspaceSharingWidget):
@@ -237,11 +246,12 @@ class WorkspaceSharingWidget(QWidget, Ui_WorkspaceSharingWidget):
             w.setParent(None)
         QCoreApplication.processEvents()
         for user_info, role in users.items():
-            self.add_participant(
-                user_info,
-                is_current_user=user_info.user_id == self.core.device.user_id,
-                role=role or "NOT_SHARED",
-            )
+            if not user_info.revoked_on:
+                self.add_participant(
+                    user_info,
+                    is_current_user=user_info.user_id == self.core.device.user_id,
+                    role=role or "NOT_SHARED",
+                )
         self.spinner.hide()
         self.widget_users.show()
 
