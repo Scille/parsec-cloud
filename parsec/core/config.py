@@ -81,7 +81,7 @@ class CoreConfig:
     gui_workspace_color: bool = False
     gui_allow_multiple_instances: bool = False
 
-    default_backend_addr: str = "parsec://localhost:6888?no_ssl=true"
+    default_backend_addr: str = None
 
     ipc_socket_file: Path = None
     ipc_win32_mutex_name: str = "parsec-cloud"
@@ -111,7 +111,6 @@ def config_factory(
     gui_check_version_allow_pre_release: bool = False,
     gui_workspace_color: bool = False,
     gui_allow_multiple_instances: bool = False,
-    default_backend_addr: str = "parsec://localhost:6888?no_ssl=true",
     environ: dict = {},
     **_,
 ) -> CoreConfig:
@@ -138,7 +137,8 @@ def config_factory(
         gui_check_version_allow_pre_release=gui_check_version_allow_pre_release,
         gui_workspace_color=gui_workspace_color,
         gui_allow_multiple_instances=gui_allow_multiple_instances,
-        default_backend_addr=default_backend_addr,
+        default_backend_addr=environ.get("DEFAULT_BACKEND_ADDR")
+        or "parsec://localhost:6777?no_ssl=true",
         ipc_socket_file=data_base_dir / "parsec-cloud.lock",
         ipc_win32_mutex_name="parsec-cloud",
     )
