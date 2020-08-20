@@ -159,7 +159,18 @@ async def _do_revoke_user(core, user_info):
 async def _do_list_users_and_invitations(core):
     try:
         # TODO: handle pagination ! (currently we only display the first 100 users...)
-        users, total = await core.find_humans()
+        total = 0
+        ret_total = 1
+        page = 1
+        users = []
+        while ret_total > 0:
+            ret_users, ret_total = await core.find_humans(page=page)
+            users.extend(ret_users)
+            total += ret_total
+            print("\nret_total = ", ret_total)
+            print("page = ", page)
+            page += 1
+
         invitations = await core.list_invitations()
         return users, [inv for inv in invitations if inv["type"] == InvitationType.USER]
     except BackendNotAvailable as exc:
