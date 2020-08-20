@@ -679,7 +679,7 @@ def core_config(tmpdir, backend_addr):
         cache_base_dir=tmpdir / "cache",
         data_base_dir=tmpdir / "data",
         mountpoint_base_dir=tmpdir / "mnt",
-        default_backend_addr=backend_addr,
+        preferred_org_creation_backend_addr=backend_addr,
     )
 
 

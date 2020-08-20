@@ -54,7 +54,7 @@ class CoreConfig:
     data_base_dir: Path
     cache_base_dir: Path
     mountpoint_base_dir: Path
-    default_backend_addr: BackendAddr
+    preferred_org_creation_backend_addr: BackendAddr
 
     debug: bool = False
 
@@ -111,17 +111,20 @@ def config_factory(
     gui_check_version_allow_pre_release: bool = False,
     gui_workspace_color: bool = False,
     gui_allow_multiple_instances: bool = False,
-    default_backend_addr: BackendAddr = None,
+    preferred_org_creation_backend_addr: Optional[BackendAddr] = None,
     environ: dict = {},
     **_,
 ) -> CoreConfig:
 
     # The environment variable we always be used first, and if it is not present,
     # we'll use the value from the configuration file.
-    if environ.get("DEFAULT_BACKEND_ADDR"):
-        default_backend_addr = BackendAddr.from_url("DEFAULT_BACKEND_ADDR")
-    if not default_backend_addr:
-        default_backend_addr = BackendAddr.from_url("parsec://localhost:6777?no_ssl=true")
+    backend_addr_env = environ.get("PREFERRED_ORG_CREATION_BACKEND_ADDR")
+    if backend_addr_env:
+        preferred_org_creation_backend_addr = BackendAddr.from_url(backend_addr_env)
+    if not preferred_org_creation_backend_addr:
+        preferred_org_creation_backend_addr = BackendAddr.from_url(
+            "parsec://localhost:6777?no_ssl=true"
+        )
 
     data_base_dir = data_base_dir or get_default_data_base_dir(environ)
     core_config = CoreConfig(
@@ -146,7 +149,7 @@ def config_factory(
         gui_check_version_allow_pre_release=gui_check_version_allow_pre_release,
         gui_workspace_color=gui_workspace_color,
         gui_allow_multiple_instances=gui_allow_multiple_instances,
-        default_backend_addr=default_backend_addr,
+        preferred_org_creation_backend_addr=preferred_org_creation_backend_addr,
         ipc_socket_file=data_base_dir / "parsec-cloud.lock",
         ipc_win32_mutex_name="parsec-cloud",
     )
@@ -195,12 +198,14 @@ def load_config(config_dir: Path, **extra_config) -> CoreConfig:
         pass
 
     try:
-        data_conf["default_backend_addr"] = BackendAddr.from_url(data_conf["default_backend_addr"])
+        data_conf["preferred_org_creation_backend_addr"] = BackendAddr.from_url(
+            data_conf["preferred_org_creation_backend_addr"]
+        )
     except KeyError:
         pass
-    except ValueError:
-        logger.warning("Invalid value for default_backend_addr")
-        data_conf["default_backend_addr"] = None
+    except ValueError as exc:
+        logger.warning(f"Invalid value for `preferred_org_creation_backend_addr` ({exc})")
+        data_conf["preferred_org_creation_backend_addr"] = None
 
     # Work around versionning issue with parsec releases:
     # - v1.12.0, v1.11.4, v1.11.3, v1.11.2, v1.11.1, v1.11.0 and v1.10.0
@@ -239,7 +244,7 @@ def save_config(config: CoreConfig):
                 "gui_check_version_allow_pre_release": config.gui_check_version_allow_pre_release,
                 "gui_workspace_color": config.gui_workspace_color,
                 "gui_allow_multiple_instances": config.gui_allow_multiple_instances,
-                "default_backend_addr": config.default_backend_addr.to_url(),
+                "preferred_org_creation_backend_addr": config.preferred_org_creation_backend_addr.to_url(),
             },
             indent=True,
         )

@@ -199,7 +199,8 @@ class CreateOrgWidget(QWidget, Ui_CreateOrgWidget):
                 return
             try:
                 backend_addr = BackendOrganizationBootstrapAddr.build(
-                    backend_addr=self.config.default_backend_addr, organization_id=org_id
+                    backend_addr=self.config.preferred_org_creation_backend_addr,
+                    organization_id=org_id,
                 )
             except ValueError as exc:
                 show_error(self, _("TEXT_ORG_WIZARD_INVALID_BACKEND_ADDR"), exception=exc)
