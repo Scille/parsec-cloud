@@ -172,5 +172,6 @@ async def test_claimer_exchange_bad_access(alice, backend, backend_invited_sock_
             on=Pendulum(2000, 1, 2),
             reason=InvitationDeletedReason.ROTTEN,
         )
-        rep = await call()
-        assert rep == {"status": "already_deleted"}
+        with pytest.raises(TransportError):
+            # Transport is always closed when invitation is closed after this handshake
+            await call()

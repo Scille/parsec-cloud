@@ -8,7 +8,7 @@ from parsec.api.protocol import INVITED_CMDS
 from parsec.core.types import BackendInvitationAddr
 from parsec.core.backend_connection.transport import connect_as_invited
 from parsec.core.backend_connection.exceptions import BackendNotAvailable
-from parsec.core.backend_connection.expose_cmds import expose_cmds
+from parsec.core.backend_connection.expose_cmds import expose_cmds_with_retrier
 
 
 class BackendInvitedCmds:
@@ -17,7 +17,7 @@ class BackendInvitedCmds:
         self.acquire_transport = acquire_transport
 
     for cmd_name in INVITED_CMDS:
-        vars()[cmd_name] = expose_cmds(cmd_name)
+        vars()[cmd_name] = expose_cmds_with_retrier(cmd_name)
 
 
 @asynccontextmanager

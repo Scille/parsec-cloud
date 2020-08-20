@@ -27,6 +27,7 @@ from parsec.backend.handshake import do_handshake
 from parsec.backend.memory import components_factory as mocked_components_factory
 from parsec.backend.postgresql import components_factory as postgresql_components_factory
 from parsec.backend.http import HTTPRequest
+from parsec.backend.invite import CloseInviteConnection
 
 
 logger = get_logger()
@@ -168,6 +169,16 @@ class BackendApp:
                                 BackendEvent.INVITE_STATUS_CHANGED, _on_invite_status_changed
                             )
                             await self._handle_client_loop(transport, client_ctx)
+
+                except CloseInviteConnection:
+                    # If the invitation has been deleted after the invited handshake,
+                    # invitation commands can raise an InvitationAlreadyDeletedError.
+                    # This error is converted to a CloseInviteConnection
+                    # The connection shall be closed due to a BackendEvent.INVITE_STATUS_CHANGED
+                    # but nothing garantie that the event will be handled before cmd_func
+                    # errors returns. If this happen, let's also close the connection
+                    pass
+
                 finally:
                     with trio.CancelScope(shield=True):
                         await self.invite.claimer_left(

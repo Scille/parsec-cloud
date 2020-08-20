@@ -56,6 +56,10 @@ logger = get_logger()
 PEER_EVENT_MAX_WAIT = 300  # 5mn
 
 
+class CloseInviteConnection(Exception):
+    pass
+
+
 class InvitationError(Exception):
     pass
 
@@ -399,6 +403,10 @@ class BaseInviteComponent:
     @api("invite_1_claimer_wait_peer", handshake_types=[HandshakeType.INVITED])
     @catch_protocol_errors
     async def api_invite_1_claimer_wait_peer(self, client_ctx, msg):
+        """
+        Raises:
+            CloseInviteConnection
+        """
         msg = invite_1_claimer_wait_peer_serializer.req_load(msg)
 
         try:
@@ -410,11 +418,12 @@ class BaseInviteComponent:
                 payload=msg["claimer_public_key"].encode(),
             )
 
+        except InvitationAlreadyDeletedError as exc:
+            # Notify parent that the connection shall be close because the invitation token is no logger valide.
+            raise CloseInviteConnection from exc
+
         except InvitationNotFoundError:
             return {"status": "not_found"}
-
-        except InvitationAlreadyDeletedError:
-            return {"status": "already_deleted"}
 
         except InvitationInvalidStateError:
             return {"status": "invalid_state"}
@@ -453,6 +462,10 @@ class BaseInviteComponent:
     @api("invite_2a_claimer_send_hashed_nonce", handshake_types=[HandshakeType.INVITED])
     @catch_protocol_errors
     async def api_invite_2a_claimer_send_hashed_nonce(self, client_ctx, msg):
+        """
+        Raises:
+            CloseInviteConnection
+        """
         msg = invite_2a_claimer_send_hashed_nonce_serializer.req_load(msg)
 
         try:
@@ -472,11 +485,12 @@ class BaseInviteComponent:
                 payload=b"",
             )
 
+        except InvitationAlreadyDeletedError as exc:
+            # Notify parent that the connection shall be close because the invitation token is no logger valide.
+            raise CloseInviteConnection from exc
+
         except InvitationNotFoundError:
             return {"status": "not_found"}
-
-        except InvitationAlreadyDeletedError:
-            return {"status": "already_deleted"}
 
         except InvitationInvalidStateError:
             return {"status": "invalid_state"}
@@ -550,6 +564,10 @@ class BaseInviteComponent:
     @api("invite_2b_claimer_send_nonce", handshake_types=[HandshakeType.INVITED])
     @catch_protocol_errors
     async def api_invite_2b_claimer_send_nonce(self, client_ctx, msg):
+        """
+        Raises:
+            CloseInviteConnection
+        """
         msg = invite_2b_claimer_send_nonce_serializer.req_load(msg)
 
         try:
@@ -561,11 +579,12 @@ class BaseInviteComponent:
                 payload=msg["claimer_nonce"],
             )
 
+        except InvitationAlreadyDeletedError as exc:
+            # Notify parent that the connection shall be close because the invitation token is no logger valide.
+            raise CloseInviteConnection from exc
+
         except InvitationNotFoundError:
             return {"status": "not_found"}
-
-        except InvitationAlreadyDeletedError:
-            return {"status": "already_deleted"}
 
         except InvitationInvalidStateError:
             return {"status": "invalid_state"}
@@ -600,6 +619,10 @@ class BaseInviteComponent:
     @api("invite_3b_claimer_wait_peer_trust", handshake_types=[HandshakeType.INVITED])
     @catch_protocol_errors
     async def api_invite_3b_claimer_wait_peer_trust(self, client_ctx, msg):
+        """
+        Raises:
+            CloseInviteConnection
+        """
         msg = invite_3b_claimer_wait_peer_trust_serializer.req_load(msg)
 
         try:
@@ -611,11 +634,12 @@ class BaseInviteComponent:
                 payload=b"",
             )
 
+        except InvitationAlreadyDeletedError as exc:
+            # Notify parent that the connection shall be close because the invitation token is no logger valide.
+            raise CloseInviteConnection from exc
+
         except InvitationNotFoundError:
             return {"status": "not_found"}
-
-        except InvitationAlreadyDeletedError:
-            return {"status": "already_deleted"}
 
         except InvitationInvalidStateError:
             return {"status": "invalid_state"}
@@ -650,6 +674,10 @@ class BaseInviteComponent:
     @api("invite_3a_claimer_signify_trust", handshake_types=[HandshakeType.INVITED])
     @catch_protocol_errors
     async def api_invite_3a_claimer_signify_trust(self, client_ctx, msg):
+        """
+        Raises:
+            CloseInviteConnection
+        """
         msg = invite_3a_claimer_signify_trust_serializer.req_load(msg)
 
         try:
@@ -661,11 +689,12 @@ class BaseInviteComponent:
                 payload=b"",
             )
 
+        except InvitationAlreadyDeletedError as exc:
+            # Notify parent that the connection shall be close because the invitation token is no logger valide.
+            raise CloseInviteConnection from exc
+
         except InvitationNotFoundError:
             return {"status": "not_found"}
-
-        except InvitationAlreadyDeletedError:
-            return {"status": "already_deleted"}
 
         except InvitationInvalidStateError:
             return {"status": "invalid_state"}
@@ -702,6 +731,10 @@ class BaseInviteComponent:
     @api("invite_4_claimer_communicate", handshake_types=[HandshakeType.INVITED])
     @catch_protocol_errors
     async def api_invite_4_claimer_communicate(self, client_ctx, msg):
+        """
+        Raises:
+            CloseInviteConnection
+        """
         msg = invite_4_claimer_communicate_serializer.req_load(msg)
 
         try:
@@ -713,11 +746,12 @@ class BaseInviteComponent:
                 payload=msg["payload"],
             )
 
+        except InvitationAlreadyDeletedError as exc:
+            # Notify parent that the connection shall be close because the invitation token is no logger valide.
+            raise CloseInviteConnection from exc
+
         except InvitationNotFoundError:
             return {"status": "not_found"}
-
-        except InvitationAlreadyDeletedError:
-            return {"status": "already_deleted"}
 
         except InvitationInvalidStateError:
             return {"status": "invalid_state"}
