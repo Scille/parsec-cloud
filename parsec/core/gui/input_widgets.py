@@ -13,7 +13,7 @@ from PyQt5.QtGui import QValidator
 # color for example). This is done by setting a dynamic property
 # and using the state of this property in CSS.
 class ValidatedLineEdit(QLineEdit):
-    validity_changed = pyqtSignal(bool)
+    validity_changed = pyqtSignal(QValidator.State)
 
     def __init__(self, parent=None):
         super().__init__(parent)
@@ -30,18 +30,12 @@ class ValidatedLineEdit(QLineEdit):
     def _on_text_edited(self, text):
         if self._validator:
             r, _, _ = self._validator.validate(text, 0)
-            if r == QValidator.Invalid:
-                self.setProperty("valid", False)
-                self.validity_changed.emit(False)
-            else:
-                self.setProperty("valid", True)
-                self.validity_changed.emit(True)
+            self.setProperty("validity", r)
+            self.validity_changed.emit(r)
             self.style().polish(self)
 
     def is_input_valid(self):
         if not self._validator:
             return True
         r, _, _ = self._validator.validate(self.text(), 0)
-        if r == QValidator.Invalid:
-            return False
-        return True
+        return r == QValidator.Acceptable

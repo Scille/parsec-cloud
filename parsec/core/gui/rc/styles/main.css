@@ -47,8 +47,12 @@ QLineEdit:disabled {
     color: #999999;
 }
 
-QLineEdit[valid="false"] {
+QLineEdit[validity="0"] {
     border: 2px solid #F44336;
+}
+
+QLineEdit[validity="1"] {
+    border: 2px solid #F1962B;
 }
 
 /* ComboBox: ENABLED, DISABLED */

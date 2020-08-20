@@ -3,7 +3,7 @@
 import platform
 
 from PyQt5.QtCore import Qt
-from PyQt5.QtGui import QPainter
+from PyQt5.QtGui import QPainter, QValidator
 from PyQt5.QtWidgets import (
     QWidget,
     QCompleter,
@@ -140,7 +140,8 @@ class TextInputWidget(QWidget, Ui_InputWidget):
         return self.line_edit_text.text()
 
     def _on_validity_changed(self, validity):
-        self.button_ok.setEnabled(validity)
+        print(validity)
+        self.button_ok.setEnabled(validity == QValidator.Acceptable)
 
     def keyPressEvent(self, event):
         if self.button_ok.isEnabled() and event.key() in (Qt.Key_Return, Qt.Key_Enter):

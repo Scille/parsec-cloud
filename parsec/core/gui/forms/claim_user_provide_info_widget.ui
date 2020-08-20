@@ -77,7 +77,7 @@
          </widget>
         </item>
         <item>
-         <widget class="QLineEdit" name="line_edit_user_full_name">
+         <widget class="ValidatedLineEdit" name="line_edit_user_full_name">
           <property name="minimumSize">
            <size>
             <width>0</width>

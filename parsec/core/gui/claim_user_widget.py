@@ -401,21 +401,29 @@ class ClaimUserProvideInfoWidget(QWidget, Ui_ClaimUserProvideInfoWidget):
         self.claim_job = None
         self.new_device = None
         self.line_edit_user_full_name.setFocus()
+        self.line_edit_user_full_name.set_validator(validators.NotEmptyValidator)
+        self.line_edit_user_full_name.validity_changed(self.check_infos)
+
         self.line_edit_user_email.setText(user_email)
         self.line_edit_user_email.set_validator(validators.EmailValidator)
+        self.line_edit_user_email.validity_changed.connect(self.check_infos)
+
         self.line_edit_device.setText(get_default_device())
-        self.line_edit_device.set_validator(validators.DeviceIDValidator)
-        self.line_edit_user_full_name.textChanged.connect(self.check_infos)
-        self.line_edit_device.textChanged.connect(self.check_infos)
         self.line_edit_device.setValidator(validators.DeviceNameValidator())
+        self.line_edit_device.validity_changed.connect(self.check_infos)
+
         self.claim_success.connect(self._on_claim_success)
         self.claim_error.connect(self._on_claim_error)
         self.label_wait.hide()
         self.button_ok.clicked.connect(self._on_claim_clicked)
         self.check_infos()
 
-    def check_infos(self, _=""):
-        if self.line_edit_user_full_name.text() and self.line_edit_device.text():
+    def check_infos(self, _=None):
+        if (
+            self.line_edit_user_full_name.is_input_valid()
+            and self.line_edit_user_email.is_input_valid()
+            and self.line_edit_device.is_input_valid()
+        ):
             self.button_ok.setDisabled(False)
         else:
             self.button_ok.setDisabled(True)

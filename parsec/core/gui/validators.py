@@ -1,7 +1,7 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
 
 from PyQt5.QtCore import QRegularExpression
-from PyQt5.QtGui import QValidator, QIntValidator
+from PyQt5.QtGui import QValidator, QIntValidator, QRegularExpressionValidator
 
 from parsec.api.protocol import OrganizationID, UserID, DeviceName, DeviceID
 from parsec.core.types import (
@@ -119,16 +119,10 @@ class DeviceIDValidator(QValidator):
             return QValidator.Invalid, string, pos
 
 
-# Does not use QRegularExpressionValidator because it seems there's no way to tell the
-# validator how to handle partial matches.
-class EmailValidator(QValidator):
+class EmailValidator(QRegularExpressionValidator):
     def __init__(self):
-        self.regex = QRegularExpression(r"^[a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+$")
-
-    def validate(self, string, pos):
-        if self.regex.match(string, pos).hasMatch():
-            return QValidator.Acceptable, string, pos
-        return QValidator.Invalid, string, pos
+        super().__init__(QRegularExpression(r"^[a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+$"))
+        print(QValidator.Intermediate, QValidator.Acceptable, QValidator.Invalid)
 
 
 class WorkspaceNameValidator(QValidator):
@@ -139,3 +133,8 @@ class WorkspaceNameValidator(QValidator):
         if self.regex.match(string, pos).hasMatch():
             return QValidator.Acceptable, string, pos
         return QValidator.Invalid, string, pos
+
+
+class NotEmptyValidator(QValidator):
+    def validate(self, string, pos):
+        return QValidator.Acceptable if len(string) else QValidator.Invalid
