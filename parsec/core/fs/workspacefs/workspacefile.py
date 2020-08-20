@@ -2,8 +2,10 @@
 
 import os
 import re
+from typing import Union
 from enum import IntEnum
 import functools
+
 from parsec.core.fs.exceptions import FSUnsupportedOperation, FSOffsetError
 from parsec.core.types import FsPath
 
@@ -47,19 +49,21 @@ class WorkspaceFile:
     mode("r") -> read file.
     """
 
-    def __init__(self, fd: int, transactions, path: FsPath, mode: str = "r"):
-        self._fd = fd
+    def __init__(self, transactions, path, mode: str = "r"):
+        self._fd = None
         self._offset = 0
         self._state = FileState.INIT
-        self._path = path
+        self._path = FsPath(path)
         self._transactions = transactions
         mode = mode.lower()
         # Preventing to open in write and read in same time or write and append or open with no mode
-        if sum(c in mode for c in "rwa") != 1:
+        if sum(c in mode for c in "rwax") != 1:
             raise ValueError("must have exactly one of create/read/write/append mode")
         # Preventing to open with non-existant mode
-        elif re.search("[^arwb]", mode) is not None:
-            raise ValueError("invalid mode: ", mode)
+        elif re.search("[^arwxb+]", mode) is not None:
+            raise ValueError(f"invalid mode: '{mode}'")
+        if "b" not in mode:
+            raise NotImplementedError("Text mode is not supported at the moment")
         self._mode = mode
 
     async def __aenter__(self):
@@ -73,13 +77,29 @@ class WorkspaceFile:
     async def ainit(self):
         """Initializing the File Object.
 
-            Check the FileState and truncate the file if needed.
+            Check the FileState, open or create the file, truncate it and move the offset if needed.
         """
         if self._state == FileState.INIT:
             self._state = FileState.OPEN
-            # Checking if the 'w' open mode have been selected, if yes, truncate the file
+            # Opening or creating the file
+            if "x" in self._mode:
+                # Try create the file
+                _, self._fd = await self._transactions.file_create(self._path, open=True)
+            else:
+                try:
+                    _, self._fd = await self._transactions.file_open(self._path)
+                except FileNotFoundError:
+                    if sum(c in self._mode for c in "aw") == 1:
+                        _, self._fd = await self._transactions.file_create(self._path, open=True)
+                    else:
+                        raise
+
+            # Truncate the file if opened with 'w' mode
             if "w" in self._mode:
                 await self.truncate(0)
+            # Move the offset to file.len if opened with 'a' mode
+            if "a" in self._mode:
+                self._offset = await self.get_size()
 
     async def __anext__(self):
         return await self.readline()
@@ -145,7 +165,7 @@ class WorkspaceFile:
 
     @check_state
     def readable(self):
-        return "r" in self._mode
+        return "r" in self._mode or "+" in self._mode
 
     async def readline(self, size: int = -1):
         raise NotImplementedError
@@ -186,7 +206,7 @@ class WorkspaceFile:
         return True
 
     def tell(self) -> int:
-        """Return the current stream position."""
+        """Return the current stream position. Unlike trio.open_file files, this method is sync"""
         if not self.seekable():
             raise FSUnsupportedOperation
         return self._offset
@@ -216,25 +236,41 @@ class WorkspaceFile:
         elif size == 0:
             await self._transactions.fd_resize(self._fd, size, truncate_only=True)
             return size
-        elif size > 0:
+        else:  # Size > 0:
             await self._transactions.fd_resize(self._fd, size, truncate_only=False)
             return size
 
     @check_state
     def writable(self):
-        return "w" in self._mode or "a" in self._mode
+        return "w" in self._mode or "a" in self._mode or "x" in self._mode or "+" in self._mode
 
-    async def write(self, data: bytes) -> int:
-        """ Write the given bytes-like object.
-        Return the number of bytes written.
-        Raises:
+    async def write(self, data: Union[str, bytes]) -> int:
+        """ Check write right and execute write_bytes or write_str depend on the mode
+            Raises:
             FSUnsupportedOperation
         """
         if not self.writable():
             raise FSUnsupportedOperation
         # Preparing offset at EOF if open with append mode
-        elif "a" in self._mode:
+        if "a" in self._mode:
             self._offset = await self.get_size()
+        if "b" in self._mode:
+            if not isinstance(data, bytes):
+                raise TypeError(f"a bytes-like object is required, not '{type(data).__name__}'")
+            return await self._write_bytes(data)
+        else:
+            if not isinstance(data, str):
+                raise TypeError(f"write() argument must be str, not {type(data).__name__}")
+        return await self._write_str(data)
+
+    async def _write_str(self, data: str) -> int:
+        raise NotImplementedError
+
+    async def _write_bytes(self, data: bytes) -> int:
+        """ Write the given bytes-like object.
+        Return the number of bytes written.
+        """
+
         result = await self._transactions.fd_write(self._fd, data, self._offset)
         self._offset += result
         return result

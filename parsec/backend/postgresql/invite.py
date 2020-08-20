@@ -14,7 +14,6 @@ from parsec.api.protocol import (
 )
 from parsec.backend.backend_events import BackendEvent
 from parsec.backend.postgresql.handler import send_signal, PGHandler
-from parsec.backend.postgresql.tables import STR_TO_INVITATION_CONDUIT_STATE
 from parsec.backend.invite import (
     ConduitState,
     NEXT_CONDUIT_STATE,
@@ -27,11 +26,12 @@ from parsec.backend.invite import (
     InvitationAlreadyDeletedError,
     InvitationInvalidStateError,
 )
-from parsec.backend.postgresql.queries import (
+from parsec.backend.postgresql.utils import (
     Q,
     q_organization_internal_id,
     q_user,
     q_user_internal_id,
+    STR_TO_INVITATION_CONDUIT_STATE,
 )
 
 

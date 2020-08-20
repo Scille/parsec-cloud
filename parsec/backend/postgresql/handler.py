@@ -17,7 +17,7 @@ import importlib_resources
 from parsec.event_bus import EventBus
 from parsec.serde import packb, unpackb
 from parsec.utils import start_task, TaskStatus
-from parsec.backend.postgresql.tables import (
+from parsec.backend.postgresql.utils import (
     STR_TO_REALM_ROLE,
     STR_TO_INVITATION_STATUS,
     STR_TO_BACKEND_EVENTS,

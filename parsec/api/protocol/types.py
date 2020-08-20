@@ -80,7 +80,7 @@ class DeviceID(str):
         return DeviceName(self.split("@")[1])
 
     @classmethod
-    def new(cls):
+    def new(cls) -> "DeviceID":
         return cls(f"{uuid4().hex}@{uuid4().hex}")
 
 

@@ -5,8 +5,10 @@ from parsec.serde import fields, post_load
 from parsec.api.protocol import DeviceID, DeviceIDField
 from parsec.api.data.base import BaseAPIData, BaseSchema
 from parsec.api.data.entry import EntryID, EntryIDField
+import attr
 
 
+@attr.s(slots=True, frozen=True, auto_attribs=True, kw_only=True, eq=False)
 class APIV1_UserClaimContent(BaseAPIData):
     class SCHEMA_CLS(BaseSchema):
         type = fields.CheckedConstant("user_claim", required=True)
@@ -27,6 +29,7 @@ class APIV1_UserClaimContent(BaseAPIData):
     verify_key: VerifyKey
 
 
+@attr.s(slots=True, frozen=True, auto_attribs=True, kw_only=True, eq=False)
 class APIV1_DeviceClaimContent(BaseAPIData):
     class SCHEMA_CLS(BaseSchema):
         type = fields.CheckedConstant("device_claim", required=True)
@@ -46,6 +49,7 @@ class APIV1_DeviceClaimContent(BaseAPIData):
     answer_public_key: PublicKey
 
 
+@attr.s(slots=True, frozen=True, auto_attribs=True, kw_only=True, eq=False)
 class APIV1_DeviceClaimAnswerContent(BaseAPIData):
     class SCHEMA_CLS(BaseSchema):
         type = fields.CheckedConstant("device_claim_answer", required=True)

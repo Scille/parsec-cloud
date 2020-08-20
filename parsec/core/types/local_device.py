@@ -21,6 +21,7 @@ from parsec.core.types.base import BaseLocalData
 from parsec.core.types.backend_address import BackendOrganizationAddr, BackendOrganizationAddrField
 
 
+@attr.s(slots=True, frozen=True, auto_attribs=True, kw_only=True, eq=False)
 class LocalDevice(BaseLocalData):
     class SCHEMA_CLS(BaseSchema):
         organization_addr = BackendOrganizationAddrField(required=True)
@@ -74,6 +75,15 @@ class LocalDevice(BaseLocalData):
 
     @property
     def slug(self) -> str:
+        """The slug is unique identifier for a particular device.
+
+        It is composed of a small part of the RVK hash, the organization ID
+        and the device ID, although it shouldn't be assumed that this information
+        can be recovered from the slug as this might change in the future.
+
+        The purpose of the slog is simply to tell whether `LocalDevice` and
+        `AvailableDevice` objects corresponds to the same device.
+        """
         # Add a hash to avoid clash when the backend is reseted
         # and we recreate a device with same organization/device_id
         # organization and device_id than a previous one

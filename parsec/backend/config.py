@@ -1,7 +1,7 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
 
 import attr
-from typing import List, Optional
+from typing import List, Optional, Union
 
 from parsec.core.types import BackendAddr
 
@@ -64,7 +64,7 @@ class MockedBlockStoreConfig(BaseBlockStoreConfig):
 
 
 @attr.s(slots=True, frozen=True, auto_attribs=True)
-class EmailConfig:
+class SmtpEmailConfig:
     host: str
     port: int
     host_user: Optional[str]
@@ -72,6 +72,21 @@ class EmailConfig:
     use_ssl: bool
     use_tls: bool
     sender: str
+
+    def __str__(self):
+        return f"{self.__class__.__name__}(sender={self.sender}, host={self.host}, port={self.port}, use_ssl={self.use_ssl})"
+
+
+@attr.s(slots=True, frozen=True, auto_attribs=True)
+class MockedEmailConfig:
+    sender: str
+    tmpdir: str
+
+    def __str__(self):
+        return f"{self.__class__.__name__}(sender={self.sender}, tmpdir={self.tmpdir})"
+
+
+EmailConfig = Union[SmtpEmailConfig, MockedEmailConfig]
 
 
 @attr.s(slots=True, frozen=True, auto_attribs=True)
@@ -86,7 +101,7 @@ class BackendConfig:
 
     blockstore_config: BaseBlockStoreConfig
 
-    email_config: Optional[EmailConfig]
+    email_config: Union[SmtpEmailConfig, MockedEmailConfig]
     backend_addr: Optional[BackendAddr]
 
     spontaneous_organization_bootstrap: bool

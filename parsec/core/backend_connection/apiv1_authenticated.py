@@ -9,7 +9,7 @@ from functools import partial
 from parsec.crypto import SigningKey
 from parsec.event_bus import EventBus
 from parsec.api.data import EntryID
-from parsec.api.protocol import DeviceID, APIEvent, APIV1_AUTHENTICATED_CMDS
+from parsec.api.protocol import DeviceID, APIEvent
 from parsec.core.types import BackendOrganizationAddr
 from parsec.core.backend_connection import cmds
 from parsec.core.backend_connection.transport import apiv1_connect, TransportPool
@@ -27,8 +27,45 @@ class APIV1_BackendAuthenticatedCmds:
         self.addr = addr
         self.acquire_transport = acquire_transport
 
-    for cmd_name in APIV1_AUTHENTICATED_CMDS:
-        vars()[cmd_name] = expose_cmds_with_retrier(cmd_name, apiv1=True)
+    events_subscribe = expose_cmds_with_retrier("events_subscribe", apiv1=True)
+    events_listen = expose_cmds_with_retrier("events_listen", apiv1=True)
+    ping = expose_cmds_with_retrier("ping", apiv1=True)
+    message_get = expose_cmds_with_retrier("message_get", apiv1=True)
+    user_get = expose_cmds_with_retrier("user_get", apiv1=True)
+    user_find = expose_cmds_with_retrier("user_find", apiv1=True)
+    user_invite = expose_cmds_with_retrier("user_invite", apiv1=True)
+    user_cancel_invitation = expose_cmds_with_retrier("user_cancel_invitation", apiv1=True)
+    user_create = expose_cmds_with_retrier("user_create", apiv1=True)
+    user_revoke = expose_cmds_with_retrier("user_revoke", apiv1=True)
+    device_invite = expose_cmds_with_retrier("device_invite", apiv1=True)
+    device_cancel_invitation = expose_cmds_with_retrier("device_cancel_invitation", apiv1=True)
+    device_create = expose_cmds_with_retrier("device_create", apiv1=True)
+    human_find = expose_cmds_with_retrier("human_find", apiv1=True)
+    block_create = expose_cmds_with_retrier("block_create", apiv1=True)
+    block_read = expose_cmds_with_retrier("block_read", apiv1=True)
+    vlob_poll_changes = expose_cmds_with_retrier("vlob_poll_changes", apiv1=True)
+    vlob_create = expose_cmds_with_retrier("vlob_create", apiv1=True)
+    vlob_read = expose_cmds_with_retrier("vlob_read", apiv1=True)
+    vlob_update = expose_cmds_with_retrier("vlob_update", apiv1=True)
+    vlob_list_versions = expose_cmds_with_retrier("vlob_list_versions", apiv1=True)
+    vlob_maintenance_get_reencryption_batch = expose_cmds_with_retrier(
+        "vlob_maintenance_get_reencryption_batch", apiv1=True
+    )
+    vlob_maintenance_save_reencryption_batch = expose_cmds_with_retrier(
+        "vlob_maintenance_save_reencryption_batch", apiv1=True
+    )
+    realm_create = expose_cmds_with_retrier("realm_create", apiv1=True)
+    realm_status = expose_cmds_with_retrier("realm_status", apiv1=True)
+    realm_get_role_certificates = expose_cmds_with_retrier(
+        "realm_get_role_certificates", apiv1=True
+    )
+    realm_update_roles = expose_cmds_with_retrier("realm_update_roles", apiv1=True)
+    realm_start_reencryption_maintenance = expose_cmds_with_retrier(
+        "realm_start_reencryption_maintenance", apiv1=True
+    )
+    realm_finish_reencryption_maintenance = expose_cmds_with_retrier(
+        "realm_finish_reencryption_maintenance", apiv1=True
+    )
 
 
 def _handle_event(event_bus: EventBus, rep: dict) -> None:

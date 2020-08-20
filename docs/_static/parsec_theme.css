@@ -29,7 +29,7 @@ body {
 .fa-bars { color: #006EFF; } .fa-bars:hover { color: #004EDF; }
 .fa-github { color: #006EFF; } .fa-github:hover { color: #004EDF; }
 a { color: #006EFF; } a:hover { color: #004EDF; }
-a:visited { color: #121D43; } a:visited:hover { color: #0A0F23; }
+a:visited { color: #006EFF; } a:visited:hover { color: #004EDF; }
 
 .wy-menu-vertical a { color: #AAAAAA; } .wy-menu-vertical a:hover { color: #FFFFFF; background-color: #006EFF; }
 .wy-menu-vertical li.current { background-color: rgba(0, 0, 0, 0); }
@@ -48,6 +48,7 @@ h1, h2, h3, h4, h5, h6 { color: #121D43; }
 
 .highlight { background: #F1F2F2; }
 .rst-content tt.literal, .rst-content tt.literal, .rst-content code.literal { color: #006EFF; font-weight: bold; }
+.rst-content li { margin-bottom: 1em; }
 
 .wy-alert.wy-alert-info, .rst-content .note, .rst-content .wy-alert-info.attention, .rst-content .wy-alert-info.caution, .rst-content .wy-alert-info.danger, .rst-content .wy-alert-info.error, .rst-content .wy-alert-info.hint, .rst-content .wy-alert-info.important, .rst-content .wy-alert-info.tip, .rst-content .wy-alert-info.warning, .rst-content .seealso, .rst-content .wy-alert-info.admonition-todo, .rst-content .wy-alert-info.admonition {
   border: 1px solid #E1E4E5;

@@ -180,4 +180,4 @@ msgstr "Créer une organisation par défaut"
 
 #: ../../development.rst:81
 msgid "Create multiple users and devices for this organization"
-msgstr "Créer plusieurs utilisateurs et périphériques pour cette organisation"
+msgstr "Créer plusieurs utilisateurs et terminaux pour cette organisation"

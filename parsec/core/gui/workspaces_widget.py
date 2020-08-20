@@ -283,7 +283,8 @@ class WorkspacesWidget(QWidget, Ui_WorkspacesWidget):
 
     def on_rename_success(self, job):
         workspace_button, workspace_name = job.ret
-        workspace_button.reload_workspace_name(workspace_name)
+        if workspace_button:
+            workspace_button.reload_workspace_name(workspace_name)
 
     def on_rename_error(self, job):
         if job.status == "invalid-name":

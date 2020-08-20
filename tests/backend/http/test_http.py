@@ -141,13 +141,6 @@ async def test_get_static(backend_http_send):
 
 
 @pytest.mark.trio
-async def test_get_redirect_not_available(backend_http_send):
-    rep = await backend_http_send(f"/redirect/foo/bar?a=1&b=2")
-    assert rep.startswith("HTTP/1.1 501 Not Implemented\r\n")
-
-
-@pytest.mark.trio
-@customize_fixtures(backend_has_email=True)
 async def test_get_redirect(backend_http_send, backend_addr):
     rep = await backend_http_send(f"/redirect/foo/bar?a=1&b=2")
     assert rep.startswith("HTTP/1.1 302 Found\r\n")
@@ -155,7 +148,7 @@ async def test_get_redirect(backend_http_send, backend_addr):
 
 
 @pytest.mark.trio
-@customize_fixtures(backend_over_ssl=True, backend_has_email=True)
+@customize_fixtures(backend_over_ssl=True)
 async def test_get_redirect_over_ssl(backend_http_send, backend_addr):
     rep = await backend_http_send(f"/redirect/foo/bar?a=1&b=2")
     assert rep.startswith("HTTP/1.1 302 Found\r\n")
@@ -163,7 +156,6 @@ async def test_get_redirect_over_ssl(backend_http_send, backend_addr):
 
 
 @pytest.mark.trio
-@customize_fixtures(backend_has_email=True)
 async def test_get_redirect_no_ssl_param_overwritten(backend_http_send, backend_addr):
     rep = await backend_http_send(f"/redirect/spam?no_ssl=false&a=1&b=2")
     assert rep.startswith("HTTP/1.1 302 Found\r\n")
@@ -171,7 +163,7 @@ async def test_get_redirect_no_ssl_param_overwritten(backend_http_send, backend_
 
 
 @pytest.mark.trio
-@customize_fixtures(backend_over_ssl=True, backend_has_email=True)
+@customize_fixtures(backend_over_ssl=True)
 async def test_get_redirect_no_ssl_param_overwritten_with_ssl_enabled(
     backend_http_send, backend_addr
 ):
@@ -181,7 +173,6 @@ async def test_get_redirect_no_ssl_param_overwritten_with_ssl_enabled(
 
 
 @pytest.mark.trio
-@customize_fixtures(backend_has_email=True)
 async def test_get_redirect_invitation(backend_http_send, backend_addr):
     invitation_addr = BackendInvitationAddr.build(
         backend_addr=backend_addr,
@@ -199,6 +190,6 @@ async def test_get_redirect_invitation(backend_http_send, backend_addr):
 
 
 @pytest.mark.trio
-@customize_fixtures(backend_over_ssl=True, backend_has_email=True)
+@customize_fixtures(backend_over_ssl=True)
 async def test_get_redirect_invitation_over_ssl(backend_http_send, backend_addr):
     await test_get_redirect_invitation(backend_http_send, backend_addr)

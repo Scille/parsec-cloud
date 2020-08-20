@@ -99,21 +99,21 @@ background-color: rgb(255, 255, 255);
          <widget class="QLabel" name="label">
           <property name="minimumSize">
            <size>
-            <width>314</width>
-            <height>48</height>
+            <width>348</width>
+            <height>60</height>
            </size>
           </property>
           <property name="maximumSize">
            <size>
-            <width>314</width>
-            <height>48</height>
+            <width>348</width>
+            <height>60</height>
            </size>
           </property>
           <property name="text">
            <string/>
           </property>
           <property name="pixmap">
-           <pixmap resource="../rc/resources.qrc">:/logos/images/logos/parsec.png</pixmap>
+           <pixmap resource="../rc/resources.qrc">:/logos/images/logos/parsec_vert.png</pixmap>
           </property>
           <property name="scaledContents">
            <bool>true</bool>

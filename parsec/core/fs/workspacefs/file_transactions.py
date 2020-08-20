@@ -1,7 +1,7 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
 
 from parsec.core.core_events import CoreEvent
-from typing import Tuple, List, Callable
+from typing import Tuple, List, Callable, Dict
 
 from collections import defaultdict
 from async_generator import asynccontextmanager
@@ -12,13 +12,14 @@ from parsec.core.types import FileDescriptor, EntryID, LocalDevice
 from parsec.core.fs.remote_loader import RemoteLoader
 from parsec.core.fs.storage import WorkspaceStorage
 from parsec.core.fs.exceptions import FSLocalMissError, FSInvalidFileDescriptor, FSEndOfFileError
-from parsec.core.types import Chunk, BlockID, LocalFileManifest
+from parsec.core.types import Chunk, LocalFileManifest
 from parsec.core.fs.workspacefs.file_operations import (
     prepare_read,
     prepare_write,
     prepare_resize,
     prepare_reshape,
 )
+from parsec.api.data import BlockAccess
 
 
 __all__ = ("FSInvalidFileDescriptor", "FileTransactions")
@@ -81,7 +82,7 @@ class FileTransactions:
         self.local_storage = local_storage
         self.remote_loader = remote_loader
         self.event_bus = event_bus
-        self._write_count = defaultdict(int)
+        self._write_count: Dict[FileDescriptor, int] = defaultdict(int)
 
     # Event helper
 
@@ -94,12 +95,12 @@ class FileTransactions:
         data = await self.local_storage.get_chunk(chunk.id)
         return data[chunk.start - chunk.raw_offset : chunk.stop - chunk.raw_offset]
 
-    async def _write_chunk(self, chunk: Chunk, content: bytes, offset: int = 0) -> None:
+    async def _write_chunk(self, chunk: Chunk, content: bytes, offset: int = 0) -> int:
         data = padded_data(content, offset, offset + chunk.stop - chunk.start)
         await self.local_storage.set_chunk(chunk.id, data)
         return len(data)
 
-    async def _build_data(self, chunks: Tuple[Chunk]) -> Tuple[bytes, List[BlockID]]:
+    async def _build_data(self, chunks: Tuple[Chunk, ...]) -> Tuple[bytes, List[BlockAccess]]:
         # Empty array
         if not chunks:
             return bytearray(), []
@@ -207,7 +208,7 @@ class FileTransactions:
 
     async def fd_read(self, fd: FileDescriptor, size: int, offset: int, raise_eof=False) -> bytes:
         # Loop over attemps
-        missing = []
+        missing: List[BlockAccess] = []
         while True:
 
             # Load missing blocks
@@ -261,7 +262,7 @@ class FileTransactions:
 
     async def _manifest_reshape(
         self, manifest: LocalFileManifest, cache_only: bool = False
-    ) -> List[BlockID]:
+    ) -> List[BlockAccess]:
         """This internal helper does not perform any locking."""
 
         # Prepare data structures

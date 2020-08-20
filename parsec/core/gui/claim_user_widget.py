@@ -10,7 +10,8 @@ from PyQt5.QtWidgets import QWidget
 from parsec.api.protocol import HumanHandle
 from parsec.core.types import LocalDevice
 from parsec.core.local_device import LocalDeviceAlreadyExistsError, save_device_with_password
-from parsec.core.invite import claimer_retrieve_info, InvitePeerResetError
+from parsec.core.invite import claimer_retrieve_info, InvitePeerResetError, InviteAlreadyUsedError
+
 from parsec.core.backend_connection import (
     backend_invited_cmds_factory,
     BackendConnectionRefused,
@@ -613,8 +614,11 @@ class ClaimUserWidget(QWidget, Ui_ClaimUserWidget):
         if job is not None and job.status == "cancelled":
             self.dialog.reject()
             return
-        # No reason to restart the process if offline, simply close the dialog
-        if job is not None and isinstance(job.exc.params.get("origin", None), BackendNotAvailable):
+        # No reason to restart the process if offline or if the invitation has been deleted
+        # simply close the dialog
+        if job is not None and isinstance(
+            job.exc.params.get("origin", None), (BackendNotAvailable, InviteAlreadyUsedError)
+        ):
             self.dialog.reject()
             return
         # Let's try one more time with the same dialog

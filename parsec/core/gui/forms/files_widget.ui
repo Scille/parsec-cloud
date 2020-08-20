@@ -43,6 +43,10 @@
 
 #button_import_folder:hover, #button_import_files:hover, #button_create_folder:hover {
 	color: #0070DD;
+}
+
+QScrollBar:vertical {
+	margin-top: 48px;
 }</string>
   </property>
   <layout class="QVBoxLayout" name="verticalLayout">

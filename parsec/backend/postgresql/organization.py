@@ -21,7 +21,7 @@ from parsec.backend.organization import (
 )
 from parsec.backend.postgresql.handler import PGHandler
 from parsec.backend.postgresql.user_queries.create import _create_user
-from parsec.backend.postgresql.queries import Q, q_organization_internal_id
+from parsec.backend.postgresql.utils import Q, q_organization_internal_id
 
 
 _q_insert_organization = Q(
