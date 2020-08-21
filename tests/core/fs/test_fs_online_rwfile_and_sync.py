@@ -49,7 +49,9 @@ def test_fs_online_rwfile_and_sync(user_fs_online_state_machine, alice):
         )
         async def atomic_read(self, size, offset):
             workspace = self.user_fs.get_workspace(self.wid)
-            content = await workspace.read_bytes("/foo.txt", size=size, offset=offset)
+            async with await workspace.open_file("/foo.txt", "rb") as f:
+                await f.seek(offset)
+                content = await f.read(size)
             expected_content = self.file_oracle.read(size, offset)
             assert content == expected_content
 
@@ -59,7 +61,9 @@ def test_fs_online_rwfile_and_sync(user_fs_online_state_machine, alice):
         )
         async def atomic_write(self, offset, content):
             workspace = self.user_fs.get_workspace(self.wid)
-            await workspace.write_bytes("/foo.txt", data=content, offset=offset, truncate=False)
+            async with await workspace.open_file("/foo.txt", "rb+") as f:
+                await f.seek(offset)
+                await f.write(content)
             self.file_oracle.write(offset, content)
 
         @rule(length=st.integers(min_value=0, max_value=PLAYGROUND_SIZE))

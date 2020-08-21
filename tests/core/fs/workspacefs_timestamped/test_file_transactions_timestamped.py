@@ -14,10 +14,14 @@ async def test_close_unknown_fd(alice_workspace_t4):
 
 @pytest.mark.trio
 async def test_operations_on_file(alice_workspace_t4, alice_workspace_t5):
-    _, fd4 = await alice_workspace_t4.transactions.file_open(FsPath("/files/content"), "r")
+    _, fd4 = await alice_workspace_t4.transactions.file_open(
+        FsPath("/files/content"), write_mode=False
+    )
     assert isinstance(fd4, int)
     transactions_t4 = alice_workspace_t4.transactions
-    _, fd5 = await alice_workspace_t5.transactions.file_open(FsPath("/files/content"), "r")
+    _, fd5 = await alice_workspace_t5.transactions.file_open(
+        FsPath("/files/content"), write_mode=False
+    )
     assert isinstance(fd5, int)
     transactions_t5 = alice_workspace_t5.transactions
 
@@ -50,14 +54,18 @@ async def test_operations_on_file(alice_workspace_t4, alice_workspace_t5):
     data = await transactions_t4.fd_read(fd4, 1, 3)
     assert data == b"d"
 
-    _, fd5 = await alice_workspace_t5.transactions.file_open(FsPath("/files/content"), "r")
+    _, fd5 = await alice_workspace_t5.transactions.file_open(
+        FsPath("/files/content"), write_mode=False
+    )
     data = await transactions_t5.fd_read(fd5, 3, 0)
     assert data == b"fgh"
 
 
 @pytest.mark.trio
 async def test_flush_file(alice_workspace_t4):
-    _, fd4 = await alice_workspace_t4.transactions.file_open(FsPath("/files/content"), "r")
+    _, fd4 = await alice_workspace_t4.transactions.file_open(
+        FsPath("/files/content"), write_mode=False
+    )
     assert isinstance(fd4, int)
     transactions_t4 = alice_workspace_t4.transactions
 

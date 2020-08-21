@@ -230,14 +230,11 @@ async def test_read_bytes(alice_workspace):
     assert await alice_workspace.read_bytes("/foo/bar") == b""
 
     await alice_workspace.write_bytes("/foo/bar", b"abcde")
-    assert await alice_workspace.read_bytes("/foo/bar", size=3) == b"abc"
-    assert await alice_workspace.read_bytes("/foo/bar", size=2, offset=2) == b"cd"
-    assert await alice_workspace.read_bytes("/foo/bar", size=8, offset=2) == b"cde"
 
     with pytest.raises(IsADirectoryError):
         await alice_workspace.read_bytes("/foo")
     with pytest.raises(IsADirectoryError):
-        await alice_workspace.read_bytes("/", 0)
+        await alice_workspace.read_bytes("/")
 
 
 @pytest.mark.trio
@@ -245,29 +242,15 @@ async def test_write_bytes(alice_workspace):
     # Pathlib mode (truncate=True)
     await alice_workspace.write_bytes("/foo/bar", b"abcde")
     assert await alice_workspace.read_bytes("/foo/bar") == b"abcde"
-    await alice_workspace.write_bytes("/foo/bar", b"xyz", offset=1)
-    assert await alice_workspace.read_bytes("/foo/bar") == b"axyz"
-    await alice_workspace.write_bytes("/foo/bar", b"[append]", offset=-1)
-    assert await alice_workspace.read_bytes("/foo/bar") == b"axyz[append]"
 
     # Clear the content of an existing file
     await alice_workspace.write_bytes("/foo/bar", b"")
     assert await alice_workspace.read_bytes("/foo/bar") == b""
 
-    # Atomic write mode (truncate=False)
-    assert await alice_workspace.write_bytes("/foo/bar", b"abcde", truncate=False) == 5
-    assert await alice_workspace.read_bytes("/foo/bar") == b"abcde"
-    assert await alice_workspace.write_bytes("/foo/bar", b"xyz", offset=1, truncate=False) == 3
-    assert await alice_workspace.read_bytes("/foo/bar") == b"axyze"
-    assert (
-        await alice_workspace.write_bytes("/foo/bar", b"[append]", offset=-1, truncate=False) == 8
-    )
-    assert await alice_workspace.read_bytes("/foo/bar") == b"axyze[append]"
-
     with pytest.raises(IsADirectoryError):
         await alice_workspace.read_bytes("/foo")
     with pytest.raises(IsADirectoryError):
-        await alice_workspace.read_bytes("/", 0)
+        await alice_workspace.read_bytes("/")
 
 
 @pytest.mark.trio
@@ -285,8 +268,8 @@ async def test_move(alice_workspace):
     await alice_workspace.move("/foz", "/containfoz")
     assert await alice_workspace.is_file("/containfoz/foz/bal")
     assert await alice_workspace.is_file("/containfoz/foz/baz")
-    assert await alice_workspace.read_bytes("/containfoz/foz/bal", size=5) == b"abcde"
-    assert await alice_workspace.read_bytes("/containfoz/foz/baz", size=5) == b"fghij"
+    assert await alice_workspace.read_bytes("/containfoz/foz/bal") == b"abcde"
+    assert await alice_workspace.read_bytes("/containfoz/foz/baz") == b"fghij"
 
     with pytest.raises(FileNotFoundError):
         await alice_workspace.move("/foz/baz", "/baz")

@@ -4,7 +4,7 @@ from typing import Union, NewType
 
 from parsec.api.data import EntryID, EntryIDField, EntryName, EntryNameField
 
-from parsec.core.types.base import FsPath
+from parsec.core.types.base import FsPath, AnyPath
 
 from parsec.core.types.backend_address import (
     BackendAddr,
@@ -48,6 +48,7 @@ __all__ = (
     "RemoteFolderishManifests",
     # Base
     "FsPath",
+    "AnyPath",
     # Entry
     "EntryID",
     "EntryIDField",

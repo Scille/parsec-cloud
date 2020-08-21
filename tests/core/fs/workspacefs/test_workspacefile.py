@@ -440,17 +440,14 @@ async def test_seek(alice_workspace, trio_file):
     await triof.aclose()
 
 
-async def open_file_no_ainit(workspace, path: AnyPath, mode="r"):
-    path = FsPath(path)
-    _, fd = await workspace.transactions.file_open(path, mode)
-    f = WorkspaceFile(workspace.transactions, mode=mode, path=path)
-    return f
+def open_file_no_ainit(workspace, path: AnyPath, mode):
+    return WorkspaceFile(workspace.transactions, mode=mode, path=path)
 
 
 @pytest.mark.trio
 async def test_file_state(alice_workspace, trio_file, random_text):
     # testing that file state is in INIT mode.
-    f = await open_file_no_ainit(alice_workspace, "/foo/bar", "wb")
+    f = open_file_no_ainit(alice_workspace, "/foo/bar", "wb")
     assert int(f.state) == int(FileState.INIT)
 
     # trying some methods with INIT file state
@@ -489,7 +486,7 @@ async def test_file_state(alice_workspace, trio_file, random_text):
     assert str(e.value) == "I/O operation on closed file."
 
     # test opening with context manager
-    async with await open_file_no_ainit(alice_workspace, "/foo/bar", "wb") as f2:
+    async with open_file_no_ainit(alice_workspace, "/foo/bar", "wb") as f2:
         # testing that file state is in OPEN mode.
         assert int(f2.state) == int(FileState.OPEN)
     # testing that file is closed after context manager

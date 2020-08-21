@@ -63,7 +63,9 @@ async def test_sync_by_id_single(alice_workspace, remote_changed):
     await sync_by_id(wid)
 
     # Non empty file
-    await alice_workspace.write_bytes("/f", b"efg", offset=3)
+    async with await alice_workspace.open_file("/f", "rb+") as f:
+        await f.seek(3)
+        assert await f.write(b"efg") == 3
     f_id = await alice_workspace.path_id("/f")
     await sync_by_id(f_id)
     assert await alice_workspace.read_bytes("/f") == b"abcefg"
