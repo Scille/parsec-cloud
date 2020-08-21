@@ -351,9 +351,9 @@ class EntryTransactions(FileTransactions):
         # Return the entry id of the created file and the file descriptor
         return child.id, fd
 
-    async def file_open(self, path: FsPath, mode="rw") -> Tuple[EntryID, FileDescriptor]:
+    async def file_open(self, path: FsPath, write_mode: bool) -> Tuple[EntryID, FileDescriptor]:
         # Check read and write rights
-        if "w" in mode:
+        if write_mode:
             self.check_write_rights(path)
         else:
             self.check_read_rights(path)

@@ -401,7 +401,7 @@ class WorkspaceFS:
         self,
         source_path: AnyPath,
         target_path: AnyPath,
-        length=DEFAULT_BLOCK_SIZE,
+        buffer_size=DEFAULT_BLOCK_SIZE,
         exist_ok: bool = False,
     ):
         """
@@ -412,7 +412,7 @@ class WorkspaceFS:
         async with await self.open_file(source_path, mode="rb") as source:
             async with await self.open_file(target_path, mode=write_mode) as target:
                 while True:
-                    data = await source.read(length)
+                    data = await source.read(buffer_size)
                     if not data:
                         return
                     await target.write(data)

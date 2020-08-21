@@ -88,8 +88,9 @@ class WorkspaceFile:
                 _, self._fd = await self._transactions.file_create(self._path, open=True)
             else:
                 try:
-                    mode = "rw" if self.writable() else "r"
-                    _, self._fd = await self._transactions.file_open(self._path, mode)
+                    _, self._fd = await self._transactions.file_open(
+                        self._path, write_mode=self.writable()
+                    )
                 except FileNotFoundError:
                     if "a" in self._mode or "w" in self._mode:
                         _, self._fd = await self._transactions.file_create(self._path, open=True)

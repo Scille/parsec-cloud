@@ -15,7 +15,6 @@ from parsec.core.fs import FSLocalOperationError, FSRemoteOperationError
 
 
 logger = get_logger()
-MODES = {os.O_RDONLY: "r", os.O_WRONLY: "w", os.O_RDWR: "rw"}
 
 
 # We are preventing the creation of file and folders starting with those prefixes
@@ -126,8 +125,8 @@ class FuseOperations(LoggingMixIn, Operations):
 
     def open(self, path: FsPath, flags: int = 0):
         # Filter file status and file creation flags
-        mode = MODES[flags % 4]
-        _, fd = self.fs_access.file_open(path, mode=mode)
+        write_mode = flags in (os.O_WRONLY, os.O_RDWR)
+        _, fd = self.fs_access.file_open(path, write_mode=write_mode)
         return fd
 
     def release(self, path: FsPath, fh: int):
