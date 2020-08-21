@@ -3,7 +3,7 @@
 import attr
 import trio
 from collections import defaultdict
-from typing import Union, List, Dict, Tuple, AsyncIterator, cast
+from typing import List, Dict, Tuple, AsyncIterator, cast
 from pendulum import Pendulum, now as pendulum_now
 
 from parsec.api.data import BaseManifest as BaseRemoteManifest
@@ -11,6 +11,7 @@ from parsec.api.data import FileManifest as RemoteFileManifest
 from parsec.api.protocol import UserID
 from parsec.core.types import (
     FsPath,
+    AnyPath,
     EntryID,
     LocalDevice,
     WorkspaceRole,
@@ -37,8 +38,6 @@ from parsec.core.fs.exceptions import (
 )
 
 from parsec.core.fs.workspacefs.workspacefile import WorkspaceFile
-
-AnyPath = Union[FsPath, str]
 
 
 @attr.s(slots=True, frozen=True, auto_attribs=True)

@@ -2,31 +2,18 @@
 
 import os
 import re
-from typing import Union
 from enum import IntEnum
-import functools
+from typing import Union, Optional
 
+from parsec.core.fs.workspacefs.entry_transactions import EntryTransactions
 from parsec.core.fs.exceptions import FSUnsupportedOperation, FSOffsetError
-from parsec.core.types import FsPath
+from parsec.core.types import FsPath, AnyPath, FileDescriptor
 
 
 class FileState(IntEnum):
     INIT = 0
     OPEN = 1
     CLOSED = 2
-
-
-def check_state(func):
-    @functools.wraps(func)
-    def wrapper(self, *args, **kwargs):
-        if self.closed:
-            raise ValueError("I/O operation on closed file.")
-        elif self._state == FileState.INIT:
-            raise ValueError("I/O operation on non-initialized file.")
-
-        return func(self, *args, **kwargs)
-
-    return wrapper
 
 
 class WorkspaceFile:
@@ -38,7 +25,6 @@ class WorkspaceFile:
     If you are using this object outside a context manager you should call ainit() method first.
 
     Keyword arguments:
-    fd -- the file descriptor.
     transactions -- object to use for file transactions.
     path -- relative path of the file.
     mode -- the mode where the file have been opened. It needs to have exactly one of "awrx".
@@ -50,8 +36,8 @@ class WorkspaceFile:
     mode("+") -> have to be used with one of "awrx" mode, file will be in read/write mode.
     """
 
-    def __init__(self, transactions, path, mode: str = "rb"):
-        self._fd = None
+    def __init__(self, transactions: EntryTransactions, path: AnyPath, mode: str = "rb"):
+        self._fd: Optional[FileDescriptor] = None
         self._offset = 0
         self._state = FileState.INIT
         self._path = FsPath(path)
@@ -67,15 +53,15 @@ class WorkspaceFile:
             raise NotImplementedError("Text mode is not supported at the moment")
         self._mode = mode
 
-    async def __aenter__(self):
+    async def __aenter__(self) -> "WorkspaceFile":
         await self.ainit()
         return self
 
-    async def __aexit__(self, *args):
+    async def __aexit__(self, *args) -> None:
         self._state = FileState.CLOSED
         await self.close()
 
-    async def ainit(self):
+    async def ainit(self) -> None:
         """Initializing the File Object.
 
             Check the FileState, open or create the file, truncate it and move the offset if needed.
@@ -94,6 +80,7 @@ class WorkspaceFile:
                 except FileNotFoundError:
                     if "a" in self._mode or "w" in self._mode:
                         _, self._fd = await self._transactions.file_create(self._path, open=True)
+                        assert self._fd is not None  # Because `open=True`
                     else:
                         raise
 
@@ -104,41 +91,52 @@ class WorkspaceFile:
             if "a" in self._mode:
                 self._offset = await self.get_size()
 
-    async def __anext__(self):
+    async def __anext__(self) -> str:
         return await self.readline()
 
-    async def close(self):
+    def _check_open_state(self) -> None:
+        if self._state == FileState.CLOSED:
+            raise ValueError("I/O operation on closed file.")
+        elif self._state == FileState.INIT:
+            raise ValueError("I/O operation on non-initialized file.")
+
+    async def close(self) -> None:
         """Close the file"""
         if self._state != FileState.CLOSED:
+            await self._transactions.fd_close(self.fileno())
             self._state = FileState.CLOSED
-            await self._transactions.fd_close(self._fd)
+
+    def fileno(self) -> FileDescriptor:
+        self._check_open_state()
+        assert self._fd is not None  # Since we checked the state
+        return self._fd
 
     @property
-    def closed(self):
+    def closed(self) -> bool:
         return self._state == FileState.CLOSED
 
-    @check_state
-    async def file_stat(self):
+    async def file_stat(self) -> dict:
         """Getting file stat"""
-        stats = await self._transactions.fd_info(self._fd, self._path)
+        self._check_open_state()
+        stats = await self._transactions.fd_info(self.fileno(), self._path)
         return stats
 
-    @check_state
-    async def get_size(self):
+    async def get_size(self) -> int:
         """Getting file length from file stat"""
+        self._check_open_state()
         stats = await self.file_stat()
         return stats["size"]
 
     @property
-    def state(self):
+    def state(self) -> FileState:
         return self._state
 
     @property
-    def mode(self):
+    def mode(self) -> str:
         return self._mode
 
     @property
-    def name(self):
+    def name(self) -> FsPath:
         return self._path
 
     async def read(self, size: int = -1) -> bytes:
@@ -157,17 +155,17 @@ class WorkspaceFile:
             raise ValueError("read length must be non-negative or -1")
         # Reading until EOF : set offset to end (equal to size)
         if size == -1:
-            result = await self._transactions.fd_read(self._fd, size, self._offset)
+            result = await self._transactions.fd_read(self.fileno(), size, self._offset)
             self._offset += len(result)
             return result
             # Reading size : add to offset size
         else:
-            result = await self._transactions.fd_read(self._fd, size, self._offset)
+            result = await self._transactions.fd_read(self.fileno(), size, self._offset)
             self._offset += len(result)
             return result
 
-    @check_state
     def readable(self) -> bool:
+        self._check_open_state()
         return "r" in self._mode or "+" in self._mode
 
     async def readline(self, size: int = -1):
@@ -204,8 +202,8 @@ class WorkspaceFile:
             self._offset = await self.get_size() + offset
         return self._offset
 
-    @check_state
     def seekable(self) -> bool:
+        self._check_open_state()
         return True
 
     def tell(self) -> int:
@@ -232,19 +230,19 @@ class WorkspaceFile:
         if not self.writable():
             raise FSUnsupportedOperation
         if size is None:
-            await self._transactions.fd_resize(self._fd, self._offset, truncate_only=False)
+            await self._transactions.fd_resize(self.fileno(), self._offset, truncate_only=False)
             return self._offset
         elif size < 0:
             raise FSOffsetError
         elif size == 0:
-            await self._transactions.fd_resize(self._fd, size, truncate_only=True)
+            await self._transactions.fd_resize(self.fileno(), size, truncate_only=True)
             return size
         else:  # Size > 0:
-            await self._transactions.fd_resize(self._fd, size, truncate_only=False)
+            await self._transactions.fd_resize(self.fileno(), size, truncate_only=False)
             return size
 
-    @check_state
     def writable(self) -> bool:
+        self._check_open_state()
         return "w" in self._mode or "a" in self._mode or "x" in self._mode or "+" in self._mode
 
     async def write(self, data: Union[str, bytes]) -> int:
@@ -274,6 +272,6 @@ class WorkspaceFile:
         Return the number of bytes written.
         """
 
-        result = await self._transactions.fd_write(self._fd, data, self._offset)
+        result = await self._transactions.fd_write(self.fileno(), data, self._offset)
         self._offset += result
         return result
