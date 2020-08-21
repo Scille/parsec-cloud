@@ -7,8 +7,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PROJECT VERSION\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2020-08-10 13:34+0200\n"
-"PO-Revision-Date: 2020-08-10 13:35+0200\n"
+"POT-Creation-Date: 2020-08-14 06:36+0200\n"
+"PO-Revision-Date: 2020-08-14 06:38+0200\n"
 "Last-Translator: \n"
 "Language: en\n"
 "Language-Team: en <LL@li.org>\n"
@@ -238,39 +238,20 @@ msgstr "Internal error. Please restart the process."
 msgid "TEXT_GREET_USER_TITLE"
 msgstr "Greet a new user"
 
+msgid "TEXT_WORKSPACE_ROLE_NOT_SHARED"
+msgstr "Not shared"
+
 msgid "TEXT_WORKSPACE_SHARING_USER_IS_REVOKED"
 msgstr "This user is revoked."
 
-msgid "TEXT_WORKSPACE_SHARING_USER_NOT_FOUND"
-msgstr "The user was not found."
-
-msgid "TEXT_WORKSPACE_SHARING_ALREADY_SHARED_user"
-msgstr "This workspace is already shared with <b>{user}</b>."
-
-msgid "TEXT_WORKSPACE_SHARING_UNSHARE_TITLE"
-msgstr "Unshare the workspace"
-
-msgid "TEXT_WORKSPACE_SHARING_UNSHARE_INSTRUCTIONS_user"
-msgstr ""
-"Are you sure you want to remove <b>{user}</b> from this workspace? The "
-"user will not be able to see future updates made to this workspace."
-
-msgid "ACTION_WORKSPACE_UNSHARE_CONFIRM"
-msgstr "Unshare"
-
-msgid "TEXT_WORKSPACE_SHARING_SHARE_ERROR_workspace-user"
-msgstr "Cannot share the workspace <b>{workspace}</b> with <b>{user}</b>."
+msgid "TEXT_WORKSPACE_SHARING_OFFLINE"
+msgstr "The server is offline or you have no access to the internet."
 
 msgid "TEXT_WORKSPACE_SHARING_UNSHARE_ERROR_workspace-user"
 msgstr "Cannot remove <b>{user}</b> from the workspace <b>{workspace}</b>."
 
-msgid "TEXT_WORKSPACE_SHARING_UPDATE_ROLES_ERROR_errors"
-msgstr ""
-"There has been an error while trying to update the users' roles on this "
-"workspace. Some roles may not have been updated."
-
-msgid "TEXT_WORKSPACE_SHARING_UPDATE_ROLES_SUCCESS"
-msgstr "The users roles have been successfully updated."
+msgid "TEXT_WORKSPACE_SHARING_SHARE_ERROR_workspace-user"
+msgstr "Cannot share the workspace <b>{workspace}</b> with <b>{user}</b>."
 
 msgid "TEXT_WORKSPACE_SHARING_TITLE"
 msgstr "Share the workspace"
@@ -1627,7 +1608,9 @@ msgid "ACTION_SYSTRAY_QUIT_PARSEC"
 msgstr "Quit"
 
 msgid "TEXT_LOGIN_ENTER_PASSWORD_INSTRUCTIONS_organization-device-user-email"
-msgstr "Welcome back to PARSEC <b>{user}</b>! Please enter the password of your <b>{device}</b> device."
+msgstr ""
+"Welcome back to PARSEC <b>{user}</b>! Please enter the password of your "
+"<b>{device}</b> device."
 
 msgid "ACTION_LOGGING_IN"
 msgstr "Logging in..."
@@ -1694,6 +1677,9 @@ msgstr "Register a device"
 
 msgid "TEXT_SETTINGS_NEED_RESTART"
 msgstr "You will need to restart the application for the changes to take effect."
+
+msgid "ACTION_LOG_OUT"
+msgstr "Log Out"
 
 msgid "NOTIF_WARN_MOUNTPOINT_UNMOUNTED"
 msgstr ""
@@ -2135,7 +2121,8 @@ msgstr ""
 "To greet your new device, Parsec needs to be started on both devices.\n"
 "\n"
 "You will have to exchange codes between the two devices. This way, we can"
-" be certain that the process is secure.\n\n"
+" be certain that the process is secure.\n"
+"\n"
 "Once Parsec is installed on your other device and you've clicked on the "
 "invitation link, you can click <i>Start</i> to begin the process."
 
@@ -2190,9 +2177,6 @@ msgstr "Importing file"
 
 msgid "ACTION_BACK"
 msgstr "Back"
-
-msgid "ACTION_LOG_OUT"
-msgstr "Log Out"
 
 msgid "ACTION_PARSEC_DOWNLOAD_NEW_VERSION"
 msgstr "Download the new version"
@@ -2257,9 +2241,6 @@ msgstr "Use colors for workspaces"
 msgid "ACTION_SAVE"
 msgstr "Save"
 
-msgid "TEXT_WORKSPACE_SHARING_REMOVE_USER_TOOLTIP"
-msgstr "Remove the user from this workspace."
-
 msgid "TEXT_WORKSPACE_TIMESTAMPED_INSTRUCTIONS"
 msgstr "You will be able to see the workspace as it was at a given time."
 
@@ -2307,18 +2288,6 @@ msgstr "Remove this workspace."
 
 msgid "TEXT_WORKSPACE_OPEN_WORKSPACE_TOOLTIP"
 msgstr "Open the workspace in the file explorer."
-
-msgid "TEXT_WORKSPACE_SHARING_USER_SEARCH_PLACEHOLDER"
-msgstr "Find a user"
-
-msgid "ACTION_WORKSPACE_SHARING_SHARE"
-msgstr "Share with this user"
-
-msgid "TEXT_WORKSPACE_SHARING_CHECK_SHOW_REVOKED_USER"
-msgstr "Show users who have been revoked"
-
-msgid "ACTION_WORKSPACE_SHARING_UPDATE_ROLES"
-msgstr "Update the roles"
 
 msgid "TEXT_WORKSPACE_FILTER_WORKSPACES_PLACEHOLDER"
 msgstr "Filter the workspaces"

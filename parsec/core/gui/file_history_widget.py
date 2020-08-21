@@ -1,8 +1,7 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
 
-from PyQt5.QtCore import Qt, pyqtSignal
+from PyQt5.QtCore import pyqtSignal
 from PyQt5.QtWidgets import QWidget
-from PyQt5.QtSvg import QSvgWidget
 from parsec.core.gui.lang import translate as _, format_datetime
 from parsec.core.gui.custom_dialogs import show_error, GreyedDialog
 from parsec.core.gui.trio_thread import ThreadSafeQtSignal
@@ -71,17 +70,13 @@ class FileHistoryWidget(QWidget, Ui_FileHistoryWidget):
         self.button_load_more_entries.clicked.connect(self.load_more)
         self.workspace_fs = workspace_fs
         self.version_lister = workspace_fs.get_version_lister()
-        self.spinner = QSvgWidget(":/icons/images/icons/spinner.svg")
-        self.spinner.setFixedSize(100, 100)
-        self.spinner_layout.addWidget(self.spinner, Qt.AlignCenter)
-        self.spinner_layout.setAlignment(Qt.AlignCenter)
         self.set_loading_in_progress(False)
         self.reset_dialog(workspace_fs, self.version_lister, path)
 
     def set_loading_in_progress(self, in_progress: bool):
         self.loading_in_progress = in_progress
         self.area_list.setVisible(not in_progress)
-        self.spinner_frame.setVisible(in_progress)
+        self.spinner.setVisible(in_progress)
 
     def reset_dialog(self, workspace_fs, version_lister, path):
         if self.loading_in_progress:

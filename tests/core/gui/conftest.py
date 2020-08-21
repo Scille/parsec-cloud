@@ -455,7 +455,7 @@ def testing_main_window_cls(aqtbot, qt_thread_gateway):
 
             await aqtbot.wait_until(_password_widget_shown)
             password_w = l_w.widget.layout().itemAt(0).widget()
-            await aqtbot.key_clicks(password_w.line_edit_password, "P@ssw0rd")
+            await aqtbot.key_clicks(password_w.line_edit_password, password)
 
             signal = tabw.logged_in if not error else tabw.login_failed
             async with aqtbot.wait_signals([l_w.login_with_password_clicked, signal]):
