@@ -63,6 +63,7 @@ async def _do_creation_process(aqtbot, co_w):
     await aqtbot.mouse_click(co_w.button_validate, QtCore.Qt.LeftButton)
 
 
+@pytest.mark.flaky(reruns=1)
 @pytest.mark.gui
 @pytest.mark.trio
 @customize_fixtures(backend_spontaneous_organization_boostrap=True)

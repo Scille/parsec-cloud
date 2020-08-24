@@ -22,7 +22,6 @@ from parsec.core.gui.trio_thread import JobResultError, ThreadSafeQtSignal, QtTo
 from parsec.core.gui.desktop import get_default_device
 from parsec.core.gui.custom_dialogs import show_error, GreyedDialog, show_info
 from parsec.core.gui.lang import translate as _
-from parsec.core.gui.password_validation import get_password_strength
 from parsec.core.gui.ui.claim_user_widget import Ui_ClaimUserWidget
 from parsec.core.gui.ui.claim_user_code_exchange_widget import Ui_ClaimUserCodeExchangeWidget
 from parsec.core.gui.ui.claim_user_provide_info_widget import Ui_ClaimUserProvideInfoWidget

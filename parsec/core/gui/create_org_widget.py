@@ -20,7 +20,6 @@ from parsec.core.gui.trio_thread import JobResultError, ThreadSafeQtSignal
 from parsec.core.gui.desktop import get_default_device
 from parsec.core.gui.lang import translate as _
 from parsec.core.gui import validators
-from parsec.core.gui.password_validation import PasswordStrengthWidget, get_password_strength
 
 from parsec.core.gui.ui.create_org_widget import Ui_CreateOrgWidget
 from parsec.core.gui.ui.create_org_user_info_widget import Ui_CreateOrgUserInfoWidget
