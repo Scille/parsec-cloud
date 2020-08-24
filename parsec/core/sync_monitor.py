@@ -1,11 +1,13 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
 
-from parsec.core.core_events import CoreEvent
+import math
+from collections import defaultdict
+
 import trio
 from trio.hazmat import current_clock
-import math
 from structlog import get_logger
 
+from parsec.core.core_events import CoreEvent
 from parsec.core.types import EntryID, WorkspaceRole
 from parsec.core.fs import (
     FSBackendOfflineError,
@@ -73,6 +75,7 @@ class SyncContext:
         self._changes_loaded = False
         self._local_changes = {}
         self._remote_changes = set()
+        self._local_confinement_points = defaultdict(set)
 
     def _sync(self, entry_id: EntryID):
         raise NotImplementedError
@@ -139,9 +142,19 @@ class SyncContext:
 
     def set_local_change(self, entry_id: EntryID) -> bool:
         # Ignore local changes in read only mode
+        wake_up = False
         if self.read_only:
-            return
+            return wake_up
 
+        # Pop confined entries related to current entry_id
+        local_confinement_points = self._local_confinement_points.pop(entry_id, ())
+
+        # Tag all confined entries as potentially changed
+        for confined_entry in local_confinement_points:
+            if self.set_local_change(confined_entry):
+                wake_up = True
+
+        # Update local_changes dictionnary
         now = timestamp()
         try:
             new_due_time = self._local_changes[entry_id].changed(now)
@@ -150,17 +163,20 @@ class SyncContext:
             self._local_changes[entry_id] = local_change
             new_due_time = local_change.due_time
 
+        # Trigger a wake up if necessary
         if new_due_time <= self.due_time:
             self.due_time = new_due_time
-            return True
+            wake_up = True
 
-        else:
-            return False
+        return wake_up
 
     def set_remote_change(self, entry_id: EntryID) -> bool:
         self._remote_changes.add(entry_id)
         self.due_time = timestamp()
         return True
+
+    def set_confined_entry(self, entry_id: EntryID, cause_id: EntryID) -> None:
+        self._local_confinement_points[cause_id].add(entry_id)
 
     def _compute_due_time(self, now=None, min_due_time=None):
         if self._remote_changes:
@@ -358,6 +374,11 @@ async def monitor_sync(user_fs, event_bus, task_status):
                 ctx.due_time = timestamp()
                 _trigger_early_wakeup()
 
+    def _on_entry_confined(event, entry_id, cause_id, workspace_id):
+        ctx = ctxs.get(workspace_id)
+        if ctx is not None:
+            ctx.set_confined_entry(entry_id, cause_id)
+
     async def _ctx_action(ctx, meth):
         try:
             return await getattr(ctx, meth)()
@@ -379,6 +400,7 @@ async def monitor_sync(user_fs, event_bus, task_status):
         (CoreEvent.FS_ENTRY_UPDATED, _on_entry_updated),
         (CoreEvent.BACKEND_REALM_VLOBS_UPDATED, _on_realm_vlobs_updated),
         (CoreEvent.SHARING_UPDATED, _on_sharing_updated),
+        (CoreEvent.FS_ENTRY_CONFINED, _on_entry_confined),
     ):
         due_times = []
         # Init userfs sync context
