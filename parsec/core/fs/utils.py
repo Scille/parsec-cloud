@@ -50,7 +50,7 @@ def is_workspace_manifest(manifest: Union[BaseManifest, BaseLocalManifest]) -> b
     return isinstance(manifest, (WorkspaceManifest, LocalWorkspaceManifest))
 
 
-def is_folderish_manifest(manifest: BaseManifest) -> bool:
+def is_folderish_manifest(manifest: Union[BaseManifest, BaseLocalManifest]) -> bool:
     return isinstance(
         manifest,
         (

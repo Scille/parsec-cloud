@@ -3,7 +3,7 @@
 import attr
 import trio
 from collections import defaultdict
-from typing import List, Dict, Tuple, AsyncIterator, cast
+from typing import List, Dict, Tuple, AsyncIterator, cast, Pattern
 from pendulum import Pendulum, now as pendulum_now
 
 from parsec.api.data import BaseManifest as BaseRemoteManifest
@@ -603,6 +603,43 @@ class WorkspaceFS:
             FSError
         """
         await self.sync_by_id(self.workspace_id, remote_changed=remote_changed, recursive=True)
+
+    # Apply "prevent sync" pattern
+
+    async def _recursive_apply_prevent_sync_pattern(
+        self, entry_id: EntryID, prevent_sync_pattern: Pattern
+    ):
+        # Load manifest
+        try:
+            manifest = await self.local_storage.get_manifest(entry_id)
+        # Not stored locally, nothing to do
+        except FSLocalMissError:
+            return
+
+        # A file manifest, nothing to do
+        if is_file_manifest(manifest):
+            return
+
+        # Apply "prevent sync" pattern (idempotent)
+        await self.transactions.apply_prevent_sync_pattern(entry_id, prevent_sync_pattern)
+
+        # Synchronize children
+        for name, child_entry_id in manifest.children.items():
+            await self._recursive_apply_prevent_sync_pattern(child_entry_id, prevent_sync_pattern)
+
+    async def apply_prevent_sync_pattern(self, pattern: Pattern):
+        # Fully apply "prevent sync" pattern
+        await self._recursive_apply_prevent_sync_pattern(self.workspace_id, pattern)
+        # Acknowledge "prevent sync" pattern
+        await self.local_storage.mark_prevent_sync_pattern_fully_applied(pattern)
+
+    async def set_prevent_sync_pattern(self, pattern: Pattern):
+        await self.local_storage.set_prevent_sync_pattern(pattern)
+
+    async def set_and_apply_prevent_sync_pattern(self, pattern: Pattern):
+        await self.set_prevent_sync_pattern(pattern)
+        if not self.local_storage.get_prevent_sync_pattern_fully_applied():
+            await self.apply_prevent_sync_pattern(self.local_storage.get_prevent_sync_pattern())
 
     # Debugging helper
 
