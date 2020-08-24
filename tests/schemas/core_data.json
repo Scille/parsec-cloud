@@ -361,10 +361,30 @@
                 "required": true,
                 "type": "FrozenMap"
             },
+            "local_confinement_points": {
+                "allow_none": false,
+                "container_type": {
+                    "allow_none": false,
+                    "required": true,
+                    "type": "EntryIDField"
+                },
+                "required": false,
+                "type": "FrozenSet"
+            },
             "need_sync": {
                 "allow_none": false,
                 "required": true,
                 "type": "Boolean"
+            },
+            "remote_confinement_points": {
+                "allow_none": false,
+                "container_type": {
+                    "allow_none": false,
+                    "required": true,
+                    "type": "EntryIDField"
+                },
+                "required": false,
+                "type": "FrozenSet"
             },
             "type": {
                 "allow_none": false,
@@ -631,10 +651,30 @@
                 "required": true,
                 "type": "FrozenMap"
             },
+            "local_confinement_points": {
+                "allow_none": false,
+                "container_type": {
+                    "allow_none": false,
+                    "required": true,
+                    "type": "EntryIDField"
+                },
+                "required": false,
+                "type": "FrozenSet"
+            },
             "need_sync": {
                 "allow_none": false,
                 "required": true,
                 "type": "Boolean"
+            },
+            "remote_confinement_points": {
+                "allow_none": false,
+                "container_type": {
+                    "allow_none": false,
+                    "required": true,
+                    "type": "EntryIDField"
+                },
+                "required": false,
+                "type": "FrozenSet"
             },
             "type": {
                 "allow_none": false,
