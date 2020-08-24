@@ -145,6 +145,7 @@ async def fuse_mountpoint_runner(
                         local=True, # Might have some unintended side effects, see https://github.com/osxfuse/osxfuse/wiki/Mount-options
                         volname=workspace_fs.get_workspace_name(),
                         volicon=Path(resources.__file__).absolute().parent / "parsec.icns",
+                        noappledouble=True,
                         encoding=encoding,
                         **config,
                     )
@@ -164,10 +165,7 @@ async def fuse_mountpoint_runner(
                     ) from exc
 
                 finally:
-                    print("finally")
                     fuse_thread_stopped.set()
-                    print("/finally")
-                    print(workspace_fs.get_workspace_name())
 
 
 
