@@ -371,7 +371,7 @@ setup(
         "parsec.backend.postgresql.migrations": ["*.sql"],
         "parsec.backend.templates": ["*"],
         "parsec.backend.static": ["*"],
-        "parsec.core.resources": ["*.ico"],
+        "parsec.core.resources": ["*.ico", "*.ignore"],
     },
     entry_points={
         "console_scripts": ["parsec = parsec.cli:cli"],
