@@ -71,18 +71,12 @@ class TaskStatus:
         self._cancel_scope.cancel()
 
     async def join(self):
-        print("\t\t\tjoin 1")
         await self._finished_event.wait()
-        print("\t\t\tjoin 2")
         await trio.sleep(0)  # Checkpoint
-        print("\t\t\tjoin 3")
 
     async def cancel_and_join(self):
-        print("\t\tcancel")
         self.cancel()
-        print("\t\tjoin")
         await self.join()
-        print("\t\tdone")
 
     # Class methods
 
