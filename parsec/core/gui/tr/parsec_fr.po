@@ -348,6 +348,9 @@ msgstr "Seul le propriétaire d'un espace de travail peut le rechiffrer."
 msgid "TEXT_WORKSPACE_CURRENTLY_REENCRYPTING_TOOLTIP"
 msgstr "En cours de rechiffrement"
 
+msgid "TEXT_WORKPACE_REENCRYPT_OFFLINE_ERROR"
+msgstr "Echec lors du rechiffrement, impossible de joindre le serveur."
+
 msgid "TEXT_WORKSPACE_IS_PRIVATE"
 msgstr "privé"
 

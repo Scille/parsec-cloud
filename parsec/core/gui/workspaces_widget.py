@@ -545,7 +545,14 @@ class WorkspacesWidget(QWidget, Ui_WorkspacesWidget):
             return
 
         async def _reencrypt(on_progress, workspace_id):
-            job = await self.core.user_fs.workspace_start_reencryption(workspace_id)
+            try:
+                job = await self.core.user_fs.workspace_start_reencryption(workspace_id)
+            except FSBackendOfflineError as exc:
+                raise JobResultError(ret=workspace_id, status="offline-backend", origin=exc)
+            # FSError
+            # FSBackendOfflineError
+            # FSWorkspaceNoAccess
+            # FSWorkspaceNotFoundError
             while True:
                 total, done = await job.do_one_batch(size=1)
                 on_progress.emit(workspace_id, total, done)
@@ -570,8 +577,11 @@ class WorkspacesWidget(QWidget, Ui_WorkspacesWidget):
         self.reencrypting.remove(workspace_id)
 
     def _on_workspace_reencryption_error(self, job):
-        workspace_id = job.ret
-        self.reencrypting.remove(workspace_id)
+        if job.status == "offline-backend":
+            err_msg = _("TEXT_WORKPACE_REENCRYPT_OFFLINE_ERROR")
+        else:
+            err_msg = job.status
+        show_error(self, err_msg, exception=job.exc)
 
     def get_workspace_button(self, workspace_id, timestamp):
         for idx in range(self.layout_workspaces.count()):
