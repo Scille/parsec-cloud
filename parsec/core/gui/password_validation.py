@@ -1,11 +1,15 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
 
 from zxcvbn import zxcvbn
+
+from PyQt5.QtCore import pyqtSignal
+from PyQt5.QtGui import QValidator
 from PyQt5.QtWidgets import QWidget
 
 from parsec.core.gui.lang import translate as _
 
 from parsec.core.gui.ui.password_strength_widget import Ui_PasswordStrengthWidget
+from parsec.core.gui.ui.password_choice_widget import Ui_PasswordChoiceWidget
 
 
 PASSWORD_CSS = {
@@ -54,3 +58,69 @@ class PasswordStrengthWidget(QWidget, Ui_PasswordStrengthWidget):
         )
         self.label.setStyleSheet(PASSWORD_CSS[score])
         self.show()
+
+
+class PasswordChoiceWidget(QWidget, Ui_PasswordChoiceWidget):
+    info_changed = pyqtSignal()
+
+    def __init__(self, parent=None):
+        super().__init__(parent)
+        self.setupUi(self)
+        pwd_str_widget = PasswordStrengthWidget()
+        self.layout_password_strength.addWidget(pwd_str_widget)
+        self.line_edit_password.textChanged.connect(pwd_str_widget.on_password_change)
+        self.line_edit_password.textChanged.connect(self._check_match)
+        self.line_edit_password_check.textChanged.connect(self._check_match)
+        self.line_edit_password_check.editingFinished.connect(self._on_editing_finished)
+        self.label_mismatch.hide()
+
+    def _check_match(self, text=""):
+        password = self.line_edit_password.text()
+        password_check = self.line_edit_password_check.text()
+        if (
+            password
+            and password_check
+            and password == password_check
+            and get_password_strength(password) > 0
+        ):
+            self.line_edit_password_check.setProperty("validity", QValidator.Acceptable)
+            self.line_edit_password_check.setToolTip(_("TEXT_PASSWORD_CHECK_MATCH"))
+            self.line_edit_password_check.style().polish(self.line_edit_password_check)
+            self.label_mismatch.hide()
+        else:
+            if password and password_check and password != password_check:
+                self.line_edit_password_check.setProperty("validity", QValidator.Intermediate)
+                self.line_edit_password_check.setToolTip(_("TEXT_PASSWORD_CHECK_NO_MATCH"))
+                self.line_edit_password_check.style().polish(self.line_edit_password_check)
+                self.label_mismatch.show()
+            else:
+                self.line_edit_password_check.setProperty("validity", QValidator.Acceptable)
+                self.line_edit_password_check.setToolTip(_("TEXT_PASSWORD_CHECK_MATCH"))
+                self.line_edit_password_check.style().polish(self.line_edit_password_check)
+                self.label_mismatch.hide()
+        self.info_changed.emit()
+
+    def _on_editing_finished(self):
+        password = self.line_edit_password.text()
+        password_check = self.line_edit_password_check.text()
+        if password and password_check and password != password_check:
+            self.line_edit_password_check.setProperty("validity", QValidator.Invalid)
+            self.line_edit_password_check.style().polish(self.line_edit_password_check)
+            self.label_mismatch.show()
+
+    @property
+    def password(self):
+        return self.line_edit_password.text()
+
+    def is_valid(self):
+        password = self.line_edit_password.text()
+        password_check = self.line_edit_password_check.text()
+        if (
+            password
+            and password_check
+            and password == password_check
+            and get_password_strength(password) > 0
+        ):
+            return True
+        else:
+            return False

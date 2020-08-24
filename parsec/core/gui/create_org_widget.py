@@ -55,17 +55,18 @@ class CreateOrgUserInfoWidget(QWidget, Ui_CreateOrgUserInfoWidget):
     def __init__(self):
         super().__init__()
         self.setupUi(self)
-        self.line_edit_user_email.textChanged.connect(self.check_infos)
+        self.line_edit_user_email.validity_changed.connect(self.check_infos)
+        self.line_edit_user_email.setValidator(validators.EmailValidator())
         self.line_edit_user_full_name.textChanged.connect(self.check_infos)
-        self.line_edit_org_name.textChanged.connect(self.check_infos)
+        self.line_edit_org_name.validity_changed.connect(self.check_infos)
         self.line_edit_org_name.setValidator(validators.OrganizationIDValidator())
         self.check_accept_contract.clicked.connect(self.check_infos)
 
-    def check_infos(self):
+    def check_infos(self, _=None):
         if (
-            self.line_edit_user_email.text()
+            self.line_edit_user_email.is_input_valid()
             and self.line_edit_user_full_name.text()
-            and self.line_edit_org_name.text()
+            and self.line_edit_org_name.is_input_valid()
             and self.check_accept_contract.isChecked()
         ):
             self.valid_info_entered.emit()
@@ -80,26 +81,20 @@ class CreateOrgDeviceInfoWidget(QWidget, Ui_CreateOrgDeviceInfoWidget):
     def __init__(self):
         super().__init__()
         self.setupUi(self)
-        pwd_str_widget = PasswordStrengthWidget()
-        self.layout_password_strength.addWidget(pwd_str_widget)
-        self.line_edit_password.textChanged.connect(pwd_str_widget.on_password_change)
-        self.line_edit_password.textChanged.connect(self.check_infos)
-        self.line_edit_password_check.textChanged.connect(self.check_infos)
+        self.widget_password.info_changed.connect(self.check_infos)
         self.line_edit_device.setText(get_default_device())
-        self.line_edit_device.textChanged.connect(self.check_infos)
+        self.line_edit_device.validity_changed.connect(self.check_infos)
         self.line_edit_device.setValidator(validators.DeviceNameValidator())
 
-    def check_infos(self, _=""):
-        if (
-            len(self.line_edit_device.text())
-            and len(self.line_edit_password.text())
-            and get_password_strength(self.line_edit_password.text()) > 0
-            and len(self.line_edit_password_check.text())
-            and self.line_edit_password.text() == self.line_edit_password_check.text()
-        ):
+    def check_infos(self, _=None):
+        if self.line_edit_device.is_input_valid() and self.widget_password.is_valid():
             self.valid_info_entered.emit()
         else:
             self.invalid_info_entered.emit()
+
+    @property
+    def password(self):
+        return self.widget_password.password
 
 
 class CreateOrgWidget(QWidget, Ui_CreateOrgWidget):
@@ -226,7 +221,7 @@ class CreateOrgWidget(QWidget, Ui_CreateOrgWidget):
             config=self.config,
             human_handle=human_handle,
             device_name=device_name,
-            password=self.device_widget.line_edit_password.text(),
+            password=self.device_widget.password,
             backend_addr=backend_addr,
         )
         self.button_validate.setEnabled(False)

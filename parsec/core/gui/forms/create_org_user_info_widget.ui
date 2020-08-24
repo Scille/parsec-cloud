@@ -82,7 +82,7 @@
       </widget>
      </item>
      <item>
-      <widget class="QLineEdit" name="line_edit_user_email">
+      <widget class="ValidatedLineEdit" name="line_edit_user_email">
        <property name="placeholderText">
         <string>TEXT_LABEL_USER_EMAIL_PLACEHOLDER</string>
        </property>
@@ -110,7 +110,7 @@
       </widget>
      </item>
      <item>
-      <widget class="QLineEdit" name="line_edit_org_name"/>
+      <widget class="ValidatedLineEdit" name="line_edit_org_name"/>
      </item>
      <item>
       <widget class="QLabel" name="label_10">
@@ -172,6 +172,13 @@
    </item>
   </layout>
  </widget>
+ <customwidgets>
+  <customwidget>
+   <class>ValidatedLineEdit</class>
+   <extends>QLineEdit</extends>
+   <header>parsec.core.gui.input_widgets</header>
+  </customwidget>
+ </customwidgets>
  <resources/>
  <connections/>
 </ui>

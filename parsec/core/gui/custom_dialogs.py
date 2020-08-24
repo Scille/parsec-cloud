@@ -140,7 +140,6 @@ class TextInputWidget(QWidget, Ui_InputWidget):
         return self.line_edit_text.text()
 
     def _on_validity_changed(self, validity):
-        print(validity)
         self.button_ok.setEnabled(validity == QValidator.Acceptable)
 
     def keyPressEvent(self, event):

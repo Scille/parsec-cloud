@@ -64,7 +64,8 @@ FORMS += forms/main_window.ui \
     forms/login_accounts_widget.ui \
     forms/login_password_input_widget.ui \
     forms/login_no_devices_widget.ui \
-    forms/spinner_widget.ui
+    forms/spinner_widget.ui \
+    forms/password_choice_widget.ui
 
 RESOURCES += rc/resources.qrc \
     forms/rc/resources.qrc

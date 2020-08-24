@@ -6,6 +6,7 @@ from PyQt5.QtGui import QValidator, QIntValidator, QRegularExpressionValidator
 from parsec.api.protocol import OrganizationID, UserID, DeviceName, DeviceID
 from parsec.core.types import (
     BackendAddr,
+    BackendActionAddr,
     BackendOrganizationAddr,
     BackendOrganizationBootstrapAddr,
     BackendOrganizationClaimUserAddr,
@@ -86,6 +87,17 @@ class BackendOrganizationClaimDeviceAddrValidator(QValidator):
             return QValidator.Intermediate, string, pos
 
 
+class BackendActionAddrValidator(QValidator):
+    def validate(self, string, pos):
+        try:
+            if len(string) == 0:
+                return QValidator.Intermediate, string, pos
+            BackendActionAddr.from_url(string)
+            return QValidator.Acceptable, string, pos
+        except ValueError:
+            return QValidator.Intermediate, string, pos
+
+
 class UserIDValidator(QValidator):
     def validate(self, string, pos):
         try:
@@ -122,7 +134,6 @@ class DeviceIDValidator(QValidator):
 class EmailValidator(QRegularExpressionValidator):
     def __init__(self):
         super().__init__(QRegularExpression(r"^[a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+$"))
-        print(QValidator.Intermediate, QValidator.Acceptable, QValidator.Invalid)
 
 
 class WorkspaceNameValidator(QValidator):
@@ -137,4 +148,4 @@ class WorkspaceNameValidator(QValidator):
 
 class NotEmptyValidator(QValidator):
     def validate(self, string, pos):
-        return QValidator.Acceptable if len(string) else QValidator.Invalid
+        return QValidator.Acceptable if len(string) else QValidator.Invalid, string, pos

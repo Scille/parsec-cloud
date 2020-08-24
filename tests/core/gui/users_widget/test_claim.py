@@ -284,8 +284,8 @@ def ClaimUserTestBed(
 
             # Fill password and we're good to go ;-)
 
-            await aqtbot.key_clicks(cuf_w.line_edit_password, self.password)
-            await aqtbot.key_clicks(cuf_w.line_edit_password_check, self.password)
+            await aqtbot.key_clicks(cuf_w.widget_password.line_edit_password, self.password)
+            await aqtbot.key_clicks(cuf_w.widget_password.line_edit_password_check, self.password)
             await aqtbot.mouse_click(cuf_w.button_finalize, QtCore.Qt.LeftButton)
 
             def _claim_done():
