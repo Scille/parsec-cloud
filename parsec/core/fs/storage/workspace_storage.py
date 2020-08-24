@@ -2,7 +2,7 @@
 
 from pathlib import Path
 from collections import defaultdict
-from typing import Dict, Tuple, Set, Optional, Union, AsyncIterator, NoReturn
+from typing import Dict, Tuple, Set, Optional, Union, AsyncIterator, NoReturn, Pattern
 
 import trio
 from trio import hazmat
@@ -63,6 +63,11 @@ class BaseWorkspaceStorage:
         # Manifest and block storage
         self.block_storage = block_storage
         self.chunk_storage = chunk_storage
+
+        # Pattern attributes
+        # Set by `_load_prevent_sync_pattern` in WorkspaceStorage.run()
+        self._prevent_sync_pattern: Pattern
+        self._prevent_sync_pattern_fully_applied: bool
 
     def _get_next_fd(self) -> FileDescriptor:
         self.fd_counter += 1
@@ -152,6 +157,14 @@ class BaseWorkspaceStorage:
             if not miss_ok:
                 raise
 
+    # "Prevent sync" pattern interface
+
+    def get_prevent_sync_pattern(self) -> Pattern:
+        return self._prevent_sync_pattern
+
+    def get_prevent_sync_pattern_fully_applied(self) -> bool:
+        return self._prevent_sync_pattern_fully_applied
+
 
 class WorkspaceStorage(BaseWorkspaceStorage):
     """Manage the access to the local storage.
@@ -213,7 +226,7 @@ class WorkspaceStorage(BaseWorkspaceStorage):
                         async with ChunkStorage.run(device, data_localdb) as chunk_storage:
 
                             # Instanciate workspace storage
-                            yield cls(
+                            instance = cls(
                                 device,
                                 path,
                                 workspace_id,
@@ -223,6 +236,12 @@ class WorkspaceStorage(BaseWorkspaceStorage):
                                 chunk_storage=chunk_storage,
                                 manifest_storage=manifest_storage,
                             )
+
+                            # Load "prevent sync" pattern
+                            await instance._load_prevent_sync_pattern()
+
+                            # Yield point
+                            yield instance
 
     # Helpers
 
@@ -273,6 +292,32 @@ class WorkspaceStorage(BaseWorkspaceStorage):
         self._check_lock_status(entry_id)
         await self.manifest_storage.clear_manifest(entry_id)
 
+    # "Prevent sync" pattern interface
+
+    async def _load_prevent_sync_pattern(self) -> None:
+        self._prevent_sync_pattern, self._prevent_sync_pattern_fully_applied = (
+            await self.manifest_storage.get_prevent_sync_pattern()
+        )
+
+    async def set_prevent_sync_pattern(self, pattern: Pattern) -> None:
+        """Set the "prevent sync" pattern for the corresponding workspace
+
+        This operation is idempotent,
+        i.e it does not reset the `fully_applied` flag if the pattern hasn't changed.
+        """
+        await self.manifest_storage.set_prevent_sync_pattern(pattern)
+        await self._load_prevent_sync_pattern()
+
+    async def mark_prevent_sync_pattern_fully_applied(self, pattern: Pattern):
+        """Mark the provided pattern as fully applied.
+
+        This is meant to be called after one made sure that all the manifests in the
+        workspace are compliant with the new pattern. The applied pattern is provided
+        as an argument in order to avoid concurrency issues.
+        """
+        await self.manifest_storage.mark_prevent_sync_pattern_fully_applied(pattern)
+        await self._load_prevent_sync_pattern()
+
     # Vacuum
 
     async def run_vacuum(self) -> None:
@@ -307,6 +352,11 @@ class WorkspaceStorageTimestamped(BaseWorkspaceStorage):
         self._cache: Dict[EntryID, BaseLocalManifest] = {}
         self.timestamp = timestamp
         self.manifest_storage = None
+
+        self._prevent_sync_pattern = workspace_storage._prevent_sync_pattern
+        self._prevent_sync_pattern_fully_applied = (
+            workspace_storage._prevent_sync_pattern_fully_applied
+        )
 
     async def set_chunk(self, chunk_id: ChunkID, block: bytes) -> NoReturn:
         self._throw_permission_error()
