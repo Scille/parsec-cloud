@@ -142,19 +142,18 @@ async def fuse_mountpoint_runner(
                         fuse_operations,
                         str(mountpoint_path.absolute()),
                         foreground=True,
-                        auto_unmount=False,
                         local=True, # Might have some unintended side effects, see https://github.com/osxfuse/osxfuse/wiki/Mount-options
-                        daemon_timeout=1,
                         volname=workspace_fs.get_workspace_name(),
                         volicon=Path(resources.__file__).absolute().parent / "parsec.icns",
+                        noappledouble=True,
                         encoding=encoding,
                         **config,
                     )
                     # osxfuse-specific options :
-                    # - daemon_timeout : temp fix to reduce unmount time
                     # - local : allows mountpoint to show up correctly in finder (+ desktop)
-                    # - volname : specify volume name (default OSXFUSE [...])
-                    # - volicon : specify volume icon (default macOS drive icon)
+                    # - volname : specify volume name (default is OSXFUSE [...])
+                    # - volicon : specify volume icon (default is macOS drive icon)
+                    # - noappledouble : disables creation of "._*" files
 
                 except Exception as exc:
                     try:
@@ -166,10 +165,7 @@ async def fuse_mountpoint_runner(
                     ) from exc
 
                 finally:
-                    print("finally")
                     fuse_thread_stopped.set()
-                    print("/finally")
-                    print(workspace_fs.get_workspace_name())
 
 
 
