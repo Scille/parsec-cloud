@@ -1550,6 +1550,77 @@ msgstr "Répertoire parent"
 msgid "TEXT_FILE_TREE_PARENT_WORKSPACE"
 msgstr "Liste des espaces de travail"
 
+msgid "TEXT_FILE_ITEM_IS_CONFINED_TOOLTIP"
+msgstr "Ce fichier ne sera pas synchronisé."
+
+msgid "TEXT_FILE_ITEM_IS_SYNCED_TOOLTIP"
+msgstr "Ce fichier est synchronisé."
+
+msgid "TEXT_FILE_ITEM_IS_NOT_SYNCED_TOOLTIP"
+msgstr "Ce fichier n'est pas encore synchronisé."
+
+msgid "TEXT_BOOTSTRAP_ORG_INSTRUCTIONS_url-organization"
+msgstr ""
+"Vous allez démarrer l'organisation <b>{organization}</b>. Vous serez le "
+"premier administrateur de l'organisation.<br /><br />\n"
+"\n"
+"Pour continuer, veuillez choisir un nom d'utilisateur, un nom d'appareil,"
+" ainsi qu'un mot de passe."
+
+msgid "TEXT_BOOTSTRAP_ORG_INVALID_URL"
+msgstr "L'URL n'est pas valide pour démarrer l'organisation."
+
+msgid "TEXT_BOOTSTRAP_ORG_INVITE_NOT_FOUND"
+msgstr "Aucune organisation ne peut être démarrée avec ce lien."
+
+msgid "TEXT_BOOTSTRAP_ORG_ALREADY_BOOTSTRAPPED"
+msgstr "Cette organisation a déjà été démarrée."
+
+msgid "TEXT_BOOTSTRAP_ORG_USER_EXISTS"
+msgstr "Ce nom d'utilisateur existe déjà au sein de cette organisation."
+
+msgid "TEXT_BOOTSTRAP_ORG_PASSWORD_MISMATCH"
+msgstr "Le mot de passe et la confirmation ne correspondent pas."
+
+msgid "TEXT_BOOTSTRAP_ORG_PASSWORD_COMPLEXITY_TOO_LOW"
+msgstr "Le mot de passe n'est pas assez complete."
+
+msgid "TEXT_BOOTSTRAP_ORG_BAD_DEVICE_NAME"
+msgstr "Le nom d'appareil n'est pas valide."
+
+msgid "TEXT_BOOTSTRAP_ORG_BAD_API_VERSION"
+msgstr ""
+"Votre application n'est pas compatible avec ce serveur. Veuillez la "
+"mettre à jour."
+
+msgid "TEXT_BOOTSTRAP_ORG_BACKEND_REFUSAL"
+msgstr "Impossible de démarrer l'organisation."
+
+msgid "TEXT_BOOTSTRAP_ORG_BACKEND_OFFLINE"
+msgstr "Le serveur est hors-ligne ou vous n'avez pas de connexion internet."
+
+msgid "TEXT_BOOTSTRAP_ORG_UNKNOWN_FAILURE"
+msgstr "Impossible de démarrer l'organisation."
+
+msgid "TEXT_BOOTSTRAP_ORG_SUCCESS_organization"
+msgstr ""
+"Votre organisation <b>{organization}</b> a été créée !<br />\n"
+"<br />\n"
+"Vous allez maintenant être automatiquement connecté.<br />\n"
+"<br />\n"
+"Pour une meilleure prise en main du logiciel, vous pouvez vous référer au"
+" <a href=\"https://docs.parsec.cloud/fr/stable/\" title=\"Guide "
+"d'utilisation\">guide d'utilisation PARSEC."
+
+msgid "ACTION_CONTINUE"
+msgstr "Continuer"
+
+msgid "TEXT_BOOTSTRAP_ORG_INVALID_EMAIL"
+msgstr "L'email n'est pas valide."
+
+msgid "TEXT_BOOTSTRAP_ORG_TITLE"
+msgstr "Démarrer l'organisation"
+
 msgid "ACTION_OK"
 msgstr "OK"
 
@@ -2293,6 +2364,12 @@ msgstr "Utiliser des couleurs pour les espaces de travail"
 
 msgid "ACTION_SAVE"
 msgstr "Sauvegarder"
+
+msgid "TEXT_SETTINGS_CHECK_SHOW_CONFINED_FILES"
+msgstr "Afficher les fichiers exclus de la synchronisation"
+
+msgid "TEXT_WORKSPACE_SHARING_REMOVE_USER_TOOLTIP"
+msgstr "Retirer l'utilisateur de cet espace de travail."
 
 msgid "TEXT_WORKSPACE_TIMESTAMPED_INSTRUCTIONS"
 msgstr ""
