@@ -281,6 +281,7 @@ def gui_factory(
             gui_last_version=parsec_version,
             mountpoint_enabled=True,
             gui_language="en",
+            gui_show_confined=False,
         )
         event_bus = event_bus or EventBus()
         # Language config rely on global var, must reset it for each test !

@@ -29,6 +29,7 @@ async def test_path_info(alice_workspace):
         "need_sync": False,
         "type": "folder",
         "updated": ANY,
+        "confinement_point": None,
     }
 
     info = await alice_workspace.path_info("/foo")
@@ -41,6 +42,7 @@ async def test_path_info(alice_workspace):
         "need_sync": False,
         "type": "folder",
         "updated": ANY,
+        "confinement_point": None,
     }
 
     info = await alice_workspace.path_info("/foo/bar")
@@ -53,6 +55,7 @@ async def test_path_info(alice_workspace):
         "need_sync": False,
         "type": "file",
         "updated": ANY,
+        "confinement_point": None,
     }
 
 
@@ -363,6 +366,8 @@ async def test_dump(alice_workspace):
                 "need_sync": False,
                 "parent": ANY,
                 "updated": ANY,
+                "local_confinement_points": frozenset(),
+                "remote_confinement_points": frozenset(),
             }
         },
         "created": ANY,
@@ -370,12 +375,14 @@ async def test_dump(alice_workspace):
         "is_placeholder": False,
         "need_sync": False,
         "updated": ANY,
+        "local_confinement_points": frozenset(),
+        "remote_confinement_points": frozenset(),
     }
 
 
 @pytest.mark.trio
 async def test_path_info_remote_loader_exceptions(monkeypatch, alice_workspace, alice):
-    manifest = await alice_workspace.transactions._get_manifest_from_path(FsPath("/foo/bar"))
+    manifest, _ = await alice_workspace.transactions._get_manifest_from_path(FsPath("/foo/bar"))
     async with alice_workspace.local_storage.lock_entry_id(manifest.id):
         await alice_workspace.local_storage.clear_manifest(manifest.id)
 

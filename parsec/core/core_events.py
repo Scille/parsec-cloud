@@ -18,6 +18,7 @@ class CoreEvent(Enum):
     FS_ENTRY_SYNCED = "fs.entry.synced"
     FS_ENTRY_DOWNSYNCED = "fs.entry.downsynced"
     FS_ENTRY_MINIMAL_SYNCED = "fs.entry.minimal_synced"
+    FS_ENTRY_CONFINED = "fs.entry.confined"
     FS_ENTRY_UPDATED = "fs.entry.updated"
     FS_ENTRY_FILE_CONFLICT_RESOLVED = "fs.entry.file_conflict_resolved"
     FS_ENTRY_FILE_UPDATE_CONFLICTED = "fs.entry.file_update_conflicted"

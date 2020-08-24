@@ -1,7 +1,7 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
 
 from parsec.core.core_events import CoreEvent
-from typing import Tuple, List, Callable, Dict
+from typing import Tuple, List, Callable, Dict, Optional, cast
 
 from collections import defaultdict
 from async_generator import asynccontextmanager
@@ -12,7 +12,13 @@ from parsec.core.types import FileDescriptor, EntryID, LocalDevice
 from parsec.core.fs.remote_loader import RemoteLoader
 from parsec.core.fs.storage import WorkspaceStorage
 from parsec.core.fs.exceptions import FSLocalMissError, FSInvalidFileDescriptor, FSEndOfFileError
-from parsec.core.types import Chunk, LocalFileManifest
+from parsec.core.fs.utils import is_workspace_manifest
+from parsec.core.types import (
+    Chunk,
+    LocalFileManifest,
+    LocalFolderishManifests,
+    LocalNonRootManifests,
+)
 from parsec.core.fs.workspacefs.file_operations import (
     prepare_read,
     prepare_write,
@@ -134,12 +140,52 @@ class FileTransactions:
         async with self.local_storage.lock_manifest(manifest.id):
             yield await self.local_storage.load_file_descriptor(fd)
 
+    # Confinement helper
+
+    async def _get_confinement_point(self, entry_id: EntryID) -> Optional[EntryID]:
+        # Load the corresponding manifest
+        try:
+            current_manifest = await self.local_storage.get_manifest(entry_id)
+        # A missing entry is never confined
+        except FSLocalMissError:
+            return None
+
+        # Walk the parent chain until the workspace manifest is reached
+        while not is_workspace_manifest(current_manifest):
+            current_manifest = cast(LocalNonRootManifests, current_manifest)
+
+            try:
+                parent_manifest = await self.local_storage.get_manifest(current_manifest.parent)
+            # In the very unlikely case where the parent manifest is not present,
+            # simply consider the entry to be not confined as having false negative
+            # on confinement detection is not a big deal.
+            except FSLocalMissError:
+                return None
+
+            # A parent manifest is necessarely a local folder/workspace manifest
+            parent_manifest = cast(LocalFolderishManifests, parent_manifest)
+
+            # The entry is not confined
+            if current_manifest.id in parent_manifest.local_confinement_points:
+                return parent_manifest.id
+
+            # Walk down
+            current_manifest = parent_manifest
+
+        # The entry is not confined
+        return None
+
     # Atomic transactions
 
-    async def fd_info(self, fd: FileDescriptor, path) -> dict:
-
+    async def fd_size(self, fd: FileDescriptor, path) -> int:
         manifest = await self.local_storage.load_file_descriptor(fd)
-        return manifest.to_stats()
+        return manifest.size
+
+    async def fd_info(self, fd: FileDescriptor, path) -> dict:
+        manifest = await self.local_storage.load_file_descriptor(fd)
+        stats = manifest.to_stats()
+        stats["confinement_point"] = await self._get_confinement_point(manifest.id)
+        return stats
 
     async def fd_close(self, fd: FileDescriptor) -> None:
         # Fetch and lock

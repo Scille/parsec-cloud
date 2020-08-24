@@ -100,6 +100,7 @@ async def generate_gui_config(backend_address):
         "gui_tray_enabled": False,
         "gui_last_version": PARSEC_VERSION,
         "preferred_org_creation_backend_addr": backend_address.to_url(),
+        "gui_show_confined": True,
     }
     await config_file.write_text(json.dumps(config, indent=4))
 

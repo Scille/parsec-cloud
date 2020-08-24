@@ -54,8 +54,8 @@ class CoreConfig:
     data_base_dir: Path
     cache_base_dir: Path
     mountpoint_base_dir: Path
+    prevent_sync_pattern_path: Optional[Path] = None  # Use `default_pattern.ignore` by default
     preferred_org_creation_backend_addr: BackendAddr
-
     debug: bool = False
 
     backend_max_cooldown: int = 30
@@ -82,6 +82,7 @@ class CoreConfig:
     gui_confirmation_before_close: bool = True
     gui_workspace_color: bool = False
     gui_allow_multiple_instances: bool = False
+    gui_show_confined: bool = False
 
     ipc_socket_file: Path = None
     ipc_win32_mutex_name: str = "parsec-cloud"
@@ -95,6 +96,7 @@ def config_factory(
     data_base_dir: Path = None,
     cache_base_dir: Path = None,
     mountpoint_base_dir: Path = None,
+    prevent_sync_pattern_path: Optional[Path] = None,
     mountpoint_enabled: bool = False,
     disabled_workspaces: FrozenSet[EntryID] = frozenset(),
     backend_max_cooldown: int = 30,
@@ -112,6 +114,7 @@ def config_factory(
     gui_workspace_color: bool = False,
     gui_allow_multiple_instances: bool = False,
     preferred_org_creation_backend_addr: Optional[BackendAddr] = None,
+    gui_show_confined: bool = False,
     environ: dict = {},
     **_,
 ) -> CoreConfig:
@@ -132,6 +135,7 @@ def config_factory(
         data_base_dir=data_base_dir,
         cache_base_dir=cache_base_dir or get_default_cache_base_dir(environ),
         mountpoint_base_dir=get_default_mountpoint_base_dir(environ),
+        prevent_sync_pattern_path=prevent_sync_pattern_path,
         mountpoint_enabled=mountpoint_enabled,
         disabled_workspaces=disabled_workspaces,
         backend_max_cooldown=backend_max_cooldown,
@@ -150,6 +154,7 @@ def config_factory(
         gui_workspace_color=gui_workspace_color,
         gui_allow_multiple_instances=gui_allow_multiple_instances,
         preferred_org_creation_backend_addr=preferred_org_creation_backend_addr,
+        gui_show_confined=gui_show_confined,
         ipc_socket_file=data_base_dir / "parsec-cloud.lock",
         ipc_win32_mutex_name="parsec-cloud",
     )
@@ -193,6 +198,11 @@ def load_config(config_dir: Path, **extra_config) -> CoreConfig:
         pass
 
     try:
+        data_conf["prevent_sync_pattern_path"] = Path(data_conf["prevent_sync_pattern_path"])
+    except (KeyError, ValueError):
+        pass
+
+    try:
         data_conf["disabled_workspaces"] = frozenset(map(EntryID, data_conf["disabled_workspaces"]))
     except (KeyError, ValueError):
         pass
@@ -231,6 +241,7 @@ def save_config(config: CoreConfig):
             {
                 "data_base_dir": str(config.data_base_dir),
                 "cache_base_dir": str(config.cache_base_dir),
+                "prevent_sync_pattern": str(config.prevent_sync_pattern_path),
                 "telemetry_enabled": config.telemetry_enabled,
                 "disabled_workspaces": list(map(str, config.disabled_workspaces)),
                 "backend_max_cooldown": config.backend_max_cooldown,
@@ -245,6 +256,7 @@ def save_config(config: CoreConfig):
                 "gui_workspace_color": config.gui_workspace_color,
                 "gui_allow_multiple_instances": config.gui_allow_multiple_instances,
                 "preferred_org_creation_backend_addr": config.preferred_org_creation_backend_addr.to_url(),
+                "gui_show_confined": config.gui_show_confined,
             },
             indent=True,
         )

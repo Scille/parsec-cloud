@@ -607,7 +607,15 @@ async def test_name(alice_workspace, trio_file):
     await f.close()
 
 
-# TODO
+@pytest.mark.trio
+async def test_stat(alice_workspace):
+    f = await alice_workspace.open_file("/foo/bar", "wb")
+    stat = await f.stat()
+    assert stat["size"] == 0
+    assert stat["type"] == "file"
+    assert stat["confinement_point"] is None
+
+
 # @pytest.mark.trio
 # async def test_move_file_from_workspace_to_another_workspace(
 #     alice_workspace, bob_workspace, trio_file

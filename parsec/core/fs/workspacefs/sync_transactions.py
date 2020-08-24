@@ -1,11 +1,12 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
 
-from parsec.core.core_events import CoreEvent
 from itertools import count
-from typing import Optional, List, Dict, AsyncIterator, cast, Tuple, Any, Union
+from typing import Optional, List, Dict, AsyncIterator, cast, Tuple, Any, Union, Pattern
 
 from pendulum import now as pendulum_now
+
 from parsec.api.protocol import DeviceID
+from parsec.core.core_events import CoreEvent
 from parsec.api.data import BaseManifest as BaseRemoteManifest
 from parsec.core.types import (
     Chunk,
@@ -25,7 +26,7 @@ from parsec.core.fs.exceptions import (
     FSLocalMissError,
 )
 
-from parsec.core.fs.utils import is_file_manifest
+from parsec.core.fs.utils import is_file_manifest, is_folderish_manifest
 
 __all__ = "SyncTransactions"
 
@@ -139,28 +140,40 @@ def merge_folder_children(
 
 def merge_manifests(
     local_author: DeviceID,
+    prevent_sync_pattern: Pattern,
     local_manifest: BaseLocalManifest,
     remote_manifest: Optional[BaseRemoteManifest] = None,
+    force_apply_pattern: Optional[bool] = False,
 ):
-    # Exctract versions
-    local_version = local_manifest.base_version
-    remote_version = local_version if remote_manifest is None else remote_manifest.version
+    # Start by re-applying pattern (idempotent)
+    if is_folderish_manifest(local_manifest) and force_apply_pattern:
+        local_manifest = cast(LocalFolderishManifests, local_manifest).apply_prevent_sync_pattern(
+            prevent_sync_pattern
+        )
 
     # The remote hasn't changed
-    if remote_version <= local_version:
+    if remote_manifest is None or remote_manifest.version <= local_manifest.base_version:
         return local_manifest
-
+    assert remote_manifest is not None
     remote_manifest = cast(BaseRemoteManifest, remote_manifest)
+
+    # Extract versions
+    remote_version = remote_manifest.version
+    local_version = local_manifest.base_version
+    local_from_remote = BaseLocalManifest.from_remote_with_local_context(
+        remote_manifest, prevent_sync_pattern, local_manifest
+    )
+
     # Only the remote has changed
     if not local_manifest.need_sync:
-        return BaseLocalManifest.from_remote(remote_manifest)
+        return local_from_remote
 
     # Both the remote and the local have changed
     assert remote_version > local_version and local_manifest.need_sync
 
     # All the local changes have been successfully uploaded
     if local_manifest.match_remote(remote_manifest):
-        return BaseLocalManifest.from_remote(remote_manifest)
+        return local_from_remote
 
     # The remote changes are ours, simply acknowledge them and keep our local changes
     if remote_manifest.author == local_author:
@@ -177,10 +190,12 @@ def merge_manifests(
     new_children = merge_folder_children(
         cast(LocalFolderishManifests, local_manifest).base.children,
         cast(LocalFolderishManifests, local_manifest).children,
-        cast(RemoteFolderishManifests, remote_manifest).children,
+        cast(LocalFolderishManifests, local_from_remote).children,
         remote_manifest.author,
     )
-    return local_manifest.evolve_and_mark_updated(base=remote_manifest, children=new_children)
+
+    # Mark as updated
+    return local_from_remote.evolve_and_mark_updated(children=new_children)
 
 
 class SyncTransactions(EntryTransactions):
@@ -207,6 +222,19 @@ class SyncTransactions(EntryTransactions):
 
     # Atomic transactions
 
+    async def apply_prevent_sync_pattern(
+        self, entry_id: EntryID, prevent_sync_pattern: Pattern
+    ) -> None:
+        # Fetch and lock
+        async with self.local_storage.lock_manifest(entry_id) as local_manifest:
+
+            # Craft new local manifest
+            new_local_manifest = local_manifest.apply_prevent_sync_pattern(prevent_sync_pattern)
+
+            # Set the new base manifest
+            if new_local_manifest != local_manifest:
+                await self.local_storage.set_manifest(entry_id, new_local_manifest)
+
     async def synchronization_step(
         self,
         entry_id: EntryID,
@@ -223,6 +251,16 @@ class SyncTransactions(EntryTransactions):
         be set to true to indicate that the caller has no intention to upload a new
         manifest. This also causes the method to return None.
         """
+
+        # Check for confinement
+        confinement_point = await self._get_confinement_point(entry_id)
+        if confinement_point is not None:
+            # Send entry confined event for the sync monitor
+            self._send_event(
+                CoreEvent.FS_ENTRY_CONFINED, entry_id=entry_id, cause_id=confinement_point
+            )
+            # Do not perform the synchronization
+            return None
 
         # Fetch and lock
         async with self.local_storage.lock_manifest(entry_id) as local_manifest:
@@ -242,7 +280,15 @@ class SyncTransactions(EntryTransactions):
                 assert local_manifest.is_reshaped()
 
             # Merge manifests
-            new_local_manifest = merge_manifests(self.local_author, local_manifest, remote_manifest)
+            prevent_sync_pattern = self.local_storage.get_prevent_sync_pattern()
+            force_apply_pattern = not self.local_storage.get_prevent_sync_pattern_fully_applied()
+            new_local_manifest = merge_manifests(
+                self.local_author,
+                prevent_sync_pattern,
+                local_manifest,
+                remote_manifest,
+                force_apply_pattern,
+            )
 
             # Extract authors
             base_author = local_manifest.base.author
@@ -251,10 +297,9 @@ class SyncTransactions(EntryTransactions):
             # Extract versions
             base_version = local_manifest.base_version
             new_base_version = new_local_manifest.base_version
-            remote_version = base_version if remote_manifest is None else remote_manifest.version
 
             # Set the new base manifest
-            if base_version != remote_version or new_local_manifest.need_sync:
+            if new_local_manifest != local_manifest:
                 await self.local_storage.set_manifest(entry_id, new_local_manifest)
 
             # Send downsynced event
@@ -326,6 +371,7 @@ class SyncTransactions(EntryTransactions):
                 new_blocks: Tuple[Tuple[Any, ...], ...] = tuple(new_blocks)
 
                 # Prepare
+                prevent_sync_pattern = self.local_storage.get_prevent_sync_pattern()
                 new_name = get_conflict_filename(
                     filename, list(parent_manifest.children), remote_manifest.author
                 )
@@ -333,9 +379,11 @@ class SyncTransactions(EntryTransactions):
                     self.local_author, parent=parent_id
                 ).evolve(size=current_manifest.size, blocks=new_blocks)
                 new_parent_manifest = parent_manifest.evolve_children_and_mark_updated(
-                    {new_name: new_manifest.id}
+                    {new_name: new_manifest.id}, prevent_sync_pattern=prevent_sync_pattern
                 )
-                other_manifest = BaseLocalManifest.from_remote(remote_manifest)
+                other_manifest = BaseLocalManifest.from_remote(
+                    remote_manifest, prevent_sync_pattern=prevent_sync_pattern
+                )
 
                 # Set manifests
                 await self.local_storage.set_manifest(

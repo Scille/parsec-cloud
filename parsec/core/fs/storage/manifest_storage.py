@@ -1,8 +1,10 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
 
+import re
+
 import trio
 from structlog import get_logger
-from typing import Dict, Tuple, Set, Optional, Union
+from typing import Dict, Tuple, Set, Optional, Union, Pattern
 from async_generator import asynccontextmanager
 
 from parsec.core.fs.exceptions import FSLocalMissError
@@ -10,6 +12,8 @@ from parsec.core.types import EntryID, ChunkID, LocalDevice, BaseLocalManifest, 
 from parsec.core.fs.storage.local_database import LocalDatabase
 
 logger = get_logger()
+
+EMPTY_PATTERN = r"^\b$"  # Do not match anything (https://stackoverflow.com/a/2302992/2846140)
 
 
 class ManifestStorage:
@@ -87,6 +91,58 @@ class ManifestStorage:
                   checkpoint INTEGER NOT NULL
                 );
                 """
+            )
+            # Singleton storing the prevent_sync_pattern
+            cursor.execute(
+                """
+                CREATE TABLE IF NOT EXISTS prevent_sync_pattern
+                (
+                  _id INTEGER PRIMARY KEY NOT NULL,
+                  pattern TEXT NOT NULL,
+                  fully_applied INTEGER NOT NULL  -- Boolean
+                );
+                """
+            )
+            # Set the default "prevent sync" pattern if it doesn't exist
+            cursor.execute(
+                """
+                INSERT OR IGNORE INTO prevent_sync_pattern(_id, pattern, fully_applied)
+                VALUES (0, ?, 0)""",
+                (EMPTY_PATTERN,),
+            )
+
+    # "Prevent sync" pattern operations
+
+    async def get_prevent_sync_pattern(self) -> Tuple[Pattern, bool]:
+        async with self._open_cursor() as cursor:
+            cursor.execute("SELECT pattern, fully_applied FROM prevent_sync_pattern WHERE _id = 0")
+            reply = cursor.fetchone()
+            pattern, fully_applied = reply
+            return (re.compile(pattern), bool(fully_applied))
+
+    async def set_prevent_sync_pattern(self, pattern: Pattern):
+        """Set the "prevent sync" pattern for the corresponding workspace
+
+        This operation is idempotent,
+        i.e it does not reset the `fully_applied` flag if the pattern hasn't changed.
+        """
+        async with self._open_cursor() as cursor:
+            cursor.execute(
+                """UPDATE prevent_sync_pattern SET pattern = ?, fully_applied = 0 WHERE _id = 0 AND pattern != ?""",
+                (pattern.pattern, pattern.pattern),
+            )
+
+    async def mark_prevent_sync_pattern_fully_applied(self, pattern):
+        """Mark the provided pattern as fully applied.
+
+        This is meant to be called after one made sure that all the manifests in the
+        workspace are compliant with the new pattern. The applied pattern is provided
+        as an argument in order to avoid concurrency issues.
+        """
+        async with self._open_cursor() as cursor:
+            cursor.execute(
+                """UPDATE prevent_sync_pattern SET fully_applied = 1 WHERE _id = 0 AND pattern = ?""",
+                (pattern.pattern,),
             )
 
     # Checkpoint operations

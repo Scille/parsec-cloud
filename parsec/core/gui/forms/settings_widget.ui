@@ -69,8 +69,8 @@ border-radius: 8px;
        <rect>
         <x>0</x>
         <y>0</y>
-        <width>563</width>
-        <height>526</height>
+        <width>549</width>
+        <height>563</height>
        </rect>
       </property>
       <layout class="QVBoxLayout" name="verticalLayout_2">
@@ -398,6 +398,17 @@ border-radius: 8px;
               </property>
               <property name="text">
                <string>TEXT_SETTINGS_INTERFACE_TITLE</string>
+              </property>
+             </widget>
+            </item>
+           </layout>
+          </item>
+          <item>
+           <layout class="QHBoxLayout" name="horizontalLayout_12">
+            <item>
+             <widget class="QCheckBox" name="check_box_show_confined">
+              <property name="text">
+               <string>TEXT_SETTINGS_CHECK_SHOW_CONFINED_FILES</string>
               </property>
              </widget>
             </item>

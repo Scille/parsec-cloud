@@ -1,14 +1,14 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
 
-from parsec.core.core_events import CoreEvent
 import trio
 from pathlib import Path
 from pendulum import Pendulum, now as pendulum_now
-from typing import Tuple, Optional, Union, Dict, Sequence
+from typing import Tuple, Optional, Union, Dict, Sequence, Pattern
 from structlog import get_logger
 
 from async_generator import asynccontextmanager
 
+from parsec.core.core_events import CoreEvent
 from parsec.event_bus import EventBus
 from parsec.crypto import SecretKey
 from parsec.api.data import (
@@ -152,12 +152,14 @@ class UserFS:
         backend_cmds: Union[APIV1_BackendAuthenticatedCmds, BackendAuthenticatedCmds],
         remote_devices_manager: RemoteDevicesManager,
         event_bus: EventBus,
+        prevent_sync_pattern: Pattern,
     ):
         self.device = device
         self.path = path
         self.backend_cmds = backend_cmds
         self.remote_devices_manager = remote_devices_manager
         self.event_bus = event_bus
+        self.prevent_sync_pattern = prevent_sync_pattern
 
         self.storage: UserStorage  # Setup by UserStorage.run factory
 
@@ -262,7 +264,7 @@ class UserFS:
         local_storage = await self._instantiate_workspace_storage(workspace_id)
 
         # Instantiate the workspace
-        return WorkspaceFS(
+        workspace = WorkspaceFS(
             workspace_id=workspace_id,
             get_workspace_entry=get_workspace_entry,
             device=self.device,
@@ -271,6 +273,11 @@ class UserFS:
             event_bus=self.event_bus,
             remote_devices_manager=self.remote_devices_manager,
         )
+
+        # Apply the current "prevent sync" pattern
+        await workspace.set_and_apply_prevent_sync_pattern(self.prevent_sync_pattern)
+
+        return workspace
 
     async def _create_workspace(
         self, workspace_id: EntryID, manifest: LocalWorkspaceManifest

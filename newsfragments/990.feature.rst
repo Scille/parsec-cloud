@@ -1,0 +1,3 @@
+Add support for confined (i.e temporary) files and directories.
+In this context, confined means files that are not meant to be
+synchronized with other clients

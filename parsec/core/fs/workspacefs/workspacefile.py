@@ -115,17 +115,15 @@ class WorkspaceFile:
     def closed(self) -> bool:
         return self._state == FileState.CLOSED
 
-    async def file_stat(self) -> dict:
-        """Getting file stat"""
+    async def stat(self) -> dict:
+        """Getting stat dictionnary"""
         self._check_open_state()
-        stats = await self._transactions.fd_info(self.fileno(), self._path)
-        return stats
+        return await self._transactions.fd_info(self.fileno(), self._path)
 
     async def get_size(self) -> int:
-        """Getting file length from file stat"""
+        """Getting file length"""
         self._check_open_state()
-        stats = await self.file_stat()
-        return stats["size"]
+        return await self._transactions.fd_size(self.fileno(), self._path)
 
     @property
     def state(self) -> FileState:

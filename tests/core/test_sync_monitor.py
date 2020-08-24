@@ -1,5 +1,6 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
 
+import re
 import trio
 import pytest
 from unittest.mock import ANY
@@ -245,3 +246,84 @@ async def test_reconnect_with_remote_changes(
             in_order=False,
             timeout=60,  # autojump, so not *really* 60s
         )
+
+
+@pytest.mark.trio
+async def test_sync_confined_children_after_rename(
+    autojump_clock, alice, running_backend, alice_core
+):
+    # Create a workspace
+    wid = await alice_core.user_fs.workspace_create("w")
+    alice_w = alice_core.user_fs.get_workspace(wid)
+
+    # Set a filter
+    pattern = re.compile(r".*\.tmp$")
+    await alice_w.set_and_apply_prevent_sync_pattern(pattern)
+
+    # Create a confined path
+    await alice_w.mkdir("/test.tmp/a/b/c", parents=True)
+
+    # Wait for sync monitor to be idle
+    await alice_core.wait_idle_monitors()
+
+    # Make sure the root is synced
+    info = await alice_w.path_info("/")
+    assert not info["need_sync"]
+    assert not info["confinement_point"]
+
+    # Make sure the rest of the path is confined
+    for path in ["/test.tmp", "/test.tmp/a", "/test.tmp/a/b", "/test.tmp/a/b/c"]:
+        info = await alice_w.path_info(path)
+        assert info["need_sync"]
+        assert info["confinement_point"]
+
+    # Rename to another confined path
+    await alice_w.rename("/test.tmp", "/test2.tmp")
+
+    # Wait for sync monitor to be idle
+    await alice_core.wait_idle_monitors()
+
+    # Make sure the root is synced
+    info = await alice_w.path_info("/")
+    assert not info["need_sync"]
+    assert not info["confinement_point"]
+
+    # Make sure the rest of the path is confined
+    for path in ["/test2.tmp", "/test2.tmp/a", "/test2.tmp/a/b", "/test2.tmp/a/b/c"]:
+        info = await alice_w.path_info(path)
+        assert info["need_sync"]
+        assert info["confinement_point"]
+
+    # Rename to non-confined path
+    await alice_w.rename("/test2.tmp", "/test2")
+
+    # Wait for sync monitor to be idle
+    await alice_core.wait_idle_monitors()
+
+    # Make sure the root is synced
+    info = await alice_w.path_info("/")
+    assert not info["need_sync"]
+    assert not info["confinement_point"]
+
+    # Make sure the rest of the path is confined
+    for path in ["/test2", "/test2/a", "/test2/a/b", "/test2/a/b/c"]:
+        info = await alice_w.path_info(path)
+        assert not info["need_sync"]
+        assert not info["confinement_point"]
+
+    # Rename to a confined path
+    await alice_w.rename("/test2", "/test3.tmp")
+
+    # Wait for sync monitor to be idle
+    await alice_core.wait_idle_monitors()
+
+    # Make sure the root is synced
+    info = await alice_w.path_info("/")
+    assert not info["need_sync"]
+    assert not info["confinement_point"]
+
+    # Make sure the rest of the path is confined
+    for path in ["/test3.tmp", "/test3.tmp/a", "/test3.tmp/a/b", "/test3.tmp/a/b/c"]:
+        info = await alice_w.path_info(path)
+        assert not info["need_sync"]
+        assert info["confinement_point"]

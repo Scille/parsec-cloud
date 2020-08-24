@@ -208,6 +208,7 @@ class FilesWidget(QWidget, Ui_FilesWidget):
         self.update_timer.setSingleShot(True)
         self.update_timer.timeout.connect(self.reload)
         self.default_import_path = str(pathlib.Path.home())
+        self.table_files.config = self.core.config
         self.table_files.file_moved.connect(self.on_file_moved)
         self.table_files.item_activated.connect(self.item_activated)
         self.table_files.rename_clicked.connect(self.rename_files)
@@ -711,6 +712,7 @@ class FilesWidget(QWidget, Ui_FilesWidget):
         file_found = False
         for path, stats in files_stats.items():
             selected = False
+            confined = bool(stats["confinement_point"])
             if default_selection and str(path) == default_selection:
                 selected = True
                 file_found = True
@@ -718,7 +720,7 @@ class FilesWidget(QWidget, Ui_FilesWidget):
                 self.table_files.add_inconsistency(str(path), stats["id"])
             elif stats["type"] == "folder":
                 self.table_files.add_folder(
-                    str(path), stats["id"], not stats["need_sync"], selected
+                    str(path), stats["id"], not stats["need_sync"], confined, selected
                 )
             else:
                 self.table_files.add_file(
@@ -728,6 +730,7 @@ class FilesWidget(QWidget, Ui_FilesWidget):
                     stats["created"],
                     stats["updated"],
                     not stats["need_sync"],
+                    confined,
                     selected,
                 )
         self.table_files.sortItems(old_sort, old_order)
@@ -822,6 +825,7 @@ class FilesWidget(QWidget, Ui_FilesWidget):
                     item.data(TYPE_DATA_INDEX) == FileType.File
                     or item.data(TYPE_DATA_INDEX) == FileType.Folder
                 ):
+                    item.confined = False
                     item.is_synced = True
 
     def _on_fs_updated_qt(self, event, uuid):
