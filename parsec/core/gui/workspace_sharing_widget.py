@@ -109,7 +109,7 @@ class SharingWidget(QWidget, Ui_SharingWidget):
             font = self.label_name.font()
             font.setStrikeOut(True)
             self.label_name.setFont(font)
-            self.setToolTip(_("TEXT_WORKSPACE_SHARING_USER_IS_REVOKED"))
+            self.setToolTip(_("TEXT_WORKSPACE_SHARING_USER_HAS_BEEN_REVOKED"))
 
         if not enabled:
             for role, index in _ROLES_TO_INDEX.items():

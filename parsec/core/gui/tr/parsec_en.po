@@ -239,8 +239,8 @@ msgstr "Greet a new user"
 msgid "TEXT_WORKSPACE_ROLE_NOT_SHARED"
 msgstr "Not shared"
 
-msgid "TEXT_WORKSPACE_SHARING_USER_IS_REVOKED"
-msgstr "This user is revoked."
+msgid "TEXT_WORKSPACE_SHARING_USER_HAS_BEEN_REVOKED"
+msgstr "This user has been revoked."
 
 msgid "TEXT_WORKSPACE_SHARING_OFFLINE"
 msgstr "The server is offline or you have no access to the internet."

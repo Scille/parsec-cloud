@@ -252,8 +252,8 @@ msgstr "Accueillir un nouvel utilisateur"
 msgid "TEXT_WORKSPACE_ROLE_NOT_SHARED"
 msgstr "Non partagé"
 
-msgid "TEXT_WORKSPACE_SHARING_USER_IS_REVOKED"
-msgstr "Cet utilisateur est révoqué."
+msgid "TEXT_WORKSPACE_SHARING_USER_HAS_BEEN_REVOKED"
+msgstr "Cet utilisateur a été révoqué."
 
 msgid "TEXT_WORKSPACE_SHARING_OFFLINE"
 msgstr "Le serveur est hors-ligne ou vous n'avez pas de connexion internet."
