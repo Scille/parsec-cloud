@@ -286,6 +286,8 @@ def gui_factory(
         # Language config rely on global var, must reset it for each test !
         switch_language(core_config)
 
+        ParsecApp.connected_devices = set()
+
         def _create_main_window():
             # Pass minimize_on_close to avoid having test blocked by the
             # closing confirmation prompt
@@ -453,7 +455,7 @@ def testing_main_window_cls(aqtbot, qt_thread_gateway):
 
             await aqtbot.wait_until(_password_widget_shown)
             password_w = l_w.widget.layout().itemAt(0).widget()
-            await aqtbot.key_clicks(password_w.line_edit_password, "P@ssw0rd")
+            await aqtbot.key_clicks(password_w.line_edit_password, password)
 
             signal = tabw.logged_in if not error else tabw.login_failed
             async with aqtbot.wait_signals([l_w.login_with_password_clicked, signal]):

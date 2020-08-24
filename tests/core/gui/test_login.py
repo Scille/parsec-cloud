@@ -3,7 +3,8 @@
 import pytest
 from PyQt5 import QtCore
 
-from parsec.core.local_device import save_device_with_password
+from parsec.core.local_device import save_device_with_password, list_available_devices
+from parsec.core.gui.parsec_application import ParsecApp
 from parsec.core.gui.login_widget import (
     LoginPasswordInputWidget,
     LoginAccountsWidget,
@@ -47,6 +48,10 @@ async def test_login(aqtbot, gui_factory, autoclose_dialog, core_config, alice):
     assert (
         central_widget.button_user.text() == f"{alice.organization_id}\n{alice.short_user_display}"
     )
+    assert (
+        gui.tab_center.tabText(0)
+        == f"{alice.organization_id} - {alice.short_user_display} - {alice.device_display}"
+    )
 
 
 @pytest.mark.gui
@@ -85,7 +90,7 @@ async def test_login_back_to_account_list(
 
 @pytest.mark.gui
 @pytest.mark.trio
-async def test_login_no_devices(aqtbot, gui_factory, autoclose_dialog, core_config):
+async def test_login_no_devices(aqtbot, gui_factory, autoclose_dialog):
     gui = await gui_factory()
     lw = gui.test_get_login_widget()
 
@@ -111,3 +116,28 @@ async def test_login_device_list(aqtbot, gui_factory, autoclose_dialog, core_con
     assert alice_w.label_device.text() == "My dev1 machine"
     assert alice_w.label_name.text() == "Alicey McAliceFace"
     assert alice_w.label_organization.text() == "CoolOrg"
+
+
+@pytest.mark.gui
+@pytest.mark.trio
+async def test_login_no_available_devices(
+    aqtbot, gui_factory, autoclose_dialog, core_config, alice, qt_thread_gateway
+):
+    password = "P@ssw0rd"
+    save_device_with_password(core_config.config_dir, alice, password)
+
+    device = list_available_devices(core_config.config_dir)[0]
+
+    gui = await gui_factory()
+
+    ParsecApp.add_connected_device(device.organization_id, device.device_id)
+
+    lw = gui.test_get_login_widget()
+
+    def _reload_devices():
+        lw.reload_devices()
+
+    await qt_thread_gateway.send_action(_reload_devices)
+
+    no_device_w = lw.widget.layout().itemAt(0).widget()
+    assert isinstance(no_device_w, LoginNoDevicesWidget)

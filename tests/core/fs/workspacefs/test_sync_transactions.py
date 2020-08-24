@@ -312,7 +312,9 @@ async def test_file_conflict(alice_sync_transactions):
     with sync_transactions.event_bus.listen() as spy:
         await sync_transactions.file_conflict(a_id, local, remote)
     assert await sync_transactions.fd_read(fd, size=-1, offset=0) == b""
-    a2_id, fd2 = await sync_transactions.file_open(FsPath("/a (conflicting with b@b - 2)"))
+    a2_id, fd2 = await sync_transactions.file_open(
+        FsPath("/a (conflicting with b@b - 2)"), write_mode=False
+    )
     assert await sync_transactions.fd_read(fd2, size=-1, offset=0) == b"abcdefghi"
     spy.assert_events_exactly_occured(
         [

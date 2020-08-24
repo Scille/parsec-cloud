@@ -292,11 +292,13 @@ async def test_delete(
 
     await events_subscribe(alice2_backend_sock)
 
-    with freeze_time("2000-01-03"):
-        rep = await invite_delete(
-            alice_backend_sock, token=invitation.token, reason=InvitationDeletedReason.CANCELLED
-        )
-    assert rep == {"status": "ok"}
+    with backend.event_bus.listen() as spy:
+        with freeze_time("2000-01-03"):
+            rep = await invite_delete(
+                alice_backend_sock, token=invitation.token, reason=InvitationDeletedReason.CANCELLED
+            )
+        assert rep == {"status": "ok"}
+        await spy.wait_with_timeout(BackendEvent.INVITE_STATUS_CHANGED)
 
     with trio.fail_after(1):
         rep = await events_listen_wait(alice2_backend_sock)

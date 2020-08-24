@@ -34,7 +34,9 @@ def test_fs_offline_restart_and_rwfile(user_fs_offline_state_machine, alice):
             offset=st.integers(min_value=0, max_value=PLAYGROUND_SIZE),
         )
         async def atomic_read(self, size, offset):
-            content = await self.workspace.read_bytes("/foo.txt", size=size, offset=offset)
+            async with await self.workspace.open_file("/foo.txt", "rb") as f:
+                await f.seek(offset)
+                content = await f.read(size)
             expected_content = self.file_oracle.read(size, offset)
             assert content == expected_content
 
@@ -43,9 +45,9 @@ def test_fs_offline_restart_and_rwfile(user_fs_offline_state_machine, alice):
             content=st.binary(max_size=PLAYGROUND_SIZE),
         )
         async def atomic_write(self, offset, content):
-            await self.workspace.write_bytes(
-                "/foo.txt", data=content, offset=offset, truncate=False
-            )
+            async with await self.workspace.open_file("/foo.txt", "rb+") as f:
+                await f.seek(offset)
+                await f.write(content)
             self.file_oracle.write(offset, content)
 
         @rule(length=st.integers(min_value=0, max_value=PLAYGROUND_SIZE))

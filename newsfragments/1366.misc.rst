@@ -1,0 +1,8 @@
+Devices keys filenames are no longer meaningful.
+
+Device key files used to be stored in a directory named after the device slug
+in a file also named after the same device slug. As a result, the device path
+used to be very long (about 200 characters).
+
+Device key files are now stored directly in the devices directory using the
+device slughash and the `.keys` extension. The path is now much shorter

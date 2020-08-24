@@ -1,0 +1,1 @@
+Updated workspace sharing to be easier to use

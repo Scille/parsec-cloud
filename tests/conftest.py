@@ -672,13 +672,14 @@ async def running_backend(server_factory, backend_addr, backend, running_backend
 
 
 @pytest.fixture
-def core_config(tmpdir):
+def core_config(tmpdir, backend_addr):
     tmpdir = Path(tmpdir)
     return CoreConfig(
         config_dir=tmpdir / "config",
         cache_base_dir=tmpdir / "cache",
         data_base_dir=tmpdir / "data",
         mountpoint_base_dir=tmpdir / "mnt",
+        preferred_org_creation_backend_addr=backend_addr,
     )
 
 

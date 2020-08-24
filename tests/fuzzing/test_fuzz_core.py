@@ -149,29 +149,21 @@ async def _fuzzer_cmd(id, core, workspace, fs_state):
 
     elif x < 30:
         path = fs_state.get_file()
-        size = randrange(0, 2000)
         try:
-            ret = await workspace.read_bytes(path, size=size)
-            fs_state.add_stat(
-                id, "file_read_ok", f"path={path}, size={size}, returned {len(ret)} bytes"
-            )
+            ret = await workspace.read_bytes(path)
+            fs_state.add_stat(id, "file_read_ok", f"path={path}, returned {len(ret)} bytes")
         except OSError as exc:
-            fs_state.add_stat(id, "file_read_bad", f"path={path}, size={size}, raised {exc!r}")
+            fs_state.add_stat(id, "file_read_bad", f"path={path}, raised {exc!r}")
 
     elif x < 40:
         path = fs_state.get_file()
         buffer = b"x" * randrange(1, 1000)
-        offset = randrange(0, 100)
         try:
-            await workspace.write_bytes(path, buffer, offset=offset)
-            fs_state.add_stat(
-                id, "file_write_ok", f"path={path}, buffer size={len(buffer)}, offset={offset}"
-            )
+            await workspace.write_bytes(path, buffer)
+            fs_state.add_stat(id, "file_write_ok", f"path={path}, buffer size={len(buffer)}")
         except OSError as exc:
             fs_state.add_stat(
-                id,
-                "file_write_bad",
-                f"path={path}, buffer size={len(buffer)}, offset={offset}, raised {exc!r}",
+                id, "file_write_bad", f"path={path}, buffer size={len(buffer)}, raised {exc!r}"
             )
 
     elif x < 50:

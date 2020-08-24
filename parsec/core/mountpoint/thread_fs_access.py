@@ -45,8 +45,8 @@ class ThreadFSAccess:
     def file_create(self, path, *, open):
         return self._run(self.workspace_fs.transactions.file_create, path, open)
 
-    def file_open(self, path, *, mode):
-        return self._run(self.workspace_fs.transactions.file_open, path, mode)
+    def file_open(self, path, *, write_mode):
+        return self._run(self.workspace_fs.transactions.file_open, path, write_mode)
 
     def file_delete(self, path):
         return self._run(self.workspace_fs.transactions.file_delete, path)

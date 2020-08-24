@@ -214,19 +214,11 @@ class WinFSPOperations(BaseFileSystemOperations):
 
     @handle_error
     def open(self, file_name, create_options, granted_access):
-        file_name = _winpath_to_parsec(file_name)
-        granted_access = granted_access & (FILE_READ_DATA | FILE_WRITE_DATA)
-        if granted_access == FILE_READ_DATA:
-            mode = "r"
-        elif granted_access == FILE_WRITE_DATA:
-            mode = "w"
-        elif granted_access == FILE_READ_DATA | FILE_WRITE_DATA:
-            mode = "rw"
-        else:
-            mode = "r"
         # `granted_access` is already handle by winfsp
+        file_name = _winpath_to_parsec(file_name)
+        write_mode = bool(granted_access & FILE_WRITE_DATA)
         try:
-            _, fd = self.fs_access.file_open(file_name, mode=mode)
+            _, fd = self.fs_access.file_open(file_name, write_mode=write_mode)
             return OpenedFile(file_name, fd)
         except IsADirectoryError:
             return OpenedFolder(file_name)
