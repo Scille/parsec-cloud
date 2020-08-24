@@ -259,10 +259,8 @@ class MountpointManager:
             await self.safe_mount(workspace_entry.id)
 
     async def safe_unmount_all(self):
-        print("unmount all")
         for workspace_id, timestamp in list(self._mountpoint_tasks.keys()):
             await self.safe_unmount(workspace_id, timestamp=timestamp)
-        print("/unmount all")
 
 
 @asynccontextmanager
@@ -335,9 +333,7 @@ async def mountpoint_manager_factory(
 
         # Unmount all the workspaces (should this be shielded?)
         finally:
-            print("Safe unmount all")
             await mountpoint_manager.safe_unmount_all()
-            print("All done bye")
 
         # Cancel the mountpoint tasks (although they should all be finised by now)
         nursery.cancel_scope.cancel()
