@@ -32,6 +32,11 @@ async def shared_workspace(running_backend, alice_user_fs, bob_user_fs, bob):
 
 
 @pytest.fixture
+async def aqtbot(qtbot, run_trio_test_in_thread):
+    return AsyncQtBot(qtbot, run_trio_test_in_thread)
+
+
+@pytest.fixture
 async def reencryption_needed_workspace(
     running_backend, shared_workspace, alice_user_fs, bob_user_fs, bob
 ):
