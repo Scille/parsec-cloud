@@ -603,7 +603,7 @@ class WorkspacesWidget(QWidget, Ui_WorkspacesWidget):
         elif job.status == "fs-error":
             err_msg = _("TEXT_WORKPACE_REENCRYPT_FS_ERROR")
         else:
-            err_msg = job.status
+            err_msg = _("TEXT_WORKSPACE_REENCRYPT_UNKOWN_ERROR")
         show_error(self, err_msg, exception=job.exc)
 
     def get_workspace_button(self, workspace_id, timestamp):

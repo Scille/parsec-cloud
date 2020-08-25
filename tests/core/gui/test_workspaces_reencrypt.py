@@ -17,6 +17,9 @@ from parsec.core.types import WorkspaceRole
 from tests.common import customize_fixtures
 
 
+# Helpers
+
+
 async def revoke_user_workspace_right(workspace, owner_user_fs, invited_user_fs, invited_user_id):
     await owner_user_fs.workspace_share(workspace, invited_user_id, None)
     await owner_user_fs.process_last_messages()
@@ -45,6 +48,9 @@ async def display_reencryption_button(aqtbot, monkeypatch, workspace_widget):
     )
 
 
+# Fixtures
+
+
 @pytest.fixture
 async def shared_workspace(running_backend, alice_user_fs, bob_user_fs, bob):
     wid = await alice_user_fs.workspace_create("w1")
@@ -64,6 +70,9 @@ async def reencryption_needed_workspace(
     return shared_workspace
 
 
+# Tests
+
+
 @pytest.mark.gui
 @pytest.mark.trio
 @customize_fixtures(logged_gui_as_admin=True)
@@ -75,7 +84,6 @@ async def test_workspace_reencryption_display(
     shared_workspace,
     bob_user_fs,
     alice_user_fs,
-    alice,
     bob,
 ):
     w_w = await logged_gui.test_switch_to_workspaces_widget()
@@ -116,10 +124,6 @@ async def test_workspace_reencryption(
     running_backend,
     logged_gui,
     autoclose_dialog,
-    bob_user_fs,
-    alice_user_fs,
-    alice,
-    bob,
     monkeypatch,
     reencryption_needed_workspace,
 ):
@@ -148,10 +152,6 @@ async def test_workspace_reencryption_offline_backend(
     running_backend,
     logged_gui,
     autoclose_dialog,
-    bob_user_fs,
-    alice_user_fs,
-    alice,
-    bob,
     monkeypatch,
     reencryption_needed_workspace,
 ):
@@ -182,7 +182,6 @@ async def test_workspace_reencryption_fs_error(
     logged_gui,
     autoclose_dialog,
     alice_user_fs,
-    alice,
     monkeypatch,
     reencryption_needed_workspace,
 ):
@@ -257,8 +256,6 @@ async def test_workspace_reencryption_not_found_error(
     running_backend,
     logged_gui,
     autoclose_dialog,
-    alice_user_fs,
-    alice,
     monkeypatch,
     reencryption_needed_workspace,
 ):
@@ -290,7 +287,8 @@ async def test_workspace_reencryption_not_found_error(
 @pytest.mark.gui
 @pytest.mark.trio
 @pytest.mark.parametrize(
-    "error_type", [FSBackendOfflineError, FSError, FSWorkspaceNoAccess, FSWorkspaceNotFoundError]
+    "error_type",
+    [FSBackendOfflineError, FSError, FSWorkspaceNoAccess, FSWorkspaceNotFoundError, Exception],
 )
 @customize_fixtures(logged_gui_as_admin=True)
 async def test_workspace_reencryption_do_one_batch_error(
@@ -298,8 +296,6 @@ async def test_workspace_reencryption_do_one_batch_error(
     running_backend,
     logged_gui,
     autoclose_dialog,
-    alice_user_fs,
-    alice,
     monkeypatch,
     reencryption_needed_workspace,
     error_type,
@@ -310,11 +306,12 @@ async def test_workspace_reencryption_do_one_batch_error(
         FSError: translate("TEXT_WORKPACE_REENCRYPT_FS_ERROR"),
         FSWorkspaceNoAccess: translate("TEXT_WORKPACE_REENCRYPT_ACCESS_ERROR"),
         FSWorkspaceNotFoundError: translate("TEXT_WORKPACE_REENCRYPT_NOT_FOUND_ERROR"),
+        Exception: translate("TEXT_WORKSPACE_REENCRYPT_UNKOWN_ERROR"),
     }
 
     w_w = await logged_gui.test_switch_to_workspaces_widget()
-
     await display_reencryption_button(aqtbot, monkeypatch, w_w)
+
     wk_button = w_w.layout_workspaces.itemAt(0).widget()
 
     async def mocked_start_reencryption(self, workspace_id):
