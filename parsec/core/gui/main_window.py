@@ -274,7 +274,6 @@ class MainWindow(QMainWindow, Ui_MainWindow):
             show_error(self, _("TEXT_INVALID_URL"), exception=exc)
             return
 
-        print(action_addr)
         if isinstance(action_addr, BackendOrganizationBootstrapAddr):
             self._on_create_org_clicked(action_addr)
         elif isinstance(action_addr, BackendInvitationAddr):

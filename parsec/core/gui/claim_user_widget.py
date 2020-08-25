@@ -22,7 +22,6 @@ from parsec.core.gui.trio_thread import JobResultError, ThreadSafeQtSignal, QtTo
 from parsec.core.gui.desktop import get_default_device
 from parsec.core.gui.custom_dialogs import show_error, GreyedDialog, show_info
 from parsec.core.gui.lang import translate as _
-from parsec.core.gui.password_validation import get_password_strength
 from parsec.core.gui.ui.claim_user_widget import Ui_ClaimUserWidget
 from parsec.core.gui.ui.claim_user_code_exchange_widget import Ui_ClaimUserCodeExchangeWidget
 from parsec.core.gui.ui.claim_user_provide_info_widget import Ui_ClaimUserProvideInfoWidget
@@ -178,25 +177,17 @@ class ClaimUserFinalizeWidget(QWidget, Ui_ClaimUserFinalizeWidget):
         self.setupUi(self)
         self.config = config
         self.new_device = new_device
-        self.line_edit_password.textChanged.connect(
-            self.password_strength_widget.on_password_change
-        )
-        self.line_edit_password.textChanged.connect(self.check_infos)
-        self.line_edit_password_check.textChanged.connect(self.check_infos)
+        self.widget_password.info_changed.connect(self.check_infos)
         self.button_finalize.clicked.connect(self._on_finalize_clicked)
 
     def check_infos(self, _=""):
-        if (
-            len(self.line_edit_password.text())
-            and get_password_strength(self.line_edit_password.text()) > 0
-            and self.line_edit_password.text() == self.line_edit_password_check.text()
-        ):
+        if self.widget_password.is_valid():
             self.button_finalize.setDisabled(False)
         else:
             self.button_finalize.setDisabled(True)
 
     def _on_finalize_clicked(self):
-        password = self.line_edit_password.text()
+        password = self.widget_password.password
         try:
             save_device_with_password(self.config.config_dir, self.new_device, password)
             self.succeeded.emit(self.new_device, password)
@@ -411,19 +402,29 @@ class ClaimUserProvideInfoWidget(QWidget, Ui_ClaimUserProvideInfoWidget):
         self.claim_job = None
         self.new_device = None
         self.line_edit_user_full_name.setFocus()
+        self.line_edit_user_full_name.set_validator(validators.NotEmptyValidator())
+        self.line_edit_user_full_name.validity_changed.connect(self.check_infos)
+
         self.line_edit_user_email.setText(user_email)
+        self.line_edit_user_email.set_validator(validators.EmailValidator())
+        self.line_edit_user_email.validity_changed.connect(self.check_infos)
+
         self.line_edit_device.setText(get_default_device())
-        self.line_edit_user_full_name.textChanged.connect(self.check_infos)
-        self.line_edit_device.textChanged.connect(self.check_infos)
-        self.line_edit_device.setValidator(validators.DeviceNameValidator())
+        self.line_edit_device.set_validator(validators.DeviceNameValidator())
+        self.line_edit_device.validity_changed.connect(self.check_infos)
+
         self.claim_success.connect(self._on_claim_success)
         self.claim_error.connect(self._on_claim_error)
         self.label_wait.hide()
         self.button_ok.clicked.connect(self._on_claim_clicked)
         self.check_infos()
 
-    def check_infos(self, _=""):
-        if self.line_edit_user_full_name.text() and self.line_edit_device.text():
+    def check_infos(self, _=None):
+        if (
+            self.line_edit_user_full_name.is_input_valid()
+            and self.line_edit_user_email.is_input_valid()
+            and self.line_edit_device.is_input_valid()
+        ):
             self.button_ok.setDisabled(False)
         else:
             self.button_ok.setDisabled(True)

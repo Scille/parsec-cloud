@@ -1,0 +1,1 @@
+Check email validity when creating an organization/inviting a user

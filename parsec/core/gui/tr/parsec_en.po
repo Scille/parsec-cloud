@@ -7,8 +7,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PROJECT VERSION\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2020-08-14 06:36+0200\n"
-"PO-Revision-Date: 2020-08-14 06:38+0200\n"
+"POT-Creation-Date: 2020-08-24 15:25+0200\n"
+"PO-Revision-Date: 2020-08-24 15:25+0200\n"
 "Last-Translator: \n"
 "Language: en\n"
 "Language-Team: en <LL@li.org>\n"
@@ -229,9 +229,6 @@ msgstr "The user was successfully greeter in your organization."
 msgid "TEXT_INVITATION_BACKEND_NOT_AVAILABLE"
 msgstr "The connection to the server has been lost. Please restart the process."
 
-msgid "TEXT_INVITATION_ALREADY_USED"
-msgstr "The invitation is no longer valid."
-
 msgid "TEXT_GREET_USER_UNKNOWN_ERROR"
 msgstr "Internal error. Please restart the process."
 
@@ -285,6 +282,12 @@ msgstr "EXCELLENT"
 
 msgid "TEXT_PASSWORD_VALIDATION_PASSWORD_STRENGTH_strength"
 msgstr "Password strength: {strength}"
+
+msgid "TEXT_PASSWORD_CHECK_MATCH"
+msgstr "The password and the confirmation match."
+
+msgid "TEXT_PASSWORD_CHECK_NO_MATCH"
+msgstr "The confirmation does not match the password."
 
 msgid "ACTION_WORKSPACE_OPEN_IN_FILE_EXPLORER"
 msgstr "Open in the file explorer"
@@ -346,6 +349,9 @@ msgstr "Error while negociating SAS code. Please restart the process."
 
 msgid "TEXT_CLAIM_USER_PEER_RESET"
 msgstr "The host has reset the process. We will restart from the beginning."
+
+msgid "TEXT_INVITATION_ALREADY_USED"
+msgstr "The invitation is no longer valid."
 
 msgid "TEXT_CLAIM_USER_SIGNIFY_TRUST_ERROR"
 msgstr "Error while acknowledging SAS code. Please restart the process."
@@ -620,10 +626,6 @@ msgstr ""
 "Are you sure you want to cancel this invitation? The link that was send "
 "by email to the user will become invalid."
 
-msgid "TEXT_USER_INVITE_SUCCESS_email"
-msgstr ""
-"The invitation to join your organization was successfuly sent at : <b>{email}</b>"
-
 msgid "TEXT_USER_INVITE_CANCEL_INVITE_ACCEPT"
 msgstr "Cancel the invitation"
 
@@ -668,6 +670,11 @@ msgstr "Failed to retrieve the user list from the server."
 
 msgid "TEXT_INVITE_USER_CANCEL_ERROR"
 msgstr "Could not cancel the invitation."
+
+msgid "TEXT_USER_INVITE_SUCCESS_email"
+msgstr ""
+"The invitation to join your organization was successfuly sent at : "
+"<b>{email}</b>"
 
 msgid "TEXT_INVITE_USER_INVITE_OFFLINE"
 msgstr "The server is offline or you have no access to the internet."
@@ -1465,9 +1472,6 @@ msgstr "B"
 msgid "TEXT_PARSEC_NEW_VERSION_AVAILABLE_version"
 msgstr "The version <b>{version}</b> of PARSEC is available!"
 
-msgid "TEXT_CHANGE_PASSWORD_PASSWORD_MISMATCH"
-msgstr "The password and the password confirmation do no match."
-
 msgid "TEXT_CHANGE_PASSWORD_SUCCESS"
 msgstr "The password has been successfully changed."
 
@@ -1986,18 +1990,6 @@ msgstr "Device name"
 msgid "TEXT_LABEL_DEVICE_PLACEHOLDER"
 msgstr "device"
 
-msgid "TEXT_LABEL_PASSWORD"
-msgstr "Password"
-
-msgid "TEXT_LABEL_PASSWORD_PLACEHOLDER"
-msgstr "Password"
-
-msgid "TEXT_LABEL_PASSWORD_CONFIRMATION"
-msgstr "Password confirmation"
-
-msgid "TEXT_LABEL_PASSWORD_CONFIRMATION_PLACEHOLDER"
-msgstr "Password confirmation"
-
 msgid "ACTION_CREATE_DEVICE"
 msgstr "Create the device"
 
@@ -2078,20 +2070,20 @@ msgstr ""
 "title=\"Condition Générales de Vente ou d'Utilisation\">conditions "
 "générales de vente ou d'utilisation</a>"
 
+msgid "TEXT_CREATE_ORGANIZATION_INSTRUCTIONS"
+msgstr "Please fill out the following information to create your organization."
+
 msgid "ACTION_PREVIOUS"
 msgstr "Previous"
 
-msgid "TEXT_CREATE_ORGANIZATION_INSTRUCTIONS"
-msgstr "Please fill out the following information to create your organization."
+msgid "TEXT_DEVICE_FILTER_PLACEHOLDER"
+msgstr "Filter the devices"
 
 msgid "TEXT_DEVICE_ADD_NEW_TOOLTIP"
 msgstr "Invite a new device"
 
 msgid "ACTION_DEVICE_ADD_NEW"
 msgstr "Invite a new device"
-
-msgid "TEXT_DEVICE_FILTER_PLACEHOLDER"
-msgstr "Filter the devices"
 
 msgid "TEXT_WORKSPACE_EMPTY_WORKSPACE"
 msgstr "This workspace is empty."
@@ -2136,8 +2128,23 @@ msgstr "By"
 msgid "ACTION_FILE_HISTORY_LOAD_MORE_ENTRIES"
 msgstr "Load more entries"
 
+msgid "TEXT_FILE_BACK_TO_WORKSPACES_TOOLTIP"
+msgstr "Return to the list of workspaces."
+
+msgid "TEXT_FILE_FILTER_PLACEHOLDER"
+msgstr "Filter the files"
+
+msgid "TEXT_FILE_CREATE_FOLDER_TOOLTIP"
+msgstr "Create a new folder into this workspace."
+
+msgid "TEXT_FILE_IMPORT_FILES_TOOLTIP"
+msgstr "Import new files into this workspace."
+
 msgid "ACTION_FILE_IMPORT_FILES"
 msgstr "Import files"
+
+msgid "TEXT_FILE_IMPORT_FOLDER_TOOLTIP"
+msgstr "Import a new folder into this workspace."
 
 msgid "ACTION_FILE_IMPORT_FOLDER"
 msgstr "Import a folder"
@@ -2154,21 +2161,6 @@ msgstr "Updated"
 msgid "TEXT_FILE_SIZE_HEADER"
 msgstr "Size"
 
-msgid "TEXT_FILE_FILTER_PLACEHOLDER"
-msgstr "Filter the files"
-
-msgid "TEXT_FILE_BACK_TO_WORKSPACES_TOOLTIP"
-msgstr "Return to the list of workspaces."
-
-msgid "TEXT_FILE_CREATE_FOLDER_TOOLTIP"
-msgstr "Create a new folder into this workspace."
-
-msgid "TEXT_FILE_IMPORT_FILES_TOOLTIP"
-msgstr "Import new files into this workspace."
-
-msgid "TEXT_FILE_IMPORT_FOLDER_TOOLTIP"
-msgstr "Import a new folder into this workspace."
-
 msgid "TEXT_GREET_DEVICE_CODE_EXCHANGE_GIVE_CODE_INSTRUCTIONS"
 msgstr "Use the following code on your new device:"
 
@@ -2181,11 +2173,11 @@ msgstr "Get the code from your new device."
 msgid "TEXT_GREET_DEVICE_WAIT_INFO"
 msgstr "Waiting for information..."
 
-msgid "ACTION_COPY_ADDR"
-msgstr "Copy invitation link to the clipboard"
-
 msgid "ACTION_SEND_EMAIL"
 msgstr "Send an email"
+
+msgid "ACTION_COPY_ADDR"
+msgstr "Copy invitation link to the clipboard"
 
 msgid "TEXT_GREET_DEVICE_INSTRUCTIONS_START"
 msgstr ""
@@ -2202,9 +2194,6 @@ msgstr ""
 "We're waiting for the user to fill out their information. You will be "
 "able to review them."
 
-msgid "ACTION_CREATE_USER"
-msgstr "Finalize"
-
 msgid "TEXT_LABEL_USER_ROLE"
 msgstr "User role"
 
@@ -2218,6 +2207,9 @@ msgstr ""
 
 msgid "TEXT_LABEL_USER_ROLE_RECOMMANDATIONS"
 msgstr "Please select the user's role. This cannot be changed later."
+
+msgid "ACTION_CREATE_USER"
+msgstr "Finalize"
 
 msgid "TEXT_GREET_USER_CODE_EXCHANGE_GIVE_CODE_INSTRUCTIONS"
 msgstr "Please give the following code to the user."
@@ -2261,11 +2253,11 @@ msgstr "Checking if a new version is available"
 msgid "TEXT_NEW_VERSION_CHECK_FAILED"
 msgstr "Could not check for new versions."
 
-msgid "ACTION_CLOSE"
-msgstr "Close"
-
 msgid "TEXT_NEW_VERSION_UP_TO_DATE"
 msgstr "Your PARSEC is up-to-date!"
+
+msgid "ACTION_CLOSE"
+msgstr "Close"
 
 msgid "LABEL_NOTIFICATIONS"
 msgstr ""
@@ -2275,6 +2267,21 @@ msgstr "Current password"
 
 msgid "ACTION_CHANGE_PASSWORD"
 msgstr "Change password"
+
+msgid "TEXT_PASSWORD_CHANGE_OLD_PASSWORD_INSTRUCTIONS"
+msgstr "To change your password, please enter your old password:"
+
+msgid "TEXT_PASSWORD_CHANGE_NEW_PASSWORD_INSTRUCTIONS"
+msgstr "And then chose a new one:"
+
+msgid "TEXT_LABEL_PASSWORD"
+msgstr "Password"
+
+msgid "TEXT_LABEL_PASSWORD_CONFIRMATION"
+msgstr "Password confirmation"
+
+msgid "TEXT_PASSWORD_CHOICE_MISMATCH"
+msgstr "Does not match the password."
 
 msgid "TEXT_SETTINGS_BEHAVIOR_TITLE"
 msgstr "Application behavior"
@@ -2348,6 +2355,9 @@ msgstr "This workspace is shared."
 msgid "TEXT_WORKSPACE_IS_OWNER_TOOLTIP"
 msgstr "You are this workspace owner."
 
+msgid "TEXT_WORKSPACE_OPEN_WORKSPACE_TOOLTIP"
+msgstr "Open the workspace in the file explorer."
+
 msgid "TEXT_WORKSPACE_RENAME_TOOLTIP"
 msgstr "Rename the workspace."
 
@@ -2363,9 +2373,6 @@ msgstr "Reencrypt the workspace."
 msgid "TEXT_WORKSPACE_DELETE_WORKSPACE_TOOLTIP"
 msgstr "Remove this workspace."
 
-msgid "TEXT_WORKSPACE_OPEN_WORKSPACE_TOOLTIP"
-msgstr "Open the workspace in the file explorer."
-
 msgid "TEXT_WORKSPACE_FILTER_WORKSPACES_PLACEHOLDER"
 msgstr "Filter the workspaces"
 
@@ -2374,3 +2381,4 @@ msgstr "Create a new workspace"
 
 msgid "ACTION_WORKSPACE_GOTO_FILE_LINK"
 msgstr "Go to a file using a link"
+
