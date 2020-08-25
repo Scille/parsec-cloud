@@ -167,8 +167,6 @@ async def fuse_mountpoint_runner(
                     print("/finally")
                     print(workspace_fs.get_workspace_name())
 
-
-
             # The fusepy runner (FUSE) relies on the `fuse_main_real` function from libfuse
             # This function is high-level helper on top of the libfuse API that is intended
             # for simple application. As such, it sets some signal handlers to exit cleanly
