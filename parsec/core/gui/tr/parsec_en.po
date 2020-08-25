@@ -284,6 +284,12 @@ msgstr "EXCELLENT"
 msgid "TEXT_PASSWORD_VALIDATION_PASSWORD_STRENGTH_strength"
 msgstr "Password strength: {strength}"
 
+msgid "TEXT_PASSWORD_CHECK_MATCH"
+msgstr "The password and the confirmation match."
+
+msgid "TEXT_PASSWORD_CHECK_NO_MATCH"
+msgstr "The confirmation does not match the password."
+
 msgid "ACTION_WORKSPACE_OPEN_IN_FILE_EXPLORER"
 msgstr "Open in the file explorer"
 
@@ -1467,9 +1473,6 @@ msgstr "B"
 msgid "TEXT_PARSEC_NEW_VERSION_AVAILABLE_version"
 msgstr "The version <b>{version}</b> of PARSEC is available!"
 
-msgid "TEXT_CHANGE_PASSWORD_PASSWORD_MISMATCH"
-msgstr "The password and the password confirmation do no match."
-
 msgid "TEXT_CHANGE_PASSWORD_SUCCESS"
 msgstr "The password has been successfully changed."
 
@@ -1926,18 +1929,6 @@ msgstr "Device name"
 msgid "TEXT_LABEL_DEVICE_PLACEHOLDER"
 msgstr "device"
 
-msgid "TEXT_LABEL_PASSWORD"
-msgstr "Password"
-
-msgid "TEXT_LABEL_PASSWORD_PLACEHOLDER"
-msgstr "Password"
-
-msgid "TEXT_LABEL_PASSWORD_CONFIRMATION"
-msgstr "Password confirmation"
-
-msgid "TEXT_LABEL_PASSWORD_CONFIRMATION_PLACEHOLDER"
-msgstr "Password confirmation"
-
 msgid "ACTION_CREATE_DEVICE"
 msgstr "Create the device"
 
@@ -2216,6 +2207,21 @@ msgstr "Current password"
 msgid "ACTION_CHANGE_PASSWORD"
 msgstr "Change password"
 
+msgid "TEXT_PASSWORD_CHANGE_OLD_PASSWORD_INSTRUCTIONS"
+msgstr "To change your password, please enter your old password:"
+
+msgid "TEXT_PASSWORD_CHANGE_NEW_PASSWORD_INSTRUCTIONS"
+msgstr "And then chose a new one:"
+
+msgid "TEXT_LABEL_PASSWORD"
+msgstr "Password"
+
+msgid "TEXT_LABEL_PASSWORD_CONFIRMATION"
+msgstr "Password confirmation"
+
+msgid "TEXT_PASSWORD_CHOICE_MISMATCH"
+msgstr "Does not match the password."
+
 msgid "TEXT_SETTINGS_BEHAVIOR_TITLE"
 msgstr "Application behavior"
 
@@ -2311,66 +2317,3 @@ msgstr "Create a new workspace"
 
 msgid "ACTION_WORKSPACE_GOTO_FILE_LINK"
 msgstr "Go to a file using a link"
-
-#~ msgid "TEXT_FILE_SHARING_REVOKED"
-#~ msgstr ""
-#~ "Your permissions on this workspace have"
-#~ " been revoked. You no longer have "
-#~ "access to theses files."
-
-#~ msgid "TEXT_BOOTSTRAP_ORG_INSTRUCTIONS_url-organization"
-#~ msgstr ""
-#~ "You are about to bootstrap the "
-#~ "organization <b>{organization}</b>. You will "
-#~ "be the first administrator of the "
-#~ "organization.<br /><br />\n"
-#~ "\n"
-#~ "To proceed, please provide your name,"
-#~ " your email address, a name for "
-#~ "this device, and a password."
-
-#~ msgid "TEXT_BOOTSTRAP_ORG_INVALID_URL"
-#~ msgstr "This is not a valid bootstrap link."
-
-#~ msgid "TEXT_BOOTSTRAP_ORG_INVITE_NOT_FOUND"
-#~ msgstr "There are no organization to bootstrap with this link."
-
-#~ msgid "TEXT_BOOTSTRAP_ORG_ALREADY_BOOTSTRAPPED"
-#~ msgstr "This organization has already been bootstrapped."
-
-#~ msgid "TEXT_BOOTSTRAP_ORG_USER_EXISTS"
-#~ msgstr "This user already exists within this organization."
-
-#~ msgid "TEXT_BOOTSTRAP_ORG_PASSWORD_MISMATCH"
-#~ msgstr "The password and the password confirmation do no match."
-
-#~ msgid "TEXT_BOOTSTRAP_ORG_PASSWORD_COMPLEXITY_TOO_LOW"
-#~ msgstr "The password is not complex enough."
-
-#~ msgid "TEXT_BOOTSTRAP_ORG_BAD_DEVICE_NAME"
-#~ msgstr "The device name is invalid."
-
-#~ msgid "TEXT_BOOTSTRAP_ORG_BAD_API_VERSION"
-#~ msgstr ""
-#~ "Your application is not compatible with"
-#~ " this server. Try to update it "
-#~ "to the latest version."
-
-#~ msgid "TEXT_BOOTSTRAP_ORG_BACKEND_REFUSAL"
-#~ msgstr "Could not bootstrap the organization."
-
-#~ msgid "TEXT_BOOTSTRAP_ORG_BACKEND_OFFLINE"
-#~ msgstr "The server is offline or you have no access to the internet."
-
-#~ msgid "TEXT_BOOTSTRAP_ORG_UNKNOWN_FAILURE"
-#~ msgstr "Could not bootstrap the organization."
-
-#~ msgid "TEXT_BOOTSTRAP_ORG_INVALID_EMAIL"
-#~ msgstr "The email is invalid."
-
-#~ msgid "TEXT_BOOTSTRAP_ORG_TITLE"
-#~ msgstr "Bootstrap the organization"
-
-#~ msgid "TEXT_WORKSPACE_SHARING_REMOVE_USER_TOOLTIP"
-#~ msgstr "Remove the user from this workspace."
-

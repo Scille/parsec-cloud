@@ -25,8 +25,8 @@ async def test_change_password_invalid_old_password(
     pc_w = await catch_password_change_widget()
 
     await aqtbot.key_clicks(pc_w.line_edit_old_password, "0123456789")
-    await aqtbot.key_clicks(pc_w.line_edit_password, "P@ssw0rd2")
-    await aqtbot.key_clicks(pc_w.line_edit_password_check, "P@ssw0rd2")
+    await aqtbot.key_clicks(pc_w.widget_new_password.line_edit_password, "P@ssw0rd2")
+    await aqtbot.key_clicks(pc_w.widget_new_password.line_edit_password_check, "P@ssw0rd2")
     await aqtbot.mouse_click(pc_w.button_change, QtCore.Qt.LeftButton)
 
     assert autoclose_dialog.dialogs == [
@@ -49,13 +49,9 @@ async def test_change_password_invalid_password_check(
     pc_w = await catch_password_change_widget()
 
     await aqtbot.key_clicks(pc_w.line_edit_old_password, "P@ssw0rd")
-    await aqtbot.key_clicks(pc_w.line_edit_password, "P@ssw0rd2")
-    await aqtbot.key_clicks(pc_w.line_edit_password_check, "P@ssw0rd3")
-    await aqtbot.mouse_click(pc_w.button_change, QtCore.Qt.LeftButton)
-
-    assert autoclose_dialog.dialogs == [
-        ("Error", "The password and the password confirmation do no match.")
-    ]
+    await aqtbot.key_clicks(pc_w.widget_new_password.line_edit_password, "P@ssw0rd2")
+    await aqtbot.key_clicks(pc_w.widget_new_password.line_edit_password_check, "P@ssw0rd3")
+    assert not pc_w.button_change.isEnabled()
 
 
 @pytest.mark.gui
@@ -78,8 +74,8 @@ async def test_change_password_success(
     pc_w = await catch_password_change_widget()
 
     await aqtbot.key_clicks(pc_w.line_edit_old_password, "P@ssw0rd")
-    await aqtbot.key_clicks(pc_w.line_edit_password, "P@ssw0rd2")
-    await aqtbot.key_clicks(pc_w.line_edit_password_check, "P@ssw0rd2")
+    await aqtbot.key_clicks(pc_w.widget_new_password.line_edit_password, "P@ssw0rd2")
+    await aqtbot.key_clicks(pc_w.widget_new_password.line_edit_password_check, "P@ssw0rd2")
     await aqtbot.mouse_click(pc_w.button_change, QtCore.Qt.LeftButton)
 
     assert autoclose_dialog.dialogs == [("", "The password has been successfully changed.")]

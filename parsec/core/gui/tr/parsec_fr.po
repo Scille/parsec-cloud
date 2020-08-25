@@ -301,6 +301,12 @@ msgstr "EXCELLENT"
 msgid "TEXT_PASSWORD_VALIDATION_PASSWORD_STRENGTH_strength"
 msgstr "Force du mot de passe : {strength}"
 
+msgid "TEXT_PASSWORD_CHECK_MATCH"
+msgstr "Le mot de passe et la confirmation sont les mêmes."
+
+msgid "TEXT_PASSWORD_CHECK_NO_MATCH"
+msgstr "La confirmation diffère du mot de passe."
+
 msgid "ACTION_WORKSPACE_OPEN_IN_FILE_EXPLORER"
 msgstr "Ouvrir dans l'explorateur de fichiers"
 
@@ -657,7 +663,7 @@ msgid "ACTION_USER_INVITE_DO_INVITE"
 msgstr "Inviter l'utilisateur"
 
 msgid "TEXT_USER_INVITE_CANCEL_INVITE_QUESTION_TITLE"
-msgstr ""
+msgstr "Annuler l'invitation"
 
 msgid "TEXT_USER_INVITE_CANCEL_INVITE_QUESTION_CONTENT"
 msgstr ""
@@ -1510,9 +1516,6 @@ msgstr "o"
 msgid "TEXT_PARSEC_NEW_VERSION_AVAILABLE_version"
 msgstr "La version <b>{version}</b> de PARSEC est disponible !"
 
-msgid "TEXT_CHANGE_PASSWORD_PASSWORD_MISMATCH"
-msgstr "Le mot de passe et la confirmation ne correspondent pas."
-
 msgid "TEXT_CHANGE_PASSWORD_SUCCESS"
 msgstr "Le mot de passe a été changé avec succès."
 
@@ -1978,18 +1981,6 @@ msgstr "Nom de l'appareil"
 msgid "TEXT_LABEL_DEVICE_PLACEHOLDER"
 msgstr "portable, téléphone, travail, fixe, ..."
 
-msgid "TEXT_LABEL_PASSWORD"
-msgstr "Mot de passe"
-
-msgid "TEXT_LABEL_PASSWORD_PLACEHOLDER"
-msgstr "Mot de passe"
-
-msgid "TEXT_LABEL_PASSWORD_CONFIRMATION"
-msgstr "Confirmation du mot de passe"
-
-msgid "TEXT_LABEL_PASSWORD_CONFIRMATION_PLACEHOLDER"
-msgstr "Confirmation du mot de passe"
-
 msgid "ACTION_CREATE_DEVICE"
 msgstr "Créer l'appareil"
 
@@ -2272,6 +2263,23 @@ msgstr "Mot de passe actuel"
 msgid "ACTION_CHANGE_PASSWORD"
 msgstr "Modifier le mot de passe"
 
+msgid "TEXT_PASSWORD_CHANGE_OLD_PASSWORD_INSTRUCTIONS"
+msgstr ""
+"Pour modifier votre mot de passe, veuillez entrer votre ancien mot de "
+"passe :"
+
+msgid "TEXT_PASSWORD_CHANGE_NEW_PASSWORD_INSTRUCTIONS"
+msgstr "Puis choisissez-en un nouveau :"
+
+msgid "TEXT_LABEL_PASSWORD"
+msgstr "Mot de passe"
+
+msgid "TEXT_LABEL_PASSWORD_CONFIRMATION"
+msgstr "Confirmation du mot de passe"
+
+msgid "TEXT_PASSWORD_CHOICE_MISMATCH"
+msgstr "Ne correspond pas au mot de passe."
+
 msgid "TEXT_SETTINGS_BEHAVIOR_TITLE"
 msgstr "Comportement"
 
@@ -2370,65 +2378,4 @@ msgstr "Créer un nouvel espace de travail"
 msgid "ACTION_WORKSPACE_GOTO_FILE_LINK"
 msgstr "Trouver un fichier via son lien"
 
-#~ msgid "TEXT_FILE_SHARING_REVOKED"
-#~ msgstr ""
-#~ "Vos permissions sur cet espace de "
-#~ "travail ont été supprimées. Vous n'avez"
-#~ " plus accès à ces fichiers."
-
-#~ msgid "TEXT_BOOTSTRAP_ORG_INSTRUCTIONS_url-organization"
-#~ msgstr ""
-#~ "Vous allez démarrer l'organisation "
-#~ "<b>{organization}</b>. Vous serez le premier"
-#~ " administrateur de l'organisation.<br /><br "
-#~ "/>\n"
-#~ "\n"
-#~ "Pour continuer, veuillez choisir un nom"
-#~ " d'utilisateur, un nom d'appareil, ainsi"
-#~ " qu'un mot de passe."
-
-#~ msgid "TEXT_BOOTSTRAP_ORG_INVALID_URL"
-#~ msgstr "L'URL n'est pas valide pour démarrer l'organisation."
-
-#~ msgid "TEXT_BOOTSTRAP_ORG_INVITE_NOT_FOUND"
-#~ msgstr "Aucune organisation ne peut être démarrée avec ce lien."
-
-#~ msgid "TEXT_BOOTSTRAP_ORG_ALREADY_BOOTSTRAPPED"
-#~ msgstr "Cette organisation a déjà été démarrée."
-
-#~ msgid "TEXT_BOOTSTRAP_ORG_USER_EXISTS"
-#~ msgstr "Ce nom d'utilisateur existe déjà au sein de cette organisation."
-
-#~ msgid "TEXT_BOOTSTRAP_ORG_PASSWORD_MISMATCH"
-#~ msgstr "Le mot de passe et la confirmation ne correspondent pas."
-
-#~ msgid "TEXT_BOOTSTRAP_ORG_PASSWORD_COMPLEXITY_TOO_LOW"
-#~ msgstr "Le mot de passe n'est pas assez complete."
-
-#~ msgid "TEXT_BOOTSTRAP_ORG_BAD_DEVICE_NAME"
-#~ msgstr "Le nom d'appareil n'est pas valide."
-
-#~ msgid "TEXT_BOOTSTRAP_ORG_BAD_API_VERSION"
-#~ msgstr ""
-#~ "Votre application n'est pas compatible "
-#~ "avec ce serveur. Veuillez la mettre "
-#~ "à jour."
-
-#~ msgid "TEXT_BOOTSTRAP_ORG_BACKEND_REFUSAL"
-#~ msgstr "Impossible de démarrer l'organisation."
-
-#~ msgid "TEXT_BOOTSTRAP_ORG_BACKEND_OFFLINE"
-#~ msgstr "Le serveur est hors-ligne ou vous n'avez pas de connexion internet."
-
-#~ msgid "TEXT_BOOTSTRAP_ORG_UNKNOWN_FAILURE"
-#~ msgstr "Impossible de démarrer l'organisation."
-
-#~ msgid "TEXT_BOOTSTRAP_ORG_INVALID_EMAIL"
-#~ msgstr "L'email n'est pas valide."
-
-#~ msgid "TEXT_BOOTSTRAP_ORG_TITLE"
-#~ msgstr "Démarrer l'organisation"
-
-#~ msgid "TEXT_WORKSPACE_SHARING_REMOVE_USER_TOOLTIP"
-#~ msgstr "Retirer l'utilisateur de cet espace de travail."
 

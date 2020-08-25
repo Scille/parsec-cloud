@@ -1,0 +1,1 @@
+Fixed organization creation window closing when passwords mismatch

@@ -52,15 +52,18 @@ async def _do_creation_process(aqtbot, co_w):
     await aqtbot.key_clicks(co_w.device_widget.line_edit_device, "HEV")
     assert not co_w.button_validate.isEnabled()
 
-    await aqtbot.key_clicks(co_w.device_widget.line_edit_password, "nihilanth")
+    await aqtbot.key_clicks(co_w.device_widget.widget_password.line_edit_password, "nihilanth")
     assert not co_w.button_validate.isEnabled()
 
-    await aqtbot.key_clicks(co_w.device_widget.line_edit_password_check, "nihilanth")
+    await aqtbot.key_clicks(
+        co_w.device_widget.widget_password.line_edit_password_check, "nihilanth"
+    )
     assert co_w.button_validate.isEnabled()
 
     await aqtbot.mouse_click(co_w.button_validate, QtCore.Qt.LeftButton)
 
 
+@pytest.mark.flaky(reruns=1)
 @pytest.mark.gui
 @pytest.mark.trio
 @customize_fixtures(backend_spontaneous_organization_boostrap=True)
@@ -134,8 +137,10 @@ async def test_create_organization_previous_clicked(
     await aqtbot.wait_until(co_w.device_widget.isVisible)
 
     await aqtbot.key_clicks(co_w.device_widget.line_edit_device, "HEV")
-    await aqtbot.key_clicks(co_w.device_widget.line_edit_password, "nihilanth")
-    await aqtbot.key_clicks(co_w.device_widget.line_edit_password_check, "nihilanth")
+    await aqtbot.key_clicks(co_w.device_widget.widget_password.line_edit_password, "nihilanth")
+    await aqtbot.key_clicks(
+        co_w.device_widget.widget_password.line_edit_password_check, "nihilanth"
+    )
 
     await aqtbot.mouse_click(co_w.button_previous, QtCore.Qt.LeftButton)
 
@@ -155,8 +160,8 @@ async def test_create_organization_previous_clicked(
     await aqtbot.wait_until(co_w.device_widget.isVisible)
 
     assert co_w.device_widget.line_edit_device.text() == "HEV"
-    assert co_w.device_widget.line_edit_password.text() == "nihilanth"
-    assert co_w.device_widget.line_edit_password_check.text() == "nihilanth"
+    assert co_w.device_widget.widget_password.line_edit_password.text() == "nihilanth"
+    assert co_w.device_widget.widget_password.line_edit_password_check.text() == "nihilanth"
 
 
 @pytest.mark.gui
@@ -190,8 +195,10 @@ async def test_create_organization_bootstrap_only(
     await aqtbot.wait_until(co_w.device_widget.isVisible)
 
     await aqtbot.key_clicks(co_w.device_widget.line_edit_device, "HEV")
-    await aqtbot.key_clicks(co_w.device_widget.line_edit_password, "nihilanth")
-    await aqtbot.key_clicks(co_w.device_widget.line_edit_password_check, "nihilanth")
+    await aqtbot.key_clicks(co_w.device_widget.widget_password.line_edit_password, "nihilanth")
+    await aqtbot.key_clicks(
+        co_w.device_widget.widget_password.line_edit_password_check, "nihilanth"
+    )
 
     await aqtbot.mouse_click(co_w.button_validate, QtCore.Qt.LeftButton)
 
@@ -261,8 +268,10 @@ async def test_create_organization_already_bootstrapped(
     await aqtbot.wait_until(co_w.device_widget.isVisible)
 
     await aqtbot.key_clicks(co_w.device_widget.line_edit_device, "HEV")
-    await aqtbot.key_clicks(co_w.device_widget.line_edit_password, "nihilanth")
-    await aqtbot.key_clicks(co_w.device_widget.line_edit_password_check, "nihilanth")
+    await aqtbot.key_clicks(co_w.device_widget.widget_password.line_edit_password, "nihilanth")
+    await aqtbot.key_clicks(
+        co_w.device_widget.widget_password.line_edit_password_check, "nihilanth"
+    )
     await aqtbot.mouse_click(co_w.button_validate, QtCore.Qt.LeftButton)
 
     def _modal_shown():
