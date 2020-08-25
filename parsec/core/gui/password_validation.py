@@ -115,12 +115,9 @@ class PasswordChoiceWidget(QWidget, Ui_PasswordChoiceWidget):
     def is_valid(self):
         password = self.line_edit_password.text()
         password_check = self.line_edit_password_check.text()
-        if (
+        return (
             password
             and password_check
             and password == password_check
             and get_password_strength(password) > 0
-        ):
-            return True
-        else:
-            return False
+        )

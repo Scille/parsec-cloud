@@ -70,7 +70,7 @@ parsec/core/gui/ui/*.py
 # QtCreator's temporary files
 *.ui.autosave
 
-Qt's translation files
+# Qt's translation files
 *.ts
 
 # History html file, automatically generated

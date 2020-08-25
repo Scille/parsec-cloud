@@ -55,10 +55,10 @@ class CreateOrgUserInfoWidget(QWidget, Ui_CreateOrgUserInfoWidget):
         super().__init__()
         self.setupUi(self)
         self.line_edit_user_email.validity_changed.connect(self.check_infos)
-        self.line_edit_user_email.setValidator(validators.EmailValidator())
+        self.line_edit_user_email.set_validator(validators.EmailValidator())
         self.line_edit_user_full_name.textChanged.connect(self.check_infos)
         self.line_edit_org_name.validity_changed.connect(self.check_infos)
-        self.line_edit_org_name.setValidator(validators.OrganizationIDValidator())
+        self.line_edit_org_name.set_validator(validators.OrganizationIDValidator())
         self.check_accept_contract.clicked.connect(self.check_infos)
 
     def check_infos(self, _=None):
@@ -83,7 +83,7 @@ class CreateOrgDeviceInfoWidget(QWidget, Ui_CreateOrgDeviceInfoWidget):
         self.widget_password.info_changed.connect(self.check_infos)
         self.line_edit_device.setText(get_default_device())
         self.line_edit_device.validity_changed.connect(self.check_infos)
-        self.line_edit_device.setValidator(validators.DeviceNameValidator())
+        self.line_edit_device.set_validator(validators.DeviceNameValidator())
 
     def check_infos(self, _=None):
         if self.line_edit_device.is_input_valid() and self.widget_password.is_valid():

@@ -2365,12 +2365,4 @@ msgstr "Créer un nouvel espace de travail"
 msgid "ACTION_WORKSPACE_GOTO_FILE_LINK"
 msgstr "Trouver un fichier via son lien"
 
-#~ msgid "TEXT_CHANGE_PASSWORD_PASSWORD_MISMATCH"
-#~ msgstr "Le mot de passe et la confirmation ne correspondent pas."
-
-#~ msgid "TEXT_LABEL_PASSWORD_PLACEHOLDER"
-#~ msgstr "Mot de passe"
-
-#~ msgid "TEXT_LABEL_PASSWORD_CONFIRMATION_PLACEHOLDER"
-#~ msgstr "Confirmation du mot de passe"
 
