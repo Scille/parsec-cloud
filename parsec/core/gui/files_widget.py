@@ -843,7 +843,9 @@ class FilesWidget(QWidget, Ui_FilesWidget):
     def _on_sharing_updated_qt(self, new_entry, previous_entry):
         if new_entry is None or new_entry.role is None:
             # Sharing revoked
-            show_error(self, _("TEXT_FILE_SHARING_REVOKED"))
+            show_error(
+                self, _("TEXT_FILE_SHARING_REVOKED_workspace").format(workspace=previous_entry.name)
+            )
             self.back_clicked.emit()
 
         elif previous_entry is not None and previous_entry.role is not None:
