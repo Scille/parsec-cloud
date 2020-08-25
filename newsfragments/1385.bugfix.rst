@@ -1,0 +1,1 @@
+Added workspace name in error message when removed from a workspace

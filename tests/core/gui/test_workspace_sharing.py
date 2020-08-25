@@ -2,8 +2,9 @@
 
 import pytest
 
-from PyQt5 import QtCore
+from PyQt5 import QtCore, QtWidgets
 
+from parsec.core.types import WorkspaceRole
 from parsec.core.local_device import save_device_with_password
 
 from parsec.core.gui.workspace_button import WorkspaceButton
@@ -228,3 +229,62 @@ async def test_workspace_sharing_filter_users(
 
     await aqtbot.key_clicks(share_w_w.line_edit_filter, "zoidberg")
     assert _users_visible() == 0
+
+
+@pytest.mark.gui
+@pytest.mark.trio
+async def test_share_workspace_while_connected(
+    aqtbot, running_backend, logged_gui, autoclose_dialog, qt_thread_gateway, alice_user_fs, bob
+):
+    w_w = await logged_gui.test_switch_to_workspaces_widget()
+    wid = await alice_user_fs.workspace_create("Workspace")
+
+    def _no_workspace_listed():
+        assert w_w.layout_workspaces.count() == 1
+        label = w_w.layout_workspaces.itemAt(0).widget()
+        assert isinstance(label, QtWidgets.QLabel)
+
+    await aqtbot.wait_until(_no_workspace_listed, timeout=2000)
+
+    await alice_user_fs.workspace_share(wid, bob.user_id, WorkspaceRole.MANAGER)
+
+    def _one_workspace_listed():
+        assert w_w.layout_workspaces.count() == 1
+        wk_button = w_w.layout_workspaces.itemAt(0).widget()
+        assert isinstance(wk_button, WorkspaceButton)
+        wk_button.name == "Workspace"
+
+    await aqtbot.wait_until(_one_workspace_listed, timeout=2000)
+
+
+@pytest.mark.gui
+@pytest.mark.trio
+async def test_unshare_workspace_while_connected(
+    aqtbot, running_backend, logged_gui, autoclose_dialog, qt_thread_gateway, alice_user_fs, bob
+):
+    w_w = await logged_gui.test_switch_to_workspaces_widget()
+    wid = await alice_user_fs.workspace_create("Workspace")
+
+    await alice_user_fs.workspace_share(wid, bob.user_id, WorkspaceRole.MANAGER)
+
+    def _one_workspace_listed():
+        assert w_w.layout_workspaces.count() == 1
+        wk_button = w_w.layout_workspaces.itemAt(0).widget()
+        assert isinstance(wk_button, WorkspaceButton)
+        wk_button.name == "Workspace"
+
+    await aqtbot.wait_until(_one_workspace_listed, timeout=2000)
+
+    await alice_user_fs.workspace_share(wid, bob.user_id, None)
+
+    def _no_workspace_listed():
+        assert w_w.layout_workspaces.count() == 1
+        label = w_w.layout_workspaces.itemAt(0).widget()
+        assert isinstance(label, QtWidgets.QLabel)
+
+    await aqtbot.wait_until(_no_workspace_listed, timeout=2000)
+
+    assert autoclose_dialog.dialogs[0] == (
+        "Error",
+        translate("TEXT_FILE_SHARING_REVOKED_workspace").format(workspace="Workspace"),
+    )
