@@ -3,7 +3,19 @@
 import trio
 from pathlib import Path
 from pendulum import Pendulum, now as pendulum_now
-from typing import Tuple, Optional, Union, Dict, Sequence, Pattern
+from typing import (
+    Tuple,
+    Optional,
+    Union,
+    Dict,
+    Sequence,
+    Pattern,
+    Any,
+    Type,
+    TypeVar,
+    AsyncIterator,
+    List,
+)
 from structlog import get_logger
 
 from async_generator import asynccontextmanager
@@ -15,6 +27,7 @@ from parsec.api.data import (
     DataError,
     RealmRoleCertificateContent,
     BaseMessageContent,
+    UserCertificateContent,
     SharingGrantedMessageContent,
     SharingReencryptedMessageContent,
     SharingRevokedMessageContent,
@@ -62,13 +75,18 @@ AnyEntryName = Union[EntryName, str]
 
 
 class ReencryptionJob:
-    def __init__(self, backend_cmds, new_workspace_entry, old_workspace_entry):
+    def __init__(
+        self,
+        backend_cmds: Union[APIV1_BackendAuthenticatedCmds, BackendAuthenticatedCmds],
+        new_workspace_entry: WorkspaceEntry,
+        old_workspace_entry: WorkspaceEntry,
+    ) -> None:
         self.backend_cmds = backend_cmds
         self.new_workspace_entry = new_workspace_entry
         self.old_workspace_entry = old_workspace_entry
         assert new_workspace_entry.id == old_workspace_entry.id
 
-    async def do_one_batch(self, size=100) -> Tuple[int, int]:
+    async def do_one_batch(self, size: int = 100) -> Tuple[int, int]:
         """
         Raises:
             FSError
@@ -144,6 +162,9 @@ class ReencryptionJob:
         return total, done
 
 
+UserFSTypeVar = TypeVar("UserFSTypeVar", bound="UserFS")
+
+
 class UserFS:
     def __init__(
         self,
@@ -192,7 +213,9 @@ class UserFS:
 
     @classmethod
     @asynccontextmanager
-    async def run(cls, *args, **kwargs):
+    async def run(
+        cls: Type[UserFSTypeVar], *args: Any, **kwargs: Any
+    ) -> AsyncIterator[UserFSTypeVar]:
         self = cls(*args, **kwargs)
 
         # Run user storage
@@ -253,7 +276,7 @@ class UserFS:
     async def _instantiate_workspace(self, workspace_id: EntryID) -> WorkspaceFS:
         # Workspace entry can change at any time, so we provide a way for
         # WorskpaeFS to load it each time it is needed
-        def get_workspace_entry():
+        def get_workspace_entry() -> WorkspaceEntry:
             user_manifest = self.get_user_manifest()
             workspace_entry = user_manifest.get_workspace_entry(workspace_id)
             if not workspace_entry:
@@ -443,7 +466,9 @@ class UserFS:
             )
             return
 
-    def _detect_and_send_shared_events(self, old_um, new_um):
+    def _detect_and_send_shared_events(
+        self, old_um: LocalUserManifest, new_um: LocalUserManifest
+    ) -> None:
         entries = {}
         for old_entry in old_um.workspaces:
             entries[old_entry.id] = [old_entry, None]
@@ -565,7 +590,7 @@ class UserFS:
 
         return True
 
-    async def _workspace_minimal_sync(self, workspace_entry: WorkspaceEntry):
+    async def _workspace_minimal_sync(self, workspace_entry: WorkspaceEntry) -> None:
         """
         Raises:
             FSError
@@ -721,7 +746,7 @@ class UserFS:
 
     async def _process_message(
         self, sender_id: DeviceID, expected_timestamp: Pendulum, ciphered: bytes
-    ):
+    ) -> None:
         """
         Raises:
             FSError
@@ -755,7 +780,7 @@ class UserFS:
 
     async def _process_message_sharing_granted(
         self, msg: Union[SharingGrantedMessageContent, SharingReencryptedMessageContent]
-    ):
+    ) -> None:
         """
         Raises:
             FSError
@@ -821,7 +846,7 @@ class UserFS:
                 previous_entry=already_existing_entry,
             )
 
-    async def _process_message_sharing_revoked(self, msg: SharingRevokedMessageContent):
+    async def _process_message_sharing_revoked(self, msg: SharingRevokedMessageContent) -> None:
         """
         Raises:
             FSError
@@ -870,7 +895,7 @@ class UserFS:
                 previous_entry=existing_workspace_entry,
             )
 
-    async def _retrieve_participants(self, workspace_id):
+    async def _retrieve_participants(self, workspace_id: EntryID) -> List[UserCertificateContent]:
         """
         Raises:
             FSError
@@ -889,7 +914,12 @@ class UserFS:
 
         return users
 
-    def _generate_reencryption_messages(self, new_workspace_entry, users, now: Pendulum):
+    def _generate_reencryption_messages(
+        self,
+        new_workspace_entry: WorkspaceEntry,
+        users: List[UserCertificateContent],
+        now: Pendulum,
+    ) -> Dict[UserID, bytes]:
         """
         Raises:
             FSError
@@ -919,8 +949,12 @@ class UserFS:
         return per_user_ciphered_msgs
 
     async def _send_start_reencryption_cmd(
-        self, workspace_id, encryption_revision, timestamp, per_user_ciphered_msgs
-    ):
+        self,
+        workspace_id: EntryID,
+        encryption_revision: int,
+        timestamp: Pendulum,
+        per_user_ciphered_msgs: Dict[UserID, bytes],
+    ) -> bool:
         """
         Raises:
             FSError
