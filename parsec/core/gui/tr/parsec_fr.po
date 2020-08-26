@@ -331,6 +331,21 @@ msgstr "Seul le propriétaire d'un espace de travail peut le rechiffrer."
 msgid "TEXT_WORKSPACE_CURRENTLY_REENCRYPTING_TOOLTIP"
 msgstr "En cours de rechiffrement"
 
+msgid "TEXT_WORKPACE_REENCRYPT_OFFLINE_ERROR"
+msgstr "Echec lors du rechiffrement, impossible de joindre le serveur."
+
+msgid "TEXT_WORKPACE_REENCRYPT_ACCESS_ERROR"
+msgstr "Echec lors du rechiffrement, vous n'avez pas la permission de rechiffrer cet espace de travail."
+
+msgid "TEXT_WORKPACE_REENCRYPT_NOT_FOUND_ERROR"
+msgstr "Echec lors du rechiffrement, l'espace de travail n'a pas été trouvé."
+
+msgid "TEXT_WORKPACE_REENCRYPT_FS_ERROR"
+msgstr "Echec lors du rechiffrement, l'espace de travail est déja en maintenance."
+
+msgid "TEXT_WORKPACE_REENCRYPT_UNKNOWN_ERROR"
+msgstr "Echec lors du rechiffrement, une erreur inattendue s'est produite."
+
 msgid "TEXT_WORKSPACE_IS_PRIVATE"
 msgstr "privé"
 
