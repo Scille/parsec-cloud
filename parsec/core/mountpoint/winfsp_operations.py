@@ -149,12 +149,12 @@ class WinFSPOperations(BaseFileSystemOperations):
         self.event_bus = event_bus
         self.fs_access = fs_access
 
-        max_file_nodes = 1024
-        max_file_size = 16 * 1024 * 1024
-        file_nodes = 1
+        # We have currently no way of easily getting the size of workspace
+        # Also, the total size of a workspace is not limited
+        # For the moment let's settle on 0 MB used for 1 TB available
         self._volume_info = {
-            "total_size": max_file_nodes * max_file_size,
-            "free_size": (max_file_nodes - file_nodes) * max_file_size,
+            "total_size": 1 * 1024 * 1024 * 1024,  # 1 TB
+            "free_size": 1 * 1024 * 1024 * 1024,  # 1 TB
             "volume_label": volume_label,
         }
 
