@@ -483,6 +483,17 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         if not ParsecApp.has_active_modal():
             self.tab_center.setCurrentIndex(idx)
 
+    def switch_to_login_tab(self):
+        idx = self._get_login_tab_index()
+        if idx != -1:
+            self.switch_to_tab(idx)
+        else:
+            tab = self.add_new_tab()
+            tab.show_login_widget()
+            self.on_tab_state_changed(tab, "login")
+            self.switch_to_tab(self.tab_center.count() - 1)
+            idx = self.tab_center.count() - 1
+
     def go_to_file_link(self, action_addr):
         devices = list_available_devices(self.config.config_dir)
         found_org = False
@@ -541,9 +552,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
                 organization=action_addr.organization_id
             ),
         )
-        idx = self._get_login_tab_index()
-        if idx != -1:
-            self.switch_to_tab(idx)
+        self.switch_to_login_tab()
 
     def add_instance(self, start_arg: Optional[str] = None):
         action_addr = None
@@ -553,19 +562,21 @@ class MainWindow(QMainWindow, Ui_MainWindow):
             except ValueError as exc:
                 show_error(self, _("TEXT_INVALID_URL"), exception=exc)
 
-        idx = self._get_login_tab_index()
-        if idx != -1:
-            self.switch_to_tab(idx)
-        else:
-            tab = self.add_new_tab()
-            tab.show_login_widget()
-            self.on_tab_state_changed(tab, "login")
-            self.switch_to_tab(self.tab_center.count() - 1)
-            idx = self.tab_center.count() - 1
+        # Do not open a new logging widget if the organisation is already opened
+        if (
+            action_addr
+            and isinstance(action_addr, BackendOrganizationFileLinkAddr)
+            and self.tab_center.count()
+        ):
+            self.go_to_file_link(action_addr)
+            return
+
+        self.switch_to_login_tab()
 
         self.show_top()
         if action_addr and isinstance(action_addr, BackendOrganizationFileLinkAddr):
-            self.go_to_file_link(action_addr)
+            # Organization is not connected, login is required
+            return
         elif action_addr:
             if isinstance(action_addr, BackendOrganizationBootstrapAddr):
                 self._on_create_org_clicked(action_addr)
