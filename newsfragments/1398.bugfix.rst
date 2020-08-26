@@ -1,0 +1,1 @@
+Do not open new login tab in the gui if a file linked is clicked with an already opened organization
