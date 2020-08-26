@@ -93,10 +93,16 @@ async def _do_workspace_list(core):
             users_roles[user_info.user_id] = (ws_entry.role, user_info)
 
         try:
-            root_info = await workspace_fs.path_info("/")
-            files = root_info["children"]
-        except FSBackendOfflineError:
+            # List files and directories in the root directory
+            # This is used for preview.
             files = []
+            async for child in workspace_fs.iterdir("/"):
+                child_info = await workspace_fs.path_info(child)
+                # Do not include confined files and directories
+                if child_info["confinement_point"] is None:
+                    files.append(child.name)
+        except FSBackendOfflineError:
+            pass
         workspaces.append((workspace_fs, ws_entry, users_roles, files, timestamped))
 
     user_manifest = core.user_fs.get_user_manifest()
