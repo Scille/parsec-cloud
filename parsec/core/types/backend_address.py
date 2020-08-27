@@ -56,6 +56,8 @@ class BackendAddr:
 
         if split.scheme != PARSEC_SCHEME:
             raise ValueError(f"Must start with `{PARSEC_SCHEME}://`")
+        if not split.hostname:
+            raise ValueError("Missing mandatory hostname")
 
         if split.query:
             # Note `parse_qs` takes care of percent-encoding
@@ -76,7 +78,7 @@ class BackendAddr:
             **cls._from_url_parse_path(path),
         }
 
-        return cls(hostname=split.hostname or "localhost", port=split.port, **kwargs)
+        return cls(hostname=split.hostname, port=split.port, **kwargs)
 
     @classmethod
     def _from_url_parse_path(cls, path):
