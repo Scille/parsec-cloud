@@ -310,7 +310,7 @@ async def test_rename_workspace_when_revoked(
         assert wk_button.label_title.text() == "Workspace (private)"
         assert wk_button.label_title.toolTip() == "Workspace (private)"
         assert not wk_button.is_shared
-        wk_button.name == "Workspace"
+        assert wk_button.name == "Workspace"
 
     await aqtbot.wait_until(_workspace_not_shared_listed, timeout=2000)
 
