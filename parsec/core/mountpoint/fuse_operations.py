@@ -80,6 +80,18 @@ class FuseOperations(LoggingMixIn, Operations):
     def init(self, path: FsPath):
         pass
 
+    def statfs(self, path: FsPath):
+        # We have currently no way of easily getting the size of workspace
+        # Also, the total size of a workspace is not limited
+        # For the moment let's settle on 0 MB used for 1 TB available
+        return {
+            "f_bsize": 512 * 1024,  # 512 KB, i.e the default block size
+            "f_frsize": 512 * 1024,  # 512 KB, i.e the default block size
+            "f_blocks": 512 * 1024,  # 512 K blocks is 1 TB
+            "f_bfree": 512 * 1024,  # 512 K blocks is 1 TB
+            "f_bavail": 512 * 1024,  # 512 K blocks is 1 TB
+        }
+
     def getattr(self, path: FsPath, fh: Optional[int] = None):
         if self._need_exit:
             fuse_exit()
@@ -108,6 +120,14 @@ class FuseOperations(LoggingMixIn, Operations):
         fuse_stat["st_uid"] = uid
         fuse_stat["st_gid"] = gid
         return fuse_stat
+
+    def chmod(self, path: FsPath, mod: int):
+        # TODO: silently ignore for the moment
+        return
+
+    def chown(self, path: FsPath, own: int):
+        # TODO: silently ignore for the moment
+        return
 
     def readdir(self, path: FsPath, fh: int):
         stat = self.fs_access.entry_info(path)
