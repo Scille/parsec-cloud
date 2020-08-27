@@ -1,7 +1,7 @@
 {% if greeter %}
 You have received an invitation from {{ greeter }} to join the {{ organization_id }} organization on Parsec.
 {% else %}
-You have received an invitation to add an new device to the {{ organization_id}} organization on Parsec.
+You have received an invitation to add a new device to the {{ organization_id}} organization on Parsec.
 {% endif %}
 
 If you don't already have it, you should Download the Parsec client via the following link: https://parsec.cloud/get-parsec
