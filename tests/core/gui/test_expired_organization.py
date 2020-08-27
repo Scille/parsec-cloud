@@ -9,6 +9,7 @@ from parsec.core.backend_connection import (
     BackendConnectionRefused,
     backend_authenticated_cmds_factory,
 )
+from parsec.core.gui.login_widget import LoginPasswordInputWidget
 from parsec.core.local_device import save_device_with_password
 from tests.common import customize_fixtures, freeze_time
 
@@ -26,13 +27,25 @@ async def test_expired_notification_logging(
     lw = gui.test_get_login_widget()
     tabw = gui.test_get_tab()
 
-    await aqtbot.key_clicks(lw.line_edit_password, "P@ssw0rd")
+    accounts_w = lw.widget.layout().itemAt(0).widget()
+    assert accounts_w
+
+    async with aqtbot.wait_signal(accounts_w.account_clicked):
+        await aqtbot.mouse_click(
+            accounts_w.accounts_widget.layout().itemAt(0).widget(), QtCore.Qt.LeftButton
+        )
+
+    def _password_widget_shown():
+        assert isinstance(lw.widget.layout().itemAt(0).widget(), LoginPasswordInputWidget)
+
+    await aqtbot.wait_until(_password_widget_shown)
+
+    password_w = lw.widget.layout().itemAt(0).widget()
+
+    await aqtbot.key_clicks(password_w.line_edit_password, "P@ssw0rd")
 
     async with aqtbot.wait_signals([lw.login_with_password_clicked, tabw.logged_in]):
-        await aqtbot.mouse_click(lw.button_login, QtCore.Qt.LeftButton)
-
-    central_widget = gui.test_get_central_widget()
-    assert central_widget is not None
+        await aqtbot.mouse_click(password_w.button_login, QtCore.Qt.LeftButton)
 
     # Assert dialog
     def _expired_notified():
@@ -53,17 +66,32 @@ async def test_expired_notification_from_connection(
 
     # Force logging on an expired organization
     with freeze_time("1989-12-17"):
-        await aqtbot.key_clicks(lw.line_edit_password, "P@ssw0rd")
+
+        accounts_w = lw.widget.layout().itemAt(0).widget()
+        assert accounts_w
+
+        async with aqtbot.wait_signal(accounts_w.account_clicked):
+            await aqtbot.mouse_click(
+                accounts_w.accounts_widget.layout().itemAt(0).widget(), QtCore.Qt.LeftButton
+            )
+
+        def _password_widget_shown():
+            assert isinstance(lw.widget.layout().itemAt(0).widget(), LoginPasswordInputWidget)
+
+        await aqtbot.wait_until(_password_widget_shown)
+
+        password_w = lw.widget.layout().itemAt(0).widget()
+
+        await aqtbot.key_clicks(password_w.line_edit_password, "P@ssw0rd")
 
         async with aqtbot.wait_signals([lw.login_with_password_clicked, tabw.logged_in]):
-            await aqtbot.mouse_click(lw.button_login, QtCore.Qt.LeftButton)
-
-        central_widget = gui.test_get_central_widget()
-        assert central_widget is not None
+            await aqtbot.mouse_click(password_w.button_login, QtCore.Qt.LeftButton)
 
         # Assert logged in
         def _notified():
             assert autoclose_dialog.dialogs == []
+            central_widget = gui.test_get_central_widget()
+            assert central_widget is not None
 
         await aqtbot.wait_until(_notified)
 

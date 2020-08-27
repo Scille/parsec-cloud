@@ -3,6 +3,7 @@
 import trio
 import triopg
 from async_generator import asynccontextmanager
+from typing import Optional
 
 from parsec.event_bus import EventBus
 from parsec.backend.config import BackendConfig
@@ -34,7 +35,7 @@ async def components_factory(config: BackendConfig, event_bus: EventBus):
     )
 
     async def _send_event(
-        event: BackendEvent, conn: triopg._triopg.TrioConnectionProxy = None, **kwargs
+        event: BackendEvent, conn: Optional[triopg._triopg.TrioConnectionProxy] = None, **kwargs
     ):
         if conn is None:
             async with dbh.pool.acquire() as conn:
