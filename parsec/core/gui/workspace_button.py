@@ -122,7 +122,8 @@ class WorkspaceButton(QWidget, Ui_WorkspaceButton):
 
     @property
     def is_shared(self):
-        return len(self.users_roles) > 1
+        # Filter out users that have been revoked
+        return sum(1 for _, u in self.users_roles.values() if u.revoked_on is None) > 1
 
     @property
     def owner(self):

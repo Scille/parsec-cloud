@@ -11,6 +11,8 @@ from parsec.core.gui.workspace_button import WorkspaceButton
 from parsec.core.gui.lang import translate
 from parsec.core.gui.login_widget import LoginPasswordInputWidget
 
+from tests.common import customize_fixtures
+
 
 @pytest.fixture
 def catch_share_workspace_widget(widget_catcher_factory):
@@ -288,3 +290,48 @@ async def test_unshare_workspace_while_connected(
         "Error",
         translate("TEXT_FILE_SHARING_REVOKED_workspace").format(workspace="Workspace"),
     )
+
+
+@customize_fixtures(logged_gui_as_admin=True)
+@pytest.mark.gui
+@pytest.mark.trio
+async def test_rename_workspace_when_revoked(
+    aqtbot, running_backend, logged_gui, autoclose_dialog, qt_thread_gateway, bob, monkeypatch
+):
+    w_w = await logged_gui.test_switch_to_workspaces_widget()
+
+    core = logged_gui.test_get_tab().core
+    wid = await core.user_fs.workspace_create("Workspace")
+
+    def _workspace_not_shared_listed():
+        assert w_w.layout_workspaces.count() == 1
+        wk_button = w_w.layout_workspaces.itemAt(0).widget()
+        assert isinstance(wk_button, WorkspaceButton)
+        assert wk_button.label_title.text() == "Workspace (private)"
+        assert wk_button.label_title.toolTip() == "Workspace (private)"
+        assert not wk_button.is_shared
+        assert wk_button.name == "Workspace"
+
+    await aqtbot.wait_until(_workspace_not_shared_listed, timeout=2000)
+
+    wid = w_w.layout_workspaces.itemAt(0).widget().workspace_fs.workspace_id
+
+    await core.user_fs.workspace_share(wid, bob.user_id, WorkspaceRole.MANAGER)
+
+    def _workspace_shared_listed():
+        assert w_w.layout_workspaces.count() == 1
+        wk_button = w_w.layout_workspaces.itemAt(0).widget()
+        assert isinstance(wk_button, WorkspaceButton)
+        assert wk_button.is_shared
+        assert wk_button.name == "Workspace"
+        assert wk_button.label_title.toolTip() == "Workspace (shared with Boby McBobFace)"
+        assert wk_button.label_title.text() == "Workspace (shared wi..."
+
+    await aqtbot.wait_until(_workspace_shared_listed, timeout=2000)
+
+    await core.revoke_user(bob.user_id)
+
+    w_w = await logged_gui.test_switch_to_users_widget()
+    w_w = await logged_gui.test_switch_to_workspaces_widget()
+
+    await aqtbot.wait_until(_workspace_not_shared_listed, timeout=2000)
