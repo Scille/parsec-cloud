@@ -7,8 +7,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PROJECT VERSION\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2020-08-27 11:08+0200\n"
-"PO-Revision-Date: 2020-08-27 11:09+0200\n"
+"POT-Creation-Date: 2020-08-27 13:59+0200\n"
+"PO-Revision-Date: 2020-08-27 13:58+0200\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language: fr\n"
 "Language-Team: fr <LL@li.org>\n"
@@ -547,7 +547,7 @@ msgid "TEXT_WORKPACE_REENCRYPT_FS_ERROR"
 msgstr "Echec lors du rechiffrement, l'espace de travail est déja en maintenance."
 
 msgid "TEXT_WORKSPACE_REENCRYPT_UNKOWN_ERROR"
-msgstr ""
+msgstr "Le rechiffrement a échoué pour une raison inconnue."
 
 msgid "TEXT_WORKSPACE_NEW_TITLE"
 msgstr "Créer un espace de travail"
@@ -2400,7 +2400,4 @@ msgstr "Créer un nouvel espace de travail"
 
 msgid "ACTION_WORKSPACE_GOTO_FILE_LINK"
 msgstr "Trouver un fichier via son lien"
-
-#~ msgid "TEXT_WORKPACE_REENCRYPT_UNKNOWN_ERROR"
-#~ msgstr "Echec lors du rechiffrement, une erreur inattendue s'est produite."
 
