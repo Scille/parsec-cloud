@@ -11,7 +11,7 @@ from parsec.core.backend_connection import (
     BackendConnectionRefused,
     BackendNotAvailable,
 )
-from parsec.core.types import BackendOrganizationBootstrapAddr
+from parsec.core.types import BackendOrganizationBootstrapAddr, BackendAddr
 from parsec.core.invite import bootstrap_organization, InviteAlreadyUsedError
 from parsec.core.local_device import save_device_with_password
 
@@ -59,18 +59,46 @@ class CreateOrgUserInfoWidget(QWidget, Ui_CreateOrgUserInfoWidget):
         self.line_edit_user_full_name.textChanged.connect(self.check_infos)
         self.line_edit_org_name.validity_changed.connect(self.check_infos)
         self.line_edit_org_name.set_validator(validators.OrganizationIDValidator())
+        self.line_edit_backend_addr.set_validator(validators.BackendAddrValidator())
+        self.line_edit_backend_addr.validity_changed.connect(self.check_infos)
         self.check_accept_contract.clicked.connect(self.check_infos)
+        self.check_use_custom_backend.clicked.connect(self._on_use_custom_backend_clicked)
+        self.widget_custom_backend.hide()
 
-    def check_infos(self, _=None):
-        if (
+    def _are_inputs_valid(self):
+        valid = (
             self.line_edit_user_email.is_input_valid()
             and self.line_edit_user_full_name.text()
             and self.line_edit_org_name.is_input_valid()
             and self.check_accept_contract.isChecked()
+        )
+        if (
+            self.check_use_custom_backend.isChecked()
+            and not self.line_edit_backend_addr.is_input_valid()
         ):
+            valid = False
+        return valid
+
+    def _on_use_custom_backend_clicked(self):
+        if self.check_use_custom_backend.isChecked():
+            self.widget_custom_backend.show()
+        else:
+            self.widget_custom_backend.hide()
+        self.check_infos()
+
+    def check_infos(self, _=None):
+        if self._are_inputs_valid():
             self.valid_info_entered.emit()
         else:
             self.invalid_info_entered.emit()
+
+    @property
+    def backend_addr(self):
+        return (
+            BackendAddr.from_url(self.line_edit_backend_addr.text())
+            if self.check_use_custom_backend.isChecked()
+            else None
+        )
 
 
 class CreateOrgDeviceInfoWidget(QWidget, Ui_CreateOrgDeviceInfoWidget):
@@ -139,6 +167,7 @@ class CreateOrgWidget(QWidget, Ui_CreateOrgWidget):
                     organization=self.start_addr.organization_id
                 )
             )
+            self.user_widget.check_use_custom_backend.setEnabled(False)
 
     def _on_info_valid(self):
         self.button_validate.setEnabled(True)
@@ -193,7 +222,8 @@ class CreateOrgWidget(QWidget, Ui_CreateOrgWidget):
                 return
             try:
                 backend_addr = BackendOrganizationBootstrapAddr.build(
-                    backend_addr=self.config.preferred_org_creation_backend_addr,
+                    backend_addr=self.user_widget.backend_addr
+                    or self.config.preferred_org_creation_backend_addr,
                     organization_id=org_id,
                 )
             except ValueError as exc:

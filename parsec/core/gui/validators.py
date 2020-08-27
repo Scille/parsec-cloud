@@ -38,9 +38,7 @@ class BackendAddrValidator(QValidator):
             BackendAddr.from_url(string)
             return QValidator.Acceptable, string, pos
         except ValueError:
-            if pos > 3:
-                return QValidator.Invalid, string, pos
-            return QValidator.Intermediate, string, pos
+            return QValidator.Invalid, string, pos
 
 
 class BackendOrganizationAddrValidator(QValidator):

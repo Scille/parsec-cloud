@@ -8,7 +8,9 @@ from tests.fixtures import local_device_to_backend_user
 from tests.common import customize_fixtures
 
 from parsec.api.protocol import OrganizationID
-from parsec.core.types import BackendOrganizationBootstrapAddr
+from parsec.core.types import BackendOrganizationBootstrapAddr, BackendAddr
+
+from parsec.core.gui.lang import translate
 
 
 @pytest.fixture
@@ -184,6 +186,10 @@ async def test_create_organization_bootstrap_only(
 
     assert co_w
 
+    assert co_w.label_instructions.text() == translate(
+        "TEXT_BOOTSTRAP_ORGANIZATION_INSTRUCTIONS_organization"
+    ).format(organization="AnomalousMaterials")
+
     await aqtbot.key_clicks(co_w.user_widget.line_edit_user_full_name, "Gordon Freeman")
     await aqtbot.key_clicks(co_w.user_widget.line_edit_user_email, "gordon.freeman@blackmesa.com")
     assert co_w.user_widget.line_edit_org_name.text() == "AnomalousMaterials"
@@ -276,5 +282,90 @@ async def test_create_organization_already_bootstrapped(
 
     def _modal_shown():
         assert autoclose_dialog.dialogs == [("Error", "This bootstrap link was already used.")]
+
+    await aqtbot.wait_until(_modal_shown)
+
+
+@pytest.mark.gui
+@pytest.mark.trio
+@customize_fixtures(backend_spontaneous_organization_boostrap=True)
+async def test_create_organization_custom_backend(
+    gui, aqtbot, running_backend, catch_create_org_widget, autoclose_dialog
+):
+    # The org creation window is usually opened using a sub-menu.
+    # Sub-menus can be a bit challenging to open in tests so we cheat
+    # using the keyboard shortcut Ctrl+N that has the same effect.
+    await aqtbot.key_clicks(gui, "n", QtCore.Qt.ControlModifier)
+
+    co_w = await catch_create_org_widget()
+    co_w.config = co_w.config.evolve(
+        preferred_org_creation_backend_addr=BackendAddr.from_url("parsec://localhost:1337")
+    )
+
+    assert co_w
+    assert not co_w.button_validate.isEnabled()
+
+    await aqtbot.key_clicks(co_w.user_widget.line_edit_user_full_name, "Gordon Freeman")
+    assert not co_w.button_validate.isEnabled()
+
+    await aqtbot.key_clicks(co_w.user_widget.line_edit_user_email, "gordon.freeman@blackmesa.com")
+    assert not co_w.button_validate.isEnabled()
+
+    await aqtbot.key_clicks(co_w.user_widget.line_edit_org_name, "AnomalousMaterials")
+    assert not co_w.button_validate.isEnabled()
+
+    await aqtbot.mouse_click(co_w.user_widget.check_accept_contract, QtCore.Qt.LeftButton)
+    assert co_w.button_validate.isEnabled()
+
+    await aqtbot.mouse_click(co_w.button_validate, QtCore.Qt.LeftButton)
+
+    await aqtbot.wait_until(co_w.user_widget.isHidden)
+    await aqtbot.wait_until(co_w.device_widget.isVisible)
+    await aqtbot.wait_until(co_w.button_previous.isVisible)
+    assert not co_w.button_validate.isEnabled()
+
+    await aqtbot.key_clicks(co_w.device_widget.line_edit_device, "HEV")
+    assert not co_w.button_validate.isEnabled()
+
+    await aqtbot.key_clicks(co_w.device_widget.widget_password.line_edit_password, "nihilanth")
+    assert not co_w.button_validate.isEnabled()
+
+    await aqtbot.key_clicks(
+        co_w.device_widget.widget_password.line_edit_password_check, "nihilanth"
+    )
+    assert co_w.button_validate.isEnabled()
+
+    await aqtbot.mouse_click(co_w.button_validate, QtCore.Qt.LeftButton)
+
+    # Should fail because it will use an invalid backend addr
+    def _error_modal_shown():
+        assert autoclose_dialog.dialogs == [("Error", "Cannot connect to the server.")]
+
+    await aqtbot.wait_until(_error_modal_shown)
+
+    autoclose_dialog.reset()
+
+    # Let's go back and provide a custom address
+    await aqtbot.mouse_click(co_w.button_previous, QtCore.Qt.LeftButton)
+
+    await aqtbot.mouse_click(co_w.user_widget.check_use_custom_backend, QtCore.Qt.LeftButton)
+    assert not co_w.button_validate.isEnabled()
+
+    await aqtbot.key_clicks(co_w.user_widget.line_edit_backend_addr, running_backend.addr.to_url())
+    assert co_w.button_validate.isEnabled()
+
+    await aqtbot.mouse_click(co_w.button_validate, QtCore.Qt.LeftButton)
+    await aqtbot.mouse_click(co_w.button_validate, QtCore.Qt.LeftButton)
+
+    def _modal_shown():
+        assert autoclose_dialog.dialogs == [
+            (
+                "",
+                "You organization <b>AnomalousMaterials</b> has been created!<br />\n<br />\n"
+                "You will now be automatically logged in.<br />\n<br />\n"
+                "To help you start with PARSEC, you can read the "
+                '<a href="https://docs.parsec.cloud/en/stable/" title="User guide">user guide</a>.',
+            )
+        ]
 
     await aqtbot.wait_until(_modal_shown)
