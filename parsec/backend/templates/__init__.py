@@ -1,6 +1,6 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
 
-from jinja2 import Environment, BaseLoader, TemplateNotFound
+from jinja2 import Environment, BaseLoader, TemplateNotFound, StrictUndefined
 import importlib_resources
 
 
@@ -18,7 +18,9 @@ class PackageLoader(BaseLoader):
         return source, self.path, lambda: True
 
 
-JINJA_ENV = Environment(loader=PackageLoader("parsec.backend.http.templates"))
+JINJA_ENV = Environment(
+    loader=PackageLoader("parsec.backend.http.templates"), undefined=StrictUndefined
+)
 
 
 def get_template(name):
