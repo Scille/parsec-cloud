@@ -82,13 +82,14 @@ async def test_organization_update_expiration_date(
             expiration_date=Pendulum(1999, 12, 31),
         )
         assert rep == {"status": "ok"}
+        await spy.wait_with_timeout(BackendEvent.ORGANIZATION_EXPIRED)
+
         rep = await organization_status(administration_backend_sock, coolorg.organization_id)
         assert rep == {
             "status": "ok",
             "is_bootstrapped": True,
             "expiration_date": Pendulum(1999, 12, 31),
         }
-        await spy.wait_with_timeout(BackendEvent.ORGANIZATION_EXPIRED)
 
 
 @pytest.mark.trio
