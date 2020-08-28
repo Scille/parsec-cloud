@@ -483,6 +483,16 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         if not ParsecApp.has_active_modal():
             self.tab_center.setCurrentIndex(idx)
 
+    def switch_to_login_tab(self):
+        idx = self._get_login_tab_index()
+        if idx != -1:
+            self.switch_to_tab(idx)
+        else:
+            tab = self.add_new_tab()
+            tab.show_login_widget()
+            self.on_tab_state_changed(tab, "login")
+            self.switch_to_tab(self.tab_center.count() - 1)
+
     def go_to_file_link(self, action_addr):
         devices = list_available_devices(self.config.config_dir)
         found_org = False
@@ -541,9 +551,19 @@ class MainWindow(QMainWindow, Ui_MainWindow):
                 organization=action_addr.organization_id
             ),
         )
-        idx = self._get_login_tab_index()
-        if idx != -1:
-            self.switch_to_tab(idx)
+        self.switch_to_login_tab()
+
+    def show_create_org_widget(self, action_addr):
+        self.switch_to_login_tab()
+        self._on_create_org_clicked(action_addr)
+
+    def show_claim_user_widget(self, action_addr):
+        self.switch_to_login_tab()
+        self._on_claim_user_clicked(action_addr)
+
+    def show_claim_device_widget(self, action_addr):
+        self.switch_to_login_tab()
+        self._on_claim_device_clicked(action_addr)
 
     def add_instance(self, start_arg: Optional[str] = None):
         action_addr = None
@@ -553,30 +573,25 @@ class MainWindow(QMainWindow, Ui_MainWindow):
             except ValueError as exc:
                 show_error(self, _("TEXT_INVALID_URL"), exception=exc)
 
-        idx = self._get_login_tab_index()
-        if idx != -1:
-            self.switch_to_tab(idx)
-        else:
-            tab = self.add_new_tab()
-            tab.show_login_widget()
-            self.on_tab_state_changed(tab, "login")
-            self.switch_to_tab(self.tab_center.count() - 1)
-            idx = self.tab_center.count() - 1
-
         self.show_top()
-        if action_addr and isinstance(action_addr, BackendOrganizationFileLinkAddr):
+        if not action_addr:
+            self.switch_to_login_tab()
+        elif isinstance(action_addr, BackendOrganizationFileLinkAddr):
             self.go_to_file_link(action_addr)
-        elif action_addr:
-            if isinstance(action_addr, BackendOrganizationBootstrapAddr):
-                self._on_create_org_clicked(action_addr)
-            elif isinstance(action_addr, BackendInvitationAddr):
-                if action_addr.invitation_type == InvitationType.USER:
-                    self._on_claim_user_clicked(action_addr)
-                elif action_addr.invitation_type == InvitationType.DEVICE:
-                    self._on_claim_device_clicked(action_addr)
-                else:
-                    show_error(self, _("TEXT_INVALID_URL"))
-                    return
+        elif isinstance(action_addr, BackendOrganizationBootstrapAddr):
+            self.show_create_org_widget(action_addr)
+        elif (
+            isinstance(action_addr, BackendInvitationAddr)
+            and action_addr.invitation_type == InvitationType.USER
+        ):
+            self.show_claim_user_widget(action_addr)
+        elif (
+            isinstance(action_addr, BackendInvitationAddr)
+            and action_addr.invitation_type == InvitationType.DEVICE
+        ):
+            self.show_claim_device_widget(action_addr)
+        else:
+            show_error(self, _("TEXT_INVALID_URL"))
 
     def close_current_tab(self, force=False):
         if self.tab_center.count() == 1:
