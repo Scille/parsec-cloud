@@ -19,15 +19,17 @@ from parsec.backend.organization import (
 )
 from parsec.backend.memory.vlob import MemoryVlobComponent
 from parsec.backend.memory.block import MemoryBlockComponent
+from parsec.backend.events import BackendEvent
 
 
 class MemoryOrganizationComponent(BaseOrganizationComponent):
-    def __init__(self, *args, **kwargs):
+    def __init__(self, send_event, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self._user_component = None
         self._vlob_component = None
         self._block_component = None
         self._organizations = {}
+        self._send_event = send_event
 
     def register_components(
         self,
@@ -107,5 +109,7 @@ class MemoryOrganizationComponent(BaseOrganizationComponent):
             self._organizations[id] = self._organizations[id].evolve(
                 expiration_date=expiration_date
             )
+            if self._organizations[id].is_expired:
+                await self._send_event(BackendEvent.ORGANIZATION_EXPIRED, organization_id=id)
         except KeyError:
             raise OrganizationNotFoundError()

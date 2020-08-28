@@ -7,6 +7,7 @@ from triopg import UniqueViolationError
 
 from parsec.api.protocol import OrganizationID
 from parsec.crypto import VerifyKey
+from parsec.backend.events import BackendEvent
 from parsec.backend.user import UserError, User, Device
 from parsec.backend.organization import (
     BaseOrganizationComponent,
@@ -22,6 +23,7 @@ from parsec.backend.organization import (
 from parsec.backend.postgresql.handler import PGHandler
 from parsec.backend.postgresql.user_queries.create import _create_user
 from parsec.backend.postgresql.utils import Q, q_organization_internal_id
+from parsec.backend.postgresql.handler import send_signal
 
 
 _q_insert_organization = Q(
@@ -190,3 +192,6 @@ class PGOrganizationComponent(BaseOrganizationComponent):
 
             if result != "UPDATE 1":
                 raise OrganizationError(f"Update error: {result}")
+
+            if expiration_date is not None and expiration_date <= Pendulum.now():
+                await send_signal(conn, BackendEvent.ORGANIZATION_EXPIRED, organization_id=id)

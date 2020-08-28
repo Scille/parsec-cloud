@@ -111,7 +111,7 @@ async def _do_process_authenticated_answer(
         result_req = handshake.build_rvk_mismatch_result_req()
         return None, result_req, _make_error_infos("Bad root verify key")
 
-    if organization.expiration_date is not None and organization.expiration_date <= pendulum_now():
+    if organization.is_expired:
         result_req = handshake.build_organization_expired_result_req()
         return None, result_req, _make_error_infos("Expired organization")
 
@@ -156,7 +156,7 @@ async def _process_invited_answer(
         result_req = handshake.build_bad_identity_result_req()
         return None, result_req, _make_error_infos("Bad organization")
 
-    if organization.expiration_date is not None and organization.expiration_date <= pendulum_now():
+    if organization.is_expired:
         result_req = handshake.build_organization_expired_result_req()
         return None, result_req, _make_error_infos("Expired organization")
 
@@ -234,7 +234,7 @@ async def _apiv1_process_anonymous_answer(
             result_req = handshake.build_bad_identity_result_req()
             return None, result_req, _make_error_infos("Bad organization")
 
-    if organization.expiration_date is not None and organization.expiration_date <= pendulum_now():
+    if organization.is_expired:
         result_req = handshake.build_organization_expired_result_req()
         return None, result_req, _make_error_infos("Expired organization")
 

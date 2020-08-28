@@ -34,7 +34,7 @@ async def components_factory(config: BackendConfig, event_bus: EventBus):
 
     webhooks = WebhooksComponent(config)
     http = HTTPComponent(config)
-    organization = MemoryOrganizationComponent(webhooks)
+    organization = MemoryOrganizationComponent(_send_event, webhooks)
     user = MemoryUserComponent(_send_event, event_bus)
     invite = MemoryInviteComponent(_send_event, event_bus, config)
     message = MemoryMessageComponent(_send_event)
@@ -43,7 +43,7 @@ async def components_factory(config: BackendConfig, event_bus: EventBus):
     ping = MemoryPingComponent(_send_event)
     block = MemoryBlockComponent()
     blockstore = blockstore_factory(config.blockstore_config)
-    events = EventsComponent(realm)
+    events = EventsComponent(realm, send_event=_send_event)
 
     components = {
         "events": events,

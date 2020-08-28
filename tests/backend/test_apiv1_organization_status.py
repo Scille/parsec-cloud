@@ -9,6 +9,7 @@ from parsec.api.protocol import (
     apiv1_organization_update_serializer,
 )
 from tests.backend.test_apiv1_organization import organization_create
+from parsec.backend.backend_events import BackendEvent
 
 
 async def organization_status(sock, organization_id):
@@ -57,7 +58,7 @@ async def test_organization_status_not_bootstrapped(
 
 @pytest.mark.trio
 async def test_organization_update_expiration_date(
-    coolorg, organization_factory, administration_backend_sock
+    coolorg, organization_factory, administration_backend_sock, backend
 ):
     rep = await organization_status(administration_backend_sock, coolorg.organization_id)
     assert rep == {"status": "ok", "is_bootstrapped": True, "expiration_date": None}
@@ -73,6 +74,22 @@ async def test_organization_update_expiration_date(
     assert rep == {"status": "ok"}
     rep = await organization_status(administration_backend_sock, coolorg.organization_id)
     assert rep == {"status": "ok", "is_bootstrapped": True, "expiration_date": None}
+    # Expired organization
+    with backend.event_bus.listen() as spy:
+        rep = await organization_update(
+            administration_backend_sock,
+            coolorg.organization_id,
+            expiration_date=Pendulum(1999, 12, 31),
+        )
+        assert rep == {"status": "ok"}
+        await spy.wait_with_timeout(BackendEvent.ORGANIZATION_EXPIRED)
+
+        rep = await organization_status(administration_backend_sock, coolorg.organization_id)
+        assert rep == {
+            "status": "ok",
+            "is_bootstrapped": True,
+            "expiration_date": Pendulum(1999, 12, 31),
+        }
 
 
 @pytest.mark.trio
