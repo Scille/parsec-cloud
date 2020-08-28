@@ -54,6 +54,7 @@ class InstanceWidget(QWidget):
     create_organization_clicked = pyqtSignal()
 
     def __init__(self, jobs_ctx, event_bus, config, systray_notification, **kwargs):
+        print("Create InstanceWidget", event_bus)
         super().__init__(**kwargs)
         self.jobs_ctx = jobs_ctx
         self.event_bus = event_bus
@@ -211,6 +212,10 @@ class InstanceWidget(QWidget):
                 self.login_failed.emit()
 
     def show_central_widget(self):
+        print(self)
+        print(self.event_bus)
+        print(self.core)
+        print(self.core.event_bus)
         self.clear_widgets()
         central_widget = CentralWidget(
             self.core,
