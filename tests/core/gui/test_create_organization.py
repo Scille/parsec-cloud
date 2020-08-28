@@ -8,7 +8,7 @@ from tests.fixtures import local_device_to_backend_user
 from tests.common import customize_fixtures
 
 from parsec.api.protocol import OrganizationID
-from parsec.core.types import BackendOrganizationBootstrapAddr, BackendAddr
+from parsec.core.types import BackendOrganizationBootstrapAddr
 
 from parsec.core.gui.lang import translate
 
@@ -289,8 +289,9 @@ async def test_create_organization_already_bootstrapped(
 @pytest.mark.gui
 @pytest.mark.trio
 @customize_fixtures(backend_spontaneous_organization_boostrap=True)
+@customize_fixtures(fake_preferred_org_creation_backend_addr=True)
 async def test_create_organization_custom_backend(
-    gui, aqtbot, running_backend, catch_create_org_widget, autoclose_dialog
+    gui, aqtbot, running_backend, catch_create_org_widget, autoclose_dialog, unused_tcp_port
 ):
     # The org creation window is usually opened using a sub-menu.
     # Sub-menus can be a bit challenging to open in tests so we cheat
@@ -298,9 +299,6 @@ async def test_create_organization_custom_backend(
     await aqtbot.key_clicks(gui, "n", QtCore.Qt.ControlModifier)
 
     co_w = await catch_create_org_widget()
-    co_w.config = co_w.config.evolve(
-        preferred_org_creation_backend_addr=BackendAddr.from_url("parsec://localhost:1337")
-    )
 
     assert co_w
     assert not co_w.button_validate.isEnabled()

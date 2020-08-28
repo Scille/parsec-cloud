@@ -672,7 +672,10 @@ async def running_backend(server_factory, backend_addr, backend, running_backend
 
 
 @pytest.fixture
-def core_config(tmpdir, backend_addr):
+def core_config(tmpdir, backend_addr, unused_tcp_port, fixtures_customization):
+    if fixtures_customization.get("fake_preferred_org_creation_backend_addr", False):
+        backend_addr = BackendAddr.from_url(f"parsec://localhost:{unused_tcp_port}")
+
     tmpdir = Path(tmpdir)
     return CoreConfig(
         config_dir=tmpdir / "config",
