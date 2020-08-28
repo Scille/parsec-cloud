@@ -198,6 +198,10 @@ async def test_invite_with_send_mail(alice, alice_backend_sock, email_letterbox)
     assert "To: zack@example.com" in body
     assert "Reply-To: Alicey McAliceFace <alice@example.com>" in body
     assert token.hex in body
+    assert (
+        "You have received an invitation from Alicey McAliceFace to join the CoolOrg organization on Parsec."
+        in body
+    )
 
     # Device invitation
     rep = await invite_new(alice_backend_sock, type=InvitationType.DEVICE, send_email=True)
@@ -216,6 +220,10 @@ async def test_invite_with_send_mail(alice, alice_backend_sock, email_letterbox)
     assert "To: alice@example.com" in body
     assert "Reply-To: " not in body
     assert token.hex in body
+    assert (
+        "You have received an invitation to add a new device to the CoolOrg organization on Parsec."
+        in body
+    )
 
 
 @pytest.mark.trio

@@ -150,10 +150,10 @@ def generate_invite_email(
     invitation_url: str,
 ) -> Message:
     html = get_template("invitation_mail.html").render(
-        greeter_name=greeter_name, organization_id=organization_id, invitation_url=invitation_url
+        greeter=greeter_name, organization_id=organization_id, invitation_url=invitation_url
     )
     text = get_template("invitation_mail.txt").render(
-        greeter_name=greeter_name, organization_id=organization_id, invitation_url=invitation_url
+        greeter=greeter_name, organization_id=organization_id, invitation_url=invitation_url
     )
 
     # mail settings
