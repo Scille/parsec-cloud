@@ -7,8 +7,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PROJECT VERSION\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2020-08-25 09:56+0200\n"
-"PO-Revision-Date: 2020-08-25 09:55+0200\n"
+"POT-Creation-Date: 2020-08-27 13:59+0200\n"
+"PO-Revision-Date: 2020-08-27 13:58+0200\n"
 "Last-Translator: \n"
 "Language: en\n"
 "Language-Team: en <LL@li.org>\n"
@@ -314,21 +314,6 @@ msgstr "Only a workspace owner can reencrypt a workspace."
 msgid "TEXT_WORKSPACE_CURRENTLY_REENCRYPTING_TOOLTIP"
 msgstr "Reencrypting the workspace"
 
-msgid "TEXT_WORKPACE_REENCRYPT_OFFLINE_ERROR"
-msgstr "Reencryption failure, can not reach the server."
-
-msgid "TEXT_WORKPACE_REENCRYPT_ACCESS_ERROR"
-msgstr "Reencryption failure, you don't have permission to reencrypt the workspace."
-
-msgid "TEXT_WORKPACE_REENCRYPT_NOT_FOUND_ERROR"
-msgstr "Reencryption failure, workspace not found."
-
-msgid "TEXT_WORKPACE_REENCRYPT_FS_ERROR"
-msgstr "Reencryption failure, workspace already in maintenance."
-
-msgid "TEXT_WORKPACE_REENCRYPT_UNKNOWN_ERROR"
-msgstr "Reencryption failure, an unexpected error occured."
-
 msgid "TEXT_WORKSPACE_IS_PRIVATE"
 msgstr "private"
 
@@ -513,6 +498,23 @@ msgstr "Reencrypt the workspace"
 
 msgid "ACTION_WORKSPACE_REENCRYPTION_CONFIRM"
 msgstr "Reencrypt"
+
+msgid "TEXT_WORKPACE_REENCRYPT_OFFLINE_ERROR"
+msgstr "Reencryption failure, can not reach the server."
+
+msgid "TEXT_WORKPACE_REENCRYPT_ACCESS_ERROR"
+msgstr ""
+"Reencryption failure, you don't have permission to reencrypt the "
+"workspace."
+
+msgid "TEXT_WORKPACE_REENCRYPT_NOT_FOUND_ERROR"
+msgstr "Reencryption failure, workspace not found."
+
+msgid "TEXT_WORKPACE_REENCRYPT_FS_ERROR"
+msgstr "Reencryption failure, workspace already in maintenance."
+
+msgid "TEXT_WORKSPACE_REENCRYPT_UNKOWN_ERROR"
+msgstr "Reencryption failed for unknown reason."
 
 msgid "TEXT_WORKSPACE_NEW_TITLE"
 msgstr "Create a workspace"
@@ -2024,6 +2026,12 @@ msgstr ""
 "title=\"Condition Générales de Vente ou d'Utilisation\">conditions "
 "générales de vente ou d'utilisation</a>"
 
+msgid "ACTION_USE_CUSTOM_BACKEND"
+msgstr "I have my own Parsec server"
+
+msgid "TEXT_LABEL_BACKEND_ADDR_PLACEHOLDER"
+msgstr "parsec://host:port"
+
 msgid "TEXT_CREATE_ORGANIZATION_INSTRUCTIONS"
 msgstr "Please fill out the following information to create your organization."
 
@@ -2216,17 +2224,17 @@ msgstr "Close"
 msgid "LABEL_NOTIFICATIONS"
 msgstr ""
 
-msgid "TEXT_LABEL_PASSWORD_OLD"
-msgstr "Current password"
-
-msgid "ACTION_CHANGE_PASSWORD"
-msgstr "Change password"
-
 msgid "TEXT_PASSWORD_CHANGE_OLD_PASSWORD_INSTRUCTIONS"
 msgstr "To change your password, please enter your old password:"
 
+msgid "TEXT_LABEL_PASSWORD_OLD"
+msgstr "Current password"
+
 msgid "TEXT_PASSWORD_CHANGE_NEW_PASSWORD_INSTRUCTIONS"
 msgstr "And then chose a new one:"
+
+msgid "ACTION_CHANGE_PASSWORD"
+msgstr "Change password"
 
 msgid "TEXT_LABEL_PASSWORD"
 msgstr "Password"
@@ -2332,3 +2340,4 @@ msgstr "Create a new workspace"
 
 msgid "ACTION_WORKSPACE_GOTO_FILE_LINK"
 msgstr "Go to a file using a link"
+
