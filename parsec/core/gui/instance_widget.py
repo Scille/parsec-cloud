@@ -165,6 +165,7 @@ class InstanceWidget(QWidget):
             )
         self.running_core_job = None
         self.core_jobs_ctx = None
+        print("Core reset")
         self.core = None
         self.logged_out.emit()
 
@@ -212,8 +213,10 @@ class InstanceWidget(QWidget):
                 self.login_failed.emit()
 
     def show_central_widget(self):
+        print("Show central widget")
         print(self)
         print(self.event_bus)
+        print("Core")
         print(self.core)
         print(self.core.event_bus)
         self.clear_widgets()
