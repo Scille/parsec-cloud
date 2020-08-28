@@ -12,6 +12,7 @@ services:
       - PARSEC_ADMINISTRATION_TOKEN=s3cr3t  # Change for prod
       - PARSEC_DB_FIRST_TRIES_NUMBER=20
       - PARSEC_DB_FIRST_TRIES_SLEEP=1
+      - PARSEC_BACKEND_ADDR=parsec://localhost:6777?no_ssl=True
     ports:
       - 6777:6777
     depends_on:
