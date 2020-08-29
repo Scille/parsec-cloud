@@ -121,12 +121,12 @@ class FuseOperations(LoggingMixIn, Operations):
         fuse_stat["st_gid"] = gid
         return fuse_stat
 
-    def chmod(self, path: FsPath, mod: int):
-        # TODO: silently ignore for the moment
+    def chmod(self, path: FsPath, mode: int):
+        # TODO: silently ignored for the moment
         return
 
-    def chown(self, path: FsPath, own: int):
-        # TODO: silently ignore for the moment
+    def chown(self, path: FsPath, uid: int, gid: int):
+        # TODO: silently ignored for the moment
         return
 
     def readdir(self, path: FsPath, fh: int):
