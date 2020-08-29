@@ -1,1 +1,0 @@
-In order to simplify url validation in the GUI, parsec:// url without hostname part are now considered invalid instead of defaulting to localhost.

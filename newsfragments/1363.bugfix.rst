@@ -1,1 +1,0 @@
-Do not restart claimer invitation process on an InviteAlreadyUsedError

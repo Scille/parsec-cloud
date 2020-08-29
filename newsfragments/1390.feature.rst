@@ -1,1 +1,0 @@
-Allows creating an organization on a custom metadata server

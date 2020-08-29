@@ -1,1 +1,0 @@
-Fix inconsistence backend replies from an cancelled invite command

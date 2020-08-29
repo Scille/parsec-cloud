@@ -1,1 +1,0 @@
-Fix email user invite generation

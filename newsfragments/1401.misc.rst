@@ -1,1 +1,0 @@
-The winfsp and fuse mountpoints now always report 0 MB used over a 1 TB capacity. Those values are arbitrary but useful to the operating system, especially OSX.

@@ -5,6 +5,85 @@ History
 .. towncrier release notes start
 
 
+Parsec v1.15.0 (2020-08-29)
+---------------------------
+
+Features
+~~~~~~~~
+
+* Updated the logos  (`#1316 <https://github.com/Scille/parsec-
+  cloud/issues/1316>`__)
+* Add a warning when chosing user role during the greet process  (`#1352
+  <https://github.com/Scille/parsec-cloud/issues/1352>`__)
+* Add support for confined (i.e temporary) files and directories. In this
+  context, confined means files that are not meant to be synchronized with other
+  clients  (`#990 <https://github.com/Scille/parsec-cloud/issues/990>`__)
+* Moved user info to the top right  (`#1153 <https://github.com/Scille/parsec-
+  cloud/issues/1153>`__)
+* Explain password and confirmation mismatch  (`#1265
+  <https://github.com/Scille/parsec-cloud/issues/1265>`__)
+* Notify user when the current in used organization has expired  (`#1206
+  <https://github.com/Scille/parsec-cloud/issues/1206>`__)
+* Updated workspace sharing to be easier to use  (`#1138
+  <https://github.com/Scille/parsec-cloud/issues/1138>`__)
+* New organization creation process  (`#1257 <https://github.com/Scille/parsec-
+  cloud/issues/1257>`__)
+* Sexier login screen  (`#1130 <https://github.com/Scille/parsec-
+  cloud/issues/1130>`__)
+* Allows creating an organization on a custom metadata server  (`#1390
+  <https://github.com/Scille/parsec-cloud/issues/1390>`__)
+* Add one custom rsync to parsec  (`#953 <https://github.com/Scille/parsec-
+  cloud/issues/953>`__)
+* GUI allows organization creation on a custom backend  (`#1133
+  <https://github.com/Scille/parsec-cloud/issues/1133>`__)
+
+Bugfixes
+~~~~~~~~
+
+* Do not open new login tab in the gui if a file linked is clicked with an
+  already opened organization  (`#1398 <https://github.com/Scille/parsec-
+  cloud/issues/1398>`__)
+* Do not display disconnected notification when login in  (`#1353
+  <https://github.com/Scille/parsec-cloud/issues/1353>`__)
+* Display the correct message when closing a connected tab  (`#1382
+  <https://github.com/Scille/parsec-cloud/issues/1382>`__)
+* Prevent spaces in organization name  (`#1256
+  <https://github.com/Scille/parsec-cloud/issues/1256>`__)
+* Check email validity when creating an organization/inviting a user  (`#1377
+  <https://github.com/Scille/parsec-cloud/issues/1377>`__)
+* Fixed organization creation window closing when passwords mismatch  (`#1376
+  <https://github.com/Scille/parsec-cloud/issues/1376>`__)
+* Do not restart claimer invitation process on an InviteAlreadyUsedError
+  (`#1363 <https://github.com/Scille/parsec-cloud/issues/1363>`__)
+* Fix email user invite generation  (`#1400 <https://github.com/Scille/parsec-
+  cloud/issues/1400>`__)
+* Fix inconsistence backend replies from an cancelled invite command  (`#1365
+  <https://github.com/Scille/parsec-cloud/issues/1365>`__)
+* Added workspace name in error message when removed from a workspace  (`#1385
+  <https://github.com/Scille/parsec-cloud/issues/1385>`__)
+
+Miscellaneous internal changes
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+* Devices keys filenames are no longer meaningful.  Device key files used to be
+  stored in a directory named after the device slug in a file also named after
+  the same device slug. As a result, the device path used to be very long (about
+  200 characters).  Device key files are now stored directly in the devices
+  directory using the device slughash and the `.keys` extension. The path is now
+  much shorter  (`#1366 <https://github.com/Scille/parsec-cloud/issues/1366>`__)
+* In order to simplify url validation in the GUI, parsec:// url without hostname
+  part are now considered invalid instead of defaulting to localhost. (`#1402
+  <https://github.com/Scille/parsec-cloud/issues/1402>`__)
+* Inviting an user to join organization now display a confirmation pop-up.
+  (`#1346 <https://github.com/Scille/parsec-cloud/issues/1346>`__)
+* Invited users is now displayed before the organization users  (`#1351
+  <https://github.com/Scille/parsec-cloud/issues/1351>`__)
+* The winfsp and fuse mountpoints now always report 0 MB used over a 1 TB
+  capacity. Those values are arbitrary but useful to the operating system,
+  especially OSX.  (`#1401 <https://github.com/Scille/parsec-
+  cloud/issues/1401>`__)
+
+
 Parsec v1.14.0 (2020-08-06)
 ---------------------------
 

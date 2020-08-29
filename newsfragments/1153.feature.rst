@@ -1,1 +1,0 @@
-Moved user info to the top right

@@ -1,1 +1,0 @@
-Invited users is now displayed before the organization users

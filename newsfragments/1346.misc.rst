@@ -1,1 +1,0 @@
-Inviting an user to join organization now display a confirmation pop-up.
