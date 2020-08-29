@@ -27,45 +27,51 @@ async def organization_bootstrap_addr(running_backend):
 
 
 async def _do_creation_process(aqtbot, co_w):
-    await aqtbot.wait_until(co_w.user_widget.isVisible)
-    await aqtbot.wait_until(co_w.device_widget.isHidden)
-    await aqtbot.wait_until(co_w.button_previous.isHidden)
-    assert not co_w.button_validate.isEnabled()
+    def _user_widget_ready():
+        assert co_w.user_widget.isVisible()
+        assert not co_w.device_widget.isVisible()
+        assert not co_w.button_previous.isVisible()
+        assert not co_w.button_validate.isEnabled()
+
+    await aqtbot.wait_until(_user_widget_ready)
 
     await aqtbot.key_clicks(co_w.user_widget.line_edit_user_full_name, "Gordon Freeman")
-    assert not co_w.button_validate.isEnabled()
-
     await aqtbot.key_clicks(co_w.user_widget.line_edit_user_email, "gordon.freeman@blackmesa.com")
-    assert not co_w.button_validate.isEnabled()
-
     await aqtbot.key_clicks(co_w.user_widget.line_edit_org_name, "AnomalousMaterials")
     assert not co_w.button_validate.isEnabled()
 
     await aqtbot.mouse_click(co_w.user_widget.check_accept_contract, QtCore.Qt.LeftButton)
-    assert co_w.button_validate.isEnabled()
+
+    def _user_widget_button_validate_ready():
+        assert co_w.button_validate.isEnabled()
+
+    await aqtbot.wait_until(_user_widget_button_validate_ready)
 
     await aqtbot.mouse_click(co_w.button_validate, QtCore.Qt.LeftButton)
 
-    await aqtbot.wait_until(co_w.user_widget.isHidden)
-    await aqtbot.wait_until(co_w.device_widget.isVisible)
-    await aqtbot.wait_until(co_w.button_previous.isVisible)
-    assert not co_w.button_validate.isEnabled()
+    def _device_widget_ready():
+        assert not co_w.user_widget.isVisible()
+        assert co_w.device_widget.isVisible()
+        assert co_w.button_previous.isVisible()
+        assert not co_w.button_validate.isEnabled()
+
+    await aqtbot.wait_until(_device_widget_ready)
 
     await aqtbot.key_clicks(co_w.device_widget.line_edit_device, "HEV")
-    assert not co_w.button_validate.isEnabled()
-
     await aqtbot.key_clicks(co_w.device_widget.widget_password.line_edit_password, "nihilanth")
     assert not co_w.button_validate.isEnabled()
 
     await aqtbot.key_clicks(
         co_w.device_widget.widget_password.line_edit_password_check, "nihilanth"
     )
-    assert co_w.button_validate.isEnabled()
 
+    def _device_widget_button_validate_ready():
+        assert co_w.button_validate.isEnabled()
+
+    await aqtbot.wait_until(_device_widget_button_validate_ready)
     await aqtbot.mouse_click(co_w.button_validate, QtCore.Qt.LeftButton)
 
 
-@pytest.mark.flaky(reruns=1)
 @pytest.mark.gui
 @pytest.mark.trio
 @customize_fixtures(backend_spontaneous_organization_boostrap=True)
@@ -75,7 +81,7 @@ async def test_create_organization(
     # The org creation window is usually opened using a sub-menu.
     # Sub-menus can be a bit challenging to open in tests so we cheat
     # using the keyboard shortcut Ctrl+N that has the same effect.
-    await aqtbot.key_clicks(gui, "n", QtCore.Qt.ControlModifier)
+    await aqtbot.key_click(gui, "n", QtCore.Qt.ControlModifier)
 
     co_w = await catch_create_org_widget()
 
@@ -103,7 +109,7 @@ async def test_create_organization_offline(
     gui, aqtbot, running_backend, catch_create_org_widget, autoclose_dialog
 ):
     with running_backend.offline():
-        await aqtbot.key_clicks(gui, "n", QtCore.Qt.ControlModifier)
+        await aqtbot.key_click(gui, "n", QtCore.Qt.ControlModifier)
 
         co_w = await catch_create_org_widget()
         assert co_w
@@ -118,12 +124,11 @@ async def test_create_organization_offline(
 
 @pytest.mark.gui
 @pytest.mark.trio
-@pytest.mark.flaky(reruns=1)
 @customize_fixtures(backend_spontaneous_organization_boostrap=True)
 async def test_create_organization_previous_clicked(
     gui, aqtbot, running_backend, catch_create_org_widget, autoclose_dialog
 ):
-    await aqtbot.key_clicks(gui, "n", QtCore.Qt.ControlModifier)
+    await aqtbot.key_click(gui, "n", QtCore.Qt.ControlModifier, 0)
 
     co_w = await catch_create_org_widget()
 
@@ -146,24 +151,30 @@ async def test_create_organization_previous_clicked(
 
     await aqtbot.mouse_click(co_w.button_previous, QtCore.Qt.LeftButton)
 
-    await aqtbot.wait_until(co_w.user_widget.isVisible)
-    await aqtbot.wait_until(co_w.device_widget.isHidden)
-    await aqtbot.wait_until(co_w.button_previous.isHidden)
-    assert co_w.button_validate.isEnabled()
+    def _previous_page_ready():
+        assert co_w.user_widget.isVisible()
+        assert not co_w.device_widget.isVisible()
+        assert not co_w.button_previous.isVisible()
+        assert co_w.button_validate.isEnabled()
 
-    assert co_w.user_widget.line_edit_user_full_name.text() == "Gordon Freeman"
-    assert co_w.user_widget.line_edit_user_email.text() == "gordon.freeman@blackmesa.com"
-    assert co_w.user_widget.line_edit_org_name.text() == "AnomalousMaterials"
-    assert co_w.user_widget.check_accept_contract.isChecked()
+        assert co_w.user_widget.line_edit_user_full_name.text() == "Gordon Freeman"
+        assert co_w.user_widget.line_edit_user_email.text() == "gordon.freeman@blackmesa.com"
+        assert co_w.user_widget.line_edit_org_name.text() == "AnomalousMaterials"
+        assert co_w.user_widget.check_accept_contract.isChecked()
 
-    assert co_w.button_validate.isEnabled()
+        assert co_w.button_validate.isEnabled()
+
+    await aqtbot.wait_until(_previous_page_ready)
 
     await aqtbot.mouse_click(co_w.button_validate, QtCore.Qt.LeftButton)
-    await aqtbot.wait_until(co_w.device_widget.isVisible)
 
-    assert co_w.device_widget.line_edit_device.text() == "HEV"
-    assert co_w.device_widget.widget_password.line_edit_password.text() == "nihilanth"
-    assert co_w.device_widget.widget_password.line_edit_password_check.text() == "nihilanth"
+    def _next_page_ready():
+        assert co_w.device_widget.isVisible()
+        assert co_w.device_widget.line_edit_device.text() == "HEV"
+        assert co_w.device_widget.widget_password.line_edit_password.text() == "nihilanth"
+        assert co_w.device_widget.widget_password.line_edit_password_check.text() == "nihilanth"
+
+    await aqtbot.wait_until(_next_page_ready)
 
 
 @pytest.mark.gui
@@ -192,8 +203,13 @@ async def test_create_organization_bootstrap_only(
 
     await aqtbot.key_clicks(co_w.user_widget.line_edit_user_full_name, "Gordon Freeman")
     await aqtbot.key_clicks(co_w.user_widget.line_edit_user_email, "gordon.freeman@blackmesa.com")
-    assert co_w.user_widget.line_edit_org_name.text() == "AnomalousMaterials"
-    assert co_w.user_widget.line_edit_org_name.isReadOnly() is True
+
+    def _user_widget_ready():
+        assert co_w.user_widget.line_edit_org_name.text() == "AnomalousMaterials"
+        assert co_w.user_widget.line_edit_org_name.isReadOnly() is True
+
+    await aqtbot.wait_until(_user_widget_ready)
+
     await aqtbot.mouse_click(co_w.user_widget.check_accept_contract, QtCore.Qt.LeftButton)
 
     await aqtbot.mouse_click(co_w.button_validate, QtCore.Qt.LeftButton)
@@ -259,15 +275,20 @@ async def test_create_organization_already_bootstrapped(
     # The org bootstrap window is usually opened using a sub-menu.
     # Sub-menus can be a bit challenging to open in tests so we cheat
     # using the keyboard shortcut Ctrl+O that has the same effect.
-    await aqtbot.key_clicks(gui, "o", QtCore.Qt.ControlModifier)
+    await aqtbot.key_click(gui, "o", QtCore.Qt.ControlModifier)
 
     co_w = await catch_create_org_widget()
     await aqtbot.wait_until(co_w.user_widget.isVisible)
 
     await aqtbot.key_clicks(co_w.user_widget.line_edit_user_full_name, "Gordon Freeman")
     await aqtbot.key_clicks(co_w.user_widget.line_edit_user_email, "gordon.freeman@blackmesa.com")
-    assert co_w.user_widget.line_edit_org_name.text() == org.organization_id
-    assert co_w.user_widget.line_edit_org_name.isReadOnly() is True
+
+    def _user_widget_ready():
+        assert co_w.user_widget.line_edit_org_name.text() == org.organization_id
+        assert co_w.user_widget.line_edit_org_name.isReadOnly() is True
+
+    await aqtbot.wait_until(_user_widget_ready)
+
     await aqtbot.mouse_click(co_w.user_widget.check_accept_contract, QtCore.Qt.LeftButton)
     await aqtbot.mouse_click(co_w.button_validate, QtCore.Qt.LeftButton)
 
