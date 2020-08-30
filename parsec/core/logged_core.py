@@ -37,7 +37,7 @@ from parsec.core.remote_devices_manager import (
     RemoteDevicesManagerBackendOfflineError,
     RemoteDevicesManagerNotFoundError,
 )
-from parsec.core.mountpoint import mountpoint_manager_factory
+from parsec.core.mountpoint import mountpoint_manager_factory, MountpointManager
 from parsec.core.messages_monitor import monitor_messages
 from parsec.core.sync_monitor import monitor_sync
 from parsec.core.fs import UserFS
@@ -96,15 +96,15 @@ def get_prevent_sync_pattern(prevent_sync_pattern_path: Optional[Path] = None) -
     return pattern
 
 
-@attr.s(frozen=True, slots=True)
+@attr.s(frozen=True, slots=True, auto_attribs=True)
 class LoggedCore:
-    config = attr.ib()
-    device = attr.ib()
-    event_bus = attr.ib()
-    mountpoint_manager = attr.ib()
-    user_fs = attr.ib()
-    _remote_devices_manager = attr.ib()
-    _backend_conn = attr.ib()
+    config: CoreConfig
+    device: LocalDevice
+    event_bus: EventBus
+    mountpoint_manager: MountpointManager
+    user_fs: UserFS
+    _remote_devices_manager: RemoteDevicesManager
+    _backend_conn: BackendAuthenticatedConn
 
     def are_monitors_idle(self) -> bool:
         return self._backend_conn.are_monitors_idle()
