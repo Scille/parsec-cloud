@@ -1,0 +1,1 @@
+Fix uncatched exception in GUI when listing workspaces while offline
