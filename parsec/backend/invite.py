@@ -223,7 +223,7 @@ The mail file can be found here: {tmpfile.name}\n""",
 
 
 async def send_email(email_config: EmailConfig, to_addr: str, message: Message) -> None:
-    if isinstance(EmailConfig, SmtpEmailConfig):
+    if isinstance(email_config, SmtpEmailConfig):
         await _smtp_send_mail(email_config, to_addr, message)
     else:
         await _mocked_send_mail(email_config, to_addr, message)

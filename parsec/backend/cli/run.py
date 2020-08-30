@@ -316,7 +316,7 @@ organization_id, device_id, device_label (can be null), human_email (can be null
     "--email-host",
     envvar="PARSEC_EMAIL_HOST",
     required=True,
-    help="The host to use for sending email",
+    help="The host to use for sending email, set to `MOCKED` to output emails to temporary file",
 )
 @click.option(
     "--email-port",
