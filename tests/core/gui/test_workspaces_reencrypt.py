@@ -332,3 +332,40 @@ async def test_workspace_reencryption_do_one_batch_error(
         assert wk_button.button_reencrypt.isVisible()
 
     await aqtbot.wait_until(_assert_error)
+
+
+@pytest.mark.gui
+@pytest.mark.trio
+async def test_workspace_reencryption_continue(
+    aqtbot,
+    running_backend,
+    gui_factory,
+    autoclose_dialog,
+    monkeypatch,
+    alice_user_fs,
+    bob_user_fs,
+    bob,
+    alice,
+):
+    # Create a shared workspace
+    wid = await alice_user_fs.workspace_create("w1")
+    workspace = alice_user_fs.get_workspace(wid)
+    await workspace.touch("/foo.txt")
+    await workspace.sync()
+    await alice_user_fs.sync()
+    await alice_user_fs.workspace_share(wid, bob.user_id, WorkspaceRole.OWNER)
+    await bob_user_fs.process_last_messages()
+
+    # Alice starts the reencryption but never finishes it...
+    await alice_user_fs.workspace_start_reencryption(wid)
+
+    # Now another Bob's device should finish the reencryption instead
+    gui = await gui_factory()
+    await gui.test_switch_to_logged_in(bob)
+
+    w_w = gui.test_get_workspaces_widget()
+    await aqtbot.stop()  # <===================== REMOVE ME !
+    # TODO: if the workspace is under reencryption, it doesn't even appear in
+    # the workspaces list (so next line will fail)
+    await display_reencryption_button(aqtbot, monkeypatch, w_w)
+    # wk_button = w_w.layout_workspaces.itemAt(0).widget()
