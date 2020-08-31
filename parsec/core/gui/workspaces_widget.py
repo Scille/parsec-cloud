@@ -440,15 +440,21 @@ class WorkspacesWidget(QWidget, Ui_WorkspacesWidget):
     def open_workspace_file(self, workspace_fs, file_name):
         file_name = FsPath("/", file_name) if file_name else FsPath("/")
 
-        # The Qt thread should never hit the core directly.
-        # Synchronous calls can run directly in the job system
-        # as they won't block the Qt loop for long
-        path = self.jobs_ctx.run_sync(
-            self.core.mountpoint_manager.get_path_in_mountpoint,
-            workspace_fs.workspace_id,
-            file_name,
-            workspace_fs.timestamp if isinstance(workspace_fs, WorkspaceFSTimestamped) else None,
-        )
+        try:
+            # The Qt thread should never hit the core directly.
+            # Synchronous calls can run directly in the job system
+            # as they won't block the Qt loop for long
+            path = self.jobs_ctx.run_sync(
+                self.core.mountpoint_manager.get_path_in_mountpoint,
+                workspace_fs.workspace_id,
+                file_name,
+                workspace_fs.timestamp
+                if isinstance(workspace_fs, WorkspaceFSTimestamped)
+                else None,
+            )
+        except MountpointNotMounted:
+            # The mountpoint has been umounted in our back, nothing left to do
+            pass
 
         desktop.open_file(str(path))
 

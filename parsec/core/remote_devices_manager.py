@@ -66,8 +66,6 @@ class RemoteDevicesManager:
         cache_validity: int = DEFAULT_CACHE_VALIDITY,
     ):
         self._backend_cmds = backend_cmds
-        self._devices = {}
-        self._users = {}
         self._trustchain_ctx = TrustchainContext(root_verify_key, cache_validity)
 
     @property

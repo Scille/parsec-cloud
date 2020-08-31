@@ -1,0 +1,1 @@
+Prevent unhandled exception when trying to open an unmounted workspace
