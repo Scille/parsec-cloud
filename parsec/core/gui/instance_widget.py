@@ -33,7 +33,15 @@ async def _do_run_core(config, device, qt_on_ready):
     # Quick fix to avoid MultiError<Cancelled, ...> exception bubbling up
     # TODO: replace this by a proper generic MultiError handling
     print("Dodod")
-    with trio.MultiError.catch(lambda exc: None if isinstance(exc, trio.Cancelled) else exc):
+
+    def logit(exc):
+        print(exc)
+        print(isinstance(exc, trio.Cancelled))
+        return None if isinstance(exc, trio.Cancelled) else exc
+
+    with trio.MultiError.catch(
+        logit
+    ):  # lambda exc: None if isinstance(exc, trio.Cancelled) else exc):
         print("a")
         async with logged_core_factory(config=config, device=device, event_bus=None) as core:
             print("b")
