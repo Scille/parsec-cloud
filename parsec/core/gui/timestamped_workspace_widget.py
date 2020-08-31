@@ -86,7 +86,7 @@ class TimestampedWorkspaceWidget(QWidget, Ui_TimestampedWorkspaceWidget):
                 exception=self.limits_job.exc,
             )
         self.limits_job = None
-        self.reject()
+        self.dialog.reject()
 
     def enable_with_timestamp(self):
         creation = self.limits_job.ret.in_timezone("local")
