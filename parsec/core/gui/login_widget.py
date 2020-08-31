@@ -69,7 +69,7 @@ class LoginPasswordInputWidget(QWidget, Ui_LoginPasswordInputWidget):
         self.log_in_clicked.emit(self.device.key_file_path, self.line_edit_password.text())
 
     def keyPressEvent(self, event):
-        if event.key() == Qt.Key_Return and self.button_login.isEnabled():
+        if event.key() in (Qt.Key_Return, Qt.Key_Enter) and self.button_login.isEnabled():
             self._on_log_in_clicked()
         event.accept()
 
