@@ -356,16 +356,26 @@ async def test_workspace_reencryption_continue(
     await alice_user_fs.workspace_share(wid, bob.user_id, WorkspaceRole.OWNER)
     await bob_user_fs.process_last_messages()
 
+    gui = await gui_factory()
+    await gui.test_switch_to_logged_in(bob)
+    w_w = gui.test_get_workspaces_widget()
+
+    # Given workspace reencryption disables all read access on the backend,
+    # we must fetch the workspace manifest before the reencryption (otherwise
+    # the workspace just doesn't show up in the workspaces list)
+    def _workspace_displayed():
+        assert workspace_widget.layout_workspaces.count() == 1
+        wk_button = workspace_widget.layout_workspaces.itemAt(0).widget()
+        assert isinstance(wk_button, WorkspaceButton)
+        assert wk_button.name == "w1"
+
+    aqtbot.wait_until(_workspace_displayed)
+
     # Alice starts the reencryption but never finishes it...
     await alice_user_fs.workspace_start_reencryption(wid)
 
     # Now another Bob's device should finish the reencryption instead
-    gui = await gui_factory()
-    await gui.test_switch_to_logged_in(bob)
-
-    w_w = gui.test_get_workspaces_widget()
-    await aqtbot.stop()  # <===================== REMOVE ME !
-    # TODO: if the workspace is under reencryption, it doesn't even appear in
-    # the workspaces list (so next line will fail)
+    # await aqtbot.stop()  # <===================== REMOVE ME !
+    # Currently the fact the workspace is under reencryption doesn't show up
     await display_reencryption_button(aqtbot, monkeypatch, w_w)
     # wk_button = w_w.layout_workspaces.itemAt(0).widget()

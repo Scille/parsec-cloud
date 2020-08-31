@@ -31,6 +31,7 @@ try:
     from parsec.core.gui.main_window import MainWindow
     from parsec.core.gui.trio_thread import ThreadSafeQtSignal, run_trio_thread
 except ImportError as exc:
+    raise
     raise ModuleNotFoundError(
         """PyQt forms haven't been generated.
 You must install the parsec package or run `python setup.py generate_pyqt_forms`

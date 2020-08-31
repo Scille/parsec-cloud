@@ -1,11 +1,13 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
 
+from typing import Optional
 from PyQt5.QtCore import pyqtSignal, Qt
 from PyQt5.QtWidgets import QWidget, QGraphicsDropShadowEffect, QMenu
 from PyQt5.QtGui import QColor, QCursor
 
 from parsec.core.fs import WorkspaceFS
 from parsec.core.types import EntryID, WorkspaceRole
+from parsec.core.fs.workspacefs import ReencryptionNeed
 
 from parsec.core.gui.lang import translate as _, format_datetime
 from parsec.core.gui.custom_dialogs import show_info
@@ -53,6 +55,7 @@ class WorkspaceButton(QWidget, Ui_WorkspaceButton):
         self.reencryption_needs = reencryption_needs
         self.timestamped = timestamped
         self.reencrypting = None
+        self._reencryption_needs: ReencryptionNeed = None
         self.setCursor(QCursor(Qt.PointingHandCursor))
         self.widget_empty.layout().addWidget(EmptyWorkspaceWidget())
         self.setContextMenuPolicy(Qt.CustomContextMenu)
@@ -206,15 +209,15 @@ class WorkspaceButton(QWidget, Ui_WorkspaceButton):
         return getattr(self.workspace_fs, "timestamp", None)
 
     @property
-    def reencryption_needs(self):
+    def reencryption_needs(self) -> Optional[ReencryptionNeed]:
         return self._reencryption_needs
 
     @reencryption_needs.setter
-    def reencryption_needs(self, val):
+    def reencryption_needs(self, val: Optional[ReencryptionNeed]):
         self._reencryption_needs = val
         if not self.is_owner:
             return
-        if self.reencryption_needs and self.reencryption_needs.need_reencryption:
+        if val and val.need_reencryption:
             self.button_reencrypt.show()
         else:
             self.button_reencrypt.hide()

@@ -284,7 +284,7 @@ def gui_factory(
             gui_check_version_at_startup=False,
             gui_first_launch=False,
             gui_last_version=parsec_version,
-            mountpoint_enabled=True,
+            # mountpoint_enabled=True,
             gui_language="en",
             gui_show_confined=False,
         )
