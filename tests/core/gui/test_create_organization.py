@@ -179,6 +179,7 @@ async def test_create_organization_previous_clicked(
 
 @pytest.mark.gui
 @pytest.mark.trio
+@pytest.mark.flaky(reruns=1)
 @customize_fixtures(backend_spontaneous_organization_boostrap=True)
 async def test_create_organization_bootstrap_only(
     aqtbot,
@@ -214,7 +215,13 @@ async def test_create_organization_bootstrap_only(
 
     await aqtbot.mouse_click(co_w.button_validate, QtCore.Qt.LeftButton)
 
-    await aqtbot.wait_until(co_w.device_widget.isVisible)
+    def _device_widget_ready():
+        assert not co_w.user_widget.isVisible()
+        assert co_w.device_widget.isVisible()
+        assert co_w.button_previous.isVisible()
+        assert not co_w.button_validate.isEnabled()
+
+    await aqtbot.wait_until(_device_widget_ready)
 
     await aqtbot.key_clicks(co_w.device_widget.line_edit_device, "HEV")
     await aqtbot.key_clicks(co_w.device_widget.widget_password.line_edit_password, "nihilanth")
