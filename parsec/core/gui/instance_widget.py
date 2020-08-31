@@ -36,6 +36,9 @@ async def _do_run_core(config, device, qt_on_ready):
 
     def logit(exc):
         print(exc)
+        import traceback
+
+        traceback.print_exc()
         print(isinstance(exc, trio.Cancelled))
         return None if isinstance(exc, trio.Cancelled) else exc
 

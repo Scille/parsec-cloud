@@ -312,31 +312,37 @@ async def logged_core_factory(
 
     path = config.data_base_dir / device.slug
     remote_devices_manager = RemoteDevicesManager(backend_conn.cmds, device.root_verify_key)
-    async with UserFS.run(
-        device, path, backend_conn.cmds, remote_devices_manager, event_bus, prevent_sync_pattern
-    ) as user_fs:
+    print("remote devices manager", remote_devices_manager)
+    try:
+        async with UserFS.run(
+            device, path, backend_conn.cmds, remote_devices_manager, event_bus, prevent_sync_pattern
+        ) as user_fs:
+            print("in userfs")
+            backend_conn.register_monitor(partial(monitor_messages, user_fs, event_bus))
+            backend_conn.register_monitor(partial(monitor_sync, user_fs, event_bus))
 
-        backend_conn.register_monitor(partial(monitor_messages, user_fs, event_bus))
-        backend_conn.register_monitor(partial(monitor_sync, user_fs, event_bus))
+            async with backend_conn.run():
+                async with mountpoint_manager_factory(
+                    user_fs,
+                    event_bus,
+                    config.mountpoint_base_dir,
+                    mount_all=config.mountpoint_enabled,
+                    mount_on_workspace_created=config.mountpoint_enabled,
+                    mount_on_workspace_shared=config.mountpoint_enabled,
+                    unmount_on_workspace_revoked=config.mountpoint_enabled,
+                    exclude_from_mount_all=config.disabled_workspaces,
+                ) as mountpoint_manager:
 
-        async with backend_conn.run():
-            async with mountpoint_manager_factory(
-                user_fs,
-                event_bus,
-                config.mountpoint_base_dir,
-                mount_all=config.mountpoint_enabled,
-                mount_on_workspace_created=config.mountpoint_enabled,
-                mount_on_workspace_shared=config.mountpoint_enabled,
-                unmount_on_workspace_revoked=config.mountpoint_enabled,
-                exclude_from_mount_all=config.disabled_workspaces,
-            ) as mountpoint_manager:
-
-                yield LoggedCore(
-                    config=config,
-                    device=device,
-                    event_bus=event_bus,
-                    mountpoint_manager=mountpoint_manager,
-                    user_fs=user_fs,
-                    remote_devices_manager=remote_devices_manager,
-                    backend_conn=backend_conn,
-                )
+                    yield LoggedCore(
+                        config=config,
+                        device=device,
+                        event_bus=event_bus,
+                        mountpoint_manager=mountpoint_manager,
+                        user_fs=user_fs,
+                        remote_devices_manager=remote_devices_manager,
+                        backend_conn=backend_conn,
+                    )
+    except Exception as e:
+        print("oh no")
+        print(e)
+        raise e
