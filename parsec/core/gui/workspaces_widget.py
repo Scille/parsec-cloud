@@ -460,6 +460,7 @@ class WorkspacesWidget(QWidget, Ui_WorkspacesWidget):
             )
         except MountpointNotMounted:
             # The mountpoint has been umounted in our back, nothing left to do
+            #
             pass
 
         desktop.open_file(str(path))
