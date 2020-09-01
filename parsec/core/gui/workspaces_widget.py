@@ -119,6 +119,8 @@ async def _do_workspace_list(core):
             pass
         except FSWorkspaceInMaintenance:
             # If a reencryption has already been started, workspace files can not be fetched
+            # But the workspace need to be displayed to be able to trigger for example
+            # reencryption operation
             pass
         workspaces.append((workspace_fs, ws_entry, users_roles, files, timestamped))
 
