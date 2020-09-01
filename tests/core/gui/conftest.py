@@ -340,7 +340,7 @@ async def logged_gui(aqtbot, gui_factory, core_config, alice, bob, fixtures_cust
     else:
         device = bob
     gui = await gui_factory()
-    gui.test_switch_to_logged_in(device)
+    await gui.test_switch_to_logged_in(device)
     return gui
 
 

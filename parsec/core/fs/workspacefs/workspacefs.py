@@ -36,6 +36,8 @@ from parsec.core.fs.exceptions import (
     FSLocalMissError,
     FSInvalidArgumentError,
     FSNotADirectoryError,
+    FSBackendOfflineError,
+    FSError,
 )
 from parsec.core.fs.workspacefs.workspacefile import WorkspaceFile
 
@@ -171,7 +173,7 @@ class WorkspaceFS:
 
         except BackendConnectionError as exc:
             raise FSError(
-                f"Cannot retreive remote status for workspace {workspace_id}: {exc}"
+                f"Cannot retreive remote status for workspace {self.workspace_id}: {exc}"
             ) from exc
 
         reencryption_already_in_progress = (

@@ -25,6 +25,7 @@ from parsec.core.fs import (
     FSError,
     FSWorkspaceNoAccess,
     FSWorkspaceNotFoundError,
+    FSWorkspaceInMaintenance,
 )
 from parsec.core.mountpoint.exceptions import (
     MountpointAlreadyMounted,
@@ -105,16 +106,19 @@ async def _do_workspace_list(core):
             )
             users_roles[user_info.user_id] = (ws_entry.role, user_info)
 
+        # List files and directories in the root directory
+        # This is used for preview.
+        files = []
         try:
-            # List files and directories in the root directory
-            # This is used for preview.
-            files = []
             async for child in workspace_fs.iterdir("/"):
                 child_info = await workspace_fs.path_info(child)
                 # Do not include confined files and directories
                 if child_info["confinement_point"] is None:
                     files.append(child.name)
         except FSBackendOfflineError:
+            pass
+        except FSWorkspaceInMaintenance:
+            # If a reencryption has already been started, workspace files can not be fetched
             pass
         workspaces.append((workspace_fs, ws_entry, users_roles, files, timestamped))
 
@@ -560,8 +564,12 @@ class WorkspacesWidget(QWidget, Ui_WorkspacesWidget):
             on_finished=self.reset,
         )
 
-    def reencrypt_workspace(self, workspace_id, user_revoked, role_revoked):
-        if workspace_id in self.reencrypting or (not user_revoked and not role_revoked):
+    def reencrypt_workspace(
+        self, workspace_id, user_revoked, role_revoked, reencryption_already_in_progress
+    ):
+        if workspace_id in self.reencrypting or (
+            not user_revoked and not role_revoked and not reencryption_already_in_progress
+        ):
             return
 
         question = ""
@@ -595,7 +603,10 @@ class WorkspacesWidget(QWidget, Ui_WorkspacesWidget):
 
         async def _reencrypt(on_progress, workspace_id):
             with _handle_fs_errors():
-                job = await self.core.user_fs.workspace_start_reencryption(workspace_id)
+                if reencryption_already_in_progress:
+                    job = await self.core.user_fs.workspace_continue_reencryption(workspace_id)
+                else:
+                    job = await self.core.user_fs.workspace_start_reencryption(workspace_id)
             while True:
                 with _handle_fs_errors():
                     total, done = await job.do_one_batch(size=1)

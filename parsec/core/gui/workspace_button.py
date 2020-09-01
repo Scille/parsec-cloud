@@ -30,7 +30,7 @@ class EmptyWorkspaceWidget(QWidget, Ui_EmptyWorkspaceWidget):
 class WorkspaceButton(QWidget, Ui_WorkspaceButton):
     clicked = pyqtSignal(WorkspaceFS)
     share_clicked = pyqtSignal(WorkspaceFS)
-    reencrypt_clicked = pyqtSignal(EntryID, bool, bool)
+    reencrypt_clicked = pyqtSignal(EntryID, bool, bool, bool)
     delete_clicked = pyqtSignal(WorkspaceFS)
     rename_clicked = pyqtSignal(QWidget)
     remount_ts_clicked = pyqtSignal(WorkspaceFS)
@@ -185,6 +185,7 @@ class WorkspaceButton(QWidget, Ui_WorkspaceButton):
                 self.workspace_id,
                 bool(self.reencryption_needs.user_revoked),
                 bool(self.reencryption_needs.role_revoked),
+                bool(self.reencryption_needs.reencryption_already_in_progress),
             )
 
     def button_delete_clicked(self):

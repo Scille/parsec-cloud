@@ -334,6 +334,24 @@ async def test_workspace_reencryption_do_one_batch_error(
     await aqtbot.wait_until(_assert_error)
 
 
+# @pytest.mark.gui
+# @pytest.mark.trio
+# @customize_fixtures(logged_gui_as_admin=False)
+# async def test_workspace_reencryption_ccont(
+#     aqtbot,
+#     running_backend,
+#     logged_gui,
+#     autoclose_dialog,
+#     shared_workspace,
+#     bob_user_fs,
+#     alice_user_fs,
+#     bob,
+# ):
+#     w_w = await logged_gui.test_switch_to_workspaces_widget()
+#
+#     await alice_user_fs.workspace_start_reencryption(d)
+
+
 @pytest.mark.gui
 @pytest.mark.trio
 async def test_workspace_reencryption_continue(
@@ -356,26 +374,31 @@ async def test_workspace_reencryption_continue(
     await alice_user_fs.workspace_share(wid, bob.user_id, WorkspaceRole.OWNER)
     await bob_user_fs.process_last_messages()
 
+    # Alice starts the reencryption but never finishes it...
+    await alice_user_fs.workspace_start_reencryption(wid)
+
     gui = await gui_factory()
     await gui.test_switch_to_logged_in(bob)
     w_w = gui.test_get_workspaces_widget()
-
-    # Given workspace reencryption disables all read access on the backend,
-    # we must fetch the workspace manifest before the reencryption (otherwise
-    # the workspace just doesn't show up in the workspaces list)
-    def _workspace_displayed():
-        assert workspace_widget.layout_workspaces.count() == 1
-        wk_button = workspace_widget.layout_workspaces.itemAt(0).widget()
-        assert isinstance(wk_button, WorkspaceButton)
-        assert wk_button.name == "w1"
-
-    aqtbot.wait_until(_workspace_displayed)
-
-    # Alice starts the reencryption but never finishes it...
-    await alice_user_fs.workspace_start_reencryption(wid)
 
     # Now another Bob's device should finish the reencryption instead
     # await aqtbot.stop()  # <===================== REMOVE ME !
     # Currently the fact the workspace is under reencryption doesn't show up
     await display_reencryption_button(aqtbot, monkeypatch, w_w)
     # wk_button = w_w.layout_workspaces.itemAt(0).widget()
+
+    monkeypatch.setattr(
+        "parsec.core.gui.workspaces_widget.ask_question",
+        lambda *args, **kwargs: translate("ACTION_WORKSPACE_REENCRYPTION_CONFIRM"),
+    )
+
+    wk_button = w_w.layout_workspaces.itemAt(0).widget()
+    async with aqtbot.wait_signals(
+        [wk_button.button_reencrypt.clicked, wk_button.reencrypt_clicked]
+    ):
+        await aqtbot.mouse_click(wk_button.button_reencrypt, QtCore.Qt.LeftButton)
+
+    def _reencrypt_button_not_displayed():
+        assert not wk_button.button_reencrypt.isVisible()
+
+    await aqtbot.wait_until(_reencrypt_button_not_displayed, timeout=3000)
