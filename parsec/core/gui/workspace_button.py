@@ -146,7 +146,7 @@ class WorkspaceButton(QWidget, Ui_WorkspaceButton):
     @property
     def is_owner(self):
         user_id = self.workspace_fs.device.user_id
-        return self.users_roles[user_id][0] == WorkspaceRole.OWNER
+        return user_id in self.users_roles and self.users_roles[user_id][0] == WorkspaceRole.OWNER
 
     def show_context_menu(self, pos):
         global_pos = self.mapToGlobal(pos)
