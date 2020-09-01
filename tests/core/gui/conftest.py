@@ -20,6 +20,7 @@ from parsec.core.gui.login_widget import LoginWidget, LoginPasswordInputWidget, 
 from parsec.core.gui.central_widget import CentralWidget
 from parsec.core.gui.lang import switch_language
 from parsec.core.gui.parsec_application import ParsecApp
+from parsec.core.local_device import LocalDeviceAlreadyExistsError
 
 
 class ThreadedTrioTestRunner:
@@ -284,7 +285,7 @@ def gui_factory(
             gui_check_version_at_startup=False,
             gui_first_launch=False,
             gui_last_version=parsec_version,
-            # mountpoint_enabled=True,
+            mountpoint_enabled=True,
             gui_language="en",
             gui_show_confined=False,
         )
@@ -339,6 +340,9 @@ async def logged_gui(aqtbot, gui_factory, core_config, alice, bob, fixtures_cust
         device = alice
     else:
         device = bob
+
+    save_device_with_password(core_config.config_dir, device, "P@ssw0rd")
+
     gui = await gui_factory()
     await gui.test_switch_to_logged_in(device)
     return gui
@@ -496,7 +500,10 @@ def testing_main_window_cls(aqtbot, qt_thread_gateway):
             return f_w
 
         async def test_switch_to_logged_in(self, device):
-            save_device_with_password(self.config.config_dir, device, "P@ssw0rd")
+            try:
+                save_device_with_password(self.config.config_dir, device, "P@ssw0rd")
+            except LocalDeviceAlreadyExistsError:
+                pass
 
             lw = self.test_get_login_widget()
             # Reload to take into account the new saved device
