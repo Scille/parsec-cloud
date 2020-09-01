@@ -46,7 +46,7 @@ from parsec.core.fs.workspacefs.workspacefile import WorkspaceFile
 class ReencryptionNeed:
     user_revoked: Tuple[UserID, ...]
     role_revoked: Tuple[UserID, ...]
-    reencryption_already_in_progress: bool
+    reencryption_already_in_progress: bool = False
 
     @property
     def need_reencryption(self):
