@@ -334,24 +334,6 @@ async def test_workspace_reencryption_do_one_batch_error(
     await aqtbot.wait_until(_assert_error)
 
 
-# @pytest.mark.gui
-# @pytest.mark.trio
-# @customize_fixtures(logged_gui_as_admin=False)
-# async def test_workspace_reencryption_ccont(
-#     aqtbot,
-#     running_backend,
-#     logged_gui,
-#     autoclose_dialog,
-#     shared_workspace,
-#     bob_user_fs,
-#     alice_user_fs,
-#     bob,
-# ):
-#     w_w = await logged_gui.test_switch_to_workspaces_widget()
-#
-#     await alice_user_fs.workspace_start_reencryption(d)
-
-
 @pytest.mark.gui
 @pytest.mark.trio
 async def test_workspace_reencryption_continue(
@@ -374,18 +356,13 @@ async def test_workspace_reencryption_continue(
     await alice_user_fs.workspace_share(wid, bob.user_id, WorkspaceRole.OWNER)
     await bob_user_fs.process_last_messages()
 
-    # Alice starts the reencryption but never finishes it...
     await alice_user_fs.workspace_start_reencryption(wid)
 
     gui = await gui_factory()
     await gui.test_switch_to_logged_in(bob)
     w_w = gui.test_get_workspaces_widget()
 
-    # Now another Bob's device should finish the reencryption instead
-    # await aqtbot.stop()  # <===================== REMOVE ME !
-    # Currently the fact the workspace is under reencryption doesn't show up
     await display_reencryption_button(aqtbot, monkeypatch, w_w)
-    # wk_button = w_w.layout_workspaces.itemAt(0).widget()
 
     monkeypatch.setattr(
         "parsec.core.gui.workspaces_widget.ask_question",
@@ -401,4 +378,4 @@ async def test_workspace_reencryption_continue(
     def _reencrypt_button_not_displayed():
         assert not wk_button.button_reencrypt.isVisible()
 
-    await aqtbot.wait_until(_reencrypt_button_not_displayed, timeout=3000)
+    await aqtbot.wait_until(_reencrypt_button_not_displayed)
