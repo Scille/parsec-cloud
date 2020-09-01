@@ -1051,7 +1051,17 @@ class UserFS:
             raise FSWorkspaceNotFoundError(f"Unknown workspace `{workspace_id}`")
 
         # First make sure the workspace is under maintenance
-        rep = await self.backend_cmds.realm_status(workspace_entry.id)
+        try:
+            rep = await self.backend_cmds.realm_status(workspace_entry.id)
+
+        except BackendNotAvailable as exc:
+            raise FSBackendOfflineError(str(exc)) from exc
+
+        except BackendConnectionError as exc:
+            raise FSError(
+                f"Cannot continue maintenance on workspace {workspace_id}: {exc}"
+            ) from exc
+
         if rep["status"] == "not_allowed":
             raise FSWorkspaceNoAccess(f"Not allowed to access workspace {workspace_id}: {rep}")
         elif rep["status"] != "ok":
