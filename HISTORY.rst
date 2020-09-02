@@ -5,6 +5,30 @@ History
 .. towncrier release notes start
 
 
+Parsec v1.15.2 (2020-09-02)
+---------------------------
+
+Bugfixes
+~~~~~~~~
+
+* Fix uncatched exception in GUI when listing workspaces while offline  (`#1412
+  <https://github.com/Scille/parsec-cloud/issues/1412>`__)
+* Fix error on Linux when using chmod/chown on mountpoint  (`#1409
+  <https://github.com/Scille/parsec-cloud/issues/1409>`__)
+* Contract and CGV link opens up properly  (`#1416
+  <https://github.com/Scille/parsec-cloud/issues/1416>`__)
+* Fixed timestamped workspace window not closing correctly on error  (`#1421
+  <https://github.com/Scille/parsec-cloud/issues/1421>`__)
+* Fix --backend-addr incorrectly always using localhost host in backend run
+  command  (`#1425 <https://github.com/Scille/parsec-cloud/issues/1425>`__)
+* Prevent unhandled exception when trying to open an unmounted workspace
+  (`#1414 <https://github.com/Scille/parsec-cloud/issues/1414>`__)
+* Allow to continue reencryption from the GUI if reencryption has already been
+  started  (`#1422 <https://github.com/Scille/parsec-cloud/issues/1422>`__)
+* Fix invite email in backend when not mocked (`#1410
+  <https://github.com/Scille/parsec-cloud/issues/1410>`__)
+
+
 Parsec v1.15.0 (2020-08-29)
 ---------------------------
 

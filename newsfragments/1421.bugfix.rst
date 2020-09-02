@@ -1,1 +1,0 @@
-Fixed timestamped workspace window not closing correctly on error

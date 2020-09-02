@@ -1,1 +1,0 @@
-Allow to continue reencryption from the GUI if reencryption has already been started
