@@ -443,7 +443,6 @@ def run_cmd(
                 ssl_context.load_default_certs()
         else:
             ssl_context = None
-        backend_addr = BackendAddr("localhost", port=port, use_ssl=bool(ssl_context))
 
         if email_host == "MOCKED":
             tmpdir = tempfile.mkdtemp(prefix="tmp-email-folder-")
