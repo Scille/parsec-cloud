@@ -54,6 +54,10 @@ class WorkspaceButton(QWidget, Ui_WorkspaceButton):
         self.workspace_fs = workspace_fs
         self.reencryption_needs = reencryption_needs
         self.timestamped = timestamped
+        self.switch_button = SwitchButton()
+        self.widget_actions.layout().insertWidget(0, self.switch_button)
+        self.switch_button.clicked.connect(self._on_switch_clicked)
+
         self.reencrypting = None
         self._reencryption_needs: ReencryptionNeed = None
         self.setCursor(QCursor(Qt.PointingHandCursor))
@@ -61,10 +65,6 @@ class WorkspaceButton(QWidget, Ui_WorkspaceButton):
         self.setContextMenuPolicy(Qt.CustomContextMenu)
         self.customContextMenuRequested.connect(self.show_context_menu)
         files = files or []
-
-        self.switch_button = SwitchButton()
-        self.widget_actions.layout().insertWidget(0, self.switch_button)
-        self.switch_button.clicked.connect(self._on_switch_clicked)
 
         if not len(files):
             self.widget_empty.show()
@@ -100,7 +100,7 @@ class WorkspaceButton(QWidget, Ui_WorkspaceButton):
         self.setGraphicsEffect(effect)
         if not self.is_owner:
             self.button_reencrypt.hide()
-        self.label_reencrypting.hide()
+        self.widget_reencryption.hide()
         self.button_share.clicked.connect(self.button_share_clicked)
         self.button_share.apply_style()
         self.button_reencrypt.clicked.connect(self.button_reencrypt_clicked)
@@ -115,7 +115,6 @@ class WorkspaceButton(QWidget, Ui_WorkspaceButton):
         self.button_open.apply_style()
         self.label_owner.apply_style()
         self.label_shared.apply_style()
-        self.label_reencrypting.apply_style()
         if not self.is_owner:
             self.label_owner.hide()
         if not self.is_shared:
@@ -230,12 +229,14 @@ class WorkspaceButton(QWidget, Ui_WorkspaceButton):
     @reencrypting.setter
     def reencrypting(self, val):
         def _start_reencrypting():
+            self.widget_reencryption.show()
+            self.widget_actions.hide()
             self.button_reencrypt.hide()
-            self.label_reencrypting.show()
 
         def _stop_reencrypting():
             self.button_reencrypt.hide()
-            self.label_reencrypting.hide()
+            self.widget_actions.show()
+            self.widget_reencryption.hide()
 
         self._reencrypting = val
         if not self.is_owner:
@@ -243,11 +244,7 @@ class WorkspaceButton(QWidget, Ui_WorkspaceButton):
         if self._reencrypting:
             _start_reencrypting()
             total, done = self._reencrypting
-            self.label_reencrypting.setToolTip(
-                "{} {}%".format(
-                    _("TEXT_WORKSPACE_CURRENTLY_REENCRYPTING_TOOLTIP"), int(done / total * 100)
-                )
-            )
+            self.progress_reencryption.setValue(int(done / total * 100))
         else:
             _stop_reencrypting()
 

@@ -144,38 +144,6 @@ QWidget#widget_title {
           </widget>
          </item>
          <item>
-          <widget class="IconLabel" name="label_reencrypting">
-           <property name="minimumSize">
-            <size>
-             <width>24</width>
-             <height>24</height>
-            </size>
-           </property>
-           <property name="maximumSize">
-            <size>
-             <width>24</width>
-             <height>24</height>
-            </size>
-           </property>
-           <property name="text">
-            <string/>
-           </property>
-           <property name="pixmap">
-            <pixmap resource="../rc/resources.qrc">:/icons/images/material/refresh.svg</pixmap>
-           </property>
-           <property name="scaledContents">
-            <bool>true</bool>
-           </property>
-           <property name="color" stdset="0">
-            <color>
-             <red>153</red>
-             <green>153</green>
-             <blue>153</blue>
-            </color>
-           </property>
-          </widget>
-         </item>
-         <item>
           <widget class="IconLabel" name="label_shared">
            <property name="minimumSize">
             <size>
@@ -406,6 +374,37 @@ QWidget#widget_title {
          <property name="bottomMargin">
           <number>0</number>
          </property>
+        </layout>
+       </widget>
+      </item>
+      <item>
+       <widget class="QWidget" name="widget_reencryption" native="true">
+        <layout class="QHBoxLayout" name="horizontalLayout_3">
+         <property name="spacing">
+          <number>0</number>
+         </property>
+         <property name="leftMargin">
+          <number>20</number>
+         </property>
+         <property name="topMargin">
+          <number>0</number>
+         </property>
+         <property name="rightMargin">
+          <number>20</number>
+         </property>
+         <property name="bottomMargin">
+          <number>0</number>
+         </property>
+         <item>
+          <widget class="QProgressBar" name="progress_reencryption">
+           <property name="value">
+            <number>0</number>
+           </property>
+           <property name="format">
+            <string>TEXT_WORKSPACE_REENCRYPTION</string>
+           </property>
+          </widget>
+         </item>
         </layout>
        </widget>
       </item>
