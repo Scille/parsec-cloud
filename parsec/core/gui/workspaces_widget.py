@@ -536,6 +536,7 @@ class WorkspacesWidget(QWidget, Ui_WorkspacesWidget):
             if result != _("ACTION_DELETE_WORKSPACE_CONFIRM"):
                 return
             # Workspace deletion is not available yet (button should be hidden anyway)
+            #
 
     def rename_workspace(self, workspace_button):
         new_name = get_text_input(
