@@ -114,7 +114,8 @@ class LoginWidget(QWidget, Ui_LoginWidget):
         item = self.widget.layout().itemAt(0)
         if item:
             lw = item.widget()
-            lw.reset()
+            if isinstance(item, LoginPasswordInputWidget):
+                lw.reset()
 
     def keyPressEvent(self, event):
         if event.key() in (Qt.Key_Return, Qt.Key_Enter) and self.button_login.isEnabled():
