@@ -5,6 +5,12 @@ History
 .. towncrier release notes start
 
 
+Parsec v2.0.0 (2020-09-03)
+--------------------------
+
+No significant changes.
+
+
 Parsec v1.15.2 (2020-09-02)
 ---------------------------
 
