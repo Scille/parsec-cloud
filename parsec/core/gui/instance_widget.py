@@ -32,8 +32,13 @@ logger = get_logger()
 async def _do_run_core(config, device, qt_on_ready):
     # Quick fix to avoid MultiError<Cancelled, ...> exception bubbling up
     # TODO: replace this by a proper generic MultiError handling
+    print("hdjk")
+    print("hdjk")
     with trio.MultiError.catch(lambda exc: None if isinstance(exc, trio.Cancelled) else exc):
+        print("hhhh")
+        print("hhhh")
         async with logged_core_factory(config=config, device=device, event_bus=None) as core:
+            print("dd")
             # Create our own job scheduler allows us to cancel all pending
             # jobs depending on us when we logout
             core_jobs_ctx = QtToTrioJobScheduler()
@@ -212,13 +217,20 @@ class InstanceWidget(QWidget):
 
     def show_central_widget(self):
         self.clear_widgets()
-        central_widget = CentralWidget(
-            self.core,
-            self.core_jobs_ctx,
-            self.core.event_bus,
-            systray_notification=self.systray_notification,
-            parent=self,
-        )
+        try:
+            central_widget = CentralWidget(
+                self.core,
+                self.core_jobs_ctx,
+                self.core.event_bus,
+                systray_notification=self.systray_notification,
+                parent=self,
+            )
+        except AttributeError:
+            # The core can be set to None at any time if run core get an error or
+            # terminate.
+            if self.core is None:
+                return
+            raise
         self.layout().addWidget(central_widget)
         central_widget.logout_requested.connect(self.logout)
         central_widget.show()
