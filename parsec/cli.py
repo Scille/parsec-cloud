@@ -7,6 +7,7 @@ import os
 from parsec._version import __version__
 from parsec.cli_utils import generate_not_available_cmd
 
+#
 
 try:
     from parsec.core.cli import core_cmd
