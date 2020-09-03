@@ -105,7 +105,7 @@ jobs:
       set -eux
       pip install pytest-repeat
       py.test $(pytest.base_args) \
-        tests --runmountpoint --runslow --rungui -m gui -x  --count 20 \
+        tests --runmountpoint --runslow --rungui -m gui -x  --count 10 \
         --junitxml=test-results-gui.xml
     displayName: 'Tests GUI'
 

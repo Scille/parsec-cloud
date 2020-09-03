@@ -43,6 +43,9 @@ class LoginAccountsWidget(QWidget, Ui_LoginAccountsWidget):
             ab.clicked.connect(self.account_clicked.emit)
             self.accounts_widget.layout().insertWidget(0, ab)
 
+    def reset(self):
+        pass
+
 
 class LoginPasswordInputWidget(QWidget, Ui_LoginPasswordInputWidget):
     back_clicked = pyqtSignal()
@@ -93,6 +96,9 @@ class LoginNoDevicesWidget(QWidget, Ui_LoginNoDevicesWidget):
         self.button_create_org.clicked.connect(self.create_organization_clicked.emit)
         self.button_join_org.clicked.connect(self.join_organization_clicked.emit)
 
+    def reset(self):
+        pass
+
 
 class LoginWidget(QWidget, Ui_LoginWidget):
     login_with_password_clicked = pyqtSignal(Path, str)
@@ -114,8 +120,7 @@ class LoginWidget(QWidget, Ui_LoginWidget):
         item = self.widget.layout().itemAt(0)
         if item:
             lw = item.widget()
-            if isinstance(item, LoginPasswordInputWidget):
-                lw.reset()
+            lw.reset()
 
     def keyPressEvent(self, event):
         if event.key() in (Qt.Key_Return, Qt.Key_Enter) and self.button_login.isEnabled():
