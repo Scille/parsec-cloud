@@ -3,10 +3,10 @@
 
 import os
 import trio
+import random
 from typing import Tuple
 from pathlib import Path
 from uuid import uuid4
-import random
 
 from parsec.logging import configure_logging
 from parsec.core import logged_core_factory
@@ -42,6 +42,7 @@ async def initialize_test_organization(
     administration_token: str,
     force: bool,
     additional_users_number: int,
+    additional_devices_number: int,
 ) -> Tuple[LocalDevice, LocalDevice, LocalDevice]:
     configure_logging("WARNING")
     organization_id = OrganizationID("Org")
@@ -87,6 +88,16 @@ async def initialize_test_organization(
                 requested_device_label="pc",
                 force=force,
             )
+            # Add additional random device for alice
+            if additional_devices_number > 0:
+                await _add_random_device(
+                    cmds=alice_cmds,
+                    password=password,
+                    config_dir=config_dir,
+                    device=alice_device,
+                    force=force,
+                    additional_devices_number=additional_devices_number,
+                )
             # Invite Bob in organization
             bob_device = await _invite_user_to_organization(
                 cmds=alice_cmds,
@@ -136,6 +147,19 @@ async def initialize_test_organization(
     return (alice_device, other_alice_device, bob_device)
 
 
+async def _add_random_device(cmds, password, config_dir, device, force, additional_devices_number):
+    for _ in range(additional_devices_number):
+        requested_device_label = "device_" + str(uuid4())[:9]
+        await _register_new_device(
+            cmds=cmds,
+            password=password,
+            config_dir=config_dir,
+            device=device,
+            requested_device_label=requested_device_label,
+            force=force,
+        )
+
+
 async def _add_random_users(
     host_cmds,
     host_device,
@@ -151,7 +175,7 @@ async def _add_random_users(
     """ Add random number of users with random role, and share workspaces with them.
         1 out of 5 users will be revoked from organization.
     """
-    for _ in range(additional_users_number):
+    for i in range(additional_users_number):
         name = "test_" + str(uuid4())[:9]
         user_profile = random.choice(list(UserProfile))
         realm_role = random.choice(list(WorkspaceRole))
