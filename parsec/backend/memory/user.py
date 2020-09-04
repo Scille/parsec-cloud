@@ -304,7 +304,9 @@ class MemoryUserComponent(BaseUserComponent):
             # Keeping non-human last
             results = [*humans, *non_humans]
 
-        return (results[(page - 1) * per_page : page * per_page], len(results))
+        total = len(results)
+        result_page = results[(page - 1) * per_page : page * per_page]
+        return (result_page, total)
 
     async def create_user_invitation(
         self, organization_id: OrganizationID, invitation: UserInvitation

@@ -25,6 +25,8 @@ from parsec.core.gui.ui.user_button import Ui_UserButton
 from parsec.core.gui.ui.user_invitation_button import Ui_UserInvitationButton
 from parsec.core.gui.ui.users_widget import Ui_UsersWidget
 
+USERS_PER_PAGE = 100
+
 
 class UserInvitationButton(QWidget, Ui_UserInvitationButton):
     greet_clicked = pyqtSignal(UUID)
@@ -157,12 +159,21 @@ async def _do_revoke_user(core, user_info):
         raise JobResultError("error") from exc
 
 
-async def _do_list_users_and_invitations(core):
+async def _do_list_users_and_invitations(core, page):
     try:
-        # TODO: handle pagination ! (currently we only display the first 100 users...)
-        users, total = await core.find_humans()
+        users, total = await core.find_humans(page=page, per_page=USERS_PER_PAGE)
         invitations = await core.list_invitations()
-        return users, [inv for inv in invitations if inv["type"] == InvitationType.USER]
+        return total, users, [inv for inv in invitations if inv["type"] == InvitationType.USER]
+    except BackendNotAvailable as exc:
+        raise JobResultError("offline") from exc
+    except BackendConnectionError as exc:
+        raise JobResultError("error") from exc
+
+
+async def _do_list_filter_users(core, pattern, page):
+    try:
+        users, total = await core.find_humans(page=page, per_page=USERS_PER_PAGE, query=pattern)
+        return total, users, []
     except BackendNotAvailable as exc:
         raise JobResultError("offline") from exc
     except BackendConnectionError as exc:
@@ -212,10 +223,14 @@ class UsersWidget(QWidget, Ui_UsersWidget):
             self.button_add_user.clicked.connect(self.invite_user)
         else:
             self.button_add_user.hide()
+        self.button_previous_page.clicked.connect(self.show_previous_page)
+        self.button_next_page.clicked.connect(self.show_next_page)
+        self.button_previous_page.clicked.connect(self.show_previous_page)
         self.filter_timer = QTimer()
         self.filter_timer.setInterval(300)
-        self.line_edit_search.textChanged.connect(self.filter_timer.start)
-        self.filter_timer.timeout.connect(self.on_filter_timer_timeout)
+        self.button_users_filter.clicked.connect(self.on_filter)
+        self.line_edit_search.textChanged.connect(lambda: self.on_filter(text_changed=True))
+        self.line_edit_search.editingFinished.connect(lambda: self.on_filter(editing_finished=True))
         self.revoke_success.connect(self._on_revoke_success)
         self.revoke_error.connect(self._on_revoke_error)
         self.list_success.connect(self._on_list_success)
@@ -226,27 +241,34 @@ class UsersWidget(QWidget, Ui_UsersWidget):
         self.cancel_invitation_error.connect(self._on_cancel_invitation_error)
 
     def show(self):
+        self._page = 1
         self.reset()
         super().show()
 
-    def on_filter_timer_timeout(self):
-        self.filter_users(self.line_edit_search.text())
+    def show_next_page(self):
+        self._page += 1
+        self.reset()
 
-    def filter_users(self, pattern):
-        pattern = pattern.lower()
-        for i in range(self.layout_users.count()):
-            item = self.layout_users.itemAt(i)
-            if item:
-                w = item.widget()
-                if pattern and (
-                    isinstance(w, UserButton)
-                    and pattern not in w.user_info.user_display.lower()
-                    or isinstance(w, UserInvitationButton)
-                    and pattern not in w.email.lower()
-                ):
-                    w.hide()
-                else:
-                    w.show()
+    def show_previous_page(self):
+        if self._page > 1:
+            self._page -= 1
+        self.reset()
+
+    def on_filter(self, editing_finished=False, text_changed=False):
+        self._page = 1
+        pattern = self.line_edit_search.text()
+        if text_changed and len(pattern) <= 0:
+            return self.reset()
+        elif text_changed:
+            return
+        self.jobs_ctx.submit_job(
+            ThreadSafeQtSignal(self, "list_success", QtToTrioJob),
+            ThreadSafeQtSignal(self, "list_error", QtToTrioJob),
+            _do_list_filter_users,
+            core=self.core,
+            page=self._page,
+            pattern=pattern,
+        )
 
     def invite_user(self):
         user_email = get_text_input(
@@ -370,11 +392,32 @@ class UsersWidget(QWidget, Ui_UsersWidget):
                 w.hide()
                 w.setParent(None)
 
+    def pagination(self, total: int):
+        """Show/activate or hide/deactivate previous and next page button"""
+        if total > USERS_PER_PAGE:
+            self.button_previous_page.show()
+            self.button_next_page.show()
+            if self._page * USERS_PER_PAGE >= total:
+                self.button_next_page.setEnabled(False)
+            else:
+                self.button_next_page.setEnabled(True)
+            if self._page <= 1:
+                self.button_previous_page.setEnabled(False)
+            else:
+                self.button_previous_page.setEnabled(True)
+        else:
+            self.button_previous_page.hide()
+            self.button_next_page.hide()
+
     def _on_list_success(self, job):
         assert job.is_finished()
         assert job.status == "ok"
 
-        users, invitations = job.ret
+        total, users, invitations = job.ret
+        # Securing if page go to far
+        if total == 0 and self._page > 1:
+            self._page -= 1
+            self.reset()
         self._flush_users_list()
 
         current_user = self.core.device.user_id
@@ -386,9 +429,10 @@ class UsersWidget(QWidget, Ui_UsersWidget):
                 token=invitation["token"],
             )
             self.add_user_invitation(invitation["claimer_email"], addr)
-
         for user_info in users:
             self.add_user(user_info=user_info, is_current_user=current_user == user_info.user_id)
+        self.spinner.hide()
+        self.pagination(total=total)
 
     def _on_list_error(self, job):
         assert job.is_finished()
@@ -403,12 +447,12 @@ class UsersWidget(QWidget, Ui_UsersWidget):
             return
         else:
             errmsg = _("TEXT_USER_LIST_RETRIEVABLE_FAILURE")
+        self.spinner.hide()
         show_error(self, errmsg, exception=job.exc)
 
     def _on_cancel_invitation_success(self, job):
         assert job.is_finished()
         assert job.status == "ok"
-
         self.reset()
 
     def _on_cancel_invitation_error(self, job):
@@ -439,10 +483,13 @@ class UsersWidget(QWidget, Ui_UsersWidget):
 
     def reset(self):
         self.layout_users.clear()
-
+        self.button_previous_page.hide()
+        self.button_next_page.hide()
+        self.spinner.show()
         self.jobs_ctx.submit_job(
             ThreadSafeQtSignal(self, "list_success", QtToTrioJob),
             ThreadSafeQtSignal(self, "list_error", QtToTrioJob),
             _do_list_users_and_invitations,
             core=self.core,
+            page=self._page,
         )

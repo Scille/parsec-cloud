@@ -138,4 +138,6 @@ async def query_find_humans(
         *sorted(non_humans, key=lambda x: x.user_id.lower()),
     ]
     # TODO: should user LIMIT and OFFSET in the SQL query instead
-    return results[(page - 1) * per_page : page * per_page], len(results)
+    total = len(results)
+    result_page = results[(page - 1) * per_page : page * per_page]
+    return (result_page, total)
