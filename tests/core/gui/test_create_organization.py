@@ -81,7 +81,7 @@ async def test_create_organization(
     # The org creation window is usually opened using a sub-menu.
     # Sub-menus can be a bit challenging to open in tests so we cheat
     # using the keyboard shortcut Ctrl+N that has the same effect.
-    await aqtbot.key_click(gui, "n", QtCore.Qt.ControlModifier)
+    await aqtbot.key_click(gui, "n", QtCore.Qt.ControlModifier, 200)
 
     co_w = await catch_create_org_widget()
 
@@ -109,7 +109,7 @@ async def test_create_organization_offline(
     gui, aqtbot, running_backend, catch_create_org_widget, autoclose_dialog
 ):
     with running_backend.offline():
-        await aqtbot.key_click(gui, "n", QtCore.Qt.ControlModifier)
+        await aqtbot.key_click(gui, "n", QtCore.Qt.ControlModifier, 200)
 
         co_w = await catch_create_org_widget()
         assert co_w
@@ -128,7 +128,8 @@ async def test_create_organization_offline(
 async def test_create_organization_previous_clicked(
     gui, aqtbot, running_backend, catch_create_org_widget, autoclose_dialog
 ):
-    await aqtbot.key_click(gui, "n", QtCore.Qt.ControlModifier, 0)
+    print("Sending")
+    await aqtbot.key_click(gui, "n", QtCore.Qt.ControlModifier, 200)
 
     co_w = await catch_create_org_widget()
 
@@ -282,7 +283,7 @@ async def test_create_organization_already_bootstrapped(
     # The org bootstrap window is usually opened using a sub-menu.
     # Sub-menus can be a bit challenging to open in tests so we cheat
     # using the keyboard shortcut Ctrl+O that has the same effect.
-    await aqtbot.key_click(gui, "o", QtCore.Qt.ControlModifier)
+    await aqtbot.key_click(gui, "o", QtCore.Qt.ControlModifier, 200)
 
     co_w = await catch_create_org_widget()
     await aqtbot.wait_until(co_w.user_widget.isVisible)
@@ -324,7 +325,7 @@ async def test_create_organization_custom_backend(
     # The org creation window is usually opened using a sub-menu.
     # Sub-menus can be a bit challenging to open in tests so we cheat
     # using the keyboard shortcut Ctrl+N that has the same effect.
-    await aqtbot.key_click(gui, "n", QtCore.Qt.ControlModifier)
+    await aqtbot.key_click(gui, "n", QtCore.Qt.ControlModifier, 200)
 
     co_w = await catch_create_org_widget()
 
