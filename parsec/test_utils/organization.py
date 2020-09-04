@@ -149,7 +149,7 @@ async def initialize_test_organization(
 
 async def _add_random_device(cmds, password, config_dir, device, force, additional_devices_number):
     for _ in range(additional_devices_number):
-        requested_device_label = "device_" + str(uuid4())[:9]
+        requested_device_label = "device_" + str(uuid4())[:8]
         await _register_new_device(
             cmds=cmds,
             password=password,
@@ -176,7 +176,7 @@ async def _add_random_users(
         1 out of 5 users will be revoked from organization.
     """
     for i in range(additional_users_number):
-        name = "test_" + str(uuid4())[:9]
+        name = "test_" + str(uuid4())[:8]
         user_profile = random.choice(list(UserProfile))
         realm_role = random.choice(list(WorkspaceRole))
         if user_profile == UserProfile.OUTSIDER and (

@@ -159,21 +159,15 @@ async def _do_revoke_user(core, user_info):
         raise JobResultError("error") from exc
 
 
-async def _do_list_users_and_invitations(core, page):
+async def _do_list_users_and_invitations(core, page, pattern=None):
     try:
-        users, total = await core.find_humans(page=page, per_page=USERS_PER_PAGE)
-        invitations = await core.list_invitations()
-        return total, users, [inv for inv in invitations if inv["type"] == InvitationType.USER]
-    except BackendNotAvailable as exc:
-        raise JobResultError("offline") from exc
-    except BackendConnectionError as exc:
-        raise JobResultError("error") from exc
-
-
-async def _do_list_filter_users(core, pattern, page):
-    try:
-        users, total = await core.find_humans(page=page, per_page=USERS_PER_PAGE, query=pattern)
-        return total, users, []
+        if pattern is None:
+            users, total = await core.find_humans(page=page, per_page=USERS_PER_PAGE)
+            invitations = await core.list_invitations()
+            return total, users, [inv for inv in invitations if inv["type"] == InvitationType.USER]
+        else:
+            users, total = await core.find_humans(page=page, per_page=USERS_PER_PAGE, query=pattern)
+            return total, users, []
     except BackendNotAvailable as exc:
         raise JobResultError("offline") from exc
     except BackendConnectionError as exc:
@@ -264,7 +258,7 @@ class UsersWidget(QWidget, Ui_UsersWidget):
         self.jobs_ctx.submit_job(
             ThreadSafeQtSignal(self, "list_success", QtToTrioJob),
             ThreadSafeQtSignal(self, "list_error", QtToTrioJob),
-            _do_list_filter_users,
+            _do_list_users_and_invitations,
             core=self.core,
             page=self._page,
             pattern=pattern,
@@ -414,6 +408,10 @@ class UsersWidget(QWidget, Ui_UsersWidget):
         assert job.status == "ok"
 
         total, users, invitations = job.ret
+        from sys import stderr
+
+        for user in users:
+            print("user = ", user, file=stderr)
         # Securing if page go to far
         if total == 0 and self._page > 1:
             self._page -= 1

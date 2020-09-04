@@ -57,19 +57,6 @@ class DeviceButton(QWidget, Ui_DeviceButton):
         self.change_password_clicked.emit()
 
 
-async def _do_list_filter_devices(core, pattern, page):
-    try:
-        devices, total = await core.get_user_devices_info(per_page=DEVICES_PER_PAGE, page=page)
-        for device in devices:
-            if not device.device_display.startswith(pattern):
-                devices.remove(device)
-        return devices, total
-    except BackendNotAvailable as exc:
-        raise JobResultError("offline") from exc
-    except BackendConnectionError as exc:
-        raise JobResultError("error") from exc
-
-
 async def _do_invite_device(core):
     try:
         return await core.new_device_invitation(send_email=False)
@@ -79,9 +66,16 @@ async def _do_invite_device(core):
         raise JobResultError("error") from exc
 
 
-async def _do_list_devices(core, page):
+async def _do_list_devices(core, page, pattern=None):
     try:
-        return await core.get_user_devices_info(per_page=DEVICES_PER_PAGE, page=page)
+        if pattern is None:
+            return await core.get_user_devices_info(per_page=DEVICES_PER_PAGE, page=page)
+        else:
+            devices, total = await core.get_user_devices_info(per_page=DEVICES_PER_PAGE, page=page)
+            for device in devices:
+                if not device.device_display.startswith(pattern):
+                    devices.remove(device)
+        return devices, total
     except BackendNotAvailable as exc:
         raise JobResultError("offline") from exc
     except BackendConnectionError as exc:
@@ -142,7 +136,7 @@ class DevicesWidget(QWidget, Ui_DevicesWidget):
         self.jobs_ctx.submit_job(
             ThreadSafeQtSignal(self, "list_success", QtToTrioJob),
             ThreadSafeQtSignal(self, "list_error", QtToTrioJob),
-            _do_list_filter_devices,
+            _do_list_devices,
             core=self.core,
             page=self._page,
             pattern=pattern,

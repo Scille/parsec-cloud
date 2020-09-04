@@ -84,14 +84,14 @@ async def test_find_and_get_info(running_backend, alice_core, bob, alice, alice2
         revoked_on=None,
     )
 
-    infos = await alice_core.get_user_devices_info(bob.user_id)
+    infos, total = await alice_core.get_user_devices_info(bob.user_id)
     assert infos == [
         DeviceInfo(
             device_id=bob.device_id, device_label=bob.device_label, created_on=Pendulum(2000, 1, 1)
         )
     ]
 
-    infos = await alice_core.get_user_devices_info()
+    infos, total = await alice_core.get_user_devices_info()
     assert infos == [
         DeviceInfo(
             device_id=alice.device_id,
