@@ -7,6 +7,7 @@ from functools import partial
 from async_generator import asynccontextmanager
 from contextlib import contextmanager
 
+#
 # Scheme stolen from py-spinners
 # MIT License Copyright (c) 2017 Manraj Singh
 # (https://github.com/manrajgrover/py-spinners)
