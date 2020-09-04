@@ -171,7 +171,9 @@ class LoggedCore:
             created_on=user_certif.timestamp,
         )
 
-    async def get_user_devices_info(self, user_id: UserID = None) -> List[DeviceInfo]:
+    async def get_user_devices_info(
+        self, user_id: UserID = None, page: int = 1, per_page: int = 100
+    ) -> List[DeviceInfo]:
         """
         Raises:
             BackendConnectionError
@@ -199,7 +201,9 @@ class LoggedCore:
                     created_on=device_certif.timestamp,
                 )
             )
-        return results
+        total = len(results)
+        result_page = results[(page - 1) * per_page : page * per_page]
+        return result_page, total
 
     async def revoke_user(self, user_id: UserID) -> None:
         """
