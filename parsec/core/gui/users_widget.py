@@ -3,7 +3,7 @@
 
 from uuid import UUID
 
-from PyQt5.QtCore import Qt, pyqtSignal, QTimer
+from PyQt5.QtCore import Qt, pyqtSignal
 from PyQt5.QtWidgets import QWidget, QMenu, QGraphicsDropShadowEffect, QLabel
 from PyQt5.QtGui import QColor
 
@@ -220,8 +220,6 @@ class UsersWidget(QWidget, Ui_UsersWidget):
         self.button_previous_page.clicked.connect(self.show_previous_page)
         self.button_next_page.clicked.connect(self.show_next_page)
         self.button_previous_page.clicked.connect(self.show_previous_page)
-        self.filter_timer = QTimer()
-        self.filter_timer.setInterval(300)
         self.button_users_filter.clicked.connect(self.on_filter)
         self.line_edit_search.textChanged.connect(lambda: self.on_filter(text_changed=True))
         self.line_edit_search.editingFinished.connect(lambda: self.on_filter(editing_finished=True))

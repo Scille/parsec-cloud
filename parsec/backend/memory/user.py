@@ -261,6 +261,7 @@ class MemoryUserComponent(BaseUserComponent):
                     user_terms = (
                         *[x.lower() for x in user.human_handle.label.split()],
                         user.human_handle.email.lower(),
+                        user.user_id.lower(),
                     )
                 else:
                     user_terms = (user.user_id.lower(),)

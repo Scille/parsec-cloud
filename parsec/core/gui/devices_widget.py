@@ -1,6 +1,6 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
 
-from PyQt5.QtCore import pyqtSignal, Qt, QTimer
+from PyQt5.QtCore import pyqtSignal, Qt
 from PyQt5.QtWidgets import QWidget, QMenu, QGraphicsDropShadowEffect, QLabel
 from PyQt5.QtGui import QColor
 
@@ -106,8 +106,6 @@ class DevicesWidget(QWidget, Ui_DevicesWidget):
         self.list_error.connect(self._on_list_error)
         self.invite_success.connect(self._on_invite_success)
         self.invite_error.connect(self._on_invite_error)
-        self.filter_timer = QTimer()
-        self.filter_timer.setInterval(300)
         self.button_devices_filter.clicked.connect(self.on_filter)
         self.line_edit_search.editingFinished.connect(lambda: self.on_filter(editing_finished=True))
         self.line_edit_search.textChanged.connect(lambda: self.on_filter(text_changed=True))
