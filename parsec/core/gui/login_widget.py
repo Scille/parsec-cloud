@@ -43,6 +43,9 @@ class LoginAccountsWidget(QWidget, Ui_LoginAccountsWidget):
             ab.clicked.connect(self.account_clicked.emit)
             self.accounts_widget.layout().insertWidget(0, ab)
 
+    def reset(self):
+        pass
+
 
 class LoginPasswordInputWidget(QWidget, Ui_LoginPasswordInputWidget):
     back_clicked = pyqtSignal()
@@ -92,6 +95,9 @@ class LoginNoDevicesWidget(QWidget, Ui_LoginNoDevicesWidget):
             self.label_no_device.setText(_("TEXT_LOGIN_NO_DEVICE_ON_MACHINE"))
         self.button_create_org.clicked.connect(self.create_organization_clicked.emit)
         self.button_join_org.clicked.connect(self.join_organization_clicked.emit)
+
+    def reset(self):
+        pass
 
 
 class LoginWidget(QWidget, Ui_LoginWidget):
