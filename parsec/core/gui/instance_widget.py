@@ -172,7 +172,7 @@ class InstanceWidget(QWidget):
             self.running_core_job.cancel_and_join()
 
     def on_logged_out(self):
-        self.state_changed.emit(self, "login")
+        self.state_changed.emit(self, "logout")
         self.show_login_widget()
 
     def on_logged_in(self):
