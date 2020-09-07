@@ -212,20 +212,19 @@ class InstanceWidget(QWidget):
 
     def show_central_widget(self):
         self.clear_widgets()
-        try:
-            central_widget = CentralWidget(
-                self.core,
-                self.core_jobs_ctx,
-                self.core.event_bus,
-                systray_notification=self.systray_notification,
-                parent=self,
-            )
-        except AttributeError:
-            # The core can be set to None at any time if do_run_core get an error, is cancelled or
-            # terminate.
-            if self.core is None:
-                return
-            raise
+        # The core can be set to None at any time if do_run_core get an error, is cancelled or
+        # terminate.
+        core = self.core
+        core_jobs_ctx = self.core_jobs_ctx
+        if self.core is None or self.core_ctx is None:
+            return
+        central_widget = CentralWidget(
+            core,
+            core_jobs_ctx,
+            core.event_bus,
+            systray_notification=self.systray_notification,
+            parent=self,
+        )
         self.layout().addWidget(central_widget)
         central_widget.logout_requested.connect(self.logout)
         central_widget.show()

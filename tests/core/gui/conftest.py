@@ -334,7 +334,6 @@ async def gui(aqtbot, gui_factory, event_bus, core_config):
 
     def _gui_displayed():
         assert _gui.isVisible()
-        assert not _gui.isHidden()
 
     await aqtbot.wait_until(_gui_displayed)
     return _gui
