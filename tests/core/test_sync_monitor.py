@@ -8,6 +8,10 @@ from unittest.mock import ANY
 from parsec.core.backend_connection import BackendConnStatus
 from parsec.backend.backend_events import BackendEvent
 from parsec.core.core_events import CoreEvent
+from parsec.core.types import WorkspaceRole
+from parsec.core.fs.exceptions import FSReadOnlyError
+
+from tests.common import create_shared_workspace
 
 
 @pytest.mark.trio
@@ -327,3 +331,58 @@ async def test_sync_confined_children_after_rename(
         info = await alice_w.path_info(path)
         assert not info["need_sync"]
         assert info["confinement_point"]
+
+
+@pytest.mark.trio
+async def test_sync_monitor_while_changing_roles(
+    running_backend, alice_core, bob_core, autojump_clock
+):
+    # Create a shared workspace
+    wid = await create_shared_workspace("w", alice_core, bob_core)
+    alice_workspace = alice_core.user_fs.get_workspace(wid)
+    bob_workspace = bob_core.user_fs.get_workspace(wid)
+
+    # Alice creates a files, let it sync
+    await alice_workspace.write_bytes("/test.txt", b"test")
+    await alice_core.wait_idle_monitors()
+    await bob_core.wait_idle_monitors()
+
+    # Bob edit the files..
+    assert await bob_workspace.read_bytes("/test.txt") == b"test"
+    await bob_workspace.write_bytes("/test.txt", b"test2")
+
+    # But gets his role changed to READER
+    with bob_core.event_bus.listen() as spy:
+        await alice_core.user_fs.workspace_share(wid, bob_core.device.user_id, WorkspaceRole.READER)
+        await spy.wait(CoreEvent.SHARING_UPDATED)
+        await bob_core.wait_idle_monitors()
+
+    # The file cannot be synced
+    info = await bob_workspace.path_info("/test.txt")
+    assert info["need_sync"]
+
+    # And the workspace is now read-only
+    with pytest.raises(FSReadOnlyError):
+        await bob_workspace.write_bytes("/this-should-fail", b"abc")
+
+    # Alice restores CONTRIBUTOR rights to Bob
+    with bob_core.event_bus.listen() as spy:
+        await alice_core.user_fs.workspace_share(
+            wid, bob_core.device.user_id, WorkspaceRole.CONTRIBUTOR
+        )
+        await spy.wait(CoreEvent.SHARING_UPDATED)
+        await bob_core.wait_idle_monitors()
+
+    # The edit file has been synced
+    info = await bob_workspace.path_info("/test.txt")
+    assert not info["need_sync"]
+
+    # So Alice can read it
+    await alice_core.wait_idle_monitors()
+    assert await alice_workspace.read_bytes("/test.txt") == b"test2"
+
+    # The workspace can be written again
+    await bob_workspace.write_bytes("/this-should-not-fail", b"abc")
+    await bob_core.wait_idle_monitors()
+    info = await bob_workspace.path_info("/this-should-not-fail")
+    assert not info["need_sync"]
