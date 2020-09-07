@@ -212,10 +212,16 @@ class InstanceWidget(QWidget):
 
     def show_central_widget(self):
         self.clear_widgets()
+        # The core can be set to None at any time if do_run_core get an error, is cancelled or
+        # terminate.
+        core = self.core
+        core_jobs_ctx = self.core_jobs_ctx
+        if core is None or core_jobs_ctx is None:
+            return
         central_widget = CentralWidget(
-            self.core,
-            self.core_jobs_ctx,
-            self.core.event_bus,
+            core,
+            core_jobs_ctx,
+            core.event_bus,
             systray_notification=self.systray_notification,
             parent=self,
         )
