@@ -1,0 +1,1 @@
+Fix an issue causing workspace files to not be closed properly.
