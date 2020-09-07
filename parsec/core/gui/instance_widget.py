@@ -216,7 +216,7 @@ class InstanceWidget(QWidget):
         # terminate.
         core = self.core
         core_jobs_ctx = self.core_jobs_ctx
-        if self.core is None or self.core_ctx is None:
+        if core is None or core_jobs_ctx is None:
             return
         central_widget = CentralWidget(
             core,
