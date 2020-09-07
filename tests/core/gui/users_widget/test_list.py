@@ -148,8 +148,9 @@ async def test_filter_users(aqtbot, running_backend, logged_gui):
 
     await aqtbot.wait_until(lambda: _all_users_visible(u_w=u_w))
 
+    # Test find()
     async with aqtbot.wait_signal(u_w.list_success):
-        await aqtbot.key_clicks(u_w.line_edit_search, "a")
+        await aqtbot.key_clicks(u_w.line_edit_search, "McA")
         await aqtbot.key_press(u_w.line_edit_search, Qt.Key_Enter)
 
     assert u_w.layout_users.count() == 2

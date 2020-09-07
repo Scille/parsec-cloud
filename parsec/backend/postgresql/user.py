@@ -103,10 +103,18 @@ class PGUserComponent(BaseUserComponent):
         per_page: int = 100,
         omit_revoked: bool = False,
         omit_non_human: bool = False,
+        no_filter_by_id: bool = False,
     ) -> Tuple[List[HumanFindResultItem], int]:
         async with self.dbh.pool.acquire() as conn:
             return await query_find_humans(
-                conn, organization_id, query, page, per_page, omit_revoked, omit_non_human
+                conn=conn,
+                organization_id=organization_id,
+                query=query,
+                page=page,
+                per_page=per_page,
+                omit_revoked=omit_revoked,
+                omit_non_human=omit_non_human,
+                no_filter_by_id=no_filter_by_id,
             )
 
     async def create_user_invitation(

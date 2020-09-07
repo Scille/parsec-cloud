@@ -286,10 +286,16 @@ def GreetUserTestBed(
                     ("", "The user was successfully greeter in your organization.")
                 ]
                 # User list should be updated
-                assert u_w.layout_users.count() == 4
-                user_widget = u_w.layout_users.itemAt(3).widget()
-                assert isinstance(user_widget, UserButton)
-                assert user_widget.user_info.human_handle == self.requested_human_handle
+                n_users = 4
+                assert u_w.layout_users.count() == n_users
+                # loop into users :new users has UUID id and alice bob and adam have their name
+                # so new user can be anywhere in the list
+                for user_idx in range(n_users):
+                    new_user_widget = u_w.layout_users.itemAt(user_idx).widget()
+                    if new_user_widget.user_info.human_handle == self.requested_human_handle:
+                        break
+                assert isinstance(new_user_widget, UserButton)
+                assert new_user_widget.user_info.human_handle == self.requested_human_handle
 
             await aqtbot.wait_until(_greet_done)
 

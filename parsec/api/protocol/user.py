@@ -259,6 +259,7 @@ class HumanFindReqSchema(BaseReqSchema):
     query = fields.String(missing=None)
     omit_revoked = fields.Boolean(missing=False)
     omit_non_human = fields.Boolean(missing=False)
+    no_filter_by_id = fields.Boolean(missing=False)
     page = fields.Int(missing=1, validate=lambda n: n > 0)
     per_page = fields.Integer(missing=100, validate=lambda n: 0 < n <= 100)
 

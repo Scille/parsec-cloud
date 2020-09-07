@@ -125,6 +125,7 @@ class LoggedCore:
         query: str = None,
         page: int = 1,
         per_page: int = 100,
+        no_filter_by_id: bool = False,
         omit_revoked: bool = False,
         omit_non_human: bool = False,
     ) -> Tuple[List[UserInfo], int]:
@@ -136,6 +137,7 @@ class LoggedCore:
             query=query,
             page=page,
             per_page=per_page,
+            no_filter_by_id=no_filter_by_id,
             omit_revoked=omit_revoked,
             omit_non_human=omit_non_human,
         )

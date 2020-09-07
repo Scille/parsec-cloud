@@ -954,6 +954,7 @@ class BaseUserComponent:
         per_page: int = 100,
         omit_revoked: bool = False,
         omit_non_human: bool = False,
+        no_filter_by_id: bool = False,
     ) -> Tuple[List[HumanFindResultItem], int]:
         raise NotImplementedError()
 

@@ -71,11 +71,11 @@ async def _do_list_devices(core, page, pattern=None):
         if pattern is None:
             return await core.get_user_devices_info(per_page=DEVICES_PER_PAGE, page=page)
         else:
+            # Filtering here device matching the pattern
             devices, total = await core.get_user_devices_info(per_page=DEVICES_PER_PAGE, page=page)
-            for device in devices:
-                if not device.device_display.startswith(pattern):
-                    devices.remove(device)
-        return devices, total
+            devices[:] = [device for device in devices if device.device_display.find(pattern) != -1]
+            total = len(devices)
+            return devices, total
     except BackendNotAvailable as exc:
         raise JobResultError("offline") from exc
     except BackendConnectionError as exc:
@@ -131,6 +131,9 @@ class DevicesWidget(QWidget, Ui_DevicesWidget):
             return self.reset()
         elif text_changed:
             return
+        self.line_edit_search.setEnabled(False)
+        self.button_devices_filter.setEnabled(False)
+        self.spinner.show()
         self.jobs_ctx.submit_job(
             ThreadSafeQtSignal(self, "list_success", QtToTrioJob),
             ThreadSafeQtSignal(self, "list_error", QtToTrioJob),
@@ -213,8 +216,8 @@ class DevicesWidget(QWidget, Ui_DevicesWidget):
             self.add_device(device, is_current_device=current_device.device_id == device.device_id)
         self.spinner.hide()
         self.pagination(total=total)
-        # Show/activate or hide/deactivate previous and next page button
-        self.pagination(total=total)
+        self.button_devices_filter.setEnabled(True)
+        self.line_edit_search.setEnabled(True)
 
     def _on_list_error(self, job):
         assert job.is_finished()
@@ -232,6 +235,8 @@ class DevicesWidget(QWidget, Ui_DevicesWidget):
         self.layout_devices.clear()
         self.button_previous_page.hide()
         self.button_next_page.hide()
+        self.button_devices_filter.setEnabled(False)
+        self.line_edit_search.setEnabled(False)
         self.spinner.show()
         self.jobs_ctx.submit_job(
             ThreadSafeQtSignal(self, "list_success", QtToTrioJob),

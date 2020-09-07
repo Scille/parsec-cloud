@@ -166,7 +166,9 @@ async def _do_list_users_and_invitations(core, page, pattern=None):
             invitations = await core.list_invitations()
             return total, users, [inv for inv in invitations if inv["type"] == InvitationType.USER]
         else:
-            users, total = await core.find_humans(page=page, per_page=USERS_PER_PAGE, query=pattern)
+            users, total = await core.find_humans(
+                page=page, per_page=USERS_PER_PAGE, query=pattern, no_filter_by_id=True
+            )
             return total, users, []
     except BackendNotAvailable as exc:
         raise JobResultError("offline") from exc
@@ -253,6 +255,9 @@ class UsersWidget(QWidget, Ui_UsersWidget):
             return self.reset()
         elif text_changed:
             return
+        self.spinner.show()
+        self.button_users_filter.setEnabled(False)
+        self.line_edit_search.setEnabled(False)
         self.jobs_ctx.submit_job(
             ThreadSafeQtSignal(self, "list_success", QtToTrioJob),
             ThreadSafeQtSignal(self, "list_error", QtToTrioJob),
@@ -406,10 +411,7 @@ class UsersWidget(QWidget, Ui_UsersWidget):
         assert job.status == "ok"
 
         total, users, invitations = job.ret
-        from sys import stderr
 
-        for user in users:
-            print("user = ", user, file=stderr)
         # Securing if page go to far
         if total == 0 and self._page > 1:
             self._page -= 1
@@ -429,6 +431,8 @@ class UsersWidget(QWidget, Ui_UsersWidget):
             self.add_user(user_info=user_info, is_current_user=current_user == user_info.user_id)
         self.spinner.hide()
         self.pagination(total=total)
+        self.button_users_filter.setEnabled(True)
+        self.line_edit_search.setEnabled(True)
 
     def _on_list_error(self, job):
         assert job.is_finished()
@@ -481,6 +485,8 @@ class UsersWidget(QWidget, Ui_UsersWidget):
         self.layout_users.clear()
         self.button_previous_page.hide()
         self.button_next_page.hide()
+        self.button_users_filter.setEnabled(False)
+        self.line_edit_search.setEnabled(False)
         self.spinner.show()
         self.jobs_ctx.submit_job(
             ThreadSafeQtSignal(self, "list_success", QtToTrioJob),

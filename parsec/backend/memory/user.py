@@ -223,7 +223,7 @@ class MemoryUserComponent(BaseUserComponent):
                 return ([], 0)
 
             results = [
-                user_id for user_id in users.keys() if user_id.lower().startswith(query.lower())
+                user_id for user_id in users.keys() if user_id.lower().find(query.lower()) != -1
             ]
 
         else:
@@ -250,6 +250,7 @@ class MemoryUserComponent(BaseUserComponent):
         per_page: int = 100,
         omit_revoked: bool = False,
         omit_non_human: bool = False,
+        no_filter_by_id: bool = False,
     ) -> Tuple[List[HumanFindResultItem], int]:
         org = self._organizations[organization_id]
 
@@ -257,7 +258,12 @@ class MemoryUserComponent(BaseUserComponent):
             data = []
             query_terms = [qt.lower() for qt in query.split()]
             for user in org.users.values():
-                if user.human_handle:
+                if user.human_handle and no_filter_by_id is True:
+                    user_terms = (
+                        *[x.lower() for x in user.human_handle.label.split()],
+                        user.human_handle.email.lower(),
+                    )
+                elif user.human_handle:
                     user_terms = (
                         *[x.lower() for x in user.human_handle.label.split()],
                         user.human_handle.email.lower(),
@@ -267,7 +273,7 @@ class MemoryUserComponent(BaseUserComponent):
                     user_terms = (user.user_id.lower(),)
 
                 for qt in query_terms:
-                    if not any(ut.startswith(qt) for ut in user_terms):
+                    if not any(ut.find(qt) != -1 for ut in user_terms):
                         break
                 else:
                     # All query term have match the current user
@@ -285,24 +291,16 @@ class MemoryUserComponent(BaseUserComponent):
             )
             for user in data
         ]
-
         if omit_revoked:
             results = [res for res in results if not res.revoked]
 
         # PostgreSQL does case insensitive sort
-        humans = sorted(
-            [res for res in results if res.human_handle],
-            key=lambda r: (r.human_handle.label.lower(), r.user_id.lower()),  # type: ignore
-        )
-        non_humans = sorted(
-            [res for res in results if not res.human_handle], key=lambda r: r.user_id.lower()
-        )
+        results = sorted([res for res in results], key=lambda r: r.user_id.lower())
 
         if omit_non_human:
-            results = humans
-        else:
-            # Keeping non-human last
-            results = [*humans, *non_humans]
+            results = sorted(
+                [res for res in results if res.human_handle], key=lambda r: r.user_id.lower()
+            )
 
         total = len(results)
         result_page = results[(page - 1) * per_page : page * per_page]
