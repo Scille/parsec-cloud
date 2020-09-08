@@ -126,6 +126,8 @@ class SharingWidget(QWidget, Ui_SharingWidget):
         self.combo_role.setCurrentIndex(_ROLES_TO_INDEX[self.role])
         self.combo_role.currentIndexChanged.connect(self.on_role_changed)
         self.status_timer = QTimer()
+        self.status_timer.setInterval(3000)
+        self.status_timer.setSingleShot(True)
         self.status_timer.timeout.connect(self._refresh_status)
 
     def _refresh_status(self):
@@ -140,13 +142,13 @@ class SharingWidget(QWidget, Ui_SharingWidget):
         p = Pixmap(":/icons/images/material/done.svg")
         p.replace_color(QColor(0, 0, 0), QColor(0x8B, 0xC3, 0x4A))
         self.label_status.setPixmap(p)
-        self.status_timer.start(3000)
+        self.status_timer.start()
 
     def set_status_update_failed(self):
         p = Pixmap(":/icons/images/material/sync_problem.svg")
         p.replace_color(QColor(0, 0, 0), QColor(0xF1, 0x96, 0x2B))
         self.label_status.setPixmap(p)
-        self.status_timer.start(3000)
+        self.status_timer.start()
 
     def on_role_changed(self, index):
         self.role_changed.emit(self.user_info, _index_to_role(index))
