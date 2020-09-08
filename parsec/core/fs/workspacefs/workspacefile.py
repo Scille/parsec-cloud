@@ -58,7 +58,6 @@ class WorkspaceFile:
         return self
 
     async def __aexit__(self, *args) -> None:
-        self._state = FileState.CLOSED
         await self.close()
 
     async def ainit(self) -> None:

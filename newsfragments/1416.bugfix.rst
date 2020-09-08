@@ -1,1 +1,0 @@
-Contract and CGV link opens up properly
