@@ -16,4 +16,4 @@ class BaseSgxComponent:
         return sgx_hello_world_serializer.rep_dump({"status": "ok"})
 
     async def hello_world(self):
-        raise NotImplementedError()
+        print("Hello World !")

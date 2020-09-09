@@ -11,6 +11,7 @@ from parsec.backend.events import EventsComponent
 from parsec.backend.blockstore import blockstore_factory
 from parsec.backend.webhooks import WebhooksComponent
 from parsec.backend.http import HTTPComponent
+from parsec.backend.sgx import BaseSgxComponent
 from parsec.backend.postgresql.handler import PGHandler, send_signal
 from parsec.backend.postgresql.organization import PGOrganizationComponent
 from parsec.backend.postgresql.ping import PGPingComponent
@@ -45,6 +46,7 @@ async def components_factory(config: BackendConfig, event_bus: EventBus):
 
     webhooks = WebhooksComponent(config)
     http = HTTPComponent(config)
+    sgx = BaseSgxComponent()
     organization = PGOrganizationComponent(dbh, webhooks)
     user = PGUserComponent(dbh, event_bus)
     invite = PGInviteComponent(dbh, event_bus, config)
@@ -63,6 +65,7 @@ async def components_factory(config: BackendConfig, event_bus: EventBus):
                 "events": events,
                 "webhooks": webhooks,
                 "http": http,
+                "sgx": sgx,
                 "organization": organization,
                 "user": user,
                 "invite": invite,

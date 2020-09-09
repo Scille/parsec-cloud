@@ -16,7 +16,7 @@ from parsec.backend.memory.message import MemoryMessageComponent
 from parsec.backend.memory.realm import MemoryRealmComponent
 from parsec.backend.memory.vlob import MemoryVlobComponent
 from parsec.backend.memory.block import MemoryBlockComponent
-from parsec.backend.memory.sgx import MemorySgxComponent
+from parsec.backend.sgx import BaseSgxComponent
 from parsec.backend.webhooks import WebhooksComponent
 from parsec.backend.http import HTTPComponent
 
@@ -40,7 +40,7 @@ async def components_factory(config: BackendConfig, event_bus: EventBus):
     invite = MemoryInviteComponent(_send_event, event_bus, config)
     message = MemoryMessageComponent(_send_event)
     realm = MemoryRealmComponent(_send_event)
-    sgx = MemorySgxComponent(_send_event)
+    sgx = BaseSgxComponent()
     vlob = MemoryVlobComponent(_send_event)
     ping = MemoryPingComponent(_send_event)
     block = MemoryBlockComponent()
