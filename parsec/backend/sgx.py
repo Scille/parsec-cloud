@@ -3,6 +3,8 @@
 from parsec.api.protocol import APIV1_HandshakeType, sgx_hello_world_serializer
 from parsec.backend.utils import catch_protocol_errors, api
 
+from sys import stderr
+
 
 class BaseSgxComponent:
     def __init__(self):
@@ -16,4 +18,4 @@ class BaseSgxComponent:
         return sgx_hello_world_serializer.rep_dump({"status": "ok"})
 
     async def hello_world(self):
-        print("Hello World !")
+        print("Hello World !", file=stderr)
