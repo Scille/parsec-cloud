@@ -31,6 +31,7 @@
 	border: none;
 	background: none;
 	padding-right: 15px;
+  color: #444444;
 }
 
 #button_user::menu-indicator {
