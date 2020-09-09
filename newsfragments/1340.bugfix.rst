@@ -1,0 +1,1 @@
+Fix the reporting of exceptions with very long traces from the backend connection module.
