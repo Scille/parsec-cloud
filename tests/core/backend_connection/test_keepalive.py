@@ -9,7 +9,6 @@ from parsec.core.types import BackendInvitationAddr
 from parsec.core.backend_connection import (
     backend_authenticated_cmds_factory,
     backend_invited_cmds_factory,
-    apiv1_backend_authenticated_cmds_factory,
     apiv1_backend_anonymous_cmds_factory,
     apiv1_backend_administration_cmds_factory,
 )
@@ -92,16 +91,6 @@ async def test_invited_cmd_keepalive(
 
     def _cmds_factory(keepalive):
         return backend_invited_cmds_factory(invitation_addr, keepalive=keepalive)
-
-    await _test_keepalive(mock_clock, monkeypatch, _cmds_factory)
-
-
-@pytest.mark.trio
-async def test_apiv1_authenticated_cmd_keepalive(mock_clock, monkeypatch, running_backend, alice):
-    def _cmds_factory(keepalive):
-        return apiv1_backend_authenticated_cmds_factory(
-            alice.organization_addr, alice.device_id, alice.signing_key, keepalive=keepalive
-        )
 
     await _test_keepalive(mock_clock, monkeypatch, _cmds_factory)
 

@@ -6,7 +6,6 @@ from async_generator import asynccontextmanager
 
 from parsec.core.backend_connection import (
     backend_authenticated_cmds_factory,
-    apiv1_backend_authenticated_cmds_factory,
     apiv1_backend_anonymous_cmds_factory,
 )
 from parsec.core.remote_devices_manager import RemoteDevicesManager
@@ -71,14 +70,6 @@ def backend_addr_factory(running_backend, tcp_stream_spy):
 @pytest.fixture
 async def alice_backend_cmds(running_backend, alice):
     async with backend_authenticated_cmds_factory(
-        alice.organization_addr, alice.device_id, alice.signing_key
-    ) as cmds:
-        yield cmds
-
-
-@pytest.fixture
-async def apiv1_alice_backend_cmds(running_backend, alice):
-    async with apiv1_backend_authenticated_cmds_factory(
         alice.organization_addr, alice.device_id, alice.signing_key
     ) as cmds:
         yield cmds

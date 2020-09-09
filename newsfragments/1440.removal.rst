@@ -1,0 +1,1 @@
+Remove deprecated `parsec core apiv1` commands from the cli.
