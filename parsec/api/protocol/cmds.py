@@ -108,4 +108,5 @@ APIV1_ADMINISTRATION_CMDS = {
     "organization_status",
     "organization_update",
     "ping",
+    "sgx_hello_world",
 }

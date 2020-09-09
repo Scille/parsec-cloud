@@ -9,6 +9,7 @@ from parsec.backend.memory.realm import MemoryRealmComponent
 from parsec.backend.memory.vlob import MemoryVlobComponent
 from parsec.backend.memory.block import MemoryBlockComponent, MemoryBlockStoreComponent
 from parsec.backend.memory.factory import components_factory
+from parsec.backend.memory.sgx import MemorySgxComponent
 
 __all__ = [
     "MemoryOrganizationComponent",
@@ -22,4 +23,5 @@ __all__ = [
     "MemoryBlockComponent",
     "MemoryBlockStoreComponent",
     "components_factory",
+    "MemorySgxComponent",
 ]

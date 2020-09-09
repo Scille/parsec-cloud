@@ -55,6 +55,7 @@ async def backend_app_factory(config: BackendConfig, event_bus: Optional[EventBu
             user=components["user"],
             invite=components["invite"],
             organization=components["organization"],
+            sgx=components["sgx"],
             message=components["message"],
             realm=components["realm"],
             vlob=components["vlob"],
@@ -75,6 +76,7 @@ class BackendApp:
         user,
         invite,
         organization,
+        sgx,
         message,
         realm,
         vlob,
@@ -91,6 +93,7 @@ class BackendApp:
         self.user = user
         self.invite = invite
         self.organization = organization
+        self.sgx = sgx
         self.message = message
         self.realm = realm
         self.vlob = vlob
@@ -100,7 +103,7 @@ class BackendApp:
         self.events = events
 
         self.apis = collect_apis(
-            user, invite, organization, message, realm, vlob, ping, blockstore, block, events
+            user, invite, organization, sgx, message, realm, vlob, ping, blockstore, block, events
         )
 
     async def handle_client_websocket(self, stream, event, first_request_data=None):

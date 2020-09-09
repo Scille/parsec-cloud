@@ -17,6 +17,7 @@ from parsec.core.cli import share_workspace
 from parsec.core.cli import bootstrap_organization
 from parsec.core.cli import rsync
 from parsec.core.cli import run
+from parsec.core.cli import sgx
 
 
 __all__ = ("core_cmd",)
@@ -34,6 +35,7 @@ core_cmd.add_command(create_workspace.create_workspace, "create_workspace")
 core_cmd.add_command(share_workspace.share_workspace, "share_workspace")
 core_cmd.add_command(list_devices.list_devices, "list_devices")
 
+core_cmd.add_command(sgx.sgx_hello_world, "sgx_hello_world")
 core_cmd.add_command(invitation.invite_user, "invite_user")
 core_cmd.add_command(invitation.invite_device, "invite_device")
 core_cmd.add_command(invitation.list_invitations, "list_invitations")

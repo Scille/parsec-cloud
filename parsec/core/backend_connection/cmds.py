@@ -71,6 +71,7 @@ from parsec.api.protocol import (
     apiv1_device_cancel_invitation_serializer,
     apiv1_device_create_serializer,
     device_create_serializer,
+    sgx_hello_world_serializer,
 )
 from parsec.core.types import EntryID
 from parsec.core.backend_connection.exceptions import BackendNotAvailable, BackendProtocolError
@@ -639,6 +640,10 @@ async def organization_stats(transport: Transport, organization_id: Organization
         cmd="organization_stats",
         organization_id=organization_id,
     )
+
+
+async def sgx_hello_world(transport: Transport):
+    return await _send_cmd(transport, sgx_hello_world_serializer, cmd="sgx_hello_world")
 
 
 async def organization_status(transport: Transport, organization_id: OrganizationID) -> dict:
