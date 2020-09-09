@@ -283,6 +283,11 @@ async def mountpoint_manager_factory(
     # Now is a good time to perform some cleanup in the registry
     if os.name == "nt":
         cleanup_parsec_drive_icons()
+    elif os.name == "posix":
+        for dirs in os.listdir(base_mountpoint_path):
+            await trio.run_process(
+                ["diskutil", "unmount", str(base_mountpoint_path) + "/" + str(dirs)]
+            )
 
     def on_event(event, new_entry, previous_entry=None):
         # Workspace created
