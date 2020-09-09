@@ -277,7 +277,7 @@ class WorkspacesWidget(QWidget, Ui_WorkspacesWidget):
 
     def has_workspaces_displayed(self):
         return self.layout_workspaces.count() >= 1 and isinstance(
-            self.layout_workspaces.itemAt(0), WorkspaceButton
+            self.layout_workspaces.itemAt(0).widget(), WorkspaceButton
         )
 
     def goto_file_clicked(self):
@@ -701,7 +701,7 @@ class WorkspacesWidget(QWidget, Ui_WorkspacesWidget):
             self.reset()
 
     def list_workspaces(self):
-        if self.has_workspaces_displayed():
+        if not self.has_workspaces_displayed():
             self.spinner.show()
         self.jobs_ctx.submit_job(
             ThreadSafeQtSignal(self, "list_success", QtToTrioJob),
