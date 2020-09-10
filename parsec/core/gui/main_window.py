@@ -487,7 +487,22 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         if not ParsecApp.has_active_modal():
             self.tab_center.setCurrentIndex(idx)
 
-    def switch_to_login_tab(self):
+    def _find_device_from_addr(self, action_addr, display_error=False):
+        device = None
+        for available_device in list_available_devices(self.config.config_dir):
+            if available_device.organization_id == action_addr.organization_id:
+                device = available_device
+                break
+        if device is None:
+            show_error(
+                self,
+                _("TEXT_FILE_LINK_NOT_IN_ORG_organization").format(
+                    organization=action_addr.organization_id
+                ),
+            )
+        return device
+
+    def switch_to_login_tab(self, action_addr=None):
         idx = self._get_login_tab_index()
         if idx != -1:
             self.switch_to_tab(idx)
@@ -495,23 +510,19 @@ class MainWindow(QMainWindow, Ui_MainWindow):
             tab = self.add_new_tab()
             tab.show_login_widget()
             self.on_tab_state_changed(tab, "login")
-            self.switch_to_tab(self.tab_center.count() - 1)
+            idx = self.tab_center.count() - 1
+            self.switch_to_tab(idx)
+
+        if action_addr is not None:
+            device = self._find_device_from_addr(action_addr, display_error=True)
+            instance_widget = self.tab_center.widget(idx)
+            instance_widget.set_workspace_path(action_addr)
+            login_w = self.tab_center.widget(idx).get_login_widget()
+            login_w._on_account_clicked(device)
 
     def go_to_file_link(self, action_addr):
-        devices = list_available_devices(self.config.config_dir)
-        found_org = False
-        for available_device in devices:
-            if available_device.organization_id == action_addr.organization_id:
-                found_org = True
-                break
-
+        found_org = self._find_device_from_addr(action_addr, display_error=True) is not None
         if not found_org:
-            show_error(
-                self,
-                _("TEXT_FILE_LINK_NOT_IN_ORG_organization").format(
-                    organization=action_addr.organization_id
-                ),
-            )
             return
 
         for idx in range(self.tab_center.count()):
@@ -533,10 +544,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
                     found_workspace = True
                     central_widget = w.get_central_widget()
                     try:
-                        central_widget.show_mount_widget()
-                        central_widget.mount_widget.show_files_widget(
-                            w.core.user_fs.get_workspace(wk.id), action_addr.path, selected=True
-                        )
+                        central_widget.go_to_file_link(wk.id, action_addr.path)
                         self.switch_to_tab(idx)
                     except AttributeError:
                         logger.exception("Central widget is not available")
@@ -555,7 +563,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
                 organization=action_addr.organization_id
             ),
         )
-        self.switch_to_login_tab()
+        self.switch_to_login_tab(action_addr)
 
     def show_create_org_widget(self, action_addr):
         self.switch_to_login_tab()

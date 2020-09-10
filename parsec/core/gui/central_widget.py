@@ -13,7 +13,7 @@ from parsec.core.gui.lang import translate as _
 from parsec.core.gui.custom_widgets import Pixmap
 from parsec.core.gui.custom_dialogs import show_error
 from parsec.core.gui.ui.central_widget import Ui_CentralWidget
-
+from parsec.core.fs import FSWorkspaceNotFoundError
 
 from parsec.api.protocol import (
     HandshakeAPIVersionError,
@@ -42,7 +42,7 @@ class CentralWidget(QWidget, Ui_CentralWidget):
     logout_requested = pyqtSignal()
     new_notification = pyqtSignal(str, str)
 
-    def __init__(self, core, jobs_ctx, event_bus, systray_notification, **kwargs):
+    def __init__(self, core, jobs_ctx, event_bus, systray_notification, action_addr=None, **kwargs):
         super().__init__(**kwargs)
         self.setupUi(self)
 
@@ -99,7 +99,20 @@ class CentralWidget(QWidget, Ui_CentralWidget):
         self._on_connection_state_changed(
             self.core.backend_status, self.core.backend_status_exc, allow_systray=False
         )
-        self.show_mount_widget()
+        if action_addr is not None:
+            try:
+                self.go_to_file_link(action_addr.workspace_id, action_addr.path)
+            except FSWorkspaceNotFoundError:
+                show_error(
+                    self,
+                    _("TEXT_FILE_LINK_WORKSPACE_NOT_FOUND_organization").format(
+                        organization=action_addr.organization_id
+                    ),
+                )
+
+                self.show_mount_widget()
+        else:
+            self.show_mount_widget()
 
     def _show_user_menu(self):
         self.button_user.showMenu()
@@ -229,6 +242,12 @@ class CentralWidget(QWidget, Ui_CentralWidget):
     def on_new_notification(self, notif_type, msg):
         if notif_type in ["REVOKED", "EXPIRED"]:
             show_error(self, msg)
+
+    def go_to_file_link(self, workspace_id, path):
+        self.show_mount_widget()
+        self.mount_widget.show_files_widget(
+            self.core.user_fs.get_workspace(workspace_id), path, selected=True
+        )
 
     def show_mount_widget(self):
         self.clear_widgets()

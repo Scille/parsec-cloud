@@ -104,6 +104,7 @@ class LoginWidget(QWidget, Ui_LoginWidget):
     login_with_password_clicked = pyqtSignal(Path, str)
     create_organization_clicked = pyqtSignal()
     join_organization_clicked = pyqtSignal()
+    login_canceled = pyqtSignal()
 
     def __init__(self, jobs_ctx, event_bus, config, login_failed_sig, parent):
         super().__init__(parent=parent)
@@ -160,12 +161,13 @@ class LoginWidget(QWidget, Ui_LoginWidget):
     def _on_account_clicked(self, device):
         self._clear_widget()
         lw = LoginPasswordInputWidget(device)
-        lw.back_clicked.connect(self.reload_devices)
+        lw.back_clicked.connect(self._on_back_clicked)
         lw.log_in_clicked.connect(self.try_login)
         self.widget.layout().addWidget(lw)
         lw.line_edit_password.setFocus()
 
     def _on_back_clicked(self):
+        self.login_canceled.emit()
         self.reload_devices()
 
     def try_login(self, key_file, password):
