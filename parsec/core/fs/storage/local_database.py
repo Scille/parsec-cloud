@@ -4,15 +4,16 @@ import inspect
 import functools
 from pathlib import Path
 from concurrent.futures import ThreadPoolExecutor
+from typing import AsyncIterator, Callable, Optional, Any, Union
 
 import trio
 import outcome
 from async_generator import asynccontextmanager
-from sqlite3 import connect as sqlite_connect
+from sqlite3 import Connection, Cursor, connect as sqlite_connect
 
 
 @asynccontextmanager
-async def thread_pool_runner(max_workers=None):
+async def thread_pool_runner(max_workers: Optional[int] = None) -> AsyncIterator[Callable]:
     """A trio-managed thread pool.
 
     This should be removed if trio decides to add support for thread pools:
@@ -21,10 +22,10 @@ async def thread_pool_runner(max_workers=None):
     executor = ThreadPoolExecutor(max_workers=max_workers)
     trio_token = trio.hazmat.current_trio_token()
 
-    async def run_in_thread(fn, *args):
+    async def run_in_thread(fn: Callable, *args: Any) -> Any:
         send_channel, receive_channel = trio.open_memory_channel(1)
 
-        def target():
+        def target() -> None:
             result = outcome.capture(fn, *args)
             trio.from_thread.run_sync(send_channel.send_nowait, result, trio_token=trio_token)
 
@@ -41,7 +42,7 @@ async def thread_pool_runner(max_workers=None):
             await trio.to_thread.run_sync(executor.shutdown)
 
 
-def protect_with_lock(fn):
+def protect_with_lock(fn: Callable) -> Callable:
     """Use as a decorator to protect an async method with `self._lock`.
 
     Also works with async gen method so it can be used for `open_cursor`.
@@ -50,18 +51,18 @@ def protect_with_lock(fn):
     if inspect.isasyncgenfunction(fn):
 
         @functools.wraps(fn)
-        async def wrapper(self, *args, **kwargs):
+        async def wrapper(self: "LocalDatabase", *args: Any, **kwargs: Any) -> AsyncIterator:
             async with self._lock:
-                async for item in fn.__get__(self)(*args, **kwargs):
+                async for item in fn(self, *args, **kwargs):
                     yield item
 
     else:
         assert inspect.iscoroutinefunction(fn)
 
         @functools.wraps(fn)
-        async def wrapper(self, *args, **kwargs):
+        async def wrapper(self: "LocalDatabase", *args: Any, **kwargs: Any) -> Any:
             async with self._lock:
-                return await fn.__get__(self)(*args, **kwargs)
+                return await fn(self, *args, **kwargs)
 
     return wrapper
 
@@ -69,17 +70,19 @@ def protect_with_lock(fn):
 class LocalDatabase:
     """Base class for managing an sqlite3 connection."""
 
-    def __init__(self, path, vacuum_threshold=None):
-        self._conn = None
+    def __init__(self, path: Union[str, Path], vacuum_threshold: Optional[int] = None):
         self._lock = trio.Lock()
-        self._run_in_thread = None
+
+        # Those attributes are set by the `run` async context manager
+        self._conn: Connection
+        self._run_in_thread: Callable
 
         self.path = Path(path)
         self.vacuum_threshold = vacuum_threshold
 
     @classmethod
     @asynccontextmanager
-    async def run(cls, *args, **kwargs):
+    async def run(cls, *args: Any, **kwargs: Any) -> AsyncIterator["LocalDatabase"]:
         # Instanciate the local database
         self = cls(*args, **kwargs)
 
@@ -101,7 +104,7 @@ class LocalDatabase:
 
     # Life cycle
 
-    async def _create_connection(self):
+    async def _create_connection(self) -> Connection:
         # Create directories
         self.path.parent.mkdir(mode=0o700, parents=True, exist_ok=True)
 
@@ -123,29 +126,21 @@ class LocalDatabase:
         return conn
 
     @protect_with_lock
-    async def _connect(self):
-        if self._conn is not None:
-            raise RuntimeError("Already connected")
-
+    async def _connect(self) -> None:
         # Connect and initialize database
         self._conn = await self._create_connection()
 
     @protect_with_lock
-    async def _close(self):
-        # Idempotency
-        if self._conn is None:
-            return
-
+    async def _close(self) -> None:
         # Commit and close
         await self._run_in_thread(self._conn.commit)
         self._conn.close()
-        self._conn = None
 
     # Cursor management
 
     @asynccontextmanager
     @protect_with_lock
-    async def open_cursor(self, commit=True):
+    async def open_cursor(self, commit: bool = True) -> AsyncIterator[Cursor]:
         # Get a cursor
         cursor = self._conn.cursor()
         try:
@@ -162,12 +157,12 @@ class LocalDatabase:
             cursor.close()
 
     @protect_with_lock
-    async def commit(self):
+    async def commit(self) -> None:
         await self._run_in_thread(self._conn.commit)
 
     # Vacuum
 
-    def get_disk_usage(self):
+    def get_disk_usage(self) -> int:
         disk_usage = 0
         for suffix in (".sqlite", ".sqlite-wal", ".sqlite-shm"):
             try:
@@ -177,7 +172,7 @@ class LocalDatabase:
         return disk_usage
 
     @protect_with_lock
-    async def run_vacuum(self):
+    async def run_vacuum(self) -> None:
         # Vacuum disabled
         if self.vacuum_threshold is None:
             return

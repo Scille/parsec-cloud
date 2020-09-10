@@ -3,12 +3,14 @@
 import time
 
 import trio
+from pathlib import Path
+from typing import Any, AsyncIterator, AsyncContextManager
 from async_generator import asynccontextmanager
 
 from parsec.core.types import ChunkID
 from parsec.core.fs.exceptions import FSLocalMissError
 from parsec.core.types import LocalDevice, DEFAULT_BLOCK_SIZE
-from parsec.core.fs.storage.local_database import LocalDatabase
+from parsec.core.fs.storage.local_database import LocalDatabase, Cursor
 
 
 class ChunkStorage:
@@ -19,12 +21,12 @@ class ChunkStorage:
         self.localdb = localdb
 
     @property
-    def path(self):
+    def path(self) -> Path:
         return self.localdb.path
 
     @classmethod
     @asynccontextmanager
-    async def run(cls, *args, **kwargs):
+    async def run(cls, *args: Any, **kwargs: Any) -> AsyncIterator["ChunkStorage"]:
         self = cls(*args, **kwargs)
         await self._create_db()
         try:
@@ -33,7 +35,7 @@ class ChunkStorage:
             with trio.CancelScope(shield=True):
                 await self.localdb.commit()
 
-    def _open_cursor(self):
+    def _open_cursor(self) -> AsyncContextManager[Cursor]:
         # There is no point in commiting dirty chunks:
         # they are referenced by a manifest that will get commited
         # soon after them. This greatly improves the performance of
@@ -46,7 +48,7 @@ class ChunkStorage:
 
     # Database initialization
 
-    async def _create_db(self):
+    async def _create_db(self) -> None:
         async with self._open_cursor() as cursor:
             cursor.execute(
                 """CREATE TABLE IF NOT EXISTS chunks
@@ -60,13 +62,13 @@ class ChunkStorage:
 
     # Size and chunks
 
-    async def get_nb_blocks(self):
+    async def get_nb_blocks(self) -> int:
         async with self._open_cursor() as cursor:
             cursor.execute("SELECT COUNT(*) FROM chunks")
             result, = cursor.fetchone()
             return result
 
-    async def get_total_size(self):
+    async def get_total_size(self) -> int:
         async with self._open_cursor() as cursor:
             cursor.execute("SELECT COALESCE(SUM(size), 0) FROM chunks")
             result, = cursor.fetchone()
@@ -74,13 +76,13 @@ class ChunkStorage:
 
     # Generic chunk operations
 
-    async def is_chunk(self, chunk_id: ChunkID):
+    async def is_chunk(self, chunk_id: ChunkID) -> bool:
         async with self._open_cursor() as cursor:
             cursor.execute("SELECT chunk_id FROM chunks WHERE chunk_id = ?", (chunk_id.bytes,))
             manifest_row = cursor.fetchone()
         return bool(manifest_row)
 
-    async def get_chunk(self, chunk_id: ChunkID):
+    async def get_chunk(self, chunk_id: ChunkID) -> bytes:
         async with self._open_cursor() as cursor:
             cursor.execute(
                 """
@@ -98,7 +100,7 @@ class ChunkStorage:
 
         return self.local_symkey.decrypt(ciphered)
 
-    async def set_chunk(self, chunk_id: ChunkID, raw: bytes):
+    async def set_chunk(self, chunk_id: ChunkID, raw: bytes) -> None:
         assert isinstance(raw, (bytes, bytearray))
         ciphered = self.local_symkey.encrypt(raw)
 
@@ -111,7 +113,7 @@ class ChunkStorage:
                 (chunk_id.bytes, len(ciphered), False, time.time(), ciphered),
             )
 
-    async def clear_chunk(self, chunk_id: ChunkID):
+    async def clear_chunk(self, chunk_id: ChunkID) -> None:
         async with self._open_cursor() as cursor:
             cursor.execute("DELETE FROM chunks WHERE chunk_id = ?", (chunk_id.bytes,))
             cursor.execute("SELECT changes()")
@@ -128,7 +130,7 @@ class BlockStorage(ChunkStorage):
         super().__init__(device, localdb)
         self.cache_size = cache_size
 
-    def _open_cursor(self):
+    def _open_cursor(self) -> AsyncContextManager[Cursor]:
         # It doesn't matter for blocks to be commited as soon as they're added
         # since they exists in the remote storage anyway. But it's simply more
         # convenient to perform the commit right away as does't cost much (at
@@ -138,14 +140,14 @@ class BlockStorage(ChunkStorage):
     # Garbage collection
 
     @property
-    def block_limit(self):
+    def block_limit(self) -> int:
         return self.cache_size // DEFAULT_BLOCK_SIZE
 
-    async def clear_all_blocks(self):
+    async def clear_all_blocks(self) -> None:
         async with self._open_cursor() as cursor:
             cursor.execute("DELETE FROM chunks")
 
-    async def clear_old_blocks(self, limit):
+    async def clear_old_blocks(self, limit: int) -> None:
         async with self._open_cursor() as cursor:
             cursor.execute(
                 """
@@ -158,7 +160,7 @@ class BlockStorage(ChunkStorage):
 
     # Upgraded set method
 
-    async def set_chunk(self, chunk_id: ChunkID, raw: bytes):
+    async def set_chunk(self, chunk_id: ChunkID, raw: bytes) -> None:
         # Actual set operation
         await super().set_chunk(chunk_id, raw)
 

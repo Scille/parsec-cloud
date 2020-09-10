@@ -2,7 +2,7 @@
 
 from pathlib import Path
 from collections import defaultdict
-from typing import Dict, Tuple, Set, Optional, Union, AsyncIterator, NoReturn, Pattern
+from typing import Dict, Tuple, Set, Optional, Union, AsyncIterator, NoReturn, Pattern, Any
 
 import trio
 from trio import hazmat
@@ -198,9 +198,9 @@ class WorkspaceStorage(BaseWorkspaceStorage):
         device: LocalDevice,
         path: Path,
         workspace_id: EntryID,
-        cache_size=DEFAULT_BLOCK_CACHE_SIZE,
-        vacuum_threshold=DEFAULT_CHUNK_VACUUM_THRESHOLD,
-    ):
+        cache_size: int = DEFAULT_BLOCK_CACHE_SIZE,
+        vacuum_threshold: int = DEFAULT_CHUNK_VACUUM_THRESHOLD,
+    ) -> AsyncIterator["WorkspaceStorage"]:
         data_path = path / WORKSPACE_DATA_STORAGE_NAME
         cache_path = path / WORKSPACE_CACHE_STORAGE_NAME
 
@@ -245,7 +245,7 @@ class WorkspaceStorage(BaseWorkspaceStorage):
 
     # Helpers
 
-    async def clear_memory_cache(self, flush=True) -> None:
+    async def clear_memory_cache(self, flush: bool = True) -> None:
         await self.manifest_storage.clear_memory_cache(flush=flush)
 
     # Checkpoint interface
@@ -308,7 +308,7 @@ class WorkspaceStorage(BaseWorkspaceStorage):
         await self.manifest_storage.set_prevent_sync_pattern(pattern)
         await self._load_prevent_sync_pattern()
 
-    async def mark_prevent_sync_pattern_fully_applied(self, pattern: Pattern):
+    async def mark_prevent_sync_pattern_fully_applied(self, pattern: Pattern) -> None:
         """Mark the provided pattern as fully applied.
 
         This is meant to be called after one made sure that all the manifests in the
@@ -376,7 +376,7 @@ class WorkspaceStorageTimestamped(BaseWorkspaceStorage):
     async def get_realm_checkpoint(self) -> NoReturn:
         self._throw_permission_error()
 
-    async def clear_memory_cache(self, flush=True) -> NoReturn:
+    async def clear_memory_cache(self, flush: bool = True) -> NoReturn:
         self._throw_permission_error()
 
     async def update_realm_checkpoint(
@@ -384,7 +384,7 @@ class WorkspaceStorageTimestamped(BaseWorkspaceStorage):
     ) -> NoReturn:
         self._throw_permission_error()
 
-    def _throw_permission_error(*args, **kwargs) -> NoReturn:
+    def _throw_permission_error(*args: Any, **kwargs: Any) -> NoReturn:
         raise FSError("Not implemented : WorkspaceStorage is timestamped")
 
     # Manifest interface

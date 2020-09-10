@@ -1,8 +1,8 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
 
 from pathlib import Path
-from typing import Dict, Set, Tuple
 from async_generator import asynccontextmanager
+from typing import Dict, Set, Tuple, AsyncIterator, cast
 
 from parsec.core.fs.exceptions import FSLocalMissError
 from parsec.core.types import EntryID, LocalDevice, LocalUserManifest
@@ -18,7 +18,13 @@ class UserStorage:
     Provides a synchronous interface to the user manifest as it is used very often.
     """
 
-    def __init__(self, device, path, user_manifest_id, manifest_storage):
+    def __init__(
+        self,
+        device: LocalDevice,
+        path: Path,
+        user_manifest_id: EntryID,
+        manifest_storage: ManifestStorage,
+    ):
         self.path = path
         self.device = device
         self.user_manifest_id = user_manifest_id
@@ -26,7 +32,7 @@ class UserStorage:
 
     @classmethod
     @asynccontextmanager
-    async def run(cls, device: LocalDevice, path: Path):
+    async def run(cls, device: LocalDevice, path: Path) -> AsyncIterator["UserStorage"]:
 
         # Local database service
         async with LocalDatabase.run(path / USER_STORAGE_NAME) as localdb:
@@ -64,11 +70,11 @@ class UserStorage:
 
     # User manifest
 
-    def get_user_manifest(self):
+    def get_user_manifest(self) -> LocalUserManifest:
         """
         Raises nothing, user manifest is guaranteed to be always available
         """
-        return self.manifest_storage._cache[self.user_manifest_id]
+        return cast(LocalUserManifest, self.manifest_storage._cache[self.user_manifest_id])
 
     async def _load_user_manifest(self) -> None:
         try:
@@ -84,7 +90,7 @@ class UserStorage:
             )
             await self.manifest_storage.set_manifest(self.user_manifest_id, manifest)
 
-    async def set_user_manifest(self, user_manifest: LocalUserManifest):
+    async def set_user_manifest(self, user_manifest: LocalUserManifest) -> None:
         assert self.user_manifest_id == user_manifest.id
         await self.manifest_storage.set_manifest(self.user_manifest_id, user_manifest)
 
