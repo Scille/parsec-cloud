@@ -5,7 +5,7 @@ from pendulum import now as pendulum_now
 
 from parsec.crypto import SigningKey
 from parsec.api.data import UserCertificateContent, DeviceCertificateContent, UserProfile
-from parsec.api.protocol import HumanHandle, DeviceID
+from parsec.api.protocol import HumanHandle
 from parsec.core.types import LocalDevice, BackendOrganizationAddr
 from parsec.core.local_device import generate_new_device
 from parsec.core.backend_connection import APIV1_BackendAnonymousCmds
@@ -43,7 +43,6 @@ async def bootstrap_organization(
     )
 
     device = generate_new_device(
-        device_id=DeviceID.new(),
         organization_addr=organization_addr,
         profile=UserProfile.ADMIN,
         human_handle=human_handle,
