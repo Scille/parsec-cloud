@@ -275,6 +275,11 @@ class WorkspacesWidget(QWidget, Ui_WorkspacesWidget):
         except ValueError:
             pass
 
+    def has_workspaces_displayed(self):
+        return self.layout_workspaces.count() >= 1 and isinstance(
+            self.layout_workspaces.itemAt(0).widget(), WorkspaceButton
+        )
+
     def goto_file_clicked(self):
         file_link = get_text_input(
             self,
@@ -332,6 +337,7 @@ class WorkspacesWidget(QWidget, Ui_WorkspacesWidget):
             show_error(self, _("TEXT_WORKSPACE_RENAME_UNKNOWN_ERROR"), exception=job.exc)
 
     def on_list_success(self, job):
+        self.spinner.hide()
         self.layout_workspaces.clear()
         workspaces = job.ret
 
@@ -354,6 +360,7 @@ class WorkspacesWidget(QWidget, Ui_WorkspacesWidget):
                 pass
 
     def on_list_error(self, job):
+        self.spinner.hide()
         self.layout_workspaces.clear()
         label = QLabel(_("TEXT_WORKSPACE_NO_WORKSPACES"))
         label.setAlignment(Qt.AlignHCenter | Qt.AlignVCenter)
@@ -694,6 +701,8 @@ class WorkspacesWidget(QWidget, Ui_WorkspacesWidget):
             self.reset()
 
     def list_workspaces(self):
+        if not self.has_workspaces_displayed():
+            self.spinner.show()
         self.jobs_ctx.submit_job(
             ThreadSafeQtSignal(self, "list_success", QtToTrioJob),
             ThreadSafeQtSignal(self, "list_error", QtToTrioJob),
