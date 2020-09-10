@@ -1,0 +1,1 @@
+Fixed error message when the choosen org name already exists

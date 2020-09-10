@@ -7,8 +7,10 @@ from PyQt5 import QtCore
 from tests.fixtures import local_device_to_backend_user
 from tests.common import customize_fixtures
 
-from parsec.api.protocol import OrganizationID
+from parsec.api.protocol import OrganizationID, HumanHandle
+from parsec.core.backend_connection import apiv1_backend_anonymous_cmds_factory
 from parsec.core.types import BackendOrganizationBootstrapAddr
+from parsec.core.invite import bootstrap_organization
 
 from parsec.core.gui.lang import translate
 
@@ -120,6 +122,37 @@ async def test_create_organization_offline(
             assert autoclose_dialog.dialogs == [("Error", "Cannot connect to the server.")]
 
         await aqtbot.wait_until(_modal_shown)
+
+
+@pytest.mark.gui
+@pytest.mark.trio
+@customize_fixtures(backend_spontaneous_organization_boostrap=True)
+async def test_create_organization_same_name(
+    gui,
+    aqtbot,
+    running_backend,
+    catch_create_org_widget,
+    autoclose_dialog,
+    organization_bootstrap_addr,
+):
+    # Create an org
+    human_handle = HumanHandle(email="zack@example.com", label="Zack")
+
+    async with apiv1_backend_anonymous_cmds_factory(addr=organization_bootstrap_addr) as cmds:
+        await bootstrap_organization(cmds, human_handle=human_handle, device_label="PC1")
+
+    # Now create an org with the same name
+    await aqtbot.key_click(gui, "n", QtCore.Qt.ControlModifier, 200)
+
+    co_w = await catch_create_org_widget()
+    assert co_w
+
+    await _do_creation_process(aqtbot, co_w)
+
+    def _modal_shown():
+        assert autoclose_dialog.dialogs == [("Error", "This organization name is already used.")]
+
+    await aqtbot.wait_until(_modal_shown)
 
 
 @pytest.mark.gui
