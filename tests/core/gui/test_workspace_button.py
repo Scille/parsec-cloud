@@ -5,6 +5,7 @@ import pytest
 from PyQt5 import QtCore
 
 from parsec.core.types import WorkspaceRole, UserInfo
+from parsec.core.fs.workspacefs import ReencryptionNeed
 from parsec.core.gui.workspace_button import WorkspaceButton
 from parsec.core.gui.lang import switch_language
 
@@ -207,6 +208,40 @@ async def test_workspace_button_rename_clicked(qtbot, workspace_fs, core_config,
     with qtbot.waitSignal(w.rename_clicked, timeout=500) as blocker:
         qtbot.mouseClick(w.button_rename, QtCore.Qt.LeftButton)
     assert blocker.args == [w]
+
+
+@pytest.mark.gui
+@pytest.mark.trio
+async def test_workspace_button_reencrypt_clicked(
+    qtbot, workspace_fs, core_config, alice_user_info
+):
+    switch_language(core_config, "en")
+
+    roles = {workspace_fs.device.user_id: (WorkspaceRole.OWNER, alice_user_info)}
+    w = WorkspaceButton(
+        workspace_name="Workspace",
+        workspace_fs=workspace_fs,
+        users_roles=roles,
+        is_mounted=True,
+        files=[],
+    )
+    w.reencryption_needs = ReencryptionNeed(
+        user_revoked=True, role_revoked=False, reencryption_already_in_progress=False
+    )
+
+    qtbot.addWidget(w)
+
+    assert not w.button_reencrypt.isHidden()
+
+    w.reencrypting = (8, 4)
+    assert w.widget_actions.isHidden()
+    assert not w.widget_reencryption.isHidden()
+    assert w.progress_reencryption.value() == 50
+    assert w.progress_reencryption.text() == "Reencrypting... 50%"
+
+    w.reencrypting = None
+    assert not w.widget_actions.isHidden()
+    assert w.widget_reencryption.isHidden()
 
 
 @pytest.mark.gui
