@@ -96,12 +96,27 @@ async def test_share_workspace(
     user_w = share_w_w.scroll_content.layout().itemAt(1).widget()
     assert user_w.combo_role.currentIndex() == 0
     user_name = user_w.user_info.short_user_display
+    user_w.status_timer.setInterval(200)
 
     def _set_manager():
         user_w.combo_role.setCurrentIndex(3)
 
     async with aqtbot.wait_signal(share_w_w.share_success):
         await qt_thread_gateway.send_action(_set_manager)
+
+    async with aqtbot.wait_signal(user_w.status_timer.timeout):
+
+        def _timer_started():
+            assert not user_w.label_status.pixmap().isNull()
+            assert user_w.status_timer.isActive()
+
+        await aqtbot.wait_until(_timer_started)
+
+    def _timer_stopped():
+        assert user_w.label_status.pixmap().isNull()
+        assert not user_w.status_timer.isActive()
+
+    await aqtbot.wait_until(_timer_stopped)
 
     login_w = await logged_gui.test_logout_and_switch_to_login_widget()
 
