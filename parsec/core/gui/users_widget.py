@@ -6,6 +6,7 @@ from uuid import UUID
 from PyQt5.QtCore import Qt, pyqtSignal
 from PyQt5.QtWidgets import QWidget, QMenu, QGraphicsDropShadowEffect, QLabel
 from PyQt5.QtGui import QColor
+from math import ceil
 
 from parsec.api.protocol import InvitationType
 from parsec.api.data import UserProfile
@@ -221,7 +222,6 @@ class UsersWidget(QWidget, Ui_UsersWidget):
             self.button_add_user.hide()
         self.button_previous_page.clicked.connect(self.show_previous_page)
         self.button_next_page.clicked.connect(self.show_next_page)
-        self.button_previous_page.clicked.connect(self.show_previous_page)
         self.button_users_filter.clicked.connect(self.on_filter)
         self.line_edit_search.textChanged.connect(lambda: self.on_filter(text_changed=True))
         self.line_edit_search.editingFinished.connect(lambda: self.on_filter(editing_finished=True))
@@ -389,11 +389,24 @@ class UsersWidget(QWidget, Ui_UsersWidget):
                 w.hide()
                 w.setParent(None)
 
-    def pagination(self, total: int):
+    def pagination(self, total: int, users_on_page: int):
         """Show/activate or hide/deactivate previous and next page button"""
         if total > USERS_PER_PAGE:
             self.button_previous_page.show()
             self.button_next_page.show()
+            self.label_page_number.setText(
+                _("TEXT_PAGE_NUMBER_page-total").format(
+                    page=self._page, total=ceil(total / USERS_PER_PAGE)
+                )
+            )
+            # Set plage of users displayed
+            user_from = (self._page - 1) * USERS_PER_PAGE + 1
+            user_to = user_from - 1 + users_on_page
+            self.label_user_on_page.setText(
+                _("TEXT_USERS_ON_PAGE_userfrom_userto-total").format(
+                    userfrom=user_from, userto=user_to, total=total
+                )
+            )
             if self._page * USERS_PER_PAGE >= total:
                 self.button_next_page.setEnabled(False)
             else:
@@ -411,7 +424,6 @@ class UsersWidget(QWidget, Ui_UsersWidget):
         assert job.status == "ok"
 
         total, users, invitations = job.ret
-
         # Securing if page go to far
         if total == 0 and self._page > 1:
             self._page -= 1
@@ -430,7 +442,7 @@ class UsersWidget(QWidget, Ui_UsersWidget):
         for user_info in users:
             self.add_user(user_info=user_info, is_current_user=current_user == user_info.user_id)
         self.spinner.hide()
-        self.pagination(total=total)
+        self.pagination(total=total, users_on_page=len(users))
         self.button_users_filter.setEnabled(True)
         self.line_edit_search.setEnabled(True)
 

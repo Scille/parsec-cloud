@@ -2320,6 +2320,12 @@ msgstr "Search users"
 msgid "ACTION_FILTER_LIST_DEVICES"
 msgstr "Search devices"
 
+msgid "TEXT_USERS_ON_PAGE_userfrom_userto-total"
+msgstr "User {userfrom} to {userto} displayed, {total} in total."
+
+msgid "TEXT_PAGE_NUMBER_page-total"
+msgstr "Page {page} / {total}"
+
 msgid "TEXT_WORKSPACE_IS_SHARED_TOOLTIP"
 msgstr "This workspace is shared."
 

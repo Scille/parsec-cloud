@@ -2380,6 +2380,12 @@ msgstr "Rechercher utilisateurs"
 msgid "ACTION_FILTER_LIST_DEVICES"
 msgstr "Rechercher appareils"
 
+msgid "TEXT_USERS_ON_PAGE_userfrom_userto-total"
+msgstr "Utilisateur {userfrom} à {userto} affichés, {total} en tout."
+
+msgid "TEXT_PAGE_NUMBER_page-total"
+msgstr "Page {page} / {total}"
+
 msgid "TEXT_WORKSPACE_IS_SHARED_TOOLTIP"
 msgstr "L'espace de travail est partagé."
 

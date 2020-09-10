@@ -15,8 +15,6 @@ from parsec.core.gui.flow_layout import FlowLayout
 from parsec.core.gui.ui.devices_widget import Ui_DevicesWidget
 from parsec.core.gui.ui.device_button import Ui_DeviceButton
 
-DEVICES_PER_PAGE = 100
-
 
 class DeviceButton(QWidget, Ui_DeviceButton):
     change_password_clicked = pyqtSignal()
@@ -27,7 +25,6 @@ class DeviceButton(QWidget, Ui_DeviceButton):
         self.is_current_device = is_current_device
         self.device_info = device_info
         self.label_icon.apply_style()
-
         self.label_device_name.setText(
             ensure_string_size(self.device_info.device_display, 260, self.label_device_name.font())
         )
@@ -66,16 +63,9 @@ async def _do_invite_device(core):
         raise JobResultError("error") from exc
 
 
-async def _do_list_devices(core, page, pattern=None):
+async def _do_list_devices(core):
     try:
-        if pattern is None:
-            return await core.get_user_devices_info(per_page=DEVICES_PER_PAGE, page=page)
-        else:
-            # Filtering here device matching the pattern
-            devices, total = await core.get_user_devices_info(per_page=DEVICES_PER_PAGE, page=page)
-            devices[:] = [device for device in devices if device.device_display.find(pattern) != -1]
-            total = len(devices)
-            return devices, total
+        return await core.get_user_devices_info()
     except BackendNotAvailable as exc:
         raise JobResultError("offline") from exc
     except BackendConnectionError as exc:
@@ -100,48 +90,14 @@ class DevicesWidget(QWidget, Ui_DevicesWidget):
         self.layout_content.addLayout(self.layout_devices)
         self.button_add_device.clicked.connect(self.invite_device)
         self.button_add_device.apply_style()
-        self.button_previous_page.clicked.connect(self.show_previous_page)
-        self.button_next_page.clicked.connect(self.show_next_page)
         self.list_success.connect(self._on_list_success)
         self.list_error.connect(self._on_list_error)
         self.invite_success.connect(self._on_invite_success)
         self.invite_error.connect(self._on_invite_error)
-        self.button_devices_filter.clicked.connect(self.on_filter)
-        self.line_edit_search.editingFinished.connect(lambda: self.on_filter(editing_finished=True))
-        self.line_edit_search.textChanged.connect(lambda: self.on_filter(text_changed=True))
 
     def show(self):
-        self._page = 1
         self.reset()
         super().show()
-
-    def show_next_page(self):
-        self._page += 1
-        self.reset()
-
-    def show_previous_page(self):
-        if self._page > 1:
-            self._page -= 1
-        self.reset()
-
-    def on_filter(self, editing_finished=False, text_changed=False):
-        self._page = 1
-        pattern = self.line_edit_search.text()
-        if text_changed and len(pattern) <= 0:
-            return self.reset()
-        elif text_changed:
-            return
-        self.line_edit_search.setEnabled(False)
-        self.button_devices_filter.setEnabled(False)
-        self.spinner.show()
-        self.jobs_ctx.submit_job(
-            ThreadSafeQtSignal(self, "list_success", QtToTrioJob),
-            ThreadSafeQtSignal(self, "list_error", QtToTrioJob),
-            _do_list_devices,
-            core=self.core,
-            page=self._page,
-            pattern=pattern,
-        )
 
     def change_password(self):
         PasswordChangeWidget.show_modal(core=self.core, parent=self, on_finished=None)
@@ -184,40 +140,16 @@ class DevicesWidget(QWidget, Ui_DevicesWidget):
         button.change_password_clicked.connect(self.change_password)
         button.show()
 
-    def pagination(self, total: int):
-        """Show/activate or hide/deactivate previous and next page button"""
-        if total > DEVICES_PER_PAGE:
-            self.button_previous_page.show()
-            self.button_next_page.show()
-            if self._page * DEVICES_PER_PAGE >= total:
-                self.button_next_page.setEnabled(False)
-            else:
-                self.button_next_page.setEnabled(True)
-            if self._page <= 1:
-                self.button_previous_page.setEnabled(False)
-            else:
-                self.button_previous_page.setEnabled(True)
-        else:
-            self.button_previous_page.hide()
-            self.button_next_page.hide()
-
     def _on_list_success(self, job):
         assert job.is_finished()
         assert job.status == "ok"
 
         devices, total = job.ret
-        # Securing if page go to far
-        if total == 0 and self._page > 1:
-            self._page -= 1
-            self.reset()
         current_device = self.core.device
         self.layout_devices.clear()
         for device in devices:
             self.add_device(device, is_current_device=current_device.device_id == device.device_id)
         self.spinner.hide()
-        self.pagination(total=total)
-        self.button_devices_filter.setEnabled(True)
-        self.line_edit_search.setEnabled(True)
 
     def _on_list_error(self, job):
         assert job.is_finished()
@@ -233,15 +165,10 @@ class DevicesWidget(QWidget, Ui_DevicesWidget):
 
     def reset(self):
         self.layout_devices.clear()
-        self.button_previous_page.hide()
-        self.button_next_page.hide()
-        self.button_devices_filter.setEnabled(False)
-        self.line_edit_search.setEnabled(False)
         self.spinner.show()
         self.jobs_ctx.submit_job(
             ThreadSafeQtSignal(self, "list_success", QtToTrioJob),
             ThreadSafeQtSignal(self, "list_error", QtToTrioJob),
             _do_list_devices,
             core=self.core,
-            page=self._page,
         )
