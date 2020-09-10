@@ -407,7 +407,7 @@ def testing_main_window_cls(aqtbot, qt_thread_gateway):
         def test_get_core(self):
             return self.test_get_central_widget().core
 
-        async def test_logout_and_switch_to_login_widget(self):
+        async def test_logout(self):
             central_widget = self.test_get_central_widget()
 
             def _trigger_logout_menu():
@@ -425,6 +425,9 @@ def testing_main_window_cls(aqtbot, qt_thread_gateway):
                 assert l_w.isVisible()
 
             await aqtbot.wait_until(_wait_logged_out)
+
+        async def test_logout_and_switch_to_login_widget(self):
+            await self.test_logout()
             return self.test_get_login_widget()
 
         async def test_proceed_to_login(self, password, error=False):

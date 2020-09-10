@@ -47,7 +47,6 @@ from parsec.core.types import (
 
 # TODO: handle exceptions status...
 from parsec.core.backend_connection import (
-    APIV1_BackendAuthenticatedCmds,
     BackendAuthenticatedCmds,
     BackendConnectionError,
     BackendNotAvailable,
@@ -77,7 +76,7 @@ AnyEntryName = Union[EntryName, str]
 class ReencryptionJob:
     def __init__(
         self,
-        backend_cmds: Union[APIV1_BackendAuthenticatedCmds, BackendAuthenticatedCmds],
+        backend_cmds: BackendAuthenticatedCmds,
         new_workspace_entry: WorkspaceEntry,
         old_workspace_entry: WorkspaceEntry,
     ) -> None:
@@ -86,7 +85,7 @@ class ReencryptionJob:
         self.old_workspace_entry = old_workspace_entry
         assert new_workspace_entry.id == old_workspace_entry.id
 
-    async def do_one_batch(self, size: int = 100) -> Tuple[int, int]:
+    async def do_one_batch(self, size: int = 1000) -> Tuple[int, int]:
         """
         Raises:
             FSError
@@ -170,7 +169,7 @@ class UserFS:
         self,
         device: LocalDevice,
         path: Path,
-        backend_cmds: Union[APIV1_BackendAuthenticatedCmds, BackendAuthenticatedCmds],
+        backend_cmds: BackendAuthenticatedCmds,
         remote_devices_manager: RemoteDevicesManager,
         event_bus: EventBus,
         prevent_sync_pattern: Pattern,

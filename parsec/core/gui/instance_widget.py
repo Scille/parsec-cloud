@@ -149,8 +149,6 @@ class InstanceWidget(QWidget):
                 logger.exception("Unhandled error", exc_info=self.running_core_job.exc)
                 show_error(self, _("TEXT_LOGIN_UNKNOWN_ERROR"), exception=self.running_core_job.exc)
         self.running_core_job = None
-        self.core_jobs_ctx = None
-        self.core = None
         self.logged_out.emit()
 
     def on_core_run_done(self):
@@ -163,8 +161,6 @@ class InstanceWidget(QWidget):
                 CoreEvent.GUI_CONFIG_CHANGED, self.on_core_config_updated
             )
         self.running_core_job = None
-        self.core_jobs_ctx = None
-        self.core = None
         self.logged_out.emit()
 
     def stop_core(self):
@@ -172,7 +168,7 @@ class InstanceWidget(QWidget):
             self.running_core_job.cancel_and_join()
 
     def on_logged_out(self):
-        self.state_changed.emit(self, "login")
+        self.state_changed.emit(self, "logout")
         self.show_login_widget()
 
     def on_logged_in(self):

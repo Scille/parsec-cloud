@@ -621,7 +621,7 @@ class WorkspacesWidget(QWidget, Ui_WorkspacesWidget):
                     job = await self.core.user_fs.workspace_start_reencryption(workspace_id)
             while True:
                 with _handle_fs_errors():
-                    total, done = await job.do_one_batch(size=1)
+                    total, done = await job.do_one_batch()
                 on_progress.emit(workspace_id, total, done)
                 if total == done:
                     break

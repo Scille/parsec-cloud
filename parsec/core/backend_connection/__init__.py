@@ -16,11 +16,6 @@ from parsec.core.backend_connection.authenticated import (
     backend_authenticated_cmds_factory,
 )
 from parsec.core.backend_connection.invited import BackendInvitedCmds, backend_invited_cmds_factory
-from parsec.core.backend_connection.apiv1_authenticated import (
-    APIV1_BackendAuthenticatedCmds,
-    APIV1_BackendAuthenticatedConn,
-    apiv1_backend_authenticated_cmds_factory,
-)
 from parsec.core.backend_connection.apiv1_annonymous import (
     APIV1_BackendAnonymousCmds,
     apiv1_backend_anonymous_cmds_factory,
@@ -48,10 +43,6 @@ __all__ = (
     # Invited
     "BackendInvitedCmds",
     "backend_invited_cmds_factory",
-    # APIv1 Authenticated
-    "APIV1_BackendAuthenticatedCmds",
-    "APIV1_BackendAuthenticatedConn",
-    "apiv1_backend_authenticated_cmds_factory",
     # APIv1 Annonymous
     "APIV1_BackendAnonymousCmds",
     "apiv1_backend_anonymous_cmds_factory",
