@@ -296,7 +296,10 @@ class CreateOrgWidget(QWidget, Ui_CreateOrgWidget):
         elif status == "offline":
             errmsg = _("TEXT_ORG_WIZARD_OFFLINE")
         elif status == "invite-already-used":
-            errmsg = _("TEXT_ORG_WIZARD_INVITE_ALREADY_USED")
+            if self.start_addr:
+                errmsg = _("TEXT_ORG_WIZARD_INVITE_ALREADY_USED")
+            else:
+                errmsg = _("TEXT_ORG_WIZARD_ORGANIZATION_ALREADY_EXISTS")
         elif status == "connection-refused":
             errmsg = _("TEXT_ORG_WIZARD_CONNECTION_REFUSED")
         elif status == "connection-error":
