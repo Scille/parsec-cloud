@@ -33,7 +33,13 @@ from parsec.core.gui.claim_device_widget import ClaimDeviceWidget
 from parsec.core.gui.license_widget import LicenseWidget
 from parsec.core.gui.about_widget import AboutWidget
 from parsec.core.gui.settings_widget import SettingsWidget
-from parsec.core.gui.custom_dialogs import ask_question, show_error, GreyedDialog, get_text_input
+from parsec.core.gui.custom_dialogs import (
+    ask_question,
+    show_error,
+    show_info,
+    GreyedDialog,
+    get_text_input,
+)
 from parsec.core.gui.custom_widgets import Button
 from parsec.core.gui.create_org_widget import CreateOrgWidget
 from parsec.core.gui.ui.main_window import Ui_MainWindow
@@ -557,7 +563,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
                     ),
                 )
                 return
-        show_error(
+        show_info(
             self,
             _("TEXT_FILE_LINK_PLEASE_LOG_IN_organization").format(
                 organization=action_addr.organization_id
