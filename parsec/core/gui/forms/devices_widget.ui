@@ -26,7 +26,7 @@
   </property>
   <layout class="QVBoxLayout" name="verticalLayout">
    <property name="spacing">
-    <number>30</number>
+    <number>0</number>
    </property>
    <property name="leftMargin">
     <number>0</number>
@@ -107,10 +107,25 @@
         <x>0</x>
         <y>0</y>
         <width>844</width>
-        <height>732</height>
+        <height>792</height>
        </rect>
       </property>
       <layout class="QVBoxLayout" name="verticalLayout_3">
+       <property name="spacing">
+        <number>0</number>
+       </property>
+       <property name="leftMargin">
+        <number>0</number>
+       </property>
+       <property name="topMargin">
+        <number>20</number>
+       </property>
+       <property name="rightMargin">
+        <number>0</number>
+       </property>
+       <property name="bottomMargin">
+        <number>0</number>
+       </property>
        <item>
         <layout class="QVBoxLayout" name="layout_content"/>
        </item>
@@ -184,15 +199,15 @@
  </widget>
  <customwidgets>
   <customwidget>
+   <class>Button</class>
+   <extends>QPushButton</extends>
+   <header>parsec.core.gui.custom_widgets</header>
+  </customwidget>
+  <customwidget>
    <class>SpinnerWidget</class>
    <extends>QWidget</extends>
    <header>parsec.core.gui.custom_widgets</header>
    <container>1</container>
-  </customwidget>
-  <customwidget>
-   <class>Button</class>
-   <extends>QPushButton</extends>
-   <header>parsec.core.gui.custom_widgets</header>
   </customwidget>
  </customwidgets>
  <resources>

@@ -14,7 +14,7 @@
    <string>Form</string>
   </property>
   <property name="styleSheet">
-   <string notr="true">#button_add_user {
+   <string notr="true">#button_add_user, #button_next_page, #button_previous_page {
 	background-color: none;
 	border: none;
 	color: #0092FF;
@@ -22,11 +22,24 @@
 
 #button_add_user:hover {
 	color: #0070DD;
+}
+
+#button_next_page:hover, #button_previous_page:hover {
+	color: #0070DD;
+	text-decoration: underline;
+}
+
+#button_next_page:disabled, #button_previous_page:disabled {
+	color: #999999;
+}
+
+#label_page_number, #label_user_on_page {
+	color: #333333;
 }</string>
   </property>
   <layout class="QVBoxLayout" name="verticalLayout">
    <property name="spacing">
-    <number>30</number>
+    <number>0</number>
    </property>
    <property name="leftMargin">
     <number>0</number>
@@ -43,7 +56,7 @@
    <item>
     <layout class="QHBoxLayout" name="horizontalLayout">
      <property name="spacing">
-      <number>0</number>
+      <number>15</number>
      </property>
      <property name="rightMargin">
       <number>0</number>
@@ -144,7 +157,7 @@
         <x>0</x>
         <y>0</y>
         <width>760</width>
-        <height>543</height>
+        <height>653</height>
        </rect>
       </property>
       <layout class="QVBoxLayout" name="verticalLayout_2">
@@ -155,7 +168,7 @@
         <number>0</number>
        </property>
        <property name="topMargin">
-        <number>0</number>
+        <number>20</number>
        </property>
        <property name="rightMargin">
         <number>0</number>
@@ -231,28 +244,28 @@
    </item>
    <item>
     <layout class="QHBoxLayout" name="PaginationHorizontalLayout">
+     <property name="spacing">
+      <number>15</number>
+     </property>
      <item>
-      <widget class="QPushButton" name="button_previous_page">
+      <spacer name="horizontalSpacer_4">
+       <property name="orientation">
+        <enum>Qt::Horizontal</enum>
+       </property>
+       <property name="sizeHint" stdset="0">
+        <size>
+         <width>40</width>
+         <height>20</height>
+        </size>
+       </property>
+      </spacer>
+     </item>
+     <item>
+      <widget class="Button" name="button_previous_page">
        <property name="text">
         <string>ACTION_LIST_PREVIOUS_PAGE</string>
        </property>
       </widget>
-     </item>
-     <item>
-      <spacer name="verticalSpacer_4">
-       <property name="orientation">
-        <enum>Qt::Vertical</enum>
-       </property>
-       <property name="sizeType">
-        <enum>QSizePolicy::Minimum</enum>
-       </property>
-       <property name="sizeHint" stdset="0">
-        <size>
-         <width>20</width>
-         <height>40</height>
-        </size>
-       </property>
-      </spacer>
      </item>
      <item>
       <widget class="QLabel" name="label_user_on_page">
@@ -262,22 +275,6 @@
       </widget>
      </item>
      <item>
-      <spacer name="verticalSpacer_5">
-       <property name="orientation">
-        <enum>Qt::Vertical</enum>
-       </property>
-       <property name="sizeType">
-        <enum>QSizePolicy::Minimum</enum>
-       </property>
-       <property name="sizeHint" stdset="0">
-        <size>
-         <width>20</width>
-         <height>40</height>
-        </size>
-       </property>
-      </spacer>
-     </item>
-     <item>
       <widget class="QLabel" name="label_page_number">
        <property name="text">
         <string/>
@@ -285,27 +282,24 @@
       </widget>
      </item>
      <item>
-      <spacer name="verticalSpacer_3">
-       <property name="orientation">
-        <enum>Qt::Vertical</enum>
-       </property>
-       <property name="sizeType">
-        <enum>QSizePolicy::Minimum</enum>
-       </property>
-       <property name="sizeHint" stdset="0">
-        <size>
-         <width>20</width>
-         <height>40</height>
-        </size>
-       </property>
-      </spacer>
-     </item>
-     <item>
-      <widget class="QPushButton" name="button_next_page">
+      <widget class="Button" name="button_next_page">
        <property name="text">
         <string>ACTION_LIST_NEXT_PAGE</string>
        </property>
       </widget>
+     </item>
+     <item>
+      <spacer name="horizontalSpacer_5">
+       <property name="orientation">
+        <enum>Qt::Horizontal</enum>
+       </property>
+       <property name="sizeHint" stdset="0">
+        <size>
+         <width>40</width>
+         <height>20</height>
+        </size>
+       </property>
+      </spacer>
      </item>
     </layout>
    </item>
