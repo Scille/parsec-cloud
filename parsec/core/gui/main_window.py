@@ -40,7 +40,7 @@ from parsec.core.gui.custom_dialogs import (
     GreyedDialog,
     get_text_input,
 )
-from parsec.core.gui.custom_widgets import Button
+from parsec.core.gui.custom_widgets import Button, ensure_string_size
 from parsec.core.gui.create_org_widget import CreateOrgWidget
 from parsec.core.gui.ui.main_window import Ui_MainWindow
 
@@ -469,7 +469,9 @@ class MainWindow(QMainWindow, Ui_MainWindow):
                 f"{device.organization_id} - {device.short_user_display} - {device.device_display}"
             )
             self.tab_center.setTabToolTip(idx, tab_name)
-            self.tab_center.setTabText(idx, tab_name)
+            self.tab_center.setTabText(
+                idx, ensure_string_size(tab_name, 150, self.tab_center.tabBar().font())
+            )
         if self.tab_center.count() == 1:
             self.tab_center.setTabsClosable(False)
         self._toggle_add_tab_button()
