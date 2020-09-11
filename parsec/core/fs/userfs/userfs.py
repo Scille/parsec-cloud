@@ -2,6 +2,7 @@
 
 import trio
 from pathlib import Path
+from trio_typing import TaskStatus
 from pendulum import Pendulum, now as pendulum_now
 from typing import (
     Tuple,
@@ -264,7 +265,7 @@ class UserFS:
         path = self.path / str(workspace_id)
 
         async def workspace_storage_task(
-            task_status: trio.TaskStatus = trio.TASK_STATUS_IGNORED
+            task_status: TaskStatus = trio.TASK_STATUS_IGNORED
         ) -> None:
             async with WorkspaceStorage.run(self.device, path, workspace_id) as workspace_storage:
                 task_status.started(workspace_storage)
