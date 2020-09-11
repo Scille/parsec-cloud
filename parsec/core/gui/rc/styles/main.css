@@ -103,6 +103,10 @@ QComboBox QListView::item:selected {
 
 /* CheckBox: ENABLED, DISABLED */
 
+QCheckBox {
+    color: #333333;
+}
+
 QCheckBox::indicator {
     width: 20px;
     height: 20px;
@@ -475,4 +479,11 @@ QProgressBar {
 QProgressBar::chunk {
     background-color: #0092FF;
     width: 20px;
+}
+
+/* QTextEdit, QTextBrowser */
+
+QTextEdit {
+    color: #333333;
+    background-color: #FFFFFF;
 }

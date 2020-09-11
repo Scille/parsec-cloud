@@ -30,6 +30,9 @@
 	color: #0070DD;
 }
 
+#scrollAreaWidgetContents {
+	background-color: #EEEEEE;
+
 #filter_widget {
 	border-radius: 5px;
 	background-color: #CCCCCC;
