@@ -54,7 +54,7 @@ from parsec.core.backend_connection import (
 from parsec.core.remote_devices_manager import RemoteDevicesManager
 
 from parsec.core.fs.workspacefs import WorkspaceFS
-from parsec.core.fs.remote_loader import RemoteLoader
+from parsec.core.fs.remote_loader import UserRemoteLoader
 from parsec.core.fs.storage import UserStorage, WorkspaceStorage
 from parsec.core.fs.userfs.merging import merge_local_user_manifests, merge_workspace_entry
 from parsec.core.fs.exceptions import (
@@ -200,14 +200,12 @@ class UserFS:
             role_cached_on=now,
             role=WorkspaceRole.OWNER,
         )
-        self.remote_loader = RemoteLoader(
+        self.remote_loader = UserRemoteLoader(
             self.device,
             self.device.user_manifest_id,
             lambda: wentry,
             self.backend_cmds,
             self.remote_devices_manager,
-            # Hack, but fine as long as we only call `load_realm_current_roles`
-            None,
         )
 
     @classmethod
@@ -265,7 +263,9 @@ class UserFS:
     async def _instantiate_workspace_storage(self, workspace_id: EntryID) -> WorkspaceStorage:
         path = self.path / str(workspace_id)
 
-        async def workspace_storage_task(task_status=trio.TASK_STATUS_IGNORED):
+        async def workspace_storage_task(
+            task_status: trio.TaskStatus = trio.TASK_STATUS_IGNORED
+        ) -> None:
             async with WorkspaceStorage.run(self.device, path, workspace_id) as workspace_storage:
                 task_status.started(workspace_storage)
                 await trio.sleep_forever()

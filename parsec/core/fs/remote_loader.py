@@ -70,7 +70,7 @@ def translate_remote_devices_manager_errors() -> Iterator[None]:
         raise FSRemoteOperationError(str(exc))
 
 
-class RemoteLoader:
+class UserRemoteLoader:
     def __init__(
         self,
         device: LocalDevice,
@@ -78,14 +78,12 @@ class RemoteLoader:
         get_workspace_entry: Callable,
         backend_cmds: BackendAuthenticatedCmds,
         remote_devices_manager: RemoteDevicesManager,
-        local_storage: BaseWorkspaceStorage,
     ):
         self.device = device
         self.workspace_id = workspace_id
         self.get_workspace_entry = get_workspace_entry
         self.backend_cmds = backend_cmds
         self.remote_devices_manager = remote_devices_manager
-        self.local_storage = local_storage
         self._realm_role_certificates_cache: Optional[List[RealmRoleCertificateContent]] = None
         self._realm_role_certificates_cache_timestamp: Optional[Pendulum] = None
 
@@ -246,6 +244,64 @@ class RemoteLoader:
         """
         with translate_remote_devices_manager_errors():
             return await self.remote_devices_manager.get_device(device_id, no_cache=no_cache)
+
+    async def list_versions(self, entry_id: EntryID) -> Dict[int, Tuple[Pendulum, DeviceID]]:
+        """
+        Raises:
+            FSError
+            FSBackendOfflineError
+            FSWorkspaceInMaintenance
+            FSRemoteManifestNotFound
+        """
+        rep = await self._backend_cmds("vlob_list_versions", entry_id)
+        if rep["status"] == "not_allowed":
+            # Seems we lost the access to the realm
+            raise FSWorkspaceNoReadAccess("Cannot load manifest: no read access")
+        elif rep["status"] == "not_found":
+            raise FSRemoteManifestNotFound(entry_id)
+        elif rep["status"] == "in_maintenance":
+            raise FSWorkspaceInMaintenance(
+                "Cannot download vlob while the workspace is in maintenance"
+            )
+        elif rep["status"] != "ok":
+            raise FSError(f"Cannot fetch vlob {entry_id}: `{rep['status']}`")
+
+        return rep["versions"]
+
+    async def create_realm(self, realm_id: EntryID) -> None:
+        """
+        Raises:
+            FSError
+            FSBackendOfflineError
+        """
+        certif = RealmRoleCertificateContent.build_realm_root_certif(
+            author=self.device.device_id, timestamp=pendulum_now(), realm_id=realm_id
+        ).dump_and_sign(self.device.signing_key)
+
+        rep = await self._backend_cmds("realm_create", certif)
+        if rep["status"] == "already_exists":
+            # It's possible a previous attempt to create this realm
+            # succeeded but we didn't receive the confirmation, hence
+            # we play idempotent here.
+            return
+        elif rep["status"] != "ok":
+            raise FSError(f"Cannot create realm {realm_id}: `{rep['status']}`")
+
+
+class RemoteLoader(UserRemoteLoader):
+    def __init__(
+        self,
+        device: LocalDevice,
+        workspace_id: EntryID,
+        get_workspace_entry: Callable,
+        backend_cmds: BackendAuthenticatedCmds,
+        remote_devices_manager: RemoteDevicesManager,
+        local_storage: BaseWorkspaceStorage,
+    ):
+        super().__init__(
+            device, workspace_id, get_workspace_entry, backend_cmds, remote_devices_manager
+        )
+        self.local_storage = local_storage
 
     async def load_blocks(self, accesses: List[BlockAccess]) -> None:
         """
@@ -433,48 +489,6 @@ class RemoteLoader:
             )
 
         return remote_manifest
-
-    async def list_versions(self, entry_id: EntryID) -> Dict[int, Tuple[Pendulum, DeviceID]]:
-        """
-        Raises:
-            FSError
-            FSBackendOfflineError
-            FSWorkspaceInMaintenance
-            FSRemoteManifestNotFound
-        """
-        rep = await self._backend_cmds("vlob_list_versions", entry_id)
-        if rep["status"] == "not_allowed":
-            # Seems we lost the access to the realm
-            raise FSWorkspaceNoReadAccess("Cannot load manifest: no read access")
-        elif rep["status"] == "not_found":
-            raise FSRemoteManifestNotFound(entry_id)
-        elif rep["status"] == "in_maintenance":
-            raise FSWorkspaceInMaintenance(
-                "Cannot download vlob while the workspace is in maintenance"
-            )
-        elif rep["status"] != "ok":
-            raise FSError(f"Cannot fetch vlob {entry_id}: `{rep['status']}`")
-
-        return rep["versions"]
-
-    async def create_realm(self, realm_id: EntryID) -> None:
-        """
-        Raises:
-            FSError
-            FSBackendOfflineError
-        """
-        certif = RealmRoleCertificateContent.build_realm_root_certif(
-            author=self.device.device_id, timestamp=pendulum_now(), realm_id=realm_id
-        ).dump_and_sign(self.device.signing_key)
-
-        rep = await self._backend_cmds("realm_create", certif)
-        if rep["status"] == "already_exists":
-            # It's possible a previous attempt to create this realm
-            # succeeded but we didn't receive the confirmation, hence
-            # we play idempotent here.
-            return
-        elif rep["status"] != "ok":
-            raise FSError(f"Cannot create realm {realm_id}: `{rep['status']}`")
 
     async def upload_manifest(self, entry_id: EntryID, manifest: BaseRemoteManifest) -> None:
         """
