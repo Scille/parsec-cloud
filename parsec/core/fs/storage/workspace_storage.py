@@ -165,6 +165,11 @@ class BaseWorkspaceStorage:
     def get_prevent_sync_pattern_fully_applied(self) -> bool:
         return self._prevent_sync_pattern_fully_applied
 
+    # Timestamped workspace
+
+    def to_timestamped(self, timestamp: Pendulum) -> "WorkspaceStorageTimestamped":
+        return WorkspaceStorageTimestamped(self, timestamp)
+
 
 class WorkspaceStorage(BaseWorkspaceStorage):
     """Manage the access to the local storage.
@@ -323,11 +328,6 @@ class WorkspaceStorage(BaseWorkspaceStorage):
     async def run_vacuum(self) -> None:
         # Only the data storage needs to get vacuuumed
         await self.data_localdb.run_vacuum()
-
-    # Timestamped workspace
-
-    def to_timestamped(self, timestamp: Pendulum) -> "WorkspaceStorageTimestamped":
-        return WorkspaceStorageTimestamped(self, timestamp)
 
 
 class WorkspaceStorageTimestamped(BaseWorkspaceStorage):

@@ -4,7 +4,7 @@
 
 import bisect
 from functools import partial
-from typing import Tuple, List, Set, Iterator, Callable, Union
+from typing import Tuple, List, Set, Iterator, Callable, Union, Sequence
 
 from parsec.core.types import BlockID, LocalFileManifest, Chunk, ChunkID
 
@@ -37,7 +37,7 @@ def index_of_chunk_after_stop(chunks: Chunks, stop: int) -> int:
     return bisect.bisect_left(chunks, stop)
 
 
-def chunk_id_set(chunks):
+def chunk_id_set(chunks: Sequence[Chunk]) -> Set[Union[ChunkID, BlockID]]:
     return {chunk.id for chunk in chunks}
 
 
