@@ -21,11 +21,11 @@
   </property>
   <property name="styleSheet">
    <string notr="true">#SettingsWidget {
-	background-color: #EEEEEE;
+	background-color: #F4F4F4;
 }
 
 #scrollArea {
-	background-color: #EEEEEE;
+	background-color: #F4F4F4;
 }
 
 #scrollAreaWidgetContents {

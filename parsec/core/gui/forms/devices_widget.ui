@@ -24,7 +24,7 @@
 	color: #0070DD;
 }
 
-#scrollAreaWidgetContents {
+#widget_content {
 	background-color: #EEEEEE;
 }</string>
   </property>
