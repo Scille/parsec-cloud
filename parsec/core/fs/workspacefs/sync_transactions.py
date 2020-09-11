@@ -41,7 +41,9 @@ def get_filename(manifest: LocalFolderishManifests, entry_id: EntryID) -> Option
     return next(gen, None)
 
 
-def get_conflict_filename(filename: EntryName, filenames: List[EntryName], author: DeviceID):
+def get_conflict_filename(
+    filename: EntryName, filenames: List[EntryName], author: DeviceID
+) -> EntryName:
     counter = count(2)
     new_filename = full_name(filename, [f"conflicting with {author}"])
     while new_filename in filenames:
@@ -72,7 +74,7 @@ def merge_folder_children(
     local_children: Dict[EntryName, EntryID],
     remote_children: Dict[EntryName, EntryID],
     remote_device_name: DeviceID,
-):
+) -> Dict[EntryName, EntryID]:
     # Prepare lookups
     base_reversed = {entry_id: name for name, entry_id in base_children.items()}
     local_reversed = {entry_id: name for name, entry_id in local_children.items()}
@@ -144,7 +146,7 @@ def merge_manifests(
     local_manifest: BaseLocalManifest,
     remote_manifest: Optional[BaseRemoteManifest] = None,
     force_apply_pattern: Optional[bool] = False,
-):
+) -> BaseLocalManifest:
     # Start by re-applying pattern (idempotent)
     if is_folderish_manifest(local_manifest) and force_apply_pattern:
         local_manifest = cast(LocalFolderishManifests, local_manifest).apply_prevent_sync_pattern(
