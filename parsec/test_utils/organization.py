@@ -109,26 +109,21 @@ async def initialize_test_organization(
                     alice_ws_id, bob_device.user_id, WorkspaceRole.MANAGER
                 )
                 # Add additional random users
-                if additional_users_number > 0:
-                    await _add_random_users(
-                        cmds=alice_cmds,
-                        author=alice_device,
-                        alice_core=alice_core,
-                        bob_core=bob_core,
-                        alice_ws_id=alice_ws_id,
-                        bob_ws_id=bob_ws_id,
-                        additional_users_number=additional_users_number,
-                    )
+                await _add_random_users(
+                    cmds=alice_cmds,
+                    author=alice_device,
+                    alice_core=alice_core,
+                    bob_core=bob_core,
+                    alice_ws_id=alice_ws_id,
+                    bob_ws_id=bob_ws_id,
+                    additional_users_number=additional_users_number,
+                )
                 # Add additional random device for alice
-                if additional_devices_number > 0:
-                    await _add_random_device(
-                        cmds=alice_cmds,
-                        config_dir=config_dir,
-                        force=force,
-                        password=password,
-                        device=alice_device,
-                        additional_devices_number=additional_devices_number,
-                    )
+                await _add_random_device(
+                    cmds=alice_cmds,
+                    device=alice_device,
+                    additional_devices_number=additional_devices_number,
+                )
 
     # Synchronize every device
     for device in (alice_device, other_alice_device, bob_device):
@@ -138,11 +133,10 @@ async def initialize_test_organization(
     return (alice_device, other_alice_device, bob_device)
 
 
-async def _add_random_device(cmds, config_dir, password, force, device, additional_devices_number):
+async def _add_random_device(cmds, device, additional_devices_number):
     for _ in range(additional_devices_number):
         device_label = "device_" + str(uuid4())[:9]
-        new_device = await _register_new_device(cmds=cmds, author=device, device_label=device_label)
-        save_device_with_password(config_dir, new_device, password, force=force)
+        await _register_new_device(cmds=cmds, author=device, device_label=device_label)
 
 
 async def _add_random_users(
