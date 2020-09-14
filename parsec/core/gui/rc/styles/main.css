@@ -262,9 +262,12 @@ QTabWidget::tab-bar:right {
     left: 1px;
 }
 
-QTabBar::tab {
+QTabBar {
     font-size: 14px;
     font-weight: bold;
+}
+
+QTabBar::tab {
     padding-left: 10px;
     padding-right: 10px;
     border-top: 1px solid #99999980;
