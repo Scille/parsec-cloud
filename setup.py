@@ -332,7 +332,7 @@ extra_requirements = {
     "backend": [
         "jinja2==2.11.2",
         # PostgreSQL
-        "triopg==0.3.0",
+        "triopg==0.5.0",
         "trio-asyncio==0.11.0",
         # S3
         "boto3==1.12.34",
