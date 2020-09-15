@@ -1,9 +1,6 @@
 <RCC>
     <qresource prefix="/logos">
-        <file>images/logos/parsec.png</file>
         <file>images/logos/scille.png</file>
-        <file>images/logos/parsec_white_small.png</file>
-        <file>images/logos/parsec_white_medium.png</file>
         <file>images/icons/parsec.png</file>
         <file>images/logos/parsec_new.png</file>
         <file>images/logos/parsec_vert.png</file>
@@ -13,19 +10,8 @@
         <file>translations/parsec_fr.mo</file>
     </qresource>
     <qresource prefix="/fonts">
-        <file>fonts/ProximaNova.otf</file>
         <file>fonts/Roboto-Regular.ttf</file>
         <file>fonts/Montserrat.ttf</file>
-    </qresource>
-    <qresource prefix="/screenshots">
-        <file>images/screenshots/devices.png</file>
-        <file>images/screenshots/documents.png</file>
-        <file>images/screenshots/users.png</file>
-        <file>images/screenshots/workspaces.png</file>
-        <file>images/screenshots/cloud-computing.png</file>
-        <file>images/screenshots/offline_en.png</file>
-        <file>images/screenshots/offline_fr.png</file>
-        <file>images/screenshots/your_turn.png</file>
     </qresource>
     <qresource prefix="/generated_misc">
         <file>generated_misc/history.html</file>
