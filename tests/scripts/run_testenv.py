@@ -180,6 +180,7 @@ async def restart_local_backend(administration_token, backend_port, email_host):
 @click.option("--force/--no-force", show_default=True, default=False)
 @click.option("--email-host", show_default=True, default=DEFAULT_EMAIL_HOST)
 @click.option("--add-random-users", show_default=True, default=0)
+@click.option("--add-random-devices", show_default=True, default=0)
 @click.option("-e", "--empty", is_flag=True)
 @click.option("--source-file", hidden=True)
 def main(**kwargs):
@@ -233,6 +234,7 @@ async def amain(
     force,
     email_host,
     add_random_users,
+    add_random_devices,
     empty,
     source_file,
 ):
@@ -276,6 +278,7 @@ Using existing backend: {backend_address}
         administration_token=administration_token,
         force=force,
         additional_users_number=add_random_users,
+        additional_devices_number=add_random_devices,
     )
 
     # Report
