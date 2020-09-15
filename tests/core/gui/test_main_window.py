@@ -519,7 +519,7 @@ async def test_tab_login_logout(
 
     await gui.test_switch_to_logged_in(alice)
     assert gui.tab_center.count() == 1
-    assert gui.tab_center.tabText(0) == "CoolOrg - Alicey McAliceFace - My dev1 machine"
+    assert gui.tab_center.tabText(0) == "CoolOrg - Alicey McA..."
     assert gui.add_tab_button.isEnabled()
     assert gui.test_get_tab() == first_created_tab
 
@@ -545,12 +545,12 @@ async def test_tab_login_logout_two_tabs(
 
     await gui.test_switch_to_logged_in(alice)
     assert gui.tab_center.count() == 1
-    assert gui.tab_center.tabText(0) == "CoolOrg - Alicey McAliceFace - My dev1 machine"
+    assert gui.tab_center.tabText(0) == "CoolOrg - Alicey McA..."
     logged_tab = gui.test_get_tab()
 
     await aqtbot.mouse_click(gui.add_tab_button, QtCore.Qt.LeftButton)
     assert gui.tab_center.count() == 2
-    assert gui.tab_center.tabText(0) == "CoolOrg - Alicey McAliceFace - My dev1 machine"
+    assert gui.tab_center.tabText(0) == "CoolOrg - Alicey McA..."
     assert gui.tab_center.tabText(1) == translate("TEXT_TAB_TITLE_LOG_IN_SCREEN")
 
     gui.switch_to_tab(0)
@@ -579,19 +579,19 @@ async def test_tab_login_logout_two_tabs_logged_in(
 
     await gui.test_switch_to_logged_in(alice)
     assert gui.tab_center.count() == 1
-    assert gui.tab_center.tabText(0) == "CoolOrg - Alicey McAliceFace - My dev1 machine"
+    assert gui.tab_center.tabText(0) == "CoolOrg - Alicey McA..."
     alice_logged_tab = gui.test_get_tab()
 
     await aqtbot.mouse_click(gui.add_tab_button, QtCore.Qt.LeftButton)
     assert gui.tab_center.count() == 2
-    assert gui.tab_center.tabText(0) == "CoolOrg - Alicey McAliceFace - My dev1 machine"
+    assert gui.tab_center.tabText(0) == "CoolOrg - Alicey McA..."
     assert gui.tab_center.tabText(1) == translate("TEXT_TAB_TITLE_LOG_IN_SCREEN")
 
     save_device_with_password(core_config.config_dir, bob, password)
     await gui.test_switch_to_logged_in(bob)
     assert gui.tab_center.count() == 2
-    assert gui.tab_center.tabText(0) == "CoolOrg - Alicey McAliceFace - My dev1 machine"
-    assert gui.tab_center.tabText(1) == "CoolOrg - Boby McBobFace - My dev1 machine"
+    assert gui.tab_center.tabText(0) == "CoolOrg - Alicey McA..."
+    assert gui.tab_center.tabText(1) == "CoolOrg - Boby McBo..."
     bob_logged_tab = gui.test_get_tab()
     assert bob_logged_tab != alice_logged_tab
 
@@ -604,7 +604,7 @@ async def test_tab_login_logout_two_tabs_logged_in(
 
     await gui.test_logout()
     assert gui.tab_center.count() == 2
-    assert gui.tab_center.tabText(0) == "CoolOrg - Boby McBobFace - My dev1 machine"
+    assert gui.tab_center.tabText(0) == "CoolOrg - Boby McBo..."
     assert gui.tab_center.tabText(1) == translate("TEXT_TAB_TITLE_LOG_IN_SCREEN")
 
 
