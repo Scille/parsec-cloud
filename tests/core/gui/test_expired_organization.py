@@ -27,14 +27,6 @@ async def test_expired_notification_logging(
     lw = gui.test_get_login_widget()
     tabw = gui.test_get_tab()
 
-    accounts_w = lw.widget.layout().itemAt(0).widget()
-    assert accounts_w
-
-    async with aqtbot.wait_signal(accounts_w.account_clicked):
-        await aqtbot.mouse_click(
-            accounts_w.accounts_widget.layout().itemAt(0).widget(), QtCore.Qt.LeftButton
-        )
-
     def _password_widget_shown():
         assert isinstance(lw.widget.layout().itemAt(0).widget(), LoginPasswordInputWidget)
 
@@ -66,14 +58,6 @@ async def test_expired_notification_from_connection(
 
     # Force logging on an expired organization
     with freeze_time("1989-12-17"):
-
-        accounts_w = lw.widget.layout().itemAt(0).widget()
-        assert accounts_w
-
-        async with aqtbot.wait_signal(accounts_w.account_clicked):
-            await aqtbot.mouse_click(
-                accounts_w.accounts_widget.layout().itemAt(0).widget(), QtCore.Qt.LeftButton
-            )
 
         def _password_widget_shown():
             assert isinstance(lw.widget.layout().itemAt(0).widget(), LoginPasswordInputWidget)
