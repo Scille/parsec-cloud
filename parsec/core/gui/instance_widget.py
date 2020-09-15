@@ -63,6 +63,7 @@ class InstanceWidget(QWidget):
         self.core = None
         self.core_jobs_ctx = None
         self.running_core_job = None
+        self.workspace_path = None
 
         self.run_core_success.connect(self.on_core_run_done)
         self.run_core_error.connect(self.on_core_run_error)
@@ -87,6 +88,12 @@ class InstanceWidget(QWidget):
     @property
     def is_logged_in(self):
         return self.running_core_job is not None
+
+    def set_workspace_path(self, action_addr):
+        self.workspace_path = action_addr
+
+    def reset_workspace_path(self):
+        self.workspace_path = None
 
     def on_core_config_updated(self, event, **kwargs):
         self.event_bus.send(CoreEvent.GUI_CONFIG_CHANGED, **kwargs)
@@ -218,6 +225,7 @@ class InstanceWidget(QWidget):
             core,
             core_jobs_ctx,
             core.event_bus,
+            action_addr=self.workspace_path,
             systray_notification=self.systray_notification,
             parent=self,
         )
@@ -235,12 +243,20 @@ class InstanceWidget(QWidget):
         login_widget.login_with_password_clicked.connect(self.login_with_password)
         login_widget.join_organization_clicked.connect(self.join_organization_clicked.emit)
         login_widget.create_organization_clicked.connect(self.create_organization_clicked.emit)
+        login_widget.login_canceled.connect(self.reset_workspace_path)
         login_widget.show()
 
     def get_central_widget(self):
         item = self.layout().itemAt(0)
         if item:
             if isinstance(item.widget(), CentralWidget):
+                return item.widget()
+        return None
+
+    def get_login_widget(self):
+        item = self.layout().itemAt(0)
+        if item:
+            if isinstance(item.widget(), LoginWidget):
                 return item.widget()
         return None
 

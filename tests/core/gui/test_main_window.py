@@ -7,14 +7,17 @@ from PyQt5 import QtCore, QtWidgets
 
 from parsec.api.protocol import InvitationType, OrganizationID
 from parsec.core.gui.lang import translate
-from parsec.core.local_device import AvailableDevice, _save_device_with_password
+from parsec.core.gui.login_widget import LoginPasswordInputWidget
+from parsec.core.local_device import (
+    AvailableDevice,
+    _save_device_with_password,
+    save_device_with_password,
+)
 from parsec.core.types import (
     BackendInvitationAddr,
     BackendOrganizationBootstrapAddr,
     BackendOrganizationFileLinkAddr,
 )
-
-from parsec.core.local_device import save_device_with_password
 
 
 @pytest.fixture
@@ -254,7 +257,7 @@ async def test_link_file_disconnected(
     monkeypatch,
     bob_available_device,
 ):
-    logged_gui, w_w, f_w = logged_gui_with_files
+    gui, w_w, f_w = logged_gui_with_files
     url = BackendOrganizationFileLinkAddr.build(
         f_w.core.device.organization_addr, f_w.workspace_fs.workspace_id, "/dir1"
     )
@@ -264,15 +267,15 @@ async def test_link_file_disconnected(
         lambda *args, **kwargs: [bob_available_device],
     )
 
-    await logged_gui.test_logout_and_switch_to_login_widget()
-
-    await aqtbot.run(logged_gui.add_instance, str(url))
+    # Log out and send link
+    await gui.test_logout_and_switch_to_login_widget()
+    await aqtbot.run(gui.add_instance, str(url))
 
     def _assert_dialogs():
         assert len(autoclose_dialog.dialogs) == 1
         assert autoclose_dialog.dialogs == [
             (
-                "Error",
+                "",
                 translate("TEXT_FILE_LINK_PLEASE_LOG_IN_organization").format(
                     organization=bob.organization_id
                 ),
@@ -281,7 +284,104 @@ async def test_link_file_disconnected(
 
     await aqtbot.wait_until(_assert_dialogs)
 
-    assert logged_gui.tab_center.count() == 1
+    # Assert login widget is displayed
+    lw = gui.test_get_login_widget()
+
+    def _password_widget_shown():
+        assert isinstance(lw.widget.layout().itemAt(0).widget(), LoginPasswordInputWidget)
+        password_w = lw.widget.layout().itemAt(0).widget()
+        assert password_w.button_login.isEnabled()
+
+    await aqtbot.wait_until(_password_widget_shown)
+
+    password_w = lw.widget.layout().itemAt(0).widget()
+
+    # Connect to the organization
+    await aqtbot.mouse_click(password_w.button_login, QtCore.Qt.LeftButton)
+
+    def _wait():
+        central_widget = gui.test_get_central_widget()
+        assert central_widget is not None
+
+    await aqtbot.wait_until(_wait)
+
+    # Assert file link has been followed
+    f_w = gui.test_get_files_widget()
+
+    def _folder_ready():
+        assert f_w.isVisible()
+        assert f_w.table_files.rowCount() == 2
+        folder = f_w.table_files.item(1, 1)
+        assert folder
+        assert folder.text() == "dir1"
+
+    await aqtbot.wait_until(_folder_ready)
+
+
+@pytest.mark.gui
+@pytest.mark.trio
+async def test_link_file_disconnected_cancel_login(
+    aqtbot,
+    running_backend,
+    backend,
+    autoclose_dialog,
+    logged_gui_with_files,
+    bob,
+    monkeypatch,
+    bob_available_device,
+):
+    gui, w_w, f_w = logged_gui_with_files
+    url = BackendOrganizationFileLinkAddr.build(
+        f_w.core.device.organization_addr, f_w.workspace_fs.workspace_id, "/dir1"
+    )
+
+    monkeypatch.setattr(
+        "parsec.core.gui.main_window.list_available_devices",
+        lambda *args, **kwargs: [bob_available_device],
+    )
+
+    # Log out and send link
+    await gui.test_logout_and_switch_to_login_widget()
+    await aqtbot.run(gui.add_instance, str(url))
+
+    def _assert_dialogs():
+        assert len(autoclose_dialog.dialogs) == 1
+        assert autoclose_dialog.dialogs == [
+            (
+                "",
+                translate("TEXT_FILE_LINK_PLEASE_LOG_IN_organization").format(
+                    organization=bob.organization_id
+                ),
+            )
+        ]
+
+    await aqtbot.wait_until(_assert_dialogs)
+
+    # Assert login widget is displayed
+    lw = gui.test_get_login_widget()
+
+    def _password_widget_shown():
+        assert isinstance(lw.widget.layout().itemAt(0).widget(), LoginPasswordInputWidget)
+        password_w = lw.widget.layout().itemAt(0).widget()
+        assert password_w.button_login.isEnabled()
+
+    await aqtbot.wait_until(_password_widget_shown)
+
+    password_w = lw.widget.layout().itemAt(0).widget()
+
+    # Cancel login
+    async with aqtbot.wait_signal(lw.login_canceled):
+        await aqtbot.mouse_click(password_w.button_back, QtCore.Qt.LeftButton)
+
+    await gui.test_switch_to_logged_in(bob)
+
+    # Assert previous file link is not followed
+    f_w = gui.test_get_files_widget()
+
+    def _folder_ready():
+        assert not f_w.isVisible()
+
+    await aqtbot.wait_until(_folder_ready)
 
 
 @pytest.mark.gui
