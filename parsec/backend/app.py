@@ -1,17 +1,20 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
 
-from typing import Optional
+from typing import Dict, Optional
 import trio
+from trio.abc import Stream
 from structlog import get_logger
 from logging import DEBUG as LOG_LEVEL_DEBUG
 from async_generator import asynccontextmanager
+from wsgiref.handlers import format_date_time
+from http import HTTPStatus
 import h11
 
 from parsec._version import __version__ as parsec_version
 from parsec.backend.backend_events import BackendEvent
 from parsec.event_bus import EventBus
 from parsec.logging import get_log_level
-from parsec.api.transport import TransportError, TransportClosedByPeer, Transport
+from parsec.api.transport import TransportError, TransportClosedByPeer, Transport, TRANSPORT_TARGET
 from parsec.api.protocol import (
     packb,
     unpackb,
@@ -31,6 +34,15 @@ from parsec.backend.invite import CloseInviteConnection
 
 
 logger = get_logger()
+
+
+# Max size for the very first HTTP request (request line + headers, so excluding body)
+# that arrives on a socket. This request should either upgrade to websocket
+# (from where on `parsec.api.transport.Transport` handles the socket) or be a
+# single HTTP request that we are going to respond to before closing the
+# connection (i.e. we ignore keep-alive)
+# The choice of 8Ko is more or less arbitrary but it range with what most web servers do.
+MAX_INITIAL_HTTP_REQUEST_SIZE = 8 * 1024
 
 
 def _filter_binary_fields(data):
@@ -103,13 +115,124 @@ class BackendApp:
             user, invite, organization, message, realm, vlob, ping, blockstore, block, events
         )
 
-    async def handle_client_websocket(self, stream, event, first_request_data=None):
+        if self.config.debug:
+            self.server_header = f"parsec/{parsec_version} {h11.PRODUCT_ID}".encode("ascii")
+        else:
+            self.server_header = b"parsec"
+
+    async def handle_client(self, stream):
+        # Uses max_size - 1 given h11 enforces the check only if it current
+        # internal buffer doesn't contain an entire message.
+        # Note that given we fetch by batches of MAX_INITIAL_HTTP_REQUEST_SIZE,
+        # we can end up with a final message as big as 2 * MAX_INITIAL_HTTP_REQUEST_SIZE - 1
+        # if the client starts by sending a MAX_INITIAL_HTTP_REQUEST_SIZE - 1
+        # tcp trame, then another MAX_INITIAL_HTTP_REQUEST_SIZE.
+        conn = h11.Connection(
+            h11.SERVER, max_incomplete_event_size=MAX_INITIAL_HTTP_REQUEST_SIZE - 1
+        )
+        try:
+            # Fetch the initial request
+            while True:
+                try:
+                    data = await stream.receive_some(MAX_INITIAL_HTTP_REQUEST_SIZE)
+                except ConnectionError:
+                    # They've stopped listening. Not much we can do about it here.
+                    data = b""
+
+                conn.receive_data(data)
+                event = conn.next_event()
+
+                if event is h11.NEED_DATA:
+                    continue
+                if isinstance(event, h11.Request):
+                    break
+                else:
+                    logger.error("Unexpected event", event=event)
+                    return
+
+            # See https://h11.readthedocs.io/en/v0.10.0/api.html#flow-control
+            if conn.they_are_waiting_for_100_continue:
+                await stream.send_all(
+                    conn.send(h11.InformationalResponse(status_code=100, headers=[]))
+                )
+
+            def _get_header(key: bytes) -> bytes:
+                # h11 guarantees the headers are always lowercase
+                return next((v for k, v in event.headers if k == key), b"")
+
+            # Test for websocket upgrade considering:
+            # - Upgrade header has been introduced in HTTP 1.1 RFC
+            # - Connection&Upgrade fields are case-insensitive according to RFC
+            # - Only `/ws` target are valid for upgrade, this allow us to reserve
+            #   other target for future use
+            # - We fallback to HTTP in case of invalid upgrade query for simplicity
+            if (
+                event.http_version == b"1.1"
+                and event.target == TRANSPORT_TARGET.encode()
+                and _get_header(b"connection").lower() == b"upgrade"
+                and _get_header(b"upgrade").lower() == b"websocket"
+            ):
+                await self._handle_client_websocket(stream, event)
+            else:
+                await self._handle_client_http(stream, conn, event)
+
+        except h11.RemoteProtocolError as exc:
+            # Peer is drunk, tell him and leave...
+            await self._send_http_reply(stream, conn, status_code=exc.error_status_hint)
+
+        finally:
+            try:
+                await stream.aclose()
+            except trio.BrokenResourceError:
+                # They're already gone, nothing to do
+                pass
+
+    async def _send_http_reply(
+        self,
+        stream: Stream,
+        conn: h11.Connection,
+        status_code: int,
+        headers: Dict[bytes, bytes] = {},
+        data: Optional[bytes] = None,
+    ) -> None:
+        reason = HTTPStatus(status_code).phrase
+        headers = list(
+            {
+                **headers,
+                # Add default headers
+                b"server": self.server_header,
+                b"date": format_date_time(None).encode("ascii"),
+                b"content-Length": str(len(data or b"")).encode("ascii"),
+                # Inform we don't support keep-alive (h11 will know what to do from there)
+                b"connection": b"close",
+            }.items()
+        )
+        try:
+            await stream.send_all(
+                conn.send(h11.Response(status_code=status_code, headers=headers, reason=reason))
+            )
+            if data:
+                await stream.send_all(conn.send(h11.Data(data=data)))
+            await stream.send_all(conn.send(h11.EndOfMessage()))
+        except trio.BrokenResourceError:
+            # Given we don't support keep-alive, the connection is going to be
+            # shutdown anyway, so we can safely ignore the fact peer has left
+            pass
+
+    async def _handle_client_http(self, stream, conn, request):
+        # TODO: right now we handle a single request then close the connection
+        # hence HTTP 1.1 keep-alive is not supported
+        req = HTTPRequest.from_h11_req(request)
+        rep = await self.http.handle_request(req)
+        await self._send_http_reply(
+            stream, conn, status_code=rep.status_code, headers=rep.headers, data=rep.data
+        )
+
+    async def _handle_client_websocket(self, stream, request):
         selected_logger = logger
 
         try:
-            transport = await Transport.init_for_server(
-                stream, first_request_data=first_request_data
-            )
+            transport = await Transport.init_for_server(stream, upgrade_request=request)
 
         except TransportClosedByPeer as exc:
             selected_logger.info("Connection dropped: client has left", reason=str(exc))
@@ -156,7 +279,7 @@ class BackendApp:
                         client_ctx.event_bus_ctx.connect(
                             BackendEvent.ORGANIZATION_EXPIRED, _on_expired
                         )
-                        await self._handle_client_loop(transport, client_ctx)
+                        await self._handle_client_websocket_loop(transport, client_ctx)
 
             elif isinstance(client_ctx, InvitedClientContext):
                 await self.invite.claimer_joined(
@@ -181,7 +304,7 @@ class BackendApp:
                             event_bus_ctx.connect(
                                 BackendEvent.INVITE_STATUS_CHANGED, _on_invite_status_changed
                             )
-                            await self._handle_client_loop(transport, client_ctx)
+                            await self._handle_client_websocket_loop(transport, client_ctx)
 
                 except CloseInviteConnection:
                     # If the invitation has been deleted after the invited handshake,
@@ -201,7 +324,7 @@ class BackendApp:
                         )
 
             else:
-                await self._handle_client_loop(transport, client_ctx)
+                await self._handle_client_websocket_loop(transport, client_ctx)
 
             await transport.aclose()
 
@@ -217,84 +340,7 @@ class BackendApp:
             await transport.aclose()
             selected_logger.info("Connection dropped: invalid data", reason=str(exc))
 
-    async def handle_client(self, stream):
-        MAX_RECV = 5
-        try:
-            conn = h11.Connection(h11.SERVER)
-            first_request_data = b""
-
-            while True:
-                if conn.they_are_waiting_for_100_continue:
-                    self.info("Sending 100 Continue")
-                    go_ahead = h11.InformationalResponse(
-                        status_code=100, headers=self.basic_headers()
-                    )
-                    await self.send(go_ahead)
-                try:
-                    data = await stream.receive_some(MAX_RECV)
-                    first_request_data += data
-
-                except ConnectionError:
-                    # They've stopped listening. Not much we can do about it here.
-                    data = b""
-                conn.receive_data(data)
-
-                event = conn.next_event()
-                if event is not h11.NEED_DATA:
-                    break
-
-            if not isinstance(event, h11.Request):
-                await stream.aclose()
-                return
-
-            # Websocket upgrade, else HTTP
-            if (b"connection", b"Upgrade") in event.headers:
-                await self.handle_client_websocket(
-                    stream, event, first_request_data=first_request_data
-                )
-            else:
-                await self.handle_client_http(stream, event, conn)
-
-        except h11.RemoteProtocolError:
-            # Peer is drunk...
-            pass
-
-        finally:
-            try:
-                await stream.aclose()
-            except trio.BrokenResourceError:
-                # They're already gone, nothing to do
-                pass
-
-    async def handle_client_http(self, stream, event, conn):
-        # TODO: right now we handle a single request then close the connection
-        # hence HTTP 1.1 keep-alive is not supported
-        req = HTTPRequest.from_h11_req(event)
-        rep = await self.http.handle_request(req)
-
-        if self.config.debug:
-            server_header = f"parsec/{parsec_version} {h11.PRODUCT_ID}"
-        else:
-            server_header = "parsec"
-        rep.headers.append(("server", server_header))
-
-        # TODO: Specify reason ? (currently we have `HTTP/1.1 200 \r\n` instead of `HTTP/1.1 200 OK\r\n`)
-        try:
-            await stream.send_all(
-                conn.send(
-                    h11.Response(
-                        status_code=rep.status_code, headers=rep.headers, reason=rep.reason
-                    )
-                )
-            )
-            if rep.data:
-                await stream.send_all(conn.send(h11.Data(data=rep.data)))
-            await stream.send_all(conn.send(h11.EndOfMessage()))
-        except trio.BrokenResourceError:
-            # Peer is already gone, nothing to do
-            pass
-
-    async def _handle_client_loop(self, transport, client_ctx):
+    async def _handle_client_websocket_loop(self, transport, client_ctx):
         # Retrieve the allowed commands according to api version and auth type
         api_cmds = self.apis[client_ctx.handshake_type]
 
