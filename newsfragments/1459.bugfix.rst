@@ -1,0 +1,1 @@
+Validate button is disabled by default when chosing a password
