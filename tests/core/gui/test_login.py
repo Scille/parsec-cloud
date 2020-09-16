@@ -177,7 +177,7 @@ async def test_login_logout_account_list_refresh(
 
     password_w = lw.widget.layout().itemAt(0).widget()
 
-    await aqtbot.key_clicks(password_w.line_edit_password, "P@ssw0rd")
+    await aqtbot.key_clicks(password_w.line_edit_password, password)
 
     async with aqtbot.wait_signals([lw.login_with_password_clicked, tabw.logged_in]):
         await aqtbot.mouse_click(password_w.button_login, QtCore.Qt.LeftButton)
