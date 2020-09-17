@@ -227,7 +227,6 @@ async def test_pagination(access_testbed, organization_factory, local_device_fac
             {"user_id": godfrey1.user_id, "human_handle": godfrey1.human_handle, "revoked": False},
             {"user_id": richard.user_id, "human_handle": richard.human_handle, "revoked": False},
             {"user_id": roger.user_id, "human_handle": roger.human_handle, "revoked": False},
-
         ],
         "per_page": 3,
         "page": 1,
