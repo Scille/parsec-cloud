@@ -136,10 +136,6 @@ async def test_search_multiple_matches(access_testbed, organization_factory, loc
     rep = await human_find(sock, query="bruce.l")
     assert rep == expected_rep
 
-    # Search by user_id
-    rep = await human_find(sock, query="bruce_l")
-    assert rep == expected_rep
-
 
 @pytest.mark.trio
 async def test_search_multiple_user_same_human_handle(
@@ -192,55 +188,6 @@ async def test_search_multiple_user_same_human_handle(
 
 
 @pytest.mark.trio
-async def test_search_with_non_humans(access_testbed, organization_factory, local_device_factory):
-    binder, org, godfrey1, sock = access_testbed
-
-    richard = local_device_factory(
-        base_human_handle=f"Richard Harrison <ninja-richard@ninja-terminator.com>", org=org
-    )
-    await binder.bind_device(richard, certifier=godfrey1)
-
-    hwang = local_device_factory(
-        base_human_handle=f"Hwang Jang Lee <ninja-hwang@ninja-terminator.com>", org=org
-    )
-    await binder.bind_device(hwang, certifier=godfrey1)
-
-    ninja1 = local_device_factory(base_device_id="ninja1@d1", has_human_handle=None, org=org)
-    await binder.bind_device(ninja1, certifier=ninja1)
-
-    ninja2 = local_device_factory(base_device_id="ninja2@d1", has_human_handle=None, org=org)
-    await binder.bind_device(ninja2, certifier=ninja2)
-
-    rep = await human_find(sock, query="ninja")
-    assert rep == {
-        "status": "ok",
-        "results": [
-            {"user_id": hwang.user_id, "human_handle": hwang.human_handle, "revoked": False},
-            {"user_id": richard.user_id, "human_handle": richard.human_handle, "revoked": False},
-            # Non human should be ordered last no matter what
-            {"user_id": ninja1.user_id, "human_handle": None, "revoked": False},
-            {"user_id": ninja2.user_id, "human_handle": None, "revoked": False},
-        ],
-        "per_page": 100,
-        "page": 1,
-        "total": 4,
-    }
-
-    # Search single
-    rep = await human_find(sock, query="ninja", omit_non_human=True)
-    assert rep == {
-        "status": "ok",
-        "results": [
-            {"user_id": hwang.user_id, "human_handle": hwang.human_handle, "revoked": False},
-            {"user_id": richard.user_id, "human_handle": richard.human_handle, "revoked": False},
-        ],
-        "per_page": 100,
-        "page": 1,
-        "total": 2,
-    }
-
-
-@pytest.mark.trio
 async def test_pagination(access_testbed, organization_factory, local_device_factory):
     binder, org, godfrey1, sock = access_testbed
 
@@ -277,9 +224,10 @@ async def test_pagination(access_testbed, organization_factory, local_device_fac
     assert rep == {
         "status": "ok",
         "results": [
-            {"user_id": blacky.user_id, "human_handle": blacky.human_handle, "revoked": False},
             {"user_id": godfrey1.user_id, "human_handle": godfrey1.human_handle, "revoked": False},
-            {"user_id": mike.user_id, "human_handle": mike.human_handle, "revoked": False},
+            {"user_id": richard.user_id, "human_handle": richard.human_handle, "revoked": False},
+            {"user_id": roger.user_id, "human_handle": roger.human_handle, "revoked": False},
+
         ],
         "per_page": 3,
         "page": 1,
@@ -291,8 +239,8 @@ async def test_pagination(access_testbed, organization_factory, local_device_fac
     assert rep == {
         "status": "ok",
         "results": [
-            {"user_id": richard.user_id, "human_handle": richard.human_handle, "revoked": False},
-            {"user_id": roger.user_id, "human_handle": roger.human_handle, "revoked": False},
+            {"user_id": blacky.user_id, "human_handle": blacky.human_handle, "revoked": False},
+            {"user_id": mike.user_id, "human_handle": mike.human_handle, "revoked": False},
         ],
         "per_page": 3,
         "page": 2,
@@ -301,7 +249,7 @@ async def test_pagination(access_testbed, organization_factory, local_device_fac
 
     # Test out of pagination
     rep = await human_find(sock, page=3, per_page=3)
-    assert rep == {"status": "ok", "results": [], "per_page": 3, "page": 3, "total": 5}
+    assert rep == {"status": "ok", "results": [], "per_page": 3, "page": 3, "total": 0}
 
 
 @pytest.mark.trio
