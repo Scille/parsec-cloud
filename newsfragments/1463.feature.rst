@@ -1,0 +1,1 @@
+Better display for temporary workspaces

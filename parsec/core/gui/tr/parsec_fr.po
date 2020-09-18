@@ -7,8 +7,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PROJECT VERSION\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2020-09-02 08:12+0200\n"
-"PO-Revision-Date: 2020-09-02 10:06+0200\n"
+"POT-Creation-Date: 2020-09-18 07:52+0200\n"
+"PO-Revision-Date: 2020-09-18 07:53+0200\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language: fr\n"
 "Language-Team: fr <LL@li.org>\n"
@@ -1762,6 +1762,11 @@ msgstr "Les modification seront prises en compte au redémarrage de l'applicatio
 msgid "ACTION_LOG_OUT"
 msgstr "Se déconnecter"
 
+msgid "TEXT_FILE_LINK_WORKSPACE_NOT_FOUND_organization"
+msgstr ""
+"Vous n'avez pas accès à l'espace de travail auquel appartient ce fichier."
+" Il n'a peut-être pas été partagé avec vous."
+
 msgid "NOTIF_WARN_MOUNTPOINT_UNMOUNTED"
 msgstr ""
 
@@ -1925,11 +1930,6 @@ msgid "TEXT_FILE_LINK_NOT_IN_ORG_organization"
 msgstr ""
 "Vous ne pouvez pas accéder à ce fichier car vous n'avez aucun appareil "
 "appartenant à l'organisation {organization} on this machine."
-
-msgid "TEXT_FILE_LINK_WORKSPACE_NOT_FOUND_organization"
-msgstr ""
-"Vous n'avez pas accès à l'espace de travail auquel appartient ce fichier."
-" Il n'a peut-être pas été partagé avec vous."
 
 msgid "TEXT_FILE_LINK_PLEASE_LOG_IN_organization"
 msgstr ""
@@ -2339,6 +2339,12 @@ msgstr "Utiliser des couleurs pour les espaces de travail"
 msgid "ACTION_SAVE"
 msgstr "Sauvegarder"
 
+msgid "TEXT_WORKSPACE_TEMPORARY_TITLE"
+msgstr "Temporaire"
+
+msgid "TEXT_WORKSPACE_TEMPORARY_DESCRIPTION"
+msgstr "Espace de travail tel qu'il apparaissait le :"
+
 msgid "TEXT_WORKSPACE_TIMESTAMPED_INSTRUCTIONS"
 msgstr ""
 "Vous pourrez naviguer dans l'espace de travail tel qu'il était à un "
@@ -2400,5 +2406,4 @@ msgstr "Créer un nouvel espace de travail"
 
 msgid "ACTION_WORKSPACE_GOTO_FILE_LINK"
 msgstr "Trouver un fichier via son lien"
-
 
