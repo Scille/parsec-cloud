@@ -9,6 +9,7 @@ from pendulum import DateTime
 from structlog import get_logger
 from typing import Sequence, Optional
 from importlib import __import__ as import_function
+from sys import platform as _platform
 
 from async_generator import asynccontextmanager
 
@@ -283,11 +284,16 @@ async def mountpoint_manager_factory(
     # Now is a good time to perform some cleanup in the registry
     if os.name == "nt":
         cleanup_parsec_drive_icons()
-    elif os.name == "posix":
+    elif os.name == "posix" and _platform == "darwin":
         for dirs in os.listdir(base_mountpoint_path):
-            await trio.run_process(
-                ["diskutil", "unmount", str(base_mountpoint_path) + "/" + str(dirs)]
-            )
+            dir_path = str(base_mountpoint_path) + "/" + str(dirs)
+            stats = os.statvfs(dir_path)
+            if stats.f_blocks == 0 and stats.f_ffree == 0 and stats.f_bavail == 0:
+                await trio.run_process(["diskutil", "unmount", dir_path])
+                if dirs in os.listdir(
+                    base_mountpoint_path
+                ):  # kinda overkill, making sure there is something to delete
+                    await trio.run_process(["rm", "-d", dir_path])  # otherwise an empty dir remains
 
     def on_event(event, new_entry, previous_entry=None):
         # Workspace created
