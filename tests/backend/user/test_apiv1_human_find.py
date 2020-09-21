@@ -412,14 +412,7 @@ async def test_no_query_users_with_and_without_human_label(access_testbed, local
         {"user_id": roger.user_id, "revoked": False, "human_handle": roger.human_handle},
         {"user_id": zoe.user_id, "revoked": False, "human_handle": zoe.human_handle},
     ]
-    rep = await human_find(sock, per_page=3, page=1)
-    if rep["results"] != non_human:
-        rep = await human_find(sock, per_page=8, page=1)
-        assert rep == {"status": "ok", "results": human, "per_page": 8, "page": 1, "total": 11}
-        rep = await human_find(sock, per_page=8, page=2)
-        assert rep == {"status": "ok", "results": non_human, "per_page": 8, "page": 2, "total": 11}
-    else:
-        rep = await human_find(sock, per_page=8, page=1)
-        assert rep == {"status": "ok", "results": non_human, "per_page": 8, "page": 2, "total": 11}
-        rep = await human_find(sock, per_page=8, page=2)
-        assert rep == {"status": "ok", "results": human, "per_page": 8, "page": 1, "total": 11}
+    rep = await human_find(sock, per_page=8, page=1)
+    assert rep == {"status": "ok", "results": human, "per_page": 8, "page": 1, "total": 11}
+    rep = await human_find(sock, per_page=8, page=2)
+    assert rep == {"status": "ok", "results": non_human, "per_page": 8, "page": 2, "total": 11}

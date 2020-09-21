@@ -444,35 +444,24 @@ async def test_no_query_users_with_and_without_human_label(access_testbed, local
     await binder.bind_device(titeuf, certifier=godfrey1)
 
     # Users with human label should be sorted
-    rep = await human_find(sock, per_page=8)
-    assert rep == {
-        "status": "ok",
-        "results": [
-            {"user_id": blacky.user_id, "revoked": False, "human_handle": blacky.human_handle},
-            {"user_id": blacky3.user_id, "revoked": False, "human_handle": blacky3.human_handle},
-            {"user_id": godfrey1.user_id, "revoked": False, "human_handle": godfrey1.human_handle},
-            {"user_id": ice.user_id, "revoked": False, "human_handle": ice.human_handle},
-            {"user_id": ninja.user_id, "revoked": False, "human_handle": ninja.human_handle},
-            {"user_id": richard.user_id, "revoked": False, "human_handle": richard.human_handle},
-            {"user_id": roger.user_id, "revoked": False, "human_handle": roger.human_handle},
-            {"user_id": zoe.user_id, "revoked": False, "human_handle": zoe.human_handle},
-        ],
-        "per_page": 8,
-        "page": 1,
-        "total": 11,
-    }
-    # Non human nondeterminated ordered result.
-    rep = await human_find(sock, page=2, per_page=8)
-    assert rep == {
-        "status": "ok",
-        "results": NonDeterministicOrderedResults(
-            [
-                {"user_id": easy.user_id, "revoked": False, "human_handle": None},
-                {"user_id": mike.user_id, "revoked": False, "human_handle": None},
-                {"user_id": titeuf.user_id, "revoked": False, "human_handle": None},
-            ]
-        ),
-        "per_page": 8,
-        "page": 2,
-        "total": 11,
-    }
+    non_human = NonDeterministicOrderedResults(
+        [
+            {"user_id": easy.user_id, "revoked": False, "human_handle": None},
+            {"user_id": mike.user_id, "revoked": False, "human_handle": None},
+            {"user_id": titeuf.user_id, "revoked": False, "human_handle": None},
+        ]
+    )
+    human = [
+        {"user_id": blacky.user_id, "revoked": False, "human_handle": blacky.human_handle},
+        {"user_id": blacky3.user_id, "revoked": False, "human_handle": blacky3.human_handle},
+        {"user_id": godfrey1.user_id, "revoked": False, "human_handle": godfrey1.human_handle},
+        {"user_id": ice.user_id, "revoked": False, "human_handle": ice.human_handle},
+        {"user_id": ninja.user_id, "revoked": False, "human_handle": ninja.human_handle},
+        {"user_id": richard.user_id, "revoked": False, "human_handle": richard.human_handle},
+        {"user_id": roger.user_id, "revoked": False, "human_handle": roger.human_handle},
+        {"user_id": zoe.user_id, "revoked": False, "human_handle": zoe.human_handle},
+    ]
+    rep = await human_find(sock, per_page=8, page=1)
+    assert rep == {"status": "ok", "results": human, "per_page": 8, "page": 1, "total": 11}
+    rep = await human_find(sock, per_page=8, page=2)
+    assert rep == {"status": "ok", "results": non_human, "per_page": 8, "page": 2, "total": 11}

@@ -140,6 +140,10 @@ async def query_find_humans(
     else:
         total = 0
     results = [
+        *[res for res in raw_results if res.human_handle],
+        *[res for res in raw_results if not res.human_handle],
+    ]
+    results = [
         HumanFindResultItem(
             user_id=UserID(user_id),
             human_handle=HumanHandle(email=email, label=label) if email is not None else None,
