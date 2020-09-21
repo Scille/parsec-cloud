@@ -15,16 +15,16 @@ async def test_list_users(aqtbot, running_backend, logged_gui, autoclose_dialog)
     assert u_w.layout_users.count() == 3
 
     item = u_w.layout_users.itemAt(0)
-    assert item.widget().label_username.text() == "Alicey McAliceFace"
-    assert item.widget().label_email.text() == "alice@example.com"
-    assert item.widget().label_is_current.text() == ""
-    assert item.widget().label_role.text() == "Administrator"
-
-    item = u_w.layout_users.itemAt(1)
     assert item.widget().label_username.text() == "Adamy McAdamFace"
     assert item.widget().label_email.text() == "adam@example.com"
     assert item.widget().label_role.text() == "Administrator"
     assert item.widget().label_is_current.text() == ""
+
+    item = u_w.layout_users.itemAt(1)
+    assert item.widget().label_username.text() == "Alicey McAliceFace"
+    assert item.widget().label_email.text() == "alice@example.com"
+    assert item.widget().label_is_current.text() == ""
+    assert item.widget().label_role.text() == "Administrator"
 
     item = u_w.layout_users.itemAt(2)
     assert item.widget().label_username.text() == "Boby McBobFace"
@@ -61,13 +61,13 @@ async def test_list_users_and_invitations(
     item = u_w.layout_users.itemAt(1)
     assert item.widget().label_email.text() == "fry@pe.com"
 
-    item = u_w.layout_users.itemAt(3)
+    item = u_w.layout_users.itemAt(2)
     assert item.widget().label_username.text() == "Adamy McAdamFace"
     assert item.widget().label_email.text() == "adam@example.com"
     assert item.widget().label_role.text() == "Administrator"
     assert item.widget().label_is_current.text() == ""
 
-    item = u_w.layout_users.itemAt(2)
+    item = u_w.layout_users.itemAt(3)
     assert item.widget().label_username.text() == "Alicey McAliceFace"
     assert item.widget().label_email.text() == "alice@example.com"
     assert item.widget().label_is_current.text() == "(you)"
@@ -98,10 +98,10 @@ async def test_filter_users(aqtbot, running_backend, logged_gui):
 
     assert u_w.layout_users.count() == 3
 
-    adam_w = u_w.layout_users.itemAt(1).widget()
+    adam_w = u_w.layout_users.itemAt(0).widget()
     assert adam_w.label_username.text() == "Adamy McAdamFace"
     assert adam_w.label_email.text() == "adam@example.com"
-    alice_w = u_w.layout_users.itemAt(0).widget()
+    alice_w = u_w.layout_users.itemAt(1).widget()
     assert alice_w.label_username.text() == "Alicey McAliceFace"
     assert alice_w.label_email.text() == "alice@example.com"
 

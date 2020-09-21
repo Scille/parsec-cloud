@@ -271,15 +271,18 @@ class MemoryUserComponent(BaseUserComponent):
                     or str(user.human_handle.label).lower().find(query.lower()) != -1
                 ):
                     users.append(user)
-            # Sort human by label
-            users = sorted(
-                [res for res in users if res.human_handle], key=lambda r: r.human_handle.label
-            )
         else:
             users = org.users.values()
             if omit_non_human:
                 users = [r for r in users if r.human_handle]
-
+        # Sort human by label
+        users = [
+            *sorted(
+                [res for res in users if res.human_handle],
+                key=lambda r: r.human_handle.label.lower(),
+            ),
+            *[res for res in users if not res.human_handle],
+        ]
         now = pendulum.now()
         results = [
             HumanFindResultItem(
