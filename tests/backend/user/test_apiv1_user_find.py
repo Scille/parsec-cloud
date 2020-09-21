@@ -56,9 +56,9 @@ async def test_api_user_find(access_testbed, organization_factory, local_device_
     other_device = local_device_factory("Philippe@p1", other_org)
     await binder.bind_organization(other_org, other_device)
 
-    # # Test exact match
-    # rep = await user_find(sock, query="Mike")
-    # assert rep == {"status": "ok", "results": ["Mike"], "per_page": 100, "page": 1, "total": 1}
+    # Test exact match
+    rep = await user_find(sock, query="Mike")
+    assert rep == {"status": "ok", "results": ["Mike"], "per_page": 100, "page": 1, "total": 1}
 
     # Test partial search
     rep = await user_find(sock, query="Phil")
@@ -100,7 +100,7 @@ async def test_api_user_find(access_testbed, organization_factory, local_device_
 
     # Test out of pagination
     rep = await user_find(sock, query="Phil", page=2, per_page=5)
-    assert rep == {"status": "ok", "results": [], "per_page": 5, "page": 2, "total": 2}
+    assert rep == {"status": "ok", "results": [], "per_page": 5, "page": 2, "total": 0}
 
     # Test no params
     rep = await user_find(sock)
