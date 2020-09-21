@@ -2365,6 +2365,24 @@ msgstr "Filtrer les utilisateurs"
 msgid "ACTION_USER_INVITE_USER"
 msgstr "Inviter un utilisateur"
 
+msgid "ACTION_LIST_NEXT_PAGE"
+msgstr "Page suivante"
+
+msgid "ACTION_LIST_PREVIOUS_PAGE"
+msgstr "Page précédente"
+
+msgid "ACTION_FILTER_LIST_USERS"
+msgstr "Rechercher utilisateurs"
+
+msgid "ACTION_FILTER_LIST_DEVICES"
+msgstr "Rechercher appareils"
+
+msgid "TEXT_USERS_ON_PAGE_userfrom_userto-total"
+msgstr "Utilisateur {userfrom} à {userto} affichés, {total} en tout."
+
+msgid "TEXT_PAGE_NUMBER_page-total"
+msgstr "Page {page} / {total}"
+
 msgid "TEXT_WORKSPACE_IS_SHARED_TOOLTIP"
 msgstr "L'espace de travail est partagé."
 
@@ -2400,5 +2418,3 @@ msgstr "Créer un nouvel espace de travail"
 
 msgid "ACTION_WORKSPACE_GOTO_FILE_LINK"
 msgstr "Trouver un fichier via son lien"
-
-
