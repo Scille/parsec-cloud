@@ -3,7 +3,7 @@
 from parsec.backend.backend_events import BackendEvent
 import attr
 import pendulum
-from typing import Tuple, List, Dict
+from typing import Tuple, List, Dict, Optional
 from collections import defaultdict
 
 from parsec.api.protocol import OrganizationID, UserID, DeviceID, DeviceName, HumanHandle
@@ -207,8 +207,8 @@ class MemoryUserComponent(BaseUserComponent):
     async def find(
         self,
         organization_id: OrganizationID,
-        query: str = None,
-        page: int = 0,
+        query: Optional[str] = None,
+        page: int = 1,
         per_page: int = 100,
         omit_revoked: bool = False,
     ):
@@ -223,7 +223,7 @@ class MemoryUserComponent(BaseUserComponent):
                 return ([], 0)
 
             results = [
-                user_id for user_id in users.keys() if user_id.lower().startswith(query.lower())
+                user_id for user_id in users.keys() if user_id.lower().find(query.lower()) != -1
             ]
 
         else:
@@ -240,12 +240,20 @@ class MemoryUserComponent(BaseUserComponent):
 
         # PostgreSQL does case insensitive sort
         sorted_results = sorted(results, key=lambda s: s.lower())
-        return sorted_results[(page - 1) * per_page : page * per_page], len(results)
+
+        # Handle pagination
+        paginated_results = sorted_results[(page - 1) * per_page : page * per_page]
+
+        if not paginated_results:
+            total = 0
+        else:
+            total = len(results)
+        return paginated_results, total
 
     async def find_humans(
         self,
         organization_id: OrganizationID,
-        query: str = None,
+        query: Optional[str] = None,
         page: int = 1,
         per_page: int = 100,
         omit_revoked: bool = False,
@@ -253,28 +261,24 @@ class MemoryUserComponent(BaseUserComponent):
     ) -> Tuple[List[HumanFindResultItem], int]:
         org = self._organizations[organization_id]
 
+        # Query is run against human handle field, hence non-human are automatically ignored
         if query:
-            data = []
-            query_terms = [qt.lower() for qt in query.split()]
+            users = []
             for user in org.users.values():
-                if user.human_handle:
-                    user_terms = (
-                        *[x.lower() for x in user.human_handle.label.split()],
-                        user.human_handle.email.lower(),
-                        user.user_id.lower(),
-                    )
-                else:
-                    user_terms = (user.user_id.lower(),)
-
-                for qt in query_terms:
-                    if not any(ut.startswith(qt) for ut in user_terms):
-                        break
-                else:
-                    # All query term have match the current user
-                    data.append(user)
-
+                # Handle a case insensitive find search to be conform with postgresql query
+                if user.human_handle and (
+                    str(user.human_handle.email).lower().find(query.lower()) != -1
+                    or str(user.human_handle.label).lower().find(query.lower()) != -1
+                ):
+                    users.append(user)
+            # Sort human by label
+            users = sorted(
+                [res for res in users if res.human_handle], key=lambda r: r.human_handle.label
+            )
         else:
-            data = org.users.values()
+            users = org.users.values()
+            if omit_non_human:
+                users = [r for r in users if r.human_handle]
 
         now = pendulum.now()
         results = [
@@ -283,28 +287,20 @@ class MemoryUserComponent(BaseUserComponent):
                 human_handle=user.human_handle,
                 revoked=(user.revoked_on is not None and user.revoked_on <= now),
             )
-            for user in data
+            for user in users
         ]
 
         if omit_revoked:
             results = [res for res in results if not res.revoked]
 
-        # PostgreSQL does case insensitive sort
-        humans = sorted(
-            [res for res in results if res.human_handle],
-            key=lambda r: (r.human_handle.label.lower(), r.user_id.lower()),  # type: ignore
-        )
-        non_humans = sorted(
-            [res for res in results if not res.human_handle], key=lambda r: r.user_id.lower()
-        )
+        # Handle pagination
+        paginated_results = results[(page - 1) * per_page : page * per_page]
 
-        if omit_non_human:
-            results = humans
+        if not paginated_results:
+            total = 0
         else:
-            # Keeping non-human last
-            results = [*humans, *non_humans]
-
-        return (results[(page - 1) * per_page : page * per_page], len(results))
+            total = len(results)
+        return (paginated_results, total)
 
     async def create_user_invitation(
         self, organization_id: OrganizationID, invitation: UserInvitation
