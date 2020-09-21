@@ -8,7 +8,7 @@ from tests.common import freeze_time, customize_fixtures
 from tests.backend.common import human_find
 
 
-# When users have same label, the sort will be in undeterminated order, we should use this class for the assertion.
+# When users have same label or for non-human, the sort could be in undeterminated order, we should use this class for the assertion.
 class NonDeterministicOrderedResults(list):
     def __init__(self, *args, order_key=None):
         super().__init__(*args)
@@ -283,19 +283,19 @@ async def test_pagination(access_testbed, local_device_factory):
     blacky2 = local_device_factory(base_human_handle=f"Blacky2 <blacky2@cobra.com>", org=org)
     await binder.bind_device(blacky2, certifier=godfrey1)
 
-    # # Find all
+    # Find all, they should be sorted by human label
     rep = await human_find(sock)
     assert rep == {
         "status": "ok",
         "results": [
+            {"user_id": blacky.user_id, "human_handle": blacky.human_handle, "revoked": False},
+            {"user_id": blacky2.user_id, "human_handle": blacky2.human_handle, "revoked": False},
+            {"user_id": blacky3.user_id, "human_handle": blacky3.human_handle, "revoked": False},
+            {"user_id": blacky4.user_id, "human_handle": blacky4.human_handle, "revoked": False},
             {"user_id": godfrey1.user_id, "human_handle": godfrey1.human_handle, "revoked": False},
+            {"user_id": mike.user_id, "human_handle": mike.human_handle, "revoked": False},
             {"user_id": richard.user_id, "human_handle": richard.human_handle, "revoked": False},
             {"user_id": roger.user_id, "human_handle": roger.human_handle, "revoked": False},
-            {"user_id": blacky3.user_id, "human_handle": blacky3.human_handle, "revoked": False},
-            {"user_id": mike.user_id, "human_handle": mike.human_handle, "revoked": False},
-            {"user_id": blacky.user_id, "human_handle": blacky.human_handle, "revoked": False},
-            {"user_id": blacky4.user_id, "human_handle": blacky4.human_handle, "revoked": False},
-            {"user_id": blacky2.user_id, "human_handle": blacky2.human_handle, "revoked": False},
         ],
         "page": 1,
         "per_page": 100,
@@ -307,10 +307,10 @@ async def test_pagination(access_testbed, local_device_factory):
     assert rep == {
         "status": "ok",
         "results": [
-            {"user_id": godfrey1.user_id, "human_handle": godfrey1.human_handle, "revoked": False},
-            {"user_id": richard.user_id, "human_handle": richard.human_handle, "revoked": False},
-            {"user_id": roger.user_id, "human_handle": roger.human_handle, "revoked": False},
+            {"user_id": blacky.user_id, "human_handle": blacky.human_handle, "revoked": False},
+            {"user_id": blacky2.user_id, "human_handle": blacky2.human_handle, "revoked": False},
             {"user_id": blacky3.user_id, "human_handle": blacky3.human_handle, "revoked": False},
+            {"user_id": blacky4.user_id, "human_handle": blacky4.human_handle, "revoked": False},
         ],
         "per_page": 4,
         "page": 1,
@@ -322,10 +322,10 @@ async def test_pagination(access_testbed, local_device_factory):
     assert rep == {
         "status": "ok",
         "results": [
+            {"user_id": godfrey1.user_id, "human_handle": godfrey1.human_handle, "revoked": False},
             {"user_id": mike.user_id, "human_handle": mike.human_handle, "revoked": False},
-            {"user_id": blacky.user_id, "human_handle": blacky.human_handle, "revoked": False},
-            {"user_id": blacky4.user_id, "human_handle": blacky4.human_handle, "revoked": False},
-            {"user_id": blacky2.user_id, "human_handle": blacky2.human_handle, "revoked": False},
+            {"user_id": richard.user_id, "human_handle": richard.human_handle, "revoked": False},
+            {"user_id": roger.user_id, "human_handle": roger.human_handle, "revoked": False},
         ],
         "per_page": 4,
         "page": 2,
@@ -383,3 +383,66 @@ async def test_find_with_query_ignore_non_human(alice_backend_sock, alice, bob, 
     assert rep == {"status": "ok", "results": [], "per_page": 100, "page": 1, "total": 0}
     rep = await human_find(alice_backend_sock, query="alice")
     assert rep == {"status": "ok", "results": [], "per_page": 100, "page": 1, "total": 0}
+
+
+@pytest.mark.trio
+async def test_no_query_users_with_and_without_human_label(access_testbed, local_device_factory):
+    binder, org, godfrey1, sock = access_testbed
+
+    ninja = local_device_factory(
+        base_human_handle=f"Ninja Warrior <Ninja_Warrior@ninja.com>", org=org
+    )
+    await binder.bind_device(ninja, certifier=godfrey1)
+
+    roger = local_device_factory(base_human_handle=f"Roger <roger@cobra.com>", org=org)
+    await binder.bind_device(roger, certifier=godfrey1)
+
+    blacky3 = local_device_factory(base_human_handle=f"Blacky3 <blacky3@cobra.com>", org=org)
+    await binder.bind_device(blacky3, certifier=godfrey1)
+
+    mike = local_device_factory(has_human_handle=False, org=org)
+    await binder.bind_device(mike, certifier=godfrey1)
+
+    blacky = local_device_factory(base_human_handle=f"Blacky <blacky@cobra.com>", org=org)
+    await binder.bind_device(blacky, certifier=godfrey1)
+
+    easy = local_device_factory(has_human_handle=False, org=org)
+    await binder.bind_device(easy, certifier=godfrey1)
+
+    ice = local_device_factory(base_human_handle=f"ice <ice@freeze.com>", org=org)
+    await binder.bind_device(ice, certifier=godfrey1)
+
+    richard = local_device_factory(base_human_handle=f"richard <richard@example.com>", org=org)
+    await binder.bind_device(richard, certifier=godfrey1)
+
+    zoe = local_device_factory(base_human_handle=f"zoe <zoe@example.com>", org=org)
+    await binder.bind_device(zoe, certifier=godfrey1)
+
+    titeuf = local_device_factory(has_human_handle=False, org=org)
+    await binder.bind_device(titeuf, certifier=godfrey1)
+
+    # Users with human label should be sorted but for now non_human users create a NonDeterministicOrder
+
+    expected_result = NonDeterministicOrderedResults(
+        [
+            {"user_id": blacky.user_id, "revoked": False, "human_handle": blacky.human_handle},
+            {"user_id": blacky3.user_id, "revoked": False, "human_handle": blacky3.human_handle},
+            {"user_id": godfrey1.user_id, "revoked": False, "human_handle": godfrey1.human_handle},
+            {"user_id": ice.user_id, "revoked": False, "human_handle": ice.human_handle},
+            {"user_id": ninja.user_id, "revoked": False, "human_handle": ninja.human_handle},
+            {"user_id": richard.user_id, "revoked": False, "human_handle": richard.human_handle},
+            {"user_id": roger.user_id, "revoked": False, "human_handle": roger.human_handle},
+            {"user_id": zoe.user_id, "revoked": False, "human_handle": zoe.human_handle},
+            {"user_id": easy.user_id, "revoked": False, "human_handle": None},
+            {"user_id": mike.user_id, "revoked": False, "human_handle": None},
+            {"user_id": titeuf.user_id, "revoked": False, "human_handle": None},
+        ]
+    )
+    rep = await human_find(sock, per_page=11, page=1)
+    assert rep == {
+        "status": "ok",
+        "results": expected_result,
+        "per_page": 11,
+        "page": 1,
+        "total": 11,
+    }

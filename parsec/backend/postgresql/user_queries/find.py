@@ -42,7 +42,6 @@ def _q_human_factory(query, omit_revoked, omit_non_human, offset, limit):
         conditions.append("AND user_.human IS NOT NULL")
     if query:
         conditions.append("AND CONCAT(human.label,human.email) ~* $query")
-        conditions.append("ORDER BY human.label")
     return Q(
         f"""SELECT
     user_.user_id,
@@ -54,7 +53,7 @@ def _q_human_factory(query, omit_revoked, omit_non_human, offset, limit):
     WHERE
     user_.organization = { q_organization_internal_id("$organization_id") }
     { " ".join(conditions) }
-
+    ORDER BY human.label
     LIMIT { limit }
     OFFSET {offset}
     """
@@ -143,7 +142,7 @@ async def query_find_humans(
     results = [
         HumanFindResultItem(
             user_id=UserID(user_id),
-            human_handle=HumanHandle(email=email, label=label) if email is not None else None,
+            human_handle=HumanHandle(email=email, label=label) if email else None,
             revoked=revoked,
         )
         for user_id, email, label, revoked, _ in raw_results
