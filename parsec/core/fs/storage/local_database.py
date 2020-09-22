@@ -23,6 +23,8 @@ async def thread_pool_runner(max_workers: Optional[int] = None) -> AsyncIterator
     trio_token = trio.hazmat.current_trio_token()
 
     async def run_in_thread(fn: Callable, *args: Any) -> Any:
+        send_channel: trio.MemorySendChannel[Any]
+        receive_channel: trio.MemoryReceiveChannel[Any]
         send_channel, receive_channel = trio.open_memory_channel(1)
 
         def target() -> None:

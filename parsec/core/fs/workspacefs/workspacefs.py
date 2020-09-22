@@ -15,6 +15,9 @@ from parsec.core.types import (
     EntryID,
     LocalDevice,
     WorkspaceRole,
+    LocalFileManifest,
+    RemoteFolderManifest,
+    RemoteWorkspaceManifest,
     RemoteFolderishManifests,
     DEFAULT_BLOCK_SIZE,
 )
@@ -23,7 +26,6 @@ from parsec.core.fs.remote_loader import RemoteLoader
 from parsec.core.fs import workspacefs  # Needed to break cyclic import with WorkspaceFSTimestamped
 from parsec.core.fs.workspacefs.sync_transactions import SyncTransactions
 from parsec.core.fs.workspacefs.versioning_helpers import VersionLister
-from parsec.core.fs.utils import is_file_manifest, is_folderish_manifest
 from parsec.core.fs.exceptions import (
     FSRemoteManifestNotFound,
     FSRemoteManifestNotFoundBadVersion,
@@ -549,13 +551,11 @@ class WorkspaceFS:
                 return remote_manifest or (await self.local_storage.get_manifest(entry_id)).base
 
             # Synchronize placeholder children
-            if is_folderish_manifest(new_remote_manifest):
-                await self._synchronize_placeholders(
-                    cast(RemoteFolderishManifests, new_remote_manifest)
-                )
+            if isinstance(new_remote_manifest, (RemoteFolderManifest, RemoteWorkspaceManifest)):
+                await self._synchronize_placeholders(new_remote_manifest)
 
             # Upload blocks
-            if is_file_manifest(new_remote_manifest):
+            if isinstance(new_remote_manifest, RemoteFileManifest):
                 await self._upload_blocks(cast(RemoteFileManifest, new_remote_manifest))
 
             # Restamp the remote manifest
@@ -609,16 +609,18 @@ class WorkspaceFS:
         except FSFileConflictError as exc:
             local_manifest, remote_manifest = exc.args
             # Only file manifest have synchronization conflict
-            assert is_file_manifest(local_manifest)
+            assert isinstance(local_manifest, LocalFileManifest)
             await self.transactions.file_conflict(entry_id, local_manifest, remote_manifest)
             return await self.sync_by_id(local_manifest.parent)
 
         # Non-recursive
-        if not recursive or is_file_manifest(manifest):
+        if not recursive or not isinstance(
+            manifest, (RemoteFolderManifest, RemoteWorkspaceManifest)
+        ):
             return
 
         # Synchronize children
-        for name, entry_id in cast(RemoteFolderishManifests, manifest).children.items():
+        for name, entry_id in manifest.children.items():
             await self.sync_by_id(entry_id, remote_changed=remote_changed, recursive=True)
 
     async def sync(self, *, remote_changed: bool = True) -> None:
@@ -641,7 +643,7 @@ class WorkspaceFS:
             return
 
         # A file manifest, nothing to do
-        if is_file_manifest(manifest):
+        if isinstance(manifest, LocalFileManifest):
             return
 
         # Apply "prevent sync" pattern (idempotent)

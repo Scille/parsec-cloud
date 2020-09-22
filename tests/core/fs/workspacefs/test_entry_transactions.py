@@ -18,10 +18,9 @@ from hypothesis_trio.stateful import (
 )
 from hypothesis import strategies as st
 
-from parsec.core.types import FsPath, EntryID
-from parsec.core.fs.utils import is_folder_manifest
 from parsec.core.fs.storage import WorkspaceStorage
 from parsec.core.fs.exceptions import FSRemoteManifestNotFound
+from parsec.core.types import FsPath, EntryID, LocalFolderManifest
 
 from tests.common import freeze_time, call_with_control
 
@@ -401,7 +400,7 @@ def test_entry_transactions(
             async def _recursive_build_id_to_path(entry_id, parent_id):
                 new_id_to_path.add((entry_id, parent_id))
                 manifest = await local_storage.get_manifest(entry_id)
-                if is_folder_manifest(manifest):
+                if isinstance(manifest, LocalFolderManifest):
                     for child_name, child_entry_id in manifest.children.items():
                         await _recursive_build_id_to_path(child_entry_id, entry_id)
 

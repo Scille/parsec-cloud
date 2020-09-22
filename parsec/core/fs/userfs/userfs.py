@@ -21,6 +21,7 @@ from structlog import get_logger
 
 from async_generator import asynccontextmanager
 
+from parsec.utils import open_service_nursery
 from parsec.core.core_events import CoreEvent
 from parsec.event_bus import EventBus
 from parsec.crypto import SecretKey
@@ -220,7 +221,7 @@ class UserFS:
         async with UserStorage.run(self.device, self.path) as self.storage:
 
             # Nursery for workspace storages
-            async with trio.open_service_nursery() as self._workspace_storage_nursery:
+            async with open_service_nursery() as self._workspace_storage_nursery:
 
                 # Make sure all the workspaces are loaded
                 # In particular, we want to make sure that any workspace available through

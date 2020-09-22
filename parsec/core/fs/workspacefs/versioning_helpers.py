@@ -18,7 +18,6 @@ concurrent downloads (which will be implemented in a next version).
 from heapq import heappush, heappop
 import attr
 import math
-import trio
 import typing
 from functools import partial
 from typing import List, Tuple, NamedTuple, Optional, Union, cast, Dict
@@ -27,7 +26,7 @@ from collections import defaultdict
 
 from parsec.api.protocol import DeviceID
 from parsec.core.types import FsPath, EntryID
-from parsec.core.fs.utils import is_file_manifest, is_folder_manifest, is_workspace_manifest
+from parsec.utils import open_service_nursery
 from parsec.core.fs.exceptions import FSRemoteManifestNotFound
 from parsec.api.data import FileManifest, UserManifest, FolderManifest, WorkspaceManifest
 
@@ -119,7 +118,7 @@ class ManifestDataAndMutablePaths:
         self, manifest_cache, entry_id: EntryID, early: Pendulum, late: Pendulum
     ):
         # TODO : Use future manifest source field to follow files and directories
-        async with trio.open_service_nursery() as child_nursery:
+        async with open_service_nursery() as child_nursery:
             child_nursery.start_soon(
                 self.populate_source_path, manifest_cache, entry_id, early.add(microseconds=-1)
             )
@@ -269,7 +268,7 @@ class ManifestCache:
 
         # Loop over parts
         parts = []
-        while not is_workspace_manifest(current_manifest):
+        while not isinstance(current_manifest, WorkspaceManifest):
             # Get the manifest
             try:
                 current_manifest = cast(Union[FolderManifest, FileManifest], current_manifest)
@@ -591,8 +590,8 @@ class VersionListerOneShot:
             ManifestData(
                 manifest.author,
                 manifest.updated,
-                is_folder_manifest(manifest),
-                None if not is_file_manifest(manifest) else manifest.size,
+                isinstance(manifest, FolderManifest),
+                None if not isinstance(manifest, FileManifest) else manifest.size,
             )
         )
         if len(self.target.parts) == path_level:
@@ -607,7 +606,7 @@ class VersionListerOneShot:
                 else None,
             )
         else:
-            if not is_file_manifest(manifest):  # If it is a file, just ignores current path
+            if not isinstance(manifest, FileManifest):  # If it is a file, just ignores current path
                 for child_name, child_id in manifest.children.items():
                     if child_name == self.target.parts[path_level]:
                         return await self._populate_tree_list_versions(

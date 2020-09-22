@@ -12,12 +12,13 @@ from parsec.core.types import FileDescriptor, EntryID, LocalDevice
 from parsec.core.fs.remote_loader import RemoteLoader
 from parsec.core.fs.storage import WorkspaceStorage
 from parsec.core.fs.exceptions import FSLocalMissError, FSInvalidFileDescriptor, FSEndOfFileError
-from parsec.core.fs.utils import is_workspace_manifest
+
 from parsec.core.types import (
     Chunk,
     LocalFileManifest,
     LocalFolderishManifests,
     LocalNonRootManifests,
+    LocalWorkspaceManifest,
 )
 from parsec.core.fs.workspacefs.file_operations import (
     prepare_read,
@@ -151,7 +152,7 @@ class FileTransactions:
             return None
 
         # Walk the parent chain until the workspace manifest is reached
-        while not is_workspace_manifest(current_manifest):
+        while not isinstance(current_manifest, LocalWorkspaceManifest):
             current_manifest = cast(LocalNonRootManifests, current_manifest)
 
             try:

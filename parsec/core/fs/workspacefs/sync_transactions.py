@@ -15,6 +15,7 @@ from parsec.core.types import (
     BaseLocalManifest,
     LocalFileManifest,
     LocalFolderManifest,
+    LocalWorkspaceManifest,
     LocalFolderishManifests,
     RemoteFolderishManifests,
 )
@@ -24,9 +25,9 @@ from parsec.core.fs.exceptions import (
     FSFileConflictError,
     FSReshapingRequiredError,
     FSLocalMissError,
+    FSIsADirectoryError,
+    FSNotADirectoryError,
 )
-
-from parsec.core.fs.utils import is_file_manifest, is_folderish_manifest
 
 __all__ = "SyncTransactions"
 
@@ -148,10 +149,10 @@ def merge_manifests(
     force_apply_pattern: Optional[bool] = False,
 ) -> BaseLocalManifest:
     # Start by re-applying pattern (idempotent)
-    if is_folderish_manifest(local_manifest) and force_apply_pattern:
-        local_manifest = cast(LocalFolderishManifests, local_manifest).apply_prevent_sync_pattern(
-            prevent_sync_pattern
-        )
+    if force_apply_pattern and isinstance(
+        local_manifest, (LocalFolderManifest, LocalWorkspaceManifest)
+    ):
+        local_manifest = local_manifest.apply_prevent_sync_pattern(prevent_sync_pattern)
 
     # The remote hasn't changed
     if remote_manifest is None or remote_manifest.version <= local_manifest.base_version:
@@ -185,7 +186,7 @@ def merge_manifests(
     assert remote_manifest.author != local_author
 
     # Cannot solve a file conflict directly
-    if is_file_manifest(local_manifest):
+    if not isinstance(local_manifest, (LocalFolderManifest, LocalWorkspaceManifest)):
         raise FSFileConflictError(local_manifest, remote_manifest)
 
     # Solve the folder conflict
@@ -230,6 +231,10 @@ class SyncTransactions(EntryTransactions):
         # Fetch and lock
         async with self.local_storage.lock_manifest(entry_id) as local_manifest:
 
+            # Not a folderish manifest
+            if not isinstance(local_manifest, (LocalFolderManifest, LocalWorkspaceManifest)):
+                return
+
             # Craft new local manifest
             new_local_manifest = local_manifest.apply_prevent_sync_pattern(prevent_sync_pattern)
 
@@ -268,7 +273,11 @@ class SyncTransactions(EntryTransactions):
         async with self.local_storage.lock_manifest(entry_id) as local_manifest:
 
             # Sync cannot be performed yet
-            if not final and is_file_manifest(local_manifest) and not local_manifest.is_reshaped():
+            if (
+                not final
+                and isinstance(local_manifest, LocalFileManifest)
+                and not local_manifest.is_reshaped()
+            ):
 
                 # Try a quick reshape (without downloading any block)
                 missing = await self._manifest_reshape(local_manifest)
@@ -279,6 +288,7 @@ class SyncTransactions(EntryTransactions):
 
                 # The manifest should be reshaped by now
                 local_manifest = await self.local_storage.get_manifest(entry_id)
+                assert isinstance(local_manifest, LocalFileManifest)
                 assert local_manifest.is_reshaped()
 
             # Merge manifests
@@ -327,6 +337,10 @@ class SyncTransactions(EntryTransactions):
             # Fetch and lock
             async with self.local_storage.lock_manifest(entry_id) as manifest:
 
+                # Not a file manifest
+                if not isinstance(manifest, LocalFileManifest):
+                    raise FSIsADirectoryError(entry_id)
+
                 # Normalize
                 missing = await self._manifest_reshape(manifest)
 
@@ -351,7 +365,16 @@ class SyncTransactions(EntryTransactions):
         # Lock parent then child
         parent_id = local_manifest.parent
         async with self.local_storage.lock_manifest(parent_id) as parent_manifest:
+
+            # Not a folderish manifest
+            if not isinstance(parent_manifest, (LocalFolderManifest, LocalWorkspaceManifest)):
+                raise FSNotADirectoryError(parent_id)
+
             async with self.local_storage.lock_manifest(entry_id) as current_manifest:
+
+                # Not a file manifest
+                if not isinstance(current_manifest, LocalFileManifest):
+                    raise FSIsADirectoryError(entry_id)
 
                 # Make sure the file still exists
                 filename = get_filename(parent_manifest, entry_id)

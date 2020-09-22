@@ -2,16 +2,6 @@
 
 import enum
 
-from typing import Union
-from parsec.api.data import WorkspaceManifest, FileManifest, FolderManifest, BaseManifest
-from parsec.core.types import (
-    LocalUserManifest,
-    LocalWorkspaceManifest,
-    LocalFolderManifest,
-    LocalFileManifest,
-    BaseLocalManifest,
-)
-
 
 # Cross-plateform windows error enumeration
 
@@ -29,35 +19,3 @@ class ntstatus(enum.IntEnum):
     STATUS_DIRECTORY_NOT_EMPTY = 0xC0000101
     STATUS_NOT_A_DIRECTORY = 0xC0000103
     STATUS_HOST_UNREACHABLE = 0xC000023D
-
-
-# TODO: remove those methods ?
-
-
-def is_placeholder_manifest(manifest: BaseLocalManifest) -> bool:
-    return manifest.is_placeholder
-
-
-def is_file_manifest(manifest: Union[BaseManifest, BaseLocalManifest]) -> bool:
-    return isinstance(manifest, (FileManifest, LocalFileManifest))
-
-
-def is_folder_manifest(manifest: Union[BaseManifest, BaseLocalManifest]) -> bool:
-    return isinstance(manifest, (FolderManifest, LocalFolderManifest))
-
-
-def is_workspace_manifest(manifest: Union[BaseManifest, BaseLocalManifest]) -> bool:
-    return isinstance(manifest, (WorkspaceManifest, LocalWorkspaceManifest))
-
-
-def is_folderish_manifest(manifest: Union[BaseManifest, BaseLocalManifest]) -> bool:
-    return isinstance(
-        manifest,
-        (
-            FolderManifest,
-            LocalFolderManifest,
-            WorkspaceManifest,
-            LocalWorkspaceManifest,
-            LocalUserManifest,
-        ),
-    )

@@ -365,7 +365,7 @@ class LocalFileManifest(BaseLocalManifest):
         id: Optional[EntryID] = None,
         now: Pendulum = None,
         blocksize=DEFAULT_BLOCK_SIZE,
-    ):
+    ) -> "LocalFileManifest":
         now = now or pendulum_now()
         blocks = ()
         return cls(
@@ -635,7 +635,7 @@ class LocalFolderManifest(BaseLocalManifest, LocalFolderishManifestMixin):
     @classmethod
     def new_placeholder(
         cls, author: DeviceID, parent: EntryID, id: EntryID = None, now: Pendulum = None
-    ):
+    ) -> "LocalFolderManifest":
         now = now or pendulum_now()
         children = FrozenDict()
         return cls(
@@ -746,7 +746,9 @@ class LocalWorkspaceManifest(BaseLocalManifest, LocalFolderishManifestMixin):
     remote_confinement_points: FrozenSet[EntryID]
 
     @classmethod
-    def new_placeholder(cls, author: DeviceID, id: EntryID = None, now: Pendulum = None):
+    def new_placeholder(
+        cls, author: DeviceID, id: EntryID = None, now: Pendulum = None
+    ) -> "LocalWorkspaceManifest":
         now = now or pendulum_now()
         children = FrozenDict()
         return cls(
