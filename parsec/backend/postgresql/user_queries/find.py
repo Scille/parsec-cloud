@@ -47,7 +47,7 @@ UNION ALL
 )
 ORDER BY row_order
 """
-)
+    )
 
 
 @lru_cache()
@@ -78,12 +78,12 @@ WITH full_results AS (
         human.email AS email,
         human.label AS label,
         user_.revoked_on IS NOT NULL AND user_.revoked_on <= $now AS is_revoked,
-        ROW_NUMBER() OVER (ORDER BY human.label) AS row_order
+        ROW_NUMBER() OVER (ORDER BY LOWER(human.label) NULLS LAST) AS row_order
     FROM user_ LEFT JOIN human ON user_.human=human._id
     WHERE
         user_.organization = { q_organization_internal_id("$organization_id") }
         { " ".join(conditions) }
-    ORDER BY human.label
+    ORDER BY LOWER(human.label) NULLS LAST
 )
 (
     SELECT
@@ -110,7 +110,7 @@ UNION ALL
 )
 ORDER BY row_order
 """
-)
+    )
 
 
 @query()
@@ -133,18 +133,23 @@ async def query_find(
             # Contains invalid caracters, no need to go further
             return ([], 0)
 
-    q = _q_factory(
-        with_query=bool(query),
-        omit_revoked=omit_revoked,
-    )
+    q = _q_factory(with_query=bool(query), omit_revoked=omit_revoked)
     if query:
         if omit_revoked:
-            args = q(organization_id=organization_id, now=pendulum_now(), query=query, offset=offset, limit=per_page)
+            args = q(
+                organization_id=organization_id,
+                now=pendulum_now(),
+                query=query,
+                offset=offset,
+                limit=per_page,
+            )
         else:
             args = q(organization_id=organization_id, query=query, offset=offset, limit=per_page)
     else:
         if omit_revoked:
-            args = q(organization_id=organization_id, now=pendulum_now(), offset=offset, limit=per_page)
+            args = q(
+                organization_id=organization_id, now=pendulum_now(), offset=offset, limit=per_page
+            )
         else:
             args = q(organization_id=organization_id, offset=offset, limit=per_page)
 
@@ -171,12 +176,16 @@ async def query_find_humans(
         return ([], 0)
 
     q = _q_human_factory(
-        with_query=bool(query),
-        omit_revoked=omit_revoked,
-        omit_non_human=omit_non_human,
+        with_query=bool(query), omit_revoked=omit_revoked, omit_non_human=omit_non_human
     )
     if query:
-        args = q(organization_id=organization_id, now=pendulum_now(), query=query, offset=offset, limit=per_page)
+        args = q(
+            organization_id=organization_id,
+            now=pendulum_now(),
+            query=query,
+            offset=offset,
+            limit=per_page,
+        )
     else:
         args = q(organization_id=organization_id, now=pendulum_now(), offset=offset, limit=per_page)
 

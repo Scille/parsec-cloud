@@ -436,7 +436,10 @@ async def test_no_query_users_with_and_without_human_label(access_testbed, local
             {"user_id": easy.user_id, "revoked": False, "human_handle": None},
             {"user_id": mike.user_id, "revoked": False, "human_handle": None},
             {"user_id": titeuf.user_id, "revoked": False, "human_handle": None},
-        ]
+        ],
+        order_key=lambda x: x["human_handle"].label.lower()
+        if x["human_handle"]
+        else "~",  # Keep non-human last
     )
     rep = await human_find(sock, per_page=11, page=1)
     assert rep == {

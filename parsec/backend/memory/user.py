@@ -240,7 +240,7 @@ class MemoryUserComponent(BaseUserComponent):
                 return revoked_on is not None and revoked_on <= now
 
             results = [user_id for user_id in results if not _user_is_revoked(user_id)]
-        
+
         total = len(results)
 
         # PostgreSQL does case insensitive sort
