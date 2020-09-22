@@ -22,6 +22,7 @@ def core_config_options(fn):
         "--log-level",
         "-l",
         default="WARNING",
+        envvar="PARSEC_LOG_LEVEL",
         type=click.Choice(("DEBUG", "INFO", "WARNING", "ERROR")),
     )
     @click.option("--log-format", "-f", type=click.Choice(("CONSOLE", "JSON")))
@@ -69,9 +70,10 @@ def core_config_and_device_options(fn):
         "--device",
         "-D",
         required=True,
+        envvar="PARSEC_DEVICE",
         help="Device to use designed by it ID, see `list_devices` command to get the available IDs",
     )
-    @click.option("--password", "-P")
+    @click.option("--password", "-P", envvar="PARSEC_DEVICE_PASSWORD")
     @wraps(fn)
     def wrapper(**kwargs):
         config = kwargs["config"]
