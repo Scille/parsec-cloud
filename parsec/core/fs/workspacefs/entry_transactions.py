@@ -92,9 +92,8 @@ class EntryTransactions(FileTransactions):
         # Follow the path
         for name in path.parts:
             manifest = await self._load_manifest(entry_id)
-            if isinstance(manifest, LocalFileManifest):
+            if not isinstance(manifest, (LocalFolderManifest, LocalWorkspaceManifest)):
                 raise FSNotADirectoryError(filename=path)
-            manifest = cast(LocalFolderishManifests, manifest)
             try:
                 entry_id = manifest.children[name]
             except (AttributeError, KeyError):

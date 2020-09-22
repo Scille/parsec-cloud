@@ -1,7 +1,7 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
 
 from itertools import count
-from typing import Optional, List, Dict, AsyncIterator, cast, Tuple, Any, Union, Pattern
+from typing import Optional, List, Dict, AsyncIterator, Tuple, Any, Union, Pattern
 
 from pendulum import now as pendulum_now
 
@@ -158,7 +158,6 @@ def merge_manifests(
     if remote_manifest is None or remote_manifest.version <= local_manifest.base_version:
         return local_manifest
     assert remote_manifest is not None
-    remote_manifest = cast(BaseRemoteManifest, remote_manifest)
 
     # Extract versions
     remote_version = remote_manifest.version
@@ -191,9 +190,9 @@ def merge_manifests(
 
     # Solve the folder conflict
     new_children = merge_folder_children(
-        cast(LocalFolderishManifests, local_manifest).base.children,
-        cast(LocalFolderishManifests, local_manifest).children,
-        cast(LocalFolderishManifests, local_from_remote).children,
+        local_manifest.base.children,
+        local_manifest.children,
+        local_from_remote.children,
         remote_manifest.author,
     )
 
