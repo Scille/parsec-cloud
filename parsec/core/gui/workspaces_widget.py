@@ -17,6 +17,7 @@ from parsec.core.types import (
     EntryID,
     EntryName,
     BackendOrganizationFileLinkAddr,
+    WorkspaceRole,
 )
 from parsec.core.fs import (
     WorkspaceFS,
@@ -88,8 +89,10 @@ async def _do_workspace_list(core):
         try:
             roles = await workspace_fs.get_user_roles()
             for user, role in roles.items():
-                user_info = await core.get_user_info(user)
-                users_roles[user_info.user_id] = (role, user_info)
+                user_info = None
+                if role == WorkspaceRole.OWNER or len(roles) <= 2:
+                    user_info = await core.get_user_info(user)
+                users_roles[user] = (role, user_info)
         except FSBackendOfflineError:
             # Fallback to craft a custom list with only our device since it's
             # the only one we know about
@@ -115,6 +118,8 @@ async def _do_workspace_list(core):
                 # Do not include confined files and directories
                 if child_info["confinement_point"] is None:
                     files.append(child.name)
+                if len(files) == 4:
+                    break
         except FSBackendOfflineError:
             pass
         except FSWorkspaceInMaintenance:
