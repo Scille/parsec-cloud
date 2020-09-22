@@ -212,6 +212,9 @@ class MemoryUserComponent(BaseUserComponent):
         per_page: int = 100,
         omit_revoked: bool = False,
     ):
+        assert page >= 1
+        assert per_page >= 1
+
         org = self._organizations[organization_id]
         users = org.users
 
@@ -237,6 +240,8 @@ class MemoryUserComponent(BaseUserComponent):
                 return revoked_on is not None and revoked_on <= now
 
             results = [user_id for user_id in results if not _user_is_revoked(user_id)]
+        
+        total = len(results)
 
         # PostgreSQL does case insensitive sort
         sorted_results = sorted(results, key=lambda s: s.lower())
@@ -244,10 +249,6 @@ class MemoryUserComponent(BaseUserComponent):
         # Handle pagination
         paginated_results = sorted_results[(page - 1) * per_page : page * per_page]
 
-        if not paginated_results:
-            total = 0
-        else:
-            total = len(results)
         return paginated_results, total
 
     async def find_humans(
@@ -259,6 +260,9 @@ class MemoryUserComponent(BaseUserComponent):
         omit_revoked: bool = False,
         omit_non_human: bool = False,
     ) -> Tuple[List[HumanFindResultItem], int]:
+        assert page >= 1
+        assert per_page >= 1
+
         org = self._organizations[organization_id]
 
         # Query is run against human handle field, hence non-human are automatically ignored
@@ -296,14 +300,12 @@ class MemoryUserComponent(BaseUserComponent):
         if omit_revoked:
             results = [res for res in results if not res.revoked]
 
+        total = len(results)
+
         # Handle pagination
         paginated_results = results[(page - 1) * per_page : page * per_page]
 
-        if not paginated_results:
-            total = 0
-        else:
-            total = len(results)
-        return (paginated_results, total)
+        return paginated_results, total
 
     async def create_user_invitation(
         self, organization_id: OrganizationID, invitation: UserInvitation

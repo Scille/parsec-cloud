@@ -100,7 +100,7 @@ async def test_api_user_find(access_testbed, organization_factory, local_device_
 
     # Test out of pagination
     rep = await user_find(sock, query="Phil", page=2, per_page=5)
-    assert rep == {"status": "ok", "results": [], "per_page": 5, "page": 2, "total": 0}
+    assert rep == {"status": "ok", "results": [], "per_page": 5, "page": 2, "total": 2}
 
     # Test no params
     rep = await user_find(sock)

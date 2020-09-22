@@ -334,7 +334,7 @@ async def test_pagination(access_testbed, local_device_factory):
 
     # Test out of pagination
     rep = await human_find(sock, page=3, per_page=4)
-    assert rep == {"status": "ok", "results": [], "per_page": 4, "page": 3, "total": 0}
+    assert rep == {"status": "ok", "results": [], "per_page": 4, "page": 3, "total": 8}
 
     # Test sort is before pagination when pagination and test non-sensitive sort
     rep = await human_find(sock, page=1, per_page=1, query="BlaCkY")

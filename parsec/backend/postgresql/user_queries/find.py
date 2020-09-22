@@ -10,54 +10,107 @@ from parsec.backend.postgresql.utils import Q, q_organization_internal_id, query
 
 
 @lru_cache()
-def _q_factory(query, omit_revoked, offset, limit):
+def _q_factory(with_query: bool, omit_revoked: bool) -> Q:
     conditions = []
-    if query:
+    if with_query:
         conditions.append("AND user_id ~* $query")
     if omit_revoked:
         conditions.append("AND (revoked_on IS NULL OR revoked_on > $now)")
     return Q(
         f"""
-SELECT
-    user_id,
-    count(*) OVER() AS full_count
-FROM user_
-WHERE
-    organization = { q_organization_internal_id("$organization_id") }
-    { " ".join(conditions) }
-ORDER BY user_id
-LIMIT { limit }
-OFFSET {offset}
-    """
-    )
+WITH full_results AS (
+    SELECT
+        user_id,
+        ROW_NUMBER() OVER (ORDER BY user_id) AS row_order
+    FROM user_
+    WHERE
+        organization = { q_organization_internal_id("$organization_id") }
+        { " ".join(conditions) }
+    ORDER BY user_id
+)
+(
+    SELECT
+        '' AS user_id,
+        0 AS row_order,
+        count(*) AS total
+    FROM full_results
+)
+UNION ALL
+(
+    SELECT
+        user_id AS user_id,
+        row_order,
+        0 AS total
+    FROM full_results
+    LIMIT $limit
+    OFFSET $offset
+)
+ORDER BY row_order
+"""
+)
 
 
 @lru_cache()
-def _q_human_factory(query, omit_revoked, omit_non_human, offset, limit):
+def _q_human_factory(with_query: bool, omit_revoked: bool, omit_non_human: bool) -> Q:
     conditions = []
     if omit_revoked:
         conditions.append("AND (user_.revoked_on IS NULL OR user_.revoked_on > $now)")
     # We only query on human
-    if omit_non_human or query:
+    if omit_non_human or with_query:
         conditions.append("AND user_.human IS NOT NULL")
-    if query:
+    if with_query:
         conditions.append("AND CONCAT(human.label,human.email) ~* $query")
+
+    # Query with pagination & total result not trivial in SQL:
+    # - We do the query with order but without pagination to get all results
+    # - From the previous query, we generate a query for total results and
+    #   another to get the rows within the pagination range
+    # - Finally we merge the two queries together through an UNION
+    # However UNION ALL doesn't guarantee the order of the rows is kept,
+    # so we have to handle this by hand with the `row_order` field, this
+    # guarantee first row is the total count, then remaining rows are the
+    # pagination items in the correct order.
     return Q(
-        f"""SELECT
-    user_.user_id,
-    human.email,
-    human.label,
-    user_.revoked_on IS NOT NULL AND user_.revoked_on <= $now,
-    count(*) OVER() AS full_count
+        f"""
+WITH full_results AS (
+    SELECT
+        user_.user_id AS user_id,
+        human.email AS email,
+        human.label AS label,
+        user_.revoked_on IS NOT NULL AND user_.revoked_on <= $now AS is_revoked,
+        ROW_NUMBER() OVER (ORDER BY human.label) AS row_order
     FROM user_ LEFT JOIN human ON user_.human=human._id
     WHERE
-    user_.organization = { q_organization_internal_id("$organization_id") }
-    { " ".join(conditions) }
+        user_.organization = { q_organization_internal_id("$organization_id") }
+        { " ".join(conditions) }
     ORDER BY human.label
-    LIMIT { limit }
-    OFFSET {offset}
-    """
-    )
+)
+(
+    SELECT
+        '' AS user_id,
+        '' AS email,
+        '' AS label,
+        false AS is_revoked,
+        0 AS row_order,
+        count(*) AS total
+    FROM full_results
+)
+UNION ALL
+(
+    SELECT
+        user_id,
+        email,
+        label,
+        is_revoked,
+        row_order,
+        0 AS total
+    FROM full_results
+    LIMIT $limit
+    OFFSET $offset
+)
+ORDER BY row_order
+"""
+)
 
 
 @query()
@@ -81,28 +134,23 @@ async def query_find(
             return ([], 0)
 
     q = _q_factory(
-        query=True if query else False,
-        omit_revoked=True if omit_revoked else False,
-        offset=offset,
-        limit=per_page,
+        with_query=bool(query),
+        omit_revoked=omit_revoked,
     )
     if query:
         if omit_revoked:
-            args = q(organization_id=organization_id, now=pendulum_now(), query=query)
+            args = q(organization_id=organization_id, now=pendulum_now(), query=query, offset=offset, limit=per_page)
         else:
-            args = q(organization_id=organization_id, query=query)
+            args = q(organization_id=organization_id, query=query, offset=offset, limit=per_page)
     else:
         if omit_revoked:
-            args = q(organization_id=organization_id, now=pendulum_now())
+            args = q(organization_id=organization_id, now=pendulum_now(), offset=offset, limit=per_page)
         else:
-            args = q(organization_id=organization_id)
+            args = q(organization_id=organization_id, offset=offset, limit=per_page)
 
     raw_results = await conn.fetch(*args)
-    if raw_results:
-        total = raw_results[0]["full_count"]
-    else:
-        total = 0
-    results = [UserID(x[0]) for x in raw_results]
+    total = raw_results[0]["total"]
+    results = [UserID(x["user_id"]) for x in raw_results[1:]]
 
     return results, total
 
@@ -123,29 +171,24 @@ async def query_find_humans(
         return ([], 0)
 
     q = _q_human_factory(
-        query=True if query else False,
-        omit_revoked=True if omit_revoked else False,
-        omit_non_human=True if omit_non_human else False,
-        offset=offset,
-        limit=per_page,
+        with_query=bool(query),
+        omit_revoked=omit_revoked,
+        omit_non_human=omit_non_human,
     )
     if query:
-        args = q(organization_id=organization_id, now=pendulum_now(), query=query)
+        args = q(organization_id=organization_id, now=pendulum_now(), query=query, offset=offset, limit=per_page)
     else:
-        args = q(organization_id=organization_id, now=pendulum_now())
+        args = q(organization_id=organization_id, now=pendulum_now(), offset=offset, limit=per_page)
 
     raw_results = await conn.fetch(*args)
-    if raw_results:
-        total = raw_results[0]["full_count"]
-    else:
-        total = 0
+    total = raw_results[0]["total"]
     results = [
         HumanFindResultItem(
             user_id=UserID(user_id),
             human_handle=HumanHandle(email=email, label=label) if email else None,
-            revoked=revoked,
+            revoked=is_revoked,
         )
-        for user_id, email, label, revoked, _ in raw_results
+        for user_id, email, label, is_revoked, _, _ in raw_results[1:]
     ]
 
     return results, total
