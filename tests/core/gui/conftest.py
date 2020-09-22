@@ -84,7 +84,7 @@ class ThreadedTrioTestRunner:
     async def _test_target(self, fn, **kwargs):
         # Initialize trio objects
         self._stopping = trio.Event()
-        self._trio_token = trio.hazmat.current_trio_token()
+        self._trio_token = trio.lowlevel.current_trio_token()
 
         # Set the started state event
         self._started.set()

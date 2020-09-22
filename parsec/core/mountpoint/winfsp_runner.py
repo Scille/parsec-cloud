@@ -118,7 +118,7 @@ async def winfsp_mountpoint_runner(
     """
     device = workspace_fs.device
     workspace_name = winify_entry_name(workspace_fs.get_workspace_name())
-    trio_token = trio.hazmat.current_trio_token()
+    trio_token = trio.lowlevel.current_trio_token()
     fs_access = ThreadFSAccess(trio_token, workspace_fs)
 
     user_manifest = user_fs.get_user_manifest()

@@ -4,7 +4,7 @@ import math
 from collections import defaultdict
 
 import trio
-from trio.hazmat import current_clock
+from trio.lowlevel import current_clock
 from structlog import get_logger
 
 from parsec.core.core_events import CoreEvent

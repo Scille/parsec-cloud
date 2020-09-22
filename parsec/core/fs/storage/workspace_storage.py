@@ -5,7 +5,7 @@ from collections import defaultdict
 from typing import Dict, Tuple, Set, Optional, Union, AsyncIterator, NoReturn, Pattern, Any
 
 import trio
-from trio import hazmat
+from trio import lowlevel
 from pendulum import Pendulum
 from structlog import get_logger
 from async_generator import asynccontextmanager
@@ -57,7 +57,7 @@ class BaseWorkspaceStorage:
         self.fd_counter = 0
 
         # Locking structures
-        self.locking_tasks: Dict[EntryID, hazmat.Task] = {}
+        self.locking_tasks: Dict[EntryID, lowlevel.Task] = {}
         self.entry_locks: Dict[EntryID, trio.Lock] = defaultdict(trio.Lock)
 
         # Manifest and block storage
@@ -82,7 +82,7 @@ class BaseWorkspaceStorage:
     async def lock_entry_id(self, entry_id: EntryID) -> AsyncIterator[EntryID]:
         async with self.entry_locks[entry_id]:
             try:
-                self.locking_tasks[entry_id] = hazmat.current_task()
+                self.locking_tasks[entry_id] = lowlevel.current_task()
                 yield entry_id
             finally:
                 del self.locking_tasks[entry_id]
@@ -94,7 +94,7 @@ class BaseWorkspaceStorage:
 
     def _check_lock_status(self, entry_id: EntryID) -> None:
         task = self.locking_tasks.get(entry_id)
-        if task != hazmat.current_task():
+        if task != lowlevel.current_task():
             raise RuntimeError(f"Entry `{entry_id}` modified without beeing locked")
 
     # File management interface

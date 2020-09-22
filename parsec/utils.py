@@ -136,7 +136,7 @@ async def check_cancellation(exc):
     # exception.
     cancelled_errors, _ = split_multi_error(exc)
     if cancelled_errors:
-        await trio.hazmat.checkpoint_if_cancelled()
+        await trio.lowlevel.checkpoint_if_cancelled()
 
 
 def collapse_multi_error(multierror):
@@ -190,7 +190,7 @@ async def open_service_nursery():
 
 async def cancel_and_checkpoint(scope):
     scope.cancel()
-    await trio.hazmat.checkpoint_if_cancelled()
+    await trio.lowlevel.checkpoint_if_cancelled()
 
 
 # Add it to trio

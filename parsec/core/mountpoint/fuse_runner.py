@@ -98,7 +98,7 @@ async def fuse_mountpoint_runner(
     """
     fuse_thread_started = threading.Event()
     fuse_thread_stopped = threading.Event()
-    trio_token = trio.hazmat.current_trio_token()
+    trio_token = trio.lowlevel.current_trio_token()
     fs_access = ThreadFSAccess(trio_token, workspace_fs)
     fuse_operations = FuseOperations(event_bus, fs_access)
 

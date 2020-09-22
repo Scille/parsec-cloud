@@ -154,7 +154,7 @@ def patch_pytest_trio():
 
     def patched_crash(self, exc):
         if exc is None:
-            task = trio.hazmat.current_task()
+            task = trio.lowlevel.current_task()
             for child_nursery in task.child_nurseries:
                 for child_exc in child_nursery._pending_excs:
                     if not isinstance(exc, trio.Cancelled):
@@ -209,7 +209,7 @@ def pytest_collection_modifyitems(config, items):
 
 @pytest.fixture
 async def task_monitoring():
-    trio.hazmat.add_instrument(TaskMonitoringInstrument())
+    trio.lowlevel.add_instrument(TaskMonitoringInstrument())
 
 
 @pytest.fixture(autouse=True, scope="session", name="unmock_crypto")
