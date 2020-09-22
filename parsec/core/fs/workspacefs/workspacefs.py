@@ -3,9 +3,10 @@
 import attr
 import trio
 from collections import defaultdict
-from typing import List, Dict, Tuple, AsyncIterator, cast, Pattern
+from typing import List, Dict, Tuple, AsyncIterator, cast, Pattern, Callable, Any
 from pendulum import Pendulum, now as pendulum_now
 
+from parsec.event_bus import EventBus
 from parsec.api.data import BaseManifest as BaseRemoteManifest
 from parsec.api.data import FileManifest as RemoteFileManifest
 from parsec.api.protocol import UserID, MaintenanceType
@@ -16,12 +17,19 @@ from parsec.core.types import (
     LocalDevice,
     WorkspaceRole,
     LocalFileManifest,
+    LocalFolderManifest,
+    LocalWorkspaceManifest,
     RemoteFolderManifest,
     RemoteWorkspaceManifest,
     RemoteFolderishManifests,
     DEFAULT_BLOCK_SIZE,
 )
-from parsec.core.backend_connection import BackendNotAvailable, BackendConnectionError
+from parsec.core.remote_devices_manager import RemoteDevicesManager
+from parsec.core.backend_connection import (
+    BackendAuthenticatedCmds,
+    BackendNotAvailable,
+    BackendConnectionError,
+)
 from parsec.core.fs.remote_loader import RemoteLoader
 from parsec.core.fs import workspacefs  # Needed to break cyclic import with WorkspaceFSTimestamped
 from parsec.core.fs.workspacefs.sync_transactions import SyncTransactions
@@ -42,6 +50,7 @@ from parsec.core.fs.exceptions import (
     FSError,
 )
 from parsec.core.fs.workspacefs.workspacefile import WorkspaceFile
+from parsec.core.fs.storage import BaseWorkspaceStorage
 
 
 @attr.s(slots=True, frozen=True, auto_attribs=True)
@@ -51,20 +60,20 @@ class ReencryptionNeed:
     reencryption_already_in_progress: bool = False
 
     @property
-    def need_reencryption(self):
-        return self.role_revoked or self.user_revoked or self.reencryption_already_in_progress
+    def need_reencryption(self) -> bool:
+        return bool(self.role_revoked or self.user_revoked or self.reencryption_already_in_progress)
 
 
 class WorkspaceFS:
     def __init__(
         self,
         workspace_id: EntryID,
-        get_workspace_entry,
+        get_workspace_entry: Callable,
         device: LocalDevice,
-        local_storage,
-        backend_cmds,
-        event_bus,
-        remote_devices_manager,
+        local_storage: BaseWorkspaceStorage,
+        backend_cmds: BackendAuthenticatedCmds,
+        event_bus: EventBus,
+        remote_devices_manager: RemoteDevicesManager,
     ):
         self.workspace_id = workspace_id
         self.get_workspace_entry = get_workspace_entry
@@ -92,7 +101,7 @@ class WorkspaceFS:
             self.event_bus,
         )
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         try:
             name = self.get_workspace_name()
         except Exception:
@@ -220,12 +229,12 @@ class WorkspaceFS:
         manifest = await self.remote_loader.load_manifest(self.get_workspace_entry().id, version=1)
         return manifest.timestamp
 
-    def get_version_lister(self):
+    def get_version_lister(self) -> VersionLister:
         return VersionLister(self)
 
     # Timestamped version
 
-    async def to_timestamped(self, timestamp: Pendulum):
+    async def to_timestamped(self, timestamp: Pendulum) -> "workspacefs.WorkspaceFSTimestamped":
         workspace = workspacefs.WorkspaceFSTimestamped(self, timestamp)
         try:
             await workspace.path_info("/")
@@ -349,7 +358,7 @@ class WorkspaceFS:
         path = FsPath(path)
         await self.transactions.file_resize(path, length)
 
-    async def open_file(self, path: AnyPath, mode="rb") -> WorkspaceFile:
+    async def open_file(self, path: AnyPath, mode: str = "rb") -> WorkspaceFile:
         workspace_file = WorkspaceFile(self.transactions, mode=mode, path=path)
         await workspace_file.ainit()
         return workspace_file
@@ -372,7 +381,7 @@ class WorkspaceFS:
 
     # Shutil-like interface
 
-    async def move(self, source: AnyPath, destination: AnyPath):
+    async def move(self, source: AnyPath, destination: AnyPath) -> None:
         """
         Raises:
             FSError
@@ -410,7 +419,7 @@ class WorkspaceFS:
         await self.copyfile(source, real_destination)
         await self.unlink(source)
 
-    async def copytree(self, source_path: AnyPath, target_path: AnyPath):
+    async def copytree(self, source_path: AnyPath, target_path: AnyPath) -> None:
         source_path = FsPath(source_path)
         target_path = FsPath(target_path)
         source_files = await self.listdir(source_path)
@@ -426,9 +435,9 @@ class WorkspaceFS:
         self,
         source_path: AnyPath,
         target_path: AnyPath,
-        buffer_size=DEFAULT_BLOCK_SIZE,
+        buffer_size: int = DEFAULT_BLOCK_SIZE,
         exist_ok: bool = False,
-    ):
+    ) -> None:
         """
         Raises:
             FSError
@@ -442,7 +451,7 @@ class WorkspaceFS:
                         return
                     await target.write(data)
 
-    async def rmtree(self, path: AnyPath):
+    async def rmtree(self, path: AnyPath) -> None:
         """
         Raises:
             FSError
@@ -574,7 +583,7 @@ class WorkspaceFS:
                 final = True
                 remote_manifest = new_remote_manifest
 
-    async def _create_realm_if_needed(self):
+    async def _create_realm_if_needed(self) -> None:
         # Get workspace manifest
         try:
             workspace_manifest = await self.local_storage.get_manifest(self.workspace_id)
@@ -588,7 +597,7 @@ class WorkspaceFS:
 
     async def sync_by_id(
         self, entry_id: EntryID, remote_changed: bool = True, recursive: bool = True
-    ):
+    ) -> None:
         """
         Raises:
             FSError
@@ -634,7 +643,7 @@ class WorkspaceFS:
 
     async def _recursive_apply_prevent_sync_pattern(
         self, entry_id: EntryID, prevent_sync_pattern: Pattern
-    ):
+    ) -> None:
         # Load manifest
         try:
             manifest = await self.local_storage.get_manifest(entry_id)
@@ -643,7 +652,7 @@ class WorkspaceFS:
             return
 
         # A file manifest, nothing to do
-        if isinstance(manifest, LocalFileManifest):
+        if not isinstance(manifest, (LocalFolderManifest, LocalWorkspaceManifest)):
             return
 
         # Apply "prevent sync" pattern (idempotent)
@@ -653,37 +662,36 @@ class WorkspaceFS:
         for name, child_entry_id in manifest.children.items():
             await self._recursive_apply_prevent_sync_pattern(child_entry_id, prevent_sync_pattern)
 
-    async def apply_prevent_sync_pattern(self, pattern: Pattern):
+    async def apply_prevent_sync_pattern(self, pattern: Pattern) -> None:
         # Fully apply "prevent sync" pattern
         await self._recursive_apply_prevent_sync_pattern(self.workspace_id, pattern)
         # Acknowledge "prevent sync" pattern
         await self.local_storage.mark_prevent_sync_pattern_fully_applied(pattern)
 
-    async def set_prevent_sync_pattern(self, pattern: Pattern):
+    async def set_prevent_sync_pattern(self, pattern: Pattern) -> None:
         await self.local_storage.set_prevent_sync_pattern(pattern)
 
-    async def set_and_apply_prevent_sync_pattern(self, pattern: Pattern):
+    async def set_and_apply_prevent_sync_pattern(self, pattern: Pattern) -> None:
         await self.set_prevent_sync_pattern(pattern)
         if not self.local_storage.get_prevent_sync_pattern_fully_applied():
             await self.apply_prevent_sync_pattern(self.local_storage.get_prevent_sync_pattern())
 
     # Debugging helper
 
-    async def dump(self):
-        async def rec(entry_id):
-            result = {"id": entry_id}
+    async def dump(self) -> Dict[str, Any]:
+        async def rec(entry_id: EntryID) -> Dict[str, Any]:
+            result: Dict[str, Any] = {"id": entry_id}
             try:
                 manifest = await self.local_storage.get_manifest(entry_id)
             except FSLocalMissError:
                 return result
 
             result.update(manifest.asdict())
-            try:
-                children = manifest.children
-            except AttributeError:
+
+            if not isinstance(manifest, (LocalFolderManifest, LocalWorkspaceManifest)):
                 return result
 
-            for key, value in children.items():
+            for key, value in manifest.children.items():
                 result["children"][key] = await rec(value)
             return result
 

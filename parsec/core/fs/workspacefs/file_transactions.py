@@ -10,7 +10,7 @@ from parsec.event_bus import EventBus
 from parsec.core.types import FileDescriptor, EntryID, LocalDevice
 
 from parsec.core.fs.remote_loader import RemoteLoader
-from parsec.core.fs.storage import WorkspaceStorage
+from parsec.core.fs.storage import BaseWorkspaceStorage
 from parsec.core.fs.exceptions import FSLocalMissError, FSInvalidFileDescriptor, FSEndOfFileError
 
 from parsec.core.types import (
@@ -79,7 +79,7 @@ class FileTransactions:
         workspace_id: EntryID,
         get_workspace_entry: Callable,
         device: LocalDevice,
-        local_storage: WorkspaceStorage,
+        local_storage: BaseWorkspaceStorage,
         remote_loader: RemoteLoader,
         event_bus: EventBus,
     ):

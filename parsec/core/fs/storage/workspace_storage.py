@@ -73,7 +73,30 @@ class BaseWorkspaceStorage:
         self.fd_counter += 1
         return FileDescriptor(self.fd_counter)
 
+    # Manifest interface
+
     async def get_manifest(self, entry_id: EntryID) -> BaseLocalManifest:
+        raise NotImplementedError
+
+    async def set_manifest(
+        self,
+        entry_id: EntryID,
+        manifest: BaseLocalManifest,
+        cache_only: bool = False,
+        check_lock_status: bool = True,
+        removed_ids: Optional[Set[Union[BlockID, ChunkID]]] = None,
+    ) -> None:
+        raise NotImplementedError
+
+    async def ensure_manifest_persistent(self, entry_id: EntryID) -> None:
+        raise NotImplementedError
+
+    # Prevent sync pattern interface
+
+    async def set_prevent_sync_pattern(self, pattern: Pattern) -> None:
+        raise NotImplementedError
+
+    async def mark_prevent_sync_pattern_fully_applied(self, pattern: Pattern) -> None:
         raise NotImplementedError
 
     # Locking helpers
@@ -398,8 +421,13 @@ class WorkspaceStorageTimestamped(BaseWorkspaceStorage):
             raise FSLocalMissError(entry_id)
 
     async def set_manifest(
-        self, entry_id: EntryID, manifest: BaseLocalManifest, cache_only: bool = False
-    ) -> None:  # initially for clean
+        self,
+        entry_id: EntryID,
+        manifest: BaseLocalManifest,
+        cache_only: bool = False,
+        check_lock_status: bool = True,
+        removed_ids: Optional[Set[Union[BlockID, ChunkID]]] = None,
+    ) -> None:
         assert isinstance(entry_id, EntryID)
         if manifest.need_sync:
             self._throw_permission_error()
@@ -409,5 +437,5 @@ class WorkspaceStorageTimestamped(BaseWorkspaceStorage):
     async def ensure_manifest_persistent(self, entry_id: EntryID) -> None:
         pass
 
-    def to_timestamped(self, timestamp: Pendulum) -> "WorkspaceStorageTimestamped":
-        return WorkspaceStorageTimestamped(self, timestamp)
+    # def to_timestamped(self, timestamp: Pendulum) -> "WorkspaceStorageTimestamped":
+    #     return WorkspaceStorageTimestamped(self, timestamp)
