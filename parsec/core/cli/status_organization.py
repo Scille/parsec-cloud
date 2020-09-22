@@ -22,8 +22,8 @@ async def _status_organization(name, backend_addr, administration_token):
 
 @click.command(short_help="status new organization")
 @click.argument("name", required=True, type=OrganizationID)
-@click.option("--addr", "-B", required=True, type=BackendAddr.from_url)
-@click.option("--administration-token", "-T", required=True)
+@click.option("--addr", "-B", required=True, type=BackendAddr.from_url, envvar="PARSEC_ADDR")
+@click.option("--administration-token", "-T", required=True, envvar="PARSEC_ADMINISTRATION_TOKEN")
 def status_organization(name, addr, administration_token):
     debug = "DEBUG" in os.environ
     configure_logging(log_level="DEBUG" if debug else "WARNING")
