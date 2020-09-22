@@ -210,16 +210,18 @@ async def test_mountpoint_open_in_explorer_button(aqtbot, running_backend, logge
         return wk_button
 
     # New workspace should show up mounted
+
     wk_button = None
     previous_wk_button = None
 
-    def _wksp1_visible_and_mounted():
+    def _mounted():
         nonlocal wk_button
+        # Note on mount the workspaces buttons are recreated !
         wk_button = get_wk_button()
         assert wk_button.button_open.isEnabled()
         assert wk_button.switch_button.isChecked()
 
-    await aqtbot.wait_until(_wksp1_visible_and_mounted)
+    await aqtbot.wait_until(_mounted)
     previous_wk_button = wk_button
 
     # Now switch to umounted
@@ -236,16 +238,8 @@ async def test_mountpoint_open_in_explorer_button(aqtbot, running_backend, logge
     await aqtbot.wait_until(_unmounted, timeout=3000)
     previous_wk_button = wk_button
 
+    # Now switch bacj to mounted
     await aqtbot.mouse_click(wk_button.switch_button, QtCore.Qt.LeftButton)
-
-    def _mounted():
-        nonlocal wk_button
-        # Note on mount the workspaces buttons are recreated !
-        wk_button = get_wk_button()
-        assert wk_button is not previous_wk_button
-        assert wk_button.button_open.isEnabled()
-        assert wk_button.switch_button.isChecked()
-
     await aqtbot.wait_until(_mounted, timeout=2000)
 
     # Test open button
