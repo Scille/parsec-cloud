@@ -1,0 +1,1 @@
+Display server address in user info tooltip
