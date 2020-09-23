@@ -4,13 +4,16 @@ import time
 
 import trio
 from pathlib import Path
-from typing import Any, AsyncIterator, AsyncContextManager
+from typing import AsyncIterator, AsyncContextManager, TypeVar
 from async_generator import asynccontextmanager
+
 
 from parsec.core.types import ChunkID
 from parsec.core.fs.exceptions import FSLocalMissError
 from parsec.core.types import LocalDevice, DEFAULT_BLOCK_SIZE
 from parsec.core.fs.storage.local_database import LocalDatabase, Cursor
+
+T = TypeVar("T", bound="ChunkStorage")
 
 
 class ChunkStorage:
@@ -26,8 +29,14 @@ class ChunkStorage:
 
     @classmethod
     @asynccontextmanager
-    async def run(cls, *args: Any, **kwargs: Any) -> AsyncIterator["ChunkStorage"]:
-        self = cls(*args, **kwargs)
+    async def run(
+        cls, device: LocalDevice, localdb: LocalDatabase
+    ) -> AsyncIterator["ChunkStorage"]:
+        async with cls(device, localdb)._run() as self:
+            yield self
+
+    @asynccontextmanager
+    async def _run(self: T) -> AsyncIterator[T]:
         await self._create_db()
         try:
             yield self
@@ -129,6 +138,14 @@ class BlockStorage(ChunkStorage):
     def __init__(self, device: LocalDevice, localdb: LocalDatabase, cache_size: int):
         super().__init__(device, localdb)
         self.cache_size = cache_size
+
+    @classmethod
+    @asynccontextmanager
+    async def run(  # type: ignore[override]
+        cls, device: LocalDevice, localdb: LocalDatabase, cache_size: int
+    ) -> AsyncIterator["ChunkStorage"]:
+        async with cls(device, localdb, cache_size)._run() as self:
+            yield self
 
     def _open_cursor(self) -> AsyncContextManager[Cursor]:
         # It doesn't matter for blocks to be commited as soon as they're added

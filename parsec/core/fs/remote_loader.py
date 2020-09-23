@@ -1,7 +1,7 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
 
 from contextlib import contextmanager
-from typing import Dict, Optional, List, Tuple, cast, Iterator, Callable, Any, NoReturn
+from typing import Dict, Optional, List, Tuple, cast, Iterator, Callable, Any
 
 from pendulum import Pendulum, now as pendulum_now
 
@@ -617,7 +617,7 @@ class RemoteLoaderTimestamped(RemoteLoader):
         self._realm_role_certificates_cache_timestamp = None
         self.timestamp = timestamp
 
-    async def upload_block(self, *args: Any, **kwargs: Any) -> NoReturn:
+    async def upload_block(self, access: BlockAccess, data: bytes) -> None:
         raise FSError("Cannot upload block through a timestamped remote loader")
 
     async def load_manifest(
@@ -652,11 +652,20 @@ class RemoteLoaderTimestamped(RemoteLoader):
             expected_backend_timestamp=expected_backend_timestamp,
         )
 
-    async def upload_manifest(self, *args: Any, **kwargs: Any) -> NoReturn:
+    async def upload_manifest(self, entry_id: EntryID, manifest: BaseRemoteManifest) -> None:
         raise FSError("Cannot upload manifest through a timestamped remote loader")
 
-    async def _vlob_create(self, *args: Any, **kwargs: Any) -> NoReturn:
+    async def _vlob_create(
+        self, encryption_revision: int, entry_id: EntryID, ciphered: bytes, now: Pendulum
+    ) -> None:
         raise FSError("Cannot create vlob through a timestamped remote loader")
 
-    async def _vlob_update(self, *args: Any, **kwargs: Any) -> NoReturn:
+    async def _vlob_update(
+        self,
+        encryption_revision: int,
+        entry_id: EntryID,
+        ciphered: bytes,
+        now: Pendulum,
+        version: int,
+    ) -> None:
         raise FSError("Cannot update vlob through a timestamped remote loader")

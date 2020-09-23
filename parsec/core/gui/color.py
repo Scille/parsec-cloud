@@ -6,8 +6,8 @@ from binascii import crc32
 
 
 class StringToColor:
-    def __init__(self, h, l, s):
-        self.color = (h, l, s)
+    def __init__(self, hue, lightness, saturation):
+        self.color = (hue, lightness, saturation)
 
     @property
     def hue(self):

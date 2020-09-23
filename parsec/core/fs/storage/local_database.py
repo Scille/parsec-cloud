@@ -4,16 +4,21 @@ import inspect
 import functools
 from pathlib import Path
 from concurrent.futures import ThreadPoolExecutor
-from typing import AsyncIterator, Callable, Optional, Any, Union
+from typing import AsyncIterator, Callable, Optional, Any, Union, TypeVar, Awaitable
+from mypy_extensions import VarArg
 
 import trio
 import outcome
 from async_generator import asynccontextmanager
 from sqlite3 import Connection, Cursor, connect as sqlite_connect
 
+R = TypeVar("R")
+
 
 @asynccontextmanager
-async def thread_pool_runner(max_workers: Optional[int] = None) -> AsyncIterator[Callable]:
+async def thread_pool_runner(
+    max_workers: Optional[int] = None
+) -> AsyncIterator[Callable[[Callable[..., R], VarArg(Any)], Awaitable[R]]]:
     """A trio-managed thread pool.
 
     This should be removed if trio decides to add support for thread pools:
@@ -22,9 +27,9 @@ async def thread_pool_runner(max_workers: Optional[int] = None) -> AsyncIterator
     executor = ThreadPoolExecutor(max_workers=max_workers)
     trio_token = trio.lowlevel.current_trio_token()
 
-    async def run_in_thread(fn: Callable, *args: Any) -> Any:
-        send_channel: trio.MemorySendChannel[Any]
-        receive_channel: trio.MemoryReceiveChannel[Any]
+    async def run_in_thread(fn: Callable[..., R], *args: Any) -> R:
+        send_channel: trio.MemorySendChannel[outcome.Outcome[R]]
+        receive_channel: trio.MemoryReceiveChannel[outcome.Outcome[R]]
         send_channel, receive_channel = trio.open_memory_channel(1)
 
         def target() -> None:
