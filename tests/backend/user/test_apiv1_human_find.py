@@ -1,12 +1,12 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
 
 import pytest
+from unittest.mock import ANY
 
 from parsec.api.data import UserProfile
 from parsec.api.protocol import human_find_serializer
 
 from tests.common import freeze_time, customize_fixtures
-from tests.backend.user.test_human_find import NonDeterministicOrderedResults
 
 
 async def human_find(sock, query=None, omit_revoked=False, omit_non_human=False, **kwargs):
@@ -182,20 +182,12 @@ async def test_search_multiple_user_same_human_handle(access_testbed, local_devi
 
     rep = await human_find(sock, query="Guzman Huerta")
     # Users have same label, the sort will have an nondeterminated ordered result.
-    assert rep == {
-        "status": "ok",
-        "results": NonDeterministicOrderedResults(
-            [
-                {"user_id": nick2.user_id, "human_handle": nick2.human_handle, "revoked": True},
-                {"user_id": nick1.user_id, "human_handle": nick1.human_handle, "revoked": True},
-                {"user_id": nick3.user_id, "human_handle": nick3.human_handle, "revoked": False},
-            ],
-            order_key=lambda x: x["human_handle"],
-        ),
-        "per_page": 100,
-        "page": 1,
-        "total": 3,
-    }
+    assert rep == {"status": "ok", "results": ANY, "per_page": 100, "page": 1, "total": 3}
+    assert sorted(rep["results"], key=lambda x: x["user_id"]) == [
+        {"user_id": nick2.user_id, "human_handle": nick2.human_handle, "revoked": True},
+        {"user_id": nick1.user_id, "human_handle": nick1.human_handle, "revoked": True},
+        {"user_id": nick3.user_id, "human_handle": nick3.human_handle, "revoked": False},
+    ]
 
     rep = await human_find(sock, query="Guzman Huerta", omit_revoked=True)
     assert rep == {
@@ -316,19 +308,12 @@ async def test_bad_args(access_testbed, local_device_factory):
 async def test_find_with_query_ignore_non_human(alice_backend_sock, alice, bob, adam):
     # Find all first
     rep = await human_find(alice_backend_sock)
-    assert rep == {
-        "status": "ok",
-        "results": NonDeterministicOrderedResults(
-            [
-                {"user_id": alice.user_id, "revoked": False, "human_handle": None},
-                {"user_id": adam.user_id, "revoked": False, "human_handle": None},
-                {"user_id": bob.user_id, "revoked": False, "human_handle": None},
-            ]
-        ),
-        "per_page": 100,
-        "page": 1,
-        "total": 3,
-    }
+    assert rep == {"status": "ok", "results": ANY, "per_page": 100, "page": 1, "total": 3}
+    assert sorted(rep["results"], key=lambda x: x["user_id"]) == [
+        {"user_id": adam.user_id, "revoked": False, "human_handle": None},
+        {"user_id": alice.user_id, "revoked": False, "human_handle": None},
+        {"user_id": bob.user_id, "revoked": False, "human_handle": None},
+    ]
 
     rep = await human_find(alice_backend_sock, query=alice.user_id)
     assert rep == {"status": "ok", "results": [], "per_page": 100, "page": 1, "total": 0}
@@ -373,30 +358,24 @@ async def test_no_query_users_with_and_without_human_label(access_testbed, local
     await binder.bind_device(titeuf, certifier=godfrey1)
 
     # Users with human label should be sorted but for now non_human users create a NonDeterministicOrder
-
-    expected_result = NonDeterministicOrderedResults(
-        [
-            {"user_id": blacky.user_id, "revoked": False, "human_handle": blacky.human_handle},
-            {"user_id": blacky3.user_id, "revoked": False, "human_handle": blacky3.human_handle},
-            {"user_id": godfrey1.user_id, "revoked": False, "human_handle": godfrey1.human_handle},
-            {"user_id": ice.user_id, "revoked": False, "human_handle": ice.human_handle},
-            {"user_id": ninja.user_id, "revoked": False, "human_handle": ninja.human_handle},
-            {"user_id": richard.user_id, "revoked": False, "human_handle": richard.human_handle},
-            {"user_id": roger.user_id, "revoked": False, "human_handle": roger.human_handle},
-            {"user_id": zoe.user_id, "revoked": False, "human_handle": zoe.human_handle},
-            {"user_id": easy.user_id, "revoked": False, "human_handle": None},
-            {"user_id": mike.user_id, "revoked": False, "human_handle": None},
-            {"user_id": titeuf.user_id, "revoked": False, "human_handle": None},
-        ],
-        order_key=lambda x: x["human_handle"].label.lower()
-        if x["human_handle"]
-        else "~",  # Keep non-human last
-    )
     rep = await human_find(sock, per_page=11, page=1)
-    assert rep == {
-        "status": "ok",
-        "results": expected_result,
-        "per_page": 11,
-        "page": 1,
-        "total": 11,
-    }
+    assert rep == {"status": "ok", "results": ANY, "per_page": 11, "page": 1, "total": 11}
+
+    # Items with human handle come first in a deterministic order
+    assert rep["results"][:8] == [
+        {"user_id": blacky.user_id, "revoked": False, "human_handle": blacky.human_handle},
+        {"user_id": blacky3.user_id, "revoked": False, "human_handle": blacky3.human_handle},
+        {"user_id": godfrey1.user_id, "revoked": False, "human_handle": godfrey1.human_handle},
+        {"user_id": ice.user_id, "revoked": False, "human_handle": ice.human_handle},
+        {"user_id": ninja.user_id, "revoked": False, "human_handle": ninja.human_handle},
+        {"user_id": richard.user_id, "revoked": False, "human_handle": richard.human_handle},
+        {"user_id": roger.user_id, "revoked": False, "human_handle": roger.human_handle},
+        {"user_id": zoe.user_id, "revoked": False, "human_handle": zoe.human_handle},
+    ]
+
+    # Items with no human handle come last with no order guarantee
+    assert sorted(rep["results"][8:], key=lambda x: x["user_id"]) == [
+        {"user_id": titeuf.user_id, "revoked": False, "human_handle": None},
+        {"user_id": mike.user_id, "revoked": False, "human_handle": None},
+        {"user_id": easy.user_id, "revoked": False, "human_handle": None},
+    ]
