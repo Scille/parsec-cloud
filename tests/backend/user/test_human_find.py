@@ -29,13 +29,32 @@ class NonDeterministicOrderedResults(list):
         if other_as_stack or self_as_stack:
             return False
         # Now check the order is respected
-        if self.order_key:
-            if sorted(other, key=self.order_key) != other:
-                return False
+        self_list = list(self)
+        if self.order_key and other != self_list:
+            index = 0
+            while index < len(self_list) or index < len(other):
+                # Check for each elem if they differ
+                if other[index] != self_list[index]:
+                    tmp_list = [other[index], self_list[index]]
+                    sorted_tmp_list = sorted(tmp_list, key=self.order_key)
+                    # Actually testing if differing elems of lists is impacted by the sort
+                    if sorted_tmp_list != tmp_list:
+                        return False
+                index += 1
         return True
 
-    def __neq__(self, other):
+    def __ne__(self, other):
         return not self.__eq__(other)
+
+
+def test_non_deterministic_ordered_results_methods():
+    test_list = NonDeterministicOrderedResults(
+        [{"k": 1, "x": "a"}, {"k": 1, "x": "b"}], order_key=lambda x: x["k"]
+    )
+    # Test __eq__ method
+    assert test_list == [{"k": 1, "x": "b"}, {"k": 1, "x": "a"}]
+    # Test __ne__ method
+    assert not test_list != [{"k": 1, "x": "b"}, {"k": 1, "x": "a"}]
 
 
 @pytest.mark.parametrize(
@@ -62,6 +81,169 @@ class NonDeterministicOrderedResults(list):
                 [{"k": 1, "x": "a"}, {"k": 1, "x": "b"}], order_key=lambda x: x["k"]
             ),
             [{"k": 1, "x": "b"}, {"k": 1, "x": "a"}],
+        ),
+        # Sort on label and put non label in NonDeterministicOrder at the end
+        (
+            # Label are well sorted , should be True
+            True,
+            NonDeterministicOrderedResults(
+                [
+                    {"label": "a", "x": 2},
+                    {"label": "b", "x": 1},
+                    {"label": "C", "x": 3},
+                    {"label": "D", "x": 4},
+                    {"label": None, "x": "y"},
+                    {"label": None, "x": "z"},
+                    {"label": None, "x": "x"},
+                ],
+                order_key=lambda x: x["label"].lower()
+                if x["label"]
+                else "~",  # Keep non-human last
+            ),
+            [
+                {"label": "a", "x": 2},
+                {"label": "b", "x": 1},
+                {"label": "C", "x": 3},
+                {"label": "D", "x": 4},
+                {"label": None, "x": "x"},
+                {"label": None, "x": "z"},
+                {"label": None, "x": "y"},
+            ],
+        ),
+        (
+            # Label isn't well sorted, should be False
+            False,
+            NonDeterministicOrderedResults(
+                [
+                    {"label": "D", "x": "d"},
+                    {"label": "b", "x": "a"},
+                    {"label": "a", "x": "b,"},
+                    {"label": "C", "x": "c"},
+                    {"label": None, "x": "x"},
+                    {"label": None, "x": "z"},
+                    {"label": None, "x": "y"},
+                ],
+                order_key=lambda x: x["label"].lower()
+                if x["label"]
+                else "~",  # Keep non-human last
+            ),
+            [
+                {"label": "a", "x": "b,"},
+                {"label": "b", "x": "a"},
+                {"label": "C", "x": "c"},
+                {"label": "D", "x": "d"},
+                {"label": None, "x": "y"},
+                {"label": None, "x": "z"},
+                {"label": None, "x": "x"},
+            ],
+        ),
+        (
+            # Label is well sorted and non-human sorted by x at start, should be False
+            False,
+            NonDeterministicOrderedResults(
+                [
+                    {"label": None, "x": "y"},
+                    {"label": None, "x": "z"},
+                    {"label": None, "x": "x"},
+                    {"label": "a", "x": "b,"},
+                    {"label": "b", "x": "a"},
+                    {"label": "C", "x": "c"},
+                    {"label": "D", "x": "d"},
+                ],
+                order_key=lambda x: x["label"].lower()
+                if x["label"]
+                else "~",  # Keep non-human last
+            ),
+            [
+                {"label": "a", "x": "b,"},
+                {"label": "b", "x": "a"},
+                {"label": "C", "x": "c"},
+                {"label": "D", "x": "d"},
+                {"label": None, "x": "y"},
+                {"label": None, "x": "z"},
+                {"label": None, "x": "x"},
+            ],
+        ),
+        (
+            # Label isn't well sorted and non-human sorted by x at start, should be False
+            False,
+            NonDeterministicOrderedResults(
+                [
+                    {"label": None, "x": "y"},
+                    {"label": None, "x": "z"},
+                    {"label": None, "x": "x"},
+                    {"label": "D", "x": "d"},
+                    {"label": "b", "x": "a"},
+                    {"label": "a", "x": "b,"},
+                    {"label": "C", "x": "c"},
+                ],
+                order_key=lambda x: x["label"].lower()
+                if x["label"]
+                else "~",  # Keep non-human last
+            ),
+            [
+                {"label": "a", "x": "b,"},
+                {"label": "b", "x": "a"},
+                {"label": "C", "x": "c"},
+                {"label": "D", "x": "d"},
+                {"label": None, "x": "y"},
+                {"label": None, "x": "z"},
+                {"label": None, "x": "x"},
+            ],
+        ),
+        (
+            # Label isn't well sorted and non-human sorted by x randomly, should be False
+            False,
+            NonDeterministicOrderedResults(
+                [
+                    {"label": None, "x": "x"},
+                    {"label": "D", "x": "d"},
+                    {"label": None, "x": "z"},
+                    {"label": "b", "x": "a"},
+                    {"label": "a", "x": "b,"},
+                    {"label": None, "x": "y"},
+                    {"label": "C", "x": "c"},
+                ],
+                order_key=lambda x: x["label"].lower()
+                if x["label"]
+                else "~",  # Keep non-human last
+            ),
+            [
+                {"label": "a", "x": "b,"},
+                {"label": "b", "x": "a"},
+                {"label": "C", "x": "c"},
+                {"label": "D", "x": "d"},
+                {"label": None, "x": "z"},
+                {"label": None, "x": "y"},
+                {"label": None, "x": "x"},
+            ],
+        ),
+        (
+            # Label well sorted and non-human sorted by x randomly, should be False
+            False,
+            NonDeterministicOrderedResults(
+                [
+                    {"label": "a", "x": "b,"},
+                    {"label": None, "x": "x"},
+                    {"label": None, "x": "z"},
+                    {"label": "b", "x": "a"},
+                    {"label": "C", "x": "c"},
+                    {"label": None, "x": "y"},
+                    {"label": "D", "x": "d"},
+                ],
+                order_key=lambda x: x["label"].lower()
+                if x["label"]
+                else "~",  # Keep non-human last
+            ),
+            [
+                {"label": "a", "x": "b,"},
+                {"label": "b", "x": "a"},
+                {"label": "C", "x": "c"},
+                {"label": "D", "x": "d"},
+                {"label": None, "x": "y"},
+                {"label": None, "x": "x"},
+                {"label": None, "x": "z"},
+            ],
         ),
     ],
 )
@@ -433,9 +615,9 @@ async def test_no_query_users_with_and_without_human_label(access_testbed, local
             {"user_id": richard.user_id, "revoked": False, "human_handle": richard.human_handle},
             {"user_id": roger.user_id, "revoked": False, "human_handle": roger.human_handle},
             {"user_id": zoe.user_id, "revoked": False, "human_handle": zoe.human_handle},
-            {"user_id": easy.user_id, "revoked": False, "human_handle": None},
-            {"user_id": mike.user_id, "revoked": False, "human_handle": None},
             {"user_id": titeuf.user_id, "revoked": False, "human_handle": None},
+            {"user_id": mike.user_id, "revoked": False, "human_handle": None},
+            {"user_id": easy.user_id, "revoked": False, "human_handle": None},
         ],
         order_key=lambda x: x["human_handle"].label.lower()
         if x["human_handle"]
