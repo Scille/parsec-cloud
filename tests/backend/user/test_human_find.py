@@ -1,259 +1,12 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
 
 import pytest
+from unittest.mock import ANY
 
 from parsec.api.data import UserProfile
 
 from tests.common import freeze_time, customize_fixtures
 from tests.backend.common import human_find
-
-
-# When users have same label or for non-human, the sort could be in undeterminated order, we should use this class for the assertion.
-class NonDeterministicOrderedResults(list):
-    def __init__(self, *args, order_key=None):
-        super().__init__(*args)
-        self.order_key = order_key
-
-    def __eq__(self, other):
-        # First make sure every item is present
-        if not isinstance(other, list):
-            return False
-        other_as_stack = list(other)
-        self_as_stack = list(self)
-        while other_as_stack and self_as_stack:
-            needle = other_as_stack.pop()
-            try:
-                self_as_stack.pop(self_as_stack.index(needle))
-            except ValueError:
-                return False
-        if other_as_stack or self_as_stack:
-            return False
-        # Now check the order is respected
-        self_list = list(self)
-        if self.order_key and other != self_list:
-            index = 0
-            while index < len(self_list) or index < len(other):
-                # Check for each elem if they differ
-                if other[index] != self_list[index]:
-                    tmp_list = [other[index], self_list[index]]
-                    sorted_tmp_list = sorted(tmp_list, key=self.order_key)
-                    # Actually testing if differing elems of lists is impacted by the sort
-                    if sorted_tmp_list != tmp_list:
-                        return False
-                index += 1
-        return True
-
-    def __ne__(self, other):
-        return not self.__eq__(other)
-
-
-def test_non_deterministic_ordered_results_methods():
-    test_list = NonDeterministicOrderedResults(
-        [{"k": 1, "x": "a"}, {"k": 1, "x": "b"}], order_key=lambda x: x["k"]
-    )
-    # Test __eq__ method
-    assert test_list == [{"k": 1, "x": "b"}, {"k": 1, "x": "a"}]
-    # Test __ne__ method
-    assert not test_list != [{"k": 1, "x": "b"}, {"k": 1, "x": "a"}]
-
-
-@pytest.mark.parametrize(
-    "is_equal,a,b",
-    [
-        (True, NonDeterministicOrderedResults(), NonDeterministicOrderedResults()),
-        (False, NonDeterministicOrderedResults(), dict()),
-        (False, NonDeterministicOrderedResults(), set()),
-        (False, NonDeterministicOrderedResults(), tuple()),
-        (True, NonDeterministicOrderedResults([1, 2]), [1, 2]),
-        (True, NonDeterministicOrderedResults([2, 1]), [1, 2]),
-        (True, NonDeterministicOrderedResults([2, 1, 2]), [1, 2, 2]),
-        (False, NonDeterministicOrderedResults([1, 2]), [1, 2, 2]),
-        (False, NonDeterministicOrderedResults([1, 2, 2]), [1, 2]),
-        (False, NonDeterministicOrderedResults([1, 2, 3]), [1, 2]),
-        (False, NonDeterministicOrderedResults([1, 2]), [1, 2, 4]),
-        (True, NonDeterministicOrderedResults([{}, {}]), [{}, {}]),
-        # Bad order
-        (False, NonDeterministicOrderedResults([1, 2], order_key=lambda x: x), [2, 1]),
-        # Different order, but still valid
-        (
-            True,
-            NonDeterministicOrderedResults(
-                [{"k": 1, "x": "a"}, {"k": 1, "x": "b"}], order_key=lambda x: x["k"]
-            ),
-            [{"k": 1, "x": "b"}, {"k": 1, "x": "a"}],
-        ),
-        # Sort on label and put non label in NonDeterministicOrder at the end
-        (
-            # Label are well sorted , should be True
-            True,
-            NonDeterministicOrderedResults(
-                [
-                    {"label": "a", "x": 2},
-                    {"label": "b", "x": 1},
-                    {"label": "C", "x": 3},
-                    {"label": "D", "x": 4},
-                    {"label": None, "x": "y"},
-                    {"label": None, "x": "z"},
-                    {"label": None, "x": "x"},
-                ],
-                order_key=lambda x: x["label"].lower()
-                if x["label"]
-                else "~",  # Keep non-human last
-            ),
-            [
-                {"label": "a", "x": 2},
-                {"label": "b", "x": 1},
-                {"label": "C", "x": 3},
-                {"label": "D", "x": 4},
-                {"label": None, "x": "x"},
-                {"label": None, "x": "z"},
-                {"label": None, "x": "y"},
-            ],
-        ),
-        (
-            # Label isn't well sorted, should be False
-            False,
-            NonDeterministicOrderedResults(
-                [
-                    {"label": "D", "x": "d"},
-                    {"label": "b", "x": "a"},
-                    {"label": "a", "x": "b,"},
-                    {"label": "C", "x": "c"},
-                    {"label": None, "x": "x"},
-                    {"label": None, "x": "z"},
-                    {"label": None, "x": "y"},
-                ],
-                order_key=lambda x: x["label"].lower()
-                if x["label"]
-                else "~",  # Keep non-human last
-            ),
-            [
-                {"label": "a", "x": "b,"},
-                {"label": "b", "x": "a"},
-                {"label": "C", "x": "c"},
-                {"label": "D", "x": "d"},
-                {"label": None, "x": "y"},
-                {"label": None, "x": "z"},
-                {"label": None, "x": "x"},
-            ],
-        ),
-        (
-            # Label is well sorted and non-human sorted by x at start, should be False
-            False,
-            NonDeterministicOrderedResults(
-                [
-                    {"label": None, "x": "y"},
-                    {"label": None, "x": "z"},
-                    {"label": None, "x": "x"},
-                    {"label": "a", "x": "b,"},
-                    {"label": "b", "x": "a"},
-                    {"label": "C", "x": "c"},
-                    {"label": "D", "x": "d"},
-                ],
-                order_key=lambda x: x["label"].lower()
-                if x["label"]
-                else "~",  # Keep non-human last
-            ),
-            [
-                {"label": "a", "x": "b,"},
-                {"label": "b", "x": "a"},
-                {"label": "C", "x": "c"},
-                {"label": "D", "x": "d"},
-                {"label": None, "x": "y"},
-                {"label": None, "x": "z"},
-                {"label": None, "x": "x"},
-            ],
-        ),
-        (
-            # Label isn't well sorted and non-human sorted by x at start, should be False
-            False,
-            NonDeterministicOrderedResults(
-                [
-                    {"label": None, "x": "y"},
-                    {"label": None, "x": "z"},
-                    {"label": None, "x": "x"},
-                    {"label": "D", "x": "d"},
-                    {"label": "b", "x": "a"},
-                    {"label": "a", "x": "b,"},
-                    {"label": "C", "x": "c"},
-                ],
-                order_key=lambda x: x["label"].lower()
-                if x["label"]
-                else "~",  # Keep non-human last
-            ),
-            [
-                {"label": "a", "x": "b,"},
-                {"label": "b", "x": "a"},
-                {"label": "C", "x": "c"},
-                {"label": "D", "x": "d"},
-                {"label": None, "x": "y"},
-                {"label": None, "x": "z"},
-                {"label": None, "x": "x"},
-            ],
-        ),
-        (
-            # Label isn't well sorted and non-human sorted by x randomly, should be False
-            False,
-            NonDeterministicOrderedResults(
-                [
-                    {"label": None, "x": "x"},
-                    {"label": "D", "x": "d"},
-                    {"label": None, "x": "z"},
-                    {"label": "b", "x": "a"},
-                    {"label": "a", "x": "b,"},
-                    {"label": None, "x": "y"},
-                    {"label": "C", "x": "c"},
-                ],
-                order_key=lambda x: x["label"].lower()
-                if x["label"]
-                else "~",  # Keep non-human last
-            ),
-            [
-                {"label": "a", "x": "b,"},
-                {"label": "b", "x": "a"},
-                {"label": "C", "x": "c"},
-                {"label": "D", "x": "d"},
-                {"label": None, "x": "z"},
-                {"label": None, "x": "y"},
-                {"label": None, "x": "x"},
-            ],
-        ),
-        (
-            # Label well sorted and non-human sorted by x randomly, should be False
-            False,
-            NonDeterministicOrderedResults(
-                [
-                    {"label": "a", "x": "b,"},
-                    {"label": None, "x": "x"},
-                    {"label": None, "x": "z"},
-                    {"label": "b", "x": "a"},
-                    {"label": "C", "x": "c"},
-                    {"label": None, "x": "y"},
-                    {"label": "D", "x": "d"},
-                ],
-                order_key=lambda x: x["label"].lower()
-                if x["label"]
-                else "~",  # Keep non-human last
-            ),
-            [
-                {"label": "a", "x": "b,"},
-                {"label": "b", "x": "a"},
-                {"label": "C", "x": "c"},
-                {"label": "D", "x": "d"},
-                {"label": None, "x": "y"},
-                {"label": None, "x": "x"},
-                {"label": None, "x": "z"},
-            ],
-        ),
-    ],
-)
-def test_non_deterministic_ordered_results(is_equal, a, b):
-    if is_equal:
-        assert a == b
-        assert b == a
-    else:
-        assert b != a
-        assert a != b
 
 
 @pytest.fixture
@@ -413,20 +166,12 @@ async def test_search_multiple_user_same_human_handle(access_testbed, local_devi
 
     rep = await human_find(sock, query="Guzman Huerta")
     # Users have same label, the sort will have an nondeterminated ordered result.
-    assert rep == {
-        "status": "ok",
-        "results": NonDeterministicOrderedResults(
-            [
-                {"user_id": nick2.user_id, "human_handle": nick2.human_handle, "revoked": True},
-                {"user_id": nick1.user_id, "human_handle": nick1.human_handle, "revoked": True},
-                {"user_id": nick3.user_id, "human_handle": nick3.human_handle, "revoked": False},
-            ],
-            order_key=lambda x: x["human_handle"],
-        ),
-        "per_page": 100,
-        "page": 1,
-        "total": 3,
-    }
+    assert rep == {"status": "ok", "results": ANY, "per_page": 100, "page": 1, "total": 3}
+    assert sorted(rep["results"], key=lambda x: x["user_id"]) == [
+        {"user_id": nick2.user_id, "human_handle": nick2.human_handle, "revoked": True},
+        {"user_id": nick1.user_id, "human_handle": nick1.human_handle, "revoked": True},
+        {"user_id": nick3.user_id, "human_handle": nick3.human_handle, "revoked": False},
+    ]
 
     rep = await human_find(sock, query="Guzman Huerta", omit_revoked=True)
     assert rep == {
@@ -547,19 +292,12 @@ async def test_bad_args(access_testbed, local_device_factory):
 async def test_find_with_query_ignore_non_human(alice_backend_sock, alice, bob, adam):
     # Find all first
     rep = await human_find(alice_backend_sock)
-    assert rep == {
-        "status": "ok",
-        "results": NonDeterministicOrderedResults(
-            [
-                {"user_id": alice.user_id, "revoked": False, "human_handle": None},
-                {"user_id": adam.user_id, "revoked": False, "human_handle": None},
-                {"user_id": bob.user_id, "revoked": False, "human_handle": None},
-            ]
-        ),
-        "per_page": 100,
-        "page": 1,
-        "total": 3,
-    }
+    assert rep == {"status": "ok", "results": ANY, "per_page": 100, "page": 1, "total": 3}
+    assert sorted(rep["results"], key=lambda x: x["user_id"]) == [
+        {"user_id": adam.user_id, "revoked": False, "human_handle": None},
+        {"user_id": alice.user_id, "revoked": False, "human_handle": None},
+        {"user_id": bob.user_id, "revoked": False, "human_handle": None},
+    ]
 
     rep = await human_find(alice_backend_sock, query=alice.user_id)
     assert rep == {"status": "ok", "results": [], "per_page": 100, "page": 1, "total": 0}
@@ -604,30 +342,24 @@ async def test_no_query_users_with_and_without_human_label(access_testbed, local
     await binder.bind_device(titeuf, certifier=godfrey1)
 
     # Users with human label should be sorted but for now non_human users create a NonDeterministicOrder
-
-    expected_result = NonDeterministicOrderedResults(
-        [
-            {"user_id": blacky.user_id, "revoked": False, "human_handle": blacky.human_handle},
-            {"user_id": blacky3.user_id, "revoked": False, "human_handle": blacky3.human_handle},
-            {"user_id": godfrey1.user_id, "revoked": False, "human_handle": godfrey1.human_handle},
-            {"user_id": ice.user_id, "revoked": False, "human_handle": ice.human_handle},
-            {"user_id": ninja.user_id, "revoked": False, "human_handle": ninja.human_handle},
-            {"user_id": richard.user_id, "revoked": False, "human_handle": richard.human_handle},
-            {"user_id": roger.user_id, "revoked": False, "human_handle": roger.human_handle},
-            {"user_id": zoe.user_id, "revoked": False, "human_handle": zoe.human_handle},
-            {"user_id": titeuf.user_id, "revoked": False, "human_handle": None},
-            {"user_id": mike.user_id, "revoked": False, "human_handle": None},
-            {"user_id": easy.user_id, "revoked": False, "human_handle": None},
-        ],
-        order_key=lambda x: x["human_handle"].label.lower()
-        if x["human_handle"]
-        else "~",  # Keep non-human last
-    )
     rep = await human_find(sock, per_page=11, page=1)
-    assert rep == {
-        "status": "ok",
-        "results": expected_result,
-        "per_page": 11,
-        "page": 1,
-        "total": 11,
-    }
+    assert rep == {"status": "ok", "results": ANY, "per_page": 11, "page": 1, "total": 11}
+
+    # Items with human handle come first in a deterministic order
+    assert rep["results"][:8] == [
+        {"user_id": blacky.user_id, "revoked": False, "human_handle": blacky.human_handle},
+        {"user_id": blacky3.user_id, "revoked": False, "human_handle": blacky3.human_handle},
+        {"user_id": godfrey1.user_id, "revoked": False, "human_handle": godfrey1.human_handle},
+        {"user_id": ice.user_id, "revoked": False, "human_handle": ice.human_handle},
+        {"user_id": ninja.user_id, "revoked": False, "human_handle": ninja.human_handle},
+        {"user_id": richard.user_id, "revoked": False, "human_handle": richard.human_handle},
+        {"user_id": roger.user_id, "revoked": False, "human_handle": roger.human_handle},
+        {"user_id": zoe.user_id, "revoked": False, "human_handle": zoe.human_handle},
+    ]
+
+    # Items with no human handle come last with no order guarantee
+    assert sorted(rep["results"][8:], key=lambda x: x["user_id"]) == [
+        {"user_id": titeuf.user_id, "revoked": False, "human_handle": None},
+        {"user_id": mike.user_id, "revoked": False, "human_handle": None},
+        {"user_id": easy.user_id, "revoked": False, "human_handle": None},
+    ]
