@@ -421,17 +421,19 @@ async def test_get_reencryption_need(alice_workspace, running_backend, monkeypat
             await alice_workspace.get_reencryption_need()
 
     # Reproduce a backend offline after the certificates have been retrieved (see issue #1335)
-    reply = await alice_workspace.remote_loader._backend_cmds(
-        "realm_get_role_certificates", alice_workspace.workspace_id
+    reply = await alice_workspace.remote_loader.backend_cmds.realm_get_role_certificates(
+        alice_workspace.workspace_id
     )
-    original = alice_workspace.remote_loader._backend_cmds
+    original = alice_workspace.remote_loader.backend_cmds.realm_get_role_certificates
 
-    async def mockup(name, *args):
-        if name == "realm_get_role_certificates" and args == (alice_workspace.workspace_id,):
+    async def mockup(*args):
+        if args == (alice_workspace.workspace_id,):
             return reply
-        return await original(name, *args)
+        return await original(*args)
 
-    monkeypatch.setattr(alice_workspace.remote_loader, "_backend_cmds", mockup)
+    monkeypatch.setattr(
+        alice_workspace.remote_loader.backend_cmds, "realm_get_role_certificates", mockup
+    )
 
     with running_backend.offline():
         with pytest.raises(FSBackendOfflineError):

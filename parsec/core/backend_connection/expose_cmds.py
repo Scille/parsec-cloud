@@ -1,5 +1,6 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
 
+from functools import wraps
 from parsec.core.backend_connection import cmds
 from parsec.core.backend_connection.exceptions import BackendNotAvailable
 
@@ -10,6 +11,7 @@ def expose_cmds(name: str, apiv1: bool = False):
     else:
         cmd = getattr(cmds, name)
 
+    @wraps(cmd)
     async def wrapper(self, *args, **kwargs):
         async with self.acquire_transport() as transport:
             return await cmd(transport, *args, **kwargs)
@@ -25,6 +27,7 @@ def expose_cmds_with_retrier(name: str, apiv1: bool = False):
     else:
         cmd = getattr(cmds, name)
 
+    @wraps(cmd)
     async def wrapper(self, *args, **kwargs):
         # Reusing the transports expose us to `BackendNotAvaiable` exceptions
         # due to inactivity timeout while the transport was in the pool.

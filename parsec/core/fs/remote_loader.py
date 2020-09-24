@@ -1,7 +1,7 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
 
 from contextlib import contextmanager
-from typing import Dict, Optional, List, Tuple, cast, Iterator, Callable, Any
+from typing import Dict, Optional, List, Tuple, cast, Iterator, Callable
 
 from pendulum import Pendulum, now as pendulum_now
 
@@ -16,6 +16,7 @@ from parsec.api.data import (
 )
 
 from parsec.core.types import EntryID, ChunkID, LocalDevice
+
 from parsec.core.backend_connection import (
     BackendConnectionError,
     BackendNotAvailable,
@@ -67,7 +68,17 @@ def translate_remote_devices_manager_errors() -> Iterator[None]:
     except RemoteDevicesManagerInvalidTrustchainError as exc:
         raise FSInvalidTrustchainEror(str(exc)) from exc
     except RemoteDevicesManagerError as exc:
-        raise FSRemoteOperationError(str(exc))
+        raise FSRemoteOperationError(str(exc)) from exc
+
+
+@contextmanager
+def translate_backend_cmds_errors() -> Iterator[None]:
+    try:
+        yield
+    except BackendNotAvailable as exc:
+        raise FSBackendOfflineError(str(exc)) from exc
+    except BackendConnectionError as exc:
+        raise FSError(str(exc)) from exc
 
 
 class UserRemoteLoader:
@@ -106,20 +117,11 @@ class UserRemoteLoader:
         else:
             return None
 
-    async def _backend_cmds(self, cmd: str, *args: Any, **kwargs: Any) -> Any:
-        try:
-            return await getattr(self.backend_cmds, cmd)(*args, **kwargs)
-
-        except BackendNotAvailable as exc:
-            raise FSBackendOfflineError(str(exc)) from exc
-
-        except BackendConnectionError as exc:
-            raise FSError(f"`{cmd}` request has failed due to connection error `{exc}`") from exc
-
     async def _load_realm_role_certificates(
         self, realm_id: Optional[EntryID] = None
     ) -> Tuple[List[RealmRoleCertificateContent], Dict[UserID, RealmRole]]:
-        rep = await self._backend_cmds("realm_get_role_certificates", realm_id or self.workspace_id)
+        with translate_backend_cmds_errors():
+            rep = await self.backend_cmds.realm_get_role_certificates(realm_id or self.workspace_id)
         if rep["status"] == "not_allowed":
             # Seems we lost the access to the realm
             raise FSWorkspaceNoReadAccess("Cannot get workspace roles: no read access")
@@ -253,7 +255,8 @@ class UserRemoteLoader:
             FSWorkspaceInMaintenance
             FSRemoteManifestNotFound
         """
-        rep = await self._backend_cmds("vlob_list_versions", entry_id)
+        with translate_backend_cmds_errors():
+            rep = await self.backend_cmds.vlob_list_versions(entry_id)
         if rep["status"] == "not_allowed":
             # Seems we lost the access to the realm
             raise FSWorkspaceNoReadAccess("Cannot load manifest: no read access")
@@ -278,7 +281,9 @@ class UserRemoteLoader:
             author=self.device.device_id, timestamp=pendulum_now(), realm_id=realm_id
         ).dump_and_sign(self.device.signing_key)
 
-        rep = await self._backend_cmds("realm_create", certif)
+        with translate_backend_cmds_errors():
+            rep = await self.backend_cmds.realm_create(certif)
+
         if rep["status"] == "already_exists":
             # It's possible a previous attempt to create this realm
             # succeeded but we didn't receive the confirmation, hence
@@ -324,7 +329,8 @@ class RemoteLoader(UserRemoteLoader):
             FSWorkspaceNoAccess
         """
         # Download
-        rep = await self._backend_cmds("block_read", access.id)
+        with translate_backend_cmds_errors():
+            rep = await self.backend_cmds.block_read(access.id)
         if rep["status"] == "not_found":
             raise FSRemoteBlockNotFound(access)
         elif rep["status"] == "not_allowed":
@@ -366,7 +372,9 @@ class RemoteLoader(UserRemoteLoader):
             raise FSError(f"Cannot encrypt block: {exc}") from exc
 
         # Upload block
-        rep = await self._backend_cmds("block_create", access.id, self.workspace_id, ciphered)
+        with translate_backend_cmds_errors():
+            rep = await self.backend_cmds.block_create(access.id, self.workspace_id, ciphered)
+
         if rep["status"] == "already_exists":
             # Ignore exception if the block has already been uploaded
             # This might happen when a failure occurs before the local storage is updated
@@ -415,13 +423,13 @@ class RemoteLoader(UserRemoteLoader):
             )
         # Download the vlob
         workspace_entry = self.get_workspace_entry()
-        rep = await self._backend_cmds(
-            "vlob_read",
-            workspace_entry.encryption_revision,
-            entry_id,
-            version=version,
-            timestamp=timestamp if version is None else None,
-        )
+        with translate_backend_cmds_errors():
+            rep = await self.backend_cmds.vlob_read(
+                workspace_entry.encryption_revision,
+                entry_id,
+                version=version,
+                timestamp=timestamp if version is None else None,
+            )
         if rep["status"] == "not_found":
             raise FSRemoteManifestNotFound(entry_id)
         elif rep["status"] == "not_allowed":
@@ -539,9 +547,10 @@ class RemoteLoader(UserRemoteLoader):
         """
 
         # Vlob upload
-        rep = await self._backend_cmds(
-            "vlob_create", self.workspace_id, encryption_revision, entry_id, now, ciphered
-        )
+        with translate_backend_cmds_errors():
+            rep = await self.backend_cmds.vlob_create(
+                self.workspace_id, encryption_revision, entry_id, now, ciphered
+            )
         if rep["status"] == "already_exists":
             raise FSRemoteSyncError(entry_id)
         elif rep["status"] == "not_allowed":
@@ -576,9 +585,11 @@ class RemoteLoader(UserRemoteLoader):
             FSWorkspaceNoAccess
         """
         # Vlob upload
-        rep = await self._backend_cmds(
-            "vlob_update", encryption_revision, entry_id, version, now, ciphered
-        )
+        with translate_backend_cmds_errors():
+            rep = await self.backend_cmds.vlob_update(
+                encryption_revision, entry_id, version, now, ciphered
+            )
+
         if rep["status"] == "not_found":
             raise FSRemoteSyncError(entry_id)
         elif rep["status"] == "not_allowed":
