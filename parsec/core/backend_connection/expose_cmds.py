@@ -1,34 +1,36 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
 
 from functools import wraps
-from parsec.core.backend_connection import cmds
+from typing import TypeVar, Callable, Any
 from parsec.core.backend_connection.exceptions import BackendNotAvailable
 
+# Once PEP 612 is available, we'll be able to type `expose_cmds` as:
+#
+#     P = ParamSpec("P")
+#     R = TypeVar("R")
+#
+#     def with_request(f: Callable[Concatenate[Transport, P], R]) -> Callable[P, R]:
+#         @wraps(cmd)
+#         async def wrapper(self, *args: P.args, **kwargs: P.kwargs) -> R:
+#             [...]
+#
+# This will allow us to properly check the types of the arguments of all the `cmds` commands
 
-def expose_cmds(name: str, apiv1: bool = False):
-    if apiv1:
-        cmd = getattr(cmds, f"apiv1_{name}", None) or getattr(cmds, name)
-    else:
-        cmd = getattr(cmds, name)
+R = TypeVar("R")
 
+
+def expose_cmds(cmd: Callable[..., R]) -> Callable[..., R]:
     @wraps(cmd)
-    async def wrapper(self, *args, **kwargs):
+    async def wrapper(self, *args: Any, **kwargs: Any) -> R:
         async with self.acquire_transport() as transport:
             return await cmd(transport, *args, **kwargs)
-
-    wrapper.__name__ = name
 
     return wrapper
 
 
-def expose_cmds_with_retrier(name: str, apiv1: bool = False):
-    if apiv1:
-        cmd = getattr(cmds, f"apiv1_{name}", None) or getattr(cmds, name)
-    else:
-        cmd = getattr(cmds, name)
-
+def expose_cmds_with_retrier(cmd: Callable[..., R]) -> Callable[..., R]:
     @wraps(cmd)
-    async def wrapper(self, *args, **kwargs):
+    async def wrapper(self, *args: Any, **kwargs: Any) -> R:
         # Reusing the transports expose us to `BackendNotAvaiable` exceptions
         # due to inactivity timeout while the transport was in the pool.
         try:
@@ -38,7 +40,5 @@ def expose_cmds_with_retrier(name: str, apiv1: bool = False):
         except BackendNotAvailable:
             async with self.acquire_transport(force_fresh=True) as transport:
                 return await cmd(transport, *args, **kwargs)
-
-    wrapper.__name__ = name
 
     return wrapper
