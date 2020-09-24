@@ -191,6 +191,7 @@ class WorkspacesWidget(QWidget, Ui_WorkspacesWidget):
         self.event_bus = event_bus
         self.reencrypting = set()
         self.disabled_workspaces = self.core.config.disabled_workspaces
+        self.filter_by_users = False
 
         self.layout_workspaces = FlowLayout(spacing=40)
         self.layout_content.addLayout(self.layout_workspaces)
@@ -220,6 +221,7 @@ class WorkspacesWidget(QWidget, Ui_WorkspacesWidget):
         self.mount_error.connect(self.on_mount_error)
         self.unmount_success.connect(self.on_unmount_success)
         self.unmount_error.connect(self.on_unmount_error)
+        self.filter_selector.currentIndexChanged.connect(self.on_filter_selection_changed)
 
         self.workspace_reencryption_success.connect(self._on_workspace_reencryption_success)
         self.workspace_reencryption_error.connect(self._on_workspace_reencryption_error)
@@ -305,13 +307,37 @@ class WorkspacesWidget(QWidget, Ui_WorkspacesWidget):
                 return
         show_error(self, _("TEXT_WORKSPACE_GOTO_FILE_LINK_WORKSPACE_NOT_FOUND"))
 
+    def on_filter_selection_changed(self, index):
+        self.filter_by_users = bool(index)
+        if self.filter_by_users:
+            self.line_edit_search.setPlaceholderText(
+                _("TEXT_WORKSPACE_FILTER_WORKSPACES_USERS_PLACEHOLDER")
+            )
+        else:
+            self.line_edit_search.setPlaceholderText(
+                _("TEXT_WORKSPACE_FILTER_WORKSPACES_PLACEHOLDER")
+            )
+
     def on_workspace_filter(self, pattern):
         pattern = pattern.lower()
         for widget in self._iter_workspace_buttons():
-            if pattern and pattern not in widget.name.lower():
-                widget.hide()
+            # Filter on users
+            if self.filter_by_users:
+                user_found = False
+                for user_role, user_info in widget.users_roles.values():
+                    if pattern and pattern in str(user_info.human_handle).lower():
+                        user_found = True
+                        break
+                if not pattern or user_found:
+                    widget.show()
+                else:
+                    widget.hide()
+            # Filter on names
             else:
-                widget.show()
+                if pattern and pattern not in widget.name.lower():
+                    widget.hide()
+                else:
+                    widget.show()
 
     def load_workspace(self, workspace_fs, path=FsPath("/"), selected=False):
         self.load_workspace_clicked.emit(workspace_fs, path, selected)

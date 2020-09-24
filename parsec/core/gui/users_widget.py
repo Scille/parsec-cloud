@@ -81,6 +81,7 @@ class UserInvitationButton(QWidget, Ui_UserInvitationButton):
 
 class UserButton(QWidget, Ui_UserButton):
     revoke_clicked = pyqtSignal(UserInfo)
+    filter_user_workspaces_clicked = pyqtSignal(str)
 
     def __init__(self, user_info, is_current_user, current_user_is_admin):
         super().__init__()
@@ -140,10 +141,17 @@ class UserButton(QWidget, Ui_UserButton):
         menu = QMenu(self)
         action = menu.addAction(_("ACTION_USER_MENU_REVOKE"))
         action.triggered.connect(self.revoke)
+
+        action = menu.addAction("ACTION_USER_MEN")
+        action.triggered.connect(self.filter_user_workspaces)
         menu.exec_(global_pos)
 
     def revoke(self):
         self.revoke_clicked.emit(self.user_info)
+
+    def filter_user_workspaces(self):
+        print("User widget emit")
+        self.filter_user_workspaces_clicked.emit(self.user_info.human_handle.label)
 
 
 async def _do_revoke_user(core, user_info):
@@ -197,6 +205,7 @@ class UsersWidget(QWidget, Ui_UsersWidget):
     invite_user_error = pyqtSignal(QtToTrioJob)
     cancel_invitation_success = pyqtSignal(QtToTrioJob)
     cancel_invitation_error = pyqtSignal(QtToTrioJob)
+    filter_user_workspaces_request = pyqtSignal(str)
 
     def __init__(self, core, jobs_ctx, event_bus, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -275,8 +284,12 @@ class UsersWidget(QWidget, Ui_UsersWidget):
             current_user_is_admin=self.core.device.is_admin,
         )
         self.layout_users.addWidget(button)
+        button.filter_user_workspaces_clicked.connect(self.filter_user_workspaces_request.emit)
         button.revoke_clicked.connect(self.revoke_user)
         button.show()
+
+    def display_user_workspaces(self, user_label):
+        print(user_label)
 
     def add_user_invitation(self, email, invite_addr):
         button = UserInvitationButton(email, invite_addr)

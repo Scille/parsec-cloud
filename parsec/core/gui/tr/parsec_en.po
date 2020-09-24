@@ -160,6 +160,12 @@ msgstr ""
 "You can no longer interact with the workspace or see any files it "
 "contains."
 
+msgid "ACTION_FILTER_WORKSPACE_NAME"
+msgstr "by name"
+
+msgid "ACTION_FILTER_WORKSPACE_USER"
+msgstr "by user"
+
 msgid "TEXT_FILE_SHARING_DEMOTED_TO_READER"
 msgstr ""
 "Your role on this workspace has changed to <b>Reader</b>. You can no "
@@ -2334,6 +2340,9 @@ msgstr "Reencrypting... %p%"
 
 msgid "TEXT_WORKSPACE_FILTER_WORKSPACES_PLACEHOLDER"
 msgstr "Filter the workspaces"
+
+msgid "TEXT_WORKSPACE_FILTER_WORKSPACES_USERS_PLACEHOLDER"
+msgstr "Filter the workspace (users based)"
 
 msgid "ACTION_WORKSPACE_ADD_WORKSPACE"
 msgstr "Create a new workspace"

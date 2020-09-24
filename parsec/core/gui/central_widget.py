@@ -92,6 +92,7 @@ class CentralWidget(QWidget, Ui_CentralWidget):
 
         self.users_widget = UsersWidget(self.core, self.jobs_ctx, self.event_bus, parent=self)
         self.widget_central.layout().insertWidget(0, self.users_widget)
+        self.users_widget.filter_user_workspaces_request.connect(self.show_mount_widget)
 
         self.devices_widget = DevicesWidget(self.core, self.jobs_ctx, self.event_bus, parent=self)
         self.widget_central.layout().insertWidget(0, self.devices_widget)
@@ -250,12 +251,12 @@ class CentralWidget(QWidget, Ui_CentralWidget):
             self.core.user_fs.get_workspace(workspace_id), path, selected=True
         )
 
-    def show_mount_widget(self):
+    def show_mount_widget(self, filter_user_name=""):
         self.clear_widgets()
         self.menu.activate_files()
         self.label_title.setText(_("ACTION_MENU_DOCUMENTS"))
         self.mount_widget.show()
-        self.mount_widget.show_workspaces_widget()
+        self.mount_widget.show_workspaces_widget(filter_user_name)
 
     def show_users_widget(self):
         self.clear_widgets()
