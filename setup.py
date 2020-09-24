@@ -286,6 +286,7 @@ requirements = [
     "async_exit_stack==1.0.1",
     "outcome==1.0.0",
     "packaging==20.4",
+    "pycryptodome==3.9.8",
 ]
 
 
