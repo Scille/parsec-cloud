@@ -752,7 +752,7 @@ async def test_drag_and_drop(
 
     def _import_file():
         mime_data = QtCore.QMimeData()
-        mime_data.setUrls([QtCore.QUrl("file://" + str(temp_dir / "file01.txt"))])
+        mime_data.setUrls([QtCore.QUrl.fromLocalFile(str(temp_dir / "file01.txt"))])
         print(mime_data.urls())
         drop_event = QtGui.QDropEvent(
             w_f.table_files.pos(),
@@ -796,8 +796,7 @@ async def test_drag_and_drop_read_only(
 
     def _import_file():
         mime_data = QtCore.QMimeData()
-        mime_data.setUrls([QtCore.QUrl("file://" + str(temp_dir / "file01.txt"))])
-        print(mime_data.urls())
+        mime_data.setUrls([QtCore.QUrl.fromLocalFile(str(temp_dir / "file01.txt"))])
         drop_event = QtGui.QDropEvent(
             w_f.table_files.pos(),
             QtCore.Qt.MoveAction,
