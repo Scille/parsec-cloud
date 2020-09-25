@@ -139,9 +139,7 @@ async def test_filter_users(aqtbot, running_backend, logged_gui):
     assert bob_w.isVisible() is True
     assert bob_w.label_username.text() == "Boby McBobFace"
     assert bob_w.label_email.text() == "bob@example.com"
-
-    with pytest.raises(AttributeError):
-        alice_w = u_w.layout_users.itemAt(1).widget()
+    assert u_w.layout_users.count() == 1
 
     async with aqtbot.wait_signal(u_w.list_success):
         await aqtbot.wait_until(lambda: u_w.line_edit_search.setText(""))
@@ -165,5 +163,4 @@ async def test_filter_users(aqtbot, running_backend, logged_gui):
     assert alice_w.isVisible() is True
     assert alice_w.label_username.text() == "Alicey McAliceFace"
     assert alice_w.label_email.text() == "alice@example.com"
-    with pytest.raises(AttributeError):
-        bob_w = u_w.layout_users.itemAt(2).widget()
+    assert u_w.layout_users.count() == 2
