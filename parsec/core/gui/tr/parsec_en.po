@@ -7,8 +7,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PROJECT VERSION\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2020-09-02 08:12+0200\n"
-"PO-Revision-Date: 2020-09-02 08:13+0200\n"
+"POT-Creation-Date: 2020-09-25 14:48+0200\n"
+"PO-Revision-Date: 2020-09-25 14:50+0200\n"
 "Last-Translator: \n"
 "Language: en\n"
 "Language-Team: en <LL@li.org>\n"
@@ -679,6 +679,9 @@ msgstr ""
 
 msgid "ACTION_USER_REVOCATION_CONFIRM"
 msgstr "Revoke the user"
+
+msgid "TEXT_USERS_PAGE_INFO_page-pagetotal-userfrom-userto-usertotal"
+msgstr "Users {userfrom} to {userto} displayed, {usertotal} in total - page {page} / {pagetotal}"
 
 msgid "TEXT_USER_LIST_RETRIEVABLE_FAILURE"
 msgstr "Failed to retrieve the user list from the server."
@@ -1709,6 +1712,11 @@ msgstr "You will need to restart the application for the changes to take effect.
 msgid "ACTION_LOG_OUT"
 msgstr "Log Out"
 
+msgid "TEXT_FILE_LINK_WORKSPACE_NOT_FOUND_organization"
+msgstr ""
+"You do not have access to the workspace containing the file. It may not "
+"have been shared with you."
+
 msgid "NOTIF_WARN_MOUNTPOINT_UNMOUNTED"
 msgstr ""
 
@@ -1872,11 +1880,6 @@ msgstr ""
 "You cannot access this file because you have no device belonging to the "
 "organization <b>{organization}</b> on this machine."
 
-msgid "TEXT_FILE_LINK_WORKSPACE_NOT_FOUND_organization"
-msgstr ""
-"You do not have access to the workspace containing the file. It may not "
-"have been shared with you."
-
 msgid "TEXT_FILE_LINK_PLEASE_LOG_IN_organization"
 msgstr ""
 "You must log in with a device from the organization <b>{organization}</b>"
@@ -2034,9 +2037,6 @@ msgstr "Please fill out the following information to create your organization."
 
 msgid "ACTION_PREVIOUS"
 msgstr "Previous"
-
-msgid "TEXT_DEVICE_FILTER_PLACEHOLDER"
-msgstr "Filter the devices"
 
 msgid "TEXT_DEVICE_ADD_NEW_TOOLTIP"
 msgstr "Invite a new device"
@@ -2305,23 +2305,14 @@ msgstr "Filter users"
 msgid "ACTION_USER_INVITE_USER"
 msgstr "Invite a new user"
 
-msgid "ACTION_LIST_NEXT_PAGE"
-msgstr "Next page"
+msgid "ACTION_FILTER_LIST_USERS"
+msgstr "Search users"
 
 msgid "ACTION_LIST_PREVIOUS_PAGE"
 msgstr "Previous page"
 
-msgid "ACTION_FILTER_LIST_USERS"
-msgstr "Search users"
-
-msgid "ACTION_FILTER_LIST_DEVICES"
-msgstr "Search devices"
-
-msgid "TEXT_USERS_ON_PAGE_userfrom_userto-total"
-msgstr "User {userfrom} to {userto} displayed, {total} in total."
-
-msgid "TEXT_PAGE_NUMBER_page-total"
-msgstr "Page {page} / {total}"
+msgid "ACTION_LIST_NEXT_PAGE"
+msgstr "Next page"
 
 msgid "TEXT_WORKSPACE_IS_SHARED_TOOLTIP"
 msgstr "This workspace is shared."
@@ -2358,3 +2349,4 @@ msgstr "Create a new workspace"
 
 msgid "ACTION_WORKSPACE_GOTO_FILE_LINK"
 msgstr "Go to a file using a link"
+

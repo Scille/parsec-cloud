@@ -389,26 +389,24 @@ class UsersWidget(QWidget, Ui_UsersWidget):
 
     def pagination(self, total: int, users_on_page: int):
         """Show/activate or hide/deactivate previous and next page button"""
+        self.label_page_info.show()
+        # Set plage of users displayed
+        user_from = (self._page - 1) * USERS_PER_PAGE + 1
+        user_to = user_from - 1 + users_on_page
+        self.label_page_info.setText(
+            _("TEXT_USERS_PAGE_INFO_page-pagetotal-userfrom-userto-usertotal").format(
+                page=self._page,
+                pagetotal=ceil(total / USERS_PER_PAGE),
+                userfrom=user_from,
+                userto=user_to,
+                usertotal=total,
+            )
+        )
         if total > USERS_PER_PAGE:
-            self.label_page_number.show()
-            self.label_user_on_page.show()
             self.button_previous_page.show()
             self.button_next_page.show()
             self.button_previous_page.setEnabled(True)
             self.button_next_page.setEnabled(True)
-            self.label_page_number.setText(
-                _("TEXT_PAGE_NUMBER_page-total").format(
-                    page=self._page, total=ceil(total / USERS_PER_PAGE)
-                )
-            )
-            # Set plage of users displayed
-            user_from = (self._page - 1) * USERS_PER_PAGE + 1
-            user_to = user_from - 1 + users_on_page
-            self.label_user_on_page.setText(
-                _("TEXT_USERS_ON_PAGE_userfrom_userto-total").format(
-                    userfrom=user_from, userto=user_to, total=total
-                )
-            )
             if self._page * USERS_PER_PAGE >= total:
                 self.button_next_page.setEnabled(False)
             else:
@@ -418,8 +416,6 @@ class UsersWidget(QWidget, Ui_UsersWidget):
             else:
                 self.button_previous_page.setEnabled(True)
         else:
-            self.label_page_number.hide()
-            self.label_user_on_page.hide()
             self.button_previous_page.hide()
             self.button_next_page.hide()
 
@@ -499,8 +495,7 @@ class UsersWidget(QWidget, Ui_UsersWidget):
 
     def reset(self):
         self.layout_users.clear()
-        self.label_page_number.hide()
-        self.label_user_on_page.hide()
+        self.label_page_info.hide()
         self.button_users_filter.setEnabled(False)
         self.line_edit_search.setEnabled(False)
         self.button_previous_page.hide()
