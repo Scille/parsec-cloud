@@ -392,6 +392,8 @@ class UsersWidget(QWidget, Ui_UsersWidget):
         if total > USERS_PER_PAGE:
             self.label_page_number.show()
             self.label_user_on_page.show()
+            self.button_previous_page.show()
+            self.button_next_page.show()
             self.button_previous_page.setEnabled(True)
             self.button_next_page.setEnabled(True)
             self.label_page_number.setText(
@@ -418,8 +420,8 @@ class UsersWidget(QWidget, Ui_UsersWidget):
         else:
             self.label_page_number.hide()
             self.label_user_on_page.hide()
-            self.button_previous_page.setEnabled(False)
-            self.button_next_page.setEnabled(False)
+            self.button_previous_page.hide()
+            self.button_next_page.hide()
 
     def _on_list_success(self, job):
         assert job.is_finished()
@@ -499,10 +501,10 @@ class UsersWidget(QWidget, Ui_UsersWidget):
         self.layout_users.clear()
         self.label_page_number.hide()
         self.label_user_on_page.hide()
-        self.button_previous_page.setEnabled(False)
-        self.button_next_page.setEnabled(False)
         self.button_users_filter.setEnabled(False)
         self.line_edit_search.setEnabled(False)
+        self.button_previous_page.hide()
+        self.button_next_page.hide()
         self.spinner.show()
         self.jobs_ctx.submit_job(
             ThreadSafeQtSignal(self, "list_success", QtToTrioJob),
