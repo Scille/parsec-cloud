@@ -18,18 +18,6 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Generated-By: Babel 2.6.0\n"
 
-msgid "TEXT_WORKSPACE_ROLE_READER"
-msgstr "Lecteur"
-
-msgid "TEXT_WORKSPACE_ROLE_CONTRIBUTOR"
-msgstr "Contributeur"
-
-msgid "TEXT_WORKSPACE_ROLE_MANAGER"
-msgstr "Gérant"
-
-msgid "TEXT_WORKSPACE_ROLE_OWNER"
-msgstr "Propriétaire"
-
 msgid "TEXT_FILE_LINK_COPIED_TO_CLIPBOARD"
 msgstr "Le lien vers le fichier a été copié dans le presse-papier."
 
@@ -249,9 +237,6 @@ msgstr "Erreur interne. Veuillez redémarrer le processus."
 msgid "TEXT_GREET_USER_TITLE"
 msgstr "Accueillir un nouvel utilisateur"
 
-msgid "TEXT_WORKSPACE_ROLE_NOT_SHARED"
-msgstr "Non partagé"
-
 msgid "TEXT_WORKSPACE_SHARING_USER_HAS_BEEN_REVOKED"
 msgstr "Cet utilisateur a été révoqué."
 
@@ -279,6 +264,21 @@ msgstr "Remonter dans le temps"
 
 msgid "TEXT_PARSEC_VERSION_version"
 msgstr "PARSEC version {version}"
+
+msgid "TEXT_WORKSPACE_ROLE_READER"
+msgstr "Lecteur"
+
+msgid "TEXT_WORKSPACE_ROLE_CONTRIBUTOR"
+msgstr "Contributeur"
+
+msgid "TEXT_WORKSPACE_ROLE_MANAGER"
+msgstr "Gérant"
+
+msgid "TEXT_WORKSPACE_ROLE_OWNER"
+msgstr "Propriétaire"
+
+msgid "TEXT_WORKSPACE_ROLE_NOT_SHARED"
+msgstr "Non partagé"
 
 msgid "TEXT_PASSWORD_VALIDATION_TOO_SHORT"
 msgstr "TROP COURT"
@@ -1575,6 +1575,11 @@ msgstr "Répertoire parent"
 msgid "TEXT_FILE_TREE_PARENT_WORKSPACE"
 msgstr "Liste des espaces de travail"
 
+msgid "TEXT_FILE_DROP_WORKSPACE_IS_READ_ONLY"
+msgstr ""
+"Impossible d'importer des fichiers car vous n'avez pas accès à cet espace"
+" de travail en écriture."
+
 msgid "TEXT_FILE_ITEM_IS_CONFINED_TOOLTIP"
 msgstr "Ce fichier ne sera pas synchronisé."
 
@@ -2170,6 +2175,9 @@ msgstr "Mis à jour"
 msgid "TEXT_FILE_SIZE_HEADER"
 msgstr "Taille"
 
+msgid "TextLabel"
+msgstr ""
+
 msgid "TEXT_GREET_DEVICE_CODE_EXCHANGE_GIVE_CODE_INSTRUCTIONS"
 msgstr "Utilisez le code suivant avec votre nouvel appareil :"
 
@@ -2409,3 +2417,4 @@ msgstr "Créer un nouvel espace de travail"
 
 msgid "ACTION_WORKSPACE_GOTO_FILE_LINK"
 msgstr "Trouver un fichier via son lien"
+

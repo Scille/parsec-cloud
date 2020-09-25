@@ -18,18 +18,6 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Generated-By: Babel 2.6.0\n"
 
-msgid "TEXT_WORKSPACE_ROLE_READER"
-msgstr "Reader"
-
-msgid "TEXT_WORKSPACE_ROLE_CONTRIBUTOR"
-msgstr "Contributor"
-
-msgid "TEXT_WORKSPACE_ROLE_MANAGER"
-msgstr "Manager"
-
-msgid "TEXT_WORKSPACE_ROLE_OWNER"
-msgstr "Owner"
-
 msgid "TEXT_FILE_LINK_COPIED_TO_CLIPBOARD"
 msgstr "A link to the file has been copied to your clipboard."
 
@@ -236,9 +224,6 @@ msgstr "Internal error. Please restart the process."
 msgid "TEXT_GREET_USER_TITLE"
 msgstr "Greet a new user"
 
-msgid "TEXT_WORKSPACE_ROLE_NOT_SHARED"
-msgstr "Not shared"
-
 msgid "TEXT_WORKSPACE_SHARING_USER_HAS_BEEN_REVOKED"
 msgstr "This user has been revoked."
 
@@ -262,6 +247,21 @@ msgstr "Go back in time"
 
 msgid "TEXT_PARSEC_VERSION_version"
 msgstr "PARSEC version {version}"
+
+msgid "TEXT_WORKSPACE_ROLE_READER"
+msgstr "Reader"
+
+msgid "TEXT_WORKSPACE_ROLE_CONTRIBUTOR"
+msgstr "Contributor"
+
+msgid "TEXT_WORKSPACE_ROLE_MANAGER"
+msgstr "Manager"
+
+msgid "TEXT_WORKSPACE_ROLE_OWNER"
+msgstr "Owner"
+
+msgid "TEXT_WORKSPACE_ROLE_NOT_SHARED"
+msgstr "Not shared"
 
 msgid "TEXT_PASSWORD_VALIDATION_TOO_SHORT"
 msgstr "TOO SHORT"
@@ -1532,6 +1532,9 @@ msgstr "Parent folder"
 msgid "TEXT_FILE_TREE_PARENT_WORKSPACE"
 msgstr "Workspaces list"
 
+msgid "TEXT_FILE_DROP_WORKSPACE_IS_READ_ONLY"
+msgstr "Cannot import files because you don't have write access to this workspace."
+
 msgid "TEXT_FILE_ITEM_IS_CONFINED_TOOLTIP"
 msgstr "The file will not be synced."
 
@@ -2119,6 +2122,9 @@ msgstr "Updated"
 
 msgid "TEXT_FILE_SIZE_HEADER"
 msgstr "Size"
+
+msgid "TextLabel"
+msgstr ""
 
 msgid "TEXT_GREET_DEVICE_CODE_EXCHANGE_GIVE_CODE_INSTRUCTIONS"
 msgstr "Use the following code on your new device:"

@@ -16,11 +16,10 @@ from parsec.core.gui.trio_thread import JobResultError, ThreadSafeQtSignal, QtTo
 from parsec.core.gui.custom_dialogs import show_error, GreyedDialog
 from parsec.core.gui.custom_widgets import Pixmap
 from parsec.core.gui.lang import translate as _
+from parsec.core.gui.workspace_roles import get_role_translation, NOT_SHARED_KEY
 from parsec.core.gui.ui.workspace_sharing_widget import Ui_WorkspaceSharingWidget
 from parsec.core.gui.ui.sharing_widget import Ui_SharingWidget
 
-
-NOT_SHARED_KEY = "NOT_SHARED"
 
 _ROLES_TO_INDEX = {
     NOT_SHARED_KEY: 0,
@@ -90,13 +89,6 @@ class SharingWidget(QWidget, Ui_SharingWidget):
 
         self.combo_role.installEventFilter(self)
 
-        self.ROLES_TRANSLATIONS = {
-            WorkspaceRole.READER: _("TEXT_WORKSPACE_ROLE_READER"),
-            WorkspaceRole.CONTRIBUTOR: _("TEXT_WORKSPACE_ROLE_CONTRIBUTOR"),
-            WorkspaceRole.MANAGER: _("TEXT_WORKSPACE_ROLE_MANAGER"),
-            WorkspaceRole.OWNER: _("TEXT_WORKSPACE_ROLE_OWNER"),
-            NOT_SHARED_KEY: _("TEXT_WORKSPACE_ROLE_NOT_SHARED"),
-        }
         self.role = role
         self.current_user_role = current_user_role
         self.is_current_user = is_current_user
@@ -115,13 +107,13 @@ class SharingWidget(QWidget, Ui_SharingWidget):
 
         if not enabled:
             for role, index in _ROLES_TO_INDEX.items():
-                self.combo_role.insertItem(index, self.ROLES_TRANSLATIONS[role])
+                self.combo_role.insertItem(index, get_role_translation(role))
         else:
             current_index = _ROLES_TO_INDEX[self.current_user_role]
             for role, index in _ROLES_TO_INDEX.items():
                 if current_index < index:
                     break
-                self.combo_role.insertItem(index, self.ROLES_TRANSLATIONS[role])
+                self.combo_role.insertItem(index, get_role_translation(role))
 
         self.combo_role.setCurrentIndex(_ROLES_TO_INDEX[self.role])
         self.combo_role.currentIndexChanged.connect(self.on_role_changed)
