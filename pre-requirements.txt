@@ -6,3 +6,5 @@
 pip>=20.1.1
 setuptools>=49.2.0
 wheel>=0.34.2
+docutils>=0.15
+Babel>=2.6.0

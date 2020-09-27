@@ -4,10 +4,11 @@ repos:
     rev: 19.3b0
     hooks:
     - id: black
+      types: [file]  # override `types: [python]` to add scons files
+      files: (\.py$|^SConstruct$|/SConscript$)
+      # Note pre-commit already ignore generated stuff given they are not part of the git repo
       args:
           - "--line-length=100"
-          - "--exclude=parsec/core/gui/_resources_rc.py"
-          - "--exclude=parsec/core/gui/ui/"
       language_version: python3
 -   repo: https://gitlab.com/pycqa/flake8
     rev: 3.7.7
@@ -36,4 +37,5 @@ repos:
       entry: python ./misc/license_headers.py add
       language: python
       language_version: python3
-      types: [python]
+      types: [file]
+      files: (\.py$|^SConstruct$|/SConscript$)

@@ -1,0 +1,100 @@
+# Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
+
+Import("env")
+
+
+### Generate PyQT forms ###
+
+
+def _generate_pyqt_form(env, target, source):
+    target, = target
+    source, = source
+
+    from PyQt5.uic.driver import Driver
+    from collections import namedtuple
+
+    Options = namedtuple(
+        "Options",
+        ["output", "import_from", "debug", "preview", "execute", "indent", "resource_suffix"],
+    )
+    o = Options(
+        output=str(target),
+        import_from="parsec.core.gui",
+        debug=False,
+        preview=False,
+        execute=False,
+        indent=4,
+        resource_suffix="_rc",
+    )
+    d = Driver(o, str(source))
+    d.invoke()
+
+
+for form in Glob("forms/*.ui"):
+    env.Command(
+        target=f"ui/{str(form.name).rsplit('.', 1)[0]}.py",
+        source=form,
+        action=Action(_generate_pyqt_form, cmdstr="Generating $SOURCE -> $TARGET"),
+        # action="pyuic5 $SOURCE --output=$TARGET --resource-suffix=_rc --import-from=parsec.core.gui"
+    )
+
+
+### Generate history changelog ###
+
+
+def _generate_history_html(env, target, source):
+    target, = target
+    source, = source
+
+    import docutils.core
+
+    docutils.core.publish_file(
+        source_path=str(source), destination_path=str(target), writer_name="html"
+    )
+
+
+history_html = env.Command(
+    target=f"rc/generated_misc/history.html",
+    source="#/HISTORY.rst",
+    action=Action(_generate_history_html, cmdstr="Generating $SOURCE -> $TARGET"),
+)
+
+
+### Compile translations ###
+
+
+def _compile_translation(env, target, source):
+    target, = target
+    source, = source
+
+    from babel.messages.frontend import CommandLineInterface
+
+    CommandLineInterface().run(["_", "compile", "-i", str(source), "-o", str(target)])
+
+
+for lang in Glob("tr/*.po"):
+    lang_mo = env.Command(
+        target=f"rc/translations/{str(lang.name).rsplit('.', 1)[0]}.mo",
+        source=lang,
+        action=Action(_compile_translation, cmdstr="Compiling translation $SOURCE -> $TARGET"),
+    )
+
+
+### Generate PyQT resources bundle ###
+
+
+def _generate_pyqt_resources_bundle(env, target, source):
+    target, = target
+    resources_qrc, *_ = source
+
+    from PyQt5.pyrcc_main import processResourceFile
+
+    processResourceFile([str(resources_qrc)], str(target), False)
+
+
+env.Command(
+    target="_resources_rc.py",
+    source=["rc/resources.qrc", "rc"],
+    source_scanner=DirScanner,  # Tell SCons to rebuild if `rc` dir changes
+    action=Action(_generate_pyqt_resources_bundle, cmdstr="Generating resource bundle $TARGET"),
+)
