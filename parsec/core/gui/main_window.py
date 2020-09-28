@@ -450,8 +450,14 @@ class MainWindow(QMainWindow, Ui_MainWindow):
                 self.tab_center.setTabText(idx, _("TEXT_TAB_TITLE_LOG_IN_SCREEN"))
         elif state == "logout":
             self.tab_center.removeTab(idx)
-            if self._get_login_tab_index() == -1:
+            idx = self._get_login_tab_index()
+            if idx == -1:
                 self.add_instance()
+            else:
+                tab_widget = self.tab_center.widget(idx)
+                log_widget = None if not tab_widget else tab_widget.get_login_widget()
+                if log_widget:
+                    log_widget.reload_devices()
         elif state == "connected":
             device = tab.current_device
             tab_name = (
