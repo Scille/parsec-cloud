@@ -135,9 +135,10 @@ class BackendApp:
             while True:
                 try:
                     data = await stream.receive_some(MAX_INITIAL_HTTP_REQUEST_SIZE)
-                except ConnectionError:
-                    # They've stopped listening. Not much we can do about it here.
-                    data = b""
+                except trio.BrokenResourceError:
+                    # The socket got broken in an unexpected way (the peer has most
+                    # likely left without telling us, or has reseted the connection)
+                    return
 
                 conn.receive_data(data)
                 event = conn.next_event()
@@ -146,8 +147,11 @@ class BackendApp:
                     continue
                 if isinstance(event, h11.Request):
                     break
+                if isinstance(event, h11.ConnectionClosed):
+                    # Peer has left
+                    return
                 else:
-                    logger.error("Unexpected event", event=event)
+                    logger.error("Unexpected event", client_event=event)
                     return
 
             # See https://h11.readthedocs.io/en/v0.10.0/api.html#flow-control
@@ -181,11 +185,9 @@ class BackendApp:
             await self._send_http_reply(stream, conn, status_code=exc.error_status_hint)
 
         finally:
-            try:
-                await stream.aclose()
-            except trio.BrokenResourceError:
-                # They're already gone, nothing to do
-                pass
+            # Note the stream might already be closed (e.g. through `Transport.aclose`)
+            # but it's ok given this operation is idempotent
+            await stream.aclose()
 
     async def _send_http_reply(
         self,
