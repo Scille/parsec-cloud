@@ -50,9 +50,7 @@ class MountWidget(QWidget, Ui_MountWidget):
         self.files_widget.hide()
         self.workspaces_widget.show()
         self.workspaces_widget.reset()
-        print(filter_user_name)
         if filter_user_name:
             self.workspaces_widget.filter_by_users = True
-            self.workspaces_widget.filter_selector.setCurrentIndex(1)
             self.workspaces_widget.line_edit_search.setText(filter_user_name)
-            self.workspaces_widget.on_workspace_filter(filter_user_name)
+            self.workspaces_widget.filter_selector.setCurrentIndex(1)

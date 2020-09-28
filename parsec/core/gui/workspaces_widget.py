@@ -317,27 +317,31 @@ class WorkspacesWidget(QWidget, Ui_WorkspacesWidget):
             self.line_edit_search.setPlaceholderText(
                 _("TEXT_WORKSPACE_FILTER_WORKSPACES_PLACEHOLDER")
             )
+        self.on_workspace_filter(self.line_edit_search.text())
+
+    def _handle_workspace_button_filtered(self, button, pattern=None):
+        if pattern is None:
+            pattern = self.line_edit_search.text().lower()
+        if pattern and self.filter_by_users:
+            user_found = False
+            for user_role, user_info in button.users_roles.values():
+                if pattern and pattern in str(user_info.human_handle).lower():
+                    user_found = True
+                    break
+            if not pattern or user_found:
+                button.show()
+            else:
+                button.hide()
+        else:
+            if pattern and pattern not in button.name.lower():
+                button.hide()
+            else:
+                button.show()
 
     def on_workspace_filter(self, pattern):
         pattern = pattern.lower()
         for widget in self._iter_workspace_buttons():
-            # Filter on users
-            if self.filter_by_users:
-                user_found = False
-                for user_role, user_info in widget.users_roles.values():
-                    if pattern and pattern in str(user_info.human_handle).lower():
-                        user_found = True
-                        break
-                if not pattern or user_found:
-                    widget.show()
-                else:
-                    widget.hide()
-            # Filter on names
-            else:
-                if pattern and pattern not in widget.name.lower():
-                    widget.hide()
-                else:
-                    widget.show()
+            self._handle_workspace_button_filtered(widget, pattern)
 
     def load_workspace(self, workspace_fs, path=FsPath("/"), selected=False):
         self.load_workspace_clicked.emit(workspace_fs, path, selected)
@@ -451,6 +455,7 @@ class WorkspacesWidget(QWidget, Ui_WorkspacesWidget):
             files=files[:4],
             timestamped=timestamped,
         )
+        self._handle_workspace_button_filtered(button)
         self.layout_workspaces.addWidget(button)
         button.clicked.connect(self.load_workspace)
         button.share_clicked.connect(self.share_workspace)
