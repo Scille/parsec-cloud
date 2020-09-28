@@ -2,7 +2,7 @@
 
 import attr
 import functools
-from typing import Optional, Tuple, TypeVar, Type, Union, NoReturn, FrozenSet, Pattern
+from typing import Optional, Tuple, TypeVar, Type, Union, NoReturn, FrozenSet, Pattern, Dict
 from pendulum import DateTime, now as pendulum_now
 
 from parsec.types import UUID4, FrozenDict
@@ -482,7 +482,9 @@ class LocalFolderishManifestMixin:
     # Evolve methods
 
     def evolve_children_and_mark_updated(
-        self: LocalFolderishManifestTypeVar, data, prevent_sync_pattern: Pattern
+        self: LocalFolderishManifestTypeVar,
+        data: Dict[str, Optional[EntryID]],
+        prevent_sync_pattern: Pattern,
     ) -> LocalFolderishManifestTypeVar:
         updated = False
         new_children = dict(self.children)
