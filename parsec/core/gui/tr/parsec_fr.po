@@ -7,8 +7,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PROJECT VERSION\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2020-09-02 08:12+0200\n"
-"PO-Revision-Date: 2020-09-02 10:06+0200\n"
+"POT-Creation-Date: 2020-09-25 14:48+0200\n"
+"PO-Revision-Date: 2020-09-25 14:50+0200\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language: fr\n"
 "Language-Team: fr <LL@li.org>\n"
@@ -722,6 +722,9 @@ msgstr ""
 
 msgid "ACTION_USER_REVOCATION_CONFIRM"
 msgstr "Révoquer l'utilisateur"
+
+msgid "TEXT_USERS_PAGE_INFO_page-pagetotal-userfrom-userto-usertotal"
+msgstr "Utilisateurs {userfrom} à {userto} affichés, {usertotal} en tout - page {page} / {pagetotal}"
 
 msgid "TEXT_USER_LIST_RETRIEVABLE_FAILURE"
 msgstr "Impossible de récupérer la liste des utilisateurs depuis le serveur."
@@ -1762,6 +1765,11 @@ msgstr "Les modification seront prises en compte au redémarrage de l'applicatio
 msgid "ACTION_LOG_OUT"
 msgstr "Se déconnecter"
 
+msgid "TEXT_FILE_LINK_WORKSPACE_NOT_FOUND_organization"
+msgstr ""
+"Vous n'avez pas accès à l'espace de travail auquel appartient ce fichier."
+" Il n'a peut-être pas été partagé avec vous."
+
 msgid "NOTIF_WARN_MOUNTPOINT_UNMOUNTED"
 msgstr ""
 
@@ -1926,11 +1934,6 @@ msgstr ""
 "Vous ne pouvez pas accéder à ce fichier car vous n'avez aucun appareil "
 "appartenant à l'organisation {organization} on this machine."
 
-msgid "TEXT_FILE_LINK_WORKSPACE_NOT_FOUND_organization"
-msgstr ""
-"Vous n'avez pas accès à l'espace de travail auquel appartient ce fichier."
-" Il n'a peut-être pas été partagé avec vous."
-
 msgid "TEXT_FILE_LINK_PLEASE_LOG_IN_organization"
 msgstr ""
 "Veuillez vous connecter à l'organisation {organization} pour accéder à ce"
@@ -2084,9 +2087,6 @@ msgstr "Veuillez fournir les informations suivantes pour créer votre organisati
 
 msgid "ACTION_PREVIOUS"
 msgstr "Précédent"
-
-msgid "TEXT_DEVICE_FILTER_PLACEHOLDER"
-msgstr "Filtrer les appareils"
 
 msgid "TEXT_DEVICE_ADD_NEW_TOOLTIP"
 msgstr "Inviter un nouvel appareil"
@@ -2365,6 +2365,15 @@ msgstr "Filtrer les utilisateurs"
 msgid "ACTION_USER_INVITE_USER"
 msgstr "Inviter un utilisateur"
 
+msgid "ACTION_FILTER_LIST_USERS"
+msgstr "Rechercher utilisateurs"
+
+msgid "ACTION_LIST_PREVIOUS_PAGE"
+msgstr "Page précédente"
+
+msgid "ACTION_LIST_NEXT_PAGE"
+msgstr "Page suivante"
+
 msgid "TEXT_WORKSPACE_IS_SHARED_TOOLTIP"
 msgstr "L'espace de travail est partagé."
 
@@ -2400,5 +2409,3 @@ msgstr "Créer un nouvel espace de travail"
 
 msgid "ACTION_WORKSPACE_GOTO_FILE_LINK"
 msgstr "Trouver un fichier via son lien"
-
-
