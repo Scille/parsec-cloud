@@ -10,7 +10,9 @@ from parsec.core.types import BlockID, LocalFileManifest, Chunk, ChunkID
 
 
 Chunks = Tuple[Chunk, ...]
-
+ChunkIDSet = Set[Union[ChunkID, BlockID]]
+WriteOperationList = List[Tuple[Chunk, int]]
+UpdateLocalFileManifestCallable = Callable[[LocalFileManifest, Chunk], LocalFileManifest]
 
 # Helpers
 
@@ -37,7 +39,7 @@ def index_of_chunk_after_stop(chunks: Chunks, stop: int) -> int:
     return bisect.bisect_left(chunks, stop)
 
 
-def chunk_id_set(chunks: Sequence[Chunk]) -> Set[Union[ChunkID, BlockID]]:
+def chunk_id_set(chunks: Sequence[Chunk]) -> ChunkIDSet:
     return {chunk.id for chunk in chunks}
 
 
@@ -87,7 +89,7 @@ def split_write(size: int, offset: int, blocksize: int) -> Iterator[Tuple[int, i
 
 def block_write(
     chunks: Chunks, size: int, start: int, new_chunk: Chunk
-) -> Tuple[Chunks, Set[Union[BlockID, ChunkID]]]:
+) -> Tuple[Chunks, ChunkIDSet]:
     # Init
     stop = start + size
 
@@ -133,11 +135,11 @@ def block_write(
 
 def prepare_write(
     manifest: LocalFileManifest, size: int, offset: int
-) -> Tuple[LocalFileManifest, List[Tuple[Chunk, int]], Set[Union[BlockID, ChunkID]]]:
+) -> Tuple[LocalFileManifest, WriteOperationList, ChunkIDSet]:
     # Prepare
     padding = 0
-    removed_ids: Set[Union[BlockID, ChunkID]] = set()
-    write_operations: List[Tuple[Chunk, int]] = []
+    removed_ids: ChunkIDSet = set()
+    write_operations: WriteOperationList = []
 
     # Padding
     if offset > manifest.size:
@@ -179,7 +181,7 @@ def prepare_write(
 
 def prepare_truncate(
     manifest: LocalFileManifest, size: int
-) -> Tuple[LocalFileManifest, Set[Union[BlockID, ChunkID]]]:
+) -> Tuple[LocalFileManifest, ChunkIDSet]:
     # Prepare
     block, remainder = locate(size, manifest.blocksize)
     removed_ids = chunk_id_set(manifest.blocks[block])
@@ -208,7 +210,7 @@ def prepare_truncate(
 
 def prepare_resize(
     manifest: LocalFileManifest, size: int
-) -> Tuple[LocalFileManifest, List[Tuple[Chunk, int]], Set[Union[BlockID, ChunkID]]]:
+) -> Tuple[LocalFileManifest, WriteOperationList, ChunkIDSet]:
     if size >= manifest.size:
         return prepare_write(manifest, 0, size)
     manifest, removed_ids = prepare_truncate(manifest, size)
@@ -220,7 +222,7 @@ def prepare_resize(
 
 def prepare_reshape(
     manifest: LocalFileManifest
-) -> Iterator[Tuple[Chunks, Chunk, Callable, Set[Union[BlockID, ChunkID]]]]:
+) -> Iterator[Tuple[Chunks, Chunk, UpdateLocalFileManifestCallable, ChunkIDSet]]:
 
     # Update manifest
     def update_manifest(

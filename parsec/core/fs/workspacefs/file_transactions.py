@@ -15,6 +15,7 @@ from parsec.core.fs.exceptions import FSLocalMissError, FSInvalidFileDescriptor,
 
 from parsec.core.types import (
     Chunk,
+    WorkspaceEntry,
     LocalFileManifest,
     LocalFolderishManifests,
     LocalNonRootManifests,
@@ -77,7 +78,7 @@ class FileTransactions:
     def __init__(
         self,
         workspace_id: EntryID,
-        get_workspace_entry: Callable,
+        get_workspace_entry: Callable[[], WorkspaceEntry],
         device: LocalDevice,
         local_storage: BaseWorkspaceStorage,
         remote_loader: RemoteLoader,
@@ -182,7 +183,7 @@ class FileTransactions:
         manifest = await self.local_storage.load_file_descriptor(fd)
         return manifest.size
 
-    async def fd_info(self, fd: FileDescriptor) -> dict:
+    async def fd_info(self, fd: FileDescriptor) -> Dict[str, object]:
         manifest = await self.local_storage.load_file_descriptor(fd)
         stats = manifest.to_stats()
         stats["confinement_point"] = await self._get_confinement_point(manifest.id)

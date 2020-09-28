@@ -46,13 +46,13 @@ def get_conflict_filename(
     filename: EntryName, filenames: List[EntryName], author: DeviceID
 ) -> EntryName:
     counter = count(2)
-    new_filename = full_name(filename, [f"conflicting with {author}"])
+    new_filename = full_name(filename, f"conflicting with {author}")
     while new_filename in filenames:
-        new_filename = full_name(filename, [f"conflicting with {author} - {next(counter)}"])
+        new_filename = full_name(filename, f"conflicting with {author} - {next(counter)}")
     return new_filename
 
 
-def full_name(name: EntryName, suffixes: List[str]) -> EntryName:
+def full_name(name: EntryName, *suffixes: str) -> EntryName:
     # No suffix
     if not suffixes:
         return name
@@ -85,8 +85,8 @@ def merge_folder_children(
     ids = set(local_reversed) | set(remote_reversed)
 
     # First map all ids to their rightful name
-    solved_local_children: Dict[EntryName, Tuple] = {}
-    solved_remote_children: Dict[EntryName, Tuple] = {}
+    solved_local_children: Dict[EntryName, Tuple[EntryID, Tuple[str, ...]]] = {}
+    solved_remote_children: Dict[EntryName, Tuple[EntryID, Tuple[str, ...]]] = {}
     for id in ids:
         base_name = base_reversed.get(id)
         local_name = local_reversed.get(id)
@@ -94,11 +94,11 @@ def merge_folder_children(
 
         # Added locally
         if base_name is None and local_name is not None:
-            solved_local_children[local_name] = (local_children[local_name],)
+            solved_local_children[local_name] = local_children[local_name], ()
 
         # Added remotely
         elif base_name is None and remote_name is not None:
-            solved_remote_children[remote_name] = (remote_children[remote_name],)
+            solved_remote_children[remote_name] = remote_children[remote_name], ()
 
         # Removed locally
         elif local_name is None:
@@ -113,29 +113,29 @@ def merge_folder_children(
 
         # Preserved remotely and locally with the same naming
         elif local_name == remote_name:
-            solved_local_children[local_name] = (local_children[local_name],)
+            solved_local_children[local_name] = local_children[local_name], ()
 
         # Name changed locally
         elif base_name == remote_name:
-            solved_local_children[local_name] = (local_children[local_name],)
+            solved_local_children[local_name] = local_children[local_name], ()
 
         # Name changed remotely
         elif base_name == local_name:
-            solved_remote_children[remote_name] = (remote_children[remote_name],)
+            solved_remote_children[remote_name] = remote_children[remote_name], ()
 
         # Name changed both locally and remotely
         else:
             suffix = f"renamed by {remote_device_name}"
-            solved_remote_children[remote_name] = remote_children[remote_name], suffix
+            solved_remote_children[remote_name] = remote_children[remote_name], (suffix,)
 
     # Merge mappings and fix conflicting names
     children = {}
-    for name, (entry_id, *suffixes) in solved_remote_children.items():
-        children[full_name(name, suffixes)] = entry_id
-    for name, (entry_id, *suffixes) in solved_local_children.items():
+    for name, (entry_id, suffixes) in solved_remote_children.items():
+        children[full_name(name, *suffixes)] = entry_id
+    for name, (entry_id, suffixes) in solved_local_children.items():
         if name in children:
-            suffixes = [*suffixes, f"conflicting with {remote_device_name}"]
-        children[full_name(name, suffixes)] = entry_id
+            suffixes = *suffixes, f"conflicting with {remote_device_name}"
+        children[full_name(name, *suffixes)] = entry_id
 
     # Return
     return children
@@ -143,7 +143,7 @@ def merge_folder_children(
 
 def merge_manifests(
     local_author: DeviceID,
-    prevent_sync_pattern: Pattern,
+    prevent_sync_pattern: Pattern[str],
     local_manifest: BaseLocalManifest,
     remote_manifest: Optional[BaseRemoteManifest] = None,
     force_apply_pattern: Optional[bool] = False,
@@ -225,7 +225,7 @@ class SyncTransactions(EntryTransactions):
     # Atomic transactions
 
     async def apply_prevent_sync_pattern(
-        self, entry_id: EntryID, prevent_sync_pattern: Pattern
+        self, entry_id: EntryID, prevent_sync_pattern: Pattern[str]
     ) -> None:
         # Fetch and lock
         async with self.local_storage.lock_manifest(entry_id) as local_manifest:

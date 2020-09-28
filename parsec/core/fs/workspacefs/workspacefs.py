@@ -16,6 +16,7 @@ from parsec.core.types import (
     EntryID,
     LocalDevice,
     WorkspaceRole,
+    WorkspaceEntry,
     LocalFileManifest,
     LocalFolderManifest,
     LocalWorkspaceManifest,
@@ -68,7 +69,7 @@ class WorkspaceFS:
     def __init__(
         self,
         workspace_id: EntryID,
-        get_workspace_entry: Callable,
+        get_workspace_entry: Callable[[], WorkspaceEntry],
         device: LocalDevice,
         local_storage: BaseWorkspaceStorage,
         backend_cmds: BackendAuthenticatedCmds,
@@ -122,7 +123,7 @@ class WorkspaceFS:
 
     # Information
 
-    async def path_info(self, path: AnyPath) -> dict:
+    async def path_info(self, path: AnyPath) -> Dict[str, object]:
         """
         Raises:
             FSError
@@ -135,7 +136,7 @@ class WorkspaceFS:
             FSError
         """
         info = await self.transactions.entry_info(FsPath(path))
-        return info["id"]
+        return cast(EntryID, info["id"])
 
     async def get_user_roles(self) -> Dict[UserID, WorkspaceRole]:
         """
@@ -284,7 +285,7 @@ class WorkspaceFS:
         info = await self.transactions.entry_info(path)
         if "children" not in info:
             raise FSNotADirectoryError(filename=str(path))
-        for child in info["children"]:
+        for child in cast(Dict[str, EntryID], info["children"]):
             yield path / child
 
     async def listdir(self, path: AnyPath) -> List[FsPath]:
@@ -642,7 +643,7 @@ class WorkspaceFS:
     # Apply "prevent sync" pattern
 
     async def _recursive_apply_prevent_sync_pattern(
-        self, entry_id: EntryID, prevent_sync_pattern: Pattern
+        self, entry_id: EntryID, prevent_sync_pattern: Pattern[str]
     ) -> None:
         # Load manifest
         try:
@@ -662,16 +663,16 @@ class WorkspaceFS:
         for name, child_entry_id in manifest.children.items():
             await self._recursive_apply_prevent_sync_pattern(child_entry_id, prevent_sync_pattern)
 
-    async def apply_prevent_sync_pattern(self, pattern: Pattern) -> None:
+    async def apply_prevent_sync_pattern(self, pattern: Pattern[str]) -> None:
         # Fully apply "prevent sync" pattern
         await self._recursive_apply_prevent_sync_pattern(self.workspace_id, pattern)
         # Acknowledge "prevent sync" pattern
         await self.local_storage.mark_prevent_sync_pattern_fully_applied(pattern)
 
-    async def set_prevent_sync_pattern(self, pattern: Pattern) -> None:
+    async def set_prevent_sync_pattern(self, pattern: Pattern[str]) -> None:
         await self.local_storage.set_prevent_sync_pattern(pattern)
 
-    async def set_and_apply_prevent_sync_pattern(self, pattern: Pattern) -> None:
+    async def set_and_apply_prevent_sync_pattern(self, pattern: Pattern[str]) -> None:
         await self.set_prevent_sync_pattern(pattern)
         if not self.local_storage.get_prevent_sync_pattern_fully_applied():
             await self.apply_prevent_sync_pattern(self.local_storage.get_prevent_sync_pattern())

@@ -15,7 +15,7 @@ from parsec.api.data import (
     BaseManifest as BaseRemoteManifest,
 )
 
-from parsec.core.types import EntryID, ChunkID, LocalDevice
+from parsec.core.types import EntryID, ChunkID, LocalDevice, WorkspaceEntry
 
 from parsec.core.backend_connection import (
     BackendConnectionError,
@@ -86,7 +86,7 @@ class UserRemoteLoader:
         self,
         device: LocalDevice,
         workspace_id: EntryID,
-        get_workspace_entry: Callable,
+        get_workspace_entry: Callable[[], WorkspaceEntry],
         backend_cmds: BackendAuthenticatedCmds,
         remote_devices_manager: RemoteDevicesManager,
     ):
@@ -299,7 +299,7 @@ class RemoteLoader(UserRemoteLoader):
         self,
         device: LocalDevice,
         workspace_id: EntryID,
-        get_workspace_entry: Callable,
+        get_workspace_entry: Callable[[], WorkspaceEntry],
         backend_cmds: BackendAuthenticatedCmds,
         remote_devices_manager: RemoteDevicesManager,
         local_storage: BaseWorkspaceStorage,

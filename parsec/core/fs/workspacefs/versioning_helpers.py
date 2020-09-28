@@ -20,7 +20,7 @@ import attr
 import math
 import typing
 from functools import partial
-from typing import List, Tuple, NamedTuple, Optional, Union, cast, Dict
+from typing import List, Tuple, NamedTuple, Optional, Union, cast, Dict, Awaitable
 from pendulum import DateTime
 from collections import defaultdict
 
@@ -368,7 +368,7 @@ class VersionListerTaskList:
         self.manifest_cache = manifest_cache
         self.versions_list_cache = versions_list_cache
 
-    def add(self, timestamp: DateTime, task: typing.Callable):
+    def add(self, timestamp: DateTime, task: typing.Callable[[], Awaitable[None]]):
         if timestamp not in self.tasks:
             heappush(self.heapq_tasks, timestamp)
         self.tasks[timestamp].append(task)

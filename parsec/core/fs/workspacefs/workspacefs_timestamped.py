@@ -33,7 +33,9 @@ class WorkspaceFSTimestamped(WorkspaceFS):
             self.event_bus,
         )
 
-    def timestamp_get_entry(self, get_original_workspace_entry: Callable) -> Callable:
+    def timestamp_get_entry(
+        self, get_original_workspace_entry: Callable[[], WorkspaceEntry]
+    ) -> Callable[[], WorkspaceEntry]:
         def get_timestamped_workspace_entry() -> WorkspaceEntry:
             return get_original_workspace_entry().evolve(role=WorkspaceRole.READER)
 

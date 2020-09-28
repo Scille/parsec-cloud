@@ -116,14 +116,14 @@ class ManifestStorage:
 
     # "Prevent sync" pattern operations
 
-    async def get_prevent_sync_pattern(self) -> Tuple[Pattern, bool]:
+    async def get_prevent_sync_pattern(self) -> Tuple[Pattern[str], bool]:
         async with self._open_cursor() as cursor:
             cursor.execute("SELECT pattern, fully_applied FROM prevent_sync_pattern WHERE _id = 0")
             reply = cursor.fetchone()
             pattern, fully_applied = reply
             return (re.compile(pattern), bool(fully_applied))
 
-    async def set_prevent_sync_pattern(self, pattern: Pattern) -> None:
+    async def set_prevent_sync_pattern(self, pattern: Pattern[str]) -> None:
         """Set the "prevent sync" pattern for the corresponding workspace
 
         This operation is idempotent,
@@ -135,7 +135,7 @@ class ManifestStorage:
                 (pattern.pattern, pattern.pattern),
             )
 
-    async def mark_prevent_sync_pattern_fully_applied(self, pattern: Pattern) -> None:
+    async def mark_prevent_sync_pattern_fully_applied(self, pattern: Pattern[str]) -> None:
         """Mark the provided pattern as fully applied.
 
         This is meant to be called after one made sure that all the manifests in the

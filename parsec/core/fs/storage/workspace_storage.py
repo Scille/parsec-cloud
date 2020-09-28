@@ -66,7 +66,7 @@ class BaseWorkspaceStorage:
 
         # Pattern attributes
         # Set by `_load_prevent_sync_pattern` in WorkspaceStorage.run()
-        self._prevent_sync_pattern: Pattern
+        self._prevent_sync_pattern: Pattern[str]
         self._prevent_sync_pattern_fully_applied: bool
 
     def _get_next_fd(self) -> FileDescriptor:
@@ -93,10 +93,10 @@ class BaseWorkspaceStorage:
 
     # Prevent sync pattern interface
 
-    async def set_prevent_sync_pattern(self, pattern: Pattern) -> None:
+    async def set_prevent_sync_pattern(self, pattern: Pattern[str]) -> None:
         raise NotImplementedError
 
-    async def mark_prevent_sync_pattern_fully_applied(self, pattern: Pattern) -> None:
+    async def mark_prevent_sync_pattern_fully_applied(self, pattern: Pattern[str]) -> None:
         raise NotImplementedError
 
     # Locking helpers
@@ -182,7 +182,7 @@ class BaseWorkspaceStorage:
 
     # "Prevent sync" pattern interface
 
-    def get_prevent_sync_pattern(self) -> Pattern:
+    def get_prevent_sync_pattern(self) -> Pattern[str]:
         return self._prevent_sync_pattern
 
     def get_prevent_sync_pattern_fully_applied(self) -> bool:
@@ -327,7 +327,7 @@ class WorkspaceStorage(BaseWorkspaceStorage):
             await self.manifest_storage.get_prevent_sync_pattern()
         )
 
-    async def set_prevent_sync_pattern(self, pattern: Pattern) -> None:
+    async def set_prevent_sync_pattern(self, pattern: Pattern[str]) -> None:
         """Set the "prevent sync" pattern for the corresponding workspace
 
         This operation is idempotent,
@@ -336,7 +336,7 @@ class WorkspaceStorage(BaseWorkspaceStorage):
         await self.manifest_storage.set_prevent_sync_pattern(pattern)
         await self._load_prevent_sync_pattern()
 
-    async def mark_prevent_sync_pattern_fully_applied(self, pattern: Pattern) -> None:
+    async def mark_prevent_sync_pattern_fully_applied(self, pattern: Pattern[str]) -> None:
         """Mark the provided pattern as fully applied.
 
         This is meant to be called after one made sure that all the manifests in the

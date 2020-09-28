@@ -1,6 +1,6 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
 
-from typing import Tuple, cast, Optional, AsyncIterator
+from typing import Tuple, cast, Optional, AsyncIterator, Dict
 from async_generator import asynccontextmanager
 
 from parsec.core.types import (
@@ -181,7 +181,7 @@ class EntryTransactions(FileTransactions):
 
     # Transactions
 
-    async def entry_info(self, path: FsPath) -> dict:
+    async def entry_info(self, path: FsPath) -> Dict[str, object]:
         # Check read rights
         self.check_read_rights(path)
 
