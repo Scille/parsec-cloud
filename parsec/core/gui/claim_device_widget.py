@@ -374,6 +374,7 @@ class ClaimDeviceProvideInfoWidget(QWidget, Ui_ClaimDeviceProvideInfoWidget):
         self.line_edit_device.setText(get_default_device())
         self.line_edit_device.validity_changed.connect(self.check_infos)
         self.widget_password.info_changed.connect(self.check_infos)
+        self.button_ok.setDisabled(True)
         self.claim_success.connect(self._on_claim_success)
         self.claim_error.connect(self._on_claim_error)
         self.label_wait.hide()
