@@ -1,10 +1,8 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
 
-import inspect
-import functools
 from pathlib import Path
 from concurrent.futures import ThreadPoolExecutor
-from typing import AsyncIterator, Callable, Optional, Union, TypeVar, Awaitable, cast
+from typing import AsyncIterator, Callable, Optional, Union, TypeVar, Awaitable
 
 import trio
 import outcome
@@ -12,7 +10,6 @@ from async_generator import asynccontextmanager
 from sqlite3 import Connection, Cursor, connect as sqlite_connect
 
 R = TypeVar("R")
-C = TypeVar("C", bound=Callable)
 
 
 @asynccontextmanager
@@ -49,37 +46,11 @@ async def thread_pool_runner(
             await trio.to_thread.run_sync(executor.shutdown)
 
 
-def protect_context_with_lock(fn: C) -> C:
-    """Use as a decorator to protect an async context with `self._lock`."""
-    assert inspect.isasyncgenfunction(fn)
-
-    @functools.wraps(fn)
-    async def wrapper(
-        self: "LocalDatabase", *args: object, **kwargs: object
-    ) -> AsyncIterator[object]:
-        async with self._lock:
-            async for item in fn(self, *args, **kwargs):
-                yield item
-
-    return cast(C, wrapper)
-
-
-def protect_method_with_lock(fn: C) -> C:
-    """Use as a decorator to protect an async method with `self._lock`."""
-    assert inspect.iscoroutinefunction(fn)
-
-    @functools.wraps(fn)
-    async def wrapper(self: "LocalDatabase", *args: object, **kwargs: object) -> object:
-        async with self._lock:
-            return await fn(self, *args, **kwargs)
-
-    return cast(C, wrapper)
-
-
 class LocalDatabase:
     """Base class for managing an sqlite3 connection."""
 
     def __init__(self, path: Union[str, Path], vacuum_threshold: Optional[int] = None):
+        # Make sure only a single task access the connection object at a time
         self._lock = trio.Lock()
 
         # Those attributes are set by the `run` async context manager
@@ -136,40 +107,49 @@ class LocalDatabase:
         # Return connection
         return conn
 
-    @protect_method_with_lock
     async def _connect(self) -> None:
-        # Connect and initialize database
-        self._conn = await self._create_connection()
+        # Lock the access to the connection object
+        async with self._lock:
 
-    @protect_method_with_lock
+            # Connect and initialize database
+            self._conn = await self._create_connection()
+
     async def _close(self) -> None:
-        # Commit and close
-        await self._run_in_thread(self._conn.commit)
-        self._conn.close()
+        # Lock the access to the connection object
+        async with self._lock:
+
+            # Commit and close
+            await self._run_in_thread(self._conn.commit)
+            self._conn.close()
 
     # Cursor management
 
     @asynccontextmanager
-    @protect_context_with_lock
     async def open_cursor(self, commit: bool = True) -> AsyncIterator[Cursor]:
-        # Get a cursor
-        cursor = self._conn.cursor()
-        try:
+        # Lock the access to the connection object
+        async with self._lock:
 
-            # Execute SQL commands
-            yield cursor
+            # Get a cursor
+            cursor = self._conn.cursor()
+            try:
 
-            # Commit the transaction when finished
-            if commit and self._conn.in_transaction:
-                await self._run_in_thread(self._conn.commit)
+                # Execute SQL commands
+                yield cursor
 
-        # Close cursor
-        finally:
-            cursor.close()
+                # Commit the transaction when finished
+                if commit and self._conn.in_transaction:
+                    await self._run_in_thread(self._conn.commit)
 
-    @protect_method_with_lock
+            # Close cursor
+            finally:
+                cursor.close()
+
     async def commit(self) -> None:
-        await self._run_in_thread(self._conn.commit)
+        # Lock the access to the connection object
+        async with self._lock:
+
+            # Run the commit
+            await self._run_in_thread(self._conn.commit)
 
     # Vacuum
 
@@ -182,24 +162,26 @@ class LocalDatabase:
                 pass
         return disk_usage
 
-    @protect_method_with_lock
     async def run_vacuum(self) -> None:
         # Vacuum disabled
         if self.vacuum_threshold is None:
             return
 
-        # Flush to disk
-        await self._run_in_thread(self._conn.commit)
+        # Lock the access to the connection object
+        async with self._lock:
 
-        # No reason to vacuum yet
-        if self.get_disk_usage() < self.vacuum_threshold:
-            return
+            # Flush to disk
+            await self._run_in_thread(self._conn.commit)
 
-        # Run vacuum
-        await self._run_in_thread(lambda: self._conn.execute("VACUUM"))
+            # No reason to vacuum yet
+            if self.get_disk_usage() < self.vacuum_threshold:
+                return
 
-        # The connection needs to be recreated
-        try:
-            self._conn.close()
-        finally:
-            self._conn = await self._create_connection()
+            # Run vacuum
+            await self._run_in_thread(lambda: self._conn.execute("VACUUM"))
+
+            # The connection needs to be recreated
+            try:
+                self._conn.close()
+            finally:
+                self._conn = await self._create_connection()
