@@ -218,7 +218,7 @@ class UserFS:
         backend_cmds: BackendAuthenticatedCmds,
         remote_devices_manager: RemoteDevicesManager,
         event_bus: EventBus,
-        prevent_sync_pattern: Pattern,
+        prevent_sync_pattern: Pattern[str],
     ) -> AsyncIterator[UserFSTypeVar]:
         self = cls(
             device, path, backend_cmds, remote_devices_manager, event_bus, prevent_sync_pattern

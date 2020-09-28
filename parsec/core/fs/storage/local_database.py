@@ -18,7 +18,7 @@ C = TypeVar("C", bound=Callable)
 @asynccontextmanager
 async def thread_pool_runner(
     max_workers: Optional[int] = None
-) -> AsyncIterator[Callable[..., Awaitable[R]]]:
+) -> AsyncIterator[Callable[[Callable[[], R]], Awaitable[R]]]:
     """A trio-managed thread pool.
 
     This should be removed if trio decides to add support for thread pools:
@@ -27,13 +27,13 @@ async def thread_pool_runner(
     executor = ThreadPoolExecutor(max_workers=max_workers)
     trio_token = trio.lowlevel.current_trio_token()
 
-    async def run_in_thread(fn: Callable[..., R], *args: object) -> R:
+    async def run_in_thread(fn: Callable[[], R]) -> R:
         send_channel: trio.MemorySendChannel[outcome.Outcome[R]]
         receive_channel: trio.MemoryReceiveChannel[outcome.Outcome[R]]
         send_channel, receive_channel = trio.open_memory_channel(1)
 
         def target() -> None:
-            result = outcome.capture(fn, *args)
+            result = outcome.capture(fn)
             trio.from_thread.run_sync(send_channel.send_nowait, result, trio_token=trio_token)
 
         executor.submit(target)
@@ -84,7 +84,7 @@ class LocalDatabase:
 
         # Those attributes are set by the `run` async context manager
         self._conn: Connection
-        self._run_in_thread: Callable[..., Awaitable]
+        self._run_in_thread: Callable[[Callable[[], R]], Awaitable[R]]
 
         self.path = Path(path)
         self.vacuum_threshold = vacuum_threshold
@@ -196,7 +196,7 @@ class LocalDatabase:
             return
 
         # Run vacuum
-        await self._run_in_thread(self._conn.execute, "VACUUM")
+        await self._run_in_thread(lambda: self._conn.execute("VACUUM"))
 
         # The connection needs to be recreated
         try:

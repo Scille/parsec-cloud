@@ -3,7 +3,7 @@
 import attr
 import trio
 from collections import defaultdict
-from typing import List, Dict, Tuple, AsyncIterator, cast, Pattern, Callable, Any
+from typing import List, Dict, Tuple, AsyncIterator, cast, Pattern, Callable
 from pendulum import Pendulum, now as pendulum_now
 
 from parsec.event_bus import EventBus
@@ -678,9 +678,9 @@ class WorkspaceFS:
 
     # Debugging helper
 
-    async def dump(self) -> Dict[str, Any]:
-        async def rec(entry_id: EntryID) -> Dict[str, Any]:
-            result: Dict[str, Any] = {"id": entry_id}
+    async def dump(self) -> Dict[str, object]:
+        async def rec(entry_id: EntryID) -> Dict[str, object]:
+            result: Dict[str, object] = {"id": entry_id}
             try:
                 manifest = await self.local_storage.get_manifest(entry_id)
             except FSLocalMissError:
@@ -691,8 +691,11 @@ class WorkspaceFS:
             if not isinstance(manifest, (LocalFolderManifest, LocalWorkspaceManifest)):
                 return result
 
+            children: Dict[str, Dict[str, object]] = {}
             for key, value in manifest.children.items():
-                result["children"][key] = await rec(value)
+                children[key] = await rec(value)
+            result["children"] = children
+
             return result
 
         return await rec(self.workspace_id)

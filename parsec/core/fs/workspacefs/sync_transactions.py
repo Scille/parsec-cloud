@@ -1,7 +1,7 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
 
 from itertools import count
-from typing import Optional, List, Dict, AsyncIterator, Tuple, Any, Union, Pattern
+from typing import Optional, List, Dict, AsyncIterator, Tuple, Union, Pattern
 
 from pendulum import now as pendulum_now
 
@@ -85,8 +85,8 @@ def merge_folder_children(
     ids = set(local_reversed) | set(remote_reversed)
 
     # First map all ids to their rightful name
-    solved_local_children: Dict[EntryName, Any] = {}
-    solved_remote_children: Dict[EntryName, Any] = {}
+    solved_local_children: Dict[EntryName, Tuple] = {}
+    solved_remote_children: Dict[EntryName, Tuple] = {}
     for id in ids:
         base_name = base_reversed.get(id)
         local_name = local_reversed.get(id)
@@ -134,7 +134,7 @@ def merge_folder_children(
         children[full_name(name, suffixes)] = entry_id
     for name, (entry_id, *suffixes) in solved_local_children.items():
         if name in children:
-            suffixes = *suffixes, f"conflicting with {remote_device_name}"
+            suffixes = [*suffixes, f"conflicting with {remote_device_name}"]
         children[full_name(name, suffixes)] = entry_id
 
     # Return
@@ -392,7 +392,6 @@ class SyncTransactions(EntryTransactions):
                             new_chunk = new_chunk.evolve_as_block(data)
                         new_chunks.append(chunk)
                     new_blocks.append(tuple(new_chunks))
-                new_blocks: Tuple[Tuple[Any, ...], ...] = tuple(new_blocks)
 
                 # Prepare
                 prevent_sync_pattern = self.local_storage.get_prevent_sync_pattern()
@@ -401,7 +400,7 @@ class SyncTransactions(EntryTransactions):
                 )
                 new_manifest = LocalFileManifest.new_placeholder(
                     self.local_author, parent=parent_id
-                ).evolve(size=current_manifest.size, blocks=new_blocks)
+                ).evolve(size=current_manifest.size, blocks=tuple(new_blocks))
                 new_parent_manifest = parent_manifest.evolve_children_and_mark_updated(
                     {new_name: new_manifest.id}, prevent_sync_pattern=prevent_sync_pattern
                 )
