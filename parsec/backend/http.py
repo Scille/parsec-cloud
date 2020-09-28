@@ -2,10 +2,9 @@
 
 import re
 import attr
-from typing import List, Dict, Tuple, Optional
+from typing import List, Dict, Optional
 import mimetypes
 from urllib.parse import parse_qs, urlsplit, urlunsplit, urlencode
-from wsgiref.handlers import format_date_time
 import importlib_resources
 import h11
 
@@ -27,58 +26,43 @@ class HTTPRequest:
 
     @classmethod
     def from_h11_req(cls, h11_req: h11.Request) -> "HTTPRequest":
-        # h11 make sur the headers and target are ISO-8859-1
+        # h11 makes sure the headers and target are ISO-8859-1
         target_split = urlsplit(h11_req.target.decode("ISO-8859-1"))
         query_params = parse_qs(target_split.query)
 
+        # Note h11 already does normalization on headers
+        # (see https://h11.readthedocs.io/en/latest/api.html?highlight=request#headers-format)
         return cls(
             method=h11_req.method.decode(),
             path=target_split.path,
             query=query_params,
-            headers=h11_req.headers,
+            headers=dict(h11_req.headers),
         )
 
 
 @attr.s(slots=True, auto_attribs=True)
 class HTTPResponse:
     status_code: int
-    headers: List[Tuple[bytes, bytes]]
+    headers: Dict[bytes, bytes]
     data: Optional[bytes]
-
-    STATUS_CODE_TO_REASON = {
-        200: b"OK",
-        302: b"Found",
-        400: b"Bad Request",
-        404: b"Not Found",
-        405: b"Method Not Allowed",
-        501: b"Not Implemented",
-    }
-
-    @property
-    def reason(self) -> bytes:
-        return self.STATUS_CODE_TO_REASON.get(self.status_code, b"")
 
     @classmethod
     def build_html(
-        cls, status_code: int, data: str, headers: Dict[str, str] = None
+        cls, status_code: int, data: str, headers: Optional[Dict[bytes, bytes]] = None
     ) -> "HTTPResponse":
         headers = headers or {}
-        headers["content-type"] = "text/html;charset=utf-8"
+        headers[b"content-type"] = b"text/html;charset=utf-8"
         return cls.build(status_code=status_code, headers=headers, data=data.encode("utf-8"))
 
     @classmethod
     def build(
-        cls, status_code: int, headers: Dict[str, str] = None, data: Optional[bytes] = None
+        cls,
+        status_code: int,
+        headers: Optional[Dict[bytes, bytes]] = None,
+        data: Optional[bytes] = None,
     ) -> "HTTPResponse":
         headers = headers or {}
-        if data:
-            headers["content-Length"] = str(len(data))
-        headers["date"] = format_date_time(None)
-
-        def _encode(val):
-            return val.encode("ISO-8859-1")
-
-        return cls(status_code=status_code, headers=[(k, v) for k, v in headers.items()], data=data)
+        return cls(status_code=status_code, headers=headers, data=data)
 
 
 class HTTPComponent:
@@ -108,7 +92,7 @@ class HTTPComponent:
             (backend_addr_split.scheme, backend_addr_split.netloc, path, location_url_query, None)
         )
 
-        return HTTPResponse.build(302, headers={"location": location_url})
+        return HTTPResponse.build(302, headers={b"location": location_url.encode("ascii")})
 
     async def _http_static(self, req: HTTPRequest, path: str) -> HTTPResponse:
         if path == "__init__.py":
@@ -124,7 +108,7 @@ class HTTPComponent:
         headers = {}
         content_type, _ = mimetypes.guess_type(path)
         if content_type:
-            headers = {"content-Type": content_type}
+            headers[b"content-Type"] = content_type.encode("ascii")
         return HTTPResponse.build(200, headers=headers, data=data)
 
     ROUTE_MAPPING = [
