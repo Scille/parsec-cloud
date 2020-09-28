@@ -638,9 +638,4 @@ async def test_link_file_unknown_org(
     accounts_w = lw.widget.layout().itemAt(0).widget()
     assert accounts_w
 
-    assert accounts_w.accounts_widget.layout().count() == 2
-    alice_w = accounts_w.accounts_widget.layout().itemAt(0).widget()
-
-    assert alice_w.label_device.text() == "My dev1 machine"
-    assert alice_w.label_name.text() == "Alicey McAliceFace"
-    assert alice_w.label_organization.text() == "CoolOrg"
+    assert isinstance(accounts_w, LoginPasswordInputWidget)
