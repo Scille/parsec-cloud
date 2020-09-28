@@ -17,7 +17,7 @@ repos:
     rev: v0.782
     hooks:
     - id: mypy
-      additional_dependencies: [trio_typing]
+      additional_dependencies: [trio_typing, pendulum]
 -   repo: https://github.com/pre-commit/pre-commit-hooks
     rev: v2.2.3  # Use the ref you want to point at
     hooks:

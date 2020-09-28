@@ -205,8 +205,8 @@ class ManifestCache:
         self,
         entry_id: EntryID,
         version: Optional[int] = None,
-        timestamp: DateTime = None,
-        expected_backend_timestamp: DateTime = None,
+        timestamp: Optional[DateTime] = None,
+        expected_backend_timestamp: Optional[DateTime] = None,
     ) -> Tuple[RemoteManifest, bool]:
         """
         Tries to find specified manifest in cache, tries to download it otherwise and updates cache

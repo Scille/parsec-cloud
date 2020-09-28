@@ -103,6 +103,7 @@ class UserRemoteLoader:
     ) -> Optional[RealmRole]:
         if (
             self._realm_role_certificates_cache is None
+            or self._realm_role_certificates_cache_timestamp is None
             or self._realm_role_certificates_cache_timestamp <= timestamp
         ):
             cache_timestamp = pendulum_now()
