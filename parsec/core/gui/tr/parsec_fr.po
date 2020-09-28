@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PROJECT VERSION\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2020-09-25 14:48+0200\n"
+"POT-Creation-Date: 2020-09-28 14:38+0200\n"
 "PO-Revision-Date: 2020-09-25 14:50+0200\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language: fr\n"
@@ -724,7 +724,9 @@ msgid "ACTION_USER_REVOCATION_CONFIRM"
 msgstr "Révoquer l'utilisateur"
 
 msgid "TEXT_USERS_PAGE_INFO_page-pagetotal-userfrom-userto-usertotal"
-msgstr "Utilisateurs {userfrom} à {userto} affichés, {usertotal} en tout - page {page} / {pagetotal}"
+msgstr ""
+"Utilisateurs {userfrom} à {userto} affichés, {usertotal} en tout - page "
+"{page} / {pagetotal}"
 
 msgid "TEXT_USER_LIST_RETRIEVABLE_FAILURE"
 msgstr "Impossible de récupérer la liste des utilisateurs depuis le serveur."
@@ -2099,9 +2101,6 @@ msgstr "Inviter un nouvel appareil"
 msgid "ACTION_DEVICE_ADD_NEW"
 msgstr "Inviter un nouvel appareil"
 
-msgid "TEXT_DEVICE_FILTER_PLACEHOLDER"
-msgstr "Filtrer les appareils"
-
 msgid "TEXT_WORKSPACE_EMPTY_WORKSPACE"
 msgstr "Cet espace de travail est vide."
 
@@ -2417,4 +2416,5 @@ msgstr "Créer un nouvel espace de travail"
 
 msgid "ACTION_WORKSPACE_GOTO_FILE_LINK"
 msgstr "Trouver un fichier via son lien"
+
 
