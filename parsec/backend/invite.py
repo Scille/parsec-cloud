@@ -11,7 +11,7 @@ from enum import Enum
 from uuid import UUID, uuid4
 from collections import defaultdict
 from typing import Dict, List, Optional, Union, Set
-from pendulum import Pendulum, now as pendulum_now
+from pendulum import DateTime, now as pendulum_now
 from email.message import Message
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
@@ -118,7 +118,7 @@ class UserInvitation:
     greeter_human_handle: Optional[HumanHandle]
     claimer_email: str
     token: UUID = attr.ib(factory=uuid4)
-    created_on: Pendulum = attr.ib(factory=pendulum_now)
+    created_on: DateTime = attr.ib(factory=pendulum_now)
     status: InvitationStatus = InvitationStatus.IDLE
 
     def evolve(self, **kwargs):
@@ -131,7 +131,7 @@ class DeviceInvitation:
     greeter_user_id: UserID
     greeter_human_handle: Optional[HumanHandle]
     token: UUID = attr.ib(factory=uuid4)
-    created_on: Pendulum = attr.ib(factory=pendulum_now)
+    created_on: DateTime = attr.ib(factory=pendulum_now)
     status: InvitationStatus = InvitationStatus.IDLE
 
     def evolve(self, **kwargs):
@@ -823,7 +823,7 @@ class BaseInviteComponent:
         organization_id: OrganizationID,
         greeter_user_id: UserID,
         claimer_email: str,
-        created_on: Optional[Pendulum] = None,
+        created_on: Optional[DateTime] = None,
     ) -> UserInvitation:
         """
         Raise: Nothing
@@ -834,7 +834,7 @@ class BaseInviteComponent:
         self,
         organization_id: OrganizationID,
         greeter_user_id: UserID,
-        created_on: Optional[Pendulum] = None,
+        created_on: Optional[DateTime] = None,
     ) -> DeviceInvitation:
         """
         Raise: Nothing
@@ -846,7 +846,7 @@ class BaseInviteComponent:
         organization_id: OrganizationID,
         greeter: UserID,
         token: UUID,
-        on: Pendulum,
+        on: DateTime,
         reason: InvitationDeletedReason,
     ) -> None:
         """

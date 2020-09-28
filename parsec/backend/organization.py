@@ -5,7 +5,7 @@ import pendulum
 from typing import Optional
 from secrets import token_hex
 
-from pendulum import Pendulum
+from pendulum import DateTime
 
 from parsec.utils import timestamps_in_the_ballpark
 from parsec.crypto import VerifyKey
@@ -58,7 +58,7 @@ class OrganizationExpiredError(OrganizationError):
 class Organization:
     organization_id: OrganizationID
     bootstrap_token: str
-    expiration_date: Optional[Pendulum] = None
+    expiration_date: Optional[DateTime] = None
     root_verify_key: Optional[VerifyKey] = None
 
     def is_bootstrapped(self):
@@ -66,7 +66,7 @@ class Organization:
 
     @property
     def is_expired(self):
-        return self.expiration_date is not None and self.expiration_date <= Pendulum.now()
+        return self.expiration_date is not None and self.expiration_date <= DateTime.now()
 
     def evolve(self, **kwargs):
         return attr.evolve(self, **kwargs)
@@ -322,7 +322,7 @@ class BaseOrganizationComponent:
         return apiv1_organization_bootstrap_serializer.rep_dump({"status": "ok"})
 
     async def create(
-        self, id: OrganizationID, bootstrap_token: str, expiration_date: Optional[Pendulum]
+        self, id: OrganizationID, bootstrap_token: str, expiration_date: Optional[DateTime]
     ) -> None:
         """
         Raises:
@@ -361,7 +361,7 @@ class BaseOrganizationComponent:
         """
         raise NotImplementedError()
 
-    async def set_expiration_date(self, id: OrganizationID, expiration_date: Pendulum = None):
+    async def set_expiration_date(self, id: OrganizationID, expiration_date: DateTime = None):
         """
         Raises:
             OrganizationNotFoundError

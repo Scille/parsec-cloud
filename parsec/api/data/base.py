@@ -2,7 +2,7 @@
 
 import attr
 from typing import Optional, Any, TypeVar, Type
-from pendulum import Pendulum
+from pendulum import DateTime
 
 from parsec.serde import (
     BaseSchema,
@@ -91,7 +91,7 @@ class BaseSignedData(metaclass=SignedDataMeta):
     SERIALIZER_CLS = BaseSerializer
 
     author: DeviceID
-    timestamp: Pendulum
+    timestamp: DateTime
 
     def __eq__(self, other: Any) -> bool:
         if isinstance(other, type(self)):
@@ -171,7 +171,7 @@ class BaseSignedData(metaclass=SignedDataMeta):
         signed: bytes,
         author_verify_key: VerifyKey,
         expected_author: Optional[DeviceID],
-        expected_timestamp: Pendulum = None,
+        expected_timestamp: DateTime = None,
     ) -> BaseSignedDataTypeVar:
         """
         Raises:
@@ -202,7 +202,7 @@ class BaseSignedData(metaclass=SignedDataMeta):
         key: bytes,
         author_verify_key: VerifyKey,
         expected_author: DeviceID,
-        expected_timestamp: Pendulum,
+        expected_timestamp: DateTime,
         **kwargs,
     ) -> BaseSignedDataTypeVar:
         """
@@ -230,7 +230,7 @@ class BaseSignedData(metaclass=SignedDataMeta):
         recipient_privkey: PrivateKey,
         author_verify_key: VerifyKey,
         expected_author: DeviceID,
-        expected_timestamp: Pendulum,
+        expected_timestamp: DateTime,
         **kwargs,
     ) -> BaseSignedDataTypeVar:
         """

@@ -1,7 +1,7 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
 
 from typing import List, Tuple
-from pendulum import Pendulum
+from pendulum import DateTime
 
 from parsec.api.protocol import DeviceID, UserID, OrganizationID
 from parsec.api.protocol import message_get_serializer
@@ -36,12 +36,12 @@ class BaseMessageComponent:
         organization_id: OrganizationID,
         sender: DeviceID,
         recipient: UserID,
-        timestamp: Pendulum,
+        timestamp: DateTime,
         body: bytes,
     ) -> None:
         raise NotImplementedError()
 
     async def get(
         self, organization_id: OrganizationID, recipient: UserID, offset: int
-    ) -> List[Tuple[DeviceID, Pendulum, bytes]]:
+    ) -> List[Tuple[DeviceID, DateTime, bytes]]:
         raise NotImplementedError()

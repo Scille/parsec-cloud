@@ -6,7 +6,7 @@ from typing import Dict, Tuple, Set, Optional, Union, AsyncIterator, NoReturn, P
 
 import trio
 from trio import lowlevel
-from pendulum import Pendulum
+from pendulum import DateTime
 from structlog import get_logger
 from async_generator import asynccontextmanager
 
@@ -190,7 +190,7 @@ class BaseWorkspaceStorage:
 
     # Timestamped workspace
 
-    def to_timestamped(self, timestamp: Pendulum) -> "WorkspaceStorageTimestamped":
+    def to_timestamped(self, timestamp: DateTime) -> "WorkspaceStorageTimestamped":
         return WorkspaceStorageTimestamped(self, timestamp)
 
 
@@ -363,7 +363,7 @@ class WorkspaceStorageTimestamped(BaseWorkspaceStorage):
     - the same lock mecanism to protect against race conditions, although it is useless there
     """
 
-    def __init__(self, workspace_storage: BaseWorkspaceStorage, timestamp: Pendulum):
+    def __init__(self, workspace_storage: BaseWorkspaceStorage, timestamp: DateTime):
         super().__init__(
             workspace_storage.device,
             workspace_storage.path,
@@ -437,5 +437,5 @@ class WorkspaceStorageTimestamped(BaseWorkspaceStorage):
     async def ensure_manifest_persistent(self, entry_id: EntryID) -> None:
         pass
 
-    # def to_timestamped(self, timestamp: Pendulum) -> "WorkspaceStorageTimestamped":
+    # def to_timestamped(self, timestamp: DateTime) -> "WorkspaceStorageTimestamped":
     #     return WorkspaceStorageTimestamped(self, timestamp)

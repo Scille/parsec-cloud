@@ -53,7 +53,7 @@ class PGRealmComponent(BaseRealmComponent):
         organization_id: OrganizationID,
         author: DeviceID,
         realm_id: UUID,
-        since: pendulum.Pendulum,
+        since: pendulum.DateTime,
     ) -> List[bytes]:
         async with self.dbh.pool.acquire() as conn:
             return await query_get_role_certificates(conn, organization_id, author, realm_id, since)
@@ -80,7 +80,7 @@ class PGRealmComponent(BaseRealmComponent):
         realm_id: UUID,
         encryption_revision: int,
         per_participant_message: Dict[UserID, bytes],
-        timestamp: pendulum.Pendulum,
+        timestamp: pendulum.DateTime,
     ) -> None:
         async with self.dbh.pool.acquire() as conn:
             await query_start_reencryption_maintenance(

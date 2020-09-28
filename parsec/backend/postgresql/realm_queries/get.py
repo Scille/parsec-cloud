@@ -172,7 +172,7 @@ async def query_get_role_certificates(
     organization_id: OrganizationID,
     author: DeviceID,
     realm_id: UUID,
-    since: pendulum.Pendulum,
+    since: pendulum.DateTime,
 ) -> List[bytes]:
     ret = await conn.fetch(
         *_q_get_role_certificates(organization_id=organization_id, realm_id=realm_id)

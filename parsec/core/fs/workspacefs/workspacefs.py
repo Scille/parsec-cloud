@@ -4,7 +4,7 @@ import attr
 import trio
 from collections import defaultdict
 from typing import List, Dict, Tuple, AsyncIterator, cast, Pattern, Callable
-from pendulum import Pendulum, now as pendulum_now
+from pendulum import DateTime, now as pendulum_now
 
 from parsec.event_bus import EventBus
 from parsec.api.data import BaseManifest as BaseRemoteManifest
@@ -217,7 +217,7 @@ class WorkspaceFS:
 
     # Versioning
 
-    async def get_earliest_timestamp(self) -> Pendulum:
+    async def get_earliest_timestamp(self) -> DateTime:
         """
         Get the earliest timestamp from which we can obtain a timestamped workspace
 
@@ -234,7 +234,7 @@ class WorkspaceFS:
 
     # Timestamped version
 
-    async def to_timestamped(self, timestamp: Pendulum) -> "workspacefs.WorkspaceFSTimestamped":
+    async def to_timestamped(self, timestamp: DateTime) -> "workspacefs.WorkspaceFSTimestamped":
         workspace = workspacefs.WorkspaceFSTimestamped(self, timestamp)
         try:
             await workspace.path_info("/")

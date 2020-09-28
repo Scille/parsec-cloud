@@ -3,7 +3,7 @@
 import trio
 from pathlib import Path
 from trio_typing import TaskStatus
-from pendulum import Pendulum, now as pendulum_now
+from pendulum import DateTime, now as pendulum_now
 from typing import (
     Tuple,
     Optional,
@@ -753,7 +753,7 @@ class UserFS:
         return errors
 
     async def _process_message(
-        self, sender_id: DeviceID, expected_timestamp: Pendulum, ciphered: bytes
+        self, sender_id: DeviceID, expected_timestamp: DateTime, ciphered: bytes
     ) -> None:
         """
         Raises:
@@ -926,7 +926,7 @@ class UserFS:
         self,
         new_workspace_entry: WorkspaceEntry,
         users: List[UserCertificateContent],
-        now: Pendulum,
+        now: DateTime,
     ) -> Dict[UserID, bytes]:
         """
         Raises:
@@ -960,7 +960,7 @@ class UserFS:
         self,
         workspace_id: EntryID,
         encryption_revision: int,
-        timestamp: Pendulum,
+        timestamp: DateTime,
         per_user_ciphered_msgs: Dict[UserID, bytes],
     ) -> bool:
         """

@@ -4,7 +4,7 @@ import attr
 from typing import Tuple, Optional
 from hashlib import sha256
 from marshmallow import ValidationError
-from pendulum import Pendulum, now as pendulum_now
+from pendulum import DateTime, now as pendulum_now
 
 from parsec.crypto import SecretKey, PrivateKey, SigningKey
 from parsec.serde import fields, post_load
@@ -149,8 +149,8 @@ class UserInfo:
     user_id: UserID
     human_handle: Optional[HumanHandle]
     profile: UserProfile
-    created_on: Pendulum
-    revoked_on: Optional[Pendulum]
+    created_on: DateTime
+    revoked_on: Optional[DateTime]
 
     @property
     def user_display(self) -> str:
@@ -172,7 +172,7 @@ class UserInfo:
 class DeviceInfo:
     device_id: DeviceID
     device_label: Optional[str]
-    created_on: Pendulum
+    created_on: DateTime
 
     @property
     def device_name(self):

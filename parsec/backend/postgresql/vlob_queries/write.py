@@ -123,7 +123,7 @@ async def query_update(
     encryption_revision: int,
     vlob_id: UUID,
     version: int,
-    timestamp: pendulum.Pendulum,
+    timestamp: pendulum.DateTime,
     blob: bytes,
 ) -> None:
     realm_id = await _get_realm_id_from_vlob_id(conn, organization_id, vlob_id)
@@ -207,7 +207,7 @@ async def query_create(
     realm_id: UUID,
     encryption_revision: int,
     vlob_id: UUID,
-    timestamp: pendulum.Pendulum,
+    timestamp: pendulum.DateTime,
     blob: bytes,
 ) -> None:
     await _check_realm_and_write_access(

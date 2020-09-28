@@ -26,7 +26,7 @@ from parsec.backend.vlob import (
 @attr.s
 class Vlob:
     realm_id: UUID = attr.ib()
-    data: List[Tuple[bytes, DeviceID, pendulum.Pendulum]] = attr.ib(factory=list)
+    data: List[Tuple[bytes, DeviceID, pendulum.DateTime]] = attr.ib(factory=list)
 
     @property
     def current_version(self):
@@ -214,7 +214,7 @@ class MemoryVlobComponent(BaseVlobComponent):
         realm_id: UUID,
         encryption_revision: int,
         vlob_id: UUID,
-        timestamp: pendulum.Pendulum,
+        timestamp: pendulum.DateTime,
         blob: bytes,
     ) -> None:
         self._check_realm_write_access(
@@ -236,8 +236,8 @@ class MemoryVlobComponent(BaseVlobComponent):
         encryption_revision: int,
         vlob_id: UUID,
         version: Optional[int] = None,
-        timestamp: Optional[pendulum.Pendulum] = None,
-    ) -> Tuple[int, bytes, DeviceID, pendulum.Pendulum]:
+        timestamp: Optional[pendulum.DateTime] = None,
+    ) -> Tuple[int, bytes, DeviceID, pendulum.DateTime]:
         vlob = self._get_vlob(organization_id, vlob_id)
 
         self._check_realm_read_access(
@@ -267,7 +267,7 @@ class MemoryVlobComponent(BaseVlobComponent):
         encryption_revision: int,
         vlob_id: UUID,
         version: int,
-        timestamp: pendulum.Pendulum,
+        timestamp: pendulum.DateTime,
         blob: bytes,
     ) -> None:
         vlob = self._get_vlob(organization_id, vlob_id)
@@ -299,7 +299,7 @@ class MemoryVlobComponent(BaseVlobComponent):
 
     async def list_versions(
         self, organization_id: OrganizationID, author: DeviceID, vlob_id: UUID
-    ) -> Dict[int, Tuple[pendulum.Pendulum, DeviceID]]:
+    ) -> Dict[int, Tuple[pendulum.DateTime, DeviceID]]:
         vlobs = self._get_vlob(organization_id, vlob_id)
 
         self._check_realm_read_access(organization_id, vlobs.realm_id, author.user_id, None)

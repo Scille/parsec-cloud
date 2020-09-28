@@ -3,7 +3,7 @@
 from contextlib import contextmanager
 from typing import Dict, Optional, List, Tuple, cast, Iterator, Callable
 
-from pendulum import Pendulum, now as pendulum_now
+from pendulum import DateTime, now as pendulum_now
 
 from parsec.utils import timestamps_in_the_ballpark
 from parsec.crypto import HashDigest, CryptoError
@@ -96,10 +96,10 @@ class UserRemoteLoader:
         self.backend_cmds = backend_cmds
         self.remote_devices_manager = remote_devices_manager
         self._realm_role_certificates_cache: Optional[List[RealmRoleCertificateContent]] = None
-        self._realm_role_certificates_cache_timestamp: Optional[Pendulum] = None
+        self._realm_role_certificates_cache_timestamp: Optional[DateTime] = None
 
     async def _get_user_realm_role_at(
-        self, user_id: UserID, timestamp: Pendulum
+        self, user_id: UserID, timestamp: DateTime
     ) -> Optional[RealmRole]:
         if (
             self._realm_role_certificates_cache is None
@@ -247,7 +247,7 @@ class UserRemoteLoader:
         with translate_remote_devices_manager_errors():
             return await self.remote_devices_manager.get_device(device_id, no_cache=no_cache)
 
-    async def list_versions(self, entry_id: EntryID) -> Dict[int, Tuple[Pendulum, DeviceID]]:
+    async def list_versions(self, entry_id: EntryID) -> Dict[int, Tuple[DateTime, DeviceID]]:
         """
         Raises:
             FSError
@@ -395,8 +395,8 @@ class RemoteLoader(UserRemoteLoader):
         self,
         entry_id: EntryID,
         version: Optional[int] = None,
-        timestamp: Optional[Pendulum] = None,
-        expected_backend_timestamp: Optional[Pendulum] = None,
+        timestamp: Optional[DateTime] = None,
+        expected_backend_timestamp: Optional[DateTime] = None,
     ) -> BaseRemoteManifest:
         """
         Download a manifest.
@@ -534,7 +534,7 @@ class RemoteLoader(UserRemoteLoader):
             )
 
     async def _vlob_create(
-        self, encryption_revision: int, entry_id: EntryID, ciphered: bytes, now: Pendulum
+        self, encryption_revision: int, entry_id: EntryID, ciphered: bytes, now: DateTime
     ) -> None:
         """
         Raises:
@@ -572,7 +572,7 @@ class RemoteLoader(UserRemoteLoader):
         encryption_revision: int,
         entry_id: EntryID,
         ciphered: bytes,
-        now: Pendulum,
+        now: DateTime,
         version: int,
     ) -> None:
         """
@@ -612,12 +612,12 @@ class RemoteLoader(UserRemoteLoader):
         elif rep["status"] != "ok":
             raise FSError(f"Cannot update vlob {entry_id}: `{rep['status']}`")
 
-    def to_timestamped(self, timestamp: Pendulum) -> "RemoteLoaderTimestamped":
+    def to_timestamped(self, timestamp: DateTime) -> "RemoteLoaderTimestamped":
         return RemoteLoaderTimestamped(self, timestamp)
 
 
 class RemoteLoaderTimestamped(RemoteLoader):
-    def __init__(self, remote_loader: RemoteLoader, timestamp: Pendulum):
+    def __init__(self, remote_loader: RemoteLoader, timestamp: DateTime):
         self.device = remote_loader.device
         self.workspace_id = remote_loader.workspace_id
         self.get_workspace_entry = remote_loader.get_workspace_entry
@@ -635,8 +635,8 @@ class RemoteLoaderTimestamped(RemoteLoader):
         self,
         entry_id: EntryID,
         version: Optional[int] = None,
-        timestamp: Optional[Pendulum] = None,
-        expected_backend_timestamp: Optional[Pendulum] = None,
+        timestamp: Optional[DateTime] = None,
+        expected_backend_timestamp: Optional[DateTime] = None,
     ) -> BaseRemoteManifest:
         """
         Allows to have manifests at all timestamps as it is needed by the versions method of either
@@ -667,7 +667,7 @@ class RemoteLoaderTimestamped(RemoteLoader):
         raise FSError("Cannot upload manifest through a timestamped remote loader")
 
     async def _vlob_create(
-        self, encryption_revision: int, entry_id: EntryID, ciphered: bytes, now: Pendulum
+        self, encryption_revision: int, entry_id: EntryID, ciphered: bytes, now: DateTime
     ) -> None:
         raise FSError("Cannot create vlob through a timestamped remote loader")
 
@@ -676,7 +676,7 @@ class RemoteLoaderTimestamped(RemoteLoader):
         encryption_revision: int,
         entry_id: EntryID,
         ciphered: bytes,
-        now: Pendulum,
+        now: DateTime,
         version: int,
     ) -> None:
         raise FSError("Cannot update vlob through a timestamped remote loader")

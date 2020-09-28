@@ -429,7 +429,7 @@ async def test_user_create_human_handle_with_revoked_previous_one(
 
 @pytest.mark.trio
 async def test_user_create_not_matching_certified_on(alice_backend_sock, alice, mallory):
-    date1 = pendulum.Pendulum(2000, 1, 1)
+    date1 = pendulum.datetime(2000, 1, 1)
     date2 = date1.add(seconds=1)
     user_certificate = UserCertificateContent(
         author=alice.device_id,
@@ -462,7 +462,7 @@ async def test_user_create_not_matching_certified_on(alice_backend_sock, alice, 
 
 @pytest.mark.trio
 async def test_user_create_certificate_too_old(alice_backend_sock, alice, mallory):
-    too_old = pendulum.Pendulum(2000, 1, 1)
+    too_old = pendulum.datetime(2000, 1, 1)
     now = too_old.add(seconds=INVITATION_VALIDITY + 1)
     user_certificate = UserCertificateContent(
         author=alice.device_id,

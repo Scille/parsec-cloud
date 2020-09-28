@@ -97,7 +97,7 @@ def is_xdist_master(config):
 @pytest.fixture(scope="session", autouse=True)
 def mock_timezone_utc(request):
     # Mock and non-UTC timezones are a really bad mix, so keep things simple
-    with pendulum.tz.LocalTimezone.test(pendulum.timezone("utc")):
+    with pendulum.test_local_timezone(pendulum.timezone("utc")):
         yield
 
 

@@ -1,7 +1,7 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
 
 import pytest
-from pendulum import Pendulum
+from pendulum import datetime
 
 from parsec.api.data import (
     UserCertificateContent,
@@ -91,7 +91,7 @@ class TrustchainData:
 
 @pytest.fixture
 def trustchain_data_factory(local_device_factory, coolorg):
-    now = Pendulum(2000, 1, 1)
+    now = datetime(2000, 1, 1)
 
     def _trustchain_data_factory(todo_devices, todo_users):
         data = TrustchainData(coolorg.organization_id, coolorg.root_verify_key)
@@ -245,8 +245,8 @@ def test_invalid_loop_on_device_certif_trustchain_error(trustchain_data_factory)
 
 
 def test_device_signature_while_revoked(trustchain_data_factory):
-    d1 = Pendulum(2000, 1, 1)
-    d2 = Pendulum(2000, 1, 2)
+    d1 = datetime(2000, 1, 1)
+    d2 = datetime(2000, 1, 2)
 
     data = trustchain_data_factory(
         todo_devices=(
@@ -269,8 +269,8 @@ def test_device_signature_while_revoked(trustchain_data_factory):
 
 
 def test_user_signature_while_revoked(trustchain_data_factory):
-    d1 = Pendulum(2000, 1, 1)
-    d2 = Pendulum(2000, 1, 2)
+    d1 = datetime(2000, 1, 1)
+    d2 = datetime(2000, 1, 2)
 
     data = trustchain_data_factory(
         todo_devices=({"id": "alice@dev1"}, {"id": "bob@dev1"}, {"id": "mallory@dev1"}),
@@ -289,8 +289,8 @@ def test_user_signature_while_revoked(trustchain_data_factory):
 
 
 def test_revoked_user_signature_while_revoked(trustchain_data_factory):
-    d1 = Pendulum(2000, 1, 1)
-    d2 = Pendulum(2000, 1, 2)
+    d1 = datetime(2000, 1, 1)
+    d2 = datetime(2000, 1, 2)
 
     data = trustchain_data_factory(
         todo_devices=({"id": "alice@dev1"}, {"id": "bob@dev1"}, {"id": "mallory@dev1"}),

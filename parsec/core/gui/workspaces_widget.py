@@ -150,14 +150,14 @@ async def _do_workspace_list(core):
     return workspaces
 
 
-async def _do_workspace_mount(core, workspace_id, timestamp: pendulum.Pendulum = None):
+async def _do_workspace_mount(core, workspace_id, timestamp: pendulum.DateTime = None):
     try:
         await core.mountpoint_manager.mount_workspace(workspace_id, timestamp)
     except MountpointAlreadyMounted:
         pass
 
 
-async def _do_workspace_unmount(core, workspace_id, timestamp: pendulum.Pendulum = None):
+async def _do_workspace_unmount(core, workspace_id, timestamp: pendulum.DateTime = None):
     try:
         await core.mountpoint_manager.unmount_workspace(workspace_id, timestamp)
     except MountpointNotMounted:

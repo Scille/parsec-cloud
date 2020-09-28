@@ -1,6 +1,6 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
 
-from pendulum import Pendulum
+from pendulum import DateTime
 
 from enum import Enum
 import attr
@@ -57,7 +57,7 @@ class SharingGrantedMessageContent(BaseMessageContent):
     name: str
     id: EntryID
     encryption_revision: int
-    encrypted_on: Pendulum
+    encrypted_on: DateTime
     key: SecretKey
 
 

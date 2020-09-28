@@ -3,7 +3,7 @@
 
 import attr
 import trio
-from pendulum import Pendulum
+from pendulum import DateTime
 from structlog import get_logger
 from async_generator import asynccontextmanager
 
@@ -22,7 +22,7 @@ logger = get_logger()
 TIMESTAMP_MAX_DT = 30 * 60
 
 
-def timestamps_in_the_ballpark(ts1: Pendulum, ts2: Pendulum, max_dt=TIMESTAMP_MAX_DT) -> bool:
+def timestamps_in_the_ballpark(ts1: DateTime, ts2: DateTime, max_dt=TIMESTAMP_MAX_DT) -> bool:
     """
     Useful to compare signed message timestamp with the one stored by the
     backend.
