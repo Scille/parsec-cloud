@@ -3,7 +3,7 @@
 import os
 import re
 from enum import IntEnum
-from typing import Union, Optional, Any, NoReturn
+from typing import Union, Optional, NoReturn, Type
 
 from parsec.core.fs.workspacefs.entry_transactions import EntryTransactions
 from parsec.core.fs.exceptions import FSUnsupportedOperation, FSOffsetError
@@ -57,7 +57,9 @@ class WorkspaceFile:
         await self.ainit()
         return self
 
-    async def __aexit__(self, *args: Any) -> None:
+    async def __aexit__(
+        self, exc_type: Optional[Type], exc_value: Optional[Exception], traceback: Optional[object]
+    ) -> None:
         await self.close()
 
     async def ainit(self) -> None:
@@ -117,12 +119,12 @@ class WorkspaceFile:
     async def stat(self) -> dict:
         """Getting stat dictionnary"""
         self._check_open_state()
-        return await self._transactions.fd_info(self.fileno(), self._path)
+        return await self._transactions.fd_info(self.fileno())
 
     async def get_size(self) -> int:
         """Getting file length"""
         self._check_open_state()
-        return await self._transactions.fd_size(self.fileno(), self._path)
+        return await self._transactions.fd_size(self.fileno())
 
     @property
     def state(self) -> FileState:

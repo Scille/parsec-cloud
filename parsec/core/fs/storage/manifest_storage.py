@@ -5,17 +5,7 @@ import re
 import trio
 from pathlib import Path
 from structlog import get_logger
-from typing import (
-    Dict,
-    Tuple,
-    Set,
-    Optional,
-    Union,
-    Pattern,
-    Any,
-    AsyncIterator,
-    AsyncContextManager,
-)
+from typing import Dict, Tuple, Set, Optional, Union, Pattern, AsyncIterator, AsyncContextManager
 from async_generator import asynccontextmanager
 
 from parsec.core.fs.exceptions import FSLocalMissError
@@ -56,8 +46,10 @@ class ManifestStorage:
 
     @classmethod
     @asynccontextmanager
-    async def run(cls, *args: Any, **kwargs: Any) -> AsyncIterator["ManifestStorage"]:
-        self = cls(*args, **kwargs)
+    async def run(
+        cls, device: LocalDevice, localdb: LocalDatabase, realm_id: EntryID
+    ) -> AsyncIterator["ManifestStorage"]:
+        self = cls(device, localdb, realm_id)
         await self._create_db()
         try:
             yield self

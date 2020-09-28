@@ -495,7 +495,7 @@ async def test_file_state(alice_workspace, trio_file, random_text):
     assert int(f2.state) == int(FileState.CLOSED)
     # File descriptor is no longer accessible
     with pytest.raises(FSInvalidFileDescriptor):
-        await f2._transactions.fd_info(f2._fd, "/foo/bar")
+        await f2._transactions.fd_info(f2._fd)
 
 
 @pytest.mark.trio
@@ -515,7 +515,7 @@ async def test_close(alice_workspace, trio_file, random_text):
 
     # File descriptor is no longer accessible
     with pytest.raises(FSInvalidFileDescriptor):
-        await f._transactions.fd_info(f._fd, "/foo/bar")
+        await f._transactions.fd_info(f._fd)
 
     # closing a 2nd time
     await f.close()

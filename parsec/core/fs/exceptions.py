@@ -18,7 +18,7 @@ import io
 from parsec.core.types import EntryID, ChunkID, AnyPath
 from parsec.core.fs.utils import ntstatus
 
-from typing import Optional, Union, Any
+from typing import Optional, Union
 
 
 # Base classes for all file system errors
@@ -57,18 +57,19 @@ class FSOperationError(OSError, FSError):
 
     def __init__(
         self,
-        message: Any = None,
+        arg: object = None,
         filename: Optional[AnyPath] = None,
         filename2: Optional[AnyPath] = None,
     ):
         # Get the actual message and save it
-        if message is None and self.ERRNO is not None:
-            message = os.strerror(self.ERRNO)
-        self.message = str(message)
+        if arg is None and self.ERRNO is not None:
+            self.message = os.strerror(self.ERRNO)
+        else:
+            self.message = str(arg)
 
         # Error with no standard errno
         if self.ERRNO is None:
-            return super().__init__(message)
+            return super().__init__(arg)
 
         # Cast filename arguments
         if filename is not None:

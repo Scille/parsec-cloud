@@ -1,7 +1,7 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
 
 from parsec.core.core_events import CoreEvent
-from typing import Tuple, List, Callable, Dict, Optional, Any, cast, AsyncIterator
+from typing import Tuple, List, Callable, Dict, Optional, cast, AsyncIterator
 
 from collections import defaultdict
 from async_generator import asynccontextmanager
@@ -93,7 +93,7 @@ class FileTransactions:
 
     # Event helper
 
-    def _send_event(self, event: CoreEvent, **kwargs: Any) -> None:
+    def _send_event(self, event: CoreEvent, **kwargs: object) -> None:
         self.event_bus.send(event, workspace_id=self.workspace_id, **kwargs)
 
     # Helper
@@ -178,11 +178,11 @@ class FileTransactions:
 
     # Atomic transactions
 
-    async def fd_size(self, fd: FileDescriptor, path: Any) -> int:
+    async def fd_size(self, fd: FileDescriptor) -> int:
         manifest = await self.local_storage.load_file_descriptor(fd)
         return manifest.size
 
-    async def fd_info(self, fd: FileDescriptor, path: Any) -> dict:
+    async def fd_info(self, fd: FileDescriptor) -> dict:
         manifest = await self.local_storage.load_file_descriptor(fd)
         stats = manifest.to_stats()
         stats["confinement_point"] = await self._get_confinement_point(manifest.id)

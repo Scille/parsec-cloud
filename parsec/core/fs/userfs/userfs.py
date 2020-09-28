@@ -11,7 +11,6 @@ from typing import (
     Dict,
     Sequence,
     Pattern,
-    Any,
     Type,
     TypeVar,
     AsyncIterator,
@@ -213,9 +212,17 @@ class UserFS:
     @classmethod
     @asynccontextmanager
     async def run(
-        cls: Type[UserFSTypeVar], *args: Any, **kwargs: Any
+        cls: Type[UserFSTypeVar],
+        device: LocalDevice,
+        path: Path,
+        backend_cmds: BackendAuthenticatedCmds,
+        remote_devices_manager: RemoteDevicesManager,
+        event_bus: EventBus,
+        prevent_sync_pattern: Pattern,
     ) -> AsyncIterator[UserFSTypeVar]:
-        self = cls(*args, **kwargs)
+        self = cls(
+            device, path, backend_cmds, remote_devices_manager, event_bus, prevent_sync_pattern
+        )
 
         # Run user storage
         async with UserStorage.run(self.device, self.path) as self.storage:

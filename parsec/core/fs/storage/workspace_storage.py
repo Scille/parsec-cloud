@@ -2,7 +2,7 @@
 
 from pathlib import Path
 from collections import defaultdict
-from typing import Dict, Tuple, Set, Optional, Union, AsyncIterator, NoReturn, Pattern, Any
+from typing import Dict, Tuple, Set, Optional, Union, AsyncIterator, NoReturn, Pattern
 
 import trio
 from trio import lowlevel
@@ -407,7 +407,7 @@ class WorkspaceStorageTimestamped(BaseWorkspaceStorage):
     ) -> NoReturn:
         self._throw_permission_error()
 
-    def _throw_permission_error(*args: Any, **kwargs: Any) -> NoReturn:
+    def _throw_permission_error(self) -> NoReturn:
         raise FSError("Not implemented : WorkspaceStorage is timestamped")
 
     # Manifest interface

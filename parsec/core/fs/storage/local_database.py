@@ -4,7 +4,7 @@ import inspect
 import functools
 from pathlib import Path
 from concurrent.futures import ThreadPoolExecutor
-from typing import AsyncIterator, Callable, Optional, Any, Union, TypeVar, Awaitable, cast
+from typing import AsyncIterator, Callable, Optional, Union, TypeVar, Awaitable, cast
 
 import trio
 import outcome
@@ -27,7 +27,7 @@ async def thread_pool_runner(
     executor = ThreadPoolExecutor(max_workers=max_workers)
     trio_token = trio.lowlevel.current_trio_token()
 
-    async def run_in_thread(fn: Callable[..., R], *args: Any) -> R:
+    async def run_in_thread(fn: Callable[..., R], *args: object) -> R:
         send_channel: trio.MemorySendChannel[outcome.Outcome[R]]
         receive_channel: trio.MemoryReceiveChannel[outcome.Outcome[R]]
         send_channel, receive_channel = trio.open_memory_channel(1)
@@ -54,7 +54,9 @@ def protect_context_with_lock(fn: C) -> C:
     assert inspect.isasyncgenfunction(fn)
 
     @functools.wraps(fn)
-    async def wrapper(self: "LocalDatabase", *args: Any, **kwargs: Any) -> AsyncIterator:
+    async def wrapper(
+        self: "LocalDatabase", *args: object, **kwargs: object
+    ) -> AsyncIterator[object]:
         async with self._lock:
             async for item in fn(self, *args, **kwargs):
                 yield item
@@ -64,10 +66,10 @@ def protect_context_with_lock(fn: C) -> C:
 
 def protect_method_with_lock(fn: C) -> C:
     """Use as a decorator to protect an async method with `self._lock`."""
-    assert inspect.isasyncgenfunction(fn)
+    assert inspect.iscoroutinefunction(fn)
 
     @functools.wraps(fn)
-    async def wrapper(self: "LocalDatabase", *args: Any, **kwargs: Any) -> Any:
+    async def wrapper(self: "LocalDatabase", *args: object, **kwargs: object) -> object:
         async with self._lock:
             return await fn(self, *args, **kwargs)
 
@@ -82,16 +84,18 @@ class LocalDatabase:
 
         # Those attributes are set by the `run` async context manager
         self._conn: Connection
-        self._run_in_thread: Callable
+        self._run_in_thread: Callable[..., Awaitable]
 
         self.path = Path(path)
         self.vacuum_threshold = vacuum_threshold
 
     @classmethod
     @asynccontextmanager
-    async def run(cls, *args: Any, **kwargs: Any) -> AsyncIterator["LocalDatabase"]:
+    async def run(
+        cls, path: Union[str, Path], vacuum_threshold: Optional[int] = None
+    ) -> AsyncIterator["LocalDatabase"]:
         # Instanciate the local database
-        self = cls(*args, **kwargs)
+        self = cls(path, vacuum_threshold)
 
         # Run a pool with single worker thread
         # (although the lock already protects against concurrent access to the pool)
