@@ -432,7 +432,6 @@ class FileTable(QTableWidget):
             event.ignore()
             return
         if event.mimeData().hasUrls():
-            print(event.mimeData().urls())
             event.accept()
             target_row = self.indexAt(event.pos()).row()
             target_item = self.item(target_row, Column.ICON)

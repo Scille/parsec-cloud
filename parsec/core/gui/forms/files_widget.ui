@@ -308,9 +308,6 @@ QScrollBar:vertical {
                <bold>true</bold>
               </font>
              </property>
-             <property name="text">
-              <string>TextLabel</string>
-             </property>
             </widget>
            </item>
           </layout>

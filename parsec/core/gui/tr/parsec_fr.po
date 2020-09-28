@@ -2099,6 +2099,9 @@ msgstr "Inviter un nouvel appareil"
 msgid "ACTION_DEVICE_ADD_NEW"
 msgstr "Inviter un nouvel appareil"
 
+msgid "TEXT_DEVICE_FILTER_PLACEHOLDER"
+msgstr "Filtrer les appareils"
+
 msgid "TEXT_WORKSPACE_EMPTY_WORKSPACE"
 msgstr "Cet espace de travail est vide."
 
@@ -2174,9 +2177,6 @@ msgstr "Mis à jour"
 
 msgid "TEXT_FILE_SIZE_HEADER"
 msgstr "Taille"
-
-msgid "TextLabel"
-msgstr ""
 
 msgid "TEXT_GREET_DEVICE_CODE_EXCHANGE_GIVE_CODE_INSTRUCTIONS"
 msgstr "Utilisez le code suivant avec votre nouvel appareil :"
