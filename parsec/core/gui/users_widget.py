@@ -239,15 +239,16 @@ class UsersWidget(QWidget, Ui_UsersWidget):
 
     def show_next_page(self):
         self._page += 1
-        self.reset()
+        self.on_filter(change_page=True)
 
     def show_previous_page(self):
         if self._page > 1:
             self._page -= 1
-        self.reset()
+        self.on_filter(change_page=True)
 
-    def on_filter(self, editing_finished=False, text_changed=False):
-        self._page = 1
+    def on_filter(self, editing_finished=False, text_changed=False, change_page=False):
+        if change_page is False:
+            self._page = 1
         pattern = self.line_edit_search.text()
         if text_changed and len(pattern) <= 0:
             return self.reset()
