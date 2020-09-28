@@ -6,6 +6,7 @@ from PyQt5 import QtCore, QtWidgets
 from parsec.core.local_device import save_device_with_password, list_available_devices
 from parsec.core.gui.parsec_application import ParsecApp
 from parsec.core.gui.central_widget import CentralWidget
+from parsec.core.gui.lang import translate as _
 from parsec.core.gui.login_widget import (
     LoginPasswordInputWidget,
     LoginAccountsWidget,
@@ -91,11 +92,17 @@ async def test_login_back_to_account_list(
 @pytest.mark.gui
 @pytest.mark.trio
 async def test_login_no_devices(aqtbot, gui_factory, autoclose_dialog):
-    gui = await gui_factory()
+    gui = await gui_factory(skip_dialogs=False)
     lw = gui.test_get_login_widget()
 
     no_device_w = lw.widget.layout().itemAt(0).widget()
     assert isinstance(no_device_w, LoginNoDevicesWidget)
+    assert autoclose_dialog.dialogs == [
+        (
+            _("TEXT_KICKSTART_PARSEC_WHAT_TO_DO_TITLE"),
+            _("TEXT_KICKSTART_PARSEC_WHAT_TO_DO_INSTRUCTIONS"),
+        )
+    ]
 
 
 @pytest.mark.gui
@@ -203,8 +210,8 @@ async def test_login_logout_account_list_refresh(
     await aqtbot.wait_until(_switch_to_login_tab)
 
     acc_w = gui.test_get_login_widget().widget.layout().itemAt(0).widget()
-    # 2 because we have a spacer
-    assert acc_w.accounts_widget.layout().count() == 2
+    # Skipping device selection because we have only one device
+    assert isinstance(acc_w, LoginPasswordInputWidget)
 
     def _switch_to_main_tab():
         gui.tab_center.setCurrentIndex(0)
