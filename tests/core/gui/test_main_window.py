@@ -111,7 +111,7 @@ async def logged_gui_with_files(
         wk_button = w_w.layout_workspaces.itemAt(0).widget()
         assert not isinstance(wk_button, QtWidgets.QLabel)
 
-    await aqtbot.wait_until(_workspace_button_ready)
+    await aqtbot.wait_until(_workspace_button_ready, timeout=2000)
 
     f_w = logged_gui.test_get_files_widget()
     wk_button = w_w.layout_workspaces.itemAt(0).widget()

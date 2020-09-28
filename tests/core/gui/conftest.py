@@ -523,10 +523,11 @@ def testing_main_window_cls(aqtbot, qt_thread_gateway):
             accounts_w = lw.widget.layout().itemAt(0).widget()
             assert accounts_w
 
-            async with aqtbot.wait_signal(accounts_w.account_clicked):
-                await aqtbot.mouse_click(
-                    accounts_w.accounts_widget.layout().itemAt(0).widget(), QtCore.Qt.LeftButton
-                )
+            if isinstance(accounts_w, LoginAccountsWidget):
+                async with aqtbot.wait_signal(accounts_w.account_clicked):
+                    await aqtbot.mouse_click(
+                        accounts_w.accounts_widget.layout().itemAt(0).widget(), QtCore.Qt.LeftButton
+                    )
 
             def _password_widget_shown():
                 assert isinstance(lw.widget.layout().itemAt(0).widget(), LoginPasswordInputWidget)

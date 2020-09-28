@@ -143,6 +143,8 @@ class LoginWidget(QWidget, Ui_LoginWidget):
             no_device_widget.join_organization_clicked.connect(self.join_organization_clicked.emit)
             self.widget.layout().addWidget(no_device_widget)
             no_device_widget.setFocus()
+        elif len(devices) == 1:
+            self._on_account_clicked(devices[0])
         else:
             accounts_widget = LoginAccountsWidget(devices)
             accounts_widget.account_clicked.connect(self._on_account_clicked)
