@@ -33,6 +33,7 @@ from parsec.core.gui.file_items import (
     COPY_STATUS_DATA_INDEX,
 )
 from parsec.core.gui.custom_widgets import Pixmap
+from parsec.core.gui.custom_dialogs import show_error
 from parsec.core.gui.file_size import get_filesize
 
 
@@ -121,12 +122,6 @@ class FileTable(QTableWidget):
     @current_user_role.setter
     def current_user_role(self, role):
         self._current_user_role = role
-        if self.is_read_only():
-            self.setDragEnabled(False)
-            self.setDragDropMode(QTableWidget.NoDragDrop)
-        else:
-            self.setDragEnabled(True)
-            self.setDragDropMode(QTableWidget.DragDrop)
 
     def resizeEvent(self, event):
         super().resizeEvent(event)
@@ -412,15 +407,9 @@ class FileTable(QTableWidget):
         self.setItem(row_idx, Column.SIZE, item)
 
     def dragEnterEvent(self, event):
-        if not self.is_read_only():
-            event.accept()
-        else:
-            event.ignore()
+        event.accept()
 
     def dragMoveEvent(self, event):
-        if self.is_read_only():
-            event.ignore()
-            return
         if event.mimeData().hasUrls():
             event.accept()
         else:
@@ -439,6 +428,7 @@ class FileTable(QTableWidget):
 
     def dropEvent(self, event):
         if self.is_read_only():
+            show_error(self, _("TEXT_FILE_DROP_WORKSPACE_IS_READ_ONLY"))
             event.ignore()
             return
         if event.mimeData().hasUrls():

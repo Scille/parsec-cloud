@@ -10,6 +10,7 @@ from parsec.core.types import EntryID, WorkspaceRole
 from parsec.core.fs.workspacefs import ReencryptionNeed
 
 from parsec.core.gui.lang import translate as _, format_datetime
+from parsec.core.gui.workspace_roles import get_role_translation
 from parsec.core.gui.custom_dialogs import show_info
 
 from parsec.core.gui.ui.workspace_button import Ui_WorkspaceButton
@@ -56,6 +57,7 @@ class WorkspaceButton(QWidget, Ui_WorkspaceButton):
         self.widget_empty.layout().addWidget(EmptyWorkspaceWidget())
         self.setContextMenuPolicy(Qt.CustomContextMenu)
         self.customContextMenuRequested.connect(self.show_context_menu)
+        self.label_role.setText(get_role_translation(self.current_role))
         files = files or []
 
         if not len(files):
@@ -138,6 +140,11 @@ class WorkspaceButton(QWidget, Ui_WorkspaceButton):
     def is_owner(self):
         user_id = self.workspace_fs.device.user_id
         return user_id in self.users_roles and self.users_roles[user_id][0] == WorkspaceRole.OWNER
+
+    @property
+    def current_role(self):
+        user_id = self.workspace_fs.device.user_id
+        return self.users_roles[user_id][0]
 
     def show_context_menu(self, pos):
         global_pos = self.mapToGlobal(pos)

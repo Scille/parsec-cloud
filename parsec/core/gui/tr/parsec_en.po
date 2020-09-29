@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PROJECT VERSION\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2020-09-25 14:48+0200\n"
+"POT-Creation-Date: 2020-09-28 14:38+0200\n"
 "PO-Revision-Date: 2020-09-25 14:50+0200\n"
 "Last-Translator: \n"
 "Language: en\n"
@@ -17,18 +17,6 @@ msgstr ""
 "Content-Type: text/plain; charset=utf-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Generated-By: Babel 2.6.0\n"
-
-msgid "TEXT_WORKSPACE_ROLE_READER"
-msgstr "Reader"
-
-msgid "TEXT_WORKSPACE_ROLE_CONTRIBUTOR"
-msgstr "Contributor"
-
-msgid "TEXT_WORKSPACE_ROLE_MANAGER"
-msgstr "Manager"
-
-msgid "TEXT_WORKSPACE_ROLE_OWNER"
-msgstr "Owner"
 
 msgid "TEXT_FILE_LINK_COPIED_TO_CLIPBOARD"
 msgstr "A link to the file has been copied to your clipboard."
@@ -236,9 +224,6 @@ msgstr "Internal error. Please restart the process."
 msgid "TEXT_GREET_USER_TITLE"
 msgstr "Greet a new user"
 
-msgid "TEXT_WORKSPACE_ROLE_NOT_SHARED"
-msgstr "Not shared"
-
 msgid "TEXT_WORKSPACE_SHARING_USER_HAS_BEEN_REVOKED"
 msgstr "This user has been revoked."
 
@@ -262,6 +247,21 @@ msgstr "Go back in time"
 
 msgid "TEXT_PARSEC_VERSION_version"
 msgstr "PARSEC version {version}"
+
+msgid "TEXT_WORKSPACE_ROLE_READER"
+msgstr "Reader"
+
+msgid "TEXT_WORKSPACE_ROLE_CONTRIBUTOR"
+msgstr "Contributor"
+
+msgid "TEXT_WORKSPACE_ROLE_MANAGER"
+msgstr "Manager"
+
+msgid "TEXT_WORKSPACE_ROLE_OWNER"
+msgstr "Owner"
+
+msgid "TEXT_WORKSPACE_ROLE_NOT_SHARED"
+msgstr "Not shared"
 
 msgid "TEXT_PASSWORD_VALIDATION_TOO_SHORT"
 msgstr "TOO SHORT"
@@ -681,7 +681,9 @@ msgid "ACTION_USER_REVOCATION_CONFIRM"
 msgstr "Revoke the user"
 
 msgid "TEXT_USERS_PAGE_INFO_page-pagetotal-userfrom-userto-usertotal"
-msgstr "Users {userfrom} to {userto} displayed, {usertotal} in total - page {page} / {pagetotal}"
+msgstr ""
+"Users {userfrom} to {userto} displayed, {usertotal} in total - page "
+"{page} / {pagetotal}"
 
 msgid "TEXT_USER_LIST_RETRIEVABLE_FAILURE"
 msgstr "Failed to retrieve the user list from the server."
@@ -1532,6 +1534,9 @@ msgstr "Parent folder"
 msgid "TEXT_FILE_TREE_PARENT_WORKSPACE"
 msgstr "Workspaces list"
 
+msgid "TEXT_FILE_DROP_WORKSPACE_IS_READ_ONLY"
+msgstr "Cannot import files because you don't have write access to this workspace."
+
 msgid "TEXT_FILE_ITEM_IS_CONFINED_TOOLTIP"
 msgstr "The file will not be synced."
 
@@ -2349,4 +2354,5 @@ msgstr "Create a new workspace"
 
 msgid "ACTION_WORKSPACE_GOTO_FILE_LINK"
 msgstr "Go to a file using a link"
+
 

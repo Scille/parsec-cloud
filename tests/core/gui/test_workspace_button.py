@@ -7,7 +7,7 @@ from PyQt5 import QtCore
 from parsec.core.types import WorkspaceRole, UserInfo
 from parsec.core.fs.workspacefs import ReencryptionNeed
 from parsec.core.gui.workspace_button import WorkspaceButton
-from parsec.core.gui.lang import switch_language
+from parsec.core.gui.lang import switch_language, translate as _
 
 
 @pytest.fixture
@@ -63,6 +63,7 @@ async def test_workspace_button(qtbot, workspace_fs, core_config, alice_user_inf
     assert w.name == "Workspace"
     assert w.label_title.text().startswith("Workspace")
     assert w.label_title.toolTip() == "Workspace (private)"
+    assert w.label_role.text() == _("TEXT_WORKSPACE_ROLE_OWNER")
 
 
 @pytest.mark.gui
@@ -93,6 +94,7 @@ async def test_workspace_button_owned_by(
     assert w.name == "Workspace"
     assert w.label_title.text().startswith("Workspace")
     assert w.label_title.toolTip() == "Workspace (owned by Boby McBobFace)"
+    assert w.label_role.text() == _("TEXT_WORKSPACE_ROLE_READER")
 
 
 @pytest.mark.gui
@@ -123,6 +125,7 @@ async def test_workspace_button_shared_with(
     assert w.name == "Workspace"
     assert w.label_title.text().startswith("Workspace")
     assert w.label_title.toolTip() == "Workspace (shared with Boby McBobFace)"
+    assert w.label_role.text() == _("TEXT_WORKSPACE_ROLE_OWNER")
 
 
 @pytest.mark.gui

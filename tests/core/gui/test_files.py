@@ -2,7 +2,9 @@
 
 import pathlib
 import pytest
-from PyQt5 import QtCore, QtWidgets
+from PyQt5 import QtCore, QtWidgets, QtGui
+
+from parsec.core.types import WorkspaceRole
 
 from parsec.core.gui.lang import translate as _
 from parsec.core.gui.file_items import FileType, NAME_DATA_INDEX, TYPE_DATA_INDEX
@@ -724,3 +726,90 @@ async def test_cut_dir_in_itself(
     async with aqtbot.wait_signal(w_f.folder_stat_success):
         w_f.table_files.item_activated.emit(FileType.Folder, "dir1")
     assert w_f.table_files.rowCount() == 1
+
+
+@pytest.mark.gui
+@pytest.mark.trio
+async def test_drag_and_drop(
+    aqtbot,
+    running_backend,
+    logged_gui_with_workspace,
+    monkeypatch,
+    autoclose_dialog,
+    temp_dir,
+    qt_thread_gateway,
+):
+    w_f = logged_gui_with_workspace.test_get_files_widget()
+
+    assert w_f is not None
+
+    def _file_widget_loaded():
+        assert w_f.table_files.rowCount() == 1
+
+    await aqtbot.wait_until(_file_widget_loaded)
+
+    assert w_f.label_role.text() == _("TEXT_WORKSPACE_ROLE_OWNER")
+
+    def _import_file():
+        mime_data = QtCore.QMimeData()
+        mime_data.setUrls([QtCore.QUrl.fromLocalFile(str(temp_dir / "file01.txt"))])
+        print(mime_data.urls())
+        drop_event = QtGui.QDropEvent(
+            w_f.table_files.pos(),
+            QtCore.Qt.MoveAction,
+            mime_data,
+            QtCore.Qt.LeftButton,
+            QtCore.Qt.NoModifier,
+        )
+        w_f.table_files.dropEvent(drop_event)
+
+    await qt_thread_gateway.send_action(_import_file)
+
+    def _file_imported():
+        assert w_f.table_files.rowCount() == 2
+        assert w_f.table_files.item(1, 1).text() == "file01.txt"
+
+    await aqtbot.wait_until(_file_imported)
+
+
+@pytest.mark.gui
+@pytest.mark.trio
+async def test_drag_and_drop_read_only(
+    aqtbot,
+    running_backend,
+    logged_gui_with_workspace,
+    monkeypatch,
+    autoclose_dialog,
+    temp_dir,
+    qt_thread_gateway,
+):
+    w_f = logged_gui_with_workspace.test_get_files_widget()
+
+    assert w_f is not None
+
+    def _file_widget_loaded():
+        assert w_f.table_files.rowCount() == 1
+
+    await aqtbot.wait_until(_file_widget_loaded)
+
+    w_f.table_files.current_user_role = WorkspaceRole.READER
+
+    def _import_file():
+        mime_data = QtCore.QMimeData()
+        mime_data.setUrls([QtCore.QUrl.fromLocalFile(str(temp_dir / "file01.txt"))])
+        drop_event = QtGui.QDropEvent(
+            w_f.table_files.pos(),
+            QtCore.Qt.MoveAction,
+            mime_data,
+            QtCore.Qt.LeftButton,
+            QtCore.Qt.NoModifier,
+        )
+        w_f.table_files.dropEvent(drop_event)
+
+    await qt_thread_gateway.send_action(_import_file)
+
+    def _import_failed():
+        assert autoclose_dialog.dialogs == [("Error", _("TEXT_FILE_DROP_WORKSPACE_IS_READ_ONLY"))]
+        assert w_f.table_files.rowCount() == 1
+
+    await aqtbot.wait_until(_import_failed)
