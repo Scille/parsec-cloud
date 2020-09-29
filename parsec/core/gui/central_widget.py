@@ -122,6 +122,7 @@ class CentralWidget(QWidget, Ui_CentralWidget):
         username = self.core.device.short_user_display
         user_text = f"{org}\n{username}"
         self.button_user.setText(user_text)
+        self.button_user.setToolTip(self.core.device.organization_addr.to_url())
 
     def _on_folder_changed(self, workspace_name, path):
         if workspace_name and path:

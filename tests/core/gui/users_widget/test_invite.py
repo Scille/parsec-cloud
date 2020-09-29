@@ -121,8 +121,8 @@ async def test_revoke_user_not_allowed(
     u_w = await logged_gui.test_switch_to_users_widget()
 
     assert u_w.layout_users.count() == 3
-    alice_w = u_w.layout_users.itemAt(1).widget()
-    assert alice_w.label_email.text() == "alice@example.com"
+    alice_w = u_w.layout_users.itemAt(0).widget()
+    assert alice_w.label_email.text() == "adam@example.com"
     assert alice_w.user_info.is_revoked is False
 
     # TODO: we should instead check that the menu giving access to revocation button is hidden...

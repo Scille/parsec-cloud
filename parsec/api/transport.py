@@ -4,11 +4,23 @@ from uuid import uuid4
 from typing import Optional
 import trio
 from trio import BrokenResourceError
+from trio.abc import Stream
 from structlog import get_logger
+from h11 import Request as H11Request
 from wsproto import WSConnection, ConnectionType
 from wsproto.utilities import LocalProtocolError, RemoteProtocolError
 from wsproto.frame_protocol import CloseReason
-from wsproto.events import CloseConnection, AcceptConnection, Request, BytesMessage, Ping, Pong
+from wsproto.events import (
+    Event,
+    CloseConnection,
+    AcceptConnection,
+    Request,
+    BytesMessage,
+    Ping,
+    Pong,
+)
+
+from parsec.api.protocol.handshake import ServerHandshake
 
 
 __all__ = ("TransportError", "Transport")
@@ -16,6 +28,7 @@ __all__ = ("TransportError", "Transport")
 
 logger = get_logger()
 WEBSOCKET_HANDSHAKE_TIMEOUT = 3.0
+TRANSPORT_TARGET = "/ws"
 
 
 class TransportError(Exception):
@@ -33,32 +46,32 @@ class TransportClosedByPeer(TransportError):
 class Transport:
     RECEIVE_BYTES = 2 ** 20  # 1Mo
 
-    def __init__(self, stream, ws, keepalive: Optional[int] = None):
+    def __init__(self, stream: Stream, ws: WSConnection, keepalive: Optional[int] = None):
         self.stream = stream
         self.ws = ws
         self.keepalive = keepalive
         self.conn_id = uuid4().hex
         self.logger = logger.bind(conn_id=self.conn_id)
         self._ws_events = ws.events()
-        self._handshake = None
+        self._handshake: Optional[ServerHandshake] = None
 
     # Application handshake interface
     # TODO: Investigate a better place for providing an access to the peer API version
     # Note: This should not be confused with the websocket handshake
 
     @property
-    def handshake(self):
+    def handshake(self) -> ServerHandshake:
         if self._handshake is None:
             raise TypeError("The handshake has not been set")
         return self._handshake
 
     @handshake.setter
-    def handshake(self, handshake):
+    def handshake(self, handshake: ServerHandshake) -> None:
         if self._handshake is not None:
             raise TypeError("The handshake has already been set")
         self._handshake = handshake
 
-    async def _next_ws_event(self):
+    async def _next_ws_event(self) -> Event:
         try:
             while True:
                 try:
@@ -86,7 +99,7 @@ class Transport:
         else:
             self.ws.receive_data(in_data)
 
-    async def _net_send(self, wsmsg):
+    async def _net_send(self, wsmsg: bytes) -> None:
         try:
             await self.stream.send_all(self.ws.send(wsmsg))
 
@@ -97,13 +110,13 @@ class Transport:
             raise TransportError(*exc.args) from exc
 
     @classmethod
-    async def init_for_client(cls, stream, host):
+    async def init_for_client(cls, stream: Stream, host: str) -> "Transport":
         ws = WSConnection(ConnectionType.CLIENT)
         transport = cls(stream, ws)
 
         # Because this is a client WebSocket, we need to initiate the connection
         # handshake by sending a Request event.
-        await transport._net_send(Request(host=host, target="/ws"))
+        await transport._net_send(Request(host=host, target=TRANSPORT_TARGET))
 
         # Get handshake answer
         event = await transport._next_ws_event()
@@ -119,10 +132,14 @@ class Transport:
         return transport
 
     @classmethod
-    async def init_for_server(cls, stream, first_request_data=None):
+    async def init_for_server(
+        cls, stream: Stream, upgrade_request: Optional[H11Request] = None
+    ) -> "Transport":
         ws = WSConnection(ConnectionType.SERVER)
-        if first_request_data:
-            ws.receive_data(first_request_data)
+        if upgrade_request:
+            ws.initiate_upgrade_connection(
+                headers=upgrade_request.headers, path=upgrade_request.target
+            )
         transport = cls(stream, ws)
 
         # Wait for client to init WebSocket handshake

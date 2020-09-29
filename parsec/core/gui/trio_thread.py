@@ -19,6 +19,7 @@ class JobResultError(Exception):
     def __init__(self, status, **kwargs):
         self.status = status
         self.params = kwargs
+        super().__init__(status, kwargs)
 
 
 class JobSchedulerNotAvailable(Exception):

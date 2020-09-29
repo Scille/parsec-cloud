@@ -7,8 +7,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PROJECT VERSION\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2020-09-18 07:52+0200\n"
-"PO-Revision-Date: 2020-09-18 11:16+0200\n"
+"POT-Creation-Date: 2020-09-28 14:38+0200\n"
+"PO-Revision-Date: 2020-09-25 14:50+0200\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language: fr\n"
 "Language-Team: fr <LL@li.org>\n"
@@ -17,18 +17,6 @@ msgstr ""
 "Content-Type: text/plain; charset=utf-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Generated-By: Babel 2.6.0\n"
-
-msgid "TEXT_WORKSPACE_ROLE_READER"
-msgstr "Lecteur"
-
-msgid "TEXT_WORKSPACE_ROLE_CONTRIBUTOR"
-msgstr "Contributeur"
-
-msgid "TEXT_WORKSPACE_ROLE_MANAGER"
-msgstr "Gérant"
-
-msgid "TEXT_WORKSPACE_ROLE_OWNER"
-msgstr "Propriétaire"
 
 msgid "TEXT_FILE_LINK_COPIED_TO_CLIPBOARD"
 msgstr "Le lien vers le fichier a été copié dans le presse-papier."
@@ -249,9 +237,6 @@ msgstr "Erreur interne. Veuillez redémarrer le processus."
 msgid "TEXT_GREET_USER_TITLE"
 msgstr "Accueillir un nouvel utilisateur"
 
-msgid "TEXT_WORKSPACE_ROLE_NOT_SHARED"
-msgstr "Non partagé"
-
 msgid "TEXT_WORKSPACE_SHARING_USER_HAS_BEEN_REVOKED"
 msgstr "Cet utilisateur a été révoqué."
 
@@ -279,6 +264,21 @@ msgstr "Remonter dans le temps"
 
 msgid "TEXT_PARSEC_VERSION_version"
 msgstr "PARSEC version {version}"
+
+msgid "TEXT_WORKSPACE_ROLE_READER"
+msgstr "Lecteur"
+
+msgid "TEXT_WORKSPACE_ROLE_CONTRIBUTOR"
+msgstr "Contributeur"
+
+msgid "TEXT_WORKSPACE_ROLE_MANAGER"
+msgstr "Gérant"
+
+msgid "TEXT_WORKSPACE_ROLE_OWNER"
+msgstr "Propriétaire"
+
+msgid "TEXT_WORKSPACE_ROLE_NOT_SHARED"
+msgstr "Non partagé"
 
 msgid "TEXT_PASSWORD_VALIDATION_TOO_SHORT"
 msgstr "TROP COURT"
@@ -722,6 +722,11 @@ msgstr ""
 
 msgid "ACTION_USER_REVOCATION_CONFIRM"
 msgstr "Révoquer l'utilisateur"
+
+msgid "TEXT_USERS_PAGE_INFO_page-pagetotal-userfrom-userto-usertotal"
+msgstr ""
+"Utilisateurs {userfrom} à {userto} affichés, {usertotal} en tout - page "
+"{page} / {pagetotal}"
 
 msgid "TEXT_USER_LIST_RETRIEVABLE_FAILURE"
 msgstr "Impossible de récupérer la liste des utilisateurs depuis le serveur."
@@ -1572,6 +1577,11 @@ msgstr "Répertoire parent"
 msgid "TEXT_FILE_TREE_PARENT_WORKSPACE"
 msgstr "Liste des espaces de travail"
 
+msgid "TEXT_FILE_DROP_WORKSPACE_IS_READ_ONLY"
+msgstr ""
+"Impossible d'importer des fichiers car vous n'avez pas accès à cet espace"
+" de travail en écriture."
+
 msgid "TEXT_FILE_ITEM_IS_CONFINED_TOOLTIP"
 msgstr "Ce fichier ne sera pas synchronisé."
 
@@ -2085,9 +2095,6 @@ msgstr "Veuillez fournir les informations suivantes pour créer votre organisati
 msgid "ACTION_PREVIOUS"
 msgstr "Précédent"
 
-msgid "TEXT_DEVICE_FILTER_PLACEHOLDER"
-msgstr "Filtrer les appareils"
-
 msgid "TEXT_DEVICE_ADD_NEW_TOOLTIP"
 msgstr "Inviter un nouvel appareil"
 
@@ -2370,6 +2377,15 @@ msgstr "Filtrer les utilisateurs"
 
 msgid "ACTION_USER_INVITE_USER"
 msgstr "Inviter un utilisateur"
+
+msgid "ACTION_FILTER_LIST_USERS"
+msgstr "Rechercher utilisateurs"
+
+msgid "ACTION_LIST_PREVIOUS_PAGE"
+msgstr "Page précédente"
+
+msgid "ACTION_LIST_NEXT_PAGE"
+msgstr "Page suivante"
 
 msgid "TEXT_WORKSPACE_IS_SHARED_TOOLTIP"
 msgstr "L'espace de travail est partagé."

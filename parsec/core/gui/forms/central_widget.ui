@@ -111,7 +111,7 @@
           <number>30</number>
          </property>
          <property name="bottomMargin">
-          <number>30</number>
+          <number>10</number>
          </property>
          <item>
           <widget class="QWidget" name="widget_title" native="true">

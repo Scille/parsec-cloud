@@ -120,6 +120,9 @@ class HumanHandle(namedtuple("HumanHandle", "email label")):
         # Ignore label field, as it is only for human redability
         return isinstance(other, HumanHandle) and self.email == other.email
 
+    def __gt__(self, other):
+        raise NotImplementedError
+
     def __hash__(self):
         return hash(self.email)
 
