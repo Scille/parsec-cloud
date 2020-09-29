@@ -80,7 +80,7 @@ async def _do_workspace_rename(core, workspace_id, new_name, button):
         raise JobResultError("rename-error") from exc
 
 
-async def _do_workspace_list(core):
+async def _do_workspace_list(core, filter_user_id=None):
     workspaces = []
 
     async def _add_workspacefs(workspace_fs, timestamped):
@@ -88,9 +88,10 @@ async def _do_workspace_list(core):
         users_roles = {}
         try:
             roles = await workspace_fs.get_user_roles()
+            update_user_info = filter_user_id in roles.keys()
             for user, role in roles.items():
                 user_info = None
-                if role == WorkspaceRole.OWNER or len(roles) <= 2:
+                if update_user_info or role == WorkspaceRole.OWNER or len(roles) <= 2:
                     user_info = await core.get_user_info(user)
                 users_roles[user] = (role, user_info)
         except FSBackendOfflineError:
@@ -229,6 +230,8 @@ class WorkspacesWidget(QWidget, Ui_WorkspacesWidget):
         self.workspace_reencryption_success.connect(self._on_workspace_reencryption_success)
         self.workspace_reencryption_error.connect(self._on_workspace_reencryption_error)
 
+        self.shared_button.clicked.connect(self.remove_user_filter)
+
         self.reset_required = False
         self.reset_timer = QTimer()
         self.reset_timer.setInterval(self.RESET_TIMER_THRESHOLD)
@@ -240,6 +243,21 @@ class WorkspacesWidget(QWidget, Ui_WorkspacesWidget):
 
         self.sharing_updated_qt.connect(self._on_sharing_updated_qt)
         self._workspace_created_qt.connect(self._on_workspace_created_qt)
+
+        self.filter_user_info = None
+        self.shared_button.hide()
+
+    def remove_user_filter(self):
+        self.filter_user_info = None
+        self.shared_button.hide()
+        self.reset()
+
+    def set_user_info(self, user_info):
+        self.filter_user_info = user_info
+        self.shared_button.show()
+        self.shared_button.setText(
+            _("TEXT_WORKSPACE_FILTERED_user").format(user=user_info.human_handle.label)
+        )
 
     def _iter_workspace_buttons(self):
         # TODO: this is needed because we insert the "no workspaces" QLabel in
@@ -422,6 +440,13 @@ class WorkspacesWidget(QWidget, Ui_WorkspacesWidget):
                 new_name=workspace_name,
                 button=None,
             )
+
+        if self.filter_user_info is not None:
+            for user_role, user_info in users_roles.values():
+                if self.filter_user_info.human_handle == user_info.human_handle:
+                    break
+            else:
+                return
         button = WorkspaceButton(
             workspace_name=workspace_name,
             workspace_fs=workspace_fs,
@@ -713,6 +738,7 @@ class WorkspacesWidget(QWidget, Ui_WorkspacesWidget):
             ThreadSafeQtSignal(self, "list_error", QtToTrioJob),
             _do_workspace_list,
             core=self.core,
+            filter_user_id=None if self.filter_user_info is None else self.filter_user_info.user_id,
         )
 
     def _on_sharing_updated_trio(self, event, new_entry, previous_entry):

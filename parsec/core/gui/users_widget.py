@@ -84,6 +84,7 @@ class UserInvitationButton(QWidget, Ui_UserInvitationButton):
 
 class UserButton(QWidget, Ui_UserButton):
     revoke_clicked = pyqtSignal(UserInfo)
+    filter_user_workspaces_clicked = pyqtSignal(UserInfo)
 
     def __init__(self, user_info, is_current_user, current_user_is_admin):
         super().__init__()
@@ -137,16 +138,24 @@ class UserButton(QWidget, Ui_UserButton):
         self.label_role.setText(profiles_txt[self.user_info.profile])
 
     def show_context_menu(self, pos):
-        if self.user_info.is_revoked or self.is_current_user or not self.current_user_is_admin:
+        if self.is_current_user:
             return
         global_pos = self.mapToGlobal(pos)
         menu = QMenu(self)
+        action = menu.addAction(_("ACTION_USER_MENU_FILTER"))
+        action.triggered.connect(self.filter_user_workspaces)
+        if self.user_info.is_revoked or not self.current_user_is_admin:
+            menu.exec_(global_pos)
+            return
         action = menu.addAction(_("ACTION_USER_MENU_REVOKE"))
         action.triggered.connect(self.revoke)
         menu.exec_(global_pos)
 
     def revoke(self):
         self.revoke_clicked.emit(self.user_info)
+
+    def filter_user_workspaces(self):
+        self.filter_user_workspaces_clicked.emit(self.user_info)
 
 
 async def _do_revoke_user(core, user_info):
@@ -203,6 +212,7 @@ class UsersWidget(QWidget, Ui_UsersWidget):
     invite_user_error = pyqtSignal(QtToTrioJob)
     cancel_invitation_success = pyqtSignal(QtToTrioJob)
     cancel_invitation_error = pyqtSignal(QtToTrioJob)
+    filter_shared_workspaces_request = pyqtSignal(UserInfo)
 
     def __init__(self, core, jobs_ctx, event_bus, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -293,6 +303,7 @@ class UsersWidget(QWidget, Ui_UsersWidget):
             current_user_is_admin=self.core.device.is_admin,
         )
         self.layout_users.addWidget(button)
+        button.filter_user_workspaces_clicked.connect(self.filter_shared_workspaces_request.emit)
         button.revoke_clicked.connect(self.revoke_user)
         button.show()
 
