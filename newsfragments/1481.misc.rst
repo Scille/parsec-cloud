@@ -1,0 +1,1 @@
+Improve error message in GUI on unexpected error.

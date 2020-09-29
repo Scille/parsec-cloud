@@ -178,6 +178,7 @@ class ClaimUserFinalizeWidget(QWidget, Ui_ClaimUserFinalizeWidget):
         self.config = config
         self.new_device = new_device
         self.widget_password.info_changed.connect(self.check_infos)
+        self.button_finalize.setDisabled(True)
         self.button_finalize.clicked.connect(self._on_finalize_clicked)
 
     def check_infos(self, _=""):

@@ -223,9 +223,15 @@ def ClaimDeviceTestBed(
             device_label = self.requested_device_label
 
             await aqtbot.run(cdpi_w.line_edit_device.clear)
+
+            assert not cdpi_w.button_ok.isEnabled()
+
             await aqtbot.key_clicks(cdpi_w.line_edit_device, device_label)
             await aqtbot.key_clicks(cdpi_w.widget_password.line_edit_password, self.password)
             await aqtbot.key_clicks(cdpi_w.widget_password.line_edit_password_check, self.password)
+
+            assert cdpi_w.button_ok.isEnabled()
+
             await aqtbot.mouse_click(cdpi_w.button_ok, QtCore.Qt.LeftButton)
 
             def _claim_info_submitted():

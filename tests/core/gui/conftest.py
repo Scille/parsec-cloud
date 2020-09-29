@@ -278,7 +278,9 @@ def gui_factory(
 ):
     windows = []
 
-    async def _gui_factory(event_bus=None, core_config=core_config, start_arg=None):
+    async def _gui_factory(
+        event_bus=None, core_config=core_config, start_arg=None, skip_dialogs=True
+    ):
         # First start popup blocks the test
         # Check version and mountpoint are useless for most tests
         core_config = core_config.evolve(
@@ -300,15 +302,12 @@ def gui_factory(
             # closing confirmation prompt
 
             switch_language(core_config, "en")
-            monkeypatch.setattr(
-                "parsec.core.gui.main_window.list_available_devices",
-                lambda *args, **kwargs: (["a"]),
-            )
+
             main_w = testing_main_window_cls(
                 qt_thread_gateway._job_scheduler, event_bus, core_config, minimize_on_close=True
             )
             qtbot.add_widget(main_w)
-            main_w.showMaximized()
+            main_w.showMaximized(skip_dialogs=skip_dialogs)
             main_w.show_top()
             windows.append(main_w)
             main_w.add_instance(start_arg)
@@ -523,10 +522,11 @@ def testing_main_window_cls(aqtbot, qt_thread_gateway):
             accounts_w = lw.widget.layout().itemAt(0).widget()
             assert accounts_w
 
-            async with aqtbot.wait_signal(accounts_w.account_clicked):
-                await aqtbot.mouse_click(
-                    accounts_w.accounts_widget.layout().itemAt(0).widget(), QtCore.Qt.LeftButton
-                )
+            if isinstance(accounts_w, LoginAccountsWidget):
+                async with aqtbot.wait_signal(accounts_w.account_clicked):
+                    await aqtbot.mouse_click(
+                        accounts_w.accounts_widget.layout().itemAt(0).widget(), QtCore.Qt.LeftButton
+                    )
 
             def _password_widget_shown():
                 assert isinstance(lw.widget.layout().itemAt(0).widget(), LoginPasswordInputWidget)
