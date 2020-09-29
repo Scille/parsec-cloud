@@ -1,3 +1,5 @@
+# Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
+
 # ------------------------------------------------------------------
 # Copyright (c) 2020 PyInstaller Development Team.
 #
@@ -10,11 +12,11 @@
 # SPDX-License-Identifier: GPL-2.0-or-later
 # ------------------------------------------------------------------
 
-from PyInstaller.utils.hooks import collect_data_files, collect_submodules
+# from PyInstaller.utils.hooks import collect_data_files, collect_submodules
 
 
 # Pendulum checks for locale modules via os.path.exists before import.
 # If the include_py_files option is turned off, this check fails, pendulum
 # will raise a ValueError.
-#datas = collect_data_files("pendulum.locales", include_py_files=True)
-#hiddenimports = collect_submodules("pendulum.locales")
+# datas = collect_data_files("pendulum.locales", include_py_files=True)
+# hiddenimports = collect_submodules("pendulum.locales")
