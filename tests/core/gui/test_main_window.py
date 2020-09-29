@@ -13,10 +13,12 @@ from parsec.core.local_device import (
     _save_device_with_password,
     save_device_with_password,
 )
+from parsec.core.types import EntryID, FsPath
 from parsec.core.types import (
     BackendInvitationAddr,
     BackendOrganizationBootstrapAddr,
     BackendOrganizationFileLinkAddr,
+    BackendOrganizationAddr,
 )
 
 
@@ -604,3 +606,36 @@ async def test_tab_login_logout_two_tabs_logged_in(
     assert gui.tab_center.count() == 2
     assert gui.tab_center.tabText(0) == "CoolOrg - Boby McBobFace - My dev1 machine"
     assert gui.tab_center.tabText(1) == translate("TEXT_TAB_TITLE_LOG_IN_SCREEN")
+
+
+@pytest.mark.gui
+@pytest.mark.trio
+async def test_link_file_unknown_org(
+    core_config, gui_factory, autoclose_dialog, running_backend, alice
+):
+    password = "P@ssw0rd"
+    save_device_with_password(core_config.config_dir, alice, password)
+
+    # Cheating a bit but it does not matter, we just want a link that appears valid with
+    # an unknown organization
+    org_addr = BackendOrganizationAddr.build(
+        running_backend.addr, "UnknownOrg", alice.organization_addr.root_verify_key
+    )
+
+    file_link = BackendOrganizationFileLinkAddr.build(
+        org_addr, EntryID(), FsPath("/doesntmattereither")
+    )
+
+    gui = await gui_factory(core_config=core_config, start_arg=file_link.to_url())
+    lw = gui.test_get_login_widget()
+
+    assert len(autoclose_dialog.dialogs) == 1
+    assert autoclose_dialog.dialogs[0][0] == "Error"
+    assert autoclose_dialog.dialogs[0][1] == translate(
+        "TEXT_FILE_LINK_NOT_IN_ORG_organization"
+    ).format(organization="UnknownOrg")
+
+    accounts_w = lw.widget.layout().itemAt(0).widget()
+    assert accounts_w
+
+    assert isinstance(accounts_w, LoginPasswordInputWidget)

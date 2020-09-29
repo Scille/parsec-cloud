@@ -535,6 +535,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
     def go_to_file_link(self, action_addr):
         found_org = self._find_device_from_addr(action_addr, display_error=True) is not None
         if not found_org:
+            self.switch_to_login_tab()
             return
 
         for idx in range(self.tab_center.count()):
