@@ -465,7 +465,7 @@ def testing_main_window_cls(aqtbot, qt_thread_gateway):
             central_widget = self.test_get_central_widget()
             d_w = self.test_get_devices_widget()
             signal = d_w.list_error if error else d_w.list_success
-            async with aqtbot.wait_exposed(d_w), aqtbot.wait_signal(signal):
+            async with aqtbot.wait_exposed(d_w), aqtbot.wait_signal(signal, timeout=3000):
                 await aqtbot.mouse_click(central_widget.menu.button_devices, QtCore.Qt.LeftButton)
             return d_w
 
@@ -473,7 +473,7 @@ def testing_main_window_cls(aqtbot, qt_thread_gateway):
             central_widget = self.test_get_central_widget()
             u_w = self.test_get_users_widget()
             signal = u_w.list_error if error else u_w.list_success
-            async with aqtbot.wait_exposed(u_w), aqtbot.wait_signal(signal):
+            async with aqtbot.wait_exposed(u_w), aqtbot.wait_signal(signal, timeout=3000):
                 await aqtbot.mouse_click(central_widget.menu.button_users, QtCore.Qt.LeftButton)
             return u_w
 
@@ -481,7 +481,7 @@ def testing_main_window_cls(aqtbot, qt_thread_gateway):
             central_widget = self.test_get_central_widget()
             w_w = self.test_get_workspaces_widget()
             signal = w_w.list_error if error else w_w.list_success
-            async with aqtbot.wait_exposed(w_w), aqtbot.wait_signal(signal):
+            async with aqtbot.wait_exposed(w_w), aqtbot.wait_signal(signal, timeout=3000):
                 await aqtbot.mouse_click(central_widget.menu.button_files, QtCore.Qt.LeftButton)
             return w_w
 

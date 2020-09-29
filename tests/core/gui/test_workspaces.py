@@ -225,7 +225,7 @@ async def test_mountpoint_open_in_explorer_button(aqtbot, running_backend, logge
         # Be sure that the workspave is mounted
         assert core.mountpoint_manager.is_workspace_mounted(wid)
 
-    await aqtbot.wait_until(_initially_mounted)
+    await aqtbot.wait_until(_initially_mounted, timeout=3000)
     previous_wk_button = wk_button
 
     # Now switch to umounted
@@ -255,7 +255,7 @@ async def test_mountpoint_open_in_explorer_button(aqtbot, running_backend, logge
 
     # Now switch back to mounted
     await aqtbot.mouse_click(wk_button.switch_button, QtCore.Qt.LeftButton)
-    await aqtbot.wait_until(_mounted, timeout=2000)
+    await aqtbot.wait_until(_mounted, timeout=3000)
 
     # Test open button
 
