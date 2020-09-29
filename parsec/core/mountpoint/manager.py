@@ -264,6 +264,16 @@ class MountpointManager:
             await self.safe_unmount(workspace_id, timestamp=timestamp)
 
 
+async def cleanup_macos_mountpoint_folder(base_mountpoint_path):
+    for dirs in os.listdir(base_mountpoint_path):
+        dir_path = str(base_mountpoint_path) + "/" + str(dirs)
+        stats = os.statvfs(dir_path)
+        if stats.f_blocks == 0 and stats.f_ffree == 0 and stats.f_bavail == 0:
+            await trio.run_process(["diskutil", "unmount", dir_path])
+            if dirs in os.listdir(base_mountpoint_path):  # checking if there is something to delete
+                await trio.run_process(["rm", "-d", dir_path])  # otherwise an empty dir remains
+
+
 @asynccontextmanager
 async def mountpoint_manager_factory(
     user_fs,
@@ -285,15 +295,7 @@ async def mountpoint_manager_factory(
     if os.name == "nt":
         cleanup_parsec_drive_icons()
     elif os.name == "posix" and _platform == "darwin":
-        for dirs in os.listdir(base_mountpoint_path):
-            dir_path = str(base_mountpoint_path) + "/" + str(dirs)
-            stats = os.statvfs(dir_path)
-            if stats.f_blocks == 0 and stats.f_ffree == 0 and stats.f_bavail == 0:
-                await trio.run_process(["diskutil", "unmount", dir_path])
-                if dirs in os.listdir(
-                    base_mountpoint_path
-                ):  # kinda overkill, making sure there is something to delete
-                    await trio.run_process(["rm", "-d", dir_path])  # otherwise an empty dir remains
+        await cleanup_macos_mountpoint_folder(base_mountpoint_path)
 
     def on_event(event, new_entry, previous_entry=None):
         # Workspace created

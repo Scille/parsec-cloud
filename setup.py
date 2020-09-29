@@ -323,7 +323,7 @@ extra_requirements = {
     "core": [
         *PYQT_DEPS,
         BABEL_DEP,
-        'fusepy==3.0.1;platform_system=="Linux"',
+        'fusepy==3.0.1;platform_system=="Linux" or platform_system=="Darwin"',
         'winfspy==0.8.0;platform_system=="Windows"',
         "zxcvbn==4.4.27",
         "psutil==5.6.3",
@@ -373,7 +373,7 @@ setup(
         "parsec.backend.postgresql.migrations": ["*.sql"],
         "parsec.backend.templates": ["*"],
         "parsec.backend.static": ["*"],
-        "parsec.core.resources": ["*.ico", "*.ignore"],
+        "parsec.core.resources": ["*.ico", "*.icns", "*.ignore"],
     },
     entry_points={
         "console_scripts": ["parsec = parsec.cli:cli"],
@@ -387,6 +387,7 @@ setup(
         "Intended Audience :: Developers",
         "Operating System :: POSIX :: Linux",
         "Operating System :: Microsoft :: Windows",
+        "Operating System :: POSIX :: MacOS",
         "License :: OSI Approved :: GNU Affero General Public License v3 or later (AGPLv3+)",
         "Natural Language :: English",
         "Programming Language :: Python :: 3.6",

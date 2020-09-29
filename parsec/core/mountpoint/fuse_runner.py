@@ -129,6 +129,21 @@ async def fuse_mountpoint_runner(
             encoding = sys.getfilesystemencoding()
 
             def _run_fuse_thread():
+                fuse_platform_options = {}
+                if sys.platform == "darwin":
+                    fuse_platform_options = {
+                        "local": True,
+                        "volname": workspace_fs.get_workspace_name(),
+                        "volicon": Path(resources.__file__).absolute().parent / "parsec.icns",
+                    }
+                    # osxfuse-specific options :
+                    # - local : allows mountpoint to show up correctly in finder (+ desktop)
+                    # - volname : specify volume name (default is OSXFUSE [...])
+                    # - volicon : specify volume icon (default is macOS drive icon)
+
+                elif sys.platform.startswith("linux"):
+                    fuse_platform_options = {"auto_unmount": True}
+
                 logger.info("Starting fuse thread...", mountpoint=mountpoint_path)
                 try:
                     # Do not let fuse start if the runner is stopping
@@ -141,16 +156,10 @@ async def fuse_mountpoint_runner(
                         fuse_operations,
                         str(mountpoint_path.absolute()),
                         foreground=True,
-                        local=True, # Might have some unintended side effects, see https://github.com/osxfuse/osxfuse/wiki/Mount-options
-                        volname=workspace_fs.get_workspace_name(),
-                        volicon=Path(resources.__file__).absolute().parent / "parsec.icns",
                         encoding=encoding,
+                        **fuse_platform_options,
                         **config,
                     )
-                    # osxfuse-specific options :
-                    # - local : allows mountpoint to show up correctly in finder (+ desktop)
-                    # - volname : specify volume name (default is OSXFUSE [...])
-                    # - volicon : specify volume icon (default is macOS drive icon)
 
                 except Exception as exc:
                     try:
@@ -218,8 +227,11 @@ async def _stop_fuse_thread(
     if fuse_thread_stopped.is_set() or not fuse_thread_started.is_set():
         return
     logger.info("Stopping fuse thread...", mountpoint=mountpoint_path)
-    # Schedule an exit in the fuse operations
-    fuse_operations.schedule_exit()
+    if sys.platform == "darwin":
+        await trio.run_process(["diskutil", "unmount", str(mountpoint_path)])
+    else:
+        # Schedule an exit in the fuse operations
+        fuse_operations.schedule_exit()
     # Loop over attemps at waking up the fuse operations
     while True:
         # Attempt to wake up the fuse operations
