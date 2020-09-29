@@ -236,8 +236,8 @@ msgstr "Cannot remove <b>{user}</b> from the workspace <b>{workspace}</b>."
 msgid "TEXT_WORKSPACE_SHARING_SHARE_ERROR_workspace-user"
 msgstr "Cannot share the workspace <b>{workspace}</b> with <b>{user}</b>."
 
-msgid "TEXT_WORKSPACE_SHARING_TITLE"
-msgstr "Share the workspace"
+msgid "TEXT_WORKSPACE_SHARING_TITLE_workspace"
+msgstr "Share the workspace {workspace}"
 
 msgid "TEXT_WORKSPACE_TIMESTAMPED_VERSION_RETRIEVAL_FAILED"
 msgstr "Cannot retrieve this workspace history."
@@ -2354,5 +2354,4 @@ msgstr "Create a new workspace"
 
 msgid "ACTION_WORKSPACE_GOTO_FILE_LINK"
 msgstr "Go to a file using a link"
-
 

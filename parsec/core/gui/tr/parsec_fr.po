@@ -253,8 +253,8 @@ msgstr ""
 "Impossible de partager l'espace de travail <b>{workspace}</b> avec "
 "l'utilisateur <b>{user}</b>."
 
-msgid "TEXT_WORKSPACE_SHARING_TITLE"
-msgstr "Partager l'espace de travail"
+msgid "TEXT_WORKSPACE_SHARING_TITLE_workspace"
+msgstr "Partager l'espace de travail {workspace}"
 
 msgid "TEXT_WORKSPACE_TIMESTAMPED_VERSION_RETRIEVAL_FAILED"
 msgstr "Impossible de récupérer l'historique de cet espace de travail."
