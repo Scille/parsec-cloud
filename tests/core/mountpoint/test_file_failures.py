@@ -2,6 +2,7 @@
 
 from parsec.core.core_events import CoreEvent
 import os
+import sys
 import trio
 import pytest
 from pathlib import Path
@@ -64,6 +65,7 @@ def test_empty_read_then_reopen(tmpdir, mountpoint_service):
 
 @pytest.mark.trio
 @pytest.mark.mountpoint
+@pytest.mark.skipif(sys.platform == "darwin", reason="TODO : crash on macOS")
 async def test_remote_error_event(
     tmpdir, monkeypatch, running_backend, alice_user_fs, bob_user_fs, monitor
 ):
