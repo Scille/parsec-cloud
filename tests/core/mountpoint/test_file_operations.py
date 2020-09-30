@@ -1,6 +1,7 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
 
 import os
+import sys
 import pytest
 from hypothesis.stateful import RuleBasedStateMachine, initialize, rule, run_state_machine_as_test
 from hypothesis import strategies as st
@@ -13,6 +14,7 @@ BALLPARK = 10000
 
 @pytest.mark.slow
 @pytest.mark.mountpoint
+@pytest.mark.skipif(sys.platform == "darwin", reason="Infinitely looping on macOS")
 def test_file_operations(tmpdir, caplog, hypothesis_settings, mountpoint_service_factory):
     tentative = 0
 

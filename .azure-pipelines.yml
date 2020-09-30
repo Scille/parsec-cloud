@@ -546,6 +546,12 @@ jobs:
         --junitxml=test-results-postgresql.xml
     workingDirectory: $(Agent.TempDirectory)/empty
     displayName: 'Tests postgresql'
+  - bash: |
+      set -eux
+      py.test $(pytest.base_args) \
+        tests --runmountpoint --runslow -m mountpoint -x \
+        --junitxml=test-results-mountpoint.xml
+    displayName: 'Tests mountpoint'
   #- bash: |
   #    set -eux
   #    py.test $(pytest.base_args) \
