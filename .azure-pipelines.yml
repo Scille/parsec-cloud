@@ -490,7 +490,7 @@ jobs:
   - bash: |
       set -eux
       cd packaging/macOS
-      ./macos_pyinstaller.sh
+      sh macos_pyinstaller.sh
       tar -jcvf parsec-macapp.tar.bz2 dist/Parsec.app
     displayName: 'Building'
   - publish: packaging/macOS/parsec-macapp.tar.bz2
