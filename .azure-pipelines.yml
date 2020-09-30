@@ -467,3 +467,30 @@ jobs:
     env:
       PYPI_CREDENTIALS: $(PYPI_CREDENTIALS)
     displayName: 'Upload to PyPI'
+
+
+#################################################################################
+# Step 5 : build on macOS
+
+
+- job: 's5_mac_build'
+  displayName: 'macOS build'
+  dependsOn: [s0_build_wheel, s1_qa, s1_linux_test, s1_windows_test, s2_linux_snap_build, s2_windows_installer_build, s3_linux_snap_test, s4_linux_snap_upload, s4_wheel_pypi_upload]
+  timeoutInMinutes: 15
+  pool:
+    vmImage: 'macos-10.15'
+  steps:
+  - checkout: self
+    submodules: true
+  - task: UsePythonVersion@0
+    inputs:
+      versionSpec: '3.7'
+  - download: current
+    artifact: wheel
+  - bash: |
+      set -eux
+      cd packaging/macOS
+      ./macos_pyinstaller.sh
+      tar -jcvf parsec-macapp.tar.bz2 dist/Parsec.app
+    displayName: 'Building'
+  - publish: packaging/macOS/parsec-macapp.tar.bz2
