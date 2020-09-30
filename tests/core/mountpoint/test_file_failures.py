@@ -14,6 +14,7 @@ from tests.common import create_shared_workspace
 
 
 @pytest.mark.mountpoint
+@pytest.mark.skipif(sys.platform == "darwin", reason="Passes on macOS but freezes")
 def test_fuse_grow_by_truncate(tmpdir, mountpoint_service):
     mountpoint = mountpoint_service.wpath
 
@@ -31,6 +32,7 @@ def test_fuse_grow_by_truncate(tmpdir, mountpoint_service):
 
 
 @pytest.mark.mountpoint
+@pytest.mark.skipif(sys.platform == "darwin", reason="Passes on macOS but freezes")
 def test_empty_read_then_reopen(tmpdir, mountpoint_service):
     mountpoint = mountpoint_service.wpath
 
