@@ -217,8 +217,9 @@ def mock_crypto(request):
     # Crypto is CPU hungry
     if request.config.getoption("--realcrypto"):
 
+        @contextmanager
         def unmock():
-            pass
+            yield
 
         yield unmock
 
