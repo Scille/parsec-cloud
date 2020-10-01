@@ -1,5 +1,7 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
 
+import os
+
 from typing import Tuple
 from base64 import b32decode, b32encode
 from hashlib import sha256
@@ -7,14 +9,14 @@ from hashlib import sha256
 from nacl.exceptions import CryptoError  # noqa: republishing
 from nacl.public import SealedBox, PrivateKey as _PrivateKey, PublicKey as _PublicKey
 from nacl.signing import SigningKey as _SigningKey, VerifyKey as _VerifyKey
-from nacl.secret import SecretBox
 from nacl.bindings import crypto_sign_BYTES, crypto_scalarmult
 from nacl.hash import blake2b, BLAKE2B_BYTES
 from nacl.pwhash import argon2i
 from nacl.utils import random
 from nacl.encoding import RawEncoder
 
-from Crypto.Cipher import AES
+from cryptography.hazmat.primitives.ciphers import Cipher, algorithms, modes
+from cryptography.exceptions import InvalidTag
 
 # Note to simplify things, we adopt `nacl.CryptoError` as our root error cls
 
@@ -51,32 +53,35 @@ class SecretKey(bytes):
 
     @classmethod
     def generate(cls) -> "SecretKey":
-        return cls(b"This is a key123")
+        return cls(os.urandom(32))
 
     def __repr__(self):
         # Avoid leaking the key in logs
         return f"<{type(self).__module__}.{type(self).__qualname__} object at {hex(id(self))}>"
 
-    # Using AES
-    def encrypt(self, raw: bytes) -> bytes:
-        encryption_suite = AES.new(self, AES.MODE_CBC, b"This is an IV456")
-        cipher_text = encryption_suite.encrypt(self.pad(data=raw.decode("utf-8")))
-        return cipher_text
+    def _check_bytes(name, value):
+        if not isinstance(value, bytes):
+            raise TypeError("{} must be bytes".format(name))
 
-    def decrypt(self, enc: bytes) -> bytes:
-        decryption_suite = AES.new(self, AES.MODE_CBC, b"This is an IV456")
-        plain_text = decryption_suite.decrypt(enc)
-        return self.unpad(plain_text.decode("utf-8"))
+    def encrypt(self, data):
+        iv = os.urandom(16)
+        cipher = Cipher(algorithms.AES(self), modes.GCM(iv))
+        encryptor = cipher.encryptor()
+        ciphered = encryptor.update(data) + encryptor.finalize()
+        tag = encryptor.tag
+        token = iv + tag + ciphered
+        return token
 
-    def pad(self, data):
-        return (
-            data
-            + (AES.block_size - len(data) % AES.block_size)
-            * chr(AES.block_size - len(data) % AES.block_size)
-        ).encode()
-
-    def unpad(self, data):
-        return data[: -ord(data[len(data) - 1 :])].encode("utf-8")
+    def decrypt(self, token):
+        iv = token[0:16]
+        tag = token[16:32]
+        ciphered = token[32:]
+        try:
+            cipher = Cipher(algorithms.AES(self), modes.GCM(iv, tag))
+            decryptor = cipher.decryptor()
+            return decryptor.update(ciphered) + decryptor.finalize()
+        except (InvalidTag, ValueError) as exc:
+            raise CryptoError(str(exc)) from exc
 
     # Using pyNaCl
     # def encrypt(self, data: bytes) -> bytes:
@@ -208,11 +213,7 @@ def import_root_verify_key(raw: str) -> VerifyKey:
 def derivate_secret_key_from_password(password: str, salt: bytes = None) -> Tuple[SecretKey, bytes]:
     salt = salt or random(argon2i.SALTBYTES)
     rawkey = argon2i.kdf(
-        SecretBox.KEY_SIZE,
-        password.encode("utf8"),
-        salt,
-        opslimit=CRYPTO_OPSLIMIT,
-        memlimit=CRYPTO_MEMLIMIT,
+        32, password.encode("utf8"), salt, opslimit=CRYPTO_OPSLIMIT, memlimit=CRYPTO_MEMLIMIT
     )
     return SecretKey(rawkey), salt
 
