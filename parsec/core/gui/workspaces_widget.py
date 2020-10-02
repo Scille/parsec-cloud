@@ -80,7 +80,7 @@ async def _do_workspace_rename(core, workspace_id, new_name, button):
         raise JobResultError("rename-error") from exc
 
 
-async def _do_workspace_list(core, filter_user_id=None):
+async def _do_workspace_list(core):
     workspaces = []
 
     async def _add_workspacefs(workspace_fs, timestamped):
@@ -88,10 +88,9 @@ async def _do_workspace_list(core, filter_user_id=None):
         users_roles = {}
         try:
             roles = await workspace_fs.get_user_roles()
-            update_user_info = filter_user_id in roles.keys()
             for user, role in roles.items():
                 user_info = None
-                if update_user_info or role == WorkspaceRole.OWNER or len(roles) <= 2:
+                if role == WorkspaceRole.OWNER or len(roles) <= 2:
                     user_info = await core.get_user_info(user)
                 users_roles[user] = (role, user_info)
         except FSBackendOfflineError:
@@ -441,12 +440,9 @@ class WorkspacesWidget(QWidget, Ui_WorkspacesWidget):
                 button=None,
             )
 
-        if self.filter_user_info is not None:
-            for user_role, user_info in users_roles.values():
-                if self.filter_user_info.human_handle == user_info.human_handle:
-                    break
-            else:
-                return
+        if self.filter_user_info is not None and self.filter_user_info.user_id not in users_roles:
+            return
+
         button = WorkspaceButton(
             workspace_name=workspace_name,
             workspace_fs=workspace_fs,
@@ -738,7 +734,6 @@ class WorkspacesWidget(QWidget, Ui_WorkspacesWidget):
             ThreadSafeQtSignal(self, "list_error", QtToTrioJob),
             _do_workspace_list,
             core=self.core,
-            filter_user_id=None if self.filter_user_info is None else self.filter_user_info.user_id,
         )
 
     def _on_sharing_updated_trio(self, event, new_entry, previous_entry):

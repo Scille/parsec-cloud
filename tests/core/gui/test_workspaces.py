@@ -303,7 +303,7 @@ async def test_workspace_filter_user(
     else:
         raise ValueError("Can not find Alice user")
 
-    def _wokrspace_filtered():
+    def _workspace_filtered():
         assert w_w.isVisible()
         assert w_w.layout_workspaces.count() == 2
         wk_button_1 = w_w.layout_workspaces.itemAt(0).widget()
@@ -315,7 +315,7 @@ async def test_workspace_filter_user(
         assert w_w.shared_button.isVisible()
         assert w_w.shared_button.text() == "Shared with {}".format(alice.human_handle.label)
 
-    await aqtbot.wait_until(_wokrspace_filtered)
+    await aqtbot.wait_until(_workspace_filtered)
 
     # Remove filter
 
