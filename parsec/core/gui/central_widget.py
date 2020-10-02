@@ -255,6 +255,8 @@ class CentralWidget(QWidget, Ui_CentralWidget):
         self.clear_widgets()
         self.menu.activate_files()
         self.label_title.setText(_("ACTION_MENU_DOCUMENTS"))
+        if user_info is not None:
+            self.mount_widget.workspaces_widget.set_user_info(user_info)
         self.mount_widget.show()
         self.mount_widget.show_workspaces_widget(user_info=user_info)
 
