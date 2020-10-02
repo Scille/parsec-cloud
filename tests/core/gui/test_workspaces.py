@@ -313,7 +313,9 @@ async def test_workspace_filter_user(
         assert wk_button_1.name in ["Workspace1", "Workspace2"]
         assert wk_button_2.name in ["Workspace1", "Workspace2"]
         assert w_w.shared_button.isVisible()
-        assert w_w.shared_button.text() == "Shared with {}".format(alice.human_handle.label)
+        assert w_w.shared_button.text() == "Common workspaces with {}".format(
+            alice.human_handle.label
+        )
 
     await aqtbot.wait_until(_workspace_filtered)
 
