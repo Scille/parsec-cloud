@@ -2421,4 +2421,4 @@ msgid "ACTION_USER_MENU_FILTER"
 msgstr "Voir les espaces de travail en commun"
 
 msgid "TEXT_WORKSPACE_FILTERED_user"
-msgstr "Partagés avec {user}"
+msgstr "Espaces en commun avec {user}"

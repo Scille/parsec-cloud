@@ -622,7 +622,7 @@ msgid "ACTION_USER_MENU_REVOKE"
 msgstr "Revoke"
 
 msgid "ACTION_USER_MENU_FILTER"
-msgstr "See shared workspaces"
+msgstr "See common workspaces"
 
 msgid "TEXT_USER_INVITE_EMAIL"
 msgstr "Invite a new user"
@@ -2360,5 +2360,5 @@ msgstr "Go to a file using a link"
 
 
 msgid "TEXT_WORKSPACE_FILTERED_user"
-msgstr "Shared with {user}"
+msgstr "Common workspaces with {user}"
 
