@@ -307,7 +307,7 @@ def gui_factory(
                 qt_thread_gateway._job_scheduler, event_bus, core_config, minimize_on_close=True
             )
             qtbot.add_widget(main_w)
-            main_w.showMaximized(skip_dialogs=skip_dialogs)
+            main_w.show_window(skip_dialogs=skip_dialogs)
             main_w.show_top()
             windows.append(main_w)
             main_w.add_instance(start_arg)
