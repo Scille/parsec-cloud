@@ -287,7 +287,7 @@ async def test_workspace_filter_user(
         assert isinstance(wk_button1, WorkspaceButton)
         assert isinstance(wk_button2, WorkspaceButton)
         assert isinstance(wk_button3, WorkspaceButton)
-        assert not w_w.shared_button.isVisible()
+        assert not w_w.filter_remove_button.isVisible()
 
     await aqtbot.wait_until(_workspace_listed, timeout=2000)
 
@@ -312,8 +312,8 @@ async def test_workspace_filter_user(
         assert isinstance(wk_button_2, WorkspaceButton)
         assert wk_button_1.name in ["Workspace1", "Workspace2"]
         assert wk_button_2.name in ["Workspace1", "Workspace2"]
-        assert w_w.shared_button.isVisible()
-        assert w_w.shared_button.text() == "Common workspaces with {}".format(
+        assert w_w.filter_remove_button.isVisible()
+        assert w_w.filter_label.text() == "Common workspaces with {}".format(
             alice.human_handle.label
         )
 
@@ -321,6 +321,6 @@ async def test_workspace_filter_user(
 
     # Remove filter
 
-    await aqtbot.mouse_click(w_w.shared_button, QtCore.Qt.LeftButton)
+    await aqtbot.mouse_click(w_w.filter_remove_button, QtCore.Qt.LeftButton)
 
     await aqtbot.wait_until(_workspace_listed, timeout=2000)
