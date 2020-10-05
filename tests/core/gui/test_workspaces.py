@@ -202,7 +202,7 @@ async def test_mountpoint_open_in_explorer_button(aqtbot, running_backend, logge
 
     # Create a new workspace
     core = logged_gui.test_get_core()
-    await core.user_fs.workspace_create("wksp1")
+    wid = await core.user_fs.workspace_create("wksp1")
 
     w_w = await logged_gui.test_switch_to_workspaces_widget()
 
@@ -216,14 +216,16 @@ async def test_mountpoint_open_in_explorer_button(aqtbot, running_backend, logge
     wk_button = None
     previous_wk_button = None
 
-    def _mounted():
+    def _initially_mounted():
         nonlocal wk_button
         # Note on mount the workspaces buttons are recreated !
         wk_button = get_wk_button()
         assert wk_button.button_open.isEnabled()
         assert wk_button.switch_button.isChecked()
+        # Be sure that the workspave is mounted
+        assert core.mountpoint_manager.is_workspace_mounted(wid)
 
-    await aqtbot.wait_until(_mounted)
+    await aqtbot.wait_until(_initially_mounted)
     previous_wk_button = wk_button
 
     # Now switch to umounted
@@ -236,11 +238,22 @@ async def test_mountpoint_open_in_explorer_button(aqtbot, running_backend, logge
         assert wk_button is not previous_wk_button
         assert not wk_button.button_open.isEnabled()
         assert not wk_button.switch_button.isChecked()
+        assert not core.mountpoint_manager.is_workspace_mounted(wid)
 
     await aqtbot.wait_until(_unmounted, timeout=3000)
     previous_wk_button = wk_button
 
-    # Now switch bacj to mounted
+    def _mounted():
+        nonlocal wk_button
+        # Note on mount the workspaces buttons are recreated !
+        wk_button = get_wk_button()
+        assert wk_button is not previous_wk_button
+        assert wk_button.button_open.isEnabled()
+        assert wk_button.switch_button.isChecked()
+        # Be sure that the workspave is mounted
+        assert core.mountpoint_manager.is_workspace_mounted(wid)
+
+    # Now switch back to mounted
     await aqtbot.mouse_click(wk_button.switch_button, QtCore.Qt.LeftButton)
     await aqtbot.wait_until(_mounted, timeout=2000)
 
