@@ -621,6 +621,9 @@ msgstr "Revoked"
 msgid "ACTION_USER_MENU_REVOKE"
 msgstr "Revoke"
 
+msgid "ACTION_USER_MENU_FILTER"
+msgstr "See common workspaces"
+
 msgid "TEXT_USER_INVITE_EMAIL"
 msgstr "Invite a new user"
 
@@ -2354,4 +2357,8 @@ msgstr "Create a new workspace"
 
 msgid "ACTION_WORKSPACE_GOTO_FILE_LINK"
 msgstr "Go to a file using a link"
+
+
+msgid "TEXT_WORKSPACE_FILTERED_user"
+msgstr "Common workspaces with {user}"
 

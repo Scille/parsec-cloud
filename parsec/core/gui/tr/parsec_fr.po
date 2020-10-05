@@ -2417,4 +2417,8 @@ msgstr "Créer un nouvel espace de travail"
 msgid "ACTION_WORKSPACE_GOTO_FILE_LINK"
 msgstr "Trouver un fichier via son lien"
 
+msgid "ACTION_USER_MENU_FILTER"
+msgstr "Voir les espaces de travail en commun"
 
+msgid "TEXT_WORKSPACE_FILTERED_user"
+msgstr "Espaces en commun avec {user}"
