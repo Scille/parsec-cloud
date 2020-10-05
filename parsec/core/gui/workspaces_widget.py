@@ -256,7 +256,7 @@ class WorkspacesWidget(QWidget, Ui_WorkspacesWidget):
         self.filter_user_info = user_info
         self.filter_layout_widget.show()
         self.filter_label.setText(
-            _("TEXT_WORKSPACE_FILTERED_user").format(user=user_info.human_handle.label)
+            _("TEXT_WORKSPACE_FILTERED_user").format(user=user_info.short_user_display)
         )
 
     def _iter_workspace_buttons(self):

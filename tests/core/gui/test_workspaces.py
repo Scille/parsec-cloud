@@ -314,7 +314,7 @@ async def test_workspace_filter_user(
         assert wk_button_2.name in ["Workspace1", "Workspace2"]
         assert w_w.filter_remove_button.isVisible()
         assert w_w.filter_label.text() == "Common workspaces with {}".format(
-            alice.human_handle.label
+            alice.short_user_display
         )
 
     await aqtbot.wait_until(_workspace_filtered)
