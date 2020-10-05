@@ -39,7 +39,14 @@ class WorkspaceButton(QWidget, Ui_WorkspaceButton):
     switch_clicked = pyqtSignal(bool, WorkspaceFS, object)
 
     def __init__(
-        self, workspace_name, workspace_fs, users_roles, is_mounted, files=None, timestamped=False
+        self,
+        workspace_name,
+        workspace_fs,
+        users_roles,
+        is_mounted,
+        files=None,
+        timestamped=False,
+        reencryption_needs=None,
     ):
         super().__init__()
         self.setupUi(self)
@@ -52,7 +59,7 @@ class WorkspaceButton(QWidget, Ui_WorkspaceButton):
         self.switch_button.clicked.connect(self._on_switch_clicked)
 
         self.reencrypting = None
-        self.reencryption_needs = None
+        self.reencryption_needs = reencryption_needs
         self.setCursor(QCursor(Qt.PointingHandCursor))
         self.widget_empty.layout().addWidget(EmptyWorkspaceWidget())
         self.setContextMenuPolicy(Qt.CustomContextMenu)

@@ -127,11 +127,19 @@ async def _do_workspace_list(core):
             # But the workspace need to be displayed to be able to trigger for example
             # reencryption operation
             pass
-        workspaces.append((workspace_fs, ws_entry, users_roles, files, timestamped))
+
+        # Get reencryption needs
+        reenc_needs = None
+        try:
+            reenc_needs = await workspace_fs.get_reencryption_need()
+        except FSBackendOfflineError:
+            pass
+
+        workspaces.append((workspace_fs, ws_entry, users_roles, files, timestamped, reenc_needs))
 
     user_manifest = core.user_fs.get_user_manifest()
     available_workspaces = [w for w in user_manifest.workspaces if w.role]
-    for count, workspace in enumerate(available_workspaces):
+    for workspace in available_workspaces:
         workspace_id = workspace.id
         workspace_fs = core.user_fs.get_workspace(workspace_id)
         await _add_workspacefs(workspace_fs, timestamped=False)
@@ -372,12 +380,17 @@ class WorkspacesWidget(QWidget, Ui_WorkspacesWidget):
             return
 
         self.line_edit_search.show()
-        for count, workspace in enumerate(workspaces):
-            workspace_fs, ws_entry, users_roles, files, timestamped = workspace
+        for workspace in workspaces:
+            workspace_fs, ws_entry, users_roles, files, timestamped, reencryption_needs = workspace
 
             try:
                 self.add_workspace(
-                    workspace_fs, ws_entry, users_roles, files, timestamped=timestamped
+                    workspace_fs,
+                    ws_entry,
+                    users_roles,
+                    files,
+                    timestamped=timestamped,
+                    reencryption_needs=reencryption_needs,
                 )
             except JobSchedulerNotAvailable:
                 pass
@@ -418,7 +431,9 @@ class WorkspacesWidget(QWidget, Ui_WorkspacesWidget):
     def on_reencryption_needs_error(self, job):
         pass
 
-    def add_workspace(self, workspace_fs, ws_entry, users_roles, files, timestamped):
+    def add_workspace(
+        self, workspace_fs, ws_entry, users_roles, files, timestamped, reencryption_needs
+    ):
 
         # The Qt thread should never hit the core directly.
         # Synchronous calls can run directly in the job system
@@ -451,6 +466,7 @@ class WorkspacesWidget(QWidget, Ui_WorkspacesWidget):
             is_mounted=self.is_workspace_mounted(workspace_fs.workspace_id, None),
             files=files[:4],
             timestamped=timestamped,
+            reencryption_needs=reencryption_needs,
         )
         self.layout_workspaces.addWidget(button)
         button.clicked.connect(self.load_workspace)
