@@ -6,9 +6,15 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>1002</width>
+    <width>636</width>
     <height>428</height>
    </rect>
+  </property>
+  <property name="minimumSize">
+   <size>
+    <width>0</width>
+    <height>0</height>
+   </size>
   </property>
   <property name="windowTitle">
    <string>Form</string>
@@ -22,6 +28,20 @@
 
 #button_goto_file:hover, #button_add_workspace:hover {
 	color: #0070DD;
+}
+
+#filter_widget {
+	border-radius: 5px;
+	background-color: #CCCCCC;
+}
+
+#filter_label {
+	color: #888888;
+}
+
+#filter_remove_button, filter_remove_button:hover {
+	background-color: #CCCCCC;
+	padding: 0;
 }</string>
   </property>
   <layout class="QVBoxLayout" name="verticalLayout">
@@ -144,31 +164,139 @@
       </layout>
      </item>
      <item>
-      <layout class="QHBoxLayout" name="shared_button_layout">
-       <property name="topMargin">
-        <number>0</number>
+      <widget class="QWidget" name="filter_layout_widget" native="true">
+       <property name="minimumSize">
+        <size>
+         <width>0</width>
+         <height>0</height>
+        </size>
        </property>
-       <item>
-        <widget class="QPushButton" name="shared_button">
-         <property name="text">
-          <string>PushButton</string>
-         </property>
-        </widget>
-       </item>
-       <item>
-        <spacer name="horizontalSpacer_4">
-         <property name="orientation">
-          <enum>Qt::Horizontal</enum>
-         </property>
-         <property name="sizeHint" stdset="0">
-          <size>
-           <width>40</width>
-           <height>20</height>
-          </size>
-         </property>
-        </spacer>
-       </item>
-      </layout>
+       <layout class="QHBoxLayout" name="horizontalLayout_4">
+        <property name="spacing">
+         <number>10</number>
+        </property>
+        <property name="leftMargin">
+         <number>0</number>
+        </property>
+        <property name="topMargin">
+         <number>0</number>
+        </property>
+        <property name="rightMargin">
+         <number>0</number>
+        </property>
+        <property name="bottomMargin">
+         <number>0</number>
+        </property>
+        <item>
+         <widget class="QWidget" name="filter_widget" native="true">
+          <property name="minimumSize">
+           <size>
+            <width>0</width>
+            <height>0</height>
+           </size>
+          </property>
+          <layout class="QHBoxLayout" name="horizontalLayout_3">
+           <property name="spacing">
+            <number>5</number>
+           </property>
+           <property name="leftMargin">
+            <number>5</number>
+           </property>
+           <property name="topMargin">
+            <number>5</number>
+           </property>
+           <property name="rightMargin">
+            <number>5</number>
+           </property>
+           <property name="bottomMargin">
+            <number>5</number>
+           </property>
+           <item>
+            <widget class="QLabel" name="filter_label">
+             <property name="minimumSize">
+              <size>
+               <width>0</width>
+               <height>0</height>
+              </size>
+             </property>
+             <property name="font">
+              <font>
+               <weight>75</weight>
+               <bold>true</bold>
+              </font>
+             </property>
+             <property name="text">
+              <string/>
+             </property>
+            </widget>
+           </item>
+           <item>
+            <widget class="Button" name="filter_remove_button">
+             <property name="minimumSize">
+              <size>
+               <width>28</width>
+               <height>28</height>
+              </size>
+             </property>
+             <property name="maximumSize">
+              <size>
+               <width>28</width>
+               <height>28</height>
+              </size>
+             </property>
+             <property name="text">
+              <string/>
+             </property>
+             <property name="icon">
+              <iconset resource="../rc/resources.qrc">
+               <normaloff>:/icons/images/material/close.svg</normaloff>:/icons/images/material/close.svg</iconset>
+             </property>
+             <property name="iconSize">
+              <size>
+               <width>24</width>
+               <height>24</height>
+              </size>
+             </property>
+             <property name="default">
+              <bool>true</bool>
+             </property>
+             <property name="flat">
+              <bool>true</bool>
+             </property>
+             <property name="color" stdset="0">
+              <color>
+               <red>136</red>
+               <green>136</green>
+               <blue>136</blue>
+              </color>
+             </property>
+             <property name="hover_color" stdset="0">
+              <color>
+               <red>102</red>
+               <green>102</green>
+               <blue>102</blue>
+              </color>
+             </property>
+            </widget>
+           </item>
+          </layout>
+         </widget>
+        </item>
+        <item>
+         <spacer name="horizontalSpacer_4">
+          <property name="orientation">
+           <enum>Qt::Horizontal</enum>
+          </property>
+          <property name="sizeHint" stdset="0">
+           <size>
+            <width>40</width>
+            <height>20</height>
+           </size>
+          </property>
+         </spacer>
+        </item>
+       </layout>
+      </widget>
      </item>
     </layout>
    </item>
@@ -252,8 +380,8 @@
        <rect>
         <x>0</x>
         <y>0</y>
-        <width>1002</width>
-        <height>89</height>
+        <width>636</width>
+        <height>91</height>
        </rect>
       </property>
       <layout class="QVBoxLayout" name="verticalLayout_2">
@@ -315,15 +443,15 @@
  </widget>
  <customwidgets>
   <customwidget>
-   <class>Button</class>
-   <extends>QPushButton</extends>
-   <header>parsec.core.gui.custom_widgets</header>
-  </customwidget>
-  <customwidget>
    <class>SpinnerWidget</class>
    <extends>QWidget</extends>
    <header>parsec.core.gui.custom_widgets</header>
    <container>1</container>
+  </customwidget>
+  <customwidget>
+   <class>Button</class>
+   <extends>QPushButton</extends>
+   <header>parsec.core.gui.custom_widgets</header>
   </customwidget>
  </customwidgets>
  <resources>

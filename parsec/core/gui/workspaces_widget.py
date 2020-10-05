@@ -229,7 +229,8 @@ class WorkspacesWidget(QWidget, Ui_WorkspacesWidget):
         self.workspace_reencryption_success.connect(self._on_workspace_reencryption_success)
         self.workspace_reencryption_error.connect(self._on_workspace_reencryption_error)
 
-        self.shared_button.clicked.connect(self.remove_user_filter)
+        self.filter_remove_button.clicked.connect(self.remove_user_filter)
+        self.filter_remove_button.apply_style()
 
         self.reset_required = False
         self.reset_timer = QTimer()
@@ -244,17 +245,17 @@ class WorkspacesWidget(QWidget, Ui_WorkspacesWidget):
         self._workspace_created_qt.connect(self._on_workspace_created_qt)
 
         self.filter_user_info = None
-        self.shared_button.hide()
+        self.filter_layout_widget.hide()
 
     def remove_user_filter(self):
         self.filter_user_info = None
-        self.shared_button.hide()
+        self.filter_layout_widget.hide()
         self.reset()
 
     def set_user_info(self, user_info):
         self.filter_user_info = user_info
-        self.shared_button.show()
-        self.shared_button.setText(
+        self.filter_layout_widget.show()
+        self.filter_label.setText(
             _("TEXT_WORKSPACE_FILTERED_user").format(user=user_info.human_handle.label)
         )
 
