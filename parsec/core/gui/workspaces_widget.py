@@ -86,7 +86,6 @@ async def _do_workspace_list(core):
     async def _add_workspacefs(workspace_fs, timestamped):
         ws_entry = workspace_fs.get_workspace_entry()
         users_roles = {}
-        reenc_needs = None
         try:
             roles = await workspace_fs.get_user_roles()
             for user, role in roles.items():
