@@ -177,6 +177,7 @@ class ExtractTranslations(Command):
             pylupdate_main()
 
         files = [str(f) for f in ui_dir.iterdir() if f.is_file() and f.suffix == ".py"]
+        files.sort()
         files.append(str(tr_dir / "parsec_en.ts"))
         args = [
             "_",
