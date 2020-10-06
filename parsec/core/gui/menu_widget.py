@@ -5,6 +5,9 @@ from PyQt5.QtGui import QPainter
 from PyQt5.QtWidgets import QWidget, QStyle, QStyleOption
 
 from parsec.core.gui.ui.menu_widget import Ui_MenuWidget
+from parsec.core.gui.lang import translate as _
+from parsec.core.gui import file_size
+from parsec.core.logged_core import OrganizationStats
 
 
 class MenuWidget(QWidget, Ui_MenuWidget):
@@ -45,6 +48,23 @@ class MenuWidget(QWidget, Ui_MenuWidget):
         self.button_files.setChecked(False)
         self.button_users.setChecked(False)
         self.button_devices.setChecked(False)
+
+    def show_organization_stats(self, organization_id: str, organization_stats: OrganizationStats):
+        self.label_organization_name.show()
+        self.label_organization_size.show()
+        self.label_organization_name.setText(organization_id)
+        total = file_size.get_filesize(
+            organization_stats.metadata_size + organization_stats.data_size
+        )
+        self.label_organization_size.setText(
+            _("TEXT_ORGANIZATION_SIZE_organizationsize").format(organizationsize=total)
+        )
+        self.label_organization_size.setToolTip(
+            _("TEXT_ORGANIZATION_SIZE_TOOLTIP_datasize-metadatasize").format(
+                datasize=file_size.get_filesize(organization_stats.data_size),
+                metadatasize=file_size.get_filesize(organization_stats.metadata_size),
+            )
+        )
 
     def set_connection_state(self, text, tooltip, icon):
         self.label_connection_state.setText(text)
