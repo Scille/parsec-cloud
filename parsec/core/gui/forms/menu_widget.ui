@@ -50,6 +50,14 @@
 
 #label_connection_state {
 	color: #FFFFFF;
+}
+
+#label_organization_name {
+	color:#EEEEEE;
+}
+
+#label_organization_size {
+	color: #EEEEEE;
 }</string>
   </property>
   <layout class="QVBoxLayout" name="verticalLayout">
@@ -360,24 +368,11 @@
          </spacer>
         </item>
         <item>
-         <spacer name="verticalSpacer_2">
-          <property name="orientation">
-           <enum>Qt::Vertical</enum>
-          </property>
-          <property name="sizeType">
-           <enum>QSizePolicy::Minimum</enum>
-          </property>
-          <property name="sizeHint" stdset="0">
-           <size>
-            <width>20</width>
-            <height>10</height>
-           </size>
-          </property>
-         </spacer>
-        </item>
-        <item>
          <widget class="QWidget" name="widget_misc" native="true">
           <layout class="QVBoxLayout" name="verticalLayout_2">
+           <property name="spacing">
+            <number>40</number>
+           </property>
            <property name="leftMargin">
             <number>10</number>
            </property>
@@ -390,6 +385,70 @@
            <property name="bottomMargin">
             <number>10</number>
            </property>
+           <item>
+            <widget class="QWidget" name="widget_organization_stats" native="true">
+             <layout class="QHBoxLayout" name="horizontalLayout">
+              <property name="spacing">
+               <number>10</number>
+              </property>
+              <property name="leftMargin">
+               <number>10</number>
+              </property>
+              <property name="topMargin">
+               <number>0</number>
+              </property>
+              <property name="rightMargin">
+               <number>0</number>
+              </property>
+              <property name="bottomMargin">
+               <number>0</number>
+              </property>
+              <item>
+               <layout class="QVBoxLayout" name="verticalLayout_4">
+                <item>
+                 <widget class="QLabel" name="label_organization_name">
+                  <property name="font">
+                   <font>
+                    <pointsize>11</pointsize>
+                    <weight>75</weight>
+                    <bold>true</bold>
+                   </font>
+                  </property>
+                  <property name="text">
+                   <string/>
+                  </property>
+                  <property name="alignment">
+                   <set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignVCenter</set>
+                  </property>
+                  <property name="wordWrap">
+                   <bool>true</bool>
+                  </property>
+                 </widget>
+                </item>
+                <item>
+                 <widget class="QLabel" name="label_organization_size">
+                  <property name="maximumSize">
+                   <size>
+                    <width>300</width>
+                    <height>300</height>
+                   </size>
+                  </property>
+                  <property name="text">
+                   <string/>
+                  </property>
+                  <property name="alignment">
+                   <set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignVCenter</set>
+                  </property>
+                  <property name="wordWrap">
+                   <bool>true</bool>
+                  </property>
+                 </widget>
+                </item>
+               </layout>
+              </item>
+             </layout>
+            </widget>
+           </item>
            <item>
             <widget class="QWidget" name="widget_connection" native="true">
              <layout class="QHBoxLayout" name="horizontalLayout_6">
