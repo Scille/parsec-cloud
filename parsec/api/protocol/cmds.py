@@ -42,6 +42,8 @@ AUTHENTICATED_CMDS = {
     "realm_update_roles",
     "realm_start_reencryption_maintenance",
     "realm_finish_reencryption_maintenance",
+    # Organization
+    "organization_stats",
 }
 INVITED_CMDS = {
     "ping",  # TODO: remove ping and ping event (only have them in tests)
