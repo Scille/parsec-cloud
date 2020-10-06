@@ -17,6 +17,7 @@ from parsec.core.types import (
     EntryID,
     EntryName,
     BackendOrganizationFileLinkAddr,
+    WorkspaceRole,
 )
 from parsec.core.fs import (
     WorkspaceFS,
@@ -88,8 +89,10 @@ async def _do_workspace_list(core):
         try:
             roles = await workspace_fs.get_user_roles()
             for user, role in roles.items():
-                user_info = await core.get_user_info(user)
-                users_roles[user_info.user_id] = (role, user_info)
+                user_info = None
+                if role == WorkspaceRole.OWNER or len(roles) <= 2:
+                    user_info = await core.get_user_info(user)
+                users_roles[user] = (role, user_info)
         except FSBackendOfflineError:
             # Fallback to craft a custom list with only our device since it's
             # the only one we know about
@@ -115,6 +118,8 @@ async def _do_workspace_list(core):
                 # Do not include confined files and directories
                 if child_info["confinement_point"] is None:
                     files.append(child.name)
+                if len(files) == 4:
+                    break
         except FSBackendOfflineError:
             pass
         except FSWorkspaceInMaintenance:
@@ -122,11 +127,19 @@ async def _do_workspace_list(core):
             # But the workspace need to be displayed to be able to trigger for example
             # reencryption operation
             pass
-        workspaces.append((workspace_fs, ws_entry, users_roles, files, timestamped))
+
+        # Get reencryption needs
+        reenc_needs = None
+        try:
+            reenc_needs = await workspace_fs.get_reencryption_need()
+        except FSBackendOfflineError:
+            pass
+
+        workspaces.append((workspace_fs, ws_entry, users_roles, files, timestamped, reenc_needs))
 
     user_manifest = core.user_fs.get_user_manifest()
     available_workspaces = [w for w in user_manifest.workspaces if w.role]
-    for count, workspace in enumerate(available_workspaces):
+    for workspace in available_workspaces:
         workspace_id = workspace.id
         workspace_fs = core.user_fs.get_workspace(workspace_id)
         await _add_workspacefs(workspace_fs, timestamped=False)
@@ -224,6 +237,9 @@ class WorkspacesWidget(QWidget, Ui_WorkspacesWidget):
         self.workspace_reencryption_success.connect(self._on_workspace_reencryption_success)
         self.workspace_reencryption_error.connect(self._on_workspace_reencryption_error)
 
+        self.filter_remove_button.clicked.connect(self.remove_user_filter)
+        self.filter_remove_button.apply_style()
+
         self.reset_required = False
         self.reset_timer = QTimer()
         self.reset_timer.setInterval(self.RESET_TIMER_THRESHOLD)
@@ -235,6 +251,21 @@ class WorkspacesWidget(QWidget, Ui_WorkspacesWidget):
 
         self.sharing_updated_qt.connect(self._on_sharing_updated_qt)
         self._workspace_created_qt.connect(self._on_workspace_created_qt)
+
+        self.filter_user_info = None
+        self.filter_layout_widget.hide()
+
+    def remove_user_filter(self):
+        self.filter_user_info = None
+        self.filter_layout_widget.hide()
+        self.reset()
+
+    def set_user_info(self, user_info):
+        self.filter_user_info = user_info
+        self.filter_layout_widget.show()
+        self.filter_label.setText(
+            _("TEXT_WORKSPACE_FILTERED_user").format(user=user_info.short_user_display)
+        )
 
     def _iter_workspace_buttons(self):
         # TODO: this is needed because we insert the "no workspaces" QLabel in
@@ -349,12 +380,17 @@ class WorkspacesWidget(QWidget, Ui_WorkspacesWidget):
             return
 
         self.line_edit_search.show()
-        for count, workspace in enumerate(workspaces):
-            workspace_fs, ws_entry, users_roles, files, timestamped = workspace
+        for workspace in workspaces:
+            workspace_fs, ws_entry, users_roles, files, timestamped, reencryption_needs = workspace
 
             try:
                 self.add_workspace(
-                    workspace_fs, ws_entry, users_roles, files, timestamped=timestamped
+                    workspace_fs,
+                    ws_entry,
+                    users_roles,
+                    files,
+                    timestamped=timestamped,
+                    reencryption_needs=reencryption_needs,
                 )
             except JobSchedulerNotAvailable:
                 pass
@@ -395,7 +431,9 @@ class WorkspacesWidget(QWidget, Ui_WorkspacesWidget):
     def on_reencryption_needs_error(self, job):
         pass
 
-    def add_workspace(self, workspace_fs, ws_entry, users_roles, files, timestamped):
+    def add_workspace(
+        self, workspace_fs, ws_entry, users_roles, files, timestamped, reencryption_needs
+    ):
 
         # The Qt thread should never hit the core directly.
         # Synchronous calls can run directly in the job system
@@ -417,6 +455,10 @@ class WorkspacesWidget(QWidget, Ui_WorkspacesWidget):
                 new_name=workspace_name,
                 button=None,
             )
+
+        if self.filter_user_info is not None and self.filter_user_info.user_id not in users_roles:
+            return
+
         button = WorkspaceButton(
             workspace_name=workspace_name,
             workspace_fs=workspace_fs,
@@ -424,6 +466,7 @@ class WorkspacesWidget(QWidget, Ui_WorkspacesWidget):
             is_mounted=self.is_workspace_mounted(workspace_fs.workspace_id, None),
             files=files[:4],
             timestamped=timestamped,
+            reencryption_needs=reencryption_needs,
         )
         self.layout_workspaces.addWidget(button)
         button.clicked.connect(self.load_workspace)

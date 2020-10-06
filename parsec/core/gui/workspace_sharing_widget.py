@@ -318,8 +318,15 @@ class WorkspaceSharingWidget(QWidget, Ui_WorkspaceSharingWidget):
 
     @classmethod
     def show_modal(cls, user_fs, workspace_fs, core, jobs_ctx, parent, on_finished):
+        workspace_name = jobs_ctx.run_sync(workspace_fs.get_workspace_name)
+
         w = cls(user_fs=user_fs, workspace_fs=workspace_fs, core=core, jobs_ctx=jobs_ctx)
-        d = GreyedDialog(w, title=_("TEXT_WORKSPACE_SHARING_TITLE"), parent=parent, width=1000)
+        d = GreyedDialog(
+            w,
+            title=_("TEXT_WORKSPACE_SHARING_TITLE_workspace").format(workspace=workspace_name),
+            parent=parent,
+            width=1000,
+        )
 
         d.finished.connect(on_finished)
         # Unlike exec_, show is asynchronous and works within the main Qt loop

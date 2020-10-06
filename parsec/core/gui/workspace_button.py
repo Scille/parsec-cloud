@@ -47,7 +47,14 @@ class WorkspaceButton(QWidget, Ui_WorkspaceButton):
     switch_clicked = pyqtSignal(bool, WorkspaceFS, object)
 
     def __init__(
-        self, workspace_name, workspace_fs, users_roles, is_mounted, files=None, timestamped=False
+        self,
+        workspace_name,
+        workspace_fs,
+        users_roles,
+        is_mounted,
+        files=None,
+        timestamped=False,
+        reencryption_needs=None,
     ):
         super().__init__()
         self.setupUi(self)
@@ -60,7 +67,7 @@ class WorkspaceButton(QWidget, Ui_WorkspaceButton):
         self.switch_button.clicked.connect(self._on_switch_clicked)
 
         self.reencrypting = None
-        self.reencryption_needs = None
+        self.reencryption_needs = reencryption_needs
         self.setCursor(QCursor(Qt.PointingHandCursor))
         self.setContextMenuPolicy(Qt.CustomContextMenu)
         self.customContextMenuRequested.connect(self.show_context_menu)
@@ -128,13 +135,12 @@ class WorkspaceButton(QWidget, Ui_WorkspaceButton):
 
     @property
     def is_shared(self):
-        # Filter out users that have been revoked
-        return sum(1 for _, u in self.users_roles.values() if u.revoked_on is None) > 1
+        return len(self.users_roles) > 1
 
     @property
     def owner(self):
         for user_id, (role, user_info) in self.users_roles.items():
-            if role == WorkspaceRole.OWNER:
+            if role == WorkspaceRole.OWNER and user_info:
                 return user_info
         raise ValueError
 
@@ -271,7 +277,7 @@ class WorkspaceButton(QWidget, Ui_WorkspaceButton):
                 shared_message = _("TEXT_WORKSPACE_IS_OWNED_BY_user").format(
                     user=self.owner.short_user_display
                 )
-            elif len(self.others) == 1:
+            elif len(self.others) == 1 and self.others[0]:
                 user, = self.others
                 shared_message = _("TEXT_WORKSPACE_IS_SHARED_WITH_user").format(
                     user=user.short_user_display

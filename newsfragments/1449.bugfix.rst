@@ -1,0 +1,1 @@
+Avoid uncessary scrolling when displaying users and devices

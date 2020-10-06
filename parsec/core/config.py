@@ -6,7 +6,8 @@ import json
 from typing import Optional, FrozenSet
 from pathlib import Path
 from structlog import get_logger
-
+import binascii
+import base64
 from parsec.api.data import EntryID
 from parsec.core.types import BackendAddr
 
@@ -83,6 +84,7 @@ class CoreConfig:
     gui_workspace_color: bool = False
     gui_allow_multiple_instances: bool = False
     gui_show_confined: bool = False
+    gui_geometry: bytes = None
 
     ipc_socket_file: Path = None
     ipc_win32_mutex_name: str = "parsec-cloud"
@@ -115,6 +117,7 @@ def config_factory(
     gui_allow_multiple_instances: bool = False,
     preferred_org_creation_backend_addr: Optional[BackendAddr] = None,
     gui_show_confined: bool = False,
+    gui_geometry: bytes = None,
     environ: dict = {},
     **_,
 ) -> CoreConfig:
@@ -155,6 +158,7 @@ def config_factory(
         gui_allow_multiple_instances=gui_allow_multiple_instances,
         preferred_org_creation_backend_addr=preferred_org_creation_backend_addr,
         gui_show_confined=gui_show_confined,
+        gui_geometry=gui_geometry,
         ipc_socket_file=data_base_dir / "parsec-cloud.lock",
         ipc_win32_mutex_name="parsec-cloud",
     )
@@ -217,6 +221,11 @@ def load_config(config_dir: Path, **extra_config) -> CoreConfig:
         logger.warning(f"Invalid value for `preferred_org_creation_backend_addr` ({exc})")
         data_conf["preferred_org_creation_backend_addr"] = None
 
+    try:
+        data_conf["gui_geometry"] = base64.b64decode(data_conf["gui_geometry"].encode("ascii"))
+    except (AttributeError, KeyError, UnicodeEncodeError, binascii.Error):
+        data_conf["gui_geometry"] = None
+
     # Work around versionning issue with parsec releases:
     # - v1.12.0, v1.11.4, v1.11.3, v1.11.2, v1.11.1, v1.11.0 and v1.10.0
     # A `v` has been incorrectly added to `parsec.__version__`, potentially
@@ -257,6 +266,9 @@ def save_config(config: CoreConfig):
                 "gui_allow_multiple_instances": config.gui_allow_multiple_instances,
                 "preferred_org_creation_backend_addr": config.preferred_org_creation_backend_addr.to_url(),
                 "gui_show_confined": config.gui_show_confined,
+                "gui_geometry": base64.b64encode(config.gui_geometry).decode("ascii")
+                if config.gui_geometry
+                else None,
             },
             indent=True,
         )
