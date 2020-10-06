@@ -3,7 +3,7 @@
 import os
 
 a = Analysis(['launch_script.py'],
-             pathex=[os.path.dirname(os.path.abspath("parsec.spec"))],
+             pathex=[os.path.dirname(os.path.abspath('parsec.spec'))],
              binaries=[],
              datas=[
                 ('../../parsec/core/resources/*.ignore', 'parsec/core/resources'),
@@ -21,27 +21,32 @@ pyz = PYZ(a.pure, a.zipped_data,
              cipher=None)
 exe = EXE(pyz,
           a.scripts,
+          a.binaries,
+          a.zipfiles,
+          a.datas,
           [],
-          exclude_binaries=True,
-          name='run_parsec',
+          name='parsec',
           debug=False,
           bootloader_ignore_signals=False,
           strip=False,
           upx=True,
           console=False )
-coll = COLLECT(exe,
-               a.binaries,
-               a.zipfiles,
-               a.datas,
-               strip=False,
-               upx=True,
-               upx_exclude=[],
-               name='Parsec')
-app = BUNDLE(coll,
-             name='Parsec.app',
+app = BUNDLE(exe,
+             name='parsec.app',
              icon='../../parsec/core/resources/parsec.icns',
-             bundle_identifier=None,
+             bundle_identifier='fr.scille.parsec',
              info_plist={
-                "NSHighResolutionCapable": True,
+                'NSPrincipalClass': 'NSApplication',
+                'NSHighResolutionCapable': True,
+                'NSAppleScriptEnabled': False,
+                'CFBundleIdentifier': 'fr.scille.parsec',
+                'CFBundleName': 'parsec',
+                'CFBundleDisplayName': 'Parsec',
+                'CFBundleURLTypes': [
+                   {
+                      'CFBundleURLName': 'parsec',
+                      'CFBundleURLSchemes': ['parsec']
+                   }
+                ]
              },
             )
