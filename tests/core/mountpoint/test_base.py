@@ -559,3 +559,25 @@ async def test_mountpoint_iterdir_with_many_files(
         for path in path_list:
             item_path = mountpoint_manager.get_path_in_mountpoint(wid, path)
             assert await trio.Path(item_path).exists()
+
+
+@pytest.mark.trio
+@pytest.mark.mountpoint
+@pytest.mark.parametrize("timeout", [x * 0.002 for x in range(20)])
+async def test_cancel_mount_workspace(base_mountpoint, alice_user_fs, event_bus, timeout):
+
+    wid = await alice_user_fs.workspace_create("w")
+
+    async with mountpoint_manager_factory(
+        alice_user_fs, event_bus, base_mountpoint
+    ) as mountpoint_manager:
+
+        with trio.move_on_after(timeout) as cancel_scope:
+            await mountpoint_manager.mount_workspace(wid)
+        if cancel_scope.cancelled_caught:
+            with pytest.raises(MountpointNotMounted):
+                mountpoint_manager.get_path_in_mountpoint(wid, FsPath("/"))
+        else:
+            path = trio.Path(mountpoint_manager.get_path_in_mountpoint(wid, FsPath("/")))
+            await path.exists()
+            assert not await (path / "foo").exists()
