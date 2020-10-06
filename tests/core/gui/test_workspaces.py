@@ -337,3 +337,76 @@ async def test_workspace_filter_user(
     await aqtbot.mouse_click(w_w.filter_remove_button, QtCore.Qt.LeftButton)
 
     await aqtbot.wait_until(_workspace_listed, timeout=2000)
+
+
+@pytest.mark.gui
+@pytest.mark.trio
+async def test_workspace_filter_user_new_workspace(
+    aqtbot,
+    running_backend,
+    logged_gui,
+    autoclose_dialog,
+    qt_thread_gateway,
+    alice_user_fs,
+    bob,
+    bob_user_fs,
+    alice,
+    monkeypatch,
+):
+    w_w = await logged_gui.test_switch_to_workspaces_widget()
+    wid_alice = await alice_user_fs.workspace_create("Workspace1")
+
+    await alice_user_fs.workspace_share(wid_alice, bob.user_id, WorkspaceRole.MANAGER)
+
+    await alice_user_fs.process_last_messages()
+    await alice_user_fs.sync()
+
+    def _workspace_listed():
+        assert w_w.layout_workspaces.count() == 1
+        wk_button1 = w_w.layout_workspaces.itemAt(0).widget()
+        assert isinstance(wk_button1, WorkspaceButton)
+        assert not w_w.filter_remove_button.isVisible()
+
+    await aqtbot.wait_until(_workspace_listed, timeout=2000)
+
+    u_w = await logged_gui.test_switch_to_users_widget()
+
+    # Force click on user filter menu
+    assert u_w.layout_users.count() == 3
+    for i in range(u_w.layout_users.count()):
+        button = u_w.layout_users.itemAt(i).widget()
+        if not button.is_current_user and button.user_info.user_id == alice.user_id:
+            button.filter_user_workspaces_clicked.emit(button.user_info)
+            break
+    else:
+        raise ValueError("Can not find Alice user")
+
+    def _workspace_filtered():
+        assert w_w.isVisible()
+        assert w_w.layout_workspaces.count() == 1
+        wk_button_1 = w_w.layout_workspaces.itemAt(0).widget()
+        assert isinstance(wk_button_1, WorkspaceButton)
+        assert wk_button_1.name == "Workspace1"
+        assert w_w.filter_remove_button.isVisible()
+        assert w_w.filter_label.text() == "Common workspaces with {}".format(
+            alice.short_user_display
+        )
+
+    await aqtbot.wait_until(_workspace_filtered)
+
+    monkeypatch.setattr(
+        "parsec.core.gui.workspaces_widget.get_text_input", lambda *args, **kwargs: ("Workspace2")
+    )
+    await aqtbot.mouse_click(w_w.button_add_workspace, QtCore.Qt.LeftButton)
+
+    def _new_workspace_listed():
+        assert w_w.layout_workspaces.count() == 2
+        wk_button1 = w_w.layout_workspaces.itemAt(0).widget()
+        wk_button2 = w_w.layout_workspaces.itemAt(1).widget()
+        assert isinstance(wk_button1, WorkspaceButton)
+        assert isinstance(wk_button2, WorkspaceButton)
+        assert wk_button1.name in ["Workspace1", "Workspace2"]
+        assert wk_button2.name in ["Workspace1", "Workspace2"]
+        assert not w_w.filter_remove_button.isVisible()
+
+    await aqtbot.wait_until(_new_workspace_listed, timeout=2000)
