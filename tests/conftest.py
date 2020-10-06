@@ -728,7 +728,14 @@ async def alice_core(core_factory, alice):
 
 @pytest.fixture
 async def alice2_core(core_factory, alice2):
+
     async with core_factory(alice2) as core:
+        yield core
+
+
+@pytest.fixture
+async def otheralice_core(core_factory, otheralice):
+    async with core_factory(otheralice) as core:
         yield core
 
 
