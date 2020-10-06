@@ -97,6 +97,13 @@ def get_prevent_sync_pattern(prevent_sync_pattern_path: Optional[Path] = None) -
 
 
 @attr.s(frozen=True, slots=True, auto_attribs=True)
+class OrganizationStats:
+    users: int
+    data_size: int
+    metadata_size: int
+
+
+@attr.s(frozen=True, slots=True, auto_attribs=True)
 class LoggedCore:
     config: CoreConfig
     device: LocalDevice
@@ -146,6 +153,18 @@ class LoggedCore:
             user_info = await self.get_user_info(item["user_id"])
             results.append(user_info)
         return (results, rep["total"])
+
+    async def get_organization_stats(self) -> OrganizationStats:
+        """
+        Raises:
+            BackendConnectionError
+        """
+        rep = await self._backend_conn.cmds.organization_stats()
+        if rep["status"] != "ok":
+            raise BackendConnectionError(f"Backend error: {rep}")
+        return OrganizationStats(
+            users=rep["users"], data_size=rep["data_size"], metadata_size=rep["metadata_size"]
+        )
 
     async def get_user_info(self, user_id: UserID) -> UserInfo:
         """
