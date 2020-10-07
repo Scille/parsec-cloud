@@ -327,8 +327,7 @@ class WorkspaceSharingWidget(QWidget, Ui_WorkspaceSharingWidget):
             parent=parent,
             width=1000,
         )
-
-        d.finished.connect(on_finished)
+        d.closing.connect(on_finished)
         # Unlike exec_, show is asynchronous and works within the main Qt loop
         d.show()
         return w

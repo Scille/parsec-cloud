@@ -1,0 +1,1 @@
+Refresh workspace list when closing the sharing dialog

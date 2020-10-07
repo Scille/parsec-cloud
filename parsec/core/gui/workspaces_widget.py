@@ -731,7 +731,7 @@ class WorkspacesWidget(QWidget, Ui_WorkspacesWidget):
             workspace_name=workspace_name,
         )
 
-    def reset(self):
+    def reset(self, _=None):
         if self.reset_timer.isActive():
             self.reset_required = True
         else:

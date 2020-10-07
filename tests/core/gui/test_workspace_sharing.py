@@ -35,6 +35,8 @@ async def gui_workspace_sharing(
         wk_button = w_w.layout_workspaces.itemAt(0).widget()
         assert isinstance(wk_button, WorkspaceButton)
         assert wk_button.name == "Workspace"
+        assert wk_button.label_title.toolTip() == "Workspace (private)"
+        assert wk_button.label_title.text() == "Workspace (private)"
         assert not autoclose_dialog.dialogs
 
     await aqtbot.wait_until(_workspace_added, timeout=2000)
@@ -42,7 +44,7 @@ async def gui_workspace_sharing(
 
     await aqtbot.mouse_click(wk_button.button_share, QtCore.Qt.LeftButton)
     share_w_w = await catch_share_workspace_widget()
-    yield logged_gui, share_w_w
+    yield logged_gui, w_w, share_w_w
 
 
 @pytest.mark.gui
@@ -50,7 +52,7 @@ async def gui_workspace_sharing(
 async def test_workspace_sharing_list_users(
     aqtbot, running_backend, gui_workspace_sharing, autoclose_dialog
 ):
-    logged_gui, share_w_w = gui_workspace_sharing
+    logged_gui, w_w, share_w_w = gui_workspace_sharing
 
     def _users_listed():
         assert share_w_w.scroll_content.layout().count() == 4
@@ -86,7 +88,7 @@ async def test_share_workspace(
     save_device_with_password(core_config.config_dir, alice, password)
     save_device_with_password(core_config.config_dir, adam, password)
 
-    logged_gui, share_w_w = gui_workspace_sharing
+    logged_gui, w_w, share_w_w = gui_workspace_sharing
 
     def _users_listed():
         assert share_w_w.scroll_content.layout().count() == 4
@@ -117,6 +119,24 @@ async def test_share_workspace(
         assert not user_w.status_timer.isActive()
 
     await aqtbot.wait_until(_timer_stopped)
+
+    async with aqtbot.wait_signals([share_w_w.parent().parent().closing, w_w.list_success]):
+
+        def _close_dialog():
+            share_w_w.parent().parent().reject()
+
+        await qt_thread_gateway.send_action(_close_dialog)
+
+    def _workspace_listed():
+        assert w_w.layout_workspaces.count() == 1
+        wk_button = w_w.layout_workspaces.itemAt(0).widget()
+        assert isinstance(wk_button, WorkspaceButton)
+        assert wk_button.name == "Workspace"
+        assert wk_button.label_title.toolTip() == "Workspace (shared with Adamy McAdamFace)"
+        assert wk_button.label_title.text() == "Workspace (shared wi..."
+        assert not autoclose_dialog.dialogs
+
+    await aqtbot.wait_until(_workspace_listed, timeout=2000)
 
     login_w = await logged_gui.test_logout_and_switch_to_login_widget()
 
@@ -184,7 +204,7 @@ async def test_share_workspace(
 async def test_share_workspace_offline(
     aqtbot, running_backend, gui_workspace_sharing, autoclose_dialog, qt_thread_gateway
 ):
-    logged_gui, share_w_w = gui_workspace_sharing
+    logged_gui, w_w, share_w_w = gui_workspace_sharing
 
     def _users_listed():
         assert share_w_w.scroll_content.layout().count() == 4
@@ -212,7 +232,7 @@ async def test_share_workspace_offline(
 async def test_workspace_sharing_filter_users(
     aqtbot, running_backend, gui_workspace_sharing, autoclose_dialog, qt_thread_gateway
 ):
-    logged_gui, share_w_w = gui_workspace_sharing
+    logged_gui, w_w, share_w_w = gui_workspace_sharing
 
     def _users_listed():
         assert share_w_w.scroll_content.layout().count() == 4
