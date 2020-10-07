@@ -56,6 +56,3 @@ async def test_organization_stats(
     # Ensure organization isolation
     other_organization_stats = await otheralice_core.get_organization_stats()
     assert other_organization_stats == OrganizationStats(users=1, data_size=0, metadata_size=ANY)
-    import trio
-
-    await trio.sleep(1)
