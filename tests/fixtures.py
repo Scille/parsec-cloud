@@ -285,7 +285,7 @@ class InitialUserManifestState:
 
     def _generate_or_retrieve_user_manifest_v1(self, device):
         try:
-            return self._v1[device.user_id]
+            return self._v1[(device.organization_id, device.user_id)]
 
         except KeyError:
             now = pendulum.now()
@@ -301,8 +301,11 @@ class InitialUserManifestState:
                 workspaces=(),
             )
             local_user_manifest = LocalUserManifest.from_remote(remote_user_manifest)
-            self._v1[device.user_id] = (remote_user_manifest, local_user_manifest)
-            return self._v1[device.user_id]
+            self._v1[(device.organization_id, device.user_id)] = (
+                remote_user_manifest,
+                local_user_manifest,
+            )
+            return self._v1[(device.organization_id, device.user_id)]
 
     def force_user_manifest_v1_generation(self, device):
         self._generate_or_retrieve_user_manifest_v1(device)

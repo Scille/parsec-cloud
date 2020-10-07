@@ -86,6 +86,7 @@ class BackendAuthenticatedCmds:
     realm_finish_reencryption_maintenance = expose_cmds_with_retrier(
         "realm_finish_reencryption_maintenance"
     )
+    organization_stats = expose_cmds_with_retrier("organization_stats")
 
 
 def _handle_event(event_bus: EventBus, rep: dict) -> None:

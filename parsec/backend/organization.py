@@ -11,6 +11,8 @@ from parsec.utils import timestamps_in_the_ballpark
 from parsec.crypto import VerifyKey
 from parsec.api.protocol import (
     OrganizationID,
+    HandshakeType,
+    organization_stats_serializer,
     APIV1_HandshakeType,
     apiv1_organization_create_serializer,
     apiv1_organization_bootstrap_serializer,
@@ -124,9 +126,36 @@ class BaseOrganizationComponent:
             }
         )
 
+    @api("organization_stats", handshake_types=[HandshakeType.AUTHENTICATED])
+    @catch_protocol_errors
+    async def api_authenticated_organization_stats(self, client_ctx, msg):
+        msg = organization_stats_serializer.req_load(msg)
+
+        if client_ctx.profile != UserProfile.ADMIN:
+            return {
+                "status": "not_allowed",
+                "reason": f"User `{client_ctx.device_id.user_id}` is not admin",
+            }
+        # Get organization of the user
+        organization_id = client_ctx.organization_id
+        try:
+            stats = await self.stats(organization_id)
+
+        except OrganizationNotFoundError:
+            return {"status": "not_found"}
+
+        return organization_stats_serializer.rep_dump(
+            {
+                "status": "ok",
+                "users": stats.users,
+                "data_size": stats.data_size,
+                "metadata_size": stats.metadata_size,
+            }
+        )
+
     @api("organization_stats", handshake_types=[APIV1_HandshakeType.ADMINISTRATION])
     @catch_protocol_errors
-    async def api_organization_stats(self, client_ctx, msg):
+    async def apiv1_administration_organization_stats(self, client_ctx, msg):
         msg = apiv1_organization_stats_serializer.req_load(msg)
 
         try:

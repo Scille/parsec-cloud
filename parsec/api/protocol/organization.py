@@ -59,6 +59,21 @@ class OrganizationBootstrapWebhookSchema(BaseSchema):
 organization_bootstrap_webhook_serializer = JSONSerializer(OrganizationBootstrapWebhookSchema)
 
 
+class OrganizationStatsReqSchema(BaseReqSchema):
+    pass
+
+
+class OrganizationStatsRepSchema(BaseRepSchema):
+    data_size = fields.Integer(required=True)
+    metadata_size = fields.Integer(required=True)
+    users = fields.Integer(required=True)
+
+
+organization_stats_serializer = CmdSerializer(
+    OrganizationStatsReqSchema, OrganizationStatsRepSchema
+)
+
+
 class APIV1_OrganizationStatsReqSchema(BaseReqSchema):
     organization_id = OrganizationIDField(required=True)
 
