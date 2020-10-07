@@ -1,7 +1,7 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
 
 from parsec.core.core_events import CoreEvent
-from PyQt5.QtCore import pyqtSignal
+from PyQt5.QtCore import pyqtSignal, QTimer
 from PyQt5.QtGui import QPixmap, QColor, QIcon
 from PyQt5.QtWidgets import QGraphicsDropShadowEffect, QWidget, QMenu
 
@@ -57,6 +57,7 @@ class CentralWidget(QWidget, Ui_CentralWidget):
     vlobs_updated_qt = pyqtSignal(object, object)
     logout_requested = pyqtSignal()
     new_notification = pyqtSignal(str, str)
+    RESET_TIMER_STATS = 5000  # ms
 
     def __init__(self, core, jobs_ctx, event_bus, systray_notification, action_addr=None, **kwargs):
         super().__init__(**kwargs)
@@ -76,6 +77,10 @@ class CentralWidget(QWidget, Ui_CentralWidget):
         self.event_bus.connect(CoreEvent.FS_ENTRY_SYNCED, self._on_vlobs_updated_trio)
         self.event_bus.connect(CoreEvent.BACKEND_REALM_VLOBS_UPDATED, self._on_vlobs_updated_trio)
         self.vlobs_updated_qt.connect(self._on_vlobs_updated_qt)
+        self.organization_stats_timer = QTimer()
+        self.organization_stats_timer.setInterval(self.RESET_TIMER_STATS)
+        self.organization_stats_timer.setSingleShot(True)
+        self.organization_stats_timer.timeout.connect(self._get_organization_stats)
 
         self.set_user_info()
         menu = QMenu()
@@ -220,7 +225,9 @@ class CentralWidget(QWidget, Ui_CentralWidget):
         self.vlobs_updated_qt.emit(event, id)
 
     def _on_vlobs_updated_qt(self, event, uuid):
-        self._get_organization_stats()
+        if not self.organization_stats_timer.isActive():
+            self.organization_stats_timer.start()
+            self._get_organization_stats()
 
     def _on_connection_state_changed(self, status, status_exc, allow_systray=True):
         text = None
