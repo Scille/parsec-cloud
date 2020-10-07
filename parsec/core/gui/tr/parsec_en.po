@@ -2292,6 +2292,12 @@ msgstr "Use colors for workspaces"
 msgid "ACTION_SAVE"
 msgstr "Save"
 
+msgid "TEXT_WORKSPACE_TEMPORARY_TITLE"
+msgstr "Snapshot"
+
+msgid "TEXT_WORKSPACE_TEMPORARY_DESCRIPTION"
+msgstr "Workspace as it appeared on:"
+
 msgid "TEXT_WORKSPACE_TIMESTAMPED_INSTRUCTIONS"
 msgstr "You will be able to see the workspace as it was at a given time."
 

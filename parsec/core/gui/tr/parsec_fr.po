@@ -2352,6 +2352,12 @@ msgstr "Utiliser des couleurs pour les espaces de travail"
 msgid "ACTION_SAVE"
 msgstr "Sauvegarder"
 
+msgid "TEXT_WORKSPACE_TEMPORARY_TITLE"
+msgstr "Vue instantanée"
+
+msgid "TEXT_WORKSPACE_TEMPORARY_DESCRIPTION"
+msgstr "Espace de travail tel qu'il apparaissait le :"
+
 msgid "TEXT_WORKSPACE_TIMESTAMPED_INSTRUCTIONS"
 msgstr ""
 "Vous pourrez naviguer dans l'espace de travail tel qu'il était à un "

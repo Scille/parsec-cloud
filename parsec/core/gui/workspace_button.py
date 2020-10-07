@@ -12,9 +12,11 @@ from parsec.core.fs.workspacefs import ReencryptionNeed
 from parsec.core.gui.lang import translate as _, format_datetime
 from parsec.core.gui.workspace_roles import get_role_translation
 from parsec.core.gui.custom_dialogs import show_info
+from parsec.core.gui.custom_widgets import ensure_string_size
 
 from parsec.core.gui.ui.workspace_button import Ui_WorkspaceButton
 from parsec.core.gui.ui.empty_workspace_widget import Ui_EmptyWorkspaceWidget
+from parsec.core.gui.ui.temporary_workspace_widget import Ui_TemporaryWorkspaceWidget
 
 from parsec.core.gui.switch_button import SwitchButton
 
@@ -26,6 +28,12 @@ class EmptyWorkspaceWidget(QWidget, Ui_EmptyWorkspaceWidget):
         super().__init__()
         self.setupUi(self)
         self.label_icon.apply_style()
+
+
+class TemporaryWorkspaceWidget(QWidget, Ui_TemporaryWorkspaceWidget):
+    def __init__(self):
+        super().__init__()
+        self.setupUi(self)
 
 
 class WorkspaceButton(QWidget, Ui_WorkspaceButton):
@@ -61,28 +69,26 @@ class WorkspaceButton(QWidget, Ui_WorkspaceButton):
         self.reencrypting = None
         self.reencryption_needs = reencryption_needs
         self.setCursor(QCursor(Qt.PointingHandCursor))
-        self.widget_empty.layout().addWidget(EmptyWorkspaceWidget())
         self.setContextMenuPolicy(Qt.CustomContextMenu)
         self.customContextMenuRequested.connect(self.show_context_menu)
         self.label_role.setText(get_role_translation(self.current_role))
         files = files or []
 
-        if not len(files):
-            self.widget_empty.show()
-            self.widget_files.hide()
+        if not self.timestamped:
+            self.button_delete.hide()
+            if not len(files):
+                self.widget_empty.show()
+                self.widget_files.hide()
+                self.widget_empty.layout().addWidget(EmptyWorkspaceWidget())
+            else:
+                for i, f in enumerate(files, 1):
+                    if i > 4:
+                        break
+                    label = getattr(self, "file{}_name".format(i))
+                    label.setText(f)
+                self.widget_files.show()
+                self.widget_empty.hide()
         else:
-            for i, f in enumerate(files, 1):
-                if i > 4:
-                    break
-                label = getattr(self, "file{}_name".format(i))
-                label.setText(f)
-            self.widget_files.show()
-            self.widget_empty.hide()
-
-        if self.timestamped:
-            self.widget_title.setStyleSheet("background-color: #DDDDDD;")
-            self.widget_actions.setStyleSheet("background-color: #DDDDDD;")
-            self.widget.setStyleSheet("background-color: #DDDDDD;")
             self.switch_button.setChecked(True)
             self.button_reencrypt.hide()
             self.button_remount_ts.hide()
@@ -91,8 +97,12 @@ class WorkspaceButton(QWidget, Ui_WorkspaceButton):
             self.label_shared.hide()
             self.label_owner.hide()
             self.switch_button.hide()
-        else:
-            self.button_delete.hide()
+            widg_tmp = TemporaryWorkspaceWidget()
+            widg_tmp.label_timestamp.setText(format_datetime(self.timestamp))
+            self.widget_empty.layout().addWidget(widg_tmp)
+            self.widget_empty.show()
+            self.widget_files.hide()
+
         effect = QGraphicsDropShadowEffect(self)
         effect.setColor(QColor(0x99, 0x99, 0x99))
         effect.setBlurRadius(10)
@@ -258,6 +268,7 @@ class WorkspaceButton(QWidget, Ui_WorkspaceButton):
     def reload_workspace_name(self, workspace_name):
         self.workspace_name = workspace_name
         display = workspace_name
+        extra_space = 40
 
         if not self.timestamped:
             if not self.is_shared:
@@ -276,14 +287,17 @@ class WorkspaceButton(QWidget, Ui_WorkspaceButton):
                 assert n > 1
                 shared_message = _("TEXT_WORKSPACE_IS_SHARED_WITH_n_USERS").format(n=n)
             display += " ({})".format(shared_message)
+            if self.is_shared:
+                extra_space += 40
+            if self.is_owner:
+                extra_space += 40
         else:
             display += "-" + _("TEXT_WORKSPACE_IS_TIMESTAMPED_date").format(
                 date=format_datetime(self.workspace_fs.timestamp)
             )
         self.label_title.setToolTip(display)
-        if len(display) > 20:
-            display = display[:20] + "..."
-        self.label_title.setText(display)
+        size = self.size().width() - extra_space
+        self.label_title.setText(ensure_string_size(display, size, self.label_title.font()))
 
     def mousePressEvent(self, event):
         if event.button() & Qt.LeftButton and self.switch_button.isChecked():
