@@ -348,7 +348,7 @@ class WorkspacesWidget(QWidget, Ui_WorkspacesWidget):
         self.load_workspace_clicked.emit(workspace_fs, path, selected)
 
     def on_create_success(self, job):
-        pass
+        self.remove_user_filter()
 
     def on_create_error(self, job):
         if job.status == "invalid-name":
