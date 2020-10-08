@@ -5,7 +5,7 @@ import os
 from typing import Tuple
 from base64 import b32decode, b32encode
 from hashlib import sha256
-from ctypes import *
+from ctypes import cdll, c_size_t, c_uint8, byref, cast, POINTER
 
 from nacl.exceptions import CryptoError  # noqa: republishing
 from nacl.public import SealedBox, PrivateKey as _PrivateKey, PublicKey as _PublicKey
@@ -16,8 +16,8 @@ from nacl.pwhash import argon2i
 from nacl.utils import random
 from nacl.encoding import RawEncoder
 
-from cryptography.hazmat.primitives.ciphers import Cipher, algorithms, modes
-from cryptography.exceptions import InvalidTag
+# from cryptography.hazmat.primitives.ciphers import Cipher, algorithms, modes
+# from cryptography.exceptions import InvalidTag
 
 # Note to simplify things, we adopt `nacl.CryptoError` as our root error cls
 
@@ -51,6 +51,7 @@ SGX_AESGCM_MAC_SIZE = 16
 SGX_AESGCM_IV_SIZE = 12
 # Types
 
+
 class SecretKey(bytes):
     __slots__ = ()
 
@@ -67,11 +68,10 @@ class SecretKey(bytes):
         ecall_encryptMessage = LibSgx.ecall_encryptMessage
         ecall_encryptMessage.restype = POINTER(c_uint8)
         encMessageLen = c_size_t()
-        len_data = len(data)
         encrypted_ptr = ecall_encryptMessage(self, data, len(data), byref(encMessageLen))
         encrypted_data = cast(encrypted_ptr, POINTER(c_uint8 * encMessageLen.value))
         encrypted_data = bytes(list(encrypted_data.contents))
-        print("ici")
+        # print("ici")
         # print()
         # print()
         # print("encrypted data = ", encrypted_data)
@@ -84,12 +84,12 @@ class SecretKey(bytes):
         ecall_decryptMessage = LibSgx.ecall_decryptMessage
         ecall_decryptMessage.restype = POINTER(c_uint8 * output_len)
         decrypted_data = bytes(list(ecall_decryptMessage(self, data, data_len).contents))
-        print("la")
+        # print("la")
         # print()
         # print()
         # print("decrypted data = ", decrypted_data)
-        return bytes(list(ecall_decryptMessage(self, data, data_len).contents))
-    
+        return decrypted_data
+
     # Using AES WITHOUT ENCLAVE
     # def encrypt(self, data):
     #     iv = os.urandom(16)
