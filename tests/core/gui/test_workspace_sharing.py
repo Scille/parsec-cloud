@@ -133,7 +133,7 @@ async def test_share_workspace(
         assert isinstance(wk_button, WorkspaceButton)
         assert wk_button.name == "Workspace"
         assert wk_button.label_title.toolTip() == "Workspace (shared with Adamy McAdamFace)"
-        assert wk_button.label_title.text() == "Workspace (shared wi..."
+        assert wk_button.label_title.text() == "Workspace (share..."
         assert not autoclose_dialog.dialogs
 
     await aqtbot.wait_until(_workspace_listed, timeout=2000)
