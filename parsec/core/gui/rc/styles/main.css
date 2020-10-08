@@ -103,6 +103,10 @@ QComboBox QListView::item:selected {
 
 /* CheckBox: ENABLED, DISABLED */
 
+QCheckBox {
+    color: #333333;
+}
+
 QCheckBox::indicator {
     width: 20px;
     height: 20px;
@@ -258,9 +262,12 @@ QTabWidget::tab-bar:right {
     left: 1px;
 }
 
-QTabBar::tab {
+QTabBar {
     font-size: 14px;
     font-weight: bold;
+}
+
+QTabBar::tab {
     padding-left: 10px;
     padding-right: 10px;
     border-top: 1px solid #99999980;
@@ -475,4 +482,11 @@ QProgressBar {
 QProgressBar::chunk {
     background-color: #0092FF;
     width: 20px;
+}
+
+/* QTextEdit, QTextBrowser */
+
+QTextEdit {
+    color: #333333;
+    background-color: #FFFFFF;
 }

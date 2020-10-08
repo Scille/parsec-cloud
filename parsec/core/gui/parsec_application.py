@@ -2,7 +2,7 @@
 
 from PyQt5.QtWidgets import QApplication
 from PyQt5.QtCore import QFile
-from PyQt5.QtGui import QFont, QFontDatabase
+from PyQt5.QtGui import QFont, QFontDatabase, QPalette, QColor
 
 
 class ParsecApp(QApplication):
@@ -13,6 +13,10 @@ class ParsecApp(QApplication):
         self.setOrganizationName("Scille")
         self.setOrganizationDomain("parsec.cloud")
         self.setApplicationName("Parsec")
+        pal = self.palette()
+        pal.setColor(QPalette.Link, QColor(0x00, 0x92, 0xFF))
+        pal.setColor(QPalette.LinkVisited, QColor(0x00, 0x70, 0xDD))
+        self.setPalette(pal)
 
     def load_stylesheet(self, res=":/styles/styles/main.css"):
         rc = QFile(res)

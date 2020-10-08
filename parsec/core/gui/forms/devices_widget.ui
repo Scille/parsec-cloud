@@ -22,6 +22,10 @@
 
 #button_add_device:hover {
 	color: #0070DD;
+}
+
+#widget_content {
+	background-color: #EEEEEE;
 }</string>
   </property>
   <layout class="QVBoxLayout" name="verticalLayout">

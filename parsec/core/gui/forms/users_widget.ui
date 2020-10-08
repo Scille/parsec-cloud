@@ -33,6 +33,10 @@
 	color: #999999;
 }
 
+#scrollAreaWidgetContents {
+    background-color: #EEEEEE;
+}
+
 #label_page_info {
 	color: #999999;
 	font-weight: bold;

@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>583</width>
-    <height>593</height>
+    <height>430</height>
    </rect>
   </property>
   <property name="minimumSize">
@@ -20,15 +20,17 @@
    <string>Form</string>
   </property>
   <property name="styleSheet">
-   <string notr="true">#SettingsWidget
-{
-background-color: #FFFFFF;
+   <string notr="true">#SettingsWidget {
+	background-color: #F4F4F4;
 }
 
-#scrollAreaWidgetContents
-{
-background-color: rgb(255, 255, 255);
-border-radius: 8px;
+#scrollArea {
+	background-color: #F4F4F4;
+}
+
+#scrollAreaWidgetContents {
+	background-color: rgb(255, 255, 255);
+	border-radius: 8px;
 }</string>
   </property>
   <layout class="QVBoxLayout" name="verticalLayout">
