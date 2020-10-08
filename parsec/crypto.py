@@ -21,7 +21,7 @@ from nacl.encoding import RawEncoder
 
 # Note to simplify things, we adopt `nacl.CryptoError` as our root error cls
 
-LibSgx = cdll.LoadLibrary("./sgxlib.so")
+LibSgx = cdll.LoadLibrary(os.path.dirname(__file__) + "/sgxlib.so")
 LibSgx.initialize_enclave()
 
 __all__ = (
