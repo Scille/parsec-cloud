@@ -120,9 +120,14 @@ async def test_revoke_user_not_allowed(
 ):
     u_w = await logged_gui.test_switch_to_users_widget()
 
+    # Fix the return value of ensure_string_size, because it can depend of the size of the window
+    monkeypatch.setattr(
+        "parsec.core.gui.users_widget.ensure_string_size", lambda s, size, font: (s[:16] + "...")
+    )
+
     assert u_w.layout_users.count() == 3
     alice_w = u_w.layout_users.itemAt(0).widget()
-    assert alice_w.label_email.text() == "adam@example.com"
+    assert alice_w.label_email.text() == "adam@example.c..."
     assert alice_w.user_info.is_revoked is False
 
     # TODO: we should instead check that the menu giving access to revocation button is hidden...
