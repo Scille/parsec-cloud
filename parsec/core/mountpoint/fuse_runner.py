@@ -104,6 +104,7 @@ async def fuse_mountpoint_runner(
     trio_token = trio.lowlevel.current_trio_token()
     fs_access = ThreadFSAccess(trio_token, workspace_fs)
     fuse_operations = FuseOperations(event_bus, fs_access)
+
     mountpoint_path, initial_st_dev = await _bootstrap_mountpoint(
         base_mountpoint_path, workspace_fs
     )

@@ -188,6 +188,7 @@ class MountpointManager:
     async def unmount_workspace(self, workspace_id: EntryID, timestamp: DateTime = None):
         if (workspace_id, timestamp) not in self._mountpoint_tasks:
             raise MountpointNotMounted(f"Workspace `{workspace_id}` not mounted.")
+
         await self._mountpoint_tasks[(workspace_id, timestamp)].cancel_and_join()
 
     async def remount_workspace_new_timestamp(
