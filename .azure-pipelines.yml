@@ -473,34 +473,9 @@ jobs:
 # Step 5 : macOS build and tests
 
 
-- job: 's5_mac_build'
-  displayName: 'macOS build'
-  dependsOn: [s0_build_wheel]
-  timeoutInMinutes: 15
-  pool:
-    vmImage: 'macos-10.15'
-  steps:
-  - checkout: self
-    submodules: true
-  - task: UsePythonVersion@0
-    inputs:
-      versionSpec: '3.7'
-  - download: current
-    artifact: wheel
-  - bash: |
-      set -eux
-      cd packaging/macOS
-      sh macos_pyinstaller.sh
-      tar -jcvf parsec-macapp.tar.bz2 dist/Parsec.app
-    displayName: 'Building'
-  - publish: packaging/macOS/parsec-macapp.tar.bz2
-
-
-#################################################################################
-
-
 - job: 'macos_test'
-  displayName: 'macOS tests (Catalina)'
+  displayName: 'MacOS tests'
+  dependsOn: s0_build_wheel
   timeoutInMinutes: 60
   pool:
     vmImage: 'macOS-10.15'
@@ -512,6 +487,15 @@ jobs:
   - task: UsePythonVersion@0
     inputs:
       versionSpec: '$(python.version)'
+  - download: current
+    artifact: wheel
+  - bash: |
+      set -eux
+      cd packaging/macOS
+      sh macos_pyinstaller.sh
+      tar -jcvf parsec-macapp.tar.bz2 dist/Parsec.app
+    displayName: 'Build'
+  - publish: packaging/macOS/parsec-macapp.tar.bz2
   - bash: |
       set -eux
       python --version
