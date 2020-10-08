@@ -5,6 +5,7 @@ import os
 from typing import Tuple
 from base64 import b32decode, b32encode
 from hashlib import sha256
+from ctypes import *
 
 from nacl.exceptions import CryptoError  # noqa: republishing
 from nacl.public import SealedBox, PrivateKey as _PrivateKey, PublicKey as _PublicKey
@@ -20,6 +21,8 @@ from cryptography.exceptions import InvalidTag
 
 # Note to simplify things, we adopt `nacl.CryptoError` as our root error cls
 
+LibSgx = cdll.LoadLibrary("./sgxlib.so")
+LibSgx.initialize_enclave()
 
 __all__ = (
     # Exceptions
@@ -44,44 +47,72 @@ __all__ = (
 CRYPTO_OPSLIMIT = argon2i.OPSLIMIT_INTERACTIVE
 CRYPTO_MEMLIMIT = argon2i.MEMLIMIT_INTERACTIVE
 
-
+SGX_AESGCM_MAC_SIZE = 16
+SGX_AESGCM_IV_SIZE = 12
 # Types
-
 
 class SecretKey(bytes):
     __slots__ = ()
 
     @classmethod
     def generate(cls) -> "SecretKey":
-        return cls(os.urandom(32))
+        return cls(os.urandom(16))
 
     def __repr__(self):
         # Avoid leaking the key in logs
         return f"<{type(self).__module__}.{type(self).__qualname__} object at {hex(id(self))}>"
 
-    def _check_bytes(name, value):
-        if not isinstance(value, bytes):
-            raise TypeError("{} must be bytes".format(name))
-
+    # Using AES with SGX enclave
     def encrypt(self, data):
-        iv = os.urandom(16)
-        cipher = Cipher(algorithms.AES(self), modes.GCM(iv))
-        encryptor = cipher.encryptor()
-        ciphered = encryptor.update(data) + encryptor.finalize()
-        tag = encryptor.tag
-        token = iv + tag + ciphered
-        return token
+        ecall_encryptMessage = LibSgx.ecall_encryptMessage
+        ecall_encryptMessage.restype = POINTER(c_uint8)
+        encMessageLen = c_size_t()
+        len_data = len(data)
+        encrypted_ptr = ecall_encryptMessage(self, data, len(data), byref(encMessageLen))
+        encrypted_data = cast(encrypted_ptr, POINTER(c_uint8 * encMessageLen.value))
+        encrypted_data = bytes(list(encrypted_data.contents))
+        print("ici")
+        # print()
+        # print()
+        # print("encrypted data = ", encrypted_data)
 
-    def decrypt(self, token):
-        iv = token[0:16]
-        tag = token[16:32]
-        ciphered = token[32:]
-        try:
-            cipher = Cipher(algorithms.AES(self), modes.GCM(iv, tag))
-            decryptor = cipher.decryptor()
-            return decryptor.update(ciphered) + decryptor.finalize()
-        except (InvalidTag, ValueError) as exc:
-            raise CryptoError(str(exc)) from exc
+        return encrypted_data
+
+    def decrypt(self, data):
+        data_len = len(data)
+        output_len = data_len - SGX_AESGCM_MAC_SIZE - SGX_AESGCM_IV_SIZE
+        ecall_decryptMessage = LibSgx.ecall_decryptMessage
+        ecall_decryptMessage.restype = POINTER(c_uint8 * output_len)
+        decrypted_data = bytes(list(ecall_decryptMessage(self, data, data_len).contents))
+        print("la")
+        # print()
+        # print()
+        # print("decrypted data = ", decrypted_data)
+        return bytes(list(ecall_decryptMessage(self, data, data_len).contents))
+    
+    # Using AES WITHOUT ENCLAVE
+    # def encrypt(self, data):
+    #     iv = os.urandom(16)
+    #     cipher = Cipher(algorithms.AES(self), modes.GCM(iv))
+    #     encryptor = cipher.encryptor()
+    #     ciphered = encryptor.update(data) + encryptor.finalize()
+    #     tag = encryptor.tag
+    #     token = iv + tag + ciphered
+    #     return token
+    # def decrypt(self, token):
+    #     iv = token[0:16]
+    #     tag = token[16:32]
+    #     ciphered = token[32:]
+    #     try:
+    #         cipher = Cipher(algorithms.AES(self), modes.GCM(iv, tag))
+    #         decryptor = cipher.decryptor()
+    #         decrypted_message = decryptor.update(ciphered) + decryptor.finalize()
+    #         print()
+    #         print()
+    #         print("decrypted_message = ", decrypted_message)
+    #         return decrypted_message
+    #     except (InvalidTag, ValueError) as exc:
+    #         raise CryptoError(str(exc)) from exc
 
     # Using pyNaCl
     # def encrypt(self, data: bytes) -> bytes:
