@@ -165,7 +165,7 @@ def run_git(cmd, verbose=False):
         raise RuntimeError(
             f"Error while running `{cmd}`: returned {proc.returncode}\n"
             f"stdout:\n{proc.stdout.decode()}\n"
-            f"stdout:\n{proc.stdout.decode()}\n"
+            f"stderr:\n{proc.stderr.decode()}\n"
         )
     stderr = proc.stderr.decode()
     if verbose and stderr:
