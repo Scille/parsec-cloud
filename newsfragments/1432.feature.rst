@@ -1,1 +1,0 @@
-Show a spinner while workspaces are loaded

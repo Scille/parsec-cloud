@@ -1,1 +1,0 @@
-Display login and follow link on not logged organization file link click.

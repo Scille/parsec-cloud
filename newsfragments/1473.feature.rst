@@ -1,1 +1,0 @@
-Add parsec core cli envvar support

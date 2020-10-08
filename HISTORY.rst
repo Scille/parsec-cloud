@@ -5,6 +5,83 @@ History
 .. towncrier release notes start
 
 
+Parsec v2.1.0 (2020-10-08)
+--------------------------
+
+Features
+~~~~~~~~
+
+* Ask directly for password if only one device is registered on the machine
+  (`#1456 <https://github.com/Scille/parsec-cloud/issues/1456>`__)
+* Better display for temporary workspaces  (`#1463
+  <https://github.com/Scille/parsec-cloud/issues/1463>`__)
+* Show a spinner while workspaces are loaded  (`#1432
+  <https://github.com/Scille/parsec-cloud/issues/1432>`__)
+* Add feature to display shared workspaces between two users  (`#1454
+  <https://github.com/Scille/parsec-cloud/issues/1454>`__)
+* Better display when user role on a workspace has been changed  (`#1418
+  <https://github.com/Scille/parsec-cloud/issues/1418>`__)
+* Adding Users Pagination for GUI.  (`#1452 <https://github.com/Scille/parsec-
+  cloud/issues/1452>`__)
+* Better display of workspace reencryption  (`#1423
+  <https://github.com/Scille/parsec-cloud/issues/1423>`__)
+* Display login and follow link on not logged organization file link click.
+  (`#1405 <https://github.com/Scille/parsec-cloud/issues/1405>`__)
+* Display the volume of an organization to admins  (`#1487
+  <https://github.com/Scille/parsec-cloud/issues/1487>`__)
+* Better indictation of the role of a user on a workspace  (`#1478
+  <https://github.com/Scille/parsec-cloud/issues/1478>`__)
+* Remember the previous position and size of the window  (`#1486
+  <https://github.com/Scille/parsec-cloud/issues/1486>`__)
+* Add parsec core cli envvar support  (`#1473 <https://github.com/Scille/parsec-
+  cloud/issues/1473>`__)
+* Display server address in user info tooltip  (`#1474
+  <https://github.com/Scille/parsec-cloud/issues/1474>`__)
+
+Bugfixes
+~~~~~~~~
+
+* Fix the reporting of exceptions with very long traces from the backend
+  connection module.  (`#1340 <https://github.com/Scille/parsec-
+  cloud/issues/1340>`__)
+* Fix batch size in workspace reencryption leading to very slow operation.
+  (`#1431 <https://github.com/Scille/parsec-cloud/issues/1431>`__)
+* Fix a possible deadlock when cancelling the mounting of a workspace on linux.
+  (`#1500 <https://github.com/Scille/parsec-cloud/issues/1500>`__)
+* Avoid uncessary scrolling when displaying users and devices  (`#1449
+  <https://github.com/Scille/parsec-cloud/issues/1449>`__)
+* Improved workspaces loading  (`#1436 <https://github.com/Scille/parsec-
+  cloud/issues/1436>`__)
+* Fixed error message when the choosen org name already exists  (`#1345
+  <https://github.com/Scille/parsec-cloud/issues/1345>`__)
+* Fix an issue causing workspace files to not be closed properly.  (`#1391
+  <https://github.com/Scille/parsec-cloud/issues/1391>`__)
+* Refresh device list when logging out  (`#1453
+  <https://github.com/Scille/parsec-cloud/issues/1453>`__)
+* Validate button is disabled by default when chosing a password  (`#1459
+  <https://github.com/Scille/parsec-cloud/issues/1459>`__)
+* Refresh workspace list when closing the sharing dialog  (`#1495
+  <https://github.com/Scille/parsec-cloud/issues/1495>`__)
+* Improve client disconnection handling in the backend.  (`#1461
+  <https://github.com/Scille/parsec-cloud/issues/1461>`__)
+* Fixed blinking reencryption button  (`#1485 <https://github.com/Scille/parsec-
+  cloud/issues/1485>`__)
+* Fixed opening the GUI with a file link containing an unknown org  (`#1455
+  <https://github.com/Scille/parsec-cloud/issues/1455>`__)
+
+Deprecations and Removals
+~~~~~~~~~~~~~~~~~~~~~~~~~
+
+* Remove deprecated `parsec core apiv1` commands from the cli. (`#1440
+  <https://github.com/Scille/parsec-cloud/issues/1440>`__)
+
+Miscellaneous internal changes
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+* Improve error message in GUI on unexpected error.  (`#1481
+  <https://github.com/Scille/parsec-cloud/issues/1481>`__)
+
+
 Parsec v2.0.0 (2020-09-03)
 --------------------------
 

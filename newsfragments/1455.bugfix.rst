@@ -1,1 +1,0 @@
-Fixed opening the GUI with a file link containing an unknown org

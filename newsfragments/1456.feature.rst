@@ -1,1 +1,0 @@
-Ask directly for password if only one device is registered on the machine
