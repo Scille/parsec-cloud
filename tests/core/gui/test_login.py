@@ -214,6 +214,7 @@ async def test_login_logout_account_list_refresh(
     acc_w = gui.test_get_login_widget().widget.layout().itemAt(0).widget()
     # Skipping device selection because we have only one device
     assert isinstance(acc_w, LoginPasswordInputWidget)
+    assert not acc_w.button_back.isVisible()
 
     def _switch_to_main_tab():
         gui.tab_center.setCurrentIndex(0)
