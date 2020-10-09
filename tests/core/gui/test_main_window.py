@@ -506,11 +506,16 @@ async def test_link_claim_user_disconnected(
 @pytest.mark.gui
 @pytest.mark.trio
 async def test_tab_login_logout(
-    aqtbot, running_backend, gui_factory, autoclose_dialog, core_config, alice
+    aqtbot, running_backend, gui_factory, autoclose_dialog, core_config, alice, monkeypatch
 ):
     password = "P@ssw0rd"
     save_device_with_password(core_config.config_dir, alice, password)
     gui = await gui_factory()
+
+    # Fix the return value of ensure_string_size, because it can depend of the size of the window
+    monkeypatch.setattr(
+        "parsec.core.gui.main_window.ensure_string_size", lambda s, size, font: (s[:16] + "...")
+    )
 
     assert gui.tab_center.count() == 1
     assert gui.tab_center.tabText(0) == translate("TEXT_TAB_TITLE_LOG_IN_SCREEN")
@@ -519,7 +524,7 @@ async def test_tab_login_logout(
 
     await gui.test_switch_to_logged_in(alice)
     assert gui.tab_center.count() == 1
-    assert gui.tab_center.tabText(0) == "CoolOrg - Alicey McAlic..."
+    assert gui.tab_center.tabText(0) == "CoolOrg - Alicey..."
     assert gui.add_tab_button.isEnabled()
     assert gui.test_get_tab() == first_created_tab
 
@@ -533,11 +538,16 @@ async def test_tab_login_logout(
 @pytest.mark.gui
 @pytest.mark.trio
 async def test_tab_login_logout_two_tabs(
-    aqtbot, running_backend, gui_factory, autoclose_dialog, core_config, alice
+    aqtbot, running_backend, gui_factory, autoclose_dialog, core_config, alice, monkeypatch
 ):
     password = "P@ssw0rd"
     save_device_with_password(core_config.config_dir, alice, password)
     gui = await gui_factory()
+
+    # Fix the return value of ensure_string_size, because it can depend of the size of the window
+    monkeypatch.setattr(
+        "parsec.core.gui.main_window.ensure_string_size", lambda s, size, font: (s[:16] + "...")
+    )
 
     assert gui.tab_center.count() == 1
     assert gui.tab_center.tabText(0) == translate("TEXT_TAB_TITLE_LOG_IN_SCREEN")
@@ -545,12 +555,12 @@ async def test_tab_login_logout_two_tabs(
 
     await gui.test_switch_to_logged_in(alice)
     assert gui.tab_center.count() == 1
-    assert gui.tab_center.tabText(0) == "CoolOrg - Alicey McAlic..."
+    assert gui.tab_center.tabText(0) == "CoolOrg - Alicey..."
     logged_tab = gui.test_get_tab()
 
     await aqtbot.mouse_click(gui.add_tab_button, QtCore.Qt.LeftButton)
     assert gui.tab_center.count() == 2
-    assert gui.tab_center.tabText(0) == "CoolOrg - Alicey McAlic..."
+    assert gui.tab_center.tabText(0) == "CoolOrg - Alicey..."
     assert gui.tab_center.tabText(1) == translate("TEXT_TAB_TITLE_LOG_IN_SCREEN")
 
     gui.switch_to_tab(0)
@@ -568,30 +578,35 @@ async def test_tab_login_logout_two_tabs(
 @pytest.mark.gui
 @pytest.mark.trio
 async def test_tab_login_logout_two_tabs_logged_in(
-    aqtbot, running_backend, gui_factory, autoclose_dialog, core_config, alice, bob
+    aqtbot, running_backend, gui_factory, autoclose_dialog, core_config, alice, bob, monkeypatch
 ):
     password = "P@ssw0rd"
     save_device_with_password(core_config.config_dir, alice, password)
     gui = await gui_factory()
+
+    # Fix the return value of ensure_string_size, because it can depend of the size of the window
+    monkeypatch.setattr(
+        "parsec.core.gui.main_window.ensure_string_size", lambda s, size, font: (s[:16] + "...")
+    )
 
     assert gui.tab_center.count() == 1
     assert gui.tab_center.tabText(0) == translate("TEXT_TAB_TITLE_LOG_IN_SCREEN")
 
     await gui.test_switch_to_logged_in(alice)
     assert gui.tab_center.count() == 1
-    assert gui.tab_center.tabText(0) == "CoolOrg - Alicey McAlic..."
+    assert gui.tab_center.tabText(0) == "CoolOrg - Alicey..."
     alice_logged_tab = gui.test_get_tab()
 
     await aqtbot.mouse_click(gui.add_tab_button, QtCore.Qt.LeftButton)
     assert gui.tab_center.count() == 2
-    assert gui.tab_center.tabText(0) == "CoolOrg - Alicey McAlic..."
+    assert gui.tab_center.tabText(0) == "CoolOrg - Alicey..."
     assert gui.tab_center.tabText(1) == translate("TEXT_TAB_TITLE_LOG_IN_SCREEN")
 
     save_device_with_password(core_config.config_dir, bob, password)
     await gui.test_switch_to_logged_in(bob)
     assert gui.tab_center.count() == 2
-    assert gui.tab_center.tabText(0) == "CoolOrg - Alicey McAlic..."
-    assert gui.tab_center.tabText(1) == "CoolOrg - Boby McBobF..."
+    assert gui.tab_center.tabText(0) == "CoolOrg - Alicey..."
+    assert gui.tab_center.tabText(1) == "CoolOrg - Boby M..."
     bob_logged_tab = gui.test_get_tab()
     assert bob_logged_tab != alice_logged_tab
 
@@ -604,7 +619,7 @@ async def test_tab_login_logout_two_tabs_logged_in(
 
     await gui.test_logout()
     assert gui.tab_center.count() == 2
-    assert gui.tab_center.tabText(0) == "CoolOrg - Boby McBobF..."
+    assert gui.tab_center.tabText(0) == "CoolOrg - Boby M..."
     assert gui.tab_center.tabText(1) == translate("TEXT_TAB_TITLE_LOG_IN_SCREEN")
 
 

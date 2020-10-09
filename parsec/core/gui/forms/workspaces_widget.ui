@@ -32,6 +32,7 @@
 
 #scrollAreaWidgetContents {
 	background-color: #EEEEEE;
+}
 
 #filter_widget {
 	border-radius: 5px;

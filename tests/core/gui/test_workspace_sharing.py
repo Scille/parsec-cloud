@@ -83,12 +83,19 @@ async def test_share_workspace(
     adam,
     catch_share_workspace_widget,
     qt_thread_gateway,
+    monkeypatch,
 ):
     password = "P@ssw0rd"
     save_device_with_password(core_config.config_dir, alice, password)
     save_device_with_password(core_config.config_dir, adam, password)
 
     logged_gui, w_w, share_w_w = gui_workspace_sharing
+
+    # Fix the return value of ensure_string_size, because it can depend of the size of the window
+    monkeypatch.setattr(
+        "parsec.core.gui.workspace_button.ensure_string_size",
+        lambda s, size, font: (s[:16] + "..."),
+    )
 
     def _users_listed():
         assert share_w_w.scroll_content.layout().count() == 4
@@ -133,7 +140,7 @@ async def test_share_workspace(
         assert isinstance(wk_button, WorkspaceButton)
         assert wk_button.name == "Workspace"
         assert wk_button.label_title.toolTip() == "Workspace (shared with Adamy McAdamFace)"
-        assert wk_button.label_title.text() == "Workspace (shared ..."
+        assert wk_button.label_title.text() == "Workspace (share..."
         assert not autoclose_dialog.dialogs
 
     await aqtbot.wait_until(_workspace_listed, timeout=2000)

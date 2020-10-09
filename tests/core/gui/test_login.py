@@ -17,7 +17,7 @@ from parsec.core.gui.login_widget import (
 
 @pytest.mark.gui
 @pytest.mark.trio
-async def test_login(aqtbot, gui_factory, autoclose_dialog, core_config, alice):
+async def test_login(aqtbot, gui_factory, autoclose_dialog, core_config, alice, monkeypatch):
     # Create an existing device before starting the gui
     password = "P@ssw0rd"
     save_device_with_password(core_config.config_dir, alice, password)
@@ -28,6 +28,11 @@ async def test_login(aqtbot, gui_factory, autoclose_dialog, core_config, alice):
 
     accounts_w = lw.widget.layout().itemAt(0).widget()
     assert accounts_w
+
+    # Fix the return value of ensure_string_size, because it can depend of the size of the window
+    monkeypatch.setattr(
+        "parsec.core.gui.main_window.ensure_string_size", lambda s, size, font: (s[:16] + "...")
+    )
 
     # Only one device, we skip the device selection
 
@@ -48,7 +53,7 @@ async def test_login(aqtbot, gui_factory, autoclose_dialog, core_config, alice):
     assert (
         central_widget.button_user.text() == f"{alice.organization_id}\n{alice.short_user_display}"
     )
-    assert gui.tab_center.tabText(0) == "CoolOrg - Alicey McAlic..."
+    assert gui.tab_center.tabText(0) == "CoolOrg - Alicey..."
 
 
 @pytest.mark.gui
