@@ -18,7 +18,7 @@ class APIV1_BackendAdministrationCmds:
         self.acquire_transport = acquire_transport
 
     organization_create = expose_cmds(cmds.organization_create)
-    organization_stats = expose_cmds(cmds.organization_stats)
+    organization_stats = expose_cmds(cmds.apiv1_organization_stats)
     organization_status = expose_cmds(cmds.organization_status)
     organization_update = expose_cmds(cmds.organization_update)
     ping = expose_cmds(cmds.ping)
