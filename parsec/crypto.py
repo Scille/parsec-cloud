@@ -28,7 +28,6 @@ class SgxStatus(Enum):
 # Note to simplify things, we adopt `nacl.CryptoError` as our root error cls
 
 LibSgx = cdll.LoadLibrary(os.path.dirname(__file__) + "/sgxlib.so")
-LibSgx.initialize_enclave()
 
 __all__ = (
     # Exceptions
@@ -71,22 +70,19 @@ class SecretKey(bytes):
 
     # Using AES with SGX enclave
     def encrypt(self, data):
-        print("initializing = ", LibSgx.initialize_enclave())
-        print(LibSgx.ecall_enclave_hello_world())
-        # ecall_encryptText = LibSgx.ecall_encryptText
-        # ecall_encryptText.restype = POINTER(c_uint8)
-        # encMessageLen = c_size_t()
-        # status_code = c_int()
-        # encrypted_ptr = ecall_encryptText(byref(status_code), self, data, len(data), byref(encMessageLen))
-        # print("\n\n\ndata=",data, "\n\n\n")
-        # print("\n\n\key=",self, "\n\n\n")
-        # if status_code.value != SgxStatus.SUCCESS.value:
-        #     print("encryption went wrong, status_code = ", status_code.value)
-        #     raise CryptoError
-        # else:
-        #     encrypted_data = cast(encrypted_ptr, POINTER(c_uint8 * encMessageLen.value))
-        #     encrypted_data = bytes(list(encrypted_data.contents))
-        return b''
+        ecall_encryptText = LibSgx.ecall_encryptText
+        ecall_encryptText.restype = POINTER(c_uint8)
+        encMessageLen = c_size_t()
+        status_code = c_int()
+        encrypted_ptr = ecall_encryptText(byref(status_code), self, data, len(data), byref(encMessageLen))
+        if status_code.value != SgxStatus.SUCCESS.value:
+            print("encryption went wrong, status_code = ", status_code.value)
+            raise CryptoError
+            return b''
+        else:
+            encrypted_data = cast(encrypted_ptr, POINTER(c_uint8 * encMessageLen.value))
+            encrypted_data = bytes(list(encrypted_data.contents))
+            return encrypted_data
 
     def decrypt(self, data):
         data_len = len(data)
