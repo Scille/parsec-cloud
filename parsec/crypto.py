@@ -23,6 +23,7 @@ class SgxStatus(Enum):
     SUCCESS = 0
     ERROR_WRONG_INPUT_ARGUMENTS = -1
 
+
 # Note to simplify things, we adopt `nacl.CryptoError` as our root error cls
 
 LibSgx = cdll.LoadLibrary(os.path.dirname(__file__) + "/sgxlib.so")
