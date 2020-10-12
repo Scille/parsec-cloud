@@ -18,12 +18,10 @@ from nacl.encoding import RawEncoder
 
 from enum import Enum
 
+
 class SgxStatus(Enum):
     SUCCESS = 0
     ERROR_WRONG_INPUT_ARGUMENTS = -1
-
-# from cryptography.hazmat.primitives.ciphers import Cipher, algorithms, modes
-# from cryptography.exceptions import InvalidTag
 
 # Note to simplify things, we adopt `nacl.CryptoError` as our root error cls
 
@@ -74,11 +72,13 @@ class SecretKey(bytes):
         ecall_encryptText.restype = POINTER(c_uint8)
         encMessageLen = c_size_t()
         status_code = c_int()
-        encrypted_ptr = ecall_encryptText(byref(status_code), self, data, len(data), byref(encMessageLen))
+        encrypted_ptr = ecall_encryptText(
+            byref(status_code), self, data, len(data), byref(encMessageLen)
+        )
         if status_code.value != SgxStatus.SUCCESS.value:
             print("encryption went wrong, status_code = ", status_code.value)
             raise CryptoError
-            return b''
+            return b""
         else:
             encrypted_data = cast(encrypted_ptr, POINTER(c_uint8 * encMessageLen.value))
             encrypted_data = bytes(list(encrypted_data.contents))
@@ -90,7 +90,9 @@ class SecretKey(bytes):
         ecall_decryptText = LibSgx.ecall_decryptText
         ecall_decryptText.restype = POINTER(c_uint8 * output_len)
         status_code = c_int()
-        decrypted_data = bytes(list(ecall_decryptText(byref(status_code), self, data, data_len).contents))
+        decrypted_data = bytes(
+            list(ecall_decryptText(byref(status_code), self, data, data_len).contents)
+        )
         return decrypted_data
 
     def hmac(self, data: bytes, digest_size=BLAKE2B_BYTES) -> bytes:
