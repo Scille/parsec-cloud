@@ -275,10 +275,10 @@ requirements = [
     # Can use marshmallow or the toasted flavour as you like ;-)
     # "marshmallow==2.14.0",
     "toastedmarshmallow==0.2.6",
-    "pendulum==1.3.1",
+    "pendulum==2.1.2",
     "PyNaCl==1.4.0",
-    "trio==0.13.0",
-    "python-interface==1.4.0",
+    "trio==0.16.0",
+    "trio_typing==0.5.0",
     "async_generator>=1.9",
     'contextvars==2.1;python_version<"3.7"',
     "sentry-sdk==0.14.3",
@@ -331,7 +331,7 @@ extra_requirements = {
     "backend": [
         "jinja2==2.11.2",
         # PostgreSQL
-        "triopg==0.3.0",
+        "triopg==0.5.0",
         "trio-asyncio==0.11.0",
         # S3
         "boto3==1.12.34",

@@ -5,21 +5,21 @@ import pendulum
 
 from tests.common import freeze_time
 
-day0 = pendulum.Pendulum(1999, 12, 31)
-day1 = pendulum.Pendulum(2000, 1, 1)
-day2 = pendulum.Pendulum(2000, 1, 2)
-day3 = pendulum.Pendulum(2000, 1, 3)
-day4 = pendulum.Pendulum(2000, 1, 4)
-day5 = pendulum.Pendulum(2000, 1, 5)
-day6 = pendulum.Pendulum(2000, 1, 6)
-day7 = pendulum.Pendulum(2000, 1, 7)
-day8 = pendulum.Pendulum(2000, 1, 8)
-day9 = pendulum.Pendulum(2000, 1, 9)
-day10 = pendulum.Pendulum(2000, 1, 10)
-day11 = pendulum.Pendulum(2000, 1, 11)
-day12 = pendulum.Pendulum(2000, 1, 12)
-day13 = pendulum.Pendulum(2000, 1, 13)
-day14 = pendulum.Pendulum(2000, 1, 14)
+day0 = pendulum.datetime(1999, 12, 31)
+day1 = pendulum.datetime(2000, 1, 1)
+day2 = pendulum.datetime(2000, 1, 2)
+day3 = pendulum.datetime(2000, 1, 3)
+day4 = pendulum.datetime(2000, 1, 4)
+day5 = pendulum.datetime(2000, 1, 5)
+day6 = pendulum.datetime(2000, 1, 6)
+day7 = pendulum.datetime(2000, 1, 7)
+day8 = pendulum.datetime(2000, 1, 8)
+day9 = pendulum.datetime(2000, 1, 9)
+day10 = pendulum.datetime(2000, 1, 10)
+day11 = pendulum.datetime(2000, 1, 11)
+day12 = pendulum.datetime(2000, 1, 12)
+day13 = pendulum.datetime(2000, 1, 13)
+day14 = pendulum.datetime(2000, 1, 14)
 
 
 @pytest.fixture

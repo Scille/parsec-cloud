@@ -2,7 +2,8 @@
 
 import trio
 from pathlib import Path
-from pendulum import Pendulum, now as pendulum_now
+from trio_typing import TaskStatus
+from pendulum import DateTime, now as pendulum_now
 from typing import (
     Tuple,
     Optional,
@@ -10,7 +11,6 @@ from typing import (
     Dict,
     Sequence,
     Pattern,
-    Any,
     Type,
     TypeVar,
     AsyncIterator,
@@ -20,6 +20,7 @@ from structlog import get_logger
 
 from async_generator import asynccontextmanager
 
+from parsec.utils import open_service_nursery
 from parsec.core.core_events import CoreEvent
 from parsec.event_bus import EventBus
 from parsec.crypto import SecretKey
@@ -54,7 +55,7 @@ from parsec.core.backend_connection import (
 from parsec.core.remote_devices_manager import RemoteDevicesManager
 
 from parsec.core.fs.workspacefs import WorkspaceFS
-from parsec.core.fs.remote_loader import RemoteLoader
+from parsec.core.fs.remote_loader import UserRemoteLoader
 from parsec.core.fs.storage import UserStorage, WorkspaceStorage
 from parsec.core.fs.userfs.merging import merge_local_user_manifests, merge_workspace_entry
 from parsec.core.fs.exceptions import (
@@ -172,7 +173,7 @@ class UserFS:
         backend_cmds: BackendAuthenticatedCmds,
         remote_devices_manager: RemoteDevicesManager,
         event_bus: EventBus,
-        prevent_sync_pattern: Pattern,
+        prevent_sync_pattern: Pattern[str],
     ):
         self.device = device
         self.path = path
@@ -200,28 +201,34 @@ class UserFS:
             role_cached_on=now,
             role=WorkspaceRole.OWNER,
         )
-        self.remote_loader = RemoteLoader(
+        self.remote_loader = UserRemoteLoader(
             self.device,
             self.device.user_manifest_id,
             lambda: wentry,
             self.backend_cmds,
             self.remote_devices_manager,
-            # Hack, but fine as long as we only call `load_realm_current_roles`
-            None,
         )
 
     @classmethod
     @asynccontextmanager
     async def run(
-        cls: Type[UserFSTypeVar], *args: Any, **kwargs: Any
+        cls: Type[UserFSTypeVar],
+        device: LocalDevice,
+        path: Path,
+        backend_cmds: BackendAuthenticatedCmds,
+        remote_devices_manager: RemoteDevicesManager,
+        event_bus: EventBus,
+        prevent_sync_pattern: Pattern[str],
     ) -> AsyncIterator[UserFSTypeVar]:
-        self = cls(*args, **kwargs)
+        self = cls(
+            device, path, backend_cmds, remote_devices_manager, event_bus, prevent_sync_pattern
+        )
 
         # Run user storage
         async with UserStorage.run(self.device, self.path) as self.storage:
 
             # Nursery for workspace storages
-            async with trio.open_service_nursery() as self._workspace_storage_nursery:
+            async with open_service_nursery() as self._workspace_storage_nursery:
 
                 # Make sure all the workspaces are loaded
                 # In particular, we want to make sure that any workspace available through
@@ -265,7 +272,9 @@ class UserFS:
     async def _instantiate_workspace_storage(self, workspace_id: EntryID) -> WorkspaceStorage:
         path = self.path / str(workspace_id)
 
-        async def workspace_storage_task(task_status=trio.TASK_STATUS_IGNORED):
+        async def workspace_storage_task(
+            task_status: TaskStatus[WorkspaceStorage] = trio.TASK_STATUS_IGNORED
+        ) -> None:
             async with WorkspaceStorage.run(self.device, path, workspace_id) as workspace_storage:
                 task_status.started(workspace_storage)
                 await trio.sleep_forever()
@@ -744,7 +753,7 @@ class UserFS:
         return errors
 
     async def _process_message(
-        self, sender_id: DeviceID, expected_timestamp: Pendulum, ciphered: bytes
+        self, sender_id: DeviceID, expected_timestamp: DateTime, ciphered: bytes
     ) -> None:
         """
         Raises:
@@ -917,7 +926,7 @@ class UserFS:
         self,
         new_workspace_entry: WorkspaceEntry,
         users: List[UserCertificateContent],
-        now: Pendulum,
+        now: DateTime,
     ) -> Dict[UserID, bytes]:
         """
         Raises:
@@ -951,7 +960,7 @@ class UserFS:
         self,
         workspace_id: EntryID,
         encryption_revision: int,
-        timestamp: Pendulum,
+        timestamp: DateTime,
         per_user_ciphered_msgs: Dict[UserID, bytes],
     ) -> bool:
         """

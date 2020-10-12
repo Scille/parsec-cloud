@@ -25,9 +25,8 @@ def format_datetime(dt, full=False, seconds=False):
         fmt = "L LTS"
     if full:
         fmt = "LLLL"
-    return dt.in_tz(pendulum.local_timezone()).format(
-        fmt, locale=_current_locale_language, formatter="alternative"
-    )
+    # The alternative formatter is now the default one since pendulum 2.0.0
+    return dt.in_tz(pendulum.local_timezone()).format(fmt, locale=_current_locale_language)
 
 
 def qt_translate(_, string):

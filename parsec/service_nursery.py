@@ -110,7 +110,7 @@ def _get_coroutine_or_flag_problem(
     # If we're not happy with this async_fn, trio won't be either,
     # and will tell us why in much greater detail.
     try:
-        trio.hazmat.spawn_system_task(probe_fn, *args)
+        trio.lowlevel.spawn_system_task(probe_fn, *args)
     except TypeError as ex:
         problem_with_async_fn = ex
     else:
@@ -170,7 +170,7 @@ async def open_service_nursery() -> AsyncIterator:
 
                 def wrap_started(value: object = None) -> None:
                     type(task_status).started(task_status, value)
-                    if trio.hazmat.current_task().parent_nursery is not nursery:
+                    if trio.lowlevel.current_task().parent_nursery is not nursery:
                         # started() didn't move the task due to a cancellation,
                         # so it doesn't get the shield
                         return

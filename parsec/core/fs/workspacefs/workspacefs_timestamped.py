@@ -1,14 +1,15 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
 
 import pendulum
+from typing import Callable
 
-from parsec.core.types import WorkspaceRole
+from parsec.core.types import WorkspaceRole, WorkspaceEntry
 from parsec.core.fs.workspacefs.sync_transactions import SyncTransactions
 from parsec.core.fs.workspacefs.workspacefs import WorkspaceFS
 
 
 class WorkspaceFSTimestamped(WorkspaceFS):
-    def __init__(self, workspacefs: WorkspaceFS, timestamp: pendulum.Pendulum):
+    def __init__(self, workspacefs: WorkspaceFS, timestamp: pendulum.DateTime):
         self.workspace_id = workspacefs.workspace_id
         if isinstance(workspacefs, WorkspaceFSTimestamped):
             self.get_workspace_entry = workspacefs.get_workspace_entry
@@ -32,8 +33,10 @@ class WorkspaceFSTimestamped(WorkspaceFS):
             self.event_bus,
         )
 
-    def timestamp_get_entry(self, get_original_workspace_entry):
-        def get_timestamped_workspace_entry():
+    def timestamp_get_entry(
+        self, get_original_workspace_entry: Callable[[], WorkspaceEntry]
+    ) -> Callable[[], WorkspaceEntry]:
+        def get_timestamped_workspace_entry() -> WorkspaceEntry:
             return get_original_workspace_entry().evolve(role=WorkspaceRole.READER)
 
         return get_timestamped_workspace_entry

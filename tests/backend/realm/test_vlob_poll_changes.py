@@ -2,7 +2,7 @@
 
 import pytest
 from uuid import UUID
-from pendulum import Pendulum, now as pendulum_now
+from pendulum import datetime, now as pendulum_now
 
 from parsec.api.data import RealmRoleCertificateContent
 from parsec.api.protocol import RealmRole
@@ -10,7 +10,7 @@ from parsec.api.protocol import RealmRole
 from tests.backend.common import realm_update_roles, vlob_update, vlob_poll_changes
 
 
-NOW = Pendulum(2000, 1, 1)
+NOW = datetime(2000, 1, 1)
 VLOB_ID = UUID("00000000000000000000000000000001")
 OTHER_VLOB_ID = UUID("00000000000000000000000000000002")
 YET_ANOTHER_VLOB_ID = UUID("00000000000000000000000000000003")
@@ -155,7 +155,7 @@ async def test_vlob_poll_changes_during_maintenance(backend, alice, alice_backen
         realm,
         2,
         {alice.user_id: b"whatever"},
-        Pendulum(2000, 1, 2),
+        datetime(2000, 1, 2),
     )
 
     # Realm under maintenance are simply skipped

@@ -258,7 +258,7 @@ async def test_user_create_device_label_not_allowed(
 async def test_user_create_not_matching_certified_on(
     backend, apiv1_backend_sock_factory, alice, mallory
 ):
-    date1 = pendulum.Pendulum(2000, 1, 1)
+    date1 = pendulum.datetime(2000, 1, 1)
     date2 = date1.add(seconds=1)
     cu = UserCertificateContent(
         author=alice.device_id,
@@ -286,7 +286,7 @@ async def test_user_create_not_matching_certified_on(
 
 @pytest.mark.trio
 async def test_user_create_certify_too_old(backend, apiv1_backend_sock_factory, alice, mallory):
-    too_old = pendulum.Pendulum(2000, 1, 1)
+    too_old = pendulum.datetime(2000, 1, 1)
     now = too_old.add(seconds=INVITATION_VALIDITY + 1)
     cu = UserCertificateContent(
         author=alice.device_id,

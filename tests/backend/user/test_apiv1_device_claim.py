@@ -4,7 +4,7 @@ from parsec.backend.backend_events import BackendEvent
 from parsec.event_bus import MetaEvent
 import pytest
 import trio
-from pendulum import Pendulum
+from pendulum import datetime
 from async_generator import asynccontextmanager
 
 from parsec.api.protocol import (
@@ -19,7 +19,7 @@ from tests.common import freeze_time
 @pytest.fixture
 async def alice_nd_invitation(backend, alice):
     invitation = DeviceInvitation(
-        alice.user_id.to_device_id("new_device"), alice.device_id, Pendulum(2000, 1, 2)
+        alice.user_id.to_device_id("new_device"), alice.device_id, datetime(2000, 1, 2)
     )
     await backend.user.create_device_invitation(alice.organization_id, invitation)
     return invitation

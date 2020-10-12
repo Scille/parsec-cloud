@@ -2,7 +2,7 @@
 
 import pytest
 from uuid import UUID
-from pendulum import Pendulum, now as pendulum_now
+from pendulum import datetime, now as pendulum_now
 from unittest.mock import ANY
 
 from parsec.api.protocol import RealmRole
@@ -13,7 +13,7 @@ from tests.common import freeze_time, customize_fixtures
 from tests.backend.common import realm_update_roles, realm_get_role_certificates
 
 
-NOW = Pendulum(2000, 1, 1)
+NOW = datetime(2000, 1, 1)
 VLOB_ID = UUID("00000000000000000000000000000001")
 REALM_ID = UUID("0000000000000000000000000000000A")
 
@@ -149,7 +149,7 @@ async def test_remove_role_idempotent(
     expected_certifs = [
         RealmRoleCertificateContent(
             author=alice.device_id,
-            timestamp=Pendulum(2000, 1, 2),
+            timestamp=datetime(2000, 1, 2),
             realm_id=realm,
             user_id=alice.user_id,
             role=RealmRole.OWNER,
@@ -159,14 +159,14 @@ async def test_remove_role_idempotent(
         expected_certifs += [
             RealmRoleCertificateContent(
                 author=alice.device_id,
-                timestamp=Pendulum(2000, 1, 3),
+                timestamp=datetime(2000, 1, 3),
                 realm_id=realm,
                 user_id=bob.user_id,
                 role=RealmRole.MANAGER,
             ),
             RealmRoleCertificateContent(
                 author=alice.device_id,
-                timestamp=Pendulum(2000, 1, 4),
+                timestamp=datetime(2000, 1, 4),
                 realm_id=realm,
                 user_id=bob.user_id,
                 role=None,
@@ -330,7 +330,7 @@ async def test_role_access_during_maintenance(
         realm,
         2,
         {alice.user_id: b"whatever"},
-        Pendulum(2000, 1, 2),
+        datetime(2000, 1, 2),
     )
 
     # Get roles allowed...
@@ -374,16 +374,16 @@ async def test_get_role_certificates_partial(backend, alice, bob, adam, bob_back
     rep = await realm_get_role_certificates(bob_backend_sock, realm)
     assert rep == {"status": "ok", "certificates": [ANY, c3, c4, c5, c6]}
 
-    rep = await realm_get_role_certificates(bob_backend_sock, realm, Pendulum(2000, 1, 3))
+    rep = await realm_get_role_certificates(bob_backend_sock, realm, datetime(2000, 1, 3))
     assert rep == {"status": "ok", "certificates": [c4, c5, c6]}
 
-    rep = await realm_get_role_certificates(bob_backend_sock, realm, Pendulum(2000, 1, 5))
+    rep = await realm_get_role_certificates(bob_backend_sock, realm, datetime(2000, 1, 5))
     assert rep == {"status": "ok", "certificates": [c6]}
 
-    rep = await realm_get_role_certificates(bob_backend_sock, realm, Pendulum(2000, 1, 7))
+    rep = await realm_get_role_certificates(bob_backend_sock, realm, datetime(2000, 1, 7))
     assert rep == {"status": "ok", "certificates": []}
 
-    rep = await realm_get_role_certificates(bob_backend_sock, realm, Pendulum(2000, 1, 6))
+    rep = await realm_get_role_certificates(bob_backend_sock, realm, datetime(2000, 1, 6))
     assert rep == {"status": "ok", "certificates": []}
 
 

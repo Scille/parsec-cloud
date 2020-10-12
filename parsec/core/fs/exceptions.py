@@ -15,7 +15,7 @@ import os
 import errno
 import io
 
-from parsec.core.types import EntryID, ChunkID
+from parsec.core.types import EntryID, ChunkID, AnyPath
 from parsec.core.fs.utils import ntstatus
 
 from typing import Optional, Union
@@ -55,15 +55,21 @@ class FSOperationError(OSError, FSError):
     WINERROR: Optional[int] = None
     NTSTATUS: Optional[ntstatus] = None
 
-    def __init__(self, message=None, filename=None, filename2=None):
+    def __init__(
+        self,
+        arg: object = None,
+        filename: Optional[AnyPath] = None,
+        filename2: Optional[AnyPath] = None,
+    ):
         # Get the actual message and save it
-        if message is None and self.ERRNO is not None:
-            message = os.strerror(self.ERRNO)
-        self.message = str(message)
+        if arg is None and self.ERRNO is not None:
+            self.message = os.strerror(self.ERRNO)
+        else:
+            self.message = str(arg)
 
         # Error with no standard errno
         if self.ERRNO is None:
-            return super().__init__(message)
+            return super().__init__(arg)
 
         # Cast filename arguments
         if filename is not None:
@@ -75,7 +81,7 @@ class FSOperationError(OSError, FSError):
         self.ntstatus = self.NTSTATUS
         super().__init__(self.ERRNO, self.message, filename, self.WINERROR, filename2)
 
-    def __str__(self):
+    def __str__(self) -> str:
         if self.filename2:
             return f"{self.message}: {self.filename} -> {self.filename2}"
         if self.filename:

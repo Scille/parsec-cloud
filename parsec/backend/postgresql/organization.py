@@ -2,7 +2,7 @@
 
 from typing import Optional
 
-from pendulum import Pendulum
+from pendulum import DateTime
 from triopg import UniqueViolationError
 
 from parsec.api.protocol import OrganizationID
@@ -99,7 +99,7 @@ class PGOrganizationComponent(BaseOrganizationComponent):
         self.dbh = dbh
 
     async def create(
-        self, id: OrganizationID, bootstrap_token: str, expiration_date: Optional[Pendulum] = None
+        self, id: OrganizationID, bootstrap_token: str, expiration_date: Optional[DateTime] = None
     ) -> None:
         async with self.dbh.pool.acquire() as conn:
             try:
@@ -178,7 +178,7 @@ class PGOrganizationComponent(BaseOrganizationComponent):
         )
 
     async def set_expiration_date(
-        self, id: OrganizationID, expiration_date: Pendulum = None
+        self, id: OrganizationID, expiration_date: DateTime = None
     ) -> None:
         async with self.dbh.pool.acquire() as conn, conn.transaction():
             result = await conn.execute(
@@ -193,5 +193,5 @@ class PGOrganizationComponent(BaseOrganizationComponent):
             if result != "UPDATE 1":
                 raise OrganizationError(f"Update error: {result}")
 
-            if expiration_date is not None and expiration_date <= Pendulum.now():
+            if expiration_date is not None and expiration_date <= DateTime.now():
                 await send_signal(conn, BackendEvent.ORGANIZATION_EXPIRED, organization_id=id)

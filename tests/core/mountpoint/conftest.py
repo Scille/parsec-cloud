@@ -42,7 +42,7 @@ def mountpoint_service_factory(tmpdir, local_device_factory, user_fs_factory, re
 
     async def _run_mountpoint_service_trio_loop(ready_queue):
         async with trio.open_service_nursery() as nursery:
-            ready_queue.put((trio.hazmat.current_trio_token(), nursery))
+            ready_queue.put((trio.lowlevel.current_trio_token(), nursery))
             await trio.sleep_forever()
 
     class MountpointService:

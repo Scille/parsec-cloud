@@ -160,7 +160,7 @@ async def test_device_create_not_own_user(bob_backend_sock, bob, alice_nd):
 
 @pytest.mark.trio
 async def test_device_create_certify_too_old(alice_backend_sock, alice, alice_nd):
-    now = pendulum.Pendulum(2000, 1, 1)
+    now = pendulum.datetime(2000, 1, 1)
     device_certificate = DeviceCertificateContent(
         author=alice.device_id,
         timestamp=now,

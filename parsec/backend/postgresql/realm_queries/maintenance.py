@@ -144,7 +144,7 @@ async def query_start_reencryption_maintenance(
     realm_id: UUID,
     encryption_revision: int,
     per_participant_message: Dict[UserID, bytes],
-    timestamp: pendulum.Pendulum,
+    timestamp: pendulum.DateTime,
 ) -> None:
     # Retrieve realm and make sure it is not under maintenance
     rep = await get_realm_status(conn, organization_id, realm_id)

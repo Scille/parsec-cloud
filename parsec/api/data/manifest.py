@@ -2,7 +2,7 @@
 
 import attr
 from typing import Optional, Tuple, FrozenDict
-from pendulum import Pendulum, now as pendulum_now
+from pendulum import DateTime, now as pendulum_now
 
 from parsec.types import UUID4
 from parsec.crypto import SecretKey, HashDigest
@@ -76,8 +76,8 @@ class WorkspaceEntry(BaseData):
     id: EntryID
     key: SecretKey
     encryption_revision: int
-    encrypted_on: Pendulum
-    role_cached_on: Pendulum
+    encrypted_on: DateTime
+    role_cached_on: DateTime
     role: Optional[RealmRole]
 
     @classmethod
@@ -180,8 +180,8 @@ class FolderManifest(VerifyParentMixin, BaseManifest):
 
     id: EntryID
     parent: EntryID
-    created: Pendulum
-    updated: Pendulum
+    created: DateTime
+    updated: DateTime
     children: FrozenDict[EntryName, EntryID]
 
 
@@ -213,8 +213,8 @@ class FileManifest(VerifyParentMixin, BaseManifest):
 
     id: EntryID
     parent: EntryID
-    created: Pendulum
-    updated: Pendulum
+    created: DateTime
+    updated: DateTime
     size: int
     blocksize: int
     blocks: Tuple[BlockAccess]
@@ -248,8 +248,8 @@ class WorkspaceManifest(BaseManifest):
             return WorkspaceManifest(**data)
 
     id: EntryID
-    created: Pendulum
-    updated: Pendulum
+    created: DateTime
+    updated: DateTime
     children: FrozenDict[EntryName, EntryID]
 
 
@@ -278,8 +278,8 @@ class UserManifest(BaseManifest):
             return UserManifest(**data)
 
     id: EntryID
-    created: Pendulum
-    updated: Pendulum
+    created: DateTime
+    updated: DateTime
     last_processed_message: int
     workspaces: Tuple[WorkspaceEntry] = attr.ib(converter=tuple)
 

@@ -18,16 +18,15 @@ concurrent downloads (which will be implemented in a next version).
 from heapq import heappush, heappop
 import attr
 import math
-import trio
 import typing
 from functools import partial
-from typing import List, Tuple, NamedTuple, Optional, Union, cast, Dict
-from pendulum import Pendulum
+from typing import List, Tuple, NamedTuple, Optional, Union, cast, Dict, Awaitable
+from pendulum import DateTime
 from collections import defaultdict
 
 from parsec.api.protocol import DeviceID
 from parsec.core.types import FsPath, EntryID
-from parsec.core.fs.utils import is_file_manifest, is_folder_manifest, is_workspace_manifest
+from parsec.utils import open_service_nursery
 from parsec.core.fs.exceptions import FSRemoteManifestNotFound
 from parsec.api.data import FileManifest, UserManifest, FolderManifest, WorkspaceManifest
 
@@ -52,10 +51,10 @@ SYNC_GUESSED_TIME_FRAME = 30
 class TimestampBoundedData(NamedTuple):
     id: EntryID
     version: int
-    early: Pendulum
-    late: Pendulum
+    early: DateTime
+    late: DateTime
     creator: DeviceID
-    updated: Pendulum
+    updated: DateTime
     is_folder: bool
     size: Optional[int]
     source: Optional[FsPath]
@@ -65,13 +64,13 @@ class TimestampBoundedData(NamedTuple):
 class TimestampBoundedEntry(NamedTuple):
     id: EntryID
     version: int
-    early: Pendulum
-    late: Pendulum
+    early: DateTime
+    late: DateTime
 
 
 class ManifestData(NamedTuple):
     creator: DeviceID
-    updated: Pendulum
+    updated: DateTime
     is_folder: bool
     size: Optional[int]
 
@@ -95,7 +94,7 @@ class ManifestDataAndMutablePaths:
     current_path: FsPath = attr.ib(default=None)
 
     async def try_get_path_at_timestamp(
-        self, manifest_cache, entry_id: EntryID, timestamp: Pendulum
+        self, manifest_cache, entry_id: EntryID, timestamp: DateTime
     ) -> Optional[FsPath]:
         try:
             return await manifest_cache.get_path_at_timestamp(entry_id, timestamp)
@@ -116,10 +115,10 @@ class ManifestDataAndMutablePaths:
         )
 
     async def populate_paths(
-        self, manifest_cache, entry_id: EntryID, early: Pendulum, late: Pendulum
+        self, manifest_cache, entry_id: EntryID, early: DateTime, late: DateTime
     ):
         # TODO : Use future manifest source field to follow files and directories
-        async with trio.open_service_nursery() as child_nursery:
+        async with open_service_nursery() as child_nursery:
             child_nursery.start_soon(
                 self.populate_source_path, manifest_cache, entry_id, early.add(microseconds=-1)
             )
@@ -132,8 +131,8 @@ class CacheEntry(NamedTuple):
     Contains a manifest and the earliest and last timestamp for which its version has been returned
     """
 
-    early: Pendulum
-    late: Pendulum
+    early: DateTime
+    late: DateTime
     manifest: RemoteManifest
 
 
@@ -206,8 +205,8 @@ class ManifestCache:
         self,
         entry_id: EntryID,
         version: Optional[int] = None,
-        timestamp: Pendulum = None,
-        expected_backend_timestamp: Pendulum = None,
+        timestamp: Optional[DateTime] = None,
+        expected_backend_timestamp: Optional[DateTime] = None,
     ) -> Tuple[RemoteManifest, bool]:
         """
         Tries to find specified manifest in cache, tries to download it otherwise and updates cache
@@ -245,7 +244,7 @@ class ManifestCache:
         self.update(manifest, entry_id, version=version, timestamp=timestamp)
         return (manifest, True)
 
-    async def get_path_at_timestamp(self, entry_id: EntryID, timestamp: Pendulum) -> FsPath:
+    async def get_path_at_timestamp(self, entry_id: EntryID, timestamp: DateTime) -> FsPath:
         """
         Find a path for an entry_id at a specific timestamp.
 
@@ -269,7 +268,7 @@ class ManifestCache:
 
         # Loop over parts
         parts = []
-        while not is_workspace_manifest(current_manifest):
+        while not isinstance(current_manifest, WorkspaceManifest):
             # Get the manifest
             try:
                 current_manifest = cast(Union[FolderManifest, FileManifest], current_manifest)
@@ -321,7 +320,7 @@ class ManifestCacheCounter:
             self.counter += 1
         return manifest
 
-    async def get_path_at_timestamp(self, entry_id: EntryID, timestamp: Pendulum) -> FsPath:
+    async def get_path_at_timestamp(self, entry_id: EntryID, timestamp: DateTime) -> FsPath:
         """
         Simpler not to count manifest used for pathfinding as they are probably already cached
         """
@@ -369,7 +368,7 @@ class VersionListerTaskList:
         self.manifest_cache = manifest_cache
         self.versions_list_cache = versions_list_cache
 
-    def add(self, timestamp: Pendulum, task: typing.Callable):
+    def add(self, timestamp: DateTime, task: typing.Callable[[], Awaitable[None]]):
         if timestamp not in self.tasks:
             heappush(self.heapq_tasks, timestamp)
         self.tasks[timestamp].append(task)
@@ -422,8 +421,8 @@ class VersionLister:
         self,
         path: FsPath,
         skip_minimal_sync: bool = True,
-        starting_timestamp: Optional[Pendulum] = None,
-        ending_timestamp: Optional[Pendulum] = None,
+        starting_timestamp: Optional[DateTime] = None,
+        ending_timestamp: Optional[DateTime] = None,
         max_manifest_queries: Optional[int] = None,
     ) -> Tuple[List[TimestampBoundedData], bool]:
         """
@@ -468,8 +467,8 @@ class VersionListerOneShot:
         self,
         path: FsPath,
         skip_minimal_sync: bool = True,
-        starting_timestamp: Optional[Pendulum] = None,
-        ending_timestamp: Optional[Pendulum] = None,
+        starting_timestamp: Optional[DateTime] = None,
+        ending_timestamp: Optional[DateTime] = None,
         max_manifest_queries: Optional[int] = None,
     ) -> Tuple[List[TimestampBoundedData], bool]:
         """
@@ -498,7 +497,7 @@ class VersionListerOneShot:
                     0,
                     root_manifest.id,
                     starting_timestamp or root_manifest.created,
-                    ending_timestamp or Pendulum.now(),
+                    ending_timestamp or DateTime.now(),
                 ),
             )
             while not self.task_list.is_empty():
@@ -576,10 +575,10 @@ class VersionListerOneShot:
         self,
         path_level: int,
         entry_id: EntryID,
-        early: Pendulum,
-        late: Pendulum,
+        early: DateTime,
+        late: DateTime,
         version_number: int,
-        expected_timestamp: Pendulum,
+        expected_timestamp: DateTime,
         next_version_number: int,
     ):
         if early > late:
@@ -591,8 +590,8 @@ class VersionListerOneShot:
             ManifestData(
                 manifest.author,
                 manifest.updated,
-                is_folder_manifest(manifest),
-                None if not is_file_manifest(manifest) else manifest.size,
+                isinstance(manifest, FolderManifest),
+                None if not isinstance(manifest, FileManifest) else manifest.size,
             )
         )
         if len(self.target.parts) == path_level:
@@ -607,7 +606,7 @@ class VersionListerOneShot:
                 else None,
             )
         else:
-            if not is_file_manifest(manifest):  # If it is a file, just ignores current path
+            if not isinstance(manifest, FileManifest):  # If it is a file, just ignores current path
                 for child_name, child_id in manifest.children.items():
                     if child_name == self.target.parts[path_level]:
                         return await self._populate_tree_list_versions(
@@ -615,7 +614,7 @@ class VersionListerOneShot:
                         )
 
     async def _populate_tree_list_versions(
-        self, path_level: int, entry_id: EntryID, early: Pendulum, late: Pendulum
+        self, path_level: int, entry_id: EntryID, early: DateTime, late: DateTime
     ):
         # TODO : Check if directory, melt the same entries through different parent
         versions = await self.task_list.versions_list_cache.load(entry_id)

@@ -208,7 +208,7 @@ async def test_organization_with_expiration_date_create_and_bootstrap(
 
     with freeze_time("2000-01-01"):
 
-        expiration_date = pendulum.Pendulum(2000, 1, 2)
+        expiration_date = pendulum.datetime(2000, 1, 2)
         rep = await organization_create(
             administration_backend_sock, neworg.organization_id, expiration_date=expiration_date
         )
@@ -326,7 +326,7 @@ async def test_organization_bootstrap_bad_data(
     verify_key = newalice.verify_key
 
     now = pendulum.now()
-    bad_now = now - pendulum.interval(seconds=1)
+    bad_now = now.subtract(seconds=1)
 
     good_cu = UserCertificateContent(
         author=None,

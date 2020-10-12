@@ -3,7 +3,7 @@
 import os
 import re
 from enum import IntEnum
-from typing import Union, Optional
+from typing import Union, Optional, NoReturn, Type, Dict
 
 from parsec.core.fs.workspacefs.entry_transactions import EntryTransactions
 from parsec.core.fs.exceptions import FSUnsupportedOperation, FSOffsetError
@@ -57,7 +57,12 @@ class WorkspaceFile:
         await self.ainit()
         return self
 
-    async def __aexit__(self, *args) -> None:
+    async def __aexit__(
+        self,
+        exc_type: Optional[Type[Exception]],
+        exc_value: Optional[Exception],
+        traceback: Optional[object],
+    ) -> None:
         await self.close()
 
     async def ainit(self) -> None:
@@ -114,15 +119,15 @@ class WorkspaceFile:
     def closed(self) -> bool:
         return self._state == FileState.CLOSED
 
-    async def stat(self) -> dict:
+    async def stat(self) -> Dict[str, object]:
         """Getting stat dictionnary"""
         self._check_open_state()
-        return await self._transactions.fd_info(self.fileno(), self._path)
+        return await self._transactions.fd_info(self.fileno())
 
     async def get_size(self) -> int:
         """Getting file length"""
         self._check_open_state()
-        return await self._transactions.fd_size(self.fileno(), self._path)
+        return await self._transactions.fd_size(self.fileno())
 
     @property
     def state(self) -> FileState:
@@ -165,10 +170,10 @@ class WorkspaceFile:
         self._check_open_state()
         return "r" in self._mode or "+" in self._mode
 
-    async def readline(self, size: int = -1):
+    async def readline(self, size: int = -1) -> NoReturn:
         raise NotImplementedError
 
-    async def seek(self, offset: int, whence=os.SEEK_SET) -> int:
+    async def seek(self, offset: int, whence: int = os.SEEK_SET) -> int:
         """ Change the stream position to the given offset.
         Behaviour depends on the whence parameter. The default value for whence is SEEK_SET.
         SEEK_SET or 0 -> seek from the start of the stream (the default);
@@ -209,7 +214,7 @@ class WorkspaceFile:
             raise FSUnsupportedOperation
         return self._offset
 
-    async def truncate(self, size=None) -> int:
+    async def truncate(self, size: Optional[int] = None) -> int:
         """ Resize the stream to the given size in bytes.
         Resize to the current position if size is not specified.
         The current stream position isn't changed.

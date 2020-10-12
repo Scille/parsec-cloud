@@ -41,7 +41,7 @@ async def query_revoke_user(
     user_id: UserID,
     revoked_user_certificate: bytes,
     revoked_user_certifier: DeviceID,
-    revoked_on: pendulum.Pendulum = None,
+    revoked_on: pendulum.DateTime = None,
 ) -> None:
     result = await conn.execute(
         *_q_revoke_user(

@@ -7,7 +7,7 @@ import pendulum
 from collections import defaultdict
 from typing import Union, Optional, Tuple
 from async_generator import asynccontextmanager
-from pendulum import Pendulum
+from pendulum import datetime
 
 from parsec.crypto import SigningKey
 from parsec.api.data import (
@@ -553,7 +553,7 @@ def backend_data_binder_factory(request, backend_addr, initial_user_manifest_sta
             org: OrganizationFullData,
             first_device: LocalDevice = None,
             initial_user_manifest_in_v0: bool = False,
-            expiration_date: Pendulum = None,
+            expiration_date: datetime = None,
         ):
             bootstrap_token = f"<{org.organization_id}-bootstrap-token>"
             await self.backend.organization.create(

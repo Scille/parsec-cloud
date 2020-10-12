@@ -4,7 +4,11 @@ from parsec.core.fs.storage.local_database import LocalDatabase
 from parsec.core.fs.storage.user_storage import UserStorage
 from parsec.core.fs.storage.manifest_storage import ManifestStorage
 from parsec.core.fs.storage.chunk_storage import ChunkStorage, BlockStorage
-from parsec.core.fs.storage.workspace_storage import WorkspaceStorage, WorkspaceStorageTimestamped
+from parsec.core.fs.storage.workspace_storage import (
+    BaseWorkspaceStorage,
+    WorkspaceStorage,
+    WorkspaceStorageTimestamped,
+)
 
 __all__ = (
     "LocalDatabase",
@@ -12,6 +16,7 @@ __all__ = (
     "ChunkStorage",
     "BlockStorage",
     "UserStorage",
+    "BaseWorkspaceStorage",
     "WorkspaceStorage",
     "WorkspaceStorageTimestamped",
 )

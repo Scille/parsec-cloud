@@ -72,7 +72,7 @@ class RealmMaintenanceError(RealmError):
 class RealmStatus:
     maintenance_type: MaintenanceType
     maintenance_started_on: Optional[DeviceID]
-    maintenance_started_by: Optional[pendulum.Pendulum]
+    maintenance_started_by: Optional[pendulum.DateTime]
     encryption_revision: int
 
     @property
@@ -99,7 +99,7 @@ class RealmGrantedRole:
     user_id: UserID
     role: Optional[RealmRole]
     granted_by: Optional[DeviceID]
-    granted_on: pendulum.Pendulum = attr.ib(factory=pendulum.now)
+    granted_on: pendulum.DateTime = attr.ib(factory=pendulum.now)
 
 
 class BaseRealmComponent:
@@ -418,7 +418,7 @@ class BaseRealmComponent:
         organization_id: OrganizationID,
         author: DeviceID,
         realm_id: UUID,
-        since: pendulum.Pendulum,
+        since: pendulum.DateTime,
     ) -> List[bytes]:
         """
         Raises:
@@ -449,7 +449,7 @@ class BaseRealmComponent:
         realm_id: UUID,
         encryption_revision: int,
         per_participant_message: Dict[UserID, bytes],
-        timestamp: pendulum.Pendulum,
+        timestamp: pendulum.DateTime,
     ) -> None:
         """
         Raises:

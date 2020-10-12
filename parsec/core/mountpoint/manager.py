@@ -5,7 +5,7 @@ import os
 import trio
 import logging
 from pathlib import PurePath
-from pendulum import Pendulum
+from pendulum import DateTime
 from structlog import get_logger
 from typing import Sequence, Optional
 from importlib import __import__ as import_function
@@ -97,7 +97,7 @@ class MountpointManager:
         except FSWorkspaceNotFoundError as exc:
             raise MountpointConfigurationError(f"Workspace `{workspace_id}` doesn't exist") from exc
 
-    def _get_workspace_timestamped(self, workspace_id: EntryID, timestamp: Pendulum):
+    def _get_workspace_timestamped(self, workspace_id: EntryID, timestamp: DateTime):
         try:
             return self._timestamped_workspacefs[workspace_id][timestamp]
         except KeyError:
@@ -112,7 +112,7 @@ class MountpointManager:
                 ) from exc
 
     async def _load_workspace_timestamped(
-        self, workspace_id: EntryID, timestamp: Pendulum
+        self, workspace_id: EntryID, timestamp: DateTime
     ) -> WorkspaceFSTimestamped:
         try:
             return self._timestamped_workspacefs[workspace_id][timestamp]
@@ -139,7 +139,7 @@ class MountpointManager:
             self._timestamped_workspacefs[workspace_id] = {timestamp: new_workspace}
         return new_workspace
 
-    async def _mount_workspace_helper(self, workspace_fs, timestamp: Pendulum = None):
+    async def _mount_workspace_helper(self, workspace_fs, timestamp: DateTime = None):
         key = (workspace_fs.workspace_id, timestamp)
 
         async def curried_runner(task_status=trio.TASK_STATUS_IGNORED):
@@ -160,7 +160,7 @@ class MountpointManager:
         return runner_task
 
     def get_path_in_mountpoint(
-        self, workspace_id: EntryID, path: FsPath, timestamp: Pendulum = None
+        self, workspace_id: EntryID, path: FsPath, timestamp: DateTime = None
     ) -> PurePath:
         if timestamp is None:
             self._get_workspace(workspace_id)
@@ -173,7 +173,7 @@ class MountpointManager:
         except KeyError:
             raise MountpointNotMounted(f"Workspace `{workspace_id}` is not mounted")
 
-    async def mount_workspace(self, workspace_id: EntryID, timestamp: Pendulum = None) -> PurePath:
+    async def mount_workspace(self, workspace_id: EntryID, timestamp: DateTime = None) -> PurePath:
         if (workspace_id, timestamp) in self._mountpoint_tasks:
             raise MountpointAlreadyMounted(f"Workspace `{workspace_id}` already mounted.")
 
@@ -184,14 +184,14 @@ class MountpointManager:
         runner_task = await self._mount_workspace_helper(workspace)
         return runner_task.value
 
-    async def unmount_workspace(self, workspace_id: EntryID, timestamp: Pendulum = None):
+    async def unmount_workspace(self, workspace_id: EntryID, timestamp: DateTime = None):
         if (workspace_id, timestamp) not in self._mountpoint_tasks:
             raise MountpointNotMounted(f"Workspace `{workspace_id}` not mounted.")
 
         await self._mountpoint_tasks[(workspace_id, timestamp)].cancel_and_join()
 
     async def remount_workspace_new_timestamp(
-        self, workspace_id: EntryID, original_timestamp: Pendulum, target_timestamp: Pendulum
+        self, workspace_id: EntryID, original_timestamp: DateTime, target_timestamp: DateTime
     ) -> PurePath:
         """
         Mount the workspace at target_timestamp, and unmount the workspace at the original
@@ -237,7 +237,7 @@ class MountpointManager:
             logger.exception("Unexpected error while mounting a new workspace")
 
     async def safe_unmount(
-        self, workspace_id: EntryID, timestamp: Optional[Pendulum] = None
+        self, workspace_id: EntryID, timestamp: Optional[DateTime] = None
     ) -> None:
         try:
             await self.unmount_workspace(workspace_id, timestamp)

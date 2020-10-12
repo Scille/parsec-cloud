@@ -3,13 +3,14 @@
 import re
 
 import trio
+from pathlib import Path
 from structlog import get_logger
-from typing import Dict, Tuple, Set, Optional, Union, Pattern
+from typing import Dict, Tuple, Set, Optional, Union, Pattern, AsyncIterator, AsyncContextManager
 from async_generator import asynccontextmanager
 
 from parsec.core.fs.exceptions import FSLocalMissError
 from parsec.core.types import EntryID, ChunkID, LocalDevice, BaseLocalManifest, BlockID
-from parsec.core.fs.storage.local_database import LocalDatabase
+from parsec.core.fs.storage.local_database import LocalDatabase, Cursor
 
 logger = get_logger()
 
@@ -40,13 +41,15 @@ class ManifestStorage:
         self._cache_ahead_of_localdb: Dict[EntryID, Set[Union[ChunkID, BlockID]]] = {}
 
     @property
-    def path(self):
+    def path(self) -> Path:
         return self.localdb.path
 
     @classmethod
     @asynccontextmanager
-    async def run(cls, *args, **kwargs):
-        self = cls(*args, **kwargs)
+    async def run(
+        cls, device: LocalDevice, localdb: LocalDatabase, realm_id: EntryID
+    ) -> AsyncIterator["ManifestStorage"]:
+        self = cls(device, localdb, realm_id)
         await self._create_db()
         try:
             yield self
@@ -54,12 +57,12 @@ class ManifestStorage:
             with trio.CancelScope(shield=True):
                 await self._flush_cache_ahead_of_persistance()
 
-    def _open_cursor(self):
+    def _open_cursor(self) -> AsyncContextManager[Cursor]:
         # We want the manifest to be written to the disk as soon as possible
         # (unless they are purposely kept out of the local database)
         return self.localdb.open_cursor(commit=True)
 
-    async def clear_memory_cache(self, flush=True):
+    async def clear_memory_cache(self, flush: bool = True) -> None:
         if flush:
             await self._flush_cache_ahead_of_persistance()
         self._cache_ahead_of_localdb.clear()
@@ -67,7 +70,7 @@ class ManifestStorage:
 
     # Database initialization
 
-    async def _create_db(self):
+    async def _create_db(self) -> None:
         async with self._open_cursor() as cursor:
             cursor.execute(
                 """
@@ -113,14 +116,14 @@ class ManifestStorage:
 
     # "Prevent sync" pattern operations
 
-    async def get_prevent_sync_pattern(self) -> Tuple[Pattern, bool]:
+    async def get_prevent_sync_pattern(self) -> Tuple[Pattern[str], bool]:
         async with self._open_cursor() as cursor:
             cursor.execute("SELECT pattern, fully_applied FROM prevent_sync_pattern WHERE _id = 0")
             reply = cursor.fetchone()
             pattern, fully_applied = reply
             return (re.compile(pattern), bool(fully_applied))
 
-    async def set_prevent_sync_pattern(self, pattern: Pattern):
+    async def set_prevent_sync_pattern(self, pattern: Pattern[str]) -> None:
         """Set the "prevent sync" pattern for the corresponding workspace
 
         This operation is idempotent,
@@ -132,7 +135,7 @@ class ManifestStorage:
                 (pattern.pattern, pattern.pattern),
             )
 
-    async def mark_prevent_sync_pattern_fully_applied(self, pattern):
+    async def mark_prevent_sync_pattern_fully_applied(self, pattern: Pattern[str]) -> None:
         """Mark the provided pattern as fully applied.
 
         This is meant to be called after one made sure that all the manifests in the

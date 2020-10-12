@@ -5,8 +5,8 @@ from collections import defaultdict
 from typing import Dict, Tuple, Set, Optional, Union, AsyncIterator, NoReturn, Pattern
 
 import trio
-from trio import hazmat
-from pendulum import Pendulum
+from trio import lowlevel
+from pendulum import DateTime
 from structlog import get_logger
 from async_generator import asynccontextmanager
 
@@ -57,7 +57,7 @@ class BaseWorkspaceStorage:
         self.fd_counter = 0
 
         # Locking structures
-        self.locking_tasks: Dict[EntryID, hazmat.Task] = {}
+        self.locking_tasks: Dict[EntryID, lowlevel.Task] = {}
         self.entry_locks: Dict[EntryID, trio.Lock] = defaultdict(trio.Lock)
 
         # Manifest and block storage
@@ -66,14 +66,37 @@ class BaseWorkspaceStorage:
 
         # Pattern attributes
         # Set by `_load_prevent_sync_pattern` in WorkspaceStorage.run()
-        self._prevent_sync_pattern: Pattern
+        self._prevent_sync_pattern: Pattern[str]
         self._prevent_sync_pattern_fully_applied: bool
 
     def _get_next_fd(self) -> FileDescriptor:
         self.fd_counter += 1
         return FileDescriptor(self.fd_counter)
 
+    # Manifest interface
+
     async def get_manifest(self, entry_id: EntryID) -> BaseLocalManifest:
+        raise NotImplementedError
+
+    async def set_manifest(
+        self,
+        entry_id: EntryID,
+        manifest: BaseLocalManifest,
+        cache_only: bool = False,
+        check_lock_status: bool = True,
+        removed_ids: Optional[Set[Union[BlockID, ChunkID]]] = None,
+    ) -> None:
+        raise NotImplementedError
+
+    async def ensure_manifest_persistent(self, entry_id: EntryID) -> None:
+        raise NotImplementedError
+
+    # Prevent sync pattern interface
+
+    async def set_prevent_sync_pattern(self, pattern: Pattern[str]) -> None:
+        raise NotImplementedError
+
+    async def mark_prevent_sync_pattern_fully_applied(self, pattern: Pattern[str]) -> None:
         raise NotImplementedError
 
     # Locking helpers
@@ -82,7 +105,7 @@ class BaseWorkspaceStorage:
     async def lock_entry_id(self, entry_id: EntryID) -> AsyncIterator[EntryID]:
         async with self.entry_locks[entry_id]:
             try:
-                self.locking_tasks[entry_id] = hazmat.current_task()
+                self.locking_tasks[entry_id] = lowlevel.current_task()
                 yield entry_id
             finally:
                 del self.locking_tasks[entry_id]
@@ -94,7 +117,7 @@ class BaseWorkspaceStorage:
 
     def _check_lock_status(self, entry_id: EntryID) -> None:
         task = self.locking_tasks.get(entry_id)
-        if task != hazmat.current_task():
+        if task != lowlevel.current_task():
             raise RuntimeError(f"Entry `{entry_id}` modified without beeing locked")
 
     # File management interface
@@ -159,11 +182,16 @@ class BaseWorkspaceStorage:
 
     # "Prevent sync" pattern interface
 
-    def get_prevent_sync_pattern(self) -> Pattern:
+    def get_prevent_sync_pattern(self) -> Pattern[str]:
         return self._prevent_sync_pattern
 
     def get_prevent_sync_pattern_fully_applied(self) -> bool:
         return self._prevent_sync_pattern_fully_applied
+
+    # Timestamped workspace
+
+    def to_timestamped(self, timestamp: DateTime) -> "WorkspaceStorageTimestamped":
+        return WorkspaceStorageTimestamped(self, timestamp)
 
 
 class WorkspaceStorage(BaseWorkspaceStorage):
@@ -198,9 +226,9 @@ class WorkspaceStorage(BaseWorkspaceStorage):
         device: LocalDevice,
         path: Path,
         workspace_id: EntryID,
-        cache_size=DEFAULT_BLOCK_CACHE_SIZE,
-        vacuum_threshold=DEFAULT_CHUNK_VACUUM_THRESHOLD,
-    ):
+        cache_size: int = DEFAULT_BLOCK_CACHE_SIZE,
+        vacuum_threshold: int = DEFAULT_CHUNK_VACUUM_THRESHOLD,
+    ) -> AsyncIterator["WorkspaceStorage"]:
         data_path = path / WORKSPACE_DATA_STORAGE_NAME
         cache_path = path / WORKSPACE_CACHE_STORAGE_NAME
 
@@ -245,7 +273,7 @@ class WorkspaceStorage(BaseWorkspaceStorage):
 
     # Helpers
 
-    async def clear_memory_cache(self, flush=True) -> None:
+    async def clear_memory_cache(self, flush: bool = True) -> None:
         await self.manifest_storage.clear_memory_cache(flush=flush)
 
     # Checkpoint interface
@@ -299,7 +327,7 @@ class WorkspaceStorage(BaseWorkspaceStorage):
             await self.manifest_storage.get_prevent_sync_pattern()
         )
 
-    async def set_prevent_sync_pattern(self, pattern: Pattern) -> None:
+    async def set_prevent_sync_pattern(self, pattern: Pattern[str]) -> None:
         """Set the "prevent sync" pattern for the corresponding workspace
 
         This operation is idempotent,
@@ -308,7 +336,7 @@ class WorkspaceStorage(BaseWorkspaceStorage):
         await self.manifest_storage.set_prevent_sync_pattern(pattern)
         await self._load_prevent_sync_pattern()
 
-    async def mark_prevent_sync_pattern_fully_applied(self, pattern: Pattern):
+    async def mark_prevent_sync_pattern_fully_applied(self, pattern: Pattern[str]) -> None:
         """Mark the provided pattern as fully applied.
 
         This is meant to be called after one made sure that all the manifests in the
@@ -324,11 +352,6 @@ class WorkspaceStorage(BaseWorkspaceStorage):
         # Only the data storage needs to get vacuuumed
         await self.data_localdb.run_vacuum()
 
-    # Timestamped workspace
-
-    def to_timestamped(self, timestamp: Pendulum) -> "WorkspaceStorageTimestamped":
-        return WorkspaceStorageTimestamped(self, timestamp)
-
 
 class WorkspaceStorageTimestamped(BaseWorkspaceStorage):
     """Timestamped version to access a local storage as it was at a given timestamp
@@ -340,7 +363,7 @@ class WorkspaceStorageTimestamped(BaseWorkspaceStorage):
     - the same lock mecanism to protect against race conditions, although it is useless there
     """
 
-    def __init__(self, workspace_storage: BaseWorkspaceStorage, timestamp: Pendulum):
+    def __init__(self, workspace_storage: BaseWorkspaceStorage, timestamp: DateTime):
         super().__init__(
             workspace_storage.device,
             workspace_storage.path,
@@ -376,7 +399,7 @@ class WorkspaceStorageTimestamped(BaseWorkspaceStorage):
     async def get_realm_checkpoint(self) -> NoReturn:
         self._throw_permission_error()
 
-    async def clear_memory_cache(self, flush=True) -> NoReturn:
+    async def clear_memory_cache(self, flush: bool = True) -> NoReturn:
         self._throw_permission_error()
 
     async def update_realm_checkpoint(
@@ -384,7 +407,7 @@ class WorkspaceStorageTimestamped(BaseWorkspaceStorage):
     ) -> NoReturn:
         self._throw_permission_error()
 
-    def _throw_permission_error(*args, **kwargs) -> NoReturn:
+    def _throw_permission_error(self) -> NoReturn:
         raise FSError("Not implemented : WorkspaceStorage is timestamped")
 
     # Manifest interface
@@ -398,8 +421,13 @@ class WorkspaceStorageTimestamped(BaseWorkspaceStorage):
             raise FSLocalMissError(entry_id)
 
     async def set_manifest(
-        self, entry_id: EntryID, manifest: BaseLocalManifest, cache_only: bool = False
-    ) -> None:  # initially for clean
+        self,
+        entry_id: EntryID,
+        manifest: BaseLocalManifest,
+        cache_only: bool = False,
+        check_lock_status: bool = True,
+        removed_ids: Optional[Set[Union[BlockID, ChunkID]]] = None,
+    ) -> None:
         assert isinstance(entry_id, EntryID)
         if manifest.need_sync:
             self._throw_permission_error()
@@ -409,5 +437,5 @@ class WorkspaceStorageTimestamped(BaseWorkspaceStorage):
     async def ensure_manifest_persistent(self, entry_id: EntryID) -> None:
         pass
 
-    def to_timestamped(self, timestamp: Pendulum) -> "WorkspaceStorageTimestamped":
-        return WorkspaceStorageTimestamped(self, timestamp)
+    # def to_timestamped(self, timestamp: DateTime) -> "WorkspaceStorageTimestamped":
+    #     return WorkspaceStorageTimestamped(self, timestamp)

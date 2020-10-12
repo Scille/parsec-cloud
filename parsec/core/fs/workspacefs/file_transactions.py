@@ -1,7 +1,7 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
 
 from parsec.core.core_events import CoreEvent
-from typing import Tuple, List, Callable, Dict, Optional, cast
+from typing import Tuple, List, Callable, Dict, Optional, cast, AsyncIterator
 
 from collections import defaultdict
 from async_generator import asynccontextmanager
@@ -10,14 +10,16 @@ from parsec.event_bus import EventBus
 from parsec.core.types import FileDescriptor, EntryID, LocalDevice
 
 from parsec.core.fs.remote_loader import RemoteLoader
-from parsec.core.fs.storage import WorkspaceStorage
+from parsec.core.fs.storage import BaseWorkspaceStorage
 from parsec.core.fs.exceptions import FSLocalMissError, FSInvalidFileDescriptor, FSEndOfFileError
-from parsec.core.fs.utils import is_workspace_manifest
+
 from parsec.core.types import (
     Chunk,
+    WorkspaceEntry,
     LocalFileManifest,
     LocalFolderishManifests,
     LocalNonRootManifests,
+    LocalWorkspaceManifest,
 )
 from parsec.core.fs.workspacefs.file_operations import (
     prepare_read,
@@ -34,7 +36,7 @@ __all__ = ("FSInvalidFileDescriptor", "FileTransactions")
 # Helpers
 
 
-def normalize_argument(arg, manifest):
+def normalize_argument(arg: int, manifest: LocalFileManifest) -> int:
     return manifest.size if arg < 0 else arg
 
 
@@ -76,9 +78,9 @@ class FileTransactions:
     def __init__(
         self,
         workspace_id: EntryID,
-        get_workspace_entry: Callable,
+        get_workspace_entry: Callable[[], WorkspaceEntry],
         device: LocalDevice,
-        local_storage: WorkspaceStorage,
+        local_storage: BaseWorkspaceStorage,
         remote_loader: RemoteLoader,
         event_bus: EventBus,
     ):
@@ -92,7 +94,7 @@ class FileTransactions:
 
     # Event helper
 
-    def _send_event(self, event, **kwargs):
+    def _send_event(self, event: CoreEvent, **kwargs: object) -> None:
         self.event_bus.send(event, workspace_id=self.workspace_id, **kwargs)
 
     # Helper
@@ -128,7 +130,7 @@ class FileTransactions:
     # Locking helper
 
     @asynccontextmanager
-    async def _load_and_lock_file(self, fd: FileDescriptor):
+    async def _load_and_lock_file(self, fd: FileDescriptor) -> AsyncIterator[LocalFileManifest]:
         # The FSLocalMissError exception is not considered here.
         # This is because we should be able to assume that the manifest
         # corresponding to valid file descriptor is always available locally
@@ -151,7 +153,7 @@ class FileTransactions:
             return None
 
         # Walk the parent chain until the workspace manifest is reached
-        while not is_workspace_manifest(current_manifest):
+        while not isinstance(current_manifest, LocalWorkspaceManifest):
             current_manifest = cast(LocalNonRootManifests, current_manifest)
 
             try:
@@ -177,11 +179,11 @@ class FileTransactions:
 
     # Atomic transactions
 
-    async def fd_size(self, fd: FileDescriptor, path) -> int:
+    async def fd_size(self, fd: FileDescriptor) -> int:
         manifest = await self.local_storage.load_file_descriptor(fd)
         return manifest.size
 
-    async def fd_info(self, fd: FileDescriptor, path) -> dict:
+    async def fd_info(self, fd: FileDescriptor) -> Dict[str, object]:
         manifest = await self.local_storage.load_file_descriptor(fd)
         stats = manifest.to_stats()
         stats["confinement_point"] = await self._get_confinement_point(manifest.id)
@@ -238,7 +240,7 @@ class FileTransactions:
         self._send_event(CoreEvent.FS_ENTRY_UPDATED, id=manifest.id)
         return len(content)
 
-    async def fd_resize(self, fd: FileDescriptor, length: int, truncate_only=False) -> None:
+    async def fd_resize(self, fd: FileDescriptor, length: int, truncate_only: bool = False) -> None:
         # Fetch and lock
         async with self._load_and_lock_file(fd) as manifest:
 
@@ -252,7 +254,9 @@ class FileTransactions:
         # Notify
         self._send_event(CoreEvent.FS_ENTRY_UPDATED, id=manifest.id)
 
-    async def fd_read(self, fd: FileDescriptor, size: int, offset: int, raise_eof=False) -> bytes:
+    async def fd_read(
+        self, fd: FileDescriptor, size: int, offset: int, raise_eof: bool = False
+    ) -> bytes:
         # Loop over attemps
         missing: List[BlockAccess] = []
         while True:

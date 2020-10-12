@@ -1,6 +1,6 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
 
-from typing import Tuple, cast, Optional, AsyncIterator
+from typing import Tuple, cast, Optional, AsyncIterator, Dict
 from async_generator import asynccontextmanager
 
 from parsec.core.types import (
@@ -10,6 +10,7 @@ from parsec.core.types import (
     BaseLocalManifest,
     LocalFileManifest,
     LocalFolderManifest,
+    LocalWorkspaceManifest,
     FileDescriptor,
     LocalFolderishManifests,
 )
@@ -17,7 +18,6 @@ from parsec.core.types import (
 
 from parsec.core.core_events import CoreEvent
 from parsec.core.fs.workspacefs.file_transactions import FileTransactions
-from parsec.core.fs.utils import is_file_manifest, is_folder_manifest, is_folderish_manifest
 from parsec.core.fs.exceptions import (
     FSPermissionError,
     FSNoAccessError,
@@ -39,11 +39,11 @@ class EntryTransactions(FileTransactions):
 
     # Right management helper
 
-    def check_read_rights(self, path: FsPath):
+    def check_read_rights(self, path: FsPath) -> None:
         if self.get_workspace_entry().role is None:
             raise FSNoAccessError(filename=path)
 
-    def check_write_rights(self, path: FsPath):
+    def check_write_rights(self, path: FsPath) -> None:
         self.check_read_rights(path)
         if self.get_workspace_entry().role not in WRITE_RIGHT_ROLES:
             raise FSReadOnlyError(filename=path)
@@ -92,9 +92,8 @@ class EntryTransactions(FileTransactions):
         # Follow the path
         for name in path.parts:
             manifest = await self._load_manifest(entry_id)
-            if is_file_manifest(manifest):
+            if not isinstance(manifest, (LocalFolderManifest, LocalWorkspaceManifest)):
                 raise FSNotADirectoryError(filename=path)
-            manifest = cast(LocalFolderishManifests, manifest)
             try:
                 entry_id = manifest.children[name]
             except (AttributeError, KeyError):
@@ -128,7 +127,7 @@ class EntryTransactions(FileTransactions):
     @asynccontextmanager
     async def _lock_parent_manifest_from_path(
         self, path: FsPath
-    ) -> AsyncIterator[Tuple[BaseLocalManifest, Optional[BaseLocalManifest]]]:
+    ) -> AsyncIterator[Tuple[LocalFolderishManifests, Optional[BaseLocalManifest]]]:
         # This is the most complicated locking scenario.
         # It requires locking the parent of the given entry and the entry itself
         # if it exists.
@@ -158,7 +157,7 @@ class EntryTransactions(FileTransactions):
             async with self._lock_manifest_from_path(path.parent) as parent:
 
                 # Parent is not a directory
-                if not is_folderish_manifest(parent):
+                if not isinstance(parent, (LocalFolderManifest, LocalWorkspaceManifest)):
                     raise FSNotADirectoryError(filename=path.parent)
 
                 # Child doesn't exist
@@ -182,7 +181,7 @@ class EntryTransactions(FileTransactions):
 
     # Transactions
 
-    async def entry_info(self, path: FsPath) -> dict:
+    async def entry_info(self, path: FsPath) -> Dict[str, object]:
         # Check read rights
         self.check_read_rights(path)
 
@@ -235,17 +234,17 @@ class EntryTransactions(FileTransactions):
                 source_manifest = await self._get_manifest(source_entry_id)
 
                 # Overwrite a file
-                if is_file_manifest(source_manifest):
+                if isinstance(source_manifest, LocalFileManifest):
 
                     # Destination is a folder
-                    if is_folder_manifest(child):
+                    if isinstance(child, LocalFolderManifest):
                         raise FSIsADirectoryError(filename=destination)
 
                 # Overwrite a folder
-                if is_folder_manifest(source_manifest):
+                if isinstance(source_manifest, LocalFolderManifest):
 
                     # Destination is not a folder
-                    if is_file_manifest(child):
+                    if not isinstance(child, LocalFolderManifest):
                         raise FSNotADirectoryError(filename=destination)
 
                     # Destination is not empty
@@ -279,7 +278,7 @@ class EntryTransactions(FileTransactions):
                 raise FSFileNotFoundError(filename=path)
 
             # Not a directory
-            if not is_folderish_manifest(child):
+            if not isinstance(child, (LocalFolderManifest, LocalWorkspaceManifest)):
                 raise FSNotADirectoryError(filename=path)
 
             # Directory not empty
@@ -313,7 +312,7 @@ class EntryTransactions(FileTransactions):
                 raise FSFileNotFoundError(filename=path)
 
             # Not a file
-            if not is_file_manifest(child):
+            if not isinstance(child, LocalFileManifest):
                 raise FSIsADirectoryError(filename=path)
 
             # Create new manifest
@@ -363,7 +362,7 @@ class EntryTransactions(FileTransactions):
         return child.id
 
     async def file_create(
-        self, path: FsPath, open=True
+        self, path: FsPath, open: bool = True
     ) -> Tuple[EntryID, Optional[FileDescriptor]]:
         # Check write rights
         self.check_write_rights(path)
@@ -407,7 +406,7 @@ class EntryTransactions(FileTransactions):
         async with self._lock_manifest_from_path(path) as manifest:
 
             # Not a file
-            if not is_file_manifest(manifest):
+            if not isinstance(manifest, LocalFileManifest):
                 raise FSIsADirectoryError(filename=path)
 
             # Return the entry id of the open file and the file descriptor
@@ -421,7 +420,7 @@ class EntryTransactions(FileTransactions):
         async with self._lock_manifest_from_path(path) as manifest:
 
             # Not a file
-            if not is_file_manifest(manifest):
+            if not isinstance(manifest, LocalFileManifest):
                 raise FSIsADirectoryError(filename=path)
 
             # Perform resize

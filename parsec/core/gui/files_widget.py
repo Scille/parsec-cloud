@@ -4,7 +4,7 @@ from parsec.core.core_events import CoreEvent
 import pathlib
 from uuid import UUID
 import trio
-from pendulum import Pendulum
+from pendulum import DateTime
 from enum import IntEnum
 from structlog import get_logger
 
@@ -164,7 +164,7 @@ class FilesWidget(QWidget, Ui_FilesWidget):
 
     import_progress = pyqtSignal(str, int)
 
-    reload_timestamped_requested = pyqtSignal(Pendulum, FsPath, FileType, bool, bool, bool)
+    reload_timestamped_requested = pyqtSignal(DateTime, FsPath, FileType, bool, bool, bool)
     reload_timestamped_success = pyqtSignal(QtToTrioJob)
     reload_timestamped_error = pyqtSignal(QtToTrioJob)
     update_version_list = pyqtSignal(WorkspaceFS, FsPath)

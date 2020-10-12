@@ -30,7 +30,7 @@ class PGVlobComponent(BaseVlobComponent):
         realm_id: UUID,
         encryption_revision: int,
         vlob_id: UUID,
-        timestamp: pendulum.Pendulum,
+        timestamp: pendulum.DateTime,
         blob: bytes,
     ) -> None:
         async with self.dbh.pool.acquire() as conn:
@@ -52,8 +52,8 @@ class PGVlobComponent(BaseVlobComponent):
         encryption_revision: int,
         vlob_id: UUID,
         version: Optional[int] = None,
-        timestamp: Optional[pendulum.Pendulum] = None,
-    ) -> Tuple[int, bytes, DeviceID, pendulum.Pendulum]:
+        timestamp: Optional[pendulum.DateTime] = None,
+    ) -> Tuple[int, bytes, DeviceID, pendulum.DateTime]:
         async with self.dbh.pool.acquire() as conn:
             return await query_read(
                 conn, organization_id, author, encryption_revision, vlob_id, version, timestamp
@@ -67,7 +67,7 @@ class PGVlobComponent(BaseVlobComponent):
         encryption_revision: int,
         vlob_id: UUID,
         version: int,
-        timestamp: pendulum.Pendulum,
+        timestamp: pendulum.DateTime,
         blob: bytes,
     ) -> None:
         async with self.dbh.pool.acquire() as conn:
@@ -90,7 +90,7 @@ class PGVlobComponent(BaseVlobComponent):
 
     async def list_versions(
         self, organization_id: OrganizationID, author: DeviceID, vlob_id: UUID
-    ) -> Dict[int, Tuple[pendulum.Pendulum, DeviceID]]:
+    ) -> Dict[int, Tuple[pendulum.DateTime, DeviceID]]:
         async with self.dbh.pool.acquire() as conn:
             return await query_list_versions(conn, organization_id, author, vlob_id)
 
