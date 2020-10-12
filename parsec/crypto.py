@@ -5,7 +5,6 @@ import os
 from typing import Tuple
 from base64 import b32decode, b32encode
 from hashlib import sha256
-from ctypes import cdll, c_size_t, c_uint8, byref, cast, POINTER, c_int
 
 from nacl.exceptions import CryptoError  # noqa: republishing
 from nacl.public import SealedBox, PrivateKey as _PrivateKey, PublicKey as _PublicKey
@@ -16,8 +15,8 @@ from nacl.pwhash import argon2i
 from nacl.utils import random
 from nacl.encoding import RawEncoder
 
-# from cryptography.hazmat.primitives.ciphers import Cipher, algorithms, modes
-# from cryptography.exceptions import InvalidTag
+from cryptography.hazmat.primitives.ciphers import Cipher, algorithms, modes
+from cryptography.exceptions import InvalidTag
 
 # Note to simplify things, we adopt `nacl.CryptoError` as our root error cls
 
@@ -70,6 +69,7 @@ class SecretKey(bytes):
         tag = encryptor.tag
         token = iv + tag + ciphered
         return token
+
     def decrypt(self, token):
         iv = token[0:16]
         tag = token[16:32]
