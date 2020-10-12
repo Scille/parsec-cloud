@@ -279,7 +279,6 @@ requirements = [
     "PyNaCl==1.4.0",
     "trio==0.16.0",
     "trio_typing==0.5.0",
-    "python-interface==1.4.0",
     "async_generator>=1.9",
     'contextvars==2.1;python_version<"3.7"',
     "sentry-sdk==0.14.3",
