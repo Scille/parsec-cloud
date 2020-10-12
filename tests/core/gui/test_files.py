@@ -815,6 +815,8 @@ async def test_drag_and_drop_read_only(
     await aqtbot.wait_until(_import_failed)
 
 
+# Cannot chmod on Windows
+@pytest.mark.linux
 @pytest.mark.gui
 @pytest.mark.trio
 async def test_import_one_file_permission_denied(
@@ -834,18 +836,18 @@ async def test_import_one_file_permission_denied(
         classmethod(lambda *args, **kwargs: ([temp_dir / "file01.txt"], True)),
     )
 
-    async with aqtbot.wait_signals(
-        [w_f.button_import_files.clicked, w_f.import_error], timeout=3000
-    ):
+    async with aqtbot.wait_signal(w_f.button_import_files.clicked):
         await aqtbot.mouse_click(w_f.button_import_files, QtCore.Qt.LeftButton)
 
     def _import_failed():
         assert autoclose_dialog.dialogs == [("Error", _("TEXT_FILE_IMPORT_ONE_PERMISSION_ERROR"))]
         assert w_f.table_files.rowCount() == 1
 
-    await aqtbot.wait_until(_import_failed)
+    await aqtbot.wait_until(_import_failed, timeout=3000)
 
 
+# Cannot chmod on Windows
+@pytest.mark.linux
 @pytest.mark.gui
 @pytest.mark.trio
 async def test_import_multiple_files_error(
@@ -868,9 +870,7 @@ async def test_import_multiple_files_error(
         ),
     )
 
-    async with aqtbot.wait_signals(
-        [w_f.button_import_files.clicked, w_f.import_error], timeout=3000
-    ):
+    async with aqtbot.wait_signal(w_f.button_import_files.clicked):
         await aqtbot.mouse_click(w_f.button_import_files, QtCore.Qt.LeftButton)
 
     def _import_error_shown():
@@ -879,6 +879,6 @@ async def test_import_multiple_files_error(
         ]
         assert w_f.table_files.rowCount() == 2
 
-    await aqtbot.wait_until(_import_error_shown)
+    await aqtbot.wait_until(_import_error_shown, timeout=3000)
 
     assert w_f.table_files.item(1, 1).text() == "file02.txt"
