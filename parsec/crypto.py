@@ -16,18 +16,11 @@ from nacl.pwhash import argon2i
 from nacl.utils import random
 from nacl.encoding import RawEncoder
 
-from enum import Enum
-
-class SgxStatus(Enum):
-    SUCCESS = 0
-    ERROR_WRONG_INPUT_ARGUMENTS = -1
-
 # from cryptography.hazmat.primitives.ciphers import Cipher, algorithms, modes
 # from cryptography.exceptions import InvalidTag
 
 # Note to simplify things, we adopt `nacl.CryptoError` as our root error cls
 
-LibSgx = cdll.LoadLibrary(os.path.dirname(__file__) + "/sgxlib.so")
 
 __all__ = (
     # Exceptions
@@ -68,71 +61,29 @@ class SecretKey(bytes):
         # Avoid leaking the key in logs
         return f"<{type(self).__module__}.{type(self).__qualname__} object at {hex(id(self))}>"
 
-    # Using AES with SGX enclave
-    def encrypt(self, data):
-        ecall_encryptText = LibSgx.ecall_encryptText
-        ecall_encryptText.restype = POINTER(c_uint8)
-        encMessageLen = c_size_t()
-        status_code = c_int()
-        encrypted_ptr = ecall_encryptText(byref(status_code), self, data, len(data), byref(encMessageLen))
-        if status_code.value != SgxStatus.SUCCESS.value:
-            print("encryption went wrong, status_code = ", status_code.value)
-            raise CryptoError
-            return b''
-        else:
-            encrypted_data = cast(encrypted_ptr, POINTER(c_uint8 * encMessageLen.value))
-            encrypted_data = bytes(list(encrypted_data.contents))
-            return encrypted_data
-
-    def decrypt(self, data):
-        data_len = len(data)
-        output_len = data_len - SGX_AESGCM_MAC_SIZE - SGX_AESGCM_IV_SIZE
-        ecall_decryptText = LibSgx.ecall_decryptText
-        ecall_decryptText.restype = POINTER(c_uint8 * output_len)
-        status_code = c_int()
-        decrypted_data = bytes(list(ecall_decryptText(byref(status_code), self, data, data_len).contents))
-        return decrypted_data
-
     # Using AES WITHOUT ENCLAVE
-    # def encrypt(self, data):
-    #     iv = os.urandom(16)
-    #     cipher = Cipher(algorithms.AES(self), modes.GCM(iv))
-    #     encryptor = cipher.encryptor()
-    #     ciphered = encryptor.update(data) + encryptor.finalize()
-    #     tag = encryptor.tag
-    #     token = iv + tag + ciphered
-    #     return token
-    # def decrypt(self, token):
-    #     iv = token[0:16]
-    #     tag = token[16:32]
-    #     ciphered = token[32:]
-    #     try:
-    #         cipher = Cipher(algorithms.AES(self), modes.GCM(iv, tag))
-    #         decryptor = cipher.decryptor()
-    #         decrypted_message = decryptor.update(ciphered) + decryptor.finalize()
-    #         print()
-    #         print()
-    #         print("decrypted_message = ", decrypted_message)
-    #         return decrypted_message
-    #     except (InvalidTag, ValueError) as exc:
-    #         raise CryptoError(str(exc)) from exc
-
-    # Using pyNaCl
-    # def encrypt(self, data: bytes) -> bytes:
-    #     """
-    #     Raises:
-    #         CryptoError: if key is invalid.
-    #     """
-    #     box = SecretBox(self)
-    #     return box.encrypt(data)
-
-    # def decrypt(self, ciphered: bytes) -> bytes:
-    #     """
-    #     Raises:
-    #         CryptoError: if key is invalid.
-    #     """
-    #     box = SecretBox(self)
-    #     return box.decrypt(ciphered)
+    def encrypt(self, data):
+        iv = os.urandom(16)
+        cipher = Cipher(algorithms.AES(self), modes.GCM(iv))
+        encryptor = cipher.encryptor()
+        ciphered = encryptor.update(data) + encryptor.finalize()
+        tag = encryptor.tag
+        token = iv + tag + ciphered
+        return token
+    def decrypt(self, token):
+        iv = token[0:16]
+        tag = token[16:32]
+        ciphered = token[32:]
+        try:
+            cipher = Cipher(algorithms.AES(self), modes.GCM(iv, tag))
+            decryptor = cipher.decryptor()
+            decrypted_message = decryptor.update(ciphered) + decryptor.finalize()
+            print()
+            print()
+            print("decrypted_message = ", decrypted_message)
+            return decrypted_message
+        except (InvalidTag, ValueError) as exc:
+            raise CryptoError(str(exc)) from exc
 
     def hmac(self, data: bytes, digest_size=BLAKE2B_BYTES) -> bytes:
         return blake2b(data, digest_size=digest_size, key=self, encoder=RawEncoder)
