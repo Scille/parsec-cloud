@@ -7,8 +7,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PROJECT VERSION\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2020-10-06 08:56+0200\n"
-"PO-Revision-Date: 2020-10-06 09:07+0200\n"
+"POT-Creation-Date: 2020-10-12 13:49+0200\n"
+"PO-Revision-Date: 2020-10-12 10:53+0200\n"
 "Last-Translator: \n"
 "Language: en\n"
 "Language-Team: en <LL@li.org>\n"
@@ -477,7 +477,20 @@ msgstr "A folder with the same name already exists."
 msgid "TEXT_FILE_FOLDER_CREATE_ERROR_UNKNOWN"
 msgstr "Cannot create the new folder."
 
-msgid "TEXT_FILE_IMPORT_ERROR"
+msgid "TEXT_FILE_IMPORT_ONE_PERMISSION_ERROR"
+msgstr "You don't have the permission to import this file."
+
+msgid "TEXT_FILE_IMPORT_MULTIPLE_PERMISSION_ERROR"
+msgstr ""
+"You don't have the permission to access some of these files. Some files "
+"may not have been imported."
+
+msgid "TEXT_FILE_IMPORT_ONE_ERROR"
+msgstr ""
+"There has been an error while import the file. The file could not be "
+"imported."
+
+msgid "TEXT_FILE_IMPORT_MULTIPLE_ERROR"
 msgstr ""
 "There has been an error while importing the files. Some files may not "
 "have been imported."
@@ -2375,4 +2388,5 @@ msgstr "Create a new workspace"
 
 msgid "ACTION_WORKSPACE_GOTO_FILE_LINK"
 msgstr "Go to a file using a link"
+
 

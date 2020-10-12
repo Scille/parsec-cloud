@@ -7,8 +7,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PROJECT VERSION\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2020-10-06 08:56+0200\n"
-"PO-Revision-Date: 2020-10-06 09:08+0200\n"
+"POT-Creation-Date: 2020-10-12 13:49+0200\n"
+"PO-Revision-Date: 2020-10-12 13:51+0200\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language: fr\n"
 "Language-Team: fr <LL@li.org>\n"
@@ -500,10 +500,17 @@ msgstr "Un répertoire du même nom existe déjà."
 msgid "TEXT_FILE_FOLDER_CREATE_ERROR_UNKNOWN"
 msgstr "Impossible de créer le nouveau répertoire."
 
-msgid "TEXT_FILE_IMPORT_ERROR"
-msgstr ""
-"Un problème est survenu lors de l'import des fichiers. Certains fichiers "
-"n'ont peut-être pas été importés."
+msgid "TEXT_FILE_IMPORT_ONE_PERMISSION_ERROR"
+msgstr "Le fichier n'a pas pu être importé car vous ne disposez pas des permissions suffisantes."
+
+msgid "TEXT_FILE_IMPORT_MULTIPLE_PERMISSION_ERROR"
+msgstr "Certains fichiers n'ont pas été importes car vous ne disposez pas des permissions suffisantes."
+
+msgid "TEXT_FILE_IMPORT_ONE_ERROR"
+msgstr "Un problème est survenu lors de l'import du fichier."
+
+msgid "TEXT_FILE_IMPORT_MULTIPLE_ERROR"
+msgstr "Un problème est survenu lors de l'import des fichiers. Certains fichiers n'ont peut-être pas été importés."
 
 msgid "TEXT_FILE_SHARING_REVOKED_workspace"
 msgstr ""
@@ -2437,4 +2444,5 @@ msgstr "Créer un nouvel espace de travail"
 
 msgid "ACTION_WORKSPACE_GOTO_FILE_LINK"
 msgstr "Trouver un fichier via son lien"
+
 

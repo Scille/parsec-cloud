@@ -89,6 +89,7 @@ async def _do_folder_create(workspace_fs, path):
 
 async def _do_import(workspace_fs, files, total_size, progress_signal):
     current_size = 0
+    errors = []
     for src, dst in files:
         try:
             if dst.parent != FsPath("/"):
@@ -107,9 +108,15 @@ async def _do_import(workspace_fs, files, total_size, progress_signal):
                         progress_signal.emit(src.name, current_size + read_size)
             current_size += read_size + 1
             progress_signal.emit(src.name, current_size)
-
         except trio.Cancelled as exc:
-            raise JobResultError("cancelled", last_file=dst) from exc
+            errors.append(exc)
+            raise JobResultError(
+                "cancelled", last_file=dst, file_count=len(files), exceptions=errors
+            ) from exc
+        except PermissionError as exc:
+            errors.append(exc)
+    if errors:
+        raise JobResultError("error", exceptions=errors, file_count=len(files))
 
 
 async def _do_remount_timestamped(
@@ -764,7 +771,34 @@ class FilesWidget(QWidget, Ui_FilesWidget):
         self.import_job = None
 
     def _on_import_error(self):
+        def _display_import_error(file_count, exceptions=None):
+            if exceptions and all(isinstance(exc, PermissionError) for exc in exceptions):
+                if file_count and file_count == 1:
+                    show_error(
+                        self, _("TEXT_FILE_IMPORT_ONE_PERMISSION_ERROR"), exception=exceptions[0]
+                    )
+                else:
+                    show_error(
+                        self,
+                        _("TEXT_FILE_IMPORT_MULTIPLE_PERMISSION_ERROR"),
+                        exception=exceptions[0],
+                    )
+            else:
+                if file_count and file_count == 1:
+                    show_error(
+                        self,
+                        _("TEXT_FILE_IMPORT_ONE_ERROR"),
+                        exception=exceptions[0] if exceptions else None,
+                    )
+                else:
+                    show_error(
+                        self,
+                        _("TEXT_FILE_IMPORT_MULTIPLE_ERROR"),
+                        exception=exceptions[0] if exceptions else None,
+                    )
+
         assert self.loading_dialog
+
         if hasattr(self.import_job.exc, "status") and self.import_job.exc.status == "cancelled":
             self.jobs_ctx.submit_job(
                 ThreadSafeQtSignal(self, "delete_success", QtToTrioJob),
@@ -775,7 +809,10 @@ class FilesWidget(QWidget, Ui_FilesWidget):
                 silent=True,
             )
         else:
-            show_error(self, _("TEXT_FILE_IMPORT_ERROR"), exception=self.import_job.exc)
+            _display_import_error(
+                file_count=self.import_job.exc.params.get("file_count", 0),
+                exceptions=self.import_job.exc.params.get("exceptions", None),
+            )
         self.loading_dialog.hide()
         self.loading_dialog.setParent(None)
         self.loading_dialog = None
