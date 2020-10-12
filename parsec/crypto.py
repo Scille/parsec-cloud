@@ -5,7 +5,7 @@ import os
 from typing import Tuple
 from base64 import b32decode, b32encode
 from hashlib import sha256
-from ctypes import cdll, c_size_t, c_uint8, byref, cast, POINTER
+from ctypes import cdll, c_size_t, c_uint8, byref, cast, POINTER, c_int
 
 from nacl.exceptions import CryptoError  # noqa: republishing
 from nacl.public import SealedBox, PrivateKey as _PrivateKey, PublicKey as _PublicKey
@@ -15,6 +15,12 @@ from nacl.hash import blake2b, BLAKE2B_BYTES
 from nacl.pwhash import argon2i
 from nacl.utils import random
 from nacl.encoding import RawEncoder
+
+from enum import Enum
+
+class SgxStatus(Enum):
+    SUCCESS = 0
+    ERROR_WRONG_INPUT_ARGUMENTS = -1
 
 # from cryptography.hazmat.primitives.ciphers import Cipher, algorithms, modes
 # from cryptography.exceptions import InvalidTag
@@ -65,29 +71,30 @@ class SecretKey(bytes):
 
     # Using AES with SGX enclave
     def encrypt(self, data):
-        ecall_encryptMessage = LibSgx.ecall_encryptMessage
-        ecall_encryptMessage.restype = POINTER(c_uint8)
-        encMessageLen = c_size_t()
-        encrypted_ptr = ecall_encryptMessage(self, data, len(data), byref(encMessageLen))
-        encrypted_data = cast(encrypted_ptr, POINTER(c_uint8 * encMessageLen.value))
-        encrypted_data = bytes(list(encrypted_data.contents))
-        # print("ici")
-        # print()
-        # print()
-        # print("encrypted data = ", encrypted_data)
-
-        return encrypted_data
+        print("initializing = ", LibSgx.initialize_enclave())
+        print(LibSgx.ecall_enclave_hello_world())
+        # ecall_encryptText = LibSgx.ecall_encryptText
+        # ecall_encryptText.restype = POINTER(c_uint8)
+        # encMessageLen = c_size_t()
+        # status_code = c_int()
+        # encrypted_ptr = ecall_encryptText(byref(status_code), self, data, len(data), byref(encMessageLen))
+        # print("\n\n\ndata=",data, "\n\n\n")
+        # print("\n\n\key=",self, "\n\n\n")
+        # if status_code.value != SgxStatus.SUCCESS.value:
+        #     print("encryption went wrong, status_code = ", status_code.value)
+        #     raise CryptoError
+        # else:
+        #     encrypted_data = cast(encrypted_ptr, POINTER(c_uint8 * encMessageLen.value))
+        #     encrypted_data = bytes(list(encrypted_data.contents))
+        return b''
 
     def decrypt(self, data):
         data_len = len(data)
         output_len = data_len - SGX_AESGCM_MAC_SIZE - SGX_AESGCM_IV_SIZE
-        ecall_decryptMessage = LibSgx.ecall_decryptMessage
-        ecall_decryptMessage.restype = POINTER(c_uint8 * output_len)
-        decrypted_data = bytes(list(ecall_decryptMessage(self, data, data_len).contents))
-        # print("la")
-        # print()
-        # print()
-        # print("decrypted data = ", decrypted_data)
+        ecall_decryptText = LibSgx.ecall_decryptText
+        ecall_decryptText.restype = POINTER(c_uint8 * output_len)
+        status_code = c_int()
+        decrypted_data = bytes(list(ecall_decryptText(byref(status_code), self, data, data_len).contents))
         return decrypted_data
 
     # Using AES WITHOUT ENCLAVE
