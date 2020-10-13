@@ -16,12 +16,15 @@ from nacl.pwhash import argon2i
 from nacl.utils import random
 from nacl.encoding import RawEncoder
 
-from enum import Enum
+from enum import IntEnum, unique
 
 
-class SgxStatus(Enum):
-    SUCCESS = 0
-    ERROR_WRONG_INPUT_ARGUMENTS = -1
+@unique
+class SgxStatus(IntEnum):
+    SGX_SUCCESS = 0
+    SGX_ERROR_UNEXPECTED = 1
+    SGX_ERROR_INVALID_PARAMETER = 2
+    SGX_ERROR_OUT_OF_MEMORY = 3
 
 
 # Note to simplify things, we adopt `nacl.CryptoError` as our root error cls
@@ -53,7 +56,6 @@ CRYPTO_MEMLIMIT = argon2i.MEMLIMIT_INTERACTIVE
 
 SGX_AESGCM_MAC_SIZE = 16
 SGX_AESGCM_IV_SIZE = 12
-# Types
 
 
 class SecretKey(bytes):
@@ -76,8 +78,10 @@ class SecretKey(bytes):
         encrypted_ptr = ecall_encryptText(
             byref(status_code), self, data, len(data), byref(encMessageLen)
         )
-        if status_code.value != SgxStatus.SUCCESS.value:
-            print("encryption went wrong, status_code = ", status_code.value)
+        if status_code.value != SgxStatus.SGX_SUCCESS.value:
+            print(
+                "encryption went wrong, status_code = ", SgxStatus(status_code.value).name, "\n\n"
+            )
             raise CryptoError
             return b""
         else:
@@ -94,7 +98,14 @@ class SecretKey(bytes):
         decrypted_data = bytes(
             list(ecall_decryptText(byref(status_code), self, data, data_len).contents)
         )
-        return decrypted_data
+        if status_code.value != SgxStatus.SGX_SUCCESS.value:
+            print(
+                "Decryption went wrong, status_code = ", SgxStatus(status_code.value).name, "\n\n"
+            )
+            return b""
+        else:
+            print("Decrypted data : ", decrypted_data)
+            return decrypted_data
 
     def hmac(self, data: bytes, digest_size=BLAKE2B_BYTES) -> bytes:
         return blake2b(data, digest_size=digest_size, key=self, encoder=RawEncoder)
@@ -209,7 +220,7 @@ def import_root_verify_key(raw: str) -> VerifyKey:
 def derivate_secret_key_from_password(password: str, salt: bytes = None) -> Tuple[SecretKey, bytes]:
     salt = salt or random(argon2i.SALTBYTES)
     rawkey = argon2i.kdf(
-        32, password.encode("utf8"), salt, opslimit=CRYPTO_OPSLIMIT, memlimit=CRYPTO_MEMLIMIT
+        16, password.encode("utf8"), salt, opslimit=CRYPTO_OPSLIMIT, memlimit=CRYPTO_MEMLIMIT
     )
     return SecretKey(rawkey), salt
 
