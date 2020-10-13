@@ -30,6 +30,7 @@ class SgxStatus(IntEnum):
 # Note to simplify things, we adopt `nacl.CryptoError` as our root error cls
 
 LibSgx = cdll.LoadLibrary(os.path.dirname(__file__) + "/sgxlib.so")
+LibSgx.initialize_enclave()
 
 __all__ = (
     # Exceptions
@@ -71,6 +72,12 @@ class SecretKey(bytes):
 
     # Using AES with SGX enclave
     def encrypt(self, data):
+        # print("encrypting")
+        # Converting to bytes in case of BytesArray
+        data = bytes(data)
+        # print("data = ", data)
+        if len(data) < 1:
+            return b""
         ecall_encryptText = LibSgx.ecall_encryptText
         ecall_encryptText.restype = POINTER(c_uint8)
         encMessageLen = c_size_t()
@@ -90,7 +97,13 @@ class SecretKey(bytes):
             return encrypted_data
 
     def decrypt(self, data):
+        # print("decrypting")
+        # Converting to bytes in case of BytesArray
+        data = bytes(data)
+        # print("data = ", data)
         data_len = len(data)
+        if data_len < 1:
+            return b""
         output_len = data_len - SGX_AESGCM_MAC_SIZE - SGX_AESGCM_IV_SIZE
         ecall_decryptText = LibSgx.ecall_decryptText
         ecall_decryptText.restype = POINTER(c_uint8 * output_len)
@@ -104,6 +117,7 @@ class SecretKey(bytes):
             # )
             return b""
         else:
+            # print("decryption success")
             return decrypted_data
 
     def hmac(self, data: bytes, digest_size=BLAKE2B_BYTES) -> bytes:
