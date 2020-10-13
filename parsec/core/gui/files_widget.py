@@ -10,7 +10,6 @@ from structlog import get_logger
 
 from PyQt5.QtCore import Qt, pyqtSignal, QTimer
 from PyQt5.QtWidgets import QFileDialog, QWidget
-
 from parsec.core.types import FsPath, WorkspaceEntry, WorkspaceRole, BackendOrganizationFileLinkAddr
 from parsec.core.fs import WorkspaceFS, WorkspaceFSTimestamped
 from parsec.core.fs.exceptions import (
@@ -29,6 +28,8 @@ from parsec.core.gui.custom_dialogs import (
     show_info,
     GreyedDialog,
 )
+
+from parsec.core.gui.custom_widgets import CenteredSpinnerWidget
 from parsec.core.gui.file_history_widget import FileHistoryWidget
 from parsec.core.gui.loading_widget import LoadingWidget
 from parsec.core.gui.lang import translate as _
@@ -175,6 +176,12 @@ class FilesWidget(QWidget, Ui_FilesWidget):
     def __init__(self, core, jobs_ctx, event_bus, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.setupUi(self)
+
+        # Create spinner and stack it on the table_files widget
+        self.spinner = CenteredSpinnerWidget(parent=self.table_files)
+        self.table_files_layout.addWidget(self.spinner, 0, 0)
+        self.spinner.hide()
+
         self.core = core
         self.jobs_ctx = jobs_ctx
         self.event_bus = event_bus
@@ -514,6 +521,8 @@ class FilesWidget(QWidget, Ui_FilesWidget):
         self.load(self.current_directory)
 
     def load(self, directory, default_selection=None):
+        self.table_files.clear()
+        self.spinner.show()
         self.jobs_ctx.submit_job(
             ThreadSafeQtSignal(self, "folder_stat_success", QtToTrioJob),
             ThreadSafeQtSignal(self, "folder_stat_error", QtToTrioJob),
@@ -696,6 +705,7 @@ class FilesWidget(QWidget, Ui_FilesWidget):
             job.ret
         )
         self.table_files.clear()
+        self.spinner.hide()
         old_sort = self.table_files.horizontalHeader().sortIndicatorSection()
         old_order = self.table_files.horizontalHeader().sortIndicatorOrder()
         self.table_files.setSortingEnabled(False)
@@ -738,6 +748,7 @@ class FilesWidget(QWidget, Ui_FilesWidget):
 
     def _on_folder_stat_error(self, job):
         self.table_files.clear()
+        self.spinner.hide()
         if isinstance(job.exc, FSFileNotFoundError):
             show_error(self, _("TEXT_FILE_FOLDER_NOT_FOUND"))
             self.table_files.add_parent_workspace()
