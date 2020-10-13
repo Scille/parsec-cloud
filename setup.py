@@ -286,7 +286,6 @@ requirements = [
     "async_exit_stack==1.0.1",
     "outcome==1.0.0",
     "packaging==20.4",
-    "ctypes==3.9.0",
 ]
 
 
