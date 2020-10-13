@@ -7,8 +7,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PROJECT VERSION\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2020-10-12 13:49+0200\n"
-"PO-Revision-Date: 2020-10-12 10:53+0200\n"
+"POT-Creation-Date: 2020-10-14 15:36+0200\n"
+"PO-Revision-Date: 2020-10-14 15:38+0200\n"
 "Last-Translator: \n"
 "Language: en\n"
 "Language-Team: en <LL@li.org>\n"
@@ -1651,6 +1651,12 @@ msgstr "Quit"
 msgid "TEXT_WORKSPACE_TIMESTAMPED_VERSION_RETRIEVAL_FAILED"
 msgstr "Cannot retrieve this workspace history."
 
+msgid "TEXT_WORKSPACE_TIMESTAMPED_INSTRUCTIONS_created"
+msgstr ""
+"You will be able to see the workspace as it was at a given time.\n"
+"\n"
+"This workspace was created on {created}."
+
 msgid "TEXT_WORKSPACE_TIMESTAMPED_TITLE"
 msgstr "Go back in time"
 
@@ -2319,9 +2325,6 @@ msgstr "Snapshot"
 
 msgid "TEXT_WORKSPACE_TEMPORARY_DESCRIPTION"
 msgstr "Workspace as it appeared on:"
-
-msgid "TEXT_WORKSPACE_TIMESTAMPED_INSTRUCTIONS"
-msgstr "You will be able to see the workspace as it was at a given time."
 
 msgid "TEXT_WORKSPACE_TIMESTAMPED_SELECT_DATE"
 msgstr "Select a date..."
