@@ -1,5 +1,6 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
 
+import os
 import pathlib
 import pytest
 from PyQt5 import QtCore, QtWidgets, QtGui
@@ -753,7 +754,6 @@ async def test_drag_and_drop(
     def _import_file():
         mime_data = QtCore.QMimeData()
         mime_data.setUrls([QtCore.QUrl.fromLocalFile(str(temp_dir / "file01.txt"))])
-        print(mime_data.urls())
         drop_event = QtGui.QDropEvent(
             w_f.table_files.pos(),
             QtCore.Qt.MoveAction,
@@ -813,3 +813,72 @@ async def test_drag_and_drop_read_only(
         assert w_f.table_files.rowCount() == 1
 
     await aqtbot.wait_until(_import_failed)
+
+
+# Cannot chmod on Windows
+@pytest.mark.linux
+@pytest.mark.gui
+@pytest.mark.trio
+async def test_import_one_file_permission_denied(
+    aqtbot, running_backend, logged_gui_with_workspace, monkeypatch, autoclose_dialog, temp_dir
+):
+    w_f = logged_gui_with_workspace.test_get_files_widget()
+
+    assert w_f is not None
+    async with aqtbot.wait_signal(w_f.folder_stat_success):
+        pass
+    assert w_f.table_files.rowCount() == 1
+
+    # Changing file permissions
+    os.chmod(temp_dir / "file01.txt", 000)
+    monkeypatch.setattr(
+        "PyQt5.QtWidgets.QFileDialog.getOpenFileNames",
+        classmethod(lambda *args, **kwargs: ([temp_dir / "file01.txt"], True)),
+    )
+
+    async with aqtbot.wait_signal(w_f.button_import_files.clicked):
+        await aqtbot.mouse_click(w_f.button_import_files, QtCore.Qt.LeftButton)
+
+    def _import_failed():
+        assert autoclose_dialog.dialogs == [("Error", _("TEXT_FILE_IMPORT_ONE_PERMISSION_ERROR"))]
+        assert w_f.table_files.rowCount() == 1
+
+    await aqtbot.wait_until(_import_failed, timeout=3000)
+
+
+# Cannot chmod on Windows
+@pytest.mark.linux
+@pytest.mark.gui
+@pytest.mark.trio
+async def test_import_multiple_files_error(
+    aqtbot, running_backend, logged_gui_with_workspace, monkeypatch, autoclose_dialog, temp_dir
+):
+    w_f = logged_gui_with_workspace.test_get_files_widget()
+
+    assert w_f is not None
+    async with aqtbot.wait_signal(w_f.folder_stat_success):
+        pass
+    assert w_f.table_files.rowCount() == 1
+
+    # Changing file permissions
+    os.chmod(temp_dir / "file01.txt", 000)
+
+    monkeypatch.setattr(
+        "PyQt5.QtWidgets.QFileDialog.getOpenFileNames",
+        classmethod(
+            lambda *args, **kwargs: ([temp_dir / "file01.txt", temp_dir / "file02.txt"], True)
+        ),
+    )
+
+    async with aqtbot.wait_signal(w_f.button_import_files.clicked):
+        await aqtbot.mouse_click(w_f.button_import_files, QtCore.Qt.LeftButton)
+
+    def _import_error_shown():
+        assert autoclose_dialog.dialogs == [
+            ("Error", _("TEXT_FILE_IMPORT_MULTIPLE_PERMISSION_ERROR"))
+        ]
+        assert w_f.table_files.rowCount() == 2
+
+    await aqtbot.wait_until(_import_error_shown, timeout=3000)
+
+    assert w_f.table_files.item(1, 1).text() == "file02.txt"
