@@ -78,9 +78,6 @@ class SecretKey(bytes):
             cipher = Cipher(algorithms.AES(self), modes.GCM(iv, tag))
             decryptor = cipher.decryptor()
             decrypted_message = decryptor.update(ciphered) + decryptor.finalize()
-            print()
-            print()
-            print("decrypted_message = ", decrypted_message)
             return decrypted_message
         except (InvalidTag, ValueError) as exc:
             raise CryptoError(str(exc)) from exc
