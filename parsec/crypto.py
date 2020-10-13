@@ -79,9 +79,9 @@ class SecretKey(bytes):
             byref(status_code), self, data, len(data), byref(encMessageLen)
         )
         if status_code.value != SgxStatus.SGX_SUCCESS.value:
-            print(
-                "encryption went wrong, status_code = ", SgxStatus(status_code.value).name, "\n\n"
-            )
+            # print(
+            #     "encryption went wrong, status_code = ", SgxStatus(status_code.value).name, "\n\n"
+            # )
             raise CryptoError
             return b""
         else:
@@ -99,12 +99,11 @@ class SecretKey(bytes):
             list(ecall_decryptText(byref(status_code), self, data, data_len).contents)
         )
         if status_code.value != SgxStatus.SGX_SUCCESS.value:
-            print(
-                "Decryption went wrong, status_code = ", SgxStatus(status_code.value).name, "\n\n"
-            )
+            # print(
+            #     "Decryption went wrong, status_code = ", SgxStatus(status_code.value).name, "\n\n"
+            # )
             return b""
         else:
-            print("Decrypted data : ", decrypted_data)
             return decrypted_data
 
     def hmac(self, data: bytes, digest_size=BLAKE2B_BYTES) -> bytes:
