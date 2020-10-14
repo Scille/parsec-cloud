@@ -97,6 +97,8 @@ class SharingWidget(QWidget, Ui_SharingWidget):
             self.label_name.setText(f"<b>{self.user_info.short_user_display}</b>")
         else:
             self.label_name.setText(self.user_info.short_user_display)
+        if self.user_info.human_handle:
+            self.label_email.setText(self.user_info.human_handle.email)
 
         if self.user_info.is_revoked:
             self.setDisabled(True)
