@@ -1,12 +1,8 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
 
-from PyQt5.QtCore import Qt, QSize, pyqtSignal, QDate
+from PyQt5.QtCore import Qt
 from PyQt5.QtGui import QColor, QBrush, QFont
-from PyQt5.QtWidgets import QCalendarWidget, QTableView, QVBoxLayout, QWidget
-
-import pendulum
-
-from parsec.core.gui.ui.calendar_header_widget import Ui_CalendarHeaderWidget
+from PyQt5.QtWidgets import QCalendarWidget
 
 
 class CalendarWidget(QCalendarWidget):
