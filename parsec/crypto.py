@@ -93,7 +93,6 @@ class SecretKey(bytes):
             return encrypted_data
 
     def decrypt(self, data):
-        print("data size = ", len(data))
         global count_sgx_call
         # Converting to bytes in case of BytesArray
         data = bytes(data)
