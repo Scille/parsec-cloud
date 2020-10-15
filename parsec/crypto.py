@@ -1,7 +1,6 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
 
 import os
-import time
 
 from typing import Tuple
 from base64 import b32decode, b32encode
@@ -18,8 +17,6 @@ from nacl.utils import random
 from nacl.encoding import RawEncoder
 
 from enum import IntEnum, unique
-
-count_sgx_call = 0
 
 
 @unique
@@ -75,30 +72,19 @@ class SecretKey(bytes):
 
     # Using AES with SGX enclave
     def encrypt(self, data):
-        print("data size = ", len(data))
         global count_sgx_call
-        # print("encrypting")
         # Converting to bytes in case of BytesArray
         data = bytes(data)
-        # print("data = ", data)
         if len(data) < 1:
             return b""
         ecall_encryptText = LibSgx.ecall_encryptText
         ecall_encryptText.restype = POINTER(c_uint8)
         encMessageLen = c_size_t()
         status_code = c_int()
-        start = time.time()  # Measuring time of SGX call
         encrypted_ptr = ecall_encryptText(
             byref(status_code), self, data, len(data), byref(encMessageLen)
         )
-        elapsed_time = time.time() - start  # Measuring time of SGX call
-        print("Time from call in python : ", elapsed_time)  # Measuring time of SGX call
-        count_sgx_call += 1
-        print("total sgx call = ", count_sgx_call)
         if status_code.value != SgxStatus.SGX_SUCCESS.value:
-            # print(
-            #     "encryption went wrong, status_code = ", SgxStatus(status_code.value).name, "\n\n"
-            # )
             raise CryptoError
             return b""
         else:
@@ -109,10 +95,8 @@ class SecretKey(bytes):
     def decrypt(self, data):
         print("data size = ", len(data))
         global count_sgx_call
-        # print("decrypting")
         # Converting to bytes in case of BytesArray
         data = bytes(data)
-        # print("data = ", data)
         data_len = len(data)
         if data_len < 1:
             return b""
@@ -120,21 +104,12 @@ class SecretKey(bytes):
         ecall_decryptText = LibSgx.ecall_decryptText
         ecall_decryptText.restype = POINTER(c_uint8 * output_len)
         status_code = c_int()
-        start = time.time()  # Measuring time of SGX call
         decrypted_data = bytes(
             list(ecall_decryptText(byref(status_code), self, data, data_len).contents)
         )
-        elapsed_time = time.time() - start  # Measuring time of SGX call
-        print("Time from call in python : ", elapsed_time)  # Measuring time of SGX call
-        count_sgx_call += 1
-        print("total sgx call = ", count_sgx_call)
         if status_code.value != SgxStatus.SGX_SUCCESS.value:
-            # print(
-            #     "Decryption went wrong, status_code = ", SgxStatus(status_code.value).name, "\n\n"
-            # )
             return b""
         else:
-            # print("decryption success")
             return decrypted_data
 
     def hmac(self, data: bytes, digest_size=BLAKE2B_BYTES) -> bytes:
