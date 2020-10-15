@@ -7,8 +7,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PROJECT VERSION\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2020-10-12 13:49+0200\n"
-"PO-Revision-Date: 2020-10-12 13:51+0200\n"
+"POT-Creation-Date: 2020-10-15 10:29+0200\n"
+"PO-Revision-Date: 2020-10-15 10:31+0200\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language: fr\n"
 "Language-Team: fr <LL@li.org>\n"
@@ -440,6 +440,9 @@ msgstr "Êtes-vous sûr de vouloir supprimer les {count} fichiers ?"
 msgid "ACTION_FILE_DELETE_MULTIPLE"
 msgstr "Supprimer"
 
+msgid "TEXT_FILE_OPEN_ERROR_file"
+msgstr "Le fichier <b>{file}</b> n'a pas pû être ouvert."
+
 msgid "TEXT_FILE_OPEN_MULTIPLE_TITLE_count"
 msgstr "Ouvrir plusieurs fichiers"
 
@@ -450,6 +453,9 @@ msgstr ""
 
 msgid "ACTION_FILE_OPEN_MULTIPLE"
 msgstr "Ouvrir les fichiers"
+
+msgid "TEXT_FILE_OPEN_MULTIPLE_ERROR"
+msgstr "Certains fichiers n'ont pas pû être ouverts."
 
 msgid "TEXT_FILE_IMPORT_LOADING_TITLE"
 msgstr "En cours d'import"
@@ -501,16 +507,22 @@ msgid "TEXT_FILE_FOLDER_CREATE_ERROR_UNKNOWN"
 msgstr "Impossible de créer le nouveau répertoire."
 
 msgid "TEXT_FILE_IMPORT_ONE_PERMISSION_ERROR"
-msgstr "Le fichier n'a pas pu être importé car vous ne disposez pas des permissions suffisantes."
+msgstr ""
+"Le fichier n'a pas pu être importé car vous ne disposez pas des "
+"permissions suffisantes."
 
 msgid "TEXT_FILE_IMPORT_MULTIPLE_PERMISSION_ERROR"
-msgstr "Certains fichiers n'ont pas été importes car vous ne disposez pas des permissions suffisantes."
+msgstr ""
+"Certains fichiers n'ont pas été importes car vous ne disposez pas des "
+"permissions suffisantes."
 
 msgid "TEXT_FILE_IMPORT_ONE_ERROR"
 msgstr "Un problème est survenu lors de l'import du fichier."
 
 msgid "TEXT_FILE_IMPORT_MULTIPLE_ERROR"
-msgstr "Un problème est survenu lors de l'import des fichiers. Certains fichiers n'ont peut-être pas été importés."
+msgstr ""
+"Un problème est survenu lors de l'import des fichiers. Certains fichiers "
+"n'ont peut-être pas été importés."
 
 msgid "TEXT_FILE_SHARING_REVOKED_workspace"
 msgstr ""
@@ -2374,11 +2386,6 @@ msgstr "Vue instantanée"
 msgid "TEXT_WORKSPACE_TEMPORARY_DESCRIPTION"
 msgstr "Espace de travail tel qu'il apparaissait le :"
 
-msgid "TEXT_WORKSPACE_TIMESTAMPED_INSTRUCTIONS"
-msgstr ""
-"Vous pourrez naviguer dans l'espace de travail tel qu'il était à un "
-"moment donné."
-
 msgid "TEXT_WORKSPACE_TIMESTAMPED_SELECT_DATE"
 msgstr "Sélectionnez une date"
 
@@ -2387,6 +2394,11 @@ msgstr "... et une heure ..."
 
 msgid "ACTION_WORKSPACE_TIMESTAMPED_MOUNT"
 msgstr "Voir l'espace de travail"
+
+msgid "TEXT_WORKSPACE_TIMESTAMPED_INSTRUCTIONS"
+msgstr ""
+"Vous pourrez naviguer dans l'espace de travail tel qu'il était à un "
+"moment donné."
 
 msgid "ACTION_CANCEL_USER_INVITATION_TOOLTIP"
 msgstr "Annuler l'invitation"
@@ -2444,5 +2456,4 @@ msgstr "Créer un nouvel espace de travail"
 
 msgid "ACTION_WORKSPACE_GOTO_FILE_LINK"
 msgstr "Trouver un fichier via son lien"
-
 
