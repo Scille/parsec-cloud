@@ -1,36 +1,42 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
 
 import os
-import hmac
 
 from typing import Tuple
 from base64 import b32decode, b32encode
 from hashlib import sha256
-from ctypes import cdll, c_size_t, c_uint8, byref, cast, POINTER, c_int
+
+# import hmac
+# from ctypes import cdll, c_size_t, c_uint8, byref, cast, POINTER, c_int
 
 
 from nacl.exceptions import CryptoError  # noqa: republishing
 from nacl.public import SealedBox, PrivateKey as _PrivateKey, PublicKey as _PublicKey
 from nacl.signing import SigningKey as _SigningKey, VerifyKey as _VerifyKey
 from nacl.bindings import crypto_sign_BYTES, crypto_scalarmult
+from nacl.hash import blake2b, BLAKE2B_BYTES
 from nacl.pwhash import argon2i
 from nacl.utils import random
+from nacl.encoding import RawEncoder
 
-from enum import IntEnum, unique
+from cryptography.hazmat.primitives.ciphers import Cipher, algorithms, modes
+from cryptography.exceptions import InvalidTag
+
+# from enum import IntEnum, unique
 
 
-@unique
-class SgxStatus(IntEnum):
-    SGX_SUCCESS = 0
-    SGX_ERROR_UNEXPECTED = 1
-    SGX_ERROR_INVALID_PARAMETER = 2
-    SGX_ERROR_OUT_OF_MEMORY = 3
+# @unique
+# class SgxStatus(IntEnum):
+#     SGX_SUCCESS = 0
+#     SGX_ERROR_UNEXPECTED = 1
+#     SGX_ERROR_INVALID_PARAMETER = 2
+#     SGX_ERROR_OUT_OF_MEMORY = 3
 
 
 # Note to simplify things, we adopt `nacl.CryptoError` as our root error cls
 
-LibSgx = cdll.LoadLibrary(os.path.dirname(__file__) + "/sgxlib.so")
-LibSgx.initialize_enclave()
+# LibSgx = cdll.LoadLibrary(os.path.dirname(__file__) + "/sgxlib.so")
+# LibSgx.initialize_enclave()
 
 __all__ = (
     # Exceptions
@@ -55,10 +61,72 @@ __all__ = (
 CRYPTO_OPSLIMIT = argon2i.OPSLIMIT_INTERACTIVE
 CRYPTO_MEMLIMIT = argon2i.MEMLIMIT_INTERACTIVE
 
-SGX_AESGCM_MAC_SIZE = 16
-SGX_AESGCM_IV_SIZE = 12
+# SGX_AESGCM_MAC_SIZE = 16
+# SGX_AESGCM_IV_SIZE = 12
 
-DIGEST_SIZE = 32
+# DIGEST_SIZE = 32
+
+
+# class SecretKey(bytes):
+#     __slots__ = ()
+
+#     @classmethod
+#     def generate(cls) -> "SecretKey":
+#         return cls(os.urandom(16))
+
+#     def __repr__(self):
+#         # Avoid leaking the key in logs
+#         return f"<{type(self).__module__}.{type(self).__qualname__} object at {hex(id(self))}>"
+
+#     # Using AES with SGX enclave
+#     def encrypt(self, data):
+#         # Converting to bytes in case of BytesArray
+#         data = bytes(data)
+#         if len(data) < 1:
+#             return b""
+#         ecall_encryptText = LibSgx.ecall_encryptText
+#         ecall_encryptText.restype = POINTER(c_uint8)
+#         encMessageLen = c_size_t()
+#         status_code = c_int()
+#         encrypted_ptr = ecall_encryptText(
+#             byref(status_code), self, data, len(data), byref(encMessageLen)
+#         )
+#         if status_code.value != SgxStatus.SGX_SUCCESS.value:
+#             raise CryptoError
+#             return b""
+#         else:
+#             encrypted_data = cast(encrypted_ptr, POINTER(c_uint8 * encMessageLen.value))
+#             encrypted_data = bytes(list(encrypted_data.contents))
+#             token = self.hmac(encrypted_data).digest() + encrypted_data
+#             return token
+
+#     def decrypt(self, token):
+#         if len(token) < DIGEST_SIZE:
+#             raise CryptoError(f"Tag must be at least {DIGEST_SIZE} bytes")
+#         hmac = token[:DIGEST_SIZE]
+#         data = token[DIGEST_SIZE:]
+#         if self.hmac(data).digest() != hmac:
+#             raise CryptoError
+#             return b""
+#         # Converting to bytes in case of BytesArray
+#         data = bytes(data)
+#         data_len = len(data)
+#         if data_len < 1:
+#             return b""
+#         output_len = data_len - SGX_AESGCM_MAC_SIZE - SGX_AESGCM_IV_SIZE
+#         ecall_decryptText = LibSgx.ecall_decryptText
+#         ecall_decryptText.restype = POINTER(c_uint8 * output_len)
+#         status_code = c_int()
+#         decrypted_data = bytes(
+#             list(ecall_decryptText(byref(status_code), self, data, data_len).contents)
+#         )
+#         if status_code.value != SgxStatus.SGX_SUCCESS.value:
+#             return b""
+#         else:
+#             return decrypted_data
+
+#     def hmac(self, data: bytes) -> bytes:
+#         return hmac.new(self, data, sha256)
 
 
 class SecretKey(bytes):
@@ -72,56 +140,30 @@ class SecretKey(bytes):
         # Avoid leaking the key in logs
         return f"<{type(self).__module__}.{type(self).__qualname__} object at {hex(id(self))}>"
 
-    # Using AES with SGX enclave
+    # Using AES WITHOUT ENCLAVE
     def encrypt(self, data):
-        # Converting to bytes in case of BytesArray
-        data = bytes(data)
-        if len(data) < 1:
-            return b""
-        ecall_encryptText = LibSgx.ecall_encryptText
-        ecall_encryptText.restype = POINTER(c_uint8)
-        encMessageLen = c_size_t()
-        status_code = c_int()
-        encrypted_ptr = ecall_encryptText(
-            byref(status_code), self, data, len(data), byref(encMessageLen)
-        )
-        if status_code.value != SgxStatus.SGX_SUCCESS.value:
-            raise CryptoError
-            return b""
-        else:
-            encrypted_data = cast(encrypted_ptr, POINTER(c_uint8 * encMessageLen.value))
-            encrypted_data = bytes(list(encrypted_data.contents))
-            return self.hmac(encrypted_data).digest() + encrypted_data
+        iv = os.urandom(16)
+        cipher = Cipher(algorithms.AES(self), modes.GCM(iv))
+        encryptor = cipher.encryptor()
+        ciphered = encryptor.update(data) + encryptor.finalize()
+        tag = encryptor.tag
+        token = iv + tag + ciphered
+        return token
 
-    def decrypt(self, data):
-        if len(data) < DIGEST_SIZE:
-            raise CryptoError(f"Tag must be at least {DIGEST_SIZE} bytes")
-        hmac = data[:DIGEST_SIZE]
-        data = data[DIGEST_SIZE:]
-        if self.hmac(data).digest() != hmac:
-            raise CryptoError
-            return b""
-        # Converting to bytes in case of BytesArray
-        data = bytes(data)
-        data_len = len(data)
-        if data_len < 1:
-            return b""
-        output_len = data_len - SGX_AESGCM_MAC_SIZE - SGX_AESGCM_IV_SIZE
-        ecall_decryptText = LibSgx.ecall_decryptText
-        ecall_decryptText.restype = POINTER(c_uint8 * output_len)
-        status_code = c_int()
-        decrypted_data = bytes(
-            list(ecall_decryptText(byref(status_code), self, data, data_len).contents)
-        )
-        if status_code.value != SgxStatus.SGX_SUCCESS.value:
-            return b""
-        else:
-            return decrypted_data
+    def decrypt(self, token):
+        iv = token[0:16]
+        tag = token[16:32]
+        ciphered = token[32:]
+        try:
+            cipher = Cipher(algorithms.AES(self), modes.GCM(iv, tag))
+            decryptor = cipher.decryptor()
+            decrypted_message = decryptor.update(ciphered) + decryptor.finalize()
+            return decrypted_message
+        except (InvalidTag, ValueError) as exc:
+            raise CryptoError(str(exc)) from exc
 
-    # def hmac(self, data: bytes, digest_size=BLAKE2B_BYTES) -> bytes:
-    # return blake2b(data, digest_size=digest_size, key=self, encoder=RawEncoder)
-    def hmac(self, data: bytes) -> bytes:
-        return hmac.new(self, data, sha256)
+    def hmac(self, data: bytes, digest_size=BLAKE2B_BYTES) -> bytes:
+        return blake2b(data, digest_size=digest_size, key=self, encoder=RawEncoder)
 
 
 class HashDigest(bytes):
@@ -200,6 +242,10 @@ class PublicKey(_PublicKey):
             CryptoError
         """
         return SealedBox(self).encrypt(data)
+
+
+def reencrypt_data(old_key: SecretKey, new_key: SecretKey, token: bytes):
+    pass
 
 
 # Helpers
