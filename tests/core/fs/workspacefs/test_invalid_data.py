@@ -70,7 +70,7 @@ async def testbed(running_backend, alice_user_fs, alice, bob):
 
 @pytest.mark.trio
 async def test_empty_blob(testbed):
-    exc_msg = "Cannot decrypt vlob: initialization_vector must be at least 1 byte"
+    exc_msg = "Cannot decrypt vlob: Tag must be at least 32 bytes"
     await testbed.run(blob=b"", exc_msg=exc_msg)
 
 

@@ -1,20 +1,20 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
 
 import os
+import hmac
 
 from typing import Tuple
 from base64 import b32decode, b32encode
 from hashlib import sha256
 from ctypes import cdll, c_size_t, c_uint8, byref, cast, POINTER, c_int
 
+
 from nacl.exceptions import CryptoError  # noqa: republishing
 from nacl.public import SealedBox, PrivateKey as _PrivateKey, PublicKey as _PublicKey
 from nacl.signing import SigningKey as _SigningKey, VerifyKey as _VerifyKey
 from nacl.bindings import crypto_sign_BYTES, crypto_scalarmult
-from nacl.hash import blake2b, BLAKE2B_BYTES
 from nacl.pwhash import argon2i
 from nacl.utils import random
-from nacl.encoding import RawEncoder
 
 from enum import IntEnum, unique
 
@@ -58,6 +58,8 @@ CRYPTO_MEMLIMIT = argon2i.MEMLIMIT_INTERACTIVE
 SGX_AESGCM_MAC_SIZE = 16
 SGX_AESGCM_IV_SIZE = 12
 
+DIGEST_SIZE = 32
+
 
 class SecretKey(bytes):
     __slots__ = ()
@@ -72,7 +74,6 @@ class SecretKey(bytes):
 
     # Using AES with SGX enclave
     def encrypt(self, data):
-        global count_sgx_call
         # Converting to bytes in case of BytesArray
         data = bytes(data)
         if len(data) < 1:
@@ -90,10 +91,16 @@ class SecretKey(bytes):
         else:
             encrypted_data = cast(encrypted_ptr, POINTER(c_uint8 * encMessageLen.value))
             encrypted_data = bytes(list(encrypted_data.contents))
-            return encrypted_data
+            return self.hmac(encrypted_data).digest() + encrypted_data
 
     def decrypt(self, data):
-        global count_sgx_call
+        if len(data) < DIGEST_SIZE:
+            raise CryptoError(f"Tag must be at least {DIGEST_SIZE} bytes")
+        hmac = data[:DIGEST_SIZE]
+        data = data[DIGEST_SIZE:]
+        if self.hmac(data).digest() != hmac:
+            raise CryptoError
+            return b""
         # Converting to bytes in case of BytesArray
         data = bytes(data)
         data_len = len(data)
@@ -111,8 +118,10 @@ class SecretKey(bytes):
         else:
             return decrypted_data
 
-    def hmac(self, data: bytes, digest_size=BLAKE2B_BYTES) -> bytes:
-        return blake2b(data, digest_size=digest_size, key=self, encoder=RawEncoder)
+    # def hmac(self, data: bytes, digest_size=BLAKE2B_BYTES) -> bytes:
+    # return blake2b(data, digest_size=digest_size, key=self, encoder=RawEncoder)
+    def hmac(self, data: bytes) -> bytes:
+        return hmac.new(self, data, sha256)
 
 
 class HashDigest(bytes):
