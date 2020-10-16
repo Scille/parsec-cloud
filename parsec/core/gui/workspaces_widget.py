@@ -749,6 +749,7 @@ class WorkspacesWidget(QWidget, Ui_WorkspacesWidget):
 
     def list_workspaces(self):
         if not self.has_workspaces_displayed():
+            self.layout_workspaces.clear()
             self.spinner.show()
         self.jobs_ctx.submit_job(
             ThreadSafeQtSignal(self, "list_success", QtToTrioJob),
