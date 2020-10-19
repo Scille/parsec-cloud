@@ -428,16 +428,19 @@ class VersionListerTaskList:
         return self.heapq_tasks == []
 
     async def execute_one(self):
-        task = heappop(self.heapq_tasks)
+        try:
+            task = heappop(self.heapq_tasks)
+        except IndexError:
+            return
         await task.run()
 
     async def execute_worker(self, workers_limit, nursery):
         if self.workers == workers_limit or self.is_empty():
             return
         self.workers += 1
-        if self.workers < workers_limit:
-            nursery.start_soon(self.execute_worker, workers_limit, nursery)
         while not self.is_empty():
+            if self.workers < workers_limit:
+                nursery.start_soon(self.execute_worker, workers_limit, nursery)
             await self.execute_one()
         self.workers -= 1
 
@@ -480,6 +483,7 @@ class VersionLister:
         starting_timestamp: Optional[DateTime] = None,
         ending_timestamp: Optional[DateTime] = None,
         max_manifest_queries: Optional[int] = None,
+        workers: int = 5,
     ) -> Tuple[List[TimestampBoundedData], bool]:
         """
         Returns:
@@ -500,6 +504,7 @@ class VersionLister:
             starting_timestamp=starting_timestamp,
             ending_timestamp=ending_timestamp,
             max_manifest_queries=max_manifest_queries,
+            workers=workers,
         )
 
 
@@ -581,7 +586,7 @@ class VersionListerOneShot:
                 self.return_dict.items(),
                 key=lambda item: (item[0].late, item[0].id, item[0].version),
             )
-            if download_limit_reached or early < download_limit
+            # if download_limit_reached or early < download_limit
         ]
         return (self._sanitize_list(versions_list, skip_minimal_sync), download_limit_reached)
 
