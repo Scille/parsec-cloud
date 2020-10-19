@@ -166,6 +166,10 @@ class SecretKey(bytes):
         return blake2b(data, digest_size=digest_size, key=self, encoder=RawEncoder)
 
 
+def reencrypt_data(old_key: SecretKey, new_key: SecretKey, token: bytes):
+    pass
+
+
 class HashDigest(bytes):
     __slots__ = ()
 
@@ -242,10 +246,6 @@ class PublicKey(_PublicKey):
             CryptoError
         """
         return SealedBox(self).encrypt(data)
-
-
-def reencrypt_data(old_key: SecretKey, new_key: SecretKey, token: bytes):
-    pass
 
 
 # Helpers
