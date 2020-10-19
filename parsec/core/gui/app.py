@@ -107,6 +107,10 @@ def fail_on_first_exception(kill_window):
 
 @contextmanager
 def log_pyqt_exceptions():
+    # Override sys.excepthook to be able to properly log exceptions occuring in Qt slots.
+    # Exceptions occuring in the core while in the Qt app should be catched sooner by the
+    # job.
+
     def log_except(etype, exception, traceback):
         logger.exception("Exception in Qt slot", exc_info=(etype, exception, traceback))
 
