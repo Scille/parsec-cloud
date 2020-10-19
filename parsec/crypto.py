@@ -3,8 +3,10 @@
 import os
 
 from typing import Tuple
-from base64 import b32decode, b32encode
+from base64 import b32decode, b32encode, urlsafe_b64encode, urlsafe_b64decode
 from hashlib import sha256
+import time
+import struct
 
 # import hmac
 # from ctypes import cdll, c_size_t, c_uint8, byref, cast, POINTER, c_int
@@ -134,7 +136,7 @@ class SecretKey(bytes):
 
     @classmethod
     def generate(cls) -> "SecretKey":
-        return cls(os.urandom(16))
+        return cls(urlsafe_b64encode(os.urandom(16)))
 
     def __repr__(self):
         # Avoid leaking the key in logs
@@ -142,18 +144,26 @@ class SecretKey(bytes):
 
     # Using AES WITHOUT ENCLAVE
     def encrypt(self, data):
+        time_stamp = struct.pack(">Q", int(time.time()))
         iv = os.urandom(16)
         cipher = Cipher(algorithms.AES(self), modes.GCM(iv))
         encryptor = cipher.encryptor()
         ciphered = encryptor.update(data) + encryptor.finalize()
         tag = encryptor.tag
-        token = iv + tag + ciphered
-        return token
+        version = b"\x80"
+        token = version + time_stamp + iv + ciphered + tag
+        return urlsafe_b64encode(token)
 
     def decrypt(self, token):
-        iv = token[0:16]
-        tag = token[16:32]
-        ciphered = token[32:]
+        token = urlsafe_b64decode(token)
+        version = token[0:1]
+        time_stamp = token[1:9]
+        iv = token[9:25]
+        tag = token[-16:]
+        ciphered = token[25:-16]
+        assert version == b"\x80"
+        if time_stamp > struct.pack(">Q", int(time.time())):
+            raise CryptoError("Invalid token")
         try:
             cipher = Cipher(algorithms.AES(self), modes.GCM(iv, tag))
             decryptor = cipher.decryptor()
@@ -164,10 +174,6 @@ class SecretKey(bytes):
 
     def hmac(self, data: bytes, digest_size=BLAKE2B_BYTES) -> bytes:
         return blake2b(data, digest_size=digest_size, key=self, encoder=RawEncoder)
-
-
-def reencrypt_data(old_key: SecretKey, new_key: SecretKey, token: bytes):
-    pass
 
 
 class HashDigest(bytes):
