@@ -77,7 +77,7 @@ def show_result(cmd_results):
         *[cell_str(f"{w} workers") for w in next(iter(cmd_results.values()))],
     )
     for lag, lag_results in cmd_results.items():
-        print("-" * 106)
+        print("-" * (31 + 25 * len(lag_results)))
         for file_name in next(iter(lag_results.values())):
             print(
                 cell_str(lag, filler_num=5),
