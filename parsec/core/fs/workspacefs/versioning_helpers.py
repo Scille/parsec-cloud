@@ -45,6 +45,10 @@ class ManifestCacheDownloadLimitReached(Exception):
     pass
 
 
+class ManifestCacheInconsistent(Exception):
+    pass
+
+
 class VersionListerTaskListNodeMissingParent(Exception):
     pass
 
@@ -225,28 +229,45 @@ class ManifestCache:
 
         Raises:
             ManifestCacheNotFound
+            ManifestCacheInconsistent
         """
         if manifest.id not in self._manifest_cache:
             self._manifest_cache[manifest.id] = {}
-        if manifest.version not in self._manifest_cache[manifest.id]:
-            self._manifest_cache[manifest.id][manifest.version] = CacheEntry(
-                timestamp, timestamp, manifest
-            )
+        cache_for_id = self._manifest_cache[manifest.id]
+        if manifest.version not in cache_for_id:
+            cache_for_id[manifest.version] = CacheEntry(timestamp, timestamp, manifest)
         elif timestamp:
             if (
-                self._manifest_cache[manifest.id][manifest.version].late is None
-                or timestamp > self._manifest_cache[manifest.id][manifest.version].late
+                cache_for_id[manifest.version].late is None
+                or timestamp > cache_for_id[manifest.version].late
             ):
-                self._manifest_cache[manifest.id][manifest.version] = CacheEntry(
-                    self._manifest_cache[manifest.id][manifest.version].early, timestamp, manifest
+                cache_for_id[manifest.version] = CacheEntry(
+                    cache_for_id[manifest.version].early, timestamp, manifest
                 )
             if (
-                self._manifest_cache[manifest.id][manifest.version].early is None
-                or timestamp < self._manifest_cache[manifest.id][manifest.version].early
+                cache_for_id[manifest.version].early is None
+                or timestamp < cache_for_id[manifest.version].early
             ):
-                self._manifest_cache[manifest.id][manifest.version] = CacheEntry(
-                    timestamp, self._manifest_cache[manifest.id][manifest.version].late, manifest
+                cache_for_id[manifest.version] = CacheEntry(
+                    timestamp, cache_for_id[manifest.version].late, manifest
                 )
+        # Check inconsistency
+        keys = sorted([*cache_for_id.keys()])
+        index = keys.index(manifest.version)
+        if (
+            index > 0
+            and cache_for_id[keys[index - 1]].late is not None
+            and cache_for_id[manifest.version].early is not None
+            and cache_for_id[keys[index - 1]].late > cache_for_id[manifest.version].early
+        ):
+            raise ManifestCacheInconsistent
+        if (
+            index < len(keys) - 1
+            and cache_for_id[keys[index + 1]].early is not None
+            and cache_for_id[manifest.version].late is not None
+            and cache_for_id[keys[index + 1]].early < cache_for_id[manifest.version].late
+        ):
+            raise ManifestCacheInconsistent
 
     async def load(
         self,
@@ -358,7 +379,7 @@ class ManifestCacheCounter:
     async def load(
         self, entry_id: EntryID, version=None, timestamp=None, expected_backend_timestamp=None
     ) -> RemoteManifest:
-        if self.limit == self.counter:
+        if self.counter >= self.limit:
             raise ManifestCacheDownloadLimitReached
         manifest, was_downloaded = await self._manifest_cache.load(
             entry_id, version, timestamp, expected_backend_timestamp
@@ -586,7 +607,7 @@ class VersionListerOneShot:
                 self.return_dict.items(),
                 key=lambda item: (item[0].late, item[0].id, item[0].version),
             )
-            # if download_limit_reached or early < download_limit
+            if download_limit_reached or early < download_limit
         ]
         return (self._sanitize_list(versions_list, skip_minimal_sync), download_limit_reached)
 
