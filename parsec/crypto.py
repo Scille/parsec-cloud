@@ -3,7 +3,7 @@
 import os
 
 from typing import Tuple
-from base64 import b32decode, b32encode, urlsafe_b64encode, urlsafe_b64decode
+from base64 import b32decode, b32encode
 from hashlib import sha256
 import time
 import struct
@@ -24,21 +24,9 @@ from nacl.encoding import RawEncoder
 from cryptography.hazmat.primitives.ciphers import Cipher, algorithms, modes
 from cryptography.exceptions import InvalidTag
 
-# from enum import IntEnum, unique
-
-
-# @unique
-# class SgxStatus(IntEnum):
-#     SGX_SUCCESS = 0
-#     SGX_ERROR_UNEXPECTED = 1
-#     SGX_ERROR_INVALID_PARAMETER = 2
-#     SGX_ERROR_OUT_OF_MEMORY = 3
-
 
 # Note to simplify things, we adopt `nacl.CryptoError` as our root error cls
 
-# LibSgx = cdll.LoadLibrary(os.path.dirname(__file__) + "/sgxlib.so")
-# LibSgx.initialize_enclave()
 
 __all__ = (
     # Exceptions
@@ -136,7 +124,7 @@ class SecretKey(bytes):
 
     @classmethod
     def generate(cls) -> "SecretKey":
-        return cls(urlsafe_b64encode(os.urandom(16)))
+        return cls(os.urandom(16))
 
     def __repr__(self):
         # Avoid leaking the key in logs
@@ -152,10 +140,9 @@ class SecretKey(bytes):
         tag = encryptor.tag
         version = b"\x80"
         token = version + time_stamp + iv + ciphered + tag
-        return urlsafe_b64encode(token)
+        return token
 
     def decrypt(self, token):
-        token = urlsafe_b64decode(token)
         version = token[0:1]
         time_stamp = token[1:9]
         iv = token[9:25]

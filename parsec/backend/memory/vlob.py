@@ -1,10 +1,13 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
 
+import os
 import attr
 import pendulum
 from uuid import UUID
 from typing import List, Tuple, Dict, Optional
 from collections import defaultdict
+from enum import IntEnum, unique
+from ctypes import cdll, c_size_t, c_uint8, byref, cast, POINTER, c_int
 
 from parsec.backend.backend_events import BackendEvent
 from parsec.api.protocol import DeviceID, OrganizationID
@@ -21,6 +24,19 @@ from parsec.backend.vlob import (
     VlobInMaintenanceError,
     VlobNotInMaintenanceError,
 )
+from parsec.crypto import SecretKey
+
+
+@unique
+class SgxStatus(IntEnum):
+    SGX_SUCCESS = 0
+    SGX_ERROR_UNEXPECTED = 1
+    SGX_ERROR_INVALID_PARAMETER = 2
+    SGX_ERROR_OUT_OF_MEMORY = 3
+
+
+LibSgx = cdll.LoadLibrary(os.path.dirname(__file__) + "/sgxlib.so")
+LibSgx.initialize_enclave()
 
 
 @attr.s
@@ -341,6 +357,9 @@ class MemoryVlobComponent(BaseVlobComponent):
 
         return total, done
 
+    async def reencrypt_data(old_key: SecretKey, new_key: SecretKey, token: bytes):
+        pass
+
     async def maintenance_backend_reencryption(
         self,
         organization_id: OrganizationID,
@@ -367,8 +386,9 @@ class MemoryVlobComponent(BaseVlobComponent):
         ]
 
         for item in batch:
-            cleartext = old_key.decrypt(item["blob"])
-            newciphered = new_key.encrypt(cleartext)
+            newciphered = await self.reencrypt_data(old_key=old_key, new_key=new_key, token=token)
+            # cleartext = old_key.decrypt(item["blob"])
+            # newciphered = new_key.encrypt(cleartext)
             donebatch.append((item["vlob_id"], item["version"], newciphered))
 
         total, done = changes.reencryption.save_batch(donebatch)
