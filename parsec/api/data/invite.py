@@ -45,7 +45,7 @@ def generate_sas_codes(
     # Computes combined HMAC
     combined_nonce = claimer_nonce + greeter_nonce
     # Digest size of 5 bytes so we can split it beween two 20bits SAS
-    combined_hmac = shared_secret_key.hmac(combined_nonce).digest()
+    combined_hmac = shared_secret_key.hmac(combined_nonce)
 
     hmac_as_int = int.from_bytes(combined_hmac, "big")
     # Big endian number extracted from bits [0, 20[

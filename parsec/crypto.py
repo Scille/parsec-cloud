@@ -133,22 +133,23 @@ class SecretKey(bytes):
     # Using AES WITHOUT ENCLAVE
     def encrypt(self, data):
         time_stamp = struct.pack(">Q", int(time.time()))
-        iv = os.urandom(16)
+        iv = os.urandom(12)
         cipher = Cipher(algorithms.AES(self), modes.GCM(iv))
         encryptor = cipher.encryptor()
         ciphered = encryptor.update(data) + encryptor.finalize()
         tag = encryptor.tag
         version = b"\x80"
-        token = version + time_stamp + iv + ciphered + tag
+        token = version + time_stamp + iv + tag + ciphered
         return token
 
     def decrypt(self, token):
         version = token[0:1]
         time_stamp = token[1:9]
-        iv = token[9:25]
-        tag = token[-16:]
-        ciphered = token[25:-16]
-        assert version == b"\x80"
+        iv = token[9:21]
+        tag = token[21:37]
+        ciphered = token[37:]
+        if version != b"\x80":
+            raise CryptoError("Invalid token")
         if time_stamp > struct.pack(">Q", int(time.time())):
             raise CryptoError("Invalid token")
         try:

@@ -7,7 +7,7 @@ from uuid import UUID
 from typing import List, Tuple, Dict, Optional
 from collections import defaultdict
 from enum import IntEnum, unique
-from ctypes import cdll, c_size_t, c_uint8, byref, cast, POINTER, c_int
+from ctypes import cdll, c_char_p, c_int, c_uint8, byref, cast, POINTER
 
 from parsec.backend.backend_events import BackendEvent
 from parsec.api.protocol import DeviceID, OrganizationID
@@ -35,7 +35,7 @@ class SgxStatus(IntEnum):
     SGX_ERROR_OUT_OF_MEMORY = 3
 
 
-LibSgx = cdll.LoadLibrary(os.path.dirname(__file__) + "/sgxlib.so")
+LibSgx = cdll.LoadLibrary(os.path.dirname(__file__) + "/../../../" + "sgxlib.so")
 LibSgx.initialize_enclave()
 
 
@@ -357,8 +357,26 @@ class MemoryVlobComponent(BaseVlobComponent):
 
         return total, done
 
-    async def reencrypt_data(old_key: SecretKey, new_key: SecretKey, token: bytes):
-        pass
+    async def reencrypt_data(self, old_key: SecretKey, new_key: SecretKey, token: bytes):
+        ecall_reencryptText = LibSgx.ecall_reencryptText
+        ecall_reencryptText.restype = POINTER(c_char_p)
+        token_len = len(token)
+        status_code = c_int()
+        reencrypted_token_ptr = ecall_reencryptText(
+            byref(status_code), old_key, new_key, token, token_len
+        )
+        if status_code.value != SgxStatus.SGX_SUCCESS.value:
+            print(
+                "\nReencryption went wrong, status_code = ",
+                SgxStatus(status_code.value).name,
+                "\n\n",
+            )
+            return b""
+        else:
+            reencrypted_token = cast(reencrypted_token_ptr, POINTER(c_uint8 * token_len))
+            reencrypted_token = bytes(list(reencrypted_token.contents))
+            print("Reencryption SUCCESS")
+            return reencrypted_token
 
     async def maintenance_backend_reencryption(
         self,
@@ -386,7 +404,9 @@ class MemoryVlobComponent(BaseVlobComponent):
         ]
 
         for item in batch:
-            newciphered = await self.reencrypt_data(old_key=old_key, new_key=new_key, token=token)
+            newciphered = await self.reencrypt_data(
+                old_key=old_key, new_key=new_key, token=item["blob"]
+            )
             # cleartext = old_key.decrypt(item["blob"])
             # newciphered = new_key.encrypt(cleartext)
             donebatch.append((item["vlob_id"], item["version"], newciphered))
