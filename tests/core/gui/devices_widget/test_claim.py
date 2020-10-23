@@ -98,9 +98,6 @@ def ClaimDeviceTestBed(
             def _register_device_displayed():
                 tab = gui.test_get_tab()
                 assert tab and tab.isVisible()
-                assert cd_w.isVisible()
-                assert cd_w.dialog.label_title.text() == "Register a device"
-                assert cdi_w.isVisible()
 
             await aqtbot.wait_until(_register_device_displayed)
 
@@ -116,6 +113,7 @@ def ClaimDeviceTestBed(
             self.claim_device_provide_info_widget = None
 
             cd_w = self.claim_device_widget
+            assert isinstance(cd_w, ClaimDeviceWidget)
             cdi_w = await catch_claim_device_widget()
             assert isinstance(cdi_w, ClaimDeviceInstructionsWidget)
 
@@ -123,7 +121,6 @@ def ClaimDeviceTestBed(
                 tab = gui.test_get_tab()
                 assert tab and tab.isVisible()
                 assert cd_w.isVisible()
-                assert cd_w.dialog.label_title.text() == "Register a device"
                 assert cdi_w.isVisible()
 
             await aqtbot.wait_until(_register_device_displayed)
@@ -134,8 +131,6 @@ def ClaimDeviceTestBed(
             self.assert_initial_state()  # Sanity check
 
         def assert_initial_state(self):
-            assert self.claim_device_widget.isVisible()
-            assert self.claim_device_instructions_widget.isVisible()
             assert self.claim_device_instructions_widget.button_start.isEnabled()
             if self.claim_device_code_exchange_widget:
                 assert not self.claim_device_code_exchange_widget.isVisible()
@@ -250,16 +245,12 @@ def ClaimDeviceTestBed(
             return "step_6_validate_claim_info"
 
         async def step_6_validate_claim_info(self):
-            cd_w = self.claim_device_widget
-            cdpi_w = self.claim_device_provide_info_widget
 
             await self.greeter_in_progress_ctx.do_create_new_device(
                 author=self.author, device_label=self.greeter_in_progress_ctx.requested_device_label
             )
 
             def _claim_done():
-                assert not cd_w.isVisible()
-                assert not cdpi_w.isVisible()
                 # Should be logged in with the new device
                 central_widget = gui.test_get_central_widget()
                 assert central_widget and central_widget.isVisible()
@@ -298,8 +289,6 @@ async def test_claim_device_offline(
         def _claim_aborted(self, expected_message):
             assert len(autoclose_dialog.dialogs) == 1
             assert autoclose_dialog.dialogs == [("Error", expected_message)]
-            assert not self.claim_device_widget.isVisible()
-            assert not self.claim_device_instructions_widget.isVisible()
 
         async def offline_step_1_start_claim(self):
             expected_message = translate("TEXT_CLAIM_DEVICE_WAIT_PEER_ERROR")
@@ -474,8 +463,6 @@ async def test_claim_device_invitation_cancelled(
         def _claim_restart(self, expected_message):
             assert len(autoclose_dialog.dialogs) == 1
             assert autoclose_dialog.dialogs == [("Error", expected_message)]
-            assert not self.claim_device_widget.isVisible()
-            assert not self.claim_device_instructions_widget.isVisible()
 
         async def cancelled_step_1_start_claim(self):
             expected_message = translate("TEXT_INVITATION_ALREADY_USED")

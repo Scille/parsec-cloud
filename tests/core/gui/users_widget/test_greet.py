@@ -113,9 +113,7 @@ def GreetUserTestBed(
             assert isinstance(greet_user_information_widget, GreetUserInstructionsWidget)
 
             def _greet_user_displayed():
-                assert greet_user_widget.dialog.isVisible()
                 assert greet_user_widget.isVisible()
-                assert greet_user_widget.dialog.label_title.text() == "Greet a new user"
                 assert greet_user_information_widget.isVisible()
 
             await aqtbot.wait_until(_greet_user_displayed)
@@ -139,9 +137,7 @@ def GreetUserTestBed(
             assert isinstance(greet_user_information_widget, GreetUserInstructionsWidget)
 
             def _greet_user_displayed():
-                assert greet_user_widget.dialog.isVisible()
                 assert greet_user_widget.isVisible()
-                assert greet_user_widget.dialog.label_title.text() == "Greet a new user"
                 assert greet_user_information_widget.isVisible()
 
             await aqtbot.wait_until(_greet_user_displayed)
@@ -271,7 +267,6 @@ def GreetUserTestBed(
         async def step_6_validate_claim_info(self):
             assert self.claimer_claim_task
             u_w = self.users_widget
-            gu_w = self.greet_user_widget
             guci_w = self.greet_user_check_informations_widget
 
             # Finally confirm the claimer info and finish the greeting !
@@ -281,7 +276,6 @@ def GreetUserTestBed(
                 await self.claimer_claim_task.join()
 
             def _greet_done():
-                assert not gu_w.isVisible()
                 assert autoclose_dialog.dialogs == [
                     ("", "The user was successfully greeter in your organization.")
                 ]
@@ -326,8 +320,6 @@ async def test_greet_user_offline(
         def _greet_aborted(self, expected_message):
             assert len(autoclose_dialog.dialogs) == 1
             assert autoclose_dialog.dialogs == [("Error", expected_message)]
-            assert not self.greet_user_widget.isVisible()
-            assert not self.greet_user_information_widget.isVisible()
 
         async def offline_step_1_start_greet(self):
             expected_message = translate("TEXT_GREET_USER_WAIT_PEER_ERROR")
@@ -491,8 +483,6 @@ async def test_greet_user_invitation_cancelled(
         def _greet_restart(self, expected_message):
             assert len(autoclose_dialog.dialogs) == 1
             assert autoclose_dialog.dialogs == [("Error", expected_message)]
-            assert not self.greet_user_widget.isVisible()
-            assert not self.greet_user_information_widget.isVisible()
 
         async def cancelled_step_1_start_greet(self):
             expected_message = translate("TEXT_GREET_USER_WAIT_PEER_ERROR")

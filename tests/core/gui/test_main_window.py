@@ -93,17 +93,17 @@ def bob_available_device(bob, tmpdir):
 
 @pytest.fixture
 async def logged_gui_with_files(
-    aqtbot, running_backend, backend, autoclose_dialog, logged_gui, bob, monkeypatch
+    aqtbot, running_backend, backend, autoclose_dialog, logged_gui, bob, monkeypatch, input_patcher
 ):
     w_w = await logged_gui.test_switch_to_workspaces_widget()
 
     assert logged_gui.tab_center.count() == 1
 
-    monkeypatch.setattr(
-        "parsec.core.gui.workspaces_widget.get_text_input", lambda *args, **kwargs: "w1"
+    input_patcher.patch_text_input(
+        "parsec.core.gui.workspaces_widget.get_text_input", QtWidgets.QDialog.Accepted, "w1"
     )
-    monkeypatch.setattr(
-        "parsec.core.gui.files_widget.get_text_input", lambda *args, **kwargs: ("dir1")
+    input_patcher.patch_text_input(
+        "parsec.core.gui.files_widget.get_text_input", QtWidgets.QDialog.Accepted, "dir1"
     )
 
     await aqtbot.mouse_click(w_w.button_add_workspace, QtCore.Qt.LeftButton)

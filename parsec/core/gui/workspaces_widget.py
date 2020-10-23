@@ -312,29 +312,31 @@ class WorkspacesWidget(QWidget, Ui_WorkspacesWidget):
         )
 
     def goto_file_clicked(self):
-        file_link = get_text_input(
+        def _on_file_link_input_finished(return_code, file_link):
+            if not return_code or not file_link:
+                return
+            url = None
+            try:
+                url = BackendOrganizationFileLinkAddr.from_url(file_link)
+            except ValueError as exc:
+                show_error(self, _("TEXT_WORKSPACE_GOTO_FILE_LINK_INVALID_LINK"), exception=exc)
+                return
+
+            for widget in self._iter_workspace_buttons():
+                if widget.workspace_fs.workspace_id == url.workspace_id:
+                    self.load_workspace(widget.workspace_fs, path=url.path, selected=True)
+                    return
+            show_error(self, _("TEXT_WORKSPACE_GOTO_FILE_LINK_WORKSPACE_NOT_FOUND"))
+
+        get_text_input(
             self,
             _("TEXT_WORKSPACE_GOTO_FILE_LINK_TITLE"),
             _("TEXT_WORKSPACE_GOTO_FILE_LINK_INSTRUCTIONS"),
             placeholder=_("TEXT_WORKSPACE_GOTO_FILE_LINK_PLACEHOLDER"),
             default_text="",
             button_text=_("ACTION_GOTO_FILE_LINK"),
+            on_finished=_on_file_link_input_finished,
         )
-        if not file_link:
-            return
-
-        url = None
-        try:
-            url = BackendOrganizationFileLinkAddr.from_url(file_link)
-        except ValueError as exc:
-            show_error(self, _("TEXT_WORKSPACE_GOTO_FILE_LINK_INVALID_LINK"), exception=exc)
-            return
-
-        for widget in self._iter_workspace_buttons():
-            if widget.workspace_fs.workspace_id == url.workspace_id:
-                self.load_workspace(widget.workspace_fs, path=url.path, selected=True)
-                return
-        show_error(self, _("TEXT_WORKSPACE_GOTO_FILE_LINK_WORKSPACE_NOT_FOUND"))
 
     def on_workspace_filter(self, pattern):
         pattern = pattern.lower()
@@ -575,42 +577,45 @@ class WorkspacesWidget(QWidget, Ui_WorkspacesWidget):
         if isinstance(workspace_fs, WorkspaceFSTimestamped):
             self.unmount_workspace(workspace_fs.workspace_id, workspace_fs.timestamp)
             return
-        else:
-            workspace_name = self.jobs_ctx.run_sync(workspace_fs.get_workspace_name)
-            result = ask_question(
-                self,
-                _("TEXT_WORKSPACE_DELETE_TITLE"),
-                _("TEXT_WORKSPACE_DELETE_INSTRUCTIONS_workspace").format(workspace=workspace_name),
-                [_("ACTION_DELETE_WORKSPACE_CONFIRM"), _("ACTION_CANCEL")],
-            )
-            if result != _("ACTION_DELETE_WORKSPACE_CONFIRM"):
-                return
-            # Workspace deletion is not available yet (button should be hidden anyway)
+        # Workspace deletion is not available, keeping the code if it is made available one day
+        # else:
+        #     workspace_name = self.jobs_ctx.run_sync(workspace_fs.get_workspace_name)
+        #     result = ask_question(
+        #         self,
+        #         _("TEXT_WORKSPACE_DELETE_TITLE"),
+        #         _("TEXT_WORKSPACE_DELETE_INSTRUCTIONS_workspace").format(workspace=workspace_name),
+        #         [_("ACTION_DELETE_WORKSPACE_CONFIRM"), _("ACTION_CANCEL")],
+        #     )
+        #     if result != _("ACTION_DELETE_WORKSPACE_CONFIRM"):
+        #         return
 
     def rename_workspace(self, workspace_button):
-        new_name = get_text_input(
+        def _rename_dialog_finished(return_code, text):
+            if not return_code or not text:
+                return
+            self.jobs_ctx.submit_job(
+                ThreadSafeQtSignal(self, "rename_success", QtToTrioJob),
+                ThreadSafeQtSignal(self, "rename_error", QtToTrioJob),
+                _do_workspace_rename,
+                core=self.core,
+                workspace_id=workspace_button.workspace_fs.workspace_id,
+                new_name=text,
+                button=workspace_button,
+            )
+
+        get_text_input(
             self,
             _("TEXT_WORKSPACE_RENAME_TITLE"),
             _("TEXT_WORKSPACE_RENAME_INSTRUCTIONS"),
+            on_finished=_rename_dialog_finished,
             placeholder=_("TEXT_WORKSPACE_RENAME_PLACEHOLDER"),
             default_text=workspace_button.name,
             button_text=_("ACTION_WORKSPACE_RENAME_CONFIRM"),
             validator=validators.WorkspaceNameValidator(),
         )
-        if not new_name:
-            return
-        self.jobs_ctx.submit_job(
-            ThreadSafeQtSignal(self, "rename_success", QtToTrioJob),
-            ThreadSafeQtSignal(self, "rename_error", QtToTrioJob),
-            _do_workspace_rename,
-            core=self.core,
-            workspace_id=workspace_button.workspace_fs.workspace_id,
-            new_name=new_name,
-            button=workspace_button,
-        )
 
-    def on_sharing_closing(self, has_changes):
-        if has_changes:
+    def on_sharing_closing(self, return_code, has_changes):
+        if return_code and has_changes:
             self.reset()
 
     def share_workspace(self, workspace_fs):
@@ -631,6 +636,49 @@ class WorkspacesWidget(QWidget, Ui_WorkspacesWidget):
         ):
             return
 
+        def _on_workspace_reencryption_question_finished(return_code, answer):
+            if not return_code or answer != _("ACTION_WORKSPACE_REENCRYPTION_CONFIRM"):
+                return
+
+            @contextmanager
+            def _handle_fs_errors():
+                try:
+                    yield
+                except FSBackendOfflineError as exc:
+                    raise JobResultError(ret=workspace_id, status="offline-backend", origin=exc)
+                except FSWorkspaceNoAccess as exc:
+                    raise JobResultError(ret=workspace_id, status="access-error", origin=exc)
+                except FSWorkspaceNotFoundError as exc:
+                    raise JobResultError(ret=workspace_id, status="not-found", origin=exc)
+                except FSError as exc:
+                    raise JobResultError(ret=workspace_id, status="fs-error", origin=exc)
+
+            async def _reencrypt(on_progress, workspace_id):
+                with _handle_fs_errors():
+                    if reencryption_already_in_progress:
+                        job = await self.core.user_fs.workspace_continue_reencryption(workspace_id)
+                    else:
+                        job = await self.core.user_fs.workspace_start_reencryption(workspace_id)
+                while True:
+                    with _handle_fs_errors():
+                        total, done = await job.do_one_batch()
+                    on_progress.emit(workspace_id, total, done)
+                    if total == done:
+                        break
+                return workspace_id
+
+            self.reencrypting.add(workspace_id)
+
+            self.jobs_ctx.submit_job(
+                ThreadSafeQtSignal(self, "workspace_reencryption_success", QtToTrioJob),
+                ThreadSafeQtSignal(self, "workspace_reencryption_error", QtToTrioJob),
+                _reencrypt,
+                on_progress=ThreadSafeQtSignal(
+                    self, "workspace_reencryption_progress", EntryID, int, int
+                ),
+                workspace_id=workspace_id,
+            )
+
         question = ""
         if user_revoked:
             question += "{}\n".format(_("TEXT_WORKSPACE_NEED_REENCRYPTION_BECAUSE_USER_REVOKED"))
@@ -638,52 +686,12 @@ class WorkspacesWidget(QWidget, Ui_WorkspacesWidget):
             question += "{}\n".format(_("TEXT_WORKSPACE_NEED_REENCRYPTION_BECAUSE_USER_REMOVED"))
         question += _("TEXT_WORKSPACE_NEED_REENCRYPTION_INSTRUCTIONS")
 
-        r = ask_question(
+        ask_question(
             self,
             _("TEXT_WORKSPACE_NEED_REENCRYPTION_TITLE"),
             question,
             [_("ACTION_WORKSPACE_REENCRYPTION_CONFIRM"), _("ACTION_CANCEL")],
-        )
-        if r != _("ACTION_WORKSPACE_REENCRYPTION_CONFIRM"):
-            return
-
-        @contextmanager
-        def _handle_fs_errors():
-            try:
-                yield
-            except FSBackendOfflineError as exc:
-                raise JobResultError(ret=workspace_id, status="offline-backend", origin=exc)
-            except FSWorkspaceNoAccess as exc:
-                raise JobResultError(ret=workspace_id, status="access-error", origin=exc)
-            except FSWorkspaceNotFoundError as exc:
-                raise JobResultError(ret=workspace_id, status="not-found", origin=exc)
-            except FSError as exc:
-                raise JobResultError(ret=workspace_id, status="fs-error", origin=exc)
-
-        async def _reencrypt(on_progress, workspace_id):
-            with _handle_fs_errors():
-                if reencryption_already_in_progress:
-                    job = await self.core.user_fs.workspace_continue_reencryption(workspace_id)
-                else:
-                    job = await self.core.user_fs.workspace_start_reencryption(workspace_id)
-            while True:
-                with _handle_fs_errors():
-                    total, done = await job.do_one_batch()
-                on_progress.emit(workspace_id, total, done)
-                if total == done:
-                    break
-            return workspace_id
-
-        self.reencrypting.add(workspace_id)
-
-        self.jobs_ctx.submit_job(
-            ThreadSafeQtSignal(self, "workspace_reencryption_success", QtToTrioJob),
-            ThreadSafeQtSignal(self, "workspace_reencryption_error", QtToTrioJob),
-            _reencrypt,
-            on_progress=ThreadSafeQtSignal(
-                self, "workspace_reencryption_progress", EntryID, int, int
-            ),
-            workspace_id=workspace_id,
+            on_finished=_on_workspace_reencryption_question_finished,
         )
 
     def _on_workspace_reencryption_success(self, job):
@@ -717,22 +725,24 @@ class WorkspacesWidget(QWidget, Ui_WorkspacesWidget):
             wb.reencrypting = (total, done)
 
     def create_workspace_clicked(self):
-        workspace_name = get_text_input(
+        def _on_workspace_name_input_finished(return_code, workspace_name):
+            if return_code and workspace_name:
+                self.jobs_ctx.submit_job(
+                    ThreadSafeQtSignal(self, "create_success", QtToTrioJob),
+                    ThreadSafeQtSignal(self, "create_error", QtToTrioJob),
+                    _do_workspace_create,
+                    core=self.core,
+                    workspace_name=workspace_name,
+                )
+
+        get_text_input(
             parent=self,
             title=_("TEXT_WORKSPACE_NEW_TITLE"),
             message=_("TEXT_WORKSPACE_NEW_INSTRUCTIONS"),
             placeholder=_("TEXT_WORKSPACE_NEW_PLACEHOLDER"),
             button_text=_("ACTION_WORKSPACE_NEW_CREATE"),
             validator=validators.WorkspaceNameValidator(),
-        )
-        if not workspace_name:
-            return
-        self.jobs_ctx.submit_job(
-            ThreadSafeQtSignal(self, "create_success", QtToTrioJob),
-            ThreadSafeQtSignal(self, "create_error", QtToTrioJob),
-            _do_workspace_create,
-            core=self.core,
-            workspace_name=workspace_name,
+            on_finished=_on_workspace_name_input_finished,
         )
 
     def reset(self):

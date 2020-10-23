@@ -21,13 +21,14 @@ def catch_share_workspace_widget(widget_catcher_factory):
 
 @pytest.fixture
 async def gui_workspace_sharing(
-    logged_gui, catch_share_workspace_widget, monkeypatch, aqtbot, autoclose_dialog
+    logged_gui, catch_share_workspace_widget, monkeypatch, aqtbot, autoclose_dialog, input_patcher
 ):
     w_w = await logged_gui.test_switch_to_workspaces_widget()
 
-    monkeypatch.setattr(
-        "parsec.core.gui.workspaces_widget.get_text_input", lambda *args, **kwargs: ("Workspace")
+    input_patcher.patch_text_input(
+        "parsec.core.gui.workspaces_widget.get_text_input", QtWidgets.QDialog.Accepted, "Workspace"
     )
+
     await aqtbot.mouse_click(w_w.button_add_workspace, QtCore.Qt.LeftButton)
 
     def _workspace_added():
@@ -44,6 +45,8 @@ async def gui_workspace_sharing(
 
     await aqtbot.mouse_click(wk_button.button_share, QtCore.Qt.LeftButton)
     share_w_w = await catch_share_workspace_widget()
+    async with aqtbot.wait_exposed(share_w_w):
+        pass
     yield logged_gui, w_w, share_w_w
 
 
@@ -133,6 +136,8 @@ async def test_share_workspace(
             share_w_w.parent().parent().reject()
 
         await qt_thread_gateway.send_action(_close_dialog)
+
+    autoclose_dialog.reset()
 
     def _workspace_listed():
         assert w_w.layout_workspaces.count() == 1
@@ -249,7 +254,10 @@ async def test_workspace_sharing_filter_users(
     def _users_visible():
         visible = 0
         for i in range(share_w_w.scroll_content.layout().count() - 1):
-            print(share_w_w.scroll_content.layout().itemAt(i).widget().label_name.text())
+            print(
+                share_w_w.scroll_content.layout().itemAt(i).widget().label_name.text(),
+                share_w_w.scroll_content.layout().itemAt(i).widget().isVisible(),
+            )
             if share_w_w.scroll_content.layout().itemAt(i).widget().isVisible():
                 visible += 1
         return visible
@@ -327,6 +335,8 @@ async def test_unshare_workspace_while_connected(
         assert isinstance(label, QtWidgets.QLabel)
 
     await aqtbot.wait_until(_no_workspace_listed, timeout=2000)
+
+    assert len(autoclose_dialog.dialogs) == 1
 
     assert autoclose_dialog.dialogs[0] == (
         "Error",

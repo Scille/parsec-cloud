@@ -405,81 +405,94 @@ class FilesWidget(QWidget, Ui_FilesWidget):
     def rename_files(self):
         files = self.table_files.selected_files()
         if len(files) == 1:
-            new_name = get_text_input(
+
+            def _on_rename_one_file_finished(return_code, new_name):
+                if return_code and new_name:
+                    self.jobs_ctx.submit_job(
+                        ThreadSafeQtSignal(self, "rename_success", QtToTrioJob),
+                        ThreadSafeQtSignal(self, "rename_error", QtToTrioJob),
+                        _do_rename,
+                        workspace_fs=self.workspace_fs,
+                        paths=[
+                            (
+                                self.current_directory / files[0].name,
+                                self.current_directory / new_name,
+                                files[0].uuid,
+                            )
+                        ],
+                    )
+
+            get_text_input(
                 self,
                 _("TEXT_FILE_RENAME_TITLE"),
                 _("TEXT_FILE_RENAME_INSTRUCTIONS"),
                 placeholder=_("TEXT_FILE_RENAME_PLACEHOLDER"),
                 default_text=files[0].name,
                 button_text=_("ACTION_FILE_RENAME"),
-            )
-            if not new_name:
-                return
-            self.jobs_ctx.submit_job(
-                ThreadSafeQtSignal(self, "rename_success", QtToTrioJob),
-                ThreadSafeQtSignal(self, "rename_error", QtToTrioJob),
-                _do_rename,
-                workspace_fs=self.workspace_fs,
-                paths=[
-                    (
-                        self.current_directory / files[0].name,
-                        self.current_directory / new_name,
-                        files[0].uuid,
-                    )
-                ],
+                on_finished=_on_rename_one_file_finished,
             )
         else:
-            new_name = get_text_input(
+
+            def _on_rename_multiple_files_finished(return_code, new_name):
+                if return_code and new_name:
+                    self.jobs_ctx.submit_job(
+                        ThreadSafeQtSignal(self, "rename_success", QtToTrioJob),
+                        ThreadSafeQtSignal(self, "rename_error", QtToTrioJob),
+                        _do_rename,
+                        workspace_fs=self.workspace_fs,
+                        paths=[
+                            (
+                                self.current_directory / f.name,
+                                self.current_directory
+                                / "{}_{}{}".format(
+                                    new_name, i, ".".join(pathlib.Path(f.name).suffixes)
+                                ),
+                                f.uuid,
+                            )
+                            for i, f in enumerate(files, 1)
+                        ],
+                    )
+
+            get_text_input(
                 self,
                 _("TEXT_FILE_RENAME_MULTIPLE_TITLE_count").format(count=len(files)),
                 _("TEXT_FILE_RENAME_MULTIPLE_INSTRUCTIONS_count").format(count=len(files)),
                 placeholder=_("TEXT_FILE_RENAME_MULTIPLE_PLACEHOLDER"),
                 button_text=_("ACTION_FILE_RENAME_MULTIPLE"),
-            )
-            if not new_name:
-                return
-
-            self.jobs_ctx.submit_job(
-                ThreadSafeQtSignal(self, "rename_success", QtToTrioJob),
-                ThreadSafeQtSignal(self, "rename_error", QtToTrioJob),
-                _do_rename,
-                workspace_fs=self.workspace_fs,
-                paths=[
-                    (
-                        self.current_directory / f.name,
-                        self.current_directory
-                        / "{}_{}{}".format(new_name, i, ".".join(pathlib.Path(f.name).suffixes)),
-                        f.uuid,
-                    )
-                    for i, f in enumerate(files, 1)
-                ],
+                on_finished=_on_rename_multiple_files_finished,
             )
 
     def delete_files(self):
         files = self.table_files.selected_files()
+
+        def _on_delete_file_question_finished(return_code, answer):
+            if return_code and (
+                answer == _("ACTION_FILE_DELETE") or answer == _("ACTION_FILE_DELETE_MULTIPLE")
+            ):
+                self.jobs_ctx.submit_job(
+                    ThreadSafeQtSignal(self, "delete_success", QtToTrioJob),
+                    ThreadSafeQtSignal(self, "delete_error", QtToTrioJob),
+                    _do_delete,
+                    workspace_fs=self.workspace_fs,
+                    files=[(self.current_directory / f.name, f.type) for f in files],
+                )
+
         if len(files) == 1:
-            result = ask_question(
+            ask_question(
                 self,
                 _("TEXT_FILE_DELETE_TITLE"),
                 _("TEXT_FILE_DELETE_INSTRUCTIONS_name").format(name=files[0].name),
                 [_("ACTION_FILE_DELETE"), _("ACTION_CANCEL")],
+                on_finished=_on_delete_file_question_finished,
             )
         else:
-            result = ask_question(
+            ask_question(
                 self,
                 _("TEXT_FILE_DELETE_MULTIPLE_TITLE_count").format(count=len(files)),
                 _("TEXT_FILE_DELETE_MULTIPLE_INSTRUCTIONS_count").format(count=len(files)),
                 [_("ACTION_FILE_DELETE_MULTIPLE"), _("ACTION_CANCEL")],
+                on_finished=_on_delete_file_question_finished,
             )
-        if result != _("ACTION_FILE_DELETE_MULTIPLE") and result != _("ACTION_FILE_DELETE"):
-            return
-        self.jobs_ctx.submit_job(
-            ThreadSafeQtSignal(self, "delete_success", QtToTrioJob),
-            ThreadSafeQtSignal(self, "delete_error", QtToTrioJob),
-            _do_delete,
-            workspace_fs=self.workspace_fs,
-            files=[(self.current_directory / f.name, f.type) for f in files],
-        )
 
     def on_open_current_dir_clicked(self):
         self.open_file(None)
@@ -490,19 +503,22 @@ class FilesWidget(QWidget, Ui_FilesWidget):
             if not self.open_file(files[0][2]):
                 show_error(self, _("TEXT_FILE_OPEN_ERROR_file").format(file=files[0][2]))
         else:
-            result = ask_question(
+
+            def _on_open_file_question_finished(return_code, answer):
+                if return_code and answer == _("ACTION_FILE_OPEN_MULTIPLE"):
+                    success = True
+                    for f in files:
+                        success &= self.open_file(f[2])
+                    if not success:
+                        show_error(self, _("TEXT_FILE_OPEN_MULTIPLE_ERROR"))
+
+            ask_question(
                 self,
                 _("TEXT_FILE_OPEN_MULTIPLE_TITLE_count").format(count=len(files)),
                 _("TEXT_FILE_OPEN_MULTIPLE_INSTRUCTIONS_count").format(count=len(files)),
                 [_("ACTION_FILE_OPEN_MULTIPLE"), _("ACTION_CANCEL")],
+                on_finished=_on_open_file_question_finished,
             )
-            if result != _("ACTION_FILE_OPEN_MULTIPLE"):
-                return
-            success = True
-            for f in files:
-                success &= self.open_file(f[2])
-            if not success:
-                show_error(self, _("TEXT_FILE_OPEN_MULTIPLE_ERROR"))
 
     def open_file(self, file_name):
         # The Qt thread should never hit the core directly.
@@ -670,22 +686,23 @@ class FilesWidget(QWidget, Ui_FilesWidget):
                     self.table_files.setRowHidden(i, False)
 
     def create_folder_clicked(self):
-        folder_name = get_text_input(
+        def _on_folder_name_finished(return_code, folder_name):
+            if return_code and folder_name:
+                self.jobs_ctx.submit_job(
+                    ThreadSafeQtSignal(self, "folder_create_success", QtToTrioJob),
+                    ThreadSafeQtSignal(self, "folder_create_error", QtToTrioJob),
+                    _do_folder_create,
+                    workspace_fs=self.workspace_fs,
+                    path=self.current_directory / folder_name,
+                )
+
+        get_text_input(
             self,
             _("TEXT_FILE_CREATE_FOLDER_TITLE"),
             _("TEXT_FILE_CREATE_FOLDER_INSTRUCTIONS"),
             placeholder=_("TEXT_FILE_CREATE_FOLDER_PLACEHOLDER"),
             button_text=_("ACTION_FILE_CREATE_FOLDER"),
-        )
-        if not folder_name:
-            return
-
-        self.jobs_ctx.submit_job(
-            ThreadSafeQtSignal(self, "folder_create_success", QtToTrioJob),
-            ThreadSafeQtSignal(self, "folder_create_error", QtToTrioJob),
-            _do_folder_create,
-            workspace_fs=self.workspace_fs,
-            path=self.current_directory / folder_name,
+            on_finished=_on_folder_name_finished,
         )
 
     def keyPressEvent(self, event):

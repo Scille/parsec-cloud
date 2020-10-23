@@ -3,7 +3,7 @@
 from functools import partial
 
 import pytest
-from PyQt5 import QtCore
+from PyQt5 import QtCore, QtWidgets
 
 from parsec.core.fs import (
     FSBackendOfflineError,
@@ -27,7 +27,7 @@ async def revoke_user_workspace_right(workspace, owner_user_fs, invited_user_fs,
     await owner_user_fs.sync()
 
 
-async def display_reencryption_button(aqtbot, monkeypatch, workspace_widget):
+async def display_reencryption_button(aqtbot, monkeypatch, workspace_widget, input_patcher):
     def _workspace_displayed():
         assert workspace_widget.layout_workspaces.count() == 1
         wk_button = workspace_widget.layout_workspaces.itemAt(0).widget()
@@ -42,9 +42,10 @@ async def display_reencryption_button(aqtbot, monkeypatch, workspace_widget):
 
     await aqtbot.wait_until(_reencrypt_button_displayed)
 
-    monkeypatch.setattr(
+    input_patcher.patch_question(
         "parsec.core.gui.workspaces_widget.ask_question",
-        lambda *args, **kwargs: translate("ACTION_WORKSPACE_REENCRYPTION_CONFIRM"),
+        QtWidgets.QDialog.Accepted,
+        translate("ACTION_WORKSPACE_REENCRYPTION_CONFIRM"),
     )
 
 
@@ -126,11 +127,12 @@ async def test_workspace_reencryption(
     autoclose_dialog,
     monkeypatch,
     reencryption_needed_workspace,
+    input_patcher,
 ):
 
     w_w = await logged_gui.test_switch_to_workspaces_widget()
 
-    await display_reencryption_button(aqtbot, monkeypatch, w_w)
+    await display_reencryption_button(aqtbot, monkeypatch, w_w, input_patcher)
     wk_button = w_w.layout_workspaces.itemAt(0).widget()
 
     async with aqtbot.wait_signals(
@@ -154,11 +156,12 @@ async def test_workspace_reencryption_offline_backend(
     autoclose_dialog,
     monkeypatch,
     reencryption_needed_workspace,
+    input_patcher,
 ):
 
     w_w = await logged_gui.test_switch_to_workspaces_widget()
 
-    await display_reencryption_button(aqtbot, monkeypatch, w_w)
+    await display_reencryption_button(aqtbot, monkeypatch, w_w, input_patcher)
     wk_button = w_w.layout_workspaces.itemAt(0).widget()
     with running_backend.offline():
         await aqtbot.mouse_click(wk_button.button_reencrypt, QtCore.Qt.LeftButton)
@@ -184,11 +187,12 @@ async def test_workspace_reencryption_fs_error(
     alice_user_fs,
     monkeypatch,
     reencryption_needed_workspace,
+    input_patcher,
 ):
 
     w_w = await logged_gui.test_switch_to_workspaces_widget()
 
-    await display_reencryption_button(aqtbot, monkeypatch, w_w)
+    await display_reencryption_button(aqtbot, monkeypatch, w_w, input_patcher)
     wk_button = w_w.layout_workspaces.itemAt(0).widget()
 
     await alice_user_fs.workspace_start_reencryption(wk_button.workspace_id)
@@ -218,11 +222,12 @@ async def test_workspace_reencryption_access_error(
     adam,
     monkeypatch,
     reencryption_needed_workspace,
+    input_patcher,
 ):
 
     w_w = await logged_gui.test_switch_to_workspaces_widget()
 
-    await display_reencryption_button(aqtbot, monkeypatch, w_w)
+    await display_reencryption_button(aqtbot, monkeypatch, w_w, input_patcher)
     wk_button = w_w.layout_workspaces.itemAt(0).widget()
 
     await alice_user_fs.workspace_share(
@@ -258,11 +263,12 @@ async def test_workspace_reencryption_not_found_error(
     autoclose_dialog,
     monkeypatch,
     reencryption_needed_workspace,
+    input_patcher,
 ):
 
     w_w = await logged_gui.test_switch_to_workspaces_widget()
 
-    await display_reencryption_button(aqtbot, monkeypatch, w_w)
+    await display_reencryption_button(aqtbot, monkeypatch, w_w, input_patcher)
     wk_button = w_w.layout_workspaces.itemAt(0).widget()
 
     def mocked_start_reencryption(self, workspace_id):
@@ -299,6 +305,7 @@ async def test_workspace_reencryption_do_one_batch_error(
     monkeypatch,
     reencryption_needed_workspace,
     error_type,
+    input_patcher,
 ):
 
     expected_errors = {
@@ -310,7 +317,7 @@ async def test_workspace_reencryption_do_one_batch_error(
     }
 
     w_w = await logged_gui.test_switch_to_workspaces_widget()
-    await display_reencryption_button(aqtbot, monkeypatch, w_w)
+    await display_reencryption_button(aqtbot, monkeypatch, w_w, input_patcher)
 
     wk_button = w_w.layout_workspaces.itemAt(0).widget()
 
@@ -346,6 +353,7 @@ async def test_workspace_reencryption_continue(
     bob_user_fs,
     bob,
     alice,
+    input_patcher,
 ):
     # Create a shared workspace
     wid = await alice_user_fs.workspace_create("w1")
@@ -362,11 +370,12 @@ async def test_workspace_reencryption_continue(
     await gui.test_switch_to_logged_in(bob)
     w_w = gui.test_get_workspaces_widget()
 
-    await display_reencryption_button(aqtbot, monkeypatch, w_w)
+    await display_reencryption_button(aqtbot, monkeypatch, w_w, input_patcher)
 
-    monkeypatch.setattr(
+    input_patcher.patch_question(
         "parsec.core.gui.workspaces_widget.ask_question",
-        lambda *args, **kwargs: translate("ACTION_WORKSPACE_REENCRYPTION_CONFIRM"),
+        QtWidgets.QDialog.Accepted,
+        translate("ACTION_WORKSPACE_REENCRYPTION_CONFIRM"),
     )
 
     wk_button = w_w.layout_workspaces.itemAt(0).widget()

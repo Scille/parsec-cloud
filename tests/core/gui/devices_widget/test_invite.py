@@ -68,9 +68,7 @@ async def test_invite_device_send_email(
     assert isinstance(gdi_w, GreetDeviceInstructionsWidget)
 
     def _greet_device_displayed():
-        assert gd_w.dialog.isVisible()
         assert gd_w.isVisible()
-        assert gd_w.dialog.label_title.text() == "Greet a new device"
         assert gdi_w.isVisible()
         assert gdi_w.button_send_email.isVisible()
         assert gdi_w.button_copy_addr.isVisible()
@@ -116,9 +114,7 @@ async def test_invite_device_without_human_handle_cannot_send_email(
     assert isinstance(gdi_w, GreetDeviceInstructionsWidget)
 
     def _greet_device_displayed():
-        assert gd_w.dialog.isVisible()
         assert gd_w.isVisible()
-        assert gd_w.dialog.label_title.text() == "Greet a new device"
         assert gdi_w.isVisible()
         assert not gdi_w.button_send_email.isVisible()
         assert gdi_w.button_copy_addr.isVisible()
@@ -152,9 +148,7 @@ async def test_invite_and_greet_device(
     assert isinstance(gdi_w, GreetDeviceInstructionsWidget)
 
     def _greet_device_displayed():
-        assert gd_w.dialog.isVisible()
         assert gd_w.isVisible()
-        assert gd_w.dialog.label_title.text() == "Greet a new device"
         assert gdi_w.isVisible()
 
     await aqtbot.wait_until(_greet_device_displayed)
@@ -255,7 +249,6 @@ async def test_invite_and_greet_device(
         start_claimer_claim_user.set()
 
         def _greet_done():
-            assert not gd_w.isVisible()
             assert autoclose_dialog.dialogs == [("", "The device was successfully created.")]
             # Devices list should be updated
             assert d_w.layout_devices.count() == 2

@@ -1,7 +1,7 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
 
 import pytest
-from PyQt5 import QtCore
+from PyQt5 import QtCore, QtWidgets
 
 from uuid import UUID
 import pendulum
@@ -18,7 +18,7 @@ from parsec.core.gui.workspace_button import WorkspaceButton
 @pytest.mark.trio
 @pytest.mark.parametrize("invalid_name", (False, True))
 async def test_add_workspace(
-    aqtbot, running_backend, logged_gui, monkeypatch, autoclose_dialog, invalid_name
+    aqtbot, running_backend, logged_gui, monkeypatch, autoclose_dialog, invalid_name, input_patcher
 ):
     w_w = await logged_gui.test_switch_to_workspaces_widget()
 
@@ -28,8 +28,10 @@ async def test_add_workspace(
 
     # Add (or try to) a new workspace
     workspace_name = ".." if invalid_name else "Workspace1"
-    monkeypatch.setattr(
-        "parsec.core.gui.workspaces_widget.get_text_input", lambda *args, **kwargs: (workspace_name)
+    input_patcher.patch_text_input(
+        "parsec.core.gui.workspaces_widget.get_text_input",
+        QtWidgets.QDialog.Accepted,
+        workspace_name,
     )
     await aqtbot.mouse_click(w_w.button_add_workspace, QtCore.Qt.LeftButton)
 
@@ -59,7 +61,7 @@ async def test_add_workspace(
 @pytest.mark.trio
 @pytest.mark.parametrize("invalid_name", (False, True))
 async def test_rename_workspace(
-    aqtbot, running_backend, logged_gui, monkeypatch, autoclose_dialog, invalid_name
+    aqtbot, running_backend, logged_gui, monkeypatch, autoclose_dialog, invalid_name, input_patcher
 ):
     w_w = await logged_gui.test_switch_to_workspaces_widget()
 
@@ -78,8 +80,10 @@ async def test_rename_workspace(
 
     # Now do the rename
     workspace_name = ".." if invalid_name else "Workspace1_Renamed"
-    monkeypatch.setattr(
-        "parsec.core.gui.workspaces_widget.get_text_input", lambda *args, **kwargs: (workspace_name)
+    input_patcher.patch_text_input(
+        "parsec.core.gui.workspaces_widget.get_text_input",
+        QtWidgets.QDialog.Accepted,
+        workspace_name,
     )
     await aqtbot.mouse_click(wk_button.button_rename, QtCore.Qt.LeftButton)
 
@@ -352,6 +356,7 @@ async def test_workspace_filter_user_new_workspace(
     bob_user_fs,
     alice,
     monkeypatch,
+    input_patcher,
 ):
     w_w = await logged_gui.test_switch_to_workspaces_widget()
     wid_alice = await alice_user_fs.workspace_create("Workspace1")
@@ -394,9 +399,10 @@ async def test_workspace_filter_user_new_workspace(
 
     await aqtbot.wait_until(_workspace_filtered)
 
-    monkeypatch.setattr(
-        "parsec.core.gui.workspaces_widget.get_text_input", lambda *args, **kwargs: ("Workspace2")
+    input_patcher.patch_text_input(
+        "parsec.core.gui.workspaces_widget.get_text_input", QtWidgets.QDialog.Accepted, "Workspace2"
     )
+
     await aqtbot.mouse_click(w_w.button_add_workspace, QtCore.Qt.LeftButton)
 
     def _new_workspace_listed():

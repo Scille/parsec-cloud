@@ -236,16 +236,26 @@ async def test_create_organization_bootstrap_only(
         "TEXT_BOOTSTRAP_ORGANIZATION_INSTRUCTIONS_organization"
     ).format(organization="AnomalousMaterials")
 
-    await aqtbot.key_clicks(co_w.user_widget.line_edit_user_full_name, "Gordon Freeman")
-    await aqtbot.key_clicks(co_w.user_widget.line_edit_user_email, "gordon.freeman@blackmesa.com")
-
     def _user_widget_ready():
+        assert co_w.user_widget.isVisible()
+        assert not co_w.device_widget.isVisible()
+        assert not co_w.button_previous.isVisible()
+        assert not co_w.button_validate.isEnabled()
         assert co_w.user_widget.line_edit_org_name.text() == "AnomalousMaterials"
         assert co_w.user_widget.line_edit_org_name.isReadOnly() is True
 
     await aqtbot.wait_until(_user_widget_ready)
 
+    await aqtbot.key_clicks(co_w.user_widget.line_edit_user_full_name, "Gordon Freeman")
+    await aqtbot.key_clicks(co_w.user_widget.line_edit_user_email, "gordon.freeman@blackmesa.com")
+    assert not co_w.button_validate.isEnabled()
+
     await aqtbot.mouse_click(co_w.user_widget.check_accept_contract, QtCore.Qt.LeftButton)
+
+    def _user_widget_button_validate_ready():
+        assert co_w.button_validate.isEnabled()
+
+    await aqtbot.wait_until(_user_widget_button_validate_ready)
 
     await aqtbot.mouse_click(co_w.button_validate, QtCore.Qt.LeftButton)
 
@@ -259,10 +269,16 @@ async def test_create_organization_bootstrap_only(
 
     await aqtbot.key_clicks(co_w.device_widget.line_edit_device, "HEV")
     await aqtbot.key_clicks(co_w.device_widget.widget_password.line_edit_password, "nihilanth")
+    assert not co_w.button_validate.isEnabled()
+
     await aqtbot.key_clicks(
         co_w.device_widget.widget_password.line_edit_password_check, "nihilanth"
     )
 
+    def _device_widget_button_validate_ready():
+        assert co_w.button_validate.isEnabled()
+
+    await aqtbot.wait_until(_device_widget_button_validate_ready)
     await aqtbot.mouse_click(co_w.button_validate, QtCore.Qt.LeftButton)
 
     def _modal_shown():
@@ -292,6 +308,7 @@ async def test_create_organization_already_bootstrapped(
     organization_factory,
     local_device_factory,
     alice,
+    input_patcher,
 ):
     org = organization_factory()
     backend_user, backend_first_device = local_device_to_backend_user(alice, org)
@@ -309,8 +326,8 @@ async def test_create_organization_already_bootstrapped(
         running_backend.addr, org.organization_id, bootstrap_token
     )
 
-    monkeypatch.setattr(
-        "parsec.core.gui.main_window.get_text_input", lambda *args, **kwargs: (str(org_bs_addr))
+    input_patcher.patch_text_input(
+        "parsec.core.gui.main_window.get_text_input", 1, str(org_bs_addr)
     )
 
     # The org bootstrap window is usually opened using a sub-menu.
@@ -365,7 +382,7 @@ async def test_create_organization_custom_backend(
     assert co_w
 
     def _user_widget_ready():
-        assert co_w.user_widget.isVisible()
+        assert not co_w.user_widget.isHidden()
         assert not co_w.device_widget.isVisible()
         assert not co_w.button_previous.isVisible()
         assert not co_w.button_validate.isEnabled()

@@ -3,7 +3,7 @@
 from structlog import get_logger
 
 from PyQt5.QtCore import pyqtSignal
-from PyQt5.QtWidgets import QWidget, QApplication, QDialog
+from PyQt5.QtWidgets import QWidget, QDialog
 
 from parsec.api.protocol import OrganizationID, DeviceName, HumanHandle
 from parsec.core.backend_connection import (
@@ -127,6 +127,9 @@ class CreateOrgDeviceInfoWidget(QWidget, Ui_CreateOrgDeviceInfoWidget):
 class CreateOrgWidget(QWidget, Ui_CreateOrgWidget):
     req_success = pyqtSignal()
     req_error = pyqtSignal()
+    finished = pyqtSignal(QDialog.DialogCode, object, object)
+    accepted = pyqtSignal()
+    rejected = pyqtSignal()
 
     def __init__(self, jobs_ctx, config, start_addr):
         super().__init__()
@@ -134,7 +137,6 @@ class CreateOrgWidget(QWidget, Ui_CreateOrgWidget):
         self.jobs_ctx = jobs_ctx
         self.config = config
         self.create_job = None
-        self.dialog = None
         self.status = None
 
         self.device_widget = CreateOrgDeviceInfoWidget()
@@ -175,10 +177,13 @@ class CreateOrgWidget(QWidget, Ui_CreateOrgWidget):
     def _on_info_invalid(self):
         self.button_validate.setEnabled(False)
 
-    def on_close(self):
-        self.status = None
+    def on_close(self, return_code):
         if self.create_job:
             self.create_job.cancel_and_join()
+        if self.status:
+            self.finished.emit(return_code, *self.status)
+        else:
+            self.finished.emit(return_code, None, None)
 
     def _on_previous_clicked(self):
         self.user_widget.show()
@@ -269,12 +274,7 @@ class CreateOrgWidget(QWidget, Ui_CreateOrgWidget):
             ),
             button_text=_("ACTION_CONTINUE"),
         )
-        if self.dialog:
-            self.dialog.accept()
-        elif QApplication.activeModalWidget():
-            QApplication.activeModalWidget().accept()
-        else:
-            logger.warning("Cannot close dialog when org wizard")
+        self.accepted.emit()
 
     def _on_req_error(self):
         assert self.create_job
@@ -318,14 +318,9 @@ class CreateOrgWidget(QWidget, Ui_CreateOrgWidget):
     def show_modal(cls, jobs_ctx, config, parent, on_finished, start_addr=None):
         w = cls(jobs_ctx, config, start_addr)
         d = GreyedDialog(w, _("TEXT_ORG_WIZARD_TITLE"), parent=parent, width=1000)
-        w.dialog = d
 
-        def _on_finished(result):
-            if result == QDialog.Accepted:
-                return on_finished(w.status)
-            return on_finished(None)
-
-        d.finished.connect(_on_finished)
+        d.closing.connect(w.on_close)
+        w.accepted.connect(d.accept)
+        w.finished.connect(on_finished)
         # Unlike exec_, show is asynchronous and works within the main Qt loop
         d.show()
-        return w

@@ -100,7 +100,7 @@ class DevicesWidget(QWidget, Ui_DevicesWidget):
         super().show()
 
     def change_password(self):
-        PasswordChangeWidget.show_modal(core=self.core, parent=self, on_finished=None)
+        PasswordChangeWidget.show_modal(core=self.core, parent=self)
 
     def invite_device(self):
         self.jobs_ctx.submit_job(
@@ -111,6 +111,10 @@ class DevicesWidget(QWidget, Ui_DevicesWidget):
         )
 
     def _on_invite_success(self, job):
+        def _on_greet_finished(return_code):
+            if return_code:
+                self.reset()
+
         assert job.is_finished()
         assert job.status == "ok"
 
@@ -119,7 +123,7 @@ class DevicesWidget(QWidget, Ui_DevicesWidget):
             jobs_ctx=self.jobs_ctx,
             invite_addr=job.ret,
             parent=self,
-            on_finished=self.reset,
+            on_finished=_on_greet_finished,
         )
 
     def _on_invite_error(self, job):

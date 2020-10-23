@@ -4,15 +4,7 @@ import platform
 
 from PyQt5.QtCore import Qt, pyqtSignal
 from PyQt5.QtGui import QPainter, QValidator
-from PyQt5.QtWidgets import (
-    QWidget,
-    QCompleter,
-    QDialog,
-    QApplication,
-    QStyleOption,
-    QStyle,
-    QSizePolicy,
-)
+from PyQt5.QtWidgets import QWidget, QCompleter, QDialog, QStyleOption, QStyle, QSizePolicy
 
 from structlog import get_logger
 
@@ -32,7 +24,7 @@ logger = get_logger()
 
 
 class GreyedDialog(QDialog, Ui_GreyedDialog):
-    closing = pyqtSignal()
+    closing = pyqtSignal(QDialog.DialogCode)
 
     def __init__(self, center_widget, title, parent, hide_close=False, width=None):
         super().__init__(None)
@@ -50,6 +42,7 @@ class GreyedDialog(QDialog, Ui_GreyedDialog):
         self.setAttribute(Qt.WA_TranslucentBackground)
         self.center_widget = center_widget
         self.main_layout.addWidget(center_widget)
+        self.center_widget.show()
         if not title and hide_close:
             self.widget_title.hide()
         if title:
@@ -98,17 +91,15 @@ class GreyedDialog(QDialog, Ui_GreyedDialog):
         self.style().drawPrimitive(QStyle.PE_Widget, opt, p, self)
 
     def on_finished(self):
-        if (
-            self.result() == QDialog.Rejected
-            and self.center_widget
-            and getattr(self.center_widget, "on_close", None)
-        ):
-            getattr(self.center_widget, "on_close")()
-        self.closing.emit()
+        self.closing.emit(self.result())
+        self.hide()
         self.setParent(None)
 
 
 class TextInputWidget(QWidget, Ui_InputWidget):
+    finished = pyqtSignal(QDialog.DialogCode, str)
+    accepted = pyqtSignal()
+
     def __init__(
         self,
         message,
@@ -120,7 +111,6 @@ class TextInputWidget(QWidget, Ui_InputWidget):
     ):
         super().__init__()
         self.setupUi(self)
-        self.dialog = None
         button_text = button_text or _("ACTION_OK")
         self.button_ok.setText(button_text)
         self.label_message.setText(message)
@@ -142,6 +132,9 @@ class TextInputWidget(QWidget, Ui_InputWidget):
     def text(self):
         return self.line_edit_text.text()
 
+    def on_closing(self, return_code):
+        self.finished.emit(return_code, self.text)
+
     def _on_validity_changed(self, validity):
         self.button_ok.setEnabled(validity == QValidator.Acceptable)
 
@@ -151,18 +144,14 @@ class TextInputWidget(QWidget, Ui_InputWidget):
         event.accept()
 
     def _on_button_clicked(self):
-        if self.dialog:
-            self.dialog.accept()
-        elif QApplication.activeModalWidget():
-            QApplication.activeModalWidget().accept()
-        else:
-            logger.warning("Cannot close dialog when requesting user text input")
+        self.accepted.emit()
 
 
 def get_text_input(
     parent,
     title,
     message,
+    on_finished,
     placeholder="",
     default_text="",
     completion=None,
@@ -178,20 +167,21 @@ def get_text_input(
         validator=validator,
     )
     d = GreyedDialog(w, title=title, parent=parent)
-    w.dialog = d
+    d.closing.connect(w.on_closing)
+    w.accepted.connect(d.accept)
     w.line_edit_text.setFocus()
-    result = d.exec_()
-    if result == QDialog.Accepted:
-        return w.text
-    return None
+    w.finished.connect(on_finished)
+    d.show()
 
 
 class QuestionWidget(QWidget, Ui_QuestionWidget):
+    finished = pyqtSignal(QDialog.DialogCode, str)
+    accepted = pyqtSignal()
+
     def __init__(self, message, button_texts, radio_mode=False):
         super().__init__()
         self.setupUi(self)
         self.status = None
-        self.dialog = None
         self.label_message.setText(message)
         for text in button_texts:
             b = Button(text)
@@ -202,24 +192,21 @@ class QuestionWidget(QWidget, Ui_QuestionWidget):
             else:
                 self.layout_buttons.insertWidget(1, b)
 
+    def on_closing(self, return_code):
+        self.finished.emit(return_code, self.status)
+
     def _on_button_clicked(self, button):
         self.status = button.text()
-        if self.dialog:
-            self.dialog.accept()
-        elif QApplication.activeModalWidget():
-            QApplication.activeModalWidget().accept()
-        else:
-            logger.warning("Cannot close dialog when asking question")
+        self.accepted.emit()
 
 
-def ask_question(parent, title, message, button_texts, radio_mode=False):
+def ask_question(parent, title, message, button_texts, on_finished, radio_mode=False):
     w = QuestionWidget(message=message, button_texts=button_texts, radio_mode=radio_mode)
     d = GreyedDialog(w, title=title, parent=parent)
-    w.dialog = d
-    status = d.exec_()
-    if status == QDialog.Accepted:
-        return w.status
-    return None
+    d.closing.connect(w.on_closing)
+    w.accepted.connect(d.accept)
+    w.finished.connect(on_finished)
+    d.show()
 
 
 class ErrorWidget(QWidget, Ui_ErrorWidget):
@@ -264,14 +251,15 @@ class ErrorWidget(QWidget, Ui_ErrorWidget):
 def show_error(parent, message, exception=None):
     w = ErrorWidget(message, exception)
     d = GreyedDialog(w, title=_("TEXT_ERR_DIALOG_TITLE"), parent=parent)
-    return d.exec_()
+    d.open()
 
 
 class InfoWidget(QWidget, Ui_InfoWidget):
-    def __init__(self, message, dialog=None, button_text=None):
+    accepted = pyqtSignal()
+
+    def __init__(self, message, button_text=None):
         super().__init__()
         self.setupUi(self)
-        self.dialog = dialog
         self.label_message.setText(message)
         self.label_icon.apply_style()
         self.button_ok.setText(_("ACTION_CONTINUE") or button_text)
@@ -279,17 +267,12 @@ class InfoWidget(QWidget, Ui_InfoWidget):
         self.button_ok.setFocus()
 
     def _on_button_clicked(self, button):
-        if self.dialog:
-            self.dialog.accept()
-        elif QApplication.activeModalWidget():
-            QApplication.activeModalWidget().accept()
-        else:
-            logger.warning("Cannot close dialog when displaying info")
+        self.accepted.emit()
 
 
 def show_info(parent, message, button_text=None):
     w = InfoWidget(message, button_text)
     d = GreyedDialog(w, title=None, parent=parent, hide_close=True)
-    w.dialog = d
+    w.accepted.connect(d.accept)
     w.button_ok.setFocus()
-    return d.exec_()
+    d.open()

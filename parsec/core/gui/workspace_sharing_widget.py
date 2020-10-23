@@ -4,7 +4,7 @@ from collections import namedtuple
 
 from PyQt5.QtCore import QCoreApplication, pyqtSignal, QEvent, QTimer
 from PyQt5.QtGui import QPixmap, QColor
-from PyQt5.QtWidgets import QWidget, QComboBox
+from PyQt5.QtWidgets import QWidget, QComboBox, QDialog
 
 from parsec.core.types import UserInfo
 from parsec.core.fs import FSError, FSBackendOfflineError
@@ -161,7 +161,7 @@ class WorkspaceSharingWidget(QWidget, Ui_WorkspaceSharingWidget):
     get_users_error = pyqtSignal(QtToTrioJob)
     share_success = pyqtSignal(QtToTrioJob)
     share_error = pyqtSignal(QtToTrioJob)
-    closing = pyqtSignal(bool)
+    closing = pyqtSignal(QDialog.DialogCode, bool)
 
     def __init__(self, user_fs, workspace_fs, core, jobs_ctx):
         super().__init__()
@@ -310,8 +310,8 @@ class WorkspaceSharingWidget(QWidget, Ui_WorkspaceSharingWidget):
         self.spinner.hide()
         self.widget_users.show()
 
-    def on_close(self):
-        self.closing.emit(self.has_changes)
+    def on_close(self, return_code):
+        self.closing.emit(return_code, self.has_changes)
 
     def reset(self):
         self.spinner.show()

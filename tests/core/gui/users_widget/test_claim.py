@@ -107,7 +107,6 @@ def ClaimUserTestBed(
                 tab = gui.test_get_tab()
                 assert tab and tab.isVisible()
                 assert cu_w.isVisible()
-                assert cu_w.dialog.label_title.text() == "Register a user"
                 assert cui_w.isVisible()
 
             await aqtbot.wait_until(_register_user_displayed)
@@ -131,7 +130,6 @@ def ClaimUserTestBed(
                 tab = gui.test_get_tab()
                 assert tab and tab.isVisible()
                 assert cu_w.isVisible()
-                assert cu_w.dialog.label_title.text() == "Register a user"
                 assert cui_w.isVisible()
 
             await aqtbot.wait_until(_register_user_displayed)
@@ -279,7 +277,6 @@ def ClaimUserTestBed(
             return "step_7_finalize"
 
         async def step_7_finalize(self):
-            cu_w = self.claim_user_widget
             cuf_w = self.claim_user_finalize
 
             # Fill password and we're good to go ;-)
@@ -293,8 +290,6 @@ def ClaimUserTestBed(
             await aqtbot.mouse_click(cuf_w.button_finalize, QtCore.Qt.LeftButton)
 
             def _claim_done():
-                assert not cu_w.isVisible()
-                assert not cuf_w.isVisible()
                 # Should be logged in with the new device
                 central_widget = gui.test_get_central_widget()
                 assert central_widget and central_widget.isVisible()
@@ -339,8 +334,6 @@ async def test_claim_user_offline(
         def _claim_aborted(self, expected_message):
             assert len(autoclose_dialog.dialogs) == 1
             assert autoclose_dialog.dialogs == [("Error", expected_message)]
-            assert not self.claim_user_widget.isVisible()
-            assert not self.claim_user_instructions_widget.isVisible()
 
         async def offline_step_1_start_claim(self):
             expected_message = translate("TEXT_CLAIM_USER_WAIT_PEER_ERROR")
@@ -518,8 +511,6 @@ async def test_claim_user_invitation_cancelled(
         def _claim_restart(self, expected_message):
             assert len(autoclose_dialog.dialogs) == 1
             assert autoclose_dialog.dialogs == [("Error", expected_message)]
-            assert not self.claim_user_widget.isVisible()
-            assert not self.claim_user_instructions_widget.isVisible()
 
         async def cancelled_step_1_start_claim(self):
             expected_message = translate("TEXT_INVITATION_ALREADY_USED")
