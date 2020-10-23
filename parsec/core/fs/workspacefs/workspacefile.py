@@ -277,3 +277,6 @@ class WorkspaceFile:
         result = await self._transactions.fd_write(self.fileno(), data, self._offset)
         self._offset += result
         return result
+
+    async def flush(self) -> None:
+        await self._transactions.fd_flush(self.fileno())

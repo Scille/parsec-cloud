@@ -118,6 +118,12 @@ class LocalDatabase:
         # Lock the access to the connection object
         async with self._lock:
 
+            # The connection might not be set
+            try:
+                self._conn
+            except AttributeError:
+                return
+
             # Commit and close
             await self._run_in_thread(self._conn.commit)
             self._conn.close()
