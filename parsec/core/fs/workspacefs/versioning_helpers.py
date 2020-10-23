@@ -18,17 +18,15 @@ concurrent downloads (which will be implemented in a next version).
 from heapq import heappush, heappop
 import attr
 import math
-import trio
 from functools import partial, total_ordering
 from typing import List, Tuple, NamedTuple, Optional, Union, cast, Dict
-from pendulum import Pendulum
+from pendulum import DateTime
 
 from parsec.api.protocol import DeviceID
 from parsec.core.types import FsPath, EntryID
 from parsec.utils import open_service_nursery
 from parsec.core.fs.exceptions import FSRemoteManifestNotFound
 from parsec.api.data import FileManifest, UserManifest, FolderManifest, WorkspaceManifest
-from parsec.utils import open_service_nursery
 
 RemoteManifest = Union[FileManifest, FolderManifest, UserManifest, WorkspaceManifest]
 
@@ -601,7 +599,7 @@ class VersionListerOneShot:
                         0,
                         root_manifest.id,
                         starting_timestamp or root_manifest.created,
-                        ending_timestamp or Pendulum.now(),
+                        ending_timestamp or DateTime.now(),
                     ),
                     starting_timestamp or root_manifest.created,
                 )
@@ -627,7 +625,7 @@ class VersionListerOneShot:
                 self.return_dict.items(),
                 key=lambda item: (item[0].late, item[0].id, item[0].version),
             )
-            if download_limit_reached or early < download_limit
+            if download_limit_reached or (download_limit and early < download_limit)
         ]
         return (self._sanitize_list(versions_list, skip_minimal_sync), download_limit_reached)
 
@@ -724,8 +722,8 @@ class VersionListerOneShot:
         self,
         path_level: int,
         entry_id: EntryID,
-        early: Pendulum,
-        late: Pendulum,
+        early: DateTime,
+        late: DateTime,
         parent: Optional[TaskNode],
     ):
         # TODO : Check if directory, melt the same entries through different parent
