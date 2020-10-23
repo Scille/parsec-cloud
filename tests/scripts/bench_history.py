@@ -18,6 +18,7 @@ ORGNAME = "Org42"
 TOKEN = "CCDCC27B6108438D99EF8AF5E847C3BB"
 DEVICE = "alice@dev1"
 PASSWORD = "P@ssw0rd."
+BANDWIDTH = 100  # KB/s
 
 PARSEC_CLI = "python -m parsec.cli"
 PARSEC_PROFILE_CLI = "python -m cProfile -o bench.prof -m parsec.cli"
@@ -138,8 +139,12 @@ def main():
             for lag in [0, 10, 50]:
                 cmd_results[lag] = {}
                 run_cmd(f"toxiproxy-cli toxic add parsec -t latency -a latency={lag} -n lagparsec")
+                run_cmd(
+                    f"toxiproxy-cli toxic add parsec -t bandwidth -a rate={BANDWIDTH} "
+                    f"-n bandwithparsec"
+                )
                 # for workers in [1, 3, 10]:
-                for workers in [1, 3]:
+                for workers in [3, 0]:
                     cmd_results[lag][workers] = result_dict = {}
                     run_history("w1:/", confdir, dev_id, workers=workers, result_dict=result_dict)
                     run_history(
@@ -163,6 +168,7 @@ def main():
                         result_dict=result_dict,
                     )
                 run_cmd(f"toxiproxy-cli toxic delete parsec -n lagparsec")
+                run_cmd(f"toxiproxy-cli toxic delete parsec -n bandwithparsec")
 
             show_result(cmd_results)
 

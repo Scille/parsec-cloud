@@ -45,7 +45,15 @@ class ManifestCacheDownloadLimitReached(Exception):
     pass
 
 
-class ManifestCacheInconsistent(Exception):
+class HistoryInconsistent(Exception):
+    pass
+
+
+class ManifestCacheInconsistent(HistoryInconsistent):
+    pass
+
+
+class VersionsListInconsistent(HistoryInconsistent):
     pass
 
 
@@ -504,17 +512,20 @@ class VersionLister:
         starting_timestamp: Optional[DateTime] = None,
         ending_timestamp: Optional[DateTime] = None,
         max_manifest_queries: Optional[int] = None,
-        workers: int = 5,
+        workers: int = 0,
     ) -> Tuple[List[TimestampBoundedData], bool]:
         """
         Returns:
             A tuple containing a list of TimestampBoundedData and a bool indicating wether the
             download limit has been reached
+            If workers is 0, start adaptive behaviour
         Raises:
             FSError
             FSBackendOfflineError
             FSWorkspaceInMaintenance
             FSRemoteManifestNotFound
+            ManifestCacheInconsistent
+            VersionsListInconsistent
         """
         version_lister_one_shot = VersionListerOneShot(
             self.workspace_fs, path, self.manifest_cache, self.versions_list_cache
@@ -552,18 +563,27 @@ class VersionListerOneShot:
         starting_timestamp: Optional[DateTime] = None,
         ending_timestamp: Optional[DateTime] = None,
         max_manifest_queries: Optional[int] = None,
-        workers: int = 5,
+        workers: int = 0,
     ) -> Tuple[List[TimestampBoundedData], bool]:
         """
         Returns:
             A tuple containing a list of TimestampBoundedData and a bool indicating wether the
             download limit has been reached
+            If workers is 0, start adaptive behaviour
         Raises:
             FSError
             FSBackendOfflineError
             FSWorkspaceInMaintenance
             FSRemoteManifestNotFound
         """
+        if workers == 0:
+            distance = len(path.parts)
+            if distance < 2:
+                workers = 3
+            elif distance == 2:
+                workers = 5
+            else:
+                workers = 10
         root_manifest = await self.workspace_fs.transactions._get_manifest(
             self.workspace_fs.workspace_id
         )
@@ -711,9 +731,9 @@ class VersionListerOneShot:
         # TODO : Check if directory, melt the same entries through different parent
         versions = await self.task_list.versions_list_cache.load(entry_id)
         for version, (timestamp, creator) in versions.items():
-            next_version = min(
-                (v for v in versions if v > version), default=None
-            )  # TODO : consistency
+            next_version = min((v for v in versions if v > version), default=None)
+            if next_version and next_version != version + 1:
+                raise VersionsListInconsistent
             self.task_list.add(
                 TaskNode(
                     partial(
