@@ -6,8 +6,12 @@ from enum import IntEnum
 from typing import Union, Optional, NoReturn, Type, Dict
 
 from parsec.core.fs.workspacefs.entry_transactions import EntryTransactions
-from parsec.core.fs.exceptions import FSUnsupportedOperation, FSOffsetError
 from parsec.core.types import FsPath, AnyPath, FileDescriptor
+from parsec.core.fs.exceptions import (
+    FSUnsupportedOperation,
+    FSOffsetError,
+    FSLocalStorageClosedError,
+)
 
 
 class FileState(IntEnum):
@@ -106,8 +110,16 @@ class WorkspaceFile:
 
     async def close(self) -> None:
         """Close the file"""
-        if self._state != FileState.CLOSED:
-            await self._transactions.fd_close(self.fileno())
+        if self._state == FileState.CLOSED:
+            return
+        try:
+            try:
+                await self._transactions.fd_flush(self.fileno())
+            finally:
+                await self._transactions.fd_close(self.fileno())
+        except FSLocalStorageClosedError:
+            pass
+        finally:
             self._state = FileState.CLOSED
 
     def fileno(self) -> FileDescriptor:

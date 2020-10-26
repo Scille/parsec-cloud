@@ -9,9 +9,9 @@ from async_generator import asynccontextmanager
 
 
 from parsec.core.types import ChunkID
-from parsec.core.fs.exceptions import FSLocalMissError
 from parsec.core.types import LocalDevice, DEFAULT_BLOCK_SIZE
 from parsec.core.fs.storage.local_database import LocalDatabase, Cursor
+from parsec.core.fs.exceptions import FSLocalMissError, FSLocalStorageClosedError
 
 T = TypeVar("T", bound="ChunkStorage")
 
@@ -42,7 +42,10 @@ class ChunkStorage:
             yield self
         finally:
             with trio.CancelScope(shield=True):
-                await self.localdb.commit()
+                try:
+                    await self.localdb.commit()
+                except FSLocalStorageClosedError:
+                    pass
 
     def _open_cursor(self) -> AsyncContextManager[Cursor]:
         # There is no point in commiting dirty chunks:

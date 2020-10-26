@@ -84,7 +84,10 @@ class LocalDatabase:
             # Safely flush and close the connection
             finally:
                 with trio.CancelScope(shield=True):
-                    await self._close()
+                    try:
+                        await self._close()
+                    except FSLocalStorageClosedError:
+                        pass
 
     # Life cycle
 
