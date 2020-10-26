@@ -249,7 +249,7 @@ class FileTransactions:
                 return
 
             # Perform the resize operation
-            await self._manifest_resize(manifest, length)
+            await self._manifest_resize(manifest, length, cache_only=True)
 
         # Notify
         self._send_event(CoreEvent.FS_ENTRY_UPDATED, id=manifest.id)
@@ -294,7 +294,9 @@ class FileTransactions:
 
     # Transaction helpers
 
-    async def _manifest_resize(self, manifest: LocalFileManifest, length: int) -> None:
+    async def _manifest_resize(
+        self, manifest: LocalFileManifest, length: int, cache_only: bool = False
+    ) -> None:
         """This internal helper does not perform any locking."""
         # No-op
         if manifest.size == length:
@@ -308,7 +310,9 @@ class FileTransactions:
             await self._write_chunk(chunk, b"", offset)
 
         # Atomic change
-        await self.local_storage.set_manifest(manifest.id, manifest, removed_ids=removed_ids)
+        await self.local_storage.set_manifest(
+            manifest.id, manifest, removed_ids=removed_ids, cache_only=cache_only
+        )
 
     async def _manifest_reshape(
         self, manifest: LocalFileManifest, cache_only: bool = False
