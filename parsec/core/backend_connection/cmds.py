@@ -239,8 +239,8 @@ async def vlob_maintenance_backend_reencryption(
     transport: Transport,
     realm_id: UUID,
     encryption_revision: int,
-    new_key: SecretKey,
-    old_key: SecretKey,
+    new_key,
+    old_key,
     size: int,
 ) -> dict:
     return await _send_cmd(

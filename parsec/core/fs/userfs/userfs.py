@@ -1,6 +1,9 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
 
 import trio
+import struct
+import time 
+
 from pathlib import Path
 from pendulum import Pendulum, now as pendulum_now
 from typing import (
@@ -67,11 +70,19 @@ from parsec.core.fs.exceptions import (
     FSWorkspaceNotInMaintenance,
 )
 
+from cryptography.hazmat.primitives import hashes
+from cryptography.hazmat.primitives.ciphers import Cipher, algorithms, modes
+from cryptography.hazmat.primitives.serialization import load_pem_public_key, load_pem_private_key
+from cryptography.hazmat.primitives.asymmetric import padding
+from cryptography.exceptions import InvalidTag
+
 
 logger = get_logger()
 
 AnyEntryName = Union[EntryName, str]
 
+aes_key = b'This is a key123'
+aes_iv = b'This is a IV'
 
 class ReencryptionJob:
     def __init__(
@@ -96,13 +107,31 @@ class ReencryptionJob:
         workspace_id = self.new_workspace_entry.id
         new_encryption_revision = self.new_workspace_entry.encryption_revision
 
+        import binascii
         # Get the batch
         try:
+            new_key = self.new_workspace_entry.key
+            old_key = self.old_workspace_entry.key
+            # Encrypting old keys
+            time_stamp = struct.pack(">Q", int(time.time()))
+            cipher = Cipher(algorithms.AES(aes_key), modes.GCM(aes_iv))
+            encryptor = cipher.encryptor()
+            ciphered = encryptor.update(old_key) + encryptor.finalize()
+            tag = encryptor.tag
+            version = b"\x80"
+            encrypted_old_key = version + time_stamp + aes_iv + tag + ciphered
+            # Encrypting new_key
+            cipher = Cipher(algorithms.AES(aes_key), modes.GCM(aes_iv))
+            encryptor = cipher.encryptor()
+            ciphered = encryptor.update(new_key) + encryptor.finalize()
+            tag = encryptor.tag
+            version = b"\x80"
+            encrypted_new_key = version + time_stamp + aes_iv + tag + ciphered
             rep = await self.backend_cmds.vlob_maintenance_backend_reencryption(
                 realm_id=workspace_id,
                 encryption_revision=new_encryption_revision,
-                new_key=self.new_workspace_entry.key,
-                old_key=self.old_workspace_entry.key,
+                new_key=encrypted_new_key,
+                old_key=encrypted_old_key,
                 size=size,
             )
             if rep["status"] in ("not_in_maintenance", "bad_encryption_revision"):

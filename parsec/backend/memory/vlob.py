@@ -357,13 +357,13 @@ class MemoryVlobComponent(BaseVlobComponent):
 
         return total, done
 
-    async def reencrypt_data(self, old_key: SecretKey, new_key: SecretKey, token: bytes):
+    async def reencrypt_data(self, encrypted_old_key, encrypted_new_key, token: bytes):
         ecall_reencryptText = LibSgx.ecall_reencryptText
         ecall_reencryptText.restype = POINTER(c_char_p)
         token_len = len(token)
         status_code = c_int()
         reencrypted_token_ptr = ecall_reencryptText(
-            byref(status_code), old_key, new_key, token, token_len
+            byref(status_code), encrypted_old_key, len(encrypted_old_key), encrypted_new_key, len(encrypted_new_key), token, token_len
         )
         if status_code.value != SgxStatus.SGX_SUCCESS.value:
             print(
@@ -405,10 +405,8 @@ class MemoryVlobComponent(BaseVlobComponent):
 
         for item in batch:
             newciphered = await self.reencrypt_data(
-                old_key=old_key, new_key=new_key, token=item["blob"]
+                encrypted_old_key=old_key, encrypted_new_key=new_key, token=item["blob"]
             )
-            # cleartext = old_key.decrypt(item["blob"])
-            # newciphered = new_key.encrypt(cleartext)
             donebatch.append((item["vlob_id"], item["version"], newciphered))
 
         total, done = changes.reencryption.save_batch(donebatch)
