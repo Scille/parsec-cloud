@@ -60,6 +60,7 @@ async def alice_fs_context(loopback_fs, event_bus_factory, alice):
 @pytest.mark.linux
 @pytest.mark.mountpoint
 async def test_workspace_fs_with_disk_full_simple(alice_fs_context, loopback_fs):
+    """Make sure the sqlite database can recover from a full disk error."""
     async with alice_fs_context() as fs:
         await fs.write_bytes("/test.txt", b"abc")
         assert await fs.read_bytes("/test.txt") == b"abc"
@@ -82,63 +83,96 @@ async def test_workspace_fs_with_disk_full_simple(alice_fs_context, loopback_fs)
 @pytest.mark.trio
 @pytest.mark.linux
 @pytest.mark.mountpoint
-@pytest.mark.parametrize("number_of_write_before_full", range(50))
-async def test_workspace_fs_with_disk_full_extended(
-    alice_fs_context, loopback_fs, number_of_write_before_full
+async def test_workspace_fs_with_disk_full_issue_1535(
+    alice_fs_context, loopback_fs, running_backend
 ):
-    async with alice_fs_context() as fs:
-        await fs.write_bytes("/test.txt", b"aaa")
-        loopback_fs.number_of_write_before_full = number_of_write_before_full
-        with pytest.raises(FSLocalStorageOperationalError):
-            while True:
-                await fs.write_bytes("/test.txt", b"bbb")
-
-    loopback_fs.full = False
-    async with alice_fs_context() as fs:
-        assert await fs.read_bytes("/test.txt") in (b"aaa", b"bbb", b"")
-
-
-@pytest.mark.trio
-@pytest.mark.linux
-@pytest.mark.mountpoint
-@pytest.mark.parametrize("number_of_write_before_full", range(50))
-async def test_workspace_fs_with_disk_full_reloaded(
-    alice_fs_context, loopback_fs, number_of_write_before_full
-):
+    """Perform the scenario described in issue #1535"""
+    # Prepare the scenario
     async with alice_fs_context() as fs:
         await fs.write_bytes("/test.txt", b"")
-        loopback_fs.number_of_write_before_full = number_of_write_before_full
-        with pytest.raises(FSLocalStorageOperationalError):
-            async with await fs.open_file("/test.txt", "wb") as f:
-                while True:
-                    await f.write(b"aaa")
-                    await f.write(b"aaa")
-                    await f.flush()
+        async with await fs.open_file("/test.txt", "wb") as f:
 
-    loopback_fs.full = False
+            # A file is being written
+            await f.write(b"aaa")
+            # The disk is full
+            loopback_fs.full = True
+            # Some task performs a commit (failing because of disk full)
+            with pytest.raises(FSLocalStorageOperationalError):
+                await fs.local_storage.data_localdb.commit()
+            # The disk is no longer full (or the commit is smaller)
+            loopback_fs.full = False
+            # Force the manifest to be written to the disk
+            with pytest.raises(FSLocalStorageClosedError):
+                await f.flush()
+
+    # Make sure the file is not corrupted
     async with alice_fs_context() as fs:
         result = await fs.read_bytes("/test.txt")
         assert result == b"a" * len(result)
 
 
 @pytest.mark.trio
+@pytest.mark.slow
 @pytest.mark.linux
 @pytest.mark.mountpoint
-@pytest.mark.parametrize("number_of_write_before_full", range(50))
-async def test_workspace_fs_with_disk_full_ultimate(
-    alice_fs_context, loopback_fs, number_of_write_before_full, running_backend
-):
-    async with alice_fs_context(allow_sqlite_error_at_exit=True) as fs:
-        await fs.write_bytes("/test.txt", b"")
-        loopback_fs.number_of_write_before_full = number_of_write_before_full
-        with pytest.raises(FSLocalStorageOperationalError):
-            async with await fs.open_file("/test.txt", "wb") as f:
+async def test_workspace_fs_with_disk_full_systematic(alice_fs_context, loopback_fs):
+    """A more systematic but slower search for corruption."""
+    for number_of_write_before_full in range(50):
+        async with alice_fs_context() as fs:
+            await fs.write_bytes("/test.txt", b"aaa")
+            loopback_fs.number_of_write_before_full = number_of_write_before_full
+            with pytest.raises(FSLocalStorageOperationalError):
                 while True:
-                    await f.write(b"aaa")
-                    await f.write(b"aaa")
-                    await fs.sync()
+                    await fs.write_bytes("/test.txt", b"bbb")
 
-    loopback_fs.full = False
-    async with alice_fs_context() as fs:
-        result = await fs.read_bytes("/test.txt")
-        assert result == b"a" * len(result)
+        loopback_fs.full = False
+        async with alice_fs_context() as fs:
+            assert await fs.read_bytes("/test.txt") in (b"aaa", b"bbb")
+
+
+@pytest.mark.trio
+@pytest.mark.slow
+@pytest.mark.linux
+@pytest.mark.mountpoint
+async def test_workspace_fs_with_disk_full_systematic_with_flush(alice_fs_context, loopback_fs):
+    """A more systematic but slower search for corruption."""
+    for number_of_write_before_full in range(50):
+        async with alice_fs_context() as fs:
+            await fs.write_bytes("/test.txt", b"")
+            loopback_fs.number_of_write_before_full = number_of_write_before_full
+            with pytest.raises(FSLocalStorageOperationalError):
+                async with await fs.open_file("/test.txt", "wb") as f:
+                    while True:
+                        await f.write(b"aaa")
+                        await f.write(b"aaa")
+                        await f.flush()
+
+        loopback_fs.full = False
+        async with alice_fs_context() as fs:
+            result = await fs.read_bytes("/test.txt")
+            assert result == b"a" * len(result)
+
+
+@pytest.mark.trio
+@pytest.mark.slow
+@pytest.mark.linux
+@pytest.mark.mountpoint
+async def test_workspace_fs_with_disk_full_systematic_with_sync(
+    alice_fs_context, loopback_fs, running_backend
+):
+    """A more systematic but slower search for corruption."""
+    for number_of_write_before_full in range(50):
+        async with alice_fs_context(allow_sqlite_error_at_exit=True) as fs:
+            await fs.write_bytes("/test.txt", b"")
+            loopback_fs.number_of_write_before_full = number_of_write_before_full
+            with pytest.raises(FSLocalStorageOperationalError):
+                async with await fs.open_file("/test.txt", "wb") as f:
+                    while True:
+                        await f.write(b"aaa")
+                        await f.write(b"aaa")
+                        await fs.sync()
+
+        loopback_fs.full = False
+        async with alice_fs_context() as fs:
+            result = await fs.read_bytes("/test.txt")
+            assert result == b"a" * len(result)
