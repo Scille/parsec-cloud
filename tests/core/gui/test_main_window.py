@@ -185,6 +185,60 @@ async def test_link_file(
 
 @pytest.mark.gui
 @pytest.mark.trio
+async def test_link_file_unmounted(
+    aqtbot,
+    running_backend,
+    backend,
+    autoclose_dialog,
+    # logged_gui,
+    logged_gui_with_files,
+    bob,
+    monkeypatch,
+    bob_available_device,
+):
+    logged_gui, w_w, f_w = logged_gui_with_files
+
+    core = logged_gui.test_get_core()
+    url = BackendOrganizationFileLinkAddr.build(
+        f_w.core.device.organization_addr, f_w.workspace_fs.workspace_id, f_w.current_directory
+    )
+
+    monkeypatch.setattr(
+        "parsec.core.gui.main_window.list_available_devices",
+        lambda *args, **kwargs: [bob_available_device],
+    )
+
+    await aqtbot.run(logged_gui.add_instance, str(url))
+
+    def _folder_ready():
+        assert f_w.isVisible()
+        assert f_w.table_files.rowCount() == 2
+        folder = f_w.table_files.item(1, 1)
+        assert folder
+        assert folder.text() == "dir1"
+
+    await aqtbot.wait_until(_folder_ready)
+
+    assert logged_gui.tab_center.count() == 1
+
+    def _mounted():
+        assert core.mountpoint_manager.is_workspace_mounted(f_w.workspace_fs.workspace_id)
+
+    await aqtbot.wait_until(_mounted)
+    await core.mountpoint_manager.unmount_workspace(f_w.workspace_fs.workspace_id)
+
+    def _unmounted():
+        assert not core.mountpoint_manager.is_workspace_mounted(f_w.workspace_fs.workspace_id)
+
+    await aqtbot.wait_until(_unmounted)
+
+    await aqtbot.run(logged_gui.add_instance, str(url))
+
+    await aqtbot.wait_until(_mounted)
+
+
+@pytest.mark.gui
+@pytest.mark.trio
 async def test_link_file_invalid_path(
     aqtbot,
     running_backend,

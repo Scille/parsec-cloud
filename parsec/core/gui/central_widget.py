@@ -308,10 +308,10 @@ class CentralWidget(QWidget, Ui_CentralWidget):
         if notif_type in ["REVOKED", "EXPIRED"]:
             show_error(self, msg)
 
-    def go_to_file_link(self, workspace_id, path):
+    def go_to_file_link(self, workspace_id, path, mount=False):
         self.show_mount_widget()
         self.mount_widget.show_files_widget(
-            self.core.user_fs.get_workspace(workspace_id), path, selected=True
+            self.core.user_fs.get_workspace(workspace_id), path, selected=True, mount_it=True
         )
 
     def show_mount_widget(self, user_info=None):
