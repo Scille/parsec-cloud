@@ -42,7 +42,7 @@ class ManifestStorage:
 
     @property
     def path(self) -> Path:
-        return self.localdb.path
+        return Path(self.localdb.path)
 
     @classmethod
     @asynccontextmanager

@@ -51,7 +51,7 @@ async def thread_pool_runner(
 class LocalDatabase:
     """Base class for managing an sqlite3 connection."""
 
-    def __init__(self, path: Union[str, Path], vacuum_threshold: Optional[int] = None):
+    def __init__(self, path: Union[str, Path, trio.Path], vacuum_threshold: Optional[int] = None):
         # Make sure only a single task access the connection object at a time
         self._lock = trio.Lock()
 
@@ -59,7 +59,7 @@ class LocalDatabase:
         self._conn: Connection
         self._run_in_thread: Callable[[Callable[[], R]], Awaitable[R]]
 
-        self.path = Path(path)
+        self.path = trio.Path(path)
         self.vacuum_threshold = vacuum_threshold
 
     @classmethod
@@ -90,7 +90,7 @@ class LocalDatabase:
 
     async def _create_connection(self) -> Connection:
         # Create directories
-        self.path.parent.mkdir(mode=0o700, parents=True, exist_ok=True)
+        await self.path.parent.mkdir(mode=0o700, parents=True, exist_ok=True)
 
         # Create sqlite connection
         conn = sqlite_connect(str(self.path), check_same_thread=False)
@@ -182,29 +182,35 @@ class LocalDatabase:
 
     # Vacuum
 
-    def get_disk_usage(self) -> int:
+    async def get_disk_usage(self) -> int:
         disk_usage = 0
         for suffix in (".sqlite", ".sqlite-wal", ".sqlite-shm"):
             try:
-                disk_usage += self.path.with_suffix(suffix).stat().st_size
+                stat = await self.path.with_suffix(suffix).stat()
             except OSError:
                 pass
+            else:
+                disk_usage += stat.st_size
         return disk_usage
 
     async def run_vacuum(self) -> None:
-        # Vacuum disabled
-        if self.vacuum_threshold is None:
-            return
 
         # Lock the access to the connection object
         async with self._lock:
 
-            # Flush to disk
-            await self._run_in_thread(self._conn.commit)
+            # Check connection state
+            self._check_state()
+
+            # Vacuum disabled
+            if self.vacuum_threshold is None:
+                return
 
             # No reason to vacuum yet
-            if self.get_disk_usage() < self.vacuum_threshold:
+            if await self.get_disk_usage() < self.vacuum_threshold:
                 return
+
+            # Flush to disk
+            await self._commit()
 
             # Run vacuum
             await self._run_in_thread(lambda: self._conn.execute("VACUUM"))
