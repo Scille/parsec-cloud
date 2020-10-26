@@ -2,7 +2,6 @@
 
 import trio
 import pytest
-import sqlite3
 from async_generator import asynccontextmanager
 
 try:
@@ -15,6 +14,7 @@ from parsec.core.fs import UserFS
 from parsec.core.logged_core import get_prevent_sync_pattern
 from parsec.core.remote_devices_manager import RemoteDevicesManager
 from parsec.core.backend_connection import backend_authenticated_cmds_factory
+from parsec.core.fs.exceptions import FSLocalStorageOperationalError, FSLocalStorageClosedError
 
 fixtures = (loopback_fs,)
 
@@ -47,7 +47,7 @@ async def alice_fs_context(loopback_fs, event_bus_factory, alice):
             async with _alice_context() as user_fs:
                 yield user_fs.get_workspace(wid)
                 exiting = True
-        except sqlite3.OperationalError:
+        except FSLocalStorageOperationalError:
             if not exiting:
                 raise
             if not allow_sqlite_error_at_exit:
@@ -67,10 +67,10 @@ async def test_workspace_fs_with_disk_full_simple(alice_fs_context, loopback_fs)
     async with alice_fs_context() as fs:
         assert await fs.read_bytes("/test.txt") == b"abc"
         loopback_fs.full = True
-        with pytest.raises(sqlite3.OperationalError):
+        with pytest.raises(FSLocalStorageOperationalError):
             await fs.write_bytes("/test.txt", b"efg")
 
-    with pytest.raises(sqlite3.OperationalError):
+    with pytest.raises(FSLocalStorageOperationalError):
         async with alice_fs_context() as fs:
             pass
 
@@ -89,7 +89,7 @@ async def test_workspace_fs_with_disk_full_extended(
     async with alice_fs_context() as fs:
         await fs.write_bytes("/test.txt", b"aaa")
         loopback_fs.number_of_write_before_full = number_of_write_before_full
-        with pytest.raises(sqlite3.OperationalError):
+        with pytest.raises(FSLocalStorageOperationalError):
             while True:
                 await fs.write_bytes("/test.txt", b"bbb")
 
@@ -108,7 +108,7 @@ async def test_workspace_fs_with_disk_full_reloaded(
     async with alice_fs_context() as fs:
         await fs.write_bytes("/test.txt", b"")
         loopback_fs.number_of_write_before_full = number_of_write_before_full
-        with pytest.raises(sqlite3.OperationalError):
+        with pytest.raises(FSLocalStorageOperationalError):
             async with await fs.open_file("/test.txt", "wb") as f:
                 while True:
                     await f.write(b"aaa")
@@ -131,7 +131,7 @@ async def test_workspace_fs_with_disk_full_ultimate(
     async with alice_fs_context(allow_sqlite_error_at_exit=True) as fs:
         await fs.write_bytes("/test.txt", b"")
         loopback_fs.number_of_write_before_full = number_of_write_before_full
-        with pytest.raises(sqlite3.OperationalError):
+        with pytest.raises(FSLocalStorageOperationalError):
             async with await fs.open_file("/test.txt", "wb") as f:
                 while True:
                     await f.write(b"aaa")

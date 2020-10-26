@@ -7,7 +7,9 @@ from typing import AsyncIterator, Callable, Optional, Union, TypeVar, Awaitable
 import trio
 import outcome
 from async_generator import asynccontextmanager
-from sqlite3 import Connection, Cursor, connect as sqlite_connect
+from sqlite3 import Connection, Cursor, OperationalError, connect as sqlite_connect
+
+from parsec.core.fs.exceptions import FSLocalStorageClosedError, FSLocalStorageOperationalError
 
 R = TypeVar("R")
 
@@ -101,8 +103,11 @@ class LocalDatabase:
         # is a great combination: it allows for fast commits (~10 us compare
         # to 15 ms the default mode) but still protects the database against
         # corruption in the case of OS crash or power failure.
-        conn.execute("PRAGMA journal_mode=WAL")
-        conn.execute("PRAGMA synchronous=NORMAL")
+        try:
+            conn.execute("PRAGMA journal_mode=WAL")
+            conn.execute("PRAGMA synchronous=NORMAL")
+        except OperationalError as exc:
+            raise FSLocalStorageOperationalError from exc
 
         # Return connection
         return conn
@@ -118,15 +123,27 @@ class LocalDatabase:
         # Lock the access to the connection object
         async with self._lock:
 
-            # The connection might not be set
-            try:
-                self._conn
-            except AttributeError:
-                return
+            # Check the connection state
+            self._check_state()
 
             # Commit and close
             await self._run_in_thread(self._conn.commit)
             self._conn.close()
+            del self._conn
+
+    async def _commit(self) -> None:
+        try:
+            await self._run_in_thread(self._conn.commit)
+        except OperationalError as exc:
+            self._conn.close()
+            del self._conn
+            raise FSLocalStorageOperationalError from exc
+
+    def _check_state(self) -> None:
+        try:
+            self._conn
+        except AttributeError:
+            raise FSLocalStorageClosedError from None
 
     # Cursor management
 
@@ -135,6 +152,9 @@ class LocalDatabase:
         # Lock the access to the connection object
         async with self._lock:
 
+            # Check connection state
+            self._check_state()
+
             # Get a cursor
             cursor = self._conn.cursor()
             try:
@@ -142,20 +162,23 @@ class LocalDatabase:
                 # Execute SQL commands
                 yield cursor
 
-                # Commit the transaction when finished
-                if commit and self._conn.in_transaction:
-                    await self._run_in_thread(self._conn.commit)
-
             # Close cursor
             finally:
                 cursor.close()
+
+            # Commit the transaction when finished
+            if commit and self._conn.in_transaction:
+                await self._commit()
 
     async def commit(self) -> None:
         # Lock the access to the connection object
         async with self._lock:
 
+            # Check connection state
+            self._check_state()
+
             # Run the commit
-            await self._run_in_thread(self._conn.commit)
+            await self._commit()
 
     # Vacuum
 
