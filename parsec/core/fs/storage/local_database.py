@@ -1,8 +1,9 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
 
 from pathlib import Path
+from contextlib import contextmanager
 from concurrent.futures import ThreadPoolExecutor
-from typing import AsyncIterator, Callable, Optional, Union, TypeVar, Awaitable
+from typing import AsyncIterator, Callable, Optional, Union, TypeVar, Awaitable, Iterator
 
 import trio
 import outcome
@@ -89,6 +90,43 @@ class LocalDatabase:
                     except FSLocalStorageClosedError:
                         pass
 
+    # Operational error protection
+
+    @contextmanager
+    def _manage_operational_error(self, conn: Optional[Connection] = None) -> Iterator[None]:
+        """Close the local database when an operational error is detected
+
+        Operational errors have to be treated with care since they usually indicate
+        that the current transaction has been rolled back. Since parsec has its own
+        in-memory cache for manifests, this can lead to complicated bugs and possibly
+        database corruptions (in the sense that a committed manifest might reference a
+        chunk of data that has not been successfully committed). See issue #1535 for an
+        example of such problem.
+
+        If an operational error is detected we simply close the connection and invalidate
+        the local database object while raising an FSLocalStorageOperationalError exception.
+        This way, we force the core to create new workspace storage objects and therefore
+        discarding any uncommited data.
+        """
+        # Get connection
+        if conn is None:
+            conn = self._conn
+        # Safe context for operational errors
+        try:
+            yield
+        except OperationalError as exc:
+            # Mark the local database as closed
+            try:
+                del self._conn
+            except AttributeError:
+                pass
+            # Close the sqlite3 connection
+            try:
+                conn.close()
+            # Raise an FSLocalStorageOperationalError
+            finally:
+                raise FSLocalStorageOperationalError from exc
+
     # Life cycle
 
     async def _create_connection(self) -> Connection:
@@ -106,11 +144,9 @@ class LocalDatabase:
         # is a great combination: it allows for fast commits (~10 us compare
         # to 15 ms the default mode) but still protects the database against
         # corruption in the case of OS crash or power failure.
-        try:
+        with self._manage_operational_error(conn):
             conn.execute("PRAGMA journal_mode=WAL")
             conn.execute("PRAGMA synchronous=NORMAL")
-        except OperationalError as exc:
-            raise FSLocalStorageOperationalError from exc
 
         # Return connection
         return conn
@@ -135,12 +171,9 @@ class LocalDatabase:
             del self._conn
 
     async def _commit(self) -> None:
-        try:
+        # Close the local database if an operational error is detected
+        with self._manage_operational_error():
             await self._run_in_thread(self._conn.commit)
-        except OperationalError as exc:
-            self._conn.close()
-            del self._conn
-            raise FSLocalStorageOperationalError from exc
 
     def _check_state(self) -> None:
         try:
@@ -158,16 +191,15 @@ class LocalDatabase:
             # Check connection state
             self._check_state()
 
-            # Get a cursor
-            cursor = self._conn.cursor()
-            try:
+            # Close the local database if an operational error is detected
+            with self._manage_operational_error():
 
                 # Execute SQL commands
-                yield cursor
-
-            # Close cursor
-            finally:
-                cursor.close()
+                cursor = self._conn.cursor()
+                try:
+                    yield cursor
+                finally:
+                    cursor.close()
 
             # Commit the transaction when finished
             if commit and self._conn.in_transaction:
@@ -208,12 +240,12 @@ class LocalDatabase:
             if self.vacuum_threshold is None:
                 return
 
+            # Flush to disk before computing disk usage
+            await self._commit()
+
             # No reason to vacuum yet
             if await self.get_disk_usage() < self.vacuum_threshold:
                 return
-
-            # Flush to disk
-            await self._commit()
 
             # Run vacuum
             await self._run_in_thread(lambda: self._conn.execute("VACUUM"))
