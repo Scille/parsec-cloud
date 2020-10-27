@@ -83,6 +83,38 @@ async def test_workspace_fs_with_disk_full_simple(alice_fs_context, loopback_fs)
 @pytest.mark.trio
 @pytest.mark.linux
 @pytest.mark.mountpoint
+async def test_workspace_fs_with_disk_full_large_write(alice_fs_context, loopback_fs):
+    """Make sure the sqlite database can recover from a full disk error."""
+    async with alice_fs_context() as fs:
+        await fs.write_bytes("/test.txt", b"abc")
+        assert await fs.read_bytes("/test.txt") == b"abc"
+
+    async with alice_fs_context() as fs:
+        assert await fs.read_bytes("/test.txt") == b"abc"
+        loopback_fs.full = True
+        async with await fs.open_file("/test.txt", "wb") as f:
+            # This block doesn't commit the transaction since no flushing is performed
+            # However, it might still raises an operational error since sqlite3 starts
+            # writing to the disk when it holds too much data in memory. If this write
+            # operation fails, the current transaction is rolled back, causing the same
+            # problems as those discussed in issue #1535 with the commit operation.
+            with pytest.raises(FSLocalStorageOperationalError):
+                # Write 100 MB of "a" (100 * 256 blocks of 4K)
+                for x in range(256 * 100):
+                    await f.write(b"a" * 4 * 1024)
+
+    with pytest.raises(FSLocalStorageOperationalError):
+        async with alice_fs_context() as fs:
+            pass
+
+    loopback_fs.full = False
+    async with alice_fs_context() as fs:
+        assert await fs.read_bytes("/test.txt") == b"abc"
+
+
+@pytest.mark.trio
+@pytest.mark.linux
+@pytest.mark.mountpoint
 async def test_workspace_fs_with_disk_full_issue_1535(
     alice_fs_context, loopback_fs, running_backend
 ):
