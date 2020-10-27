@@ -1,6 +1,7 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
 
 from enum import Enum
+from typing import Dict, cast
 
 from parsec.serde import OneOfSchema, fields, validate
 from parsec.api.protocol.base import BaseReqSchema, BaseRepSchema, CmdSerializer
@@ -76,8 +77,8 @@ class EventsListenRepSchema(OneOfSchema):
         APIEvent.REALM_MAINTENANCE_FINISHED: EventsRealmMaintenanceFinishedRepSchema(),
     }
 
-    def get_obj_type(self, obj):
-        return obj["event"]
+    def get_obj_type(self, obj: Dict[str, object]) -> APIEvent:
+        return cast(APIEvent, obj["event"])
 
 
 events_listen_serializer = CmdSerializer(EventsListenReqSchema, EventsListenRepSchema)
