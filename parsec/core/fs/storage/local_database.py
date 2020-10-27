@@ -93,7 +93,9 @@ class LocalDatabase:
     # Operational error protection
 
     @contextmanager
-    def _manage_operational_error(self, conn: Optional[Connection] = None) -> Iterator[None]:
+    def _manage_operational_error(
+        self, conn: Optional[Connection] = None, allow_commit: bool = False
+    ) -> Iterator[None]:
         """Close the local database when an operational error is detected
 
         Operational errors have to be treated with care since they usually indicate
@@ -111,21 +113,35 @@ class LocalDatabase:
         # Get connection
         if conn is None:
             conn = self._conn
+        in_transaction_before = conn.in_transaction
+
         # Safe context for operational errors
         try:
-            yield
-        except OperationalError as exc:
+            try:
+                yield
+
+            # Extra checks for end of transaction
+            finally:
+                end_of_transaction_detected = in_transaction_before and not conn.in_transaction
+                if not allow_commit and end_of_transaction_detected:
+                    raise OperationalError("A forbidden commit/rollback has been detected")
+
+        # An operational error has been detected
+        except OperationalError as exception:
+
             # Mark the local database as closed
             try:
                 del self._conn
             except AttributeError:
                 pass
+
             # Close the sqlite3 connection
             try:
                 conn.close()
+
             # Raise an FSLocalStorageOperationalError
             finally:
-                raise FSLocalStorageOperationalError from exc
+                raise FSLocalStorageOperationalError from exception
 
     # Life cycle
 
@@ -172,7 +188,7 @@ class LocalDatabase:
 
     async def _commit(self) -> None:
         # Close the local database if an operational error is detected
-        with self._manage_operational_error():
+        with self._manage_operational_error(allow_commit=True):
             await self._run_in_thread(self._conn.commit)
 
     def _check_state(self) -> None:
