@@ -1,6 +1,7 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
 
 from enum import Enum
+from typing import Dict, cast
 
 from parsec.serde import BaseSchema, OneOfSchema, fields
 from parsec.api.protocol.base import BaseReqSchema, BaseRepSchema, CmdSerializer
@@ -53,8 +54,8 @@ class InviteNewReqSchema(OneOfSchema):
         InvitationType.DEVICE: InviteNewDeviceReqSchema(),
     }
 
-    def get_obj_type(self, obj):
-        return obj["type"]
+    def get_obj_type(self, obj: Dict[str, object]) -> InvitationType:
+        return cast(InvitationType, obj["type"])
 
 
 class InviteNewRepSchema(BaseRepSchema):
@@ -120,8 +121,8 @@ class InviteListItemSchema(OneOfSchema):
         InvitationType.DEVICE: InviteListItemDeviceSchema(),
     }
 
-    def get_obj_type(self, obj):
-        return obj["type"]
+    def get_obj_type(self, obj: Dict[str, object]) -> InvitationType:
+        return cast(InvitationType, obj["type"])
 
 
 class InviteListRepSchema(BaseRepSchema):
@@ -155,8 +156,8 @@ class InviteInfoRepSchema(OneOfSchema):
         InvitationType.DEVICE: InviteInfoDeviceRepSchema(),
     }
 
-    def get_obj_type(self, obj):
-        return obj["type"]
+    def get_obj_type(self, obj: Dict[str, object]) -> InvitationType:
+        return cast(InvitationType, obj["type"])
 
 
 invite_info_serializer = CmdSerializer(InviteInfoReqSchema, InviteInfoRepSchema)
