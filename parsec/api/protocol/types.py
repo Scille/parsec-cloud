@@ -1,12 +1,17 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
 
 import re
-from typing import Union
+from typing import Union, TypeVar, Type, NoReturn
 from uuid import uuid4
 from collections import namedtuple
 from email.utils import parseaddr
 
 from parsec.serde import fields
+
+
+UserIDTypeVar = TypeVar("UserIDTypeVar", bound="UserID")
+DeviceIDTypeVar = TypeVar("DeviceIDTypeVar", bound="DeviceID")
+DeviceNameTypeVar = TypeVar("DeviceNameTypeVar", bound="DeviceName")
 
 
 def _bytes_size(txt: str) -> int:
@@ -17,11 +22,11 @@ class OrganizationID(str):
     __slots__ = ()
     regex = re.compile(r"^[\w\-]{1,32}$")
 
-    def __init__(self, raw):
+    def __init__(self, raw: str):
         if not isinstance(raw, str) or not self.regex.match(raw) or _bytes_size(raw) > 32:
             raise ValueError("Invalid organization ID")
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         return f"<OrganizationID {super().__repr__()}>"
 
 
@@ -29,18 +34,18 @@ class UserID(str):
     __slots__ = ()
     regex = re.compile(r"^[\w\-]{1,32}$")
 
-    def __init__(self, raw):
+    def __init__(self, raw: str):
         if not isinstance(raw, str) or not self.regex.match(raw) or _bytes_size(raw) > 32:
             raise ValueError("Invalid user name")
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         return f"<UserID {super().__repr__()}>"
 
     @classmethod
-    def new(cls):
+    def new(cls: Type[UserIDTypeVar]) -> UserIDTypeVar:
         return cls(uuid4().hex)
 
-    def to_device_id(self, device_name: Union[str, "DeviceName"]) -> "DeviceID":
+    def to_device_id(self, device_name: Union[str, "DeviceID"]) -> "DeviceID":
         return DeviceID(f"{self}@{device_name}")
 
 
@@ -48,15 +53,15 @@ class DeviceName(str):
     __slots__ = ()
     regex = re.compile(r"^[\w\-]{1,32}$")
 
-    def __init__(self, raw):
+    def __init__(self, raw: str):
         if not isinstance(raw, str) or not self.regex.match(raw) or _bytes_size(raw) > 32:
             raise ValueError("Invalid device name")
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         return f"<DeviceName {super().__repr__()}>"
 
     @classmethod
-    def new(cls):
+    def new(cls: Type[DeviceNameTypeVar]) -> DeviceNameTypeVar:
         return cls(uuid4().hex)
 
 
@@ -64,11 +69,11 @@ class DeviceID(str):
     __slots__ = ()
     regex = re.compile(r"^[\w\-]{1,32}@[\w\-]{1,32}$")
 
-    def __init__(self, raw):
+    def __init__(self, raw: str):
         if not isinstance(raw, str) or not self.regex.match(raw) or _bytes_size(raw) > 65:
             raise ValueError("Invalid device ID")
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         return f"<DeviceID {super().__repr__()}>"
 
     @property
@@ -80,7 +85,7 @@ class DeviceID(str):
         return DeviceName(self.split("@")[1])
 
     @classmethod
-    def new(cls) -> "DeviceID":
+    def new(cls: Type[DeviceIDTypeVar]) -> DeviceIDTypeVar:
         return cls(f"{uuid4().hex}@{uuid4().hex}")
 
 
@@ -110,29 +115,29 @@ class HumanHandle(namedtuple("HumanHandle", "email label")):
         # No need to call super().__init__ given namedtuple set attributes during __new__
         super().__init__()
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         return f"<HumanHandle {str(self)} >"
 
-    def __str__(self):
+    def __str__(self) -> str:
         return f"{self.label} <{self.email}>"
 
-    def __eq__(self, other):
+    def __eq__(self, other: object) -> bool:
         # Ignore label field, as it is only for human redability
         return isinstance(other, HumanHandle) and self.email == other.email
 
-    def __gt__(self, other):
+    def __gt__(self, other: object) -> NoReturn:
         raise NotImplementedError
 
-    def __hash__(self):
+    def __hash__(self) -> int:
         return hash(self.email)
 
 
 class HumanHandleField(fields.Tuple):
-    def __init__(self, **kwargs):
+    def __init__(self, **kwargs: object):
         email = fields.String(required=True)
         label = fields.String(required=True)
         super().__init__(email, label, **kwargs)
 
-    def _deserialize(self, *args, **kwargs):
+    def _deserialize(self, *args: object, **kwargs: object) -> HumanHandle:
         result = super()._deserialize(*args, **kwargs)
         return HumanHandle(*result)
