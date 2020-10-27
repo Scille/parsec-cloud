@@ -469,25 +469,25 @@ async def test_vacuum(tmpdir, alice, workspace_id):
 
         # Make sure the storage is empty
         data = b"\x00" * data_size
-        assert aws.data_localdb.get_disk_usage() < data_size
+        assert await aws.data_localdb.get_disk_usage() < data_size
 
         # Set and commit a chunk of 1MB
         await aws.set_chunk(chunk.id, data)
         await aws.data_localdb.commit()
-        assert aws.data_localdb.get_disk_usage() > data_size
+        assert await aws.data_localdb.get_disk_usage() > data_size
 
         # Run the vacuum
         await aws.run_vacuum()
-        assert aws.data_localdb.get_disk_usage() > data_size
+        assert await aws.data_localdb.get_disk_usage() > data_size
 
         # Clear the chunk 1MB
         await aws.clear_chunk(chunk.id)
         await aws.data_localdb.commit()
-        assert aws.data_localdb.get_disk_usage() > data_size
+        assert await aws.data_localdb.get_disk_usage() > data_size
 
         # Run the vacuum
         await aws.run_vacuum()
-        assert aws.data_localdb.get_disk_usage() < data_size
+        assert await aws.data_localdb.get_disk_usage() < data_size
 
         # Make sure vacuum can run even if a transaction has started
         await aws.set_chunk(chunk.id, data)
@@ -499,7 +499,7 @@ async def test_vacuum(tmpdir, alice, workspace_id):
         await aws.cache_localdb.run_vacuum()
 
     # Make sure disk usage can be called on a closed storage
-    assert aws.data_localdb.get_disk_usage() < data_size
+    assert await aws.data_localdb.get_disk_usage() < data_size
 
 
 @pytest.mark.trio

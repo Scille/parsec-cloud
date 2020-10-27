@@ -425,6 +425,9 @@ def persistent_mockup(monkeypatch):
         storage_set.discard(storage)
         storage._conn = None
 
+    async def get_disk_usage(storage):
+        return 0
+
     @asynccontextmanager
     async def thread_pool_runner(max_workers):
         assert max_workers == 1
@@ -437,6 +440,7 @@ def persistent_mockup(monkeypatch):
     monkeypatch.setattr(local_database, "thread_pool_runner", thread_pool_runner)
     monkeypatch.setattr(LocalDatabase, "_create_connection", _create_connection)
     monkeypatch.setattr(LocalDatabase, "_close", _close)
+    monkeypatch.setattr(LocalDatabase, "get_disk_usage", get_disk_usage)
 
     yield mockup_context
     mockup_context.clear()
