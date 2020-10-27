@@ -3,7 +3,7 @@
 
 cd ../..
 python3 setup.py bdist_wheel
-python3 -m pip install .
+python3 -m pip install -e .
 python3 -m pip install 'pyinstaller==4.0'
 cd packaging/macOS
 
@@ -15,7 +15,6 @@ else
 fi
 
 pyinstaller parsec.spec $FORCE
-rm dist/parsec # Delete ununsed binary file
 
 if [[ $1 == '-i' || $1 == '--install' || $2 == '-i' || $2 == '--install' ]]
 then

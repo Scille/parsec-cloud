@@ -21,30 +21,38 @@ pyz = PYZ(a.pure, a.zipped_data,
              cipher=None)
 exe = EXE(pyz,
           a.scripts,
-          a.binaries,
-          a.zipfiles,
-          a.datas,
           [],
-          name='parsec',
+          exclude_binaries=True,
+          name="parsec-gui",
+          icon="../../parsec/core/resources/parsec.icns",
           debug=False,
           bootloader_ignore_signals=False,
           strip=False,
           upx=True,
-          console=False )
-app = BUNDLE(exe,
+          console=False)
+coll = COLLECT(exe,
+               a.binaries,
+               a.zipfiles,
+               a.datas,
+               strip=False,
+               upx=True,
+               upx_exclude=[],
+               name="parsec")
+app = BUNDLE(coll,
              name='parsec.app',
              icon='../../parsec/core/resources/parsec.icns',
-             bundle_identifier='fr.scille.parsec',
+             bundle_identifier='com.scille.parsec',
              info_plist={
                 'NSPrincipalClass': 'NSApplication',
                 'NSHighResolutionCapable': True,
                 'NSAppleScriptEnabled': False,
-                'CFBundleIdentifier': 'fr.scille.parsec',
+                'CFBundleIdentifier': 'com.scille.parsec',
                 'CFBundleName': 'parsec',
                 'CFBundleDisplayName': 'Parsec',
                 'CFBundleURLTypes': [
                    {
-                      'CFBundleURLName': 'parsec',
+                      'CFBundleTypeRole': 'Shell',
+                      'CFBundleURLName': 'com.scille.parsec',
                       'CFBundleURLSchemes': ['parsec']
                    }
                 ]

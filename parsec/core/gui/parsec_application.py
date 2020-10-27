@@ -1,8 +1,12 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
 
 from PyQt5.QtWidgets import QApplication
-from PyQt5.QtCore import QFile
+from PyQt5.QtCore import QFile, QEvent
 from PyQt5.QtGui import QFont, QFontDatabase, QPalette, QColor
+from structlog import get_logger
+
+
+logger = get_logger()
 
 
 class ParsecApp(QApplication):
@@ -17,6 +21,22 @@ class ParsecApp(QApplication):
         pal.setColor(QPalette.Link, QColor(0x00, 0x92, 0xFF))
         pal.setColor(QPalette.LinkVisited, QColor(0x00, 0x70, 0xDD))
         self.setPalette(pal)
+
+    def event(self, e):
+        """Handle macOS FileOpen events."""
+        if e.type() != QEvent.FileOpen or e.url().scheme() != "parsec":
+            return super().event(e)
+        try:
+            url = e.url().url()
+            mw = self.get_main_window()
+            if not mw:
+                pass
+            else:
+                mw.new_instance_needed.emit(url)
+        except Exception:
+            logger.exception("Url handling failed")
+
+        return True
 
     def load_stylesheet(self, res=":/styles/styles/main.css"):
         rc = QFile(res)
