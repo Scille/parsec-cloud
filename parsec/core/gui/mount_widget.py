@@ -34,7 +34,7 @@ class MountWidget(QWidget, Ui_MountWidget):
     def load_workspace(self, workspace_fs, default_path, select=False):
         self.show_files_widget(workspace_fs, default_path, select)
 
-    def show_files_widget(self, workspace_fs, default_path, selected=False):
+    def show_files_widget(self, workspace_fs, default_path, selected=False, mount_it=False):
         self.workspaces_widget.hide()
         self.files_widget.set_workspace_fs(
             workspace_fs,
@@ -43,6 +43,11 @@ class MountWidget(QWidget, Ui_MountWidget):
             if len(default_path.parts) != 0 and selected
             else None,
         )
+        if mount_it and not self.workspaces_widget.is_workspace_mounted(
+            workspace_fs.workspace_id, None
+        ):
+            self.workspaces_widget.mount_workspace(workspace_fs.workspace_id)
+
         self.files_widget.show()
 
     def show_workspaces_widget(self, user_info=None):

@@ -61,6 +61,8 @@ async def test_workspace_sharing_list_users(
 
     main_user_w = share_w_w.scroll_content.layout().itemAt(0).widget()
     assert main_user_w.user_info.short_user_display == "Boby McBobFace"
+    assert main_user_w.label_name.text() == "<b>Boby McBobFace</b>"
+    assert main_user_w.label_email.text() == "bob@example.com"
     assert main_user_w.combo_role.currentIndex() == 4
     assert main_user_w.combo_role.currentText() == translate("TEXT_WORKSPACE_ROLE_OWNER")
 
