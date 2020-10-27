@@ -110,15 +110,26 @@ class WorkspaceFile:
 
     async def close(self) -> None:
         """Close the file"""
+        # Idempotency
         if self._state == FileState.CLOSED:
             return
+        # Make sure the state is set to CLOSED
         try:
+            # Make sure the fd is closed is called even if the flushing fails
             try:
-                await self._transactions.fd_flush(self.fileno())
+                # Ignore FSLocalStorageClosedError exceptions
+                try:
+                    # Flush the file (typically causes the manifest to be reshaped)
+                    await self._transactions.fd_flush(self.fileno())
+                except FSLocalStorageClosedError:
+                    return
             finally:
-                await self._transactions.fd_close(self.fileno())
-        except FSLocalStorageClosedError:
-            pass
+                # Ignore FSLocalStorageClosedError exceptions
+                try:
+                    # Close the file
+                    await self._transactions.fd_close(self.fileno())
+                except FSLocalStorageClosedError:
+                    return
         finally:
             self._state = FileState.CLOSED
 
