@@ -12,7 +12,7 @@ from parsec.core.backend_connection import (
     BackendNotAvailable,
 )
 from parsec.core.types import BackendOrganizationBootstrapAddr, BackendAddr
-from parsec.core.invite import bootstrap_organization, InviteAlreadyUsedError
+from parsec.core.invite import bootstrap_organization, InviteAlreadyUsedError, InviteTimestampError
 from parsec.core.local_device import save_device_with_password
 
 from parsec.core.gui.custom_dialogs import GreyedDialog, show_error, show_info
@@ -45,6 +45,8 @@ async def _do_create_org(config, human_handle, device_name, password, backend_ad
         raise JobResultError("connection-refused", exc=exc)
     except BackendNotAvailable as exc:
         raise JobResultError("connection-error", exc=exc)
+    except InviteTimestampError as exc:
+        raise JobResultError("timestamp-error", exc=exc)
 
 
 class CreateOrgUserInfoWidget(QWidget, Ui_CreateOrgUserInfoWidget):
@@ -304,6 +306,8 @@ class CreateOrgWidget(QWidget, Ui_CreateOrgWidget):
             errmsg = _("TEXT_ORG_WIZARD_CONNECTION_REFUSED")
         elif status == "connection-error":
             errmsg = _("TEXT_ORG_WIZARD_CONNECTION_ERROR")
+        elif status == "timestamp-error":
+            errmsg = _("TEXT_ORG_WIZARD_INVALID_TIMESTAMP")
         else:
             errmsg = _("TEXT_ORG_WIZARD_UNKNOWN_FAILURE")
         exc = self.create_job.exc
