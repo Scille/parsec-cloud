@@ -418,7 +418,7 @@ def persistent_mockup(monkeypatch):
 
     async def _create_connection(storage):
         storage_set.add(storage)
-        return mockup_context.get(storage.path)
+        storage._conn = mockup_context.get(storage.path)
 
     async def _close(storage):
         # Idempotent operation

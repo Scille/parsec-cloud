@@ -93,9 +93,7 @@ class LocalDatabase:
     # Operational error protection
 
     @contextmanager
-    def _manage_operational_error(
-        self, conn: Optional[Connection] = None, allow_commit: bool = False
-    ) -> Iterator[None]:
+    def _manage_operational_error(self, allow_commit: bool = False) -> Iterator[None]:
         """Close the local database when an operational error is detected
 
         Operational errors have to be treated with care since they usually indicate
@@ -110,11 +108,7 @@ class LocalDatabase:
         This way, we force the core to create new workspace storage objects and therefore
         discarding any uncommited data.
         """
-        # Get connection
-        if conn is None:
-            conn = self._conn
-        in_transaction_before = conn.in_transaction
-
+        in_transaction_before = self._conn.in_transaction
         # Safe context for operational errors
         try:
             try:
@@ -122,80 +116,94 @@ class LocalDatabase:
 
             # Extra checks for end of transaction
             finally:
-                end_of_transaction_detected = in_transaction_before and not conn.in_transaction
+                end_of_transaction_detected = (
+                    in_transaction_before and not self._conn.in_transaction
+                )
                 if not allow_commit and end_of_transaction_detected:
                     raise OperationalError("A forbidden commit/rollback has been detected")
 
         # An operational error has been detected
         except OperationalError as exception:
 
-            # Mark the local database as closed
-            try:
-                del self._conn
-            except AttributeError:
-                pass
-
             # Close the sqlite3 connection
             try:
-                conn.close()
+                self._conn.close()
 
-            # Raise an FSLocalStorageOperationalError
+            # Ignore second operational error (it should not happen though)
+            except OperationalError:
+                pass
+
+            # Mark the local database as closed
             finally:
-                raise FSLocalStorageOperationalError from exception
+                del self._conn
+
+            # Raise the dedicated operational error
+            raise FSLocalStorageOperationalError from exception
 
     # Life cycle
 
-    async def _create_connection(self) -> Connection:
+    async def _create_connection(self) -> None:
         # Create directories
         await self.path.parent.mkdir(mode=0o700, parents=True, exist_ok=True)
 
         # Create sqlite connection
-        conn = sqlite_connect(str(self.path), check_same_thread=False)
+        self._conn = sqlite_connect(str(self.path), check_same_thread=False)
 
         # The default isolation level ("") lets python manage the transaction
         # so we can periodically commit the pending changes.
-        assert conn.isolation_level == ""
+        assert self._conn.isolation_level == ""
 
         # The combination of WAL journal mode and NORMAL synchronous mode
         # is a great combination: it allows for fast commits (~10 us compare
         # to 15 ms the default mode) but still protects the database against
         # corruption in the case of OS crash or power failure.
-        with self._manage_operational_error(conn):
-            conn.execute("PRAGMA journal_mode=WAL")
-            conn.execute("PRAGMA synchronous=NORMAL")
-
-        # Return connection
-        return conn
+        with self._manage_operational_error():
+            self._conn.execute("PRAGMA journal_mode=WAL")
+            self._conn.execute("PRAGMA synchronous=NORMAL")
 
     async def _connect(self) -> None:
         # Lock the access to the connection object
         async with self._lock:
 
             # Connect and initialize database
-            self._conn = await self._create_connection()
+            await self._create_connection()
 
     async def _close(self) -> None:
         # Lock the access to the connection object
         async with self._lock:
 
-            # Check the connection state
-            self._check_state()
+            # Local database is already closed
+            if self._is_closed():
+                return
 
-            # Commit and close
-            await self._run_in_thread(self._conn.commit)
-            self._conn.close()
-            del self._conn
+            # Commit the current transaction
+            try:
+                await self._commit()
+
+            finally:
+                # Local database is already closed
+                if self._is_closed():
+                    return
+
+                # Close the sqlite3 connection
+                try:
+                    self._conn.close()
+
+                # Mark the local database as closed
+                finally:
+                    del self._conn
 
     async def _commit(self) -> None:
         # Close the local database if an operational error is detected
         with self._manage_operational_error(allow_commit=True):
             await self._run_in_thread(self._conn.commit)
 
-    def _check_state(self) -> None:
-        try:
-            self._conn
-        except AttributeError:
-            raise FSLocalStorageClosedError from None
+    def _is_closed(self) -> bool:
+        return not hasattr(self, "_conn")
+
+    def _check_open(self) -> None:
+        if self._is_closed():
+            raise FSLocalStorageClosedError
 
     # Cursor management
 
@@ -205,7 +213,7 @@ class LocalDatabase:
         async with self._lock:
 
             # Check connection state
-            self._check_state()
+            self._check_open()
 
             # Close the local database if an operational error is detected
             with self._manage_operational_error():
@@ -226,7 +234,7 @@ class LocalDatabase:
         async with self._lock:
 
             # Check connection state
-            self._check_state()
+            self._check_open()
 
             # Run the commit
             await self._commit()
@@ -250,7 +258,7 @@ class LocalDatabase:
         async with self._lock:
 
             # Check connection state
-            self._check_state()
+            self._check_open()
 
             # Vacuum disabled
             if self.vacuum_threshold is None:
@@ -270,4 +278,4 @@ class LocalDatabase:
             try:
                 self._conn.close()
             finally:
-                self._conn = await self._create_connection()
+                await self._create_connection()

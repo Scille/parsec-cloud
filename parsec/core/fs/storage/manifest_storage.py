@@ -55,8 +55,10 @@ class ManifestStorage:
             yield self
         finally:
             with trio.CancelScope(shield=True):
+                # Flush the in-memory cache before closing the storage
                 try:
                     await self._flush_cache_ahead_of_persistance()
+                # Ignore storage closed exceptions, since it follows an operational error
                 except FSLocalStorageClosedError:
                     pass
 

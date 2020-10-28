@@ -42,8 +42,10 @@ class ChunkStorage:
             yield self
         finally:
             with trio.CancelScope(shield=True):
+                # Commit the pending changes in the local database
                 try:
                     await self.localdb.commit()
+                # Ignore storage closed exceptions, since it follows an operational error
                 except FSLocalStorageClosedError:
                     pass
 
