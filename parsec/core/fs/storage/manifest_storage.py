@@ -8,7 +8,7 @@ from structlog import get_logger
 from typing import Dict, Tuple, Set, Optional, Union, Pattern, AsyncIterator, AsyncContextManager
 from async_generator import asynccontextmanager
 
-from parsec.core.fs.exceptions import FSLocalMissError
+from parsec.core.fs.exceptions import FSLocalMissError, FSLocalStorageClosedError
 from parsec.core.types import EntryID, ChunkID, LocalDevice, BaseLocalManifest, BlockID
 from parsec.core.fs.storage.local_database import LocalDatabase, Cursor
 
@@ -42,7 +42,7 @@ class ManifestStorage:
 
     @property
     def path(self) -> Path:
-        return self.localdb.path
+        return Path(self.localdb.path)
 
     @classmethod
     @asynccontextmanager
@@ -55,7 +55,12 @@ class ManifestStorage:
             yield self
         finally:
             with trio.CancelScope(shield=True):
-                await self._flush_cache_ahead_of_persistance()
+                # Flush the in-memory cache before closing the storage
+                try:
+                    await self._flush_cache_ahead_of_persistance()
+                # Ignore storage closed exceptions, since it follows an operational error
+                except FSLocalStorageClosedError:
+                    pass
 
     def _open_cursor(self) -> AsyncContextManager[Cursor]:
         # We want the manifest to be written to the disk as soon as possible

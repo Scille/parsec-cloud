@@ -6,8 +6,12 @@ from enum import IntEnum
 from typing import Union, Optional, NoReturn, Type, Dict
 
 from parsec.core.fs.workspacefs.entry_transactions import EntryTransactions
-from parsec.core.fs.exceptions import FSUnsupportedOperation, FSOffsetError
 from parsec.core.types import FsPath, AnyPath, FileDescriptor
+from parsec.core.fs.exceptions import (
+    FSUnsupportedOperation,
+    FSOffsetError,
+    FSLocalStorageClosedError,
+)
 
 
 class FileState(IntEnum):
@@ -106,8 +110,27 @@ class WorkspaceFile:
 
     async def close(self) -> None:
         """Close the file"""
-        if self._state != FileState.CLOSED:
-            await self._transactions.fd_close(self.fileno())
+        # Idempotency
+        if self._state == FileState.CLOSED:
+            return
+        # Make sure the state is set to CLOSED
+        try:
+            # Make sure the file descriptor is closed even if the flushing fails
+            try:
+                # Ignore storage closed exceptions, since it follows an operational error
+                try:
+                    # Flush the file (typically causes the manifest to be reshaped)
+                    await self._transactions.fd_flush(self.fileno())
+                except FSLocalStorageClosedError:
+                    return
+            finally:
+                # Ignore storage closed exceptions, since it follows an operational error
+                try:
+                    # Close the file
+                    await self._transactions.fd_close(self.fileno())
+                except FSLocalStorageClosedError:
+                    return
+        finally:
             self._state = FileState.CLOSED
 
     def fileno(self) -> FileDescriptor:
@@ -277,3 +300,6 @@ class WorkspaceFile:
         result = await self._transactions.fd_write(self.fileno(), data, self._offset)
         self._offset += result
         return result
+
+    async def flush(self) -> None:
+        await self._transactions.fd_flush(self.fileno())
