@@ -272,9 +272,8 @@ class GreetUserCheckInfoWidget(QWidget, Ui_GreetUserCheckInfoWidget):
         handle = None
         device_label = self.line_edit_device.text()
         try:
-            handle = HumanHandle(
-                label=self.line_edit_user_full_name.text(), email=self.line_edit_user_email.text()
-            )
+            user_name = validators.trim_user_name(self.line_edit_user_full_name.text())
+            handle = HumanHandle(label=user_name, email=self.line_edit_user_email.text())
         except ValueError as exc:
             show_error(self, _("TEXT_GREET_USER_INVALID_HUMAN_HANDLE"), exception=exc)
             return
