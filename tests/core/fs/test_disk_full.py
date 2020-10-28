@@ -58,7 +58,7 @@ async def alice_fs_context(loopback_fs, event_bus_factory, alice):
 
 @pytest.mark.trio
 @pytest.mark.linux
-@pytest.mark.mountpoint
+@pytest.mark.diskfull
 async def test_workspace_fs_with_disk_full_simple(alice_fs_context, loopback_fs):
     """Make sure the sqlite database can recover from a full disk error."""
     async with alice_fs_context() as fs:
@@ -82,7 +82,7 @@ async def test_workspace_fs_with_disk_full_simple(alice_fs_context, loopback_fs)
 
 @pytest.mark.trio
 @pytest.mark.linux
-@pytest.mark.mountpoint
+@pytest.mark.diskfull
 async def test_workspace_fs_with_disk_full_large_write(alice_fs_context, loopback_fs):
     """Make sure the sqlite database can recover from a full disk error."""
     async with alice_fs_context() as fs:
@@ -114,7 +114,7 @@ async def test_workspace_fs_with_disk_full_large_write(alice_fs_context, loopbac
 
 @pytest.mark.trio
 @pytest.mark.linux
-@pytest.mark.mountpoint
+@pytest.mark.diskfull
 async def test_workspace_fs_with_disk_full_issue_1535(
     alice_fs_context, loopback_fs, running_backend
 ):
@@ -146,7 +146,7 @@ async def test_workspace_fs_with_disk_full_issue_1535(
 @pytest.mark.trio
 @pytest.mark.slow
 @pytest.mark.linux
-@pytest.mark.mountpoint
+@pytest.mark.diskfull
 async def test_workspace_fs_with_disk_full_systematic(alice_fs_context, loopback_fs):
     """A more systematic but slower search for corruption."""
     for number_of_write_before_full in range(50):
@@ -165,7 +165,7 @@ async def test_workspace_fs_with_disk_full_systematic(alice_fs_context, loopback
 @pytest.mark.trio
 @pytest.mark.slow
 @pytest.mark.linux
-@pytest.mark.mountpoint
+@pytest.mark.diskfull
 async def test_workspace_fs_with_disk_full_systematic_with_flush(alice_fs_context, loopback_fs):
     """A more systematic but slower search for corruption."""
     for number_of_write_before_full in range(50):
@@ -188,7 +188,7 @@ async def test_workspace_fs_with_disk_full_systematic_with_flush(alice_fs_contex
 @pytest.mark.trio
 @pytest.mark.slow
 @pytest.mark.linux
-@pytest.mark.mountpoint
+@pytest.mark.diskfull
 async def test_workspace_fs_with_disk_full_systematic_with_sync(
     alice_fs_context, loopback_fs, running_backend
 ):
