@@ -37,7 +37,8 @@ async def _do_creation_process(aqtbot, co_w):
 
     await aqtbot.wait_until(_user_widget_ready)
 
-    await aqtbot.key_clicks(co_w.user_widget.line_edit_user_full_name, "Gordon Freeman")
+    # Adding a few spaces to the name
+    await aqtbot.key_clicks(co_w.user_widget.line_edit_user_full_name, "  Gordon     Freeman   ")
     await aqtbot.key_clicks(co_w.user_widget.line_edit_user_email, "gordon.freeman@blackmesa.com")
     await aqtbot.key_clicks(co_w.user_widget.line_edit_org_name, "AnomalousMaterials")
     assert not co_w.button_validate.isEnabled()
@@ -102,6 +103,13 @@ async def test_create_organization(
         ]
 
     await aqtbot.wait_until(_modal_shown)
+
+    def _logged_in():
+        c_w = gui.test_get_central_widget()
+        assert c_w
+        assert c_w.button_user.text() == "AnomalousMaterials\nGordon Freeman"
+
+    await aqtbot.wait_until(_logged_in)
 
 
 @pytest.mark.gui

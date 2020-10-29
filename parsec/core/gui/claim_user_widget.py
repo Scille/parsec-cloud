@@ -433,9 +433,8 @@ class ClaimUserProvideInfoWidget(QWidget, Ui_ClaimUserProvideInfoWidget):
     def _on_claim_clicked(self):
         device_label = self.line_edit_device.text()
         try:
-            human_handle = HumanHandle(
-                email=self.line_edit_user_email.text(), label=self.line_edit_user_full_name.text()
-            )
+            user_name = validators.trim_user_name(self.line_edit_user_full_name.text())
+            human_handle = HumanHandle(email=self.line_edit_user_email.text(), label=user_name)
         except ValueError as exc:
             show_error(self, _("TEXT_CLAIM_USER_INVALID_HUMAN_HANDLE"), exception=exc)
             return
