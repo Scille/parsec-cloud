@@ -1,5 +1,7 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
 
+from typing import Any, Dict
+
 from parsec.crypto import VerifyKey, PublicKey, PrivateKey, SecretKey
 from parsec.serde import fields, post_load
 from parsec.api.protocol import DeviceID, DeviceIDField
@@ -19,7 +21,7 @@ class APIV1_UserClaimContent(BaseAPIData):
         verify_key = fields.VerifyKey(required=True)
 
         @post_load
-        def make_obj(self, data):
+        def make_obj(self, data: Dict[str, Any]) -> "APIV1_UserClaimContent":  # type: ignore[misc]
             data.pop("type")
             return APIV1_UserClaimContent(**data)
 
@@ -39,7 +41,9 @@ class APIV1_DeviceClaimContent(BaseAPIData):
         answer_public_key = fields.PublicKey(required=True)
 
         @post_load
-        def make_obj(self, data):
+        def make_obj(  # type: ignore[misc]
+            self, data: Dict[str, Any]
+        ) -> "APIV1_DeviceClaimContent":
             data.pop("type")
             return APIV1_DeviceClaimContent(**data)
 
@@ -58,7 +62,9 @@ class APIV1_DeviceClaimAnswerContent(BaseAPIData):
         user_manifest_key = fields.SecretKey(required=True)
 
         @post_load
-        def make_obj(self, data):
+        def make_obj(  # type: ignore[misc]
+            self, data: Dict[str, Any]
+        ) -> "APIV1_DeviceClaimAnswerContent":
             data.pop("type")
             return APIV1_DeviceClaimAnswerContent(**data)
 
