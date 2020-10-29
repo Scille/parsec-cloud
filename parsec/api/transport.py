@@ -1,7 +1,7 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
 
 from uuid import uuid4
-from typing import Optional
+from typing import Optional, Type, Union
 import trio
 from trio import BrokenResourceError
 from trio.abc import Stream
@@ -85,7 +85,7 @@ class Transport:
         except RemoteProtocolError as exc:
             raise TransportError(f"Invalid WebSocket query: {exc}") from exc
 
-    async def _net_recv(self):
+    async def _net_recv(self) -> None:
         try:
             in_data = await self.stream.receive_some(self.RECEIVE_BYTES)
 
@@ -99,7 +99,7 @@ class Transport:
         else:
             self.ws.receive_data(in_data)
 
-    async def _net_send(self, wsmsg: bytes) -> None:
+    async def _net_send(self, wsmsg: Event) -> None:
         try:
             await self.stream.send_all(self.ws.send(wsmsg))
 
@@ -110,7 +110,7 @@ class Transport:
             raise TransportError(*exc.args) from exc
 
     @classmethod
-    async def init_for_client(cls, stream: Stream, host: str) -> "Transport":
+    async def init_for_client(cls: Type["Transport"], stream: Stream, host: str) -> "Transport":
         ws = WSConnection(ConnectionType.CLIENT)
         transport = cls(stream, ws)
 
@@ -132,8 +132,8 @@ class Transport:
         return transport
 
     @classmethod
-    async def init_for_server(
-        cls, stream: Stream, upgrade_request: Optional[H11Request] = None
+    async def init_for_server(  # type: ignore[misc]
+        cls: Type["Transport"], stream: Stream, upgrade_request: Optional[H11Request] = None
     ) -> "Transport":
         ws = WSConnection(ConnectionType.SERVER)
         if upgrade_request:
@@ -143,10 +143,9 @@ class Transport:
         transport = cls(stream, ws)
 
         # Wait for client to init WebSocket handshake
-        event = "Websocket handshake timeout"
+        event: Union[str, Event] = "Websocket handshake timeout"
         with trio.move_on_after(WEBSOCKET_HANDSHAKE_TIMEOUT):
             event = await transport._next_ws_event()
-
         if isinstance(event, Request):
             transport.logger.debug("Accepting WebSocket upgrade")
             await transport._net_send(AcceptConnection())
