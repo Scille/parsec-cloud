@@ -28,7 +28,7 @@ def configure_logging(log_level=None, log_format=None, log_file=None, log_filter
         structlog.stdlib.add_logger_name,
         structlog.stdlib.add_log_level,
         structlog.processors.format_exc_info,
-        structlog.processors.TimeStamper(fmt="%Y-%m-%d %H:%M:%S"),
+        structlog.processors.TimeStamper(fmt="%Y-%m-%d %H:%M:%S", utc=False),
     ]
 
     if log_filter:
