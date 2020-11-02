@@ -34,4 +34,3 @@ class CoreEvent(Enum):
     # Others
     SHARING_UPDATED = "sharing.updated"
     USERFS_UPDATED = "userfs.updated"
-    CLIPBOARD_UPDATED = "clipboard.updated"
