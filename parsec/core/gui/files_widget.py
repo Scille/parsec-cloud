@@ -1,9 +1,9 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
+import trio
+import pathlib
 
 from parsec.core.core_events import CoreEvent
-import pathlib
 from uuid import UUID
-import trio
 from pendulum import DateTime
 from enum import IntEnum
 from structlog import get_logger
@@ -156,6 +156,7 @@ class FilesWidget(QWidget, Ui_FilesWidget):
     fs_updated_qt = pyqtSignal(CoreEvent, UUID)
     fs_synced_qt = pyqtSignal(CoreEvent, UUID)
     entry_downsynced_qt = pyqtSignal(UUID, UUID)
+    global_clipboard_updated_qt = pyqtSignal(object)
 
     sharing_updated_qt = pyqtSignal(WorkspaceEntry, object)
     back_clicked = pyqtSignal()
@@ -304,12 +305,10 @@ class FilesWidget(QWidget, Ui_FilesWidget):
             if f.type != FileType.Folder and f.type != FileType.File:
                 continue
             files_to_copy.append((self.current_directory / f.name, f.type))
-        self.clipboard = Clipboard(files_to_copy, Clipboard.Status.Copied)
-        self.event_bus.send(
-            CoreEvent.CLIPBOARD_UPDATED,
-            clipboard=self.clipboard,
-            source_workspace=self.workspace_fs,
+        self.clipboard = Clipboard(
+            files=files_to_copy, status=Clipboard.Status.Copied, source_workspace=self.workspace_fs
         )
+        self.global_clipboard_updated_qt.emit(self.clipboard)
         self.table_files.paste_disabled = False
 
     def on_cut_clicked(self):
@@ -323,12 +322,10 @@ class FilesWidget(QWidget, Ui_FilesWidget):
             rows.append(f.row)
             files_to_cut.append((self.current_directory / f.name, f.type))
         self.table_files.set_rows_cut(rows)
-        self.clipboard = Clipboard(files_to_cut, Clipboard.Status.Cut)
-        self.event_bus.send(
-            CoreEvent.CLIPBOARD_UPDATED,
-            clipboard=self.clipboard,
-            source_workspace=self.workspace_fs,
+        self.clipboard = Clipboard(
+            files=files_to_cut, status=Clipboard.Status.Cut, source_workspace=self.workspace_fs
         )
+        self.global_clipboard_updated_qt.emit(self.clipboard)
         self.table_files.paste_disabled = False
 
     def on_paste_clicked(self):
@@ -395,7 +392,8 @@ class FilesWidget(QWidget, Ui_FilesWidget):
                     break
         if self.clipboard.status == Clipboard.Status.Cut:
             self.clipboard = None
-            self.event_bus.send(CoreEvent.CLIPBOARD_UPDATED, clipboard=None)
+            # Set Global clipboard to none too
+            self.global_clipboard_updated_qt.emit(None)
             self.table_files.paste_disabled = True
 
         if last_exc:

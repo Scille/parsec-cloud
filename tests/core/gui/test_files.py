@@ -657,7 +657,7 @@ async def test_copy_cut_folders_and_files_between_two_workspaces(
         assert wk_widget.isVisible()
         assert not w_f.isVisible()
 
-    # Getting files widget to copy the 4 files
+    # Getting files widget to copy the 2 files
     logged_gui = logged_gui_with_files
     w_f = logged_gui.test_get_files_widget()
     mount_widget = logged_gui.test_get_mount_widget()
@@ -668,15 +668,18 @@ async def test_copy_cut_folders_and_files_between_two_workspaces(
     assert w_f is not None
     assert mount_widget is not None
 
+    # 2 files displayed + 1 folder + parent button
     assert w_f.table_files.rowCount() == 4
+    # Checking clipboard and global clipboard are both empty
     assert w_f.clipboard is None
     assert mount_widget.global_clipboard is None
 
+    # Selecting the two files to copy
     await aqtbot.run(
         w_f.table_files.setRangeSelected, QtWidgets.QTableWidgetSelectionRange(2, 0, 3, 0), True
     )
 
-    # Copy the 4 files of first workspace
+    # Copy the 2 files of first workspace
     async with aqtbot.wait_signal(w_f.table_files.copy_clicked):
         await aqtbot.key_click(w_f.table_files, "C", modifier=QtCore.Qt.ControlModifier)
 
@@ -686,9 +689,10 @@ async def test_copy_cut_folders_and_files_between_two_workspaces(
     # Moving to sub directory
     async with aqtbot.wait_signal(w_f.folder_stat_success):
         w_f.table_files.item_activated.emit(FileType.Folder, "dir1")
+    # Should have only the parent directory displayed
     await aqtbot.wait_until(lambda: _files_displayed(1))
 
-    # Paste the 4 files in subfolder
+    # Paste the 2 files in subfolder
     async with aqtbot.wait_signal(w_f.table_files.paste_clicked):
         await aqtbot.key_click(w_f.table_files, "V", modifier=QtCore.Qt.ControlModifier)
 
@@ -708,11 +712,11 @@ async def test_copy_cut_folders_and_files_between_two_workspaces(
         w_f.table_files.setRangeSelected, QtWidgets.QTableWidgetSelectionRange(1, 0, 3, 0), True
     )
 
-    # Cut the 4 files and the folder of first workspace
+    # Cut the 2 files and the folder of first workspace
     async with aqtbot.wait_signal(w_f.table_files.cut_clicked):
         await aqtbot.key_click(w_f.table_files, "X", modifier=QtCore.Qt.ControlModifier)
 
-    # Check clipboards
+    # Check both clipboards is not none
     assert w_f.clipboard is not None
     assert mount_widget.global_clipboard is not None
 
@@ -720,14 +724,16 @@ async def test_copy_cut_folders_and_files_between_two_workspaces(
     w_f.table_files.item_activated.emit(FileType.ParentWorkspace, "Parent Workspace")
 
     await aqtbot.wait_until(_workspace_widget_visible)
+    # Selecting the second workspace
     wk_button = wk_widget.layout_workspaces.itemAt(1).widget()
     assert wk_button.name == "Workspace2"
 
+    # Going to second workspace
     async with aqtbot.wait_signal(wk_widget.load_workspace_clicked):
         await aqtbot.mouse_click(wk_button, QtCore.Qt.LeftButton)
     await aqtbot.wait_until(lambda: _files_displayed(1))
 
-    # Paste the files/folders of second workspace in first workspace folder
+    # Paste the files/folders of first workspace in second workspace folder
     async with aqtbot.wait_signal(w_f.table_files.paste_clicked):
         await aqtbot.key_click(w_f.table_files, "V", modifier=QtCore.Qt.ControlModifier)
 
@@ -742,12 +748,12 @@ async def test_copy_cut_folders_and_files_between_two_workspaces(
     assert w_f.table_files.item(2, 1).text() == "file01.txt"
     assert w_f.table_files.item(3, 1).text() == "file02.txt"
 
-    # Prepare copy in first workspace, select cut range
+    # Prepare copy in second workspace, select cut range
     await aqtbot.run(
         w_f.table_files.setRangeSelected, QtWidgets.QTableWidgetSelectionRange(1, 0, 3, 0), True
     )
 
-    # Cut the 4 files and the folder of first workspace
+    # Copy files and folder of second workspace
     async with aqtbot.wait_signal(w_f.table_files.copy_clicked):
         await aqtbot.key_click(w_f.table_files, "C", modifier=QtCore.Qt.ControlModifier)
 
@@ -760,7 +766,7 @@ async def test_copy_cut_folders_and_files_between_two_workspaces(
     assert w_f.table_files.item(1, 1).text() == "file01.txt"
     assert w_f.table_files.item(2, 1).text() == "file02.txt"
 
-    # Going back to first workspace to check deletion
+    # Going back to first workspace to check deletion because of cut
     w_f.table_files.item_activated.emit(FileType.ParentWorkspace, "Parent Workspace")
 
     await aqtbot.wait_until(_workspace_widget_visible)
