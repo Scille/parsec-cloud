@@ -107,7 +107,7 @@ class FileTable(QTableWidget):
         self.cellDoubleClicked.connect(self.item_double_clicked)
         self.cellClicked.connect(self.item_clicked)
         self.current_user_role = WorkspaceRole.OWNER
-        self.paste_disabled = True
+        self.paste_status = "PasteDisabled"
         effect = QGraphicsDropShadowEffect(self)
         effect.setColor(QColor(34, 34, 34, 25))
         effect.setBlurRadius(8)
@@ -143,7 +143,7 @@ class FileTable(QTableWidget):
             elif event.matches(QKeySequence.Cut):
                 self.cut_clicked.emit()
             elif event.matches(QKeySequence.Paste):
-                if not self.paste_disabled:
+                if self.paste_status != "PasteDisabled":
                     self.paste_clicked.emit()
 
     def selected_files(self):
@@ -199,9 +199,16 @@ class FileTable(QTableWidget):
             action = menu.addAction(_("ACTION_FILE_MENU_GET_FILE_LINK"))
             action.triggered.connect(self.file_path_clicked.emit)
         if not self.is_read_only():
-            action = menu.addAction(_("ACTION_FILE_MENU_PASTE"))
+            if self.paste_status != "SelfWorkspace" and self.paste_status != "PasteDisabled":
+                action = menu.addAction(
+                    _("ACTION_FILE_MENU_PASTE_FROM_OTHER_WORKSPACE_source").format(
+                        source=self.paste_status
+                    )
+                )
+            else:
+                action = menu.addAction(_("ACTION_FILE_MENU_PASTE"))
             action.triggered.connect(self.paste_clicked.emit)
-            if self.paste_disabled:
+            if self.paste_status == "PasteDisabled":
                 action.setDisabled(True)
         menu.exec_(global_pos)
 

@@ -277,7 +277,16 @@ class FilesWidget(QWidget, Ui_FilesWidget):
             self.button_import_files.show()
             self.button_create_folder.show()
         self.clipboard = clipboard
-        self.table_files.paste_disabled = False if self.clipboard else True
+        if not self.clipboard:
+            self.table_files.paste_status = "PasteDisabled"
+        else:
+            if self.clipboard.source_workspace == self.workspace_fs:
+                self.table_files.paste_status = "SelfWorkspace"
+            else:
+                # Sending the source_workspace name for paste text
+                self.table_files.paste_status = str(
+                    self.jobs_ctx.run_sync(self.clipboard.source_workspace.get_workspace_name)
+                )
         self.reset(default_selection)
 
     def reset(self, default_selection=None):
@@ -309,7 +318,7 @@ class FilesWidget(QWidget, Ui_FilesWidget):
             files=files_to_copy, status=Clipboard.Status.Copied, source_workspace=self.workspace_fs
         )
         self.global_clipboard_updated_qt.emit(self.clipboard)
-        self.table_files.paste_disabled = False
+        self.table_files.paste_status = "SelfWorkspace"
 
     def on_cut_clicked(self):
         files = self.table_files.selected_files()
@@ -326,7 +335,7 @@ class FilesWidget(QWidget, Ui_FilesWidget):
             files=files_to_cut, status=Clipboard.Status.Cut, source_workspace=self.workspace_fs
         )
         self.global_clipboard_updated_qt.emit(self.clipboard)
-        self.table_files.paste_disabled = False
+        self.table_files.paste_status = "SelfWorkspace"
 
     def on_paste_clicked(self):
         if not self.clipboard:
@@ -394,7 +403,7 @@ class FilesWidget(QWidget, Ui_FilesWidget):
             self.clipboard = None
             # Set Global clipboard to none too
             self.global_clipboard_updated_qt.emit(None)
-            self.table_files.paste_disabled = True
+            self.table_files.paste_status = "PasteDisabled"
 
         if last_exc:
             # Multiple errors, we'll just display a generic error message
