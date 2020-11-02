@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PROJECT VERSION\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2020-10-15 10:29+0200\n"
+"POT-Creation-Date: 2020-11-02 11:36+0100\n"
 "PO-Revision-Date: 2020-10-15 10:30+0200\n"
 "Last-Translator: \n"
 "Language: en\n"
@@ -1863,6 +1863,11 @@ msgstr "Cannot rename the workspace."
 msgid "TEXT_WORKSPACE_NO_WORKSPACES"
 msgstr "No workspace has been created yet."
 
+msgid "TEXT_WORKSPACE_CANNOT_MOUNT_NO_DRIVE"
+msgstr ""
+"Cannot display the content of this workspace because you have too many "
+"workspaces already mounted. Unmount some of them by using the toggle."
+
 msgid "TEXT_WORKSPACE_CANNOT_MOUNT"
 msgstr ""
 "An internal error prevents PARSEC from accessing the files in this "
@@ -2326,6 +2331,9 @@ msgstr "Snapshot"
 msgid "TEXT_WORKSPACE_TEMPORARY_DESCRIPTION"
 msgstr "Workspace as it appeared on:"
 
+msgid "TEXT_WORKSPACE_TIMESTAMPED_INSTRUCTIONS"
+msgstr "You will be able to see the workspace as it was at a given time."
+
 msgid "TEXT_WORKSPACE_TIMESTAMPED_SELECT_DATE"
 msgstr "Select a date..."
 
@@ -2334,9 +2342,6 @@ msgstr "...and a time..."
 
 msgid "ACTION_WORKSPACE_TIMESTAMPED_MOUNT"
 msgstr "See the workspace"
-
-msgid "TEXT_WORKSPACE_TIMESTAMPED_INSTRUCTIONS"
-msgstr "You will be able to see the workspace as it was at a given time."
 
 msgid "ACTION_CANCEL_USER_INVITATION_TOOLTIP"
 msgstr "Cancel the invitation"
@@ -2347,11 +2352,11 @@ msgstr "Greet the user"
 msgid "TEXT_USERS_FILTER_USERS_PLACEHOLDER"
 msgstr "Filter users"
 
-msgid "ACTION_USER_INVITE_USER"
-msgstr "Invite a new user"
-
 msgid "ACTION_FILTER_LIST_USERS"
 msgstr "Search users"
+
+msgid "ACTION_USER_INVITE_USER"
+msgstr "Invite a new user"
 
 msgid "ACTION_LIST_PREVIOUS_PAGE"
 msgstr "Previous page"
@@ -2364,6 +2369,9 @@ msgstr "This workspace is shared."
 
 msgid "TEXT_WORKSPACE_IS_OWNER_TOOLTIP"
 msgstr "You are this workspace owner."
+
+msgid "TEXT_WORKSPACE_REENCRYPTION"
+msgstr "Reencrypting... %p%"
 
 msgid "TEXT_WORKSPACE_OPEN_WORKSPACE_TOOLTIP"
 msgstr "Open the workspace in the file explorer."
@@ -2382,9 +2390,6 @@ msgstr "Reencrypt the workspace."
 
 msgid "TEXT_WORKSPACE_DELETE_WORKSPACE_TOOLTIP"
 msgstr "Remove this workspace."
-
-msgid "TEXT_WORKSPACE_REENCRYPTION"
-msgstr "Reencrypting... %p%"
 
 msgid "TEXT_WORKSPACE_FILTER_WORKSPACES_PLACEHOLDER"
 msgstr "Filter the workspaces"

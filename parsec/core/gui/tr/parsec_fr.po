@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PROJECT VERSION\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2020-10-15 10:29+0200\n"
+"POT-Creation-Date: 2020-11-02 11:36+0100\n"
 "PO-Revision-Date: 2020-10-15 10:31+0200\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language: fr\n"
@@ -1916,6 +1916,12 @@ msgstr "Impossible de renommer l'espace de travail."
 msgid "TEXT_WORKSPACE_NO_WORKSPACES"
 msgstr "Aucun espace de travail n'a été créé."
 
+msgid "TEXT_WORKSPACE_CANNOT_MOUNT_NO_DRIVE"
+msgstr ""
+"Impossible d'afficher les fichiers dans cet espace de travail car la "
+"limite du système est atteinte. Désactivez d'autres espaces de travail en"
+" utilisant l'interrupteur."
+
 msgid "TEXT_WORKSPACE_CANNOT_MOUNT"
 msgstr ""
 "Une erreur interne empêche PARSEC d'accéder aux fichiers de cet espace de"
@@ -2386,6 +2392,11 @@ msgstr "Vue instantanée"
 msgid "TEXT_WORKSPACE_TEMPORARY_DESCRIPTION"
 msgstr "Espace de travail tel qu'il apparaissait le :"
 
+msgid "TEXT_WORKSPACE_TIMESTAMPED_INSTRUCTIONS"
+msgstr ""
+"Vous pourrez naviguer dans l'espace de travail tel qu'il était à un "
+"moment donné."
+
 msgid "TEXT_WORKSPACE_TIMESTAMPED_SELECT_DATE"
 msgstr "Sélectionnez une date"
 
@@ -2394,11 +2405,6 @@ msgstr "... et une heure ..."
 
 msgid "ACTION_WORKSPACE_TIMESTAMPED_MOUNT"
 msgstr "Voir l'espace de travail"
-
-msgid "TEXT_WORKSPACE_TIMESTAMPED_INSTRUCTIONS"
-msgstr ""
-"Vous pourrez naviguer dans l'espace de travail tel qu'il était à un "
-"moment donné."
 
 msgid "ACTION_CANCEL_USER_INVITATION_TOOLTIP"
 msgstr "Annuler l'invitation"
@@ -2409,11 +2415,11 @@ msgstr "Accueillir l'utilisateur"
 msgid "TEXT_USERS_FILTER_USERS_PLACEHOLDER"
 msgstr "Filtrer les utilisateurs"
 
-msgid "ACTION_USER_INVITE_USER"
-msgstr "Inviter un utilisateur"
-
 msgid "ACTION_FILTER_LIST_USERS"
 msgstr "Rechercher utilisateurs"
+
+msgid "ACTION_USER_INVITE_USER"
+msgstr "Inviter un utilisateur"
 
 msgid "ACTION_LIST_PREVIOUS_PAGE"
 msgstr "Page précédente"
@@ -2426,6 +2432,9 @@ msgstr "L'espace de travail est partagé."
 
 msgid "TEXT_WORKSPACE_IS_OWNER_TOOLTIP"
 msgstr "Vous êtes le propriétaire de cet espace de travail."
+
+msgid "TEXT_WORKSPACE_REENCRYPTION"
+msgstr "Rechiffrement... %p%"
 
 msgid "TEXT_WORKSPACE_OPEN_WORKSPACE_TOOLTIP"
 msgstr "Ouvrir l'espace de travail dans l'explorateur de fichiers."
@@ -2444,9 +2453,6 @@ msgstr "Rechiffrer l'espace de travail."
 
 msgid "TEXT_WORKSPACE_DELETE_WORKSPACE_TOOLTIP"
 msgstr "Supprimer l'espace de travail"
-
-msgid "TEXT_WORKSPACE_REENCRYPTION"
-msgstr "Rechiffrement... %p%"
 
 msgid "TEXT_WORKSPACE_FILTER_WORKSPACES_PLACEHOLDER"
 msgstr "Filtrer les espaces de travail"
