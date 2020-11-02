@@ -37,6 +37,16 @@ from parsec.core.gui.custom_dialogs import show_error
 from parsec.core.gui.file_size import get_filesize
 
 
+class PasteStatus:
+    class Status(IntEnum):
+        Disabled = 1
+        Enabled = 2
+
+    def __init__(self, status, source_workspace=None):
+        self.source_workspace = source_workspace
+        self.status = status
+
+
 class Column(IntEnum):
     ICON = 0
     NAME = 1
@@ -107,7 +117,7 @@ class FileTable(QTableWidget):
         self.cellDoubleClicked.connect(self.item_double_clicked)
         self.cellClicked.connect(self.item_clicked)
         self.current_user_role = WorkspaceRole.OWNER
-        self.paste_status = "PasteDisabled"
+        self.paste_status = PasteStatus(status=PasteStatus.Status.Disabled)
         effect = QGraphicsDropShadowEffect(self)
         effect.setColor(QColor(34, 34, 34, 25))
         effect.setBlurRadius(8)
@@ -143,7 +153,7 @@ class FileTable(QTableWidget):
             elif event.matches(QKeySequence.Cut):
                 self.cut_clicked.emit()
             elif event.matches(QKeySequence.Paste):
-                if self.paste_status != "PasteDisabled":
+                if self.paste_status.status == PasteStatus.Status.Enabled:
                     self.paste_clicked.emit()
 
     def selected_files(self):
@@ -199,16 +209,16 @@ class FileTable(QTableWidget):
             action = menu.addAction(_("ACTION_FILE_MENU_GET_FILE_LINK"))
             action.triggered.connect(self.file_path_clicked.emit)
         if not self.is_read_only():
-            if self.paste_status != "SelfWorkspace" and self.paste_status != "PasteDisabled":
+            if self.paste_status.source_workspace:
                 action = menu.addAction(
                     _("ACTION_FILE_MENU_PASTE_FROM_OTHER_WORKSPACE_source").format(
-                        source=self.paste_status
+                        source=self.paste_status.source_workspace
                     )
                 )
             else:
                 action = menu.addAction(_("ACTION_FILE_MENU_PASTE"))
             action.triggered.connect(self.paste_clicked.emit)
-            if self.paste_status == "PasteDisabled":
+            if self.paste_status.status == PasteStatus.Status.Disabled:
                 action.setDisabled(True)
         menu.exec_(global_pos)
 

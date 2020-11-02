@@ -35,6 +35,7 @@ from parsec.core.gui.loading_widget import LoadingWidget
 from parsec.core.gui.lang import translate as _
 from parsec.core.gui.workspace_roles import get_role_translation
 from parsec.core.gui.ui.files_widget import Ui_FilesWidget
+from parsec.core.gui.file_table import PasteStatus
 from parsec.core.types import DEFAULT_BLOCK_SIZE
 
 
@@ -278,14 +279,17 @@ class FilesWidget(QWidget, Ui_FilesWidget):
             self.button_create_folder.show()
         self.clipboard = clipboard
         if not self.clipboard:
-            self.table_files.paste_status = "PasteDisabled"
+            self.table_files.paste_status = PasteStatus(status=PasteStatus.Status.Disabled)
         else:
             if self.clipboard.source_workspace == self.workspace_fs:
-                self.table_files.paste_status = "SelfWorkspace"
+                self.table_files.paste_status = PasteStatus(status=PasteStatus.Status.Enabled)
             else:
                 # Sending the source_workspace name for paste text
-                self.table_files.paste_status = str(
-                    self.jobs_ctx.run_sync(self.clipboard.source_workspace.get_workspace_name)
+                self.table_files.paste_status = PasteStatus(
+                    status=PasteStatus.Status.Enabled,
+                    source_workspace=str(
+                        self.jobs_ctx.run_sync(self.clipboard.source_workspace.get_workspace_name)
+                    ),
                 )
         self.reset(default_selection)
 
@@ -318,7 +322,7 @@ class FilesWidget(QWidget, Ui_FilesWidget):
             files=files_to_copy, status=Clipboard.Status.Copied, source_workspace=self.workspace_fs
         )
         self.global_clipboard_updated_qt.emit(self.clipboard)
-        self.table_files.paste_status = "SelfWorkspace"
+        self.table_files.paste_status = PasteStatus(status=PasteStatus.Status.Enabled)
 
     def on_cut_clicked(self):
         files = self.table_files.selected_files()
@@ -335,7 +339,7 @@ class FilesWidget(QWidget, Ui_FilesWidget):
             files=files_to_cut, status=Clipboard.Status.Cut, source_workspace=self.workspace_fs
         )
         self.global_clipboard_updated_qt.emit(self.clipboard)
-        self.table_files.paste_status = "SelfWorkspace"
+        self.table_files.paste_status = PasteStatus(status=PasteStatus.Status.Enabled)
 
     def on_paste_clicked(self):
         if not self.clipboard:
@@ -403,7 +407,7 @@ class FilesWidget(QWidget, Ui_FilesWidget):
             self.clipboard = None
             # Set Global clipboard to none too
             self.global_clipboard_updated_qt.emit(None)
-            self.table_files.paste_status = "PasteDisabled"
+            self.table_files.paste_status = PasteStatus(status=PasteStatus.Status.Disabled)
 
         if last_exc:
             # Multiple errors, we'll just display a generic error message
