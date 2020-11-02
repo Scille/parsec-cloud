@@ -61,11 +61,4 @@ class MountWidget(QWidget, Ui_MountWidget):
         self.workspaces_widget.reset()
 
     def clipboard_updated(self, clipboard: Optional[Clipboard] = None):
-        if clipboard and clipboard.source_workspace:
-            self.global_clipboard = Clipboard(
-                files=clipboard.files,
-                status=clipboard.status,
-                source_workspace=clipboard.source_workspace,
-            )
-        else:
-            self.global_clipboard = None
+        self.global_clipboard = clipboard
