@@ -23,7 +23,7 @@ elif [ -n "$ZSH_VERSION" ]; then
 fi
 
 # Run python script and source
-if [ "$(uname)" == "Darwin" ]; then
+if [[ "$(uname)" == "Darwin" ]]; then
   source_file="$TMPDIR/parsec-$(uuidgen)"
 else
   source_file=$(tempfile)
