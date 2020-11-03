@@ -232,6 +232,9 @@ def autoclose_dialog(monkeypatch):
     monkeypatch.setattr(
         "parsec.core.gui.custom_dialogs.GreyedDialog.exec_", _dialog_exec, raising=False
     )
+    monkeypatch.setattr(
+        "parsec.core.gui.custom_dialogs.GreyedDialog.open", _dialog_exec, raising=False
+    )
     return spy
 
 
