@@ -7,7 +7,8 @@ a = Analysis(['launch_script.py'],
              binaries=[],
              datas=[
                 ('../../parsec/core/resources/*.ignore', 'parsec/core/resources'),
-                ('../../parsec/core/resources/*.icns', 'parsec/core/resources')
+                ('../../parsec/core/resources/*.icns', 'parsec/core/resources'),
+                ('../../parsec/core/resources/default_pattern.ignore', 'parsec/core/resources')
                 ],
              hiddenimports=[],
              hookspath=['my_hooks'],
@@ -47,7 +48,7 @@ app = BUNDLE(coll,
                 'NSHighResolutionCapable': True,
                 'NSAppleScriptEnabled': False,
                 'CFBundleIdentifier': 'com.scille.parsec',
-                'CFBundleName': 'parsec',
+                'CFBundleName': 'Parsec',
                 'CFBundleDisplayName': 'Parsec',
                 'CFBundleURLTypes': [
                    {
