@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PROJECT VERSION\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2020-11-02 11:36+0100\n"
+"POT-Creation-Date: 2020-11-02 14:24+0100\n"
 "PO-Revision-Date: 2020-10-15 10:30+0200\n"
 "Last-Translator: \n"
 "Language: en\n"
@@ -345,6 +345,9 @@ msgstr "Show history"
 
 msgid "ACTION_FILE_MENU_GET_FILE_LINK"
 msgstr "Get a link to the file"
+
+msgid "ACTION_FILE_MENU_PASTE_FROM_OTHER_WORKSPACE_source"
+msgstr "Paste from {source}"
 
 msgid "ACTION_FILE_MENU_PASTE"
 msgstr "Paste"
@@ -1656,6 +1659,12 @@ msgstr "Quit"
 
 msgid "TEXT_WORKSPACE_TIMESTAMPED_VERSION_RETRIEVAL_FAILED"
 msgstr "Cannot retrieve this workspace history."
+
+msgid "TEXT_WORKSPACE_TIMESTAMPED_INSTRUCTIONS_created"
+msgstr ""
+"You will be able to see the workspace as it was at a given time.\n"
+"\n"
+"This workspace was created on {created}."
 
 msgid "TEXT_WORKSPACE_TIMESTAMPED_TITLE"
 msgstr "Go back in time"

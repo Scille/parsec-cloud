@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PROJECT VERSION\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2020-11-02 11:36+0100\n"
+"POT-Creation-Date: 2020-11-02 14:24+0100\n"
 "PO-Revision-Date: 2020-10-15 10:31+0200\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language: fr\n"
@@ -364,6 +364,9 @@ msgstr "Voir l'historique"
 
 msgid "ACTION_FILE_MENU_GET_FILE_LINK"
 msgstr "Lien vers ce fichier"
+
+msgid "ACTION_FILE_MENU_PASTE_FROM_OTHER_WORKSPACE_source"
+msgstr "Coller depuis {source}"
 
 msgid "ACTION_FILE_MENU_PASTE"
 msgstr "Coller"
@@ -1704,6 +1707,12 @@ msgstr "Quitter"
 msgid "TEXT_WORKSPACE_TIMESTAMPED_VERSION_RETRIEVAL_FAILED"
 msgstr "Impossible de récupérer l'historique de cet espace de travail."
 
+msgid "TEXT_WORKSPACE_TIMESTAMPED_INSTRUCTIONS_created"
+msgstr ""
+"Vous pourrez naviguer dans l'espace de travail tel qu'il était à un moment donné.\n"
+"\n"
+"Cet espace de travail a été créé le {created}."
+
 msgid "TEXT_WORKSPACE_TIMESTAMPED_TITLE"
 msgstr "Remonter dans le temps"
 
@@ -2462,4 +2471,3 @@ msgstr "Créer un nouvel espace de travail"
 
 msgid "ACTION_WORKSPACE_GOTO_FILE_LINK"
 msgstr "Trouver un fichier via son lien"
-

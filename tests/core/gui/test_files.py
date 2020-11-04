@@ -9,8 +9,9 @@ from parsec.core.types import WorkspaceRole
 
 from parsec.core.gui.lang import translate as _
 from parsec.core.gui.file_items import FileType, NAME_DATA_INDEX, TYPE_DATA_INDEX
-
 from parsec.test_utils import create_inconsistent_workspace
+
+from tests.common import customize_fixtures
 
 
 @pytest.fixture
@@ -36,7 +37,14 @@ async def logged_gui_with_workspace(
     alice,
     running_backend,
     monkeypatch,
+    fixtures_customization,
 ):
+    # Logged as bob (i.e. standard profile) by default
+    if fixtures_customization.get("logged_gui_create_two_workspaces", True):
+        workspaces_nb = 2
+    else:
+        workspaces_nb = 1
+
     central_widget = logged_gui.test_get_central_widget()
     assert central_widget is not None
 
@@ -47,18 +55,22 @@ async def logged_gui_with_workspace(
     add_button = wk_widget.button_add_workspace
     assert add_button is not None
 
-    monkeypatch.setattr(
-        "parsec.core.gui.workspaces_widget.get_text_input", lambda *args, **kwargs: ("Workspace")
-    )
+    for index in range(workspaces_nb):
+        workspace_name = "Workspace"
+        workspace_name = workspace_name + str(index + 1) if index > 0 else workspace_name
+        monkeypatch.setattr(
+            "parsec.core.gui.workspaces_widget.get_text_input",
+            lambda *args, **kwargs: (workspace_name),
+        )
 
-    async with aqtbot.wait_signals(
-        [wk_widget.create_success, wk_widget.list_success, wk_widget.mountpoint_started],
-        timeout=2000,
-    ):
-        await aqtbot.mouse_click(add_button, QtCore.Qt.LeftButton)
+        async with aqtbot.wait_signals(
+            [wk_widget.create_success, wk_widget.list_success, wk_widget.mountpoint_started],
+            timeout=2000,
+        ):
+            await aqtbot.mouse_click(add_button, QtCore.Qt.LeftButton)
 
     def workspace_button_ready():
-        assert wk_widget.layout_workspaces.count() == 1
+        assert wk_widget.layout_workspaces.count() == workspaces_nb
         wk_button = wk_widget.layout_workspaces.itemAt(0).widget()
         assert not isinstance(wk_button, QtWidgets.QLabel)
 
@@ -629,6 +641,203 @@ async def test_copy_files(
     assert w_f.table_files.item(1, 1).text() == "dir1"
     assert w_f.table_files.item(2, 1).text() == "file01.txt"
     assert w_f.table_files.item(3, 1).text() == "file02.txt"
+
+
+@pytest.mark.gui
+@pytest.mark.trio
+@customize_fixtures(logged_gui_create_two_workspaces=True)
+async def test_copy_cut_folders_and_files_between_two_workspaces(
+    aqtbot, running_backend, monkeypatch, logged_gui_with_files, autoclose_dialog
+):
+    # Wait until the file widget is refreshed
+    def _files_displayed(files_nb):
+        assert w_f.table_files.rowCount() == files_nb
+
+    def _workspace_widget_visible():
+        assert wk_widget.isVisible()
+        assert not w_f.isVisible()
+
+    # Getting files widget to copy the 2 files
+    logged_gui = logged_gui_with_files
+    w_f = logged_gui.test_get_files_widget()
+    mount_widget = logged_gui.test_get_mount_widget()
+
+    # Getting workspace widget
+    wk_widget = logged_gui.test_get_workspaces_widget()
+
+    assert w_f is not None
+    assert mount_widget is not None
+
+    # 2 files displayed + 1 folder + parent button
+    assert w_f.table_files.rowCount() == 4
+    # Checking clipboard and global clipboard are both empty
+    assert w_f.clipboard is None
+    assert mount_widget.global_clipboard is None
+
+    # Selecting the two files to copy
+    await aqtbot.run(
+        w_f.table_files.setRangeSelected, QtWidgets.QTableWidgetSelectionRange(2, 0, 3, 0), True
+    )
+
+    # Copy the 2 files of first workspace
+    async with aqtbot.wait_signal(w_f.table_files.copy_clicked):
+        await aqtbot.key_click(w_f.table_files, "C", modifier=QtCore.Qt.ControlModifier)
+
+    # Test local widget file clipboard
+    assert w_f.clipboard is not None
+
+    # Moving to sub directory
+    async with aqtbot.wait_signal(w_f.folder_stat_success):
+        w_f.table_files.item_activated.emit(FileType.Folder, "dir1")
+    # Should have only the parent directory displayed
+    await aqtbot.wait_until(lambda: _files_displayed(1))
+
+    # Paste the 2 files in subfolder
+    async with aqtbot.wait_signal(w_f.table_files.paste_clicked):
+        await aqtbot.key_click(w_f.table_files, "V", modifier=QtCore.Qt.ControlModifier)
+
+    await aqtbot.wait_until(lambda: _files_displayed(3))
+
+    assert w_f.table_files.item(1, 1).text() == "file01.txt"
+    assert w_f.table_files.item(2, 1).text() == "file02.txt"
+
+    # Moving back to root
+    async with aqtbot.wait_signal(w_f.folder_stat_success):
+        w_f.table_files.item_activated.emit(FileType.ParentFolder, "Parent Folder")
+
+    await aqtbot.wait_until(lambda: _files_displayed(4))
+
+    # Select cut range
+    await aqtbot.run(
+        w_f.table_files.setRangeSelected, QtWidgets.QTableWidgetSelectionRange(1, 0, 3, 0), True
+    )
+
+    # Cut the 2 files and the folder of first workspace
+    async with aqtbot.wait_signal(w_f.table_files.cut_clicked):
+        await aqtbot.key_click(w_f.table_files, "X", modifier=QtCore.Qt.ControlModifier)
+
+    # Check both clipboards is not none
+    assert w_f.clipboard is not None
+    assert mount_widget.global_clipboard is not None
+
+    # Go to workspace list to paste it in second workspace
+    w_f.table_files.item_activated.emit(FileType.ParentWorkspace, "Parent Workspace")
+
+    await aqtbot.wait_until(_workspace_widget_visible)
+    # Selecting the second workspace
+    wk_button = wk_widget.layout_workspaces.itemAt(1).widget()
+    assert wk_button.name == "Workspace2"
+
+    # Going to second workspace
+    async with aqtbot.wait_signal(wk_widget.load_workspace_clicked):
+        await aqtbot.mouse_click(wk_button, QtCore.Qt.LeftButton)
+    await aqtbot.wait_until(lambda: _files_displayed(1))
+
+    # Paste the files/folders of first workspace in second workspace folder
+    async with aqtbot.wait_signal(w_f.table_files.paste_clicked):
+        await aqtbot.key_click(w_f.table_files, "V", modifier=QtCore.Qt.ControlModifier)
+
+    await aqtbot.wait_until(lambda: _files_displayed(4))
+
+    # Check clipboards, should be None because we used cut
+    assert w_f.clipboard is None
+    assert mount_widget.global_clipboard is None
+
+    # Check files/folder in root directory
+    assert w_f.table_files.item(1, 1).text() == "dir1"
+    assert w_f.table_files.item(2, 1).text() == "file01.txt"
+    assert w_f.table_files.item(3, 1).text() == "file02.txt"
+
+    # Prepare copy in second workspace, select cut range
+    await aqtbot.run(
+        w_f.table_files.setRangeSelected, QtWidgets.QTableWidgetSelectionRange(1, 0, 3, 0), True
+    )
+
+    # Copy files and folder of second workspace
+    async with aqtbot.wait_signal(w_f.table_files.copy_clicked):
+        await aqtbot.key_click(w_f.table_files, "C", modifier=QtCore.Qt.ControlModifier)
+
+    # Moving to sub directory
+    async with aqtbot.wait_signal(w_f.folder_stat_success):
+        w_f.table_files.item_activated.emit(FileType.Folder, "dir1")
+    await aqtbot.wait_until(lambda: _files_displayed(3))
+
+    # Check if files in subdirectory have been pasted correctly
+    assert w_f.table_files.item(1, 1).text() == "file01.txt"
+    assert w_f.table_files.item(2, 1).text() == "file02.txt"
+
+    # Going back to first workspace to check deletion because of cut
+    w_f.table_files.item_activated.emit(FileType.ParentWorkspace, "Parent Workspace")
+
+    await aqtbot.wait_until(_workspace_widget_visible)
+    wk_button = wk_widget.layout_workspaces.itemAt(0).widget()
+    assert wk_button.name == "Workspace"
+
+    async with aqtbot.wait_signal(wk_widget.load_workspace_clicked):
+        await aqtbot.mouse_click(wk_button, QtCore.Qt.LeftButton)
+    await aqtbot.wait_until(lambda: _files_displayed(1))
+
+    # Paste the files/folders of second workspace in first workspace folder
+    async with aqtbot.wait_signal(w_f.table_files.paste_clicked):
+        await aqtbot.key_click(w_f.table_files, "V", modifier=QtCore.Qt.ControlModifier)
+
+    await aqtbot.wait_until(lambda: _files_displayed(4))
+
+    # Check files/folder in root directory
+    assert w_f.table_files.item(1, 1).text() == "dir1"
+    assert w_f.table_files.item(2, 1).text() == "file01.txt"
+    assert w_f.table_files.item(3, 1).text() == "file02.txt"
+
+    # Moving to sub directory
+    async with aqtbot.wait_signal(w_f.folder_stat_success):
+        w_f.table_files.item_activated.emit(FileType.Folder, "dir1")
+    await aqtbot.wait_until(lambda: _files_displayed(3))
+    assert w_f.table_files.item(1, 1).text() == "file01.txt"
+    assert w_f.table_files.item(2, 1).text() == "file02.txt"
+
+    # Moving one last time to 2nd workspace to check files are still there
+    w_f.table_files.item_activated.emit(FileType.ParentWorkspace, "Parent Workspace")
+
+    await aqtbot.wait_until(_workspace_widget_visible)
+    wk_button = wk_widget.layout_workspaces.itemAt(1).widget()
+    assert wk_button.name == "Workspace2"
+
+    async with aqtbot.wait_signal(wk_widget.load_workspace_clicked):
+        await aqtbot.mouse_click(wk_button, QtCore.Qt.LeftButton)
+    await aqtbot.wait_until(lambda: _files_displayed(4))
+
+    # Moving to sub directory
+    async with aqtbot.wait_signal(w_f.folder_stat_success):
+        w_f.table_files.item_activated.emit(FileType.Folder, "dir1")
+    await aqtbot.wait_until(lambda: _files_displayed(3))
+    assert w_f.table_files.item(1, 1).text() == "file01.txt"
+    assert w_f.table_files.item(2, 1).text() == "file02.txt"
+
+    # Check clipboards, should exist because we used copy
+    assert w_f.clipboard is not None
+    assert mount_widget.global_clipboard is not None
+
+    # Test copy again in subdirectory
+    async with aqtbot.wait_signal(w_f.table_files.paste_clicked):
+        await aqtbot.key_click(w_f.table_files, "V", modifier=QtCore.Qt.ControlModifier)
+
+    await aqtbot.wait_until(lambda: _files_displayed(6))
+    assert w_f.table_files.item(1, 1).text() == "dir1"
+    assert w_f.table_files.item(2, 1).text() == "file01 (2).txt"
+    assert w_f.table_files.item(3, 1).text() == "file01.txt"
+    assert w_f.table_files.item(4, 1).text() == "file02 (2).txt"
+    assert w_f.table_files.item(5, 1).text() == "file02.txt"
+
+    # Moving to sub/sub directory
+    async with aqtbot.wait_signal(w_f.folder_stat_success):
+        w_f.table_files.item_activated.emit(FileType.Folder, "dir1")
+    await aqtbot.wait_until(lambda: _files_displayed(3))
+    assert w_f.table_files.item(1, 1).text() == "file01.txt"
+    assert w_f.table_files.item(2, 1).text() == "file02.txt"
+
+    # Check clipboards, should exist because we used copy
+    assert w_f.clipboard is not None
+    assert mount_widget.global_clipboard is not None
 
 
 @pytest.mark.gui
