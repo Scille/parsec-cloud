@@ -237,10 +237,9 @@ class CreateOrgWidget(QWidget, Ui_CreateOrgWidget):
             show_error(self, _("TEXT_ORG_WIZARD_INVALID_DEVICE_NAME"), exception=exc)
             return
         try:
-            human_handle = HumanHandle(
-                self.user_widget.line_edit_user_email.text(),
-                self.user_widget.line_edit_user_full_name.text(),
-            )
+            user_name = validators.trim_user_name(self.user_widget.line_edit_user_full_name.text())
+
+            human_handle = HumanHandle(self.user_widget.line_edit_user_email.text(), user_name)
         except ValueError as exc:
             show_error(self, _("TEXT_ORG_WIZARD_INVALID_HUMAN_HANDLE"), exception=exc)
             return

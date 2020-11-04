@@ -14,6 +14,11 @@ from parsec.core.types import (
 )
 
 
+def trim_user_name(name):
+    name = name.strip()
+    return " ".join(name.split())
+
+
 class NetworkPortValidator(QIntValidator):
     def __init__(self):
         super().__init__(1, 65536)

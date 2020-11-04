@@ -4,7 +4,7 @@ from collections import namedtuple
 
 
 class ApiVersion(namedtuple("ApiVersion", "version revision")):
-    def __str__(self):
+    def __str__(self) -> str:
         return f"{self.version}.{self.revision}"
 
 

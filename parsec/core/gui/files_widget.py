@@ -1,9 +1,9 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
+import trio
+import pathlib
 
 from parsec.core.core_events import CoreEvent
-import pathlib
 from uuid import UUID
-import trio
 from pendulum import DateTime
 from enum import IntEnum
 from structlog import get_logger
@@ -35,6 +35,7 @@ from parsec.core.gui.loading_widget import LoadingWidget
 from parsec.core.gui.lang import translate as _
 from parsec.core.gui.workspace_roles import get_role_translation
 from parsec.core.gui.ui.files_widget import Ui_FilesWidget
+from parsec.core.gui.file_table import PasteStatus
 from parsec.core.types import DEFAULT_BLOCK_SIZE
 
 
@@ -146,8 +147,9 @@ class Clipboard:
         Copied = 1
         Cut = 2
 
-    def __init__(self, files, status):
+    def __init__(self, files, status, source_workspace=None):
         self.files = files
+        self.source_workspace = source_workspace
         self.status = status
 
 
@@ -155,6 +157,7 @@ class FilesWidget(QWidget, Ui_FilesWidget):
     fs_updated_qt = pyqtSignal(CoreEvent, UUID)
     fs_synced_qt = pyqtSignal(CoreEvent, UUID)
     entry_downsynced_qt = pyqtSignal(UUID, UUID)
+    global_clipboard_updated_qt = pyqtSignal(object)
 
     sharing_updated_qt = pyqtSignal(WorkspaceEntry, object)
     back_clicked = pyqtSignal()
@@ -257,7 +260,9 @@ class FilesWidget(QWidget, Ui_FilesWidget):
     def disconnect_all(self):
         pass
 
-    def set_workspace_fs(self, wk_fs, current_directory=FsPath("/"), default_selection=None):
+    def set_workspace_fs(
+        self, wk_fs, current_directory=FsPath("/"), default_selection=None, clipboard=None
+    ):
         self.current_directory = current_directory
         self.workspace_fs = wk_fs
         ws_entry = self.jobs_ctx.run_sync(self.workspace_fs.get_workspace_entry)
@@ -272,8 +277,20 @@ class FilesWidget(QWidget, Ui_FilesWidget):
             self.button_import_folder.show()
             self.button_import_files.show()
             self.button_create_folder.show()
-        self.clipboard = None
-        self.table_files.paste_disabled = True
+        self.clipboard = clipboard
+        if not self.clipboard:
+            self.table_files.paste_status = PasteStatus(status=PasteStatus.Status.Disabled)
+        else:
+            if self.clipboard.source_workspace == self.workspace_fs:
+                self.table_files.paste_status = PasteStatus(status=PasteStatus.Status.Enabled)
+            else:
+                # Sending the source_workspace name for paste text
+                self.table_files.paste_status = PasteStatus(
+                    status=PasteStatus.Status.Enabled,
+                    source_workspace=str(
+                        self.jobs_ctx.run_sync(self.clipboard.source_workspace.get_workspace_name)
+                    ),
+                )
         self.reset(default_selection)
 
     def reset(self, default_selection=None):
@@ -301,21 +318,28 @@ class FilesWidget(QWidget, Ui_FilesWidget):
             if f.type != FileType.Folder and f.type != FileType.File:
                 continue
             files_to_copy.append((self.current_directory / f.name, f.type))
-        self.clipboard = Clipboard(files_to_copy, Clipboard.Status.Copied)
-        self.table_files.paste_disabled = False
+        self.clipboard = Clipboard(
+            files=files_to_copy, status=Clipboard.Status.Copied, source_workspace=self.workspace_fs
+        )
+        self.global_clipboard_updated_qt.emit(self.clipboard)
+        self.table_files.paste_status = PasteStatus(status=PasteStatus.Status.Enabled)
 
     def on_cut_clicked(self):
         files = self.table_files.selected_files()
         files_to_cut = []
         rows = []
+
         for f in files:
             if f.type != FileType.Folder and f.type != FileType.File:
                 continue
             rows.append(f.row)
             files_to_cut.append((self.current_directory / f.name, f.type))
         self.table_files.set_rows_cut(rows)
-        self.table_files.paste_disabled = False
-        self.clipboard = Clipboard(files_to_cut, Clipboard.Status.Cut)
+        self.clipboard = Clipboard(
+            files=files_to_cut, status=Clipboard.Status.Cut, source_workspace=self.workspace_fs
+        )
+        self.global_clipboard_updated_qt.emit(self.clipboard)
+        self.table_files.paste_status = PasteStatus(status=PasteStatus.Status.Enabled)
 
     def on_paste_clicked(self):
         if not self.clipboard:
@@ -338,12 +362,24 @@ class FilesWidget(QWidget, Ui_FilesWidget):
                 try:
                     dst = self.current_directory / file_name
                     if self.clipboard.status == Clipboard.Status.Cut:
-                        self.jobs_ctx.run(self.workspace_fs.move, src, dst)
+                        self.jobs_ctx.run(
+                            self.workspace_fs.move, src, dst, self.clipboard.source_workspace
+                        )
                     else:
                         if src_type == FileType.Folder:
-                            self.jobs_ctx.run(self.workspace_fs.copytree, src, dst)
+                            self.jobs_ctx.run(
+                                self.workspace_fs.copytree,
+                                src,
+                                dst,
+                                self.clipboard.source_workspace,
+                            )
                         else:
-                            self.jobs_ctx.run(self.workspace_fs.copyfile, src, dst)
+                            self.jobs_ctx.run(
+                                self.workspace_fs.copyfile,
+                                src,
+                                dst,
+                                self.clipboard.source_workspace,
+                            )
                     break
                 except FileExistsError:
                     # File already exists, we append a counter at the end of its name
@@ -369,7 +405,9 @@ class FilesWidget(QWidget, Ui_FilesWidget):
                     break
         if self.clipboard.status == Clipboard.Status.Cut:
             self.clipboard = None
-            self.table_files.paste_disabled = True
+            # Set Global clipboard to none too
+            self.global_clipboard_updated_qt.emit(None)
+            self.table_files.paste_status = PasteStatus(status=PasteStatus.Status.Disabled)
 
         if last_exc:
             # Multiple errors, we'll just display a generic error message

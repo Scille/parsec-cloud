@@ -76,6 +76,7 @@ def pytest_addoption(parser):
     parser.addoption("--runslow", action="store_true", help="Don't skip slow tests")
     parser.addoption("--runmountpoint", action="store_true", help="Don't skip FUSE/WinFSP tests")
     parser.addoption("--rungui", action="store_true", help="Don't skip GUI tests")
+    parser.addoption("--rundiskfull", action="store_true", help="Don't skip the disk full tests")
     parser.addoption(
         "--realcrypto", action="store_true", help="Don't mock crypto operation to save time"
     )
@@ -196,6 +197,9 @@ def pytest_runtest_setup(item):
             pytest.skip("need --runmountpoint option to run")
         elif not get_mountpoint_runner():
             pytest.skip("FUSE/WinFSP not available")
+    if item.get_closest_marker("diskfull"):
+        if not item.config.getoption("--rundiskfull"):
+            pytest.skip("need --rundiskfull option to run")
     if item.get_closest_marker("gui"):
         if not item.config.getoption("--rungui"):
             pytest.skip("need --rungui option to run")
@@ -418,12 +422,15 @@ def persistent_mockup(monkeypatch):
 
     async def _create_connection(storage):
         storage_set.add(storage)
-        return mockup_context.get(storage.path)
+        storage._conn = mockup_context.get(storage.path)
 
     async def _close(storage):
         # Idempotent operation
         storage_set.discard(storage)
         storage._conn = None
+
+    async def get_disk_usage(storage):
+        return 0
 
     @asynccontextmanager
     async def thread_pool_runner(max_workers):
@@ -437,6 +444,7 @@ def persistent_mockup(monkeypatch):
     monkeypatch.setattr(local_database, "thread_pool_runner", thread_pool_runner)
     monkeypatch.setattr(LocalDatabase, "_create_connection", _create_connection)
     monkeypatch.setattr(LocalDatabase, "_close", _close)
+    monkeypatch.setattr(LocalDatabase, "get_disk_usage", get_disk_usage)
 
     yield mockup_context
     mockup_context.clear()

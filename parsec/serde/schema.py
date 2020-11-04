@@ -1,7 +1,7 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
 
 from marshmallow import Schema, MarshalResult, UnmarshalResult, ValidationError, post_load
-from typing import Union, Dict
+from typing import Union, Dict, Type
 
 from enum import Enum
 
@@ -93,8 +93,8 @@ class OneOfSchema(BaseSchema):
     """
 
     type_field: str = "type"
-    type_schemas: Dict[Enum, Schema] = {}
-    fallback_type_schema: Schema = None
+    type_schemas: Dict[Union[Enum, str], Schema] = {}
+    fallback_type_schema: Type[Schema] = None
     _instantiated_schemas: Dict[Union[Enum, str], Schema] = None
     _instantiated_fallback_schema: Schema = None
 

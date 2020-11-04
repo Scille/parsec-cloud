@@ -105,7 +105,11 @@ class GreyedDialog(QDialog, Ui_GreyedDialog):
         ):
             getattr(self.center_widget, "on_close")()
         self.closing.emit()
-        self.setParent(None)
+        # On Windows, GreyedDialogs don't get cleared out if their parent
+        # is not set to None. Linux seems to clear them automatically over time.
+        # Resetting the parent on MacOS causes a crash.
+        if platform.system() != "Darwin":
+            self.setParent(None)
 
 
 class TextInputWidget(QWidget, Ui_InputWidget):
@@ -264,7 +268,7 @@ class ErrorWidget(QWidget, Ui_ErrorWidget):
 def show_error(parent, message, exception=None):
     w = ErrorWidget(message, exception)
     d = GreyedDialog(w, title=_("TEXT_ERR_DIALOG_TITLE"), parent=parent)
-    return d.exec_()
+    return d.open()
 
 
 class InfoWidget(QWidget, Ui_InfoWidget):
@@ -292,4 +296,4 @@ def show_info(parent, message, button_text=None):
     d = GreyedDialog(w, title=None, parent=parent, hide_close=True)
     w.dialog = d
     w.button_ok.setFocus()
-    return d.exec_()
+    return d.open()

@@ -12,7 +12,11 @@ class LoadingWidget(QWidget, Ui_LoadingWidget):
     def __init__(self, total_size):
         super().__init__()
         self.setupUi(self)
-        self.progress_bar.setMaximum(total_size)
+        self.divider = 1
+        # Check for int32 overflow
+        while int(total_size / self.divider) > 0x7FFFFFFF:
+            self.divider *= 1000
+        self.progress_bar.setMaximum(int(total_size / self.divider))
         self.progress_bar.setMinimum(0)
         self.progress_bar.setValue(0)
 
@@ -26,4 +30,4 @@ class LoadingWidget(QWidget, Ui_LoadingWidget):
             self.label.setText(f'"{f}"')
 
     def set_progress(self, size):
-        self.progress_bar.setValue(size)
+        self.progress_bar.setValue(int(size / self.divider))

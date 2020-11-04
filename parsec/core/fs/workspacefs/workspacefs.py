@@ -3,7 +3,7 @@
 import attr
 import trio
 from collections import defaultdict
-from typing import List, Dict, Tuple, AsyncIterator, cast, Pattern, Callable
+from typing import List, Dict, Tuple, AsyncIterator, cast, Pattern, Callable, Optional
 from pendulum import DateTime, now as pendulum_now
 
 from parsec.event_bus import EventBus
@@ -382,60 +382,90 @@ class WorkspaceFS:
 
     # Shutil-like interface
 
-    async def move(self, source: AnyPath, destination: AnyPath) -> None:
+    async def move(
+        self,
+        source: AnyPath,
+        destination: AnyPath,
+        source_workspace: Optional["WorkspaceFS"] = None,
+    ) -> None:
         """
         Raises:
             FSError
         """
         source = FsPath(source)
+
         destination = FsPath(destination)
         real_destination = destination
 
-        if source.parts == destination.parts[: len(source.parts)]:
-            raise FSInvalidArgumentError(
-                f"Cannot move a directory {source} into itself {destination}"
-            )
-        try:
-            if await self.is_dir(destination):
-                real_destination = destination / source.name
-                if await self.exists(real_destination):
-                    raise FileExistsError
-        # At this point, real_destination is the target either representing :
-        # - the destination path if it didn't already exist,
-        # - a new entry with the same name as source, but inside the destination directory
-        except FileNotFoundError:
-            pass
+        # Source workspace will be either the same workspace or another one (copy paste between two different workspace)
+        source_workspace = source_workspace or self
 
-        # Rename if possible
-        if source.parent == real_destination.parent:
-            return await self.rename(source, real_destination)
+        # Testing if we are trying to paste files from the same workspace
+        if source_workspace is self:
+            if source.parts == destination.parts[: len(source.parts)]:
+                raise FSInvalidArgumentError(
+                    f"Cannot move a directory {source} into itself {destination}"
+                )
+            try:
+                if await self.is_dir(destination):
+                    real_destination = destination / source.name
+                    if await self.exists(real_destination):
+                        raise FileExistsError
+            # At this point, real_destination is the target either representing :
+            # - the destination path if it didn't already exist,
+            # - a new entry with the same name as source, but inside the destination directory
+            except FileNotFoundError:
+                pass
+
+            # Rename if possible
+            if source.parent == real_destination.parent:
+                return await self.rename(source, real_destination)
 
         # Copy directory
-        if await self.is_dir(source):
-            await self.copytree(source, real_destination)
-            await self.rmtree(source)
+        if await source_workspace.is_dir(source):
+            await self.copytree(
+                source_path=source, target_path=real_destination, source_workspace=source_workspace
+            )
+            await source_workspace.rmtree(source)
             return
 
         # Copy file
-        await self.copyfile(source, real_destination)
-        await self.unlink(source)
+        await self.copyfile(
+            source_path=source, target_path=real_destination, source_workspace=source_workspace
+        )
+        await source_workspace.unlink(source)
 
-    async def copytree(self, source_path: AnyPath, target_path: AnyPath) -> None:
+    async def copytree(
+        self,
+        source_path: AnyPath,
+        target_path: AnyPath,
+        source_workspace: Optional["WorkspaceFS"] = None,
+    ) -> None:
         source_path = FsPath(source_path)
         target_path = FsPath(target_path)
-        source_files = await self.listdir(source_path)
+        source_workspace = source_workspace or self
+        source_files = await source_workspace.listdir(source_path)
         await self.mkdir(target_path)
         for source_file in source_files:
             target_file = target_path / source_file.name
-            if await self.is_dir(source_file):
-                await self.copytree(source_file, target_file)
-            elif await self.is_file(source_file):
-                await self.copyfile(source_file, target_file)
+            if await source_workspace.is_dir(source_file):
+                await self.copytree(
+                    source_path=source_file,
+                    target_path=target_file,
+                    source_workspace=source_workspace,
+                )
+            elif await source_workspace.is_file(source_file):
+                await self.copyfile(
+                    source_path=source_file,
+                    target_path=target_file,
+                    source_workspace=source_workspace,
+                )
 
     async def copyfile(
         self,
         source_path: AnyPath,
         target_path: AnyPath,
+        source_workspace: Optional["WorkspaceFS"] = None,
         buffer_size: int = DEFAULT_BLOCK_SIZE,
         exist_ok: bool = False,
     ) -> None:
@@ -443,8 +473,10 @@ class WorkspaceFS:
         Raises:
             FSError
         """
+
+        source_workspace = source_workspace or self
         write_mode = "wb" if exist_ok else "xb"
-        async with await self.open_file(source_path, mode="rb") as source:
+        async with await source_workspace.open_file(source_path, mode="rb") as source:
             async with await self.open_file(target_path, mode=write_mode) as target:
                 while True:
                     data = await source.read(buffer_size)

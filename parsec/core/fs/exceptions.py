@@ -141,7 +141,15 @@ class FSNoSynchronizationRequired(FSInternalError):
     pass
 
 
-# WorkspaceFile errors
+class FSLocalStorageClosedError(FSInternalError):
+    pass
+
+
+class FSLocalStorageOperationalError(FSInternalError):
+    pass
+
+
+# Workspace file errors
 
 
 class FSUnsupportedOperation(FSLocalOperationError, io.UnsupportedOperation):
