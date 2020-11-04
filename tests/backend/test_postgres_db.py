@@ -2,6 +2,7 @@
 
 import pytest
 import trio
+import platform
 
 
 def records_filter_debug(records):
@@ -24,9 +25,11 @@ async def test_postgresql_connection_not_ok(
     with pytest.raises(OSError) as exc:
         async with backend_factory(config={"db_url": postgresql_url}):
             pass
-    assert "[Errno 111] Connect call failed" in str(
-        exc.value
-    ) or "[Errno 61] Connect call failed" in str(exc.value)
+    if platform.system() == "Darwin":
+        errno = 61
+    else:
+        errno = 111
+    assert f"[Errno {errno}] Connect call failed" in str(exc.value)
     records = records_filter_debug(caplog.records)
     assert len(records) == 1
     assert records[0].levelname == "ERROR"
@@ -51,9 +54,11 @@ async def test_postgresql_connection_not_ok_retrying(
                 }
             ):
                 pass
-    assert "[Errno 111] Connect call failed" in str(
-        exc.value
-    ) or "[Errno 61] Connect call failed" in str(exc.value)
+    if platform.system() == "Darwin":
+        errno = 61
+    else:
+        errno = 111
+    assert f"[Errno {errno}] Connect call failed" in str(exc.value)
     records = records_filter_debug(caplog.records)
     assert len(records) == 4
     for record in records[:3]:

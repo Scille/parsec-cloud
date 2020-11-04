@@ -266,6 +266,8 @@ class MountpointManager:
 
 
 async def cleanup_macos_mountpoint_folder(base_mountpoint_path):
+    # In case of a crash on macOS, workspaces don't unmount correctly and leave empty directories
+    # in the default mount folder. This function is used to clean these anytime a login occurs.
     for dirs in os.listdir(base_mountpoint_path):
         dir_path = str(base_mountpoint_path) + "/" + str(dirs)
         stats = os.statvfs(dir_path)
@@ -295,7 +297,7 @@ async def mountpoint_manager_factory(
     # Now is a good time to perform some cleanup in the registry
     if os.name == "nt":
         cleanup_parsec_drive_icons()
-    elif os.name == "posix" and _platform == "darwin" and os.path.isdir(base_mountpoint_path):
+    elif _platform == "darwin" and os.path.isdir(base_mountpoint_path):
         await cleanup_macos_mountpoint_folder(base_mountpoint_path)
 
     def on_event(event, new_entry, previous_entry=None):

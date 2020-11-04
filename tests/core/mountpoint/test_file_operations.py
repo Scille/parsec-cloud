@@ -14,7 +14,7 @@ BALLPARK = 10000
 
 @pytest.mark.slow
 @pytest.mark.mountpoint
-@pytest.mark.skipif(sys.platform == "darwin", reason="Infinitely looping on macOS")
+@pytest.mark.skipif(sys.platform == "darwin", reason="TODO: Infinitely looping on macOS")
 def test_file_operations(tmpdir, caplog, hypothesis_settings, mountpoint_service_factory):
     tentative = 0
 

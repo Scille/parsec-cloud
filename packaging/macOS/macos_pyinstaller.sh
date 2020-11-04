@@ -1,11 +1,12 @@
 # Note : pyinstaller doesn't work with python 3.8 yet.
 # see https://github.com/pyinstaller/pyinstaller/issues/4311
 
-cd ../..
+BASEDIR=$(dirname $(greadlink -f "$0") )
+cd $BASEDIR/../..
 python3 setup.py bdist_wheel
 python3 -m pip install -e .
 python3 -m pip install 'pyinstaller==4.0'
-cd packaging/macOS
+cd $BASEDIR
 
 if [ $1 == '-f' -o $1 == '--force' ]
 then
@@ -14,6 +15,7 @@ else
     FORCE="";
 fi
 
+rm -Rf $BASEDIR/build $BASEDIR/dist
 pyinstaller parsec.spec $FORCE
 
 if [[ $1 == '-i' || $1 == '--install' || $2 == '-i' || $2 == '--install' ]]
