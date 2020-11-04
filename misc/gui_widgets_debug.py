@@ -18,6 +18,7 @@ from PyQt5.QtWidgets import (
 
 from parsec.core.gui.resources_rc import *  # noqa
 from parsec.core.gui import custom_dialogs
+from parsec.core.gui.calendar_widget import CalendarWidget
 
 
 SMALL_TEXT = "Lorem ipsum dolor sit amet, consectetur adipiscing elit."
@@ -117,6 +118,8 @@ class MainWindow(QMainWindow):
         cb = QCheckBox("Disabled")
         cb.setDisabled(True)
         ws.append(cb)
+        cw = CalendarWidget()
+        ws.append(cw)
 
         with open("parsec/core/gui/rc/styles/main.css") as fd:
             self.setStyleSheet(fd.read())

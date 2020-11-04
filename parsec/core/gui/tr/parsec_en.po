@@ -1660,6 +1660,12 @@ msgstr "Quit"
 msgid "TEXT_WORKSPACE_TIMESTAMPED_VERSION_RETRIEVAL_FAILED"
 msgstr "Cannot retrieve this workspace history."
 
+msgid "TEXT_WORKSPACE_TIMESTAMPED_INSTRUCTIONS_created"
+msgstr ""
+"You will be able to see the workspace as it was at a given time.\n"
+"\n"
+"This workspace was created on {created}."
+
 msgid "TEXT_WORKSPACE_TIMESTAMPED_TITLE"
 msgstr "Go back in time"
 

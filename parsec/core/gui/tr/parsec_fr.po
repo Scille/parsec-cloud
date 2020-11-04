@@ -1707,6 +1707,12 @@ msgstr "Quitter"
 msgid "TEXT_WORKSPACE_TIMESTAMPED_VERSION_RETRIEVAL_FAILED"
 msgstr "Impossible de récupérer l'historique de cet espace de travail."
 
+msgid "TEXT_WORKSPACE_TIMESTAMPED_INSTRUCTIONS_created"
+msgstr ""
+"Vous pourrez naviguer dans l'espace de travail tel qu'il était à un moment donné.\n"
+"\n"
+"Cet espace de travail a été créé le {created}."
+
 msgid "TEXT_WORKSPACE_TIMESTAMPED_TITLE"
 msgstr "Remonter dans le temps"
 
@@ -2459,4 +2465,3 @@ msgstr "Créer un nouvel espace de travail"
 
 msgid "ACTION_WORKSPACE_GOTO_FILE_LINK"
 msgstr "Trouver un fichier via son lien"
-
