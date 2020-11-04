@@ -5,11 +5,13 @@ import pkgutil
 import importlib
 
 from parsec.serde import BaseSerializer, JSONSerializer, MsgpackSerializer, ZipMsgpackSerializer
-from parsec.serde.fields import List, Map, Tuple, Nested, CheckedConstant, EnumCheckedConstant
+from parsec.serde.fields import List, Map, Dict, Tuple, Nested, CheckedConstant, EnumCheckedConstant
 
 from parsec.api.data.base import BaseData, BaseAPIData, BaseSignedData, BaseAPISignedData
 from parsec.api.data.manifest import BaseManifest
 from parsec.api.data.message import BaseMessageContent
+
+from parsec.api.protocol.base import CmdSerializer
 
 from parsec.core.types.base import BaseLocalData
 from parsec.core.types.manifest import BaseLocalManifest
@@ -59,7 +61,9 @@ def field_to_spec(field):
         spec["nested_type"] = field_to_spec(field.nested_field)
     elif isinstance(field, Tuple):
         spec["args_types"] = [field_to_spec(x) for x in field.args]
-    # Note Dict type correspond to a schemaless field, so nothing more to document
+    else:
+        # Note Dict type correspond to a schemaless field, so nothing more to document
+        assert isinstance(field, Dict)
 
     return spec
 
@@ -75,6 +79,22 @@ def data_class_to_spec(data_class):
     }
 
 
+def generate_api_protocol_specs():
+    import parsec.api.protocol
+
+    # Collect command serializers
+    protocol_serializers = []
+    for item_name in dir(parsec.api.protocol):
+        item = getattr(mod, item_name)
+        if not isinstance(item, CmdSerializer):
+            continue
+        protocol_serializers.append(item)
+
+    import parsec.api.protocol.cmds
+
+    protocol_classes = collect_data_classes_from_module(parsec.api.protocol)
+
+
 def collect_data_classes_from_module(mod):
     data_classes = []
     for item_name in dir(mod):
@@ -85,7 +105,7 @@ def collect_data_classes_from_module(mod):
         if item in _BASE_DATA_CLASSES:
             continue
         # Data classes with default serializer cannot be serialized, hence no need
-        # to check them (note they will be checked if they used in Nested field)
+        # to check them (note they will be checked if they are used in a Nested field)
         if item.SERIALIZER_CLS is BaseSerializer:
             continue
         # Ignore imported classes (avoid to populate current module collection
@@ -121,10 +141,16 @@ if __name__ == "__main__":
     import argparse
 
     parser = argparse.ArgumentParser()
-    parser.add_argument("what", choices=["api_data", "core_data"])
+    parser.add_argument("what", choices=["api_protocol", "api_data", "core_data"])
     args = parser.parse_args()
+    if args.what == "api_protocol":
+        specs = generate_api_protocol_specs()
     if args.what == "api_data":
         specs = generate_api_data_specs()
     else:
         specs = generate_core_data_specs()
+
+    # Sanity check
+    assert_backward_compatible_spec_upgrade()
+
     print(json.dumps(specs, indent=4, sort_keys=True))
