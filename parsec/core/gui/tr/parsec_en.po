@@ -1872,6 +1872,11 @@ msgstr "Cannot rename the workspace."
 msgid "TEXT_WORKSPACE_NO_WORKSPACES"
 msgstr "No workspace has been created yet."
 
+msgid "TEXT_WORKSPACE_CANNOT_MOUNT_NO_DRIVE"
+msgstr ""
+"Cannot display the content of this workspace because you have too many "
+"workspaces already mounted. Unmount some of them by using the toggle."
+
 msgid "TEXT_WORKSPACE_CANNOT_MOUNT"
 msgstr ""
 "An internal error prevents PARSEC from accessing the files in this "

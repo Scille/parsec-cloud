@@ -32,6 +32,7 @@ from parsec.core.mountpoint.exceptions import (
     MountpointAlreadyMounted,
     MountpointNotMounted,
     MountpointError,
+    MountpointNoDriveAvailable,
 )
 
 from parsec.core.gui.trio_thread import (
@@ -412,7 +413,10 @@ class WorkspacesWidget(QWidget, Ui_WorkspacesWidget):
             wb = self.get_workspace_button(workspace_id, timestamp)
             if wb:
                 wb.set_mountpoint_state(False)
-            show_error(self, _("TEXT_WORKSPACE_CANNOT_MOUNT"), exception=job.exc)
+            if isinstance(job.exc, MountpointNoDriveAvailable):
+                show_error(self, _("TEXT_WORKSPACE_CANNOT_MOUNT_NO_DRIVE"), exception=job.exc)
+            else:
+                show_error(self, _("TEXT_WORKSPACE_CANNOT_MOUNT"), exception=job.exc)
 
     def on_unmount_success(self, job):
         self.reset()

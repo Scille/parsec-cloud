@@ -1925,6 +1925,12 @@ msgstr "Impossible de renommer l'espace de travail."
 msgid "TEXT_WORKSPACE_NO_WORKSPACES"
 msgstr "Aucun espace de travail n'a été créé."
 
+msgid "TEXT_WORKSPACE_CANNOT_MOUNT_NO_DRIVE"
+msgstr ""
+"Impossible d'afficher les fichiers dans cet espace de travail car la "
+"limite du système est atteinte. Désactivez d'autres espaces de travail en"
+" utilisant l'interrupteur."
+
 msgid "TEXT_WORKSPACE_CANNOT_MOUNT"
 msgstr ""
 "Une erreur interne empêche PARSEC d'accéder aux fichiers de cet espace de"
