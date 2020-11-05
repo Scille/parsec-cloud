@@ -297,8 +297,11 @@ async def mountpoint_manager_factory(
     # Now is a good time to perform some cleanup in the registry
     if os.name == "nt":
         cleanup_parsec_drive_icons()
-    elif _platform == "darwin" and os.path.isdir(base_mountpoint_path):
-        await cleanup_macos_mountpoint_folder(base_mountpoint_path)
+    elif _platform == "darwin":
+        try:
+            await cleanup_macos_mountpoint_folder(base_mountpoint_path)
+        except FileNotFoundError:
+            pass
 
     def on_event(event, new_entry, previous_entry=None):
         # Workspace created
