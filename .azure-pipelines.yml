@@ -414,6 +414,7 @@ jobs:
       versionSpec: '$(python.version)'
   - bash: |
       set -eux
+      brew install coreutils
       sh macos_pyinstaller.sh
       tar -jcvf parsec-macos-amd64.tar.bz2 dist/Parsec.app
     displayName: 'Build'
