@@ -7,16 +7,12 @@ from functools import partial
 from parsec.core.fs.workspacefs.versioning_helpers import VersionLister
 from parsec.core.types import FsPath
 
-import time
-
 
 @pytest.mark.trio
 async def test_files_history(alice_workspace):
     sync_by_id = partial(alice_workspace.sync_by_id, remote_changed=True)
     entry = alice_workspace.get_workspace_entry()
     wid = entry.id
-
-    start_time = time.time()
 
     # Empty workspace
     await sync_by_id(wid)
@@ -57,16 +53,12 @@ async def test_files_history(alice_workspace):
     assert getattr(f2_versions[0][0], "version") == 1
 
     # Updating the file a couple of time and sync again to test the version list
-    print("before loop time : ", time.time() - start_time)
     for i in range(20):
         f = await alice_workspace.open_file("/f", "ab")
         await f.write(str(i).encode())
         await f.close()
         await sync_by_id(wid)
-    print("after loop time : ", time.time() - start_time)
-    print("before version lister time : ", time.time() - start_time)
     f_versions = await VersionLister(alice_workspace).list(FsPath("/f"))
-    print("after version lister time : ", time.time() - start_time)
 
     # _sanitize_list is removing the first 1 version because it is the empty manifest set
     version_nb = 2
@@ -77,5 +69,3 @@ async def test_files_history(alice_workspace):
         if previous_late:
             assert previous_late == version.early
         previous_late = version.late
-
-    print("test took : ", time.time() - start_time)
