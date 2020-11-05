@@ -3,6 +3,9 @@
 Create a temporary environment and initialize a test setup for parsec.
 
 Run `tests/scripts/run_testenv.sh --help` for more information.
+
+For MacOS, please install coreutils from brew to get realpath:
+`brew install coreutils`
 '
 
 # Make sure this script is sourced
@@ -20,7 +23,11 @@ elif [ -n "$ZSH_VERSION" ]; then
 fi
 
 # Run python script and source
-source_file=$(tempfile)
+if [[ "$(uname)" == "Darwin" ]]; then
+  source_file="$TMPDIR/parsec-$(uuidgen)"
+else
+  source_file=$(tempfile)
+fi
 $script_dir/run_testenv.py --source-file $source_file $@ || return $?
 source $source_file
 

@@ -14,6 +14,7 @@ import pkg_resources
 pkg_resources.require("parsec-cloud[all]")
 
 import os
+import platform
 import sys
 import re
 import tempfile
@@ -106,7 +107,7 @@ async def generate_gui_config(backend_address):
 
 
 async def configure_mime_types():
-    if os.name == "nt":
+    if platform.system() == "Windows" or platform.system() == "Darwin":
         return
     XDG_DATA_HOME = os.environ["XDG_DATA_HOME"]
     desktop_file = trio.Path(f"{XDG_DATA_HOME}/applications/parsec.desktop")
