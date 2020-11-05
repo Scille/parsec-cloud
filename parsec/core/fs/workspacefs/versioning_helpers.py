@@ -316,6 +316,9 @@ class ManifestCache:
             expected_backend_timestamp=expected_backend_timestamp,
         )
         self.update(manifest, entry_id, version=version, timestamp=timestamp)
+        from time import sleep
+
+        sleep(0.1)
         return (manifest, True)
 
     async def get_path_at_timestamp(self, entry_id: EntryID, timestamp: DateTime) -> FsPath:
