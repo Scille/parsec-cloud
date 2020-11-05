@@ -65,7 +65,7 @@ async def test_files_history(alice_workspace):
         await sync_by_id(wid)
     print("after loop time : ", time.time() - start_time)
     print("before version lister time : ", time.time() - start_time)
-    f_versions = await VersionLister(alice_workspace).list(FsPath("/f"), workers=100)
+    f_versions = await VersionLister(alice_workspace).list(FsPath("/f"))
     print("after version lister time : ", time.time() - start_time)
 
     # _sanitize_list is removing the first 1 version because it is the empty manifest set
