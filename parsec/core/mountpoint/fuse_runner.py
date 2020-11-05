@@ -17,6 +17,9 @@ from parsec.core.mountpoint.fuse_operations import FuseOperations
 from parsec.core.mountpoint.thread_fs_access import ThreadFSAccess
 from parsec.core.mountpoint.exceptions import MountpointDriverCrash
 
+from parsec.core import resources
+from pathlib import Path
+
 
 __all__ = ("fuse_mountpoint_runner",)
 
@@ -127,6 +130,21 @@ async def fuse_mountpoint_runner(
             encoding = sys.getfilesystemencoding()
 
             def _run_fuse_thread():
+                fuse_platform_options = {}
+                if sys.platform == "darwin":
+                    fuse_platform_options = {
+                        "local": True,
+                        "volname": workspace_fs.get_workspace_name(),
+                        "volicon": Path(resources.__file__).absolute().parent / "parsec.icns",
+                    }
+                    # osxfuse-specific options :
+                    # - local : allows mountpoint to show up correctly in finder (+ desktop)
+                    # - volname : specify volume name (default is OSXFUSE [...])
+                    # - volicon : specify volume icon (default is macOS drive icon)
+
+                else:
+                    fuse_platform_options = {"auto_unmount": True}
+
                 logger.info("Starting fuse thread...", mountpoint=mountpoint_path)
                 try:
                     # Do not let fuse start if the runner is stopping
@@ -139,8 +157,8 @@ async def fuse_mountpoint_runner(
                         fuse_operations,
                         str(mountpoint_path.absolute()),
                         foreground=True,
-                        auto_unmount=True,
                         encoding=encoding,
+                        **fuse_platform_options,
                         **config,
                     )
 
@@ -210,8 +228,14 @@ async def _stop_fuse_thread(
     if fuse_thread_stopped.is_set() or not fuse_thread_started.is_set():
         return
     logger.info("Stopping fuse thread...", mountpoint=mountpoint_path)
-    # Schedule an exit in the fuse operations
-    fuse_operations.schedule_exit()
+    if sys.platform == "darwin":
+        # The schedule_exit() solution doesn't work on macOS, instead freezes the application for
+        # 120 seconds before a timeout occurs. The solution used is to call this function (macOS
+        # equivalent to fusermount) in a subprocess to unmount.
+        await trio.run_process(["diskutil", "unmount", str(mountpoint_path)])
+    else:
+        # Schedule an exit in the fuse operations
+        fuse_operations.schedule_exit()
     # Loop over attemps at waking up the fuse operations
     while True:
         # Attempt to wake up the fuse operations
