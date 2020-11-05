@@ -491,7 +491,8 @@ jobs:
     artifact: wheel
   - bash: |
       set -eux
-      cd packaging/macOS
+      workingDirectory: $(Build.SourcesDirectory)/packaging/macOS
+      brew install coreutils
       sh macos_pyinstaller.sh
       tar -jcvf parsec-macapp.tar.bz2 dist/Parsec.app
     displayName: 'Build'
