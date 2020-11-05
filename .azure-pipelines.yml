@@ -114,3 +114,33 @@ jobs:
       # jobs  # returns error if parsec is not started
       # kill %1
     displayName: 'Test Snap'
+
+
+
+- job: 's3_linux_snap_test_xubuntu'
+  displayName: 'Never trust a snap'
+  dependsOn: s2_linux_snap_build
+  timeoutInMinutes: 10
+  pool:
+    vmImage: 'xubuntu-latest'
+  steps:
+  # Note there no point specifying Python version given snap doesn't take it into account
+  - checkout: none
+  - download: current
+    artifact: linux_amd64_snap
+  - bash: |
+      set -eux
+      sudo apt-get update
+      # TODO: xvfb doesn't currently work
+      # sudo apt-get install -y xvfb xorg
+      sudo snap install --classic --dangerous $(Pipeline.Workspace)/linux_amd64_snap/parsec*.snap
+      parsec.cli --version
+      # Make sure snap contains core but not backend
+      NOT_AVAILABLES=$(parsec.cli --help | grep -i "not available")
+      test "$(echo $NOT_AVAILABLES | grep -i 'backend')"
+      test -z "$(echo $NOT_AVAILABLES | grep -i 'core')"
+      # xvfb-run parsec &
+      # sleep 5
+      # jobs  # returns error if parsec is not started
+      # kill %1
+    displayName: 'Test Snap'
