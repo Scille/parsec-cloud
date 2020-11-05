@@ -392,6 +392,9 @@ class ManifestCacheCounter:
         )
         if was_downloaded:
             self.counter += 1
+        from time import sleep
+
+        sleep(0.1)
         return manifest
 
     async def get_path_at_timestamp(self, entry_id: EntryID, timestamp: DateTime) -> FsPath:
