@@ -70,6 +70,101 @@ async def _do_delete(workspace_fs, files, silent=False):
                 raise JobResultError("error", multi=len(files) > 1) from exc
 
 
+async def _do_copy_files(workspace_fs, current_directory, files, source_workspace):
+    last_exc = None
+    error_count = 0
+    for f in files:
+        src = f[0]
+        src_type = f[1]
+        file_name = src.name
+        base_name = pathlib.Path(src.name)
+        # In order to be able to rename the file if a file of the same name already exists
+        # we need the name without extensions.
+        # .stem only removes the first extension, so we loop over it.
+        while str(base_name) != base_name.stem:
+            base_name = pathlib.Path(base_name.stem)
+        count = 2
+        base_name = str(base_name)
+        while True:
+            try:
+                dst = current_directory / file_name
+                if src_type == FileType.Folder:
+                    await workspace_fs.copytree(src, dst, source_workspace)
+                else:
+                    await workspace_fs.copyfile(src, dst, source_workspace)
+                break
+            except FileExistsError:
+                # File already exists, we append a counter at the end of its name
+                file_name = "{} ({}){}".format(
+                    base_name, count, "".join(pathlib.Path(src.name).suffixes)
+                )
+                count += 1
+            except FSInvalidArgumentError as exc:
+                # Move a file onto itself
+                # Not a big deal for files, we just do nothing and pretend we
+                # actually did something
+                # For folders we have to warn the user
+                if src_type == FileType.Folder:
+                    error_count += 1
+                    last_exc = exc
+                break
+            except Exception as exc:
+                # No idea what happened, we'll just warn the user that we encountered an
+                # unexcepted error and log it
+                error_count += 1
+                last_exc = exc
+                logger.exception("Unhandled error while cut/copy file", exc_info=exc)
+                break
+    if error_count:
+        raise JobResultError("error", last_exc=last_exc, error_count=error_count)
+
+
+async def _do_move_files(workspace_fs, current_directory, files, source_workspace):
+    error_count = 0
+    last_exc = None
+    for f in files:
+        src = f[0]
+        src_type = f[1]
+        file_name = src.name
+        base_name = pathlib.Path(src.name)
+        # In order to be able to rename the file if a file of the same name already exists
+        # we need the name without extensions.
+        # .stem only removes the first extension, so we loop over it.
+        while str(base_name) != base_name.stem:
+            base_name = pathlib.Path(base_name.stem)
+        count = 2
+        base_name = str(base_name)
+        while True:
+            try:
+                dst = current_directory / file_name
+                await workspace_fs.move(src, dst, source_workspace)
+                break
+            except FileExistsError:
+                # File already exists, we append a counter at the end of its name
+                file_name = "{} ({}){}".format(
+                    base_name, count, "".join(pathlib.Path(src.name).suffixes)
+                )
+                count += 1
+            except FSInvalidArgumentError as exc:
+                # Move a file onto itself
+                # Not a big deal for files, we just do nothing and pretend we
+                # actually did something
+                # For folders we have to warn the user
+                if src_type == FileType.Folder:
+                    error_count += 1
+                    last_exc = exc
+                break
+            except Exception as exc:
+                # No idea what happened, we'll just warn the user that we encountered an
+                # unexcepted error and log it
+                error_count += 1
+                last_exc = exc
+                logger.exception("Unhandled error while cut/copy file", exc_info=exc)
+                break
+    if error_count:
+        raise JobResultError("error", last_exc=last_exc, error_count=error_count)
+
+
 async def _do_folder_stat(workspace_fs, path, default_selection):
     stats = {}
     dir_stat = await workspace_fs.path_info(path)
@@ -173,6 +268,11 @@ class FilesWidget(QWidget, Ui_FilesWidget):
     import_success = pyqtSignal(QtToTrioJob)
     import_error = pyqtSignal(QtToTrioJob)
 
+    copy_success = pyqtSignal(QtToTrioJob)
+    copy_error = pyqtSignal(QtToTrioJob)
+    move_success = pyqtSignal(QtToTrioJob)
+    move_error = pyqtSignal(QtToTrioJob)
+
     import_progress = pyqtSignal(str, int)
 
     reload_timestamped_requested = pyqtSignal(DateTime, FsPath, FileType, bool, bool, bool)
@@ -244,6 +344,10 @@ class FilesWidget(QWidget, Ui_FilesWidget):
         self.folder_create_error.connect(self._on_folder_create_error)
         self.import_success.connect(self._on_import_success)
         self.import_error.connect(self._on_import_error)
+        self.copy_success.connect(self._on_copy_success)
+        self.copy_error.connect(self._on_copy_error)
+        self.move_success.connect(self._on_move_success)
+        self.move_error.connect(self._on_move_error)
 
         self.reload_timestamped_requested.connect(self._on_reload_timestamped_requested)
         self.reload_timestamped_success.connect(self._on_reload_timestamped_success)
@@ -344,82 +448,49 @@ class FilesWidget(QWidget, Ui_FilesWidget):
     def on_paste_clicked(self):
         if not self.clipboard:
             return
-        error_count = 0
-        last_exc = None
-        for f in self.clipboard.files:
-            src = f[0]
-            src_type = f[1]
-            file_name = src.name
-            base_name = pathlib.Path(src.name)
-            # In order to be able to rename the file if a file of the same name already exists
-            # we need the name without extensions.
-            # .stem only removes the first extension, so we loop over it.
-            while str(base_name) != base_name.stem:
-                base_name = pathlib.Path(base_name.stem)
-            count = 2
-            base_name = str(base_name)
-            while True:
-                try:
-                    dst = self.current_directory / file_name
-                    if self.clipboard.status == Clipboard.Status.Cut:
-                        self.jobs_ctx.run(
-                            self.workspace_fs.move, src, dst, self.clipboard.source_workspace
-                        )
-                    else:
-                        if src_type == FileType.Folder:
-                            self.jobs_ctx.run(
-                                self.workspace_fs.copytree,
-                                src,
-                                dst,
-                                self.clipboard.source_workspace,
-                            )
-                        else:
-                            self.jobs_ctx.run(
-                                self.workspace_fs.copyfile,
-                                src,
-                                dst,
-                                self.clipboard.source_workspace,
-                            )
-                    break
-                except FileExistsError:
-                    # File already exists, we append a counter at the end of its name
-                    file_name = "{} ({}){}".format(
-                        base_name, count, "".join(pathlib.Path(src.name).suffixes)
-                    )
-                    count += 1
-                except FSInvalidArgumentError as exc:
-                    # Move a file onto itself
-                    # Not a big deal for files, we just do nothing and pretend we
-                    # actually did something
-                    # For folders we have to warn the user
-                    if src_type == FileType.Folder:
-                        error_count += 1
-                        last_exc = exc
-                    break
-                except Exception as exc:
-                    # No idea what happened, we'll just warn the user that we encountered an
-                    # unexcepted error and log it
-                    error_count += 1
-                    last_exc = exc
-                    logger.exception("Unhandled error while cut/copy file", exc_info=exc)
-                    break
+
         if self.clipboard.status == Clipboard.Status.Cut:
+            self.jobs_ctx.submit_job(
+                ThreadSafeQtSignal(self, "move_success", QtToTrioJob),
+                ThreadSafeQtSignal(self, "move_error", QtToTrioJob),
+                _do_move_files,
+                workspace_fs=self.workspace_fs,
+                current_directory=self.current_directory,
+                files=self.clipboard.files,
+                source_workspace=self.clipboard.source_workspace,
+            )
             self.clipboard = None
             # Set Global clipboard to none too
             self.global_clipboard_updated_qt.emit(None)
             self.table_files.paste_status = PasteStatus(status=PasteStatus.Status.Disabled)
+        else:
+            self.jobs_ctx.submit_job(
+                ThreadSafeQtSignal(self, "move_success", QtToTrioJob),
+                ThreadSafeQtSignal(self, "move_error", QtToTrioJob),
+                _do_copy_files,
+                workspace_fs=self.workspace_fs,
+                current_directory=self.current_directory,
+                files=self.clipboard.files,
+                source_workspace=self.clipboard.source_workspace,
+            )
 
-        if last_exc:
-            # Multiple errors, we'll just display a generic error message
-            if error_count > 1:
-                show_error(self, _("TEXT_FILE_PASTE_ERROR"))
-            else:
-                # Folder moved into itself
-                if type(last_exc) == FSInvalidArgumentError:
-                    show_error(self, _("TEXT_FILE_FOLDER_MOVED_INTO_ITSELF_ERROR"))
-                else:
-                    show_error(self, _("TEXT_FILE_PASTE_ERROR"))
+    def _on_move_success(self, job):
+        self.reset()
 
+    def _on_move_error(self, job):
+        exc = job.exc
+        if exc and isinstance(exc.params.get("last_exc", None), FSInvalidArgumentError):
+            show_error(self, _("TEXT_FILE_FOLDER_MOVED_INTO_ITSELF_ERROR"))
+        else:
+            show_error(self, _("TEXT_FILE_PASTE_ERROR"))
+
+        self.reset()
+
+    def _on_copy_success(self, job):
+        self.reset()
+
+    def _on_copy_error(self, job):
+        show_error(self, _("TEXT_FILE_PASTE_ERROR"))
         self.reset()
 
     def show_history(self):

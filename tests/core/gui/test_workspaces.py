@@ -207,6 +207,7 @@ async def test_mountpoint_open_in_explorer_button(aqtbot, running_backend, logge
     w_w = await logged_gui.test_switch_to_workspaces_widget()
 
     def get_wk_button():
+        assert w_w.layout_workspaces.count() == 1
         wk_button = w_w.layout_workspaces.itemAt(0).widget()
         assert isinstance(wk_button, WorkspaceButton)
         return wk_button
