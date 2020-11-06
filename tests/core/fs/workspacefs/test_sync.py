@@ -37,9 +37,6 @@ async def test_sync_by_id_single(alice_workspace, remote_changed):
     entry = alice_workspace.get_workspace_entry()
     wid = entry.id
 
-    # Empty workspace
-    await sync_by_id(wid)
-
     # Empty directory
     await alice_workspace.mkdir("/a")
     a_id = await alice_workspace.path_id("/a")
