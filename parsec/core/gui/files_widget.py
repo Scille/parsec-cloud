@@ -73,18 +73,12 @@ async def _do_delete(workspace_fs, files, silent=False):
 async def _do_copy_files(workspace_fs, current_directory, files, source_workspace):
     last_exc = None
     error_count = 0
-    for f in files:
-        src = f[0]
-        src_type = f[1]
-        file_name = src.name
-        base_name = pathlib.Path(src.name)
+    for src, src_type in files:
         # In order to be able to rename the file if a file of the same name already exists
         # we need the name without extensions.
-        # .stem only removes the first extension, so we loop over it.
-        while str(base_name) != base_name.stem:
-            base_name = pathlib.Path(base_name.stem)
+        name_we, *_ = src.name.split(".", 1)
         count = 2
-        base_name = str(base_name)
+        file_name = src.name
         while True:
             try:
                 dst = current_directory / file_name
@@ -96,7 +90,7 @@ async def _do_copy_files(workspace_fs, current_directory, files, source_workspac
             except FileExistsError:
                 # File already exists, we append a counter at the end of its name
                 file_name = "{} ({}){}".format(
-                    base_name, count, "".join(pathlib.Path(src.name).suffixes)
+                    name_we, count, "".join(pathlib.Path(src.name).suffixes)
                 )
                 count += 1
             except FSInvalidArgumentError as exc:
@@ -122,18 +116,12 @@ async def _do_copy_files(workspace_fs, current_directory, files, source_workspac
 async def _do_move_files(workspace_fs, current_directory, files, source_workspace):
     error_count = 0
     last_exc = None
-    for f in files:
-        src = f[0]
-        src_type = f[1]
-        file_name = src.name
-        base_name = pathlib.Path(src.name)
+    for src, src_type in files:
         # In order to be able to rename the file if a file of the same name already exists
         # we need the name without extensions.
-        # .stem only removes the first extension, so we loop over it.
-        while str(base_name) != base_name.stem:
-            base_name = pathlib.Path(base_name.stem)
+        name_we, *_ = src.name.split(".", 1)
+        file_name = src.name
         count = 2
-        base_name = str(base_name)
         while True:
             try:
                 dst = current_directory / file_name
@@ -142,7 +130,7 @@ async def _do_move_files(workspace_fs, current_directory, files, source_workspac
             except FileExistsError:
                 # File already exists, we append a counter at the end of its name
                 file_name = "{} ({}){}".format(
-                    base_name, count, "".join(pathlib.Path(src.name).suffixes)
+                    name_we, count, "".join(pathlib.Path(src.name).suffixes)
                 )
                 count += 1
             except FSInvalidArgumentError as exc:
