@@ -526,14 +526,8 @@ class WorkspacesWidget(QWidget, Ui_WorkspacesWidget):
             if not date or not time:
                 return
 
-            datetime = pendulum.datetime(
-                date.year(),
-                date.month(),
-                date.day(),
-                time.hour(),
-                time.minute(),
-                time.second(),
-                tzinfo="local",
+            datetime = pendulum.local(
+                date.year(), date.month(), date.day(), time.hour(), time.minute(), time.second()
             )
             self.mount_workspace(workspace_fs.workspace_id, datetime)
 
