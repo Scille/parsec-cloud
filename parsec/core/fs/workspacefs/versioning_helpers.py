@@ -471,6 +471,8 @@ class VersionListerTaskList:
         self.workers += 1
         while not self.is_empty():
             await self.execute_one()
+            if self.is_empty():
+                break
             if self.workers < workers_limit:
                 before_loop = time.time()
                 await self.execute_worker(workers_limit, nursery)
