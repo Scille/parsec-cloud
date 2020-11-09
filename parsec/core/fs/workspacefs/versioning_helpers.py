@@ -473,9 +473,10 @@ class VersionListerTaskList:
             await self.execute_one()
         self.workers -= 1
 
-    async def execute(self, workers=1):
+    async def execute(self):
+        workers_limit = len(self.heapq_tasks)
         async with open_service_nursery() as nursery:
-            nursery.start_soon(self.execute_worker, workers, nursery)
+            nursery.start_soon(self.execute_worker, workers_limit, nursery)
 
 
 class VersionLister:
@@ -512,7 +513,6 @@ class VersionLister:
         starting_timestamp: Optional[DateTime] = None,
         ending_timestamp: Optional[DateTime] = None,
         max_manifest_queries: Optional[int] = None,
-        workers: int = 0,
     ) -> Tuple[List[TimestampBoundedData], bool]:
         """
         Returns:
@@ -536,7 +536,6 @@ class VersionLister:
             starting_timestamp=starting_timestamp,
             ending_timestamp=ending_timestamp,
             max_manifest_queries=max_manifest_queries,
-            workers=workers,
         )
 
 
@@ -563,7 +562,6 @@ class VersionListerOneShot:
         starting_timestamp: Optional[DateTime] = None,
         ending_timestamp: Optional[DateTime] = None,
         max_manifest_queries: Optional[int] = None,
-        workers: int = 0,
     ) -> Tuple[List[TimestampBoundedData], bool]:
         """
         Returns:
@@ -576,14 +574,6 @@ class VersionListerOneShot:
             FSWorkspaceInMaintenance
             FSRemoteManifestNotFound
         """
-        if workers == 0:
-            distance = len(path.parts)
-            if distance < 2:
-                workers = 3
-            elif distance == 2:
-                workers = 5
-            else:
-                workers = 10
         root_manifest = await self.workspace_fs.transactions._get_manifest(
             self.workspace_fs.workspace_id
         )
@@ -606,7 +596,7 @@ class VersionListerOneShot:
                     starting_timestamp or root_manifest.created,
                 )
             )
-            await self.task_list.execute(workers=workers)
+            await self.task_list.execute()
         except ManifestCacheDownloadLimitReached:
             download_limit_reached = self.task_list.task_tree.completed
             download_limit = self.task_list.task_tree.get_earliest_completed_consecutive_timestamp()
