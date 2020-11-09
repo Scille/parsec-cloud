@@ -467,7 +467,7 @@ class VersionListerTaskList:
     async def execute(self):
         import time
 
-        workers_limit = 1
+        workers_limit = 100
         print("workers_limit = ", workers_limit)
         while not self.is_empty():
             print("is empty = ", self.is_empty())
