@@ -470,16 +470,16 @@ class VersionListerTaskList:
             return
         self.workers += 1
         while not self.is_empty():
+            await self.execute_one()
             if self.workers < workers_limit:
                 before_loop = time.time()
                 await self.execute_worker(workers_limit, nursery)
                 total_time = time.time() - before_loop
                 print("nursery time  = ", total_time)
-            await self.execute_one()
         self.workers -= 1
 
     async def execute(self):
-        workers_limit = 100
+        workers_limit = 10
         print("workers_limit = ", workers_limit)
         async with open_service_nursery() as nursery:
             nursery.start_soon(self.execute_worker, workers_limit, nursery)

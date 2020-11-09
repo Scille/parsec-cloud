@@ -45,7 +45,7 @@ async def test_file_history(alice, alice_workspace):
 
     # Updating the file a couple of time and sync again to test the version list
     before_loop = time.time()
-    for i in range(50):
+    for i in range(200):
         f = await alice_workspace.open_file("/f", "ab")
         await f.write(str(i).encode())
         await f.close()
