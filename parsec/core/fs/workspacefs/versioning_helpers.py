@@ -45,6 +45,14 @@ class ManifestCacheDownloadLimitReached(Exception):
     pass
 
 
+class HistoryInconsistent(Exception):
+    pass
+
+
+class ManifestCacheInconsistent(HistoryInconsistent):
+    pass
+
+
 SYNC_GUESSED_TIME_FRAME = 30
 
 
@@ -181,25 +189,41 @@ class ManifestCache:
         """
         if manifest.id not in self._manifest_cache:
             self._manifest_cache[manifest.id] = {}
-        if manifest.version not in self._manifest_cache[manifest.id]:
-            self._manifest_cache[manifest.id][manifest.version] = CacheEntry(
-                timestamp, timestamp, manifest
-            )
+        cache_for_id = self._manifest_cache[manifest.id]
+        if manifest.version not in cache_for_id:
+            cache_for_id[manifest.version] = CacheEntry(timestamp, timestamp, manifest)
         elif timestamp:
             if (
-                self._manifest_cache[manifest.id][manifest.version].late is None
-                or timestamp > self._manifest_cache[manifest.id][manifest.version].late
+                cache_for_id[manifest.version].late is None
+                or timestamp > cache_for_id[manifest.version].late
             ):
-                self._manifest_cache[manifest.id][manifest.version] = CacheEntry(
-                    self._manifest_cache[manifest.id][manifest.version].early, timestamp, manifest
+                cache_for_id[manifest.version] = CacheEntry(
+                    cache_for_id[manifest.version].early, timestamp, manifest
                 )
             if (
-                self._manifest_cache[manifest.id][manifest.version].early is None
-                or timestamp < self._manifest_cache[manifest.id][manifest.version].early
+                cache_for_id[manifest.version].early is None
+                or timestamp < cache_for_id[manifest.version].early
             ):
-                self._manifest_cache[manifest.id][manifest.version] = CacheEntry(
-                    timestamp, self._manifest_cache[manifest.id][manifest.version].late, manifest
+                cache_for_id[manifest.version] = CacheEntry(
+                    timestamp, cache_for_id[manifest.version].late, manifest
                 )
+        # Check inconsistency
+        keys = sorted([*cache_for_id.keys()])
+        index = keys.index(manifest.version)
+        if (
+            index > 0
+            and cache_for_id[keys[index - 1]].late is not None
+            and cache_for_id[manifest.version].early is not None
+            and cache_for_id[keys[index - 1]].late > cache_for_id[manifest.version].early
+        ):
+            raise ManifestCacheInconsistent
+        if (
+            index < len(keys) - 1
+            and cache_for_id[keys[index + 1]].early is not None
+            and cache_for_id[manifest.version].late is not None
+            and cache_for_id[keys[index + 1]].early < cache_for_id[manifest.version].late
+        ):
+            raise ManifestCacheInconsistent
 
     async def load(
         self,
@@ -311,7 +335,7 @@ class ManifestCacheCounter:
     async def load(
         self, entry_id: EntryID, version=None, timestamp=None, expected_backend_timestamp=None
     ) -> RemoteManifest:
-        if self.limit == self.counter:
+        if self.limit <= self.counter:
             raise ManifestCacheDownloadLimitReached
         manifest, was_downloaded = await self._manifest_cache.load(
             entry_id, version, timestamp, expected_backend_timestamp
@@ -370,6 +394,7 @@ class VersionListerTaskList:
 
     def add(self, timestamp: DateTime, task: typing.Callable[[], Awaitable[None]]):
         if timestamp not in self.tasks:
+            print("ici")
             heappush(self.heapq_tasks, timestamp)
         self.tasks[timestamp].append(task)
 
@@ -377,6 +402,7 @@ class VersionListerTaskList:
         return not bool(self.tasks)
 
     async def execute_one(self):
+        print("inside execute one")
         min = heappop(self.heapq_tasks)
         task = self.tasks[min].pop()
         if len(self.tasks[min]) == 0:
@@ -384,10 +410,15 @@ class VersionListerTaskList:
         else:
             heappush(self.heapq_tasks, min)
         await task()
+        print("End of execute one ")
 
-    async def execute(self, number: int = 1):
-        for i in range(number):
-            await self.execute_one()
+    async def execute(self):
+        max_workers = len(self.heapq_tasks)
+        async with open_service_nursery() as nursery:
+            while max_workers > 0:
+                print("inside loop")
+                nursery.start_soon(self.execute_one)
+                max_workers -= 1
 
 
 class VersionLister:
@@ -434,6 +465,7 @@ class VersionLister:
             FSBackendOfflineError
             FSWorkspaceInMaintenance
             FSRemoteManifestNotFound
+            ManifestCacheInconsistent
         """
         version_lister_one_shot = VersionListerOneShot(
             self.workspace_fs, path, self.manifest_cache, self.versions_list_cache
@@ -500,8 +532,7 @@ class VersionListerOneShot:
                     ending_timestamp or DateTime.now(),
                 ),
             )
-            while not self.task_list.is_empty():
-                await self.task_list.execute_one()
+            await self.task_list.execute()
         except ManifestCacheDownloadLimitReached:
             # TODO : expose last timestamp for which we don't miss data
             download_limit_reached = False
