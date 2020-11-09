@@ -41,13 +41,21 @@ async def test_file_history(alice, alice_workspace):
         )
     ]
 
+    import time
+
     # Updating the file a couple of time and sync again to test the version list
+    before_loop = time.time()
     for i in range(20):
         f = await alice_workspace.open_file("/f", "ab")
         await f.write(str(i).encode())
         await f.close()
         await sync_by_id(wid)
+    total_time = time.time() - before_loop
+    print("loop time = ", total_time)
+    before_versions_list = time.time()
     versions_list, download_limit_reached = await VersionLister(alice_workspace).list(FsPath("/f"))
+    total_time = time.time() - before_versions_list
+    print("versions_list time = ", total_time)
     assert download_limit_reached is True
 
     # _sanitize_list is removing the first 1 version because it is the empty manifest set
