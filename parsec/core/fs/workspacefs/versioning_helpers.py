@@ -464,17 +464,23 @@ class VersionListerTaskList:
         await task.run()
 
     async def execute_worker(self, workers_limit, nursery):
+        import time
+
         if self.workers == workers_limit or self.is_empty():
             return
         self.workers += 1
         while not self.is_empty():
             if self.workers < workers_limit:
-                nursery.start_soon(self.execute_worker, workers_limit, nursery)
+                before_loop = time.time()
+                await self.execute_worker(workers_limit, nursery)
+                total_time = time.time() - before_loop
+                print("nursery time  = ", total_time)
             await self.execute_one()
         self.workers -= 1
 
     async def execute(self):
-        workers_limit = len(self.heapq_tasks)
+        workers_limit = 100
+        print("workers_limit = ", workers_limit)
         async with open_service_nursery() as nursery:
             nursery.start_soon(self.execute_worker, workers_limit, nursery)
 
