@@ -460,20 +460,22 @@ class VersionListerTaskList:
         if self.is_empty():
             return
         task = heappop(self.heapq_tasks)
-        # import time
-
         await task.run()
 
         self.workers -= 1
 
     async def execute(self):
         workers_limit = 10
+        i = 0
         while not self.is_empty():
             async with open_service_nursery() as nursery:
-                while self.workers < workers_limit:
-                    self.workers += 1
-                    nursery.start_soon(self.execute_one)
-        print("ok ba")
+                if not self.is_empty():
+                    while self.workers < workers_limit:
+                        self.workers += 1
+                        i += 1
+                        nursery.start_soon(self.execute_one)
+            self.workers = 0
+        print("ok, i = ", i)
 
 
 class VersionLister:
