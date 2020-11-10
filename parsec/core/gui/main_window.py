@@ -33,6 +33,7 @@ from parsec.core.gui.claim_device_widget import ClaimDeviceWidget
 from parsec.core.gui.license_widget import LicenseWidget
 from parsec.core.gui.about_widget import AboutWidget
 from parsec.core.gui.settings_widget import SettingsWidget
+from parsec.core.gui.keys_widget import KeysWidget
 from parsec.core.gui.custom_dialogs import (
     ask_question,
     show_error,
@@ -188,6 +189,9 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         action.setShortcut(self.shortcut_join_org.key())
         action.setShortcutVisibleInContextMenu(True)
 
+        action = menu.addAction(_("ACTION_MAIN_MENU_MANAGE_KEYS"))
+        action.triggered.connect(self._on_manage_keys)
+
         menu.addSeparator()
 
         action = menu.addAction(_("ACTION_MAIN_MENU_SETTINGS"))
@@ -239,6 +243,11 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         w = SettingsWidget(self.config, self.jobs_ctx, self.event_bus)
         d = GreyedDialog(w, title=_("TEXT_SETTINGS_TITLE"), parent=self, width=1000)
         d.exec_()
+
+    def _on_manage_keys(self):
+        w = KeysWidget(config=self.config, parent=self)
+        d = GreyedDialog(w, title=_("TEXT_KEYS_DIALOG"), parent=self, width=1000)
+        d.exec()
 
     def _on_show_doc_clicked(self):
         desktop.open_doc_link()
