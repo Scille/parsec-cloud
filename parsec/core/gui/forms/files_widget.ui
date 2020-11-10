@@ -6,7 +6,7 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>1183</width>
+    <width>1229</width>
     <height>489</height>
    </rect>
   </property>
@@ -59,18 +59,6 @@ QScrollBar:vertical {
 }</string>
   </property>
   <layout class="QVBoxLayout" name="verticalLayout">
-   <property name="leftMargin">
-    <number>0</number>
-   </property>
-   <property name="topMargin">
-    <number>0</number>
-   </property>
-   <property name="rightMargin">
-    <number>0</number>
-   </property>
-   <property name="bottomMargin">
-    <number>0</number>
-   </property>
    <item>
     <widget class="QWidget" name="widget_files" native="true">
      <property name="sizePolicy">
@@ -316,7 +304,7 @@ QScrollBar:vertical {
        </layout>
       </item>
       <item>
-       <layout class="QHBoxLayout" name="horizontalLayout_3">
+       <layout class="QGridLayout" name="table_files_layout">
         <property name="leftMargin">
          <number>0</number>
         </property>
@@ -329,7 +317,7 @@ QScrollBar:vertical {
         <property name="bottomMargin">
          <number>0</number>
         </property>
-        <item>
+        <item row="0" column="0">
          <widget class="FileTable" name="table_files">
           <property name="font">
            <font>

@@ -1,6 +1,6 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
 
-from typing import Optional
+from typing import Optional, Any, Dict, Type, TypeVar
 from uuid import UUID
 from enum import Enum
 from marshmallow import ValidationError
@@ -57,7 +57,7 @@ class UserCertificateContent(BaseAPISignedData):
         profile = UserProfileField(allow_none=False)
 
         @post_load
-        def make_obj(self, data):
+        def make_obj(self, data: Dict[str, Any]) -> "UserCertificateContent":
             data.pop("type")
 
             # Handle legacy `is_admin` field
@@ -75,7 +75,7 @@ class UserCertificateContent(BaseAPISignedData):
             return UserCertificateContent(**data)
 
     # Override author attribute to allow for None value if signed by the root key
-    author: Optional[DeviceID]
+    author: Optional[DeviceID]  # type: ignore[assignment]
 
     user_id: UserID
     human_handle: Optional[HumanHandle]
@@ -114,7 +114,7 @@ class RevokedUserCertificateContent(BaseAPISignedData):
         user_id = UserIDField(required=True)
 
         @post_load
-        def make_obj(self, data):
+        def make_obj(self, data: Dict[str, Any]) -> "RevokedUserCertificateContent":
             data.pop("type")
             return RevokedUserCertificateContent(**data)
 
@@ -132,6 +132,11 @@ class RevokedUserCertificateContent(BaseAPISignedData):
         return data
 
 
+DeviceCertificateContentTypeVar = TypeVar(
+    "DeviceCertificateContentTypeVar", bound="DeviceCertificateContent"
+)
+
+
 @attr.s(slots=True, frozen=True, auto_attribs=True, kw_only=True, eq=False)
 class DeviceCertificateContent(BaseAPISignedData):
     class SCHEMA_CLS(BaseSignedDataSchema):
@@ -145,12 +150,12 @@ class DeviceCertificateContent(BaseAPISignedData):
         verify_key = fields.VerifyKey(required=True)
 
         @post_load
-        def make_obj(self, data):
+        def make_obj(self, data: Dict[str, Any]) -> "DeviceCertificateContent":
             data.pop("type")
             return DeviceCertificateContent(**data)
 
     # Override author attribute to allow for None value if signed by the root key
-    author: Optional[DeviceID]
+    author: Optional[DeviceID]  # type: ignore[assignment]
 
     device_id: DeviceID
     device_label: Optional[str]
@@ -158,7 +163,10 @@ class DeviceCertificateContent(BaseAPISignedData):
 
     @classmethod
     def verify_and_load(
-        cls, *args, expected_device: Optional[DeviceID] = None, **kwargs
+        cls: Type[DeviceCertificateContentTypeVar],
+        *args: Any,
+        expected_device: Optional[DeviceID] = None,
+        **kwargs: Any,
     ) -> "DeviceCertificateContent":
         data = super().verify_and_load(*args, **kwargs)
         if expected_device is not None and data.device_id != expected_device:
@@ -177,7 +185,7 @@ class RealmRoleCertificateContent(BaseAPISignedData):
         role = RealmRoleField(required=True, allow_none=True)
 
         @post_load
-        def make_obj(self, data):
+        def make_obj(self, data: Dict[str, Any]) -> "RealmRoleCertificateContent":
             data.pop("type")
             return RealmRoleCertificateContent(**data)
 

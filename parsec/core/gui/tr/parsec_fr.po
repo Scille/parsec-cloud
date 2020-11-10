@@ -7,8 +7,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PROJECT VERSION\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2020-10-06 08:56+0200\n"
-"PO-Revision-Date: 2020-10-06 09:08+0200\n"
+"POT-Creation-Date: 2020-11-04 09:40+0100\n"
+"PO-Revision-Date: 2020-10-15 10:31+0200\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language: fr\n"
 "Language-Team: fr <LL@li.org>\n"
@@ -282,6 +282,12 @@ msgstr "La connexion vers le serveur a été refusée."
 msgid "TEXT_ORG_WIZARD_CONNECTION_ERROR"
 msgstr "Impossible de se connecter au serveur."
 
+msgid "TEXT_ORG_WIZARD_INVALID_TIMESTAMP"
+msgstr ""
+"Il semblerait que votre machine ne soit pas à la bonne date ou à la bonne"
+" heure. Veuillez vérifier votre configuration et vous assurez que la "
+"date, l'heure ainsi que le fuseau horaire sont corrects."
+
 msgid "TEXT_ORG_WIZARD_UNKNOWN_FAILURE"
 msgstr "Impossible de créer l'organisation."
 
@@ -365,6 +371,9 @@ msgstr "Voir l'historique"
 msgid "ACTION_FILE_MENU_GET_FILE_LINK"
 msgstr "Lien vers ce fichier"
 
+msgid "ACTION_FILE_MENU_PASTE_FROM_OTHER_WORKSPACE_source"
+msgstr "Coller depuis {source}"
+
 msgid "ACTION_FILE_MENU_PASTE"
 msgstr "Coller"
 
@@ -440,6 +449,9 @@ msgstr "Êtes-vous sûr de vouloir supprimer les {count} fichiers ?"
 msgid "ACTION_FILE_DELETE_MULTIPLE"
 msgstr "Supprimer"
 
+msgid "TEXT_FILE_OPEN_ERROR_file"
+msgstr "Le fichier <b>{file}</b> n'a pas pû être ouvert."
+
 msgid "TEXT_FILE_OPEN_MULTIPLE_TITLE_count"
 msgstr "Ouvrir plusieurs fichiers"
 
@@ -450,6 +462,9 @@ msgstr ""
 
 msgid "ACTION_FILE_OPEN_MULTIPLE"
 msgstr "Ouvrir les fichiers"
+
+msgid "TEXT_FILE_OPEN_MULTIPLE_ERROR"
+msgstr "Certains fichiers n'ont pas pû être ouverts."
 
 msgid "TEXT_FILE_IMPORT_LOADING_TITLE"
 msgstr "En cours d'import"
@@ -500,7 +515,20 @@ msgstr "Un répertoire du même nom existe déjà."
 msgid "TEXT_FILE_FOLDER_CREATE_ERROR_UNKNOWN"
 msgstr "Impossible de créer le nouveau répertoire."
 
-msgid "TEXT_FILE_IMPORT_ERROR"
+msgid "TEXT_FILE_IMPORT_ONE_PERMISSION_ERROR"
+msgstr ""
+"Le fichier n'a pas pu être importé car vous ne disposez pas des "
+"permissions suffisantes."
+
+msgid "TEXT_FILE_IMPORT_MULTIPLE_PERMISSION_ERROR"
+msgstr ""
+"Certains fichiers n'ont pas été importes car vous ne disposez pas des "
+"permissions suffisantes."
+
+msgid "TEXT_FILE_IMPORT_ONE_ERROR"
+msgstr "Un problème est survenu lors de l'import du fichier."
+
+msgid "TEXT_FILE_IMPORT_MULTIPLE_ERROR"
 msgstr ""
 "Un problème est survenu lors de l'import des fichiers. Certains fichiers "
 "n'ont peut-être pas été importés."
@@ -686,7 +714,9 @@ msgstr ""
 msgid "TEXT_LOGIN_ERROR_FUSE_NOT_AVAILABLE"
 msgstr ""
 "FUSE n'a pas pu être chargé. \n"
-"Merci de vérifier votre installation."
+"Merci de vérifier votre installation. \n"
+"Sur Mac, il est nécessaire d'installer OSXFUSE (FUSE for MacOS) et de l'accepter dans les réglages de sécurité. \n"
+"https://osxfuse.github.io/2020/10/05/OSXFUSE-3.11.2.html"
 
 msgid "TEXT_LOGIN_UNKNOWN_ERROR"
 msgstr "Impossible de se connecter."
@@ -1685,6 +1715,12 @@ msgstr "Quitter"
 msgid "TEXT_WORKSPACE_TIMESTAMPED_VERSION_RETRIEVAL_FAILED"
 msgstr "Impossible de récupérer l'historique de cet espace de travail."
 
+msgid "TEXT_WORKSPACE_TIMESTAMPED_INSTRUCTIONS_created"
+msgstr ""
+"Vous pourrez naviguer dans l'espace de travail tel qu'il était à un moment donné.\n"
+"\n"
+"Cet espace de travail a été créé le {created}."
+
 msgid "TEXT_WORKSPACE_TIMESTAMPED_TITLE"
 msgstr "Remonter dans le temps"
 
@@ -1896,6 +1932,12 @@ msgstr "Impossible de renommer l'espace de travail."
 
 msgid "TEXT_WORKSPACE_NO_WORKSPACES"
 msgstr "Aucun espace de travail n'a été créé."
+
+msgid "TEXT_WORKSPACE_CANNOT_MOUNT_NO_DRIVE"
+msgstr ""
+"Impossible d'afficher les fichiers dans cet espace de travail car la "
+"limite du système est atteinte. Désactivez d'autres espaces de travail en"
+" utilisant l'interrupteur."
 
 msgid "TEXT_WORKSPACE_CANNOT_MOUNT"
 msgstr ""
@@ -2390,11 +2432,11 @@ msgstr "Accueillir l'utilisateur"
 msgid "TEXT_USERS_FILTER_USERS_PLACEHOLDER"
 msgstr "Filtrer les utilisateurs"
 
-msgid "ACTION_USER_INVITE_USER"
-msgstr "Inviter un utilisateur"
-
 msgid "ACTION_FILTER_LIST_USERS"
 msgstr "Rechercher utilisateurs"
+
+msgid "ACTION_USER_INVITE_USER"
+msgstr "Inviter un utilisateur"
 
 msgid "ACTION_LIST_PREVIOUS_PAGE"
 msgstr "Page précédente"
@@ -2407,6 +2449,9 @@ msgstr "L'espace de travail est partagé."
 
 msgid "TEXT_WORKSPACE_IS_OWNER_TOOLTIP"
 msgstr "Vous êtes le propriétaire de cet espace de travail."
+
+msgid "TEXT_WORKSPACE_REENCRYPTION"
+msgstr "Rechiffrement... %p%"
 
 msgid "TEXT_WORKSPACE_OPEN_WORKSPACE_TOOLTIP"
 msgstr "Ouvrir l'espace de travail dans l'explorateur de fichiers."
@@ -2426,9 +2471,6 @@ msgstr "Rechiffrer l'espace de travail."
 msgid "TEXT_WORKSPACE_DELETE_WORKSPACE_TOOLTIP"
 msgstr "Supprimer l'espace de travail"
 
-msgid "TEXT_WORKSPACE_REENCRYPTION"
-msgstr "Rechiffrement... %p%"
-
 msgid "TEXT_WORKSPACE_FILTER_WORKSPACES_PLACEHOLDER"
 msgstr "Filtrer les espaces de travail"
 
@@ -2437,4 +2479,3 @@ msgstr "Créer un nouvel espace de travail"
 
 msgid "ACTION_WORKSPACE_GOTO_FILE_LINK"
 msgstr "Trouver un fichier via son lien"
-

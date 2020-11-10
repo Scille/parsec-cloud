@@ -2,10 +2,12 @@
 
 import pytest
 
+import pendulum
+
 from PyQt5 import QtCore
 
 from tests.fixtures import local_device_to_backend_user
-from tests.common import customize_fixtures
+from tests.common import customize_fixtures, freeze_time
 
 from parsec.api.protocol import OrganizationID, HumanHandle
 from parsec.core.backend_connection import apiv1_backend_anonymous_cmds_factory
@@ -37,7 +39,8 @@ async def _do_creation_process(aqtbot, co_w):
 
     await aqtbot.wait_until(_user_widget_ready)
 
-    await aqtbot.key_clicks(co_w.user_widget.line_edit_user_full_name, "Gordon Freeman")
+    # Adding a few spaces to the name
+    await aqtbot.key_clicks(co_w.user_widget.line_edit_user_full_name, "  Gordon     Freeman   ")
     await aqtbot.key_clicks(co_w.user_widget.line_edit_user_email, "gordon.freeman@blackmesa.com")
     await aqtbot.key_clicks(co_w.user_widget.line_edit_org_name, "AnomalousMaterials")
     assert not co_w.button_validate.isEnabled()
@@ -102,6 +105,13 @@ async def test_create_organization(
         ]
 
     await aqtbot.wait_until(_modal_shown)
+
+    def _logged_in():
+        c_w = gui.test_get_central_widget()
+        assert c_w
+        assert c_w.button_user.text() == "AnomalousMaterials\nGordon Freeman"
+
+    await aqtbot.wait_until(_logged_in)
 
 
 @pytest.mark.gui
@@ -444,3 +454,31 @@ async def test_create_organization_custom_backend(
         ]
 
     await aqtbot.wait_until(_modal_shown)
+
+
+@pytest.mark.gui
+@pytest.mark.trio
+@customize_fixtures(backend_spontaneous_organization_boostrap=True)
+async def test_create_organization_wrong_timestamp(
+    gui, aqtbot, running_backend, catch_create_org_widget, autoclose_dialog, monkeypatch
+):
+    await aqtbot.key_click(gui, "n", QtCore.Qt.ControlModifier, 200)
+    co_w = await catch_create_org_widget()
+    assert co_w
+
+    # Patch the pendulum.now() just for the organization creation in the core so we have
+    # a different date than the server
+    def _fake_pendulum_now():
+        with freeze_time("2000-01-01"):
+            return pendulum.now()
+
+    monkeypatch.setattr("parsec.core.invite.organization.pendulum_now", _fake_pendulum_now)
+
+    await _do_creation_process(aqtbot, co_w)
+
+    def _error_shown():
+        assert autoclose_dialog.dialogs == [
+            ("Error", translate("TEXT_ORG_WIZARD_INVALID_TIMESTAMP"))
+        ]
+
+    await aqtbot.wait_until(_error_shown)

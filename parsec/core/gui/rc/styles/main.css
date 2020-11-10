@@ -194,6 +194,7 @@ QScrollBar:vertical {
     background-color: #FFFFFF;
     width: 20px;
     border: 1px solid #CCCCCC;
+    border-radius: 6px;
 }
 
 QScrollBar::handle:vertical {
@@ -399,16 +400,71 @@ QMenu::separator {
 
 /* Calendar */
 
-QCalendarWidget QWidget {
-    background-color: #999999;
+QCalendarWidget QWidget#qt_calendar_navigationbar {
+    background-color: #0092FF;
     color: #FFFFFF;
 }
 
-QCalendarWidget QTableView {
-    color: #000000;
-    background-color: #F2F2F2;
-    selection-background-color: #D2D2D2;
-    selection-color: #000000;
+QCalendarWidget QWidget#qt_calendar_prevmonth {
+    qproperty-icon: url(":/icons/images/material/navigate_before.svg");
+}
+
+QCalendarWidget QWidget#qt_calendar_nextmonth {
+    qproperty-icon: url(":/icons/images/material/navigate_next.svg");
+}
+
+QCalendarWidget QWidget#qt_calendar_prevmonth:hover {
+    qproperty-icon: url(":/icons/images/material/navigate_before.svg");
+    background-color: #0092FF;
+    border: none;
+}
+
+QCalendarWidget QWidget#qt_calendar_nextmonth:hover {
+    qproperty-icon: url(":/icons/images/material/navigate_next.svg");
+    background-color: #0092FF;
+    border: none;
+}
+
+QCalendarWidget QWidget#qt_calendar_monthbutton:hover {
+    background-color: #0092FF;
+    color: #FFFFFF;
+    border: none;
+}
+
+QCalendarWidget QWidget#qt_calendar_monthbutton:open {
+    background-color: #0092FF;
+    color: #FFFFFF;
+    border: none;
+}
+
+QCalendar QWidget#qt_calendar_yearbutton {
+    background-color: #0092FF;
+    color: #FFFFFF;
+    font-weight: bold;
+}
+
+QCalendar QWidget#qt_calendar_yearbutton:hover {
+    background-color: #0092FF;
+    color: #FFFFFF;
+    font-weight: bold;
+}
+
+QCalendar QWidget#qt_calendar_yearbutton:open {
+    background-color: #0092FF;
+    color: #FFFFFF;
+    font-weight: bold;
+}
+
+QCalendar QWidget#qt_calendar_yearedit:hover {
+    background-color: #0092FF;
+    color: #FFFFFF;
+    font-weight: bold;
+}
+
+QCalendar QWidget#qt_calendar_yearedit:open {
+    background-color: #0092FF;
+    color: #FFFFFF;
+    font-weight: bold;
 }
 
 /* Line */

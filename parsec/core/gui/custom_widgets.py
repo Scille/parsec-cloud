@@ -26,6 +26,12 @@ class SpinnerWidget(QWidget, Ui_SpinnerWidget):
         self.widget.layout().insertWidget(1, self.spinner)
 
 
+class CenteredSpinnerWidget(SpinnerWidget):
+    def __init__(self, parent=None):
+        super().__init__(parent=parent)
+        self.setMaximumSize(QSize(16777215, 16777215))
+
+
 def ensure_string_size(s, size, font):
     metrics = QFontMetrics(font)
     if metrics.horizontalAdvance(s) > size:

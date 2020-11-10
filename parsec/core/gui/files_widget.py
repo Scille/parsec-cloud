@@ -1,16 +1,15 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
+import trio
+import pathlib
 
 from parsec.core.core_events import CoreEvent
-import pathlib
 from uuid import UUID
-import trio
 from pendulum import DateTime
 from enum import IntEnum
 from structlog import get_logger
 
 from PyQt5.QtCore import Qt, pyqtSignal, QTimer
 from PyQt5.QtWidgets import QFileDialog, QWidget
-
 from parsec.core.types import FsPath, WorkspaceEntry, WorkspaceRole, BackendOrganizationFileLinkAddr
 from parsec.core.fs import WorkspaceFS, WorkspaceFSTimestamped
 from parsec.core.fs.exceptions import (
@@ -29,11 +28,14 @@ from parsec.core.gui.custom_dialogs import (
     show_info,
     GreyedDialog,
 )
+
+from parsec.core.gui.custom_widgets import CenteredSpinnerWidget
 from parsec.core.gui.file_history_widget import FileHistoryWidget
 from parsec.core.gui.loading_widget import LoadingWidget
 from parsec.core.gui.lang import translate as _
 from parsec.core.gui.workspace_roles import get_role_translation
 from parsec.core.gui.ui.files_widget import Ui_FilesWidget
+from parsec.core.gui.file_table import PasteStatus
 from parsec.core.types import DEFAULT_BLOCK_SIZE
 
 
@@ -89,6 +91,7 @@ async def _do_folder_create(workspace_fs, path):
 
 async def _do_import(workspace_fs, files, total_size, progress_signal):
     current_size = 0
+    errors = []
     for src, dst in files:
         try:
             if dst.parent != FsPath("/"):
@@ -107,9 +110,15 @@ async def _do_import(workspace_fs, files, total_size, progress_signal):
                         progress_signal.emit(src.name, current_size + read_size)
             current_size += read_size + 1
             progress_signal.emit(src.name, current_size)
-
         except trio.Cancelled as exc:
-            raise JobResultError("cancelled", last_file=dst) from exc
+            errors.append(exc)
+            raise JobResultError(
+                "cancelled", last_file=dst, file_count=len(files), exceptions=errors
+            ) from exc
+        except PermissionError as exc:
+            errors.append(exc)
+    if errors:
+        raise JobResultError("error", exceptions=errors, file_count=len(files))
 
 
 async def _do_remount_timestamped(
@@ -138,8 +147,9 @@ class Clipboard:
         Copied = 1
         Cut = 2
 
-    def __init__(self, files, status):
+    def __init__(self, files, status, source_workspace=None):
         self.files = files
+        self.source_workspace = source_workspace
         self.status = status
 
 
@@ -147,6 +157,7 @@ class FilesWidget(QWidget, Ui_FilesWidget):
     fs_updated_qt = pyqtSignal(CoreEvent, UUID)
     fs_synced_qt = pyqtSignal(CoreEvent, UUID)
     entry_downsynced_qt = pyqtSignal(UUID, UUID)
+    global_clipboard_updated_qt = pyqtSignal(object)
 
     sharing_updated_qt = pyqtSignal(WorkspaceEntry, object)
     back_clicked = pyqtSignal()
@@ -175,6 +186,12 @@ class FilesWidget(QWidget, Ui_FilesWidget):
     def __init__(self, core, jobs_ctx, event_bus, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.setupUi(self)
+
+        # Create spinner and stack it on the table_files widget
+        self.spinner = CenteredSpinnerWidget(parent=self.table_files)
+        self.table_files_layout.addWidget(self.spinner, 0, 0)
+        self.spinner.hide()
+
         self.core = core
         self.jobs_ctx = jobs_ctx
         self.event_bus = event_bus
@@ -243,7 +260,9 @@ class FilesWidget(QWidget, Ui_FilesWidget):
     def disconnect_all(self):
         pass
 
-    def set_workspace_fs(self, wk_fs, current_directory=FsPath("/"), default_selection=None):
+    def set_workspace_fs(
+        self, wk_fs, current_directory=FsPath("/"), default_selection=None, clipboard=None
+    ):
         self.current_directory = current_directory
         self.workspace_fs = wk_fs
         ws_entry = self.jobs_ctx.run_sync(self.workspace_fs.get_workspace_entry)
@@ -258,8 +277,20 @@ class FilesWidget(QWidget, Ui_FilesWidget):
             self.button_import_folder.show()
             self.button_import_files.show()
             self.button_create_folder.show()
-        self.clipboard = None
-        self.table_files.paste_disabled = True
+        self.clipboard = clipboard
+        if not self.clipboard:
+            self.table_files.paste_status = PasteStatus(status=PasteStatus.Status.Disabled)
+        else:
+            if self.clipboard.source_workspace == self.workspace_fs:
+                self.table_files.paste_status = PasteStatus(status=PasteStatus.Status.Enabled)
+            else:
+                # Sending the source_workspace name for paste text
+                self.table_files.paste_status = PasteStatus(
+                    status=PasteStatus.Status.Enabled,
+                    source_workspace=str(
+                        self.jobs_ctx.run_sync(self.clipboard.source_workspace.get_workspace_name)
+                    ),
+                )
         self.reset(default_selection)
 
     def reset(self, default_selection=None):
@@ -287,21 +318,28 @@ class FilesWidget(QWidget, Ui_FilesWidget):
             if f.type != FileType.Folder and f.type != FileType.File:
                 continue
             files_to_copy.append((self.current_directory / f.name, f.type))
-        self.clipboard = Clipboard(files_to_copy, Clipboard.Status.Copied)
-        self.table_files.paste_disabled = False
+        self.clipboard = Clipboard(
+            files=files_to_copy, status=Clipboard.Status.Copied, source_workspace=self.workspace_fs
+        )
+        self.global_clipboard_updated_qt.emit(self.clipboard)
+        self.table_files.paste_status = PasteStatus(status=PasteStatus.Status.Enabled)
 
     def on_cut_clicked(self):
         files = self.table_files.selected_files()
         files_to_cut = []
         rows = []
+
         for f in files:
             if f.type != FileType.Folder and f.type != FileType.File:
                 continue
             rows.append(f.row)
             files_to_cut.append((self.current_directory / f.name, f.type))
         self.table_files.set_rows_cut(rows)
-        self.table_files.paste_disabled = False
-        self.clipboard = Clipboard(files_to_cut, Clipboard.Status.Cut)
+        self.clipboard = Clipboard(
+            files=files_to_cut, status=Clipboard.Status.Cut, source_workspace=self.workspace_fs
+        )
+        self.global_clipboard_updated_qt.emit(self.clipboard)
+        self.table_files.paste_status = PasteStatus(status=PasteStatus.Status.Enabled)
 
     def on_paste_clicked(self):
         if not self.clipboard:
@@ -324,12 +362,24 @@ class FilesWidget(QWidget, Ui_FilesWidget):
                 try:
                     dst = self.current_directory / file_name
                     if self.clipboard.status == Clipboard.Status.Cut:
-                        self.jobs_ctx.run(self.workspace_fs.move, src, dst)
+                        self.jobs_ctx.run(
+                            self.workspace_fs.move, src, dst, self.clipboard.source_workspace
+                        )
                     else:
                         if src_type == FileType.Folder:
-                            self.jobs_ctx.run(self.workspace_fs.copytree, src, dst)
+                            self.jobs_ctx.run(
+                                self.workspace_fs.copytree,
+                                src,
+                                dst,
+                                self.clipboard.source_workspace,
+                            )
                         else:
-                            self.jobs_ctx.run(self.workspace_fs.copyfile, src, dst)
+                            self.jobs_ctx.run(
+                                self.workspace_fs.copyfile,
+                                src,
+                                dst,
+                                self.clipboard.source_workspace,
+                            )
                     break
                 except FileExistsError:
                     # File already exists, we append a counter at the end of its name
@@ -355,7 +405,9 @@ class FilesWidget(QWidget, Ui_FilesWidget):
                     break
         if self.clipboard.status == Clipboard.Status.Cut:
             self.clipboard = None
-            self.table_files.paste_disabled = True
+            # Set Global clipboard to none too
+            self.global_clipboard_updated_qt.emit(None)
+            self.table_files.paste_status = PasteStatus(status=PasteStatus.Status.Disabled)
 
         if last_exc:
             # Multiple errors, we'll just display a generic error message
@@ -473,7 +525,8 @@ class FilesWidget(QWidget, Ui_FilesWidget):
     def open_files(self):
         files = self.table_files.selected_files()
         if len(files) == 1:
-            self.open_file(files[0][2])
+            if not self.open_file(files[0][2]):
+                show_error(self, _("TEXT_FILE_OPEN_ERROR_file").format(file=files[0][2]))
         else:
             result = ask_question(
                 self,
@@ -483,8 +536,11 @@ class FilesWidget(QWidget, Ui_FilesWidget):
             )
             if result != _("ACTION_FILE_OPEN_MULTIPLE"):
                 return
+            success = True
             for f in files:
-                self.open_file(f[2])
+                success &= self.open_file(f[2])
+            if not success:
+                show_error(self, _("TEXT_FILE_OPEN_MULTIPLE_ERROR"))
 
     def open_file(self, file_name):
         # The Qt thread should never hit the core directly.
@@ -498,7 +554,7 @@ class FilesWidget(QWidget, Ui_FilesWidget):
             if isinstance(self.workspace_fs, WorkspaceFSTimestamped)
             else None,
         )
-        desktop.open_file(str(path))
+        return desktop.open_file(str(path))
 
     def item_activated(self, file_type, file_name):
         if file_type == FileType.ParentFolder:
@@ -506,7 +562,8 @@ class FilesWidget(QWidget, Ui_FilesWidget):
         elif file_type == FileType.ParentWorkspace:
             self.back_clicked.emit()
         elif file_type == FileType.File:
-            self.open_file(file_name)
+            if not self.open_file(file_name):
+                show_error(self, _("TEXT_FILE_OPEN_ERROR_file").format(file=file_name))
         elif file_type == FileType.Folder:
             self.load(self.current_directory / file_name)
 
@@ -514,6 +571,8 @@ class FilesWidget(QWidget, Ui_FilesWidget):
         self.load(self.current_directory)
 
     def load(self, directory, default_selection=None):
+        self.table_files.clear()
+        self.spinner.show()
         self.jobs_ctx.submit_job(
             ThreadSafeQtSignal(self, "folder_stat_success", QtToTrioJob),
             ThreadSafeQtSignal(self, "folder_stat_error", QtToTrioJob),
@@ -696,6 +755,7 @@ class FilesWidget(QWidget, Ui_FilesWidget):
             job.ret
         )
         self.table_files.clear()
+        self.spinner.hide()
         old_sort = self.table_files.horizontalHeader().sortIndicatorSection()
         old_order = self.table_files.horizontalHeader().sortIndicatorOrder()
         self.table_files.setSortingEnabled(False)
@@ -738,6 +798,7 @@ class FilesWidget(QWidget, Ui_FilesWidget):
 
     def _on_folder_stat_error(self, job):
         self.table_files.clear()
+        self.spinner.hide()
         if isinstance(job.exc, FSFileNotFoundError):
             show_error(self, _("TEXT_FILE_FOLDER_NOT_FOUND"))
             self.table_files.add_parent_workspace()
@@ -764,7 +825,34 @@ class FilesWidget(QWidget, Ui_FilesWidget):
         self.import_job = None
 
     def _on_import_error(self):
+        def _display_import_error(file_count, exceptions=None):
+            if exceptions and all(isinstance(exc, PermissionError) for exc in exceptions):
+                if file_count and file_count == 1:
+                    show_error(
+                        self, _("TEXT_FILE_IMPORT_ONE_PERMISSION_ERROR"), exception=exceptions[0]
+                    )
+                else:
+                    show_error(
+                        self,
+                        _("TEXT_FILE_IMPORT_MULTIPLE_PERMISSION_ERROR"),
+                        exception=exceptions[0],
+                    )
+            else:
+                if file_count and file_count == 1:
+                    show_error(
+                        self,
+                        _("TEXT_FILE_IMPORT_ONE_ERROR"),
+                        exception=exceptions[0] if exceptions else None,
+                    )
+                else:
+                    show_error(
+                        self,
+                        _("TEXT_FILE_IMPORT_MULTIPLE_ERROR"),
+                        exception=exceptions[0] if exceptions else None,
+                    )
+
         assert self.loading_dialog
+
         if hasattr(self.import_job.exc, "status") and self.import_job.exc.status == "cancelled":
             self.jobs_ctx.submit_job(
                 ThreadSafeQtSignal(self, "delete_success", QtToTrioJob),
@@ -775,7 +863,10 @@ class FilesWidget(QWidget, Ui_FilesWidget):
                 silent=True,
             )
         else:
-            show_error(self, _("TEXT_FILE_IMPORT_ERROR"), exception=self.import_job.exc)
+            _display_import_error(
+                file_count=self.import_job.exc.params.get("file_count", 0),
+                exceptions=self.import_job.exc.params.get("exceptions", None),
+            )
         self.loading_dialog.hide()
         self.loading_dialog.setParent(None)
         self.loading_dialog = None

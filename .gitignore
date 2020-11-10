@@ -28,7 +28,7 @@ var/
 # PyInstaller
 #  Usually these files are written by a python script from a template
 #  before PyInstaller builds the exe, so as to inject date/other infos into it.
-*.spec
+#*.spec
 
 # Installer logs
 pip-log.txt
@@ -80,3 +80,7 @@ parsec/core/gui/rc/generated_misc/
 *~
 *#
 .#*
+
+# macOS-specific files
+*.DS_Store
+*._DS_Store

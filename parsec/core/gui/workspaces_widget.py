@@ -32,6 +32,7 @@ from parsec.core.mountpoint.exceptions import (
     MountpointAlreadyMounted,
     MountpointNotMounted,
     MountpointError,
+    MountpointNoDriveAvailable,
 )
 
 from parsec.core.gui.trio_thread import (
@@ -412,7 +413,10 @@ class WorkspacesWidget(QWidget, Ui_WorkspacesWidget):
             wb = self.get_workspace_button(workspace_id, timestamp)
             if wb:
                 wb.set_mountpoint_state(False)
-            show_error(self, _("TEXT_WORKSPACE_CANNOT_MOUNT"), exception=job.exc)
+            if isinstance(job.exc, MountpointNoDriveAvailable):
+                show_error(self, _("TEXT_WORKSPACE_CANNOT_MOUNT_NO_DRIVE"), exception=job.exc)
+            else:
+                show_error(self, _("TEXT_WORKSPACE_CANNOT_MOUNT"), exception=job.exc)
 
     def on_unmount_success(self, job):
         self.reset()
@@ -511,25 +515,19 @@ class WorkspacesWidget(QWidget, Ui_WorkspacesWidget):
                 if isinstance(workspace_fs, WorkspaceFSTimestamped)
                 else None,
             )
+            if not desktop.open_file(str(path)):
+                show_error(self, _("TEXT_FILE_OPEN_ERROR_file").format(file=str(file_name)))
         except MountpointNotMounted:
             # The mountpoint has been umounted in our back, nothing left to do
-            pass
-
-        desktop.open_file(str(path))
+            show_error(self, _("TEXT_FILE_OPEN_ERROR_file").format(file=str(file_name)))
 
     def remount_workspace_ts(self, workspace_fs):
         def _on_finished(date, time):
             if not date or not time:
                 return
 
-            datetime = pendulum.datetime(
-                date.year(),
-                date.month(),
-                date.day(),
-                time.hour(),
-                time.minute(),
-                time.second(),
-                tzinfo="local",
+            datetime = pendulum.local(
+                date.year(), date.month(), date.day(), time.hour(), time.minute(), time.second()
             )
             self.mount_workspace(workspace_fs.workspace_id, datetime)
 
@@ -749,6 +747,7 @@ class WorkspacesWidget(QWidget, Ui_WorkspacesWidget):
 
     def list_workspaces(self):
         if not self.has_workspaces_displayed():
+            self.layout_workspaces.clear()
             self.spinner.show()
         self.jobs_ctx.submit_job(
             ThreadSafeQtSignal(self, "list_success", QtToTrioJob),

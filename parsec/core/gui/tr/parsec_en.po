@@ -7,8 +7,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PROJECT VERSION\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2020-10-06 08:56+0200\n"
-"PO-Revision-Date: 2020-10-06 09:07+0200\n"
+"POT-Creation-Date: 2020-11-04 09:40+0100\n"
+"PO-Revision-Date: 2020-10-15 10:30+0200\n"
 "Last-Translator: \n"
 "Language: en\n"
 "Language-Team: en <LL@li.org>\n"
@@ -265,6 +265,12 @@ msgstr "The server refused the connection."
 msgid "TEXT_ORG_WIZARD_CONNECTION_ERROR"
 msgstr "Cannot connect to the server."
 
+msgid "TEXT_ORG_WIZARD_INVALID_TIMESTAMP"
+msgstr ""
+"It seems that your machine does not have a correct date and time set up. "
+"Please check your date and time options and make sure that your time and "
+"timezone are correct.\n"
+
 msgid "TEXT_ORG_WIZARD_UNKNOWN_FAILURE"
 msgstr "Could not create the organization."
 
@@ -346,6 +352,9 @@ msgstr "Show history"
 msgid "ACTION_FILE_MENU_GET_FILE_LINK"
 msgstr "Get a link to the file"
 
+msgid "ACTION_FILE_MENU_PASTE_FROM_OTHER_WORKSPACE_source"
+msgstr "Paste from {source}"
+
 msgid "ACTION_FILE_MENU_PASTE"
 msgstr "Paste"
 
@@ -419,6 +428,9 @@ msgstr "Are you sure you want to delete {count} files?"
 msgid "ACTION_FILE_DELETE_MULTIPLE"
 msgstr "Delete"
 
+msgid "TEXT_FILE_OPEN_ERROR_file"
+msgstr "The file <b>{file}</b> could not be opened.\n"
+
 msgid "TEXT_FILE_OPEN_MULTIPLE_TITLE_count"
 msgstr "Open {count} files"
 
@@ -427,6 +439,9 @@ msgstr "Are you sure you want to open {count} files? This may take some time."
 
 msgid "ACTION_FILE_OPEN_MULTIPLE"
 msgstr "Open the files"
+
+msgid "TEXT_FILE_OPEN_MULTIPLE_ERROR"
+msgstr "Some or all files could not be opened."
 
 msgid "TEXT_FILE_IMPORT_LOADING_TITLE"
 msgstr "Importing"
@@ -477,7 +492,20 @@ msgstr "A folder with the same name already exists."
 msgid "TEXT_FILE_FOLDER_CREATE_ERROR_UNKNOWN"
 msgstr "Cannot create the new folder."
 
-msgid "TEXT_FILE_IMPORT_ERROR"
+msgid "TEXT_FILE_IMPORT_ONE_PERMISSION_ERROR"
+msgstr "You don't have the permission to import this file."
+
+msgid "TEXT_FILE_IMPORT_MULTIPLE_PERMISSION_ERROR"
+msgstr ""
+"You don't have the permission to access some of these files. Some files "
+"may not have been imported."
+
+msgid "TEXT_FILE_IMPORT_ONE_ERROR"
+msgstr ""
+"There has been an error while import the file. The file could not be "
+"imported."
+
+msgid "TEXT_FILE_IMPORT_MULTIPLE_ERROR"
 msgstr ""
 "There has been an error while importing the files. Some files may not "
 "have been imported."
@@ -644,7 +672,9 @@ msgstr ""
 msgid "TEXT_LOGIN_ERROR_FUSE_NOT_AVAILABLE"
 msgstr ""
 "Fuse could not be loaded. \n"
-"Please check your installation."
+"Please check your installation. \n"
+"On Mac, you have to install OSXFUSE (FUSE for MacOS) and allow in security settings. \n"
+"https://osxfuse.github.io/2020/10/05/OSXFUSE-3.11.2.html"
 
 msgid "TEXT_LOGIN_UNKNOWN_ERROR"
 msgstr "Cannot log in."
@@ -1638,6 +1668,12 @@ msgstr "Quit"
 msgid "TEXT_WORKSPACE_TIMESTAMPED_VERSION_RETRIEVAL_FAILED"
 msgstr "Cannot retrieve this workspace history."
 
+msgid "TEXT_WORKSPACE_TIMESTAMPED_INSTRUCTIONS_created"
+msgstr ""
+"You will be able to see the workspace as it was at a given time.\n"
+"\n"
+"This workspace was created on {created}."
+
 msgid "TEXT_WORKSPACE_TIMESTAMPED_TITLE"
 msgstr "Go back in time"
 
@@ -1843,6 +1879,11 @@ msgstr "Cannot rename the workspace."
 
 msgid "TEXT_WORKSPACE_NO_WORKSPACES"
 msgstr "No workspace has been created yet."
+
+msgid "TEXT_WORKSPACE_CANNOT_MOUNT_NO_DRIVE"
+msgstr ""
+"Cannot display the content of this workspace because you have too many "
+"workspaces already mounted. Unmount some of them by using the toggle."
 
 msgid "TEXT_WORKSPACE_CANNOT_MOUNT"
 msgstr ""
@@ -2328,11 +2369,11 @@ msgstr "Greet the user"
 msgid "TEXT_USERS_FILTER_USERS_PLACEHOLDER"
 msgstr "Filter users"
 
-msgid "ACTION_USER_INVITE_USER"
-msgstr "Invite a new user"
-
 msgid "ACTION_FILTER_LIST_USERS"
 msgstr "Search users"
+
+msgid "ACTION_USER_INVITE_USER"
+msgstr "Invite a new user"
 
 msgid "ACTION_LIST_PREVIOUS_PAGE"
 msgstr "Previous page"
@@ -2345,6 +2386,9 @@ msgstr "This workspace is shared."
 
 msgid "TEXT_WORKSPACE_IS_OWNER_TOOLTIP"
 msgstr "You are this workspace owner."
+
+msgid "TEXT_WORKSPACE_REENCRYPTION"
+msgstr "Reencrypting... %p%"
 
 msgid "TEXT_WORKSPACE_OPEN_WORKSPACE_TOOLTIP"
 msgstr "Open the workspace in the file explorer."
@@ -2363,9 +2407,6 @@ msgstr "Reencrypt the workspace."
 
 msgid "TEXT_WORKSPACE_DELETE_WORKSPACE_TOOLTIP"
 msgstr "Remove this workspace."
-
-msgid "TEXT_WORKSPACE_REENCRYPTION"
-msgstr "Reencrypting... %p%"
 
 msgid "TEXT_WORKSPACE_FILTER_WORKSPACES_PLACEHOLDER"
 msgstr "Filter the workspaces"
