@@ -155,12 +155,13 @@ jobs:
     displayName: 'Tests postgresql'
   # The full disk test are run separately since they rely on running a sqlite3 database
   # on a fuse mountpoint which can deadlock if run with the rest of the test suite
-  - bash: |
-      set -eux
-      py.test $(pytest.base_args) \
-        tests --rundiskfull --runslow -m diskfull -x \
-        --junitxml=test-results-fulldisk.xml
-    displayName: 'Tests full disk'
+  # TEMPORARILY DISABLED BECAUSE THEY CAUSE ISSUES
+  # - bash: |
+  #     set -eux
+  #     py.test $(pytest.base_args) \
+  #       tests --rundiskfull --runslow -m diskfull -x \
+  #       --junitxml=test-results-fulldisk.xml
+  #   displayName: 'Tests full disk'
   # TODO: run gui tests with xvfb
   # - bash: |
   #     set -eux
