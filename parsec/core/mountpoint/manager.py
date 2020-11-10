@@ -9,6 +9,7 @@ from pendulum import DateTime
 from structlog import get_logger
 from typing import Sequence, Optional
 from importlib import __import__ as import_function
+from sys import platform as _platform
 
 from async_generator import asynccontextmanager
 
@@ -38,7 +39,7 @@ try:
         import_function("winfspy")
     else:
         import_function("fuse")
-except (ImportError, RuntimeError):
+except (ImportError, RuntimeError, OSError):
     pass
 
 logger = get_logger()
@@ -64,7 +65,7 @@ def get_mountpoint_runner():
         try:
             # Use import function for easier mock up
             import_function("fuse")
-        except ImportError as exc:
+        except (ImportError, OSError) as exc:
             raise MountpointFuseNotAvailable(exc) from exc
 
         logging.getLogger("fuse").setLevel(logging.WARNING)
@@ -264,6 +265,18 @@ class MountpointManager:
             await self.safe_unmount(workspace_id, timestamp=timestamp)
 
 
+async def cleanup_macos_mountpoint_folder(base_mountpoint_path):
+    # In case of a crash on macOS, workspaces don't unmount correctly and leave empty directories
+    # in the default mount folder. This function is used to clean these anytime a login occurs.
+    for dirs in os.listdir(base_mountpoint_path):
+        dir_path = str(base_mountpoint_path) + "/" + str(dirs)
+        stats = os.statvfs(dir_path)
+        if stats.f_blocks == 0 and stats.f_ffree == 0 and stats.f_bavail == 0:
+            await trio.run_process(["diskutil", "unmount", dir_path])
+            if dirs in os.listdir(base_mountpoint_path):  # checking if there is something to delete
+                await trio.run_process(["rm", "-d", dir_path])  # otherwise an empty dir remains
+
+
 @asynccontextmanager
 async def mountpoint_manager_factory(
     user_fs,
@@ -284,6 +297,11 @@ async def mountpoint_manager_factory(
     # Now is a good time to perform some cleanup in the registry
     if os.name == "nt":
         cleanup_parsec_drive_icons()
+    elif _platform == "darwin":
+        try:
+            await cleanup_macos_mountpoint_folder(base_mountpoint_path)
+        except FileNotFoundError:
+            pass
 
     def on_event(event, new_entry, previous_entry=None):
         # Workspace created
