@@ -135,7 +135,7 @@ jobs:
       # Install the parsec wheel with all dependencies
       WHEEL=$(ls $(Pipeline.Workspace)/wheel/parsec_cloud-*.whl)
       echo $WHEEL
-      pip install $WHEEL[all]
+      pip install --use-feature=2020-resolver $WHEEL[all]
       # Check dependency compatibility
       pip check parsec[all]
     displayName: 'Install'
@@ -219,7 +219,7 @@ jobs:
       # Install the parsec wheel with all dependencies
       WHEEL=$(ls $(Pipeline.Workspace)/wheel/parsec_cloud-*.whl)
       echo $WHEEL
-      pip install $WHEEL[all]
+      pip install --use-feature=2020-resolver $WHEEL[all]
       # Check dependency compatibility
       pip check parsec[all]
     displayName: 'Install'
@@ -298,7 +298,7 @@ jobs:
       WHEEL_DIRECTORY=`python -c 'print(r"$(Pipeline.Workspace)/wheel".replace("\\\\", "/"))'`
       WHEEL=$(ls $WHEEL_DIRECTORY/parsec_cloud-*.whl)
       echo $WHEEL
-      pip install $WHEEL[all]
+      pip install --use-feature=2020-resolver $WHEEL[all]
       # Check dependency compatibility
       pip check parsec[all]
       # Check winfsp-tests availability
