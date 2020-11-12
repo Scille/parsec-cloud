@@ -1,0 +1,1 @@
+Added README file for macOS packaging process and packaging scripts
