@@ -69,7 +69,7 @@ Once the notarization is done, you should have received a confirmation email.
 The notarization will be checked online by the user's Mac, and for it to work offline, we can staple the app, which will "attach" the notarization ticket to it.
 
 ```shell
-xcrun staple stapler "dist/parsec.app"
+xcrun stapler staple -v "dist/parsec.app"
 ```
 
 Once stapled, we need to re-zip the app to distribute the stapled version:
@@ -78,6 +78,7 @@ Once stapled, we need to re-zip the app to distribute the stapled version:
 rm dist/parsec.zip
 ditto -c -k --sequesterRsrc --keepParent "dist/parsec.app" dist/parsec.zip
 ```
+
 
 ### 6 - Check with Gatekeeper
 
