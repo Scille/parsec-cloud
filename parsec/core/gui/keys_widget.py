@@ -44,7 +44,13 @@ class KeysWidget(QWidget, Ui_KeysWidget):
         self.button_import_key.clicked.connect(self._on_import_key)
 
     def reload_devices(self):
-        self.scroll_content.layout().clean()
+        layout = self.scroll_content.layout()
+        for _ in range(layout.count()):
+            item = self.scroll_content.layout().takeAt(0)
+            layout.removeItem(item)
+            w = item.widget()
+            if w is not None:
+                w.setParent(None)
         devices = list_available_devices(self.config.config_dir)
         for device in devices:
             w = KeyWidget(device, parent=self)
@@ -57,7 +63,6 @@ class KeysWidget(QWidget, Ui_KeysWidget):
         if not output_directory:
             return
         _, key_name = os.path.split(device.key_file_path)
-        print(output_directory)
         try:
             shutil.copyfile(device.key_file_path, os.path.join(output_directory, key_name))
         except IOError:
@@ -85,7 +90,6 @@ class KeysWidget(QWidget, Ui_KeysWidget):
         )
         if a == "ACTION_YES":
             _, key_name = os.path.split(new_device.key_file_path)
-            print(self.config)
             shutil.copyfile(
                 new_device.key_file_path,
                 os.path.join(get_devices_dir(self.config.config_dir), key_name),
