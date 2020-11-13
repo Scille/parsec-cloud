@@ -54,3 +54,4 @@ parts:
       - libfreetype6
       - libpng16-16
       - libfontconfig
+      - libxkbcommon-x11-0
