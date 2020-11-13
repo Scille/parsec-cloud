@@ -2500,3 +2500,6 @@ msgstr "Importer une clé d'appareil"
 
 msgid "ACTION_MAIN_MENU_MANAGE_KEYS"
 msgstr "Importer/Exporter les clés de l'appareil"
+
+msgid "TEXT_EXPORT_KEY_TOOLTIP"
+msgstr "Exporter cette clé"
