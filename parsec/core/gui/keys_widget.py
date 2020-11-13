@@ -17,6 +17,7 @@ from parsec.core.local_device import (
 from parsec.core.gui.ui.keys_widget import Ui_KeysWidget
 from parsec.core.gui.ui.key_widget import Ui_KeyWidget
 from parsec.core.gui.custom_dialogs import show_error, ask_question
+from parsec.core.gui.lang import translate
 
 
 class KeyWidget(QWidget, Ui_KeyWidget):
@@ -65,8 +66,8 @@ class KeysWidget(QWidget, Ui_KeysWidget):
         _, key_name = os.path.split(device.key_file_path)
         try:
             shutil.copyfile(device.key_file_path, os.path.join(output_directory, key_name))
-        except IOError:
-            show_error("ERROR")
+        except IOError as err:
+            show_error(self, translate("EXPORT_KEY_ERROR"), err)
 
     def _on_import_key(self):
         file_dialog = QFileDialog()
@@ -80,15 +81,15 @@ class KeysWidget(QWidget, Ui_KeysWidget):
         if not key_file:
             return
         new_device = load_device_file(Path(key_file))
-        a = ask_question(
+        rep = ask_question(
             parent=self,
-            title="ASK_IMPORT_KEY",
+            title=translate("ASK_IMPORT_KEY"),
             message=(
                 f"{new_device.organization_id}<br>{new_device.human_handle.label}<br>{new_device.device_label}"
             ),
-            button_texts=("ACTION_YES", "ACTION_NO"),
+            button_texts=(translate("ACTION_IMPORT_YES"), translate("ACTION_IMPORT_NO")),
         )
-        if a == "ACTION_YES":
+        if rep == translate("ACTION_IMPORT_YES"):
             _, key_name = os.path.split(new_device.key_file_path)
             shutil.copyfile(
                 new_device.key_file_path,

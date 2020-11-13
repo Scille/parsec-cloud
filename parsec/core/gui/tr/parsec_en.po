@@ -2417,3 +2417,23 @@ msgstr "Create a new workspace"
 msgid "ACTION_WORKSPACE_GOTO_FILE_LINK"
 msgstr "Go to a file using a link"
 
+msgid "ASK_IMPORT_KEY"
+msgstr "Import this device key ?"
+
+msgid "ACTION_IMPORT_YES"
+msgstr "Import"
+
+msgid "ACTION_IMPORT_NO"
+msgstr "Cancel"
+
+msgid "EXPORT_KEY_ERROR"
+msgstr "Can not export device key"
+
+msgid "TEXT_KEYS_DIALOG"
+msgstr "Manage device keys"
+
+msgid "ACTION_IMPORT_KEY"
+msgstr "Import a device key"
+
+msgid "ACTION_MAIN_MENU_MANAGE_KEYS"
+msgstr "Import/Export device keys"

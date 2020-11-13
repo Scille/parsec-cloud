@@ -2479,3 +2479,24 @@ msgstr "Créer un nouvel espace de travail"
 
 msgid "ACTION_WORKSPACE_GOTO_FILE_LINK"
 msgstr "Trouver un fichier via son lien"
+
+msgid "ASK_IMPORT_KEY"
+msgstr "Importer cette clé d'appareil ?"
+
+msgid "ACTION_IMPORT_YES"
+msgstr "Importer"
+
+msgid "ACTION_IMPORT_NO"
+msgstr "Annuler"
+
+msgid "EXPORT_KEY_ERROR"
+msgstr "Impossible d'importer cette clé d'appareil"
+
+msgid "TEXT_KEYS_DIALOG"
+msgstr "Gerer les clés de l'appareil"
+
+msgid "ACTION_IMPORT_KEY"
+msgstr "Importer une clé d'appareil"
+
+msgid "ACTION_MAIN_MENU_MANAGE_KEYS"
+msgstr "Importer/Exporter les clés de l'appareil"
