@@ -37,6 +37,8 @@ class KeyWidget(QWidget, Ui_KeyWidget):
 
 
 class KeysWidget(QWidget, Ui_KeysWidget):
+    key_imported = pyqtSignal()
+
     def __init__(self, config, parent):
         super().__init__(parent=parent)
         self.config = config
@@ -93,3 +95,4 @@ class KeysWidget(QWidget, Ui_KeysWidget):
                 os.path.join(get_devices_dir(self.config.config_dir), key_name),
             )
             self.reload_devices()
+            self.key_imported.emit()
