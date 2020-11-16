@@ -93,6 +93,20 @@ class KeysWidget(QWidget, Ui_KeysWidget):
         )
         if rep == translate("ACTION_IMPORT_YES"):
             _, key_name = os.path.split(new_device.key_file_path)
+            dest = get_devices_dir(self.config.config_dir).joinpath(key_name)
+            if dest.exists():
+                rep = ask_question(
+                    parent=self,
+                    title=translate("ASK_OVERWRITE_KEY"),
+                    message=translate("TEXT_OVERWRITE_KEY"),
+                    button_texts=(
+                        translate("ACTION_OVERWRITE_KEY_YES"),
+                        translate("ACTION_IMPORT_NO"),
+                    ),
+                )
+                if not rep == translate("ACTION_OVERWRITE_KEY_YES"):
+                    print("nop")
+                    return
             shutil.copyfile(
                 new_device.key_file_path,
                 os.path.join(get_devices_dir(self.config.config_dir), key_name),

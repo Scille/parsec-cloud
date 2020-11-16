@@ -2512,3 +2512,12 @@ msgstr "Clés d'appareil (*.keys)"
 
 msgid "TEXT_INVALID_DEVICE_KEY"
 msgstr "Ce fichier ne contient pas de clé d'appareil valide"
+
+msgid "ASK_OVERWRITE_KEY"
+msgstr "Remplacer la clé d'appareil ? "
+
+msgid "TEXT_OVERWRITE_KEY"
+msgstr "Cette clé d'appareil existe déja, souhaiter vous la remplacer ?"
+
+msgid "ACTION_OVERWRITE_KEY_YES"
+msgstr "Remplacer"

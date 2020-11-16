@@ -2449,3 +2449,12 @@ msgstr "Keys files (*.keys)"
 
 msgid "TEXT_INVALID_DEVICE_KEY"
 msgstr "This file does not containt a valid device key"
+
+msgid "ASK_OVERWRITE_KEY"
+msgstr "Overwrite device key ?"
+
+msgid "TEXT_OVERWRITE_KEY"
+msgstr "This device key aready exist, do you want to overwrite it ?"
+
+msgid "ACTION_OVERWRITE_KEY_YES"
+msgstr "overwrite"
