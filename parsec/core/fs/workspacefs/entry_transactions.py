@@ -16,7 +16,7 @@ from parsec.core.types import (
 )
 
 
-from parsec.core.core_events import CoreEvent
+from parsec.core.core_events import CoreEvent, FSEntryUpdatedReason
 from parsec.core.fs.workspacefs.file_transactions import FileTransactions
 from parsec.core.fs.exceptions import (
     FSPermissionError,
@@ -261,10 +261,17 @@ class EntryTransactions(FileTransactions):
             await self.local_storage.set_manifest(parent.id, new_parent)
 
         # Send event
-        self._send_event(CoreEvent.FS_ENTRY_UPDATED, id=parent.id)
+        self._send_event(
+            CoreEvent.FS_ENTRY_UPDATED,
+            id=parent.id,
+            reason=FSEntryUpdatedReason.ENTRY_RENAME,
+            entry_id=source_entry_id,
+            entry_source_name=source.name,
+            entry_destination_name=destination.name,
+        )
 
         # Return the entry id of the renamed entry
-        return parent.children[source.name]
+        return source_entry_id
 
     async def folder_delete(self, path: FsPath) -> EntryID:
         # Check write rights
@@ -295,7 +302,13 @@ class EntryTransactions(FileTransactions):
             await self.local_storage.set_manifest(parent.id, new_parent)
 
         # Send event
-        self._send_event(CoreEvent.FS_ENTRY_UPDATED, id=parent.id)
+        self._send_event(
+            CoreEvent.FS_ENTRY_UPDATED,
+            id=parent.id,
+            reason=FSEntryUpdatedReason.FOLDER_DELETE,
+            entry_id=child.id,
+            entry_name=path.name,
+        )
 
         # Return the entry id of the removed folder
         return child.id
@@ -325,7 +338,13 @@ class EntryTransactions(FileTransactions):
             await self.local_storage.set_manifest(parent.id, new_parent)
 
         # Send event
-        self._send_event(CoreEvent.FS_ENTRY_UPDATED, id=parent.id)
+        self._send_event(
+            CoreEvent.FS_ENTRY_UPDATED,
+            id=parent.id,
+            reason=FSEntryUpdatedReason.FILE_DELETE,
+            entry_id=child.id,
+            entry_name=path.name,
+        )
 
         # Return the entry id of the deleted file
         return child.id
@@ -355,8 +374,18 @@ class EntryTransactions(FileTransactions):
             await self.local_storage.set_manifest(parent.id, new_parent)
 
         # Send events
-        self._send_event(CoreEvent.FS_ENTRY_UPDATED, id=parent.id)
-        self._send_event(CoreEvent.FS_ENTRY_UPDATED, id=child.id)
+        self._send_event(
+            CoreEvent.FS_ENTRY_UPDATED,
+            id=parent.id,
+            reason=FSEntryUpdatedReason.FOLDER_CREATE,
+            entry_id=child.id,
+            entry_name=path.name,
+        )
+        self._send_event(
+            CoreEvent.FS_ENTRY_UPDATED,
+            id=child.id,
+            reason=FSEntryUpdatedReason.FOLDER_CREATE_ENTRY_CREATION,
+        )
 
         # Return the entry id of the created folder
         return child.id
@@ -389,8 +418,21 @@ class EntryTransactions(FileTransactions):
             fd = self.local_storage.create_file_descriptor(child) if open else None
 
         # Send events
-        self._send_event(CoreEvent.FS_ENTRY_UPDATED, id=parent.id)
-        self._send_event(CoreEvent.FS_ENTRY_UPDATED, id=child.id)
+        self._send_event(
+            CoreEvent.FS_ENTRY_UPDATED,
+            id=parent.id,
+            reason=FSEntryUpdatedReason.FILE_CREATE,
+            entry_id=child.id,
+            entry_name=path.name,
+            entry_creation_date=child.created,
+            entry_updated=child.updated,
+            entry_size=child.size,
+        )
+        self._send_event(
+            CoreEvent.FS_ENTRY_UPDATED,
+            id=child.id,
+            reason=FSEntryUpdatedReason.FILE_CREATE_ENTRY_CREATION,
+        )
 
         # Return the entry id of the created file and the file descriptor
         return child.id, fd
@@ -425,6 +467,8 @@ class EntryTransactions(FileTransactions):
 
             # Perform resize
             await self._manifest_resize(manifest, length)
-
+            self._send_event(
+                CoreEvent.FS_ENTRY_UPDATED, id=manifest.id, reason=FSEntryUpdatedReason.FILE_RESIZE
+            )
             # Return entry id
             return manifest.id

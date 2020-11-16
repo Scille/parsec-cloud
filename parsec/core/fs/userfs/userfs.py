@@ -21,7 +21,7 @@ from structlog import get_logger
 from async_generator import asynccontextmanager
 
 from parsec.utils import open_service_nursery
-from parsec.core.core_events import CoreEvent
+from parsec.core.core_events import CoreEvent, FSEntryUpdatedReason
 from parsec.event_bus import EventBus
 from parsec.crypto import SecretKey
 from parsec.api.data import (
@@ -193,7 +193,7 @@ class UserFS:
 
         now = pendulum_now()
         wentry = WorkspaceEntry(
-            name="<user manifest>",
+            name=EntryName("<user manifest>"),
             id=device.user_manifest_id,
             key=device.user_manifest_key,
             encryption_revision=1,
@@ -366,7 +366,15 @@ class UserFS:
             user_manifest = user_manifest.evolve_workspaces_and_mark_updated(workspace_entry)
             await self._create_workspace(workspace_entry.id, workspace_manifest)
             await self.set_user_manifest(user_manifest)
-            self.event_bus.send(CoreEvent.FS_ENTRY_UPDATED, id=self.user_manifest_id)
+            self.event_bus.send(
+                CoreEvent.FS_ENTRY_UPDATED,
+                id=self.user_manifest_id,
+                reason=FSEntryUpdatedReason.WORKSPACE_CREATE,
+                # Use of entry_id instead of workspace_id because events from FS_ENTRY_UPDATED in
+                # workspacefs already use workspace_id as a discriminent
+                entry_id=workspace_entry.id,
+                workspace_name=name,
+            )
             self.event_bus.send(CoreEvent.FS_WORKSPACE_CREATED, new_entry=workspace_entry)
 
         return workspace_entry.id
@@ -388,7 +396,16 @@ class UserFS:
                 updated_workspace_entry
             )
             await self.set_user_manifest(updated_user_manifest)
-            self.event_bus.send(CoreEvent.FS_ENTRY_UPDATED, id=self.user_manifest_id)
+            self.event_bus.send(
+                CoreEvent.FS_ENTRY_UPDATED,
+                id=self.user_manifest_id,
+                reason=FSEntryUpdatedReason.WORKSPACE_RENAME,
+                # Use of entry_id instead of workspace_id because events from FS_ENTRY_UPDATED in
+                # workspacefs already use workspace_id as a discriminent
+                entry_id=updated_workspace_entry.id,
+                workspace_old_name=workspace_entry.name,
+                workspace_new_name=new_name,
+            )
 
     async def _fetch_remote_user_manifest(self, version: Optional[int] = None) -> UserManifest:
         """
@@ -748,7 +765,11 @@ class UserFS:
                         last_processed_message=new_last_processed_message
                     )
                     await self.set_user_manifest(user_manifest)
-                    self.event_bus.send(CoreEvent.FS_ENTRY_UPDATED, id=self.user_manifest_id)
+                    self.event_bus.send(
+                        CoreEvent.FS_ENTRY_UPDATED,
+                        id=self.user_manifest_id,
+                        reason=FSEntryUpdatedReason.PROCESS_LAST_MESSAGES,
+                    )
 
         return errors
 
@@ -820,7 +841,7 @@ class UserFS:
         # Finally insert the new workspace entry into our user manifest
         workspace_entry = WorkspaceEntry(
             # Name are not required to be unique across workspaces, so no check to do here
-            name=msg.name,
+            name=EntryName(msg.name),
             id=msg.id,
             key=msg.key,
             encryption_revision=msg.encryption_revision,

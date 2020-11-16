@@ -34,3 +34,26 @@ class CoreEvent(Enum):
     # Others
     SHARING_UPDATED = "sharing.updated"
     USERFS_UPDATED = "userfs.updated"
+
+
+class FSEntryUpdatedReason(Enum):
+    ENTRY_RENAME = "ENTRY_RENAME"
+    FOLDER_DELETE = "FOLDER_DELETE"
+    # Creation of the parent manifest when creating folder, this is the main event
+    FOLDER_CREATE = "FOLDER_CREATE"
+    # Creation of the child
+    FOLDER_CREATE_ENTRY_CREATION = "FOLDER_CREATE_ENTRY_CREATION"
+    FILE_DELETE = "FILE_DELETE"
+    # Creation of the parent manifest when creating file, this is the main event
+    FILE_CREATE = "FILE_CREATE"
+    # Creation of the child
+    FILE_CREATE_ENTRY_CREATION = "FILE_CREATE_ENTRY_CREATION"
+    FILE_WRITE = "FILE_WRITE"
+    FILE_RESIZE = "FILE_RESIZE"
+    # Sync parent of file, this is the main event
+    SYNC_FILE_CONFLICT = "SYNC_FILE_CONFLICT"
+    # Sync child
+    SYNC_FILE_CONFLICT_ENTRY_CREATION = "SYNC_FILE_CONFLICT_ENTRY_CREATION"
+    WORKSPACE_CREATE = "WORKSPACE_CREATE"
+    WORKSPACE_RENAME = "WORKSPACE_RENAME"
+    PROCESS_LAST_MESSAGES = "PROCESS_LAST_MESSAGES"

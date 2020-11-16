@@ -347,7 +347,7 @@ async def monitor_sync(user_fs, event_bus, task_status):
         # not yet notified to task_status
         task_status.awake()
 
-    def _on_entry_updated(event, id, workspace_id=None):
+    def _on_entry_updated(event, id, workspace_id=None, **kwarg):
         if workspace_id is None:
             # User manifest
             assert id == user_fs.user_manifest_id

@@ -6,7 +6,7 @@ from typing import Optional, List, Dict, AsyncIterator, Tuple, Union, Pattern
 from pendulum import now as pendulum_now
 
 from parsec.api.protocol import DeviceID
-from parsec.core.core_events import CoreEvent
+from parsec.core.core_events import CoreEvent, FSEntryUpdatedReason
 from parsec.api.data import BaseManifest as BaseRemoteManifest
 from parsec.core.types import (
     Chunk,
@@ -415,8 +415,20 @@ class SyncTransactions(EntryTransactions):
                 await self.local_storage.set_manifest(parent_id, new_parent_manifest)
                 await self.local_storage.set_manifest(entry_id, other_manifest)
 
-                self._send_event(CoreEvent.FS_ENTRY_UPDATED, id=new_manifest.id)
-                self._send_event(CoreEvent.FS_ENTRY_UPDATED, id=parent_id)
+                self._send_event(
+                    CoreEvent.FS_ENTRY_UPDATED,
+                    id=parent_id,
+                    reason=FSEntryUpdatedReason.SYNC_FILE_CONFLICT,
+                    entry_id=entry_id,
+                    entry_name=filename,
+                    entry_resolved_name=new_name,
+                    entry_resolved_id=new_manifest.id,
+                )
+                self._send_event(
+                    CoreEvent.FS_ENTRY_UPDATED,
+                    id=new_manifest.id,
+                    reason=FSEntryUpdatedReason.SYNC_FILE_CONFLICT_ENTRY_CREATION,
+                )
                 self._send_event(
                     CoreEvent.FS_ENTRY_FILE_CONFLICT_RESOLVED,
                     id=entry_id,
