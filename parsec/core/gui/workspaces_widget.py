@@ -771,7 +771,7 @@ class WorkspacesWidget(QWidget, Ui_WorkspacesWidget):
     def _on_fs_entry_synced_trio(self, event, id, workspace_id=None):
         self.fs_synced_qt.emit(event, id)
 
-    def _on_fs_entry_updated_trio(self, event, workspace_id=None, id=None):
+    def _on_fs_entry_updated_trio(self, event, reason, workspace_id=None, id=None, **kwarg):
         if workspace_id and not id:
             self.fs_updated_qt.emit(event, workspace_id)
 
