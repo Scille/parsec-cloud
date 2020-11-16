@@ -59,8 +59,7 @@ class KeysWidget(QWidget, Ui_KeysWidget):
             self.scroll_content.layout().insertWidget(self.scroll_content.layout().count() - 1, w)
 
     def _on_export_key(self, device):
-        file_dialog = QFileDialog()
-        output_directory = file_dialog.getExistingDirectory()
+        output_directory = QFileDialog.getExistingDirectory()
         if not output_directory:
             return
         _, key_name = os.path.split(device.key_file_path)
@@ -70,12 +69,10 @@ class KeysWidget(QWidget, Ui_KeysWidget):
             show_error(self, translate("EXPORT_KEY_ERROR"), err)
 
     def _on_import_key(self):
-        file_dialog = QFileDialog()
-        file_dialog.setFileMode(QFileDialog.ExistingFile)
-        key_file, _ = file_dialog.getOpenFileName(
+        key_file, _ = QFileDialog.getOpenFileName(
             parent=self,
             caption="Import a key",
-            filter="Keys files (*.keys)",
+            filter="Keys files (*.keys);;All files (*)",
             initialFilter="Keys files (*.keys)",
         )
         if not key_file:
