@@ -572,7 +572,7 @@
             "name": {
                 "allow_none": false,
                 "required": true,
-                "type": "String"
+                "type": "EntryNameField"
             },
             "timestamp": {
                 "allow_none": false,
@@ -618,7 +618,7 @@
             "name": {
                 "allow_none": false,
                 "required": true,
-                "type": "String"
+                "type": "EntryNameField"
             },
             "timestamp": {
                 "allow_none": false,

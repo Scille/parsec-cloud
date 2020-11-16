@@ -1,0 +1,1 @@
+Fix message name typing, setting it to EntryName to comfort with WorkspaceEntry.

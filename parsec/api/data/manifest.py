@@ -75,7 +75,7 @@ class WorkspaceEntry(BaseData):
         def make_obj(self, data: Dict[str, Any]) -> "WorkspaceEntry":
             return WorkspaceEntry(**data)
 
-    name: str
+    name: EntryName
     id: EntryID
     key: SecretKey
     encryption_revision: int
@@ -87,7 +87,7 @@ class WorkspaceEntry(BaseData):
     def new(cls: Type[WorkspaceEntryTypeVar], name: str) -> "WorkspaceEntry":
         now = pendulum_now()
         return WorkspaceEntry(
-            name=name,
+            name=EntryName(name),
             id=EntryID(),
             key=SecretKey.generate(),
             encryption_revision=1,
