@@ -2447,3 +2447,5 @@ msgstr "Keys files (*.keys);;All files (*)"
 msgid "IMPORT_KEY_INITIAL_FILTER"
 msgstr "Keys files (*.keys)"
 
+msgid "TEXT_INVALID_DEVICE_KEY"
+msgstr "This file does not containt a valid device key"

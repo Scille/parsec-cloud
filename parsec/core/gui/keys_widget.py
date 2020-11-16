@@ -80,6 +80,9 @@ class KeysWidget(QWidget, Ui_KeysWidget):
         if not key_file:
             return
         new_device = load_device_file(Path(key_file))
+        if new_device is None:
+            show_error(self, translate("TEXT_INVALID_DEVICE_KEY"))
+            return
         rep = ask_question(
             parent=self,
             title=translate("ASK_IMPORT_KEY"),
