@@ -4,13 +4,12 @@ import re
 import pytest
 
 from parsec.api.protocol import DeviceID
-from parsec.core.core_events import CoreEvent
+from parsec.core.core_events import CoreEvent, FSEntryUpdatedReason
 from parsec.core.types import FsPath, EntryID, Chunk, LocalFolderManifest, LocalFileManifest
 
 from parsec.core.fs.workspacefs.sync_transactions import merge_manifests
 from parsec.core.fs.workspacefs.sync_transactions import merge_folder_children
 from parsec.core.fs.exceptions import FSFileConflictError
-
 
 empty_pattern = re.compile(r"^\b$")
 
@@ -324,13 +323,22 @@ async def test_file_conflict(alice_sync_transactions):
         [
             (
                 CoreEvent.FS_ENTRY_UPDATED,
-                {"workspace_id": sync_transactions.workspace_id, "id": a2_id},
+                {
+                    "id": sync_transactions.workspace_id,
+                    "workspace_id": sync_transactions.workspace_id,
+                    "reason": FSEntryUpdatedReason.SYNC_FILE_CONFLICT,
+                    "entry_id": a_id,
+                    "entry_name": "a",
+                    "entry_resolved_name": "a (conflicting with b@b - 2)",
+                    "entry_resolved_id": a2_id,
+                },
             ),
             (
                 CoreEvent.FS_ENTRY_UPDATED,
                 {
+                    "id": a2_id,
                     "workspace_id": sync_transactions.workspace_id,
-                    "id": sync_transactions.workspace_id,
+                    "reason": FSEntryUpdatedReason.SYNC_FILE_CONFLICT_ENTRY_CREATION,
                 },
             ),
             (
