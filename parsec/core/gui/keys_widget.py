@@ -73,9 +73,9 @@ class KeysWidget(QWidget, Ui_KeysWidget):
     def _on_import_key(self):
         key_file, _ = QFileDialog.getOpenFileName(
             parent=self,
-            caption="Import a key",
-            filter="Keys files (*.keys);;All files (*)",
-            initialFilter="Keys files (*.keys)",
+            caption=translate("ACTION_IMPORT_KEY"),
+            filter=translate("IMPORT_KEY_FILTERS"),
+            initialFilter=translate("IMPORT_KEY_INITIAL_FILTER"),
         )
         if not key_file:
             return

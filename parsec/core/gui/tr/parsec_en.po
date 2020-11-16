@@ -2440,3 +2440,10 @@ msgstr "Import/Export device keys"
 
 msgid "TEXT_EXPORT_KEY_TOOLTIP"
 msgstr "Export this device key"
+
+msgid "IMPORT_KEY_FILTERS"
+msgstr "Keys files (*.keys);;All files (*)"
+
+msgid "IMPORT_KEY_INITIAL_FILTER"
+msgstr "Keys files (*.keys)"
+
