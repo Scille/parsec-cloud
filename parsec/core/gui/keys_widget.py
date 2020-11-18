@@ -75,9 +75,7 @@ class KeysWidget(QWidget, Ui_KeysWidget):
         output_directory = QFileDialog.getExistingDirectory()
         if not output_directory:
             return
-        key_name = (
-            f"{device.organization_id}-{device.human_handle.label}-{device.device_label}.keys"
-        )
+        key_name = f"parsec-{device.organization_id}-{device.human_handle.label}-{device.device_label}.keys"
         keys_dest = Path(output_directory).joinpath(key_name)
         if self._overwrite_key(keys_dest):
             try:
