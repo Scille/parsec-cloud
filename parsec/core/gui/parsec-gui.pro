@@ -67,6 +67,8 @@ FORMS += forms/main_window.ui \
     forms/spinner_widget.ui \
     forms/password_choice_widget.ui \
     forms/temporary_workspace_widget.ui
+    forms/key_widget.ui\
+    forms/keys_widget.ui\
 
 RESOURCES += rc/resources.qrc \
     forms/rc/resources.qrc
