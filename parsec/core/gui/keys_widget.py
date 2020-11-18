@@ -60,15 +60,30 @@ class KeysWidget(QWidget, Ui_KeysWidget):
             w.export_clicked.connect(self._on_export_key)
             self.scroll_content.layout().insertWidget(self.scroll_content.layout().count() - 1, w)
 
+    def _overwrite_key(self, dest):
+        if dest.exists():
+            rep = ask_question(
+                parent=self,
+                title=translate("ASK_OVERWRITE_KEY"),
+                message=translate("TEXT_OVERWRITE_KEY"),
+                button_texts=(translate("ACTION_OVERWRITE_KEY_YES"), translate("ACTION_IMPORT_NO")),
+            )
+            return rep == translate("ACTION_OVERWRITE_KEY_YES")
+        return True
+
     def _on_export_key(self, device):
         output_directory = QFileDialog.getExistingDirectory()
         if not output_directory:
             return
-        _, key_name = os.path.split(device.key_file_path)
-        try:
-            shutil.copyfile(device.key_file_path, os.path.join(output_directory, key_name))
-        except IOError as err:
-            show_error(self, translate("EXPORT_KEY_ERROR"), err)
+        key_name = (
+            f"{device.organization_id}-{device.human_handle.label}-{device.device_label}.keys"
+        )
+        keys_dest = Path(output_directory).joinpath(key_name)
+        if self._overwrite_key(keys_dest):
+            try:
+                shutil.copyfile(device.key_file_path, keys_dest)
+            except IOError as err:
+                show_error(self, translate("EXPORT_KEY_ERROR"), err)
 
     def _on_import_key(self):
         key_file, _ = QFileDialog.getOpenFileName(
@@ -92,24 +107,13 @@ class KeysWidget(QWidget, Ui_KeysWidget):
             button_texts=(translate("ACTION_IMPORT_YES"), translate("ACTION_IMPORT_NO")),
         )
         if rep == translate("ACTION_IMPORT_YES"):
-            _, key_name = os.path.split(new_device.key_file_path)
+            key_name = new_device.slughash + ".keys"
             dest = get_devices_dir(self.config.config_dir).joinpath(key_name)
-            if dest.exists():
-                rep = ask_question(
-                    parent=self,
-                    title=translate("ASK_OVERWRITE_KEY"),
-                    message=translate("TEXT_OVERWRITE_KEY"),
-                    button_texts=(
-                        translate("ACTION_OVERWRITE_KEY_YES"),
-                        translate("ACTION_IMPORT_NO"),
-                    ),
+            if self._overwrite_key(dest):
+
+                shutil.copyfile(
+                    new_device.key_file_path,
+                    os.path.join(get_devices_dir(self.config.config_dir), key_name),
                 )
-                if not rep == translate("ACTION_OVERWRITE_KEY_YES"):
-                    print("nop")
-                    return
-            shutil.copyfile(
-                new_device.key_file_path,
-                os.path.join(get_devices_dir(self.config.config_dir), key_name),
-            )
-            self.reload_devices()
-            self.key_imported.emit()
+                self.reload_devices()
+                self.key_imported.emit()
