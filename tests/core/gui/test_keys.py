@@ -4,6 +4,7 @@ import pytest
 from parsec.core.local_device import save_device_with_password
 from parsec.core.gui.keys_widget import KeysWidget, KeyWidget
 from parsec.core.local_device import AvailableDevice
+from parsec.core.gui.lang import translate
 
 from PyQt5 import QtCore
 
@@ -41,7 +42,7 @@ def test_keys_export(qtbot, core_config, alice, bob, monkeypatch, keys_widget):
     tmp_path = core_config.config_dir.joinpath("tmp")
     tmp_path.mkdir()
     monkeypatch.setattr(
-        "parsec.core.gui.keys_widget.QFileDialog.getExistingDirectory", lambda x: tmp_path
+        "parsec.core.gui.keys_widget.QFileDialog.getExistingDirectory", lambda *x: tmp_path
     )
 
     key_w = keys_layout.itemAt(0).widget()
@@ -77,7 +78,10 @@ def test_keys_import(qtbot, core_config, alice, bob, monkeypatch):
         "parsec.core.gui.keys_widget.QFileDialog.getOpenFileName",
         lambda *x, **y: (key_glob[0], None),
     )
-    monkeypatch.setattr("parsec.core.gui.keys_widget.ask_question", lambda *x, **y: "ACTION_YES")
+
+    monkeypatch.setattr(
+        "parsec.core.gui.keys_widget.ask_question", lambda *x, **y: translate("ACTION_IMPORT_YES")
+    )
     qtbot.mouseClick(w.button_import_key, QtCore.Qt.LeftButton)
 
     def key_imported():
