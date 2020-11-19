@@ -464,7 +464,7 @@ class FilesWidget(QWidget, Ui_FilesWidget):
             )
 
     def _on_move_success(self, job):
-        self.reset()
+        self.reload()
 
     def _on_move_error(self, job):
         exc = job.exc
@@ -472,15 +472,14 @@ class FilesWidget(QWidget, Ui_FilesWidget):
             show_error(self, _("TEXT_FILE_FOLDER_MOVED_INTO_ITSELF_ERROR"))
         else:
             show_error(self, _("TEXT_FILE_PASTE_ERROR"))
-
-        self.reset()
+        self.reload()
 
     def _on_copy_success(self, job):
-        self.reset()
+        self.reload()
 
     def _on_copy_error(self, job):
         show_error(self, _("TEXT_FILE_PASTE_ERROR"))
-        self.reset()
+        self.reload()
 
     def show_history(self):
         files = self.table_files.selected_files()
@@ -795,7 +794,7 @@ class FilesWidget(QWidget, Ui_FilesWidget):
             self.delete_files()
 
     def _on_rename_success(self, job):
-        self.reset()
+        self.reload()
 
     def _on_rename_error(self, job):
         if job.exc.params.get("multi"):
@@ -804,7 +803,7 @@ class FilesWidget(QWidget, Ui_FilesWidget):
             show_error(self, _("TEXT_FILE_RENAME_ERROR"), exception=job.exc)
 
     def _on_delete_success(self, job):
-        self.reset()
+        self.reload()
 
     def _on_delete_error(self, job):
         if not getattr(job.exc, "params", None):
