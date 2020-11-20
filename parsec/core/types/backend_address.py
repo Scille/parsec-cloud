@@ -21,7 +21,7 @@ class BackendAddr:
     (e.g. ``parsec://parsec.example.com/``)
     """
 
-    __slots__ = ("_hostname", "_port", "_use_ssl")
+    __slots__ = ("_hostname", "_port", "_use_ssl", "_custom_port", "_netloc")
 
     def __eq__(self, other):
         if isinstance(other, BackendAddr):
@@ -32,8 +32,12 @@ class BackendAddr:
     def __init__(self, hostname: str, port: Optional[int] = None, use_ssl=True):
         assert not hostname.startswith("parsec://")
         self._hostname = hostname
-        self._port, _ = self._parse_port(port, use_ssl)
+        self._port, self._custom_port = self._parse_port(port, use_ssl)
         self._use_ssl = use_ssl
+        if self._custom_port:
+            self._netloc = f"{self._hostname}:{self._custom_port}"
+        else:
+            self._netloc = self._hostname
 
     @staticmethod
     def _parse_port(port, use_ssl) -> Tuple[int, Optional[int]]:
@@ -101,13 +105,10 @@ class BackendAddr:
             raise ValueError("Invalid `no_ssl` param value (must be true or false)")
 
     def to_url(self) -> str:
-        _, custom_port = self._parse_port(self._port, self._use_ssl)
-        if custom_port:
-            netloc = f"{self._hostname}:{custom_port}"
-        else:
-            netloc = self.hostname
         query = urlencode(self._to_url_get_params())
-        return urlunsplit((PARSEC_SCHEME, netloc, quote_plus(self._to_url_get_path()), query, None))
+        return urlunsplit(
+            (PARSEC_SCHEME, self._netloc, quote_plus(self._to_url_get_path()), query, None)
+        )
 
     def _to_url_get_path(self):
         return ""
@@ -600,11 +601,6 @@ class BackendInvitationAddr(BackendActionAddr):
         return [("action", action), ("token", self._token.hex), *super()._to_url_get_params()]
 
     def to_http_redirection_url(self) -> str:
-        _, custom_port = self._parse_port(self._port, self._use_ssl)
-        if custom_port:
-            netloc = f"{self._hostname}:{custom_port}"
-        else:
-            netloc = self.hostname
         # Skipping no_ssl param because it is already in the scheme
         query = urlencode({k: v for k, v in self._to_url_get_params() if k != "no_ssl"})
         path = "/redirect/" + quote_plus(self._to_url_get_path())
@@ -613,7 +609,7 @@ class BackendInvitationAddr(BackendActionAddr):
         else:
             scheme = "http"
 
-        return urlunsplit((scheme, netloc, path, query, None))
+        return urlunsplit((scheme, self._netloc, path, query, None))
 
     @classmethod
     def build(
