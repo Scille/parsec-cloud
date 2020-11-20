@@ -2504,6 +2504,9 @@ msgstr "Importer/Exporter les clés de l'appareil"
 msgid "TEXT_EXPORT_KEY_TOOLTIP"
 msgstr "Exporter cette clé"
 
+msgid "TEXT_EXPORT_KEY"
+msgstr "Exporter la clé d'appareil"
+
 msgid "IMPORT_KEY_FILTERS"
 msgstr "Clés d'appareil (*.keys);;Tous les fichiers (*)"
 

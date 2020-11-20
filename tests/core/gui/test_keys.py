@@ -41,8 +41,9 @@ def test_keys_export(qtbot, core_config, alice, bob, monkeypatch, keys_widget):
 
     tmp_path = core_config.config_dir.joinpath("tmp")
     tmp_path.mkdir()
+    dest_file = tmp_path.joinpath("mydevice.keys")
     monkeypatch.setattr(
-        "parsec.core.gui.keys_widget.QFileDialog.getExistingDirectory", lambda *x: tmp_path
+        "parsec.core.gui.keys_widget.QFileDialog.getSaveFileName", lambda *x, **y: (dest_file, "")
     )
 
     key_w = keys_layout.itemAt(0).widget()

@@ -72,16 +72,21 @@ class KeysWidget(QWidget, Ui_KeysWidget):
         return True
 
     def _on_export_key(self, device):
-        output_directory = QFileDialog.getExistingDirectory()
-        if not output_directory:
+        default_key_name = f"parsec-{device.organization_id}-{device.human_handle.label}-{device.device_label}.keys"
+        key_path, _ = QFileDialog.getSaveFileName(
+            self,
+            translate("TEXT_EXPORT_KEY"),
+            str(Path.home().joinpath(default_key_name)),
+            filter=translate("IMPORT_KEY_FILTERS"),
+            initialFilter=translate("IMPORT_KEY_INITIAL_FILTER"),
+        )
+        if not key_path:
             return
-        key_name = f"parsec-{device.organization_id}-{device.human_handle.label}-{device.device_label}.keys"
-        keys_dest = Path(output_directory).joinpath(key_name)
-        if self._overwrite_key(keys_dest):
-            try:
-                shutil.copyfile(device.key_file_path, keys_dest)
-            except IOError as err:
-                show_error(self, translate("EXPORT_KEY_ERROR"), err)
+        keys_dest = Path(key_path)
+        try:
+            shutil.copyfile(device.key_file_path, keys_dest)
+        except IOError as err:
+            show_error(self, translate("EXPORT_KEY_ERROR"), err)
 
     def _on_import_key(self):
         key_file, _ = QFileDialog.getOpenFileName(

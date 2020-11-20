@@ -2441,6 +2441,9 @@ msgstr "Import/Export device keys"
 msgid "TEXT_EXPORT_KEY_TOOLTIP"
 msgstr "Export this device key"
 
+msgid "TEXT_EXPORT_KEY"
+msgstr "Export device key"
+
 msgid "IMPORT_KEY_FILTERS"
 msgstr "Keys files (*.keys);;All files (*)"
 
