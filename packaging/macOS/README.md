@@ -16,7 +16,7 @@ Build steps
 
 ### 1 - Use a compatible Python version
 
-The app building is done with PyInstaller. For it to work properly, you must use a version of Python anterior to 3.8, otherwise the app won't launch at all. Any 3.6.x or 3.7.x version should work fine.
+The app building is done with PyInstaller. I suggest using Python 3.7.6, other versions might raise various errors or warnings, or the app might not launch at all.
 
 Python 3.8 support will come with the release of PyInstaller 4.1 : https://github.com/pyinstaller/pyinstaller/issues/4311
 
