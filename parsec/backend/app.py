@@ -164,7 +164,8 @@ class BackendApp:
                 # h11 guarantees the headers are always lowercase
                 return next((v for k, v in event.headers if k == key), b"")
 
-            # Test for proxy redirection, only if backend use ssl and ssl_redirect_proxy is set.
+            # Test for proxy redirection, only if backend use ssl is false and ssl_redirect_proxy
+            # is set and request redirection_header match the one in backend.
             ssl_redirect_proxy = self.config.ssl_redirect_proxy
             if ssl_redirect_proxy and self.config.ssl_context is False:
                 # Separating header from protocol.
@@ -173,11 +174,11 @@ class BackendApp:
                 # Get proxy redirection protocol from request if there is one proxy redirection
                 # header that match the one set in backend.
                 request_redirection_header = _get_header(ssl_redirect_proxy[0].lower().encode())
-                # If it match, then no need for a redirection.
+                # If redirection header match and protocol match, then no need for a redirection.
                 if (
-                    not request_redirection_header
+                    request_redirection_header
                     # Checking if the protocol is matching.
-                    or proxy_redirection_protocol != request_redirection_header
+                    and proxy_redirection_protocol != request_redirection_header
                 ):
                     req = HTTPRequest.from_h11_req(event)
                     rep = await self.http._http_proxy_redirection(

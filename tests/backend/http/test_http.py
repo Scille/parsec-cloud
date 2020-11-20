@@ -107,17 +107,17 @@ async def assert_stream_closed_on_peer_side(stream):
 @customize_fixtures(backend_ssl_redirect_proxy="X-Forwarded-Proto:https")
 @pytest.mark.trio
 async def test_redirect_proxy(backend, backend_http_send):
-    # No redirection header.
+    # No redirection header. shouln't redirect.
     req = b"GET /test HTTP/1.0\r\n\r\n"
     status, headers, test = await backend_http_send(req=req)
-    assert status == (301, "Moved Permanently")
+    assert status == (404, "Not Found")
 
-    # Incorrect redirection header with good redirection protocol.
+    # Incorrect redirection header with good redirection protocol. shouln't redirect.
     req = b"GET test HTTP/1.0\r\nX-Forwa-P:https\r\n\r\n"
     status, headers, test = await backend_http_send(req=req)
-    assert status == (301, "Moved Permanently")
+    assert status == (404, "Not Found")
 
-    # Correct header redirection but not same redirection protocol.
+    # Correct header redirection but not same redirection protocol. should redirect.
     req = b"GET / HTTP/1.0\r\nX-Forwarded-Proto:42\r\n\r\n"
     status, headers, test = await backend_http_send(req=req)
     assert status == (301, "Moved Permanently")
@@ -156,7 +156,7 @@ async def test_ssl_redirect_proxy(backend, backend_http_send):
     status, headers, test = await backend_http_send(req=req)
     assert status == (200, "OK")
 
-    # Correct header and redirection protocol, no redirection.
+    # Correct header and redirection protocol.
     req = b"GET test HTTP/1.0\r\nX-Forwarded-Proto:https\r\n\r\n"
     status, headers, test = await backend_http_send(req=req)
     assert status == (404, "Not Found")
