@@ -454,8 +454,8 @@ class FilesWidget(QWidget, Ui_FilesWidget):
             self.table_files.paste_status = PasteStatus(status=PasteStatus.Status.Disabled)
         else:
             self.jobs_ctx.submit_job(
-                ThreadSafeQtSignal(self, "move_success", QtToTrioJob),
-                ThreadSafeQtSignal(self, "move_error", QtToTrioJob),
+                ThreadSafeQtSignal(self, "copy_success", QtToTrioJob),
+                ThreadSafeQtSignal(self, "copy_error", QtToTrioJob),
                 _do_copy_files,
                 workspace_fs=self.workspace_fs,
                 current_directory=self.current_directory,
@@ -468,7 +468,11 @@ class FilesWidget(QWidget, Ui_FilesWidget):
 
     def _on_move_error(self, job):
         exc = job.exc
-        if exc and isinstance(exc.params.get("last_exc", None), FSInvalidArgumentError):
+        if (
+            exc
+            and hasattr(exc, "params")
+            and isinstance(exc.params.get("last_exc", None), FSInvalidArgumentError)
+        ):
             show_error(self, _("TEXT_FILE_FOLDER_MOVED_INTO_ITSELF_ERROR"))
         else:
             show_error(self, _("TEXT_FILE_PASTE_ERROR"))
