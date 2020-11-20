@@ -102,6 +102,8 @@ class BackendConfig:
     blockstore_config: BaseBlockStoreConfig
 
     email_config: Union[SmtpEmailConfig, MockedEmailConfig]
+    ssl_context: bool
+    ssl_redirect_proxy: str
     backend_addr: Optional[BackendAddr]
 
     spontaneous_organization_bootstrap: bool
