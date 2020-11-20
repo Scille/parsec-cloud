@@ -164,6 +164,34 @@ class BackendApp:
                 # h11 guarantees the headers are always lowercase
                 return next((v for k, v in event.headers if k == key), b"")
 
+            # Test for proxy redirection, only if backend use ssl and ssl_redirect_proxy is set.
+            ssl_redirect_proxy = self.config.ssl_redirect_proxy
+            if ssl_redirect_proxy and self.config.ssl_context is False:
+                # Separating header from protocol.
+                ssl_redirect_proxy = ssl_redirect_proxy.replace(" ", "").split(":", 1)
+                proxy_redirection_protocol = ssl_redirect_proxy[1].lower().encode()
+                # Get proxy redirection protocol from request if there is one proxy redirection
+                # header that match the one set in backend.
+                request_redirection_header = _get_header(ssl_redirect_proxy[0].lower().encode())
+                # If it match, then no need for a redirection.
+                if (
+                    not request_redirection_header
+                    # Checking if the protocol is matching.
+                    or proxy_redirection_protocol != request_redirection_header
+                ):
+                    req = HTTPRequest.from_h11_req(event)
+                    rep = await self.http._http_proxy_redirection(
+                        req, proxy_redirection_protocol.decode()
+                    )
+                    await self._send_http_reply(
+                        stream=stream,
+                        conn=conn,
+                        status_code=rep.status_code,
+                        headers=rep.headers,
+                        data=rep.data,
+                    )
+                    return await stream.aclose()
+
             # Test for websocket upgrade considering:
             # - Upgrade header has been introduced in HTTP 1.1 RFC
             # - Connection&Upgrade fields are case-insensitive according to RFC
