@@ -247,7 +247,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
     def _on_manage_keys(self):
         w = KeysWidget(config=self.config, parent=self)
         w.key_imported.connect(self.reload_login_devices)
-        d = GreyedDialog(w, title=_("TEXT_KEYS_DIALOG"), parent=self, width=1000)
+        d = GreyedDialog(w, title=_("TEXT_KEYS_DIALOG"), parent=self, width=800)
         d.exec()
 
     def _on_show_doc_clicked(self):

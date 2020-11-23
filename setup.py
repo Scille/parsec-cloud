@@ -182,6 +182,8 @@ class ExtractTranslations(Command):
         args = [
             "_",
             "extract",
+            "-k",
+            "translate",
             "-s",
             "--no-location",
             "-F",

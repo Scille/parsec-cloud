@@ -104,8 +104,10 @@ class KeysWidget(QWidget, Ui_KeysWidget):
         rep = ask_question(
             parent=self,
             title=translate("ASK_IMPORT_KEY"),
-            message=(
-                f"{new_device.organization_id}<br>{new_device.human_handle.label}<br>{new_device.device_label}"
+            message=translate("TEXT_IMPORT_KEY_CONFIRM_organization-user-device").format(
+                organization=new_device.organization_id,
+                user=new_device.short_user_display,
+                device=new_device.device_label,
             ),
             button_texts=(translate("ACTION_IMPORT_YES"), translate("ACTION_IMPORT_NO")),
         )
