@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PROJECT VERSION\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2020-11-04 09:40+0100\n"
+"POT-Creation-Date: 2020-11-23 12:19+0100\n"
 "PO-Revision-Date: 2020-10-15 10:30+0200\n"
 "Last-Translator: \n"
 "Language: en\n"
@@ -370,11 +370,11 @@ msgstr "Cannot import files because you don't have write access to this workspac
 msgid "TEXT_FILE_LINK_COPIED_TO_CLIPBOARD"
 msgstr "A link to the file has been copied to your clipboard."
 
-msgid "TEXT_FILE_PASTE_ERROR"
-msgstr "Cannot paste this file here."
-
 msgid "TEXT_FILE_FOLDER_MOVED_INTO_ITSELF_ERROR"
 msgstr "Cannot move a folder into itself."
+
+msgid "TEXT_FILE_PASTE_ERROR"
+msgstr "Cannot paste this file here."
 
 msgid "TEXT_FILE_HISTORY_MULTIPLE_FILES_SELECTED_ERROR"
 msgstr ""
@@ -671,11 +671,12 @@ msgstr ""
 
 msgid "TEXT_LOGIN_ERROR_FUSE_NOT_AVAILABLE"
 msgstr ""
-"Fuse could not be loaded.<br>"
-"Please check your installation.<br><br>"
-"On Mac, you have to install OSXFUSE (FUSE for MacOS) and allow in security settings.<br>"
-"From Mac OS 11.x, a restart is required after osxfuse installation.<br><br>"
-"<a href=\"https://osxfuse.github.io/2020/10/05/OSXFUSE-3.11.2.html\">Get osxfuse here</a>"
+"Fuse could not be loaded.<br>Please check your installation.<br><br>On "
+"Mac, you have to install OSXFUSE (FUSE for MacOS) and allow in security "
+"settings.<br>From Mac OS 11.x, a restart is required after osxfuse "
+"installation.<br><br><a "
+"href=\"https://osxfuse.github.io/2020/10/05/OSXFUSE-3.11.2.html\">Get "
+"osxfuse here</a>"
 
 msgid "TEXT_LOGIN_UNKNOWN_ERROR"
 msgstr "Cannot log in."
@@ -688,75 +689,6 @@ msgstr "The password is incorrect."
 
 msgid "TEXT_LOGIN_MOUNTPOINT_ERROR"
 msgstr "Cannot log in. The workspaces could not be mounted."
-
-msgid "TEXT_DEVICE_IS_CURRENT"
-msgstr "current"
-
-msgid "ACTION_DEVICE_MENU_CHANGE_PASSWORD"
-msgstr "Change password"
-
-msgid "TEXT_INVITE_DEVICE_INVITE_OFFLINE"
-msgstr "The server is offline or you have no access to the internet."
-
-msgid "TEXT_INVITE_DEVICE_INVITE_ERROR"
-msgstr "Could not invite the device."
-
-msgid "TEXT_DEVICE_LIST_RETRIEVABLE_FAILURE"
-msgstr "Failed to retrieve the device list from the server."
-
-msgid "TEXT_CLAIM_DEVICE_INVALID_CODE_CLICKED"
-msgstr ""
-"You did not provide the right code. You will have to restart the process."
-" We want to make absolutely sure that the process is secured."
-
-msgid "TEXT_CLAIM_DEVICE_NONE_CODE_CLICKED"
-msgstr ""
-"If you didn't see the code that was given to you by your other device, it"
-" could mean that a malicious user is trying to register in your stead.\n"
-"\n"
-"You can retry the invitation process. If this problem persists, your "
-"network may not be safe."
-
-msgid "TEXT_CLAIM_DEVICE_GET_GREETER_SAS_ERROR"
-msgstr "Error while negociationg SAS code. Please restart the process."
-
-msgid "TEXT_CLAIM_DEVICE_PEER_RESET"
-msgstr "The host has reset the process. We will restart from the beginning."
-
-msgid "TEXT_CLAIM_DEVICE_SIGNIFY_TRUST_ERROR"
-msgstr "Error while acknowledging SAS code. Please restart the process."
-
-msgid "TEXT_CLAIM_DEVICE_WAIT_PEER_TRUST_ERROR"
-msgstr ""
-"Error while waiting for peer SAS code acknowledgment. Please restart the "
-"process."
-
-msgid "TEXT_CLAIM_DEVICE_CLAIM_ERROR"
-msgstr "Error while validating invite information. Please restart the process."
-
-msgid "TEXT_CLAIM_DEVICE_WAITING"
-msgstr "Waiting..."
-
-msgid "TEXT_CLAIM_DEVICE_WAIT_PEER_ERROR"
-msgstr "Error while waiting for the other device. Please restart the process."
-
-msgid "ACTION_START"
-msgstr "Start"
-
-msgid "TEXT_CLAIM_DEVICE_FAILED_TO_RETRIEVE_INFO"
-msgstr "Failed to retrieve information about the invitation."
-
-msgid "TEXT_CLAIM_DEVICE_SUCCESSFUL"
-msgstr "The device was successfully created!"
-
-msgid "TEXT_CLAIM_DEVICE_INVITATION_NOT_FOUND"
-msgstr "No invitation found."
-
-msgid "TEXT_CLAIM_DEVICE_UNKNOWN_ERROR"
-msgstr "Error while registering the new device."
-
-msgid "TEXT_CLAIM_DEVICE_TITLE"
-msgstr "Register a device"
 
 msgid "TEXT_PARSEC_LICENSE"
 msgstr ""
@@ -1729,11 +1661,11 @@ msgstr "The confirmation does not match the password."
 msgid "TEXT_SETTINGS_NEED_RESTART"
 msgstr "You will need to restart the application for the changes to take effect."
 
-msgid "TEXT_FILE_OPEN_MULTIPLE_TITLE_count"
-msgstr "Open {count} files"
+msgid "ACTION_SYSTRAY_SHOW_WINDOW"
+msgstr "Show Parsec"
 
-msgid "TEXT_FILE_OPEN_MULTIPLE_INSTRUCTIONS_count"
-msgstr "Are you sure you want to open {count} files? This may take some time."
+msgid "ACTION_SYSTRAY_QUIT_PARSEC"
+msgstr "Quit"
 
 msgid "TEXT_WORKSPACE_TIMESTAMPED_VERSION_RETRIEVAL_FAILED"
 msgstr "Cannot retrieve this workspace history."
@@ -1842,6 +1774,9 @@ msgstr ""
 
 msgid "TEXT_INVITE_USER_INVITE_OFFLINE"
 msgstr "The server is offline or you have no access to the internet."
+
+msgid "TEXT_INVITE_USER_ALREADY_MEMBER_ERROR"
+msgstr "This user is already a member of this organization."
 
 msgid "TEXT_INVITE_USER_INVITE_ERROR"
 msgstr "Could not invite the user."
@@ -2417,9 +2352,6 @@ msgstr "Snapshot"
 
 msgid "TEXT_WORKSPACE_TEMPORARY_DESCRIPTION"
 msgstr "Workspace as it appeared on:"
-
-msgid "TEXT_WORKSPACE_TIMESTAMPED_INSTRUCTIONS"
-msgstr "You will be able to see the workspace as it was at a given time."
 
 msgid "TEXT_WORKSPACE_TIMESTAMPED_SELECT_DATE"
 msgstr "Select a date..."

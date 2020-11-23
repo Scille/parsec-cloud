@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PROJECT VERSION\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2020-11-04 09:40+0100\n"
+"POT-Creation-Date: 2020-11-23 12:19+0100\n"
 "PO-Revision-Date: 2020-10-15 10:31+0200\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language: fr\n"
@@ -391,11 +391,11 @@ msgstr ""
 msgid "TEXT_FILE_LINK_COPIED_TO_CLIPBOARD"
 msgstr "Le lien vers le fichier a été copié dans le presse-papier."
 
-msgid "TEXT_FILE_PASTE_ERROR"
-msgstr "Impossible de coller ce fichier à cet endroit."
-
 msgid "TEXT_FILE_FOLDER_MOVED_INTO_ITSELF_ERROR"
 msgstr "Impossible de déplacer un répertoire dans lui-même."
+
+msgid "TEXT_FILE_PASTE_ERROR"
+msgstr "Impossible de coller ce fichier à cet endroit."
 
 msgid "TEXT_FILE_HISTORY_MULTIPLE_FILES_SELECTED_ERROR"
 msgstr ""
@@ -713,11 +713,13 @@ msgstr ""
 
 msgid "TEXT_LOGIN_ERROR_FUSE_NOT_AVAILABLE"
 msgstr ""
-"FUSE n'a pas pu être chargé.<br>"
-"Merci de vérifier votre installation.<br><br>"
-"Sur Mac, il est nécessaire d'installer OSXFUSE (FUSE for MacOS) et de l'accepter dans les réglages de sécurité.<br>"
-"À partir de Mac OS 11.x, un rédémarrage est nécessaire après l'installation de osxfuse.<br><br>"
-"<a href=\"https://osxfuse.github.io/2020/10/05/OSXFUSE-3.11.2.html\">Télécharger osxfuse ici</a>"
+"FUSE n'a pas pu être chargé.<br>Merci de vérifier votre "
+"installation.<br><br>Sur Mac, il est nécessaire d'installer OSXFUSE (FUSE"
+" for MacOS) et de l'accepter dans les réglages de sécurité.<br>À partir "
+"de Mac OS 11.x, un rédémarrage est nécessaire après l'installation de "
+"osxfuse.<br><br><a "
+"href=\"https://osxfuse.github.io/2020/10/05/OSXFUSE-3.11.2.html\">Télécharger"
+" osxfuse ici</a>"
 
 msgid "TEXT_LOGIN_UNKNOWN_ERROR"
 msgstr "Impossible de se connecter."
@@ -732,81 +734,6 @@ msgid "TEXT_LOGIN_MOUNTPOINT_ERROR"
 msgstr ""
 "Impossible de se connecter. Les espaces de travail n'ont pas pu être "
 "montés."
-
-msgid "TEXT_DEVICE_IS_CURRENT"
-msgstr "actuel"
-
-msgid "ACTION_DEVICE_MENU_CHANGE_PASSWORD"
-msgstr "Changer le mot de passe"
-
-msgid "TEXT_INVITE_DEVICE_INVITE_OFFLINE"
-msgstr "Le serveur est hors-ligne ou vous n'avez pas de connexion internet."
-
-msgid "TEXT_INVITE_DEVICE_INVITE_ERROR"
-msgstr "Impossible d'inviter un nouvel appareil"
-
-msgid "TEXT_DEVICE_LIST_RETRIEVABLE_FAILURE"
-msgstr "Impossible de récupérer la liste de vos appareils."
-
-msgid "TEXT_CLAIM_DEVICE_INVALID_CODE_CLICKED"
-msgstr ""
-"Vous n'avez pas cliqué sur le bon code. Vous devez redémarrer le "
-"processus du début. Nous voulons être certain que le processus est "
-"sécurisé."
-
-msgid "TEXT_CLAIM_DEVICE_NONE_CODE_CLICKED"
-msgstr ""
-"Si aucun des codes ne correspondaient à celui qui vous a été donné, il "
-"est possible qu'un utilisateur malicieux essaie de s'inscrire à votre "
-"place.\n"
-"\n"
-"Veuillez redémarrer le processus. Si le problème persiste, votre réseau "
-"n'est peut-être pas sécurisé."
-
-msgid "TEXT_CLAIM_DEVICE_GET_GREETER_SAS_ERROR"
-msgstr ""
-"Erreur pendant la négociation du code SAS. Veuillez redémarrer le "
-"processus."
-
-msgid "TEXT_CLAIM_DEVICE_PEER_RESET"
-msgstr "Le processus va redémarrer suite à une annulation."
-
-msgid "TEXT_CLAIM_DEVICE_SIGNIFY_TRUST_ERROR"
-msgstr ". Veuillez redémarrer le processus."
-
-msgid "TEXT_CLAIM_DEVICE_WAIT_PEER_TRUST_ERROR"
-msgstr ""
-"Erreur pendant l'attente de confirmation du code SAS. Veuillez redémarrer"
-" le processus."
-
-msgid "TEXT_CLAIM_DEVICE_CLAIM_ERROR"
-msgstr ""
-"Erreur pendant la validation des informations d'invitation. Veuillez "
-"redémarrer le processus."
-
-msgid "TEXT_CLAIM_DEVICE_WAITING"
-msgstr "En attente..."
-
-msgid "TEXT_CLAIM_DEVICE_WAIT_PEER_ERROR"
-msgstr "Suite à une annulation de l'hôte, il faut redémarrer le processus."
-
-msgid "ACTION_START"
-msgstr "Démarrer"
-
-msgid "TEXT_CLAIM_DEVICE_FAILED_TO_RETRIEVE_INFO"
-msgstr "Impossible de récupérer les informations de l'invitation."
-
-msgid "TEXT_CLAIM_DEVICE_SUCCESSFUL"
-msgstr "L'appareil a été créé avec succès !"
-
-msgid "TEXT_CLAIM_DEVICE_INVITATION_NOT_FOUND"
-msgstr "L'invitation n'a pas été trouvée."
-
-msgid "TEXT_CLAIM_DEVICE_UNKNOWN_ERROR"
-msgstr "Erreur interne. Veuillez redémarrer le processus."
-
-msgid "TEXT_CLAIM_DEVICE_TITLE"
-msgstr "Enregistrer un appareil"
 
 msgid "TEXT_PARSEC_LICENSE"
 msgstr ""
@@ -1782,18 +1709,19 @@ msgstr "La confirmation diffère du mot de passe."
 msgid "TEXT_SETTINGS_NEED_RESTART"
 msgstr "Les modification seront prises en compte au redémarrage de l'application."
 
-msgid "ACTION_FILE_OPEN_MULTIPLE"
-msgstr "Ouvrir les fichiers"
+msgid "ACTION_SYSTRAY_SHOW_WINDOW"
+msgstr "Afficher Parsec"
 
-msgid "TEXT_FILE_IMPORT_LOADING_TITLE"
-msgstr "En cours d'import"
+msgid "ACTION_SYSTRAY_QUIT_PARSEC"
+msgstr "Quitter"
 
 msgid "TEXT_WORKSPACE_TIMESTAMPED_VERSION_RETRIEVAL_FAILED"
 msgstr "Impossible de récupérer l'historique de cet espace de travail."
 
 msgid "TEXT_WORKSPACE_TIMESTAMPED_INSTRUCTIONS_created"
 msgstr ""
-"Vous pourrez naviguer dans l'espace de travail tel qu'il était à un moment donné.\n"
+"Vous pourrez naviguer dans l'espace de travail tel qu'il était à un "
+"moment donné.\n"
 "\n"
 "Cet espace de travail a été créé le {created}."
 
@@ -1895,6 +1823,9 @@ msgstr ""
 
 msgid "TEXT_INVITE_USER_INVITE_OFFLINE"
 msgstr "Le serveur est hors-ligne ou vous n'avez pas de connexion internet."
+
+msgid "TEXT_INVITE_USER_ALREADY_MEMBER_ERROR"
+msgstr "Cet utilisateur est déjà dans cette organisation."
 
 msgid "TEXT_INVITE_USER_INVITE_ERROR"
 msgstr "Impossible d'inviter l'utilisateur."
@@ -2485,11 +2416,6 @@ msgstr "Vue instantanée"
 msgid "TEXT_WORKSPACE_TEMPORARY_DESCRIPTION"
 msgstr "Espace de travail tel qu'il apparaissait le :"
 
-msgid "TEXT_WORKSPACE_TIMESTAMPED_INSTRUCTIONS"
-msgstr ""
-"Vous pourrez naviguer dans l'espace de travail tel qu'il était à un "
-"moment donné."
-
 msgid "TEXT_WORKSPACE_TIMESTAMPED_SELECT_DATE"
 msgstr "Sélectionnez une date"
 
@@ -2555,3 +2481,10 @@ msgstr "Créer un nouvel espace de travail"
 
 msgid "ACTION_WORKSPACE_GOTO_FILE_LINK"
 msgstr "Trouver un fichier via son lien"
+
+#~ msgid "TEXT_WORKSPACE_TIMESTAMPED_INSTRUCTIONS"
+#~ msgstr ""
+#~ "Vous pourrez naviguer dans l'espace de"
+#~ " travail tel qu'il était à un "
+#~ "moment donné."
+

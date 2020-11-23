@@ -482,7 +482,6 @@ class PGInviteComponent(BaseInviteComponent):
             user_id = await query_retrieve_active_human_by_email(
                 conn, organization_id, claimer_email
             )
-            print(user_id)
             if user_id:
                 raise InvitationAlreadyMemberError()
             token = await _do_new_user_invitation(
