@@ -3,13 +3,12 @@
 import os
 import string
 import platform
+from importlib import import_module
 from pathlib import Path
-
-import psutil
 from structlog import get_logger
 from contextlib import contextmanager
 
-from . import resources
+from parsec.core import resources
 
 logger = get_logger()
 
@@ -24,11 +23,24 @@ EXPLORER_DRIVES_DEFAULT_ICON_TEMPLATE = EXPLORER_DRIVES + "\\{}\\DefaultIcon"
 
 # Winreg helper
 
+_psutil = None
+
+
+def get_psutil():
+    global _psutil
+    if not _psutil:
+        _psutil = import_module("psutil")
+    return _psutil
+
+
+_winreg = None
+
 
 def get_winreg():
-    import winreg  # noqa
-
-    return winreg
+    global _winreg
+    if not _winreg:
+        _winreg = import_module("winreg")
+    return _winreg
 
 
 def try_winreg():
@@ -181,5 +193,5 @@ def cleanup_parsec_drive_icons():
 
         # Perform some cleanup if necessary
         _, pid = get_parsec_drive_icon(letter)
-        if pid and not psutil.pid_exists(pid):
+        if pid and not get_psutil().pid_exists(pid):
             del_parsec_drive_icon(letter)
