@@ -1,6 +1,7 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
 
 import os
+exec(open("../../parsec/_version.py", encoding="utf8").read())
 
 a = Analysis(['launch_script.py'],
    pathex=[os.path.dirname(os.path.abspath('parsec.spec'))],
@@ -50,6 +51,7 @@ app = BUNDLE(coll,
       'CFBundleIdentifier': 'com.scille.parsec',
       'CFBundleName': 'Parsec',
       'CFBundleDisplayName': 'Parsec',
+      'CFBundleShortVersionString': __version__,
       'CFBundleURLTypes': [
          {
             'CFBundleTypeRole': 'Shell',
