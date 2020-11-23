@@ -3,9 +3,8 @@
 import pytest
 import trio
 from unittest.mock import ANY
-from pendulum import datetime, now as pendulum_now
+from pendulum import datetime
 
-from parsec.api.data import RevokedUserCertificateContent
 from parsec.backend.backend_events import BackendEvent
 from parsec.api.transport import TransportError
 from parsec.api.data import UserProfile
@@ -25,7 +24,6 @@ from tests.backend.common import (
     invite_info,
     events_subscribe,
     events_listen_wait,
-    user_revoke,
 )
 
 
@@ -336,13 +334,11 @@ async def test_delete(
 
 @pytest.mark.trio
 @pytest.mark.parametrize("is_revoked", [True, False])
-async def test_user_invitation_already_member(alice, bob, backend, alice_backend_sock, is_revoked):
+async def test_user_invitation_already_member(
+    alice, bob, backend, alice_backend_sock, is_revoked, backend_data_binder
+):
     if is_revoked:
-        now = pendulum_now()
-        bob_revocation = RevokedUserCertificateContent(
-            author=alice.device_id, timestamp=now, user_id=bob.user_id
-        ).dump_and_sign(alice.signing_key)
-        await user_revoke(alice_backend_sock, revoked_user_certificate=bob_revocation)
+        await backend_data_binder.bind_revocation(user_id=alice.user_id, certifier=bob)
 
     rep = await invite_new(
         alice_backend_sock, type=InvitationType.USER, claimer_email=bob.human_handle.email

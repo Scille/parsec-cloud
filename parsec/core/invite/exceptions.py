@@ -21,7 +21,7 @@ class InviteAlreadyUsedError(InviteError):
 
 
 class InviteAlreadyMemberError(InviteError):
-    def __init__(self, msg="Invitation is already a member"):
+    def __init__(self, msg="Invited user is already a member of the organization"):
         super().__init__(msg)
 
 

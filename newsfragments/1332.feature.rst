@@ -1,1 +1,1 @@
-Add an user that is already member of the organization is now forbiden
+Inviting a user already member of an organization is no longer allowed by the backend server
