@@ -312,6 +312,7 @@ test_requirements = [
     "sphinx==2.4.3",
     "sphinx-intl==2.0.0",
     "sphinx-rtd-theme==0.4.3",
+    "psutil==5.6.3",
 ]
 
 
