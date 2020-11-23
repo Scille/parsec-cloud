@@ -105,6 +105,22 @@ def fail_on_first_exception(kill_window):
             raise exceptions[0]
 
 
+@contextmanager
+def log_pyqt_exceptions():
+    # Override sys.excepthook to be able to properly log exceptions occuring in Qt slots.
+    # Exceptions occuring in the core while in the Qt app should be catched sooner by the
+    # job.
+
+    def log_except(etype, exception, traceback):
+        logger.exception("Exception in Qt slot", exc_info=(etype, exception, traceback))
+
+    sys.excepthook, previous_hook = log_except, sys.excepthook
+    try:
+        yield
+    finally:
+        sys.excepthook = previous_hook
+
+
 def run_gui(config: CoreConfig, start_arg: str = None, diagnose: bool = False):
     logger.info("Starting UI")
 
@@ -167,7 +183,7 @@ def run_gui(config: CoreConfig, start_arg: str = None, diagnose: bool = False):
         if config.gui_check_version_at_startup and not diagnose:
             CheckNewVersion(jobs_ctx=jobs_ctx, event_bus=event_bus, config=config, parent=win)
 
-        win.showMaximized(skip_dialogs=diagnose, invitation_link=start_arg)
+        win.show_window(skip_dialogs=diagnose, invitation_link=start_arg)
         win.show_top()
         win.new_instance_needed.emit(start_arg)
 
@@ -195,4 +211,5 @@ def run_gui(config: CoreConfig, start_arg: str = None, diagnose: bool = False):
             with fail_on_first_exception(kill_window):
                 return app.exec_()
         else:
-            return app.exec_()
+            with log_pyqt_exceptions():
+                return app.exec_()

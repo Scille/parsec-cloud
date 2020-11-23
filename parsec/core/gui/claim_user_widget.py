@@ -14,6 +14,7 @@ from parsec.core.invite import claimer_retrieve_info, InvitePeerResetError
 from parsec.core.backend_connection import (
     backend_invited_cmds_factory,
     BackendConnectionRefused,
+    BackendInvitationAlreadyUsed,
     BackendNotAvailable,
 )
 from parsec.core.gui import validators
@@ -21,7 +22,6 @@ from parsec.core.gui.trio_thread import JobResultError, ThreadSafeQtSignal, QtTo
 from parsec.core.gui.desktop import get_default_device
 from parsec.core.gui.custom_dialogs import show_error, GreyedDialog, show_info
 from parsec.core.gui.lang import translate as _
-from parsec.core.gui.password_validation import get_password_strength
 from parsec.core.gui.ui.claim_user_widget import Ui_ClaimUserWidget
 from parsec.core.gui.ui.claim_user_code_exchange_widget import Ui_ClaimUserCodeExchangeWidget
 from parsec.core.gui.ui.claim_user_provide_info_widget import Ui_ClaimUserProvideInfoWidget
@@ -51,6 +51,8 @@ class Claimer:
             async with backend_invited_cmds_factory(
                 addr=addr, keepalive=config.backend_connection_keepalive
             ) as cmds:
+                # Trigger handshake
+                await cmds.ping()
                 r = await self.main_oob_recv.receive()
 
                 assert r == self.Step.RetrieveInfo
@@ -115,6 +117,8 @@ class Claimer:
                     await self.job_oob_send.send((False, exc, None))
         except BackendNotAvailable as exc:
             raise JobResultError(status="backend-not-available", origin=exc)
+        except BackendInvitationAlreadyUsed as exc:
+            raise JobResultError(status="invitation-already-used", origin=exc)
         except BackendConnectionRefused as exc:
             raise JobResultError(status="invitation-not-found", origin=exc)
 
@@ -173,25 +177,18 @@ class ClaimUserFinalizeWidget(QWidget, Ui_ClaimUserFinalizeWidget):
         self.setupUi(self)
         self.config = config
         self.new_device = new_device
-        self.line_edit_password.textChanged.connect(
-            self.password_strength_widget.on_password_change
-        )
-        self.line_edit_password.textChanged.connect(self.check_infos)
-        self.line_edit_password_check.textChanged.connect(self.check_infos)
+        self.widget_password.info_changed.connect(self.check_infos)
+        self.button_finalize.setDisabled(True)
         self.button_finalize.clicked.connect(self._on_finalize_clicked)
 
     def check_infos(self, _=""):
-        if (
-            len(self.line_edit_password.text())
-            and get_password_strength(self.line_edit_password.text()) > 0
-            and self.line_edit_password.text() == self.line_edit_password_check.text()
-        ):
+        if self.widget_password.is_valid():
             self.button_finalize.setDisabled(False)
         else:
             self.button_finalize.setDisabled(True)
 
     def _on_finalize_clicked(self):
-        password = self.line_edit_password.text()
+        password = self.widget_password.password
         try:
             save_device_with_password(self.config.config_dir, self.new_device, password)
             self.succeeded.emit(self.new_device, password)
@@ -293,6 +290,8 @@ class ClaimUserCodeExchangeWidget(QWidget, Ui_ClaimUserCodeExchangeWidget):
                 exc = job.exc.params.get("origin", None)
                 if isinstance(exc, InvitePeerResetError):
                     msg = _("TEXT_CLAIM_USER_PEER_RESET")
+                if isinstance(exc, BackendInvitationAlreadyUsed):
+                    msg = _("TEXT_INVITATION_ALREADY_USED")
             show_error(self, msg, exception=exc)
         self.failed.emit(job)
 
@@ -345,6 +344,8 @@ class ClaimUserCodeExchangeWidget(QWidget, Ui_ClaimUserCodeExchangeWidget):
                 exc = job.exc.params.get("origin", None)
                 if isinstance(exc, InvitePeerResetError):
                     msg = _("TEXT_CLAIM_USER_PEER_RESET")
+                if isinstance(exc, BackendInvitationAlreadyUsed):
+                    msg = _("TEXT_INVITATION_ALREADY_USED")
             show_error(self, msg, exception=exc)
         self.failed.emit(job)
 
@@ -371,6 +372,8 @@ class ClaimUserCodeExchangeWidget(QWidget, Ui_ClaimUserCodeExchangeWidget):
                 exc = job.exc.params.get("origin", None)
                 if isinstance(exc, InvitePeerResetError):
                     msg = _("TEXT_CLAIM_USER_PEER_RESET")
+                if isinstance(exc, BackendInvitationAlreadyUsed):
+                    msg = _("TEXT_INVITATION_ALREADY_USED")
             show_error(self, msg, exception=exc)
         self.failed.emit(job)
 
@@ -400,19 +403,29 @@ class ClaimUserProvideInfoWidget(QWidget, Ui_ClaimUserProvideInfoWidget):
         self.claim_job = None
         self.new_device = None
         self.line_edit_user_full_name.setFocus()
+        self.line_edit_user_full_name.set_validator(validators.NotEmptyValidator())
+        self.line_edit_user_full_name.validity_changed.connect(self.check_infos)
+
         self.line_edit_user_email.setText(user_email)
+        self.line_edit_user_email.set_validator(validators.EmailValidator())
+        self.line_edit_user_email.validity_changed.connect(self.check_infos)
+
         self.line_edit_device.setText(get_default_device())
-        self.line_edit_user_full_name.textChanged.connect(self.check_infos)
-        self.line_edit_device.textChanged.connect(self.check_infos)
-        self.line_edit_device.setValidator(validators.DeviceNameValidator())
+        self.line_edit_device.set_validator(validators.DeviceNameValidator())
+        self.line_edit_device.validity_changed.connect(self.check_infos)
+
         self.claim_success.connect(self._on_claim_success)
         self.claim_error.connect(self._on_claim_error)
         self.label_wait.hide()
         self.button_ok.clicked.connect(self._on_claim_clicked)
         self.check_infos()
 
-    def check_infos(self, _=""):
-        if self.line_edit_user_full_name.text() and self.line_edit_device.text():
+    def check_infos(self, _=None):
+        if (
+            self.line_edit_user_full_name.is_input_valid()
+            and self.line_edit_user_email.is_input_valid()
+            and self.line_edit_device.is_input_valid()
+        ):
             self.button_ok.setDisabled(False)
         else:
             self.button_ok.setDisabled(True)
@@ -420,9 +433,8 @@ class ClaimUserProvideInfoWidget(QWidget, Ui_ClaimUserProvideInfoWidget):
     def _on_claim_clicked(self):
         device_label = self.line_edit_device.text()
         try:
-            human_handle = HumanHandle(
-                email=self.line_edit_user_email.text(), label=self.line_edit_user_full_name.text()
-            )
+            user_name = validators.trim_user_name(self.line_edit_user_full_name.text())
+            human_handle = HumanHandle(email=self.line_edit_user_email.text(), label=user_name)
         except ValueError as exc:
             show_error(self, _("TEXT_CLAIM_USER_INVALID_HUMAN_HANDLE"), exception=exc)
             return
@@ -462,6 +474,8 @@ class ClaimUserProvideInfoWidget(QWidget, Ui_ClaimUserProvideInfoWidget):
                 exc = job.exc.params.get("origin", None)
                 if isinstance(exc, InvitePeerResetError):
                     msg = _("TEXT_CLAIM_USER_PEER_RESET")
+                if isinstance(exc, BackendInvitationAlreadyUsed):
+                    msg = _("TEXT_INVITATION_ALREADY_USED")
             show_error(self, msg, exception=exc)
         self.check_infos()
         self.widget_info.setDisabled(False)
@@ -522,6 +536,8 @@ class ClaimUserInstructionsWidget(QWidget, Ui_ClaimUserInstructionsWidget):
                 exc = job.exc.params.get("origin", None)
                 if isinstance(exc, InvitePeerResetError):
                     msg = _("TEXT_CLAIM_USER_PEER_RESET")
+                if isinstance(exc, BackendInvitationAlreadyUsed):
+                    msg = _("TEXT_INVITATION_ALREADY_USED")
             self.button_start.setDisabled(False)
             self.button_start.setText(_("ACTION_START"))
             show_error(self, msg, exception=exc)
@@ -594,6 +610,8 @@ class ClaimUserWidget(QWidget, Ui_ClaimUserWidget):
                 exc = job.exc.params.get("origin", None)
                 if isinstance(exc, InvitePeerResetError):
                     msg = _("TEXT_CLAIM_USER_PEER_RESET")
+                if isinstance(exc, BackendInvitationAlreadyUsed):
+                    msg = _("TEXT_INVITATION_ALREADY_USED")
             show_error(self, msg, exception=exc)
         # No point in retrying the process here, simply close the dialog
         self.dialog.reject()
@@ -613,8 +631,11 @@ class ClaimUserWidget(QWidget, Ui_ClaimUserWidget):
         if job is not None and job.status == "cancelled":
             self.dialog.reject()
             return
-        # No reason to restart the process if offline, simply close the dialog
-        if job is not None and isinstance(job.exc.params.get("origin", None), BackendNotAvailable):
+        # No reason to restart the process if offline or if the invitation has been deleted
+        # simply close the dialog
+        if job is not None and isinstance(
+            job.exc.params.get("origin", None), (BackendNotAvailable, BackendConnectionRefused)
+        ):
             self.dialog.reject()
             return
         # Let's try one more time with the same dialog
@@ -696,6 +717,8 @@ class ClaimUserWidget(QWidget, Ui_ClaimUserWidget):
         exc = None
         if job.status == "invitation-not-found":
             msg = _("TEXT_CLAIM_USER_INVITATION_NOT_FOUND")
+        elif job.status == "invitation-already-used":
+            msg = _("TEXT_INVITATION_ALREADY_USED")
         elif job.status == "backend-not-available":
             msg = _("TEXT_INVITATION_BACKEND_NOT_AVAILABLE")
         else:

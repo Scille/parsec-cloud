@@ -1,13 +1,13 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
 
 import attr
-from typing import Optional, Tuple, FrozenDict
-from pendulum import Pendulum, now as pendulum_now
+from typing import Optional, Tuple, Dict, Any, Type, TypeVar
+from pendulum import DateTime, now as pendulum_now
 
-from parsec.types import UUID4
+from parsec.types import UUID4, FrozenDict
 from parsec.crypto import SecretKey, HashDigest
-from parsec.serde import fields, validate, post_load, OneOfSchema
-from parsec.api.protocol import RealmRole, RealmRoleField
+from parsec.serde import fields, validate, post_load, OneOfSchema, pre_load
+from parsec.api.protocol import RealmRole, RealmRoleField, DeviceID
 from parsec.api.data.base import (
     BaseData,
     BaseSchema,
@@ -17,6 +17,10 @@ from parsec.api.data.base import (
 )
 from parsec.api.data.entry import EntryID, EntryIDField, EntryName, EntryNameField
 from enum import Enum
+
+LOCAL_AUTHOR_LEGACY_PLACEHOLDER = DeviceID(
+    "LOCAL_AUTHOR_LEGACY_PLACEHOLDER@LOCAL_AUTHOR_LEGACY_PLACEHOLDER"
+)
 
 
 class BlockID(UUID4):
@@ -33,6 +37,7 @@ class ManifestType(Enum):
     USER_MANIFEST = "user_manifest"
 
 
+@attr.s(slots=True, frozen=True, auto_attribs=True, kw_only=True, eq=False)
 class BlockAccess(BaseData):
     class SCHEMA_CLS(BaseSchema):
         id = BlockIDField(required=True)
@@ -42,7 +47,7 @@ class BlockAccess(BaseData):
         digest = fields.HashDigest(required=True)
 
         @post_load
-        def make_obj(self, data):
+        def make_obj(self, data: Dict[str, Any]) -> "BlockAccess":
             return BlockAccess(**data)
 
     id: BlockID
@@ -52,9 +57,13 @@ class BlockAccess(BaseData):
     digest: HashDigest
 
 
+WorkspaceEntryTypeVar = TypeVar("WorkspaceEntryTypeVar", bound="WorkspaceEntry")
+
+
+@attr.s(slots=True, frozen=True, auto_attribs=True, kw_only=True, eq=False)
 class WorkspaceEntry(BaseData):
     class SCHEMA_CLS(BaseSchema):
-        name = EntryNameField(validate=validate.Length(min=1, max=256), required=True)
+        name = EntryNameField(required=True)
         id = EntryIDField(required=True)
         key = fields.SecretKey(required=True)
         encryption_revision = fields.Int(required=True, validate=validate.Range(min=0))
@@ -63,22 +72,22 @@ class WorkspaceEntry(BaseData):
         role = RealmRoleField(required=True, allow_none=True)
 
         @post_load
-        def make_obj(self, data):
+        def make_obj(self, data: Dict[str, Any]) -> "WorkspaceEntry":
             return WorkspaceEntry(**data)
 
-    name: str
+    name: EntryName
     id: EntryID
     key: SecretKey
     encryption_revision: int
-    encrypted_on: Pendulum
-    role_cached_on: Pendulum
+    encrypted_on: DateTime
+    role_cached_on: DateTime
     role: Optional[RealmRole]
 
     @classmethod
-    def new(cls, name):
+    def new(cls: Type[WorkspaceEntryTypeVar], name: str) -> "WorkspaceEntry":
         now = pendulum_now()
         return WorkspaceEntry(
-            name=name,
+            name=EntryName(name),
             id=EntryID(),
             key=SecretKey.generate(),
             encryption_revision=1,
@@ -91,25 +100,20 @@ class WorkspaceEntry(BaseData):
         return self.role is None
 
 
-class VerifyParentMixin:
-    @classmethod
-    def verify_and_load(
-        cls, *args, expected_parent: Optional[EntryID] = None, **kwargs
-    ) -> BaseAPISignedData:
-        data = super().verify_and_load(*args, **kwargs)
-        if expected_parent is not None and data.parent != expected_parent:
-            raise DataValidationError(
-                f"Invalid parent ID: expected `{expected_parent}`, got `{data.parent}`"
-            )
-        return data
+T = TypeVar("T")
+BaseAPISignedDataTypeVar = TypeVar("BaseAPISignedDataTypeVar", bound="BaseAPISignedData")
+BaseManifestTypeVar = TypeVar("BaseManifestTypeVar", bound="BaseManifest")
 
 
-class Manifest(BaseAPISignedData):
+@attr.s(slots=True, frozen=True, auto_attribs=True, kw_only=True, eq=False)
+class BaseManifest(BaseAPISignedData):
     class SCHEMA_CLS(OneOfSchema, BaseSignedDataSchema):
         type_field = "type"
+        version = fields.Integer(required=True, validate=validate.Range(min=0))
+        id = EntryIDField(required=True)
 
         @property
-        def type_schemas(self):
+        def type_schemas(self) -> Dict[ManifestType, Type[OneOfSchema]]:  # type: ignore[override]
             return {
                 ManifestType.FILE_MANIFEST: FileManifest.SCHEMA_CLS,
                 ManifestType.FOLDER_MANIFEST: FolderManifest.SCHEMA_CLS,
@@ -117,20 +121,21 @@ class Manifest(BaseAPISignedData):
                 ManifestType.USER_MANIFEST: UserManifest.SCHEMA_CLS,
             }
 
-        def get_obj_type(self, obj):
+        def get_obj_type(self, obj: Dict[str, T]) -> T:
             return obj["type"]
+
+    version: int
+    id: EntryID
 
     @classmethod
     def verify_and_load(
-        cls,
-        *args,
+        cls: Type[BaseManifestTypeVar],
+        *args: object,
         expected_id: Optional[EntryID] = None,
         expected_version: Optional[int] = None,
-        **kwargs,
-    ) -> "Manifest":
-        data = super().verify_and_load(*args, **kwargs)
-        if data.author is None and data.version != 0:
-            raise DataValidationError("Manifest cannot be signed by root verify key")
+        **kwargs: object,
+    ) -> BaseManifestTypeVar:
+        data = super().verify_and_load(*args, **kwargs)  # type: ignore[arg-type]
         if expected_id is not None and data.id != expected_id:
             raise DataValidationError(
                 f"Invalid entry ID: expected `{expected_id}`, got `{data.id}`"
@@ -142,40 +147,61 @@ class Manifest(BaseAPISignedData):
         return data
 
 
-class FolderManifest(VerifyParentMixin, Manifest):
+FolderManifestTypeVar = TypeVar("FolderManifestTypeVar", bound="FolderManifest")
+
+
+@attr.s(slots=True, frozen=True, auto_attribs=True, kw_only=True, eq=False)
+class FolderManifest(BaseManifest):
     class SCHEMA_CLS(BaseSignedDataSchema):
         type = fields.EnumCheckedConstant(ManifestType.FOLDER_MANIFEST, required=True)
         id = EntryIDField(required=True)
         parent = EntryIDField(required=True)
-        # Version 0 means the data is not synchronized (hence author sould be None)
+        # Version 0 means the data is not synchronized
         version = fields.Integer(required=True, validate=validate.Range(min=0))
         created = fields.DateTime(required=True)
         updated = fields.DateTime(required=True)
-        children = fields.FrozenMap(
-            EntryNameField(validate=validate.Length(min=1, max=256)),
-            EntryIDField(required=True),
-            required=True,
-        )
+        children = fields.FrozenMap(EntryNameField(), EntryIDField(required=True), required=True)
+
+        @pre_load
+        def fix_legacy(self, data: Dict[str, Any]) -> Dict[str, Any]:
+            # Compatibility with versions <= 1.14
+            if data["author"] is None:
+                data["author"] = LOCAL_AUTHOR_LEGACY_PLACEHOLDER
+            return data
 
         @post_load
-        def make_obj(self, data):
+        def make_obj(self, data: Dict[str, Any]) -> "FolderManifest":
             data.pop("type")
             return FolderManifest(**data)
 
+    @classmethod
+    def verify_and_load(  # type: ignore[override]
+        cls: Type["FolderManifest"],
+        *args: object,
+        expected_parent: Optional[EntryID] = None,
+        **kwargs: object,
+    ) -> "FolderManifest":
+        data = super().verify_and_load(*args, **kwargs)  # type: ignore[arg-type]
+        if expected_parent is not None and data.parent != expected_parent:
+            raise DataValidationError(
+                f"Invalid parent ID: expected `{expected_parent}`, got `{data.parent}`"
+            )
+        return data
+
     id: EntryID
     parent: EntryID
-    version: int
-    created: Pendulum
-    updated: Pendulum
+    created: DateTime
+    updated: DateTime
     children: FrozenDict[EntryName, EntryID]
 
 
-class FileManifest(VerifyParentMixin, Manifest):
+@attr.s(slots=True, frozen=True, auto_attribs=True, kw_only=True, eq=False)
+class FileManifest(BaseManifest):
     class SCHEMA_CLS(BaseSignedDataSchema):
         type = fields.EnumCheckedConstant(ManifestType.FILE_MANIFEST, required=True)
         id = EntryIDField(required=True)
         parent = EntryIDField(required=True)
-        # Version 0 means the data is not synchronized (hence author sould be None)
+        # Version 0 means the data is not synchronized
         version = fields.Integer(required=True, validate=validate.Range(min=0))
         created = fields.DateTime(required=True)
         updated = fields.DateTime(required=True)
@@ -183,69 +209,99 @@ class FileManifest(VerifyParentMixin, Manifest):
         blocksize = fields.Integer(required=True, validate=validate.Range(min=8))
         blocks = fields.FrozenList(fields.Nested(BlockAccess.SCHEMA_CLS), required=True)
 
+        @pre_load
+        def fix_legacy(self, data: Dict[str, T]) -> Dict[str, T]:
+            # Compatibility with versions <= 1.14
+            if data["author"] is None:
+                data["author"] = LOCAL_AUTHOR_LEGACY_PLACEHOLDER
+            return data
+
         @post_load
-        def make_obj(self, data):
+        def make_obj(self, data: Dict[str, Any]) -> "FileManifest":
             data.pop("type")
             return FileManifest(**data)
 
+    @classmethod
+    def verify_and_load(  # type: ignore[override]
+        cls: Type["FileManifest"],
+        *args: object,
+        expected_parent: Optional[EntryID] = None,
+        **kwargs: object,
+    ) -> "FileManifest":
+        data = super().verify_and_load(*args, **kwargs)  # type: ignore[arg-type]
+        if expected_parent is not None and data.parent != expected_parent:
+            raise DataValidationError(
+                f"Invalid parent ID: expected `{expected_parent}`, got `{data.parent}`"
+            )
+        return data
+
     id: EntryID
     parent: EntryID
-    version: int
-    created: Pendulum
-    updated: Pendulum
+    created: DateTime
+    updated: DateTime
     size: int
     blocksize: int
     blocks: Tuple[BlockAccess]
 
 
-class WorkspaceManifest(Manifest):
+@attr.s(slots=True, frozen=True, auto_attribs=True, kw_only=True, eq=False)
+class WorkspaceManifest(BaseManifest):
     class SCHEMA_CLS(BaseSignedDataSchema):
         type = fields.EnumCheckedConstant(ManifestType.WORKSPACE_MANIFEST, required=True)
         id = EntryIDField(required=True)
-        # Version 0 means the data is not synchronized (hence author sould be None)
+        # Version 0 means the data is not synchronized
         version = fields.Integer(required=True, validate=validate.Range(min=0))
         created = fields.DateTime(required=True)
         updated = fields.DateTime(required=True)
-        children = fields.FrozenMap(
-            EntryNameField(validate=validate.Length(min=1, max=256)),
-            EntryIDField(required=True),
-            required=True,
-        )
+        children = fields.FrozenMap(EntryNameField(), EntryIDField(required=True), required=True)
+
+        @pre_load
+        def fix_legacy(self, data: Dict[str, T]) -> Dict[str, T]:
+            # Compatibility with versions <= 1.14
+            if data["author"] is None:
+                data["author"] = LOCAL_AUTHOR_LEGACY_PLACEHOLDER
+            return data
 
         @post_load
-        def make_obj(self, data):
+        def make_obj(self, data: Dict[str, Any]) -> "WorkspaceManifest":
             data.pop("type")
             return WorkspaceManifest(**data)
 
     id: EntryID
-    version: int
-    created: Pendulum
-    updated: Pendulum
+    created: DateTime
+    updated: DateTime
     children: FrozenDict[EntryName, EntryID]
 
 
-class UserManifest(Manifest):
+@attr.s(slots=True, frozen=True, auto_attribs=True, kw_only=True, eq=False)
+class UserManifest(BaseManifest):
     class SCHEMA_CLS(BaseSignedDataSchema):
         type = fields.EnumCheckedConstant(ManifestType.USER_MANIFEST, required=True)
         id = EntryIDField(required=True)
-        # Version 0 means the data is not synchronized (hence author sould be None)
+        # Version 0 means the data is not synchronized
         version = fields.Integer(required=True, validate=validate.Range(min=0))
         created = fields.DateTime(required=True)
         updated = fields.DateTime(required=True)
         last_processed_message = fields.Integer(required=True, validate=validate.Range(min=0))
         workspaces = fields.List(fields.Nested(WorkspaceEntry.SCHEMA_CLS), required=True)
 
+        @pre_load
+        def fix_legacy(self, data: Dict[str, T]) -> Dict[str, T]:
+            # Compatibility with versions <= 1.14
+            if data["author"] is None:
+                data["author"] = LOCAL_AUTHOR_LEGACY_PLACEHOLDER
+            return data
+
         @post_load
-        def make_obj(self, data):
+        def make_obj(self, data: Dict[str, Any]) -> "UserManifest":
             data.pop("type")
             return UserManifest(**data)
 
     id: EntryID
-    version: int
-    created: Pendulum
-    updated: Pendulum
+    created: DateTime
+    updated: DateTime
     last_processed_message: int
     workspaces: Tuple[WorkspaceEntry] = attr.ib(converter=tuple)
 
-    def get_workspace_entry(self, workspace_id: EntryID) -> WorkspaceEntry:
+    def get_workspace_entry(self, workspace_id: EntryID) -> Optional[WorkspaceEntry]:
         return next((w for w in self.workspaces if w.id == workspace_id), None)

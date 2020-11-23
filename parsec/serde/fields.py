@@ -1,6 +1,6 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
 
-from pendulum import Pendulum
+from pendulum import DateTime as PendulumDateTime
 from uuid import UUID as _UUID
 from enum import Enum
 from collections import Mapping
@@ -55,6 +55,9 @@ __all__ = (
     "PrivateKey",
     "SecretKey",
     "HashDigest",
+    "FrozenList",
+    "FrozenMap",
+    "FrozenSet",
 )
 
 
@@ -176,7 +179,7 @@ class DateTime(Field):
     """DateTime already handled by pack/unpack"""
 
     def _deserialize(self, value, attr, data):
-        if not isinstance(value, Pendulum):
+        if not isinstance(value, PendulumDateTime):
             raise ValidationError("Not a datetime")
 
         return value
@@ -258,6 +261,11 @@ class FrozenMap(Map):
 class FrozenList(List):
     def _deserialize(self, value, attr, obj):
         return tuple(super()._deserialize(value, attr, obj))
+
+
+class FrozenSet(List):
+    def _deserialize(self, value, attr, obj):
+        return frozenset(super()._deserialize(value, attr, obj))
 
 
 class Tuple(Field):

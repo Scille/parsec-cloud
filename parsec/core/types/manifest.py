@@ -2,8 +2,8 @@
 
 import attr
 import functools
-from typing import Optional, Tuple
-from pendulum import Pendulum, now as pendulum_now
+from typing import Optional, Tuple, TypeVar, Type, Union, NoReturn, FrozenSet, Pattern, Dict
+from pendulum import DateTime, now as pendulum_now
 
 from parsec.types import UUID4, FrozenDict
 from parsec.crypto import SecretKey, HashDigest
@@ -15,7 +15,7 @@ from parsec.api.data import (
     WorkspaceEntry,
     BlockAccess,
     BlockID,
-    Manifest as RemoteManifest,
+    BaseManifest as BaseRemoteManifest,
     UserManifest as RemoteUserManifest,
     WorkspaceManifest as RemoteWorkspaceManifest,
     FolderManifest as RemoteFolderManifest,
@@ -51,6 +51,7 @@ ChunkIDField = fields.uuid_based_field_factory(ChunkID)
 
 
 @functools.total_ordering
+@attr.s(slots=True, frozen=True, auto_attribs=True, kw_only=True, eq=False)
 class Chunk(BaseData):
     """Represents a chunk of a data in file manifest.
 
@@ -179,7 +180,7 @@ class Chunk(BaseData):
 
     # Export
 
-    def get_block_access(self) -> BlockAccess:
+    def get_block_access(self) -> Optional[BlockAccess]:
         if not self.is_block:
             raise TypeError("This chunk does not correspond to a block")
         return self.access
@@ -195,9 +196,29 @@ class LocalManifestType(Enum):
     LOCAL_USER_MANIFEST = "local_user_manifest"
 
 
-class LocalManifest(BaseLocalData):
+LocalManifestTypeVar = TypeVar("LocalManifestTypeVar", bound="BaseLocalManifest")
+LocalFileManifestTypeVar = TypeVar("LocalFileManifestTypeVar", bound="LocalFileManifest")
+LocalFolderManifestTypeVar = TypeVar("LocalFolderManifestTypeVar", bound="LocalFolderManifest")
+LocalWorkspaceManifestTypeVar = TypeVar(
+    "LocalWorkspaceManifestTypeVar", bound="LocalWorkspaceManifest"
+)
+LocalUserManifestTypeVar = TypeVar("LocalUserManifestTypeVar", bound="LocalUserManifest")
+LocalManifestsTypeVar = Union[
+    LocalManifestTypeVar,
+    LocalFileManifestTypeVar,
+    LocalFolderManifestTypeVar,
+    LocalWorkspaceManifestTypeVar,
+    LocalUserManifestTypeVar,
+]
+
+
+@attr.s(slots=True, frozen=True, auto_attribs=True, kw_only=True, eq=False)
+class BaseLocalManifest(BaseLocalData):
     class SCHEMA_CLS(OneOfSchema, BaseSchema):
         type_field = "type"
+        base = fields.Nested(BaseRemoteManifest.SCHEMA_CLS, required=True)
+        need_sync = fields.Boolean(required=True)
+        updated = fields.DateTime(required=True)
 
         @property
         def type_schemas(self):
@@ -210,6 +231,10 @@ class LocalManifest(BaseLocalData):
 
         def get_obj_type(self, obj):
             return obj["type"]
+
+    need_sync: bool
+    updated: DateTime
+    base: BaseRemoteManifest  # base must be overwritten in subclass
 
     # Properties
 
@@ -231,7 +256,7 @@ class LocalManifest(BaseLocalData):
 
     # Evolve methods
 
-    def evolve_and_mark_updated(self, **data) -> "LocalManifest":
+    def evolve_and_mark_updated(self: LocalManifestTypeVar, **data) -> LocalManifestTypeVar:
         if "updated" not in data:
             data["updated"] = pendulum_now()
         data.setdefault("need_sync", True)
@@ -240,24 +265,50 @@ class LocalManifest(BaseLocalData):
     # Remote methods
 
     @classmethod
-    def from_remote(cls, remote: RemoteManifest) -> "LocalManifest":
+    def from_remote(
+        cls: Type[LocalManifestTypeVar], remote: BaseRemoteManifest, prevent_sync_pattern: Pattern
+    ) -> LocalManifestsTypeVar:
         if isinstance(remote, RemoteFileManifest):
             return LocalFileManifest.from_remote(remote)
         elif isinstance(remote, RemoteFolderManifest):
-            return LocalFolderManifest.from_remote(remote)
+            return LocalFolderManifest.from_remote(remote, prevent_sync_pattern)
         elif isinstance(remote, RemoteWorkspaceManifest):
-            return LocalWorkspaceManifest.from_remote(remote)
+            return LocalWorkspaceManifest.from_remote(remote, prevent_sync_pattern)
         elif isinstance(remote, RemoteUserManifest):
             return LocalUserManifest.from_remote(remote)
+        raise ValueError("Wrong remote type")
 
-    def to_remote(self) -> RemoteManifest:
+    @classmethod
+    def from_remote_with_local_context(
+        cls: Type[LocalManifestTypeVar],
+        remote: BaseRemoteManifest,
+        prevent_sync_pattern: Pattern,
+        local_manifest: LocalManifestTypeVar,
+    ) -> LocalManifestsTypeVar:
+        if isinstance(remote, RemoteFileManifest):
+            return LocalFileManifest.from_remote(remote)
+        elif isinstance(remote, RemoteFolderManifest):
+            return LocalFolderManifest.from_remote_with_local_context(
+                remote, prevent_sync_pattern, local_manifest
+            )
+        elif isinstance(remote, RemoteWorkspaceManifest):
+            return LocalWorkspaceManifest.from_remote_with_local_context(
+                remote, prevent_sync_pattern, local_manifest
+            )
+        elif isinstance(remote, RemoteUserManifest):
+            return LocalUserManifest.from_remote(remote)
+        raise ValueError("Wrong remote type")
+
+    def to_remote(self, author: Optional[DeviceID], timestamp: DateTime = None) -> NoReturn:
         raise NotImplementedError
 
-    def match_remote(self, remote_manifest: RemoteFileManifest) -> bool:
-        reference = self.to_remote(
+    def match_remote(self, remote_manifest: BaseRemoteManifest) -> bool:
+        reference: BaseRemoteManifest = self.to_remote(
             author=remote_manifest.author, timestamp=remote_manifest.timestamp
         )
         return reference.evolve(version=remote_manifest.version) == remote_manifest
+
+    # Stat method
 
     def to_stats(self):
         # General stats
@@ -283,7 +334,8 @@ class LocalManifest(BaseLocalData):
         return dct
 
 
-class LocalFileManifest(LocalManifest):
+@attr.s(slots=True, frozen=True, auto_attribs=True, kw_only=True, eq=False)
+class LocalFileManifest(BaseLocalManifest):
     class SCHEMA_CLS(BaseSchema):
         type = fields.EnumCheckedConstant(LocalManifestType.LOCAL_FILE_MANIFEST, required=True)
         base = fields.Nested(RemoteFileManifest.SCHEMA_CLS, required=True)
@@ -301,21 +353,24 @@ class LocalFileManifest(LocalManifest):
             return LocalFileManifest(**data)
 
     base: RemoteFileManifest
-    need_sync: bool
-    updated: Pendulum
     size: int
     blocksize: int
-    blocks: Tuple[Tuple[Chunk], ...]
+    blocks: Tuple[Tuple[Chunk, ...], ...]
 
     @classmethod
     def new_placeholder(
-        cls, parent: EntryID, id: EntryID = None, now: Pendulum = None, blocksize=DEFAULT_BLOCK_SIZE
-    ):
+        cls,
+        author: DeviceID,
+        parent: EntryID,
+        id: Optional[EntryID] = None,
+        now: DateTime = None,
+        blocksize=DEFAULT_BLOCK_SIZE,
+    ) -> "LocalFileManifest":
         now = now or pendulum_now()
         blocks = ()
         return cls(
             base=RemoteFileManifest(
-                author=None,
+                author=author,
                 timestamp=now,
                 id=id or EntryID(),
                 parent=parent,
@@ -379,7 +434,9 @@ class LocalFileManifest(LocalManifest):
     # Remote methods
 
     @classmethod
-    def from_remote(cls, remote: RemoteFileManifest) -> "LocalFileManifest":
+    def from_remote(
+        cls: Type[LocalFileManifestTypeVar], remote: RemoteFileManifest
+    ) -> LocalFileManifestTypeVar:
         return cls(
             base=remote,
             need_sync=False,
@@ -389,7 +446,7 @@ class LocalFileManifest(LocalManifest):
             blocks=tuple((Chunk.from_block_acess(block_access),) for block_access in remote.blocks),
         )
 
-    def to_remote(self, author: DeviceID, timestamp: Pendulum = None) -> RemoteFileManifest:
+    def to_remote(self, author: DeviceID, timestamp: DateTime = None) -> RemoteFileManifest:
         # Checks
         self.assert_integrity()
         assert self.is_reshaped()
@@ -416,31 +473,176 @@ class LocalFileManifest(LocalManifest):
         return super().match_remote(remote_manifest)
 
 
-class LocalFolderManifest(LocalManifest):
+LocalFolderishManifestTypeVar = TypeVar("LocalManifestTypeVar", bound="LocalFolderishManifestMixin")
+
+
+class LocalFolderishManifestMixin:
+    """Common methods for LocalFolderManifest and LocalWorkspaceManifest"""
+
+    # Evolve methods
+
+    def evolve_children_and_mark_updated(
+        self: LocalFolderishManifestTypeVar,
+        data: Dict[str, Optional[EntryID]],
+        prevent_sync_pattern: Pattern,
+    ) -> LocalFolderishManifestTypeVar:
+        updated = False
+        new_children = dict(self.children)
+        new_local_confinement_points = set(self.local_confinement_points)
+
+        # Deal with removal first
+        for name, entry_id in data.items():
+            if name not in new_children:
+                continue
+            # Remove old entry
+            old_entry_id = new_children.pop(name)
+            if old_entry_id in new_local_confinement_points:
+                new_local_confinement_points.discard(old_entry_id)
+            else:
+                updated = True
+
+        # Make sure no entry_id is duplicated
+        assert not set(data.values()).intersection(new_children.values())
+
+        # Deal with additions second
+        for name, entry_id in data.items():
+            if entry_id is None:
+                continue
+            # Add new entry
+            new_children[name] = entry_id
+            if prevent_sync_pattern.match(name):
+                new_local_confinement_points.add(entry_id)
+            else:
+                updated = True
+
+        new_local_confinement_points = frozenset(new_local_confinement_points)
+        if not updated:
+            return self.evolve(
+                children=new_children, local_confinement_points=new_local_confinement_points
+            )
+        return self.evolve_and_mark_updated(
+            children=new_children, local_confinement_points=new_local_confinement_points
+        )
+
+    # Filtering and confinement helpers
+
+    def _filter_local_confinement_points(
+        self: LocalFolderishManifestTypeVar
+    ) -> LocalFolderishManifestTypeVar:
+        if not self.local_confinement_points:
+            return self
+        children = {
+            name: entry_id
+            for name, entry_id in self.children.items()
+            if entry_id not in self.local_confinement_points
+        }
+        return self.evolve(local_confinement_points=frozenset(), children=children)
+
+    def _restore_local_confinement_points(
+        self: LocalFolderishManifestTypeVar,
+        other: LocalFolderishManifestTypeVar,
+        prevent_sync_pattern: Pattern,
+    ) -> LocalFolderishManifestTypeVar:
+        # Using self.remote_confinement_points is useful to restore entries that were present locally
+        # before applying a new filter that filtered those entries from the remote manifest
+        if not other.local_confinement_points and not self.remote_confinement_points:
+            return self
+        previously_local_confinement_points = {
+            name: entry_id
+            for name, entry_id in other.children.items()
+            if entry_id in other.local_confinement_points
+            or entry_id in self.remote_confinement_points
+        }
+        return self.evolve_children_and_mark_updated(
+            previously_local_confinement_points, prevent_sync_pattern
+        )
+
+    def _filter_remote_entries(
+        self: LocalFolderishManifestTypeVar, prevent_sync_pattern: Pattern
+    ) -> LocalFolderishManifestTypeVar:
+        remote_confinement_points = frozenset(
+            {
+                entry_id
+                for name, entry_id in self.children.items()
+                if prevent_sync_pattern.match(name)
+            }
+        )
+        if not remote_confinement_points:
+            return self
+        children = {
+            name: entry_id
+            for name, entry_id in self.children.items()
+            if entry_id not in remote_confinement_points
+        }
+        return self.evolve(children=children, remote_confinement_points=remote_confinement_points)
+
+    def _restore_remote_confinement_points(
+        self: LocalFolderishManifestTypeVar
+    ) -> LocalFolderishManifestTypeVar:
+        if not self.remote_confinement_points:
+            return self
+        children = dict(self.children)
+        for name, entry_id in self.base.children.items():
+            if entry_id in self.remote_confinement_points:
+                children[name] = entry_id
+        return self.evolve(remote_confinement_points=frozenset(), children=children)
+
+    # Apply "prevent sync" pattern
+
+    def apply_prevent_sync_pattern(
+        self: LocalFolderishManifestTypeVar, prevent_sync_pattern: Pattern
+    ) -> LocalFolderishManifestTypeVar:
+        # Filter local confinement points
+        result = self._filter_local_confinement_points()
+        # Restore remote confinement points
+        result = result._restore_remote_confinement_points()
+        # Filter remote confinement_points
+        result = result._filter_remote_entries(prevent_sync_pattern)
+        # Restore local confinement points
+        return result._restore_local_confinement_points(self, prevent_sync_pattern)
+
+
+@attr.s(slots=True, frozen=True, auto_attribs=True, kw_only=True, eq=False)
+class LocalFolderManifest(BaseLocalManifest, LocalFolderishManifestMixin):
     class SCHEMA_CLS(BaseSchema):
         type = fields.EnumCheckedConstant(LocalManifestType.LOCAL_FOLDER_MANIFEST, required=True)
         base = fields.Nested(RemoteFolderManifest.SCHEMA_CLS, required=True)
         need_sync = fields.Boolean(required=True)
         updated = fields.DateTime(required=True)
         children = fields.FrozenMap(EntryNameField(), EntryIDField(required=True), required=True)
+        # Confined entries are entries that are meant to stay locally and not be added
+        # to the uploaded remote manifest when synchronizing. The criteria for being
+        # confined is to have a filename that matched the "prevent sync" pattern at the time of
+        # the last change (or when a new filter was successfully applied)
+        local_confinement_points = fields.FrozenSet(EntryIDField(required=True))
+
+        # Filtered entries are entries present in the base manifest that are not exposed
+        # locally. We keep track of them to remember that those entries have not been
+        # deleted locally and hence should be restored when crafting the remote manifest
+        # to upload.
+        remote_confinement_points = fields.FrozenSet(EntryIDField(required=True))
 
         @post_load
         def make_obj(self, data):
             data.pop("type")
+            data.setdefault("local_confinement_points", frozenset())
+            data.setdefault("remote_confinement_points", frozenset())
             return LocalFolderManifest(**data)
 
     base: RemoteFolderManifest
-    need_sync: bool
-    updated: Pendulum
     children: FrozenDict[EntryName, EntryID]
+    local_confinement_points: FrozenSet[EntryID]
+    remote_confinement_points: FrozenSet[EntryID]
 
     @classmethod
-    def new_placeholder(cls, parent: EntryID, id: EntryID = None, now: Pendulum = None):
+    def new_placeholder(
+        cls, author: DeviceID, parent: EntryID, id: EntryID = None, now: DateTime = None
+    ) -> "LocalFolderManifest":
         now = now or pendulum_now()
         children = FrozenDict()
         return cls(
             base=RemoteFolderManifest(
-                author=None,
+                author=author,
                 timestamp=now,
                 id=id or EntryID(),
                 parent=parent,
@@ -452,9 +654,12 @@ class LocalFolderManifest(LocalManifest):
             need_sync=True,
             updated=now,
             children=children,
+            local_confinement_points=frozenset(),
+            remote_confinement_points=frozenset(),
         )
 
     # Properties
+
     def to_stats(self):
         stats = super().to_stats()
         stats["type"] = "folder"
@@ -465,25 +670,40 @@ class LocalFolderManifest(LocalManifest):
     def parent(self):
         return self.base.parent
 
-    # Evolve methods
-
-    def evolve_children_and_mark_updated(self, data) -> "LocalFolderManifest":
-        return self.evolve_and_mark_updated(
-            children={k: v for k, v in {**self.children, **data}.items() if v is not None}
-        )
-
-    def evolve_children(self, data) -> "LocalFolderManifest":
-        return self.evolve(
-            children={k: v for k, v in {**self.children, **data}.items() if v is not None}
-        )
-
     # Remote methods
 
     @classmethod
-    def from_remote(cls, remote: RemoteFolderManifest) -> "LocalFolderManifest":
-        return cls(base=remote, need_sync=False, updated=remote.updated, children=remote.children)
+    def from_remote(
+        cls, remote: RemoteFolderManifest, prevent_sync_pattern: Pattern
+    ) -> "LocalFolderManifest":
+        # Create local manifest
+        result = cls(
+            base=remote,
+            need_sync=False,
+            updated=remote.updated,
+            children=remote.children,
+            local_confinement_points=frozenset(),
+            remote_confinement_points=frozenset(),
+        )
+        # Filter remote entries
+        return result._filter_remote_entries(prevent_sync_pattern)
 
-    def to_remote(self, author: DeviceID, timestamp: Pendulum = None) -> RemoteFolderManifest:
+    @classmethod
+    def from_remote_with_local_context(
+        cls,
+        remote: RemoteFolderManifest,
+        prevent_sync_pattern: Pattern,
+        local_manifest: "LocalFolderManifest",
+    ) -> "LocalFolderManifest":
+        result = cls.from_remote(remote, prevent_sync_pattern)
+        return result._restore_local_confinement_points(local_manifest, prevent_sync_pattern)
+
+    def to_remote(self, author: DeviceID, timestamp: DateTime = None) -> RemoteFolderManifest:
+        # Filter confined entries
+        processed_manifest = self._filter_local_confinement_points()
+        # Restore filtered entries
+        processed_manifest = processed_manifest._restore_remote_confinement_points()
+        # Create remote manifest
         return RemoteFolderManifest(
             author=author,
             timestamp=timestamp or pendulum_now(),
@@ -492,35 +712,50 @@ class LocalFolderManifest(LocalManifest):
             version=self.base_version + 1,
             created=self.created,
             updated=self.updated,
-            children=self.children,
+            children=processed_manifest.children,
         )
 
 
-class LocalWorkspaceManifest(LocalManifest):
+@attr.s(slots=True, frozen=True, auto_attribs=True, kw_only=True, eq=False)
+class LocalWorkspaceManifest(BaseLocalManifest, LocalFolderishManifestMixin):
     class SCHEMA_CLS(BaseSchema):
         type = fields.EnumCheckedConstant(LocalManifestType.LOCAL_WORKSPACE_MANIFEST, required=True)
         base = fields.Nested(RemoteWorkspaceManifest.SCHEMA_CLS, required=True)
         need_sync = fields.Boolean(required=True)
         updated = fields.DateTime(required=True)
         children = fields.FrozenMap(EntryNameField(), EntryIDField(required=True), required=True)
+        # Confined entries are entries that are meant to stay locally and not be added
+        # to the uploaded remote manifest when synchronizing. The criteria for being
+        # confined is to have a filename that matched the "prevent sync" pattern at the time of
+        # the last change (or when a new filter was successfully applied)
+        local_confinement_points = fields.FrozenSet(EntryIDField(required=True))
+        # Filtered entries are entries present in the base manifest that are not exposed
+        # locally. We keep track of them to remember that those entries have not been
+        # deleted locally and hence should be restored when crafting the remote manifest
+        # to upload.
+        remote_confinement_points = fields.FrozenSet(EntryIDField(required=True))
 
         @post_load
         def make_obj(self, data):
             data.pop("type")
+            data.setdefault("local_confinement_points", frozenset())
+            data.setdefault("remote_confinement_points", frozenset())
             return LocalWorkspaceManifest(**data)
 
     base: RemoteWorkspaceManifest
-    need_sync: bool
-    updated: Pendulum
     children: FrozenDict[EntryName, EntryID]
+    local_confinement_points: FrozenSet[EntryID]
+    remote_confinement_points: FrozenSet[EntryID]
 
     @classmethod
-    def new_placeholder(cls, id: EntryID = None, now: Pendulum = None):
+    def new_placeholder(
+        cls, author: DeviceID, id: EntryID = None, now: DateTime = None
+    ) -> "LocalWorkspaceManifest":
         now = now or pendulum_now()
         children = FrozenDict()
         return cls(
             base=RemoteWorkspaceManifest(
-                author=None,
+                author=author,
                 timestamp=now,
                 id=id or EntryID(),
                 version=0,
@@ -531,6 +766,8 @@ class LocalWorkspaceManifest(LocalManifest):
             need_sync=True,
             updated=now,
             children=children,
+            local_confinement_points=frozenset(),
+            remote_confinement_points=frozenset(),
         )
 
     # Evolve methods
@@ -541,23 +778,40 @@ class LocalWorkspaceManifest(LocalManifest):
         stats["children"] = sorted(self.children.keys())
         return stats
 
-    def evolve_children_and_mark_updated(self, data) -> "LocalWorkspaceManifest":
-        return self.evolve_and_mark_updated(
-            children={k: v for k, v in {**self.children, **data}.items() if v is not None}
-        )
-
-    def evolve_children(self, data) -> "LocalWorkspaceManifest":
-        return self.evolve(
-            children={k: v for k, v in {**self.children, **data}.items() if v is not None}
-        )
-
     # Remote methods
 
     @classmethod
-    def from_remote(cls, remote: RemoteWorkspaceManifest) -> "LocalWorkspaceManifest":
-        return cls(base=remote, need_sync=False, updated=remote.updated, children=remote.children)
+    def from_remote(
+        cls, remote: RemoteFolderManifest, prevent_sync_pattern: Pattern
+    ) -> "LocalWorkspaceManifest":
+        # Create local manifest
+        result = cls(
+            base=remote,
+            need_sync=False,
+            updated=remote.updated,
+            children=remote.children,
+            local_confinement_points=frozenset(),
+            remote_confinement_points=frozenset(),
+        )
+        # Filter remote entries
+        return result._filter_remote_entries(prevent_sync_pattern)
 
-    def to_remote(self, author: DeviceID, timestamp: Pendulum = None) -> RemoteWorkspaceManifest:
+    @classmethod
+    def from_remote_with_local_context(
+        cls,
+        remote: RemoteFolderManifest,
+        prevent_sync_pattern: Pattern,
+        local_manifest: "LocalWorkspaceManifest",
+    ) -> "LocalWorkspaceManifest":
+        result = cls.from_remote(remote, prevent_sync_pattern)
+        return result._restore_local_confinement_points(local_manifest, prevent_sync_pattern)
+
+    def to_remote(self, author: DeviceID, timestamp: DateTime = None) -> RemoteWorkspaceManifest:
+        # Filter confined entries
+        processed_manifest = self._filter_local_confinement_points()
+        # Restore filtered entries
+        processed_manifest = processed_manifest._restore_remote_confinement_points()
+        # Create remote manifest
         return RemoteWorkspaceManifest(
             author=author,
             timestamp=timestamp or pendulum_now(),
@@ -565,11 +819,12 @@ class LocalWorkspaceManifest(LocalManifest):
             version=self.base_version + 1,
             created=self.created,
             updated=self.updated,
-            children=self.children,
+            children=processed_manifest.children,
         )
 
 
-class LocalUserManifest(LocalManifest):
+@attr.s(slots=True, frozen=True, auto_attribs=True, kw_only=True, eq=False)
+class LocalUserManifest(BaseLocalManifest):
     class SCHEMA_CLS(BaseSchema):
         type = fields.EnumCheckedConstant(LocalManifestType.LOCAL_USER_MANIFEST, required=True)
         base = fields.Nested(RemoteUserManifest.SCHEMA_CLS, required=True)
@@ -584,18 +839,19 @@ class LocalUserManifest(LocalManifest):
             return LocalUserManifest(**data)
 
     base: RemoteUserManifest
-    need_sync: bool
-    updated: Pendulum
+
     last_processed_message: int
     workspaces: Tuple[WorkspaceEntry, ...]
 
     @classmethod
-    def new_placeholder(cls, id: EntryID = None, now: Pendulum = None) -> "LocalUserManifest":
+    def new_placeholder(
+        cls, author: DeviceID, id: EntryID = None, now: DateTime = None
+    ) -> "LocalUserManifest":
         workspaces = ()
         now = now or pendulum_now()
         return cls(
             base=RemoteUserManifest(
-                author=None,
+                author=author,
                 timestamp=now,
                 id=id or EntryID(),
                 version=0,
@@ -637,7 +893,7 @@ class LocalUserManifest(LocalManifest):
             workspaces=remote.workspaces,
         )
 
-    def to_remote(self, author: DeviceID, timestamp: Pendulum = None) -> RemoteUserManifest:
+    def to_remote(self, author: DeviceID, timestamp: DateTime = None) -> RemoteUserManifest:
         return RemoteUserManifest(
             author=author,
             timestamp=timestamp or pendulum_now(),

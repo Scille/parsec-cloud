@@ -33,7 +33,18 @@ from parsec.core.gui.file_items import (
     COPY_STATUS_DATA_INDEX,
 )
 from parsec.core.gui.custom_widgets import Pixmap
+from parsec.core.gui.custom_dialogs import show_error
 from parsec.core.gui.file_size import get_filesize
+
+
+class PasteStatus:
+    class Status(IntEnum):
+        Disabled = 1
+        Enabled = 2
+
+    def __init__(self, status, source_workspace=None):
+        self.source_workspace = source_workspace
+        self.status = status
 
 
 class Column(IntEnum):
@@ -79,6 +90,7 @@ class FileTable(QTableWidget):
         super().__init__(*args, **kwargs)
         self.previous_selection = []
         self.setColumnCount(len(Column))
+        self.config = None
 
         h_header = self.horizontalHeader()
         h_header.setDefaultAlignment(Qt.AlignLeft | Qt.AlignVCenter)
@@ -105,7 +117,7 @@ class FileTable(QTableWidget):
         self.cellDoubleClicked.connect(self.item_double_clicked)
         self.cellClicked.connect(self.item_clicked)
         self.current_user_role = WorkspaceRole.OWNER
-        self.paste_disabled = True
+        self.paste_status = PasteStatus(status=PasteStatus.Status.Disabled)
         effect = QGraphicsDropShadowEffect(self)
         effect.setColor(QColor(34, 34, 34, 25))
         effect.setBlurRadius(8)
@@ -120,12 +132,6 @@ class FileTable(QTableWidget):
     @current_user_role.setter
     def current_user_role(self, role):
         self._current_user_role = role
-        if self.is_read_only():
-            self.setDragEnabled(False)
-            self.setDragDropMode(QTableWidget.NoDragDrop)
-        else:
-            self.setDragEnabled(True)
-            self.setDragDropMode(QTableWidget.DragDrop)
 
     def resizeEvent(self, event):
         super().resizeEvent(event)
@@ -147,7 +153,7 @@ class FileTable(QTableWidget):
             elif event.matches(QKeySequence.Cut):
                 self.cut_clicked.emit()
             elif event.matches(QKeySequence.Paste):
-                if not self.paste_disabled:
+                if self.paste_status.status == PasteStatus.Status.Enabled:
                     self.paste_clicked.emit()
 
     def selected_files(self):
@@ -203,9 +209,16 @@ class FileTable(QTableWidget):
             action = menu.addAction(_("ACTION_FILE_MENU_GET_FILE_LINK"))
             action.triggered.connect(self.file_path_clicked.emit)
         if not self.is_read_only():
-            action = menu.addAction(_("ACTION_FILE_MENU_PASTE"))
+            if self.paste_status.source_workspace:
+                action = menu.addAction(
+                    _("ACTION_FILE_MENU_PASTE_FROM_OTHER_WORKSPACE_source").format(
+                        source=self.paste_status.source_workspace
+                    )
+                )
+            else:
+                action = menu.addAction(_("ACTION_FILE_MENU_PASTE"))
             action.triggered.connect(self.paste_clicked.emit)
-            if self.paste_disabled:
+            if self.paste_status.status == PasteStatus.Status.Disabled:
                 action.setDisabled(True)
         menu.exec_(global_pos)
 
@@ -294,10 +307,12 @@ class FileTable(QTableWidget):
             item.setFlags(Qt.ItemIsEnabled)
             self.setItem(row_idx, col, item)
 
-    def add_folder(self, folder_name, uuid, is_synced, selected=False):
+    def add_folder(self, folder_name, uuid, is_synced, is_confined, selected=False):
+        if is_confined and not self.config.gui_show_confined:
+            return
         row_idx = self.rowCount()
         self.insertRow(row_idx)
-        item = FolderTableItem(is_synced)
+        item = FolderTableItem(is_synced, is_confined)
         item.setData(UUID_DATA_INDEX, uuid)
         self.setItem(row_idx, Column.ICON, item)
         item = CustomTableItem(folder_name)
@@ -327,11 +342,21 @@ class FileTable(QTableWidget):
             )
 
     def add_file(
-        self, file_name, uuid, file_size, created_on, updated_on, is_synced, selected=False
+        self,
+        file_name,
+        uuid,
+        file_size,
+        created_on,
+        updated_on,
+        is_synced,
+        is_confined,
+        selected=False,
     ):
+        if is_confined and not self.config.gui_show_confined:
+            return
         row_idx = self.rowCount()
         self.insertRow(row_idx)
-        item = FileTableItem(is_synced, file_name)
+        item = FileTableItem(is_synced, is_confined, file_name)
         item.setData(NAME_DATA_INDEX, 1)
         item.setData(TYPE_DATA_INDEX, FileType.File)
         item.setData(UUID_DATA_INDEX, uuid)
@@ -366,7 +391,7 @@ class FileTable(QTableWidget):
         inconsistency_color = QColor(255, 144, 155)
         row_idx = self.rowCount()
         self.insertRow(row_idx)
-        item = InconsistencyTableItem(False)
+        item = InconsistencyTableItem(False, False)
         item.setData(NAME_DATA_INDEX, 1)
         item.setData(TYPE_DATA_INDEX, FileType.Inconsistency)
         item.setData(UUID_DATA_INDEX, uuid)
@@ -399,15 +424,9 @@ class FileTable(QTableWidget):
         self.setItem(row_idx, Column.SIZE, item)
 
     def dragEnterEvent(self, event):
-        if not self.is_read_only():
-            event.accept()
-        else:
-            event.ignore()
+        event.accept()
 
     def dragMoveEvent(self, event):
-        if self.is_read_only():
-            event.ignore()
-            return
         if event.mimeData().hasUrls():
             event.accept()
         else:
@@ -426,6 +445,7 @@ class FileTable(QTableWidget):
 
     def dropEvent(self, event):
         if self.is_read_only():
+            show_error(self, _("TEXT_FILE_DROP_WORKSPACE_IS_READ_ONLY"))
             event.ignore()
             return
         if event.mimeData().hasUrls():

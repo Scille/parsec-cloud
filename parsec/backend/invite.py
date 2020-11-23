@@ -5,11 +5,13 @@ import attr
 import trio
 import smtplib
 import ssl
+import sys
+import tempfile
 from enum import Enum
 from uuid import UUID, uuid4
 from collections import defaultdict
 from typing import Dict, List, Optional, Union, Set
-from pendulum import Pendulum, now as pendulum_now
+from pendulum import DateTime, now as pendulum_now
 from email.message import Message
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
@@ -45,13 +47,17 @@ from parsec.api.protocol import (
 )
 from parsec.backend.templates import get_template
 from parsec.backend.utils import catch_protocol_errors, api
-from parsec.backend.config import BackendConfig, EmailConfig
+from parsec.backend.config import BackendConfig, EmailConfig, SmtpEmailConfig, MockedEmailConfig
 from parsec.core.types import BackendInvitationAddr
 
 
 logger = get_logger()
 
 PEER_EVENT_MAX_WAIT = 300  # 5mn
+
+
+class CloseInviteConnection(Exception):
+    pass
 
 
 class InvitationError(Exception):
@@ -116,7 +122,7 @@ class UserInvitation:
     greeter_human_handle: Optional[HumanHandle]
     claimer_email: str
     token: UUID = attr.ib(factory=uuid4)
-    created_on: Pendulum = attr.ib(factory=pendulum_now)
+    created_on: DateTime = attr.ib(factory=pendulum_now)
     status: InvitationStatus = InvitationStatus.IDLE
 
     def evolve(self, **kwargs):
@@ -129,7 +135,7 @@ class DeviceInvitation:
     greeter_user_id: UserID
     greeter_human_handle: Optional[HumanHandle]
     token: UUID = attr.ib(factory=uuid4)
-    created_on: Pendulum = attr.ib(factory=pendulum_now)
+    created_on: DateTime = attr.ib(factory=pendulum_now)
     status: InvitationStatus = InvitationStatus.IDLE
 
     def evolve(self, **kwargs):
@@ -148,10 +154,10 @@ def generate_invite_email(
     invitation_url: str,
 ) -> Message:
     html = get_template("invitation_mail.html").render(
-        greeter_name=greeter_name, organization_id=organization_id, invitation_url=invitation_url
+        greeter=greeter_name, organization_id=organization_id, invitation_url=invitation_url
     )
     text = get_template("invitation_mail.txt").render(
-        greeter_name=greeter_name, organization_id=organization_id, invitation_url=invitation_url
+        greeter=greeter_name, organization_id=organization_id, invitation_url=invitation_url
     )
 
     # mail settings
@@ -177,7 +183,7 @@ def generate_invite_email(
     return message
 
 
-async def send_email(email_config: EmailConfig, to_addr: str, message: Message) -> None:
+async def _smtp_send_mail(email_config: SmtpEmailConfig, to_addr: str, message: Message) -> None:
     def _do():
         try:
             context = ssl.create_default_context()
@@ -198,6 +204,33 @@ async def send_email(email_config: EmailConfig, to_addr: str, message: Message) 
             logger.warning("SMTP error", exc_info=e, to_addr=to_addr)
 
     await trio.to_thread.run_sync(_do)
+
+
+async def _mocked_send_mail(
+    email_config: MockedEmailConfig, to_addr: str, message: Message
+) -> None:
+    def _do():
+        tmpfile_fd, tmpfile_path = tempfile.mkstemp(
+            prefix="tmp-email-", suffix=".html", dir=email_config.tmpdir
+        )
+        tmpfile = open(tmpfile_path, "w")
+        tmpfile.write(message.as_string())
+        print(
+            f"""\
+A request to send an e-mail to {to_addr} has been triggered and mocked.
+The mail file can be found here: {tmpfile.name}\n""",
+            tmpfile.name,
+            file=sys.stderr,
+        )
+
+    await trio.to_thread.run_sync(_do)
+
+
+async def send_email(email_config: EmailConfig, to_addr: str, message: Message) -> None:
+    if isinstance(email_config, SmtpEmailConfig):
+        await _smtp_send_mail(email_config, to_addr, message)
+    else:
+        await _mocked_send_mail(email_config, to_addr, message)
 
 
 class BaseInviteComponent:
@@ -245,10 +278,6 @@ class BaseInviteComponent:
                 invitation_type=invitation.TYPE,
                 token=invitation.token,
             ).to_http_redirection_url()
-
-        if msg["send_email"]:
-            if not self._config.email_config or not self._config.backend_addr:
-                return invite_new_serializer.rep_dump({"status": "not_available"})
 
         if msg["type"] == InvitationType.USER:
             if client_ctx.profile != UserProfile.ADMIN:
@@ -380,6 +409,10 @@ class BaseInviteComponent:
     @api("invite_1_claimer_wait_peer", handshake_types=[HandshakeType.INVITED])
     @catch_protocol_errors
     async def api_invite_1_claimer_wait_peer(self, client_ctx, msg):
+        """
+        Raises:
+            CloseInviteConnection
+        """
         msg = invite_1_claimer_wait_peer_serializer.req_load(msg)
 
         try:
@@ -391,11 +424,12 @@ class BaseInviteComponent:
                 payload=msg["claimer_public_key"].encode(),
             )
 
+        except InvitationAlreadyDeletedError as exc:
+            # Notify parent that the connection shall be close because the invitation token is no logger valide.
+            raise CloseInviteConnection from exc
+
         except InvitationNotFoundError:
             return {"status": "not_found"}
-
-        except InvitationAlreadyDeletedError:
-            return {"status": "already_deleted"}
 
         except InvitationInvalidStateError:
             return {"status": "invalid_state"}
@@ -434,6 +468,10 @@ class BaseInviteComponent:
     @api("invite_2a_claimer_send_hashed_nonce", handshake_types=[HandshakeType.INVITED])
     @catch_protocol_errors
     async def api_invite_2a_claimer_send_hashed_nonce(self, client_ctx, msg):
+        """
+        Raises:
+            CloseInviteConnection
+        """
         msg = invite_2a_claimer_send_hashed_nonce_serializer.req_load(msg)
 
         try:
@@ -453,11 +491,12 @@ class BaseInviteComponent:
                 payload=b"",
             )
 
+        except InvitationAlreadyDeletedError as exc:
+            # Notify parent that the connection shall be close because the invitation token is no logger valide.
+            raise CloseInviteConnection from exc
+
         except InvitationNotFoundError:
             return {"status": "not_found"}
-
-        except InvitationAlreadyDeletedError:
-            return {"status": "already_deleted"}
 
         except InvitationInvalidStateError:
             return {"status": "invalid_state"}
@@ -531,6 +570,10 @@ class BaseInviteComponent:
     @api("invite_2b_claimer_send_nonce", handshake_types=[HandshakeType.INVITED])
     @catch_protocol_errors
     async def api_invite_2b_claimer_send_nonce(self, client_ctx, msg):
+        """
+        Raises:
+            CloseInviteConnection
+        """
         msg = invite_2b_claimer_send_nonce_serializer.req_load(msg)
 
         try:
@@ -542,11 +585,12 @@ class BaseInviteComponent:
                 payload=msg["claimer_nonce"],
             )
 
+        except InvitationAlreadyDeletedError as exc:
+            # Notify parent that the connection shall be close because the invitation token is no logger valide.
+            raise CloseInviteConnection from exc
+
         except InvitationNotFoundError:
             return {"status": "not_found"}
-
-        except InvitationAlreadyDeletedError:
-            return {"status": "already_deleted"}
 
         except InvitationInvalidStateError:
             return {"status": "invalid_state"}
@@ -581,6 +625,10 @@ class BaseInviteComponent:
     @api("invite_3b_claimer_wait_peer_trust", handshake_types=[HandshakeType.INVITED])
     @catch_protocol_errors
     async def api_invite_3b_claimer_wait_peer_trust(self, client_ctx, msg):
+        """
+        Raises:
+            CloseInviteConnection
+        """
         msg = invite_3b_claimer_wait_peer_trust_serializer.req_load(msg)
 
         try:
@@ -592,11 +640,12 @@ class BaseInviteComponent:
                 payload=b"",
             )
 
+        except InvitationAlreadyDeletedError as exc:
+            # Notify parent that the connection shall be close because the invitation token is no logger valide.
+            raise CloseInviteConnection from exc
+
         except InvitationNotFoundError:
             return {"status": "not_found"}
-
-        except InvitationAlreadyDeletedError:
-            return {"status": "already_deleted"}
 
         except InvitationInvalidStateError:
             return {"status": "invalid_state"}
@@ -631,6 +680,10 @@ class BaseInviteComponent:
     @api("invite_3a_claimer_signify_trust", handshake_types=[HandshakeType.INVITED])
     @catch_protocol_errors
     async def api_invite_3a_claimer_signify_trust(self, client_ctx, msg):
+        """
+        Raises:
+            CloseInviteConnection
+        """
         msg = invite_3a_claimer_signify_trust_serializer.req_load(msg)
 
         try:
@@ -642,11 +695,12 @@ class BaseInviteComponent:
                 payload=b"",
             )
 
+        except InvitationAlreadyDeletedError as exc:
+            # Notify parent that the connection shall be close because the invitation token is no logger valide.
+            raise CloseInviteConnection from exc
+
         except InvitationNotFoundError:
             return {"status": "not_found"}
-
-        except InvitationAlreadyDeletedError:
-            return {"status": "already_deleted"}
 
         except InvitationInvalidStateError:
             return {"status": "invalid_state"}
@@ -683,6 +737,10 @@ class BaseInviteComponent:
     @api("invite_4_claimer_communicate", handshake_types=[HandshakeType.INVITED])
     @catch_protocol_errors
     async def api_invite_4_claimer_communicate(self, client_ctx, msg):
+        """
+        Raises:
+            CloseInviteConnection
+        """
         msg = invite_4_claimer_communicate_serializer.req_load(msg)
 
         try:
@@ -694,11 +752,12 @@ class BaseInviteComponent:
                 payload=msg["payload"],
             )
 
+        except InvitationAlreadyDeletedError as exc:
+            # Notify parent that the connection shall be close because the invitation token is no logger valide.
+            raise CloseInviteConnection from exc
+
         except InvitationNotFoundError:
             return {"status": "not_found"}
-
-        except InvitationAlreadyDeletedError:
-            return {"status": "already_deleted"}
 
         except InvitationInvalidStateError:
             return {"status": "invalid_state"}
@@ -770,7 +829,7 @@ class BaseInviteComponent:
         organization_id: OrganizationID,
         greeter_user_id: UserID,
         claimer_email: str,
-        created_on: Optional[Pendulum] = None,
+        created_on: Optional[DateTime] = None,
     ) -> UserInvitation:
         """
         Raise: Nothing
@@ -781,7 +840,7 @@ class BaseInviteComponent:
         self,
         organization_id: OrganizationID,
         greeter_user_id: UserID,
-        created_on: Optional[Pendulum] = None,
+        created_on: Optional[DateTime] = None,
     ) -> DeviceInvitation:
         """
         Raise: Nothing
@@ -793,7 +852,7 @@ class BaseInviteComponent:
         organization_id: OrganizationID,
         greeter: UserID,
         token: UUID,
-        on: Pendulum,
+        on: DateTime,
         reason: InvitationDeletedReason,
     ) -> None:
         """

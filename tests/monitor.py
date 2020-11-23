@@ -13,7 +13,7 @@ import logging
 
 import trio
 from trio.abc import Instrument
-from trio.hazmat import current_statistics
+from trio.lowlevel import current_statistics
 
 
 LOGGER = logging.getLogger("trio.monitor")
@@ -96,7 +96,7 @@ class Monitor(Instrument):
 
     def before_run(self):
         LOGGER.info("Starting Trio monitor at %s:%d", *self.address)
-        self._trio_token = trio.hazmat.current_trio_token()
+        self._trio_token = trio.lowlevel.current_trio_token()
         self._ui_thread = threading.Thread(target=self.server, args=(), daemon=True)
         self._closing = threading.Event()
         self._ui_thread.start()

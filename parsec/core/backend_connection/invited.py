@@ -6,9 +6,10 @@ from typing import Optional, AsyncGenerator
 
 from parsec.api.protocol import INVITED_CMDS
 from parsec.core.types import BackendInvitationAddr
+from parsec.core.backend_connection import cmds
 from parsec.core.backend_connection.transport import connect_as_invited
 from parsec.core.backend_connection.exceptions import BackendNotAvailable
-from parsec.core.backend_connection.expose_cmds import expose_cmds
+from parsec.core.backend_connection.expose_cmds import expose_cmds_with_retrier
 
 
 class BackendInvitedCmds:
@@ -16,8 +17,22 @@ class BackendInvitedCmds:
         self.addr = addr
         self.acquire_transport = acquire_transport
 
-    for cmd_name in INVITED_CMDS:
-        vars()[cmd_name] = expose_cmds(cmd_name)
+    ping = expose_cmds_with_retrier(cmds.ping)
+    invite_info = expose_cmds_with_retrier(cmds.invite_info)
+    invite_1_claimer_wait_peer = expose_cmds_with_retrier(cmds.invite_1_claimer_wait_peer)
+    invite_2a_claimer_send_hashed_nonce = expose_cmds_with_retrier(
+        cmds.invite_2a_claimer_send_hashed_nonce
+    )
+    invite_2b_claimer_send_nonce = expose_cmds_with_retrier(cmds.invite_2b_claimer_send_nonce)
+    invite_3a_claimer_signify_trust = expose_cmds_with_retrier(cmds.invite_3a_claimer_signify_trust)
+    invite_3b_claimer_wait_peer_trust = expose_cmds_with_retrier(
+        cmds.invite_3b_claimer_wait_peer_trust
+    )
+    invite_4_claimer_communicate = expose_cmds_with_retrier(cmds.invite_4_claimer_communicate)
+
+
+for cmd in INVITED_CMDS:
+    assert hasattr(BackendInvitedCmds, cmd)
 
 
 @asynccontextmanager

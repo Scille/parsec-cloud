@@ -2,7 +2,7 @@
 
 import pytest
 import trio
-from pendulum import Pendulum, now as pendulum_now
+from pendulum import datetime, now as pendulum_now
 
 from parsec.backend.backend_events import BackendEvent
 from parsec.api.protocol import RealmRole, MaintenanceType, APIEvent
@@ -33,7 +33,7 @@ async def test_start_bad_encryption_revision(backend, alice_backend_sock, realm)
 @pytest.mark.trio
 async def test_start_bad_timestamp(backend, alice_backend_sock, realm):
     rep = await realm_start_reencryption_maintenance(
-        alice_backend_sock, realm, 2, Pendulum(2000, 1, 1), {"alice": b"wathever"}, check_rep=False
+        alice_backend_sock, realm, 2, datetime(2000, 1, 1), {"alice": b"wathever"}, check_rep=False
     )
     assert rep == {"status": "bad_timestamp", "reason": "Timestamp is out of date."}
 
@@ -130,7 +130,7 @@ async def test_start_send_message_to_participants(
                 {
                     "count": 1,
                     "body": f"{user.user_id} msg".encode(),
-                    "timestamp": Pendulum(2000, 1, 2),
+                    "timestamp": datetime(2000, 1, 2),
                     "sender": alice.device_id,
                 }
             ],
@@ -149,7 +149,7 @@ async def test_start_reencryption_update_status(alice_backend_sock, alice, realm
         "encryption_revision": 2,
         "in_maintenance": True,
         "maintenance_started_by": alice.device_id,
-        "maintenance_started_on": Pendulum(2000, 1, 2),
+        "maintenance_started_on": datetime(2000, 1, 2),
         "maintenance_type": MaintenanceType.REENCRYPTION,
     }
 
@@ -404,7 +404,7 @@ async def test_reencryption(alice, alice_backend_sock, realm, vlobs, vlob_atoms)
             {
                 "count": 1,
                 "body": b"foo",
-                "timestamp": Pendulum(2000, 1, 2),
+                "timestamp": datetime(2000, 1, 2),
                 "sender": alice.device_id,
             }
         ],

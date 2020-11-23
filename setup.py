@@ -177,6 +177,7 @@ class ExtractTranslations(Command):
             pylupdate_main()
 
         files = [str(f) for f in ui_dir.iterdir() if f.is_file() and f.suffix == ".py"]
+        files.sort()
         files.append(str(tr_dir / "parsec_en.ts"))
         args = [
             "_",
@@ -270,20 +271,20 @@ requirements = [
     "click==7.0",
     "msgpack==0.6.0",
     "wsproto==0.15.0",
+    "h11==0.10.0",
     # Can use marshmallow or the toasted flavour as you like ;-)
     # "marshmallow==2.14.0",
     "toastedmarshmallow==0.2.6",
-    "pendulum==1.3.1",
+    "pendulum==2.1.2",
     "PyNaCl==1.4.0",
-    "trio==0.13.0",
-    "python-interface==1.4.0",
+    "trio==0.16.0",
+    "trio_typing==0.5.0",
     "async_generator>=1.9",
     'contextvars==2.1;python_version<"3.7"',
     "sentry-sdk==0.14.3",
     "structlog==19.2.0",
     "importlib_resources==1.0.2",
     "colorama==0.4.0",  # structlog colored output
-    "PyPika==0.36.5",
     "async_exit_stack==1.0.1",
     "outcome==1.0.0",
     "packaging==20.4",
@@ -314,23 +315,23 @@ test_requirements = [
 ]
 
 
-PYQT_DEP = "PyQt5==5.14.2"
+PYQT_DEPS = ["PyQt5==5.14.2", "pyqt5-sip==12.8.0"]
 BABEL_DEP = "Babel==2.6.0"
 WHEEL_DEP = "wheel==0.34.2"
 DOCUTILS_DEP = "docutils==0.15"
 extra_requirements = {
     "core": [
-        PYQT_DEP,
+        *PYQT_DEPS,
         BABEL_DEP,
-        'fusepy==3.0.1;platform_system=="Linux"',
-        'winfspy==0.7.5;platform_system=="Windows"',
+        'fusepy==3.0.1;platform_system=="Linux" or platform_system=="Darwin"',
+        'winfspy==0.8.0;platform_system=="Windows"',
         "zxcvbn==4.4.27",
         "psutil==5.6.3",
     ],
     "backend": [
         "jinja2==2.11.2",
         # PostgreSQL
-        "triopg==0.3.0",
+        "triopg==0.5.0",
         "trio-asyncio==0.11.0",
         # S3
         "boto3==1.12.34",
@@ -355,7 +356,7 @@ setup(
     python_requires="~=3.6",
     packages=find_packages(include=["parsec", "parsec.*"]),
     package_dir={"parsec": "parsec"},
-    setup_requires=[WHEEL_DEP, PYQT_DEP, BABEL_DEP, DOCUTILS_DEP],  # To generate resources bundle
+    setup_requires=[WHEEL_DEP, *PYQT_DEPS, BABEL_DEP, DOCUTILS_DEP],  # To generate resources bundle
     install_requires=requirements,
     extras_require=extra_requirements,
     cmdclass={
@@ -372,7 +373,7 @@ setup(
         "parsec.backend.postgresql.migrations": ["*.sql"],
         "parsec.backend.templates": ["*"],
         "parsec.backend.static": ["*"],
-        "parsec.core.resources": ["*.ico"],
+        "parsec.core.resources": ["*.ico", "*.icns", "*.ignore"],
     },
     entry_points={
         "console_scripts": ["parsec = parsec.cli:cli"],
@@ -386,6 +387,7 @@ setup(
         "Intended Audience :: Developers",
         "Operating System :: POSIX :: Linux",
         "Operating System :: Microsoft :: Windows",
+        "Operating System :: POSIX :: MacOS",
         "License :: OSI Approved :: GNU Affero General Public License v3 or later (AGPLv3+)",
         "Natural Language :: English",
         "Programming Language :: Python :: 3.6",

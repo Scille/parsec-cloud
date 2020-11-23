@@ -1,7 +1,7 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
 
 import pytest
-from pendulum import Pendulum
+from pendulum import datetime
 
 from parsec.api.protocol import apiv1_device_get_invitation_creator_serializer
 from parsec.backend.user import DeviceInvitation, INVITATION_VALIDITY
@@ -12,7 +12,7 @@ from tests.common import freeze_time
 @pytest.fixture
 async def alice_nd_invitation(backend, alice):
     invitation = DeviceInvitation(
-        alice.user_id.to_device_id("new_device"), alice.device_id, Pendulum(2000, 1, 2)
+        alice.user_id.to_device_id("new_device"), alice.device_id, datetime(2000, 1, 2)
     )
     await backend.user.create_device_invitation(alice.organization_id, invitation)
     return invitation

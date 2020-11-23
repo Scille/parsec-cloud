@@ -25,7 +25,7 @@ def test_pack_datetime():
     packed = packb(data)
     unpacked = unpackb(packed)
     assert unpacked == data
-    assert isinstance(unpacked["date"], pendulum.Pendulum)
+    assert isinstance(unpacked["date"], pendulum.DateTime)
 
 
 def test_pack_uuid():

@@ -17,6 +17,14 @@ class BackendConnectionRefused(BackendConnectionError):
     pass
 
 
+class BackendInvitationAlreadyUsed(BackendConnectionRefused):
+    pass
+
+
+class BackendInvitationNotFound(BackendConnectionRefused):
+    pass
+
+
 # TODO: hack needed by `LoggedCore.get_user_info`
 class BackendNotFoundError(BackendConnectionError):
     pass

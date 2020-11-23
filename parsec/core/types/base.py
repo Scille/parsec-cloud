@@ -1,14 +1,15 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
 
-from typing import Tuple
+import attr
+from typing import Tuple, Union
 
 from parsec.serde import BaseSchema, MsgpackSerializer
 from parsec.api.data import BaseData, EntryName
 
+__all__ = ("BaseLocalData", "FsPath", "AnyPath")
 
-__all__ = ("BaseLocalData", "FsPath")
 
-
+@attr.s(slots=True, frozen=True, auto_attribs=True, kw_only=True, eq=False)
 class BaseLocalData(BaseData):
     """Unsigned and uncompressed base class for local data"""
 
@@ -78,3 +79,6 @@ class FsPath:
     @property
     def parts(self) -> Tuple[EntryName, ...]:
         return self._parts
+
+
+AnyPath = Union[FsPath, str]

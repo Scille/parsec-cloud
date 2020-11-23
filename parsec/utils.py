@@ -3,7 +3,7 @@
 
 import attr
 import trio
-from pendulum import Pendulum
+from pendulum import DateTime
 from structlog import get_logger
 from async_generator import asynccontextmanager
 
@@ -22,7 +22,7 @@ logger = get_logger()
 TIMESTAMP_MAX_DT = 30 * 60
 
 
-def timestamps_in_the_ballpark(ts1: Pendulum, ts2: Pendulum, max_dt=TIMESTAMP_MAX_DT) -> bool:
+def timestamps_in_the_ballpark(ts1: DateTime, ts2: DateTime, max_dt=TIMESTAMP_MAX_DT) -> bool:
     """
     Useful to compare signed message timestamp with the one stored by the
     backend.
@@ -136,7 +136,7 @@ async def check_cancellation(exc):
     # exception.
     cancelled_errors, _ = split_multi_error(exc)
     if cancelled_errors:
-        await trio.hazmat.checkpoint_if_cancelled()
+        await trio.lowlevel.checkpoint_if_cancelled()
 
 
 def collapse_multi_error(multierror):
@@ -190,7 +190,7 @@ async def open_service_nursery():
 
 async def cancel_and_checkpoint(scope):
     scope.cancel()
-    await trio.hazmat.checkpoint_if_cancelled()
+    await trio.lowlevel.checkpoint_if_cancelled()
 
 
 # Add it to trio

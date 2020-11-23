@@ -1,13 +1,13 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
 
-from pendulum import Pendulum
+from pendulum import DateTime
 from typing import List, Tuple
 
 from parsec.backend.backend_events import BackendEvent
 from parsec.api.protocol import UserID, DeviceID, OrganizationID
 from parsec.backend.message import BaseMessageComponent
 from parsec.backend.postgresql.handler import send_signal, PGHandler
-from parsec.backend.postgresql.queries import (
+from parsec.backend.postgresql.utils import (
     Q,
     q_organization_internal_id,
     q_user_internal_id,
@@ -82,7 +82,7 @@ class PGMessageComponent(BaseMessageComponent):
         organization_id: OrganizationID,
         sender: DeviceID,
         recipient: UserID,
-        timestamp: Pendulum,
+        timestamp: DateTime,
         body: bytes,
     ) -> None:
         async with self.dbh.pool.acquire() as conn, conn.transaction():
@@ -90,7 +90,7 @@ class PGMessageComponent(BaseMessageComponent):
 
     async def get(
         self, organization_id: OrganizationID, recipient: UserID, offset: int
-    ) -> List[Tuple[DeviceID, Pendulum, bytes]]:
+    ) -> List[Tuple[DeviceID, DateTime, bytes]]:
         async with self.dbh.pool.acquire() as conn:
             data = await conn.fetch(
                 *_q_get_messages(

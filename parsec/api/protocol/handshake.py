@@ -1,6 +1,6 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
 
-from typing import List, Tuple, Optional
+from typing import Tuple, Optional, cast, Dict, Sequence, Union
 from uuid import UUID
 from enum import Enum
 from secrets import token_bytes
@@ -43,7 +43,7 @@ class HandshakeRevokedDevice(HandshakeError):
 
 class HandshakeAPIVersionError(HandshakeError):
     def __init__(
-        self, backend_versions: List[ApiVersion], client_versions: List[ApiVersion] = None
+        self, backend_versions: Sequence[ApiVersion], client_versions: Sequence[ApiVersion] = []
     ):
         self.client_versions = client_versions
         self.backend_versions = backend_versions
@@ -54,13 +54,14 @@ class HandshakeAPIVersionError(HandshakeError):
             f"and backend API versions {backend_versions_str}"
         )
 
-    def __str__(self):
+    def __str__(self) -> str:
         return self.message
 
 
 class HandshakeType(Enum):
     AUTHENTICATED = "AUTHENTICATED"
     INVITED = "INVITED"
+    NOT_INITIALIZED = "NOT_INITIALIZED"
 
 
 HandshakeTypeField = fields.enum_field_factory(HandshakeType)
@@ -76,7 +77,7 @@ APIV1_HandshakeTypeField = fields.enum_field_factory(APIV1_HandshakeType)
 
 
 def _settle_compatible_versions(
-    backend_versions: List[ApiVersion], client_versions: List[ApiVersion]
+    backend_versions: Sequence[ApiVersion], client_versions: Sequence[ApiVersion]
 ) -> Tuple[ApiVersion, ApiVersion]:
     # Try to use the newest version first
     for cv in reversed(sorted(client_versions)):
@@ -88,12 +89,12 @@ def _settle_compatible_versions(
 
 
 class ApiVersionField(fields.Tuple):
-    def __init__(self, **kwargs):
+    def __init__(self, **kwargs: object):
         version = fields.Integer(required=True, validate=validate.Range(min=0))
         revision = fields.Integer(required=True, validate=validate.Range(min=0))
         super().__init__(version, revision, **kwargs)
 
-    def _deserialize(self, *args, **kwargs):
+    def _deserialize(self, *args: object, **kwargs: object) -> ApiVersion:
         result = super()._deserialize(*args, **kwargs)
         return ApiVersion(*result)
 
@@ -141,8 +142,8 @@ class HandshakeAnswerSchema(OneOfSchema):
         HandshakeType.INVITED: HandshakeInvitedAnswerSchema(),
     }
 
-    def get_obj_type(self, obj):
-        return obj["type"]
+    def get_obj_type(self, obj: Dict[str, object]) -> HandshakeType:
+        return cast(HandshakeType, obj["type"])
 
 
 handshake_answer_serializer = serializer_factory(HandshakeAnswerSchema)
@@ -182,8 +183,8 @@ class APIV1_HandshakeAnswerSchema(OneOfSchema):
         APIV1_HandshakeType.ADMINISTRATION: APIV1_HandshakeAdministrationAnswerSchema(),
     }
 
-    def get_obj_type(self, obj):
-        return obj["type"]
+    def get_obj_type(self, obj: Dict[str, object]) -> APIV1_HandshakeType:
+        return cast(APIV1_HandshakeType, obj["type"])
 
 
 apiv1_handshake_answer_serializer = serializer_factory(APIV1_HandshakeAnswerSchema)
@@ -205,19 +206,16 @@ class ServerHandshake:
     def __init__(self, challenge_size: int = 48):
         # Challenge
         self.challenge_size = challenge_size
-        self.challenge = None
-        self.answer_type = None
-        self.answer_data = None
+        self.challenge: bytes
+        self.answer_data: Dict[str, object]
+        self.answer_type: Union[HandshakeType, APIV1_HandshakeType] = HandshakeType.NOT_INITIALIZED
 
         # API version
-        self.client_api_version = None
-        self.backend_api_version = None
+        self.client_api_version: ApiVersion
+        self.backend_api_version: ApiVersion
 
         # State
         self.state = "stalled"
-
-    def is_anonymous(self):
-        return self.device_id is None
 
     def build_challenge_req(self) -> bytes:
         if not self.state == "stalled":
@@ -234,7 +232,7 @@ class ServerHandshake:
             }
         )
 
-    def process_answer_req(self, req: bytes):
+    def process_answer_req(self, req: bytes) -> None:
         if not self.state == "challenge":
             raise HandshakeError("Invalid state.")
 
@@ -262,7 +260,7 @@ class ServerHandshake:
             self.SUPPORTED_API_VERSIONS, [client_api_version]
         )
 
-    def build_bad_protocol_result_req(self, help="Invalid params") -> bytes:
+    def build_bad_protocol_result_req(self, help: str = "Invalid params") -> bytes:
         if self.state not in ("answer", "challenge"):
             raise HandshakeError("Invalid state.")
 
@@ -272,7 +270,7 @@ class ServerHandshake:
         )
 
     def build_bad_administration_token_result_req(
-        self, help="Invalid administration token"
+        self, help: str = "Invalid administration token"
     ) -> bytes:
         if not self.state == "answer":
             raise HandshakeError("Invalid state.")
@@ -282,7 +280,7 @@ class ServerHandshake:
             {"handshake": "result", "result": "bad_admin_token", "help": help}
         )
 
-    def build_bad_identity_result_req(self, help="Invalid handshake information") -> bytes:
+    def build_bad_identity_result_req(self, help: str = "Invalid handshake information") -> bytes:
         """
         We should keep the help for this result voluntarily broad otherwise
         an attacker could use it to brute force informations.
@@ -295,7 +293,9 @@ class ServerHandshake:
             {"handshake": "result", "result": "bad_identity", "help": help}
         )
 
-    def build_organization_expired_result_req(self, help="Trial organization has expired") -> bytes:
+    def build_organization_expired_result_req(
+        self, help: str = "Trial organization has expired"
+    ) -> bytes:
         if not self.state == "answer":
             raise HandshakeError("Invalid state.")
 
@@ -304,7 +304,7 @@ class ServerHandshake:
             {"handshake": "result", "result": "organization_expired", "help": help}
         )
 
-    def build_rvk_mismatch_result_req(self, help=None) -> bytes:
+    def build_rvk_mismatch_result_req(self, help: Optional[str] = None) -> bytes:
         if not self.state == "answer":
             raise HandshakeError("Invalid state.")
 
@@ -315,7 +315,7 @@ class ServerHandshake:
             {"handshake": "result", "result": "rvk_mismatch", "help": help}
         )
 
-    def build_revoked_device_result_req(self, help="Device has been revoked") -> bytes:
+    def build_revoked_device_result_req(self, help: str = "Device has been revoked") -> bytes:
         if not self.state == "answer":
             raise HandshakeError("Invalid state.")
 
@@ -324,7 +324,7 @@ class ServerHandshake:
             {"handshake": "result", "result": "revoked_device", "help": help}
         )
 
-    def build_result_req(self, verify_key=None) -> bytes:
+    def build_result_req(self, verify_key: Optional[VerifyKey] = None) -> bytes:
         if not self.state == "answer":
             raise HandshakeError("Invalid state.")
 
@@ -347,22 +347,25 @@ class ServerHandshake:
 
 
 class BaseClientHandshake:
-    SUPPORTED_API_VERSIONS = None  # Overwritten by subclasses
+    SUPPORTED_API_VERSIONS: Sequence[ApiVersion]  # Overwritten by subclasses
 
-    def __init__(self):
-        self.challenge_data = None
-        self.backend_api_version = None
-        self.client_api_version = None
+    def __init__(self) -> None:
+        self.challenge_data: Dict[str, object]
+        self.backend_api_version: ApiVersion
+        self.client_api_version: ApiVersion
 
-    def load_challenge_req(self, req: bytes):
+    def load_challenge_req(self, req: bytes) -> None:
         self.challenge_data = handshake_challenge_serializer.loads(req)
+        supported_api_version = cast(
+            Sequence[ApiVersion], self.challenge_data["supported_api_versions"]
+        )
 
         # API version matching
         self.backend_api_version, self.client_api_version = _settle_compatible_versions(
-            self.challenge_data["supported_api_versions"], self.SUPPORTED_API_VERSIONS
+            supported_api_version, self.SUPPORTED_API_VERSIONS
         )
 
-    def process_result_req(self, req: bytes) -> bytes:
+    def process_result_req(self, req: bytes) -> None:
         data = handshake_result_serializer.loads(req)
         if data["result"] != "ok":
             if data["result"] == "bad_identity":
@@ -388,7 +391,7 @@ class BaseClientHandshake:
 
 class AuthenticatedClientHandshake(BaseClientHandshake):
     SUPPORTED_API_VERSIONS = (API_V2_VERSION,)
-    HANDSHAKE_TYPE = HandshakeType.AUTHENTICATED
+    HANDSHAKE_TYPE: Union[HandshakeType, APIV1_HandshakeType] = HandshakeType.AUTHENTICATED
     HANDSHAKE_ANSWER_SERIALIZER = handshake_answer_serializer
 
     def __init__(

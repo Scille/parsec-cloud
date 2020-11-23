@@ -1,0 +1,1 @@
+Added email in workspace sharing dialog

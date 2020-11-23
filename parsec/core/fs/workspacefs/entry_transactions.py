@@ -1,22 +1,23 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
 
-from parsec.core.core_events import CoreEvent
-from typing import Tuple
+from typing import Tuple, cast, Optional, AsyncIterator, Dict
 from async_generator import asynccontextmanager
 
 from parsec.core.types import (
     EntryID,
     FsPath,
     WorkspaceRole,
-    LocalManifest,
+    BaseLocalManifest,
     LocalFileManifest,
     LocalFolderManifest,
+    LocalWorkspaceManifest,
     FileDescriptor,
+    LocalFolderishManifests,
 )
 
 
+from parsec.core.core_events import CoreEvent
 from parsec.core.fs.workspacefs.file_transactions import FileTransactions
-from parsec.core.fs.utils import is_file_manifest, is_folder_manifest, is_folderish_manifest
 from parsec.core.fs.exceptions import (
     FSPermissionError,
     FSNoAccessError,
@@ -38,66 +39,95 @@ class EntryTransactions(FileTransactions):
 
     # Right management helper
 
-    def check_read_rights(self, path: FsPath):
+    def check_read_rights(self, path: FsPath) -> None:
         if self.get_workspace_entry().role is None:
             raise FSNoAccessError(filename=path)
 
-    def check_write_rights(self, path: FsPath):
+    def check_write_rights(self, path: FsPath) -> None:
         self.check_read_rights(path)
         if self.get_workspace_entry().role not in WRITE_RIGHT_ROLES:
             raise FSReadOnlyError(filename=path)
 
     # Look-up helpers
 
-    async def _get_manifest(self, entry_id: EntryID) -> LocalManifest:
+    async def _get_manifest(self, entry_id: EntryID) -> BaseLocalManifest:
         try:
             return await self.local_storage.get_manifest(entry_id)
         except FSLocalMissError as exc:
-            remote_manifest = await self.remote_loader.load_manifest(exc.id)
-            return LocalManifest.from_remote(remote_manifest)
+            remote_manifest = await self.remote_loader.load_manifest(cast(EntryID, exc.id))
+            return BaseLocalManifest.from_remote(
+                remote_manifest, prevent_sync_pattern=self.local_storage.get_prevent_sync_pattern()
+            )
 
     @asynccontextmanager
-    async def _load_and_lock_manifest(self, entry_id: EntryID):
+    async def _load_and_lock_manifest(self, entry_id: EntryID) -> AsyncIterator[BaseLocalManifest]:
         async with self.local_storage.lock_entry_id(entry_id):
             try:
                 local_manifest = await self.local_storage.get_manifest(entry_id)
             except FSLocalMissError as exc:
-                remote_manifest = await self.remote_loader.load_manifest(exc.id)
-                local_manifest = LocalManifest.from_remote(remote_manifest)
+                remote_manifest = await self.remote_loader.load_manifest(cast(EntryID, exc.id))
+                local_manifest = BaseLocalManifest.from_remote(
+                    remote_manifest,
+                    prevent_sync_pattern=self.local_storage.get_prevent_sync_pattern(),
+                )
                 await self.local_storage.set_manifest(entry_id, local_manifest)
             yield local_manifest
 
-    async def _load_manifest(self, entry_id: EntryID) -> LocalManifest:
+    async def _load_manifest(self, entry_id: EntryID) -> BaseLocalManifest:
         async with self._load_and_lock_manifest(entry_id) as manifest:
             return manifest
 
-    @asynccontextmanager
-    async def _lock_manifest_from_path(self, path: FsPath) -> LocalManifest:
+    async def _entry_id_from_path(self, path: FsPath) -> Tuple[EntryID, Optional[EntryID]]:
+        """Returns a tuple (entry_id, confinement_point).
+
+        The confinement point corresponds to the entry id of the folderish manifest
+        that contains a child with a confined name in the corresponding path.
+
+        If the entry is not confined, the confinement point is `None`.
+        """
         # Root entry_id and manifest
         entry_id = self.workspace_id
+        confinement_point = None
 
         # Follow the path
         for name in path.parts:
             manifest = await self._load_manifest(entry_id)
-            if is_file_manifest(manifest):
+            if not isinstance(manifest, (LocalFolderManifest, LocalWorkspaceManifest)):
                 raise FSNotADirectoryError(filename=path)
             try:
                 entry_id = manifest.children[name]
             except (AttributeError, KeyError):
                 raise FSFileNotFoundError(filename=path)
+            if entry_id in manifest.local_confinement_points:
+                confinement_point = manifest.id
 
-        # Lock entry
+        # Return both entry_id and confined status
+        return entry_id, confinement_point
+
+    @asynccontextmanager
+    async def _lock_manifest_from_path(self, path: FsPath) -> AsyncIterator[BaseLocalManifest]:
+        entry_id, _ = await self._entry_id_from_path(path)
         async with self._load_and_lock_manifest(entry_id) as manifest:
             yield manifest
 
-    async def _get_manifest_from_path(self, path: FsPath) -> LocalManifest:
-        async with self._lock_manifest_from_path(path) as manifest:
-            return manifest
+    async def _get_manifest_from_path(
+        self, path: FsPath
+    ) -> Tuple[BaseLocalManifest, Optional[EntryID]]:
+        """Returns a tuple (manifest, confinement_point).
+
+        The confinement point corresponds to the entry id of the folderish manifest
+        that contains a child with a confined name in the corresponding path.
+
+        If the entry is not confined, the confinement point is `None`.
+        """
+        entry_id, confined = await self._entry_id_from_path(path)
+        manifest = await self._load_manifest(entry_id)
+        return manifest, confined
 
     @asynccontextmanager
     async def _lock_parent_manifest_from_path(
         self, path: FsPath
-    ) -> Tuple[LocalManifest, LocalManifest]:
+    ) -> AsyncIterator[Tuple[LocalFolderishManifests, Optional[BaseLocalManifest]]]:
         # This is the most complicated locking scenario.
         # It requires locking the parent of the given entry and the entry itself
         # if it exists.
@@ -127,7 +157,7 @@ class EntryTransactions(FileTransactions):
             async with self._lock_manifest_from_path(path.parent) as parent:
 
                 # Parent is not a directory
-                if not is_folderish_manifest(parent):
+                if not isinstance(parent, (LocalFolderManifest, LocalWorkspaceManifest)):
                     raise FSNotADirectoryError(filename=path.parent)
 
                 # Child doesn't exist
@@ -151,17 +181,19 @@ class EntryTransactions(FileTransactions):
 
     # Transactions
 
-    async def entry_info(self, path: FsPath) -> dict:
+    async def entry_info(self, path: FsPath) -> Dict[str, object]:
         # Check read rights
         self.check_read_rights(path)
 
         # Fetch data
-        manifest = await self._get_manifest_from_path(path)
-        return manifest.to_stats()
+        manifest, confinement_point = await self._get_manifest_from_path(path)
+        stats = manifest.to_stats()
+        stats["confinement_point"] = confinement_point
+        return stats
 
     async def entry_rename(
         self, source: FsPath, destination: FsPath, overwrite: bool = True
-    ) -> EntryID:
+    ) -> Optional[EntryID]:
         # Check write rights
         self.check_write_rights(source)
 
@@ -191,7 +223,7 @@ class EntryTransactions(FileTransactions):
 
             # Source and destination are the same
             if source.name == destination.name:
-                return
+                return None
 
             # Destination already exists
             if not overwrite and child is not None:
@@ -202,17 +234,17 @@ class EntryTransactions(FileTransactions):
                 source_manifest = await self._get_manifest(source_entry_id)
 
                 # Overwrite a file
-                if is_file_manifest(source_manifest):
+                if isinstance(source_manifest, LocalFileManifest):
 
                     # Destination is a folder
-                    if is_folder_manifest(child):
+                    if isinstance(child, LocalFolderManifest):
                         raise FSIsADirectoryError(filename=destination)
 
                 # Overwrite a folder
-                if is_folder_manifest(source_manifest):
+                if isinstance(source_manifest, LocalFolderManifest):
 
                     # Destination is not a folder
-                    if is_file_manifest(child):
+                    if not isinstance(child, LocalFolderManifest):
                         raise FSNotADirectoryError(filename=destination)
 
                     # Destination is not empty
@@ -221,7 +253,8 @@ class EntryTransactions(FileTransactions):
 
             # Create new manifest
             new_parent = parent.evolve_children_and_mark_updated(
-                {destination.name: source_entry_id, source.name: None}
+                {destination.name: source_entry_id, source.name: None},
+                prevent_sync_pattern=self.local_storage.get_prevent_sync_pattern(),
             )
 
             # Atomic change
@@ -245,7 +278,7 @@ class EntryTransactions(FileTransactions):
                 raise FSFileNotFoundError(filename=path)
 
             # Not a directory
-            if not is_folderish_manifest(child):
+            if not isinstance(child, (LocalFolderManifest, LocalWorkspaceManifest)):
                 raise FSNotADirectoryError(filename=path)
 
             # Directory not empty
@@ -253,7 +286,10 @@ class EntryTransactions(FileTransactions):
                 raise FSDirectoryNotEmptyError(filename=path)
 
             # Create new manifest
-            new_parent = parent.evolve_children_and_mark_updated({path.name: None})
+            new_parent = parent.evolve_children_and_mark_updated(
+                {path.name: None},
+                prevent_sync_pattern=self.local_storage.get_prevent_sync_pattern(),
+            )
 
             # Atomic change
             await self.local_storage.set_manifest(parent.id, new_parent)
@@ -276,11 +312,14 @@ class EntryTransactions(FileTransactions):
                 raise FSFileNotFoundError(filename=path)
 
             # Not a file
-            if not is_file_manifest(child):
+            if not isinstance(child, LocalFileManifest):
                 raise FSIsADirectoryError(filename=path)
 
             # Create new manifest
-            new_parent = parent.evolve_children_and_mark_updated({path.name: None})
+            new_parent = parent.evolve_children_and_mark_updated(
+                {path.name: None},
+                prevent_sync_pattern=self.local_storage.get_prevent_sync_pattern(),
+            )
 
             # Atomic change
             await self.local_storage.set_manifest(parent.id, new_parent)
@@ -303,10 +342,13 @@ class EntryTransactions(FileTransactions):
                 raise FSFileExistsError(filename=path)
 
             # Create folder
-            child = LocalFolderManifest.new_placeholder(parent=parent.id)
+            child = LocalFolderManifest.new_placeholder(self.local_author, parent=parent.id)
 
             # New parent manifest
-            new_parent = parent.evolve_children_and_mark_updated({path.name: child.id})
+            new_parent = parent.evolve_children_and_mark_updated(
+                {path.name: child.id},
+                prevent_sync_pattern=self.local_storage.get_prevent_sync_pattern(),
+            )
 
             # ~ Atomic change
             await self.local_storage.set_manifest(child.id, child, check_lock_status=False)
@@ -319,7 +361,9 @@ class EntryTransactions(FileTransactions):
         # Return the entry id of the created folder
         return child.id
 
-    async def file_create(self, path: FsPath, open=True) -> Tuple[EntryID, FileDescriptor]:
+    async def file_create(
+        self, path: FsPath, open: bool = True
+    ) -> Tuple[EntryID, Optional[FileDescriptor]]:
         # Check write rights
         self.check_write_rights(path)
 
@@ -331,10 +375,13 @@ class EntryTransactions(FileTransactions):
                 raise FSFileExistsError(filename=path)
 
             # Create file
-            child = LocalFileManifest.new_placeholder(parent=parent.id)
+            child = LocalFileManifest.new_placeholder(self.local_author, parent=parent.id)
 
             # New parent manifest
-            new_parent = parent.evolve_children_and_mark_updated({path.name: child.id})
+            new_parent = parent.evolve_children_and_mark_updated(
+                {path.name: child.id},
+                prevent_sync_pattern=self.local_storage.get_prevent_sync_pattern(),
+            )
 
             # ~ Atomic change
             await self.local_storage.set_manifest(child.id, child, check_lock_status=False)
@@ -348,9 +395,9 @@ class EntryTransactions(FileTransactions):
         # Return the entry id of the created file and the file descriptor
         return child.id, fd
 
-    async def file_open(self, path: FsPath, mode="rw") -> Tuple[EntryID, FileDescriptor]:
+    async def file_open(self, path: FsPath, write_mode: bool) -> Tuple[EntryID, FileDescriptor]:
         # Check read and write rights
-        if "w" in mode:
+        if write_mode:
             self.check_write_rights(path)
         else:
             self.check_read_rights(path)
@@ -359,7 +406,7 @@ class EntryTransactions(FileTransactions):
         async with self._lock_manifest_from_path(path) as manifest:
 
             # Not a file
-            if not is_file_manifest(manifest):
+            if not isinstance(manifest, LocalFileManifest):
                 raise FSIsADirectoryError(filename=path)
 
             # Return the entry id of the open file and the file descriptor
@@ -373,11 +420,11 @@ class EntryTransactions(FileTransactions):
         async with self._lock_manifest_from_path(path) as manifest:
 
             # Not a file
-            if not is_file_manifest(manifest):
+            if not isinstance(manifest, LocalFileManifest):
                 raise FSIsADirectoryError(filename=path)
 
             # Perform resize
             await self._manifest_resize(manifest, length)
-
+            self._send_event(CoreEvent.FS_ENTRY_UPDATED, id=manifest.id)
             # Return entry id
             return manifest.id

@@ -7,7 +7,7 @@ from string import ascii_lowercase
 from contextlib import contextmanager
 import attr
 import pytest
-from pendulum import Pendulum
+from pendulum import datetime
 from hypothesis_trio.stateful import (
     TrioAsyncioRuleBasedStateMachine,
     initialize,
@@ -18,10 +18,9 @@ from hypothesis_trio.stateful import (
 )
 from hypothesis import strategies as st
 
-from parsec.core.types import FsPath, EntryID
-from parsec.core.fs.utils import is_folder_manifest
 from parsec.core.fs.storage import WorkspaceStorage
 from parsec.core.fs.exceptions import FSRemoteManifestNotFound
+from parsec.core.types import FsPath, EntryID, LocalFolderManifest
 
 from tests.common import freeze_time, call_with_control
 
@@ -35,9 +34,10 @@ async def test_root_entry_info(alice_entry_transactions):
         "base_version": 0,
         "is_placeholder": True,
         "need_sync": True,
-        "created": Pendulum(2000, 1, 1),
-        "updated": Pendulum(2000, 1, 1),
+        "created": datetime(2000, 1, 1),
+        "updated": datetime(2000, 1, 1),
         "children": [],
+        "confinement_point": None,
     }
 
 
@@ -58,9 +58,10 @@ async def test_file_create(alice_entry_transactions, alice_file_transactions, al
         "base_version": 0,
         "is_placeholder": True,
         "need_sync": True,
-        "created": Pendulum(2000, 1, 1),
-        "updated": Pendulum(2000, 1, 2),
+        "created": datetime(2000, 1, 1),
+        "updated": datetime(2000, 1, 2),
         "children": ["foo.txt"],
+        "confinement_point": None,
     }
 
     foo_stat = await entry_transactions.entry_info(FsPath("/foo.txt"))
@@ -70,9 +71,10 @@ async def test_file_create(alice_entry_transactions, alice_file_transactions, al
         "base_version": 0,
         "is_placeholder": True,
         "need_sync": True,
-        "created": Pendulum(2000, 1, 2),
-        "updated": Pendulum(2000, 1, 2),
+        "created": datetime(2000, 1, 2),
+        "updated": datetime(2000, 1, 2),
         "size": 0,
+        "confinement_point": None,
     }
 
 
@@ -190,12 +192,13 @@ async def test_access_not_loaded_entry(alice, bob, alice_entry_transactions):
     assert entry_info == {
         "type": "folder",
         "id": entry_id,
-        "created": Pendulum(2000, 1, 1),
-        "updated": Pendulum(2000, 1, 1),
+        "created": datetime(2000, 1, 1),
+        "updated": datetime(2000, 1, 1),
         "base_version": 0,
         "is_placeholder": True,
         "need_sync": True,
         "children": [],
+        "confinement_point": None,
     }
 
 
@@ -397,7 +400,7 @@ def test_entry_transactions(
             async def _recursive_build_id_to_path(entry_id, parent_id):
                 new_id_to_path.add((entry_id, parent_id))
                 manifest = await local_storage.get_manifest(entry_id)
-                if is_folder_manifest(manifest):
+                if isinstance(manifest, LocalFolderManifest):
                     for child_name, child_entry_id in manifest.children.items():
                         await _recursive_build_id_to_path(child_entry_id, entry_id)
 

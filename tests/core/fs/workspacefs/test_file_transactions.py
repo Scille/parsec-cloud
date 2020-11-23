@@ -2,7 +2,7 @@
 
 import os
 import pytest
-from pendulum import Pendulum
+from pendulum import datetime
 from pathlib import Path
 from hypothesis_trio.stateful import (
     initialize,
@@ -48,8 +48,8 @@ class File:
 @pytest.fixture
 async def foo_txt(alice, alice_file_transactions):
     local_storage = alice_file_transactions.local_storage
-    now = Pendulum(2000, 1, 2)
-    placeholder = LocalFileManifest.new_placeholder(parent=EntryID(), now=now)
+    now = datetime(2000, 1, 2)
+    placeholder = LocalFileManifest.new_placeholder(alice.device_id, parent=EntryID(), now=now)
     remote_v1 = placeholder.to_remote(author=alice.device_id, timestamp=now)
     manifest = LocalFileManifest.from_remote(remote_v1)
     async with local_storage.lock_entry_id(manifest.id):
@@ -89,8 +89,8 @@ async def test_operations_on_file(alice_file_transactions, foo_txt):
         is_placeholder=False,
         need_sync=True,
         base_version=1,
-        created=Pendulum(2000, 1, 2),
-        updated=Pendulum(2000, 1, 3),
+        created=datetime(2000, 1, 2),
+        updated=datetime(2000, 1, 3),
     )
 
     data = await file_transactions.fd_read(fd, 5, 6)
@@ -112,8 +112,8 @@ async def test_operations_on_file(alice_file_transactions, foo_txt):
         is_placeholder=False,
         need_sync=True,
         base_version=1,
-        created=Pendulum(2000, 1, 2),
-        updated=Pendulum(2000, 1, 3),
+        created=datetime(2000, 1, 2),
+        updated=datetime(2000, 1, 3),
     )
 
 
@@ -128,8 +128,8 @@ async def test_flush_file(alice_file_transactions, foo_txt):
         is_placeholder=False,
         need_sync=False,
         base_version=1,
-        created=Pendulum(2000, 1, 2),
-        updated=Pendulum(2000, 1, 2),
+        created=datetime(2000, 1, 2),
+        updated=datetime(2000, 1, 2),
     )
 
     with freeze_time("2000-01-03"):
@@ -142,8 +142,8 @@ async def test_flush_file(alice_file_transactions, foo_txt):
         is_placeholder=False,
         need_sync=True,
         base_version=1,
-        created=Pendulum(2000, 1, 2),
-        updated=Pendulum(2000, 1, 3),
+        created=datetime(2000, 1, 2),
+        updated=datetime(2000, 1, 3),
     )
 
     await file_transactions.fd_flush(fd)
@@ -156,8 +156,8 @@ async def test_flush_file(alice_file_transactions, foo_txt):
         is_placeholder=False,
         need_sync=True,
         base_version=1,
-        created=Pendulum(2000, 1, 2),
-        updated=Pendulum(2000, 1, 3),
+        created=datetime(2000, 1, 2),
+        updated=datetime(2000, 1, 3),
     )
 
 
@@ -245,7 +245,9 @@ def test_file_operations(
             self.file_transactions = self.transactions_controller.file_transactions
             self.local_storage = self.file_transactions.local_storage
 
-            self.fresh_manifest = LocalFileManifest.new_placeholder(parent=EntryID())
+            self.fresh_manifest = LocalFileManifest.new_placeholder(
+                alice.device_id, parent=EntryID()
+            )
             self.entry_id = self.fresh_manifest.id
             async with self.local_storage.lock_entry_id(self.entry_id):
                 await self.local_storage.set_manifest(self.entry_id, self.fresh_manifest)

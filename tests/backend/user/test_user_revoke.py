@@ -3,7 +3,7 @@
 from parsec.backend.backend_events import BackendEvent
 import pytest
 import trio
-from pendulum import now as pendulum_now, Pendulum
+from pendulum import now as pendulum_now, datetime
 
 from parsec.backend.user import INVITATION_VALIDITY
 from parsec.api.data import RevokedUserCertificateContent, UserProfile
@@ -123,7 +123,7 @@ async def test_user_revoke_invalid_certified(backend, alice_backend_sock, alice2
 
 @pytest.mark.trio
 async def test_user_revoke_certify_too_old(backend, alice_backend_sock, alice, bob):
-    now = Pendulum(2000, 1, 1)
+    now = datetime(2000, 1, 1)
     revoked_user_certificate = RevokedUserCertificateContent(
         author=alice.device_id, timestamp=now, user_id=bob.user_id
     ).dump_and_sign(alice.signing_key)

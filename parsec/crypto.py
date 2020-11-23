@@ -56,10 +56,6 @@ class SecretKey(bytes):
         # Avoid leaking the key in logs
         return f"<{type(self).__module__}.{type(self).__qualname__} object at {hex(id(self))}>"
 
-    @classmethod
-    def from_password(cls, password: str) -> "SecretKey":
-        pass
-
     def encrypt(self, data: bytes) -> bytes:
         """
         Raises:

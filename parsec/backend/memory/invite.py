@@ -5,7 +5,7 @@ import attr
 from uuid import UUID
 from typing import List, Optional, Tuple
 from collections import defaultdict
-from pendulum import Pendulum, now as pendulum_now
+from pendulum import DateTime, now as pendulum_now
 
 from parsec.api.protocol import OrganizationID, UserID, InvitationStatus, InvitationDeletedReason
 from parsec.backend.invite import (
@@ -172,7 +172,7 @@ class MemoryInviteComponent(BaseInviteComponent):
         organization_id: OrganizationID,
         greeter_user_id: UserID,
         claimer_email: str,
-        created_on: Optional[Pendulum] = None,
+        created_on: Optional[DateTime] = None,
     ) -> UserInvitation:
         """
         Raise: InvitationAlreadyMemberError
@@ -196,7 +196,7 @@ class MemoryInviteComponent(BaseInviteComponent):
         self,
         organization_id: OrganizationID,
         greeter_user_id: UserID,
-        created_on: Optional[Pendulum] = None,
+        created_on: Optional[DateTime] = None,
     ) -> DeviceInvitation:
         return await self._new(
             organization_id=organization_id, greeter_user_id=greeter_user_id, created_on=created_on
@@ -206,7 +206,7 @@ class MemoryInviteComponent(BaseInviteComponent):
         self,
         organization_id: OrganizationID,
         greeter_user_id: UserID,
-        created_on: Optional[Pendulum],
+        created_on: Optional[DateTime],
         claimer_email: Optional[str] = None,
     ) -> Invitation:
         org = self._organizations[organization_id]
@@ -254,7 +254,7 @@ class MemoryInviteComponent(BaseInviteComponent):
         organization_id: OrganizationID,
         greeter: UserID,
         token: UUID,
-        on: Pendulum,
+        on: DateTime,
         reason: InvitationDeletedReason,
     ) -> None:
         self._get_invitation_and_conduit(organization_id, token, expected_greeter=greeter)

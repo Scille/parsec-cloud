@@ -4,6 +4,9 @@ import pytest
 
 from tests.common import customize_fixtures
 from PyQt5.QtWidgets import QLabel
+from PyQt5 import QtCore
+from PyQt5.Qt import Qt
+
 from parsec.core.gui.lang import translate
 
 
@@ -56,28 +59,28 @@ async def test_list_users_and_invitations(
     assert u_w.layout_users.count() == 5
 
     item = u_w.layout_users.itemAt(0)
+    assert item.widget().label_email.text() == "amy@pe.com"
+
+    item = u_w.layout_users.itemAt(1)
+    assert item.widget().label_email.text() == "fry@pe.com"
+
+    item = u_w.layout_users.itemAt(2)
     assert item.widget().label_username.text() == "Adamy McAdamFace"
     assert item.widget().label_email.text() == "adam@example.com"
     assert item.widget().label_role.text() == "Administrator"
     assert item.widget().label_is_current.text() == ""
 
-    item = u_w.layout_users.itemAt(1)
+    item = u_w.layout_users.itemAt(3)
     assert item.widget().label_username.text() == "Alicey McAliceFace"
     assert item.widget().label_email.text() == "alice@example.com"
     assert item.widget().label_is_current.text() == "(you)"
     assert item.widget().label_role.text() == "Administrator"
 
-    item = u_w.layout_users.itemAt(2)
+    item = u_w.layout_users.itemAt(4)
     assert item.widget().label_username.text() == "Boby McBobFace"
     assert item.widget().label_email.text() == "bob@example.com"
     assert item.widget().label_is_current.text() == ""
     assert item.widget().label_role.text() == "Standard"
-
-    item = u_w.layout_users.itemAt(3)
-    assert item.widget().label_email.text() == "fry@pe.com"
-
-    item = u_w.layout_users.itemAt(4)
-    assert item.widget().label_email.text() == "amy@pe.com"
 
 
 @pytest.mark.gui
@@ -94,39 +97,70 @@ async def test_list_users_offline(aqtbot, logged_gui, autoclose_dialog):
 @pytest.mark.gui
 @pytest.mark.trio
 async def test_filter_users(aqtbot, running_backend, logged_gui):
+    def _users_shown(count: int):
+        assert u_w.layout_users.count() == count
+        items = (u_w.layout_users.itemAt(i) for i in range(u_w.layout_users.count()))
+        for item in items:
+            widget = item.widget()
+            assert widget.label_username.text() in [
+                "Alicey McAliceFace",
+                "Boby McBobFace",
+                "Adamy McAdamFace",
+            ]
+
+    def _all_users_visible(u_w):
+        assert u_w.layout_users.count() == 3
+        adam_w = u_w.layout_users.itemAt(0).widget()
+        assert adam_w.label_username.text() == "Adamy McAdamFace"
+        assert adam_w.label_email.text() == "adam@example.com"
+        alice_w = u_w.layout_users.itemAt(1).widget()
+        assert alice_w.label_username.text() == "Alicey McAliceFace"
+        assert alice_w.label_email.text() == "alice@example.com"
+
+        bob_w = u_w.layout_users.itemAt(2).widget()
+        assert bob_w.label_username.text() == "Boby McBobFace"
+        assert bob_w.label_email.text() == "bob@example.com"
+
+        assert alice_w.isVisible() is True
+        assert bob_w.isVisible() is True
+        assert adam_w.isVisible() is True
+
     u_w = await logged_gui.test_switch_to_users_widget()
+    await aqtbot.wait_until(lambda: _all_users_visible(u_w=u_w))
 
-    assert u_w.layout_users.count() == 3
+    async with aqtbot.wait_signal(u_w.list_success):
+        await aqtbot.key_clicks(u_w.line_edit_search, "bo")
+        await aqtbot.mouse_click(u_w.button_users_filter, QtCore.Qt.LeftButton)
 
-    adam_w = u_w.layout_users.itemAt(0).widget()
-    assert adam_w.label_username.text() == "Adamy McAdamFace"
-    assert adam_w.label_email.text() == "adam@example.com"
-    alice_w = u_w.layout_users.itemAt(1).widget()
-    assert alice_w.label_username.text() == "Alicey McAliceFace"
-    assert alice_w.label_email.text() == "alice@example.com"
+    await aqtbot.wait_until(lambda: _users_shown(count=1))
 
-    bob_w = u_w.layout_users.itemAt(2).widget()
+    bob_w = u_w.layout_users.itemAt(0).widget()
+
+    assert bob_w.isVisible() is True
     assert bob_w.label_username.text() == "Boby McBobFace"
     assert bob_w.label_email.text() == "bob@example.com"
+    assert u_w.layout_users.count() == 1
 
-    assert alice_w.isVisible() is True
-    assert bob_w.isVisible() is True
+    async with aqtbot.wait_signal(u_w.list_success):
+        await aqtbot.wait_until(lambda: u_w.line_edit_search.setText(""))
+
+    await aqtbot.wait_until(lambda: _all_users_visible(u_w=u_w))
+
+    # Test find()
+    async with aqtbot.wait_signal(u_w.list_success):
+        await aqtbot.key_clicks(u_w.line_edit_search, "McA")
+        await aqtbot.key_press(u_w.line_edit_search, Qt.Key_Enter)
+
+    assert u_w.layout_users.count() == 2
+
+    adam_w = u_w.layout_users.itemAt(0).widget()
+
     assert adam_w.isVisible() is True
+    assert adam_w.label_username.text() == "Adamy McAdamFace"
+    assert adam_w.label_email.text() == "adam@example.com"
 
-    async with aqtbot.wait_signal(u_w.filter_timer.timeout):
-        await aqtbot.key_clicks(u_w.line_edit_search, "bo")
-    assert alice_w.isVisible() is False
-    assert bob_w.isVisible() is True
-    assert adam_w.isVisible() is False
-
-    async with aqtbot.wait_signal(u_w.filter_timer.timeout):
-        await aqtbot.run(lambda: u_w.line_edit_search.setText(""))
+    alice_w = u_w.layout_users.itemAt(1).widget()
     assert alice_w.isVisible() is True
-    assert bob_w.isVisible() is True
-    assert adam_w.isVisible() is True
-
-    async with aqtbot.wait_signal(u_w.filter_timer.timeout):
-        await aqtbot.key_clicks(u_w.line_edit_search, "mca")
-    assert alice_w.isVisible() is True
-    assert bob_w.isVisible() is False
-    assert adam_w.isVisible() is True
+    assert alice_w.label_username.text() == "Alicey McAliceFace"
+    assert alice_w.label_email.text() == "alice@example.com"
+    assert u_w.layout_users.count() == 2

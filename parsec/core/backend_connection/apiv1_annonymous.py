@@ -5,6 +5,7 @@ from async_generator import asynccontextmanager
 from typing import Optional, AsyncGenerator
 
 from parsec.core.types import BackendOrganizationAddr
+from parsec.core.backend_connection import cmds
 from parsec.core.backend_connection.transport import apiv1_connect
 from parsec.core.backend_connection.exceptions import BackendNotAvailable
 from parsec.core.backend_connection.expose_cmds import expose_cmds
@@ -16,8 +17,16 @@ class APIV1_BackendAnonymousCmds:
         self.addr = addr
         self.acquire_transport = acquire_transport
 
-    for cmd_name in APIV1_ANONYMOUS_CMDS:
-        vars()[cmd_name] = expose_cmds(cmd_name, apiv1=True)
+    user_claim = expose_cmds(cmds.user_claim)
+    user_get_invitation_creator = expose_cmds(cmds.user_get_invitation_creator)
+    device_claim = expose_cmds(cmds.device_claim)
+    device_get_invitation_creator = expose_cmds(cmds.device_get_invitation_creator)
+    organization_bootstrap = expose_cmds(cmds.organization_bootstrap)
+    ping = expose_cmds(cmds.ping)
+
+
+for cmd in APIV1_ANONYMOUS_CMDS:
+    assert hasattr(APIV1_BackendAnonymousCmds, cmd)
 
 
 @asynccontextmanager

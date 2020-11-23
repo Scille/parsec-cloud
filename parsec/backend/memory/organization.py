@@ -2,7 +2,7 @@
 
 from typing import Optional
 
-from pendulum import Pendulum
+from pendulum import DateTime
 
 from parsec.api.protocol import OrganizationID
 from parsec.crypto import VerifyKey
@@ -19,15 +19,17 @@ from parsec.backend.organization import (
 )
 from parsec.backend.memory.vlob import MemoryVlobComponent
 from parsec.backend.memory.block import MemoryBlockComponent
+from parsec.backend.events import BackendEvent
 
 
 class MemoryOrganizationComponent(BaseOrganizationComponent):
-    def __init__(self, *args, **kwargs):
+    def __init__(self, send_event, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self._user_component = None
         self._vlob_component = None
         self._block_component = None
         self._organizations = {}
+        self._send_event = send_event
 
     def register_components(
         self,
@@ -41,7 +43,7 @@ class MemoryOrganizationComponent(BaseOrganizationComponent):
         self._block_component = block
 
     async def create(
-        self, id: OrganizationID, bootstrap_token: str, expiration_date: Optional[Pendulum] = None
+        self, id: OrganizationID, bootstrap_token: str, expiration_date: Optional[DateTime] = None
     ) -> None:
         org = self._organizations.get(id)
 
@@ -101,11 +103,13 @@ class MemoryOrganizationComponent(BaseOrganizationComponent):
         return OrganizationStats(users=users, data_size=data_size, metadata_size=metadata_size)
 
     async def set_expiration_date(
-        self, id: OrganizationID, expiration_date: Pendulum = None
+        self, id: OrganizationID, expiration_date: DateTime = None
     ) -> None:
         try:
             self._organizations[id] = self._organizations[id].evolve(
                 expiration_date=expiration_date
             )
+            if self._organizations[id].is_expired:
+                await self._send_event(BackendEvent.ORGANIZATION_EXPIRED, organization_id=id)
         except KeyError:
             raise OrganizationNotFoundError()

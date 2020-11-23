@@ -7,8 +7,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PROJECT VERSION\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2020-08-04 14:21+0200\n"
-"PO-Revision-Date: 2020-07-24 11:17+0200\n"
+"POT-Creation-Date: 2020-11-04 09:40+0100\n"
+"PO-Revision-Date: 2020-10-15 10:30+0200\n"
 "Last-Translator: \n"
 "Language: en\n"
 "Language-Team: en <LL@li.org>\n"
@@ -18,111 +18,16 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Generated-By: Babel 2.6.0\n"
 
-msgid "TEXT_ORG_WIZARD_EMAIL_ALREADY_EXISTS"
-msgstr "This email is already used."
+msgid "TEXT_PARSEC_VERSION_version"
+msgstr "PARSEC version {version}"
 
-msgid "TEXT_ORG_WIZARD_ORGANIZATION_ALREADY_EXISTS"
-msgstr "This organization name is already used."
+msgid "ACTION_LOG_OUT"
+msgstr "Log Out"
 
-msgid "TEXT_ORG_WIZARD_INVALID_EMAIL"
-msgstr "The email is invalid."
-
-msgid "TEXT_ORG_WIZARD_INVALID_ORGANIZATION_ID"
-msgstr "The organization name is invalid."
-
-msgid "TEXT_ORG_WIZARD_INVALID_RESPONSE"
-msgstr "Could not create the organization."
-
-msgid "TEXT_ORG_WIZARD_OFFLINE"
-msgstr "The server is offline or you have no access to the internet."
-
-msgid "TEXT_ORG_WIZARD_UNKNOWN_FAILURE"
-msgstr "Could not create the organization."
-
-msgid "ACTION_CREATE_ORGANIZATION"
-msgstr "Create the organization"
-
-msgid "ACTION_NEXT"
-msgstr "Next"
-
-msgid "TEXT_ORG_WIZARD_TITLE"
-msgstr "Create a new organization"
-
-msgid "ACTION_SYSTRAY_SHOW_WINDOW"
-msgstr "Show PARSEC"
-
-msgid "ACTION_SYSTRAY_QUIT_PARSEC"
-msgstr "Quit"
-
-msgid "ACTION_FILE_OPEN_CURRENT_DIRECTORY"
-msgstr "Open current directory in the file explorer"
-
-msgid "ACTION_FILE_MENU_OPEN"
-msgstr "Open"
-
-msgid "ACTION_FILE_MENU_RENAME"
-msgstr "Rename"
-
-msgid "ACTION_FILE_MENU_DELETE"
-msgstr "Delete"
-
-msgid "ACTION_FILE_MENU_COPY"
-msgstr "Copy"
-
-msgid "ACTION_FILE_MENU_CUT"
-msgstr "Cut"
-
-msgid "ACTION_FILE_MENU_SHOW_FILE_HISTORY"
-msgstr "Show history"
-
-msgid "ACTION_FILE_MENU_GET_FILE_LINK"
-msgstr "Get a link to the file"
-
-msgid "ACTION_FILE_MENU_PASTE"
-msgstr "Paste"
-
-msgid "TEXT_FILE_TREE_PARENT_FOLDER"
-msgstr "Parent folder"
-
-msgid "TEXT_FILE_TREE_PARENT_WORKSPACE"
-msgstr "Workspaces list"
-
-msgid "TEXT_CHANGE_PASSWORD_PASSWORD_MISMATCH"
-msgstr "The password and the password confirmation do no match."
-
-msgid "TEXT_CHANGE_PASSWORD_SUCCESS"
-msgstr "The password has been successfully changed."
-
-msgid "TEXT_CHANGE_PASSWORD_INVALID_PASSWORD"
-msgstr "You did not provide the right password for this device."
-
-msgid "TEXT_CHANGE_PASSWORD_TITLE"
-msgstr "Change password"
-
-msgid "TEXT_LOGIN_ERROR_DEVICE_REVOKED"
-msgstr "This device has been revoked and can no longer be used to log in."
-
-msgid "TEXT_LOGIN_ERROR_WINFSP_NOT_AVAILABLE"
+msgid "TEXT_FILE_LINK_WORKSPACE_NOT_FOUND_organization"
 msgstr ""
-"WinFsp could not be loaded. \n"
-"Please check your installation."
-
-msgid "TEXT_LOGIN_ERROR_FUSE_NOT_AVAILABLE"
-msgstr ""
-"Fuse could not be loaded. \n"
-"Please check your installation."
-
-msgid "TEXT_LOGIN_UNKNOWN_ERROR"
-msgstr "Cannot log in."
-
-msgid "TEXT_LOGIN_ERROR_ALREADY_CONNECTED"
-msgstr "This device is already logged in, probably in another tab."
-
-msgid "TEXT_LOGIN_ERROR_AUTHENTICATION_FAILED"
-msgstr "The password is incorrect."
-
-msgid "TEXT_LOGIN_MOUNTPOINT_ERROR"
-msgstr "Cannot log in. The workspaces could not be mounted."
+"You do not have access to the workspace containing the file. It may not "
+"have been shared with you."
 
 msgid "NOTIF_WARN_MOUNTPOINT_UNMOUNTED"
 msgstr ""
@@ -160,6 +65,9 @@ msgstr "Connected"
 msgid "TEXT_BACKEND_STATE_DISCONNECTED"
 msgstr "Disconnected"
 
+msgid "TEXT_BACKEND_STATE_API_MISMATCH_versions"
+msgstr "Application incompatible with the server"
+
 msgid "TEXT_BACKEND_STATE_REVOKED_DEVICE"
 msgstr "This device is revoked"
 
@@ -172,6 +80,9 @@ msgstr "Unknown"
 msgid "TEXT_BACKEND_STATE_CRASHED_cause"
 msgstr "Connection to the server lost"
 
+msgid "TEXT_SYSTRAY_BACKEND_DISCONNECT_organization"
+msgstr "{organization}: Disconnected"
+
 msgid "ACTION_MENU_DOCUMENTS"
 msgstr "Documents"
 
@@ -180,6 +91,227 @@ msgstr "Users"
 
 msgid "ACTION_MENU_DEVICES"
 msgstr "My devices"
+
+msgid "TEXT_CLAIM_DEVICE_INVALID_CODE_CLICKED"
+msgstr ""
+"You did not provide the right code. You will have to restart the process."
+" We want to make absolutely sure that the process is secured."
+
+msgid "TEXT_CLAIM_DEVICE_NONE_CODE_CLICKED"
+msgstr ""
+"If you didn't see the code that was given to you by your other device, it"
+" could mean that a malicious user is trying to register in your stead.\n"
+"\n"
+"You can retry the invitation process. If this problem persists, your "
+"network may not be safe."
+
+msgid "TEXT_CLAIM_DEVICE_GET_GREETER_SAS_ERROR"
+msgstr "Error while negociationg SAS code. Please restart the process."
+
+msgid "TEXT_CLAIM_DEVICE_PEER_RESET"
+msgstr "The host has reset the process. We will restart from the beginning."
+
+msgid "TEXT_INVITATION_ALREADY_USED"
+msgstr "The invitation is no longer valid."
+
+msgid "TEXT_CLAIM_DEVICE_SIGNIFY_TRUST_ERROR"
+msgstr "Error while acknowledging SAS code. Please restart the process."
+
+msgid "TEXT_CLAIM_DEVICE_WAIT_PEER_TRUST_ERROR"
+msgstr ""
+"Error while waiting for peer SAS code acknowledgment. Please restart the "
+"process."
+
+msgid "TEXT_CLAIM_DEVICE_CLAIM_ERROR"
+msgstr "Error while validating invite information. Please restart the process."
+
+msgid "TEXT_CLAIM_DEVICE_WAITING"
+msgstr "Waiting..."
+
+msgid "TEXT_CLAIM_DEVICE_WAIT_PEER_ERROR"
+msgstr "Error while waiting for the other device. Please restart the process."
+
+msgid "ACTION_START"
+msgstr "Start"
+
+msgid "TEXT_CLAIM_DEVICE_FAILED_TO_RETRIEVE_INFO"
+msgstr "Failed to retrieve information about the invitation."
+
+msgid "TEXT_CLAIM_DEVICE_SUCCESSFUL"
+msgstr "The device was successfully created!"
+
+msgid "TEXT_CLAIM_DEVICE_INVITATION_NOT_FOUND"
+msgstr "No invitation found."
+
+msgid "TEXT_INVITATION_BACKEND_NOT_AVAILABLE"
+msgstr "The connection to the server has been lost. Please restart the process."
+
+msgid "TEXT_CLAIM_DEVICE_UNKNOWN_ERROR"
+msgstr "Error while registering the new device."
+
+msgid "TEXT_CLAIM_DEVICE_TITLE"
+msgstr "Register a device"
+
+msgid "TEXT_CLAIM_USER_DEVICE_ALREADY_EXISTS"
+msgstr "A device with the same name already exists."
+
+msgid "TEXT_CLAIM_USER_INVALID_CODE_CLICKED"
+msgstr ""
+"You did not provide the right code. You will have to restart the process."
+" We want to make absolutely sure that the invitation was meant for you."
+
+msgid "TEXT_CLAIM_USER_NONE_CODE_CLICKED"
+msgstr ""
+"If you didn't see the code that was given to you, it could mean that a "
+"malicious user is trying to register in your stead.\n"
+"\n"
+"You can retry the invitation process. If this problem persists, your "
+"network may not be safe."
+
+msgid "TEXT_CLAIM_USER_GET_GREETER_SAS_ERROR"
+msgstr "Error while negociating SAS code. Please restart the process."
+
+msgid "TEXT_CLAIM_USER_PEER_RESET"
+msgstr "The host has reset the process. We will restart from the beginning."
+
+msgid "TEXT_CLAIM_USER_SIGNIFY_TRUST_ERROR"
+msgstr "Error while acknowledging SAS code. Please restart the process."
+
+msgid "TEXT_CLAIM_USER_WAIT_PEER_TRUST_ERROR"
+msgstr ""
+"Error while waiting for peer SAS code acknowledgment. Please restart the "
+"process."
+
+msgid "TEXT_CLAIM_USER_INVALID_HUMAN_HANDLE"
+msgstr "The email is invalid."
+
+msgid "TEXT_CLAIM_USER_CLAIM_ERROR"
+msgstr "Error while validating invite information. Please restart the process."
+
+msgid "TEXT_CLAIM_USER_WAITING"
+msgstr "Waiting for the other user"
+
+msgid "TEXT_CLAIM_USER_WAIT_PEER_ERROR"
+msgstr "Error while waiting for the other user. Please restart the process."
+
+msgid "TEXT_CLAIM_USER_FAILED_TO_RETRIEVE_INFO"
+msgstr "Failed to retrieve information about the invitation."
+
+msgid "TEXT_CLAIM_USER_SUCCESSFUL"
+msgstr ""
+"The user was successfully created. You will now be logged in.\n"
+"Welcome to Parsec!"
+
+msgid "TEXT_CLAIM_USER_INVITATION_NOT_FOUND"
+msgstr "The invitation was not found."
+
+msgid "TEXT_CLAIM_USER_UNKNOWN_ERROR"
+msgstr "Unexpected error. Please restart the process."
+
+msgid "TEXT_CLAIM_USER_TITLE"
+msgstr "Register a user"
+
+msgid "TEXT_BOOTSTRAP_ORGANIZATION_INSTRUCTIONS_organization"
+msgstr ""
+"Please fill out the following information to bootstrap the organization "
+"<b>{organization}</b>."
+
+msgid "ACTION_NEXT"
+msgstr "Next"
+
+msgid "ACTION_CREATE_ORG"
+msgstr "Create the organization"
+
+msgid "TEXT_ORG_WIZARD_INVALID_ORGANIZATION_ID"
+msgstr "The organization name is invalid."
+
+msgid "TEXT_ORG_WIZARD_INVALID_BACKEND_ADDR"
+msgstr "The server address is invalid."
+
+msgid "TEXT_ORG_WIZARD_INVALID_DEVICE_NAME"
+msgstr "The device name is invalid."
+
+msgid "TEXT_ORG_WIZARD_INVALID_HUMAN_HANDLE"
+msgstr "The email address is invalid."
+
+msgid "TEXT_BOOTSTRAP_ORG_SUCCESS_organization"
+msgstr ""
+"You organization <b>{organization}</b> has been created!<br />\n"
+"<br />\n"
+"You will now be automatically logged in.<br />\n"
+"<br />\n"
+"To help you start with PARSEC, you can read the <a "
+"href=\"https://docs.parsec.cloud/en/stable/\" title=\"User guide\">user "
+"guide</a>."
+
+msgid "ACTION_CONTINUE"
+msgstr "Continue"
+
+msgid "TEXT_ORG_WIZARD_ORGANIZATION_ALREADY_EXISTS"
+msgstr "This organization name is already used."
+
+msgid "TEXT_ORG_WIZARD_INVALID_EMAIL"
+msgstr "The email is invalid."
+
+msgid "TEXT_ORG_WIZARD_OFFLINE"
+msgstr "The server is offline or you have no access to the internet."
+
+msgid "TEXT_ORG_WIZARD_INVITE_ALREADY_USED"
+msgstr "This bootstrap link was already used."
+
+msgid "TEXT_ORG_WIZARD_CONNECTION_REFUSED"
+msgstr "The server refused the connection."
+
+msgid "TEXT_ORG_WIZARD_CONNECTION_ERROR"
+msgstr "Cannot connect to the server."
+
+msgid "TEXT_ORG_WIZARD_INVALID_TIMESTAMP"
+msgstr ""
+"It seems that your machine does not have a correct date and time set up. "
+"Please check your date and time options and make sure that your time and "
+"timezone are correct.\n"
+
+msgid "TEXT_ORG_WIZARD_UNKNOWN_FAILURE"
+msgstr "Could not create the organization."
+
+msgid "TEXT_ORG_WIZARD_TITLE"
+msgstr "Create a new organization"
+
+msgid "ACTION_OK"
+msgstr "OK"
+
+msgid "TEXT_ERR_DIALOG_TITLE"
+msgstr "Error"
+
+msgid "TEXT_DEVICE_IS_CURRENT"
+msgstr "current"
+
+msgid "ACTION_DEVICE_MENU_CHANGE_PASSWORD"
+msgstr "Change password"
+
+msgid "TEXT_INVITE_DEVICE_INVITE_OFFLINE"
+msgstr "The server is offline or you have no access to the internet."
+
+msgid "TEXT_INVITE_DEVICE_INVITE_ERROR"
+msgstr "Could not invite the device."
+
+msgid "TEXT_DEVICE_LIST_RETRIEVABLE_FAILURE"
+msgstr "Failed to retrieve the device list from the server."
+
+msgid "TEXT_FILE_HISTORY_LIST_FAILURE"
+msgstr "Error while retrieving the file history."
+
+msgid "TEXT_FILE_HISTORY_TITLE_name"
+msgstr "File history of {name}"
+
+msgid "TEXT_FILE_ITEM_IS_CONFINED_TOOLTIP"
+msgstr "The file will not be synced."
+
+msgid "TEXT_FILE_ITEM_IS_SYNCED_TOOLTIP"
+msgstr "The file is synced."
+
+msgid "TEXT_FILE_ITEM_IS_NOT_SYNCED_TOOLTIP"
+msgstr "The file is not synced yet."
 
 msgid "TEXT_FILE_SIZE_TB"
 msgstr "TB"
@@ -196,72 +328,220 @@ msgstr "KB"
 msgid "TEXT_FILE_SIZE_B"
 msgstr "B"
 
-msgid "ACTION_LOG_IN"
-msgstr "Log In"
+msgid "ACTION_FILE_OPEN_CURRENT_DIRECTORY"
+msgstr "Open current directory in the file explorer"
 
-msgid "TEXT_LOGIN_NO_AVAILABLE_DEVICE"
-msgstr "No other device is available on this computer."
+msgid "ACTION_FILE_MENU_OPEN"
+msgstr "Open"
 
-msgid "TEXT_LOGIN_NO_DEVICE_ON_MACHINE"
-msgstr "You do not have any device on this computer."
+msgid "ACTION_FILE_MENU_RENAME"
+msgstr "Rename"
 
-msgid "ACTION_LOGGING_IN"
-msgstr "Logging in..."
+msgid "ACTION_FILE_MENU_DELETE"
+msgstr "Delete"
 
-msgid "TEXT_WORKSPACE_ROLE_READER"
-msgstr "Reader"
+msgid "ACTION_FILE_MENU_COPY"
+msgstr "Copy"
 
-msgid "TEXT_WORKSPACE_ROLE_CONTRIBUTOR"
-msgstr "Contributor"
+msgid "ACTION_FILE_MENU_CUT"
+msgstr "Cut"
 
-msgid "TEXT_WORKSPACE_ROLE_MANAGER"
-msgstr "Manager"
+msgid "ACTION_FILE_MENU_SHOW_FILE_HISTORY"
+msgstr "Show history"
 
-msgid "TEXT_WORKSPACE_ROLE_OWNER"
-msgstr "Owner"
+msgid "ACTION_FILE_MENU_GET_FILE_LINK"
+msgstr "Get a link to the file"
 
-msgid "TEXT_WORKSPACE_SHARING_USER_IS_REVOKED"
-msgstr "This user is revoked."
+msgid "ACTION_FILE_MENU_PASTE_FROM_OTHER_WORKSPACE_source"
+msgstr "Paste from {source}"
 
-msgid "TEXT_WORKSPACE_SHARING_USER_NOT_FOUND"
-msgstr "The user was not found."
+msgid "ACTION_FILE_MENU_PASTE"
+msgstr "Paste"
 
-msgid "TEXT_WORKSPACE_SHARING_ALREADY_SHARED_user"
-msgstr "This workspace is already shared with <b>{user}</b>."
+msgid "TEXT_FILE_TREE_PARENT_FOLDER"
+msgstr "Parent folder"
 
-msgid "TEXT_WORKSPACE_SHARING_UNSHARE_TITLE"
-msgstr "Unshare the workspace"
+msgid "TEXT_FILE_TREE_PARENT_WORKSPACE"
+msgstr "Workspaces list"
 
-msgid "TEXT_WORKSPACE_SHARING_UNSHARE_INSTRUCTIONS_user"
+msgid "TEXT_FILE_DROP_WORKSPACE_IS_READ_ONLY"
+msgstr "Cannot import files because you don't have write access to this workspace."
+
+msgid "TEXT_FILE_LINK_COPIED_TO_CLIPBOARD"
+msgstr "A link to the file has been copied to your clipboard."
+
+msgid "TEXT_FILE_PASTE_ERROR"
+msgstr "Cannot paste this file here."
+
+msgid "TEXT_FILE_FOLDER_MOVED_INTO_ITSELF_ERROR"
+msgstr "Cannot move a folder into itself."
+
+msgid "TEXT_FILE_HISTORY_MULTIPLE_FILES_SELECTED_ERROR"
 msgstr ""
-"Are you sure you want to remove <b>{user}</b> from this workspace? The "
-"user will not be able to see future updates made to this workspace."
+"Cannot show the history of multiple files at once. Please select only one"
+" file."
 
-msgid "ACTION_WORKSPACE_UNSHARE_CONFIRM"
-msgstr "Unshare"
+msgid "TEXT_FILE_RENAME_TITLE"
+msgstr "Rename a file"
+
+msgid "TEXT_FILE_RENAME_INSTRUCTIONS"
+msgstr "Enter the new file name."
+
+msgid "TEXT_FILE_RENAME_PLACEHOLDER"
+msgstr "File name"
+
+msgid "ACTION_FILE_RENAME"
+msgstr "Rename"
+
+msgid "TEXT_FILE_RENAME_MULTIPLE_TITLE_count"
+msgstr "Rename {count} files"
+
+msgid "TEXT_FILE_RENAME_MULTIPLE_INSTRUCTIONS_count"
+msgstr ""
+"Enter the files names. Files will be renamed automatically according to "
+"the following scheme: NAME_COUNT.EXTENSION."
+
+msgid "TEXT_FILE_RENAME_MULTIPLE_PLACEHOLDER"
+msgstr "Files names"
+
+msgid "ACTION_FILE_RENAME_MULTIPLE"
+msgstr "Rename"
+
+msgid "TEXT_FILE_DELETE_TITLE"
+msgstr "Delete a file"
+
+msgid "TEXT_FILE_DELETE_INSTRUCTIONS_name"
+msgstr "Are you sure you want to delete the file <b>{name}</b>?"
+
+msgid "ACTION_FILE_DELETE"
+msgstr "Delete"
 
 msgid "ACTION_CANCEL"
 msgstr "Cancel"
 
-msgid "TEXT_WORKSPACE_SHARING_SHARE_ERROR_workspace-user"
-msgstr "Cannot share the workspace <b>{workspace}</b> with <b>{user}</b>."
+msgid "TEXT_FILE_DELETE_MULTIPLE_TITLE_count"
+msgstr "Delete {count} files"
 
-msgid "TEXT_WORKSPACE_SHARING_UNSHARE_ERROR_workspace-user"
-msgstr "Cannot remove <b>{user}</b> from the workspace <b>{workspace}</b>."
+msgid "TEXT_FILE_DELETE_MULTIPLE_INSTRUCTIONS_count"
+msgstr "Are you sure you want to delete {count} files?"
 
-msgid "TEXT_WORKSPACE_SHARING_UPDATE_ROLES_ERROR_errors"
+msgid "ACTION_FILE_DELETE_MULTIPLE"
+msgstr "Delete"
+
+msgid "TEXT_FILE_OPEN_ERROR_file"
+msgstr "The file <b>{file}</b> could not be opened.\n"
+
+msgid "TEXT_FILE_OPEN_MULTIPLE_TITLE_count"
+msgstr "Open {count} files"
+
+msgid "TEXT_FILE_OPEN_MULTIPLE_INSTRUCTIONS_count"
+msgstr "Are you sure you want to open {count} files? This may take some time."
+
+msgid "ACTION_FILE_OPEN_MULTIPLE"
+msgstr "Open the files"
+
+msgid "TEXT_FILE_OPEN_MULTIPLE_ERROR"
+msgstr "Some or all files could not be opened."
+
+msgid "TEXT_FILE_IMPORT_LOADING_TITLE"
+msgstr "Importing"
+
+msgid "TEXT_FILE_IMPORT_FILES"
+msgstr "Import files"
+
+msgid "TEXT_FILE_IMPORT_FOLDER"
+msgstr "Import a folder"
+
+msgid "TEXT_FILE_CREATE_FOLDER_TITLE"
+msgstr "Create a folder"
+
+msgid "TEXT_FILE_CREATE_FOLDER_INSTRUCTIONS"
+msgstr "Enter the folder name."
+
+msgid "TEXT_FILE_CREATE_FOLDER_PLACEHOLDER"
+msgstr "Folder name"
+
+msgid "ACTION_FILE_CREATE_FOLDER"
+msgstr "Create a new folder"
+
+msgid "TEXT_FILE_RENAME_MULTIPLE_ERROR"
 msgstr ""
-"There has been an error while trying to update the users' roles on this "
-"workspace. Some roles may not have been updated."
+"There has been an error while renaming the files. Some files may not have"
+" been renamed."
 
-msgid "TEXT_WORKSPACE_SHARING_UPDATE_ROLES_SUCCESS"
-msgstr "The users roles have been successfully updated."
+msgid "TEXT_FILE_RENAME_ERROR"
+msgstr "The file could not be renamed."
 
-msgid "TEXT_WORKSPACE_SHARING_TITLE"
-msgstr "Share the workspace"
+msgid "TEXT_FILE_DELETE_MULTIPLE_ERROR"
+msgstr ""
+"There has been an error while deleting the files. Some files may not have"
+" been deleted."
 
-msgid "TEXT_PARSEC_VERSION_version"
-msgstr "PARSEC version {version}"
+msgid "TEXT_FILE_DELETE_ERROR"
+msgstr "This file could not be deleted."
+
+msgid "TEXT_FILE_GOTO_LINK_NOT_FOUND"
+msgstr "The file could not be found."
+
+msgid "TEXT_FILE_FOLDER_NOT_FOUND"
+msgstr "The folder does not exist."
+
+msgid "TEXT_FILE_FOLDER_CREATE_ERROR_ALREADY_EXISTS"
+msgstr "A folder with the same name already exists."
+
+msgid "TEXT_FILE_FOLDER_CREATE_ERROR_UNKNOWN"
+msgstr "Cannot create the new folder."
+
+msgid "TEXT_FILE_IMPORT_ONE_PERMISSION_ERROR"
+msgstr "You don't have the permission to import this file."
+
+msgid "TEXT_FILE_IMPORT_MULTIPLE_PERMISSION_ERROR"
+msgstr ""
+"You don't have the permission to access some of these files. Some files "
+"may not have been imported."
+
+msgid "TEXT_FILE_IMPORT_ONE_ERROR"
+msgstr ""
+"There has been an error while import the file. The file could not be "
+"imported."
+
+msgid "TEXT_FILE_IMPORT_MULTIPLE_ERROR"
+msgstr ""
+"There has been an error while importing the files. Some files may not "
+"have been imported."
+
+msgid "TEXT_FILE_SHARING_REVOKED_workspace"
+msgstr ""
+"Your permissions on the workspace <b>{workspace}</b> have been removed. "
+"You can no longer interact with the workspace or see any files it "
+"contains."
+
+msgid "TEXT_FILE_SHARING_DEMOTED_TO_READER"
+msgstr ""
+"Your role on this workspace has changed to <b>Reader</b>. You can no "
+"longer add, update or delete files, but you can still see them."
+
+msgid "TEXT_GREET_DEVICE_INSTRUCTIONS_NO_EMAIL"
+msgstr ""
+"To greet your new device, Parsec needs to be started on both devices.\n"
+"<br /><br />\n"
+"You will have to exchange codes between the two devices. This way, we can"
+" be certain that the process is secure.\n"
+"<br /><br />\n"
+"To get the invitation link, click the <i>Copy invitation link to the "
+"clipboard</i> button below and transfer it to your new device."
+
+msgid "TEXT_GREET_DEVICE_INSTRUCTIONS_email"
+msgstr ""
+"To greet your new device, Parsec needs to be started on both devices.\n"
+"<br /><br />\n"
+"You will have to exchange codes between the two devices. This way, we can"
+" be certain that the process is secure.\n"
+"<br /><br />\n"
+"To get the invitation link to you new device, you can either transfer it "
+"manually by clicking the <i>Copy invitation link to the clipboard</i> "
+"button, or we can send an email with the link to <b>{email}</b> by "
+"clicking the <i>Send an email</i> button."
 
 msgid "TEXT_GREET_DEVICE_ADDR_COPIED_TO_CLIPBOARD"
 msgstr "The invitation link has been copied to the clipboard"
@@ -313,88 +593,22 @@ msgstr ""
 msgid "TEXT_DEVICE_GREET_SUCCESSFUL"
 msgstr "The device was successfully created."
 
-msgid "TEXT_INVITATION_BACKEND_NOT_AVAILABLE"
-msgstr "The connection to the server has been lost. Please restart the process."
-
 msgid "TEXT_GREET_DEVICE_UNKNOWN_ERROR"
 msgstr "Internal error. Please restart the process."
 
 msgid "TEXT_GREET_DEVICE_TITLE"
 msgstr "Greet a new device"
 
-msgid "TEXT_BOOTSTRAP_ORG_INSTRUCTIONS_url-organization"
+msgid "TEXT_GREET_USER_WAITING"
+msgstr "Waiting for the other user..."
+
+msgid "TEXT_GREET_USER_WAIT_PEER_ERROR"
 msgstr ""
-"You are about to bootstrap the organization <b>{organization}</b>. You "
-"will be the first administrator of the organization.<br /><br />\n"
-"\n"
-"To proceed, please provide your name, your email address, a name for this"
-" device, and a password."
+"An error occured while waiting for the other user. Please restart the "
+"process."
 
-msgid "TEXT_BOOTSTRAP_ORG_INVALID_URL"
-msgstr "This is not a valid bootstrap link."
-
-msgid "TEXT_BOOTSTRAP_ORG_INVITE_NOT_FOUND"
-msgstr "There are no organization to bootstrap with this link."
-
-msgid "TEXT_BOOTSTRAP_ORG_ALREADY_BOOTSTRAPPED"
-msgstr "This organization has already been bootstrapped."
-
-msgid "TEXT_BOOTSTRAP_ORG_USER_EXISTS"
-msgstr "This user already exists within this organization."
-
-msgid "TEXT_BOOTSTRAP_ORG_PASSWORD_MISMATCH"
-msgstr "The password and the password confirmation do no match."
-
-msgid "TEXT_BOOTSTRAP_ORG_PASSWORD_COMPLEXITY_TOO_LOW"
-msgstr "The password is not complex enough."
-
-msgid "TEXT_BOOTSTRAP_ORG_BAD_DEVICE_NAME"
-msgstr "The device name is invalid."
-
-msgid "TEXT_BOOTSTRAP_ORG_BAD_API_VERSION"
-msgstr ""
-"Your application is not compatible with this server. Try to update it to "
-"the latest version."
-
-msgid "TEXT_BOOTSTRAP_ORG_BACKEND_REFUSAL"
-msgstr "Could not bootstrap the organization."
-
-msgid "TEXT_BOOTSTRAP_ORG_BACKEND_OFFLINE"
-msgstr "The server is offline or you have no access to the internet."
-
-msgid "TEXT_BOOTSTRAP_ORG_UNKNOWN_FAILURE"
-msgstr "Could not bootstrap the organization."
-
-msgid "TEXT_BOOTSTRAP_ORG_SUCCESS_organization"
-msgstr ""
-"You organization <b>{organization}</b> has been created!<br />\n"
-"<br />\n"
-"You will now be automatically logged in.<br />\n"
-"<br />\n"
-"To help you start with PARSEC, you can read the <a "
-"href=\"https://docs.parsec.cloud/en/stable/\" title=\"User guide\">user "
-"guide</a>."
-
-msgid "ACTION_CONTINUE"
-msgstr "Continue"
-
-msgid "TEXT_BOOTSTRAP_ORG_INVALID_EMAIL"
-msgstr "The email is invalid."
-
-msgid "TEXT_BOOTSTRAP_ORG_TITLE"
-msgstr "Bootstrap the organization"
-
-msgid "ACTION_USER_INVITE_COPY_ADDR"
-msgstr "Copy invitation link"
-
-msgid "ACTION_USER_INVITE_COPY_EMAIL"
-msgstr "Copy email"
-
-msgid "TEXT_USER_IS_CURRENT"
-msgstr "you"
-
-msgid "TEXT_USER_PROFILE_OUTSIDER"
-msgstr "Outsider"
+msgid "TEXT_GREET_USER_PEER_RESET"
+msgstr "The invitee has reset the process. We will restart from the beginning."
 
 msgid "TEXT_USER_PROFILE_STANDARD"
 msgstr "Standard"
@@ -402,85 +616,78 @@ msgstr "Standard"
 msgid "TEXT_USER_PROFILE_ADMIN"
 msgstr "Administrator"
 
-msgid "TEXT_USER_IS_REVOKED"
-msgstr "Revoked"
+msgid "TEXT_GREET_USER_INVALID_HUMAN_HANDLE"
+msgstr "The email is invalid."
 
-msgid "ACTION_USER_MENU_REVOKE"
-msgstr "Revoke"
+msgid "TEXT_GREET_USER_CREATE_USER_ERROR"
+msgstr "An error occured while creating the user. Please restart the process."
 
-msgid "TEXT_USER_INVITE_EMAIL"
-msgstr "Invite a new user"
+msgid "TEXT_GREET_USER_GET_REQUESTS_ERROR"
+msgstr "Internal error. Please restart the process."
 
-msgid "TEXT_USER_INVITE_EMAIL_INSTRUCTIONS"
-msgstr "Please provide the new user's email address:"
-
-msgid "TEXT_USER_INVITE_EMAIL_PLACEHOLDER"
-msgstr "user@host.com"
-
-msgid "ACTION_USER_INVITE_DO_INVITE"
-msgstr "Invite the user"
-
-msgid "TEXT_USER_INVITE_CANCEL_INVITE_QUESTION_TITLE"
-msgstr "Cancel the invitation"
-
-msgid "TEXT_USER_INVITE_CANCEL_INVITE_QUESTION_CONTENT"
+msgid "TEXT_GREET_USER_INVALID_CODE_CLICKED"
 msgstr ""
-"Are you sure you want to cancel this invitation? The link that was send "
-"by email to the user will become invalid."
+"You did not provide the right code. You will have to restart the process."
+" We want to make absolutely sure that the process is secured."
 
-msgid "TEXT_USER_INVITE_CANCEL_INVITE_ACCEPT"
-msgstr "Cancel the invitation"
-
-msgid "ACTION_NO"
-msgstr "No"
-
-msgid "TEXT_USER_REVOKE_SUCCESS_user"
+msgid "TEXT_GREET_USER_NONE_CODE_CLICKED"
 msgstr ""
-"The user <b>{user}</b> has been successfully revoked. Do no forget to "
-"reencrypt the workspaces that were shared with them."
+"If you didn't see the code that was given to you by the other user, it "
+"could mean an attack by a malicious user.\n"
+"\n"
+"You can retry the invitation process. If this problem persists, your "
+"network may not be safe."
 
-msgid "TEXT_USER_REVOCATION_USER_ALREADY_REVOKED"
-msgstr "This user has already been revoked."
+msgid "TEXT_GREET_USER_GET_GREETER_SAS_ERROR"
+msgstr "Error while negociating SAS code. Please restart the process."
 
-msgid "TEXT_USER_REVOCATION_USER_NOT_FOUND"
-msgstr "The user was not found."
+msgid "TEXT_GREET_USER_GET_CLAIMER_SAS_ERROR"
+msgstr "Error while negociating claimer SAS code. Please restart the process."
 
-msgid "TEXT_USER_REVOCATION_NOT_ENOUGH_PERMISSIONS"
-msgstr "You don't have enough permissions to revoke this user."
+msgid "TEXT_GREET_USER_SIGNIFY_TRUST_ERROR"
+msgstr "Error while acknowledging SAS code. Please restart the process."
 
-msgid "TEXT_USER_REVOCATION_BACKEND_OFFLINE"
-msgstr "The server is offline or you have no access to the internet."
-
-msgid "TEXT_USER_REVOCATION_UNKNOWN_FAILURE"
-msgstr "Could not revoke this user."
-
-msgid "TEXT_USER_REVOCATION_TITLE"
-msgstr "Revoke a user"
-
-msgid "TEXT_USER_REVOCATION_INSTRUCTIONS_user"
+msgid "TEXT_GREET_USER_WAIT_PEER_TRUST_ERROR"
 msgstr ""
-"A revoked user will no longer have access to the organization and the "
-"data stored within it.<br />\n"
-"<br />\n"
-"Are you sure you want to revoke the user <b>{user}</b>?"
+"Error while waiting for peer SAS code acknowledgment. Please restart the "
+"process."
 
-msgid "ACTION_USER_REVOCATION_CONFIRM"
-msgstr "Revoke the user"
+msgid "TEXT_USER_GREET_SUCCESSFUL"
+msgstr "The user was successfully greeter in your organization."
 
-msgid "TEXT_USER_LIST_RETRIEVABLE_FAILURE"
-msgstr "Failed to retrieve the user list from the server."
+msgid "TEXT_GREET_USER_UNKNOWN_ERROR"
+msgstr "Internal error. Please restart the process."
 
-msgid "TEXT_INVITE_USER_CANCEL_ERROR"
-msgstr "Could not cancel the invitation."
+msgid "TEXT_GREET_USER_TITLE"
+msgstr "Greet a new user"
 
-msgid "TEXT_INVITE_USER_INVITE_OFFLINE"
-msgstr "The server is offline or you have no access to the internet."
+msgid "TEXT_LOGIN_ERROR_DEVICE_REVOKED"
+msgstr "This device has been revoked and can no longer be used to log in."
 
-msgid "TEXT_INVITE_USER_ALREADY_MEMBER_ERROR"
-msgstr "The user is already a member of the organization."
+msgid "TEXT_LOGIN_ERROR_WINFSP_NOT_AVAILABLE"
+msgstr ""
+"WinFsp could not be loaded. \n"
+"Please check your installation."
 
-msgid "TEXT_INVITE_USER_INVITE_ERROR"
-msgstr "Could not invite the user."
+msgid "TEXT_LOGIN_ERROR_FUSE_NOT_AVAILABLE"
+msgstr ""
+"Fuse could not be loaded.<br>"
+"Please check your installation.<br><br>"
+"On Mac, you have to install OSXFUSE (FUSE for MacOS) and allow in security settings.<br>"
+"From Mac OS 11.x, a restart is required after osxfuse installation.<br><br>"
+"<a href=\"https://osxfuse.github.io/2020/10/05/OSXFUSE-3.11.2.html\">Get osxfuse here</a>"
+
+msgid "TEXT_LOGIN_UNKNOWN_ERROR"
+msgstr "Cannot log in."
+
+msgid "TEXT_LOGIN_ERROR_ALREADY_CONNECTED"
+msgstr "This device is already logged in, probably in another tab."
+
+msgid "TEXT_LOGIN_ERROR_AUTHENTICATION_FAILED"
+msgstr "The password is incorrect."
+
+msgid "TEXT_LOGIN_MOUNTPOINT_ERROR"
+msgstr "Cannot log in. The workspaces could not be mounted."
 
 msgid "TEXT_DEVICE_IS_CURRENT"
 msgstr "current"
@@ -1323,8 +1530,22 @@ msgstr ""
 "\n"
 "</body></html>"
 
-msgid "TEXT_SETTINGS_NEED_RESTART"
-msgstr "You will need to restart the application for the changes to take effect."
+msgid "TEXT_LOGIN_ENTER_PASSWORD_INSTRUCTIONS_organization-device-user-email"
+msgstr ""
+"Welcome back to PARSEC <b>{user}</b>! Please enter the password of your "
+"<b>{device}</b> device."
+
+msgid "ACTION_LOGGING_IN"
+msgstr "Logging in..."
+
+msgid "ACTION_LOG_IN"
+msgstr "Log In"
+
+msgid "TEXT_LOGIN_NO_AVAILABLE_DEVICE"
+msgstr "No other device is available on this computer."
+
+msgid "TEXT_LOGIN_NO_DEVICE_ON_MACHINE"
+msgstr "You do not have any device on this computer."
 
 msgid "TEXT_PARSEC_WINDOW_TITLE_version"
 msgstr "PARSEC {version}"
@@ -1392,15 +1613,6 @@ msgstr "The link is invalid."
 msgid "TEXT_INVALID_URL"
 msgstr "The link is invalid."
 
-msgid "TEXT_BOOTSTRAP_ORG_URL_TITLE"
-msgstr "Bootstrap an organization"
-
-msgid "TEXT_BOOTSTRAP_ORG_URL_INSTRUCTIONS"
-msgstr "Please provide the link to bootstrap the organization."
-
-msgid "TEXT_BOOTSTRAP_ORG_URL_PLACEHOLDER"
-msgstr "parsec://parsec.example.com/my_org?action=bootstrap_organization&token=1234ABCD"
-
 msgid "TEXT_ERROR_REPORTING_TITLE"
 msgstr "Error reporting"
 
@@ -1414,6 +1626,9 @@ msgstr ""
 
 msgid "ACTION_ERROR_REPORTING_ACCEPT"
 msgstr "Allow error reporting"
+
+msgid "ACTION_NO"
+msgstr "No"
 
 msgid "TEXT_KICKSTART_PARSEC_WHAT_TO_DO_TITLE"
 msgstr "Welcome to Parsec!"
@@ -1434,11 +1649,6 @@ msgid "TEXT_FILE_LINK_NOT_IN_ORG_organization"
 msgstr ""
 "You cannot access this file because you have no device belonging to the "
 "organization <b>{organization}</b> on this machine."
-
-msgid "TEXT_FILE_LINK_WORKSPACE_NOT_FOUND_organization"
-msgstr ""
-"You do not have access to the workspace containing the file. It may not "
-"have been shared with you."
 
 msgid "TEXT_FILE_LINK_PLEASE_LOG_IN_organization"
 msgstr ""
@@ -1468,142 +1678,26 @@ msgstr "Are you sure you want to close PARSEC?"
 msgid "ACTION_PARSEC_QUIT_CONFIRM"
 msgstr "Quit"
 
-msgid "TEXT_FILE_LINK_COPIED_TO_CLIPBOARD"
-msgstr "A link to the file has been copied to your clipboard."
+msgid "TEXT_ORGANIZATION_SIZE_organizationsize"
+msgstr "<b>{organizationsize}</b> used"
 
-msgid "TEXT_FILE_PASTE_ERROR"
-msgstr "Cannot paste this file here."
-
-msgid "TEXT_FILE_FOLDER_MOVED_INTO_ITSELF_ERROR"
-msgstr "Cannot move a folder into itself."
-
-msgid "TEXT_FILE_HISTORY_MULTIPLE_FILES_SELECTED_ERROR"
+msgid "TEXT_ORGANIZATION_SIZE_TOOLTIP_datasize-metadatasize"
 msgstr ""
-"Cannot show the history of multiple files at once. Please select only one"
-" file."
+"Data: <b>{datasize}</b>\n"
+"<br />\n"
+"Meta-data: <b>{metadatasize}</b>"
 
-msgid "TEXT_FILE_RENAME_TITLE"
-msgstr "Rename a file"
+msgid "TEXT_PARSEC_NEW_VERSION_AVAILABLE_version"
+msgstr "The version <b>{version}</b> of PARSEC is available!"
 
-msgid "TEXT_FILE_RENAME_INSTRUCTIONS"
-msgstr "Enter the new file name."
+msgid "TEXT_CHANGE_PASSWORD_SUCCESS"
+msgstr "The password has been successfully changed."
 
-msgid "TEXT_FILE_RENAME_PLACEHOLDER"
-msgstr "File name"
+msgid "TEXT_CHANGE_PASSWORD_INVALID_PASSWORD"
+msgstr "You did not provide the right password for this device."
 
-msgid "ACTION_FILE_RENAME"
-msgstr "Rename"
-
-msgid "TEXT_FILE_RENAME_MULTIPLE_TITLE_count"
-msgstr "Rename {count} files"
-
-msgid "TEXT_FILE_RENAME_MULTIPLE_INSTRUCTIONS_count"
-msgstr ""
-"Enter the files names. Files will be renamed automatically according to "
-"the following scheme: NAME_COUNT.EXTENSION."
-
-msgid "TEXT_FILE_RENAME_MULTIPLE_PLACEHOLDER"
-msgstr "Files names"
-
-msgid "ACTION_FILE_RENAME_MULTIPLE"
-msgstr "Rename"
-
-msgid "TEXT_FILE_DELETE_TITLE"
-msgstr "Delete a file"
-
-msgid "TEXT_FILE_DELETE_INSTRUCTIONS_name"
-msgstr "Are you sure you want to delete the file <b>{name}</b>?"
-
-msgid "ACTION_FILE_DELETE"
-msgstr "Delete"
-
-msgid "TEXT_FILE_DELETE_MULTIPLE_TITLE_count"
-msgstr "Delete {count} files"
-
-msgid "TEXT_FILE_DELETE_MULTIPLE_INSTRUCTIONS_count"
-msgstr "Are you sure you want to delete {count} files?"
-
-msgid "ACTION_FILE_DELETE_MULTIPLE"
-msgstr "Delete"
-
-msgid "TEXT_FILE_OPEN_MULTIPLE_TITLE_count"
-msgstr "Open {count} files"
-
-msgid "TEXT_FILE_OPEN_MULTIPLE_INSTRUCTIONS_count"
-msgstr "Are you sure you want to open {count} files? This may take some time."
-
-msgid "ACTION_FILE_OPEN_MULTIPLE"
-msgstr "Open the files"
-
-msgid "TEXT_FILE_IMPORT_LOADING_TITLE"
-msgstr "Importing"
-
-msgid "TEXT_FILE_IMPORT_FILES"
-msgstr "Import files"
-
-msgid "TEXT_FILE_IMPORT_FOLDER"
-msgstr "Import a folder"
-
-msgid "TEXT_FILE_CREATE_FOLDER_TITLE"
-msgstr "Create a folder"
-
-msgid "TEXT_FILE_CREATE_FOLDER_INSTRUCTIONS"
-msgstr "Enter the folder name."
-
-msgid "TEXT_FILE_CREATE_FOLDER_PLACEHOLDER"
-msgstr "Folder name"
-
-msgid "ACTION_FILE_CREATE_FOLDER"
-msgstr "Create a new folder"
-
-msgid "TEXT_FILE_RENAME_MULTIPLE_ERROR"
-msgstr ""
-"There has been an error while renaming the files. Some files may not have"
-" been renamed."
-
-msgid "TEXT_FILE_RENAME_ERROR"
-msgstr "The file could not be renamed."
-
-msgid "TEXT_FILE_DELETE_MULTIPLE_ERROR"
-msgstr ""
-"There has been an error while deleting the files. Some files may not have"
-" been deleted."
-
-msgid "TEXT_FILE_DELETE_ERROR"
-msgstr "This file could not be deleted."
-
-msgid "TEXT_FILE_GOTO_LINK_NOT_FOUND"
-msgstr "The file could not be found."
-
-msgid "TEXT_FILE_FOLDER_NOT_FOUND"
-msgstr "The folder does not exist."
-
-msgid "TEXT_FILE_FOLDER_CREATE_ERROR_ALREADY_EXISTS"
-msgstr "A folder with the same name already exists."
-
-msgid "TEXT_FILE_FOLDER_CREATE_ERROR_UNKNOWN"
-msgstr "Cannot create the new folder."
-
-msgid "TEXT_FILE_IMPORT_ERROR"
-msgstr ""
-"There has been an error while importing the files. Some files may not "
-"have been imported."
-
-msgid "TEXT_FILE_SHARING_REVOKED"
-msgstr ""
-"Your permissions on this workspace have been revoked. You no longer have "
-"access to theses files."
-
-msgid "TEXT_FILE_SHARING_DEMOTED_TO_READER"
-msgstr ""
-"Your role on this workspace has changed to <b>Reader</b>. You can no "
-"longer add, update or delete files, but you can still see them."
-
-msgid "TEXT_FILE_HISTORY_LIST_FAILURE"
-msgstr "Error while retrieving the file history."
-
-msgid "TEXT_FILE_HISTORY_TITLE_name"
-msgstr "File history of {name}"
+msgid "TEXT_CHANGE_PASSWORD_TITLE"
+msgstr "Change password"
 
 msgid "TEXT_PASSWORD_VALIDATION_TOO_SHORT"
 msgstr "TOO SHORT"
@@ -1626,61 +1720,131 @@ msgstr "EXCELLENT"
 msgid "TEXT_PASSWORD_VALIDATION_PASSWORD_STRENGTH_strength"
 msgstr "Password strength: {strength}"
 
-msgid "TEXT_GREET_USER_WAITING"
-msgstr "Waiting for the other user..."
+msgid "TEXT_PASSWORD_CHECK_MATCH"
+msgstr "The password and the confirmation match."
 
-msgid "TEXT_GREET_USER_WAIT_PEER_ERROR"
+msgid "TEXT_PASSWORD_CHECK_NO_MATCH"
+msgstr "The confirmation does not match the password."
+
+msgid "TEXT_SETTINGS_NEED_RESTART"
+msgstr "You will need to restart the application for the changes to take effect."
+
+msgid "TEXT_FILE_OPEN_MULTIPLE_TITLE_count"
+msgstr "Open {count} files"
+
+msgid "TEXT_FILE_OPEN_MULTIPLE_INSTRUCTIONS_count"
+msgstr "Are you sure you want to open {count} files? This may take some time."
+
+msgid "TEXT_WORKSPACE_TIMESTAMPED_VERSION_RETRIEVAL_FAILED"
+msgstr "Cannot retrieve this workspace history."
+
+msgid "TEXT_WORKSPACE_TIMESTAMPED_INSTRUCTIONS_created"
 msgstr ""
-"An error occured while waiting for the other user. Please restart the "
-"process."
-
-msgid "TEXT_GREET_USER_PEER_RESET"
-msgstr "The invitee has reset the process. We will restart from the beginning."
-
-msgid "TEXT_GREET_USER_INVALID_HUMAN_HANDLE"
-msgstr "The email is invalid."
-
-msgid "TEXT_GREET_USER_CREATE_USER_ERROR"
-msgstr "An error occured while creating the user. Please restart the process."
-
-msgid "TEXT_GREET_USER_GET_REQUESTS_ERROR"
-msgstr "Internal error. Please restart the process."
-
-msgid "TEXT_GREET_USER_INVALID_CODE_CLICKED"
-msgstr ""
-"You did not provide the right code. You will have to restart the process."
-" We want to make absolutely sure that the process is secured."
-
-msgid "TEXT_GREET_USER_NONE_CODE_CLICKED"
-msgstr ""
-"If you didn't see the code that was given to you by the other user, it "
-"could mean an attack by a malicious user.\n"
+"You will be able to see the workspace as it was at a given time.\n"
 "\n"
-"You can retry the invitation process. If this problem persists, your "
-"network may not be safe."
+"This workspace was created on {created}."
 
-msgid "TEXT_GREET_USER_GET_GREETER_SAS_ERROR"
-msgstr "Error while negociating SAS code. Please restart the process."
+msgid "TEXT_WORKSPACE_TIMESTAMPED_TITLE"
+msgstr "Go back in time"
 
-msgid "TEXT_GREET_USER_GET_CLAIMER_SAS_ERROR"
-msgstr "Error while negociating claimer SAS code. Please restart the process."
+msgid "ACTION_USER_INVITE_COPY_ADDR"
+msgstr "Copy invitation link"
 
-msgid "TEXT_GREET_USER_SIGNIFY_TRUST_ERROR"
-msgstr "Error while acknowledging SAS code. Please restart the process."
+msgid "ACTION_USER_INVITE_COPY_EMAIL"
+msgstr "Copy email"
 
-msgid "TEXT_GREET_USER_WAIT_PEER_TRUST_ERROR"
+msgid "TEXT_USER_IS_CURRENT"
+msgstr "you"
+
+msgid "TEXT_USER_PROFILE_OUTSIDER"
+msgstr "Outsider"
+
+msgid "TEXT_USER_IS_REVOKED"
+msgstr "Revoked"
+
+msgid "ACTION_USER_MENU_FILTER"
+msgstr "See common workspaces"
+
+msgid "ACTION_USER_MENU_REVOKE"
+msgstr "Revoke"
+
+msgid "TEXT_USER_INVITE_EMAIL"
+msgstr "Invite a new user"
+
+msgid "TEXT_USER_INVITE_EMAIL_INSTRUCTIONS"
+msgstr "Please provide the new user's email address:"
+
+msgid "TEXT_USER_INVITE_EMAIL_PLACEHOLDER"
+msgstr "user@host.com"
+
+msgid "ACTION_USER_INVITE_DO_INVITE"
+msgstr "Invite the user"
+
+msgid "TEXT_USER_INVITE_CANCEL_INVITE_QUESTION_TITLE"
+msgstr "Cancel the invitation"
+
+msgid "TEXT_USER_INVITE_CANCEL_INVITE_QUESTION_CONTENT"
 msgstr ""
-"Error while waiting for peer SAS code acknowledgment. Please restart the "
-"process."
+"Are you sure you want to cancel this invitation? The link that was send "
+"by email to the user will become invalid."
 
-msgid "TEXT_USER_GREET_SUCCESSFUL"
-msgstr "The user was successfully greeter in your organization."
+msgid "TEXT_USER_INVITE_CANCEL_INVITE_ACCEPT"
+msgstr "Cancel the invitation"
 
-msgid "TEXT_GREET_USER_UNKNOWN_ERROR"
-msgstr "Internal error. Please restart the process."
+msgid "TEXT_USER_REVOKE_SUCCESS_user"
+msgstr ""
+"The user <b>{user}</b> has been successfully revoked. Do no forget to "
+"reencrypt the workspaces that were shared with them."
 
-msgid "TEXT_GREET_USER_TITLE"
-msgstr "Greet a new user"
+msgid "TEXT_USER_REVOCATION_USER_ALREADY_REVOKED"
+msgstr "This user has already been revoked."
+
+msgid "TEXT_USER_REVOCATION_USER_NOT_FOUND"
+msgstr "The user was not found."
+
+msgid "TEXT_USER_REVOCATION_NOT_ENOUGH_PERMISSIONS"
+msgstr "You don't have enough permissions to revoke this user."
+
+msgid "TEXT_USER_REVOCATION_BACKEND_OFFLINE"
+msgstr "The server is offline or you have no access to the internet."
+
+msgid "TEXT_USER_REVOCATION_UNKNOWN_FAILURE"
+msgstr "Could not revoke this user."
+
+msgid "TEXT_USER_REVOCATION_TITLE"
+msgstr "Revoke a user"
+
+msgid "TEXT_USER_REVOCATION_INSTRUCTIONS_user"
+msgstr ""
+"A revoked user will no longer have access to the organization and the "
+"data stored within it.<br />\n"
+"<br />\n"
+"Are you sure you want to revoke the user <b>{user}</b>?"
+
+msgid "ACTION_USER_REVOCATION_CONFIRM"
+msgstr "Revoke the user"
+
+msgid "TEXT_USERS_PAGE_INFO_page-pagetotal-userfrom-userto-usertotal"
+msgstr ""
+"Users {userfrom} to {userto} displayed, {usertotal} in total - page "
+"{page} / {pagetotal}"
+
+msgid "TEXT_USER_LIST_RETRIEVABLE_FAILURE"
+msgstr "Failed to retrieve the user list from the server."
+
+msgid "TEXT_INVITE_USER_CANCEL_ERROR"
+msgstr "Could not cancel the invitation."
+
+msgid "TEXT_USER_INVITE_SUCCESS_email"
+msgstr ""
+"The invitation to join your organization was successfuly sent at : "
+"<b>{email}</b>"
+
+msgid "TEXT_INVITE_USER_INVITE_OFFLINE"
+msgstr "The server is offline or you have no access to the internet."
+
+msgid "TEXT_INVITE_USER_INVITE_ERROR"
+msgstr "Could not invite the user."
 
 msgid "ACTION_WORKSPACE_OPEN_IN_FILE_EXPLORER"
 msgstr "Open in the file explorer"
@@ -1703,9 +1867,6 @@ msgstr "Remove"
 msgid "TEXT_WORKSPACE_ONLY_OWNER_CAN_REENCRYPT"
 msgstr "Only a workspace owner can reencrypt a workspace."
 
-msgid "TEXT_WORKSPACE_CURRENTLY_REENCRYPTING_TOOLTIP"
-msgstr "Reencrypting the workspace"
-
 msgid "TEXT_WORKSPACE_IS_PRIVATE"
 msgstr "private"
 
@@ -1721,11 +1882,38 @@ msgstr "shared with {n} users"
 msgid "TEXT_WORKSPACE_IS_TIMESTAMPED_date"
 msgstr "temporary_{date}"
 
-msgid "TEXT_SYSTRAY_BACKEND_DISCONNECT_organization"
-msgstr "{organization}: Disconnected"
+msgid "TEXT_WORKSPACE_ROLE_READER"
+msgstr "Reader"
 
-msgid "TEXT_BACKEND_STATE_API_MISMATCH_versions"
-msgstr "Application incompatible with the server"
+msgid "TEXT_WORKSPACE_ROLE_CONTRIBUTOR"
+msgstr "Contributor"
+
+msgid "TEXT_WORKSPACE_ROLE_MANAGER"
+msgstr "Manager"
+
+msgid "TEXT_WORKSPACE_ROLE_OWNER"
+msgstr "Owner"
+
+msgid "TEXT_WORKSPACE_ROLE_NOT_SHARED"
+msgstr "Not shared"
+
+msgid "TEXT_WORKSPACE_SHARING_USER_HAS_BEEN_REVOKED"
+msgstr "This user has been revoked."
+
+msgid "TEXT_WORKSPACE_SHARING_OFFLINE"
+msgstr "The server is offline or you have no access to the internet."
+
+msgid "TEXT_WORKSPACE_SHARING_UNSHARE_ERROR_workspace-user"
+msgstr "Cannot remove <b>{user}</b> from the workspace <b>{workspace}</b>."
+
+msgid "TEXT_WORKSPACE_SHARING_SHARE_ERROR_workspace-user"
+msgstr "Cannot share the workspace <b>{workspace}</b> with <b>{user}</b>."
+
+msgid "TEXT_WORKSPACE_SHARING_TITLE_workspace"
+msgstr "Share the workspace {workspace}"
+
+msgid "TEXT_WORKSPACE_FILTERED_user"
+msgstr "Common workspaces with {user}"
 
 msgid "TEXT_WORKSPACE_GOTO_FILE_LINK_TITLE"
 msgstr "Access a file by its link"
@@ -1761,6 +1949,11 @@ msgstr "Cannot rename the workspace."
 
 msgid "TEXT_WORKSPACE_NO_WORKSPACES"
 msgstr "No workspace has been created yet."
+
+msgid "TEXT_WORKSPACE_CANNOT_MOUNT_NO_DRIVE"
+msgstr ""
+"Cannot display the content of this workspace because you have too many "
+"workspaces already mounted. Unmount some of them by using the toggle."
 
 msgid "TEXT_WORKSPACE_CANNOT_MOUNT"
 msgstr ""
@@ -1817,6 +2010,23 @@ msgstr "Reencrypt the workspace"
 msgid "ACTION_WORKSPACE_REENCRYPTION_CONFIRM"
 msgstr "Reencrypt"
 
+msgid "TEXT_WORKPACE_REENCRYPT_OFFLINE_ERROR"
+msgstr "Reencryption failure, can not reach the server."
+
+msgid "TEXT_WORKPACE_REENCRYPT_ACCESS_ERROR"
+msgstr ""
+"Reencryption failure, you don't have permission to reencrypt the "
+"workspace."
+
+msgid "TEXT_WORKPACE_REENCRYPT_NOT_FOUND_ERROR"
+msgstr "Reencryption failure, workspace not found."
+
+msgid "TEXT_WORKPACE_REENCRYPT_FS_ERROR"
+msgstr "Reencryption failure, workspace already in maintenance."
+
+msgid "TEXT_WORKSPACE_REENCRYPT_UNKOWN_ERROR"
+msgstr "Reencryption failed for unknown reason."
+
 msgid "TEXT_WORKSPACE_NEW_TITLE"
 msgstr "Create a workspace"
 
@@ -1828,80 +2038,6 @@ msgstr "Workspace"
 
 msgid "ACTION_WORKSPACE_NEW_CREATE"
 msgstr "Create"
-
-msgid "TEXT_WORKSPACE_TIMESTAMPED_VERSION_RETRIEVAL_FAILED"
-msgstr "Cannot retrieve this workspace history."
-
-msgid "TEXT_WORKSPACE_TIMESTAMPED_TITLE"
-msgstr "Go back in time"
-
-msgid "TEXT_CLAIM_USER_DEVICE_ALREADY_EXISTS"
-msgstr "A device with the same name already exists."
-
-msgid "TEXT_CLAIM_USER_INVALID_CODE_CLICKED"
-msgstr ""
-"You did not provide the right code. You will have to restart the process."
-" We want to make absolutely sure that the invitation was meant for you."
-
-msgid "TEXT_CLAIM_USER_NONE_CODE_CLICKED"
-msgstr ""
-"If you didn't see the code that was given to you, it could mean that a "
-"malicious user is trying to register in your stead.\n"
-"\n"
-"You can retry the invitation process. If this problem persists, your "
-"network may not be safe."
-
-msgid "TEXT_CLAIM_USER_GET_GREETER_SAS_ERROR"
-msgstr "Error while negociating SAS code. Please restart the process."
-
-msgid "TEXT_CLAIM_USER_PEER_RESET"
-msgstr "The host has reset the process. We will restart from the beginning."
-
-msgid "TEXT_CLAIM_USER_SIGNIFY_TRUST_ERROR"
-msgstr "Error while acknowledging SAS code. Please restart the process."
-
-msgid "TEXT_CLAIM_USER_WAIT_PEER_TRUST_ERROR"
-msgstr ""
-"Error while waiting for peer SAS code acknowledgment. Please restart the "
-"process."
-
-msgid "TEXT_CLAIM_USER_INVALID_HUMAN_HANDLE"
-msgstr "The email is invalid."
-
-msgid "TEXT_CLAIM_USER_CLAIM_ERROR"
-msgstr "Error while validating invite information. Please restart the process."
-
-msgid "TEXT_CLAIM_USER_WAITING"
-msgstr "Waiting for the other user"
-
-msgid "TEXT_CLAIM_USER_WAIT_PEER_ERROR"
-msgstr "Error while waiting for the other user. Please restart the process."
-
-msgid "TEXT_CLAIM_USER_FAILED_TO_RETRIEVE_INFO"
-msgstr "Failed to retrieve information about the invitation."
-
-msgid "TEXT_CLAIM_USER_SUCCESSFUL"
-msgstr ""
-"The user was successfully created. You will now be logged in.\n"
-"Welcome to Parsec!"
-
-msgid "TEXT_CLAIM_USER_INVITATION_NOT_FOUND"
-msgstr "The invitation was not found."
-
-msgid "TEXT_CLAIM_USER_UNKNOWN_ERROR"
-msgstr "Unexpected error. Please restart the process."
-
-msgid "TEXT_CLAIM_USER_TITLE"
-msgstr "Register a user"
-
-msgid "ACTION_OK"
-msgstr "OK"
-
-msgid "TEXT_ERR_DIALOG_TITLE"
-msgstr "Error"
-
-msgid "TEXT_PARSEC_NEW_VERSION_AVAILABLE_version"
-msgstr "The version <b>{version}</b> of PARSEC is available!"
 
 msgid "TEXT_PARSEC_DEVELOPMENT_INFO"
 msgstr ""
@@ -1915,33 +2051,6 @@ msgstr ""
 "#0092FF;\">Freepik</a> from <a href=\"https://www.flaticon.com/\" "
 "title=\"Flaticon\" style=\"color: #0092FF; font-weight: "
 "bold;\">www.flaticon.com</a>"
-
-msgid "TEXT_LABEL_DEVICE_NAME"
-msgstr "Device name"
-
-msgid "TEXT_LABEL_PASSWORD"
-msgstr "Password"
-
-msgid "TEXT_LABEL_PASSWORD_CONFIRMATION"
-msgstr "Password confirmation"
-
-msgid "TEXT_BOOTSTRAP_ORG_TOOLTIP"
-msgstr "Bootstrap the organization"
-
-msgid "ACTION_BOOTSTRAP_ORG"
-msgstr "Bootstrap the organization"
-
-msgid "TEXT_LABEL_USER_EMAIL"
-msgstr "Email"
-
-msgid "TEXT_LABEL_USER_FULL_NAME"
-msgstr "Full name"
-
-msgid "TEXT_LABEL_USER_FULL_NAME_PLACEHOLDER"
-msgstr "John Smith"
-
-msgid "TEXT_LABEL_USER_EMAIL_PLACEHOLDER"
-msgstr "user@host.com"
 
 msgid "TEXT_CLAIM_DEVICE_CODE_EXCHANGE_GET_CODE_INSTRUCTIONS"
 msgstr "Get the code from your other device."
@@ -1967,12 +2076,6 @@ msgstr "Device name"
 
 msgid "TEXT_LABEL_DEVICE_PLACEHOLDER"
 msgstr "device"
-
-msgid "TEXT_LABEL_PASSWORD_PLACEHOLDER"
-msgstr "Password"
-
-msgid "TEXT_LABEL_PASSWORD_CONFIRMATION_PLACEHOLDER"
-msgstr "Password confirmation"
 
 msgid "ACTION_CREATE_DEVICE"
 msgstr "Create the device"
@@ -2015,6 +2118,18 @@ msgstr ""
 msgid "TEXT_CLAIM_USER_PROVIDE_INFO_INSTRUCTIONS"
 msgstr "Please provide the following information:"
 
+msgid "TEXT_LABEL_USER_FULL_NAME"
+msgstr "Full name"
+
+msgid "TEXT_LABEL_USER_FULL_NAME_PLACEHOLDER"
+msgstr "John Smith"
+
+msgid "TEXT_LABEL_USER_EMAIL"
+msgstr "Email"
+
+msgid "TEXT_LABEL_USER_EMAIL_PLACEHOLDER"
+msgstr "user@host.com"
+
 msgid "TEXT_CLAIM_USER_WAIT_FOR_USER_INFO"
 msgstr ""
 "We are waiting for the person who invited you to confirm these "
@@ -2025,32 +2140,31 @@ msgstr ""
 "None of\n"
 "these codes"
 
-msgid "TEXT_ORG_WIZARD_CHOICE_INSTRUCTIONS"
-msgstr "Please choose:"
-
-msgid "TEXT_ORG_WIZARD_CREATE_FROM_SCRATCH"
-msgstr ""
-"I don't have an account on the website and want to create a new "
-"organization"
-
-msgid "TEXT_ORG_WIZARD_ALREADY_HAS_URL"
-msgstr ""
-"I already have an account on the website and a link to bootstrap my "
-"organization"
-
-msgid "TEXT_ORG_WIZARD_CREATE_ORG_INSTRUCTIONS"
-msgstr "Please enter your email and the name you want for your organization."
+msgid "TEXT_LABEL_DEVICE_NAME"
+msgstr "Device name"
 
 msgid "TEXT_LABEL_ORG_NAME"
 msgstr "Organization name"
 
+msgid "TEXT_LABEL_ORG_NAME_RECOMMANDATIONS"
+msgstr "Letters, digits, underscores and hyphens only. No spaces."
+
 msgid "ACTION_ACCEPT_CONTRACT"
 msgstr ""
-"I accept the <a href=\"https://my.parsec.cloud/assets/privacypolicy.pdf\""
-" title=\"Contract\">contract</a> and PARSEC's <a "
+"I accept the <a href=\"https://parsec.cloud/pdf/Parsec-Privacy-Policy-"
+"fr.pdf\" title=\"Contract\">contract</a> and PARSEC's <a "
 "href=\"https://my.parsec.cloud/assets/termsandconditions.pdf\" "
-"title=\"Condition Générales d'Utilisation\">conditions générales "
-"d'utilisation</a>"
+"title=\"Condition Générales de Vente ou d'Utilisation\">conditions "
+"générales de vente ou d'utilisation</a>"
+
+msgid "ACTION_USE_CUSTOM_BACKEND"
+msgstr "I have my own Parsec server"
+
+msgid "TEXT_LABEL_BACKEND_ADDR_PLACEHOLDER"
+msgstr "parsec://host:port"
+
+msgid "TEXT_CREATE_ORGANIZATION_INSTRUCTIONS"
+msgstr "Please fill out the following information to create your organization."
 
 msgid "ACTION_PREVIOUS"
 msgstr "Previous"
@@ -2060,9 +2174,6 @@ msgstr "Invite a new device"
 
 msgid "ACTION_DEVICE_ADD_NEW"
 msgstr "Invite a new device"
-
-msgid "TEXT_DEVICE_FILTER_PLACEHOLDER"
-msgstr "Filter the devices"
 
 msgid "TEXT_WORKSPACE_EMPTY_WORKSPACE"
 msgstr "This workspace is empty."
@@ -2107,8 +2218,23 @@ msgstr "By"
 msgid "ACTION_FILE_HISTORY_LOAD_MORE_ENTRIES"
 msgstr "Load more entries"
 
+msgid "TEXT_FILE_BACK_TO_WORKSPACES_TOOLTIP"
+msgstr "Return to the list of workspaces."
+
+msgid "TEXT_FILE_FILTER_PLACEHOLDER"
+msgstr "Filter the files"
+
+msgid "TEXT_FILE_CREATE_FOLDER_TOOLTIP"
+msgstr "Create a new folder into this workspace."
+
+msgid "TEXT_FILE_IMPORT_FILES_TOOLTIP"
+msgstr "Import new files into this workspace."
+
 msgid "ACTION_FILE_IMPORT_FILES"
 msgstr "Import files"
+
+msgid "TEXT_FILE_IMPORT_FOLDER_TOOLTIP"
+msgstr "Import a new folder into this workspace."
 
 msgid "ACTION_FILE_IMPORT_FOLDER"
 msgstr "Import a folder"
@@ -2125,21 +2251,6 @@ msgstr "Updated"
 msgid "TEXT_FILE_SIZE_HEADER"
 msgstr "Size"
 
-msgid "TEXT_FILE_FILTER_PLACEHOLDER"
-msgstr "Filter the files"
-
-msgid "TEXT_FILE_BACK_TO_WORKSPACES_TOOLTIP"
-msgstr "Return to the list of workspaces."
-
-msgid "TEXT_FILE_CREATE_FOLDER_TOOLTIP"
-msgstr "Create a new folder into this workspace."
-
-msgid "TEXT_FILE_IMPORT_FILES_TOOLTIP"
-msgstr "Import new files into this workspace."
-
-msgid "TEXT_FILE_IMPORT_FOLDER_TOOLTIP"
-msgstr "Import a new folder into this workspace."
-
 msgid "TEXT_GREET_DEVICE_CODE_EXCHANGE_GIVE_CODE_INSTRUCTIONS"
 msgstr "Use the following code on your new device:"
 
@@ -2152,27 +2263,26 @@ msgstr "Get the code from your new device."
 msgid "TEXT_GREET_DEVICE_WAIT_INFO"
 msgstr "Waiting for information..."
 
-msgid "ACTION_COPY_ADDR"
-msgstr "Copy invitation link to the clipboard"
-
 msgid "ACTION_SEND_EMAIL"
 msgstr "Send an email"
 
-msgid "TEXT_GREET_DEVICE_INSTRUCTIONS"
+msgid "ACTION_COPY_ADDR"
+msgstr "Copy invitation link to the clipboard"
+
+msgid "TEXT_GREET_DEVICE_INSTRUCTIONS_START"
 msgstr ""
 "To greet your new device, Parsec needs to be started on both devices.\n"
 "\n"
 "You will have to exchange codes between the two devices. This way, we can"
 " be certain that the process is secure.\n"
-"When you are ready, click Start."
+"\n"
+"Once Parsec is installed on your other device and you've clicked on the "
+"invitation link, you can click <i>Start</i> to begin the process."
 
 msgid "TEXT_GREET_USER_WAITING_FOR_INFO"
 msgstr ""
 "We're waiting for the user to fill out their information. You will be "
 "able to review them."
-
-msgid "ACTION_CREATE_USER"
-msgstr "Finalize"
 
 msgid "TEXT_LABEL_USER_ROLE"
 msgstr "User role"
@@ -2184,6 +2294,12 @@ msgstr ""
 "Standard: can create workspaces and see other users, but cannot invite "
 "new users.<br />\n"
 "Administrator: can revoke and invite users."
+
+msgid "TEXT_LABEL_USER_ROLE_RECOMMANDATIONS"
+msgstr "Please select the user's role. This cannot be changed later."
+
+msgid "ACTION_CREATE_USER"
+msgstr "Finalize"
 
 msgid "TEXT_GREET_USER_CODE_EXCHANGE_GIVE_CODE_INSTRUCTIONS"
 msgstr "Please give the following code to the user."
@@ -2212,11 +2328,8 @@ msgstr "Close the window."
 msgid "TEXT_IMPORT_FILES_PROGRESS"
 msgstr "Importing file"
 
-msgid "TEXT_LABEL_USER_NAME"
-msgstr "Username"
-
-msgid "ACTION_LOG_OUT"
-msgstr "Log Out"
+msgid "ACTION_BACK"
+msgstr "Back"
 
 msgid "ACTION_PARSEC_DOWNLOAD_NEW_VERSION"
 msgstr "Download the new version"
@@ -2230,20 +2343,35 @@ msgstr "Checking if a new version is available"
 msgid "TEXT_NEW_VERSION_CHECK_FAILED"
 msgstr "Could not check for new versions."
 
-msgid "ACTION_CLOSE"
-msgstr "Close"
-
 msgid "TEXT_NEW_VERSION_UP_TO_DATE"
 msgstr "Your PARSEC is up-to-date!"
+
+msgid "ACTION_CLOSE"
+msgstr "Close"
 
 msgid "LABEL_NOTIFICATIONS"
 msgstr ""
 
+msgid "TEXT_PASSWORD_CHANGE_OLD_PASSWORD_INSTRUCTIONS"
+msgstr "To change your password, please enter your old password:"
+
 msgid "TEXT_LABEL_PASSWORD_OLD"
 msgstr "Current password"
 
+msgid "TEXT_PASSWORD_CHANGE_NEW_PASSWORD_INSTRUCTIONS"
+msgstr "And then chose a new one:"
+
 msgid "ACTION_CHANGE_PASSWORD"
 msgstr "Change password"
+
+msgid "TEXT_LABEL_PASSWORD"
+msgstr "Password"
+
+msgid "TEXT_LABEL_PASSWORD_CONFIRMATION"
+msgstr "Password confirmation"
+
+msgid "TEXT_PASSWORD_CHOICE_MISMATCH"
+msgstr "Does not match the password."
 
 msgid "TEXT_SETTINGS_BEHAVIOR_TITLE"
 msgstr "Application behavior"
@@ -2275,14 +2403,20 @@ msgstr "Automatically send reports on errors"
 msgid "TEXT_SETTINGS_INTERFACE_TITLE"
 msgstr "Interface"
 
+msgid "TEXT_SETTINGS_CHECK_SHOW_CONFINED_FILES"
+msgstr "Display files that will not be synced"
+
 msgid "TEXT_SETTINGS_CHECK_USE_WORKSPACES_COLORS"
 msgstr "Use colors for workspaces"
 
 msgid "ACTION_SAVE"
 msgstr "Save"
 
-msgid "TEXT_WORKSPACE_SHARING_REMOVE_USER_TOOLTIP"
-msgstr "Remove the user from this workspace."
+msgid "TEXT_WORKSPACE_TEMPORARY_TITLE"
+msgstr "Snapshot"
+
+msgid "TEXT_WORKSPACE_TEMPORARY_DESCRIPTION"
+msgstr "Workspace as it appeared on:"
 
 msgid "TEXT_WORKSPACE_TIMESTAMPED_INSTRUCTIONS"
 msgstr "You will be able to see the workspace as it was at a given time."
@@ -2305,14 +2439,29 @@ msgstr "Greet the user"
 msgid "TEXT_USERS_FILTER_USERS_PLACEHOLDER"
 msgstr "Filter users"
 
+msgid "ACTION_FILTER_LIST_USERS"
+msgstr "Search users"
+
 msgid "ACTION_USER_INVITE_USER"
 msgstr "Invite a new user"
+
+msgid "ACTION_LIST_PREVIOUS_PAGE"
+msgstr "Previous page"
+
+msgid "ACTION_LIST_NEXT_PAGE"
+msgstr "Next page"
 
 msgid "TEXT_WORKSPACE_IS_SHARED_TOOLTIP"
 msgstr "This workspace is shared."
 
 msgid "TEXT_WORKSPACE_IS_OWNER_TOOLTIP"
 msgstr "You are this workspace owner."
+
+msgid "TEXT_WORKSPACE_REENCRYPTION"
+msgstr "Reencrypting... %p%"
+
+msgid "TEXT_WORKSPACE_OPEN_WORKSPACE_TOOLTIP"
+msgstr "Open the workspace in the file explorer."
 
 msgid "TEXT_WORKSPACE_RENAME_TOOLTIP"
 msgstr "Rename the workspace."
@@ -2329,21 +2478,6 @@ msgstr "Reencrypt the workspace."
 msgid "TEXT_WORKSPACE_DELETE_WORKSPACE_TOOLTIP"
 msgstr "Remove this workspace."
 
-msgid "TEXT_WORKSPACE_OPEN_WORKSPACE_TOOLTIP"
-msgstr "Open the workspace in the file explorer."
-
-msgid "TEXT_WORKSPACE_SHARING_USER_SEARCH_PLACEHOLDER"
-msgstr "Find a user"
-
-msgid "ACTION_WORKSPACE_SHARING_SHARE"
-msgstr "Share with this user"
-
-msgid "TEXT_WORKSPACE_SHARING_CHECK_SHOW_REVOKED_USER"
-msgstr "Show users who have been revoked"
-
-msgid "ACTION_WORKSPACE_SHARING_UPDATE_ROLES"
-msgstr "Update the roles"
-
 msgid "TEXT_WORKSPACE_FILTER_WORKSPACES_PLACEHOLDER"
 msgstr "Filter the workspaces"
 
@@ -2353,5 +2487,3 @@ msgstr "Create a new workspace"
 msgid "ACTION_WORKSPACE_GOTO_FILE_LINK"
 msgstr "Go to a file using a link"
 
-#~ msgid "TEXT_GREET_USER_ADDR_COPIED_TO_CLIPBOARD"
-#~ msgstr "The invitation link has been copied to the clipboard"

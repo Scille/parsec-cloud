@@ -7,7 +7,7 @@ import pendulum
 from collections import defaultdict
 from typing import Union, Optional, Tuple
 from async_generator import asynccontextmanager
-from pendulum import Pendulum
+from pendulum import datetime
 
 from parsec.crypto import SigningKey
 from parsec.api.data import (
@@ -154,8 +154,8 @@ def local_device_factory(coolorg):
         org_addr = addr_with_device_subdomain(org.addr, device_id)
 
         device = generate_new_device(
-            device_id,
-            org_addr,
+            organization_addr=org_addr,
+            device_id=device_id,
             profile=profile,
             human_handle=human_handle,
             device_label=device_label,
@@ -285,7 +285,7 @@ class InitialUserManifestState:
 
     def _generate_or_retrieve_user_manifest_v1(self, device):
         try:
-            return self._v1[device.user_id]
+            return self._v1[(device.organization_id, device.user_id)]
 
         except KeyError:
             now = pendulum.now()
@@ -301,8 +301,11 @@ class InitialUserManifestState:
                 workspaces=(),
             )
             local_user_manifest = LocalUserManifest.from_remote(remote_user_manifest)
-            self._v1[device.user_id] = (remote_user_manifest, local_user_manifest)
-            return self._v1[device.user_id]
+            self._v1[(device.organization_id, device.user_id)] = (
+                remote_user_manifest,
+                local_user_manifest,
+            )
+            return self._v1[(device.organization_id, device.user_id)]
 
     def force_user_manifest_v1_generation(self, device):
         self._generate_or_retrieve_user_manifest_v1(device)
@@ -550,7 +553,7 @@ def backend_data_binder_factory(request, backend_addr, initial_user_manifest_sta
             org: OrganizationFullData,
             first_device: LocalDevice = None,
             initial_user_manifest_in_v0: bool = False,
-            expiration_date: Pendulum = None,
+            expiration_date: datetime = None,
         ):
             bootstrap_token = f"<{org.organization_id}-bootstrap-token>"
             await self.backend.organization.create(

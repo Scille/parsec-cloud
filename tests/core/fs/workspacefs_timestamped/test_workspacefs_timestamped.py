@@ -22,6 +22,7 @@ async def test_path_info(alice_workspace, timestamp_0, alice_workspace_t1, alice
         "need_sync": False,
         "type": "folder",
         "updated": ANY,
+        "confinement_point": None,
     }
 
     info = await alice_workspace_t1.path_info("/foo")
@@ -34,6 +35,7 @@ async def test_path_info(alice_workspace, timestamp_0, alice_workspace_t1, alice
         "need_sync": False,
         "type": "folder",
         "updated": ANY,
+        "confinement_point": None,
     }
 
     with pytest.raises(FileNotFoundError):
@@ -49,6 +51,7 @@ async def test_path_info(alice_workspace, timestamp_0, alice_workspace_t1, alice
         "need_sync": False,
         "type": "folder",
         "updated": ANY,
+        "confinement_point": None,
     }
 
     info = await alice_workspace_t2.path_info("/foo/bar")
@@ -61,6 +64,7 @@ async def test_path_info(alice_workspace, timestamp_0, alice_workspace_t1, alice
         "need_sync": False,
         "type": "file",
         "updated": ANY,
+        "confinement_point": None,
     }
 
     with pytest.raises(FileNotFoundError):
@@ -176,14 +180,10 @@ async def test_read_bytes(alice_workspace_t4, alice_workspace_t5):
     assert await alice_workspace_t4.read_bytes("/files/content") == b"abcde"
     assert await alice_workspace_t5.read_bytes("/files/content") == b"fghij"
 
-    assert await alice_workspace_t4.read_bytes("/files/content", size=3) == b"abc"
-    assert await alice_workspace_t4.read_bytes("/files/content", size=2, offset=2) == b"cd"
-    assert await alice_workspace_t4.read_bytes("/files/content", size=8, offset=2) == b"cde"
-
     with pytest.raises(IsADirectoryError):
         await alice_workspace_t4.read_bytes("/foo")
     with pytest.raises(IsADirectoryError):
-        await alice_workspace_t4.read_bytes("/", 0)
+        await alice_workspace_t4.read_bytes("/")
 
 
 @pytest.mark.trio

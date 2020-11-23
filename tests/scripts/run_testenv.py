@@ -14,6 +14,7 @@ import pkg_resources
 pkg_resources.require("parsec-cloud[all]")
 
 import os
+import platform
 import sys
 import re
 import tempfile
@@ -33,6 +34,7 @@ from parsec.test_utils import initialize_test_organization
 
 DEFAULT_BACKEND_PORT = 6888
 DEFAULT_ADMINISTRATION_TOKEN = "V8VjaXrOz6gUC6ZEHPab0DSsjfq6DmcJ"
+DEFAULT_EMAIL_HOST = "MOCKED"
 DEFAULT_DEVICE_PASSWORD = "test"
 
 
@@ -83,7 +85,7 @@ Your environment will be configured with the following commands:
             await f.write(line + "\n")
 
 
-async def generate_gui_config():
+async def generate_gui_config(backend_address):
     config_dir = None
     if os.name == "nt":
         config_dir = trio.Path(os.environ["APPDATA"]) / "parsec/config"
@@ -98,12 +100,14 @@ async def generate_gui_config():
         "gui_check_version_at_startup": False,
         "gui_tray_enabled": False,
         "gui_last_version": PARSEC_VERSION,
+        "preferred_org_creation_backend_addr": backend_address.to_url(),
+        "gui_show_confined": True,
     }
     await config_file.write_text(json.dumps(config, indent=4))
 
 
 async def configure_mime_types():
-    if os.name == "nt":
+    if platform.system() == "Windows" or platform.system() == "Darwin":
         return
     XDG_DATA_HOME = os.environ["XDG_DATA_HOME"]
     desktop_file = trio.Path(f"{XDG_DATA_HOME}/applications/parsec.desktop")
@@ -124,11 +128,13 @@ MimeType=x-scheme-handler/parsec;
     await trio.run_process("xdg-mime default parsec.desktop x-scheme-handler/parsec".split())
 
 
-async def restart_local_backend(administration_token, backend_port):
+async def restart_local_backend(administration_token, backend_port, email_host):
     pattern = f"parsec.* backend.* run.* -P {backend_port}"
     command = (
         f"{sys.executable} -Wignore -m parsec.cli backend run -b MOCKED --db MOCKED "
-        f"-P {backend_port} --administration-token {administration_token} --backend-addr parsec://localhost:{backend_port}?no_ssl=true"
+        f"--email-host={email_host} -P {backend_port} "
+        f"--spontaneous-organization-bootstrap "
+        f"--administration-token {administration_token} --backend-addr parsec://localhost:{backend_port}?no_ssl=true"
     )
 
     # Trio does not support subprocess in windows yet
@@ -173,6 +179,9 @@ async def restart_local_backend(administration_token, backend_port):
     "-T", "--administration-token", show_default=True, default=DEFAULT_ADMINISTRATION_TOKEN
 )
 @click.option("--force/--no-force", show_default=True, default=False)
+@click.option("--email-host", show_default=True, default=DEFAULT_EMAIL_HOST)
+@click.option("--add-random-users", show_default=True, default=0)
+@click.option("--add-random-devices", show_default=True, default=0)
 @click.option("-e", "--empty", is_flag=True)
 @click.option("--source-file", hidden=True)
 def main(**kwargs):
@@ -219,7 +228,16 @@ def main(**kwargs):
 
 
 async def amain(
-    backend_address, backend_port, password, administration_token, force, empty, source_file
+    backend_address,
+    backend_port,
+    password,
+    administration_token,
+    force,
+    email_host,
+    add_random_users,
+    add_random_devices,
+    empty,
+    source_file,
 ):
     # Set up the temporary environment
     click.echo()
@@ -232,12 +250,11 @@ async def amain(
     if empty:
         return
 
-    # Generate dummy config file for gui
-    await generate_gui_config()
-
     # Start a local backend
     if backend_address is None:
-        backend_address = await restart_local_backend(administration_token, backend_port)
+        backend_address = await restart_local_backend(
+            administration_token, backend_port, email_host
+        )
         click.echo(
             f"""\
 A fresh backend server is now running: {backend_address}
@@ -250,10 +267,19 @@ Using existing backend: {backend_address}
 """
         )
 
+    # Generate dummy config file for gui
+    await generate_gui_config(backend_address)
+
     # Initialize the test organization
     config_dir = get_default_config_dir(os.environ)
     alice_device, other_alice_device, bob_device = await initialize_test_organization(
-        config_dir, backend_address, password, administration_token, force
+        config_dir=config_dir,
+        backend_address=backend_address,
+        password=password,
+        administration_token=administration_token,
+        force=force,
+        additional_users_number=add_random_users,
+        additional_devices_number=add_random_devices,
     )
 
     # Report

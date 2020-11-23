@@ -1,6 +1,5 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
 
-from parsec.core.core_events import CoreEvent
 import math
 import trio
 import unicodedata
@@ -9,8 +8,9 @@ from pathlib import Path
 from functools import partial
 from structlog import get_logger
 from winfspy import FileSystem, enable_debug_log
-from winfspy.plumbing.winstuff import filetime_now
+from winfspy.plumbing import filetime_now
 
+from parsec.core.core_events import CoreEvent
 from parsec.core.win_registry import parsec_drive_icon_context
 from parsec.core.mountpoint.thread_fs_access import ThreadFSAccess
 from parsec.core.mountpoint.winfsp_operations import WinFSPOperations, winify_entry_name
@@ -118,7 +118,7 @@ async def winfsp_mountpoint_runner(
     """
     device = workspace_fs.device
     workspace_name = winify_entry_name(workspace_fs.get_workspace_name())
-    trio_token = trio.hazmat.current_trio_token()
+    trio_token = trio.lowlevel.current_trio_token()
     fs_access = ThreadFSAccess(trio_token, workspace_fs)
 
     user_manifest = user_fs.get_user_manifest()

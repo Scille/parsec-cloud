@@ -6,9 +6,9 @@ from parsec.api.protocol import OrganizationID, UserID, DeviceID
 from parsec.backend.backend_events import BackendEvent
 from parsec.backend.user import UserError, UserNotFoundError, UserAlreadyRevokedError
 from parsec.backend.postgresql.handler import send_signal
-from parsec.backend.postgresql.utils import query
-from parsec.backend.postgresql.queries import (
+from parsec.backend.postgresql.utils import (
     Q,
+    query,
     q_organization_internal_id,
     q_device_internal_id,
     q_user,
@@ -41,7 +41,7 @@ async def query_revoke_user(
     user_id: UserID,
     revoked_user_certificate: bytes,
     revoked_user_certifier: DeviceID,
-    revoked_on: pendulum.Pendulum = None,
+    revoked_on: pendulum.DateTime = None,
 ) -> None:
     result = await conn.execute(
         *_q_revoke_user(

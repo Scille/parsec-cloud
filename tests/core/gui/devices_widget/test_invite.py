@@ -45,7 +45,6 @@ async def test_invite_device_offline(aqtbot, logged_gui, autoclose_dialog, runni
 @pytest.mark.gui
 @pytest.mark.trio
 @pytest.mark.parametrize("online", (True, False))
-@customize_fixtures(backend_has_email=True)
 async def test_invite_device_send_email(
     aqtbot,
     logged_gui,

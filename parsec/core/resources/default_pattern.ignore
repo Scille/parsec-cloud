@@ -1,0 +1,92 @@
+###### Patterns of the file names to ignore #####
+
+# This file contains the default configuration for the file name to ignore in Parsec.
+# The files that matches any of those patterns will not be sychronized with other clients,
+# and will not be downloaded from other clients. Each pattern is defined using the fnmatch
+# syntax, as described here: https://docs.python.org/3.8/library/fnmatch.html
+
+
+### Temporary extensions ###
+
+*.tmp
+*.temp
+*.swp
+
+
+### Linux ###
+
+# Temporary files
+*~
+
+# Temporary files which can be created if a process still has a handle open of a deleted file
+.fuse_hidden*
+
+# KDE directory preferences
+.directory
+
+# Linux trash folder which might appear on any partition or disk
+.Trash-*
+
+# .nfs files are created when an open file is removed but is still being accessed
+.nfs*
+
+# Glib temporary files
+.goutputstream-*
+
+
+### macOS ###
+
+# General
+.DS_Store
+.AppleDouble
+.LSOverride
+
+# Icon with two \r
+# TODO: support the parsing of \r (https://stackoverflow.com/a/30755378/2846140)
+# Icon\r\r
+
+# Thumbnails
+._*
+
+# Files that might appear in the root of a volume
+.DocumentRevisions-V100
+.Spotlight-V100
+.TemporaryItems
+.Trashes
+.VolumeIcon.icns
+.com.apple.timemachine.donotpresent
+
+# Directories potentially created on remote AFP share
+.AppleDB
+.AppleDesktop
+Network Trash Folder
+Temporary Items
+.apdisk
+
+# File System Events notification mechanism
+.fseventsd
+
+
+### Windows ###
+
+# Windows thumbnail cache files
+Thumbs.db
+Thumbs.db:encryptable
+ehthumbs.db
+ehthumbs_vista.db
+
+# Dump file
+*.stackdump
+
+# Folder config file
+[Dd]esktop.ini
+
+# Recycle Bin used on file shares
+$RECYCLE.BIN
+
+# Windows shortcuts
+*.lnk
+
+# Microsoft office lock files
+.~*
+~$*

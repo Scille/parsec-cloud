@@ -3,7 +3,7 @@
 from typing import Tuple, List, Dict, Optional
 from uuid import UUID
 import pendulum
-from pendulum import Pendulum
+from pendulum import DateTime
 
 from parsec.crypto import VerifyKey, PublicKey
 from parsec.api.transport import Transport, TransportError
@@ -34,6 +34,7 @@ from parsec.api.protocol import (
     ping_serializer,
     apiv1_organization_create_serializer,
     apiv1_organization_stats_serializer,
+    organization_stats_serializer,
     apiv1_organization_status_serializer,
     apiv1_organization_update_serializer,
     apiv1_organization_bootstrap_serializer,
@@ -121,6 +122,12 @@ async def _send_cmd(transport: Transport, serializer, **req) -> dict:
 
 ###  Backend authenticated cmds  ###
 
+### Organization API ###
+
+
+async def organization_stats(transport: Transport) -> dict:
+    return await _send_cmd(transport, organization_stats_serializer, cmd="organization_stats")
+
 
 ### Events&misc API ###
 
@@ -152,7 +159,7 @@ async def vlob_create(
     realm_id: UUID,
     encryption_revision: int,
     vlob_id: UUID,
-    timestamp: pendulum.Pendulum,
+    timestamp: pendulum.DateTime,
     blob: bytes,
 ) -> dict:
     return await _send_cmd(
@@ -172,7 +179,7 @@ async def vlob_read(
     encryption_revision: int,
     vlob_id: UUID,
     version: int = None,
-    timestamp: pendulum.Pendulum = None,
+    timestamp: pendulum.DateTime = None,
 ) -> dict:
     return await _send_cmd(
         transport,
@@ -190,7 +197,7 @@ async def vlob_update(
     encryption_revision: int,
     vlob_id: UUID,
     version: int,
-    timestamp: pendulum.Pendulum,
+    timestamp: pendulum.DateTime,
     blob: bytes,
 ) -> dict:
     return await _send_cmd(
@@ -290,7 +297,7 @@ async def realm_start_reencryption_maintenance(
     transport: Transport,
     realm_id: UUID,
     encryption_revision: int,
-    timestamp: pendulum.Pendulum,
+    timestamp: pendulum.DateTime,
     per_participant_message: Dict[UserID, bytes],
 ) -> dict:
     return await _send_cmd(
@@ -621,7 +628,7 @@ async def apiv1_device_create(
 
 
 async def organization_create(
-    transport: Transport, organization_id: OrganizationID, expiration_date: Pendulum = None
+    transport: Transport, organization_id: OrganizationID, expiration_date: DateTime = None
 ) -> dict:
     return await _send_cmd(
         transport,
@@ -632,7 +639,7 @@ async def organization_create(
     )
 
 
-async def organization_stats(transport: Transport, organization_id: OrganizationID) -> dict:
+async def apiv1_organization_stats(transport: Transport, organization_id: OrganizationID) -> dict:
     return await _send_cmd(
         transport,
         apiv1_organization_stats_serializer,
@@ -651,7 +658,7 @@ async def organization_status(transport: Transport, organization_id: Organizatio
 
 
 async def organization_update(
-    transport: Transport, organization_id: OrganizationID, expiration_date: Pendulum = None
+    transport: Transport, organization_id: OrganizationID, expiration_date: DateTime = None
 ) -> dict:
     return await _send_cmd(
         transport,

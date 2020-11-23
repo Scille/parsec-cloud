@@ -28,16 +28,20 @@ from parsec.core.gui import telemetry
 from parsec.core.gui import desktop
 from parsec.core import win_registry
 from parsec.core.gui.changelog_widget import ChangelogWidget
-from parsec.core.gui.bootstrap_organization_widget import BootstrapOrganizationWidget
 from parsec.core.gui.claim_user_widget import ClaimUserWidget
 from parsec.core.gui.claim_device_widget import ClaimDeviceWidget
 from parsec.core.gui.license_widget import LicenseWidget
 from parsec.core.gui.about_widget import AboutWidget
 from parsec.core.gui.settings_widget import SettingsWidget
-from parsec.core.gui.custom_dialogs import ask_question, show_error, GreyedDialog, get_text_input
-from parsec.core.gui.custom_widgets import Button
+from parsec.core.gui.custom_dialogs import (
+    ask_question,
+    show_error,
+    show_info,
+    GreyedDialog,
+    get_text_input,
+)
+from parsec.core.gui.custom_widgets import Button, ensure_string_size
 from parsec.core.gui.create_org_widget import CreateOrgWidget
-from parsec.core.gui import validators
 from parsec.core.gui.ui.main_window import Ui_MainWindow
 
 
@@ -245,13 +249,16 @@ class MainWindow(QMainWindow, Ui_MainWindow):
     def _on_add_instance_clicked(self):
         self.add_instance()
 
-    def _on_create_org_clicked(self):
-        def _on_finished(action_addr):
-            if action_addr is None:
+    def _on_create_org_clicked(self, addr=None):
+        def _on_finished(ret):
+            if ret is None:
                 return
-            self._on_bootstrap_org_clicked(action_addr)
+            self.reload_login_devices()
+            self.try_login(ret[0], ret[1])
 
-        CreateOrgWidget.show_modal(self.jobs_ctx, self, on_finished=_on_finished)
+        CreateOrgWidget.show_modal(
+            self.jobs_ctx, self.config, self, on_finished=_on_finished, start_addr=addr
+        )
 
     def _on_join_org_clicked(self):
         url = get_text_input(
@@ -274,7 +281,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
             return
 
         if isinstance(action_addr, BackendOrganizationBootstrapAddr):
-            self._on_bootstrap_org_clicked(action_addr)
+            self._on_create_org_clicked(action_addr)
         elif isinstance(action_addr, BackendInvitationAddr):
             if action_addr.invitation_type == InvitationType.USER:
                 self._on_claim_user_clicked(action_addr)
@@ -286,41 +293,6 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         else:
             show_error(self, _("TEXT_INVALID_URL"))
             return
-
-    def _on_bootstrap_org_clicked(self, action_addr=None):
-        if not action_addr:
-            url = get_text_input(
-                parent=self,
-                title=_("TEXT_BOOTSTRAP_ORG_URL_TITLE"),
-                message=_("TEXT_BOOTSTRAP_ORG_URL_INSTRUCTIONS"),
-                placeholder=_("TEXT_BOOTSTRAP_ORG_URL_PLACEHOLDER"),
-                validator=validators.BackendOrganizationBootstrapAddrValidator(),
-            )
-            if url is None:
-                return
-            elif url == "":
-                show_error(self, _("TEXT_BOOTSTRAP_ORG_INVALID_URL"))
-                return
-
-            action_addr = None
-            try:
-                action_addr = BackendOrganizationBootstrapAddr.from_url(url)
-            except ValueError as exc:
-                show_error(self, _("TEXT_BOOTSTRAP_ORG_INVALID_URL"), exception=exc)
-                return
-
-        def _on_finished(ret):
-            if ret:
-                self.reload_login_devices()
-                self.try_login(ret[0], ret[1])
-
-        BootstrapOrganizationWidget.show_modal(
-            jobs_ctx=self.jobs_ctx,
-            config=self.config,
-            addr=action_addr,
-            parent=self,
-            on_finished=_on_finished,
-        )
 
     def _on_claim_user_clicked(self, action_addr):
         widget = None
@@ -399,8 +371,13 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         save_config(self.config)
         telemetry.init(self.config)
 
-    def showMaximized(self, skip_dialogs=False, invitation_link=""):
-        super().showMaximized()
+    def show_window(self, skip_dialogs=False, invitation_link=""):
+        try:
+            if not self.restoreGeometry(self.config.gui_geometry):
+                self.showMaximized()
+        except TypeError:
+            self.showMaximized()
+
         QCoreApplication.processEvents()
 
         # Used with the --diagnose option
@@ -476,11 +453,25 @@ class MainWindow(QMainWindow, Ui_MainWindow):
             else:
                 self.tab_center.setTabToolTip(idx, _("TEXT_TAB_TITLE_LOG_IN_SCREEN"))
                 self.tab_center.setTabText(idx, _("TEXT_TAB_TITLE_LOG_IN_SCREEN"))
+        elif state == "logout":
+            self.tab_center.removeTab(idx)
+            idx = self._get_login_tab_index()
+            if idx == -1:
+                self.add_instance()
+            else:
+                tab_widget = self.tab_center.widget(idx)
+                log_widget = None if not tab_widget else tab_widget.get_login_widget()
+                if log_widget:
+                    log_widget.reload_devices()
         elif state == "connected":
             device = tab.current_device
-            tab_name = f"{device.organization_id} - {device.short_user_display}"
+            tab_name = (
+                f"{device.organization_id} - {device.short_user_display} - {device.device_display}"
+            )
             self.tab_center.setTabToolTip(idx, tab_name)
-            self.tab_center.setTabText(idx, tab_name)
+            self.tab_center.setTabText(
+                idx, ensure_string_size(tab_name, 150, self.tab_center.tabBar().font())
+            )
         if self.tab_center.count() == 1:
             self.tab_center.setTabsClosable(False)
         self._toggle_add_tab_button()
@@ -515,21 +506,43 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         if not ParsecApp.has_active_modal():
             self.tab_center.setCurrentIndex(idx)
 
-    def go_to_file_link(self, action_addr):
-        devices = list_available_devices(self.config.config_dir)
-        found_org = False
-        for available_device in devices:
+    def _find_device_from_addr(self, action_addr, display_error=False):
+        device = None
+        for available_device in list_available_devices(self.config.config_dir):
             if available_device.organization_id == action_addr.organization_id:
-                found_org = True
+                device = available_device
                 break
-
-        if not found_org:
+        if device is None:
             show_error(
                 self,
                 _("TEXT_FILE_LINK_NOT_IN_ORG_organization").format(
                     organization=action_addr.organization_id
                 ),
             )
+        return device
+
+    def switch_to_login_tab(self, action_addr=None):
+        idx = self._get_login_tab_index()
+        if idx != -1:
+            self.switch_to_tab(idx)
+        else:
+            tab = self.add_new_tab()
+            tab.show_login_widget()
+            self.on_tab_state_changed(tab, "login")
+            idx = self.tab_center.count() - 1
+            self.switch_to_tab(idx)
+
+        if action_addr is not None:
+            device = self._find_device_from_addr(action_addr, display_error=True)
+            instance_widget = self.tab_center.widget(idx)
+            instance_widget.set_workspace_path(action_addr)
+            login_w = self.tab_center.widget(idx).get_login_widget()
+            login_w._on_account_clicked(device)
+
+    def go_to_file_link(self, action_addr):
+        found_org = self._find_device_from_addr(action_addr, display_error=True) is not None
+        if not found_org:
+            self.switch_to_login_tab()
             return
 
         for idx in range(self.tab_center.count()):
@@ -551,10 +564,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
                     found_workspace = True
                     central_widget = w.get_central_widget()
                     try:
-                        central_widget.show_mount_widget()
-                        central_widget.mount_widget.show_files_widget(
-                            w.core.user_fs.get_workspace(wk.id), action_addr.path, selected=True
-                        )
+                        central_widget.go_to_file_link(wk.id, action_addr.path)
                         self.switch_to_tab(idx)
                     except AttributeError:
                         logger.exception("Central widget is not available")
@@ -567,15 +577,25 @@ class MainWindow(QMainWindow, Ui_MainWindow):
                     ),
                 )
                 return
-        show_error(
+        show_info(
             self,
             _("TEXT_FILE_LINK_PLEASE_LOG_IN_organization").format(
                 organization=action_addr.organization_id
             ),
         )
-        idx = self._get_login_tab_index()
-        if idx != -1:
-            self.switch_to_tab(idx)
+        self.switch_to_login_tab(action_addr)
+
+    def show_create_org_widget(self, action_addr):
+        self.switch_to_login_tab()
+        self._on_create_org_clicked(action_addr)
+
+    def show_claim_user_widget(self, action_addr):
+        self.switch_to_login_tab()
+        self._on_claim_user_clicked(action_addr)
+
+    def show_claim_device_widget(self, action_addr):
+        self.switch_to_login_tab()
+        self._on_claim_device_clicked(action_addr)
 
     def add_instance(self, start_arg: Optional[str] = None):
         action_addr = None
@@ -585,30 +605,25 @@ class MainWindow(QMainWindow, Ui_MainWindow):
             except ValueError as exc:
                 show_error(self, _("TEXT_INVALID_URL"), exception=exc)
 
-        idx = self._get_login_tab_index()
-        if idx != -1:
-            self.switch_to_tab(idx)
-        else:
-            tab = self.add_new_tab()
-            tab.show_login_widget()
-            self.on_tab_state_changed(tab, "login")
-            self.switch_to_tab(self.tab_center.count() - 1)
-            idx = self.tab_center.count() - 1
-
         self.show_top()
-        if action_addr and isinstance(action_addr, BackendOrganizationFileLinkAddr):
+        if not action_addr:
+            self.switch_to_login_tab()
+        elif isinstance(action_addr, BackendOrganizationFileLinkAddr):
             self.go_to_file_link(action_addr)
-        elif action_addr:
-            if isinstance(action_addr, BackendOrganizationBootstrapAddr):
-                self._on_bootstrap_org_clicked(action_addr)
-            elif isinstance(action_addr, BackendInvitationAddr):
-                if action_addr.invitation_type == InvitationType.USER:
-                    self._on_claim_user_clicked(action_addr)
-                elif action_addr.invitation_type == InvitationType.DEVICE:
-                    self._on_claim_device_clicked(action_addr)
-                else:
-                    show_error(self, _("TEXT_INVALID_URL"))
-                    return
+        elif isinstance(action_addr, BackendOrganizationBootstrapAddr):
+            self.show_create_org_widget(action_addr)
+        elif (
+            isinstance(action_addr, BackendInvitationAddr)
+            and action_addr.invitation_type == InvitationType.USER
+        ):
+            self.show_claim_user_widget(action_addr)
+        elif (
+            isinstance(action_addr, BackendInvitationAddr)
+            and action_addr.invitation_type == InvitationType.DEVICE
+        ):
+            self.show_claim_device_widget(action_addr)
+        else:
+            show_error(self, _("TEXT_INVALID_URL"))
 
     def close_current_tab(self, force=False):
         if self.tab_center.count() == 1:
@@ -636,7 +651,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
                     self,
                     _("TEXT_TAB_CLOSE_TITLE"),
                     _("TEXT_TAB_CLOSE_INSTRUCTIONS_device").format(
-                        device=tab.core.device.device_id
+                        device=f"{tab.core.device.short_user_display} - {tab.core.device.device_display}"
                     ),
                     [_("ACTION_TAB_CLOSE_CONFIRM"), _("ACTION_CANCEL")],
                 )
@@ -674,6 +689,8 @@ class MainWindow(QMainWindow, Ui_MainWindow):
                     self.need_close = False
                     return
 
+            state = self.saveGeometry()
+            self.event_bus.send(CoreEvent.GUI_CONFIG_CHANGED, gui_geometry=state)
             self.close_all_tabs()
             event.accept()
             QApplication.quit()

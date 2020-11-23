@@ -12,6 +12,7 @@ from parsec.core.backend_connection import BackendNotAvailable
 from parsec.core.invite import InviteError, InvitePeerResetError, InviteAlreadyUsedError
 from parsec.core.gui.trio_thread import JobResultError, ThreadSafeQtSignal, QtToTrioJob
 from parsec.core.gui.custom_dialogs import show_error, GreyedDialog, show_info
+from parsec.core.gui import validators
 from parsec.core.gui.lang import translate as _
 from parsec.core.gui.ui.greet_user_widget import Ui_GreetUserWidget
 from parsec.core.gui.ui.greet_user_code_exchange_widget import Ui_GreetUserCodeExchangeWidget
@@ -232,9 +233,12 @@ class GreetUserCheckInfoWidget(QWidget, Ui_GreetUserCheckInfoWidget):
         self.widget_info.hide()
         self.label_waiting.show()
 
-        self.line_edit_user_full_name.textChanged.connect(self.check_infos)
-        self.line_edit_user_email.textChanged.connect(self.check_infos)
-        self.line_edit_device.textChanged.connect(self.check_infos)
+        self.line_edit_user_full_name.validity_changed.connect(self.check_infos)
+        self.line_edit_user_full_name.set_validator(validators.NotEmptyValidator())
+        self.line_edit_user_email.validity_changed.connect(self.check_infos)
+        self.line_edit_user_email.set_validator(validators.EmailValidator())
+        self.line_edit_device.validity_changed.connect(self.check_infos)
+        self.line_edit_device.set_validator(validators.DeviceNameValidator())
 
         # self.combo_profile.addItem(_("TEXT_USER_PROFILE_OUTSIDER"), UserProfile.OUTSIDER)
         self.combo_profile.addItem(_("TEXT_USER_PROFILE_STANDARD"), UserProfile.STANDARD)
@@ -253,8 +257,12 @@ class GreetUserCheckInfoWidget(QWidget, Ui_GreetUserCheckInfoWidget):
             self.greeter.get_claim_requests,
         )
 
-    def check_infos(self, _=""):
-        if self.line_edit_user_full_name.text() and self.line_edit_device.text():
+    def check_infos(self, _=None):
+        if (
+            self.line_edit_user_full_name.is_input_valid()
+            and self.line_edit_device.is_input_valid()
+            and self.line_edit_user_email.is_input_valid()
+        ):
             self.button_create_user.setDisabled(False)
         else:
             self.button_create_user.setDisabled(True)
@@ -264,9 +272,8 @@ class GreetUserCheckInfoWidget(QWidget, Ui_GreetUserCheckInfoWidget):
         handle = None
         device_label = self.line_edit_device.text()
         try:
-            handle = HumanHandle(
-                label=self.line_edit_user_full_name.text(), email=self.line_edit_user_email.text()
-            )
+            user_name = validators.trim_user_name(self.line_edit_user_full_name.text())
+            handle = HumanHandle(label=user_name, email=self.line_edit_user_email.text())
         except ValueError as exc:
             show_error(self, _("TEXT_GREET_USER_INVALID_HUMAN_HANDLE"), exception=exc)
             return

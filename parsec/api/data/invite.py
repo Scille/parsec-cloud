@@ -1,7 +1,7 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
 
 import re
-from typing import Optional, Tuple, List
+from typing import Optional, Tuple, List, Dict, Any
 from random import randint, shuffle
 
 from parsec.crypto import VerifyKey, PublicKey, PrivateKey, SecretKey
@@ -10,6 +10,7 @@ from parsec.api.protocol import DeviceID, DeviceIDField, HumanHandle, HumanHandl
 from parsec.api.data.base import BaseAPIData, BaseSchema
 from parsec.api.data.entry import EntryID, EntryIDField
 from parsec.api.data.certif import UserProfile, UserProfileField
+import attr
 
 
 class SASCode(str):
@@ -18,15 +19,15 @@ class SASCode(str):
     symbols = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789"
     regex = re.compile(rf"^[{symbols}]{{{length}}}$")
 
-    def __init__(self, raw):
+    def __init__(self, raw: str):
         if not isinstance(raw, str) or not self.regex.match(raw):
             raise ValueError("Invalid SAS code")
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         return f"<SASCode {super().__repr__()}>"
 
     @classmethod
-    def from_int(cls, num):
+    def from_int(cls, num: int) -> "SASCode":
         if num < 0:
             raise ValueError("Provided integer is negative")
         result = ""
@@ -64,6 +65,7 @@ def generate_sas_code_candidates(valid_sas: SASCode, size: int = 3) -> List[SASC
     return ordered_candidates
 
 
+@attr.s(slots=True, frozen=True, auto_attribs=True, kw_only=True, eq=False)
 class InviteUserData(BaseAPIData):
     class SCHEMA_CLS(BaseSchema):
         type = fields.CheckedConstant("invite_user_data", required=True)
@@ -75,7 +77,8 @@ class InviteUserData(BaseAPIData):
         verify_key = fields.VerifyKey(required=True)
 
         @post_load
-        def make_obj(self, data):
+        def make_obj(self, data: Dict[str, Any]) -> "InviteUserData":  # type: ignore[misc]
+
             data.pop("type")
             return InviteUserData(**data)
 
@@ -85,6 +88,7 @@ class InviteUserData(BaseAPIData):
     verify_key: VerifyKey
 
 
+@attr.s(slots=True, frozen=True, auto_attribs=True, kw_only=True, eq=False)
 class InviteUserConfirmation(BaseAPIData):
     class SCHEMA_CLS(BaseSchema):
         type = fields.CheckedConstant("invite_user_confirmation", required=True)
@@ -95,7 +99,7 @@ class InviteUserConfirmation(BaseAPIData):
         root_verify_key = fields.VerifyKey(required=True)
 
         @post_load
-        def make_obj(self, data):
+        def make_obj(self, data: Dict[str, Any]) -> "InviteUserConfirmation":  # type: ignore[misc]
             data.pop("type")
             return InviteUserConfirmation(**data)
 
@@ -106,6 +110,7 @@ class InviteUserConfirmation(BaseAPIData):
     root_verify_key: VerifyKey
 
 
+@attr.s(slots=True, frozen=True, auto_attribs=True, kw_only=True, eq=False)
 class InviteDeviceData(BaseAPIData):
     class SCHEMA_CLS(BaseSchema):
         type = fields.CheckedConstant("invite_device_data", required=True)
@@ -114,7 +119,7 @@ class InviteDeviceData(BaseAPIData):
         verify_key = fields.VerifyKey(required=True)
 
         @post_load
-        def make_obj(self, data):
+        def make_obj(self, data: Dict[str, Any]) -> "InviteDeviceData":  # type: ignore[misc]
             data.pop("type")
             return InviteDeviceData(**data)
 
@@ -122,6 +127,7 @@ class InviteDeviceData(BaseAPIData):
     verify_key: VerifyKey
 
 
+@attr.s(slots=True, frozen=True, auto_attribs=True, kw_only=True, eq=False)
 class InviteDeviceConfirmation(BaseAPIData):
     class SCHEMA_CLS(BaseSchema):
         type = fields.CheckedConstant("invite_device_confirmation", required=True)
@@ -135,7 +141,9 @@ class InviteDeviceConfirmation(BaseAPIData):
         root_verify_key = fields.VerifyKey(required=True)
 
         @post_load
-        def make_obj(self, data):
+        def make_obj(  # type: ignore[misc]
+            self, data: Dict[str, Any]
+        ) -> "InviteDeviceConfirmation":
             data.pop("type")
             return InviteDeviceConfirmation(**data)
 

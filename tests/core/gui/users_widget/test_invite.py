@@ -13,7 +13,7 @@ from tests.common import customize_fixtures
 @pytest.mark.gui
 @pytest.mark.trio
 @pytest.mark.parametrize("online", (True, False))
-@customize_fixtures(backend_has_email=True, logged_gui_as_admin=True)
+@customize_fixtures(logged_gui_as_admin=True)
 async def test_invite_user(
     aqtbot, logged_gui, bob, running_backend, monkeypatch, autoclose_dialog, email_letterbox, online
 ):
@@ -31,13 +31,18 @@ async def test_invite_user(
 
         def _new_invitation_displayed():
             assert u_w.layout_users.count() == 4
-            inv_btn = u_w.layout_users.itemAt(3).widget()
+            inv_btn = u_w.layout_users.itemAt(0).widget()
             assert isinstance(inv_btn, UserInvitationButton)
             assert inv_btn.email == "hubert.farnsworth@pe.com"
             assert email_letterbox.emails == [(inv_btn.email, ANY)]
+            assert autoclose_dialog.dialogs == [
+                (
+                    "",
+                    "The invitation to join your organization was successfuly sent at : <b>hubert.farnsworth@pe.com</b>",
+                )
+            ]
 
         await aqtbot.wait_until(_new_invitation_displayed)
-        assert not autoclose_dialog.dialogs
 
         monkeypatch.setattr(
             "parsec.core.gui.users_widget.get_text_input",
@@ -129,8 +134,8 @@ async def test_revoke_user_not_allowed(
     u_w = await logged_gui.test_switch_to_users_widget()
 
     assert u_w.layout_users.count() == 3
-    alice_w = u_w.layout_users.itemAt(1).widget()
-    assert alice_w.label_email.text() == "alice@example.com"
+    alice_w = u_w.layout_users.itemAt(0).widget()
+    assert alice_w.label_email.text() == "adam@example.com"
     assert alice_w.user_info.is_revoked is False
 
     # TODO: we should instead check that the menu giving access to revocation button is hidden...
@@ -151,7 +156,7 @@ async def test_revoke_user_not_allowed(
 
 @pytest.mark.gui
 @pytest.mark.trio
-@customize_fixtures(backend_has_email=True, logged_gui_as_admin=True)
+@customize_fixtures(logged_gui_as_admin=True)
 async def test_cancel_user_invitation(
     aqtbot,
     logged_gui,
@@ -178,9 +183,16 @@ async def test_cancel_user_invitation(
 
     def _new_invitation_displayed():
         assert u_w.layout_users.count() == 4
+        assert autoclose_dialog.dialogs == [
+            (
+                "",
+                f"The invitation to join your organization was successfuly sent at : <b>{ email }</b>",
+            )
+        ]
 
     await aqtbot.wait_until(_new_invitation_displayed)
-    user_invitation_w = u_w.layout_users.itemAt(3).widget()
+    autoclose_dialog.reset()
+    user_invitation_w = u_w.layout_users.itemAt(0).widget()
     assert user_invitation_w.email == email
 
     # Cancel invitation

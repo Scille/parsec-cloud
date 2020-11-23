@@ -30,6 +30,8 @@ from parsec.core.backend_connection.exceptions import (
     BackendConnectionError,
     BackendNotAvailable,
     BackendConnectionRefused,
+    BackendInvitationAlreadyUsed,
+    BackendInvitationNotFound,
     BackendProtocolError,
 )
 
@@ -166,7 +168,12 @@ async def _do_handshake(transport: Transport, handshake):
         raise BackendNotAvailable(exc) from exc
 
     except HandshakeError as exc:
-        raise BackendConnectionRefused(str(exc)) from exc
+        if str(exc) == "Invalid handshake: Invitation not found":
+            raise BackendInvitationNotFound(str(exc)) from exc
+        elif str(exc) == "Invalid handshake: Invitation already deleted":
+            raise BackendInvitationAlreadyUsed(str(exc)) from exc
+        else:
+            raise BackendConnectionRefused(str(exc)) from exc
 
     except ProtocolError as exc:
         transport.logger.exception("Protocol error during handshake")

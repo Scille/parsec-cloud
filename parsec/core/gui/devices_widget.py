@@ -1,6 +1,6 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
 
-from PyQt5.QtCore import pyqtSignal, Qt, QTimer
+from PyQt5.QtCore import pyqtSignal, Qt
 from PyQt5.QtWidgets import QWidget, QMenu, QGraphicsDropShadowEffect, QLabel
 from PyQt5.QtGui import QColor
 
@@ -25,13 +25,13 @@ class DeviceButton(QWidget, Ui_DeviceButton):
         self.is_current_device = is_current_device
         self.device_info = device_info
         self.label_icon.apply_style()
-
         self.label_device_name.setText(
             ensure_string_size(self.device_info.device_display, 260, self.label_device_name.font())
         )
         self.label_device_name.setToolTip(self.device_info.device_display)
         if self.is_current_device:
             self.label_is_current.setText("({})".format(_("TEXT_DEVICE_IS_CURRENT")))
+
         self.setContextMenuPolicy(Qt.CustomContextMenu)
         self.customContextMenuRequested.connect(self.show_context_menu)
         effect = QGraphicsDropShadowEffect(self)
@@ -90,32 +90,14 @@ class DevicesWidget(QWidget, Ui_DevicesWidget):
         self.layout_content.addLayout(self.layout_devices)
         self.button_add_device.clicked.connect(self.invite_device)
         self.button_add_device.apply_style()
-        self.filter_timer = QTimer()
-        self.filter_timer.setInterval(300)
         self.list_success.connect(self._on_list_success)
         self.list_error.connect(self._on_list_error)
         self.invite_success.connect(self._on_invite_success)
         self.invite_error.connect(self._on_invite_error)
-        self.line_edit_search.textChanged.connect(self.filter_timer.start)
-        self.filter_timer.timeout.connect(self.on_filter_timer_timeout)
 
     def show(self):
         self.reset()
         super().show()
-
-    def on_filter_timer_timeout(self):
-        self.filter_devices(self.line_edit_search.text())
-
-    def filter_devices(self, pattern):
-        pattern = pattern.lower()
-        for i in range(self.layout_devices.count()):
-            item = self.layout_devices.itemAt(i)
-            if item:
-                w = item.widget()
-                if pattern and pattern not in w.device_info.device_display.lower():
-                    w.hide()
-                else:
-                    w.show()
 
     def change_password(self):
         PasswordChangeWidget.show_modal(core=self.core, parent=self, on_finished=None)
@@ -158,18 +140,16 @@ class DevicesWidget(QWidget, Ui_DevicesWidget):
         button.change_password_clicked.connect(self.change_password)
         button.show()
 
-    def _flush_devices_list(self):
-        self.layout_devices.clear()
-
     def _on_list_success(self, job):
         assert job.is_finished()
         assert job.status == "ok"
 
         devices = job.ret
         current_device = self.core.device
-        self._flush_devices_list()
+        self.layout_devices.clear()
         for device in devices:
             self.add_device(device, is_current_device=current_device.device_id == device.device_id)
+        self.spinner.hide()
 
     def _on_list_error(self, job):
         assert job.is_finished()
@@ -177,12 +157,15 @@ class DevicesWidget(QWidget, Ui_DevicesWidget):
 
         status = job.status
         if status in ["error", "offline"]:
-            self._flush_devices_list()
+            self.layout_devices.clear()
             label = QLabel(_("TEXT_DEVICE_LIST_RETRIEVABLE_FAILURE"))
             label.setAlignment(Qt.AlignHCenter | Qt.AlignVCenter)
             self.layout_devices.addWidget(label)
+        self.spinner.hide()
 
     def reset(self):
+        self.layout_devices.clear()
+        self.spinner.show()
         self.jobs_ctx.submit_job(
             ThreadSafeQtSignal(self, "list_success", QtToTrioJob),
             ThreadSafeQtSignal(self, "list_error", QtToTrioJob),

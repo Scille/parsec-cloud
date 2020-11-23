@@ -2,8 +2,8 @@
 
 import platform
 
-from PyQt5.QtCore import Qt
-from PyQt5.QtGui import QPainter
+from PyQt5.QtCore import Qt, pyqtSignal
+from PyQt5.QtGui import QPainter, QValidator
 from PyQt5.QtWidgets import (
     QWidget,
     QCompleter,
@@ -32,6 +32,8 @@ logger = get_logger()
 
 
 class GreyedDialog(QDialog, Ui_GreyedDialog):
+    closing = pyqtSignal()
+
     def __init__(self, center_widget, title, parent, hide_close=False, width=None):
         super().__init__(None)
         self.setupUi(self)
@@ -102,7 +104,12 @@ class GreyedDialog(QDialog, Ui_GreyedDialog):
             and getattr(self.center_widget, "on_close", None)
         ):
             getattr(self.center_widget, "on_close")()
-        self.setParent(None)
+        self.closing.emit()
+        # On Windows, GreyedDialogs don't get cleared out if their parent
+        # is not set to None. Linux seems to clear them automatically over time.
+        # Resetting the parent on MacOS causes a crash.
+        if platform.system() != "Darwin":
+            self.setParent(None)
 
 
 class TextInputWidget(QWidget, Ui_InputWidget):
@@ -123,8 +130,9 @@ class TextInputWidget(QWidget, Ui_InputWidget):
         self.label_message.setText(message)
         self.line_edit_text.setPlaceholderText(placeholder)
         self.line_edit_text.setText(default_text)
-        if validator:
-            self.line_edit_text.setValidator(validator)
+        self.line_edit_text.set_validator(validator)
+        self.line_edit_text.validity_changed.connect(self._on_validity_changed)
+        self.button_ok.setEnabled(self.line_edit_text.is_input_valid())
         if completion:
             completer = QCompleter(completion)
             completer.setCaseSensitivity(Qt.CaseInsensitive)
@@ -138,8 +146,11 @@ class TextInputWidget(QWidget, Ui_InputWidget):
     def text(self):
         return self.line_edit_text.text()
 
+    def _on_validity_changed(self, validity):
+        self.button_ok.setEnabled(validity == QValidator.Acceptable)
+
     def keyPressEvent(self, event):
-        if event.key() in (Qt.Key_Return, Qt.Key_Enter):
+        if self.button_ok.isEnabled() and event.key() in (Qt.Key_Return, Qt.Key_Enter):
             self._on_button_clicked()
         event.accept()
 
@@ -220,6 +231,7 @@ class ErrorWidget(QWidget, Ui_ErrorWidget):
         super().__init__()
         self.setupUi(self)
         self.label_message.setText(message)
+        self.label_message.setOpenExternalLinks(True)
         self.label_icon.apply_style()
         self.text_details.hide()
         if not exception:
@@ -257,7 +269,7 @@ class ErrorWidget(QWidget, Ui_ErrorWidget):
 def show_error(parent, message, exception=None):
     w = ErrorWidget(message, exception)
     d = GreyedDialog(w, title=_("TEXT_ERR_DIALOG_TITLE"), parent=parent)
-    return d.exec_()
+    return d.open()
 
 
 class InfoWidget(QWidget, Ui_InfoWidget):
@@ -285,4 +297,4 @@ def show_info(parent, message, button_text=None):
     d = GreyedDialog(w, title=None, parent=parent, hide_close=True)
     w.dialog = d
     w.button_ok.setFocus()
-    return d.exec_()
+    return d.open()

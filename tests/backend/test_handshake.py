@@ -14,6 +14,7 @@ from parsec.api.protocol import (
     HandshakeBadIdentity,
     HandshakeOrganizationExpired,
 )
+from parsec.backend.backend_events import BackendEvent
 
 
 @pytest.mark.trio
@@ -53,7 +54,9 @@ async def test_handshake_incompatible_version(backend, server_factory):
         assert unpackb(result_req) == {
             "handshake": "result",
             "result": "bad_protocol",
-            "help": "No overlap between client API versions {3.0} and backend API versions {2.0, 1.2}",
+            "help": "No overlap between client API versions {3.0} and backend API versions {"
+            + str(API_VERSION)
+            + ", 1.2}",
         }
 
 
@@ -229,17 +232,19 @@ async def test_handshake_expired_organization(backend, server_factory, expiredor
             root_verify_key=expiredorg.root_verify_key,
         )
 
-    async with server_factory(backend.handle_client) as server:
-        stream = server.connection_factory()
-        transport = await Transport.init_for_client(stream, server.addr.hostname)
+    with backend.event_bus.listen() as spy:
+        async with server_factory(backend.handle_client) as server:
+            stream = server.connection_factory()
+            transport = await Transport.init_for_client(stream, server.addr.hostname)
 
-        challenge_req = await transport.recv()
-        answer_req = ch.process_challenge_req(challenge_req)
+            challenge_req = await transport.recv()
+            answer_req = ch.process_challenge_req(challenge_req)
 
-        await transport.send(answer_req)
-        result_req = await transport.recv()
-        with pytest.raises(HandshakeOrganizationExpired):
-            ch.process_result_req(result_req)
+            await transport.send(answer_req)
+            result_req = await transport.recv()
+            with pytest.raises(HandshakeOrganizationExpired):
+                ch.process_result_req(result_req)
+            await spy.wait_with_timeout(BackendEvent.ORGANIZATION_EXPIRED)
 
 
 @pytest.mark.trio

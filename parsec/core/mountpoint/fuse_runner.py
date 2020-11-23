@@ -17,6 +17,9 @@ from parsec.core.mountpoint.fuse_operations import FuseOperations
 from parsec.core.mountpoint.thread_fs_access import ThreadFSAccess
 from parsec.core.mountpoint.exceptions import MountpointDriverCrash
 
+from parsec.core import resources
+from pathlib import Path
+
 
 __all__ = ("fuse_mountpoint_runner",)
 
@@ -78,8 +81,7 @@ async def _bootstrap_mountpoint(base_mountpoint_path: PurePath, workspace_fs) ->
 
 async def _teardown_mountpoint(mountpoint_path):
     try:
-        with trio.CancelScope(shield=True):
-            await trio.Path(mountpoint_path).rmdir()
+        await trio.Path(mountpoint_path).rmdir()
     except OSError:
         pass
 
@@ -99,7 +101,7 @@ async def fuse_mountpoint_runner(
     """
     fuse_thread_started = threading.Event()
     fuse_thread_stopped = threading.Event()
-    trio_token = trio.hazmat.current_trio_token()
+    trio_token = trio.lowlevel.current_trio_token()
     fs_access = ThreadFSAccess(trio_token, workspace_fs)
     fuse_operations = FuseOperations(event_bus, fs_access)
 
@@ -114,6 +116,7 @@ async def fuse_mountpoint_runner(
         "timestamp": getattr(workspace_fs, "timestamp", None),
     }
     try:
+        teardown_cancel_scope = None
         event_bus.send(CoreEvent.MOUNTPOINT_STARTING, **event_kwargs)
 
         async with trio.open_service_nursery() as nursery:
@@ -127,15 +130,35 @@ async def fuse_mountpoint_runner(
             encoding = sys.getfilesystemencoding()
 
             def _run_fuse_thread():
+                fuse_platform_options = {}
+                if sys.platform == "darwin":
+                    fuse_platform_options = {
+                        "local": True,
+                        "volname": workspace_fs.get_workspace_name(),
+                        "volicon": Path(resources.__file__).absolute().parent / "parsec.icns",
+                    }
+                    # osxfuse-specific options :
+                    # - local : allows mountpoint to show up correctly in finder (+ desktop)
+                    # - volname : specify volume name (default is OSXFUSE [...])
+                    # - volicon : specify volume icon (default is macOS drive icon)
+
+                else:
+                    fuse_platform_options = {"auto_unmount": True}
+
                 logger.info("Starting fuse thread...", mountpoint=mountpoint_path)
                 try:
+                    # Do not let fuse start if the runner is stopping
+                    # It's important that `fuse_thread_started` is set before the check
+                    # in order to avoid race conditions
                     fuse_thread_started.set()
+                    if teardown_cancel_scope is not None:
+                        return
                     FUSE(
                         fuse_operations,
                         str(mountpoint_path.absolute()),
                         foreground=True,
-                        auto_unmount=True,
                         encoding=encoding,
+                        **fuse_platform_options,
                         **config,
                     )
 
@@ -167,44 +190,62 @@ async def fuse_mountpoint_runner(
             task_status.started(mountpoint_path)
 
     finally:
-        await _stop_fuse_thread(mountpoint_path, fuse_operations, fuse_thread_stopped)
-        event_bus.send(CoreEvent.MOUNTPOINT_STOPPED, **event_kwargs)
-        await _teardown_mountpoint(mountpoint_path)
+        with trio.CancelScope(shield=True) as teardown_cancel_scope:
+            await _stop_fuse_thread(
+                mountpoint_path, fuse_operations, fuse_thread_started, fuse_thread_stopped
+            )
+            event_bus.send(CoreEvent.MOUNTPOINT_STOPPED, **event_kwargs)
+            await _teardown_mountpoint(mountpoint_path)
 
 
 async def _wait_for_fuse_ready(mountpoint_path, fuse_thread_started, initial_st_dev):
     trio_mountpoint_path = trio.Path(mountpoint_path)
-
     # Polling until fuse is ready
     while True:
+        # Tick for 10 ms
         await trio.sleep(0.01)
+        # Stat the root of the workspace
         try:
             stat = await trio_mountpoint_path.stat()
+        # The directory does not exist for some reason
         except FileNotFoundError:
-            continue
+            raise
         # Looks like a revoked workspace has been mounted
         except PermissionError:
             break
         # Might be another OSError like errno 113 (No route to host)
         except OSError:
             break
+        # The device field differs, the mountpoint is up and running
         if stat.st_dev != initial_st_dev:
             break
 
 
-async def _stop_fuse_thread(mountpoint_path, fuse_operations, fuse_thread_stopped):
-    if fuse_thread_stopped.is_set():
+async def _stop_fuse_thread(
+    mountpoint_path, fuse_operations, fuse_thread_started, fuse_thread_stopped
+):
+    # Nothing to do if the fuse thread is not running
+    if fuse_thread_stopped.is_set() or not fuse_thread_started.is_set():
         return
-
-    # Ask for dummy file just to force a fuse operation that will
-    # process the `fuse_exit` from a valid context
-
-    with trio.CancelScope(shield=True):
-        logger.info("Stopping fuse thread...", mountpoint=mountpoint_path)
+    logger.info("Stopping fuse thread...", mountpoint=mountpoint_path)
+    if sys.platform == "darwin":
+        # The schedule_exit() solution doesn't work on macOS, instead freezes the application for
+        # 120 seconds before a timeout occurs. The solution used is to call this function (macOS
+        # equivalent to fusermount) in a subprocess to unmount.
+        await trio.run_process(["diskutil", "unmount", str(mountpoint_path)])
+    else:
+        # Schedule an exit in the fuse operations
         fuse_operations.schedule_exit()
+    # Loop over attemps at waking up the fuse operations
+    while True:
+        # Attempt to wake up the fuse operations
         try:
-            await trio.Path(mountpoint_path / "__shutdown_fuse__").exists()
+            await trio.Path(mountpoint_path / ".__shutdown_fuse__").exists()
+        # This might fail for many reasons
         except OSError:
             pass
-        await trio.to_thread.run_sync(fuse_thread_stopped.wait)
-        logger.info("Fuse thread stopped", mountpoint=mountpoint_path)
+        # Check if the attempt succeeded for 10 ms
+        if await trio.to_thread.run_sync(fuse_thread_stopped.wait, 0.01):
+            break
+    # The thread has now stopped
+    logger.info("Fuse thread stopped", mountpoint=mountpoint_path)

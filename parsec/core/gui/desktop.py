@@ -9,23 +9,23 @@ from parsec.api.protocol import DeviceName
 
 
 def open_file(path):
-    QDesktopServices.openUrl(QUrl.fromLocalFile(QFileInfo(path).absoluteFilePath()))
+    return QDesktopServices.openUrl(QUrl.fromLocalFile(QFileInfo(path).absoluteFilePath()))
 
 
 def open_url(url):
-    QDesktopServices.openUrl(QUrl(url))
+    return QDesktopServices.openUrl(QUrl(url))
 
 
 def open_doc_link():
-    open_url("https://parsec-cloud.readthedocs.io")
+    return open_url("https://parsec-cloud.readthedocs.io")
 
 
 def open_feedback_link():
-    open_url("https://my.parsec.cloud/feedback")
+    return open_url("https://my.parsec.cloud/feedback")
 
 
 def open_user_guide():
-    open_url("https://parsec.cloud")
+    return open_url("https://parsec.cloud")
 
 
 def get_default_device():

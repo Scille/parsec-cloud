@@ -7,11 +7,13 @@ from parsec.backend.utils import catch_protocol_errors, run_with_breathing_trans
 from parsec.backend.realm import BaseRealmComponent
 from parsec.backend.backend_events import BackendEvent
 from functools import partial
+from typing import Callable
 
 
 class EventsComponent:
-    def __init__(self, realm_component: BaseRealmComponent):
+    def __init__(self, realm_component: BaseRealmComponent, send_event: Callable):
         self._realm_component = realm_component
+        self.send = send_event
 
     @api("events_subscribe")
     @catch_protocol_errors

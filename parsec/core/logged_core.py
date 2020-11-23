@@ -1,9 +1,13 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
 
+import re
 import attr
+import fnmatch
 from uuid import UUID
+from pathlib import Path
+import importlib_resources
 from pendulum import now as pendulum_now
-from typing import Optional, Tuple, List
+from typing import Optional, Tuple, List, Pattern
 from structlog import get_logger
 from functools import partial
 from async_generator import asynccontextmanager
@@ -12,6 +16,7 @@ from parsec.event_bus import EventBus
 from parsec.api.protocol import UserID, InvitationType, InvitationDeletedReason
 from parsec.api.data import RevokedUserCertificateContent
 from parsec.core.types import LocalDevice, UserInfo, DeviceInfo, BackendInvitationAddr
+from parsec.core import resources as core_resources
 from parsec.core.config import CoreConfig
 from parsec.core.backend_connection import (
     BackendAuthenticatedConn,
@@ -33,7 +38,7 @@ from parsec.core.remote_devices_manager import (
     RemoteDevicesManagerBackendOfflineError,
     RemoteDevicesManagerNotFoundError,
 )
-from parsec.core.mountpoint import mountpoint_manager_factory
+from parsec.core.mountpoint import mountpoint_manager_factory, MountpointManager
 from parsec.core.messages_monitor import monitor_messages
 from parsec.core.sync_monitor import monitor_sync
 from parsec.core.fs import UserFS
@@ -41,16 +46,73 @@ from parsec.core.fs import UserFS
 
 logger = get_logger()
 
+FAILSAFE_PATTERN_FILTER = re.compile(
+    r"^\b$"
+)  # Matches nothing (https://stackoverflow.com/a/2302992/2846140)
 
-@attr.s(frozen=True, slots=True)
+
+def _get_prevent_sync_pattern(prevent_sync_pattern_path: Path) -> Optional[Pattern]:
+    try:
+        data = prevent_sync_pattern_path.read_text()
+    except OSError as exc:
+        logger.warning(
+            "Path to the file containing the filename patterns to ignore is not properly defined",
+            exc_info=exc,
+        )
+        return None
+    try:
+        regex = []
+        for line in data.splitlines():
+            line = line.strip()
+            if line and not line.startswith("#"):
+                regex.append(fnmatch.translate(line))
+        regex = "|".join(regex)
+    except ValueError as exc:
+        logger.warning(
+            "Could not parse the file containing the filename patterns to ignore", exc_info=exc
+        )
+        return None
+    try:
+        return re.compile(regex)
+    except re.error as exc:
+        logger.warning(
+            "Could not compile the file containing the filename patterns to ignore into a regex pattern",
+            exc_info=exc,
+        )
+        return None
+
+
+def get_prevent_sync_pattern(prevent_sync_pattern_path: Optional[Path] = None) -> Pattern:
+    pattern = None
+    # Get the pattern from the path defined in the core config
+    if prevent_sync_pattern_path is not None:
+        pattern = _get_prevent_sync_pattern(prevent_sync_pattern_path)
+    # Default to the pattern from the ignore file in the core resources
+    if pattern is None:
+        with importlib_resources.path(core_resources, "default_pattern.ignore") as path:
+            pattern = _get_prevent_sync_pattern(path)
+    # As a last resort use the failsafe
+    if pattern is None:
+        return FAILSAFE_PATTERN_FILTER
+    return pattern
+
+
+@attr.s(frozen=True, slots=True, auto_attribs=True)
+class OrganizationStats:
+    users: int
+    data_size: int
+    metadata_size: int
+
+
+@attr.s(frozen=True, slots=True, auto_attribs=True)
 class LoggedCore:
-    config = attr.ib()
-    device = attr.ib()
-    event_bus = attr.ib()
-    mountpoint_manager = attr.ib()
-    user_fs = attr.ib()
-    _remote_devices_manager = attr.ib()
-    _backend_conn = attr.ib()
+    config: CoreConfig
+    device: LocalDevice
+    event_bus: EventBus
+    mountpoint_manager: MountpointManager
+    user_fs: UserFS
+    _remote_devices_manager: RemoteDevicesManager
+    _backend_conn: BackendAuthenticatedConn
 
     def are_monitors_idle(self) -> bool:
         return self._backend_conn.are_monitors_idle()
@@ -92,6 +154,18 @@ class LoggedCore:
             user_info = await self.get_user_info(item["user_id"])
             results.append(user_info)
         return (results, rep["total"])
+
+    async def get_organization_stats(self) -> OrganizationStats:
+        """
+        Raises:
+            BackendConnectionError
+        """
+        rep = await self._backend_conn.cmds.organization_stats()
+        if rep["status"] != "ok":
+            raise BackendConnectionError(f"Backend error: {rep}")
+        return OrganizationStats(
+            users=rep["users"], data_size=rep["data_size"], metadata_size=rep["metadata_size"]
+        )
 
     async def get_user_info(self, user_id: UserID) -> UserInfo:
         """
@@ -246,6 +320,7 @@ async def logged_core_factory(
     config: CoreConfig, device: LocalDevice, event_bus: Optional[EventBus] = None
 ):
     event_bus = event_bus or EventBus()
+    prevent_sync_pattern = get_prevent_sync_pattern(config.prevent_sync_pattern_path)
 
     backend_conn = BackendAuthenticatedConn(
         addr=device.organization_addr,
@@ -260,7 +335,7 @@ async def logged_core_factory(
     path = config.data_base_dir / device.slug
     remote_devices_manager = RemoteDevicesManager(backend_conn.cmds, device.root_verify_key)
     async with UserFS.run(
-        device, path, backend_conn.cmds, remote_devices_manager, event_bus
+        device, path, backend_conn.cmds, remote_devices_manager, event_bus, prevent_sync_pattern
     ) as user_fs:
 
         backend_conn.register_monitor(partial(monitor_messages, user_fs, event_bus))

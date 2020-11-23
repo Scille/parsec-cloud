@@ -11,7 +11,7 @@ from winfspy import (
     FILE_ATTRIBUTE,
     CREATE_FILE_CREATE_OPTIONS,
 )
-from winfspy.plumbing.winstuff import dt_to_filetime, NTSTATUS, SecurityDescriptor
+from winfspy.plumbing import dt_to_filetime, NTSTATUS, SecurityDescriptor
 
 from parsec.core.types import FsPath
 from parsec.core.fs import FSLocalOperationError, FSRemoteOperationError
@@ -149,12 +149,12 @@ class WinFSPOperations(BaseFileSystemOperations):
         self.event_bus = event_bus
         self.fs_access = fs_access
 
-        max_file_nodes = 1024
-        max_file_size = 16 * 1024 * 1024
-        file_nodes = 1
+        # We have currently no way of easily getting the size of workspace
+        # Also, the total size of a workspace is not limited
+        # For the moment let's settle on 0 MB used for 1 TB available
         self._volume_info = {
-            "total_size": max_file_nodes * max_file_size,
-            "free_size": (max_file_nodes - file_nodes) * max_file_size,
+            "total_size": 1 * 1024 * 1024 * 1024,  # 1 TB
+            "free_size": 1 * 1024 * 1024 * 1024,  # 1 TB
             "volume_label": volume_label,
         }
 
@@ -214,19 +214,11 @@ class WinFSPOperations(BaseFileSystemOperations):
 
     @handle_error
     def open(self, file_name, create_options, granted_access):
-        file_name = _winpath_to_parsec(file_name)
-        granted_access = granted_access & (FILE_READ_DATA | FILE_WRITE_DATA)
-        if granted_access == FILE_READ_DATA:
-            mode = "r"
-        elif granted_access == FILE_WRITE_DATA:
-            mode = "w"
-        elif granted_access == FILE_READ_DATA | FILE_WRITE_DATA:
-            mode = "rw"
-        else:
-            mode = "r"
         # `granted_access` is already handle by winfsp
+        file_name = _winpath_to_parsec(file_name)
+        write_mode = bool(granted_access & FILE_WRITE_DATA)
         try:
-            _, fd = self.fs_access.file_open(file_name, mode=mode)
+            _, fd = self.fs_access.file_open(file_name, write_mode=write_mode)
             return OpenedFile(file_name, fd)
         except IsADirectoryError:
             return OpenedFolder(file_name)

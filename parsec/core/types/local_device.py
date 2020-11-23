@@ -4,7 +4,7 @@ import attr
 from typing import Tuple, Optional
 from hashlib import sha256
 from marshmallow import ValidationError
-from pendulum import Pendulum, now as pendulum_now
+from pendulum import DateTime, now as pendulum_now
 
 from parsec.crypto import SecretKey, PrivateKey, SigningKey
 from parsec.serde import fields, post_load
@@ -21,6 +21,7 @@ from parsec.core.types.base import BaseLocalData
 from parsec.core.types.backend_address import BackendOrganizationAddr, BackendOrganizationAddrField
 
 
+@attr.s(slots=True, frozen=True, auto_attribs=True, kw_only=True, eq=False)
 class LocalDevice(BaseLocalData):
     class SCHEMA_CLS(BaseSchema):
         organization_addr = BackendOrganizationAddrField(required=True)
@@ -74,6 +75,15 @@ class LocalDevice(BaseLocalData):
 
     @property
     def slug(self) -> str:
+        """The slug is unique identifier for a particular device.
+
+        It is composed of a small part of the RVK hash, the organization ID
+        and the device ID, although it shouldn't be assumed that this information
+        can be recovered from the slug as this might change in the future.
+
+        The purpose of the slog is simply to tell whether `LocalDevice` and
+        `AvailableDevice` objects corresponds to the same device.
+        """
         # Add a hash to avoid clash when the backend is reseted
         # and we recreate a device with same organization/device_id
         # organization and device_id than a previous one
@@ -139,8 +149,8 @@ class UserInfo:
     user_id: UserID
     human_handle: Optional[HumanHandle]
     profile: UserProfile
-    created_on: Pendulum
-    revoked_on: Optional[Pendulum]
+    created_on: DateTime
+    revoked_on: Optional[DateTime]
 
     @property
     def user_display(self) -> str:
@@ -162,7 +172,7 @@ class UserInfo:
 class DeviceInfo:
     device_id: DeviceID
     device_label: Optional[str]
-    created_on: Pendulum
+    created_on: DateTime
 
     @property
     def device_name(self):

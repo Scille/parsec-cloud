@@ -1,7 +1,7 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
 
 import pendulum
-from typing import Tuple, List
+from typing import Tuple, List, Optional
 
 from parsec.api.protocol import UserID, DeviceID, OrganizationID
 from parsec.backend.user import (
@@ -87,18 +87,25 @@ class PGUserComponent(BaseUserComponent):
     async def find(
         self,
         organization_id: OrganizationID,
-        query: str = None,
+        query: Optional[str] = None,
         page: int = 1,
         per_page: int = 100,
         omit_revoked: bool = False,
     ) -> Tuple[List[UserID], int]:
         async with self.dbh.pool.acquire() as conn:
-            return await query_find(conn, organization_id, query, page, per_page, omit_revoked)
+            return await query_find(
+                conn=conn,
+                organization_id=organization_id,
+                query=query,
+                page=page,
+                per_page=per_page,
+                omit_revoked=omit_revoked,
+            )
 
     async def find_humans(
         self,
         organization_id: OrganizationID,
-        query: str = None,
+        query: Optional[str] = None,
         page: int = 1,
         per_page: int = 100,
         omit_revoked: bool = False,
@@ -106,7 +113,13 @@ class PGUserComponent(BaseUserComponent):
     ) -> Tuple[List[HumanFindResultItem], int]:
         async with self.dbh.pool.acquire() as conn:
             return await query_find_humans(
-                conn, organization_id, query, page, per_page, omit_revoked, omit_non_human
+                conn=conn,
+                organization_id=organization_id,
+                query=query,
+                page=page,
+                per_page=per_page,
+                omit_revoked=omit_revoked,
+                omit_non_human=omit_non_human,
             )
 
     async def create_user_invitation(
@@ -167,7 +180,7 @@ class PGUserComponent(BaseUserComponent):
         user_id: UserID,
         revoked_user_certificate: bytes,
         revoked_user_certifier: DeviceID,
-        revoked_on: pendulum.Pendulum = None,
+        revoked_on: pendulum.DateTime = None,
     ) -> None:
         async with self.dbh.pool.acquire() as conn:
             return await query_revoke_user(

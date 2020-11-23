@@ -203,7 +203,8 @@ def test_sync_monitor_stateful(
             else:
                 data = self.get_next_data()
                 try:
-                    await wfs.write_bytes(file_path, data)
+                    if await wfs.exists(file_path):
+                        await wfs.write_bytes(file_path, data)
                 except (FSWorkspaceNoAccess, OSError):
                     return
 

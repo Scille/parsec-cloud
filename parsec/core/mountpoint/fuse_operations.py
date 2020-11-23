@@ -15,7 +15,6 @@ from parsec.core.fs import FSLocalOperationError, FSRemoteOperationError
 
 
 logger = get_logger()
-MODES = {os.O_RDONLY: "r", os.O_WRONLY: "w", os.O_RDWR: "rw"}
 
 
 # We are preventing the creation of file and folders starting with those prefixes
@@ -81,6 +80,18 @@ class FuseOperations(LoggingMixIn, Operations):
     def init(self, path: FsPath):
         pass
 
+    def statfs(self, path: FsPath):
+        # We have currently no way of easily getting the size of workspace
+        # Also, the total size of a workspace is not limited
+        # For the moment let's settle on 0 MB used for 1 TB available
+        return {
+            "f_bsize": 512 * 1024,  # 512 KB, i.e the default block size
+            "f_frsize": 512 * 1024,  # 512 KB, i.e the default block size
+            "f_blocks": 512 * 1024,  # 512 K blocks is 1 TB
+            "f_bfree": 512 * 1024,  # 512 K blocks is 1 TB
+            "f_bavail": 512 * 1024,  # 512 K blocks is 1 TB
+        }
+
     def getattr(self, path: FsPath, fh: Optional[int] = None):
         if self._need_exit:
             fuse_exit()
@@ -110,6 +121,14 @@ class FuseOperations(LoggingMixIn, Operations):
         fuse_stat["st_gid"] = gid
         return fuse_stat
 
+    def chmod(self, path: FsPath, mode: int):
+        # TODO: silently ignored for the moment
+        return
+
+    def chown(self, path: FsPath, uid: int, gid: int):
+        # TODO: silently ignored for the moment
+        return
+
     def readdir(self, path: FsPath, fh: int):
         stat = self.fs_access.entry_info(path)
 
@@ -126,8 +145,8 @@ class FuseOperations(LoggingMixIn, Operations):
 
     def open(self, path: FsPath, flags: int = 0):
         # Filter file status and file creation flags
-        mode = MODES[flags % 4]
-        _, fd = self.fs_access.file_open(path, mode=mode)
+        write_mode = flags in (os.O_WRONLY, os.O_RDWR)
+        _, fd = self.fs_access.file_open(path, write_mode=write_mode)
         return fd
 
     def release(self, path: FsPath, fh: int):

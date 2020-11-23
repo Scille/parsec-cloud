@@ -23,3 +23,8 @@ class InviteAlreadyUsedError(InviteError):
 class InviteAlreadyMemberError(InviteError):
     def __init__(self, msg="Invitation is already a member"):
         super().__init__(msg)
+
+
+class InviteTimestampError(InviteError):
+    def __init__(self, msg="Invalid timestamp"):
+        super().__init__(msg)

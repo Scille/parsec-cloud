@@ -19,6 +19,7 @@ class JobResultError(Exception):
     def __init__(self, status, **kwargs):
         self.status = status
         self.params = kwargs
+        super().__init__(status, kwargs)
 
 
 class JobSchedulerNotAvailable(Exception):
@@ -158,7 +159,7 @@ class QtToTrioJobScheduler:
 
     async def _start(self, *, task_status=trio.TASK_STATUS_IGNORED):
         assert not self.started.is_set()
-        self._trio_token = trio.hazmat.current_trio_token()
+        self._trio_token = trio.lowlevel.current_trio_token()
         self._send_job_channel, recv_job_channel = trio.open_memory_channel(1)
         try:
             async with trio.open_service_nursery() as nursery, recv_job_channel:

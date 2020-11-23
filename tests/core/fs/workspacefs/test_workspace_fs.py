@@ -5,7 +5,7 @@ import pytest
 from unittest.mock import ANY
 
 from parsec.api.protocol import DeviceID, RealmRole
-from parsec.api.data import Manifest as RemoteManifest
+from parsec.api.data import BaseManifest as BaseRemoteManifest
 from parsec.core.types import FsPath, EntryID
 from parsec.core.fs.exceptions import FSError, FSBackendOfflineError
 from parsec.core.fs.workspacefs.workspacefs import ReencryptionNeed
@@ -29,6 +29,7 @@ async def test_path_info(alice_workspace):
         "need_sync": False,
         "type": "folder",
         "updated": ANY,
+        "confinement_point": None,
     }
 
     info = await alice_workspace.path_info("/foo")
@@ -41,6 +42,7 @@ async def test_path_info(alice_workspace):
         "need_sync": False,
         "type": "folder",
         "updated": ANY,
+        "confinement_point": None,
     }
 
     info = await alice_workspace.path_info("/foo/bar")
@@ -53,6 +55,7 @@ async def test_path_info(alice_workspace):
         "need_sync": False,
         "type": "file",
         "updated": ANY,
+        "confinement_point": None,
     }
 
 
@@ -230,14 +233,11 @@ async def test_read_bytes(alice_workspace):
     assert await alice_workspace.read_bytes("/foo/bar") == b""
 
     await alice_workspace.write_bytes("/foo/bar", b"abcde")
-    assert await alice_workspace.read_bytes("/foo/bar", size=3) == b"abc"
-    assert await alice_workspace.read_bytes("/foo/bar", size=2, offset=2) == b"cd"
-    assert await alice_workspace.read_bytes("/foo/bar", size=8, offset=2) == b"cde"
 
     with pytest.raises(IsADirectoryError):
         await alice_workspace.read_bytes("/foo")
     with pytest.raises(IsADirectoryError):
-        await alice_workspace.read_bytes("/", 0)
+        await alice_workspace.read_bytes("/")
 
 
 @pytest.mark.trio
@@ -245,29 +245,15 @@ async def test_write_bytes(alice_workspace):
     # Pathlib mode (truncate=True)
     await alice_workspace.write_bytes("/foo/bar", b"abcde")
     assert await alice_workspace.read_bytes("/foo/bar") == b"abcde"
-    await alice_workspace.write_bytes("/foo/bar", b"xyz", offset=1)
-    assert await alice_workspace.read_bytes("/foo/bar") == b"axyz"
-    await alice_workspace.write_bytes("/foo/bar", b"[append]", offset=-1)
-    assert await alice_workspace.read_bytes("/foo/bar") == b"axyz[append]"
 
     # Clear the content of an existing file
     await alice_workspace.write_bytes("/foo/bar", b"")
     assert await alice_workspace.read_bytes("/foo/bar") == b""
 
-    # Atomic write mode (truncate=False)
-    assert await alice_workspace.write_bytes("/foo/bar", b"abcde", truncate=False) == 5
-    assert await alice_workspace.read_bytes("/foo/bar") == b"abcde"
-    assert await alice_workspace.write_bytes("/foo/bar", b"xyz", offset=1, truncate=False) == 3
-    assert await alice_workspace.read_bytes("/foo/bar") == b"axyze"
-    assert (
-        await alice_workspace.write_bytes("/foo/bar", b"[append]", offset=-1, truncate=False) == 8
-    )
-    assert await alice_workspace.read_bytes("/foo/bar") == b"axyze[append]"
-
     with pytest.raises(IsADirectoryError):
         await alice_workspace.read_bytes("/foo")
     with pytest.raises(IsADirectoryError):
-        await alice_workspace.read_bytes("/", 0)
+        await alice_workspace.read_bytes("/")
 
 
 @pytest.mark.trio
@@ -285,8 +271,8 @@ async def test_move(alice_workspace):
     await alice_workspace.move("/foz", "/containfoz")
     assert await alice_workspace.is_file("/containfoz/foz/bal")
     assert await alice_workspace.is_file("/containfoz/foz/baz")
-    assert await alice_workspace.read_bytes("/containfoz/foz/bal", size=5) == b"abcde"
-    assert await alice_workspace.read_bytes("/containfoz/foz/baz", size=5) == b"fghij"
+    assert await alice_workspace.read_bytes("/containfoz/foz/bal") == b"abcde"
+    assert await alice_workspace.read_bytes("/containfoz/foz/baz") == b"fghij"
 
     with pytest.raises(FileNotFoundError):
         await alice_workspace.move("/foz/baz", "/baz")
@@ -380,6 +366,8 @@ async def test_dump(alice_workspace):
                 "need_sync": False,
                 "parent": ANY,
                 "updated": ANY,
+                "local_confinement_points": frozenset(),
+                "remote_confinement_points": frozenset(),
             }
         },
         "created": ANY,
@@ -387,21 +375,23 @@ async def test_dump(alice_workspace):
         "is_placeholder": False,
         "need_sync": False,
         "updated": ANY,
+        "local_confinement_points": frozenset(),
+        "remote_confinement_points": frozenset(),
     }
 
 
 @pytest.mark.trio
 async def test_path_info_remote_loader_exceptions(monkeypatch, alice_workspace, alice):
-    manifest = await alice_workspace.transactions._get_manifest_from_path(FsPath("/foo/bar"))
+    manifest, _ = await alice_workspace.transactions._get_manifest_from_path(FsPath("/foo/bar"))
     async with alice_workspace.local_storage.lock_entry_id(manifest.id):
         await alice_workspace.local_storage.clear_manifest(manifest.id)
 
-    vanilla_file_manifest_deserialize = RemoteManifest._deserialize
+    vanilla_file_manifest_deserialize = BaseRemoteManifest._deserialize
 
     def mocked_file_manifest_deserialize(*args, **kwargs):
         return vanilla_file_manifest_deserialize(*args, **kwargs).evolve(**manifest_modifiers)
 
-    monkeypatch.setattr(RemoteManifest, "_deserialize", mocked_file_manifest_deserialize)
+    monkeypatch.setattr(BaseRemoteManifest, "_deserialize", mocked_file_manifest_deserialize)
 
     manifest_modifiers = {"id": EntryID()}
     with pytest.raises(FSError) as exc:
@@ -431,17 +421,19 @@ async def test_get_reencryption_need(alice_workspace, running_backend, monkeypat
             await alice_workspace.get_reencryption_need()
 
     # Reproduce a backend offline after the certificates have been retrieved (see issue #1335)
-    reply = await alice_workspace.remote_loader._backend_cmds(
-        "realm_get_role_certificates", alice_workspace.workspace_id
+    reply = await alice_workspace.remote_loader.backend_cmds.realm_get_role_certificates(
+        alice_workspace.workspace_id
     )
-    original = alice_workspace.remote_loader._backend_cmds
+    original = alice_workspace.remote_loader.backend_cmds.realm_get_role_certificates
 
-    async def mockup(name, *args):
-        if name == "realm_get_role_certificates" and args == (alice_workspace.workspace_id,):
+    async def mockup(*args):
+        if args == (alice_workspace.workspace_id,):
             return reply
-        return await original(name, *args)
+        return await original(*args)
 
-    monkeypatch.setattr(alice_workspace.remote_loader, "_backend_cmds", mockup)
+    monkeypatch.setattr(
+        alice_workspace.remote_loader.backend_cmds, "realm_get_role_certificates", mockup
+    )
 
     with running_backend.offline():
         with pytest.raises(FSBackendOfflineError):

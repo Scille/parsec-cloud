@@ -107,7 +107,7 @@ def test_fs_online_concurrent_tree_and_sync(
         async def update_file(self, fs, path):
             workspace = fs.get_workspace(self.wid)
             try:
-                await workspace.write_bytes(path, offset=0, data=b"a")
+                await workspace.write_bytes(path, data=b"a")
             except OSError:
                 pass
 

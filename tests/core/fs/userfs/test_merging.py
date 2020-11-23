@@ -1,7 +1,7 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
 
 import pytest
-from pendulum import Pendulum
+from pendulum import datetime
 
 from parsec.api.data import UserManifest, WorkspaceEntry
 from parsec.core.types import LocalUserManifest
@@ -10,7 +10,7 @@ from parsec.core.fs.userfs.merging import merge_local_user_manifests
 
 @pytest.fixture
 def gen_date():
-    curr = Pendulum(2000, 1, 1)
+    curr = datetime(2000, 1, 1)
 
     def _gen():
         nonlocal curr
@@ -66,9 +66,9 @@ def test_merge_local_user_manifest_changes_placeholder(gen_date, alice):
     w2 = WorkspaceEntry.new(name="w2")
     w3 = WorkspaceEntry.new(name="w3")
 
-    diverged = LocalUserManifest.new_placeholder(id=alice.user_manifest_id, now=d4).evolve(
-        last_processed_message=30, workspaces=(w1, w3)
-    )
+    diverged = LocalUserManifest.new_placeholder(
+        alice.device_id, id=alice.user_manifest_id, now=d4
+    ).evolve(last_processed_message=30, workspaces=(w1, w3))
     target = UserManifest(
         author=alice.device_id,
         timestamp=d2,

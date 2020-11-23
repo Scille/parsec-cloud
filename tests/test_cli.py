@@ -22,12 +22,13 @@ from click.testing import CliRunner
 from async_generator import asynccontextmanager
 
 from parsec import __version__ as parsec_version
-from parsec.api.protocol import OrganizationID, DeviceID
 from parsec.backend.postgresql import MigrationItem
-from parsec.core.local_device import save_device_with_password, list_available_devices
+from parsec.core.local_device import save_device_with_password
 from parsec.cli import cli
 
 CWD = Path(__file__).parent.parent
+BACKEND_ADDR = "parsec://localhost"
+EMAIL_HOST = "MOCKED"
 
 
 def test_version():
@@ -80,7 +81,7 @@ def _short_cmd(cmd):
         return f"{cmd[:40]}…"
 
 
-def _run(cmd, env={}, timeout=20.0, capture=True):
+def _run(cmd, env={}, timeout=30.0, capture=True):
     print(f"========= RUN {cmd} ==============")
     env = {**os.environ.copy(), "DEBUG": "true", **env}
     cooked_cmd = ("python -m parsec.cli " + cmd).split()
@@ -244,148 +245,6 @@ def ssl_conf(request):
 
 @pytest.mark.slow
 @pytest.mark.skipif(os.name == "nt", reason="Hard to test on Windows...")
-def test_apiv1_full_run(unused_tcp_port, tmpdir, ssl_conf):
-    # As usual Windows path require a big hack...
-    config_dir = tmpdir.strpath.replace("\\", "\\\\")
-    org = OrganizationID("org")
-
-    # slughash depends on root verify key, so we cannot determine
-    # it before the organization is created
-    def _retrieve_device_slughash(device_id):
-        availables = list_available_devices(Path(config_dir))
-        for available in availables:
-            if available.device_id == device_id:
-                return available.slughash
-        else:
-            assert False, f"`{device_id}` not among {availables}"
-
-    alice1 = DeviceID("alice@pc1")
-    alice2 = DeviceID("alice@pc2")
-    bob1 = DeviceID("bob@laptop")
-    password = "P@ssw0rd."
-    administration_token = "9e57754ddfe62f7f8780edc0"
-
-    print("######## START BACKEND #########")
-    with _running(
-        (
-            f"backend run --db=MOCKED --blockstore=MOCKED"
-            f" --administration-token={administration_token}"
-            f" --port={unused_tcp_port}"
-            f" {ssl_conf.backend_opts}"
-        ),
-        wait_for="Starting Parsec Backend",
-    ):
-
-        print("####### Create organization #######")
-        admin_url = f"parsec://localhost:{unused_tcp_port}"
-        if not ssl_conf.use_ssl:
-            admin_url += "?no_ssl=true"
-
-        p = _run(
-            "core create_organization "
-            f"{org} --addr={admin_url} "
-            f"--administration-token={administration_token}",
-            env=ssl_conf.client_env,
-        )
-        url = re.search(
-            r"^Bootstrap organization url: (.*)$", p.stdout.decode(), re.MULTILINE
-        ).group(1)
-
-        print("####### Bootstrap organization #######")
-        _run(
-            "core apiv1 bootstrap_organization "
-            f"{alice1} --addr={url} --config-dir={config_dir} --password={password}",
-            env=ssl_conf.client_env,
-        )
-
-        alice1_slughash = _retrieve_device_slughash(alice1)
-
-        print("####### Create another user #######")
-        with _running(
-            "core apiv1 invite_user "
-            f"--config-dir={config_dir} --device={alice1_slughash} "
-            f"--password={password} {bob1.user_id}",
-            wait_for="token:",
-            env=ssl_conf.client_env,
-        ) as p:
-            stdout = p.live_stdout.read()
-            url = re.search(r"^url: (.*)$", stdout, re.MULTILINE).group(1)
-            token = re.search(r"^token: (.*)$", stdout, re.MULTILINE).group(1)
-
-            _run(
-                "core apiv1 claim_user "
-                f"--config-dir={config_dir} --addr={url} --token={token} "
-                f"--password={password} {bob1.device_name}",
-                env=ssl_conf.client_env,
-            )
-
-            p.wait()
-
-        print("####### Create another device #######")
-        with _running(
-            "core apiv1 invite_device "
-            f"--config-dir={config_dir} --device={alice1_slughash} --password={password}"
-            f" {alice2.device_name}",
-            wait_for="token:",
-            env=ssl_conf.client_env,
-        ) as p:
-            stdout = p.live_stdout.read()
-            url = re.search(r"^url: (.*)$", stdout, re.MULTILINE).group(1)
-            token = re.search(r"^token: (.*)$", stdout, re.MULTILINE).group(1)
-
-            _run(
-                "core apiv1 claim_device "
-                f"--config-dir={config_dir} --addr={url} --token={token} "
-                f"--password={password}",
-                env=ssl_conf.client_env,
-            )
-
-            p.wait()
-
-        alice2_slughash = _retrieve_device_slughash(alice2)
-        bob1_slughash = _retrieve_device_slughash(bob1)
-
-        print("####### List users #######")
-        p = _run(f"core list_devices --config-dir={config_dir}", env=ssl_conf.client_env)
-        stdout = p.stdout.decode()
-        assert alice1_slughash[:3] in stdout
-        assert f"{org}: {alice1.user_id} @ {alice1.device_name}" in stdout
-        assert alice2_slughash[:3] in stdout
-        assert f"{org}: {alice2.user_id} @ {alice2.device_name}" in stdout
-        assert bob1_slughash[:3] in stdout
-        assert f"{org}: {bob1.user_id} @ {bob1.device_name}" in stdout
-
-        print("####### New users can communicate with backend #######")
-        _run(
-            "core create_workspace wksp1 "
-            f"--config-dir={config_dir} --device={bob1_slughash} --password={password}",
-            env=ssl_conf.client_env,
-        )
-        _run(
-            "core create_workspace wksp2 "
-            f"--config-dir={config_dir} --device={alice2_slughash} --password={password}",
-            env=ssl_conf.client_env,
-        )
-
-        print("####### Stats organization #######")
-        _run(
-            "core stats_organization "
-            f"{org} --addr={admin_url} "
-            f"--administration-token={administration_token}",
-            env=ssl_conf.client_env,
-        )
-
-        print("####### Status organization #######")
-        _run(
-            "core status_organization "
-            f"{org} --addr={admin_url} "
-            f"--administration-token={administration_token}",
-            env=ssl_conf.client_env,
-        )
-
-
-@pytest.mark.slow
-@pytest.mark.skipif(os.name == "nt", reason="Hard to test on Windows...")
 def test_full_run(coolorg, unused_tcp_port, tmpdir, ssl_conf):
     # As usual Windows path require a big hack...
     config_dir = tmpdir.strpath.replace("\\", "\\\\")
@@ -408,6 +267,8 @@ def test_full_run(coolorg, unused_tcp_port, tmpdir, ssl_conf):
             f"backend run --db=MOCKED --blockstore=MOCKED"
             f" --administration-token={administration_token}"
             f" --port={unused_tcp_port}"
+            f" --backend-addr={BACKEND_ADDR}"
+            f" --email-host={EMAIL_HOST}"
             f" {ssl_conf.backend_opts}"
         ),
         wait_for="Starting Parsec Backend",

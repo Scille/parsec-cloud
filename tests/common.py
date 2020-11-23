@@ -66,6 +66,12 @@ class AsyncMock(Mock):
         else:
             return super().__call__(*args, **kwargs)
 
+    async def __aenter__(self, *args, **kwargs):
+        return self
+
+    async def __aexit__(self, *args, **kwargs):
+        return True
+
 
 class FreezeTestOnTransportError(Transport):
     """
@@ -235,11 +241,12 @@ _FIXTURES_CUSTOMIZATIONS = {
     "mallory_has_human_handle",
     "mallory_has_device_label",
     "backend_not_populated",
-    "backend_has_email",
     "backend_has_webhook",
     "backend_over_ssl",
     "backend_spontaneous_organization_boostrap",
     "logged_gui_as_admin",
+    "logged_gui_create_two_workspaces",
+    "fake_preferred_org_creation_backend_addr",
 }
 
 

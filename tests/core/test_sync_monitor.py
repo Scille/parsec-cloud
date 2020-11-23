@@ -1,5 +1,6 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
 
+import re
 import trio
 import pytest
 from unittest.mock import ANY
@@ -7,6 +8,10 @@ from unittest.mock import ANY
 from parsec.core.backend_connection import BackendConnStatus
 from parsec.backend.backend_events import BackendEvent
 from parsec.core.core_events import CoreEvent
+from parsec.core.types import WorkspaceRole
+from parsec.core.fs.exceptions import FSReadOnlyError
+
+from tests.common import create_shared_workspace
 
 
 @pytest.mark.trio
@@ -245,3 +250,139 @@ async def test_reconnect_with_remote_changes(
             in_order=False,
             timeout=60,  # autojump, so not *really* 60s
         )
+
+
+@pytest.mark.trio
+async def test_sync_confined_children_after_rename(
+    autojump_clock, alice, running_backend, alice_core
+):
+    # Create a workspace
+    wid = await alice_core.user_fs.workspace_create("w")
+    alice_w = alice_core.user_fs.get_workspace(wid)
+
+    # Set a filter
+    pattern = re.compile(r".*\.tmp$")
+    await alice_w.set_and_apply_prevent_sync_pattern(pattern)
+
+    # Create a confined path
+    await alice_w.mkdir("/test.tmp/a/b/c", parents=True)
+
+    # Wait for sync monitor to be idle
+    await alice_core.wait_idle_monitors()
+
+    # Make sure the root is synced
+    info = await alice_w.path_info("/")
+    assert not info["need_sync"]
+    assert not info["confinement_point"]
+
+    # Make sure the rest of the path is confined
+    for path in ["/test.tmp", "/test.tmp/a", "/test.tmp/a/b", "/test.tmp/a/b/c"]:
+        info = await alice_w.path_info(path)
+        assert info["need_sync"]
+        assert info["confinement_point"]
+
+    # Rename to another confined path
+    await alice_w.rename("/test.tmp", "/test2.tmp")
+
+    # Wait for sync monitor to be idle
+    await alice_core.wait_idle_monitors()
+
+    # Make sure the root is synced
+    info = await alice_w.path_info("/")
+    assert not info["need_sync"]
+    assert not info["confinement_point"]
+
+    # Make sure the rest of the path is confined
+    for path in ["/test2.tmp", "/test2.tmp/a", "/test2.tmp/a/b", "/test2.tmp/a/b/c"]:
+        info = await alice_w.path_info(path)
+        assert info["need_sync"]
+        assert info["confinement_point"]
+
+    # Rename to non-confined path
+    await alice_w.rename("/test2.tmp", "/test2")
+
+    # Wait for sync monitor to be idle
+    await alice_core.wait_idle_monitors()
+
+    # Make sure the root is synced
+    info = await alice_w.path_info("/")
+    assert not info["need_sync"]
+    assert not info["confinement_point"]
+
+    # Make sure the rest of the path is confined
+    for path in ["/test2", "/test2/a", "/test2/a/b", "/test2/a/b/c"]:
+        info = await alice_w.path_info(path)
+        assert not info["need_sync"]
+        assert not info["confinement_point"]
+
+    # Rename to a confined path
+    await alice_w.rename("/test2", "/test3.tmp")
+
+    # Wait for sync monitor to be idle
+    await alice_core.wait_idle_monitors()
+
+    # Make sure the root is synced
+    info = await alice_w.path_info("/")
+    assert not info["need_sync"]
+    assert not info["confinement_point"]
+
+    # Make sure the rest of the path is confined
+    for path in ["/test3.tmp", "/test3.tmp/a", "/test3.tmp/a/b", "/test3.tmp/a/b/c"]:
+        info = await alice_w.path_info(path)
+        assert not info["need_sync"]
+        assert info["confinement_point"]
+
+
+@pytest.mark.trio
+async def test_sync_monitor_while_changing_roles(
+    running_backend, alice_core, bob_core, autojump_clock
+):
+    # Create a shared workspace
+    wid = await create_shared_workspace("w", alice_core, bob_core)
+    alice_workspace = alice_core.user_fs.get_workspace(wid)
+    bob_workspace = bob_core.user_fs.get_workspace(wid)
+
+    # Alice creates a files, let it sync
+    await alice_workspace.write_bytes("/test.txt", b"test")
+    await alice_core.wait_idle_monitors()
+    await bob_core.wait_idle_monitors()
+
+    # Bob edit the files..
+    assert await bob_workspace.read_bytes("/test.txt") == b"test"
+    await bob_workspace.write_bytes("/test.txt", b"test2")
+
+    # But gets his role changed to READER
+    with bob_core.event_bus.listen() as spy:
+        await alice_core.user_fs.workspace_share(wid, bob_core.device.user_id, WorkspaceRole.READER)
+        await spy.wait(CoreEvent.SHARING_UPDATED)
+        await bob_core.wait_idle_monitors()
+
+    # The file cannot be synced
+    info = await bob_workspace.path_info("/test.txt")
+    assert info["need_sync"]
+
+    # And the workspace is now read-only
+    with pytest.raises(FSReadOnlyError):
+        await bob_workspace.write_bytes("/this-should-fail", b"abc")
+
+    # Alice restores CONTRIBUTOR rights to Bob
+    with bob_core.event_bus.listen() as spy:
+        await alice_core.user_fs.workspace_share(
+            wid, bob_core.device.user_id, WorkspaceRole.CONTRIBUTOR
+        )
+        await spy.wait(CoreEvent.SHARING_UPDATED)
+        await bob_core.wait_idle_monitors()
+
+    # The edit file has been synced
+    info = await bob_workspace.path_info("/test.txt")
+    assert not info["need_sync"]
+
+    # So Alice can read it
+    await alice_core.wait_idle_monitors()
+    assert await alice_workspace.read_bytes("/test.txt") == b"test2"
+
+    # The workspace can be written again
+    await bob_workspace.write_bytes("/this-should-not-fail", b"abc")
+    await bob_core.wait_idle_monitors()
+    info = await bob_workspace.path_info("/this-should-not-fail")
+    assert not info["need_sync"]

@@ -4,9 +4,9 @@ from parsec.api.protocol import RealmRole, OrganizationID
 from parsec.backend.backend_events import BackendEvent
 from parsec.backend.realm import RealmGrantedRole, RealmAlreadyExistsError
 from parsec.backend.postgresql.handler import send_signal
-from parsec.backend.postgresql.utils import query
-from parsec.backend.postgresql.queries import (
+from parsec.backend.postgresql.utils import (
     Q,
+    query,
     q_organization_internal_id,
     q_user_internal_id,
     q_device_internal_id,

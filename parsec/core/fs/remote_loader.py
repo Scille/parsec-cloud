@@ -1,9 +1,9 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
 
 from contextlib import contextmanager
-from typing import Dict, Optional, List, Tuple
+from typing import Dict, Optional, List, Tuple, cast, Iterator, Callable
 
-from pendulum import Pendulum, now as pendulum_now
+from pendulum import DateTime, now as pendulum_now
 
 from parsec.utils import timestamps_in_the_ballpark
 from parsec.crypto import HashDigest, CryptoError
@@ -12,17 +12,23 @@ from parsec.api.data import (
     DataError,
     BlockAccess,
     RealmRoleCertificateContent,
-    Manifest as RemoteManifest,
+    BaseManifest as BaseRemoteManifest,
 )
 
-from parsec.core.types import EntryID, ChunkID
-from parsec.core.backend_connection import BackendConnectionError, BackendNotAvailable
+from parsec.core.types import EntryID, ChunkID, LocalDevice, WorkspaceEntry
+
+from parsec.core.backend_connection import (
+    BackendConnectionError,
+    BackendNotAvailable,
+    BackendAuthenticatedCmds,
+)
 from parsec.api.data import (
     UserCertificateContent,
     DeviceCertificateContent,
     RevokedUserCertificateContent,
 )
 from parsec.core.remote_devices_manager import (
+    RemoteDevicesManager,
     RemoteDevicesManagerBackendOfflineError,
     RemoteDevicesManagerError,
     RemoteDevicesManagerUserNotFoundError,
@@ -46,10 +52,11 @@ from parsec.core.fs.exceptions import (
     FSDeviceNotFoundError,
     FSInvalidTrustchainEror,
 )
+from parsec.core.fs.storage import BaseWorkspaceStorage
 
 
 @contextmanager
-def translate_remote_devices_manager_errors():
+def translate_remote_devices_manager_errors() -> Iterator[None]:
     try:
         yield
     except RemoteDevicesManagerBackendOfflineError as exc:
@@ -61,31 +68,42 @@ def translate_remote_devices_manager_errors():
     except RemoteDevicesManagerInvalidTrustchainError as exc:
         raise FSInvalidTrustchainEror(str(exc)) from exc
     except RemoteDevicesManagerError as exc:
-        raise FSRemoteOperationError(str(exc))
+        raise FSRemoteOperationError(str(exc)) from exc
 
 
-class RemoteLoader:
+@contextmanager
+def translate_backend_cmds_errors() -> Iterator[None]:
+    try:
+        yield
+    except BackendNotAvailable as exc:
+        raise FSBackendOfflineError(str(exc)) from exc
+    except BackendConnectionError as exc:
+        raise FSError(str(exc)) from exc
+
+
+class UserRemoteLoader:
     def __init__(
         self,
-        device,
-        workspace_id,
-        get_workspace_entry,
-        backend_cmds,
-        remote_devices_manager,
-        local_storage,
+        device: LocalDevice,
+        workspace_id: EntryID,
+        get_workspace_entry: Callable[[], WorkspaceEntry],
+        backend_cmds: BackendAuthenticatedCmds,
+        remote_devices_manager: RemoteDevicesManager,
     ):
         self.device = device
         self.workspace_id = workspace_id
         self.get_workspace_entry = get_workspace_entry
         self.backend_cmds = backend_cmds
         self.remote_devices_manager = remote_devices_manager
-        self.local_storage = local_storage
-        self._realm_role_certificates_cache = None
-        self._realm_role_certificates_cache_timestamp = None
+        self._realm_role_certificates_cache: Optional[List[RealmRoleCertificateContent]] = None
+        self._realm_role_certificates_cache_timestamp: Optional[DateTime] = None
 
-    async def _get_user_realm_role_at(self, user_id: UserID, timestamp: Pendulum):
+    async def _get_user_realm_role_at(
+        self, user_id: UserID, timestamp: DateTime
+    ) -> Optional[RealmRole]:
         if (
-            not self._realm_role_certificates_cache
+            self._realm_role_certificates_cache is None
+            or self._realm_role_certificates_cache_timestamp is None
             or self._realm_role_certificates_cache_timestamp <= timestamp
         ):
             cache_timestamp = pendulum_now()
@@ -93,24 +111,18 @@ class RemoteLoader:
             # Set the cache timestamp in two times to avoid invalid value in case of exception
             self._realm_role_certificates_cache_timestamp = cache_timestamp
 
+        assert self._realm_role_certificates_cache is not None
         for certif in reversed(self._realm_role_certificates_cache):
             if certif.user_id == user_id and certif.timestamp <= timestamp:
                 return certif.role
         else:
             return None
 
-    async def _backend_cmds(self, cmd, *args, **kwargs):
-        try:
-            return await getattr(self.backend_cmds, cmd)(*args, **kwargs)
-
-        except BackendNotAvailable as exc:
-            raise FSBackendOfflineError(str(exc)) from exc
-
-        except BackendConnectionError as exc:
-            raise FSError(f"`{cmd}` request has failed due to connection error `{exc}`") from exc
-
-    async def _load_realm_role_certificates(self, realm_id: Optional[EntryID] = None):
-        rep = await self._backend_cmds("realm_get_role_certificates", realm_id or self.workspace_id)
+    async def _load_realm_role_certificates(
+        self, realm_id: Optional[EntryID] = None
+    ) -> Tuple[List[RealmRoleCertificateContent], Dict[UserID, RealmRole]]:
+        with translate_backend_cmds_errors():
+            rep = await self.backend_cmds.realm_get_role_certificates(realm_id or self.workspace_id)
         if rep["status"] == "not_allowed":
             # Seems we lost the access to the realm
             raise FSWorkspaceNoReadAccess("Cannot get workspace roles: no read access")
@@ -127,7 +139,7 @@ class RemoteLoader:
                 key=lambda x: x[0].timestamp,
             )
 
-            current_roles = {}
+            current_roles: Dict[UserID, RealmRole] = {}
             owner_only = (RealmRole.OWNER,)
             owner_or_manager = (RealmRole.OWNER, RealmRole.MANAGER)
 
@@ -147,7 +159,7 @@ class RemoteLoader:
                 existing_user_role = current_roles.get(unsecure_certif.user_id)
                 if not current_roles and unsecure_certif.user_id == author.device_id.user_id:
                     # First user is autosigned
-                    needed_roles = (None,)
+                    needed_roles: Tuple[Optional[RealmRole], ...] = (None,)
                 elif (
                     existing_user_role in owner_or_manager
                     or unsecure_certif.role in owner_or_manager
@@ -155,7 +167,11 @@ class RemoteLoader:
                     needed_roles = owner_only
                 else:
                     needed_roles = owner_or_manager
-                if current_roles.get(unsecure_certif.author.user_id) not in needed_roles:
+                # TODO: typing, author is optional in base.py but it seems that manifests always have an author (no RVK)
+                if (
+                    current_roles.get(cast(DeviceID, unsecure_certif.author).user_id)
+                    not in needed_roles
+                ):
                     raise FSError(
                         f"Invalid realm role certificates: "
                         f"{unsecure_certif.author} has not right to give "
@@ -232,6 +248,67 @@ class RemoteLoader:
         with translate_remote_devices_manager_errors():
             return await self.remote_devices_manager.get_device(device_id, no_cache=no_cache)
 
+    async def list_versions(self, entry_id: EntryID) -> Dict[int, Tuple[DateTime, DeviceID]]:
+        """
+        Raises:
+            FSError
+            FSBackendOfflineError
+            FSWorkspaceInMaintenance
+            FSRemoteManifestNotFound
+        """
+        with translate_backend_cmds_errors():
+            rep = await self.backend_cmds.vlob_list_versions(entry_id)
+        if rep["status"] == "not_allowed":
+            # Seems we lost the access to the realm
+            raise FSWorkspaceNoReadAccess("Cannot load manifest: no read access")
+        elif rep["status"] == "not_found":
+            raise FSRemoteManifestNotFound(entry_id)
+        elif rep["status"] == "in_maintenance":
+            raise FSWorkspaceInMaintenance(
+                "Cannot download vlob while the workspace is in maintenance"
+            )
+        elif rep["status"] != "ok":
+            raise FSError(f"Cannot fetch vlob {entry_id}: `{rep['status']}`")
+
+        return rep["versions"]
+
+    async def create_realm(self, realm_id: EntryID) -> None:
+        """
+        Raises:
+            FSError
+            FSBackendOfflineError
+        """
+        certif = RealmRoleCertificateContent.build_realm_root_certif(
+            author=self.device.device_id, timestamp=pendulum_now(), realm_id=realm_id
+        ).dump_and_sign(self.device.signing_key)
+
+        with translate_backend_cmds_errors():
+            rep = await self.backend_cmds.realm_create(certif)
+
+        if rep["status"] == "already_exists":
+            # It's possible a previous attempt to create this realm
+            # succeeded but we didn't receive the confirmation, hence
+            # we play idempotent here.
+            return
+        elif rep["status"] != "ok":
+            raise FSError(f"Cannot create realm {realm_id}: `{rep['status']}`")
+
+
+class RemoteLoader(UserRemoteLoader):
+    def __init__(
+        self,
+        device: LocalDevice,
+        workspace_id: EntryID,
+        get_workspace_entry: Callable[[], WorkspaceEntry],
+        backend_cmds: BackendAuthenticatedCmds,
+        remote_devices_manager: RemoteDevicesManager,
+        local_storage: BaseWorkspaceStorage,
+    ):
+        super().__init__(
+            device, workspace_id, get_workspace_entry, backend_cmds, remote_devices_manager
+        )
+        self.local_storage = local_storage
+
     async def load_blocks(self, accesses: List[BlockAccess]) -> None:
         """
         Raises:
@@ -253,7 +330,8 @@ class RemoteLoader:
             FSWorkspaceNoAccess
         """
         # Download
-        rep = await self._backend_cmds("block_read", access.id)
+        with translate_backend_cmds_errors():
+            rep = await self.backend_cmds.block_read(access.id)
         if rep["status"] == "not_found":
             raise FSRemoteBlockNotFound(access)
         elif rep["status"] == "not_allowed":
@@ -261,7 +339,7 @@ class RemoteLoader:
             raise FSWorkspaceNoReadAccess("Cannot load block: no read access")
         elif rep["status"] == "in_maintenance":
             raise FSWorkspaceInMaintenance(
-                f"Cannot download block while the workspace in maintenance"
+                "Cannot download block while the workspace in maintenance"
             )
         elif rep["status"] != "ok":
             raise FSError(f"Cannot download block: `{rep['status']}`")
@@ -278,7 +356,7 @@ class RemoteLoader:
         assert HashDigest.from_data(block) == access.digest, access
         await self.local_storage.set_clean_block(access.id, block)
 
-    async def upload_block(self, access: BlockAccess, data: bytes):
+    async def upload_block(self, access: BlockAccess, data: bytes) -> None:
         """
         Raises:
             FSError
@@ -295,7 +373,9 @@ class RemoteLoader:
             raise FSError(f"Cannot encrypt block: {exc}") from exc
 
         # Upload block
-        rep = await self._backend_cmds("block_create", access.id, self.workspace_id, ciphered)
+        with translate_backend_cmds_errors():
+            rep = await self.backend_cmds.block_create(access.id, self.workspace_id, ciphered)
+
         if rep["status"] == "already_exists":
             # Ignore exception if the block has already been uploaded
             # This might happen when a failure occurs before the local storage is updated
@@ -304,9 +384,7 @@ class RemoteLoader:
             # Seems we lost the access to the realm
             raise FSWorkspaceNoWriteAccess("Cannot upload block: no write access")
         elif rep["status"] == "in_maintenance":
-            raise FSWorkspaceInMaintenance(
-                f"Cannot upload block while the workspace in maintenance"
-            )
+            raise FSWorkspaceInMaintenance("Cannot upload block while the workspace in maintenance")
         elif rep["status"] != "ok":
             raise FSError(f"Cannot upload block: {rep}")
 
@@ -317,10 +395,10 @@ class RemoteLoader:
     async def load_manifest(
         self,
         entry_id: EntryID,
-        version: int = None,
-        timestamp: Pendulum = None,
-        expected_backend_timestamp: Pendulum = None,
-    ) -> RemoteManifest:
+        version: Optional[int] = None,
+        timestamp: Optional[DateTime] = None,
+        expected_backend_timestamp: Optional[DateTime] = None,
+    ) -> BaseRemoteManifest:
         """
         Download a manifest.
 
@@ -346,13 +424,13 @@ class RemoteLoader:
             )
         # Download the vlob
         workspace_entry = self.get_workspace_entry()
-        rep = await self._backend_cmds(
-            "vlob_read",
-            workspace_entry.encryption_revision,
-            entry_id,
-            version=version,
-            timestamp=timestamp if version is None else None,
-        )
+        with translate_backend_cmds_errors():
+            rep = await self.backend_cmds.vlob_read(
+                workspace_entry.encryption_revision,
+                entry_id,
+                version=version,
+                timestamp=timestamp if version is None else None,
+            )
         if rep["status"] == "not_found":
             raise FSRemoteManifestNotFound(entry_id)
         elif rep["status"] == "not_allowed":
@@ -368,7 +446,7 @@ class RemoteLoader:
             )
         elif rep["status"] == "in_maintenance":
             raise FSWorkspaceInMaintenance(
-                f"Cannot download vlob while the workspace is in maintenance"
+                "Cannot download vlob while the workspace is in maintenance"
             )
         elif rep["status"] != "ok":
             raise FSError(f"Cannot fetch vlob {entry_id}: `{rep['status']}`")
@@ -392,7 +470,7 @@ class RemoteLoader:
             author = await self.remote_devices_manager.get_device(expected_author)
 
         try:
-            remote_manifest = RemoteManifest.decrypt_verify_and_load(
+            remote_manifest = BaseRemoteManifest.decrypt_verify_and_load(
                 rep["blob"],
                 key=workspace_entry.key,
                 author_verify_key=author.verify_key,
@@ -421,49 +499,7 @@ class RemoteLoader:
 
         return remote_manifest
 
-    async def list_versions(self, entry_id: EntryID) -> Dict[int, Tuple[Pendulum, DeviceID]]:
-        """
-        Raises:
-            FSError
-            FSBackendOfflineError
-            FSWorkspaceInMaintenance
-            FSRemoteManifestNotFound
-        """
-        rep = await self._backend_cmds("vlob_list_versions", entry_id)
-        if rep["status"] == "not_allowed":
-            # Seems we lost the access to the realm
-            raise FSWorkspaceNoReadAccess("Cannot load manifest: no read access")
-        elif rep["status"] == "not_found":
-            raise FSRemoteManifestNotFound(entry_id)
-        elif rep["status"] == "in_maintenance":
-            raise FSWorkspaceInMaintenance(
-                f"Cannot download vlob while the workspace is in maintenance"
-            )
-        elif rep["status"] != "ok":
-            raise FSError(f"Cannot fetch vlob {entry_id}: `{rep['status']}`")
-
-        return rep["versions"]
-
-    async def create_realm(self, realm_id: EntryID):
-        """
-        Raises:
-            FSError
-            FSBackendOfflineError
-        """
-        certif = RealmRoleCertificateContent.build_realm_root_certif(
-            author=self.device.device_id, timestamp=pendulum_now(), realm_id=realm_id
-        ).dump_and_sign(self.device.signing_key)
-
-        rep = await self._backend_cmds("realm_create", certif)
-        if rep["status"] == "already_exists":
-            # It's possible a previous attempt to create this realm
-            # succeeded but we didn't receive the confirmation, hence
-            # we play idempotent here.
-            return
-        elif rep["status"] != "ok":
-            raise FSError(f"Cannot create realm {realm_id}: `{rep['status']}`")
-
-    async def upload_manifest(self, entry_id: EntryID, manifest: RemoteManifest):
+    async def upload_manifest(self, entry_id: EntryID, manifest: BaseRemoteManifest) -> None:
         """
         Raises:
             FSError
@@ -499,8 +535,8 @@ class RemoteLoader:
             )
 
     async def _vlob_create(
-        self, encryption_revision: int, entry_id: EntryID, ciphered: bytes, now: Pendulum
-    ):
+        self, encryption_revision: int, entry_id: EntryID, ciphered: bytes, now: DateTime
+    ) -> None:
         """
         Raises:
             FSError
@@ -512,9 +548,10 @@ class RemoteLoader:
         """
 
         # Vlob upload
-        rep = await self._backend_cmds(
-            "vlob_create", self.workspace_id, encryption_revision, entry_id, now, ciphered
-        )
+        with translate_backend_cmds_errors():
+            rep = await self.backend_cmds.vlob_create(
+                self.workspace_id, encryption_revision, entry_id, now, ciphered
+            )
         if rep["status"] == "already_exists":
             raise FSRemoteSyncError(entry_id)
         elif rep["status"] == "not_allowed":
@@ -526,7 +563,7 @@ class RemoteLoader:
             )
         elif rep["status"] == "in_maintenance":
             raise FSWorkspaceInMaintenance(
-                f"Cannot create vlob while the workspace is in maintenance"
+                "Cannot create vlob while the workspace is in maintenance"
             )
         elif rep["status"] != "ok":
             raise FSError(f"Cannot create vlob {entry_id}: `{rep['status']}`")
@@ -536,9 +573,9 @@ class RemoteLoader:
         encryption_revision: int,
         entry_id: EntryID,
         ciphered: bytes,
-        now: Pendulum,
+        now: DateTime,
         version: int,
-    ):
+    ) -> None:
         """
         Raises:
             FSError
@@ -549,9 +586,11 @@ class RemoteLoader:
             FSWorkspaceNoAccess
         """
         # Vlob upload
-        rep = await self._backend_cmds(
-            "vlob_update", encryption_revision, entry_id, version, now, ciphered
-        )
+        with translate_backend_cmds_errors():
+            rep = await self.backend_cmds.vlob_update(
+                encryption_revision, entry_id, version, now, ciphered
+            )
+
         if rep["status"] == "not_found":
             raise FSRemoteSyncError(entry_id)
         elif rep["status"] == "not_allowed":
@@ -569,17 +608,17 @@ class RemoteLoader:
             )
         elif rep["status"] == "in_maintenance":
             raise FSWorkspaceInMaintenance(
-                f"Cannot create vlob while the workspace is in maintenance"
+                "Cannot create vlob while the workspace is in maintenance"
             )
         elif rep["status"] != "ok":
             raise FSError(f"Cannot update vlob {entry_id}: `{rep['status']}`")
 
-    def to_timestamped(self, timestamp):
+    def to_timestamped(self, timestamp: DateTime) -> "RemoteLoaderTimestamped":
         return RemoteLoaderTimestamped(self, timestamp)
 
 
 class RemoteLoaderTimestamped(RemoteLoader):
-    def __init__(self, remote_loader: RemoteLoader, timestamp: Pendulum):
+    def __init__(self, remote_loader: RemoteLoader, timestamp: DateTime):
         self.device = remote_loader.device
         self.workspace_id = remote_loader.workspace_id
         self.get_workspace_entry = remote_loader.get_workspace_entry
@@ -590,16 +629,16 @@ class RemoteLoaderTimestamped(RemoteLoader):
         self._realm_role_certificates_cache_timestamp = None
         self.timestamp = timestamp
 
-    async def upload_block(self, *e, **ke):
-        raise FSError(f"Cannot upload block through a timestamped remote loader")
+    async def upload_block(self, access: BlockAccess, data: bytes) -> None:
+        raise FSError("Cannot upload block through a timestamped remote loader")
 
     async def load_manifest(
         self,
         entry_id: EntryID,
-        version: int = None,
-        timestamp: Pendulum = None,
-        expected_backend_timestamp: Pendulum = None,
-    ) -> RemoteManifest:
+        version: Optional[int] = None,
+        timestamp: Optional[DateTime] = None,
+        expected_backend_timestamp: Optional[DateTime] = None,
+    ) -> BaseRemoteManifest:
         """
         Allows to have manifests at all timestamps as it is needed by the versions method of either
         a WorkspaceFS or a WorkspaceFSTimestamped
@@ -625,11 +664,20 @@ class RemoteLoaderTimestamped(RemoteLoader):
             expected_backend_timestamp=expected_backend_timestamp,
         )
 
-    async def upload_manifest(self, *e, **ke):
-        raise FSError(f"Cannot upload manifest through a timestamped remote loader")
+    async def upload_manifest(self, entry_id: EntryID, manifest: BaseRemoteManifest) -> None:
+        raise FSError("Cannot upload manifest through a timestamped remote loader")
 
-    async def _vlob_create(self, *e, **ke):
-        raise FSError(f"Cannot create vlob through a timestamped remote loader")
+    async def _vlob_create(
+        self, encryption_revision: int, entry_id: EntryID, ciphered: bytes, now: DateTime
+    ) -> None:
+        raise FSError("Cannot create vlob through a timestamped remote loader")
 
-    async def _vlob_update(self, *e, **ke):
-        raise FSError(f"Cannot update vlob through a timestamped remote loader")
+    async def _vlob_update(
+        self,
+        encryption_revision: int,
+        entry_id: EntryID,
+        ciphered: bytes,
+        now: DateTime,
+        version: int,
+    ) -> None:
+        raise FSError("Cannot update vlob through a timestamped remote loader")

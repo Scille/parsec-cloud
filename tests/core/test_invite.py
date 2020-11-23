@@ -3,8 +3,10 @@
 import pytest
 import trio
 
+from pendulum import now as pendulum_now
 from parsec.api.data import UserProfile
-from parsec.api.protocol import HumanHandle, InvitationType
+from parsec.api.protocol import HumanHandle, InvitationType, InvitationDeletedReason
+
 from parsec.core.backend_connection import backend_invited_cmds_factory
 from parsec.core.types import BackendInvitationAddr, LocalDevice, WorkspaceRole
 from parsec.core.invite import (
@@ -15,6 +17,10 @@ from parsec.core.invite import (
     DeviceGreetInitialCtx,
     UserGreetInitialCtx,
 )
+
+from parsec.backend.backend_events import BackendEvent
+from parsec.core.backend_connection.exceptions import BackendInvitationAlreadyUsed
+from parsec.api.protocol import InvitationStatus
 
 
 @pytest.mark.trio
@@ -371,3 +377,207 @@ async def test_claimer_handle_reset(backend, running_backend, alice, alice_backe
 
                 # Claimer redo step 1
                 claimer_in_progress_ctx = await claimer_initial_ctx.do_wait_peer()
+
+
+@pytest.mark.trio
+@pytest.mark.parametrize(
+    "fail_on_step", ["wait_peer", "signify_trust", "wait_peer_trust", "claim_device"]
+)
+async def test_claimer_handle_cancel_event(
+    backend, running_backend, alice, alice_backend_cmds, fail_on_step
+):
+    invitation = await backend.invite.new_for_device(
+        organization_id=alice.organization_id, greeter_user_id=alice.user_id
+    )
+    invitation_addr = BackendInvitationAddr.build(
+        backend_addr=alice.organization_addr,
+        organization_id=alice.organization_id,
+        invitation_type=InvitationType.DEVICE,
+        token=invitation.token,
+    )
+
+    async def _cancel_invitation():
+        await backend.invite.delete(
+            organization_id=alice.organization_id,
+            greeter=alice.user_id,
+            token=invitation_addr.token,
+            on=pendulum_now(),
+            reason=InvitationDeletedReason.CANCELLED,
+        )
+
+    async with backend_invited_cmds_factory(addr=invitation_addr) as claimer_cmds:
+        greeter_initial_ctx = UserGreetInitialCtx(
+            cmds=alice_backend_cmds, token=invitation_addr.token
+        )
+        claimer_initial_ctx = await claimer_retrieve_info(claimer_cmds)
+
+        claimer_in_progress_ctx = None
+        greeter_in_progress_ctx = None
+
+        async def _do_claimer():
+            nonlocal claimer_in_progress_ctx
+            if fail_on_step == "wait_peer":
+                return
+            claimer_in_progress_ctx = await claimer_initial_ctx.do_wait_peer()
+            if fail_on_step == "signify_trust":
+                return
+            claimer_in_progress_ctx = await claimer_in_progress_ctx.do_signify_trust()
+            if fail_on_step == "wait_peer_trust":
+                return
+            claimer_in_progress_ctx = await claimer_in_progress_ctx.do_wait_peer_trust()
+
+        async def _do_greeter():
+            nonlocal greeter_in_progress_ctx
+            if fail_on_step == "wait_peer":
+                return
+            greeter_in_progress_ctx = await greeter_initial_ctx.do_wait_peer()
+            if fail_on_step == "signify_trust":
+                return
+            greeter_in_progress_ctx = await greeter_in_progress_ctx.do_wait_peer_trust()
+            if fail_on_step == "wait_peer_trust":
+                return
+            greeter_in_progress_ctx = await greeter_in_progress_ctx.do_signify_trust()
+
+        with trio.fail_after(1):
+            async with trio.open_nursery() as nursery:
+
+                nursery.start_soon(_do_claimer)
+                nursery.start_soon(_do_greeter)
+
+        with trio.fail_after(1):
+
+            async with trio.open_nursery() as nursery:
+
+                async def _do_claimer_wait_peer():
+                    with pytest.raises(BackendInvitationAlreadyUsed) as exc_info:
+                        await claimer_initial_ctx.do_wait_peer()
+                    assert str(exc_info.value) == "Invalid handshake: Invitation already deleted"
+
+                async def _do_claimer_signify_trust():
+                    with pytest.raises(BackendInvitationAlreadyUsed) as exc_info:
+                        await claimer_in_progress_ctx.do_signify_trust()
+                    assert str(exc_info.value) == "Invalid handshake: Invitation already deleted"
+
+                async def _do_claimer_wait_peer_trust():
+                    with pytest.raises(BackendInvitationAlreadyUsed) as exc_info:
+                        await claimer_in_progress_ctx.do_wait_peer_trust()
+                    assert str(exc_info.value) == "Invalid handshake: Invitation already deleted"
+
+                async def _do_claimer_claim_device():
+                    with pytest.raises(BackendInvitationAlreadyUsed) as exc_info:
+                        await claimer_in_progress_ctx.do_claim_device(
+                            requested_device_label="TheSecretDevice"
+                        )
+                    assert str(exc_info.value) == "Invalid handshake: Invitation already deleted"
+
+                steps = {
+                    "wait_peer": _do_claimer_wait_peer,
+                    "signify_trust": _do_claimer_signify_trust,
+                    "wait_peer_trust": _do_claimer_wait_peer_trust,
+                    "claim_device": _do_claimer_claim_device,
+                }
+                _do_claimer = steps[fail_on_step]
+
+                with backend.event_bus.listen() as spy:
+                    nursery.start_soon(_do_claimer)
+                    # Be sure that _do_claimer got valid invitations before cancelation
+                    await spy.wait_with_timeout(BackendEvent.INVITE_CONDUIT_UPDATED)
+                    await _cancel_invitation()
+                    await spy.wait_with_timeout(BackendEvent.INVITE_STATUS_CHANGED)
+
+
+@pytest.mark.trio
+@pytest.mark.parametrize(
+    "fail_on_step", ["wait_peer", "signify_trust", "wait_peer_trust", "claim_device"]
+)
+async def test_claimer_handle_command_failure(
+    backend, running_backend, alice, alice_backend_cmds, monkeypatch, fail_on_step
+):
+    invitation = await backend.invite.new_for_device(
+        organization_id=alice.organization_id, greeter_user_id=alice.user_id
+    )
+    invitation_addr = BackendInvitationAddr.build(
+        backend_addr=alice.organization_addr,
+        organization_id=alice.organization_id,
+        invitation_type=InvitationType.DEVICE,
+        token=invitation.token,
+    )
+
+    async def _cancel_invitation():
+        await backend.invite.delete(
+            organization_id=alice.organization_id,
+            greeter=alice.user_id,
+            token=invitation_addr.token,
+            on=pendulum_now(),
+            reason=InvitationDeletedReason.CANCELLED,
+        )
+
+    async with backend_invited_cmds_factory(addr=invitation_addr) as claimer_cmds:
+        greeter_initial_ctx = UserGreetInitialCtx(
+            cmds=alice_backend_cmds, token=invitation_addr.token
+        )
+        claimer_initial_ctx = await claimer_retrieve_info(claimer_cmds)
+
+        claimer_in_progress_ctx = None
+        greeter_in_progress_ctx = None
+
+        async def _do_claimer():
+            nonlocal claimer_in_progress_ctx
+            if fail_on_step == "wait_peer":
+                return
+            claimer_in_progress_ctx = await claimer_initial_ctx.do_wait_peer()
+            if fail_on_step == "signify_trust":
+                return
+            claimer_in_progress_ctx = await claimer_in_progress_ctx.do_signify_trust()
+            if fail_on_step == "wait_peer_trust":
+                return
+            claimer_in_progress_ctx = await claimer_in_progress_ctx.do_wait_peer_trust()
+
+        async def _do_greeter():
+            nonlocal greeter_in_progress_ctx
+            if fail_on_step == "wait_peer":
+                return
+            greeter_in_progress_ctx = await greeter_initial_ctx.do_wait_peer()
+            if fail_on_step == "signify_trust":
+                return
+            greeter_in_progress_ctx = await greeter_in_progress_ctx.do_wait_peer_trust()
+            if fail_on_step == "wait_peer_trust":
+                return
+            greeter_in_progress_ctx = await greeter_in_progress_ctx.do_signify_trust()
+
+        with trio.fail_after(1):
+
+            async with trio.open_nursery() as nursery:
+                nursery.start_soon(_do_claimer)
+                nursery.start_soon(_do_greeter)
+
+        deleted_event = trio.Event()
+
+        async def _send_event(*args, **kwargs):
+            if BackendEvent.INVITE_STATUS_CHANGED in args and (
+                kwargs.get("status") == InvitationStatus.DELETED
+                or kwargs.get("status_str") == InvitationStatus.DELETED.value
+            ):
+                deleted_event.set()
+            await trio.sleep(0)
+
+        backend.invite._send_event = _send_event
+        monkeypatch.setattr("parsec.backend.postgresql.invite.send_signal", _send_event)
+
+        with trio.fail_after(1):
+            await _cancel_invitation()
+            await deleted_event.wait()
+            with pytest.raises(BackendInvitationAlreadyUsed) as exc_info:
+                if fail_on_step == "wait_peer":
+                    await claimer_initial_ctx.do_wait_peer()
+                elif fail_on_step == "signify_trust":
+                    await claimer_in_progress_ctx.do_signify_trust()
+                elif fail_on_step == "wait_peer_trust":
+                    await claimer_in_progress_ctx.do_wait_peer_trust()
+                elif fail_on_step == "claim_device":
+                    await claimer_in_progress_ctx.do_claim_device(
+                        requested_device_label="TheSecretDevice"
+                    )
+                else:
+                    raise AssertionError(f"Unknown step {fail_on_step}")
+            assert str(exc_info.value) == "Invalid handshake: Invitation already deleted"

@@ -1,20 +1,34 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
 
-from parsec.core.core_events import CoreEvent
 import trio
 from pathlib import Path
-from pendulum import Pendulum, now as pendulum_now
-from typing import List, Tuple, Optional, Union
+from trio_typing import TaskStatus
+from pendulum import DateTime, now as pendulum_now
+from typing import (
+    Tuple,
+    Optional,
+    Union,
+    Dict,
+    Sequence,
+    Pattern,
+    Type,
+    TypeVar,
+    AsyncIterator,
+    List,
+)
 from structlog import get_logger
 
 from async_generator import asynccontextmanager
 
+from parsec.utils import open_service_nursery
+from parsec.core.core_events import CoreEvent
 from parsec.event_bus import EventBus
 from parsec.crypto import SecretKey
 from parsec.api.data import (
     DataError,
     RealmRoleCertificateContent,
-    MessageContent,
+    BaseMessageContent,
+    UserCertificateContent,
     SharingGrantedMessageContent,
     SharingReencryptedMessageContent,
     SharingRevokedMessageContent,
@@ -34,14 +48,14 @@ from parsec.core.types import (
 
 # TODO: handle exceptions status...
 from parsec.core.backend_connection import (
-    APIV1_BackendAuthenticatedCmds,
+    BackendAuthenticatedCmds,
     BackendConnectionError,
     BackendNotAvailable,
 )
 from parsec.core.remote_devices_manager import RemoteDevicesManager
 
 from parsec.core.fs.workspacefs import WorkspaceFS
-from parsec.core.fs.remote_loader import RemoteLoader
+from parsec.core.fs.remote_loader import UserRemoteLoader
 from parsec.core.fs.storage import UserStorage, WorkspaceStorage
 from parsec.core.fs.userfs.merging import merge_local_user_manifests, merge_workspace_entry
 from parsec.core.fs.exceptions import (
@@ -61,13 +75,18 @@ AnyEntryName = Union[EntryName, str]
 
 
 class ReencryptionJob:
-    def __init__(self, backend_cmds, new_workspace_entry, old_workspace_entry):
+    def __init__(
+        self,
+        backend_cmds: BackendAuthenticatedCmds,
+        new_workspace_entry: WorkspaceEntry,
+        old_workspace_entry: WorkspaceEntry,
+    ) -> None:
         self.backend_cmds = backend_cmds
         self.new_workspace_entry = new_workspace_entry
         self.old_workspace_entry = old_workspace_entry
         assert new_workspace_entry.id == old_workspace_entry.id
 
-    async def do_one_batch(self, size=100) -> Tuple[int, int]:
+    async def do_one_batch(self, size: int = 1000) -> Tuple[int, int]:
         """
         Raises:
             FSError
@@ -143,33 +162,38 @@ class ReencryptionJob:
         return total, done
 
 
+UserFSTypeVar = TypeVar("UserFSTypeVar", bound="UserFS")
+
+
 class UserFS:
     def __init__(
         self,
         device: LocalDevice,
         path: Path,
-        backend_cmds: APIV1_BackendAuthenticatedCmds,
+        backend_cmds: BackendAuthenticatedCmds,
         remote_devices_manager: RemoteDevicesManager,
         event_bus: EventBus,
+        prevent_sync_pattern: Pattern[str],
     ):
         self.device = device
         self.path = path
         self.backend_cmds = backend_cmds
         self.remote_devices_manager = remote_devices_manager
         self.event_bus = event_bus
+        self.prevent_sync_pattern = prevent_sync_pattern
 
-        self.storage = None
+        self.storage: UserStorage  # Setup by UserStorage.run factory
 
         # Message processing is done in-order, hence it is pointless to do
         # it concurrently
-        self._workspace_storage_nursery = None
+        self._workspace_storage_nursery: trio.Nursery  # Setup by UserStorage.run factory
         self._process_messages_lock = trio.Lock()
         self._update_user_manifest_lock = trio.Lock()
-        self._workspace_storages = {}
+        self._workspace_storages: Dict[EntryID, WorkspaceFS] = {}
 
         now = pendulum_now()
         wentry = WorkspaceEntry(
-            name="<user manifest>",
+            name=EntryName("<user manifest>"),
             id=device.user_manifest_id,
             key=device.user_manifest_key,
             encryption_revision=1,
@@ -177,26 +201,34 @@ class UserFS:
             role_cached_on=now,
             role=WorkspaceRole.OWNER,
         )
-        self.remote_loader = RemoteLoader(
+        self.remote_loader = UserRemoteLoader(
             self.device,
             self.device.user_manifest_id,
             lambda: wentry,
             self.backend_cmds,
             self.remote_devices_manager,
-            # Hack, but fine as long as we only call `load_realm_current_roles`
-            None,
         )
 
     @classmethod
     @asynccontextmanager
-    async def run(cls, *args, **kwargs):
-        self = cls(*args, **kwargs)
+    async def run(
+        cls: Type[UserFSTypeVar],
+        device: LocalDevice,
+        path: Path,
+        backend_cmds: BackendAuthenticatedCmds,
+        remote_devices_manager: RemoteDevicesManager,
+        event_bus: EventBus,
+        prevent_sync_pattern: Pattern[str],
+    ) -> AsyncIterator[UserFSTypeVar]:
+        self = cls(
+            device, path, backend_cmds, remote_devices_manager, event_bus, prevent_sync_pattern
+        )
 
         # Run user storage
         async with UserStorage.run(self.device, self.path) as self.storage:
 
             # Nursery for workspace storages
-            async with trio.open_service_nursery() as self._workspace_storage_nursery:
+            async with open_service_nursery() as self._workspace_storage_nursery:
 
                 # Make sure all the workspaces are loaded
                 # In particular, we want to make sure that any workspace available through
@@ -216,11 +248,16 @@ class UserFS:
 
     def get_user_manifest(self) -> LocalUserManifest:
         """
-        Raises: Nothing !
+        Raises: ValueError
         """
+        if self.storage is None:
+            raise ValueError("Storage not set")
         return self.storage.get_user_manifest()
 
     async def set_user_manifest(self, manifest: LocalUserManifest) -> None:
+
+        if self.storage is None:
+            raise ValueError("Storage not set")
 
         # Make sure all the workspaces are loaded
         # In particular, we want to make sure that any workspace available through
@@ -235,7 +272,9 @@ class UserFS:
     async def _instantiate_workspace_storage(self, workspace_id: EntryID) -> WorkspaceStorage:
         path = self.path / str(workspace_id)
 
-        async def workspace_storage_task(task_status=trio.TASK_STATUS_IGNORED):
+        async def workspace_storage_task(
+            task_status: TaskStatus[WorkspaceStorage] = trio.TASK_STATUS_IGNORED
+        ) -> None:
             async with WorkspaceStorage.run(self.device, path, workspace_id) as workspace_storage:
                 task_status.started(workspace_storage)
                 await trio.sleep_forever()
@@ -245,7 +284,7 @@ class UserFS:
     async def _instantiate_workspace(self, workspace_id: EntryID) -> WorkspaceFS:
         # Workspace entry can change at any time, so we provide a way for
         # WorskpaeFS to load it each time it is needed
-        def get_workspace_entry():
+        def get_workspace_entry() -> WorkspaceEntry:
             user_manifest = self.get_user_manifest()
             workspace_entry = user_manifest.get_workspace_entry(workspace_id)
             if not workspace_entry:
@@ -256,7 +295,7 @@ class UserFS:
         local_storage = await self._instantiate_workspace_storage(workspace_id)
 
         # Instantiate the workspace
-        return WorkspaceFS(
+        workspace = WorkspaceFS(
             workspace_id=workspace_id,
             get_workspace_entry=get_workspace_entry,
             device=self.device,
@@ -265,6 +304,11 @@ class UserFS:
             event_bus=self.event_bus,
             remote_devices_manager=self.remote_devices_manager,
         )
+
+        # Apply the current "prevent sync" pattern
+        await workspace.set_and_apply_prevent_sync_pattern(self.prevent_sync_pattern)
+
+        return workspace
 
     async def _create_workspace(
         self, workspace_id: EntryID, manifest: LocalWorkspaceManifest
@@ -314,7 +358,9 @@ class UserFS:
         """
         name = EntryName(name)
         workspace_entry = WorkspaceEntry.new(name)
-        workspace_manifest = LocalWorkspaceManifest.new_placeholder(id=workspace_entry.id)
+        workspace_manifest = LocalWorkspaceManifest.new_placeholder(
+            self.device.device_id, id=workspace_entry.id
+        )
         async with self._update_user_manifest_lock:
             user_manifest = self.get_user_manifest()
             user_manifest = user_manifest.evolve_workspaces_and_mark_updated(workspace_entry)
@@ -344,7 +390,7 @@ class UserFS:
             await self.set_user_manifest(updated_user_manifest)
             self.event_bus.send(CoreEvent.FS_ENTRY_UPDATED, id=self.user_manifest_id)
 
-    async def _fetch_remote_user_manifest(self, version: int = None) -> UserManifest:
+    async def _fetch_remote_user_manifest(self, version: Optional[int] = None) -> UserManifest:
         """
         Raises:
             FSError
@@ -428,7 +474,9 @@ class UserFS:
             )
             return
 
-    def _detect_and_send_shared_events(self, old_um, new_um):
+    def _detect_and_send_shared_events(
+        self, old_um: LocalUserManifest, new_um: LocalUserManifest
+    ) -> None:
         entries = {}
         for old_entry in old_um.workspaces:
             entries[old_entry.id] = [old_entry, None]
@@ -550,7 +598,7 @@ class UserFS:
 
         return True
 
-    async def _workspace_minimal_sync(self, workspace_entry: WorkspaceEntry):
+    async def _workspace_minimal_sync(self, workspace_entry: WorkspaceEntry) -> None:
         """
         Raises:
             FSError
@@ -594,7 +642,9 @@ class UserFS:
         # Build the sharing message
         try:
             if role is not None:
-                recipient_message = SharingGrantedMessageContent(
+                recipient_message: Union[
+                    SharingGrantedMessageContent, SharingRevokedMessageContent
+                ] = SharingGrantedMessageContent(
                     author=self.device.device_id,
                     timestamp=now,
                     name=workspace_entry.name,
@@ -651,7 +701,7 @@ class UserFS:
         elif rep["status"] != "ok":
             raise FSError(f"Error while trying to set vlob group roles in backend: {rep}")
 
-    async def process_last_messages(self) -> List[Tuple[int, Exception]]:
+    async def process_last_messages(self) -> Sequence[Tuple[int, Exception]]:
         """
         Raises:
             FSError
@@ -703,8 +753,8 @@ class UserFS:
         return errors
 
     async def _process_message(
-        self, sender_id: DeviceID, expected_timestamp: Pendulum, ciphered: bytes
-    ):
+        self, sender_id: DeviceID, expected_timestamp: DateTime, ciphered: bytes
+    ) -> None:
         """
         Raises:
             FSError
@@ -716,7 +766,7 @@ class UserFS:
 
         # Decrypt&verify message
         try:
-            msg = MessageContent.decrypt_verify_and_load_for(
+            msg = BaseMessageContent.decrypt_verify_and_load_for(
                 ciphered,
                 recipient_privkey=self.device.private_key,
                 author_verify_key=sender.verify_key,
@@ -737,8 +787,8 @@ class UserFS:
             self.event_bus.send(CoreEvent.MESSAGE_PINGED, ping=msg.ping)
 
     async def _process_message_sharing_granted(
-        self, msg: Union[SharingRevokedMessageContent, SharingReencryptedMessageContent]
-    ):
+        self, msg: Union[SharingGrantedMessageContent, SharingReencryptedMessageContent]
+    ) -> None:
         """
         Raises:
             FSError
@@ -804,7 +854,7 @@ class UserFS:
                 previous_entry=already_existing_entry,
             )
 
-    async def _process_message_sharing_revoked(self, msg: SharingRevokedMessageContent):
+    async def _process_message_sharing_revoked(self, msg: SharingRevokedMessageContent) -> None:
         """
         Raises:
             FSError
@@ -853,7 +903,7 @@ class UserFS:
                 previous_entry=existing_workspace_entry,
             )
 
-    async def _retrieve_participants(self, workspace_id):
+    async def _retrieve_participants(self, workspace_id: EntryID) -> List[UserCertificateContent]:
         """
         Raises:
             FSError
@@ -872,7 +922,12 @@ class UserFS:
 
         return users
 
-    def _generate_reencryption_messages(self, new_workspace_entry, users, now: Pendulum):
+    def _generate_reencryption_messages(
+        self,
+        new_workspace_entry: WorkspaceEntry,
+        users: List[UserCertificateContent],
+        now: DateTime,
+    ) -> Dict[UserID, bytes]:
         """
         Raises:
             FSError
@@ -902,8 +957,12 @@ class UserFS:
         return per_user_ciphered_msgs
 
     async def _send_start_reencryption_cmd(
-        self, workspace_id, encryption_revision, timestamp, per_user_ciphered_msgs
-    ):
+        self,
+        workspace_id: EntryID,
+        encryption_revision: int,
+        timestamp: DateTime,
+        per_user_ciphered_msgs: Dict[UserID, bytes],
+    ) -> bool:
         """
         Raises:
             FSError
@@ -1000,7 +1059,17 @@ class UserFS:
             raise FSWorkspaceNotFoundError(f"Unknown workspace `{workspace_id}`")
 
         # First make sure the workspace is under maintenance
-        rep = await self.backend_cmds.realm_status(workspace_entry.id)
+        try:
+            rep = await self.backend_cmds.realm_status(workspace_entry.id)
+
+        except BackendNotAvailable as exc:
+            raise FSBackendOfflineError(str(exc)) from exc
+
+        except BackendConnectionError as exc:
+            raise FSError(
+                f"Cannot continue maintenance on workspace {workspace_id}: {exc}"
+            ) from exc
+
         if rep["status"] == "not_allowed":
             raise FSWorkspaceNoAccess(f"Not allowed to access workspace {workspace_id}: {rep}")
         elif rep["status"] != "ok":
@@ -1029,6 +1098,6 @@ class UserFS:
             if previous_workspace_entry.encryption_revision == current_encryption_revision - 1:
                 break
             else:
-                version_to_fetch = previous_workspace_entry.version - 1
+                version_to_fetch = previous_user_manifest.version - 1
 
         return ReencryptionJob(self.backend_cmds, workspace_entry, previous_workspace_entry)

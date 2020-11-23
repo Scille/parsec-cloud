@@ -8,7 +8,7 @@ K = typing.TypeVar("K")
 V = typing.TypeVar("V")
 
 
-class FrozenDict(dict, typing.Generic[K, V]):
+class FrozenDict(typing.Dict[K, V]):
     __slots__ = ()
 
     def __repr__(self):

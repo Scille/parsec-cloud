@@ -1,5 +1,28 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
+
+"""
+This script is used to ease the parsec release process.
+
+The produced tag is going to be signed so make sure you have a GPG key available.
+If not, it can be generated using the following command:
+
+    $ gpg --gen-key
+
+A typical release process looks as follow:
+
+    # Switch to master and make sure all the latest commits are pulled
+    $ git checkout master
+    $ git pull master
+
+    # Run the releaser script with the expected version
+    $ ./misc/releaser.py build v1.2.3
+
+    # Push the produced tag and commits
+    $ git push --follow-tags
+
+
+"""
 
 import sys
 import argparse
@@ -165,7 +188,7 @@ def run_git(cmd, verbose=False):
         raise RuntimeError(
             f"Error while running `{cmd}`: returned {proc.returncode}\n"
             f"stdout:\n{proc.stdout.decode()}\n"
-            f"stdout:\n{proc.stdout.decode()}\n"
+            f"stderr:\n{proc.stderr.decode()}\n"
         )
     stderr = proc.stderr.decode()
     if verbose and stderr:
@@ -335,7 +358,9 @@ def check_non_release(version):
 
 
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser(description="Handle release & related checks")
+    parser = argparse.ArgumentParser(
+        description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter
+    )
     parser.add_argument("command", choices=("build", "check"))
     parser.add_argument("version", type=Version, nargs="?")
     parser.add_argument("-v", "--verbose", action="store_true")

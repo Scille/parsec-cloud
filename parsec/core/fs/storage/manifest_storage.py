@@ -1,15 +1,20 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
 
+import re
+
 import trio
+from pathlib import Path
 from structlog import get_logger
-from typing import Dict, Tuple, Set, Optional
+from typing import Dict, Tuple, Set, Optional, Union, Pattern, AsyncIterator, AsyncContextManager
 from async_generator import asynccontextmanager
 
-from parsec.core.fs.exceptions import FSLocalMissError
-from parsec.core.types import EntryID, ChunkID, LocalDevice, LocalManifest
-from parsec.core.fs.storage.local_database import LocalDatabase
+from parsec.core.fs.exceptions import FSLocalMissError, FSLocalStorageClosedError
+from parsec.core.types import EntryID, ChunkID, LocalDevice, BaseLocalManifest, BlockID
+from parsec.core.fs.storage.local_database import LocalDatabase, Cursor
 
 logger = get_logger()
+
+EMPTY_PATTERN = r"^\b$"  # Do not match anything (https://stackoverflow.com/a/2302992/2846140)
 
 
 class ManifestStorage:
@@ -25,7 +30,7 @@ class ManifestStorage:
 
         # This cache contains all the manifests that have been set or accessed
         # since the last call to `clear_memory_cache`
-        self._cache = {}
+        self._cache: Dict[EntryID, BaseLocalManifest] = {}
 
         # This dictionnary keeps track of all the entry ids of the manifests
         # that have been added to the cache but still needs to be written to
@@ -33,29 +38,36 @@ class ManifestStorage:
         # the chunks that needs to be removed from the localdb after the
         # manifest is written. Note: this set might be empty but the manifest
         # still requires to be flushed.
-        self._cache_ahead_of_localdb = {}
+        self._cache_ahead_of_localdb: Dict[EntryID, Set[Union[ChunkID, BlockID]]] = {}
 
     @property
-    def path(self):
-        return self.localdb.path
+    def path(self) -> Path:
+        return Path(self.localdb.path)
 
     @classmethod
     @asynccontextmanager
-    async def run(cls, *args, **kwargs):
-        self = cls(*args, **kwargs)
+    async def run(
+        cls, device: LocalDevice, localdb: LocalDatabase, realm_id: EntryID
+    ) -> AsyncIterator["ManifestStorage"]:
+        self = cls(device, localdb, realm_id)
         await self._create_db()
         try:
             yield self
         finally:
             with trio.CancelScope(shield=True):
-                await self._flush_cache_ahead_of_persistance()
+                # Flush the in-memory cache before closing the storage
+                try:
+                    await self._flush_cache_ahead_of_persistance()
+                # Ignore storage closed exceptions, since it follows an operational error
+                except FSLocalStorageClosedError:
+                    pass
 
-    def _open_cursor(self):
+    def _open_cursor(self) -> AsyncContextManager[Cursor]:
         # We want the manifest to be written to the disk as soon as possible
         # (unless they are purposely kept out of the local database)
         return self.localdb.open_cursor(commit=True)
 
-    async def clear_memory_cache(self, flush=True):
+    async def clear_memory_cache(self, flush: bool = True) -> None:
         if flush:
             await self._flush_cache_ahead_of_persistance()
         self._cache_ahead_of_localdb.clear()
@@ -63,7 +75,7 @@ class ManifestStorage:
 
     # Database initialization
 
-    async def _create_db(self):
+    async def _create_db(self) -> None:
         async with self._open_cursor() as cursor:
             cursor.execute(
                 """
@@ -87,6 +99,58 @@ class ManifestStorage:
                   checkpoint INTEGER NOT NULL
                 );
                 """
+            )
+            # Singleton storing the prevent_sync_pattern
+            cursor.execute(
+                """
+                CREATE TABLE IF NOT EXISTS prevent_sync_pattern
+                (
+                  _id INTEGER PRIMARY KEY NOT NULL,
+                  pattern TEXT NOT NULL,
+                  fully_applied INTEGER NOT NULL  -- Boolean
+                );
+                """
+            )
+            # Set the default "prevent sync" pattern if it doesn't exist
+            cursor.execute(
+                """
+                INSERT OR IGNORE INTO prevent_sync_pattern(_id, pattern, fully_applied)
+                VALUES (0, ?, 0)""",
+                (EMPTY_PATTERN,),
+            )
+
+    # "Prevent sync" pattern operations
+
+    async def get_prevent_sync_pattern(self) -> Tuple[Pattern[str], bool]:
+        async with self._open_cursor() as cursor:
+            cursor.execute("SELECT pattern, fully_applied FROM prevent_sync_pattern WHERE _id = 0")
+            reply = cursor.fetchone()
+            pattern, fully_applied = reply
+            return (re.compile(pattern), bool(fully_applied))
+
+    async def set_prevent_sync_pattern(self, pattern: Pattern[str]) -> None:
+        """Set the "prevent sync" pattern for the corresponding workspace
+
+        This operation is idempotent,
+        i.e it does not reset the `fully_applied` flag if the pattern hasn't changed.
+        """
+        async with self._open_cursor() as cursor:
+            cursor.execute(
+                """UPDATE prevent_sync_pattern SET pattern = ?, fully_applied = 0 WHERE _id = 0 AND pattern != ?""",
+                (pattern.pattern, pattern.pattern),
+            )
+
+    async def mark_prevent_sync_pattern_fully_applied(self, pattern: Pattern[str]) -> None:
+        """Mark the provided pattern as fully applied.
+
+        This is meant to be called after one made sure that all the manifests in the
+        workspace are compliant with the new pattern. The applied pattern is provided
+        as an argument in order to avoid concurrency issues.
+        """
+        async with self._open_cursor() as cursor:
+            cursor.execute(
+                """UPDATE prevent_sync_pattern SET fully_applied = 1 WHERE _id = 0 AND pattern = ?""",
+                (pattern.pattern,),
             )
 
     # Checkpoint operations
@@ -121,13 +185,16 @@ class ManifestStorage:
         """
         Raises: Nothing !
         """
+        remote_changes = set()
+        local_changes = {
+            entry_id for entry_id, manifest in self._cache.items() if manifest.need_sync
+        }
+
         async with self._open_cursor() as cursor:
             cursor.execute(
                 "SELECT vlob_id, need_sync, base_version, remote_version "
                 "FROM vlobs WHERE need_sync = 1 OR base_version != remote_version"
             )
-            local_changes = set()
-            remote_changes = set()
             for manifest_id, need_sync, bv, rv in cursor.fetchall():
                 manifest_id = EntryID(manifest_id)
                 if need_sync:
@@ -138,7 +205,7 @@ class ManifestStorage:
 
     # Manifest operations
 
-    async def get_manifest(self, entry_id: EntryID) -> LocalManifest:
+    async def get_manifest(self, entry_id: EntryID) -> BaseLocalManifest:
         """
         Raises:
             FSLocalMissError
@@ -160,7 +227,7 @@ class ManifestStorage:
 
         # Safely fill the cache
         if entry_id not in self._cache:
-            self._cache[entry_id] = LocalManifest.decrypt_and_load(
+            self._cache[entry_id] = BaseLocalManifest.decrypt_and_load(
                 manifest_row[0], key=self.device.local_symkey
             )
 
@@ -170,9 +237,9 @@ class ManifestStorage:
     async def set_manifest(
         self,
         entry_id: EntryID,
-        manifest: LocalManifest,
+        manifest: BaseLocalManifest,
         cache_only: bool = False,
-        removed_ids: Optional[Set[ChunkID]] = None,
+        removed_ids: Optional[Set[Union[ChunkID, BlockID]]] = None,
     ) -> None:
         """
         Raises: Nothing !

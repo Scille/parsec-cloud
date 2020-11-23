@@ -1,7 +1,7 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
 
 from unittest.mock import ANY
-from pendulum import Pendulum
+from pendulum import datetime
 import pytest
 
 from parsec.api.protocol import (
@@ -9,6 +9,7 @@ from parsec.api.protocol import (
     apiv1_organization_update_serializer,
 )
 from tests.backend.test_apiv1_organization import organization_create
+from parsec.backend.backend_events import BackendEvent
 
 
 async def organization_status(sock, organization_id):
@@ -21,7 +22,7 @@ async def organization_status(sock, organization_id):
     return apiv1_organization_status_serializer.rep_loads(raw_rep)
 
 
-async def organization_update(sock, organization_id, expiration_date: Pendulum = None):
+async def organization_update(sock, organization_id, expiration_date: datetime = None):
     raw_rep = await sock.send(
         apiv1_organization_update_serializer.req_dumps(
             {
@@ -57,22 +58,38 @@ async def test_organization_status_not_bootstrapped(
 
 @pytest.mark.trio
 async def test_organization_update_expiration_date(
-    coolorg, organization_factory, administration_backend_sock
+    coolorg, organization_factory, administration_backend_sock, backend
 ):
     rep = await organization_status(administration_backend_sock, coolorg.organization_id)
     assert rep == {"status": "ok", "is_bootstrapped": True, "expiration_date": None}
     rep = await organization_update(
-        administration_backend_sock, coolorg.organization_id, expiration_date=Pendulum(2077, 1, 1)
+        administration_backend_sock, coolorg.organization_id, expiration_date=datetime(2077, 1, 1)
     )
     assert rep == {"status": "ok"}
     rep = await organization_status(administration_backend_sock, coolorg.organization_id)
-    assert rep == {"status": "ok", "is_bootstrapped": True, "expiration_date": Pendulum(2077, 1, 1)}
+    assert rep == {"status": "ok", "is_bootstrapped": True, "expiration_date": datetime(2077, 1, 1)}
     rep = await organization_update(
         administration_backend_sock, coolorg.organization_id, expiration_date=None
     )
     assert rep == {"status": "ok"}
     rep = await organization_status(administration_backend_sock, coolorg.organization_id)
     assert rep == {"status": "ok", "is_bootstrapped": True, "expiration_date": None}
+    # Expired organization
+    with backend.event_bus.listen() as spy:
+        rep = await organization_update(
+            administration_backend_sock,
+            coolorg.organization_id,
+            expiration_date=datetime(1999, 12, 31),
+        )
+        assert rep == {"status": "ok"}
+        await spy.wait_with_timeout(BackendEvent.ORGANIZATION_EXPIRED)
+
+        rep = await organization_status(administration_backend_sock, coolorg.organization_id)
+        assert rep == {
+            "status": "ok",
+            "is_bootstrapped": True,
+            "expiration_date": datetime(1999, 12, 31),
+        }
 
 
 @pytest.mark.trio
@@ -80,7 +97,7 @@ async def test_organization_update_expiration_date_unknown_organization(
     coolorg, organization_factory, administration_backend_sock
 ):
     rep = await organization_update(
-        administration_backend_sock, "dummy", expiration_date=Pendulum(2077, 1, 1)
+        administration_backend_sock, "dummy", expiration_date=datetime(2077, 1, 1)
     )
     assert rep == {"status": "not_found"}
 

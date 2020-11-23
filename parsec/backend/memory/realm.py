@@ -142,7 +142,7 @@ class MemoryRealmComponent(BaseRealmComponent):
         organization_id: OrganizationID,
         author: DeviceID,
         realm_id: UUID,
-        since: pendulum.Pendulum,
+        since: pendulum.DateTime,
     ) -> List[bytes]:
         realm = self._get_realm(organization_id, realm_id)
         if author.user_id not in realm.roles:
@@ -220,7 +220,7 @@ class MemoryRealmComponent(BaseRealmComponent):
         realm_id: UUID,
         encryption_revision: int,
         per_participant_message: Dict[UserID, bytes],
-        timestamp: pendulum.Pendulum,
+        timestamp: pendulum.DateTime,
     ) -> None:
         realm = self._get_realm(organization_id, realm_id)
         if realm.roles.get(author.user_id) != RealmRole.OWNER:

@@ -22,6 +22,7 @@ from async_generator import asynccontextmanager
 import hypothesis
 from pathlib import Path
 import sqlite3
+import tempfile
 
 from parsec.monitoring import TaskMonitoringInstrument
 from parsec.core import CoreConfig
@@ -34,7 +35,7 @@ from parsec.core.fs.storage import LocalDatabase, local_database, UserStorage
 from parsec.backend import backend_app_factory
 from parsec.backend.config import (
     BackendConfig,
-    EmailConfig,
+    MockedEmailConfig,
     MockedBlockStoreConfig,
     PostgreSQLBlockStoreConfig,
     RAID0BlockStoreConfig,
@@ -75,6 +76,7 @@ def pytest_addoption(parser):
     parser.addoption("--runslow", action="store_true", help="Don't skip slow tests")
     parser.addoption("--runmountpoint", action="store_true", help="Don't skip FUSE/WinFSP tests")
     parser.addoption("--rungui", action="store_true", help="Don't skip GUI tests")
+    parser.addoption("--rundiskfull", action="store_true", help="Don't skip the disk full tests")
     parser.addoption(
         "--realcrypto", action="store_true", help="Don't mock crypto operation to save time"
     )
@@ -96,7 +98,7 @@ def is_xdist_master(config):
 @pytest.fixture(scope="session", autouse=True)
 def mock_timezone_utc(request):
     # Mock and non-UTC timezones are a really bad mix, so keep things simple
-    with pendulum.tz.LocalTimezone.test(pendulum.timezone("utc")):
+    with pendulum.test_local_timezone(pendulum.timezone("utc")):
         yield
 
 
@@ -153,7 +155,7 @@ def patch_pytest_trio():
 
     def patched_crash(self, exc):
         if exc is None:
-            task = trio.hazmat.current_task()
+            task = trio.lowlevel.current_task()
             for child_nursery in task.child_nurseries:
                 for child_exc in child_nursery._pending_excs:
                     if not isinstance(exc, trio.Cancelled):
@@ -195,6 +197,9 @@ def pytest_runtest_setup(item):
             pytest.skip("need --runmountpoint option to run")
         elif not get_mountpoint_runner():
             pytest.skip("FUSE/WinFSP not available")
+    if item.get_closest_marker("diskfull"):
+        if not item.config.getoption("--rundiskfull"):
+            pytest.skip("need --rundiskfull option to run")
     if item.get_closest_marker("gui"):
         if not item.config.getoption("--rungui"):
             pytest.skip("need --rungui option to run")
@@ -208,7 +213,7 @@ def pytest_collection_modifyitems(config, items):
 
 @pytest.fixture
 async def task_monitoring():
-    trio.hazmat.add_instrument(TaskMonitoringInstrument())
+    trio.lowlevel.add_instrument(TaskMonitoringInstrument())
 
 
 @pytest.fixture(autouse=True, scope="session", name="unmock_crypto")
@@ -216,8 +221,9 @@ def mock_crypto(request):
     # Crypto is CPU hungry
     if request.config.getoption("--realcrypto"):
 
+        @contextmanager
         def unmock():
-            pass
+            yield
 
         yield unmock
 
@@ -416,12 +422,15 @@ def persistent_mockup(monkeypatch):
 
     async def _create_connection(storage):
         storage_set.add(storage)
-        return mockup_context.get(storage.path)
+        storage._conn = mockup_context.get(storage.path)
 
     async def _close(storage):
         # Idempotent operation
         storage_set.discard(storage)
         storage._conn = None
+
+    async def get_disk_usage(storage):
+        return 0
 
     @asynccontextmanager
     async def thread_pool_runner(max_workers):
@@ -435,6 +444,7 @@ def persistent_mockup(monkeypatch):
     monkeypatch.setattr(local_database, "thread_pool_runner", thread_pool_runner)
     monkeypatch.setattr(LocalDatabase, "_create_connection", _create_connection)
     monkeypatch.setattr(LocalDatabase, "_close", _close)
+    monkeypatch.setattr(LocalDatabase, "get_disk_usage", get_disk_usage)
 
     yield mockup_context
     mockup_context.clear()
@@ -575,19 +585,9 @@ def backend_factory(
 async def backend(backend_factory, request, fixtures_customization, backend_addr):
     populated = not fixtures_customization.get("backend_not_populated", False)
     config = {}
-    if fixtures_customization.get("backend_has_email", False):
-        config["email_config"] = EmailConfig(
-            host="example.com",
-            # Invalid port, hence we should crash if by mistake we try
-            # to reach this SMTP server
-            port=999999,
-            host_user="mail_user",
-            host_password=None,
-            use_ssl=False,
-            use_tls=False,
-            sender="Parsec <no-reply@parsec.com>",
-        )
-        config["backend_addr"] = backend_addr
+    tmpdir = tempfile.mkdtemp(prefix="tmp-email-folder-")
+    config["email_config"] = MockedEmailConfig(sender="Parsec <no-reply@parsec.com>", tmpdir=tmpdir)
+    config["backend_addr"] = backend_addr
     if fixtures_customization.get("backend_spontaneous_organization_boostrap", False):
         config["spontaneous_organization_bootstrap"] = True
     if fixtures_customization.get("backend_has_webhook", False):
@@ -681,13 +681,17 @@ async def running_backend(server_factory, backend_addr, backend, running_backend
 
 
 @pytest.fixture
-def core_config(tmpdir):
+def core_config(tmpdir, backend_addr, unused_tcp_port, fixtures_customization):
+    if fixtures_customization.get("fake_preferred_org_creation_backend_addr", False):
+        backend_addr = BackendAddr.from_url(f"parsec://localhost:{unused_tcp_port}")
+
     tmpdir = Path(tmpdir)
     return CoreConfig(
         config_dir=tmpdir / "config",
         cache_base_dir=tmpdir / "cache",
         data_base_dir=tmpdir / "data",
         mountpoint_base_dir=tmpdir / "mnt",
+        preferred_org_creation_backend_addr=backend_addr,
     )
 
 
@@ -732,7 +736,14 @@ async def alice_core(core_factory, alice):
 
 @pytest.fixture
 async def alice2_core(core_factory, alice2):
+
     async with core_factory(alice2) as core:
+        yield core
+
+
+@pytest.fixture
+async def otheralice_core(core_factory, otheralice):
+    async with core_factory(otheralice) as core:
         yield core
 
 
