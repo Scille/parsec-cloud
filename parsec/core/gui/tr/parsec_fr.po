@@ -2481,10 +2481,3 @@ msgstr "Créer un nouvel espace de travail"
 
 msgid "ACTION_WORKSPACE_GOTO_FILE_LINK"
 msgstr "Trouver un fichier via son lien"
-
-#~ msgid "TEXT_WORKSPACE_TIMESTAMPED_INSTRUCTIONS"
-#~ msgstr ""
-#~ "Vous pourrez naviguer dans l'espace de"
-#~ " travail tel qu'il était à un "
-#~ "moment donné."
-
