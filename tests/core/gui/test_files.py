@@ -609,16 +609,24 @@ async def test_copy_files(
         await aqtbot.key_click(w_f.table_files, "C", modifier=QtCore.Qt.ControlModifier)
 
     assert w_f.clipboard is not None
+    assert len(w_f.clipboard.files) == 2
 
     # Moving to sub directory
     async with aqtbot.wait_signal(w_f.folder_stat_success):
         w_f.table_files.item_activated.emit(FileType.Folder, "dir1")
+
+    def _switched_folder():
+        c_w = logged_gui_with_files.test_get_central_widget()
+        assert c_w.label_title3.text() == "/dir1"
+
+    await aqtbot.wait_until(_switched_folder)
+
     assert w_f.table_files.rowCount() == 1
 
-    async with aqtbot.wait_signal(w_f.table_files.paste_clicked):
+    async with aqtbot.wait_signals([w_f.table_files.paste_clicked, w_f.copy_success], timeout=2000):
         await aqtbot.key_click(w_f.table_files, "V", modifier=QtCore.Qt.ControlModifier)
 
-    await aqtbot.wait_until(partial(_files_refreshed, 3))
+    await aqtbot.wait_until(partial(_files_refreshed, 3), timeout=2000)
 
     assert w_f.table_files.item(1, 1).text() == "file01.txt"
     assert w_f.table_files.item(2, 1).text() == "file02.txt"
