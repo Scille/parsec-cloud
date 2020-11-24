@@ -1,0 +1,1 @@
+Make OSXFUSE download link clickable in GUI

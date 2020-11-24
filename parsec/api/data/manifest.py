@@ -63,7 +63,7 @@ WorkspaceEntryTypeVar = TypeVar("WorkspaceEntryTypeVar", bound="WorkspaceEntry")
 @attr.s(slots=True, frozen=True, auto_attribs=True, kw_only=True, eq=False)
 class WorkspaceEntry(BaseData):
     class SCHEMA_CLS(BaseSchema):
-        name = EntryNameField(validate=validate.Length(min=1, max=256), required=True)
+        name = EntryNameField(required=True)
         id = EntryIDField(required=True)
         key = fields.SecretKey(required=True)
         encryption_revision = fields.Int(required=True, validate=validate.Range(min=0))
@@ -75,7 +75,7 @@ class WorkspaceEntry(BaseData):
         def make_obj(self, data: Dict[str, Any]) -> "WorkspaceEntry":
             return WorkspaceEntry(**data)
 
-    name: str
+    name: EntryName
     id: EntryID
     key: SecretKey
     encryption_revision: int
@@ -87,7 +87,7 @@ class WorkspaceEntry(BaseData):
     def new(cls: Type[WorkspaceEntryTypeVar], name: str) -> "WorkspaceEntry":
         now = pendulum_now()
         return WorkspaceEntry(
-            name=name,
+            name=EntryName(name),
             id=EntryID(),
             key=SecretKey.generate(),
             encryption_revision=1,
@@ -160,11 +160,7 @@ class FolderManifest(BaseManifest):
         version = fields.Integer(required=True, validate=validate.Range(min=0))
         created = fields.DateTime(required=True)
         updated = fields.DateTime(required=True)
-        children = fields.FrozenMap(
-            EntryNameField(validate=validate.Length(min=1, max=256)),
-            EntryIDField(required=True),
-            required=True,
-        )
+        children = fields.FrozenMap(EntryNameField(), EntryIDField(required=True), required=True)
 
         @pre_load
         def fix_legacy(self, data: Dict[str, Any]) -> Dict[str, Any]:
@@ -257,11 +253,7 @@ class WorkspaceManifest(BaseManifest):
         version = fields.Integer(required=True, validate=validate.Range(min=0))
         created = fields.DateTime(required=True)
         updated = fields.DateTime(required=True)
-        children = fields.FrozenMap(
-            EntryNameField(validate=validate.Length(min=1, max=256)),
-            EntryIDField(required=True),
-            required=True,
-        )
+        children = fields.FrozenMap(EntryNameField(), EntryIDField(required=True), required=True)
 
         @pre_load
         def fix_legacy(self, data: Dict[str, T]) -> Dict[str, T]:

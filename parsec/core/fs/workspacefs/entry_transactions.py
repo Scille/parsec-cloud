@@ -425,6 +425,6 @@ class EntryTransactions(FileTransactions):
 
             # Perform resize
             await self._manifest_resize(manifest, length)
-
+            self._send_event(CoreEvent.FS_ENTRY_UPDATED, id=manifest.id)
             # Return entry id
             return manifest.id
