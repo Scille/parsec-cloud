@@ -184,7 +184,7 @@ def _load_legacy_device_file(key_file_path: Path) -> Optional[AvailableDevice]:
     )
 
 
-def _load_device_file(key_file_path: Path) -> Optional[AvailableDevice]:
+def load_device_file(key_file_path: Path) -> Optional[AvailableDevice]:
     try:
         data = key_file_serializer.loads(key_file_path.read_bytes())
     except (FileNotFoundError, LocalDeviceError):
@@ -210,7 +210,7 @@ def _iter_available_devices(config_dir: Path) -> Iterator[AvailableDevice]:
     # In the case of duplicate files, that means only the first discovered device is considered
     for key_file_path in sorted(key_file_paths):
         # Load the device file
-        device = _load_device_file(key_file_path)
+        device = load_device_file(key_file_path)
         # Try with the legacy deserializer if necessary
         if device is None:
             device = _load_legacy_device_file(key_file_path)

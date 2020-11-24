@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PROJECT VERSION\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2020-11-04 09:40+0100\n"
+"POT-Creation-Date: 2020-11-23 09:35+0100\n"
 "PO-Revision-Date: 2020-10-15 10:31+0200\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language: fr\n"
@@ -391,11 +391,11 @@ msgstr ""
 msgid "TEXT_FILE_LINK_COPIED_TO_CLIPBOARD"
 msgstr "Le lien vers le fichier a été copié dans le presse-papier."
 
-msgid "TEXT_FILE_PASTE_ERROR"
-msgstr "Impossible de coller ce fichier à cet endroit."
-
 msgid "TEXT_FILE_FOLDER_MOVED_INTO_ITSELF_ERROR"
 msgstr "Impossible de déplacer un répertoire dans lui-même."
+
+msgid "TEXT_FILE_PASTE_ERROR"
+msgstr "Impossible de coller ce fichier à cet endroit."
 
 msgid "TEXT_FILE_HISTORY_MULTIPLE_FILES_SELECTED_ERROR"
 msgstr ""
@@ -732,6 +732,47 @@ msgid "TEXT_LOGIN_MOUNTPOINT_ERROR"
 msgstr ""
 "Impossible de se connecter. Les espaces de travail n'ont pas pu être "
 "montés."
+
+msgid "ASK_OVERWRITE_KEY"
+msgstr "Remplacer la clef d'appareil"
+
+msgid "TEXT_OVERWRITE_KEY"
+msgstr "Cette clef d'appareil existe déjà, souhaitez-vous la remplacer ?"
+
+msgid "ACTION_OVERWRITE_KEY_YES"
+msgstr "Remplacer"
+
+msgid "ACTION_IMPORT_NO"
+msgstr "Annuler"
+
+msgid "TEXT_EXPORT_KEY"
+msgstr "Exporter la clef d'appareil"
+
+msgid "IMPORT_KEY_FILTERS"
+msgstr "Clefs d'appareil (*.keys);;Tous les fichiers (*)"
+
+msgid "IMPORT_KEY_INITIAL_FILTER"
+msgstr "Clefs d'appareil (*.keys)"
+
+msgid "EXPORT_KEY_ERROR"
+msgstr "Impossible d'exporter cette clef."
+
+msgid "ACTION_IMPORT_KEY"
+msgstr "Importer une clé d'appareil"
+
+msgid "TEXT_INVALID_DEVICE_KEY"
+msgstr "Ce fichier ne contient pas de clef d'appareil valide."
+
+msgid "ASK_IMPORT_KEY"
+msgstr "Importer cette clef d'appareil ?"
+
+msgid "TEXT_IMPORT_KEY_CONFIRM_organization-user-device"
+msgstr "Organisation : <b>{organization}</b><br />"
+"Utilisateur : <b>{user}</b><br />"
+"Appareil : <b>{device}</b>"
+
+msgid "ACTION_IMPORT_YES"
+msgstr "Importer"
 
 msgid "TEXT_PARSEC_LICENSE"
 msgstr ""
@@ -1545,6 +1586,9 @@ msgstr "Créer une organisation"
 msgid "ACTION_MAIN_MENU_JOIN_ORGANIZATION"
 msgstr "Rejoindre une organisation"
 
+msgid "ACTION_MAIN_MENU_MANAGE_KEYS"
+msgstr "Importer/Exporter les clés de l'appareil"
+
 msgid "ACTION_MAIN_MENU_SETTINGS"
 msgstr "Configuration"
 
@@ -1574,6 +1618,9 @@ msgstr "Journal des modifications de PARSEC"
 
 msgid "TEXT_SETTINGS_TITLE"
 msgstr "Configuration"
+
+msgid "TEXT_KEYS_DIALOG"
+msgstr "Gerer les clés de l'appareil"
 
 msgid "TEXT_JOIN_ORG_URL_TITLE"
 msgstr "Rejoindre une organisation"
@@ -1718,7 +1765,8 @@ msgstr "Impossible de récupérer l'historique de cet espace de travail."
 
 msgid "TEXT_WORKSPACE_TIMESTAMPED_INSTRUCTIONS_created"
 msgstr ""
-"Vous pourrez naviguer dans l'espace de travail tel qu'il était à un moment donné.\n"
+"Vous pourrez naviguer dans l'espace de travail tel qu'il était à un "
+"moment donné.\n"
 "\n"
 "Cet espace de travail a été créé le {created}."
 
@@ -2315,6 +2363,15 @@ msgstr ""
 msgid "TEXT_DIALOG_CLOSE_TOOLTIP"
 msgstr "Fermer la fenêtre."
 
+msgid "TEXT_EXPORT_KEY_TOOLTIP"
+msgstr "Exporter cette clé"
+
+msgid "ACTION_EXPORT_KEY"
+msgstr "Exporter cette clef"
+
+msgid "TEXT_IMPORT_KEY_TOOLTIP"
+msgstr "Importer une nouvelle clef dans Parsec"
+
 msgid "TEXT_IMPORT_FILES_PROGRESS"
 msgstr "Import du fichier"
 
@@ -2410,11 +2467,6 @@ msgstr "Vue instantanée"
 msgid "TEXT_WORKSPACE_TEMPORARY_DESCRIPTION"
 msgstr "Espace de travail tel qu'il apparaissait le :"
 
-msgid "TEXT_WORKSPACE_TIMESTAMPED_INSTRUCTIONS"
-msgstr ""
-"Vous pourrez naviguer dans l'espace de travail tel qu'il était à un "
-"moment donné."
-
 msgid "TEXT_WORKSPACE_TIMESTAMPED_SELECT_DATE"
 msgstr "Sélectionnez une date"
 
@@ -2480,3 +2532,4 @@ msgstr "Créer un nouvel espace de travail"
 
 msgid "ACTION_WORKSPACE_GOTO_FILE_LINK"
 msgstr "Trouver un fichier via son lien"
+

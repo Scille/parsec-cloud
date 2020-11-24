@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PROJECT VERSION\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2020-11-04 09:40+0100\n"
+"POT-Creation-Date: 2020-11-23 09:35+0100\n"
 "PO-Revision-Date: 2020-10-15 10:30+0200\n"
 "Last-Translator: \n"
 "Language: en\n"
@@ -370,11 +370,11 @@ msgstr "Cannot import files because you don't have write access to this workspac
 msgid "TEXT_FILE_LINK_COPIED_TO_CLIPBOARD"
 msgstr "A link to the file has been copied to your clipboard."
 
-msgid "TEXT_FILE_PASTE_ERROR"
-msgstr "Cannot paste this file here."
-
 msgid "TEXT_FILE_FOLDER_MOVED_INTO_ITSELF_ERROR"
 msgstr "Cannot move a folder into itself."
+
+msgid "TEXT_FILE_PASTE_ERROR"
+msgstr "Cannot paste this file here."
 
 msgid "TEXT_FILE_HISTORY_MULTIPLE_FILES_SELECTED_ERROR"
 msgstr ""
@@ -688,6 +688,47 @@ msgstr "The password is incorrect."
 
 msgid "TEXT_LOGIN_MOUNTPOINT_ERROR"
 msgstr "Cannot log in. The workspaces could not be mounted."
+
+msgid "ASK_OVERWRITE_KEY"
+msgstr "Overwrite device key"
+
+msgid "TEXT_OVERWRITE_KEY"
+msgstr "This device key already exists, do you want to overwrite it?"
+
+msgid "ACTION_OVERWRITE_KEY_YES"
+msgstr "Overwrite"
+
+msgid "ACTION_IMPORT_NO"
+msgstr "Cancel"
+
+msgid "TEXT_EXPORT_KEY"
+msgstr "Export device key"
+
+msgid "IMPORT_KEY_FILTERS"
+msgstr "Key files (*.keys);;All files (*)"
+
+msgid "IMPORT_KEY_INITIAL_FILTER"
+msgstr "Key files (*.keys)"
+
+msgid "EXPORT_KEY_ERROR"
+msgstr "Cannot export device key"
+
+msgid "ACTION_IMPORT_KEY"
+msgstr "Import a device key"
+
+msgid "TEXT_INVALID_DEVICE_KEY"
+msgstr "This file does not contain a valid device key."
+
+msgid "ASK_IMPORT_KEY"
+msgstr "Import this device key?"
+
+msgid "TEXT_IMPORT_KEY_CONFIRM_organization-user-device"
+msgstr "Organization: <b>{organization}</b><br />"
+"User: <b>{user}</b><br />"
+"Device: <b>{device}</b>"
+
+msgid "ACTION_IMPORT_YES"
+msgstr "Import"
 
 msgid "TEXT_PARSEC_LICENSE"
 msgstr ""
@@ -1499,6 +1540,9 @@ msgstr "Create an organization"
 msgid "ACTION_MAIN_MENU_JOIN_ORGANIZATION"
 msgstr "Join an organization"
 
+msgid "ACTION_MAIN_MENU_MANAGE_KEYS"
+msgstr "Import/Export device keys"
+
 msgid "ACTION_MAIN_MENU_SETTINGS"
 msgstr "Settings"
 
@@ -1528,6 +1572,9 @@ msgstr "PARSEC Changelog"
 
 msgid "TEXT_SETTINGS_TITLE"
 msgstr "Settings"
+
+msgid "TEXT_KEYS_DIALOG"
+msgstr "Manage device keys"
 
 msgid "TEXT_JOIN_ORG_URL_TITLE"
 msgstr "Join an organization"
@@ -2256,6 +2303,15 @@ msgstr ""
 msgid "TEXT_DIALOG_CLOSE_TOOLTIP"
 msgstr "Close the window."
 
+msgid "TEXT_EXPORT_KEY_TOOLTIP"
+msgstr "Export this device key"
+
+msgid "ACTION_EXPORT_KEY"
+msgstr "Export this key"
+
+msgid "TEXT_IMPORT_KEY_TOOLTIP"
+msgstr "Import a new key to Parsec"
+
 msgid "TEXT_IMPORT_FILES_PROGRESS"
 msgstr "Importing file"
 
@@ -2348,9 +2404,6 @@ msgstr "Snapshot"
 
 msgid "TEXT_WORKSPACE_TEMPORARY_DESCRIPTION"
 msgstr "Workspace as it appeared on:"
-
-msgid "TEXT_WORKSPACE_TIMESTAMPED_INSTRUCTIONS"
-msgstr "You will be able to see the workspace as it was at a given time."
 
 msgid "TEXT_WORKSPACE_TIMESTAMPED_SELECT_DATE"
 msgstr "Select a date..."
