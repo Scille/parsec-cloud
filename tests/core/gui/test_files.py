@@ -675,6 +675,7 @@ async def test_copy_cut_folders_and_files_between_two_workspaces(
 
     # Test local widget file clipboard
     assert w_f.clipboard is not None
+    assert len(w_f.clipboard.files) == 2
 
     # Moving to sub directory
     async with aqtbot.wait_signal(w_f.folder_stat_success):
@@ -683,10 +684,10 @@ async def test_copy_cut_folders_and_files_between_two_workspaces(
     await aqtbot.wait_until(lambda: _files_displayed(1))
 
     # Paste the 2 files in subfolder
-    async with aqtbot.wait_signal(w_f.table_files.paste_clicked):
+    async with aqtbot.wait_signals([w_f.table_files.paste_clicked, w_f.copy_success], timeout=2000):
         await aqtbot.key_click(w_f.table_files, "V", modifier=QtCore.Qt.ControlModifier)
 
-    await aqtbot.wait_until(lambda: _files_displayed(3))
+    await aqtbot.wait_until(lambda: _files_displayed(3), timeout=2000)
 
     assert w_f.table_files.item(1, 1).text() == "file01.txt"
     assert w_f.table_files.item(2, 1).text() == "file02.txt"
@@ -706,6 +707,7 @@ async def test_copy_cut_folders_and_files_between_two_workspaces(
 
     # Check both clipboards is not none
     assert w_f.clipboard is not None
+    assert len(w_f.clipboard.files) == 3
     assert mount_widget.global_clipboard is not None
 
     # Go to workspace list to paste it in second workspace
@@ -722,7 +724,7 @@ async def test_copy_cut_folders_and_files_between_two_workspaces(
     await aqtbot.wait_until(lambda: _files_displayed(1))
 
     # Paste the files/folders of first workspace in second workspace folder
-    async with aqtbot.wait_signal(w_f.table_files.paste_clicked):
+    async with aqtbot.wait_signals([w_f.table_files.paste_clicked, w_f.move_success], timeout=2000):
         await aqtbot.key_click(w_f.table_files, "V", modifier=QtCore.Qt.ControlModifier)
 
     await aqtbot.wait_until(lambda: _files_displayed(4))
