@@ -314,6 +314,7 @@ test_requirements = [
     "sphinx==2.4.3",
     "sphinx-intl==2.0.0",
     "sphinx-rtd-theme==0.4.3",
+    "psutil==5.6.3",
 ]
 
 
@@ -328,7 +329,7 @@ extra_requirements = {
         'fusepy==3.0.1;platform_system=="Linux" or platform_system=="Darwin"',
         'winfspy==0.8.0;platform_system=="Windows"',
         "zxcvbn==4.4.27",
-        "psutil==5.6.3",
+        'psutil==5.6.3;platform_system=="Windows"',
     ],
     "backend": [
         "jinja2==2.11.2",
