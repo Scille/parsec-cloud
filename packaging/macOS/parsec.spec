@@ -1,7 +1,10 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
 
 import os
-exec(open("../../parsec/_version.py", encoding="utf8").read())
+
+ # Awesome hack to load `__version__`
+__version__ = None
+exec(open("../../parsec/_version.py", encoding="utf-8").read())
 
 a = Analysis(['launch_script.py'],
    pathex=[os.path.dirname(os.path.abspath('parsec.spec'))],
