@@ -63,6 +63,9 @@ async def _do_creation_process(aqtbot, co_w):
     await aqtbot.wait_until(_device_widget_ready)
 
     await aqtbot.key_clicks(co_w.device_widget.line_edit_device, "HEV")
+    assert co_w.device_widget.widget_password.label_password_warning.text() == translate(
+        "TEXT_PASSWORD_WARNING"
+    )
     await aqtbot.key_clicks(co_w.device_widget.widget_password.line_edit_password, "nihilanth")
     assert not co_w.button_validate.isEnabled()
 
