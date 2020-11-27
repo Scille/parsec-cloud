@@ -94,22 +94,6 @@ class HTTPComponent:
 
         return HTTPResponse.build(302, headers={b"location": location_url.encode("ascii")})
 
-    async def _http_proxy_redirection(self, req: HTTPRequest, proxy_redirection_protocol: str):
-        backend_addr_split = urlsplit(self._config.backend_addr.to_url())
-        location_url_query_params = req.query.copy()
-        location_url_query_params.pop("no_ssl", None)
-        location_url_query = urlencode(query=location_url_query_params, doseq=True)
-        location_url = urlunsplit(
-            (
-                proxy_redirection_protocol,
-                backend_addr_split.netloc,
-                req.path,
-                location_url_query,
-                None,
-            )
-        )
-        return HTTPResponse.build(301, headers={b"location": location_url.encode("ascii")})
-
     async def _http_static(self, req: HTTPRequest, path: str) -> HTTPResponse:
         if path == "__init__.py":
             return HTTPResponse.build(404)

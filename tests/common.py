@@ -243,7 +243,7 @@ _FIXTURES_CUSTOMIZATIONS = {
     "backend_not_populated",
     "backend_has_webhook",
     "backend_over_ssl",
-    "backend_ssl_redirect_proxy",
+    "backend_forward_proto_enforce_https",
     "backend_spontaneous_organization_boostrap",
     "logged_gui_as_admin",
     "logged_gui_create_two_workspaces",

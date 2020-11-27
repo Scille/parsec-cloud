@@ -126,6 +126,10 @@ class BackendAddr:
         return self._port
 
     @property
+    def netloc(self):
+        return self._netloc
+
+    @property
     def use_ssl(self):
         return self._use_ssl
 
