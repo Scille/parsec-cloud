@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PROJECT VERSION\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2020-11-25 11:37+0100\n"
+"POT-Creation-Date: 2020-11-30 08:25+0100\n"
 "PO-Revision-Date: 2020-10-15 10:30+0200\n"
 "Last-Translator: \n"
 "Language: en\n"
@@ -1824,6 +1824,18 @@ msgstr "The server is offline or you have no access to the internet."
 
 msgid "TEXT_INVITE_USER_INVITE_ERROR"
 msgstr "Could not invite the user."
+
+msgid "TEXT_WORKSPACE_USER_COUNT_count"
+msgstr "{count} user(s)"
+
+msgid "TEXT_WORKSPACE_METADATA_SIZE_size"
+msgstr "{size} of metadata"
+
+msgid "TEXT_WORKSPACE_DATA_SIZE_size"
+msgstr "{size} of data"
+
+msgid "TEXT_WORKSPACE_TOTAL_SIZE_size"
+msgstr "{size} total"
 
 msgid "ACTION_WORKSPACE_OPEN_IN_FILE_EXPLORER"
 msgstr "Open in the file explorer"

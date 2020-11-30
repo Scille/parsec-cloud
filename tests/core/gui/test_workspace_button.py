@@ -51,19 +51,25 @@ async def test_workspace_button(qtbot, workspace_fs, core_config, alice_user_inf
         workspace_fs=workspace_fs,
         users_roles=roles,
         is_mounted=True,
-        files=[],
+        metadata_size=20000,
+        data_size=1800000,
     )
     qtbot.addWidget(w)
     w.show()
 
-    assert w.widget_empty.isVisible() is True
-    assert w.widget_files.isVisible() is False
     assert w.label_owner.isVisible() is True
     assert w.label_shared.isVisible() is False
     assert w.name == "Workspace"
     assert w.label_title.text().startswith("Workspace")
     assert w.label_title.toolTip() == "Workspace (private)"
     assert w.label_role.text() == _("TEXT_WORKSPACE_ROLE_OWNER")
+
+    assert w.label_user_count.text() == _("TEXT_WORKSPACE_USER_COUNT_count").format(count=1)
+    assert w.label_data_size.text() == _("TEXT_WORKSPACE_DATA_SIZE_size").format(size="1 MB")
+    assert w.label_metadata_size.text() == _("TEXT_WORKSPACE_METADATA_SIZE_size").format(
+        size="19 KB"
+    )
+    assert w.label_total_size.text() == _("TEXT_WORKSPACE_TOTAL_SIZE_size").format(size="1 MB")
 
 
 @pytest.mark.gui
@@ -82,19 +88,24 @@ async def test_workspace_button_owned_by(
         workspace_fs=workspace_fs,
         users_roles=roles,
         is_mounted=True,
-        files=[],
+        metadata_size=20000,
+        data_size=1800000,
     )
 
     qtbot.addWidget(w)
     w.show()
-    assert w.widget_empty.isVisible() is True
-    assert w.widget_files.isVisible() is False
     assert w.label_owner.isVisible() is False
     assert w.label_shared.isVisible() is True
     assert w.name == "Workspace"
     assert w.label_title.text().startswith("Workspace")
     assert w.label_title.toolTip() == "Workspace (owned by Boby McBobFace)"
     assert w.label_role.text() == _("TEXT_WORKSPACE_ROLE_READER")
+    assert w.label_user_count.text() == _("TEXT_WORKSPACE_USER_COUNT_count").format(count=2)
+    assert w.label_data_size.text() == _("TEXT_WORKSPACE_DATA_SIZE_size").format(size="1 MB")
+    assert w.label_metadata_size.text() == _("TEXT_WORKSPACE_METADATA_SIZE_size").format(
+        size="19 KB"
+    )
+    assert w.label_total_size.text() == _("TEXT_WORKSPACE_TOTAL_SIZE_size").format(size="1 MB")
 
 
 @pytest.mark.gui
@@ -113,46 +124,24 @@ async def test_workspace_button_shared_with(
         workspace_fs=workspace_fs,
         users_roles=roles,
         is_mounted=True,
-        files=[],
+        metadata_size=20000,
+        data_size=1800000,
     )
 
     qtbot.addWidget(w)
     w.show()
-    assert w.widget_empty.isVisible() is True
-    assert w.widget_files.isVisible() is False
     assert w.label_owner.isVisible() is True
     assert w.label_shared.isVisible() is True
     assert w.name == "Workspace"
     assert w.label_title.text().startswith("Workspace")
     assert w.label_title.toolTip() == "Workspace (shared with Boby McBobFace)"
     assert w.label_role.text() == _("TEXT_WORKSPACE_ROLE_OWNER")
-
-
-@pytest.mark.gui
-@pytest.mark.trio
-async def test_workspace_button_files(qtbot, workspace_fs, core_config, alice_user_info):
-    switch_language(core_config, "en")
-
-    roles = {alice_user_info.user_id: (WorkspaceRole.OWNER, alice_user_info)}
-    w = WorkspaceButton(
-        workspace_name="Workspace",
-        workspace_fs=workspace_fs,
-        users_roles=roles,
-        is_mounted=True,
-        files=["File1.txt", "File2.txt", "Dir1"],
+    assert w.label_user_count.text() == _("TEXT_WORKSPACE_USER_COUNT_count").format(count=2)
+    assert w.label_data_size.text() == _("TEXT_WORKSPACE_DATA_SIZE_size").format(size="1 MB")
+    assert w.label_metadata_size.text() == _("TEXT_WORKSPACE_METADATA_SIZE_size").format(
+        size="19 KB"
     )
-
-    qtbot.addWidget(w)
-    w.show()
-    assert w.widget_empty.isVisible() is False
-    assert w.widget_files.isVisible() is True
-    assert w.label_owner.isVisible() is True
-    assert w.label_shared.isVisible() is False
-    assert w.name == "Workspace"
-    assert w.file1_name.text() == "File1.txt"
-    assert w.file2_name.text() == "File2.txt"
-    assert w.file3_name.text() == "Dir1"
-    assert w.file4_name.text() == ""
+    assert w.label_total_size.text() == _("TEXT_WORKSPACE_TOTAL_SIZE_size").format(size="1 MB")
 
 
 @pytest.mark.gui
@@ -166,7 +155,8 @@ async def test_workspace_button_clicked(qtbot, workspace_fs, core_config, alice_
         workspace_fs=workspace_fs,
         users_roles=roles,
         is_mounted=True,
-        files=[],
+        metadata_size=20000,
+        data_size=1800000,
     )
 
     qtbot.addWidget(w)
@@ -186,7 +176,8 @@ async def test_workspace_button_share_clicked(qtbot, workspace_fs, core_config, 
         workspace_fs=workspace_fs,
         users_roles=roles,
         is_mounted=True,
-        files=[],
+        metadata_size=20000,
+        data_size=1800000,
     )
     qtbot.addWidget(w)
     with qtbot.waitSignal(w.share_clicked, timeout=500) as blocker:
@@ -205,7 +196,8 @@ async def test_workspace_button_rename_clicked(qtbot, workspace_fs, core_config,
         workspace_fs=workspace_fs,
         users_roles=roles,
         is_mounted=True,
-        files=[],
+        metadata_size=20000,
+        data_size=1800000,
     )
     qtbot.addWidget(w)
     with qtbot.waitSignal(w.rename_clicked, timeout=500) as blocker:
@@ -226,7 +218,8 @@ async def test_workspace_button_reencrypt_clicked(
         workspace_fs=workspace_fs,
         users_roles=roles,
         is_mounted=True,
-        files=[],
+        metadata_size=20000,
+        data_size=1800000,
     )
     w.reencryption_needs = ReencryptionNeed(
         user_revoked=True, role_revoked=False, reencryption_already_in_progress=False
@@ -258,7 +251,8 @@ async def test_workspace_button_delete_clicked(qtbot, workspace_fs, core_config,
         workspace_fs=workspace_fs,
         users_roles=roles,
         is_mounted=True,
-        files=[],
+        metadata_size=20000,
+        data_size=1800000,
     )
     qtbot.addWidget(w)
     with qtbot.waitSignal(w.delete_clicked, timeout=500) as blocker:

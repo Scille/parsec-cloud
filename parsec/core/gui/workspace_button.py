@@ -13,6 +13,7 @@ from parsec.core.gui.lang import translate as _, format_datetime
 from parsec.core.gui.workspace_roles import get_role_translation
 from parsec.core.gui.custom_dialogs import show_info
 from parsec.core.gui.custom_widgets import ensure_string_size
+from parsec.core.gui.file_size import get_filesize
 
 from parsec.core.gui.ui.workspace_button import Ui_WorkspaceButton
 from parsec.core.gui.ui.empty_workspace_widget import Ui_EmptyWorkspaceWidget
@@ -52,7 +53,8 @@ class WorkspaceButton(QWidget, Ui_WorkspaceButton):
         workspace_fs,
         users_roles,
         is_mounted,
-        files=None,
+        metadata_size,
+        data_size,
         timestamped=False,
         reencryption_needs=None,
     ):
@@ -72,22 +74,22 @@ class WorkspaceButton(QWidget, Ui_WorkspaceButton):
         self.setContextMenuPolicy(Qt.CustomContextMenu)
         self.customContextMenuRequested.connect(self.show_context_menu)
         self.label_role.setText(get_role_translation(self.current_role))
-        files = files or []
+
+        self.label_user_count.setText(
+            _("TEXT_WORKSPACE_USER_COUNT_count").format(count=len(users_roles))
+        )
+        self.label_metadata_size.setText(
+            _("TEXT_WORKSPACE_METADATA_SIZE_size").format(size=get_filesize(metadata_size))
+        )
+        self.label_data_size.setText(
+            _("TEXT_WORKSPACE_DATA_SIZE_size").format(size=get_filesize(data_size))
+        )
+        self.label_total_size.setText(
+            _("TEXT_WORKSPACE_TOTAL_SIZE_size").format(size=get_filesize(data_size + metadata_size))
+        )
 
         if not self.timestamped:
             self.button_delete.hide()
-            if not len(files):
-                self.widget_empty.show()
-                self.widget_files.hide()
-                self.widget_empty.layout().addWidget(EmptyWorkspaceWidget())
-            else:
-                for i, f in enumerate(files, 1):
-                    if i > 4:
-                        break
-                    label = getattr(self, "file{}_name".format(i))
-                    label.setText(f)
-                self.widget_files.show()
-                self.widget_empty.hide()
         else:
             self.switch_button.setChecked(True)
             self.button_reencrypt.hide()

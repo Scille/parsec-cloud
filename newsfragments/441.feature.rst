@@ -1,0 +1,1 @@
+Display stats about the workspace instead of files in the GUI

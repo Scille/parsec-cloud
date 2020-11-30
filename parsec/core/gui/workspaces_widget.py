@@ -468,7 +468,8 @@ class WorkspacesWidget(QWidget, Ui_WorkspacesWidget):
             workspace_fs=workspace_fs,
             users_roles=users_roles,
             is_mounted=self.is_workspace_mounted(workspace_fs.workspace_id, None),
-            files=files[:4],
+            metadata_size=0,
+            data_size=0,
             timestamped=timestamped,
             reencryption_needs=reencryption_needs,
         )
