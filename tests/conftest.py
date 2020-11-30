@@ -533,6 +533,7 @@ def backend_factory(
     initial_user_manifest_state,
     blockstore,
     backend_store,
+    fixtures_customization,
 ):
     # Given the postgresql driver uses trio-asyncio, any coroutine dealing with
     # the backend should inherit from the one with the asyncio loop context manager.
@@ -542,6 +543,7 @@ def backend_factory(
 
     @asynccontextmanager
     async def _backend_factory(populated=True, config={}, event_bus=None):
+        ssl_context = fixtures_customization.get("backend_over_ssl", False)
         config = BackendConfig(
             **{
                 "administration_token": "s3cr3t",
@@ -554,11 +556,14 @@ def backend_factory(
                 "blockstore_config": blockstore,
                 "email_config": None,
                 "backend_addr": None,
+                "forward_proto_enforce_https": None,
+                "ssl_context": ssl_context if ssl_context else False,
                 "spontaneous_organization_bootstrap": False,
                 "organization_bootstrap_webhook_url": None,
                 **config,
             }
         )
+
         if not event_bus:
             event_bus = event_bus_factory()
         # TODO: backend connection to postgresql will timeout if we use a trio
@@ -593,6 +598,9 @@ async def backend(backend_factory, request, fixtures_customization, backend_addr
     if fixtures_customization.get("backend_has_webhook", False):
         # Invalid port, hence we should crash if by mistake we try to reach this url
         config["organization_bootstrap_webhook_url"] = "http://example.com:888888/webhook"
+    forward_proto_enforce_https = fixtures_customization.get("backend_forward_proto_enforce_https")
+    if forward_proto_enforce_https:
+        config["forward_proto_enforce_https"] = forward_proto_enforce_https
 
     async with backend_factory(populated=populated, config=config) as backend:
         yield backend

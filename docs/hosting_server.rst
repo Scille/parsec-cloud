@@ -161,12 +161,21 @@ SSL
 * ``--ssl-keyfile <file>``
 * Environ: ``PARSEC_SSL_KEYFILE``
 
-Custom SSL key file.
+SSL key file. This setting enables serving Parsec over SSL.
 
 * ``--ssl-certfile <file>``
 * Environ: ``PARSEC_SSL_CERTFILE``
 
-Custom SSL certificate file.
+SSL certificate file. This setting enables serving Parsec over SSL.
+
+* ``--forward-proto-enforce-https``
+* Environ: ``PARSEC_FORWARD_PROTO_ENFORCE_HTTPS``
+
+Enforce HTTPS by redirecting incoming request that do not comply with the provided header.
+This is useful when running Parsec behind a forward proxy handing the SSL layer.
+You should *only* use this setting if you control your proxy or have some other
+guarantee that it sets/strips this header appropriately.
+Typical value for this setting should be `X-Forwarded-Proto:https`.
 
 Logs
 ----
