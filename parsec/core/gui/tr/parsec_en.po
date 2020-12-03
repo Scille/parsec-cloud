@@ -256,6 +256,9 @@ msgstr "The email is invalid."
 msgid "TEXT_ORG_WIZARD_OFFLINE"
 msgstr "The server is offline or you have no access to the internet."
 
+msgid "TEXT_ORG_WIZARD_INVITE_NOT_FOUND"
+msgstr "This bootstrap link is invalid."
+
 msgid "TEXT_ORG_WIZARD_INVITE_ALREADY_USED"
 msgstr "This bootstrap link was already used."
 

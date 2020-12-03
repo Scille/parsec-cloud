@@ -273,6 +273,9 @@ msgstr "L'email n'est pas valide."
 msgid "TEXT_ORG_WIZARD_OFFLINE"
 msgstr "Le serveur est hors-ligne ou vous n'avez pas de connexion internet."
 
+msgid "TEXT_ORG_WIZARD_INVITE_NOT_FOUND"
+msgstr "Le lien de démarrage de l'organisation est invalide."
+
 msgid "TEXT_ORG_WIZARD_INVITE_ALREADY_USED"
 msgstr "Le lien de démarrage de l'organisation a déjà été utilisé."
 
