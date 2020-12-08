@@ -1,0 +1,1 @@
+Cleaned choices when creating an organization in the GUI
