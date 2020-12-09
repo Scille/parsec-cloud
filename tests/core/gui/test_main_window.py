@@ -20,6 +20,7 @@ from parsec.core.types import (
     BackendOrganizationFileLinkAddr,
     BackendOrganizationAddr,
 )
+from parsec.core.gui import desktop
 
 
 @pytest.fixture
@@ -35,6 +36,11 @@ def catch_claim_device_widget(widget_catcher_factory):
 @pytest.fixture
 def catch_claim_user_widget(widget_catcher_factory):
     return widget_catcher_factory("parsec.core.gui.claim_user_widget.ClaimUserWidget")
+
+
+@pytest.fixture
+def catch_text_input_widget(widget_catcher_factory):
+    return widget_catcher_factory("parsec.core.gui.custom_dialogs.TextInputWidget")
 
 
 @pytest.fixture
@@ -708,3 +714,76 @@ async def test_link_file_unknown_org(
     assert accounts_w
 
     assert isinstance(accounts_w, LoginPasswordInputWidget)
+
+
+@pytest.mark.gui
+@pytest.mark.trio
+async def test_join_organization_org_link_in_clipboard(
+    aqtbot,
+    running_backend,
+    backend,
+    autoclose_dialog,
+    gui,
+    catch_text_input_widget,
+    invitation_organization_link,
+):
+    desktop.copy_to_clipboard(invitation_organization_link)
+    await aqtbot.key_click(gui, "o", QtCore.Qt.ControlModifier, 200)
+    text_input_w = await catch_text_input_widget()
+    assert text_input_w
+
+    assert text_input_w.line_edit_text.text() == invitation_organization_link
+
+
+@pytest.mark.gui
+@pytest.mark.trio
+async def test_join_organization_device_link_in_clipboard(
+    aqtbot,
+    running_backend,
+    backend,
+    autoclose_dialog,
+    gui,
+    catch_text_input_widget,
+    invitation_device_link,
+):
+    desktop.copy_to_clipboard(invitation_device_link)
+
+    await aqtbot.key_click(gui, "o", QtCore.Qt.ControlModifier, 200)
+    text_input_w = await catch_text_input_widget()
+    assert text_input_w
+
+    assert text_input_w.line_edit_text.text() == invitation_device_link
+
+
+@pytest.mark.gui
+@pytest.mark.trio
+async def test_join_organization_user_link_in_clipboard(
+    aqtbot,
+    running_backend,
+    backend,
+    autoclose_dialog,
+    gui,
+    catch_text_input_widget,
+    invitation_user_link,
+):
+    desktop.copy_to_clipboard(invitation_user_link)
+
+    await aqtbot.key_click(gui, "o", QtCore.Qt.ControlModifier, 200)
+    text_input_w = await catch_text_input_widget()
+    assert text_input_w
+
+    assert text_input_w.line_edit_text.text() == invitation_user_link
+
+
+@pytest.mark.gui
+@pytest.mark.trio
+async def test_join_organization_other_text_in_clipboard(
+    aqtbot, running_backend, backend, autoclose_dialog, gui, catch_text_input_widget
+):
+    desktop.copy_to_clipboard("Still sane, Exile?")
+
+    await aqtbot.key_click(gui, "o", QtCore.Qt.ControlModifier, 200)
+    text_input_w = await catch_text_input_widget()
+    assert text_input_w
+
+    assert text_input_w.line_edit_text.text() == ""
