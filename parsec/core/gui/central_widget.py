@@ -9,6 +9,7 @@ from parsec.core.gui.mount_widget import MountWidget
 from parsec.core.gui.users_widget import UsersWidget
 from parsec.core.gui.devices_widget import DevicesWidget
 from parsec.core.gui.menu_widget import MenuWidget
+from parsec.core.gui.password_change_widget import PasswordChangeWidget
 from parsec.core.gui.lang import translate as _
 from parsec.core.gui.custom_widgets import Pixmap
 from parsec.core.gui.custom_dialogs import show_error
@@ -84,6 +85,9 @@ class CentralWidget(QWidget, Ui_CentralWidget):
 
         self.set_user_info()
         menu = QMenu()
+        change_password_act = menu.addAction(_("ACTION_DEVICE_MENU_CHANGE_PASSWORD"))
+        change_password_act.triggered.connect(self.change_password)
+        menu.addSeparator()
         log_out_act = menu.addAction(_("ACTION_LOG_OUT"))
         log_out_act.triggered.connect(self.logout_requested.emit)
         self.button_user.setMenu(menu)
@@ -152,6 +156,9 @@ class CentralWidget(QWidget, Ui_CentralWidget):
         user_text = f"{org}\n{username}"
         self.button_user.setText(user_text)
         self.button_user.setToolTip(self.core.device.organization_addr.to_url())
+
+    def change_password(self):
+        PasswordChangeWidget.show_modal(core=self.core, parent=self, on_finished=None)
 
     def _on_folder_changed(self, workspace_name, path):
         if workspace_name and path:

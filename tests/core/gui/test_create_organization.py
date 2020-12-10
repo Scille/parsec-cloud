@@ -63,6 +63,9 @@ async def _do_creation_process(aqtbot, co_w):
     await aqtbot.wait_until(_device_widget_ready)
 
     await aqtbot.key_clicks(co_w.device_widget.line_edit_device, "HEV")
+    assert co_w.device_widget.widget_password.label_password_warning.text() == translate(
+        "TEXT_PASSWORD_WARNING"
+    )
     await aqtbot.key_clicks(co_w.device_widget.widget_password.line_edit_password, "nihilanth")
     assert not co_w.button_validate.isEnabled()
 
@@ -482,3 +485,99 @@ async def test_create_organization_wrong_timestamp(
         ]
 
     await aqtbot.wait_until(_error_shown)
+
+
+@pytest.mark.gui
+@pytest.mark.trio
+async def test_create_organization_with_boostrap_token(
+    gui, aqtbot, running_backend, catch_create_org_widget, autoclose_dialog
+):
+    # Firt create the organization
+    bootstrap_token = "T0k3n"
+    organization_id = OrganizationID("AnomalousMaterials")
+    await running_backend.backend.organization.create(
+        id=organization_id, bootstrap_token=bootstrap_token
+    )
+
+    good_bootstrap_addr = BackendOrganizationBootstrapAddr.build(
+        running_backend.addr, organization_id, bootstrap_token
+    )
+    bad_bootstrap_addr = BackendOrganizationBootstrapAddr.build(
+        running_backend.addr, organization_id, "B@dT0k3n"
+    )
+
+    # Now try to use the wrong bootstrap link
+    for bootstrap_addr in (bad_bootstrap_addr, good_bootstrap_addr):
+        autoclose_dialog.reset()
+
+        await aqtbot.run(gui.add_instance, bootstrap_addr.to_url())
+
+        co_w = await catch_create_org_widget()
+
+        assert co_w
+
+        def _user_widget_ready():
+            assert co_w.user_widget.isVisible()
+            assert not co_w.device_widget.isVisible()
+            assert not co_w.button_previous.isVisible()
+            assert not co_w.button_validate.isEnabled()
+            # Organization name and server address should be already provided
+            assert co_w.user_widget.line_edit_org_name.isReadOnly()
+            assert not co_w.user_widget.check_use_custom_backend.isEnabled()
+
+        await aqtbot.wait_until(_user_widget_ready)
+
+        await aqtbot.key_clicks(co_w.user_widget.line_edit_user_full_name, "Gordon Freeman")
+        await aqtbot.key_clicks(
+            co_w.user_widget.line_edit_user_email, "gordon.freeman@blackmesa.com"
+        )
+        await aqtbot.mouse_click(co_w.user_widget.check_accept_contract, QtCore.Qt.LeftButton)
+
+        def _user_widget_button_validate_ready():
+            assert co_w.button_validate.isEnabled()
+
+        await aqtbot.wait_until(_user_widget_button_validate_ready)
+        await aqtbot.mouse_click(co_w.button_validate, QtCore.Qt.LeftButton)
+
+        def _device_widget_ready():
+            assert not co_w.user_widget.isVisible()
+            assert co_w.device_widget.isVisible()
+            assert co_w.button_previous.isVisible()
+            assert not co_w.button_validate.isEnabled()
+
+        await aqtbot.wait_until(_device_widget_ready)
+
+        await aqtbot.key_clicks(co_w.device_widget.line_edit_device, "HEV")
+        await aqtbot.key_clicks(co_w.device_widget.widget_password.line_edit_password, "nihilanth")
+        await aqtbot.key_clicks(
+            co_w.device_widget.widget_password.line_edit_password_check, "nihilanth"
+        )
+
+        def _device_widget_button_validate_ready():
+            assert co_w.button_validate.isEnabled()
+
+        await aqtbot.wait_until(_device_widget_button_validate_ready)
+
+        await aqtbot.mouse_click(co_w.button_validate, QtCore.Qt.LeftButton)
+
+        if bootstrap_addr is bad_bootstrap_addr:
+
+            def _error_modal_shown():
+                assert autoclose_dialog.dialogs == [("Error", "This bootstrap link is invalid.")]
+
+            await aqtbot.wait_until(_error_modal_shown)
+
+        else:
+
+            def _modal_shown():
+                assert autoclose_dialog.dialogs == [
+                    (
+                        "",
+                        "You organization <b>AnomalousMaterials</b> has been created!<br />\n<br />\n"
+                        "You will now be automatically logged in.<br />\n<br />\n"
+                        "To help you start with PARSEC, you can read the "
+                        '<a href="https://docs.parsec.cloud/en/stable/" title="User guide">user guide</a>.',
+                    )
+                ]
+
+            await aqtbot.wait_until(_modal_shown)

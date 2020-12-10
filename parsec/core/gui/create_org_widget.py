@@ -12,7 +12,13 @@ from parsec.core.backend_connection import (
     BackendNotAvailable,
 )
 from parsec.core.types import BackendOrganizationBootstrapAddr, BackendAddr
-from parsec.core.invite import bootstrap_organization, InviteAlreadyUsedError, InviteTimestampError
+from parsec.core.invite import (
+    bootstrap_organization,
+    InviteNotFoundError,
+    InviteAlreadyUsedError,
+    InviteTimestampError,
+    InviteError,
+)
 from parsec.core.local_device import save_device_with_password
 
 from parsec.core.gui.custom_dialogs import GreyedDialog, show_error, show_info
@@ -39,6 +45,8 @@ async def _do_create_org(config, human_handle, device_name, password, backend_ad
                 config_dir=config.config_dir, device=new_device, password=password
             )
             return new_device, password
+    except InviteNotFoundError as exc:
+        raise JobResultError("invite-not-found", exc=exc)
     except InviteAlreadyUsedError as exc:
         raise JobResultError("invite-already-used", exc=exc)
     except BackendConnectionRefused as exc:
@@ -47,6 +55,8 @@ async def _do_create_org(config, human_handle, device_name, password, backend_ad
         raise JobResultError("connection-error", exc=exc)
     except InviteTimestampError as exc:
         raise JobResultError("timestamp-error", exc=exc)
+    except InviteError as exc:
+        raise JobResultError("invite-error", exc=exc)
 
 
 class CreateOrgUserInfoWidget(QWidget, Ui_CreateOrgUserInfoWidget):
@@ -296,6 +306,8 @@ class CreateOrgWidget(QWidget, Ui_CreateOrgWidget):
             errmsg = _("TEXT_ORG_WIZARD_INVALID_ORGANIZATION_ID")
         elif status == "offline":
             errmsg = _("TEXT_ORG_WIZARD_OFFLINE")
+        elif status == "invite-not-found":
+            errmsg = _("TEXT_ORG_WIZARD_INVITE_NOT_FOUND")
         elif status == "invite-already-used":
             if self.start_addr:
                 errmsg = _("TEXT_ORG_WIZARD_INVITE_ALREADY_USED")

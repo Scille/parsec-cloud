@@ -4,6 +4,7 @@ import ssl
 import trio
 import click
 from structlog import get_logger
+from typing import Tuple, Optional
 from itertools import count
 from collections import defaultdict
 import tempfile
@@ -166,6 +167,19 @@ def _parse_blockstore_params(raw_params):
         return RAID5BlockStoreConfig(blockstores=blockstores)
     else:
         raise click.BadParameter(f"Invalid multi blockstore mode `{raid_mode}`")
+
+
+def _parse_forward_proto_enforce_https_check_param(
+    raw_param: Optional[str]
+) -> Optional[Tuple[str, str]]:
+    if raw_param is None:
+        return None
+    try:
+        key, value = raw_param.split(":")
+    except ValueError:
+        raise click.BadParameter(f"Invalid format, should be `<header-name>:<header-value>`")
+    # HTTP header key is case-insensitive unlike the header value
+    return (key.lower(), value)
 
 
 class DevOption(click.Option):
@@ -364,16 +378,31 @@ organization_id, device_id, device_label (can be null), human_email (can be null
     "--email-sender", envvar="PARSEC_EMAIL_SENDER", help="Sender address used in sent emails"
 )
 @click.option(
+    "--forward-proto-enforce-https",
+    type=str,
+    show_default=True,
+    default=None,
+    callback=lambda ctx, param, value: _parse_forward_proto_enforce_https_check_param(value),
+    envvar="PARSEC_FORWARD_PROTO_ENFORCE_HTTPS",
+    help=(
+        "Enforce HTTPS by redirecting incoming request that do not comply with the provided header."
+        " This is useful when running Parsec behind a forward proxy handing the SSL layer."
+        " You should *only* use this setting if you control your proxy or have some other"
+        " guarantee that it sets/strips this header appropriately."
+        " Typical value for this setting should be `X-Forwarded-Proto:https`."
+    ),
+)
+@click.option(
     "--ssl-keyfile",
     type=click.Path(exists=True, dir_okay=False),
     envvar="PARSEC_SSL_KEYFILE",
-    help="SSL key file",
+    help="SSL key file. This setting enables serving Parsec over SSL.",
 )
 @click.option(
     "--ssl-certfile",
     type=click.Path(exists=True, dir_okay=False),
     envvar="PARSEC_SSL_CERTFILE",
-    help="SSL certificate file",
+    help="SSL certificate file. This setting enables serving Parsec over SSL.",
 )
 @click.option(
     "--log-level",
@@ -417,6 +446,7 @@ def run_cmd(
     email_use_ssl,
     email_use_tls,
     email_sender,
+    forward_proto_enforce_https,
     ssl_keyfile,
     ssl_certfile,
     log_level,
@@ -474,6 +504,8 @@ def run_cmd(
             organization_bootstrap_webhook_url=organization_bootstrap_webhook,
             blockstore_config=blockstore,
             email_config=email_config,
+            ssl_context=True if ssl_context else False,
+            forward_proto_enforce_https=forward_proto_enforce_https,
             backend_addr=backend_addr,
             debug=debug,
         )

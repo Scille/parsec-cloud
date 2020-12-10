@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PROJECT VERSION\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2020-11-23 12:19+0100\n"
+"POT-Creation-Date: 2020-11-25 11:37+0100\n"
 "PO-Revision-Date: 2020-10-15 10:30+0200\n"
 "Last-Translator: \n"
 "Language: en\n"
@@ -255,6 +255,9 @@ msgstr "The email is invalid."
 
 msgid "TEXT_ORG_WIZARD_OFFLINE"
 msgstr "The server is offline or you have no access to the internet."
+
+msgid "TEXT_ORG_WIZARD_INVITE_NOT_FOUND"
+msgstr "This bootstrap link is invalid."
 
 msgid "TEXT_ORG_WIZARD_INVITE_ALREADY_USED"
 msgstr "This bootstrap link was already used."
@@ -689,6 +692,47 @@ msgstr "The password is incorrect."
 
 msgid "TEXT_LOGIN_MOUNTPOINT_ERROR"
 msgstr "Cannot log in. The workspaces could not be mounted."
+
+msgid "ASK_OVERWRITE_KEY"
+msgstr "Overwrite device key"
+
+msgid "TEXT_OVERWRITE_KEY"
+msgstr "This device key already exists, do you want to overwrite it?"
+
+msgid "ACTION_OVERWRITE_KEY_YES"
+msgstr "Overwrite"
+
+msgid "ACTION_IMPORT_NO"
+msgstr "Cancel"
+
+msgid "TEXT_EXPORT_KEY"
+msgstr "Export device key"
+
+msgid "IMPORT_KEY_FILTERS"
+msgstr "Key files (*.keys);;All files (*)"
+
+msgid "IMPORT_KEY_INITIAL_FILTER"
+msgstr "Key files (*.keys)"
+
+msgid "EXPORT_KEY_ERROR"
+msgstr "Cannot export device key"
+
+msgid "ACTION_IMPORT_KEY"
+msgstr "Import a device key"
+
+msgid "TEXT_INVALID_DEVICE_KEY"
+msgstr "This file does not contain a valid device key."
+
+msgid "ASK_IMPORT_KEY"
+msgstr "Import this device key?"
+
+msgid "TEXT_IMPORT_KEY_CONFIRM_organization-user-device"
+msgstr ""
+"Organization: <b>{organization}</b><br />User: <b>{user}</b><br />Device:"
+" <b>{device}</b>"
+
+msgid "ACTION_IMPORT_YES"
+msgstr "Import"
 
 msgid "TEXT_PARSEC_LICENSE"
 msgstr ""
@@ -1500,6 +1544,9 @@ msgstr "Create an organization"
 msgid "ACTION_MAIN_MENU_JOIN_ORGANIZATION"
 msgstr "Join an organization"
 
+msgid "ACTION_MAIN_MENU_MANAGE_KEYS"
+msgstr "Import/Export device keys"
+
 msgid "ACTION_MAIN_MENU_SETTINGS"
 msgstr "Settings"
 
@@ -1529,6 +1576,9 @@ msgstr "PARSEC Changelog"
 
 msgid "TEXT_SETTINGS_TITLE"
 msgstr "Settings"
+
+msgid "TEXT_KEYS_DIALOG"
+msgstr "Manage device keys"
 
 msgid "TEXT_JOIN_ORG_URL_TITLE"
 msgstr "Join an organization"
@@ -2260,6 +2310,15 @@ msgstr ""
 msgid "TEXT_DIALOG_CLOSE_TOOLTIP"
 msgstr "Close the window."
 
+msgid "TEXT_EXPORT_KEY_TOOLTIP"
+msgstr "Export this device key"
+
+msgid "ACTION_EXPORT_KEY"
+msgstr "Export this key"
+
+msgid "TEXT_IMPORT_KEY_TOOLTIP"
+msgstr "Import a new key to Parsec"
+
 msgid "TEXT_IMPORT_FILES_PROGRESS"
 msgstr "Importing file"
 
@@ -2307,6 +2366,13 @@ msgstr "Password confirmation"
 
 msgid "TEXT_PASSWORD_CHOICE_MISMATCH"
 msgstr "Does not match the password."
+
+msgid "TEXT_PASSWORD_WARNING"
+msgstr ""
+"Your password is extremely important. Be sure to chose a secure password "
+"that you will remember. Your data will be encrypted with it and it is not"
+" possible to recover them if your forget it.<br />We also advise that you"
+" create multiple devices if possible and share your workspaces."
 
 msgid "TEXT_SETTINGS_BEHAVIOR_TITLE"
 msgstr "Application behavior"

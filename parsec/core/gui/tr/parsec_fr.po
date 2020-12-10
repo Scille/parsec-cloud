@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PROJECT VERSION\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2020-11-23 12:19+0100\n"
+"POT-Creation-Date: 2020-11-25 11:37+0100\n"
 "PO-Revision-Date: 2020-10-15 10:31+0200\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language: fr\n"
@@ -272,6 +272,9 @@ msgstr "L'email n'est pas valide."
 
 msgid "TEXT_ORG_WIZARD_OFFLINE"
 msgstr "Le serveur est hors-ligne ou vous n'avez pas de connexion internet."
+
+msgid "TEXT_ORG_WIZARD_INVITE_NOT_FOUND"
+msgstr "Le lien de démarrage de l'organisation est invalide."
 
 msgid "TEXT_ORG_WIZARD_INVITE_ALREADY_USED"
 msgstr "Le lien de démarrage de l'organisation a déjà été utilisé."
@@ -734,6 +737,47 @@ msgid "TEXT_LOGIN_MOUNTPOINT_ERROR"
 msgstr ""
 "Impossible de se connecter. Les espaces de travail n'ont pas pu être "
 "montés."
+
+msgid "ASK_OVERWRITE_KEY"
+msgstr "Remplacer la clef d'appareil"
+
+msgid "TEXT_OVERWRITE_KEY"
+msgstr "Cette clef d'appareil existe déjà, souhaitez-vous la remplacer ?"
+
+msgid "ACTION_OVERWRITE_KEY_YES"
+msgstr "Remplacer"
+
+msgid "ACTION_IMPORT_NO"
+msgstr "Annuler"
+
+msgid "TEXT_EXPORT_KEY"
+msgstr "Exporter la clef d'appareil"
+
+msgid "IMPORT_KEY_FILTERS"
+msgstr "Clefs d'appareil (*.keys);;Tous les fichiers (*)"
+
+msgid "IMPORT_KEY_INITIAL_FILTER"
+msgstr "Clefs d'appareil (*.keys)"
+
+msgid "EXPORT_KEY_ERROR"
+msgstr "Impossible d'exporter cette clef."
+
+msgid "ACTION_IMPORT_KEY"
+msgstr "Importer une clé d'appareil"
+
+msgid "TEXT_INVALID_DEVICE_KEY"
+msgstr "Ce fichier ne contient pas de clef d'appareil valide."
+
+msgid "ASK_IMPORT_KEY"
+msgstr "Importer cette clef d'appareil ?"
+
+msgid "TEXT_IMPORT_KEY_CONFIRM_organization-user-device"
+msgstr ""
+"Organisation : <b>{organization}</b><br />Utilisateur : <b>{user}</b><br "
+"/>Appareil : <b>{device}</b>"
+
+msgid "ACTION_IMPORT_YES"
+msgstr "Importer"
 
 msgid "TEXT_PARSEC_LICENSE"
 msgstr ""
@@ -1547,6 +1591,9 @@ msgstr "Créer une organisation"
 msgid "ACTION_MAIN_MENU_JOIN_ORGANIZATION"
 msgstr "Rejoindre une organisation"
 
+msgid "ACTION_MAIN_MENU_MANAGE_KEYS"
+msgstr "Importer/Exporter les clés de l'appareil"
+
 msgid "ACTION_MAIN_MENU_SETTINGS"
 msgstr "Configuration"
 
@@ -1576,6 +1623,9 @@ msgstr "Journal des modifications de PARSEC"
 
 msgid "TEXT_SETTINGS_TITLE"
 msgstr "Configuration"
+
+msgid "TEXT_KEYS_DIALOG"
+msgstr "Gerer les clés de l'appareil"
 
 msgid "TEXT_JOIN_ORG_URL_TITLE"
 msgstr "Rejoindre une organisation"
@@ -2321,6 +2371,15 @@ msgstr ""
 msgid "TEXT_DIALOG_CLOSE_TOOLTIP"
 msgstr "Fermer la fenêtre."
 
+msgid "TEXT_EXPORT_KEY_TOOLTIP"
+msgstr "Exporter cette clé"
+
+msgid "ACTION_EXPORT_KEY"
+msgstr "Exporter cette clef"
+
+msgid "TEXT_IMPORT_KEY_TOOLTIP"
+msgstr "Importer une nouvelle clef dans Parsec"
+
 msgid "TEXT_IMPORT_FILES_PROGRESS"
 msgstr "Import du fichier"
 
@@ -2370,6 +2429,14 @@ msgstr "Confirmation du mot de passe"
 
 msgid "TEXT_PASSWORD_CHOICE_MISMATCH"
 msgstr "Ne correspond pas au mot de passe."
+
+msgid "TEXT_PASSWORD_WARNING"
+msgstr ""
+"Votre mot de passe est extrêmement important. Veuillez choisir un mot de "
+"passe sécurisé que vous retiendrez. Vos données seront chiffrées avec "
+"celui-ci et il est impossible de les récupérer si vous l'oubliez.<br "
+"/>Nous vous conseillons également de créer plusieurs appareils et de "
+"partager vos espaces de travail."
 
 msgid "TEXT_SETTINGS_BEHAVIOR_TITLE"
 msgstr "Comportement"
@@ -2481,3 +2548,4 @@ msgstr "Créer un nouvel espace de travail"
 
 msgid "ACTION_WORKSPACE_GOTO_FILE_LINK"
 msgstr "Trouver un fichier via son lien"
+

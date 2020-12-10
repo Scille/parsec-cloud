@@ -322,7 +322,7 @@ class BaseOrganizationComponent:
         return apiv1_organization_bootstrap_serializer.rep_dump({"status": "ok"})
 
     async def create(
-        self, id: OrganizationID, bootstrap_token: str, expiration_date: Optional[DateTime]
+        self, id: OrganizationID, bootstrap_token: str, expiration_date: Optional[DateTime] = None
     ) -> None:
         """
         Raises:
