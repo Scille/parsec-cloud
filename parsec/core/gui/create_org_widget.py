@@ -258,7 +258,6 @@ class CreateOrgWidget(QWidget, Ui_CreateOrgWidget):
                     else self.config.preferred_org_creation_backend_addr,
                     organization_id=org_id,
                 )
-                print(self.user_widget.radio_use_custom.isChecked(), backend_addr)
             except ValueError as exc:
                 show_error(self, _("TEXT_ORG_WIZARD_INVALID_BACKEND_ADDR"), exception=exc)
                 return
