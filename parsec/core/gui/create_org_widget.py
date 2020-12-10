@@ -74,28 +74,31 @@ class CreateOrgUserInfoWidget(QWidget, Ui_CreateOrgUserInfoWidget):
         self.line_edit_backend_addr.set_validator(validators.BackendAddrValidator())
         self.line_edit_backend_addr.validity_changed.connect(self.check_infos)
         self.check_accept_contract.clicked.connect(self.check_infos)
-        self.check_use_custom_backend.clicked.connect(self._on_use_custom_backend_clicked)
-        self.widget_custom_backend.hide()
+        self.radio_use_commercial.toggled.connect(self._switch_server)
+        self.radio_use_custom.toggled.connect(self._switch_server)
+        self.radio_use_commercial.setChecked(True)
 
     def _are_inputs_valid(self):
-        valid = (
+        return (
             self.line_edit_user_email.is_input_valid()
             and self.line_edit_user_full_name.text()
             and self.line_edit_org_name.is_input_valid()
-            and self.check_accept_contract.isChecked()
+            and (
+                (self.radio_use_commercial.isChecked() and self.check_accept_contract.isChecked())
+                or (
+                    self.radio_use_custom.isChecked()
+                    and self.line_edit_backend_addr.is_input_valid()
+                )
+            )
         )
-        if (
-            self.check_use_custom_backend.isChecked()
-            and not self.line_edit_backend_addr.is_input_valid()
-        ):
-            valid = False
-        return valid
 
-    def _on_use_custom_backend_clicked(self):
-        if self.check_use_custom_backend.isChecked():
-            self.widget_custom_backend.show()
-        else:
+    def _switch_server(self, _):
+        if self.radio_use_commercial.isChecked():
             self.widget_custom_backend.hide()
+            self.widget_contract.show()
+        else:
+            self.widget_contract.hide()
+            self.widget_custom_backend.show()
         self.check_infos()
 
     def check_infos(self, _=None):
@@ -108,7 +111,7 @@ class CreateOrgUserInfoWidget(QWidget, Ui_CreateOrgUserInfoWidget):
     def backend_addr(self):
         return (
             BackendAddr.from_url(self.line_edit_backend_addr.text())
-            if self.check_use_custom_backend.isChecked()
+            if self.radio_use_custom.isChecked()
             else None
         )
 
@@ -179,7 +182,23 @@ class CreateOrgWidget(QWidget, Ui_CreateOrgWidget):
                     organization=self.start_addr.organization_id
                 )
             )
-            self.user_widget.check_use_custom_backend.setEnabled(False)
+            # Not creating on the default server
+            if (
+                self.start_addr.hostname != config.preferred_org_creation_backend_addr.hostname
+                or self.start_addr.port != config.preferred_org_creation_backend_addr.port
+            ):
+                self.user_widget.radio_use_custom.setChecked(True)
+                self.user_widget.radio_use_commercial.setDisabled(True)
+                # Will not be used, it just makes the display prettier
+                backend_addr = BackendAddr(
+                    self.start_addr.hostname, self.start_addr.port, self.start_addr.use_ssl
+                )
+                self.user_widget.line_edit_backend_addr.setText(backend_addr.to_url())
+                self.user_widget.line_edit_backend_addr.setDisabled(True)
+                self.user_widget.line_edit_backend_addr.setCursorPosition(0)
+            else:
+                self.user_widget.radio_use_commercial.setChecked(True)
+                self.user_widget.radio_use_custom.setDisabled(True)
 
     def _on_info_valid(self):
         self.button_validate.setEnabled(True)
@@ -235,7 +254,8 @@ class CreateOrgWidget(QWidget, Ui_CreateOrgWidget):
             try:
                 backend_addr = BackendOrganizationBootstrapAddr.build(
                     backend_addr=self.user_widget.backend_addr
-                    or self.config.preferred_org_creation_backend_addr,
+                    if self.user_widget.radio_use_custom.isChecked()
+                    else self.config.preferred_org_creation_backend_addr,
                     organization_id=org_id,
                 )
             except ValueError as exc:

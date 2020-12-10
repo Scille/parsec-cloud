@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PROJECT VERSION\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2020-11-25 11:37+0100\n"
+"POT-Creation-Date: 2020-12-08 11:12+0100\n"
 "PO-Revision-Date: 2020-10-15 10:31+0200\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language: fr\n"
@@ -2195,10 +2195,13 @@ msgstr ""
 "PARSEC"
 
 msgid "ACTION_USE_CUSTOM_BACKEND"
-msgstr "Je dispose de mon propre serveur Parsec"
+msgstr "Je dispose de mon propre serveur PARSEC"
 
 msgid "TEXT_LABEL_BACKEND_ADDR_PLACEHOLDER"
 msgstr "parsec://hote:port"
+
+msgid "ACTION_CREATE_ON_COMMERCIAL_BACKEND"
+msgstr "Utiliser le server PARSEC principal"
 
 msgid "TEXT_CREATE_ORGANIZATION_INSTRUCTIONS"
 msgstr "Veuillez fournir les informations suivantes pour créer votre organisation."
