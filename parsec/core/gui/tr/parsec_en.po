@@ -1712,7 +1712,7 @@ msgid "TEXT_SETTINGS_NEED_RESTART"
 msgstr "You will need to restart the application for the changes to take effect."
 
 msgid "ACTION_SYSTRAY_SHOW_WINDOW"
-msgstr "Show PARSEC"
+msgstr "Show Parsec"
 
 msgid "ACTION_SYSTRAY_QUIT_PARSEC"
 msgstr "Quit"
@@ -1824,6 +1824,9 @@ msgstr ""
 
 msgid "TEXT_INVITE_USER_INVITE_OFFLINE"
 msgstr "The server is offline or you have no access to the internet."
+
+msgid "TEXT_INVITE_USER_ALREADY_MEMBER_ERROR"
+msgstr "This user is already a member of this organization."
 
 msgid "TEXT_INVITE_USER_INVITE_ERROR"
 msgstr "Could not invite the user."
