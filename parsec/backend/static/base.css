@@ -1,10 +1,15 @@
 html {
     height: 100%;
-    background: linear-gradient(#52c9ff, #0071ff);
+    background: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: Montserrat, Arial, sans-serif;
 }
 
-.main-title {
-    margin: 30px, 10%, 30px;
+.logo {
+    max-width: 10em;
+    margin-bottom: 1em;
 }
 
 .text-secondary {
@@ -19,12 +24,36 @@ html {
     text-align: center!important;
 }
 
+.text-left {
+    text-align: left!important;
+}
+
 .main-title-spacer {
-    width: 60px;
-    height: 2px;
-    margin: 20px auto 50px auto;
+    width: 6em;
+    height: 0.2em;
+    margin: 1em auto 2em auto;
 }
 
 .bg-primary {
     background-color: #006eff !important;
+}
+
+ul {
+    margin: 1.5em;
+}
+
+li {
+    font-size: 1.5em;
+}
+
+a {
+    color: #6c757d!important;
+    margin: 1em;
+    padding: 1em;
+    font-weight: bold;
+    font-size: 0.8em;
+}
+
+a:hover {
+    color: #006eff!important;
 }
