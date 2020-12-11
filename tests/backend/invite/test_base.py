@@ -338,7 +338,7 @@ async def test_user_invitation_already_member(
     alice, bob, backend, alice_backend_sock, is_revoked, backend_data_binder
 ):
     if is_revoked:
-        await backend_data_binder.bind_revocation(user_id=alice.user_id, certifier=bob)
+        await backend_data_binder.bind_revocation(user_id=bob.user_id, certifier=alice)
 
     rep = await invite_new(
         alice_backend_sock, type=InvitationType.USER, claimer_email=bob.human_handle.email
