@@ -15,7 +15,7 @@ MacOS
 
 Parsec is not yet available on MacOS Big Sur (>= 11.0).
 
-MacOS (<= 10.15) installer is available at the latest stable version on `parsec.cloud <https://parsec.cloud/get-parsec>`_ or `GitHub <https://github.com/Scille/parsec/releases/latest>`_.
+MacOS (<= 10.15) installer is available as a DMG installer on `GitHub <https://github.com/Scille/parsec/releases/latest>`_ (installer named ``parsec-vX.Y.Z-macos-amd64.dmg``).
 
 
 Linux
