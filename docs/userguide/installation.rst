@@ -10,14 +10,6 @@ Windows
 Windows installer is available at the latest stable version on `parsec.cloud <https://parsec.cloud/get-parsec>`_. Otherwise, it is possible to download a specific Parsec version on `GitHub <https://github.com/Scille/parsec/releases/latest>`_, for exemple to make Parsec work on a 32 bits computer (installers named ``parsec-vX.Y.Z-win32-setup.exe``).
 
 
-MacOS
------
-
-Parsec is not yet available on MacOS Big Sur (>= 11.0).
-
-MacOS (<= 10.15) installer is available at the latest stable version on `parsec.cloud <https://parsec.cloud/get-parsec>`_ or `GitHub <https://github.com/Scille/parsec/releases/latest>`_.
-
-
 Linux
 -----
 
@@ -37,6 +29,12 @@ If you are familiar with Snap, you may notice that Parsec snap is provided in cl
     .. code-block:: shell
 
         sudo snap install parsec --classic
+
+
+MacOS
+-----
+
+Parsec is not yet available on MacOS.
 
 
 Via pip
