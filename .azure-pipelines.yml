@@ -40,6 +40,7 @@ jobs:
       set -eux
       sudo apt-get update
       python --version
+      pip install pip --user --upgrade
       pip install -r pre-requirements.txt
     displayName: 'Bootstrap'
   - bash: |
@@ -122,6 +123,7 @@ jobs:
       set -eux
       sudo apt-get update
       python --version
+      pip install pip --user --upgrade
       pip install -r pre-requirements.txt
       sudo apt-get install \
         postgresql-$(postgresql.version) \
@@ -205,6 +207,7 @@ jobs:
   - bash: |
       set -eux
       python --version
+      pip install pip --user --upgrade
       pip install -r pre-requirements.txt
       brew install \
         postgres \
@@ -282,6 +285,7 @@ jobs:
   - bash: |
       set -eux
       python.exe --version
+      pip install pip --user --upgrade
       pip install -r pre-requirements.txt
       choco install -y --limit-output winfsp --pre --version=$(winfsp.version)
       # Install winfsp-test and put it in PATH
@@ -449,6 +453,7 @@ jobs:
       modifyEnvironment: true
   - bash: |
       set -eux
+      pip install pip --user --upgrade
       # Path with backslash are a pain...
       SOURCES_DIRECTORY=`python -c 'print(r"$(Build.SourcesDirectory)".replace("\\\\", "/"))'`
       TEMP_DIRECTORY=`python -c 'print(r"$(Agent.TempDirectory)".replace("\\\\", "/"))'`
