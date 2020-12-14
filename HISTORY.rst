@@ -5,6 +5,92 @@ History
 .. towncrier release notes start
 
 
+Parsec v2.2.0 (2020-12-14)
+--------------------------
+
+Features
+~~~~~~~~
+
+* Added email in workspace sharing dialog  (`#1514
+  <https://github.com/Scille/parsec-cloud/issues/1514>`__)
+* Reworked the dialog to see a workspace as it was to make it a little bit
+  sexier  (`#1512 <https://github.com/Scille/parsec-cloud/issues/1512>`__)
+* Allow copy/cut/paste files from different workspaces.  (`#1183
+  <https://github.com/Scille/parsec-cloud/issues/1183>`__)
+* Backend can now force https redirection (see `--forward-proto-enforce-https`
+  parameter).  (`#1466 <https://github.com/Scille/parsec-cloud/issues/1466>`__)
+* Add a spinner when opening a folder in the gui  (`#1442
+  <https://github.com/Scille/parsec-cloud/issues/1442>`__)
+* Add macOS compatibility  (`#1441 <https://github.com/Scille/parsec-
+  cloud/issues/1441>`__)
+* Inviting a user already member of an organization is no longer allowed by the
+  backend server (`#1332 <https://github.com/Scille/parsec-
+  cloud/issues/1332>`__)
+* Add widget to import and export keys  (`#1520
+  <https://github.com/Scille/parsec-cloud/issues/1520>`__)
+* Added a warning message when a user choses their password (`#525
+  <https://github.com/Scille/parsec-cloud/issues/525>`__)
+
+Bugfixes
+~~~~~~~~
+
+* Fix the go back in time for workspace.  (`#1568
+  <https://github.com/Scille/parsec-cloud/issues/1568>`__)
+* Made copy and cut of files asynchronous in the GUI  (`#1560
+  <https://github.com/Scille/parsec-cloud/issues/1560>`__)
+* Cleaned choices when creating an organization in the GUI (`#1596
+  <https://github.com/Scille/parsec-cloud/issues/1596>`__)
+* Mount workspace if needed when a file link is clicked  (`#1531
+  <https://github.com/Scille/parsec-cloud/issues/1531>`__)
+* Displays an error message when failing to open a file  (`#1525
+  <https://github.com/Scille/parsec-cloud/issues/1525>`__)
+* Fix an error when opening a workspace in the file explorer  (`#1541
+  <https://github.com/Scille/parsec-cloud/issues/1541>`__)
+* Fixed overflow error in loading dialog (`#1543
+  <https://github.com/Scille/parsec-cloud/issues/1543>`__)
+* Fix uncatched error in GUI when bootstrapping organization with an invalid url
+  (`#1593 <https://github.com/Scille/parsec-cloud/issues/1593>`__)
+* Improved GUI style on MacOS  (`#1447 <https://github.com/Scille/parsec-
+  cloud/issues/1447>`__)
+* Trim the user name  (`#1544 <https://github.com/Scille/parsec-
+  cloud/issues/1544>`__)
+* Improved import error messages  (`#1491 <https://github.com/Scille/parsec-
+  cloud/issues/1491>`__)
+* Display a correct error message if the time on the machine is not correctly
+  set when creating a new org  (`#1475 <https://github.com/Scille/parsec-
+  cloud/issues/1475>`__)
+* Clear workspace list when spinner is displayed  (`#1515
+  <https://github.com/Scille/parsec-cloud/issues/1515>`__)
+* Fixed crash on MacOS when closing a dialog  (`#1538
+  <https://github.com/Scille/parsec-cloud/issues/1538>`__)
+* Improved error message when trying to mount a workspace with no drives
+  available on Windows (`#1542 <https://github.com/Scille/parsec-
+  cloud/issues/1542>`__)
+* Fix synchronization potentially not triggered after a file resize  (`#1579
+  <https://github.com/Scille/parsec-cloud/issues/1579>`__)
+* Hide return button on login screen when there's only one device  (`#1505
+  <https://github.com/Scille/parsec-cloud/issues/1505>`__)
+
+Client/Backend API evolutions
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+* Fix incorrect definitions of entry name type for workspace and folder
+  manifests in api.  (`#1571 <https://github.com/Scille/parsec-
+  cloud/issues/1571>`__)
+
+Miscellaneous internal changes
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+* Log exceptions occuring in Qt slots  (`#1520
+  <https://github.com/Scille/parsec-cloud/issues/1520>`__)
+* Moved password change location in the same menu as the logout button (`#621
+  <https://github.com/Scille/parsec-cloud/issues/621>`__)
+* Make OSXFUSE download link clickable in GUI  (`#1585
+  <https://github.com/Scille/parsec-cloud/issues/1585>`__)
+* Add support for macOS  (`#1572 <https://github.com/Scille/parsec-
+  cloud/issues/1572>`__)
+
+
 Parsec v2.1.0 (2020-10-08)
 --------------------------
 

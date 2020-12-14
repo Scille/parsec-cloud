@@ -1,1 +1,0 @@
-Moved password change location in the same menu as the logout button

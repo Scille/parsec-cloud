@@ -1,1 +1,0 @@
-Hide return button on login screen when there's only one device

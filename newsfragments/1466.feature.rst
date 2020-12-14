@@ -1,1 +1,0 @@
-Backend can now force https redirection (see `--forward-proto-enforce-https` parameter).

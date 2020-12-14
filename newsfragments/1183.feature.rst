@@ -1,1 +1,0 @@
-Allow copy/cut/paste files from different workspaces.

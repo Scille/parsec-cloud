@@ -1,1 +1,0 @@
-Inviting a user already member of an organization is no longer allowed by the backend server
