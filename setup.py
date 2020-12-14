@@ -390,7 +390,7 @@ setup(
         "Intended Audience :: Developers",
         "Operating System :: POSIX :: Linux",
         "Operating System :: Microsoft :: Windows",
-        "Operating System :: POSIX :: MacOS",
+        "Operating System :: MacOS",
         "License :: OSI Approved :: GNU Affero General Public License v3 or later (AGPLv3+)",
         "Natural Language :: English",
         "Programming Language :: Python :: 3.6",
