@@ -5,6 +5,22 @@ History
 .. towncrier release notes start
 
 
+Parsec v2.2.1 (2020-12-15)
+--------------------------
+
+Features
+--------
+
+* Improve backend HTTP welcome page, we no longer use html like it's 1997
+  (`#1603 <https://github.com/Scille/parsec-cloud/issues/1603>`__)
+
+Bugfixes
+~~~~~~~~
+
+* Fix unhandled error on linux/macOS when logout occures during mountpoint
+  processing. (`#1607 <https://github.com/Scille/parsec-cloud/issues/1607>`__)
+
+
 Parsec v2.2.0 (2020-12-14)
 --------------------------
 
