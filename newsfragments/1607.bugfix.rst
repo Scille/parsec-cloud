@@ -1,0 +1,1 @@
+Fix unhandled error on linux/macOS when logout occures during mountpoint processing.
