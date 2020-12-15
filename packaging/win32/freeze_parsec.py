@@ -57,6 +57,7 @@ def main(parsec_source):
     if not TOOLS_VENV_DIR.is_dir():
         print(f"### Create tool virtualenv ###")
         run(f"python -m venv {TOOLS_VENV_DIR}")
+        run(f"{ TOOLS_VENV_DIR / 'Scripts/python' } -m pip install pip --upgrade")
         run(f"{ TOOLS_VENV_DIR / 'Scripts/python' } -m pip install wheel")
 
     if not WHEELS_DIR.is_dir():
