@@ -10,6 +10,8 @@ trigger:
 
 variables:
   python.version: '3.6'
+  # pyinstaller is picky on the version to use
+  python.version_for_macos_packaging: '3.8'
   postgresql.version: '10'
   winfsp.version: '1.7.20172'
   pytest.base_args: |
@@ -410,7 +412,7 @@ jobs:
     submodules: true
   - task: UsePythonVersion@0
     inputs:
-      versionSpec: '$(python.version)'
+      versionSpec: '$(python.version_for_macos_packaging)'
   - bash: |
       set -eux
       brew install coreutils
