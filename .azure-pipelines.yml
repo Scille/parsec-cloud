@@ -403,7 +403,7 @@ jobs:
 
 - job: 's2_macos_app_build'
   displayName: 'MacOS app build'
-  condition: startsWith(variables['build.sourceBranch'], 'refs/tags/')
+  # condition: startsWith(variables['build.sourceBranch'], 'refs/tags/')
   timeoutInMinutes: 60
   pool:
     vmImage: 'macOS-10.15'
