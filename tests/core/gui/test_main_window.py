@@ -726,8 +726,13 @@ async def test_join_organization_org_link_in_clipboard(
     gui,
     catch_text_input_widget,
     invitation_organization_link,
+    qt_thread_gateway,
 ):
-    desktop.copy_to_clipboard(invitation_organization_link)
+    def _copy_to_clipboard():
+        desktop.copy_to_clipboard(invitation_organization_link)
+
+    await qt_thread_gateway.send_action(_copy_to_clipboard)
+
     await aqtbot.key_click(gui, "o", QtCore.Qt.ControlModifier, 200)
     text_input_w = await catch_text_input_widget()
     assert text_input_w
@@ -745,8 +750,12 @@ async def test_join_organization_device_link_in_clipboard(
     gui,
     catch_text_input_widget,
     invitation_device_link,
+    qt_thread_gateway,
 ):
-    desktop.copy_to_clipboard(invitation_device_link)
+    def _copy_to_clipboard():
+        desktop.copy_to_clipboard(invitation_device_link)
+
+    await qt_thread_gateway.send_action(_copy_to_clipboard)
 
     await aqtbot.key_click(gui, "o", QtCore.Qt.ControlModifier, 200)
     text_input_w = await catch_text_input_widget()
@@ -765,8 +774,12 @@ async def test_join_organization_user_link_in_clipboard(
     gui,
     catch_text_input_widget,
     invitation_user_link,
+    qt_thread_gateway,
 ):
-    desktop.copy_to_clipboard(invitation_user_link)
+    def _copy_to_clipboard():
+        desktop.copy_to_clipboard(invitation_user_link)
+
+    await qt_thread_gateway.send_action(_copy_to_clipboard)
 
     await aqtbot.key_click(gui, "o", QtCore.Qt.ControlModifier, 200)
     text_input_w = await catch_text_input_widget()
@@ -778,9 +791,18 @@ async def test_join_organization_user_link_in_clipboard(
 @pytest.mark.gui
 @pytest.mark.trio
 async def test_join_organization_other_text_in_clipboard(
-    aqtbot, running_backend, backend, autoclose_dialog, gui, catch_text_input_widget
+    aqtbot,
+    running_backend,
+    backend,
+    autoclose_dialog,
+    gui,
+    catch_text_input_widget,
+    qt_thread_gateway,
 ):
-    desktop.copy_to_clipboard("Still sane, Exile?")
+    def _copy_to_clipboard():
+        desktop.copy_to_clipboard("Still sane, Exile?")
+
+    await qt_thread_gateway.send_action(_copy_to_clipboard)
 
     await aqtbot.key_click(gui, "o", QtCore.Qt.ControlModifier, 200)
     text_input_w = await catch_text_input_widget()
