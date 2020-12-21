@@ -2,6 +2,8 @@
 
 from zxcvbn import zxcvbn
 
+import re
+
 from PyQt5.QtCore import pyqtSignal
 from PyQt5.QtGui import QValidator
 from PyQt5.QtWidgets import QWidget
@@ -34,10 +36,10 @@ def get_password_strength_text(password_score):
     return PASSWORD_STRENGTH_TEXTS[password_score]
 
 
-def get_password_strength(password):
+def get_password_strength(password, user_inputs=None):
     if len(password) < 8:
         return 0
-    result = zxcvbn(password)
+    result = zxcvbn(password, user_inputs=user_inputs)
     return result["score"] + 1
 
 
@@ -45,12 +47,25 @@ class PasswordStrengthWidget(QWidget, Ui_PasswordStrengthWidget):
     def __init__(self, parent=None):
         super().__init__(parent)
         self.setupUi(self)
+        self._user_inputs = []
+
+    @property
+    def user_inputs(self):
+        return self._user_inputs
+
+    @user_inputs.setter
+    def user_inputs(self, user_inputs):
+        self._user_inputs = []
+        # User inputs are passed raw, we have to clean them up a bit
+        # We split them up on the most common characters
+        for i in user_inputs:
+            self._user_inputs.extend([x for x in re.split(r"\W+", i) if x and len(x) > 3])
 
     def on_password_change(self, text):
         if not text:
             self.hide()
             return
-        score = get_password_strength(text)
+        score = get_password_strength(text, self.user_inputs)
         self.label.setText(
             _("TEXT_PASSWORD_VALIDATION_PASSWORD_STRENGTH_strength").format(
                 strength=get_password_strength_text(score)
@@ -66,13 +81,21 @@ class PasswordChoiceWidget(QWidget, Ui_PasswordChoiceWidget):
     def __init__(self, parent=None):
         super().__init__(parent)
         self.setupUi(self)
-        pwd_str_widget = PasswordStrengthWidget()
-        self.layout_password_strength.addWidget(pwd_str_widget)
-        self.line_edit_password.textChanged.connect(pwd_str_widget.on_password_change)
+        self.pwd_str_widget = PasswordStrengthWidget()
+        self.layout_password_strength.addWidget(self.pwd_str_widget)
+        self.line_edit_password.textChanged.connect(self.pwd_str_widget.on_password_change)
         self.line_edit_password.textChanged.connect(self._check_match)
         self.line_edit_password_check.textChanged.connect(self._check_match)
         self.line_edit_password_check.editingFinished.connect(self._on_editing_finished)
         self.label_mismatch.hide()
+
+    @property
+    def user_inputs(self):
+        return self.pwd_str_widget.user_inputs
+
+    @user_inputs.setter
+    def user_inputs(self, user_inputs):
+        self.pwd_str_widget.user_inputs = user_inputs
 
     def _check_match(self, text=""):
         password = self.line_edit_password.text()
@@ -81,7 +104,7 @@ class PasswordChoiceWidget(QWidget, Ui_PasswordChoiceWidget):
             password
             and password_check
             and password == password_check
-            and get_password_strength(password) > 0
+            and get_password_strength(password, self.user_inputs) > 0
         ):
             self.line_edit_password_check.setProperty("validity", QValidator.Acceptable)
             self.line_edit_password_check.setToolTip(_("TEXT_PASSWORD_CHECK_MATCH"))
@@ -119,5 +142,5 @@ class PasswordChoiceWidget(QWidget, Ui_PasswordChoiceWidget):
             password
             and password_check
             and password == password_check
-            and get_password_strength(password) > 0
+            and get_password_strength(password, self.user_inputs) > 0
         )
