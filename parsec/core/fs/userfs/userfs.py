@@ -193,7 +193,7 @@ class UserFS:
 
         now = pendulum_now()
         wentry = WorkspaceEntry(
-            name="<user manifest>",
+            name=EntryName("<user manifest>"),
             id=device.user_manifest_id,
             key=device.user_manifest_key,
             encryption_revision=1,

@@ -1,5 +1,4 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
-
 from pendulum import now as pendulum_now
 from functools import lru_cache
 from typing import Tuple, List, Optional
@@ -7,6 +6,19 @@ from typing import Tuple, List, Optional
 from parsec.api.protocol import UserID, OrganizationID, HumanHandle
 from parsec.backend.user import HumanFindResultItem
 from parsec.backend.postgresql.utils import Q, q_organization_internal_id, query
+
+_q_retrieve_active_human_by_email = Q(
+    f"""
+SELECT
+    user_.user_id
+FROM user_ LEFT JOIN human ON user_.human=human._id
+WHERE
+    user_.organization = { q_organization_internal_id("$organization_id") }
+    AND human.email = $email
+    AND (user_.revoked_on IS NULL OR user_.revoked_on > $now)
+LIMIT 1
+"""
+)
 
 
 @lru_cache()
@@ -158,6 +170,19 @@ async def query_find(
     results = [UserID(x["user_id"]) for x in raw_results[1:]]
 
     return results, total
+
+
+@query()
+async def query_retrieve_active_human_by_email(
+    conn, organization_id: OrganizationID, email: str
+) -> Optional[UserID]:
+    result = await conn.fetchrow(
+        *_q_retrieve_active_human_by_email(
+            organization_id=organization_id, now=pendulum_now(), email=email
+        )
+    )
+    if result:
+        return UserID(result["user_id"])
 
 
 @query()

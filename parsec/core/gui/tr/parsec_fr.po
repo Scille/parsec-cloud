@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PROJECT VERSION\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2020-11-04 09:40+0100\n"
+"POT-Creation-Date: 2020-12-08 11:12+0100\n"
 "PO-Revision-Date: 2020-10-15 10:31+0200\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language: fr\n"
@@ -273,6 +273,9 @@ msgstr "L'email n'est pas valide."
 msgid "TEXT_ORG_WIZARD_OFFLINE"
 msgstr "Le serveur est hors-ligne ou vous n'avez pas de connexion internet."
 
+msgid "TEXT_ORG_WIZARD_INVITE_NOT_FOUND"
+msgstr "Le lien de démarrage de l'organisation est invalide."
+
 msgid "TEXT_ORG_WIZARD_INVITE_ALREADY_USED"
 msgstr "Le lien de démarrage de l'organisation a déjà été utilisé."
 
@@ -391,11 +394,11 @@ msgstr ""
 msgid "TEXT_FILE_LINK_COPIED_TO_CLIPBOARD"
 msgstr "Le lien vers le fichier a été copié dans le presse-papier."
 
-msgid "TEXT_FILE_PASTE_ERROR"
-msgstr "Impossible de coller ce fichier à cet endroit."
-
 msgid "TEXT_FILE_FOLDER_MOVED_INTO_ITSELF_ERROR"
 msgstr "Impossible de déplacer un répertoire dans lui-même."
+
+msgid "TEXT_FILE_PASTE_ERROR"
+msgstr "Impossible de coller ce fichier à cet endroit."
 
 msgid "TEXT_FILE_HISTORY_MULTIPLE_FILES_SELECTED_ERROR"
 msgstr ""
@@ -713,10 +716,13 @@ msgstr ""
 
 msgid "TEXT_LOGIN_ERROR_FUSE_NOT_AVAILABLE"
 msgstr ""
-"FUSE n'a pas pu être chargé. \n"
-"Merci de vérifier votre installation. \n"
-"Sur Mac, il est nécessaire d'installer OSXFUSE (FUSE for MacOS) et de l'accepter dans les réglages de sécurité. \n"
-"https://osxfuse.github.io/2020/10/05/OSXFUSE-3.11.2.html"
+"FUSE n'a pas pu être chargé.<br>Merci de vérifier votre "
+"installation.<br><br>Sur Mac, il est nécessaire d'installer OSXFUSE (FUSE"
+" for MacOS) et de l'accepter dans les réglages de sécurité.<br>À partir "
+"de Mac OS 11.x, un rédémarrage est nécessaire après l'installation de "
+"osxfuse.<br><br><a "
+"href=\"https://osxfuse.github.io/2020/10/05/OSXFUSE-3.11.2.html\">Télécharger"
+" osxfuse ici</a>"
 
 msgid "TEXT_LOGIN_UNKNOWN_ERROR"
 msgstr "Impossible de se connecter."
@@ -731,6 +737,47 @@ msgid "TEXT_LOGIN_MOUNTPOINT_ERROR"
 msgstr ""
 "Impossible de se connecter. Les espaces de travail n'ont pas pu être "
 "montés."
+
+msgid "ASK_OVERWRITE_KEY"
+msgstr "Remplacer la clef d'appareil"
+
+msgid "TEXT_OVERWRITE_KEY"
+msgstr "Cette clef d'appareil existe déjà, souhaitez-vous la remplacer ?"
+
+msgid "ACTION_OVERWRITE_KEY_YES"
+msgstr "Remplacer"
+
+msgid "ACTION_IMPORT_NO"
+msgstr "Annuler"
+
+msgid "TEXT_EXPORT_KEY"
+msgstr "Exporter la clef d'appareil"
+
+msgid "IMPORT_KEY_FILTERS"
+msgstr "Clefs d'appareil (*.keys);;Tous les fichiers (*)"
+
+msgid "IMPORT_KEY_INITIAL_FILTER"
+msgstr "Clefs d'appareil (*.keys)"
+
+msgid "EXPORT_KEY_ERROR"
+msgstr "Impossible d'exporter cette clef."
+
+msgid "ACTION_IMPORT_KEY"
+msgstr "Importer une clé d'appareil"
+
+msgid "TEXT_INVALID_DEVICE_KEY"
+msgstr "Ce fichier ne contient pas de clef d'appareil valide."
+
+msgid "ASK_IMPORT_KEY"
+msgstr "Importer cette clef d'appareil ?"
+
+msgid "TEXT_IMPORT_KEY_CONFIRM_organization-user-device"
+msgstr ""
+"Organisation : <b>{organization}</b><br />Utilisateur : <b>{user}</b><br "
+"/>Appareil : <b>{device}</b>"
+
+msgid "ACTION_IMPORT_YES"
+msgstr "Importer"
 
 msgid "TEXT_PARSEC_LICENSE"
 msgstr ""
@@ -1544,6 +1591,9 @@ msgstr "Créer une organisation"
 msgid "ACTION_MAIN_MENU_JOIN_ORGANIZATION"
 msgstr "Rejoindre une organisation"
 
+msgid "ACTION_MAIN_MENU_MANAGE_KEYS"
+msgstr "Importer/Exporter les clés de l'appareil"
+
 msgid "ACTION_MAIN_MENU_SETTINGS"
 msgstr "Configuration"
 
@@ -1573,6 +1623,9 @@ msgstr "Journal des modifications de PARSEC"
 
 msgid "TEXT_SETTINGS_TITLE"
 msgstr "Configuration"
+
+msgid "TEXT_KEYS_DIALOG"
+msgstr "Gerer les clés de l'appareil"
 
 msgid "TEXT_JOIN_ORG_URL_TITLE"
 msgstr "Rejoindre une organisation"
@@ -1707,7 +1760,7 @@ msgid "TEXT_SETTINGS_NEED_RESTART"
 msgstr "Les modification seront prises en compte au redémarrage de l'application."
 
 msgid "ACTION_SYSTRAY_SHOW_WINDOW"
-msgstr "Afficher PARSEC"
+msgstr "Afficher Parsec"
 
 msgid "ACTION_SYSTRAY_QUIT_PARSEC"
 msgstr "Quitter"
@@ -1717,7 +1770,8 @@ msgstr "Impossible de récupérer l'historique de cet espace de travail."
 
 msgid "TEXT_WORKSPACE_TIMESTAMPED_INSTRUCTIONS_created"
 msgstr ""
-"Vous pourrez naviguer dans l'espace de travail tel qu'il était à un moment donné.\n"
+"Vous pourrez naviguer dans l'espace de travail tel qu'il était à un "
+"moment donné.\n"
 "\n"
 "Cet espace de travail a été créé le {created}."
 
@@ -1820,6 +1874,9 @@ msgstr ""
 msgid "TEXT_INVITE_USER_INVITE_OFFLINE"
 msgstr "Le serveur est hors-ligne ou vous n'avez pas de connexion internet."
 
+msgid "TEXT_INVITE_USER_ALREADY_MEMBER_ERROR"
+msgstr "Cet utilisateur fait déjà parti de cette organisation."
+
 msgid "TEXT_INVITE_USER_INVITE_ERROR"
 msgstr "Impossible d'inviter l'utilisateur."
 
@@ -1877,7 +1934,7 @@ msgstr "Non partagé"
 msgid "TEXT_WORKSPACE_SHARING_USER_HAS_BEEN_REVOKED"
 msgstr "Cet utilisateur a été révoqué."
 
-msgid "TEXT_WORKSPACE_SHARING_OFFLINE"
+msgid "TEXT_WORKSPACE_SHesARING_OFFLINE"
 msgstr "Le serveur est hors-ligne ou vous n'avez pas de connexion internet."
 
 msgid "TEXT_WORKSPACE_SHARING_UNSHARE_ERROR_workspace-user"
@@ -2141,10 +2198,13 @@ msgstr ""
 "PARSEC"
 
 msgid "ACTION_USE_CUSTOM_BACKEND"
-msgstr "Je dispose de mon propre serveur Parsec"
+msgstr "Je dispose de mon propre serveur PARSEC"
 
 msgid "TEXT_LABEL_BACKEND_ADDR_PLACEHOLDER"
 msgstr "parsec://hote:port"
+
+msgid "ACTION_CREATE_ON_COMMERCIAL_BACKEND"
+msgstr "Utiliser le server PARSEC principal"
 
 msgid "TEXT_CREATE_ORGANIZATION_INSTRUCTIONS"
 msgstr "Veuillez fournir les informations suivantes pour créer votre organisation."
@@ -2314,6 +2374,15 @@ msgstr ""
 msgid "TEXT_DIALOG_CLOSE_TOOLTIP"
 msgstr "Fermer la fenêtre."
 
+msgid "TEXT_EXPORT_KEY_TOOLTIP"
+msgstr "Exporter cette clé"
+
+msgid "ACTION_EXPORT_KEY"
+msgstr "Exporter cette clef"
+
+msgid "TEXT_IMPORT_KEY_TOOLTIP"
+msgstr "Importer une nouvelle clef dans Parsec"
+
 msgid "TEXT_IMPORT_FILES_PROGRESS"
 msgstr "Import du fichier"
 
@@ -2364,6 +2433,14 @@ msgstr "Confirmation du mot de passe"
 msgid "TEXT_PASSWORD_CHOICE_MISMATCH"
 msgstr "Ne correspond pas au mot de passe."
 
+msgid "TEXT_PASSWORD_WARNING"
+msgstr ""
+"Votre mot de passe est extrêmement important. Veuillez choisir un mot de "
+"passe sécurisé que vous retiendrez. Vos données seront chiffrées avec "
+"celui-ci et il est impossible de les récupérer si vous l'oubliez.<br "
+"/>Nous vous conseillons également de créer plusieurs appareils et de "
+"partager vos espaces de travail."
+
 msgid "TEXT_SETTINGS_BEHAVIOR_TITLE"
 msgstr "Comportement"
 
@@ -2408,11 +2485,6 @@ msgstr "Vue instantanée"
 
 msgid "TEXT_WORKSPACE_TEMPORARY_DESCRIPTION"
 msgstr "Espace de travail tel qu'il apparaissait le :"
-
-msgid "TEXT_WORKSPACE_TIMESTAMPED_INSTRUCTIONS"
-msgstr ""
-"Vous pourrez naviguer dans l'espace de travail tel qu'il était à un "
-"moment donné."
 
 msgid "TEXT_WORKSPACE_TIMESTAMPED_SELECT_DATE"
 msgstr "Sélectionnez une date"
@@ -2479,3 +2551,4 @@ msgstr "Créer un nouvel espace de travail"
 
 msgid "ACTION_WORKSPACE_GOTO_FILE_LINK"
 msgstr "Trouver un fichier via son lien"
+

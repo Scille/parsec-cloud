@@ -2,6 +2,10 @@
 
 import os
 
+ # Awesome hack to load `__version__`
+__version__ = None
+exec(open("../../parsec/_version.py", encoding="utf-8").read())
+
 a = Analysis(['launch_script.py'],
    pathex=[os.path.dirname(os.path.abspath('parsec.spec'))],
    binaries=[],
@@ -50,6 +54,7 @@ app = BUNDLE(coll,
       'CFBundleIdentifier': 'com.scille.parsec',
       'CFBundleName': 'Parsec',
       'CFBundleDisplayName': 'Parsec',
+      'CFBundleShortVersionString': __version__,
       'CFBundleURLTypes': [
          {
             'CFBundleTypeRole': 'Shell',

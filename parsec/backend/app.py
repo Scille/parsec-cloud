@@ -160,9 +160,26 @@ class BackendApp:
                     conn.send(h11.InformationalResponse(status_code=100, headers=[]))
                 )
 
-            def _get_header(key: bytes) -> bytes:
-                # h11 guarantees the headers are always lowercase
-                return next((v for k, v in event.headers if k == key), b"")
+            def _get_header(key: bytes) -> Optional[bytes]:
+                # h11 guarantees the headers key are always lowercase
+                return next((v for k, v in event.headers if k == key), None)
+
+            # Do https redirection if incoming request doesn't follow forward proto rules
+            if self.config.forward_proto_enforce_https:
+                header_key, header_expected_value = self.config.forward_proto_enforce_https
+                header_value = _get_header(header_key)
+                # If redirection header match and protocol match, then no need for a redirection.
+                if header_value is not None and header_value != header_expected_value:
+                    location_url = (
+                        b"https://" + self.config.backend_addr.netloc.encode("ascii") + event.target
+                    )
+                    await self._send_http_reply(
+                        stream=stream,
+                        conn=conn,
+                        status_code=301,
+                        headers={b"location": location_url},
+                    )
+                    return await stream.aclose()
 
             # Test for websocket upgrade considering:
             # - Upgrade header has been introduced in HTTP 1.1 RFC
@@ -173,8 +190,8 @@ class BackendApp:
             if (
                 event.http_version == b"1.1"
                 and event.target == TRANSPORT_TARGET.encode()
-                and _get_header(b"connection").lower() == b"upgrade"
-                and _get_header(b"upgrade").lower() == b"websocket"
+                and (_get_header(b"connection") or b"").lower() == b"upgrade"
+                and (_get_header(b"upgrade") or b"").lower() == b"websocket"
             ):
                 await self._handle_client_websocket(stream, event)
             else:

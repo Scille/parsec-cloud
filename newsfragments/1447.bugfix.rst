@@ -1,1 +1,0 @@
-Improved GUI style on MacOS

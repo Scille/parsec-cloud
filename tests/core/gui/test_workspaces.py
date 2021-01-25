@@ -211,6 +211,7 @@ async def test_mountpoint_open_in_explorer_button(aqtbot, running_backend, logge
         item = w_w.layout_workspaces.itemAt(0)
         assert item
         wk_button = item.widget()
+
         assert isinstance(wk_button, WorkspaceButton)
         return wk_button
 

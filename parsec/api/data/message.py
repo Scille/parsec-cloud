@@ -7,7 +7,7 @@ from enum import Enum
 import attr
 from parsec.crypto import SecretKey
 from parsec.serde import fields, post_load, OneOfSchema
-from parsec.api.data.entry import EntryID, EntryIDField
+from parsec.api.data.entry import EntryID, EntryIDField, EntryNameField, EntryName
 from parsec.api.data.base import BaseAPISignedData, BaseSignedDataSchema
 
 
@@ -46,7 +46,7 @@ class BaseMessageContent(BaseAPISignedData):
 class SharingGrantedMessageContent(BaseMessageContent):
     class SCHEMA_CLS(BaseSignedDataSchema):
         type = fields.EnumCheckedConstant(MessageContentType.SHARING_GRANTED, required=True)
-        name = fields.String(required=True)
+        name = EntryNameField(required=True)
         id = EntryIDField(required=True)
         encryption_revision = fields.Integer(required=True)
         encrypted_on = fields.DateTime(required=True)
@@ -63,7 +63,7 @@ class SharingGrantedMessageContent(BaseMessageContent):
             data.pop("type")
             return SharingGrantedMessageContent(**data)
 
-    name: str
+    name: EntryName
     id: EntryID
     encryption_revision: int
     encrypted_on: DateTime

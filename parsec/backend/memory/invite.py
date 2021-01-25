@@ -19,6 +19,7 @@ from parsec.backend.invite import (
     InvitationNotFoundError,
     InvitationAlreadyDeletedError,
     InvitationInvalidStateError,
+    InvitationAlreadyMemberError,
 )
 
 
@@ -173,6 +174,17 @@ class MemoryInviteComponent(BaseInviteComponent):
         claimer_email: str,
         created_on: Optional[DateTime] = None,
     ) -> UserInvitation:
+        """
+        Raise: InvitationAlreadyMemberError
+        """
+        org = self._user_component._organizations[organization_id]
+        for _, user in org.users.items():
+            if (
+                user.human_handle
+                and user.human_handle.email == claimer_email
+                and not user.is_revoked()
+            ):
+                raise InvitationAlreadyMemberError()
         return await self._new(
             organization_id=organization_id,
             greeter_user_id=greeter_user_id,
