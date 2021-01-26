@@ -508,7 +508,22 @@ def run_cmd(
             debug=debug,
         )
 
-        async def _run_backend():
+        click.echo(
+            f"Starting Parsec Backend on {host}:{port}"
+            f" (db={config.db_type}"
+            f" blockstore={config.blockstore_config.type}"
+            f" backend_addr={config.backend_addr}"
+            f" email_config={str(email_config)})"
+        )
+        try:
+            trio_run(_run_backend, config, use_asyncio=True)
+        except KeyboardInterrupt:
+            click.echo("bye ;-)")
+
+
+async def _run_backend(config):
+    while True:
+        try:
             async with backend_app_factory(config=config) as backend:
 
                 async def _serve_client(stream):
@@ -518,21 +533,20 @@ def run_cmd(
                     try:
                         await backend.handle_client(stream)
 
+                    except ConnectionError:
+                        # Should be handled by the reconnection logic (see below)
+                        raise
+
                     except Exception:
                         # If we are here, something unexpected happened...
                         logger.exception("Unexpected crash")
                         await stream.aclose()
 
-                await trio.serve_tcp(_serve_client, port, host=host)
+                # Provide a service nursery so multi-errors errors are handled
+                async with trio.open_service_nursery() as nursery:
+                    await trio.serve_tcp(_serve_client, port, handler_nursery=nursery, host=host)
 
-        click.echo(
-            f"Starting Parsec Backend on {host}:{port}"
-            f" (db={config.db_type}"
-            f" blockstore={config.blockstore_config.type}"
-            f" backend_addr={config.backend_addr}"
-            f" email_config={str(email_config)})"
-        )
-        try:
-            trio_run(_run_backend, use_asyncio=True)
-        except KeyboardInterrupt:
-            click.echo("bye ;-)")
+        except ConnectionError as exc:
+            # Connection with the DB is dead, restart everything
+            logger.warning(f"Database connection lost ({exc}), retrying in 1s")
+            await trio.sleep(1)
