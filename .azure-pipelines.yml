@@ -214,7 +214,7 @@ jobs:
       brew install \
         postgres \
         desktop-file-utils  # Provides `update-desktop-database` used by `tests/scripts/run_testenv.sh`
-      brew cask install osxfuse
+      brew install --cask osxfuse
       psql --version
     displayName: 'Bootstrap'
   - bash: |
