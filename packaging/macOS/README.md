@@ -117,7 +117,7 @@ To create the `.dmg`, open `Disk Utility`, then follow *File > New Image > Blank
 
 Once done, mount the Disk Image, and put the background image in a `.background` folder at its root. The Disk Image should be mounted in `/Volumes` by default.
 
-Then, copy the previously codesigned, notarized and stapled app in the same mounted volume.
+Then, copy the previously codesigned, notarized and stapled app in the same mounted volume, along with an alias to `/Applications`.
 
 In *View > Show View Options*, restrict the mounted volume to `Always open in icon view` and `Browse in icon view` to force the right format upon opening the `.dmg`. In the same window the icon sizes can be adjusted to match the background.
 
