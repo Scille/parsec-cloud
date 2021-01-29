@@ -10,15 +10,18 @@ To release an app on MacOS, even without dealing with the App Store, we must go 
 2. __Sign the app__: Using an active Apple Developer account, we sign our code and its dependencies with a custom certificate created using the account.
 3. __Notarize the app__: Notarizing the app is equivalent to asking Apple to approve it for distribution. Since MacOS 10.14.5, all applications downloaded outside of the App Store must be notarized to run. See https://developer.apple.com/documentation/xcode/notarizing_macos_software_before_distribution
 4. __Staple the app__: An app notarization will be checked with an online request when a user tries to execute it. Stapling "attaches" the notarization to the app bundle itself, so that this check can be performed offline.
+5. __Bundle into .dmg__: A nice format for distribution in MacOS is a `.dmg` bundle, which compresses the app and allows the user to simply drag and drop the app inside their `/Applications` folder.
 
 Build steps
 -----------
 
 ### 1 - Use a compatible Python version
 
-The app building is done with PyInstaller. I suggest using Python 3.7.6, other versions might raise various errors or warnings, or the app might not launch at all.
-
-Python 3.8 support will come with the release of PyInstaller 4.1 : https://github.com/pyinstaller/pyinstaller/issues/4311
+The app building is done with PyInstaller. Most versions of Python from 3.6 onwards will work, though some raises errors upon opening the app. If such an problem occurs, an easy solution is to switch to a working Python version with `pyenv`, such as 3.8.0.
+Be mindful that using `pyenv`, the python version must be installed with the `--enable-framework` option:
+```shell
+$ PYTHON_CONFIGURE_OPTS="--enable-framework" pyenv install 3.8.0
+```
 
 
 ### 2 - Build the application
@@ -93,12 +96,35 @@ $ rm dist/parsec.zip
 $ ditto -c -k --sequesterRsrc --keepParent "dist/parsec.app" dist/parsec.zip
 ```
 
-
-### 6 - Check with Gatekeeper
+#### Check with Gatekeeper
 
 Steps 4 and 5 exist to comply with Gatekeeper.
-We can verify if both steps were successful by asking Gatekeeper directly:
+We can check if both steps were successful by asking Gatekeeper directly:
 
 ```shell
 $ spctl --assess --type execute -vvv "dist/parsec.app"
 ```
+
+
+### 6 - Bundle into .dmg
+
+The app is now ready to be bundled for distribution. To this end, we create a drag & drop `.dmg` folder.
+A `.dmg` background is needed at this point, many neutral backgrounds can be found with a quick search, until we eventually design our own.
+
+#### Create the .dmg
+
+To create the `.dmg`, open `Disk Utility`, then follow *File > New Image > Blank Image*, then only modify the *Size* to be enough so that Parsec and the background image can fit.
+
+Once done, mount the Disk Image, and put the background image in a `.background` folder at its root. The Disk Image should be mounted in `/Volumes` by default.
+
+Then, copy the previously codesigned, notarized and stapled app in the same mounted volume.
+
+In *View > Show View Options*, restrict the mounted volume to `Always open in icon view` and `Browse in icon view` to force the right format upon opening the `.dmg`. In the same window the icon sizes can be adjusted to match the background.
+
+Drag and arrange the icons to match the background, then eject the Disk Image.
+
+#### Compress the .dmg
+
+The `.dmg` can now be compressed and set as read-only.
+
+Open `Disk Utility` again, then *Images > Convert*, select the `.dmg` and compress it with the name that will be used for distribution, in our case `Parsec.dmg`.
