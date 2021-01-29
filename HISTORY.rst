@@ -5,6 +5,21 @@ History
 .. towncrier release notes start
 
 
+Parsec v2.2.3 (2021-01-29)
+--------------------------
+
+Features
+--------
+
+* Added MacOS version for release
+
+Bugfixes
+~~~~~~~~
+
+* Improved workspace loading performance (less query for reencryption) (`#1619
+  <https://github.com/Scille/parsec-cloud/issues/1619>`__)
+
+
 Parsec v2.2.2 (2020-12-15)
 --------------------------
 
