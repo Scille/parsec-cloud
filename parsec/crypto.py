@@ -29,9 +29,9 @@ __all__ = (
     "SigningKey",
     "VerifyKey",
     # Helpers
-    "export_root_verify_key",
-    "import_root_verify_key",
     "derivate_secret_key_from_password",
+    "generate_shared_secret_key",
+    "generate_nonce",
 )
 
 
@@ -155,31 +155,6 @@ class PublicKey(_PublicKey):
 
 
 # Helpers
-
-
-def export_root_verify_key(key: VerifyKey) -> str:
-    """
-    Raises:
-        ValueError
-    """
-    # Note we replace padding char `=` by a simple `s` (which is not part of
-    # the base32 table so no risk of collision) to avoid copy/paste errors
-    # and silly escaping issues when carrying the key around.
-    return b32encode(key.encode()).decode("utf8").replace("=", "s")
-
-
-def import_root_verify_key(raw: str) -> VerifyKey:
-    """
-    Raises:
-        ValueError
-    """
-    if isinstance(raw, VerifyKey):
-        # Useful during tests
-        return raw
-    try:
-        return VerifyKey(b32decode(raw.replace("s", "=").encode("utf8")))
-    except CryptoError as exc:
-        raise ValueError("Invalid verify key") from exc
 
 
 def derivate_secret_key_from_password(password: str, salt: bytes = None) -> Tuple[SecretKey, bytes]:

@@ -6,7 +6,6 @@ from urllib.parse import urlsplit, urlunsplit, parse_qs, quote_plus, unquote_plu
 from marshmallow import ValidationError
 
 from parsec.serde import fields
-from parsec.crypto import VerifyKey, export_root_verify_key, import_root_verify_key
 from parsec.api.protocol import OrganizationID, UserID, DeviceID, InvitationType
 from parsec.api.data import EntryID
 from parsec.core.types.base import FsPath
@@ -135,65 +134,39 @@ class BackendAddr:
 
 
 class OrganizationParamsFixture(BackendAddr):
-    __slots__ = ("_root_verify_key", "_organization_id")
+    __slots__ = ("_organization_id", )
 
-    def __init__(self, organization_id: OrganizationID, root_verify_key: VerifyKey, **kwargs):
+    def __init__(self, organization_id: OrganizationID, **kwargs):
         super().__init__(**kwargs)
         self._organization_id = organization_id
-        self._root_verify_key = root_verify_key
 
     @classmethod
     def _from_url_parse_path(cls, path):
         return {"organization_id": OrganizationID(path[1:])}
 
-    @classmethod
-    def _from_url_parse_and_consume_params(cls, params):
-        kwargs = super()._from_url_parse_and_consume_params(params)
-
-        value = params.pop("rvk", ())
-        if len(value) != 1:
-            raise ValueError("Missing mandatory `rvk` param")
-        try:
-            kwargs["root_verify_key"] = import_root_verify_key(value[0])
-        except ValueError as exc:
-            raise ValueError("Invalid `rvk` param value") from exc
-
-        return kwargs
-
     def _to_url_get_path(self):
         return str(self.organization_id)
-
-    def _to_url_get_params(self):
-        return [
-            *super()._to_url_get_params(),
-            ("rvk", export_root_verify_key(self.root_verify_key)),
-        ]
 
     @property
     def organization_id(self) -> OrganizationID:
         return self._organization_id
 
-    @property
-    def root_verify_key(self) -> VerifyKey:
-        return self._root_verify_key
-
 
 class BackendOrganizationAddr(OrganizationParamsFixture, BackendAddr):
     """
     Represent the URL to access an organization within a backend
-    (e.g. ``parsec://parsec.example.com/MyOrg?rvk=7NFDS4VQLP3XPCMTSEN34ZOXKGGIMTY2W2JI2SPIHB2P3M6K4YWAssss``)
+    (e.g. ``parsec://parsec.example.com/MyOrg``)
     """
 
     @classmethod
     def build(
-        cls, backend_addr: BackendAddr, organization_id: OrganizationID, root_verify_key: VerifyKey
+        cls, backend_addr: BackendAddr, organization_id: OrganizationID
     ) -> "BackendOrganizationAddr":
         return cls(
             hostname=backend_addr.hostname,
             port=backend_addr.port,
             use_ssl=backend_addr.use_ssl,
             organization_id=organization_id,
-            root_verify_key=root_verify_key,
         )
 
 
@@ -279,9 +252,9 @@ class BackendOrganizationBootstrapAddr(BackendActionAddr):
             token=token,
         )
 
-    def generate_organization_addr(self, root_verify_key: VerifyKey) -> BackendOrganizationAddr:
+    def generate_organization_addr(self) -> BackendOrganizationAddr:
         return BackendOrganizationAddr.build(
-            backend_addr=self, organization_id=self.organization_id, root_verify_key=root_verify_key
+            backend_addr=self, organization_id=self.organization_id
         )
 
     @property
@@ -299,7 +272,7 @@ class BackendOrganizationBootstrapAddr(BackendActionAddr):
 class BackendOrganizationClaimUserAddr(OrganizationParamsFixture, BackendActionAddr):
     """
     Represent the URL to bootstrap claim a user
-    (e.g. ``parsec://parsec.example.com/my_org?action=claim_user&user_id=John&token=1234ABCD&rvk=P25GRG3XPSZKBEKXYQFBOLERWQNEDY3AO43MVNZCLPXPKN63JRYQssss``)
+    (e.g. ``parsec://parsec.example.com/my_org?action=claim_user&user_id=John&token=1234ABCD``)
     """
 
     __slots__ = ("_user_id", "_token")
@@ -355,7 +328,6 @@ class BackendOrganizationClaimUserAddr(OrganizationParamsFixture, BackendActionA
             port=organization_addr.port,
             use_ssl=organization_addr.use_ssl,
             organization_id=organization_addr.organization_id,
-            root_verify_key=organization_addr.root_verify_key,
             user_id=user_id,
             token=token,
         )
@@ -364,7 +336,6 @@ class BackendOrganizationClaimUserAddr(OrganizationParamsFixture, BackendActionA
         return BackendOrganizationAddr.build(
             backend_addr=self,
             organization_id=self.organization_id,
-            root_verify_key=self.root_verify_key,
         )
 
     @property
@@ -379,7 +350,7 @@ class BackendOrganizationClaimUserAddr(OrganizationParamsFixture, BackendActionA
 class BackendOrganizationClaimDeviceAddr(OrganizationParamsFixture, BackendActionAddr):
     """
     Represent the URL to bootstrap claim a device
-    (e.g. ``parsec://parsec.example.com/my_org?action=claim_device&device_id=John%40pc&token=1234ABCD&rvk=P25GRG3XPSZKBEKXYQFBOLERWQNEDY3AO43MVNZCLPXPKN63JRYQssss``)
+    (e.g. ``parsec://parsec.example.com/my_org?action=claim_device&device_id=John%40pc&token=1234ABCD``)
     """
 
     __slots__ = ("_device_id", "_token")
@@ -435,7 +406,6 @@ class BackendOrganizationClaimDeviceAddr(OrganizationParamsFixture, BackendActio
             port=organization_addr.port,
             use_ssl=organization_addr.use_ssl,
             organization_id=organization_addr.organization_id,
-            root_verify_key=organization_addr.root_verify_key,
             device_id=device_id,
             token=token,
         )
@@ -444,7 +414,6 @@ class BackendOrganizationClaimDeviceAddr(OrganizationParamsFixture, BackendActio
         return BackendOrganizationAddr.build(
             backend_addr=self,
             organization_id=self.organization_id,
-            root_verify_key=self.root_verify_key,
         )
 
     @property
@@ -514,7 +483,6 @@ class BackendOrganizationFileLinkAddr(OrganizationParamsFixture, BackendActionAd
             port=organization_addr.port,
             use_ssl=organization_addr.use_ssl,
             organization_id=organization_addr.organization_id,
-            root_verify_key=organization_addr.root_verify_key,
             workspace_id=workspace_id,
             path=path,
         )
@@ -523,7 +491,6 @@ class BackendOrganizationFileLinkAddr(OrganizationParamsFixture, BackendActionAd
         return BackendOrganizationAddr.build(
             backend_addr=self,
             organization_id=self.organization_id,
-            root_verify_key=self.root_verify_key,
         )
 
     @property
@@ -632,9 +599,9 @@ class BackendInvitationAddr(BackendActionAddr):
             token=token,
         )
 
-    def generate_organization_addr(self, root_verify_key: VerifyKey) -> BackendOrganizationAddr:
+    def generate_organization_addr(self) -> BackendOrganizationAddr:
         return BackendOrganizationAddr.build(
-            backend_addr=self, organization_id=self.organization_id, root_verify_key=root_verify_key
+            backend_addr=self, organization_id=self.organization_id
         )
 
     @property

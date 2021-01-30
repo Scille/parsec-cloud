@@ -6,7 +6,7 @@ from hashlib import sha256
 from marshmallow import ValidationError
 from pendulum import DateTime, now as pendulum_now
 
-from parsec.crypto import SecretKey, PrivateKey, SigningKey
+from parsec.crypto import SecretKey, PrivateKey, SigningKey, VerifyKey
 from parsec.serde import fields, post_load
 from parsec.api.protocol import (
     UserID,
@@ -55,6 +55,7 @@ class LocalDevice(BaseLocalData):
             return LocalDevice(**data)
 
     organization_addr: BackendOrganizationAddr
+    root_verify_key: VerifyKey
     device_id: DeviceID
     device_label: Optional[str]
     human_handle: Optional[HumanHandle]
