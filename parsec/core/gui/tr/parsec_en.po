@@ -334,6 +334,9 @@ msgstr "B"
 msgid "ACTION_FILE_OPEN_CURRENT_DIRECTORY"
 msgstr "Open current directory in the file explorer"
 
+msgid "ACTION_FILE_OPEN_CURRENT_DIRECTORY_MAC"
+msgstr "Open current directory in Finder"
+
 msgid "ACTION_FILE_MENU_OPEN"
 msgstr "Open"
 
@@ -1833,6 +1836,9 @@ msgstr "Could not invite the user."
 
 msgid "ACTION_WORKSPACE_OPEN_IN_FILE_EXPLORER"
 msgstr "Open in the file explorer"
+
+msgid "ACTION_WORKSPACE_OPEN_IN_FINDER"
+msgstr "Open in Finder"
 
 msgid "ACTION_WORKSPACE_RENAME"
 msgstr "Rename"
