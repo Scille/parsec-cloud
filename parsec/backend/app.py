@@ -383,7 +383,14 @@ class BackendApp:
 
             else:
                 try:
-                    rep = await cmd_func(client_ctx, req)
+                    print('****** handling', cmd)
+                    try:
+                        rep = await cmd_func(client_ctx, req)
+                    except BaseException as exc:
+                        print('******************* err', cmd, exc)
+                    finally:
+                        print('******************* leaving', cmd)
+                    print('****** handled', cmd)
 
                 except InvalidMessageError as exc:
                     rep = {
@@ -398,6 +405,7 @@ class BackendApp:
                 except CancelledByNewRequest as exc:
                     # Long command handling such as message_get can be cancelled
                     # when the peer send a new request
+                    print('****** cancelled', cmd, exc)
                     raw_req = exc.new_raw_req
                     continue
 

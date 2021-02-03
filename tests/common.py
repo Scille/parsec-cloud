@@ -106,6 +106,14 @@ class FreezeTestOnTransportError(Transport):
             # Wait here until this coroutine is cancelled
             await trio.sleep_forever()
 
+    async def aclose(self):
+        try:
+            return await self.transport.aclose()
+
+        except TransportError:
+            # Wait here until this coroutine is cancelled
+            await trio.sleep_forever()
+
 
 @attr.s
 class CallController:

@@ -662,3 +662,33 @@ async def test_claimer_step_2_retry(
                 async with trio.open_nursery() as nursery:
                     nursery.start_soon(_claimer_step_2)
                     nursery.start_soon(_greeter_step_2)
+
+
+
+
+@pytest.mark.trio
+async def test_greeter_disconnect(
+    backend, alice, backend_sock_factory, alice_backend_sock, invitation, invited_sock
+):
+    greeter_privkey = PrivateKey.generate()
+    # Send the command frame to the server...
+    await invite_1_greeter_wait_peer._do_send(
+        alice_backend_sock,
+        args=[],
+        kwargs={
+            "token": invitation.token,
+            "greeter_public_key": greeter_privkey.public_key,
+        }
+    )
+    # ...from now on the client should be waiting for the server answer
+    # however it should also be able to send keepalive pings...
+    # alice_backend_sock
+    await trio.sleep(1)
+
+    # ...and also to cleanly close the connection without delay
+    with trio.fail_after(1):
+        print('================== CLOSING...')
+        await alice_backend_sock.aclose()
+        print('================== CLOSED !')
+
+    await trio.sleep(1)
