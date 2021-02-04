@@ -25,6 +25,7 @@ from parsec.backend.invite import (
     InvitationNotFoundError,
     InvitationAlreadyDeletedError,
     InvitationInvalidStateError,
+    InvitationAlreadyMemberError,
 )
 from parsec.backend.postgresql.utils import (
     Q,
@@ -33,7 +34,7 @@ from parsec.backend.postgresql.utils import (
     q_user_internal_id,
     STR_TO_INVITATION_CONDUIT_STATE,
 )
-
+from parsec.backend.postgresql.user_queries.find import query_retrieve_active_human_by_email
 
 _q_retrieve_compatible_user_invitation = Q(
     f"""
@@ -474,10 +475,15 @@ class PGInviteComponent(BaseInviteComponent):
         created_on: Optional[DateTime] = None,
     ) -> UserInvitation:
         """
-        Raise: Nothing
+        Raise: InvitationAlreadyMemberError
         """
         created_on = created_on or pendulum_now()
         async with self.dbh.pool.acquire() as conn, conn.transaction():
+            user_id = await query_retrieve_active_human_by_email(
+                conn, organization_id, claimer_email
+            )
+            if user_id:
+                raise InvitationAlreadyMemberError()
             token = await _do_new_user_invitation(
                 conn,
                 organization_id=organization_id,

@@ -104,14 +104,68 @@ async def assert_stream_closed_on_peer_side(stream):
         await stream.send_all(b"GET / HTTP/1.0\r\n\r\n")
 
 
+async def _do_test_redirect(backend_http_send):
+    # No redirection header. shouln't redirect.
+    req = b"GET /test HTTP/1.0\r\n\r\n"
+    status, headers, test = await backend_http_send(req=req)
+    assert status == (404, "Not Found")
+
+    # Incorrect redirection header with good redirection protocol. shouln't redirect.
+    req = b"GET /test HTTP/1.0\r\nX-Forwa-P:https\r\n\r\n"
+    status, headers, test = await backend_http_send(req=req)
+    assert status == (404, "Not Found")
+
+    # Correct header redirection but not same redirection protocol. should redirect.
+    req = b"GET / HTTP/1.0\r\nX-Forwarded-Proto:42\r\n\r\n"
+    status, headers, test = await backend_http_send(req=req)
+    # Only non-ssl request should lead to redirection
+    assert status == (301, "Moved Permanently")
+
+    # Make sure header key is case insensitive...
+    req = b"GET / HTTP/1.0\r\nx-forwarded-proto:https\r\n\r\n"
+    status, headers, test = await backend_http_send(req=req)
+    assert status == (200, "OK")
+
+    # ...but header value is not !
+    req = b"GET / HTTP/1.0\r\nx-forwarded-proto:HTTPS\r\n\r\n"
+    status, headers, test = await backend_http_send(req=req)
+    # Only non-ssl request should lead to redirection
+    assert status == (301, "Moved Permanently")
+
+    # Correct header and redirection protocol, no redirection.
+    req = b"GET /test HTTP/1.0\r\nX-Forwarded-Proto:https\r\n\r\n"
+    status, headers, test = await backend_http_send(req=req)
+    assert status == (404, "Not Found")
+
+    # Correct header and redirection protocol, no redirection.
+    # Root path actually return the index page of parsec so status 200 for this one.
+    req = b"GET / HTTP/1.0\r\nX-Forwarded-Proto:https\r\n\r\n"
+    status, headers, test = await backend_http_send(req=req)
+    assert status == (200, "OK")
+
+
+@customize_fixtures(backend_forward_proto_enforce_https=(b"x-forwarded-proto", b"https"))
+@pytest.mark.trio
+async def test_redirect_proxy(backend, backend_http_send):
+    await _do_test_redirect(backend_http_send)
+
+
+@customize_fixtures(backend_forward_proto_enforce_https=(b"x-forwarded-proto", b"https"))
+@customize_fixtures(backend_over_ssl=True)
+@pytest.mark.trio
+async def test_forward_proto_enforce_https(backend, backend_http_send):
+    await _do_test_redirect(backend_http_send)
+
+
 @pytest.mark.trio
 async def test_invalid_request_line(backend_http_send):
     for req in [
-        b"\r\n\r\n",
+        b"\x00",  # Early check should detect this has no chance of being an HTTP request
+        b"\r\n\r\n",  # Missing everything :/
         b"HTTP/1.0\r\n\r\n",  # Missing method and target
         "GET /开始 HTTP/1.0\r\n\r\n".encode("utf8"),  # UTF-8 is not ISO-8859-1 !
         b"GET /\xf1 HTTP/1.0\r\n\r\n",  # Target part must be ISO-8859-1
-        b"G\xf1T / HTTP/1.0\r\n\r\n",  # Method must be ISO-8859-1)
+        b"G\xf1T / HTTP/1.0\r\n\r\n",  # Method must be ISO-8859-1
         b"GET / HTTP/42.0\r\n\r\n",  # Only supported in Cyberpunk 2077
     ]:
         status, _, _ = await backend_http_send(req=req)

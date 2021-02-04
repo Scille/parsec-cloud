@@ -1,7 +1,7 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
 
 import attr
-from typing import List, Optional, Union
+from typing import List, Optional, Union, Tuple
 
 from parsec.core.types import BackendAddr
 
@@ -102,6 +102,8 @@ class BackendConfig:
     blockstore_config: BaseBlockStoreConfig
 
     email_config: Union[SmtpEmailConfig, MockedEmailConfig]
+    ssl_context: bool
+    forward_proto_enforce_https: Optional[Tuple[bytes, bytes]]
     backend_addr: Optional[BackendAddr]
 
     spontaneous_organization_bootstrap: bool

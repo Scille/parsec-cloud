@@ -333,6 +333,23 @@ async def test_delete(
 
 
 @pytest.mark.trio
+@pytest.mark.parametrize("is_revoked", [True, False])
+async def test_user_invitation_already_member(
+    alice, bob, backend, alice_backend_sock, is_revoked, backend_data_binder
+):
+    if is_revoked:
+        await backend_data_binder.bind_revocation(user_id=bob.user_id, certifier=alice)
+
+    rep = await invite_new(
+        alice_backend_sock, type=InvitationType.USER, claimer_email=bob.human_handle.email
+    )
+    if not is_revoked:
+        assert rep == {"status": "already_member"}
+    else:
+        assert rep == {"status": "ok", "token": ANY}
+
+
+@pytest.mark.trio
 async def test_user_invitation_double_create(alice, backend, alice_backend_sock):
     claimer_email = "zack@example.com"
 

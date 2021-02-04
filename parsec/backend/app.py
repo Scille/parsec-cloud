@@ -130,6 +130,7 @@ class BackendApp:
         conn = h11.Connection(
             h11.SERVER, max_incomplete_event_size=MAX_INITIAL_HTTP_REQUEST_SIZE - 1
         )
+        initial_line_cheap_check_done = False
         try:
             # Fetch the initial request
             while True:
@@ -139,6 +140,17 @@ class BackendApp:
                     # The socket got broken in an unexpected way (the peer has most
                     # likely left without telling us, or has reseted the connection)
                     return
+
+                # HTTP request initial line must be composed of printable ASCII
+                # characters. This create an opportunity for an early&cheap check.
+                # This is typically useful when a client attempt an SSL connection
+                # while we didn't enabled SSL on server side: without this check
+                # we will hang forever waiting for the `\r\n\r\n` marking end of
+                # the HTTP request.
+                if not initial_line_cheap_check_done and data and data[0] < 0x21:
+                    await self._send_http_reply(stream, conn, status_code=400)
+                    return
+                initial_line_cheap_check_done = True
 
                 conn.receive_data(data)
                 event = conn.next_event()
@@ -160,9 +172,26 @@ class BackendApp:
                     conn.send(h11.InformationalResponse(status_code=100, headers=[]))
                 )
 
-            def _get_header(key: bytes) -> bytes:
-                # h11 guarantees the headers are always lowercase
-                return next((v for k, v in event.headers if k == key), b"")
+            def _get_header(key: bytes) -> Optional[bytes]:
+                # h11 guarantees the headers key are always lowercase
+                return next((v for k, v in event.headers if k == key), None)
+
+            # Do https redirection if incoming request doesn't follow forward proto rules
+            if self.config.forward_proto_enforce_https:
+                header_key, header_expected_value = self.config.forward_proto_enforce_https
+                header_value = _get_header(header_key)
+                # If redirection header match and protocol match, then no need for a redirection.
+                if header_value is not None and header_value != header_expected_value:
+                    location_url = (
+                        b"https://" + self.config.backend_addr.netloc.encode("ascii") + event.target
+                    )
+                    await self._send_http_reply(
+                        stream=stream,
+                        conn=conn,
+                        status_code=301,
+                        headers={b"location": location_url},
+                    )
+                    return await stream.aclose()
 
             # Test for websocket upgrade considering:
             # - Upgrade header has been introduced in HTTP 1.1 RFC
@@ -173,8 +202,8 @@ class BackendApp:
             if (
                 event.http_version == b"1.1"
                 and event.target == TRANSPORT_TARGET.encode()
-                and _get_header(b"connection").lower() == b"upgrade"
-                and _get_header(b"upgrade").lower() == b"websocket"
+                and (_get_header(b"connection") or b"").lower() == b"upgrade"
+                and (_get_header(b"upgrade") or b"").lower() == b"websocket"
             ):
                 await self._handle_client_websocket(stream, event)
             else:

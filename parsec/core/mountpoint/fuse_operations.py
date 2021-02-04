@@ -3,6 +3,7 @@
 from parsec.core.core_events import CoreEvent
 import os
 import errno
+import trio
 from typing import Optional
 from structlog import get_logger
 from contextlib import contextmanager
@@ -53,6 +54,10 @@ def translate_error(event_bus, operation, path):
         )
         # Use EINVAL as fallback error code, since this is what fusepy does.
         raise FuseOSError(errno.EINVAL) from exc
+
+    except trio.Cancelled as exc:  # Cancelled inherits BaseException
+        # Might be raised by `self.fs_access` if the trio loop finishes in our back
+        raise FuseOSError(errno.EACCES) from exc
 
 
 class FuseOperations(LoggingMixIn, Operations):

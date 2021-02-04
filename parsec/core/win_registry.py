@@ -3,13 +3,13 @@
 import os
 import string
 import platform
+from importlib import import_module
+import importlib_resources
 from pathlib import Path
-
-import psutil
 from structlog import get_logger
 from contextlib import contextmanager
 
-from . import resources
+from parsec.core import resources
 
 logger = get_logger()
 
@@ -17,18 +17,31 @@ ACROBAT_READER_DC_PRIVILEGED = "Software\\Adobe\\Acrobat Reader\\DC\\Privileged"
 ENABLE_APP_CONTAINER = "bEnableProtectedModeAppContainer"
 
 PROCESS_ID = "ProcessID"
-DRIVE_ICON_PATH = Path(resources.__file__).absolute().parent / "parsec.ico"
+DRIVE_ICON_NAME = "parsec.ico"
 EXPLORER_DRIVES = "Software\\Classes\\Applications\\Explorer.exe\\Drives"
 EXPLORER_DRIVES_DEFAULT_ICON_TEMPLATE = EXPLORER_DRIVES + "\\{}\\DefaultIcon"
 
 
 # Winreg helper
 
+_psutil = None
+
+
+def get_psutil():
+    global _psutil
+    if not _psutil:
+        _psutil = import_module("psutil")
+    return _psutil
+
+
+_winreg = None
+
 
 def get_winreg():
-    import winreg  # noqa
-
-    return winreg
+    global _winreg
+    if not _winreg:
+        _winreg = import_module("winreg")
+    return _winreg
 
 
 def try_winreg():
@@ -132,18 +145,18 @@ def get_parsec_drive_icon(letter):
     return icon_path, pid
 
 
-def set_parsec_drive_icon(letter):
+def set_parsec_drive_icon(letter: str, drive_icon_path: Path):
     winreg = get_winreg()
     hkcu = winreg.HKEY_CURRENT_USER
     assert len(letter) == 1 and letter.upper() in string.ascii_uppercase
     key = EXPLORER_DRIVES_DEFAULT_ICON_TEMPLATE.format(letter.upper())
 
     # Write both the drive icon path and the current process id
-    winreg.SetValue(hkcu, key, winreg.REG_SZ, str(DRIVE_ICON_PATH))
+    winreg.SetValue(hkcu, key, winreg.REG_SZ, str(drive_icon_path))
     winreg_write_user_dword(key, PROCESS_ID, os.getpid())
 
 
-def del_parsec_drive_icon(letter):
+def del_parsec_drive_icon(letter: str):
     winreg = get_winreg()
     hkcu = winreg.HKEY_CURRENT_USER
     assert len(letter) == 1 and letter.upper() in string.ascii_uppercase
@@ -164,11 +177,12 @@ def parsec_drive_icon_context(letter):
         return
 
     # Safe context for removing the key after usage
-    try:
-        set_parsec_drive_icon(letter)
-        yield
-    finally:
-        del_parsec_drive_icon(letter)
+    with importlib_resources.path(resources, DRIVE_ICON_NAME) as drive_icon_path:
+        set_parsec_drive_icon(letter, drive_icon_path)
+        try:
+            yield
+        finally:
+            del_parsec_drive_icon(letter)
 
 
 def cleanup_parsec_drive_icons():
@@ -181,5 +195,5 @@ def cleanup_parsec_drive_icons():
 
         # Perform some cleanup if necessary
         _, pid = get_parsec_drive_icon(letter)
-        if pid and not psutil.pid_exists(pid):
+        if pid and not get_psutil().pid_exists(pid):
             del_parsec_drive_icon(letter)

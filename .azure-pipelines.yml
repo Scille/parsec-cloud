@@ -10,6 +10,8 @@ trigger:
 
 variables:
   python.version: '3.6'
+  # pyinstaller is picky on the version to use
+  python.version_for_macos_packaging: '3.8'
   postgresql.version: '10'
   winfsp.version: '1.7.20172'
   pytest.base_args: |
@@ -40,6 +42,7 @@ jobs:
       set -eux
       sudo apt-get update
       python --version
+      pip install pip --user --upgrade
       pip install -r pre-requirements.txt
     displayName: 'Bootstrap'
   - bash: |
@@ -122,6 +125,7 @@ jobs:
       set -eux
       sudo apt-get update
       python --version
+      pip install pip --user --upgrade
       pip install -r pre-requirements.txt
       sudo apt-get install \
         postgresql-$(postgresql.version) \
@@ -205,11 +209,12 @@ jobs:
   - bash: |
       set -eux
       python --version
+      pip install pip --user --upgrade
       pip install -r pre-requirements.txt
       brew install \
         postgres \
         desktop-file-utils  # Provides `update-desktop-database` used by `tests/scripts/run_testenv.sh`
-      brew cask install osxfuse
+      brew install --cask osxfuse
       psql --version
     displayName: 'Bootstrap'
   - bash: |
@@ -223,16 +228,16 @@ jobs:
       # Check dependency compatibility
       pip check parsec[all]
     displayName: 'Install'
-# Postgresql tests almost working, but _run function in tests/test_cli.py gives
-# returncode of 1 instead of 0. Removed test_cli.py from this call as temporary fix
-# doing tests only on tests/backend/*
-  - bash: |
-      set -eux
-      py.test $(pytest.base_args) \
-        tests/backend --postgresql --runslow \
-        -n auto --max-worker-restart=0 -x \
-        --junitxml=test-results-postgresql.xml
-    displayName: 'Tests postgresql'
+  # Postgresql tests almost working, but _run function in tests/test_cli.py gives
+  # returncode of 1 instead of 0. Removed test_cli.py from this call as temporary fix
+  # doing tests only on tests/backend/*
+  # - bash: |
+  #     set -eux
+  #     py.test $(pytest.base_args) \
+  #       tests/backend --postgresql --runslow \
+  #       -n auto --max-worker-restart=0 -x \
+  #       --junitxml=test-results-postgresql.xml
+  #   displayName: 'Tests postgresql'
   - bash: |
       set -eux
       py.test $(pytest.base_args) \
@@ -282,6 +287,7 @@ jobs:
   - bash: |
       set -eux
       python.exe --version
+      pip install pip --user --upgrade
       pip install -r pre-requirements.txt
       choco install -y --limit-output winfsp --pre --version=$(winfsp.version)
       # Install winfsp-test and put it in PATH
@@ -406,7 +412,7 @@ jobs:
     submodules: true
   - task: UsePythonVersion@0
     inputs:
-      versionSpec: '$(python.version)'
+      versionSpec: '$(python.version_for_macos_packaging)'
   - bash: |
       set -eux
       brew install coreutils
@@ -449,6 +455,7 @@ jobs:
       modifyEnvironment: true
   - bash: |
       set -eux
+      pip install pip --user --upgrade
       # Path with backslash are a pain...
       SOURCES_DIRECTORY=`python -c 'print(r"$(Build.SourcesDirectory)".replace("\\\\", "/"))'`
       TEMP_DIRECTORY=`python -c 'print(r"$(Agent.TempDirectory)".replace("\\\\", "/"))'`

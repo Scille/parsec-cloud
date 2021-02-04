@@ -231,6 +231,7 @@ class ErrorWidget(QWidget, Ui_ErrorWidget):
         super().__init__()
         self.setupUi(self)
         self.label_message.setText(message)
+        self.label_message.setOpenExternalLinks(True)
         self.label_icon.apply_style()
         self.text_details.hide()
         if not exception:

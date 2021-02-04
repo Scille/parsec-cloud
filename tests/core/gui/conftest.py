@@ -242,7 +242,7 @@ def autoclose_dialog(monkeypatch):
 def widget_catcher_factory(aqtbot, monkeypatch):
     """Useful to capture lazily created widget such as modals"""
 
-    def _widget_catcher_factory(*widget_cls_pathes):
+    def _widget_catcher_factory(*widget_cls_pathes, timeout=1000):
         widgets = []
 
         def _catch_init(self, *args, **kwargs):
@@ -261,7 +261,7 @@ def widget_catcher_factory(aqtbot, monkeypatch):
             def _invitation_shown():
                 assert len(widgets)
 
-            await aqtbot.wait_until(_invitation_shown)
+            await aqtbot.wait_until(_invitation_shown, timeout=timeout)
             return widgets.pop(0)
 
         return _wait_next
@@ -414,7 +414,7 @@ def testing_main_window_cls(aqtbot, qt_thread_gateway):
             central_widget = self.test_get_central_widget()
 
             def _trigger_logout_menu():
-                central_widget.button_user.menu().actions()[0].trigger()
+                central_widget.button_user.menu().actions()[2].trigger()
 
             tabw = self.test_get_tab()
 
