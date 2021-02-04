@@ -695,7 +695,7 @@ async def test_copy_cut_folders_and_files_between_two_workspaces(
     async with aqtbot.wait_signals([w_f.table_files.paste_clicked, w_f.copy_success], timeout=2000):
         await aqtbot.key_click(w_f.table_files, "V", modifier=QtCore.Qt.ControlModifier)
 
-    await aqtbot.wait_until(lambda: _files_displayed(3), timeout=2000)
+    await aqtbot.wait_until(lambda: _files_displayed(3), timeout=3000)
 
     assert w_f.table_files.item(1, 1).text() == "file01.txt"
     assert w_f.table_files.item(2, 1).text() == "file02.txt"

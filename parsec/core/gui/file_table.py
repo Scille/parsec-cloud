@@ -290,7 +290,6 @@ class FileTable(QTableWidget):
             else:
                 self.add_parent_folder()
 
-        print(files_stats)
         to_remove = []
         for row in range(1, self.rowCount()):
             name_item = self.item(row, Column.NAME)
