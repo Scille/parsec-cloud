@@ -7,32 +7,21 @@ from parsec.core.types import (
     BackendAddr,
     BackendOrganizationAddr,
     BackendOrganizationBootstrapAddr,
-    BackendOrganizationClaimUserAddr,
-    BackendOrganizationClaimDeviceAddr,
     BackendOrganizationFileLinkAddr,
     BackendInvitationAddr,
 )
 
 
-ORG = "MyOrg"
-RVK = "P25GRG3XPSZKBEKXYQFBOLERWQNEDY3AO43MVNZCLPXPKN63JRYQssss"
-TOKEN = "a0000000000000000000000000000001"
-DOMAIN = "parsec.cloud.com"
-USER_ID = "John"
-DEVICE_ID = "John%40Dev42"
-PATH = "%2Fdir%2Ffile"
-WORKSPACE_ID = "2d4ded12-7406-4608-833b-7f57f01156e2"
-INVITATION_TYPE = "claim_user"
 DEFAULT_ARGS = {
-    "ORG": ORG,
-    "RVK": RVK,
-    "TOKEN": TOKEN,
-    "DOMAIN": DOMAIN,
-    "USER_ID": USER_ID,
-    "DEVICE_ID": DEVICE_ID,
-    "PATH": PATH,
-    "WORKSPACE_ID": WORKSPACE_ID,
-    "INVITATION_TYPE": INVITATION_TYPE,
+    "ORG": "MyOrg",
+    "RVK": "P25GRG3XPSZKBEKXYQFBOLERWQNEDY3AO43MVNZCLPXPKN63JRYQssss",
+    "TOKEN": "a0000000000000000000000000000001",
+    "DOMAIN": "parsec.cloud.com",
+    "USER_ID": "John",
+    "DEVICE_ID": "John%40Dev42",
+    "PATH": "%2Fdir%2Ffile",
+    "WORKSPACE_ID": "2d4ded12-7406-4608-833b-7f57f01156e2",
+    "INVITATION_TYPE": "claim_user",
 }
 
 
@@ -66,26 +55,6 @@ BackendOrganizationBootstrapAddrTestbed = AddrTestbed(
     BackendOrganizationBootstrapAddr,
     "parsec://{DOMAIN}/{ORG}?action=bootstrap_organization&token={TOKEN}",
 )
-BackendOrganizationClaimUserAddrTestbed = AddrTestbed(
-    "org_claim_user_addr",
-    BackendOrganizationClaimUserAddr,
-    "parsec://{DOMAIN}/{ORG}?action=claim_user&user_id={USER_ID}&token={TOKEN}&rvk={RVK}",
-)
-BackendOrganizationClaimDeviceAddrTestbed = AddrTestbed(
-    "org_claim_device_addr",
-    BackendOrganizationClaimDeviceAddr,
-    "parsec://{DOMAIN}/{ORG}?action=claim_device&device_id={DEVICE_ID}&token={TOKEN}&rvk={RVK}",
-)
-BackendOrganizationClaimUserAddrNoTokenTestbed = AddrTestbed(
-    "org_claim_user_addr_no_token",
-    BackendOrganizationClaimUserAddr,
-    "parsec://{DOMAIN}/{ORG}?action=claim_user&user_id={USER_ID}&rvk={RVK}",
-)
-BackendOrganizationClaimDeviceAddrNoTokenTestbed = AddrTestbed(
-    "org_claim_device_addr_no_token",
-    BackendOrganizationClaimDeviceAddr,
-    "parsec://{DOMAIN}/{ORG}?action=claim_device&device_id={DEVICE_ID}&rvk={RVK}",
-)
 BackendOrganizationFileLinkAddrTestbed = AddrTestbed(
     "org_file_link_addr",
     BackendOrganizationFileLinkAddr,
@@ -103,10 +72,6 @@ BackendInvitationAddrTestbed = AddrTestbed(
         BackendAddrTestbed,
         BackendOrganizationAddrTestbed,
         BackendOrganizationBootstrapAddrTestbed,
-        BackendOrganizationClaimUserAddrTestbed,
-        BackendOrganizationClaimDeviceAddrTestbed,
-        BackendOrganizationClaimUserAddrNoTokenTestbed,
-        BackendOrganizationClaimDeviceAddrNoTokenTestbed,
         BackendOrganizationFileLinkAddrTestbed,
         BackendInvitationAddrTestbed,
     ]
@@ -119,10 +84,6 @@ def addr_testbed(request):
     params=[
         BackendOrganizationAddrTestbed,
         BackendOrganizationBootstrapAddrTestbed,
-        BackendOrganizationClaimUserAddrTestbed,
-        BackendOrganizationClaimDeviceAddrTestbed,
-        BackendOrganizationClaimUserAddrNoTokenTestbed,
-        BackendOrganizationClaimDeviceAddrNoTokenTestbed,
         BackendOrganizationFileLinkAddrTestbed,
         BackendInvitationAddrTestbed,
     ]
@@ -134,8 +95,6 @@ def addr_with_org_testbed(request):
 @pytest.fixture(
     params=[
         BackendOrganizationBootstrapAddrTestbed,
-        BackendOrganizationClaimUserAddrTestbed,
-        BackendOrganizationClaimDeviceAddrTestbed,
         # BackendInvitationAddrTestbed token format is different from apiv1's token
     ]
 )
@@ -300,5 +259,7 @@ def test_invitation_addr_to_http_url(addr_invitation_testbed, no_ssl):
     addr = addr_invitation_testbed.cls.from_url(url)
     http_url = addr.to_http_redirection_url()
     assert (
-        http_url == f"{http_scheme}{DOMAIN}/redirect/{ORG}?action={INVITATION_TYPE}&token={TOKEN}"
+        http_url
+        == http_scheme
+        + "{DOMAIN}/redirect/{ORG}?action={INVITATION_TYPE}&token={TOKEN}".format(**DEFAULT_ARGS)
     )
