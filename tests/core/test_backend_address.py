@@ -1,9 +1,12 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2016-2021 Scille SAS
 
 import pytest
+from uuid import UUID
 
-from parsec.api.protocol import InvitationType
+from parsec.crypto import SigningKey
+from parsec.api.protocol import InvitationType, OrganizationID
 from parsec.core.types import (
+    EntryID,
     BackendAddr,
     BackendOrganizationAddr,
     BackendOrganizationBootstrapAddr,
@@ -58,7 +61,7 @@ BackendOrganizationBootstrapAddrTestbed = AddrTestbed(
 BackendOrganizationFileLinkAddrTestbed = AddrTestbed(
     "org_file_link_addr",
     BackendOrganizationFileLinkAddr,
-    "parsec://{DOMAIN}/{ORG}?action=file_link&workspace_id={WORKSPACE_ID}&path={PATH}&rvk={RVK}",
+    "parsec://{DOMAIN}/{ORG}?action=file_link&workspace_id={WORKSPACE_ID}&path={PATH}",
 )
 BackendInvitationAddrTestbed = AddrTestbed(
     "org_invitation_addr",
@@ -263,3 +266,53 @@ def test_invitation_addr_to_http_url(addr_invitation_testbed, no_ssl):
         == http_scheme
         + "{DOMAIN}/redirect/{ORG}?action={INVITATION_TYPE}&token={TOKEN}".format(**DEFAULT_ARGS)
     )
+
+
+def test_build_addrs():
+    backend_addr = BackendAddr.from_url(BackendAddrTestbed.url)
+    assert backend_addr.hostname == "parsec.cloud.com"
+    assert backend_addr.port == 443
+    assert backend_addr.use_ssl is True
+
+    organization_id = OrganizationID("MyOrg")
+    root_verify_key = SigningKey.generate().verify_key
+
+    organization_addr = BackendOrganizationAddr.build(
+        backend_addr=backend_addr, organization_id=organization_id, root_verify_key=root_verify_key
+    )
+    assert organization_addr.organization_id == organization_id
+    assert organization_addr.root_verify_key == root_verify_key
+
+    organization_bootstrap_addr = BackendOrganizationBootstrapAddr.build(
+        backend_addr=backend_addr,
+        organization_id=organization_id,
+        token="a0000000000000000000000000000001",
+    )
+    assert organization_bootstrap_addr.token == "a0000000000000000000000000000001"
+    assert organization_bootstrap_addr.organization_id == organization_id
+
+    organization_bootstrap_addr2 = BackendOrganizationBootstrapAddr.build(
+        backend_addr=backend_addr, organization_id=organization_id, token=None
+    )
+    assert organization_bootstrap_addr2.organization_id == organization_id
+    assert organization_bootstrap_addr2.token == ""
+
+    organization_file_link_addr = BackendOrganizationFileLinkAddr.build(
+        organization_addr=organization_addr,
+        workspace_id=EntryID("2d4ded12-7406-4608-833b-7f57f01156e2"),
+        path="/foo/bar",
+    )
+    assert organization_file_link_addr.workspace_id == EntryID(
+        "2d4ded12-7406-4608-833b-7f57f01156e2"
+    )
+    assert organization_file_link_addr.path == "/foo/bar"
+
+    invitation_addr = BackendInvitationAddr.build(
+        backend_addr=backend_addr,
+        organization_id=organization_id,
+        invitation_type=InvitationType.USER,
+        token=UUID("a0000000000000000000000000000001"),
+    )
+    assert invitation_addr.organization_id == organization_id
+    assert invitation_addr.token == UUID("a0000000000000000000000000000001")
+    assert invitation_addr.invitation_type == InvitationType.USER

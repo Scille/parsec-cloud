@@ -137,7 +137,12 @@ class BackendAddr:
         return self._use_ssl
 
 
-class OrganizationParamsFixture(BackendAddr):
+class BackendOrganizationAddr(BackendAddr):
+    """
+    Represent the URL to access an organization within a backend
+    (e.g. ``parsec://parsec.example.com/MyOrg?rvk=7NFDS4VQLP3XPCMTSEN34ZOXKGGIMTY2W2JI2SPIHB2P3M6K4YWAssss``)
+    """
+
     __slots__ = ("_root_verify_key", "_organization_id")
 
     def __init__(self, organization_id: OrganizationID, root_verify_key: VerifyKey, **kwargs):
@@ -179,13 +184,6 @@ class OrganizationParamsFixture(BackendAddr):
     @property
     def root_verify_key(self) -> VerifyKey:
         return self._root_verify_key
-
-
-class BackendOrganizationAddr(OrganizationParamsFixture, BackendAddr):
-    """
-    Represent the URL to access an organization within a backend
-    (e.g. ``parsec://parsec.example.com/MyOrg?rvk=7NFDS4VQLP3XPCMTSEN34ZOXKGGIMTY2W2JI2SPIHB2P3M6K4YWAssss``)
-    """
 
     @classmethod
     def build(
@@ -297,18 +295,25 @@ class BackendOrganizationBootstrapAddr(BackendActionAddr):
         return self._token if self._token is not None else ""
 
 
-class BackendOrganizationFileLinkAddr(OrganizationParamsFixture, BackendActionAddr):
+class BackendOrganizationFileLinkAddr(BackendActionAddr):
     """
     Represent the URL to share a file link
     (e.g. ``parsec://parsec.example.com/my_org?action=file_link&workspace_id=xx&path=yy``)
     """
 
-    __slots__ = ("_workspace_id", "_path")
+    __slots__ = ("_organization_id", "_workspace_id", "_path")
 
-    def __init__(self, workspace_id: EntryID, path: FsPath, **kwargs):
+    def __init__(
+        self, organization_id: OrganizationID, workspace_id: EntryID, path: FsPath, **kwargs
+    ):
         super().__init__(**kwargs)
+        self._organization_id = organization_id
         self._workspace_id = workspace_id
         self._path = path
+
+    @classmethod
+    def _from_url_parse_path(cls, path):
+        return {"organization_id": OrganizationID(path[1:])}
 
     @classmethod
     def _from_url_parse_and_consume_params(cls, params):
@@ -338,6 +343,9 @@ class BackendOrganizationFileLinkAddr(OrganizationParamsFixture, BackendActionAd
 
         return kwargs
 
+    def _to_url_get_path(self):
+        return str(self.organization_id)
+
     def _to_url_get_params(self):
         params = [
             ("action", "file_link"),
@@ -355,17 +363,13 @@ class BackendOrganizationFileLinkAddr(OrganizationParamsFixture, BackendActionAd
             port=organization_addr.port,
             use_ssl=organization_addr.use_ssl,
             organization_id=organization_addr.organization_id,
-            root_verify_key=organization_addr.root_verify_key,
             workspace_id=workspace_id,
             path=path,
         )
 
-    def to_organization_addr(self) -> BackendOrganizationAddr:
-        return BackendOrganizationAddr.build(
-            backend_addr=self,
-            organization_id=self.organization_id,
-            root_verify_key=self.root_verify_key,
-        )
+    @property
+    def organization_id(self) -> OrganizationID:
+        return self._organization_id
 
     @property
     def workspace_id(self) -> EntryID:
