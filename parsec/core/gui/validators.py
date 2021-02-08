@@ -9,8 +9,6 @@ from parsec.core.types import (
     BackendActionAddr,
     BackendOrganizationAddr,
     BackendOrganizationBootstrapAddr,
-    BackendOrganizationClaimUserAddr,
-    BackendOrganizationClaimDeviceAddr,
 )
 
 
@@ -63,28 +61,6 @@ class BackendOrganizationBootstrapAddrValidator(QValidator):
             if len(string) == 0:
                 return QValidator.Intermediate, string, pos
             BackendOrganizationBootstrapAddr.from_url(string)
-            return QValidator.Acceptable, string, pos
-        except ValueError:
-            return QValidator.Intermediate, string, pos
-
-
-class BackendOrganizationClaimUserAddrValidator(QValidator):
-    def validate(self, string, pos):
-        try:
-            if len(string) == 0:
-                return QValidator.Intermediate, string, pos
-            BackendOrganizationClaimUserAddr.from_url(string)
-            return QValidator.Acceptable, string, pos
-        except ValueError:
-            return QValidator.Intermediate, string, pos
-
-
-class BackendOrganizationClaimDeviceAddrValidator(QValidator):
-    def validate(self, string, pos):
-        try:
-            if len(string) == 0:
-                return QValidator.Intermediate, string, pos
-            BackendOrganizationClaimDeviceAddr.from_url(string)
             return QValidator.Acceptable, string, pos
         except ValueError:
             return QValidator.Intermediate, string, pos

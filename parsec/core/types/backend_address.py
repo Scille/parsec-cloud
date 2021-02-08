@@ -7,7 +7,7 @@ from marshmallow import ValidationError
 
 from parsec.serde import fields
 from parsec.crypto import VerifyKey, export_root_verify_key, import_root_verify_key
-from parsec.api.protocol import OrganizationID, UserID, DeviceID, InvitationType
+from parsec.api.protocol import OrganizationID, InvitationType
 from parsec.api.data import EntryID
 from parsec.core.types.base import FsPath
 
@@ -211,8 +211,6 @@ class BackendActionAddr(BackendAddr):
         else:
             for type in (
                 BackendOrganizationBootstrapAddr,
-                BackendOrganizationClaimUserAddr,
-                BackendOrganizationClaimDeviceAddr,
                 BackendOrganizationFileLinkAddr,
                 BackendInvitationAddr,
             ):
@@ -297,166 +295,6 @@ class BackendOrganizationBootstrapAddr(BackendActionAddr):
         # token is the empty one (which is used for spontaneous organization
         # bootstrap without prior organization creation)
         return self._token if self._token is not None else ""
-
-
-class BackendOrganizationClaimUserAddr(OrganizationParamsFixture, BackendActionAddr):
-    """
-    Represent the URL to bootstrap claim a user
-    (e.g. ``parsec://parsec.example.com/my_org?action=claim_user&user_id=John&token=1234ABCD&rvk=P25GRG3XPSZKBEKXYQFBOLERWQNEDY3AO43MVNZCLPXPKN63JRYQssss``)
-    """
-
-    __slots__ = ("_user_id", "_token")
-
-    def __init__(self, user_id: UserID, token: Optional[str], **kwargs):
-        super().__init__(**kwargs)
-        self._user_id = user_id
-        self._token = token
-
-    @classmethod
-    def _from_url_parse_and_consume_params(cls, params):
-        kwargs = super()._from_url_parse_and_consume_params(params)
-
-        value = params.pop("action", ())
-        if len(value) != 1:
-            raise ValueError("Missing mandatory `action` param")
-        if value[0] != "claim_user":
-            raise ValueError("Expected `action=claim_user` value")
-
-        value = params.pop("user_id", ())
-        if len(value) != 1:
-            raise ValueError("Missing mandatory `user_id` param")
-        try:
-            kwargs["user_id"] = UserID(value[0])
-        except ValueError as exc:
-            raise ValueError("Invalid `user_id` param value") from exc
-
-        value = params.pop("token", ())
-        if len(value) > 1:
-            raise ValueError("Multiple values for param `token`")
-        elif value and value[0]:
-            kwargs["token"] = value[0]
-        else:
-            kwargs["token"] = None
-
-        return kwargs
-
-    def _to_url_get_params(self):
-        params = [("action", "claim_user"), ("user_id", self._user_id)]
-        if self._token:
-            params.append(("token", self._token))
-        return [*params, *super()._to_url_get_params()]
-
-    @classmethod
-    def build(
-        cls,
-        organization_addr: BackendOrganizationAddr,
-        user_id: UserID,
-        token: Optional[str] = None,
-    ) -> "BackendOrganizationClaimUserAddr":
-        return cls(
-            hostname=organization_addr.hostname,
-            port=organization_addr.port,
-            use_ssl=organization_addr.use_ssl,
-            organization_id=organization_addr.organization_id,
-            root_verify_key=organization_addr.root_verify_key,
-            user_id=user_id,
-            token=token,
-        )
-
-    def to_organization_addr(self) -> BackendOrganizationAddr:
-        return BackendOrganizationAddr.build(
-            backend_addr=self,
-            organization_id=self.organization_id,
-            root_verify_key=self.root_verify_key,
-        )
-
-    @property
-    def user_id(self) -> UserID:
-        return self._user_id
-
-    @property
-    def token(self) -> Optional[str]:
-        return self._token
-
-
-class BackendOrganizationClaimDeviceAddr(OrganizationParamsFixture, BackendActionAddr):
-    """
-    Represent the URL to bootstrap claim a device
-    (e.g. ``parsec://parsec.example.com/my_org?action=claim_device&device_id=John%40pc&token=1234ABCD&rvk=P25GRG3XPSZKBEKXYQFBOLERWQNEDY3AO43MVNZCLPXPKN63JRYQssss``)
-    """
-
-    __slots__ = ("_device_id", "_token")
-
-    def __init__(self, device_id: DeviceID, token: Optional[str], **kwargs):
-        super().__init__(**kwargs)
-        self._device_id = device_id
-        self._token = token
-
-    @classmethod
-    def _from_url_parse_and_consume_params(cls, params):
-        kwargs = super()._from_url_parse_and_consume_params(params)
-
-        value = params.pop("action", ())
-        if len(value) != 1:
-            raise ValueError("Missing mandatory `action` param")
-        if value[0] != "claim_device":
-            raise ValueError("Expected `action=claim_device` value")
-
-        value = params.pop("device_id", ())
-        if len(value) != 1:
-            raise ValueError("Missing mandatory `device_id` param")
-        try:
-            kwargs["device_id"] = DeviceID(value[0])
-        except ValueError as exc:
-            raise ValueError("Invalid `device_id` param value") from exc
-
-        value = params.pop("token", ())
-        if len(value) > 1:
-            raise ValueError("Multiple values for param `token`")
-        elif value and value[0]:
-            kwargs["token"] = value[0]
-        else:
-            kwargs["token"] = None
-
-        return kwargs
-
-    def _to_url_get_params(self):
-        params = [("action", "claim_device"), ("device_id", self._device_id)]
-        if self._token:
-            params.append(("token", self._token))
-        return [*params, *super()._to_url_get_params()]
-
-    @classmethod
-    def build(
-        cls,
-        organization_addr: BackendOrganizationAddr,
-        device_id: DeviceID,
-        token: Optional[str] = None,
-    ) -> "BackendOrganizationClaimDeviceAddr":
-        return cls(
-            hostname=organization_addr.hostname,
-            port=organization_addr.port,
-            use_ssl=organization_addr.use_ssl,
-            organization_id=organization_addr.organization_id,
-            root_verify_key=organization_addr.root_verify_key,
-            device_id=device_id,
-            token=token,
-        )
-
-    def to_organization_addr(self) -> BackendOrganizationAddr:
-        return BackendOrganizationAddr.build(
-            backend_addr=self,
-            organization_id=self.organization_id,
-            root_verify_key=self.root_verify_key,
-        )
-
-    @property
-    def device_id(self) -> DeviceID:
-        return self._device_id
-
-    @property
-    def token(self) -> Optional[str]:
-        return self._token
 
 
 class BackendOrganizationFileLinkAddr(OrganizationParamsFixture, BackendActionAddr):
