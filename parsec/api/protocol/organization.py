@@ -67,6 +67,7 @@ class OrganizationStatsRepSchema(BaseRepSchema):
     data_size = fields.Integer(required=True)
     metadata_size = fields.Integer(required=True)
     users = fields.Integer(required=True)
+    actives_users = fields.Integer(required=False)
 
 
 organization_stats_serializer = CmdSerializer(

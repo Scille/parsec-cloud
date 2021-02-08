@@ -77,6 +77,7 @@ class OrganizationStats:
     data_size: int
     metadata_size: int
     users: int
+    active_users: int
 
 
 class BaseOrganizationComponent:
