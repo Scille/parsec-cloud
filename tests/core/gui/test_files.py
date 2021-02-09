@@ -599,48 +599,49 @@ async def test_copy_files(
     w_f = logged_gui_with_files.test_get_files_widget()
 
     assert w_f is not None
-
     assert w_f.table_files.rowCount() == 4
 
+    # Do the copy with ctrl-C
     await aqtbot.run(
         w_f.table_files.setRangeSelected, QtWidgets.QTableWidgetSelectionRange(2, 0, 3, 0), True
     )
-
     async with aqtbot.wait_signal(w_f.table_files.copy_clicked):
         await aqtbot.key_click(w_f.table_files, "C", modifier=QtCore.Qt.ControlModifier)
 
     assert w_f.clipboard is not None
 
     # Moving to sub directory
-    async with aqtbot.wait_signal(w_f.folder_stat_success):
-        w_f.table_files.item_activated.emit(FileType.Folder, "dir1")
-    assert w_f.table_files.rowCount() == 1
+    w_f.table_files.item_activated.emit(FileType.Folder, "dir1")
 
+    def _in_dir1():
+        assert w_f.table_files.rowCount() == 1
+        assert w_f.table_files.item(0, 1).text() == "Parent folder"
+
+    await aqtbot.wait_until(_in_dir1)
+
+    # Do the paste with ctrl-V
     async with aqtbot.wait_signal(w_f.table_files.paste_clicked):
         await aqtbot.key_click(w_f.table_files, "V", modifier=QtCore.Qt.ControlModifier)
 
     # Wait until the file widget is refreshed
-    while w_f.table_files.rowCount() < 3:
-        async with aqtbot.wait_signal(w_f.folder_stat_success, timeout=3000):
-            pass
+    def _dir_refreshed():
+        assert w_f.table_files.rowCount() == 3
+        assert w_f.table_files.item(0, 1).text() == "Parent folder"
+        assert w_f.table_files.item(1, 1).text() == "file01.txt"
+        assert w_f.table_files.item(2, 1).text() == "file02.txt"
 
-    assert w_f.table_files.rowCount() == 3
-    assert w_f.table_files.item(1, 1).text() == "file01.txt"
-    assert w_f.table_files.item(2, 1).text() == "file02.txt"
+    await aqtbot.wait_until(_dir_refreshed)
 
-    # Moving back
-    async with aqtbot.wait_signal(w_f.folder_stat_success):
-        w_f.table_files.item_activated.emit(FileType.ParentFolder, "Parent Folder")
+    # Moving back to the parent folder
+    w_f.table_files.item_activated.emit(FileType.ParentFolder, "Parent Folder")
 
-    # Wait until the file widget is refreshed
-    while w_f.table_files.rowCount() < 4:
-        async with aqtbot.wait_signal(w_f.folder_stat_success, timeout=3000):
-            pass
+    def _back_in_parent():
+        assert w_f.table_files.rowCount() == 4
+        assert w_f.table_files.item(1, 1).text() == "dir1"
+        assert w_f.table_files.item(2, 1).text() == "file01.txt"
+        assert w_f.table_files.item(3, 1).text() == "file02.txt"
 
-    assert w_f.table_files.rowCount() == 4
-    assert w_f.table_files.item(1, 1).text() == "dir1"
-    assert w_f.table_files.item(2, 1).text() == "file01.txt"
-    assert w_f.table_files.item(3, 1).text() == "file02.txt"
+    await aqtbot.wait_until(_back_in_parent)
 
 
 @pytest.mark.gui
