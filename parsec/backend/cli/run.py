@@ -457,7 +457,7 @@ def run_cmd(
 ):
 
     # Start a local backend
-    configure_logging(log_level, log_format, log_file)
+    configure_logging(log_level=log_level, log_format=log_format, log_file=log_file)
     if sentry_url:
         configure_sentry_logging(sentry_url)
 

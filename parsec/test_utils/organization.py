@@ -45,7 +45,7 @@ async def initialize_test_organization(
     additional_users_number: int,
     additional_devices_number: int,
 ) -> Tuple[LocalDevice, LocalDevice, LocalDevice]:
-    configure_logging("WARNING")
+    configure_logging(log_level="WARNING")
     organization_id = OrganizationID("Org")
 
     # Create organization

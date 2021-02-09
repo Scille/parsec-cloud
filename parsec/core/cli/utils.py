@@ -31,7 +31,11 @@ def core_config_options(fn):
     def wrapper(config_dir, *args, **kwargs):
         assert "config" not in kwargs
 
-        configure_logging(kwargs["log_level"], kwargs["log_format"], kwargs["log_file"])
+        configure_logging(
+            log_level=kwargs["log_level"],
+            log_format=kwargs["log_format"],
+            log_file=kwargs["log_file"],
+        )
 
         config_dir = Path(config_dir) if config_dir else get_default_config_dir(os.environ)
         config = load_config(config_dir, debug="DEBUG" in os.environ)
