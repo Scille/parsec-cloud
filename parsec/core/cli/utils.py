@@ -27,14 +27,11 @@ def core_config_options(fn):
     )
     @click.option("--log-format", "-f", type=click.Choice(("CONSOLE", "JSON")))
     @click.option("--log-file", "-o")
-    @click.option("--log-filter")
     @wraps(fn)
     def wrapper(config_dir, *args, **kwargs):
         assert "config" not in kwargs
 
-        configure_logging(
-            kwargs["log_level"], kwargs["log_format"], kwargs["log_file"], kwargs["log_filter"]
-        )
+        configure_logging(kwargs["log_level"], kwargs["log_format"], kwargs["log_file"])
 
         config_dir = Path(config_dir) if config_dir else get_default_config_dir(os.environ)
         config = load_config(config_dir, debug="DEBUG" in os.environ)

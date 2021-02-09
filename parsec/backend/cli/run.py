@@ -416,7 +416,6 @@ organization_id, device_id, device_label (can be null), human_email (can be null
     "--log-format", "-f", type=click.Choice(("CONSOLE", "JSON")), envvar="PARSEC_LOG_FORMAT"
 )
 @click.option("--log-file", "-o", envvar="PARSEC_LOG_FILE")
-@click.option("--log-filter", envvar="PARSEC_LOG_FILTER")
 @click.option("--sentry-url", envvar="PARSEC_SENTRY_URL", help="Sentry URL for telemetry report")
 @click.option("--debug", is_flag=True, envvar="PARSEC_DEBUG")
 @click.option(
@@ -452,14 +451,13 @@ def run_cmd(
     log_level,
     log_format,
     log_file,
-    log_filter,
     sentry_url,
     debug,
     dev,
 ):
 
     # Start a local backend
-    configure_logging(log_level, log_format, log_file, log_filter)
+    configure_logging(log_level, log_format, log_file)
     if sentry_url:
         configure_sentry_logging(sentry_url)
 
