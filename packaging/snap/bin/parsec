@@ -1,8 +1,6 @@
 #! /bin/sh
 
 mkdir -p ~/.config/parsec
-LOG_FILE=~/.config/parsec/parsec-core.log
-echo Starting parsec core >> $LOG_FILE
 export XDG_CURRENT_DESKTOP=unknown
 PYTHON=${SNAP}/usr/bin/python3
 
@@ -22,4 +20,4 @@ export SNAPCRAFT_PART_INSTALL=$SNAP
 # (i.e. without sandbox).
 unset SNAP
 
-$PYTHON -I -m parsec.cli core gui --log-level=INFO --log-file=$LOG_FILE $@
+$PYTHON -I -m parsec.cli core gui $@
