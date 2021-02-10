@@ -26,8 +26,7 @@ int main(int argc, char *argv[])
         "os.environ['SENTRY_URL'] = 'https://863e60bbef39406896d2b7a5dbd491bb@sentry.io/1212848'\n"
         "os.environ['PREFERRED_ORG_CREATION_BACKEND_ADDR'] = 'parsec://saas.parsec.cloud'\n"
         "os.makedirs(os.path.expandvars('%APPDATA%\\\\parsec'), exist_ok=True)\n"
-        "args = ['core', 'gui', ' '.join(sys.argv[1:])]\n"
-        "cli(args)\n"
+        "cli(args=['core', 'gui', *sys.argv[1:]])\n"
     );
 
     for (int i = 0; i < argc; i++) {
