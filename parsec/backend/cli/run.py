@@ -206,7 +206,20 @@ class DevOption(click.Option):
         return value, args
 
 
-@click.command(short_help="run the server", context_settings={"max_content_width": 400})
+@click.command(
+    context_settings={"max_content_width": 400},
+    short_help="run the server",
+    epilog="""Note each parameter has a corresponding environ variable with the `PARSEC_` prefix
+(e.g. `--email-port=42` parameter is equivalent to environ variable `PARSEC_EMAIL_PORT=42`).
+
+\b
+Parameters can also be specified by using the special environment variable `PARSEC_CMD_ARGS`.
+All available command line arguments can be used and environ variables within it will be expanded.
+For instance:
+
+    $ DB_URL=postgres:///parsec PARSEC_CMD_ARGS='--db=$DB_URL --host=0.0.0.0' parsec backend run
+""",
+)
 @click.option(
     "--host",
     "-H",
