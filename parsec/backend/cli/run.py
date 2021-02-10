@@ -423,7 +423,12 @@ organization_id, device_id, device_label (can be null), human_email (can be null
     cls=DevOption,
     is_flag=True,
     is_eager=True,
-    help="Equivalent to `--debug --db=MOCKED --backend-addr=parsec://localhost:<port>(?no_ssl=False if ssl_context is defined) --email-sender=no-reply@parsec.com --email-host=MOCKED --blockstore=MOCKED --administration-token=s3cr3t`",
+    help=(
+        "Equivalent to `--debug --db=MOCKED"
+        " --blockstore=MOCKED --administration-token=s3cr3t"
+        " --email-sender=no-reply@parsec.com --email-host=MOCKED"
+        " --backend-addr=parsec://localhost:<port>(?no_ssl=False if ssl is not set)`"
+    ),
 )
 def run_cmd(
     host,
