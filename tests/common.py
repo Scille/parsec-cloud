@@ -246,7 +246,6 @@ _FIXTURES_CUSTOMIZATIONS = {
     "backend_forward_proto_enforce_https",
     "backend_spontaneous_organization_boostrap",
     "logged_gui_as_admin",
-    "logged_gui_create_two_workspaces",
     "fake_preferred_org_creation_backend_addr",
 }
 
