@@ -35,7 +35,6 @@ async def logged_gui_with_workspace(
     autoclose_dialog,
     core_config,
     alice,
-    running_backend,
     monkeypatch,
     fixtures_customization,
 ):
@@ -85,9 +84,7 @@ async def logged_gui_with_workspace(
 
 
 @pytest.fixture
-async def logged_gui_with_files(
-    aqtbot, logged_gui_with_workspace, running_backend, monkeypatch, temp_dir
-):
+async def logged_gui_with_files(aqtbot, logged_gui_with_workspace, monkeypatch, temp_dir):
     w_f = logged_gui_with_workspace.test_get_files_widget()
 
     assert w_f is not None
@@ -148,7 +145,7 @@ async def create_directories(logged_gui_with_workspace, aqtbot, monkeypatch, dir
 
 @pytest.mark.gui
 @pytest.mark.trio
-async def test_list_files(aqtbot, running_backend, logged_gui_with_workspace):
+async def test_list_files(aqtbot, logged_gui_with_workspace):
     w_f = logged_gui_with_workspace.test_get_files_widget()
 
     assert w_f is not None
