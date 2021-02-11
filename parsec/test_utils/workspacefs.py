@@ -7,6 +7,10 @@ from parsec.core.types import FsPath, EntryID
 
 
 async def make_workspace_dir_inconsistent(workspace: WorkspaceFS, dir: FsPath):
+    """
+    Create directory and make it inconsistent by adding an entry refering
+    to an unknown EntryID.
+    """
     await workspace.mkdir(dir)
     await workspace.touch(dir / "foo.txt")
     rep_info = await workspace.transactions.entry_info(dir)
