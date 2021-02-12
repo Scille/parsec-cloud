@@ -105,6 +105,7 @@ class MemoryOrganizationComponent(BaseOrganizationComponent):
         return OrganizationStats(
             users=users,
             actives_users=actives_users,
+            revoked_users=users - actives_users,
             data_size=data_size,
             metadata_size=metadata_size,
         )
