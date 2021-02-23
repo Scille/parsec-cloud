@@ -206,7 +206,20 @@ class DevOption(click.Option):
         return value, args
 
 
-@click.command(short_help="run the server", context_settings={"max_content_width": 400})
+@click.command(
+    context_settings={"max_content_width": 400},
+    short_help="run the server",
+    epilog="""Note each parameter has a corresponding environ variable with the `PARSEC_` prefix
+(e.g. `--email-port=42` parameter is equivalent to environ variable `PARSEC_EMAIL_PORT=42`).
+
+\b
+Parameters can also be specified by using the special environment variable `PARSEC_CMD_ARGS`.
+All available command line arguments can be used and environ variables within it will be expanded.
+For instance:
+
+    $ DB_URL=postgres:///parsec PARSEC_CMD_ARGS='--db=$DB_URL --host=0.0.0.0' parsec backend run
+""",
+)
 @click.option(
     "--host",
     "-H",
@@ -416,7 +429,6 @@ organization_id, device_id, device_label (can be null), human_email (can be null
     "--log-format", "-f", type=click.Choice(("CONSOLE", "JSON")), envvar="PARSEC_LOG_FORMAT"
 )
 @click.option("--log-file", "-o", envvar="PARSEC_LOG_FILE")
-@click.option("--log-filter", envvar="PARSEC_LOG_FILTER")
 @click.option("--sentry-url", envvar="PARSEC_SENTRY_URL", help="Sentry URL for telemetry report")
 @click.option("--debug", is_flag=True, envvar="PARSEC_DEBUG")
 @click.option(
@@ -424,7 +436,12 @@ organization_id, device_id, device_label (can be null), human_email (can be null
     cls=DevOption,
     is_flag=True,
     is_eager=True,
-    help="Equivalent to `--debug --db=MOCKED --backend-addr=parsec://localhost:<port>(?no_ssl=False if ssl_context is defined) --email-sender=no-reply@parsec.com --email-host=MOCKED --blockstore=MOCKED --administration-token=s3cr3t`",
+    help=(
+        "Equivalent to `--debug --db=MOCKED"
+        " --blockstore=MOCKED --administration-token=s3cr3t"
+        " --email-sender=no-reply@parsec.com --email-host=MOCKED"
+        " --backend-addr=parsec://localhost:<port>(?no_ssl=False if ssl is not set)`"
+    ),
 )
 def run_cmd(
     host,
@@ -452,14 +469,13 @@ def run_cmd(
     log_level,
     log_format,
     log_file,
-    log_filter,
     sentry_url,
     debug,
     dev,
 ):
 
     # Start a local backend
-    configure_logging(log_level, log_format, log_file, log_filter)
+    configure_logging(log_level=log_level, log_format=log_format, log_file=log_file)
     if sentry_url:
         configure_sentry_logging(sentry_url)
 

@@ -306,4 +306,6 @@ Enable debug informations.
 
 * ``--dev``
 
-Equivalent to ``--debug --db=MOCKED --blockstore=MOCKED --administration-token=s3cr3t``.
+Equivalent to ``--debug --db=MOCKED --blockstore=MOCKED --administration-token=s3cr3t
+--email-sender=no-reply@parsec.com --email-host=MOCKED
+--backend-addr=parsec://localhost:<port>(?no_ssl=False if ssl is not set)``.
