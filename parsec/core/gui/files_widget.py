@@ -466,8 +466,9 @@ class FilesWidget(QWidget, Ui_FilesWidget):
         self.reset()
 
     def _on_move_error(self, job):
-        exc = job.exc
-        if exc and isinstance(exc.params.get("last_exc", None), FSInvalidArgumentError):
+        if not getattr(job.exc, "params", None):
+            return
+        if isinstance(job.exc.params.get("last_exc", None), FSInvalidArgumentError):
             show_error(self, _("TEXT_FILE_FOLDER_MOVED_INTO_ITSELF_ERROR"))
         else:
             show_error(self, _("TEXT_FILE_PASTE_ERROR"))
@@ -793,6 +794,8 @@ class FilesWidget(QWidget, Ui_FilesWidget):
         self.reset()
 
     def _on_rename_error(self, job):
+        if not getattr(job.exc, "params", None):
+            return
         if job.exc.params.get("multi"):
             show_error(self, _("TEXT_FILE_RENAME_MULTIPLE_ERROR"), exception=job.exc)
         else:
@@ -824,14 +827,16 @@ class FilesWidget(QWidget, Ui_FilesWidget):
             self.table_files.add_parent_folder()
         file_found = False
         for path, stats in files_stats.items():
+            # Must check first given inconsistent stats result are missing fields
+            if stats["type"] == "inconsistency":
+                self.table_files.add_inconsistency(str(path), stats["id"])
+                continue
             selected = False
             confined = bool(stats["confinement_point"])
             if default_selection and str(path) == default_selection:
                 selected = True
                 file_found = True
-            if stats["type"] == "inconsistency":
-                self.table_files.add_inconsistency(str(path), stats["id"])
-            elif stats["type"] == "folder":
+            if stats["type"] == "folder":
                 self.table_files.add_folder(
                     str(path), stats["id"], not stats["need_sync"], confined, selected
                 )

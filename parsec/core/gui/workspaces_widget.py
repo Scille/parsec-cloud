@@ -19,6 +19,7 @@ from parsec.core.types import (
     BackendOrganizationFileLinkAddr,
     WorkspaceRole,
 )
+from parsec.core.backend_connection import BackendNotAvailable
 from parsec.core.fs import (
     WorkspaceFS,
     WorkspaceFSTimestamped,
@@ -94,7 +95,7 @@ async def _do_workspace_list(core):
                 if role == WorkspaceRole.OWNER or len(roles) <= 2:
                     user_info = await core.get_user_info(user)
                 users_roles[user] = (role, user_info)
-        except FSBackendOfflineError:
+        except (FSBackendOfflineError, BackendNotAvailable):
             # Fallback to craft a custom list with only our device since it's
             # the only one we know about
             user_info = UserInfo(
