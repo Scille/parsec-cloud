@@ -7,6 +7,7 @@ from PyQt5.QtGui import QValidator
 from PyQt5.QtWidgets import QWidget
 
 from parsec.core.gui.lang import translate as _
+from parsec.core.gui import desktop
 
 from parsec.core.gui.ui.password_strength_widget import Ui_PasswordStrengthWidget
 from parsec.core.gui.ui.password_choice_widget import Ui_PasswordChoiceWidget
@@ -70,9 +71,15 @@ class PasswordChoiceWidget(QWidget, Ui_PasswordChoiceWidget):
         self.layout_password_strength.addWidget(pwd_str_widget)
         self.line_edit_password.textChanged.connect(pwd_str_widget.on_password_change)
         self.line_edit_password.textChanged.connect(self._check_match)
+        self.line_edit_password.textChanged.connect(self._on_any_text_changed)
         self.line_edit_password_check.textChanged.connect(self._check_match)
         self.line_edit_password_check.editingFinished.connect(self._on_editing_finished)
+        self.line_edit_password_check.textChanged.connect(self._on_any_text_changed)
         self.label_mismatch.hide()
+        self.label_caps_lock.setVisible(desktop.is_caps_lock_on())
+
+    def _on_any_text_changed(self, _):
+        self.label_caps_lock.setVisible(desktop.is_caps_lock_on())
 
     def _check_match(self, text=""):
         password = self.line_edit_password.text()
