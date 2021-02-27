@@ -104,7 +104,7 @@ def test_complete_scenario():
 
     with freeze_time("2000-01-01"):
         base = manifest = LocalFileManifest.new_placeholder(
-            DeviceID.new(), parent=EntryID(), blocksize=16
+            DeviceID.new(), parent=EntryID.new(), blocksize=16
         )
         assert manifest == base.evolve(size=0)
 
@@ -193,7 +193,7 @@ def test_file_operations(hypothesis_settings, tmpdir):
             super().__init__()
             self.oracle = open(tmpdir / "oracle.txt", "w+b")
             self.manifest = LocalFileManifest.new_placeholder(
-                DeviceID.new(), parent=EntryID(), blocksize=8
+                DeviceID.new(), parent=EntryID.new(), blocksize=8
             )
             self.storage = Storage()
 

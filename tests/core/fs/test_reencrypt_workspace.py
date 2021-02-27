@@ -89,7 +89,7 @@ async def test_reencrypt_placeholder(running_backend, alice, alice_user_fs):
 
 @pytest.mark.trio
 async def test_unknown_workspace(alice_user_fs):
-    bad_wid = EntryID()
+    bad_wid = EntryID.new()
 
     with pytest.raises(FSWorkspaceNotFoundError):
         await alice_user_fs.workspace_start_reencryption(bad_wid)

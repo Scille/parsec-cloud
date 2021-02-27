@@ -20,7 +20,7 @@ from tests.common import freeze_time, create_shared_workspace
 
 @pytest.mark.trio
 async def test_share_unknown(running_backend, alice_user_fs, bob):
-    wid = EntryID()
+    wid = EntryID.new()
     with pytest.raises(FSWorkspaceNotFoundError):
         await alice_user_fs.workspace_share(wid, bob.user_id, WorkspaceRole.MANAGER)
 

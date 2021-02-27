@@ -692,7 +692,7 @@ async def test_link_file_unknown_org(
     )
 
     file_link = BackendOrganizationFileLinkAddr.build(
-        org_addr, EntryID(), FsPath("/doesntmattereither")
+        org_addr, EntryID.new(), FsPath("/doesntmattereither")
     )
 
     gui = await gui_factory(core_config=core_config, start_arg=file_link.to_url())

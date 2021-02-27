@@ -393,7 +393,7 @@ async def test_path_info_remote_loader_exceptions(monkeypatch, alice_workspace, 
 
     monkeypatch.setattr(BaseRemoteManifest, "_deserialize", mocked_file_manifest_deserialize)
 
-    manifest_modifiers = {"id": EntryID()}
+    manifest_modifiers = {"id": EntryID.new()}
     with pytest.raises(FSError) as exc:
         await alice_workspace.path_info(FsPath("/foo/bar"))
     assert f"Invalid entry ID: expected `{manifest.id}`, got `{manifest_modifiers['id']}`" in str(

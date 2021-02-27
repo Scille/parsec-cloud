@@ -27,7 +27,7 @@ def create_manifest(device, type=LocalWorkspaceManifest, use_legacy_none_author=
     elif type is LocalWorkspaceManifest:
         manifest = type.new_placeholder(author)
     else:
-        manifest = type.new_placeholder(author, parent=EntryID())
+        manifest = type.new_placeholder(author, parent=EntryID.new())
     if use_legacy_none_author:
         base = manifest.base.evolve(author=None)
         manifest = manifest.evolve(base=base)
@@ -36,7 +36,7 @@ def create_manifest(device, type=LocalWorkspaceManifest, use_legacy_none_author=
 
 @pytest.fixture
 def workspace_id():
-    return EntryID()
+    return EntryID.new()
 
 
 @pytest.fixture
@@ -288,7 +288,7 @@ async def test_realm_checkpoint(alice_workspace_storage):
     assert await aws.get_realm_checkpoint() == 0
     assert await aws.get_need_sync_entries() == (set(), set())
 
-    await aws.update_realm_checkpoint(11, {manifest.id: 22, EntryID(): 33})
+    await aws.update_realm_checkpoint(11, {manifest.id: 22, EntryID.new(): 33})
 
     assert await aws.get_realm_checkpoint() == 11
     assert await aws.get_need_sync_entries() == (set(), set())
@@ -303,7 +303,7 @@ async def test_realm_checkpoint(alice_workspace_storage):
     assert await aws.get_realm_checkpoint() == 11
     assert await aws.get_need_sync_entries() == (set(), set())
 
-    await aws.update_realm_checkpoint(44, {manifest.id: 55, EntryID(): 66})
+    await aws.update_realm_checkpoint(44, {manifest.id: 55, EntryID.new(): 66})
 
     assert await aws.get_realm_checkpoint() == 44
     assert await aws.get_need_sync_entries() == (set(), set([manifest.id]))
@@ -444,7 +444,7 @@ async def test_timestamped_storage(alice_workspace_storage):
         await taws.clear_memory_cache("flush")
 
     with pytest.raises(FSLocalMissError):
-        await taws.get_manifest(EntryID())
+        await taws.get_manifest(EntryID.new())
 
     manifest = create_manifest(aws.device)
     with pytest.raises(FSError):
