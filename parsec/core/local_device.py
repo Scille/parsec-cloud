@@ -106,7 +106,7 @@ def generate_new_device(
         signing_key=signing_key or SigningKey.generate(),
         private_key=private_key or PrivateKey.generate(),
         profile=profile,
-        user_manifest_id=EntryID(),
+        user_manifest_id=EntryID.new(),
         user_manifest_key=SecretKey.generate(),
         local_symkey=SecretKey.generate(),
     )

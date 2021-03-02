@@ -49,7 +49,7 @@ class File:
 async def foo_txt(alice, alice_file_transactions):
     local_storage = alice_file_transactions.local_storage
     now = datetime(2000, 1, 2)
-    placeholder = LocalFileManifest.new_placeholder(alice.device_id, parent=EntryID(), now=now)
+    placeholder = LocalFileManifest.new_placeholder(alice.device_id, parent=EntryID.new(), now=now)
     remote_v1 = placeholder.to_remote(author=alice.device_id, timestamp=now)
     manifest = LocalFileManifest.from_remote(remote_v1)
     async with local_storage.lock_entry_id(manifest.id):
@@ -224,7 +224,9 @@ def test_file_operations(
     class FileOperationsStateMachine(TrioAsyncioRuleBasedStateMachine):
         async def start_transactions(self):
             async def _transactions_controlled_cb(started_cb):
-                async with WorkspaceStorage.run(alice, Path("/dummy"), EntryID()) as local_storage:
+                async with WorkspaceStorage.run(
+                    alice, Path("/dummy"), EntryID.new()
+                ) as local_storage:
                     file_transactions = await file_transactions_factory(
                         self.device, alice_backend_cmds, local_storage=local_storage
                     )
@@ -246,7 +248,7 @@ def test_file_operations(
             self.local_storage = self.file_transactions.local_storage
 
             self.fresh_manifest = LocalFileManifest.new_placeholder(
-                alice.device_id, parent=EntryID()
+                alice.device_id, parent=EntryID.new()
             )
             self.entry_id = self.fresh_manifest.id
             async with self.local_storage.lock_entry_id(self.entry_id):

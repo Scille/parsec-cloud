@@ -16,8 +16,8 @@ empty_pattern = re.compile(r"^\b$")
 
 
 def test_merge_folder_children():
-    m1 = EntryID()
-    m2 = EntryID()
+    m1 = EntryID.new()
+    m2 = EntryID.new()
     a1 = {"a": m1}
     a2 = {"a": m2}
     b1 = {"b.txt": m1}
@@ -59,7 +59,7 @@ def test_merge_folder_children():
 def test_merge_folder_manifests():
     my_device = DeviceID("b@b")
     other_device = DeviceID("a@a")
-    parent = EntryID()
+    parent = EntryID.new()
     v1 = LocalFolderManifest.new_placeholder(my_device, parent=parent).to_remote(
         author=other_device
     )
@@ -69,7 +69,7 @@ def test_merge_folder_manifests():
     assert merge_manifests(my_device, empty_pattern, m1) == m1
 
     # Local change
-    m2 = m1.evolve_children_and_mark_updated({"a": EntryID()}, empty_pattern)
+    m2 = m1.evolve_children_and_mark_updated({"a": EntryID.new()}, empty_pattern)
     assert merge_manifests(my_device, empty_pattern, m2) == m2
 
     # Successful upload
@@ -78,9 +78,9 @@ def test_merge_folder_manifests():
     assert m3 == LocalFolderManifest.from_remote(v2, empty_pattern)
 
     # Two local changes
-    m4 = m3.evolve_children_and_mark_updated({"b": EntryID()}, empty_pattern)
+    m4 = m3.evolve_children_and_mark_updated({"b": EntryID.new()}, empty_pattern)
     assert merge_manifests(my_device, empty_pattern, m4) == m4
-    m5 = m4.evolve_children_and_mark_updated({"c": EntryID()}, empty_pattern)
+    m5 = m4.evolve_children_and_mark_updated({"c": EntryID.new()}, empty_pattern)
     assert merge_manifests(my_device, empty_pattern, m4) == m4
 
     # M4 has been successfully uploaded
@@ -89,7 +89,7 @@ def test_merge_folder_manifests():
     assert m6 == m5.evolve(base=v3)
 
     # The remote has changed
-    v4 = v3.evolve(version=4, children={"d": EntryID(), **v3.children}, author=other_device)
+    v4 = v3.evolve(version=4, children={"d": EntryID.new(), **v3.children}, author=other_device)
     m7 = merge_manifests(my_device, empty_pattern, m6, v4)
     assert m7.base_version == 4
     assert sorted(m7.children) == ["a", "b", "c", "d"]
@@ -101,7 +101,7 @@ def test_merge_folder_manifests():
     assert m8 == LocalFolderManifest.from_remote(v5, empty_pattern)
 
     # The remote has changed
-    v6 = v5.evolve(version=6, children={"e": EntryID(), **v5.children}, author=other_device)
+    v6 = v5.evolve(version=6, children={"e": EntryID.new(), **v5.children}, author=other_device)
     m9 = merge_manifests(my_device, empty_pattern, m8, v6)
     assert m9 == LocalFolderManifest.from_remote(v6, empty_pattern)
 
@@ -109,7 +109,7 @@ def test_merge_folder_manifests():
 def test_merge_manifests_with_a_placeholder():
     my_device = DeviceID("b@b")
     other_device = DeviceID("a@a")
-    parent = EntryID()
+    parent = EntryID.new()
 
     m1 = LocalFolderManifest.new_placeholder(my_device, parent=parent)
     m2 = merge_manifests(my_device, empty_pattern, m1)
@@ -119,12 +119,12 @@ def test_merge_manifests_with_a_placeholder():
     m2a = merge_manifests(my_device, empty_pattern, m1, v1)
     assert m2a == LocalFolderManifest.from_remote(v1, empty_pattern)
 
-    m2b = m1.evolve_children_and_mark_updated({"a": EntryID()}, empty_pattern)
+    m2b = m1.evolve_children_and_mark_updated({"a": EntryID.new()}, empty_pattern)
     m3b = merge_manifests(my_device, empty_pattern, m2b, v1)
     assert m3b == m2b.evolve(base=v1)
 
-    v2 = v1.evolve(version=2, author=other_device, children={"b": EntryID()})
-    m2c = m1.evolve_children_and_mark_updated({"a": EntryID()}, empty_pattern)
+    v2 = v1.evolve(version=2, author=other_device, children={"b": EntryID.new()})
+    m2c = m1.evolve_children_and_mark_updated({"a": EntryID.new()}, empty_pattern)
     m3c = merge_manifests(my_device, empty_pattern, m2c, v2)
     children = {**v2.children, **m2c.children}
     assert m3c == m2c.evolve(base=v2, children=children, updated=m3c.updated)
@@ -133,7 +133,7 @@ def test_merge_manifests_with_a_placeholder():
 def test_merge_file_manifests():
     my_device = DeviceID("b@b")
     other_device = DeviceID("a@a")
-    parent = EntryID()
+    parent = EntryID.new()
     v1 = LocalFileManifest.new_placeholder(my_device, parent=parent).to_remote(author=other_device)
 
     def evolve(m, n):
@@ -214,7 +214,7 @@ async def test_synchronization_step_transaction(alice_sync_transactions, type):
     b_id = await sync_transactions.folder_create(FsPath("/b"))
 
     # Remote change
-    children = {**manifest.children, "c": EntryID()}
+    children = {**manifest.children, "c": EntryID.new()}
     manifest = manifest.evolve(version=5, children=children, author="b@b")
 
     # Sync parent with a placeholder child
