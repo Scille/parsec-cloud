@@ -68,7 +68,6 @@ def test_share_workspace(tmpdir, alice, bob):
 
     print(result.output)
     assert result.exit_code == 0
-    assert result.output == ""
 
     factory_mock.assert_called_once_with(ANY, bob)
     share_mock.assert_called_once_with("/ws1", alice.user_id)
