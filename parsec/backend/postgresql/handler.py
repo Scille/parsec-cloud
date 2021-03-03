@@ -161,20 +161,12 @@ class PGHandler:
         self.pool: triopg.TrioPoolProxy
         self.notification_conn: triopg.TrioConnectionProxy
         self._task_status: Optional[TaskStatus] = None
+        self._connection_lost = False
 
     async def init(self, nursery):
         self._task_status = await start_task(nursery, self._run_connections)
 
     async def _run_connections(self, task_status=trio.TASK_STATUS_IGNORED):
-        # Notification listening is achieve by a never-ending LISTEN
-        # query to PostgreSQL.
-        # If this query is terminated (most likely because the database has
-        # been restarted) we might miss some notifications.
-        # Hence all client connections should be closed in order not to mislead
-        # them into thinking no notifications has occurred.
-        # And the simplest way to do that is to raise a big exception ;-)
-        def _on_notification_conn_termination(connection):
-            raise ConnectionError("PostgreSQL notification query has been lost")
 
         async with triopg.create_pool(
             self.url, min_size=self.min_connections, max_size=self.max_connections
@@ -182,10 +174,27 @@ class PGHandler:
             # This connection is dedicated to the notifications listening, so it
             # would only complicate stuff to include it into the connection pool
             async with triopg.connect(self.url) as self.notification_conn:
-                self.notification_conn.add_termination_listener(_on_notification_conn_termination)
+                self.notification_conn.add_termination_listener(
+                    self._on_notification_conn_termination
+                )
                 await self.notification_conn.add_listener("app_notification", self._on_notification)
                 task_status.started()
-                await trio.sleep_forever()
+                try:
+                    await trio.sleep_forever()
+                finally:
+                    if self._connection_lost:
+                        raise ConnectionError("PostgreSQL notification query has been lost")
+
+    # Notification listening is achieve by a never-ending LISTEN
+    # query to PostgreSQL.
+    # If this query is terminated (most likely because the database has
+    # been restarted) we might miss some notifications.
+    # Hence all client connections should be closed in order not to mislead
+    # them into thinking no notifications has occurred.
+    # And the simplest way to do that is to raise a big exception in _run_connections ;-)
+    def _on_notification_conn_termination(self, connection):
+        self._connection_lost = True
+        self._task_status.cancel()
 
     def _on_notification(self, connection, pid, channel, payload):
         data = unpackb(b64decode(payload.encode("ascii")))

@@ -3,6 +3,7 @@
 import pytest
 import trio
 import platform
+import triopg
 
 
 def records_filter_debug(records):
@@ -19,14 +20,18 @@ async def test_postgresql_connection_ok(postgresql_url, backend_factory):
 @pytest.mark.trio
 @pytest.mark.postgresql
 async def test_postgresql_notification_listener_terminated(postgresql_url, backend_factory):
+
     async with triopg.connect(postgresql_url) as conn:
 
-        async with backend_factory(config={"db_url": postgresql_url}):
-            row = await conn.fetchrow(
-                "SELECT pid FROM pg_stat_activity WHERE query NOT ILIKE '%pg_stat_activity%'"
-            )
-            assert row is not None
-            await conn.execute("TERMINATE %s", row[0])
+        with pytest.raises(ConnectionError):
+
+            async with backend_factory(config={"db_url": postgresql_url}) as back:
+                row = await back.ping.dbh.notification_conn.fetchrow("SELECT pg_backend_pid()")
+                pid = row[0]
+                row = await conn.fetchrow(f"SELECT pg_terminate_backend({pid})")
+                assert list(row) == [True]
+                await trio.sleep(1)
+                assert False, "Should be cancelled by now"
 
 
 @pytest.mark.trio
