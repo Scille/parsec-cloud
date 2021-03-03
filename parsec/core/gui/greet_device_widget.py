@@ -11,6 +11,7 @@ from parsec.core.invite import InviteError, InvitePeerResetError, InviteAlreadyU
 from parsec.core.gui.trio_thread import JobResultError, ThreadSafeQtSignal, QtToTrioJob
 from parsec.core.gui.custom_dialogs import show_error, GreyedDialog, show_info
 from parsec.core.gui.lang import translate as _
+from parsec.core.gui.qrcode_widget import generate_qr_code
 from parsec.core.gui import desktop
 from parsec.core.gui.ui.greet_device_widget import Ui_GreetDeviceWidget
 from parsec.core.gui.ui.greet_device_code_exchange_widget import Ui_GreetDeviceCodeExchangeWidget
@@ -138,6 +139,9 @@ class GreetDeviceInstructionsWidget(QWidget, Ui_GreetDeviceInstructionsWidget):
         self.greeter = greeter
         self.invite_addr = invite_addr
         self.core = core
+
+        pix = generate_qr_code(invite_addr.to_url())
+        self.qrcode_widget.set_image(pix)
 
         self.wait_peer_job = None
         self.wait_peer_success.connect(self._on_wait_peer_success)

@@ -1,0 +1,1 @@
+Add QR code on device invitation
