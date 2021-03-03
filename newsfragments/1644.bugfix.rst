@@ -1,0 +1,1 @@
+Fixed a mountpoint issue in MacOS that could cause errors during login or unmounting a workspace.
