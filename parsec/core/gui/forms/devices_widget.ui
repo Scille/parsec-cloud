@@ -24,8 +24,8 @@
 	color: #0070DD;
 }
 
-#widget_content {
-	background-color: #EEEEEE;
+#scrollAreaWidgetContents {
+    background-color: #EEEEEE;
 }</string>
   </property>
   <layout class="QVBoxLayout" name="verticalLayout">
