@@ -19,6 +19,7 @@ from parsec.backend.organization import (
 )
 from parsec.backend.memory.vlob import MemoryVlobComponent
 from parsec.backend.memory.block import MemoryBlockComponent
+from parsec.backend.memory.realm import MemoryRealmComponent
 from parsec.backend.events import BackendEvent
 
 
@@ -28,6 +29,7 @@ class MemoryOrganizationComponent(BaseOrganizationComponent):
         self._user_component = None
         self._vlob_component = None
         self._block_component = None
+        self._realm_component = None
         self._organizations = {}
         self._send_event = send_event
 
@@ -36,11 +38,13 @@ class MemoryOrganizationComponent(BaseOrganizationComponent):
         user: BaseUserComponent,
         vlob: MemoryVlobComponent,
         block: MemoryBlockComponent,
+        realm: MemoryRealmComponent,
         **other_components
     ):
         self._user_component = user
         self._vlob_component = vlob
         self._block_component = block
+        self._realm_component = realm
 
     async def create(
         self, id: OrganizationID, bootstrap_token: str, expiration_date: Optional[DateTime] = None
@@ -100,7 +104,11 @@ class MemoryOrganizationComponent(BaseOrganizationComponent):
 
         users = len(self._user_component._organizations[id].users)
 
-        return OrganizationStats(users=users, data_size=data_size, metadata_size=metadata_size)
+        workspaces = len(list(filter(lambda ks: ks[0] == id, self._realm_component._realms.keys())))
+
+        return OrganizationStats(
+            users=users, data_size=data_size, metadata_size=metadata_size, workspaces=workspaces
+        )
 
     async def set_expiration_date(
         self, id: OrganizationID, expiration_date: DateTime = None
