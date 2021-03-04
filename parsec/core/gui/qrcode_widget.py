@@ -1,10 +1,14 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
 
+from PyQt5.QtCore import QRectF
 from PyQt5.QtWidgets import QWidget, QVBoxLayout
 from PyQt5.QtGui import QPixmap, QPainter, QImage, QColor
-from PIL.ImageQt import ImageQt
+from PyQt5.QtSvg import QSvgRenderer
 
 import qrcode
+import qrcode.image.svg
+
+import io
 
 from parsec.core.gui.lang import translate as _
 from parsec.core.gui.custom_widgets import OverlayLabel
@@ -34,25 +38,34 @@ def generate_qr_code(text):
     qr = qrcode.QRCode(
         version=None, error_correction=qrcode.constants.ERROR_CORRECT_H, border=4, box_size=10
     )
+
     qr.add_data(text)
     qr.make(fit=True)
-    # img = qr.make_image(back_color="#F4F4F4", fill_color="#000000")
-    img = qr.make_image(back_color="#F4F4F4", fill_color="#5193FF")
-    qimg = ImageQt(img)
-    final_img = None
+    # No idea why but SvgPathImage ignores the back_color and fill_color arguments and uses a const style.
+    # So we replace the QT_PATH_STYLE string by our own.
+    qrcode.image.svg.SvgPathImage.QR_PATH_STYLE = (
+        "fill:#5193FF;fill-opacity:1;fill-rule:nonzero;stroke:none"
+    )
+    img = qr.make_image(image_factory=qrcode.image.svg.SvgPathImage)
+    stream = io.BytesIO()
+    img.save(stream)
+    renderer = QSvgRenderer()
+    renderer.load(stream.getvalue())
+
+    final_img = QImage(600, 600, QImage.Format_ARGB32)
+
+    painter = QPainter()
+    painter.begin(final_img)
+    painter.setCompositionMode(QPainter.CompositionMode_SourceOver)
+    renderer.render(painter, QRectF(0, 0, final_img.rect().width(), final_img.rect().height()))
+
     if PARSEC_LOGO:
-        final_img = QImage(qimg.width(), qimg.height(), QImage.Format_ARGB32)
         x = int(final_img.width() / 2 - PARSEC_LOGO.width() / 2)
         y = int(final_img.height() / 2 - PARSEC_LOGO.height() / 2)
-        qimg = qimg.convertToFormat(QImage.Format_ARGB32)
-        painter = QPainter()
-        painter.begin(final_img)
-        painter.setCompositionMode(QPainter.CompositionMode_SourceOver)
-        painter.drawImage(0, 0, qimg)
         painter.drawImage(x, y, PARSEC_LOGO)
-        painter.end()
-    else:
-        final_img = qimg
+
+    painter.end()
+
     pix = QPixmap.fromImage(final_img)
     return pix
 
