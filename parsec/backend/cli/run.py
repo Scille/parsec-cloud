@@ -262,6 +262,20 @@ Allowed values:
     help="Maximum number of connections to the database if using PostgreSQL",
 )
 @click.option(
+    "--maximum-database-connection-attempts",
+    default=10,
+    show_default=True,
+    envvar="PARSEC_MAXIMUM_DATABASE_CONNECTION_ATTEMPTS",
+    help="Maximum number of attempts at connecting to the database (0 means never retry)",
+)
+@click.option(
+    "--pause-before-retry-database-connection",
+    default=1.0,
+    show_default=True,
+    envvar="PARSEC_PAUSE_BEFORE_RETRY_DATABASE_CONNECTION",
+    help="Number of seconds before a new attempt at connecting to the database",
+)
+@click.option(
     "--blockstore",
     "-b",
     required=True,
@@ -435,6 +449,8 @@ def run_cmd(
     db,
     db_min_connections,
     db_max_connections,
+    maximum_database_connection_attempts,
+    pause_before_retry_database_connection,
     blockstore,
     administration_token,
     spontaneous_organization_bootstrap,
@@ -493,7 +509,7 @@ def run_cmd(
                 sender=email_sender,
             )
 
-        config = BackendConfig(
+        app_config = BackendConfig(
             administration_token=administration_token,
             db_url=db,
             db_min_connections=db_min_connections,
@@ -510,43 +526,86 @@ def run_cmd(
 
         click.echo(
             f"Starting Parsec Backend on {host}:{port}"
-            f" (db={config.db_type}"
-            f" blockstore={config.blockstore_config.type}"
-            f" backend_addr={config.backend_addr}"
+            f" (db={app_config.db_type}"
+            f" blockstore={app_config.blockstore_config.type}"
+            f" backend_addr={app_config.backend_addr}"
             f" email_config={str(email_config)})"
         )
         try:
-            trio_run(_run_backend, config, use_asyncio=True)
+            retry_policy = RetryPolicy(
+                maximum_database_connection_attempts, pause_before_retry_database_connection
+            )
+            trio_run(
+                _run_backend, host, port, ssl_context, retry_policy, app_config, use_asyncio=True
+            )
         except KeyboardInterrupt:
             click.echo("bye ;-)")
 
 
-async def _run_backend(config):
+class RetryPolicy:
+    def __init__(self, maximum_attempts: int = 10, pause_before_retry: float = 1.0):
+        self.maximum_attempts = maximum_attempts
+        self.pause_before_retry = pause_before_retry
+        self.current_attempt = 0  # No attempt at the moment
+
+    def new_attempt(self):
+        self.current_attempt += 1
+
+    def success(self):
+        self.current_attempt = 0
+
+    def is_expired(self):
+        return self.current_attempt >= self.maximum_attempts
+
+    async def pause(self):
+        await trio.sleep(self.pause_before_retry)
+
+
+async def _run_backend(host, port, ssl_context, retry_policy, app_config):
+    # Loop over connection attempts
     while True:
         try:
-            async with backend_app_factory(config=config) as backend:
+            # New connection attempt
+            retry_policy.new_attempt()
 
-                async def _serve_client(stream):
-                    if ssl_context:
-                        stream = trio.SSLStream(stream, ssl_context, server_side=True)
+            # Run the backend app (and connect to the database)
+            async with backend_app_factory(config=app_config) as backend:
 
-                    try:
-                        await backend.handle_client(stream)
+                # Connection is successful, reset the retry policy
+                retry_policy.success()
 
-                    except ConnectionError:
-                        # Should be handled by the reconnection logic (see below)
-                        raise
-
-                    except Exception:
-                        # If we are here, something unexpected happened...
-                        logger.exception("Unexpected crash")
-                        await stream.aclose()
-
-                # Provide a service nursery so multi-errors errors are handled
-                async with trio.open_service_nursery() as nursery:
-                    await trio.serve_tcp(_serve_client, port, handler_nursery=nursery, host=host)
+                # Serve backend through TCP
+                await _serve_backend(backend, host, port, ssl_context)
 
         except ConnectionError as exc:
+            # The maximum number of attempt is reached
+            if retry_policy.is_expired():
+                raise
             # Connection with the DB is dead, restart everything
-            logger.warning(f"Database connection lost ({exc}), retrying in 1s")
-            await trio.sleep(1)
+            logger.warning(
+                f"Database connection lost ({exc}), retrying in {retry_policy.pause_before_retry} seconds"
+            )
+            await retry_policy.pause()
+
+
+async def _serve_backend(backend, host, port, ssl_context):
+    # Client handler
+    async def _serve_client(stream):
+        if ssl_context:
+            stream = trio.SSLStream(stream, ssl_context, server_side=True)
+
+        try:
+            await backend.handle_client(stream)
+
+        except ConnectionError:
+            # Should be handled by the reconnection logic (see `_run_and_retry_back`)
+            raise
+
+        except Exception:
+            # If we are here, something unexpected happened...
+            logger.exception("Unexpected crash")
+            await stream.aclose()
+
+    # Provide a service nursery so multi-errors errors are handled
+    async with trio.open_service_nursery() as nursery:
+        await trio.serve_tcp(_serve_client, port, handler_nursery=nursery, host=host)
