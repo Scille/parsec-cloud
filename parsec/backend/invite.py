@@ -152,12 +152,19 @@ def generate_invite_email(
     greeter_name: Optional[str],  # Noe for device invitation
     organization_id: OrganizationID,
     invitation_url: str,
+    parsec_url: str,
 ) -> Message:
     html = get_template("invitation_mail.html").render(
-        greeter=greeter_name, organization_id=organization_id, invitation_url=invitation_url
+        greeter=greeter_name,
+        organization_id=organization_id,
+        invitation_url=invitation_url,
+        parsec_url=parsec_url,
     )
     text = get_template("invitation_mail.txt").render(
-        greeter=greeter_name, organization_id=organization_id, invitation_url=invitation_url
+        greeter=greeter_name,
+        organization_id=organization_id,
+        invitation_url=invitation_url,
+        parsec_url=parsec_url,
     )
 
     # mail settings
@@ -279,6 +286,14 @@ class BaseInviteComponent:
                 token=invitation.token,
             ).to_http_redirection_url()
 
+        def _to_url(client_ctx, invitation):
+            return BackendInvitationAddr.build(
+                backend_addr=self._config.backend_addr,
+                organization_id=client_ctx.organization_id,
+                invitation_type=invitation.TYPE,
+                token=invitation.token,
+            ).to_url()
+
         if msg["type"] == InvitationType.USER:
             if client_ctx.profile != UserProfile.ADMIN:
                 return invite_new_serializer.rep_dump({"status": "not_allowed"})
@@ -305,6 +320,7 @@ class BaseInviteComponent:
                     reply_to=reply_to,
                     organization_id=client_ctx.organization_id,
                     invitation_url=_to_http_redirection_url(client_ctx, invitation),
+                    parsec_url=_to_url(client_ctx, invitation),
                 )
                 await send_email(
                     email_config=self._config.email_config,
@@ -328,6 +344,7 @@ class BaseInviteComponent:
                     reply_to=None,
                     organization_id=client_ctx.organization_id,
                     invitation_url=_to_http_redirection_url(client_ctx, invitation),
+                    parsec_url=_to_url(client_ctx, invitation),
                 )
                 await send_email(
                     email_config=self._config.email_config,

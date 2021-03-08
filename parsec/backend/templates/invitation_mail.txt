@@ -17,3 +17,6 @@ then follow the steps on the Parsec client.
 {% endif %}
 
 For more information you can consult the Parsec documentation: https://docs.parsec.cloud
+
+  If the button does not work properly you can also copy and paste this link in the address bar of your parsec.
+  {{ parsec_url }}
