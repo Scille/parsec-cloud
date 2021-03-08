@@ -1643,7 +1643,7 @@ msgid "TEXT_JOIN_ORG_INVALID_URL"
 msgstr "L'URL n'est pas valide."
 
 msgid "TEXT_INVALID_URL"
-msgstr "L'URL n'est pas valide."
+msgstr "L'URL n'est pas valide. (format attendu: parsec://hote:port/organisation?action=action&..)"
 
 msgid "TEXT_ERROR_REPORTING_TITLE"
 msgstr "Rapport d'erreur"
@@ -2557,4 +2557,3 @@ msgstr "Créer un nouvel espace de travail"
 
 msgid "ACTION_WORKSPACE_GOTO_FILE_LINK"
 msgstr "Trouver un fichier via son lien"
-
