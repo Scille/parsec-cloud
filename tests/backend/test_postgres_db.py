@@ -16,7 +16,9 @@ def records_filter_debug(records):
 async def wait_for_listener(conn, to_terminate=False, timeout=3.0):
     with trio.fail_after(timeout):
         while True:
-            rows = await conn.fetch("SELECT pid FROM pg_stat_activity WHERE query LIKE 'LISTEN %'")
+            rows = await conn.fetch(
+                "SELECT pid FROM pg_stat_activity WHERE query ILIKE 'listen %' AND state ILIKE 'idle'"
+            )
             if not to_terminate and rows or to_terminate and not rows:
                 return [r["pid"] for r in rows]
 
