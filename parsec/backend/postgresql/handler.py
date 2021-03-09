@@ -194,7 +194,8 @@ class PGHandler:
     # And the simplest way to do that is to raise a big exception in _run_connections ;-)
     def _on_notification_conn_termination(self, connection):
         self._connection_lost = True
-        self._task_status.cancel()
+        if self._task_status:
+            self._task_status.cancel()
 
     def _on_notification(self, connection, pid, channel, payload):
         data = unpackb(b64decode(payload.encode("ascii")))
