@@ -1643,7 +1643,7 @@ msgid "TEXT_JOIN_ORG_INVALID_URL"
 msgstr "L'URL n'est pas valide."
 
 msgid "TEXT_INVALID_URL"
-msgstr "L'URL n'est pas valide. (format attendu: parsec://hote:port/organisation?action=action&..)"
+msgstr "L'URL n'est pas valide (format attendu : parsec://hote:port/organisation?action=action&..)"
 
 msgid "TEXT_ERROR_REPORTING_TITLE"
 msgstr "Rapport d'erreur"

@@ -1596,7 +1596,7 @@ msgid "TEXT_JOIN_ORG_INVALID_URL"
 msgstr "The link is invalid."
 
 msgid "TEXT_INVALID_URL"
-msgstr "The link is invalid.  (expected format : parsec://hote:port/organisation?action=action&..)"
+msgstr "The link is invalid (expected format: parsec://hote:port/organisation?action=action&..)"
 
 msgid "TEXT_ERROR_REPORTING_TITLE"
 msgstr "Error reporting"
