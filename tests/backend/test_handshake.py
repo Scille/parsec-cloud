@@ -56,7 +56,7 @@ async def test_handshake_incompatible_version(backend, server_factory):
             "result": "bad_protocol",
             "help": "No overlap between client API versions {3.0} and backend API versions {"
             + str(API_VERSION)
-            + ", 1.2}",
+            + ", 1.3}",
         }
 
 
