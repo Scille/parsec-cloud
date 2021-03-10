@@ -104,7 +104,13 @@ class MemoryOrganizationComponent(BaseOrganizationComponent):
 
         users = len(self._user_component._organizations[id].users)
 
-        workspaces = len(list(filter(lambda ks: ks[0] == id, self._realm_component._realms.keys())))
+        workspaces = len(
+            [
+                realm_id
+                for organization_id, realm_id in self._realm_component._realms.keys()
+                if organization_id == id
+            ]
+        )
 
         return OrganizationStats(
             users=users, data_size=data_size, metadata_size=metadata_size, workspaces=workspaces
