@@ -337,8 +337,8 @@ extra_requirements = {
         "triopg==0.5.0",
         "trio-asyncio==0.11.0",
         # S3
-        "boto3==1.12.34",
-        "botocore==1.15.34",
+        "boto3==1.17.27",
+        "botocore==1.20.27",
         # Swift
         "python-swiftclient==3.5.0",
         "pbr==4.0.2",
