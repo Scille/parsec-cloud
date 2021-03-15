@@ -760,7 +760,8 @@ class WorkspacesWidget(QWidget, Ui_WorkspacesWidget):
         self.fs_synced_qt.emit(event, id)
 
     def _on_fs_entry_updated_trio(self, event, workspace_id=None, id=None):
-        if workspace_id and not id:
+        assert id is not None
+        if workspace_id and id == workspace_id:
             self.fs_updated_qt.emit(event, workspace_id)
 
     def _on_entry_downsynced_trio(self, event, workspace_id=None, id=None):
