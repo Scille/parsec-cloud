@@ -25,14 +25,7 @@ from parsec.backend.backend_events import BackendEvent
 
 @asynccontextmanager
 async def components_factory(config: BackendConfig, event_bus: EventBus):
-    dbh = PGHandler(
-        config.db_url,
-        config.db_min_connections,
-        config.db_max_connections,
-        config.db_first_tries_number,
-        config.db_first_tries_sleep,
-        event_bus,
-    )
+    dbh = PGHandler(config.db_url, config.db_min_connections, config.db_max_connections, event_bus)
 
     async def _send_event(
         event: BackendEvent, conn: Optional[triopg._triopg.TrioConnectionProxy] = None, **kwargs

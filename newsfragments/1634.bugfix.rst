@@ -1,0 +1,1 @@
+Fix server event dispatching when a PostgreSQL database connection terminates unexpectedly.
