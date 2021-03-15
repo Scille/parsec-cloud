@@ -13,13 +13,13 @@ def records_filter_debug(records):
     return [record for record in records if record.levelname != "DEBUG"]
 
 
-async def wait_for_listener(conn, to_terminate=False, timeout=3.0):
+async def wait_for_listeners(conn, to_terminate=False, timeout=3.0):
     with trio.fail_after(timeout):
         while True:
             rows = await conn.fetch(
                 "SELECT pid FROM pg_stat_activity WHERE query ILIKE 'listen %' AND state ILIKE 'idle'"
             )
-            if not to_terminate and rows or to_terminate and not rows:
+            if (not to_terminate and rows) or (to_terminate and not rows):
                 return [r["pid"] for r in rows]
 
 
@@ -39,11 +39,12 @@ async def test_postgresql_notification_listener_terminated(postgresql_url, backe
         with pytest.raises(ConnectionError):
 
             async with backend_factory(config={"db_url": postgresql_url}):
-                pid, = await wait_for_listener(conn)
+                pid, = await wait_for_listeners(conn)
                 value, = await conn.fetchrow("SELECT pg_terminate_backend($1)", pid)
                 assert value
-                await trio.sleep(1)
-                assert False, "Should be cancelled by now"
+                # Wait to get cancelled by the backend app
+                with trio.fail_after(3):
+                    await trio.sleep_forever()
 
 
 @pytest.mark.trio
@@ -97,13 +98,13 @@ async def test_retry_policy_no_retry(postgresql_url, unused_tcp_port, asyncio_lo
             # Connect to PostgreSQL database
             async with triopg.connect(postgresql_url) as conn:
                 # Wait for the backend to be connected
-                pid, = await wait_for_listener(conn)
+                pid, = await wait_for_listeners(conn)
                 # Terminate the backend listener connection
-                value, = await conn.fetchrow(f"SELECT pg_terminate_backend($1)", pid)
+                value, = await conn.fetchrow("SELECT pg_terminate_backend($1)", pid)
                 assert value
-                # The _run_backend should raise a Connection error and cancel the nursery
-                await trio.sleep(3)
-                assert False
+                # Wait to get cancelled by the connection error `_run_backend`
+                with trio.fail_after(3):
+                    await trio.sleep_forever()
 
 
 @pytest.mark.trio
@@ -138,14 +139,18 @@ async def test_retry_policy_allow_retry(postgresql_url, unused_tcp_port, asyncio
         async with triopg.connect(postgresql_url) as conn:
 
             # Test for 10 cycles
+            pid = None
             for _ in range(10):
                 # Wait for the backend to be connected
-                pid, = await wait_for_listener(conn)
+                new_pid, = await wait_for_listeners(conn)
+                # Make sure a new connection has been created
+                assert new_pid != pid
+                pid = new_pid
                 # Terminate the backend listener connection
                 value, = await conn.fetchrow("SELECT pg_terminate_backend($1)", pid)
                 assert value
                 # Wait for the listener to terminate
-                await wait_for_listener(conn, to_terminate=True)
+                await wait_for_listeners(conn, to_terminate=True)
 
             # Cancel the backend nursery
             nursery.cancel_scope.cancel()
