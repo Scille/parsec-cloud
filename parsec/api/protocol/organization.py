@@ -81,6 +81,7 @@ class APIV1_OrganizationStatsRepSchema(BaseRepSchema):
     data_size = fields.Integer(required=True)
     metadata_size = fields.Integer(required=True)
     users = fields.Integer(required=True)
+    workspaces = fields.Integer(required=True)
 
 
 apiv1_organization_stats_serializer = CmdSerializer(

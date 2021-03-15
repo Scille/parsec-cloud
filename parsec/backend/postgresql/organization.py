@@ -69,6 +69,11 @@ SELECT
         WHERE user_.organization = { q_organization_internal_id("$organization_id") }
     ) users,
     (
+        SELECT COUNT(*)
+        FROM realm
+        WHERE realm.organization = { q_organization_internal_id("$organization_id") }
+    ) workspaces,
+    (
         SELECT COALESCE(SUM(size), 0)
         FROM vlob_atom
         WHERE
@@ -175,6 +180,7 @@ class PGOrganizationComponent(BaseOrganizationComponent):
             users=result["users"],
             data_size=result["data_size"],
             metadata_size=result["metadata_size"],
+            workspaces=result["workspaces"],
         )
 
     async def set_expiration_date(

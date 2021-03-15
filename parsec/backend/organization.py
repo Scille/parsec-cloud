@@ -77,6 +77,7 @@ class OrganizationStats:
     data_size: int
     metadata_size: int
     users: int
+    workspaces: int
 
 
 class BaseOrganizationComponent:
@@ -170,6 +171,7 @@ class BaseOrganizationComponent:
                 "users": stats.users,
                 "data_size": stats.data_size,
                 "metadata_size": stats.metadata_size,
+                "workspaces": stats.workspaces,
             }
         )
 
