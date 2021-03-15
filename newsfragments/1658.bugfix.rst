@@ -1,0 +1,1 @@
+Fix issue where workspace preview does not update when changes are made while on maintenance.
