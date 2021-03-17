@@ -151,6 +151,8 @@ class LoggedCore:
             raise BackendConnectionError(f"Backend error: {rep}")
         results = []
         for item in rep["results"]:
+            # Note `BackendNotFoundError` should never occurs (unless backend is broken !)
+            # here given we are feeding the backend the user IDs it has provided us
             user_info = await self.get_user_info(item["user_id"])
             results.append(user_info)
         return (results, rep["total"])
@@ -242,6 +244,7 @@ class LoggedCore:
     async def new_user_invitation(self, email: str, send_email: bool) -> BackendInvitationAddr:
         """
         Raises:
+            InviteAlreadyMemberError
             BackendConnectionError
         """
         rep = await self._backend_conn.cmds.invite_new(
