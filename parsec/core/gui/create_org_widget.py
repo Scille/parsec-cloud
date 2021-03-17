@@ -134,6 +134,9 @@ class CreateOrgDeviceInfoWidget(QWidget, Ui_CreateOrgDeviceInfoWidget):
         else:
             self.invalid_info_entered.emit()
 
+    def set_excluded_strings(self, excluded_strings):
+        self.widget_password.excluded_strings = excluded_strings
+
     @property
     def password(self):
         return self.widget_password.password
@@ -227,6 +230,13 @@ class CreateOrgWidget(QWidget, Ui_CreateOrgWidget):
     def _on_next_clicked(self):
         self.user_widget.hide()
         self.device_widget.show()
+        self.device_widget.set_excluded_strings(
+            [
+                self.user_widget.line_edit_org_name.text(),
+                self.user_widget.line_edit_user_full_name.text(),
+                self.user_widget.line_edit_user_email.text(),
+            ]
+        )
 
         try:
             self.button_validate.clicked.disconnect(self._on_next_clicked)
