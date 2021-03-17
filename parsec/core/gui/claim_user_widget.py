@@ -178,12 +178,14 @@ class ClaimUserFinalizeWidget(QWidget, Ui_ClaimUserFinalizeWidget):
         self.config = config
         self.new_device = new_device
 
-        self.widget_password.user_inputs = [
-            new_device.organization_addr.organization_id,
-            new_device.device_label,
-            new_device.human_handle.email,
-            new_device.human_handle.label,
-        ]
+        self.widget_password.set_excluded_strings(
+            [
+                new_device.organization_addr.organization_id,
+                new_device.device_label,
+                new_device.human_handle.email,
+                new_device.human_handle.label,
+            ]
+        )
 
         self.widget_password.info_changed.connect(self.check_infos)
         self.button_finalize.setDisabled(True)

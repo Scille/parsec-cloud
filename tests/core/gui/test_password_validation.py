@@ -31,7 +31,10 @@ def test_password_text(core_config):
 @pytest.mark.gui
 def test_password_validation_with_user_inputs():
     assert get_password_strength("William J Blazkowicz") == 5
-    assert get_password_strength("William J Blazkowicz", user_inputs=["william", "blazkowicz"]) == 4
+    assert (
+        get_password_strength("William J Blazkowicz", excluded_strings=["william", "blazkowicz"])
+        == 4
+    )
 
 
 @pytest.mark.gui
@@ -67,12 +70,12 @@ def test_password_choice_widget_mismatch(qtbot, core_config):
 
 
 @pytest.mark.gui
-def test_password_choice_widget_with_user_inputs(qtbot, core_config):
+def test_password_choice_widget_with_excluded_strings(qtbot, core_config):
     switch_language(core_config, "en")
 
     p = PasswordChoiceWidget(parent=None)
-    p.user_inputs = ["william.j.blazkowicz@wolfenstein.de"]
-    assert p.user_inputs == ["william", "blazkowicz", "wolfenstein"]
+    p.set_excluded_strings(["william.j.blazkowicz@wolfenstein.de"])
+    assert p.pwd_str_widget._excluded_strings == ["william", "blazkowicz", "wolfenstein"]
     qtbot.addWidget(p)
 
     p.line_edit_password.setText("William J Blazkowicz")

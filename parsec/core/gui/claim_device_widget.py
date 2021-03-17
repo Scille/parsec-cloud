@@ -382,7 +382,7 @@ class ClaimDeviceProvideInfoWidget(QWidget, Ui_ClaimDeviceProvideInfoWidget):
         self.button_ok.clicked.connect(self._on_claim_clicked)
 
     def _on_device_text_changed(self, device_text):
-        self.widget_password.user_inputs = [device_text]
+        self.widget_password.set_excluded_strings([device_text])
 
     def check_infos(self, _=""):
         if self.line_edit_device.is_input_valid() and self.widget_password.is_valid():

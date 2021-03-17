@@ -134,8 +134,8 @@ class CreateOrgDeviceInfoWidget(QWidget, Ui_CreateOrgDeviceInfoWidget):
         else:
             self.invalid_info_entered.emit()
 
-    def set_infos(self, infos):
-        self.widget_password.user_inputs = infos
+    def set_excluded_strings(self, excluded_strings):
+        self.widget_password.excluded_strings = excluded_strings
 
     @property
     def password(self):
@@ -230,7 +230,7 @@ class CreateOrgWidget(QWidget, Ui_CreateOrgWidget):
     def _on_next_clicked(self):
         self.user_widget.hide()
         self.device_widget.show()
-        self.device_widget.set_infos(
+        self.device_widget.set_excluded_strings(
             [
                 self.user_widget.line_edit_org_name.text(),
                 self.user_widget.line_edit_user_full_name.text(),
