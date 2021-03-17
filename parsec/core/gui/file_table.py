@@ -4,6 +4,7 @@ from collections import namedtuple
 import pendulum
 import pathlib
 from enum import IntEnum
+from sys import platform
 
 from PyQt5.QtCore import Qt, pyqtSignal
 from PyQt5.QtGui import QIcon, QColor, QKeySequence
@@ -189,7 +190,10 @@ class FileTable(QTableWidget):
         selected = self.selected_files()
         menu = QMenu(self)
 
-        action = menu.addAction(_("ACTION_FILE_OPEN_CURRENT_DIRECTORY"))
+        if platform == "darwin":
+            action = menu.addAction(_("ACTION_FILE_OPEN_CURRENT_DIRECTORY_MAC"))
+        else:
+            action = menu.addAction(_("ACTION_FILE_OPEN_CURRENT_DIRECTORY"))
         action.triggered.connect(self.open_current_dir_clicked.emit)
         if len(selected):
             action = menu.addAction(_("ACTION_FILE_MENU_OPEN"))

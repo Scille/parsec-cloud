@@ -1,0 +1,1 @@
+Added MacOS Big Sur compatibility

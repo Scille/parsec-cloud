@@ -1,6 +1,5 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
 
-import re
 import structlog
 import logging
 import sentry_sdk
@@ -20,7 +19,7 @@ def get_log_level():
     return _log_level
 
 
-def configure_logging(log_level=None, log_format=None, log_file=None, log_filter=None):
+def configure_logging(log_level=None, log_format=None, log_file=None):
     global _log_level
 
     _log_level = None
@@ -30,16 +29,6 @@ def configure_logging(log_level=None, log_format=None, log_file=None, log_filter
         structlog.processors.format_exc_info,
         structlog.processors.TimeStamper(fmt="%Y-%m-%d %H:%M:%S", utc=False),
     ]
-
-    if log_filter:
-        log_filter = re.compile(log_filter)
-
-        def dropper(logger, method_name, event_dict):
-            if not log_filter.match(str(event_dict)):
-                raise structlog.DropEvent
-            return event_dict
-
-        shared_processors.append(dropper)
 
     structlog.configure(
         processors=[

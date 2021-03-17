@@ -334,6 +334,9 @@ msgstr "B"
 msgid "ACTION_FILE_OPEN_CURRENT_DIRECTORY"
 msgstr "Open current directory in the file explorer"
 
+msgid "ACTION_FILE_OPEN_CURRENT_DIRECTORY_MAC"
+msgstr "Open current directory in Finder"
+
 msgid "ACTION_FILE_MENU_OPEN"
 msgstr "Open"
 
@@ -675,11 +678,11 @@ msgstr ""
 msgid "TEXT_LOGIN_ERROR_FUSE_NOT_AVAILABLE"
 msgstr ""
 "Fuse could not be loaded.<br>Please check your installation.<br><br>On "
-"Mac, you have to install OSXFUSE (FUSE for MacOS) and allow in security "
-"settings.<br>From Mac OS 11.x, a restart is required after osxfuse "
+"Mac, you have to install macFUSE and allow in security "
+"settings.<br>From Mac OS 11.x, a restart is required after macFUSE "
 "installation.<br><br><a "
-"href=\"https://osxfuse.github.io/2020/10/05/OSXFUSE-3.11.2.html\">Get "
-"osxfuse here</a>"
+"href=\"https://osxfuse.github.io/2021/01/02/macFUSE-4.0.4.html\">Get "
+"macFUSE here</a>"
 
 msgid "TEXT_LOGIN_UNKNOWN_ERROR"
 msgstr "Cannot log in."
@@ -1833,6 +1836,9 @@ msgstr "Could not invite the user."
 
 msgid "ACTION_WORKSPACE_OPEN_IN_FILE_EXPLORER"
 msgstr "Open in the file explorer"
+
+msgid "ACTION_WORKSPACE_OPEN_IN_FINDER"
+msgstr "Open in Finder"
 
 msgid "ACTION_WORKSPACE_RENAME"
 msgstr "Rename"

@@ -1,0 +1,1 @@
+Disable logging to file by default when running the GUI client.

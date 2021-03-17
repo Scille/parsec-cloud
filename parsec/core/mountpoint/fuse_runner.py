@@ -232,7 +232,7 @@ async def _stop_fuse_thread(
         # The schedule_exit() solution doesn't work on macOS, instead freezes the application for
         # 120 seconds before a timeout occurs. The solution used is to call this function (macOS
         # equivalent to fusermount) in a subprocess to unmount.
-        await trio.run_process(["diskutil", "unmount", str(mountpoint_path)])
+        await trio.run_process(["diskutil", "unmount", "force", str(mountpoint_path)])
     else:
         # Schedule an exit in the fuse operations
         fuse_operations.schedule_exit()

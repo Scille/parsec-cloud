@@ -1,7 +1,7 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
 
 from uuid import UUID, uuid4
-from typing import Optional, Union
+from typing import Union, Type, TypeVar
 
 from parsec.serde import fields
 
@@ -9,17 +9,26 @@ from parsec.serde import fields
 __all__ = ("EntryID", "EntryIDField", "EntryName", "EntryNameField")
 
 
+EntryIDTypeVar = TypeVar("EntryIDTypeVar", bound="EntryID")
+
+
 class EntryID(UUID):
     __slots__ = ()
 
-    def __init__(self, init: Optional[Union[UUID, bytes, str]] = None):
-        init = uuid4() if init is None else init
-        if isinstance(init, UUID):
-            super().__init__(bytes=init.bytes)
-        elif isinstance(init, bytes):
-            super().__init__(bytes=init)
+    def __init__(self, raw: Union[UUID, bytes, str]):
+        if isinstance(raw, UUID):
+            super().__init__(bytes=raw.bytes)
+        elif isinstance(raw, bytes):
+            super().__init__(bytes=raw)
         else:
-            super().__init__(hex=init)
+            super().__init__(hex=raw)
+
+    def __repr__(self) -> str:
+        return f"<EntryID {self.hex}>"
+
+    @classmethod
+    def new(cls: Type[EntryIDTypeVar]) -> EntryIDTypeVar:
+        return cls(uuid4())
 
 
 EntryIDField = fields.uuid_based_field_factory(EntryID)

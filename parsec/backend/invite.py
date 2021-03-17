@@ -245,7 +245,7 @@ class BaseInviteComponent:
         # information in database so that we default to no claimer present
         # (which is the most likely when a backend is restarted) .
         #
-        # However there is multiple way this list can go out of sync:
+        # However there are multiple ways this list can go out of sync:
         # - a claimer can be connected to a backend, then another backend starts
         # - the backend the claimer is connected to crashes witout being able
         #   to notify the other backends
@@ -425,7 +425,7 @@ class BaseInviteComponent:
             )
 
         except InvitationAlreadyDeletedError as exc:
-            # Notify parent that the connection shall be close because the invitation token is no logger valide.
+            # Notify parent that the connection shall be close because the invitation token is no longer valid.
             raise CloseInviteConnection from exc
 
         except InvitationNotFoundError:
@@ -492,7 +492,7 @@ class BaseInviteComponent:
             )
 
         except InvitationAlreadyDeletedError as exc:
-            # Notify parent that the connection shall be close because the invitation token is no logger valide.
+            # Notify parent that the connection shall be close because the invitation token is no longer valid.
             raise CloseInviteConnection from exc
 
         except InvitationNotFoundError:
@@ -586,7 +586,7 @@ class BaseInviteComponent:
             )
 
         except InvitationAlreadyDeletedError as exc:
-            # Notify parent that the connection shall be close because the invitation token is no logger valide.
+            # Notify parent that the connection shall be close because the invitation token is no longer valid.
             raise CloseInviteConnection from exc
 
         except InvitationNotFoundError:
@@ -641,7 +641,7 @@ class BaseInviteComponent:
             )
 
         except InvitationAlreadyDeletedError as exc:
-            # Notify parent that the connection shall be close because the invitation token is no logger valide.
+            # Notify parent that the connection shall be close because the invitation token is no longer valid.
             raise CloseInviteConnection from exc
 
         except InvitationNotFoundError:
@@ -696,7 +696,7 @@ class BaseInviteComponent:
             )
 
         except InvitationAlreadyDeletedError as exc:
-            # Notify parent that the connection shall be close because the invitation token is no logger valide.
+            # Notify parent that the connection shall be close because the invitation token is no longer valid.
             raise CloseInviteConnection from exc
 
         except InvitationNotFoundError:
@@ -753,7 +753,7 @@ class BaseInviteComponent:
             )
 
         except InvitationAlreadyDeletedError as exc:
-            # Notify parent that the connection shall be close because the invitation token is no logger valide.
+            # Notify parent that the connection shall be close because the invitation token is no longer valid.
             raise CloseInviteConnection from exc
 
         except InvitationNotFoundError:
@@ -778,8 +778,8 @@ class BaseInviteComponent:
         # First we "talk" by providing our payload and retrieve the peer's
         # payload if he has talked prior to us.
         # Then we "listen" by waiting for the peer to provide his payload if we
-        # have talk first, or to confirm us it has received our payload if we
-        # have talk after him.
+        # have talked first, or to confirm us it has received our payload if we
+        # have talked after him.
         filter_organization_id = organization_id
         filter_token = token
 

@@ -19,6 +19,7 @@ from parsec.core.types import (
     BackendOrganizationFileLinkAddr,
     WorkspaceRole,
 )
+from parsec.core.backend_connection import BackendNotAvailable
 from parsec.core.fs import (
     WorkspaceFS,
     WorkspaceFSTimestamped,
@@ -94,7 +95,7 @@ async def _do_workspace_list(core):
                 if role == WorkspaceRole.OWNER or len(roles) <= 2:
                     user_info = await core.get_user_info(user)
                 users_roles[user] = (role, user_info)
-        except FSBackendOfflineError:
+        except (FSBackendOfflineError, BackendNotAvailable):
             # Fallback to craft a custom list with only our device since it's
             # the only one we know about
             user_info = UserInfo(
@@ -129,14 +130,7 @@ async def _do_workspace_list(core):
             # reencryption operation
             pass
 
-        # Get reencryption needs
-        reenc_needs = None
-        try:
-            reenc_needs = await workspace_fs.get_reencryption_need()
-        except FSBackendOfflineError:
-            pass
-
-        workspaces.append((workspace_fs, ws_entry, users_roles, files, timestamped, reenc_needs))
+        workspaces.append((workspace_fs, ws_entry, users_roles, files, timestamped))
 
     user_manifest = core.user_fs.get_user_manifest()
     available_workspaces = [w for w in user_manifest.workspaces if w.role]
@@ -382,16 +376,11 @@ class WorkspacesWidget(QWidget, Ui_WorkspacesWidget):
 
         self.line_edit_search.show()
         for workspace in workspaces:
-            workspace_fs, ws_entry, users_roles, files, timestamped, reencryption_needs = workspace
+            workspace_fs, ws_entry, users_roles, files, timestamped = workspace
 
             try:
                 self.add_workspace(
-                    workspace_fs,
-                    ws_entry,
-                    users_roles,
-                    files,
-                    timestamped=timestamped,
-                    reencryption_needs=reencryption_needs,
+                    workspace_fs, ws_entry, users_roles, files, timestamped=timestamped
                 )
             except JobSchedulerNotAvailable:
                 pass
@@ -435,9 +424,7 @@ class WorkspacesWidget(QWidget, Ui_WorkspacesWidget):
     def on_reencryption_needs_error(self, job):
         pass
 
-    def add_workspace(
-        self, workspace_fs, ws_entry, users_roles, files, timestamped, reencryption_needs
-    ):
+    def add_workspace(self, workspace_fs, ws_entry, users_roles, files, timestamped):
 
         # The Qt thread should never hit the core directly.
         # Synchronous calls can run directly in the job system
@@ -470,7 +457,7 @@ class WorkspacesWidget(QWidget, Ui_WorkspacesWidget):
             is_mounted=self.is_workspace_mounted(workspace_fs.workspace_id, None),
             files=files[:4],
             timestamped=timestamped,
-            reencryption_needs=reencryption_needs,
+            reencryption_needs=None,
         )
         self.layout_workspaces.addWidget(button)
         button.clicked.connect(self.load_workspace)
@@ -482,12 +469,13 @@ class WorkspacesWidget(QWidget, Ui_WorkspacesWidget):
         button.open_clicked.connect(self.open_workspace)
         button.switch_clicked.connect(self._on_switch_clicked)
 
-        self.jobs_ctx.submit_job(
-            ThreadSafeQtSignal(self, "reencryption_needs_success", QtToTrioJob),
-            ThreadSafeQtSignal(self, "reencryption_needs_error", QtToTrioJob),
-            _get_reencryption_needs,
-            workspace_fs=workspace_fs,
-        )
+        if button.is_owner:
+            self.jobs_ctx.submit_job(
+                ThreadSafeQtSignal(self, "reencryption_needs_success", QtToTrioJob),
+                ThreadSafeQtSignal(self, "reencryption_needs_error", QtToTrioJob),
+                _get_reencryption_needs,
+                workspace_fs=workspace_fs,
+            )
 
     def _on_switch_clicked(self, state, workspace_fs, timestamp):
         if state:
@@ -772,7 +760,8 @@ class WorkspacesWidget(QWidget, Ui_WorkspacesWidget):
         self.fs_synced_qt.emit(event, id)
 
     def _on_fs_entry_updated_trio(self, event, workspace_id=None, id=None):
-        if workspace_id and not id:
+        assert id is not None
+        if workspace_id and id == workspace_id:
             self.fs_updated_qt.emit(event, workspace_id)
 
     def _on_entry_downsynced_trio(self, event, workspace_id=None, id=None):

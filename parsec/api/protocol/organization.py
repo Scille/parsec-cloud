@@ -35,7 +35,6 @@ class APIV1_OrganizationBootstrapReqSchema(BaseReqSchema):
     # in later version of Parsec.
     redacted_user_certificate = fields.Bytes(allow_none=False)
     redacted_device_certificate = fields.Bytes(allow_none=False)
-    root_verify_key = fields.VerifyKey(required=True)
 
 
 class APIV1_OrganizationBootstrapRepSchema(BaseRepSchema):
@@ -82,6 +81,7 @@ class APIV1_OrganizationStatsRepSchema(BaseRepSchema):
     data_size = fields.Integer(required=True)
     metadata_size = fields.Integer(required=True)
     users = fields.Integer(required=True)
+    workspaces = fields.Integer(required=True)
 
 
 apiv1_organization_stats_serializer = CmdSerializer(

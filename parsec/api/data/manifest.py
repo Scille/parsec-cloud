@@ -88,7 +88,7 @@ class WorkspaceEntry(BaseData):
         now = pendulum_now()
         return WorkspaceEntry(
             name=EntryName(name),
-            id=EntryID(),
+            id=EntryID.new(),
             key=SecretKey.generate(),
             encryption_revision=1,
             encrypted_on=now,

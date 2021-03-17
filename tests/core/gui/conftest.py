@@ -492,7 +492,7 @@ def testing_main_window_cls(aqtbot, qt_thread_gateway):
             w_w = await self.test_switch_to_workspaces_widget()
 
             for i in range(w_w.layout_workspaces.count()):
-                wk_button = w_w.layout_workspaces.itemAt(0).widget()
+                wk_button = w_w.layout_workspaces.itemAt(i).widget()
                 if isinstance(wk_button, WorkspaceButton) and wk_button.name == workspace_name:
                     break
             else:
@@ -501,13 +501,6 @@ def testing_main_window_cls(aqtbot, qt_thread_gateway):
             f_w = self.test_get_files_widget()
             async with aqtbot.wait_exposed(f_w), aqtbot.wait_signal(f_w.folder_changed):
                 await aqtbot.mouse_click(wk_button, QtCore.Qt.LeftButton)
-
-            # Sanity check just to be sure...
-            def _entry_available():
-                assert f_w.workspace_fs.get_workspace_name() == workspace_name
-                assert f_w.table_files.rowCount() == 1
-
-            await aqtbot.wait_until(_entry_available)
 
             return f_w
 

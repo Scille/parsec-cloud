@@ -75,7 +75,7 @@ async def benchmark_file_writing(device, workspace):
 async def main():
 
     # Config
-    configure_logging(LOG_LEVEL)
+    configure_logging(log_level=LOG_LEVEL)
     config_dir = get_default_config_dir(os.environ)
     config = load_config(config_dir)
     devices = list_available_devices(config_dir)
