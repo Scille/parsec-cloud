@@ -275,7 +275,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         try:
             # Get the clipboard text, try and convert it to parsec addr and use it as default value
             default_url = BackendActionAddr.from_url(desktop.get_clipboard()).to_url()
-        except:
+        except ValueError:
             pass
         url = get_text_input(
             parent=self,

@@ -716,81 +716,32 @@ async def test_link_file_unknown_org(
     assert isinstance(accounts_w, LoginPasswordInputWidget)
 
 
-@pytest.mark.gui
-@pytest.mark.trio
-async def test_join_organization_org_link_in_clipboard(
-    aqtbot,
-    running_backend,
-    backend,
-    autoclose_dialog,
-    gui,
-    catch_text_input_widget,
-    invitation_organization_link,
-    qt_thread_gateway,
+@pytest.fixture
+async def random_clipboard_data(running_backend):
+    return "Still sane, Exile?"
+
+
+@pytest.fixture
+async def clipboard_text_provider(
+    invitation_organization_link, invitation_device_link, invitation_user_link
 ):
-    def _copy_to_clipboard():
-        desktop.copy_to_clipboard(invitation_organization_link)
+    texts = [
+        invitation_organization_link,
+        invitation_device_link,
+        invitation_user_link,
+        "Still sane, Exile?",
+    ]
 
-    await qt_thread_gateway.send_action(_copy_to_clipboard)
+    def _select_clipboard_text(idx):
+        return texts[idx]
 
-    await aqtbot.key_click(gui, "o", QtCore.Qt.ControlModifier, 200)
-    text_input_w = await catch_text_input_widget()
-    assert text_input_w
-
-    assert text_input_w.line_edit_text.text() == invitation_organization_link
-
-
-@pytest.mark.gui
-@pytest.mark.trio
-async def test_join_organization_device_link_in_clipboard(
-    aqtbot,
-    running_backend,
-    backend,
-    autoclose_dialog,
-    gui,
-    catch_text_input_widget,
-    invitation_device_link,
-    qt_thread_gateway,
-):
-    def _copy_to_clipboard():
-        desktop.copy_to_clipboard(invitation_device_link)
-
-    await qt_thread_gateway.send_action(_copy_to_clipboard)
-
-    await aqtbot.key_click(gui, "o", QtCore.Qt.ControlModifier, 200)
-    text_input_w = await catch_text_input_widget()
-    assert text_input_w
-
-    assert text_input_w.line_edit_text.text() == invitation_device_link
+    return _select_clipboard_text
 
 
 @pytest.mark.gui
 @pytest.mark.trio
-async def test_join_organization_user_link_in_clipboard(
-    aqtbot,
-    running_backend,
-    backend,
-    autoclose_dialog,
-    gui,
-    catch_text_input_widget,
-    invitation_user_link,
-    qt_thread_gateway,
-):
-    def _copy_to_clipboard():
-        desktop.copy_to_clipboard(invitation_user_link)
-
-    await qt_thread_gateway.send_action(_copy_to_clipboard)
-
-    await aqtbot.key_click(gui, "o", QtCore.Qt.ControlModifier, 200)
-    text_input_w = await catch_text_input_widget()
-    assert text_input_w
-
-    assert text_input_w.line_edit_text.text() == invitation_user_link
-
-
-@pytest.mark.gui
-@pytest.mark.trio
-async def test_join_organization_other_text_in_clipboard(
+@pytest.mark.parametrize("clipboard_text_index", (0, 1, 2, 3))
+async def test_join_organization_text_in_clipboard(
     aqtbot,
     running_backend,
     backend,
@@ -798,9 +749,13 @@ async def test_join_organization_other_text_in_clipboard(
     gui,
     catch_text_input_widget,
     qt_thread_gateway,
+    clipboard_text_provider,
+    clipboard_text_index,
 ):
+    clipboard_text = clipboard_text_provider(clipboard_text_index)
+
     def _copy_to_clipboard():
-        desktop.copy_to_clipboard("Still sane, Exile?")
+        desktop.copy_to_clipboard(clipboard_text)
 
     await qt_thread_gateway.send_action(_copy_to_clipboard)
 
@@ -808,4 +763,7 @@ async def test_join_organization_other_text_in_clipboard(
     text_input_w = await catch_text_input_widget()
     assert text_input_w
 
-    assert text_input_w.line_edit_text.text() == ""
+    if clipboard_text_index == 3:
+        assert text_input_w.line_edit_text.text() == ""
+    else:
+        assert text_input_w.line_edit_text.text() == clipboard_text
