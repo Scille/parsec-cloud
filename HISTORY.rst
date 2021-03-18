@@ -5,6 +5,57 @@ History
 .. towncrier release notes start
 
 
+Parsec v2.2.4 (2021-03-18)
+--------------------------
+
+Features
+~~~~~~~~
+
+* Made password validation stronger in the GUI (`#1601
+  <https://github.com/Scille/parsec-cloud/issues/1601>`__)
+* Added MacOS Big Sur compatibility  (`#1640 <https://github.com/Scille/parsec-
+  cloud/issues/1640>`__)
+
+Bugfixes
+~~~~~~~~
+
+* Fix server event dispatching when a PostgreSQL database connection terminates
+  unexpectedly.  (`#1634 <https://github.com/Scille/parsec-
+  cloud/issues/1634>`__)
+* Fix unhandled exception in GUI when offline and workspace author UserInfo is
+  not in cache. Fix view on inconstent files in GUI. (`#1641
+  <https://github.com/Scille/parsec-cloud/issues/1641>`__)
+* Fixed a mountpoint issue in MacOS that could cause errors during login or
+  unmounting a workspace.  (`#1644 <https://github.com/Scille/parsec-
+  cloud/issues/1644>`__)
+* Fixed style issues on dark mode MacOS (`#1646
+  <https://github.com/Scille/parsec-cloud/issues/1646>`__)
+* Fix issue where workspace preview does not update when changes are made while
+  on maintenance.  (`#1658 <https://github.com/Scille/parsec-
+  cloud/issues/1658>`__)
+
+Deprecations and Removals
+~~~~~~~~~~~~~~~~~~~~~~~~~
+
+* Remove massively unused `--log-filter` option from `core gui` and `backend
+  run` commands. (`#1639 <https://github.com/Scille/parsec-
+  cloud/issues/1639>`__)
+
+Client/Backend API evolutions
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+* Bump api version to 1.3; Add the number of workspaces in the organization
+  stats  (`#1655 <https://github.com/Scille/parsec-cloud/issues/1655>`__)
+
+Miscellaneous internal changes
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+* Fix backend server infinite wait on HTTP-invalid incoming request.  (`#1611
+  <https://github.com/Scille/parsec-cloud/issues/1611>`__)
+* Disable logging to file by default when running the GUI client.  (`#1638
+  <https://github.com/Scille/parsec-cloud/issues/1638>`__)
+
+
 Parsec v2.2.3 (2021-01-29)
 --------------------------
 
