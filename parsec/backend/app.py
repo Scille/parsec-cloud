@@ -130,7 +130,6 @@ class BackendApp:
         conn = h11.Connection(
             h11.SERVER, max_incomplete_event_size=MAX_INITIAL_HTTP_REQUEST_SIZE - 1
         )
-        initial_line_cheap_check_done = False
         try:
             # Fetch the initial request
             while True:
@@ -140,17 +139,6 @@ class BackendApp:
                     # The socket got broken in an unexpected way (the peer has most
                     # likely left without telling us, or has reseted the connection)
                     return
-
-                # HTTP request initial line must be composed of printable ASCII
-                # characters. This create an opportunity for an early&cheap check.
-                # This is typically useful when a client attempt an SSL connection
-                # while we didn't enabled SSL on server side: without this check
-                # we will hang forever waiting for the `\r\n\r\n` marking end of
-                # the HTTP request.
-                if not initial_line_cheap_check_done and data and data[0] < 0x21:
-                    await self._send_http_reply(stream, conn, status_code=400)
-                    return
-                initial_line_cheap_check_done = True
 
                 conn.receive_data(data)
                 event = conn.next_event()
