@@ -168,8 +168,9 @@ async def test_invalid_request_line(backend_http_send):
         b"G\xf1T / HTTP/1.0\r\n\r\n",  # Method must be ISO-8859-1
         b"GET / HTTP/42.0\r\n\r\n",  # Only supported in Cyberpunk 2077
     ]:
-        status, _, _ = await backend_http_send(req=req)
-        assert status == (400, "Bad Request")
+        with trio.fail_after(1):
+            status, _, _ = await backend_http_send(req=req)
+            assert status == (400, "Bad Request")
 
 
 @pytest.mark.trio
