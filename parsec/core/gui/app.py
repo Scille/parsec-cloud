@@ -1,20 +1,18 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2016-2021 Scille SAS
 
-from parsec.core.core_events import CoreEvent
-
 import sys
 import signal
 from queue import Queue
+from typing import Optional
 from contextlib import contextmanager
-
 import trio
 from structlog import get_logger
-
 from PyQt5.QtCore import QTimer, Qt
 from PyQt5.QtWidgets import QApplication
 
-from parsec.core.config import CoreConfig
 from parsec.event_bus import EventBus
+from parsec.core.core_events import CoreEvent
+from parsec.core.config import CoreConfig
 from parsec.core.ipcinterface import (
     run_ipc_server,
     send_to_ipc_server,
@@ -121,7 +119,7 @@ def log_pyqt_exceptions():
         sys.excepthook = previous_hook
 
 
-def run_gui(config: CoreConfig, start_arg: str = None, diagnose: bool = False):
+def run_gui(config: CoreConfig, start_arg: Optional[str] = None, diagnose: bool = False):
     logger.info("Starting UI")
 
     # Needed for High DPI usage of QIcons, otherwise only QImages are well scaled

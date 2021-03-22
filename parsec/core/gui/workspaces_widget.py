@@ -319,16 +319,20 @@ class WorkspacesWidget(QWidget, Ui_WorkspacesWidget):
         if not file_link:
             return
 
-        url = None
         try:
-            url = BackendOrganizationFileLinkAddr.from_url(file_link)
+            addr = BackendOrganizationFileLinkAddr.from_url(file_link)
         except ValueError as exc:
             show_error(self, _("TEXT_WORKSPACE_GOTO_FILE_LINK_INVALID_LINK"), exception=exc)
             return
 
         for widget in self._iter_workspace_buttons():
-            if widget.workspace_fs.workspace_id == url.workspace_id:
-                self.load_workspace(widget.workspace_fs, path=url.path, selected=True)
+            if widget.workspace_fs.workspace_id == addr.workspace_id:
+                try:
+                    path = widget.workspace_fs.decrypt_file_link_path(addr)
+                except ValueError as exc:
+                    show_error(self, _("TEXT_WORKSPACE_GOTO_FILE_LINK_INVALID_LINK"), exception=exc)
+                    return
+                self.load_workspace(widget.workspace_fs, path=path, selected=True)
                 return
         show_error(self, _("TEXT_WORKSPACE_GOTO_FILE_LINK_WORKSPACE_NOT_FOUND"))
 
