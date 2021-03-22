@@ -3,7 +3,7 @@
 import attr
 import trio
 from collections import defaultdict
-from typing import List, Dict, Tuple, AsyncIterator, cast, Pattern, Callable, Optional
+from typing import List, Dict, Tuple, AsyncIterator, cast, Pattern, Callable, Optional, Awaitable
 from pendulum import DateTime, now as pendulum_now
 
 from parsec.event_bus import EventBus
@@ -70,6 +70,7 @@ class WorkspaceFS:
         self,
         workspace_id: EntryID,
         get_workspace_entry: Callable[[], WorkspaceEntry],
+        get_previous_workspace_entry: Callable[[], Awaitable[WorkspaceEntry]],
         device: LocalDevice,
         local_storage: BaseWorkspaceStorage,
         backend_cmds: BackendAuthenticatedCmds,
@@ -78,6 +79,7 @@ class WorkspaceFS:
     ):
         self.workspace_id = workspace_id
         self.get_workspace_entry = get_workspace_entry
+        self.get_previous_workspace_entry = get_previous_workspace_entry
         self.device = device
         self.local_storage = local_storage
         self.backend_cmds = backend_cmds
@@ -89,6 +91,7 @@ class WorkspaceFS:
             self.device,
             self.workspace_id,
             self.get_workspace_entry,
+            self.get_previous_workspace_entry,
             self.backend_cmds,
             self.remote_devices_manager,
             self.local_storage,

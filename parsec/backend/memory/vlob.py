@@ -137,20 +137,13 @@ class MemoryVlobComponent(BaseVlobComponent):
             raise VlobNotFoundError(f"Vlob `{vlob_id}` doesn't exist")
 
     def _check_realm_read_access(self, organization_id, realm_id, user_id, encryption_revision):
-        can_read_roles = (
-            RealmRole.OWNER,
-            RealmRole.MANAGER,
-            RealmRole.CONTRIBUTOR,
-            RealmRole.READER,
-        )
         self._check_realm_access(
-            organization_id, realm_id, user_id, encryption_revision, can_read_roles
+            organization_id, realm_id, user_id, encryption_revision, read_only=True
         )
 
     def _check_realm_write_access(self, organization_id, realm_id, user_id, encryption_revision):
-        can_write_roles = (RealmRole.OWNER, RealmRole.MANAGER, RealmRole.CONTRIBUTOR)
         self._check_realm_access(
-            organization_id, realm_id, user_id, encryption_revision, can_write_roles
+            organization_id, realm_id, user_id, encryption_revision, read_only=False
         )
 
     def _check_realm_access(
@@ -159,7 +152,7 @@ class MemoryVlobComponent(BaseVlobComponent):
         realm_id,
         user_id,
         encryption_revision,
-        allowed_roles,
+        read_only=False,
         expected_maintenance=False,
     ):
         try:
@@ -167,18 +160,40 @@ class MemoryVlobComponent(BaseVlobComponent):
         except RealmNotFoundError:
             raise VlobNotFoundError(f"Realm `{realm_id}` doesn't exist")
 
+        # Role checking
+        allowed_roles = (RealmRole.OWNER, RealmRole.MANAGER, RealmRole.CONTRIBUTOR)
+        if read_only:
+            allowed_roles += (RealmRole.READER,)
         if realm.roles.get(user_id) not in allowed_roles:
             raise VlobAccessError()
 
-        if expected_maintenance is False:
-            if realm.status.in_maintenance:
-                raise VlobInMaintenanceError(f"Realm `{realm_id}` is currently under maintenance")
-        elif expected_maintenance is True:
-            if not realm.status.in_maintenance:
-                raise VlobNotInMaintenanceError(f"Realm `{realm_id}` not under maintenance")
+        # Writing during maintenance is forbidden
+        if not expected_maintenance and realm.status.in_maintenance and not read_only:
+            raise VlobInMaintenanceError(f"Realm `{realm_id}` is currently under maintenance")
 
-        if encryption_revision not in (None, realm.status.encryption_revision):
-            raise VlobEncryptionRevisionError()
+        # A maintenance state was expected
+        if expected_maintenance and not realm.status.in_maintenance:
+            raise VlobNotInMaintenanceError(f"Realm `{realm_id}` not under maintenance")
+
+        # Encryption revision checking
+        if encryption_revision is not None:
+
+            # Special case of reading while in maintenance
+            if read_only and realm.status.in_maintenance:
+
+                # The vlob is not available yet for the current revision
+                if encryption_revision == realm.status.encryption_revision:
+                    raise VlobInMaintenanceError(
+                        f"Realm `{realm_id}` is currently under maintenance"
+                    )
+
+                # The vlob is only available at the previous revision
+                if encryption_revision != realm.status.encryption_revision - 1:
+                    raise VlobEncryptionRevisionError()
+
+            # Otherwise, simply check that the revisions match
+            elif encryption_revision != realm.status.encryption_revision:
+                raise VlobEncryptionRevisionError()
 
     def _check_realm_in_maintenance_access(
         self, organization_id, realm_id, user_id, encryption_revision

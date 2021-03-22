@@ -35,28 +35,25 @@ class MemoryBlockComponent(BaseBlockComponent):
         self._realm_component = realm
 
     def _check_realm_read_access(self, organization_id, realm_id, user_id):
-        can_read_roles = (
-            RealmRole.OWNER,
-            RealmRole.MANAGER,
-            RealmRole.CONTRIBUTOR,
-            RealmRole.READER,
-        )
-        self._check_realm_access(organization_id, realm_id, user_id, can_read_roles)
+        self._check_realm_access(organization_id, realm_id, user_id, read_only=True)
 
     def _check_realm_write_access(self, organization_id, realm_id, user_id):
-        can_write_roles = (RealmRole.OWNER, RealmRole.MANAGER, RealmRole.CONTRIBUTOR)
-        self._check_realm_access(organization_id, realm_id, user_id, can_write_roles)
+        self._check_realm_access(organization_id, realm_id, user_id, read_only=False)
 
-    def _check_realm_access(self, organization_id, realm_id, user_id, allowed_roles):
+    def _check_realm_access(self, organization_id, realm_id, user_id, read_only=False):
         try:
             realm = self._realm_component._get_realm(organization_id, realm_id)
         except RealmNotFoundError:
             raise BlockNotFoundError(f"Realm `{realm_id}` doesn't exist")
 
+        allowed_roles = (RealmRole.OWNER, RealmRole.MANAGER, RealmRole.CONTRIBUTOR)
+        if read_only:
+            allowed_roles += (RealmRole.READER,)
+
         if realm.roles.get(user_id) not in allowed_roles:
             raise BlockAccessError()
 
-        if realm.status.in_maintenance:
+        if realm.status.in_maintenance and not read_only:
             raise BlockInMaintenanceError(f"Realm `{realm_id}` is currently under maintenance")
 
     async def read(

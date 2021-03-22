@@ -1,7 +1,7 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
 
 from contextlib import contextmanager
-from typing import Dict, Optional, List, Tuple, cast, Iterator, Callable
+from typing import Dict, Optional, List, Tuple, cast, Iterator, Callable, Awaitable
 
 from pendulum import DateTime, now as pendulum_now
 
@@ -87,12 +87,14 @@ class UserRemoteLoader:
         device: LocalDevice,
         workspace_id: EntryID,
         get_workspace_entry: Callable[[], WorkspaceEntry],
+        get_previous_workspace_entry: Callable[[], Awaitable[WorkspaceEntry]],
         backend_cmds: BackendAuthenticatedCmds,
         remote_devices_manager: RemoteDevicesManager,
     ):
         self.device = device
         self.workspace_id = workspace_id
         self.get_workspace_entry = get_workspace_entry
+        self.get_previous_workspace_entry = get_previous_workspace_entry
         self.backend_cmds = backend_cmds
         self.remote_devices_manager = remote_devices_manager
         self._realm_role_certificates_cache: Optional[List[RealmRoleCertificateContent]] = None
@@ -300,12 +302,18 @@ class RemoteLoader(UserRemoteLoader):
         device: LocalDevice,
         workspace_id: EntryID,
         get_workspace_entry: Callable[[], WorkspaceEntry],
+        get_previous_workspace_entry: Callable[[], Awaitable[WorkspaceEntry]],
         backend_cmds: BackendAuthenticatedCmds,
         remote_devices_manager: RemoteDevicesManager,
         local_storage: BaseWorkspaceStorage,
     ):
         super().__init__(
-            device, workspace_id, get_workspace_entry, backend_cmds, remote_devices_manager
+            device,
+            workspace_id,
+            get_workspace_entry,
+            get_previous_workspace_entry,
+            backend_cmds,
+            remote_devices_manager,
         )
         self.local_storage = local_storage
 
@@ -417,13 +425,30 @@ class RemoteLoader(UserRemoteLoader):
             FSDeviceNotFoundError
             FSInvalidTrustchainError
         """
+        return await self._load_manifest(
+            entry_id,
+            version=version,
+            timestamp=timestamp,
+            expected_backend_timestamp=expected_backend_timestamp,
+        )
+
+    async def _load_manifest(
+        self,
+        entry_id: EntryID,
+        version: Optional[int] = None,
+        timestamp: Optional[DateTime] = None,
+        expected_backend_timestamp: Optional[DateTime] = None,
+        workspace_entry: Optional[WorkspaceEntry] = None,
+    ) -> BaseRemoteManifest:
         if timestamp is not None and version is not None:
             raise FSError(
                 f"Supplied both version {version} and timestamp `{timestamp}` for manifest "
                 f"`{entry_id}`"
             )
         # Download the vlob
-        workspace_entry = self.get_workspace_entry()
+        current_workspace_entry = self.get_workspace_entry()
+        if workspace_entry is None:
+            workspace_entry = self.get_workspace_entry()
         with translate_backend_cmds_errors():
             rep = await self.backend_cmds.vlob_read(
                 workspace_entry.encryption_revision,
@@ -431,6 +456,20 @@ class RemoteLoader(UserRemoteLoader):
                 version=version,
                 timestamp=timestamp if version is None else None,
             )
+        # Special case for loading manifest while in maintenance
+        if (
+            rep["status"] == "in_maintenance"
+            and workspace_entry.encryption_revision == current_workspace_entry.encryption_revision
+        ):
+            previous_workspace_entry = await self.get_previous_workspace_entry()
+            return await self._load_manifest(
+                entry_id,
+                version=version,
+                timestamp=timestamp,
+                expected_backend_timestamp=expected_backend_timestamp,
+                workspace_entry=previous_workspace_entry,
+            )
+
         if rep["status"] == "not_found":
             raise FSRemoteManifestNotFound(entry_id)
         elif rep["status"] == "not_allowed":
@@ -622,6 +661,7 @@ class RemoteLoaderTimestamped(RemoteLoader):
         self.device = remote_loader.device
         self.workspace_id = remote_loader.workspace_id
         self.get_workspace_entry = remote_loader.get_workspace_entry
+        self.get_previous_workspace_entry = remote_loader.get_previous_workspace_entry
         self.backend_cmds = remote_loader.backend_cmds
         self.remote_devices_manager = remote_loader.remote_devices_manager
         self.local_storage = remote_loader.local_storage.to_timestamped(timestamp)
