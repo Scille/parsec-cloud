@@ -46,14 +46,12 @@ from parsec.api.protocol import (
     invite_4_claimer_communicate_serializer,
 )
 from parsec.backend.templates import get_template
-from parsec.backend.utils import catch_protocol_errors, api, run_with_breathing_transport
+from parsec.backend.utils import catch_protocol_errors, api
 from parsec.backend.config import BackendConfig, EmailConfig, SmtpEmailConfig, MockedEmailConfig
 from parsec.core.types import BackendInvitationAddr
 
 
 logger = get_logger()
-
-PEER_EVENT_MAX_WAIT = 300  # 5mn
 
 
 class CloseInviteConnection(Exception):
@@ -408,7 +406,7 @@ class BaseInviteComponent:
             }
         return invite_info_serializer.rep_dump(rep)
 
-    @api("invite_1_claimer_wait_peer", handshake_types=[HandshakeType.INVITED])
+    @api("invite_1_claimer_wait_peer", long_request=True, handshake_types=[HandshakeType.INVITED])
     @catch_protocol_errors
     async def api_invite_1_claimer_wait_peer(self, client_ctx, msg):
         """
@@ -417,20 +415,13 @@ class BaseInviteComponent:
         """
         msg = invite_1_claimer_wait_peer_serializer.req_load(msg)
         try:
-            with trio.move_on_after(PEER_EVENT_MAX_WAIT) as cancel_scope:
-
-                greeter_public_key = await run_with_breathing_transport(
-                    client_ctx.transport,
-                    self.conduit_exchange,
-                    client_ctx.organization_id,
-                    None,
-                    client_ctx.invitation.token,
-                    ConduitState.STATE_1_WAIT_PEERS,
-                    msg["claimer_public_key"].encode(),
-                )
-
-            if cancel_scope.cancelled_caught:
-                return {"status": "timeout", "reason": "Timeout while waiting for new peer"}
+            greeter_public_key = await self.conduit_exchange(
+                client_ctx.organization_id,
+                None,
+                client_ctx.invitation.token,
+                ConduitState.STATE_1_WAIT_PEERS,
+                msg["claimer_public_key"].encode(),
+            )
 
         except InvitationAlreadyDeletedError as exc:
             # Notify parent that the connection shall be close because the invitation token is no longer valid.

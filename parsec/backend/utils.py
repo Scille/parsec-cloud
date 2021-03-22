@@ -14,6 +14,7 @@ from parsec.api.protocol import (
 from parsec.api.version import API_V1_VERSION, API_V2_VERSION
 
 
+PEER_EVENT_MAX_WAIT = 300  # 5mn
 ALLOWED_API_VERSIONS = {API_V1_VERSION.version, API_V2_VERSION.version}
 
 
@@ -24,15 +25,26 @@ OperationKind = Enum("OperationKind", "DATA_READ DATA_WRITE MAINTENANCE")
 def api(
     cmd: str,
     *,
-    handshake_types: Sequence[Union[HandshakeType, APIV1_HandshakeType]] = (
+    long_request: bool = False,
+    handshake_types: List[Union[HandshakeType, APIV1_HandshakeType]] = (
         HandshakeType.AUTHENTICATED,
         APIV1_HandshakeType.AUTHENTICATED,
     ),
 ):
     def wrapper(fn):
-        assert not hasattr(fn, "_api_info")
-        fn._api_info = {"cmd": cmd, "handshake_types": handshake_types}
-        return fn
+        async def wrapped(self, client_ctx, *args, **kwargs):
+            if long_request:
+                with trio.move_on_after(PEER_EVENT_MAX_WAIT):
+                    return await run_with_breathing_transport(
+                        client_ctx.transport, fn, self, client_ctx, *args, **kwargs
+                    )
+                return {"status": "timeout", "reason": "Timeout while waiting for new peer"}
+            else:
+                return await fn(self, client_ctx, *args, **kwargs)
+
+        assert not hasattr(wrapped, "_api_info")
+        wrapped._api_info = {"cmd": cmd, "handshake_types": handshake_types}
+        return wrapped
 
     return wrapper
 
@@ -52,7 +64,6 @@ def collect_apis(*components):
 
                 assert info["cmd"] not in apis[handshake_type]
                 apis[handshake_type][info["cmd"]] = meth
-
     return apis
 
 
