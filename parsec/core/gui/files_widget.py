@@ -10,7 +10,7 @@ from structlog import get_logger
 
 from PyQt5.QtCore import Qt, pyqtSignal, QTimer
 from PyQt5.QtWidgets import QFileDialog, QWidget
-from parsec.core.types import FsPath, WorkspaceEntry, WorkspaceRole, BackendOrganizationFileLinkAddr
+from parsec.core.types import FsPath, WorkspaceEntry, WorkspaceRole
 from parsec.core.fs import WorkspaceFS, WorkspaceFSTimestamped
 from parsec.core.fs.exceptions import (
     FSRemoteManifestNotFound,
@@ -395,12 +395,9 @@ class FilesWidget(QWidget, Ui_FilesWidget):
         files = self.table_files.selected_files()
         if len(files) != 1:
             return
-        url = BackendOrganizationFileLinkAddr.build(
-            self.core.device.organization_addr,
-            self.workspace_fs.workspace_id,
-            self.current_directory / files[0].name,
-        )
-        desktop.copy_to_clipboard(str(url))
+        path = self.current_directory / files[0].name
+        addr = self.workspace_fs.generate_file_link(path)
+        desktop.copy_to_clipboard(addr.to_url())
         show_info(self, _("TEXT_FILE_LINK_COPIED_TO_CLIPBOARD"))
 
     def on_copy_clicked(self):

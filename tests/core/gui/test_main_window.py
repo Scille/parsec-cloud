@@ -12,7 +12,7 @@ from parsec.core.local_device import (
     _save_device_with_password,
     save_device_with_password,
 )
-from parsec.core.types import EntryID, FsPath
+from parsec.core.types import EntryID
 from parsec.core.types import (
     BackendInvitationAddr,
     BackendOrganizationBootstrapAddr,
@@ -162,9 +162,7 @@ async def test_link_file(
     bob_available_device,
 ):
     logged_gui, w_w, f_w = logged_gui_with_files
-    url = BackendOrganizationFileLinkAddr.build(
-        f_w.core.device.organization_addr, f_w.workspace_fs.workspace_id, f_w.current_directory
-    )
+    url = f_w.workspace_fs.generate_file_link(f_w.current_directory)
 
     monkeypatch.setattr(
         "parsec.core.gui.main_window.list_available_devices",
@@ -192,7 +190,6 @@ async def test_link_file_unmounted(
     running_backend,
     backend,
     autoclose_dialog,
-    # logged_gui,
     logged_gui_with_files,
     bob,
     monkeypatch,
@@ -201,9 +198,7 @@ async def test_link_file_unmounted(
     logged_gui, w_w, f_w = logged_gui_with_files
 
     core = logged_gui.test_get_core()
-    url = BackendOrganizationFileLinkAddr.build(
-        f_w.core.device.organization_addr, f_w.workspace_fs.workspace_id, f_w.current_directory
-    )
+    url = f_w.workspace_fs.generate_file_link(f_w.current_directory)
 
     monkeypatch.setattr(
         "parsec.core.gui.main_window.list_available_devices",
@@ -252,9 +247,7 @@ async def test_link_file_invalid_path(
     bob_available_device,
 ):
     logged_gui, w_w, f_w = logged_gui_with_files
-    url = BackendOrganizationFileLinkAddr.build(
-        f_w.core.device.organization_addr, f_w.workspace_fs.workspace_id, "/not_a_valid_path"
-    )
+    url = f_w.workspace_fs.generate_file_link("/unknown")
 
     monkeypatch.setattr(
         "parsec.core.gui.main_window.list_available_devices",
@@ -285,16 +278,15 @@ async def test_link_file_invalid_workspace(
     bob_available_device,
 ):
     logged_gui, w_w, f_w = logged_gui_with_files
-    url = BackendOrganizationFileLinkAddr.build(
-        f_w.core.device.organization_addr, "not_a_workspace", "/dir1"
-    )
+    org_addr = f_w.core.device.organization_addr
+    url = f"parsec://{org_addr.netloc}/{org_addr.organization_id}?action=file_link&workspace_id=not_a_uuid&path=HRSW4Y3SPFYHIZLEL5YGC6LMN5QWIPQs"
 
     monkeypatch.setattr(
         "parsec.core.gui.main_window.list_available_devices",
         lambda *args, **kwargs: [bob_available_device],
     )
 
-    await aqtbot.run(logged_gui.add_instance, str(url))
+    await aqtbot.run(logged_gui.add_instance, url)
 
     def _assert_dialogs():
         assert len(autoclose_dialog.dialogs) == 1
@@ -316,9 +308,7 @@ async def test_link_file_disconnected(
     bob_available_device,
 ):
     gui, w_w, f_w = logged_gui_with_files
-    url = BackendOrganizationFileLinkAddr.build(
-        f_w.core.device.organization_addr, f_w.workspace_fs.workspace_id, "/dir1"
-    )
+    addr = f_w.workspace_fs.generate_file_link("/dir1")
 
     monkeypatch.setattr(
         "parsec.core.gui.main_window.list_available_devices",
@@ -327,7 +317,7 @@ async def test_link_file_disconnected(
 
     # Log out and send link
     await gui.test_logout_and_switch_to_login_widget()
-    await aqtbot.run(gui.add_instance, str(url))
+    await aqtbot.run(gui.add_instance, addr.to_url())
 
     def _assert_dialogs():
         assert len(autoclose_dialog.dialogs) == 1
@@ -389,9 +379,7 @@ async def test_link_file_disconnected_cancel_login(
     bob_available_device,
 ):
     gui, w_w, f_w = logged_gui_with_files
-    url = BackendOrganizationFileLinkAddr.build(
-        f_w.core.device.organization_addr, f_w.workspace_fs.workspace_id, "/dir1"
-    )
+    url = f_w.workspace_fs.generate_file_link("/dir1")
 
     monkeypatch.setattr(
         "parsec.core.gui.main_window.list_available_devices",
@@ -694,7 +682,7 @@ async def test_link_file_unknown_org(
     )
 
     file_link = BackendOrganizationFileLinkAddr.build(
-        org_addr, EntryID.new(), FsPath("/doesntmattereither")
+        organization_addr=org_addr, workspace_id=EntryID.new(), encrypted_path=b"<whatever>"
     )
 
     gui = await gui_factory(core_config=core_config, start_arg=file_link.to_url())

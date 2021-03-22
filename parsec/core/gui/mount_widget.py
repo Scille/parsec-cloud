@@ -54,7 +54,7 @@ class MountWidget(QWidget, Ui_MountWidget):
 
         self.files_widget.show()
 
-    def show_workspaces_widget(self, user_info=None):
+    def show_workspaces_widget(self):
         self.folder_changed.emit(None, None)
         self.files_widget.hide()
         self.workspaces_widget.show()
