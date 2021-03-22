@@ -6,10 +6,15 @@ from urllib.parse import urlsplit, urlunsplit, parse_qs, quote_plus, unquote_plu
 from marshmallow import ValidationError
 
 from parsec.serde import fields
-from parsec.crypto import VerifyKey, export_root_verify_key, import_root_verify_key
+from parsec.crypto import (
+    VerifyKey,
+    export_root_verify_key,
+    import_root_verify_key,
+    binary_urlsafe_decode,
+    binary_urlsafe_encode,
+)
 from parsec.api.protocol import OrganizationID, InvitationType
 from parsec.api.data import EntryID
-from parsec.core.types.base import FsPath
 
 
 PARSEC_SCHEME = "parsec"
@@ -301,15 +306,19 @@ class BackendOrganizationFileLinkAddr(BackendActionAddr):
     (e.g. ``parsec://parsec.example.com/my_org?action=file_link&workspace_id=xx&path=yy``)
     """
 
-    __slots__ = ("_organization_id", "_workspace_id", "_path")
+    __slots__ = ("_organization_id", "_workspace_id", "_encrypted_path")
 
     def __init__(
-        self, organization_id: OrganizationID, workspace_id: EntryID, path: FsPath, **kwargs
+        self,
+        organization_id: OrganizationID,
+        workspace_id: EntryID,
+        encrypted_path: bytes,
+        **kwargs,
     ):
         super().__init__(**kwargs)
         self._organization_id = organization_id
         self._workspace_id = workspace_id
-        self._path = path
+        self._encrypted_path = encrypted_path
 
     @classmethod
     def _from_url_parse_path(cls, path):
@@ -337,7 +346,7 @@ class BackendOrganizationFileLinkAddr(BackendActionAddr):
         if len(value) != 1:
             raise ValueError("Missing mandatory `path` param")
         try:
-            kwargs["path"] = FsPath(value[0])
+            kwargs["encrypted_path"] = binary_urlsafe_decode(value[0])
         except ValueError as exc:
             raise ValueError("Invalid `path` param value") from exc
 
@@ -349,14 +358,17 @@ class BackendOrganizationFileLinkAddr(BackendActionAddr):
     def _to_url_get_params(self):
         params = [
             ("action", "file_link"),
-            ("workspace_id", str(self._workspace_id)),
-            ("path", str(self._path)),
+            ("workspace_id", self._workspace_id.hex),
+            ("path", binary_urlsafe_encode(self._encrypted_path)),
         ]
         return [*params, *super()._to_url_get_params()]
 
     @classmethod
     def build(
-        cls, organization_addr: BackendOrganizationAddr, workspace_id: EntryID, path: FsPath
+        cls,
+        organization_addr: BackendOrganizationAddr,
+        workspace_id: EntryID,
+        encrypted_path: bytes,
     ) -> "BackendOrganizationFileLinkAddr":
         return cls(
             hostname=organization_addr.hostname,
@@ -364,7 +376,7 @@ class BackendOrganizationFileLinkAddr(BackendActionAddr):
             use_ssl=organization_addr.use_ssl,
             organization_id=organization_addr.organization_id,
             workspace_id=workspace_id,
-            path=path,
+            encrypted_path=encrypted_path,
         )
 
     @property
@@ -376,8 +388,8 @@ class BackendOrganizationFileLinkAddr(BackendActionAddr):
         return self._workspace_id
 
     @property
-    def path(self) -> FsPath:
-        return self._path
+    def encrypted_path(self) -> bytes:
+        return self._encrypted_path
 
 
 class BackendOrganizationAddrField(fields.Field):

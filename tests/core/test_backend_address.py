@@ -22,7 +22,7 @@ DEFAULT_ARGS = {
     "DOMAIN": "parsec.cloud.com",
     "USER_ID": "John",
     "DEVICE_ID": "John%40Dev42",
-    "PATH": "%2Fdir%2Ffile",
+    "ENCRYPTED_PATH": "HRSW4Y3SPFYHIZLEL5YGC6LMN5QWIPQs",
     "WORKSPACE_ID": "2d4ded12-7406-4608-833b-7f57f01156e2",
     "INVITATION_TYPE": "claim_user",
 }
@@ -61,7 +61,7 @@ BackendOrganizationBootstrapAddrTestbed = AddrTestbed(
 BackendOrganizationFileLinkAddrTestbed = AddrTestbed(
     "org_file_link_addr",
     BackendOrganizationFileLinkAddr,
-    "parsec://{DOMAIN}/{ORG}?action=file_link&workspace_id={WORKSPACE_ID}&path={PATH}",
+    "parsec://{DOMAIN}/{ORG}?action=file_link&workspace_id={WORKSPACE_ID}&path={ENCRYPTED_PATH}",
 )
 BackendInvitationAddrTestbed = AddrTestbed(
     "org_invitation_addr",
@@ -218,11 +218,19 @@ def test_file_link_addr_invalid_workspace(addr_file_link_testbed, invalid_worksp
         addr_file_link_testbed.cls.from_url(url)
 
 
-@pytest.mark.parametrize("invalid_path", [None, "dir/path"])
+@pytest.mark.parametrize("invalid_path", [None, "__notbase32__"])
 def test_file_link_addr_invalid_path(addr_file_link_testbed, invalid_path):
-    url = addr_file_link_testbed.generate_url(PATH=invalid_path)
+    url = addr_file_link_testbed.generate_url(ENCRYPTED_PATH=invalid_path)
     with pytest.raises(ValueError):
         addr_file_link_testbed.cls.from_url(url)
+
+
+def test_file_link_addr_get_encrypted_path(addr_file_link_testbed):
+    serialized_encrypted_path = "HRSW4Y3SPFYHIZLEL5YGC6LMN5QWIPQs"
+    encrypted_path = b"<encrypted_payload>"
+    url = addr_file_link_testbed.generate_url(ENCRYPTED_PATH=serialized_encrypted_path)
+    addr = addr_file_link_testbed.cls.from_url(url)
+    assert addr.encrypted_path == encrypted_path
 
 
 @pytest.mark.parametrize("invalid_type", [None, "claim", "claim_foo"])
@@ -300,12 +308,12 @@ def test_build_addrs():
     organization_file_link_addr = BackendOrganizationFileLinkAddr.build(
         organization_addr=organization_addr,
         workspace_id=EntryID("2d4ded12-7406-4608-833b-7f57f01156e2"),
-        path="/foo/bar",
+        encrypted_path=b"<encrypted_payload>",
     )
     assert organization_file_link_addr.workspace_id == EntryID(
         "2d4ded12-7406-4608-833b-7f57f01156e2"
     )
-    assert organization_file_link_addr.path == "/foo/bar"
+    assert organization_file_link_addr.encrypted_path == b"<encrypted_payload>"
 
     invitation_addr = BackendInvitationAddr.build(
         backend_addr=backend_addr,
