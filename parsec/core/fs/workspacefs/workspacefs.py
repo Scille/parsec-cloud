@@ -6,6 +6,7 @@ from collections import defaultdict
 from typing import List, Dict, Tuple, AsyncIterator, cast, Pattern, Callable, Optional, Awaitable
 from pendulum import DateTime, now as pendulum_now
 
+from parsec.crypto import CryptoError
 from parsec.event_bus import EventBus
 from parsec.api.data import BaseManifest as BaseRemoteManifest
 from parsec.api.data import FileManifest as RemoteFileManifest
@@ -24,6 +25,7 @@ from parsec.core.types import (
     RemoteWorkspaceManifest,
     RemoteFolderishManifests,
     DEFAULT_BLOCK_SIZE,
+    BackendOrganizationFileLinkAddr,
 )
 from parsec.core.remote_devices_manager import RemoteDevicesManager
 from parsec.core.backend_connection import (
@@ -746,3 +748,27 @@ class WorkspaceFS:
             return result
 
         return await rec(self.workspace_id)
+
+    def generate_file_link(self, path: AnyPath) -> BackendOrganizationFileLinkAddr:
+        """
+        Raises: Nothing
+        """
+        workspace_entry = self.get_workspace_entry()
+        encrypted_path = workspace_entry.key.encrypt(str(FsPath(path)).encode("utf-8"))
+        return BackendOrganizationFileLinkAddr.build(
+            organization_addr=self.device.organization_addr,
+            workspace_id=workspace_entry.id,
+            encrypted_path=encrypted_path,
+        )
+
+    def decrypt_file_link_path(self, addr: BackendOrganizationFileLinkAddr) -> FsPath:
+        """
+        Raises: ValueError
+        """
+        workspace_entry = self.get_workspace_entry()
+        try:
+            raw_path = workspace_entry.key.decrypt(addr.encrypted_path)
+        except CryptoError:
+            raise ValueError("Cannot decrypt path")
+        # FsPath raises ValueError, decode() raises UnicodeDecodeError which is a subclass of ValueError
+        return FsPath(raw_path.decode("utf-8"))
