@@ -113,7 +113,7 @@ async def main():
             nursery.start_soon(_invite_1_claimer_wait_peer, transport)
             # nursery.start_soon(_api_ping, transport)
             nursery.start_soon(_websocket_ping, transport)
-            nursery.start_soon(invite_1_greeter_wait_peer, alice_cmds, invitation_addr._token)
+            nursery.start_soon(invite_1_greeter_wait_peer, alice_cmds, invitation_addr.token)
 
 
 if __name__ == "__main__":
