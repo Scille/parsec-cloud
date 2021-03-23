@@ -151,20 +151,19 @@ def generate_invite_email(
     reply_to: Optional[str],
     greeter_name: Optional[str],  # Noe for device invitation
     organization_id: OrganizationID,
-    invitation_url: str,
-    parsec_url: str,
+    invitation_addr: BackendInvitationAddr,
 ) -> Message:
     html = get_template("invitation_mail.html").render(
         greeter=greeter_name,
         organization_id=organization_id,
-        invitation_url=invitation_url,
-        parsec_url=parsec_url,
+        invitation_url=invitation_addr.to_http_redirection_url(),
+        parsec_url=invitation_addr.to_url(),
     )
     text = get_template("invitation_mail.txt").render(
         greeter=greeter_name,
         organization_id=organization_id,
-        invitation_url=invitation_url,
-        parsec_url=parsec_url,
+        invitation_url=invitation_addr.to_http_redirection_url(),
+        parsec_url=invitation_addr.to_url(),
     )
 
     # mail settings
@@ -278,21 +277,13 @@ class BaseInviteComponent:
     async def api_invite_new(self, client_ctx, msg):
         msg = invite_new_serializer.req_load(msg)
 
-        def _to_http_redirection_url(client_ctx, invitation):
+        def _to_invitation_addr(client_ctx, invitation):
             return BackendInvitationAddr.build(
                 backend_addr=self._config.backend_addr,
                 organization_id=client_ctx.organization_id,
                 invitation_type=invitation.TYPE,
                 token=invitation.token,
-            ).to_http_redirection_url()
-
-        def _to_url(client_ctx, invitation):
-            return BackendInvitationAddr.build(
-                backend_addr=self._config.backend_addr,
-                organization_id=client_ctx.organization_id,
-                invitation_type=invitation.TYPE,
-                token=invitation.token,
-            ).to_url()
+            )
 
         if msg["type"] == InvitationType.USER:
             if client_ctx.profile != UserProfile.ADMIN:
@@ -319,8 +310,7 @@ class BaseInviteComponent:
                     greeter_name=greeter_name,
                     reply_to=reply_to,
                     organization_id=client_ctx.organization_id,
-                    invitation_url=_to_http_redirection_url(client_ctx, invitation),
-                    parsec_url=_to_url(client_ctx, invitation),
+                    invitation_addr=_to_invitation_addr(client_ctx, invitation),
                 )
                 await send_email(
                     email_config=self._config.email_config,
@@ -343,8 +333,7 @@ class BaseInviteComponent:
                     greeter_name=None,
                     reply_to=None,
                     organization_id=client_ctx.organization_id,
-                    invitation_url=_to_http_redirection_url(client_ctx, invitation),
-                    parsec_url=_to_url(client_ctx, invitation),
+                    invitation_addr=_to_invitation_addr(client_ctx, invitation),
                 )
                 await send_email(
                     email_config=self._config.email_config,
