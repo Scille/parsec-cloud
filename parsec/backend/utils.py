@@ -32,15 +32,18 @@ def api(
     ),
 ):
     def wrapper(fn):
-        async def wrapped(self, client_ctx, *args, **kwargs):
-            if long_request:
+        if long_request:
+
+            @wraps(fn)
+            async def wrapped(self, client_ctx, *args, **kwargs):
                 with trio.move_on_after(PEER_EVENT_MAX_WAIT):
                     return await run_with_breathing_transport(
                         client_ctx.transport, fn, self, client_ctx, *args, **kwargs
                     )
                 return {"status": "timeout", "reason": "Timeout while waiting for new peer"}
-            else:
-                return await fn(self, client_ctx, *args, **kwargs)
+
+        else:
+            wrapped = fn
 
         assert not hasattr(wrapped, "_api_info")
         wrapped._api_info = {"cmd": cmd, "handshake_types": handshake_types}
