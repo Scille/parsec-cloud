@@ -1,3 +1,2 @@
-Remove `rkv` parameter from the file link url.
-This change comes with backward compatibility (old url works with new version of Parsec)
-but not forward compatibility (older versions of Parsec don't work with new url).
+Change the file link URL format so that file path is encrypted.
+This change breaks compatibility with previous file url format.
