@@ -4,6 +4,7 @@ import os
 from pathlib import Path
 import pytest
 from PyQt5 import QtCore, QtWidgets, QtGui
+from PyQt5.QtGui import QGuiApplication
 
 from parsec.core.types import WorkspaceRole, FsPath
 
@@ -621,9 +622,7 @@ async def test_import_file_permission_denied(
 
 @pytest.mark.gui
 @pytest.mark.trio
-async def test_open_file_failed(
-    monkeypatch, tmpdir, aqtbot, autoclose_dialog, files_widget_testbed
-):
+async def test_open_file_failed(monkeypatch, aqtbot, autoclose_dialog, files_widget_testbed):
     tb = files_widget_testbed
     f_w = files_widget_testbed.files_widget
 
@@ -666,3 +665,56 @@ async def test_open_file_failed(
         assert autoclose_dialog.dialogs == [("Error", _("TEXT_FILE_OPEN_MULTIPLE_ERROR"))]
 
     await aqtbot.wait_until(_open_multiple_files_error_shown)
+
+
+@pytest.mark.gui
+@pytest.mark.trio
+async def test_copy_file_link(aqtbot, autoclose_dialog, files_widget_testbed):
+    tb = files_widget_testbed
+    f_w = files_widget_testbed.files_widget
+
+    # Populate the workspace
+    await tb.workspace_fs.mkdir("/foo")
+    await tb.workspace_fs.touch("/foo/bar.txt")
+    await tb.check_files_view(path="/", expected_entries=["foo/"])
+
+    await tb.cd("foo")
+    await tb.apply_selection("bar.txt")
+
+    f_w.table_files.file_path_clicked.emit()
+
+    def _file_link_copied_dialog():
+        assert autoclose_dialog.dialogs == [("", _("TEXT_FILE_LINK_COPIED_TO_CLIPBOARD"))]
+        url = QGuiApplication.clipboard().text()
+        assert url.startswith("parsec://")
+
+    await aqtbot.wait_until(_file_link_copied_dialog)
+
+
+@pytest.mark.gui
+@pytest.mark.trio
+async def test_use_file_link(aqtbot, autoclose_dialog, files_widget_testbed):
+    tb = files_widget_testbed
+    f_w = files_widget_testbed.files_widget
+
+    # Populate the workspace
+    await tb.workspace_fs.mkdir("/foo")
+    await tb.workspace_fs.touch("/foo/bar.txt")
+    await tb.check_files_view(path="/", expected_entries=["foo/"])
+
+    # Create and use file link
+    url = f_w.workspace_fs.generate_file_link("/foo/bar.txt")
+    await aqtbot.run(tb.logged_gui.add_instance, str(url))
+
+    def _selection_on_file():
+        assert tb.pwd() == "/foo"
+        selected_files = f_w.table_files.selected_files()
+        assert len(selected_files) == 1
+        selected_files[0].name == "bar.txt"
+        # No new tab has been created
+        assert tb.logged_gui.tab_center.count() == 1
+
+    await aqtbot.wait_until(_selection_on_file)
+
+
+# Note: other file link tests are in test_main_window.py
