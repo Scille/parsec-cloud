@@ -686,4 +686,7 @@ async def test_claim_user_with_bad_start_arg(event_bus, core_config, gui_factory
 
     assert len(autoclose_dialog.dialogs) == 1
     assert autoclose_dialog.dialogs[0][0] == "Error"
-    assert autoclose_dialog.dialogs[0][1] == "The link is invalid."
+    assert (
+        autoclose_dialog.dialogs[0][1]
+        == "The link is invalid (expected format: parsec://host:port/organisation?action=action&..)"
+    )
