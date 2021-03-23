@@ -1,5 +1,6 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2016-2021 Scille SAS
 
+from parsec.api.data.manifest import WorkspaceEntry
 from typing import Optional
 from PyQt5.QtCore import pyqtSignal, QTimer
 from PyQt5.QtGui import QPixmap, QColor, QIcon
@@ -12,7 +13,7 @@ from parsec.api.protocol import (
     HandshakeOrganizationExpired,
 )
 from parsec.core.core_events import CoreEvent
-from parsec.core.logged_core import LoggedCore
+from parsec.core.logged_core import LoggedCore, OrganizationStats
 from parsec.core.types import UserInfo, BackendOrganizationFileLinkAddr
 from parsec.core.backend_connection import (
     BackendConnectionError,
@@ -38,7 +39,7 @@ from parsec.core.gui.ui.central_widget import Ui_CentralWidget
 from parsec.core.gui.trio_thread import JobResultError, ThreadSafeQtSignal, QtToTrioJob
 
 
-async def _do_get_organization_stats(core):
+async def _do_get_organization_stats(core: LoggedCore) -> OrganizationStats:
     try:
         return await core.get_organization_stats()
     except BackendNotAvailable as exc:
@@ -63,7 +64,7 @@ class GoToFileLinkPathDecryptionError(Exception):
     pass
 
 
-class CentralWidget(QWidget, Ui_CentralWidget):
+class CentralWidget(QWidget, Ui_CentralWidget):  # type: ignore[misc]
     NOTIFICATION_EVENTS = [
         CoreEvent.BACKEND_CONNECTION_CHANGED,
         CoreEvent.MOUNTPOINT_STOPPED,
@@ -89,7 +90,7 @@ class CentralWidget(QWidget, Ui_CentralWidget):
         event_bus: EventBus,
         systray_notification: pyqtSignal,
         file_link_addr: Optional[BackendOrganizationFileLinkAddr] = None,
-        **kwargs,
+        **kwargs: object,
     ):
         super().__init__(**kwargs)
 
@@ -204,7 +205,7 @@ class CentralWidget(QWidget, Ui_CentralWidget):
             self.icon_title3.hide()
             self.label_title3.setText("")
 
-    def handle_event(self, event: CoreEvent, **kwargs) -> None:
+    def handle_event(self, event: CoreEvent, **kwargs: object) -> None:
         if event == CoreEvent.BACKEND_CONNECTION_CHANGED:
             self.connection_state_changed.emit(kwargs["status"], kwargs["status_exc"])
         elif event == CoreEvent.MOUNTPOINT_STOPPED:
@@ -232,10 +233,10 @@ class CentralWidget(QWidget, Ui_CentralWidget):
                 ),
             )
         elif event == CoreEvent.SHARING_UPDATED:
-            new_entry = kwargs["new_entry"]
-            previous_entry = kwargs["previous_entry"]
-            new_role = getattr(new_entry, "role", None)
-            previous_role = getattr(previous_entry, "role", None)
+            new_entry: WorkspaceEntry = kwargs["new_entry"]  # type: ignore
+            previous_entry: Optional[WorkspaceEntry] = kwargs["previous_entry"]  # type: ignore
+            new_role = new_entry.role
+            previous_role = previous_entry.role if previous_entry is not None else None
             if new_role is not None and previous_role is None:
                 self.new_notification.emit(
                     "INFO", _("NOTIF_INFO_WORKSPACE_SHARED_{}").format(new_entry.name)
@@ -245,8 +246,9 @@ class CentralWidget(QWidget, Ui_CentralWidget):
                     "INFO", _("NOTIF_INFO_WORKSPACE_ROLE_UPDATED_{}").format(new_entry.name)
                 )
             elif new_role is None and previous_role is not None:
+                name = previous_entry.name  # type: ignore
                 self.new_notification.emit(
-                    "INFO", _("NOTIF_INFO_WORKSPACE_UNSHARED_{}").format(previous_entry.name)
+                    "INFO", _("NOTIF_INFO_WORKSPACE_UNSHARED_{}").format(name)
                 )
         elif event == CoreEvent.FS_ENTRY_FILE_UPDATE_CONFLICTED:
             self.new_notification.emit(
@@ -261,7 +263,7 @@ class CentralWidget(QWidget, Ui_CentralWidget):
             core=self.core,
         )
 
-    def _on_vlobs_updated_trio(self, *args, **kwargs) -> None:
+    def _on_vlobs_updated_trio(self, *args: object, **kwargs: object) -> None:
         self.vlobs_updated_qt.emit()
 
     def _on_vlobs_updated_qt(self) -> None:
@@ -293,6 +295,7 @@ class CentralWidget(QWidget, Ui_CentralWidget):
 
         elif status == BackendConnStatus.REFUSED:
             disconnected = True
+            assert isinstance(status_exc, Exception)
             cause = status_exc.__cause__
             if isinstance(cause, HandshakeAPIVersionError):
                 tooltip = _("TEXT_BACKEND_STATE_API_MISMATCH_versions").format(
@@ -313,6 +316,7 @@ class CentralWidget(QWidget, Ui_CentralWidget):
             notif = ("WARNING", tooltip)
 
         elif status == BackendConnStatus.CRASHED:
+            assert isinstance(status_exc, Exception)
             text = _("TEXT_BACKEND_STATE_DISCONNECTED")
             tooltip = _("TEXT_BACKEND_STATE_CRASHED_cause").format(cause=str(status_exc.__cause__))
             icon = QPixmap(":/icons/images/material/cloud_off.svg")
