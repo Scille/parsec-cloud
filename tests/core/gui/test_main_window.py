@@ -147,23 +147,9 @@ async def logged_gui_with_files(
 
 @pytest.mark.gui
 @pytest.mark.trio
-async def test_link_file(
-    aqtbot,
-    running_backend,
-    backend,
-    autoclose_dialog,
-    logged_gui_with_files,
-    bob,
-    monkeypatch,
-    bob_available_device,
-):
+async def test_link_file(aqtbot, logged_gui_with_files):
     logged_gui, w_w, f_w = logged_gui_with_files
     url = f_w.workspace_fs.generate_file_link(f_w.current_directory)
-
-    monkeypatch.setattr(
-        "parsec.core.gui.main_window.list_available_devices",
-        lambda *args, **kwargs: [bob_available_device],
-    )
 
     await aqtbot.run(logged_gui.add_instance, str(url))
 
@@ -181,25 +167,11 @@ async def test_link_file(
 
 @pytest.mark.gui
 @pytest.mark.trio
-async def test_link_file_unmounted(
-    aqtbot,
-    running_backend,
-    backend,
-    autoclose_dialog,
-    logged_gui_with_files,
-    bob,
-    monkeypatch,
-    bob_available_device,
-):
+async def test_link_file_unmounted(aqtbot, logged_gui_with_files):
     logged_gui, w_w, f_w = logged_gui_with_files
 
     core = logged_gui.test_get_core()
     url = f_w.workspace_fs.generate_file_link(f_w.current_directory)
-
-    monkeypatch.setattr(
-        "parsec.core.gui.main_window.list_available_devices",
-        lambda *args, **kwargs: [bob_available_device],
-    )
 
     await aqtbot.run(logged_gui.add_instance, str(url))
 
@@ -232,23 +204,9 @@ async def test_link_file_unmounted(
 
 @pytest.mark.gui
 @pytest.mark.trio
-async def test_link_file_invalid_path(
-    aqtbot,
-    running_backend,
-    backend,
-    autoclose_dialog,
-    logged_gui_with_files,
-    bob,
-    monkeypatch,
-    bob_available_device,
-):
+async def test_link_file_invalid_path(aqtbot, autoclose_dialog, logged_gui_with_files):
     logged_gui, w_w, f_w = logged_gui_with_files
     url = f_w.workspace_fs.generate_file_link("/unknown")
-
-    monkeypatch.setattr(
-        "parsec.core.gui.main_window.list_available_devices",
-        lambda *args, **kwargs: [bob_available_device],
-    )
 
     await aqtbot.run(logged_gui.add_instance, str(url))
 
@@ -264,17 +222,7 @@ async def test_link_file_invalid_path(
 @pytest.mark.gui
 @pytest.mark.trio
 @pytest.mark.parametrize("kind", ["bad_workspace_id", "legacy_url_format"])
-async def test_link_file_invalid_url(
-    aqtbot,
-    running_backend,
-    backend,
-    autoclose_dialog,
-    logged_gui_with_files,
-    bob,
-    monkeypatch,
-    bob_available_device,
-    kind,
-):
+async def test_link_file_invalid_url(aqtbot, autoclose_dialog, logged_gui_with_files, kind):
     logged_gui, w_w, f_w = logged_gui_with_files
     org_addr = f_w.core.device.organization_addr
     if kind == "bad_workspace_id":
@@ -283,11 +231,6 @@ async def test_link_file_invalid_url(
         url = f"parsec://{org_addr.netloc}/{org_addr.organization_id}?action=file_link&workspace_id=449977b2-889a-4a62-bc54-f89c26175e90&path=%2Fbar.txt&no_ssl=true&rvk=ZY3JDUOCOKTLCXWS6CJTAELDZSMZYFK5QLNJAVY6LFJV5IRJWAIAssss"
     else:
         assert False
-
-    monkeypatch.setattr(
-        "parsec.core.gui.main_window.list_available_devices",
-        lambda *args, **kwargs: [bob_available_device],
-    )
 
     await aqtbot.run(logged_gui.add_instance, url)
 
@@ -301,14 +244,7 @@ async def test_link_file_invalid_url(
 @pytest.mark.gui
 @pytest.mark.trio
 async def test_link_file_disconnected(
-    aqtbot,
-    running_backend,
-    backend,
-    autoclose_dialog,
-    logged_gui_with_files,
-    bob,
-    monkeypatch,
-    bob_available_device,
+    aqtbot, autoclose_dialog, logged_gui_with_files, bob, monkeypatch, bob_available_device
 ):
     gui, w_w, f_w = logged_gui_with_files
     addr = f_w.workspace_fs.generate_file_link("/dir1")
@@ -372,14 +308,7 @@ async def test_link_file_disconnected(
 @pytest.mark.gui
 @pytest.mark.trio
 async def test_link_file_disconnected_cancel_login(
-    aqtbot,
-    running_backend,
-    backend,
-    autoclose_dialog,
-    logged_gui_with_files,
-    bob,
-    monkeypatch,
-    bob_available_device,
+    aqtbot, autoclose_dialog, logged_gui_with_files, bob, monkeypatch, bob_available_device
 ):
     gui, w_w, f_w = logged_gui_with_files
     url = f_w.workspace_fs.generate_file_link("/dir1")
@@ -436,15 +365,7 @@ async def test_link_file_disconnected_cancel_login(
 @pytest.mark.gui
 @pytest.mark.trio
 async def test_link_organization(
-    aqtbot,
-    running_backend,
-    backend,
-    autoclose_dialog,
-    logged_gui,
-    bob,
-    monkeypatch,
-    catch_create_org_widget,
-    invitation_organization_link,
+    aqtbot, logged_gui, catch_create_org_widget, invitation_organization_link
 ):
     await aqtbot.run(logged_gui.add_instance, invitation_organization_link)
     co_w = await catch_create_org_widget()
@@ -455,15 +376,7 @@ async def test_link_organization(
 @pytest.mark.gui
 @pytest.mark.trio
 async def test_link_organization_disconnected(
-    aqtbot,
-    running_backend,
-    backend,
-    autoclose_dialog,
-    logged_gui,
-    bob,
-    monkeypatch,
-    catch_create_org_widget,
-    invitation_organization_link,
+    aqtbot, logged_gui, catch_create_org_widget, invitation_organization_link
 ):
     await logged_gui.test_logout_and_switch_to_login_widget()
     await aqtbot.run(logged_gui.add_instance, invitation_organization_link)
@@ -475,15 +388,7 @@ async def test_link_organization_disconnected(
 @pytest.mark.gui
 @pytest.mark.trio
 async def test_link_claim_device(
-    aqtbot,
-    running_backend,
-    backend,
-    autoclose_dialog,
-    logged_gui,
-    bob,
-    monkeypatch,
-    catch_claim_device_widget,
-    invitation_device_link,
+    aqtbot, logged_gui, catch_claim_device_widget, invitation_device_link
 ):
     await aqtbot.run(logged_gui.add_instance, invitation_device_link)
     cd_w = await catch_claim_device_widget()
@@ -494,15 +399,7 @@ async def test_link_claim_device(
 @pytest.mark.gui
 @pytest.mark.trio
 async def test_link_claim_device_disconnected(
-    aqtbot,
-    running_backend,
-    backend,
-    autoclose_dialog,
-    logged_gui,
-    bob,
-    monkeypatch,
-    catch_claim_device_widget,
-    invitation_device_link,
+    aqtbot, logged_gui, catch_claim_device_widget, invitation_device_link
 ):
     await logged_gui.test_logout_and_switch_to_login_widget()
     await aqtbot.run(logged_gui.add_instance, invitation_device_link)
@@ -513,17 +410,7 @@ async def test_link_claim_device_disconnected(
 
 @pytest.mark.gui
 @pytest.mark.trio
-async def test_link_claim_user(
-    aqtbot,
-    running_backend,
-    backend,
-    autoclose_dialog,
-    logged_gui,
-    bob,
-    monkeypatch,
-    catch_claim_user_widget,
-    invitation_user_link,
-):
+async def test_link_claim_user(aqtbot, logged_gui, catch_claim_user_widget, invitation_user_link):
     await aqtbot.run(logged_gui.add_instance, invitation_user_link)
     cd_w = await catch_claim_user_widget()
     assert cd_w
@@ -533,15 +420,7 @@ async def test_link_claim_user(
 @pytest.mark.gui
 @pytest.mark.trio
 async def test_link_claim_user_disconnected(
-    aqtbot,
-    running_backend,
-    backend,
-    autoclose_dialog,
-    logged_gui,
-    bob,
-    monkeypatch,
-    catch_claim_user_widget,
-    invitation_user_link,
+    aqtbot, logged_gui, catch_claim_user_widget, invitation_user_link
 ):
     await logged_gui.test_logout_and_switch_to_login_widget()
     await aqtbot.run(logged_gui.add_instance, invitation_user_link)
@@ -552,9 +431,7 @@ async def test_link_claim_user_disconnected(
 
 @pytest.mark.gui
 @pytest.mark.trio
-async def test_tab_login_logout(
-    aqtbot, running_backend, gui_factory, autoclose_dialog, core_config, alice, monkeypatch
-):
+async def test_tab_login_logout(gui_factory, core_config, alice, monkeypatch):
     password = "P@ssw0rd"
     save_device_with_password(core_config.config_dir, alice, password)
     gui = await gui_factory()
@@ -584,9 +461,7 @@ async def test_tab_login_logout(
 
 @pytest.mark.gui
 @pytest.mark.trio
-async def test_tab_login_logout_two_tabs(
-    aqtbot, running_backend, gui_factory, autoclose_dialog, core_config, alice, monkeypatch
-):
+async def test_tab_login_logout_two_tabs(aqtbot, gui_factory, core_config, alice, monkeypatch):
     password = "P@ssw0rd"
     save_device_with_password(core_config.config_dir, alice, password)
     gui = await gui_factory()
@@ -625,7 +500,7 @@ async def test_tab_login_logout_two_tabs(
 @pytest.mark.gui
 @pytest.mark.trio
 async def test_tab_login_logout_two_tabs_logged_in(
-    aqtbot, running_backend, gui_factory, autoclose_dialog, core_config, alice, bob, monkeypatch
+    aqtbot, gui_factory, core_config, alice, bob, monkeypatch
 ):
     password = "P@ssw0rd"
     save_device_with_password(core_config.config_dir, alice, password)
