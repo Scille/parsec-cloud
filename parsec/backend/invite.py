@@ -416,11 +416,11 @@ class BaseInviteComponent:
         msg = invite_1_claimer_wait_peer_serializer.req_load(msg)
         try:
             greeter_public_key = await self.conduit_exchange(
-                client_ctx.organization_id,
-                None,
-                client_ctx.invitation.token,
-                ConduitState.STATE_1_WAIT_PEERS,
-                msg["claimer_public_key"].encode(),
+                organization_id=client_ctx.organization_id,
+                greeter=None,
+                token=client_ctx.invitation.token,
+                state=ConduitState.STATE_1_WAIT_PEERS,
+                payload=msg["claimer_public_key"].encode(),
             )
 
         except InvitationAlreadyDeletedError as exc:
