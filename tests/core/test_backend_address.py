@@ -23,7 +23,7 @@ DEFAULT_ARGS = {
     "USER_ID": "John",
     "DEVICE_ID": "John%40Dev42",
     "ENCRYPTED_PATH": "HRSW4Y3SPFYHIZLEL5YGC6LMN5QWIPQs",
-    "WORKSPACE_ID": "2d4ded12-7406-4608-833b-7f57f01156e2",
+    "WORKSPACE_ID": "2d4ded1274064608833b7f57f01156e2",
     "INVITATION_TYPE": "claim_user",
 }
 
@@ -77,7 +77,14 @@ BackendInvitationAddrTestbed = AddrTestbed(
         BackendOrganizationBootstrapAddrTestbed,
         BackendOrganizationFileLinkAddrTestbed,
         BackendInvitationAddrTestbed,
-    ]
+    ],
+    ids=[
+        "backend_addr",
+        "backend_organization_addr",
+        "backend_organization_bootstrap_addr",
+        "backend_organization_file_link_addr",
+        "backend_invitation_addr",
+    ],
 )
 def addr_testbed(request):
     return request.param
@@ -89,7 +96,13 @@ def addr_testbed(request):
         BackendOrganizationBootstrapAddrTestbed,
         BackendOrganizationFileLinkAddrTestbed,
         BackendInvitationAddrTestbed,
-    ]
+    ],
+    ids=[
+        "backend_organization_addr",
+        "backend_organization_bootstrap_addr",
+        "backend_organization_file_link_addr",
+        "backend_invitation_addr",
+    ],
 )
 def addr_with_org_testbed(request):
     return request.param
@@ -99,7 +112,8 @@ def addr_with_org_testbed(request):
     params=[
         BackendOrganizationBootstrapAddrTestbed,
         # BackendInvitationAddrTestbed token format is different from apiv1's token
-    ]
+    ],
+    ids=["backend_organization_bootstrap_addr"],
 )
 def addr_with_token_testbed(request):
     return request.param
