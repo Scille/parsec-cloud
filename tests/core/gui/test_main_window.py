@@ -267,7 +267,8 @@ async def test_link_file_invalid_path(
 
 @pytest.mark.gui
 @pytest.mark.trio
-async def test_link_file_invalid_workspace(
+@pytest.mark.parametrize("kind", ["bad_workspace_id", "legacy_url_format"])
+async def test_link_file_invalid_url(
     aqtbot,
     running_backend,
     backend,
@@ -276,10 +277,16 @@ async def test_link_file_invalid_workspace(
     bob,
     monkeypatch,
     bob_available_device,
+    kind,
 ):
     logged_gui, w_w, f_w = logged_gui_with_files
     org_addr = f_w.core.device.organization_addr
-    url = f"parsec://{org_addr.netloc}/{org_addr.organization_id}?action=file_link&workspace_id=not_a_uuid&path=HRSW4Y3SPFYHIZLEL5YGC6LMN5QWIPQs"
+    if kind == "bad_workspace_id":
+        url = f"parsec://{org_addr.netloc}/{org_addr.organization_id}?action=file_link&workspace_id=not_a_uuid&path=HRSW4Y3SPFYHIZLEL5YGC6LMN5QWIPQs"
+    elif kind == "legacy_url_format":
+        url = f"parsec://{org_addr.netloc}/{org_addr.organization_id}?action=file_link&workspace_id=449977b2-889a-4a62-bc54-f89c26175e90&path=%2Fbar.txt&no_ssl=true&rvk=ZY3JDUOCOKTLCXWS6CJTAELDZSMZYFK5QLNJAVY6LFJV5IRJWAIAssss"
+    else:
+        assert False
 
     monkeypatch.setattr(
         "parsec.core.gui.main_window.list_available_devices",
