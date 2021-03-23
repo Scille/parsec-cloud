@@ -3,12 +3,12 @@
 from parsec.core.types.local_device import LocalDevice
 from parsec.core.core_events import CoreEvent
 import sys
-from typing import Callable, Optional
+from typing import Callable, Optional, Tuple
 from structlog import get_logger
 from distutils.version import LooseVersion
 
 from PyQt5.QtCore import QCoreApplication, pyqtSignal, Qt, QSize
-from PyQt5.QtGui import QColor, QIcon, QKeySequence
+from PyQt5.QtGui import QColor, QIcon, QKeySequence, QResizeEvent, QCloseEvent
 from PyQt5.QtWidgets import QMainWindow, QApplication, QMenu, QShortcut
 
 from parsec import __version__ as PARSEC_VERSION
@@ -56,7 +56,7 @@ from parsec.core.gui.central_widget import (
 logger = get_logger()
 
 
-class MainWindow(QMainWindow, Ui_MainWindow):
+class MainWindow(QMainWindow, Ui_MainWindow):  # type: ignore[misc]
     foreground_needed = pyqtSignal()
     new_instance_needed = pyqtSignal(object)
     systray_notification = pyqtSignal(str, str, int)
@@ -71,7 +71,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         event_bus: EventBus,
         config: CoreConfig,
         minimize_on_close: bool = False,
-        **kwargs,
+        **kwargs: object,
     ):
         super().__init__(**kwargs)
         self.setupUi(self)
@@ -172,7 +172,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         else:
             self.add_tab_button.setDisabled(True)
 
-    def resizeEvent(self, event) -> None:
+    def resizeEvent(self, event: QResizeEvent) -> None:
         super().resizeEvent(event)
         for win in self.children():
             if win.objectName() == "GreyedDialog":
@@ -276,7 +276,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
     def _on_create_org_clicked(
         self, addr: Optional[BackendOrganizationBootstrapAddr] = None
     ) -> None:
-        def _on_finished(ret):
+        def _on_finished(ret: Optional[Tuple[LocalDevice, str]]) -> None:
             if ret is None:
                 return
             self.reload_login_devices()
@@ -322,9 +322,9 @@ class MainWindow(QMainWindow, Ui_MainWindow):
             return
 
     def _on_claim_user_clicked(self, action_addr: BackendInvitationAddr) -> None:
-        widget = None
+        widget: ClaimDeviceWidget
 
-        def _on_finished():
+        def _on_finished() -> None:
             nonlocal widget
             if not widget.status:
                 return
@@ -341,9 +341,9 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         )
 
     def _on_claim_device_clicked(self, action_addr: BackendInvitationAddr) -> None:
-        widget = None
+        widget: ClaimDeviceWidget
 
-        def _on_finished():
+        def _on_finished() -> None:
             nonlocal widget
             if not widget.status:
                 return
@@ -361,7 +361,6 @@ class MainWindow(QMainWindow, Ui_MainWindow):
 
     def try_login(self, device: LocalDevice, password: str) -> None:
         idx = self._get_login_tab_index()
-        tab = None
         if idx == -1:
             tab = self.add_new_tab()
         else:
@@ -393,7 +392,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         self.add_instance(start_arg)
         self.show_top()
 
-    def on_config_updated(self, event: CoreEvent, **kwargs) -> None:
+    def on_config_updated(self, event: CoreEvent, **kwargs: object) -> None:
         self.config = self.config.evolve(**kwargs)
         save_config(self.config)
         telemetry.init(self.config)
@@ -696,7 +695,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
             self.tab_center.setTabsClosable(False)
         self._toggle_add_tab_button()
 
-    def closeEvent(self, event) -> None:
+    def closeEvent(self, event: QCloseEvent) -> None:
         if self.minimize_on_close and not self.need_close:
             self.hide()
             event.ignore()
