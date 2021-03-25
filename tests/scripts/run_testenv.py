@@ -36,6 +36,8 @@ DEFAULT_BACKEND_PORT = 6888
 DEFAULT_ADMINISTRATION_TOKEN = "V8VjaXrOz6gUC6ZEHPab0DSsjfq6DmcJ"
 DEFAULT_EMAIL_HOST = "MOCKED"
 DEFAULT_DEVICE_PASSWORD = "test"
+DEFAULT_DATABASE = "MOCKED"
+DEFAULT_BLOCKSTORE = "MOCKED"
 
 
 # Helpers
@@ -128,10 +130,10 @@ MimeType=x-scheme-handler/parsec;
     await trio.run_process("xdg-mime default parsec.desktop x-scheme-handler/parsec".split())
 
 
-async def restart_local_backend(administration_token, backend_port, email_host):
+async def restart_local_backend(administration_token, backend_port, email_host, db, blockstore):
     pattern = f"parsec.* backend.* run.* -P {backend_port}"
     command = (
-        f"{sys.executable} -Wignore -m parsec.cli backend run -b MOCKED --db MOCKED "
+        f"{sys.executable} -Wignore -m parsec.cli backend run -b {blockstore} --db {db} "
         f"--email-host={email_host} -P {backend_port} "
         f"--spontaneous-organization-bootstrap "
         f"--administration-token {administration_token} --backend-addr parsec://localhost:{backend_port}?no_ssl=true"
@@ -174,6 +176,8 @@ async def restart_local_backend(administration_token, backend_port, email_host):
 @click.command()
 @click.option("-B", "--backend-address", type=BackendAddr.from_url)
 @click.option("-p", "--backend-port", show_default=True, type=int, default=DEFAULT_BACKEND_PORT)
+@click.option("--db", show_default=True, type=str, default=DEFAULT_DATABASE)
+@click.option("-b", "--blockstore", show_default=True, type=str, default=DEFAULT_BLOCKSTORE)
 @click.option("-P", "--password", show_default=True, default=DEFAULT_DEVICE_PASSWORD)
 @click.option(
     "-T", "--administration-token", show_default=True, default=DEFAULT_ADMINISTRATION_TOKEN
@@ -230,6 +234,8 @@ def main(**kwargs):
 async def amain(
     backend_address,
     backend_port,
+    db,
+    blockstore,
     password,
     administration_token,
     force,
@@ -253,7 +259,7 @@ async def amain(
     # Start a local backend
     if backend_address is None:
         backend_address = await restart_local_backend(
-            administration_token, backend_port, email_host
+            administration_token, backend_port, email_host, db, blockstore
         )
         click.echo(
             f"""\
