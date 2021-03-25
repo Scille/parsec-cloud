@@ -179,14 +179,14 @@ class MemoryVlobComponent(BaseVlobComponent):
 
             # The vlob is not available yet for the current revision
             if (
-                encryption_revision is None
+                encryption_revision is not None
                 and encryption_revision == realm.status.encryption_revision
             ):
                 raise VlobInMaintenanceError(f"Realm `{realm_id}` is currently under maintenance")
 
             # The vlob is only available at the previous revision
             if (
-                encryption_revision is None
+                encryption_revision is not None
                 and encryption_revision != realm.status.encryption_revision - 1
             ):
                 raise VlobEncryptionRevisionError()
