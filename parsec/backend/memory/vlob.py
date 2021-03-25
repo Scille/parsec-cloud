@@ -167,32 +167,45 @@ class MemoryVlobComponent(BaseVlobComponent):
         if realm.roles.get(user_id) not in allowed_roles:
             raise VlobAccessError()
 
-        # Writing during maintenance is forbidden
-        if not expected_maintenance and realm.status.in_maintenance and not read_only:
-            raise VlobInMaintenanceError(f"Realm `{realm_id}` is currently under maintenance")
+        # Special case of reading while in reencryption
+        if not expected_maintenance and read_only and realm.status.in_reencryption:
+            # Starting a reencryption maintenance bumps the encryption revision.
+            # Hence if we are currently in reencryption maintenance, last encryption revision is not ready
+            # to be used (it will be once the reencryption is over !).
+            # So during this intermediary state, we allow read access to the previous encryption revision instead.
 
-        # A maintenance state was expected
-        if expected_maintenance and not realm.status.in_maintenance:
-            raise VlobNotInMaintenanceError(f"Realm `{realm_id}` not under maintenance")
+            # Note that `encryption_revision` might also be `None` in the case of `poll_changes` and `list_versions`
+            # requests, which should also be allowed during a reencryption
 
-        # Encryption revision checking
-        if encryption_revision is not None:
+            # The vlob is not available yet for the current revision
+            if (
+                encryption_revision is None
+                and encryption_revision == realm.status.encryption_revision
+            ):
+                raise VlobInMaintenanceError(f"Realm `{realm_id}` is currently under maintenance")
 
-            # Special case of reading while in maintenance
-            if read_only and realm.status.in_maintenance:
+            # The vlob is only available at the previous revision
+            if (
+                encryption_revision is None
+                and encryption_revision != realm.status.encryption_revision - 1
+            ):
+                raise VlobEncryptionRevisionError()
 
-                # The vlob is not available yet for the current revision
-                if encryption_revision == realm.status.encryption_revision:
-                    raise VlobInMaintenanceError(
-                        f"Realm `{realm_id}` is currently under maintenance"
-                    )
+        # In all other cases
+        else:
+            # Writing during maintenance is forbidden
+            if not expected_maintenance and realm.status.in_maintenance:
+                raise VlobInMaintenanceError(f"Realm `{realm_id}` is currently under maintenance")
 
-                # The vlob is only available at the previous revision
-                if encryption_revision != realm.status.encryption_revision - 1:
-                    raise VlobEncryptionRevisionError()
+            # A maintenance state was expected
+            if expected_maintenance and not realm.status.in_maintenance:
+                raise VlobNotInMaintenanceError(f"Realm `{realm_id}` not under maintenance")
 
             # Otherwise, simply check that the revisions match
-            elif encryption_revision != realm.status.encryption_revision:
+            if (
+                encryption_revision is not None
+                and encryption_revision != realm.status.encryption_revision
+            ):
                 raise VlobEncryptionRevisionError()
 
     def _check_realm_in_maintenance_access(

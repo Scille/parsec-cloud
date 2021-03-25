@@ -406,6 +406,7 @@ class RemoteLoader(UserRemoteLoader):
         version: Optional[int] = None,
         timestamp: Optional[DateTime] = None,
         expected_backend_timestamp: Optional[DateTime] = None,
+        workspace_entry: Optional[WorkspaceEntry] = None,
     ) -> BaseRemoteManifest:
         """
         Download a manifest.
@@ -425,30 +426,14 @@ class RemoteLoader(UserRemoteLoader):
             FSDeviceNotFoundError
             FSInvalidTrustchainError
         """
-        return await self._load_manifest(
-            entry_id,
-            version=version,
-            timestamp=timestamp,
-            expected_backend_timestamp=expected_backend_timestamp,
-        )
-
-    async def _load_manifest(
-        self,
-        entry_id: EntryID,
-        version: Optional[int] = None,
-        timestamp: Optional[DateTime] = None,
-        expected_backend_timestamp: Optional[DateTime] = None,
-        workspace_entry: Optional[WorkspaceEntry] = None,
-    ) -> BaseRemoteManifest:
-        if timestamp is not None and version is not None:
-            raise FSError(
-                f"Supplied both version {version} and timestamp `{timestamp}` for manifest "
-                f"`{entry_id}`"
-            )
-        # Download the vlob
+        assert (
+            timestamp is None or version is None
+        ), "Either timestamp or version argument should be provided"
+        # Get the current and requested workspace entry
+        # They're usually the same, except when loading from a workspace while it's in maintenance
         current_workspace_entry = self.get_workspace_entry()
-        if workspace_entry is None:
-            workspace_entry = self.get_workspace_entry()
+        workspace_entry = current_workspace_entry if workspace_entry is None else workspace_entry
+        # Download the vlob
         with translate_backend_cmds_errors():
             rep = await self.backend_cmds.vlob_read(
                 workspace_entry.encryption_revision,
@@ -456,13 +441,28 @@ class RemoteLoader(UserRemoteLoader):
                 version=version,
                 timestamp=timestamp if version is None else None,
             )
-        # Special case for loading manifest while in maintenance
+        # Special case for loading manifest while in maintenance.
+        # This is done to allow users to fetch data from a workspace while it's being reencrypted.
+        # If the workspace is in maintenance for another reason (such as garbage collection),
+        # the recursive call to load manifest will simply also fail with an FSWorkspaceInMaintenance.
         if (
             rep["status"] == "in_maintenance"
             and workspace_entry.encryption_revision == current_workspace_entry.encryption_revision
         ):
+            # Getting the last workspace entry with the previous encryption revision
+            # requires one or several calls to the backend, meaning the following exceptions might get raised:
+            # - FSError
+            # - FSBackendOfflineError
+            # - FSWorkspaceInMaintenance
+            # It is fine to let those exceptions bubble up as there all valid reasons for failing to load a manifest.
             previous_workspace_entry = await self.get_previous_workspace_entry()
-            return await self._load_manifest(
+            # Make sure we don't fall into an infinite loop because of some other bug
+            assert (
+                previous_workspace_entry.encryption_revision
+                < self.get_workspace_entry().encryption_revision
+            )
+            # Recursive call to `load_manifest`, requiring an older encryption revision than the current one
+            return await self.load_manifest(
                 entry_id,
                 version=version,
                 timestamp=timestamp,
@@ -678,6 +678,7 @@ class RemoteLoaderTimestamped(RemoteLoader):
         version: Optional[int] = None,
         timestamp: Optional[DateTime] = None,
         expected_backend_timestamp: Optional[DateTime] = None,
+        workspace_entry: Optional[WorkspaceEntry] = None,
     ) -> BaseRemoteManifest:
         """
         Allows to have manifests at all timestamps as it is needed by the versions method of either
@@ -702,6 +703,7 @@ class RemoteLoaderTimestamped(RemoteLoader):
             version=version,
             timestamp=timestamp,
             expected_backend_timestamp=expected_backend_timestamp,
+            workspace_entry=workspace_entry,
         )
 
     async def upload_manifest(self, entry_id: EntryID, manifest: BaseRemoteManifest) -> None:

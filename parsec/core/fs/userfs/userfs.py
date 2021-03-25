@@ -203,14 +203,14 @@ class UserFS:
             role=WorkspaceRole.OWNER,
         )
 
-        async def get_previous_entry() -> NoReturn:
+        async def _get_previous_entry() -> NoReturn:
             assert False, "This method should never called"
 
         self.remote_loader = UserRemoteLoader(
             self.device,
             self.device.user_manifest_id,
             lambda: wentry,
-            get_previous_entry,
+            _get_previous_entry,
             self.backend_cmds,
             self.remote_devices_manager,
         )
@@ -291,6 +291,12 @@ class UserFS:
         # Workspace entry can change at any time, so we provide a way for
         # WorkspaceFS to load it each time it is needed
         def get_workspace_entry() -> WorkspaceEntry:
+            """
+            Return the current workspace entry.
+
+            Raises:
+                FSWorkspaceNotFoundError
+            """
             user_manifest = self.get_user_manifest()
             workspace_entry = user_manifest.get_workspace_entry(workspace_id)
             if not workspace_entry:
@@ -298,6 +304,15 @@ class UserFS:
             return workspace_entry
 
         async def get_previous_workspace_entry() -> WorkspaceEntry:
+            """
+            Return the most recent workspace entry using the previous encryption revision.
+            This requires one or several calls to the backend.
+
+            Raises:
+                FSError
+                FSBackendOfflineError
+                FSWorkspaceInMaintenance
+            """
             workspace_entry = get_workspace_entry()
             return await self._get_previous_workspace_entry(workspace_entry)
 
@@ -1097,6 +1112,14 @@ class UserFS:
     async def _get_previous_workspace_entry(
         self, workspace_entry: WorkspaceEntry
     ) -> WorkspaceEntry:
+        """
+        Return the most recent workspace entry using the previous encryption revision.
+
+        Raises:
+            FSError
+            FSBackendOfflineError
+            FSWorkspaceInMaintenance
+        """
         # Must retrieve the previous encryption revision's key
         version_to_fetch = None
         current_encryption_revision = workspace_entry.encryption_revision

@@ -53,7 +53,8 @@ class MemoryBlockComponent(BaseBlockComponent):
         if realm.roles.get(user_id) not in allowed_roles:
             raise BlockAccessError()
 
-        if realm.status.in_maintenance and not read_only:
+        # Reading blocks is allowed while reencrypting the workspace
+        if realm.status.in_reencryption and not read_only:
             raise BlockInMaintenanceError(f"Realm `{realm_id}` is currently under maintenance")
 
     async def read(
