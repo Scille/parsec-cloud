@@ -14,7 +14,7 @@ from parsec.api.protocol import (
 from parsec.api.version import API_V1_VERSION, API_V2_VERSION
 
 
-PEER_EVENT_MAX_WAIT = 300  # 5mn
+PEER_EVENT_MAX_WAIT = 3  # 5mn
 ALLOWED_API_VERSIONS = {API_V1_VERSION.version, API_V2_VERSION.version}
 
 
@@ -40,7 +40,7 @@ def api(
                     return await run_with_breathing_transport(
                         client_ctx.transport, fn, self, client_ctx, *args, **kwargs
                     )
-                return {"status": "timeout", "reason": "Timeout while waiting for new peer"}
+                return {"status": "timeout", "reason": f"Timeout while {fn.__name__} is running"}
 
         else:
             wrapped = fn
