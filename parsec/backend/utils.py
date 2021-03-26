@@ -36,11 +36,9 @@ def api(
 
             @wraps(fn)
             async def wrapped(self, client_ctx, *args, **kwargs):
-                with trio.move_on_after(PEER_EVENT_MAX_WAIT):
-                    return await run_with_breathing_transport(
-                        client_ctx.transport, fn, self, client_ctx, *args, **kwargs
-                    )
-                return {"status": "timeout", "reason": f"Timeout while {fn.__name__} is running"}
+                return await run_with_breathing_transport(
+                    client_ctx.transport, fn, self, client_ctx, *args, **kwargs
+                )
 
         else:
             wrapped = fn
