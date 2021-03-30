@@ -1,6 +1,8 @@
 #! /bin/bash
 
 BASEDIR=$(dirname $(greadlink -f "$0") )
+# Note: greadlink requires coreutils to be installed
+
 cd $BASEDIR/../..
 python3 -m pip install 'pyinstaller==4.1'
 # Pyinstaller read the imports in the codebase recursively then copy the
