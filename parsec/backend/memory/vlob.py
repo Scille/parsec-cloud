@@ -160,10 +160,21 @@ class MemoryVlobComponent(BaseVlobComponent):
         except RealmNotFoundError:
             raise VlobNotFoundError(f"Realm `{realm_id}` doesn't exist")
 
-        # Role checking
-        allowed_roles = (RealmRole.OWNER, RealmRole.MANAGER, RealmRole.CONTRIBUTOR)
-        if read_only:
-            allowed_roles += (RealmRole.READER,)
+        # Only an owner can perform maintenance operation
+        if expected_maintenance:
+            allowed_roles = (RealmRole.OWNER,)
+        # All roles can do read-only operation
+        elif read_only:
+            allowed_roles = (
+                RealmRole.OWNER,
+                RealmRole.MANAGER,
+                RealmRole.CONTRIBUTOR,
+                RealmRole.READER,
+            )
+        # All roles except reader can do write operation
+        else:
+            allowed_roles = (RealmRole.OWNER, RealmRole.MANAGER, RealmRole.CONTRIBUTOR)
+        # Check the role
         if realm.roles.get(user_id) not in allowed_roles:
             raise VlobAccessError()
 
@@ -211,14 +222,8 @@ class MemoryVlobComponent(BaseVlobComponent):
     def _check_realm_in_maintenance_access(
         self, organization_id, realm_id, user_id, encryption_revision
     ):
-        can_do_maintenance_roles = (RealmRole.OWNER,)
         self._check_realm_access(
-            organization_id,
-            realm_id,
-            user_id,
-            encryption_revision,
-            can_do_maintenance_roles,
-            expected_maintenance=True,
+            organization_id, realm_id, user_id, encryption_revision, expected_maintenance=True
         )
 
     async def _update_changes(self, organization_id, author, realm_id, src_id, src_version=1):

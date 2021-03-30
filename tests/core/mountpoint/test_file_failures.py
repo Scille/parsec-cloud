@@ -1,13 +1,15 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
 
-from parsec.core.core_events import CoreEvent
 import os
 import sys
 import trio
 import pytest
 from pathlib import Path
+from contextlib import contextmanager
 
 from parsec.core.types import FsPath
+from parsec.core.core_events import CoreEvent
+from parsec.core.fs import FSBackendOfflineError
 from parsec.core.mountpoint.manager import mountpoint_manager_factory
 
 from tests.common import create_shared_workspace
@@ -93,11 +95,19 @@ async def test_remote_error_event(
 
         trio_w = trio.Path(mountpoint_manager.get_path_in_mountpoint(wid, FsPath("/")))
 
-        # Switch the mountpoint in maintenance...
-        await bob_user_fs.workspace_start_reencryption(wid)
-
         def _testbed():
-            # ...accessing workspace data in the backend should endup in remote error
+
+            # Simulate network failure
+            @contextmanager
+            def _offline(*args, **kwargs):
+                raise FSBackendOfflineError
+                yield
+
+            monkeypatch.setattr(
+                "parsec.core.fs.remote_loader.translate_backend_cmds_errors", _offline
+            )
+
+            # Accessing workspace data in the backend should end up in remote error
             with alice_user_fs.event_bus.listen() as spy:
                 fd = os.open(str(trio_w / "foo.txt"), os.O_RDONLY)
                 with pytest.raises(OSError):

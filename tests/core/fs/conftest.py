@@ -22,6 +22,10 @@ def transactions_factory(event_bus, remote_devices_manager_factory):
         def _get_workspace_entry():
             return workspace_entry
 
+        async def _get_previous_workspace_entry():
+            # The tests shouldn't need this yet
+            assert False
+
         workspace_entry = WorkspaceEntry.new("test")
         workspace_manifest = LocalWorkspaceManifest.new_placeholder(
             device.device_id, id=workspace_entry.id, now=datetime(2000, 1, 1)
@@ -34,6 +38,7 @@ def transactions_factory(event_bus, remote_devices_manager_factory):
             device,
             workspace_entry.id,
             _get_workspace_entry,
+            _get_previous_workspace_entry,
             backend_cmds,
             remote_devices_manager,
             local_storage,
