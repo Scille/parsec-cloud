@@ -22,6 +22,8 @@ from parsec.core.backend_connection import (
     BackendAuthenticatedConn,
     BackendConnectionError,
     BackendNotFoundError,
+    BackendInvitationNotFound,
+    BackendInvitationAlreadyUsed,
     BackendInvitationOnExistingMember,
     BackendConnStatus,
     BackendNotAvailable,
@@ -285,7 +287,11 @@ class LoggedCore:
             BackendConnectionError
         """
         rep = await self._backend_conn.cmds.invite_delete(token=token, reason=reason)
-        if rep["status"] != "ok":
+        if rep["status"] == "not_found":
+            raise BackendInvitationNotFound("Invitation not found")
+        elif rep["status"] == "already_deleted":
+            raise BackendInvitationAlreadyUsed("Invitation already used")
+        elif rep["status"] != "ok":
             raise BackendConnectionError(f"Backend error: {rep}")
 
     async def list_invitations(self) -> List[dict]:  # TODO: better return type
