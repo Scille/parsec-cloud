@@ -8,6 +8,7 @@ from parsec.core.backend_connection.exceptions import (
     BackendInvitationNotFound,
     BackendInvitationAlreadyUsed,
     BackendNotFoundError,
+    BackendInvitationOnExistingMember,
 )
 from parsec.core.backend_connection.authenticated import (
     BackendAuthenticatedCmds,
@@ -35,6 +36,7 @@ __all__ = (
     "BackendInvitationNotFound",
     "BackendInvitationAlreadyUsed",
     "BackendNotFoundError",
+    "BackendInvitationOnExistingMember",
     # Authenticated
     "BackendAuthenticatedCmds",
     "BackendConnStatus",

@@ -22,6 +22,7 @@ from parsec.core.backend_connection import (
     BackendAuthenticatedConn,
     BackendConnectionError,
     BackendNotFoundError,
+    BackendInvitationOnExistingMember,
     BackendConnStatus,
     BackendNotAvailable,
 )
@@ -30,7 +31,6 @@ from parsec.core.invite import (
     UserGreetInProgress1Ctx,
     DeviceGreetInitialCtx,
     DeviceGreetInProgress1Ctx,
-    InviteAlreadyMemberError,
 )
 from parsec.core.remote_devices_manager import (
     RemoteDevicesManager,
@@ -244,14 +244,13 @@ class LoggedCore:
     async def new_user_invitation(self, email: str, send_email: bool) -> BackendInvitationAddr:
         """
         Raises:
-            InviteAlreadyMemberError
             BackendConnectionError
         """
         rep = await self._backend_conn.cmds.invite_new(
             type=InvitationType.USER, claimer_email=email, send_email=send_email
         )
         if rep["status"] == "already_member":
-            raise InviteAlreadyMemberError()
+            raise BackendInvitationOnExistingMember("An user already exist with this email")
         elif rep["status"] != "ok":
             raise BackendConnectionError(f"Backend error: {rep}")
         return BackendInvitationAddr.build(
