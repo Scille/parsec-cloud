@@ -4,7 +4,7 @@ BASEDIR=$(dirname $(greadlink -f "$0") )
 # Note: greadlink requires coreutils to be installed
 
 cd $BASEDIR/../..
-python3 -m pip install 'pyinstaller==4.1'
+python3 -m pip install 'pyinstaller==4.2'
 # Pyinstaller read the imports in the codebase recursively then copy the
 # corresponding needed packages from the current virtualenv.
 python3 -m pip install .[core]
