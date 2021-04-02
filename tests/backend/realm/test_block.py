@@ -409,13 +409,12 @@ async def test_access_during_maintenance(backend, alice, alice_backend_sock, rea
         {alice.user_id: b"whatever"},
         pendulum.now(),
     )
-
     rep = await block_create(alice_backend_sock, BLOCK_ID, realm, BLOCK_DATA, check_rep=False)
     assert rep == {"status": "in_maintenance"}
 
     # Reading while in reencryption is OK
     rep = await block_read(alice_backend_sock, block)
-    assert rep == {"status": "ok", "block": b"Hodi ho !"}
+    assert rep["status"] == "ok"
 
 
 @given(block=st.binary(max_size=2 ** 8), nb_blockstores=st.integers(min_value=3, max_value=16))

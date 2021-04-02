@@ -5,6 +5,7 @@ import attr
 
 from parsec.api.protocol import DeviceID, OrganizationID
 from parsec.api.protocol import RealmRole
+from parsec.backend.utils import OperationKind
 from parsec.backend.realm import BaseRealmComponent, RealmNotFoundError
 from parsec.backend.blockstore import BaseBlockStoreComponent
 from parsec.backend.block import (
@@ -35,26 +36,29 @@ class MemoryBlockComponent(BaseBlockComponent):
         self._realm_component = realm
 
     def _check_realm_read_access(self, organization_id, realm_id, user_id):
-        self._check_realm_access(organization_id, realm_id, user_id, read_only=True)
+        self._check_realm_access(organization_id, realm_id, user_id, OperationKind.DATA_READ)
 
     def _check_realm_write_access(self, organization_id, realm_id, user_id):
-        self._check_realm_access(organization_id, realm_id, user_id, read_only=False)
+        self._check_realm_access(organization_id, realm_id, user_id, OperationKind.DATA_WRITE)
 
-    def _check_realm_access(self, organization_id, realm_id, user_id, read_only=False):
+    def _check_realm_access(self, organization_id, realm_id, user_id, operation_kind):
         try:
             realm = self._realm_component._get_realm(organization_id, realm_id)
         except RealmNotFoundError:
             raise BlockNotFoundError(f"Realm `{realm_id}` doesn't exist")
 
         allowed_roles = (RealmRole.OWNER, RealmRole.MANAGER, RealmRole.CONTRIBUTOR)
-        if read_only:
+        if operation_kind == operation_kind.DATA_READ:
             allowed_roles += (RealmRole.READER,)
 
         if realm.roles.get(user_id) not in allowed_roles:
             raise BlockAccessError()
 
-        # Reading blocks is allowed while reencrypting the workspace
-        if realm.status.in_reencryption and not read_only:
+        # Special case of reading while in reencryption is authorized
+        if realm.status.in_reencryption and operation_kind == OperationKind.DATA_READ:
+            pass
+        # Access is not allowed while in maintenance
+        elif realm.status.in_maintenance:
             raise BlockInMaintenanceError(f"Realm `{realm_id}` is currently under maintenance")
 
     async def read(

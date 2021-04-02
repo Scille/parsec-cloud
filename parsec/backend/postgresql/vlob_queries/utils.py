@@ -1,13 +1,12 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
 
-from parsec.api.protocol import MaintenanceType
+from parsec.backend.utils import OperationKind
 from parsec.backend.postgresql.utils import (
     Q,
     q_realm_internal_id,
     q_user_internal_id,
     q_organization_internal_id,
     STR_TO_REALM_ROLE,
-    STR_TO_REALM_MAINTENANCE_TYPE,
 )
 from parsec.backend.realm import RealmRole
 from parsec.backend.vlob import (
@@ -20,28 +19,15 @@ from parsec.backend.vlob import (
 from parsec.backend.postgresql.realm_queries.maintenance import get_realm_status, RealmNotFoundError
 
 
-async def _check_realm(
-    conn,
-    organization_id,
-    realm_id,
-    encryption_revision,
-    expected_maintenance=False,
-    read_only=False,
-):
+async def _check_realm(conn, organization_id, realm_id, encryption_revision, operation_kind):
     # Get the current realm status
     try:
-        rep = await get_realm_status(conn, organization_id, realm_id)
+        status = await get_realm_status(conn, organization_id, realm_id)
     except RealmNotFoundError as exc:
         raise VlobNotFoundError(*exc.args) from exc
-    status_maintenance_type = STR_TO_REALM_MAINTENANCE_TYPE.get(rep["maintenance_type"])
-    status_encryption_revision = rep["encryption_revision"]
 
     # Special case of reading while in reencryption
-    if (
-        not expected_maintenance
-        and read_only
-        and status_maintenance_type == MaintenanceType.REENCRYPTION
-    ):
+    if operation_kind == OperationKind.DATA_READ and status.in_reencryption:
         # Starting a reencryption maintenance bumps the encryption revision.
         # Hence if we are currently in reencryption maintenance, last encryption revision is not ready
         # to be used (it will be once the reencryption is over !).
@@ -51,13 +37,13 @@ async def _check_realm(
         # requests, which should also be allowed during a reencryption
 
         # The vlob is not available yet for the current revision
-        if encryption_revision is not None and encryption_revision == status_encryption_revision:
+        if encryption_revision is not None and encryption_revision == status.encryption_revision:
             raise VlobInMaintenanceError(f"Realm `{realm_id}` is currently under maintenance")
 
         # The vlob is only available at the previous revision
         if (
             encryption_revision is not None
-            and encryption_revision != status_encryption_revision - 1
+            and encryption_revision != status.encryption_revision - 1
         ):
             raise VlobEncryptionRevisionError()
 
@@ -65,15 +51,15 @@ async def _check_realm(
     else:
 
         # Access during maintenance is forbidden
-        if not expected_maintenance and status_maintenance_type is not None:
+        if operation_kind != OperationKind.MAINTENANCE and status.in_maintenance:
             raise VlobInMaintenanceError("Data realm is currently under maintenance")
 
         # A maintenance state was expected
-        if expected_maintenance and status_maintenance_type is None:
+        if operation_kind == OperationKind.MAINTENANCE and not status.in_maintenance:
             raise VlobNotInMaintenanceError(f"Realm `{realm_id}` not under maintenance")
 
         # Otherwise simply check that the revisions match
-        if encryption_revision is not None and status_encryption_revision != encryption_revision:
+        if encryption_revision is not None and status.encryption_revision != encryption_revision:
             raise VlobEncryptionRevisionError()
 
 
@@ -111,7 +97,9 @@ async def _check_realm_access(conn, organization_id, realm_id, author, allowed_r
 async def _check_realm_and_read_access(
     conn, organization_id, author, realm_id, encryption_revision
 ):
-    await _check_realm(conn, organization_id, realm_id, encryption_revision, read_only=True)
+    await _check_realm(
+        conn, organization_id, realm_id, encryption_revision, OperationKind.DATA_READ
+    )
     can_read_roles = (RealmRole.OWNER, RealmRole.MANAGER, RealmRole.CONTRIBUTOR, RealmRole.READER)
     await _check_realm_access(conn, organization_id, realm_id, author, can_read_roles)
 
@@ -119,7 +107,9 @@ async def _check_realm_and_read_access(
 async def _check_realm_and_write_access(
     conn, organization_id, author, realm_id, encryption_revision
 ):
-    await _check_realm(conn, organization_id, realm_id, encryption_revision, read_only=False)
+    await _check_realm(
+        conn, organization_id, realm_id, encryption_revision, OperationKind.DATA_WRITE
+    )
     can_write_roles = (RealmRole.OWNER, RealmRole.MANAGER, RealmRole.CONTRIBUTOR)
     await _check_realm_access(conn, organization_id, realm_id, author, can_write_roles)
 

@@ -1,6 +1,7 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
 
 import trio
+from enum import Enum
 from functools import wraps
 from typing import Union, List
 
@@ -14,6 +15,10 @@ from parsec.api.version import API_V1_VERSION, API_V2_VERSION
 
 
 ALLOWED_API_VERSIONS = {API_V1_VERSION.version, API_V2_VERSION.version}
+
+
+# Enumeration used to check access rights for a given kind of operation
+OperationKind = Enum("OperationKind", "DATA_READ DATA_WRITE MAINTENANCE")
 
 
 def api(

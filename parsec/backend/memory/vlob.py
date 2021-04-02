@@ -9,6 +9,7 @@ from collections import defaultdict
 from parsec.backend.backend_events import BackendEvent
 from parsec.api.protocol import DeviceID, OrganizationID
 from parsec.api.protocol import RealmRole
+from parsec.backend.utils import OperationKind
 from parsec.backend.realm import BaseRealmComponent, RealmNotFoundError
 from parsec.backend.vlob import (
     BaseVlobComponent,
@@ -138,22 +139,16 @@ class MemoryVlobComponent(BaseVlobComponent):
 
     def _check_realm_read_access(self, organization_id, realm_id, user_id, encryption_revision):
         self._check_realm_access(
-            organization_id, realm_id, user_id, encryption_revision, read_only=True
+            organization_id, realm_id, user_id, encryption_revision, OperationKind.DATA_READ
         )
 
     def _check_realm_write_access(self, organization_id, realm_id, user_id, encryption_revision):
         self._check_realm_access(
-            organization_id, realm_id, user_id, encryption_revision, read_only=False
+            organization_id, realm_id, user_id, encryption_revision, OperationKind.DATA_WRITE
         )
 
     def _check_realm_access(
-        self,
-        organization_id,
-        realm_id,
-        user_id,
-        encryption_revision,
-        read_only=False,
-        expected_maintenance=False,
+        self, organization_id, realm_id, user_id, encryption_revision, operation_kind
     ):
         try:
             realm = self._realm_component._get_realm(organization_id, realm_id)
@@ -161,10 +156,10 @@ class MemoryVlobComponent(BaseVlobComponent):
             raise VlobNotFoundError(f"Realm `{realm_id}` doesn't exist")
 
         # Only an owner can perform maintenance operation
-        if expected_maintenance:
+        if operation_kind == OperationKind.MAINTENANCE:
             allowed_roles = (RealmRole.OWNER,)
         # All roles can do read-only operation
-        elif read_only:
+        elif operation_kind == OperationKind.DATA_READ:
             allowed_roles = (
                 RealmRole.OWNER,
                 RealmRole.MANAGER,
@@ -179,7 +174,7 @@ class MemoryVlobComponent(BaseVlobComponent):
             raise VlobAccessError()
 
         # Special case of reading while in reencryption
-        if not expected_maintenance and read_only and realm.status.in_reencryption:
+        if operation_kind == OperationKind.DATA_READ and realm.status.in_reencryption:
             # Starting a reencryption maintenance bumps the encryption revision.
             # Hence if we are currently in reencryption maintenance, last encryption revision is not ready
             # to be used (it will be once the reencryption is over !).
@@ -205,11 +200,11 @@ class MemoryVlobComponent(BaseVlobComponent):
         # In all other cases
         else:
             # Writing during maintenance is forbidden
-            if not expected_maintenance and realm.status.in_maintenance:
+            if operation_kind != OperationKind.MAINTENANCE and realm.status.in_maintenance:
                 raise VlobInMaintenanceError(f"Realm `{realm_id}` is currently under maintenance")
 
             # A maintenance state was expected
-            if expected_maintenance and not realm.status.in_maintenance:
+            if operation_kind == OperationKind.MAINTENANCE and not realm.status.in_maintenance:
                 raise VlobNotInMaintenanceError(f"Realm `{realm_id}` not under maintenance")
 
             # Otherwise, simply check that the revisions match
@@ -223,7 +218,7 @@ class MemoryVlobComponent(BaseVlobComponent):
         self, organization_id, realm_id, user_id, encryption_revision
     ):
         self._check_realm_access(
-            organization_id, realm_id, user_id, encryption_revision, expected_maintenance=True
+            organization_id, realm_id, user_id, encryption_revision, OperationKind.MAINTENANCE
         )
 
     async def _update_changes(self, organization_id, author, realm_id, src_id, src_version=1):

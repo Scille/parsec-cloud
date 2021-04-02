@@ -204,7 +204,7 @@ class UserFS:
         )
 
         async def _get_previous_entry() -> NoReturn:
-            assert False, "This method should never called"
+            raise NotImplementedError
 
         self.remote_loader = UserRemoteLoader(
             self.device,
