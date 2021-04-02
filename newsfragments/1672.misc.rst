@@ -1,0 +1,1 @@
+Updated pyqt version to 5.15.2
