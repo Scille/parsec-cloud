@@ -139,7 +139,8 @@ async def query_read(
         if not data:
             raise VlobVersionError()
 
-    return list(data)
+    version, blob, author, created_on = data
+    return version, blob, author, created_on
 
 
 _q_poll_changes = Q(

@@ -70,14 +70,14 @@ class RealmMaintenanceError(RealmError):
 
 @attr.s(slots=True, frozen=True, auto_attribs=True)
 class RealmStatus:
-    maintenance_type: MaintenanceType
+    maintenance_type: Optional[MaintenanceType]
     maintenance_started_on: Optional[DeviceID]
     maintenance_started_by: Optional[pendulum.DateTime]
     encryption_revision: int
 
     @property
     def in_maintenance(self) -> bool:
-        return bool(self.maintenance_type)
+        return self.maintenance_type is not None
 
     @property
     def in_reencryption(self) -> bool:

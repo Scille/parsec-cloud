@@ -1,6 +1,6 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
 
-from parsec.api.protocol import OrganizationID, DeviceID, UserID
+from parsec.api.protocol import OrganizationID, DeviceID
 from parsec.backend.backend_events import BackendEvent
 from parsec.backend.user import (
     UserError,
@@ -128,7 +128,7 @@ async def query_create_device_invitation(
 
 @query(in_transaction=True)
 async def query_get_device_invitation(
-    conn, organization_id: OrganizationID, device_id: UserID
+    conn, organization_id: OrganizationID, device_id: DeviceID
 ) -> DeviceInvitation:
     return await _get_device_invitation(conn, organization_id, device_id)
 

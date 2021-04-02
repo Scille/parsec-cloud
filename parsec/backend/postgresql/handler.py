@@ -5,7 +5,7 @@ import attr
 import re
 from pendulum import now as pendulum_now
 import triopg
-from typing import List, Tuple, Optional
+from typing import List, Tuple, Optional, Iterable
 
 from triopg import UniqueViolationError, UndefinedTableError, PostgresError
 from uuid import uuid4
@@ -71,7 +71,7 @@ class MigrationResult:
 
 
 async def apply_migrations(
-    url: str, migrations: List[MigrationItem], dry_run: bool
+    url: str, migrations: Iterable[MigrationItem], dry_run: bool
 ) -> MigrationResult:
     """
     Returns: MigrationResult
@@ -81,7 +81,7 @@ async def apply_migrations(
 
 
 async def _apply_migrations(
-    conn, migrations: Tuple[MigrationItem], dry_run: bool
+    conn, migrations: Iterable[MigrationItem], dry_run: bool
 ) -> MigrationResult:
     error = None
     already_applied = []

@@ -128,7 +128,7 @@ class Trustchain:
 @attr.s(slots=True, auto_attribs=True)
 class GetUserAndDevicesResult:
     user_certificate: bytes
-    device_certificates: bytes
+    device_certificates: List[bytes]
     revoked_user_certificate: Optional[bytes]
     trustchain_user_certificates: List[bytes]
     trustchain_device_certificates: List[bytes]

@@ -5,7 +5,7 @@ from uuid import UUID
 from typing import Dict, List, Optional
 
 from parsec.api.protocol import DeviceID, UserID, OrganizationID, RealmRole
-from parsec.backend.realm import BaseRealmComponent, RealmStatus, RealmGrantedRole
+from parsec.backend.realm import BaseRealmComponent, RealmStatus, RealmGrantedRole, RealmStats
 from parsec.backend.postgresql.handler import PGHandler
 from parsec.backend.postgresql.realm_queries import (
     query_create,
@@ -38,7 +38,7 @@ class PGRealmComponent(BaseRealmComponent):
 
     async def get_stats(
         self, organization_id: OrganizationID, author: DeviceID, realm_id: UUID
-    ) -> RealmStatus:
+    ) -> RealmStats:
         async with self.dbh.pool.acquire() as conn:
             return await query_get_stats(conn, organization_id, author, realm_id)
 

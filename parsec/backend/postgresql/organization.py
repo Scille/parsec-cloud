@@ -184,7 +184,7 @@ class PGOrganizationComponent(BaseOrganizationComponent):
         )
 
     async def set_expiration_date(
-        self, id: OrganizationID, expiration_date: DateTime = None
+        self, id: OrganizationID, expiration_date: Optional[DateTime] = None
     ) -> None:
         async with self.dbh.pool.acquire() as conn, conn.transaction():
             result = await conn.execute(

@@ -67,6 +67,7 @@ SELECT
 async def query_create(
     conn, organization_id: OrganizationID, self_granted_role: RealmGrantedRole
 ) -> None:
+    assert self_granted_role.granted_by is not None
     assert self_granted_role.granted_by.user_id == self_granted_role.user_id
     assert self_granted_role.role == RealmRole.OWNER
 
