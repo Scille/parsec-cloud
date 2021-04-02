@@ -13,7 +13,7 @@ variables:
   # pyinstaller is picky on the version to use
   python.version_for_macos_packaging: '3.8'
   postgresql.version: '10'
-  winfsp.version: '1.7.20172'
+  winfsp.version: '1.8.20304'
   pytest.base_args: |
     --log-level=DEBUG \
     --durations=10 -v \
@@ -289,10 +289,10 @@ jobs:
       python.exe --version
       pip install pip --user --upgrade
       pip install -r pre-requirements.txt
-      choco install -y --limit-output winfsp --pre --version=$(winfsp.version)
+      choco install -y --limit-output winfsp --version=$(winfsp.version)
       # Install winfsp-test and put it in PATH
       mkdir winfsp-test
-      curl -L https://github.com/billziss-gh/winfsp/releases/download/v1.7/winfsp-tests-1.7.20172.zip -o winfsp-test/winfsp-tests.zip
+      curl -L https://github.com/billziss-gh/winfsp/releases/download/v1.8/winfsp-tests-1.8.20304.zip -o winfsp-test/winfsp-tests.zip
       unzip winfsp-test/winfsp-tests.zip -d winfsp-test
       echo "##vso[task.prependpath]$(Build.SourcesDirectory)\\winfsp-test"
     displayName: 'Bootstrap'
@@ -472,7 +472,7 @@ jobs:
     workingDirectory: $(Agent.TempDirectory)/winbuild
   - bash: |
       set -eux
-      curl -L https://github.com/billziss-gh/winfsp/releases/download/v1.7/winfsp-1.7.20172.msi -o winfsp-1.7.20172.msi
+      curl -L https://github.com/billziss-gh/winfsp/releases/download/v1.8/winfsp-1.8.20304.msi -o winfsp-1.8.20304.msi
       makensis.exe installer.nsi
       mkdir dist
       cp build/parsec*-setup.exe dist
