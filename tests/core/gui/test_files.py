@@ -5,7 +5,7 @@ from pathlib import Path
 import pytest
 from PyQt5 import QtCore, QtWidgets, QtGui
 
-from parsec.core.types import WorkspaceRole
+from parsec.core.types import WorkspaceRole, FsPath
 
 from parsec.core.gui.lang import translate as _
 from parsec.core.gui.file_items import FileType, TYPE_DATA_INDEX
@@ -60,7 +60,7 @@ async def files_widget_testbed(monkeypatch, aqtbot, logged_gui):
             if path.startswith("/"):
                 raise ValueError("Absolute path not supported")
             for name in path.split("/"):
-                if name == ".":
+                if name == "." or name == "":
                     continue
                 elif name == "..":
                     if not current_path_parts:
@@ -72,7 +72,9 @@ async def files_widget_testbed(monkeypatch, aqtbot, logged_gui):
                     current_path_parts.append(name)
 
                 def _path_reached():
-                    assert c_w.label_title3.text() == "/" + "/".join(current_path_parts)
+                    fs_path = FsPath("/" + "/".join(current_path_parts))
+                    assert f_w.current_directory == fs_path
+                    assert c_w.label_title3.text() == str(fs_path)
 
                 await aqtbot.wait_until(_path_reached)
 
