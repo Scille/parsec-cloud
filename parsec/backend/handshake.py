@@ -1,10 +1,12 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
 
-from typing import Tuple, Dict, Optional
 from pendulum import now as pendulum_now
+from typing import Tuple, Dict, Optional, cast, Type
 
 from parsec.api.transport import Transport
 from parsec.api.protocol import (
+    DeviceID,
+    OrganizationID,
     ProtocolError,
     InvitationType,
     HandshakeType,
@@ -87,8 +89,8 @@ async def _do_process_authenticated_answer(
     backend, transport: Transport, handshake: ServerHandshake, handshake_type
 ) -> Tuple[Optional[BaseClientContext], bytes, Optional[Dict]]:
 
-    organization_id = handshake.answer_data["organization_id"]
-    device_id = handshake.answer_data["device_id"]
+    organization_id = cast(OrganizationID, handshake.answer_data["organization_id"])
+    device_id = cast(DeviceID, handshake.answer_data["device_id"])
     expected_rvk = handshake.answer_data["rvk"]
 
     def _make_error_infos(reason):
@@ -136,8 +138,8 @@ async def _do_process_authenticated_answer(
 async def _process_invited_answer(
     backend, transport: Transport, handshake: ServerHandshake
 ) -> Tuple[Optional[BaseClientContext], bytes, Optional[Dict]]:
-    organization_id = handshake.answer_data["organization_id"]
-    invitation_type = handshake.answer_data["invitation_type"]
+    organization_id = cast(OrganizationID, handshake.answer_data["organization_id"])
+    invitation_type = cast(InvitationType, handshake.answer_data["invitation_type"])
     token = handshake.answer_data["token"]
 
     def _make_error_infos(reason):
@@ -180,6 +182,7 @@ async def _process_invited_answer(
         result_req = handshake.build_bad_identity_result_req()
         return None, result_req, _make_error_infos("Bad invitation")
 
+    expected_invitation_type: Type
     if handshake.answer_data["invitation_type"] == InvitationType.USER:
         expected_invitation_type = UserInvitation
     else:  # Device
@@ -206,7 +209,7 @@ async def _apiv1_process_authenticated_answer(
 async def _apiv1_process_anonymous_answer(
     backend, transport: Transport, handshake: ServerHandshake
 ) -> Tuple[Optional[BaseClientContext], bytes, Optional[Dict]]:
-    organization_id = handshake.answer_data["organization_id"]
+    organization_id = cast(OrganizationID, handshake.answer_data["organization_id"])
     expected_rvk = handshake.answer_data["rvk"]
 
     def _make_error_infos(reason):

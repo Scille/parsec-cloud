@@ -283,7 +283,8 @@ class MemoryVlobComponent(BaseVlobComponent):
                 else:
                     raise VlobVersionError()
         try:
-            return (version, *vlob.data[version - 1])
+            vlob_data, vlob_device_id, vlob_timestamp = vlob.data[version - 1]
+            return (version, vlob_data, vlob_device_id, vlob_timestamp)
 
         except IndexError:
             raise VlobVersionError()

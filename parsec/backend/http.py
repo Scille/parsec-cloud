@@ -111,23 +111,25 @@ class HTTPComponent:
             headers[b"content-Type"] = content_type.encode("ascii")
         return HTTPResponse.build(200, headers=headers, data=data)
 
-    ROUTE_MAPPING = [
-        (r"^/?$", _http_root),
-        (r"^/redirect(?P<path>.*)$", _http_redirect),
-        (r"^/static/(?P<path>.*)$", _http_static),
-    ]
-
     async def handle_request(self, req: HTTPRequest) -> HTTPResponse:
         if req.method != "GET":
             return HTTPResponse.build(405)
 
-        for path_pattern, route in self.ROUTE_MAPPING:
-            match = re.match(path_pattern, req.path)
-            if match:
-                route_args = match.groupdict()
-                break
-        else:
-            route = HTTPComponent._http_404
-            route_args = {}
+        # Root GET request
+        if re.match(r"^/?$", req.path):
+            return await self._http_root(req)
 
-        return await route(self, req, **route_args)
+        # Redirect GET request
+        match = re.match(r"^/redirect/(?P<path>.*)$", req.path)
+        if match:
+            path = match["path"]
+            return await self._http_redirect(req, path)
+
+        # Static GET request
+        match = re.match(r"^/static/(?P<path>.*)$", req.path)
+        if match:
+            path = match["path"]
+            return await self._http_static(req, path)
+
+        # Invalid GET request
+        return await self._http_404(req)

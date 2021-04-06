@@ -3,7 +3,7 @@
 import trio
 from enum import Enum
 from functools import wraps
-from typing import Union, List
+from typing import Union, Sequence
 
 from parsec.api.protocol import (
     ProtocolError,
@@ -24,7 +24,7 @@ OperationKind = Enum("OperationKind", "DATA_READ DATA_WRITE MAINTENANCE")
 def api(
     cmd: str,
     *,
-    handshake_types: List[Union[HandshakeType, APIV1_HandshakeType]] = (
+    handshake_types: Sequence[Union[HandshakeType, APIV1_HandshakeType]] = (
         HandshakeType.AUTHENTICATED,
         APIV1_HandshakeType.AUTHENTICATED,
     ),

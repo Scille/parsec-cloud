@@ -3,7 +3,7 @@
 import attr
 import pendulum
 from uuid import UUID
-from typing import List, Dict, Optional
+from typing import List, Dict, Optional, Tuple
 
 from parsec.api.data import UserProfile
 from parsec.api.protocol import DeviceID, UserID, OrganizationID
@@ -81,6 +81,7 @@ class MemoryRealmComponent(BaseRealmComponent):
     async def create(
         self, organization_id: OrganizationID, self_granted_role: RealmGrantedRole
     ) -> None:
+        assert self_granted_role.granted_by is not None
         assert self_granted_role.granted_by.user_id == self_granted_role.user_id
         assert self_granted_role.role == RealmRole.OWNER
 
@@ -114,22 +115,23 @@ class MemoryRealmComponent(BaseRealmComponent):
         realm = self._get_realm(organization_id, realm_id)
         if author.user_id not in realm.roles:
             raise RealmAccessError()
-        RealmStats.blocks_size = 0
-        RealmStats.vlobs_size = 0
+
+        realm_stats_blocks_size = 0
+        realm_stats_vlobs_size = 0
         for value in self._block_component._blockmetas.values():
             if value.realm_id == realm_id:
-                RealmStats.blocks_size += value.size
+                realm_stats_blocks_size += value.size
         for value in self._vlob_component._vlobs.values():
             if value.realm_id == realm_id:
-                RealmStats.vlobs_size += sum(len(blob) for (blob, _, _) in value.data)
+                realm_stats_vlobs_size += sum(len(blob) for (blob, _, _) in value.data)
 
-        return RealmStats
+        return RealmStats(blocks_size=realm_stats_blocks_size, vlobs_size=realm_stats_vlobs_size)
 
     async def get_current_roles(
         self, organization_id: OrganizationID, realm_id: UUID
     ) -> Dict[UserID, RealmRole]:
         realm = self._get_realm(organization_id, realm_id)
-        roles = {}
+        roles: Dict[UserID, RealmRole] = {}
         for x in realm.granted_roles:
             if x.role is None:
                 roles.pop(x.user_id, None)
@@ -158,6 +160,7 @@ class MemoryRealmComponent(BaseRealmComponent):
         new_role: RealmGrantedRole,
         recipient_message: Optional[bytes] = None,
     ) -> None:
+        assert new_role.granted_by is not None
         assert new_role.granted_by.user_id != new_role.user_id
 
         try:
@@ -181,6 +184,7 @@ class MemoryRealmComponent(BaseRealmComponent):
         owner_only = (RealmRole.OWNER,)
         owner_or_manager = (RealmRole.OWNER, RealmRole.MANAGER)
         existing_user_role = realm.roles.get(new_role.user_id)
+        needed_roles: Tuple[RealmRole, ...]
         if existing_user_role in owner_or_manager or new_role.role in owner_or_manager:
             needed_roles = owner_only
         else:

@@ -71,8 +71,8 @@ class RealmMaintenanceError(RealmError):
 @attr.s(slots=True, frozen=True, auto_attribs=True)
 class RealmStatus:
     maintenance_type: Optional[MaintenanceType]
-    maintenance_started_on: Optional[DeviceID]
-    maintenance_started_by: Optional[pendulum.DateTime]
+    maintenance_started_on: Optional[pendulum.DateTime]
+    maintenance_started_by: Optional[DeviceID]
     encryption_revision: int
 
     @property

@@ -1,10 +1,13 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
 
-import trio
 import math
+from typing import Tuple, Dict
+
+import trio
 from async_generator import asynccontextmanager
 
 from parsec.event_bus import EventBus
+from parsec.utils import open_service_nursery
 from parsec.backend.config import BackendConfig
 from parsec.backend.blockstore import blockstore_factory
 from parsec.backend.events import EventsComponent
@@ -22,7 +25,9 @@ from parsec.backend.http import HTTPComponent
 
 @asynccontextmanager
 async def components_factory(config: BackendConfig, event_bus: EventBus):
-    (send_events_channel, receive_events_channel) = trio.open_memory_channel(math.inf)
+    (send_events_channel, receive_events_channel) = trio.open_memory_channel[
+        Tuple[str, Dict[str, object]]
+    ](math.inf)
 
     async def _send_event(event: str, **kwargs):
         await send_events_channel.send((event, kwargs))
@@ -59,10 +64,12 @@ async def components_factory(config: BackendConfig, event_bus: EventBus):
         "block": block,
         "blockstore": blockstore,
     }
-    for component in (organization, user, invite, message, realm, vlob, ping, block):
-        component.register_components(**components)
+    for component in components.values():
+        method = getattr(component, "register_components", None)
+        if method is not None:
+            method(**components)
 
-    async with trio.open_service_nursery() as nursery:
+    async with open_service_nursery() as nursery:
         nursery.start_soon(_dispatch_event)
         try:
             yield components

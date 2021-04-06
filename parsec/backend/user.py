@@ -151,10 +151,6 @@ class UserInvitation:
     creator: DeviceID
     created_on: pendulum.DateTime = attr.ib(factory=pendulum.now)
 
-    @property
-    def organization_id(self) -> OrganizationID:
-        return self.user_id.organization_id
-
     def is_valid(self) -> bool:
         return (pendulum.now() - self.created_on).total_seconds() < INVITATION_VALIDITY
 
@@ -887,7 +883,7 @@ class BaseUserComponent:
         user_id: UserID,
         revoked_user_certificate: bytes,
         revoked_user_certifier: DeviceID,
-        revoked_on: pendulum.DateTime = None,
+        revoked_on: Optional[pendulum.DateTime] = None,
     ) -> None:
         """
         Raises:
@@ -942,7 +938,7 @@ class BaseUserComponent:
     async def find(
         self,
         organization_id: OrganizationID,
-        query: str = None,
+        query: Optional[str] = None,
         page: int = 1,
         per_page: int = 100,
         omit_revoked: bool = False,
@@ -952,7 +948,7 @@ class BaseUserComponent:
     async def find_humans(
         self,
         organization_id: OrganizationID,
-        query: str = None,
+        query: Optional[str] = None,
         page: int = 1,
         per_page: int = 100,
         omit_revoked: bool = False,

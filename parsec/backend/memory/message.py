@@ -38,6 +38,6 @@ class MemoryMessageComponent(BaseMessageComponent):
 
     async def get(
         self, organization_id: OrganizationID, recipient: UserID, offset: int
-    ) -> List[Tuple[DeviceID, bytes]]:
+    ) -> List[Tuple[DeviceID, DateTime, bytes]]:
         messages = self._organizations[organization_id]
         return messages[recipient][offset:]

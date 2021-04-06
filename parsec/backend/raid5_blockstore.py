@@ -1,12 +1,12 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
 
-import trio
 from uuid import UUID
 import struct
 from structlog import get_logger
 from sys import byteorder
 from typing import List, Optional
 
+from parsec.utils import open_service_nursery
 from parsec.api.protocol import OrganizationID
 from parsec.backend.blockstore import BaseBlockStoreComponent
 from parsec.backend.block import BlockAlreadyExistsError, BlockNotFoundError, BlockTimeoutError
@@ -40,7 +40,9 @@ def generate_checksum_chunk(chunks: List[bytes]) -> bytes:
     return _xor_buffers(*chunks)
 
 
-def rebuild_block_from_chunks(chunks: List[Optional[bytes]], checksum_chunk: bytes) -> bytes:
+def rebuild_block_from_chunks(
+    chunks: List[Optional[bytes]], checksum_chunk: Optional[bytes]
+) -> bytes:
     valid_chunks = [chunk for chunk in chunks if chunk is not None]
     assert len(chunks) - len(valid_chunks) <= 1  # Cannot correct more than 1 chunk
     try:
@@ -49,7 +51,8 @@ def rebuild_block_from_chunks(chunks: List[Optional[bytes]], checksum_chunk: byt
         chunks[missing_chunk_id] = _xor_buffers(*valid_chunks, checksum_chunk)
     except StopIteration:
         pass
-
+    # By now, all chunks are valid
+    chunks: List[bytes]
     payload = b"".join(chunks)
     block_len, = struct.unpack("!I", payload[:4])
     return payload[4 : 4 + block_len]
@@ -61,7 +64,7 @@ class RAID5BlockStoreComponent(BaseBlockStoreComponent):
 
     async def read(self, organization_id: OrganizationID, id: UUID) -> bytes:
         timeout_count = 0
-        fetch_results = [None] * len(self.blockstores)
+        fetch_results: List[Optional[bytes]] = [None] * len(self.blockstores)
 
         async def _partial_blockstore_read(nursery, blockstore_index):
             nonlocal timeout_count
@@ -88,7 +91,7 @@ class RAID5BlockStoreComponent(BaseBlockStoreComponent):
                     # Try to fetch the checksum to rebuild the current missing chunk...
                     nursery.start_soon(_partial_blockstore_read, nursery, len(self.blockstores) - 1)
 
-        async with trio.open_service_nursery() as nursery:
+        async with open_service_nursery() as nursery:
             # Don't fetch the checksum by default
             for blockstore_index in range(len(self.blockstores) - 1):
                 nursery.start_soon(_partial_blockstore_read, nursery, blockstore_index)
@@ -154,7 +157,7 @@ class RAID5BlockStoreComponent(BaseBlockStoreComponent):
                     # Early exit
                     nursery.cancel_scope.cancel()
 
-        async with trio.open_service_nursery() as nursery:
+        async with open_service_nursery() as nursery:
             for i, chunk_or_checksum in enumerate([*chunks, checksum_chunk]):
                 nursery.start_soon(_subblockstore_create, nursery, i, chunk_or_checksum)
 

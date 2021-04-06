@@ -117,7 +117,7 @@ class MemoryOrganizationComponent(BaseOrganizationComponent):
         )
 
     async def set_expiration_date(
-        self, id: OrganizationID, expiration_date: DateTime = None
+        self, id: OrganizationID, expiration_date: Optional[DateTime] = None
     ) -> None:
         try:
             self._organizations[id] = self._organizations[id].evolve(

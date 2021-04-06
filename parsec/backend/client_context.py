@@ -1,7 +1,9 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
 
+from uuid import UUID
+from typing import Optional, Union, Tuple, Set, Dict
+
 import trio
-from typing import Optional
 
 from parsec.crypto import VerifyKey, PublicKey
 from parsec.api.version import ApiVersion
@@ -14,6 +16,8 @@ from parsec.api.protocol import (
     DeviceName,
     DeviceID,
     HumanHandle,
+    HandshakeType,
+    APIV1_HandshakeType,
 )
 from parsec.backend.invite import Invitation
 
@@ -30,7 +34,7 @@ class BaseClientContext:
         return self.handshake.backend_api_version
 
     @property
-    def handshake_type(self) -> str:
+    def handshake_type(self) -> Union[HandshakeType, APIV1_HandshakeType]:
         return self.handshake.answer_type
 
 
@@ -70,8 +74,8 @@ class AuthenticatedClientContext(BaseClientContext):
         self.verify_key = verify_key
 
         self.event_bus_ctx = None  # Overwritten in BackendApp.handle_client
-        self.channels = trio.open_memory_channel(100)
-        self.realms = set()
+        self.channels = trio.open_memory_channel[Tuple[str, Dict[str, object]]](100)
+        self.realms: Set[UUID] = set()
         self.events_subscribed = False
 
         self.conn_id = self.transport.conn_id
@@ -99,7 +103,8 @@ class AuthenticatedClientContext(BaseClientContext):
 
     @property
     def device_display(self) -> str:
-        return self.device_label or str(self.device_id.device_name)
+        # The device label is not known here
+        return str(self.device_id.device_name)
 
     @property
     def send_events_channel(self):
