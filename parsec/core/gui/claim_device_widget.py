@@ -613,10 +613,12 @@ class ClaimDeviceWidget(QWidget, Ui_ClaimDeviceWidget):
         page.failed.connect(self._on_page_failed)
         self.main_layout.insertWidget(0, page)
 
-    def _on_finished(self, device, password):
-        save_device_with_password(self.config.config_dir, device, password)
+    def _on_finished(self, new_device, password):
+        save_device_with_password(
+            config_dir=self.config.config_dir, device=new_device, password=password
+        )
         show_info(self, _("TEXT_CLAIM_DEVICE_SUCCESSFUL"))
-        self.status = (device, password)
+        self.status = (new_device, password)
         self.dialog.accept()
 
     def _on_claimer_success(self, job):

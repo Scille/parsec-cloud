@@ -326,7 +326,9 @@ async def _claim_invitation(config, addr, password):
 
         device_display = click.style(new_device.slughash, fg="yellow")
         with operation(f"Saving device {device_display}"):
-            save_device_with_password(config.config_dir, new_device, password)
+            save_device_with_password(
+                config_dir=config.config_dir, device=new_device, password=password
+            )
 
 
 @click.command(short_help="claim invitation")

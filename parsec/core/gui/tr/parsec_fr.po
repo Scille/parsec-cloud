@@ -158,9 +158,6 @@ msgstr "Erreur interne. Veuillez redémarrer le processus."
 msgid "TEXT_CLAIM_DEVICE_TITLE"
 msgstr "Enregistrer un appareil"
 
-msgid "TEXT_CLAIM_USER_DEVICE_ALREADY_EXISTS"
-msgstr "Un appareil du même nom existe déjà."
-
 msgid "TEXT_CLAIM_USER_INVALID_CODE_CLICKED"
 msgstr ""
 "Vous n'avez pas cliqué sur le bon code. Vous devez redémarrer le "

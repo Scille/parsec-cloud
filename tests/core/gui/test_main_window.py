@@ -1,7 +1,5 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
 
-from pathlib import Path
-
 import pytest
 from PyQt5 import QtCore, QtWidgets
 
@@ -78,9 +76,9 @@ async def invitation_user_link(backend, bob):
 
 
 @pytest.fixture
-def bob_available_device(bob, tmpdir):
-    key_file_path = Path(tmpdir) / "bob_device.key"
-    _save_device_with_password(key_file=key_file_path, device=bob, password="")
+def bob_available_device(bob, tmp_path):
+    key_file_path = tmp_path / "bob_device.key"
+    _save_device_with_password(key_file=key_file_path, device=bob, password="", force=True)
     return AvailableDevice(
         key_file_path=key_file_path,
         organization_id=bob.organization_id,
