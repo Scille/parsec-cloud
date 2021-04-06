@@ -29,6 +29,9 @@ class BackendAddr:
         else:
             return False
 
+    def __hash__(self):
+        return hash(self.to_url())
+
     def __init__(self, hostname: str, port: Optional[int] = None, use_ssl=True):
         assert not hostname.startswith("parsec://")
         self._hostname = hostname
