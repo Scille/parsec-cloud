@@ -270,7 +270,7 @@ with open("HISTORY.rst") as history_file:
 
 requirements = [
     "attrs==19.2.0",
-    "click==7.0",
+    "click==7.1.2",
     "msgpack==0.6.0",
     "wsproto==1.0.0",
     "h11==0.12.0",
