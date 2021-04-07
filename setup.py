@@ -283,6 +283,7 @@ requirements = [
     "trio_typing==0.5.0",
     "async_generator>=1.9",
     'contextvars==2.1;python_version<"3.7"',
+    'typing-extensions;python_version<"3.8"',
     "sentry-sdk==0.14.3",
     "structlog==19.2.0",
     "importlib_resources==1.0.2",
