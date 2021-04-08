@@ -6,7 +6,6 @@ from typing import (
     Tuple,
     List,
     Dict,
-    Any,
     Iterator,
     ContextManager,
     TypeVar,
@@ -38,12 +37,12 @@ AllEvent = Union[MetaEvent, CustomEvent]
 
 
 class EventCallback(Protocol):
-    def __call__(self, event: Enum, **kwargs: Any) -> None:
+    def __call__(self, event: Enum, **kwargs: object) -> None:
         ...
 
 
 class EventFilterCallback(Protocol):
-    def __call__(self, event: Enum, **kwargs: Any) -> bool:
+    def __call__(self, event: Enum, **kwargs: object) -> bool:
         ...
 
 
@@ -51,9 +50,9 @@ class EventWaiter:
     def __init__(self, filter: Optional[EventFilterCallback]):
         self._filter = filter
         self._event_occured = trio.Event()
-        self._event_result: Optional[Tuple[Enum, Dict[str, Any]]] = None
+        self._event_result: Optional[Tuple[Enum, Dict[str, object]]] = None
 
-    def _cb(self, event: Enum, **kwargs: Any) -> None:
+    def _cb(self, event: Enum, **kwargs: object) -> None:
         if self._event_occured.is_set():
             return
         if self._filter and not self._filter(event, **kwargs):
@@ -61,9 +60,10 @@ class EventWaiter:
         self._event_result = (event, kwargs)
         self._event_occured.set()
 
-    async def wait(self) -> Tuple[Enum, Dict[str, Any]]:
+    async def wait(self) -> Tuple[Enum, Dict[str, object]]:
         await self._event_occured.wait()
-        return self._event_result  # type: ignore
+        assert self._event_result is not None
+        return self._event_result
 
     def clear(self) -> None:
         self._event_occured = trio.Event()
@@ -80,7 +80,7 @@ class EventBus:
     def connection_context(self) -> "EventBusConnectionContext":
         return EventBusConnectionContext(self)
 
-    def send(self, event: Enum, **kwargs: Any) -> None:
+    def send(self, event: Enum, **kwargs: object) -> None:
         # Do not log meta events (event.connected and event.disconnected)
         if "event_type" not in kwargs:
             logger.debug("Send event", event_type=event, **kwargs)
@@ -157,7 +157,7 @@ class EventBusConnectionContext:
             self.event_bus.disconnect(event, cb)
         self.to_disconnect.clear()
 
-    def send(self, event: Enum, **kwargs: Any) -> None:
+    def send(self, event: Enum, **kwargs: object) -> None:
         self.event_bus.send(event, **kwargs)
 
     def waiter_on(self, event: Enum) -> ContextManager[EventWaiter]:
