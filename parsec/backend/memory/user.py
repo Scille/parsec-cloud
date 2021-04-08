@@ -171,10 +171,10 @@ class MemoryUserComponent(BaseUserComponent):
         return GetUserAndDevicesResult(
             user_certificate=user.redacted_user_certificate if redacted else user.user_certificate,
             revoked_user_certificate=user.revoked_user_certificate,
-            device_certificates=[
+            device_certificates=tuple(
                 d.redacted_device_certificate if redacted else d.device_certificate
                 for d in user_devices.values()
-            ],
+            ),
             trustchain_device_certificates=trustchain.devices,
             trustchain_user_certificates=trustchain.users,
             trustchain_revoked_user_certificates=trustchain.revoked_users,

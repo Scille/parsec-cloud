@@ -167,8 +167,11 @@ class MemoryVlobComponent(BaseVlobComponent):
                 RealmRole.READER,
             )
         # All roles except reader can do write operation
-        else:
+        elif operation_kind == OperationKind.DATA_WRITE:
             allowed_roles = (RealmRole.OWNER, RealmRole.MANAGER, RealmRole.CONTRIBUTOR)
+        else:
+            assert False, f"Operation kind {operation_kind} not supported"
+
         # Check the role
         if realm.roles.get(user_id) not in allowed_roles:
             raise VlobAccessError()

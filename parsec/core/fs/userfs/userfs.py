@@ -15,7 +15,6 @@ from typing import (
     TypeVar,
     AsyncIterator,
     List,
-    NoReturn,
 )
 from structlog import get_logger
 
@@ -203,7 +202,7 @@ class UserFS:
             role=WorkspaceRole.OWNER,
         )
 
-        async def _get_previous_entry() -> NoReturn:
+        async def _get_previous_entry() -> WorkspaceEntry:
             raise NotImplementedError
 
         self.remote_loader = UserRemoteLoader(

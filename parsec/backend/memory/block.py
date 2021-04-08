@@ -47,9 +47,19 @@ class MemoryBlockComponent(BaseBlockComponent):
         except RealmNotFoundError:
             raise BlockNotFoundError(f"Realm `{realm_id}` doesn't exist")
 
-        allowed_roles = (RealmRole.OWNER, RealmRole.MANAGER, RealmRole.CONTRIBUTOR)
         if operation_kind == operation_kind.DATA_READ:
-            allowed_roles += (RealmRole.READER,)
+            allowed_roles = (
+                RealmRole.OWNER,
+                RealmRole.MANAGER,
+                RealmRole.CONTRIBUTOR,
+                RealmRole.READER,
+            )
+        elif operation_kind == operation_kind.DATA_WRITE:
+            allowed_roles = (RealmRole.OWNER, RealmRole.MANAGER, RealmRole.CONTRIBUTOR)
+        elif operation_kind == operation_kind.MAINTENANCE:
+            allowed_roles = (RealmRole.OWNER,)
+        else:
+            assert False, f"Operation kind {operation_kind} not supported"
 
         if realm.roles.get(user_id) not in allowed_roles:
             raise BlockAccessError()

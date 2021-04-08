@@ -128,11 +128,11 @@ class Trustchain:
 @attr.s(slots=True, auto_attribs=True)
 class GetUserAndDevicesResult:
     user_certificate: bytes
-    device_certificates: List[bytes]
+    device_certificates: Tuple[bytes, ...]
     revoked_user_certificate: Optional[bytes]
-    trustchain_user_certificates: List[bytes]
-    trustchain_device_certificates: List[bytes]
-    trustchain_revoked_user_certificates: List[bytes]
+    trustchain_user_certificates: Tuple[bytes, ...]
+    trustchain_device_certificates: Tuple[bytes, ...]
+    trustchain_revoked_user_certificates: Tuple[bytes, ...]
 
 
 @attr.s(slots=True, frozen=True, auto_attribs=True)

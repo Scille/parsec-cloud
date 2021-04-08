@@ -1,6 +1,7 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
 
 import math
+from enum import Enum
 from typing import Tuple, Dict
 
 import trio
@@ -25,11 +26,11 @@ from parsec.backend.http import HTTPComponent
 
 @asynccontextmanager
 async def components_factory(config: BackendConfig, event_bus: EventBus):
-    (send_events_channel, receive_events_channel) = trio.open_memory_channel[
-        Tuple[str, Dict[str, object]]
+    send_events_channel, receive_events_channel = trio.open_memory_channel[
+        Tuple[Enum, Dict[str, object]]
     ](math.inf)
 
-    async def _send_event(event: str, **kwargs):
+    async def _send_event(event: Enum, **kwargs):
         await send_events_channel.send((event, kwargs))
 
     async def _dispatch_event():

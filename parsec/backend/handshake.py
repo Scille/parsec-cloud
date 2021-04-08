@@ -127,6 +127,7 @@ async def _do_process_authenticated_answer(
         organization_id=organization_id,
         device_id=device_id,
         human_handle=user.human_handle,
+        device_label=device.device_label,
         profile=user.profile,
         public_key=user.public_key,
         verify_key=device.verify_key,
@@ -182,11 +183,11 @@ async def _process_invited_answer(
         result_req = handshake.build_bad_identity_result_req()
         return None, result_req, _make_error_infos("Bad invitation")
 
-    expected_invitation_type: Type
-    if handshake.answer_data["invitation_type"] == InvitationType.USER:
-        expected_invitation_type = UserInvitation
-    else:  # Device
-        expected_invitation_type = DeviceInvitation
+    expected_invitation_type: Type = (
+        UserInvitation
+        if handshake.answer_data["invitation_type"] == InvitationType.USER
+        else DeviceInvitation
+    )
     if not isinstance(invitation, expected_invitation_type):
         result_req = handshake.build_bad_identity_result_req()
         return None, result_req, _make_error_infos("Bad invitation")
