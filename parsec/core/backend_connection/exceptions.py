@@ -28,3 +28,8 @@ class BackendInvitationNotFound(BackendConnectionRefused):
 # TODO: hack needed by `LoggedCore.get_user_info`
 class BackendNotFoundError(BackendConnectionError):
     pass
+
+
+# TODO: hack needed by `LoggedCore.new_user_invitation`
+class BackendInvitationOnExistingMember(BackendConnectionError):
+    pass

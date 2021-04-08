@@ -12,8 +12,11 @@ from parsec.api.protocol import InvitationType
 from parsec.api.data import UserProfile
 from parsec.core.types import BackendInvitationAddr, UserInfo
 
-from parsec.core.invite import InviteAlreadyMemberError
-from parsec.core.backend_connection import BackendConnectionError, BackendNotAvailable
+from parsec.core.backend_connection import (
+    BackendConnectionError,
+    BackendNotAvailable,
+    BackendInvitationOnExistingMember,
+)
 
 from parsec.core.gui.trio_thread import JobResultError, ThreadSafeQtSignal, QtToTrioJob
 from parsec.core.gui.custom_dialogs import show_error, show_info, ask_question, get_text_input
@@ -200,10 +203,10 @@ async def _do_invite_user(core, email):
         return email
     except BackendNotAvailable as exc:
         raise JobResultError("offline") from exc
+    except BackendInvitationOnExistingMember as exc:
+        raise JobResultError("already_member") from exc
     except BackendConnectionError as exc:
         raise JobResultError("error") from exc
-    except InviteAlreadyMemberError as exc:
-        raise JobResultError("already_member") from exc
 
 
 class UsersWidget(QWidget, Ui_UsersWidget):
