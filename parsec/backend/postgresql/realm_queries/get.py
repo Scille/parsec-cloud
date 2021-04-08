@@ -135,19 +135,15 @@ async def query_get_stats(
 
     if not ret["has_access"]:
         raise RealmAccessError()
-    blocks_size_rep = await conn.fetch(
+    blocks_size_rep = await conn.fetchrow(
         *_q_get_blocks_size_from_realm(organization_id=organization_id, realm_id=realm_id)
     )
-    vlobs_size_rep = await conn.fetch(
+    vlobs_size_rep = await conn.fetchrow(
         *_q_get_vlob_size_from_realm(organization_id=organization_id, realm_id=realm_id)
     )
 
-    blocks_size = 0
-    vlobs_size = 0
-    if "sum" in blocks_size_rep[0] and blocks_size_rep[0]["sum"] is not None:
-        blocks_size = blocks_size_rep[0]["sum"]
-    if "sum" in vlobs_size_rep[0] and vlobs_size_rep[0]["sum"] is not None:
-        vlobs_size = vlobs_size_rep[0]["sum"]
+    blocks_size = blocks_size_rep["sum"] or 0
+    vlobs_size = vlobs_size_rep["sum"] or 0
 
     return RealmStats(blocks_size=blocks_size, vlobs_size=vlobs_size)
 

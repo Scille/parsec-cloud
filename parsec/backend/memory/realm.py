@@ -116,16 +116,16 @@ class MemoryRealmComponent(BaseRealmComponent):
         if author.user_id not in realm.roles:
             raise RealmAccessError()
 
-        realm_stats_blocks_size = 0
-        realm_stats_vlobs_size = 0
+        blocks_size = 0
+        vlobs_size = 0
         for value in self._block_component._blockmetas.values():
             if value.realm_id == realm_id:
-                realm_stats_blocks_size += value.size
+                blocks_size += value.size
         for value in self._vlob_component._vlobs.values():
             if value.realm_id == realm_id:
-                realm_stats_vlobs_size += sum(len(blob) for (blob, _, _) in value.data)
+                vlobs_size += sum(len(blob) for (blob, _, _) in value.data)
 
-        return RealmStats(blocks_size=realm_stats_blocks_size, vlobs_size=realm_stats_vlobs_size)
+        return RealmStats(blocks_size=blocks_size, vlobs_size=vlobs_size)
 
     async def get_current_roles(
         self, organization_id: OrganizationID, realm_id: UUID
