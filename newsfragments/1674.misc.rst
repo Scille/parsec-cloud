@@ -1,0 +1,1 @@
+Update CLI command `parsec core bootstrap_organization` to accept params for human/device label/email.

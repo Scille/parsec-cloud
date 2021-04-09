@@ -178,7 +178,6 @@ async def restart_local_backend(administration_token, backend_port, email_host):
 @click.option(
     "-T", "--administration-token", show_default=True, default=DEFAULT_ADMINISTRATION_TOKEN
 )
-@click.option("--force/--no-force", show_default=True, default=False)
 @click.option("--email-host", show_default=True, default=DEFAULT_EMAIL_HOST)
 @click.option("--add-random-users", show_default=True, default=0)
 @click.option("--add-random-devices", show_default=True, default=0)
@@ -232,7 +231,6 @@ async def amain(
     backend_port,
     password,
     administration_token,
-    force,
     email_host,
     add_random_users,
     add_random_devices,
@@ -277,7 +275,6 @@ Using existing backend: {backend_address}
         backend_address=backend_address,
         password=password,
         administration_token=administration_token,
-        force=force,
         additional_users_number=add_random_users,
         additional_devices_number=add_random_devices,
     )

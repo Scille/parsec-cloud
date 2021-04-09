@@ -9,7 +9,7 @@ from PyQt5.QtWidgets import QWidget
 
 from parsec.api.protocol import HumanHandle
 from parsec.core.types import LocalDevice
-from parsec.core.local_device import LocalDeviceAlreadyExistsError, save_device_with_password
+from parsec.core.local_device import save_device_with_password
 from parsec.core.invite import claimer_retrieve_info, InvitePeerResetError
 from parsec.core.backend_connection import (
     backend_invited_cmds_factory,
@@ -199,12 +199,10 @@ class ClaimUserFinalizeWidget(QWidget, Ui_ClaimUserFinalizeWidget):
 
     def _on_finalize_clicked(self):
         password = self.widget_password.password
-        try:
-            save_device_with_password(self.config.config_dir, self.new_device, password)
-            self.succeeded.emit(self.new_device, password)
-        except LocalDeviceAlreadyExistsError as exc:
-            show_error(self, _("TEXT_CLAIM_USER_DEVICE_ALREADY_EXISTS"), exception=exc)
-            self.failed.emit(None)
+        save_device_with_password(
+            config_dir=self.config.config_dir, device=self.new_device, password=password
+        )
+        self.succeeded.emit(self.new_device, password)
 
 
 class ClaimUserCodeExchangeWidget(QWidget, Ui_ClaimUserCodeExchangeWidget):
