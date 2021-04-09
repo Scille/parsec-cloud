@@ -2,7 +2,7 @@
 
 import re
 import attr
-from typing import List, Dict, Optional, Callable, Match, Awaitable
+from typing import List, Dict, Optional
 import mimetypes
 from urllib.parse import parse_qs, urlsplit, urlunsplit, urlencode
 import importlib_resources
@@ -68,27 +68,16 @@ class HTTPResponse:
 class HTTPComponent:
     def __init__(self, config: BackendConfig):
         self._config = config
-        # Map the path pattern to the corresponding handler
-        self.routes: Dict[str, Callable[[HTTPRequest, Match], Awaitable[HTTPResponse]]] = {
-            self._http_root_pattern: self._http_root,
-            self._http_redirect_pattern: self._http_redirect,
-            self._http_static_pattern: self._http_static,
-        }
 
     async def _http_404(self, req: HTTPRequest) -> HTTPResponse:
         data = get_template("404.html").render()
         return HTTPResponse.build_html(404, data=data)
 
-    _http_root_pattern = r"^/?$"
-
-    async def _http_root(self, req: HTTPRequest, match: Match) -> HTTPResponse:
+    async def _http_root(self, req: HTTPRequest) -> HTTPResponse:
         data = get_template("index.html").render()
         return HTTPResponse.build_html(200, data=data)
 
-    _http_redirect_pattern = r"^/redirect/(?P<path>.*)$"
-
-    async def _http_redirect(self, req: HTTPRequest, match: Match) -> HTTPResponse:
-        path = match["path"]
+    async def _http_redirect(self, req: HTTPRequest, *, path: str) -> HTTPResponse:
         if not self._config.backend_addr:
             return HTTPResponse.build(501, data=b"Url redirection is not available")
         backend_addr_split = urlsplit(self._config.backend_addr.to_url())
@@ -105,10 +94,7 @@ class HTTPComponent:
 
         return HTTPResponse.build(302, headers={b"location": location_url.encode("ascii")})
 
-    _http_static_pattern = r"^/static/(?P<path>.*)$"
-
-    async def _http_static(self, req: HTTPRequest, match: Match) -> HTTPResponse:
-        path = match["path"]
+    async def _http_static(self, req: HTTPRequest, *, path: str) -> HTTPResponse:
         if path == "__init__.py":
             return HTTPResponse.build(404)
 
@@ -125,18 +111,27 @@ class HTTPComponent:
             headers[b"content-Type"] = content_type.encode("ascii")
         return HTTPResponse.build(200, headers=headers, data=data)
 
+    ROUTE_MAPPING = [
+        (re.compile(r"^/?$"), _http_root),
+        (re.compile(r"^/redirect/(?P<path>.*)$"), _http_redirect),
+        (re.compile(r"^/static/(?P<path>.*)$"), _http_static),
+    ]
+
     async def handle_request(self, req: HTTPRequest) -> HTTPResponse:
         # Only GET requests are supported
         if req.method != "GET":
             return HTTPResponse.build(405)
 
         # Loop over patterns
-        for pattern, handler in self.routes.items():
+        for pattern, handler in self.ROUTE_MAPPING:
             # Match against the path
-            match = re.match(pattern, req.path)
+            match = pattern.match(req.path)
             # Run the request handler
             if match:
-                return await handler(req, match)
+                route_args = match.groupdict()
+                break
+        else:
+            handler = HTTPComponent._http_404
+            route_args = {}
 
-        # Invalid GET request
-        return await self._http_404(req)
+        return await handler(self, req, **route_args)  # type: ignore
