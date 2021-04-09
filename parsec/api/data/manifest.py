@@ -301,7 +301,8 @@ class UserManifest(BaseManifest):
     created: DateTime
     updated: DateTime
     last_processed_message: int
-    workspaces: Tuple[WorkspaceEntry] = attr.ib(converter=tuple)
+
+    workspaces: Tuple[WorkspaceEntry, ...] = attr.ib(converter=tuple)
 
     def get_workspace_entry(self, workspace_id: EntryID) -> Optional[WorkspaceEntry]:
         return next((w for w in self.workspaces if w.id == workspace_id), None)

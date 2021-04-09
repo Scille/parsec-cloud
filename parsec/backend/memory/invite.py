@@ -185,12 +185,14 @@ class MemoryInviteComponent(BaseInviteComponent):
                 and not user.is_revoked()
             ):
                 raise InvitationAlreadyMemberError()
-        return await self._new(
+        result = await self._new(
             organization_id=organization_id,
             greeter_user_id=greeter_user_id,
             claimer_email=claimer_email,
             created_on=created_on,
         )
+        assert isinstance(result, UserInvitation)
+        return result
 
     async def new_for_device(
         self,
@@ -198,9 +200,11 @@ class MemoryInviteComponent(BaseInviteComponent):
         greeter_user_id: UserID,
         created_on: Optional[DateTime] = None,
     ) -> DeviceInvitation:
-        return await self._new(
+        result = await self._new(
             organization_id=organization_id, greeter_user_id=greeter_user_id, created_on=created_on
         )
+        assert isinstance(result, DeviceInvitation)
+        return result
 
     async def _new(
         self,

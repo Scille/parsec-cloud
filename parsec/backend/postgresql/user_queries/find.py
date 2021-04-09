@@ -183,6 +183,7 @@ async def query_retrieve_active_human_by_email(
     )
     if result:
         return UserID(result["user_id"])
+    return None
 
 
 @query()

@@ -1,6 +1,5 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
 
-from parsec.core.core_events import CoreEvent
 import os
 import sys
 import trio
@@ -8,6 +7,7 @@ import pytest
 from pathlib import Path
 
 from parsec.core.types import FsPath
+from parsec.core.core_events import CoreEvent
 from parsec.core.mountpoint.manager import mountpoint_manager_factory
 
 from tests.common import create_shared_workspace
@@ -93,11 +93,10 @@ async def test_remote_error_event(
 
         trio_w = trio.Path(mountpoint_manager.get_path_in_mountpoint(wid, FsPath("/")))
 
-        # Switch the mountpoint in maintenance...
-        await bob_user_fs.workspace_start_reencryption(wid)
+        # Offline test
 
-        def _testbed():
-            # ...accessing workspace data in the backend should endup in remote error
+        def _testbed_offline():
+            # Accessing workspace data in the backend should end up in remote error
             with alice_user_fs.event_bus.listen() as spy:
                 fd = os.open(str(trio_w / "foo.txt"), os.O_RDONLY)
                 with pytest.raises(OSError):
@@ -110,6 +109,12 @@ async def test_remote_error_event(
             assert os.listdir(str(trio_w)) == ["bar.txt", "foo.txt"]
             assert CoreEvent.MOUNTPOINT_REMOTE_ERROR not in [e.event for e in spy.events]
 
+        with running_backend.offline():
+            await trio.to_thread.run_sync(_testbed_offline)
+
+        # Online test
+
+        def _testbed_online():
             # Finally test unhandled error
             def _crash(*args, **kwargs):
                 raise RuntimeError("D'Oh !")
@@ -123,4 +128,4 @@ async def test_remote_error_event(
                     os.mkdir(str(trio_w / "dummy"))
             spy.assert_event_occured(CoreEvent.MOUNTPOINT_UNHANDLED_ERROR)
 
-        await trio.to_thread.run_sync(_testbed)
+        await trio.to_thread.run_sync(_testbed_online)

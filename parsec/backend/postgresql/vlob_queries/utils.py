@@ -1,5 +1,6 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
 
+from parsec.backend.utils import OperationKind
 from parsec.backend.postgresql.utils import (
     Q,
     q_realm_internal_id,
@@ -18,21 +19,48 @@ from parsec.backend.vlob import (
 from parsec.backend.postgresql.realm_queries.maintenance import get_realm_status, RealmNotFoundError
 
 
-async def _check_realm(
-    conn, organization_id, realm_id, encryption_revision, expected_maintenance=False
-):
+async def _check_realm(conn, organization_id, realm_id, encryption_revision, operation_kind):
+    # Get the current realm status
     try:
-        rep = await get_realm_status(conn, organization_id, realm_id)
+        status = await get_realm_status(conn, organization_id, realm_id)
     except RealmNotFoundError as exc:
         raise VlobNotFoundError(*exc.args) from exc
-    if expected_maintenance is False:
-        if rep["maintenance_type"]:
+
+    # Special case of reading while in reencryption
+    if operation_kind == OperationKind.DATA_READ and status.in_reencryption:
+        # Starting a reencryption maintenance bumps the encryption revision.
+        # Hence if we are currently in reencryption maintenance, last encryption revision is not ready
+        # to be used (it will be once the reencryption is over !).
+        # So during this intermediary state, we allow read access to the previous encryption revision instead.
+
+        # Note that `encryption_revision` might also be `None` in the case of `poll_changes` and `list_versions`
+        # requests, which should also be allowed during a reencryption
+
+        # The vlob is not available yet for the current revision
+        if encryption_revision is not None and encryption_revision == status.encryption_revision:
+            raise VlobInMaintenanceError(f"Realm `{realm_id}` is currently under maintenance")
+
+        # The vlob is only available at the previous revision
+        if (
+            encryption_revision is not None
+            and encryption_revision != status.encryption_revision - 1
+        ):
+            raise VlobEncryptionRevisionError()
+
+    # In all other cases
+    else:
+
+        # Access during maintenance is forbidden
+        if operation_kind != OperationKind.MAINTENANCE and status.in_maintenance:
             raise VlobInMaintenanceError("Data realm is currently under maintenance")
-    elif expected_maintenance is True:
-        if not rep["maintenance_type"]:
+
+        # A maintenance state was expected
+        if operation_kind == OperationKind.MAINTENANCE and not status.in_maintenance:
             raise VlobNotInMaintenanceError(f"Realm `{realm_id}` not under maintenance")
-    if encryption_revision is not None and rep["encryption_revision"] != encryption_revision:
-        raise VlobEncryptionRevisionError()
+
+        # Otherwise simply check that the revisions match
+        if encryption_revision is not None and status.encryption_revision != encryption_revision:
+            raise VlobEncryptionRevisionError()
 
 
 _q_check_realm_access = Q(
@@ -66,10 +94,22 @@ async def _check_realm_access(conn, organization_id, realm_id, author, allowed_r
         raise VlobAccessError()
 
 
+async def _check_realm_and_read_access(
+    conn, organization_id, author, realm_id, encryption_revision
+):
+    await _check_realm(
+        conn, organization_id, realm_id, encryption_revision, OperationKind.DATA_READ
+    )
+    can_read_roles = (RealmRole.OWNER, RealmRole.MANAGER, RealmRole.CONTRIBUTOR, RealmRole.READER)
+    await _check_realm_access(conn, organization_id, realm_id, author, can_read_roles)
+
+
 async def _check_realm_and_write_access(
     conn, organization_id, author, realm_id, encryption_revision
 ):
-    await _check_realm(conn, organization_id, realm_id, encryption_revision)
+    await _check_realm(
+        conn, organization_id, realm_id, encryption_revision, OperationKind.DATA_WRITE
+    )
     can_write_roles = (RealmRole.OWNER, RealmRole.MANAGER, RealmRole.CONTRIBUTOR)
     await _check_realm_access(conn, organization_id, realm_id, author, can_write_roles)
 

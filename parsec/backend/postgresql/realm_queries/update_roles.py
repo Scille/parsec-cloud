@@ -1,6 +1,6 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
 
-from typing import Optional
+from typing import Optional, Tuple
 
 from parsec.backend.backend_events import BackendEvent
 from parsec.api.data import UserProfile
@@ -85,6 +85,7 @@ async def query_update_roles(
     new_role: RealmGrantedRole,
     recipient_message: Optional[bytes],
 ) -> None:
+    assert new_role.granted_by is not None
     if new_role.granted_by.user_id == new_role.user_id:
         raise RealmAccessError("Cannot modify our own role")
 
@@ -124,6 +125,8 @@ async def query_update_roles(
     existing_user_role = STR_TO_REALM_ROLE.get(existing_user_role)
     owner_only = (RealmRole.OWNER,)
     owner_or_manager = (RealmRole.OWNER, RealmRole.MANAGER)
+
+    needed_roles: Tuple[RealmRole, ...]
     if existing_user_role in owner_or_manager or new_role.role in owner_or_manager:
         needed_roles = owner_only
     else:

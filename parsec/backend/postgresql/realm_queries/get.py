@@ -2,7 +2,7 @@
 
 import pendulum
 from uuid import UUID
-from typing import Dict, List
+from typing import Dict, List, Optional
 
 from parsec.api.protocol import DeviceID, UserID, OrganizationID, RealmRole
 from parsec.backend.realm import RealmStatus, RealmAccessError, RealmNotFoundError
@@ -135,20 +135,17 @@ async def query_get_stats(
 
     if not ret["has_access"]:
         raise RealmAccessError()
-    blocks_size = await conn.fetch(
+    blocks_size_rep = await conn.fetchrow(
         *_q_get_blocks_size_from_realm(organization_id=organization_id, realm_id=realm_id)
     )
-    vlobs_size = await conn.fetch(
+    vlobs_size_rep = await conn.fetchrow(
         *_q_get_vlob_size_from_realm(organization_id=organization_id, realm_id=realm_id)
     )
-    RealmStats.blocks_size = 0
-    RealmStats.vlobs_size = 0
-    if "sum" in blocks_size[0] and blocks_size[0]["sum"] is not None:
-        RealmStats.blocks_size = blocks_size[0]["sum"]
-    if "sum" in vlobs_size[0] and vlobs_size[0]["sum"] is not None:
-        RealmStats.vlobs_size = vlobs_size[0]["sum"]
 
-    return RealmStats
+    blocks_size = blocks_size_rep["sum"] or 0
+    vlobs_size = vlobs_size_rep["sum"] or 0
+
+    return RealmStats(blocks_size=blocks_size, vlobs_size=vlobs_size)
 
 
 @query()
@@ -199,7 +196,7 @@ async def query_get_role_certificates(
 @query()
 async def query_get_realms_for_user(
     conn, organization_id: OrganizationID, user: UserID
-) -> Dict[UUID, RealmRole]:
+) -> Dict[UUID, Optional[RealmRole]]:
     rep = await conn.fetch(*_q_get_realms_for_user(organization_id=organization_id, user_id=user))
     return {
         row["realm_id"]: STR_TO_REALM_ROLE.get(row["role"])

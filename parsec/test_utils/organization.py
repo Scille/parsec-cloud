@@ -54,7 +54,7 @@ async def initialize_test_organization(
     ) as administration_cmds:
 
         rep = await administration_cmds.organization_create(organization_id)
-        assert rep["status"] == "ok"
+        assert rep["status"] == "ok", rep
         bootstrap_token = rep["bootstrap_token"]
 
         organization_bootstrap_addr = BackendOrganizationBootstrapAddr.build(

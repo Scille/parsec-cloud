@@ -6,7 +6,6 @@ from typing import Dict, Tuple, Optional
 
 from parsec.api.protocol import DeviceID, OrganizationID
 from parsec.backend.vlob import VlobVersionError, VlobNotFoundError
-from parsec.backend.realm import RealmRole
 from parsec.backend.postgresql.utils import (
     Q,
     query,
@@ -17,8 +16,7 @@ from parsec.backend.postgresql.utils import (
 )
 from parsec.backend.postgresql.vlob_queries.utils import (
     _get_realm_id_from_vlob_id,
-    _check_realm,
-    _check_realm_access,
+    _check_realm_and_read_access,
 )
 
 
@@ -90,14 +88,6 @@ WHERE
 )
 
 
-async def _check_realm_and_read_access(
-    conn, organization_id, author, realm_id, encryption_revision
-):
-    await _check_realm(conn, organization_id, realm_id, encryption_revision)
-    can_read_roles = (RealmRole.OWNER, RealmRole.MANAGER, RealmRole.CONTRIBUTOR, RealmRole.READER)
-    await _check_realm_access(conn, organization_id, realm_id, author, can_read_roles)
-
-
 @query(in_transaction=True)
 async def query_read(
     conn,
@@ -149,7 +139,8 @@ async def query_read(
         if not data:
             raise VlobVersionError()
 
-    return list(data)
+    version, blob, author, created_on = data
+    return version, blob, author, created_on
 
 
 _q_poll_changes = Q(

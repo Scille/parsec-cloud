@@ -5,6 +5,7 @@ from uuid import UUID
 import pendulum
 
 from parsec.api.protocol import DeviceID, OrganizationID
+from parsec.backend.utils import OperationKind
 from parsec.backend.vlob import BaseVlobComponent
 from parsec.backend.blockstore import BaseBlockStoreComponent
 from parsec.backend.block import (
@@ -98,14 +99,19 @@ VALUES (
 )
 
 
-async def _check_realm(conn, organization_id, realm_id):
+async def _check_realm(conn, organization_id, realm_id, operation_kind):
+    # Fetch the realm status maintenance type
     try:
-        rep = await get_realm_status(conn, organization_id, realm_id)
-
+        status = await get_realm_status(conn, organization_id, realm_id)
     except RealmNotFoundError as exc:
         raise BlockNotFoundError(*exc.args) from exc
 
-    if rep["maintenance_type"]:
+    # Special case of reading while in reencryption is authorized
+    if operation_kind == OperationKind.DATA_READ and status.in_reencryption:
+        pass
+
+    # Access is not allowed while in maintenance
+    elif status.in_maintenance:
         raise BlockInMaintenanceError("Data realm is currently under maintenance")
 
 
@@ -129,7 +135,7 @@ class PGBlockComponent(BaseBlockComponent):
             )
             if not realm_id:
                 raise BlockNotFoundError(f"Realm `{realm_id}` doesn't exist")
-            await _check_realm(conn, organization_id, realm_id)
+            await _check_realm(conn, organization_id, realm_id, OperationKind.DATA_READ)
             ret = await conn.fetchrow(
                 *_q_get_block_meta(
                     organization_id=organization_id, block_id=block_id, user_id=author.user_id
@@ -152,7 +158,7 @@ class PGBlockComponent(BaseBlockComponent):
         block: bytes,
     ) -> None:
         async with self.dbh.pool.acquire() as conn, conn.transaction():
-            await _check_realm(conn, organization_id, realm_id)
+            await _check_realm(conn, organization_id, realm_id, OperationKind.DATA_WRITE)
 
             # 1) Check access rights and block unicity
             ret = await conn.fetchrow(

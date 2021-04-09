@@ -1,6 +1,6 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
 
-from typing import Tuple
+from typing import Tuple, Optional
 
 from parsec.api.protocol import OrganizationID, UserID, DeviceID, HumanHandle
 from parsec.backend.user import User, Device, Trustchain, UserNotFoundError, GetUserAndDevicesResult
@@ -174,10 +174,9 @@ async def _get_user(conn, organization_id: OrganizationID, user_id: UserID) -> U
     if not row:
         raise UserNotFoundError(user_id)
 
+    human_handle = None
     if row["human_email"]:
         human_handle = HumanHandle(email=row["human_email"], label=row["human_label"])
-    else:
-        human_handle = None
 
     return User(
         user_id=user_id,
@@ -209,8 +208,8 @@ async def _get_device(conn, organization_id: OrganizationID, device_id: DeviceID
 
 
 async def _get_trustchain(
-    conn, organization_id: OrganizationID, *device_ids: Tuple[DeviceID], redacted: bool = False
-) -> Tuple[Device]:
+    conn, organization_id: OrganizationID, *device_ids: Optional[DeviceID], redacted: bool = False
+) -> Trustchain:
     rows = await conn.fetch(
         *_q_get_trustchain(organization_id=organization_id, device_ids=device_ids)
     )
@@ -235,7 +234,7 @@ async def _get_trustchain(
 
 async def _get_user_devices(
     conn, organization_id: OrganizationID, user_id: UserID
-) -> Tuple[Device]:
+) -> Tuple[Device, ...]:
     results = await conn.fetch(
         *_q_get_user_devices(organization_id=organization_id, user_id=user_id)
     )
@@ -300,10 +299,10 @@ async def query_get_user_with_devices_and_trustchain(
     return GetUserAndDevicesResult(
         user_certificate=user.redacted_user_certificate if redacted else user.user_certificate,
         revoked_user_certificate=user.revoked_user_certificate,
-        device_certificates=[
+        device_certificates=tuple(
             d.redacted_device_certificate if redacted else d.device_certificate
             for d in user_devices
-        ],
+        ),
         trustchain_device_certificates=trustchain.devices,
         trustchain_user_certificates=trustchain.users,
         trustchain_revoked_user_certificates=trustchain.revoked_users,
@@ -323,10 +322,9 @@ async def query_get_user_with_device(
     if not u_row or not d_row:
         raise UserNotFoundError(device_id)
 
+    human_handle = None
     if u_row["human_email"]:
         human_handle = HumanHandle(email=u_row["human_email"], label=u_row["human_label"])
-    else:
-        human_handle = None
 
     device = Device(
         device_id=device_id,

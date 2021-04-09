@@ -10,7 +10,7 @@ import tempfile
 from enum import Enum
 from uuid import UUID, uuid4
 from collections import defaultdict
-from typing import Dict, List, Optional, Union, Set
+from typing import Dict, List, Optional, Union, Set, cast
 from pendulum import DateTime, now as pendulum_now
 from email.message import Message
 from email.mime.text import MIMEText
@@ -18,7 +18,7 @@ from email.mime.multipart import MIMEMultipart
 from structlog import get_logger
 
 from parsec.crypto import PublicKey
-from parsec.event_bus import EventBus
+from parsec.event_bus import EventBus, EventCallback, EventFilterCallback
 from parsec.api.data import UserProfile
 from parsec.api.protocol import (
     OrganizationID,
@@ -258,13 +258,15 @@ class BaseInviteComponent:
         # expected to do ;-)
         self._claimers_ready: Dict[OrganizationID, Set[UUID]] = defaultdict(set)
 
-        def _on_status_changed(event, organization_id, greeter, token, status):
+        def _on_status_changed(event: Enum, organization_id, greeter, token, status) -> None:
             if status == InvitationStatus.READY:
                 self._claimers_ready[organization_id].add(token)
             else:  # Invitation deleted or back to idle
                 self._claimers_ready[organization_id].discard(token)
 
-        self._event_bus.connect(BackendEvent.INVITE_STATUS_CHANGED, _on_status_changed)
+        self._event_bus.connect(
+            BackendEvent.INVITE_STATUS_CHANGED, cast(EventCallback, _on_status_changed)
+        )
 
     @api("invite_new", handshake_types=[HandshakeType.AUTHENTICATED])
     @catch_protocol_errors
@@ -783,11 +785,12 @@ class BaseInviteComponent:
         filter_organization_id = organization_id
         filter_token = token
 
-        def _conduit_updated_filter(event: str, organization_id: OrganizationID, token: UUID):
+        def _conduit_updated_filter(event: Enum, organization_id: OrganizationID, token: UUID):
             return organization_id == filter_organization_id and token == filter_token
 
         with self._event_bus.waiter_on(
-            BackendEvent.INVITE_CONDUIT_UPDATED, filter=_conduit_updated_filter
+            BackendEvent.INVITE_CONDUIT_UPDATED,
+            filter=cast(EventFilterCallback, _conduit_updated_filter),
         ) as waiter:
             listen_ctx = await self._conduit_talk(organization_id, greeter, token, state, payload)
 

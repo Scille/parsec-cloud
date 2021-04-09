@@ -51,16 +51,16 @@ class S3BlockStoreComponent(BaseBlockStoreComponent):
             await trio.to_thread.run_sync(
                 partial(self._s3.head_object, Bucket=self._s3_bucket, Key=slug)
             )
-        except S3ClientError as exc:
-            if exc.response["Error"]["Code"] == "404":
+        except S3ClientError as outer_exc:
+            if outer_exc.response["Error"]["Code"] == "404":
                 try:
                     await trio.to_thread.run_sync(
                         partial(self._s3.put_object, Bucket=self._s3_bucket, Key=slug, Body=block)
                     )
-                except (S3ClientError, S3EndpointConnectionError) as exc:
-                    raise BlockTimeoutError() from exc
+                except (S3ClientError, S3EndpointConnectionError) as inner_exc:
+                    raise BlockTimeoutError() from inner_exc
             else:
-                raise BlockTimeoutError() from exc
+                raise BlockTimeoutError() from outer_exc
 
         except S3EndpointConnectionError as exc:
             raise BlockTimeoutError() from exc

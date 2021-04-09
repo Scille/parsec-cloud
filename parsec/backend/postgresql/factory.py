@@ -1,11 +1,11 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
 
-import trio
 import triopg
 from async_generator import asynccontextmanager
 from typing import Optional
 
 from parsec.event_bus import EventBus
+from parsec.utils import open_service_nursery
 from parsec.backend.config import BackendConfig
 from parsec.backend.events import EventsComponent
 from parsec.backend.blockstore import blockstore_factory
@@ -49,7 +49,7 @@ async def components_factory(config: BackendConfig, event_bus: EventBus):
     block = PGBlockComponent(dbh, blockstore, vlob)
     events = EventsComponent(realm, send_event=_send_event)
 
-    async with trio.open_service_nursery() as nursery:
+    async with open_service_nursery() as nursery:
         await dbh.init(nursery)
         try:
             yield {

@@ -207,6 +207,10 @@ class ServerHandshake:
         # Challenge
         self.challenge_size = challenge_size
         self.challenge: bytes
+
+        # Once support APIV1 is dropped, we can do much better than exposing the answer data as
+        # a dictionary of arbitrary object. Instead, it could be deserialize as a dedicated and
+        # properly typed `HandshakeAnswer` object.
         self.answer_data: Dict[str, object]
         self.answer_type: Union[HandshakeType, APIV1_HandshakeType] = HandshakeType.NOT_INITIALIZED
 
