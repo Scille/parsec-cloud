@@ -25,6 +25,7 @@ from parsec import __version__ as parsec_version
 from parsec.backend.postgresql import MigrationItem
 from parsec.core.local_device import save_device_with_password
 from parsec.cli import cli
+from parsec.api.protocol import RealmRole
 
 CWD = Path(__file__).parent.parent
 BACKEND_ADDR = "parsec://localhost"
@@ -66,11 +67,10 @@ def test_share_workspace(tmpdir, alice, bob):
         )
         result = runner.invoke(cli, args)
 
-    print(result.output)
     assert result.exit_code == 0
 
     factory_mock.assert_called_once_with(ANY, bob)
-    share_mock.assert_called_once_with("/ws1", alice.user_id)
+    share_mock.assert_called_once_with("/ws1", alice.user_id, RealmRole.READER)
 
 
 def _short_cmd(cmd):
