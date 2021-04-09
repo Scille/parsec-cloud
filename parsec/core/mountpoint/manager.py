@@ -10,6 +10,7 @@ from structlog import get_logger
 from typing import Sequence, Optional
 from importlib import __import__ as import_function
 from sys import platform as _platform
+from subprocess import CalledProcessError
 
 from async_generator import asynccontextmanager
 
@@ -301,6 +302,11 @@ async def mountpoint_manager_factory(
         try:
             await cleanup_macos_mountpoint_folder(base_mountpoint_path)
         except FileNotFoundError:
+            pass
+        except CalledProcessError:
+            # The unmount can fail if the app wasn't properly closed and will
+            # block login until reboot. Cleanup is skipped in such cases and
+            # should work properly after the next user's reboot.
             pass
 
     def on_event(event, new_entry, previous_entry=None):

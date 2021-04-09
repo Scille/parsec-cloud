@@ -37,8 +37,12 @@ EntryIDField = fields.uuid_based_field_factory(EntryID)
 class EntryName(str):
     __slots__ = ()
 
-    def __init__(self, raw: str):
+    def __new__(cls, raw: str) -> "EntryName":
+        import unicodedata
 
+        return super(EntryName, cls).__new__(cls, unicodedata.normalize("NFC", raw))
+
+    def __init__(self, raw: str):
         # Stick to UNIX filesystem philosophy:
         # - no `.` or `..` name
         # - no `/` or null byte in the name
