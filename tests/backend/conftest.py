@@ -27,10 +27,10 @@ from tests.common import FreezeTestOnTransportError
 @pytest.fixture
 def backend_raw_transport_factory(server_factory):
     @asynccontextmanager
-    async def _backend_sock_factory(backend, freeze_on_transport_error=True):
+    async def _backend_sock_factory(backend, freeze_on_transport_error=True, keepalive=None):
         async with server_factory(backend.handle_client) as server:
             stream = server.connection_factory()
-            transport = await Transport.init_for_client(stream, server.addr.hostname)
+            transport = await Transport.init_for_client(stream, server.addr.hostname, keepalive)
             if freeze_on_transport_error:
                 transport = FreezeTestOnTransportError(transport)
 
@@ -122,9 +122,11 @@ def backend_sock_factory(backend_raw_transport_factory, coolorg):
     # APIv2's invited handshake is not compatible with this
     # fixture because it requires purpose information (invitation_type/token)
     @asynccontextmanager
-    async def _backend_sock_factory(backend, auth_as: LocalDevice, freeze_on_transport_error=True):
+    async def _backend_sock_factory(
+        backend, auth_as: LocalDevice, freeze_on_transport_error=True, keepalive=None
+    ):
         async with backend_raw_transport_factory(
-            backend, freeze_on_transport_error=freeze_on_transport_error
+            backend, freeze_on_transport_error=freeze_on_transport_error, keepalive=keepalive
         ) as transport:
             # Handshake
             ch = AuthenticatedClientHandshake(

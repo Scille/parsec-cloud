@@ -110,9 +110,11 @@ class Transport:
             raise TransportError(*exc.args) from exc
 
     @classmethod
-    async def init_for_client(cls: Type["Transport"], stream: Stream, host: str) -> "Transport":
+    async def init_for_client(
+        cls: Type["Transport"], stream: Stream, host: str, keepalive: Optional[int] = None
+    ) -> "Transport":
         ws = WSConnection(ConnectionType.CLIENT)
-        transport = cls(stream, ws)
+        transport = cls(stream, ws, keepalive)
 
         # Because this is a client WebSocket, we need to initiate the connection
         # handshake by sending a Request event.
