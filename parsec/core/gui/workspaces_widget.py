@@ -670,6 +670,7 @@ class WorkspacesWidget(QWidget, Ui_WorkspacesWidget):
                 raise JobResultError(ret=workspace_id, status="fs-error", origin=exc)
 
         async def _reencrypt(on_progress, workspace_id):
+            on_progress.emit(workspace_id, 1, 0)
             with _handle_fs_errors():
                 if reencryption_already_in_progress:
                     job = await self.core.user_fs.workspace_continue_reencryption(workspace_id)
