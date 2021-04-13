@@ -45,6 +45,16 @@ class FlowLayout(QLayout):
                 w.hide()
                 w.setParent(None)
 
+    def pop_all(self):
+        results = []
+        while self.count() != 0:
+            item = self.takeAt(0)
+            if item:
+                w = item.widget()
+                self.removeWidget(w)
+                results.append(w)
+        return results
+
     def expandingDirections(self):
         return Qt.Horizontal
 
