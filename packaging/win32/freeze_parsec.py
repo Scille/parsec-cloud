@@ -189,8 +189,18 @@ END
     (BUILD_DIR / "uninstall_files.nsh").write_text("\n".join(uninstall_files_lines))
 
 
+def check_python_version():
+    if CPYTHON_VERSION == "3.7.7":
+        raise RuntimeError(
+            "CPython 3.7.7 is broken for packaging (see https://bugs.python.org/issue39930)"
+        )
+
+
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Freeze Parsec")
     parser.add_argument("parsec_source")
+    parser.add_argument("--disable-check-python", action="store_true")
     args = parser.parse_args()
+    if not args.disable_check_python:
+        check_python_version()
     main(Path(args.parsec_source))
