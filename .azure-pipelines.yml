@@ -9,7 +9,7 @@ trigger:
     - '*'
 
 variables:
-  python.version: '3.6'
+  python.version: '3.7'
   # pyinstaller is picky on the version to use
   python.version_for_macos_packaging: '3.8'
   postgresql.version: '12'
