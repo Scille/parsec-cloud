@@ -704,6 +704,7 @@ class WorkspacesWidget(QWidget, Ui_WorkspacesWidget):
     def _on_workspace_reencryption_success(self, job):
         workspace_id = job.arguments["workspace_id"]
         workspace_button = self.get_workspace_button(workspace_id, None)
+        workspace_button.reencryption_needs = None
         workspace_button.reencrypting = None
         self.reencrypting.remove(workspace_id)
 
@@ -711,6 +712,7 @@ class WorkspacesWidget(QWidget, Ui_WorkspacesWidget):
         workspace_id = job.arguments["workspace_id"]
         workspace_button = self.get_workspace_button(workspace_id, None)
         workspace_button.reencrypting = None
+        self.reencrypting.remove(workspace_id)
         if job.is_cancelled():
             return
         if job.status == "offline-backend":

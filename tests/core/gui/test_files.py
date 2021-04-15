@@ -593,6 +593,7 @@ async def test_import_file_permission_denied(
             assert tb.pwd() == "/"
 
         await aqtbot.wait_until(_import_failed)
+        autoclose_dialog.dialogs = []
 
         # Try importing multiple files
 
@@ -608,7 +609,7 @@ async def test_import_file_permission_denied(
             assert autoclose_dialog.dialogs == [
                 ("Error", _("TEXT_FILE_IMPORT_MULTIPLE_PERMISSION_ERROR"))
             ]
-            assert tb.ls() == ["files02.txt"]
+            assert tb.ls() == ["file2.txt"]
             assert tb.pwd() == "/"
 
         await aqtbot.wait_until(_import_error_shown)
