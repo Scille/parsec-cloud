@@ -130,17 +130,18 @@ async def _do_workspace_list(core):
             # reencryption operation
             pass
 
-        workspaces.append((workspace_fs, ws_entry, users_roles, files, timestamped))
+        workspace_name = workspace_fs.get_workspace_name()
+        return workspace_fs, workspace_name, ws_entry, users_roles, files, timestamped
 
     user_manifest = core.user_fs.get_user_manifest()
     available_workspaces = [w for w in user_manifest.workspaces if w.role]
     for workspace in available_workspaces:
         workspace_id = workspace.id
         workspace_fs = core.user_fs.get_workspace(workspace_id)
-        await _add_workspacefs(workspace_fs, timestamped=False)
+        workspaces.append(await _add_workspacefs(workspace_fs, timestamped=False))
     worspaces_timestamped_dict = await core.mountpoint_manager.get_timestamped_mounted()
     for (workspace_id, timestamp), workspace_fs in worspaces_timestamped_dict.items():
-        await _add_workspacefs(workspace_fs, timestamped=True)
+        workspaces.append(await _add_workspacefs(workspace_fs, timestamped=True))
 
     return workspaces
 
@@ -380,12 +381,13 @@ class WorkspacesWidget(QWidget, Ui_WorkspacesWidget):
             widget.workspace_fs: widget for widget in widgets if isinstance(widget, WorkspaceButton)
         }
         for workspace in workspaces:
-            workspace_fs, ws_entry, users_roles, files, timestamped = workspace
+            workspace_fs, workspace_name, ws_entry, users_roles, files, timestamped = workspace
 
             try:
                 self.add_workspace(
                     widget_mapping,
                     workspace_fs,
+                    workspace_name,
                     ws_entry,
                     users_roles,
                     files,
@@ -434,15 +436,15 @@ class WorkspacesWidget(QWidget, Ui_WorkspacesWidget):
         pass
 
     def add_workspace(
-        self, widget_mapping, workspace_fs, ws_entry, users_roles, files, timestamped
+        self,
+        widget_mapping,
+        workspace_fs,
+        workspace_name,
+        ws_entry,
+        users_roles,
+        files,
+        timestamped,
     ):
-
-        # The Qt thread should never hit the core directly.
-        # Synchronous calls can run directly in the job system
-        # as they won't block the Qt loop for long
-        # XXX: Maybe move this in the `list_workspaces` job?
-        workspace_name = self.jobs_ctx.run_sync(workspace_fs.get_workspace_name)
-
         # Temporary code to fix the workspace names edited by
         # the previous naming policy (the userfs used to add
         # `(shared by <device>)` at the end of the workspace name)
