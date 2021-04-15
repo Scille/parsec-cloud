@@ -18,6 +18,9 @@ repos:
     hooks:
     - id: mypy
       additional_dependencies: [trio_typing, pendulum]
+      # Mypy will complain if it find two files with the same name which
+      # are not part of a package (typically occurs for packaging script helpers)
+      files: ^(parsec|tests)/
 -   repo: https://github.com/pre-commit/pre-commit-hooks
     rev: v2.2.3  # Use the ref you want to point at
     hooks:

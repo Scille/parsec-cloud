@@ -1,3 +1,5 @@
+# Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
+
 # Greatly inspired by Deluge NSIS installer
 # https://github.com/deluge-torrent/deluge/blob/develop/packaging/win32/Win32%20README.txt
 
@@ -6,9 +8,9 @@
 !include "WordFunc.nsh"
 
 # Script version; displayed when running the installer
-!define PARSEC_INSTALLER_VERSION "1.0"
+!define INSTALLER_SCRIPT_VERSION "1.0"
 
-# Parsec program information
+# Program information
 !define PROGRAM_NAME "Parsec"
 !define PROGRAM_WEB_SITE "http://parsec.cloud"
 !define APPGUID "6C37F945-7EFC-480A-A444-A6D44A3D107F"
@@ -16,11 +18,11 @@
 
 # Detect version from file
 !define BUILD_DIR "build"
-!searchparse /file ${BUILD_DIR}/BUILD.tmp `target = "` PARSEC_FREEZE_BUILD_DIR `"`
-!ifndef PARSEC_FREEZE_BUILD_DIR
+!searchparse /file ${BUILD_DIR}/BUILD.tmp `target = "` PROGRAM_FREEZE_BUILD_DIR `"`
+!ifndef PROGRAM_FREEZE_BUILD_DIR
    !error "Cannot find freeze build directory"
 !endif
-!searchparse /file ${BUILD_DIR}/BUILD.tmp `parsec_version = "` PROGRAM_VERSION `"`
+!searchparse /file ${BUILD_DIR}/BUILD.tmp `program_version = "` PROGRAM_VERSION `"`
 !ifndef PROGRAM_VERSION
    !error "Program Version Undefined"
 !endif
@@ -28,12 +30,18 @@
 !ifndef PROGRAM_PLATFORM
    !error "Program Platform Undefined"
 !endif
+!searchparse /file ${BUILD_DIR}/BUILD.tmp `winfsp_installer_path = "` WINFSP_INSTALLER_PATH `"`
+!ifndef WINFSP_INSTALLER_PATH
+   !error "WinFSP installer path Undefined"
+!endif
+!searchparse /file ${BUILD_DIR}/BUILD.tmp `winfsp_installer_name = "` WINFSP_INSTALLER_NAME `"`
+!ifndef WINFSP_INSTALLER_NAME
+   !error "WinFSP installer name Undefined"
+!endif
 
 # Python files generated
-!define LICENSE_FILEPATH "${PARSEC_FREEZE_BUILD_DIR}\LICENSE.txt"
+!define LICENSE_FILEPATH "${PROGRAM_FREEZE_BUILD_DIR}\LICENSE.txt"
 !define INSTALLER_FILENAME "parsec-${PROGRAM_VERSION}-${PROGRAM_PLATFORM}-setup.exe"
-
-!define WINFSP_INSTALLER "winfsp-1.8.20304.msi"
 
 # Set default compressor
 SetCompressor /FINAL /SOLID lzma
@@ -43,7 +51,7 @@ SetCompressorDictSize 64
 # Modern User Interface 2
 !include MUI2.nsh
 # Installer
-!define MUI_ICON "parsec.ico"
+!define MUI_ICON "icon.ico"
 !define MUI_HEADERIMAGE
 !define MUI_HEADERIMAGE_RIGHT
 !define MUI_HEADERIMAGE_BITMAP "installer-top.bmp"
@@ -51,7 +59,7 @@ SetCompressorDictSize 64
 !define MUI_COMPONENTSPAGE_SMALLDESC
 !define MUI_ABORTWARNING
 # Start Menu Folder Page Configuration
-!define MUI_STARTMENUPAGE_DEFAULTFOLDER ${PROGRAM_NAME}
+!define MUI_STARTMENUPAGE_DEFAULTFOLDER "${PROGRAM_NAME}"
 !define MUI_STARTMENUPAGE_REGISTRY_ROOT "HKCR"
 !define MUI_STARTMENUPAGE_REGISTRY_KEY "Software\${PROGRAM_NAME}"
 !define MUI_STARTMENUPAGE_REGISTRY_VALUENAME "Start Menu Folder"
@@ -65,7 +73,7 @@ SetCompressorDictSize 64
 !define MUI_FINISHPAGE_SHOWREADME_NOTCHECKED
 !define MUI_FINISHPAGE_SHOWREADME_TEXT "Create Desktop Shortcut"
 !define MUI_FINISHPAGE_SHOWREADME_FUNCTION CreateDesktopShortcut
-# Run Parsec after install, using explorer.exe to un-elevate priviledges
+# Run program after install, using explorer.exe to un-elevate priviledges
 # More information: https://stackoverflow.com/a/15041823/2846140
 !define MUI_FINISHPAGE_RUN "$WINDIR\explorer.exe"
 !define MUI_FINISHPAGE_RUN_PARAMETERS "$INSTDIR\parsec.exe"
@@ -100,7 +108,7 @@ Var StartMenuFolder
 
 # --- Functions ---
 
-Function checkParsecRunning
+Function checkProgramAlreadyRunning
     check:
         System::Call 'kernel32::OpenMutex(i 0x100000, b 0, t "parsec-cloud") i .R0'
         IntCmp $R0 0 notRunning
@@ -113,9 +121,9 @@ Function checkParsecRunning
     notRunning:
 FunctionEnd
 
-# Check for running Parsec instance.
+# Check for running program instance.
 Function .onInit
-    Call checkParsecRunning
+    Call checkProgramAlreadyRunning
 
     ReadRegStr $R0 HKLM \
     "Software\Microsoft\Windows\CurrentVersion\Uninstall\${PROGRAM_NAME}" \
@@ -193,19 +201,19 @@ FunctionEnd
 # --- Installation sections ---
 !define PROGRAM_UNINST_KEY "Software\Microsoft\Windows\CurrentVersion\Uninstall\${PROGRAM_NAME}"
 !define PROGRAM_UNINST_ROOT_KEY "HKLM"
-!define PROGRAM_UNINST_FILENAME "$INSTDIR\parsec-uninst.exe"
+!define PROGRAM_UNINST_FILENAME "$INSTDIR\uninstall.exe"
 
-BrandingText "${PROGRAM_NAME} Windows Installer v${PARSEC_INSTALLER_VERSION}"
+BrandingText "${PROGRAM_NAME} Windows Installer v${INSTALLER_SCRIPT_VERSION}"
 Name "${PROGRAM_NAME} ${PROGRAM_VERSION}"
 OutFile "${BUILD_DIR}\${INSTALLER_FILENAME}"
-InstallDir "$PROGRAMFILES\Parsec"
+InstallDir "$PROGRAMFILES\Parsec-cloud"
 
 # No need for such details
 ShowInstDetails hide
 ShowUnInstDetails hide
 
 # Install main application
-Section "Parsec Secure Cloud Sharing" Section1
+Section "Parsec Cloud Sharing" Section1
     SectionIn RO
     !include "${BUILD_DIR}\install_files.nsh"
 
@@ -225,11 +233,11 @@ SectionEnd
 
 !macro InstallWinFSP
     SetOutPath "$TEMP"
-    File ${WINFSP_INSTALLER}
+    File ${WINFSP_INSTALLER_PATH}
     ; Use /qn to for silent installation
     ; Use a very high installation level to make sure it runs till the end
-    ExecWait "msiexec /i ${WINFSP_INSTALLER} /qn INSTALLLEVEL=1000"
-    Delete ${WINFSP_INSTALLER}
+    ExecWait "msiexec /i ${WINFSP_INSTALLER_NAME} /qn INSTALLLEVEL=1000"
+    Delete ${WINFSP_INSTALLER_NAME}
 !macroend
 
 # Install winfsp if necessary
@@ -294,7 +302,7 @@ SectionEnd
 
 # --- Uninstallation section ---
 Section Uninstall
-    # Delete Parsec files.
+    # Delete program files.
     Delete "$INSTDIR\homepage.url"
     Delete ${PROGRAM_UNINST_FILENAME}
     !include "${BUILD_DIR}\uninstall_files.nsh"
@@ -325,13 +333,13 @@ Section Uninstall
 SectionEnd
 
 # Add version info to installer properties.
-VIProductVersion "${PARSEC_INSTALLER_VERSION}.0.0"
-VIAddVersionKey ProductName ${PROGRAM_NAME}
+VIProductVersion "${INSTALLER_SCRIPT_VERSION}.0.0"
+VIAddVersionKey ProductName "${PROGRAM_NAME}"
 VIAddVersionKey Comments "Parsec secure cloud sharing"
 VIAddVersionKey CompanyName "Scille SAS"
 VIAddVersionKey LegalCopyright "Scille SAS"
 VIAddVersionKey FileDescription "${PROGRAM_NAME} Application Installer"
-VIAddVersionKey FileVersion "${PARSEC_INSTALLER_VERSION}.0.0"
+VIAddVersionKey FileVersion "${INSTALLER_SCRIPT_VERSION}.0.0"
 VIAddVersionKey ProductVersion "${PROGRAM_VERSION}.0"
 VIAddVersionKey OriginalFilename ${INSTALLER_FILENAME}
 

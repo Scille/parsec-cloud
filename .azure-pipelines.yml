@@ -467,12 +467,11 @@ jobs:
   # Must use cmd.exe here instead of bash otherwise `C:\Program Files\Git\bin\link.exe`
   # takes priority over visual studio link.exe in PATH
   - script: |
-      python freeze_parsec.py $(Build.SourcesDirectory)
+      python freeze_program.py $(Build.SourcesDirectory)
     displayName: 'Freeze Parsec'
     workingDirectory: $(Agent.TempDirectory)/winbuild
   - bash: |
       set -eux
-      curl -L https://github.com/billziss-gh/winfsp/releases/download/v1.8/winfsp-1.8.20304.msi -o winfsp-1.8.20304.msi
       makensis.exe installer.nsi
       mkdir dist
       cp build/parsec*-setup.exe dist
