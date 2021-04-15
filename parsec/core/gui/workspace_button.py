@@ -270,6 +270,7 @@ class WorkspaceButton(QWidget, Ui_WorkspaceButton):
             self.button_reencrypt.hide()
             self.widget_actions.show()
             self.widget_reencryption.hide()
+            self.button_reencrypt.setVisible(bool(self.reencryption_needs))
             self.setContextMenuPolicy(Qt.CustomContextMenu)
 
         self._reencrypting = val

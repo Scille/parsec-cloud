@@ -672,7 +672,6 @@ class WorkspacesWidget(QWidget, Ui_WorkspacesWidget):
                 raise JobResultError(ret=workspace_id, status="fs-error", origin=exc)
 
         async def _reencrypt(on_progress, workspace_id):
-            on_progress.emit(workspace_id, 1, 0)
             with _handle_fs_errors():
                 if reencryption_already_in_progress:
                     job = await self.core.user_fs.workspace_continue_reencryption(workspace_id)
@@ -688,6 +687,10 @@ class WorkspacesWidget(QWidget, Ui_WorkspacesWidget):
 
         self.reencrypting.add(workspace_id)
 
+        # Initialize progress to 0 percent
+        workspace_button = self.get_workspace_button(workspace_id, None)
+        workspace_button.reencrypting = 1, 0
+
         self.jobs_ctx.submit_job(
             ThreadSafeQtSignal(self, "workspace_reencryption_success", QtToTrioJob),
             ThreadSafeQtSignal(self, "workspace_reencryption_error", QtToTrioJob),
@@ -699,10 +702,15 @@ class WorkspacesWidget(QWidget, Ui_WorkspacesWidget):
         )
 
     def _on_workspace_reencryption_success(self, job):
-        workspace_id = job.ret
+        workspace_id = job.arguments["workspace_id"]
+        workspace_button = self.get_workspace_button(workspace_id, None)
+        workspace_button.reencrypting = None
         self.reencrypting.remove(workspace_id)
 
     def _on_workspace_reencryption_error(self, job):
+        workspace_id = job.arguments["workspace_id"]
+        workspace_button = self.get_workspace_button(workspace_id, None)
+        workspace_button.reencrypting = None
         if job.is_cancelled():
             return
         if job.status == "offline-backend":
