@@ -42,7 +42,8 @@ jobs:
       set -eux
       sudo apt-get update
       python --version
-      pip install pip --user --upgrade
+      # pip 20.3 introduces the new dependency resolver
+      pip install pip>=20.3 --user --upgrade
       pip install -r pre-requirements.txt
     displayName: 'Bootstrap'
   - bash: |
@@ -125,7 +126,8 @@ jobs:
       set -eux
       sudo apt-get update
       python --version
-      pip install pip --user --upgrade
+      # pip 20.3 introduces the new dependency resolver
+      pip install pip>=20.3 --user --upgrade
       pip install -r pre-requirements.txt
       sudo apt-get install \
         postgresql-$(postgresql.version) \
@@ -139,7 +141,7 @@ jobs:
       # Install the parsec wheel with all dependencies
       WHEEL=$(ls $(Pipeline.Workspace)/wheel/parsec_cloud-*.whl)
       echo $WHEEL
-      pip install --use-feature=2020-resolver $WHEEL[all]
+      pip install $WHEEL[all]
       # Check dependency compatibility
       pip check parsec[all]
     displayName: 'Install'
@@ -209,7 +211,8 @@ jobs:
   - bash: |
       set -eux
       python --version
-      pip install pip --user --upgrade
+      # pip 20.3 introduces the new dependency resolver
+      pip install pip>=20.3 --user --upgrade
       pip install -r pre-requirements.txt
       brew install \
         postgres \
@@ -224,7 +227,7 @@ jobs:
       # Install the parsec wheel with all dependencies
       WHEEL=$(ls $(Pipeline.Workspace)/wheel/parsec_cloud-*.whl)
       echo $WHEEL
-      pip install --use-feature=2020-resolver $WHEEL[all]
+      pip install $WHEEL[all]
       # Check dependency compatibility
       pip check parsec[all]
     displayName: 'Install'
@@ -287,7 +290,8 @@ jobs:
   - bash: |
       set -eux
       python.exe --version
-      pip install pip --user --upgrade
+      # pip 20.3 introduces the new dependency resolver
+      pip install pip>=20.3 --user --upgrade
       pip install -r pre-requirements.txt
       choco install -y --limit-output winfsp --version=$(winfsp.version)
       # Install winfsp-test and put it in PATH
@@ -304,7 +308,7 @@ jobs:
       WHEEL_DIRECTORY=`python -c 'print(r"$(Pipeline.Workspace)/wheel".replace("\\\\", "/"))'`
       WHEEL=$(ls $WHEEL_DIRECTORY/parsec_cloud-*.whl)
       echo $WHEEL
-      pip install --use-feature=2020-resolver $WHEEL[all]
+      pip install $WHEEL[all]
       # Check dependency compatibility
       pip check parsec[all]
       # Check winfsp-tests availability
@@ -455,7 +459,8 @@ jobs:
       modifyEnvironment: true
   - bash: |
       set -eux
-      pip install pip --user --upgrade
+      # pip 20.3 introduces the new dependency resolver
+      pip install pip>=20.3 --user --upgrade
       # Path with backslash are a pain...
       SOURCES_DIRECTORY=`python -c 'print(r"$(Build.SourcesDirectory)".replace("\\\\", "/"))'`
       TEMP_DIRECTORY=`python -c 'print(r"$(Agent.TempDirectory)".replace("\\\\", "/"))'`
