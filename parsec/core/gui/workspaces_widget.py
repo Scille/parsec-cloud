@@ -130,17 +130,18 @@ async def _do_workspace_list(core):
             # reencryption operation
             pass
 
-        workspaces.append((workspace_fs, ws_entry, users_roles, files, timestamped))
+        workspace_name = workspace_fs.get_workspace_name()
+        return workspace_fs, workspace_name, ws_entry, users_roles, files, timestamped
 
     user_manifest = core.user_fs.get_user_manifest()
     available_workspaces = [w for w in user_manifest.workspaces if w.role]
     for workspace in available_workspaces:
         workspace_id = workspace.id
         workspace_fs = core.user_fs.get_workspace(workspace_id)
-        await _add_workspacefs(workspace_fs, timestamped=False)
+        workspaces.append(await _add_workspacefs(workspace_fs, timestamped=False))
     worspaces_timestamped_dict = await core.mountpoint_manager.get_timestamped_mounted()
     for (workspace_id, timestamp), workspace_fs in worspaces_timestamped_dict.items():
-        await _add_workspacefs(workspace_fs, timestamped=True)
+        workspaces.append(await _add_workspacefs(workspace_fs, timestamped=True))
 
     return workspaces
 
@@ -364,10 +365,10 @@ class WorkspacesWidget(QWidget, Ui_WorkspacesWidget):
 
     def on_list_success(self, job):
         self.spinner.hide()
-        self.layout_workspaces.clear()
         workspaces = job.ret
 
         if not workspaces:
+            self.layout_workspaces.clear()
             self.line_edit_search.hide()
             label = QLabel(_("TEXT_WORKSPACE_NO_WORKSPACES"))
             label.setAlignment(Qt.AlignHCenter | Qt.AlignVCenter)
@@ -375,12 +376,22 @@ class WorkspacesWidget(QWidget, Ui_WorkspacesWidget):
             return
 
         self.line_edit_search.show()
+        widgets = self.layout_workspaces.pop_all()
+        widget_mapping = {
+            widget.workspace_fs: widget for widget in widgets if isinstance(widget, WorkspaceButton)
+        }
         for workspace in workspaces:
-            workspace_fs, ws_entry, users_roles, files, timestamped = workspace
+            workspace_fs, workspace_name, ws_entry, users_roles, files, timestamped = workspace
 
             try:
                 self.add_workspace(
-                    workspace_fs, ws_entry, users_roles, files, timestamped=timestamped
+                    widget_mapping,
+                    workspace_fs,
+                    workspace_name,
+                    ws_entry,
+                    users_roles,
+                    files,
+                    timestamped=timestamped,
                 )
             except JobSchedulerNotAvailable:
                 pass
@@ -424,13 +435,16 @@ class WorkspacesWidget(QWidget, Ui_WorkspacesWidget):
     def on_reencryption_needs_error(self, job):
         pass
 
-    def add_workspace(self, workspace_fs, ws_entry, users_roles, files, timestamped):
-
-        # The Qt thread should never hit the core directly.
-        # Synchronous calls can run directly in the job system
-        # as they won't block the Qt loop for long
-        workspace_name = self.jobs_ctx.run_sync(workspace_fs.get_workspace_name)
-
+    def add_workspace(
+        self,
+        widget_mapping,
+        workspace_fs,
+        workspace_name,
+        ws_entry,
+        users_roles,
+        files,
+        timestamped,
+    ):
         # Temporary code to fix the workspace names edited by
         # the previous naming policy (the userfs used to add
         # `(shared by <device>)` at the end of the workspace name)
@@ -450,24 +464,35 @@ class WorkspacesWidget(QWidget, Ui_WorkspacesWidget):
         if self.filter_user_info is not None and self.filter_user_info.user_id not in users_roles:
             return
 
-        button = WorkspaceButton(
-            workspace_name=workspace_name,
-            workspace_fs=workspace_fs,
-            users_roles=users_roles,
-            is_mounted=self.is_workspace_mounted(workspace_fs.workspace_id, None),
-            files=files[:4],
-            timestamped=timestamped,
-            reencryption_needs=None,
-        )
-        self.layout_workspaces.addWidget(button)
-        button.clicked.connect(self.load_workspace)
-        button.share_clicked.connect(self.share_workspace)
-        button.reencrypt_clicked.connect(self.reencrypt_workspace)
-        button.delete_clicked.connect(self.delete_workspace)
-        button.rename_clicked.connect(self.rename_workspace)
-        button.remount_ts_clicked.connect(self.remount_workspace_ts)
-        button.open_clicked.connect(self.open_workspace)
-        button.switch_clicked.connect(self._on_switch_clicked)
+        if workspace_fs in widget_mapping:
+            button = widget_mapping[workspace_fs]
+            button.apply_state(
+                workspace_name=workspace_name,
+                workspace_fs=workspace_fs,
+                users_roles=users_roles,
+                is_mounted=self.is_workspace_mounted(workspace_fs.workspace_id, None),
+                files=files[:4],
+                timestamped=timestamped,
+            )
+            self.layout_workspaces.addWidget(button)
+        else:
+            button = WorkspaceButton(
+                workspace_name=workspace_name,
+                workspace_fs=workspace_fs,
+                users_roles=users_roles,
+                is_mounted=self.is_workspace_mounted(workspace_fs.workspace_id, None),
+                files=files[:4],
+                timestamped=timestamped,
+            )
+            self.layout_workspaces.addWidget(button)
+            button.clicked.connect(self.load_workspace)
+            button.share_clicked.connect(self.share_workspace)
+            button.reencrypt_clicked.connect(self.reencrypt_workspace)
+            button.delete_clicked.connect(self.delete_workspace)
+            button.rename_clicked.connect(self.rename_workspace)
+            button.remount_ts_clicked.connect(self.remount_workspace_ts)
+            button.open_clicked.connect(self.open_workspace)
+            button.switch_clicked.connect(self._on_switch_clicked)
 
         if button.is_owner:
             self.jobs_ctx.submit_job(
@@ -662,6 +687,10 @@ class WorkspacesWidget(QWidget, Ui_WorkspacesWidget):
 
         self.reencrypting.add(workspace_id)
 
+        # Initialize progress to 0 percent
+        workspace_button = self.get_workspace_button(workspace_id, None)
+        workspace_button.reencrypting = 1, 0
+
         self.jobs_ctx.submit_job(
             ThreadSafeQtSignal(self, "workspace_reencryption_success", QtToTrioJob),
             ThreadSafeQtSignal(self, "workspace_reencryption_error", QtToTrioJob),
@@ -673,10 +702,17 @@ class WorkspacesWidget(QWidget, Ui_WorkspacesWidget):
         )
 
     def _on_workspace_reencryption_success(self, job):
-        workspace_id = job.ret
+        workspace_id = job.arguments["workspace_id"]
+        workspace_button = self.get_workspace_button(workspace_id, None)
+        workspace_button.reencryption_needs = None
+        workspace_button.reencrypting = None
         self.reencrypting.remove(workspace_id)
 
     def _on_workspace_reencryption_error(self, job):
+        workspace_id = job.arguments["workspace_id"]
+        workspace_button = self.get_workspace_button(workspace_id, None)
+        workspace_button.reencrypting = None
+        self.reencrypting.remove(workspace_id)
         if job.is_cancelled():
             return
         if job.status == "offline-backend":

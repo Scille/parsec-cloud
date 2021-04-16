@@ -1,0 +1,1 @@
+Fix some blinking with the workspace buttons, especially while doing a reencryption.
