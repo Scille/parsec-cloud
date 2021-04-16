@@ -12,7 +12,7 @@ variables:
   python.version: '3.6'
   # pyinstaller is picky on the version to use
   python.version_for_macos_packaging: '3.8'
-  postgresql.version: '10'
+  postgresql.version: '12'
   winfsp.version: '1.8.20304'
   pytest.base_args: |
     --log-level=DEBUG \
