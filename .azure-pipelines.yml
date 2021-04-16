@@ -290,6 +290,7 @@ jobs:
   - bash: |
       set -eux
       python.exe --version
+      pip uninstall pipx -y  # dunno why this thing is here...
       # pip 20.3 introduces the new dependency resolver
       pip install pip>=20.3 --user --upgrade
       pip install -r pre-requirements.txt
