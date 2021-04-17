@@ -1,4 +1,4 @@
-# Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
+# Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2016-2021 Scille SAS
 
 from PyQt5.QtCore import QUrl, QFileInfo, QSysInfo, QLocale
 from PyQt5.QtGui import QDesktopServices, QGuiApplication, QClipboard
