@@ -9,6 +9,8 @@ from importlib.util import find_spec
 # Cannot use __file__ given we are not in a real .py file
 BASEDIR = Path(os.path.abspath(""))
 
+# Remove parsec.backend given we won't ship it extra dependencies
+EXCLUDED_MODULES = {"parsec.backend"}
 
 # In all it zeal, Pyinstaller finds itself very smart by not including
 # resource data (i.e. non-python files contained within a python package).
@@ -23,6 +25,8 @@ def collect_package_datas(package_name):
 
     def _collect_recursive(subpackage_stems):
         subpackage_name = ".".join(subpackage_stems)
+        if subpackage_name in EXCLUDED_MODULES:
+            return
         for entry_name in contents(subpackage_name):
             if is_resource(subpackage_name, entry_name):
                 if '.' not in entry_name or entry_name.rsplit('.', 1)[1] not in ignored_extensions:
@@ -54,7 +58,7 @@ a = Analysis(
     hiddenimports=[],
     hookspath=[],
     runtime_hooks=[],
-    excludes=[],
+    excludes=EXCLUDED_MODULES,
     win_no_prefer_redirects=False,
     win_private_assemblies=False,
     cipher=block_cipher,

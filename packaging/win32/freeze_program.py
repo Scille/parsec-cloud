@@ -53,17 +53,15 @@ def main(program_source):
     if not TOOLS_VENV_DIR.is_dir():
         print("### Create tool virtualenv ###")
         run(f"python -m venv {TOOLS_VENV_DIR}")
-        run(f"{ TOOLS_VENV_DIR / 'Scripts/python' } -m pip install pip --upgrade")
-        run(f"{ TOOLS_VENV_DIR / 'Scripts/python' } -m pip install wheel")
+        run(f"{ TOOLS_VENV_DIR / 'Scripts/python' } -m pip install pip wheel setuptools --upgrade")
 
     if not WHEELS_DIR.is_dir():
         print("### Generate wheels from Parsec, Parsec and dependencies ###")
-        # Note we should be installing only `core` extra for parsec, however
-        # this will clash with Pyinstaller that will complain it has found
-        # reference to missing dependencies in the `parsec.backend` package.
-        # TODO: find a way to avoid having to install `backend` extra
+        # Generate wheels for parsec (with it core extra) and it dependencies
+        # Also generate wheels for PyInstaller in the same command so that
+        # dependency resolution is done together with parsec.
         run(
-            f"{ TOOLS_VENV_DIR / 'Scripts/python' } -m pip wheel {program_source}[core,backend] --wheel-dir {WHEELS_DIR}"
+            f"{ TOOLS_VENV_DIR / 'Scripts/python' } -m pip wheel --wheel-dir {WHEELS_DIR} {program_source.absolute()}[core] pyinstaller"
         )
 
     # Bootstrap PyInstaller virtualenv
@@ -71,10 +69,10 @@ def main(program_source):
     if not pyinstaller_venv_dir.is_dir():
         print("### Installing wheels & PyInstaller in temporary virtualenv ###")
         run(f"python -m venv {pyinstaller_venv_dir}")
-        wheels = " ".join(map(str, WHEELS_DIR.glob("*.whl")))
         run(f"{ pyinstaller_venv_dir / 'Scripts/python' } -m pip install pip --upgrade")
-        run(f"{ pyinstaller_venv_dir / 'Scripts/python' } -m pip install pyinstaller")
-        run(f"{ pyinstaller_venv_dir / 'Scripts/python' } -m pip install {wheels} --no-deps")
+        run(
+            f"{ pyinstaller_venv_dir / 'Scripts/python' } -m pip install --no-index --find-links {WHEELS_DIR} parsec-cloud[core] pyinstaller"
+        )
 
     pyinstaller_build = BUILD_DIR / "pyinstaller_build"
     pyinstaller_dist = BUILD_DIR / "pyinstaller_dist"
