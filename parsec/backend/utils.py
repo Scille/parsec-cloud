@@ -26,7 +26,7 @@ def api(
     cmd: str,
     *,
     long_request: bool = False,
-    handshake_types: List[Union[HandshakeType, APIV1_HandshakeType]] = (
+    handshake_types: Sequence[Union[HandshakeType, APIV1_HandshakeType]] = (
         HandshakeType.AUTHENTICATED,
         APIV1_HandshakeType.AUTHENTICATED,
     ),
