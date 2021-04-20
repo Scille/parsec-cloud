@@ -726,6 +726,7 @@ def core_factory(
                     await spy.wait_with_timeout(
                         CoreEvent.BACKEND_CONNECTION_CHANGED,
                         {"status": BackendConnStatus.READY, "status_exc": spy.ANY},
+                        timeout=2.0,  # 1 second might not be enough for postgresql 12 tests running in the CI
                     )
                 assert core.are_monitors_idle()
 
