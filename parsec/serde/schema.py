@@ -175,7 +175,6 @@ class OneOfSchema(BaseSchema):
                     result_errors[idx] = result.errors
 
             result = UnmarshalResult(result_data, result_errors)
-
         if result.errors and self.strict:
             raise ValidationError(result.errors)
 

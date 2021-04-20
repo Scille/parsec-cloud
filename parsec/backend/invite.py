@@ -53,8 +53,6 @@ from parsec.core.types import BackendInvitationAddr
 
 logger = get_logger()
 
-PEER_EVENT_MAX_WAIT = 300  # 5mn
-
 
 class CloseInviteConnection(Exception):
     pass
@@ -408,7 +406,7 @@ class BaseInviteComponent:
             }
         return invite_info_serializer.rep_dump(rep)
 
-    @api("invite_1_claimer_wait_peer", handshake_types=[HandshakeType.INVITED])
+    @api("invite_1_claimer_wait_peer", long_request=True, handshake_types=[HandshakeType.INVITED])
     @catch_protocol_errors
     async def api_invite_1_claimer_wait_peer(self, client_ctx, msg):
         """
@@ -416,7 +414,6 @@ class BaseInviteComponent:
             CloseInviteConnection
         """
         msg = invite_1_claimer_wait_peer_serializer.req_load(msg)
-
         try:
             greeter_public_key = await self.conduit_exchange(
                 organization_id=client_ctx.organization_id,
