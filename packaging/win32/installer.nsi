@@ -108,6 +108,46 @@ Var StartMenuFolder
 
 # --- Functions ---
 
+; Taken from https://nsis.sourceforge.io/Get_parent_directory
+; (NSIS project, Copyright (C) 1999-2021 Contributors, zlib/libpng license)
+; GetParent
+; input, top of stack  (e.g. C:\Program Files\Foo)
+; output, top of stack (replaces, with e.g. C:\Program Files)
+; modifies no other variables.
+;
+; Usage:
+;   Push "C:\Program Files\Directory\Whatever"
+;   Call GetParent
+;   Pop $R0
+;   ; at this point $R0 will equal "C:\Program Files\Directory"
+Function GetParent
+
+  Exch $R0
+  Push $R1
+  Push $R2
+  Push $R3
+
+  StrCpy $R1 0
+  StrLen $R2 $R0
+
+  loop:
+    IntOp $R1 $R1 + 1
+    IntCmp $R1 $R2 get 0 get
+    StrCpy $R3 $R0 1 -$R1
+    StrCmp $R3 "\" get
+  Goto loop
+
+  get:
+    StrCpy $R0 $R0 -$R1
+
+    Pop $R3
+    Pop $R2
+    Pop $R1
+    Exch $R0
+
+FunctionEnd
+
+
 Function checkProgramAlreadyRunning
     check:
         System::Call 'kernel32::OpenMutex(i 0x100000, b 0, t "parsec-cloud") i .R0'
@@ -139,8 +179,28 @@ Function .onInit
     ;Run the uninstaller sequentially and silently
     ;https://nsis.sourceforge.io/Docs/Chapter3.html#installerusageuninstaller
     uninst:
+      ; Retrieve the previous version's install directory and store it into $R1.
+      ; We cannot use ${INSTDIR} instead, given the previous version might
+      ; have been installed in a custom directory.
+      Push "$R0"
+      Call GetParent
+      Pop $R1
       ClearErrors
-      ExecWait '"$R0" /S _?=$INSTDIR'
+      ; If run without `_?=R1`, the uninstaller executable (i.e. `$R0`) will
+      ; copy itself in a temporary directory, run this copy and exit right away.
+      ; This is needed otherwise the installer won't be able to remove itself,
+      ; however it also means `ExecWait` doesn't work here (the actuall uninstall
+      ; process is still running when ExecWait returns).
+      ; So we provide the ugly `_?=$R1` which, on top of being absolutly
+      ; unreadable, does two things:
+      ; - it force the directory to work on for the uninstaller (but we pass the
+      ;   same previous version install directory as argument, so we change nothing here)
+      ; - it tells the uninstaller not to do the "temp copy, exec and return"
+      ;   trick and instead leave the uninstaller untouched.
+      ; At this point, I'm very much puzzled as why writting NSIS installer
+      ; feels like reverse engineering a taiwanese NES clone...
+      ExecWait '"$R0" /S _?=$R1'
+
     done:
 
 FunctionEnd
