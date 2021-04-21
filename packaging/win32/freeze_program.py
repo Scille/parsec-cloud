@@ -102,6 +102,13 @@ def main(program_source):
     )
 
     # Create the install and uninstall file list for NSIS installer
+    # Crawling order is important in [install|uninstall]_files.nsh, we cannot
+    # create a file if it parent folder doesn't exist and we cannot remove a
+    # folder if it is not empty.
+    # On top of that, we have to jump into a directory before installing it
+    # files (see the `SetOutPath` command).
+    # We don't use `Path.rglob` given it would require further tweaking
+    # due to it crawling order, so it's just simpler to roll our own crawler.
     target_files = []
 
     def _recursive_collect_target_files(curr_dir):
@@ -117,24 +124,31 @@ def main(program_source):
 
     _recursive_collect_target_files(target_dir)
 
-    install_files_lines = ["; Files to install", 'SetOutPath "$INSTDIR\\"']
-    curr_dir = Path(".")
+    install_files_txt = '; Files to install\nSetOutPath "$INSTDIR\\"\n'
+    installed_check = {Path(".")}
     for target_is_dir, target_file in target_files:
         if target_is_dir:
-            install_files_lines.append(f'SetOutPath "$INSTDIR\\{target_file}"')
-            curr_dir = target_file
+            # Jump into the folder (create it if needed)
+            install_files_txt += f'SetOutPath "$INSTDIR\\{target_file}"\n'
         else:
-            assert curr_dir == target_file.parent
-            install_files_lines.append(f'File "${{PROGRAM_FREEZE_BUILD_DIR}}\\{target_file}"')
-    (BUILD_DIR / "install_files.nsh").write_text("\n".join(install_files_lines))
+            # Copy the file in the current folder
+            install_files_txt += f'File "${{PROGRAM_FREEZE_BUILD_DIR}}\\{target_file}"\n'
+        # Installation simulation sanity check
+        assert target_file not in installed_check
+        assert target_file.parent in installed_check
+        installed_check.add(target_file)
+    (BUILD_DIR / "install_files.nsh").write_text(install_files_txt)
 
-    uninstall_files_lines = ["; Files to uninstall"]
+    uninstall_files_txt = "; Files to uninstall\n"
     for target_is_dir, target_file in reversed(target_files):
         if target_is_dir:
-            uninstall_files_lines.append(f'RMDir "$INSTDIR\\{target_file}"')
+            uninstall_files_txt += f'RMDir "$INSTDIR\\{target_file}"\n'
         else:
-            uninstall_files_lines.append(f'Delete "$INSTDIR\\{target_file}"')
-    (BUILD_DIR / "uninstall_files.nsh").write_text("\n".join(uninstall_files_lines))
+            uninstall_files_txt += f'Delete "$INSTDIR\\{target_file}"\n'
+        # Uninstallation simulation sanity check
+        assert target_file.parent in installed_check
+        installed_check.remove(target_file)
+    (BUILD_DIR / "uninstall_files.nsh").write_text(uninstall_files_txt)
 
 
 def check_python_version():
