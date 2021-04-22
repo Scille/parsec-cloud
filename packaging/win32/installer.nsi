@@ -70,7 +70,7 @@ SetCompressorDictSize 64
 !define MUI_UNFINISHPAGE_NOAUTOCLOSE
 # Add shortcut
 !define MUI_FINISHPAGE_SHOWREADME ""
-!define MUI_FINISHPAGE_SHOWREADME_NOTCHECKED
+# !define MUI_FINISHPAGE_SHOWREADME_NOTCHECKED
 !define MUI_FINISHPAGE_SHOWREADME_TEXT "Create Desktop Shortcut"
 !define MUI_FINISHPAGE_SHOWREADME_FUNCTION CreateDesktopShortcut
 # Run program after install, using explorer.exe to un-elevate priviledges
@@ -78,7 +78,7 @@ SetCompressorDictSize 64
 !define MUI_FINISHPAGE_RUN "$WINDIR\explorer.exe"
 !define MUI_FINISHPAGE_RUN_PARAMETERS "$INSTDIR\parsec.exe"
 !define MUI_FINISHPAGE_RUN_TEXT "Run Parsec"
-!define MUI_FINISHPAGE_RUN_NOTCHECKED
+# !define MUI_FINISHPAGE_RUN_NOTCHECKED
 
 # --- Start of Modern User Interface ---
 Var StartMenuFolder
