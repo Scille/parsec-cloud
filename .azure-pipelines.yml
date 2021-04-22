@@ -9,7 +9,7 @@ trigger:
     - '*'
 
 variables:
-  python.version: '3.6'
+  python.version: '3.7'
   # pyinstaller is picky on the version to use
   python.version_for_macos_packaging: '3.8'
   postgresql.version: '12'
@@ -42,7 +42,8 @@ jobs:
       set -eux
       sudo apt-get update
       python --version
-      pip install pip --user --upgrade
+      # pip 20.3 introduces the new dependency resolver
+      pip install pip>=20.3 --user --upgrade
       pip install -r pre-requirements.txt
     displayName: 'Bootstrap'
   - bash: |
@@ -125,7 +126,8 @@ jobs:
       set -eux
       sudo apt-get update
       python --version
-      pip install pip --user --upgrade
+      # pip 20.3 introduces the new dependency resolver
+      pip install pip>=20.3 --user --upgrade
       pip install -r pre-requirements.txt
       sudo apt-get install \
         postgresql-$(postgresql.version) \
@@ -139,7 +141,7 @@ jobs:
       # Install the parsec wheel with all dependencies
       WHEEL=$(ls $(Pipeline.Workspace)/wheel/parsec_cloud-*.whl)
       echo $WHEEL
-      pip install --use-feature=2020-resolver $WHEEL[all]
+      pip install $WHEEL[all]
       # Check dependency compatibility
       pip check parsec[all]
     displayName: 'Install'
@@ -209,7 +211,8 @@ jobs:
   - bash: |
       set -eux
       python --version
-      pip install pip --user --upgrade
+      # pip 20.3 introduces the new dependency resolver
+      pip install pip>=20.3 --user --upgrade
       pip install -r pre-requirements.txt
       brew install \
         postgres \
@@ -224,7 +227,7 @@ jobs:
       # Install the parsec wheel with all dependencies
       WHEEL=$(ls $(Pipeline.Workspace)/wheel/parsec_cloud-*.whl)
       echo $WHEEL
-      pip install --use-feature=2020-resolver $WHEEL[all]
+      pip install $WHEEL[all]
       # Check dependency compatibility
       pip check parsec[all]
     displayName: 'Install'
@@ -287,7 +290,9 @@ jobs:
   - bash: |
       set -eux
       python.exe --version
-      pip install pip --user --upgrade
+      pip uninstall pipx -y  # dunno why this thing is here...
+      # pip 20.3 introduces the new dependency resolver
+      pip install pip>=20.3 --user --upgrade
       pip install -r pre-requirements.txt
       choco install -y --limit-output winfsp --version=$(winfsp.version)
       # Install winfsp-test and put it in PATH
@@ -304,7 +309,7 @@ jobs:
       WHEEL_DIRECTORY=`python -c 'print(r"$(Pipeline.Workspace)/wheel".replace("\\\\", "/"))'`
       WHEEL=$(ls $WHEEL_DIRECTORY/parsec_cloud-*.whl)
       echo $WHEEL
-      pip install --use-feature=2020-resolver $WHEEL[all]
+      pip install $WHEEL[all]
       # Check dependency compatibility
       pip check parsec[all]
       # Check winfsp-tests availability
@@ -386,9 +391,22 @@ jobs:
       cp $(Build.SourcesDirectory)/setup.py src
       cp $(Build.SourcesDirectory)/README.rst src
       cp $(Build.SourcesDirectory)/HISTORY.rst src
-      VERBOSE_TAG=`git -C $(Build.SourcesDirectory) describe --tag`
-      sed -i "s#^\\(__version__ = \\).*\$#\\1'$VERBOSE_TAG'#" src/parsec/_version.py
-      sed -i "s/__PARSEC_VERSION__/$VERBOSE_TAG/" snap/snapcraft.yaml
+      # Retrieve Parsec version and customize it if we are not building on a tag
+      # See https://www.python.org/dev/peps/pep-0440/#local-version-identifiers
+      if ([[ $(Build.SourceBranch) = "refs/tags/"* ]])
+      then
+        # Use tag name as version
+        VERSION=`git -C $(Build.SourcesDirectory) describe --tag`
+      else
+        # Use `<tag_name>+dev<commit_hash>` as version
+        VERSION=`sed -n 's/^__version__ = "\\(.*\\)"$/\\1/p' $(Build.SourcesDirectory)/parsec/_version.py`
+        COMMIT=`git -C $(Build.SourcesDirectory) rev-parse --verify --short HEAD`
+        VERSION="$VERSION.$COMMIT"
+      fi
+      echo "Version label: $VERSION"
+      sed -i "s#^\\(__version__ = \\).*\$#\\1'$VERSION'#" src/parsec/_version.py
+      sed -i "s/__PARSEC_VERSION__/$VERSION/" snap/snapcraft.yaml
+      # Now build the snap !
       snapcraft --destructive-mode
       mkdir dist
       cp parsec*.snap dist
@@ -455,24 +473,35 @@ jobs:
       modifyEnvironment: true
   - bash: |
       set -eux
-      pip install pip --user --upgrade
+      # pip 20.3 introduces the new dependency resolver
+      pip install pip>=20.3 --user --upgrade
       # Path with backslash are a pain...
       SOURCES_DIRECTORY=`python -c 'print(r"$(Build.SourcesDirectory)".replace("\\\\", "/"))'`
-      TEMP_DIRECTORY=`python -c 'print(r"$(Agent.TempDirectory)".replace("\\\\", "/"))'`
-      VERBOSE_TAG=`git -C $SOURCES_DIRECTORY describe --tag`
-      sed -i "s#^\\(__version__ = \\).*\$#\\1'$VERBOSE_TAG'#" $SOURCES_DIRECTORY/parsec/_version.py
+      # Retrieve Parsec version and customize it if we are not building on a tag
+      # See https://www.python.org/dev/peps/pep-0440/#local-version-identifiers
+      if ([[ $(Build.SourceBranch) = "refs/tags/"* ]])
+      then
+        # Use tag name as version
+        VERSION=`git -C $SOURCES_DIRECTORY describe --tag`
+      else
+        # Use `<tag_name>+dev<commit_hash>` as version
+        VERSION=`sed -n 's/^__version__ = "\\(.*\\)"$/\\1/p' $SOURCES_DIRECTORY/parsec/_version.py`
+        COMMIT=`git -C $SOURCES_DIRECTORY rev-parse --verify --short HEAD`
+        VERSION="$VERSION.$COMMIT"
+      fi
+      echo "Version label: $VERSION"
+      sed -i "s#^\\(__version__ = \\).*\$#\\1'$VERSION'#" $SOURCES_DIRECTORY/parsec/_version.py
       cp -R $SOURCES_DIRECTORY/packaging/win32/ winbuild
     displayName: 'Prepare build'
     workingDirectory: $(Agent.TempDirectory)
   # Must use cmd.exe here instead of bash otherwise `C:\Program Files\Git\bin\link.exe`
   # takes priority over visual studio link.exe in PATH
   - script: |
-      python freeze_parsec.py $(Build.SourcesDirectory)
+      python freeze_program.py $(Build.SourcesDirectory)
     displayName: 'Freeze Parsec'
     workingDirectory: $(Agent.TempDirectory)/winbuild
   - bash: |
       set -eux
-      curl -L https://github.com/billziss-gh/winfsp/releases/download/v1.8/winfsp-1.8.20304.msi -o winfsp-1.8.20304.msi
       makensis.exe installer.nsi
       mkdir dist
       cp build/parsec*-setup.exe dist

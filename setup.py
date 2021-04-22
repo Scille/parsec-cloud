@@ -304,11 +304,7 @@ test_requirements = [
     "hypothesis==5.3.0",
     "hypothesis-trio==0.5.0",
     "trustme==0.6.0",
-    # Winfsptest requirements
-    # We can't use `winfspy[test]` because of some pip limitations
-    # - see pip issues #7096/#6239/#4391/#988
-    # Looking forward to the new pip dependency resolver!
-    'pywin32==227;platform_system=="Windows"',
+    'winfspy[test]==0.8.2;platform_system=="Windows"',
     # Fix botocore and sphinx conflicting requirements on docutils
     "docutils>=0.12,<0.16",
     # Documentation generation requirements
