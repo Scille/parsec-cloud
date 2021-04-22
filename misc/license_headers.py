@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-# Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
+# Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2016-2021 Scille SAS
 
 
 import sys
@@ -7,11 +7,12 @@ import pathlib
 import re
 import argparse
 
-
-HEADER = "# Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS\n\n"
+THIS_YEAR = "2021"
+HEADER = f"# Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2016-{THIS_YEAR} Scille SAS"
 HEADER_RE = re.compile(
-    r"^# Parsec Cloud \(https://parsec\.cloud\) Copyright \(c\) AGPLv3 2019 Scille SAS$"
+    r"^# Parsec Cloud \(https://parsec\.cloud\) Copyright \(c\) AGPLv3 2016-(?P<year>[0-9]{4}) Scille SAS$"
 )
+assert HEADER_RE.match(HEADER)  # Sanity check
 SKIP_PATHES = (
     pathlib.Path("parsec/core/gui/_resources_rc.py"),
     pathlib.Path("parsec/core/gui/ui/"),
@@ -57,8 +58,14 @@ def check_headers(files):
     for file in get_files(files):
         with open(file, "r", encoding="utf-8") as fd:
             shabang_line, header_line = extract_shabang_and_header_lines(fd)
-            if not HEADER_RE.match(header_line.strip()):
+            match = HEADER_RE.match(header_line.strip())
+            if not match:
                 print("Missing header", file)
+                ret = 1
+            elif match["year"] != THIS_YEAR:
+                print(
+                    f"Wrong year in the header (got {match['year']}, should be {THIS_YEAR})", file
+                )
                 ret = 1
             for line, line_txt in enumerate(fd.read().split("\n"), 3 if shabang_line else 2):
                 if HEADER_RE.match(line_txt.strip()):
@@ -71,11 +78,16 @@ def add_headers(files):
     for file in get_files(files):
         with open(file, "r", encoding="utf-8") as fd:
             shabang_line, header_line = extract_shabang_and_header_lines(fd)
-            if HEADER_RE.match(header_line.strip()):
-                continue
-            print("Add missing header", file)
-            updated_data = f"{shabang_line}{HEADER}{header_line}{fd.read()}".strip() + "\n"
-            file.write_text(updated_data)
+            match = HEADER_RE.match(header_line.strip())
+            if not match:
+                print("Add missing header", file)
+                updated_data = f"{shabang_line}{HEADER}\n\n{header_line}{fd.read()}"
+                file.write_text(updated_data)
+            elif match["year"] != THIS_YEAR:
+                print("Correct copyright year", file)
+                updated_data = f"{shabang_line}{HEADER}\n{fd.read()}"
+                file.write_text(updated_data)
+
     return 0
 
 

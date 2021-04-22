@@ -1,4 +1,4 @@
-# Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
+# Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2016-2021 Scille SAS
 
 from marshmallow import Schema, MarshalResult, UnmarshalResult, ValidationError, post_load
 from typing import Union, Dict, Type
