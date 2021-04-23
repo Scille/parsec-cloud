@@ -133,8 +133,7 @@ def test_entryname_normalization():
         "àáâäæãåāçćčèéêëēėęîïíīįìłñńôöòóœøōõßśšûüùúūÿžźż"
     )
 
-    for i in range(len(nfc_str)):
-        assert nfc_str[i] != nfd_str[i]
+    assert nfc_str != nfd_str
     assert EntryName(nfd_str) == nfc_str
     assert EntryName(nfc_str) == nfc_str
     assert EntryName(nfc_str + nfd_str) == nfc_str + nfc_str

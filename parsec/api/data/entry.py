@@ -1,5 +1,6 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
 
+from unicodedata import normalize
 from uuid import UUID, uuid4
 from typing import Union, Type, TypeVar
 
@@ -38,9 +39,7 @@ class EntryName(str):
     __slots__ = ()
 
     def __new__(cls, raw: str) -> "EntryName":
-        import unicodedata
-
-        return super(EntryName, cls).__new__(cls, unicodedata.normalize("NFC", raw))
+        return super(EntryName, cls).__new__(cls, normalize("NFC", raw))
 
     def __init__(self, raw: str):
         # Stick to UNIX filesystem philosophy:
