@@ -24,6 +24,10 @@ class ParsecApp(QApplication):
 
     def event(self, e):
         """Handle macOS FileOpen events."""
+        if e.type() == QEvent.ApplicationActivate:
+            # Necessary to reopen window with dock icon after being closed with
+            # red X on MacOS
+            self.get_main_window().show_top()
         if e.type() != QEvent.FileOpen or e.url().scheme() != "parsec":
             return super().event(e)
         try:

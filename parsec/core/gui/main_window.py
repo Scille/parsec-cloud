@@ -680,7 +680,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         if self.minimize_on_close and not self.need_close:
             self.hide()
             event.ignore()
-            if not self.minimize_on_close_notif_already_send:
+            if not self.minimize_on_close_notif_already_send and platform.system() != "Darwin":
                 self.minimize_on_close_notif_already_send = True
                 self.systray_notification.emit(
                     "Parsec", _("TEXT_TRAY_PARSEC_STILL_RUNNING_MESSAGE"), 2000
