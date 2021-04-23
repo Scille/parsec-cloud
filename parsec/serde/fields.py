@@ -87,6 +87,8 @@ def enum_field_factory(enum):
 
 
 def bytes_based_field_factory(value_type):
+    assert isinstance(value_type, type)
+
     def _serialize(self, value, attr, obj):
         if value is None:
             return None
@@ -111,6 +113,8 @@ def bytes_based_field_factory(value_type):
 
 
 def str_based_field_factory(value_type):
+    assert isinstance(value_type, type)
+
     def _serialize(self, value, attr, data):
         if value is None:
             return None
@@ -131,6 +135,8 @@ def str_based_field_factory(value_type):
 
 
 def uuid_based_field_factory(value_type):
+    assert isinstance(value_type, type)
+
     def _serialize(self, value, attr, data):
         if value is None:
             return None

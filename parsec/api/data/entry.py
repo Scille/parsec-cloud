@@ -1,5 +1,6 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2016-2021 Scille SAS
 
+from unicodedata import normalize
 from uuid import UUID, uuid4
 from typing import Union, Type, TypeVar
 
@@ -37,8 +38,10 @@ EntryIDField = fields.uuid_based_field_factory(EntryID)
 class EntryName(str):
     __slots__ = ()
 
-    def __init__(self, raw: str):
+    def __new__(cls, raw: str) -> "EntryName":
+        return super(EntryName, cls).__new__(cls, normalize("NFC", raw))
 
+    def __init__(self, raw: str):
         # Stick to UNIX filesystem philosophy:
         # - no `.` or `..` name
         # - no `/` or null byte in the name

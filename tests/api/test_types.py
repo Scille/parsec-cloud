@@ -3,7 +3,7 @@
 import pytest
 
 from parsec.api.protocol import UserID, DeviceID, DeviceName, OrganizationID, HumanHandle
-from parsec.api.data import SASCode
+from parsec.api.data import SASCode, EntryName
 
 
 @pytest.mark.parametrize("cls", (UserID, DeviceName, OrganizationID))
@@ -125,3 +125,15 @@ def test_sas_code():
     for invalid in ["", "AAA", "AAAAA", "aaaa", "AAAI", "AAAO", "AAA0", "AAA1"]:
         with pytest.raises(ValueError):
             SASCode(invalid)
+
+
+def test_entryname_normalization():
+    nfc_str = "àáâäæãåāçćčèéêëēėęîïíīįìłñńôöòóœøōõßśšûüùúūÿžźż"
+    nfd_str = (
+        "àáâäæãåāçćčèéêëēėęîïíīįìłñńôöòóœøōõßśšûüùúūÿžźż"
+    )
+
+    assert nfc_str != nfd_str
+    assert EntryName(nfd_str) == nfc_str
+    assert EntryName(nfc_str) == nfc_str
+    assert EntryName(nfc_str + nfd_str) == nfc_str + nfc_str

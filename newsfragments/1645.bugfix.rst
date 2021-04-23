@@ -1,0 +1,1 @@
+Added filename normalization to fix conflicts on special characters on MacOS.
