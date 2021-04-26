@@ -52,7 +52,7 @@ class GoToFileLinkError(Exception):
     pass
 
 
-class GoToFileLinkBadOrgazationIDError(Exception):
+class GoToFileLinkBadOrganizationIDError(Exception):
     pass
 
 
@@ -357,12 +357,12 @@ class CentralWidget(QWidget, Ui_CentralWidget):  # type: ignore[misc]
     def go_to_file_link(self, addr: BackendOrganizationFileLinkAddr, mount: bool = True) -> None:
         """
         Raises:
-            GoToFileLinkBadOrgazationIDError
+            GoToFileLinkBadOrganizationIDError
             GoToFileLinkBadWorkspaceIDError
             GoToFileLinkPathDecryptionError
         """
         if addr.organization_id != self.core.device.organization_id:
-            raise GoToFileLinkBadOrgazationIDError
+            raise GoToFileLinkBadOrganizationIDError
         try:
             workspace = self.core.user_fs.get_workspace(addr.workspace_id)
         except FSWorkspaceNotFoundError as exc:

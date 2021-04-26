@@ -47,7 +47,7 @@ from parsec.core.gui.custom_widgets import Button, ensure_string_size
 from parsec.core.gui.create_org_widget import CreateOrgWidget
 from parsec.core.gui.ui.main_window import Ui_MainWindow
 from parsec.core.gui.central_widget import (
-    GoToFileLinkBadOrgazationIDError,
+    GoToFileLinkBadOrganizationIDError,
     GoToFileLinkBadWorkspaceIDError,
     GoToFileLinkPathDecryptionError,
 )
@@ -593,7 +593,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):  # type: ignore[misc]
             try:
                 central_widget.go_to_file_link(addr)
 
-            except GoToFileLinkBadOrgazationIDError:
+            except GoToFileLinkBadOrganizationIDError:
                 continue
             except GoToFileLinkBadWorkspaceIDError:
                 show_error(
