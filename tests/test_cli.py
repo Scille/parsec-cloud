@@ -25,11 +25,16 @@ from parsec import __version__ as parsec_version
 from parsec.backend.postgresql import MigrationItem
 from parsec.core.local_device import save_device_with_password
 from parsec.cli import cli
-from parsec.api.protocol import RealmRole
+from parsec.core.cli.share_workspace import WorkspaceRoleChoice
 
 CWD = Path(__file__).parent.parent
 BACKEND_ADDR = "parsec://localhost"
 EMAIL_HOST = "MOCKED"
+
+
+@pytest.fixture(params=WorkspaceRoleChoice.STR_TO_ROLE.keys())
+def cli_workspace_role(request):
+    return request.param
 
 
 def test_version():
@@ -39,7 +44,7 @@ def test_version():
     assert f"parsec, version {parsec_version}\n" in result.output
 
 
-def test_share_workspace(tmpdir, alice, bob):
+def test_share_workspace(tmpdir, alice, bob, cli_workspace_role):
     # As usual Windows path require a big hack...
     config_dir = tmpdir.strpath.replace("\\", "\\\\")
     # Mocking
@@ -63,6 +68,7 @@ def test_share_workspace(tmpdir, alice, bob):
         args = (
             f"core share_workspace --password {password} "
             f"--device={bob.slughash} --config-dir={config_dir} "
+            f"--role={cli_workspace_role} "
             f"ws1 {alice.user_id}"
         )
         result = runner.invoke(cli, args)
@@ -70,7 +76,9 @@ def test_share_workspace(tmpdir, alice, bob):
     assert result.exit_code == 0
 
     factory_mock.assert_called_once_with(ANY, bob)
-    share_mock.assert_called_once_with("/ws1", alice.user_id, RealmRole.READER)
+    share_mock.assert_called_once_with(
+        "/ws1", alice.user_id, WorkspaceRoleChoice.STR_TO_ROLE[cli_workspace_role]
+    )
 
 
 def _short_cmd(cmd):
