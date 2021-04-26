@@ -10,32 +10,30 @@ from parsec.core.cli.utils import core_config_and_device_options
 from parsec.core.types import WorkspaceRole
 
 
-def cli_role_to_workspacerole(role):
-    roles = {
-        "READER": WorkspaceRole.READER,
-        "CONTRIBUTOR": WorkspaceRole.CONTRIBUTOR,
-        "MANAGER": WorkspaceRole.MANAGER,
-        "OWNER": WorkspaceRole.OWNER,
-    }
-    return roles[role]
+class WorkspaceRoleChoice(click.Choice):
+    STR_TO_ROLE = {"NONE": None, **{role.value: role for role in WorkspaceRole}}
+
+    def __init__(self, **kwargs):
+        super().__init__(self.STR_TO_ROLE, **kwargs)
+
+    def convert(self, value, param, ctx):
+        ret = super().convert(value, param, ctx)
+        return self.STR_TO_ROLE[ret.upper()]
 
 
 async def _share_workspace(config, device, name, user_id, user_role):
     async with logged_core_factory(config, device) as core:
-        role = cli_role_to_workspacerole(user_role)
-        await core.user_fs.workspace_share(f"/{name}", user_id, role)
+        await core.user_fs.workspace_share(f"/{name}", user_id, user_role)
 
 
 @click.command(short_help="share workspace")
 @core_config_and_device_options
 @click.argument("workspace_name")
 @click.argument("user_id", type=UserID, required=True)
-@click.argument(
-    "user_role", default="READER", type=click.Choice(("READER", "CONTRIBUTOR", "MANAGER", "OWNER"))
-)
-def share_workspace(config, device, workspace_name, user_id, user_role, **kwargs):
+@click.option("--role", type=WorkspaceRoleChoice(case_sensitive=False))
+def share_workspace(config, device, workspace_name, user_id, role, **kwargs):
     """
     Create a new workspace for the given device.
     """
     with cli_exception_handler(config.debug):
-        trio_run(_share_workspace, config, device, workspace_name, user_id, user_role)
+        trio_run(_share_workspace, config, device, workspace_name, user_id, role)
