@@ -27,7 +27,9 @@ class WorkspaceRoleChoice(click.Choice):
 
 async def _share_workspace(config, device, name, user_id, user_role):
     async with logged_core_factory(config, device) as core:
-        await core.user_fs.workspace_share(f"/{name}", user_id, user_role)
+        workspace = core.find_workspace_from_name(name)
+        print(workspace)
+        await core.user_fs.workspace_share(workspace.id, user_id, user_role)
 
 
 @click.command(short_help="share workspace")

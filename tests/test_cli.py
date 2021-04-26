@@ -34,7 +34,10 @@ EMAIL_HOST = "MOCKED"
 
 @pytest.fixture(params=WorkspaceRoleChoice.STR_TO_ROLE.keys())
 def cli_workspace_role(request):
-    return request.param
+    expected_role = WorkspaceRoleChoice.fix_none_choice(
+        WorkspaceRoleChoice.STR_TO_ROLE[request.param]
+    )
+    return request.param, expected_role
 
 
 def test_version():
@@ -50,6 +53,7 @@ def test_share_workspace(tmpdir, alice, bob, cli_workspace_role):
     # Mocking
     factory_mock = MagicMock()
     share_mock = MagicMock()
+    workspace_role, expected_workspace_role = cli_workspace_role
 
     @asynccontextmanager
     async def logged_core_factory(*args, **kwargs):
@@ -59,6 +63,7 @@ def test_share_workspace(tmpdir, alice, bob, cli_workspace_role):
         return share_mock(*args, **kwargs)
 
     factory_mock.return_value.user_fs.workspace_share = share
+    factory_mock.return_value.find_workspace_from_name.return_value.id = "ws1_id"
 
     password = "S3cr3t"
     save_device_with_password(Path(config_dir), bob, password)
@@ -68,7 +73,7 @@ def test_share_workspace(tmpdir, alice, bob, cli_workspace_role):
         args = (
             f"core share_workspace --password {password} "
             f"--device={bob.slughash} --config-dir={config_dir} "
-            f"--role={cli_workspace_role} "
+            f"--role={workspace_role} "
             f"ws1 {alice.user_id}"
         )
         result = runner.invoke(cli, args)
@@ -76,9 +81,7 @@ def test_share_workspace(tmpdir, alice, bob, cli_workspace_role):
     assert result.exit_code == 0
 
     factory_mock.assert_called_once_with(ANY, bob)
-    share_mock.assert_called_once_with(
-        "/ws1", alice.user_id, WorkspaceRoleChoice.STR_TO_ROLE[cli_workspace_role]
-    )
+    share_mock.assert_called_once_with("ws1_id", alice.user_id, expected_workspace_role)
 
 
 def _short_cmd(cmd):
