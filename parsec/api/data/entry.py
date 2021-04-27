@@ -39,22 +39,20 @@ class EntryName(str):
     __slots__ = ()
 
     def __new__(cls, raw: str) -> "EntryName":
-        return super(EntryName, cls).__new__(cls, normalize("NFC", raw))
-
-    def __init__(self, raw: str):
+        raw = normalize("NFC", raw)
         # Stick to UNIX filesystem philosophy:
         # - no `.` or `..` name
         # - no `/` or null byte in the name
         # - max 255 bytes long name
         if (
-            not isinstance(raw, str)
-            or not 0 < len(raw.encode("utf8")) < 256
+            not 0 < len(raw.encode("utf8")) < 256
             or raw == "."
             or raw == ".."
             or "/" in raw
             or "\x00" in raw
         ):
             raise ValueError("Invalid entry name")
+        return super(EntryName, cls).__new__(cls, raw)
 
 
 EntryNameField = fields.str_based_field_factory(EntryName)

@@ -1,6 +1,7 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2016-2021 Scille SAS
 
 import re
+from unicodedata import normalize
 from typing import Union, TypeVar, Type, NoReturn
 from uuid import uuid4
 from collections import namedtuple
@@ -22,9 +23,11 @@ class OrganizationID(str):
     __slots__ = ()
     regex = re.compile(r"^[\w\-]{1,32}$")
 
-    def __init__(self, raw: str):
-        if not isinstance(raw, str) or not self.regex.match(raw) or _bytes_size(raw) > 32:
+    def __new__(cls, raw: str) -> "OrganizationID":
+        raw = normalize("NFC", raw)
+        if not cls.regex.match(raw) or _bytes_size(raw) > 32:
             raise ValueError("Invalid organization ID")
+        return super(OrganizationID, cls).__new__(cls, raw)
 
     def __repr__(self) -> str:
         return f"<OrganizationID {super().__repr__()}>"
@@ -34,9 +37,11 @@ class UserID(str):
     __slots__ = ()
     regex = re.compile(r"^[\w\-]{1,32}$")
 
-    def __init__(self, raw: str):
-        if not isinstance(raw, str) or not self.regex.match(raw) or _bytes_size(raw) > 32:
+    def __new__(cls, raw: str) -> "UserID":
+        raw = normalize("NFC", raw)
+        if not cls.regex.match(raw) or _bytes_size(raw) > 32:
             raise ValueError("Invalid user name")
+        return super(UserID, cls).__new__(cls, raw)
 
     def __repr__(self) -> str:
         return f"<UserID {super().__repr__()}>"
@@ -53,9 +58,11 @@ class DeviceName(str):
     __slots__ = ()
     regex = re.compile(r"^[\w\-]{1,32}$")
 
-    def __init__(self, raw: str):
-        if not isinstance(raw, str) or not self.regex.match(raw) or _bytes_size(raw) > 32:
+    def __new__(cls, raw: str) -> "DeviceName":
+        raw = normalize("NFC", raw)
+        if not cls.regex.match(raw) or _bytes_size(raw) > 32:
             raise ValueError("Invalid device name")
+        return super(DeviceName, cls).__new__(cls, raw)
 
     def __repr__(self) -> str:
         return f"<DeviceName {super().__repr__()}>"
@@ -69,9 +76,11 @@ class DeviceID(str):
     __slots__ = ()
     regex = re.compile(r"^[\w\-]{1,32}@[\w\-]{1,32}$")
 
-    def __init__(self, raw: str):
-        if not isinstance(raw, str) or not self.regex.match(raw) or _bytes_size(raw) > 65:
+    def __new__(cls, raw: str) -> "DeviceID":
+        raw = normalize("NFC", raw)
+        if not cls.regex.match(raw) or _bytes_size(raw) > 65:
             raise ValueError("Invalid device ID")
+        return super(DeviceID, cls).__new__(cls, raw)
 
     def __repr__(self) -> str:
         return f"<DeviceID {super().__repr__()}>"
@@ -98,20 +107,22 @@ DeviceIDField = fields.str_based_field_factory(DeviceID)
 class HumanHandle(namedtuple("HumanHandle", "email label")):
     __slots__ = ()
 
-    def __init__(self, email: str, label: str):
+    def __new__(cls, email: str, label: str) -> "HumanHandle":
+        email = normalize("NFC", email)
+        label = normalize("NFC", label)
+
         # TODO: how to check the email  easily ?
-        if not isinstance(email, str) or not 0 < _bytes_size(email) < 255:
+        if not 0 < _bytes_size(email) < 255:
             raise ValueError("Invalid email address")
 
-        if not isinstance(label, str) or not 0 < _bytes_size(label) < 255:
+        if not 0 < _bytes_size(label) < 255:
             raise ValueError("Invalid label")
 
-        parsed_label, parsed_email = parseaddr(str(self))
+        parsed_label, parsed_email = parseaddr(f"{label} <{email}>")
         if parsed_email != email or parsed_label != label:
             raise ValueError("Invalid email/label couple")
 
-        # No need to call super().__init__ given namedtuple set attributes during __new__
-        super().__init__()
+        return super(HumanHandle, cls).__new__(cls, email, label)
 
     def __repr__(self) -> str:
         return f"<HumanHandle {str(self)} >"
