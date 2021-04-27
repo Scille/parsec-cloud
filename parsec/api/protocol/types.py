@@ -107,10 +107,8 @@ class HumanHandle(namedtuple("HumanHandle", "email label")):
             raise ValueError("Invalid label")
 
         parsed_label, parsed_email = parseaddr(str(self))
-        if parsed_email != email:
-            raise ValueError("Invalid email address")
-        if parsed_label != label:
-            raise ValueError("Invalid label")
+        if parsed_email != email or parsed_label != label:
+            raise ValueError("Invalid email/label couple")
 
         # No need to call super().__init__ given namedtuple set attributes during __new__
         super().__init__()

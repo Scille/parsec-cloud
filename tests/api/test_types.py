@@ -100,6 +100,8 @@ def test_valid_human_handle(email, label):
         (f"{'飞' * 21}@{'飞' * 63}.x", "Alice"),  # 255 bytes long utf8 email
         ("alice@example.com", ""),  # Empty label
         ("", "Alice"),  # Empty email
+        ("", "Alice <alice@example.com>"),  # Empty email and misleading label
+        ("Alice <alice@example.com>", ""),  # Empty label and misleading label
     ),
 )
 def test_invalid_human_handle(email, label):
