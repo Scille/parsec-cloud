@@ -6,9 +6,12 @@ from unittest.mock import ANY
 
 from parsec.api.protocol import DeviceID, RealmRole
 from parsec.api.data import BaseManifest as BaseRemoteManifest
-from parsec.core.types import FsPath, EntryID
+from parsec.core.types import FsPath, EntryID, DEFAULT_BLOCK_SIZE
 from parsec.core.fs.exceptions import FSError, FSBackendOfflineError
 from parsec.core.fs.workspacefs.workspacefs import ReencryptionNeed
+from parsec.backend.block import BlockNotFoundError
+
+from tests.common import create_shared_workspace
 
 
 @pytest.mark.trio
@@ -438,3 +441,77 @@ async def test_get_reencryption_need(alice_workspace, running_backend, monkeypat
     with running_backend.offline():
         with pytest.raises(FSBackendOfflineError):
             await alice_workspace.get_reencryption_need()
+
+
+@pytest.mark.trio
+async def test_upload_blocks(alice_user_fs, alice2_user_fs, running_backend, monkeypatch):
+    wid = await create_shared_workspace("w", alice_user_fs, alice2_user_fs)
+    alice_workspace = alice_user_fs.get_workspace(wid)
+
+    alice2_workspace = alice2_user_fs.get_workspace(wid)
+
+    fspath = "/taz"
+
+    await alice_workspace.touch(fspath)
+    await alice_workspace.sync()
+
+    await alice_workspace.write_bytes(fspath, b"aaaaaa" * DEFAULT_BLOCK_SIZE)
+
+    info = await alice_workspace.path_info(fspath)
+
+    assert info["base_version"] == 1
+    assert info["is_placeholder"] is False
+    assert info["need_sync"] is True
+
+    assert await alice2_workspace.read_bytes(fspath) == bytearray()
+
+    # mock the synchronization_step method to retrieve the new manifest
+    vanilla_transaction_synchronization_step = alice_workspace.transactions.synchronization_step
+    block_id_error = None
+
+    async def mock_synchronization_step(entry_id, *args, **kwargs):
+        nonlocal block_id_error
+        nonlocal info
+        res = await vanilla_transaction_synchronization_step(entry_id, *args, **kwargs)
+        if entry_id == info["id"] and res:
+            block_id_error = res.blocks[2].id
+
+        return res
+
+    monkeypatch.setattr(
+        alice_workspace.transactions, "synchronization_step", mock_synchronization_step
+    )
+
+    vanilla_backend_block_create = running_backend.backend.block.create
+
+    async def mock_backend_block_create(*args, **kwargs):
+        nonlocal block_id_error
+        if kwargs["block_id"] == block_id_error:
+            raise BlockNotFoundError()
+        return await vanilla_backend_block_create(*args, **kwargs)
+
+    monkeypatch.setattr(running_backend.backend.block, "create", mock_backend_block_create)
+
+    with pytest.raises(FSError):
+        await alice_workspace.sync()
+
+    info = await alice_workspace.path_info(fspath)
+
+    assert info["base_version"] == 1
+    assert info["is_placeholder"] is False
+    assert info["need_sync"] is True
+
+    monkeypatch.setattr(running_backend.backend.block, "create", vanilla_backend_block_create)
+
+    await alice2_workspace.sync()
+    assert await alice2_workspace.read_bytes(fspath) == bytearray()
+
+    await alice_workspace.sync()
+
+    info = await alice_workspace.path_info(fspath)
+    assert info["base_version"] == 2
+    assert info["is_placeholder"] is False
+    assert info["need_sync"] is False
+
+    await alice2_workspace.sync()
+    assert await alice2_workspace.read_bytes(fspath) == b"aaaaaa" * DEFAULT_BLOCK_SIZE
