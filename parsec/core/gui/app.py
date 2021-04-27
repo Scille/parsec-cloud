@@ -171,6 +171,7 @@ def run_gui(config: CoreConfig, start_arg: str = None, diagnose: bool = False):
             # Another instance of Parsec already started, nothing more to do
             return
 
+        # Systray is not displayed on MacOS, having natively a menu with similar functions.
         if systray_available() and sys.platform != "darwin":
             systray = Systray(parent=win)
             win.systray_notification.connect(systray.on_systray_notification)
