@@ -1,6 +1,7 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2016-2021 Scille SAS
 
 import os
+import sys
 import errno
 from pathlib import Path
 from string import ascii_lowercase
@@ -246,7 +247,7 @@ class PathElement:
 
 
 @pytest.mark.slow
-@pytest.mark.skipif(os.name == "nt", reason="Windows path style not compatible with oracle")
+@pytest.mark.skipif(sys.platform == "win32", reason="Windows path style not compatible with oracle")
 def test_entry_transactions(
     tmpdir,
     hypothesis_settings,

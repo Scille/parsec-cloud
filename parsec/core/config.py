@@ -1,6 +1,7 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2016-2021 Scille SAS
 
 import os
+import sys
 import attr
 import json
 from typing import Optional, FrozenSet
@@ -16,7 +17,7 @@ logger = get_logger()
 
 
 def get_default_data_base_dir(environ: dict) -> Path:
-    if os.name == "nt":
+    if sys.platform == "win32":
         return Path(environ["APPDATA"]) / "parsec/data"
     else:
         path = environ.get("XDG_DATA_HOME")
@@ -26,7 +27,7 @@ def get_default_data_base_dir(environ: dict) -> Path:
 
 
 def get_default_cache_base_dir(environ: dict) -> Path:
-    if os.name == "nt":
+    if sys.platform == "win32":
         return Path(environ["APPDATA"]) / "parsec/cache"
     else:
         path = environ.get("XDG_CACHE_HOME")
@@ -36,7 +37,7 @@ def get_default_cache_base_dir(environ: dict) -> Path:
 
 
 def get_default_config_dir(environ: dict) -> Path:
-    if os.name == "nt":
+    if sys.platform == "win32":
         return Path(environ["APPDATA"]) / "parsec/config"
     else:
         path = environ.get("XDG_CONFIG_HOME")
@@ -169,7 +170,7 @@ def config_factory(
     core_config.cache_base_dir.mkdir(mode=0o700, parents=True, exist_ok=True)
 
     # Mountpoint base directory is not used on windows
-    if os.name != "nt":
+    if sys.platform != "win32":
         core_config.mountpoint_base_dir.mkdir(mode=0o700, parents=True, exist_ok=True)
 
     return core_config

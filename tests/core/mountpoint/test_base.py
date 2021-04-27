@@ -81,7 +81,7 @@ async def test_base_mountpoint_not_created(base_mountpoint, alice_user_fs, event
 
 @pytest.mark.trio
 @pytest.mark.mountpoint
-@pytest.mark.skipif(os.name == "nt", reason="Windows uses drive")
+@pytest.mark.skipif(sys.platform == "win32", reason="Windows uses drive")
 async def test_mountpoint_path_already_in_use(
     base_mountpoint, running_backend, alice_user_fs, alice2_user_fs
 ):
@@ -252,7 +252,7 @@ def test_manifest_not_available(mountpoint_service_factory):
 
     with pytest.raises(OSError) as exc:
         (x_path / "foo.txt").stat()
-    if os.name == "nt":
+    if sys.platform == "win32":
         # This winerror code corresponds to ntstatus.STATUS_HOST_UNREACHABLE
         ERROR_HOST_UNREACHABLE = 1232
         assert exc.value.winerror == ERROR_HOST_UNREACHABLE
@@ -281,7 +281,7 @@ async def test_get_path_in_mountpoint(base_mountpoint, alice_user_fs, event_bus)
 
         assert isinstance(bar_path, PurePath)
         # Windows uses drives, not base_mountpoint
-        if os.name != "nt":
+        if sys.platform != "win32":
             expected = base_mountpoint / "mounted_wksp" / "bar.txt"
             assert str(bar_path) == str(expected.absolute())
         assert await trio.Path(bar_path).exists()
@@ -310,7 +310,7 @@ def test_unhandled_crash_in_fs_operation(caplog, mountpoint_service, monkeypatch
         (mountpoint_service.wpath / "crash_me").stat()
 
     assert exc.value.errno == errno.EINVAL
-    if os.name == "nt":
+    if sys.platform == "win32":
         caplog.assert_occured(
             "[exception] Unhandled exception in winfsp mountpoint [parsec.core.mountpoint.winfsp_operations]"
         )
@@ -371,7 +371,7 @@ async def test_mountpoint_revoke_access(
     async def assert_cannot_write(mountpoint_manager, new_role):
         expected_error, expected_errno = PermissionError, errno.EACCES
         # On linux, errno.EROFS is not translated to a PermissionError
-        if new_role is WorkspaceRole.READER and os.name != "nt":
+        if new_role is WorkspaceRole.READER and sys.platform != "win32":
             expected_error, expected_errno = OSError, errno.EROFS
         root_path = get_root_path(mountpoint_manager)
         foo_path = root_path / "foo.txt"
@@ -471,7 +471,7 @@ async def test_mountpoint_revoke_access(
 
 
 @pytest.mark.mountpoint
-@pytest.mark.skipif(os.name == "nt", reason="TODO: crash with WinFSP :'(")
+@pytest.mark.skipif(sys.platform == "win32", reason="TODO: crash with WinFSP :'(")
 def test_stat_mountpoint(mountpoint_service):
     async def _bootstrap(user_fs, mountpoint_manager):
         workspace = user_fs.get_workspace(mountpoint_service.wid)

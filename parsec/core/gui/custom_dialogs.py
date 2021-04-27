@@ -1,6 +1,6 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2016-2021 Scille SAS
 
-import platform
+import sys
 
 from PyQt5.QtCore import Qt, pyqtSignal
 from PyQt5.QtGui import QPainter, QValidator
@@ -41,7 +41,7 @@ class GreyedDialog(QDialog, Ui_GreyedDialog):
         self.setObjectName("GreyedDialog")
         self.setWindowModality(Qt.ApplicationModal)
         self.button_close.apply_style()
-        if platform.system() == "Windows":
+        if sys.platform == "win32":
             # SplashScreen on Windows freezes the Window
             self.setWindowFlags(Qt.FramelessWindowHint)
         else:
@@ -108,7 +108,7 @@ class GreyedDialog(QDialog, Ui_GreyedDialog):
         # On Windows, GreyedDialogs don't get cleared out if their parent
         # is not set to None. Linux seems to clear them automatically over time.
         # Resetting the parent on MacOS causes a crash.
-        if platform.system() != "Darwin":
+        if sys.platform != "darwin":
             self.setParent(None)
 
 

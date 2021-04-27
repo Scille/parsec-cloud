@@ -1,7 +1,7 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2016-2021 Scille SAS
 
 import re
-import platform
+import sys
 import trio
 import json
 from json import JSONDecodeError
@@ -145,7 +145,7 @@ class CheckNewVersion(QDialog, Ui_NewVersionDialog):
         super().__init__(**kwargs)
         self.setupUi(self)
 
-        if platform.system() != "Windows":
+        if sys.platform != "win32":
             return
 
         self.widget_info = NewVersionInfo(parent=self)

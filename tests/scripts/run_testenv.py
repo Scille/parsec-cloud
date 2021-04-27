@@ -14,7 +14,6 @@ import pkg_resources
 pkg_resources.require("parsec-cloud[all]")
 
 import os
-import platform
 import sys
 import re
 import tempfile
@@ -46,7 +45,7 @@ DEFAULT_BLOCKSTORE = "MOCKED"
 async def new_environment(source_file=None):
     export_lines = []
     tempdir = tempfile.mkdtemp()
-    if os.name == "nt":
+    if sys.platform == "win32":
         export = "set"
         env = {"APPDATA": tempdir}
     else:
@@ -89,7 +88,7 @@ Your environment will be configured with the following commands:
 
 async def generate_gui_config(backend_address):
     config_dir = None
-    if os.name == "nt":
+    if sys.platform == "win32":
         config_dir = trio.Path(os.environ["APPDATA"]) / "parsec/config"
     else:
         config_dir = trio.Path(os.environ["XDG_CONFIG_HOME"]) / "parsec"
@@ -109,7 +108,7 @@ async def generate_gui_config(backend_address):
 
 
 async def configure_mime_types():
-    if platform.system() == "Windows" or platform.system() == "Darwin":
+    if sys.platform == "win32" or sys.platform == "darwin":
         return
     XDG_DATA_HOME = os.environ["XDG_DATA_HOME"]
     desktop_file = trio.Path(f"{XDG_DATA_HOME}/applications/parsec.desktop")
@@ -154,7 +153,7 @@ async def restart_local_backend(administration_token, backend_port, email_host, 
         backend_process.stdout.close()
 
     # Windows restart
-    if os.name == "nt" or True:
+    if sys.platform == "win32" or True:
         await trio.to_thread.run_sync(_windows_target)
 
     # Linux restart
