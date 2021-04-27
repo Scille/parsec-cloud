@@ -49,27 +49,29 @@ def before_quit(systray):
 
 
 async def _start_ipc_server(config, main_window, start_arg, result_queue):
-    new_instance_needed_qt = ThreadSafeQtSignal(main_window, "new_instance_needed", object)
-    foreground_needed_qt = ThreadSafeQtSignal(main_window, "foreground_needed")
+    try:
+        new_instance_needed_qt = ThreadSafeQtSignal(main_window, "new_instance_needed", object)
+        foreground_needed_qt = ThreadSafeQtSignal(main_window, "foreground_needed")
 
-    async def cmd_handler(cmd):
-        if cmd["cmd"] == IPCCommand.FOREGROUND:
-            foreground_needed_qt.emit()
-        elif cmd["cmd"] == IPCCommand.NEW_INSTANCE:
-            new_instance_needed_qt.emit(cmd.get("start_arg"))
-        return {"status": "ok"}
+        async def _cmd_handler(cmd):
+            if cmd["cmd"] == IPCCommand.FOREGROUND:
+                foreground_needed_qt.emit()
+            elif cmd["cmd"] == IPCCommand.NEW_INSTANCE:
+                new_instance_needed_qt.emit(cmd.get("start_arg"))
+            return {"status": "ok"}
 
-    while True:
-        try:
-            async with run_ipc_server(
-                cmd_handler, config.ipc_socket_file, win32_mutex_name=config.ipc_win32_mutex_name
-            ):
-                result_queue.put("started")
-                await trio.sleep_forever()
-
-        except IPCServerAlreadyRunning:
-            # Parsec is already started, give it our work then
+        while True:
             try:
+                async with run_ipc_server(
+                    _cmd_handler,
+                    config.ipc_socket_file,
+                    win32_mutex_name=config.ipc_win32_mutex_name,
+                ):
+                    result_queue.put_nowait("started")
+                    await trio.sleep_forever()
+
+            except IPCServerAlreadyRunning:
+                # Parsec is already started, give it our work then
                 try:
                     if start_arg:
                         await send_to_ipc_server(
@@ -77,13 +79,18 @@ async def _start_ipc_server(config, main_window, start_arg, result_queue):
                         )
                     else:
                         await send_to_ipc_server(config.ipc_socket_file, IPCCommand.FOREGROUND)
-                finally:
-                    result_queue.put("already_running")
-                return
 
-            except IPCServerNotRunning:
-                # IPC server has closed, retry to create our own
-                continue
+                except IPCServerNotRunning:
+                    # IPC server has closed, retry to create our own
+                    continue
+
+                # We have successfuly noticed the other running application
+                result_queue.put_nowait("already_running")
+                break
+
+    except Exception:
+        result_queue.put_nowait("error")
+        raise
 
 
 @contextmanager
