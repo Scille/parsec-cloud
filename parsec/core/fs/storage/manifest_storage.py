@@ -276,7 +276,10 @@ class ManifestStorage:
             ciphered = manifest.dump_and_encrypt(self.device.local_symkey)
 
             # Insert into the local database
-            cursor.execute(
+            # Use a thread as executing a statement that modifies the content of the database might,
+            # in some case, block for several hundreds of milliseconds
+            await trio.to_thread.run_sync(
+                cursor.execute,
                 """INSERT OR REPLACE INTO vlobs (vlob_id, blob, need_sync, base_version, remote_version)
                 VALUES (
                     ?, ?, ?, ?,

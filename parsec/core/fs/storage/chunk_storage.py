@@ -98,7 +98,10 @@ class ChunkStorage:
 
     async def get_chunk(self, chunk_id: ChunkID) -> bytes:
         async with self._open_cursor() as cursor:
-            cursor.execute(
+            # Use a thread as executing a statement that modifies the content of the database might,
+            # in some case, block for several hundreds of milliseconds
+            await trio.to_thread.run_sync(
+                cursor.execute,
                 """
                 UPDATE chunks SET accessed_on = ? WHERE chunk_id = ?;
                 """,
@@ -108,7 +111,6 @@ class ChunkStorage:
             changes, = cursor.fetchone()
             if not changes:
                 raise FSLocalMissError(chunk_id)
-
             cursor.execute("""SELECT data FROM chunks WHERE chunk_id = ?""", (chunk_id.bytes,))
             ciphered, = cursor.fetchone()
 
@@ -120,7 +122,10 @@ class ChunkStorage:
 
         # Update database
         async with self._open_cursor() as cursor:
-            cursor.execute(
+            # Use a thread as executing a statement that modifies the content of the database might,
+            # in some case, block for several hundreds of milliseconds
+            await trio.to_thread.run_sync(
+                cursor.execute,
                 """INSERT OR REPLACE INTO
                 chunks (chunk_id, size, offline, accessed_on, data)
                 VALUES (?, ?, ?, ?, ?)""",
@@ -129,7 +134,11 @@ class ChunkStorage:
 
     async def clear_chunk(self, chunk_id: ChunkID) -> None:
         async with self._open_cursor() as cursor:
-            cursor.execute("DELETE FROM chunks WHERE chunk_id = ?", (chunk_id.bytes,))
+            # Use a thread as executing a statement that modifies the content of the database might,
+            # in some case, block for several hundreds of milliseconds
+            await trio.to_thread.run_sync(
+                cursor.execute, "DELETE FROM chunks WHERE chunk_id = ?", (chunk_id.bytes,)
+            )
             cursor.execute("SELECT changes()")
             changes, = cursor.fetchone()
 
@@ -179,7 +188,10 @@ class BlockStorage(ChunkStorage):
         async with self._open_cursor() as cursor:
 
             # Insert the chunk
-            cursor.execute(
+            # Use a thread as executing a statement that modifies the content of the database might,
+            # in some case, block for several hundreds of milliseconds
+            await trio.to_thread.run_sync(
+                cursor.execute,
                 """INSERT OR REPLACE INTO
                 chunks (chunk_id, size, offline, accessed_on, data)
                 VALUES (?, ?, ?, ?, ?)""",
@@ -197,7 +209,10 @@ class BlockStorage(ChunkStorage):
 
             # Remove the extra block plus 10 % of the cache size, i.e about 100 blocks
             limit = extra_blocks + self.block_limit // 10
-            cursor.execute(
+            # Use a thread as executing a statement that modifies the content of the database might,
+            # in some case, block for several hundreds of milliseconds
+            await trio.to_thread.run_sync(
+                cursor.execute,
                 """
                 DELETE FROM chunks WHERE chunk_id IN (
                     SELECT chunk_id FROM chunks ORDER BY accessed_on ASC LIMIT ?
