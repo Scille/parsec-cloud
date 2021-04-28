@@ -1,6 +1,7 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2016-2021 Scille SAS
 
 import os
+import sys
 import errno
 import pytest
 import trio
@@ -44,13 +45,13 @@ async def test_inconsistent_folder_with_network(base_mountpoint, running_backend
 def _os_tests(mountpoint_path, error_code, winerror):
 
     # Check stat of inconsistent dir counts one file on Windows, 2 on Linux
-    assert ((mountpoint_path / "rep").stat()).st_nlink == 1 if os.name == "nt" else 2
+    assert ((mountpoint_path / "rep").stat()).st_nlink == 1 if sys.platform == "win32" else 2
 
     # Check listdir on workspace dir still works
     os.listdir(mountpoint_path)
 
     # Check listdir of inconsistent dir fails on Windows, works on Linux
-    if os.name == "nt":
+    if sys.platform == "win32":
         with pytest.raises(OSError) as exc:
             os.listdir(mountpoint_path / "rep")
         assert exc.value.winerror == winerror
@@ -60,7 +61,7 @@ def _os_tests(mountpoint_path, error_code, winerror):
 
     # Check scandir of inconsistent dir fails on Windows, works on Linux
     # But check that accessing stats of the inconsistent child is failing as expected on Linux
-    if os.name == "nt":
+    if sys.platform == "win32":
         with pytest.raises(OSError) as exc:
             [dir_entry for dir_entry in os.scandir(mountpoint_path / "rep")]
         assert exc.value.winerror == winerror

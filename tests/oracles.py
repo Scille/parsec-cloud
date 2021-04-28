@@ -1,6 +1,6 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2016-2021 Scille SAS
 
-import os
+import sys
 import pytest
 import shutil
 from pathlib import Path
@@ -16,7 +16,7 @@ def oracle_fs_factory(tmpdir):
             self.root.mkdir()
             # Root oracle can no longer be removed this way
             self.base.chmod(0o500)
-            if os.name == "nt":
+            if sys.platform == "win32":
                 self.root.chmod(0o500)
             self.entries_stats = {}
             self._register_stat(self.root, "root")

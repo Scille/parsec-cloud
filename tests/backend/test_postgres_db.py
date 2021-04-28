@@ -2,7 +2,7 @@
 
 import pytest
 import trio
-import platform
+import sys
 import triopg
 
 from parsec.backend.cli.run import _run_backend, RetryPolicy
@@ -56,7 +56,7 @@ async def test_postgresql_connection_not_ok(
     with pytest.raises(OSError) as exc:
         async with backend_factory(config={"db_url": postgresql_url}):
             pass
-    if platform.system() == "Darwin":
+    if sys.platform == "darwin":
         errno = 61
     else:
         errno = 111

@@ -171,7 +171,7 @@ def _wait_for_regex(p, regex):
         raise AssertionError("Too slow")
 
 
-@pytest.mark.skipif(os.name == "nt", reason="Hard to test on Windows...")
+@pytest.mark.skipif(sys.platform == "win32", reason="Hard to test on Windows...")
 def test_migrate_backend(postgresql_url, unused_tcp_port):
     sql = "SELECT current_database();"  # Dummy migration content
     dry_run_args = f"backend migrate --db {postgresql_url} --dry-run"
@@ -243,7 +243,7 @@ def ssl_conf(request):
 
 
 @pytest.mark.slow
-@pytest.mark.skipif(os.name == "nt", reason="Hard to test on Windows...")
+@pytest.mark.skipif(sys.platform == "win32", reason="Hard to test on Windows...")
 def test_full_run(coolorg, unused_tcp_port, tmpdir, ssl_conf):
     # As usual Windows path require a big hack...
     config_dir = tmpdir.strpath.replace("\\", "\\\\")
@@ -539,12 +539,12 @@ def test_full_run(coolorg, unused_tcp_port, tmpdir, ssl_conf):
         pytest.param(
             {"WINFSP_LIBRARY_PATH": "nope"},
             id="Wrong winfsp library path",
-            marks=pytest.mark.skipif(os.name != "nt", reason="Windows only"),
+            marks=pytest.mark.skipif(sys.platform != "win32", reason="Windows only"),
         ),
         pytest.param(
             {"WINFSP_DEBUG_PATH": "nope"},
             id="Wrong winfsp binary path",
-            marks=pytest.mark.skipif(os.name != "nt", reason="Windows only"),
+            marks=pytest.mark.skipif(sys.platform != "win32", reason="Windows only"),
         ),
     ],
 )

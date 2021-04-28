@@ -4,12 +4,13 @@ from parsec.core.core_events import CoreEvent
 import os
 import trio
 import logging
+import sys
+
 from pathlib import PurePath
 from pendulum import DateTime
 from structlog import get_logger
 from typing import Sequence, Optional
 from importlib import __import__ as import_function
-from sys import platform as _platform
 from subprocess import CalledProcessError
 
 from async_generator import asynccontextmanager
@@ -36,7 +37,7 @@ from parsec.core.win_registry import cleanup_parsec_drive_icons
 # avoid spending too much time importing them later while the
 # trio loop is running.
 try:
-    if os.name == "nt":
+    if sys.platform == "win32":
         import_function("winfspy")
     else:
         import_function("fuse")
@@ -48,7 +49,7 @@ logger = get_logger()
 
 def get_mountpoint_runner():
     # Windows
-    if os.name == "nt":
+    if sys.platform == "win32":
 
         try:
             # Use import function for easier mock up
@@ -86,7 +87,7 @@ class MountpointManager:
         self._mountpoint_tasks = {}
         self._timestamped_workspacefs = {}
 
-        if os.name == "nt":
+        if sys.platform == "win32":
             self._build_mountpoint_path = lambda base_path, parts: base_path / "\\".join(
                 winify_entry_name(x) for x in parts
             )
@@ -296,9 +297,9 @@ async def mountpoint_manager_factory(
     runner = get_mountpoint_runner()
 
     # Now is a good time to perform some cleanup in the registry
-    if os.name == "nt":
+    if sys.platform == "win32":
         cleanup_parsec_drive_icons()
-    elif _platform == "darwin":
+    elif sys.platform == "darwin":
         try:
             await cleanup_macos_mountpoint_folder(base_mountpoint_path)
         except FileNotFoundError:

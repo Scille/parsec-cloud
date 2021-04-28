@@ -1,6 +1,6 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2016-2021 Scille SAS
 
-import os
+import sys
 import pytest
 from pathlib import Path
 from uuid import UUID, uuid4
@@ -297,7 +297,7 @@ def test_supports_legacy_is_admin_field(alice):
 def test_list_devices_support_legacy_file_with_meaningful_name(config_dir):
     # Legacy path might exceed the 256 characters limit in some cases (see issue #1356)
     # So we use the `\\?\` workaround: https://stackoverflow.com/a/57502760/2846140
-    if os.name == "nt":
+    if sys.platform == "win32":
         config_dir = Path("\\\\?\\" + str(config_dir.resolve()))
 
     # Device information

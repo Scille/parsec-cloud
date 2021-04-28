@@ -1,6 +1,7 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2016-2021 Scille SAS
 
-from sys import platform
+import sys
+
 from typing import Optional
 from PyQt5.QtCore import pyqtSignal, Qt
 from PyQt5.QtWidgets import QWidget, QGraphicsDropShadowEffect, QMenu
@@ -180,7 +181,7 @@ class WorkspaceButton(QWidget, Ui_WorkspaceButton):
         global_pos = self.mapToGlobal(pos)
         menu = QMenu(self)
 
-        if platform == "darwin":
+        if sys.platform == "darwin":
             action = menu.addAction(_("ACTION_WORKSPACE_OPEN_IN_FINDER"))
         else:
             action = menu.addAction(_("ACTION_WORKSPACE_OPEN_IN_FILE_EXPLORER"))

@@ -1,7 +1,7 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2016-2021 Scille SAS
 
 from parsec.core.core_events import CoreEvent
-import platform
+import sys
 from typing import Optional
 from structlog import get_logger
 from distutils.version import LooseVersion
@@ -419,7 +419,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
 
                 # Revert the acrobat reader workaround
                 if (
-                    platform.system() == "Windows"
+                    sys.platform == "win32"
                     and win_registry.is_acrobat_reader_dc_present()
                     and not win_registry.get_acrobat_app_container_enabled()
                 ):
@@ -683,7 +683,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
 
             # This notification is disabled on Mac since minimizing apps on
             # close is the standard behaviour on this OS.
-            if not self.minimize_on_close_notif_already_send and platform.system() != "Darwin":
+            if not self.minimize_on_close_notif_already_send and sys.platform != "darwin":
                 self.minimize_on_close_notif_already_send = True
                 self.systray_notification.emit(
                     "Parsec", _("TEXT_TRAY_PARSEC_STILL_RUNNING_MESSAGE"), 2000

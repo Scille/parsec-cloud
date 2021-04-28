@@ -1,6 +1,7 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2016-2021 Scille SAS
 
 import os
+import sys
 import pytest
 from pendulum import datetime
 from pathlib import Path
@@ -215,7 +216,7 @@ size = st.integers(min_value=0, max_value=4 * 1024 ** 2)  # Between 0 and 4MB
 
 
 @pytest.mark.slow
-@pytest.mark.skipif(os.name == "nt", reason="Windows file style not compatible with oracle")
+@pytest.mark.skipif(sys.platform == "win32", reason="Windows file style not compatible with oracle")
 def test_file_operations(
     tmpdir, hypothesis_settings, reset_testbed, file_transactions_factory, alice, alice_backend_cmds
 ):

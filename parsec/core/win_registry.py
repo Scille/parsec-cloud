@@ -2,7 +2,7 @@
 
 import os
 import string
-import platform
+import sys
 from importlib import import_module
 import importlib_resources
 from pathlib import Path
@@ -90,7 +90,7 @@ def winreg_has_user_key(key):
 
 
 def is_acrobat_reader_dc_present():
-    if platform.system() != "Windows" or not try_winreg():
+    if sys.platform != "win32" or not try_winreg():
         return False
 
     return winreg_has_user_key(ACROBAT_READER_DC_PRIVILEGED)
@@ -172,7 +172,7 @@ def del_parsec_drive_icon(letter: str):
 @contextmanager
 def parsec_drive_icon_context(letter):
     # Winreg is not available for some reasons
-    if platform.system() != "Windows" or not try_winreg():
+    if sys.platform != "win32" or not try_winreg():
         yield
         return
 
@@ -187,7 +187,7 @@ def parsec_drive_icon_context(letter):
 
 def cleanup_parsec_drive_icons():
     # Winreg is not available for some reasons
-    if platform.system() != "Windows" or not try_winreg():
+    if sys.platform != "win32" or not try_winreg():
         return
 
     # Loop over the 26 drives

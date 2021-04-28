@@ -1,6 +1,7 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2016-2021 Scille SAS
 
 import os
+import sys
 import errno
 from pathlib import Path
 from string import ascii_lowercase
@@ -41,7 +42,7 @@ class expect_raises:
         # WinFSP error handling is not stricly similar to the real
         # Windows file system; so we often endup with the wrong exception
         # (e.g. `NotADirectoryError` when we expect `FileNotFoundError`)
-        if os.name == "nt":
+        if sys.platform == "win32":
             allowed = OSError
         else:
             allowed = type(self.expected_exc)
