@@ -272,8 +272,16 @@ class ManifestStorage:
             # Safely get the manifest
             manifest = self._cache[entry_id]
 
-            # Dump and decrypt the manifest
-            ciphered = manifest.dump_and_encrypt(self.device.local_symkey)
+            # Dump and decrypt the manifest, in a thread if necessary
+            # Serializing a manifest with 50 entries should take about 10 ms
+            # This is one order of magnitude higher than the thread overhead
+            # which is about 1 ms
+            if manifest.size_estimate() > 50:
+                ciphered = await trio.to_thread.run_sync(
+                    manifest.dump_and_encrypt, self.device.local_symkey
+                )
+            else:
+                ciphered = manifest.dump_and_encrypt(self.device.local_symkey)
 
             # Insert into the local database
             # Use a thread as executing a statement that modifies the content of the database might,

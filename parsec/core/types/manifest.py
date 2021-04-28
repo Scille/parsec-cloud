@@ -254,6 +254,9 @@ class BaseLocalManifest(BaseLocalData):
     def is_placeholder(self):
         return self.base.version == 0
 
+    def size_estimate(self):
+        return 1
+
     # Evolve methods
 
     def evolve_and_mark_updated(self: LocalManifestTypeVar, **data) -> LocalManifestTypeVar:
@@ -430,6 +433,9 @@ class LocalFileManifest(BaseLocalManifest):
                 assert chunk.stop <= chunk.raw_offset + chunk.raw_size
                 current = chunk.stop
         assert current == self.size
+
+    def size_estimate(self):
+        return 1 + len(self.base.blocks) + sum(map(len, self.blocks))
 
     # Remote methods
 
@@ -670,6 +676,9 @@ class LocalFolderManifest(BaseLocalManifest, LocalFolderishManifestMixin):
     def parent(self):
         return self.base.parent
 
+    def size_estimate(self):
+        return 1 + len(self.base.children) + len(self.children)
+
     # Remote methods
 
     @classmethod
@@ -769,6 +778,11 @@ class LocalWorkspaceManifest(BaseLocalManifest, LocalFolderishManifestMixin):
             local_confinement_points=frozenset(),
             remote_confinement_points=frozenset(),
         )
+
+    # Properties
+
+    def size_estimate(self):
+        return 1 + len(self.base.children) + len(self.children)
 
     # Evolve methods
 
@@ -870,6 +884,9 @@ class LocalUserManifest(BaseLocalManifest):
 
     def get_workspace_entry(self, workspace_id: EntryID) -> WorkspaceEntry:
         return next((w for w in self.workspaces if w.id == workspace_id), None)
+
+    def size_estimate(self):
+        return 1 + len(self.base.workspaces) + len(self.workspaces)
 
     # Evolve methods
 
