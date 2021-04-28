@@ -432,6 +432,10 @@ def persistent_mockup(monkeypatch):
     async def get_disk_usage(storage):
         return 0
 
+    async def run_in_thread(storage, fn, *args):
+        return fn(*args)
+
+    monkeypatch.setattr(LocalDatabase, "run_in_thread", run_in_thread)
     monkeypatch.setattr(LocalDatabase, "_create_connection", _create_connection)
     monkeypatch.setattr(LocalDatabase, "_close", _close)
     monkeypatch.setattr(LocalDatabase, "get_disk_usage", get_disk_usage)

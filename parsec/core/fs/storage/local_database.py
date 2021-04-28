@@ -13,6 +13,9 @@ from parsec.core.fs.exceptions import FSLocalStorageClosedError, FSLocalStorageO
 class LocalDatabase:
     """Base class for managing an sqlite3 connection."""
 
+    # Make the trio run_sync function patchable for the tests
+    run_in_thread = staticmethod(trio.to_thread.run_sync)
+
     def __init__(self, path: Union[str, Path, trio.Path], vacuum_threshold: Optional[int] = None):
         # Make sure only a single task access the connection object at a time
         self._lock = trio.Lock()
@@ -83,7 +86,7 @@ class LocalDatabase:
 
             # Close the sqlite3 connection
             try:
-                await trio.to_thread.run_sync(self._conn.close)
+                await self.run_in_thread(self._conn.close)
 
             # Ignore second operational error (it should not happen though)
             except OperationalError:
@@ -142,7 +145,7 @@ class LocalDatabase:
 
                     # Close the sqlite3 connection
                     try:
-                        await trio.to_thread.run_sync(self._conn.close)
+                        await self.run_in_thread(self._conn.close)
 
                     # Mark the local database as closed
                     finally:
@@ -151,7 +154,7 @@ class LocalDatabase:
     async def _commit(self) -> None:
         # Close the local database if an operational error is detected
         async with self._manage_operational_error(allow_commit=True):
-            await trio.to_thread.run_sync(self._conn.commit)
+            await self.run_in_thread(self._conn.commit)
 
     def _is_closed(self) -> bool:
         return not hasattr(self, "_conn")
@@ -227,10 +230,10 @@ class LocalDatabase:
                 return
 
             # Run vacuum
-            await trio.to_thread.run_sync(self._conn.execute, "VACUUM")
+            await self.run_in_thread(self._conn.execute, "VACUUM")
 
             # The connection needs to be recreated
             try:
-                await trio.to_thread.run_sync(self._conn.close)
+                await self.run_in_thread(self._conn.close)
             finally:
                 await self._create_connection()

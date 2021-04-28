@@ -277,7 +277,7 @@ class ManifestStorage:
             # This is one order of magnitude higher than the thread overhead
             # which is about 1 ms
             if manifest.size_estimate() > 50:
-                ciphered = await trio.to_thread.run_sync(
+                ciphered = await self.localdb.run_in_thread(
                     manifest.dump_and_encrypt, self.device.local_symkey
                 )
             else:
@@ -286,7 +286,7 @@ class ManifestStorage:
             # Insert into the local database
             # Use a thread as executing a statement that modifies the content of the database might,
             # in some case, block for several hundreds of milliseconds
-            await trio.to_thread.run_sync(
+            await self.localdb.run_in_thread(
                 cursor.execute,
                 """INSERT OR REPLACE INTO vlobs (vlob_id, blob, need_sync, base_version, remote_version)
                 VALUES (

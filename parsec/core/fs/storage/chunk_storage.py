@@ -100,7 +100,7 @@ class ChunkStorage:
         async with self._open_cursor() as cursor:
             # Use a thread as executing a statement that modifies the content of the database might,
             # in some case, block for several hundreds of milliseconds
-            await trio.to_thread.run_sync(
+            await self.localdb.run_in_thread(
                 cursor.execute,
                 """
                 UPDATE chunks SET accessed_on = ? WHERE chunk_id = ?;
@@ -124,7 +124,7 @@ class ChunkStorage:
         async with self._open_cursor() as cursor:
             # Use a thread as executing a statement that modifies the content of the database might,
             # in some case, block for several hundreds of milliseconds
-            await trio.to_thread.run_sync(
+            await self.localdb.run_in_thread(
                 cursor.execute,
                 """INSERT OR REPLACE INTO
                 chunks (chunk_id, size, offline, accessed_on, data)
@@ -136,7 +136,7 @@ class ChunkStorage:
         async with self._open_cursor() as cursor:
             # Use a thread as executing a statement that modifies the content of the database might,
             # in some case, block for several hundreds of milliseconds
-            await trio.to_thread.run_sync(
+            await self.localdb.run_in_thread(
                 cursor.execute, "DELETE FROM chunks WHERE chunk_id = ?", (chunk_id.bytes,)
             )
             cursor.execute("SELECT changes()")
@@ -190,7 +190,7 @@ class BlockStorage(ChunkStorage):
             # Insert the chunk
             # Use a thread as executing a statement that modifies the content of the database might,
             # in some case, block for several hundreds of milliseconds
-            await trio.to_thread.run_sync(
+            await self.localdb.run_in_thread(
                 cursor.execute,
                 """INSERT OR REPLACE INTO
                 chunks (chunk_id, size, offline, accessed_on, data)
@@ -211,7 +211,7 @@ class BlockStorage(ChunkStorage):
             limit = extra_blocks + self.block_limit // 10
             # Use a thread as executing a statement that modifies the content of the database might,
             # in some case, block for several hundreds of milliseconds
-            await trio.to_thread.run_sync(
+            await self.localdb.run_in_thread(
                 cursor.execute,
                 """
                 DELETE FROM chunks WHERE chunk_id IN (
