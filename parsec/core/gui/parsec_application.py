@@ -28,7 +28,17 @@ class ParsecApp(QApplication):
         """Handle macOS FileOpen events."""
         if sys.platform == "darwin" and e.type() == QEvent.ApplicationActivate:
             # Necessary to reopen window with dock icon after being closed with
-            # red X on MacOS
+            # red X on MacOS.
+            # There are three events related to the dock icon click:
+            # ApplicationActivate, ApplicationDeactivate and ApplicationStateChange.
+            # The events ApplicationDeactivate and ApplicationStateChange are
+            # tied to whenever the window state changes from foreground to
+            # background. Inversely, the events ApplicationActivate and
+            # ApplicationStateChange can be caught when switching from
+            # background to foreground, or clicking the dock icon.
+            # Even though ApplicationActivate is said to be deprecated, it's
+            # seemingly the only event we can use for this particular case,
+            # ApplicationStateChange not being specific enough.
             self.get_main_window().show_top()
         if e.type() != QEvent.FileOpen or e.url().scheme() != "parsec":
             return super().event(e)
