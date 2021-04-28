@@ -1,9 +1,8 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2016-2021 Scille SAS
 
 from pathlib import Path
-from contextlib import contextmanager
 from concurrent.futures import ThreadPoolExecutor
-from typing import AsyncIterator, Callable, Optional, Union, TypeVar, Awaitable, Iterator
+from typing import AsyncIterator, Callable, Optional, Union, TypeVar, Awaitable
 
 import trio
 import outcome
@@ -92,8 +91,8 @@ class LocalDatabase:
 
     # Operational error protection
 
-    @contextmanager
-    def _manage_operational_error(self, allow_commit: bool = False) -> Iterator[None]:
+    @asynccontextmanager
+    async def _manage_operational_error(self, allow_commit: bool = False) -> AsyncIterator[None]:
         """Close the local database when an operational error is detected
 
         Operational errors have to be treated with care since they usually indicate
@@ -127,7 +126,7 @@ class LocalDatabase:
 
             # Close the sqlite3 connection
             try:
-                self._conn.close()
+                await self._run_in_thread(self._conn.close)
 
             # Ignore second operational error (it should not happen though)
             except OperationalError:
@@ -157,7 +156,7 @@ class LocalDatabase:
         # is a great combination: it allows for fast commits (~10 us compare
         # to 15 ms the default mode) but still protects the database against
         # corruption in the case of OS crash or power failure.
-        with self._manage_operational_error():
+        async with self._manage_operational_error():
             self._conn.execute("PRAGMA journal_mode=WAL")
             self._conn.execute("PRAGMA synchronous=NORMAL")
 
@@ -187,7 +186,7 @@ class LocalDatabase:
 
                 # Close the sqlite3 connection
                 try:
-                    self._conn.close()
+                    await self._run_in_thread(self._conn.close)
 
                 # Mark the local database as closed
                 finally:
@@ -195,7 +194,7 @@ class LocalDatabase:
 
     async def _commit(self) -> None:
         # Close the local database if an operational error is detected
-        with self._manage_operational_error(allow_commit=True):
+        async with self._manage_operational_error(allow_commit=True):
             await self._run_in_thread(self._conn.commit)
 
     def _is_closed(self) -> bool:
@@ -216,7 +215,7 @@ class LocalDatabase:
             self._check_open()
 
             # Close the local database if an operational error is detected
-            with self._manage_operational_error():
+            async with self._manage_operational_error():
 
                 # Execute SQL commands
                 cursor = self._conn.cursor()
@@ -276,6 +275,6 @@ class LocalDatabase:
 
             # The connection needs to be recreated
             try:
-                self._conn.close()
+                await self._run_in_thread(self._conn.close)
             finally:
                 await self._create_connection()
