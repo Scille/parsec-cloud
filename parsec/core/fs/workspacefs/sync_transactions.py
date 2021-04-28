@@ -208,13 +208,13 @@ class SyncTransactions(EntryTransactions):
         self, remote_manifest: RemoteFolderishManifests
     ) -> AsyncIterator[EntryID]:
         # Check children placeholder
-        for chield_entry_id in remote_manifest.children.values():
+        for child_entry_id in remote_manifest.children.values():
             try:
-                child_manifest = await self.local_storage.get_manifest(chield_entry_id)
+                child_manifest = await self.local_storage.get_manifest(child_entry_id)
             except FSLocalMissError:
                 continue
             if child_manifest.is_placeholder:
-                yield chield_entry_id
+                yield child_entry_id
 
     async def get_minimal_remote_manifest(self, entry_id: EntryID) -> Optional[BaseRemoteManifest]:
         manifest = await self.local_storage.get_manifest(entry_id)
