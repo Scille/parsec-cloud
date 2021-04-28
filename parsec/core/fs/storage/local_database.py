@@ -1,51 +1,13 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2016-2021 Scille SAS
 
 from pathlib import Path
-from concurrent.futures import ThreadPoolExecutor
-from typing import AsyncIterator, Callable, Optional, Union, TypeVar, Awaitable
+from typing import AsyncIterator, Optional, Union
 
 import trio
-import outcome
 from async_generator import asynccontextmanager
 from sqlite3 import Connection, Cursor, OperationalError, connect as sqlite_connect
 
 from parsec.core.fs.exceptions import FSLocalStorageClosedError, FSLocalStorageOperationalError
-
-R = TypeVar("R")
-
-
-@asynccontextmanager
-async def thread_pool_runner(
-    max_workers: Optional[int] = None
-) -> AsyncIterator[Callable[[Callable[[], R]], Awaitable[R]]]:
-    """A trio-managed thread pool.
-
-    This should be removed if trio decides to add support for thread pools:
-    https://github.com/python-trio/trio/blob/c5497c5ac4/trio/_threads.py#L32-L128
-    """
-    executor = ThreadPoolExecutor(max_workers=max_workers)
-    trio_token = trio.lowlevel.current_trio_token()
-
-    async def run_in_thread(fn: Callable[[], R]) -> R:
-        send_channel: trio.MemorySendChannel[outcome.Outcome[R]]
-        receive_channel: trio.MemoryReceiveChannel[outcome.Outcome[R]]
-        send_channel, receive_channel = trio.open_memory_channel(1)
-
-        def target() -> None:
-            result = outcome.capture(fn)
-            trio.from_thread.run_sync(send_channel.send_nowait, result, trio_token=trio_token)
-
-        executor.submit(target)
-        result = await receive_channel.receive()
-        return result.unwrap()
-
-    # The thread pool executor cannot be used as a sync context here, as it would
-    # block the trio loop. Instead, we shut the executor down in a worker thread.
-    try:
-        yield run_in_thread
-    finally:
-        with trio.CancelScope(shield=True):
-            await trio.to_thread.run_sync(executor.shutdown)
 
 
 class LocalDatabase:
@@ -57,7 +19,6 @@ class LocalDatabase:
 
         # Those attributes are set by the `run` async context manager
         self._conn: Connection
-        self._run_in_thread: Callable[[Callable[[], R]], Awaitable[R]]
 
         self.path = trio.Path(path)
         self.vacuum_threshold = vacuum_threshold
@@ -70,24 +31,20 @@ class LocalDatabase:
         # Instanciate the local database
         self = cls(path, vacuum_threshold)
 
-        # Run a pool with single worker thread
-        # (although the lock already protects against concurrent access to the pool)
-        async with thread_pool_runner(max_workers=1) as self._run_in_thread:
+        # Create the connection to the sqlite database
+        try:
+            await self._connect()
 
-            # Create the connection to the sqlite database
-            try:
-                await self._connect()
+            # Yield the instance
+            yield self
 
-                # Yield the instance
-                yield self
-
-            # Safely flush and close the connection
-            finally:
-                with trio.CancelScope(shield=True):
-                    try:
-                        await self._close()
-                    except FSLocalStorageClosedError:
-                        pass
+        # Safely flush and close the connection
+        finally:
+            with trio.CancelScope(shield=True):
+                try:
+                    await self._close()
+                except FSLocalStorageClosedError:
+                    pass
 
     # Operational error protection
 
@@ -126,7 +83,7 @@ class LocalDatabase:
 
             # Close the sqlite3 connection
             try:
-                await self._run_in_thread(self._conn.close)
+                await trio.to_thread.run_sync(self._conn.close)
 
             # Ignore second operational error (it should not happen though)
             except OperationalError:
@@ -180,22 +137,21 @@ class LocalDatabase:
                 await self._commit()
 
             finally:
-                # Local database is already closed
-                if self._is_closed():
-                    return
+                # Local database is not already closed
+                if not self._is_closed():
 
-                # Close the sqlite3 connection
-                try:
-                    await self._run_in_thread(self._conn.close)
+                    # Close the sqlite3 connection
+                    try:
+                        await trio.to_thread.run_sync(self._conn.close)
 
-                # Mark the local database as closed
-                finally:
-                    del self._conn
+                    # Mark the local database as closed
+                    finally:
+                        del self._conn
 
     async def _commit(self) -> None:
         # Close the local database if an operational error is detected
         async with self._manage_operational_error(allow_commit=True):
-            await self._run_in_thread(self._conn.commit)
+            await trio.to_thread.run_sync(self._conn.commit)
 
     def _is_closed(self) -> bool:
         return not hasattr(self, "_conn")
@@ -271,10 +227,10 @@ class LocalDatabase:
                 return
 
             # Run vacuum
-            await self._run_in_thread(lambda: self._conn.execute("VACUUM"))
+            await trio.to_thread.run_sync(self._conn.execute, "VACUUM")
 
             # The connection needs to be recreated
             try:
-                await self._run_in_thread(self._conn.close)
+                await trio.to_thread.run_sync(self._conn.close)
             finally:
                 await self._create_connection()
