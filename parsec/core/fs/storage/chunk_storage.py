@@ -169,8 +169,34 @@ class BlockStorage(ChunkStorage):
         async with self._open_cursor() as cursor:
             cursor.execute("DELETE FROM chunks")
 
-    async def clear_old_blocks(self, limit: int) -> None:
+    # Upgraded set method
+
+    async def set_chunk(self, chunk_id: ChunkID, raw: bytes) -> None:
+        assert isinstance(raw, (bytes, bytearray))
+        ciphered = self.local_symkey.encrypt(raw)
+
+        # Update database
         async with self._open_cursor() as cursor:
+
+            # Insert the chunk
+            cursor.execute(
+                """INSERT OR REPLACE INTO
+                chunks (chunk_id, size, offline, accessed_on, data)
+                VALUES (?, ?, ?, ?, ?)""",
+                (chunk_id.bytes, len(ciphered), False, time.time(), ciphered),
+            )
+
+            # Count the chunks
+            cursor.execute("SELECT COUNT(*) FROM chunks")
+            nb_blocks, = cursor.fetchone()
+            extra_blocks = nb_blocks - self.block_limit
+
+            # No clean up is needed
+            if extra_blocks <= 0:
+                return
+
+            # Remove the extra block plus 10 % of the cache size, i.e about 100 blocks
+            limit = extra_blocks + self.block_limit // 10
             cursor.execute(
                 """
                 DELETE FROM chunks WHERE chunk_id IN (
@@ -179,18 +205,3 @@ class BlockStorage(ChunkStorage):
                 """,
                 (limit,),
             )
-
-    # Upgraded set method
-
-    async def set_chunk(self, chunk_id: ChunkID, raw: bytes) -> None:
-        # Actual set operation
-        await super().set_chunk(chunk_id, raw)
-
-        # Clean up if necessary
-        nb_blocks = await self.get_nb_blocks()
-        extra_blocks = nb_blocks - self.block_limit
-        if extra_blocks > 0:
-
-            # Remove the extra block plus 10 % of the cache size, i.e about 100 blocks
-            limit = extra_blocks + self.block_limit // 10
-            await self.clear_old_blocks(limit=limit)
