@@ -269,48 +269,46 @@ class ManifestStorage:
             if entry_id not in self._cache_ahead_of_localdb:
                 return
 
-            # Safely get the manifest
+            # Safely get the manifest and other information
             manifest = self._cache[entry_id]
+            pending_chunks_ids = [
+                (chunk_id.bytes,) for chunk_id in self._cache_ahead_of_localdb[entry_id]
+            ]
+            local_symkey = self.device.local_symkey
 
-            # Dump and decrypt the manifest, in a thread if necessary
-            # Serializing a manifest with 50 entries should take about 10 ms
-            # This is one order of magnitude higher than the thread overhead
-            # which is about 1 ms
-            if manifest.size_estimate() > 50:
-                ciphered = await self.localdb.run_in_thread(
-                    manifest.dump_and_encrypt, self.device.local_symkey
-                )
-            else:
-                ciphered = manifest.dump_and_encrypt(self.device.local_symkey)
+            def _thread_target() -> None:
+                # Dump and decrypt the manifest
+                ciphered = manifest.dump_and_encrypt(local_symkey)
 
-            # Insert into the local database
-            # Use a thread as executing a statement that modifies the content of the database might,
-            # in some case, block for several hundreds of milliseconds
-            await self.localdb.run_in_thread(
-                cursor.execute,
-                """INSERT OR REPLACE INTO vlobs (vlob_id, blob, need_sync, base_version, remote_version)
-                VALUES (
+                # Insert into the local database
+                cursor.execute(
+                    """INSERT OR REPLACE INTO vlobs (vlob_id, blob, need_sync, base_version, remote_version)
+                    VALUES (
                     ?, ?, ?, ?,
-                    max(
-                        ?,
-                        IFNULL((SELECT remote_version FROM vlobs WHERE vlob_id=?), 0)
-                    )
-                )""",
-                (
-                    entry_id.bytes,
-                    ciphered,
-                    manifest.need_sync,
-                    manifest.base_version,
-                    manifest.base_version,
-                    entry_id.bytes,
-                ),
-            )
+                        max(
+                            ?,
+                            IFNULL((SELECT remote_version FROM vlobs WHERE vlob_id=?), 0)
+                        )
+                    )""",
+                    (
+                        entry_id.bytes,
+                        ciphered,
+                        manifest.need_sync,
+                        manifest.base_version,
+                        manifest.base_version,
+                        entry_id.bytes,
+                    ),
+                )
 
-            # Clean all the pending chunks
-            for chunk_id in self._cache_ahead_of_localdb[entry_id]:
-                cursor.execute("DELETE FROM chunks WHERE chunk_id = ?", (chunk_id.bytes,))
+                # Clean all the pending chunks
+                if pending_chunks_ids:
+                    cursor.executemany("DELETE FROM chunks WHERE chunk_id = ?", pending_chunks_ids)
 
-            # Safely tag entry as up-to-date
+            # Run CPU and IO expensive logic in a thread
+            await self.localdb.run_in_thread(_thread_target)
+
+        # Tag entry as up-to-date only if no new manifest has been written in the meantime
+        if manifest == self._cache[entry_id]:
             self._cache_ahead_of_localdb.pop(entry_id)
 
     async def ensure_manifest_persistent(self, entry_id: EntryID) -> None:
