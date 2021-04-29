@@ -11,8 +11,6 @@ from parsec.core.fs.exceptions import FSError, FSBackendOfflineError
 from parsec.core.fs.workspacefs.workspacefs import ReencryptionNeed
 from parsec.backend.block import BlockNotFoundError
 
-from tests.common import create_shared_workspace
-
 
 @pytest.mark.trio
 async def test_workspace_properties(alice_workspace):
@@ -444,18 +442,27 @@ async def test_get_reencryption_need(alice_workspace, running_backend, monkeypat
 
 
 @pytest.mark.trio
-async def test_upload_blocks(alice_user_fs, alice2_user_fs, running_backend, monkeypatch):
-    wid = await create_shared_workspace("w", alice_user_fs, alice2_user_fs)
-    alice_workspace = alice_user_fs.get_workspace(wid)
+async def test_backend_block_upload_error_during_sync(
+    alice_user_fs, alice2_user_fs, running_backend, monkeypatch
+):
+    wid = await alice_user_fs.workspace_create("w")
+    await alice_user_fs.sync()
+    await alice2_user_fs.sync()
 
+    alice_workspace = alice_user_fs.get_workspace(wid)
     alice2_workspace = alice2_user_fs.get_workspace(wid)
 
     fspath = "/taz"
 
     await alice_workspace.touch(fspath)
+    # Placeholder sync always starts by a "minimal sync" (i.e. an empty manifest is synchronized so that
+    # parent folder don't have to wait for the full sync before syncing itself).
+    # Here we force the minimal sync so to avoid this corner-case in the rest of the test.
     await alice_workspace.sync()
 
-    await alice_workspace.write_bytes(fspath, b"aaaaaa" * DEFAULT_BLOCK_SIZE)
+    # Fill the file with multiple blocks worth of data so that parallel upload will occurs
+    TAZ_V2_BLOCKS = 6
+    await alice_workspace.write_bytes(fspath, b"a" * TAZ_V2_BLOCKS * DEFAULT_BLOCK_SIZE)
 
     info = await alice_workspace.path_info(fspath)
 
@@ -463,31 +470,15 @@ async def test_upload_blocks(alice_user_fs, alice2_user_fs, running_backend, mon
     assert info["is_placeholder"] is False
     assert info["need_sync"] is True
 
-    assert await alice2_workspace.read_bytes(fspath) == bytearray()
-
-    # mock the synchronization_step method to retrieve the new manifest
-    vanilla_transaction_synchronization_step = alice_workspace.transactions.synchronization_step
-    block_id_error = None
-
-    async def mock_synchronization_step(entry_id, *args, **kwargs):
-        nonlocal block_id_error
-        nonlocal info
-        res = await vanilla_transaction_synchronization_step(entry_id, *args, **kwargs)
-        if entry_id == info["id"] and res:
-            block_id_error = res.blocks[2].id
-
-        return res
-
-    monkeypatch.setattr(
-        alice_workspace.transactions, "synchronization_step", mock_synchronization_step
-    )
-
     vanilla_backend_block_create = running_backend.backend.block.create
 
+    blocks_create_before_crash = TAZ_V2_BLOCKS // 2
+
     async def mock_backend_block_create(*args, **kwargs):
-        nonlocal block_id_error
-        if kwargs["block_id"] == block_id_error:
+        nonlocal blocks_create_before_crash
+        if blocks_create_before_crash == 0:
             raise BlockNotFoundError()
+        blocks_create_before_crash -= 1
         return await vanilla_backend_block_create(*args, **kwargs)
 
     monkeypatch.setattr(running_backend.backend.block, "create", mock_backend_block_create)
@@ -495,11 +486,16 @@ async def test_upload_blocks(alice_user_fs, alice2_user_fs, running_backend, mon
     with pytest.raises(FSError):
         await alice_workspace.sync()
 
+    # File sync has failed, so it info should be the same
     info = await alice_workspace.path_info(fspath)
-
     assert info["base_version"] == 1
-    assert info["is_placeholder"] is False
     assert info["need_sync"] is True
+    # Other device doesn't see the modifications that have failed to be synced
+    await alice2_workspace.sync()
+    info = await alice2_workspace.path_info(fspath)
+    assert info["base_version"] == 1
+    assert info["need_sync"] is False
+    assert info["size"] == 0
 
     monkeypatch.setattr(running_backend.backend.block, "create", vanilla_backend_block_create)
 
@@ -510,8 +506,7 @@ async def test_upload_blocks(alice_user_fs, alice2_user_fs, running_backend, mon
 
     info = await alice_workspace.path_info(fspath)
     assert info["base_version"] == 2
-    assert info["is_placeholder"] is False
     assert info["need_sync"] is False
 
     await alice2_workspace.sync()
-    assert await alice2_workspace.read_bytes(fspath) == b"aaaaaa" * DEFAULT_BLOCK_SIZE
+    assert await alice2_workspace.read_bytes(fspath) == b"a" * TAZ_V2_BLOCKS * DEFAULT_BLOCK_SIZE
