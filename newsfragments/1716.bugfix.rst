@@ -1,0 +1,1 @@
+Fix an issue with fuse mounpoints on linux where the shutdown procedure might block forever
