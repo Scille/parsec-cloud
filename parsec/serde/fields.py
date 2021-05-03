@@ -122,6 +122,9 @@ def str_based_field_factory(value_type):
         return str(value)
 
     def _deserialize(self, value, attr, data):
+        if not isinstance(value, str):
+            raise ValidationError("Not string")
+
         try:
             return value_type(value)
         except ValueError as exc:
@@ -144,8 +147,11 @@ def uuid_based_field_factory(value_type):
         return value
 
     def _deserialize(self, value, attr, data):
+        if not isinstance(value, _UUID):
+            raise ValidationError("Not an UUID")
+
         try:
-            return value_type(str(value))
+            return value_type(value)
         except ValueError as exc:
             raise ValidationError(str(exc)) from exc
 
