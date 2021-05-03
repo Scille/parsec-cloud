@@ -25,18 +25,16 @@ from parsec import __version__ as parsec_version
 from parsec.backend.postgresql import MigrationItem
 from parsec.core.local_device import save_device_with_password
 from parsec.cli import cli
-from parsec.core.cli.share_workspace import WorkspaceRoleChoice
+from parsec.core.cli.share_workspace import WORKSPACE_ROLE_CHOICES
 
 CWD = Path(__file__).parent.parent
 BACKEND_ADDR = "parsec://localhost"
 EMAIL_HOST = "MOCKED"
 
 
-@pytest.fixture(params=WorkspaceRoleChoice.STR_TO_ROLE.keys())
+@pytest.fixture(params=WORKSPACE_ROLE_CHOICES.keys())
 def cli_workspace_role(request):
-    expected_role = WorkspaceRoleChoice.fix_none_choice(
-        WorkspaceRoleChoice.STR_TO_ROLE[request.param]
-    )
+    expected_role = WORKSPACE_ROLE_CHOICES[request.param]
     return request.param, expected_role
 
 
