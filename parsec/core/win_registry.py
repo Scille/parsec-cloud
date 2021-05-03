@@ -27,6 +27,11 @@ EXPLORER_DRIVES_DEFAULT_ICON_TEMPLATE = EXPLORER_DRIVES + "\\{}\\DefaultIcon"
 # Psutil is a dependency only on Windows, winreg is part of stdlib
 # but only available on Windows. Hence must rely on dynamic import
 # so that the current module can be imported from any OS.
+#
+# On top of that, we use good ol' `import foo` (nothing beats that !) instead
+# of the fancy `importlib.import_module`. This is to make sure PyInstaller
+# won't mess application packaging by missing this import during
+# tree-shaking (see issue #1690).
 
 
 def get_psutil():
