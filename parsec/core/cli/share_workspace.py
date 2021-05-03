@@ -16,14 +16,13 @@ WORKSPACE_ROLE_CHOICES = {"NONE": None, **{role.value: role for role in Workspac
 async def _share_workspace(config, device, name, user_id, user_role):
     async with logged_core_factory(config, device) as core:
         workspace = core.find_workspace_from_name(name)
-        print(workspace)
         await core.user_fs.workspace_share(workspace.id, user_id, user_role)
 
 
 @click.command(short_help="share workspace")
 @core_config_and_device_options
-@click.argument("workspace_name")
-@click.argument("user_id", type=UserID, required=True)
+@click.option("--workspace-name")
+@click.option("--user-id", type=UserID, required=True)
 @click.option(
     "--role", required=True, type=click.Choice(WORKSPACE_ROLE_CHOICES.keys(), case_sensitive=False)
 )

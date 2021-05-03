@@ -72,7 +72,8 @@ def test_share_workspace(tmpdir, alice, bob, cli_workspace_role):
             f"core share_workspace --password {password} "
             f"--device={bob.slughash} --config-dir={config_dir} "
             f"--role={workspace_role} "
-            f"ws1 {alice.user_id}"
+            f"--workspace-name=ws1 "
+            f"--user-id={alice.user_id}"
         )
         result = runner.invoke(cli, args)
 
