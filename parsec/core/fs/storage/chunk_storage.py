@@ -117,7 +117,6 @@ class ChunkStorage:
         return self.local_symkey.decrypt(ciphered)
 
     async def set_chunk(self, chunk_id: ChunkID, raw: bytes) -> None:
-        assert isinstance(raw, (bytes, bytearray))
         ciphered = self.local_symkey.encrypt(raw)
 
         # Update database
@@ -181,7 +180,6 @@ class BlockStorage(ChunkStorage):
     # Upgraded set method
 
     async def set_chunk(self, chunk_id: ChunkID, raw: bytes) -> None:
-        assert isinstance(raw, (bytes, bytearray))
         ciphered = self.local_symkey.encrypt(raw)
 
         # Update database
