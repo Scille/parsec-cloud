@@ -1,1 +1,0 @@
-Fix confusing dialog when logging out with an on-going reencryption.

@@ -1,1 +1,0 @@
-Enforce NFC string normalization for organization/device/user/entry id and human handle.

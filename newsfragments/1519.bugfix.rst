@@ -1,1 +1,0 @@
-Fixed Dock icon behaviour on MacOS when app was closed with red X.

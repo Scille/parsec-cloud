@@ -5,6 +5,49 @@ History
 .. towncrier release notes start
 
 
+Parsec v2.3.0 (2021-05-04)
+--------------------------
+
+Features
+~~~~~~~~
+
+* Allow read access to a workspace during a re-encryption.  (`#1650
+  <https://github.com/Scille/parsec-cloud/issues/1650>`__)
+
+Bugfixes
+~~~~~~~~
+
+* Fixed Dock icon behaviour on MacOS when app was closed with red X.  (`#1519
+  <https://github.com/Scille/parsec-cloud/issues/1519>`__)
+* Fix the server's stucking while it waits for a peer.  (`#1625
+  <https://github.com/Scille/parsec-cloud/issues/1625>`__)
+* Added filename normalization to fix conflicts on special characters on MacOS.
+  (`#1645 <https://github.com/Scille/parsec-cloud/issues/1645>`__)
+* Fix confusing dialog when logging out with an on-going reencryption.  (`#1663
+  <https://github.com/Scille/parsec-cloud/issues/1663>`__)
+* Fix some blinking with the workspace buttons, especially while doing a
+  reencryption.  (`#1665 <https://github.com/Scille/parsec-
+  cloud/issues/1665>`__)
+* Enforce NFC string normalization for organization/device/user/entry id and
+  human handle.  (`#1708 <https://github.com/Scille/parsec-
+  cloud/issues/1708>`__)
+* Fix an issue with fuse mounpoints on linux where the shutdown procedure might
+  block forever  (`#1716 <https://github.com/Scille/parsec-
+  cloud/issues/1716>`__)
+
+Miscellaneous internal changes
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+* Update CLI command `parsec core bootstrap_organization` to accept params for
+  human/device label/email.  (`#1674 <https://github.com/Scille/parsec-
+  cloud/issues/1674>`__)
+* Improve synchronization performance by running the block uploads in parallel
+  (`#1678 <https://github.com/Scille/parsec-cloud/issues/1678>`__)
+* Improve Windows installer for smaller size and faster install time. Also fix
+  uninstall when previous version has been installed in a custom location.
+  (`#1690 <https://github.com/Scille/parsec-cloud/issues/1690>`__)
+
+
 Parsec v2.2.4 (2021-03-18)
 --------------------------
 

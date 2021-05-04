@@ -1,2 +1,0 @@
-Improve Windows installer for smaller size and faster install time.
-Also fix uninstall when previous version has been installed in a custom location.
