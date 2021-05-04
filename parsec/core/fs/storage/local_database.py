@@ -84,20 +84,22 @@ class LocalDatabase:
         # An operational error has been detected
         except OperationalError as exception:
 
-            # Close the sqlite3 connection
-            try:
-                await self.run_in_thread(self._conn.close)
+            with trio.CancelScope(shield=True):
 
-            # Ignore second operational error (it should not happen though)
-            except OperationalError:
-                pass
+                # Close the sqlite3 connection
+                try:
+                    await self.run_in_thread(self._conn.close)
 
-            # Mark the local database as closed
-            finally:
-                del self._conn
+                # Ignore second operational error (it should not happen though)
+                except OperationalError:
+                    pass
 
-            # Raise the dedicated operational error
-            raise FSLocalStorageOperationalError from exception
+                # Mark the local database as closed
+                finally:
+                    del self._conn
+
+                # Raise the dedicated operational error
+                raise FSLocalStorageOperationalError from exception
 
     # Life cycle
 
