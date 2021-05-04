@@ -3,7 +3,6 @@
 import os
 import string
 import sys
-from importlib import import_module
 import importlib_resources
 from pathlib import Path
 from structlog import get_logger
@@ -24,24 +23,27 @@ EXPLORER_DRIVES_DEFAULT_ICON_TEMPLATE = EXPLORER_DRIVES + "\\{}\\DefaultIcon"
 
 # Winreg helper
 
-_psutil = None
+
+# Psutil is a dependency only on Windows, winreg is part of stdlib
+# but only available on Windows. Hence must rely on dynamic import
+# so that the current module can be imported from any OS.
+#
+# On top of that, we use good ol' `import foo` (nothing beats that !) instead
+# of the fancy `importlib.import_module`. This is to make sure PyInstaller
+# won't mess application packaging by missing this import during
+# tree-shaking (see issue #1690).
 
 
 def get_psutil():
-    global _psutil
-    if not _psutil:
-        _psutil = import_module("psutil")
-    return _psutil
+    import psutil
 
-
-_winreg = None
+    return psutil
 
 
 def get_winreg():
-    global _winreg
-    if not _winreg:
-        _winreg = import_module("winreg")
-    return _winreg
+    import winreg
+
+    return winreg
 
 
 def try_winreg():
