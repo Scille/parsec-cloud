@@ -550,8 +550,8 @@ jobs:
 
 - job: 's4_linux_snap_upload'
   displayName: 'Upload snap'
-  condition: startsWith(variables['build.sourceBranch'], 'refs/tags/')
   dependsOn: [s0_build_wheel, s1_qa, s1_linux_test, s1_macos_test, s1_windows_test, s2_linux_snap_build, s2_macos_app_build, s2_windows_installer_build, s3_linux_snap_test]
+  condition: and(succeeded(), startsWith(variables['build.sourceBranch'], 'refs/tags/'))
   timeoutInMinutes: 10
   pool:
     vmImage: 'ubuntu-latest'
@@ -576,8 +576,8 @@ jobs:
 
 - job: 's4_wheel_pypi_upload'
   displayName: 'Upload wheel on PyPI'
-  condition: startsWith(variables['build.sourceBranch'], 'refs/tags/')
   dependsOn: [s0_build_wheel, s1_qa, s1_linux_test, s1_macos_test, s1_windows_test, s2_linux_snap_build, s2_macos_app_build, s2_windows_installer_build, s3_linux_snap_test]
+  condition: and(succeeded(), startsWith(variables['build.sourceBranch'], 'refs/tags/'))
   timeoutInMinutes: 10
   pool:
     vmImage: 'ubuntu-latest'
