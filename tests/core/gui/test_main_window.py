@@ -4,6 +4,7 @@ import pytest
 from PyQt5 import QtCore, QtWidgets
 
 from parsec.api.protocol import InvitationType, OrganizationID
+from parsec.api.data import UserProfile
 from parsec.core.gui.lang import translate
 from parsec.core.gui.login_widget import LoginPasswordInputWidget
 from parsec.core.local_device import (
@@ -17,7 +18,10 @@ from parsec.core.types import (
     BackendOrganizationBootstrapAddr,
     BackendOrganizationFileLinkAddr,
     BackendOrganizationAddr,
+    WorkspaceRole,
 )
+
+from tests.common import customize_fixtures
 
 
 @pytest.fixture
@@ -706,3 +710,27 @@ async def test_link_file_unknown_org(
     assert accounts_w
 
     assert isinstance(accounts_w, LoginPasswordInputWidget)
+
+
+@pytest.mark.gui
+@pytest.mark.trio
+@customize_fixtures(adam_profile=UserProfile.OUTSIDER)
+async def test_outsider_profil_limit(
+    aqtbot, running_backend, adam, core_config, gui_factory, alice_user_fs
+):
+    wid = await alice_user_fs.workspace_create("workspace1")
+    await alice_user_fs.workspace_share(wid, adam.user_id, WorkspaceRole.READER)
+    await alice_user_fs.process_last_messages()
+    await alice_user_fs.sync()
+
+    gui = await gui_factory()
+    await gui.test_switch_to_logged_in(adam)
+
+    w_w = await gui.test_switch_to_workspaces_widget()
+    layout_workspace = w_w.layout_workspaces.itemAt(0)
+    workspace_button = layout_workspace.widget()
+    assert workspace_button.button_share.isVisible() is False
+    assert w_w.button_add_workspace.isVisible() is False
+
+    c_w = gui.test_get_central_widget()
+    assert c_w.menu.button_users.isVisible() is False
