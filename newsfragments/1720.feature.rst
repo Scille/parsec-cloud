@@ -1,0 +1,1 @@
+Adds the outsider profile management in the GUI
