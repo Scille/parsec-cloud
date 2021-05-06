@@ -1,6 +1,5 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2016-2021 Scille SAS
 
-from parsec.core.core_events import CoreEvent
 import os
 import sys
 import errno
@@ -18,6 +17,8 @@ from parsec.core.mountpoint import (
     MountpointFuseNotAvailable,
     MountpointWinfspNotAvailable,
 )
+
+from parsec.core.core_events import CoreEvent
 from parsec.core import logged_core_factory
 from parsec.core.types import FsPath, WorkspaceRole
 
@@ -578,9 +579,11 @@ async def test_cancel_mount_workspace(base_mountpoint, alice_user_fs, event_bus,
     """
     wid = await alice_user_fs.workspace_create("w")
 
-    # The timeout for `_stop_fuse_thread` is 1 second, so let's use a 0.9 seconds
-    # to make sure a potential failure doesn't go undetected.
-    with trio.fail_after(0.9):
+    # The timeout for `_stop_fuse_thread` is 1 second (3 seconds for macOS),
+    # so let's use a slightly lower timeout to make sure a potential failure
+    # doesn't go undetected.
+    timeout = 3.0 if sys.platform == "darwin" else 1.0
+    with trio.fail_after(timeout * 0.9):
 
         async with mountpoint_manager_factory(
             alice_user_fs, event_bus, base_mountpoint

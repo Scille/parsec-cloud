@@ -239,9 +239,9 @@ async def _stop_fuse_thread(
         process_args = ["diskutil", "unmount", "force", str(mountpoint_path)]
         process = await trio.open_process(process_args)
 
-        # Perform 100 attempts of 10 ms, i.e a 1 second timeout
+        # Perform 300 attempts of 10 ms, i.e a 3 second timeout
         # A while loop wouldn't be ideal here, especially since this code is protected against cancellation
-        for _ in range(100):
+        for _ in range(300):
             # Check if the attempt succeeded for 10 ms
             if await trio.to_thread.run_sync(fuse_thread_stopped.wait, 0.01):
                 break

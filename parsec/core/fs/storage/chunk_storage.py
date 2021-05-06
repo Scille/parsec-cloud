@@ -57,7 +57,7 @@ class ChunkStorage:
         # writes data as blocks of 4K. The manifest being kept in
         # memory during the writing, this means that the data and
         # metadata is typically not flushed to the disk until an
-        # an acutal flush operation is performed.
+        # an actual flush operation is performed.
         return self.localdb.open_cursor(commit=False)
 
     # Database initialization
@@ -98,7 +98,10 @@ class ChunkStorage:
 
     async def get_chunk(self, chunk_id: ChunkID) -> bytes:
         async with self._open_cursor() as cursor:
-            cursor.execute(
+            # Use a thread as executing a statement that modifies the content of the database might,
+            # in some case, block for several hundreds of milliseconds
+            await self.localdb.run_in_thread(
+                cursor.execute,
                 """
                 UPDATE chunks SET accessed_on = ? WHERE chunk_id = ?;
                 """,
@@ -108,19 +111,20 @@ class ChunkStorage:
             changes, = cursor.fetchone()
             if not changes:
                 raise FSLocalMissError(chunk_id)
-
             cursor.execute("""SELECT data FROM chunks WHERE chunk_id = ?""", (chunk_id.bytes,))
             ciphered, = cursor.fetchone()
 
         return self.local_symkey.decrypt(ciphered)
 
     async def set_chunk(self, chunk_id: ChunkID, raw: bytes) -> None:
-        assert isinstance(raw, (bytes, bytearray))
         ciphered = self.local_symkey.encrypt(raw)
 
         # Update database
         async with self._open_cursor() as cursor:
-            cursor.execute(
+            # Use a thread as executing a statement that modifies the content of the database might,
+            # in some case, block for several hundreds of milliseconds
+            await self.localdb.run_in_thread(
+                cursor.execute,
                 """INSERT OR REPLACE INTO
                 chunks (chunk_id, size, offline, accessed_on, data)
                 VALUES (?, ?, ?, ?, ?)""",
@@ -129,7 +133,11 @@ class ChunkStorage:
 
     async def clear_chunk(self, chunk_id: ChunkID) -> None:
         async with self._open_cursor() as cursor:
-            cursor.execute("DELETE FROM chunks WHERE chunk_id = ?", (chunk_id.bytes,))
+            # Use a thread as executing a statement that modifies the content of the database might,
+            # in some case, block for several hundreds of milliseconds
+            await self.localdb.run_in_thread(
+                cursor.execute, "DELETE FROM chunks WHERE chunk_id = ?", (chunk_id.bytes,)
+            )
             cursor.execute("SELECT changes()")
             changes, = cursor.fetchone()
 
@@ -155,7 +163,7 @@ class BlockStorage(ChunkStorage):
     def _open_cursor(self) -> AsyncContextManager[Cursor]:
         # It doesn't matter for blocks to be commited as soon as they're added
         # since they exists in the remote storage anyway. But it's simply more
-        # convenient to perform the commit right away as does't cost much (at
+        # convenient to perform the commit right away as it does't cost much (at
         # least compare to the downloading of the block).
         return self.localdb.open_cursor(commit=True)
 
@@ -169,9 +177,40 @@ class BlockStorage(ChunkStorage):
         async with self._open_cursor() as cursor:
             cursor.execute("DELETE FROM chunks")
 
-    async def clear_old_blocks(self, limit: int) -> None:
+    # Upgraded set method
+
+    async def set_chunk(self, chunk_id: ChunkID, raw: bytes) -> None:
+        ciphered = self.local_symkey.encrypt(raw)
+
+        # Update database
         async with self._open_cursor() as cursor:
-            cursor.execute(
+
+            # Insert the chunk
+            # Use a thread as executing a statement that modifies the content of the database might,
+            # in some case, block for several hundreds of milliseconds
+            await self.localdb.run_in_thread(
+                cursor.execute,
+                """INSERT OR REPLACE INTO
+                chunks (chunk_id, size, offline, accessed_on, data)
+                VALUES (?, ?, ?, ?, ?)""",
+                (chunk_id.bytes, len(ciphered), False, time.time(), ciphered),
+            )
+
+            # Count the chunks
+            cursor.execute("SELECT COUNT(*) FROM chunks")
+            nb_blocks, = cursor.fetchone()
+            extra_blocks = nb_blocks - self.block_limit
+
+            # No clean up is needed
+            if extra_blocks <= 0:
+                return
+
+            # Remove the extra block plus 10 % of the cache size, i.e about 100 blocks
+            limit = extra_blocks + self.block_limit // 10
+            # Use a thread as executing a statement that modifies the content of the database might,
+            # in some case, block for several hundreds of milliseconds
+            await self.localdb.run_in_thread(
+                cursor.execute,
                 """
                 DELETE FROM chunks WHERE chunk_id IN (
                     SELECT chunk_id FROM chunks ORDER BY accessed_on ASC LIMIT ?
@@ -179,18 +218,3 @@ class BlockStorage(ChunkStorage):
                 """,
                 (limit,),
             )
-
-    # Upgraded set method
-
-    async def set_chunk(self, chunk_id: ChunkID, raw: bytes) -> None:
-        # Actual set operation
-        await super().set_chunk(chunk_id, raw)
-
-        # Clean up if necessary
-        nb_blocks = await self.get_nb_blocks()
-        extra_blocks = nb_blocks - self.block_limit
-        if extra_blocks > 0:
-
-            # Remove the extra block plus 10 % of the cache size, i.e about 100 blocks
-            limit = extra_blocks + self.block_limit // 10
-            await self.clear_old_blocks(limit=limit)
