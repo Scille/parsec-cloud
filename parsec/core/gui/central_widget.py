@@ -24,7 +24,6 @@ from parsec.api.protocol import (
     HandshakeRevokedDevice,
     HandshakeOrganizationExpired,
 )
-from parsec.api.data import UserProfile
 from parsec.core.backend_connection import BackendConnStatus
 from parsec.core.fs import (
     FSWorkspaceNoReadAccess,
@@ -99,7 +98,7 @@ class CentralWidget(QWidget, Ui_CentralWidget):
 
         self.new_notification.connect(self.on_new_notification)
         self.menu.files_clicked.connect(self.show_mount_widget)
-        if self.core.device.profile == UserProfile.OUTSIDER:
+        if self.core.device.is_outsider:
             self.menu.button_users.hide()
         else:
             self.menu.users_clicked.connect(self.show_users_widget)

@@ -10,7 +10,6 @@ import pendulum
 
 from contextlib import contextmanager
 
-from parsec.api.data import UserProfile
 from parsec.core.types import (
     WorkspaceEntry,
     UserInfo,
@@ -205,7 +204,7 @@ class WorkspacesWidget(QWidget, Ui_WorkspacesWidget):
         self.layout_workspaces = FlowLayout(spacing=40)
         self.layout_content.addLayout(self.layout_workspaces)
 
-        if self.core.device.profile == UserProfile.OUTSIDER:
+        if self.core.device.is_outsider:
             self.button_add_workspace.hide()
         else:
             self.button_add_workspace.clicked.connect(self.create_workspace_clicked)
@@ -490,7 +489,7 @@ class WorkspacesWidget(QWidget, Ui_WorkspacesWidget):
             )
             self.layout_workspaces.addWidget(button)
             button.clicked.connect(self.load_workspace)
-            if self.core.device.profile == UserProfile.OUTSIDER:
+            if self.core.device.is_outsider:
                 button.button_share.hide()
             else:
                 button.share_clicked.connect(self.share_workspace)

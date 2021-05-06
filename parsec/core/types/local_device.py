@@ -70,6 +70,10 @@ class LocalDevice(BaseLocalData):
     def is_admin(self) -> bool:
         return self.profile == UserProfile.ADMIN
 
+    @property
+    def is_outsider(self) -> bool:
+        return self.profile == UserProfile.OUTSIDER
+
     def __repr__(self):
         return f"{self.__class__.__name__}({self.device_id})"
 
