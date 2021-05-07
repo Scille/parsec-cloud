@@ -2,12 +2,13 @@
 
 import pytest
 
+import pendulum
 from PyQt5 import QtCore
 
 from parsec.core.types import WorkspaceRole, UserInfo
-from parsec.core.fs.workspacefs import ReencryptionNeed
+from parsec.core.fs.workspacefs import ReencryptionNeed, WorkspaceFSTimestamped
 from parsec.core.gui.workspace_button import WorkspaceButton
-from parsec.core.gui.lang import switch_language, translate as _
+from parsec.core.gui.lang import switch_language, format_datetime, translate as _
 
 
 @pytest.fixture
@@ -264,3 +265,22 @@ async def test_workspace_button_delete_clicked(qtbot, workspace_fs, core_config,
     with qtbot.waitSignal(w.delete_clicked, timeout=500) as blocker:
         qtbot.mouseClick(w.button_delete, QtCore.Qt.LeftButton)
     assert blocker.args == [workspace_fs]
+
+
+@pytest.mark.gui
+@pytest.mark.trio
+async def test_workspace_button_timestamped(qtbot, workspace_fs, core_config, alice_user_info):
+    switch_language(core_config, "en")
+    timestamp = pendulum.now().add(seconds=10)
+    roles = {alice_user_info.user_id: (WorkspaceRole.OWNER, alice_user_info)}
+    ts_workspace_fs = WorkspaceFSTimestamped(workspace_fs, timestamp)
+    w = WorkspaceButton(
+        workspace_name="Workspace",
+        workspace_fs=ts_workspace_fs,
+        users_roles=roles,
+        is_mounted=True,
+        timestamped=True,
+    )
+    assert w.timestamp == timestamp
+    label = w.widget_empty.layout().itemAt(0).widget().label_timestamp
+    assert label.text() == format_datetime(timestamp)

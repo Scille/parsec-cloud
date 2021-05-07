@@ -139,7 +139,7 @@ class WorkspaceButton(QWidget, Ui_WorkspaceButton):
                     label = getattr(self, "file{}_name".format(i))
                     label.setText(f)
         else:
-            widget_temp = self.widget_empty.layout().widgetAt(0)
+            widget_temp = self.widget_empty.layout().itemAt(0).widget()
             widget_temp.label_timestamp.setText(format_datetime(self.timestamp))
 
         self.label_role.setText(get_role_translation(self.current_role))
