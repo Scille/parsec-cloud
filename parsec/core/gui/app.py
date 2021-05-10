@@ -6,6 +6,7 @@ import sys
 import signal
 from queue import Queue
 from contextlib import contextmanager
+from enum import Enum
 
 import trio
 from structlog import get_logger
@@ -48,28 +49,33 @@ def before_quit(systray):
     return _before_quit
 
 
-async def _start_ipc_server(config, main_window, start_arg, result_queue):
-    new_instance_needed_qt = ThreadSafeQtSignal(main_window, "new_instance_needed", object)
-    foreground_needed_qt = ThreadSafeQtSignal(main_window, "foreground_needed")
+IPCServerStartupOutcome = Enum("IPCServerStartupOutcome", "STARTED ALREADY_RUNNING ERROR")
 
-    async def cmd_handler(cmd):
-        if cmd["cmd"] == IPCCommand.FOREGROUND:
-            foreground_needed_qt.emit()
-        elif cmd["cmd"] == IPCCommand.NEW_INSTANCE:
-            new_instance_needed_qt.emit(cmd.get("start_arg"))
-        return {"status": "ok"}
 
-    while True:
-        try:
-            async with run_ipc_server(
-                cmd_handler, config.ipc_socket_file, win32_mutex_name=config.ipc_win32_mutex_name
-            ):
-                result_queue.put("started")
-                await trio.sleep_forever()
+async def _run_ipc_server(config, main_window, start_arg, result_queue):
+    try:
+        new_instance_needed_qt = ThreadSafeQtSignal(main_window, "new_instance_needed", object)
+        foreground_needed_qt = ThreadSafeQtSignal(main_window, "foreground_needed")
 
-        except IPCServerAlreadyRunning:
-            # Parsec is already started, give it our work then
+        async def _cmd_handler(cmd):
+            if cmd["cmd"] == IPCCommand.FOREGROUND:
+                foreground_needed_qt.emit()
+            elif cmd["cmd"] == IPCCommand.NEW_INSTANCE:
+                new_instance_needed_qt.emit(cmd.get("start_arg"))
+            return {"status": "ok"}
+
+        while True:
             try:
+                async with run_ipc_server(
+                    _cmd_handler,
+                    config.ipc_socket_file,
+                    win32_mutex_name=config.ipc_win32_mutex_name,
+                ):
+                    result_queue.put_nowait(IPCServerStartupOutcome.STARTED)
+                    await trio.sleep_forever()
+
+            except IPCServerAlreadyRunning:
+                # Parsec is already started, give it our work then
                 try:
                     if start_arg:
                         await send_to_ipc_server(
@@ -77,13 +83,19 @@ async def _start_ipc_server(config, main_window, start_arg, result_queue):
                         )
                     else:
                         await send_to_ipc_server(config.ipc_socket_file, IPCCommand.FOREGROUND)
-                finally:
-                    result_queue.put("already_running")
-                return
 
-            except IPCServerNotRunning:
-                # IPC server has closed, retry to create our own
-                continue
+                except IPCServerNotRunning:
+                    # IPC server has closed, retry to create our own
+                    continue
+
+                # We have successfuly noticed the other running application
+                result_queue.put_nowait(IPCServerStartupOutcome.ALREADY_RUNNING)
+                break
+
+    except Exception:
+        result_queue.put_nowait(IPCServerStartupOutcome.ERROR)
+        # Let the exception bubble up so QtToTrioJob logged it as an unexpected error
+        raise
 
 
 @contextmanager
@@ -161,15 +173,21 @@ def run_gui(config: CoreConfig, start_arg: str = None, diagnose: bool = False):
         jobs_ctx.submit_job(
             ThreadSafeNoQtSignal(),
             ThreadSafeNoQtSignal(),
-            _start_ipc_server,
+            _run_ipc_server,
             config,
             win,
             start_arg,
             result_queue,
         )
-        if result_queue.get() == "already_running":
+        if result_queue.get() == IPCServerStartupOutcome.ALREADY_RUNNING:
             # Another instance of Parsec already started, nothing more to do
             return
+
+        # If we are here, it's either the IPC server has successfully started
+        # or it has crashed without being able to communicate with an existing
+        # IPC server. Such case is of course not supposed to happen but if it
+        # does we nevertheless keep the application running as a kind of
+        # failsafe mode (and the crash reason is logged and sent to telemetry).
 
         # Systray is not displayed on MacOS, having natively a menu with similar functions.
         if systray_available() and sys.platform != "darwin":
