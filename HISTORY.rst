@@ -5,6 +5,24 @@ History
 .. towncrier release notes start
 
 
+Parsec v2.3.1 (2021-05-10)
+--------------------------
+
+Bugfixes
+~~~~~~~~
+
+* Fix blocking calls related to the local storage that might slow down the
+  application.  (`#1713 <https://github.com/Scille/parsec-cloud/issues/1713>`__)
+* Fix a regression that broke the "Remount workspace at a given timestamp"
+  button.  (`#1723 <https://github.com/Scille/parsec-cloud/issues/1723>`__)
+
+Miscellaneous internal changes
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+* Update recommanded macFUSE version to 4.1.0 for mountpoint on macOS.  (`#1718
+  <https://github.com/Scille/parsec-cloud/issues/1718>`__)
+
+
 Parsec v2.3.0 (2021-05-04)
 --------------------------
 

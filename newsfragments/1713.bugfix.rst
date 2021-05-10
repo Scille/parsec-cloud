@@ -1,1 +1,0 @@
-Fix blocking calls related to the local storage that might slow down the application.
