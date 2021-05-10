@@ -678,7 +678,7 @@ msgstr ""
 "Mac, you have to install macFUSE and allow in security "
 "settings.<br>From Mac OS 11.x, a restart is required after macFUSE "
 "installation.<br><br><a "
-"href=\"https://osxfuse.github.io/2021/01/02/macFUSE-4.0.4.html\">Get "
+"href=\"https://osxfuse.github.io/2021/03/13/macFUSE-4.1.0.html\">Get "
 "macFUSE here</a>"
 
 msgid "TEXT_LOGIN_UNKNOWN_ERROR"

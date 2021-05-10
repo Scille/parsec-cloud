@@ -721,7 +721,7 @@ msgstr ""
 " et de l'accepter dans les réglages de sécurité.<br>À partir "
 "de Mac OS 11.x, un rédémarrage est nécessaire après l'installation de "
 "macFUSE.<br><br><a "
-"href=\"https://osxfuse.github.io/2021/01/02/macFUSE-4.0.4.html\">Télécharger"
+"href=\"https://osxfuse.github.io/2021/03/13/macFUSE-4.1.0.html\">Télécharger"
 " macFUSE ici</a>"
 
 msgid "TEXT_LOGIN_UNKNOWN_ERROR"
