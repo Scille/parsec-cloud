@@ -1,0 +1,1 @@
+Update recommanded macFUSE version to 4.1.0 for mountpoint on macOS.
