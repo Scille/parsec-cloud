@@ -44,6 +44,7 @@ from parsec.core.mountpoint import mountpoint_manager_factory, MountpointManager
 from parsec.core.messages_monitor import monitor_messages
 from parsec.core.sync_monitor import monitor_sync
 from parsec.core.fs import UserFS
+from parsec.core.fs.exceptions import FSWorkspaceNotFoundError
 
 
 logger = get_logger()
@@ -129,6 +130,12 @@ class LoggedCore:
     @property
     def backend_status_exc(self) -> Optional[Exception]:
         return self._backend_conn.status_exc
+
+    def find_workspace_from_name(self, workspace_name: str):
+        for workspace in self.user_fs.get_user_manifest().workspaces:
+            if workspace_name == workspace.name:
+                return workspace
+        raise FSWorkspaceNotFoundError(f"Unknown workspace {workspace_name}")
 
     async def find_humans(
         self,

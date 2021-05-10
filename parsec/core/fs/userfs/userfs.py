@@ -379,7 +379,8 @@ class UserFS:
 
     async def workspace_create(self, name: AnyEntryName) -> EntryID:
         """
-        Raises: Nothing !
+        Raises:
+            ValueError: if name is passed as str but cannot be converted to `EntryName`
         """
         name = EntryName(name)
         workspace_entry = WorkspaceEntry.new(name)
@@ -400,6 +401,7 @@ class UserFS:
         """
         Raises:
             FSWorkspaceNotFoundError
+            ValueError: if name is passed as str but cannot be converted to `EntryName`
         """
         new_name = EntryName(new_name)
         async with self._update_user_manifest_lock:
@@ -633,7 +635,7 @@ class UserFS:
         await workspace.minimal_sync(workspace_entry.id)
 
     async def workspace_share(
-        self, workspace_id: EntryID, recipient: UserID, role: Optional[WorkspaceRole]
+        self, workspace_id: EntryID, recipient: UserID, role: Optional[WorkspaceRole] = None
     ) -> None:
         """
         Raises:
