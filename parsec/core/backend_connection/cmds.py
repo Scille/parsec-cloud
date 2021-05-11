@@ -660,12 +660,15 @@ async def organization_status(transport: Transport, organization_id: Organizatio
 async def organization_update(
     transport: Transport, organization_id: OrganizationID, expiration_date: DateTime = None
 ) -> dict:
+    kwargs = {}
+    if expiration_date:
+        kwargs["expiration_date"] = expiration_date
     return await _send_cmd(
         transport,
         apiv1_organization_update_serializer,
         cmd="organization_update",
         organization_id=organization_id,
-        expiration_date=expiration_date,
+        **kwargs
     )
 
 

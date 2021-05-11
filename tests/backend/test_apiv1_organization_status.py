@@ -23,13 +23,12 @@ async def organization_status(sock, organization_id):
 
 
 async def organization_update(sock, organization_id, expiration_date: datetime = None):
+    kwargs = {}
+    if expiration_date:
+        kwargs["expiration_date"] = expiration_date
     raw_rep = await sock.send(
         apiv1_organization_update_serializer.req_dumps(
-            {
-                "cmd": "organization_update",
-                "organization_id": organization_id,
-                "expiration_date": expiration_date,
-            }
+            {"cmd": "organization_update", "organization_id": organization_id, **kwargs}
         )
     )
     raw_rep = await sock.recv()
