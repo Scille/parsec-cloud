@@ -62,18 +62,26 @@ async def test_organization_update_expiration_date(
 ):
     rep = await organization_status(administration_backend_sock, coolorg.organization_id)
     assert rep == {"status": "ok", "is_bootstrapped": True, "expiration_date": None}
+
+    rep = await organization_update(administration_backend_sock, coolorg.organization_id)
+    assert rep == {"status": "ok"}
+    rep = await organization_status(administration_backend_sock, coolorg.organization_id)
+    assert rep == {"status": "ok", "is_bootstrapped": True, "expiration_date": None}
+
     rep = await organization_update(
         administration_backend_sock, coolorg.organization_id, expiration_date=datetime(2077, 1, 1)
     )
     assert rep == {"status": "ok"}
     rep = await organization_status(administration_backend_sock, coolorg.organization_id)
     assert rep == {"status": "ok", "is_bootstrapped": True, "expiration_date": datetime(2077, 1, 1)}
+
     rep = await organization_update(
         administration_backend_sock, coolorg.organization_id, expiration_date=None
     )
     assert rep == {"status": "ok"}
     rep = await organization_status(administration_backend_sock, coolorg.organization_id)
     assert rep == {"status": "ok", "is_bootstrapped": True, "expiration_date": None}
+
     # Expired organization
     with backend.event_bus.listen() as spy:
         rep = await organization_update(
