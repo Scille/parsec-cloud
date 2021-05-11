@@ -60,12 +60,6 @@ async def test_organization_update_expiration_date(
     rep = await organization_status(administration_backend_sock, coolorg.organization_id)
     assert rep == {"status": "ok", "is_bootstrapped": True, "expiration_date": None}
 
-    rep = await organization_update(administration_backend_sock, coolorg.organization_id)
-    assert rep == {"status": "ok"}
-    assert 1 == 2
-    rep = await organization_status(administration_backend_sock, coolorg.organization_id)
-    assert rep == {"status": "ok", "is_bootstrapped": True, "expiration_date": None}
-
     rep = await organization_update(
         administration_backend_sock, coolorg.organization_id, expiration_date=datetime(2077, 1, 1)
     )
