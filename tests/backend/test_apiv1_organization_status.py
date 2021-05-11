@@ -1,5 +1,6 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2016-2021 Scille SAS
 
+from typing import Dict
 from unittest.mock import ANY
 from pendulum import datetime
 import pytest
@@ -22,13 +23,10 @@ async def organization_status(sock, organization_id):
     return apiv1_organization_status_serializer.rep_loads(raw_rep)
 
 
-async def organization_update(sock, organization_id, expiration_date: datetime = None):
-    kwargs = {}
-    if expiration_date:
-        kwargs["expiration_date"] = expiration_date
+async def organization_update(sock, organization_id, **fields: Dict):
     raw_rep = await sock.send(
         apiv1_organization_update_serializer.req_dumps(
-            {"cmd": "organization_update", "organization_id": organization_id, **kwargs}
+            {"cmd": "organization_update", "organization_id": organization_id, **fields}
         )
     )
     raw_rep = await sock.recv()
@@ -64,6 +62,7 @@ async def test_organization_update_expiration_date(
 
     rep = await organization_update(administration_backend_sock, coolorg.organization_id)
     assert rep == {"status": "ok"}
+    assert 1 == 2
     rep = await organization_status(administration_backend_sock, coolorg.organization_id)
     assert rep == {"status": "ok", "is_bootstrapped": True, "expiration_date": None}
 
