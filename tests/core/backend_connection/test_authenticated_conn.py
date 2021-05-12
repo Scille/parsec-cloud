@@ -104,7 +104,7 @@ async def test_init_with_backend_offline(event_bus, alice):
 
 @pytest.mark.trio
 @pytest.mark.parametrize("during_bootstrap", (True, False))
-async def test_monitor_crash(running_backend, event_bus, alice, during_bootstrap):
+async def test_monitor_crash(caplog, running_backend, event_bus, alice, during_bootstrap):
     async def _bad_monitor(*, task_status=trio.TASK_STATUS_IGNORED):
         if during_bootstrap:
             raise RuntimeError("D'oh !")
@@ -123,6 +123,9 @@ async def test_monitor_crash(running_backend, event_bus, alice, during_bootstrap
                 {"status": BackendConnStatus.CRASHED, "status_exc": spy.ANY},
             )
             assert conn.status == BackendConnStatus.CRASHED
+            caplog.assert_occured(
+                "[exception] Unhandled exception            [parsec.core.backend_connection.authenticated]"
+            )
 
             # Test command not possible
             with pytest.raises(BackendNotAvailable) as exc:

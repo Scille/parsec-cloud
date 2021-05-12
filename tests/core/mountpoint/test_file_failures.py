@@ -69,7 +69,7 @@ def test_empty_read_then_reopen(tmpdir, mountpoint_service):
 @pytest.mark.mountpoint
 @pytest.mark.skipif(sys.platform == "darwin", reason="TODO : crash on macOS")
 async def test_remote_error_event(
-    tmpdir, monkeypatch, running_backend, alice_user_fs, bob_user_fs, monitor
+    tmpdir, monkeypatch, caplog, running_backend, alice_user_fs, bob_user_fs, monitor
 ):
     wid = await create_shared_workspace("w1", bob_user_fs, alice_user_fs)
 
@@ -126,6 +126,11 @@ async def test_remote_error_event(
             with alice_user_fs.event_bus.listen() as spy:
                 with pytest.raises(OSError):
                     os.mkdir(str(trio_w / "dummy"))
+            if sys.platform == "win32":
+                expected_log = "[exception] Unhandled exception in winfsp mountpoint [parsec.core.mountpoint.winfsp_operations]"
+            else:
+                expected_log = "[exception] Unhandled exception in fuse mountpoint [parsec.core.mountpoint.fuse_operations]"
+            caplog.assert_occured(expected_log)
             spy.assert_event_occured(CoreEvent.MOUNTPOINT_UNHANDLED_ERROR)
 
         await trio.to_thread.run_sync(_testbed_online)

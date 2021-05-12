@@ -292,6 +292,7 @@ async def test_workspace_reencryption_not_found_error(
 )
 @customize_fixtures(logged_gui_as_admin=True)
 async def test_workspace_reencryption_do_one_batch_error(
+    caplog,
     aqtbot,
     running_backend,
     logged_gui,
@@ -332,6 +333,11 @@ async def test_workspace_reencryption_do_one_batch_error(
         assert wk_button.button_reencrypt.isVisible()
 
     await aqtbot.wait_until(_assert_error)
+    # Unexpected error is logged
+    if error_type is Exception:
+        caplog.assert_occured(
+            "[exception] Uncatched error                [parsec.core.gui.trio_thread]"
+        )
 
 
 @pytest.mark.gui
