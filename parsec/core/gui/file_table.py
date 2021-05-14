@@ -74,7 +74,7 @@ class FileTable(QTableWidget):
     FIXED_COL_SIZE = 560
     NAME_COL_MIN_SIZE = 150
 
-    file_moved = pyqtSignal(str, str)
+    file_moved = pyqtSignal(FileType, str, str)
     item_activated = pyqtSignal(FileType, str)
     files_dropped = pyqtSignal(list, str)
     delete_clicked = pyqtSignal()
@@ -484,9 +484,9 @@ class FileTable(QTableWidget):
             for row in rows:
                 file_name = self.item(row, Column.NAME).text()
                 if file_type == FileType.ParentFolder:
-                    self.file_moved.emit(file_name, "..")
+                    self.file_moved.emit(FileType.Folder, file_name, "..")
                 else:
-                    self.file_moved.emit(file_name, target_name)
+                    self.file_moved.emit(file_type, file_name, target_name)
             for row in rows:
                 self.removeRow(row)
             event.accept()
