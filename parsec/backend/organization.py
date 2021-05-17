@@ -60,6 +60,7 @@ class Organization:
     bootstrap_token: str
     expiration_date: Optional[DateTime] = None
     root_verify_key: Optional[VerifyKey] = None
+    outsider_enabled: Optional[bool] = False
 
     def is_bootstrapped(self):
         return self.root_verify_key is not None
@@ -123,6 +124,7 @@ class BaseOrganizationComponent:
             {
                 "is_bootstrapped": organization.is_bootstrapped(),
                 "expiration_date": organization.expiration_date,
+                "outsider_enabled": organization.outsider_enabled,
                 "status": "ok",
             }
         )

@@ -97,6 +97,7 @@ class APIV1_OrganizationStatusReqSchema(BaseReqSchema):
 class APIV1_OrganizationStatusRepSchema(BaseRepSchema):
     is_bootstrapped = fields.Boolean(required=True)
     expiration_date = fields.DateTime(allow_none=True, required=False)
+    outsider_enabled = fields.Boolean(required=True)
 
 
 apiv1_organization_status_serializer = CmdSerializer(
