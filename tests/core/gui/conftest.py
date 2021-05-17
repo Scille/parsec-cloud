@@ -1,7 +1,6 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2016-2021 Scille SAS
 
 import pytest
-from unittest.mock import patch
 from functools import wraps, partial
 import trio
 from trio.testing import trio_test as vanilla_trio_test
@@ -108,7 +107,7 @@ class ThreadedTrioTestRunner:
 # this fixture will actually be executed *before* pytest-trio setup
 # the trio loop, giving us a chance to monkeypatch it !
 @pytest.fixture
-def run_trio_test_in_thread():
+def run_trio_test_in_thread(monkeypatch):
     runner = ThreadedTrioTestRunner()
 
     def trio_test(fn):
@@ -119,12 +118,24 @@ def run_trio_test_in_thread():
 
         return wrapper
 
-    with patch("pytest_trio.plugin.trio_test", new=trio_test):
+    monkeypatch.setattr("pytest_trio.plugin.trio_test", trio_test)
 
-        yield runner
+    # TODO: This is a ugly hack to prevent timers from slowing the entire
+    # test (this could event lead to timeout if the timer triggers a refresh
+    # in the GUI that is eagerly awaited by the test)
+    from PyQt5.QtCore import QTimer
 
-        # Wait for the last moment before stopping the thread
-        runner.stop_test_thread()
+    vanilla_setInterval = QTimer.setInterval
+
+    def patched_setInterval(self, time):
+        vanilla_setInterval(self, min(time, 100))
+
+    monkeypatch.setattr(QTimer, "setInterval", patched_setInterval)
+
+    yield runner
+
+    # Wait for the last moment before stopping the thread
+    runner.stop_test_thread()
 
 
 @pytest.fixture
