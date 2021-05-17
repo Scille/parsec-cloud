@@ -99,7 +99,20 @@ async def test_organization_update_only_expiration_date(
         "outsider_enabled": False,
     }
 
-    # Expired organization
+
+@pytest.mark.trio
+async def test_organization_update_expiration_date_with_expired_event(
+    coolorg, organization_factory, administration_backend_sock, backend
+):
+    rep = await organization_status(administration_backend_sock, coolorg.organization_id)
+    assert rep == {
+        "status": "ok",
+        "is_bootstrapped": True,
+        "expiration_date": None,
+        "outsider_enabled": False,
+    }
+
+    # New expired organization
     with backend.event_bus.listen() as spy:
         rep = await organization_update(
             administration_backend_sock,
@@ -117,13 +130,144 @@ async def test_organization_update_only_expiration_date(
             "outsider_enabled": False,
         }
 
+    # Already Expired organization
+    with backend.event_bus.listen() as spy:
+        rep = await organization_update(
+            administration_backend_sock,
+            coolorg.organization_id,
+            expiration_date=datetime(2000, 1, 31),
+        )
+        assert rep == {"status": "ok"}
+        await spy.wait_with_timeout(BackendEvent.ORGANIZATION_EXPIRED)
+        rep = await organization_status(administration_backend_sock, coolorg.organization_id)
+        assert rep == {
+            "status": "ok",
+            "is_bootstrapped": True,
+            "expiration_date": datetime(2000, 1, 31),
+            "outsider_enabled": False,
+        }
+
 
 @pytest.mark.trio
-async def test_organization_update_expiration_date_unknown_organization(
+async def test_organization_update_only_outsider_enabled(
+    coolorg, organization_factory, administration_backend_sock, backend
+):
+    rep = await organization_status(administration_backend_sock, coolorg.organization_id)
+    assert rep == {
+        "status": "ok",
+        "is_bootstrapped": True,
+        "expiration_date": None,
+        "outsider_enabled": False,
+    }
+
+    rep = await organization_update(
+        administration_backend_sock, coolorg.organization_id, outsider_enabled=True
+    )
+    assert rep == {"status": "ok"}
+    rep = await organization_status(administration_backend_sock, coolorg.organization_id)
+    assert rep == {
+        "status": "ok",
+        "is_bootstrapped": True,
+        "expiration_date": None,
+        "outsider_enabled": True,
+    }
+
+    rep = await organization_update(
+        administration_backend_sock, coolorg.organization_id, outsider_enabled=False
+    )
+    assert rep == {"status": "ok"}
+    rep = await organization_status(administration_backend_sock, coolorg.organization_id)
+    assert rep == {
+        "status": "ok",
+        "is_bootstrapped": True,
+        "expiration_date": None,
+        "outsider_enabled": False,
+    }
+
+
+@pytest.mark.trio
+async def test_organization_update_multiple_fields(
+    coolorg, organization_factory, administration_backend_sock, backend
+):
+    rep = await organization_status(administration_backend_sock, coolorg.organization_id)
+    assert rep == {
+        "status": "ok",
+        "is_bootstrapped": True,
+        "expiration_date": None,
+        "outsider_enabled": False,
+    }
+
+    rep = await organization_update(
+        administration_backend_sock,
+        coolorg.organization_id,
+        expiration_date=datetime(2077, 1, 1),
+        outsider_enabled=True,
+    )
+    assert rep == {"status": "ok"}
+    rep = await organization_status(administration_backend_sock, coolorg.organization_id)
+    assert rep == {
+        "status": "ok",
+        "is_bootstrapped": True,
+        "expiration_date": datetime(2077, 1, 1),
+        "outsider_enabled": True,
+    }
+
+    rep = await organization_update(
+        administration_backend_sock,
+        coolorg.organization_id,
+        expiration_date=None,
+        outsider_enabled=True,
+    )
+    assert rep == {"status": "ok"}
+    rep = await organization_status(administration_backend_sock, coolorg.organization_id)
+    assert rep == {
+        "status": "ok",
+        "is_bootstrapped": True,
+        "expiration_date": None,
+        "outsider_enabled": True,
+    }
+
+    rep = await organization_update(
+        administration_backend_sock,
+        coolorg.organization_id,
+        expiration_date=datetime(2077, 1, 1),
+        outsider_enabled=False,
+    )
+    assert rep == {"status": "ok"}
+    rep = await organization_status(administration_backend_sock, coolorg.organization_id)
+    assert rep == {
+        "status": "ok",
+        "is_bootstrapped": True,
+        "expiration_date": datetime(2077, 1, 1),
+        "outsider_enabled": False,
+    }
+
+
+@pytest.mark.trio
+async def test_organization_update_without_fields(
+    coolorg, organization_factory, administration_backend_sock
+):
+    rep = await organization_update(administration_backend_sock, "dummy")
+    assert rep["status"] == "bad_message"
+
+
+@pytest.mark.trio
+async def test_organization_update_unknown_organization(
     coolorg, organization_factory, administration_backend_sock
 ):
     rep = await organization_update(
         administration_backend_sock, "dummy", expiration_date=datetime(2077, 1, 1)
+    )
+    assert rep == {"status": "not_found"}
+
+    rep = await organization_update(administration_backend_sock, "dummy", outsider_enabled=False)
+    assert rep == {"status": "not_found"}
+
+    rep = await organization_update(
+        administration_backend_sock,
+        "dummy",
+        outsider_enabled=False,
+        expiration_date=datetime(2077, 1, 1),
     )
     assert rep == {"status": "not_found"}
 

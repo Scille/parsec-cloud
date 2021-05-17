@@ -108,8 +108,9 @@ apiv1_organization_status_serializer = CmdSerializer(
 class APIV1_OrganizationUpdateReqSchema(BaseReqSchema):
     organization_id = OrganizationIDField(required=True)
     expiration_date = fields.DateTime(allow_none=True, required=False)
+    outsider_enabled = fields.Boolean(required=False)
 
-    UPDATABLE_FIELDS = ("expiration_date",)
+    UPDATABLE_FIELDS = ("expiration_date", "outsider_enabled")
 
     @validates_schema
     def validate_updatable_fields(self, data: Dict[str, str]) -> None:

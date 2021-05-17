@@ -181,14 +181,10 @@ class BaseOrganizationComponent:
     @catch_protocol_errors
     async def api_organization_update(self, client_ctx, msg):
         msg = apiv1_organization_update_serializer.req_load(msg)
-        if "expiration_date" in msg:
-            try:
-                await self.set_expiration_date(
-                    msg["organization_id"], expiration_date=msg["expiration_date"]
-                )
-
-            except OrganizationNotFoundError:
-                return {"status": "not_found"}
+        try:
+            await self.update(msg.pop("organization_id"), **msg)
+        except OrganizationNotFoundError:
+            return {"status": "not_found"}
 
         return apiv1_organization_update_serializer.rep_dump({"status": "ok"})
 
@@ -368,6 +364,13 @@ class BaseOrganizationComponent:
     async def set_expiration_date(
         self, id: OrganizationID, expiration_date: Optional[DateTime] = None
     ):
+        """
+        Raises:
+            OrganizationNotFoundError
+        """
+        raise NotImplementedError()
+
+    async def update(self, id: OrganizationID, **fields: dict):
         """
         Raises:
             OrganizationNotFoundError

@@ -127,3 +127,16 @@ class MemoryOrganizationComponent(BaseOrganizationComponent):
                 await self._send_event(BackendEvent.ORGANIZATION_EXPIRED, organization_id=id)
         except KeyError:
             raise OrganizationNotFoundError()
+
+    async def update(self, id: OrganizationID, **fields: dict) -> None:
+        """
+        Raises:
+            OrganizationNotFoundError
+        """
+        if id not in self._organizations:
+            raise OrganizationNotFoundError()
+
+        self._organizations[id] = self._organizations[id].evolve(**fields)
+
+        if self._organizations[id].is_expired:
+            await self._send_event(BackendEvent.ORGANIZATION_EXPIRED, organization_id=id)
