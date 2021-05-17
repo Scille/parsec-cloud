@@ -106,8 +106,7 @@ jobs:
       pre-commit run --all-files --show-diff-on-failure
     displayName: 'Pre-commit hooks check'
   - bash: |
-      if ([[ $(Build.SourceBranch) = "refs/heads/master" ]] || [[ $(Build.SourceBranch) = "refs/tags/"* ]])
-      then exit 0; fi
+      # PRs must contain a newsfragment
       for FILENAME in newsfragments/*
       do
         # If file never existed in master, consider as a new newsfragment
@@ -117,6 +116,7 @@ jobs:
         then exit 0; fi
       done
       echo "NO NEW NEWSFRAGMENT FOUND" >&2
+    condition: eq(variables['Build.Reason'], 'PullRequest')
     displayName: 'Newsfragment'
     failOnStderr: true
   - bash: |
