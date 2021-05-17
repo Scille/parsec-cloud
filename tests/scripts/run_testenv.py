@@ -153,7 +153,7 @@ async def restart_local_backend(administration_token, backend_port, email_host, 
         backend_process.stdout.close()
 
     # Windows restart
-    if sys.platform == "win32" or True:
+    if sys.platform == "win32":
         await trio.to_thread.run_sync(_windows_target)
 
     # Linux restart
