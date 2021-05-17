@@ -1,6 +1,6 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2016-2021 Scille SAS
 
-from typing import Optional
+from typing import Optional, Any, Dict
 
 from pendulum import DateTime
 from triopg import UniqueViolationError
@@ -28,8 +28,8 @@ from parsec.backend.postgresql.handler import send_signal
 
 _q_insert_organization = Q(
     """
-INSERT INTO organization (organization_id, bootstrap_token, expiration_date)
-VALUES ($organization_id, $bootstrap_token, $expiration_date)
+INSERT INTO organization (organization_id, bootstrap_token, expiration_date, outsider_enabled)
+VALUES ($organization_id, $bootstrap_token, $expiration_date, FALSE)
 ON CONFLICT (organization_id) DO
     UPDATE SET
         bootstrap_token = EXCLUDED.bootstrap_token,
@@ -41,7 +41,7 @@ ON CONFLICT (organization_id) DO
 
 _q_get_organization = Q(
     """
-SELECT bootstrap_token, root_verify_key, expiration_date
+SELECT bootstrap_token, root_verify_key, expiration_date, outsider_enabled
 FROM organization
 WHERE organization_id = $organization_id
 """
@@ -137,6 +137,7 @@ class PGOrganizationComponent(BaseOrganizationComponent):
             bootstrap_token=data[0],
             root_verify_key=rvk,
             expiration_date=data[2],
+            outsider_enabled=data[3],
         )
 
     async def bootstrap(
@@ -182,6 +183,36 @@ class PGOrganizationComponent(BaseOrganizationComponent):
             metadata_size=result["metadata_size"],
             workspaces=result["workspaces"],
         )
+
+    async def update(self, id: OrganizationID, **fields: Dict[str, Any]) -> None:
+        """
+        Raises:
+            OrganizationNotFoundError
+            OrganizationError
+        """
+        set = ", ".join([f"{k} = ${k}" for k in fields.keys()])
+        q = Q(
+            f"""
+        UPDATE organization
+        SET
+        {set}
+        WHERE organization_id = $organization_id
+        """
+        )
+        async with self.dbh.pool.acquire() as conn, conn.transaction():
+            result = await conn.execute(*q(organization_id=id, **fields))
+
+            if result == "UPDATE 0":
+                raise OrganizationNotFoundError
+
+            if result != "UPDATE 1":
+                raise OrganizationError(f"Update error: {result}")
+
+            if (
+                fields.get("expiration_date") is not None
+                and fields.get("expiration_date") <= DateTime.now()  # type: ignore[operator]
+            ):
+                await send_signal(conn, BackendEvent.ORGANIZATION_EXPIRED, organization_id=id)
 
     async def set_expiration_date(
         self, id: OrganizationID, expiration_date: Optional[DateTime] = None
