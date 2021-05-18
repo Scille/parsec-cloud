@@ -74,8 +74,12 @@ async def _do_check_new_version(url, api_url, check_pre=False):
                     continue
                 if release["prerelease"] and not check_pre:
                     continue
+                if sys.platform == "darwin":
+                    installer_name = "-macos-amd64.dmg"
+                else:
+                    installer_name = f"-{win_version}-setup.exe"
                 for asset in release["assets"]:
-                    if asset["name"].endswith(f"-{win_version}-setup.exe"):
+                    if asset["name"].endswith(installer_name):
                         asset_version = _extract_version(release["tag_name"])
                         if (
                             asset_version
@@ -145,7 +149,7 @@ class CheckNewVersion(QDialog, Ui_NewVersionDialog):
         super().__init__(**kwargs)
         self.setupUi(self)
 
-        if sys.platform != "win32":
+        if sys.platform != "win32" and sys.platform != "darwin":
             return
 
         self.widget_info = NewVersionInfo(parent=self)
