@@ -272,20 +272,33 @@ def widget_catcher_factory(aqtbot, monkeypatch):
     return _widget_catcher_factory
 
 
+@pytest.fixture(autouse=True)
+def throttled_job_fast_wait(monkeypatch):
+    # Throttled job slow down tests (and leads to timeout given `aqtbot.wait_until`
+    # count real elapsed time and not the trio clock that can be mocked).
+    # This is an autouse for all GUI tests given the throttled jobs are used
+    # in really common places (e.g. files widget).
+    vanilla_submit_throttled_job = QtToTrioJobScheduler.submit_throttled_job
+
+    def _patched_submit_throttled_job(self, throttling_id, delay, *args, **kwargs):
+        fast_delay = delay / 100
+        return vanilla_submit_throttled_job(self, throttling_id, fast_delay, *args, **kwargs)
+
+    monkeypatch.setattr(QtToTrioJobScheduler, "submit_throttled_job", _patched_submit_throttled_job)
+
+
 @pytest.fixture
 def gui_factory(
-    aqtbot,
-    qtbot,
-    qt_thread_gateway,
-    testing_main_window_cls,
-    core_config,
-    monkeypatch,
-    event_bus_factory,
+    aqtbot, qtbot, qt_thread_gateway, testing_main_window_cls, core_config, event_bus_factory
 ):
     windows = []
 
     async def _gui_factory(
-        event_bus=None, core_config=core_config, start_arg=None, skip_dialogs=True
+        event_bus=None,
+        core_config=core_config,
+        start_arg=None,
+        skip_dialogs=True,
+        throttle_job_no_wait=True,
     ):
         # First start popup blocks the test
         # Check version and mountpoint are useless for most tests
@@ -304,11 +317,10 @@ def gui_factory(
         ParsecApp.connected_devices = set()
 
         def _create_main_window():
-            # Pass minimize_on_close to avoid having test blocked by the
-            # closing confirmation prompt
-
             switch_language(core_config, "en")
 
+            # Pass minimize_on_close to avoid having test blocked by the
+            # closing confirmation prompt
             main_w = testing_main_window_cls(
                 qt_thread_gateway._job_scheduler, event_bus, core_config, minimize_on_close=True
             )

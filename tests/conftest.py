@@ -264,8 +264,12 @@ def autojump_clock(request):
     # Event dispatching through PostgreSQL LISTEN/NOTIFY is
     # invisible from trio point of view, hence waiting for
     # event with autojump_threshold=0 means we jump to timeout
+    # Qt also need a non-zero threshold, otherwise Qt and trio threads fight in
+    # busy loops which makes the test a lot slower (and toast your CPU) !
     if request.config.getoption("--postgresql"):
         return MockClock(autojump_threshold=0.1)
+    elif request.node.get_closest_marker("gui"):
+        return MockClock(autojump_threshold=0.01)
     else:
         return MockClock(autojump_threshold=0)
 

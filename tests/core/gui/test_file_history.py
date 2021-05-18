@@ -12,7 +12,7 @@ def catch_file_history_widget(widget_catcher_factory):
 @pytest.mark.gui
 @pytest.mark.trio
 async def test_file_history(
-    aqtbot, running_backend, logged_gui, monkeypatch, autoclose_dialog, catch_file_history_widget
+    aqtbot, running_backend, logged_gui, autoclose_dialog, catch_file_history_widget
 ):
     core = logged_gui.test_get_core()
     wid = await core.user_fs.workspace_create("wksp1")
