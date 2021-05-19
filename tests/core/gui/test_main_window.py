@@ -111,7 +111,7 @@ async def logged_gui_with_files(
         wk_button = w_w.layout_workspaces.itemAt(0).widget()
         assert not isinstance(wk_button, QtWidgets.QLabel)
 
-    await aqtbot.wait_until(_workspace_button_ready, timeout=2000)
+    await aqtbot.wait_until(_workspace_button_ready)
 
     f_w = logged_gui.test_get_files_widget()
     wk_button = w_w.layout_workspaces.itemAt(0).widget()
@@ -119,6 +119,7 @@ async def logged_gui_with_files(
     await aqtbot.mouse_click(wk_button, QtCore.Qt.LeftButton)
 
     def _entry_available():
+        assert f_w.workspace_fs is not None
         assert f_w.workspace_fs.get_workspace_name() == "w1"
         assert f_w.table_files.rowCount() == 1
 

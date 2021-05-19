@@ -156,10 +156,21 @@ async def _do_move_files(workspace_fs, target_dir, source_files, source_workspac
 async def _do_folder_stat(workspace_fs, path, default_selection):
     stats = {}
     dir_stat = await workspace_fs.path_info(path)
+    # Retrieve children info, this is not an atomic operation so our view
+    # on the folder might be slightly non-causal (typically if a file is
+    # created during while we do the loop it won't appear in the final result,
+    # but later update on existing files will appear).
+    # We consider this fine enough given a change in the folder should lead
+    # to an event from the corefs which in turn will re-trigger this stat code
     for child in dir_stat["children"]:
         try:
             child_stat = await workspace_fs.path_info(path / child)
+        except FSFileNotFoundError:
+            # The child entry as been concurrently removed, just ignore it
+            pass
         except FSRemoteManifestNotFound as exc:
+            # Cannot get informations about this child entry, this can occur if
+            # if the manifest is inconsistent (broken data or signature).
             child_stat = {"type": "inconsistency", "id": exc.args[0]}
         stats[child] = child_stat
     return path, dir_stat["id"], stats, default_selection
@@ -627,7 +638,6 @@ class FilesWidget(QWidget, Ui_FilesWidget):
         self.load(self.current_directory, throttle_delay=self.RELOAD_FILES_LIST_THROTTLE_DELAY)
 
     def load(self, directory, default_selection=None, throttle_delay: float = 0):
-        self.table_files.clear()
         self.spinner.show()
         self.jobs_ctx.submit_throttled_job(
             "files_widget.load",
@@ -819,9 +829,16 @@ class FilesWidget(QWidget, Ui_FilesWidget):
             show_error(self, _("TEXT_FILE_DELETE_ERROR"), exception=job.exc)
 
     def _on_folder_stat_success(self, job):
+        old_current_directory = self.current_directory
         self.current_directory, self.current_directory_uuid, files_stats, default_selection = (
             job.ret
         )
+        # Try to keep the current selection
+        if old_current_directory == self.current_directory:
+            old_selection = [x.name for x in self.table_files.selected_files()]
+        else:
+            old_selection = set()
+
         self.table_files.clear()
         self.spinner.hide()
         old_sort = self.table_files.horizontalHeader().sortIndicatorSection()
@@ -832,23 +849,25 @@ class FilesWidget(QWidget, Ui_FilesWidget):
         else:
             self.table_files.add_parent_folder()
         file_found = False
-        for path, stats in files_stats.items():
+        for entry_name, stats in files_stats.items():
             # Must check first given inconsistent stats result are missing fields
             if stats["type"] == "inconsistency":
-                self.table_files.add_inconsistency(str(path), stats["id"])
+                self.table_files.add_inconsistency(entry_name, stats["id"])
                 continue
             selected = False
             confined = bool(stats["confinement_point"])
-            if default_selection and str(path) == default_selection:
+            if default_selection and entry_name == default_selection:
                 selected = True
                 file_found = True
+            elif entry_name in old_selection:
+                selected = True
             if stats["type"] == "folder":
                 self.table_files.add_folder(
-                    str(path), stats["id"], not stats["need_sync"], confined, selected
+                    entry_name, stats["id"], not stats["need_sync"], confined, selected
                 )
             else:
                 self.table_files.add_file(
-                    str(path),
+                    entry_name,
                     stats["id"],
                     stats["size"],
                     stats["created"],

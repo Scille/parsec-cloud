@@ -87,7 +87,7 @@ async def files_widget_testbed(monkeypatch, aqtbot, logged_gui):
                 raise ValueError(f"No item with name {name}")
 
         async def apply_selection(self, selection, reset_selection_first=True):
-            # selection can be string, tuple of (start_line, end_line) or a list that
+            # selection can be string, tuple of (start_line, end_line) or a list of that
             if reset_selection_first:
                 await self.reset_selection()
             if isinstance(selection, (list, tuple)):
@@ -302,7 +302,7 @@ async def test_file_browsing_and_edit(
     await tb.rename(selection="dir0", new_name="dir1")
     await tb.check_files_view(path="/", expected_entries=["dir1/", "dir3/", "zdir2/", "file1.txt"])
 
-    # ...but a not empty folder !
+    # ...but not a non-empty folder !
     def _error_displayed():
         assert len(autoclose_dialog.dialogs) == 1
         assert autoclose_dialog.dialogs[0][0] == "Error"

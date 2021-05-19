@@ -1,10 +1,11 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2016-2021 Scille SAS
 
-from collections import namedtuple
 import pendulum
 import pathlib
 import sys
 from enum import IntEnum
+import attr
+from uuid import UUID
 
 from PyQt5.QtCore import Qt, pyqtSignal
 from PyQt5.QtGui import QIcon, QColor, QKeySequence
@@ -68,6 +69,14 @@ class ItemDelegate(QStyledItemDelegate):
         if index.data(COPY_STATUS_DATA_INDEX):
             view_option.font.setItalic(True)
         super().paint(painter, view_option, index)
+
+
+@attr.s(slots=True, frozen=True, auto_attribs=True)
+class SelectedFile:
+    row: int
+    type: FileType
+    name: str
+    uuid: UUID
 
 
 class FileTable(QTableWidget):
@@ -158,8 +167,6 @@ class FileTable(QTableWidget):
                     self.paste_clicked.emit()
 
     def selected_files(self):
-        SelectedFile = namedtuple("SelectedFile", ["row", "type", "name", "uuid"])
-
         files = []
         for r in self.selectedRanges():
             for row in range(r.topRow(), r.bottomRow() + 1):
