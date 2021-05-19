@@ -86,6 +86,7 @@ class BackendAuthenticatedCmds:
         cmds.realm_finish_reencryption_maintenance
     )
     organization_stats = expose_cmds_with_retrier(cmds.organization_stats)
+    organization_status = expose_cmds_with_retrier(cmds.organization_status)
 
 
 for cmd in AUTHENTICATED_CMDS:

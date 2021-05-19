@@ -6,7 +6,7 @@ import fnmatch
 from uuid import UUID
 from pathlib import Path
 import importlib_resources
-from pendulum import now as pendulum_now
+from pendulum import now as pendulum_now, DateTime
 from typing import Optional, Tuple, List, Pattern
 from structlog import get_logger
 from functools import partial
@@ -105,6 +105,12 @@ class OrganizationStats:
     users: int
     data_size: int
     metadata_size: int
+
+
+@attr.s(frozen=True, slots=True, auto_attribs=True)
+class OrganizationStatus:
+    expiration_date: DateTime
+    outsider_enabled: bool
 
 
 @attr.s(frozen=True, slots=True, auto_attribs=True)
@@ -328,6 +334,18 @@ class LoggedCore:
         """
         initial_ctx = DeviceGreetInitialCtx(cmds=self._backend_conn.cmds, token=token)
         return await initial_ctx.do_wait_peer()
+
+    async def get_organization_status(self) -> OrganizationStatus:
+        """
+        Raises:
+            BackendConnectionError
+        """
+        rep = await self._backend_conn.cmds.organization_status()
+        if rep["status"] != "ok":
+            raise BackendConnectionError(f"Backend error: {rep}")
+        return OrganizationStatus(
+            expiration_date=rep["expiration_date"], outsider_enabled=rep["outsider_enabled"]
+        )
 
 
 @asynccontextmanager

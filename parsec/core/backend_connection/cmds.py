@@ -36,6 +36,7 @@ from parsec.api.protocol import (
     apiv1_organization_stats_serializer,
     organization_stats_serializer,
     apiv1_organization_status_serializer,
+    organization_status_serializer,
     apiv1_organization_update_serializer,
     apiv1_organization_bootstrap_serializer,
     events_subscribe_serializer,
@@ -127,6 +128,10 @@ async def _send_cmd(transport: Transport, serializer, **req) -> dict:
 
 async def organization_stats(transport: Transport) -> dict:
     return await _send_cmd(transport, organization_stats_serializer, cmd="organization_stats")
+
+
+async def organization_status(transport: Transport) -> dict:
+    return await _send_cmd(transport, organization_status_serializer, cmd="organization_status")
 
 
 ### Events&misc API ###
@@ -648,7 +653,7 @@ async def apiv1_organization_stats(transport: Transport, organization_id: Organi
     )
 
 
-async def organization_status(transport: Transport, organization_id: OrganizationID) -> dict:
+async def apiv1_organization_status(transport: Transport, organization_id: OrganizationID) -> dict:
     return await _send_cmd(
         transport,
         apiv1_organization_status_serializer,
