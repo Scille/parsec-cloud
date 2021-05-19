@@ -237,7 +237,7 @@ class Clipboard:
 
 
 class FilesWidget(QWidget, Ui_FilesWidget):
-    RELOAD_FILES_LIST_DELAY = 1  # 1s
+    RELOAD_FILES_LIST_THROTTLE_DELAY = 1  # 1s
 
     fs_updated_qt = pyqtSignal(CoreEvent, UUID)
     fs_synced_qt = pyqtSignal(CoreEvent, UUID)
@@ -623,15 +623,15 @@ class FilesWidget(QWidget, Ui_FilesWidget):
         elif file_type == FileType.Folder:
             self.load(self.current_directory / file_name)
 
-    def schedule_reload(self):
-        self.load(self.current_directory, delay=self.RELOAD_FILES_LIST_DELAY)
+    def reload(self):
+        self.load(self.current_directory, throttle_delay=self.RELOAD_FILES_LIST_THROTTLE_DELAY)
 
-    def load(self, directory, default_selection=None, delay: float = 0):
+    def load(self, directory, default_selection=None, throttle_delay: float = 0):
         self.table_files.clear()
         self.spinner.show()
         self.jobs_ctx.submit_throttled_job(
             "files_widget.load",
-            delay,
+            throttle_delay,
             ThreadSafeQtSignal(self, "folder_stat_success", QtToTrioJob),
             ThreadSafeQtSignal(self, "folder_stat_error", QtToTrioJob),
             _do_folder_stat,
@@ -962,7 +962,7 @@ class FilesWidget(QWidget, Ui_FilesWidget):
         if ws_id != workspace_id:
             return
         if id == self.current_directory_uuid:
-            self.schedule_reload()
+            self.reload()
 
     def _on_fs_synced_qt(self, event, uuid):
         if not self.workspace_fs:
@@ -986,7 +986,7 @@ class FilesWidget(QWidget, Ui_FilesWidget):
             return
 
         if self.current_directory_uuid == uuid or self.table_files.has_file(uuid):
-            self.schedule_reload()
+            self.reload()
 
     def _on_sharing_updated_trio(self, event, new_entry, previous_entry):
         self.sharing_updated_qt.emit(new_entry, previous_entry)
