@@ -105,6 +105,20 @@ apiv1_organization_status_serializer = CmdSerializer(
 )
 
 
+class OrganizationStatusReqSchema(BaseReqSchema):
+    pass
+
+
+class OrganizationStatusRepSchema(BaseRepSchema):
+    expiration_date = fields.DateTime(allow_none=True, required=False)
+    outsider_enabled = fields.Boolean(required=True)
+
+
+organization_status_serializer = CmdSerializer(
+    OrganizationStatusReqSchema, OrganizationStatusRepSchema
+)
+
+
 class APIV1_OrganizationUpdateReqSchema(BaseReqSchema):
     organization_id = OrganizationIDField(required=True)
     expiration_date = fields.DateTime(allow_none=True, required=False)

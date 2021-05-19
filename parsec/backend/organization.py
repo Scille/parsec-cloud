@@ -19,6 +19,7 @@ from parsec.api.protocol import (
     apiv1_organization_stats_serializer,
     apiv1_organization_status_serializer,
     apiv1_organization_update_serializer,
+    organization_status_serializer,
 )
 from parsec.api.data import UserCertificateContent, DeviceCertificateContent, DataError, UserProfile
 from parsec.backend.user import User, Device
@@ -123,6 +124,33 @@ class BaseOrganizationComponent:
         return apiv1_organization_status_serializer.rep_dump(
             {
                 "is_bootstrapped": organization.is_bootstrapped(),
+                "expiration_date": organization.expiration_date,
+                "outsider_enabled": organization.outsider_enabled,
+                "status": "ok",
+            }
+        )
+
+    @api("organization_status", handshake_types=[HandshakeType.AUTHENTICATED])
+    @catch_protocol_errors
+    async def api_authenticated_organization_status(self, client_ctx, msg):
+        msg = organization_status_serializer.req_load(msg)
+
+        if client_ctx.profile != UserProfile.ADMIN:
+            return {
+                "status": "not_allowed",
+                "reason": f"User `{client_ctx.device_id.user_id}` is not admin",
+            }
+
+        organization_id = client_ctx.organization_id
+
+        try:
+            organization = await self.get(organization_id)
+
+        except OrganizationNotFoundError:
+            return {"status": "not_found"}
+
+        return organization_status_serializer.rep_dump(
+            {
                 "expiration_date": organization.expiration_date,
                 "outsider_enabled": organization.outsider_enabled,
                 "status": "ok",
