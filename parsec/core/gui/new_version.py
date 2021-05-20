@@ -58,11 +58,14 @@ async def _do_check_new_version(url, api_url, check_pre=False):
     latest_from_head, json_releases = await trio.to_thread.run_sync(_fetch_json_releases)
     if json_releases:
         current_arch = QSysInfo().currentCpuArchitecture()
-        if current_arch == "x86_64":
-            win_version = "win64"
-        elif current_arch == "i386":
-            win_version = "win32"
+        if sys.platform == "win32" and current_arch == "x86_64":
+            installer_suffix = "-win64-setup.exe"
+        elif sys.platform == "win32" and current_arch == "i386":
+            installer_suffix = "-win32-setup.exe"
+        elif sys.platform == "darwin":
+            installer_suffix = "-macos-amd64.dmg"
         else:
+            # Generic fallback
             return latest_from_head, url
 
         latest_version = Version("0.0.0")
@@ -74,12 +77,8 @@ async def _do_check_new_version(url, api_url, check_pre=False):
                     continue
                 if release["prerelease"] and not check_pre:
                     continue
-                if sys.platform == "darwin":
-                    installer_name = "-macos-amd64.dmg"
-                else:
-                    installer_name = f"-{win_version}-setup.exe"
                 for asset in release["assets"]:
-                    if asset["name"].endswith(installer_name):
+                    if asset["name"].endswith(installer_suffix):
                         asset_version = _extract_version(release["tag_name"])
                         if (
                             asset_version
@@ -149,7 +148,7 @@ class CheckNewVersion(QDialog, Ui_NewVersionDialog):
         super().__init__(**kwargs)
         self.setupUi(self)
 
-        if sys.platform != "win32" and sys.platform != "darwin":
+        if sys.platform not in ("win32", "darwin"):
             return
 
         self.widget_info = NewVersionInfo(parent=self)
