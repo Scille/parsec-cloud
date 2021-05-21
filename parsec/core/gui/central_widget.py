@@ -98,7 +98,10 @@ class CentralWidget(QWidget, Ui_CentralWidget):
 
         self.new_notification.connect(self.on_new_notification)
         self.menu.files_clicked.connect(self.show_mount_widget)
-        self.menu.users_clicked.connect(self.show_users_widget)
+        if self.core.device.is_outsider:
+            self.menu.button_users.hide()
+        else:
+            self.menu.users_clicked.connect(self.show_users_widget)
         self.menu.devices_clicked.connect(self.show_devices_widget)
         self.connection_state_changed.connect(self._on_connection_state_changed)
 

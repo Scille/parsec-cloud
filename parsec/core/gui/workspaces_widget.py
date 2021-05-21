@@ -204,7 +204,10 @@ class WorkspacesWidget(QWidget, Ui_WorkspacesWidget):
         self.layout_workspaces = FlowLayout(spacing=40)
         self.layout_content.addLayout(self.layout_workspaces)
 
-        self.button_add_workspace.clicked.connect(self.create_workspace_clicked)
+        if self.core.device.is_outsider:
+            self.button_add_workspace.hide()
+        else:
+            self.button_add_workspace.clicked.connect(self.create_workspace_clicked)
         self.button_goto_file.clicked.connect(self.goto_file_clicked)
 
         self.button_add_workspace.apply_style()
@@ -486,7 +489,10 @@ class WorkspacesWidget(QWidget, Ui_WorkspacesWidget):
             )
             self.layout_workspaces.addWidget(button)
             button.clicked.connect(self.load_workspace)
-            button.share_clicked.connect(self.share_workspace)
+            if self.core.device.is_outsider:
+                button.button_share.hide()
+            else:
+                button.share_clicked.connect(self.share_workspace)
             button.reencrypt_clicked.connect(self.reencrypt_workspace)
             button.delete_clicked.connect(self.delete_workspace)
             button.rename_clicked.connect(self.rename_workspace)
