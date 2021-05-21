@@ -8,7 +8,7 @@ from PyQt5.QtWidgets import QWidget
 
 from parsec.api.data import UserProfile
 from parsec.api.protocol import HumanHandle
-from parsec.core.backend_connection import BackendNotAvailable
+from parsec.core.backend_connection import BackendNotAvailable, BackendConnectionError
 from parsec.core.invite import InviteError, InvitePeerResetError, InviteAlreadyUsedError
 from parsec.core.gui.trio_thread import JobResultError, ThreadSafeQtSignal, QtToTrioJob
 from parsec.core.gui.custom_dialogs import show_error, GreyedDialog, show_info
@@ -222,7 +222,7 @@ class GreetUserCheckInfoWidget(QWidget, Ui_GreetUserCheckInfoWidget):
     create_user_success = pyqtSignal(QtToTrioJob)
     create_user_error = pyqtSignal(QtToTrioJob)
 
-    def __init__(self, jobs_ctx, greeter):
+    def __init__(self, jobs_ctx, greeter, outsider_enabled=False):
         super().__init__()
         self.setupUi(self)
         self.jobs_ctx = jobs_ctx
@@ -240,7 +240,8 @@ class GreetUserCheckInfoWidget(QWidget, Ui_GreetUserCheckInfoWidget):
         self.line_edit_device.validity_changed.connect(self.check_infos)
         self.line_edit_device.set_validator(validators.DeviceNameValidator())
 
-        # self.combo_profile.addItem(_("TEXT_USER_PROFILE_OUTSIDER"), UserProfile.OUTSIDER)
+        if outsider_enabled:
+            self.combo_profile.addItem(_("TEXT_USER_PROFILE_OUTSIDER"), UserProfile.OUTSIDER)
         self.combo_profile.addItem(_("TEXT_USER_PROFILE_STANDARD"), UserProfile.STANDARD)
         self.combo_profile.addItem(_("TEXT_USER_PROFILE_ADMIN"), UserProfile.ADMIN)
         self.combo_profile.setCurrentIndex(0)
@@ -534,9 +535,20 @@ class GreetUserCodeExchangeWidget(QWidget, Ui_GreetUserCodeExchangeWidget):
         self.failed.emit(job)
 
 
+async def _do_get_organization_status(core):
+    try:
+        return await core.get_organization_status()
+    except BackendNotAvailable as exc:
+        raise JobResultError("offline") from exc
+    except BackendConnectionError as exc:
+        raise JobResultError("error") from exc
+
+
 class GreetUserWidget(QWidget, Ui_GreetUserWidget):
     greeter_success = pyqtSignal(QtToTrioJob)
     greeter_error = pyqtSignal(QtToTrioJob)
+    organization_status_success = pyqtSignal(QtToTrioJob)
+    organization_status_error = pyqtSignal(QtToTrioJob)
 
     def __init__(self, core, jobs_ctx, token):
         super().__init__()
@@ -549,7 +561,12 @@ class GreetUserWidget(QWidget, Ui_GreetUserWidget):
         self.greeter_job = None
         self.greeter_success.connect(self._on_greeter_success)
         self.greeter_error.connect(self._on_greeter_error)
+        self.organization_status_job = None
+        self.outsider_enabled = False
+        self.organization_status_success.connect(self._on_organization_status_success)
+        self.organization_status_error.connect(self._on_organization_status_error)
         self._run_greeter()
+        self._run_organization_status()
 
     def _run_greeter(self):
         self.greeter_job = self.jobs_ctx.submit_job(
@@ -609,11 +626,35 @@ class GreetUserWidget(QWidget, Ui_GreetUserWidget):
         page.failed.connect(self._on_page_failed)
         self.main_layout.addWidget(page)
 
+    def _run_organization_status(self):
+        self.organization_status_job = self.jobs_ctx.submit_job(
+            ThreadSafeQtSignal(self, "organization_status_success", QtToTrioJob),
+            ThreadSafeQtSignal(self, "organization_status_error", QtToTrioJob),
+            _do_get_organization_status,
+            core=self.core,
+        )
+
+    def _on_organization_status_success(self, job):
+        if self.organization_status_job != job:
+            return
+        assert self.organization_status_job
+        assert self.organization_status_job.is_finished()
+        assert self.organization_status_job.status == "ok"
+        organization_status = job.ret
+        self.outsider_enabled = organization_status.outsider_enabled
+
+    def _on_organization_status_error(self, job):
+        assert job
+        assert job.is_finished()
+        assert job.status != "ok"
+
+        self.outsider_enabled = False
+
     def _goto_page3(self):
         current_page = self.main_layout.takeAt(0).widget()
         current_page.hide()
         current_page.setParent(None)
-        page = GreetUserCheckInfoWidget(self.jobs_ctx, self.greeter)
+        page = GreetUserCheckInfoWidget(self.jobs_ctx, self.greeter, self.outsider_enabled)
         page.succeeded.connect(self._on_finished)
         page.failed.connect(self._on_page_failed)
         self.main_layout.addWidget(page)
