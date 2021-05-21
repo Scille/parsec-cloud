@@ -23,7 +23,7 @@ def quick_hash(name: str):
     return str(int.from_bytes(m.digest(), byteorder="big"))[0:8]
 
 
-def generate_brower_download_url(version, arch):
+def generate_browser_download_url(version, arch):
     return f"{gui_web_releases_url}/download/{version}/parsec-{version}-win{str(arch)}-setup.exe"
 
 
@@ -44,7 +44,7 @@ def generate_json_asset(version, arch):
         "download_count": 11,
         "created_at": "2019-12-20T14:47:11Z",
         "updated_at": "2019-12-20T14:47:22Z",
-        "browser_download_url": generate_brower_download_url(version, arch),
+        "browser_download_url": generate_browser_download_url(version, arch),
     }
 
 
@@ -156,7 +156,7 @@ def mocked_CPU(arch):
 )
 @patch("parsec.core.gui.new_version.QSysInfo.currentCpuArchitecture", new=mocked_CPU(64))
 def test_windows_update_updateable():
-    assert smallcheck() == (Version("1.9.0"), generate_brower_download_url("v1.9.0", 64))
+    assert smallcheck() == (Version("1.9.0"), generate_browser_download_url("v1.9.0", 64))
 
 
 @patch("parsec.core.gui.new_version.__version__", new="1.8.0+dev")
@@ -173,7 +173,7 @@ def test_windows_update_updateable():
 )
 @patch("parsec.core.gui.new_version.QSysInfo.currentCpuArchitecture", new=mocked_CPU(64))
 def test_windows_update_updateable_with_dev():
-    assert smallcheck() == (Version("1.9.0"), generate_brower_download_url("v1.9.0", 64))
+    assert smallcheck() == (Version("1.9.0"), generate_browser_download_url("v1.9.0", 64))
 
 
 @patch("parsec.core.gui.new_version.__version__", new="1.9.0")
@@ -239,7 +239,7 @@ def test_windows_update_newest_announced_not_in_json_not_updateable():
 )
 @patch("parsec.core.gui.new_version.QSysInfo.currentCpuArchitecture", new=mocked_CPU(64))
 def test_windows_update_newest_announced_not_in_json_but_updateable():
-    assert smallcheck() == (Version("1.8.0"), generate_brower_download_url("v1.8.0", 64))
+    assert smallcheck() == (Version("1.8.0"), generate_browser_download_url("v1.8.0", 64))
 
 
 @patch("parsec.core.gui.new_version.__version__", new="1.8.0+dev")
@@ -273,7 +273,7 @@ def test_windows_update_newest_announced_no_compatible_asset():
 )
 @patch("parsec.core.gui.new_version.QSysInfo.currentCpuArchitecture", new=mocked_CPU(64))
 def test_windows_update_newest_announced_no_compatible_asset_but_newer_available():
-    assert smallcheck() == (Version("1.8.0"), generate_brower_download_url("v1.8.0", 64))
+    assert smallcheck() == (Version("1.8.0"), generate_browser_download_url("v1.8.0", 64))
 
 
 @patch("parsec.core.gui.new_version.__version__", new="1.7.0")
@@ -307,7 +307,7 @@ def test_windows_update_newest_announced_no_x86_compatible_asset():
 )
 @patch("parsec.core.gui.new_version.QSysInfo.currentCpuArchitecture", new=mocked_CPU(32))
 def test_windows_update_newest_announced_no_x86_compatible_asset_but_newer_available():
-    assert smallcheck() == (Version("1.8.0"), generate_brower_download_url("v1.8.0", 32))
+    assert smallcheck() == (Version("1.8.0"), generate_browser_download_url("v1.8.0", 32))
 
 
 @patch("parsec.core.gui.new_version.__version__", new="1.7.0")
@@ -341,7 +341,7 @@ def test_windows_update_newest_announced_no_x64_compatible_asset():
 )
 @patch("parsec.core.gui.new_version.QSysInfo.currentCpuArchitecture", new=mocked_CPU(64))
 def test_windows_update_newest_announced_no_x64_compatible_asset_but_newer_available():
-    assert smallcheck() == (Version("1.8.0"), generate_brower_download_url("v1.8.0", 64))
+    assert smallcheck() == (Version("1.8.0"), generate_browser_download_url("v1.8.0", 64))
 
 
 @patch("parsec.core.gui.new_version.__version__", new="1.7.0")
@@ -358,8 +358,8 @@ def test_windows_update_newest_announced_no_x64_compatible_asset_but_newer_avail
 )
 def test_windows_update_newest_announced_no_cpu_mock_dont_raise_exception():
     assert smallcheck() in (
-        (Version("1.9.0"), generate_brower_download_url("v1.9.0", 32)),
-        (Version("1.9.0"), generate_brower_download_url("v1.9.0", 64)),
+        (Version("1.9.0"), generate_browser_download_url("v1.9.0", 32)),
+        (Version("1.9.0"), generate_browser_download_url("v1.9.0", 64)),
     )
 
 
@@ -377,7 +377,7 @@ def test_windows_update_newest_announced_no_cpu_mock_dont_raise_exception():
 )
 @patch("parsec.core.gui.new_version.QSysInfo.currentCpuArchitecture", new=mocked_CPU(64))
 def test_windows_update_newest_announced_is_prerelease():
-    assert smallcheck() == (Version("1.8.0"), generate_brower_download_url("v1.8.0", 64))
+    assert smallcheck() == (Version("1.8.0"), generate_browser_download_url("v1.8.0", 64))
 
 
 @patch("parsec.core.gui.new_version.__version__", new="1.7.0")
@@ -394,7 +394,7 @@ def test_windows_update_newest_announced_is_prerelease():
 )
 @patch("parsec.core.gui.new_version.QSysInfo.currentCpuArchitecture", new=mocked_CPU(64))
 def test_windows_update_newest_announced_is_draft():
-    assert smallcheck() == (Version("1.8.0"), generate_brower_download_url("v1.8.0", 64))
+    assert smallcheck() == (Version("1.8.0"), generate_browser_download_url("v1.8.0", 64))
 
 
 @patch("parsec.core.gui.new_version.__version__", new="1.7.0")
@@ -439,7 +439,7 @@ def test_windows_update_whole_json_is_malformed():
 )
 @patch("parsec.core.gui.new_version.QSysInfo.currentCpuArchitecture", new=mocked_CPU(64))
 def test_windows_update_newest_announced_is_rc_forgotten_to_set_as_prerelease():
-    assert smallcheck() == (Version("1.8.0"), generate_brower_download_url("v1.8.0", 64))
+    assert smallcheck() == (Version("1.8.0"), generate_browser_download_url("v1.8.0", 64))
 
 
 @patch("parsec.core.gui.new_version.__version__", new="1.8.0")
@@ -477,7 +477,7 @@ def test_windows_update_newest_announced_is_rc_forgotten_to_set_as_prerelease_no
 )
 @patch("parsec.core.gui.new_version.QSysInfo.currentCpuArchitecture", new=mocked_CPU(64))
 def test_windows_update_newest_announced_is_rc_marked_as_prerelease():
-    assert smallcheck() == (Version("1.8.0"), generate_brower_download_url("v1.8.0", 64))
+    assert smallcheck() == (Version("1.8.0"), generate_browser_download_url("v1.8.0", 64))
 
 
 @patch("parsec.core.gui.new_version.__version__", new="1.7.0")
@@ -498,7 +498,7 @@ def test_windows_update_newest_announced_is_rc_marked_as_prerelease():
 def test_windows_update_newest_announced_is_rc_marked_as_prerelease_and_pre_enabled():
     assert smallcheck(check_pre=True) == (
         Version("1.9.0-rc3"),
-        generate_brower_download_url("v1.9.0-rc3", 64),
+        generate_browser_download_url("v1.9.0-rc3", 64),
     )
 
 
@@ -520,5 +520,5 @@ def test_windows_update_newest_announced_is_rc_marked_as_prerelease_and_pre_enab
 def test_windows_update_newest_announced_is_rc_forgot_marked_as_prerelease_and_pre_enabled():
     assert smallcheck(check_pre=True) == (
         Version("1.9.0-rc3"),
-        generate_brower_download_url("v1.9.0-rc3", 64),
+        generate_browser_download_url("v1.9.0-rc3", 64),
     )
