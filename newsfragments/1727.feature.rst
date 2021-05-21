@@ -1,0 +1,1 @@
+Add the capacity to enable the outsider profile in the organizations.
