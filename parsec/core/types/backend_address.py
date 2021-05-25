@@ -63,13 +63,14 @@ class BackendAddr:
         return f"{type(self).__name__}(url={self.to_url()})"
 
     @classmethod
-    def from_url(cls, url: str):
+    def from_url(cls, url: str, *, allow_http_redirection: bool = False):
+        """
+        Use `allow_http_redirection` to accept backend redirection URL,
+        for instance `http://example.com/redirect/myOrg?token=123` will be
+        converted into `parsec://example.com/myOrg?token=123&no_ssl=True`.
+        """
         split = urlsplit(url)
-
-        if split.scheme != PARSEC_SCHEME:
-            raise ValueError(f"Must start with `{PARSEC_SCHEME}://`")
-        if not split.hostname:
-            raise ValueError("Missing mandatory hostname")
+        path = unquote_plus(split.path)
 
         if split.query:
             # Note `parse_qs` takes care of percent-encoding
@@ -83,7 +84,24 @@ class BackendAddr:
         else:
             params = {}
 
-        path = unquote_plus(split.path)
+        if allow_http_redirection and split.scheme in ("http", "https"):
+            # `no_ssl` is defined by http/https scheme and shouldn't be
+            # overwritten by the query part of the url
+            params["no_ssl"] = ["true" if split.scheme == "http" else "false"]
+            # Remove the `/redirect/` path prefix
+            split_path = path.split("/", 2)
+            if split_path[:2] != ["", "redirect"]:
+                raise ValueError("HTTP to Parsec redirection URL must have a `/redirect/...` path")
+            try:
+                path = f"/{split_path[2]}"
+            except IndexError:
+                path = ""
+
+        elif split.scheme != PARSEC_SCHEME:
+            raise ValueError(f"Must start with `{PARSEC_SCHEME}://`")
+
+        if not split.hostname:
+            raise ValueError("Missing mandatory hostname")
 
         kwargs = {
             **cls._from_url_parse_and_consume_params(params),
@@ -207,9 +225,9 @@ class BackendActionAddr(BackendAddr):
     __slots__ = ()
 
     @classmethod
-    def from_url(cls, url: str):
+    def from_url(cls, url: str, **kwargs):
         if cls is not BackendActionAddr:
-            return BackendAddr.from_url.__func__(cls, url)
+            return BackendAddr.from_url.__func__(cls, url, **kwargs)
 
         else:
             for type in (
@@ -218,7 +236,7 @@ class BackendActionAddr(BackendAddr):
                 BackendInvitationAddr,
             ):
                 try:
-                    return BackendAddr.from_url.__func__(type, url)
+                    return BackendAddr.from_url.__func__(type, url, **kwargs)
                 except ValueError:
                     pass
 

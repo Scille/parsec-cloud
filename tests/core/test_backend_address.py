@@ -2,6 +2,7 @@
 
 import pytest
 from uuid import UUID
+import re
 
 from parsec.crypto import SigningKey
 from parsec.api.protocol import InvitationType, OrganizationID
@@ -167,6 +168,48 @@ def test_good_addr_with_unknown_field(addr_testbed):
     addr = addr_testbed.cls.from_url(url_with_unknown_field)
     url2 = addr.to_url()
     assert url2 == url
+
+
+def test_good_addr_with_http_redirection(addr_testbed):
+    redirection_url = re.sub(r"^parsec://([^/]*)(.*)$", r"https://\1/redirect\2", addr_testbed.url)
+    addr = addr_testbed.cls.from_url(redirection_url, allow_http_redirection=True)
+    assert addr.to_url() == addr_testbed.url
+
+    # Also try http redirection
+    addr_from_redirection = addr_testbed.cls.from_url(
+        add_args_to_url(addr_testbed.url, "no_ssl=true")
+    )
+    redirection_url = re.sub(r"^parsec://([^/]*)(.*)$", r"http://\1/redirect\2", addr_testbed.url)
+    addr = addr_testbed.cls.from_url(redirection_url, allow_http_redirection=True)
+    assert addr_from_redirection.to_url() == addr.to_url()
+
+
+def test_good_addr_with_http_redirection_overwritting_no_ssl(addr_testbed):
+    # no_ssl param should be ignored given it is already provided in the scheme
+    redirection_url = re.sub(r"^parsec://([^/]*)(.*)$", r"https://\1/redirect\2", addr_testbed.url)
+    redirection_url = add_args_to_url(redirection_url, "no_ssl=true")
+    addr_from_redirection = addr_testbed.cls.from_url(redirection_url, allow_http_redirection=True)
+    assert addr_from_redirection.to_url() == addr_testbed.url
+
+
+def test_addr_with_http_redirection_not_enabled(addr_testbed):
+    # no_ssl param should be ignored given it is already provided in the scheme
+    redirection_url = re.sub(r"^parsec://([^/]*)(.*)$", r"https://\1/redirect\2", addr_testbed.url)
+    # HTTP redirection handling is disabled by default
+    with pytest.raises(ValueError):
+        addr_testbed.cls.from_url(redirection_url)
+
+
+def test_bad_addr_with_http_redirection(addr_testbed):
+    # Missing `/redirect` path prefix
+    bad_url = addr_testbed.url.replace("parsec://", "https://")
+    with pytest.raises(ValueError):
+        addr_testbed.cls.from_url(bad_url)
+
+    # Bad scheme
+    bad_url = re.sub(r"^parsec://([^/]*)(.*)$", r"dummy://\1/redirect\2", addr_testbed.url)
+    with pytest.raises(ValueError):
+        addr_testbed.cls.from_url(bad_url)
 
 
 def test_good_addr_with_unicode_org_name(addr_with_org_testbed):
