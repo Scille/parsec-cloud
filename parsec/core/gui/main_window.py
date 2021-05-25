@@ -304,7 +304,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):  # type: ignore[misc]
 
         action_addr = None
         try:
-            action_addr = BackendActionAddr.from_url(url)
+            action_addr = BackendActionAddr.from_url(url, allow_http_redirection=True)
         except ValueError as exc:
             show_error(self, _("TEXT_INVALID_URL"), exception=exc)
             return
@@ -632,7 +632,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):  # type: ignore[misc]
         action_addr = None
         if start_arg:
             try:
-                action_addr = BackendActionAddr.from_url(start_arg)
+                action_addr = BackendActionAddr.from_url(start_arg, allow_http_redirection=True)
             except ValueError as exc:
                 show_error(self, _("TEXT_INVALID_URL"), exception=exc)
 
