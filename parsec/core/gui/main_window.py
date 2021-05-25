@@ -3,7 +3,7 @@
 from parsec.core.types.local_device import LocalDevice
 from parsec.core.core_events import CoreEvent
 import sys
-from typing import Callable, Optional, Tuple
+from typing import Callable, Optional, Tuple, cast
 from structlog import get_logger
 from distutils.version import LooseVersion
 
@@ -12,7 +12,7 @@ from PyQt5.QtGui import QColor, QIcon, QKeySequence, QResizeEvent, QCloseEvent
 from PyQt5.QtWidgets import QMainWindow, QApplication, QMenu, QShortcut
 
 from parsec import __version__ as PARSEC_VERSION
-from parsec.event_bus import EventBus
+from parsec.event_bus import EventBus, EventCallback
 from parsec.core.local_device import list_available_devices, get_key_file
 from parsec.core.config import CoreConfig, save_config
 from parsec.core.types import (
@@ -85,7 +85,9 @@ class MainWindow(QMainWindow, Ui_MainWindow):  # type: ignore[misc]
         self.minimize_on_close_notif_already_send = False
         self.force_close = False
         self.need_close = False
-        self.event_bus.connect(CoreEvent.GUI_CONFIG_CHANGED, self.on_config_updated)
+        self.event_bus.connect(
+            CoreEvent.GUI_CONFIG_CHANGED, cast(EventCallback, self.on_config_updated)
+        )
         self.setWindowTitle(_("TEXT_PARSEC_WINDOW_TITLE_version").format(version=PARSEC_VERSION))
         self.foreground_needed.connect(self._on_foreground_needed)
         self.new_instance_needed.connect(self._on_new_instance_needed)

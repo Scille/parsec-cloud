@@ -1,12 +1,12 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2016-2021 Scille SAS
 
 from parsec.api.data.manifest import WorkspaceEntry
-from typing import Optional
+from typing import Optional, cast
 from PyQt5.QtCore import pyqtSignal, QTimer
 from PyQt5.QtGui import QPixmap, QColor, QIcon
 from PyQt5.QtWidgets import QGraphicsDropShadowEffect, QWidget, QMenu
 
-from parsec.event_bus import EventBus
+from parsec.event_bus import EventBus, EventCallback
 from parsec.api.protocol import (
     HandshakeAPIVersionError,
     HandshakeRevokedDevice,
@@ -104,7 +104,7 @@ class CentralWidget(QWidget, Ui_CentralWidget):  # type: ignore[misc]
         self.widget_menu.layout().addWidget(self.menu)
 
         for e in self.NOTIFICATION_EVENTS:
-            self.event_bus.connect(e, self.handle_event)
+            self.event_bus.connect(e, cast(EventCallback, self.handle_event))
 
         self.event_bus.connect(CoreEvent.FS_ENTRY_SYNCED, self._on_vlobs_updated_trio)
         self.event_bus.connect(CoreEvent.BACKEND_REALM_VLOBS_UPDATED, self._on_vlobs_updated_trio)
