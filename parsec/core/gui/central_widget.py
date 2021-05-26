@@ -206,12 +206,16 @@ class CentralWidget(QWidget, Ui_CentralWidget):  # type: ignore[misc]
 
     def handle_event(self, event: CoreEvent, **kwargs: object) -> None:
         if event == CoreEvent.BACKEND_CONNECTION_CHANGED:
+            assert isinstance(kwargs["status"], BackendConnStatus)
+            assert kwargs["status_exc"] is None or isinstance(kwargs["status_exc"], Exception)
             self.connection_state_changed.emit(kwargs["status"], kwargs["status_exc"])
         elif event == CoreEvent.MOUNTPOINT_STOPPED:
             self.new_notification.emit("WARNING", _("NOTIF_WARN_MOUNTPOINT_UNMOUNTED"))
         elif event == CoreEvent.MOUNTPOINT_REMOTE_ERROR:
-            exc = kwargs["exc"]
-            path = kwargs["path"]
+            assert isinstance(kwargs["exc"], Exception)
+            assert isinstance(kwargs["path"], str)
+            exc: Exception = kwargs["exc"]
+            path: str = kwargs["path"]
             if isinstance(exc, FSWorkspaceNoReadAccess):
                 msg = _("NOTIF_WARN_WORKSPACE_READ_ACCESS_LOST_{}").format(path)
             elif isinstance(exc, FSWorkspaceNoWriteAccess):
@@ -222,18 +226,22 @@ class CentralWidget(QWidget, Ui_CentralWidget):  # type: ignore[misc]
                 msg = _("NOTIF_WARN_MOUNTPOINT_REMOTE_ERROR_{}_{}").format(path, str(exc))
             self.new_notification.emit("WARNING", msg)
         elif event == CoreEvent.MOUNTPOINT_UNHANDLED_ERROR:
-            exc = kwargs["exc"]
-            path = kwargs["path"]
-            operation = kwargs["operation"]
+            assert isinstance(kwargs["exc"], Exception)
+            assert isinstance(kwargs["path"], str)
+            assert isinstance(kwargs["operation"], str)
             self.new_notification.emit(
                 "ERROR",
                 _("NOTIF_ERR_MOUNTPOINT_UNEXPECTED_ERROR_{}_{}_{}").format(
-                    operation, path, str(exc)
+                    kwargs["operation"], kwargs["path"], str(kwargs["exc"])
                 ),
             )
         elif event == CoreEvent.SHARING_UPDATED:
-            new_entry: WorkspaceEntry = kwargs["new_entry"]  # type: ignore
-            previous_entry: Optional[WorkspaceEntry] = kwargs["previous_entry"]  # type: ignore
+            assert isinstance(kwargs["new_entry"], WorkspaceEntry)
+            assert kwargs["previous_entry"] is None or isinstance(
+                kwargs["previous_entry"], WorkspaceEntry
+            )
+            new_entry: WorkspaceEntry = kwargs["new_entry"]
+            previous_entry: Optional[WorkspaceEntry] = kwargs["previous_entry"]
             new_role = new_entry.role
             previous_role = previous_entry.role if previous_entry is not None else None
             if new_role is not None and previous_role is None:
