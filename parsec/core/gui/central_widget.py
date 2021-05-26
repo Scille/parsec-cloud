@@ -71,7 +71,6 @@ class CentralWidget(QWidget, Ui_CentralWidget):  # type: ignore[misc]
         CoreEvent.MOUNTPOINT_REMOTE_ERROR,
         CoreEvent.MOUNTPOINT_UNHANDLED_ERROR,
         CoreEvent.SHARING_UPDATED,
-        CoreEvent.FS_ENTRY_FILE_UPDATE_CONFLICTED,
     ]
 
     organization_stats_success = pyqtSignal(QtToTrioJob)
@@ -250,10 +249,6 @@ class CentralWidget(QWidget, Ui_CentralWidget):  # type: ignore[misc]
                 self.new_notification.emit(
                     "INFO", _("NOTIF_INFO_WORKSPACE_UNSHARED_{}").format(name)
                 )
-        elif event == CoreEvent.FS_ENTRY_FILE_UPDATE_CONFLICTED:
-            self.new_notification.emit(
-                "WARNING", _("NOTIF_WARN_SYNC_CONFLICT_{}").format(kwargs["path"])
-            )
 
     def _get_organization_stats(self) -> None:
         self.jobs_ctx.submit_job(
