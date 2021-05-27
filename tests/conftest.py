@@ -13,6 +13,7 @@ import socket
 import contextlib
 import pendulum
 from unittest.mock import patch
+import logging
 import structlog
 import trio
 from trio.testing import MockClock
@@ -141,9 +142,27 @@ def patch_caplog():
 
     def _assert_occured(self, log):
         __tracebackhide__ = True
-        assert any([r for r in self.records if log in _remove_colors(r.msg)])
+        record = next((r for r in self.records if log in _remove_colors(r.msg)), None)
+        assert record is not None
+        if not hasattr(self, "asserted_records"):
+            self.asserted_records = set()
+        self.asserted_records.add(record)
 
     LogCaptureFixture.assert_occured = _assert_occured
+
+
+@pytest.fixture(autouse=True)
+def no_logs_gte_error(caplog):
+    yield
+    # The test should use `caplog.assert_occured` to indicate a log was expected,
+    # otherwise we consider error logs as *actual* errors.
+    asserted_records = getattr(caplog, "asserted_records", set())
+    errors = [
+        record
+        for record in caplog.get_records("call")
+        if record.levelno >= logging.ERROR and record not in asserted_records
+    ]
+    assert not errors
 
 
 def patch_pytest_trio():
