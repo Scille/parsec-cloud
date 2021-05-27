@@ -268,15 +268,19 @@ class MountpointManager:
 
 
 async def cleanup_macos_mountpoint_folder(base_mountpoint_path):
-    # In case of a crash on macOS, workspaces don't unmount correctly and leave empty directories
-    # in the default mount folder. This function is used to clean these anytime a login occurs.
+    # In case of a crash on macOS, workspaces don't unmount correctly and leave
+    # empty mountpoints or directories in the default mount folder. This
+    # function is used to unmount or delete these anytime a login occurs.
     for dirs in os.listdir(base_mountpoint_path):
         dir_path = str(base_mountpoint_path) + "/" + str(dirs)
         stats = os.statvfs(dir_path)
         if stats.f_blocks == 0 and stats.f_ffree == 0 and stats.f_bavail == 0:
-            await trio.run_process(["diskutil", "unmount", "force", dir_path])
-            if dirs in os.listdir(base_mountpoint_path):  # checking if there is something to delete
-                await trio.run_process(["rm", "-d", dir_path])  # otherwise an empty dir remains
+            try:
+                await trio.run_process(["diskutil", "unmount", "force", dir_path])
+            except:
+                await trio.run_process(["rm", "-d", dir_path])
+            else:
+                continue
 
 
 @asynccontextmanager
