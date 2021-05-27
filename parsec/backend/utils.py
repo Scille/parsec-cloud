@@ -124,3 +124,10 @@ async def run_with_breathing_transport(transport, fn, *args, **kwargs):
         nursery.start_soon(_keep_transport_breathing)
 
     return rep
+
+
+class Unset:
+    pass
+
+
+unset_sentinel = Unset()
