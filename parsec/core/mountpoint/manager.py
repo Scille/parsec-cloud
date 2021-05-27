@@ -277,9 +277,8 @@ async def cleanup_macos_mountpoint_folder(base_mountpoint_path):
         if stats.f_blocks == 0 and stats.f_ffree == 0 and stats.f_bavail == 0:
             try:
                 await trio.run_process(["diskutil", "unmount", "force", dir_path])
-            except:
                 await trio.run_process(["rm", "-d", dir_path])
-            else:
+            except:
                 continue
 
 
