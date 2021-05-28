@@ -2,7 +2,7 @@
 
 import attr
 import pendulum
-from typing import Optional
+from typing import Optional, Union
 from secrets import token_hex
 
 from pendulum import DateTime
@@ -24,7 +24,7 @@ from parsec.api.protocol import (
 from parsec.api.data import UserCertificateContent, DeviceCertificateContent, DataError, UserProfile
 from parsec.backend.user import User, Device
 from parsec.backend.webhooks import WebhooksComponent
-from parsec.backend.utils import catch_protocol_errors, api
+from parsec.backend.utils import catch_protocol_errors, api, unset_sentinel, Unset
 
 
 class OrganizationError(Exception):
@@ -398,7 +398,12 @@ class BaseOrganizationComponent:
         """
         raise NotImplementedError()
 
-    async def update(self, id: OrganizationID, **fields: dict):
+    async def update(
+        self,
+        id: OrganizationID,
+        expiration_date: Union[Unset, Optional[DateTime]] = unset_sentinel,
+        outsider_enabled: Union[Unset, bool] = unset_sentinel,
+    ):
         """
         Raises:
             OrganizationNotFoundError
