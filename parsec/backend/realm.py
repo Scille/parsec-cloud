@@ -114,9 +114,6 @@ class BaseRealmComponent:
     @api("realm_create")
     @catch_protocol_errors
     async def api_realm_create(self, client_ctx, msg):
-        if client_ctx.profile == UserProfile.OUTSIDER:
-            return {"status": "not_allowed", "reason": "Outsider user cannot create realm"}
-
         msg = realm_create_serializer.req_load(msg)
 
         try:
@@ -236,6 +233,16 @@ class BaseRealmComponent:
     @api("realm_update_roles")
     @catch_protocol_errors
     async def api_realm_update_roles(self, client_ctx, msg):
+        # An OUTSIDER is allowed to create a realm (given he needs to have one
+        # to store it user manifest). However he cannot be MANAGER or OWNER in
+        # a shared realm as well.
+        # Hence the only way for him to be OWNER is to create a realm, and in
+        # this case he cannot share this realm with anyone.
+        # On top of that, we don't have to fetch the user profile from the
+        # database before checking it given it cannot be updated.
+        if client_ctx.profile == UserProfile.OUTSIDER:
+            return {"status": "not_allowed", "reason": "Outsider user cannot share realm"}
+
         msg = realm_update_roles_serializer.req_load(msg)
 
         try:

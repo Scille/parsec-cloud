@@ -105,7 +105,6 @@ async def test_update_roles_outsider_is_limited(alice, bob, alice_backend_sock, 
         (RealmRole.MANAGER, False),
         (RealmRole.OWNER, False),
     ]:
-        print("testing:", role)
         rep = await _realm_generate_certif_and_update_roles_or_fail(
             alice_backend_sock, alice, realm, bob.user_id, role
         )
@@ -116,6 +115,15 @@ async def test_update_roles_outsider_is_limited(alice, bob, alice_backend_sock, 
                 "status": "incompatible_profile",
                 "reason": "User with OUTSIDER profile cannot be MANAGER or OWNER",
             }
+
+
+@pytest.mark.trio
+@customize_fixtures(alice_profile=UserProfile.OUTSIDER)
+async def test_update_roles_outsider_cannot_share_with(alice, bob, alice_backend_sock, realm):
+    rep = await _realm_generate_certif_and_update_roles_or_fail(
+        alice_backend_sock, alice, realm, bob.user_id, RealmRole.READER
+    )
+    assert rep == {"status": "not_allowed", "reason": "Outsider user cannot share realm"}
 
 
 @pytest.mark.trio
