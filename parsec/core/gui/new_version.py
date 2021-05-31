@@ -77,7 +77,7 @@ async def do_check_new_version(
 ) -> Optional[Tuple[Version, str]]:
     # Retrieve the releases from Github
     json_releases = await fetch_json_releases(api_url)
-    if not json_releases:
+    if json_releases is None:
         # Cannot retreive the releases (typically due to no internet access)
         return None
 

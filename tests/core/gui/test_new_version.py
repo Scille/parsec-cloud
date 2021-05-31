@@ -239,7 +239,6 @@ async def test_check_new_version_offline(monkeypatch):
     "payload",
     [
         {},
-        [],
         [{}],
         [{"assets": [], "draft": "foo", "prerelease": False, "version": "v1.9.0"}],
         [{"assets": [], "draft": False, "prerelease": False, "version": "<no_a_version>"}],
@@ -271,7 +270,7 @@ async def test_check_new_version_offline(monkeypatch):
         ],
     ],
 )
-async def test_check_new_version_bad_api_payload(monkeypatch, payload):
+async def test_check_new_version_bad_api_payload(monkeypatch, caplog, payload):
     from parsec.core.gui import new_version as new_version_mod
 
     async def _mocked_new_version_mod(api_url):
@@ -281,3 +280,6 @@ async def test_check_new_version_bad_api_payload(monkeypatch, payload):
 
     result = await do_check_new_version(api_url="https://api.com/releases")
     assert result is None
+    caplog.assert_occured(
+        "[error    ] Cannot load releases info from API [parsec.core.gui.new_version]"
+    )
