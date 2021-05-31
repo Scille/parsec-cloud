@@ -159,7 +159,7 @@ async def test_raid1_block_create_partial_exists(alice_backend_sock, alice, back
 
 @pytest.mark.trio
 @pytest.mark.raid1_blockstore
-async def test_raid1_block_read_partial_failure(alice_backend_sock, alice, backend, block):
+async def test_raid1_block_read_partial_failure(alice_backend_sock, backend, block):
     async def mock_read(organization_id, id):
         await trio.sleep(0)
         raise BlockTimeoutError()
@@ -248,7 +248,7 @@ async def test_raid5_block_create_partial_exists(alice_backend_sock, alice, back
 @pytest.mark.raid5_blockstore
 @pytest.mark.parametrize("failing_blockstore", (0, 1))  # Ignore checksum blockstore
 async def test_raid5_block_read_single_failure(
-    caplog, alice_backend_sock, alice, backend, block, failing_blockstore
+    caplog, alice_backend_sock, backend, block, failing_blockstore
 ):
     async def mock_read(organization_id, id):
         await trio.sleep(0)
@@ -286,7 +286,7 @@ async def test_raid5_block_read_single_invalid_chunk_size(
 @pytest.mark.raid5_blockstore
 @pytest.mark.parametrize("failing_blockstores", [(0, 1), (0, 2)])
 async def test_raid5_block_read_multiple_failure(
-    caplog, alice_backend_sock, alice, backend, block, failing_blockstores
+    caplog, alice_backend_sock, backend, block, failing_blockstores
 ):
     async def mock_read(organization_id, id):
         await trio.sleep(0)

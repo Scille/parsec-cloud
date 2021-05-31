@@ -233,7 +233,7 @@ async def test_vlobs_updated_event_not_participant(backend, alice_backend_sock, 
 @pytest.mark.trio
 @pytest.mark.parametrize("realm_created_by_self", (True, False))
 async def test_vlobs_updated_event_realm_created_after_subscribe(
-    backend, alice_backend_sock, alice, alice2, realm, realm_created_by_self
+    backend, alice_backend_sock, alice, alice2, realm_created_by_self
 ):
     realm_id = UUID("0000000000000000000000000000000A")
     await events_subscribe(alice_backend_sock)

@@ -10,7 +10,7 @@ from tests.backend.common import realm_status, realm_update_roles
 
 
 @pytest.mark.trio
-async def test_status(backend, bob_backend_sock, alice_backend_sock, alice, bob, realm):
+async def test_status(bob_backend_sock, alice_backend_sock, alice, bob, realm):
     rep = await realm_status(alice_backend_sock, realm)
     assert rep == {
         "status": "ok",

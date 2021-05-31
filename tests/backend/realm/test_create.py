@@ -29,7 +29,7 @@ async def test_create_ok(backend, alice, alice_backend_sock):
 
 
 @pytest.mark.trio
-async def test_create_invalid_certif(backend, alice, bob, alice_backend_sock):
+async def test_create_invalid_certif(bob, alice_backend_sock):
     realm_id = UUID("C0000000000000000000000000000000")
     certif = RealmRoleCertificateContent.build_realm_root_certif(
         author=bob.device_id, timestamp=pendulum.now(), realm_id=realm_id
@@ -42,7 +42,7 @@ async def test_create_invalid_certif(backend, alice, bob, alice_backend_sock):
 
 
 @pytest.mark.trio
-async def test_create_certif_not_self_signed(backend, alice, bob, alice_backend_sock):
+async def test_create_certif_not_self_signed(alice, bob, alice_backend_sock):
     realm_id = UUID("C0000000000000000000000000000000")
     certif = RealmRoleCertificateContent(
         author=alice.device_id,
@@ -59,7 +59,7 @@ async def test_create_certif_not_self_signed(backend, alice, bob, alice_backend_
 
 
 @pytest.mark.trio
-async def test_create_certif_role_not_owner(backend, alice, bob, alice_backend_sock):
+async def test_create_certif_role_not_owner(alice, alice_backend_sock):
     realm_id = UUID("C0000000000000000000000000000000")
     certif = RealmRoleCertificateContent(
         author=alice.device_id,
@@ -76,7 +76,7 @@ async def test_create_certif_role_not_owner(backend, alice, bob, alice_backend_s
 
 
 @pytest.mark.trio
-async def test_create_certif_too_old(backend, alice, alice_backend_sock):
+async def test_create_certif_too_old(alice, alice_backend_sock):
     realm_id = UUID("C0000000000000000000000000000000")
     now = pendulum.now()
     certif = RealmRoleCertificateContent.build_realm_root_certif(
@@ -91,7 +91,7 @@ async def test_create_certif_too_old(backend, alice, alice_backend_sock):
 
 
 @pytest.mark.trio
-async def test_create_realm_already_exists(backend, alice, alice_backend_sock, realm):
+async def test_create_realm_already_exists(alice, alice_backend_sock, realm):
     certif = RealmRoleCertificateContent.build_realm_root_certif(
         author=alice.device_id, timestamp=pendulum.now(), realm_id=realm
     ).dump_and_sign(alice.signing_key)
@@ -101,7 +101,7 @@ async def test_create_realm_already_exists(backend, alice, alice_backend_sock, r
 
 @pytest.mark.trio
 @customize_fixtures(alice_profile=UserProfile.OUTSIDER)
-async def test_realm_create_not_allowed_for_outsider(backend, alice, alice_backend_sock):
+async def test_realm_create_not_allowed_for_outsider(alice, alice_backend_sock):
     realm_id = UUID("C0000000000000000000000000000000")
     certif = RealmRoleCertificateContent.build_realm_root_certif(
         author=alice.device_id, timestamp=pendulum.now(), realm_id=realm_id
