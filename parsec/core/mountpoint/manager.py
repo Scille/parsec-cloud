@@ -1,7 +1,6 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2016-2021 Scille SAS
 
 from parsec.core.core_events import CoreEvent
-import os
 import trio
 import logging
 import sys
@@ -268,18 +267,41 @@ class MountpointManager:
 
 
 async def cleanup_macos_mountpoint_folder(base_mountpoint_path):
-    # In case of a crash on macOS, workspaces don't unmount correctly and leave
-    # empty mountpoints or directories in the default mount folder. This
-    # function is used to unmount or delete these anytime a login occurs.
-    for dirs in os.listdir(base_mountpoint_path):
-        dir_path = str(base_mountpoint_path) + "/" + str(dirs)
-        stats = os.statvfs(dir_path)
-        if stats.f_blocks == 0 and stats.f_ffree == 0 and stats.f_bavail == 0:
+    # In case of a crash on macOS, workspaces don't unmount correctly and leave empty
+    # mountpoints or directories in the default mount folder. This function is used to
+    # unmount and/or delete these anytime a login occurs. In some rare and so far unknown
+    # conditions, the unmount call can fail, raising a CalledProcessError, hence the
+    # exception below. In such cases, the issue stops occurring after a system reboot,
+    # making the exception catching a temporary solution.
+    base_mountpoint_path = trio.Path(base_mountpoint_path)
+    try:
+        mountpoint_names = await base_mountpoint_path.iterdir()
+    except FileNotFoundError:
+        # Unlike with `pathlib.Path.iterdir` which returns a lazy itertor,
+        # `trio.Path.iterdir` does FS access and may raise FileNotFoundError
+        return
+    for mountpoint_name in mountpoint_names:
+        mountpoint_path = base_mountpoint_path / mountpoint_name
+        stats = await trio.Path(mountpoint_path).stat()
+        if (
+            stats.st_size == 0
+            and stats.st_blocks == 0
+            and stats.st_atime == 0
+            and stats.st_mtime == 0
+            and stats.st_ctime == 0
+        ):
             try:
-                await trio.run_process(["diskutil", "unmount", "force", dir_path])
-                await trio.run_process(["rm", "-d", dir_path])
-            except:
-                continue
+                await trio.run_process(["diskutil", "unmount", "force", mountpoint_path])
+            except CalledProcessError as exc:
+                logger.warning(
+                    "Error during mountpoint cleanup: diskutil unmount failed",
+                    exc_info=exc,
+                    mountpoint_path=mountpoint_path,
+                )
+            try:
+                await trio.Path(mountpoint_path).rmdir()
+            except FileNotFoundError:
+                pass
 
 
 @asynccontextmanager
@@ -303,15 +325,7 @@ async def mountpoint_manager_factory(
     if sys.platform == "win32":
         cleanup_parsec_drive_icons()
     elif sys.platform == "darwin":
-        try:
-            await cleanup_macos_mountpoint_folder(base_mountpoint_path)
-        except FileNotFoundError:
-            pass
-        except CalledProcessError:
-            # The unmount can fail if the app wasn't properly closed and will
-            # block login until reboot. Cleanup is skipped in such cases and
-            # should work properly after the next user's reboot.
-            pass
+        await cleanup_macos_mountpoint_folder(base_mountpoint_path)
 
     def on_event(event, new_entry, previous_entry=None):
         # Workspace created
