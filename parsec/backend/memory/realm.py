@@ -163,6 +163,8 @@ class MemoryRealmComponent(BaseRealmComponent):
         assert new_role.granted_by is not None
         assert new_role.granted_by.user_id != new_role.user_id
 
+        # The only way for an OUTSIDER to be OWNER is to create his own realm
+        # (given he needs to have one to store it user manifest).
         try:
             user = self._user_component._get_user(organization_id, new_role.user_id)
         except UserNotFoundError:

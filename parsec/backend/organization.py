@@ -309,7 +309,7 @@ class BaseOrganizationComponent:
         except (OrganizationNotFoundError, OrganizationInvalidBootstrapTokenError):
             return {"status": "not_found"}
 
-        # Note: we let OrganizationFirstUserCreationError bobbles up given
+        # Note: we let OrganizationFirstUserCreationError bubbles up given
         # it should not occurs under normal circumstances
 
         # Finally notify webhook

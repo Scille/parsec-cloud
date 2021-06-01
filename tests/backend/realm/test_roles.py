@@ -78,7 +78,7 @@ async def test_update_roles_not_found(alice, bob, alice_backend_sock):
 
 
 @pytest.mark.trio
-async def test_update_roles_bad_user(backend, alice, mallory, alice_backend_sock, realm):
+async def test_update_roles_bad_user(alice, mallory, alice_backend_sock, realm):
     rep = await _realm_generate_certif_and_update_roles_or_fail(
         alice_backend_sock, alice, realm, mallory.user_id, RealmRole.MANAGER
     )
@@ -86,7 +86,7 @@ async def test_update_roles_bad_user(backend, alice, mallory, alice_backend_sock
 
 
 @pytest.mark.trio
-async def test_update_roles_cannot_modify_self(backend, alice, alice_backend_sock, realm):
+async def test_update_roles_cannot_modify_self(alice, alice_backend_sock, realm):
     rep = await _realm_generate_certif_and_update_roles_or_fail(
         alice_backend_sock, alice, realm, alice.user_id, RealmRole.MANAGER
     )
@@ -98,14 +98,13 @@ async def test_update_roles_cannot_modify_self(backend, alice, alice_backend_soc
 
 @pytest.mark.trio
 @customize_fixtures(bob_profile=UserProfile.OUTSIDER)
-async def test_update_roles_outsider_is_limited(backend, alice, bob, alice_backend_sock, realm):
+async def test_update_roles_outsider_is_limited(alice, bob, alice_backend_sock, realm):
     for role, is_allowed in [
         (RealmRole.READER, True),
         (RealmRole.CONTRIBUTOR, True),
         (RealmRole.MANAGER, False),
         (RealmRole.OWNER, False),
     ]:
-        print("testing:", role)
         rep = await _realm_generate_certif_and_update_roles_or_fail(
             alice_backend_sock, alice, realm, bob.user_id, role
         )
@@ -119,9 +118,18 @@ async def test_update_roles_outsider_is_limited(backend, alice, bob, alice_backe
 
 
 @pytest.mark.trio
+@customize_fixtures(alice_profile=UserProfile.OUTSIDER)
+async def test_update_roles_outsider_cannot_share_with(alice, bob, alice_backend_sock, realm):
+    rep = await _realm_generate_certif_and_update_roles_or_fail(
+        alice_backend_sock, alice, realm, bob.user_id, RealmRole.READER
+    )
+    assert rep == {"status": "not_allowed", "reason": "Outsider user cannot share realm"}
+
+
+@pytest.mark.trio
 @pytest.mark.parametrize("start_with_existing_role", (False, True))
 async def test_remove_role_idempotent(
-    backend, alice, bob, alice_backend_sock, realm, start_with_existing_role
+    alice, bob, alice_backend_sock, realm, start_with_existing_role
 ):
     if start_with_existing_role:
         with freeze_time("2000-01-03"):
@@ -301,7 +309,7 @@ async def test_role_update_not_allowed(
 
 @pytest.mark.trio
 async def test_remove_role_dont_change_other_realms(
-    backend, alice, bob, alice_backend_sock, bob_backend_sock, realm, bob_realm
+    backend, alice, bob, alice_backend_sock, realm, bob_realm
 ):
     # Bob is owner of bob_realm and manager of realm
     rep = await _realm_generate_certif_and_update_roles_or_fail(
@@ -321,9 +329,7 @@ async def test_remove_role_dont_change_other_realms(
 
 
 @pytest.mark.trio
-async def test_role_access_during_maintenance(
-    backend, alice, bob, alice_backend_sock, realm, vlobs
-):
+async def test_role_access_during_maintenance(backend, alice, bob, alice_backend_sock, realm):
     await backend.realm.start_reencryption_maintenance(
         alice.organization_id,
         alice.device_id,

@@ -4,9 +4,9 @@ import pytest
 
 from PyQt5 import QtCore, QtWidgets
 
+from parsec.api.data import UserProfile
 from parsec.core.types import WorkspaceRole
 from parsec.core.local_device import save_device_with_password
-
 from parsec.core.gui.workspace_button import WorkspaceButton
 from parsec.core.gui.lang import translate
 from parsec.core.gui.login_widget import LoginPasswordInputWidget
@@ -234,6 +234,45 @@ async def test_share_workspace_offline(
         assert autoclose_dialog.dialogs[0] == ("Error", translate("TEXT_WORKSPACE_SHARING_OFFLINE"))
 
     await aqtbot.wait_until(_error_shown)
+
+
+@pytest.mark.gui
+@pytest.mark.trio
+# Only bob can be set as outsider (given Alice and Adam are used to invite news users),
+# so we have to login as Alice (hence the `logged_gui_as_admin`...)
+@customize_fixtures(logged_gui_as_admin=True)
+@customize_fixtures(bob_profile=UserProfile.OUTSIDER)
+async def test_share_with_outsider_limit_roles(
+    aqtbot, running_backend, gui_workspace_sharing, autoclose_dialog, qt_thread_gateway
+):
+    logged_gui, w_w, share_w_w = gui_workspace_sharing
+
+    def _users_listed():
+        assert share_w_w.scroll_content.layout().count() == 4
+
+    await aqtbot.wait_until(_users_listed)
+
+    for role_index, role_name in [(3, "Manager"), (4, "Owner")]:
+
+        def _set_manager():
+            select_bob_w = share_w_w.scroll_content.layout().itemAt(2).widget()
+            assert select_bob_w.label_email.text() == "bob@example.com"
+            # Switch bob to an invalid role
+            assert select_bob_w.combo_role.itemText(role_index) == role_name
+            select_bob_w.combo_role.setCurrentIndex(3)
+
+        await qt_thread_gateway.send_action(_set_manager)
+
+        def _error_shown():
+            assert len(autoclose_dialog.dialogs) == 1
+            assert autoclose_dialog.dialogs[0] == (
+                "Error",
+                translate("TEXT_WORKSPACE_SHARING_SHARE_ERROR_workspace-user").format(
+                    workspace="Workspace", user="Boby McBobFace"
+                ),
+            )
+
+        await aqtbot.wait_until(_error_shown)
 
 
 @pytest.mark.gui

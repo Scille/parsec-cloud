@@ -30,7 +30,7 @@ from tests.backend.common import (
 
 
 @pytest.mark.trio
-async def test_start_bad_encryption_revision(backend, alice_backend_sock, realm):
+async def test_start_bad_encryption_revision(alice_backend_sock, realm):
     rep = await realm_start_reencryption_maintenance(
         alice_backend_sock, realm, 42, pendulum_now(), {"alice": b"wathever"}, check_rep=False
     )
@@ -38,7 +38,7 @@ async def test_start_bad_encryption_revision(backend, alice_backend_sock, realm)
 
 
 @pytest.mark.trio
-async def test_start_bad_timestamp(backend, alice_backend_sock, realm):
+async def test_start_bad_timestamp(alice_backend_sock, realm):
     rep = await realm_start_reencryption_maintenance(
         alice_backend_sock, realm, 2, datetime(2000, 1, 1), {"alice": b"wathever"}, check_rep=False
     )
@@ -162,7 +162,7 @@ async def test_start_reencryption_update_status(alice_backend_sock, alice, realm
 
 
 @pytest.mark.trio
-async def test_start_already_in_maintenance(backend, alice_backend_sock, realm):
+async def test_start_already_in_maintenance(alice_backend_sock, realm):
     await realm_start_reencryption_maintenance(
         alice_backend_sock, realm, 2, pendulum_now(), {"alice": b"wathever"}
     )
@@ -397,7 +397,7 @@ async def test_reencryption_batch_bad_revisison(alice_backend_sock, realm):
 
 
 @pytest.mark.trio
-async def test_reencryption(alice, alice_backend_sock, realm, vlobs, vlob_atoms):
+async def test_reencryption(alice, alice_backend_sock, realm, vlob_atoms):
     with freeze_time("2000-01-02"):
         await realm_start_reencryption_maintenance(
             alice_backend_sock, realm, 2, pendulum_now(), {"alice": b"foo"}
@@ -561,7 +561,7 @@ async def test_access_during_reencryption(backend, alice_backend_sock, alice, re
 
 @pytest.mark.trio
 async def test_reencryption_events(
-    backend, alice, alice_backend_sock, alice2_backend_sock, realm, vlobs, vlob_atoms
+    backend, alice_backend_sock, alice2_backend_sock, realm, vlobs, vlob_atoms
 ):
 
     # Start listening events
