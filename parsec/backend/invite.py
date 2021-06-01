@@ -161,7 +161,7 @@ def generate_invite_email(
     # mail settings
     message = MIMEMultipart("alternative")
     if greeter_name:
-        message["Subject"] = f"[Parsec] { greeter_name } invited you to { organization_id}"
+        message["Subject"] = f"[Parsec] { greeter_name } invited you to { organization_id }"
     else:
         message["Subject"] = f"[Parsec] New device invitation to { organization_id }"
     message["From"] = from_addr
@@ -199,7 +199,7 @@ async def _smtp_send_mail(email_config: SmtpEmailConfig, to_addr: str, message: 
                 server.sendmail(email_config.sender, to_addr, message.as_string())
 
         except smtplib.SMTPException as e:
-            logger.warning("SMTP error", exc_info=e, to_addr=to_addr)
+            logger.warning("SMTP error", exc_info=e, to_addr=to_addr, subject=message["Subject"])
 
     await trio.to_thread.run_sync(_do)
 

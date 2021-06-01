@@ -656,7 +656,8 @@ def webhook_spy(monkeypatch):
     events = []
 
     class MockedRep:
-        def getcode(self):
+        @property
+        def status(self):
             return 200
 
     @contextmanager

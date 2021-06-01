@@ -18,9 +18,9 @@ def _do_urllib_request(url: str, data: bytes) -> None:
     )
     try:
         with urlopen(req, timeout=30) as rep:
-            if rep.getcode() != 200:
+            if not 200 <= rep.status < 300:
                 logger.warning(
-                    "webhook bad return status", url=url, data=data, return_status=rep.getcode()
+                    "webhook bad return status", url=url, data=data, return_status=rep.status
                 )
 
     except URLError as exc:
