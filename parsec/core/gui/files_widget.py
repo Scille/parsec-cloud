@@ -396,7 +396,7 @@ class FilesWidget(QWidget, Ui_FilesWidget):
         if len(files) != 1:
             return
         path = self.current_directory / files[0].name
-        addr = self.workspace_fs.generate_file_link(path)
+        addr = self.jobs_ctx.run_sync(self.workspace_fs.generate_file_link, path)
         desktop.copy_to_clipboard(addr.to_url())
         show_info(self, _("TEXT_FILE_LINK_COPIED_TO_CLIPBOARD"))
 
