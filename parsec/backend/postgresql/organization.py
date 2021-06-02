@@ -1,7 +1,8 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2016-2021 Scille SAS
 
-from typing import Optional, Any, Dict
+from typing import Optional, Dict, Union
 
+from functools import lru_cache
 from pendulum import DateTime
 from triopg import UniqueViolationError
 
@@ -9,6 +10,7 @@ from parsec.api.protocol import OrganizationID
 from parsec.crypto import VerifyKey
 from parsec.backend.events import BackendEvent
 from parsec.backend.user import UserError, User, Device
+from parsec.backend.utils import unset_sentinel, Unset
 from parsec.backend.organization import (
     BaseOrganizationComponent,
     OrganizationStats,
@@ -98,6 +100,24 @@ WHERE organization_id = $organization_id
 )
 
 
+@lru_cache
+def _q_update_factory(with_expiration_date: bool, with_outsider_enabled: bool):
+    fields = []
+    if with_expiration_date:
+        fields.append("expiration_date = $expiration_date")
+    if with_outsider_enabled:
+        fields.append("outsider_enabled = $outsider_enabled")
+
+    return Q(
+        f"""
+            UPDATE organization
+            SET
+            { ", ".join(fields) }
+            WHERE organization_id = $organization_id
+        """
+    )
+
+
 class PGOrganizationComponent(BaseOrganizationComponent):
     def __init__(self, dbh: PGHandler, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -184,20 +204,30 @@ class PGOrganizationComponent(BaseOrganizationComponent):
             workspaces=result["workspaces"],
         )
 
-    async def update(self, id: OrganizationID, **fields: Dict[str, Any]) -> None:
+    async def update(
+        self,
+        id: OrganizationID,
+        expiration_date: Union[Unset, Optional[DateTime]] = unset_sentinel,
+        outsider_enabled: Union[Unset, bool] = unset_sentinel,
+    ) -> None:
         """
         Raises:
             OrganizationNotFoundError
             OrganizationError
         """
-        set = ", ".join([f"{k} = ${k}" for k in fields.keys()])
-        q = Q(
-            f"""
-        UPDATE organization
-        SET
-        {set}
-        WHERE organization_id = $organization_id
-        """
+        fields: Dict[str, Union[Optional[DateTime], bool]] = {}
+        with_expiration_date: bool = False
+        with_outsider_enabled: bool = False
+
+        if not isinstance(expiration_date, Unset):
+            with_expiration_date = True
+            fields["expiration_date"] = expiration_date
+        if not isinstance(outsider_enabled, Unset):
+            with_outsider_enabled = True
+            fields["outsider_enabled"] = outsider_enabled
+
+        q = _q_update_factory(
+            with_expiration_date=with_expiration_date, with_outsider_enabled=with_outsider_enabled
         )
         async with self.dbh.pool.acquire() as conn, conn.transaction():
             result = await conn.execute(*q(organization_id=id, **fields))
