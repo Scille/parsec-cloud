@@ -547,8 +547,6 @@ async def _do_get_organization_status(core):
 class GreetUserWidget(QWidget, Ui_GreetUserWidget):
     greeter_success = pyqtSignal(QtToTrioJob)
     greeter_error = pyqtSignal(QtToTrioJob)
-    organization_status_success = pyqtSignal(QtToTrioJob)
-    organization_status_error = pyqtSignal(QtToTrioJob)
 
     def __init__(self, core, jobs_ctx, token):
         super().__init__()
@@ -562,11 +560,8 @@ class GreetUserWidget(QWidget, Ui_GreetUserWidget):
         self.greeter_success.connect(self._on_greeter_success)
         self.greeter_error.connect(self._on_greeter_error)
         self.organization_status_job = None
-        self.outsider_enabled = False
-        self.organization_status_success.connect(self._on_organization_status_success)
-        self.organization_status_error.connect(self._on_organization_status_error)
+        self.outsider_enabled = core.get_organization_status().outsider_enabled
         self._run_greeter()
-        self._run_organization_status()
 
     def _run_greeter(self):
         self.greeter_job = self.jobs_ctx.submit_job(
@@ -625,30 +620,6 @@ class GreetUserWidget(QWidget, Ui_GreetUserWidget):
         page.succeeded.connect(self._goto_page3)
         page.failed.connect(self._on_page_failed)
         self.main_layout.addWidget(page)
-
-    def _run_organization_status(self):
-        self.organization_status_job = self.jobs_ctx.submit_job(
-            ThreadSafeQtSignal(self, "organization_status_success", QtToTrioJob),
-            ThreadSafeQtSignal(self, "organization_status_error", QtToTrioJob),
-            _do_get_organization_status,
-            core=self.core,
-        )
-
-    def _on_organization_status_success(self, job):
-        if self.organization_status_job != job:
-            return
-        assert self.organization_status_job
-        assert self.organization_status_job.is_finished()
-        assert self.organization_status_job.status == "ok"
-        organization_status = job.ret
-        self.outsider_enabled = organization_status.outsider_enabled
-
-    def _on_organization_status_error(self, job):
-        assert job
-        assert job.is_finished()
-        assert job.status != "ok"
-
-        self.outsider_enabled = False
 
     def _goto_page3(self):
         current_page = self.main_layout.takeAt(0).widget()

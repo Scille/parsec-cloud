@@ -11,7 +11,7 @@ from parsec.crypto import SigningKey
 from parsec.event_bus import EventBus
 from parsec.api.data import EntryID
 from parsec.api.protocol import DeviceID, APIEvent, AUTHENTICATED_CMDS
-from parsec.core.types import BackendOrganizationAddr
+from parsec.core.types import BackendOrganizationAddr, OrganizationStatus
 from parsec.core.backend_connection import cmds
 from parsec.core.backend_connection.transport import connect_as_authenticated, TransportPool
 from parsec.core.backend_connection.exceptions import BackendNotAvailable, BackendConnectionRefused
@@ -172,6 +172,9 @@ class BackendAuthenticatedConn:
         self._monitors_idle_event = trio.Event()
         self._monitors_idle_event.set()  # No monitors
         self._backend_connection_failures = 0
+        self._organization_status = OrganizationStatus(
+            expiration_date=False, outsider_enabled=False
+        )
         self.event_bus = event_bus
         self.max_cooldown = max_cooldown
 
@@ -203,6 +206,13 @@ class BackendAuthenticatedConn:
         # A better approach would be to make sure that components using this status
         # do not rely on this redundant event.
         self._status_event_sent = True
+
+    def set_organization_status(self, status: OrganizationStatus) -> None:
+        self._organization_status = status
+
+    @property
+    def organization_status(self) -> OrganizationStatus:
+        return self._organization_status
 
     def register_monitor(self, monitor_cb) -> None:
         if self._started:
@@ -273,6 +283,16 @@ class BackendAuthenticatedConn:
             self.set_status(BackendConnStatus.INITIALIZING)
             self._backend_connection_failures = 0
             logger.info("Backend online")
+
+            rep = await cmds.organization_status(transport)
+            if rep["status"] != "ok":
+                raise BackendConnectionRefused()
+
+            self.set_organization_status(
+                OrganizationStatus(
+                    expiration_date=rep["expiration_date"], outsider_enabled=rep["outsider_enabled"]
+                )
+            )
 
             await cmds.events_subscribe(transport)
 
