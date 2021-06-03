@@ -279,7 +279,7 @@ requirements = [
     "toastedmarshmallow==0.2.6",
     "pendulum==2.1.2",
     "PyNaCl==1.4.0",
-    "trio==0.16.0",
+    "trio==0.18.0",
     "trio_typing==0.5.0",
     "async_generator>=1.9",
     'contextvars==2.1;python_version<"3.7"',
@@ -298,7 +298,7 @@ test_requirements = [
     "pytest==5.4.3",
     "pytest-cov==2.10.0",
     "pytest-xdist==1.32.0",
-    "pytest-trio==0.5.2",
+    "pytest-trio==0.7.0",
     "pytest-qt==3.3.0",
     "pytest-rerunfailures==9.0",
     "hypothesis==5.3.0",
@@ -332,7 +332,7 @@ extra_requirements = {
         "jinja2==2.11.2",
         # PostgreSQL
         "triopg==0.6.0",
-        "trio-asyncio==0.11.0",
+        "trio-asyncio==0.12.0",
         # S3
         "boto3==1.12.34",
         "botocore==1.15.34",

@@ -104,8 +104,6 @@ def mock_timezone_utc(request):
 
 
 def pytest_configure(config):
-    # Patch pytest-trio
-    patch_pytest_trio()
     # Configure structlog to redirect everything in logging
     structlog.configure(
         logger_factory=structlog.stdlib.LoggerFactory(),
@@ -163,36 +161,6 @@ def no_logs_gte_error(caplog):
         if record.levelno >= logging.ERROR and record not in asserted_records
     ]
     assert not errors
-
-
-def patch_pytest_trio():
-    # Fix while waiting for
-    # https://github.com/python-trio/pytest-trio/issues/77
-    import pytest_trio
-
-    vanilla_crash = pytest_trio.plugin.TrioTestContext.crash
-
-    def patched_crash(self, exc):
-        if exc is None:
-            task = trio.lowlevel.current_task()
-            for child_nursery in task.child_nurseries:
-                for child_exc in child_nursery._pending_excs:
-                    if not isinstance(exc, trio.Cancelled):
-                        vanilla_crash(self, child_exc)
-        vanilla_crash(self, exc)
-
-    pytest_trio.plugin.TrioTestContext.crash = patched_crash
-
-    def fget(self):
-        if self.crashed and not self._error_list:
-            self._error_list.append(trio.TrioInternalError("See pytest-trio issue #75"))
-        return self._error_list
-
-    def fset(self, value):
-        self._error_list = value
-
-    error_list = property(fget, fset)
-    pytest_trio.plugin.TrioTestContext.error_list = error_list
 
 
 @pytest.fixture(scope="session")
