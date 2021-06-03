@@ -134,13 +134,6 @@ class BaseOrganizationComponent:
     @catch_protocol_errors
     async def api_authenticated_organization_status(self, client_ctx, msg):
         msg = organization_status_serializer.req_load(msg)
-
-        if client_ctx.profile != UserProfile.ADMIN:
-            return {
-                "status": "not_allowed",
-                "reason": f"User `{client_ctx.device_id.user_id}` is not admin",
-            }
-
         organization_id = client_ctx.organization_id
 
         try:
