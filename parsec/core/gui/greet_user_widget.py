@@ -8,7 +8,7 @@ from PyQt5.QtWidgets import QWidget
 
 from parsec.api.data import UserProfile
 from parsec.api.protocol import HumanHandle
-from parsec.core.backend_connection import BackendNotAvailable, BackendConnectionError
+from parsec.core.backend_connection import BackendNotAvailable
 from parsec.core.invite import InviteError, InvitePeerResetError, InviteAlreadyUsedError
 from parsec.core.gui.trio_thread import JobResultError, ThreadSafeQtSignal, QtToTrioJob
 from parsec.core.gui.custom_dialogs import show_error, GreyedDialog, show_info
@@ -535,15 +535,6 @@ class GreetUserCodeExchangeWidget(QWidget, Ui_GreetUserCodeExchangeWidget):
         self.failed.emit(job)
 
 
-async def _do_get_organization_status(core):
-    try:
-        return await core.get_organization_status()
-    except BackendNotAvailable as exc:
-        raise JobResultError("offline") from exc
-    except BackendConnectionError as exc:
-        raise JobResultError("error") from exc
-
-
 class GreetUserWidget(QWidget, Ui_GreetUserWidget):
     greeter_success = pyqtSignal(QtToTrioJob)
     greeter_error = pyqtSignal(QtToTrioJob)
@@ -559,8 +550,7 @@ class GreetUserWidget(QWidget, Ui_GreetUserWidget):
         self.greeter_job = None
         self.greeter_success.connect(self._on_greeter_success)
         self.greeter_error.connect(self._on_greeter_error)
-        self.organization_status_job = None
-        self.outsider_enabled = core.get_organization_status().outsider_enabled
+        self.outsider_enabled = core.get_organization_config().outsider_enabled
         self._run_greeter()
 
     def _run_greeter(self):

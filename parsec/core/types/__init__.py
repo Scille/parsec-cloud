@@ -35,7 +35,7 @@ from parsec.core.types.manifest import (
     ChunkID,
 )
 
-from parsec.core.types.organizations import OrganizationStats, OrganizationStatus
+from parsec.core.types.organizations import OrganizationStats, OrganizationConfig
 
 from parsec.api.data import WorkspaceManifest as RemoteWorkspaceManifest
 from parsec.api.data import FolderManifest as RemoteFolderManifest
@@ -88,5 +88,5 @@ __all__ = (
     "ChunkID",
     # organizations
     "OrganizationStats",
-    "OrganizationStatus",
+    "OrganizationConfig",
 )

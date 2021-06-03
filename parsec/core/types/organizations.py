@@ -11,6 +11,6 @@ class OrganizationStats:
 
 
 @attr.s(frozen=True, slots=True, auto_attribs=True)
-class OrganizationStatus:
+class OrganizationConfig:
     expiration_date: DateTime
     outsider_enabled: bool

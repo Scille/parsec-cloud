@@ -44,7 +44,7 @@ AUTHENTICATED_CMDS = {
     "realm_finish_reencryption_maintenance",
     # Organization
     "organization_stats",  # organization_stats has been added in api v2.1
-    "organization_status",
+    "organization_config",  # organization_config has been added in api v2.2
 }
 INVITED_CMDS = {
     "ping",  # TODO: remove ping and ping event (only have them in tests)

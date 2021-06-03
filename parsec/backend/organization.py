@@ -19,7 +19,7 @@ from parsec.api.protocol import (
     apiv1_organization_stats_serializer,
     apiv1_organization_status_serializer,
     apiv1_organization_update_serializer,
-    organization_status_serializer,
+    organization_config_serializer,
 )
 from parsec.api.data import UserCertificateContent, DeviceCertificateContent, DataError, UserProfile
 from parsec.backend.user import User, Device
@@ -130,10 +130,10 @@ class BaseOrganizationComponent:
             }
         )
 
-    @api("organization_status", handshake_types=[HandshakeType.AUTHENTICATED])
+    @api("organization_config", handshake_types=[HandshakeType.AUTHENTICATED])
     @catch_protocol_errors
-    async def api_authenticated_organization_status(self, client_ctx, msg):
-        msg = organization_status_serializer.req_load(msg)
+    async def api_authenticated_organization_config(self, client_ctx, msg):
+        msg = organization_config_serializer.req_load(msg)
         organization_id = client_ctx.organization_id
 
         try:
@@ -142,7 +142,7 @@ class BaseOrganizationComponent:
         except OrganizationNotFoundError:
             return {"status": "not_found"}
 
-        return organization_status_serializer.rep_dump(
+        return organization_config_serializer.rep_dump(
             {
                 "expiration_date": organization.expiration_date,
                 "outsider_enabled": organization.outsider_enabled,

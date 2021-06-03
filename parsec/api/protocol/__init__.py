@@ -46,7 +46,7 @@ from parsec.api.protocol.organization import (
     apiv1_organization_stats_serializer,
     apiv1_organization_status_serializer,
     apiv1_organization_update_serializer,
-    organization_status_serializer,
+    organization_config_serializer,
 )
 from parsec.api.protocol.events import (
     events_subscribe_serializer,
@@ -168,7 +168,7 @@ __all__ = (
     "organization_stats_serializer",
     "apiv1_organization_stats_serializer",
     "apiv1_organization_status_serializer",
-    "organization_status_serializer",
+    "organization_config_serializer",
     "apiv1_organization_update_serializer",
     # Events
     "events_subscribe_serializer",

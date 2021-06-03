@@ -18,7 +18,7 @@ from parsec.api.data import RevokedUserCertificateContent
 from parsec.core.types import LocalDevice, UserInfo, DeviceInfo, BackendInvitationAddr
 from parsec.core import resources as core_resources
 from parsec.core.config import CoreConfig
-from parsec.core.types import OrganizationStatus, OrganizationStats
+from parsec.core.types import OrganizationConfig, OrganizationStats
 from parsec.core.backend_connection import (
     BackendAuthenticatedConn,
     BackendConnectionError,
@@ -323,8 +323,8 @@ class LoggedCore:
         initial_ctx = DeviceGreetInitialCtx(cmds=self._backend_conn.cmds, token=token)
         return await initial_ctx.do_wait_peer()
 
-    def get_organization_status(self) -> OrganizationStatus:
-        return self._backend_conn.organization_status
+    def get_organization_config(self) -> OrganizationConfig:
+        return self._backend_conn.organization_config
 
 
 @asynccontextmanager

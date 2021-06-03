@@ -11,7 +11,7 @@ from parsec.crypto import SigningKey
 from parsec.event_bus import EventBus
 from parsec.api.data import EntryID
 from parsec.api.protocol import DeviceID, APIEvent, AUTHENTICATED_CMDS
-from parsec.core.types import BackendOrganizationAddr, OrganizationStatus
+from parsec.core.types import BackendOrganizationAddr, OrganizationConfig
 from parsec.core.backend_connection import cmds
 from parsec.core.backend_connection.transport import connect_as_authenticated, TransportPool
 from parsec.core.backend_connection.exceptions import BackendNotAvailable, BackendConnectionRefused
@@ -86,7 +86,7 @@ class BackendAuthenticatedCmds:
         cmds.realm_finish_reencryption_maintenance
     )
     organization_stats = expose_cmds_with_retrier(cmds.organization_stats)
-    organization_status = expose_cmds_with_retrier(cmds.organization_status)
+    organization_config = expose_cmds_with_retrier(cmds.organization_config)
 
 
 for cmd in AUTHENTICATED_CMDS:
@@ -172,7 +172,7 @@ class BackendAuthenticatedConn:
         self._monitors_idle_event = trio.Event()
         self._monitors_idle_event.set()  # No monitors
         self._backend_connection_failures = 0
-        self._organization_status = OrganizationStatus(
+        self._organization_config = OrganizationConfig(
             expiration_date=False, outsider_enabled=False
         )
         self.event_bus = event_bus
@@ -207,12 +207,12 @@ class BackendAuthenticatedConn:
         # do not rely on this redundant event.
         self._status_event_sent = True
 
-    def set_organization_status(self, status: OrganizationStatus) -> None:
-        self._organization_status = status
+    def set_organization_config(self, config: OrganizationConfig) -> None:
+        self._organization_config = config
 
     @property
-    def organization_status(self) -> OrganizationStatus:
-        return self._organization_status
+    def organization_config(self) -> OrganizationConfig:
+        return self._organization_config
 
     def register_monitor(self, monitor_cb) -> None:
         if self._started:
@@ -284,12 +284,12 @@ class BackendAuthenticatedConn:
             self._backend_connection_failures = 0
             logger.info("Backend online")
 
-            rep = await cmds.organization_status(transport)
+            rep = await cmds.organization_config(transport)
             if rep["status"] != "ok":
                 raise BackendConnectionRefused()
 
-            self.set_organization_status(
-                OrganizationStatus(
+            self.set_organization_config(
+                OrganizationConfig(
                     expiration_date=rep["expiration_date"], outsider_enabled=rep["outsider_enabled"]
                 )
             )
