@@ -100,7 +100,7 @@ WHERE organization_id = $organization_id
 )
 
 
-@lru_cache
+@lru_cache()
 def _q_update_factory(with_expiration_date: bool, with_outsider_enabled: bool):
     fields = []
     if with_expiration_date:
