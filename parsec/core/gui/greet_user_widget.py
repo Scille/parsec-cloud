@@ -240,11 +240,16 @@ class GreetUserCheckInfoWidget(QWidget, Ui_GreetUserCheckInfoWidget):
         self.line_edit_device.validity_changed.connect(self.check_infos)
         self.line_edit_device.set_validator(validators.DeviceNameValidator())
 
-        if allow_outsider_profile:
-            self.combo_profile.addItem(_("TEXT_USER_PROFILE_OUTSIDER"), UserProfile.OUTSIDER)
+        self.combo_profile.addItem(_("TEXT_USER_PROFILE_OUTSIDER"), UserProfile.OUTSIDER)
         self.combo_profile.addItem(_("TEXT_USER_PROFILE_STANDARD"), UserProfile.STANDARD)
         self.combo_profile.addItem(_("TEXT_USER_PROFILE_ADMIN"), UserProfile.ADMIN)
         self.combo_profile.setCurrentIndex(0)
+
+        if not allow_outsider_profile:
+            item = self.combo_profile.model().item(0)
+            item.setEnabled(False)
+            item.setToolTip(_("NOT_ALLOWED_OUTSIDER_PROFILE_TOOLTIP"))
+            self.combo_profile.setCurrentIndex(1)
 
         self.get_requests_success.connect(self._on_get_requests_success)
         self.get_requests_error.connect(self._on_get_requests_error)
