@@ -117,18 +117,6 @@ class MemoryOrganizationComponent(BaseOrganizationComponent):
             users=users, data_size=data_size, metadata_size=metadata_size, workspaces=workspaces
         )
 
-    async def set_expiration_date(
-        self, id: OrganizationID, expiration_date: Optional[DateTime] = None
-    ) -> None:
-        try:
-            self._organizations[id] = self._organizations[id].evolve(
-                expiration_date=expiration_date
-            )
-            if self._organizations[id].is_expired:
-                await self._send_event(BackendEvent.ORGANIZATION_EXPIRED, organization_id=id)
-        except KeyError:
-            raise OrganizationNotFoundError()
-
     async def update(
         self,
         id: OrganizationID,

@@ -382,15 +382,6 @@ class BaseOrganizationComponent:
         """
         raise NotImplementedError()
 
-    async def set_expiration_date(
-        self, id: OrganizationID, expiration_date: Optional[DateTime] = None
-    ):
-        """
-        Raises:
-            OrganizationNotFoundError
-        """
-        raise NotImplementedError()
-
     async def update(
         self,
         id: OrganizationID,

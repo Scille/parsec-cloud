@@ -244,22 +244,3 @@ class PGOrganizationComponent(BaseOrganizationComponent):
                 and fields.get("expiration_date") <= DateTime.now()  # type: ignore[operator]
             ):
                 await send_signal(conn, BackendEvent.ORGANIZATION_EXPIRED, organization_id=id)
-
-    async def set_expiration_date(
-        self, id: OrganizationID, expiration_date: Optional[DateTime] = None
-    ) -> None:
-        async with self.dbh.pool.acquire() as conn, conn.transaction():
-            result = await conn.execute(
-                *_q_update_organisation_expiration_date(
-                    organization_id=id, expiration_date=expiration_date
-                )
-            )
-
-            if result == "UPDATE 0":
-                raise OrganizationNotFoundError
-
-            if result != "UPDATE 1":
-                raise OrganizationError(f"Update error: {result}")
-
-            if expiration_date is not None and expiration_date <= DateTime.now():
-                await send_signal(conn, BackendEvent.ORGANIZATION_EXPIRED, organization_id=id)
