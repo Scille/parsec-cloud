@@ -40,7 +40,7 @@ async def test_organization_status_bootstrapped(coolorg, administration_backend_
         "status": "ok",
         "is_bootstrapped": True,
         "expiration_date": None,
-        "outsider_enabled": False,
+        "allow_outsider_profile": False,
     }
 
 
@@ -59,7 +59,7 @@ async def test_organization_status_not_bootstrapped(
         "status": "ok",
         "is_bootstrapped": False,
         "expiration_date": None,
-        "outsider_enabled": False,
+        "allow_outsider_profile": False,
     }
 
 
@@ -72,7 +72,7 @@ async def test_organization_update_only_expiration_date(
         "status": "ok",
         "is_bootstrapped": True,
         "expiration_date": None,
-        "outsider_enabled": False,
+        "allow_outsider_profile": False,
     }
 
     rep = await organization_update(
@@ -84,7 +84,7 @@ async def test_organization_update_only_expiration_date(
         "status": "ok",
         "is_bootstrapped": True,
         "expiration_date": datetime(2077, 1, 1),
-        "outsider_enabled": False,
+        "allow_outsider_profile": False,
     }
 
     rep = await organization_update(
@@ -96,7 +96,7 @@ async def test_organization_update_only_expiration_date(
         "status": "ok",
         "is_bootstrapped": True,
         "expiration_date": None,
-        "outsider_enabled": False,
+        "allow_outsider_profile": False,
     }
 
 
@@ -109,7 +109,7 @@ async def test_organization_update_expiration_date_with_expired_event(
         "status": "ok",
         "is_bootstrapped": True,
         "expiration_date": None,
-        "outsider_enabled": False,
+        "allow_outsider_profile": False,
     }
 
     # New expired organization
@@ -127,7 +127,7 @@ async def test_organization_update_expiration_date_with_expired_event(
             "status": "ok",
             "is_bootstrapped": True,
             "expiration_date": datetime(1999, 12, 31),
-            "outsider_enabled": False,
+            "allow_outsider_profile": False,
         }
 
     # Already Expired organization
@@ -144,12 +144,12 @@ async def test_organization_update_expiration_date_with_expired_event(
             "status": "ok",
             "is_bootstrapped": True,
             "expiration_date": datetime(2000, 1, 31),
-            "outsider_enabled": False,
+            "allow_outsider_profile": False,
         }
 
 
 @pytest.mark.trio
-async def test_organization_update_only_outsider_enabled(
+async def test_organization_update_only_allow_outsider_profile(
     coolorg, organization_factory, administration_backend_sock, backend
 ):
     rep = await organization_status(administration_backend_sock, coolorg.organization_id)
@@ -157,11 +157,11 @@ async def test_organization_update_only_outsider_enabled(
         "status": "ok",
         "is_bootstrapped": True,
         "expiration_date": None,
-        "outsider_enabled": False,
+        "allow_outsider_profile": False,
     }
 
     rep = await organization_update(
-        administration_backend_sock, coolorg.organization_id, outsider_enabled=True
+        administration_backend_sock, coolorg.organization_id, allow_outsider_profile=True
     )
     assert rep == {"status": "ok"}
     rep = await organization_status(administration_backend_sock, coolorg.organization_id)
@@ -169,11 +169,11 @@ async def test_organization_update_only_outsider_enabled(
         "status": "ok",
         "is_bootstrapped": True,
         "expiration_date": None,
-        "outsider_enabled": True,
+        "allow_outsider_profile": True,
     }
 
     rep = await organization_update(
-        administration_backend_sock, coolorg.organization_id, outsider_enabled=False
+        administration_backend_sock, coolorg.organization_id, allow_outsider_profile=False
     )
     assert rep == {"status": "ok"}
     rep = await organization_status(administration_backend_sock, coolorg.organization_id)
@@ -181,7 +181,7 @@ async def test_organization_update_only_outsider_enabled(
         "status": "ok",
         "is_bootstrapped": True,
         "expiration_date": None,
-        "outsider_enabled": False,
+        "allow_outsider_profile": False,
     }
 
 
@@ -194,14 +194,14 @@ async def test_organization_update_multiple_fields(
         "status": "ok",
         "is_bootstrapped": True,
         "expiration_date": None,
-        "outsider_enabled": False,
+        "allow_outsider_profile": False,
     }
 
     rep = await organization_update(
         administration_backend_sock,
         coolorg.organization_id,
         expiration_date=datetime(2077, 1, 1),
-        outsider_enabled=True,
+        allow_outsider_profile=True,
     )
     assert rep == {"status": "ok"}
     rep = await organization_status(administration_backend_sock, coolorg.organization_id)
@@ -209,14 +209,14 @@ async def test_organization_update_multiple_fields(
         "status": "ok",
         "is_bootstrapped": True,
         "expiration_date": datetime(2077, 1, 1),
-        "outsider_enabled": True,
+        "allow_outsider_profile": True,
     }
 
     rep = await organization_update(
         administration_backend_sock,
         coolorg.organization_id,
         expiration_date=None,
-        outsider_enabled=True,
+        allow_outsider_profile=True,
     )
     assert rep == {"status": "ok"}
     rep = await organization_status(administration_backend_sock, coolorg.organization_id)
@@ -224,14 +224,14 @@ async def test_organization_update_multiple_fields(
         "status": "ok",
         "is_bootstrapped": True,
         "expiration_date": None,
-        "outsider_enabled": True,
+        "allow_outsider_profile": True,
     }
 
     rep = await organization_update(
         administration_backend_sock,
         coolorg.organization_id,
         expiration_date=datetime(2077, 1, 1),
-        outsider_enabled=False,
+        allow_outsider_profile=False,
     )
     assert rep == {"status": "ok"}
     rep = await organization_status(administration_backend_sock, coolorg.organization_id)
@@ -239,7 +239,7 @@ async def test_organization_update_multiple_fields(
         "status": "ok",
         "is_bootstrapped": True,
         "expiration_date": datetime(2077, 1, 1),
-        "outsider_enabled": False,
+        "allow_outsider_profile": False,
     }
 
 
@@ -260,13 +260,15 @@ async def test_organization_update_unknown_organization(
     )
     assert rep == {"status": "not_found"}
 
-    rep = await organization_update(administration_backend_sock, "dummy", outsider_enabled=False)
+    rep = await organization_update(
+        administration_backend_sock, "dummy", allow_outsider_profile=False
+    )
     assert rep == {"status": "not_found"}
 
     rep = await organization_update(
         administration_backend_sock,
         "dummy",
-        outsider_enabled=False,
+        allow_outsider_profile=False,
         expiration_date=datetime(2077, 1, 1),
     )
     assert rep == {"status": "not_found"}

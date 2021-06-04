@@ -173,7 +173,7 @@ class BackendAuthenticatedConn:
         self._monitors_idle_event.set()  # No monitors
         self._backend_connection_failures = 0
         self._organization_config = OrganizationConfig(
-            expiration_date=False, outsider_enabled=False
+            expiration_date=False, allow_outsider_profile=False
         )
         self.event_bus = event_bus
         self.max_cooldown = max_cooldown
@@ -290,7 +290,8 @@ class BackendAuthenticatedConn:
 
             self.set_organization_config(
                 OrganizationConfig(
-                    expiration_date=rep["expiration_date"], outsider_enabled=rep["outsider_enabled"]
+                    expiration_date=rep["expiration_date"],
+                    allow_outsider_profile=rep["allow_outsider_profile"],
                 )
             )
 

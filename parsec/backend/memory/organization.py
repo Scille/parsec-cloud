@@ -133,7 +133,7 @@ class MemoryOrganizationComponent(BaseOrganizationComponent):
         self,
         id: OrganizationID,
         expiration_date: Union[Unset, Optional[DateTime]] = unset_sentinel,
-        outsider_enabled: Union[Unset, bool] = unset_sentinel,
+        allow_outsider_profile: Union[Unset, bool] = unset_sentinel,
     ) -> None:
         """
         Raises:
@@ -145,8 +145,8 @@ class MemoryOrganizationComponent(BaseOrganizationComponent):
         fields: Dict[str, Union[Optional[DateTime], bool]] = {}
         if not isinstance(expiration_date, Unset):
             fields["expiration_date"] = expiration_date
-        if not isinstance(outsider_enabled, Unset):
-            fields["outsider_enabled"] = outsider_enabled
+        if not isinstance(allow_outsider_profile, Unset):
+            fields["allow_outsider_profile"] = allow_outsider_profile
 
         self._organizations[id] = self._organizations[id].evolve(**fields)
 

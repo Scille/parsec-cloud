@@ -97,7 +97,7 @@ class APIV1_OrganizationStatusReqSchema(BaseReqSchema):
 class APIV1_OrganizationStatusRepSchema(BaseRepSchema):
     is_bootstrapped = fields.Boolean(required=True)
     expiration_date = fields.DateTime(allow_none=True, required=False)
-    outsider_enabled = fields.Boolean(required=True)
+    allow_outsider_profile = fields.Boolean(required=True)
 
 
 apiv1_organization_status_serializer = CmdSerializer(
@@ -111,7 +111,7 @@ class OrganizationConfigReqSchema(BaseReqSchema):
 
 class OrganizationConfigRepSchema(BaseRepSchema):
     expiration_date = fields.DateTime(allow_none=True, required=False)
-    outsider_enabled = fields.Boolean(required=True)
+    allow_outsider_profile = fields.Boolean(required=True)
 
 
 organization_config_serializer = CmdSerializer(
@@ -122,9 +122,9 @@ organization_config_serializer = CmdSerializer(
 class APIV1_OrganizationUpdateReqSchema(BaseReqSchema):
     organization_id = OrganizationIDField(required=True)
     expiration_date = fields.DateTime(allow_none=True, required=False)
-    outsider_enabled = fields.Boolean(required=False)
+    allow_outsider_profile = fields.Boolean(required=False)
 
-    UPDATABLE_FIELDS = ("expiration_date", "outsider_enabled")
+    UPDATABLE_FIELDS = ("expiration_date", "allow_outsider_profile")
 
     @validates_schema
     def validate_updatable_fields(self, data: Dict[str, str]) -> None:

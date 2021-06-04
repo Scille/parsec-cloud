@@ -222,7 +222,7 @@ class GreetUserCheckInfoWidget(QWidget, Ui_GreetUserCheckInfoWidget):
     create_user_success = pyqtSignal(QtToTrioJob)
     create_user_error = pyqtSignal(QtToTrioJob)
 
-    def __init__(self, jobs_ctx, greeter, outsider_enabled=False):
+    def __init__(self, jobs_ctx, greeter, allow_outsider_profile=False):
         super().__init__()
         self.setupUi(self)
         self.jobs_ctx = jobs_ctx
@@ -240,7 +240,7 @@ class GreetUserCheckInfoWidget(QWidget, Ui_GreetUserCheckInfoWidget):
         self.line_edit_device.validity_changed.connect(self.check_infos)
         self.line_edit_device.set_validator(validators.DeviceNameValidator())
 
-        if outsider_enabled:
+        if allow_outsider_profile:
             self.combo_profile.addItem(_("TEXT_USER_PROFILE_OUTSIDER"), UserProfile.OUTSIDER)
         self.combo_profile.addItem(_("TEXT_USER_PROFILE_STANDARD"), UserProfile.STANDARD)
         self.combo_profile.addItem(_("TEXT_USER_PROFILE_ADMIN"), UserProfile.ADMIN)
@@ -550,7 +550,7 @@ class GreetUserWidget(QWidget, Ui_GreetUserWidget):
         self.greeter_job = None
         self.greeter_success.connect(self._on_greeter_success)
         self.greeter_error.connect(self._on_greeter_error)
-        self.outsider_enabled = core.get_organization_config().outsider_enabled
+        self.allow_outsider_profile = core.get_organization_config().allow_outsider_profile
         self._run_greeter()
 
     def _run_greeter(self):
@@ -615,7 +615,7 @@ class GreetUserWidget(QWidget, Ui_GreetUserWidget):
         current_page = self.main_layout.takeAt(0).widget()
         current_page.hide()
         current_page.setParent(None)
-        page = GreetUserCheckInfoWidget(self.jobs_ctx, self.greeter, self.outsider_enabled)
+        page = GreetUserCheckInfoWidget(self.jobs_ctx, self.greeter, self.allow_outsider_profile)
         page.succeeded.connect(self._on_finished)
         page.failed.connect(self._on_page_failed)
         self.main_layout.addWidget(page)
