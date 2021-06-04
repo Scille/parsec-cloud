@@ -1,6 +1,4 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2016-2021 Scille SAS
-from marshmallow import validates_schema, ValidationError
-from typing import Dict
 from parsec.serde import fields, BaseSchema, JSONSerializer
 from parsec.api.protocol.base import BaseReqSchema, BaseRepSchema, CmdSerializer
 from parsec.api.protocol.types import OrganizationIDField, DeviceIDField
@@ -123,15 +121,6 @@ class APIV1_OrganizationUpdateReqSchema(BaseReqSchema):
     organization_id = OrganizationIDField(required=True)
     expiration_date = fields.DateTime(allow_none=True, required=False)
     allow_outsider_profile = fields.Boolean(required=False)
-
-    UPDATABLE_FIELDS = ("expiration_date", "allow_outsider_profile")
-
-    @validates_schema
-    def validate_updatable_fields(self, data: Dict[str, str]) -> None:
-        if not any(field in data for field in self.UPDATABLE_FIELDS):
-            raise ValidationError(
-                f"You should at least update one of these fields {self.UPDATABLE_FIELDS}"
-            )
 
 
 class APIV1_OrganizationUpdateRepSchema(BaseRepSchema):

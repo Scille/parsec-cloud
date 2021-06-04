@@ -244,14 +244,6 @@ async def test_organization_update_multiple_fields(
 
 
 @pytest.mark.trio
-async def test_organization_update_without_fields(
-    coolorg, organization_factory, administration_backend_sock
-):
-    rep = await organization_update(administration_backend_sock, "dummy")
-    assert rep["status"] == "bad_message"
-
-
-@pytest.mark.trio
 async def test_organization_update_unknown_organization(
     coolorg, organization_factory, administration_backend_sock
 ):
