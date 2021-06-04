@@ -69,7 +69,10 @@ def run_testenv():
 
 
 @pytest.mark.slow
-@pytest.mark.skipif(sys.platform == "win32", reason="causes a freeze in appveyor for some reasons")
+@pytest.mark.skipif(
+    "linux" not in sys.platform,
+    reason="causes a freeze in appveyor for some reasons, and crashes on Catalina",
+)
 def test_run_testenv(run_testenv):
     available_devices = list_available_devices(run_testenv.config_dir)
     devices = [(d.human_handle.label, d.device_label) for d in available_devices]
