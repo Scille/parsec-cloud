@@ -1,1 +1,1 @@
-Add the capacity to enable the outsider profile in the organizations.
+Introduce OUTSIDER organization user profile: an outsider cannot see the identity of other users within the organization. On top of that it is only allowed to be READER/CONTRIBUTOR on shared workspaces.
