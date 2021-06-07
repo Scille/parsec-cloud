@@ -330,7 +330,7 @@ class UsersWidget(QWidget, Ui_UsersWidget):
             self,
             _("TEXT_USER_INVITE_CANCEL_INVITE_QUESTION_TITLE"),
             _("TEXT_USER_INVITE_CANCEL_INVITE_QUESTION_CONTENT"),
-            [_("TEXT_USER_INVITE_CANCEL_INVITE_ACCEPT"), _("ACTION_NO")],
+            [_("TEXT_USER_INVITE_CANCEL_INVITE_ACCEPT"), _("ACTION_ENABLE_TELEMETRY_REFUSE")],
         )
         if r != _("TEXT_USER_INVITE_CANCEL_INVITE_ACCEPT"):
             return

@@ -398,9 +398,9 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         if self.config.gui_first_launch:
             r = ask_question(
                 self,
-                _("TEXT_ERROR_REPORTING_TITLE"),
-                _("TEXT_ERROR_REPORTING_INSTRUCTIONS"),
-                [_("ACTION_ERROR_REPORTING_ACCEPT"), _("ACTION_NO")],
+                _("TEXT_ENABLE_TELEMETRY_TITLE"),
+                _("TEXT_ENABLE_TELEMETRY_INSTRUCTIONS"),
+                [_("ACTION_ENABLE_TELEMETRY_ACCEPT"), _("ACTION_ENABLE_TELEMETRY_REFUSE")],
             )
 
             # Acknowledge the changes
@@ -408,7 +408,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
                 CoreEvent.GUI_CONFIG_CHANGED,
                 gui_first_launch=False,
                 gui_last_version=PARSEC_VERSION,
-                telemetry_enabled=r == _("ACTION_ERROR_REPORTING_ACCEPT"),
+                telemetry_enabled=r == _("ACTION_ENABLE_TELEMETRY_ACCEPT"),
             )
 
         # For each parsec update
