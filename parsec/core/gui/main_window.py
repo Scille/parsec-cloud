@@ -611,6 +611,8 @@ class MainWindow(QMainWindow, Ui_MainWindow):  # type: ignore[misc]
             except GoToFileLinkBadOrganizationIDError:
                 continue
             except GoToFileLinkBadWorkspaceIDError:
+                # Switch tab so user understand where the error comes from
+                self.switch_to_tab(idx)
                 show_error(
                     self,
                     _("TEXT_FILE_LINK_WORKSPACE_NOT_FOUND_organization").format(
@@ -619,6 +621,8 @@ class MainWindow(QMainWindow, Ui_MainWindow):  # type: ignore[misc]
                 )
                 return
             except GoToFileLinkPathDecryptionError:
+                # Switch tab so user understand where the error comes from
+                self.switch_to_tab(idx)
                 show_error(self, _("TEXT_INVALID_URL"))
                 return
             else:
