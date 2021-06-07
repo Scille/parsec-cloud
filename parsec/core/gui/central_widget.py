@@ -367,7 +367,7 @@ class CentralWidget(QWidget, Ui_CentralWidget):  # type: ignore[misc]
         if addr.organization_id != self.core.device.organization_id:
             raise GoToFileLinkBadOrganizationIDError
         try:
-            workspace = self.core.user_fs.get_workspace(addr.workspace_id)
+            workspace = self.jobs_ctx.run_sync(self.core.user_fs.get_workspace, addr.workspace_id)
         except FSWorkspaceNotFoundError as exc:
             raise GoToFileLinkBadWorkspaceIDError from exc
         try:
