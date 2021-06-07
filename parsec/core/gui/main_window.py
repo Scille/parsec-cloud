@@ -552,27 +552,40 @@ class MainWindow(QMainWindow, Ui_MainWindow):  # type: ignore[misc]
             idx = self.tab_center.count() - 1
             self.switch_to_tab(idx)
 
-        if file_link_addr:
-            for available_device in list_available_devices(self.config.config_dir):
-                if available_device.organization_id == file_link_addr.organization_id:
-                    instance_widget = self.tab_center.widget(idx)
-                    instance_widget.set_workspace_path(file_link_addr)
-                    login_w = self.tab_center.widget(idx).get_login_widget()
-                    login_w._on_account_clicked(available_device)
-                    show_info(
-                        self,
-                        _("TEXT_FILE_LINK_PLEASE_LOG_IN_organization").format(
-                            organization=file_link_addr.organization_id
-                        ),
-                    )
-                    break
-            else:
-                show_error(
-                    self,
-                    _("TEXT_FILE_LINK_NOT_IN_ORG_organization").format(
-                        organization=file_link_addr.organization_id
-                    ),
-                )
+        if not file_link_addr:
+            # We're done here
+            return
+
+        # Find the device corresponding to the organization in the link
+        for available_device in list_available_devices(self.config.config_dir):
+            if available_device.organization_id == file_link_addr.organization_id:
+                break
+
+        else:
+            # Cannot reach this organization with our available devices
+            show_error(
+                self,
+                _("TEXT_FILE_LINK_NOT_IN_ORG_organization").format(
+                    organization=file_link_addr.organization_id
+                ),
+            )
+            return
+
+        # Pre-select the corresponding device
+        login_w = self.tab_center.widget(idx).get_login_widget()
+        login_w._on_account_clicked(available_device)
+
+        # Set the path
+        instance_widget = self.tab_center.widget(idx)
+        instance_widget.set_workspace_path(file_link_addr)
+
+        # Prompt the user for the need to log in first
+        show_info(
+            self,
+            _("TEXT_FILE_LINK_PLEASE_LOG_IN_organization").format(
+                organization=file_link_addr.organization_id
+            ),
+        )
 
     def go_to_file_link(self, addr: BackendOrganizationFileLinkAddr) -> None:
         # Try to use the file link on the already logged in cores
