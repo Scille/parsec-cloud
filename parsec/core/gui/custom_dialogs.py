@@ -191,20 +191,41 @@ def get_text_input(
 
 
 class QuestionWidget(QWidget, Ui_QuestionWidget):
-    def __init__(self, message, button_texts, radio_mode=False):
+    def __init__(self, message, button_texts, radio_mode=False, oriented_question=False):
         super().__init__()
         self.setupUi(self)
         self.status = None
         self.dialog = None
         self.label_message.setText(message)
-        for text in button_texts:
-            b = Button(text)
+
+        if oriented_question:
+            no_text, yes_text = button_texts
+            assert not radio_mode
+
+            # Add "yes" button
+            b = Button(yes_text)
             b.clicked_self.connect(self._on_button_clicked)
             b.setCursor(Qt.PointingHandCursor)
-            if radio_mode:
-                self.layout_radios.addWidget(b)
-            else:
-                self.layout_buttons.insertWidget(1, b)
+            b.setStyleSheet(
+                "QPushButton {background-color: darkgrey;} QPushButton:hover {background-color: grey;}"
+            )
+            self.layout_buttons.addWidget(b)
+
+            # Add "no" button
+            b = Button(no_text)
+            b.clicked_self.connect(self._on_button_clicked)
+            b.setCursor(Qt.PointingHandCursor)
+            self.layout_buttons.addWidget(b)
+
+        else:
+            for text in button_texts:
+                b = Button(text)
+                b.clicked_self.connect(self._on_button_clicked)
+                b.setCursor(Qt.PointingHandCursor)
+                if radio_mode:
+                    self.layout_radios.addWidget(b)
+                else:
+                    self.layout_buttons.insertWidget(1, b)
 
     def _on_button_clicked(self, button):
         self.status = button.text()
@@ -216,8 +237,13 @@ class QuestionWidget(QWidget, Ui_QuestionWidget):
             logger.warning("Cannot close dialog when asking question")
 
 
-def ask_question(parent, title, message, button_texts, radio_mode=False):
-    w = QuestionWidget(message=message, button_texts=button_texts, radio_mode=radio_mode)
+def ask_question(parent, title, message, button_texts, radio_mode=False, oriented_question=False):
+    w = QuestionWidget(
+        message=message,
+        button_texts=button_texts,
+        radio_mode=radio_mode,
+        oriented_question=oriented_question,
+    )
     d = GreyedDialog(w, title=title, parent=parent)
     w.dialog = d
     status = d.exec_()

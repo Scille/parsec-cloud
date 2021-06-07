@@ -401,6 +401,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
                 _("TEXT_ENABLE_TELEMETRY_TITLE"),
                 _("TEXT_ENABLE_TELEMETRY_INSTRUCTIONS"),
                 [_("ACTION_ENABLE_TELEMETRY_ACCEPT"), _("ACTION_ENABLE_TELEMETRY_REFUSE")],
+                oriented_question=True,
             )
 
             # Acknowledge the changes
