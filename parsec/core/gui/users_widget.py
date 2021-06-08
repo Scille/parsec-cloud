@@ -384,6 +384,8 @@ class UsersWidget(QWidget, Ui_UsersWidget):
             _("TEXT_USER_REVOCATION_TITLE"),
             _("TEXT_USER_REVOCATION_INSTRUCTIONS_user").format(user=user_info.short_user_display),
             [_("ACTION_USER_REVOCATION_CONFIRM"), _("ACTION_CANCEL")],
+            oriented_question=True,
+            dangerous_yes=True,
         )
         if result != _("ACTION_USER_REVOCATION_CONFIRM"):
             return
