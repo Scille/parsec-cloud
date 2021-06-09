@@ -240,7 +240,7 @@ class PGOrganizationComponent(BaseOrganizationComponent):
                 raise OrganizationError(f"Update error: {result}")
 
             if (
-                fields.get("expiration_date") is not None
+                isinstance(fields.get("expiration_date"), DateTime)
                 and fields.get("expiration_date") <= DateTime.now()  # type: ignore[operator]
             ):
                 await send_signal(conn, BackendEvent.ORGANIZATION_EXPIRED, organization_id=id)
