@@ -293,7 +293,9 @@ class BackendAuthenticatedConn:
                 allow_outsider_profile=rep["allow_outsider_profile"],
             )
 
-            await cmds.events_subscribe(transport)
+            rep = await cmds.events_subscribe(transport)
+            if rep["status"] != "ok":
+                raise BackendConnectionRefused(f"Error while events subscribing : {rep}")
 
             # Quis custodiet ipsos custodes?
             monitors_states = ["STALLED" for _ in range(len(self._monitors_cbs))]
