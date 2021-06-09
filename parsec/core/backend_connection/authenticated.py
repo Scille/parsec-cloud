@@ -207,9 +207,6 @@ class BackendAuthenticatedConn:
         # do not rely on this redundant event.
         self._status_event_sent = True
 
-    def set_organization_config(self, config: OrganizationConfig) -> None:
-        self._organization_config = config
-
     @property
     def organization_config(self) -> OrganizationConfig:
         return self._organization_config
@@ -288,11 +285,9 @@ class BackendAuthenticatedConn:
             if rep["status"] != "ok":
                 raise BackendConnectionRefused()
 
-            self.set_organization_config(
-                OrganizationConfig(
-                    expiration_date=rep["expiration_date"],
-                    allow_outsider_profile=rep["allow_outsider_profile"],
-                )
+            self._organization_config = OrganizationConfig(
+                expiration_date=rep["expiration_date"],
+                allow_outsider_profile=rep["allow_outsider_profile"],
             )
 
             await cmds.events_subscribe(transport)
