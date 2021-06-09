@@ -216,7 +216,7 @@ class PGOrganizationComponent(BaseOrganizationComponent):
             OrganizationError
         """
         fields: Dict[str, Union[Optional[DateTime], bool]] = {}
-        with_expiration_date: bool = False
+        with_expiration_date = False
         with_allow_outsider_profile: bool = False
 
         if not isinstance(expiration_date, Unset):
