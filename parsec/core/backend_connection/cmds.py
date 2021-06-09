@@ -662,7 +662,7 @@ async def apiv1_organization_status(transport: Transport, organization_id: Organ
     )
 
 
-async def organization_update(
+async def apiv1_organization_update(
     transport: Transport, organization_id: OrganizationID, **fields: Dict
 ) -> dict:
     return await _send_cmd(
