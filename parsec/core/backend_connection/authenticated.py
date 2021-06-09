@@ -211,7 +211,6 @@ class BackendAuthenticatedConn:
         # do not rely on this redundant event.
         self._status_event_sent = True
 
-    @property
     def organization_config(self) -> OrganizationConfig:
         return self._organization_config
 

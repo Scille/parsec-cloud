@@ -324,7 +324,7 @@ class LoggedCore:
         return await initial_ctx.do_wait_peer()
 
     def get_organization_config(self) -> OrganizationConfig:
-        return self._backend_conn.organization_config
+        return self._backend_conn.organization_config()
 
 
 @asynccontextmanager
