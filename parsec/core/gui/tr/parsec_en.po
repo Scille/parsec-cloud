@@ -617,7 +617,7 @@ msgid "TEXT_USER_PROFILE_STANDARD"
 msgstr "Standard"
 
 msgid "NOT_ALLOWED_OUTSIDER_PROFILE_TOOLTIP"
-msgstr "Disabled because backend does not allow it in its current configuration"
+msgstr "Your organization does not authorize this kind of profile."
 
 msgid "TEXT_USER_PROFILE_ADMIN"
 msgstr "Administrator"
