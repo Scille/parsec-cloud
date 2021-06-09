@@ -175,6 +175,10 @@ class BackendAuthenticatedConn:
         self._organization_config = OrganizationConfig(
             expiration_date=False, allow_outsider_profile=False
         )
+        # organization config is very unlikely to change, hence we query it
+        # once when backend connection bootstraps, then keep the value in cache.
+        # On top of that, we pre-populate the cache with a "good enough" default
+        # value so organization config is guaranteed to be always available \o/
         self.event_bus = event_bus
         self.max_cooldown = max_cooldown
 
