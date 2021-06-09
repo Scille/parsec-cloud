@@ -555,7 +555,6 @@ class GreetUserWidget(QWidget, Ui_GreetUserWidget):
         self.greeter_job = None
         self.greeter_success.connect(self._on_greeter_success)
         self.greeter_error.connect(self._on_greeter_error)
-        self.allow_outsider_profile = core.get_organization_config().allow_outsider_profile
         self._run_greeter()
 
     def _run_greeter(self):
@@ -620,7 +619,12 @@ class GreetUserWidget(QWidget, Ui_GreetUserWidget):
         current_page = self.main_layout.takeAt(0).widget()
         current_page.hide()
         current_page.setParent(None)
-        page = GreetUserCheckInfoWidget(self.jobs_ctx, self.greeter, self.allow_outsider_profile)
+        # The organization's config value is already cached in the core's logic
+        # so the GUI doesn't need to set the value in its own cache
+        organization_config = self.jobs_ctx.run_sync(self.core.get_organization_config)
+        page = GreetUserCheckInfoWidget(
+            self.jobs_ctx, self.greeter, organization_config.allow_outsider_profile
+        )
         page.succeeded.connect(self._on_finished)
         page.failed.connect(self._on_page_failed)
         self.main_layout.addWidget(page)
