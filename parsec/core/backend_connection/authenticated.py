@@ -286,7 +286,7 @@ class BackendAuthenticatedConn:
 
             rep = await cmds.organization_config(transport)
             if rep["status"] != "ok":
-                raise BackendConnectionRefused()
+                raise BackendConnectionRefused(f"Error while fetching organization config: {rep}")
 
             self._organization_config = OrganizationConfig(
                 expiration_date=rep["expiration_date"],
