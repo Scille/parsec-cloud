@@ -3,7 +3,7 @@
 import trio
 from enum import Enum
 from functools import wraps
-from typing import Union, Sequence
+from typing import Union, Sequence, Final, Literal
 
 from parsec.api.protocol import (
     ProtocolError,
@@ -126,8 +126,6 @@ async def run_with_breathing_transport(transport, fn, *args, **kwargs):
     return rep
 
 
-class Unset:
-    pass
-
-
-unset_sentinel = Unset()
+UnsetType = Enum("UnsetType", "Unset")
+Unset: Final = UnsetType.Unset
+UnsetType = Literal[UnsetType.Unset]

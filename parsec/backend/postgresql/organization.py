@@ -10,7 +10,7 @@ from parsec.api.protocol import OrganizationID
 from parsec.crypto import VerifyKey
 from parsec.backend.events import BackendEvent
 from parsec.backend.user import UserError, User, Device
-from parsec.backend.utils import unset_sentinel, Unset
+from parsec.backend.utils import UnsetType, Unset
 from parsec.backend.organization import (
     BaseOrganizationComponent,
     OrganizationStats,
@@ -207,8 +207,8 @@ class PGOrganizationComponent(BaseOrganizationComponent):
     async def update(
         self,
         id: OrganizationID,
-        expiration_date: Union[Unset, Optional[DateTime]] = unset_sentinel,
-        allow_outsider_profile: Union[Unset, bool] = unset_sentinel,
+        expiration_date: Union[UnsetType, Optional[DateTime]] = Unset,
+        allow_outsider_profile: Union[UnsetType, bool] = Unset,
     ) -> None:
         """
         Raises:
@@ -219,10 +219,10 @@ class PGOrganizationComponent(BaseOrganizationComponent):
         with_expiration_date = False
         with_allow_outsider_profile: bool = False
 
-        if not isinstance(expiration_date, Unset):
+        if expiration_date != Unset:
             with_expiration_date = True
             fields["expiration_date"] = expiration_date
-        if not isinstance(allow_outsider_profile, Unset):
+        if allow_outsider_profile != Unset:
             with_allow_outsider_profile = True
             fields["allow_outsider_profile"] = allow_outsider_profile
 

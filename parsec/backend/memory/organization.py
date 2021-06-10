@@ -1,6 +1,6 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2016-2021 Scille SAS
 
-from typing import Optional, Union, Dict
+from typing import Optional, Union
 
 from pendulum import DateTime
 
@@ -17,7 +17,7 @@ from parsec.backend.organization import (
     OrganizationNotFoundError,
     OrganizationFirstUserCreationError,
 )
-from parsec.backend.utils import unset_sentinel, Unset
+from parsec.backend.utils import Unset, UnsetType
 from parsec.backend.memory.vlob import MemoryVlobComponent
 from parsec.backend.memory.block import MemoryBlockComponent
 from parsec.backend.memory.realm import MemoryRealmComponent
@@ -120,8 +120,8 @@ class MemoryOrganizationComponent(BaseOrganizationComponent):
     async def update(
         self,
         id: OrganizationID,
-        expiration_date: Union[Unset, Optional[DateTime]] = unset_sentinel,
-        allow_outsider_profile: Union[Unset, bool] = unset_sentinel,
+        expiration_date: Union[UnsetType, Optional[DateTime]] = Unset,
+        allow_outsider_profile: Union[UnsetType, bool] = Unset,
     ) -> None:
         """
         Raises:
@@ -130,13 +130,12 @@ class MemoryOrganizationComponent(BaseOrganizationComponent):
         if id not in self._organizations:
             raise OrganizationNotFoundError()
 
-        fields: Dict[str, Union[Optional[DateTime], bool]] = {}
-        if not isinstance(expiration_date, Unset):
-            fields["expiration_date"] = expiration_date
-        if not isinstance(allow_outsider_profile, Unset):
-            fields["allow_outsider_profile"] = allow_outsider_profile
+        org = self._organizations[id]
 
-        self._organizations[id] = self._organizations[id].evolve(**fields)
+        if expiration_date != Unset:
+            org.evolve(expiration_date=expiration_date)
+        if allow_outsider_profile != Unset:
+            org.evolve(allow_outsider_profile=allow_outsider_profile)
 
-        if self._organizations[id].is_expired:
+        if org.is_expired:
             await self._send_event(BackendEvent.ORGANIZATION_EXPIRED, organization_id=id)

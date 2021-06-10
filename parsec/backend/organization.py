@@ -24,7 +24,7 @@ from parsec.api.protocol import (
 from parsec.api.data import UserCertificateContent, DeviceCertificateContent, DataError, UserProfile
 from parsec.backend.user import User, Device
 from parsec.backend.webhooks import WebhooksComponent
-from parsec.backend.utils import catch_protocol_errors, api, unset_sentinel, Unset
+from parsec.backend.utils import catch_protocol_errors, api, Unset, UnsetType
 
 
 class OrganizationError(Exception):
@@ -61,7 +61,7 @@ class Organization:
     bootstrap_token: str
     expiration_date: Optional[DateTime] = None
     root_verify_key: Optional[VerifyKey] = None
-    allow_outsider_profile: Optional[bool] = False
+    allow_outsider_profile: bool = False
 
     def is_bootstrapped(self):
         return self.root_verify_key is not None
@@ -385,8 +385,8 @@ class BaseOrganizationComponent:
     async def update(
         self,
         id: OrganizationID,
-        expiration_date: Union[Unset, Optional[DateTime]] = unset_sentinel,
-        allow_outsider_profile: Union[Unset, bool] = unset_sentinel,
+        expiration_date: Union[UnsetType, Optional[DateTime]] = Unset,
+        allow_outsider_profile: Union[UnsetType, bool] = Unset,
     ):
         """
         Raises:
