@@ -5,5 +5,5 @@
 --  Migration
 -------------------------------------------------------
 
-ALTER TABLE organization ADD allow_outsider_profile BOOLEAN NOT NULL;
-UPDATE organization SET allow_outsider_profile = False
+ALTER TABLE organization ADD user_profile_outsider_allowed BOOLEAN NOT NULL;
+UPDATE organization SET user_profile_outsider_allowed = False

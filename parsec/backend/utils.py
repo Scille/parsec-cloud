@@ -3,7 +3,8 @@
 import trio
 from enum import Enum
 from functools import wraps
-from typing import Union, Sequence, Final, Literal
+from typing_extensions import Final, Literal
+from typing import Union, Sequence
 
 from parsec.api.protocol import (
     ProtocolError,

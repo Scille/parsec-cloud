@@ -30,7 +30,7 @@ from parsec.backend.postgresql.handler import send_signal
 
 _q_insert_organization = Q(
     """
-INSERT INTO organization (organization_id, bootstrap_token, expiration_date, allow_outsider_profile)
+INSERT INTO organization (organization_id, bootstrap_token, expiration_date, user_profile_outsider_allowed)
 VALUES ($organization_id, $bootstrap_token, $expiration_date, FALSE)
 ON CONFLICT (organization_id) DO
     UPDATE SET
@@ -43,7 +43,7 @@ ON CONFLICT (organization_id) DO
 
 _q_get_organization = Q(
     """
-SELECT bootstrap_token, root_verify_key, expiration_date, allow_outsider_profile
+SELECT bootstrap_token, root_verify_key, expiration_date, user_profile_outsider_allowed
 FROM organization
 WHERE organization_id = $organization_id
 """
@@ -101,12 +101,12 @@ WHERE organization_id = $organization_id
 
 
 @lru_cache()
-def _q_update_factory(with_expiration_date: bool, with_allow_outsider_profile: bool):
+def _q_update_factory(with_expiration_date: bool, with_user_profile_outsider_allowed: bool):
     fields = []
     if with_expiration_date:
         fields.append("expiration_date = $expiration_date")
-    if with_allow_outsider_profile:
-        fields.append("allow_outsider_profile = $allow_outsider_profile")
+    if with_user_profile_outsider_allowed:
+        fields.append("user_profile_outsider_allowed = $user_profile_outsider_allowed")
 
     return Q(
         f"""
@@ -157,7 +157,7 @@ class PGOrganizationComponent(BaseOrganizationComponent):
             bootstrap_token=data[0],
             root_verify_key=rvk,
             expiration_date=data[2],
-            allow_outsider_profile=data[3],
+            user_profile_outsider_allowed=data[3],
         )
 
     async def bootstrap(
@@ -208,7 +208,7 @@ class PGOrganizationComponent(BaseOrganizationComponent):
         self,
         id: OrganizationID,
         expiration_date: Union[UnsetType, Optional[DateTime]] = Unset,
-        allow_outsider_profile: Union[UnsetType, bool] = Unset,
+        user_profile_outsider_allowed: Union[UnsetType, bool] = Unset,
     ) -> None:
         """
         Raises:
@@ -217,18 +217,18 @@ class PGOrganizationComponent(BaseOrganizationComponent):
         """
         fields: Dict[str, Union[Optional[DateTime], bool]] = {}
         with_expiration_date = False
-        with_allow_outsider_profile: bool = False
+        with_user_profile_outsider_allowed: bool = False
 
         if expiration_date != Unset:
             with_expiration_date = True
             fields["expiration_date"] = expiration_date
-        if allow_outsider_profile != Unset:
-            with_allow_outsider_profile = True
-            fields["allow_outsider_profile"] = allow_outsider_profile
+        if user_profile_outsider_allowed != Unset:
+            with_user_profile_outsider_allowed = True
+            fields["user_profile_outsider_allowed"] = user_profile_outsider_allowed
 
         q = _q_update_factory(
             with_expiration_date=with_expiration_date,
-            with_allow_outsider_profile=with_allow_outsider_profile,
+            with_user_profile_outsider_allowed=with_user_profile_outsider_allowed,
         )
         async with self.dbh.pool.acquire() as conn, conn.transaction():
             result = await conn.execute(*q(organization_id=id, **fields))

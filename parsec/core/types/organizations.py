@@ -13,4 +13,4 @@ class OrganizationStats:
 @attr.s(frozen=True, slots=True, auto_attribs=True)
 class OrganizationConfig:
     expiration_date: DateTime
-    allow_outsider_profile: bool
+    user_profile_outsider_allowed: bool

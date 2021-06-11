@@ -61,7 +61,7 @@ class Organization:
     bootstrap_token: str
     expiration_date: Optional[DateTime] = None
     root_verify_key: Optional[VerifyKey] = None
-    allow_outsider_profile: bool = False
+    user_profile_outsider_allowed: bool = False
 
     def is_bootstrapped(self):
         return self.root_verify_key is not None
@@ -125,7 +125,7 @@ class BaseOrganizationComponent:
             {
                 "is_bootstrapped": organization.is_bootstrapped(),
                 "expiration_date": organization.expiration_date,
-                "allow_outsider_profile": organization.allow_outsider_profile,
+                "user_profile_outsider_allowed": organization.user_profile_outsider_allowed,
                 "status": "ok",
             }
         )
@@ -145,7 +145,7 @@ class BaseOrganizationComponent:
         return organization_config_serializer.rep_dump(
             {
                 "expiration_date": organization.expiration_date,
-                "allow_outsider_profile": organization.allow_outsider_profile,
+                "user_profile_outsider_allowed": organization.user_profile_outsider_allowed,
                 "status": "ok",
             }
         )
@@ -386,7 +386,7 @@ class BaseOrganizationComponent:
         self,
         id: OrganizationID,
         expiration_date: Union[UnsetType, Optional[DateTime]] = Unset,
-        allow_outsider_profile: Union[UnsetType, bool] = Unset,
+        user_profile_outsider_allowed: Union[UnsetType, bool] = Unset,
     ):
         """
         Raises:

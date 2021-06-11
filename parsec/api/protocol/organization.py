@@ -95,7 +95,7 @@ class APIV1_OrganizationStatusReqSchema(BaseReqSchema):
 class APIV1_OrganizationStatusRepSchema(BaseRepSchema):
     is_bootstrapped = fields.Boolean(required=True)
     expiration_date = fields.DateTime(allow_none=True, required=False)
-    allow_outsider_profile = fields.Boolean(required=True)
+    user_profile_outsider_allowed = fields.Boolean(required=True)
 
 
 apiv1_organization_status_serializer = CmdSerializer(
@@ -109,7 +109,7 @@ class OrganizationConfigReqSchema(BaseReqSchema):
 
 class OrganizationConfigRepSchema(BaseRepSchema):
     expiration_date = fields.DateTime(allow_none=True, required=False)
-    allow_outsider_profile = fields.Boolean(required=True)
+    user_profile_outsider_allowed = fields.Boolean(required=True)
 
 
 organization_config_serializer = CmdSerializer(
@@ -120,7 +120,7 @@ organization_config_serializer = CmdSerializer(
 class APIV1_OrganizationUpdateReqSchema(BaseReqSchema):
     organization_id = OrganizationIDField(required=True)
     expiration_date = fields.DateTime(allow_none=True, required=False)
-    allow_outsider_profile = fields.Boolean(required=False)
+    user_profile_outsider_allowed = fields.Boolean(required=False)
 
 
 class APIV1_OrganizationUpdateRepSchema(BaseRepSchema):

@@ -121,7 +121,7 @@ class MemoryOrganizationComponent(BaseOrganizationComponent):
         self,
         id: OrganizationID,
         expiration_date: Union[UnsetType, Optional[DateTime]] = Unset,
-        allow_outsider_profile: Union[UnsetType, bool] = Unset,
+        user_profile_outsider_allowed: Union[UnsetType, bool] = Unset,
     ) -> None:
         """
         Raises:
@@ -130,12 +130,14 @@ class MemoryOrganizationComponent(BaseOrganizationComponent):
         if id not in self._organizations:
             raise OrganizationNotFoundError()
 
-        org = self._organizations[id]
-
         if expiration_date != Unset:
-            org.evolve(expiration_date=expiration_date)
-        if allow_outsider_profile != Unset:
-            org.evolve(allow_outsider_profile=allow_outsider_profile)
+            self._organizations[id] = self._organizations[id].evolve(
+                expiration_date=expiration_date
+            )
+        if user_profile_outsider_allowed != Unset:
+            self._organizations[id] = self._organizations[id].evolve(
+                user_profile_outsider_allowed=user_profile_outsider_allowed
+            )
 
-        if org.is_expired:
+        if self._organizations[id].is_expired:
             await self._send_event(BackendEvent.ORGANIZATION_EXPIRED, organization_id=id)
