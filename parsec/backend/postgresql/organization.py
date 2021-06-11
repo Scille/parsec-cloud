@@ -1,6 +1,6 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2016-2021 Scille SAS
 
-from typing import Optional, Dict, Union
+from typing import Optional, Union
 
 from functools import lru_cache
 from pendulum import DateTime
@@ -215,15 +215,14 @@ class PGOrganizationComponent(BaseOrganizationComponent):
             OrganizationNotFoundError
             OrganizationError
         """
-        fields: Dict[str, Union[Optional[DateTime], bool]] = {}
-        with_expiration_date = False
-        with_user_profile_outsider_allowed: bool = False
+        fields: dict = {}
 
-        if expiration_date != Unset:
-            with_expiration_date = True
+        with_expiration_date = expiration_date is not Unset
+        with_user_profile_outsider_allowed = user_profile_outsider_allowed is not Unset
+
+        if with_expiration_date:
             fields["expiration_date"] = expiration_date
-        if user_profile_outsider_allowed != Unset:
-            with_user_profile_outsider_allowed = True
+        if with_user_profile_outsider_allowed:
             fields["user_profile_outsider_allowed"] = user_profile_outsider_allowed
 
         q = _q_update_factory(

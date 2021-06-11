@@ -130,14 +130,16 @@ class MemoryOrganizationComponent(BaseOrganizationComponent):
         if id not in self._organizations:
             raise OrganizationNotFoundError()
 
-        if expiration_date != Unset:
-            self._organizations[id] = self._organizations[id].evolve(
-                expiration_date=expiration_date
-            )
-        if user_profile_outsider_allowed != Unset:
-            self._organizations[id] = self._organizations[id].evolve(
+        organization = self._organizations[id]
+
+        if expiration_date is not Unset:
+            organization = organization.evolve(expiration_date=expiration_date)
+        if user_profile_outsider_allowed is not Unset:
+            organization = organization.evolve(
                 user_profile_outsider_allowed=user_profile_outsider_allowed
             )
+
+        self._organizations[id] = organization
 
         if self._organizations[id].is_expired:
             await self._send_event(BackendEvent.ORGANIZATION_EXPIRED, organization_id=id)
