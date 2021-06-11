@@ -267,9 +267,6 @@ class WorkspacesWidget(QWidget, Ui_WorkspacesWidget):
             _("TEXT_WORKSPACE_FILTERED_user").format(user=user_info.short_user_display)
         )
 
-    def _iter_workspace_buttons(self):
-        return self.workspace_button_mapping.values()
-
     def disconnect_all(self):
         pass
 
@@ -325,10 +322,10 @@ class WorkspacesWidget(QWidget, Ui_WorkspacesWidget):
             show_error(self, _("TEXT_WORKSPACE_GOTO_FILE_LINK_INVALID_LINK"), exception=exc)
             return
 
-        for widget in self._iter_workspace_buttons():
-            if widget.workspace_fs.workspace_id == url.workspace_id:
-                self.load_workspace(widget.workspace_fs, path=url.path, selected=True)
-                return
+        button = self.get_workspace_button(url.workspace_id)
+        if button is not None:
+            self.load_workspace(button.workspace_fs, path=url.path, selected=True)
+            return
         show_error(self, _("TEXT_WORKSPACE_GOTO_FILE_LINK_WORKSPACE_NOT_FOUND"))
 
     def on_workspace_filter(self, pattern):
@@ -490,10 +487,9 @@ class WorkspacesWidget(QWidget, Ui_WorkspacesWidget):
 
     def on_reencryption_needs_success(self, job):
         workspace_id, reencryption_needs = job.ret
-        for widget in self._iter_workspace_buttons():
-            if widget.workspace_fs.workspace_id == workspace_id:
-                widget.reencryption_needs = reencryption_needs
-                break
+        button = self.get_workspace_button(workspace_id)
+        if button is not None:
+            button.reencryption_needs = reencryption_needs
 
     def on_reencryption_needs_error(self, job):
         pass
@@ -740,8 +736,8 @@ class WorkspacesWidget(QWidget, Ui_WorkspacesWidget):
             err_msg = _("TEXT_WORKSPACE_REENCRYPT_UNKOWN_ERROR")
         show_error(self, err_msg, exception=job.exc)
 
-    def get_workspace_button(self, workspace_id, timestamp):
-        for widget in self._iter_workspace_buttons():
+    def get_workspace_button(self, workspace_id, timestamp=None):
+        for widget in self.workspace_button_mapping.values():
             if widget.workspace_id == workspace_id and timestamp == widget.timestamp:
                 return widget
         return None
