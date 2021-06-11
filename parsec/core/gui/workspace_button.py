@@ -48,9 +48,7 @@ class WorkspaceButton(QWidget, Ui_WorkspaceButton):
     open_clicked = pyqtSignal(WorkspaceFS)
     switch_clicked = pyqtSignal(bool, WorkspaceFS, object)
 
-    def __init__(
-        self, workspace_name, workspace_fs, users_roles, is_mounted, files=None, timestamped=False
-    ):
+    def __init__(self, workspace_fs, timestamped=False):
         # Initialize UI
         super().__init__()
         self.setupUi(self)
@@ -108,9 +106,6 @@ class WorkspaceButton(QWidget, Ui_WorkspaceButton):
         self.button_open.apply_style()
         self.label_owner.apply_style()
         self.label_shared.apply_style()
-
-        # Apply the current state
-        self.apply_state(workspace_name, workspace_fs, users_roles, is_mounted, files, timestamped)
 
     def apply_state(
         self, workspace_name, workspace_fs, users_roles, is_mounted, files=None, timestamped=False

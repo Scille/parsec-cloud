@@ -37,13 +37,8 @@ class FlowLayout(QLayout):
         return None
 
     def clear(self):
-        while self.count() != 0:
-            item = self.takeAt(0)
-            if item:
-                w = item.widget()
-                self.removeWidget(w)
-                w.hide()
-                w.setParent(None)
+        for w in self.pop_all():
+            w.setParent(None)
 
     def pop_all(self):
         results = []
@@ -52,6 +47,7 @@ class FlowLayout(QLayout):
             if item:
                 w = item.widget()
                 self.removeWidget(w)
+                w.hide()
                 results.append(w)
         return results
 
