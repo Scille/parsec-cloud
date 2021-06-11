@@ -367,7 +367,8 @@ class WorkspacesWidget(QWidget, Ui_WorkspacesWidget):
         for workspace_fs, workspace_name, ws_entry, users_roles, files, timestamped in workspaces:
 
             # Pop button from existing mapping
-            button = old_mapping.pop(workspace_fs, None)
+            key = (workspace_fs.workspace_id, getattr(workspace_fs, "timestamp", None))
+            button = old_mapping.pop(key, None)
 
             # Create and bind button if it doesn't exist
             if button is None:
@@ -409,7 +410,7 @@ class WorkspacesWidget(QWidget, Ui_WorkspacesWidget):
             # Add the button to the new mapping
             # Note that the order of insertion matters as it corresponds to the order in which
             # the workspaces are displayed.
-            new_mapping[workspace_fs] = button
+            new_mapping[key] = button
 
         # Set the new mapping
         self.workspace_button_mapping = new_mapping
@@ -737,10 +738,8 @@ class WorkspacesWidget(QWidget, Ui_WorkspacesWidget):
         show_error(self, err_msg, exception=job.exc)
 
     def get_workspace_button(self, workspace_id, timestamp=None):
-        for widget in self.workspace_button_mapping.values():
-            if widget.workspace_id == workspace_id and timestamp == widget.timestamp:
-                return widget
-        return None
+        key = (workspace_id, timestamp)
+        return self.workspace_button_mapping.get(key)
 
     def _on_workspace_reencryption_progress(self, workspace_id, total, done):
         wb = self.get_workspace_button(workspace_id, None)
