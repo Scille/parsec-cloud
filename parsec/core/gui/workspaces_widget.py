@@ -371,7 +371,7 @@ class WorkspacesWidget(QWidget, Ui_WorkspacesWidget):
 
             # Create and bind button if it doesn't exist
             if button is None:
-                button = WorkspaceButton(workspace_fs=workspace_fs, timestamped=timestamped)
+                button = WorkspaceButton(workspace_fs)
                 button.clicked.connect(self.load_workspace)
                 if self.core.device.is_outsider:
                     button.button_share.hide()

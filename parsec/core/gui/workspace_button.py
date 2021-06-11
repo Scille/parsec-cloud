@@ -48,13 +48,12 @@ class WorkspaceButton(QWidget, Ui_WorkspaceButton):
     open_clicked = pyqtSignal(WorkspaceFS)
     switch_clicked = pyqtSignal(bool, WorkspaceFS, object)
 
-    def __init__(self, workspace_fs, timestamped=False):
+    def __init__(self, workspace_fs):
         # Initialize UI
         super().__init__()
         self.setupUi(self)
 
         # Read-only attributes
-        self.timestamped = timestamped
         self.workspace_fs = workspace_fs
 
         # Property inner state
@@ -147,7 +146,7 @@ class WorkspaceButton(QWidget, Ui_WorkspaceButton):
     def create(
         cls, workspace_name, workspace_fs, users_roles, is_mounted, files=None, timestamped=False
     ):
-        instance = cls(workspace_fs, timestamped)
+        instance = cls(workspace_fs)
         instance.apply_state(
             workspace_name=workspace_name,
             workspace_fs=workspace_fs,
@@ -250,6 +249,10 @@ class WorkspaceButton(QWidget, Ui_WorkspaceButton):
     @property
     def timestamp(self):
         return getattr(self.workspace_fs, "timestamp", None)
+
+    @property
+    def timestamped(self):
+        return self.timestamp is not None
 
     @property
     def reencryption_needs(self) -> Optional[ReencryptionNeed]:
