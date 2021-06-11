@@ -440,7 +440,6 @@ class WorkspacesWidget(QWidget, Ui_WorkspacesWidget):
         # Get info for both filters
         name_filter = self.line_edit_search.text().lower() or None
         user_filter = self.filter_user_info and self.filter_user_info.user_id
-        # print(f"{name_filter=}, {user_filter=}, {len(self.workspace_button_mapping)}")
 
         # Remove all widgets and add them back in order to make sure the order is always correct
         self.layout_workspaces.pop_all()

@@ -143,6 +143,21 @@ class WorkspaceButton(QWidget, Ui_WorkspaceButton):
         self.reload_workspace_name(self.workspace_name)
         self.set_mountpoint_state(is_mounted)
 
+    @classmethod
+    def create(
+        cls, workspace_name, workspace_fs, users_roles, is_mounted, files=None, timestamped=False
+    ):
+        instance = cls(workspace_fs, timestamped)
+        instance.apply_state(
+            workspace_name=workspace_name,
+            workspace_fs=workspace_fs,
+            users_roles=users_roles,
+            is_mounted=is_mounted,
+            files=files,
+            timestamped=timestamped,
+        )
+        return instance
+
     @property
     def is_shared(self):
         return len(self.users_roles) > 1
