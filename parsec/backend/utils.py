@@ -127,6 +127,10 @@ async def run_with_breathing_transport(transport, fn, *args, **kwargs):
     return rep
 
 
+# Unset singleton used as default value in function parameter when `None`
+# can be a valid value.
+# We implement this as an enum to satisfy type checker (see
+# https://github.com/python/typing/issues/689#issuecomment-561425237)
 UnsetType = Enum("UnsetType", "Unset")
 Unset: Final = UnsetType.Unset
 UnsetType = Literal[UnsetType.Unset]
