@@ -73,4 +73,9 @@ def run_testenv():
 def test_run_testenv(run_testenv):
     available_devices = list_available_devices(run_testenv.config_dir)
     devices = [(d.human_handle.label, d.device_label) for d in available_devices]
-    assert sorted(devices) == [("Alice", "laptop"), ("Alice", "pc"), ("Bob", "laptop")]
+    assert sorted(devices) == [
+        ("Alice", "laptop"),
+        ("Alice", "pc"),
+        ("Bob", "laptop"),
+        ("Toto", "laptop"),
+    ]

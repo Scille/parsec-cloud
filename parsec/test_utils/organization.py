@@ -96,12 +96,12 @@ async def initialize_test_organization(
             )
             save_device_with_password(config_dir=config_dir, device=bob_device, password=password)
 
-            # Invite toto in organization
+            # Invite Toto in organization
             toto_device = await _register_new_user(
                 cmds=alice_cmds,
                 author=alice_device,
                 device_label="laptop",
-                human_handle=HumanHandle(email="toto@example.com", label="toto"),
+                human_handle=HumanHandle(email="toto@example.com", label="Toto"),
                 profile=UserProfile.OUTSIDER,
             )
             save_device_with_password(config_dir=config_dir, device=toto_device, password=password)
