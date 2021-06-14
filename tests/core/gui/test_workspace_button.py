@@ -47,7 +47,7 @@ async def test_workspace_button(qtbot, workspace_fs, core_config, alice_user_inf
     switch_language(core_config, "en")
 
     roles = {alice_user_info.user_id: (WorkspaceRole.OWNER, alice_user_info)}
-    w = WorkspaceButton(
+    w = WorkspaceButton.create(
         workspace_name="Workspace",
         workspace_fs=workspace_fs,
         users_roles=roles,
@@ -78,7 +78,7 @@ async def test_workspace_button_owned_by(
         bob.user_id: (WorkspaceRole.OWNER, bob_user_info),
         alice_user_info.user_id: (WorkspaceRole.READER, alice_user_info),
     }
-    w = WorkspaceButton(
+    w = WorkspaceButton.create(
         workspace_name="Workspace",
         workspace_fs=workspace_fs,
         users_roles=roles,
@@ -109,7 +109,7 @@ async def test_workspace_button_shared_with(
         bob.user_id: (WorkspaceRole.READER, bob_user_info),
         alice_user_info.user_id: (WorkspaceRole.OWNER, alice_user_info),
     }
-    w = WorkspaceButton(
+    w = WorkspaceButton.create(
         workspace_name="Workspace",
         workspace_fs=workspace_fs,
         users_roles=roles,
@@ -135,7 +135,7 @@ async def test_workspace_button_files(qtbot, workspace_fs, core_config, alice_us
     switch_language(core_config, "en")
 
     roles = {alice_user_info.user_id: (WorkspaceRole.OWNER, alice_user_info)}
-    w = WorkspaceButton(
+    w = WorkspaceButton.create(
         workspace_name="Workspace",
         workspace_fs=workspace_fs,
         users_roles=roles,
@@ -162,7 +162,7 @@ async def test_workspace_button_clicked(qtbot, workspace_fs, core_config, alice_
     switch_language(core_config, "en")
 
     roles = {alice_user_info.user_id: (WorkspaceRole.OWNER, alice_user_info)}
-    w = WorkspaceButton(
+    w = WorkspaceButton.create(
         workspace_name="Workspace",
         workspace_fs=workspace_fs,
         users_roles=roles,
@@ -182,7 +182,7 @@ async def test_workspace_button_share_clicked(qtbot, workspace_fs, core_config, 
     switch_language(core_config, "en")
 
     roles = {alice_user_info.user_id: (WorkspaceRole.OWNER, alice_user_info)}
-    w = WorkspaceButton(
+    w = WorkspaceButton.create(
         workspace_name="Workspace",
         workspace_fs=workspace_fs,
         users_roles=roles,
@@ -201,7 +201,7 @@ async def test_workspace_button_rename_clicked(qtbot, workspace_fs, core_config,
     switch_language(core_config, "en")
 
     roles = {alice_user_info.user_id: (WorkspaceRole.OWNER, alice_user_info)}
-    w = WorkspaceButton(
+    w = WorkspaceButton.create(
         workspace_name="Workspace",
         workspace_fs=workspace_fs,
         users_roles=roles,
@@ -222,7 +222,7 @@ async def test_workspace_button_reencrypt_clicked(
     switch_language(core_config, "en")
 
     roles = {workspace_fs.device.user_id: (WorkspaceRole.OWNER, alice_user_info)}
-    w = WorkspaceButton(
+    w = WorkspaceButton.create(
         workspace_name="Workspace",
         workspace_fs=workspace_fs,
         users_roles=roles,
@@ -254,7 +254,7 @@ async def test_workspace_button_delete_clicked(qtbot, workspace_fs, core_config,
     switch_language(core_config, "en")
 
     roles = {alice_user_info.user_id: (WorkspaceRole.OWNER, alice_user_info)}
-    w = WorkspaceButton(
+    w = WorkspaceButton.create(
         workspace_name="Workspace",
         workspace_fs=workspace_fs,
         users_roles=roles,
@@ -274,7 +274,7 @@ async def test_workspace_button_timestamped(qtbot, workspace_fs, core_config, al
     timestamp = pendulum.now().add(seconds=10)
     roles = {alice_user_info.user_id: (WorkspaceRole.OWNER, alice_user_info)}
     ts_workspace_fs = WorkspaceFSTimestamped(workspace_fs, timestamp)
-    w = WorkspaceButton(
+    w = WorkspaceButton.create(
         workspace_name="Workspace",
         workspace_fs=ts_workspace_fs,
         users_roles=roles,

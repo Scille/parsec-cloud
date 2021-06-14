@@ -48,15 +48,12 @@ class WorkspaceButton(QWidget, Ui_WorkspaceButton):
     open_clicked = pyqtSignal(WorkspaceFS)
     switch_clicked = pyqtSignal(bool, WorkspaceFS, object)
 
-    def __init__(
-        self, workspace_name, workspace_fs, users_roles, is_mounted, files=None, timestamped=False
-    ):
+    def __init__(self, workspace_fs):
         # Initialize UI
         super().__init__()
         self.setupUi(self)
 
         # Read-only attributes
-        self.timestamped = timestamped
         self.workspace_fs = workspace_fs
 
         # Property inner state
@@ -109,9 +106,6 @@ class WorkspaceButton(QWidget, Ui_WorkspaceButton):
         self.label_owner.apply_style()
         self.label_shared.apply_style()
 
-        # Apply the current state
-        self.apply_state(workspace_name, workspace_fs, users_roles, is_mounted, files, timestamped)
-
     def apply_state(
         self, workspace_name, workspace_fs, users_roles, is_mounted, files=None, timestamped=False
     ):
@@ -147,6 +141,21 @@ class WorkspaceButton(QWidget, Ui_WorkspaceButton):
         self.label_shared.setVisible(self.is_shared)
         self.reload_workspace_name(self.workspace_name)
         self.set_mountpoint_state(is_mounted)
+
+    @classmethod
+    def create(
+        cls, workspace_name, workspace_fs, users_roles, is_mounted, files=None, timestamped=False
+    ):
+        instance = cls(workspace_fs)
+        instance.apply_state(
+            workspace_name=workspace_name,
+            workspace_fs=workspace_fs,
+            users_roles=users_roles,
+            is_mounted=is_mounted,
+            files=files,
+            timestamped=timestamped,
+        )
+        return instance
 
     @property
     def is_shared(self):
@@ -240,6 +249,10 @@ class WorkspaceButton(QWidget, Ui_WorkspaceButton):
     @property
     def timestamp(self):
         return getattr(self.workspace_fs, "timestamp", None)
+
+    @property
+    def timestamped(self):
+        return self.timestamp is not None
 
     @property
     def reencryption_needs(self) -> Optional[ReencryptionNeed]:
