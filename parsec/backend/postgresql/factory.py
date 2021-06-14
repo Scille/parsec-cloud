@@ -40,7 +40,7 @@ async def components_factory(
 
     webhooks = WebhooksComponent(config)
     http = HTTPComponent(config)
-    organization = PGOrganizationComponent(dbh, webhooks)
+    organization = PGOrganizationComponent(dbh, webhooks, config)
     user = PGUserComponent(dbh, event_bus)
     invite = PGInviteComponent(dbh, event_bus, config)
     message = PGMessageComponent(dbh)
