@@ -211,7 +211,7 @@ class BackendAuthenticatedConn:
         # do not rely on this redundant event.
         self._status_event_sent = True
 
-    def organization_config(self) -> OrganizationConfig:
+    def get_organization_config(self) -> OrganizationConfig:
         return self._organization_config
 
     def register_monitor(self, monitor_cb) -> None:
