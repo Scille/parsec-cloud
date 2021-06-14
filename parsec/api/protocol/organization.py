@@ -1,5 +1,4 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2016-2021 Scille SAS
-
 from parsec.serde import fields, BaseSchema, JSONSerializer
 from parsec.api.protocol.base import BaseReqSchema, BaseRepSchema, CmdSerializer
 from parsec.api.protocol.types import OrganizationIDField, DeviceIDField
@@ -96,6 +95,7 @@ class APIV1_OrganizationStatusReqSchema(BaseReqSchema):
 class APIV1_OrganizationStatusRepSchema(BaseRepSchema):
     is_bootstrapped = fields.Boolean(required=True)
     expiration_date = fields.DateTime(allow_none=True, required=False)
+    user_profile_outsider_allowed = fields.Boolean(required=True)
 
 
 apiv1_organization_status_serializer = CmdSerializer(
@@ -103,9 +103,24 @@ apiv1_organization_status_serializer = CmdSerializer(
 )
 
 
+class OrganizationConfigReqSchema(BaseReqSchema):
+    pass
+
+
+class OrganizationConfigRepSchema(BaseRepSchema):
+    expiration_date = fields.DateTime(allow_none=True, required=False)
+    user_profile_outsider_allowed = fields.Boolean(required=True)
+
+
+organization_config_serializer = CmdSerializer(
+    OrganizationConfigReqSchema, OrganizationConfigRepSchema
+)
+
+
 class APIV1_OrganizationUpdateReqSchema(BaseReqSchema):
     organization_id = OrganizationIDField(required=True)
     expiration_date = fields.DateTime(allow_none=True, required=False)
+    user_profile_outsider_allowed = fields.Boolean(required=False)
 
 
 class APIV1_OrganizationUpdateRepSchema(BaseRepSchema):

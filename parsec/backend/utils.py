@@ -3,6 +3,7 @@
 import trio
 from enum import Enum
 from functools import wraps
+from typing_extensions import Final, Literal
 from typing import Union, Sequence
 
 from parsec.api.protocol import (
@@ -124,3 +125,12 @@ async def run_with_breathing_transport(transport, fn, *args, **kwargs):
         nursery.start_soon(_keep_transport_breathing)
 
     return rep
+
+
+# Unset singleton used as default value in function parameter when `None`
+# can be a valid value.
+# We implement this as an enum to satisfy type checker (see
+# https://github.com/python/typing/issues/689#issuecomment-561425237)
+UnsetType = Enum("UnsetType", "Unset")
+Unset: Final = UnsetType.Unset
+UnsetType = Literal[UnsetType.Unset]

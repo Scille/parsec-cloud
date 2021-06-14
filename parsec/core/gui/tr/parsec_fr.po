@@ -648,6 +648,9 @@ msgstr "Suite à une annulation de l'invité, il faut redémarrer le processus."
 msgid "TEXT_USER_PROFILE_STANDARD"
 msgstr "Standard"
 
+msgid "NOT_ALLOWED_OUTSIDER_PROFILE_TOOLTIP"
+msgstr "Votre configuration actuelle n'autorise pas ce type de profil"
+
 msgid "TEXT_USER_PROFILE_ADMIN"
 msgstr "Administrateur"
 
@@ -2552,4 +2555,3 @@ msgstr "Créer un nouvel espace de travail"
 
 msgid "ACTION_WORKSPACE_GOTO_FILE_LINK"
 msgstr "Trouver un fichier via son lien"
-

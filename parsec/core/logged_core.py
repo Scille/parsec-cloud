@@ -18,6 +18,7 @@ from parsec.api.data import RevokedUserCertificateContent
 from parsec.core.types import LocalDevice, UserInfo, DeviceInfo, BackendInvitationAddr
 from parsec.core import resources as core_resources
 from parsec.core.config import CoreConfig
+from parsec.core.types import OrganizationConfig, OrganizationStats
 from parsec.core.backend_connection import (
     BackendAuthenticatedConn,
     BackendConnectionError,
@@ -98,13 +99,6 @@ def get_prevent_sync_pattern(prevent_sync_pattern_path: Optional[Path] = None) -
     if pattern is None:
         return FAILSAFE_PATTERN_FILTER
     return pattern
-
-
-@attr.s(frozen=True, slots=True, auto_attribs=True)
-class OrganizationStats:
-    users: int
-    data_size: int
-    metadata_size: int
 
 
 @attr.s(frozen=True, slots=True, auto_attribs=True)
@@ -329,6 +323,9 @@ class LoggedCore:
         initial_ctx = DeviceGreetInitialCtx(cmds=self._backend_conn.cmds, token=token)
         return await initial_ctx.do_wait_peer()
 
+    def get_organization_config(self) -> OrganizationConfig:
+        return self._backend_conn.get_organization_config()
+
 
 @asynccontextmanager
 async def logged_core_factory(
@@ -336,7 +333,6 @@ async def logged_core_factory(
 ):
     event_bus = event_bus or EventBus()
     prevent_sync_pattern = get_prevent_sync_pattern(config.prevent_sync_pattern_path)
-
     backend_conn = BackendAuthenticatedConn(
         addr=device.organization_addr,
         device_id=device.device_id,

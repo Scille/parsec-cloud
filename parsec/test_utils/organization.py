@@ -95,6 +95,16 @@ async def initialize_test_organization(
                 profile=UserProfile.STANDARD,
             )
             save_device_with_password(config_dir=config_dir, device=bob_device, password=password)
+
+            # Invite Toto in organization
+            toto_device = await _register_new_user(
+                cmds=alice_cmds,
+                author=alice_device,
+                device_label="laptop",
+                human_handle=HumanHandle(email="toto@example.com", label="Toto"),
+                profile=UserProfile.OUTSIDER,
+            )
+            save_device_with_password(config_dir=config_dir, device=toto_device, password=password)
             # Create Alice workspace
             alice_ws_id = await alice_core.user_fs.workspace_create("alice_workspace")
             # Create context manager

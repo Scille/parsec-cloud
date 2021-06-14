@@ -7,7 +7,7 @@ from PyQt5.QtWidgets import QWidget, QStyle, QStyleOption
 from parsec.core.gui.ui.menu_widget import Ui_MenuWidget
 from parsec.core.gui.lang import translate as _
 from parsec.core.gui import file_size
-from parsec.core.logged_core import OrganizationStats
+from parsec.core.types import OrganizationStats
 
 
 class MenuWidget(QWidget, Ui_MenuWidget):

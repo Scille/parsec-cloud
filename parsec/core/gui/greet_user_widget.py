@@ -222,7 +222,7 @@ class GreetUserCheckInfoWidget(QWidget, Ui_GreetUserCheckInfoWidget):
     create_user_success = pyqtSignal(QtToTrioJob)
     create_user_error = pyqtSignal(QtToTrioJob)
 
-    def __init__(self, jobs_ctx, greeter):
+    def __init__(self, jobs_ctx, greeter, user_profile_outsider_allowed=False):
         super().__init__()
         self.setupUi(self)
         self.jobs_ctx = jobs_ctx
@@ -240,10 +240,16 @@ class GreetUserCheckInfoWidget(QWidget, Ui_GreetUserCheckInfoWidget):
         self.line_edit_device.validity_changed.connect(self.check_infos)
         self.line_edit_device.set_validator(validators.DeviceNameValidator())
 
-        # self.combo_profile.addItem(_("TEXT_USER_PROFILE_OUTSIDER"), UserProfile.OUTSIDER)
+        self.combo_profile.addItem(_("TEXT_USER_PROFILE_OUTSIDER"), UserProfile.OUTSIDER)
         self.combo_profile.addItem(_("TEXT_USER_PROFILE_STANDARD"), UserProfile.STANDARD)
         self.combo_profile.addItem(_("TEXT_USER_PROFILE_ADMIN"), UserProfile.ADMIN)
         self.combo_profile.setCurrentIndex(0)
+
+        if not user_profile_outsider_allowed:
+            item = self.combo_profile.model().item(0)
+            item.setEnabled(False)
+            item.setToolTip(_("NOT_ALLOWED_OUTSIDER_PROFILE_TOOLTIP"))
+            self.combo_profile.setCurrentIndex(1)
 
         self.get_requests_success.connect(self._on_get_requests_success)
         self.get_requests_error.connect(self._on_get_requests_error)
@@ -613,7 +619,12 @@ class GreetUserWidget(QWidget, Ui_GreetUserWidget):
         current_page = self.main_layout.takeAt(0).widget()
         current_page.hide()
         current_page.setParent(None)
-        page = GreetUserCheckInfoWidget(self.jobs_ctx, self.greeter)
+        # The organization's config value is already cached in the core's logic
+        # so the GUI doesn't need to set the value in its own cache
+        organization_config = self.jobs_ctx.run_sync(self.core.get_organization_config)
+        page = GreetUserCheckInfoWidget(
+            self.jobs_ctx, self.greeter, organization_config.user_profile_outsider_allowed
+        )
         page.succeeded.connect(self._on_finished)
         page.failed.connect(self._on_page_failed)
         self.main_layout.addWidget(page)
