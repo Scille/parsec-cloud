@@ -282,6 +282,7 @@ async def test_common_temporary_files(alice_workspace):
         "test.lnk",
         ".~test",
         "~$test",
+        "mydoc.docx.sb-324kJJ4-AGBJ32A",
     ]
     for path in confined_file_list:
         path = "/" + path
