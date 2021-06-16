@@ -342,6 +342,7 @@ def test_entry_transactions(
             except OSError as exc:
                 expected_exc = exc
 
+            # On MacOS, unlink() raises a PermissionError if used on a directory
             if sys.platform == "darwin" and isinstance(expected_exc, PermissionError):
                 if path.to_oracle().is_dir():
                     expected_exc = IsADirectoryError()
