@@ -4,8 +4,10 @@ import pytest
 from uuid import uuid4
 from unittest.mock import ANY
 
+from parsec.api.data import UserProfile
 from parsec.api.protocol import apiv1_organization_stats_serializer
 from tests.backend.common import vlob_create, block_create
+from tests.common import customize_fixtures
 
 
 async def organization_stats(sock, organization_id):
@@ -19,6 +21,7 @@ async def organization_stats(sock, organization_id):
 
 
 @pytest.mark.trio
+@customize_fixtures(adam_profile=UserProfile.OUTSIDER)
 async def test_organization_stats(
     coolorg, alice_backend_sock, administration_backend_sock, realm, realm_factory, alice, backend
 ):
@@ -27,7 +30,8 @@ async def test_organization_stats(
         "status": "ok",
         "data_size": 0,
         "metadata_size": ANY,
-        "users": 3,
+        "users": 2,
+        "outsiders": 1,
         "workspaces": 4,
     }
     initial_metadata_size = rep["metadata_size"]
@@ -39,7 +43,8 @@ async def test_organization_stats(
         "status": "ok",
         "data_size": 0,
         "metadata_size": initial_metadata_size + 4,
-        "users": 3,
+        "users": 2,
+        "outsiders": 1,
         "workspaces": 4,
     }
 
@@ -50,7 +55,8 @@ async def test_organization_stats(
         "status": "ok",
         "data_size": 4,
         "metadata_size": initial_metadata_size + 4,
-        "users": 3,
+        "users": 2,
+        "outsiders": 1,
         "workspaces": 4,
     }
 
@@ -61,7 +67,8 @@ async def test_organization_stats(
         "status": "ok",
         "data_size": 4,
         "metadata_size": initial_metadata_size + 4,
-        "users": 3,
+        "users": 2,
+        "outsiders": 1,
         "workspaces": 5,
     }
 

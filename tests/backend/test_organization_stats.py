@@ -6,15 +6,20 @@ from unittest.mock import ANY
 from pendulum import now as pendulum_now
 
 from parsec.core.backend_connection import BackendConnectionError
+from parsec.api.data import UserProfile
 from parsec.core.logged_core import OrganizationStats
+from tests.common import customize_fixtures
 
 
 @pytest.mark.trio
+@customize_fixtures(adam_profile=UserProfile.OUTSIDER)
 async def test_organization_stats(
     running_backend, backend, realm, alice, alice_core, bob_core, otheralice_core
 ):
     organization_stats = await alice_core.get_organization_stats()
-    assert organization_stats == OrganizationStats(users=3, data_size=0, metadata_size=ANY)
+    assert organization_stats == OrganizationStats(
+        users=2, outsiders=1, data_size=0, metadata_size=ANY
+    )
     initial_metadata_size = organization_stats.metadata_size
 
     # Create new metadata
@@ -29,7 +34,7 @@ async def test_organization_stats(
     )
     organization_stats = await alice_core.get_organization_stats()
     assert organization_stats == OrganizationStats(
-        users=3, data_size=0, metadata_size=initial_metadata_size + 4
+        users=2, outsiders=1, data_size=0, metadata_size=initial_metadata_size + 4
     )
 
     # Create new data
@@ -42,7 +47,7 @@ async def test_organization_stats(
     )
     organization_stats = await alice_core.get_organization_stats()
     assert organization_stats == OrganizationStats(
-        users=3, data_size=4, metadata_size=initial_metadata_size + 4
+        users=2, outsiders=1, data_size=4, metadata_size=initial_metadata_size + 4
     )
 
     # Bob is not admin, it should fail
@@ -55,4 +60,6 @@ async def test_organization_stats(
 
     # Ensure organization isolation
     other_organization_stats = await otheralice_core.get_organization_stats()
-    assert other_organization_stats == OrganizationStats(users=1, data_size=0, metadata_size=ANY)
+    assert other_organization_stats == OrganizationStats(
+        users=1, outsiders=0, data_size=0, metadata_size=ANY
+    )

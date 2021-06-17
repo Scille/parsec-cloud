@@ -79,6 +79,7 @@ class OrganizationStats:
     data_size: int
     metadata_size: int
     users: int
+    outsiders: int
     workspaces: int
 
 
@@ -172,6 +173,7 @@ class BaseOrganizationComponent:
             {
                 "status": "ok",
                 "users": stats.users,
+                "outsiders": stats.outsiders,
                 "data_size": stats.data_size,
                 "metadata_size": stats.metadata_size,
             }
@@ -192,6 +194,7 @@ class BaseOrganizationComponent:
             {
                 "status": "ok",
                 "users": stats.users,
+                "outsiders": stats.outsiders,
                 "data_size": stats.data_size,
                 "metadata_size": stats.metadata_size,
                 "workspaces": stats.workspaces,

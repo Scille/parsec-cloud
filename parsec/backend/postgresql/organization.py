@@ -7,6 +7,7 @@ from pendulum import DateTime
 from triopg import UniqueViolationError
 
 from parsec.api.protocol import OrganizationID
+from parsec.api.data import UserProfile
 from parsec.crypto import VerifyKey
 from parsec.backend.events import BackendEvent
 from parsec.backend.user import UserError, User, Device
@@ -61,15 +62,21 @@ WHERE
 """
 )
 
-
 _q_get_stats = Q(
     f"""
 SELECT
     (
         SELECT COUNT(*)
         FROM user_
-        WHERE user_.organization = { q_organization_internal_id("$organization_id") }
+        WHERE user_.organization = { q_organization_internal_id("$organization_id") } AND
+             user_.profile != '{ UserProfile.OUTSIDER.value }'
     ) users,
+    (
+        SELECT COUNT(*)
+        FROM user_
+        WHERE user_.organization = { q_organization_internal_id("$organization_id") } AND
+             user_.profile = '{ UserProfile.OUTSIDER.value }'
+    ) outsiders,
     (
         SELECT COUNT(*)
         FROM realm
@@ -197,8 +204,10 @@ class PGOrganizationComponent(BaseOrganizationComponent):
         async with self.dbh.pool.acquire() as conn, conn.transaction():
             await self._get(conn, id)  # Check organization exists
             result = await conn.fetchrow(*_q_get_stats(organization_id=id))
+
         return OrganizationStats(
             users=result["users"],
+            outsiders=result["outsiders"],
             data_size=result["data_size"],
             metadata_size=result["metadata_size"],
             workspaces=result["workspaces"],

@@ -6,6 +6,7 @@ from pendulum import DateTime
 @attr.s(frozen=True, slots=True, auto_attribs=True)
 class OrganizationStats:
     users: int
+    outsiders: int
     data_size: int
     metadata_size: int
 

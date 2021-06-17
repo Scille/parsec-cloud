@@ -5,6 +5,7 @@ from typing import Optional, Union
 from pendulum import DateTime
 
 from parsec.api.protocol import OrganizationID
+from parsec.api.data import UserProfile
 from parsec.crypto import VerifyKey
 from parsec.backend.user import BaseUserComponent, UserError, User, Device
 from parsec.backend.organization import (
@@ -103,7 +104,13 @@ class MemoryOrganizationComponent(BaseOrganizationComponent):
             if vlob_organization_id == id:
                 data_size += blockmeta.size
 
-        users = len(self._user_component._organizations[id].users)
+        users = 0
+        outsiders = 0
+        for user in self._user_component._organizations[id].users.values():
+            if user.profile == UserProfile.OUTSIDER:
+                outsiders += 1
+            else:
+                users += 1
 
         workspaces = len(
             [
@@ -114,7 +121,11 @@ class MemoryOrganizationComponent(BaseOrganizationComponent):
         )
 
         return OrganizationStats(
-            users=users, data_size=data_size, metadata_size=metadata_size, workspaces=workspaces
+            users=users,
+            data_size=data_size,
+            metadata_size=metadata_size,
+            workspaces=workspaces,
+            outsiders=outsiders,
         )
 
     async def update(

@@ -65,6 +65,7 @@ class OrganizationStatsRepSchema(BaseRepSchema):
     data_size = fields.Integer(required=True)
     metadata_size = fields.Integer(required=True)
     users = fields.Integer(required=True)
+    outsiders = fields.Integer(required=True)
 
 
 organization_stats_serializer = CmdSerializer(
@@ -80,6 +81,7 @@ class APIV1_OrganizationStatsRepSchema(BaseRepSchema):
     data_size = fields.Integer(required=True)
     metadata_size = fields.Integer(required=True)
     users = fields.Integer(required=True)
+    outsiders = fields.Integer(required=True)
     workspaces = fields.Integer(required=True)
 
 
