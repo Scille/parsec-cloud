@@ -110,7 +110,7 @@ class CreateOrgUserInfoWidget(QWidget, Ui_CreateOrgUserInfoWidget):
     @property
     def backend_addr(self):
         return (
-            BackendAddr.from_url(self.line_edit_backend_addr.text())
+            BackendAddr.from_url(self.line_edit_backend_addr.text(), allow_http_redirection=True)
             if self.radio_use_custom.isChecked()
             else None
         )

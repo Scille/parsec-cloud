@@ -9,8 +9,6 @@ from parsec.core.types import (
     BackendActionAddr,
     BackendOrganizationAddr,
     BackendOrganizationBootstrapAddr,
-    BackendOrganizationClaimUserAddr,
-    BackendOrganizationClaimDeviceAddr,
 )
 
 
@@ -40,7 +38,7 @@ class BackendAddrValidator(QValidator):
         try:
             if len(string) == 0:
                 return QValidator.Intermediate, string, pos
-            BackendAddr.from_url(string)
+            BackendAddr.from_url(string, allow_http_redirection=True)
             return QValidator.Acceptable, string, pos
         except ValueError:
             return QValidator.Invalid, string, pos
@@ -51,7 +49,7 @@ class BackendOrganizationAddrValidator(QValidator):
         try:
             if len(string) == 0:
                 return QValidator.Intermediate, string, pos
-            BackendOrganizationAddr.from_url(string)
+            BackendOrganizationAddr.from_url(string, allow_http_redirection=True)
             return QValidator.Acceptable, string, pos
         except ValueError:
             return QValidator.Intermediate, string, pos
@@ -62,29 +60,7 @@ class BackendOrganizationBootstrapAddrValidator(QValidator):
         try:
             if len(string) == 0:
                 return QValidator.Intermediate, string, pos
-            BackendOrganizationBootstrapAddr.from_url(string)
-            return QValidator.Acceptable, string, pos
-        except ValueError:
-            return QValidator.Intermediate, string, pos
-
-
-class BackendOrganizationClaimUserAddrValidator(QValidator):
-    def validate(self, string, pos):
-        try:
-            if len(string) == 0:
-                return QValidator.Intermediate, string, pos
-            BackendOrganizationClaimUserAddr.from_url(string)
-            return QValidator.Acceptable, string, pos
-        except ValueError:
-            return QValidator.Intermediate, string, pos
-
-
-class BackendOrganizationClaimDeviceAddrValidator(QValidator):
-    def validate(self, string, pos):
-        try:
-            if len(string) == 0:
-                return QValidator.Intermediate, string, pos
-            BackendOrganizationClaimDeviceAddr.from_url(string)
+            BackendOrganizationBootstrapAddr.from_url(string, allow_http_redirection=True)
             return QValidator.Acceptable, string, pos
         except ValueError:
             return QValidator.Intermediate, string, pos
@@ -95,7 +71,7 @@ class BackendActionAddrValidator(QValidator):
         try:
             if len(string) == 0:
                 return QValidator.Intermediate, string, pos
-            BackendActionAddr.from_url(string)
+            BackendActionAddr.from_url(string, allow_http_redirection=True)
             return QValidator.Acceptable, string, pos
         except ValueError:
             return QValidator.Intermediate, string, pos

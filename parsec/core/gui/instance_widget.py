@@ -1,15 +1,16 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2016-2021 Scille SAS
 
+from parsec.core.config import CoreConfig
+from typing import Optional
 from parsec.core.core_events import CoreEvent
 import trio
-
 from structlog import get_logger
-
 from PyQt5.QtCore import pyqtSignal, pyqtSlot
 from PyQt5.QtWidgets import QWidget, QVBoxLayout, QApplication
 
-from parsec.core import logged_core_factory
+from parsec.event_bus import EventBus
 from parsec.api.protocol import HandshakeRevokedDevice
+from parsec.core import logged_core_factory
 from parsec.core.local_device import LocalDeviceError, load_device_with_password
 from parsec.core.mountpoint import (
     MountpointConfigurationError,
@@ -53,7 +54,14 @@ class InstanceWidget(QWidget):
     join_organization_clicked = pyqtSignal()
     create_organization_clicked = pyqtSignal()
 
-    def __init__(self, jobs_ctx, event_bus, config, systray_notification, **kwargs):
+    def __init__(
+        self,
+        jobs_ctx: QtToTrioJobScheduler,
+        event_bus: EventBus,
+        config: CoreConfig,
+        systray_notification: pyqtSignal,
+        **kwargs
+    ):
         super().__init__(**kwargs)
         self.jobs_ctx = jobs_ctx
         self.event_bus = event_bus
@@ -222,11 +230,11 @@ class InstanceWidget(QWidget):
         if core is None or core_jobs_ctx is None:
             return
         central_widget = CentralWidget(
-            core,
-            core_jobs_ctx,
-            core.event_bus,
-            action_addr=self.workspace_path,
+            core=core,
+            jobs_ctx=core_jobs_ctx,
+            event_bus=core.event_bus,
             systray_notification=self.systray_notification,
+            file_link_addr=self.workspace_path,
             parent=self,
         )
         self.layout().addWidget(central_widget)
@@ -246,7 +254,7 @@ class InstanceWidget(QWidget):
         login_widget.login_canceled.connect(self.reset_workspace_path)
         login_widget.show()
 
-    def get_central_widget(self):
+    def get_central_widget(self) -> Optional[CentralWidget]:
         item = self.layout().itemAt(0)
         if item:
             if isinstance(item.widget(), CentralWidget):
