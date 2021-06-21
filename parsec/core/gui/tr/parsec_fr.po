@@ -719,21 +719,12 @@ msgstr ""
 
 msgid "TEXT_LOGIN_ERROR_FUSE_NOT_AVAILABLE"
 msgstr ""
-<<<<<<< HEAD
-"FUSE n'a pas pu être chargé.<br>Merci de vérifier votre "
-"installation.<br><br>Sur Mac, il est nécessaire d'installer macFUSE et de"
-" l'accepter dans les réglages de sécurité.<br>À partir de Mac OS 11.x, un"
-" rédémarrage est nécessaire après l'installation de macFUSE.<br><br><a "
-"href=\"https://osxfuse.github.io/2021/01/02/macFUSE-4.0.4.html\">Télécharger"
-" macFUSE ici</a>"
-=======
 "FUSE n'a pas pu être chargé.<br>Merci de vérifier votre installation, c'est "
 "une dépendance requise pour le fonctionnement de Parsec. <br><br>Sur MacOS, "
 "il est nécessaire d'installer macFUSE et de l'accepter dans les réglages de "
 "sécurité.<br>À partir de MacOS 11.x, un rédémarrage est nécessaire après "
 "l'installation de macFUSE.<br><br><a href=\"https://osxfuse.github.io/\"> "
 "Télécharger la dernière version de macFUSE ici</a>"
->>>>>>> origin/master
 
 msgid "TEXT_LOGIN_UNKNOWN_ERROR"
 msgstr "Impossible de se connecter."
