@@ -1,6 +1,7 @@
-# Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
+# Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2016-2021 Scille SAS
 
-from sys import platform
+import sys
+
 from typing import Optional
 from PyQt5.QtCore import pyqtSignal, Qt
 from PyQt5.QtWidgets import QWidget, QGraphicsDropShadowEffect, QMenu
@@ -47,48 +48,30 @@ class WorkspaceButton(QWidget, Ui_WorkspaceButton):
     open_clicked = pyqtSignal(WorkspaceFS)
     switch_clicked = pyqtSignal(bool, WorkspaceFS, object)
 
-    def __init__(
-        self,
-        workspace_name,
-        workspace_fs,
-        users_roles,
-        is_mounted,
-        files=None,
-        timestamped=False,
-        reencryption_needs=None,
-    ):
+    def __init__(self, workspace_fs):
+        # Initialize UI
         super().__init__()
         self.setupUi(self)
-        self.users_roles = users_roles
-        self.workspace_name = workspace_name
+
+        # Read-only attributes
         self.workspace_fs = workspace_fs
-        self.timestamped = timestamped
+
+        # Property inner state
+        self._reencrypting = None
+        self._reencryption_needs = None
+
+        # Static initialization
         self.switch_button = SwitchButton()
         self.widget_actions.layout().insertWidget(0, self.switch_button)
         self.switch_button.clicked.connect(self._on_switch_clicked)
-
-        self.reencrypting = None
-        self.reencryption_needs = reencryption_needs
         self.setCursor(QCursor(Qt.PointingHandCursor))
         self.setContextMenuPolicy(Qt.CustomContextMenu)
         self.customContextMenuRequested.connect(self.show_context_menu)
-        self.label_role.setText(get_role_translation(self.current_role))
-        files = files or []
 
         if not self.timestamped:
             self.button_delete.hide()
-            if not len(files):
-                self.widget_empty.show()
-                self.widget_files.hide()
-                self.widget_empty.layout().addWidget(EmptyWorkspaceWidget())
-            else:
-                for i, f in enumerate(files, 1):
-                    if i > 4:
-                        break
-                    label = getattr(self, "file{}_name".format(i))
-                    label.setText(f)
-                self.widget_files.show()
-                self.widget_empty.hide()
+            self.button_reencrypt.hide()
+            self.widget_empty.layout().addWidget(EmptyWorkspaceWidget())
         else:
             self.switch_button.setChecked(True)
             self.button_reencrypt.hide()
@@ -98,11 +81,8 @@ class WorkspaceButton(QWidget, Ui_WorkspaceButton):
             self.label_shared.hide()
             self.label_owner.hide()
             self.switch_button.hide()
-            widg_tmp = TemporaryWorkspaceWidget()
-            widg_tmp.label_timestamp.setText(format_datetime(self.timestamp))
-            self.widget_empty.layout().addWidget(widg_tmp)
-            self.widget_empty.show()
-            self.widget_files.hide()
+            widget_tmp = TemporaryWorkspaceWidget()
+            self.widget_empty.layout().addWidget(widget_tmp)
 
         effect = QGraphicsDropShadowEffect(self)
         effect.setColor(QColor(0x99, 0x99, 0x99))
@@ -110,8 +90,6 @@ class WorkspaceButton(QWidget, Ui_WorkspaceButton):
         effect.setXOffset(2)
         effect.setYOffset(2)
         self.setGraphicsEffect(effect)
-        if not self.is_owner:
-            self.button_reencrypt.hide()
         self.widget_reencryption.hide()
         self.button_share.clicked.connect(self.button_share_clicked)
         self.button_share.apply_style()
@@ -127,12 +105,57 @@ class WorkspaceButton(QWidget, Ui_WorkspaceButton):
         self.button_open.apply_style()
         self.label_owner.apply_style()
         self.label_shared.apply_style()
-        if not self.is_owner:
-            self.label_owner.hide()
-        if not self.is_shared:
-            self.label_shared.hide()
+
+    def apply_state(
+        self, workspace_name, workspace_fs, users_roles, is_mounted, files=None, timestamped=False
+    ):
+        # Not meant to change
+        assert timestamped == self.timestamped
+        assert workspace_fs == self.workspace_fs
+
+        # Update attributes
+        self.workspace_name = workspace_name
+        self.workspace_fs = workspace_fs
+        self.users_roles = users_roles
+        self.files = files or []
+
+        # Update dependent widgets
+        if not self.timestamped:
+            if not len(self.files):
+                self.widget_empty.show()
+                self.widget_files.hide()
+            else:
+                self.widget_files.show()
+                self.widget_empty.hide()
+                for i, f in enumerate(files, 1):
+                    if i > 4:
+                        break
+                    label = getattr(self, "file{}_name".format(i))
+                    label.setText(f)
+        else:
+            widget_temp = self.widget_empty.layout().itemAt(0).widget()
+            widget_temp.label_timestamp.setText(format_datetime(self.timestamp))
+
+        self.label_role.setText(get_role_translation(self.current_role))
+        self.label_owner.setVisible(self.is_owner)
+        self.label_shared.setVisible(self.is_shared)
         self.reload_workspace_name(self.workspace_name)
         self.set_mountpoint_state(is_mounted)
+
+    @classmethod
+    def create(
+        cls, workspace_name, workspace_fs, users_roles, is_mounted, files=None, timestamped=False
+    ):
+        instance = cls(workspace_fs)
+        instance.apply_state(
+            workspace_name=workspace_name,
+            workspace_fs=workspace_fs,
+            users_roles=users_roles,
+            is_mounted=is_mounted,
+            files=files,
+            timestamped=timestamped,
+        )
+        return instance
 
     @property
     def is_shared(self):
@@ -167,7 +190,7 @@ class WorkspaceButton(QWidget, Ui_WorkspaceButton):
         global_pos = self.mapToGlobal(pos)
         menu = QMenu(self)
 
-        if platform == "darwin":
+        if sys.platform == "darwin":
             action = menu.addAction(_("ACTION_WORKSPACE_OPEN_IN_FINDER"))
         else:
             action = menu.addAction(_("ACTION_WORKSPACE_OPEN_IN_FILE_EXPLORER"))
@@ -228,6 +251,10 @@ class WorkspaceButton(QWidget, Ui_WorkspaceButton):
         return getattr(self.workspace_fs, "timestamp", None)
 
     @property
+    def timestamped(self):
+        return self.timestamp is not None
+
+    @property
     def reencryption_needs(self) -> Optional[ReencryptionNeed]:
         return self._reencryption_needs
 
@@ -257,6 +284,7 @@ class WorkspaceButton(QWidget, Ui_WorkspaceButton):
             self.button_reencrypt.hide()
             self.widget_actions.show()
             self.widget_reencryption.hide()
+            self.button_reencrypt.setVisible(bool(self.reencryption_needs))
             self.setContextMenuPolicy(Qt.CustomContextMenu)
 
         self._reencrypting = val

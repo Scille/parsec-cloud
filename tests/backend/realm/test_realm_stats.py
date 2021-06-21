@@ -1,4 +1,4 @@
-# Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
+# Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2016-2021 Scille SAS
 
 import pytest
 from uuid import UUID, uuid4
@@ -10,7 +10,7 @@ REALM_ID_FAKE = UUID("00000000-0000-0000-0000-000000000001")
 
 
 @pytest.mark.trio
-async def test_realm_stats_ok(backend, alice_backend_sock, realm):
+async def test_realm_stats_ok(alice_backend_sock, realm):
 
     # Create new data
     await block_create(alice_backend_sock, realm_id=realm, block_id=uuid4(), block=b"1234")

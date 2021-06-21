@@ -66,6 +66,8 @@ Temporary Items
 # File System Events notification mechanism
 .fseventsd
 
+# Temporary directories for .doc and .docx files
+*.*.sb-*-*
 
 ### Windows ###
 

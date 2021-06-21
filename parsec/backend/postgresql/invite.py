@@ -1,4 +1,4 @@
-# Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
+# Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2016-2021 Scille SAS
 
 from pendulum import DateTime, now as pendulum_now
 from uuid import UUID, uuid4
@@ -554,12 +554,11 @@ class PGInviteComponent(BaseInviteComponent):
             deleted_on,
             deleted_reason,
         ) in rows:
+            greeter_human_handle = None
             if greeter_human_handle_email:
                 greeter_human_handle = HumanHandle(
                     email=greeter_human_handle_email, label=greeter_human_handle_label
                 )
-            else:
-                greeter_human_handle = None
 
             if deleted_on:
                 status = InvitationStatus.DELETED
@@ -568,6 +567,7 @@ class PGInviteComponent(BaseInviteComponent):
             else:
                 status = InvitationStatus.IDLE
 
+            invitation: Invitation
             if type == InvitationType.USER.value:
                 invitation = UserInvitation(
                     greeter_user_id=UserID(greeter),
@@ -610,12 +610,12 @@ class PGInviteComponent(BaseInviteComponent):
         if deleted_on:
             raise InvitationAlreadyDeletedError(token)
 
+        greeter_human_handle = None
         if greeter_human_handle_email:
             greeter_human_handle = HumanHandle(
                 email=greeter_human_handle_email, label=greeter_human_handle_label
             )
-        else:
-            greeter_human_handle = None
+
         if type == InvitationType.USER.value:
             return UserInvitation(
                 greeter_user_id=UserID(greeter),
@@ -637,7 +637,7 @@ class PGInviteComponent(BaseInviteComponent):
     async def _conduit_talk(
         self,
         organization_id: OrganizationID,
-        greeter: UserID,
+        greeter: Optional[UserID],
         token: UUID,
         state: ConduitState,
         payload: bytes,

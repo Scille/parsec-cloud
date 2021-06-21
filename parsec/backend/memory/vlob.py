@@ -1,4 +1,4 @@
-# Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
+# Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2016-2021 Scille SAS
 
 import attr
 import pendulum
@@ -9,6 +9,7 @@ from collections import defaultdict
 from parsec.backend.backend_events import BackendEvent
 from parsec.api.protocol import DeviceID, OrganizationID
 from parsec.api.protocol import RealmRole
+from parsec.backend.utils import OperationKind
 from parsec.backend.realm import BaseRealmComponent, RealmNotFoundError
 from parsec.backend.vlob import (
     BaseVlobComponent,
@@ -137,60 +138,90 @@ class MemoryVlobComponent(BaseVlobComponent):
             raise VlobNotFoundError(f"Vlob `{vlob_id}` doesn't exist")
 
     def _check_realm_read_access(self, organization_id, realm_id, user_id, encryption_revision):
-        can_read_roles = (
-            RealmRole.OWNER,
-            RealmRole.MANAGER,
-            RealmRole.CONTRIBUTOR,
-            RealmRole.READER,
-        )
         self._check_realm_access(
-            organization_id, realm_id, user_id, encryption_revision, can_read_roles
+            organization_id, realm_id, user_id, encryption_revision, OperationKind.DATA_READ
         )
 
     def _check_realm_write_access(self, organization_id, realm_id, user_id, encryption_revision):
-        can_write_roles = (RealmRole.OWNER, RealmRole.MANAGER, RealmRole.CONTRIBUTOR)
         self._check_realm_access(
-            organization_id, realm_id, user_id, encryption_revision, can_write_roles
+            organization_id, realm_id, user_id, encryption_revision, OperationKind.DATA_WRITE
         )
 
     def _check_realm_access(
-        self,
-        organization_id,
-        realm_id,
-        user_id,
-        encryption_revision,
-        allowed_roles,
-        expected_maintenance=False,
+        self, organization_id, realm_id, user_id, encryption_revision, operation_kind
     ):
         try:
             realm = self._realm_component._get_realm(organization_id, realm_id)
         except RealmNotFoundError:
             raise VlobNotFoundError(f"Realm `{realm_id}` doesn't exist")
 
+        # Only an owner can perform maintenance operation
+        if operation_kind == OperationKind.MAINTENANCE:
+            allowed_roles = (RealmRole.OWNER,)
+        # All roles can do read-only operation
+        elif operation_kind == OperationKind.DATA_READ:
+            allowed_roles = (
+                RealmRole.OWNER,
+                RealmRole.MANAGER,
+                RealmRole.CONTRIBUTOR,
+                RealmRole.READER,
+            )
+        # All roles except reader can do write operation
+        elif operation_kind == OperationKind.DATA_WRITE:
+            allowed_roles = (RealmRole.OWNER, RealmRole.MANAGER, RealmRole.CONTRIBUTOR)
+        else:
+            assert False, f"Operation kind {operation_kind} not supported"
+
+        # Check the role
         if realm.roles.get(user_id) not in allowed_roles:
             raise VlobAccessError()
 
-        if expected_maintenance is False:
-            if realm.status.in_maintenance:
+        # Special case of reading while in reencryption
+        if operation_kind == OperationKind.DATA_READ and realm.status.in_reencryption:
+            # Starting a reencryption maintenance bumps the encryption revision.
+            # Hence if we are currently in reencryption maintenance, last encryption revision is not ready
+            # to be used (it will be once the reencryption is over !).
+            # So during this intermediary state, we allow read access to the previous encryption revision instead.
+
+            # Note that `encryption_revision` might also be `None` in the case of `poll_changes` and `list_versions`
+            # requests, which should also be allowed during a reencryption
+
+            # The vlob is not available yet for the current revision
+            if (
+                encryption_revision is not None
+                and encryption_revision == realm.status.encryption_revision
+            ):
                 raise VlobInMaintenanceError(f"Realm `{realm_id}` is currently under maintenance")
-        elif expected_maintenance is True:
-            if not realm.status.in_maintenance:
+
+            # The vlob is only available at the previous revision
+            if (
+                encryption_revision is not None
+                and encryption_revision != realm.status.encryption_revision - 1
+            ):
+                raise VlobEncryptionRevisionError()
+
+        # In all other cases
+        else:
+            # Writing during maintenance is forbidden
+            if operation_kind != OperationKind.MAINTENANCE and realm.status.in_maintenance:
+                raise VlobInMaintenanceError(f"Realm `{realm_id}` is currently under maintenance")
+
+            # A maintenance state was expected
+            if operation_kind == OperationKind.MAINTENANCE and not realm.status.in_maintenance:
                 raise VlobNotInMaintenanceError(f"Realm `{realm_id}` not under maintenance")
 
-        if encryption_revision not in (None, realm.status.encryption_revision):
-            raise VlobEncryptionRevisionError()
+            # Otherwise, simply check that the revisions match
+            if (
+                encryption_revision is not None
+                and encryption_revision != realm.status.encryption_revision
+            ):
+                raise VlobEncryptionRevisionError()
 
     def _check_realm_in_maintenance_access(
         self, organization_id, realm_id, user_id, encryption_revision
     ):
-        can_do_maintenance_roles = (RealmRole.OWNER,)
         self._check_realm_access(
-            organization_id,
-            realm_id,
-            user_id,
-            encryption_revision,
-            can_do_maintenance_roles,
-            expected_maintenance=True,
+            organization_id, realm_id, user_id, encryption_revision, OperationKind.MAINTENANCE
         )
 
     async def _update_changes(self, organization_id, author, realm_id, src_id, src_version=1):
@@ -255,7 +286,8 @@ class MemoryVlobComponent(BaseVlobComponent):
                 else:
                     raise VlobVersionError()
         try:
-            return (version, *vlob.data[version - 1])
+            vlob_data, vlob_device_id, vlob_timestamp = vlob.data[version - 1]
+            return (version, vlob_data, vlob_device_id, vlob_timestamp)
 
         except IndexError:
             raise VlobVersionError()

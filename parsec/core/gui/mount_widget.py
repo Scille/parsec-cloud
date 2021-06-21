@@ -1,4 +1,4 @@
-# Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
+# Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2016-2021 Scille SAS
 
 from typing import Optional
 
@@ -54,7 +54,7 @@ class MountWidget(QWidget, Ui_MountWidget):
 
         self.files_widget.show()
 
-    def show_workspaces_widget(self, user_info=None):
+    def show_workspaces_widget(self):
         self.folder_changed.emit(None, None)
         self.files_widget.hide()
         self.workspaces_widget.show()

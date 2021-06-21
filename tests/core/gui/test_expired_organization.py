@@ -1,4 +1,4 @@
-# Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
+# Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2016-2021 Scille SAS
 
 import pendulum
 import pytest
@@ -106,8 +106,8 @@ async def test_expired_notification_from_update(
 
     # Set expiration date
     with running_backend.backend.event_bus.listen() as spy:
-        await running_backend.backend.organization.set_expiration_date(
-            alice.organization_id, pendulum.datetime(1989, 1, 1)
+        await running_backend.backend.organization.update(
+            id=alice.organization_id, expiration_date=pendulum.datetime(1989, 1, 1)
         )
         await spy.wait_with_timeout(BackendEvent.ORGANIZATION_EXPIRED)
 

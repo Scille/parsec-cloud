@@ -1,4 +1,4 @@
-# Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
+# Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2016-2021 Scille SAS
 
 import re
 import attr
@@ -18,10 +18,14 @@ from parsec.api.data import RevokedUserCertificateContent
 from parsec.core.types import LocalDevice, UserInfo, DeviceInfo, BackendInvitationAddr
 from parsec.core import resources as core_resources
 from parsec.core.config import CoreConfig
+from parsec.core.types import OrganizationConfig, OrganizationStats
 from parsec.core.backend_connection import (
     BackendAuthenticatedConn,
     BackendConnectionError,
     BackendNotFoundError,
+    BackendInvitationNotFound,
+    BackendInvitationAlreadyUsed,
+    BackendInvitationOnExistingMember,
     BackendConnStatus,
     BackendNotAvailable,
 )
@@ -30,7 +34,6 @@ from parsec.core.invite import (
     UserGreetInProgress1Ctx,
     DeviceGreetInitialCtx,
     DeviceGreetInProgress1Ctx,
-    InviteAlreadyMemberError,
 )
 from parsec.core.remote_devices_manager import (
     RemoteDevicesManager,
@@ -42,6 +45,7 @@ from parsec.core.mountpoint import mountpoint_manager_factory, MountpointManager
 from parsec.core.messages_monitor import monitor_messages
 from parsec.core.sync_monitor import monitor_sync
 from parsec.core.fs import UserFS
+from parsec.core.fs.exceptions import FSWorkspaceNotFoundError
 
 
 logger = get_logger()
@@ -98,13 +102,6 @@ def get_prevent_sync_pattern(prevent_sync_pattern_path: Optional[Path] = None) -
 
 
 @attr.s(frozen=True, slots=True, auto_attribs=True)
-class OrganizationStats:
-    users: int
-    data_size: int
-    metadata_size: int
-
-
-@attr.s(frozen=True, slots=True, auto_attribs=True)
 class LoggedCore:
     config: CoreConfig
     device: LocalDevice
@@ -127,6 +124,12 @@ class LoggedCore:
     @property
     def backend_status_exc(self) -> Optional[Exception]:
         return self._backend_conn.status_exc
+
+    def find_workspace_from_name(self, workspace_name: str):
+        for workspace in self.user_fs.get_user_manifest().workspaces:
+            if workspace_name == workspace.name:
+                return workspace
+        raise FSWorkspaceNotFoundError(f"Unknown workspace {workspace_name}")
 
     async def find_humans(
         self,
@@ -151,6 +154,8 @@ class LoggedCore:
             raise BackendConnectionError(f"Backend error: {rep}")
         results = []
         for item in rep["results"]:
+            # Note `BackendNotFoundError` should never occurs (unless backend is broken !)
+            # here given we are feeding the backend the user IDs it has provided us
             user_info = await self.get_user_info(item["user_id"])
             results.append(user_info)
         return (results, rep["total"])
@@ -248,7 +253,7 @@ class LoggedCore:
             type=InvitationType.USER, claimer_email=email, send_email=send_email
         )
         if rep["status"] == "already_member":
-            raise InviteAlreadyMemberError()
+            raise BackendInvitationOnExistingMember("An user already exist with this email")
         elif rep["status"] != "ok":
             raise BackendConnectionError(f"Backend error: {rep}")
         return BackendInvitationAddr.build(
@@ -283,7 +288,11 @@ class LoggedCore:
             BackendConnectionError
         """
         rep = await self._backend_conn.cmds.invite_delete(token=token, reason=reason)
-        if rep["status"] != "ok":
+        if rep["status"] == "not_found":
+            raise BackendInvitationNotFound("Invitation not found")
+        elif rep["status"] == "already_deleted":
+            raise BackendInvitationAlreadyUsed("Invitation already used")
+        elif rep["status"] != "ok":
             raise BackendConnectionError(f"Backend error: {rep}")
 
     async def list_invitations(self) -> List[dict]:  # TODO: better return type
@@ -314,6 +323,9 @@ class LoggedCore:
         initial_ctx = DeviceGreetInitialCtx(cmds=self._backend_conn.cmds, token=token)
         return await initial_ctx.do_wait_peer()
 
+    def get_organization_config(self) -> OrganizationConfig:
+        return self._backend_conn.get_organization_config()
+
 
 @asynccontextmanager
 async def logged_core_factory(
@@ -321,7 +333,6 @@ async def logged_core_factory(
 ):
     event_bus = event_bus or EventBus()
     prevent_sync_pattern = get_prevent_sync_pattern(config.prevent_sync_pattern_path)
-
     backend_conn = BackendAuthenticatedConn(
         addr=device.organization_addr,
         device_id=device.device_id,

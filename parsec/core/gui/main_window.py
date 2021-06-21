@@ -1,19 +1,20 @@
-# Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
+# Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2016-2021 Scille SAS
 
+from parsec.core.types.local_device import LocalDevice
 from parsec.core.core_events import CoreEvent
-import platform
-from typing import Optional
+import sys
+from typing import Callable, Optional, Tuple, cast
 from structlog import get_logger
 from distutils.version import LooseVersion
 
 from PyQt5.QtCore import QCoreApplication, pyqtSignal, Qt, QSize
-from PyQt5.QtGui import QColor, QIcon, QKeySequence
+from PyQt5.QtGui import QColor, QIcon, QKeySequence, QResizeEvent, QCloseEvent
 from PyQt5.QtWidgets import QMainWindow, QApplication, QMenu, QShortcut
 
 from parsec import __version__ as PARSEC_VERSION
-
+from parsec.event_bus import EventBus, EventCallback
 from parsec.core.local_device import list_available_devices, get_key_file
-from parsec.core.config import save_config
+from parsec.core.config import CoreConfig, save_config
 from parsec.core.types import (
     BackendActionAddr,
     BackendInvitationAddr,
@@ -21,6 +22,7 @@ from parsec.core.types import (
     BackendOrganizationFileLinkAddr,
 )
 from parsec.api.protocol import InvitationType
+from parsec.core.gui.trio_thread import QtToTrioJobScheduler
 from parsec.core.gui.lang import translate as _
 from parsec.core.gui.instance_widget import InstanceWidget
 from parsec.core.gui.parsec_application import ParsecApp
@@ -44,12 +46,17 @@ from parsec.core.gui.custom_dialogs import (
 from parsec.core.gui.custom_widgets import Button, ensure_string_size
 from parsec.core.gui.create_org_widget import CreateOrgWidget
 from parsec.core.gui.ui.main_window import Ui_MainWindow
+from parsec.core.gui.central_widget import (
+    GoToFileLinkBadOrganizationIDError,
+    GoToFileLinkBadWorkspaceIDError,
+    GoToFileLinkPathDecryptionError,
+)
 
 
 logger = get_logger()
 
 
-class MainWindow(QMainWindow, Ui_MainWindow):
+class MainWindow(QMainWindow, Ui_MainWindow):  # type: ignore[misc]
     foreground_needed = pyqtSignal()
     new_instance_needed = pyqtSignal(object)
     systray_notification = pyqtSignal(str, str, int)
@@ -58,7 +65,14 @@ class MainWindow(QMainWindow, Ui_MainWindow):
     TAB_NOT_SELECTED_COLOR = QColor(123, 132, 163)
     TAB_SELECTED_COLOR = QColor(12, 65, 159)
 
-    def __init__(self, jobs_ctx, event_bus, config, minimize_on_close: bool = False, **kwargs):
+    def __init__(
+        self,
+        jobs_ctx: QtToTrioJobScheduler,
+        event_bus: EventBus,
+        config: CoreConfig,
+        minimize_on_close: bool = False,
+        **kwargs: object,
+    ):
         super().__init__(**kwargs)
         self.setupUi(self)
 
@@ -71,7 +85,9 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         self.minimize_on_close_notif_already_send = False
         self.force_close = False
         self.need_close = False
-        self.event_bus.connect(CoreEvent.GUI_CONFIG_CHANGED, self.on_config_updated)
+        self.event_bus.connect(
+            CoreEvent.GUI_CONFIG_CHANGED, cast(EventCallback, self.on_config_updated)
+        )
         self.setWindowTitle(_("TEXT_PARSEC_WINDOW_TITLE_version").format(version=PARSEC_VERSION))
         self.foreground_needed.connect(self._on_foreground_needed)
         self.new_instance_needed.connect(self._on_new_instance_needed)
@@ -108,7 +124,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         self._define_shortcuts()
         self.ensurePolished()
 
-    def _define_shortcuts(self):
+    def _define_shortcuts(self) -> None:
         self.shortcut_close = QShortcut(QKeySequence(QKeySequence.Close), self)
         self.shortcut_close.activated.connect(self._shortcut_proxy(self.close_current_tab))
         self.shortcut_new_tab = QShortcut(QKeySequence(QKeySequence.AddTab), self)
@@ -132,16 +148,16 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         shortcut = QShortcut(QKeySequence(QKeySequence.PreviousChild), self)
         shortcut.activated.connect(self._shortcut_proxy(self._cycle_tabs(-1)))
 
-    def _shortcut_proxy(self, funct):
-        def _inner_proxy():
+    def _shortcut_proxy(self, funct: Callable[[], None]) -> Callable[[], None]:
+        def _inner_proxy() -> None:
             if ParsecApp.has_active_modal():
                 return
             funct()
 
         return _inner_proxy
 
-    def _cycle_tabs(self, offset):
-        def _inner_cycle_tabs():
+    def _cycle_tabs(self, offset: int) -> Callable[[], None]:
+        def _inner_cycle_tabs() -> None:
             idx = self.tab_center.currentIndex()
             idx += offset
             if idx >= self.tab_center.count():
@@ -152,20 +168,20 @@ class MainWindow(QMainWindow, Ui_MainWindow):
 
         return _inner_cycle_tabs
 
-    def _toggle_add_tab_button(self):
+    def _toggle_add_tab_button(self) -> None:
         if self._get_login_tab_index() == -1:
             self.add_tab_button.setDisabled(False)
         else:
             self.add_tab_button.setDisabled(True)
 
-    def resizeEvent(self, event):
+    def resizeEvent(self, event: QResizeEvent) -> None:
         super().resizeEvent(event)
         for win in self.children():
             if win.objectName() == "GreyedDialog":
                 win.resize(event.size())
                 win.move(0, 0)
 
-    def _show_menu(self):
+    def _show_menu(self) -> None:
         menu = QMenu(self)
         menu.setObjectName("MainMenu")
         action = None
@@ -224,53 +240,56 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         menu.exec_(pos)
         menu.setParent(None)
 
-    def _show_about(self):
+    def _show_about(self) -> None:
         w = AboutWidget()
         d = GreyedDialog(w, title="", parent=self, width=1000)
         d.exec_()
 
-    def _show_license(self):
+    def _show_license(self) -> None:
         w = LicenseWidget()
         d = GreyedDialog(w, title=_("TEXT_LICENSE_TITLE"), parent=self, width=1000)
         d.exec_()
 
-    def _show_changelog(self):
+    def _show_changelog(self) -> None:
         w = ChangelogWidget()
         d = GreyedDialog(w, title=_("TEXT_CHANGELOG_TITLE"), parent=self, width=1000)
         d.exec_()
 
-    def _show_settings(self):
+    def _show_settings(self) -> None:
         w = SettingsWidget(self.config, self.jobs_ctx, self.event_bus)
         d = GreyedDialog(w, title=_("TEXT_SETTINGS_TITLE"), parent=self, width=1000)
         d.exec_()
 
-    def _on_manage_keys(self):
+    def _on_manage_keys(self) -> None:
         w = KeysWidget(config=self.config, parent=self)
         w.key_imported.connect(self.reload_login_devices)
         d = GreyedDialog(w, title=_("TEXT_KEYS_DIALOG"), parent=self, width=800)
         d.exec()
 
-    def _on_show_doc_clicked(self):
+    def _on_show_doc_clicked(self) -> None:
         desktop.open_doc_link()
 
-    def _on_send_feedback_clicked(self):
+    def _on_send_feedback_clicked(self) -> None:
         desktop.open_feedback_link()
 
-    def _on_add_instance_clicked(self):
+    def _on_add_instance_clicked(self) -> None:
         self.add_instance()
 
-    def _on_create_org_clicked(self, addr=None):
-        def _on_finished(ret):
+    def _on_create_org_clicked(
+        self, addr: Optional[BackendOrganizationBootstrapAddr] = None
+    ) -> None:
+        def _on_finished(ret: Optional[Tuple[LocalDevice, str]]) -> None:
             if ret is None:
                 return
             self.reload_login_devices()
-            self.try_login(ret[0], ret[1])
+            device, password = ret
+            self.try_login(device, password)
 
         CreateOrgWidget.show_modal(
             self.jobs_ctx, self.config, self, on_finished=_on_finished, start_addr=addr
         )
 
-    def _on_join_org_clicked(self):
+    def _on_join_org_clicked(self) -> None:
         url = get_text_input(
             parent=self,
             title=_("TEXT_JOIN_ORG_URL_TITLE"),
@@ -285,7 +304,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
 
         action_addr = None
         try:
-            action_addr = BackendActionAddr.from_url(url)
+            action_addr = BackendActionAddr.from_url(url, allow_http_redirection=True)
         except ValueError as exc:
             show_error(self, _("TEXT_INVALID_URL"), exception=exc)
             return
@@ -304,16 +323,16 @@ class MainWindow(QMainWindow, Ui_MainWindow):
             show_error(self, _("TEXT_INVALID_URL"))
             return
 
-    def _on_claim_user_clicked(self, action_addr):
-        widget = None
+    def _on_claim_user_clicked(self, action_addr: BackendInvitationAddr) -> None:
+        widget: ClaimDeviceWidget
 
-        def _on_finished():
+        def _on_finished() -> None:
             nonlocal widget
             if not widget.status:
                 return
-            login, password = widget.status
+            device, password = widget.status
             self.reload_login_devices()
-            self.try_login(login, password)
+            self.try_login(device, password)
 
         widget = ClaimUserWidget.show_modal(
             jobs_ctx=self.jobs_ctx,
@@ -323,16 +342,16 @@ class MainWindow(QMainWindow, Ui_MainWindow):
             on_finished=_on_finished,
         )
 
-    def _on_claim_device_clicked(self, action_addr):
-        widget = None
+    def _on_claim_device_clicked(self, action_addr: BackendInvitationAddr) -> None:
+        widget: ClaimDeviceWidget
 
-        def _on_finished():
+        def _on_finished() -> None:
             nonlocal widget
             if not widget.status:
                 return
-            login, password = widget.status
+            device, password = widget.status
             self.reload_login_devices()
-            self.try_login(login, password)
+            self.try_login(device, password)
 
         widget = ClaimDeviceWidget.show_modal(
             jobs_ctx=self.jobs_ctx,
@@ -342,9 +361,8 @@ class MainWindow(QMainWindow, Ui_MainWindow):
             on_finished=_on_finished,
         )
 
-    def try_login(self, device, password):
+    def try_login(self, device: LocalDevice, password: str) -> None:
         idx = self._get_login_tab_index()
-        tab = None
         if idx == -1:
             tab = self.add_new_tab()
         else:
@@ -352,7 +370,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         kf = get_key_file(self.config.config_dir, device)
         tab.login_with_password(kf, password)
 
-    def reload_login_devices(self):
+    def reload_login_devices(self) -> None:
         idx = self._get_login_tab_index()
         if idx == -1:
             return
@@ -361,7 +379,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
             return
         w.show_login_widget()
 
-    def on_current_tab_changed(self, index):
+    def on_current_tab_changed(self, index: int) -> None:
         for i in range(self.tab_center.tabBar().count()):
             if i != index:
                 if self.tab_center.tabBar().tabTextColor(i) != MainWindow.TAB_NOTIFICATION_COLOR:
@@ -369,19 +387,21 @@ class MainWindow(QMainWindow, Ui_MainWindow):
             else:
                 self.tab_center.tabBar().setTabTextColor(i, MainWindow.TAB_SELECTED_COLOR)
 
-    def _on_foreground_needed(self):
+    def _on_foreground_needed(self) -> None:
         self.show_top()
 
-    def _on_new_instance_needed(self, start_arg):
+    def _on_new_instance_needed(self, start_arg: Optional[str]) -> None:
         self.add_instance(start_arg)
         self.show_top()
 
-    def on_config_updated(self, event, **kwargs):
+    def on_config_updated(self, event: CoreEvent, **kwargs: object) -> None:
         self.config = self.config.evolve(**kwargs)
         save_config(self.config)
         telemetry.init(self.config)
 
-    def show_window(self, skip_dialogs=False, invitation_link=""):
+    def show_window(
+        self, skip_dialogs: bool = False, invitation_link: Optional[str] = None
+    ) -> None:
         try:
             if not self.restoreGeometry(self.config.gui_geometry):
                 self.showMaximized()
@@ -398,9 +418,10 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         if self.config.gui_first_launch:
             r = ask_question(
                 self,
-                _("TEXT_ERROR_REPORTING_TITLE"),
-                _("TEXT_ERROR_REPORTING_INSTRUCTIONS"),
-                [_("ACTION_ERROR_REPORTING_ACCEPT"), _("ACTION_NO")],
+                _("TEXT_ENABLE_TELEMETRY_TITLE"),
+                _("TEXT_ENABLE_TELEMETRY_INSTRUCTIONS"),
+                [_("ACTION_ENABLE_TELEMETRY_ACCEPT"), _("ACTION_ENABLE_TELEMETRY_REFUSE")],
+                oriented_question=True,
             )
 
             # Acknowledge the changes
@@ -408,7 +429,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
                 CoreEvent.GUI_CONFIG_CHANGED,
                 gui_first_launch=False,
                 gui_last_version=PARSEC_VERSION,
-                telemetry_enabled=r == _("ACTION_ERROR_REPORTING_ACCEPT"),
+                telemetry_enabled=r == _("ACTION_ENABLE_TELEMETRY_ACCEPT"),
             )
 
         # For each parsec update
@@ -419,7 +440,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
 
                 # Revert the acrobat reader workaround
                 if (
-                    platform.system() == "Windows"
+                    sys.platform == "win32"
                     and win_registry.is_acrobat_reader_dc_present()
                     and not win_registry.get_acrobat_app_container_enabled()
                 ):
@@ -447,13 +468,13 @@ class MainWindow(QMainWindow, Ui_MainWindow):
             elif r == _("ACTION_NO_DEVICE_CREATE_ORGANIZATION"):
                 self._on_create_org_clicked()
 
-    def show_top(self):
+    def show_top(self) -> None:
         self.activateWindow()
         self.setWindowState((self.windowState() & ~Qt.WindowMinimized) | Qt.WindowActive)
         self.raise_()
         self.show()
 
-    def on_tab_state_changed(self, tab, state):
+    def on_tab_state_changed(self, tab: InstanceWidget, state: str) -> None:
         idx = self.tab_center.indexOf(tab)
         if idx == -1:
             return
@@ -486,20 +507,20 @@ class MainWindow(QMainWindow, Ui_MainWindow):
             self.tab_center.setTabsClosable(False)
         self._toggle_add_tab_button()
 
-    def on_tab_notification(self, widget, event):
-        idx = self.tab_center.indexOf(widget)
+    def on_tab_notification(self, tab: InstanceWidget, event: CoreEvent) -> None:
+        idx = self.tab_center.indexOf(tab)
         if idx == -1 or idx == self.tab_center.currentIndex():
             return
         if event == CoreEvent.SHARING_UPDATED:
             self.tab_center.tabBar().setTabTextColor(idx, MainWindow.TAB_NOTIFICATION_COLOR)
 
-    def _get_login_tab_index(self):
+    def _get_login_tab_index(self) -> int:
         for idx in range(self.tab_center.count()):
             if self.tab_center.tabText(idx) == _("TEXT_TAB_TITLE_LOG_IN_SCREEN"):
                 return idx
         return -1
 
-    def add_new_tab(self):
+    def add_new_tab(self) -> InstanceWidget:
         tab = InstanceWidget(self.jobs_ctx, self.event_bus, self.config, self.systray_notification)
         tab.join_organization_clicked.connect(self._on_join_org_clicked)
         tab.create_organization_clicked.connect(self._on_create_org_clicked)
@@ -512,106 +533,123 @@ class MainWindow(QMainWindow, Ui_MainWindow):
             self.tab_center.setTabsClosable(False)
         return tab
 
-    def switch_to_tab(self, idx):
+    def switch_to_tab(self, idx: int) -> None:
         if not ParsecApp.has_active_modal():
             self.tab_center.setCurrentIndex(idx)
 
-    def _find_device_from_addr(self, action_addr, display_error=False):
-        device = None
-        for available_device in list_available_devices(self.config.config_dir):
-            if available_device.organization_id == action_addr.organization_id:
-                device = available_device
-                break
-        if device is None:
-            show_error(
-                self,
-                _("TEXT_FILE_LINK_NOT_IN_ORG_organization").format(
-                    organization=action_addr.organization_id
-                ),
-            )
-        return device
-
-    def switch_to_login_tab(self, action_addr=None):
+    def switch_to_login_tab(
+        self, file_link_addr: Optional[BackendOrganizationFileLinkAddr] = None
+    ) -> None:
+        # Retrieve the login tab
         idx = self._get_login_tab_index()
         if idx != -1:
             self.switch_to_tab(idx)
         else:
+            # No loging tab, create one
             tab = self.add_new_tab()
             tab.show_login_widget()
             self.on_tab_state_changed(tab, "login")
             idx = self.tab_center.count() - 1
             self.switch_to_tab(idx)
 
-        if action_addr is not None:
-            device = self._find_device_from_addr(action_addr, display_error=True)
-            instance_widget = self.tab_center.widget(idx)
-            instance_widget.set_workspace_path(action_addr)
-            login_w = self.tab_center.widget(idx).get_login_widget()
-            login_w._on_account_clicked(device)
-
-    def go_to_file_link(self, action_addr):
-        found_org = self._find_device_from_addr(action_addr, display_error=True) is not None
-        if not found_org:
-            self.switch_to_login_tab()
+        if not file_link_addr:
+            # We're done here
             return
 
+        # Find the device corresponding to the organization in the link
+        for available_device in list_available_devices(self.config.config_dir):
+            if available_device.organization_id == file_link_addr.organization_id:
+                break
+
+        else:
+            # Cannot reach this organization with our available devices
+            show_error(
+                self,
+                _("TEXT_FILE_LINK_NOT_IN_ORG_organization").format(
+                    organization=file_link_addr.organization_id
+                ),
+            )
+            return
+
+        # Pre-select the corresponding device
+        login_w = self.tab_center.widget(idx).get_login_widget()
+        login_w._on_account_clicked(available_device)
+
+        # Set the path
+        instance_widget = self.tab_center.widget(idx)
+        instance_widget.set_workspace_path(file_link_addr)
+
+        # Prompt the user for the need to log in first
+        show_info(
+            self,
+            _("TEXT_FILE_LINK_PLEASE_LOG_IN_organization").format(
+                organization=file_link_addr.organization_id
+            ),
+        )
+
+    def go_to_file_link(self, addr: BackendOrganizationFileLinkAddr) -> None:
+        # Try to use the file link on the already logged in cores
         for idx in range(self.tab_center.count()):
             if self.tab_center.tabText(idx) == _("TEXT_TAB_TITLE_LOG_IN_SCREEN"):
                 continue
+
             w = self.tab_center.widget(idx)
             if (
                 not w
                 or not w.core
-                or w.core.device.organization_addr.organization_id != action_addr.organization_id
+                or w.core.device.organization_addr.organization_id != addr.organization_id
             ):
                 continue
-            user_manifest = w.core.user_fs.get_user_manifest()
-            found_workspace = False
-            for wk in user_manifest.workspaces:
-                if not wk.role:
-                    continue
-                if wk.id == action_addr.workspace_id:
-                    found_workspace = True
-                    central_widget = w.get_central_widget()
-                    try:
-                        central_widget.go_to_file_link(wk.id, action_addr.path)
-                        self.switch_to_tab(idx)
-                    except AttributeError:
-                        logger.exception("Central widget is not available")
-                    return
-            if not found_workspace:
+
+            central_widget = w.get_central_widget()
+            if not central_widget:
+                continue
+
+            try:
+                central_widget.go_to_file_link(addr)
+
+            except GoToFileLinkBadOrganizationIDError:
+                continue
+            except GoToFileLinkBadWorkspaceIDError:
+                # Switch tab so user understand where the error comes from
+                self.switch_to_tab(idx)
                 show_error(
                     self,
                     _("TEXT_FILE_LINK_WORKSPACE_NOT_FOUND_organization").format(
-                        organization=action_addr.organization_id
+                        organization=addr.organization_id
                     ),
                 )
                 return
-        show_info(
-            self,
-            _("TEXT_FILE_LINK_PLEASE_LOG_IN_organization").format(
-                organization=action_addr.organization_id
-            ),
-        )
-        self.switch_to_login_tab(action_addr)
+            except GoToFileLinkPathDecryptionError:
+                # Switch tab so user understand where the error comes from
+                self.switch_to_tab(idx)
+                show_error(self, _("TEXT_INVALID_URL"))
+                return
+            else:
+                self.switch_to_tab(idx)
+                return
 
-    def show_create_org_widget(self, action_addr):
+        # The file link is from an organization we'r not currently logged in
+        # or we don't have any device related to
+        self.switch_to_login_tab(addr)
+
+    def show_create_org_widget(self, action_addr: BackendOrganizationBootstrapAddr) -> None:
         self.switch_to_login_tab()
         self._on_create_org_clicked(action_addr)
 
-    def show_claim_user_widget(self, action_addr):
+    def show_claim_user_widget(self, action_addr: BackendInvitationAddr) -> None:
         self.switch_to_login_tab()
         self._on_claim_user_clicked(action_addr)
 
-    def show_claim_device_widget(self, action_addr):
+    def show_claim_device_widget(self, action_addr: BackendInvitationAddr) -> None:
         self.switch_to_login_tab()
         self._on_claim_device_clicked(action_addr)
 
-    def add_instance(self, start_arg: Optional[str] = None):
+    def add_instance(self, start_arg: Optional[str] = None) -> None:
         action_addr = None
         if start_arg:
             try:
-                action_addr = BackendActionAddr.from_url(start_arg)
+                action_addr = BackendActionAddr.from_url(start_arg, allow_http_redirection=True)
             except ValueError as exc:
                 show_error(self, _("TEXT_INVALID_URL"), exception=exc)
 
@@ -635,24 +673,24 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         else:
             show_error(self, _("TEXT_INVALID_URL"))
 
-    def close_current_tab(self, force=False):
+    def close_current_tab(self, force: bool = False) -> None:
         if self.tab_center.count() == 1:
             self.close_app()
         else:
             idx = self.tab_center.currentIndex()
             self.close_tab(idx, force=force)
 
-    def close_app(self, force=False):
+    def close_app(self, force: bool = False) -> None:
         self.show_top()
         self.need_close = True
         self.force_close = force
         self.close()
 
-    def close_all_tabs(self):
+    def close_all_tabs(self) -> None:
         for idx in range(self.tab_center.count()):
             self.close_tab(idx, force=True)
 
-    def close_tab(self, index, force=False):
+    def close_tab(self, index: int, force: bool = False) -> None:
         tab = self.tab_center.widget(index)
         if not force:
             r = _("ACTION_TAB_CLOSE_CONFIRM")
@@ -676,11 +714,14 @@ class MainWindow(QMainWindow, Ui_MainWindow):
             self.tab_center.setTabsClosable(False)
         self._toggle_add_tab_button()
 
-    def closeEvent(self, event):
+    def closeEvent(self, event: QCloseEvent) -> None:
         if self.minimize_on_close and not self.need_close:
             self.hide()
             event.ignore()
-            if not self.minimize_on_close_notif_already_send:
+
+            # This notification is disabled on Mac since minimizing apps on
+            # close is the standard behaviour on this OS.
+            if not self.minimize_on_close_notif_already_send and sys.platform != "darwin":
                 self.minimize_on_close_notif_already_send = True
                 self.systray_notification.emit(
                     "Parsec", _("TEXT_TRAY_PARSEC_STILL_RUNNING_MESSAGE"), 2000

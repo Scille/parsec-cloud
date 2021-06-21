@@ -1,4 +1,4 @@
-# Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
+# Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2016-2021 Scille SAS
 
 
 class InviteError(Exception):
@@ -17,11 +17,6 @@ class InviteNotFoundError(InviteError):
 
 class InviteAlreadyUsedError(InviteError):
     def __init__(self, msg="Invitation already used"):
-        super().__init__(msg)
-
-
-class InviteAlreadyMemberError(InviteError):
-    def __init__(self, msg="Invited user is already a member of the organization"):
         super().__init__(msg)
 
 

@@ -1,7 +1,8 @@
-# Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
+# Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2016-2021 Scille SAS
 
 import os
 import re
+import sys
 import pytest
 import psutil
 import pathlib
@@ -26,7 +27,7 @@ def run_testenv():
     try:
         # Source the run_testenv script and echo the testenv path
         base_dir = os.path.dirname(__file__)
-        if os.name == "nt":
+        if sys.platform == "win32":
             fd, bat_script = tempfile.mkstemp(suffix=".bat")
             with open(fd, "w") as f:
                 f.write(f"call {base_dir}\\scripts\\run_testenv.bat\r\necho %APPDATA%")
@@ -41,7 +42,7 @@ def run_testenv():
 
         # Retrieve the testenv path
         testenv_path = pathlib.Path(output.splitlines()[-1].decode())
-        if os.name == "nt":
+        if sys.platform == "win32":
             data_path = testenv_path / "parsec" / "data"
             cache_path = testenv_path / "parsec" / "cache"
             config_path = testenv_path / "parsec" / "config"
@@ -68,8 +69,16 @@ def run_testenv():
 
 
 @pytest.mark.slow
-@pytest.mark.skipif(os.name == "nt", reason="causes a freeze in appveyor for some reasons")
+@pytest.mark.skipif(
+    "linux" not in sys.platform,
+    reason="causes a freeze in appveyor for some reasons, and crashes on Catalina",
+)
 def test_run_testenv(run_testenv):
     available_devices = list_available_devices(run_testenv.config_dir)
     devices = [(d.human_handle.label, d.device_label) for d in available_devices]
-    assert sorted(devices) == [("Alice", "laptop"), ("Alice", "pc"), ("Bob", "laptop")]
+    assert sorted(devices) == [
+        ("Alice", "laptop"),
+        ("Alice", "pc"),
+        ("Bob", "laptop"),
+        ("Toto", "laptop"),
+    ]

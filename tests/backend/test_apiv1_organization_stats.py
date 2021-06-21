@@ -1,4 +1,4 @@
-# Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
+# Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2016-2021 Scille SAS
 
 import pytest
 from uuid import uuid4
@@ -19,9 +19,17 @@ async def organization_stats(sock, organization_id):
 
 
 @pytest.mark.trio
-async def test_organization_stats(coolorg, alice_backend_sock, administration_backend_sock, realm):
+async def test_organization_stats(
+    coolorg, alice_backend_sock, administration_backend_sock, realm, realm_factory, alice, backend
+):
     rep = await organization_stats(administration_backend_sock, coolorg.organization_id)
-    assert rep == {"status": "ok", "data_size": 0, "metadata_size": ANY, "users": 3}
+    assert rep == {
+        "status": "ok",
+        "data_size": 0,
+        "metadata_size": ANY,
+        "users": 3,
+        "workspaces": 4,
+    }
     initial_metadata_size = rep["metadata_size"]
 
     # Create new metadata
@@ -32,6 +40,7 @@ async def test_organization_stats(coolorg, alice_backend_sock, administration_ba
         "data_size": 0,
         "metadata_size": initial_metadata_size + 4,
         "users": 3,
+        "workspaces": 4,
     }
 
     # Create new data
@@ -42,6 +51,18 @@ async def test_organization_stats(coolorg, alice_backend_sock, administration_ba
         "data_size": 4,
         "metadata_size": initial_metadata_size + 4,
         "users": 3,
+        "workspaces": 4,
+    }
+
+    # create new workspace
+    await realm_factory(backend, alice)
+    rep = await organization_stats(administration_backend_sock, coolorg.organization_id)
+    assert rep == {
+        "status": "ok",
+        "data_size": 4,
+        "metadata_size": initial_metadata_size + 4,
+        "users": 3,
+        "workspaces": 5,
     }
 
 

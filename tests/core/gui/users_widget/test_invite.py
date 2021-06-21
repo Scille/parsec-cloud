@@ -1,4 +1,4 @@
-# Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
+# Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2016-2021 Scille SAS
 
 import pytest
 from unittest.mock import ANY
@@ -100,7 +100,7 @@ async def test_revoke_user(
 
     monkeypatch.setattr(
         "parsec.core.gui.users_widget.ask_question",
-        lambda *args: _("ACTION_USER_REVOCATION_CONFIRM"),
+        lambda *args, **kwargs: _("ACTION_USER_REVOCATION_CONFIRM"),
     )
 
     if online:
@@ -146,7 +146,7 @@ async def test_revoke_user_not_allowed(
 
     monkeypatch.setattr(
         "parsec.core.gui.users_widget.ask_question",
-        lambda *args: _("ACTION_USER_REVOCATION_CONFIRM"),
+        lambda *args, **kwargs: _("ACTION_USER_REVOCATION_CONFIRM"),
     )
 
     await aqtbot.run(alice_w.revoke_clicked.emit, alice_w.user_info)
@@ -175,10 +175,12 @@ async def test_cancel_user_invitation(
     email = "i@like.coffee"
 
     # Patch dialogs
-    monkeypatch.setattr("parsec.core.gui.users_widget.get_text_input", lambda *x, **y: email)
+    monkeypatch.setattr(
+        "parsec.core.gui.users_widget.get_text_input", lambda *args, **kwargs: email
+    )
     monkeypatch.setattr(
         "parsec.core.gui.users_widget.ask_question",
-        lambda *x, **y: _("TEXT_USER_INVITE_CANCEL_INVITE_ACCEPT"),
+        lambda *args, **kwargs: _("TEXT_USER_INVITE_CANCEL_INVITE_ACCEPT"),
     )
     u_w = await logged_gui.test_switch_to_users_widget()
 

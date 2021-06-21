@@ -1,4 +1,4 @@
-# Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
+# Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2016-2021 Scille SAS
 
 import attr
 from typing import Optional, Tuple, Dict, Any, Type, TypeVar
@@ -88,7 +88,7 @@ class WorkspaceEntry(BaseData):
         now = pendulum_now()
         return WorkspaceEntry(
             name=EntryName(name),
-            id=EntryID(),
+            id=EntryID.new(),
             key=SecretKey.generate(),
             encryption_revision=1,
             encrypted_on=now,
@@ -301,7 +301,7 @@ class UserManifest(BaseManifest):
     created: DateTime
     updated: DateTime
     last_processed_message: int
-    workspaces: Tuple[WorkspaceEntry] = attr.ib(converter=tuple)
+    workspaces: Tuple[WorkspaceEntry, ...] = attr.ib(converter=tuple)
 
     def get_workspace_entry(self, workspace_id: EntryID) -> Optional[WorkspaceEntry]:
         return next((w for w in self.workspaces if w.id == workspace_id), None)

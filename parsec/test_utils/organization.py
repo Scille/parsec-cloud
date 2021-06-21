@@ -1,4 +1,4 @@
-# Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
+# Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2016-2021 Scille SAS
 
 
 import os
@@ -41,7 +41,6 @@ async def initialize_test_organization(
     backend_address: BackendAddr,
     password: str,
     administration_token: str,
-    force: bool,
     additional_users_number: int,
     additional_devices_number: int,
 ) -> Tuple[LocalDevice, LocalDevice, LocalDevice]:
@@ -55,7 +54,7 @@ async def initialize_test_organization(
     ) as administration_cmds:
 
         rep = await administration_cmds.organization_create(organization_id)
-        assert rep["status"] == "ok"
+        assert rep["status"] == "ok", rep
         bootstrap_token = rep["bootstrap_token"]
 
         organization_bootstrap_addr = BackendOrganizationBootstrapAddr.build(
@@ -69,7 +68,7 @@ async def initialize_test_organization(
             human_handle=HumanHandle(label="Alice", email="alice@example.com"),
             device_label="laptop",
         )
-        save_device_with_password(config_dir, alice_device, password, force=force)
+        save_device_with_password(config_dir=config_dir, device=alice_device, password=password)
 
     config = load_config(config_dir, debug="DEBUG" in os.environ)
     # Create context manager, alice_core will be needed for the rest of the script
@@ -84,7 +83,9 @@ async def initialize_test_organization(
             other_alice_device = await _register_new_device(
                 cmds=alice_cmds, author=alice_device, device_label="pc"
             )
-            save_device_with_password(config_dir, other_alice_device, password, force=force)
+            save_device_with_password(
+                config_dir=config_dir, device=other_alice_device, password=password
+            )
             # Invite Bob in organization
             bob_device = await _register_new_user(
                 cmds=alice_cmds,
@@ -93,7 +94,17 @@ async def initialize_test_organization(
                 human_handle=HumanHandle(email="bob@example.com", label="Bob"),
                 profile=UserProfile.STANDARD,
             )
-            save_device_with_password(config_dir, bob_device, password, force=force)
+            save_device_with_password(config_dir=config_dir, device=bob_device, password=password)
+
+            # Invite Toto in organization
+            toto_device = await _register_new_user(
+                cmds=alice_cmds,
+                author=alice_device,
+                device_label="laptop",
+                human_handle=HumanHandle(email="toto@example.com", label="Toto"),
+                profile=UserProfile.OUTSIDER,
+            )
+            save_device_with_password(config_dir=config_dir, device=toto_device, password=password)
             # Create Alice workspace
             alice_ws_id = await alice_core.user_fs.workspace_create("alice_workspace")
             # Create context manager

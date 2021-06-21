@@ -1,4 +1,4 @@
-# Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
+# Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2016-2021 Scille SAS
 
 from typing import Optional, Any, Dict, Type, TypeVar
 from uuid import UUID
@@ -27,9 +27,10 @@ class UserProfile(Enum):
 
     Admin can invite and revoke users and on top of what standard user can do.
 
-    Outsider is only able to collaborate on existing realm and should only
-    access redacted certificates (hence he cannot create new realms or
-    get OWNER/MANAGER role on a realm)
+    Outsider is only able to collaborate on existing realm and can only
+    access redacted certificates (i.e. the realms created by an outsider
+    cannot be shared and the outsider cannot be OWNER/MANAGER
+    on a realm shared with him)
     """
 
     ADMIN = "ADMIN"

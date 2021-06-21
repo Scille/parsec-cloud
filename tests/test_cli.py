@@ -1,4 +1,4 @@
-# Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
+# Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2016-2021 Scille SAS
 
 import re
 import os
@@ -25,10 +25,17 @@ from parsec import __version__ as parsec_version
 from parsec.backend.postgresql import MigrationItem
 from parsec.core.local_device import save_device_with_password
 from parsec.cli import cli
+from parsec.core.cli.share_workspace import WORKSPACE_ROLE_CHOICES
 
 CWD = Path(__file__).parent.parent
 BACKEND_ADDR = "parsec://localhost"
 EMAIL_HOST = "MOCKED"
+
+
+@pytest.fixture(params=WORKSPACE_ROLE_CHOICES.keys())
+def cli_workspace_role(request):
+    expected_role = WORKSPACE_ROLE_CHOICES[request.param]
+    return request.param, expected_role
 
 
 def test_version():
@@ -38,12 +45,13 @@ def test_version():
     assert f"parsec, version {parsec_version}\n" in result.output
 
 
-def test_share_workspace(tmpdir, alice, bob):
+def test_share_workspace(tmpdir, alice, bob, cli_workspace_role):
     # As usual Windows path require a big hack...
     config_dir = tmpdir.strpath.replace("\\", "\\\\")
     # Mocking
     factory_mock = MagicMock()
     share_mock = MagicMock()
+    workspace_role, expected_workspace_role = cli_workspace_role
 
     @asynccontextmanager
     async def logged_core_factory(*args, **kwargs):
@@ -53,6 +61,7 @@ def test_share_workspace(tmpdir, alice, bob):
         return share_mock(*args, **kwargs)
 
     factory_mock.return_value.user_fs.workspace_share = share
+    factory_mock.return_value.find_workspace_from_name.return_value.id = "ws1_id"
 
     password = "S3cr3t"
     save_device_with_password(Path(config_dir), bob, password)
@@ -62,16 +71,16 @@ def test_share_workspace(tmpdir, alice, bob):
         args = (
             f"core share_workspace --password {password} "
             f"--device={bob.slughash} --config-dir={config_dir} "
-            f"ws1 {alice.user_id}"
+            f"--role={workspace_role} "
+            f"--workspace-name=ws1 "
+            f"--user-id={alice.user_id}"
         )
         result = runner.invoke(cli, args)
 
-    print(result.output)
     assert result.exit_code == 0
-    assert result.output == ""
 
     factory_mock.assert_called_once_with(ANY, bob)
-    share_mock.assert_called_once_with("/ws1", alice.user_id)
+    share_mock.assert_called_once_with("ws1_id", alice.user_id, expected_workspace_role)
 
 
 def _short_cmd(cmd):
@@ -172,7 +181,7 @@ def _wait_for_regex(p, regex):
         raise AssertionError("Too slow")
 
 
-@pytest.mark.skipif(os.name == "nt", reason="Hard to test on Windows...")
+@pytest.mark.skipif(sys.platform == "win32", reason="Hard to test on Windows...")
 def test_migrate_backend(postgresql_url, unused_tcp_port):
     sql = "SELECT current_database();"  # Dummy migration content
     dry_run_args = f"backend migrate --db {postgresql_url} --dry-run"
@@ -244,7 +253,7 @@ def ssl_conf(request):
 
 
 @pytest.mark.slow
-@pytest.mark.skipif(os.name == "nt", reason="Hard to test on Windows...")
+@pytest.mark.skipif(sys.platform == "win32", reason="Hard to test on Windows...")
 def test_full_run(coolorg, unused_tcp_port, tmpdir, ssl_conf):
     # As usual Windows path require a big hack...
     config_dir = tmpdir.strpath.replace("\\", "\\\\")
@@ -540,12 +549,12 @@ def test_full_run(coolorg, unused_tcp_port, tmpdir, ssl_conf):
         pytest.param(
             {"WINFSP_LIBRARY_PATH": "nope"},
             id="Wrong winfsp library path",
-            marks=pytest.mark.skipif(os.name != "nt", reason="Windows only"),
+            marks=pytest.mark.skipif(sys.platform != "win32", reason="Windows only"),
         ),
         pytest.param(
             {"WINFSP_DEBUG_PATH": "nope"},
             id="Wrong winfsp binary path",
-            marks=pytest.mark.skipif(os.name != "nt", reason="Windows only"),
+            marks=pytest.mark.skipif(sys.platform != "win32", reason="Windows only"),
         ),
     ],
 )

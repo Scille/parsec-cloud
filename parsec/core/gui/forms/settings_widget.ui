@@ -346,7 +346,7 @@
                </font>
               </property>
               <property name="text">
-               <string>TEXT_SETTINGS_ERROR_REPORTING_TITLE</string>
+               <string>TEXT_SETTINGS_TELEMETRY_TITLE</string>
               </property>
              </widget>
             </item>
@@ -360,7 +360,7 @@
             <item>
              <widget class="QCheckBox" name="check_box_send_data">
               <property name="text">
-               <string>TEXT_SETTINGS_CHECK_SEND_CRASH_REPORT</string>
+               <string>TEXT_SETTINGS_ENABLE_TELEMETRY</string>
               </property>
              </widget>
             </item>

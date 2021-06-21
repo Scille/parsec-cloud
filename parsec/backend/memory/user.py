@@ -1,4 +1,4 @@
-# Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
+# Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2016-2021 Scille SAS
 
 from parsec.backend.backend_events import BackendEvent
 import attr
@@ -171,10 +171,10 @@ class MemoryUserComponent(BaseUserComponent):
         return GetUserAndDevicesResult(
             user_certificate=user.redacted_user_certificate if redacted else user.user_certificate,
             revoked_user_certificate=user.revoked_user_certificate,
-            device_certificates=[
+            device_certificates=tuple(
                 d.redacted_device_certificate if redacted else d.device_certificate
                 for d in user_devices.values()
-            ],
+            ),
             trustchain_device_certificates=trustchain.devices,
             trustchain_user_certificates=trustchain.users,
             trustchain_revoked_user_certificates=trustchain.revoked_users,
@@ -408,7 +408,7 @@ class MemoryUserComponent(BaseUserComponent):
         user_id: UserID,
         revoked_user_certificate: bytes,
         revoked_user_certifier: DeviceID,
-        revoked_on: pendulum.DateTime = None,
+        revoked_on: Optional[pendulum.DateTime] = None,
     ) -> None:
         org = self._organizations[organization_id]
 

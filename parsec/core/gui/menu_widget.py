@@ -1,4 +1,4 @@
-# Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
+# Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2016-2021 Scille SAS
 
 from PyQt5.QtCore import pyqtSignal
 from PyQt5.QtGui import QPainter
@@ -7,7 +7,7 @@ from PyQt5.QtWidgets import QWidget, QStyle, QStyleOption
 from parsec.core.gui.ui.menu_widget import Ui_MenuWidget
 from parsec.core.gui.lang import translate as _
 from parsec.core.gui import file_size
-from parsec.core.logged_core import OrganizationStats
+from parsec.core.types import OrganizationStats
 
 
 class MenuWidget(QWidget, Ui_MenuWidget):

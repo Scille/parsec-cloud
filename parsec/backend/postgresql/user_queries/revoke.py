@@ -1,4 +1,6 @@
-# Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
+# Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2016-2021 Scille SAS
+
+from typing import Optional
 
 import pendulum
 
@@ -41,7 +43,7 @@ async def query_revoke_user(
     user_id: UserID,
     revoked_user_certificate: bytes,
     revoked_user_certifier: DeviceID,
-    revoked_on: pendulum.DateTime = None,
+    revoked_on: Optional[pendulum.DateTime] = None,
 ) -> None:
     result = await conn.execute(
         *_q_revoke_user(

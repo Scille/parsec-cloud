@@ -1,4 +1,4 @@
-# Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
+# Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2016-2021 Scille SAS
 
 import attr
 from typing import List, Optional, Union, Tuple
@@ -96,8 +96,6 @@ class BackendConfig:
     db_url: str
     db_min_connections: int
     db_max_connections: int
-    db_first_tries_number: int
-    db_first_tries_sleep: int
 
     blockstore_config: BaseBlockStoreConfig
 

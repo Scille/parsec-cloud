@@ -1,8 +1,8 @@
-# Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
+# Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2016-2021 Scille SAS
 
 import attr
 import pendulum
-from typing import Optional
+from typing import Optional, Union
 from secrets import token_hex
 
 from pendulum import DateTime
@@ -19,11 +19,12 @@ from parsec.api.protocol import (
     apiv1_organization_stats_serializer,
     apiv1_organization_status_serializer,
     apiv1_organization_update_serializer,
+    organization_config_serializer,
 )
 from parsec.api.data import UserCertificateContent, DeviceCertificateContent, DataError, UserProfile
 from parsec.backend.user import User, Device
 from parsec.backend.webhooks import WebhooksComponent
-from parsec.backend.utils import catch_protocol_errors, api
+from parsec.backend.utils import catch_protocol_errors, api, Unset, UnsetType
 
 
 class OrganizationError(Exception):
@@ -60,6 +61,7 @@ class Organization:
     bootstrap_token: str
     expiration_date: Optional[DateTime] = None
     root_verify_key: Optional[VerifyKey] = None
+    user_profile_outsider_allowed: bool = False
 
     def is_bootstrapped(self):
         return self.root_verify_key is not None
@@ -77,6 +79,7 @@ class OrganizationStats:
     data_size: int
     metadata_size: int
     users: int
+    workspaces: int
 
 
 class BaseOrganizationComponent:
@@ -122,6 +125,27 @@ class BaseOrganizationComponent:
             {
                 "is_bootstrapped": organization.is_bootstrapped(),
                 "expiration_date": organization.expiration_date,
+                "user_profile_outsider_allowed": organization.user_profile_outsider_allowed,
+                "status": "ok",
+            }
+        )
+
+    @api("organization_config", handshake_types=[HandshakeType.AUTHENTICATED])
+    @catch_protocol_errors
+    async def api_authenticated_organization_config(self, client_ctx, msg):
+        msg = organization_config_serializer.req_load(msg)
+        organization_id = client_ctx.organization_id
+
+        try:
+            organization = await self.get(organization_id)
+
+        except OrganizationNotFoundError:
+            return {"status": "not_found"}
+
+        return organization_config_serializer.rep_dump(
+            {
+                "expiration_date": organization.expiration_date,
+                "user_profile_outsider_allowed": organization.user_profile_outsider_allowed,
                 "status": "ok",
             }
         )
@@ -170,6 +194,7 @@ class BaseOrganizationComponent:
                 "users": stats.users,
                 "data_size": stats.data_size,
                 "metadata_size": stats.metadata_size,
+                "workspaces": stats.workspaces,
             }
         )
 
@@ -177,12 +202,8 @@ class BaseOrganizationComponent:
     @catch_protocol_errors
     async def api_organization_update(self, client_ctx, msg):
         msg = apiv1_organization_update_serializer.req_load(msg)
-
         try:
-            await self.set_expiration_date(
-                msg["organization_id"], expiration_date=msg["expiration_date"]
-            )
-
+            await self.update(msg.pop("organization_id"), **msg)
         except OrganizationNotFoundError:
             return {"status": "not_found"}
 
@@ -307,7 +328,7 @@ class BaseOrganizationComponent:
         except (OrganizationNotFoundError, OrganizationInvalidBootstrapTokenError):
             return {"status": "not_found"}
 
-        # Note: we let OrganizationFirstUserCreationError bobbles up given
+        # Note: we let OrganizationFirstUserCreationError bubbles up given
         # it should not occurs under normal circumstances
 
         # Finally notify webhook
@@ -361,7 +382,12 @@ class BaseOrganizationComponent:
         """
         raise NotImplementedError()
 
-    async def set_expiration_date(self, id: OrganizationID, expiration_date: DateTime = None):
+    async def update(
+        self,
+        id: OrganizationID,
+        expiration_date: Union[UnsetType, Optional[DateTime]] = Unset,
+        user_profile_outsider_allowed: Union[UnsetType, bool] = Unset,
+    ):
         """
         Raises:
             OrganizationNotFoundError

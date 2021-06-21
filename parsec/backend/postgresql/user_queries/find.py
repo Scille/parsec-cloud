@@ -1,4 +1,4 @@
-# Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
+# Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2016-2021 Scille SAS
 from pendulum import now as pendulum_now
 from functools import lru_cache
 from typing import Tuple, List, Optional
@@ -183,6 +183,7 @@ async def query_retrieve_active_human_by_email(
     )
     if result:
         return UserID(result["user_id"])
+    return None
 
 
 @query()

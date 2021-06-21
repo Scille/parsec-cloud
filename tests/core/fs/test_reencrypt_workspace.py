@@ -1,4 +1,4 @@
-# Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
+# Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2016-2021 Scille SAS
 
 import pytest
 from pendulum import datetime
@@ -89,7 +89,7 @@ async def test_reencrypt_placeholder(running_backend, alice, alice_user_fs):
 
 @pytest.mark.trio
 async def test_unknown_workspace(alice_user_fs):
-    bad_wid = EntryID()
+    bad_wid = EntryID.new()
 
     with pytest.raises(FSWorkspaceNotFoundError):
         await alice_user_fs.workspace_start_reencryption(bad_wid)
@@ -178,7 +178,7 @@ async def test_no_access_during_reencryption(running_backend, alice2_user_fs, wo
 
     # WorkspaceFS doesn't have encryption revision until user messages are processed
     assert aw.get_encryption_revision() == 1
-    # Data not in local cache cannot be accessed
+    # Data in local cache can be accessed
     root_info = await aw.path_info("/")
     assert root_info == {
         "id": workspace,
@@ -191,10 +191,12 @@ async def test_no_access_during_reencryption(running_backend, alice2_user_fs, wo
         "children": ["foo.txt"],
         "confinement_point": None,
     }
-    with pytest.raises(FSWorkspaceInMaintenance):
-        await aw.path_info("/foo.txt")
+    # Data not in local cache can be downloaded
+    foo_info = await aw.path_info("/foo.txt")
+    assert foo_info["type"] == "file"
+    assert foo_info["need_sync"] is False
 
-    # Also cannot sync data
+    # But data cannot be synced
     with freeze_time("2000-01-03"):
         await aw.touch("/bar.txt")
         bar_id = await aw.path_id("/bar.txt")
@@ -207,7 +209,7 @@ async def test_no_access_during_reencryption(running_backend, alice2_user_fs, wo
         if total == done:
             break
 
-    # Still not allowed to access data due to outdated encryption_revision
+    # The data in cache in still available
     root_info2 = await aw.path_info("/")
     assert root_info2 == {
         "id": workspace,
@@ -220,10 +222,11 @@ async def test_no_access_during_reencryption(running_backend, alice2_user_fs, wo
         "children": ["bar.txt", "foo.txt"],
         "confinement_point": None,
     }
-    with pytest.raises(FSBadEncryptionRevision):
-        await aw.path_info("/foo.txt")
+    foo_info = await aw.path_info("/foo.txt")
+    assert foo_info["type"] == "file"
+    assert foo_info["need_sync"] is False
 
-    # Stilly not allowed to do the sync
+    # But we're still not allowed to do the sync
     with pytest.raises(FSBadEncryptionRevision):
         await aw.sync_by_id(bar_id)
 

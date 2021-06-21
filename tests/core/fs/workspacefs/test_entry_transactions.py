@@ -1,6 +1,7 @@
-# Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
+# Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2016-2021 Scille SAS
 
 import os
+import sys
 import errno
 from pathlib import Path
 from string import ascii_lowercase
@@ -246,7 +247,7 @@ class PathElement:
 
 
 @pytest.mark.slow
-@pytest.mark.skipif(os.name == "nt", reason="Windows path style not compatible with oracle")
+@pytest.mark.skipif(sys.platform == "win32", reason="Windows path style not compatible with oracle")
 def test_entry_transactions(
     tmpdir,
     hypothesis_settings,
@@ -267,7 +268,9 @@ def test_entry_transactions(
 
         async def start_transactions(self):
             async def _transactions_controlled_cb(started_cb):
-                async with WorkspaceStorage.run(alice, Path("/dummy"), EntryID()) as local_storage:
+                async with WorkspaceStorage.run(
+                    alice, Path("/dummy"), EntryID.new()
+                ) as local_storage:
                     entry_transactions = await entry_transactions_factory(
                         self.device, alice_backend_cmds, local_storage=local_storage
                     )
@@ -338,6 +341,11 @@ def test_entry_transactions(
                 path.to_oracle().unlink()
             except OSError as exc:
                 expected_exc = exc
+
+            # On MacOS, unlink() raises a PermissionError if used on a directory
+            if sys.platform == "darwin" and isinstance(expected_exc, PermissionError):
+                if path.to_oracle().is_dir():
+                    expected_exc = IsADirectoryError()
 
             with expect_raises(expected_exc):
                 await self.entry_transactions.file_delete(path.to_parsec())

@@ -1,4 +1,4 @@
-# Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
+# Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2016-2021 Scille SAS
 
 import pytest
 from uuid import UUID
@@ -158,6 +158,6 @@ async def test_vlob_poll_changes_during_maintenance(backend, alice, alice_backen
         datetime(2000, 1, 2),
     )
 
-    # Realm under maintenance are simply skipped
+    # It's ok to poll changes while the workspace is being reencrypted
     rep = await vlob_poll_changes(alice_backend_sock, realm, 1)
-    assert rep == {"status": "in_maintenance"}
+    assert rep["status"] == "ok"

@@ -1,4 +1,4 @@
-# Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
+# Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2016-2021 Scille SAS
 
 import trio
 from pathlib import Path
@@ -201,10 +201,15 @@ class UserFS:
             role_cached_on=now,
             role=WorkspaceRole.OWNER,
         )
+
+        async def _get_previous_entry() -> WorkspaceEntry:
+            raise NotImplementedError
+
         self.remote_loader = UserRemoteLoader(
             self.device,
             self.device.user_manifest_id,
             lambda: wentry,
+            _get_previous_entry,
             self.backend_cmds,
             self.remote_devices_manager,
         )
@@ -283,13 +288,32 @@ class UserFS:
 
     async def _instantiate_workspace(self, workspace_id: EntryID) -> WorkspaceFS:
         # Workspace entry can change at any time, so we provide a way for
-        # WorskpaeFS to load it each time it is needed
+        # WorkspaceFS to load it each time it is needed
         def get_workspace_entry() -> WorkspaceEntry:
+            """
+            Return the current workspace entry.
+
+            Raises:
+                FSWorkspaceNotFoundError
+            """
             user_manifest = self.get_user_manifest()
             workspace_entry = user_manifest.get_workspace_entry(workspace_id)
             if not workspace_entry:
                 raise FSWorkspaceNotFoundError(f"Unknown workspace `{workspace_id}`")
             return workspace_entry
+
+        async def get_previous_workspace_entry() -> WorkspaceEntry:
+            """
+            Return the most recent workspace entry using the previous encryption revision.
+            This requires one or several calls to the backend.
+
+            Raises:
+                FSError
+                FSBackendOfflineError
+                FSWorkspaceInMaintenance
+            """
+            workspace_entry = get_workspace_entry()
+            return await self._get_previous_workspace_entry(workspace_entry)
 
         # Instantiate the local storage
         local_storage = await self._instantiate_workspace_storage(workspace_id)
@@ -298,6 +322,7 @@ class UserFS:
         workspace = WorkspaceFS(
             workspace_id=workspace_id,
             get_workspace_entry=get_workspace_entry,
+            get_previous_workspace_entry=get_previous_workspace_entry,
             device=self.device,
             local_storage=local_storage,
             backend_cmds=self.backend_cmds,
@@ -354,7 +379,8 @@ class UserFS:
 
     async def workspace_create(self, name: AnyEntryName) -> EntryID:
         """
-        Raises: Nothing !
+        Raises:
+            ValueError: if name is passed as str but cannot be converted to `EntryName`
         """
         name = EntryName(name)
         workspace_entry = WorkspaceEntry.new(name)
@@ -375,6 +401,7 @@ class UserFS:
         """
         Raises:
             FSWorkspaceNotFoundError
+            ValueError: if name is passed as str but cannot be converted to `EntryName`
         """
         new_name = EntryName(new_name)
         async with self._update_user_manifest_lock:
@@ -608,7 +635,7 @@ class UserFS:
         await workspace.minimal_sync(workspace_entry.id)
 
     async def workspace_share(
-        self, workspace_id: EntryID, recipient: UserID, role: Optional[WorkspaceRole]
+        self, workspace_id: EntryID, recipient: UserID, role: Optional[WorkspaceRole] = None
     ) -> None:
         """
         Raises:
@@ -1077,12 +1104,26 @@ class UserFS:
 
         if not rep["in_maintenance"] or rep["maintenance_type"] != MaintenanceType.REENCRYPTION:
             raise FSWorkspaceNotInMaintenance("Not in reencryption maintenance")
-        current_encryption_revision = rep["encryption_revision"]
         if rep["encryption_revision"] != workspace_entry.encryption_revision:
             raise FSError("Bad encryption revision")
 
+        previous_workspace_entry = await self._get_previous_workspace_entry(workspace_entry)
+        return ReencryptionJob(self.backend_cmds, workspace_entry, previous_workspace_entry)
+
+    async def _get_previous_workspace_entry(
+        self, workspace_entry: WorkspaceEntry
+    ) -> WorkspaceEntry:
+        """
+        Return the most recent workspace entry using the previous encryption revision.
+
+        Raises:
+            FSError
+            FSBackendOfflineError
+            FSWorkspaceInMaintenance
+        """
         # Must retrieve the previous encryption revision's key
         version_to_fetch = None
+        current_encryption_revision = workspace_entry.encryption_revision
         while True:
             previous_user_manifest = await self._fetch_remote_user_manifest(
                 version=version_to_fetch
@@ -1096,8 +1137,6 @@ class UserFS:
                 )
 
             if previous_workspace_entry.encryption_revision == current_encryption_revision - 1:
-                break
+                return previous_workspace_entry
             else:
                 version_to_fetch = previous_user_manifest.version - 1
-
-        return ReencryptionJob(self.backend_cmds, workspace_entry, previous_workspace_entry)

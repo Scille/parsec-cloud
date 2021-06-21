@@ -1,9 +1,10 @@
-# Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
+# Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2016-2021 Scille SAS
 
 import trio
 from typing import Optional
 from structlog import get_logger
-from urllib.request import urlopen, Request, URLError
+from urllib.error import URLError
+from urllib.request import urlopen, Request
 
 from parsec.api.protocol import OrganizationID, DeviceID, organization_bootstrap_webhook_serializer
 
@@ -17,9 +18,9 @@ def _do_urllib_request(url: str, data: bytes) -> None:
     )
     try:
         with urlopen(req, timeout=30) as rep:
-            if rep.getcode() != 200:
+            if not 200 <= rep.status < 300:
                 logger.warning(
-                    "webhook bad return status", url=url, data=data, return_status=rep.getcode()
+                    "webhook bad return status", url=url, data=data, return_status=rep.status
                 )
 
     except URLError as exc:

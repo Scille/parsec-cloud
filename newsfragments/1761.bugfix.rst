@@ -1,0 +1,1 @@
+Fix some alignments issues with the workspace widgets.

@@ -1,8 +1,8 @@
-# Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
+# Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2016-2021 Scille SAS
 
 import pytest
 import trio
-import os
+import sys
 import subprocess
 from uuid import uuid4
 from pathlib import Path
@@ -20,7 +20,7 @@ from parsec.core.ipcinterface import (
 
 
 @pytest.mark.trio
-@pytest.mark.skipif(os.name != "nt", reason="Windows only")
+@pytest.mark.skipif(sys.platform != "win32", reason="Windows only")
 async def test_win32_mutex():
     mut1 = uuid4().hex
     mut2 = uuid4().hex
@@ -39,7 +39,7 @@ async def test_win32_mutex():
 
 
 # @pytest.mark.trio
-# @pytest.mark.skipif(os.name != "nt", reason="Windows only")
+# @pytest.mark.skipif(sys.platform != "win32", reason="Windows only")
 # async def test_win32_mutex_interprocess():
 #     mutex_name = uuid4().hex
 #     python_cmd = f"""
@@ -63,7 +63,7 @@ async def test_win32_mutex():
 
 
 @pytest.mark.trio
-@pytest.mark.skipif(os.name == "nt", reason="POSIX only")
+@pytest.mark.skipif(sys.platform == "win32", reason="POSIX only")
 async def test_posix_file_lock(tmpdir):
     file1 = Path(tmpdir / "1.lock")
     # Also check having missing folders in the path is not an issue
@@ -83,7 +83,7 @@ async def test_posix_file_lock(tmpdir):
 
 
 @pytest.mark.trio
-@pytest.mark.skipif(os.name == "nt", reason="POSIX only")
+@pytest.mark.skipif(sys.platform == "win32", reason="POSIX only")
 async def test_posix_file_lock_interprocess(tmpdir):
     file1 = Path(tmpdir / "1.lock")
     python_cmd = f"""

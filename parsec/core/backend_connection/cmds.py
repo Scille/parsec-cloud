@@ -1,4 +1,4 @@
-# Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
+# Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2016-2021 Scille SAS
 
 from typing import Tuple, List, Dict, Optional
 from uuid import UUID
@@ -36,6 +36,7 @@ from parsec.api.protocol import (
     apiv1_organization_stats_serializer,
     organization_stats_serializer,
     apiv1_organization_status_serializer,
+    organization_config_serializer,
     apiv1_organization_update_serializer,
     apiv1_organization_bootstrap_serializer,
     events_subscribe_serializer,
@@ -127,6 +128,10 @@ async def _send_cmd(transport: Transport, serializer, **req) -> dict:
 
 async def organization_stats(transport: Transport) -> dict:
     return await _send_cmd(transport, organization_stats_serializer, cmd="organization_stats")
+
+
+async def organization_config(transport: Transport) -> dict:
+    return await _send_cmd(transport, organization_config_serializer, cmd="organization_config")
 
 
 ### Events&misc API ###
@@ -648,7 +653,7 @@ async def apiv1_organization_stats(transport: Transport, organization_id: Organi
     )
 
 
-async def organization_status(transport: Transport, organization_id: OrganizationID) -> dict:
+async def apiv1_organization_status(transport: Transport, organization_id: OrganizationID) -> dict:
     return await _send_cmd(
         transport,
         apiv1_organization_status_serializer,
@@ -657,15 +662,15 @@ async def organization_status(transport: Transport, organization_id: Organizatio
     )
 
 
-async def organization_update(
-    transport: Transport, organization_id: OrganizationID, expiration_date: DateTime = None
+async def apiv1_organization_update(
+    transport: Transport, organization_id: OrganizationID, **fields: Dict
 ) -> dict:
     return await _send_cmd(
         transport,
         apiv1_organization_update_serializer,
         cmd="organization_update",
         organization_id=organization_id,
-        expiration_date=expiration_date,
+        **fields
     )
 
 

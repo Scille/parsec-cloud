@@ -1,8 +1,8 @@
-# Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
+# Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2016-2021 Scille SAS
 
-import trio
 from uuid import UUID
 
+from parsec.utils import open_service_nursery
 from parsec.api.protocol import OrganizationID
 from parsec.backend.blockstore import BaseBlockStoreComponent
 from parsec.backend.block import BlockAlreadyExistsError, BlockNotFoundError, BlockTimeoutError
@@ -22,7 +22,7 @@ class RAID1BlockStoreComponent(BaseBlockStoreComponent):
                 pass
 
         value = None
-        async with trio.open_service_nursery() as nursery:
+        async with open_service_nursery() as nursery:
             for blockstore in self.blockstores:
                 nursery.start_soon(_single_blockstore_read, nursery, blockstore)
 
@@ -43,6 +43,6 @@ class RAID1BlockStoreComponent(BaseBlockStoreComponent):
                 # Only solution to solve this is to ignore AlreadyExistsError.
                 pass
 
-        async with trio.open_service_nursery() as nursery:
+        async with open_service_nursery() as nursery:
             for blockstore in self.blockstores:
                 nursery.start_soon(_single_blockstore_create, blockstore)

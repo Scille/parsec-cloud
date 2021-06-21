@@ -1,15 +1,16 @@
-# Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
+# Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2016-2021 Scille SAS
 
 from parsec.core.core_events import CoreEvent
-import os
 import trio
 import logging
+import sys
+
 from pathlib import PurePath
 from pendulum import DateTime
 from structlog import get_logger
 from typing import Sequence, Optional
 from importlib import __import__ as import_function
-from sys import platform as _platform
+from subprocess import CalledProcessError
 
 from async_generator import asynccontextmanager
 
@@ -35,7 +36,7 @@ from parsec.core.win_registry import cleanup_parsec_drive_icons
 # avoid spending too much time importing them later while the
 # trio loop is running.
 try:
-    if os.name == "nt":
+    if sys.platform == "win32":
         import_function("winfspy")
     else:
         import_function("fuse")
@@ -47,7 +48,7 @@ logger = get_logger()
 
 def get_mountpoint_runner():
     # Windows
-    if os.name == "nt":
+    if sys.platform == "win32":
 
         try:
             # Use import function for easier mock up
@@ -85,7 +86,7 @@ class MountpointManager:
         self._mountpoint_tasks = {}
         self._timestamped_workspacefs = {}
 
-        if os.name == "nt":
+        if sys.platform == "win32":
             self._build_mountpoint_path = lambda base_path, parts: base_path / "\\".join(
                 winify_entry_name(x) for x in parts
             )
@@ -266,15 +267,41 @@ class MountpointManager:
 
 
 async def cleanup_macos_mountpoint_folder(base_mountpoint_path):
-    # In case of a crash on macOS, workspaces don't unmount correctly and leave empty directories
-    # in the default mount folder. This function is used to clean these anytime a login occurs.
-    for dirs in os.listdir(base_mountpoint_path):
-        dir_path = str(base_mountpoint_path) + "/" + str(dirs)
-        stats = os.statvfs(dir_path)
-        if stats.f_blocks == 0 and stats.f_ffree == 0 and stats.f_bavail == 0:
-            await trio.run_process(["diskutil", "unmount", dir_path])
-            if dirs in os.listdir(base_mountpoint_path):  # checking if there is something to delete
-                await trio.run_process(["rm", "-d", dir_path])  # otherwise an empty dir remains
+    # In case of a crash on macOS, workspaces don't unmount correctly and leave empty
+    # mountpoints or directories in the default mount folder. This function is used to
+    # unmount and/or delete these anytime a login occurs. In some rare and so far unknown
+    # conditions, the unmount call can fail, raising a CalledProcessError, hence the
+    # exception below. In such cases, the issue stops occurring after a system reboot,
+    # making the exception catching a temporary solution.
+    base_mountpoint_path = trio.Path(base_mountpoint_path)
+    try:
+        mountpoint_names = await base_mountpoint_path.iterdir()
+    except FileNotFoundError:
+        # Unlike with `pathlib.Path.iterdir` which returns a lazy itertor,
+        # `trio.Path.iterdir` does FS access and may raise FileNotFoundError
+        return
+    for mountpoint_name in mountpoint_names:
+        mountpoint_path = base_mountpoint_path / mountpoint_name
+        stats = await trio.Path(mountpoint_path).stat()
+        if (
+            stats.st_size == 0
+            and stats.st_blocks == 0
+            and stats.st_atime == 0
+            and stats.st_mtime == 0
+            and stats.st_ctime == 0
+        ):
+            try:
+                await trio.run_process(["diskutil", "unmount", "force", mountpoint_path])
+            except CalledProcessError as exc:
+                logger.warning(
+                    "Error during mountpoint cleanup: diskutil unmount failed",
+                    exc_info=exc,
+                    mountpoint_path=mountpoint_path,
+                )
+            try:
+                await trio.Path(mountpoint_path).rmdir()
+            except FileNotFoundError:
+                pass
 
 
 @asynccontextmanager
@@ -295,13 +322,10 @@ async def mountpoint_manager_factory(
     runner = get_mountpoint_runner()
 
     # Now is a good time to perform some cleanup in the registry
-    if os.name == "nt":
+    if sys.platform == "win32":
         cleanup_parsec_drive_icons()
-    elif _platform == "darwin":
-        try:
-            await cleanup_macos_mountpoint_folder(base_mountpoint_path)
-        except FileNotFoundError:
-            pass
+    elif sys.platform == "darwin":
+        await cleanup_macos_mountpoint_folder(base_mountpoint_path)
 
     def on_event(event, new_entry, previous_entry=None):
         # Workspace created

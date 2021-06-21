@@ -1,4 +1,4 @@
-# Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
+# Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2016-2021 Scille SAS
 
 import attr
 from pathlib import Path
@@ -106,7 +106,7 @@ def generate_new_device(
         signing_key=signing_key or SigningKey.generate(),
         private_key=private_key or PrivateKey.generate(),
         profile=profile,
-        user_manifest_id=EntryID(),
+        user_manifest_id=EntryID.new(),
         user_manifest_key=SecretKey.generate(),
         local_symkey=SecretKey.generate(),
     )
@@ -259,9 +259,7 @@ def load_device_with_password(key_file: Path, password: str) -> LocalDevice:
         raise LocalDeviceValidationError(f"Cannot load local device: {exc}") from exc
 
 
-def save_device_with_password(
-    config_dir: Path, device: LocalDevice, password: str, force: bool = False
-) -> Path:
+def save_device_with_password(config_dir: Path, device: LocalDevice, password: str) -> Path:
     """
         LocalDeviceError
         LocalDeviceNotFoundError
@@ -270,12 +268,22 @@ def save_device_with_password(
         LocalDevicePackingError
     """
     key_file = get_default_key_file(config_dir, device)
-    _save_device_with_password(key_file, device, password, force=force)
+    # Why do we use `force=True` here ?
+    # Key file name is per-device unique (given it contains the device slughash),
+    # hence there is no risk to overwrite another device.
+    # So if we are overwritting a key file it could be by:
+    # - the same device object, hence overwritting has no effect
+    # - a device object with same slughash but different device/user keys
+    #   This would mean the device enrollment has been replayed (which is
+    #   not possible in theory, but could occur in case of a rollback in the
+    #   Parsec server), in this case the old device object is now invalid
+    #   and it's a good thing to replace it.
+    _save_device_with_password(key_file, device, password, force=True)
     return key_file
 
 
 def _save_device_with_password(
-    key_file: Path, device: LocalDevice, password: str, force: bool = False
+    key_file: Path, device: LocalDevice, password: str, force: bool
 ) -> None:
     if key_file.exists() and not force:
         raise LocalDeviceAlreadyExistsError(f"Device key file `{key_file}` already exists")

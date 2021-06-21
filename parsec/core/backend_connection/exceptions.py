@@ -1,4 +1,4 @@
-# Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
+# Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2016-2021 Scille SAS
 
 
 class BackendConnectionError(Exception):
@@ -27,4 +27,9 @@ class BackendInvitationNotFound(BackendConnectionRefused):
 
 # TODO: hack needed by `LoggedCore.get_user_info`
 class BackendNotFoundError(BackendConnectionError):
+    pass
+
+
+# TODO: hack needed by `LoggedCore.new_user_invitation`
+class BackendInvitationOnExistingMember(BackendConnectionError):
     pass

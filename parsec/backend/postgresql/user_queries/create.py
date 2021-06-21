@@ -1,4 +1,4 @@
-# Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
+# Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2016-2021 Scille SAS
 
 from parsec.backend.backend_events import BackendEvent
 import itertools
@@ -135,6 +135,7 @@ VALUES (
 async def _do_create_user_with_human_handle(
     conn, organization_id: OrganizationID, user: User, first_device: Device
 ) -> None:
+    assert user.human_handle is not None
     # Create human handle if needed
     await conn.execute(
         *_q_insert_human_if_not_exists(
@@ -272,7 +273,7 @@ async def _create_device(
 async def query_create_device(
     conn, organization_id: OrganizationID, device: Device, encrypted_answer: bytes = b""
 ) -> None:
-    await _create_device(conn, organization_id, device, encrypted_answer)
+    await _create_device(conn, organization_id, device, bool(encrypted_answer))
     await send_signal(
         conn,
         BackendEvent.DEVICE_CREATED,

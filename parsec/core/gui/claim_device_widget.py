@@ -1,4 +1,4 @@
-# Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
+# Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2016-2021 Scille SAS
 
 import trio
 from enum import IntEnum
@@ -363,7 +363,7 @@ class ClaimDeviceProvideInfoWidget(QWidget, Ui_ClaimDeviceProvideInfoWidget):
     claim_success = pyqtSignal(QtToTrioJob)
     claim_error = pyqtSignal(QtToTrioJob)
 
-    def __init__(self, jobs_ctx, claimer, device_email):
+    def __init__(self, jobs_ctx, claimer):
         super().__init__()
         self.setupUi(self)
         self.jobs_ctx = jobs_ctx
@@ -372,6 +372,7 @@ class ClaimDeviceProvideInfoWidget(QWidget, Ui_ClaimDeviceProvideInfoWidget):
         self.line_edit_device.setFocus()
         self.line_edit_device.set_validator(validators.DeviceNameValidator())
         self.line_edit_device.setText(get_default_device())
+        self.line_edit_device.textChanged.connect(self._on_device_text_changed)
         self.line_edit_device.validity_changed.connect(self.check_infos)
         self.widget_password.info_changed.connect(self.check_infos)
         self.button_ok.setDisabled(True)
@@ -379,6 +380,9 @@ class ClaimDeviceProvideInfoWidget(QWidget, Ui_ClaimDeviceProvideInfoWidget):
         self.claim_error.connect(self._on_claim_error)
         self.label_wait.hide()
         self.button_ok.clicked.connect(self._on_claim_clicked)
+
+    def _on_device_text_changed(self, device_text):
+        self.widget_password.set_excluded_strings([device_text])
 
     def check_infos(self, _=""):
         if self.line_edit_device.is_input_valid() and self.widget_password.is_valid():
@@ -510,7 +514,6 @@ class ClaimDeviceWidget(QWidget, Ui_ClaimDeviceWidget):
         self.dialog = None
         self.addr = addr
         self.status = None
-        self.device_email = None
         self.claimer_job = None
         self.retrieve_info_job = None
         self.claimer_success.connect(self._on_claimer_success)
@@ -605,15 +608,17 @@ class ClaimDeviceWidget(QWidget, Ui_ClaimDeviceWidget):
         current_page = self.main_layout.takeAt(0).widget()
         current_page.hide()
         current_page.setParent(None)
-        page = ClaimDeviceProvideInfoWidget(self.jobs_ctx, self.claimer, self.device_email)
+        page = ClaimDeviceProvideInfoWidget(self.jobs_ctx, self.claimer)
         page.succeeded.connect(self._on_finished)
         page.failed.connect(self._on_page_failed)
         self.main_layout.insertWidget(0, page)
 
-    def _on_finished(self, device, password):
-        save_device_with_password(self.config.config_dir, device, password)
+    def _on_finished(self, new_device, password):
+        save_device_with_password(
+            config_dir=self.config.config_dir, device=new_device, password=password
+        )
         show_info(self, _("TEXT_CLAIM_DEVICE_SUCCESSFUL"))
-        self.status = (device, password)
+        self.status = (new_device, password)
         self.dialog.accept()
 
     def _on_claimer_success(self, job):

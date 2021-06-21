@@ -1,11 +1,12 @@
-# Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
+# Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2016-2021 Scille SAS
 
 import attr
 import trio
 from collections import defaultdict
-from typing import List, Dict, Tuple, AsyncIterator, cast, Pattern, Callable, Optional
+from typing import List, Dict, Tuple, AsyncIterator, cast, Pattern, Callable, Optional, Awaitable
 from pendulum import DateTime, now as pendulum_now
 
+from parsec.crypto import CryptoError
 from parsec.event_bus import EventBus
 from parsec.api.data import BaseManifest as BaseRemoteManifest
 from parsec.api.data import FileManifest as RemoteFileManifest
@@ -24,6 +25,7 @@ from parsec.core.types import (
     RemoteWorkspaceManifest,
     RemoteFolderishManifests,
     DEFAULT_BLOCK_SIZE,
+    BackendOrganizationFileLinkAddr,
 )
 from parsec.core.remote_devices_manager import RemoteDevicesManager
 from parsec.core.backend_connection import (
@@ -52,6 +54,7 @@ from parsec.core.fs.exceptions import (
 )
 from parsec.core.fs.workspacefs.workspacefile import WorkspaceFile
 from parsec.core.fs.storage import BaseWorkspaceStorage
+from parsec.utils import open_service_nursery
 
 
 @attr.s(slots=True, frozen=True, auto_attribs=True)
@@ -70,6 +73,7 @@ class WorkspaceFS:
         self,
         workspace_id: EntryID,
         get_workspace_entry: Callable[[], WorkspaceEntry],
+        get_previous_workspace_entry: Callable[[], Awaitable[WorkspaceEntry]],
         device: LocalDevice,
         local_storage: BaseWorkspaceStorage,
         backend_cmds: BackendAuthenticatedCmds,
@@ -78,6 +82,7 @@ class WorkspaceFS:
     ):
         self.workspace_id = workspace_id
         self.get_workspace_entry = get_workspace_entry
+        self.get_previous_workspace_entry = get_previous_workspace_entry
         self.device = device
         self.local_storage = local_storage
         self.backend_cmds = backend_cmds
@@ -89,6 +94,7 @@ class WorkspaceFS:
             self.device,
             self.workspace_id,
             self.get_workspace_entry,
+            self.get_previous_workspace_entry,
             self.backend_cmds,
             self.remote_devices_manager,
             self.local_storage,
@@ -504,12 +510,22 @@ class WorkspaceFS:
             await self.minimal_sync(child)
 
     async def _upload_blocks(self, manifest: RemoteFileManifest) -> None:
-        for access in manifest.blocks:
-            try:
-                data = await self.local_storage.get_dirty_block(access.id)
-            except FSLocalMissError:
-                continue
-            await self.remote_loader.upload_block(access, data)
+        blocks_iter = iter(manifest.blocks)
+
+        async def _uploader() -> None:
+            while True:
+                access = next(blocks_iter, None)
+                if not access:
+                    break
+                try:
+                    data = await self.local_storage.get_dirty_block(access.id)
+                except FSLocalMissError:
+                    continue
+                await self.remote_loader.upload_block(access, data)
+
+        async with open_service_nursery() as nursery:
+            for _ in range(4):
+                nursery.start_soon(_uploader)
 
     async def minimal_sync(self, entry_id: EntryID) -> None:
         """
@@ -732,3 +748,27 @@ class WorkspaceFS:
             return result
 
         return await rec(self.workspace_id)
+
+    def generate_file_link(self, path: AnyPath) -> BackendOrganizationFileLinkAddr:
+        """
+        Raises: Nothing
+        """
+        workspace_entry = self.get_workspace_entry()
+        encrypted_path = workspace_entry.key.encrypt(str(FsPath(path)).encode("utf-8"))
+        return BackendOrganizationFileLinkAddr.build(
+            organization_addr=self.device.organization_addr,
+            workspace_id=workspace_entry.id,
+            encrypted_path=encrypted_path,
+        )
+
+    def decrypt_file_link_path(self, addr: BackendOrganizationFileLinkAddr) -> FsPath:
+        """
+        Raises: ValueError
+        """
+        workspace_entry = self.get_workspace_entry()
+        try:
+            raw_path = workspace_entry.key.decrypt(addr.encrypted_path)
+        except CryptoError:
+            raise ValueError("Cannot decrypt path")
+        # FsPath raises ValueError, decode() raises UnicodeDecodeError which is a subclass of ValueError
+        return FsPath(raw_path.decode("utf-8"))

@@ -1,4 +1,4 @@
-# Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
+# Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2016-2021 Scille SAS
 
 import trio
 from enum import Enum
@@ -11,7 +11,7 @@ from parsec.crypto import SigningKey
 from parsec.event_bus import EventBus
 from parsec.api.data import EntryID
 from parsec.api.protocol import DeviceID, APIEvent, AUTHENTICATED_CMDS
-from parsec.core.types import BackendOrganizationAddr
+from parsec.core.types import BackendOrganizationAddr, OrganizationConfig
 from parsec.core.backend_connection import cmds
 from parsec.core.backend_connection.transport import connect_as_authenticated, TransportPool
 from parsec.core.backend_connection.exceptions import BackendNotAvailable, BackendConnectionRefused
@@ -86,6 +86,7 @@ class BackendAuthenticatedCmds:
         cmds.realm_finish_reencryption_maintenance
     )
     organization_stats = expose_cmds_with_retrier(cmds.organization_stats)
+    organization_config = expose_cmds_with_retrier(cmds.organization_config)
 
 
 for cmd in AUTHENTICATED_CMDS:
@@ -171,6 +172,13 @@ class BackendAuthenticatedConn:
         self._monitors_idle_event = trio.Event()
         self._monitors_idle_event.set()  # No monitors
         self._backend_connection_failures = 0
+        self._organization_config = OrganizationConfig(
+            expiration_date=False, user_profile_outsider_allowed=False
+        )
+        # organization config is very unlikely to change, hence we query it
+        # once when backend connection bootstraps, then keep the value in cache.
+        # On top of that, we pre-populate the cache with a "good enough" default
+        # value so organization config is guaranteed to be always available \o/
         self.event_bus = event_bus
         self.max_cooldown = max_cooldown
 
@@ -202,6 +210,9 @@ class BackendAuthenticatedConn:
         # A better approach would be to make sure that components using this status
         # do not rely on this redundant event.
         self._status_event_sent = True
+
+    def get_organization_config(self) -> OrganizationConfig:
+        return self._organization_config
 
     def register_monitor(self, monitor_cb) -> None:
         if self._started:
@@ -273,7 +284,18 @@ class BackendAuthenticatedConn:
             self._backend_connection_failures = 0
             logger.info("Backend online")
 
-            await cmds.events_subscribe(transport)
+            rep = await cmds.organization_config(transport)
+            if rep["status"] != "ok":
+                raise BackendConnectionRefused(f"Error while fetching organization config: {rep}")
+
+            self._organization_config = OrganizationConfig(
+                expiration_date=rep["expiration_date"],
+                user_profile_outsider_allowed=rep["user_profile_outsider_allowed"],
+            )
+
+            rep = await cmds.events_subscribe(transport)
+            if rep["status"] != "ok":
+                raise BackendConnectionRefused(f"Error while events subscribing : {rep}")
 
             # Quis custodiet ipsos custodes?
             monitors_states = ["STALLED" for _ in range(len(self._monitors_cbs))]

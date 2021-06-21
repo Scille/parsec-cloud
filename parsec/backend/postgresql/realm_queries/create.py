@@ -1,4 +1,4 @@
-# Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
+# Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2016-2021 Scille SAS
 
 from parsec.api.protocol import RealmRole, OrganizationID
 from parsec.backend.backend_events import BackendEvent
@@ -67,6 +67,7 @@ SELECT
 async def query_create(
     conn, organization_id: OrganizationID, self_granted_role: RealmGrantedRole
 ) -> None:
+    assert self_granted_role.granted_by is not None
     assert self_granted_role.granted_by.user_id == self_granted_role.user_id
     assert self_granted_role.role == RealmRole.OWNER
 

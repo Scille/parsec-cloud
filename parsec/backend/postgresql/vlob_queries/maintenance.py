@@ -1,8 +1,9 @@
-# Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
+# Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2016-2021 Scille SAS
 
 from uuid import UUID
 from typing import List, Tuple
 
+from parsec.backend.utils import OperationKind
 from parsec.backend.realm import RealmRole
 from parsec.api.protocol import DeviceID, OrganizationID
 from parsec.backend.postgresql.utils import (
@@ -122,7 +123,7 @@ async def _check_realm_and_maintenance_access(
     conn, organization_id, author, realm_id, encryption_revision
 ):
     await _check_realm(
-        conn, organization_id, realm_id, encryption_revision, expected_maintenance=True
+        conn, organization_id, realm_id, encryption_revision, OperationKind.MAINTENANCE
     )
     can_write_roles = (RealmRole.OWNER,)
     await _check_realm_access(conn, organization_id, realm_id, author, can_write_roles)

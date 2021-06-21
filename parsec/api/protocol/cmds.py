@@ -1,4 +1,4 @@
-# Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
+# Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2016-2021 Scille SAS
 
 
 AUTHENTICATED_CMDS = {
@@ -44,6 +44,7 @@ AUTHENTICATED_CMDS = {
     "realm_finish_reencryption_maintenance",
     # Organization
     "organization_stats",  # organization_stats has been added in api v2.1
+    "organization_config",  # organization_config has been added in api v2.2
 }
 INVITED_CMDS = {
     "ping",  # TODO: remove ping and ping event (only have them in tests)

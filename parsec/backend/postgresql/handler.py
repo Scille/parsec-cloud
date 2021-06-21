@@ -1,11 +1,11 @@
-# Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
+# Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2016-2021 Scille SAS
 
 import trio
 import attr
 import re
 from pendulum import now as pendulum_now
 import triopg
-from typing import List, Tuple, Optional
+from typing import List, Tuple, Optional, Iterable
 
 from triopg import UniqueViolationError, UndefinedTableError, PostgresError
 from uuid import uuid4
@@ -30,32 +30,6 @@ logger = get_logger()
 
 CREATE_MIGRATION_TABLE_ID = 2
 MIGRATION_FILE_PATTERN = r"^(?P<id>\d{4})_(?P<name>\w*).sql$"
-
-
-async def retry_postgres(function, *args, **kwargs):
-    postgres_initial_connect_failed = False
-    tries_number = kwargs["tries_number"]
-    tries_sleep = kwargs["tries_sleep"]
-    kwargs = {k: v for k, v in kwargs.items() if k not in ["tries_number", "tries_sleep"]}
-    while True:
-        try:
-            return await function(
-                *args, **kwargs, postgres_initial_connect_failed=postgres_initial_connect_failed
-            )
-
-        except OSError:
-            postgres_initial_connect_failed = True
-            if tries_number == 1:
-                logger.error("initial db connection failed", tries_remaining=0)
-                raise
-            if tries_number > 1:
-                tries_number -= 1
-            logger.warning(
-                "initial db connection failed",
-                tries_remaining=tries_number if tries_number else "unlimited",
-                wait_time=tries_sleep,
-            )
-            await trio.sleep(tries_sleep)
 
 
 @attr.s(slots=True, auto_attribs=True)
@@ -97,34 +71,17 @@ class MigrationResult:
 
 
 async def apply_migrations(
-    url: str,
-    first_tries_number: int,
-    first_tries_sleep: int,
-    migrations: List[MigrationItem],
-    dry_run: bool,
+    url: str, migrations: Iterable[MigrationItem], dry_run: bool
 ) -> MigrationResult:
     """
     Returns: MigrationResult
     """
-
-    async def _retryable(url, migrations, dry_run, postgres_initial_connect_failed=False):
-        async with triopg.connect(url) as conn:
-            if postgres_initial_connect_failed:
-                logger.warning("db connection established after initial failure")
-            return await _apply_migrations(conn, migrations, dry_run)
-
-    return await retry_postgres(
-        _retryable,
-        url,
-        migrations,
-        dry_run,
-        tries_number=first_tries_number,
-        tries_sleep=first_tries_sleep,
-    )
+    async with triopg.connect(url) as conn:
+        return await _apply_migrations(conn, migrations, dry_run)
 
 
 async def _apply_migrations(
-    conn, migrations: Tuple[MigrationItem], dry_run: bool
+    conn, migrations: Iterable[MigrationItem], dry_run: bool
 ) -> MigrationResult:
     error = None
     already_applied = []
@@ -196,51 +153,49 @@ def retry_on_unique_violation(fn):
 
 # TODO: replace by a fonction
 class PGHandler:
-    def __init__(
-        self,
-        url: str,
-        min_connections: int,
-        max_connections: int,
-        first_tries_number: int,
-        first_tries_sleep: int,
-        event_bus: EventBus,
-    ):
+    def __init__(self, url: str, min_connections: int, max_connections: int, event_bus: EventBus):
         self.url = url
         self.min_connections = min_connections
         self.max_connections = max_connections
-        self.first_tries_number = first_tries_number
-        self.first_tries_sleep = first_tries_sleep
         self.event_bus = event_bus
         self.pool: triopg.TrioPoolProxy
         self.notification_conn: triopg.TrioConnectionProxy
         self._task_status: Optional[TaskStatus] = None
+        self._connection_lost = False
 
     async def init(self, nursery):
         self._task_status = await start_task(nursery, self._run_connections)
 
     async def _run_connections(self, task_status=trio.TASK_STATUS_IGNORED):
-        async def _retryable(self, task_status, postgres_initial_connect_failed=False):
-            async with triopg.create_pool(
-                self.url, min_size=self.min_connections, max_size=self.max_connections
-            ) as self.pool:
-                # This connection is dedicated to the notifications listening, so it
-                # would only complicate stuff to include it into the connection pool
-                async with triopg.connect(self.url) as self.notification_conn:
-                    await self.notification_conn.add_listener(
-                        "app_notification", self._on_notification
-                    )
-                    task_status.started()
-                    if postgres_initial_connect_failed:
-                        logger.warning("db connection established after initial failure")
-                    await trio.sleep_forever()
 
-        await retry_postgres(
-            _retryable,
-            self,
-            task_status,
-            tries_number=self.first_tries_number,
-            tries_sleep=self.first_tries_sleep,
-        )
+        async with triopg.create_pool(
+            self.url, min_size=self.min_connections, max_size=self.max_connections
+        ) as self.pool:
+            # This connection is dedicated to the notifications listening, so it
+            # would only complicate stuff to include it into the connection pool
+            async with triopg.connect(self.url) as self.notification_conn:
+                self.notification_conn.add_termination_listener(
+                    self._on_notification_conn_termination
+                )
+                await self.notification_conn.add_listener("app_notification", self._on_notification)
+                task_status.started()
+                try:
+                    await trio.sleep_forever()
+                finally:
+                    if self._connection_lost:
+                        raise ConnectionError("PostgreSQL notification query has been lost")
+
+    # Notification listening is achieve by a never-ending LISTEN
+    # query to PostgreSQL.
+    # If this query is terminated (most likely because the database has
+    # been restarted) we might miss some notifications.
+    # Hence all client connections should be closed in order not to mislead
+    # them into thinking no notifications has occurred.
+    # And the simplest way to do that is to raise a big exception in _run_connections ;-)
+    def _on_notification_conn_termination(self, connection):
+        self._connection_lost = True
+        if self._task_status:
+            self._task_status.cancel()
 
     def _on_notification(self, connection, pid, channel, payload):
         data = unpackb(b64decode(payload.encode("ascii")))

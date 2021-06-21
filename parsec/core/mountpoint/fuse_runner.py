@@ -1,6 +1,6 @@
-# Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
+# Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2016-2021 Scille SAS
 
-from parsec.core.core_events import CoreEvent
+import os
 import sys
 import trio
 import errno
@@ -13,6 +13,7 @@ from structlog import get_logger
 from contextlib import contextmanager
 from itertools import count
 
+from parsec.core.core_events import CoreEvent
 from parsec.core.mountpoint.fuse_operations import FuseOperations
 from parsec.core.mountpoint.thread_fs_access import ThreadFSAccess
 from parsec.core.mountpoint.exceptions import MountpointDriverCrash
@@ -125,7 +126,7 @@ async def fuse_mountpoint_runner(
             # Note that this does not prevent the user from using a certain encoding
             # in the context of the parsec app and another encoding in the context of
             # an application accessing the mountpoint. In this case, an encoding error
-            # might be raised while fuspy tries to decode the path. If that happends,
+            # might be raised while fuspy tries to decode the path. If that happens,
             # fuspy will log the error and simply return EINVAL, which is acceptable.
             encoding = sys.getfilesystemencoding()
 
@@ -228,24 +229,59 @@ async def _stop_fuse_thread(
     if fuse_thread_stopped.is_set() or not fuse_thread_started.is_set():
         return
     logger.info("Stopping fuse thread...", mountpoint=mountpoint_path)
+
+    # Fuse exit in macOS
     if sys.platform == "darwin":
+
         # The schedule_exit() solution doesn't work on macOS, instead freezes the application for
         # 120 seconds before a timeout occurs. The solution used is to call this function (macOS
         # equivalent to fusermount) in a subprocess to unmount.
-        await trio.run_process(["diskutil", "unmount", str(mountpoint_path)])
+        process_args = ["diskutil", "unmount", "force", str(mountpoint_path)]
+        process = await trio.open_process(process_args)
+
+        # Perform 300 attempts of 10 ms, i.e a 3 second timeout
+        # A while loop wouldn't be ideal here, especially since this code is protected against cancellation
+        for _ in range(300):
+            # Check if the attempt succeeded for 10 ms
+            if await trio.to_thread.run_sync(fuse_thread_stopped.wait, 0.01):
+                break
+            # Restart the unmount process if necessary
+            if process.poll() is not None:
+                process = await trio.open_process(process_args)
+
+        # Wait for unmount process to complete if necessary
+        await process.wait()
+
+    # Fuse exit in linux
     else:
+
         # Schedule an exit in the fuse operations
         fuse_operations.schedule_exit()
-    # Loop over attemps at waking up the fuse operations
-    while True:
-        # Attempt to wake up the fuse operations
-        try:
-            await trio.Path(mountpoint_path / ".__shutdown_fuse__").exists()
-        # This might fail for many reasons
-        except OSError:
-            pass
-        # Check if the attempt succeeded for 10 ms
-        if await trio.to_thread.run_sync(fuse_thread_stopped.wait, 0.01):
-            break
+
+        # Ping fuse by performing an access from a daemon thread
+        def _ping_fuse_thread_target():
+            try:
+                os.stat(mountpoint_path / ".__shutdown_fuse__")
+            except OSError:
+                pass
+
+        # All kind of stuff can go wrong here if the access is performed while the fuse FS is already shutting down,
+        # from exotic exceptions to blocking forever. For this reason, we don't use `await trio.Path(...).exists()`
+        # but simply fire and forget a ping to the fuse FS. Either this ping succeeds in waking the FS up and thus
+        # starting its shutdown procedure, or it fails because the FS is already shutting down.
+        thread = threading.Thread(target=_ping_fuse_thread_target, daemon=True)
+        thread.start()
+
+        # Perform 100 attempts of 10 ms, i.e a 1 second timeout
+        # A while loop wouldn't be ideal here, especially since this code is protected against cancellation
+        for _ in range(100):
+            # Check if the attempt succeeded for 10 ms
+            if await trio.to_thread.run_sync(fuse_thread_stopped.wait, 0.01):
+                break
+            # Restart the daemon thread if necessary
+            if not thread.is_alive():
+                thread = threading.Thread(target=_ping_fuse_thread_target, daemon=True)
+                thread.start()
+
     # The thread has now stopped
     logger.info("Fuse thread stopped", mountpoint=mountpoint_path)

@@ -1,6 +1,6 @@
-# Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
+# Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2016-2021 Scille SAS
 
-from typing import Optional
+from typing import Optional, Union
 
 from pendulum import DateTime
 
@@ -17,8 +17,10 @@ from parsec.backend.organization import (
     OrganizationNotFoundError,
     OrganizationFirstUserCreationError,
 )
+from parsec.backend.utils import Unset, UnsetType
 from parsec.backend.memory.vlob import MemoryVlobComponent
 from parsec.backend.memory.block import MemoryBlockComponent
+from parsec.backend.memory.realm import MemoryRealmComponent
 from parsec.backend.events import BackendEvent
 
 
@@ -28,6 +30,7 @@ class MemoryOrganizationComponent(BaseOrganizationComponent):
         self._user_component = None
         self._vlob_component = None
         self._block_component = None
+        self._realm_component = None
         self._organizations = {}
         self._send_event = send_event
 
@@ -36,11 +39,13 @@ class MemoryOrganizationComponent(BaseOrganizationComponent):
         user: BaseUserComponent,
         vlob: MemoryVlobComponent,
         block: MemoryBlockComponent,
+        realm: MemoryRealmComponent,
         **other_components
     ):
         self._user_component = user
         self._vlob_component = vlob
         self._block_component = block
+        self._realm_component = realm
 
     async def create(
         self, id: OrganizationID, bootstrap_token: str, expiration_date: Optional[DateTime] = None
@@ -100,16 +105,41 @@ class MemoryOrganizationComponent(BaseOrganizationComponent):
 
         users = len(self._user_component._organizations[id].users)
 
-        return OrganizationStats(users=users, data_size=data_size, metadata_size=metadata_size)
+        workspaces = len(
+            [
+                realm_id
+                for organization_id, realm_id in self._realm_component._realms.keys()
+                if organization_id == id
+            ]
+        )
 
-    async def set_expiration_date(
-        self, id: OrganizationID, expiration_date: DateTime = None
+        return OrganizationStats(
+            users=users, data_size=data_size, metadata_size=metadata_size, workspaces=workspaces
+        )
+
+    async def update(
+        self,
+        id: OrganizationID,
+        expiration_date: Union[UnsetType, Optional[DateTime]] = Unset,
+        user_profile_outsider_allowed: Union[UnsetType, bool] = Unset,
     ) -> None:
-        try:
-            self._organizations[id] = self._organizations[id].evolve(
-                expiration_date=expiration_date
-            )
-            if self._organizations[id].is_expired:
-                await self._send_event(BackendEvent.ORGANIZATION_EXPIRED, organization_id=id)
-        except KeyError:
+        """
+        Raises:
+            OrganizationNotFoundError
+        """
+        if id not in self._organizations:
             raise OrganizationNotFoundError()
+
+        organization = self._organizations[id]
+
+        if expiration_date is not Unset:
+            organization = organization.evolve(expiration_date=expiration_date)
+        if user_profile_outsider_allowed is not Unset:
+            organization = organization.evolve(
+                user_profile_outsider_allowed=user_profile_outsider_allowed
+            )
+
+        self._organizations[id] = organization
+
+        if self._organizations[id].is_expired:
+            await self._send_event(BackendEvent.ORGANIZATION_EXPIRED, organization_id=id)

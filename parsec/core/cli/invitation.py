@@ -1,4 +1,4 @@
-# Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
+# Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2016-2021 Scille SAS
 
 import click
 import platform
@@ -326,7 +326,9 @@ async def _claim_invitation(config, addr, password):
 
         device_display = click.style(new_device.slughash, fg="yellow")
         with operation(f"Saving device {device_display}"):
-            save_device_with_password(config.config_dir, new_device, password)
+            save_device_with_password(
+                config_dir=config.config_dir, device=new_device, password=password
+            )
 
 
 @click.command(short_help="claim invitation")

@@ -1,6 +1,6 @@
-# Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
+# Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2016-2021 Scille SAS
 
-import os
+import sys
 import pytest
 from string import ascii_lowercase
 from hypothesis import strategies as st
@@ -16,7 +16,7 @@ st_entry_name = st.text(alphabet=ascii_lowercase, min_size=1, max_size=3)
 
 
 @pytest.mark.slow
-@pytest.mark.skipif(os.name == "nt", reason="Windows path style not compatible with oracle")
+@pytest.mark.skipif(sys.platform == "win32", reason="Windows path style not compatible with oracle")
 def test_fs_online_tree_and_sync(user_fs_online_state_machine, oracle_fs_with_sync_factory, alice):
     class FSOnlineTreeAndSync(user_fs_online_state_machine):
         Files = Bundle("file")

@@ -1,7 +1,8 @@
-# Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
+# Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2016-2021 Scille SAS
 
 import pytest
 import trio
+from uuid import uuid4
 from pendulum import datetime, now as pendulum_now
 
 from parsec.backend.backend_events import BackendEvent
@@ -15,15 +16,21 @@ from tests.backend.common import (
     realm_start_reencryption_maintenance,
     realm_finish_reencryption_maintenance,
     vlob_read,
+    vlob_list_versions,
+    vlob_poll_changes,
+    vlob_create,
+    vlob_update,
     vlob_maintenance_get_reencryption_batch,
     vlob_maintenance_save_reencryption_batch,
+    block_read,
+    block_create,
     events_subscribe,
     events_listen_nowait,
 )
 
 
 @pytest.mark.trio
-async def test_start_bad_encryption_revision(backend, alice_backend_sock, realm):
+async def test_start_bad_encryption_revision(alice_backend_sock, realm):
     rep = await realm_start_reencryption_maintenance(
         alice_backend_sock, realm, 42, pendulum_now(), {"alice": b"wathever"}, check_rep=False
     )
@@ -31,7 +38,7 @@ async def test_start_bad_encryption_revision(backend, alice_backend_sock, realm)
 
 
 @pytest.mark.trio
-async def test_start_bad_timestamp(backend, alice_backend_sock, realm):
+async def test_start_bad_timestamp(alice_backend_sock, realm):
     rep = await realm_start_reencryption_maintenance(
         alice_backend_sock, realm, 2, datetime(2000, 1, 1), {"alice": b"wathever"}, check_rep=False
     )
@@ -155,7 +162,7 @@ async def test_start_reencryption_update_status(alice_backend_sock, alice, realm
 
 
 @pytest.mark.trio
-async def test_start_already_in_maintenance(backend, alice_backend_sock, realm):
+async def test_start_already_in_maintenance(alice_backend_sock, realm):
     await realm_start_reencryption_maintenance(
         alice_backend_sock, realm, 2, pendulum_now(), {"alice": b"wathever"}
     )
@@ -390,7 +397,7 @@ async def test_reencryption_batch_bad_revisison(alice_backend_sock, realm):
 
 
 @pytest.mark.trio
-async def test_reencryption(alice, alice_backend_sock, realm, vlobs, vlob_atoms):
+async def test_reencryption(alice, alice_backend_sock, realm, vlob_atoms):
     with freeze_time("2000-01-02"):
         await realm_start_reencryption_maintenance(
             alice_backend_sock, realm, 2, pendulum_now(), {"alice": b"foo"}
@@ -436,8 +443,125 @@ async def test_reencryption(alice, alice_backend_sock, realm, vlobs, vlob_atoms)
 
 
 @pytest.mark.trio
+async def test_access_during_reencryption(backend, alice_backend_sock, alice, realm_factory):
+    # First initialize a nice realm with block and vlob
+    realm_id = await realm_factory(backend, author=alice)
+    vlob_id = uuid4()
+    block_id = uuid4()
+    await backend.vlob.create(
+        organization_id=alice.organization_id,
+        author=alice.device_id,
+        realm_id=realm_id,
+        encryption_revision=1,
+        vlob_id=vlob_id,
+        timestamp=pendulum_now(),
+        blob=b"v1",
+    )
+    await backend.block.create(
+        organization_id=alice.organization_id,
+        author=alice.device_id,
+        realm_id=realm_id,
+        block_id=block_id,
+        block=b"<block_data>",
+    )
+
+    async def _assert_write_access_disallowed(encryption_revision):
+        rep = await vlob_create(
+            alice_backend_sock,
+            realm_id=realm_id,
+            vlob_id=uuid4(),
+            blob=b"data",
+            encryption_revision=encryption_revision,
+            check_rep=False,
+        )
+        assert rep == {"status": "in_maintenance"}
+        rep = await vlob_update(
+            alice_backend_sock,
+            vlob_id,
+            version=2,
+            blob=b"data",
+            encryption_revision=encryption_revision,
+            check_rep=False,
+        )
+        assert rep == {"status": "in_maintenance"}
+        rep = await block_create(
+            alice_backend_sock, block_id=block_id, realm_id=realm_id, block=b"data", check_rep=False
+        )
+        assert rep == {"status": "in_maintenance"}
+
+    async def _assert_read_access_allowed(encryption_revision, expected_blob=b"v1"):
+        rep = await vlob_read(
+            alice_backend_sock, vlob_id=vlob_id, version=1, encryption_revision=encryption_revision
+        )
+        assert rep["status"] == "ok"
+        assert rep["blob"] == expected_blob
+
+        rep = await block_read(alice_backend_sock, block_id=block_id)
+        assert rep == {"status": "ok", "block": b"<block_data>"}
+
+        # For good measure, also try those read-only commands even if they
+        # are encryption-revision agnostic
+        rep = await vlob_list_versions(alice_backend_sock, vlob_id=vlob_id)
+        assert rep["status"] == "ok"
+        rep = await vlob_poll_changes(alice_backend_sock, realm_id=realm_id, last_checkpoint=0)
+        assert rep["status"] == "ok"
+
+    async def _assert_read_access_bad_encryption_revision(encryption_revision, expected_status):
+        rep = await vlob_read(
+            alice_backend_sock, vlob_id=vlob_id, version=1, encryption_revision=encryption_revision
+        )
+        assert rep == {"status": expected_status}
+
+    # Sanity check just to make we can access the data with initial encryption revision
+    await _assert_read_access_allowed(1)
+
+    # Now start reencryption
+    await backend.realm.start_reencryption_maintenance(
+        organization_id=alice.organization_id,
+        author=alice.device_id,
+        realm_id=realm_id,
+        encryption_revision=2,
+        per_participant_message={alice.user_id: b"<whatever>"},
+        timestamp=pendulum_now(),
+    )
+
+    # Only read with old encryption revision is now allowed
+    await _assert_read_access_allowed(1)
+    await _assert_read_access_bad_encryption_revision(2, expected_status="in_maintenance")
+    await _assert_write_access_disallowed(1)
+    await _assert_write_access_disallowed(2)
+
+    # Actually reencrypt the vlob data, this shouldn't affect us for the moment
+    # given reencryption is not formally finished
+    await backend.vlob.maintenance_save_reencryption_batch(
+        organization_id=alice.organization_id,
+        author=alice.device_id,
+        realm_id=realm_id,
+        encryption_revision=2,
+        batch=[(vlob_id, 1, b"v2")],
+    )
+
+    await _assert_read_access_allowed(1)
+    await _assert_read_access_bad_encryption_revision(2, expected_status="in_maintenance")
+    await _assert_write_access_disallowed(1)
+    await _assert_write_access_disallowed(2)
+
+    # Finish the reencryption
+    await backend.realm.finish_reencryption_maintenance(
+        organization_id=alice.organization_id,
+        author=alice.device_id,
+        realm_id=realm_id,
+        encryption_revision=2,
+    )
+
+    # Now only the new encryption revision is allowed
+    await _assert_read_access_allowed(2, expected_blob=b"v2")
+    await _assert_read_access_bad_encryption_revision(1, expected_status="bad_encryption_revision")
+
+
+@pytest.mark.trio
 async def test_reencryption_events(
-    backend, alice, alice_backend_sock, alice2_backend_sock, realm, vlobs, vlob_atoms
+    backend, alice_backend_sock, alice2_backend_sock, realm, vlobs, vlob_atoms
 ):
 
     # Start listening events

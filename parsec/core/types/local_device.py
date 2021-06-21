@@ -1,4 +1,4 @@
-# Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
+# Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2016-2021 Scille SAS
 
 import attr
 from typing import Tuple, Optional
@@ -69,6 +69,10 @@ class LocalDevice(BaseLocalData):
     @property
     def is_admin(self) -> bool:
         return self.profile == UserProfile.ADMIN
+
+    @property
+    def is_outsider(self) -> bool:
+        return self.profile == UserProfile.OUTSIDER
 
     def __repr__(self):
         return f"{self.__class__.__name__}({self.device_id})"

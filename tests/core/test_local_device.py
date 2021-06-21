@@ -1,6 +1,6 @@
-# Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
+# Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2016-2021 Scille SAS
 
-import os
+import sys
 import pytest
 from pathlib import Path
 from uuid import UUID, uuid4
@@ -20,7 +20,6 @@ from parsec.core.local_device import (
     change_device_password,
     LocalDeviceCryptoError,
     LocalDeviceNotFoundError,
-    LocalDeviceAlreadyExistsError,
     LocalDevicePackingError,
 )
 
@@ -217,11 +216,18 @@ def test_load_bad_data(config_dir, alice):
         load_device_with_password(alice_key, "S3Cr37")
 
 
-def test_password_save_already_existing(config_dir, alice):
+def test_password_save_already_existing(config_dir, alice, alice2, otheralice):
     save_device_with_password(config_dir, alice, "S3Cr37")
 
-    with pytest.raises(LocalDeviceAlreadyExistsError):
-        save_device_with_password(config_dir, alice, "S3Cr37")
+    # Different devices should not overwrite each other
+    save_device_with_password(config_dir, otheralice, "S3Cr37")
+    save_device_with_password(config_dir, alice2, "S3Cr37")
+
+    # Overwritting self is allowed
+    save_device_with_password(config_dir, alice, "S3Cr37")
+
+    devices = list_available_devices(config_dir)
+    assert len(devices) == 3
 
 
 def test_password_load_not_found(config_dir, alice):
@@ -291,7 +297,7 @@ def test_supports_legacy_is_admin_field(alice):
 def test_list_devices_support_legacy_file_with_meaningful_name(config_dir):
     # Legacy path might exceed the 256 characters limit in some cases (see issue #1356)
     # So we use the `\\?\` workaround: https://stackoverflow.com/a/57502760/2846140
-    if os.name == "nt":
+    if sys.platform == "win32":
         config_dir = Path("\\\\?\\" + str(config_dir.resolve()))
 
     # Device information
@@ -345,8 +351,10 @@ def test_multiple_files_same_device(config_dir, alice):
     # Make sure we don't list duplicates
     devices = list_available_devices(config_dir)
     assert len(devices) == 1
+    assert devices[0].device_id == alice.device_id
 
     # Remove orignal file
     path.unlink()
     devices = list_available_devices(config_dir)
     assert len(devices) == 1
+    assert devices[0].device_id == alice.device_id

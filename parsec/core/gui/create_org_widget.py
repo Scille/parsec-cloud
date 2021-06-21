@@ -1,4 +1,4 @@
-# Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
+# Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2016-2021 Scille SAS
 
 from structlog import get_logger
 
@@ -110,7 +110,7 @@ class CreateOrgUserInfoWidget(QWidget, Ui_CreateOrgUserInfoWidget):
     @property
     def backend_addr(self):
         return (
-            BackendAddr.from_url(self.line_edit_backend_addr.text())
+            BackendAddr.from_url(self.line_edit_backend_addr.text(), allow_http_redirection=True)
             if self.radio_use_custom.isChecked()
             else None
         )
@@ -133,6 +133,9 @@ class CreateOrgDeviceInfoWidget(QWidget, Ui_CreateOrgDeviceInfoWidget):
             self.valid_info_entered.emit()
         else:
             self.invalid_info_entered.emit()
+
+    def set_excluded_strings(self, excluded_strings):
+        self.widget_password.excluded_strings = excluded_strings
 
     @property
     def password(self):
@@ -227,6 +230,13 @@ class CreateOrgWidget(QWidget, Ui_CreateOrgWidget):
     def _on_next_clicked(self):
         self.user_widget.hide()
         self.device_widget.show()
+        self.device_widget.set_excluded_strings(
+            [
+                self.user_widget.line_edit_org_name.text(),
+                self.user_widget.line_edit_user_full_name.text(),
+                self.user_widget.line_edit_user_email.text(),
+            ]
+        )
 
         try:
             self.button_validate.clicked.disconnect(self._on_next_clicked)

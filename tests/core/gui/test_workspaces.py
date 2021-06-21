@@ -1,4 +1,4 @@
-# Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
+# Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2016-2021 Scille SAS
 
 import pytest
 from PyQt5 import QtCore
@@ -215,11 +215,9 @@ async def test_mountpoint_open_in_explorer_button(aqtbot, running_backend, logge
     # New workspace should show up mounted
 
     wk_button = None
-    previous_wk_button = None
 
     def _initially_mounted():
         nonlocal wk_button
-        # Note on mount the workspaces buttons are recreated !
         wk_button = get_wk_button()
         assert wk_button.button_open.isEnabled()
         assert wk_button.switch_button.isChecked()
@@ -227,28 +225,22 @@ async def test_mountpoint_open_in_explorer_button(aqtbot, running_backend, logge
         assert core.mountpoint_manager.is_workspace_mounted(wid)
 
     await aqtbot.wait_until(_initially_mounted, timeout=3000)
-    previous_wk_button = wk_button
 
     # Now switch to umounted
     await aqtbot.mouse_click(wk_button.switch_button, QtCore.Qt.LeftButton)
 
     def _unmounted():
         nonlocal wk_button
-        # Note on mount the workspaces buttons are recreated !
         wk_button = get_wk_button()
-        assert wk_button is not previous_wk_button
         assert not wk_button.button_open.isEnabled()
         assert not wk_button.switch_button.isChecked()
         assert not core.mountpoint_manager.is_workspace_mounted(wid)
 
     await aqtbot.wait_until(_unmounted, timeout=3000)
-    previous_wk_button = wk_button
 
     def _mounted():
         nonlocal wk_button
-        # Note on mount the workspaces buttons are recreated !
         wk_button = get_wk_button()
-        assert wk_button is not previous_wk_button
         assert wk_button.button_open.isEnabled()
         assert wk_button.switch_button.isChecked()
         # Be sure that the workspave is mounted

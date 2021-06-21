@@ -1,4 +1,4 @@
-# Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
+# Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2016-2021 Scille SAS
 
 from pendulum import DateTime as PendulumDateTime
 from uuid import UUID as _UUID
@@ -87,6 +87,8 @@ def enum_field_factory(enum):
 
 
 def bytes_based_field_factory(value_type):
+    assert isinstance(value_type, type)
+
     def _serialize(self, value, attr, obj):
         if value is None:
             return None
@@ -111,6 +113,8 @@ def bytes_based_field_factory(value_type):
 
 
 def str_based_field_factory(value_type):
+    assert isinstance(value_type, type)
+
     def _serialize(self, value, attr, data):
         if value is None:
             return None
@@ -118,6 +122,9 @@ def str_based_field_factory(value_type):
         return str(value)
 
     def _deserialize(self, value, attr, data):
+        if not isinstance(value, str):
+            raise ValidationError("Not string")
+
         try:
             return value_type(value)
         except ValueError as exc:
@@ -131,6 +138,8 @@ def str_based_field_factory(value_type):
 
 
 def uuid_based_field_factory(value_type):
+    assert isinstance(value_type, type)
+
     def _serialize(self, value, attr, data):
         if value is None:
             return None
@@ -138,8 +147,11 @@ def uuid_based_field_factory(value_type):
         return value
 
     def _deserialize(self, value, attr, data):
+        if not isinstance(value, _UUID):
+            raise ValidationError("Not an UUID")
+
         try:
-            return value_type(str(value))
+            return value_type(value)
         except ValueError as exc:
             raise ValidationError(str(exc)) from exc
 

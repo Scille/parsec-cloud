@@ -1,1 +1,0 @@
-Remove massively unused `--log-filter` option from `core gui` and `backend run` commands.

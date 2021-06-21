@@ -1,7 +1,7 @@
-# Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
+# Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2016-2021 Scille SAS
 
 from parsec.core.core_events import CoreEvent
-import platform
+import sys
 
 from PyQt5.QtWidgets import QWidget
 
@@ -20,7 +20,7 @@ class SettingsWidget(QWidget, Ui_SettingsWidget):
         self.jobs_ctx = jobs_ctx
         self.setupUi(self)
 
-        if platform.system() != "Windows":
+        if sys.platform != "win32":
             self.widget_version.hide()
 
         self.button_save.clicked.connect(self.save)

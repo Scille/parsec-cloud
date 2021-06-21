@@ -1,4 +1,4 @@
-# Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
+# Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2016-2021 Scille SAS
 
 import math
 from collections import defaultdict
@@ -11,6 +11,7 @@ from parsec.core.core_events import CoreEvent
 from parsec.core.types import EntryID, WorkspaceRole
 from parsec.core.fs import (
     FSBackendOfflineError,
+    FSBadEncryptionRevision,
     FSWorkspaceNotFoundError,
     FSWorkspaceNoReadAccess,
     FSWorkspaceNoWriteAccess,
@@ -229,8 +230,11 @@ class SyncContext:
                 # modifications. Hence we can forget about this change given
                 # it's `self._local_changes` role to keep track of local changes.
                 pass
-            except FSWorkspaceInMaintenance:
-                # Not the right time for the sync, retry later
+            except (FSWorkspaceInMaintenance, FSBadEncryptionRevision):
+                # Not the right time for the sync, retry later.
+                # `FSBadEncryptionRevision` occurs if the reencryption is quick
+                # enough to start and finish before we process the sharing.reencrypted
+                # message so we try a sync with the old encryption revision.
                 min_due_time = now + MAINTENANCE_MIN_WAIT
                 self._remote_changes.add(entry_id)
 
@@ -257,8 +261,11 @@ class SyncContext:
                     # the write access in the future) but pretent it just accured
                     # to avoid a busy sync loop until `read_only` flag is updated.
                     self._local_changes[entry_id] = LocalChange(now)
-                except FSWorkspaceInMaintenance:
-                    # Not the right time for the sync, retry later
+                except (FSWorkspaceInMaintenance, FSBadEncryptionRevision):
+                    # Not the right time for the sync, retry later.
+                    # `FSBadEncryptionRevision` occurs if the reencryption is quick
+                    # enough to start and finish before we process the sharing.reencrypted
+                    # message so we try a sync with the old encryption revision.
                     min_due_time = now + MAINTENANCE_MIN_WAIT
                     self._local_changes[entry_id] = LocalChange(now)
 

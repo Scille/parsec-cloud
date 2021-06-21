@@ -1,4 +1,4 @@
-# Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
+# Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2016-2021 Scille SAS
 
 
 from uuid import UUID
@@ -12,8 +12,11 @@ from parsec.api.protocol import InvitationType
 from parsec.api.data import UserProfile
 from parsec.core.types import BackendInvitationAddr, UserInfo
 
-from parsec.core.invite import InviteAlreadyMemberError
-from parsec.core.backend_connection import BackendConnectionError, BackendNotAvailable
+from parsec.core.backend_connection import (
+    BackendConnectionError,
+    BackendNotAvailable,
+    BackendInvitationOnExistingMember,
+)
 
 from parsec.core.gui.trio_thread import JobResultError, ThreadSafeQtSignal, QtToTrioJob
 from parsec.core.gui.custom_dialogs import show_error, show_info, ask_question, get_text_input
@@ -200,10 +203,10 @@ async def _do_invite_user(core, email):
         return email
     except BackendNotAvailable as exc:
         raise JobResultError("offline") from exc
+    except BackendInvitationOnExistingMember as exc:
+        raise JobResultError("already_member") from exc
     except BackendConnectionError as exc:
         raise JobResultError("error") from exc
-    except InviteAlreadyMemberError as exc:
-        raise JobResultError("already_member") from exc
 
 
 class UsersWidget(QWidget, Ui_UsersWidget):
@@ -327,7 +330,7 @@ class UsersWidget(QWidget, Ui_UsersWidget):
             self,
             _("TEXT_USER_INVITE_CANCEL_INVITE_QUESTION_TITLE"),
             _("TEXT_USER_INVITE_CANCEL_INVITE_QUESTION_CONTENT"),
-            [_("TEXT_USER_INVITE_CANCEL_INVITE_ACCEPT"), _("ACTION_NO")],
+            [_("TEXT_USER_INVITE_CANCEL_INVITE_ACCEPT"), _("ACTION_ENABLE_TELEMETRY_REFUSE")],
         )
         if r != _("TEXT_USER_INVITE_CANCEL_INVITE_ACCEPT"):
             return
@@ -381,6 +384,8 @@ class UsersWidget(QWidget, Ui_UsersWidget):
             _("TEXT_USER_REVOCATION_TITLE"),
             _("TEXT_USER_REVOCATION_INSTRUCTIONS_user").format(user=user_info.short_user_display),
             [_("ACTION_USER_REVOCATION_CONFIRM"), _("ACTION_CANCEL")],
+            oriented_question=True,
+            dangerous_yes=True,
         )
         if result != _("ACTION_USER_REVOCATION_CONFIRM"):
             return

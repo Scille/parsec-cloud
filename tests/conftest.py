@@ -1,4 +1,4 @@
-# Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
+# Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2016-2021 Scille SAS
 
 from parsec.core.core_events import CoreEvent
 import pytest
@@ -13,6 +13,7 @@ import socket
 import contextlib
 import pendulum
 from unittest.mock import patch
+import logging
 import structlog
 import trio
 from trio.testing import MockClock
@@ -30,7 +31,7 @@ from parsec.core.types import BackendAddr
 from parsec.core.logged_core import logged_core_factory
 from parsec.core.backend_connection import BackendConnStatus
 from parsec.core.mountpoint.manager import get_mountpoint_runner
-from parsec.core.fs.storage import LocalDatabase, local_database, UserStorage
+from parsec.core.fs.storage import LocalDatabase, UserStorage
 
 from parsec.backend import backend_app_factory
 from parsec.backend.config import (
@@ -103,8 +104,6 @@ def mock_timezone_utc(request):
 
 
 def pytest_configure(config):
-    # Patch pytest-trio
-    patch_pytest_trio()
     # Configure structlog to redirect everything in logging
     structlog.configure(
         logger_factory=structlog.stdlib.LoggerFactory(),
@@ -141,39 +140,27 @@ def patch_caplog():
 
     def _assert_occured(self, log):
         __tracebackhide__ = True
-        assert any([r for r in self.records if log in _remove_colors(r.msg)])
+        record = next((r for r in self.records if log in _remove_colors(r.msg)), None)
+        assert record is not None
+        if not hasattr(self, "asserted_records"):
+            self.asserted_records = set()
+        self.asserted_records.add(record)
 
     LogCaptureFixture.assert_occured = _assert_occured
 
 
-def patch_pytest_trio():
-    # Fix while waiting for
-    # https://github.com/python-trio/pytest-trio/issues/77
-    import pytest_trio
-
-    vanilla_crash = pytest_trio.plugin.TrioTestContext.crash
-
-    def patched_crash(self, exc):
-        if exc is None:
-            task = trio.lowlevel.current_task()
-            for child_nursery in task.child_nurseries:
-                for child_exc in child_nursery._pending_excs:
-                    if not isinstance(exc, trio.Cancelled):
-                        vanilla_crash(self, child_exc)
-        vanilla_crash(self, exc)
-
-    pytest_trio.plugin.TrioTestContext.crash = patched_crash
-
-    def fget(self):
-        if self.crashed and not self._error_list:
-            self._error_list.append(trio.TrioInternalError("See pytest-trio issue #75"))
-        return self._error_list
-
-    def fset(self, value):
-        self._error_list = value
-
-    error_list = property(fget, fset)
-    pytest_trio.plugin.TrioTestContext.error_list = error_list
+@pytest.fixture(autouse=True)
+def no_logs_gte_error(caplog):
+    yield
+    # The test should use `caplog.assert_occured` to indicate a log was expected,
+    # otherwise we consider error logs as *actual* errors.
+    asserted_records = getattr(caplog, "asserted_records", set())
+    errors = [
+        record
+        for record in caplog.get_records("call")
+        if record.levelno >= logging.ERROR and record not in asserted_records
+    ]
+    assert not errors
 
 
 @pytest.fixture(scope="session")
@@ -432,16 +419,10 @@ def persistent_mockup(monkeypatch):
     async def get_disk_usage(storage):
         return 0
 
-    @asynccontextmanager
-    async def thread_pool_runner(max_workers):
-        assert max_workers == 1
+    async def run_in_thread(storage, fn, *args):
+        return fn(*args)
 
-        async def run_in_thread(fn, *args):
-            return fn(*args)
-
-        yield run_in_thread
-
-    monkeypatch.setattr(local_database, "thread_pool_runner", thread_pool_runner)
+    monkeypatch.setattr(LocalDatabase, "run_in_thread", run_in_thread)
     monkeypatch.setattr(LocalDatabase, "_create_connection", _create_connection)
     monkeypatch.setattr(LocalDatabase, "_close", _close)
     monkeypatch.setattr(LocalDatabase, "get_disk_usage", get_disk_usage)
@@ -549,8 +530,6 @@ def backend_factory(
                 "administration_token": "s3cr3t",
                 "db_min_connections": 1,
                 "db_max_connections": 5,
-                "db_first_tries_number": 1,
-                "db_first_tries_sleep": 1,
                 "debug": False,
                 "db_url": backend_store,
                 "blockstore_config": blockstore,
@@ -645,7 +624,8 @@ def webhook_spy(monkeypatch):
     events = []
 
     class MockedRep:
-        def getcode(self):
+        @property
+        def status(self):
             return 200
 
     @contextmanager
@@ -728,6 +708,7 @@ def core_factory(
                     await spy.wait_with_timeout(
                         CoreEvent.BACKEND_CONNECTION_CHANGED,
                         {"status": BackendConnStatus.READY, "status_exc": spy.ANY},
+                        timeout=2.0,  # 1 second might not be enough for postgresql 12 tests running in the CI
                     )
                 assert core.are_monitors_idle()
 

@@ -1,4 +1,4 @@
-# Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
+# Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2016-2021 Scille SAS
 
 from typing import Dict, List, Optional
 from uuid import UUID
@@ -70,14 +70,22 @@ class RealmMaintenanceError(RealmError):
 
 @attr.s(slots=True, frozen=True, auto_attribs=True)
 class RealmStatus:
-    maintenance_type: MaintenanceType
-    maintenance_started_on: Optional[DeviceID]
-    maintenance_started_by: Optional[pendulum.DateTime]
+    maintenance_type: Optional[MaintenanceType]
+    maintenance_started_on: Optional[pendulum.DateTime]
+    maintenance_started_by: Optional[DeviceID]
     encryption_revision: int
 
     @property
     def in_maintenance(self) -> bool:
-        return bool(self.maintenance_type)
+        return self.maintenance_type is not None
+
+    @property
+    def in_reencryption(self) -> bool:
+        return self.maintenance_type == MaintenanceType.REENCRYPTION
+
+    @property
+    def in_garbage_collection(self) -> bool:
+        return self.maintenance_type == MaintenanceType.GARBAGE_COLLECTION
 
 
 @attr.s(slots=True, frozen=True, auto_attribs=True)
@@ -106,9 +114,6 @@ class BaseRealmComponent:
     @api("realm_create")
     @catch_protocol_errors
     async def api_realm_create(self, client_ctx, msg):
-        if client_ctx.profile == UserProfile.OUTSIDER:
-            return {"status": "not_allowed", "reason": "Outsider user cannot create realm"}
-
         msg = realm_create_serializer.req_load(msg)
 
         try:
@@ -228,6 +233,16 @@ class BaseRealmComponent:
     @api("realm_update_roles")
     @catch_protocol_errors
     async def api_realm_update_roles(self, client_ctx, msg):
+        # An OUTSIDER is allowed to create a realm (given he needs to have one
+        # to store it user manifest). However he cannot be MANAGER or OWNER in
+        # a shared realm as well.
+        # Hence the only way for him to be OWNER is to create a realm, and in
+        # this case he cannot share this realm with anyone.
+        # On top of that, we don't have to fetch the user profile from the
+        # database before checking it given it cannot be updated.
+        if client_ctx.profile == UserProfile.OUTSIDER:
+            return {"status": "not_allowed", "reason": "Outsider user cannot share realm"}
+
         msg = realm_update_roles_serializer.req_load(msg)
 
         try:

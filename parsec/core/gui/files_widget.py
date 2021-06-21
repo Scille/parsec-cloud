@@ -1,4 +1,4 @@
-# Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
+# Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2016-2021 Scille SAS
 import trio
 import pathlib
 
@@ -10,7 +10,7 @@ from structlog import get_logger
 
 from PyQt5.QtCore import Qt, pyqtSignal, QTimer
 from PyQt5.QtWidgets import QFileDialog, QWidget
-from parsec.core.types import FsPath, WorkspaceEntry, WorkspaceRole, BackendOrganizationFileLinkAddr
+from parsec.core.types import FsPath, WorkspaceEntry, WorkspaceRole
 from parsec.core.fs import WorkspaceFS, WorkspaceFSTimestamped
 from parsec.core.fs.exceptions import (
     FSRemoteManifestNotFound,
@@ -70,10 +70,10 @@ async def _do_delete(workspace_fs, files, silent=False):
                 raise JobResultError("error", multi=len(files) > 1) from exc
 
 
-async def _do_copy_files(workspace_fs, current_directory, files, source_workspace):
+async def _do_copy_files(workspace_fs, target_dir, source_files, source_workspace):
     last_exc = None
     error_count = 0
-    for src, src_type in files:
+    for src, src_type in source_files:
         # In order to be able to rename the file if a file of the same name already exists
         # we need the name without extensions.
         name_we, *_ = src.name.split(".", 1)
@@ -81,7 +81,7 @@ async def _do_copy_files(workspace_fs, current_directory, files, source_workspac
         file_name = src.name
         while True:
             try:
-                dst = current_directory / file_name
+                dst = target_dir / file_name
                 if src_type == FileType.Folder:
                     await workspace_fs.copytree(src, dst, source_workspace)
                 else:
@@ -113,10 +113,10 @@ async def _do_copy_files(workspace_fs, current_directory, files, source_workspac
         raise JobResultError("error", last_exc=last_exc, error_count=error_count)
 
 
-async def _do_move_files(workspace_fs, current_directory, files, source_workspace):
+async def _do_move_files(workspace_fs, target_dir, source_files, source_workspace):
     error_count = 0
     last_exc = None
-    for src, src_type in files:
+    for src, src_type in source_files:
         # In order to be able to rename the file if a file of the same name already exists
         # we need the name without extensions.
         name_we, *_ = src.name.split(".", 1)
@@ -124,7 +124,7 @@ async def _do_move_files(workspace_fs, current_directory, files, source_workspac
         count = 2
         while True:
             try:
-                dst = current_directory / file_name
+                dst = target_dir / file_name
                 await workspace_fs.move(src, dst, source_workspace)
                 break
             except FileExistsError:
@@ -308,7 +308,7 @@ class FilesWidget(QWidget, Ui_FilesWidget):
         self.update_timer.timeout.connect(self.reload)
         self.default_import_path = str(pathlib.Path.home())
         self.table_files.config = self.core.config
-        self.table_files.file_moved.connect(self.on_file_moved)
+        self.table_files.file_moved.connect(self.on_table_files_file_moved)
         self.table_files.item_activated.connect(self.item_activated)
         self.table_files.rename_clicked.connect(self.rename_files)
         self.table_files.delete_clicked.connect(self.delete_files)
@@ -395,12 +395,9 @@ class FilesWidget(QWidget, Ui_FilesWidget):
         files = self.table_files.selected_files()
         if len(files) != 1:
             return
-        url = BackendOrganizationFileLinkAddr.build(
-            self.core.device.organization_addr,
-            self.workspace_fs.workspace_id,
-            self.current_directory / files[0].name,
-        )
-        desktop.copy_to_clipboard(str(url))
+        path = self.current_directory / files[0].name
+        addr = self.jobs_ctx.run_sync(self.workspace_fs.generate_file_link, path)
+        desktop.copy_to_clipboard(addr.to_url())
         show_info(self, _("TEXT_FILE_LINK_COPIED_TO_CLIPBOARD"))
 
     def on_copy_clicked(self):
@@ -443,22 +440,23 @@ class FilesWidget(QWidget, Ui_FilesWidget):
                 ThreadSafeQtSignal(self, "move_error", QtToTrioJob),
                 _do_move_files,
                 workspace_fs=self.workspace_fs,
-                current_directory=self.current_directory,
-                files=self.clipboard.files,
+                target_dir=self.current_directory,
+                source_files=self.clipboard.files,
                 source_workspace=self.clipboard.source_workspace,
             )
             self.clipboard = None
             # Set Global clipboard to none too
             self.global_clipboard_updated_qt.emit(None)
             self.table_files.paste_status = PasteStatus(status=PasteStatus.Status.Disabled)
-        else:
+
+        elif self.clipboard.status == Clipboard.Status.Copied:
             self.jobs_ctx.submit_job(
-                ThreadSafeQtSignal(self, "move_success", QtToTrioJob),
-                ThreadSafeQtSignal(self, "move_error", QtToTrioJob),
+                ThreadSafeQtSignal(self, "copy_success", QtToTrioJob),
+                ThreadSafeQtSignal(self, "copy_error", QtToTrioJob),
                 _do_copy_files,
                 workspace_fs=self.workspace_fs,
-                current_directory=self.current_directory,
-                files=self.clipboard.files,
+                target_dir=self.current_directory,
+                source_files=self.clipboard.files,
                 source_workspace=self.clipboard.source_workspace,
             )
 
@@ -747,14 +745,22 @@ class FilesWidget(QWidget, Ui_FilesWidget):
                 total_size += tmp_total_size
         self.import_all(files, total_size)
 
-    def on_file_moved(self, src, dst):
-        src_path = self.current_directory / src
-        dst_path = ""
-        if dst == "..":
-            dst_path = self.current_directory.parent / src
+    def on_table_files_file_moved(self, file_type, file_name, target_name):
+        src_path = self.current_directory / file_name
+        target_dir = ""
+        if target_name == "..":
+            target_dir = self.current_directory.parent
         else:
-            dst_path = self.current_directory / dst / src
-        self.jobs_ctx.run(self.workspace_fs.move, src_path, dst_path)
+            target_dir = self.current_directory / target_name
+        self.jobs_ctx.submit_job(
+            ThreadSafeQtSignal(self, "move_success", QtToTrioJob),
+            ThreadSafeQtSignal(self, "move_error", QtToTrioJob),
+            _do_move_files,
+            workspace_fs=self.workspace_fs,
+            target_dir=target_dir,
+            source_files=[(file_type, src_path)],
+            source_workspace=self.workspace_fs,
+        )
 
     def filter_files(self, pattern):
         pattern = pattern.lower()

@@ -1,0 +1,1 @@
+Add red color to remove widget dialogue confirmation button in GUI.

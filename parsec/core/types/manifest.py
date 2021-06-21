@@ -1,4 +1,4 @@
-# Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
+# Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2016-2021 Scille SAS
 
 import attr
 import functools
@@ -372,7 +372,7 @@ class LocalFileManifest(BaseLocalManifest):
             base=RemoteFileManifest(
                 author=author,
                 timestamp=now,
-                id=id or EntryID(),
+                id=id or EntryID.new(),
                 parent=parent,
                 version=0,
                 created=now,
@@ -644,7 +644,7 @@ class LocalFolderManifest(BaseLocalManifest, LocalFolderishManifestMixin):
             base=RemoteFolderManifest(
                 author=author,
                 timestamp=now,
-                id=id or EntryID(),
+                id=id or EntryID.new(),
                 parent=parent,
                 version=0,
                 created=now,
@@ -757,7 +757,7 @@ class LocalWorkspaceManifest(BaseLocalManifest, LocalFolderishManifestMixin):
             base=RemoteWorkspaceManifest(
                 author=author,
                 timestamp=now,
-                id=id or EntryID(),
+                id=id or EntryID.new(),
                 version=0,
                 created=now,
                 updated=now,
@@ -853,7 +853,7 @@ class LocalUserManifest(BaseLocalManifest):
             base=RemoteUserManifest(
                 author=author,
                 timestamp=now,
-                id=id or EntryID(),
+                id=id or EntryID.new(),
                 version=0,
                 created=now,
                 updated=now,

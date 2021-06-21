@@ -1,4 +1,4 @@
-# Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
+# Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2016-2021 Scille SAS
 
 import pytest
 import trio
@@ -96,7 +96,7 @@ async def test_update_file(alice_workspace):
         "parsec.core.cli.rsync._chunks_from_path",
         AsyncMock(spec=mock.Mock, side_effect=[[b"block1", b"block2"]]),
     ):
-        entry_id = EntryID()
+        entry_id = EntryID.new()
         await rsync._update_file(
             alice_workspace, entry_id, FsPath("/src_file"), FsPath("/path_in_workspace")
         )
@@ -280,7 +280,7 @@ async def test_get_or_create_directory(alice_workspace):
 
     _create_path_mock = AsyncMock(spec=mock.Mock(), side_effect=lambda *x: "_create_path_mock")
     with mock.patch("parsec.core.cli.rsync._create_path", _create_path_mock):
-        entry_id = EntryID()
+        entry_id = EntryID.new()
         res = await rsync._get_or_create_directory(
             entry_id, alice_workspace, FsPath("/test_directory"), FsPath("/path_in_workspace")
         )
@@ -309,7 +309,7 @@ async def test_upsert_file(alice_workspace):
 
     path = FsPath("/test")
     workspace_path = FsPath("/path_in_workspace")
-    entry_id = EntryID()
+    entry_id = EntryID.new()
 
     with mock.patch("parsec.core.cli.rsync._create_path", _create_path_mock):
         with mock.patch("parsec.core.cli.rsync._update_file", _update_file_mock):
@@ -338,7 +338,7 @@ async def test_sync_directory(alice_workspace):
     _sync_directory_content_mock = AsyncMock(spec=mock.Mock())
     _clear_directory_mock = AsyncMock(spec=mock.Mock())
 
-    entry_id = EntryID()
+    entry_id = EntryID.new()
     path = FsPath("/test")
     workspace_path = FsPath("/path_in_workspace")
 

@@ -1,4 +1,4 @@
-# Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
+# Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2016-2021 Scille SAS
 
 import pytest
 import trio
@@ -521,14 +521,14 @@ async def test_delete_invitation_while_claimer_connected(
     async with backend_invited_sock_factory(
         backend,
         organization_id=alice.organization_id,
-        invitation_type=InvitationType.USER,
+        invitation_type=invitation.TYPE,
         token=invitation.token,
         freeze_on_transport_error=False,
     ) as invited_sock:
         async with backend_invited_sock_factory(
             backend,
             organization_id=alice.organization_id,
-            invitation_type=InvitationType.USER,
+            invitation_type=other_invitation.TYPE,
             token=other_invitation.token,
             freeze_on_transport_error=False,
         ) as other_invited_sock:
@@ -547,7 +547,10 @@ async def test_delete_invitation_while_claimer_connected(
                     # Claimer connection can take some time to be closed
                     while True:
                         rep = await invite_info(invited_sock)
-                        assert rep == {"status": "already_deleted"}
+                        # Invitation info are cached for the connection
+                        # at handshake time, hence if the command won't take
+                        # into account the fact the invitation has been deleted
+                        assert rep["status"] == "ok"
 
             # However other invitations shouldn't have been affected
             rep = await invite_info(other_invited_sock)

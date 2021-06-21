@@ -1,7 +1,7 @@
-# Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
+# Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2016-2021 Scille SAS
 
 from contextlib import contextmanager
-from typing import Dict, Optional, List, Tuple, cast, Iterator, Callable
+from typing import Dict, Optional, List, Tuple, cast, Iterator, Callable, Awaitable
 
 from pendulum import DateTime, now as pendulum_now
 
@@ -87,12 +87,14 @@ class UserRemoteLoader:
         device: LocalDevice,
         workspace_id: EntryID,
         get_workspace_entry: Callable[[], WorkspaceEntry],
+        get_previous_workspace_entry: Callable[[], Awaitable[WorkspaceEntry]],
         backend_cmds: BackendAuthenticatedCmds,
         remote_devices_manager: RemoteDevicesManager,
     ):
         self.device = device
         self.workspace_id = workspace_id
         self.get_workspace_entry = get_workspace_entry
+        self.get_previous_workspace_entry = get_previous_workspace_entry
         self.backend_cmds = backend_cmds
         self.remote_devices_manager = remote_devices_manager
         self._realm_role_certificates_cache: Optional[List[RealmRoleCertificateContent]] = None
@@ -300,12 +302,18 @@ class RemoteLoader(UserRemoteLoader):
         device: LocalDevice,
         workspace_id: EntryID,
         get_workspace_entry: Callable[[], WorkspaceEntry],
+        get_previous_workspace_entry: Callable[[], Awaitable[WorkspaceEntry]],
         backend_cmds: BackendAuthenticatedCmds,
         remote_devices_manager: RemoteDevicesManager,
         local_storage: BaseWorkspaceStorage,
     ):
         super().__init__(
-            device, workspace_id, get_workspace_entry, backend_cmds, remote_devices_manager
+            device,
+            workspace_id,
+            get_workspace_entry,
+            get_previous_workspace_entry,
+            backend_cmds,
+            remote_devices_manager,
         )
         self.local_storage = local_storage
 
@@ -398,6 +406,7 @@ class RemoteLoader(UserRemoteLoader):
         version: Optional[int] = None,
         timestamp: Optional[DateTime] = None,
         expected_backend_timestamp: Optional[DateTime] = None,
+        workspace_entry: Optional[WorkspaceEntry] = None,
     ) -> BaseRemoteManifest:
         """
         Download a manifest.
@@ -417,13 +426,14 @@ class RemoteLoader(UserRemoteLoader):
             FSDeviceNotFoundError
             FSInvalidTrustchainError
         """
-        if timestamp is not None and version is not None:
-            raise FSError(
-                f"Supplied both version {version} and timestamp `{timestamp}` for manifest "
-                f"`{entry_id}`"
-            )
+        assert (
+            timestamp is None or version is None
+        ), "Either timestamp or version argument should be provided"
+        # Get the current and requested workspace entry
+        # They're usually the same, except when loading from a workspace while it's in maintenance
+        current_workspace_entry = self.get_workspace_entry()
+        workspace_entry = current_workspace_entry if workspace_entry is None else workspace_entry
         # Download the vlob
-        workspace_entry = self.get_workspace_entry()
         with translate_backend_cmds_errors():
             rep = await self.backend_cmds.vlob_read(
                 workspace_entry.encryption_revision,
@@ -431,6 +441,35 @@ class RemoteLoader(UserRemoteLoader):
                 version=version,
                 timestamp=timestamp if version is None else None,
             )
+        # Special case for loading manifest while in maintenance.
+        # This is done to allow users to fetch data from a workspace while it's being reencrypted.
+        # If the workspace is in maintenance for another reason (such as garbage collection),
+        # the recursive call to load manifest will simply also fail with an FSWorkspaceInMaintenance.
+        if (
+            rep["status"] == "in_maintenance"
+            and workspace_entry.encryption_revision == current_workspace_entry.encryption_revision
+        ):
+            # Getting the last workspace entry with the previous encryption revision
+            # requires one or several calls to the backend, meaning the following exceptions might get raised:
+            # - FSError
+            # - FSBackendOfflineError
+            # - FSWorkspaceInMaintenance
+            # It is fine to let those exceptions bubble up as there all valid reasons for failing to load a manifest.
+            previous_workspace_entry = await self.get_previous_workspace_entry()
+            # Make sure we don't fall into an infinite loop because of some other bug
+            assert (
+                previous_workspace_entry.encryption_revision
+                < self.get_workspace_entry().encryption_revision
+            )
+            # Recursive call to `load_manifest`, requiring an older encryption revision than the current one
+            return await self.load_manifest(
+                entry_id,
+                version=version,
+                timestamp=timestamp,
+                expected_backend_timestamp=expected_backend_timestamp,
+                workspace_entry=previous_workspace_entry,
+            )
+
         if rep["status"] == "not_found":
             raise FSRemoteManifestNotFound(entry_id)
         elif rep["status"] == "not_allowed":
@@ -622,6 +661,7 @@ class RemoteLoaderTimestamped(RemoteLoader):
         self.device = remote_loader.device
         self.workspace_id = remote_loader.workspace_id
         self.get_workspace_entry = remote_loader.get_workspace_entry
+        self.get_previous_workspace_entry = remote_loader.get_previous_workspace_entry
         self.backend_cmds = remote_loader.backend_cmds
         self.remote_devices_manager = remote_loader.remote_devices_manager
         self.local_storage = remote_loader.local_storage.to_timestamped(timestamp)
@@ -638,6 +678,7 @@ class RemoteLoaderTimestamped(RemoteLoader):
         version: Optional[int] = None,
         timestamp: Optional[DateTime] = None,
         expected_backend_timestamp: Optional[DateTime] = None,
+        workspace_entry: Optional[WorkspaceEntry] = None,
     ) -> BaseRemoteManifest:
         """
         Allows to have manifests at all timestamps as it is needed by the versions method of either
@@ -662,6 +703,7 @@ class RemoteLoaderTimestamped(RemoteLoader):
             version=version,
             timestamp=timestamp,
             expected_backend_timestamp=expected_backend_timestamp,
+            workspace_entry=workspace_entry,
         )
 
     async def upload_manifest(self, entry_id: EntryID, manifest: BaseRemoteManifest) -> None:

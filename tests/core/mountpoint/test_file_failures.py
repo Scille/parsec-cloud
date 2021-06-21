@@ -1,6 +1,5 @@
-# Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
+# Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2016-2021 Scille SAS
 
-from parsec.core.core_events import CoreEvent
 import os
 import sys
 import trio
@@ -8,6 +7,7 @@ import pytest
 from pathlib import Path
 
 from parsec.core.types import FsPath
+from parsec.core.core_events import CoreEvent
 from parsec.core.mountpoint.manager import mountpoint_manager_factory
 
 from tests.common import create_shared_workspace
@@ -69,7 +69,7 @@ def test_empty_read_then_reopen(tmpdir, mountpoint_service):
 @pytest.mark.mountpoint
 @pytest.mark.skipif(sys.platform == "darwin", reason="TODO : crash on macOS")
 async def test_remote_error_event(
-    tmpdir, monkeypatch, running_backend, alice_user_fs, bob_user_fs, monitor
+    tmpdir, monkeypatch, caplog, running_backend, alice_user_fs, bob_user_fs, monitor
 ):
     wid = await create_shared_workspace("w1", bob_user_fs, alice_user_fs)
 
@@ -93,11 +93,10 @@ async def test_remote_error_event(
 
         trio_w = trio.Path(mountpoint_manager.get_path_in_mountpoint(wid, FsPath("/")))
 
-        # Switch the mountpoint in maintenance...
-        await bob_user_fs.workspace_start_reencryption(wid)
+        # Offline test
 
-        def _testbed():
-            # ...accessing workspace data in the backend should endup in remote error
+        def _testbed_offline():
+            # Accessing workspace data in the backend should end up in remote error
             with alice_user_fs.event_bus.listen() as spy:
                 fd = os.open(str(trio_w / "foo.txt"), os.O_RDONLY)
                 with pytest.raises(OSError):
@@ -110,6 +109,12 @@ async def test_remote_error_event(
             assert os.listdir(str(trio_w)) == ["bar.txt", "foo.txt"]
             assert CoreEvent.MOUNTPOINT_REMOTE_ERROR not in [e.event for e in spy.events]
 
+        with running_backend.offline():
+            await trio.to_thread.run_sync(_testbed_offline)
+
+        # Online test
+
+        def _testbed_online():
             # Finally test unhandled error
             def _crash(*args, **kwargs):
                 raise RuntimeError("D'Oh !")
@@ -121,6 +126,11 @@ async def test_remote_error_event(
             with alice_user_fs.event_bus.listen() as spy:
                 with pytest.raises(OSError):
                     os.mkdir(str(trio_w / "dummy"))
+            if sys.platform == "win32":
+                expected_log = "[exception] Unhandled exception in winfsp mountpoint [parsec.core.mountpoint.winfsp_operations]"
+            else:
+                expected_log = "[exception] Unhandled exception in fuse mountpoint [parsec.core.mountpoint.fuse_operations]"
+            caplog.assert_occured(expected_log)
             spy.assert_event_occured(CoreEvent.MOUNTPOINT_UNHANDLED_ERROR)
 
-        await trio.to_thread.run_sync(_testbed)
+        await trio.to_thread.run_sync(_testbed_online)

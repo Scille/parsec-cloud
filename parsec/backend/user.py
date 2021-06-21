@@ -1,4 +1,4 @@
-# Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
+# Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2016-2021 Scille SAS
 
 from parsec.backend.backend_events import BackendEvent
 import trio
@@ -40,7 +40,7 @@ from parsec.api.protocol import (
     apiv1_device_create_serializer,
     device_create_serializer,
 )
-from parsec.backend.utils import catch_protocol_errors, run_with_breathing_transport, api
+from parsec.backend.utils import catch_protocol_errors, api
 
 
 class UserError(Exception):
@@ -128,11 +128,11 @@ class Trustchain:
 @attr.s(slots=True, auto_attribs=True)
 class GetUserAndDevicesResult:
     user_certificate: bytes
-    device_certificates: bytes
+    device_certificates: Tuple[bytes, ...]
     revoked_user_certificate: Optional[bytes]
-    trustchain_user_certificates: List[bytes]
-    trustchain_device_certificates: List[bytes]
-    trustchain_revoked_user_certificates: List[bytes]
+    trustchain_user_certificates: Tuple[bytes, ...]
+    trustchain_device_certificates: Tuple[bytes, ...]
+    trustchain_revoked_user_certificates: Tuple[bytes, ...]
 
 
 @attr.s(slots=True, frozen=True, auto_attribs=True)
@@ -150,10 +150,6 @@ class UserInvitation:
     user_id: UserID
     creator: DeviceID
     created_on: pendulum.DateTime = attr.ib(factory=pendulum.now)
-
-    @property
-    def organization_id(self) -> OrganizationID:
-        return self.user_id.organization_id
 
     def is_valid(self) -> bool:
         return (pendulum.now() - self.created_on).total_seconds() < INVITATION_VALIDITY
@@ -252,7 +248,7 @@ class BaseUserComponent:
 
     #### User creation API ####
 
-    @api("user_invite", handshake_types=[APIV1_HandshakeType.AUTHENTICATED])
+    @api("user_invite", long_request=True, handshake_types=[APIV1_HandshakeType.AUTHENTICATED])
     @catch_protocol_errors
     async def api_user_invite(self, client_ctx, msg):
         if client_ctx.profile != UserProfile.ADMIN:
@@ -263,9 +259,7 @@ class BaseUserComponent:
         # Setting the cancel scope here instead of just were we are waiting
         # for the event make testing easier.
         with trio.move_on_after(PEER_EVENT_MAX_WAIT) as cancel_scope:
-            rep = await run_with_breathing_transport(
-                client_ctx.transport, self._api_user_invite, client_ctx, msg
-            )
+            rep = await self._api_user_invite(client_ctx, msg)
 
         if cancel_scope.cancelled_caught:
             rep = {
@@ -328,7 +322,7 @@ class BaseUserComponent:
             }
         )
 
-    @api("user_claim", handshake_types=[APIV1_HandshakeType.ANONYMOUS])
+    @api("user_claim", long_request=True, handshake_types=[APIV1_HandshakeType.ANONYMOUS])
     @catch_protocol_errors
     async def api_user_claim(self, client_ctx, msg):
         msg = apiv1_user_claim_serializer.req_load(msg)
@@ -336,9 +330,7 @@ class BaseUserComponent:
         # Setting the cancel scope here instead of just were we are waiting
         # for the event make testing easier.
         with trio.move_on_after(PEER_EVENT_MAX_WAIT) as cancel_scope:
-            rep = await run_with_breathing_transport(
-                client_ctx.transport, self._api_user_claim, client_ctx, msg
-            )
+            rep = await self._api_user_claim(client_ctx, msg)
 
         if cancel_scope.cancelled_caught:
             rep = {
@@ -593,7 +585,7 @@ class BaseUserComponent:
 
     #### Device creation API ####
 
-    @api("device_invite", handshake_types=[APIV1_HandshakeType.AUTHENTICATED])
+    @api("device_invite", long_request=True, handshake_types=[APIV1_HandshakeType.AUTHENTICATED])
     @catch_protocol_errors
     async def api_device_invite(self, client_ctx, msg):
         msg = apiv1_device_invite_serializer.req_load(msg)
@@ -601,9 +593,7 @@ class BaseUserComponent:
         # Setting the cancel scope here instead of just were we are waiting
         # for the event make testing easier.
         with trio.move_on_after(PEER_EVENT_MAX_WAIT) as cancel_scope:
-            rep = await run_with_breathing_transport(
-                client_ctx.transport, self._api_device_invite, client_ctx, msg
-            )
+            rep = await self._api_device_invite(client_ctx, msg)
 
         if cancel_scope.cancelled_caught:
             rep = {
@@ -667,7 +657,7 @@ class BaseUserComponent:
             }
         )
 
-    @api("device_claim", handshake_types=[APIV1_HandshakeType.ANONYMOUS])
+    @api("device_claim", long_request=True, handshake_types=[APIV1_HandshakeType.ANONYMOUS])
     @catch_protocol_errors
     async def api_device_claim(self, client_ctx, msg):
         msg = apiv1_device_claim_serializer.req_load(msg)
@@ -675,9 +665,7 @@ class BaseUserComponent:
         # Setting the cancel scope here instead of just were we are waiting
         # for the event make testing easier.
         with trio.move_on_after(PEER_EVENT_MAX_WAIT) as cancel_scope:
-            rep = await run_with_breathing_transport(
-                client_ctx.transport, self._api_device_claim, client_ctx, msg
-            )
+            rep = await self._api_device_claim(client_ctx, msg)
 
         if cancel_scope.cancelled_caught:
             rep = {
@@ -887,7 +875,7 @@ class BaseUserComponent:
         user_id: UserID,
         revoked_user_certificate: bytes,
         revoked_user_certifier: DeviceID,
-        revoked_on: pendulum.DateTime = None,
+        revoked_on: Optional[pendulum.DateTime] = None,
     ) -> None:
         """
         Raises:
@@ -942,7 +930,7 @@ class BaseUserComponent:
     async def find(
         self,
         organization_id: OrganizationID,
-        query: str = None,
+        query: Optional[str] = None,
         page: int = 1,
         per_page: int = 100,
         omit_revoked: bool = False,
@@ -952,7 +940,7 @@ class BaseUserComponent:
     async def find_humans(
         self,
         organization_id: OrganizationID,
-        query: str = None,
+        query: Optional[str] = None,
         page: int = 1,
         per_page: int = 100,
         omit_revoked: bool = False,

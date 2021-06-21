@@ -1,2 +1,0 @@
-Fix unhandled exception in GUI when offline and workspace author UserInfo is not in cache.
-Fix view on inconstent files in GUI.

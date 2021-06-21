@@ -1,4 +1,4 @@
-# Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
+# Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2016-2021 Scille SAS
 
 import pytest
 from uuid import UUID, uuid4
@@ -38,7 +38,7 @@ async def test_create_and_read(alice, alice_backend_sock, alice2_backend_sock, r
 
 
 @pytest.mark.trio
-async def test_create_bad_timestamp(alice, alice_backend_sock, realm):
+async def test_create_bad_timestamp(alice_backend_sock, realm):
     blob = b"Initial commit."
     d1 = datetime(2000, 1, 1)
     with freeze_time(d1):
@@ -78,7 +78,7 @@ async def test_create_but_already_exists(alice_backend_sock, realm):
 
 
 @pytest.mark.trio
-async def test_create_check_access_rights(backend, alice, bob, bob_backend_sock, realm, vlobs):
+async def test_create_check_access_rights(backend, alice, bob, bob_backend_sock, realm):
     vlob_id = uuid4()
 
     # User not part of the realm
@@ -294,7 +294,7 @@ async def test_update_ok(alice_backend_sock, vlobs):
 
 
 @pytest.mark.trio
-async def test_update_bad_timestamp(alice, alice_backend_sock, vlobs):
+async def test_update_bad_timestamp(alice_backend_sock, vlobs):
     blob = b"Initial commit."
     d1 = datetime(2000, 1, 1)
     with freeze_time(d1):
@@ -413,7 +413,7 @@ async def test_update_bad_version(alice_backend_sock, vlobs):
 
 
 @pytest.mark.trio
-async def test_bad_encryption_revision(backend, alice, alice_backend_sock, realm, vlobs):
+async def test_bad_encryption_revision(alice_backend_sock, realm, vlobs):
     rep = await vlob_create(
         alice_backend_sock,
         realm,

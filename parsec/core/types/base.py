@@ -1,7 +1,7 @@
-# Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
+# Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2016-2021 Scille SAS
 
 import attr
-from typing import Tuple, Union
+from typing import Tuple, Iterable, Union
 
 from parsec.serde import BaseSchema, MsgpackSerializer
 from parsec.api.data import BaseData, EntryName
@@ -27,7 +27,7 @@ class FsPath:
     be resolved.
     """
 
-    def __init__(self, raw):
+    def __init__(self, raw: Union["FsPath", str, Iterable[EntryName]]):
         if isinstance(raw, FsPath):
             parts = raw.parts
         elif isinstance(raw, (list, tuple)):

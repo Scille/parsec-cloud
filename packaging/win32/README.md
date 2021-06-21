@@ -1,4 +1,4 @@
-NSIS installer for parsec
+NSIS installer for Parsec
 =========================
 
 Inspired by (Deluge NSIS installer)[https://github.com/deluge-torrent/deluge/blob/3f9ae337932da550f2623daa6dedd9c3e0e5cfb3/packaging/win32/Win32%20README.txt]
@@ -10,26 +10,17 @@ Build steps
 
 ### 1 - Build the application
 
-First make sure you are within a cmd.exe shell with visual studio configured
-for the target architecture you want to build.
-
-Example for Visual Studio 2017 with amd64 target:
+Run the `freeze_program.py` Python script with the path to the Parsec sources to use:
 ```shell
-$ "C:\Program Files (x86)\Microsoft Visual Studio\2017\Community\VC\Auxiliary\Build\vcvarsall.bat"  amd64
-```
-
-Run the `freeze_parsec.py` Python script with the path to the Parsec sources to use:
-```shell
-$ python freeze_parsec.py ../..
+$ python freeze_program.py ../..
 ```
 
 Note the Python version embedded inside the build will be taken from the interpreter
 you run the script with.
-For this reason, you must run the script with a Python interpreter of the same
-architecture than the one configured for visual studio.
 
 On top of the build, the script will generate `install_files.nsh`, `uninstall_files.nsh`
 and `BUILD.tmp` files that will be used by the packaging nsis script.
+It will also download a WinFSP installer which is also needed by the packaging nsis script.
 
 
 ### 2 - Package the application

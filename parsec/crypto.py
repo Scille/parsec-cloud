@@ -1,4 +1,4 @@
-# Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
+# Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2016-2021 Scille SAS
 
 from typing import Tuple
 from base64 import b32decode, b32encode
@@ -157,15 +157,37 @@ class PublicKey(_PublicKey):
 # Helpers
 
 
+# Binary encoder/decoder for url use.
+# Notes:
+# - We replace padding char `=` by a simple `s` (which is not part of
+#   the base32 table so no risk of collision) to avoid copy/paste errors
+#   and silly escaping issues when carrying the key around.
+# - We could be using base64url (see RFC 4648) which would be more efficient,
+#   but backward compatibility prevent us from doing it :'(
+
+
+def binary_urlsafe_encode(data: bytes) -> str:
+    """
+    Raises:
+        ValueError
+    """
+    return b32encode(data).decode("utf8").replace("=", "s")
+
+
+def binary_urlsafe_decode(data: str) -> bytes:
+    """
+    Raises:
+        ValueError
+    """
+    return b32decode(data.replace("s", "=").encode("utf8"))
+
+
 def export_root_verify_key(key: VerifyKey) -> str:
     """
     Raises:
         ValueError
     """
-    # Note we replace padding char `=` by a simple `s` (which is not part of
-    # the base32 table so no risk of collision) to avoid copy/paste errors
-    # and silly escaping issues when carrying the key around.
-    return b32encode(key.encode()).decode("utf8").replace("=", "s")
+    return binary_urlsafe_encode(key.encode())
 
 
 def import_root_verify_key(raw: str) -> VerifyKey:
@@ -173,11 +195,9 @@ def import_root_verify_key(raw: str) -> VerifyKey:
     Raises:
         ValueError
     """
-    if isinstance(raw, VerifyKey):
-        # Useful during tests
-        return raw
+    raw_binary = binary_urlsafe_decode(raw)
     try:
-        return VerifyKey(b32decode(raw.replace("s", "=").encode("utf8")))
+        return VerifyKey(raw_binary)
     except CryptoError as exc:
         raise ValueError("Invalid verify key") from exc
 

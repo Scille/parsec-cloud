@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-# Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
+# Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2016-2021 Scille SAS
 
 import os
 
@@ -270,19 +270,20 @@ with open("HISTORY.rst") as history_file:
 
 requirements = [
     "attrs==19.2.0",
-    "click==7.0",
+    "click==7.1.2",
     "msgpack==0.6.0",
-    "wsproto==0.15.0",
-    "h11==0.10.0",
+    "wsproto==1.0.0",
+    "h11==0.12.0",
     # Can use marshmallow or the toasted flavour as you like ;-)
     # "marshmallow==2.14.0",
     "toastedmarshmallow==0.2.6",
     "pendulum==2.1.2",
     "PyNaCl==1.4.0",
-    "trio==0.16.0",
+    "trio==0.18.0",
     "trio_typing==0.5.0",
     "async_generator>=1.9",
     'contextvars==2.1;python_version<"3.7"',
+    'typing-extensions;python_version<"3.8"',
     "sentry-sdk==0.14.3",
     "structlog==19.2.0",
     "importlib_resources==1.0.2",
@@ -297,17 +298,13 @@ test_requirements = [
     "pytest==5.4.3",
     "pytest-cov==2.10.0",
     "pytest-xdist==1.32.0",
-    "pytest-trio==0.5.2",
+    "pytest-trio==0.7.0",
     "pytest-qt==3.3.0",
     "pytest-rerunfailures==9.0",
     "hypothesis==5.3.0",
     "hypothesis-trio==0.5.0",
     "trustme==0.6.0",
-    # Winfsptest requirements
-    # We can't use `winfspy[test]` because of some pip limitations
-    # - see pip issues #7096/#6239/#4391/#988
-    # Looking forward to the new pip dependency resolver!
-    'pywin32==227;platform_system=="Windows"',
+    'winfspy[test]==0.8.2;platform_system=="Windows"',
     # Fix botocore and sphinx conflicting requirements on docutils
     "docutils>=0.12,<0.16",
     # Documentation generation requirements
@@ -318,7 +315,7 @@ test_requirements = [
 ]
 
 
-PYQT_DEPS = ["PyQt5==5.14.2", "pyqt5-sip==12.8.0"]
+PYQT_DEPS = ["PyQt5==5.15.2", "pyqt5-sip==12.8.1"]
 GUI_DEPS = [*PYQT_DEPS, "qrcode==6.1"]
 BABEL_DEP = "Babel==2.6.0"
 WHEEL_DEP = "wheel==0.34.2"
@@ -328,15 +325,15 @@ extra_requirements = {
         *GUI_DEPS,
         BABEL_DEP,
         'fusepy==3.0.1;platform_system=="Linux" or platform_system=="Darwin"',
-        'winfspy==0.8.0;platform_system=="Windows"',
+        'winfspy==0.8.2;platform_system=="Windows"',
         "zxcvbn==4.4.27",
         'psutil==5.7.3;platform_system=="Windows"',
     ],
     "backend": [
         "jinja2==2.11.2",
         # PostgreSQL
-        "triopg==0.5.0",
-        "trio-asyncio==0.11.0",
+        "triopg==0.6.0",
+        "trio-asyncio==0.12.0",
         # S3
         "boto3==1.12.34",
         "botocore==1.15.34",

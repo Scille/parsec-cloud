@@ -1,4 +1,4 @@
-# Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
+# Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2016-2021 Scille SAS
 
 from parsec.backend.backend_events import BackendEvent
 import attr
@@ -10,7 +10,7 @@ import tempfile
 from enum import Enum
 from uuid import UUID, uuid4
 from collections import defaultdict
-from typing import Dict, List, Optional, Union, Set
+from typing import Dict, List, Optional, Union, Set, cast
 from pendulum import DateTime, now as pendulum_now
 from email.message import Message
 from email.mime.text import MIMEText
@@ -18,7 +18,7 @@ from email.mime.multipart import MIMEMultipart
 from structlog import get_logger
 
 from parsec.crypto import PublicKey
-from parsec.event_bus import EventBus
+from parsec.event_bus import EventBus, EventCallback, EventFilterCallback
 from parsec.api.data import UserProfile
 from parsec.api.protocol import (
     OrganizationID,
@@ -52,8 +52,6 @@ from parsec.core.types import BackendInvitationAddr
 
 
 logger = get_logger()
-
-PEER_EVENT_MAX_WAIT = 300  # 5mn
 
 
 class CloseInviteConnection(Exception):
@@ -163,7 +161,7 @@ def generate_invite_email(
     # mail settings
     message = MIMEMultipart("alternative")
     if greeter_name:
-        message["Subject"] = f"[Parsec] { greeter_name } invited you to { organization_id}"
+        message["Subject"] = f"[Parsec] { greeter_name } invited you to { organization_id }"
     else:
         message["Subject"] = f"[Parsec] New device invitation to { organization_id }"
     message["From"] = from_addr
@@ -201,7 +199,7 @@ async def _smtp_send_mail(email_config: SmtpEmailConfig, to_addr: str, message: 
                 server.sendmail(email_config.sender, to_addr, message.as_string())
 
         except smtplib.SMTPException as e:
-            logger.warning("SMTP error", exc_info=e, to_addr=to_addr)
+            logger.warning("SMTP error", exc_info=e, to_addr=to_addr, subject=message["Subject"])
 
     await trio.to_thread.run_sync(_do)
 
@@ -245,7 +243,7 @@ class BaseInviteComponent:
         # information in database so that we default to no claimer present
         # (which is the most likely when a backend is restarted) .
         #
-        # However there is multiple way this list can go out of sync:
+        # However there are multiple ways this list can go out of sync:
         # - a claimer can be connected to a backend, then another backend starts
         # - the backend the claimer is connected to crashes witout being able
         #   to notify the other backends
@@ -258,13 +256,15 @@ class BaseInviteComponent:
         # expected to do ;-)
         self._claimers_ready: Dict[OrganizationID, Set[UUID]] = defaultdict(set)
 
-        def _on_status_changed(event, organization_id, greeter, token, status):
+        def _on_status_changed(event: Enum, organization_id, greeter, token, status) -> None:
             if status == InvitationStatus.READY:
                 self._claimers_ready[organization_id].add(token)
             else:  # Invitation deleted or back to idle
                 self._claimers_ready[organization_id].discard(token)
 
-        self._event_bus.connect(BackendEvent.INVITE_STATUS_CHANGED, _on_status_changed)
+        self._event_bus.connect(
+            BackendEvent.INVITE_STATUS_CHANGED, cast(EventCallback, _on_status_changed)
+        )
 
     @api("invite_new", handshake_types=[HandshakeType.AUTHENTICATED])
     @catch_protocol_errors
@@ -406,7 +406,7 @@ class BaseInviteComponent:
             }
         return invite_info_serializer.rep_dump(rep)
 
-    @api("invite_1_claimer_wait_peer", handshake_types=[HandshakeType.INVITED])
+    @api("invite_1_claimer_wait_peer", long_request=True, handshake_types=[HandshakeType.INVITED])
     @catch_protocol_errors
     async def api_invite_1_claimer_wait_peer(self, client_ctx, msg):
         """
@@ -414,7 +414,6 @@ class BaseInviteComponent:
             CloseInviteConnection
         """
         msg = invite_1_claimer_wait_peer_serializer.req_load(msg)
-
         try:
             greeter_public_key = await self.conduit_exchange(
                 organization_id=client_ctx.organization_id,
@@ -425,7 +424,7 @@ class BaseInviteComponent:
             )
 
         except InvitationAlreadyDeletedError as exc:
-            # Notify parent that the connection shall be close because the invitation token is no logger valide.
+            # Notify parent that the connection shall be close because the invitation token is no longer valid.
             raise CloseInviteConnection from exc
 
         except InvitationNotFoundError:
@@ -492,7 +491,7 @@ class BaseInviteComponent:
             )
 
         except InvitationAlreadyDeletedError as exc:
-            # Notify parent that the connection shall be close because the invitation token is no logger valide.
+            # Notify parent that the connection shall be close because the invitation token is no longer valid.
             raise CloseInviteConnection from exc
 
         except InvitationNotFoundError:
@@ -586,7 +585,7 @@ class BaseInviteComponent:
             )
 
         except InvitationAlreadyDeletedError as exc:
-            # Notify parent that the connection shall be close because the invitation token is no logger valide.
+            # Notify parent that the connection shall be close because the invitation token is no longer valid.
             raise CloseInviteConnection from exc
 
         except InvitationNotFoundError:
@@ -641,7 +640,7 @@ class BaseInviteComponent:
             )
 
         except InvitationAlreadyDeletedError as exc:
-            # Notify parent that the connection shall be close because the invitation token is no logger valide.
+            # Notify parent that the connection shall be close because the invitation token is no longer valid.
             raise CloseInviteConnection from exc
 
         except InvitationNotFoundError:
@@ -696,7 +695,7 @@ class BaseInviteComponent:
             )
 
         except InvitationAlreadyDeletedError as exc:
-            # Notify parent that the connection shall be close because the invitation token is no logger valide.
+            # Notify parent that the connection shall be close because the invitation token is no longer valid.
             raise CloseInviteConnection from exc
 
         except InvitationNotFoundError:
@@ -753,7 +752,7 @@ class BaseInviteComponent:
             )
 
         except InvitationAlreadyDeletedError as exc:
-            # Notify parent that the connection shall be close because the invitation token is no logger valide.
+            # Notify parent that the connection shall be close because the invitation token is no longer valid.
             raise CloseInviteConnection from exc
 
         except InvitationNotFoundError:
@@ -778,16 +777,17 @@ class BaseInviteComponent:
         # First we "talk" by providing our payload and retrieve the peer's
         # payload if he has talked prior to us.
         # Then we "listen" by waiting for the peer to provide his payload if we
-        # have talk first, or to confirm us it has received our payload if we
-        # have talk after him.
+        # have talked first, or to confirm us it has received our payload if we
+        # have talked after him.
         filter_organization_id = organization_id
         filter_token = token
 
-        def _conduit_updated_filter(event: str, organization_id: OrganizationID, token: UUID):
+        def _conduit_updated_filter(event: Enum, organization_id: OrganizationID, token: UUID):
             return organization_id == filter_organization_id and token == filter_token
 
         with self._event_bus.waiter_on(
-            BackendEvent.INVITE_CONDUIT_UPDATED, filter=_conduit_updated_filter
+            BackendEvent.INVITE_CONDUIT_UPDATED,
+            filter=cast(EventFilterCallback, _conduit_updated_filter),
         ) as waiter:
             listen_ctx = await self._conduit_talk(organization_id, greeter, token, state, payload)
 

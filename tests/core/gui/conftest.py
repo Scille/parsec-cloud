@@ -1,4 +1,4 @@
-# Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
+# Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2016-2021 Scille SAS
 
 import pytest
 from unittest.mock import patch
@@ -111,15 +111,18 @@ class ThreadedTrioTestRunner:
 def run_trio_test_in_thread():
     runner = ThreadedTrioTestRunner()
 
-    def trio_test(fn):
-        @wraps(fn)
-        def wrapper(**kwargs):
-            runner.start_test_thread(fn, **kwargs)
-            return runner.process_requests_until_test_result()
+    def trio_test(run):
+        def decorator(fn):
+            @wraps(fn)
+            def wrapper(**kwargs):
+                runner.start_test_thread(fn, **kwargs)
+                return runner.process_requests_until_test_result()
 
-        return wrapper
+            return wrapper
 
-    with patch("pytest_trio.plugin.trio_test", new=trio_test):
+        return decorator
+
+    with patch("pytest_trio.plugin._trio_test", new=trio_test):
 
         yield runner
 

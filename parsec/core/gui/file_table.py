@@ -1,10 +1,10 @@
-# Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
+# Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2016-2021 Scille SAS
 
 from collections import namedtuple
 import pendulum
 import pathlib
+import sys
 from enum import IntEnum
-from sys import platform
 
 from PyQt5.QtCore import Qt, pyqtSignal
 from PyQt5.QtGui import QIcon, QColor, QKeySequence
@@ -74,7 +74,7 @@ class FileTable(QTableWidget):
     FIXED_COL_SIZE = 560
     NAME_COL_MIN_SIZE = 150
 
-    file_moved = pyqtSignal(str, str)
+    file_moved = pyqtSignal(FileType, str, str)
     item_activated = pyqtSignal(FileType, str)
     files_dropped = pyqtSignal(list, str)
     delete_clicked = pyqtSignal()
@@ -190,7 +190,7 @@ class FileTable(QTableWidget):
         selected = self.selected_files()
         menu = QMenu(self)
 
-        if platform == "darwin":
+        if sys.platform == "darwin":
             action = menu.addAction(_("ACTION_FILE_OPEN_CURRENT_DIRECTORY_MAC"))
         else:
             action = menu.addAction(_("ACTION_FILE_OPEN_CURRENT_DIRECTORY"))
@@ -484,9 +484,9 @@ class FileTable(QTableWidget):
             for row in rows:
                 file_name = self.item(row, Column.NAME).text()
                 if file_type == FileType.ParentFolder:
-                    self.file_moved.emit(file_name, "..")
+                    self.file_moved.emit(FileType.Folder, file_name, "..")
                 else:
-                    self.file_moved.emit(file_name, target_name)
+                    self.file_moved.emit(file_type, file_name, target_name)
             for row in rows:
                 self.removeRow(row)
             event.accept()

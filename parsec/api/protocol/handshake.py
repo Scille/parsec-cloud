@@ -1,4 +1,4 @@
-# Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
+# Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2016-2021 Scille SAS
 
 from typing import Tuple, Optional, cast, Dict, Sequence, Union
 from uuid import UUID
@@ -207,6 +207,10 @@ class ServerHandshake:
         # Challenge
         self.challenge_size = challenge_size
         self.challenge: bytes
+
+        # Once support APIV1 is dropped, we can do much better than exposing the answer data as
+        # a dictionary of arbitrary object. Instead, it could be deserialize as a dedicated and
+        # properly typed `HandshakeAnswer` object.
         self.answer_data: Dict[str, object]
         self.answer_type: Union[HandshakeType, APIV1_HandshakeType] = HandshakeType.NOT_INITIALIZED
 

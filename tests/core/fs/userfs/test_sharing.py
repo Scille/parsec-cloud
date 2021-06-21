@@ -1,4 +1,4 @@
-# Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
+# Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2016-2021 Scille SAS
 
 from parsec.core.core_events import CoreEvent
 import pytest
@@ -20,7 +20,7 @@ from tests.common import freeze_time, create_shared_workspace
 
 @pytest.mark.trio
 async def test_share_unknown(running_backend, alice_user_fs, bob):
-    wid = EntryID()
+    wid = EntryID.new()
     with pytest.raises(FSWorkspaceNotFoundError):
         await alice_user_fs.workspace_share(wid, bob.user_id, WorkspaceRole.MANAGER)
 

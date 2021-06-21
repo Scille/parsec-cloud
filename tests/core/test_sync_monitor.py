@@ -1,4 +1,4 @@
-# Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
+# Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2016-2021 Scille SAS
 
 import re
 import trio
@@ -386,3 +386,53 @@ async def test_sync_monitor_while_changing_roles(
     await bob_core.wait_idle_monitors()
     info = await bob_workspace.path_info("/this-should-not-fail")
     assert not info["need_sync"]
+
+
+@pytest.mark.trio
+async def test_sync_with_concurrent_reencryption(
+    running_backend, alice_core, bob_user_fs, autojump_clock, monkeypatch
+):
+    # Create a shared workspace
+    wid = await create_shared_workspace("w", bob_user_fs, alice_core)
+    alice_workspace = alice_core.user_fs.get_workspace(wid)
+    bob_workspace = bob_user_fs.get_workspace(wid)
+
+    # Alice creates a files, let it sync
+    await alice_workspace.write_bytes("/test.txt", b"v1")
+    await alice_core.wait_idle_monitors()
+    await bob_user_fs.sync()
+
+    # Freeze Alice message processing so she won't process `sharing.reencrypted` messages
+    allow_message_processing = trio.Event()
+
+    async def _mockpoint_sleep():
+        await allow_message_processing.wait()
+
+    monkeypatch.setattr(
+        "parsec.core.messages_monitor.freeze_messages_monitor_mockpoint", _mockpoint_sleep
+    )
+
+    # Now Bob reencrypt the workspace
+    reencryption_job = await bob_user_fs.workspace_start_reencryption(wid)
+    await bob_user_fs.process_last_messages()
+    total, done = await reencryption_job.do_one_batch()
+    assert total == done  # Sanity check to make sure the encryption is finished
+
+    # Alice modify the workspace and try to do the sync...
+    await alice_workspace.write_bytes("/test.txt", b"v2")
+    # Sync monitor will try and fail to do the sync of the workspace
+    await trio.sleep(300)  # autojump, so not *really* 300s
+    assert not alice_core.are_monitors_idle()
+
+    # Now let Alice process the `sharing.reencrypted` messages, this should
+    # allow to do the sync
+    allow_message_processing.set()
+    with trio.fail_after(60):  # autojump, so not *really* 60s
+        await alice_core.wait_idle_monitors()
+
+    # Just make sure the sync is done
+    await bob_workspace.sync()
+    for workspace in (bob_workspace, alice_workspace):
+        info = await workspace.path_info("/test.txt")
+        assert not info["need_sync"]
+        assert info["base_version"] == 3

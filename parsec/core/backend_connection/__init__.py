@@ -1,4 +1,4 @@
-# Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
+# Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2016-2021 Scille SAS
 
 from parsec.core.backend_connection.exceptions import (
     BackendConnectionError,
@@ -8,6 +8,7 @@ from parsec.core.backend_connection.exceptions import (
     BackendInvitationNotFound,
     BackendInvitationAlreadyUsed,
     BackendNotFoundError,
+    BackendInvitationOnExistingMember,
 )
 from parsec.core.backend_connection.authenticated import (
     BackendAuthenticatedCmds,
@@ -35,6 +36,7 @@ __all__ = (
     "BackendInvitationNotFound",
     "BackendInvitationAlreadyUsed",
     "BackendNotFoundError",
+    "BackendInvitationOnExistingMember",
     # Authenticated
     "BackendAuthenticatedCmds",
     "BackendConnStatus",
