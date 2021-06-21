@@ -293,7 +293,7 @@ class OverlayLabel(ClickableLabel):
         self._draw_overlay()
 
     def setPixmap(self, pix):
-        self._pix = pix
+        self._pix = pix.copy()
         self._draw_overlay()
 
     def _draw_overlay(self):

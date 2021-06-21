@@ -1,4 +1,4 @@
-# Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
+# Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2016-2021 Scille SAS
 
 from PyQt5.QtCore import QRectF
 from PyQt5.QtWidgets import QWidget, QVBoxLayout
@@ -27,13 +27,14 @@ def generate_qr_code(text):
         img = QImage(":/logos/images/logos/parsec2.png")
         if img:
             img = img.convertToFormat(QImage.Format_ARGB32)
-            PARSEC_LOGO = QImage(img.width() + 30, img.height() + 20, QImage.Format_ARGB32)
-            PARSEC_LOGO.fill(QColor(0xF4, 0xF4, 0xF4))
+            logo = QImage(img.width() + 30, img.height() + 20, QImage.Format_ARGB32)
+            logo.fill(QColor(0xF4, 0xF4, 0xF4))
             painter = QPainter()
-            painter.begin(PARSEC_LOGO)
+            painter.begin(logo)
             painter.setCompositionMode(QPainter.CompositionMode_SourceOver)
             painter.drawImage(15, 10, img)
             painter.end()
+            PARSEC_LOGO = logo
 
     qr = qrcode.QRCode(
         version=None, error_correction=qrcode.constants.ERROR_CORRECT_H, border=4, box_size=10
@@ -46,13 +47,14 @@ def generate_qr_code(text):
     qrcode.image.svg.SvgPathImage.QR_PATH_STYLE = (
         "fill:#5193FF;fill-opacity:1;fill-rule:nonzero;stroke:none"
     )
-    img = qr.make_image(image_factory=qrcode.image.svg.SvgPathImage)
+    qr_img = qr.make_image(image_factory=qrcode.image.svg.SvgPathImage)
     stream = io.BytesIO()
-    img.save(stream)
+    qr_img.save(stream)
     renderer = QSvgRenderer()
     renderer.load(stream.getvalue())
 
     final_img = QImage(600, 600, QImage.Format_ARGB32)
+    final_img.fill(QColor(0xF4, 0xF4, 0xF4))
 
     painter = QPainter()
     painter.begin(final_img)
