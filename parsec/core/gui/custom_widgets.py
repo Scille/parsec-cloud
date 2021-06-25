@@ -2,6 +2,8 @@
 
 import math
 
+from enum import Enum
+
 from PyQt5.QtCore import Qt, pyqtSignal, QSize
 from PyQt5.QtGui import QIcon, QPainter, QColor, QPen, QCursor, QPixmap, QFont, QFontMetrics
 from PyQt5.QtWidgets import (
@@ -256,6 +258,71 @@ class ClickableLabel(QLabel):
     def mousePressEvent(self, event):
         if event.button() & Qt.LeftButton:
             self.clicked.emit(self.text())
+
+
+class OverlayLabel(ClickableLabel):
+    OPEN_FULLSCREEN_ICON = None
+    CLOSE_FULLSCREEN_ICON = None
+
+    class ClickMode(Enum):
+        OpenFullScreen = 1
+        CloseFullScreen = 2
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self._pix = None
+        self.click_mode = OverlayLabel.ClickMode.OpenFullScreen
+        self.show_icon = True
+        if not OverlayLabel.OPEN_FULLSCREEN_ICON:
+            OverlayLabel.OPEN_FULLSCREEN_ICON = Pixmap(":/icons/images/material/fullscreen.svg")
+            OverlayLabel.OPEN_FULLSCREEN_ICON.replace_color(QColor(0, 0, 0), QColor(164, 164, 164))
+        if not OverlayLabel.CLOSE_FULLSCREEN_ICON:
+            OverlayLabel.CLOSE_FULLSCREEN_ICON = Pixmap(
+                ":/icons/images/material/fullscreen_exit.svg"
+            )
+            OverlayLabel.CLOSE_FULLSCREEN_ICON.replace_color(QColor(0, 0, 0), QColor(164, 164, 164))
+
+    def set_mode(self, click_mode, show_icon):
+        self.click_mode = click_mode
+        self.show_icon = show_icon
+
+    def enterEvent(self, event):
+        self._draw_overlay()
+
+    def leaveEvent(self, event):
+        self._draw_overlay()
+
+    def setPixmap(self, pix):
+        self._pix = pix.copy()
+        self._draw_overlay()
+
+    def _draw_overlay(self):
+        if not self._pix:
+            return
+
+        if not self.underMouse():
+            super().setPixmap(self._pix)
+            return
+
+        icon = None
+
+        if self.click_mode == OverlayLabel.ClickMode.OpenFullScreen and self.show_icon:
+            icon = OverlayLabel.OPEN_FULLSCREEN_ICON
+            icon = icon.scaled(self._pix.width() - 10, self._pix.height() - 10, Qt.KeepAspectRatio)
+        elif self.click_mode == OverlayLabel.ClickMode.CloseFullScreen and self.show_icon:
+            icon = OverlayLabel.CLOSE_FULLSCREEN_ICON
+            icon = icon.scaled(
+                int(self._pix.width() / 5), int(self._pix.height() / 5), Qt.KeepAspectRatio
+            )
+
+        p = self._pix.copy()
+        painter = QPainter(p)
+        if icon:
+            pos_x = int(p.width() / 2) - int(icon.width() / 2)
+            pos_y = int(p.height() / 2) - int(icon.height() / 2)
+            painter.drawPixmap(pos_x, pos_y, icon)
+        painter.end()
+        super().setPixmap(p)
 
 
 class IconLabel(QLabel):

@@ -34,13 +34,16 @@ logger = get_logger()
 class GreyedDialog(QDialog, Ui_GreyedDialog):
     closing = pyqtSignal()
 
-    def __init__(self, center_widget, title, parent, hide_close=False, width=None):
+    def __init__(
+        self, center_widget, title, parent, hide_close=False, width=None, close_on_click=False
+    ):
         super().__init__(None)
         self.setupUi(self)
         self.setModal(True)
         self.setObjectName("GreyedDialog")
         self.setWindowModality(Qt.ApplicationModal)
         self.button_close.apply_style()
+        self.close_on_click = close_on_click
         if sys.platform == "win32":
             # SplashScreen on Windows freezes the Window
             self.setWindowFlags(Qt.FramelessWindowHint)
@@ -96,6 +99,13 @@ class GreyedDialog(QDialog, Ui_GreyedDialog):
         opt.initFrom(self)
         p = QPainter(self)
         self.style().drawPrimitive(QStyle.PE_Widget, opt, p, self)
+
+    def mousePressEvent(self, event):
+        super().mousePressEvent(event)
+        if not self.close_on_click:
+            return
+        if event.button() == Qt.LeftButton:
+            self.accept()
 
     def on_finished(self):
         if (
