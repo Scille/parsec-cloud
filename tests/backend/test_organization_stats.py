@@ -18,7 +18,15 @@ async def test_organization_stats(
 ):
     organization_stats = await alice_core.get_organization_stats()
     assert organization_stats == OrganizationStats(
-        users=2, outsiders=1, data_size=0, metadata_size=ANY
+        users=3,
+        active_users=3,
+        users_per_profile_detail={
+            "ADMIN": {"active": 1, "revoked": 0},
+            "STANDARD": {"active": 1, "revoked": 0},
+            "OUTSIDER": {"active": 1, "revoked": 0},
+        },
+        data_size=0,
+        metadata_size=ANY,
     )
     initial_metadata_size = organization_stats.metadata_size
 
@@ -34,7 +42,15 @@ async def test_organization_stats(
     )
     organization_stats = await alice_core.get_organization_stats()
     assert organization_stats == OrganizationStats(
-        users=2, outsiders=1, data_size=0, metadata_size=initial_metadata_size + 4
+        users=3,
+        active_users=3,
+        users_per_profile_detail={
+            "ADMIN": {"active": 1, "revoked": 0},
+            "STANDARD": {"active": 1, "revoked": 0},
+            "OUTSIDER": {"active": 1, "revoked": 0},
+        },
+        data_size=0,
+        metadata_size=initial_metadata_size + 4,
     )
 
     # Create new data
@@ -47,7 +63,15 @@ async def test_organization_stats(
     )
     organization_stats = await alice_core.get_organization_stats()
     assert organization_stats == OrganizationStats(
-        users=2, outsiders=1, data_size=4, metadata_size=initial_metadata_size + 4
+        users=3,
+        active_users=3,
+        users_per_profile_detail={
+            "ADMIN": {"active": 1, "revoked": 0},
+            "STANDARD": {"active": 1, "revoked": 0},
+            "OUTSIDER": {"active": 1, "revoked": 0},
+        },
+        data_size=4,
+        metadata_size=initial_metadata_size + 4,
     )
 
     # Bob is not admin, it should fail
@@ -61,5 +85,13 @@ async def test_organization_stats(
     # Ensure organization isolation
     other_organization_stats = await otheralice_core.get_organization_stats()
     assert other_organization_stats == OrganizationStats(
-        users=1, outsiders=0, data_size=0, metadata_size=ANY
+        users=1,
+        active_users=1,
+        users_per_profile_detail={
+            "ADMIN": {"active": 1, "revoked": 0},
+            "STANDARD": {"active": 0, "revoked": 0},
+            "OUTSIDER": {"active": 0, "revoked": 0},
+        },
+        data_size=0,
+        metadata_size=ANY,
     )

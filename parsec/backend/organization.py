@@ -2,7 +2,7 @@
 
 import attr
 import pendulum
-from typing import Optional, Union
+from typing import Optional, Union, Dict, Counter
 from secrets import token_hex
 
 from pendulum import DateTime
@@ -79,8 +79,9 @@ class OrganizationStats:
     data_size: int
     metadata_size: int
     users: int
-    outsiders: int
+    active_users: int
     workspaces: int
+    users_per_profile_detail: Dict[str, Counter]
 
 
 class BaseOrganizationComponent:
@@ -173,9 +174,10 @@ class BaseOrganizationComponent:
             {
                 "status": "ok",
                 "users": stats.users,
-                "outsiders": stats.outsiders,
+                "active_users": stats.active_users,
                 "data_size": stats.data_size,
                 "metadata_size": stats.metadata_size,
+                "users_per_profile_detail": stats.users_per_profile_detail,
             }
         )
 
@@ -194,7 +196,8 @@ class BaseOrganizationComponent:
             {
                 "status": "ok",
                 "users": stats.users,
-                "outsiders": stats.outsiders,
+                "active_users": stats.active_users,
+                "users_per_profile_detail": stats.users_per_profile_detail,
                 "data_size": stats.data_size,
                 "metadata_size": stats.metadata_size,
                 "workspaces": stats.workspaces,
@@ -396,3 +399,9 @@ class BaseOrganizationComponent:
             OrganizationNotFoundError
         """
         raise NotImplementedError()
+
+    def _init_users_per_profile_detail(self):
+        detail = {}
+        for profile in UserProfile:
+            detail[profile.value] = {"active": 0, "revoked": 0}
+        return detail

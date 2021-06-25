@@ -30,8 +30,13 @@ async def test_organization_stats(
         "status": "ok",
         "data_size": 0,
         "metadata_size": ANY,
-        "users": 2,
-        "outsiders": 1,
+        "users": 3,
+        "active_users": 3,
+        "users_per_profile_detail": {
+            "ADMIN": {"active": 1, "revoked": 0},
+            "STANDARD": {"active": 1, "revoked": 0},
+            "OUTSIDER": {"active": 1, "revoked": 0},
+        },
         "workspaces": 4,
     }
     initial_metadata_size = rep["metadata_size"]
@@ -43,8 +48,13 @@ async def test_organization_stats(
         "status": "ok",
         "data_size": 0,
         "metadata_size": initial_metadata_size + 4,
-        "users": 2,
-        "outsiders": 1,
+        "users": 3,
+        "active_users": 3,
+        "users_per_profile_detail": {
+            "ADMIN": {"active": 1, "revoked": 0},
+            "STANDARD": {"active": 1, "revoked": 0},
+            "OUTSIDER": {"active": 1, "revoked": 0},
+        },
         "workspaces": 4,
     }
 
@@ -55,8 +65,13 @@ async def test_organization_stats(
         "status": "ok",
         "data_size": 4,
         "metadata_size": initial_metadata_size + 4,
-        "users": 2,
-        "outsiders": 1,
+        "users": 3,
+        "active_users": 3,
+        "users_per_profile_detail": {
+            "ADMIN": {"active": 1, "revoked": 0},
+            "STANDARD": {"active": 1, "revoked": 0},
+            "OUTSIDER": {"active": 1, "revoked": 0},
+        },
         "workspaces": 4,
     }
 
@@ -67,8 +82,13 @@ async def test_organization_stats(
         "status": "ok",
         "data_size": 4,
         "metadata_size": initial_metadata_size + 4,
-        "users": 2,
-        "outsiders": 1,
+        "users": 3,
+        "active_users": 3,
+        "users_per_profile_detail": {
+            "ADMIN": {"active": 1, "revoked": 0},
+            "STANDARD": {"active": 1, "revoked": 0},
+            "OUTSIDER": {"active": 1, "revoked": 0},
+        },
         "workspaces": 5,
     }
 

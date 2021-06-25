@@ -1,7 +1,6 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2016-2021 Scille SAS
 
 from typing import Optional, Union
-
 from functools import lru_cache
 from pendulum import DateTime
 from triopg import UniqueViolationError
@@ -65,6 +64,13 @@ WHERE
 _q_get_stats = Q(
     f"""
 SELECT
+    (
+        SELECT ARRAY(
+            SELECT (revoked_on, profile)
+            FROM user_
+            WHERE organization = { q_organization_internal_id("$organization_id") }
+        )
+    )_users,
     (
         SELECT COUNT(*)
         FROM user_
@@ -204,10 +210,22 @@ class PGOrganizationComponent(BaseOrganizationComponent):
         async with self.dbh.pool.acquire() as conn, conn.transaction():
             await self._get(conn, id)  # Check organization exists
             result = await conn.fetchrow(*_q_get_stats(organization_id=id))
+            users = 0
+            active_users = 0
+            users_per_profile_detail = self._init_users_per_profile_detail()
+            for u in result["_users"]:
+                revoked_on, profile = u
+                users += 1
+                if revoked_on:
+                    users_per_profile_detail[profile]["revoked"] += 1
+                else:
+                    active_users += 1
+                    users_per_profile_detail[profile]["active"] += 1
 
         return OrganizationStats(
-            users=result["users"],
-            outsiders=result["outsiders"],
+            users=users,
+            active_users=active_users,
+            users_per_profile_detail=users_per_profile_detail,
             data_size=result["data_size"],
             metadata_size=result["metadata_size"],
             workspaces=result["workspaces"],
