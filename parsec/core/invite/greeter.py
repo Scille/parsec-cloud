@@ -315,6 +315,13 @@ class UserGreetInProgress4Ctx:
         if rep["status"] != "ok":
             raise InviteError(f"Cannot create device: {rep}")
 
+        # From now on the user has been created on the server, but greeter
+        # is not aware of it yet. If something goes wrong, we can end up with
+        # the greeter losing it private keys.
+        # This is considered acceptable given 1) the error window is small and
+        # 2) if this occurs the inviter can revoke the user and retry the
+        # enrollment process to fix this
+
         try:
             payload = InviteUserConfirmation(
                 device_id=device_id,
@@ -329,6 +336,9 @@ class UserGreetInProgress4Ctx:
         rep = await self._cmds.invite_4_greeter_communicate(token=self.token, payload=payload)
         _check_rep(rep, step_name="step 4 (confirmation exchange)")
 
+        # Invitation deletion is not strictly necessary (enrollment has succeeded
+        # anyway) so it's no big deal if something goes wrong before it can be
+        # done (and it can be manually deleted from invitation list).
         await self._cmds.invite_delete(token=self.token, reason=InvitationDeletedReason.FINISHED)
 
 
@@ -369,6 +379,13 @@ class DeviceGreetInProgress4Ctx:
         )
         _check_rep(rep, step_name="device creation")
 
+        # From now on the device has been created on the server, but greeter
+        # is not aware of it yet. If something goes wrong, we can end up with
+        # the greeter losing it private keys.
+        # This is considered acceptable given 1) the error window is small and
+        # 2) if this occurs the inviter can revoke the device and retry the
+        # enrollment process to fix this
+
         try:
             payload = InviteDeviceConfirmation(
                 device_id=device_id,
@@ -386,4 +403,7 @@ class DeviceGreetInProgress4Ctx:
         rep = await self._cmds.invite_4_greeter_communicate(token=self.token, payload=payload)
         _check_rep(rep, step_name="step 4 (confirmation exchange)")
 
+        # Invitation deletion is not strictly necessary (enrollment has succeeded
+        # anyway) so it's no big deal if something goes wrong before it can be
+        # done (and it can be manually deleted from invitation list).
         await self._cmds.invite_delete(token=self.token, reason=InvitationDeletedReason.FINISHED)
