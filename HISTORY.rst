@@ -5,6 +5,16 @@ History
 .. towncrier release notes start
 
 
+Parsec v2.4.1 (2021-06-29)
+--------------------------
+
+Bugfixes
+~~~~~~~~
+
+* Fix database migration script n°6.  (`#1774 <https://github.com/Scille/parsec-
+  cloud/issues/1774>`__)
+
+
 Parsec v2.4.0 (2021-06-29)
 --------------------------
 
