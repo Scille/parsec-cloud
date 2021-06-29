@@ -1,2 +1,0 @@
-Add `.sb-` temporary directories to the confined pattern list.
-Those directories appear on MacOS when editing `.doc` and `.docx` files.

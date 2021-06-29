@@ -5,6 +5,54 @@ History
 .. towncrier release notes start
 
 
+Parsec v2.4.0 (2021-06-29)
+--------------------------
+
+Features
+~~~~~~~~
+
+* Adds the outsider profile management in the GUI  (`#1720
+  <https://github.com/Scille/parsec-cloud/issues/1720>`__)
+* Add QR code on device invitation (`#1652 <https://github.com/Scille/parsec-
+  cloud/issues/1652>`__)
+* Introduce OUTSIDER organization user profile: an outsider cannot see the
+  identity of other users within the organization. On top of that it is only
+  allowed to be READER/CONTRIBUTOR on shared workspaces.  (`#1727
+  <https://github.com/Scille/parsec-cloud/issues/1727>`__)
+* Add `.sb-` temporary directories to the confined pattern list. Those
+  directories appear on MacOS when editing `.doc` and `.docx` files.  (`#1764
+  <https://github.com/Scille/parsec-cloud/issues/1764>`__)
+
+Bugfixes
+~~~~~~~~
+
+* Added the pop-up widget to download latest app version on MacOS  (`#1736
+  <https://github.com/Scille/parsec-cloud/issues/1736>`__)
+* Fix some alignments issues with the workspace widgets.  (`#1761
+  <https://github.com/Scille/parsec-cloud/issues/1761>`__)
+* Fix error handling for drag&drop in GUI. (`#1732
+  <https://github.com/Scille/parsec-cloud/issues/1732>`__)
+* Fix possible crash when sync occurs right after a workspace reencryption.
+  (`#1730 <https://github.com/Scille/parsec-cloud/issues/1730>`__)
+
+Deprecations and Removals
+~~~~~~~~~~~~~~~~~~~~~~~~~
+
+* Change the file link URL format so that file path is encrypted. This change
+  breaks compatibility with previous file url format.  (`#1637
+  <https://github.com/Scille/parsec-cloud/issues/1637>`__)
+
+Miscellaneous internal changes
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+* Server on-organization-bootstrap webhook now allow 2xx return status instead
+  of only 200.  (`#1750 <https://github.com/Scille/parsec-cloud/issues/1750>`__)
+* Add red color to remove widget dialogue confirmation button in GUI.  (`#1758
+  <https://github.com/Scille/parsec-cloud/issues/1758>`__)
+* Reword telemetry related dialogue in GUI. (`#1759
+  <https://github.com/Scille/parsec-cloud/issues/1759>`__)
+
+
 Parsec v2.3.1 (2021-05-10)
 --------------------------
 

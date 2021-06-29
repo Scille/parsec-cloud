@@ -1,1 +1,0 @@
-Reword telemetry related dialogue in GUI.

@@ -1,1 +1,0 @@
-Added the pop-up widget to download latest app version on MacOS

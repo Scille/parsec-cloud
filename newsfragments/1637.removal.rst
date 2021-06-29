@@ -1,2 +1,0 @@
-Change the file link URL format so that file path is encrypted.
-This change breaks compatibility with previous file url format.
