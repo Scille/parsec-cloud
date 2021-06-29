@@ -1,0 +1,1 @@
+Fix database migration script n°6.
