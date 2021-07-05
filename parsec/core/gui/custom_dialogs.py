@@ -353,7 +353,7 @@ def show_info(parent, message, button_text=None):
 
 
 class InfoLinkWidget(QWidget, Ui_InfoWidget):
-    def __init__(self, message, dialog=None, button_text=None, url=None):
+    def __init__(self, message, url, button_text, dialog=None):
         super().__init__()
         self.setupUi(self)
         self.dialog = dialog
@@ -361,7 +361,7 @@ class InfoLinkWidget(QWidget, Ui_InfoWidget):
         self.label_message.setText(message)
         self.label_icon.apply_style()
         self.label_message.setOpenExternalLinks(True)
-        self.button_ok.setText(button_text or _("ACTION_CONTINUE"))
+        self.button_ok.setText(button_text)
         self.button_ok.clicked.connect(self._on_button_clicked)
         self.button_ok.setFocus()
 
@@ -371,7 +371,7 @@ class InfoLinkWidget(QWidget, Ui_InfoWidget):
 
 
 def show_info_link(parent, title, message, button_text, url):
-    w = InfoLinkWidget(message, url=url, button_text=button_text)
+    w = InfoLinkWidget(message, url, button_text)
     d = GreyedDialog(w, title=title, parent=parent)
     w.dialog = d
     w.button_ok.setFocus()
