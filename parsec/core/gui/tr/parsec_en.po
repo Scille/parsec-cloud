@@ -677,11 +677,22 @@ msgstr ""
 
 msgid "TEXT_LOGIN_ERROR_FUSE_NOT_AVAILABLE"
 msgstr ""
-"FUSE could not be loaded.<br>Please check your installation, this is a "
-"necessary dependency to use Parsec.<br><br>On Mac, you have to install "
-"macFUSE and allow in security settings.<br>From MacOS 11.x onwards, a system "
-"restart is required after macFUSE installation.<br><br><a "
-"href=\"https://osxfuse.github.io/\">Get the latest version of macFUSE here</a>"
+"FUSE could not be loaded. \n"
+"Please check your installation."
+
+msgid "TEXT_LOGIN_ERROR_MACFUSE_NOT_AVAILABLE"
+msgstr ""
+"To finalize your installation, macFUSE must be installed for certain key "
+"features to function.<br><br>On macOS versions 11.0 onwards, it's necessary "
+"to allow macFUSE in security settings after installation, requiring a system "
+"reboot afterwards.<br><br>A detailed installation guide is available "
+"<a href=\"https://www.google.com/search?q=todo\">here</a>."
+
+msgid "TEXT_MACFUSE_INSTALL_WINDOW_TITLE"
+msgstr "One last step: Install macFUSE"
+
+msgid "TEXT_MACFUSE_DOWNLOAD_BUTTON"
+msgstr "Download macFUSE"
 
 msgid "TEXT_LOGIN_UNKNOWN_ERROR"
 msgstr "Cannot log in."
