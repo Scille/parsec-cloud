@@ -4,6 +4,7 @@ from parsec.core.config import CoreConfig
 from typing import Optional
 from parsec.core.core_events import CoreEvent
 import trio
+import sys
 from structlog import get_logger
 from PyQt5.QtCore import pyqtSignal, pyqtSlot
 from PyQt5.QtWidgets import QWidget, QVBoxLayout, QApplication
