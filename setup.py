@@ -10,6 +10,9 @@ from setuptools.command.build_py import build_py
 # Awesome hack to load `__version__`
 __version__ = None
 exec(open("parsec/_version.py", encoding="utf-8").read())
+# Provide normalized version format (i.e. without leading "v") to avoid warning from setuptools
+assert __version__.startswith("v")
+__version__ = __version__[1:]
 
 
 def fix_pyqt_import():
