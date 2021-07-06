@@ -4,6 +4,7 @@ from parsec.core.config import CoreConfig
 from typing import Optional
 from parsec.core.core_events import CoreEvent
 import trio
+import sys
 from structlog import get_logger
 from PyQt5.QtCore import pyqtSignal, pyqtSlot
 from PyQt5.QtWidgets import QWidget, QVBoxLayout, QApplication
@@ -21,7 +22,7 @@ from parsec.core.mountpoint import (
 
 from parsec.core.gui.trio_thread import QtToTrioJobScheduler, ThreadSafeQtSignal
 from parsec.core.gui.parsec_application import ParsecApp
-from parsec.core.gui.custom_dialogs import show_error
+from parsec.core.gui.custom_dialogs import show_error, show_info_link
 from parsec.core.gui.lang import translate as _
 from parsec.core.gui.login_widget import LoginWidget
 from parsec.core.gui.central_widget import CentralWidget
@@ -155,11 +156,20 @@ class InstanceWidget(QWidget):
                     exception=self.running_core_job.exc,
                 )
             elif isinstance(self.running_core_job.exc, MountpointFuseNotAvailable):
-                show_error(
-                    self,
-                    _("TEXT_LOGIN_ERROR_FUSE_NOT_AVAILABLE"),
-                    exception=self.running_core_job.exc,
-                )
+                if sys.platform == "darwin":
+                    show_info_link(
+                        self,
+                        _("TEXT_MACFUSE_INSTALL_WINDOW_TITLE"),
+                        _("TEXT_LOGIN_ERROR_MACFUSE_NOT_AVAILABLE"),
+                        _("TEXT_MACFUSE_DOWNLOAD_BUTTON"),
+                        "https://osxfuse.github.io",
+                    )
+                else:
+                    show_error(
+                        self,
+                        _("TEXT_LOGIN_ERROR_FUSE_NOT_AVAILABLE"),
+                        exception=self.running_core_job.exc,
+                    )
             else:
                 logger.exception("Unhandled error", exc_info=self.running_core_job.exc)
                 show_error(self, _("TEXT_LOGIN_UNKNOWN_ERROR"), exception=self.running_core_job.exc)
