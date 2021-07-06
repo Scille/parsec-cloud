@@ -173,7 +173,7 @@ class BackendAuthenticatedConn:
         self._monitors_idle_event.set()  # No monitors
         self._backend_connection_failures = 0
         self._organization_config = OrganizationConfig(
-            expiration_date=False, user_profile_outsider_allowed=False
+            expiration_date=None, user_profile_outsider_allowed=False
         )
         # organization config is very unlikely to change, hence we query it
         # once when backend connection bootstraps, then keep the value in cache.
@@ -286,12 +286,19 @@ class BackendAuthenticatedConn:
 
             rep = await cmds.organization_config(transport)
             if rep["status"] != "ok":
-                raise BackendConnectionRefused(f"Error while fetching organization config: {rep}")
+                # Authenticated's organization_config command has been introduced in API v2.2
+                # So a cheap trick to keep backward compatibility here is to
+                # stick with the pre-populated organization config cached value.
+                if rep["status"] != "unknown_command":
+                    raise BackendConnectionRefused(
+                        f"Error while fetching organization config: {rep}"
+                    )
 
-            self._organization_config = OrganizationConfig(
-                expiration_date=rep["expiration_date"],
-                user_profile_outsider_allowed=rep["user_profile_outsider_allowed"],
-            )
+            else:
+                self._organization_config = OrganizationConfig(
+                    expiration_date=rep["expiration_date"],
+                    user_profile_outsider_allowed=rep["user_profile_outsider_allowed"],
+                )
 
             rep = await cmds.events_subscribe(transport)
             if rep["status"] != "ok":
