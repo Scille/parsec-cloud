@@ -13,9 +13,9 @@ Windows installer is available at the latest stable version on `parsec.cloud <ht
 MacOS
 -----
 
-Parsec is not yet available on MacOS Big Sur (>= 11.0).
+MacOS (10.15, >= 11.0) installer is available as a DMG installer on `GitHub <https://github.com/Scille/parsec/releases/latest>`_ (installer named ``parsec-vX.Y.Z-macos-amd64.dmg``).
 
-MacOS (<= 10.15) installer is available as a DMG installer on `GitHub <https://github.com/Scille/parsec/releases/latest>`_ (installer named ``parsec-vX.Y.Z-macos-amd64.dmg``).
+The MacOS version necessitates `macFUSE <https://osxfuse.github.io/>`_ to be installed, which can be troublesome on Big Sur. See `this discussion <https://github.com/osxfuse/osxfuse/issues/814>`_ about it and the OS' limitations. A detailed installation guide is in the making.
 
 
 Linux
