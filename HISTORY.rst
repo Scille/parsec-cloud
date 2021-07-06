@@ -5,6 +5,16 @@ History
 .. towncrier release notes start
 
 
+Parsec v2.4.2 (2021-07-06)
+--------------------------
+
+Miscellaneous internal changes
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+* Made the macFUSE pop-up during MacOS installation more user-friendly  (`#1777
+  <https://github.com/Scille/parsec-cloud/issues/1777>`__)
+
+
 Parsec v2.4.1 (2021-06-29)
 --------------------------
 
