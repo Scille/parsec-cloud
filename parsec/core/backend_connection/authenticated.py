@@ -173,7 +173,7 @@ class BackendAuthenticatedConn:
         self._monitors_idle_event.set()  # No monitors
         self._backend_connection_failures = 0
         self._organization_config = OrganizationConfig(
-            expiration_date=False, user_profile_outsider_allowed=False
+            expiration_date=None, user_profile_outsider_allowed=False
         )
         # organization config is very unlikely to change, hence we query it
         # once when backend connection bootstraps, then keep the value in cache.
