@@ -150,12 +150,19 @@ def generate_invite_email(
     greeter_name: Optional[str],  # Noe for device invitation
     organization_id: OrganizationID,
     invitation_url: str,
+    backend_url: str,
 ) -> Message:
     html = get_template("invitation_mail.html").render(
-        greeter=greeter_name, organization_id=organization_id, invitation_url=invitation_url
+        greeter=greeter_name,
+        organization_id=organization_id,
+        invitation_url=invitation_url,
+        backend_url=backend_url,
     )
     text = get_template("invitation_mail.txt").render(
-        greeter=greeter_name, organization_id=organization_id, invitation_url=invitation_url
+        greeter=greeter_name,
+        organization_id=organization_id,
+        invitation_url=invitation_url,
+        backend_url=backend_url,
     )
 
     # mail settings
@@ -305,6 +312,7 @@ class BaseInviteComponent:
                     reply_to=reply_to,
                     organization_id=client_ctx.organization_id,
                     invitation_url=_to_http_redirection_url(client_ctx, invitation),
+                    backend_url=self._config.backend_addr.to_http_domain_url(),
                 )
                 await send_email(
                     email_config=self._config.email_config,
@@ -328,6 +336,7 @@ class BaseInviteComponent:
                     reply_to=None,
                     organization_id=client_ctx.organization_id,
                     invitation_url=_to_http_redirection_url(client_ctx, invitation),
+                    backend_url=self._config.backend_addr.to_http_domain_url(),
                 )
                 await send_email(
                     email_config=self._config.email_config,

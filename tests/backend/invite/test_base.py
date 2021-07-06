@@ -202,6 +202,15 @@ async def test_invite_with_send_mail(alice, alice_backend_sock, email_letterbox)
         "You have received an invitation from Alicey McAliceFace to join the CoolOrg organization on Parsec."
         in body
     )
+    # Check urls in the email
+    assert (
+        f'<a href="http://example.com:9999/redirect/CoolOrg?action=claim_user&token={token.hex}" target="_blank">Claim invitation</a>'
+        in body
+    )
+    assert (
+        '<img src="http://example.com:9999/static/parsec-vert.png" alt="Parsec Logo" title="Parsec" width="150" height="100"/>'
+        in body
+    )
 
     # Device invitation
     rep = await invite_new(alice_backend_sock, type=InvitationType.DEVICE, send_email=True)
@@ -222,6 +231,15 @@ async def test_invite_with_send_mail(alice, alice_backend_sock, email_letterbox)
     assert token.hex in body
     assert (
         "You have received an invitation to add a new device to the CoolOrg organization on Parsec."
+        in body
+    )
+    # Check urls in the email
+    assert (
+        f'<a href="http://example.com:9999/redirect/CoolOrg?action=claim_device&token={token.hex}" target="_blank">Claim invitation</a>'
+        in body
+    )
+    assert (
+        '<img src="http://example.com:9999/static/parsec-vert.png" alt="Parsec Logo" title="Parsec" width="150" height="100"/>'
         in body
     )
 
