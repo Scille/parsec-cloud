@@ -6,7 +6,7 @@ import trio
 import json
 from typing import Optional, Tuple, List
 from json import JSONDecodeError
-from urllib.request import urlopen, Request, HTTPError
+from urllib.request import urlopen, Request, URLError
 from packaging.version import Version
 from structlog import get_logger
 
@@ -66,7 +66,7 @@ async def fetch_json_releases(api_url: str) -> Optional[List]:
         except JSONDecodeError as exc:
             logger.error("Cannot deserialize releases info from API", exc_info=exc, api_url=api_url)
             return None
-        except HTTPError:
+        except URLError:
             return None
 
     return await trio.to_thread.run_sync(_do_http_request)
