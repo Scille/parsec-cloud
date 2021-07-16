@@ -153,7 +153,7 @@ async def _do_move_files(workspace_fs, target_dir, source_files, source_workspac
         raise JobResultError("error", last_exc=last_exc, error_count=error_count)
 
 
-async def _do_folder_stat(workspace_fs, path, default_selection):
+async def _do_folder_stat(workspace_fs, path, default_selection, set_path):
     stats = {}
     dir_stat = await workspace_fs.path_info(path)
     # Retrieve children info, this is not an atomic operation so our view
@@ -173,7 +173,7 @@ async def _do_folder_stat(workspace_fs, path, default_selection):
             # if the manifest is inconsistent (broken data or signature).
             child_stat = {"type": "inconsistency", "id": exc.args[0]}
         stats[child] = child_stat
-    return path, dir_stat["id"], stats, default_selection
+    return path, dir_stat["id"], stats, default_selection, set_path
 
 
 async def _do_folder_create(workspace_fs, path):
@@ -396,7 +396,8 @@ class FilesWidget(QWidget, Ui_FilesWidget):
 
     def reset(self, default_selection=None):
         workspace_name = self.jobs_ctx.run_sync(self.workspace_fs.get_workspace_name)
-        self.load(self.current_directory, default_selection)
+        # Reload without any delay
+        self.reload(default_selection, delay=0)
         self.table_files.sortItems(0)
         self.folder_changed.emit(str(workspace_name), str(self.current_directory))
 
@@ -635,20 +636,31 @@ class FilesWidget(QWidget, Ui_FilesWidget):
         elif file_type == FileType.Folder:
             self.load(self.current_directory / file_name)
 
-    def reload(self):
-        self.load(self.current_directory, throttle_delay=self.RELOAD_FILES_LIST_THROTTLE_DELAY)
-
-    def load(self, directory, default_selection=None, throttle_delay: float = 0):
-        self.spinner.show()
+    def reload(self, default_selection=None, delay=None):
+        if delay is None:
+            delay = self.RELOAD_FILES_LIST_THROTTLE_DELAY
         self.jobs_ctx.submit_throttled_job(
-            "files_widget.load",
-            throttle_delay,
+            "files_widget.reload",
+            delay,
+            ThreadSafeQtSignal(self, "folder_stat_success", QtToTrioJob),
+            ThreadSafeQtSignal(self, "folder_stat_error", QtToTrioJob),
+            _do_folder_stat,
+            workspace_fs=self.workspace_fs,
+            path=self.current_directory,
+            default_selection=default_selection,
+            set_path=False,
+        )
+
+    def load(self, directory, default_selection=None):
+        self.spinner.show()
+        self.jobs_ctx.submit_job(
             ThreadSafeQtSignal(self, "folder_stat_success", QtToTrioJob),
             ThreadSafeQtSignal(self, "folder_stat_error", QtToTrioJob),
             _do_folder_stat,
             workspace_fs=self.workspace_fs,
             path=directory,
             default_selection=default_selection,
+            set_path=True,
         )
 
     def import_all(self, files, total_size):
@@ -830,10 +842,18 @@ class FilesWidget(QWidget, Ui_FilesWidget):
             show_error(self, _("TEXT_FILE_DELETE_ERROR"), exception=job.exc)
 
     def _on_folder_stat_success(self, job):
+        # Extract job information
+        directory, directory_uuid, files_stats, default_selection, set_path = job.ret
+        # Ignore old refresh jobs
+        if not set_path and self.current_directory != directory:
+            return
+        # Set the current directory
         old_current_directory = self.current_directory
-        self.current_directory, self.current_directory_uuid, files_stats, default_selection = (
-            job.ret
-        )
+        self.current_directory, self.current_directory_uuid = directory, directory_uuid
+        # Trigger a refresh to avoid race conditions
+        # TODO: maybe find a better way to deal with race conditions
+        if set_path:
+            self.reload()
         # Try to keep the current selection
         if old_current_directory == self.current_directory:
             old_selection = [x.name for x in self.table_files.selected_files()]

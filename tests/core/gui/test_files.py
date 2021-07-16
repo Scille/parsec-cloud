@@ -376,8 +376,6 @@ async def test_file_browsing_and_edit(
     await tb.check_files_view(
         path="/", expected_entries=["dir1/", "dir3/", "dir31/", "zdir2/", "file1.txt"]
     )
-
-    # Make sure source /dir3/dir31 has been removed and target /dir31 contains the expected data
     await tb.cd("dir3")
     await tb.check_files_view(path="/dir3", expected_entries=["dir33/"])
     await tb.cd("../dir31")
