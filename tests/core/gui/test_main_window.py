@@ -110,6 +110,8 @@ async def logged_gui_with_files(
         assert w_w.layout_workspaces.count() == 1
         wk_button = w_w.layout_workspaces.itemAt(0).widget()
         assert not isinstance(wk_button, QtWidgets.QLabel)
+        # Important: this is necessary for the incoming click to reliably work
+        assert wk_button.switch_button.isChecked()
 
     await aqtbot.wait_until(_workspace_button_ready)
 
