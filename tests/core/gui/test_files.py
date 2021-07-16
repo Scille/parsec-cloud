@@ -107,14 +107,7 @@ async def files_widget_testbed(monkeypatch, aqtbot, logged_gui):
             await aqtbot.run(_do_selection)
 
         async def reset_selection(self):
-            for r in f_w.table_files.selectedRanges():
-                top = r.topRow()
-                bottom = r.bottomRow()
-                await aqtbot.run(
-                    f_w.table_files.setRangeSelected,
-                    QtWidgets.QTableWidgetSelectionRange(top, 0, bottom, 0),
-                    False,
-                )
+            await aqtbot.run(f_w.table_files.reset)
 
         async def copy(self, selection=None):
             if selection is not None:

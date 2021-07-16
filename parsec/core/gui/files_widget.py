@@ -592,8 +592,9 @@ class FilesWidget(QWidget, Ui_FilesWidget):
     def open_files(self):
         files = self.table_files.selected_files()
         if len(files) == 1:
-            if not self.open_file(files[0][2]):
-                show_error(self, _("TEXT_FILE_OPEN_ERROR_file").format(file=files[0][2]))
+            path = files[0].name
+            if not self.open_file(path):
+                show_error(self, _("TEXT_FILE_OPEN_ERROR_file").format(file=path))
         else:
             result = ask_question(
                 self,
@@ -605,7 +606,7 @@ class FilesWidget(QWidget, Ui_FilesWidget):
                 return
             success = True
             for f in files:
-                success &= self.open_file(f[2])
+                success &= self.open_file(f.name)
             if not success:
                 show_error(self, _("TEXT_FILE_OPEN_MULTIPLE_ERROR"))
 
