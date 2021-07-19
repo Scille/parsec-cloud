@@ -636,9 +636,7 @@ class FilesWidget(QWidget, Ui_FilesWidget):
         elif file_type == FileType.Folder:
             self.load(self.current_directory / file_name)
 
-    def reload(self, default_selection=None, delay=None):
-        if delay is None:
-            delay = self.RELOAD_FILES_LIST_THROTTLE_DELAY
+    def reload(self, default_selection=None, delay=RELOAD_FILES_LIST_THROTTLE_DELAY):
         self.jobs_ctx.submit_throttled_job(
             "files_widget.reload",
             delay,
