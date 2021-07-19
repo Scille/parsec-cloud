@@ -129,10 +129,14 @@ async def test_share_workspace(
 
     await aqtbot.wait_until(_timer_stopped)
 
-    async with aqtbot.wait_signals([share_w_w.parent().parent().closing, w_w.list_success]):
+    # We have to be careful about keeping a reference to the parent.
+    # Otherwise, it's garbage collected later on and can trigger a
+    # sporadic segfault, causing the test to become inconsistent
+    parent = share_w_w.parent().parent()
+    async with aqtbot.wait_signals([parent.closing, w_w.list_success]):
 
         def _close_dialog():
-            share_w_w.parent().parent().reject()
+            parent.reject()
 
         await qt_thread_gateway.send_action(_close_dialog)
 

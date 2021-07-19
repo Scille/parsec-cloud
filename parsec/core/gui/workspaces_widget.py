@@ -3,7 +3,7 @@
 from parsec.core.core_events import CoreEvent
 from uuid import UUID
 
-from PyQt5.QtCore import pyqtSignal, QTimer, Qt
+from PyQt5.QtCore import pyqtSignal, Qt
 from PyQt5.QtWidgets import QWidget, QLabel
 
 import pendulum
@@ -161,7 +161,7 @@ async def _do_workspace_unmount(core, workspace_id, timestamp: pendulum.DateTime
 
 
 class WorkspacesWidget(QWidget, Ui_WorkspacesWidget):
-    RESET_TIMER_THRESHOLD = 1000  # ms
+    REFRESH_WORKSPACES_LIST_DELAY = 1  # 1s
 
     fs_updated_qt = pyqtSignal(CoreEvent, UUID)
     fs_synced_qt = pyqtSignal(CoreEvent, UUID)
@@ -239,12 +239,6 @@ class WorkspacesWidget(QWidget, Ui_WorkspacesWidget):
 
         self.filter_remove_button.clicked.connect(self.remove_user_filter)
         self.filter_remove_button.apply_style()
-
-        self.reset_required = False
-        self.reset_timer = QTimer()
-        self.reset_timer.setInterval(self.RESET_TIMER_THRESHOLD)
-        self.reset_timer.setSingleShot(True)
-        self.reset_timer.timeout.connect(self.on_timeout)
 
         self.mountpoint_started.connect(self._on_mountpoint_started_qt)
         self.mountpoint_stopped.connect(self._on_mountpoint_stopped_qt)
@@ -773,22 +767,15 @@ class WorkspacesWidget(QWidget, Ui_WorkspacesWidget):
         )
 
     def reset(self):
-        if self.reset_timer.isActive():
-            self.reset_required = True
-        else:
-            self.reset_required = False
-            self.reset_timer.start()
-            self.list_workspaces()
-
-    def on_timeout(self):
-        if self.reset_required:
-            self.reset()
+        self.list_workspaces()
 
     def list_workspaces(self):
         if not self.has_workspaces_displayed():
             self.layout_workspaces.clear()
             self.spinner.show()
-        self.jobs_ctx.submit_job(
+        self.jobs_ctx.submit_throttled_job(
+            "workspace_widget.list_workspaces",
+            self.REFRESH_WORKSPACES_LIST_DELAY,
             ThreadSafeQtSignal(self, "list_success", QtToTrioJob),
             ThreadSafeQtSignal(self, "list_error", QtToTrioJob),
             _do_workspace_list,

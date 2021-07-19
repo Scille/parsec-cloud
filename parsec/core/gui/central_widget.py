@@ -1,8 +1,8 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2016-2021 Scille SAS
 
-from parsec.api.data.manifest import WorkspaceEntry
 from typing import Optional, cast
-from PyQt5.QtCore import pyqtSignal, QTimer
+
+from PyQt5.QtCore import pyqtSignal
 from PyQt5.QtGui import QPixmap, QColor, QIcon
 from PyQt5.QtWidgets import QGraphicsDropShadowEffect, QWidget, QMenu
 
@@ -13,6 +13,7 @@ from parsec.api.protocol import (
     HandshakeOrganizationExpired,
 )
 from parsec.core.core_events import CoreEvent
+from parsec.api.data.manifest import WorkspaceEntry
 from parsec.core.logged_core import LoggedCore, OrganizationStats
 from parsec.core.types import UserInfo, BackendOrganizationFileLinkAddr
 from parsec.core.backend_connection import (
@@ -80,7 +81,8 @@ class CentralWidget(QWidget, Ui_CentralWidget):  # type: ignore[misc]
     vlobs_updated_qt = pyqtSignal()
     logout_requested = pyqtSignal()
     new_notification = pyqtSignal(str, str)
-    RESET_TIMER_STATS = 5000  # ms
+
+    REFRESH_ORGANIZATION_STATS_DELAY = 5  # 5s
 
     def __init__(
         self,
@@ -108,10 +110,6 @@ class CentralWidget(QWidget, Ui_CentralWidget):  # type: ignore[misc]
         self.event_bus.connect(CoreEvent.FS_ENTRY_SYNCED, self._on_vlobs_updated_trio)
         self.event_bus.connect(CoreEvent.BACKEND_REALM_VLOBS_UPDATED, self._on_vlobs_updated_trio)
         self.vlobs_updated_qt.connect(self._on_vlobs_updated_qt)
-        self.organization_stats_timer = QTimer()
-        self.organization_stats_timer.setInterval(self.RESET_TIMER_STATS)
-        self.organization_stats_timer.setSingleShot(True)
-        self.organization_stats_timer.timeout.connect(self._get_organization_stats)
 
         self.set_user_info()
         menu = QMenu()
@@ -258,8 +256,10 @@ class CentralWidget(QWidget, Ui_CentralWidget):  # type: ignore[misc]
                     "INFO", _("NOTIF_INFO_WORKSPACE_UNSHARED_{}").format(name)
                 )
 
-    def _get_organization_stats(self) -> None:
-        self.jobs_ctx.submit_job(
+    def _load_organization_stats(self, delay: float = 0) -> None:
+        self.jobs_ctx.submit_throttled_job(
+            "central_widget.load_organization_stats",
+            delay,
             ThreadSafeQtSignal(self, "organization_stats_success", QtToTrioJob),
             ThreadSafeQtSignal(self, "organization_stats_error", QtToTrioJob),
             _do_get_organization_stats,
@@ -270,9 +270,7 @@ class CentralWidget(QWidget, Ui_CentralWidget):  # type: ignore[misc]
         self.vlobs_updated_qt.emit()
 
     def _on_vlobs_updated_qt(self) -> None:
-        if not self.organization_stats_timer.isActive():
-            self.organization_stats_timer.start()
-            self._get_organization_stats()
+        self._load_organization_stats(delay=self.REFRESH_ORGANIZATION_STATS_DELAY)
 
     def _on_connection_state_changed(
         self, status: BackendConnStatus, status_exc: Optional[Exception], allow_systray: bool = True
@@ -287,7 +285,7 @@ class CentralWidget(QWidget, Ui_CentralWidget):  # type: ignore[misc]
         self.menu.label_organization_size.clear()
         if status in (BackendConnStatus.READY, BackendConnStatus.INITIALIZING):
             if status == BackendConnStatus.READY and self.core.device.is_admin:
-                self._get_organization_stats()
+                self._load_organization_stats()
             tooltip = text = _("TEXT_BACKEND_STATE_CONNECTED")
             icon = QPixmap(":/icons/images/material/cloud_queue.svg")
 

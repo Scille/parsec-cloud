@@ -39,6 +39,9 @@ class ThreadSafeQtSignal:
         cooked_args = [Q_ARG(t, v) for t, v in zip(self.args_types, args)]
         QMetaObject.invokeMethod(self.qobj, self.signal_name, Qt.QueuedConnection, *cooked_args)
 
+    def __repr__(self):
+        return f"<ThreadSafeQtSignal {self.signal_name}>"
+
 
 class QtToTrioJob:
     def __init__(self, trio_token, fn, args, kwargs, qt_on_success, qt_on_error):
@@ -83,7 +86,8 @@ class QtToTrioJob:
     def is_crashed(self):
         return self.status == "crashed"
 
-    async def _run_fn(self, *, task_status=trio.TASK_STATUS_IGNORED):
+    async def __call__(self, *, task_status=trio.TASK_STATUS_IGNORED):
+        assert self.status is None
         with trio.CancelScope() as self.cancel_scope:
             task_status.started()
             self._started.set()
@@ -156,6 +160,8 @@ class QtToTrioJobScheduler:
         self._cancel_scope = None
         self.started = threading.Event()
         self._stopped = trio.Event()
+        self._throttling_scheduled_jobs = {}
+        self._throttling_last_executed = {}
 
     async def _start(self, *, task_status=trio.TASK_STATUS_IGNORED):
         assert not self.started.is_set()
@@ -168,8 +174,7 @@ class QtToTrioJobScheduler:
                 task_status.started()
                 while True:
                     job = await recv_job_channel.receive()
-                    assert job.status is None
-                    await nursery.start(job._run_fn)
+                    await nursery.start(job)
 
         finally:
             self._stopped.set()
@@ -199,6 +204,63 @@ class QtToTrioJobScheduler:
         except trio.RunFinishedError:
             logger.info(f"The submitted job `{job}` won't run as the trio loop is not running")
             raise JobSchedulerNotAvailable("The trio loop is not running")
+
+    def submit_throttled_job(
+        self, throttling_id: str, delay: float, qt_on_success, qt_on_error, fn, *args, **kwargs
+    ):
+        """
+        Throttle execution: immediatly execute `fn` unless a job with a similar
+        `throttling_id` it has been already executed in the last `delay` seconds,
+        in which case we schedule the execution to occur when the delay is elapsed.
+        Submitting a job with an already sheduled `throttling_id` will lead to
+        a single execution of the last provided job parameters at the soonest delay.
+        """
+        # Fool-proof sanity check, signals must be wrapped in `ThreadSafeQtSignal`
+        assert not [x for x in args if isinstance(x, pyqtBoundSignal)]
+        assert not [v for v in kwargs.values() if isinstance(v, pyqtBoundSignal)]
+
+        async def _throttled_execute(task_status=trio.TASK_STATUS_IGNORED):
+            # Create the job but don't execute it: we have to handle throttle first !
+            job = QtToTrioJob(self._trio_token, fn, args, kwargs, qt_on_success, qt_on_error)
+
+            # Only modify `_throttling_scheduled_jobs` from the trio
+            # thread to avoid concurrent acces with the Qt thread
+            # Note we might be overwritting another job here, it is fine given
+            # we only want to execute the last scheduled one
+            self._throttling_scheduled_jobs[throttling_id] = job
+            task_status.started()
+
+            # Sleep the throttle delay, if last execution occurred long enough
+            # this will equivalent of doing `trio.sleep(0)`
+            last_executed = self._throttling_last_executed.get(throttling_id, 0)
+            await trio.sleep_until(last_executed + delay)
+
+            # It is possible our job has been executed by another `_throttled_execute`
+            # that had a shorter delay. In such case we have nothing more to do.
+            last_executed = self._throttling_last_executed.get(throttling_id, 0)
+            if last_executed + delay > trio.current_time():
+                return
+            job = self._throttling_scheduled_jobs.pop(throttling_id, None)
+            if not job:
+                return
+
+            # Actually start the job execution
+            self._throttling_last_executed[throttling_id] = trio.current_time()
+            try:
+                await self._send_job_channel.send(job)
+            except trio.BrokenResourceError:
+                # Job scheduler has been closed, nothing more can be done
+                pass
+
+        async def _send_throttle_job():
+            # While inside this async function we are blocking the Qt thread
+            # hence we just submit `_throttled_execute`
+            await self._send_job_channel.send(_throttled_execute)
+
+        try:
+            self._run_job(_send_throttle_job)
+        except JobSchedulerNotAvailable:
+            pass
 
     def submit_job(self, qt_on_success, qt_on_error, fn, *args, **kwargs):
         # Fool-proof sanity check, signals must be wrapped in `ThreadSafeQtSignal`

@@ -213,8 +213,8 @@ def run_gui(config: CoreConfig, start_arg: Optional[str] = None, diagnose: bool 
         # QTimer wakes up the event loop periodically which allows us to close
         # the window even when it is in background.
         timer = QTimer()
-        timer.start(1000 if diagnose else 400)
-        timer.timeout.connect(kill_window if diagnose else lambda: None)
+        timer.start(400)
+        timer.timeout.connect(lambda: None)
 
         if diagnose:
             diagnose_timer = QTimer()
