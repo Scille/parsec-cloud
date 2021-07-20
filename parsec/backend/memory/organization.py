@@ -4,7 +4,8 @@ from typing import Optional, Union
 
 from pendulum import DateTime
 
-from parsec.api.protocol import OrganizationID
+from parsec.api.protocol import OrganizationID, UsersPerProfileDetailItem
+from parsec.api.data.certif import UserProfile
 from parsec.crypto import VerifyKey
 from parsec.backend.user import BaseUserComponent, UserError, User, Device
 from parsec.backend.organization import (
@@ -105,13 +106,13 @@ class MemoryOrganizationComponent(BaseOrganizationComponent):
 
         users = 0
         active_users = 0
-        users_per_profile_detail = self._init_users_per_profile_detail()
+        users_per_profile_detail = {p: {"active": 0, "revoked": 0} for p in UserProfile}
         for user in self._user_component._organizations[id].users.values():
             users += 1
             if user.revoked_on:
-                users_per_profile_detail[user.profile.value]["revoked"] += 1
+                users_per_profile_detail[user.profile]["revoked"] += 1
             else:
-                users_per_profile_detail[user.profile.value]["active"] += 1
+                users_per_profile_detail[user.profile]["active"] += 1
                 active_users += 1
 
         workspaces = len(
@@ -121,7 +122,14 @@ class MemoryOrganizationComponent(BaseOrganizationComponent):
                 if organization_id == id
             ]
         )
-
+        schema = UsersPerProfileDetailItem()
+        users_per_profile_detail = schema.load(
+            [
+                {"profile": profile.value, "active": data["active"], "revoked": data["revoked"]}
+                for profile, data in users_per_profile_detail.items()
+            ],
+            many=True,
+        ).data
         return OrganizationStats(
             users=users,
             active_users=active_users,

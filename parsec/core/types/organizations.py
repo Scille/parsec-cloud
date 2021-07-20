@@ -1,7 +1,8 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2016-2021 Scille SAS
 import attr
 from pendulum import DateTime
-from typing import Dict, Counter
+from typing import List
+from parsec.api.protocol import UsersPerProfileDetailItem
 
 
 @attr.s(frozen=True, slots=True, auto_attribs=True)
@@ -10,7 +11,7 @@ class OrganizationStats:
     active_users: int
     data_size: int
     metadata_size: int
-    users_per_profile_detail: Dict[str, Counter]
+    users_per_profile_detail: List[UsersPerProfileDetailItem]
 
 
 @attr.s(frozen=True, slots=True, auto_attribs=True)

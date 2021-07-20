@@ -4,11 +4,11 @@ import re
 from unicodedata import normalize
 from typing import Union, TypeVar, Type, NoReturn
 from uuid import uuid4
+from enum import Enum
 from collections import namedtuple
 from email.utils import parseaddr
 
 from parsec.serde import fields
-
 
 UserIDTypeVar = TypeVar("UserIDTypeVar", bound="UserID")
 DeviceIDTypeVar = TypeVar("DeviceIDTypeVar", bound="DeviceID")
@@ -150,3 +150,23 @@ class HumanHandleField(fields.Tuple):
     def _deserialize(self, *args: object, **kwargs: object) -> HumanHandle:
         result = super()._deserialize(*args, **kwargs)
         return HumanHandle(*result)
+
+
+class UserProfile(Enum):
+    """
+    Standard user can create new realms and invite new devices for himself.
+
+    Admin can invite and revoke users and on top of what standard user can do.
+
+    Outsider is only able to collaborate on existing realm and can only
+    access redacted certificates (i.e. the realms created by an outsider
+    cannot be shared and the outsider cannot be OWNER/MANAGER
+    on a realm shared with him)
+    """
+
+    ADMIN = "ADMIN"
+    STANDARD = "STANDARD"
+    OUTSIDER = "OUTSIDER"
+
+
+UserProfileField = fields.enum_field_factory(UserProfile)

@@ -20,7 +20,7 @@ services:
     depends_on:
       - "postgres"
     entrypoint: []
-    command: ["/bin/sh", "-c", "parsec backend migrate && parsec backend run"]
+    command: ["/bin/sh", "-c", "parsec backend migrate && parsec backend run --backend-addr=parsec://127.0.0.1"]
     volumes:
       - /tmp:/tmp
 

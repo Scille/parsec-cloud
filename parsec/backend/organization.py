@@ -2,7 +2,7 @@
 
 import attr
 import pendulum
-from typing import Optional, Union, Dict, Counter
+from typing import Optional, Union, List
 from secrets import token_hex
 
 from pendulum import DateTime
@@ -20,6 +20,7 @@ from parsec.api.protocol import (
     apiv1_organization_status_serializer,
     apiv1_organization_update_serializer,
     organization_config_serializer,
+    UsersPerProfileDetailItem,
 )
 from parsec.api.data import UserCertificateContent, DeviceCertificateContent, DataError, UserProfile
 from parsec.backend.user import User, Device
@@ -81,7 +82,7 @@ class OrganizationStats:
     users: int
     active_users: int
     workspaces: int
-    users_per_profile_detail: Dict[str, Counter]
+    users_per_profile_detail: List[UsersPerProfileDetailItem]
 
 
 class BaseOrganizationComponent:
@@ -399,9 +400,3 @@ class BaseOrganizationComponent:
             OrganizationNotFoundError
         """
         raise NotImplementedError()
-
-    def _init_users_per_profile_detail(self):
-        detail = {}
-        for profile in UserProfile:
-            detail[profile.value] = {"active": 0, "revoked": 0}
-        return detail

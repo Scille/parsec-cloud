@@ -5,8 +5,7 @@ from functools import lru_cache
 from pendulum import DateTime
 from triopg import UniqueViolationError
 
-from parsec.api.protocol import OrganizationID
-from parsec.api.data import UserProfile
+from parsec.api.protocol import OrganizationID, UserProfile, UsersPerProfileDetailItem
 from parsec.crypto import VerifyKey
 from parsec.backend.events import BackendEvent
 from parsec.backend.user import UserError, User, Device
@@ -70,19 +69,7 @@ SELECT
             FROM user_
             WHERE organization = { q_organization_internal_id("$organization_id") }
         )
-    )_users,
-    (
-        SELECT COUNT(*)
-        FROM user_
-        WHERE user_.organization = { q_organization_internal_id("$organization_id") } AND
-             user_.profile != '{ UserProfile.OUTSIDER.value }'
-    ) users,
-    (
-        SELECT COUNT(*)
-        FROM user_
-        WHERE user_.organization = { q_organization_internal_id("$organization_id") } AND
-             user_.profile = '{ UserProfile.OUTSIDER.value }'
-    ) outsiders,
+    )users,
     (
         SELECT COUNT(*)
         FROM realm
@@ -212,16 +199,24 @@ class PGOrganizationComponent(BaseOrganizationComponent):
             result = await conn.fetchrow(*_q_get_stats(organization_id=id))
             users = 0
             active_users = 0
-            users_per_profile_detail = self._init_users_per_profile_detail()
-            for u in result["_users"]:
+            users_per_profile_detail = {p: {"active": 0, "revoked": 0} for p in UserProfile}
+            for u in result["users"]:
                 revoked_on, profile = u
                 users += 1
                 if revoked_on:
-                    users_per_profile_detail[profile]["revoked"] += 1
+                    users_per_profile_detail[UserProfile[profile]]["revoked"] += 1
                 else:
                     active_users += 1
-                    users_per_profile_detail[profile]["active"] += 1
+                    users_per_profile_detail[UserProfile[profile]]["active"] += 1
 
+            schema = UsersPerProfileDetailItem()
+            users_per_profile_detail = schema.load(
+                [
+                    {"profile": profile.value, "active": data["active"], "revoked": data["revoked"]}
+                    for profile, data in users_per_profile_detail.items()
+                ],
+                many=True,
+            ).data
         return OrganizationStats(
             users=users,
             active_users=active_users,
