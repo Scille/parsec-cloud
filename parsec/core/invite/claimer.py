@@ -199,6 +199,14 @@ class UserClaimInProgress3Ctx:
     async def do_claim_user(
         self, requested_device_label: Optional[str], requested_human_handle: Optional[HumanHandle]
     ) -> LocalDevice:
+        # User&device keys are generated here and kept in memory until the end of
+        # the enrollment process. This mean we can lost it if something goes wrong.
+        # This has no impact until step 4 (somewhere between data exchange and
+        # confirmation exchange steps) where greeter upload our certificates in
+        # the server.
+        # This is considered acceptable given 1) the error window is small and
+        # 2) if this occurs the inviter can revoke the user and retry the
+        # enrollment process to fix this
         private_key = PrivateKey.generate()
         signing_key = SigningKey.generate()
 
@@ -250,6 +258,14 @@ class DeviceClaimInProgress3Ctx:
     _cmds: BackendInvitedCmds
 
     async def do_claim_device(self, requested_device_label: Optional[str]) -> LocalDevice:
+        # Device key is generated here and kept in memory until the end of
+        # the enrollment process. This mean we can lost it if something goes wrong.
+        # This has no impact until step 4 (somewhere between data exchange and
+        # confirmation exchange steps) where greeter upload our certificate in
+        # the server.
+        # This is considered acceptable given 1) the error window is small and
+        # 2) if this occurs the inviter can revoke the device and retry the
+        # enrollment process to fix this
         signing_key = SigningKey.generate()
 
         try:
