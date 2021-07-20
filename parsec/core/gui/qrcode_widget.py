@@ -17,9 +17,6 @@ from parsec.core.gui.custom_dialogs import GreyedDialog
 from parsec.core.gui.ui.qrcode_widget import Ui_QRCodeWidget
 
 
-PARSEC_LOGO = None
-
-
 def generate_qr_code(text):
     qr = qrcode.QRCode(
         version=None, error_correction=qrcode.constants.ERROR_CORRECT_H, border=4, box_size=10
