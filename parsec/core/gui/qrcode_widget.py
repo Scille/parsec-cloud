@@ -21,21 +21,6 @@ PARSEC_LOGO = None
 
 
 def generate_qr_code(text):
-    global PARSEC_LOGO
-
-    if not PARSEC_LOGO:
-        img = QImage(":/logos/images/logos/parsec2.png")
-        if img:
-            img = img.convertToFormat(QImage.Format_ARGB32)
-            logo = QImage(img.width() + 30, img.height() + 20, QImage.Format_ARGB32)
-            logo.fill(QColor(0xF4, 0xF4, 0xF4))
-            painter = QPainter()
-            painter.begin(logo)
-            painter.setCompositionMode(QPainter.CompositionMode_SourceOver)
-            painter.drawImage(15, 10, img)
-            painter.end()
-            PARSEC_LOGO = logo
-
     qr = qrcode.QRCode(
         version=None, error_correction=qrcode.constants.ERROR_CORRECT_H, border=4, box_size=10
     )
@@ -45,7 +30,7 @@ def generate_qr_code(text):
     # No idea why but SvgPathImage ignores the back_color and fill_color arguments and uses a const style.
     # So we replace the QT_PATH_STYLE string by our own.
     qrcode.image.svg.SvgPathImage.QR_PATH_STYLE = (
-        "fill:#5193FF;fill-opacity:1;fill-rule:nonzero;stroke:none"
+        "fill:#000000;fill-opacity:1;fill-rule:nonzero;stroke:none"
     )
     qr_img = qr.make_image(image_factory=qrcode.image.svg.SvgPathImage)
     stream = io.BytesIO()
@@ -60,11 +45,6 @@ def generate_qr_code(text):
     painter.begin(final_img)
     painter.setCompositionMode(QPainter.CompositionMode_SourceOver)
     renderer.render(painter, QRectF(0, 0, final_img.rect().width(), final_img.rect().height()))
-
-    if PARSEC_LOGO:
-        x = int(final_img.width() / 2 - PARSEC_LOGO.width() / 2)
-        y = int(final_img.height() / 2 - PARSEC_LOGO.height() / 2)
-        painter.drawImage(x, y, PARSEC_LOGO)
 
     painter.end()
 
