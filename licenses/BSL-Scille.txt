@@ -5,7 +5,19 @@ Licensor:  Scille SAS
 Licensed Work:  Parsec v2.4.2+dev
 The Licensed Work is © 2016-2021 Scille SAS
 
-Additional Use Grant: <TODO>
+Additional Use Grant: You may make production use of the Licensed Work, provided
+                      that you do not use it in any of the following ways:
+
+                      1) use the Licensed Work for a Secure Storage Service.
+
+                      A "Secure Storage Service" is a commercial offering
+                      that allows third parties (other than your employees and
+                      contractors) to access the functionality of the Licensed
+                      Work so that such third parties directly benefit from the
+                      data sharing or end-to-end encryption features of the Licensed Work.
+
+                      2) use the Licensed Work for use in a governmental or any
+                      for-profit entity with more than fifty (50) users.
 
 Change Date:  July 1, 2025
 
