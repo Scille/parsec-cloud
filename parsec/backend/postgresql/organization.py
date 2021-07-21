@@ -5,7 +5,7 @@ from functools import lru_cache
 from pendulum import DateTime
 from triopg import UniqueViolationError
 
-from parsec.api.protocol import OrganizationID, UserProfile, UsersPerProfileDetailItem
+from parsec.api.protocol import OrganizationID, UserProfile
 from parsec.crypto import VerifyKey
 from parsec.backend.events import BackendEvent
 from parsec.backend.user import UserError, User, Device
@@ -20,6 +20,7 @@ from parsec.backend.organization import (
     OrganizationAlreadyBootstrappedError,
     OrganizationNotFoundError,
     OrganizationFirstUserCreationError,
+    UsersPerProfileDetailItem,
 )
 from parsec.backend.postgresql.handler import PGHandler
 from parsec.backend.postgresql.user_queries.create import _create_user
@@ -209,14 +210,11 @@ class PGOrganizationComponent(BaseOrganizationComponent):
                     active_users += 1
                     users_per_profile_detail[UserProfile[profile]]["active"] += 1
 
-            schema = UsersPerProfileDetailItem()
-            users_per_profile_detail = schema.load(
-                [
-                    {"profile": profile.value, "active": data["active"], "revoked": data["revoked"]}
-                    for profile, data in users_per_profile_detail.items()
-                ],
-                many=True,
-            ).data
+            users_per_profile_detail = [
+                UsersPerProfileDetailItem(profile=profile, **data)
+                for profile, data in users_per_profile_detail.items()
+            ]
+
         return OrganizationStats(
             users=users,
             active_users=active_users,

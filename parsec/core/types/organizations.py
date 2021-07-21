@@ -2,7 +2,7 @@
 import attr
 from pendulum import DateTime
 from typing import List
-from parsec.api.protocol import UsersPerProfileDetailItem
+from parsec.api.protocol import UsersPerProfileDetailItemSchema
 
 
 @attr.s(frozen=True, slots=True, auto_attribs=True)
@@ -11,7 +11,7 @@ class OrganizationStats:
     active_users: int
     data_size: int
     metadata_size: int
-    users_per_profile_detail: List[UsersPerProfileDetailItem]
+    users_per_profile_detail: List[UsersPerProfileDetailItemSchema]
 
 
 @attr.s(frozen=True, slots=True, auto_attribs=True)

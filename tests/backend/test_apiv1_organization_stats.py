@@ -7,7 +7,6 @@ from unittest.mock import ANY
 from parsec.api.data import UserProfile
 from parsec.api.protocol import apiv1_organization_stats_serializer
 from tests.backend.common import vlob_create, block_create
-from tests.common import freeze_time
 
 
 async def organization_stats(sock, organization_id):
@@ -111,24 +110,19 @@ async def access_testbed(
         binder = backend_data_binder_factory(backend)
 
         org = organization_factory("IFD")
-        device = local_device_factory(
-            org=org,
-            base_device_id="godfrey@d1",
-            base_human_handle="Godfrey Ho <godfrey.ho@ifd.com>",
-            profile=UserProfile.ADMIN,
-        )
-        with freeze_time("2000-01-01"):
-            await binder.bind_organization(org, device)
+        device = local_device_factory(org=org, profile=UserProfile.ADMIN)
+        await binder.bind_organization(org, device, initial_user_manifest_in_v0=True)
         async with apiv1_backend_sock_factory(backend, "administration") as sock:
 
             yield binder, org, device, sock
 
 
 @pytest.mark.trio
-async def test_organization_stats_users(access_testbed, core_factory, local_device_factory):
+async def test_organization_stats_users(
+    access_testbed, core_factory, local_device_factory, otherorg
+):
     binder, org, godfrey1, sock = access_testbed
-    stats = await organization_stats(sock, org.organization_id)
-    assert stats == {
+    expected_stats = {
         "status": "ok",
         "users": 1,
         "active_users": 1,
@@ -139,109 +133,31 @@ async def test_organization_stats_users(access_testbed, core_factory, local_devi
         ],
         "data_size": 0,
         "metadata_size": ANY,
-        "workspaces": 1,
+        "workspaces": 0,
     }
 
-    nick1 = local_device_factory(
-        base_device_id="el_murcielago_enmascarado_ii@d1",
-        base_human_handle="Rodolfo Guzman Huerta",
-        profile=UserProfile.ADMIN,
-        org=org,
-    )
-    await binder.bind_device(nick1, certifier=godfrey1)
-    stats = await organization_stats(sock, org.organization_id)
-    assert stats == {
-        "status": "ok",
-        "users": 2,
-        "active_users": 2,
-        "users_per_profile_detail": [
-            {"profile": UserProfile.ADMIN, "active": 2, "revoked": 0},
-            {"profile": UserProfile.STANDARD, "active": 0, "revoked": 0},
-            {"profile": UserProfile.OUTSIDER, "active": 0, "revoked": 0},
-        ],
-        "data_size": 0,
-        "metadata_size": ANY,
-        "workspaces": 2,
-    }
+    for profile in UserProfile:
+        i = [
+            i
+            for i, v in enumerate(expected_stats["users_per_profile_detail"])
+            if v["profile"] == profile
+        ][0]
+        device = local_device_factory(profile=profile, org=org)
+        await binder.bind_device(device, certifier=godfrey1, initial_user_manifest_in_v0=True)
+        expected_stats["users"] += 1
+        expected_stats["active_users"] += 1
+        expected_stats["users_per_profile_detail"][i]["active"] += 1
+        stats = await organization_stats(sock, org.organization_id)
+        assert stats == expected_stats
 
-    await binder.bind_revocation(nick1.user_id, certifier=godfrey1)
+        await binder.bind_revocation(device.user_id, certifier=godfrey1)
+        expected_stats["active_users"] -= 1
+        expected_stats["users_per_profile_detail"][i]["active"] -= 1
+        expected_stats["users_per_profile_detail"][i]["revoked"] += 1
+        stats = await organization_stats(sock, org.organization_id)
+        assert stats == expected_stats
+    # Also make sure stats are isolated between organizations
+    device = local_device_factory(org=otherorg, profile=UserProfile.ADMIN)
+    await binder.bind_organization(otherorg, device, initial_user_manifest_in_v0=True)
     stats = await organization_stats(sock, org.organization_id)
-    assert stats == {
-        "status": "ok",
-        "users": 2,
-        "active_users": 1,
-        "users_per_profile_detail": [
-            {"profile": UserProfile.ADMIN, "active": 1, "revoked": 1},
-            {"profile": UserProfile.STANDARD, "active": 0, "revoked": 0},
-            {"profile": UserProfile.OUTSIDER, "active": 0, "revoked": 0},
-        ],
-        "data_size": 0,
-        "metadata_size": ANY,
-        "workspaces": 2,
-    }
-
-    nick2 = local_device_factory(profile=UserProfile.STANDARD, org=org)
-    await binder.bind_device(nick2, certifier=godfrey1)
-    stats = await organization_stats(sock, org.organization_id)
-    assert stats == {
-        "status": "ok",
-        "users": 3,
-        "active_users": 2,
-        "users_per_profile_detail": [
-            {"profile": UserProfile.ADMIN, "active": 1, "revoked": 1},
-            {"profile": UserProfile.STANDARD, "active": 1, "revoked": 0},
-            {"profile": UserProfile.OUTSIDER, "active": 0, "revoked": 0},
-        ],
-        "data_size": 0,
-        "metadata_size": ANY,
-        "workspaces": 3,
-    }
-
-    await binder.bind_revocation(nick2.user_id, certifier=godfrey1)
-    stats = await organization_stats(sock, org.organization_id)
-    assert stats == {
-        "status": "ok",
-        "users": 3,
-        "active_users": 1,
-        "users_per_profile_detail": [
-            {"profile": UserProfile.ADMIN, "active": 1, "revoked": 1},
-            {"profile": UserProfile.STANDARD, "active": 0, "revoked": 1},
-            {"profile": UserProfile.OUTSIDER, "active": 0, "revoked": 0},
-        ],
-        "data_size": 0,
-        "metadata_size": ANY,
-        "workspaces": 3,
-    }
-
-    nick3 = local_device_factory(profile=UserProfile.OUTSIDER, org=org)
-    await binder.bind_device(nick3, certifier=godfrey1)
-    stats = await organization_stats(sock, org.organization_id)
-    assert stats == {
-        "status": "ok",
-        "users": 4,
-        "active_users": 2,
-        "users_per_profile_detail": [
-            {"profile": UserProfile.ADMIN, "active": 1, "revoked": 1},
-            {"profile": UserProfile.STANDARD, "active": 0, "revoked": 1},
-            {"profile": UserProfile.OUTSIDER, "active": 1, "revoked": 0},
-        ],
-        "data_size": 0,
-        "metadata_size": ANY,
-        "workspaces": 4,
-    }
-
-    await binder.bind_revocation(nick3.user_id, certifier=godfrey1)
-    stats = await organization_stats(sock, org.organization_id)
-    assert stats == {
-        "status": "ok",
-        "users": 4,
-        "active_users": 1,
-        "users_per_profile_detail": [
-            {"profile": UserProfile.ADMIN, "active": 1, "revoked": 1},
-            {"profile": UserProfile.STANDARD, "active": 0, "revoked": 1},
-            {"profile": UserProfile.OUTSIDER, "active": 0, "revoked": 1},
-        ],
-        "data_size": 0,
-        "metadata_size": ANY,
-        "workspaces": 4,
-    }
+    assert stats == expected_stats

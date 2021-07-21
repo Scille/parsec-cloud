@@ -20,7 +20,6 @@ from parsec.api.protocol import (
     apiv1_organization_status_serializer,
     apiv1_organization_update_serializer,
     organization_config_serializer,
-    UsersPerProfileDetailItem,
 )
 from parsec.api.data import UserCertificateContent, DeviceCertificateContent, DataError, UserProfile
 from parsec.backend.user import User, Device
@@ -73,6 +72,13 @@ class Organization:
 
     def evolve(self, **kwargs):
         return attr.evolve(self, **kwargs)
+
+
+@attr.s(slots=True, frozen=True, auto_attribs=True)
+class UsersPerProfileDetailItem:
+    profile: UserProfile
+    active: int
+    revoked: int
 
 
 @attr.s(slots=True, frozen=True, auto_attribs=True)

@@ -57,7 +57,7 @@ class OrganizationBootstrapWebhookSchema(BaseSchema):
 organization_bootstrap_webhook_serializer = JSONSerializer(OrganizationBootstrapWebhookSchema)
 
 
-class UsersPerProfileDetailItem(BaseSchema):
+class UsersPerProfileDetailItemSchema(BaseSchema):
     profile = UserProfileField(required=True)
     active = fields.Integer(required=True)
     revoked = fields.Integer(required=True)
@@ -72,7 +72,9 @@ class OrganizationStatsRepSchema(BaseRepSchema):
     metadata_size = fields.Integer(required=True)
     users = fields.Integer(required=True)
     active_users = fields.Integer(required=True)
-    users_per_profile_detail = fields.List(fields.Nested(UsersPerProfileDetailItem), required=True)
+    users_per_profile_detail = fields.List(
+        fields.Nested(UsersPerProfileDetailItemSchema), required=True
+    )
 
 
 organization_stats_serializer = CmdSerializer(
@@ -87,10 +89,12 @@ class APIV1_OrganizationStatsReqSchema(BaseReqSchema):
 class APIV1_OrganizationStatsRepSchema(BaseRepSchema):
     data_size = fields.Integer(required=True)
     metadata_size = fields.Integer(required=True)
-    users = fields.Integer(required=True)
     workspaces = fields.Integer(required=True)
+    users = fields.Integer(required=True)
     active_users = fields.Integer(required=True)
-    users_per_profile_detail = fields.List(fields.Nested(UsersPerProfileDetailItem), required=True)
+    users_per_profile_detail = fields.List(
+        fields.Nested(UsersPerProfileDetailItemSchema), required=True
+    )
 
 
 apiv1_organization_stats_serializer = CmdSerializer(

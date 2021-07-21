@@ -4,7 +4,7 @@ from typing import Optional, Union
 
 from pendulum import DateTime
 
-from parsec.api.protocol import OrganizationID, UsersPerProfileDetailItem
+from parsec.api.protocol import OrganizationID
 from parsec.api.data.certif import UserProfile
 from parsec.crypto import VerifyKey
 from parsec.backend.user import BaseUserComponent, UserError, User, Device
@@ -17,6 +17,7 @@ from parsec.backend.organization import (
     OrganizationAlreadyBootstrappedError,
     OrganizationNotFoundError,
     OrganizationFirstUserCreationError,
+    UsersPerProfileDetailItem,
 )
 from parsec.backend.utils import Unset, UnsetType
 from parsec.backend.memory.vlob import MemoryVlobComponent
@@ -122,14 +123,11 @@ class MemoryOrganizationComponent(BaseOrganizationComponent):
                 if organization_id == id
             ]
         )
-        schema = UsersPerProfileDetailItem()
-        users_per_profile_detail = schema.load(
-            [
-                {"profile": profile.value, "active": data["active"], "revoked": data["revoked"]}
-                for profile, data in users_per_profile_detail.items()
-            ],
-            many=True,
-        ).data
+        users_per_profile_detail = [
+            UsersPerProfileDetailItem(profile=profile, **data)
+            for profile, data in users_per_profile_detail.items()
+        ]
+
         return OrganizationStats(
             users=users,
             active_users=active_users,
