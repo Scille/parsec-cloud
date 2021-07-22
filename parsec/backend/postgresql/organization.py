@@ -31,7 +31,7 @@ from parsec.backend.postgresql.handler import send_signal
 _q_insert_organization = Q(
     """
 INSERT INTO organization (organization_id, bootstrap_token, expiration_date, user_profile_outsider_allowed, active_users_limit)
-VALUES ($organization_id, $bootstrap_token, $expiration_date, FALSE, $active_users_limit)
+VALUES ($organization_id, $bootstrap_token, $expiration_date, $user_profile_outsider_allowed, $active_users_limit)
 ON CONFLICT (organization_id) DO
     UPDATE SET
         bootstrap_token = EXCLUDED.bootstrap_token,
@@ -117,20 +117,6 @@ WHERE organization_id = $organization_id
 """
 )
 
-_q_check_users_limit = Q(
-    f"""
-    SELECT
-        organization._id
-    FROM organization
-    LEFT JOIN
-        user_ on user_.organization = organization._id
-    WHERE
-        organization_id = $organization_id
-    GROUP BY organization._id
-    HAVING active_users_limit is NULL OR count(user_) < active_users_limit;
-"""
-)
-
 
 @lru_cache()
 def _q_update_factory(
@@ -165,17 +151,25 @@ class PGOrganizationComponent(BaseOrganizationComponent):
         self,
         id: OrganizationID,
         bootstrap_token: str,
-        expiration_date: Optional[DateTime] = None,
-        active_users_limit: Optional[int] = None,
+        expiration_date: Union[UnsetType, Optional[DateTime]] = Unset,
+        active_users_limit: Union[UnsetType, Optional[int]] = Unset,
+        user_profile_outsider_allowed: Union[UnsetType, Optional[bool]] = Unset,
     ) -> None:
+        if active_users_limit is Unset:
+            active_users_limit = self._config.organization_initial_active_users_limit
+        if user_profile_outsider_allowed is Unset:
+            user_profile_outsider_allowed = (
+                self._config.organization_initial_user_profile_outsider_allowed
+            )
         async with self.dbh.pool.acquire() as conn:
             try:
                 result = await conn.execute(
                     *_q_insert_organization(
                         organization_id=id,
                         bootstrap_token=bootstrap_token,
-                        expiration_date=expiration_date,
+                        expiration_date=expiration_date if expiration_date is not Unset else None,
                         active_users_limit=active_users_limit,
+                        user_profile_outsider_allowed=user_profile_outsider_allowed,
                     )
                 )
             except UniqueViolationError:

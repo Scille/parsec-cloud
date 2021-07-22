@@ -7,12 +7,13 @@ from parsec.api.protocol.types import OrganizationIDField, DeviceIDField, UserPr
 class APIV1_OrganizationCreateReqSchema(BaseReqSchema):
     organization_id = OrganizationIDField(required=True)
     expiration_date = fields.DateTime(allow_none=True, required=False)
+    user_profile_outsider_allowed = fields.Boolean(required=False)
+    active_users_limit = fields.Integer(required=False)
 
 
 class APIV1_OrganizationCreateRepSchema(BaseRepSchema):
     bootstrap_token = fields.String(required=True)
     expiration_date = fields.DateTime(allow_none=True, required=False)
-    active_users_limit = fields.Integer(allow_none=True, required=True)
 
 
 apiv1_organization_create_serializer = CmdSerializer(

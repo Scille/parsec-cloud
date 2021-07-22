@@ -70,7 +70,7 @@ class Organization:
 
     @property
     def is_expired(self):
-        return self.expiration_date is not None and self.expiration_date <= DateTime.now()
+        return self.expiration_date and self.expiration_date <= DateTime.now()
 
     def evolve(self, **kwargs):
         return attr.evolve(self, **kwargs)
@@ -105,28 +105,19 @@ class BaseOrganizationComponent:
     @catch_protocol_errors
     async def api_organization_create(self, client_ctx, msg):
         msg = apiv1_organization_create_serializer.req_load(msg)
-
         bootstrap_token = token_hex(self.bootstrap_token_size)
-        expiration_date = msg.get("expiration_date", None)
-        default_users_limit = self._config.default_users_limit
+        expiration_date = msg.get("expiration_date")
         try:
-            await self.create(
-                msg["organization_id"],
-                bootstrap_token=bootstrap_token,
-                expiration_date=expiration_date,
-                active_users_limit=default_users_limit,
-            )
+            await self.create(msg.pop("organization_id"), bootstrap_token=bootstrap_token, **msg)
 
         except OrganizationAlreadyExistsError:
             return {"status": "already_exists"}
 
         rep = {
-            "active_users_limit": default_users_limit,
             "bootstrap_token": bootstrap_token,
+            "expiration_date": expiration_date,
             "status": "ok",
         }
-        if expiration_date:
-            rep["expiration_date"] = expiration_date
 
         return apiv1_organization_create_serializer.rep_dump(rep)
 
@@ -140,15 +131,16 @@ class BaseOrganizationComponent:
 
         except OrganizationNotFoundError:
             return {"status": "not_found"}
-        return apiv1_organization_status_serializer.rep_dump(
-            {
-                "is_bootstrapped": organization.is_bootstrapped(),
-                "expiration_date": organization.expiration_date,
-                "user_profile_outsider_allowed": organization.user_profile_outsider_allowed,
-                "active_users_limit": organization.active_users_limit,
-                "status": "ok",
-            }
-        )
+
+        rep = {
+            "is_bootstrapped": organization.is_bootstrapped(),
+            "user_profile_outsider_allowed": organization.user_profile_outsider_allowed,
+            "active_users_limit": organization.active_users_limit,
+            "expiration_date": organization.expiration_date,
+            "status": "ok",
+        }
+
+        return apiv1_organization_status_serializer.rep_dump(rep)
 
     @api("organization_config", handshake_types=[HandshakeType.AUTHENTICATED])
     @catch_protocol_errors
@@ -161,14 +153,14 @@ class BaseOrganizationComponent:
         except OrganizationNotFoundError:
             return {"status": "not_found"}
 
-        return organization_config_serializer.rep_dump(
-            {
-                "expiration_date": organization.expiration_date,
-                "user_profile_outsider_allowed": organization.user_profile_outsider_allowed,
-                "active_users_limit": organization.active_users_limit,
-                "status": "ok",
-            }
-        )
+        rep = {
+            "user_profile_outsider_allowed": organization.user_profile_outsider_allowed,
+            "expiration_date": organization.expiration_date,
+            "active_users_limit": organization.active_users_limit,
+            "status": "ok",
+        }
+
+        return organization_config_serializer.rep_dump(rep)
 
     @api("organization_stats", handshake_types=[HandshakeType.AUTHENTICATED])
     @catch_protocol_errors
@@ -226,7 +218,6 @@ class BaseOrganizationComponent:
     @catch_protocol_errors
     async def api_organization_update(self, client_ctx, msg):
         msg = apiv1_organization_update_serializer.req_load(msg)
-        print(msg)
         try:
             await self.update(msg.pop("organization_id"), **msg)
         except OrganizationNotFoundError:
@@ -353,8 +344,6 @@ class BaseOrganizationComponent:
         except (OrganizationNotFoundError, OrganizationInvalidBootstrapTokenError):
             return {"status": "not_found"}
 
-        organization = await self.get(client_ctx.organization_id)
-
         # Note: we let OrganizationFirstUserCreationError bubbles up given
         # it should not occurs under normal circumstances
 
@@ -365,7 +354,6 @@ class BaseOrganizationComponent:
             device_label=first_device.device_label,
             human_email=user.human_handle.email if user.human_handle else None,
             human_label=user.human_handle.label if user.human_handle else None,
-            active_users_limit=organization.active_users_limit,
         )
 
         return apiv1_organization_bootstrap_serializer.rep_dump({"status": "ok"})
@@ -374,8 +362,8 @@ class BaseOrganizationComponent:
         self,
         id: OrganizationID,
         bootstrap_token: str,
-        expiration_date: Optional[DateTime] = None,
-        active_users_limit: Optional[int] = None,
+        expiration_date: Union[UnsetType, Optional[DateTime]] = Unset,
+        active_users_limit: Union[UnsetType, Optional[int]] = Unset,
     ) -> None:
         """
         Raises:

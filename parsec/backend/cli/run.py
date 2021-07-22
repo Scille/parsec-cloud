@@ -333,10 +333,17 @@ organization_id, device_id, device_label (can be null), human_email (can be null
 """,
 )
 @click.option(
-    "--organization-default-users-limit",
-    envvar="PARSEC_ORGANIZATION_DEFAULT_USERS_LIMIT",
-    help="Default value uses by the system to limit the users by organization",
+    "--organization-initial-active-users-limit",
+    envvar="PARSEC_ORGANIZATION_INITIAL_ACTIVE_USERS_LIMIT",
+    help="Non-revoked users limit used to configure newly created organizations (default: no limit)",
     type=int,
+)
+@click.option(
+    "--organization_initial_user_profile_outsider_allowed",
+    envvar="PARSEC_ORGANIZATION_INITIAL_USER_PROFILE_OUTSIDER_ALLOWED",
+    help="Allow the outsider profiles for the newly created organizations (default: False)",
+    type=int,
+    default=False,
 )
 @click.option(
     "--backend-addr",
@@ -461,7 +468,8 @@ def run_cmd(
     administration_token,
     spontaneous_organization_bootstrap,
     organization_bootstrap_webhook,
-    organization_default_users_limit,
+    organization_initial_active_users_limit,
+    organization_initial_user_profile_outsider_allowed,
     backend_addr,
     email_host,
     email_port,
@@ -527,9 +535,10 @@ def run_cmd(
             forward_proto_enforce_https=forward_proto_enforce_https,
             backend_addr=backend_addr,
             debug=debug,
-            bootstrap_webhook_url=organization_bootstrap_webhook,
-            spontaneous_bootstrap=spontaneous_organization_bootstrap,
-            default_users_limit=organization_default_users_limit,
+            organization_bootstrap_webhook_url=organization_bootstrap_webhook,
+            organization_spontaneous_bootstrap=spontaneous_organization_bootstrap,
+            organization_initial_active_users_limit=organization_initial_active_users_limit,
+            organization_initial_user_profile_outsider_allowed=organization_initial_user_profile_outsider_allowed,
         )
 
         click.echo(

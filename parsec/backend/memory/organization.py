@@ -55,20 +55,27 @@ class MemoryOrganizationComponent(BaseOrganizationComponent):
         self,
         id: OrganizationID,
         bootstrap_token: str,
-        expiration_date: Optional[DateTime] = None,
-        active_users_limit: Optional[int] = None,
+        expiration_date: Union[UnsetType, Optional[DateTime]] = Unset,
+        active_users_limit: Union[UnsetType, Optional[int]] = Unset,
+        user_profile_outsider_allowed: Union[UnsetType, bool] = Unset,
     ) -> None:
         org = self._organizations.get(id)
-
         # Allow overwritting of not-yet-bootstrapped organization
         if org and org.root_verify_key:
             raise OrganizationAlreadyExistsError()
+        if active_users_limit is Unset:
+            active_users_limit = self._config.organization_initial_active_users_limit
+        if user_profile_outsider_allowed is Unset:
+            user_profile_outsider_allowed = (
+                self._config.organization_initial_user_profile_outsider_allowed
+            )
 
         self._organizations[id] = Organization(
             organization_id=id,
             bootstrap_token=bootstrap_token,
-            expiration_date=expiration_date,
+            expiration_date=expiration_date if expiration_date is not Unset else None,
             active_users_limit=active_users_limit,
+            user_profile_outsider_allowed=user_profile_outsider_allowed,
         )
 
     async def get(self, id: OrganizationID) -> Organization:

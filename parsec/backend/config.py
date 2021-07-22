@@ -106,9 +106,10 @@ class BackendConfig:
 
     debug: bool
 
-    bootstrap_webhook_url: Optional[str] = None
-    spontaneous_bootstrap: bool = False
-    default_users_limit: Optional[int] = None
+    organization_bootstrap_webhook_url: Optional[str] = None
+    organization_spontaneous_bootstrap: bool = False
+    organization_initial_active_users_limit: Optional[int] = None
+    organization_initial_user_profile_outsider_allowed: bool = False
 
     @property
     def db_type(self):
