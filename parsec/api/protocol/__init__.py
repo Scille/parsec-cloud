@@ -18,6 +18,8 @@ from parsec.api.protocol.types import (
     DeviceNameField,
     OrganizationIDField,
     HumanHandleField,
+    UserProfileField,
+    UserProfile,
 )
 from parsec.api.protocol.handshake import (
     HandshakeError,
@@ -47,6 +49,7 @@ from parsec.api.protocol.organization import (
     apiv1_organization_status_serializer,
     apiv1_organization_update_serializer,
     organization_config_serializer,
+    UsersPerProfileDetailItemSchema,
 )
 from parsec.api.protocol.events import (
     events_subscribe_serializer,
@@ -160,6 +163,8 @@ __all__ = (
     "DeviceNameField",
     "OrganizationIDField",
     "HumanHandleField",
+    "UserProfileField",
+    "UserProfile",
     # Organization
     "apiv1_organization_create_serializer",
     "apiv1_organization_bootstrap_serializer",
@@ -170,6 +175,7 @@ __all__ = (
     "apiv1_organization_status_serializer",
     "organization_config_serializer",
     "apiv1_organization_update_serializer",
+    "UsersPerProfileDetailItemSchema",
     # Events
     "events_subscribe_serializer",
     "events_listen_serializer",

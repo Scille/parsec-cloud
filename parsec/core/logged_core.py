@@ -165,11 +165,16 @@ class LoggedCore:
         Raises:
             BackendConnectionError
         """
+
         rep = await self._backend_conn.cmds.organization_stats()
         if rep["status"] != "ok":
             raise BackendConnectionError(f"Backend error: {rep}")
         return OrganizationStats(
-            users=rep["users"], data_size=rep["data_size"], metadata_size=rep["metadata_size"]
+            users=rep["users"],
+            active_users=rep["active_users"],
+            data_size=rep["data_size"],
+            metadata_size=rep["metadata_size"],
+            users_per_profile_detail=rep["users_per_profile_detail"],
         )
 
     async def get_user_info(self, user_id: UserID) -> UserInfo:

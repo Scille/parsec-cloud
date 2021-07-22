@@ -2,7 +2,7 @@
 
 import attr
 import pendulum
-from typing import Optional, Union
+from typing import Optional, Union, List
 from secrets import token_hex
 
 from pendulum import DateTime
@@ -75,11 +75,20 @@ class Organization:
 
 
 @attr.s(slots=True, frozen=True, auto_attribs=True)
+class UsersPerProfileDetailItem:
+    profile: UserProfile
+    active: int
+    revoked: int
+
+
+@attr.s(slots=True, frozen=True, auto_attribs=True)
 class OrganizationStats:
     data_size: int
     metadata_size: int
     users: int
+    active_users: int
     workspaces: int
+    users_per_profile_detail: List[UsersPerProfileDetailItem]
 
 
 class BaseOrganizationComponent:
@@ -172,8 +181,10 @@ class BaseOrganizationComponent:
             {
                 "status": "ok",
                 "users": stats.users,
+                "active_users": stats.active_users,
                 "data_size": stats.data_size,
                 "metadata_size": stats.metadata_size,
+                "users_per_profile_detail": stats.users_per_profile_detail,
             }
         )
 
@@ -192,6 +203,8 @@ class BaseOrganizationComponent:
             {
                 "status": "ok",
                 "users": stats.users,
+                "active_users": stats.active_users,
+                "users_per_profile_detail": stats.users_per_profile_detail,
                 "data_size": stats.data_size,
                 "metadata_size": stats.metadata_size,
                 "workspaces": stats.workspaces,

@@ -1,7 +1,7 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2016-2021 Scille SAS
 from parsec.serde import fields, BaseSchema, JSONSerializer
 from parsec.api.protocol.base import BaseReqSchema, BaseRepSchema, CmdSerializer
-from parsec.api.protocol.types import OrganizationIDField, DeviceIDField
+from parsec.api.protocol.types import OrganizationIDField, DeviceIDField, UserProfileField
 
 
 class APIV1_OrganizationCreateReqSchema(BaseReqSchema):
@@ -57,6 +57,12 @@ class OrganizationBootstrapWebhookSchema(BaseSchema):
 organization_bootstrap_webhook_serializer = JSONSerializer(OrganizationBootstrapWebhookSchema)
 
 
+class UsersPerProfileDetailItemSchema(BaseSchema):
+    profile = UserProfileField(required=True)
+    active = fields.Integer(required=True)
+    revoked = fields.Integer(required=True)
+
+
 class OrganizationStatsReqSchema(BaseReqSchema):
     pass
 
@@ -65,6 +71,10 @@ class OrganizationStatsRepSchema(BaseRepSchema):
     data_size = fields.Integer(required=True)
     metadata_size = fields.Integer(required=True)
     users = fields.Integer(required=True)
+    active_users = fields.Integer(required=True)
+    users_per_profile_detail = fields.List(
+        fields.Nested(UsersPerProfileDetailItemSchema), required=True
+    )
 
 
 organization_stats_serializer = CmdSerializer(
@@ -79,8 +89,12 @@ class APIV1_OrganizationStatsReqSchema(BaseReqSchema):
 class APIV1_OrganizationStatsRepSchema(BaseRepSchema):
     data_size = fields.Integer(required=True)
     metadata_size = fields.Integer(required=True)
-    users = fields.Integer(required=True)
     workspaces = fields.Integer(required=True)
+    users = fields.Integer(required=True)
+    active_users = fields.Integer(required=True)
+    users_per_profile_detail = fields.List(
+        fields.Nested(UsersPerProfileDetailItemSchema), required=True
+    )
 
 
 apiv1_organization_stats_serializer = CmdSerializer(

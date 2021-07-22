@@ -1,12 +1,11 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2016-2021 Scille SAS
 
 from typing import Optional, Union
-
 from functools import lru_cache
 from pendulum import DateTime
 from triopg import UniqueViolationError
 
-from parsec.api.protocol import OrganizationID
+from parsec.api.protocol import OrganizationID, UserProfile
 from parsec.crypto import VerifyKey
 from parsec.backend.events import BackendEvent
 from parsec.backend.user import UserError, User, Device
@@ -21,6 +20,7 @@ from parsec.backend.organization import (
     OrganizationAlreadyBootstrappedError,
     OrganizationNotFoundError,
     OrganizationFirstUserCreationError,
+    UsersPerProfileDetailItem,
 )
 from parsec.backend.postgresql.handler import PGHandler
 from parsec.backend.postgresql.user_queries.create import _create_user
@@ -61,15 +61,16 @@ WHERE
 """
 )
 
-
 _q_get_stats = Q(
     f"""
 SELECT
     (
-        SELECT COUNT(*)
-        FROM user_
-        WHERE user_.organization = { q_organization_internal_id("$organization_id") }
-    ) users,
+        SELECT ARRAY(
+            SELECT (revoked_on, profile)
+            FROM user_
+            WHERE organization = { q_organization_internal_id("$organization_id") }
+        )
+    )users,
     (
         SELECT COUNT(*)
         FROM realm
@@ -197,8 +198,27 @@ class PGOrganizationComponent(BaseOrganizationComponent):
         async with self.dbh.pool.acquire() as conn, conn.transaction():
             await self._get(conn, id)  # Check organization exists
             result = await conn.fetchrow(*_q_get_stats(organization_id=id))
+            users = 0
+            active_users = 0
+            users_per_profile_detail = {p: {"active": 0, "revoked": 0} for p in UserProfile}
+            for u in result["users"]:
+                revoked_on, profile = u
+                users += 1
+                if revoked_on:
+                    users_per_profile_detail[UserProfile[profile]]["revoked"] += 1
+                else:
+                    active_users += 1
+                    users_per_profile_detail[UserProfile[profile]]["active"] += 1
+
+            users_per_profile_detail = [
+                UsersPerProfileDetailItem(profile=profile, **data)
+                for profile, data in users_per_profile_detail.items()
+            ]
+
         return OrganizationStats(
-            users=result["users"],
+            users=users,
+            active_users=active_users,
+            users_per_profile_detail=users_per_profile_detail,
             data_size=result["data_size"],
             metadata_size=result["metadata_size"],
             workspaces=result["workspaces"],

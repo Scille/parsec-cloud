@@ -5,6 +5,7 @@ from typing import Optional, Union
 from pendulum import DateTime
 
 from parsec.api.protocol import OrganizationID
+from parsec.api.data.certif import UserProfile
 from parsec.crypto import VerifyKey
 from parsec.backend.user import BaseUserComponent, UserError, User, Device
 from parsec.backend.organization import (
@@ -16,6 +17,7 @@ from parsec.backend.organization import (
     OrganizationAlreadyBootstrappedError,
     OrganizationNotFoundError,
     OrganizationFirstUserCreationError,
+    UsersPerProfileDetailItem,
 )
 from parsec.backend.utils import Unset, UnsetType
 from parsec.backend.memory.vlob import MemoryVlobComponent
@@ -103,7 +105,16 @@ class MemoryOrganizationComponent(BaseOrganizationComponent):
             if vlob_organization_id == id:
                 data_size += blockmeta.size
 
-        users = len(self._user_component._organizations[id].users)
+        users = 0
+        active_users = 0
+        users_per_profile_detail = {p: {"active": 0, "revoked": 0} for p in UserProfile}
+        for user in self._user_component._organizations[id].users.values():
+            users += 1
+            if user.revoked_on:
+                users_per_profile_detail[user.profile]["revoked"] += 1
+            else:
+                users_per_profile_detail[user.profile]["active"] += 1
+                active_users += 1
 
         workspaces = len(
             [
@@ -112,9 +123,18 @@ class MemoryOrganizationComponent(BaseOrganizationComponent):
                 if organization_id == id
             ]
         )
+        users_per_profile_detail = [
+            UsersPerProfileDetailItem(profile=profile, **data)
+            for profile, data in users_per_profile_detail.items()
+        ]
 
         return OrganizationStats(
-            users=users, data_size=data_size, metadata_size=metadata_size, workspaces=workspaces
+            users=users,
+            active_users=active_users,
+            users_per_profile_detail=users_per_profile_detail,
+            data_size=data_size,
+            metadata_size=metadata_size,
+            workspaces=workspaces,
         )
 
     async def update(
