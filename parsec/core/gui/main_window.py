@@ -332,7 +332,8 @@ class MainWindow(QMainWindow, Ui_MainWindow):  # type: ignore[misc]
                 return
             device, password = widget.status
             self.reload_login_devices()
-            self.try_login(device, password)
+            if sys.platform != "darwin":
+                self.try_login(device, password)
 
         widget = ClaimUserWidget.show_modal(
             jobs_ctx=self.jobs_ctx,
@@ -351,7 +352,8 @@ class MainWindow(QMainWindow, Ui_MainWindow):  # type: ignore[misc]
                 return
             device, password = widget.status
             self.reload_login_devices()
-            self.try_login(device, password)
+            if sys.platform != "darwin":
+                self.try_login(device, password)
 
         widget = ClaimDeviceWidget.show_modal(
             jobs_ctx=self.jobs_ctx,
