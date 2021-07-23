@@ -43,7 +43,7 @@ async def _do_run_core(config, device, qt_on_ready):
                 qt_on_ready.emit(core, core_jobs_ctx)
 
 
-def macfuse_installation_widget(window):
+def ensure_macfuse_available_or_show_dialogue(window):
     try:
         import fuse  # noqa
     except OSError:

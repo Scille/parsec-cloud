@@ -205,9 +205,12 @@ def run_gui(config: CoreConfig, start_arg: Optional[str] = None, diagnose: bool 
         win.new_instance_needed.emit(start_arg)
 
         if sys.platform == "darwin":
-            from parsec.core.gui.instance_widget import macfuse_installation_widget
+            # macFUSE is not bundled with Parsec and must be manually installed by the user
+            # so we detect early such need to provide a help dialogue ;-)
+            # TODO: provide a similar mechanism on Windows&Linux to handle mountpoint runner not available
+            from parsec.core.gui.instance_widget import ensure_macfuse_available_or_show_dialogue
 
-            macfuse_installation_widget(win)
+            ensure_macfuse_available_or_show_dialogue(win)
 
         def kill_window(*args):
             win.close_app(force=True)
