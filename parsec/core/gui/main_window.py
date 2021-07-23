@@ -332,11 +332,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):  # type: ignore[misc]
                 return
             device, password = widget.status
             self.reload_login_devices()
-            if sys.platform != "darwin":
-                # If macfuse isn't installed, the pop-up guide will show at
-                # this moment and somehow block the GUI. This is a temp fix.
-                # TODO: have the macfuse pop-up happen at application launch
-                self.try_login(device, password)
+            self.try_login(device, password)
 
         widget = ClaimUserWidget.show_modal(
             jobs_ctx=self.jobs_ctx,
@@ -355,11 +351,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):  # type: ignore[misc]
                 return
             device, password = widget.status
             self.reload_login_devices()
-            if sys.platform != "darwin":
-                # If macfuse isn't installed, the pop-up guide will show at
-                # this moment and somehow block the GUI. This is a temp fix.
-                # TODO: have the macfuse pop-up happen at application launch
-                self.try_login(device, password)
+            self.try_login(device, password)
 
         widget = ClaimDeviceWidget.show_modal(
             jobs_ctx=self.jobs_ctx,
