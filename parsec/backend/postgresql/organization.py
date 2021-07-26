@@ -61,16 +61,18 @@ WHERE
 """
 )
 
+# Note the `profile::text` casting here, this is a limitation of asyncpg which doesn't support
+# enum within an anonymous record (see https://github.com/MagicStack/asyncpg/issues/360)
 _q_get_stats = Q(
     f"""
 SELECT
     (
         SELECT ARRAY(
-            SELECT (revoked_on, profile)
+            SELECT (revoked_on, profile::text)
             FROM user_
             WHERE organization = { q_organization_internal_id("$organization_id") }
         )
-    )users,
+    ) users,
     (
         SELECT COUNT(*)
         FROM realm
