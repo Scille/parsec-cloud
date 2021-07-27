@@ -181,7 +181,7 @@ class WorkspaceSharingWidget(QWidget, Ui_WorkspaceSharingWidget):
         self.get_users_error.connect(self._on_get_users_error)
         self.line_edit_filter.textChanged.connect(self._on_filter_changed)
 
-        ws_entry = self.jobs_ctx.run_sync(self.workspace_fs.get_workspace_entry)
+        ws_entry = self.workspace_fs.get_workspace_entry()
         self.current_user_role = ws_entry.role
         self.reset()
 
@@ -328,7 +328,7 @@ class WorkspaceSharingWidget(QWidget, Ui_WorkspaceSharingWidget):
 
     @classmethod
     def show_modal(cls, user_fs, workspace_fs, core, jobs_ctx, parent, on_finished):
-        workspace_name = jobs_ctx.run_sync(workspace_fs.get_workspace_name)
+        workspace_name = workspace_fs.get_workspace_name()
 
         w = cls(user_fs=user_fs, workspace_fs=workspace_fs, core=core, jobs_ctx=jobs_ctx)
         d = GreyedDialog(

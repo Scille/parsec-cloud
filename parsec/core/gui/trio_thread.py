@@ -195,11 +195,6 @@ class QtToTrioJobScheduler:
             self.nursery.start_soon(job)
         return job
 
-    def run_sync(self, fn, *args):
-        if self.nursery._closed:
-            raise JobSchedulerNotAvailable
-        return fn(*args)
-
 
 @asynccontextmanager
 async def run_trio_job_scheduler():

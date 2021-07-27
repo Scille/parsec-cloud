@@ -609,7 +609,7 @@ class GreetUserWidget(QWidget, Ui_GreetUserWidget):
         current_page.setParent(None)
         # The organization's config value is already cached in the core's logic
         # so the GUI doesn't need to set the value in its own cache
-        organization_config = self.jobs_ctx.run_sync(self.core.get_organization_config)
+        organization_config = self.core.get_organization_config()
         page = GreetUserCheckInfoWidget(
             self.jobs_ctx, self.greeter, organization_config.user_profile_outsider_allowed
         )

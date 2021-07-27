@@ -368,7 +368,7 @@ class FilesWidget(QWidget, Ui_FilesWidget):
         self.workspace_fs = wk_fs
         self.load(current_directory)
 
-        ws_entry = self.jobs_ctx.run_sync(self.workspace_fs.get_workspace_entry)
+        ws_entry = self.workspace_fs.get_workspace_entry()
         self.current_user_role = ws_entry.role
         self.label_role.setText(get_role_translation(self.current_user_role))
         self.table_files.current_user_role = self.current_user_role
@@ -390,14 +390,12 @@ class FilesWidget(QWidget, Ui_FilesWidget):
                 # Sending the source_workspace name for paste text
                 self.table_files.paste_status = PasteStatus(
                     status=PasteStatus.Status.Enabled,
-                    source_workspace=str(
-                        self.jobs_ctx.run_sync(self.clipboard.source_workspace.get_workspace_name)
-                    ),
+                    source_workspace=str(self.clipboard.source_workspace.get_workspace_name()),
                 )
         self.reset(default_selection)
 
     def reset(self, default_selection=None):
-        workspace_name = self.jobs_ctx.run_sync(self.workspace_fs.get_workspace_name)
+        workspace_name = self.workspace_fs.get_workspace_name()
         # Reload without any delay
         self.reload(default_selection, delay=0)
         self.table_files.sortItems(0)
@@ -408,7 +406,7 @@ class FilesWidget(QWidget, Ui_FilesWidget):
         if len(files) != 1:
             return
         path = self.current_directory / files[0].name
-        addr = self.jobs_ctx.run_sync(self.workspace_fs.generate_file_link, path)
+        addr = self.workspace_fs.generate_file_link(path)
         desktop.copy_to_clipboard(addr.to_url())
         show_info(self, _("TEXT_FILE_LINK_COPIED_TO_CLIPBOARD"))
 
@@ -617,8 +615,7 @@ class FilesWidget(QWidget, Ui_FilesWidget):
         # The Qt thread should never hit the core directly.
         # Synchronous calls can run directly in the job system
         # as they won't block the Qt loop for long
-        path = self.jobs_ctx.run_sync(
-            self.core.mountpoint_manager.get_path_in_mountpoint,
+        path = self.core.mountpoint_manager.get_path_in_mountpoint(
             self.workspace_fs.workspace_id,
             self.current_directory / file_name if file_name else self.current_directory,
             self.workspace_fs.timestamp
@@ -903,7 +900,7 @@ class FilesWidget(QWidget, Ui_FilesWidget):
             self.filter_files(self.line_edit_search.text())
         if default_selection and not file_found:
             show_error(self, _("TEXT_FILE_GOTO_LINK_NOT_FOUND"))
-        workspace_name = self.jobs_ctx.run_sync(self.workspace_fs.get_workspace_name)
+        workspace_name = self.workspace_fs.get_workspace_name()
         self.folder_changed.emit(str(workspace_name), str(self.current_directory))
 
     def _on_folder_stat_error(self, job):
