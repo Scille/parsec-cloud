@@ -1,5 +1,6 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2016-2021 Scille SAS
 
+import re
 import shutil
 import argparse
 import subprocess
@@ -46,7 +47,11 @@ def main(program_source: Path, output: Path, force: bool):
         "install_requires=requirements + extra_requirements['core']",
     )
     assert patched_setup_py_src != setup_py_src
-    (src_dir / "setup.py").write_text(setup_py_src)
+    # We want to use the Qt5 provided by snap, so don't install PyQt which comes
+    # with it own copy of Qt5. Instead the snap should depend on python3-pyqt5 package.
+    patched2_setup_py_src = re.sub(r"PYQT_DEPS\W*=.*", r"PYQT_DEPS = []", setup_py_src)
+    assert patched2_setup_py_src != patched_setup_py_src
+    (src_dir / "setup.py").write_text(patched2_setup_py_src)
 
     shutil.copytree(program_source / "packaging/snap/bin", output / "bin")
 

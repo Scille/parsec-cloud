@@ -39,7 +39,10 @@ parts:
     python-version: python3
     source: "./src"  # src dir is created by `generate_snap.py`
     source-type: local
+    build-packages:
+      - python3-pyqt5
     stage-packages:
+      - python3-pyqt5
       # fuse package contains fusermount which is sometime needed by libfuse2
       # (see: https://github.com/Scille/parsec-cloud/issues/1253)
       - fuse
