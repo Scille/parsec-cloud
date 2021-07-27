@@ -406,13 +406,8 @@ jobs:
     displayName: 'Bootstrap'
   - bash: |
       set -eux
-      cp -R $(Build.SourcesDirectory)/packaging/snap snapbuild
-      cd snapbuild
-      mkdir src
-      cp -R $(Build.SourcesDirectory)/parsec src
-      cp $(Build.SourcesDirectory)/setup.py src
-      cp $(Build.SourcesDirectory)/README.rst src
-      cp $(Build.SourcesDirectory)/HISTORY.rst src
+      # pip 20.3 introduces the new dependency resolver
+      pip install pip>=20.3 --user --upgrade
       # Retrieve Parsec version and customize it if we are not building on a tag
       # See https://www.python.org/dev/peps/pep-0440/#local-version-identifiers
       if ([[ $(Build.SourceBranch) = "refs/tags/"* ]])
@@ -427,13 +422,18 @@ jobs:
       fi
       echo "Version label: $VERSION"
       sed -i "s#^\\(__version__ = \\).*\$#\\1'$VERSION'#" src/parsec/_version.py
-      sed -i "s/__PARSEC_VERSION__/$VERSION/" snap/snapcraft.yaml
-      # Now build the snap !
+      python $(Build.SourcesDirectory)/packaging/snap/generate_snap_build_dir.py \
+        --program-source $(Build.SourcesDirectory) \
+        --output $(Agent.TempDirectory)/snapbuild
+    displayName: 'Prepare build'
+    workingDirectory: $(Agent.TempDirectory)
+  - bash: |
+      set -eux
       snapcraft --destructive-mode
       mkdir dist
       cp parsec*.snap dist
     displayName: 'Build snap'
-    workingDirectory: $(Agent.TempDirectory)
+    workingDirectory: $(Agent.TempDirectory)/snapbuild
   - publish: $(Agent.TempDirectory)/snapbuild/dist
     artifact: linux_amd64_snap
 

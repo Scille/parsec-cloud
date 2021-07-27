@@ -1,5 +1,5 @@
 name: parsec
-version: __PARSEC_VERSION__
+version: "{program_version}"  # Customized `generate_snap.py`
 summary: Secure cloud framework # 79 char long summary
 description: |
   Parsec is an open-source cloud-based application that allow simple yet
@@ -37,12 +37,8 @@ parts:
   parsec-core:
     plugin: python
     python-version: python3
-    source: "./src"
+    source: "./src"  # src dir is created by `generate_snap.py`
     source-type: local
-    override-pull: |
-      snapcraftctl pull
-      # Ugly hack given snapcraft doesn't support extra requirements...
-      sed -i "s#install_requires=requirements#install_requires=requirements + extra_requirements['core']#g" setup.py
     stage-packages:
       # fuse package contains fusermount which is sometime needed by libfuse2
       # (see: https://github.com/Scille/parsec-cloud/issues/1253)
