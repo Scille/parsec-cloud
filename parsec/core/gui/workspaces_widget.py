@@ -168,8 +168,7 @@ class WorkspacesWidget(QWidget, Ui_WorkspacesWidget):
     workspace_reencryption_success = pyqtSignal(QtToTrioJob)
     workspace_reencryption_error = pyqtSignal(QtToTrioJob)
     workspace_reencryption_progress = pyqtSignal(EntryID, int, int)
-    mountpoint_started = pyqtSignal(object, object)
-    mountpoint_stopped = pyqtSignal(object, object)
+    mountpoint_state_updated = pyqtSignal(object, object)
 
     rename_success = pyqtSignal(QtToTrioJob)
     rename_error = pyqtSignal(QtToTrioJob)
@@ -235,8 +234,7 @@ class WorkspacesWidget(QWidget, Ui_WorkspacesWidget):
         self.filter_remove_button.clicked.connect(self.remove_user_filter)
         self.filter_remove_button.apply_style()
 
-        self.mountpoint_started.connect(self._on_mountpoint_started_qt)
-        self.mountpoint_stopped.connect(self._on_mountpoint_stopped_qt)
+        self.mountpoint_state_updated.connect(self._on_mountpoint_state_updated_qt)
 
         self.sharing_updated_qt.connect(self._on_sharing_updated_qt)
         self._workspace_created_qt.connect(self._on_workspace_created_qt)
@@ -521,11 +519,7 @@ class WorkspacesWidget(QWidget, Ui_WorkspacesWidget):
         file_name = FsPath("/", file_name) if file_name else FsPath("/")
 
         try:
-            # The Qt thread should never hit the core directly.
-            # Synchronous calls can run directly in the job system
-            # as they won't block the Qt loop for long
-            path = self.jobs_ctx.run_sync(
-                self.core.mountpoint_manager.get_path_in_mountpoint,
+            path = self.core.mountpoint_manager.get_path_in_mountpoint(
                 workspace_fs.workspace_id,
                 file_name,
                 workspace_fs.timestamp
@@ -582,16 +576,14 @@ class WorkspacesWidget(QWidget, Ui_WorkspacesWidget):
         )
 
     def is_workspace_mounted(self, workspace_id, timestamp=None):
-        return self.jobs_ctx.run_sync(
-            self.core.mountpoint_manager.is_workspace_mounted, workspace_id, timestamp
-        )
+        return self.core.mountpoint_manager.is_workspace_mounted(workspace_id, timestamp)
 
     def delete_workspace(self, workspace_fs):
         if isinstance(workspace_fs, WorkspaceFSTimestamped):
             self.unmount_workspace(workspace_fs.workspace_id, workspace_fs.timestamp)
             return
         else:
-            workspace_name = self.jobs_ctx.run_sync(workspace_fs.get_workspace_name)
+            workspace_name = workspace_fs.get_workspace_name()
             result = ask_question(
                 self,
                 _("TEXT_WORKSPACE_DELETE_TITLE"),
@@ -807,18 +799,14 @@ class WorkspacesWidget(QWidget, Ui_WorkspacesWidget):
     def _on_fs_updated_qt(self, event, workspace_id):
         self.reset()
 
-    def _on_mountpoint_started_qt(self, workspace_id, timestamp):
+    def _on_mountpoint_state_updated_qt(self, workspace_id, timestamp):
         wb = self.get_workspace_button(workspace_id, timestamp)
         if wb:
-            wb.set_mountpoint_state(True)
-
-    def _on_mountpoint_stopped_qt(self, workspace_id, timestamp):
-        wb = self.get_workspace_button(workspace_id, timestamp)
-        if wb:
-            wb.set_mountpoint_state(False)
+            mounted = self.is_workspace_mounted(workspace_id, timestamp)
+            wb.set_mountpoint_state(mounted)
 
     def _on_mountpoint_started_trio(self, event, mountpoint, workspace_id, timestamp):
-        self.mountpoint_started.emit(workspace_id, timestamp)
+        self.mountpoint_state_updated.emit(workspace_id, timestamp)
 
     def _on_mountpoint_stopped_trio(self, event, mountpoint, workspace_id, timestamp):
-        self.mountpoint_stopped.emit(workspace_id, timestamp)
+        self.mountpoint_state_updated.emit(workspace_id, timestamp)
