@@ -196,7 +196,6 @@ async def winfsp_mountpoint_runner(
             await _wait_for_winfsp_ready(mountpoint_path)
 
             # Notify the manager that the mountpoint is ready
-            event_bus.send(CoreEvent.MOUNTPOINT_STARTED, **event_kwargs)
             task_status.started(mountpoint_path)
 
             # Start recording `sharing.updated` events
@@ -223,8 +222,9 @@ async def winfsp_mountpoint_runner(
         raise MountpointDriverCrash(f"WinFSP has crashed on {mountpoint_path}: {exc}") from exc
 
     finally:
+        event_bus.send(CoreEvent.MOUNTPOINT_STOPPING, **event_kwargs)
+
         # Must run in thread given this call will wait for any winfsp operation
         # to finish so blocking the trio loop can produce a dead lock...
         with trio.CancelScope(shield=True):
             await trio.to_thread.run_sync(fs.stop)
-            event_bus.send(CoreEvent.MOUNTPOINT_STOPPED, **event_kwargs)

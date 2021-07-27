@@ -193,15 +193,14 @@ async def fuse_mountpoint_runner(
                 )
                 await _wait_for_fuse_ready(mountpoint_path, fuse_thread_started, initial_st_dev)
 
-            event_bus.send(CoreEvent.MOUNTPOINT_STARTED, **event_kwargs)
             task_status.started(mountpoint_path)
 
     finally:
+        event_bus.send(CoreEvent.MOUNTPOINT_STOPPING, **event_kwargs)
         with trio.CancelScope(shield=True) as teardown_cancel_scope:
             await _stop_fuse_thread(
                 mountpoint_path, fuse_operations, fuse_thread_started, fuse_thread_stopped
             )
-            event_bus.send(CoreEvent.MOUNTPOINT_STOPPED, **event_kwargs)
             await _teardown_mountpoint(mountpoint_path)
 
 

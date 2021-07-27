@@ -14,9 +14,9 @@ from subprocess import CalledProcessError
 
 from async_generator import asynccontextmanager
 
-from parsec.utils import start_task
 from parsec.core.types import FsPath, EntryID
 from parsec.core.fs.workspacefs import WorkspaceFSTimestamped
+from parsec.utils import TaskStatus, start_task, open_service_nursery
 from parsec.core.fs.exceptions import FSWorkspaceNotFoundError, FSWorkspaceTimestampedTooEarly
 from parsec.core.mountpoint.exceptions import (
     MountpointConfigurationError,
@@ -141,12 +141,19 @@ class MountpointManager:
             self._timestamped_workspacefs[workspace_id] = {timestamp: new_workspace}
         return new_workspace
 
-    async def _mount_workspace_helper(self, workspace_fs, timestamp: DateTime = None):
+    async def _mount_workspace_helper(self, workspace_fs, timestamp: DateTime = None) -> TaskStatus:
+        finished = False
+        runner_task = None
         key = (workspace_fs.workspace_id, timestamp)
+        event_kwargs = {
+            "mountpoint": None,
+            "workspace_id": workspace_fs.workspace_id,
+            "timestamp": timestamp,
+        }
 
         async def curried_runner(task_status=trio.TASK_STATUS_IGNORED):
             try:
-                return await self._runner(
+                await self._runner(
                     self.user_fs,
                     workspace_fs,
                     self.base_mountpoint_path,
@@ -155,10 +162,36 @@ class MountpointManager:
                     task_status=task_status,
                 )
             finally:
-                self._mountpoint_tasks.pop(key, None)
+                # Tag the task as finished before cleaning up
+                nonlocal finished
+                finished = True
+                # The task failed before it started
+                if runner_task is None:
+                    pass
+                # Another task has already been set for this mountpoint
+                elif self._mountpoint_tasks.get(key) != runner_task:
+                    pass
+                # Set the mountpoint as unmounted THEN send the corresponding event
+                else:
+                    self._mountpoint_tasks.pop(key, None)
+                    self.event_bus.send(CoreEvent.MOUNTPOINT_STOPPED, **event_kwargs)
 
+        # Start the mountpoint runner task
         runner_task = await start_task(self._nursery, curried_runner)
-        self._mountpoint_tasks[key] = runner_task
+        event_kwargs["mountpoint"] = runner_task.value
+
+        # Another task has already been set for this mountpoint
+        if key in self._mountpoint_tasks:
+            await runner_task.cancel_and_join()
+        # The task somehow finished before we could register it
+        elif finished:
+            await runner_task.cancel_and_join()
+        # Set the mountpoint as mounted THEN send the corresponding event
+        else:
+            self._mountpoint_tasks[key] = runner_task
+            self.event_bus.send(CoreEvent.MOUNTPOINT_STARTED, **event_kwargs)
+
+        # Return the task so the caller can access the path
         return runner_task
 
     def get_path_in_mountpoint(
@@ -347,7 +380,7 @@ async def mountpoint_manager_factory(
             return
 
     # Instantiate the mountpoint manager with its own nursery
-    async with trio.open_service_nursery() as nursery:
+    async with open_service_nursery() as nursery:
         mountpoint_manager = MountpointManager(
             user_fs, event_bus, base_mountpoint_path, config, runner, nursery
         )
@@ -356,7 +389,7 @@ async def mountpoint_manager_factory(
         try:
 
             # A nursery dedicated to new workspace events
-            async with trio.open_service_nursery() as mount_nursery:
+            async with open_service_nursery() as mount_nursery:
 
                 # Setup new workspace events
                 with event_bus.connect_in_context(
