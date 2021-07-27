@@ -3,18 +3,7 @@
 import re
 import shutil
 import argparse
-import subprocess
 from pathlib import Path
-
-
-BUILD_DIR = Path("build").resolve()
-
-
-def run(cmd, **kwargs):
-    print(f">>> {cmd}")
-    ret = subprocess.run(cmd, shell=True, **kwargs)
-    assert ret.returncode == 0, ret.returncode
-    return ret
 
 
 def main(program_source: Path, output: Path, force: bool):
@@ -49,9 +38,13 @@ def main(program_source: Path, output: Path, force: bool):
     assert patched_setup_py_src != setup_py_src
     # We want to use the Qt5 provided by snap, so don't install PyQt which comes
     # with it own copy of Qt5. Instead the snap should depend on python3-pyqt5 package.
-    patched2_setup_py_src = re.sub(r"PYQT_DEPS\W*=.*", r"PYQT_DEPS = []", setup_py_src)
+    patched2_setup_py_src = re.sub(r"PYQT_DEPS\W*=.*", r"PYQT_DEPS = []", patched_setup_py_src)
     assert patched2_setup_py_src != patched_setup_py_src
-    (src_dir / "setup.py").write_text(patched2_setup_py_src)
+    patched3_setup_py_src = re.sub(
+        r"def fix_pyqt_import\(\):", "def fix_pyqt_import():\n    return", patched2_setup_py_src
+    )
+    assert patched3_setup_py_src != patched2_setup_py_src
+    (src_dir / "setup.py").write_text(patched3_setup_py_src)
 
     shutil.copytree(program_source / "packaging/snap/bin", output / "bin")
 
@@ -74,8 +67,10 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(
         description="Generate build dir for Snap with parsec sources, ready to run snapcraft on it"
     )
-    parser.add_argument("--program-source")
-    parser.add_argument("--output")
+    parser.add_argument(
+        "--program-source", type=Path, default=Path(__file__).joinpath("../../..").resolve()
+    )
+    parser.add_argument("--output", type=Path, required=True)
     parser.add_argument("--force", action="store_true")
     args = parser.parse_args()
-    main(Path(args.program_source).absolute(), Path(args.output).absolute(), args.force)
+    main(args.program_source.absolute(), args.output.absolute(), args.force)

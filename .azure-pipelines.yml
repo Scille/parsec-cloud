@@ -398,6 +398,9 @@ jobs:
   steps:
   - checkout: self
     submodules: true
+  - task: UsePythonVersion@0
+    inputs:
+      versionSpec: '$(python.version)'
   - bash: |
       set -eux
       sudo apt-get update
@@ -421,7 +424,7 @@ jobs:
         VERSION="$VERSION.$COMMIT"
       fi
       echo "Version label: $VERSION"
-      sed -i "s#^\\(__version__ = \\).*\$#\\1'$VERSION'#" src/parsec/_version.py
+      sed -i "s#^\\(__version__ = \\).*\$#\\1'$VERSION'#" $(Build.SourcesDirectory)/parsec/_version.py
       python $(Build.SourcesDirectory)/packaging/snap/generate_snap_build_dir.py \
         --program-source $(Build.SourcesDirectory) \
         --output $(Agent.TempDirectory)/snapbuild

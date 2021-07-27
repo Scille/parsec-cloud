@@ -39,6 +39,9 @@ parts:
     python-version: python3
     source: "./src"  # src dir is created by `generate_snap.py`
     source-type: local
+    override-build: |
+      pip install -r pre-requirements.txt
+      snapcraftctl build
     build-packages:
       - python3-pyqt5
     stage-packages:
