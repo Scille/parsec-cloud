@@ -141,11 +141,17 @@ def run_gui(config: CoreConfig, start_arg: Optional[str] = None, diagnose: bool 
     QApplication.setHighDpiScaleFactorRoundingPolicy(
         Qt.HighDpiScaleFactorRoundingPolicy.PassThrough
     )
-    return qtrio.run(_run_gui, config, start_arg, diagnose)
 
-
-async def _run_gui(config: CoreConfig, start_arg: str = None, diagnose: bool = False):
+    # The parsec app needs to be instanciated before qtrio runs in order
+    # to be the default QApplication instance
     app = ParsecApp()
+    assert QApplication.instance() is app
+    return qtrio.run(_run_gui, app, config, start_arg, diagnose)
+
+
+async def _run_gui(
+    app: ParsecApp, config: CoreConfig, start_arg: str = None, diagnose: bool = False
+):
     app.load_stylesheet()
     app.load_font()
 
