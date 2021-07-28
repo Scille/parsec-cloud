@@ -142,56 +142,48 @@ class MountpointManager:
         return new_workspace
 
     async def _mount_workspace_helper(self, workspace_fs, timestamp: DateTime = None) -> TaskStatus:
-        finished = False
-        runner_task = None
-        key = (workspace_fs.workspace_id, timestamp)
-        event_kwargs = {
-            "mountpoint": None,
-            "workspace_id": workspace_fs.workspace_id,
-            "timestamp": timestamp,
-        }
+        workspace_id = workspace_fs.workspace_id
+        key = workspace_id, timestamp
 
-        async def curried_runner(task_status=trio.TASK_STATUS_IGNORED):
+        async def curried_runner(task_status):
+            event_kwargs = {}
             try:
-                await self._runner(
+                async with self._runner(
                     self.user_fs,
                     workspace_fs,
                     self.base_mountpoint_path,
                     config=self.config,
                     event_bus=self.event_bus,
-                    task_status=task_status,
-                )
+                ) as mountpoint_path:
+
+                    # Another runner started before us
+                    if key in self._mountpoint_tasks:
+                        raise MountpointAlreadyMounted(
+                            f"Workspace `{workspace_id}` already mounted."
+                        )
+
+                    # Prepare kwargs for both started and stopped events
+                    event_kwargs = {
+                        "mountpoint": mountpoint_path,
+                        "workspace_id": workspace_fs.workspace_id,
+                        "timestamp": timestamp,
+                    }
+
+                    # Set the mountpoint as mounted THEN send the corresponding event
+                    task_status.started(mountpoint_path)
+                    self._mountpoint_tasks[key] = task_status
+                    self.event_bus.send(CoreEvent.MOUNTPOINT_STARTED, **event_kwargs)
+
             finally:
-                # Tag the task as finished before cleaning up
-                nonlocal finished
-                finished = True
-                # The task failed before it started
-                if runner_task is None:
-                    pass
-                # Another task has already been set for this mountpoint
-                elif self._mountpoint_tasks.get(key) != runner_task:
-                    pass
-                # Set the mountpoint as unmounted THEN send the corresponding event
-                else:
+                # Pop the mountpoint task if its ours
+                if self._mountpoint_tasks.get(key) == task_status:
                     self._mountpoint_tasks.pop(key, None)
+                # Send stopped event if started has been previously sent
+                if event_kwargs:
                     self.event_bus.send(CoreEvent.MOUNTPOINT_STOPPED, **event_kwargs)
 
         # Start the mountpoint runner task
         runner_task = await start_task(self._nursery, curried_runner)
-        event_kwargs["mountpoint"] = runner_task.value
-
-        # Another task has already been set for this mountpoint
-        if key in self._mountpoint_tasks:
-            await runner_task.cancel_and_join()
-        # The task somehow finished before we could register it
-        elif finished:
-            await runner_task.cancel_and_join()
-        # Set the mountpoint as mounted THEN send the corresponding event
-        else:
-            self._mountpoint_tasks[key] = runner_task
-            self.event_bus.send(CoreEvent.MOUNTPOINT_STARTED, **event_kwargs)
-
-        # Return the task so the caller can access the path
         return runner_task
 
     def get_path_in_mountpoint(

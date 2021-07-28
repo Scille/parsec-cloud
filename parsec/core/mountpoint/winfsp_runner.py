@@ -7,6 +7,7 @@ from zlib import adler32
 from pathlib import PurePath
 from functools import partial
 from structlog import get_logger
+from async_generator import asynccontextmanager
 from winfspy import FileSystem, enable_debug_log
 from winfspy.plumbing import filetime_now
 
@@ -106,14 +107,13 @@ async def _wait_for_winfsp_ready(mountpoint_path, timeout=1.0):
                 return
 
 
+@asynccontextmanager
 async def winfsp_mountpoint_runner(
     user_fs: UserFS,
     workspace_fs: WorkspaceFS,
     base_mountpoint_path: PurePath,
     config: dict,
     event_bus: EventBus,
-    *,
-    task_status=trio.TASK_STATUS_IGNORED,
 ):
     """
     Raises:
@@ -196,7 +196,7 @@ async def winfsp_mountpoint_runner(
             await _wait_for_winfsp_ready(mountpoint_path)
 
             # Notify the manager that the mountpoint is ready
-            task_status.started(mountpoint_path)
+            yield mountpoint_path
 
             # Start recording `sharing.updated` events
             with event_bus.waiter_on(CoreEvent.SHARING_UPDATED) as waiter:
