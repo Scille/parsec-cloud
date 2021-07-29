@@ -145,8 +145,9 @@ class MountpointManager:
         workspace_id = workspace_fs.workspace_id
         key = workspace_id, timestamp
 
-        async def curried_runner(task_status):
+        async def curried_runner(task_status: TaskStatus):
             event_kwargs = {}
+
             try:
                 async with self._runner(
                     self.user_fs,
@@ -177,7 +178,7 @@ class MountpointManager:
             finally:
                 # Pop the mountpoint task if its ours
                 if self._mountpoint_tasks.get(key) == task_status:
-                    self._mountpoint_tasks.pop(key, None)
+                    del self._mountpoint_tasks[key]
                 # Send stopped event if started has been previously sent
                 if event_kwargs:
                     self.event_bus.send(CoreEvent.MOUNTPOINT_STOPPED, **event_kwargs)
