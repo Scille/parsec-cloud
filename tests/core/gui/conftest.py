@@ -241,8 +241,7 @@ def gui_factory(
         # For some reasons, the main window from the previous test might
         # still be around. Simply wait for things to settle down until
         # our freshly created window is detected as the app main window.
-        # TODO: investigate why `await aqtbot.wait_until(right_main_window)` fails
-        aqtbot.qtbot.wait_until(right_main_window)
+        await aqtbot.wait_until(right_main_window)
 
         return main_w
 
@@ -413,13 +412,17 @@ def testing_main_window_cls(aqtbot):
                 raise AssertionError(f"Workspace `{workspace_name}` not found")
 
             f_w = self.test_get_files_widget()
-            async with aqtbot.wait_exposed(f_w), aqtbot.wait_signal(f_w.folder_changed):
-                # We need to make sure the workspace button is ready for left click first
-                await aqtbot.wait_until(wk_button.switch_button.isChecked)
-                # Send the click
+
+            # We need to make sure the workspace button is ready for left click first
+            async with aqtbot.wait_exposed(f_w):
+                pass
+            await aqtbot.wait_until(wk_button.switch_button.isChecked)
+
+            # Send the click and wait for the folder changed signal
+            async with aqtbot.wait_signal(f_w.folder_changed):
                 aqtbot.mouse_click(wk_button, QtCore.Qt.LeftButton)
 
-            # Wait for the spinner to disappear
+            # Wait for the spinner to disappear, meaning the folder information is properly displayed
             await aqtbot.wait_until(f_w.spinner.isHidden)
             return f_w
 
