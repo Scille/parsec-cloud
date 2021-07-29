@@ -915,14 +915,14 @@ class FilesWidget(QWidget, Ui_FilesWidget):
         else:
             show_error(self, _("TEXT_FILE_FOLDER_CREATE_ERROR_UNKNOWN"))
 
-    def _on_import_success(self):
+    def _on_import_success(self, job):
         assert self.loading_dialog
         self.loading_dialog.hide()
         self.loading_dialog.setParent(None)
         self.loading_dialog = None
         self.import_job = None
 
-    def _on_import_error(self):
+    def _on_import_error(self, job):
         def _display_import_error(file_count, exceptions=None):
             if exceptions and all(isinstance(exc, PermissionError) for exc in exceptions):
                 if file_count and file_count == 1:

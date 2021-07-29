@@ -8,6 +8,7 @@ from structlog import get_logger
 
 import pendulum
 
+from parsec.core.gui.trio_thread import QtToTrioJob
 from parsec.core.gui.lang import get_qlocale, translate as _, format_datetime
 from parsec.core.gui.custom_dialogs import show_error, GreyedDialog
 from parsec.core.gui.ui.timestamped_workspace_widget import Ui_TimestampedWorkspaceWidget
@@ -22,8 +23,8 @@ async def _do_workspace_get_creation_timestamp(workspace_fs):
 
 
 class TimestampedWorkspaceWidget(QWidget, Ui_TimestampedWorkspaceWidget):
-    get_creation_timestamp_success = pyqtSignal()
-    get_creation_timestamp_error = pyqtSignal()
+    get_creation_timestamp_success = pyqtSignal(QtToTrioJob)
+    get_creation_timestamp_error = pyqtSignal(QtToTrioJob)
 
     def __init__(self, workspace_fs, jobs_ctx):
         super().__init__()
@@ -36,7 +37,7 @@ class TimestampedWorkspaceWidget(QWidget, Ui_TimestampedWorkspaceWidget):
             fmt = self.calendar_widget.weekdayTextFormat(d)
             fmt.setForeground(QColor(0, 0, 0))
             self.calendar_widget.setWeekdayTextFormat(d, fmt)
-        self.get_creation_timestamp_success.connect(self.enable_with_timestamp)
+        self.get_creation_timestamp_success.connect(self.on_success)
         self.get_creation_timestamp_error.connect(self.on_error)
         self.limits_job = self.jobs_ctx.submit_job(
             self.get_creation_timestamp_success,
@@ -77,7 +78,7 @@ class TimestampedWorkspaceWidget(QWidget, Ui_TimestampedWorkspaceWidget):
         else:
             self.time_edit.clearMaximumTime()
 
-    def on_error(self):
+    def on_error(self, job):
         if self.limits_job and self.limits_job.status != "cancelled":
             show_error(
                 self,
@@ -87,7 +88,7 @@ class TimestampedWorkspaceWidget(QWidget, Ui_TimestampedWorkspaceWidget):
         self.limits_job = None
         self.dialog.reject()
 
-    def enable_with_timestamp(self):
+    def on_success(self, job):
         creation = self.limits_job.ret.in_timezone("local")
         self.limits_job = None
         self.creation_date = (creation.year, creation.month, creation.day)

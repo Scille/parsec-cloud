@@ -19,6 +19,7 @@ from parsec.core.mountpoint import (
     MountpointWinfspNotAvailable,
 )
 
+from parsec.core.gui.trio_thread import QtToTrioJob
 from parsec.core.gui.trio_thread import QtToTrioJobScheduler, run_trio_job_scheduler
 from parsec.core.gui.parsec_application import ParsecApp
 from parsec.core.gui.custom_dialogs import show_error, show_info_link
@@ -56,8 +57,8 @@ def ensure_macfuse_available_or_show_dialogue(window):
 
 
 class InstanceWidget(QWidget):
-    run_core_success = pyqtSignal()
-    run_core_error = pyqtSignal()
+    run_core_success = pyqtSignal(QtToTrioJob)
+    run_core_error = pyqtSignal(QtToTrioJob)
     run_core_ready = pyqtSignal(object, object)
     logged_in = pyqtSignal()
     logged_out = pyqtSignal()
@@ -149,7 +150,8 @@ class InstanceWidget(QWidget):
         )
         self.logged_in.emit()
 
-    def on_core_run_error(self):
+    def on_core_run_error(self, job):
+        assert job is self.running_core_job
         assert self.running_core_job.is_finished()
         if self.core:
             self.core.event_bus.disconnect(
@@ -178,7 +180,8 @@ class InstanceWidget(QWidget):
         self.running_core_job = None
         self.logged_out.emit()
 
-    def on_core_run_done(self):
+    def on_core_run_done(self, job):
+        assert job is self.running_core_job
         assert self.running_core_job.is_finished()
         if self.core:
             ParsecApp.remove_connected_device(

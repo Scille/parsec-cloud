@@ -26,9 +26,9 @@ class JobSchedulerNotAvailable(Exception):
 
 
 class QtToTrioJob:
-    def __init__(self, fn, args, kwargs, qt_on_success, qt_on_error):
-        self._qt_on_success = qt_on_success
-        self._qt_on_error = qt_on_error
+    def __init__(self, fn, args, kwargs, on_success, on_error):
+        self._on_success = on_success
+        self._on_error = on_error
         self._fn = fn
         self._args = args
         self._kwargs = kwargs
@@ -119,14 +119,8 @@ class QtToTrioJob:
 
     def _set_done(self):
         self._done.set()
-        signal = self._qt_on_success if self.is_ok() else self._qt_on_error
-        # TODO: Either pick a consistent API for those signals or get rid of the altogether.
-        # In the meantime, hack into the signal time in order to detect whether the job should
-        # be emitted as an argument to the signal
-        if signal.signal.endswith("(PyQt_PyObject)"):
-            signal.emit(self)
-        else:
-            signal.emit()
+        signal = self._on_success if self.is_ok() else self._on_error
+        signal.emit(self)
 
     def cancel(self):
         self.cancel_scope.cancel()
@@ -142,7 +136,7 @@ class QtToTrioJobScheduler:
         self.nursery.cancel_scope.cancel()
 
     def submit_throttled_job(
-        self, throttling_id: str, delay: float, qt_on_success, qt_on_error, fn, *args, **kwargs
+        self, throttling_id: str, delay: float, on_success, on_error, fn, *args, **kwargs
     ):
         """
         Throttle execution: immediatly execute `fn` unless a job with a similar
@@ -183,15 +177,15 @@ class QtToTrioJobScheduler:
                 pass
 
         # Create the job but don't execute it: we have to handle throttle first !
-        job = QtToTrioJob(fn, args, kwargs, qt_on_success, qt_on_error)
+        job = QtToTrioJob(fn, args, kwargs, on_success, on_error)
         if self.nursery._closed:
             job.set_cancelled(JobSchedulerNotAvailable())
         else:
             self.nursery.start_soon(_throttled_execute, job)
         return job
 
-    def submit_job(self, qt_on_success, qt_on_error, fn, *args, **kwargs):
-        job = QtToTrioJob(fn, args, kwargs, qt_on_success, qt_on_error)
+    def submit_job(self, on_success, on_error, fn, *args, **kwargs):
+        job = QtToTrioJob(fn, args, kwargs, on_success, on_error)
         if self.nursery._closed:
             job.set_cancelled(JobSchedulerNotAvailable())
         else:

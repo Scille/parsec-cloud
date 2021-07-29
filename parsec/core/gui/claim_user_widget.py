@@ -299,7 +299,7 @@ class ClaimUserCodeExchangeWidget(QWidget, Ui_ClaimUserCodeExchangeWidget):
             show_error(self, msg, exception=exc)
         self.failed.emit(job)
 
-    def _on_get_claimer_sas_success(self):
+    def _on_get_claimer_sas_success(self, job):
         assert self.get_claimer_sas_job
         assert self.get_claimer_sas_job.is_finished()
         assert self.get_claimer_sas_job.status == "ok"
@@ -321,7 +321,7 @@ class ClaimUserCodeExchangeWidget(QWidget, Ui_ClaimUserCodeExchangeWidget):
         assert job.status != "ok"
         self.failed.emit(job)
 
-    def _on_signify_trust_success(self):
+    def _on_signify_trust_success(self, job):
         assert self.signify_trust_job
         assert self.signify_trust_job.is_finished()
         assert self.signify_trust_job.status == "ok"

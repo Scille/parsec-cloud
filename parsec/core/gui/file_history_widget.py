@@ -2,6 +2,8 @@
 
 from PyQt5.QtCore import pyqtSignal
 from PyQt5.QtWidgets import QWidget
+
+from parsec.core.gui.trio_thread import QtToTrioJob
 from parsec.core.gui.lang import translate as _, format_datetime
 from parsec.core.gui.custom_dialogs import show_error, GreyedDialog
 from parsec.core.gui.file_size import get_filesize
@@ -45,8 +47,8 @@ class FileHistoryButton(QWidget, Ui_FileHistoryButton):
 
 
 class FileHistoryWidget(QWidget, Ui_FileHistoryWidget):
-    get_versions_success = pyqtSignal()
-    get_versions_error = pyqtSignal()
+    get_versions_success = pyqtSignal(QtToTrioJob)
+    get_versions_error = pyqtSignal(QtToTrioJob)
 
     def __init__(
         self,
@@ -121,7 +123,7 @@ class FileHistoryWidget(QWidget, Ui_FileHistoryWidget):
         self.layout_history.addWidget(button)
         button.show()
 
-    def on_get_version_success(self):
+    def on_get_version_success(self, job):
         versions_list, download_limit_reached = self.versions_job.ret
         if download_limit_reached:
             self.button_load_more_entries.setVisible(False)
@@ -138,7 +140,7 @@ class FileHistoryWidget(QWidget, Ui_FileHistoryWidget):
             )
         self.set_loading_in_progress(False)
 
-    def on_get_version_error(self):
+    def on_get_version_error(self, job):
         if self.versions_job and self.versions_job.status != "cancelled":
             show_error(self, _("TEXT_FILE_HISTORY_LIST_FAILURE"), exception=self.versions_job.exc)
         self.versions_job = None

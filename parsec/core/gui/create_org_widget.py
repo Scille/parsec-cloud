@@ -21,6 +21,7 @@ from parsec.core.invite import (
 )
 from parsec.core.local_device import save_device_with_password
 
+from parsec.core.gui.trio_thread import QtToTrioJob
 from parsec.core.gui.custom_dialogs import GreyedDialog, show_error, show_info
 from parsec.core.gui.trio_thread import JobResultError
 from parsec.core.gui.desktop import get_default_device
@@ -143,8 +144,8 @@ class CreateOrgDeviceInfoWidget(QWidget, Ui_CreateOrgDeviceInfoWidget):
 
 
 class CreateOrgWidget(QWidget, Ui_CreateOrgWidget):
-    req_success = pyqtSignal()
-    req_error = pyqtSignal()
+    req_success = pyqtSignal(QtToTrioJob)
+    req_error = pyqtSignal(QtToTrioJob)
 
     def __init__(self, jobs_ctx, config, start_addr):
         super().__init__()
@@ -296,8 +297,8 @@ class CreateOrgWidget(QWidget, Ui_CreateOrgWidget):
         )
         self.button_validate.setEnabled(False)
 
-    def _on_req_success(self):
-        assert self.create_job
+    def _on_req_success(self, job):
+        assert self.create_job is job
         assert self.create_job.is_finished()
         assert self.create_job.status == "ok"
 
@@ -317,8 +318,8 @@ class CreateOrgWidget(QWidget, Ui_CreateOrgWidget):
         else:
             logger.warning("Cannot close dialog when org wizard")
 
-    def _on_req_error(self):
-        assert self.create_job
+    def _on_req_error(self, job):
+        assert self.create_job is job
         assert self.create_job.is_finished()
         assert self.create_job.status != "ok"
 
