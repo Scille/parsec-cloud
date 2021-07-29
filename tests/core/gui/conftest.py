@@ -2,7 +2,8 @@
 
 import time
 from importlib import import_module
-from contextlib import asynccontextmanager
+from async_exit_stack import AsyncExitStack
+from async_generator import asynccontextmanager
 
 import trio
 import qtrio
@@ -79,19 +80,11 @@ class AsyncQtBot:
             await self.wait(10)
 
     @asynccontextmanager
-    async def _wait_signals(self, signals):
-        if not signals:
-            yield
-            return
-        head, *tail = signals
-        async with qtrio._core.wait_signal_context(head):
-            async with self.wait_signals(tail):
-                yield
-
-    @asynccontextmanager
     async def wait_signals(self, signals, *, timeout=5000):
         with trio.fail_after(timeout / 1000):
-            async with self._wait_signals(signals):
+            async with AsyncExitStack() as stack:
+                for signal in signals:
+                    await stack.enter_async_context(qtrio._core.wait_signal_context(signal))
                 yield
 
     @asynccontextmanager

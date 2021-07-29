@@ -1,8 +1,8 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2016-2021 Scille SAS
 
 import threading
-from contextlib import asynccontextmanager
 from inspect import iscoroutinefunction, signature
+from async_generator import asynccontextmanager
 
 import trio
 from structlog import get_logger
