@@ -120,6 +120,9 @@ class QtToTrioJob:
     def _set_done(self):
         self._done.set()
         signal = self._qt_on_success if self.is_ok() else self._qt_on_error
+        # TODO: Either pick a consistent API for those signals or get rid of the altogether.
+        # In the meantime, hack into the signal time in order to detect whether the job should
+        # be emitted as an argument to the signal
         if signal.signal.endswith("(PyQt_PyObject)"):
             signal.emit(self)
         else:
