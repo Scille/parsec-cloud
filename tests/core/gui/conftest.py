@@ -56,10 +56,10 @@ class AsyncQtBot:
         """
         __tracebackhide__ = True
 
-        start = time.time()
+        start = trio.current_time()
 
         def timed_out():
-            elapsed = time.time() - start
+            elapsed = trio.current_time() - start
             elapsed_ms = elapsed * 1000
             return elapsed_ms > timeout
 
@@ -225,16 +225,12 @@ def gui_factory(
             gui_show_confined=False,
         )
         event_bus = event_bus or event_bus_factory()
-        # Language config rely on global var, must reset it for each test !
-        switch_language(core_config)
-
         ParsecApp.connected_devices = set()
 
-        # Pass minimize_on_close to avoid having test blocked by the
-        # closing confirmation prompt
-
+        # Language config rely on global var, must reset it for each test !
         switch_language(core_config, "en")
 
+        # Pass minimize_on_close to avoid having test blocked by the closing confirmation prompt
         main_w = testing_main_window_cls(
             job_scheduler, job_scheduler.close, event_bus, core_config, minimize_on_close=True
         )
