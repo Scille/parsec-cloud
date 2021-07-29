@@ -78,7 +78,6 @@ class CentralWidget(QWidget, Ui_CentralWidget):  # type: ignore[misc]
     organization_stats_error = pyqtSignal(QtToTrioJob)
 
     connection_state_changed = pyqtSignal(object, object)
-    vlobs_updated_qt = pyqtSignal()
     logout_requested = pyqtSignal()
     new_notification = pyqtSignal(str, str)
 
@@ -107,9 +106,8 @@ class CentralWidget(QWidget, Ui_CentralWidget):  # type: ignore[misc]
         for e in self.NOTIFICATION_EVENTS:
             self.event_bus.connect(e, cast(EventCallback, self.handle_event))
 
-        self.event_bus.connect(CoreEvent.FS_ENTRY_SYNCED, self._on_vlobs_updated_trio)
-        self.event_bus.connect(CoreEvent.BACKEND_REALM_VLOBS_UPDATED, self._on_vlobs_updated_trio)
-        self.vlobs_updated_qt.connect(self._on_vlobs_updated_qt)
+        self.event_bus.connect(CoreEvent.FS_ENTRY_SYNCED, self._on_vlobs_updated)
+        self.event_bus.connect(CoreEvent.BACKEND_REALM_VLOBS_UPDATED, self._on_vlobs_updated)
 
         self.set_user_info()
         menu = QMenu()
@@ -270,10 +268,7 @@ class CentralWidget(QWidget, Ui_CentralWidget):  # type: ignore[misc]
             core=self.core,
         )
 
-    def _on_vlobs_updated_trio(self, *args: object, **kwargs: object) -> None:
-        self.vlobs_updated_qt.emit()
-
-    def _on_vlobs_updated_qt(self) -> None:
+    def _on_vlobs_updated(self, *args: object, **kwargs: object) -> None:
         self._load_organization_stats(delay=self.REFRESH_ORGANIZATION_STATS_DELAY)
 
     def _on_connection_state_changed(

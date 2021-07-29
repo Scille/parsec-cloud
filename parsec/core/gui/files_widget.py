@@ -3,14 +3,13 @@ import trio
 import pathlib
 
 from parsec.core.core_events import CoreEvent
-from uuid import UUID
 from pendulum import DateTime
 from enum import IntEnum
 from structlog import get_logger
 
 from PyQt5.QtCore import Qt, pyqtSignal
 from PyQt5.QtWidgets import QFileDialog, QWidget
-from parsec.core.types import FsPath, WorkspaceEntry, WorkspaceRole
+from parsec.core.types import FsPath, WorkspaceRole
 from parsec.core.fs import WorkspaceFS, WorkspaceFSTimestamped
 from parsec.core.fs.exceptions import (
     FSRemoteManifestNotFound,
@@ -250,12 +249,8 @@ class Clipboard:
 class FilesWidget(QWidget, Ui_FilesWidget):
     RELOAD_FILES_LIST_THROTTLE_DELAY = 1  # 1s
 
-    fs_updated_qt = pyqtSignal(CoreEvent, UUID)
-    fs_synced_qt = pyqtSignal(CoreEvent, UUID)
-    entry_downsynced_qt = pyqtSignal(UUID, UUID)
-    global_clipboard_updated_qt = pyqtSignal(object)
+    global_clipboard_updated = pyqtSignal(object)
 
-    sharing_updated_qt = pyqtSignal(WorkspaceEntry, object)
     back_clicked = pyqtSignal()
 
     rename_success = pyqtSignal(QtToTrioJob)
@@ -312,9 +307,6 @@ class FilesWidget(QWidget, Ui_FilesWidget):
         self.line_edit_search.hide()
         self.current_directory = FsPath("/")
         self.current_directory_uuid = None
-        self.fs_updated_qt.connect(self._on_fs_updated_qt)
-        self.fs_synced_qt.connect(self._on_fs_synced_qt)
-        self.entry_downsynced_qt.connect(self._on_entry_downsynced_qt)
         self.default_import_path = str(pathlib.Path.home())
         self.table_files.config = self.core.config
         self.table_files.file_moved.connect(self.on_table_files_file_moved)
@@ -330,7 +322,6 @@ class FilesWidget(QWidget, Ui_FilesWidget):
         self.table_files.file_path_clicked.connect(self.on_get_file_path_clicked)
         self.table_files.open_current_dir_clicked.connect(self.on_open_current_dir_clicked)
 
-        self.sharing_updated_qt.connect(self._on_sharing_updated_qt)
         self.rename_success.connect(self._on_rename_success)
         self.rename_error.connect(self._on_rename_error)
         self.delete_success.connect(self._on_delete_success)
@@ -353,10 +344,10 @@ class FilesWidget(QWidget, Ui_FilesWidget):
         self.loading_dialog = None
         self.import_progress.connect(self._on_import_progress)
 
-        self.event_bus.connect(CoreEvent.FS_ENTRY_UPDATED, self._on_fs_entry_updated_trio)
-        self.event_bus.connect(CoreEvent.FS_ENTRY_SYNCED, self._on_fs_entry_synced_trio)
-        self.event_bus.connect(CoreEvent.SHARING_UPDATED, self._on_sharing_updated_trio)
-        self.event_bus.connect(CoreEvent.FS_ENTRY_DOWNSYNCED, self._on_entry_downsynced_trio)
+        self.event_bus.connect(CoreEvent.FS_ENTRY_SYNCED, self._on_fs_entry_synced)
+        self.event_bus.connect(CoreEvent.FS_ENTRY_UPDATED, self._on_fs_entry_updated)
+        self.event_bus.connect(CoreEvent.FS_ENTRY_DOWNSYNCED, self._on_fs_entry_downsynced)
+        self.event_bus.connect(CoreEvent.SHARING_UPDATED, self._on_sharing_updated)
 
     def disconnect_all(self):
         pass
@@ -420,7 +411,7 @@ class FilesWidget(QWidget, Ui_FilesWidget):
         self.clipboard = Clipboard(
             files=files_to_copy, status=Clipboard.Status.Copied, source_workspace=self.workspace_fs
         )
-        self.global_clipboard_updated_qt.emit(self.clipboard)
+        self.global_clipboard_updated.emit(self.clipboard)
         self.table_files.paste_status = PasteStatus(status=PasteStatus.Status.Enabled)
 
     def on_cut_clicked(self):
@@ -437,7 +428,7 @@ class FilesWidget(QWidget, Ui_FilesWidget):
         self.clipboard = Clipboard(
             files=files_to_cut, status=Clipboard.Status.Cut, source_workspace=self.workspace_fs
         )
-        self.global_clipboard_updated_qt.emit(self.clipboard)
+        self.global_clipboard_updated.emit(self.clipboard)
         self.table_files.paste_status = PasteStatus(status=PasteStatus.Status.Enabled)
 
     def on_paste_clicked(self):
@@ -456,7 +447,7 @@ class FilesWidget(QWidget, Ui_FilesWidget):
             )
             self.clipboard = None
             # Set Global clipboard to none too
-            self.global_clipboard_updated_qt.emit(None)
+            self.global_clipboard_updated.emit(None)
             self.table_files.paste_status = PasteStatus(status=PasteStatus.Status.Disabled)
 
         elif self.clipboard.status == Clipboard.Status.Copied:
@@ -979,20 +970,7 @@ class FilesWidget(QWidget, Ui_FilesWidget):
         self.loading_dialog = None
         self.import_job = None
 
-    def _on_fs_entry_synced_trio(self, event, id, workspace_id=None):
-        self.fs_synced_qt.emit(event, id)
-
-    def _on_fs_entry_updated_trio(self, event, workspace_id=None, id=None):
-        assert id is not None
-        if workspace_id is None or (
-            self.workspace_fs is not None and workspace_id == self.workspace_fs.workspace_id
-        ):
-            self.fs_updated_qt.emit(event, id)
-
-    def _on_entry_downsynced_trio(self, event, workspace_id=None, id=None):
-        self.entry_downsynced_qt.emit(workspace_id, id)
-
-    def _on_entry_downsynced_qt(self, workspace_id, id):
+    def _on_fs_entry_downsynced(self, event, workspace_id=None, id=None):
         if not self.workspace_fs:
             return
         ws_id = self.workspace_fs.workspace_id
@@ -1001,16 +979,16 @@ class FilesWidget(QWidget, Ui_FilesWidget):
         if id == self.current_directory_uuid:
             self.reload()
 
-    def _on_fs_synced_qt(self, event, uuid):
+    def _on_fs_entry_synced(self, event, id, workspace_id=None):
         if not self.workspace_fs:
             return
 
-        if self.current_directory_uuid == uuid:
+        if self.current_directory_uuid == id:
             return
 
         for i in range(1, self.table_files.rowCount()):
             item = self.table_files.item(i, 0)
-            if item and item.data(UUID_DATA_INDEX) == uuid:
+            if item and item.data(UUID_DATA_INDEX) == id:
                 if (
                     item.data(TYPE_DATA_INDEX) == FileType.File
                     or item.data(TYPE_DATA_INDEX) == FileType.Folder
@@ -1018,17 +996,16 @@ class FilesWidget(QWidget, Ui_FilesWidget):
                     item.confined = False
                     item.is_synced = True
 
-    def _on_fs_updated_qt(self, event, uuid):
-        if not self.workspace_fs:
+    def _on_fs_entry_updated(self, event, workspace_id=None, id=None):
+        assert id is not None
+        if self.workspace_fs is None:
             return
-
-        if self.current_directory_uuid == uuid or self.table_files.has_file(uuid):
+        if workspace_id != self.workspace_fs.workspace_id:
+            return
+        if self.current_directory_uuid == id or self.table_files.has_file(id):
             self.reload()
 
-    def _on_sharing_updated_trio(self, event, new_entry, previous_entry):
-        self.sharing_updated_qt.emit(new_entry, previous_entry)
-
-    def _on_sharing_updated_qt(self, new_entry, previous_entry):
+    def _on_sharing_updated(self, event, new_entry, previous_entry):
         if new_entry is None or new_entry.role is None:
             # Sharing revoked
             show_error(

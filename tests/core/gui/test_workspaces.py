@@ -3,11 +3,8 @@
 import pytest
 from PyQt5 import QtCore
 
-from uuid import UUID
-import pendulum
-from unittest.mock import ANY, Mock
+from unittest.mock import Mock
 
-from parsec.api.data import WorkspaceEntry
 from parsec.core.types import WorkspaceRole
 from parsec.core.core_events import CoreEvent
 from parsec.core.fs import FSWorkspaceNoReadAccess
@@ -134,61 +131,6 @@ async def test_mountpoint_remote_error_event(aqtbot, running_backend, logged_gui
         msg_widget.message
         == 'Unexpected error while performing "unlink" operation on "/bar": D\'Oh !.'
     )
-
-
-@pytest.mark.skip("Should be reworked")
-@pytest.mark.gui
-@pytest.mark.trio
-async def test_event_bus_internal_connection(aqtbot, running_backend, logged_gui, autoclose_dialog):
-    w_w = await logged_gui.test_switch_to_workspaces_widget()
-    uuid = UUID("1bc1e17b-157a-462f-86f2-7f64657ba16a")
-    w_entry = WorkspaceEntry(
-        name="w",
-        id=ANY,
-        key=ANY,
-        encryption_revision=1,
-        encrypted_on=ANY,
-        role_cached_on=ANY,
-        role=None,
-    )
-
-    async with aqtbot.wait_signal(w_w.fs_synced_qt):
-        w_w.event_bus.send(CoreEvent.FS_ENTRY_SYNCED, workspace_id=None, id=uuid)
-
-    async with aqtbot.wait_signal(w_w.fs_updated_qt):
-        w_w.event_bus.send(CoreEvent.FS_ENTRY_UPDATED, workspace_id=uuid, id=None)
-
-    async with aqtbot.wait_signal(w_w._workspace_created_qt):
-        w_w.event_bus.send(CoreEvent.FS_WORKSPACE_CREATED, new_entry=w_entry)
-
-    async with aqtbot.wait_signal(w_w.sharing_updated_qt):
-        w_w.event_bus.send(CoreEvent.SHARING_UPDATED, new_entry=w_entry, previous_entry=None)
-
-    async with aqtbot.wait_signal(w_w.entry_downsynced_qt):
-        w_w.event_bus.send(CoreEvent.FS_ENTRY_DOWNSYNCED, workspace_id=uuid, id=uuid)
-
-    async with aqtbot.wait_signal(w_w.mountpoint_started):
-        w_w.event_bus.send(
-            CoreEvent.MOUNTPOINT_STARTED,
-            mountpoint=None,
-            workspace_id=uuid,
-            timestamp=pendulum.now(),
-        )
-
-    assert not autoclose_dialog.dialogs
-    async with aqtbot.wait_signal(w_w.mountpoint_stopped):
-        w_w.event_bus.send(
-            CoreEvent.MOUNTPOINT_STOPPED,
-            mountpoint=None,
-            workspace_id=uuid,
-            timestamp=pendulum.now(),
-        )
-    assert autoclose_dialog.dialogs == [
-        (
-            "Error",
-            "Your permissions on this workspace have been revoked. You no longer have access to theses files.",
-        )
-    ]
 
 
 @pytest.mark.gui

@@ -29,7 +29,7 @@ class MountWidget(QWidget, Ui_MountWidget):
         self.workspaces_widget.load_workspace_clicked.connect(self.load_workspace)
         self.files_widget = FilesWidget(self.core, self.jobs_ctx, self.event_bus, parent=self)
         self.files_widget.folder_changed.connect(self.folder_changed.emit)
-        self.files_widget.global_clipboard_updated_qt.connect(self.clipboard_updated)
+        self.files_widget.global_clipboard_updated.connect(self.clipboard_updated)
         self.layout_content.insertWidget(0, self.files_widget)
         self.files_widget.back_clicked.connect(self.show_workspaces_widget)
         self.show_workspaces_widget()

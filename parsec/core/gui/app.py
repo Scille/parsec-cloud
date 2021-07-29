@@ -48,14 +48,14 @@ def before_quit(systray):
 
 
 async def _run_ipc_server(config, main_window, start_arg, task_status=trio.TASK_STATUS_IGNORED):
-    new_instance_needed_qt = main_window.new_instance_needed
-    foreground_needed_qt = main_window.foreground_needed
+    new_instance_needed = main_window.new_instance_needed
+    foreground_needed = main_window.foreground_needed
 
     async def _cmd_handler(cmd):
         if cmd["cmd"] == IPCCommand.FOREGROUND:
-            foreground_needed_qt.emit()
+            foreground_needed.emit()
         elif cmd["cmd"] == IPCCommand.NEW_INSTANCE:
-            new_instance_needed_qt.emit(cmd.get("start_arg"))
+            new_instance_needed.emit(cmd.get("start_arg"))
         return {"status": "ok"}
 
     # Loop over attemps at running an IPC server or sending the command to an existing one
