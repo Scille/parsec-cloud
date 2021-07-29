@@ -1,6 +1,5 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2016-2021 Scille SAS
 
-import time
 from importlib import import_module
 from async_exit_stack import AsyncExitStack
 from async_generator import asynccontextmanager
@@ -8,8 +7,8 @@ from async_generator import asynccontextmanager
 import trio
 import qtrio
 import pytest
-from PyQt5 import QtCore
-from pytestqt import exceptions as pytestqt_exceptions
+from PyQt5 import QtCore, QtTest
+from pytestqt.exceptions import TimeoutError
 
 from parsec import __version__ as parsec_version
 from parsec.core.local_device import save_device_with_password
@@ -94,29 +93,25 @@ class AsyncQtBot:
 
     @asynccontextmanager
     async def wait_active(self, widget, *, timeout=5000):
+        deadline = trio.current_time() + timeout / 1000
         yield
-        deadline = time.time() + timeout / 1000
-        while time.time() < deadline:
-            try:
-                with self.qtbot.wait_active(widget, timeout=10):
-                    await trio.sleep(0.01)
-            except pytestqt_exceptions.TimeoutError:
-                continue
-            else:
+        while True:
+            if QtTest.QTest.qWaitForWindowActive(widget, 10):
                 return
+            if trio.current_time() > deadline:
+                raise TimeoutError
+            await trio.sleep(0.010)
 
     @asynccontextmanager
     async def wait_exposed(self, widget, *, timeout=5000):
+        deadline = trio.current_time() + timeout / 1000
         yield
-        deadline = time.time() + timeout / 1000
-        while time.time() < deadline:
-            try:
-                with self.qtbot.wait_exposed(widget, timeout=10):
-                    await trio.sleep(0.01)
-            except pytestqt_exceptions.TimeoutError:
-                continue
-            else:
+        while True:
+            if QtTest.QTest.qWaitForWindowExposed(widget, 10):
                 return
+            if trio.current_time() > deadline:
+                raise TimeoutError
+            await trio.sleep(0.010)
 
 
 @pytest.fixture
