@@ -4,7 +4,6 @@ import sys
 import signal
 from typing import Optional
 from contextlib import contextmanager
-from enum import Enum
 
 import trio
 import qtrio
@@ -48,53 +47,47 @@ def before_quit(systray):
     return _before_quit
 
 
-IPCServerStartupOutcome = Enum("IPCServerStartupOutcome", "STARTED ALREADY_RUNNING ERROR")
-
-
 async def _run_ipc_server(config, main_window, start_arg, task_status=trio.TASK_STATUS_IGNORED):
-    try:
-        new_instance_needed_qt = main_window.new_instance_needed
-        foreground_needed_qt = main_window.foreground_needed
+    new_instance_needed_qt = main_window.new_instance_needed
+    foreground_needed_qt = main_window.foreground_needed
 
-        async def _cmd_handler(cmd):
-            if cmd["cmd"] == IPCCommand.FOREGROUND:
-                foreground_needed_qt.emit()
-            elif cmd["cmd"] == IPCCommand.NEW_INSTANCE:
-                new_instance_needed_qt.emit(cmd.get("start_arg"))
-            return {"status": "ok"}
+    async def _cmd_handler(cmd):
+        if cmd["cmd"] == IPCCommand.FOREGROUND:
+            foreground_needed_qt.emit()
+        elif cmd["cmd"] == IPCCommand.NEW_INSTANCE:
+            new_instance_needed_qt.emit(cmd.get("start_arg"))
+        return {"status": "ok"}
 
-        while True:
+    # Loop over attemps at running an IPC server or sending the command to an existing one
+    while True:
+
+        # Attempt to run an IPC server if Parsec is not already started
+        try:
+            async with run_ipc_server(
+                _cmd_handler, config.ipc_socket_file, win32_mutex_name=config.ipc_win32_mutex_name
+            ):
+                task_status.started()
+                await trio.sleep_forever()
+
+        # Parsec is already started, give it our work then
+        except IPCServerAlreadyRunning:
+
+            # Protect against race conditions, in case the server was shutting down
             try:
-                async with run_ipc_server(
-                    _cmd_handler,
-                    config.ipc_socket_file,
-                    win32_mutex_name=config.ipc_win32_mutex_name,
-                ):
-                    task_status.started(IPCServerStartupOutcome.STARTED)
-                    await trio.sleep_forever()
+                if start_arg:
+                    await send_to_ipc_server(
+                        config.ipc_socket_file, IPCCommand.NEW_INSTANCE, start_arg=start_arg
+                    )
+                else:
+                    await send_to_ipc_server(config.ipc_socket_file, IPCCommand.FOREGROUND)
 
-            except IPCServerAlreadyRunning:
-                # Parsec is already started, give it our work then
-                try:
-                    if start_arg:
-                        await send_to_ipc_server(
-                            config.ipc_socket_file, IPCCommand.NEW_INSTANCE, start_arg=start_arg
-                        )
-                    else:
-                        await send_to_ipc_server(config.ipc_socket_file, IPCCommand.FOREGROUND)
+            # IPC server has closed, retry to create our own
+            except IPCServerNotRunning:
+                continue
 
-                except IPCServerNotRunning:
-                    # IPC server has closed, retry to create our own
-                    continue
-
-                # We have successfuly noticed the other running application
-                task_status.started(IPCServerStartupOutcome.ALREADY_RUNNING)
-                break
-
-    except Exception as exc:
-        task_status.started(IPCServerStartupOutcome.ERROR)
-        logger.exection(exc)
-        raise
+            # We have successfuly noticed the other running application
+            # We can now forward the exception to the caller
+            raise
 
 
 @contextmanager
@@ -167,10 +160,11 @@ async def _run_gui(
             minimize_on_close=config.gui_tray_enabled and systray_available(),
         )
 
-        result = await jobs_ctx.nursery.start(_run_ipc_server, config, win, start_arg)
-
-        if result == IPCServerStartupOutcome.ALREADY_RUNNING:
-            # Another instance of Parsec already started, nothing more to do
+        # Attempt to run an IPC server if Parsec is not already started
+        try:
+            await jobs_ctx.nursery.start(_run_ipc_server, config, win, start_arg)
+        # Another instance of Parsec already started, nothing more to do
+        except IPCServerAlreadyRunning:
             return
 
         # If we are here, it's either the IPC server has successfully started
