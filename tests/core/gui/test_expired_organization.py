@@ -34,10 +34,10 @@ async def test_expired_notification_logging(
 
     password_w = lw.widget.layout().itemAt(0).widget()
 
-    await aqtbot.key_clicks(password_w.line_edit_password, "P@ssw0rd")
+    aqtbot.key_clicks(password_w.line_edit_password, "P@ssw0rd")
 
     async with aqtbot.wait_signals([lw.login_with_password_clicked, tabw.logged_in]):
-        await aqtbot.mouse_click(password_w.button_login, QtCore.Qt.LeftButton)
+        aqtbot.mouse_click(password_w.button_login, QtCore.Qt.LeftButton)
 
     # Assert dialog
     def _expired_notified():
@@ -66,10 +66,10 @@ async def test_expired_notification_from_connection(
 
         password_w = lw.widget.layout().itemAt(0).widget()
 
-        await aqtbot.key_clicks(password_w.line_edit_password, "P@ssw0rd")
+        aqtbot.key_clicks(password_w.line_edit_password, "P@ssw0rd")
 
         async with aqtbot.wait_signals([lw.login_with_password_clicked, tabw.logged_in]):
-            await aqtbot.mouse_click(password_w.button_login, QtCore.Qt.LeftButton)
+            aqtbot.mouse_click(password_w.button_login, QtCore.Qt.LeftButton)
 
         # Assert logged in
         def _notified():

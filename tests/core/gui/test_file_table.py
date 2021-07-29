@@ -15,7 +15,7 @@ def test_file_table_parent_folder(qtbot, core_config):
     switch_language(core_config, "en")
 
     w = FileTable(parent=None)
-    qtbot.addWidget(w)
+    qtbot.add_widget(w)
 
     assert w.rowCount() == 0
     assert w.columnCount() == 5
@@ -30,7 +30,7 @@ def test_file_table_parent_workspace(qtbot, core_config):
     switch_language(core_config, "en")
 
     w = FileTable(parent=None)
-    qtbot.addWidget(w)
+    qtbot.add_widget(w)
 
     assert w.rowCount() == 0
     assert w.columnCount() == 5
@@ -44,7 +44,7 @@ def test_file_table_parent_workspace(qtbot, core_config):
 def test_file_table_clear(qtbot):
 
     w = FileTable(parent=None)
-    qtbot.addWidget(w)
+    qtbot.add_widget(w)
 
     w.add_parent_workspace()
     assert w.rowCount() == 1
@@ -57,7 +57,7 @@ def test_file_table_sort(qtbot, core_config):
     switch_language(core_config, "en")
 
     w = FileTable(parent=None)
-    qtbot.addWidget(w)
+    qtbot.add_widget(w)
     w.add_parent_workspace()
     w.add_folder("Dir1", uuid.uuid4(), True, False)
     w.add_file(

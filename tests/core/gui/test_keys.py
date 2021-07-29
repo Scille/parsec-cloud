@@ -16,7 +16,7 @@ def keys_widget(qtbot, core_config, alice, bob):
     save_device_with_password(core_config.config_dir, bob, password)
 
     w = KeysWidget(core_config, parent=None)
-    qtbot.addWidget(w)
+    qtbot.add_widget(w)
     assert w.scroll_content.layout().count() == 2
     return w
 
@@ -67,7 +67,7 @@ def test_keys_import(qtbot, core_config, alice, bob, monkeypatch):
     fake_config = type("fake_config", (), {"config_dir": tmp_path})()
 
     w = KeysWidget(fake_config, parent=None)
-    qtbot.addWidget(w)
+    qtbot.add_widget(w)
 
     keys_layout = w.scroll_content.layout()
     assert keys_layout.count() == 0

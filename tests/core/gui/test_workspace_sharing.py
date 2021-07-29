@@ -28,7 +28,7 @@ async def gui_workspace_sharing(
     monkeypatch.setattr(
         "parsec.core.gui.workspaces_widget.get_text_input", lambda *args, **kwargs: ("Workspace")
     )
-    await aqtbot.mouse_click(w_w.button_add_workspace, QtCore.Qt.LeftButton)
+    aqtbot.mouse_click(w_w.button_add_workspace, QtCore.Qt.LeftButton)
 
     def _workspace_added():
         assert w_w.layout_workspaces.count() == 1
@@ -42,7 +42,7 @@ async def gui_workspace_sharing(
     await aqtbot.wait_until(_workspace_added, timeout=2000)
     wk_button = w_w.layout_workspaces.itemAt(0).widget()
 
-    await aqtbot.mouse_click(wk_button.button_share, QtCore.Qt.LeftButton)
+    aqtbot.mouse_click(wk_button.button_share, QtCore.Qt.LeftButton)
     share_w_w = await catch_share_workspace_widget()
     yield logged_gui, w_w, share_w_w
 
@@ -152,7 +152,7 @@ async def test_share_workspace(
         acc_w = accounts_w.accounts_widget.layout().itemAt(i).widget()
         if acc_w.label_name.text() == user_name:
             async with aqtbot.wait_signal(accounts_w.account_clicked):
-                await aqtbot.mouse_click(acc_w, QtCore.Qt.LeftButton)
+                aqtbot.mouse_click(acc_w, QtCore.Qt.LeftButton)
             break
 
     def _password_widget_shown():
@@ -161,12 +161,12 @@ async def test_share_workspace(
     await aqtbot.wait_until(_password_widget_shown)
 
     password_w = login_w.widget.layout().itemAt(0).widget()
-    await aqtbot.key_clicks(password_w.line_edit_password, password)
+    aqtbot.key_clicks(password_w.line_edit_password, password)
 
     tabw = logged_gui.test_get_tab()
 
     async with aqtbot.wait_signals([login_w.login_with_password_clicked, tabw.logged_in]):
-        await aqtbot.mouse_click(password_w.button_login, QtCore.Qt.LeftButton)
+        aqtbot.mouse_click(password_w.button_login, QtCore.Qt.LeftButton)
 
     w_w = await logged_gui.test_switch_to_workspaces_widget()
 
@@ -184,7 +184,7 @@ async def test_share_workspace(
     assert w_b.workspace_name == "Workspace"
     assert w_b.is_owner is False
 
-    await aqtbot.mouse_click(w_b.button_share, QtCore.Qt.LeftButton)
+    aqtbot.mouse_click(w_b.button_share, QtCore.Qt.LeftButton)
     share_w_w = await catch_share_workspace_widget()
 
     def _users_listed():
@@ -294,19 +294,19 @@ async def test_workspace_sharing_filter_users(
 
     assert _users_visible() == 3
 
-    await aqtbot.key_clicks(share_w_w.line_edit_filter, "face")
+    aqtbot.key_clicks(share_w_w.line_edit_filter, "face")
     assert _users_visible() == 3
     _reset_input()
 
-    await aqtbot.key_clicks(share_w_w.line_edit_filter, "mca")
+    aqtbot.key_clicks(share_w_w.line_edit_filter, "mca")
     assert _users_visible() == 2
     _reset_input()
 
-    await aqtbot.key_clicks(share_w_w.line_edit_filter, "bob")
+    aqtbot.key_clicks(share_w_w.line_edit_filter, "bob")
     assert _users_visible() == 1
     _reset_input()
 
-    await aqtbot.key_clicks(share_w_w.line_edit_filter, "zoidberg")
+    aqtbot.key_clicks(share_w_w.line_edit_filter, "zoidberg")
     assert _users_visible() == 0
     _reset_input()
 

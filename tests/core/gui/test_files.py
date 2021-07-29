@@ -113,19 +113,19 @@ async def files_widget_testbed(monkeypatch, aqtbot, logged_gui):
             if selection is not None:
                 await self.apply_selection(selection)
             async with aqtbot.wait_signal(f_w.table_files.copy_clicked):
-                await aqtbot.key_click(f_w.table_files, "C", modifier=QtCore.Qt.ControlModifier)
+                aqtbot.key_click(f_w.table_files, "C", modifier=QtCore.Qt.ControlModifier)
             assert f_w.clipboard is not None
 
         async def cut(self, selection=None):
             if selection is not None:
                 await self.apply_selection(selection)
             async with aqtbot.wait_signal(f_w.table_files.cut_clicked):
-                await aqtbot.key_click(f_w.table_files, "X", modifier=QtCore.Qt.ControlModifier)
+                aqtbot.key_click(f_w.table_files, "X", modifier=QtCore.Qt.ControlModifier)
             assert f_w.clipboard is not None
 
         async def paste(self):
             async with aqtbot.wait_signal(f_w.table_files.paste_clicked):
-                await aqtbot.key_click(f_w.table_files, "V", modifier=QtCore.Qt.ControlModifier)
+                aqtbot.key_click(f_w.table_files, "V", modifier=QtCore.Qt.ControlModifier)
 
         async def check_files_view(self, path, expected_entries, workspace_name="wksp1"):
             expected_table_files = []
@@ -161,7 +161,7 @@ async def files_widget_testbed(monkeypatch, aqtbot, logged_gui):
             monkeypatch.setattr(
                 "parsec.core.gui.files_widget.get_text_input", lambda *args, **kwargs: (name)
             )
-            await aqtbot.mouse_click(f_w.button_create_folder, QtCore.Qt.LeftButton)
+            aqtbot.mouse_click(f_w.button_create_folder, QtCore.Qt.LeftButton)
 
             def _folder_created():
                 for i in range(f_w.table_files.rowCount()):
@@ -248,7 +248,7 @@ async def test_file_browsing_and_edit(
         ),
     )
     async with aqtbot.wait_signal(f_w.import_success):
-        await aqtbot.mouse_click(f_w.button_import_files, QtCore.Qt.LeftButton)
+        aqtbot.mouse_click(f_w.button_import_files, QtCore.Qt.LeftButton)
     await tb.check_files_view(
         path="/", expected_entries=["dir0/", "dir1/", "zdir2/", "file1.txt", "file2.txt"]
     )
@@ -259,7 +259,7 @@ async def test_file_browsing_and_edit(
         classmethod(lambda *args, **kwargs: out_of_parsec_data / "dir3"),
     )
     async with aqtbot.wait_signal(f_w.import_success):
-        await aqtbot.mouse_click(f_w.button_import_folder, QtCore.Qt.LeftButton)
+        aqtbot.mouse_click(f_w.button_import_folder, QtCore.Qt.LeftButton)
     await tb.check_files_view(
         path="/", expected_entries=["dir0/", "dir1/", "dir3/", "zdir2/", "file1.txt", "file2.txt"]
     )
@@ -573,7 +573,7 @@ async def test_import_file_permission_denied(
         )
 
         async with aqtbot.wait_signal(f_w.button_import_files.clicked):
-            await aqtbot.mouse_click(f_w.button_import_files, QtCore.Qt.LeftButton)
+            aqtbot.mouse_click(f_w.button_import_files, QtCore.Qt.LeftButton)
 
         def _import_failed():
             assert autoclose_dialog.dialogs == [
@@ -593,7 +593,7 @@ async def test_import_file_permission_denied(
         )
 
         async with aqtbot.wait_signal(f_w.button_import_files.clicked):
-            await aqtbot.mouse_click(f_w.button_import_files, QtCore.Qt.LeftButton)
+            aqtbot.mouse_click(f_w.button_import_files, QtCore.Qt.LeftButton)
 
         def _import_error_shown():
             assert autoclose_dialog.dialogs == [

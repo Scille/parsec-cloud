@@ -91,7 +91,7 @@ def GreetDeviceTestBed(
             assert devices_widget.layout_devices.count() == 2
 
             # Click on the invitation button
-            await aqtbot.mouse_click(devices_widget.button_add_device, QtCore.Qt.LeftButton)
+            aqtbot.mouse_click(devices_widget.button_add_device, QtCore.Qt.LeftButton)
             greet_device_widget = await catch_greet_device_widget()
             assert isinstance(greet_device_widget, GreetDeviceWidget)
 
@@ -145,7 +145,7 @@ def GreetDeviceTestBed(
         async def step_1_start_greet(self):
             gdi_w = self.greet_device_information_widget
 
-            await aqtbot.mouse_click(gdi_w.button_start, QtCore.Qt.LeftButton)
+            aqtbot.mouse_click(gdi_w.button_start, QtCore.Qt.LeftButton)
 
             def _greet_started():
                 assert not gdi_w.button_start.isEnabled()
@@ -276,7 +276,7 @@ async def test_greet_device_offline(
             gui_w = self.greet_device_information_widget
 
             with running_backend.offline():
-                await aqtbot.mouse_click(gui_w.button_start, QtCore.Qt.LeftButton)
+                aqtbot.mouse_click(gui_w.button_start, QtCore.Qt.LeftButton)
                 await aqtbot.wait_until(partial(self._greet_aborted, expected_message))
 
             return None
@@ -412,7 +412,7 @@ async def test_greet_device_invitation_cancelled(
 
             await self._cancel_invitation()
 
-            await aqtbot.mouse_click(gui_w.button_start, QtCore.Qt.LeftButton)
+            aqtbot.mouse_click(gui_w.button_start, QtCore.Qt.LeftButton)
             await aqtbot.wait_until(partial(self._greet_restart, expected_message))
 
             return None

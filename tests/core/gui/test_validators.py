@@ -15,7 +15,7 @@ def test_device_name_validator(qtbot, core_config):
 
     le = ValidatedLineEdit()
     le.set_validator(validators.DeviceNameValidator())
-    qtbot.addWidget(le)
+    qtbot.add_widget(le)
     le.show()
 
     qtbot.keyClicks(le, "abcd")
@@ -33,7 +33,7 @@ def test_email_validator(qtbot, core_config):
 
     le = ValidatedLineEdit()
     le.set_validator(validators.EmailValidator())
-    qtbot.addWidget(le)
+    qtbot.add_widget(le)
     le.show()
 
     qtbot.keyClicks(le, "maurice")
@@ -55,7 +55,7 @@ def test_organization_validator(qtbot, core_config):
 
     le = ValidatedLineEdit()
     le.set_validator(validators.OrganizationIDValidator())
-    qtbot.addWidget(le)
+    qtbot.add_widget(le)
     le.show()
 
     qtbot.keyClicks(le, "Reynholm")

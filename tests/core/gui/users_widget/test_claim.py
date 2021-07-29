@@ -151,7 +151,7 @@ def ClaimUserTestBed(
 
         async def step_1_start_claim(self):
             cui_w = self.claim_user_instructions_widget
-            await aqtbot.mouse_click(cui_w.button_start, QtCore.Qt.LeftButton)
+            aqtbot.mouse_click(cui_w.button_start, QtCore.Qt.LeftButton)
 
             def _claimer_started():
                 assert not cui_w.button_start.isEnabled()
@@ -231,11 +231,11 @@ def ClaimUserTestBed(
             human_label = self.requested_human_handle.label
             device_label = self.requested_device_label
 
-            await aqtbot.key_clicks(cupi_w.line_edit_user_email, human_email)
-            await aqtbot.key_clicks(cupi_w.line_edit_user_full_name, human_label)
+            aqtbot.key_clicks(cupi_w.line_edit_user_email, human_email)
+            aqtbot.key_clicks(cupi_w.line_edit_user_full_name, human_label)
             cupi_w.line_edit_device.clear()
-            await aqtbot.key_clicks(cupi_w.line_edit_device, device_label)
-            await aqtbot.mouse_click(cupi_w.button_ok, QtCore.Qt.LeftButton)
+            aqtbot.key_clicks(cupi_w.line_edit_device, device_label)
+            aqtbot.mouse_click(cupi_w.button_ok, QtCore.Qt.LeftButton)
 
             def _claim_info_submitted():
                 assert not cupi_w.button_ok.isEnabled()
@@ -286,11 +286,11 @@ def ClaimUserTestBed(
 
             assert not cuf_w.button_finalize.isEnabled()
 
-            await aqtbot.key_clicks(cuf_w.widget_password.line_edit_password, self.password)
-            await aqtbot.key_clicks(cuf_w.widget_password.line_edit_password_check, self.password)
+            aqtbot.key_clicks(cuf_w.widget_password.line_edit_password, self.password)
+            aqtbot.key_clicks(cuf_w.widget_password.line_edit_password_check, self.password)
 
             assert cuf_w.button_finalize.isEnabled()
-            await aqtbot.mouse_click(cuf_w.button_finalize, QtCore.Qt.LeftButton)
+            aqtbot.mouse_click(cuf_w.button_finalize, QtCore.Qt.LeftButton)
 
             def _claim_done():
                 assert not cu_w.isVisible()
@@ -347,7 +347,7 @@ async def test_claim_user_offline(
             cui_w = self.claim_user_instructions_widget
 
             with running_backend.offline():
-                await aqtbot.mouse_click(cui_w.button_start, QtCore.Qt.LeftButton)
+                aqtbot.mouse_click(cui_w.button_start, QtCore.Qt.LeftButton)
                 await aqtbot.wait_until(partial(self._claim_aborted, expected_message))
 
             return None
@@ -384,11 +384,11 @@ async def test_claim_user_offline(
             device_label = self.requested_device_label
 
             with running_backend.offline():
-                await aqtbot.key_clicks(cupi_w.line_edit_user_email, human_email)
-                await aqtbot.key_clicks(cupi_w.line_edit_user_full_name, human_label)
+                aqtbot.key_clicks(cupi_w.line_edit_user_email, human_email)
+                aqtbot.key_clicks(cupi_w.line_edit_user_full_name, human_label)
                 cupi_w.line_edit_device.clear()
-                await aqtbot.key_clicks(cupi_w.line_edit_device, device_label)
-                await aqtbot.mouse_click(cupi_w.button_ok, QtCore.Qt.LeftButton)
+                aqtbot.key_clicks(cupi_w.line_edit_device, device_label)
+                aqtbot.mouse_click(cupi_w.button_ok, QtCore.Qt.LeftButton)
                 await aqtbot.wait_until(partial(self._claim_aborted, expected_message))
 
             return None
@@ -464,11 +464,11 @@ async def test_claim_user_reset_by_peer(
             device_label = self.requested_device_label
 
             async with self._reset_greeter():
-                await aqtbot.key_clicks(cupi_w.line_edit_user_email, human_email)
-                await aqtbot.key_clicks(cupi_w.line_edit_user_full_name, human_label)
+                aqtbot.key_clicks(cupi_w.line_edit_user_email, human_email)
+                aqtbot.key_clicks(cupi_w.line_edit_user_full_name, human_label)
                 cupi_w.line_edit_device.clear()
-                await aqtbot.key_clicks(cupi_w.line_edit_device, device_label)
-                await aqtbot.mouse_click(cupi_w.button_ok, QtCore.Qt.LeftButton)
+                aqtbot.key_clicks(cupi_w.line_edit_device, device_label)
+                aqtbot.mouse_click(cupi_w.button_ok, QtCore.Qt.LeftButton)
                 await aqtbot.wait_until(partial(self._claim_restart, expected_message))
 
             await self.bootstrap_after_restart()
@@ -527,7 +527,7 @@ async def test_claim_user_invitation_cancelled(
 
             await self._cancel_invitation()
 
-            await aqtbot.mouse_click(cui_w.button_start, QtCore.Qt.LeftButton)
+            aqtbot.mouse_click(cui_w.button_start, QtCore.Qt.LeftButton)
             await aqtbot.wait_until(partial(self._claim_restart, expected_message))
 
             return None
@@ -567,11 +567,11 @@ async def test_claim_user_invitation_cancelled(
 
             await self._cancel_invitation()
 
-            await aqtbot.key_clicks(cupi_w.line_edit_user_email, human_email)
-            await aqtbot.key_clicks(cupi_w.line_edit_user_full_name, human_label)
+            aqtbot.key_clicks(cupi_w.line_edit_user_email, human_email)
+            aqtbot.key_clicks(cupi_w.line_edit_user_full_name, human_label)
             cupi_w.line_edit_device.clear()
-            await aqtbot.key_clicks(cupi_w.line_edit_device, device_label)
-            await aqtbot.mouse_click(cupi_w.button_ok, QtCore.Qt.LeftButton)
+            aqtbot.key_clicks(cupi_w.line_edit_device, device_label)
+            aqtbot.mouse_click(cupi_w.button_ok, QtCore.Qt.LeftButton)
             await aqtbot.wait_until(partial(self._claim_restart, expected_message))
 
             return None

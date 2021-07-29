@@ -144,7 +144,7 @@ def ClaimDeviceTestBed(
 
         async def step_1_start_claim(self):
             cdi_w = self.claim_device_instructions_widget
-            await aqtbot.mouse_click(cdi_w.button_start, QtCore.Qt.LeftButton)
+            aqtbot.mouse_click(cdi_w.button_start, QtCore.Qt.LeftButton)
 
             def _claimer_started():
                 assert not cdi_w.button_start.isEnabled()
@@ -226,13 +226,13 @@ def ClaimDeviceTestBed(
 
             assert not cdpi_w.button_ok.isEnabled()
 
-            await aqtbot.key_clicks(cdpi_w.line_edit_device, device_label)
-            await aqtbot.key_clicks(cdpi_w.widget_password.line_edit_password, self.password)
-            await aqtbot.key_clicks(cdpi_w.widget_password.line_edit_password_check, self.password)
+            aqtbot.key_clicks(cdpi_w.line_edit_device, device_label)
+            aqtbot.key_clicks(cdpi_w.widget_password.line_edit_password, self.password)
+            aqtbot.key_clicks(cdpi_w.widget_password.line_edit_password_check, self.password)
 
             assert cdpi_w.button_ok.isEnabled()
 
-            await aqtbot.mouse_click(cdpi_w.button_ok, QtCore.Qt.LeftButton)
+            aqtbot.mouse_click(cdpi_w.button_ok, QtCore.Qt.LeftButton)
 
             def _claim_info_submitted():
                 assert not cdpi_w.button_ok.isEnabled()
@@ -306,7 +306,7 @@ async def test_claim_device_offline(
             cdi_w = self.claim_device_instructions_widget
 
             with running_backend.offline():
-                await aqtbot.mouse_click(cdi_w.button_start, QtCore.Qt.LeftButton)
+                aqtbot.mouse_click(cdi_w.button_start, QtCore.Qt.LeftButton)
                 await aqtbot.wait_until(partial(self._claim_aborted, expected_message))
 
             return None
@@ -342,12 +342,10 @@ async def test_claim_device_offline(
 
             with running_backend.offline():
                 cdpi_w.line_edit_device.clear()
-                await aqtbot.key_clicks(cdpi_w.line_edit_device, device_label)
-                await aqtbot.key_clicks(cdpi_w.widget_password.line_edit_password, self.password)
-                await aqtbot.key_clicks(
-                    cdpi_w.widget_password.line_edit_password_check, self.password
-                )
-                await aqtbot.mouse_click(cdpi_w.button_ok, QtCore.Qt.LeftButton)
+                aqtbot.key_clicks(cdpi_w.line_edit_device, device_label)
+                aqtbot.key_clicks(cdpi_w.widget_password.line_edit_password, self.password)
+                aqtbot.key_clicks(cdpi_w.widget_password.line_edit_password_check, self.password)
+                aqtbot.mouse_click(cdpi_w.button_ok, QtCore.Qt.LeftButton)
                 await aqtbot.wait_until(partial(self._claim_aborted, expected_message))
 
             return None
@@ -421,12 +419,10 @@ async def test_claim_device_reset_by_peer(
 
             async with self._reset_greeter():
                 cdpi_w.line_edit_device.clear()
-                await aqtbot.key_clicks(cdpi_w.line_edit_device, device_label)
-                await aqtbot.key_clicks(cdpi_w.widget_password.line_edit_password, self.password)
-                await aqtbot.key_clicks(
-                    cdpi_w.widget_password.line_edit_password_check, self.password
-                )
-                await aqtbot.mouse_click(cdpi_w.button_ok, QtCore.Qt.LeftButton)
+                aqtbot.key_clicks(cdpi_w.line_edit_device, device_label)
+                aqtbot.key_clicks(cdpi_w.widget_password.line_edit_password, self.password)
+                aqtbot.key_clicks(cdpi_w.widget_password.line_edit_password_check, self.password)
+                aqtbot.mouse_click(cdpi_w.button_ok, QtCore.Qt.LeftButton)
                 await aqtbot.wait_until(partial(self._claim_restart, expected_message))
 
             await self.bootstrap_after_restart()
@@ -483,7 +479,7 @@ async def test_claim_device_invitation_cancelled(
 
             await self._cancel_invitation()
 
-            await aqtbot.mouse_click(cdi_w.button_start, QtCore.Qt.LeftButton)
+            aqtbot.mouse_click(cdi_w.button_start, QtCore.Qt.LeftButton)
             await aqtbot.wait_until(partial(self._claim_restart, expected_message))
 
             return None
@@ -522,10 +518,10 @@ async def test_claim_device_invitation_cancelled(
             await self._cancel_invitation()
 
             cdpi_w.line_edit_device.clear()
-            await aqtbot.key_clicks(cdpi_w.line_edit_device, device_label)
-            await aqtbot.key_clicks(cdpi_w.widget_password.line_edit_password, self.password)
-            await aqtbot.key_clicks(cdpi_w.widget_password.line_edit_password_check, self.password)
-            await aqtbot.mouse_click(cdpi_w.button_ok, QtCore.Qt.LeftButton)
+            aqtbot.key_clicks(cdpi_w.line_edit_device, device_label)
+            aqtbot.key_clicks(cdpi_w.widget_password.line_edit_password, self.password)
+            aqtbot.key_clicks(cdpi_w.widget_password.line_edit_password_check, self.password)
+            aqtbot.mouse_click(cdpi_w.button_ok, QtCore.Qt.LeftButton)
             await aqtbot.wait_until(partial(self._claim_restart, expected_message))
 
             return None

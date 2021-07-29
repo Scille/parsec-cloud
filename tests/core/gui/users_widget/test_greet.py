@@ -104,7 +104,7 @@ def GreetUserTestBed(
 
             # Click on the invitation button
 
-            await aqtbot.mouse_click(invitation_widget.button_greet, QtCore.Qt.LeftButton)
+            aqtbot.mouse_click(invitation_widget.button_greet, QtCore.Qt.LeftButton)
 
             greet_user_widget = await catch_greet_user_widget()
             assert isinstance(greet_user_widget, GreetUserWidget)
@@ -163,7 +163,7 @@ def GreetUserTestBed(
         async def step_1_start_greet(self):
             gui_w = self.greet_user_information_widget
 
-            await aqtbot.mouse_click(gui_w.button_start, QtCore.Qt.LeftButton)
+            aqtbot.mouse_click(gui_w.button_start, QtCore.Qt.LeftButton)
 
             def _greet_started():
                 assert not gui_w.button_start.isEnabled()
@@ -275,7 +275,7 @@ def GreetUserTestBed(
             guci_w = self.greet_user_check_informations_widget
 
             # Finally confirm the claimer info and finish the greeting !
-            await aqtbot.mouse_click(guci_w.button_create_user, QtCore.Qt.LeftButton)
+            aqtbot.mouse_click(guci_w.button_create_user, QtCore.Qt.LeftButton)
 
             with trio.fail_after(1):
                 await self.claimer_claim_task.join()
@@ -334,7 +334,7 @@ async def test_greet_user_offline(
             gui_w = self.greet_user_information_widget
 
             with running_backend.offline():
-                await aqtbot.mouse_click(gui_w.button_start, QtCore.Qt.LeftButton)
+                aqtbot.mouse_click(gui_w.button_start, QtCore.Qt.LeftButton)
                 await aqtbot.wait_until(partial(self._greet_aborted, expected_message))
 
             return None
@@ -376,7 +376,7 @@ async def test_greet_user_offline(
 
             with running_backend.offline():
                 self.nursery.cancel_scope.cancel()
-                await aqtbot.mouse_click(guci_w.button_create_user, QtCore.Qt.LeftButton)
+                aqtbot.mouse_click(guci_w.button_create_user, QtCore.Qt.LeftButton)
                 await aqtbot.wait_until(partial(self._greet_aborted, expected_message))
 
             return None
@@ -450,7 +450,7 @@ async def test_greet_user_reset_by_peer(aqtbot, GreetUserTestBed, autoclose_dial
             await self.claimer_claim_task.cancel_and_join()
             async with self._reset_claimer():
 
-                await aqtbot.mouse_click(guci_w.button_create_user, QtCore.Qt.LeftButton)
+                aqtbot.mouse_click(guci_w.button_create_user, QtCore.Qt.LeftButton)
                 await aqtbot.wait_until(partial(self._greet_restart, expected_message))
 
             await self.bootstrap_after_restart()
@@ -500,7 +500,7 @@ async def test_greet_user_invitation_cancelled(
 
             await self._cancel_invitation()
 
-            await aqtbot.mouse_click(gui_w.button_start, QtCore.Qt.LeftButton)
+            aqtbot.mouse_click(gui_w.button_start, QtCore.Qt.LeftButton)
             await aqtbot.wait_until(partial(self._greet_restart, expected_message))
 
             return None
@@ -546,7 +546,7 @@ async def test_greet_user_invitation_cancelled(
             await self.claimer_claim_task.cancel_and_join()
             await self._cancel_invitation()
 
-            await aqtbot.mouse_click(guci_w.button_create_user, QtCore.Qt.LeftButton)
+            aqtbot.mouse_click(guci_w.button_create_user, QtCore.Qt.LeftButton)
             await aqtbot.wait_until(partial(self._greet_restart, expected_message))
 
             return None

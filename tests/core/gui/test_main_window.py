@@ -104,7 +104,7 @@ async def logged_gui_with_files(
         "parsec.core.gui.files_widget.get_text_input", lambda *args, **kwargs: ("dir1")
     )
 
-    await aqtbot.mouse_click(w_w.button_add_workspace, QtCore.Qt.LeftButton)
+    aqtbot.mouse_click(w_w.button_add_workspace, QtCore.Qt.LeftButton)
 
     def _workspace_button_ready():
         assert w_w.layout_workspaces.count() == 1
@@ -118,7 +118,7 @@ async def logged_gui_with_files(
     f_w = logged_gui.test_get_files_widget()
     wk_button = w_w.layout_workspaces.itemAt(0).widget()
 
-    await aqtbot.mouse_click(wk_button, QtCore.Qt.LeftButton)
+    aqtbot.mouse_click(wk_button, QtCore.Qt.LeftButton)
 
     def _entry_available():
         assert f_w.workspace_fs is not None
@@ -134,7 +134,7 @@ async def logged_gui_with_files(
         assert folder
         assert folder.text() == "dir1"
 
-    await aqtbot.mouse_click(f_w.button_create_folder, QtCore.Qt.LeftButton)
+    aqtbot.mouse_click(f_w.button_create_folder, QtCore.Qt.LeftButton)
 
     await aqtbot.wait_until(_folder_ready)
 
@@ -287,7 +287,7 @@ async def test_link_file_disconnected(
     password_w = lw.widget.layout().itemAt(0).widget()
 
     # Connect to the organization
-    await aqtbot.mouse_click(password_w.button_login, QtCore.Qt.LeftButton)
+    aqtbot.mouse_click(password_w.button_login, QtCore.Qt.LeftButton)
 
     def _wait():
         central_widget = gui.test_get_central_widget()
@@ -352,7 +352,7 @@ async def test_link_file_disconnected_cancel_login(
 
     # Cancel login
     async with aqtbot.wait_signal(lw.login_canceled):
-        await aqtbot.mouse_click(password_w.button_back, QtCore.Qt.LeftButton)
+        aqtbot.mouse_click(password_w.button_back, QtCore.Qt.LeftButton)
 
     await gui.test_switch_to_logged_in(bob)
 
@@ -497,7 +497,7 @@ async def test_tab_login_logout_two_tabs(aqtbot, gui_factory, core_config, alice
     assert gui.tab_center.tabText(0) == "CoolOrg - Alicey..."
     logged_tab = gui.test_get_tab()
 
-    await aqtbot.mouse_click(gui.add_tab_button, QtCore.Qt.LeftButton)
+    aqtbot.mouse_click(gui.add_tab_button, QtCore.Qt.LeftButton)
     assert gui.tab_center.count() == 2
     assert gui.tab_center.tabText(0) == "CoolOrg - Alicey..."
     assert gui.tab_center.tabText(1) == translate("TEXT_TAB_TITLE_LOG_IN_SCREEN")
@@ -536,7 +536,7 @@ async def test_tab_login_logout_two_tabs_logged_in(
     assert gui.tab_center.tabText(0) == "CoolOrg - Alicey..."
     alice_logged_tab = gui.test_get_tab()
 
-    await aqtbot.mouse_click(gui.add_tab_button, QtCore.Qt.LeftButton)
+    aqtbot.mouse_click(gui.add_tab_button, QtCore.Qt.LeftButton)
     assert gui.tab_center.count() == 2
     assert gui.tab_center.tabText(0) == "CoolOrg - Alicey..."
     assert gui.tab_center.tabText(1) == translate("TEXT_TAB_TITLE_LOG_IN_SCREEN")

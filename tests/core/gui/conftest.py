@@ -43,12 +43,7 @@ class AsyncQtBot:
         words = name.split("_")
         camel_name = words[0] + "".join(word.title() for word in words[1:])
         if hasattr(self.qtbot, camel_name):
-
-            async def method(*args, **kwargs):
-                return getattr(self.qtbot, camel_name)(*args, **kwargs)
-
-            return method
-
+            return getattr(self.qtbot, camel_name)
         raise AttributeError(name)
 
     async def wait(self, timeout):
@@ -250,7 +245,7 @@ def gui_factory(
         main_w = testing_main_window_cls(
             job_scheduler, job_scheduler.close, event_bus, core_config, minimize_on_close=True
         )
-        aqtbot.qtbot.add_widget(main_w)
+        aqtbot.add_widget(main_w)
         main_w.show_window(skip_dialogs=skip_dialogs)
         main_w.show_top()
         windows.append(main_w)
@@ -375,7 +370,7 @@ def testing_main_window_cls(aqtbot):
 
             if isinstance(accounts_w, LoginAccountsWidget):
                 async with aqtbot.wait_signal(accounts_w.account_clicked):
-                    await aqtbot.mouse_click(
+                    aqtbot.mouse_click(
                         accounts_w.accounts_widget.layout().itemAt(0).widget(), QtCore.Qt.LeftButton
                     )
 
@@ -384,11 +379,11 @@ def testing_main_window_cls(aqtbot):
 
             await aqtbot.wait_until(_password_widget_shown)
             password_w = l_w.widget.layout().itemAt(0).widget()
-            await aqtbot.key_clicks(password_w.line_edit_password, password)
+            aqtbot.key_clicks(password_w.line_edit_password, password)
 
             signal = tabw.logged_in if not error else tabw.login_failed
             async with aqtbot.wait_signals([l_w.login_with_password_clicked, signal]):
-                await aqtbot.mouse_click(password_w.button_login, QtCore.Qt.LeftButton)
+                aqtbot.mouse_click(password_w.button_login, QtCore.Qt.LeftButton)
 
             def _wait_logged_in():
                 assert not l_w.isVisible()
@@ -404,7 +399,7 @@ def testing_main_window_cls(aqtbot):
             d_w = self.test_get_devices_widget()
             signal = d_w.list_error if error else d_w.list_success
             async with aqtbot.wait_exposed(d_w), aqtbot.wait_signal(signal, timeout=3000):
-                await aqtbot.mouse_click(central_widget.menu.button_devices, QtCore.Qt.LeftButton)
+                aqtbot.mouse_click(central_widget.menu.button_devices, QtCore.Qt.LeftButton)
             return d_w
 
         async def test_switch_to_users_widget(self, error=False):
@@ -412,7 +407,7 @@ def testing_main_window_cls(aqtbot):
             u_w = self.test_get_users_widget()
             signal = u_w.list_error if error else u_w.list_success
             async with aqtbot.wait_exposed(u_w), aqtbot.wait_signal(signal, timeout=3000):
-                await aqtbot.mouse_click(central_widget.menu.button_users, QtCore.Qt.LeftButton)
+                aqtbot.mouse_click(central_widget.menu.button_users, QtCore.Qt.LeftButton)
             return u_w
 
         async def test_switch_to_workspaces_widget(self, error=False):
@@ -420,7 +415,7 @@ def testing_main_window_cls(aqtbot):
             w_w = self.test_get_workspaces_widget()
             signal = w_w.list_error if error else w_w.list_success
             async with aqtbot.wait_exposed(w_w), aqtbot.wait_signal(signal, timeout=3000):
-                await aqtbot.mouse_click(central_widget.menu.button_files, QtCore.Qt.LeftButton)
+                aqtbot.mouse_click(central_widget.menu.button_files, QtCore.Qt.LeftButton)
             return w_w
 
         async def test_switch_to_files_widget(self, workspace_name, error=False):
@@ -438,7 +433,7 @@ def testing_main_window_cls(aqtbot):
                 # We need to make sure the workspace button is ready for left click first
                 await aqtbot.wait_until(wk_button.switch_button.isChecked)
                 # Send the click
-                await aqtbot.mouse_click(wk_button, QtCore.Qt.LeftButton)
+                aqtbot.mouse_click(wk_button, QtCore.Qt.LeftButton)
 
             # Wait for the spinner to disappear
             await aqtbot.wait_until(f_w.spinner.isHidden)
@@ -460,7 +455,7 @@ def testing_main_window_cls(aqtbot):
 
             if isinstance(accounts_w, LoginAccountsWidget):
                 async with aqtbot.wait_signal(accounts_w.account_clicked):
-                    await aqtbot.mouse_click(
+                    aqtbot.mouse_click(
                         accounts_w.accounts_widget.layout().itemAt(0).widget(), QtCore.Qt.LeftButton
                     )
 
@@ -471,10 +466,10 @@ def testing_main_window_cls(aqtbot):
 
             password_w = lw.widget.layout().itemAt(0).widget()
 
-            await aqtbot.key_clicks(password_w.line_edit_password, "P@ssw0rd")
+            aqtbot.key_clicks(password_w.line_edit_password, "P@ssw0rd")
 
             async with aqtbot.wait_signals([lw.login_with_password_clicked, tabw.logged_in]):
-                await aqtbot.mouse_click(password_w.button_login, QtCore.Qt.LeftButton)
+                aqtbot.mouse_click(password_w.button_login, QtCore.Qt.LeftButton)
 
             central_widget = self.test_get_central_widget()
             assert central_widget is not None

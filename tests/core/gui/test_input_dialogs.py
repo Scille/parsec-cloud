@@ -10,7 +10,7 @@ from parsec.core.gui import custom_dialogs
 def test_get_text_dialog_close(qtbot):
     w = custom_dialogs.TextInputWidget(message="Message")
     d = custom_dialogs.GreyedDialog(w, title="Title", parent=None)
-    qtbot.addWidget(d)
+    qtbot.add_widget(d)
     d.show()
 
     assert d.isVisible() is True
@@ -32,7 +32,7 @@ def test_get_text_dialog_accept(qtbot):
     )
     d = custom_dialogs.GreyedDialog(w, title="Title", parent=None)
     w.dialog = d
-    qtbot.addWidget(d)
+    qtbot.add_widget(d)
     d.show()
 
     assert d.isVisible() is True
@@ -54,7 +54,7 @@ def test_ask_question_no(qtbot):
     w = custom_dialogs.QuestionWidget(message="Message", button_texts=["YES", "NO"])
     d = custom_dialogs.GreyedDialog(w, title="Title", parent=None)
     w.dialog = d
-    qtbot.addWidget(d)
+    qtbot.add_widget(d)
 
     d.show()
     assert d.isVisible() is True
@@ -74,7 +74,7 @@ def test_ask_question_yes(qtbot):
     w = custom_dialogs.QuestionWidget(message="Message", button_texts=["YES", "NO"])
     d = custom_dialogs.GreyedDialog(w, title="Title", parent=None)
     w.dialog = d
-    qtbot.addWidget(d)
+    qtbot.add_widget(d)
 
     d.show()
     assert d.isVisible() is True
@@ -94,7 +94,7 @@ def test_ask_question_close(qtbot):
     w = custom_dialogs.QuestionWidget(message="Message", button_texts=["YES", "NO"])
     d = custom_dialogs.GreyedDialog(w, title="Title", parent=None)
     w.dialog = d
-    qtbot.addWidget(d)
+    qtbot.add_widget(d)
 
     d.show()
     assert d.isVisible() is True

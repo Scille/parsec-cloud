@@ -31,7 +31,7 @@ async def test_add_workspace(
     monkeypatch.setattr(
         "parsec.core.gui.workspaces_widget.get_text_input", lambda *args, **kwargs: (workspace_name)
     )
-    await aqtbot.mouse_click(w_w.button_add_workspace, QtCore.Qt.LeftButton)
+    aqtbot.mouse_click(w_w.button_add_workspace, QtCore.Qt.LeftButton)
 
     def _outcome_occured():
         assert w_w.layout_workspaces.count() == 1
@@ -81,7 +81,7 @@ async def test_rename_workspace(
     monkeypatch.setattr(
         "parsec.core.gui.workspaces_widget.get_text_input", lambda *args, **kwargs: (workspace_name)
     )
-    await aqtbot.mouse_click(wk_button.button_rename, QtCore.Qt.LeftButton)
+    aqtbot.mouse_click(wk_button.button_rename, QtCore.Qt.LeftButton)
 
     def _outcome_occured():
         assert w_w.layout_workspaces.count() == 1
@@ -227,7 +227,7 @@ async def test_mountpoint_open_in_explorer_button(aqtbot, running_backend, logge
     await aqtbot.wait_until(_initially_mounted, timeout=3000)
 
     # Now switch to umounted
-    await aqtbot.mouse_click(wk_button.switch_button, QtCore.Qt.LeftButton)
+    aqtbot.mouse_click(wk_button.switch_button, QtCore.Qt.LeftButton)
 
     def _unmounted():
         nonlocal wk_button
@@ -247,7 +247,7 @@ async def test_mountpoint_open_in_explorer_button(aqtbot, running_backend, logge
         assert core.mountpoint_manager.is_workspace_mounted(wid)
 
     # Now switch back to mounted
-    await aqtbot.mouse_click(wk_button.switch_button, QtCore.Qt.LeftButton)
+    aqtbot.mouse_click(wk_button.switch_button, QtCore.Qt.LeftButton)
     await aqtbot.wait_until(_mounted, timeout=3000)
 
     # Test open button
@@ -255,7 +255,7 @@ async def test_mountpoint_open_in_explorer_button(aqtbot, running_backend, logge
     def _wk_opened():
         open_workspace_mock.assert_called_once()
 
-    await aqtbot.mouse_click(wk_button.button_open, QtCore.Qt.LeftButton)
+    aqtbot.mouse_click(wk_button.button_open, QtCore.Qt.LeftButton)
     await aqtbot.wait_until(_wk_opened)
 
 
@@ -319,7 +319,7 @@ async def test_workspace_filter_user(
 
     # Remove filter
 
-    await aqtbot.mouse_click(w_w.filter_remove_button, QtCore.Qt.LeftButton)
+    aqtbot.mouse_click(w_w.filter_remove_button, QtCore.Qt.LeftButton)
 
     await aqtbot.wait_until(_workspace_listed, timeout=2000)
 
@@ -381,7 +381,7 @@ async def test_workspace_filter_user_new_workspace(
     monkeypatch.setattr(
         "parsec.core.gui.workspaces_widget.get_text_input", lambda *args, **kwargs: ("Workspace2")
     )
-    await aqtbot.mouse_click(w_w.button_add_workspace, QtCore.Qt.LeftButton)
+    aqtbot.mouse_click(w_w.button_add_workspace, QtCore.Qt.LeftButton)
 
     def _new_workspace_listed():
         assert w_w.layout_workspaces.count() == 2

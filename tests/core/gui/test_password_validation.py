@@ -42,7 +42,7 @@ def test_password_choice_widget(qtbot, core_config):
     switch_language(core_config, "en")
 
     p = PasswordChoiceWidget(parent=None)
-    qtbot.addWidget(p)
+    qtbot.add_widget(p)
 
     p.line_edit_password.setText("William J Blazkowicz")
     p.line_edit_password_check.setText("William J Blazkowicz")
@@ -57,7 +57,7 @@ def test_password_choice_widget_mismatch(qtbot, core_config):
     switch_language(core_config, "en")
 
     p = PasswordChoiceWidget(parent=None)
-    qtbot.addWidget(p)
+    qtbot.add_widget(p)
 
     p.line_edit_password.setText("William J Blazkowicz")
     p.line_edit_password_check.setText("William J Blazkowiz")
@@ -76,7 +76,7 @@ def test_password_choice_widget_with_excluded_strings(qtbot, core_config):
     p = PasswordChoiceWidget(parent=None)
     p.set_excluded_strings(["william.j.blazkowicz@wolfenstein.de"])
     assert p.pwd_str_widget._excluded_strings == ["william", "blazkowicz", "wolfenstein"]
-    qtbot.addWidget(p)
+    qtbot.add_widget(p)
 
     p.line_edit_password.setText("William J Blazkowicz")
 

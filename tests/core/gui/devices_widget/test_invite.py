@@ -32,7 +32,7 @@ async def test_invite_device_offline(aqtbot, logged_gui, autoclose_dialog, runni
 
     # TODO: not sure why but this timeout without running_backend fixture...
     with running_backend.offline():
-        await aqtbot.mouse_click(d_w.button_add_device, QtCore.Qt.LeftButton)
+        aqtbot.mouse_click(d_w.button_add_device, QtCore.Qt.LeftButton)
 
         def _invite_failed():
             assert autoclose_dialog.dialogs == [
@@ -57,7 +57,7 @@ async def test_invite_device_send_email(
 ):
     d_w = await logged_gui.test_switch_to_devices_widget()
 
-    await aqtbot.mouse_click(d_w.button_add_device, QtCore.Qt.LeftButton)
+    aqtbot.mouse_click(d_w.button_add_device, QtCore.Qt.LeftButton)
 
     # Device invitation widget should show up now
 
@@ -78,7 +78,7 @@ async def test_invite_device_send_email(
     await aqtbot.wait_until(_greet_device_displayed)
 
     if online:
-        await aqtbot.mouse_click(gdi_w.button_send_email, QtCore.Qt.LeftButton)
+        aqtbot.mouse_click(gdi_w.button_send_email, QtCore.Qt.LeftButton)
 
         def _email_sent():
             assert email_letterbox.emails == [(bob.human_handle.email, ANY)]
@@ -88,7 +88,7 @@ async def test_invite_device_send_email(
 
     else:
         with running_backend.offline():
-            await aqtbot.mouse_click(gdi_w.button_send_email, QtCore.Qt.LeftButton)
+            aqtbot.mouse_click(gdi_w.button_send_email, QtCore.Qt.LeftButton)
 
             def _email_send_failed():
                 assert autoclose_dialog.dialogs == [("Error", "Could not send the email.")]
@@ -105,7 +105,7 @@ async def test_invite_device_without_human_handle_cannot_send_email(
 ):
     d_w = await logged_gui.test_switch_to_devices_widget()
 
-    await aqtbot.mouse_click(d_w.button_add_device, QtCore.Qt.LeftButton)
+    aqtbot.mouse_click(d_w.button_add_device, QtCore.Qt.LeftButton)
 
     # Device invitation widget should show up now
 
@@ -141,7 +141,7 @@ async def test_invite_and_greet_device(
 
     d_w = await logged_gui.test_switch_to_devices_widget()
 
-    await aqtbot.mouse_click(d_w.button_add_device, QtCore.Qt.LeftButton)
+    aqtbot.mouse_click(d_w.button_add_device, QtCore.Qt.LeftButton)
 
     # Device invitation widget should show up now with welcome page
 
@@ -200,7 +200,7 @@ async def test_invite_and_greet_device(
 
         # Start the greeting
 
-        await aqtbot.mouse_click(gdi_w.button_start, QtCore.Qt.LeftButton)
+        aqtbot.mouse_click(gdi_w.button_start, QtCore.Qt.LeftButton)
 
         def _greet_started():
             assert not gdi_w.button_start.isEnabled()
