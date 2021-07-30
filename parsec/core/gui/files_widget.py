@@ -1,6 +1,8 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2016-2021 Scille SAS
 import trio
 import pathlib
+from uuid import UUID
+from typing import Optional
 
 from parsec.core.core_events import CoreEvent
 from pendulum import DateTime
@@ -152,7 +154,7 @@ async def _do_move_files(workspace_fs, target_dir, source_files, source_workspac
         raise JobResultError("error", last_exc=last_exc, error_count=error_count)
 
 
-async def _do_folder_stat(workspace_fs, path, default_selection, set_path):
+async def _do_folder_stat(workspace_fs, path, default_selection):
     stats = {}
     dir_stat = await workspace_fs.path_info(path)
     # Retrieve children info, this is not an atomic operation so our view
@@ -172,7 +174,7 @@ async def _do_folder_stat(workspace_fs, path, default_selection, set_path):
             # if the manifest is inconsistent (broken data or signature).
             child_stat = {"type": "inconsistency", "id": exc.args[0]}
         stats[child] = child_stat
-    return path, dir_stat["id"], stats, default_selection, set_path
+    return path, dir_stat["id"], stats, default_selection
 
 
 async def _do_folder_create(workspace_fs, path):
@@ -305,8 +307,15 @@ class FilesWidget(QWidget, Ui_FilesWidget):
         self.button_create_folder.apply_style()
         self.line_edit_search.textChanged.connect(self.filter_files)
         self.line_edit_search.hide()
-        self.current_directory = FsPath("/")
-        self.current_directory_uuid = None
+
+        # Current directory UUID can be `None`.
+        # This means that the corresponding UUID is still unkown since the
+        # folder stat job has not returned the info yet. It could also be that
+        # the job has failed to return properly, maybe because the directory
+        # no longer exists
+        self.current_directory: FsPath = FsPath("/")
+        self.current_directory_uuid: Optional[UUID] = None
+
         self.default_import_path = str(pathlib.Path.home())
         self.table_files.config = self.core.config
         self.table_files.file_moved.connect(self.on_table_files_file_moved)
@@ -603,9 +612,6 @@ class FilesWidget(QWidget, Ui_FilesWidget):
                 show_error(self, _("TEXT_FILE_OPEN_MULTIPLE_ERROR"))
 
     def open_file(self, file_name):
-        # The Qt thread should never hit the core directly.
-        # Synchronous calls can run directly in the job system
-        # as they won't block the Qt loop for long
         path = self.core.mountpoint_manager.get_path_in_mountpoint(
             self.workspace_fs.workspace_id,
             self.current_directory / file_name if file_name else self.current_directory,
@@ -636,11 +642,12 @@ class FilesWidget(QWidget, Ui_FilesWidget):
             workspace_fs=self.workspace_fs,
             path=self.current_directory,
             default_selection=default_selection,
-            set_path=False,
         )
 
     def load(self, directory, default_selection=None):
         self.spinner.show()
+        self.current_directory = directory
+        self.current_directory_uuid = None
         self.jobs_ctx.submit_job(
             self.folder_stat_success,
             self.folder_stat_error,
@@ -648,7 +655,6 @@ class FilesWidget(QWidget, Ui_FilesWidget):
             workspace_fs=self.workspace_fs,
             path=directory,
             default_selection=default_selection,
-            set_path=True,
         )
 
     def import_all(self, files, total_size):
@@ -831,22 +837,18 @@ class FilesWidget(QWidget, Ui_FilesWidget):
 
     def _on_folder_stat_success(self, job):
         # Extract job information
-        directory, directory_uuid, files_stats, default_selection, set_path = job.ret
+        directory, directory_uuid, files_stats, default_selection = job.ret
         # Ignore old refresh jobs
-        if not set_path and self.current_directory != directory:
+        if self.current_directory != directory:
             return
-        # Set the current directory
-        old_current_directory = self.current_directory
-        self.current_directory, self.current_directory_uuid = directory, directory_uuid
-        # Trigger a refresh to avoid race conditions
-        # TODO: maybe find a better way to deal with race conditions
-        if set_path:
-            self.reload()
+        # Set the UUID
+        first_refresh = self.current_directory_uuid is None
+        self.current_directory_uuid = directory_uuid
         # Try to keep the current selection
-        if old_current_directory == self.current_directory:
-            old_selection = [x.name for x in self.table_files.selected_files()]
-        else:
+        if first_refresh:
             old_selection = set()
+        else:
+            old_selection = [x.name for x in self.table_files.selected_files()]
 
         self.table_files.clear()
         self.spinner.hide()
@@ -971,13 +973,20 @@ class FilesWidget(QWidget, Ui_FilesWidget):
         self.import_job = None
 
     def _on_fs_entry_downsynced(self, event, workspace_id=None, id=None):
+        # No workspace FS
         if not self.workspace_fs:
             return
-        ws_id = self.workspace_fs.workspace_id
-        if ws_id != workspace_id:
+        # Not the corresponding workspace
+        if workspace_id != self.workspace_fs.workspace_id:
             return
-        if id == self.current_directory_uuid:
+        # Reload, as it might correspond to the current directory
+        if self.current_directory_uuid is None:
             self.reload()
+            return
+        # Reload, as it definitely corresponds to the current directory
+        if self.current_directory_uuid == id:
+            self.reload()
+            return
 
     def _on_fs_entry_synced(self, event, id, workspace_id=None):
         if not self.workspace_fs:
@@ -998,12 +1007,24 @@ class FilesWidget(QWidget, Ui_FilesWidget):
 
     def _on_fs_entry_updated(self, event, workspace_id=None, id=None):
         assert id is not None
-        if self.workspace_fs is None:
+        # No workspace FS
+        if not self.workspace_fs:
             return
+        # Not the corresponding workspace
         if workspace_id != self.workspace_fs.workspace_id:
             return
-        if self.current_directory_uuid == id or self.table_files.has_file(id):
+        # Reload, as it might correspond to the current directory
+        if self.current_directory_uuid is None:
             self.reload()
+            return
+        # Reload, as it definitely corresponds to the current directory
+        if self.current_directory_uuid == id:
+            self.reload()
+            return
+        # Reload, as the id appears in the table files
+        if self.table_files.has_file(id):
+            self.reload()
+            return
 
     def _on_sharing_updated(self, event, new_entry, previous_entry):
         if new_entry is None or new_entry.role is None:
