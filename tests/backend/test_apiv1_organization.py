@@ -1,8 +1,10 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2016-2021 Scille SAS
 
+import trio
 import pytest
 import pendulum
 from unittest.mock import ANY
+from collections import defaultdict
 
 from parsec.api.data import UserCertificateContent, DeviceCertificateContent, UserProfile
 from parsec.api.protocol import (
@@ -591,3 +593,43 @@ async def test_organization_spontaneous_bootstrap(
         assert org.root_verify_key == neworg.root_verify_key
         assert org.bootstrap_token == empty_token
         assert org.expiration_date is None
+
+
+@pytest.mark.trio
+@customize_fixtures(backend_spontaneous_organization_boostrap=True, backend_not_populated=True)
+async def test_concurrent_organization_bootstrap(
+    backend, organization_factory, local_device_factory, apiv1_backend_sock_factory
+):
+    concurrency = 5
+    unleash_bootstraps = trio.Event()
+    neworg = organization_factory("NewOrg")
+    empty_token = ""
+    results = defaultdict(lambda: 0)
+
+    async def _do_bootstrap(task_status=trio.TASK_STATUS_IGNORED):
+        newalice = local_device_factory(
+            org=neworg, profile=UserProfile.ADMIN, base_human_handle="alice <alice@example.com>"
+        )
+        backend_newalice, backend_newalice_first_device = local_device_to_backend_user(
+            newalice, neworg
+        )
+        async with apiv1_backend_sock_factory(backend, neworg.organization_id) as sock:
+            task_status.started()
+            await unleash_bootstraps.wait()
+            rep = await organization_bootstrap(
+                sock=sock,
+                bootstrap_token=empty_token,
+                user_certificate=backend_newalice.user_certificate,
+                device_certificate=backend_newalice_first_device.device_certificate,
+                redacted_user_certificate=backend_newalice.redacted_user_certificate,
+                redacted_device_certificate=backend_newalice_first_device.redacted_device_certificate,
+                root_verify_key=neworg.root_verify_key,
+            )
+            results[rep["status"]] += 1
+
+    async with trio.open_nursery() as nursery:
+        for i in range(concurrency):
+            await nursery.start(_do_bootstrap)
+        unleash_bootstraps.set()
+
+    assert results == {"ok": 1, "already_bootstrapped": concurrency - 1}
