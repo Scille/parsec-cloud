@@ -77,6 +77,11 @@ _q_get_stats = Q(
     f"""
 SELECT
     (
+        EXISTS(
+            SELECT 1 FROM organization WHERE _id = { q_organization_internal_id("$organization_id") }
+        )
+    ) exist,
+    (
         SELECT ARRAY(
             SELECT (revoked_on, profile::text)
             FROM user_
@@ -214,8 +219,10 @@ class PGOrganizationComponent(BaseOrganizationComponent):
 
     async def stats(self, id: OrganizationID) -> OrganizationStats:
         async with self.dbh.pool.acquire() as conn, conn.transaction():
-            await self._get(conn, id)  # Check organization exists
             result = await conn.fetchrow(*_q_get_stats(organization_id=id))
+            if not result["exist"]:
+                raise OrganizationNotFoundError()
+
             users = 0
             active_users = 0
             users_per_profile_detail = {p: {"active": 0, "revoked": 0} for p in UserProfile}
