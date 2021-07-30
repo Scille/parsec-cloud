@@ -63,12 +63,14 @@ async def test_organization_create_already_exists(administration_backend_sock, c
 
 
 @pytest.mark.trio
+@customize_fixtures(backend_not_populated=True)
 async def test_organization_create_bad_name(administration_backend_sock):
     rep = await organization_create(administration_backend_sock, "a" * 33)
     assert rep["status"] == "bad_message"
 
 
 @pytest.mark.trio
+@customize_fixtures(backend_not_populated=True)
 async def test_organization_create_wrong_expiration_date(administration_backend_sock):
     rep = await organization_create(administration_backend_sock, "new", "2010-01-01")
     assert rep["status"] == "bad_message"
@@ -255,13 +257,9 @@ async def test_organization_with_expiration_date_create_and_bootstrap(
 
 
 @pytest.mark.trio
+@customize_fixtures(backend_not_populated=True)
 async def test_organization_expired_create_and_bootstrap(
-    backend,
-    organization_factory,
-    local_device_factory,
-    alice,
-    administration_backend_sock,
-    apiv1_backend_sock_factory,
+    backend, organization_factory, administration_backend_sock, apiv1_backend_sock_factory
 ):
     neworg = organization_factory("NewOrg")
 
@@ -537,7 +535,7 @@ async def test_organization_bootstrap_bad_data(
 
 @pytest.mark.trio
 @pytest.mark.parametrize("flavour", ["no_create", "create_different_token", "create_same_token"])
-@customize_fixtures(backend_spontaneous_organization_boostrap=True)
+@customize_fixtures(backend_spontaneous_organization_boostrap=True, backend_not_populated=True)
 async def test_organization_spontaneous_bootstrap(
     backend, organization_factory, local_device_factory, apiv1_backend_sock_factory, flavour
 ):
