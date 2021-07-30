@@ -272,7 +272,7 @@ with open("HISTORY.rst") as history_file:
 
 
 requirements = [
-    "attrs==19.2.0",
+    "attrs==21.2.0",
     "click==7.1.2",
     "msgpack==0.6.0",
     "wsproto==1.0.0",
@@ -318,7 +318,7 @@ test_requirements = [
 ]
 
 
-PYQT_DEPS = ["PyQt5==5.15.2", "pyqt5-sip==12.8.1", "qtrio==0.4.2"]
+PYQT_DEPS = ["PyQt5==5.15.2", "pyqt5-sip==12.8.1", "qtrio==0.5.0"]
 GUI_DEPS = [*PYQT_DEPS, "qrcode==6.1"]
 BABEL_DEP = "Babel==2.6.0"
 WHEEL_DEP = "wheel==0.34.2"

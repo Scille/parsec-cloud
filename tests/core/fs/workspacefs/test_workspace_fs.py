@@ -367,8 +367,8 @@ async def test_dump(alice_workspace):
                 "need_sync": False,
                 "parent": ANY,
                 "updated": ANY,
-                "local_confinement_points": frozenset(),
-                "remote_confinement_points": frozenset(),
+                "local_confinement_points": [],
+                "remote_confinement_points": [],
             }
         },
         "created": ANY,
@@ -376,8 +376,8 @@ async def test_dump(alice_workspace):
         "is_placeholder": False,
         "need_sync": False,
         "updated": ANY,
-        "local_confinement_points": frozenset(),
-        "remote_confinement_points": frozenset(),
+        "local_confinement_points": [],
+        "remote_confinement_points": [],
     }
 
 
