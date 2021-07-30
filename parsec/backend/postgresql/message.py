@@ -52,7 +52,14 @@ OFFSET $offset
 )
 
 
-async def send_message(conn, organization_id, sender, recipient, timestamp, body):
+async def send_message(
+    conn,
+    organization_id: OrganizationID,
+    sender: DeviceID,
+    recipient: UserID,
+    timestamp: DateTime,
+    body: bytes,
+) -> None:
     index = await conn.fetchval(
         *_q_insert_message(
             organization_id=organization_id,
