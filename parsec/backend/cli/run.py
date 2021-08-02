@@ -339,11 +339,11 @@ organization_id, device_id, device_label (can be null), human_email (can be null
     type=int,
 )
 @click.option(
-    "--organization_initial_user_profile_outsider_allowed",
+    "--organization-initial-user-profile-outsider-allowed",
     envvar="PARSEC_ORGANIZATION_INITIAL_USER_PROFILE_OUTSIDER_ALLOWED",
     help="Allow the outsider profiles for the newly created organizations (default: False)",
-    type=int,
-    default=False,
+    default=True,
+    type=bool,
 )
 @click.option(
     "--backend-addr",
