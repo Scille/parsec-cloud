@@ -29,7 +29,6 @@ from parsec.backend.invite import (
     InvitationAlreadyDeletedError,
     InvitationNotFoundError,
 )
-from parsec.backend.utils import Unset
 
 
 async def do_handshake(
@@ -228,9 +227,7 @@ async def _apiv1_process_anonymous_answer(
         if backend.config.organization_spontaneous_bootstrap:
             # Lazy creation of the organization with always the same empty token
             try:
-                await backend.organization.create(
-                    id=organization_id, bootstrap_token="", expiration_date=Unset
-                )
+                await backend.organization.create(id=organization_id, bootstrap_token="")
             except OrganizationAlreadyExistsError:
                 pass
             organization = await backend.organization.get(organization_id)
