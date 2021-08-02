@@ -75,7 +75,9 @@ async def test_organization_create_bad_name(administration_backend_sock):
 @pytest.mark.trio
 @customize_fixtures(backend_not_populated=True)
 async def test_organization_create_wrong_expiration_date(administration_backend_sock):
-    rep = await organization_create(administration_backend_sock, "new", "2010-01-01")
+    rep = await organization_create(
+        administration_backend_sock, "new", expiration_date="2010-01-01"
+    )
     assert rep["status"] == "bad_message"
 
 

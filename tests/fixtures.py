@@ -7,7 +7,6 @@ import pendulum
 from collections import defaultdict
 from typing import Union, Optional, Tuple
 from async_generator import asynccontextmanager
-from pendulum import datetime
 
 from parsec.crypto import SigningKey
 from parsec.api.data import (
@@ -24,7 +23,6 @@ from parsec.core.types import LocalDevice, LocalUserManifest, BackendOrganizatio
 from parsec.core.local_device import generate_new_device
 from parsec.backend.user import User as BackendUser, Device as BackendDevice
 from parsec.backend.realm import RealmGrantedRole
-from parsec.backend.utils import Unset
 
 from tests.common import freeze_time, addr_with_device_subdomain
 
@@ -551,11 +549,11 @@ def backend_data_binder_factory(request, backend_addr, initial_user_manifest_sta
             org: OrganizationFullData,
             first_device: LocalDevice = None,
             initial_user_manifest_in_v0: bool = False,
-            expiration_date: datetime = Unset,
+            **create_kwargs,
         ):
             bootstrap_token = f"<{org.organization_id}-bootstrap-token>"
             await self.backend.organization.create(
-                org.organization_id, bootstrap_token, expiration_date
+                org.organization_id, bootstrap_token, **create_kwargs
             )
             if first_device:
                 backend_user, backend_first_device = local_device_to_backend_user(first_device, org)
