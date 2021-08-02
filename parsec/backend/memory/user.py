@@ -47,8 +47,8 @@ class MemoryUserComponent(BaseUserComponent):
         active_users_limit = self._organization_component._organizations[
             organization_id
         ].active_users_limit
-        active_users = list(filter(lambda u: u.revoked_on is None, org.users.values()))
-        if active_users_limit is not None and active_users_limit <= len(active_users):
+        active_users = (u for u in org.users.values() if u.revoked_on is None)
+        if active_users_limit is not None and active_users_limit <= len(list(active_users)):
             raise UserLimitReached()
 
         if user.user_id in org.users:
