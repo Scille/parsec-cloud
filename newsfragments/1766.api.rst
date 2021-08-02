@@ -1,0 +1,1 @@
+Add active user limit configurable on a per-organization basis. Also add --organization-initial-user-profile-outsider-allowed and --organization-initial-active-users-limit options in `backend run` command.
