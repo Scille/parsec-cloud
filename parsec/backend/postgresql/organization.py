@@ -109,15 +109,6 @@ SELECT
 )
 
 
-_q_update_organisation_expiration_date = Q(
-    """
-UPDATE organization
-SET expiration_date = $expiration_date
-WHERE organization_id = $organization_id
-"""
-)
-
-
 @lru_cache()
 def _q_update_factory(
     with_expiration_date: bool,
