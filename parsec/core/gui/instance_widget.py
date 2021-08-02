@@ -19,7 +19,8 @@ from parsec.core.mountpoint import (
     MountpointWinfspNotAvailable,
 )
 
-from parsec.core.gui.trio_thread import QtToTrioJobScheduler, ThreadSafeQtSignal
+from parsec.core.gui.trio_jobs import QtToTrioJob
+from parsec.core.gui.trio_jobs import QtToTrioJobScheduler, run_trio_job_scheduler
 from parsec.core.gui.parsec_application import ParsecApp
 from parsec.core.gui.custom_dialogs import show_error, show_info_link
 from parsec.core.gui.lang import translate as _
@@ -37,10 +38,9 @@ async def _do_run_core(config, device, qt_on_ready):
         async with logged_core_factory(config=config, device=device, event_bus=None) as core:
             # Create our own job scheduler allows us to cancel all pending
             # jobs depending on us when we logout
-            core_jobs_ctx = QtToTrioJobScheduler()
-            async with trio.open_service_nursery() as nursery:
-                await nursery.start(core_jobs_ctx._start)
+            async with run_trio_job_scheduler() as core_jobs_ctx:
                 qt_on_ready.emit(core, core_jobs_ctx)
+                await trio.sleep_forever()
 
 
 def ensure_macfuse_available_or_show_dialogue(window):
@@ -57,8 +57,8 @@ def ensure_macfuse_available_or_show_dialogue(window):
 
 
 class InstanceWidget(QWidget):
-    run_core_success = pyqtSignal()
-    run_core_error = pyqtSignal()
+    run_core_success = pyqtSignal(QtToTrioJob)
+    run_core_error = pyqtSignal(QtToTrioJob)
     run_core_ready = pyqtSignal(object, object)
     logged_in = pyqtSignal()
     logged_out = pyqtSignal()
@@ -127,12 +127,12 @@ class InstanceWidget(QWidget):
         self.config = ParsecApp.get_main_window().config
 
         self.running_core_job = self.jobs_ctx.submit_job(
-            ThreadSafeQtSignal(self, "run_core_success"),
-            ThreadSafeQtSignal(self, "run_core_error"),
+            self.run_core_success,
+            self.run_core_error,
             _do_run_core,
             self.config,
             device,
-            ThreadSafeQtSignal(self, "run_core_ready", object, object),
+            self.run_core_ready,
         )
 
     def on_run_core_ready(self, core, core_jobs_ctx):
@@ -150,7 +150,8 @@ class InstanceWidget(QWidget):
         )
         self.logged_in.emit()
 
-    def on_core_run_error(self):
+    def on_core_run_error(self, job):
+        assert job is self.running_core_job
         assert self.running_core_job.is_finished()
         if self.core:
             self.core.event_bus.disconnect(
@@ -179,7 +180,8 @@ class InstanceWidget(QWidget):
         self.running_core_job = None
         self.logged_out.emit()
 
-    def on_core_run_done(self):
+    def on_core_run_done(self, job):
+        assert job is self.running_core_job
         assert self.running_core_job.is_finished()
         if self.core:
             ParsecApp.remove_connected_device(
@@ -193,7 +195,7 @@ class InstanceWidget(QWidget):
 
     def stop_core(self):
         if self.running_core_job:
-            self.running_core_job.cancel_and_join()
+            self.running_core_job.cancel()
 
     def on_logged_out(self):
         self.state_changed.emit(self, "logout")

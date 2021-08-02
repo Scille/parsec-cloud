@@ -27,7 +27,7 @@ from parsec.core.fs import (
     FSWorkspaceNoWriteAccess,
     FSWorkspaceInMaintenance,
 )
-from parsec.core.gui.trio_thread import QtToTrioJobScheduler
+from parsec.core.gui.trio_jobs import QtToTrioJobScheduler
 from parsec.core.gui.mount_widget import MountWidget
 from parsec.core.gui.users_widget import UsersWidget
 from parsec.core.gui.devices_widget import DevicesWidget
@@ -37,7 +37,7 @@ from parsec.core.gui.lang import translate as _
 from parsec.core.gui.custom_widgets import Pixmap
 from parsec.core.gui.custom_dialogs import show_error
 from parsec.core.gui.ui.central_widget import Ui_CentralWidget
-from parsec.core.gui.trio_thread import JobResultError, ThreadSafeQtSignal, QtToTrioJob
+from parsec.core.gui.trio_jobs import JobResultError, QtToTrioJob
 
 
 async def _do_get_organization_stats(core: LoggedCore) -> OrganizationStats:
@@ -78,7 +78,6 @@ class CentralWidget(QWidget, Ui_CentralWidget):  # type: ignore[misc]
     organization_stats_error = pyqtSignal(QtToTrioJob)
 
     connection_state_changed = pyqtSignal(object, object)
-    vlobs_updated_qt = pyqtSignal()
     logout_requested = pyqtSignal()
     new_notification = pyqtSignal(str, str)
 
@@ -107,9 +106,8 @@ class CentralWidget(QWidget, Ui_CentralWidget):  # type: ignore[misc]
         for e in self.NOTIFICATION_EVENTS:
             self.event_bus.connect(e, cast(EventCallback, self.handle_event))
 
-        self.event_bus.connect(CoreEvent.FS_ENTRY_SYNCED, self._on_vlobs_updated_trio)
-        self.event_bus.connect(CoreEvent.BACKEND_REALM_VLOBS_UPDATED, self._on_vlobs_updated_trio)
-        self.vlobs_updated_qt.connect(self._on_vlobs_updated_qt)
+        self.event_bus.connect(CoreEvent.FS_ENTRY_SYNCED, self._on_vlobs_updated)
+        self.event_bus.connect(CoreEvent.BACKEND_REALM_VLOBS_UPDATED, self._on_vlobs_updated)
 
         self.set_user_info()
         menu = QMenu()
@@ -264,16 +262,13 @@ class CentralWidget(QWidget, Ui_CentralWidget):  # type: ignore[misc]
         self.jobs_ctx.submit_throttled_job(
             "central_widget.load_organization_stats",
             delay,
-            ThreadSafeQtSignal(self, "organization_stats_success", QtToTrioJob),
-            ThreadSafeQtSignal(self, "organization_stats_error", QtToTrioJob),
+            self.organization_stats_success,
+            self.organization_stats_error,
             _do_get_organization_stats,
             core=self.core,
         )
 
-    def _on_vlobs_updated_trio(self, *args: object, **kwargs: object) -> None:
-        self.vlobs_updated_qt.emit()
-
-    def _on_vlobs_updated_qt(self) -> None:
+    def _on_vlobs_updated(self, *args: object, **kwargs: object) -> None:
         self._load_organization_stats(delay=self.REFRESH_ORGANIZATION_STATS_DELAY)
 
     def _on_connection_state_changed(
@@ -369,7 +364,7 @@ class CentralWidget(QWidget, Ui_CentralWidget):  # type: ignore[misc]
         if addr.organization_id != self.core.device.organization_id:
             raise GoToFileLinkBadOrganizationIDError
         try:
-            workspace = self.jobs_ctx.run_sync(self.core.user_fs.get_workspace, addr.workspace_id)
+            workspace = self.core.user_fs.get_workspace(addr.workspace_id)
         except FSWorkspaceNotFoundError as exc:
             raise GoToFileLinkBadWorkspaceIDError from exc
         try:

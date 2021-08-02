@@ -11,7 +11,7 @@ from parsec.core.fs import FSError, FSBackendOfflineError
 from parsec.core.types import WorkspaceRole
 from parsec.core.backend_connection import BackendNotAvailable
 
-from parsec.core.gui.trio_thread import JobResultError, ThreadSafeQtSignal, QtToTrioJob
+from parsec.core.gui.trio_jobs import JobResultError, QtToTrioJob
 
 from parsec.core.gui.custom_dialogs import show_error, GreyedDialog
 from parsec.core.gui.custom_widgets import Pixmap
@@ -181,7 +181,7 @@ class WorkspaceSharingWidget(QWidget, Ui_WorkspaceSharingWidget):
         self.get_users_error.connect(self._on_get_users_error)
         self.line_edit_filter.textChanged.connect(self._on_filter_changed)
 
-        ws_entry = self.jobs_ctx.run_sync(self.workspace_fs.get_workspace_entry)
+        ws_entry = self.workspace_fs.get_workspace_entry()
         self.current_user_role = ws_entry.role
         self.reset()
 
@@ -234,8 +234,8 @@ class WorkspaceSharingWidget(QWidget, Ui_WorkspaceSharingWidget):
         if sharing_widget:
             sharing_widget.set_status_updating()
         self.jobs_ctx.submit_job(
-            ThreadSafeQtSignal(self, "share_success", QtToTrioJob),
-            ThreadSafeQtSignal(self, "share_error", QtToTrioJob),
+            self.share_success,
+            self.share_error,
             _do_share_workspace,
             user_fs=self.user_fs,
             workspace_fs=self.workspace_fs,
@@ -319,8 +319,8 @@ class WorkspaceSharingWidget(QWidget, Ui_WorkspaceSharingWidget):
         self.spinner.show()
         self.widget_users.hide()
         self.jobs_ctx.submit_job(
-            ThreadSafeQtSignal(self, "get_users_success", QtToTrioJob),
-            ThreadSafeQtSignal(self, "get_users_error", QtToTrioJob),
+            self.get_users_success,
+            self.get_users_error,
             _do_get_users,
             core=self.core,
             workspace_fs=self.workspace_fs,
@@ -328,7 +328,7 @@ class WorkspaceSharingWidget(QWidget, Ui_WorkspaceSharingWidget):
 
     @classmethod
     def show_modal(cls, user_fs, workspace_fs, core, jobs_ctx, parent, on_finished):
-        workspace_name = jobs_ctx.run_sync(workspace_fs.get_workspace_name)
+        workspace_name = workspace_fs.get_workspace_name()
 
         w = cls(user_fs=user_fs, workspace_fs=workspace_fs, core=core, jobs_ctx=jobs_ctx)
         d = GreyedDialog(

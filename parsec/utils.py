@@ -37,7 +37,7 @@ def timestamps_in_the_ballpark(ts1: DateTime, ts2: DateTime, max_dt=TIMESTAMP_MA
 class TaskStatus:
 
     # Internal state
-
+    _trio_task_status = attr.ib()
     _cancel_scope = attr.ib(default=None)
     _started_value = attr.ib(default=None)
     _finished_event = attr.ib(factory=trio.Event)
@@ -45,11 +45,14 @@ class TaskStatus:
     def _set_cancel_scope(self, scope):
         self._cancel_scope = scope
 
-    def _set_started_value(self, value):
-        self._started_value = value
-
     def _set_finished(self):
         self._finished_event.set()
+
+    # Trio-like methods
+
+    def started(self, value=None):
+        self._started_value = value
+        self._trio_task_status.started(self)
 
     # Properties
 
@@ -82,13 +85,11 @@ class TaskStatus:
 
     @classmethod
     async def wrap_task(cls, corofn, *args, task_status=trio.TASK_STATUS_IGNORED):
-        status = cls()
+        status = cls(task_status)
         try:
-            async with trio.open_service_nursery() as nursery:
-                status._set_cancel_scope(nursery.cancel_scope)
-                value = await nursery.start(corofn, *args)
-                status._set_started_value(value)
-                task_status.started(status)
+            with trio.CancelScope() as cancel_scope:
+                status._set_cancel_scope(cancel_scope)
+                await corofn(*args, task_status=status)
         finally:
             status._set_finished()
 

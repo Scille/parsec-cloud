@@ -1,7 +1,6 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2016-2021 Scille SAS
 
 from parsec.core.core_events import CoreEvent
-from uuid import UUID
 
 from PyQt5.QtCore import pyqtSignal, Qt
 from PyQt5.QtWidgets import QWidget, QLabel
@@ -11,7 +10,6 @@ import pendulum
 from contextlib import contextmanager
 
 from parsec.core.types import (
-    WorkspaceEntry,
     UserInfo,
     FsPath,
     EntryID,
@@ -36,12 +34,7 @@ from parsec.core.mountpoint.exceptions import (
     MountpointNoDriveAvailable,
 )
 
-from parsec.core.gui.trio_thread import (
-    JobResultError,
-    ThreadSafeQtSignal,
-    QtToTrioJob,
-    JobSchedulerNotAvailable,
-)
+from parsec.core.gui.trio_jobs import JobResultError, QtToTrioJob, JobSchedulerNotAvailable
 from parsec.core.gui import desktop
 from parsec.core.gui.custom_dialogs import show_error, get_text_input, ask_question
 from parsec.core.gui.flow_layout import FlowLayout
@@ -163,18 +156,11 @@ async def _do_workspace_unmount(core, workspace_id, timestamp: pendulum.DateTime
 class WorkspacesWidget(QWidget, Ui_WorkspacesWidget):
     REFRESH_WORKSPACES_LIST_DELAY = 1  # 1s
 
-    fs_updated_qt = pyqtSignal(CoreEvent, UUID)
-    fs_synced_qt = pyqtSignal(CoreEvent, UUID)
-    entry_downsynced_qt = pyqtSignal(UUID, UUID)
-
-    sharing_updated_qt = pyqtSignal(WorkspaceEntry, object)
-    _workspace_created_qt = pyqtSignal(WorkspaceEntry)
     load_workspace_clicked = pyqtSignal(WorkspaceFS, FsPath, bool)
     workspace_reencryption_success = pyqtSignal(QtToTrioJob)
     workspace_reencryption_error = pyqtSignal(QtToTrioJob)
     workspace_reencryption_progress = pyqtSignal(EntryID, int, int)
-    mountpoint_started = pyqtSignal(object, object)
-    mountpoint_stopped = pyqtSignal(object, object)
+    mountpoint_state_updated = pyqtSignal(object, object)
 
     rename_success = pyqtSignal(QtToTrioJob)
     rename_error = pyqtSignal(QtToTrioJob)
@@ -214,10 +200,6 @@ class WorkspacesWidget(QWidget, Ui_WorkspacesWidget):
         self.button_add_workspace.apply_style()
         self.button_goto_file.apply_style()
 
-        self.fs_updated_qt.connect(self._on_fs_updated_qt)
-        self.fs_synced_qt.connect(self._on_fs_synced_qt)
-        self.entry_downsynced_qt.connect(self._on_entry_downsynced_qt)
-
         self.line_edit_search.textChanged.connect(self.on_workspace_filter)
 
         self.rename_success.connect(self.on_rename_success)
@@ -240,12 +222,6 @@ class WorkspacesWidget(QWidget, Ui_WorkspacesWidget):
         self.filter_remove_button.clicked.connect(self.remove_user_filter)
         self.filter_remove_button.apply_style()
 
-        self.mountpoint_started.connect(self._on_mountpoint_started_qt)
-        self.mountpoint_stopped.connect(self._on_mountpoint_stopped_qt)
-
-        self.sharing_updated_qt.connect(self._on_sharing_updated_qt)
-        self._workspace_created_qt.connect(self._on_workspace_created_qt)
-
         self.filter_user_info = None
         self.filter_layout_widget.hide()
 
@@ -265,30 +241,24 @@ class WorkspacesWidget(QWidget, Ui_WorkspacesWidget):
         pass
 
     def showEvent(self, event):
-        self.event_bus.connect(CoreEvent.FS_WORKSPACE_CREATED, self._on_workspace_created_trio)
-        self.event_bus.connect(CoreEvent.FS_ENTRY_UPDATED, self._on_fs_entry_updated_trio)
-        self.event_bus.connect(CoreEvent.FS_ENTRY_SYNCED, self._on_fs_entry_synced_trio)
-        self.event_bus.connect(CoreEvent.SHARING_UPDATED, self._on_sharing_updated_trio)
-        self.event_bus.connect(CoreEvent.FS_ENTRY_DOWNSYNCED, self._on_entry_downsynced_trio)
-        self.event_bus.connect(CoreEvent.MOUNTPOINT_STARTED, self._on_mountpoint_started_trio)
-        self.event_bus.connect(CoreEvent.MOUNTPOINT_STOPPED, self._on_mountpoint_stopped_trio)
+        self.event_bus.connect(CoreEvent.FS_WORKSPACE_CREATED, self._on_workspace_created)
+        self.event_bus.connect(CoreEvent.FS_ENTRY_UPDATED, self._on_fs_entry_updated)
+        self.event_bus.connect(CoreEvent.FS_ENTRY_SYNCED, self._on_fs_entry_synced)
+        self.event_bus.connect(CoreEvent.SHARING_UPDATED, self._on_sharing_updated)
+        self.event_bus.connect(CoreEvent.FS_ENTRY_DOWNSYNCED, self._on_entry_downsynced)
+        self.event_bus.connect(CoreEvent.MOUNTPOINT_STARTED, self._on_mountpoint_started)
+        self.event_bus.connect(CoreEvent.MOUNTPOINT_STOPPED, self._on_mountpoint_stopped)
         self.reset()
 
     def hideEvent(self, event):
         try:
-            self.event_bus.disconnect(
-                CoreEvent.FS_WORKSPACE_CREATED, self._on_workspace_created_trio
-            )
-            self.event_bus.disconnect(CoreEvent.FS_ENTRY_UPDATED, self._on_fs_entry_updated_trio)
-            self.event_bus.disconnect(CoreEvent.FS_ENTRY_SYNCED, self._on_fs_entry_synced_trio)
-            self.event_bus.disconnect(CoreEvent.SHARING_UPDATED, self._on_sharing_updated_trio)
-            self.event_bus.disconnect(CoreEvent.FS_ENTRY_DOWNSYNCED, self._on_entry_downsynced_trio)
-            self.event_bus.disconnect(
-                CoreEvent.MOUNTPOINT_STARTED, self._on_mountpoint_started_trio
-            )
-            self.event_bus.disconnect(
-                CoreEvent.MOUNTPOINT_STOPPED, self._on_mountpoint_stopped_trio
-            )
+            self.event_bus.disconnect(CoreEvent.FS_WORKSPACE_CREATED, self._on_workspace_created)
+            self.event_bus.disconnect(CoreEvent.FS_ENTRY_UPDATED, self._on_fs_entry_updated)
+            self.event_bus.disconnect(CoreEvent.FS_ENTRY_SYNCED, self._on_fs_entry_synced)
+            self.event_bus.disconnect(CoreEvent.SHARING_UPDATED, self._on_sharing_updated)
+            self.event_bus.disconnect(CoreEvent.FS_ENTRY_DOWNSYNCED, self._on_entry_downsynced)
+            self.event_bus.disconnect(CoreEvent.MOUNTPOINT_STARTED, self._on_mountpoint_started)
+            self.event_bus.disconnect(CoreEvent.MOUNTPOINT_STOPPED, self._on_mountpoint_stopped)
         except ValueError:
             pass
 
@@ -398,8 +368,8 @@ class WorkspacesWidget(QWidget, Ui_WorkspacesWidget):
             if button.is_owner:
                 try:
                     self.jobs_ctx.submit_job(
-                        ThreadSafeQtSignal(self, "reencryption_needs_success", QtToTrioJob),
-                        ThreadSafeQtSignal(self, "reencryption_needs_error", QtToTrioJob),
+                        self.reencryption_needs_success,
+                        self.reencryption_needs_error,
                         _get_reencryption_needs,
                         workspace_fs=workspace_fs,
                     )
@@ -502,8 +472,8 @@ class WorkspacesWidget(QWidget, Ui_WorkspacesWidget):
         if token in workspace_name:
             workspace_name, *_ = workspace_name.split(token)
             self.jobs_ctx.submit_job(
-                ThreadSafeQtSignal(self, "ignore_success", QtToTrioJob),
-                ThreadSafeQtSignal(self, "ignore_error", QtToTrioJob),
+                self.ignore_success,
+                self.ignore_error,
                 _do_workspace_rename,
                 core=self.core,
                 workspace_id=workspace_fs.workspace_id,
@@ -526,11 +496,7 @@ class WorkspacesWidget(QWidget, Ui_WorkspacesWidget):
         file_name = FsPath("/", file_name) if file_name else FsPath("/")
 
         try:
-            # The Qt thread should never hit the core directly.
-            # Synchronous calls can run directly in the job system
-            # as they won't block the Qt loop for long
-            path = self.jobs_ctx.run_sync(
-                self.core.mountpoint_manager.get_path_in_mountpoint,
+            path = self.core.mountpoint_manager.get_path_in_mountpoint(
                 workspace_fs.workspace_id,
                 file_name,
                 workspace_fs.timestamp
@@ -559,8 +525,8 @@ class WorkspacesWidget(QWidget, Ui_WorkspacesWidget):
 
     def mount_workspace(self, workspace_id, timestamp=None):
         self.jobs_ctx.submit_job(
-            ThreadSafeQtSignal(self, "mount_success", QtToTrioJob),
-            ThreadSafeQtSignal(self, "mount_error", QtToTrioJob),
+            self.mount_success,
+            self.mount_error,
             _do_workspace_mount,
             core=self.core,
             workspace_id=workspace_id,
@@ -569,8 +535,8 @@ class WorkspacesWidget(QWidget, Ui_WorkspacesWidget):
 
     def unmount_workspace(self, workspace_id, timestamp=None):
         self.jobs_ctx.submit_job(
-            ThreadSafeQtSignal(self, "unmount_success", QtToTrioJob),
-            ThreadSafeQtSignal(self, "unmount_error", QtToTrioJob),
+            self.unmount_success,
+            self.unmount_error,
             _do_workspace_unmount,
             core=self.core,
             workspace_id=workspace_id,
@@ -587,16 +553,14 @@ class WorkspacesWidget(QWidget, Ui_WorkspacesWidget):
         )
 
     def is_workspace_mounted(self, workspace_id, timestamp=None):
-        return self.jobs_ctx.run_sync(
-            self.core.mountpoint_manager.is_workspace_mounted, workspace_id, timestamp
-        )
+        return self.core.mountpoint_manager.is_workspace_mounted(workspace_id, timestamp)
 
     def delete_workspace(self, workspace_fs):
         if isinstance(workspace_fs, WorkspaceFSTimestamped):
             self.unmount_workspace(workspace_fs.workspace_id, workspace_fs.timestamp)
             return
         else:
-            workspace_name = self.jobs_ctx.run_sync(workspace_fs.get_workspace_name)
+            workspace_name = workspace_fs.get_workspace_name()
             result = ask_question(
                 self,
                 _("TEXT_WORKSPACE_DELETE_TITLE"),
@@ -620,8 +584,8 @@ class WorkspacesWidget(QWidget, Ui_WorkspacesWidget):
         if not new_name:
             return
         self.jobs_ctx.submit_job(
-            ThreadSafeQtSignal(self, "rename_success", QtToTrioJob),
-            ThreadSafeQtSignal(self, "rename_error", QtToTrioJob),
+            self.rename_success,
+            self.rename_error,
             _do_workspace_rename,
             core=self.core,
             workspace_id=workspace_button.workspace_fs.workspace_id,
@@ -701,12 +665,10 @@ class WorkspacesWidget(QWidget, Ui_WorkspacesWidget):
         workspace_button.reencrypting = 1, 0
 
         self.jobs_ctx.submit_job(
-            ThreadSafeQtSignal(self, "workspace_reencryption_success", QtToTrioJob),
-            ThreadSafeQtSignal(self, "workspace_reencryption_error", QtToTrioJob),
+            self.workspace_reencryption_success,
+            self.workspace_reencryption_error,
             _reencrypt,
-            on_progress=ThreadSafeQtSignal(
-                self, "workspace_reencryption_progress", EntryID, int, int
-            ),
+            on_progress=self.workspace_reencryption_progress,
             workspace_id=workspace_id,
         )
 
@@ -759,8 +721,8 @@ class WorkspacesWidget(QWidget, Ui_WorkspacesWidget):
         if not workspace_name:
             return
         self.jobs_ctx.submit_job(
-            ThreadSafeQtSignal(self, "create_success", QtToTrioJob),
-            ThreadSafeQtSignal(self, "create_error", QtToTrioJob),
+            self.create_success,
+            self.create_error,
             _do_workspace_create,
             core=self.core,
             workspace_name=workspace_name,
@@ -776,56 +738,37 @@ class WorkspacesWidget(QWidget, Ui_WorkspacesWidget):
         self.jobs_ctx.submit_throttled_job(
             "workspace_widget.list_workspaces",
             self.REFRESH_WORKSPACES_LIST_DELAY,
-            ThreadSafeQtSignal(self, "list_success", QtToTrioJob),
-            ThreadSafeQtSignal(self, "list_error", QtToTrioJob),
+            self.list_success,
+            self.list_error,
             _do_workspace_list,
             core=self.core,
         )
 
-    def _on_sharing_updated_trio(self, event, new_entry, previous_entry):
-        self.sharing_updated_qt.emit(new_entry, previous_entry)
-
-    def _on_sharing_updated_qt(self, new_entry, previous_entry):
+    def _on_sharing_updated(self, event, new_entry, previous_entry):
         self.reset()
 
-    def _on_workspace_created_trio(self, event, new_entry):
-        self._workspace_created_qt.emit(new_entry)
-
-    def _on_workspace_created_qt(self, workspace_entry):
+    def _on_workspace_created(self, event, new_entry):
         self.reset()
 
-    def _on_fs_entry_synced_trio(self, event, id, workspace_id=None):
-        self.fs_synced_qt.emit(event, id)
+    def _on_fs_entry_synced(self, event, id, workspace_id=None):
+        self.reset()
 
-    def _on_fs_entry_updated_trio(self, event, workspace_id=None, id=None):
+    def _on_fs_entry_updated(self, event, workspace_id=None, id=None):
         assert id is not None
         if workspace_id and id == workspace_id:
-            self.fs_updated_qt.emit(event, workspace_id)
+            self.reset()
 
-    def _on_entry_downsynced_trio(self, event, workspace_id=None, id=None):
-        self.entry_downsynced_qt.emit(workspace_id, id)
-
-    def _on_entry_downsynced_qt(self, workspace_id, id):
+    def _on_entry_downsynced(self, event, workspace_id=None, id=None):
         self.reset()
 
-    def _on_fs_synced_qt(self, event, id):
-        self.reset()
-
-    def _on_fs_updated_qt(self, event, workspace_id):
-        self.reset()
-
-    def _on_mountpoint_started_qt(self, workspace_id, timestamp):
+    def _on_mountpoint_state_updated(self, workspace_id, timestamp):
         wb = self.get_workspace_button(workspace_id, timestamp)
         if wb:
-            wb.set_mountpoint_state(True)
+            mounted = self.is_workspace_mounted(workspace_id, timestamp)
+            wb.set_mountpoint_state(mounted)
 
-    def _on_mountpoint_stopped_qt(self, workspace_id, timestamp):
-        wb = self.get_workspace_button(workspace_id, timestamp)
-        if wb:
-            wb.set_mountpoint_state(False)
+    def _on_mountpoint_started(self, event, mountpoint, workspace_id, timestamp):
+        self._on_mountpoint_state_updated(workspace_id, timestamp)
 
-    def _on_mountpoint_started_trio(self, event, mountpoint, workspace_id, timestamp):
-        self.mountpoint_started.emit(workspace_id, timestamp)
-
-    def _on_mountpoint_stopped_trio(self, event, mountpoint, workspace_id, timestamp):
-        self.mountpoint_stopped.emit(workspace_id, timestamp)
+    def _on_mountpoint_stopped(self, event, mountpoint, workspace_id, timestamp):
+        self._on_mountpoint_state_updated(workspace_id, timestamp)

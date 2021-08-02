@@ -1,6 +1,5 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2016-2021 Scille SAS
 
-from parsec.core.core_events import CoreEvent
 import trio
 import logging
 import sys
@@ -14,9 +13,10 @@ from subprocess import CalledProcessError
 
 from async_generator import asynccontextmanager
 
-from parsec.utils import start_task
+from parsec.core.core_events import CoreEvent
 from parsec.core.types import FsPath, EntryID
 from parsec.core.fs.workspacefs import WorkspaceFSTimestamped
+from parsec.utils import TaskStatus, start_task, open_service_nursery
 from parsec.core.fs.exceptions import FSWorkspaceNotFoundError, FSWorkspaceTimestampedTooEarly
 from parsec.core.mountpoint.exceptions import (
     MountpointConfigurationError,
@@ -141,24 +141,55 @@ class MountpointManager:
             self._timestamped_workspacefs[workspace_id] = {timestamp: new_workspace}
         return new_workspace
 
-    async def _mount_workspace_helper(self, workspace_fs, timestamp: DateTime = None):
-        key = (workspace_fs.workspace_id, timestamp)
+    async def _mount_workspace_helper(self, workspace_fs, timestamp: DateTime = None) -> TaskStatus:
+        workspace_id = workspace_fs.workspace_id
+        key = workspace_id, timestamp
 
-        async def curried_runner(task_status=trio.TASK_STATUS_IGNORED):
+        async def curried_runner(task_status: TaskStatus):
+            event_kwargs = {}
+
             try:
-                return await self._runner(
+                async with self._runner(
                     self.user_fs,
                     workspace_fs,
                     self.base_mountpoint_path,
                     config=self.config,
                     event_bus=self.event_bus,
-                    task_status=task_status,
-                )
-            finally:
-                self._mountpoint_tasks.pop(key, None)
+                ) as mountpoint_path:
 
+                    # Another runner started before us
+                    if key in self._mountpoint_tasks:
+                        raise MountpointAlreadyMounted(
+                            f"Workspace `{workspace_id}` already mounted."
+                        )
+
+                    # Prepare kwargs for both started and stopped events
+                    event_kwargs = {
+                        "mountpoint": mountpoint_path,
+                        "workspace_id": workspace_fs.workspace_id,
+                        "timestamp": timestamp,
+                    }
+
+                    # Set the mountpoint as mounted THEN send the corresponding event
+                    task_status.started(mountpoint_path)
+                    self._mountpoint_tasks[key] = task_status
+                    self.event_bus.send(CoreEvent.MOUNTPOINT_STARTED, **event_kwargs)
+
+                    # It is the reponsability of the runner context teardown to wait
+                    # for cancellation. This is done to avoid adding an extra nursery
+                    # into the winfsp runner, for simplicity. This could change in the
+                    # future in which case we'll simmply add a `sleep_forever` below.
+
+            finally:
+                # Pop the mountpoint task if its ours
+                if self._mountpoint_tasks.get(key) == task_status:
+                    del self._mountpoint_tasks[key]
+                # Send stopped event if started has been previously sent
+                if event_kwargs:
+                    self.event_bus.send(CoreEvent.MOUNTPOINT_STOPPED, **event_kwargs)
+
+        # Start the mountpoint runner task
         runner_task = await start_task(self._nursery, curried_runner)
-        self._mountpoint_tasks[key] = runner_task
         return runner_task
 
     def get_path_in_mountpoint(
@@ -347,7 +378,7 @@ async def mountpoint_manager_factory(
             return
 
     # Instantiate the mountpoint manager with its own nursery
-    async with trio.open_service_nursery() as nursery:
+    async with open_service_nursery() as nursery:
         mountpoint_manager = MountpointManager(
             user_fs, event_bus, base_mountpoint_path, config, runner, nursery
         )
@@ -356,7 +387,7 @@ async def mountpoint_manager_factory(
         try:
 
             # A nursery dedicated to new workspace events
-            async with trio.open_service_nursery() as mount_nursery:
+            async with open_service_nursery() as mount_nursery:
 
                 # Setup new workspace events
                 with event_bus.connect_in_context(

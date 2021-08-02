@@ -16,8 +16,8 @@ from PyQt5.QtWidgets import QDialog, QWidget
 from parsec import __version__
 from parsec.serde import BaseSchema, fields, JSONSerializer, SerdeError
 from parsec.core.gui import desktop
-from parsec.core.gui.trio_thread import ThreadSafeQtSignal
 from parsec.core.gui.lang import translate as _
+from parsec.core.gui.trio_jobs import QtToTrioJob
 from parsec.core.gui.ui.new_version_dialog import Ui_NewVersionDialog
 from parsec.core.gui.ui.new_version_info import Ui_NewVersionInfo
 from parsec.core.gui.ui.new_version_available import Ui_NewVersionAvailable
@@ -176,8 +176,8 @@ class NewVersionAvailable(QWidget, Ui_NewVersionAvailable):
 
 
 class CheckNewVersion(QDialog, Ui_NewVersionDialog):
-    check_new_version_success = pyqtSignal()
-    check_new_version_error = pyqtSignal()
+    check_new_version_success = pyqtSignal(QtToTrioJob)
+    check_new_version_error = pyqtSignal(QtToTrioJob)
 
     def __init__(self, jobs_ctx, event_bus, config, **kwargs):
         super().__init__(**kwargs)
@@ -204,15 +204,16 @@ class CheckNewVersion(QDialog, Ui_NewVersionDialog):
         self.check_new_version_error.connect(self.on_check_new_version_error)
 
         self.version_job = self.jobs_ctx.submit_job(
-            ThreadSafeQtSignal(self, "check_new_version_success"),
-            ThreadSafeQtSignal(self, "check_new_version_error"),
+            self.check_new_version_success,
+            self.check_new_version_error,
             do_check_new_version,
             api_url=self.config.gui_check_version_api_url,
             allow_prerelease=self.config.gui_check_version_allow_pre_release,
         )
         self.setWindowFlags(Qt.SplashScreen)
 
-    def on_check_new_version_success(self):
+    def on_check_new_version_success(self, job):
+        assert job is self.version_job
         assert self.version_job.is_finished()
         assert self.version_job.status == "ok"
         version_job_ret = self.version_job.ret
@@ -232,7 +233,8 @@ class CheckNewVersion(QDialog, Ui_NewVersionDialog):
             self.widget_info.show()
             self.widget_info.show_up_to_date()
 
-    def on_check_new_version_error(self):
+    def on_check_new_version_error(self, job):
+        assert job is self.version_job
         assert self.version_job.is_finished()
         assert self.version_job.status != "ok"
         self.version_job = None
@@ -251,5 +253,5 @@ class CheckNewVersion(QDialog, Ui_NewVersionDialog):
 
     def closeEvent(self, event):
         if self.version_job:
-            self.version_job.cancel_and_join()
+            self.version_job.cancel()
         event.accept()

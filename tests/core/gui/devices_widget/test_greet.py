@@ -91,7 +91,7 @@ def GreetDeviceTestBed(
             assert devices_widget.layout_devices.count() == 2
 
             # Click on the invitation button
-            await aqtbot.mouse_click(devices_widget.button_add_device, QtCore.Qt.LeftButton)
+            aqtbot.mouse_click(devices_widget.button_add_device, QtCore.Qt.LeftButton)
             greet_device_widget = await catch_greet_device_widget()
             assert isinstance(greet_device_widget, GreetDeviceWidget)
 
@@ -145,7 +145,7 @@ def GreetDeviceTestBed(
         async def step_1_start_greet(self):
             gdi_w = self.greet_device_information_widget
 
-            await aqtbot.mouse_click(gdi_w.button_start, QtCore.Qt.LeftButton)
+            aqtbot.mouse_click(gdi_w.button_start, QtCore.Qt.LeftButton)
 
             def _greet_started():
                 assert not gdi_w.button_start.isEnabled()
@@ -199,7 +199,7 @@ def GreetDeviceTestBed(
             gdce_w = self.greet_device_code_exchange_widget
 
             # Pretent we have clicked on the right choice
-            await aqtbot.run(gdce_w.code_input_widget.good_code_clicked.emit)
+            gdce_w.code_input_widget.good_code_clicked.emit()
 
             self.claimer_in_progress_ctx = await self.claimer_in_progress_ctx.do_wait_peer_trust()
 
@@ -276,7 +276,7 @@ async def test_greet_device_offline(
             gui_w = self.greet_device_information_widget
 
             with running_backend.offline():
-                await aqtbot.mouse_click(gui_w.button_start, QtCore.Qt.LeftButton)
+                aqtbot.mouse_click(gui_w.button_start, QtCore.Qt.LeftButton)
                 await aqtbot.wait_until(partial(self._greet_aborted, expected_message))
 
             return None
@@ -300,7 +300,7 @@ async def test_greet_device_offline(
             guce_w = self.greet_device_code_exchange_widget
 
             with running_backend.offline():
-                await aqtbot.run(guce_w.code_input_widget.good_code_clicked.emit)
+                guce_w.code_input_widget.good_code_clicked.emit()
                 await aqtbot.wait_until(partial(self._greet_aborted, expected_message))
 
             return None
@@ -354,7 +354,7 @@ async def test_greet_device_reset_by_peer(aqtbot, GreetDeviceTestBed, autoclose_
             guce_w = self.greet_device_code_exchange_widget
 
             # Pretent we have click on the right choice
-            await aqtbot.run(guce_w.code_input_widget.good_code_clicked.emit)
+            guce_w.code_input_widget.good_code_clicked.emit()
 
             async with self._reset_claimer():
                 await aqtbot.wait_until(partial(self._greet_restart, expected_message))
@@ -412,7 +412,7 @@ async def test_greet_device_invitation_cancelled(
 
             await self._cancel_invitation()
 
-            await aqtbot.mouse_click(gui_w.button_start, QtCore.Qt.LeftButton)
+            aqtbot.mouse_click(gui_w.button_start, QtCore.Qt.LeftButton)
             await aqtbot.wait_until(partial(self._greet_restart, expected_message))
 
             return None
@@ -439,7 +439,7 @@ async def test_greet_device_invitation_cancelled(
 
             await self._cancel_invitation()
 
-            await aqtbot.run(guce_w.code_input_widget.good_code_clicked.emit)
+            guce_w.code_input_widget.good_code_clicked.emit()
             await aqtbot.wait_until(partial(self._greet_restart, expected_message))
 
             return None

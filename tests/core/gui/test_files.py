@@ -104,28 +104,28 @@ async def files_widget_testbed(monkeypatch, aqtbot, logged_gui):
                         QtWidgets.QTableWidgetSelectionRange(top, 0, bottom, 0), True
                     )
 
-            await aqtbot.run(_do_selection)
+            _do_selection()
 
         async def reset_selection(self):
-            await aqtbot.run(f_w.table_files.reset)
+            f_w.table_files.reset()
 
         async def copy(self, selection=None):
             if selection is not None:
                 await self.apply_selection(selection)
             async with aqtbot.wait_signal(f_w.table_files.copy_clicked):
-                await aqtbot.key_click(f_w.table_files, "C", modifier=QtCore.Qt.ControlModifier)
+                aqtbot.key_click(f_w.table_files, "C", modifier=QtCore.Qt.ControlModifier)
             assert f_w.clipboard is not None
 
         async def cut(self, selection=None):
             if selection is not None:
                 await self.apply_selection(selection)
             async with aqtbot.wait_signal(f_w.table_files.cut_clicked):
-                await aqtbot.key_click(f_w.table_files, "X", modifier=QtCore.Qt.ControlModifier)
+                aqtbot.key_click(f_w.table_files, "X", modifier=QtCore.Qt.ControlModifier)
             assert f_w.clipboard is not None
 
         async def paste(self):
             async with aqtbot.wait_signal(f_w.table_files.paste_clicked):
-                await aqtbot.key_click(f_w.table_files, "V", modifier=QtCore.Qt.ControlModifier)
+                aqtbot.key_click(f_w.table_files, "V", modifier=QtCore.Qt.ControlModifier)
 
         async def check_files_view(self, path, expected_entries, workspace_name="wksp1"):
             expected_table_files = []
@@ -161,7 +161,7 @@ async def files_widget_testbed(monkeypatch, aqtbot, logged_gui):
             monkeypatch.setattr(
                 "parsec.core.gui.files_widget.get_text_input", lambda *args, **kwargs: (name)
             )
-            await aqtbot.mouse_click(f_w.button_create_folder, QtCore.Qt.LeftButton)
+            aqtbot.mouse_click(f_w.button_create_folder, QtCore.Qt.LeftButton)
 
             def _folder_created():
                 for i in range(f_w.table_files.rowCount()):
@@ -248,7 +248,7 @@ async def test_file_browsing_and_edit(
         ),
     )
     async with aqtbot.wait_signal(f_w.import_success):
-        await aqtbot.mouse_click(f_w.button_import_files, QtCore.Qt.LeftButton)
+        aqtbot.mouse_click(f_w.button_import_files, QtCore.Qt.LeftButton)
     await tb.check_files_view(
         path="/", expected_entries=["dir0/", "dir1/", "zdir2/", "file1.txt", "file2.txt"]
     )
@@ -259,7 +259,7 @@ async def test_file_browsing_and_edit(
         classmethod(lambda *args, **kwargs: out_of_parsec_data / "dir3"),
     )
     async with aqtbot.wait_signal(f_w.import_success):
-        await aqtbot.mouse_click(f_w.button_import_folder, QtCore.Qt.LeftButton)
+        aqtbot.mouse_click(f_w.button_import_folder, QtCore.Qt.LeftButton)
     await tb.check_files_view(
         path="/", expected_entries=["dir0/", "dir1/", "dir3/", "zdir2/", "file1.txt", "file2.txt"]
     )
@@ -505,9 +505,7 @@ async def test_cut_dir_in_itself(aqtbot, autoclose_dialog, files_widget_testbed)
 
 @pytest.mark.gui
 @pytest.mark.trio
-async def test_drag_and_drop(
-    qt_thread_gateway, tmpdir, aqtbot, autoclose_dialog, files_widget_testbed
-):
+async def test_drag_and_drop(tmpdir, aqtbot, autoclose_dialog, files_widget_testbed):
     tb = files_widget_testbed
     f_w = files_widget_testbed.files_widget
 
@@ -529,7 +527,7 @@ async def test_drag_and_drop(
 
     # Good drap&drop
 
-    await qt_thread_gateway.send_action(_import_file)
+    _import_file()
     await tb.check_files_view(path="/", expected_entries=["file1.txt"])
 
     # Drap&drop in readonly workspace is not allowed
@@ -537,7 +535,7 @@ async def test_drag_and_drop(
     # Quick hack to have a read-only workspace ;-)
     f_w.table_files.current_user_role = WorkspaceRole.READER
 
-    await qt_thread_gateway.send_action(_import_file)
+    _import_file()
 
     def _import_failed():
         assert autoclose_dialog.dialogs == [("Error", _("TEXT_FILE_DROP_WORKSPACE_IS_READ_ONLY"))]
@@ -575,7 +573,7 @@ async def test_import_file_permission_denied(
         )
 
         async with aqtbot.wait_signal(f_w.button_import_files.clicked):
-            await aqtbot.mouse_click(f_w.button_import_files, QtCore.Qt.LeftButton)
+            aqtbot.mouse_click(f_w.button_import_files, QtCore.Qt.LeftButton)
 
         def _import_failed():
             assert autoclose_dialog.dialogs == [
@@ -595,7 +593,7 @@ async def test_import_file_permission_denied(
         )
 
         async with aqtbot.wait_signal(f_w.button_import_files.clicked):
-            await aqtbot.mouse_click(f_w.button_import_files, QtCore.Qt.LeftButton)
+            aqtbot.mouse_click(f_w.button_import_files, QtCore.Qt.LeftButton)
 
         def _import_error_shown():
             assert autoclose_dialog.dialogs == [
@@ -695,7 +693,7 @@ async def test_use_file_link(aqtbot, autoclose_dialog, files_widget_testbed):
 
     # Create and use file link
     url = f_w.workspace_fs.generate_file_link("/foo/bar.txt")
-    await aqtbot.run(tb.logged_gui.add_instance, str(url))
+    tb.logged_gui.add_instance(str(url))
 
     def _selection_on_file():
         assert tb.pwd() == "/foo"

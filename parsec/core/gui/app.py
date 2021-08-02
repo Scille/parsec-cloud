@@ -2,11 +2,11 @@
 
 import sys
 import signal
-from queue import Queue
 from typing import Optional
 from contextlib import contextmanager
-from enum import Enum
+
 import trio
+import qtrio
 from structlog import get_logger
 from PyQt5.QtCore import QTimer, Qt
 from PyQt5.QtWidgets import QApplication
@@ -28,7 +28,7 @@ try:
     from parsec.core.gui.new_version import CheckNewVersion
     from parsec.core.gui.systray import systray_available, Systray
     from parsec.core.gui.main_window import MainWindow
-    from parsec.core.gui.trio_thread import ThreadSafeQtSignal, run_trio_thread
+    from parsec.core.gui.trio_jobs import run_trio_job_scheduler
 except ImportError as exc:
     raise ModuleNotFoundError(
         """PyQt forms haven't been generated.
@@ -47,53 +47,47 @@ def before_quit(systray):
     return _before_quit
 
 
-IPCServerStartupOutcome = Enum("IPCServerStartupOutcome", "STARTED ALREADY_RUNNING ERROR")
+async def _run_ipc_server(config, main_window, start_arg, task_status=trio.TASK_STATUS_IGNORED):
+    new_instance_needed = main_window.new_instance_needed
+    foreground_needed = main_window.foreground_needed
 
+    async def _cmd_handler(cmd):
+        if cmd["cmd"] == IPCCommand.FOREGROUND:
+            foreground_needed.emit()
+        elif cmd["cmd"] == IPCCommand.NEW_INSTANCE:
+            new_instance_needed.emit(cmd.get("start_arg"))
+        return {"status": "ok"}
 
-async def _run_ipc_server(config, main_window, start_arg, result_queue):
-    try:
-        new_instance_needed_qt = ThreadSafeQtSignal(main_window, "new_instance_needed", object)
-        foreground_needed_qt = ThreadSafeQtSignal(main_window, "foreground_needed")
+    # Loop over attemps at running an IPC server or sending the command to an existing one
+    while True:
 
-        async def _cmd_handler(cmd):
-            if cmd["cmd"] == IPCCommand.FOREGROUND:
-                foreground_needed_qt.emit()
-            elif cmd["cmd"] == IPCCommand.NEW_INSTANCE:
-                new_instance_needed_qt.emit(cmd.get("start_arg"))
-            return {"status": "ok"}
+        # Attempt to run an IPC server if Parsec is not already started
+        try:
+            async with run_ipc_server(
+                _cmd_handler, config.ipc_socket_file, win32_mutex_name=config.ipc_win32_mutex_name
+            ):
+                task_status.started()
+                await trio.sleep_forever()
 
-        while True:
+        # Parsec is already started, give it our work then
+        except IPCServerAlreadyRunning:
+
+            # Protect against race conditions, in case the server was shutting down
             try:
-                async with run_ipc_server(
-                    _cmd_handler,
-                    config.ipc_socket_file,
-                    win32_mutex_name=config.ipc_win32_mutex_name,
-                ):
-                    result_queue.put_nowait(IPCServerStartupOutcome.STARTED)
-                    await trio.sleep_forever()
+                if start_arg:
+                    await send_to_ipc_server(
+                        config.ipc_socket_file, IPCCommand.NEW_INSTANCE, start_arg=start_arg
+                    )
+                else:
+                    await send_to_ipc_server(config.ipc_socket_file, IPCCommand.FOREGROUND)
 
-            except IPCServerAlreadyRunning:
-                # Parsec is already started, give it our work then
-                try:
-                    if start_arg:
-                        await send_to_ipc_server(
-                            config.ipc_socket_file, IPCCommand.NEW_INSTANCE, start_arg=start_arg
-                        )
-                    else:
-                        await send_to_ipc_server(config.ipc_socket_file, IPCCommand.FOREGROUND)
+            # IPC server has closed, retry to create our own
+            except IPCServerNotRunning:
+                continue
 
-                except IPCServerNotRunning:
-                    # IPC server has closed, retry to create our own
-                    continue
-
-                # We have successfuly noticed the other running application
-                result_queue.put_nowait(IPCServerStartupOutcome.ALREADY_RUNNING)
-                break
-
-    except Exception:
-        result_queue.put_nowait(IPCServerStartupOutcome.ERROR)
-        # Let the exception bubble up so QtToTrioJob logged it as an unexpected error
-        raise
+            # We have successfuly noticed the other running application
+            # We can now forward the exception to the caller
+            raise
 
 
 @contextmanager
@@ -141,44 +135,36 @@ def run_gui(config: CoreConfig, start_arg: Optional[str] = None, diagnose: bool 
         Qt.HighDpiScaleFactorRoundingPolicy.PassThrough
     )
 
+    # The parsec app needs to be instanciated before qtrio runs in order
+    # to be the default QApplication instance
     app = ParsecApp()
+    assert QApplication.instance() is app
+    return qtrio.run(_run_gui, app, config, start_arg, diagnose)
 
+
+async def _run_gui(
+    app: ParsecApp, config: CoreConfig, start_arg: str = None, diagnose: bool = False
+):
     app.load_stylesheet()
     app.load_font()
 
     lang_key = lang.switch_language(config)
 
     event_bus = EventBus()
-    with run_trio_thread() as jobs_ctx:
+    async with run_trio_job_scheduler() as jobs_ctx:
         win = MainWindow(
             jobs_ctx=jobs_ctx,
+            quit_callback=jobs_ctx.close,
             event_bus=event_bus,
             config=config,
             minimize_on_close=config.gui_tray_enabled and systray_available(),
         )
 
-        result_queue = Queue(maxsize=1)
-
-        class ThreadSafeNoQtSignal(ThreadSafeQtSignal):
-            def __init__(self):
-                self.qobj = None
-                self.signal_name = ""
-                self.args_types = ()
-
-            def emit(self, *args):
-                pass
-
-        jobs_ctx.submit_job(
-            ThreadSafeNoQtSignal(),
-            ThreadSafeNoQtSignal(),
-            _run_ipc_server,
-            config,
-            win,
-            start_arg,
-            result_queue,
-        )
-        if result_queue.get() == IPCServerStartupOutcome.ALREADY_RUNNING:
-            # Another instance of Parsec already started, nothing more to do
+        # Attempt to run an IPC server if Parsec is not already started
+        try:
+            await jobs_ctx.nursery.start(_run_ipc_server, config, win, start_arg)
+        # Another instance of Parsec already started, nothing more to do
+        except IPCServerAlreadyRunning:
             return
 
         # If we are here, it's either the IPC server has successfully started
@@ -214,7 +200,6 @@ def run_gui(config: CoreConfig, start_arg: Optional[str] = None, diagnose: bool 
 
         def kill_window(*args):
             win.close_app(force=True)
-            QApplication.quit()
 
         signal.signal(signal.SIGINT, kill_window)
 
@@ -234,7 +219,7 @@ def run_gui(config: CoreConfig, start_arg: Optional[str] = None, diagnose: bool 
 
         if diagnose:
             with fail_on_first_exception(kill_window):
-                return app.exec_()
+                await trio.sleep_forever()
         else:
             with log_pyqt_exceptions():
-                return app.exec_()
+                await trio.sleep_forever()

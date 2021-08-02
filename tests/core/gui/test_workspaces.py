@@ -3,11 +3,8 @@
 import pytest
 from PyQt5 import QtCore
 
-from uuid import UUID
-import pendulum
-from unittest.mock import ANY, Mock
+from unittest.mock import Mock
 
-from parsec.api.data import WorkspaceEntry
 from parsec.core.types import WorkspaceRole
 from parsec.core.core_events import CoreEvent
 from parsec.core.fs import FSWorkspaceNoReadAccess
@@ -31,7 +28,7 @@ async def test_add_workspace(
     monkeypatch.setattr(
         "parsec.core.gui.workspaces_widget.get_text_input", lambda *args, **kwargs: (workspace_name)
     )
-    await aqtbot.mouse_click(w_w.button_add_workspace, QtCore.Qt.LeftButton)
+    aqtbot.mouse_click(w_w.button_add_workspace, QtCore.Qt.LeftButton)
 
     def _outcome_occured():
         assert w_w.layout_workspaces.count() == 1
@@ -81,7 +78,7 @@ async def test_rename_workspace(
     monkeypatch.setattr(
         "parsec.core.gui.workspaces_widget.get_text_input", lambda *args, **kwargs: (workspace_name)
     )
-    await aqtbot.mouse_click(wk_button.button_rename, QtCore.Qt.LeftButton)
+    aqtbot.mouse_click(wk_button.button_rename, QtCore.Qt.LeftButton)
 
     def _outcome_occured():
         assert w_w.layout_workspaces.count() == 1
@@ -136,61 +133,6 @@ async def test_mountpoint_remote_error_event(aqtbot, running_backend, logged_gui
     )
 
 
-@pytest.mark.skip("Should be reworked")
-@pytest.mark.gui
-@pytest.mark.trio
-async def test_event_bus_internal_connection(aqtbot, running_backend, logged_gui, autoclose_dialog):
-    w_w = await logged_gui.test_switch_to_workspaces_widget()
-    uuid = UUID("1bc1e17b-157a-462f-86f2-7f64657ba16a")
-    w_entry = WorkspaceEntry(
-        name="w",
-        id=ANY,
-        key=ANY,
-        encryption_revision=1,
-        encrypted_on=ANY,
-        role_cached_on=ANY,
-        role=None,
-    )
-
-    async with aqtbot.wait_signal(w_w.fs_synced_qt):
-        w_w.event_bus.send(CoreEvent.FS_ENTRY_SYNCED, workspace_id=None, id=uuid)
-
-    async with aqtbot.wait_signal(w_w.fs_updated_qt):
-        w_w.event_bus.send(CoreEvent.FS_ENTRY_UPDATED, workspace_id=uuid, id=None)
-
-    async with aqtbot.wait_signal(w_w._workspace_created_qt):
-        w_w.event_bus.send(CoreEvent.FS_WORKSPACE_CREATED, new_entry=w_entry)
-
-    async with aqtbot.wait_signal(w_w.sharing_updated_qt):
-        w_w.event_bus.send(CoreEvent.SHARING_UPDATED, new_entry=w_entry, previous_entry=None)
-
-    async with aqtbot.wait_signal(w_w.entry_downsynced_qt):
-        w_w.event_bus.send(CoreEvent.FS_ENTRY_DOWNSYNCED, workspace_id=uuid, id=uuid)
-
-    async with aqtbot.wait_signal(w_w.mountpoint_started):
-        w_w.event_bus.send(
-            CoreEvent.MOUNTPOINT_STARTED,
-            mountpoint=None,
-            workspace_id=uuid,
-            timestamp=pendulum.now(),
-        )
-
-    assert not autoclose_dialog.dialogs
-    async with aqtbot.wait_signal(w_w.mountpoint_stopped):
-        w_w.event_bus.send(
-            CoreEvent.MOUNTPOINT_STOPPED,
-            mountpoint=None,
-            workspace_id=uuid,
-            timestamp=pendulum.now(),
-        )
-    assert autoclose_dialog.dialogs == [
-        (
-            "Error",
-            "Your permissions on this workspace have been revoked. You no longer have access to theses files.",
-        )
-    ]
-
-
 @pytest.mark.gui
 @pytest.mark.trio
 async def test_mountpoint_open_in_explorer_button(aqtbot, running_backend, logged_gui, monkeypatch):
@@ -227,7 +169,7 @@ async def test_mountpoint_open_in_explorer_button(aqtbot, running_backend, logge
     await aqtbot.wait_until(_initially_mounted, timeout=3000)
 
     # Now switch to umounted
-    await aqtbot.mouse_click(wk_button.switch_button, QtCore.Qt.LeftButton)
+    aqtbot.mouse_click(wk_button.switch_button, QtCore.Qt.LeftButton)
 
     def _unmounted():
         nonlocal wk_button
@@ -247,7 +189,7 @@ async def test_mountpoint_open_in_explorer_button(aqtbot, running_backend, logge
         assert core.mountpoint_manager.is_workspace_mounted(wid)
 
     # Now switch back to mounted
-    await aqtbot.mouse_click(wk_button.switch_button, QtCore.Qt.LeftButton)
+    aqtbot.mouse_click(wk_button.switch_button, QtCore.Qt.LeftButton)
     await aqtbot.wait_until(_mounted, timeout=3000)
 
     # Test open button
@@ -255,22 +197,14 @@ async def test_mountpoint_open_in_explorer_button(aqtbot, running_backend, logge
     def _wk_opened():
         open_workspace_mock.assert_called_once()
 
-    await aqtbot.mouse_click(wk_button.button_open, QtCore.Qt.LeftButton)
+    aqtbot.mouse_click(wk_button.button_open, QtCore.Qt.LeftButton)
     await aqtbot.wait_until(_wk_opened)
 
 
 @pytest.mark.gui
 @pytest.mark.trio
 async def test_workspace_filter_user(
-    aqtbot,
-    running_backend,
-    logged_gui,
-    autoclose_dialog,
-    qt_thread_gateway,
-    alice_user_fs,
-    bob,
-    bob_user_fs,
-    alice,
+    aqtbot, running_backend, logged_gui, autoclose_dialog, alice_user_fs, bob, bob_user_fs, alice
 ):
     w_w = await logged_gui.test_switch_to_workspaces_widget()
     wid_alice = await alice_user_fs.workspace_create("Workspace1")
@@ -327,7 +261,7 @@ async def test_workspace_filter_user(
 
     # Remove filter
 
-    await aqtbot.mouse_click(w_w.filter_remove_button, QtCore.Qt.LeftButton)
+    aqtbot.mouse_click(w_w.filter_remove_button, QtCore.Qt.LeftButton)
 
     await aqtbot.wait_until(_workspace_listed, timeout=2000)
 
@@ -339,7 +273,6 @@ async def test_workspace_filter_user_new_workspace(
     running_backend,
     logged_gui,
     autoclose_dialog,
-    qt_thread_gateway,
     alice_user_fs,
     bob,
     bob_user_fs,
@@ -390,7 +323,7 @@ async def test_workspace_filter_user_new_workspace(
     monkeypatch.setattr(
         "parsec.core.gui.workspaces_widget.get_text_input", lambda *args, **kwargs: ("Workspace2")
     )
-    await aqtbot.mouse_click(w_w.button_add_workspace, QtCore.Qt.LeftButton)
+    aqtbot.mouse_click(w_w.button_add_workspace, QtCore.Qt.LeftButton)
 
     def _new_workspace_listed():
         assert w_w.layout_workspaces.count() == 2

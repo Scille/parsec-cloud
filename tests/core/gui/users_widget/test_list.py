@@ -129,8 +129,8 @@ async def test_filter_users(aqtbot, running_backend, logged_gui):
     await aqtbot.wait_until(lambda: _all_users_visible(u_w=u_w))
 
     async with aqtbot.wait_signal(u_w.list_success):
-        await aqtbot.key_clicks(u_w.line_edit_search, "bo")
-        await aqtbot.mouse_click(u_w.button_users_filter, QtCore.Qt.LeftButton)
+        aqtbot.key_clicks(u_w.line_edit_search, "bo")
+        aqtbot.mouse_click(u_w.button_users_filter, QtCore.Qt.LeftButton)
 
     await aqtbot.wait_until(lambda: _users_shown(count=1))
 
@@ -148,8 +148,8 @@ async def test_filter_users(aqtbot, running_backend, logged_gui):
 
     # Test find()
     async with aqtbot.wait_signal(u_w.list_success):
-        await aqtbot.key_clicks(u_w.line_edit_search, "McA")
-        await aqtbot.key_press(u_w.line_edit_search, Qt.Key_Enter)
+        aqtbot.key_clicks(u_w.line_edit_search, "McA")
+        aqtbot.key_press(u_w.line_edit_search, Qt.Key_Enter)
 
     assert u_w.layout_users.count() == 2
 

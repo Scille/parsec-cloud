@@ -12,6 +12,7 @@ from pathlib import PurePath
 from fuse import FUSE
 from structlog import get_logger
 from contextlib import contextmanager
+from async_generator import asynccontextmanager
 from itertools import count
 
 from parsec.event_bus import EventBus
@@ -89,14 +90,13 @@ async def _teardown_mountpoint(mountpoint_path):
         pass
 
 
+@asynccontextmanager
 async def fuse_mountpoint_runner(
     user_fs: UserFS,
     workspace_fs: WorkspaceFS,
     base_mountpoint_path: PurePath,
     config: dict,
     event_bus: EventBus,
-    *,
-    task_status=trio.TASK_STATUS_IGNORED,
 ):
     """
     Raises:
@@ -193,15 +193,15 @@ async def fuse_mountpoint_runner(
                 )
                 await _wait_for_fuse_ready(mountpoint_path, fuse_thread_started, initial_st_dev)
 
-            event_bus.send(CoreEvent.MOUNTPOINT_STARTED, **event_kwargs)
-            task_status.started(mountpoint_path)
+            # Indicate the mountpoint is now started
+            yield mountpoint_path
 
     finally:
+        event_bus.send(CoreEvent.MOUNTPOINT_STOPPING, **event_kwargs)
         with trio.CancelScope(shield=True) as teardown_cancel_scope:
             await _stop_fuse_thread(
                 mountpoint_path, fuse_operations, fuse_thread_started, fuse_thread_stopped
             )
-            event_bus.send(CoreEvent.MOUNTPOINT_STOPPED, **event_kwargs)
             await _teardown_mountpoint(mountpoint_path)
 
 

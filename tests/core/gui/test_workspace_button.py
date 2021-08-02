@@ -54,7 +54,7 @@ async def test_workspace_button(qtbot, workspace_fs, core_config, alice_user_inf
         is_mounted=True,
         files=[],
     )
-    qtbot.addWidget(w)
+    qtbot.add_widget(w)
     w.show()
 
     assert w.widget_empty.isVisible() is True
@@ -86,7 +86,7 @@ async def test_workspace_button_owned_by(
         files=[],
     )
 
-    qtbot.addWidget(w)
+    qtbot.add_widget(w)
     w.show()
     assert w.widget_empty.isVisible() is True
     assert w.widget_files.isVisible() is False
@@ -117,7 +117,7 @@ async def test_workspace_button_shared_with(
         files=[],
     )
 
-    qtbot.addWidget(w)
+    qtbot.add_widget(w)
     w.show()
     assert w.widget_empty.isVisible() is True
     assert w.widget_files.isVisible() is False
@@ -143,7 +143,7 @@ async def test_workspace_button_files(qtbot, workspace_fs, core_config, alice_us
         files=["File1.txt", "File2.txt", "Dir1"],
     )
 
-    qtbot.addWidget(w)
+    qtbot.add_widget(w)
     w.show()
     assert w.widget_empty.isVisible() is False
     assert w.widget_files.isVisible() is True
@@ -170,7 +170,7 @@ async def test_workspace_button_clicked(qtbot, workspace_fs, core_config, alice_
         files=[],
     )
 
-    qtbot.addWidget(w)
+    qtbot.add_widget(w)
     with qtbot.waitSignal(w.clicked, timeout=500) as blocker:
         qtbot.mouseClick(w, QtCore.Qt.LeftButton)
     assert blocker.args == [workspace_fs]
@@ -189,7 +189,7 @@ async def test_workspace_button_share_clicked(qtbot, workspace_fs, core_config, 
         is_mounted=True,
         files=[],
     )
-    qtbot.addWidget(w)
+    qtbot.add_widget(w)
     with qtbot.waitSignal(w.share_clicked, timeout=500) as blocker:
         qtbot.mouseClick(w.button_share, QtCore.Qt.LeftButton)
     assert blocker.args == [workspace_fs]
@@ -208,7 +208,7 @@ async def test_workspace_button_rename_clicked(qtbot, workspace_fs, core_config,
         is_mounted=True,
         files=[],
     )
-    qtbot.addWidget(w)
+    qtbot.add_widget(w)
     with qtbot.waitSignal(w.rename_clicked, timeout=500) as blocker:
         qtbot.mouseClick(w.button_rename, QtCore.Qt.LeftButton)
     assert blocker.args == [w]
@@ -233,7 +233,7 @@ async def test_workspace_button_reencrypt_clicked(
         user_revoked=True, role_revoked=False, reencryption_already_in_progress=False
     )
 
-    qtbot.addWidget(w)
+    qtbot.add_widget(w)
 
     assert not w.button_reencrypt.isHidden()
 
@@ -261,7 +261,7 @@ async def test_workspace_button_delete_clicked(qtbot, workspace_fs, core_config,
         is_mounted=True,
         files=[],
     )
-    qtbot.addWidget(w)
+    qtbot.add_widget(w)
     with qtbot.waitSignal(w.delete_clicked, timeout=500) as blocker:
         qtbot.mouseClick(w.button_delete, QtCore.Qt.LeftButton)
     assert blocker.args == [workspace_fs]

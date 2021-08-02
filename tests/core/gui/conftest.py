@@ -1,21 +1,20 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2016-2021 Scille SAS
 
-import pytest
-from unittest.mock import patch
-from functools import wraps, partial
-import trio
-from trio.testing import trio_test as vanilla_trio_test
-import queue
-import threading
-from concurrent import futures
 from importlib import import_module
-from PyQt5 import QtCore
+from async_exit_stack import AsyncExitStack
+from async_generator import asynccontextmanager
+
+import trio
+import qtrio
+import pytest
+from PyQt5 import QtCore, QtTest
+from pytestqt.exceptions import TimeoutError
 
 from parsec import __version__ as parsec_version
 from parsec.core.local_device import save_device_with_password
 from parsec.core.gui.main_window import MainWindow
 from parsec.core.gui.workspaces_widget import WorkspaceButton
-from parsec.core.gui.trio_thread import QtToTrioJobScheduler
+from parsec.core.gui.trio_jobs import QtToTrioJobScheduler
 from parsec.core.gui.login_widget import LoginWidget, LoginPasswordInputWidget, LoginAccountsWidget
 from parsec.core.gui.central_widget import CentralWidget
 from parsec.core.gui.lang import switch_language
@@ -23,194 +22,96 @@ from parsec.core.gui.parsec_application import ParsecApp
 from parsec.core.local_device import LocalDeviceAlreadyExistsError
 
 
-class ThreadedTrioTestRunner:
-    def __init__(self):
-        self._thread = None
-        self._trio_token = None
-        self._request_queue = queue.Queue()
-        self._test_result = futures.Future()
-        self._job_scheduler = QtToTrioJobScheduler()
-
-        # State events
-        self._stopping = None
-        self._started = threading.Event()
-
-    def start_test_thread(self, fn, **kwargs):
-        async_target = partial(self._test_target, fn)
-        sync_target = partial(vanilla_trio_test(async_target), **kwargs)
-        self._thread = threading.Thread(target=sync_target)
-        self._thread.start()
-        self._started.wait()
-
-    def process_requests_until_test_result(self):
-        self._process_requests()
-        return self._test_result.result()
-
-    def stop_test_thread(self):
-        # Set the stopping state event
-        trio.from_thread.run_sync(self._stopping.set, trio_token=self._trio_token)
-        self._thread.join()
-
-    async def send_action(self, fn, *args, **kwargs):
-        reply_sender, reply_receiver = trio.open_memory_channel(1)
-
-        def reply_callback(future):
-            trio.from_thread.run_sync(reply_sender.send_nowait, future, trio_token=self._trio_token)
-
-        request = partial(fn, *args, **kwargs)
-        self._request_queue.put_nowait((request, reply_callback))
-        reply = await reply_receiver.receive()
-        return reply.result()
-
-    def _process_requests(self):
-        for request, callback in iter(self._request_queue.get, None):
-            reply = futures.Future()
-            try:
-                result = request()
-            except Exception as exc:
-                reply.set_exception(exc)
-            else:
-                reply.set_result(result)
-            callback(reply)
-
-    async def _run_with_job_scheduler(self, fn, **kwargs):
-        async with trio.open_service_nursery() as nursery:
-            await nursery.start(self._job_scheduler._start)
-            try:
-                return await fn(**kwargs)
-            finally:
-                await self._job_scheduler._stop()
-
-    async def _test_target(self, fn, **kwargs):
-        # Initialize trio objects
-        self._stopping = trio.Event()
-        self._trio_token = trio.lowlevel.current_trio_token()
-
-        # Set the started state event
-        self._started.set()
-
-        # Run the test
-        try:
-            result = await self._run_with_job_scheduler(fn, **kwargs)
-        except BaseException as exc:
-            self._test_result.set_exception(exc)
-        else:
-            self._test_result.set_result(result)
-
-        # Indicate there will be no more requests
-        self._request_queue.put_nowait(None)
-
-        # Let the trio loop run until teardown
-        await self._stopping.wait()
-
-
-# Not an async fixture (and doesn't depend on an async fixture either)
-# this fixture will actually be executed *before* pytest-trio setup
-# the trio loop, giving us a chance to monkeypatch it !
 @pytest.fixture
-def run_trio_test_in_thread():
-    runner = ThreadedTrioTestRunner()
-
-    def trio_test(run):
-        def decorator(fn):
-            @wraps(fn)
-            def wrapper(**kwargs):
-                runner.start_test_thread(fn, **kwargs)
-                return runner.process_requests_until_test_result()
-
-            return wrapper
-
-        return decorator
-
-    with patch("pytest_trio.plugin._trio_test", new=trio_test):
-
-        yield runner
-
-        # Wait for the last moment before stopping the thread
-        runner.stop_test_thread()
+@pytest.mark.trio
+async def job_scheduler():
+    async with trio.open_nursery() as nursery:
+        yield QtToTrioJobScheduler(nursery)
+        nursery.cancel_scope.cancel()
 
 
 @pytest.fixture
-async def qt_thread_gateway(run_trio_test_in_thread):
-    return run_trio_test_in_thread
-
-
-@pytest.fixture
-async def aqtbot(qtbot, run_trio_test_in_thread):
-    return AsyncQtBot(qtbot, run_trio_test_in_thread)
-
-
-class CtxManagerAsyncWrapped:
-    def __init__(self, qtbot, qt_thread_gateway, fnname, *args, **kwargs):
-        self.qtbot = qtbot
-        self.qt_thread_gateway = qt_thread_gateway
-        self.fnname = fnname
-        self.args = args
-        self.kwargs = kwargs
-        self.ctx = None
-
-    async def __aenter__(self):
-        def _action_enter():
-            self.ctx = getattr(self.qtbot, self.fnname)(*self.args, **self.kwargs)
-            self.ctx.__enter__()
-
-        await self.qt_thread_gateway.send_action(_action_enter)
-
-    async def __aexit__(self, exc_type, exc, tb):
-        def _action_exit():
-            self.ctx.__exit__(exc_type, exc, tb)
-
-        await self.qt_thread_gateway.send_action(_action_exit)
+def aqtbot(qtbot):
+    return AsyncQtBot(qtbot)
 
 
 class AsyncQtBot:
-    def __init__(self, qtbot, qt_thread_gateway):
+    def __init__(self, qtbot):
         self.qtbot = qtbot
-        self.qt_thread_gateway = qt_thread_gateway
-        self.run = self.qt_thread_gateway.send_action
 
-        def _autowrap(fnname):
-            async def wrapper(*args, **kwargs):
-                def _action():
-                    return getattr(self.qtbot, fnname)(*args, **kwargs)
+    def __getattr__(self, name):
+        words = name.split("_")
+        camel_name = words[0] + "".join(word.title() for word in words[1:])
+        if hasattr(self.qtbot, camel_name):
+            return getattr(self.qtbot, camel_name)
+        raise AttributeError(name)
 
-                return await self.qt_thread_gateway.send_action(_action)
+    async def wait(self, timeout):
+        await trio.sleep(timeout / 1000)
 
-            wrapper.__name__ = f"{fnname}"
-            return wrapper
+    async def wait_until(self, callback, *, timeout=5000):
+        """Implementation shamelessly adapted from:
+        https://github.com/pytest-dev/pytest-qt/blob/16b989d700dfb91fe389999d8e2676437169ed44/src/pytestqt/qtbot.py#L459
+        """
+        __tracebackhide__ = True
 
-        self.key_click = _autowrap("keyClick")
-        self.key_clicks = _autowrap("keyClicks")
-        self.key_event = _autowrap("keyEvent")
-        self.key_press = _autowrap("keyPress")
-        self.key_release = _autowrap("keyRelease")
-        # self.key_to_ascii = self.qtbot.keyToAscii  # available ?
-        self.mouse_click = _autowrap("mouseClick")
-        self.mouse_d_click = _autowrap("mouseDClick")
-        self.mouse_move = _autowrap("mouseMove")
-        self.mouse_press = _autowrap("mousePress")
-        self.mouse_release = _autowrap("mouseRelease")
+        start = trio.current_time()
 
-        self.add_widget = _autowrap("add_widget")
-        self.stop = _autowrap("stop")
-        self.wait = _autowrap("wait")
-        self.wait_until = _autowrap("wait_until")
+        def timed_out():
+            elapsed = trio.current_time() - start
+            elapsed_ms = elapsed * 1000
+            return elapsed_ms > timeout
 
-        def _autowrap_ctx_manager(fnname):
-            def wrapper(*args, **kwargs):
-                return CtxManagerAsyncWrapped(
-                    self.qtbot, self.qt_thread_gateway, fnname, *args, **kwargs
-                )
+        timeout_msg = f"wait_until timed out in {timeout} milliseconds"
 
-            wrapper.__name__ = f"{fnname}"
-            return wrapper
+        while True:
+            try:
+                result = callback()
+            except AssertionError:
+                result = False
+            if result not in (None, True, False):
+                msg = f"waitUntil() callback must return None, True or False, returned {result!r}"
+                raise ValueError(msg)
+            if result in (True, None):
+                return
+            if timed_out():
+                raise TimeoutError(timeout_msg)
+            await trio.sleep(0.010)
 
-        self.wait_signal = _autowrap_ctx_manager("wait_signal")
-        self.wait_signals = _autowrap_ctx_manager("wait_signals")
-        self.assert_not_emitted = _autowrap_ctx_manager("assert_not_emitted")
-        self.wait_active = _autowrap_ctx_manager("wait_active")
-        self.wait_exposed = _autowrap_ctx_manager("wait_exposed")
-        self.capture_exceptions = _autowrap_ctx_manager("capture_exceptions")
+    @asynccontextmanager
+    async def wait_signals(self, signals, *, timeout=5000):
+        with trio.fail_after(timeout / 1000):
+            async with AsyncExitStack() as stack:
+                for signal in signals:
+                    await stack.enter_async_context(qtrio._core.wait_signal_context(signal))
+                yield
+
+    @asynccontextmanager
+    async def wait_signal(self, signal, *, timeout=5000):
+        async with self.wait_signals((signal,), timeout=timeout):
+            yield
+
+    @asynccontextmanager
+    async def wait_active(self, widget, *, timeout=5000):
+        deadline = trio.current_time() + timeout / 1000
+        yield
+        while True:
+            if QtTest.QTest.qWaitForWindowActive(widget, 10):
+                return
+            if trio.current_time() > deadline:
+                raise TimeoutError
+            await trio.sleep(0.010)
+
+    @asynccontextmanager
+    async def wait_exposed(self, widget, *, timeout=5000):
+        deadline = trio.current_time() + timeout / 1000
+        yield
+        while True:
+            if QtTest.QTest.qWaitForWindowExposed(widget, 10):
+                return
+            if trio.current_time() > deadline:
+                raise TimeoutError
+            await trio.sleep(0.010)
 
 
 @pytest.fixture
@@ -289,7 +190,12 @@ def throttled_job_fast_wait(monkeypatch):
 
 @pytest.fixture
 def gui_factory(
-    aqtbot, qtbot, qt_thread_gateway, testing_main_window_cls, core_config, event_bus_factory
+    aqtbot,
+    job_scheduler,
+    testing_main_window_cls,
+    core_config,
+    event_bus_factory,
+    running_backend_ready,
 ):
     windows = []
 
@@ -300,6 +206,9 @@ def gui_factory(
         skip_dialogs=True,
         throttle_job_no_wait=True,
     ):
+        # Wait for the backend to run if necessary
+        await running_backend_ready.wait()
+
         # First start popup blocks the test
         # Check version and mountpoint are useless for most tests
         core_config = core_config.evolve(
@@ -311,36 +220,30 @@ def gui_factory(
             gui_show_confined=False,
         )
         event_bus = event_bus or event_bus_factory()
-        # Language config rely on global var, must reset it for each test !
-        switch_language(core_config)
-
         ParsecApp.connected_devices = set()
 
-        def _create_main_window():
-            switch_language(core_config, "en")
+        # Language config rely on global var, must reset it for each test !
+        switch_language(core_config, "en")
 
-            # Pass minimize_on_close to avoid having test blocked by the
-            # closing confirmation prompt
-            main_w = testing_main_window_cls(
-                qt_thread_gateway._job_scheduler, event_bus, core_config, minimize_on_close=True
-            )
-            qtbot.add_widget(main_w)
-            main_w.show_window(skip_dialogs=skip_dialogs)
-            main_w.show_top()
-            windows.append(main_w)
-            main_w.add_instance(start_arg)
+        # Pass minimize_on_close to avoid having test blocked by the closing confirmation prompt
+        main_w = testing_main_window_cls(
+            job_scheduler, job_scheduler.close, event_bus, core_config, minimize_on_close=True
+        )
+        aqtbot.add_widget(main_w)
+        main_w.show_window(skip_dialogs=skip_dialogs)
+        main_w.show_top()
+        windows.append(main_w)
+        main_w.add_instance(start_arg)
 
-            def right_main_window():
-                assert ParsecApp.get_main_window() is main_w
+        def right_main_window():
+            assert ParsecApp.get_main_window() is main_w
 
-            # For some reasons, the main window from the previous test might
-            # still be around. Simply wait for things to settle down until
-            # our freshly created window is detected as the app main window.
-            qtbot.wait_until(right_main_window)
+        # For some reasons, the main window from the previous test might
+        # still be around. Simply wait for things to settle down until
+        # our freshly created window is detected as the app main window.
+        await aqtbot.wait_until(right_main_window)
 
-            return main_w
-
-        return await qt_thread_gateway.send_action(_create_main_window)
+        return main_w
 
     return _gui_factory
 
@@ -373,7 +276,7 @@ async def logged_gui(aqtbot, gui_factory, core_config, alice, bob, fixtures_cust
 
 
 @pytest.fixture
-def testing_main_window_cls(aqtbot, qt_thread_gateway):
+def testing_main_window_cls(aqtbot):
     # Since widgets are not longer persistent and are instantiated only when needed,
     # we can no longer simply access them.
     # These methods help to retrieve a widget according to the current state of the GUI.
@@ -426,14 +329,9 @@ def testing_main_window_cls(aqtbot, qt_thread_gateway):
 
         async def test_logout(self):
             central_widget = self.test_get_central_widget()
-
-            def _trigger_logout_menu():
-                central_widget.button_user.menu().actions()[2].trigger()
-
             tabw = self.test_get_tab()
-
             async with aqtbot.wait_signal(tabw.logged_out):
-                await qt_thread_gateway.send_action(_trigger_logout_menu)
+                central_widget.button_user.menu().actions()[2].trigger()
 
             def _wait_logged_out():
                 assert not central_widget.isVisible()
@@ -455,7 +353,7 @@ def testing_main_window_cls(aqtbot, qt_thread_gateway):
 
             if isinstance(accounts_w, LoginAccountsWidget):
                 async with aqtbot.wait_signal(accounts_w.account_clicked):
-                    await aqtbot.mouse_click(
+                    aqtbot.mouse_click(
                         accounts_w.accounts_widget.layout().itemAt(0).widget(), QtCore.Qt.LeftButton
                     )
 
@@ -464,11 +362,11 @@ def testing_main_window_cls(aqtbot, qt_thread_gateway):
 
             await aqtbot.wait_until(_password_widget_shown)
             password_w = l_w.widget.layout().itemAt(0).widget()
-            await aqtbot.key_clicks(password_w.line_edit_password, password)
+            aqtbot.key_clicks(password_w.line_edit_password, password)
 
             signal = tabw.logged_in if not error else tabw.login_failed
             async with aqtbot.wait_signals([l_w.login_with_password_clicked, signal]):
-                await aqtbot.mouse_click(password_w.button_login, QtCore.Qt.LeftButton)
+                aqtbot.mouse_click(password_w.button_login, QtCore.Qt.LeftButton)
 
             def _wait_logged_in():
                 assert not l_w.isVisible()
@@ -484,7 +382,7 @@ def testing_main_window_cls(aqtbot, qt_thread_gateway):
             d_w = self.test_get_devices_widget()
             signal = d_w.list_error if error else d_w.list_success
             async with aqtbot.wait_exposed(d_w), aqtbot.wait_signal(signal, timeout=3000):
-                await aqtbot.mouse_click(central_widget.menu.button_devices, QtCore.Qt.LeftButton)
+                aqtbot.mouse_click(central_widget.menu.button_devices, QtCore.Qt.LeftButton)
             return d_w
 
         async def test_switch_to_users_widget(self, error=False):
@@ -492,7 +390,7 @@ def testing_main_window_cls(aqtbot, qt_thread_gateway):
             u_w = self.test_get_users_widget()
             signal = u_w.list_error if error else u_w.list_success
             async with aqtbot.wait_exposed(u_w), aqtbot.wait_signal(signal, timeout=3000):
-                await aqtbot.mouse_click(central_widget.menu.button_users, QtCore.Qt.LeftButton)
+                aqtbot.mouse_click(central_widget.menu.button_users, QtCore.Qt.LeftButton)
             return u_w
 
         async def test_switch_to_workspaces_widget(self, error=False):
@@ -500,7 +398,7 @@ def testing_main_window_cls(aqtbot, qt_thread_gateway):
             w_w = self.test_get_workspaces_widget()
             signal = w_w.list_error if error else w_w.list_success
             async with aqtbot.wait_exposed(w_w), aqtbot.wait_signal(signal, timeout=3000):
-                await aqtbot.mouse_click(central_widget.menu.button_files, QtCore.Qt.LeftButton)
+                aqtbot.mouse_click(central_widget.menu.button_files, QtCore.Qt.LeftButton)
             return w_w
 
         async def test_switch_to_files_widget(self, workspace_name, error=False):
@@ -514,9 +412,18 @@ def testing_main_window_cls(aqtbot, qt_thread_gateway):
                 raise AssertionError(f"Workspace `{workspace_name}` not found")
 
             f_w = self.test_get_files_widget()
-            async with aqtbot.wait_exposed(f_w), aqtbot.wait_signal(f_w.folder_changed):
-                await aqtbot.mouse_click(wk_button, QtCore.Qt.LeftButton)
 
+            # We need to make sure the workspace button is ready for left click first
+            async with aqtbot.wait_exposed(f_w):
+                pass
+            await aqtbot.wait_until(wk_button.switch_button.isChecked)
+
+            # Send the click and wait for the folder changed signal
+            async with aqtbot.wait_signal(f_w.folder_changed):
+                aqtbot.mouse_click(wk_button, QtCore.Qt.LeftButton)
+
+            # Wait for the spinner to disappear, meaning the folder information is properly displayed
+            await aqtbot.wait_until(f_w.spinner.isHidden)
             return f_w
 
         async def test_switch_to_logged_in(self, device):
@@ -527,7 +434,7 @@ def testing_main_window_cls(aqtbot, qt_thread_gateway):
 
             lw = self.test_get_login_widget()
             # Reload to take into account the new saved device
-            await aqtbot.run(lw.reload_devices)
+            lw.reload_devices()
             tabw = self.test_get_tab()
 
             accounts_w = lw.widget.layout().itemAt(0).widget()
@@ -535,7 +442,7 @@ def testing_main_window_cls(aqtbot, qt_thread_gateway):
 
             if isinstance(accounts_w, LoginAccountsWidget):
                 async with aqtbot.wait_signal(accounts_w.account_clicked):
-                    await aqtbot.mouse_click(
+                    aqtbot.mouse_click(
                         accounts_w.accounts_widget.layout().itemAt(0).widget(), QtCore.Qt.LeftButton
                     )
 
@@ -546,10 +453,10 @@ def testing_main_window_cls(aqtbot, qt_thread_gateway):
 
             password_w = lw.widget.layout().itemAt(0).widget()
 
-            await aqtbot.key_clicks(password_w.line_edit_password, "P@ssw0rd")
+            aqtbot.key_clicks(password_w.line_edit_password, "P@ssw0rd")
 
             async with aqtbot.wait_signals([lw.login_with_password_clicked, tabw.logged_in]):
-                await aqtbot.mouse_click(password_w.button_login, QtCore.Qt.LeftButton)
+                aqtbot.mouse_click(password_w.button_login, QtCore.Qt.LeftButton)
 
             central_widget = self.test_get_central_widget()
             assert central_widget is not None

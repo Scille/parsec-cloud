@@ -27,7 +27,7 @@ async def test_invite_user(
     )
 
     if online:
-        await aqtbot.mouse_click(u_w.button_add_user, QtCore.Qt.LeftButton)
+        aqtbot.mouse_click(u_w.button_add_user, QtCore.Qt.LeftButton)
 
         def _new_invitation_displayed():
             assert u_w.layout_users.count() == 4
@@ -52,7 +52,7 @@ async def test_invite_user(
             "parsec.core.gui.users_widget.get_text_input",
             lambda *args, **kwargs: bob.human_handle.email,
         )
-        await aqtbot.mouse_click(u_w.button_add_user, QtCore.Qt.LeftButton)
+        aqtbot.mouse_click(u_w.button_add_user, QtCore.Qt.LeftButton)
 
         def _already_member():
             assert autoclose_dialog.dialogs == [
@@ -63,7 +63,7 @@ async def test_invite_user(
 
     else:
         with running_backend.offline():
-            await aqtbot.mouse_click(u_w.button_add_user, QtCore.Qt.LeftButton)
+            aqtbot.mouse_click(u_w.button_add_user, QtCore.Qt.LeftButton)
 
             def _email_send_failed():
                 assert autoclose_dialog.dialogs == [
@@ -104,7 +104,7 @@ async def test_revoke_user(
     )
 
     if online:
-        await aqtbot.run(bob_w.revoke_clicked.emit, bob_w.user_info)
+        bob_w.revoke_clicked.emit(bob_w.user_info)
 
         def _revocation_done():
             assert bob_w.user_info.is_revoked is True
@@ -119,7 +119,7 @@ async def test_revoke_user(
 
     else:
         with running_backend.offline():
-            await aqtbot.run(bob_w.revoke_clicked.emit, bob_w.user_info)
+            bob_w.revoke_clicked.emit(bob_w.user_info)
 
             def _revocation_error():
                 assert bob_w.user_info.is_revoked is False
@@ -149,7 +149,7 @@ async def test_revoke_user_not_allowed(
         lambda *args, **kwargs: _("ACTION_USER_REVOCATION_CONFIRM"),
     )
 
-    await aqtbot.run(alice_w.revoke_clicked.emit, alice_w.user_info)
+    alice_w.revoke_clicked.emit(alice_w.user_info)
 
     def _revocation_error():
         assert alice_w.user_info.is_revoked is False
@@ -185,7 +185,7 @@ async def test_cancel_user_invitation(
     u_w = await logged_gui.test_switch_to_users_widget()
 
     # Invite new user
-    await aqtbot.mouse_click(u_w.button_add_user, QtCore.Qt.LeftButton)
+    aqtbot.mouse_click(u_w.button_add_user, QtCore.Qt.LeftButton)
 
     def _new_invitation_displayed():
         assert u_w.layout_users.count() == 4
@@ -202,7 +202,7 @@ async def test_cancel_user_invitation(
     assert user_invitation_w.email == email
 
     # Cancel invitation
-    await aqtbot.mouse_click(user_invitation_w.button_cancel, QtCore.Qt.LeftButton)
+    aqtbot.mouse_click(user_invitation_w.button_cancel, QtCore.Qt.LeftButton)
 
     def _new_invitation_removed():
         assert u_w.layout_users.count() == 3

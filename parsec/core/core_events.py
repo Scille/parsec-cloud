@@ -26,8 +26,9 @@ class CoreEvent(Enum):
     GUI_CONFIG_CHANGED = "gui.config.changed"
     # Mountpoint
     MOUNTPOINT_REMOTE_ERROR = "mountpoint.remote_error"
-    MOUNTPOINT_STARTED = "mountpoint.started"
     MOUNTPOINT_STARTING = "mountpoint.starting"
+    MOUNTPOINT_STARTED = "mountpoint.started"
+    MOUNTPOINT_STOPPING = "mountpoint.stopping"
     MOUNTPOINT_STOPPED = "mountpoint.stopped"
     MOUNTPOINT_UNHANDLED_ERROR = "mountpoint.unhandled_error"
     # Others

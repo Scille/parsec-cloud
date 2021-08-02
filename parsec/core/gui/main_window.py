@@ -9,7 +9,7 @@ from distutils.version import LooseVersion
 
 from PyQt5.QtCore import QCoreApplication, pyqtSignal, Qt, QSize
 from PyQt5.QtGui import QColor, QIcon, QKeySequence, QResizeEvent, QCloseEvent
-from PyQt5.QtWidgets import QMainWindow, QApplication, QMenu, QShortcut
+from PyQt5.QtWidgets import QMainWindow, QMenu, QShortcut
 
 from parsec import __version__ as PARSEC_VERSION
 from parsec.event_bus import EventBus, EventCallback
@@ -22,7 +22,7 @@ from parsec.core.types import (
     BackendOrganizationFileLinkAddr,
 )
 from parsec.api.protocol import InvitationType
-from parsec.core.gui.trio_thread import QtToTrioJobScheduler
+from parsec.core.gui.trio_jobs import QtToTrioJobScheduler
 from parsec.core.gui.lang import translate as _
 from parsec.core.gui.instance_widget import InstanceWidget
 from parsec.core.gui.parsec_application import ParsecApp
@@ -68,6 +68,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):  # type: ignore[misc]
     def __init__(
         self,
         jobs_ctx: QtToTrioJobScheduler,
+        quit_callback: Callable[[], None],
         event_bus: EventBus,
         config: CoreConfig,
         minimize_on_close: bool = False,
@@ -78,6 +79,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):  # type: ignore[misc]
 
         self.setMenuBar(None)
         self.jobs_ctx = jobs_ctx
+        self.quit_callback = quit_callback
         self.event_bus = event_bus
         self.config = config
         self.minimize_on_close = minimize_on_close
@@ -744,4 +746,4 @@ class MainWindow(QMainWindow, Ui_MainWindow):  # type: ignore[misc]
             self.event_bus.send(CoreEvent.GUI_CONFIG_CHANGED, gui_geometry=state)
             self.close_all_tabs()
             event.accept()
-            QApplication.quit()
+            self.quit_callback()
