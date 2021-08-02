@@ -13,17 +13,14 @@ from parsec.api.protocol import (
     apiv1_organization_bootstrap_serializer,
 )
 from parsec.api.protocol.handshake import HandshakeOrganizationExpired
-from parsec.backend.utils import Unset
 
 from tests.common import freeze_time, customize_fixtures
 from tests.backend.common import ping
 from tests.fixtures import local_device_to_backend_user
 
 
-async def organization_create(sock, organization_id, expiration_date=Unset):
-    req = {"cmd": "organization_create", "organization_id": organization_id}
-    if expiration_date is not Unset:
-        req["expiration_date"] = expiration_date
+async def organization_create(sock, organization_id, **kwargs):
+    req = {"cmd": "organization_create", "organization_id": organization_id, **kwargs}
     raw_rep = await sock.send(apiv1_organization_create_serializer.req_dumps(req))
     raw_rep = await sock.recv()
     return apiv1_organization_create_serializer.rep_loads(raw_rep)
@@ -548,11 +545,12 @@ async def test_organization_spontaneous_bootstrap(
     empty_token = ""
 
     # Step 1: organization creation (if needed)
+
     if flavour == "create_same_token":
         # Basically pretent we already tried the spontaneous
         # bootstrap but got interrupted
         step1_token = empty_token
-        step1_expiration_date = Unset
+        step1_expiration_date = None
     else:
         # Administration explicitly created an organization,
         # we shouldn't be able to overwrite it
@@ -564,6 +562,7 @@ async def test_organization_spontaneous_bootstrap(
             bootstrap_token=step1_token,
             expiration_date=step1_expiration_date,
         )
+
     # Step 2: organization bootstrap
 
     newalice = local_device_factory(org=neworg, profile=UserProfile.ADMIN)
