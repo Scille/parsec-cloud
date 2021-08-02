@@ -364,6 +364,7 @@ class BaseOrganizationComponent:
         bootstrap_token: str,
         expiration_date: Union[UnsetType, Optional[DateTime]] = Unset,
         active_users_limit: Union[UnsetType, Optional[int]] = Unset,
+        user_profile_outsider_allowed: Union[UnsetType, bool] = Unset,
     ) -> None:
         """
         Raises:
@@ -406,8 +407,8 @@ class BaseOrganizationComponent:
         self,
         id: OrganizationID,
         expiration_date: Union[UnsetType, Optional[DateTime]] = Unset,
+        active_users_limit: Union[UnsetType, Optional[int]] = Unset,
         user_profile_outsider_allowed: Union[UnsetType, bool] = Unset,
-        active_users_limit: Union[UnsetType, int] = Unset,
     ):
         """
         Raises:
