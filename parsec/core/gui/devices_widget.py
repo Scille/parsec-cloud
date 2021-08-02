@@ -5,7 +5,7 @@ from PyQt5.QtWidgets import QWidget, QGraphicsDropShadowEffect, QLabel
 from PyQt5.QtGui import QColor
 
 from parsec.core.backend_connection import BackendNotAvailable, BackendConnectionError
-from parsec.core.gui.trio_thread import JobResultError, QtToTrioJob
+from parsec.core.gui.trio_jobs import JobResultError, QtToTrioJob
 from parsec.core.gui.greet_device_widget import GreetDeviceWidget
 from parsec.core.gui.lang import translate as _
 from parsec.core.gui.custom_widgets import ensure_string_size

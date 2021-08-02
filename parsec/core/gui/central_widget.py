@@ -27,7 +27,7 @@ from parsec.core.fs import (
     FSWorkspaceNoWriteAccess,
     FSWorkspaceInMaintenance,
 )
-from parsec.core.gui.trio_thread import QtToTrioJobScheduler
+from parsec.core.gui.trio_jobs import QtToTrioJobScheduler
 from parsec.core.gui.mount_widget import MountWidget
 from parsec.core.gui.users_widget import UsersWidget
 from parsec.core.gui.devices_widget import DevicesWidget
@@ -37,7 +37,7 @@ from parsec.core.gui.lang import translate as _
 from parsec.core.gui.custom_widgets import Pixmap
 from parsec.core.gui.custom_dialogs import show_error
 from parsec.core.gui.ui.central_widget import Ui_CentralWidget
-from parsec.core.gui.trio_thread import JobResultError, QtToTrioJob
+from parsec.core.gui.trio_jobs import JobResultError, QtToTrioJob
 
 
 async def _do_get_organization_stats(core: LoggedCore) -> OrganizationStats:

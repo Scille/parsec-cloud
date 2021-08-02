@@ -10,7 +10,7 @@ from parsec.api.data import UserProfile
 from parsec.api.protocol import HumanHandle
 from parsec.core.backend_connection import BackendNotAvailable
 from parsec.core.invite import InviteError, InvitePeerResetError, InviteAlreadyUsedError
-from parsec.core.gui.trio_thread import JobResultError, QtToTrioJob
+from parsec.core.gui.trio_jobs import JobResultError, QtToTrioJob
 from parsec.core.gui.custom_dialogs import show_error, GreyedDialog, show_info
 from parsec.core.gui import validators
 from parsec.core.gui.lang import translate as _

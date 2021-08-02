@@ -1,6 +1,5 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2016-2021 Scille SAS
 
-from parsec.core.core_events import CoreEvent
 import trio
 import logging
 import sys
@@ -14,6 +13,7 @@ from subprocess import CalledProcessError
 
 from async_generator import asynccontextmanager
 
+from parsec.core.core_events import CoreEvent
 from parsec.core.types import FsPath, EntryID
 from parsec.core.fs.workspacefs import WorkspaceFSTimestamped
 from parsec.utils import TaskStatus, start_task, open_service_nursery
@@ -174,6 +174,11 @@ class MountpointManager:
                     task_status.started(mountpoint_path)
                     self._mountpoint_tasks[key] = task_status
                     self.event_bus.send(CoreEvent.MOUNTPOINT_STARTED, **event_kwargs)
+
+                    # It is the reponsability of the runner context teardown to wait
+                    # for cancellation. This is done to avoid adding an extra nursery
+                    # into the winfsp runner, for simplicity. This could change in the
+                    # future in which case we'll simmply add a `sleep_forever` below.
 
             finally:
                 # Pop the mountpoint task if its ours

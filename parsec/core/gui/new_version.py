@@ -17,7 +17,7 @@ from parsec import __version__
 from parsec.serde import BaseSchema, fields, JSONSerializer, SerdeError
 from parsec.core.gui import desktop
 from parsec.core.gui.lang import translate as _
-from parsec.core.gui.trio_thread import QtToTrioJob
+from parsec.core.gui.trio_jobs import QtToTrioJob
 from parsec.core.gui.ui.new_version_dialog import Ui_NewVersionDialog
 from parsec.core.gui.ui.new_version_info import Ui_NewVersionInfo
 from parsec.core.gui.ui.new_version_available import Ui_NewVersionAvailable

@@ -34,7 +34,7 @@ from parsec.core.mountpoint.exceptions import (
     MountpointNoDriveAvailable,
 )
 
-from parsec.core.gui.trio_thread import JobResultError, QtToTrioJob, JobSchedulerNotAvailable
+from parsec.core.gui.trio_jobs import JobResultError, QtToTrioJob, JobSchedulerNotAvailable
 from parsec.core.gui import desktop
 from parsec.core.gui.custom_dialogs import show_error, get_text_input, ask_question
 from parsec.core.gui.flow_layout import FlowLayout

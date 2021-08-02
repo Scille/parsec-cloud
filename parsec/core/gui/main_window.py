@@ -22,7 +22,7 @@ from parsec.core.types import (
     BackendOrganizationFileLinkAddr,
 )
 from parsec.api.protocol import InvitationType
-from parsec.core.gui.trio_thread import QtToTrioJobScheduler
+from parsec.core.gui.trio_jobs import QtToTrioJobScheduler
 from parsec.core.gui.lang import translate as _
 from parsec.core.gui.instance_widget import InstanceWidget
 from parsec.core.gui.parsec_application import ParsecApp

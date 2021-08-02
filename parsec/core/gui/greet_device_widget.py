@@ -8,7 +8,7 @@ from PyQt5.QtWidgets import QWidget
 
 from parsec.core.backend_connection import BackendNotAvailable, BackendConnectionError
 from parsec.core.invite import InviteError, InvitePeerResetError, InviteAlreadyUsedError
-from parsec.core.gui.trio_thread import JobResultError, QtToTrioJob
+from parsec.core.gui.trio_jobs import JobResultError, QtToTrioJob
 from parsec.core.gui.custom_dialogs import show_error, GreyedDialog, show_info
 from parsec.core.gui.lang import translate as _
 from parsec.core.gui.qrcode_widget import generate_qr_code

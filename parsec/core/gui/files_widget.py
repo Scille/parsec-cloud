@@ -19,7 +19,7 @@ from parsec.core.fs.exceptions import (
     FSFileNotFoundError,
 )
 
-from parsec.core.gui.trio_thread import JobResultError, QtToTrioJob
+from parsec.core.gui.trio_jobs import JobResultError, QtToTrioJob
 from parsec.core.gui import desktop
 from parsec.core.gui.file_items import FileType, TYPE_DATA_INDEX, UUID_DATA_INDEX
 from parsec.core.gui.custom_dialogs import (
@@ -918,6 +918,7 @@ class FilesWidget(QWidget, Ui_FilesWidget):
             show_error(self, _("TEXT_FILE_FOLDER_CREATE_ERROR_UNKNOWN"))
 
     def _on_import_success(self, job):
+        assert self.import_job is job
         assert self.loading_dialog
         self.loading_dialog.hide()
         self.loading_dialog.setParent(None)

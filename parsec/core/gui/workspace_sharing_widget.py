@@ -11,7 +11,7 @@ from parsec.core.fs import FSError, FSBackendOfflineError
 from parsec.core.types import WorkspaceRole
 from parsec.core.backend_connection import BackendNotAvailable
 
-from parsec.core.gui.trio_thread import JobResultError, QtToTrioJob
+from parsec.core.gui.trio_jobs import JobResultError, QtToTrioJob
 
 from parsec.core.gui.custom_dialogs import show_error, GreyedDialog
 from parsec.core.gui.custom_widgets import Pixmap

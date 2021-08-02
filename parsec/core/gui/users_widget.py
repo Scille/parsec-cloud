@@ -18,7 +18,7 @@ from parsec.core.backend_connection import (
     BackendInvitationOnExistingMember,
 )
 
-from parsec.core.gui.trio_thread import JobResultError, QtToTrioJob
+from parsec.core.gui.trio_jobs import JobResultError, QtToTrioJob
 from parsec.core.gui.custom_dialogs import show_error, show_info, ask_question, get_text_input
 from parsec.core.gui.custom_widgets import ensure_string_size
 from parsec.core.gui.flow_layout import FlowLayout

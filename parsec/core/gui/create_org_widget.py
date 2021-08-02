@@ -21,9 +21,9 @@ from parsec.core.invite import (
 )
 from parsec.core.local_device import save_device_with_password
 
-from parsec.core.gui.trio_thread import QtToTrioJob
+from parsec.core.gui.trio_jobs import QtToTrioJob
 from parsec.core.gui.custom_dialogs import GreyedDialog, show_error, show_info
-from parsec.core.gui.trio_thread import JobResultError
+from parsec.core.gui.trio_jobs import JobResultError
 from parsec.core.gui.desktop import get_default_device
 from parsec.core.gui.lang import translate as _
 from parsec.core.gui import validators

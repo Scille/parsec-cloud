@@ -19,8 +19,8 @@ from parsec.core.mountpoint import (
     MountpointWinfspNotAvailable,
 )
 
-from parsec.core.gui.trio_thread import QtToTrioJob
-from parsec.core.gui.trio_thread import QtToTrioJobScheduler, run_trio_job_scheduler
+from parsec.core.gui.trio_jobs import QtToTrioJob
+from parsec.core.gui.trio_jobs import QtToTrioJobScheduler, run_trio_job_scheduler
 from parsec.core.gui.parsec_application import ParsecApp
 from parsec.core.gui.custom_dialogs import show_error, show_info_link
 from parsec.core.gui.lang import translate as _

@@ -14,7 +14,7 @@ from parsec import __version__ as parsec_version
 from parsec.core.local_device import save_device_with_password
 from parsec.core.gui.main_window import MainWindow
 from parsec.core.gui.workspaces_widget import WorkspaceButton
-from parsec.core.gui.trio_thread import QtToTrioJobScheduler
+from parsec.core.gui.trio_jobs import QtToTrioJobScheduler
 from parsec.core.gui.login_widget import LoginWidget, LoginPasswordInputWidget, LoginAccountsWidget
 from parsec.core.gui.central_widget import CentralWidget
 from parsec.core.gui.lang import switch_language
@@ -76,7 +76,7 @@ class AsyncQtBot:
                 return
             if timed_out():
                 raise TimeoutError(timeout_msg)
-            await self.wait(10)
+            await trio.sleep(0.010)
 
     @asynccontextmanager
     async def wait_signals(self, signals, *, timeout=5000):

@@ -3,7 +3,7 @@
 from PyQt5.QtCore import pyqtSignal
 from PyQt5.QtWidgets import QWidget
 
-from parsec.core.gui.trio_thread import QtToTrioJob
+from parsec.core.gui.trio_jobs import QtToTrioJob
 from parsec.core.gui.lang import translate as _, format_datetime
 from parsec.core.gui.custom_dialogs import show_error, GreyedDialog
 from parsec.core.gui.file_size import get_filesize

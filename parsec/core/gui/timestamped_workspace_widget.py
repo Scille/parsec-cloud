@@ -8,7 +8,7 @@ from structlog import get_logger
 
 import pendulum
 
-from parsec.core.gui.trio_thread import QtToTrioJob
+from parsec.core.gui.trio_jobs import QtToTrioJob
 from parsec.core.gui.lang import get_qlocale, translate as _, format_datetime
 from parsec.core.gui.custom_dialogs import show_error, GreyedDialog
 from parsec.core.gui.ui.timestamped_workspace_widget import Ui_TimestampedWorkspaceWidget
@@ -79,7 +79,8 @@ class TimestampedWorkspaceWidget(QWidget, Ui_TimestampedWorkspaceWidget):
             self.time_edit.clearMaximumTime()
 
     def on_error(self, job):
-        if self.limits_job and self.limits_job.status != "cancelled":
+        assert self.limits_job is job
+        if self.limits_job.status != "cancelled":
             show_error(
                 self,
                 _("TEXT_WORKSPACE_TIMESTAMPED_VERSION_RETRIEVAL_FAILED"),
@@ -89,6 +90,7 @@ class TimestampedWorkspaceWidget(QWidget, Ui_TimestampedWorkspaceWidget):
         self.dialog.reject()
 
     def on_success(self, job):
+        assert self.limits_job is job
         creation = self.limits_job.ret.in_timezone("local")
         self.limits_job = None
         self.creation_date = (creation.year, creation.month, creation.day)

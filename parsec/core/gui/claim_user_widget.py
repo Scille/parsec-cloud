@@ -18,7 +18,7 @@ from parsec.core.backend_connection import (
     BackendNotAvailable,
 )
 from parsec.core.gui import validators
-from parsec.core.gui.trio_thread import JobResultError, QtToTrioJob
+from parsec.core.gui.trio_jobs import JobResultError, QtToTrioJob
 from parsec.core.gui.desktop import get_default_device
 from parsec.core.gui.custom_dialogs import show_error, GreyedDialog, show_info
 from parsec.core.gui.lang import translate as _

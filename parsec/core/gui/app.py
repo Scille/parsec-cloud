@@ -28,7 +28,7 @@ try:
     from parsec.core.gui.new_version import CheckNewVersion
     from parsec.core.gui.systray import systray_available, Systray
     from parsec.core.gui.main_window import MainWindow
-    from parsec.core.gui.trio_thread import run_trio_job_scheduler
+    from parsec.core.gui.trio_jobs import run_trio_job_scheduler
 except ImportError as exc:
     raise ModuleNotFoundError(
         """PyQt forms haven't been generated.
