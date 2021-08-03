@@ -4,7 +4,16 @@ import json
 import importlib_resources
 
 import tests.schemas
-from tests.schemas.builder import generate_api_data_specs, generate_core_data_specs
+from tests.schemas.builder import (
+    generate_api_protocol_specs,
+    generate_api_data_specs,
+    generate_core_data_specs,
+)
+
+
+def test_api_protocol_compat():
+    specs = json.loads(importlib_resources.read_text(tests.schemas, "api_protocol.json"))
+    assert generate_api_protocol_specs() == specs
 
 
 def test_api_data_compat():

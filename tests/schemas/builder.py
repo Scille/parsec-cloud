@@ -1,5 +1,6 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2016-2021 Scille SAS
 
+import re
 import json
 import pkgutil
 import importlib
@@ -15,6 +16,7 @@ from parsec.serde.fields import (
     BaseEnumField,
 )
 
+from parsec.api.protocol.base import CmdSerializer
 from parsec.api.data.base import BaseData, BaseAPIData, BaseSignedData, BaseAPISignedData
 from parsec.api.data.manifest import BaseManifest
 from parsec.api.data.message import BaseMessageContent
@@ -133,14 +135,109 @@ def generate_core_data_specs():
     return {data_cls.__name__: data_class_to_spec(data_cls) for data_cls in data_classes}
 
 
+def collect_cmd_serializers_from_module(mod):
+    data_classes = []
+    for item_name in dir(mod):
+        item = getattr(mod, item_name)
+        # Ignore non-data classes
+        if not isinstance(item, type) or not issubclass(item, _BASE_DATA_CLASSES):
+            continue
+        if item in _BASE_DATA_CLASSES:
+            continue
+        # Data classes with default serializer cannot be serialized, hence no need
+        # to check them (note they will be checked if they are used in Nested field)
+        if item.SERIALIZER_CLS is BaseSerializer:
+            continue
+        # Ignore imported classes (avoid to populate current module collection
+        # with extenal imported schema.
+        # Example: Avoid to add imported api schemas while generating parsec.core.types)
+        if not item.__module__.startswith(mod.__name__):
+            continue
+        data_classes.append(item)
+    return data_classes
+
+
+def cmd_serializer_to_spec(cmd_serializer: CmdSerializer):
+    assert isinstance(cmd_serializer, CmdSerializer)
+    # Serialization should always be msgpack, but add it just to be sure...
+    return {
+        "req": {
+            "serializing": _SERIALIZER_TO_STR[type(cmd_serializer._req_serializer)],
+            **schema_to_spec(cmd_serializer._req_serializer.schema),
+        },
+        "rep": {
+            "serializing": _SERIALIZER_TO_STR[type(cmd_serializer._rep_serializer)],
+            **schema_to_spec(cmd_serializer.rep_noerror_schema),
+        },
+    }
+
+
+def generate_api_protocol_specs():
+    # First collect all command serializers
+    from parsec.api import protocol as protocol_mod
+
+    cmd_serializers = {}
+    for item_name in dir(protocol_mod):
+        item = getattr(protocol_mod, item_name)
+        if not isinstance(item, CmdSerializer):
+            continue
+        # This is where things start to be hacky: given we don't use enum
+        # for command name, and given we sometime use the same schema for
+        # APIv1 and v2 definitions, we rely on a weak naming convention
+        # to do the identification...
+        match = re.match(r"^(?P<name>(apiv1_)?[a-z][a-z0-9_]+)_serializer$", item_name)
+        assert match, f"Invalid name `{item_name}` for CmdSerializer !"
+        cmd_serializers[match.group("name")] = item
+
+    # Now retrieve the per-familly commands sets and generate specs
+    from parsec.api.protocol import cmds as cmds_mod
+
+    specs = {"APIv1": {}, "APIv2": {}}
+    used_cmds_serializers = set()
+    for item_name in dir(cmds_mod):
+        item = getattr(cmds_mod, item_name)
+        # Only keep command sets
+        if item_name.startswith("_") or not isinstance(item, set):
+            continue
+
+        # Just like for command serializers, commands sets have a naming convention
+        match = re.match(r"^(?P<apiv1>APIV1_)?(?P<name>[A-Z][A-Z0-9_]+)_CMDS", item_name)
+        assert match, f"Invalid name `{item_name}` for command set !"
+        cmds_set_name = match.group("name")
+        cmds_set_is_apiv1 = bool(match.group("apiv1"))
+        cmds_set_specs = {}
+
+        # Build command specs for the current commands sets
+        for cmd_name in item:
+            # Retrieve the corresponding command serializer
+            if cmds_set_is_apiv1:
+                # apiv1 commands serializer have the "apiv1_" prefix when the
+                # command name is clashing with a apiv2
+                try:
+                    cmd_serializer = cmd_serializers[f"apiv1_{cmd_name}"]
+                except KeyError:
+                    cmd_serializer = cmd_serializers[cmd_name]
+            else:
+                cmd_serializer = cmd_serializers[cmd_name]
+            used_cmds_serializers.add(cmd_serializer)  # Keep track for sanity check
+            cmds_set_specs[cmd_name] = cmd_serializer_to_spec(cmd_serializer)
+
+        specs["APIv1" if cmds_set_is_apiv1 else "APIv2"][cmds_set_name] = cmds_set_specs
+
+    # Finally ensure no command serializer has been omitted
+    unused_cmds_serializers = set(cmd_serializers.values()) - used_cmds_serializers
+    assert (
+        not unused_cmds_serializers
+    ), f"Command serializer declared but not part of a commands familly group: {unused_cmds_serializers}"
+
+    return specs
+
+
 if __name__ == "__main__":
     import argparse
 
     parser = argparse.ArgumentParser()
-    parser.add_argument("what", choices=["api_data", "core_data"])
+    parser.add_argument("what", choices=["api_protocol", "api_data", "core_data"])
     args = parser.parse_args()
-    if args.what == "api_data":
-        specs = generate_api_data_specs()
-    else:
-        specs = generate_core_data_specs()
+    specs = globals()[f"generate_{args.what}_specs"]()
     print(json.dumps(specs, indent=4, sort_keys=True))
