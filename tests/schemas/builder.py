@@ -5,7 +5,15 @@ import pkgutil
 import importlib
 
 from parsec.serde import BaseSerializer, JSONSerializer, MsgpackSerializer, ZipMsgpackSerializer
-from parsec.serde.fields import List, Map, Tuple, Nested, CheckedConstant, EnumCheckedConstant
+from parsec.serde.fields import (
+    List,
+    Map,
+    Tuple,
+    Nested,
+    CheckedConstant,
+    EnumCheckedConstant,
+    BaseEnumField,
+)
 
 from parsec.api.data.base import BaseData, BaseAPIData, BaseSignedData, BaseAPISignedData
 from parsec.api.data.manifest import BaseManifest
@@ -48,8 +56,16 @@ def field_to_spec(field):
     # Handle nested/meta/special types
     if isinstance(field, CheckedConstant):
         spec["value"] = field.constant
-    if isinstance(field, EnumCheckedConstant):
+    elif isinstance(field, EnumCheckedConstant):
         spec["value"] = field.constant.value
+        spec["enum_type"] = type(field.constant).__name__
+    elif isinstance(field, BaseEnumField):
+        spec["enum_type"] = field.ENUM.__name__
+        # It might seem strange to embed the enum definition in the schema.
+        # This is done to easily see which schema is impacted on enum
+        # modification (for instance adding a value in an enum doesn't impact
+        # a schema using an `EnumCheckedConstant` on this enum).
+        spec["enum_allowed_values"] = [v.value for v in field.ENUM]
     elif isinstance(field, Nested):
         spec["schema"] = schema_to_spec(field.schema)
     elif isinstance(field, List):
@@ -85,7 +101,7 @@ def collect_data_classes_from_module(mod):
         if item in _BASE_DATA_CLASSES:
             continue
         # Data classes with default serializer cannot be serialized, hence no need
-        # to check them (note they will be checked if they used in Nested field)
+        # to check them (note they will be checked if they are used in Nested field)
         if item.SERIALIZER_CLS is BaseSerializer:
             continue
         # Ignore imported classes (avoid to populate current module collection
