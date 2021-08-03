@@ -18,6 +18,7 @@ from parsec.core.types import (
     FileDescriptor,
     BaseLocalManifest,
     LocalFileManifest,
+    LocalWorkspaceManifest,
 )
 from parsec.core.fs.exceptions import FSError, FSLocalMissError, FSInvalidFileDescriptor
 
@@ -265,6 +266,11 @@ class WorkspaceStorage(BaseWorkspaceStorage):
                                 manifest_storage=manifest_storage,
                             )
 
+                            # Populate the cache with the workspace manifest to be able to
+                            # access it synchronously at all time
+                            await instance._load_workspace_manifest()
+                            assert instance.workspace_id in instance.manifest_storage._cache
+
                             # Load "prevent sync" pattern
                             await instance._load_prevent_sync_pattern()
 
@@ -293,6 +299,29 @@ class WorkspaceStorage(BaseWorkspaceStorage):
         return await self.manifest_storage.get_need_sync_entries()
 
     # Manifest interface
+
+    async def _load_workspace_manifest(self) -> None:
+        try:
+            await self.manifest_storage.get_manifest(self.workspace_id)
+
+        except FSLocalMissError:
+            # It is possible to lack the workspace manifest in local (e.g.
+            # the workspace has been created by a third-party and our
+            # device hasn't tried to access it yet).
+            # In such case it is easy to fall back on an empty manifest
+            # which is a good enough aproximation of the very first version
+            # of the manifest (field `created` is invalid, but it will be
+            # correction by the merge during sync).
+            # This trick is not strictly required (the caller must handle missing
+            # file/folder manifests anyway), but it guarantees the workspace
+            # root folder is always consistent (ls/touch/mkdir always works on it).
+            # This is especially important when the workspace is accessed from
+            # file system mountpoint given having a weird error popup when clicking
+            # on the mountpoint from the file explorer really feel like a bug :/
+            manifest = LocalWorkspaceManifest.new_placeholder(
+                author=self.device.device_id, id=self.workspace_id
+            )
+            await self.manifest_storage.set_manifest(self.workspace_id, manifest)
 
     async def get_manifest(self, entry_id: EntryID) -> BaseLocalManifest:
         """Raises: FSLocalMissError"""

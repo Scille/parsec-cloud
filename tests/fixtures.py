@@ -97,7 +97,7 @@ def local_device_factory(coolorg):
         base_human_handle: Optional[str] = None,
         has_device_label: bool = True,
         base_device_label: Optional[str] = None,
-    ):
+    ) -> LocalDevice:
         nonlocal count
 
         if not base_device_id:
@@ -560,6 +560,7 @@ def backend_data_binder_factory(request, backend_addr, initial_user_manifest_sta
                 org.organization_id, bootstrap_token, expiration_date
             )
             if first_device:
+                assert org.organization_id == first_device.organization_id
                 backend_user, backend_first_device = local_device_to_backend_user(first_device, org)
                 await self.backend.organization.bootstrap(
                     org.organization_id,
