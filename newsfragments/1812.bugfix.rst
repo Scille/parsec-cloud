@@ -1,0 +1,1 @@
+Fix rare error when offline while accessing a workspace mounpoint for the first time.
