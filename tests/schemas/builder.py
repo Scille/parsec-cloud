@@ -226,6 +226,10 @@ def generate_api_protocol_specs():
 
     # Finally ensure no command serializer has been omitted
     unused_cmds_serializers = set(cmd_serializers.values()) - used_cmds_serializers
+    # TODO: realm_stats command is not part of commands group, what should we do with it ?
+    from parsec.api.protocol import realm_stats_serializer
+
+    unused_cmds_serializers.remove(realm_stats_serializer)
     assert (
         not unused_cmds_serializers
     ), f"Command serializer declared but not part of a commands familly group: {unused_cmds_serializers}"
