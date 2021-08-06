@@ -2,7 +2,7 @@
 
 import attr
 import functools
-from typing import Optional, Tuple, TypeVar, Type, Union, NoReturn, FrozenSet, Pattern, Dict
+from typing import Optional, Tuple, TypeVar, Type, Union, FrozenSet, Pattern, Dict
 from pendulum import DateTime, now as pendulum_now
 
 from parsec.types import UUID4, FrozenDict
@@ -299,11 +299,13 @@ class BaseLocalManifest(BaseLocalData):
             return LocalUserManifest.from_remote(remote)
         raise ValueError("Wrong remote type")
 
-    def to_remote(self, author: Optional[DeviceID], timestamp: DateTime = None) -> NoReturn:
+    def to_remote(
+        self, author: Optional[DeviceID], timestamp: DateTime = None
+    ) -> BaseRemoteManifest:
         raise NotImplementedError
 
     def match_remote(self, remote_manifest: BaseRemoteManifest) -> bool:
-        reference: BaseRemoteManifest = self.to_remote(
+        reference = self.to_remote(
             author=remote_manifest.author, timestamp=remote_manifest.timestamp
         )
         return reference.evolve(version=remote_manifest.version) == remote_manifest
