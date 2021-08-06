@@ -185,9 +185,10 @@ def merge_manifests(
     assert remote_manifest.author != local_author
 
     # Cannot solve a file conflict directly
-    if not isinstance(local_manifest, (LocalFolderManifest, LocalWorkspaceManifest)):
+    if isinstance(local_manifest, LocalFileManifest):
         raise FSFileConflictError(local_manifest, remote_manifest)
 
+    assert isinstance(local_manifest, (LocalFolderManifest, LocalWorkspaceManifest))
     # Solve the folder conflict
     new_children = merge_folder_children(
         local_manifest.base.children,
@@ -196,8 +197,28 @@ def merge_manifests(
         remote_manifest.author,
     )
 
-    # Mark as updated
-    return local_from_remote.evolve_and_mark_updated(children=new_children)
+    # Children merge can end up with nothing to sync.
+    #
+    # This is typically the case when we sync for the first time a workspace
+    # shared with us that we didn't modified:
+    # - the workspace manifest is a placeholder (with arbitrary update&create dates)
+    # - on sync the update date is different than in the remote, so a merge occurs
+    # - given we didn't modify the workspace, the children merge is trivial
+    # So without this check each each user we share the workspace with would
+    # sync a new workspace manifest version with only it updated date changing :/
+    #
+    # Another case where this happen:
+    # - we have local change on our workspace manifest for removing an entry
+    # - we rely on a base workspace manifest in version N
+    # - remote workspace manifest is in version N+1 and already integrate the removal
+    #
+    # /!\ Extra attention should be payed here if we want to add new fields
+    # /!\ with they own sync logic, as this optimization may shadow them !
+
+    if new_children == local_from_remote.children:
+        return local_from_remote
+    else:
+        return local_from_remote.evolve_and_mark_updated(children=new_children)
 
 
 class SyncTransactions(EntryTransactions):

@@ -201,3 +201,102 @@ async def test_concurrent_devices_agree_on_workspace_manifest(
             alice2_wksp_stat = await alice2_wksp.path_info("/")
             assert alice_wksp_stat == expected_alice_wksp_stat
             assert alice2_wksp_stat == expected_alice_wksp_stat
+
+
+@pytest.mark.trio
+async def test_empty_user_manifest_placeholder_noop_on_resolve_sync(
+    running_backend, user_fs_factory, alice, alice2
+):
+    # Alice creates a workspace and sync it
+    async with user_fs_factory(alice, initialize_in_v0=True) as alice_user_fs:
+        with freeze_time("2000-01-02"):
+            await alice_user_fs.workspace_create("wksp1")
+        with freeze_time("2000-01-03"):
+            await alice_user_fs.sync()
+        alice_user_manifest_v1 = alice_user_fs.get_user_manifest()
+        assert alice_user_manifest_v1.to_stats() == {
+            "id": alice.user_manifest_id,
+            # Fixtures populate backend with an empty v1 user manifest created at 2000-01-01
+            "base_version": 2,
+            "created": datetime(2000, 1, 1),
+            "updated": datetime(2000, 1, 2),
+            "is_placeholder": False,
+            "need_sync": False,
+        }
+
+        with freeze_time("2000-01-04"):
+            # Now Alice2 comes into play with it user manifest placeholder
+            async with user_fs_factory(alice2, initialize_in_v0=True) as alice2_user_fs:
+                with freeze_time("2000-01-05"):
+                    # Access the user manifest to ensure it is created, but do not modify it !
+                    alice2_user_manifest_v0 = alice2_user_fs.get_user_manifest()
+                    assert alice2_user_manifest_v0.to_stats() == {
+                        "id": alice.user_manifest_id,
+                        "base_version": 0,
+                        "created": datetime(2000, 1, 4),
+                        "updated": datetime(2000, 1, 4),
+                        "is_placeholder": True,
+                        "need_sync": True,
+                    }
+
+                    # Finally Alice2 sync, this should not create any remote change
+                    with freeze_time("2000-01-06"):
+                        await alice2_user_fs.sync()
+
+                    alice2_user_manifest_v1 = alice2_user_fs.get_user_manifest()
+                    assert alice2_user_manifest_v1 == alice_user_manifest_v1
+
+
+@pytest.mark.trio
+async def test_empty_workspace_manifest_placeholder_noop_on_resolve_sync(
+    running_backend, user_fs_factory, alice, alice2
+):
+    async with user_fs_factory(alice) as alice_user_fs:
+        async with user_fs_factory(alice2) as alice2_user_fs:
+            # First Alice creates a workspace, then populates and syncs it
+            with freeze_time("2000-01-01"):
+                wksp_id = await alice_user_fs.workspace_create("wksp")
+            alice_wksp = alice_user_fs.get_workspace(wksp_id)
+            with freeze_time("2000-01-02"):
+                await alice_wksp.mkdir("/from_alice")
+            with freeze_time("2000-01-03"):
+                await alice_wksp.sync()
+                await alice_user_fs.sync()
+
+            # Alice2 retrieves the user manifest but NOT the workspace manifest
+            with freeze_time("2000-01-04"):
+                await alice2_user_fs.sync()
+            alice2_wksp = alice2_user_fs.get_workspace(wksp_id)
+
+            # Access the workspace manifest to ensure it is created, but do not modify it !
+            with freeze_time("2000-01-05"):
+                alice2_wksp_stat_v0 = await alice2_wksp.path_info("/")
+            assert alice2_wksp_stat_v0 == {
+                "id": wksp_id,
+                "base_version": 0,
+                "created": datetime(2000, 1, 4),
+                "updated": datetime(2000, 1, 4),
+                "is_placeholder": True,
+                "need_sync": True,
+                "type": "folder",
+                "children": [],
+                "confinement_point": None,
+            }
+
+            # Now proceed to sync, this should end up with no remote changes
+            with freeze_time("2000-01-06"):
+                await alice2_wksp.sync()
+            alice_wksp_stat_v1 = await alice_wksp.path_info("/")
+            alice2_wksp_stat_v1 = await alice2_wksp.path_info("/")
+            assert alice2_wksp_stat_v1 == alice_wksp_stat_v1
+            assert alice2_wksp_stat_v1 == {
+                "id": wksp_id,
+                "base_version": 1,
+                "created": datetime(2000, 1, 1),
+                "updated": datetime(2000, 1, 2),
+                "is_placeholder": False,
+                "need_sync": False,
+                "type": "folder",
+                "children": ["from_alice"],
+                "confinement_point": None,
+            }

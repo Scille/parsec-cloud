@@ -642,6 +642,7 @@ class WorkspaceFS:
             return
 
         if workspace_manifest.is_placeholder:
+            # `create_realm` is idempotent, so we are shielded against concurrency errors
             await self.remote_loader.create_realm(self.workspace_id)
 
     async def sync_by_id(

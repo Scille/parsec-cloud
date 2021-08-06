@@ -108,6 +108,7 @@ async def test_autosync_on_modification(
     # Check workspace and folder have been correctly synced
     await alice2_user_fs.sync()
     workspace2 = alice2_user_fs.get_workspace(wid)
+    await workspace2.sync()
     path_info = await workspace.path_info("/foo")
     path_info2 = await workspace2.path_info("/foo")
     assert path_info == path_info2
@@ -117,6 +118,7 @@ async def test_autosync_on_modification(
 async def test_autosync_on_remote_modifications(
     autojump_clock, running_backend, alice, alice_core, alice2_user_fs
 ):
+    # New workspace
     with alice_core.event_bus.listen() as spy:
         wid = await alice2_user_fs.workspace_create("w")
         await alice2_user_fs.sync()
@@ -124,6 +126,10 @@ async def test_autosync_on_remote_modifications(
         # Wait for event to come back to alice_core
         await spy.wait_multiple_with_timeout(
             [
+                (
+                    CoreEvent.BACKEND_REALM_VLOBS_UPDATED,
+                    {"realm_id": wid, "checkpoint": 1, "src_id": wid, "src_version": 1},
+                ),
                 (
                     CoreEvent.BACKEND_REALM_VLOBS_UPDATED,
                     {
@@ -140,9 +146,12 @@ async def test_autosync_on_remote_modifications(
         # Now wait for alice_core's sync
         with trio.fail_after(60):  # autojump, so not *really* 60s
             await alice_core.wait_idle_monitors()
-        # Check workspace has been correctly synced
-        alice_w = alice_core.user_fs.get_workspace(wid)
 
+    # Check workspace has been correctly synced
+    alice_w = alice_core.user_fs.get_workspace(wid)
+
+    # Remote changes in workspace
+    with alice_core.event_bus.listen() as spy:
         alice2_w = alice2_user_fs.get_workspace(wid)
         await alice2_w.mkdir("/foo")
         foo_id = await alice2_w.path_id("/foo")
@@ -164,10 +173,11 @@ async def test_autosync_on_remote_modifications(
         )
         with trio.fail_after(60):  # autojump, so not *really* 60s
             await alice_core.wait_idle_monitors()
-        # Check folder has been correctly synced
-        path_info = await alice_w.path_info("/foo")
-        path_info2 = await alice2_w.path_info("/foo")
-        assert path_info == path_info2
+
+    # Check folder has been correctly synced
+    path_info = await alice_w.path_info("/foo")
+    path_info2 = await alice2_w.path_info("/foo")
+    assert path_info == path_info2
 
 
 @pytest.mark.trio
@@ -185,6 +195,7 @@ async def test_reconnect_with_remote_changes(
         # Get back modifications from alice
         await alice2_user_fs.sync()
         alice2_w = alice2_user_fs.get_workspace(wid)
+        await alice2_w.sync()
         # Modify the workspace while alice is offline
         await alice2_w.mkdir("/foo/spam")
         await alice2_w.write_bytes("/bar.txt", b"v2")
