@@ -1,11 +1,11 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2016-2021 Scille SAS
 
-from parsec.core.core_events import CoreEvent
 import pytest
 from unittest.mock import ANY
 from pendulum import datetime
 
 from parsec.api.data import UserManifest, WorkspaceEntry
+from parsec.core.core_events import CoreEvent
 from parsec.core.types import WorkspaceRole, LocalUserManifest, EntryID
 from parsec.core.fs import (
     FSError,
@@ -69,38 +69,25 @@ async def test_share_ok(running_backend, alice_user_fs, bob_user_fs, alice, bob,
     with bob_user_fs.event_bus.listen() as spy:
         with freeze_time("2000-01-03"):
             await bob_user_fs.process_last_messages()
+    expected_bob_w1_workspace_entry = WorkspaceEntry(
+        name="w1",
+        id=wid,
+        key=ANY,
+        encryption_revision=1,
+        encrypted_on=datetime(2000, 1, 2),
+        role_cached_on=datetime(2000, 1, 3),
+        role=WorkspaceRole.MANAGER,
+    )
     spy.assert_event_occured(
         CoreEvent.SHARING_UPDATED,
-        {
-            "new_entry": WorkspaceEntry(
-                name="w1",
-                id=wid,
-                key=ANY,
-                encryption_revision=1,
-                encrypted_on=datetime(2000, 1, 2),
-                role_cached_on=datetime(2000, 1, 3),
-                role=WorkspaceRole.MANAGER,
-            ),
-            "previous_entry": None,
-        },
+        {"new_entry": expected_bob_w1_workspace_entry, "previous_entry": None},
     )
 
     aum = alice_user_fs.get_user_manifest()
     bum = bob_user_fs.get_user_manifest()
-    assert len(aum.workspaces) == 1
-    assert len(bum.workspaces) == 1
-    awe = aum.get_workspace_entry(wid)
-    bwe = bum.get_workspace_entry(wid)
 
-    assert bwe.name == "w1"
-    assert bwe.id == awe.id
-    assert bwe.role == WorkspaceRole.MANAGER
-
-    aw = alice_user_fs.get_workspace(wid)
-    bw = bob_user_fs.get_workspace(wid)
-    aw_stat = await aw.path_info("/")
-    bw_stat = await bw.path_info("/")
-    assert aw_stat == bw_stat
+    assert bum.workspaces == (expected_bob_w1_workspace_entry,)
+    assert bum.get_workspace_entry(wid).key == aum.get_workspace_entry(wid).key
 
 
 @pytest.mark.trio
@@ -196,14 +183,24 @@ async def test_unshare_not_shared(running_backend, alice_user_fs, bob_user_fs, a
 
 
 @pytest.mark.trio
+@pytest.mark.parametrize("synced_workspace_manifest", (True, False))
 async def test_share_to_another_after_beeing_unshared(
-    running_backend, alice_user_fs, bob_user_fs, alice, bob
+    running_backend, alice_user_fs, bob_user_fs, alice, bob, synced_workspace_manifest
 ):
     # Share a workspace...
     with freeze_time("2000-01-02"):
         wid = await alice_user_fs.workspace_create("w1")
     await alice_user_fs.workspace_share(wid, bob.user_id, WorkspaceRole.MANAGER)
     await bob_user_fs.process_last_messages()
+
+    # Sanity check to ensure Bob knows about Alice's workspace but hasn't
+    # retrieve the workspace manifest uploaded by Alice
+    bob_wfs = bob_user_fs.get_workspace(wid)
+    bob_workspace_info = await bob_wfs.path_info("/")
+    assert bob_workspace_info["is_placeholder"] is True
+
+    if synced_workspace_manifest:
+        await bob_wfs.sync()
 
     # ...and unshare it
     await alice_user_fs.workspace_share(wid, bob.user_id, None)
@@ -378,18 +375,44 @@ async def test_share_with_sharing_name_already_taken(
         },
     )
 
-    assert len(bob_user_fs.get_user_manifest().workspaces) == 3
-
-    b_aw_stat = await bob_user_fs.get_workspace(awid).path_info("/")
-    a_aw_stat = await alice_user_fs.get_workspace(awid).path_info("/")
-    b_aw_stat.pop("need_sync")
-    a_aw_stat.pop("need_sync")
-    assert b_aw_stat == a_aw_stat
-
-    b_bw_stat = await bob_user_fs.get_workspace(bwid).path_info("/")
-    assert b_bw_stat["id"] == bwid
-    b_bw2_stat = await bob_user_fs.get_workspace(bw2id).path_info("/")
-    assert b_bw2_stat["id"] == bw2id
+    bob_user_manifest = bob_user_fs.get_user_manifest()
+    assert len(bob_user_manifest.workspaces) == 3
+    assert (
+        WorkspaceEntry(
+            name="w",
+            id=bwid,
+            key=ANY,
+            encryption_revision=1,
+            encrypted_on=datetime(2000, 1, 1),
+            role_cached_on=datetime(2000, 1, 1),
+            role=RealmRole.OWNER,
+        )
+        in bob_user_manifest.workspaces
+    )
+    assert (
+        WorkspaceEntry(
+            name="w",
+            id=bw2id,
+            key=ANY,
+            encryption_revision=1,
+            encrypted_on=datetime(2000, 1, 1),
+            role_cached_on=datetime(2000, 1, 1),
+            role=RealmRole.OWNER,
+        )
+        in bob_user_manifest.workspaces
+    )
+    assert (
+        WorkspaceEntry(
+            name="w",
+            id=awid,
+            key=ANY,
+            encryption_revision=1,
+            encrypted_on=datetime(2000, 1, 1),
+            role_cached_on=datetime(2000, 1, 2),
+            role=RealmRole.MANAGER,
+        )
+        in bob_user_manifest.workspaces
+    )
 
 
 @pytest.mark.trio

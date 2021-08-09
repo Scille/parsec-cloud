@@ -40,7 +40,6 @@ from parsec.core.types import (
     EntryID,
     EntryName,
     LocalDevice,
-    LocalWorkspaceManifest,
     WorkspaceEntry,
     WorkspaceRole,
     LocalUserManifest,
@@ -274,19 +273,25 @@ class UserFS:
 
         await self.storage.set_user_manifest(manifest)
 
-    async def _instantiate_workspace_storage(self, workspace_id: EntryID) -> WorkspaceStorage:
+    async def _instantiate_workspace_storage(
+        self, workspace_id: EntryID, force_realm_created_status: bool = False
+    ) -> WorkspaceStorage:
         path = self.path / str(workspace_id)
 
         async def workspace_storage_task(
             task_status: TaskStatus[WorkspaceStorage] = trio.TASK_STATUS_IGNORED
         ) -> None:
             async with WorkspaceStorage.run(self.device, path, workspace_id) as workspace_storage:
+                if force_realm_created_status:
+                    await workspace_storage.manifest_storage.set_realm_created()
                 task_status.started(workspace_storage)
                 await trio.sleep_forever()
 
         return await self._workspace_storage_nursery.start(workspace_storage_task)
 
-    async def _instantiate_workspace(self, workspace_id: EntryID) -> WorkspaceFS:
+    async def _instantiate_workspace(
+        self, workspace_id: EntryID, force_realm_created_status: bool = False
+    ) -> WorkspaceFS:
         # Workspace entry can change at any time, so we provide a way for
         # WorkspaceFS to load it each time it is needed
         def get_workspace_entry() -> WorkspaceEntry:
@@ -316,7 +321,9 @@ class UserFS:
             return await self._get_previous_workspace_entry(workspace_entry)
 
         # Instantiate the local storage
-        local_storage = await self._instantiate_workspace_storage(workspace_id)
+        local_storage = await self._instantiate_workspace_storage(
+            workspace_id, force_realm_created_status
+        )
 
         # Instantiate the workspace
         workspace = WorkspaceFS(
@@ -335,20 +342,9 @@ class UserFS:
 
         return workspace
 
-    async def _create_workspace(
-        self, workspace_id: EntryID, manifest: LocalWorkspaceManifest
-    ) -> None:
-        """
-        Raises: Nothing
-        """
-        workspace = await self._instantiate_workspace(workspace_id)
-
-        async with workspace.local_storage.lock_entry_id(workspace_id):
-            await workspace.local_storage.set_manifest(workspace_id, manifest)
-
-        self._workspace_fss.setdefault(workspace_id, workspace)
-
-    async def _load_workspace(self, workspace_id: EntryID) -> WorkspaceFS:
+    async def _load_workspace(
+        self, workspace_id: EntryID, force_realm_created_status: bool = False
+    ) -> WorkspaceFS:
         """
         Raises:
             FSWorkspaceNotFoundError
@@ -358,7 +354,9 @@ class UserFS:
             return self._workspace_fss[workspace_id]
 
         # Instantiate the workpace
-        workspace = await self._instantiate_workspace(workspace_id)
+        workspace = await self._instantiate_workspace(
+            workspace_id, force_realm_created_status=force_realm_created_status
+        )
 
         # Set and return
         return self._workspace_fss.setdefault(workspace_id, workspace)
@@ -384,13 +382,9 @@ class UserFS:
         """
         name = EntryName(name)
         workspace_entry = WorkspaceEntry.new(name)
-        workspace_manifest = LocalWorkspaceManifest.new_placeholder(
-            self.device.device_id, id=workspace_entry.id
-        )
         async with self._update_user_manifest_lock:
             user_manifest = self.get_user_manifest()
             user_manifest = user_manifest.evolve_workspaces_and_mark_updated(workspace_entry)
-            await self._create_workspace(workspace_entry.id, workspace_manifest)
             await self.set_user_manifest(user_manifest)
             self.event_bus.send(CoreEvent.FS_ENTRY_UPDATED, id=self.user_manifest_id)
             self.event_bus.send(CoreEvent.FS_WORKSPACE_CREATED, new_entry=workspace_entry)
@@ -627,15 +621,54 @@ class UserFS:
 
     async def _workspace_minimal_sync(self, workspace_entry: WorkspaceEntry) -> None:
         """
+        Ensure the wokspace is usable from outside the local device:
+        - realm is created on the server
+        - initial version of the workspace manifest has been uploaded to the server
+
         Raises:
             FSError
             FSBackendOfflineError
         """
         workspace = self.get_workspace(workspace_entry.id)
-        await workspace.minimal_sync(workspace_entry.id)
+
+        # This is a noop if the local workspace manifest is not a placeholder.
+        # If it is a placeholder this means:
+        # 1) either our device has just created the workspace in local
+        # 2) or our device has just processed a sharing message (hence our user
+        #   manifest contains a new workspace entry)
+        # 2') or our device is the creator of the workspace and has previously
+        #     succeeded it minimal sync, but has crashed before realizing so :/
+        # 3) or our device has fetched a new version of the user manifest with a new
+        #   workspace entry in it (i.e. another device of ours has done 1) or 2) )
+        #
+        # Of course only case 1) actually need to do (and will succeed to do) a
+        # minimal sync. In the other cases we will realize the workspace manifest
+        # is already uploaded, start using it instead and return without any remote change.
+        #
+        # However, unlike cases 1) and 2') where only our device knows about the
+        # realm (it is it creator and won't sync/share it until it has done a
+        # minimal sync on it) in cases 2) and 3) we can lose the realm access
+        # (our not having the write access). In such case we will recieve an
+        # access error, but we consider nevertheless the minimal sync has succeeded
+        # anyway (the famous "task failed successfully") given our goal is to
+        # ensure the workspace is ready to be used by other devices, and losing
+        # (or having a limited) access is a proof of that.
+        #
+        # Last but not least, only realm creation is stricly needed for
+        # minimal_sync of the workspace: given each device starts using
+        # the workspace by creating a workspace manifest placeholder, any
+        # of them could sync it placeholder which would become the initial
+        # workspace manifest.
+        # However we keep the workspace manifest upload as part of the minimal
+        # sync for compatibility reason (Parsec <= 2.4.2 download the workspace
+        # manifest instead of starting with a placeholder).
+        try:
+            await workspace.minimal_sync(workspace_entry.id)
+        except FSWorkspaceNoAccess:
+            pass
 
     async def workspace_share(
-        self, workspace_id: EntryID, recipient: UserID, role: Optional[WorkspaceRole] = None
+        self, workspace_id: EntryID, recipient: UserID, role: Optional[WorkspaceRole]
     ) -> None:
         """
         Raises:
@@ -868,6 +901,10 @@ class UserFS:
                 )
 
             user_manifest = user_manifest.evolve_workspaces_and_mark_updated(workspace_entry)
+            # Mark the realm as already created. This prevent us from trying
+            # to do the creation ourself during the minimal sync of the
+            # workspace manifest.
+            await self._instantiate_workspace(workspace_entry.id, force_realm_created_status=True)
             await self.set_user_manifest(user_manifest)
             self.event_bus.send(CoreEvent.USERFS_UPDATED)
 

@@ -5,6 +5,7 @@ from uuid import uuid4
 from pendulum import datetime
 from unittest.mock import ANY
 
+from parsec.api.protocol import RealmRole
 from parsec.api.data import UserManifest
 from parsec.core.types import (
     WorkspaceEntry,
@@ -475,3 +476,37 @@ async def test_sync_remote_changes(running_backend, alice_user_fs, alice2_user_f
     )
     assert um == expected_um
     assert um2 == expected_um
+
+
+@pytest.mark.trio
+@pytest.mark.parametrize("access_lost", (False, True))
+async def test_sync_with_shared_workspace_as_placeholder(
+    running_backend, alice_user_fs, bob_user_fs, alice, access_lost
+):
+    # Bob creates a workspace and share it with Alice
+    wid = await bob_user_fs.workspace_create("wksp")
+    await bob_user_fs.sync()
+    await bob_user_fs.workspace_share(
+        workspace_id=wid, recipient=alice.user_id, role=RealmRole.MANAGER
+    )
+
+    # Alice process the sharing message
+    await alice_user_fs.process_last_messages()
+
+    # Sanity check to ensure Alice knows about Bob's workspace but hasn't
+    # retrieve the workspace manifest uploaded by Bob
+    alice_wfs = alice_user_fs.get_workspace(wid)
+    alice_workspace_info = await alice_wfs.path_info("/")
+    assert alice_workspace_info["is_placeholder"] is True
+
+    # Difficulty bonus !
+    if access_lost:
+        await bob_user_fs.workspace_share(workspace_id=wid, recipient=alice.user_id, role=None)
+
+    await alice_user_fs.workspace_create("wksp2")
+
+    # Now trigger user manifest sync
+    await alice_user_fs.sync()
+
+    user_manifest = alice_user_fs.get_user_manifest()
+    assert user_manifest.need_sync is False

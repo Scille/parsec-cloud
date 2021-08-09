@@ -286,6 +286,16 @@ async def test_realm_checkpoint(alice_workspace_storage):
     manifest = create_manifest(aws.device, LocalFileManifest)
 
     assert await aws.get_realm_checkpoint() == 0
+    # Workspace storage starts with a workspace manifest placeholder
+    assert await aws.get_need_sync_entries() == ({aws.workspace_id}, set())
+
+    workspace_manifest = create_manifest(aws.device, LocalWorkspaceManifest)
+    workspace_manifest = workspace_manifest.evolve(
+        base=workspace_manifest.to_remote(aws.device.device_id), need_sync=False
+    )
+    await aws.set_manifest(aws.workspace_id, workspace_manifest, check_lock_status=False)
+
+    assert await aws.get_realm_checkpoint() == 0
     assert await aws.get_need_sync_entries() == (set(), set())
 
     await aws.update_realm_checkpoint(11, {manifest.id: 22, EntryID.new(): 33})

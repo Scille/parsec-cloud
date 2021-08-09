@@ -40,6 +40,10 @@ class ManifestStorage:
         # still requires to be flushed.
         self._cache_ahead_of_localdb: Dict[EntryID, Set[Union[ChunkID, BlockID]]] = {}
 
+        # Realm created flag is set once and can never be changed after that,
+        # hence it is trivial to keep it cached
+        self._cache_realm_created: Optional[bool] = None
+
     @property
     def path(self) -> Path:
         return Path(self.localdb.path)
@@ -118,6 +122,40 @@ class ManifestStorage:
                 VALUES (0, ?, 0)""",
                 (EMPTY_PATTERN,),
             )
+            # Singleton storing the state of the realm creation in the backend
+            cursor.execute(
+                """
+                CREATE TABLE IF NOT EXISTS realm_created
+                (
+                    _id INTEGER PRIMARY KEY NOT NULL,
+                    is_created INTEGER NOT NULL  -- Boolean
+                );
+                """
+            )
+
+    # Tracking realm state in backend
+
+    async def is_realm_created(self) -> bool:
+        """
+        Raises: Nothing !
+        """
+        if self._cache_realm_created is None:
+            async with self._open_cursor() as cursor:
+                cursor.execute("SELECT is_created FROM realm_created WHERE _id = 0")
+                rep = cursor.fetchone()
+                self._cache_realm_created = bool(rep[0]) if rep else False
+        return self._cache_realm_created
+
+    async def set_realm_created(self) -> None:
+        """
+        Raises: Nothing !
+        """
+        if self._cache_realm_created is not True:
+            async with self._open_cursor() as cursor:
+                cursor.execute(
+                    "INSERT OR REPLACE INTO realm_created(_id, is_created) VALUES (0, 1)"
+                )
+            self._cache_realm_created = True
 
     # "Prevent sync" pattern operations
 

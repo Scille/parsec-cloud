@@ -305,16 +305,18 @@ class WorkspaceStorage(BaseWorkspaceStorage):
             await self.manifest_storage.get_manifest(self.workspace_id)
 
         except FSLocalMissError:
-            # It is possible to lack the workspace manifest in local (e.g.
-            # the workspace has been created by a third-party and our
-            # device hasn't tried to access it yet).
+            # It is possible to lack the workspace manifest in local if our
+            # device hasn't tried to access it yet. This is because the
+            # workspace manifest is lazily created (if we created the workspace)
+            # or fetched (if the workspace were shared with us).
             # In such case it is easy to fall back on an empty manifest
             # which is a good enough aproximation of the very first version
             # of the manifest (field `created` is invalid, but it will be
             # correction by the merge during sync).
-            # This trick is not strictly required (the caller must handle missing
-            # file/folder manifests anyway), but it guarantees the workspace
-            # root folder is always consistent (ls/touch/mkdir always works on it).
+            # This approach also guarantees the workspace root folder is always
+            # consistent (ls/touch/mkdir always works on it), which is not the
+            # case for the others files and folders (as their access may
+            # require communication with the backend).
             # This is especially important when the workspace is accessed from
             # file system mountpoint given having a weird error popup when clicking
             # on the mountpoint from the file explorer really feel like a bug :/

@@ -53,7 +53,7 @@ from parsec.core.fs.exceptions import (
     FSError,
 )
 from parsec.core.fs.workspacefs.workspacefile import WorkspaceFile
-from parsec.core.fs.storage import BaseWorkspaceStorage
+from parsec.core.fs.storage import BaseWorkspaceStorage, WorkspaceStorage
 from parsec.utils import open_service_nursery
 
 
@@ -633,17 +633,12 @@ class WorkspaceFS:
                 remote_manifest = new_remote_manifest
 
     async def _create_realm_if_needed(self) -> None:
-        # Get workspace manifest
-        try:
-            workspace_manifest = await self.local_storage.get_manifest(self.workspace_id)
-
-        # Cannot be a placeholder if we know about it but don't have it in local
-        except FSLocalMissError:
+        if not isinstance(self.local_storage, WorkspaceStorage):
             return
-
-        if workspace_manifest.is_placeholder:
+        if not await self.local_storage.manifest_storage.is_realm_created():
             # `create_realm` is idempotent, so we are shielded against concurrency errors
             await self.remote_loader.create_realm(self.workspace_id)
+            await self.local_storage.manifest_storage.set_realm_created()
 
     async def sync_by_id(
         self, entry_id: EntryID, remote_changed: bool = True, recursive: bool = True
