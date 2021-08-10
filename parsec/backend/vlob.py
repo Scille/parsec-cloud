@@ -39,6 +39,10 @@ class VlobNotFoundError(VlobError):
     pass
 
 
+class VlobRealmNotFoundError(VlobError):
+    pass
+
+
 class VlobAlreadyExistsError(VlobError):
     pass
 
@@ -75,7 +79,7 @@ class BaseVlobComponent:
         except VlobAlreadyExistsError as exc:
             return vlob_create_serializer.rep_dump({"status": "already_exists", "reason": str(exc)})
 
-        except VlobAccessError:
+        except (VlobAccessError, VlobRealmNotFoundError):
             return vlob_create_serializer.rep_dump({"status": "not_allowed"})
 
         except VlobEncryptionRevisionError:
@@ -99,7 +103,7 @@ class BaseVlobComponent:
         except VlobNotFoundError as exc:
             return vlob_read_serializer.rep_dump({"status": "not_found", "reason": str(exc)})
 
-        except VlobAccessError:
+        except (VlobAccessError, VlobRealmNotFoundError):
             return vlob_read_serializer.rep_dump({"status": "not_allowed"})
 
         except VlobVersionError:
@@ -139,7 +143,7 @@ class BaseVlobComponent:
         except VlobNotFoundError as exc:
             return vlob_update_serializer.rep_dump({"status": "not_found", "reason": str(exc)})
 
-        except VlobAccessError:
+        except (VlobAccessError, VlobRealmNotFoundError):
             return vlob_update_serializer.rep_dump({"status": "not_allowed"})
 
         except VlobVersionError:
@@ -170,7 +174,7 @@ class BaseVlobComponent:
                 msg["last_checkpoint"],
             )
 
-        except VlobAccessError:
+        except (VlobAccessError, VlobRealmNotFoundError):
             return vlob_poll_changes_serializer.rep_dump({"status": "not_allowed"})
 
         except VlobNotFoundError as exc:
@@ -195,7 +199,7 @@ class BaseVlobComponent:
                 client_ctx.organization_id, client_ctx.device_id, msg["vlob_id"]
             )
 
-        except VlobAccessError:
+        except (VlobAccessError, VlobRealmNotFoundError):
             return vlob_list_versions_serializer.rep_dump({"status": "not_allowed"})
 
         except VlobNotFoundError as exc:
@@ -218,7 +222,7 @@ class BaseVlobComponent:
                 client_ctx.organization_id, client_ctx.device_id, **msg
             )
 
-        except VlobAccessError:
+        except (VlobAccessError, VlobRealmNotFoundError):
             return vlob_maintenance_get_reencryption_batch_serializer.rep_dump(
                 {"status": "not_allowed"}
             )
@@ -265,7 +269,7 @@ class BaseVlobComponent:
                 batch=[(x["vlob_id"], x["version"], x["blob"]) for x in msg["batch"]],
             )
 
-        except VlobAccessError:
+        except (VlobAccessError, VlobRealmNotFoundError):
             return vlob_maintenance_save_reencryption_batch_serializer.rep_dump(
                 {"status": "not_allowed"}
             )

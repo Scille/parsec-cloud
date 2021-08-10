@@ -10,6 +10,7 @@ from parsec.backend.postgresql.utils import (
 from parsec.backend.realm import RealmRole
 from parsec.backend.vlob import (
     VlobNotFoundError,
+    VlobRealmNotFoundError,
     VlobInMaintenanceError,
     VlobNotInMaintenanceError,
     VlobEncryptionRevisionError,
@@ -23,7 +24,7 @@ async def _check_realm(conn, organization_id, realm_id, encryption_revision, ope
     try:
         status = await get_realm_status(conn, organization_id, realm_id)
     except RealmNotFoundError as exc:
-        raise VlobNotFoundError(*exc.args) from exc
+        raise VlobRealmNotFoundError(*exc.args) from exc
 
     # Special case of reading while in reencryption
     if operation_kind == OperationKind.DATA_READ and status.in_reencryption:

@@ -17,6 +17,7 @@ from parsec.backend.vlob import (
     VlobVersionError,
     VlobTimestampError,
     VlobNotFoundError,
+    VlobRealmNotFoundError,
     VlobAlreadyExistsError,
     VlobEncryptionRevisionError,
     VlobInMaintenanceError,
@@ -153,7 +154,7 @@ class MemoryVlobComponent(BaseVlobComponent):
         try:
             realm = self._realm_component._get_realm(organization_id, realm_id)
         except RealmNotFoundError:
-            raise VlobNotFoundError(f"Realm `{realm_id}` doesn't exist")
+            raise VlobRealmNotFoundError(f"Realm `{realm_id}` doesn't exist")
 
         # Only an owner can perform maintenance operation
         if operation_kind == OperationKind.MAINTENANCE:
