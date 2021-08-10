@@ -189,7 +189,7 @@ class UserFS:
         self._workspace_storage_nursery: trio.Nursery  # Setup by UserStorage.run factory
         self._process_messages_lock = trio.Lock()
         self._update_user_manifest_lock = trio.Lock()
-        self._workspace_storages: Dict[EntryID, WorkspaceFS] = {}
+        self._workspace_fss: Dict[EntryID, WorkspaceFS] = {}
 
         now = pendulum_now()
         wentry = WorkspaceEntry(
@@ -346,7 +346,7 @@ class UserFS:
         async with workspace.local_storage.lock_entry_id(workspace_id):
             await workspace.local_storage.set_manifest(workspace_id, manifest)
 
-        self._workspace_storages.setdefault(workspace_id, workspace)
+        self._workspace_fss.setdefault(workspace_id, workspace)
 
     async def _load_workspace(self, workspace_id: EntryID) -> WorkspaceFS:
         """
@@ -354,21 +354,21 @@ class UserFS:
             FSWorkspaceNotFoundError
         """
         # The workspace has already been instantiated
-        if workspace_id in self._workspace_storages:
-            return self._workspace_storages[workspace_id]
+        if workspace_id in self._workspace_fss:
+            return self._workspace_fss[workspace_id]
 
         # Instantiate the workpace
         workspace = await self._instantiate_workspace(workspace_id)
 
         # Set and return
-        return self._workspace_storages.setdefault(workspace_id, workspace)
+        return self._workspace_fss.setdefault(workspace_id, workspace)
 
     def get_workspace(self, workspace_id: EntryID) -> WorkspaceFS:
         # UserFS provides the guarantee that any workspace available through
         # `userfs.get_user_manifest().workspaces` is also available in
-        # `self._workspace_storages`.
+        # `self._workspace_fss`.
         try:
-            workspace = self._workspace_storages[workspace_id]
+            workspace = self._workspace_fss[workspace_id]
         except KeyError:
             raise FSWorkspaceNotFoundError(f"Unknown workspace `{workspace_id}`")
 
