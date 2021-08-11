@@ -78,6 +78,15 @@ async def test_create_but_already_exists(alice_backend_sock, realm):
 
 
 @pytest.mark.trio
+async def test_create_but_unknown_realm(alice_backend_sock):
+    bad_realm_id = uuid4()
+    blob = b"Initial commit."
+
+    rep = await vlob_create(alice_backend_sock, bad_realm_id, VLOB_ID, blob, check_rep=False)
+    assert rep["status"] == "not_allowed"
+
+
+@pytest.mark.trio
 async def test_create_check_access_rights(backend, alice, bob, bob_backend_sock, realm):
     vlob_id = uuid4()
 

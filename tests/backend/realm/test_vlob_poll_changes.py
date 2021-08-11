@@ -84,10 +84,7 @@ async def test_vlob_poll_changes_checkpoint_up_to_date(backend, alice, alice_bac
 @pytest.mark.trio
 async def test_vlob_poll_changes_not_found(alice_backend_sock):
     rep = await vlob_poll_changes(alice_backend_sock, UNKNOWN_REALM_ID, 0)
-    assert rep == {
-        "status": "not_found",
-        "reason": "Realm `00000000-0000-0000-0000-00000000000f` doesn't exist",
-    }
+    assert rep == {"status": "not_allowed"}
 
 
 @pytest.mark.trio
