@@ -61,13 +61,15 @@ __all__ = (
 )
 
 
-def enum_field_factory(enum):
+class BaseEnumField(Field):
+    ENUM: Enum
+
     def _serialize(self, value, attr, obj):
         if value is None:
             return None
 
-        if not isinstance(value, enum):
-            raise ValidationError(f"Not a {enum.__name__}")
+        if not isinstance(value, self.ENUM):
+            raise ValidationError(f"Not a {self.ENUM.__name__}")
 
         return value.value
 
@@ -75,15 +77,17 @@ def enum_field_factory(enum):
         if not isinstance(value, str):
             raise ValidationError("Not string")
 
-        for choice in enum:
+        for choice in self.ENUM:
             if choice.value == value:
                 return choice
         else:
             raise ValidationError(f"Invalid role `{value}`")
 
-    return type(
-        f"{enum.__name__}Field", (Field,), {"_serialize": _serialize, "_deserialize": _deserialize}
-    )
+
+# Using inheritance to define enum fields allows for easy instrospection detection
+# which is useful when checking api changes in tests (see tests/schemas/builder.py)
+def enum_field_factory(enum):
+    return type(f"{enum.__name__}Field", (BaseEnumField,), {"ENUM": enum})
 
 
 def bytes_based_field_factory(value_type):
