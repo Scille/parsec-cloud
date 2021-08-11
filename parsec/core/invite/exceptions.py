@@ -23,3 +23,8 @@ class InviteAlreadyUsedError(InviteError):
 class InviteTimestampError(InviteError):
     def __init__(self, msg="Invalid timestamp"):
         super().__init__(msg)
+
+
+class InviteActiveUsersLimitReachedError(InviteError):
+    def __init__(self, msg="Active users limit reached"):
+        super().__init__(msg)

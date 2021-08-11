@@ -7,10 +7,14 @@ from pendulum import now as pendulum_now
 from parsec.api.data import UserProfile
 from parsec.api.protocol import HumanHandle, InvitationType, InvitationDeletedReason
 
-from parsec.core.backend_connection import backend_invited_cmds_factory
+from parsec.core.backend_connection import (
+    backend_invited_cmds_factory,
+    backend_authenticated_cmds_factory,
+)
 from parsec.core.types import BackendInvitationAddr, LocalDevice, WorkspaceRole
 from parsec.core.invite import (
     InvitePeerResetError,
+    InviteActiveUsersLimitReachedError,
     claimer_retrieve_info,
     DeviceClaimInitialCtx,
     UserClaimInitialCtx,
@@ -581,3 +585,60 @@ async def test_claimer_handle_command_failure(
                 else:
                     raise AssertionError(f"Unknown step {fail_on_step}")
             assert str(exc_info.value) == "Invalid handshake: Invitation already deleted"
+
+
+@pytest.mark.trio
+async def test_user_claim_but_active_users_limit_reached(backend, running_backend, alice):
+    # Organization has reached active user limit
+    await backend.organization.update(alice.organization_id, active_users_limit=1)
+
+    # Invitation is still ok...
+    invitation = await backend.invite.new_for_user(
+        organization_id=alice.organization_id,
+        greeter_user_id=alice.user_id,
+        claimer_email="zack@example.com",
+    )
+    invitation_addr = BackendInvitationAddr.build(
+        backend_addr=alice.organization_addr,
+        organization_id=alice.organization_id,
+        invitation_type=InvitationType.USER,
+        token=invitation.token,
+    )
+
+    async def _run_greeter():
+        async with backend_authenticated_cmds_factory(
+            alice.organization_addr, alice.device_id, alice.signing_key
+        ) as alice_backend_cmds:
+            initial_ctx = UserGreetInitialCtx(cmds=alice_backend_cmds, token=invitation_addr.token)
+            in_progress_ctx = await initial_ctx.do_wait_peer()
+            in_progress_ctx = await in_progress_ctx.do_wait_peer_trust()
+            in_progress_ctx = await in_progress_ctx.do_signify_trust()
+            in_progress_ctx = await in_progress_ctx.do_get_claim_requests()
+
+            # ...this is where the limit should be enforced
+            with pytest.raises(InviteActiveUsersLimitReachedError):
+                await in_progress_ctx.do_create_new_user(
+                    author=alice,
+                    device_label=in_progress_ctx.requested_device_label,
+                    human_handle=in_progress_ctx.requested_human_handle,
+                    profile=UserProfile.STANDARD,
+                )
+
+    async def _run_claimer():
+        async with backend_invited_cmds_factory(addr=invitation_addr) as cmds:
+            initial_ctx = await claimer_retrieve_info(cmds)
+            in_progress_ctx = await initial_ctx.do_wait_peer()
+            in_progress_ctx = await in_progress_ctx.do_signify_trust()
+            in_progress_ctx = await in_progress_ctx.do_wait_peer_trust()
+
+            await in_progress_ctx.do_claim_user(
+                requested_device_label=None, requested_human_handle=None
+            )
+
+    with trio.fail_after(1):
+        async with trio.open_nursery() as nursery:
+            nursery.start_soon(_run_claimer)
+            await _run_greeter()
+            # Claimer is not notified that the greeter has failed so we
+            # must explicitly cancel it
+            nursery.cancel_scope.cancel()

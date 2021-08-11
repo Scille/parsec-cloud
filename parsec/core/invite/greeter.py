@@ -35,6 +35,7 @@ from parsec.core.invite.exceptions import (
     InvitePeerResetError,
     InviteNotFoundError,
     InviteAlreadyUsedError,
+    InviteActiveUsersLimitReachedError,
 )
 
 
@@ -45,6 +46,8 @@ def _check_rep(rep, step_name):
         raise InviteAlreadyUsedError
     elif rep["status"] == "invalid_state":
         raise InvitePeerResetError
+    elif rep["status"] == "active_users_limit_reached":
+        raise InviteActiveUsersLimitReachedError
     elif rep["status"] != "ok":
         raise InviteError(f"Backend error during {step_name}: {rep}")
 
@@ -312,8 +315,7 @@ class UserGreetInProgress4Ctx:
             redacted_user_certificate=redacted_user_certificate,
             redacted_device_certificate=redacted_device_certificate,
         )
-        if rep["status"] != "ok":
-            raise InviteError(f"Cannot create device: {rep}")
+        _check_rep(rep, step_name="step 4 (user certificates upload)")
 
         # From now on the user has been created on the server, but greeter
         # is not aware of it yet. If something goes wrong, we can end up with
@@ -377,7 +379,7 @@ class DeviceGreetInProgress4Ctx:
             device_certificate=device_certificate,
             redacted_device_certificate=redacted_device_certificate,
         )
-        _check_rep(rep, step_name="device creation")
+        _check_rep(rep, step_name="step 4 (device certificates upload)")
 
         # From now on the device has been created on the server, but greeter
         # is not aware of it yet. If something goes wrong, we can end up with
