@@ -194,6 +194,14 @@ class BaseWorkspaceStorage:
     def to_timestamped(self, timestamp: DateTime) -> "WorkspaceStorageTimestamped":
         return WorkspaceStorageTimestamped(self, timestamp)
 
+    # Tracking realm state in backend
+
+    async def is_realm_created(self) -> bool:
+        raise NotImplementedError
+
+    async def set_realm_created(self) -> None:
+        raise NotImplementedError
+
 
 class WorkspaceStorage(BaseWorkspaceStorage):
     """Manage the access to the local storage.
@@ -383,6 +391,14 @@ class WorkspaceStorage(BaseWorkspaceStorage):
         # Only the data storage needs to get vacuuumed
         await self.data_localdb.run_vacuum()
 
+    # Tracking realm state in backend
+
+    async def is_realm_created(self) -> bool:
+        return await self.manifest_storage.is_realm_created()
+
+    async def set_realm_created(self) -> None:
+        await self.manifest_storage.set_realm_created()
+
 
 class WorkspaceStorageTimestamped(BaseWorkspaceStorage):
     """Timestamped version to access a local storage as it was at a given timestamp
@@ -470,3 +486,11 @@ class WorkspaceStorageTimestamped(BaseWorkspaceStorage):
 
     # def to_timestamped(self, timestamp: DateTime) -> "WorkspaceStorageTimestamped":
     #     return WorkspaceStorageTimestamped(self, timestamp)
+
+    # Tracking realm state in backend
+
+    async def is_realm_created(self) -> bool:
+        self._throw_permission_error()
+
+    async def set_realm_created(self) -> None:
+        self._throw_permission_error()
