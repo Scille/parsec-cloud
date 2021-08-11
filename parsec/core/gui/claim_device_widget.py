@@ -255,7 +255,7 @@ class ClaimDeviceCodeExchangeWidget(QWidget, Ui_ClaimDeviceCodeExchangeWidget):
                 exc = job.exc.params.get("origin", None)
                 if isinstance(exc, InvitePeerResetError):
                     msg = _("TEXT_CLAIM_DEVICE_PEER_RESET")
-                if isinstance(exc, BackendInvitationAlreadyUsed):
+                elif isinstance(exc, BackendInvitationAlreadyUsed):
                     msg = _("TEXT_INVITATION_ALREADY_USED")
             show_error(self, msg, exception=exc)
         self.failed.emit(job)
@@ -309,7 +309,7 @@ class ClaimDeviceCodeExchangeWidget(QWidget, Ui_ClaimDeviceCodeExchangeWidget):
                 exc = job.exc.params.get("origin", None)
                 if isinstance(exc, InvitePeerResetError):
                     msg = _("TEXT_CLAIM_DEVICE_PEER_RESET")
-                if isinstance(exc, BackendInvitationAlreadyUsed):
+                elif isinstance(exc, BackendInvitationAlreadyUsed):
                     msg = _("TEXT_INVITATION_ALREADY_USED")
             show_error(self, msg, exception=exc)
         self.failed.emit(job)
@@ -418,7 +418,7 @@ class ClaimDeviceProvideInfoWidget(QWidget, Ui_ClaimDeviceProvideInfoWidget):
                 exc = job.exc.params.get("origin", None)
                 if isinstance(exc, InvitePeerResetError):
                     msg = _("TEXT_CLAIM_DEVICE_PEER_RESET")
-                if isinstance(exc, BackendInvitationAlreadyUsed):
+                elif isinstance(exc, BackendInvitationAlreadyUsed):
                     msg = _("TEXT_INVITATION_ALREADY_USED")
             show_error(self, msg, exception=exc)
         self.check_infos()
@@ -478,7 +478,7 @@ class ClaimDeviceInstructionsWidget(QWidget, Ui_ClaimDeviceInstructionsWidget):
                 exc = job.exc.params.get("origin", None)
                 if isinstance(exc, InvitePeerResetError):
                     msg = _("TEXT_CLAIM_DEVICE_PEER_RESET")
-                if isinstance(exc, BackendInvitationAlreadyUsed):
+                elif isinstance(exc, BackendInvitationAlreadyUsed):
                     msg = _("TEXT_INVITATION_ALREADY_USED")
             self.button_start.setDisabled(False)
             self.button_start.setText(_("ACTION_START"))

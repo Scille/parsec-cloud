@@ -294,7 +294,7 @@ class ClaimUserCodeExchangeWidget(QWidget, Ui_ClaimUserCodeExchangeWidget):
                 exc = job.exc.params.get("origin", None)
                 if isinstance(exc, InvitePeerResetError):
                     msg = _("TEXT_CLAIM_USER_PEER_RESET")
-                if isinstance(exc, BackendInvitationAlreadyUsed):
+                elif isinstance(exc, BackendInvitationAlreadyUsed):
                     msg = _("TEXT_INVITATION_ALREADY_USED")
             show_error(self, msg, exception=exc)
         self.failed.emit(job)
@@ -344,7 +344,7 @@ class ClaimUserCodeExchangeWidget(QWidget, Ui_ClaimUserCodeExchangeWidget):
                 exc = job.exc.params.get("origin", None)
                 if isinstance(exc, InvitePeerResetError):
                     msg = _("TEXT_CLAIM_USER_PEER_RESET")
-                if isinstance(exc, BackendInvitationAlreadyUsed):
+                elif isinstance(exc, BackendInvitationAlreadyUsed):
                     msg = _("TEXT_INVITATION_ALREADY_USED")
             show_error(self, msg, exception=exc)
         self.failed.emit(job)
@@ -372,7 +372,7 @@ class ClaimUserCodeExchangeWidget(QWidget, Ui_ClaimUserCodeExchangeWidget):
                 exc = job.exc.params.get("origin", None)
                 if isinstance(exc, InvitePeerResetError):
                     msg = _("TEXT_CLAIM_USER_PEER_RESET")
-                if isinstance(exc, BackendInvitationAlreadyUsed):
+                elif isinstance(exc, BackendInvitationAlreadyUsed):
                     msg = _("TEXT_INVITATION_ALREADY_USED")
             show_error(self, msg, exception=exc)
         self.failed.emit(job)
@@ -474,7 +474,7 @@ class ClaimUserProvideInfoWidget(QWidget, Ui_ClaimUserProvideInfoWidget):
                 exc = job.exc.params.get("origin", None)
                 if isinstance(exc, InvitePeerResetError):
                     msg = _("TEXT_CLAIM_USER_PEER_RESET")
-                if isinstance(exc, BackendInvitationAlreadyUsed):
+                elif isinstance(exc, BackendInvitationAlreadyUsed):
                     msg = _("TEXT_INVITATION_ALREADY_USED")
             show_error(self, msg, exception=exc)
         self.check_infos()
@@ -534,7 +534,7 @@ class ClaimUserInstructionsWidget(QWidget, Ui_ClaimUserInstructionsWidget):
                 exc = job.exc.params.get("origin", None)
                 if isinstance(exc, InvitePeerResetError):
                     msg = _("TEXT_CLAIM_USER_PEER_RESET")
-                if isinstance(exc, BackendInvitationAlreadyUsed):
+                elif isinstance(exc, BackendInvitationAlreadyUsed):
                     msg = _("TEXT_INVITATION_ALREADY_USED")
             self.button_start.setDisabled(False)
             self.button_start.setText(_("ACTION_START"))
@@ -606,7 +606,7 @@ class ClaimUserWidget(QWidget, Ui_ClaimUserWidget):
                 exc = job.exc.params.get("origin", None)
                 if isinstance(exc, InvitePeerResetError):
                     msg = _("TEXT_CLAIM_USER_PEER_RESET")
-                if isinstance(exc, BackendInvitationAlreadyUsed):
+                elif isinstance(exc, BackendInvitationAlreadyUsed):
                     msg = _("TEXT_INVITATION_ALREADY_USED")
             show_error(self, msg, exception=exc)
         # No point in retrying the process here, simply close the dialog

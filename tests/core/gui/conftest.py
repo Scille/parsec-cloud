@@ -49,7 +49,7 @@ class AsyncQtBot:
     async def wait(self, timeout):
         await trio.sleep(timeout / 1000)
 
-    async def wait_until(self, callback, *, timeout=5000):
+    async def wait_until(self, callback, *, timeout=1000):
         """Implementation shamelessly adapted from:
         https://github.com/pytest-dev/pytest-qt/blob/16b989d700dfb91fe389999d8e2676437169ed44/src/pytestqt/qtbot.py#L459
         """
