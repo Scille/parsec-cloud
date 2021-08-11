@@ -362,7 +362,11 @@ class BaseOrganizationComponent:
         self,
         id: OrganizationID,
         bootstrap_token: str,
+        # `None` is a valid value for some of those params, hence it cannot be used
+        # as "param not set" marker and we use a custom `Unset` singleton instead.
+        # `None` stands for "no expiration"
         expiration_date: Union[UnsetType, Optional[DateTime]] = Unset,
+        # `None` stands for "no limit"
         active_users_limit: Union[UnsetType, Optional[int]] = Unset,
         user_profile_outsider_allowed: Union[UnsetType, bool] = Unset,
     ) -> None:
@@ -406,7 +410,11 @@ class BaseOrganizationComponent:
     async def update(
         self,
         id: OrganizationID,
+        # `None` is a valid value for some of those params, hence it cannot be used
+        # as "param not set" marker and we use a custom `Unset` singleton instead.
+        # `None` stands for "no expiration"
         expiration_date: Union[UnsetType, Optional[DateTime]] = Unset,
+        # `None` stands for "no limit"
         active_users_limit: Union[UnsetType, Optional[int]] = Unset,
         user_profile_outsider_allowed: Union[UnsetType, bool] = Unset,
     ):

@@ -5,4 +5,5 @@
 --  Migration
 -------------------------------------------------------
 
+-- NULL if not limit
 ALTER TABLE organization ADD active_users_limit INTEGER;
