@@ -25,6 +25,11 @@
                 },
                 "req": {
                     "fields": {
+                        "active_users_limit": {
+                            "allow_none": true,
+                            "required": false,
+                            "type": "Integer"
+                        },
                         "cmd": {
                             "allow_none": false,
                             "required": true,
@@ -39,6 +44,11 @@
                             "allow_none": false,
                             "required": true,
                             "type": "OrganizationIDField"
+                        },
+                        "user_profile_outsider_allowed": {
+                            "allow_none": false,
+                            "required": false,
+                            "type": "Boolean"
                         }
                     },
                     "serializing": "msgpack"
@@ -135,6 +145,11 @@
             "organization_status": {
                 "rep": {
                     "fields": {
+                        "active_users_limit": {
+                            "allow_none": true,
+                            "required": true,
+                            "type": "Integer"
+                        },
                         "expiration_date": {
                             "allow_none": true,
                             "required": false,
@@ -189,6 +204,11 @@
                 },
                 "req": {
                     "fields": {
+                        "active_users_limit": {
+                            "allow_none": true,
+                            "required": false,
+                            "type": "Integer"
+                        },
                         "cmd": {
                             "allow_none": false,
                             "required": true,
@@ -2536,6 +2556,11 @@
             "organization_config": {
                 "rep": {
                     "fields": {
+                        "active_users_limit": {
+                            "allow_none": true,
+                            "required": true,
+                            "type": "Integer"
+                        },
                         "expiration_date": {
                             "allow_none": true,
                             "required": false,
