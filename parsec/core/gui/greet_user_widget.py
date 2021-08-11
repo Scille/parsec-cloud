@@ -9,7 +9,12 @@ from PyQt5.QtWidgets import QWidget
 from parsec.api.data import UserProfile
 from parsec.api.protocol import HumanHandle
 from parsec.core.backend_connection import BackendNotAvailable
-from parsec.core.invite import InviteError, InvitePeerResetError, InviteAlreadyUsedError
+from parsec.core.invite import (
+    InviteError,
+    InvitePeerResetError,
+    InviteActiveUsersLimitReachedError,
+    InviteAlreadyUsedError,
+)
 from parsec.core.gui.trio_jobs import JobResultError, QtToTrioJob
 from parsec.core.gui.custom_dialogs import show_error, GreyedDialog, show_info
 from parsec.core.gui import validators
@@ -313,6 +318,8 @@ class GreetUserCheckInfoWidget(QWidget, Ui_GreetUserCheckInfoWidget):
                 exc = job.exc.params.get("origin", None)
                 if isinstance(exc, InvitePeerResetError):
                     msg = _("TEXT_GREET_USER_PEER_RESET")
+                elif isinstance(exc, InviteActiveUsersLimitReachedError):
+                    msg = _("TEXT_GREET_USER_ACTIVE_USERS_LIMIT_REACHED")
             show_error(self, msg, exception=exc)
         self.failed.emit(job)
 
@@ -576,6 +583,12 @@ class GreetUserWidget(QWidget, Ui_GreetUserWidget):
         # No reason to restart the process if the invitation is already used, simply close the dialog
         if job is not None and isinstance(
             job.exc.params.get("origin", None), InviteAlreadyUsedError
+        ):
+            self.dialog.reject()
+            return
+        # No reason to restart the process if active users limit has been reached
+        if job is not None and isinstance(
+            job.exc.params.get("origin", None), InviteActiveUsersLimitReachedError
         ):
             self.dialog.reject()
             return

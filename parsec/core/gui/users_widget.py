@@ -313,13 +313,10 @@ class UsersWidget(QWidget, Ui_UsersWidget):
         button.revoke_clicked.connect(self.revoke_user)
         button.show()
 
-    def add_user_invitation(self, email, invite_addr, greet_disabled):
+    def add_user_invitation(self, email, invite_addr):
         button = UserInvitationButton(email, invite_addr)
         self.layout_users.addWidget(button)
         button.greet_clicked.connect(self.greet_user)
-        button.setDisabled(greet_disabled)
-        if greet_disabled:
-            button.setToolTip(_("USERS_LIMIT_REACHED"))
         button.cancel_clicked.connect(self.cancel_invitation)
         button.show()
 
@@ -455,9 +452,6 @@ class UsersWidget(QWidget, Ui_UsersWidget):
 
         current_user = self.core.device.user_id
 
-        active_users_limit = self.core.get_organization_config().active_users_limit
-        add_users_disabled = active_users_limit is not None and len(users) >= active_users_limit
-
         for invitation in reversed(invitations):
             addr = BackendInvitationAddr.build(
                 backend_addr=self.core.device.organization_addr,
@@ -465,7 +459,7 @@ class UsersWidget(QWidget, Ui_UsersWidget):
                 invitation_type=InvitationType.USER,
                 token=invitation["token"],
             )
-            self.add_user_invitation(invitation["claimer_email"], addr, add_users_disabled)
+            self.add_user_invitation(invitation["claimer_email"], addr)
         for user_info in users:
             self.add_user(user_info=user_info, is_current_user=current_user == user_info.user_id)
         self.spinner.hide()
