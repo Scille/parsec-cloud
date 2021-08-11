@@ -2,7 +2,7 @@
 
 import triopg
 from async_generator import asynccontextmanager
-from typing import Optional
+from typing import AsyncGenerator, Optional
 
 from parsec.event_bus import EventBus
 from parsec.utils import open_service_nursery
@@ -24,12 +24,14 @@ from parsec.backend.backend_events import BackendEvent
 
 
 @asynccontextmanager
-async def components_factory(config: BackendConfig, event_bus: EventBus):
+async def components_factory(
+    config: BackendConfig, event_bus: EventBus
+) -> AsyncGenerator[dict, None]:
     dbh = PGHandler(config.db_url, config.db_min_connections, config.db_max_connections, event_bus)
 
     async def _send_event(
         event: BackendEvent, conn: Optional[triopg._triopg.TrioConnectionProxy] = None, **kwargs
-    ):
+    ) -> None:
         if conn is None:
             async with dbh.pool.acquire() as conn:
                 await send_signal(conn, event, **kwargs)

@@ -18,6 +18,8 @@ from parsec.api.protocol import (
     InvalidMessageError,
 )
 
+from tests.common import customize_fixtures
+
 
 @pytest.fixture
 def mock_api_versions(monkeypatch):
@@ -47,6 +49,7 @@ def mock_api_versions(monkeypatch):
 
 
 @pytest.mark.trio
+@customize_fixtures(backend_not_populated=True)
 async def test_anonymous_handshake_invalid_format(backend, server_factory):
     async with server_factory(backend.handle_client) as server:
         stream = server.connection_factory()
@@ -90,6 +93,7 @@ async def test_authenticated_handshake_good(backend, server_factory, alice, mock
 
 
 @pytest.mark.trio
+@customize_fixtures(backend_not_populated=True)
 async def test_administration_handshake_good(backend, server_factory, mock_api_versions):
     ch = APIV1_AdministrationClientHandshake(backend.config.administration_token)
     async with server_factory(backend.handle_client) as server:
@@ -108,6 +112,7 @@ async def test_administration_handshake_good(backend, server_factory, mock_api_v
 
 
 @pytest.mark.trio
+@customize_fixtures(backend_not_populated=True)
 async def test_administration_handshake_bad_token(backend, server_factory):
     ch = APIV1_AdministrationClientHandshake("dummy token")
     async with server_factory(backend.handle_client) as server:

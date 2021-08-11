@@ -1,7 +1,8 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) BSLv1.1 (eventually AGPLv3) 2016-2021 Scille SAS
 
 from typing import Optional, Union
-
+import trio
+from collections import defaultdict
 from pendulum import DateTime
 
 from parsec.api.protocol import OrganizationID
@@ -35,6 +36,7 @@ class MemoryOrganizationComponent(BaseOrganizationComponent):
         self._realm_component = None
         self._organizations = {}
         self._send_event = send_event
+        self._organization_bootstrap_lock = defaultdict(trio.Lock)
 
     def register_components(
         self,
@@ -75,22 +77,28 @@ class MemoryOrganizationComponent(BaseOrganizationComponent):
         bootstrap_token: str,
         root_verify_key: VerifyKey,
     ) -> None:
-        organization = await self.get(id)
-        if organization.is_bootstrapped():
-            raise OrganizationAlreadyBootstrappedError()
+        # Organization bootstrap involves multiple modifications (in user,
+        # device and organization) and is not atomic (given await is used),
+        # so we protect it from concurrency with a big old lock
+        async with self._organization_bootstrap_lock[id]:
 
-        if organization.bootstrap_token != bootstrap_token:
-            raise OrganizationInvalidBootstrapTokenError()
+            organization = await self.get(id)
 
-        try:
-            await self._user_component.create_user(id, user, first_device)
+            if organization.is_bootstrapped():
+                raise OrganizationAlreadyBootstrappedError()
 
-        except UserError as exc:
-            raise OrganizationFirstUserCreationError(exc) from exc
+            if organization.bootstrap_token != bootstrap_token:
+                raise OrganizationInvalidBootstrapTokenError()
 
-        self._organizations[organization.organization_id] = organization.evolve(
-            root_verify_key=root_verify_key
-        )
+            try:
+                await self._user_component.create_user(id, user, first_device)
+
+            except UserError as exc:
+                raise OrganizationFirstUserCreationError(exc) from exc
+
+            self._organizations[organization.organization_id] = organization.evolve(
+                root_verify_key=root_verify_key
+            )
 
     async def stats(self, id: OrganizationID) -> OrganizationStats:
         await self.get(id)

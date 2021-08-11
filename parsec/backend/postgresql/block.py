@@ -99,7 +99,9 @@ VALUES (
 )
 
 
-async def _check_realm(conn, organization_id, realm_id, operation_kind):
+async def _check_realm(
+    conn, organization_id: OrganizationID, realm_id: UUID, operation_kind: OperationKind
+) -> None:
     # Fetch the realm status maintenance type
     try:
         status = await get_realm_status(conn, organization_id, realm_id)

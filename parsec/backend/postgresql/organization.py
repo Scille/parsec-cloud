@@ -50,6 +50,16 @@ WHERE organization_id = $organization_id
 )
 
 
+_q_get_organization_for_update = Q(
+    """
+SELECT bootstrap_token, root_verify_key, expiration_date, user_profile_outsider_allowed
+FROM organization
+WHERE organization_id = $organization_id
+FOR UPDATE
+"""
+)
+
+
 _q_bootstrap_organization = Q(
     """
 UPDATE organization
@@ -66,6 +76,11 @@ WHERE
 _q_get_stats = Q(
     f"""
 SELECT
+    (
+        EXISTS(
+            SELECT 1 FROM organization WHERE _id = { q_organization_internal_id("$organization_id") }
+        )
+    ) exist,
     (
         SELECT ARRAY(
             SELECT (revoked_on, profile::text)
@@ -149,8 +164,11 @@ class PGOrganizationComponent(BaseOrganizationComponent):
             return await self._get(conn, id)
 
     @staticmethod
-    async def _get(conn, id: OrganizationID) -> Organization:
-        data = await conn.fetchrow(*_q_get_organization(organization_id=id))
+    async def _get(conn, id: OrganizationID, for_update: bool = False) -> Organization:
+        if for_update:
+            data = await conn.fetchrow(*_q_get_organization_for_update(organization_id=id))
+        else:
+            data = await conn.fetchrow(*_q_get_organization(organization_id=id))
         if not data:
             raise OrganizationNotFoundError()
 
@@ -172,7 +190,10 @@ class PGOrganizationComponent(BaseOrganizationComponent):
         root_verify_key: VerifyKey,
     ) -> None:
         async with self.dbh.pool.acquire() as conn, conn.transaction():
-            organization = await self._get(conn, id)
+            # The FOR UPDATE in the query ensure the line is locked in the
+            # organization table until the end of the transaction. Hence
+            # preventing concurrent bootstrap operation form going any further.
+            organization = await self._get(conn, id, for_update=True)
 
             if organization.is_bootstrapped():
                 raise OrganizationAlreadyBootstrappedError()
@@ -198,8 +219,10 @@ class PGOrganizationComponent(BaseOrganizationComponent):
 
     async def stats(self, id: OrganizationID) -> OrganizationStats:
         async with self.dbh.pool.acquire() as conn, conn.transaction():
-            await self._get(conn, id)  # Check organization exists
             result = await conn.fetchrow(*_q_get_stats(organization_id=id))
+            if not result["exist"]:
+                raise OrganizationNotFoundError()
+
             users = 0
             active_users = 0
             users_per_profile_detail = {p: {"active": 0, "revoked": 0} for p in UserProfile}

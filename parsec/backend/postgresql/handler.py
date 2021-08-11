@@ -99,7 +99,7 @@ async def _apply_migrations(
     return MigrationResult(already_applied=already_applied, new_apply=new_apply, error=error)
 
 
-async def _apply_migration(conn, migration: MigrationItem):
+async def _apply_migration(conn, migration: MigrationItem) -> None:
     async with conn.transaction():
         await conn.execute(migration.sql)
         if migration.idx >= CREATE_MIGRATION_TABLE_ID:
@@ -113,7 +113,7 @@ async def _last_migration_row(conn):
     return await conn.fetchval(query)
 
 
-async def _is_initial_migration_applied(conn):
+async def _is_initial_migration_applied(conn) -> bool:
     query = "SELECT _id FROM organization LIMIT 1"
     try:
         await conn.fetchval(query)
@@ -123,7 +123,7 @@ async def _is_initial_migration_applied(conn):
         return True
 
 
-async def _idx_limit(conn):
+async def _idx_limit(conn) -> int:
     idx_limit = 0
     try:
         idx_limit = await _last_migration_row(conn)
@@ -159,10 +159,10 @@ class PGHandler:
         self._task_status: Optional[TaskStatus] = None
         self._connection_lost = False
 
-    async def init(self, nursery):
+    async def init(self, nursery: trio.Nursery) -> None:
         self._task_status = await start_task(nursery, self._run_connections)
 
-    async def _run_connections(self, task_status=trio.TASK_STATUS_IGNORED):
+    async def _run_connections(self, task_status=trio.TASK_STATUS_IGNORED) -> None:
 
         async with triopg.create_pool(
             self.url, min_size=self.min_connections, max_size=self.max_connections
@@ -188,12 +188,12 @@ class PGHandler:
     # Hence all client connections should be closed in order not to mislead
     # them into thinking no notifications has occurred.
     # And the simplest way to do that is to raise a big exception in _run_connections ;-)
-    def _on_notification_conn_termination(self, connection):
+    def _on_notification_conn_termination(self, conn) -> None:
         self._connection_lost = True
         if self._task_status:
             self._task_status.cancel()
 
-    def _on_notification(self, connection, pid, channel, payload):
+    def _on_notification(self, conn, pid: int, channel: str, payload: str) -> None:
         data = unpackb(b64decode(payload.encode("ascii")))
         data.pop("__id__")  # Simply discard the notification id
         signal = data.pop("__signal__")
@@ -209,12 +209,12 @@ class PGHandler:
             data["status"] = InvitationStatus(status_str) if status_str is not None else None
         self.event_bus.send(signal, **data)
 
-    async def teardown(self):
+    async def teardown(self) -> None:
         if self._task_status:
             await self._task_status.cancel_and_join()
 
 
-async def send_signal(conn, signal, **kwargs):
+async def send_signal(conn, signal: BackendEvent, **kwargs) -> None:
     # PostgreSQL's NOTIFY only accept string as payload, hence we must
     # use base64 on our payload...
 
