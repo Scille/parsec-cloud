@@ -7,7 +7,7 @@ from parsec.backend.user import INVITATION_VALIDITY, User, Device
 from parsec.api.data import UserCertificateContent, DeviceCertificateContent, UserProfile
 from parsec.api.protocol import DeviceID
 
-from tests.common import freeze_time
+from tests.common import customize_fixtures, freeze_time
 from tests.backend.common import user_get, user_create
 
 
@@ -80,6 +80,65 @@ async def test_user_create_ok(
         device_certifier=alice.device_id,
         created_on=now,
     )
+
+
+@pytest.mark.trio
+@customize_fixtures(backend_not_populated=True)
+async def test_user_create_nok_active_users_limit_reached(
+    backend, backend_data_binder_factory, backend_sock_factory, coolorg, alice, mallory
+):
+    # Ensure there is only one user in the organization...
+    binder = backend_data_binder_factory(backend)
+    await binder.bind_organization(coolorg, alice)
+    # ...so our active user limit has just been reached
+    await backend.organization.update(alice.organization_id, active_users_limit=1)
+
+    now = pendulum.now()
+    user_certificate = UserCertificateContent(
+        author=alice.device_id,
+        timestamp=now,
+        user_id=mallory.user_id,
+        human_handle=None,
+        public_key=mallory.public_key,
+        profile=UserProfile.STANDARD,
+    )
+    redacted_user_certificate = user_certificate.evolve(human_handle=None)
+    device_certificate = DeviceCertificateContent(
+        author=alice.device_id,
+        timestamp=now,
+        device_id=mallory.device_id,
+        device_label=None,
+        verify_key=mallory.verify_key,
+    )
+    redacted_device_certificate = device_certificate.evolve(device_label=None)
+
+    user_certificate = user_certificate.dump_and_sign(alice.signing_key)
+    device_certificate = device_certificate.dump_and_sign(alice.signing_key)
+    redacted_user_certificate = redacted_user_certificate.dump_and_sign(alice.signing_key)
+    redacted_device_certificate = redacted_device_certificate.dump_and_sign(alice.signing_key)
+
+    async with backend_sock_factory(backend, alice) as sock:
+        rep = await user_create(
+            sock,
+            user_certificate=user_certificate,
+            device_certificate=device_certificate,
+            redacted_user_certificate=redacted_user_certificate,
+            redacted_device_certificate=redacted_device_certificate,
+        )
+        assert rep == {"status": "active_users_limit_reached"}
+
+        # Now correct the limit, and ensure the user can be created
+
+        await backend.organization.update(alice.organization_id, active_users_limit=2)
+
+        rep = await user_create(
+            sock,
+            user_certificate=user_certificate,
+            device_certificate=device_certificate,
+            redacted_user_certificate=redacted_user_certificate,
+            redacted_device_certificate=redacted_device_certificate,
+        )
+        assert rep == {"status": "ok"}
 
 
 @pytest.mark.trio

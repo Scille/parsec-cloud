@@ -14,7 +14,7 @@ from parsec.backend.user import (
     UserError,
     UserNotFoundError,
     UserAlreadyExistsError,
-    UserLimitReached,
+    UserActiveUsersLimitReached,
 )
 from parsec.backend.postgresql.handler import send_signal
 from parsec.backend.postgresql.utils import (
@@ -27,7 +27,7 @@ from parsec.backend.postgresql.utils import (
 )
 
 
-_q_check_users_limit = Q(
+_q_check_active_users_limit = Q(
     f"""
     SELECT
         (
@@ -263,9 +263,15 @@ async def query_create_user(
     first_device: Device,
     invitation_token: Optional[UUID] = None,
 ) -> None:
-    record = await conn.fetchrow(*_q_check_users_limit(organization_id=organization_id))
+    record = await conn.fetchrow(*_q_check_active_users_limit(organization_id=organization_id))
     if not record["allowed"]:
-        raise UserLimitReached()
+        raise UserActiveUsersLimitReached()
+    # Note we don't lock anything in postgresql after checking active users limit.
+    # This means we are not protected against concurrency (i.e. multiple concurrent
+    # user creation will first check the active user limit is not reached then
+    # commit their new user, ending up with more than the users than the limit !).
+    # This is considered "fine enough" given concurrency on user creation is very
+    # low and worse outcome would be to go slightly above user limit.
     await _create_user(conn, organization_id, user, first_device)
 
 

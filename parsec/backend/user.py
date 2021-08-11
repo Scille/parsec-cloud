@@ -59,7 +59,7 @@ class UserAlreadyRevokedError(UserError):
     pass
 
 
-class UserLimitReached(UserError):
+class UserActiveUsersLimitReached(UserError):
     pass
 
 
@@ -534,8 +534,8 @@ class BaseUserComponent:
 
         except UserAlreadyExistsError as exc:
             return {"status": "already_exists", "reason": str(exc)}
-        except UserLimitReached:
-            return {"status": "not_allowed", "reason": "Users limit reached"}
+        except UserActiveUsersLimitReached:
+            return {"status": "active_users_limit_reached"}
 
         return {"status": "ok"}
 

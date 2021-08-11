@@ -19,7 +19,7 @@ from parsec.backend.user import (
     UserAlreadyExistsError,
     UserAlreadyRevokedError,
     UserNotFoundError,
-    UserLimitReached,
+    UserActiveUsersLimitReached,
 )
 
 
@@ -49,7 +49,7 @@ class MemoryUserComponent(BaseUserComponent):
         ].active_users_limit
         active_users = (u for u in org.users.values() if u.revoked_on is None)
         if active_users_limit is not None and active_users_limit <= len(list(active_users)):
-            raise UserLimitReached()
+            raise UserActiveUsersLimitReached()
 
         if user.user_id in org.users:
             raise UserAlreadyExistsError(f"User `{user.user_id}` already exists")
