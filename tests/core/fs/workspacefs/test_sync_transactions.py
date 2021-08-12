@@ -106,6 +106,60 @@ def test_merge_folder_manifests():
     assert m9 == LocalFolderManifest.from_remote(v6, empty_pattern)
 
 
+@pytest.mark.parametrize("local_change", ("rename", "prevent_sync_rename"))
+@pytest.mark.parametrize("remote_change", ("same_entry_moved", "new_entry_added"))
+def test_merge_folder_manifests_with_concurrent_remote_change(local_change, remote_change):
+    my_device = DeviceID("b@1")
+    other_device = DeviceID("b@2")
+    parent = EntryID.new()
+    foo_txt = EntryID.new()
+    remote_manifest_v1 = (
+        LocalFolderManifest.new_placeholder(my_device, parent=parent)
+        .evolve(children={"foo.txt": foo_txt})
+        .to_remote(author=my_device)
+    )
+
+    prevent_sync_pattern = re.compile(r".*\.tmp\Z")
+
+    # Load the manifest in local
+    local_manifest = LocalFolderManifest.from_remote(
+        remote_manifest_v1, prevent_sync_pattern=prevent_sync_pattern
+    )
+
+    # In local, `foo.txt` is renamed
+    if local_change == "rename":
+        foo_txt_new_name = "foo2.txt"
+    else:
+        assert local_change == "prevent_sync_rename"
+        foo_txt_new_name = "foo.txt.tmp"
+    local_manifest = local_manifest.evolve_children_and_mark_updated(
+        data={"foo.txt": None, foo_txt_new_name: foo_txt}, prevent_sync_pattern=prevent_sync_pattern
+    )
+
+    # In remote, a change also occurs
+    if remote_change == "same_entry_moved":
+        remote_manifest_v2_children = {"bar.txt": remote_manifest_v1.children["foo.txt"]}
+    else:
+        assert remote_change == "new_entry_added"
+        remote_manifest_v2_children = {**remote_manifest_v1.children, "bar.txt": EntryID.new()}
+
+    remote_manifest_v2 = remote_manifest_v1.evolve(
+        author=other_device,
+        version=remote_manifest_v1.version + 1,
+        children=remote_manifest_v2_children,
+    )
+
+    # Now merging should detect the duplication
+    merged_manifest = merge_manifests(
+        local_author=my_device,
+        prevent_sync_pattern=prevent_sync_pattern,
+        local_manifest=local_manifest,
+        remote_manifest=remote_manifest_v2,
+        force_apply_pattern=False,
+    )
+    assert merged_manifest.children
+
+
 def test_merge_manifests_with_a_placeholder():
     my_device = DeviceID("b@b")
     other_device = DeviceID("a@a")
