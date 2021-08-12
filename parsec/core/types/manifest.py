@@ -473,7 +473,9 @@ class LocalFileManifest(BaseLocalManifest):
         return super().match_remote(remote_manifest)
 
 
-LocalFolderishManifestTypeVar = TypeVar("LocalManifestTypeVar", bound="LocalFolderishManifestMixin")
+LocalFolderishManifestTypeVar = TypeVar(
+    "LocalFolderishManifestTypeVar", bound="LocalFolderishManifestMixin"
+)
 
 
 class LocalFolderishManifestMixin:
