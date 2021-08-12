@@ -15,7 +15,7 @@ from tests.backend.common import (
 
 
 @pytest.mark.trio
-async def test_claimer_join_and_leave(
+async def test_greeter_event_on_claimer_join_and_leave(
     alice, backend, bob_backend_sock, alice_backend_sock, backend_invited_sock_factory
 ):
     invitation = await backend.invite.new_for_device(

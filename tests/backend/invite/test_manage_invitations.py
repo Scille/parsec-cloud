@@ -6,7 +6,6 @@ from unittest.mock import ANY
 from pendulum import datetime
 
 from parsec.backend.backend_events import BackendEvent
-from parsec.api.transport import TransportError
 from parsec.api.data import UserProfile
 from parsec.api.protocol import (
     InvitationStatus,
@@ -28,10 +27,10 @@ from tests.backend.common import (
 
 
 @pytest.mark.trio
-async def test_user_create_and_info(
+async def test_user_new_invitation_and_info(
     backend, alice, alice_backend_sock, alice2_backend_sock, backend_invited_sock_factory
 ):
-    # Provide other unrelated invatitons that should stay unchanged
+    # Provide other unrelated invitations that should stay unchanged
     with backend.event_bus.listen() as spy:
         other_device_invitation = await backend.invite.new_for_device(
             organization_id=alice.organization_id,
@@ -110,7 +109,7 @@ async def test_user_create_and_info(
 
 
 @pytest.mark.trio
-async def test_device_create_and_info(
+async def test_device_new_invitation_and_info(
     backend, alice, alice_backend_sock, alice2_backend_sock, backend_invited_sock_factory
 ):
 
@@ -306,7 +305,7 @@ async def test_invite_new_limited_for_standard(alice_backend_sock):
 
 
 @pytest.mark.trio
-async def test_delete(
+async def test_delete_invitation(
     alice, backend, alice_backend_sock, alice2_backend_sock, backend_invited_sock_factory
 ):
     with backend.event_bus.listen() as spy:
@@ -353,8 +352,8 @@ async def test_delete(
 
 @pytest.mark.trio
 @pytest.mark.parametrize("is_revoked", [True, False])
-async def test_user_invitation_already_member(
-    alice, bob, backend, alice_backend_sock, is_revoked, backend_data_binder
+async def test_new_user_invitation_on_already_member(
+    backend_data_binder, alice, bob, alice_backend_sock, is_revoked
 ):
     if is_revoked:
         await backend_data_binder.bind_revocation(user_id=bob.user_id, certifier=alice)
@@ -369,7 +368,7 @@ async def test_user_invitation_already_member(
 
 
 @pytest.mark.trio
-async def test_user_invitation_double_create(alice, backend, alice_backend_sock):
+async def test_idempotent_new_user_invitation(alice, backend, alice_backend_sock):
     claimer_email = "zack@example.com"
 
     invitation = await backend.invite.new_for_user(
@@ -407,9 +406,7 @@ async def test_user_invitation_double_create(alice, backend, alice_backend_sock)
 
 
 @pytest.mark.trio
-async def test_device_invitation_double_create(
-    alice, backend, alice_backend_sock, backend_invited_sock_factory
-):
+async def test_idempotent_new_device_invitation(alice, backend, alice_backend_sock):
     invitation = await backend.invite.new_for_device(
         organization_id=alice.organization_id,
         greeter_user_id=alice.user_id,
@@ -439,9 +436,7 @@ async def test_device_invitation_double_create(
 
 
 @pytest.mark.trio
-async def test_user_invitation_recreate_deleted(
-    alice, backend, alice_backend_sock, backend_invited_sock_factory
-):
+async def test_new_user_invitation_after_invitation_deleted(alice, backend, alice_backend_sock):
     claimer_email = "zack@example.com"
     invitation = await backend.invite.new_for_user(
         organization_id=alice.organization_id,
@@ -483,9 +478,7 @@ async def test_user_invitation_recreate_deleted(
 
 
 @pytest.mark.trio
-async def test_device_invitation_recreate_deleted(
-    alice, backend, alice_backend_sock, backend_invited_sock_factory
-):
+async def test_new_device_invitation_after_invitation_deleted(alice, backend, alice_backend_sock):
     invitation = await backend.invite.new_for_device(
         organization_id=alice.organization_id,
         greeter_user_id=alice.user_id,
@@ -522,62 +515,7 @@ async def test_device_invitation_recreate_deleted(
 
 
 @pytest.mark.trio
-async def test_delete_invitation_while_claimer_connected(
-    backend, alice, backend_invited_sock_factory
-):
-    invitation = await backend.invite.new_for_user(
-        organization_id=alice.organization_id,
-        greeter_user_id=alice.user_id,
-        claimer_email="zack@example.com",
-    )
-    other_invitation = await backend.invite.new_for_user(
-        organization_id=alice.organization_id,
-        greeter_user_id=alice.user_id,
-        claimer_email="kcaz@example.com",
-    )
-
-    # Invitation is valid so handshake is allowed
-    async with backend_invited_sock_factory(
-        backend,
-        organization_id=alice.organization_id,
-        invitation_type=invitation.TYPE,
-        token=invitation.token,
-        freeze_on_transport_error=False,
-    ) as invited_sock:
-        async with backend_invited_sock_factory(
-            backend,
-            organization_id=alice.organization_id,
-            invitation_type=other_invitation.TYPE,
-            token=other_invitation.token,
-            freeze_on_transport_error=False,
-        ) as other_invited_sock:
-
-            # Delete the invitation, claimer connection should be closed automatically
-            await backend.invite.delete(
-                organization_id=alice.organization_id,
-                greeter=alice.user_id,
-                token=invitation.token,
-                on=datetime(2000, 1, 2),
-                reason=InvitationDeletedReason.ROTTEN,
-            )
-
-            with pytest.raises(TransportError):
-                with trio.fail_after(1):
-                    # Claimer connection can take some time to be closed
-                    while True:
-                        rep = await invite_info(invited_sock)
-                        # Invitation info are cached for the connection
-                        # at handshake time, hence if the command won't take
-                        # into account the fact the invitation has been deleted
-                        assert rep["status"] == "ok"
-
-            # However other invitations shouldn't have been affected
-            rep = await invite_info(other_invited_sock)
-            assert rep["status"] == "ok"
-
-
-@pytest.mark.trio
-async def test_already_deleted(alice, backend, alice_backend_sock, backend_invited_sock_factory):
+async def test_delete_already_deleted_invitation(alice, backend, alice_backend_sock):
     invitation = await backend.invite.new_for_device(
         organization_id=alice.organization_id, greeter_user_id=alice.user_id
     )
@@ -597,9 +535,7 @@ async def test_already_deleted(alice, backend, alice_backend_sock, backend_invit
 
 
 @pytest.mark.trio
-async def test_isolated_between_users(
-    alice, bob, backend, backend_invited_sock_factory, alice_backend_sock
-):
+async def test_invitation_deletion_isolated_between_users(bob, backend, alice_backend_sock):
     invitation = await backend.invite.new_for_device(
         organization_id=bob.organization_id, greeter_user_id=bob.user_id
     )
@@ -614,7 +550,7 @@ async def test_isolated_between_users(
 
 
 @pytest.mark.trio
-async def test_isolated_between_organizations(
+async def test_invitation_deletion_isolated_between_organizations(
     alice, otheralice, backend, backend_invited_sock_factory, alice_backend_sock
 ):
     invitation = await backend.invite.new_for_device(
