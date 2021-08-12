@@ -52,7 +52,7 @@ WHERE organization_id = $organization_id
 
 _q_get_organization_for_update = Q(
     """
-SELECT bootstrap_token, root_verify_key, expiration_date, user_profile_outsider_allowed
+SELECT bootstrap_token, root_verify_key, expiration_date, active_users_limit, user_profile_outsider_allowed
 FROM organization
 WHERE organization_id = $organization_id
 FOR UPDATE
