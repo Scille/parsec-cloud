@@ -4,7 +4,7 @@ import os
 import sys
 import errno
 from uuid import uuid4
-
+from itertools import count
 import trio
 import pytest
 from pathlib import Path, PurePath
@@ -566,8 +566,7 @@ async def test_mountpoint_iterdir_with_many_files(
 
 @pytest.mark.trio
 @pytest.mark.mountpoint
-@pytest.mark.parametrize("timeout", [x * 0.002 for x in range(20)])
-async def test_cancel_mount_workspace(base_mountpoint, alice_user_fs, event_bus, timeout):
+async def test_cancel_mount_workspace(base_mountpoint, alice_user_fs, event_bus):
     """
     This function tests the race conditions between the mounting of a workspace
     and trio cancellation. In particular, it produces interesting results when trying to
@@ -579,22 +578,26 @@ async def test_cancel_mount_workspace(base_mountpoint, alice_user_fs, event_bus,
     """
     wid = await alice_user_fs.workspace_create("w")
 
-    # The timeout for `_stop_fuse_thread` is 1 second (3 seconds for macOS),
-    # so let's use a slightly lower timeout to make sure a potential failure
-    # doesn't go undetected.
-    timeout = 3.0 if sys.platform == "darwin" else 1.0
-    with trio.fail_after(timeout * 0.9):
+    # Reuse the same mountpoint manager for all the mountings to
+    # make sure state is not polutated by previous mount attempts
+    async with mountpoint_manager_factory(
+        alice_user_fs, event_bus, base_mountpoint
+    ) as mountpoint_manager:
 
-        async with mountpoint_manager_factory(
-            alice_user_fs, event_bus, base_mountpoint
-        ) as mountpoint_manager:
+        for timeout in count(0, 0.002):
+            print(f"timeout: {timeout}")
 
-            with trio.move_on_after(timeout) as cancel_scope:
-                await mountpoint_manager.mount_workspace(wid)
-            if cancel_scope.cancelled_caught:
-                with pytest.raises(MountpointNotMounted):
-                    mountpoint_manager.get_path_in_mountpoint(wid, FsPath("/"))
-            else:
-                path = trio.Path(mountpoint_manager.get_path_in_mountpoint(wid, FsPath("/")))
-                await path.exists()
-                assert not await (path / "foo").exists()
+            with trio.fail_after(5):
+
+                with trio.move_on_after(timeout) as cancel_scope:
+                    await mountpoint_manager.mount_workspace(wid)
+
+                if cancel_scope.cancelled_caught:
+                    with pytest.raises(MountpointNotMounted):
+                        mountpoint_manager.get_path_in_mountpoint(wid, FsPath("/"))
+                else:
+                    # Sanity check
+                    path = trio.Path(mountpoint_manager.get_path_in_mountpoint(wid, FsPath("/")))
+                    await path.exists()
+                    # Timeout has become too high to be useful, time to stop the test
+                    break
