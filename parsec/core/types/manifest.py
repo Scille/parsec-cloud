@@ -554,11 +554,17 @@ class LocalFolderishManifestMixin:
         # before applying a new filter that filtered those entries from the remote manifest
         if not other.local_confinement_points and not self.remote_confinement_points:
             return self
+        # Create a set for fast lookup in order to make sure no entry gets duplicated.
+        # This might happen when a synchronized entry is renamed to a confined name locally.
+        self_entry_ids = set(self.children.values())
         previously_local_confinement_points = {
             name: entry_id
             for name, entry_id in other.children.items()
-            if entry_id in other.local_confinement_points
-            or entry_id in self.remote_confinement_points
+            if entry_id not in self_entry_ids
+            and (
+                entry_id in other.local_confinement_points
+                or entry_id in self.remote_confinement_points
+            )
         }
         return self.evolve_children_and_mark_updated(
             previously_local_confinement_points, prevent_sync_pattern
