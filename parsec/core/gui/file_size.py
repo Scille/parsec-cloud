@@ -8,12 +8,14 @@ def size(bytes, system):
     Format the specified number of bytes with the corresponding system.
 
     More specifically:
-    - `0 <= bytes < 10`:         1 significant figures:    `X B`
-    - `10 <= bytes < 100`:       2 significant figures:   `XY B`
-    - `100 <= bytes < 100`:      3 significant figures:  `XYZ B`
-    - `1 <= kilobytes < 10`:     2 significant figures: `X.Y KB`
-    - `10 <= kilobytes < 100`:   3 significant figures: XY.Z KB`
-    - `100 <= kilobytes < 1000`: 3 significant figures: `XYZ KB`
+    - `0 <= bytes < 10`:          1 significant figures:     `X B`
+    - `10 <= bytes < 100`:        2 significant figures:    `XY B`
+    - `100 <= bytes < 1000`:      3 significant figures:   `XYZ B`
+    - `1000 <= bytes < 1024`:     4 significant figures:  `10XY B` TODO: Do better
+    - `1 <= kilobytes < 10`:      2 significant figures:  `X.Y KB`
+    - `10 <= kilobytes < 100`:    3 significant figures: `XY.Z KB`
+    - `100 <= kilobytes < 1000`:  3 significant figures:  `XYZ KB`
+    - `1000 <= kilobytes < 1024`: 4 significant figures: `10XY KB` TODO: Do better
     - And so on for MB, GB and TB
     """
     # Iterate over factors, expecting them to be in decreasing order
@@ -23,10 +25,8 @@ def size(bytes, system):
             break
     # Convert to the right unit
     amount = bytes / factor
-    # Pick the right formatter
-    formatter = ".1f" if amount < 99.95 and factor > 1 else ".0f"
     # Format the amount and add the suffix
-    formatted_amount = format(bytes / factor, formatter)
+    formatted_amount = f"{amount:.1f}" if amount < 99.95 and factor > 1 else f"{amount:.0f}"
     return f"{formatted_amount} {suffix}"
 
 
