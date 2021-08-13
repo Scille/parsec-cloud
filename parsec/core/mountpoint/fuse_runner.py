@@ -254,6 +254,8 @@ async def _stop_fuse_thread(
             # Restart the unmount process if necessary
             if process.poll() is not None:
                 process = await trio.open_process(process_args)
+        else:
+            logger.error("Fuse thread stop timeout", mountpoint=mountpoint_path)
 
         # Wait for unmount process to complete if necessary
         await process.wait()
@@ -288,6 +290,8 @@ async def _stop_fuse_thread(
             if not thread.is_alive():
                 thread = threading.Thread(target=_ping_fuse_thread_target, daemon=True)
                 thread.start()
+        else:
+            logger.error("Fuse thread stop timeout", mountpoint=mountpoint_path)
 
     # The thread has now stopped
     logger.info("Fuse thread stopped", mountpoint=mountpoint_path)
