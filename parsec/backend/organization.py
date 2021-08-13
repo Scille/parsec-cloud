@@ -93,19 +93,20 @@ class OrganizationStats:
     users_per_profile_detail: List[UsersPerProfileDetailItem]
 
 
+def generate_bootstrap_token() -> str:
+    return token_hex(32)
+
+
 class BaseOrganizationComponent:
-    def __init__(
-        self, webhooks: WebhooksComponent, config: BackendConfig, bootstrap_token_size: int = 32
-    ):
+    def __init__(self, webhooks: WebhooksComponent, config: BackendConfig):
         self.webhooks = webhooks
-        self.bootstrap_token_size = bootstrap_token_size
         self._config = config
 
     @api("organization_create", handshake_types=[APIV1_HandshakeType.ADMINISTRATION])
     @catch_protocol_errors
     async def api_organization_create(self, client_ctx, msg):
         msg = apiv1_organization_create_serializer.req_load(msg)
-        bootstrap_token = token_hex(self.bootstrap_token_size)
+        bootstrap_token = generate_bootstrap_token()
         expiration_date = msg.get("expiration_date")
         try:
             await self.create(msg.pop("organization_id"), bootstrap_token=bootstrap_token, **msg)
