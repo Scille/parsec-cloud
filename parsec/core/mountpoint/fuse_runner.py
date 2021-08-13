@@ -251,7 +251,12 @@ async def _stop_fuse_thread(
             # Check if the attempt succeeded for 10 ms
             if await trio.to_thread.run_sync(fuse_thread_stopped.wait, 0.01):
                 break
-            # Restart the unmount process if necessary
+            # Restart the unmount process if necessary, this is needed in
+            # case the stop is ordered before fuse has finished started (hence
+            # the unmount command can run before the OS mount has occured).
+            # Of course this means in theory we could be umounting by mistake
+            # an unrelated mountpoint that tooks our path, but it's a really
+            # unlikely event.
             if process.poll() is not None:
                 process = await trio.open_process(process_args)
         else:
