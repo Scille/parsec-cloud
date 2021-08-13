@@ -494,9 +494,12 @@ class LocalFolderishManifestMixin:
 
         # Deal with removal first
         for name, entry_id in data.items():
-            # Note we don't filter out with `entry_id is not None`, this
-            # is because we treat entry rename as removal+creation
+            # Here `entry_id` can be either:
+            # - a new entry id that might overwrite the previous one with the same name if it exists
+            # - `None` which means the entry for the corresponding name should be removed
             if name not in new_children:
+                # Make sure we don't remove a name that does not exist
+                assert entry_id is not None
                 continue
             # Remove old entry
             old_entry_id = new_children.pop(name)
