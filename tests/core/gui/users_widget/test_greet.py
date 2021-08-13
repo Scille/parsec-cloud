@@ -556,3 +556,37 @@ async def test_greet_user_invitation_cancelled(
     )
 
     await CancelledTestBed().run()
+
+
+@pytest.mark.gui
+@pytest.mark.trio
+@customize_fixtures(logged_gui_as_admin=True)
+async def test_greet_user_but_active_user_limit_reached(
+    aqtbot, autoclose_dialog, backend, alice, GreetUserTestBed
+):
+    await backend.organization.update(alice.organization_id, active_users_limit=1)
+
+    class GreetUserButActiveUserLimitReachedTestBed(GreetUserTestBed):
+        async def step_6_validate_claim_info(self):
+            assert self.claimer_claim_task
+            # Start the greeting, however it won't be able to finish due to active user limit
+            aqtbot.mouse_click(
+                self.greet_user_check_informations_widget.button_create_user, QtCore.Qt.LeftButton
+            )
+
+            def _greet_failed():
+                assert len(autoclose_dialog.dialogs) == 1
+                assert autoclose_dialog.dialogs == [
+                    (
+                        "Error",
+                        "Active users limit reached, increase the limit or revoke some users before retrying.",
+                    )
+                ]
+                assert not self.greet_user_widget.isVisible()
+                assert not self.greet_user_information_widget.isVisible()
+
+            await aqtbot.wait_until(_greet_failed)
+
+            return None  # Test is done \o/
+
+    await GreetUserButActiveUserLimitReachedTestBed().run()

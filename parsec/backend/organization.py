@@ -25,6 +25,7 @@ from parsec.api.data import UserCertificateContent, DeviceCertificateContent, Da
 from parsec.backend.user import User, Device
 from parsec.backend.webhooks import WebhooksComponent
 from parsec.backend.utils import catch_protocol_errors, api, Unset, UnsetType
+from parsec.backend.config import BackendConfig
 
 
 class OrganizationError(Exception):
@@ -62,13 +63,14 @@ class Organization:
     expiration_date: Optional[DateTime] = None
     root_verify_key: Optional[VerifyKey] = None
     user_profile_outsider_allowed: bool = False
+    active_users_limit: Optional[int] = None
 
     def is_bootstrapped(self):
         return self.root_verify_key is not None
 
     @property
     def is_expired(self):
-        return self.expiration_date is not None and self.expiration_date <= DateTime.now()
+        return self.expiration_date and self.expiration_date <= DateTime.now()
 
     def evolve(self, **kwargs):
         return attr.evolve(self, **kwargs)
@@ -92,30 +94,30 @@ class OrganizationStats:
 
 
 class BaseOrganizationComponent:
-    def __init__(self, webhooks: WebhooksComponent, bootstrap_token_size: int = 32):
+    def __init__(
+        self, webhooks: WebhooksComponent, config: BackendConfig, bootstrap_token_size: int = 32
+    ):
         self.webhooks = webhooks
         self.bootstrap_token_size = bootstrap_token_size
+        self._config = config
 
     @api("organization_create", handshake_types=[APIV1_HandshakeType.ADMINISTRATION])
     @catch_protocol_errors
     async def api_organization_create(self, client_ctx, msg):
         msg = apiv1_organization_create_serializer.req_load(msg)
-
         bootstrap_token = token_hex(self.bootstrap_token_size)
-        expiration_date = msg.get("expiration_date", None)
+        expiration_date = msg.get("expiration_date")
         try:
-            await self.create(
-                msg["organization_id"],
-                bootstrap_token=bootstrap_token,
-                expiration_date=expiration_date,
-            )
+            await self.create(msg.pop("organization_id"), bootstrap_token=bootstrap_token, **msg)
 
         except OrganizationAlreadyExistsError:
             return {"status": "already_exists"}
 
-        rep = {"bootstrap_token": bootstrap_token, "status": "ok"}
-        if expiration_date:
-            rep["expiration_date"] = expiration_date
+        rep = {
+            "bootstrap_token": bootstrap_token,
+            "expiration_date": expiration_date,
+            "status": "ok",
+        }
 
         return apiv1_organization_create_serializer.rep_dump(rep)
 
@@ -130,34 +132,35 @@ class BaseOrganizationComponent:
         except OrganizationNotFoundError:
             return {"status": "not_found"}
 
-        return apiv1_organization_status_serializer.rep_dump(
-            {
-                "is_bootstrapped": organization.is_bootstrapped(),
-                "expiration_date": organization.expiration_date,
-                "user_profile_outsider_allowed": organization.user_profile_outsider_allowed,
-                "status": "ok",
-            }
-        )
+        rep = {
+            "is_bootstrapped": organization.is_bootstrapped(),
+            "user_profile_outsider_allowed": organization.user_profile_outsider_allowed,
+            "active_users_limit": organization.active_users_limit,
+            "expiration_date": organization.expiration_date,
+            "status": "ok",
+        }
+
+        return apiv1_organization_status_serializer.rep_dump(rep)
 
     @api("organization_config", handshake_types=[HandshakeType.AUTHENTICATED])
     @catch_protocol_errors
     async def api_authenticated_organization_config(self, client_ctx, msg):
         msg = organization_config_serializer.req_load(msg)
         organization_id = client_ctx.organization_id
-
         try:
             organization = await self.get(organization_id)
 
         except OrganizationNotFoundError:
             return {"status": "not_found"}
 
-        return organization_config_serializer.rep_dump(
-            {
-                "expiration_date": organization.expiration_date,
-                "user_profile_outsider_allowed": organization.user_profile_outsider_allowed,
-                "status": "ok",
-            }
-        )
+        rep = {
+            "user_profile_outsider_allowed": organization.user_profile_outsider_allowed,
+            "expiration_date": organization.expiration_date,
+            "active_users_limit": organization.active_users_limit,
+            "status": "ok",
+        }
+
+        return organization_config_serializer.rep_dump(rep)
 
     @api("organization_stats", handshake_types=[HandshakeType.AUTHENTICATED])
     @catch_protocol_errors
@@ -356,7 +359,16 @@ class BaseOrganizationComponent:
         return apiv1_organization_bootstrap_serializer.rep_dump({"status": "ok"})
 
     async def create(
-        self, id: OrganizationID, bootstrap_token: str, expiration_date: Optional[DateTime] = None
+        self,
+        id: OrganizationID,
+        bootstrap_token: str,
+        # `None` is a valid value for some of those params, hence it cannot be used
+        # as "param not set" marker and we use a custom `Unset` singleton instead.
+        # `None` stands for "no expiration"
+        expiration_date: Union[UnsetType, Optional[DateTime]] = Unset,
+        # `None` stands for "no limit"
+        active_users_limit: Union[UnsetType, Optional[int]] = Unset,
+        user_profile_outsider_allowed: Union[UnsetType, bool] = Unset,
     ) -> None:
         """
         Raises:
@@ -398,7 +410,12 @@ class BaseOrganizationComponent:
     async def update(
         self,
         id: OrganizationID,
+        # `None` is a valid value for some of those params, hence it cannot be used
+        # as "param not set" marker and we use a custom `Unset` singleton instead.
+        # `None` stands for "no expiration"
         expiration_date: Union[UnsetType, Optional[DateTime]] = Unset,
+        # `None` stands for "no limit"
+        active_users_limit: Union[UnsetType, Optional[int]] = Unset,
         user_profile_outsider_allowed: Union[UnsetType, bool] = Unset,
     ):
         """

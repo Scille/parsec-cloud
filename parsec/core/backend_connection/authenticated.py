@@ -172,13 +172,13 @@ class BackendAuthenticatedConn:
         self._monitors_idle_event = trio.Event()
         self._monitors_idle_event.set()  # No monitors
         self._backend_connection_failures = 0
-        self._organization_config = OrganizationConfig(
-            expiration_date=None, user_profile_outsider_allowed=False
-        )
         # organization config is very unlikely to change, hence we query it
         # once when backend connection bootstraps, then keep the value in cache.
         # On top of that, we pre-populate the cache with a "good enough" default
         # value so organization config is guaranteed to be always available \o/
+        self._organization_config = OrganizationConfig(
+            expiration_date=None, user_profile_outsider_allowed=False, active_users_limit=None
+        )
         self.event_bus = event_bus
         self.max_cooldown = max_cooldown
 
@@ -296,8 +296,9 @@ class BackendAuthenticatedConn:
 
             else:
                 self._organization_config = OrganizationConfig(
-                    expiration_date=rep["expiration_date"],
+                    expiration_date=rep.get("expiration_date"),
                     user_profile_outsider_allowed=rep["user_profile_outsider_allowed"],
+                    active_users_limit=rep["active_users_limit"],
                 )
 
             rep = await cmds.events_subscribe(transport)

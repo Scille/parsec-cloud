@@ -76,6 +76,44 @@ async def test_invite_user(
 
 @pytest.mark.gui
 @pytest.mark.trio
+@customize_fixtures(logged_gui_as_admin=True)
+async def test_invite_and_greet_user_whith_active_users_limit_reached(
+    aqtbot, gui, alice, running_backend, monkeypatch, autoclose_dialog
+):
+    # Set the active user limit before login to ensure no cache information has been kept
+    await running_backend.backend.organization.update(alice.organization_id, active_users_limit=1)
+    await gui.test_switch_to_logged_in(alice)
+    u_w = await gui.test_switch_to_users_widget()
+
+    assert u_w.layout_users.count() == 3
+
+    monkeypatch.setattr(
+        "parsec.core.gui.users_widget.get_text_input",
+        lambda *args, **kwargs: "hubert.farnsworth@pe.com",
+    )
+
+    aqtbot.mouse_click(u_w.button_add_user, QtCore.Qt.LeftButton)
+
+    # The active user limit doesn't prevent to send invitation (check is
+    # enforced by the backend during claim finalization)
+
+    def _new_invitation_displayed():
+        assert u_w.layout_users.count() == 4
+        inv_btn = u_w.layout_users.itemAt(0).widget()
+        assert isinstance(inv_btn, UserInvitationButton)
+        assert inv_btn.email == "hubert.farnsworth@pe.com"
+        assert autoclose_dialog.dialogs == [
+            (
+                "",
+                "The invitation to join your organization was successfuly sent at : <b>hubert.farnsworth@pe.com</b>",
+            )
+        ]
+
+    await aqtbot.wait_until(_new_invitation_displayed)
+
+
+@pytest.mark.gui
+@pytest.mark.trio
 async def test_invite_user_not_allowed(logged_gui, running_backend):
     u_w = await logged_gui.test_switch_to_users_widget()
 

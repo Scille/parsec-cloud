@@ -19,6 +19,7 @@ from parsec.backend.user import (
     UserAlreadyExistsError,
     UserAlreadyRevokedError,
     UserNotFoundError,
+    UserActiveUsersLimitReached,
 )
 
 
@@ -37,12 +38,18 @@ class MemoryUserComponent(BaseUserComponent):
         self._organizations = defaultdict(OrganizationStore)
 
     def register_components(self, **other_components):
-        pass
+        self._organization_component = other_components["organization"]
 
     async def create_user(
         self, organization_id: OrganizationID, user: User, first_device: Device
     ) -> None:
         org = self._organizations[organization_id]
+        active_users_limit = self._organization_component._organizations[
+            organization_id
+        ].active_users_limit
+        active_users = (u for u in org.users.values() if u.revoked_on is None)
+        if active_users_limit is not None and active_users_limit <= len(list(active_users)):
+            raise UserActiveUsersLimitReached()
 
         if user.user_id in org.users:
             raise UserAlreadyExistsError(f"User `{user.user_id}` already exists")

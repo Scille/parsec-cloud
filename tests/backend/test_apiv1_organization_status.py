@@ -1,5 +1,4 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2016-2021 Scille SAS
-
 from typing import Dict
 from unittest.mock import ANY
 from pendulum import datetime
@@ -8,6 +7,7 @@ import pytest
 from parsec.api.protocol import (
     apiv1_organization_status_serializer,
     apiv1_organization_update_serializer,
+    organization_config_serializer,
 )
 from tests.backend.test_apiv1_organization import organization_create
 from parsec.backend.backend_events import BackendEvent
@@ -23,6 +23,14 @@ async def organization_status(sock, organization_id):
     return apiv1_organization_status_serializer.rep_loads(raw_rep)
 
 
+async def organization_config(sock):
+    raw_rep = await sock.send(
+        organization_config_serializer.req_dumps({"cmd": "organization_config"})
+    )
+    raw_rep = await sock.recv()
+    return organization_config_serializer.rep_loads(raw_rep)
+
+
 async def organization_update(sock, organization_id, **fields: Dict):
     raw_rep = await sock.send(
         apiv1_organization_update_serializer.req_dumps(
@@ -34,45 +42,71 @@ async def organization_update(sock, organization_id, **fields: Dict):
 
 
 @pytest.mark.trio
-async def test_organization_status_bootstrapped(coolorg, administration_backend_sock):
+async def test_organization_status_bootstrapped(
+    coolorg, administration_backend_sock, alice_backend_sock, backend
+):
     rep = await organization_status(administration_backend_sock, coolorg.organization_id)
     assert rep == {
         "status": "ok",
         "is_bootstrapped": True,
+        "user_profile_outsider_allowed": True,
+        "active_users_limit": backend.config.organization_initial_active_users_limit,
         "expiration_date": None,
-        "user_profile_outsider_allowed": False,
+    }
+
+
+@pytest.mark.trio
+async def test_organization_config_bootstrapped(coolorg, alice_backend_sock, backend):
+    rep = await organization_config(alice_backend_sock)
+    assert rep == {
+        "status": "ok",
+        "user_profile_outsider_allowed": True,
+        "active_users_limit": backend.config.organization_initial_active_users_limit,
+        "expiration_date": None,
     }
 
 
 @pytest.mark.trio
 async def test_organization_status_not_bootstrapped(
-    organization_factory, administration_backend_sock
+    organization_factory, administration_backend_sock, alice_backend_sock, backend
 ):
     # 1) Create organization
     neworg = organization_factory("NewOrg")
     rep = await organization_create(administration_backend_sock, neworg.organization_id)
-    assert rep == {"status": "ok", "bootstrap_token": ANY}
+    assert rep == {"status": "ok", "bootstrap_token": ANY, "expiration_date": None}
 
     # 2) Check its status
     rep = await organization_status(administration_backend_sock, neworg.organization_id)
     assert rep == {
         "status": "ok",
         "is_bootstrapped": False,
+        "user_profile_outsider_allowed": True,
+        "active_users_limit": backend.config.organization_initial_active_users_limit,
         "expiration_date": None,
-        "user_profile_outsider_allowed": False,
     }
 
 
 @pytest.mark.trio
+async def test_organization_config_not_bootstrapped(
+    organization_factory, administration_backend_sock, alice_backend_sock, backend
+):
+    # 1) Create organization
+    neworg = organization_factory("NewOrg")
+    rep = await organization_create(administration_backend_sock, neworg.organization_id)
+    assert rep == {"status": "ok", "bootstrap_token": ANY, "expiration_date": None}
+
+
+@pytest.mark.trio
 async def test_organization_update_only_expiration_date(
-    coolorg, organization_factory, administration_backend_sock, backend
+    coolorg, organization_factory, alice_backend_sock, administration_backend_sock, backend
 ):
     rep = await organization_status(administration_backend_sock, coolorg.organization_id)
     assert rep == {
         "status": "ok",
         "is_bootstrapped": True,
+        "user_profile_outsider_allowed": True,
+        "active_users_limit": backend.config.organization_initial_active_users_limit,
         "expiration_date": None,
-        "user_profile_outsider_allowed": False,
     }
 
     rep = await organization_update(
@@ -84,7 +118,16 @@ async def test_organization_update_only_expiration_date(
         "status": "ok",
         "is_bootstrapped": True,
         "expiration_date": datetime(2077, 1, 1),
-        "user_profile_outsider_allowed": False,
+        "user_profile_outsider_allowed": True,
+        "active_users_limit": backend.config.organization_initial_active_users_limit,
+    }
+
+    rep = await organization_config(alice_backend_sock)
+    assert rep == {
+        "status": "ok",
+        "expiration_date": datetime(2077, 1, 1),
+        "user_profile_outsider_allowed": True,
+        "active_users_limit": backend.config.organization_initial_active_users_limit,
     }
 
     rep = await organization_update(
@@ -95,21 +138,39 @@ async def test_organization_update_only_expiration_date(
     assert rep == {
         "status": "ok",
         "is_bootstrapped": True,
+        "user_profile_outsider_allowed": True,
+        "active_users_limit": backend.config.organization_initial_active_users_limit,
         "expiration_date": None,
-        "user_profile_outsider_allowed": False,
+    }
+
+    rep = await organization_config(alice_backend_sock)
+    assert rep == {
+        "status": "ok",
+        "user_profile_outsider_allowed": True,
+        "active_users_limit": backend.config.organization_initial_active_users_limit,
+        "expiration_date": None,
     }
 
 
 @pytest.mark.trio
 async def test_organization_update_expiration_date_with_expired_event(
-    coolorg, organization_factory, administration_backend_sock, backend
+    coolorg, organization_factory, administration_backend_sock, alice_backend_sock, backend
 ):
     rep = await organization_status(administration_backend_sock, coolorg.organization_id)
     assert rep == {
         "status": "ok",
         "is_bootstrapped": True,
+        "user_profile_outsider_allowed": True,
+        "active_users_limit": backend.config.organization_initial_active_users_limit,
         "expiration_date": None,
-        "user_profile_outsider_allowed": False,
+    }
+
+    rep = await organization_config(alice_backend_sock)
+    assert rep == {
+        "status": "ok",
+        "user_profile_outsider_allowed": True,
+        "active_users_limit": backend.config.organization_initial_active_users_limit,
+        "expiration_date": None,
     }
 
     # New expired organization
@@ -127,7 +188,8 @@ async def test_organization_update_expiration_date_with_expired_event(
             "status": "ok",
             "is_bootstrapped": True,
             "expiration_date": datetime(1999, 12, 31),
-            "user_profile_outsider_allowed": False,
+            "user_profile_outsider_allowed": True,
+            "active_users_limit": backend.config.organization_initial_active_users_limit,
         }
 
     # Already Expired organization
@@ -144,32 +206,30 @@ async def test_organization_update_expiration_date_with_expired_event(
             "status": "ok",
             "is_bootstrapped": True,
             "expiration_date": datetime(2000, 1, 31),
-            "user_profile_outsider_allowed": False,
+            "user_profile_outsider_allowed": True,
+            "active_users_limit": backend.config.organization_initial_active_users_limit,
         }
 
 
 @pytest.mark.trio
 async def test_organization_update_only_user_profile_outsider_allowed(
-    coolorg, organization_factory, administration_backend_sock, backend
+    coolorg, organization_factory, administration_backend_sock, alice_backend_sock, backend
 ):
     rep = await organization_status(administration_backend_sock, coolorg.organization_id)
     assert rep == {
         "status": "ok",
         "is_bootstrapped": True,
+        "user_profile_outsider_allowed": True,
+        "active_users_limit": backend.config.organization_initial_active_users_limit,
         "expiration_date": None,
-        "user_profile_outsider_allowed": False,
     }
 
-    rep = await organization_update(
-        administration_backend_sock, coolorg.organization_id, user_profile_outsider_allowed=True
-    )
-    assert rep == {"status": "ok"}
-    rep = await organization_status(administration_backend_sock, coolorg.organization_id)
+    rep = await organization_config(alice_backend_sock)
     assert rep == {
         "status": "ok",
-        "is_bootstrapped": True,
-        "expiration_date": None,
         "user_profile_outsider_allowed": True,
+        "active_users_limit": backend.config.organization_initial_active_users_limit,
+        "expiration_date": None,
     }
 
     rep = await organization_update(
@@ -180,51 +240,124 @@ async def test_organization_update_only_user_profile_outsider_allowed(
     assert rep == {
         "status": "ok",
         "is_bootstrapped": True,
-        "expiration_date": None,
         "user_profile_outsider_allowed": False,
+        "active_users_limit": backend.config.organization_initial_active_users_limit,
+        "expiration_date": None,
+    }
+
+    rep = await organization_config(alice_backend_sock)
+    assert rep == {
+        "status": "ok",
+        "user_profile_outsider_allowed": False,
+        "active_users_limit": backend.config.organization_initial_active_users_limit,
+        "expiration_date": None,
+    }
+
+    rep = await organization_update(
+        administration_backend_sock, coolorg.organization_id, user_profile_outsider_allowed=True
+    )
+    assert rep == {"status": "ok"}
+    rep = await organization_status(administration_backend_sock, coolorg.organization_id)
+    assert rep == {
+        "status": "ok",
+        "is_bootstrapped": True,
+        "user_profile_outsider_allowed": True,
+        "active_users_limit": backend.config.organization_initial_active_users_limit,
+        "expiration_date": None,
+    }
+
+    rep = await organization_config(alice_backend_sock)
+    assert rep == {
+        "status": "ok",
+        "user_profile_outsider_allowed": True,
+        "active_users_limit": backend.config.organization_initial_active_users_limit,
+        "expiration_date": None,
     }
 
 
 @pytest.mark.trio
-async def test_organization_update_multiple_fields(
-    coolorg, organization_factory, administration_backend_sock, backend
+async def test_organization_update_only_users_limit(
+    coolorg, organization_factory, administration_backend_sock, alice_backend_sock, backend
 ):
     rep = await organization_status(administration_backend_sock, coolorg.organization_id)
     assert rep == {
         "status": "ok",
         "is_bootstrapped": True,
+        "user_profile_outsider_allowed": True,
+        "active_users_limit": backend.config.organization_initial_active_users_limit,
         "expiration_date": None,
-        "user_profile_outsider_allowed": False,
+    }
+
+    rep = await organization_config(alice_backend_sock)
+    assert rep == {
+        "status": "ok",
+        "user_profile_outsider_allowed": True,
+        "active_users_limit": backend.config.organization_initial_active_users_limit,
+        "expiration_date": None,
     }
 
     rep = await organization_update(
-        administration_backend_sock,
-        coolorg.organization_id,
-        expiration_date=datetime(2077, 1, 1),
-        user_profile_outsider_allowed=True,
+        administration_backend_sock, coolorg.organization_id, active_users_limit=25
     )
     assert rep == {"status": "ok"}
     rep = await organization_status(administration_backend_sock, coolorg.organization_id)
     assert rep == {
         "status": "ok",
         "is_bootstrapped": True,
-        "expiration_date": datetime(2077, 1, 1),
         "user_profile_outsider_allowed": True,
+        "active_users_limit": 25,
+        "expiration_date": None,
+    }
+
+    rep = await organization_config(alice_backend_sock)
+    assert rep == {
+        "status": "ok",
+        "user_profile_outsider_allowed": True,
+        "active_users_limit": 25,
+        "expiration_date": None,
     }
 
     rep = await organization_update(
-        administration_backend_sock,
-        coolorg.organization_id,
-        expiration_date=None,
-        user_profile_outsider_allowed=True,
+        administration_backend_sock, coolorg.organization_id, active_users_limit=None
     )
     assert rep == {"status": "ok"}
     rep = await organization_status(administration_backend_sock, coolorg.organization_id)
     assert rep == {
         "status": "ok",
         "is_bootstrapped": True,
-        "expiration_date": None,
         "user_profile_outsider_allowed": True,
+        "active_users_limit": None,
+        "expiration_date": None,
+    }
+
+    rep = await organization_config(alice_backend_sock)
+    assert rep == {
+        "status": "ok",
+        "user_profile_outsider_allowed": True,
+        "active_users_limit": None,
+        "expiration_date": None,
+    }
+
+
+@pytest.mark.trio
+async def test_organization_update_multiple_fields(
+    coolorg, organization_factory, administration_backend_sock, alice_backend_sock, backend
+):
+    rep = await organization_status(administration_backend_sock, coolorg.organization_id)
+    assert rep == {
+        "status": "ok",
+        "is_bootstrapped": True,
+        "user_profile_outsider_allowed": True,
+        "active_users_limit": backend.config.organization_initial_active_users_limit,
+        "expiration_date": None,
+    }
+
+    rep = await organization_config(alice_backend_sock)
+    assert rep == {
+        "status": "ok",
+        "user_profile_outsider_allowed": True,
+        "active_users_limit": backend.config.organization_initial_active_users_limit,
+        "expiration_date": None,
     }
 
     rep = await organization_update(
@@ -232,6 +365,7 @@ async def test_organization_update_multiple_fields(
         coolorg.organization_id,
         expiration_date=datetime(2077, 1, 1),
         user_profile_outsider_allowed=False,
+        active_users_limit=5689,
     )
     assert rep == {"status": "ok"}
     rep = await organization_status(administration_backend_sock, coolorg.organization_id)
@@ -240,6 +374,65 @@ async def test_organization_update_multiple_fields(
         "is_bootstrapped": True,
         "expiration_date": datetime(2077, 1, 1),
         "user_profile_outsider_allowed": False,
+        "active_users_limit": 5689,
+    }
+
+    rep = await organization_config(alice_backend_sock)
+    assert rep == {
+        "status": "ok",
+        "expiration_date": datetime(2077, 1, 1),
+        "user_profile_outsider_allowed": False,
+        "active_users_limit": 5689,
+    }
+
+    rep = await organization_update(
+        administration_backend_sock,
+        coolorg.organization_id,
+        expiration_date=None,
+        user_profile_outsider_allowed=True,
+        active_users_limit=None,
+    )
+    assert rep == {"status": "ok"}
+    rep = await organization_status(administration_backend_sock, coolorg.organization_id)
+    assert rep == {
+        "status": "ok",
+        "is_bootstrapped": True,
+        "user_profile_outsider_allowed": True,
+        "active_users_limit": None,
+        "expiration_date": None,
+    }
+
+    rep = await organization_config(alice_backend_sock)
+    assert rep == {
+        "status": "ok",
+        "user_profile_outsider_allowed": True,
+        "active_users_limit": None,
+        "expiration_date": None,
+    }
+
+    rep = await organization_update(
+        administration_backend_sock,
+        coolorg.organization_id,
+        expiration_date=datetime(2077, 1, 1),
+        user_profile_outsider_allowed=False,
+        active_users_limit=3,
+    )
+    assert rep == {"status": "ok"}
+    rep = await organization_status(administration_backend_sock, coolorg.organization_id)
+    assert rep == {
+        "status": "ok",
+        "is_bootstrapped": True,
+        "expiration_date": datetime(2077, 1, 1),
+        "user_profile_outsider_allowed": False,
+        "active_users_limit": 3,
+    }
+
+    rep = await organization_config(alice_backend_sock)
+    assert rep == {
+        "status": "ok",
+        "expiration_date": datetime(2077, 1, 1),
+        "user_profile_outsider_allowed": False,
+        "active_users_limit": 3,
     }
 
 

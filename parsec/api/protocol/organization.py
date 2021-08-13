@@ -7,6 +7,12 @@ from parsec.api.protocol.types import OrganizationIDField, DeviceIDField, UserPr
 class APIV1_OrganizationCreateReqSchema(BaseReqSchema):
     organization_id = OrganizationIDField(required=True)
     expiration_date = fields.DateTime(allow_none=True, required=False)
+    # /!\ Missing field and field set to `None` does not mean the same thing:
+    # - missing field: ask the backend to use it default value for this field
+    # - field set to `None`: `None` is a valid value to use for this field
+    user_profile_outsider_allowed = fields.Boolean(required=False)
+    # `None` stands for "no limit" here
+    active_users_limit = fields.Integer(allow_none=True, required=False)
 
 
 class APIV1_OrganizationCreateRepSchema(BaseRepSchema):
@@ -110,6 +116,8 @@ class APIV1_OrganizationStatusRepSchema(BaseRepSchema):
     is_bootstrapped = fields.Boolean(required=True)
     expiration_date = fields.DateTime(allow_none=True, required=False)
     user_profile_outsider_allowed = fields.Boolean(required=True)
+    # `None` stands for "no limit" here
+    active_users_limit = fields.Integer(allow_none=True, required=True)
 
 
 apiv1_organization_status_serializer = CmdSerializer(
@@ -124,6 +132,8 @@ class OrganizationConfigReqSchema(BaseReqSchema):
 class OrganizationConfigRepSchema(BaseRepSchema):
     expiration_date = fields.DateTime(allow_none=True, required=False)
     user_profile_outsider_allowed = fields.Boolean(required=True)
+    # `None` stands for "no limit" here
+    active_users_limit = fields.Integer(allow_none=True, required=True)
 
 
 organization_config_serializer = CmdSerializer(
@@ -133,8 +143,13 @@ organization_config_serializer = CmdSerializer(
 
 class APIV1_OrganizationUpdateReqSchema(BaseReqSchema):
     organization_id = OrganizationIDField(required=True)
+    # /!\ Missing field and field set to `None` does not mean the same thing:
+    # - missing field: don't modify this field
+    # - field set to `None`: `None` is a valid value to use for this field
     expiration_date = fields.DateTime(allow_none=True, required=False)
     user_profile_outsider_allowed = fields.Boolean(required=False)
+    # `None` stands for "no limit" here
+    active_users_limit = fields.Integer(allow_none=True, required=False)
 
 
 class APIV1_OrganizationUpdateRepSchema(BaseRepSchema):

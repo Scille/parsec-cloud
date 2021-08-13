@@ -613,6 +613,9 @@ msgstr ""
 msgid "TEXT_GREET_USER_PEER_RESET"
 msgstr "The invitee has reset the process. We will restart from the beginning."
 
+msgid "TEXT_GREET_USER_ACTIVE_USERS_LIMIT_REACHED"
+msgstr "Active users limit reached, increase the limit or revoke some users before retrying."
+
 msgid "TEXT_USER_PROFILE_STANDARD"
 msgstr "Standard"
 

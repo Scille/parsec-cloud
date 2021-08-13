@@ -19,10 +19,8 @@ from tests.backend.common import ping
 from tests.fixtures import local_device_to_backend_user
 
 
-async def organization_create(sock, organization_id, expiration_date=None):
-    req = {"cmd": "organization_create", "organization_id": organization_id}
-    if expiration_date:
-        req["expiration_date"] = expiration_date
+async def organization_create(sock, organization_id, **kwargs):
+    req = {"cmd": "organization_create", "organization_id": organization_id, **kwargs}
     raw_rep = await sock.send(apiv1_organization_create_serializer.req_dumps(req))
     raw_rep = await sock.recv()
     return apiv1_organization_create_serializer.rep_loads(raw_rep)
@@ -74,7 +72,9 @@ async def test_organization_create_bad_name(administration_backend_sock):
 @pytest.mark.trio
 @customize_fixtures(backend_not_populated=True)
 async def test_organization_create_wrong_expiration_date(administration_backend_sock):
-    rep = await organization_create(administration_backend_sock, "new", "2010-01-01")
+    rep = await organization_create(
+        administration_backend_sock, "new", expiration_date="2010-01-01"
+    )
     assert rep["status"] == "bad_message"
 
 
@@ -88,12 +88,12 @@ async def test_organization_recreate_and_bootstrap(
 ):
     neworg = organization_factory("NewOrg")
     rep = await organization_create(administration_backend_sock, neworg.organization_id)
-    assert rep == {"status": "ok", "bootstrap_token": ANY}
+    assert rep == {"status": "ok", "bootstrap_token": ANY, "expiration_date": None}
     bootstrap_token1 = rep["bootstrap_token"]
 
     # Can recreate the organization as long as it hasn't been bootstrapped yet
     rep = await organization_create(administration_backend_sock, neworg.organization_id)
-    assert rep == {"status": "ok", "bootstrap_token": ANY}
+    assert rep == {"status": "ok", "bootstrap_token": ANY, "expiration_date": None}
     bootstrap_token2 = rep["bootstrap_token"]
 
     assert bootstrap_token1 != bootstrap_token2
@@ -142,9 +142,9 @@ async def test_organization_create_and_bootstrap(
     # 1) Create organization, note this means `neworg.bootstrap_token`
     # will contain an invalid token
 
-    rep = await organization_create(administration_backend_sock, neworg.organization_id)
-    assert rep == {"status": "ok", "bootstrap_token": ANY}
-    bootstrap_token = rep["bootstrap_token"]
+    create_org_rep = await organization_create(administration_backend_sock, neworg.organization_id)
+    assert create_org_rep == {"status": "ok", "bootstrap_token": ANY, "expiration_date": None}
+    bootstrap_token = create_org_rep["bootstrap_token"]
 
     # 2) Bootstrap organization
 
@@ -206,7 +206,6 @@ async def test_organization_with_expiration_date_create_and_bootstrap(
     apiv1_backend_sock_factory,
 ):
     neworg = organization_factory("NewOrg")
-
     # 1) Create organization, note this means `neworg.bootstrap_token`
     # will contain an invalid token
 
@@ -284,7 +283,7 @@ async def test_organization_expired_create_and_bootstrap(
     # 3) Now re-create the organization to overwrite the expiration date
 
     rep = await organization_create(administration_backend_sock, neworg.organization_id)
-    assert rep == {"status": "ok", "bootstrap_token": ANY}
+    assert rep == {"status": "ok", "bootstrap_token": ANY, "expiration_date": None}
 
     # 4) This time, bootstrap is possible
 
@@ -568,7 +567,6 @@ async def test_organization_spontaneous_bootstrap(
 
     newalice = local_device_factory(org=neworg, profile=UserProfile.ADMIN)
     backend_newalice, backend_newalice_first_device = local_device_to_backend_user(newalice, neworg)
-
     async with apiv1_backend_sock_factory(backend, neworg.organization_id) as sock:
         rep = await organization_bootstrap(
             sock,

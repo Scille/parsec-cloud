@@ -52,16 +52,30 @@ class MemoryOrganizationComponent(BaseOrganizationComponent):
         self._realm_component = realm
 
     async def create(
-        self, id: OrganizationID, bootstrap_token: str, expiration_date: Optional[DateTime] = None
+        self,
+        id: OrganizationID,
+        bootstrap_token: str,
+        expiration_date: Union[UnsetType, Optional[DateTime]] = Unset,
+        active_users_limit: Union[UnsetType, Optional[int]] = Unset,
+        user_profile_outsider_allowed: Union[UnsetType, bool] = Unset,
     ) -> None:
         org = self._organizations.get(id)
-
         # Allow overwritting of not-yet-bootstrapped organization
         if org and org.root_verify_key:
             raise OrganizationAlreadyExistsError()
+        if active_users_limit is Unset:
+            active_users_limit = self._config.organization_initial_active_users_limit
+        if user_profile_outsider_allowed is Unset:
+            user_profile_outsider_allowed = (
+                self._config.organization_initial_user_profile_outsider_allowed
+            )
 
         self._organizations[id] = Organization(
-            organization_id=id, bootstrap_token=bootstrap_token, expiration_date=expiration_date
+            organization_id=id,
+            bootstrap_token=bootstrap_token,
+            expiration_date=expiration_date if expiration_date is not Unset else None,
+            active_users_limit=active_users_limit,
+            user_profile_outsider_allowed=user_profile_outsider_allowed,
         )
 
     async def get(self, id: OrganizationID) -> Organization:
@@ -149,6 +163,7 @@ class MemoryOrganizationComponent(BaseOrganizationComponent):
         self,
         id: OrganizationID,
         expiration_date: Union[UnsetType, Optional[DateTime]] = Unset,
+        active_users_limit: Union[UnsetType, Optional[int]] = Unset,
         user_profile_outsider_allowed: Union[UnsetType, bool] = Unset,
     ) -> None:
         """
@@ -162,6 +177,8 @@ class MemoryOrganizationComponent(BaseOrganizationComponent):
 
         if expiration_date is not Unset:
             organization = organization.evolve(expiration_date=expiration_date)
+        if active_users_limit is not Unset:
+            organization = organization.evolve(active_users_limit=active_users_limit)
         if user_profile_outsider_allowed is not Unset:
             organization = organization.evolve(
                 user_profile_outsider_allowed=user_profile_outsider_allowed

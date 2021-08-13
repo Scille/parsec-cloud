@@ -451,6 +451,7 @@ class UsersWidget(QWidget, Ui_UsersWidget):
         self._flush_users_list()
 
         current_user = self.core.device.user_id
+
         for invitation in reversed(invitations):
             addr = BackendInvitationAddr.build(
                 backend_addr=self.core.device.organization_addr,
@@ -462,6 +463,7 @@ class UsersWidget(QWidget, Ui_UsersWidget):
         for user_info in users:
             self.add_user(user_info=user_info, is_current_user=current_user == user_info.user_id)
         self.spinner.hide()
+
         self.pagination(total=total, users_on_page=len(users))
         self.button_users_filter.setEnabled(True)
         self.line_edit_search.setEnabled(True)

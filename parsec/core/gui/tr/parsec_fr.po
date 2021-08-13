@@ -645,6 +645,11 @@ msgstr "Suite à une annulation de l'invité, il faut redémarrer le precessus"
 msgid "TEXT_GREET_USER_PEER_RESET"
 msgstr "Suite à une annulation de l'invité, il faut redémarrer le processus."
 
+msgid "TEXT_GREET_USER_ACTIVE_USERS_LIMIT_REACHED"
+msgstr ""
+"Limite d'utilisateurs actifs atteinte, augmentez cette limite ou bien "
+"revoquez des utilisateurs avant de réessayer."
+
 msgid "TEXT_USER_PROFILE_STANDARD"
 msgstr "Standard"
 

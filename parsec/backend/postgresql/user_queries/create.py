@@ -8,7 +8,14 @@ from uuid import UUID
 from pendulum import now as pendulum_now
 
 from parsec.api.protocol import OrganizationID
-from parsec.backend.user import User, Device, UserError, UserNotFoundError, UserAlreadyExistsError
+from parsec.backend.user import (
+    User,
+    Device,
+    UserError,
+    UserNotFoundError,
+    UserAlreadyExistsError,
+    UserActiveUsersLimitReached,
+)
 from parsec.backend.postgresql.handler import send_signal
 from parsec.backend.postgresql.utils import (
     Q,
@@ -17,6 +24,29 @@ from parsec.backend.postgresql.utils import (
     q_device_internal_id,
     q_user_internal_id,
     q_human_internal_id,
+)
+
+
+_q_check_active_users_limit = Q(
+    f"""
+    SELECT
+        (
+            organization.active_users_limit is NULL
+            OR (
+                SELECT
+                    count(*)
+                FROM
+                    user_
+                WHERE
+                    user_.organization = organization._id AND
+                    user_.revoked_on IS NULL
+            ) < organization.active_users_limit
+        ) as allowed
+    FROM
+        organization
+    WHERE
+        organization.organization_id = $organization_id
+"""
 )
 
 
@@ -233,6 +263,15 @@ async def query_create_user(
     first_device: Device,
     invitation_token: Optional[UUID] = None,
 ) -> None:
+    record = await conn.fetchrow(*_q_check_active_users_limit(organization_id=organization_id))
+    if not record["allowed"]:
+        raise UserActiveUsersLimitReached()
+    # Note we don't lock anything in postgresql after checking active users limit.
+    # This means we are not protected against concurrency (i.e. multiple concurrent
+    # user creation will first check the active user limit is not reached then
+    # commit their new user, ending up with more than the users than the limit !).
+    # This is considered "fine enough" given concurrency on user creation is very
+    # low and worse outcome would be to go slightly above user limit.
     await _create_user(conn, organization_id, user, first_device)
 
 

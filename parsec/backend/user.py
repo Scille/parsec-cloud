@@ -59,6 +59,10 @@ class UserAlreadyRevokedError(UserError):
     pass
 
 
+class UserActiveUsersLimitReached(UserError):
+    pass
+
+
 PEER_EVENT_MAX_WAIT = 300
 INVITATION_VALIDITY = 3600
 
@@ -530,6 +534,8 @@ class BaseUserComponent:
 
         except UserAlreadyExistsError as exc:
             return {"status": "already_exists", "reason": str(exc)}
+        except UserActiveUsersLimitReached:
+            return {"status": "active_users_limit_reached"}
 
         return {"status": "ok"}
 
