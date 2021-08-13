@@ -157,7 +157,16 @@ def test_merge_folder_manifests_with_concurrent_remote_change(local_change, remo
         remote_manifest=remote_manifest_v2,
         force_apply_pattern=False,
     )
-    assert merged_manifest.children
+
+    if remote_change == "same_entry_moved":
+        assert list(merged_manifest.children) == ["bar (renamed by b@2).txt"]
+    else:
+        assert remote_change == "new_entry_added"
+        if local_change == "rename":
+            assert list(merged_manifest.children) == ["bar.txt", "foo2.txt"]
+        else:
+            assert local_change == "prevent_sync_rename"
+            assert list(merged_manifest.children) == ["bar.txt", "foo.txt.tmp"]
 
 
 def test_merge_manifests_with_a_placeholder():
