@@ -473,7 +473,9 @@ class LocalFileManifest(BaseLocalManifest):
         return super().match_remote(remote_manifest)
 
 
-LocalFolderishManifestTypeVar = TypeVar("LocalManifestTypeVar", bound="LocalFolderishManifestMixin")
+LocalFolderishManifestTypeVar = TypeVar(
+    "LocalFolderishManifestTypeVar", bound="LocalFolderishManifestMixin"
+)
 
 
 class LocalFolderishManifestMixin:
@@ -492,7 +494,12 @@ class LocalFolderishManifestMixin:
 
         # Deal with removal first
         for name, entry_id in data.items():
+            # Here `entry_id` can be either:
+            # - a new entry id that might overwrite the previous one with the same name if it exists
+            # - `None` which means the entry for the corresponding name should be removed
             if name not in new_children:
+                # Make sure we don't remove a name that does not exist
+                assert entry_id is not None
                 continue
             # Remove old entry
             old_entry_id = new_children.pop(name)
@@ -547,11 +554,17 @@ class LocalFolderishManifestMixin:
         # before applying a new filter that filtered those entries from the remote manifest
         if not other.local_confinement_points and not self.remote_confinement_points:
             return self
+        # Create a set for fast lookup in order to make sure no entry gets duplicated.
+        # This might happen when a synchronized entry is renamed to a confined name locally.
+        self_entry_ids = set(self.children.values())
         previously_local_confinement_points = {
             name: entry_id
             for name, entry_id in other.children.items()
-            if entry_id in other.local_confinement_points
-            or entry_id in self.remote_confinement_points
+            if entry_id not in self_entry_ids
+            and (
+                entry_id in other.local_confinement_points
+                or entry_id in self.remote_confinement_points
+            )
         }
         return self.evolve_children_and_mark_updated(
             previously_local_confinement_points, prevent_sync_pattern
