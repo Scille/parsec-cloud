@@ -36,18 +36,12 @@ from parsec.api.protocol.handshake import (
     AuthenticatedClientHandshake,
     InvitedClientHandshake,
     APIV1_HandshakeType,
-    APIV1_AuthenticatedClientHandshake,
     APIV1_AnonymousClientHandshake,
-    APIV1_AdministrationClientHandshake,
 )
 from parsec.api.protocol.organization import (
-    apiv1_organization_create_serializer,
     apiv1_organization_bootstrap_serializer,
     organization_bootstrap_webhook_serializer,
     organization_stats_serializer,
-    apiv1_organization_stats_serializer,
-    apiv1_organization_status_serializer,
-    apiv1_organization_update_serializer,
     organization_config_serializer,
     UsersPerProfileDetailItemSchema,
 )
@@ -59,19 +53,8 @@ from parsec.api.protocol.events import (
 from parsec.api.protocol.ping import ping_serializer
 from parsec.api.protocol.user import (
     user_get_serializer,
-    apiv1_user_find_serializer,
-    apiv1_user_invite_serializer,
-    apiv1_user_get_invitation_creator_serializer,
-    apiv1_user_claim_serializer,
-    apiv1_user_cancel_invitation_serializer,
-    apiv1_user_create_serializer,
     user_create_serializer,
     user_revoke_serializer,
-    apiv1_device_invite_serializer,
-    apiv1_device_get_invitation_creator_serializer,
-    apiv1_device_claim_serializer,
-    apiv1_device_cancel_invitation_serializer,
-    apiv1_device_create_serializer,
     device_create_serializer,
     human_find_serializer,
 )
@@ -120,13 +103,7 @@ from parsec.api.protocol.vlob import (
     vlob_maintenance_get_reencryption_batch_serializer,
     vlob_maintenance_save_reencryption_batch_serializer,
 )
-from parsec.api.protocol.cmds import (
-    AUTHENTICATED_CMDS,
-    INVITED_CMDS,
-    APIV1_AUTHENTICATED_CMDS,
-    APIV1_ANONYMOUS_CMDS,
-    APIV1_ADMINISTRATION_CMDS,
-)
+from parsec.api.protocol.cmds import AUTHENTICATED_CMDS, INVITED_CMDS, APIV1_ANONYMOUS_CMDS
 
 
 __all__ = (
@@ -149,9 +126,7 @@ __all__ = (
     "AuthenticatedClientHandshake",
     "InvitedClientHandshake",
     "APIV1_HandshakeType",
-    "APIV1_AuthenticatedClientHandshake",
     "APIV1_AnonymousClientHandshake",
-    "APIV1_AdministrationClientHandshake",
     # Types
     "UserID",
     "DeviceID",
@@ -166,15 +141,11 @@ __all__ = (
     "UserProfileField",
     "UserProfile",
     # Organization
-    "apiv1_organization_create_serializer",
     "apiv1_organization_bootstrap_serializer",
     "organization_bootstrap_webhook_serializer",
     "organization_bootstrap_serializer",
     "organization_stats_serializer",
-    "apiv1_organization_stats_serializer",
-    "apiv1_organization_status_serializer",
     "organization_config_serializer",
-    "apiv1_organization_update_serializer",
     "UsersPerProfileDetailItemSchema",
     # Events
     "events_subscribe_serializer",
@@ -184,19 +155,8 @@ __all__ = (
     "ping_serializer",
     # User
     "user_get_serializer",
-    "apiv1_user_find_serializer",
-    "apiv1_user_invite_serializer",
-    "apiv1_user_get_invitation_creator_serializer",
-    "apiv1_user_claim_serializer",
-    "apiv1_user_cancel_invitation_serializer",
-    "apiv1_user_create_serializer",
     "user_create_serializer",
     "user_revoke_serializer",
-    "apiv1_device_invite_serializer",
-    "apiv1_device_get_invitation_creator_serializer",
-    "apiv1_device_claim_serializer",
-    "apiv1_device_cancel_invitation_serializer",
-    "apiv1_device_create_serializer",
     "device_create_serializer",
     "human_find_serializer",
     # Invite
@@ -247,7 +207,5 @@ __all__ = (
     # List of cmds
     "AUTHENTICATED_CMDS",
     "INVITED_CMDS",
-    "APIV1_AUTHENTICATED_CMDS",
     "APIV1_ANONYMOUS_CMDS",
-    "APIV1_ADMINISTRATION_CMDS",
 )

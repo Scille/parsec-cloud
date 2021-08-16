@@ -68,9 +68,7 @@ HandshakeTypeField = fields.enum_field_factory(HandshakeType)
 
 
 class APIV1_HandshakeType(Enum):
-    AUTHENTICATED = "authenticated"
     ANONYMOUS = "anonymous"
-    ADMINISTRATION = "administration"
 
 
 APIV1_HandshakeTypeField = fields.enum_field_factory(APIV1_HandshakeType)
@@ -149,16 +147,6 @@ class HandshakeAnswerSchema(OneOfSchema):
 handshake_answer_serializer = serializer_factory(HandshakeAnswerSchema)
 
 
-class APIV1_HandshakeAuthenticatedAnswerSchema(BaseSchema):
-    handshake = fields.CheckedConstant("answer", required=True)
-    type = fields.EnumCheckedConstant(APIV1_HandshakeType.AUTHENTICATED, required=True)
-    client_api_version = ApiVersionField(required=True)
-    organization_id = OrganizationIDField(required=True)
-    device_id = DeviceIDField(required=True)
-    rvk = fields.VerifyKey(required=True)
-    answer = fields.Bytes(required=True)
-
-
 class APIV1_HandshakeAnonymousAnswerSchema(BaseSchema):
     handshake = fields.CheckedConstant("answer", required=True)
     type = fields.EnumCheckedConstant(APIV1_HandshakeType.ANONYMOUS, required=True)
@@ -168,20 +156,9 @@ class APIV1_HandshakeAnonymousAnswerSchema(BaseSchema):
     rvk = fields.VerifyKey(missing=None)
 
 
-class APIV1_HandshakeAdministrationAnswerSchema(BaseSchema):
-    handshake = fields.CheckedConstant("answer", required=True)
-    type = fields.EnumCheckedConstant(APIV1_HandshakeType.ADMINISTRATION, required=True)
-    client_api_version = ApiVersionField(required=True)
-    token = fields.String(required=True)
-
-
 class APIV1_HandshakeAnswerSchema(OneOfSchema):
     type_field = "type"
-    type_schemas = {
-        APIV1_HandshakeType.AUTHENTICATED: APIV1_HandshakeAuthenticatedAnswerSchema(),
-        APIV1_HandshakeType.ANONYMOUS: APIV1_HandshakeAnonymousAnswerSchema(),
-        APIV1_HandshakeType.ADMINISTRATION: APIV1_HandshakeAdministrationAnswerSchema(),
-    }
+    type_schemas = {APIV1_HandshakeType.ANONYMOUS: APIV1_HandshakeAnonymousAnswerSchema()}
 
     def get_obj_type(self, obj: Dict[str, object]) -> APIV1_HandshakeType:
         return cast(APIV1_HandshakeType, obj["type"])
@@ -332,7 +309,7 @@ class ServerHandshake:
         if not self.state == "answer":
             raise HandshakeError("Invalid state.")
 
-        if self.answer_type in (HandshakeType.AUTHENTICATED, APIV1_HandshakeType.AUTHENTICATED):
+        if self.answer_type == HandshakeType.AUTHENTICATED:
             if not verify_key:
                 raise HandshakeError(
                     "`verify_key` param must be provided for authenticated handshake"
@@ -426,12 +403,6 @@ class AuthenticatedClientHandshake(BaseClientHandshake):
         )
 
 
-class APIV1_AuthenticatedClientHandshake(AuthenticatedClientHandshake):
-    SUPPORTED_API_VERSIONS = (API_V1_VERSION,)
-    HANDSHAKE_TYPE = APIV1_HandshakeType.AUTHENTICATED
-    HANDSHAKE_ANSWER_SERIALIZER = apiv1_handshake_answer_serializer
-
-
 class InvitedClientHandshake(BaseClientHandshake):
     SUPPORTED_API_VERSIONS = (API_V2_VERSION,)
 
@@ -474,23 +445,5 @@ class APIV1_AnonymousClientHandshake(BaseClientHandshake):
                 "client_api_version": self.client_api_version,
                 "organization_id": self.organization_id,
                 "rvk": self.root_verify_key,
-            }
-        )
-
-
-class APIV1_AdministrationClientHandshake(BaseClientHandshake):
-    SUPPORTED_API_VERSIONS = (API_V1_VERSION,)
-
-    def __init__(self, token: str):
-        self.token = token
-
-    def process_challenge_req(self, req: bytes) -> bytes:
-        self.load_challenge_req(req)
-        return apiv1_handshake_answer_serializer.dumps(
-            {
-                "handshake": "answer",
-                "type": APIV1_HandshakeType.ADMINISTRATION,
-                "client_api_version": self.client_api_version,
-                "token": self.token,
             }
         )

@@ -29,7 +29,6 @@ def api(
     long_request: bool = False,
     handshake_types: Sequence[Union[HandshakeType, APIV1_HandshakeType]] = (
         HandshakeType.AUTHENTICATED,
-        APIV1_HandshakeType.AUTHENTICATED,
     ),
 ):
     def wrapper(fn):

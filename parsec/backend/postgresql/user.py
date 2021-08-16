@@ -10,8 +10,6 @@ from parsec.backend.user import (
     Device,
     Trustchain,
     GetUserAndDevicesResult,
-    UserInvitation,
-    DeviceInvitation,
     HumanFindResultItem,
 )
 from parsec.backend.postgresql.handler import PGHandler
@@ -26,14 +24,6 @@ from parsec.backend.postgresql.user_queries import (
     query_get_user_with_devices_and_trustchain,
     query_get_user_with_device,
     query_revoke_user,
-    query_create_user_invitation,
-    query_get_user_invitation,
-    query_claim_user_invitation,
-    query_cancel_user_invitation,
-    query_create_device_invitation,
-    query_get_device_invitation,
-    query_claim_device_invitation,
-    query_cancel_device_invitation,
 )
 
 
@@ -121,58 +111,6 @@ class PGUserComponent(BaseUserComponent):
                 omit_revoked=omit_revoked,
                 omit_non_human=omit_non_human,
             )
-
-    async def create_user_invitation(
-        self, organization_id: OrganizationID, invitation: UserInvitation
-    ) -> None:
-        async with self.dbh.pool.acquire() as conn:
-            await query_create_user_invitation(conn, organization_id, invitation)
-
-    async def get_user_invitation(
-        self, organization_id: OrganizationID, user_id: UserID
-    ) -> UserInvitation:
-        async with self.dbh.pool.acquire() as conn:
-            return await query_get_user_invitation(conn, organization_id, user_id)
-
-    async def claim_user_invitation(
-        self, organization_id: OrganizationID, user_id: UserID, encrypted_claim: bytes = b""
-    ) -> UserInvitation:
-        async with self.dbh.pool.acquire() as conn:
-            return await query_claim_user_invitation(
-                conn, organization_id, user_id, encrypted_claim
-            )
-
-    async def cancel_user_invitation(
-        self, organization_id: OrganizationID, user_id: UserID
-    ) -> None:
-        async with self.dbh.pool.acquire() as conn:
-            await query_cancel_user_invitation(conn, organization_id, user_id)
-
-    async def create_device_invitation(
-        self, organization_id: OrganizationID, invitation: DeviceInvitation
-    ) -> None:
-        async with self.dbh.pool.acquire() as conn:
-            await query_create_device_invitation(conn, organization_id, invitation)
-
-    async def get_device_invitation(
-        self, organization_id: OrganizationID, device_id: DeviceID
-    ) -> DeviceInvitation:
-        async with self.dbh.pool.acquire() as conn:
-            return await query_get_device_invitation(conn, organization_id, device_id)
-
-    async def claim_device_invitation(
-        self, organization_id: OrganizationID, device_id: DeviceID, encrypted_claim: bytes = b""
-    ) -> DeviceInvitation:
-        async with self.dbh.pool.acquire() as conn:
-            return await query_claim_device_invitation(
-                conn, organization_id, device_id, encrypted_claim
-            )
-
-    async def cancel_device_invitation(
-        self, organization_id: OrganizationID, device_id: DeviceID
-    ) -> None:
-        async with self.dbh.pool.acquire() as conn:
-            await query_cancel_device_invitation(conn, organization_id, device_id)
 
     async def revoke_user(
         self,

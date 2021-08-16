@@ -4,27 +4,6 @@ from parsec.api.protocol.base import BaseReqSchema, BaseRepSchema, CmdSerializer
 from parsec.api.protocol.types import OrganizationIDField, DeviceIDField, UserProfileField
 
 
-class APIV1_OrganizationCreateReqSchema(BaseReqSchema):
-    organization_id = OrganizationIDField(required=True)
-    expiration_date = fields.DateTime(allow_none=True, required=False)
-    # /!\ Missing field and field set to `None` does not mean the same thing:
-    # - missing field: ask the backend to use it default value for this field
-    # - field set to `None`: `None` is a valid value to use for this field
-    user_profile_outsider_allowed = fields.Boolean(required=False)
-    # `None` stands for "no limit" here
-    active_users_limit = fields.Integer(allow_none=True, required=False)
-
-
-class APIV1_OrganizationCreateRepSchema(BaseRepSchema):
-    bootstrap_token = fields.String(required=True)
-    expiration_date = fields.DateTime(allow_none=True, required=False)
-
-
-apiv1_organization_create_serializer = CmdSerializer(
-    APIV1_OrganizationCreateReqSchema, APIV1_OrganizationCreateRepSchema
-)
-
-
 class APIV1_OrganizationBootstrapReqSchema(BaseReqSchema):
     bootstrap_token = fields.String(required=True)
     root_verify_key = fields.VerifyKey(required=True)
@@ -88,43 +67,6 @@ organization_stats_serializer = CmdSerializer(
 )
 
 
-class APIV1_OrganizationStatsReqSchema(BaseReqSchema):
-    organization_id = OrganizationIDField(required=True)
-
-
-class APIV1_OrganizationStatsRepSchema(BaseRepSchema):
-    data_size = fields.Integer(required=True)
-    metadata_size = fields.Integer(required=True)
-    workspaces = fields.Integer(required=True)
-    users = fields.Integer(required=True)
-    active_users = fields.Integer(required=True)
-    users_per_profile_detail = fields.List(
-        fields.Nested(UsersPerProfileDetailItemSchema), required=True
-    )
-
-
-apiv1_organization_stats_serializer = CmdSerializer(
-    APIV1_OrganizationStatsReqSchema, APIV1_OrganizationStatsRepSchema
-)
-
-
-class APIV1_OrganizationStatusReqSchema(BaseReqSchema):
-    organization_id = OrganizationIDField(required=True)
-
-
-class APIV1_OrganizationStatusRepSchema(BaseRepSchema):
-    is_bootstrapped = fields.Boolean(required=True)
-    expiration_date = fields.DateTime(allow_none=True, required=False)
-    user_profile_outsider_allowed = fields.Boolean(required=True)
-    # `None` stands for "no limit" here
-    active_users_limit = fields.Integer(allow_none=True, required=True)
-
-
-apiv1_organization_status_serializer = CmdSerializer(
-    APIV1_OrganizationStatusReqSchema, APIV1_OrganizationStatusRepSchema
-)
-
-
 class OrganizationConfigReqSchema(BaseReqSchema):
     pass
 
@@ -138,24 +80,4 @@ class OrganizationConfigRepSchema(BaseRepSchema):
 
 organization_config_serializer = CmdSerializer(
     OrganizationConfigReqSchema, OrganizationConfigRepSchema
-)
-
-
-class APIV1_OrganizationUpdateReqSchema(BaseReqSchema):
-    organization_id = OrganizationIDField(required=True)
-    # /!\ Missing field and field set to `None` does not mean the same thing:
-    # - missing field: don't modify this field
-    # - field set to `None`: `None` is a valid value to use for this field
-    expiration_date = fields.DateTime(allow_none=True, required=False)
-    user_profile_outsider_allowed = fields.Boolean(required=False)
-    # `None` stands for "no limit" here
-    active_users_limit = fields.Integer(allow_none=True, required=False)
-
-
-class APIV1_OrganizationUpdateRepSchema(BaseRepSchema):
-    pass
-
-
-apiv1_organization_update_serializer = CmdSerializer(
-    APIV1_OrganizationUpdateReqSchema, APIV1_OrganizationUpdateRepSchema
 )
