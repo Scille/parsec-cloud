@@ -45,37 +45,48 @@ organization_create_rep_serializer = JSONSerializer(OrganizationCreateRepSchema)
 # GET /administration/organizations/<organization_id>
 
 
-class UsersPerProfileDetailItemSchema(BaseSchema):
-    profile = UserProfileField(required=True)
-    active = fields.Integer(required=True)
-    revoked = fields.Integer(required=True)
-
-
-class OrganizationGetReqSchema(BaseSchema):
+class OrganizationConfigReqSchema(BaseSchema):
     pass
 
 
-class OrganizationGetRepSchema(BaseSchema):
+class OrganizationConfigRepSchema(BaseSchema):
     is_bootstrapped = fields.Boolean(required=True)
     is_expired = fields.Boolean(required=True)
     user_profile_outsider_allowed = fields.Boolean(required=True)
     # `None` stands for "no limit" here
     active_users_limit = fields.Integer(allow_none=True, required=True)
 
-    # TODO: add stats here too ?
-    # # Stats
-    # data_size = fields.Integer(required=True)
-    # metadata_size = fields.Integer(required=True)
-    # workspaces = fields.Integer(required=True)
-    # users = fields.Integer(required=True)
-    # active_users = fields.Integer(required=True)
-    # users_per_profile_detail = fields.List(
-    #     fields.Nested(UsersPerProfileDetailItemSchema), required=True
-    # )
+
+organization_config_req_serializer = JSONSerializer(OrganizationConfigReqSchema)
+organization_config_rep_serializer = JSONSerializer(OrganizationConfigRepSchema)
 
 
-organization_get_req_serializer = JSONSerializer(OrganizationGetReqSchema)
-organization_get_rep_serializer = JSONSerializer(OrganizationGetRepSchema)
+# GET /administration/organizations/<organization_id>/stats
+
+
+class UsersPerProfileDetailItemSchema(BaseSchema):
+    profile = UserProfileField(required=True)
+    active = fields.Integer(required=True)
+    revoked = fields.Integer(required=True)
+
+
+class OrganizationStatsReqSchema(BaseSchema):
+    pass
+
+
+class OrganizationStatsRepSchema(BaseSchema):
+    data_size = fields.Integer(required=True)
+    metadata_size = fields.Integer(required=True)
+    workspaces = fields.Integer(required=True)
+    users = fields.Integer(required=True)
+    active_users = fields.Integer(required=True)
+    users_per_profile_detail = fields.List(
+        fields.Nested(UsersPerProfileDetailItemSchema), required=True
+    )
+
+
+organization_stats_req_serializer = JSONSerializer(OrganizationStatsReqSchema)
+organization_stats_rep_serializer = JSONSerializer(OrganizationStatsRepSchema)
 
 
 # PATCH /administration/organizations/<organization_id>

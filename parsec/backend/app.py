@@ -43,6 +43,8 @@ logger = get_logger()
 # connection (i.e. we ignore keep-alive)
 # The choice of 8Ko is more or less arbitrary but it range with what most web servers do.
 MAX_INITIAL_HTTP_REQUEST_SIZE = 8 * 1024
+# Max size for HTTP body, 1Mo seems plenty given HTTP API never upload big chunk of data
+MAX_HTTP_BODY_SIZE = 1 * 1024 ** 2
 
 
 def _filter_binary_fields(data):
@@ -241,11 +243,44 @@ class BackendApp:
     async def _handle_client_http(self, stream, conn, request):
         # TODO: right now we handle a single request then close the connection
         # hence HTTP 1.1 keep-alive is not supported
-        req = HTTPRequest.from_h11_req(request)
+
+        async def _get_body(content_length: int) -> bytes:
+            if content_length <= 0 or content_length >= MAX_HTTP_BODY_SIZE:
+                return b""
+
+            body = b""
+            while True:
+                event = conn.next_event()
+
+                if event is h11.NEED_DATA:
+                    try:
+                        data = await stream.receive_some(MAX_INITIAL_HTTP_REQUEST_SIZE)
+                    except trio.BrokenResourceError:
+                        # The socket got broken in an unexpected way (the peer has most
+                        # likely left without telling us, or has reseted the connection)
+                        return b""
+                    conn.receive_data(data)
+                elif isinstance(event, h11.EndOfMessage):
+                    return body
+                elif isinstance(event, h11.Data):
+                    body += event.data
+                    # TODO: needed ? or h11 takes care of it ?
+                    if len(body) >= content_length:
+                        return body
+                elif isinstance(event, h11.ConnectionClosed):
+                    # Peer has left
+                    return b""
+                else:
+                    logger.error("Unexpected event", client_event=event)
+                    return b""
+
+        req = HTTPRequest.from_h11_req(request, _get_body)
+
         rep = await self.http.handle_request(req)
         await self._send_http_reply(
             stream, conn, status_code=rep.status_code, headers=rep.headers, data=rep.data
         )
+        logger.info("Request", path=req.path, status=rep.status_code)
 
     async def _handle_client_websocket(self, stream, request):
         selected_logger = logger
