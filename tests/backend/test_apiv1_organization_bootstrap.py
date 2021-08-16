@@ -3,27 +3,15 @@
 import trio
 import pytest
 import pendulum
-from unittest.mock import ANY
 from collections import defaultdict
 
 from parsec.api.data import UserCertificateContent, DeviceCertificateContent, UserProfile
-from parsec.api.protocol import (
-    UserID,
-    apiv1_organization_create_serializer,
-    apiv1_organization_bootstrap_serializer,
-)
+from parsec.api.protocol import UserID, apiv1_organization_bootstrap_serializer
 from parsec.api.protocol.handshake import HandshakeOrganizationExpired
 
-from tests.common import freeze_time, customize_fixtures
+from tests.common import customize_fixtures
 from tests.backend.common import ping
 from tests.fixtures import local_device_to_backend_user
-
-
-async def organization_create(sock, organization_id, **kwargs):
-    req = {"cmd": "organization_create", "organization_id": organization_id, **kwargs}
-    raw_rep = await sock.send(apiv1_organization_create_serializer.req_dumps(req))
-    raw_rep = await sock.recv()
-    return apiv1_organization_create_serializer.rep_loads(raw_rep)
 
 
 _missing = object()
@@ -57,105 +45,31 @@ async def organization_bootstrap(
 
 
 @pytest.mark.trio
-async def test_organization_create_already_exists(administration_backend_sock, coolorg):
-    rep = await organization_create(administration_backend_sock, coolorg.organization_id)
-    assert rep["status"] == "already_exists"
-
-
-@pytest.mark.trio
-@customize_fixtures(backend_not_populated=True)
-async def test_organization_create_bad_name(administration_backend_sock):
-    rep = await organization_create(administration_backend_sock, "a" * 33)
-    assert rep["status"] == "bad_message"
-
-
-@pytest.mark.trio
-@customize_fixtures(backend_not_populated=True)
-async def test_organization_create_wrong_expiration_date(administration_backend_sock):
-    rep = await organization_create(
-        administration_backend_sock, "new", expiration_date="2010-01-01"
-    )
-    assert rep["status"] == "bad_message"
-
-
-@pytest.mark.trio
-async def test_organization_recreate_and_bootstrap(
-    backend,
-    organization_factory,
-    local_device_factory,
-    administration_backend_sock,
-    apiv1_backend_sock_factory,
-):
-    neworg = organization_factory("NewOrg")
-    rep = await organization_create(administration_backend_sock, neworg.organization_id)
-    assert rep == {"status": "ok", "bootstrap_token": ANY, "expiration_date": None}
-    bootstrap_token1 = rep["bootstrap_token"]
-
-    # Can recreate the organization as long as it hasn't been bootstrapped yet
-    rep = await organization_create(administration_backend_sock, neworg.organization_id)
-    assert rep == {"status": "ok", "bootstrap_token": ANY, "expiration_date": None}
-    bootstrap_token2 = rep["bootstrap_token"]
-
-    assert bootstrap_token1 != bootstrap_token2
-
-    newalice = local_device_factory(org=neworg, profile=UserProfile.ADMIN)
-    backend_newalice, backend_newalice_first_device = local_device_to_backend_user(newalice, neworg)
-
-    async with apiv1_backend_sock_factory(backend, neworg.organization_id) as sock:
-        # Old token is now invalid
-        rep = await organization_bootstrap(
-            sock,
-            bootstrap_token1,
-            backend_newalice.user_certificate,
-            backend_newalice_first_device.device_certificate,
-            neworg.root_verify_key,
-        )
-        assert rep == {"status": "not_found"}
-
-        rep = await organization_bootstrap(
-            sock,
-            bootstrap_token2,
-            backend_newalice.user_certificate,
-            backend_newalice_first_device.device_certificate,
-            neworg.root_verify_key,
-        )
-        assert rep == {"status": "ok"}
-
-    # Now we are no longer allowed to re-create the organization
-    rep = await organization_create(administration_backend_sock, neworg.organization_id)
-    assert rep == {"status": "already_exists"}
-
-
-@pytest.mark.trio
 @customize_fixtures(backend_has_webhook=True)
-async def test_organization_create_and_bootstrap(
+async def test_organization__bootstrap(
     webhook_spy,
     backend,
     organization_factory,
     local_device_factory,
     alice,
-    administration_backend_sock,
     apiv1_backend_sock_factory,
+    backend_sock_factory,
 ):
     neworg = organization_factory("NewOrg")
+    await backend.organization.create(
+        id=neworg.organization_id, bootstrap_token=neworg.bootstrap_token
+    )
 
-    # 1) Create organization, note this means `neworg.bootstrap_token`
-    # will contain an invalid token
-
-    create_org_rep = await organization_create(administration_backend_sock, neworg.organization_id)
-    assert create_org_rep == {"status": "ok", "bootstrap_token": ANY, "expiration_date": None}
-    bootstrap_token = create_org_rep["bootstrap_token"]
-
-    # 2) Bootstrap organization
+    # 1) Bootstrap organization
 
     # Use an existing user name to make sure they didn't mix together
-    newalice = local_device_factory("alice@dev1", neworg, profile=UserProfile.ADMIN)
+    newalice = local_device_factory(alice.device_id, neworg, profile=UserProfile.ADMIN)
     backend_newalice, backend_newalice_first_device = local_device_to_backend_user(newalice, neworg)
 
     async with apiv1_backend_sock_factory(backend, neworg.organization_id) as sock:
         rep = await organization_bootstrap(
             sock,
-            bootstrap_token=bootstrap_token,
+            bootstrap_token=neworg.bootstrap_token,
             user_certificate=backend_newalice.user_certificate,
             device_certificate=backend_newalice_first_device.device_certificate,
             root_verify_key=neworg.root_verify_key,
@@ -178,17 +92,17 @@ async def test_organization_create_and_bootstrap(
         )
     ]
 
-    # 3) Now our new device can connect the backend
+    # 2) Now our new device can connect the backend
 
-    async with apiv1_backend_sock_factory(backend, newalice) as sock:
+    async with backend_sock_factory(backend, newalice) as sock:
         await ping(sock)
 
-    # 4) Make sure alice from the other organization is still working
+    # 3) Make sure alice from the other organization is still working
 
-    async with apiv1_backend_sock_factory(backend, alice) as sock:
+    async with backend_sock_factory(backend, alice) as sock:
         await ping(sock)
 
-    # 5) Finally, check the resulting data in the backend
+    # 4) Finally, check the resulting data in the backend
     backend_user, backend_device = await backend.user.get_user_with_device(
         newalice.organization_id, newalice.device_id
     )
@@ -197,82 +111,17 @@ async def test_organization_create_and_bootstrap(
 
 
 @pytest.mark.trio
-async def test_organization_with_expiration_date_create_and_bootstrap(
-    backend,
-    organization_factory,
-    local_device_factory,
-    alice,
-    administration_backend_sock,
-    apiv1_backend_sock_factory,
-):
-    neworg = organization_factory("NewOrg")
-    # 1) Create organization, note this means `neworg.bootstrap_token`
-    # will contain an invalid token
-
-    with freeze_time("2000-01-01"):
-
-        expiration_date = pendulum.datetime(2000, 1, 2)
-        rep = await organization_create(
-            administration_backend_sock, neworg.organization_id, expiration_date=expiration_date
-        )
-        assert rep == {"status": "ok", "bootstrap_token": ANY, "expiration_date": expiration_date}
-        bootstrap_token = rep["bootstrap_token"]
-
-        # 2) Bootstrap organization
-
-        # Use an existing user name to make sure they didn't mix together
-        newalice = local_device_factory("alice@dev1", neworg, profile=UserProfile.ADMIN)
-        backend_newalice, backend_newalice_first_device = local_device_to_backend_user(
-            newalice, neworg
-        )
-
-        async with apiv1_backend_sock_factory(backend, neworg.organization_id) as sock:
-            rep = await organization_bootstrap(
-                sock,
-                bootstrap_token,
-                backend_newalice.user_certificate,
-                backend_newalice_first_device.device_certificate,
-                neworg.root_verify_key,
-            )
-        assert rep == {"status": "ok"}
-
-        # 3) Now our new device can connect the backend
-
-        async with apiv1_backend_sock_factory(backend, newalice) as sock:
-            await ping(sock)
-
-        # 4) Make sure alice from the other organization is still working
-
-        async with apiv1_backend_sock_factory(backend, alice) as sock:
-            await ping(sock)
-
-    # 5) Now advance after the expiration
-    with freeze_time("2000-01-02"):
-        # Both anonymous and authenticated connections are refused
-        with pytest.raises(HandshakeOrganizationExpired):
-            async with apiv1_backend_sock_factory(backend, newalice):
-                pass
-        with pytest.raises(HandshakeOrganizationExpired):
-            async with apiv1_backend_sock_factory(backend, neworg.organization_id):
-                pass
-
-
-@pytest.mark.trio
 @customize_fixtures(backend_not_populated=True)
 async def test_organization_expired_create_and_bootstrap(
-    backend, organization_factory, administration_backend_sock, apiv1_backend_sock_factory
+    backend, organization_factory, apiv1_backend_sock_factory
 ):
     neworg = organization_factory("NewOrg")
 
-    # 1) Create organization, note this means `neworg.bootstrap_token`
-    # will contain an invalid token
-
-    expiration_date = pendulum.now().subtract(days=1)
-
-    rep = await organization_create(
-        administration_backend_sock, neworg.organization_id, expiration_date=expiration_date
+    # 1) Create an organization and mark it expired
+    await backend.organization.create(
+        id=neworg.organization_id, bootstrap_token=neworg.bootstrap_token
     )
-    assert rep == {"status": "ok", "bootstrap_token": ANY, "expiration_date": expiration_date}
+    await backend.organization.update(id=neworg.organization_id, is_expired=True)
 
     # 2) Connection to backend for bootstrap purpose is not possible
 
@@ -281,9 +130,9 @@ async def test_organization_expired_create_and_bootstrap(
             pass
 
     # 3) Now re-create the organization to overwrite the expiration date
-
-    rep = await organization_create(administration_backend_sock, neworg.organization_id)
-    assert rep == {"status": "ok", "bootstrap_token": ANY, "expiration_date": None}
+    await backend.organization.create(
+        id=neworg.organization_id, bootstrap_token=neworg.bootstrap_token
+    )
 
     # 4) This time, bootstrap is possible
 
@@ -293,16 +142,13 @@ async def test_organization_expired_create_and_bootstrap(
 
 @pytest.mark.trio
 async def test_organization_bootstrap_bad_data(
-    backend_data_binder,
-    apiv1_backend_sock_factory,
-    organization_factory,
-    local_device_factory,
-    backend,
-    coolorg,
+    apiv1_backend_sock_factory, organization_factory, local_device_factory, backend, coolorg
 ):
     neworg = organization_factory("NewOrg")
     newalice = local_device_factory("alice@dev1", neworg)
-    await backend_data_binder.bind_organization(neworg)
+    await backend.organization.create(
+        id=neworg.organization_id, bootstrap_token=neworg.bootstrap_token
+    )
 
     bad_organization_id = coolorg.organization_id
     good_organization_id = neworg.organization_id
@@ -550,18 +396,12 @@ async def test_organization_spontaneous_bootstrap(
         # Basically pretent we already tried the spontaneous
         # bootstrap but got interrupted
         step1_token = empty_token
-        step1_expiration_date = None
     else:
         # Administration explicitly created an organization,
         # we shouldn't be able to overwrite it
         step1_token = "123"
-        step1_expiration_date = pendulum.now().add(days=1)
     if flavour != "no_create":
-        await backend.organization.create(
-            id=neworg.organization_id,
-            bootstrap_token=step1_token,
-            expiration_date=step1_expiration_date,
-        )
+        await backend.organization.create(id=neworg.organization_id, bootstrap_token=step1_token)
 
     # Step 2: organization bootstrap
 
@@ -586,11 +426,9 @@ async def test_organization_spontaneous_bootstrap(
     if flavour == "create_different_token":
         assert org.root_verify_key is None
         assert org.bootstrap_token == step1_token
-        assert org.expiration_date == step1_expiration_date
     else:
         assert org.root_verify_key == neworg.root_verify_key
         assert org.bootstrap_token == empty_token
-        assert org.expiration_date is None
 
 
 @pytest.mark.trio

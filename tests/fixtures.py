@@ -657,13 +657,9 @@ def backend_data_binder_factory(request, backend_addr, initial_user_manifest_sta
     return _backend_data_binder_factory
 
 
-# TODO: should be separated between API v1 and v2
 @pytest.fixture
 def sock_from_other_organization_factory(
-    apiv1_backend_sock_factory,
-    backend_data_binder_factory,
-    organization_factory,
-    local_device_factory,
+    backend_sock_factory, backend_data_binder_factory, organization_factory, local_device_factory
 ):
     @asynccontextmanager
     async def _sock_from_other_organization_factory(
@@ -688,7 +684,7 @@ def sock_from_other_organization_factory(
         else:
             auth_as = other_device
 
-        async with apiv1_backend_sock_factory(backend, auth_as) as sock:
+        async with backend_sock_factory(backend, auth_as) as sock:
             sock.device = other_device
             yield sock
 
