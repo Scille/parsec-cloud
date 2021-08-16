@@ -560,9 +560,8 @@ def backend_factory(
                 with freeze_time("2000-01-01"):
                     binder = backend_data_binder_factory(backend)
                     await binder.bind_organization(coolorg, alice)
-                    await binder.bind_organization(
-                        expiredorg, expiredorgalice, expiration_date=pendulum.now()
-                    )
+                    await binder.bind_organization(expiredorg, expiredorgalice)
+                    await backend.organization.update(expiredorg.organization_id, is_expired=True)
                     await binder.bind_organization(otherorg, otheralice)
                     await binder.bind_device(alice2, certifier=alice)
                     await binder.bind_device(adam, certifier=alice2)
