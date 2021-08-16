@@ -140,7 +140,7 @@ class InvitedClientContext(BaseClientContext):
             conn_id=self.conn_id,
             handshake_type=self.handshake_type.value,
             organization_id=self.organization_id,
-            invitation=self.invitation,
+            invitation_token=self.invitation.token,
         )
 
     def __repr__(self):
