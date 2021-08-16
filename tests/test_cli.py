@@ -248,7 +248,9 @@ def ssl_conf(request):
 
             yield SSLConf(
                 backend_opts=f" --ssl-keyfile={server_keyfile} --ssl-certfile={server_certfile} ",
-                client_env={"SSL_CAFILE": ca_certfile},
+                # SSL_CERT_FILE is the env var used by default by ssl.SSLContext
+                # TODO: replace those by proper params in the api ?
+                client_env={"SSL_CAFILE": ca_certfile, "SSL_CERT_FILE": ca_certfile},
             )
 
 
