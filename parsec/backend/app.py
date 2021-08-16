@@ -1,6 +1,6 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) BSLv1.1 (eventually AGPLv3) 2016-2021 Scille SAS
 
-from typing import Dict, Optional
+from typing import Dict, Optional, NoReturn
 import trio
 from trio.abc import Stream
 from structlog import get_logger
@@ -122,7 +122,7 @@ class BackendApp:
         else:
             self.server_header = b"parsec"
 
-    async def handle_client(self, stream):
+    async def handle_client(self, stream: Stream) -> None:
         # Uses max_size - 1 given h11 enforces the check only if it current
         # internal buffer doesn't contain an entire message.
         # Note that given we fetch by batches of MAX_INITIAL_HTTP_REQUEST_SIZE,
@@ -240,7 +240,9 @@ class BackendApp:
             # shutdown anyway, so we can safely ignore the fact peer has left
             pass
 
-    async def _handle_client_http(self, stream, conn, request):
+    async def _handle_client_http(
+        self, stream: Stream, conn: h11.Connection, request: h11.Request
+    ) -> None:
         # TODO: right now we handle a single request then close the connection
         # hence HTTP 1.1 keep-alive is not supported
 
@@ -282,7 +284,7 @@ class BackendApp:
         )
         logger.info("Request", path=req.path, status=rep.status_code)
 
-    async def _handle_client_websocket(self, stream, request):
+    async def _handle_client_websocket(self, stream: Stream, request: h11.Request) -> None:
         selected_logger = logger
 
         try:
@@ -329,9 +331,11 @@ class BackendApp:
                             if organization_id == client_ctx.organization_id:
                                 cancel_scope.cancel()
 
-                        client_ctx.event_bus_ctx.connect(BackendEvent.USER_REVOKED, _on_revoked)
                         client_ctx.event_bus_ctx.connect(
-                            BackendEvent.ORGANIZATION_EXPIRED, _on_expired
+                            BackendEvent.USER_REVOKED, _on_revoked  # type: ignore
+                        )
+                        client_ctx.event_bus_ctx.connect(
+                            BackendEvent.ORGANIZATION_EXPIRED, _on_expired  # type: ignore
                         )
                         await self._handle_client_websocket_loop(transport, client_ctx)
 
@@ -394,7 +398,7 @@ class BackendApp:
             await transport.aclose()
             selected_logger.info("Connection dropped: invalid data", reason=str(exc))
 
-    async def _handle_client_websocket_loop(self, transport, client_ctx):
+    async def _handle_client_websocket_loop(self, transport: Transport, client_ctx) -> NoReturn:
         # Retrieve the allowed commands according to api version and auth type
         api_cmds = self.apis[client_ctx.handshake_type]
 
@@ -403,6 +407,7 @@ class BackendApp:
             # raw_req can be already defined if we received a new request
             # while processing a command
             raw_req = raw_req or await transport.recv()
+            rep: dict
             req = unpackb(raw_req)
             if get_log_level() <= LOG_LEVEL_DEBUG:
                 client_ctx.logger.debug("Request", req=_filter_binary_fields(req))
