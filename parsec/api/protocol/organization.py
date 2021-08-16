@@ -55,6 +55,7 @@ class OrganizationStatsReqSchema(BaseReqSchema):
 class OrganizationStatsRepSchema(BaseRepSchema):
     data_size = fields.Integer(required=True)
     metadata_size = fields.Integer(required=True)
+    workspaces = fields.Integer(required=True)
     users = fields.Integer(required=True)
     active_users = fields.Integer(required=True)
     users_per_profile_detail = fields.List(

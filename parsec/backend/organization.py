@@ -138,6 +138,7 @@ class BaseOrganizationComponent:
         return organization_stats_serializer.rep_dump(
             {
                 "status": "ok",
+                "workspaces": stats.workspaces,
                 "users": stats.users,
                 "active_users": stats.active_users,
                 "data_size": stats.data_size,
