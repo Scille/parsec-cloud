@@ -130,13 +130,13 @@ class BackendAddr:
         else:
             raise ValueError("Invalid `no_ssl` param value (must be true or false)")
 
-    def to_http_domain_url(self) -> str:
+    def to_http_domain_url(self, path: str = "") -> str:
         if self._use_ssl:
             scheme = "https"
         else:
             scheme = "http"
 
-        return urlunsplit((scheme, self._netloc, "", None, None))
+        return urlunsplit((scheme, self._netloc, path, None, None))
 
     def to_url(self) -> str:
         query = urlencode(self._to_url_get_params())

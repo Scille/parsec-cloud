@@ -21,10 +21,6 @@ from parsec.core.backend_connection.apiv1_annonymous import (
     APIV1_BackendAnonymousCmds,
     apiv1_backend_anonymous_cmds_factory,
 )
-from parsec.core.backend_connection.apiv1_administration import (
-    APIV1_BackendAdministrationCmds,
-    apiv1_backend_administration_cmds_factory,
-)
 
 
 __all__ = (
@@ -48,7 +44,4 @@ __all__ = (
     # APIv1 Annonymous
     "APIV1_BackendAnonymousCmds",
     "apiv1_backend_anonymous_cmds_factory",
-    # APIv1 Administration
-    "APIV1_BackendAdministrationCmds",
-    "apiv1_backend_administration_cmds_factory",
 )
