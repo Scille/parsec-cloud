@@ -23,7 +23,6 @@ from parsec.core.types import (
 from parsec.core.config import load_config
 from parsec.core.backend_connection import (
     BackendAuthenticatedCmds,
-    apiv1_backend_administration_cmds_factory,
     apiv1_backend_anonymous_cmds_factory,
     backend_authenticated_cmds_factory,
 )
@@ -34,6 +33,7 @@ from parsec.core.invite import (
     UserGreetInitialCtx,
     claimer_retrieve_info,
 )
+from parsec.core.cli.create_organization import create_organization_req
 
 
 async def initialize_test_organization(
@@ -49,17 +49,13 @@ async def initialize_test_organization(
 
     # Create organization
 
-    async with apiv1_backend_administration_cmds_factory(
-        backend_address, administration_token
-    ) as administration_cmds:
+    bootstrap_token = await create_organization_req(
+        organization_id, backend_address, administration_token
+    )
+    organization_bootstrap_addr = BackendOrganizationBootstrapAddr.build(
+        backend_address, organization_id, bootstrap_token
+    )
 
-        rep = await administration_cmds.organization_create(organization_id)
-        assert rep["status"] == "ok", rep
-        bootstrap_token = rep["bootstrap_token"]
-
-        organization_bootstrap_addr = BackendOrganizationBootstrapAddr.build(
-            backend_address, organization_id, bootstrap_token
-        )
     # Bootstrap organization and Alice user and create device "laptop" for Alice
 
     async with apiv1_backend_anonymous_cmds_factory(organization_bootstrap_addr) as anonymous_cmds:

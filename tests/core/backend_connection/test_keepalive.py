@@ -10,7 +10,6 @@ from parsec.core.backend_connection import (
     backend_authenticated_cmds_factory,
     backend_invited_cmds_factory,
     apiv1_backend_anonymous_cmds_factory,
-    apiv1_backend_administration_cmds_factory,
 )
 
 
@@ -99,17 +98,5 @@ async def test_invited_cmd_keepalive(
 async def test_apiv1_anonymous_cmd_keepalive(mock_clock, monkeypatch, running_backend, coolorg):
     def _cmds_factory(keepalive):
         return apiv1_backend_anonymous_cmds_factory(coolorg.addr, keepalive=keepalive)
-
-    await _test_keepalive(mock_clock, monkeypatch, _cmds_factory)
-
-
-@pytest.mark.trio
-async def test_apiv1_administration_cmd_keepalive(
-    mock_clock, monkeypatch, running_backend, backend_addr, backend
-):
-    def _cmds_factory(keepalive):
-        return apiv1_backend_administration_cmds_factory(
-            backend_addr, backend.config.administration_token, keepalive=keepalive
-        )
 
     await _test_keepalive(mock_clock, monkeypatch, _cmds_factory)
