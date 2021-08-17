@@ -2,7 +2,6 @@
 
 import attr
 import pendulum
-from pendulum import DateTime
 from typing import Optional, Union, List
 from secrets import token_hex
 
@@ -55,17 +54,13 @@ class OrganizationExpiredError(OrganizationError):
 class Organization:
     organization_id: OrganizationID
     bootstrap_token: str
-    expiration_date: Optional[DateTime] = None
-    root_verify_key: Optional[VerifyKey] = None
-    user_profile_outsider_allowed: bool = False
-    active_users_limit: Optional[int] = None
+    is_expired: bool
+    root_verify_key: Optional[VerifyKey]
+    user_profile_outsider_allowed: bool
+    active_users_limit: Optional[int]
 
     def is_bootstrapped(self):
         return self.root_verify_key is not None
-
-    @property
-    def is_expired(self):
-        return self.expiration_date and self.expiration_date <= DateTime.now()
 
     def evolve(self, **kwargs):
         return attr.evolve(self, **kwargs)
@@ -110,7 +105,6 @@ class BaseOrganizationComponent:
 
         rep = {
             "user_profile_outsider_allowed": organization.user_profile_outsider_allowed,
-            "expiration_date": organization.expiration_date,
             "active_users_limit": organization.active_users_limit,
             "status": "ok",
         }
@@ -286,8 +280,6 @@ class BaseOrganizationComponent:
         bootstrap_token: str,
         # `None` is a valid value for some of those params, hence it cannot be used
         # as "param not set" marker and we use a custom `Unset` singleton instead.
-        # `None` stands for "no expiration"
-        expiration_date: Union[UnsetType, Optional[DateTime]] = Unset,
         # `None` stands for "no limit"
         active_users_limit: Union[UnsetType, Optional[int]] = Unset,
         user_profile_outsider_allowed: Union[UnsetType, bool] = Unset,
@@ -334,8 +326,7 @@ class BaseOrganizationComponent:
         id: OrganizationID,
         # `None` is a valid value for some of those params, hence it cannot be used
         # as "param not set" marker and we use a custom `Unset` singleton instead.
-        # `None` stands for "no expiration"
-        expiration_date: Union[UnsetType, Optional[DateTime]] = Unset,
+        is_expired: Union[UnsetType, bool] = Unset,
         # `None` stands for "no limit"
         active_users_limit: Union[UnsetType, Optional[int]] = Unset,
         user_profile_outsider_allowed: Union[UnsetType, bool] = Unset,

@@ -3,7 +3,6 @@
 from typing import Optional, Union
 import trio
 from collections import defaultdict
-from pendulum import DateTime
 
 from parsec.api.protocol import OrganizationID
 from parsec.api.data.certif import UserProfile
@@ -55,7 +54,6 @@ class MemoryOrganizationComponent(BaseOrganizationComponent):
         self,
         id: OrganizationID,
         bootstrap_token: str,
-        expiration_date: Union[UnsetType, Optional[DateTime]] = Unset,
         active_users_limit: Union[UnsetType, Optional[int]] = Unset,
         user_profile_outsider_allowed: Union[UnsetType, bool] = Unset,
     ) -> None:
@@ -73,7 +71,8 @@ class MemoryOrganizationComponent(BaseOrganizationComponent):
         self._organizations[id] = Organization(
             organization_id=id,
             bootstrap_token=bootstrap_token,
-            expiration_date=expiration_date if expiration_date is not Unset else None,
+            is_expired=False,
+            root_verify_key=None,
             active_users_limit=active_users_limit,
             user_profile_outsider_allowed=user_profile_outsider_allowed,
         )
@@ -162,7 +161,7 @@ class MemoryOrganizationComponent(BaseOrganizationComponent):
     async def update(
         self,
         id: OrganizationID,
-        expiration_date: Union[UnsetType, Optional[DateTime]] = Unset,
+        is_expired: Union[UnsetType, bool] = Unset,
         active_users_limit: Union[UnsetType, Optional[int]] = Unset,
         user_profile_outsider_allowed: Union[UnsetType, bool] = Unset,
     ) -> None:
@@ -175,8 +174,8 @@ class MemoryOrganizationComponent(BaseOrganizationComponent):
 
         organization = self._organizations[id]
 
-        if expiration_date is not Unset:
-            organization = organization.evolve(expiration_date=expiration_date)
+        if is_expired is not Unset:
+            organization = organization.evolve(is_expired=is_expired)
         if active_users_limit is not Unset:
             organization = organization.evolve(active_users_limit=active_users_limit)
         if user_profile_outsider_allowed is not Unset:
