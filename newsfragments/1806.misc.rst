@@ -1,0 +1,1 @@
+Improve claim/greet dialog in GUI when invitation is deleted.

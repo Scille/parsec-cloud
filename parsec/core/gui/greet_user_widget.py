@@ -211,6 +211,8 @@ class GreetUserInstructionsWidget(QWidget, Ui_GreetUserInstructionsWidget):
                 exc = job.exc.params.get("origin", None)
                 if isinstance(exc, InvitePeerResetError):
                     msg = _("TEXT_GREET_USER_PEER_RESET")
+                elif isinstance(exc, InviteAlreadyUsedError):
+                    msg = _("TEXT_INVITATION_ALREADY_USED")
             show_error(self, msg, exception=exc)
         self.failed.emit(job)
 
@@ -318,6 +320,8 @@ class GreetUserCheckInfoWidget(QWidget, Ui_GreetUserCheckInfoWidget):
                 exc = job.exc.params.get("origin", None)
                 if isinstance(exc, InvitePeerResetError):
                     msg = _("TEXT_GREET_USER_PEER_RESET")
+                elif isinstance(exc, InviteAlreadyUsedError):
+                    msg = _("TEXT_INVITATION_ALREADY_USED")
                 elif isinstance(exc, InviteActiveUsersLimitReachedError):
                     msg = _("TEXT_GREET_USER_ACTIVE_USERS_LIMIT_REACHED")
             show_error(self, msg, exception=exc)
@@ -352,6 +356,8 @@ class GreetUserCheckInfoWidget(QWidget, Ui_GreetUserCheckInfoWidget):
                 exc = job.exc.params.get("origin", None)
                 if isinstance(exc, InvitePeerResetError):
                     msg = _("TEXT_GREET_USER_PEER_RESET")
+                elif isinstance(exc, InviteAlreadyUsedError):
+                    msg = _("TEXT_INVITATION_ALREADY_USED")
             show_error(self, msg, exception=exc)
         self.failed.emit(job)
 
@@ -448,6 +454,8 @@ class GreetUserCodeExchangeWidget(QWidget, Ui_GreetUserCodeExchangeWidget):
                 exc = job.exc.params.get("origin", None)
                 if isinstance(exc, InvitePeerResetError):
                     msg = _("TEXT_GREET_USER_PEER_RESET")
+                elif isinstance(exc, InviteAlreadyUsedError):
+                    msg = _("TEXT_INVITATION_ALREADY_USED")
             show_error(self, msg, exception=exc)
         self.failed.emit(job)
 
@@ -477,6 +485,8 @@ class GreetUserCodeExchangeWidget(QWidget, Ui_GreetUserCodeExchangeWidget):
                 exc = job.exc.params.get("origin", None)
                 if isinstance(exc, InvitePeerResetError):
                     msg = _("TEXT_GREET_USER_PEER_RESET")
+                elif isinstance(exc, InviteAlreadyUsedError):
+                    msg = _("TEXT_INVITATION_ALREADY_USED")
             show_error(self, msg, exception=exc)
         self.failed.emit(job)
 
@@ -503,6 +513,8 @@ class GreetUserCodeExchangeWidget(QWidget, Ui_GreetUserCodeExchangeWidget):
                 exc = job.exc.params.get("origin", None)
                 if isinstance(exc, InvitePeerResetError):
                     msg = _("TEXT_GREET_USER_PEER_RESET")
+                elif isinstance(exc, InviteAlreadyUsedError):
+                    msg = _("TEXT_INVITATION_ALREADY_USED")
             show_error(self, msg, exception=exc)
         self.failed.emit(job)
 
@@ -531,6 +543,8 @@ class GreetUserCodeExchangeWidget(QWidget, Ui_GreetUserCodeExchangeWidget):
                 exc = job.exc.params.get("origin", None)
                 if isinstance(exc, InvitePeerResetError):
                     msg = _("TEXT_GREET_USER_PEER_RESET")
+                elif isinstance(exc, InviteAlreadyUsedError):
+                    msg = _("TEXT_INVITATION_ALREADY_USED")
             show_error(self, msg, exception=exc)
         self.failed.emit(job)
 

@@ -467,10 +467,10 @@ async def test_greet_user_reset_by_peer(aqtbot, GreetUserTestBed, autoclose_dial
     "cancelled_step",
     [
         "step_1_start_greet",
-        pytest.param("step_2_start_claimer", marks=pytest.mark.xfail),
-        pytest.param("step_3_exchange_greeter_sas", marks=pytest.mark.xfail),
+        "step_2_start_claimer",
+        # step 3 displays the SAS code, so it won't detect the cancellation
         "step_4_exchange_claimer_sas",
-        pytest.param("step_5_provide_claim_info", marks=pytest.mark.xfail),
+        "step_5_provide_claim_info",
         "step_6_validate_claim_info",
     ],
 )
@@ -495,7 +495,7 @@ async def test_greet_user_invitation_cancelled(
             assert not self.greet_user_information_widget.isVisible()
 
         async def cancelled_step_1_start_greet(self):
-            expected_message = translate("TEXT_GREET_USER_WAIT_PEER_ERROR")
+            expected_message = translate("TEXT_INVITATION_ALREADY_USED")
             gui_w = self.greet_user_information_widget
 
             await self._cancel_invitation()
@@ -506,15 +506,7 @@ async def test_greet_user_invitation_cancelled(
             return None
 
         async def cancelled_step_2_start_claimer(self):
-            expected_message = translate("TEXT_GREET_USER_WAIT_PEER_ERROR")
-            await self._cancel_invitation()
-
-            await aqtbot.wait_until(partial(self._greet_restart, expected_message))
-
-            return None
-
-        async def cancelled_step_3_exchange_greeter_sas(self):
-            expected_message = translate("TEXT_GREET_USER_WAIT_PEER_TRUST_ERROR")
+            expected_message = translate("TEXT_INVITATION_ALREADY_USED")
             await self._cancel_invitation()
 
             await aqtbot.wait_until(partial(self._greet_restart, expected_message))
@@ -522,7 +514,7 @@ async def test_greet_user_invitation_cancelled(
             return None
 
         async def cancelled_step_4_exchange_claimer_sas(self):
-            expected_message = translate("TEXT_GREET_USER_SIGNIFY_TRUST_ERROR")
+            expected_message = translate("TEXT_INVITATION_ALREADY_USED")
             guce_w = self.greet_user_code_exchange_widget
 
             await self._cancel_invitation()
@@ -533,7 +525,8 @@ async def test_greet_user_invitation_cancelled(
             return None
 
         async def cancelled_step_5_provide_claim_info(self):
-            expected_message = translate("TEXT_GREET_USER_GET_REQUESTS_ERROR")
+            expected_message = translate("TEXT_INVITATION_ALREADY_USED")
+            # expected_message = translate("TEXT_GREET_USER_GET_REQUESTS_ERROR")
             await self._cancel_invitation()
 
             await aqtbot.wait_until(partial(self._greet_restart, expected_message))
@@ -541,7 +534,7 @@ async def test_greet_user_invitation_cancelled(
             return None
 
         async def cancelled_step_6_validate_claim_info(self):
-            expected_message = translate("TEXT_GREET_USER_CREATE_USER_ERROR")
+            expected_message = translate("TEXT_INVITATION_ALREADY_USED")
             guci_w = self.greet_user_check_informations_widget
             await self.claimer_claim_task.cancel_and_join()
             await self._cancel_invitation()

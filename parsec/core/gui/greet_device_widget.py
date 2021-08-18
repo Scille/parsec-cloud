@@ -214,6 +214,8 @@ class GreetDeviceInstructionsWidget(QWidget, Ui_GreetDeviceInstructionsWidget):
                 exc = job.exc.params.get("origin", None)
                 if isinstance(exc, InvitePeerResetError):
                     msg = _("TEXT_GREET_DEVICE_PEER_RESET")
+                elif isinstance(exc, InviteAlreadyUsedError):
+                    msg = _("TEXT_INVITATION_ALREADY_USED")
             show_error(self, msg, exception=exc)
         self.failed.emit(job)
 
@@ -313,6 +315,8 @@ class GreetDeviceCodeExchangeWidget(QWidget, Ui_GreetDeviceCodeExchangeWidget):
                 exc = job.exc.params.get("origin", None)
                 if isinstance(exc, InvitePeerResetError):
                     msg = _("TEXT_GREET_DEVICE_PEER_RESET")
+                elif isinstance(exc, InviteAlreadyUsedError):
+                    msg = _("TEXT_INVITATION_ALREADY_USED")
             show_error(self, msg, exception=exc)
         self.failed.emit(job)
 
@@ -342,6 +346,8 @@ class GreetDeviceCodeExchangeWidget(QWidget, Ui_GreetDeviceCodeExchangeWidget):
                 exc = job.exc.params.get("origin", None)
                 if isinstance(exc, InvitePeerResetError):
                     msg = _("TEXT_GREET_DEVICE_PEER_RESET")
+                elif isinstance(exc, InviteAlreadyUsedError):
+                    msg = _("TEXT_INVITATION_ALREADY_USED")
             show_error(self, msg, exception=exc)
         self.failed.emit(job)
 
@@ -368,6 +374,8 @@ class GreetDeviceCodeExchangeWidget(QWidget, Ui_GreetDeviceCodeExchangeWidget):
                 exc = job.exc.params.get("origin", None)
                 if isinstance(exc, InvitePeerResetError):
                     msg = _("TEXT_GREET_DEVICE_PEER_RESET")
+                elif isinstance(exc, InviteAlreadyUsedError):
+                    msg = _("TEXT_INVITATION_ALREADY_USED")
             show_error(self, msg, exception=exc)
         self.failed.emit(job)
 
@@ -396,6 +404,8 @@ class GreetDeviceCodeExchangeWidget(QWidget, Ui_GreetDeviceCodeExchangeWidget):
                 exc = job.exc.params.get("origin", None)
                 if isinstance(exc, InvitePeerResetError):
                     msg = _("TEXT_GREET_DEVICE_PEER_RESET")
+                elif isinstance(exc, InviteAlreadyUsedError):
+                    msg = _("TEXT_INVITATION_ALREADY_USED")
             show_error(self, msg, exception=exc)
         self.failed.emit(job)
 

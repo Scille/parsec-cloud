@@ -397,9 +397,12 @@ class BaseInviteComponent:
     @catch_protocol_errors
     async def api_invite_info(self, client_ctx, msg):
         invite_info_serializer.req_load(msg)
-        # Invitation has already been fetched during handshake
+        # Invitation has already been fetched during handshake, this
+        # means we don't have to access the database at all here.
+        # Not accessing the database also means we cannot detect if invitation
+        # has been deleted but it's no big deal given we don't modify anything !
+        # (and the connection will eventually be closed by backend event anyway)
         invitation = client_ctx.invitation
-        # TODO: check invitation status and close connection if deleted ?
         if isinstance(invitation, UserInvitation):
             rep = {
                 "type": InvitationType.USER,
