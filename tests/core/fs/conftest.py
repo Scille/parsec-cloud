@@ -122,6 +122,7 @@ def user_fs_offline_state_machine(
             self.user_fs_controller = await self.get_root_nursery().start(
                 call_with_control, _user_fs_controlled_cb
             )
+            return self.user_fs_controller
 
         async def stop_user_fs(self):
             try:
