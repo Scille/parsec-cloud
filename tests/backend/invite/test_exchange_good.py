@@ -262,9 +262,14 @@ async def test_change_connection_during_exchange(
     await tb.send_order("claimer", "1_wait_peer")
     await tb.assert_ok_rep("greeter")
     await tb.assert_ok_rep("claimer")
+    import time
+
+    a = time.monotonic()
 
     # Step 2
     await tb.send_order("greeter", "2a_get_hashed_nonce")
+    b = time.monotonic()
+    print("******* send command 2a_get_hashed_nonce", b - a)
 
     # Change claimer sock, don't close previous sock
     async with backend_invited_sock_factory(
@@ -275,11 +280,17 @@ async def test_change_connection_during_exchange(
         # claimer gets it connection closed if invitation is deleted
         freeze_on_transport_error=False,
     ) as claimer_sock:
+        c = time.monotonic()
+        print("******* setup new claimer sock", c - b)
 
         tb.claimer_sock = claimer_sock
         await tb.send_order("claimer", "2a_send_hashed_nonce")
+        d = time.monotonic()
+        print("******* send 2a_send_hashed_nonce", d - c)
 
         await tb.assert_ok_rep("greeter")
+        e = time.monotonic()
+        print("******* recieved answer for  2a_get_hashed_nonce", e - d)
 
         # Change greeter sock, don't close previous sock
         async with backend_sock_factory(backend, tb.greeter) as greeter_sock:
