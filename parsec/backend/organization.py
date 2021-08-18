@@ -79,7 +79,7 @@ class OrganizationStats:
     metadata_size: int
     users: int
     active_users: int
-    workspaces: int
+    realms: int
     users_per_profile_detail: List[UsersPerProfileDetailItem]
 
 
@@ -132,11 +132,11 @@ class BaseOrganizationComponent:
         return organization_stats_serializer.rep_dump(
             {
                 "status": "ok",
-                "workspaces": stats.workspaces,
-                "users": stats.users,
-                "active_users": stats.active_users,
                 "data_size": stats.data_size,
                 "metadata_size": stats.metadata_size,
+                "realms": stats.realms,
+                "users": stats.users,
+                "active_users": stats.active_users,
                 "users_per_profile_detail": stats.users_per_profile_detail,
             }
         )

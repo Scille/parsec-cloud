@@ -18,7 +18,7 @@ from parsec.api.data import RevokedUserCertificateContent
 from parsec.core.types import LocalDevice, UserInfo, DeviceInfo, BackendInvitationAddr
 from parsec.core import resources as core_resources
 from parsec.core.config import CoreConfig
-from parsec.core.types import OrganizationConfig, OrganizationStats
+from parsec.core.types import OrganizationConfig, OrganizationStats, UsersPerProfileDetailItem
 from parsec.core.backend_connection import (
     BackendAuthenticatedConn,
     BackendConnectionError,
@@ -170,11 +170,14 @@ class LoggedCore:
         if rep["status"] != "ok":
             raise BackendConnectionError(f"Backend error: {rep}")
         return OrganizationStats(
-            users=rep["users"],
-            active_users=rep["active_users"],
             data_size=rep["data_size"],
             metadata_size=rep["metadata_size"],
-            users_per_profile_detail=rep["users_per_profile_detail"],
+            realms=rep["realms"],
+            users=rep["users"],
+            active_users=rep["active_users"],
+            users_per_profile_detail=[
+                UsersPerProfileDetailItem(**x) for x in rep["users_per_profile_detail"]
+            ],
         )
 
     async def get_user_info(self, user_id: UserID) -> UserInfo:

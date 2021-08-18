@@ -423,7 +423,7 @@ async def test_organization_stats_data(backend_rest_send, realm, realm_factory, 
             {"profile": UserProfile.STANDARD, "active": 1, "revoked": 0},
             {"profile": UserProfile.OUTSIDER, "active": 0, "revoked": 0},
         ],
-        "workspaces": 4,
+        "realms": 4,
     }
     initial_metadata_size = rep["metadata_size"]
 
@@ -448,7 +448,7 @@ async def test_organization_stats_data(backend_rest_send, realm, realm_factory, 
             {"profile": UserProfile.STANDARD, "active": 1, "revoked": 0},
             {"profile": UserProfile.OUTSIDER, "active": 0, "revoked": 0},
         ],
-        "workspaces": 4,
+        "realms": 4,
     }
 
     # Create new data
@@ -470,7 +470,7 @@ async def test_organization_stats_data(backend_rest_send, realm, realm_factory, 
             {"profile": UserProfile.STANDARD, "active": 1, "revoked": 0},
             {"profile": UserProfile.OUTSIDER, "active": 0, "revoked": 0},
         ],
-        "workspaces": 4,
+        "realms": 4,
     }
 
     # create new workspace
@@ -486,7 +486,7 @@ async def test_organization_stats_data(backend_rest_send, realm, realm_factory, 
             {"profile": UserProfile.STANDARD, "active": 1, "revoked": 0},
             {"profile": UserProfile.OUTSIDER, "active": 0, "revoked": 0},
         ],
-        "workspaces": 5,
+        "realms": 5,
     }
 
 
@@ -527,7 +527,7 @@ async def test_organization_stats_users(
         ],
         "data_size": 0,
         "metadata_size": 0,
-        "workspaces": 0,
+        "realms": 0,
     }
 
     for profile in UserProfile:
@@ -565,5 +565,5 @@ async def test_organization_stats_users(
         ],
         "data_size": 0,
         "metadata_size": 0,
-        "workspaces": 0,
+        "realms": 0,
     }

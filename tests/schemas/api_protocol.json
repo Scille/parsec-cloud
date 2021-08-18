@@ -761,6 +761,11 @@
                             "required": true,
                             "type": "Integer"
                         },
+                        "realms": {
+                            "allow_none": false,
+                            "required": true,
+                            "type": "Integer"
+                        },
                         "status": {
                             "allow_none": false,
                             "required": true,
@@ -806,11 +811,6 @@
                             },
                             "required": true,
                             "type": "List"
-                        },
-                        "workspaces": {
-                            "allow_none": false,
-                            "required": true,
-                            "type": "Integer"
                         }
                     },
                     "serializing": "msgpack"

@@ -290,12 +290,12 @@ class HTTPComponent:
             organization_stats_rep_serializer.dump(
                 {
                     "status": "ok",
-                    "users": stats.users,
-                    "active_users": stats.active_users,
+                    "realms": stats.realms,
                     "data_size": stats.data_size,
                     "metadata_size": stats.metadata_size,
+                    "users": stats.users,
+                    "active_users": stats.active_users,
                     "users_per_profile_detail": stats.users_per_profile_detail,
-                    "workspaces": stats.workspaces,
                 }
             ),
         )

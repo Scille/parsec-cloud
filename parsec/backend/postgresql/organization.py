@@ -111,7 +111,7 @@ SELECT
         SELECT COUNT(*)
         FROM realm
         WHERE realm.organization = { q_organization_internal_id("$organization_id") }
-    ) workspaces,
+    ) realms,
     (
         SELECT COALESCE(SUM(size), 0)
         FROM vlob_atom
@@ -268,12 +268,12 @@ class PGOrganizationComponent(BaseOrganizationComponent):
             ]
 
         return OrganizationStats(
+            data_size=result["data_size"],
+            metadata_size=result["metadata_size"],
+            realms=result["realms"],
             users=users,
             active_users=active_users,
             users_per_profile_detail=users_per_profile_detail,
-            data_size=result["data_size"],
-            metadata_size=result["metadata_size"],
-            workspaces=result["workspaces"],
         )
 
     async def update(

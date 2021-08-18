@@ -137,7 +137,7 @@ class MemoryOrganizationComponent(BaseOrganizationComponent):
                 users_per_profile_detail[user.profile]["active"] += 1
                 active_users += 1
 
-        workspaces = len(
+        realms = len(
             [
                 realm_id
                 for organization_id, realm_id in self._realm_component._realms.keys()
@@ -150,12 +150,12 @@ class MemoryOrganizationComponent(BaseOrganizationComponent):
         ]
 
         return OrganizationStats(
+            data_size=data_size,
+            metadata_size=metadata_size,
+            realms=realms,
             users=users,
             active_users=active_users,
             users_per_profile_detail=users_per_profile_detail,
-            data_size=data_size,
-            metadata_size=metadata_size,
-            workspaces=workspaces,
         )
 
     async def update(

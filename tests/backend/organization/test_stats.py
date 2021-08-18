@@ -33,7 +33,7 @@ async def test_organization_stats_data(alice_backend_sock, realm, realm_factory,
             {"profile": UserProfile.STANDARD, "active": 1, "revoked": 0},
             {"profile": UserProfile.OUTSIDER, "active": 0, "revoked": 0},
         ],
-        "workspaces": 4,
+        "realms": 4,
     }
     initial_metadata_size = stats["metadata_size"]
 
@@ -59,7 +59,7 @@ async def test_organization_stats_data(alice_backend_sock, realm, realm_factory,
             {"profile": UserProfile.STANDARD, "active": 1, "revoked": 0},
             {"profile": UserProfile.OUTSIDER, "active": 0, "revoked": 0},
         ],
-        "workspaces": 4,
+        "realms": 4,
     }
 
     # Create new data
@@ -82,7 +82,7 @@ async def test_organization_stats_data(alice_backend_sock, realm, realm_factory,
             {"profile": UserProfile.STANDARD, "active": 1, "revoked": 0},
             {"profile": UserProfile.OUTSIDER, "active": 0, "revoked": 0},
         ],
-        "workspaces": 4,
+        "realms": 4,
     }
 
     # create new workspace
@@ -99,7 +99,7 @@ async def test_organization_stats_data(alice_backend_sock, realm, realm_factory,
             {"profile": UserProfile.STANDARD, "active": 1, "revoked": 0},
             {"profile": UserProfile.OUTSIDER, "active": 0, "revoked": 0},
         ],
-        "workspaces": 5,
+        "realms": 5,
     }
 
 
@@ -134,7 +134,7 @@ async def test_organization_stats_users(
         ],
         "data_size": 0,
         "metadata_size": ANY,
-        "workspaces": 0,
+        "realms": 0,
     }
 
     async with backend_sock_factory(backend, godfrey1) as sock:
@@ -175,5 +175,5 @@ async def test_organization_stats_users(
         ],
         "data_size": 0,
         "metadata_size": 0,
-        "workspaces": 0,
+        "realms": 0,
     }
