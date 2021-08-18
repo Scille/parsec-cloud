@@ -545,7 +545,7 @@ class RemoteLoader(UserRemoteLoader):
         elif role_at_timestamp == RealmRole.READER:
             raise FSError(
                 f"Manifest was created at {expected_timestamp} by `{expected_author}` "
-                "which had write right on the workspace at that time"
+                "which had no right to write on the workspace at that time"
             )
 
         return remote_manifest
