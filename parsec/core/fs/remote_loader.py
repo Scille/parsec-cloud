@@ -100,6 +100,10 @@ class UserRemoteLoader:
         self._realm_role_certificates_cache: Optional[List[RealmRoleCertificateContent]] = None
         self._realm_role_certificates_cache_timestamp: Optional[DateTime] = None
 
+    def clear_realm_role_certificate_cache(self) -> None:
+        self._realm_role_certificates_cache = None
+        self._realm_role_certificates_cache_timestamp = None
+
     async def _get_user_realm_role_at(
         self, user_id: UserID, timestamp: DateTime
     ) -> Optional[RealmRole]:
