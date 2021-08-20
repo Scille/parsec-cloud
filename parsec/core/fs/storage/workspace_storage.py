@@ -35,6 +35,23 @@ DEFAULT_BLOCK_CACHE_SIZE = 512 * 1024 * 1024
 DEFAULT_CHUNK_VACUUM_THRESHOLD = 512 * 1024 * 1024
 
 
+async def workspace_storage_non_speculative_init(
+    device: LocalDevice, path: Path, workspace_id: EntryID
+) -> None:
+    data_path = path / WORKSPACE_DATA_STORAGE_NAME
+
+    # Local data storage service
+    async with LocalDatabase.run(data_path) as data_localdb:
+
+        # Manifest storage service
+        async with ManifestStorage.run(device, data_localdb, workspace_id) as manifest_storage:
+
+            manifest = LocalWorkspaceManifest.new_placeholder(
+                author=device.device_id, id=workspace_id, speculative=False
+            )
+            await manifest_storage.set_manifest(workspace_id, manifest)
+
+
 class BaseWorkspaceStorage:
     """ Common base class for WorkspaceStorage and WorkspaceStorageTimestamped
     Can not be instanciated
@@ -314,9 +331,9 @@ class WorkspaceStorage(BaseWorkspaceStorage):
 
         except FSLocalMissError:
             # It is possible to lack the workspace manifest in local if our
-            # device hasn't tried to access it yet. This is because the
-            # workspace manifest is lazily created (if we created the workspace)
-            # or fetched (if the workspace were shared with us).
+            # device hasn't tried to access it yet (and we are not the creator
+            # of the workspace, in which case the workspacefs local db is
+            # initialized with a non-speculative local manifest placeholder).
             # In such case it is easy to fall back on an empty manifest
             # which is a good enough aproximation of the very first version
             # of the manifest (field `created` is invalid, but it will be
@@ -329,7 +346,7 @@ class WorkspaceStorage(BaseWorkspaceStorage):
             # file system mountpoint given having a weird error popup when clicking
             # on the mountpoint from the file explorer really feel like a bug :/
             manifest = LocalWorkspaceManifest.new_placeholder(
-                author=self.device.device_id, id=self.workspace_id
+                author=self.device.device_id, id=self.workspace_id, speculative=True
             )
             await self.manifest_storage.set_manifest(self.workspace_id, manifest)
 
