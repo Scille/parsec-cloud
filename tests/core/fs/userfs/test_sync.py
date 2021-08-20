@@ -15,7 +15,7 @@ from parsec.core.types import (
 )
 from parsec.core.fs import FSWorkspaceNotFoundError, FSBackendOfflineError
 
-from tests.common import freeze_time
+from tests.common import customize_fixtures, freeze_time
 
 
 @pytest.mark.trio
@@ -48,12 +48,13 @@ async def test_create_workspace(initial_user_manifest_state, alice_user_fs, alic
                 role=WorkspaceRole.OWNER,
             ),
         ),
+        speculative=False,
     )
     assert um == expected_um
 
     w_manifest = await alice_user_fs.get_workspace(wid).local_storage.get_manifest(wid)
     expected_w_manifest = LocalWorkspaceManifest.new_placeholder(
-        alice.device_id, id=w_manifest.id, now=datetime(2000, 1, 2)
+        alice.device_id, id=w_manifest.id, now=datetime(2000, 1, 2), speculative=False
     )
     assert w_manifest == expected_w_manifest
 
@@ -92,6 +93,7 @@ async def test_rename_workspace(initial_user_manifest_state, alice_user_fs, alic
                 role=WorkspaceRole.OWNER,
             ),
         ),
+        speculative=False,
     )
     assert um == expected_um
 
@@ -225,11 +227,14 @@ async def test_sync_under_concurrency(
 
 
 @pytest.mark.trio
+@customize_fixtures(backend_not_populated=True)
 async def test_modify_user_manifest_placeholder(
-    running_backend, backend_data_binder, local_device_factory, user_fs_factory
+    running_backend, backend_data_binder, local_device_factory, user_fs_factory, coolorg
 ):
     device = local_device_factory()
-    await backend_data_binder.bind_device(device, initial_user_manifest_in_v0=True)
+    await backend_data_binder.bind_organization(
+        coolorg, first_device=device, initial_user_manifest_in_v0=True
+    )
 
     async with user_fs_factory(device, initialize_in_v0=True) as user_fs:
         um_v0 = user_fs.get_user_manifest()
@@ -260,48 +265,152 @@ async def test_modify_user_manifest_placeholder(
 
 
 @pytest.mark.trio
-@pytest.mark.parametrize("with_workspace", (False, True))
-async def test_sync_placeholder(
-    running_backend, backend_data_binder, local_device_factory, user_fs_factory, with_workspace
+@pytest.mark.parametrize("speculative", (False, True))
+@customize_fixtures(backend_not_populated=True)
+async def test_sync_placeholder_existing_remote(
+    running_backend, backend_data_binder, user_fs_factory, coolorg, alice, alice2, speculative
 ):
-    device = local_device_factory()
-    await backend_data_binder.bind_device(device, initial_user_manifest_in_v0=True)
+    # Bind also creates user manifest v1 in backend with alice's first device as author
+    await backend_data_binder.bind_organization(coolorg, first_device=alice)
+    await backend_data_binder.bind_device(alice2)
 
-    async with user_fs_factory(device, initialize_in_v0=True) as user_fs:
+    async with user_fs_factory(alice2, initialize_in_v0=True) as user_fs:
+        if not speculative:
+            non_speculative_v0_created_on = datetime(2000, 1, 3)
+            with freeze_time(non_speculative_v0_created_on):
+                manifest = LocalUserManifest.new_placeholder(
+                    author=alice.device_id, id=alice.user_manifest_id, speculative=False
+                )
+                await user_fs.storage.manifest_storage.set_manifest(
+                    alice.user_manifest_id, manifest
+                )
+
+        # Given we don't have any local changes, no remote upload is needed
+        await user_fs.sync()
+
+        um = user_fs.get_user_manifest()
+        expected_base_um = UserManifest(
+            author=alice.device_id,
+            timestamp=datetime(2000, 1, 1),
+            id=alice.user_manifest_id,
+            version=1,
+            created=datetime(2000, 1, 1),
+            updated=datetime(2000, 1, 1),
+            last_processed_message=0,
+            workspaces=(),
+        )
+        expected_um = LocalUserManifest(
+            base=expected_base_um,
+            need_sync=False,
+            updated=datetime(2000, 1, 1),
+            last_processed_message=0,
+            workspaces=expected_base_um.workspaces,
+            speculative=False,
+        )
+        assert um == expected_um
+
+
+@pytest.mark.trio
+@customize_fixtures(backend_not_populated=True)
+async def test_sync_modified_placeholder(
+    running_backend, backend_data_binder, user_fs_factory, coolorg, alice, alice2
+):
+    # Bind also creates user manifest v1 in backend with alice's first device as author
+    await backend_data_binder.bind_organization(coolorg, first_device=alice)
+    await backend_data_binder.bind_device(alice2)
+
+    async with user_fs_factory(alice2, initialize_in_v0=True) as user_fs:
+        with freeze_time("2000-01-02"):
+            await user_fs.workspace_create("w1")
+        before_sync_um = user_fs.get_user_manifest()
+
+        with freeze_time("2000-01-03"):
+            await user_fs.sync()
+
+        um = user_fs.get_user_manifest()
+        expected_base_um = UserManifest(
+            author=alice2.device_id,
+            timestamp=datetime(2000, 1, 3),
+            id=alice.user_manifest_id,
+            version=2,
+            created=datetime(2000, 1, 1),
+            updated=datetime(2000, 1, 2),
+            last_processed_message=0,
+            workspaces=before_sync_um.workspaces,
+        )
+        expected_um = LocalUserManifest(
+            base=expected_base_um,
+            need_sync=False,
+            updated=datetime(2000, 1, 2),
+            last_processed_message=0,
+            workspaces=before_sync_um.workspaces,
+            speculative=False,
+        )
+        assert um == expected_um
+
+
+@pytest.mark.trio
+@pytest.mark.parametrize("with_local_changes", (False, True))
+@pytest.mark.parametrize("speculative", (False, True))
+@customize_fixtures(backend_not_populated=True)
+async def test_sync_placeholder_no_remote(
+    running_backend,
+    backend_data_binder,
+    user_fs_factory,
+    coolorg,
+    alice,
+    with_local_changes,
+    speculative,
+):
+    await backend_data_binder.bind_organization(
+        coolorg, first_device=alice, initial_user_manifest_in_v0=True
+    )
+
+    async with user_fs_factory(alice, initialize_in_v0=True) as user_fs:
+        if not speculative:
+            with freeze_time("2000-01-02"):
+                manifest = LocalUserManifest.new_placeholder(
+                    author=alice.device_id, id=alice.user_manifest_id, speculative=False
+                )
+                await user_fs.storage.manifest_storage.set_manifest(
+                    alice.user_manifest_id, manifest
+                )
+
         um_v0 = user_fs.get_user_manifest()
 
         expected_um = LocalUserManifest.new_placeholder(
-            device.device_id, id=device.user_manifest_id, now=um_v0.created
+            alice.device_id, id=alice.user_manifest_id, speculative=speculative, now=um_v0.created
         )
         assert um_v0 == expected_um
 
-        if with_workspace:
-            with freeze_time("2000-01-02"):
+        if with_local_changes:
+            with freeze_time("2000-01-03"):
                 wid = await user_fs.workspace_create("w1")
             um = user_fs.get_user_manifest()
             expected_um = um_v0.evolve(
-                updated=datetime(2000, 1, 2),
+                updated=datetime(2000, 1, 3),
                 workspaces=(
                     WorkspaceEntry(
                         name="w1",
                         id=wid,
                         key=ANY,
                         encryption_revision=1,
-                        encrypted_on=datetime(2000, 1, 2),
-                        role_cached_on=datetime(2000, 1, 2),
+                        encrypted_on=datetime(2000, 1, 3),
+                        role_cached_on=datetime(2000, 1, 3),
                         role=WorkspaceRole.OWNER,
                     ),
                 ),
             )
             assert um == expected_um
 
-        with freeze_time("2000-01-02"):
+        with freeze_time("2000-01-04"):
             await user_fs.sync()
+
         um = user_fs.get_user_manifest()
         expected_base_um = UserManifest(
-            author=device.device_id,
-            timestamp=datetime(2000, 1, 2),
-            id=device.user_manifest_id,
+            author=alice.device_id,
+            timestamp=datetime(2000, 1, 4),
+            id=alice.user_manifest_id,
             version=1,
             created=expected_um.created,
             updated=expected_um.updated,
@@ -314,23 +423,24 @@ async def test_sync_placeholder(
             updated=expected_um.updated,
             last_processed_message=0,
             workspaces=expected_base_um.workspaces,
+            speculative=False,
         )
         assert um == expected_um
 
 
 @pytest.mark.trio
 @pytest.mark.parametrize("dev2_has_changes", (False, True))
+@customize_fixtures(backend_not_populated=True)
 async def test_concurrent_sync_placeholder(
-    running_backend, backend_data_binder, local_device_factory, user_fs_factory, dev2_has_changes
+    running_backend, backend_data_binder, user_fs_factory, dev2_has_changes, coolorg, alice, alice2
 ):
-    device1 = local_device_factory("a@1")
-    await backend_data_binder.bind_device(device1, initial_user_manifest_in_v0=True)
+    await backend_data_binder.bind_organization(
+        coolorg, first_device=alice, initial_user_manifest_in_v0=True
+    )
+    await backend_data_binder.bind_device(alice2, initial_user_manifest_in_v0=True)
 
-    device2 = local_device_factory("a@2")
-    await backend_data_binder.bind_device(device2, initial_user_manifest_in_v0=True)
-
-    async with user_fs_factory(device1, initialize_in_v0=True) as user_fs1, user_fs_factory(
-        device2, initialize_in_v0=True
+    async with user_fs_factory(alice, initialize_in_v0=True) as user_fs1, user_fs_factory(
+        alice2, initialize_in_v0=True
     ) as user_fs2:
         # fs2's created value is different and will be overwritten when
         # merging synced manifest from fs1
@@ -354,8 +464,8 @@ async def test_concurrent_sync_placeholder(
         um2 = user_fs2.get_user_manifest()
         if dev2_has_changes:
             expected_base_um = UserManifest(
-                author=device2.device_id,
-                id=device2.user_manifest_id,
+                author=alice2.device_id,
+                id=alice2.user_manifest_id,
                 timestamp=datetime(2000, 1, 4),
                 version=2,
                 created=um_created_v0_fs1,
@@ -388,13 +498,14 @@ async def test_concurrent_sync_placeholder(
                 updated=datetime(2000, 1, 2),
                 last_processed_message=0,
                 workspaces=expected_base_um.workspaces,
+                speculative=False,
             )
 
         else:
             expected_base_um = UserManifest(
-                author=device1.device_id,
+                author=alice.device_id,
                 timestamp=datetime(2000, 1, 3),
-                id=device1.user_manifest_id,
+                id=alice.user_manifest_id,
                 version=1,
                 created=um_created_v0_fs1,
                 updated=datetime(2000, 1, 1),
@@ -417,6 +528,7 @@ async def test_concurrent_sync_placeholder(
                 updated=datetime(2000, 1, 1),
                 last_processed_message=0,
                 workspaces=expected_base_um.workspaces,
+                speculative=False,
             )
 
         assert um1 == expected_um
@@ -424,7 +536,7 @@ async def test_concurrent_sync_placeholder(
 
 
 @pytest.mark.trio
-async def test_sync_not_needed(running_backend, alice_user_fs, alice2_user_fs, alice, alice2):
+async def test_sync_not_needed(running_backend, alice_user_fs):
     um1 = alice_user_fs.get_user_manifest()
     await alice_user_fs.sync()
     um2 = alice_user_fs.get_user_manifest()
@@ -433,7 +545,7 @@ async def test_sync_not_needed(running_backend, alice_user_fs, alice2_user_fs, a
 
 
 @pytest.mark.trio
-async def test_sync_remote_changes(running_backend, alice_user_fs, alice2_user_fs, alice, alice2):
+async def test_sync_remote_changes(running_backend, alice_user_fs, alice2_user_fs, alice2):
     # Alice 2 update the user manifest
     with freeze_time("2000-01-02"):
         wid = await alice2_user_fs.workspace_create("wa")
@@ -473,6 +585,7 @@ async def test_sync_remote_changes(running_backend, alice_user_fs, alice2_user_f
         updated=datetime(2000, 1, 2),
         last_processed_message=0,
         workspaces=expected_base_um.workspaces,
+        speculative=False,
     )
     assert um == expected_um
     assert um2 == expected_um

@@ -341,7 +341,7 @@ def initialize_userfs_storage_v1(initial_user_manifest_state, persistent_mockup)
                     storage.device
                 )
             await storage.set_user_manifest(user_manifest)
-            # Chcekpoint 1 *is* the upload of user manifest v1
+            # Checkpoint 1 *is* the upload of user manifest v1
             await storage.update_realm_checkpoint(1, {})
 
     return _initialize_userfs_storage

@@ -489,6 +489,7 @@ async def test_share_workspace_then_conflict_on_rights(
         updated=expected_remote.updated,
         last_processed_message=expected_remote.last_processed_message,
         workspaces=expected_remote.workspaces,
+        speculative=False,
     )
     assert am == expected
     assert a2m == expected
