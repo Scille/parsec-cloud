@@ -75,7 +75,16 @@ def merge_folder_children(
     local_children: Dict[EntryName, EntryID],
     remote_children: Dict[EntryName, EntryID],
     remote_device_name: DeviceID,
+    speculative_local_children: bool,
 ) -> Dict[EntryName, EntryID]:
+    if speculative_local_children:
+        # Not having the remote entries among the local children means
+        # we removed them.
+        # However speculative means we created the local children in total
+        # isolation with the remote, so it's not we want to remove all children
+        # from remote but we only don't know about them !
+        local_children = {**remote_children, **local_children}
+
     # Prepare lookups
     base_reversed = {entry_id: name for name, entry_id in base_children.items()}
     local_reversed = {entry_id: name for name, entry_id in local_children.items()}
@@ -181,6 +190,11 @@ def merge_manifests(
     if remote_manifest.author == local_author:
         return local_manifest.evolve(base=remote_manifest)
 
+    # if isinstance(local_manifest, LocalWorkspaceManifest):
+    #     local_manifest.speculative
+    # if local_manifest.speculative or remote_manifest.author == local_author:
+    #     return local_manifest.evolve(base=remote_manifest)
+
     # The remote has been updated by some other device
     assert remote_manifest.author != local_author
 
@@ -188,20 +202,28 @@ def merge_manifests(
     if isinstance(local_manifest, LocalFileManifest):
         raise FSFileConflictError(local_manifest, remote_manifest)
 
-    assert isinstance(local_manifest, (LocalFolderManifest, LocalWorkspaceManifest))
+    if isinstance(local_manifest, LocalFolderManifest):
+        speculative = False
+    elif isinstance(local_manifest, LocalWorkspaceManifest):
+        speculative = local_manifest.speculative
+    else:
+        assert False
+
+    # TODO !!!!!!!!!! FINISH THIS !!!!!!!!!!!
     # Solve the folder conflict
     new_children = merge_folder_children(
         local_manifest.base.children,
         local_manifest.children,
         local_from_remote.children,
         remote_manifest.author,
+        speculative,
     )
 
     # Children merge can end up with nothing to sync.
     #
     # This is typically the case when we sync for the first time a workspace
     # shared with us that we didn't modified:
-    # - the workspace manifest is a placeholder (with arbitrary update&create dates)
+    # - the workspace manifest is a speculative placeholder (with arbitrary update&create dates)
     # - on sync the update date is different than in the remote, so a merge occurs
     # - given we didn't modify the workspace, the children merge is trivial
     # So without this check each each user we share the workspace with would

@@ -35,6 +35,8 @@ def test_fs_online_rwfile_and_sync(user_fs_online_state_machine, alice):
         async def reset(self):
             await self.reset_user_fs(self.device)
             await self.user_fs.sync()
+            # Retrieve workspace manifest v1 to replace the default empty speculative placeholder
+            await self.user_fs.get_workspace(self.wid).sync()
             self.file_oracle.reset()
 
         @rule()

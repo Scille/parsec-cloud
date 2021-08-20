@@ -633,6 +633,7 @@ class WorkspaceFS:
                 remote_manifest = new_remote_manifest
 
     async def _create_realm_if_needed(self) -> None:
+        # TODO: replace this by check on is_placeholder + speculative
         if not await self.local_storage.is_realm_created():
             # `create_realm` is idempotent, so we are shielded against concurrency errors
             await self.remote_loader.create_realm(self.workspace_id)
