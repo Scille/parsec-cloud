@@ -364,17 +364,17 @@ class LocalFileManifest(BaseLocalManifest):
         cls,
         author: DeviceID,
         parent: EntryID,
-        id: Optional[EntryID] = None,
         now: DateTime = None,
-        blocksize=DEFAULT_BLOCK_SIZE,
+        blocksize: int = DEFAULT_BLOCK_SIZE,
     ) -> "LocalFileManifest":
+        id = EntryID.new()
         now = now or pendulum_now()
         blocks = ()
         return cls(
             base=RemoteFileManifest(
                 author=author,
                 timestamp=now,
-                id=id or EntryID.new(),
+                id=id,
                 parent=parent,
                 version=0,
                 created=now,
@@ -651,15 +651,16 @@ class LocalFolderManifest(BaseLocalManifest, LocalFolderishManifestMixin):
 
     @classmethod
     def new_placeholder(
-        cls, author: DeviceID, parent: EntryID, id: EntryID = None, now: DateTime = None
+        cls, author: DeviceID, parent: EntryID, now: DateTime = None
     ) -> "LocalFolderManifest":
+        id = EntryID.new()
         now = now or pendulum_now()
         children = FrozenDict()
         return cls(
             base=RemoteFolderManifest(
                 author=author,
                 timestamp=now,
-                id=id or EntryID.new(),
+                id=id,
                 parent=parent,
                 version=0,
                 created=now,
