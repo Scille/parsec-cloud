@@ -10,6 +10,7 @@ from PyQt5.QtWidgets import QWidget
 from parsec.api.protocol import HumanHandle
 from parsec.core.types import LocalDevice
 from parsec.core.local_device import save_device_with_password
+from parsec.core.fs.storage.user_storage import user_storage_non_speculative_init
 from parsec.core.invite import claimer_retrieve_info, InvitePeerResetError
 from parsec.core.backend_connection import (
     backend_invited_cmds_factory,
@@ -198,6 +199,11 @@ class ClaimUserFinalizeWidget(QWidget, Ui_ClaimUserFinalizeWidget):
             self.button_finalize.setDisabled(True)
 
     def _on_finalize_clicked(self):
+        # Claiming a user means we are it first device, hence we know there
+        # is no existing user manifest (hence our placeholder is non-speculative)
+        user_storage_non_speculative_init(
+            device=self.new_device, path=self.config.data_base_dir / self.new_device.slug
+        )
         password = self.widget_password.password
         save_device_with_password(
             config_dir=self.config.config_dir, device=self.new_device, password=password

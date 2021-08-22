@@ -29,12 +29,12 @@ from parsec.core.invite import (
     claimer_retrieve_info,
 )
 from parsec.core.local_device import save_device_with_password
+from parsec.core.fs.storage.user_storage import user_storage_non_speculative_init
 from parsec.core.cli.utils import (
     cli_command_base_options,
     core_config_and_device_options,
     core_config_options,
 )
-
 
 async def _invite_device(config, device):
     async with spinner("Creating device invitation"):
@@ -333,6 +333,12 @@ async def _claim_invitation(config, addr, password):
 
         device_display = click.style(new_device.slughash, fg="yellow")
         with operation(f"Saving device {device_display}"):
+            # Claiming a user means we are it first device, hence we know there
+            # is no existing user manifest (hence our placeholder is non-speculative)
+            if addr.invitation_type == InvitationType.USER:
+                user_storage_non_speculative_init(
+                    device=new_device, path=config.data_base_dir / new_device.slug
+                )
             save_device_with_password(
                 config_dir=config.config_dir, device=new_device, password=password
             )

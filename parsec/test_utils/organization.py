@@ -26,6 +26,7 @@ from parsec.core.backend_connection import (
     backend_authenticated_cmds_factory,
 )
 from parsec.core.local_device import generate_new_device, save_device_with_password
+from parsec.core.fs.storage.user_storage import user_storage_non_speculative_init
 from parsec.core.invite import (
     bootstrap_organization,
     DeviceGreetInitialCtx,
@@ -44,6 +45,7 @@ async def initialize_test_organization(
     additional_devices_number: int,
 ) -> Tuple[LocalDevice, LocalDevice, LocalDevice]:
     organization_id = OrganizationID("Org")
+    config = load_config(config_dir, debug="DEBUG" in os.environ)
 
     # Create organization
 
@@ -62,9 +64,11 @@ async def initialize_test_organization(
             human_handle=HumanHandle(label="Alice", email="alice@example.com"),
             device_label="laptop",
         )
+        user_storage_non_speculative_init(
+            device=alice_device, path=config.data_base_dir / alice_device.slug
+        )
         save_device_with_password(config_dir=config_dir, device=alice_device, password=password)
 
-    config = load_config(config_dir, debug="DEBUG" in os.environ)
     # Create context manager, alice_core will be needed for the rest of the script
     async with logged_core_factory(config, alice_device) as alice_core:
         async with backend_authenticated_cmds_factory(
@@ -88,6 +92,9 @@ async def initialize_test_organization(
                 human_handle=HumanHandle(email="bob@example.com", label="Bob"),
                 profile=UserProfile.STANDARD,
             )
+            user_storage_non_speculative_init(
+                device=bob_device, path=config.data_base_dir / bob_device.slug
+            )
             save_device_with_password(config_dir=config_dir, device=bob_device, password=password)
 
             # Invite Toto in organization
@@ -97,6 +104,9 @@ async def initialize_test_organization(
                 device_label="laptop",
                 human_handle=HumanHandle(email="toto@example.com", label="Toto"),
                 profile=UserProfile.OUTSIDER,
+            )
+            user_storage_non_speculative_init(
+                device=toto_device, path=config.data_base_dir / toto_device.slug
             )
             save_device_with_password(config_dir=config_dir, device=toto_device, password=password)
             # Create Alice workspace

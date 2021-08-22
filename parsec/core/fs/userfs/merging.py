@@ -145,4 +145,5 @@ def merge_local_user_manifests(
         updated=updated,
         last_processed_message=last_processed_message,
         workspaces=workspaces,
+        speculative=False,
     )

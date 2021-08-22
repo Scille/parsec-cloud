@@ -12,6 +12,22 @@ from parsec.core.fs.storage.local_database import LocalDatabase
 from parsec.core.fs.storage.manifest_storage import ManifestStorage
 
 
+async def user_storage_non_speculative_init(device: LocalDevice, path: Path) -> None:
+
+    # Local data storage service
+    async with LocalDatabase.run(path / USER_STORAGE_NAME) as localdb:
+
+        # Manifest storage service
+        async with ManifestStorage.run(
+            device, localdb, device.user_manifest_id
+        ) as manifest_storage:
+
+            manifest = LocalUserManifest.new_placeholder(
+                author=device.device_id, id=device.user_manifest_id, speculative=False
+            )
+            await manifest_storage.set_manifest(device.user_manifest_id, manifest)
+
+
 class UserStorage:
     """Storage for the user manifest.
 
@@ -80,13 +96,16 @@ class UserStorage:
         try:
             await self.manifest_storage.get_manifest(self.user_manifest_id)
         except FSLocalMissError:
-            # In the unlikely event the user manifest is not present in
-            # local (e.g. device just created or during tests), we fall
-            # back on an empty manifest which is a good aproximation of
-            # the very first version of the manifest (field `created` is
-            # invalid, but it will be corrected by the merge during sync).
+            # It is possible to lack the user manifest in local if our
+            # device hasn't tried to access it yet (and we are not the
+            # initial device of our user, in which case the user local db is
+            # initialized with a non-speculative local manifest placeholder).
+            # In such case it is easy to fall back on an empty manifest
+            # which is a good enough aproximation of the very first version
+            # of the manifest (field `created` is invalid, but it will be
+            # correction by the merge during sync).
             manifest = LocalUserManifest.new_placeholder(
-                self.device.device_id, id=self.device.user_manifest_id
+                self.device.device_id, id=self.device.user_manifest_id, speculative=True
             )
             await self.manifest_storage.set_manifest(self.user_manifest_id, manifest)
 

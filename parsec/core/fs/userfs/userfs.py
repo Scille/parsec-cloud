@@ -40,7 +40,6 @@ from parsec.core.types import (
     EntryID,
     EntryName,
     LocalDevice,
-    LocalWorkspaceManifest,
     WorkspaceEntry,
     WorkspaceRole,
     LocalUserManifest,
@@ -56,7 +55,11 @@ from parsec.core.remote_devices_manager import RemoteDevicesManager
 
 from parsec.core.fs.workspacefs import WorkspaceFS
 from parsec.core.fs.remote_loader import UserRemoteLoader
-from parsec.core.fs.storage import UserStorage, WorkspaceStorage
+from parsec.core.fs.storage import (
+    UserStorage,
+    WorkspaceStorage,
+    workspace_storage_non_speculative_init,
+)
 from parsec.core.fs.userfs.merging import merge_local_user_manifests, merge_workspace_entry
 from parsec.core.fs.exceptions import (
     FSError,
@@ -274,17 +277,8 @@ class UserFS:
 
         await self.storage.set_user_manifest(manifest)
 
-    async def _instantiate_workspace_storage(self, workspace_id: EntryID) -> WorkspaceStorage:
-        path = self.path / str(workspace_id)
-
-        async def workspace_storage_task(
-            task_status: TaskStatus[WorkspaceStorage] = trio.TASK_STATUS_IGNORED
-        ) -> None:
-            async with WorkspaceStorage.run(self.device, path, workspace_id) as workspace_storage:
-                task_status.started(workspace_storage)
-                await trio.sleep_forever()
-
-        return await self._workspace_storage_nursery.start(workspace_storage_task)
+    def _get_workspace_storage_path(self, workspace_id: EntryID) -> Path:
+        return self.path / str(workspace_id)
 
     async def _instantiate_workspace(self, workspace_id: EntryID) -> WorkspaceFS:
         # Workspace entry can change at any time, so we provide a way for
@@ -316,7 +310,18 @@ class UserFS:
             return await self._get_previous_workspace_entry(workspace_entry)
 
         # Instantiate the local storage
-        local_storage = await self._instantiate_workspace_storage(workspace_id)
+        storage_path = self._get_workspace_storage_path(workspace_id)
+
+        async def workspace_storage_task(
+            task_status: TaskStatus[WorkspaceStorage] = trio.TASK_STATUS_IGNORED
+        ) -> None:
+            async with WorkspaceStorage.run(
+                self.device, storage_path, workspace_id
+            ) as workspace_storage:
+                task_status.started(workspace_storage)
+                await trio.sleep_forever()
+
+        local_storage = await self._workspace_storage_nursery.start(workspace_storage_task)
 
         # Instantiate the workspace
         workspace = WorkspaceFS(
@@ -334,19 +339,6 @@ class UserFS:
         await workspace.set_and_apply_prevent_sync_pattern(self.prevent_sync_pattern)
 
         return workspace
-
-    async def _create_workspace(
-        self, workspace_id: EntryID, manifest: LocalWorkspaceManifest
-    ) -> None:
-        """
-        Raises: Nothing
-        """
-        workspace = await self._instantiate_workspace(workspace_id)
-
-        async with workspace.local_storage.lock_entry_id(workspace_id):
-            await workspace.local_storage.set_manifest(workspace_id, manifest)
-
-        self._workspace_fss.setdefault(workspace_id, workspace)
 
     async def _load_workspace(self, workspace_id: EntryID) -> WorkspaceFS:
         """
@@ -384,13 +376,28 @@ class UserFS:
         """
         name = EntryName(name)
         workspace_entry = WorkspaceEntry.new(name)
-        workspace_manifest = LocalWorkspaceManifest.new_placeholder(
-            self.device.device_id, id=workspace_entry.id
-        )
         async with self._update_user_manifest_lock:
             user_manifest = self.get_user_manifest()
             user_manifest = user_manifest.evolve_workspaces_and_mark_updated(workspace_entry)
-            await self._create_workspace(workspace_entry.id, workspace_manifest)
+            # Given *we* are the creator of the workspace, our placeholder is
+            # the only non-speculative one.
+            #
+            # Note the save order is important given there is no atomicity
+            # between saving the non-speculative workspace manifest placeholder
+            # and the save of the user manifest containing the workspace entry.
+            # Indeed, if we would save the user manifest first and a crash
+            # occured before saving the placeholder, we would endup in the same
+            # situation as if the workspace has been created by someone else
+            # (i.e. a workspace entry but no local data about this workspace)
+            # so we would fallback to a local speculative workspace manifest.
+            # However a speculative manifest means the workspace have been
+            # created by somebody else, and hence we shouldn't try to create
+            # it corresponding realm in the backend !
+            await workspace_storage_non_speculative_init(
+                device=self.device,
+                path=self._get_workspace_storage_path(workspace_entry.id),
+                workspace_id=workspace_entry.id,
+            )
             await self.set_user_manifest(user_manifest)
             self.event_bus.send(CoreEvent.FS_ENTRY_UPDATED, id=self.user_manifest_id)
             self.event_bus.send(CoreEvent.FS_WORKSPACE_CREATED, new_entry=workspace_entry)
@@ -627,12 +634,29 @@ class UserFS:
 
     async def _workspace_minimal_sync(self, workspace_entry: WorkspaceEntry) -> None:
         """
+        Ensure the wokspace is usable from outside the local device:
+        - realm is created on the server
+        - initial version of the workspace manifest has been uploaded to the server
+
+        In theroy, only realm creation is stricly needed for minimal_sync of the
+        workspace: given each device starts using the workspace by creating a
+        speculative placeholder workspace manifest, any of them could sync
+        it placeholder which would become the initial workspace manifest.
+        However we keep the workspace manifest upload as part of the minimal
+        sync for compatibility reason (Parsec <= 2.4.2 download the workspace
+        manifest instead of starting with a speculative placeholder).
+
         Raises:
             FSError
             FSBackendOfflineError
         """
         workspace = self.get_workspace(workspace_entry.id)
-        await workspace.minimal_sync(workspace_entry.id)
+        try:
+            await workspace.minimal_sync(workspace_entry.id)
+        except FSWorkspaceNoAccess:
+            # Not having full access on the workspace is a proof is owned
+            # by somebody else, hence minimal sync is not needed.
+            pass
 
     async def workspace_share(
         self, workspace_id: EntryID, recipient: UserID, role: Optional[WorkspaceRole]

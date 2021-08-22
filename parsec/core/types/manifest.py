@@ -750,9 +750,25 @@ class LocalWorkspaceManifest(BaseLocalManifest, LocalFolderishManifestMixin):
         # deleted locally and hence should be restored when crafting the remote manifest
         # to upload.
         remote_confinement_points = fields.FrozenSet(EntryIDField(required=True))
+        # Speculative placeholders are created when we want to access a workspace
+        # but didn't retrieve manifest data from backend yet. This implies:
+        # - non-placeholders cannot be speculative
+        # - the only non-speculative placeholder is the placeholder initialized
+        #   during the initial workspace creation
+        # This speculative information is useful during merge to understand if
+        # a data is not present in the placeholder compared with a remote because:
+        # a) the data is not locally known (speculative is True)
+        # b) the data is known, but has been locally removed (speculative is False)
+        # Prevented to be `required=True` by backward compatibility
+        speculative = fields.Boolean(allow_none=False, required=False, missing=False)
 
         @post_load
         def make_obj(self, data):
+            # TODO: Ensure non-placeholder cannot be marked speculative
+            assert data["speculative"] is False or data["base"].version == 0
+            # TODO: Should this assert be in remote workspace manifest definition instead ?
+            # TODO: but in theory remote workspace manifest should assert version > 0 !
+            assert data["base"].version != 0 or not data["base"].children
             data.pop("type")
             data.setdefault("local_confinement_points", frozenset())
             data.setdefault("remote_confinement_points", frozenset())
@@ -763,9 +779,11 @@ class LocalWorkspaceManifest(BaseLocalManifest, LocalFolderishManifestMixin):
     local_confinement_points: FrozenSet[EntryID]
     remote_confinement_points: FrozenSet[EntryID]
 
+    speculative: bool
+
     @classmethod
     def new_placeholder(
-        cls, author: DeviceID, id: EntryID = None, now: DateTime = None
+        cls, author: DeviceID, id: EntryID = None, speculative: bool = False, now: DateTime = None
     ) -> "LocalWorkspaceManifest":
         now = now or pendulum_now()
         children = FrozenDict()
@@ -784,6 +802,7 @@ class LocalWorkspaceManifest(BaseLocalManifest, LocalFolderishManifestMixin):
             children=children,
             local_confinement_points=frozenset(),
             remote_confinement_points=frozenset(),
+            speculative=speculative,
         )
 
     # Evolve methods
@@ -808,6 +827,7 @@ class LocalWorkspaceManifest(BaseLocalManifest, LocalFolderishManifestMixin):
             children=remote.children,
             local_confinement_points=frozenset(),
             remote_confinement_points=frozenset(),
+            speculative=False,
         )
         # Filter remote entries
         return result._filter_remote_entries(prevent_sync_pattern)
@@ -848,10 +868,27 @@ class LocalUserManifest(BaseLocalManifest):
         updated = fields.DateTime(required=True)
         last_processed_message = fields.Integer(required=True, validate=validate.Range(min=0))
         workspaces = fields.FrozenList(fields.Nested(WorkspaceEntry.SCHEMA_CLS), required=True)
+        # Speculative placeholders are created when we want to access the
+        # user manifest but didn't retrieve it from backend yet. This implies:
+        # - non-placeholders cannot be speculative
+        # - the only non-speculative placeholder is the placeholder initialized
+        #   during the initial user claim (by opposition of subsequent device
+        #   claims on the same user)
+        # This speculative information is useful during merge to understand if
+        # a data is not present in the placeholder compared with a remote because:
+        # a) the data is not locally known (speculative is True)
+        # b) the data is known, but has been locally removed (speculative is False)
+        # Prevented to be `required=True` by backward compatibility
+        speculative = fields.Boolean(allow_none=False, required=False, missing=False)
 
         @post_load
         def make_obj(self, data):
             data.pop("type")
+            # TODO: Ensure non-placeholder cannot be marked speculative
+            assert data["speculative"] is False or data["base"].version == 0
+            # TODO: Should this assert be in remote workspace manifest definition instead ?
+            # TODO: but in theory remote workspace manifest should assert version > 0 !
+            assert data["base"].version != 0 or not data["base"].workspaces
             return LocalUserManifest(**data)
 
     base: RemoteUserManifest
@@ -859,11 +896,12 @@ class LocalUserManifest(BaseLocalManifest):
     last_processed_message: int
     workspaces: Tuple[WorkspaceEntry, ...]
 
+    speculative: bool
+
     @classmethod
     def new_placeholder(
-        cls, author: DeviceID, id: EntryID = None, now: DateTime = None
+        cls, author: DeviceID, id: EntryID = None, speculative: bool = False, now: DateTime = None
     ) -> "LocalUserManifest":
-        workspaces = ()
         now = now or pendulum_now()
         return cls(
             base=RemoteUserManifest(
@@ -874,12 +912,13 @@ class LocalUserManifest(BaseLocalManifest):
                 created=now,
                 updated=now,
                 last_processed_message=0,
-                workspaces=workspaces,
+                workspaces=(),
             ),
             need_sync=True,
             updated=now,
             last_processed_message=0,
-            workspaces=workspaces,
+            workspaces=(),
+            speculative=speculative,
         )
 
     # Helper
@@ -907,6 +946,7 @@ class LocalUserManifest(BaseLocalManifest):
             updated=remote.updated,
             last_processed_message=remote.last_processed_message,
             workspaces=remote.workspaces,
+            speculative=False,
         )
 
     def to_remote(self, author: DeviceID, timestamp: DateTime = None) -> RemoteUserManifest:
