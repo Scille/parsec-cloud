@@ -26,7 +26,13 @@ def merge_workspace_entry(
         name = target.name
 
     # Keep last encryption
-    if diverged.encryption_revision < target.encryption_revision:
+    if diverged.encryption_revision <= target.encryption_revision:
+        # Note `diverged.encryption_revision == target.encryption_revision`
+        # should imply `diverged.encrypted_on == target.encrypted_on`, but
+        # there is no way to enforce this (e.g. a buggy client may have change
+        # this value...). However we'd better keep the remote value to avoid
+        # constant sync fight between two client if they endup with a different
+        # value they both consider the "right" one.
         encryption_revision = target.encryption_revision
         encrypted_on = target.encrypted_on
         key = target.key
@@ -112,8 +118,11 @@ def merge_local_user_manifests(
     base_workspaces = diverged.base.workspaces if diverged.base is not None else None
 
     assert target.version > base_version
-    # Not true when merging user manifest v1 given v0 is lazily generated
-    assert base_version == 0 or diverged.created == target.created
+
+    # `created` should never change, so in theory we should have
+    # `diverged.created == target.created`, but there is no strict guarantee
+    # (e.g. remote manifest may have been uploaded by a buggy client) so
+    # we have no choice but to accept whatever value remote provides.
 
     workspaces, need_sync = merge_workspace_entries(
         base_workspaces, diverged.workspaces, target.workspaces
