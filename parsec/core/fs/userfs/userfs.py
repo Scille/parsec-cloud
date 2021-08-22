@@ -635,7 +635,7 @@ class UserFS:
         await workspace.minimal_sync(workspace_entry.id)
 
     async def workspace_share(
-        self, workspace_id: EntryID, recipient: UserID, role: Optional[WorkspaceRole] = None
+        self, workspace_id: EntryID, recipient: UserID, role: Optional[WorkspaceRole]
     ) -> None:
         """
         Raises:
