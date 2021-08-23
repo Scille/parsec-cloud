@@ -553,6 +553,7 @@ def backend_data_binder_factory(request, backend_addr, initial_user_manifest_sta
             bootstrap_token = f"<{org.organization_id}-bootstrap-token>"
             await self.backend.organization.create(org.organization_id, bootstrap_token)
             if first_device:
+                assert org.organization_id == first_device.organization_id
                 backend_user, backend_first_device = local_device_to_backend_user(first_device, org)
                 await self.backend.organization.bootstrap(
                     org.organization_id,
