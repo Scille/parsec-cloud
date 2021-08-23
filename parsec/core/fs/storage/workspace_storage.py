@@ -25,7 +25,10 @@ from parsec.core.fs.exceptions import FSError, FSLocalMissError, FSInvalidFileDe
 from parsec.core.fs.storage.local_database import LocalDatabase
 from parsec.core.fs.storage.manifest_storage import ManifestStorage
 from parsec.core.fs.storage.chunk_storage import ChunkStorage, BlockStorage
-from parsec.core.fs.storage.version import WORKSPACE_DATA_STORAGE_NAME, WORKSPACE_CACHE_STORAGE_NAME
+from parsec.core.fs.storage.version import (
+    get_workspace_data_storage_db_path,
+    get_workspace_cache_storage_db_path,
+)
 
 
 logger = get_logger()
@@ -36,12 +39,12 @@ DEFAULT_CHUNK_VACUUM_THRESHOLD = 512 * 1024 * 1024
 
 
 async def workspace_storage_non_speculative_init(
-    device: LocalDevice, path: Path, workspace_id: EntryID
+    data_base_dir: Path, device: LocalDevice, workspace_id: EntryID
 ) -> None:
-    data_path = path / WORKSPACE_DATA_STORAGE_NAME
+    db_path = get_workspace_data_storage_db_path(data_base_dir, device, workspace_id)
 
     # Local data storage service
-    async with LocalDatabase.run(data_path) as data_localdb:
+    async with LocalDatabase.run(db_path) as data_localdb:
 
         # Manifest storage service
         async with ManifestStorage.run(device, data_localdb, workspace_id) as manifest_storage:
@@ -60,12 +63,10 @@ class BaseWorkspaceStorage:
     def __init__(
         self,
         device: LocalDevice,
-        path: Path,
         workspace_id: EntryID,
         block_storage: ChunkStorage,
         chunk_storage: ChunkStorage,
     ):
-        self.path = path
         self.device = device
         self.device_id = device.device_id
         self.workspace_id = workspace_id
@@ -230,7 +231,6 @@ class WorkspaceStorage(BaseWorkspaceStorage):
     def __init__(
         self,
         device: LocalDevice,
-        path: Path,
         workspace_id: EntryID,
         data_localdb: LocalDatabase,
         cache_localdb: LocalDatabase,
@@ -238,7 +238,7 @@ class WorkspaceStorage(BaseWorkspaceStorage):
         chunk_storage: ChunkStorage,
         manifest_storage: ManifestStorage,
     ):
-        super().__init__(device, path, workspace_id, block_storage, chunk_storage)
+        super().__init__(device, workspace_id, block_storage, chunk_storage)
         self.data_localdb = data_localdb
         self.cache_localdb = cache_localdb
         self.manifest_storage = manifest_storage
@@ -247,14 +247,14 @@ class WorkspaceStorage(BaseWorkspaceStorage):
     @asynccontextmanager
     async def run(
         cls,
+        data_base_dir: Path,
         device: LocalDevice,
-        path: Path,
         workspace_id: EntryID,
         cache_size: int = DEFAULT_BLOCK_CACHE_SIZE,
         vacuum_threshold: int = DEFAULT_CHUNK_VACUUM_THRESHOLD,
     ) -> AsyncIterator["WorkspaceStorage"]:
-        data_path = path / WORKSPACE_DATA_STORAGE_NAME
-        cache_path = path / WORKSPACE_CACHE_STORAGE_NAME
+        data_path = get_workspace_data_storage_db_path(data_base_dir, device, workspace_id)
+        cache_path = get_workspace_cache_storage_db_path(data_base_dir, device, workspace_id)
 
         # Local cache storage service
         async with LocalDatabase.run(cache_path) as cache_localdb:
@@ -280,7 +280,6 @@ class WorkspaceStorage(BaseWorkspaceStorage):
                             # Instanciate workspace storage
                             instance = cls(
                                 device,
-                                path,
                                 workspace_id,
                                 data_localdb=data_localdb,
                                 cache_localdb=cache_localdb,
@@ -426,7 +425,6 @@ class WorkspaceStorageTimestamped(BaseWorkspaceStorage):
     def __init__(self, workspace_storage: BaseWorkspaceStorage, timestamp: DateTime):
         super().__init__(
             workspace_storage.device,
-            workspace_storage.path,
             workspace_storage.workspace_id,
             block_storage=workspace_storage.block_storage,
             chunk_storage=workspace_storage.chunk_storage,

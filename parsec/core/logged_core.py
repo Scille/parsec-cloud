@@ -351,10 +351,14 @@ async def logged_core_factory(
         keepalive=config.backend_connection_keepalive,
     )
 
-    path = config.data_base_dir / device.slug
     remote_devices_manager = RemoteDevicesManager(backend_conn.cmds, device.root_verify_key)
     async with UserFS.run(
-        device, path, backend_conn.cmds, remote_devices_manager, event_bus, prevent_sync_pattern
+        config.data_base_dir,
+        device,
+        backend_conn.cmds,
+        remote_devices_manager,
+        event_bus,
+        prevent_sync_pattern,
     ) as user_fs:
 
         backend_conn.register_monitor(partial(monitor_messages, user_fs, event_bus))

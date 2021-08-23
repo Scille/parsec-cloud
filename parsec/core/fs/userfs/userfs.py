@@ -171,15 +171,15 @@ UserFSTypeVar = TypeVar("UserFSTypeVar", bound="UserFS")
 class UserFS:
     def __init__(
         self,
+        data_base_dir: Path,
         device: LocalDevice,
-        path: Path,
         backend_cmds: BackendAuthenticatedCmds,
         remote_devices_manager: RemoteDevicesManager,
         event_bus: EventBus,
         prevent_sync_pattern: Pattern[str],
     ):
+        self.data_base_dir = data_base_dir
         self.device = device
-        self.path = path
         self.backend_cmds = backend_cmds
         self.remote_devices_manager = remote_devices_manager
         self.event_bus = event_bus
@@ -221,19 +221,24 @@ class UserFS:
     @asynccontextmanager
     async def run(
         cls: Type[UserFSTypeVar],
+        data_base_dir: Path,
         device: LocalDevice,
-        path: Path,
         backend_cmds: BackendAuthenticatedCmds,
         remote_devices_manager: RemoteDevicesManager,
         event_bus: EventBus,
         prevent_sync_pattern: Pattern[str],
     ) -> AsyncIterator[UserFSTypeVar]:
         self = cls(
-            device, path, backend_cmds, remote_devices_manager, event_bus, prevent_sync_pattern
+            data_base_dir,
+            device,
+            backend_cmds,
+            remote_devices_manager,
+            event_bus,
+            prevent_sync_pattern,
         )
 
         # Run user storage
-        async with UserStorage.run(self.device, self.path) as self.storage:
+        async with UserStorage.run(self.data_base_dir, self.device) as self.storage:
 
             # Nursery for workspace storages
             async with open_service_nursery() as self._workspace_storage_nursery:
@@ -277,9 +282,6 @@ class UserFS:
 
         await self.storage.set_user_manifest(manifest)
 
-    def _get_workspace_storage_path(self, workspace_id: EntryID) -> Path:
-        return self.path / str(workspace_id)
-
     async def _instantiate_workspace(self, workspace_id: EntryID) -> WorkspaceFS:
         # Workspace entry can change at any time, so we provide a way for
         # WorkspaceFS to load it each time it is needed
@@ -310,13 +312,12 @@ class UserFS:
             return await self._get_previous_workspace_entry(workspace_entry)
 
         # Instantiate the local storage
-        storage_path = self._get_workspace_storage_path(workspace_id)
 
         async def workspace_storage_task(
             task_status: TaskStatus[WorkspaceStorage] = trio.TASK_STATUS_IGNORED
         ) -> None:
             async with WorkspaceStorage.run(
-                self.device, storage_path, workspace_id
+                data_base_dir=self.data_base_dir, device=self.device, workspace_id=workspace_id
             ) as workspace_storage:
                 task_status.started(workspace_storage)
                 await trio.sleep_forever()
@@ -394,8 +395,8 @@ class UserFS:
             # created by somebody else, and hence we shouldn't try to create
             # it corresponding realm in the backend !
             await workspace_storage_non_speculative_init(
+                data_base_dir=self.data_base_dir,
                 device=self.device,
-                path=self._get_workspace_storage_path(workspace_entry.id),
                 workspace_id=workspace_entry.id,
             )
             await self.set_user_manifest(user_manifest)

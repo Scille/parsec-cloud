@@ -113,6 +113,11 @@ class Claimer:
                     new_device = await in_progress_ctx.do_claim_user(
                         requested_device_label=device_label, requested_human_handle=human_handle
                     )
+                    # Claiming a user means we are it first device, hence we know there
+                    # is no existing user manifest (hence our placeholder is non-speculative)
+                    await user_storage_non_speculative_init(
+                        data_base_dir=config.data_base_dir, device=new_device
+                    )
                     await self.job_oob_send.send((True, None, new_device))
                 except Exception as exc:
                     await self.job_oob_send.send((False, exc, None))
@@ -199,11 +204,6 @@ class ClaimUserFinalizeWidget(QWidget, Ui_ClaimUserFinalizeWidget):
             self.button_finalize.setDisabled(True)
 
     def _on_finalize_clicked(self):
-        # Claiming a user means we are it first device, hence we know there
-        # is no existing user manifest (hence our placeholder is non-speculative)
-        user_storage_non_speculative_init(
-            device=self.new_device, path=self.config.data_base_dir / self.new_device.slug
-        )
         password = self.widget_password.password
         save_device_with_password(
             config_dir=self.config.config_dir, device=self.new_device, password=password

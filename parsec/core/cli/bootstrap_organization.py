@@ -36,8 +36,8 @@ async def _bootstrap_organization(config, addr, password, device_label, human_la
         with operation(f"Saving device {device_display}"):
             # The organization is brand new, of course there is no existing
             # remote user manifest, hence our placeholder is non-speculative.
-            user_storage_non_speculative_init(
-                device=new_device, path=config.data_base_dir / new_device.slug
+            await user_storage_non_speculative_init(
+                data_base_dir=config.data_base_dir, device=new_device
             )
             save_device_with_password(
                 config_dir=config.config_dir, device=new_device, password=password

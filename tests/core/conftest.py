@@ -1,7 +1,6 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2016-2021 Scille SAS
 
 import pytest
-from pathlib import Path
 from async_generator import asynccontextmanager
 
 from parsec.core.backend_connection import (
@@ -14,11 +13,8 @@ from parsec.core.logged_core import get_prevent_sync_pattern
 
 
 @pytest.fixture
-def local_storage_path(tmpdir):
-    def _local_storage_path(device):
-        return Path(tmpdir) / "local_storage" / device.slug
-
-    return _local_storage_path
+def data_base_dir(tmp_path):
+    return tmp_path / "local_data"
 
 
 @pytest.fixture
@@ -98,17 +94,16 @@ async def apiv1_anonymous_backend_cmds(running_backend, coolorg):
 
 
 @pytest.fixture
-def user_fs_factory(local_storage_path, event_bus_factory, initialize_userfs_storage_v1, coolorg):
+def user_fs_factory(data_base_dir, event_bus_factory, initialize_userfs_storage_v1, coolorg):
     @asynccontextmanager
     async def _user_fs_factory(device, event_bus=None, initialize_in_v0: bool = False):
         event_bus = event_bus or event_bus_factory()
         async with backend_authenticated_cmds_factory(
             device.organization_addr, device.device_id, device.signing_key
         ) as cmds:
-            path = local_storage_path(device)
             rdm = RemoteDevicesManager(cmds, device.root_verify_key)
             async with UserFS.run(
-                device, path, cmds, rdm, event_bus, get_prevent_sync_pattern()
+                data_base_dir, device, cmds, rdm, event_bus, get_prevent_sync_pattern()
             ) as user_fs:
                 if not initialize_in_v0:
                     await initialize_userfs_storage_v1(user_fs.storage)

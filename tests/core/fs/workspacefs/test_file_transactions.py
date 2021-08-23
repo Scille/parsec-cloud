@@ -226,7 +226,7 @@ def test_file_operations(
         async def start_transactions(self):
             async def _transactions_controlled_cb(started_cb):
                 async with WorkspaceStorage.run(
-                    alice, Path("/dummy"), EntryID.new()
+                    Path("/dummy"), alice, EntryID.new()
                 ) as local_storage:
                     file_transactions = await file_transactions_factory(
                         self.device, alice_backend_cmds, local_storage=local_storage

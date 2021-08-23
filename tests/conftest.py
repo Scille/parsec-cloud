@@ -774,8 +774,7 @@ def core_factory(
         if not user_manifest_in_v0:
             # Create a storage just for this operation (the underlying database
             # will be reused by the core's storage thanks to `persistent_mockup`)
-            path = core_config.data_base_dir / device.slug
-            async with UserStorage.run(device=device, path=path) as storage:
+            async with UserStorage.run(core_config.data_base_dir, device) as storage:
                 await initialize_userfs_storage_v1(storage)
 
         with event_bus.listen() as spy:
