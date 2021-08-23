@@ -80,7 +80,12 @@ def test_merge_local_user_manifest_changes_placeholder(gen_date, alice):
         workspaces=(w1, w2),
     )
     expected_merged = LocalUserManifest(
-        base=target, updated=d4, last_processed_message=30, workspaces=(w1, w2, w3), need_sync=True
+        base=target,
+        updated=d4,
+        last_processed_message=30,
+        workspaces=(w1, w2, w3),
+        need_sync=True,
+        speculative=False,
     )
 
     merged = merge_local_user_manifests(diverged, target)

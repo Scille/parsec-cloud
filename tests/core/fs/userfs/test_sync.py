@@ -47,12 +47,13 @@ async def test_create_workspace(initial_user_manifest_state, alice_user_fs, alic
                 role=WorkspaceRole.OWNER,
             ),
         ),
+        speculative=False,
     )
     assert um == expected_um
 
     w_manifest = await alice_user_fs.get_workspace(wid).local_storage.get_manifest(wid)
     expected_w_manifest = LocalWorkspaceManifest.new_placeholder(
-        alice.device_id, id=w_manifest.id, now=datetime(2000, 1, 2)
+        alice.device_id, id=w_manifest.id, now=datetime(2000, 1, 2), speculative=False
     )
     assert w_manifest == expected_w_manifest
 
@@ -91,6 +92,7 @@ async def test_rename_workspace(initial_user_manifest_state, alice_user_fs, alic
                 role=WorkspaceRole.OWNER,
             ),
         ),
+        speculative=False,
     )
     assert um == expected_um
 
@@ -270,7 +272,7 @@ async def test_sync_placeholder(
         um_v0 = user_fs.get_user_manifest()
 
         expected_um = LocalUserManifest.new_placeholder(
-            device.device_id, id=device.user_manifest_id, now=um_v0.created
+            device.device_id, id=device.user_manifest_id, now=um_v0.created, speculative=True
         )
         assert um_v0 == expected_um
 
@@ -313,6 +315,7 @@ async def test_sync_placeholder(
             updated=expected_um.updated,
             last_processed_message=0,
             workspaces=expected_base_um.workspaces,
+            speculative=False,
         )
         assert um == expected_um
 
@@ -387,6 +390,7 @@ async def test_concurrent_sync_placeholder(
                 updated=datetime(2000, 1, 2),
                 last_processed_message=0,
                 workspaces=expected_base_um.workspaces,
+                speculative=False,
             )
 
         else:
@@ -416,6 +420,7 @@ async def test_concurrent_sync_placeholder(
                 updated=datetime(2000, 1, 1),
                 last_processed_message=0,
                 workspaces=expected_base_um.workspaces,
+                speculative=False,
             )
 
         assert um1 == expected_um
@@ -472,6 +477,7 @@ async def test_sync_remote_changes(running_backend, alice_user_fs, alice2_user_f
         updated=datetime(2000, 1, 2),
         last_processed_message=0,
         workspaces=expected_base_um.workspaces,
+        speculative=False,
     )
     assert um == expected_um
     assert um2 == expected_um

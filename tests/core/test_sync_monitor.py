@@ -209,6 +209,7 @@ async def test_autosync_on_modification(
     # Check workspace and folder have been correctly synced
     await alice2_user_fs.sync()
     workspace2 = alice2_user_fs.get_workspace(wid)
+    await workspace2.sync()
     path_info = await workspace.path_info("/foo")
     path_info2 = await workspace2.path_info("/foo")
     assert path_info == path_info2
@@ -229,6 +230,10 @@ async def test_autosync_on_remote_modifications(
             [
                 (
                     CoreEvent.BACKEND_REALM_VLOBS_UPDATED,
+                    {"realm_id": wid, "checkpoint": 1, "src_id": wid, "src_version": 1},
+                ),
+                (
+                    CoreEvent.BACKEND_REALM_VLOBS_UPDATED,
                     {
                         "realm_id": alice.user_manifest_id,
                         "checkpoint": 2,
@@ -243,8 +248,12 @@ async def test_autosync_on_remote_modifications(
         # Now wait for alice_core's sync
         with trio.fail_after(60):  # autojump, so not *really* 60s
             await alice_core.wait_idle_monitors()
-        # Check workspace has been correctly synced
-        alice_w = alice_core.user_fs.get_workspace(wid)
+
+    # Check workspace has been correctly synced
+    alice_w = alice_core.user_fs.get_workspace(wid)
+
+    # Remote changes in workspace
+    with alice_core.event_bus.listen() as spy:
 
         alice2_w = alice2_user_fs.get_workspace(wid)
         await alice2_w.mkdir("/foo")
@@ -267,10 +276,11 @@ async def test_autosync_on_remote_modifications(
         )
         with trio.fail_after(60):  # autojump, so not *really* 60s
             await alice_core.wait_idle_monitors()
-        # Check folder has been correctly synced
-        path_info = await alice_w.path_info("/foo")
-        path_info2 = await alice2_w.path_info("/foo")
-        assert path_info == path_info2
+
+    # Check folder has been correctly synced
+    path_info = await alice_w.path_info("/foo")
+    path_info2 = await alice2_w.path_info("/foo")
+    assert path_info == path_info2
 
 
 @pytest.mark.trio
@@ -290,6 +300,7 @@ async def test_reconnect_with_remote_changes(
         # Get back modifications from alice
         await alice2_user_fs.sync()
         alice2_w = alice2_user_fs.get_workspace(wid)
+        await alice2_w.sync()
         # Modify the workspace while alice is offline
         await alice2_w.mkdir("/foo/spam")
         await alice2_w.write_bytes("/bar.txt", b"v2")
@@ -452,9 +463,13 @@ async def test_sync_monitor_while_changing_roles(
     bob_workspace = bob_core.user_fs.get_workspace(wid)
 
     # Alice creates a files, let it sync
-    await alice_workspace.write_bytes("/test.txt", b"test")
-    await alice_core.wait_idle_monitors()
-    await bob_core.wait_idle_monitors()
+    with bob_core.event_bus.listen() as spy:
+        with trio.fail_after(60):  # autojump, so not *really* 60s
+            await alice_workspace.write_bytes("/test.txt", b"test")
+            await alice_core.wait_idle_monitors()
+            # Ensure bob receive the change notification and process it
+            await spy.wait(CoreEvent.FS_ENTRY_DOWNSYNCED, kwargs={"workspace_id": wid, "id": wid})
+            await bob_core.wait_idle_monitors()
 
     # Bob edit the files..
     assert await bob_workspace.read_bytes("/test.txt") == b"test"
@@ -462,9 +477,12 @@ async def test_sync_monitor_while_changing_roles(
 
     # But gets his role changed to READER
     with bob_core.event_bus.listen() as spy:
-        await alice_core.user_fs.workspace_share(wid, bob_core.device.user_id, WorkspaceRole.READER)
-        await spy.wait(CoreEvent.SHARING_UPDATED)
-        await bob_core.wait_idle_monitors()
+        with trio.fail_after(60):  # autojump, so not *really* 60s
+            await alice_core.user_fs.workspace_share(
+                wid, bob_core.device.user_id, WorkspaceRole.READER
+            )
+            await spy.wait(CoreEvent.SHARING_UPDATED)
+            await bob_core.wait_idle_monitors()
 
     # The file cannot be synced
     info = await bob_workspace.path_info("/test.txt")
@@ -476,11 +494,12 @@ async def test_sync_monitor_while_changing_roles(
 
     # Alice restores CONTRIBUTOR rights to Bob
     with bob_core.event_bus.listen() as spy:
-        await alice_core.user_fs.workspace_share(
-            wid, bob_core.device.user_id, WorkspaceRole.CONTRIBUTOR
-        )
-        await spy.wait(CoreEvent.SHARING_UPDATED)
-        await bob_core.wait_idle_monitors()
+        with trio.fail_after(60):  # autojump, so not *really* 60s
+            await alice_core.user_fs.workspace_share(
+                wid, bob_core.device.user_id, WorkspaceRole.CONTRIBUTOR
+            )
+            await spy.wait(CoreEvent.SHARING_UPDATED)
+            await bob_core.wait_idle_monitors()
 
     # The edit file has been synced
     info = await bob_workspace.path_info("/test.txt")

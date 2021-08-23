@@ -379,6 +379,7 @@ async def test_dump(alice_workspace):
         "updated": ANY,
         "local_confinement_points": [],
         "remote_confinement_points": [],
+        "speculative": False,
     }
 
 

@@ -171,7 +171,7 @@ async def test_no_access_during_reencryption(running_backend, alice2_user_fs, wo
     aw = alice2_user_fs.get_workspace(workspace)
 
     # Populate local cache for workspace root manifest
-    await aw.path_info("/")
+    await aw.sync()
 
     # Start reencryption
     job = await alice2_user_fs.workspace_start_reencryption(workspace)

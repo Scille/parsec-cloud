@@ -52,6 +52,8 @@ def test_fs_online_tree_and_sync(user_fs_online_state_machine, oracle_fs_with_sy
             self.oracle_fs.reset()
             self.oracle_fs.create_workspace("/w")
             await self.user_fs.sync()
+            # Retrieve workspace manifest v1 to replace the default empty speculative placeholder
+            await self.user_fs.get_workspace(self.wid).sync()
 
         @rule()
         async def sync_root(self):

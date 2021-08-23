@@ -346,6 +346,9 @@ async def test_mountpoint_revoke_access(
     await workspace.touch("/bar.txt")
     await workspace.touch("/to_delete.txt")
     await workspace.sync()
+    # Retrieve workspace manifest v1 to replace the default empty speculative placeholder
+    await alice_user_fs.get_workspace(wid).sync()
+    await alice2_user_fs.get_workspace(wid).sync()
 
     def get_root_path(mountpoint_manager):
         root_path = mountpoint_manager.get_path_in_mountpoint(wid, FsPath("/"))
