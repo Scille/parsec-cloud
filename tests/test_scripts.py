@@ -44,24 +44,19 @@ def run_testenv():
         testenv_path = pathlib.Path(output.splitlines()[-1].decode())
         if sys.platform == "win32":
             data_path = testenv_path / "parsec" / "data"
-            cache_path = testenv_path / "parsec" / "cache"
             config_path = testenv_path / "parsec" / "config"
         else:
             testenv_path = testenv_path.parent
             data_path = testenv_path / "share" / "parsec"
-            cache_path = testenv_path / "cache" / "parsec"
             config_path = testenv_path / "config" / "parsec"
 
         # Make sure the corresponding directories exist
         assert testenv_path.exists()
         assert data_path.exists()
-        assert cache_path.exists()
         assert config_path.exists()
 
         # Return a core configuration
-        yield config_factory(
-            config_dir=config_path, data_base_dir=data_path, cache_base_dir=cache_path
-        )
+        yield config_factory(config_dir=config_path, data_base_dir=data_path)
 
     # Make sure we don't leave a backend running as it messes up with the CI
     finally:

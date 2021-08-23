@@ -26,16 +26,6 @@ def get_default_data_base_dir(environ: dict) -> Path:
         return Path(path) / "parsec"
 
 
-def get_default_cache_base_dir(environ: dict) -> Path:
-    if sys.platform == "win32":
-        return Path(environ["APPDATA"]) / "parsec/cache"
-    else:
-        path = environ.get("XDG_CACHE_HOME")
-        if not path:
-            path = f"{environ.get('HOME')}/.cache"
-        return Path(path) / "parsec"
-
-
 def get_default_config_dir(environ: dict) -> Path:
     if sys.platform == "win32":
         return Path(environ["APPDATA"]) / "parsec/config"
@@ -54,7 +44,6 @@ def get_default_mountpoint_base_dir(environ: dict) -> Path:
 class CoreConfig:
     config_dir: Path
     data_base_dir: Path
-    cache_base_dir: Path
     mountpoint_base_dir: Path
     prevent_sync_pattern_path: Optional[Path] = None  # Use `default_pattern.ignore` by default
     preferred_org_creation_backend_addr: BackendAddr
@@ -97,7 +86,6 @@ class CoreConfig:
 def config_factory(
     config_dir: Path = None,
     data_base_dir: Path = None,
-    cache_base_dir: Path = None,
     mountpoint_base_dir: Path = None,
     prevent_sync_pattern_path: Optional[Path] = None,
     mountpoint_enabled: bool = False,
@@ -138,7 +126,6 @@ def config_factory(
     core_config = CoreConfig(
         config_dir=config_dir or get_default_config_dir(environ),
         data_base_dir=data_base_dir,
-        cache_base_dir=cache_base_dir or get_default_cache_base_dir(environ),
         mountpoint_base_dir=get_default_mountpoint_base_dir(environ),
         prevent_sync_pattern_path=prevent_sync_pattern_path,
         mountpoint_enabled=mountpoint_enabled,
@@ -168,7 +155,6 @@ def config_factory(
     # Make sure the directories exist on the system
     core_config.config_dir.mkdir(mode=0o700, parents=True, exist_ok=True)
     core_config.data_base_dir.mkdir(mode=0o700, parents=True, exist_ok=True)
-    core_config.cache_base_dir.mkdir(mode=0o700, parents=True, exist_ok=True)
 
     # Mountpoint base directory is not used on windows
     if sys.platform != "win32":
@@ -195,11 +181,6 @@ def load_config(config_dir: Path, **extra_config) -> CoreConfig:
 
     try:
         data_conf["data_base_dir"] = Path(data_conf["data_base_dir"])
-    except (KeyError, ValueError):
-        pass
-
-    try:
-        data_conf["cache_base_dir"] = Path(data_conf["cache_base_dir"])
     except (KeyError, ValueError):
         pass
 
@@ -251,7 +232,6 @@ def save_config(config: CoreConfig):
         json.dumps(
             {
                 "data_base_dir": str(config.data_base_dir),
-                "cache_base_dir": str(config.cache_base_dir),
                 "prevent_sync_pattern": str(config.prevent_sync_pattern_path),
                 "telemetry_enabled": config.telemetry_enabled,
                 "disabled_workspaces": list(map(str, config.disabled_workspaces)),

@@ -756,7 +756,6 @@ def core_config(tmpdir, backend_addr, unused_tcp_port, fixtures_customization):
     tmpdir = Path(tmpdir)
     return CoreConfig(
         config_dir=tmpdir / "config",
-        cache_base_dir=tmpdir / "cache",
         data_base_dir=tmpdir / "data",
         mountpoint_base_dir=tmpdir / "mnt",
         preferred_org_creation_backend_addr=backend_addr,
