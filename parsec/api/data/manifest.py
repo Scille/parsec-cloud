@@ -2,7 +2,7 @@
 
 import attr
 from typing import Optional, Tuple, Dict, Any, Type, TypeVar
-from pendulum import DateTime, now as pendulum_now
+from pendulum import DateTime
 
 from parsec.types import UUID4, FrozenDict
 from parsec.crypto import SecretKey, HashDigest
@@ -84,17 +84,14 @@ class WorkspaceEntry(BaseData):
     role: Optional[RealmRole]
 
     @classmethod
-    def new(
-        cls: Type[WorkspaceEntryTypeVar], name: str, now: Optional[DateTime] = None
-    ) -> "WorkspaceEntry":
-        now = now or pendulum_now()
+    def new(cls: Type[WorkspaceEntryTypeVar], name: str, timestamp: DateTime) -> "WorkspaceEntry":
         return WorkspaceEntry(
             name=EntryName(name),
             id=EntryID.new(),
             key=SecretKey.generate(),
             encryption_revision=1,
-            encrypted_on=now,
-            role_cached_on=now,
+            encrypted_on=timestamp,
+            role_cached_on=timestamp,
             role=RealmRole.OWNER,
         )
 

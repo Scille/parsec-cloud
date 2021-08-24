@@ -9,8 +9,6 @@ from parsec.api.protocol import DeviceID
 from parsec.core.types import EntryID, LocalWorkspaceManifest
 from parsec.core.fs.workspacefs.sync_transactions import merge_manifests
 
-from tests.common import freeze_time
-
 
 empty_pattern = re.compile(r"^\b$")
 
@@ -33,7 +31,7 @@ def test_merge_speculative_with_it_unsuspected_former_self(local_changes):
     my_device = DeviceID("a@a")
 
     # 1) Workspace manifest is originally created by our device
-    local = LocalWorkspaceManifest.new_placeholder(author=my_device, now=d1)
+    local = LocalWorkspaceManifest.new_placeholder(author=my_device, timestamp=d1)
     foo_id = EntryID.new()
     local = local.evolve(updated=d2, children=FrozenDict({"foo": foo_id}))
 
@@ -42,15 +40,14 @@ def test_merge_speculative_with_it_unsuspected_former_self(local_changes):
 
     # 3) Now let's pretend we lost local storage, hence creating a new speculative manifest
     new_local = LocalWorkspaceManifest.new_placeholder(
-        author=my_device, id=local.id, speculative=True
+        author=my_device, id=local.id, timestamp=d3, speculative=True
     )
     if local_changes:
         bar_id = EntryID.new()
         new_local = new_local.evolve(updated=d4, children=FrozenDict({"bar": bar_id}))
 
     # 4) When syncing the manifest, we shouldn't remove any data from the remote
-    with freeze_time(d5):
-        merged = merge_manifests(my_device, empty_pattern, new_local, v1)
+    merged = merge_manifests(my_device, d5, empty_pattern, new_local, v1)
 
     if local_changes:
         assert merged == LocalWorkspaceManifest(

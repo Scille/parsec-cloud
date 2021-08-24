@@ -22,12 +22,13 @@ from tests.common import customize_fixtures
 
 def create_manifest(device, type=LocalWorkspaceManifest, use_legacy_none_author=False):
     author = device.device_id
+    timestamp = device.timestamp()
     if type is LocalUserManifest:
-        manifest = LocalUserManifest.new_placeholder(author)
+        manifest = LocalUserManifest.new_placeholder(author, timestamp=timestamp)
     elif type is LocalWorkspaceManifest:
-        manifest = type.new_placeholder(author)
+        manifest = type.new_placeholder(author, timestamp=timestamp)
     else:
-        manifest = type.new_placeholder(author, parent=EntryID.new())
+        manifest = type.new_placeholder(author, parent=EntryID.new(), timestamp=timestamp)
     if use_legacy_none_author:
         base = manifest.base.evolve(author=None)
         manifest = manifest.evolve(base=base)
@@ -279,7 +280,9 @@ async def test_serialize_non_empty_local_file_manifest(data_base_dir, alice, wor
     chunk2 = Chunk.new(7, 8)
     chunk3 = Chunk.new(8, 10)
     blocks = (chunk1, chunk2), (chunk3,)
-    manifest = manifest.evolve_and_mark_updated(blocksize=8, size=10, blocks=blocks)
+    manifest = manifest.evolve_and_mark_updated(
+        blocksize=8, size=10, blocks=blocks, timestamp=alice.timestamp()
+    )
     manifest.assert_integrity()
     async with WorkspaceStorage.run(data_base_dir, alice, workspace_id) as aws:
         async with aws.lock_entry_id(manifest.id):
@@ -300,9 +303,8 @@ async def test_realm_checkpoint(alice_workspace_storage):
     assert await aws.get_need_sync_entries() == ({aws.workspace_id}, set())
 
     workspace_manifest = create_manifest(aws.device, LocalWorkspaceManifest)
-    workspace_manifest = workspace_manifest.evolve(
-        base=workspace_manifest.to_remote(aws.device.device_id), need_sync=False
-    )
+    base = workspace_manifest.to_remote(aws.device.device_id, timestamp=aws.device.timestamp())
+    workspace_manifest = workspace_manifest.evolve(base=base, need_sync=False)
     await aws.set_manifest(aws.workspace_id, workspace_manifest, check_lock_status=False)
 
     assert await aws.get_realm_checkpoint() == 0

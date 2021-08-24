@@ -255,6 +255,7 @@ class EntryTransactions(FileTransactions):
             new_parent = parent.evolve_children_and_mark_updated(
                 {destination.name: source_entry_id, source.name: None},
                 prevent_sync_pattern=self.local_storage.get_prevent_sync_pattern(),
+                timestamp=self.device.timestamp(),
             )
 
             # Atomic change
@@ -289,6 +290,7 @@ class EntryTransactions(FileTransactions):
             new_parent = parent.evolve_children_and_mark_updated(
                 {path.name: None},
                 prevent_sync_pattern=self.local_storage.get_prevent_sync_pattern(),
+                timestamp=self.device.timestamp(),
             )
 
             # Atomic change
@@ -319,6 +321,7 @@ class EntryTransactions(FileTransactions):
             new_parent = parent.evolve_children_and_mark_updated(
                 {path.name: None},
                 prevent_sync_pattern=self.local_storage.get_prevent_sync_pattern(),
+                timestamp=self.device.timestamp(),
             )
 
             # Atomic change
@@ -342,12 +345,16 @@ class EntryTransactions(FileTransactions):
                 raise FSFileExistsError(filename=path)
 
             # Create folder
-            child = LocalFolderManifest.new_placeholder(self.local_author, parent=parent.id)
+            timestamp = self.device.timestamp()
+            child = LocalFolderManifest.new_placeholder(
+                self.local_author, parent=parent.id, timestamp=timestamp
+            )
 
             # New parent manifest
             new_parent = parent.evolve_children_and_mark_updated(
                 {path.name: child.id},
                 prevent_sync_pattern=self.local_storage.get_prevent_sync_pattern(),
+                timestamp=self.device.timestamp(),
             )
 
             # ~ Atomic change
@@ -375,12 +382,16 @@ class EntryTransactions(FileTransactions):
                 raise FSFileExistsError(filename=path)
 
             # Create file
-            child = LocalFileManifest.new_placeholder(self.local_author, parent=parent.id)
+            timestamp = self.device.timestamp()
+            child = LocalFileManifest.new_placeholder(
+                self.local_author, parent=parent.id, timestamp=timestamp
+            )
 
             # New parent manifest
             new_parent = parent.evolve_children_and_mark_updated(
                 {path.name: child.id},
                 prevent_sync_pattern=self.local_storage.get_prevent_sync_pattern(),
+                timestamp=self.device.timestamp(),
             )
 
             # ~ Atomic change

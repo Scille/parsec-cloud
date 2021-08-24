@@ -3,7 +3,7 @@
 import trio
 from pathlib import Path
 from trio_typing import TaskStatus
-from pendulum import DateTime, now as pendulum_now
+from pendulum import DateTime
 from typing import (
     Tuple,
     Optional,
@@ -194,14 +194,14 @@ class UserFS:
         self._update_user_manifest_lock = trio.Lock()
         self._workspaces: Dict[EntryID, WorkspaceFS] = {}
 
-        now = pendulum_now()
+        timestamp = self.device.timestamp()
         wentry = WorkspaceEntry(
             name=EntryName("<user manifest>"),
             id=device.user_manifest_id,
             key=device.user_manifest_key,
             encryption_revision=1,
-            encrypted_on=now,
-            role_cached_on=now,
+            encrypted_on=timestamp,
+            role_cached_on=timestamp,
             role=WorkspaceRole.OWNER,
         )
 
@@ -376,10 +376,13 @@ class UserFS:
             ValueError: if name is passed as str but cannot be converted to `EntryName`
         """
         name = EntryName(name)
-        workspace_entry = WorkspaceEntry.new(name)
         async with self._update_user_manifest_lock:
+            timestamp = self.device.timestamp()
+            workspace_entry = WorkspaceEntry.new(name, timestamp=timestamp)
             user_manifest = self.get_user_manifest()
-            user_manifest = user_manifest.evolve_workspaces_and_mark_updated(workspace_entry)
+            user_manifest = user_manifest.evolve_workspaces_and_mark_updated(
+                timestamp, workspace_entry
+            )
             # Given *we* are the creator of the workspace, our placeholder is
             # the only non-speculative one.
             #
@@ -418,9 +421,10 @@ class UserFS:
             if not workspace_entry:
                 raise FSWorkspaceNotFoundError(f"Unknown workspace `{workspace_id}`")
 
+            timestamp = self.device.timestamp()
             updated_workspace_entry = workspace_entry.evolve(name=new_name)
             updated_user_manifest = user_manifest.evolve_workspaces_and_mark_updated(
-                updated_workspace_entry
+                timestamp, updated_workspace_entry
             )
             await self.set_user_manifest(updated_user_manifest)
             self.event_bus.send(CoreEvent.FS_ENTRY_UPDATED, id=self.user_manifest_id)
@@ -561,7 +565,7 @@ class UserFS:
         if base_um.is_placeholder:
             certif = RealmRoleCertificateContent.build_realm_root_certif(
                 author=self.device.device_id,
-                timestamp=pendulum_now(),
+                timestamp=self.device.timestamp(),
                 realm_id=self.device.user_manifest_id,
             ).dump_and_sign(self.device.signing_key)
 
@@ -587,8 +591,8 @@ class UserFS:
             await self._workspace_minimal_sync(w)
 
         # Build vlob
-        now = pendulum_now()
-        to_sync_um = base_um.to_remote(author=self.device.device_id, timestamp=now)
+        timestamp = self.device.timestamp()
+        to_sync_um = base_um.to_remote(author=self.device.device_id, timestamp=timestamp)
         ciphered = to_sync_um.dump_sign_and_encrypt(
             author_signkey=self.device.signing_key, key=self.device.user_manifest_key
         )
@@ -599,11 +603,11 @@ class UserFS:
             # the user manifest's realm
             if to_sync_um.version == 1:
                 rep = await self.backend_cmds.vlob_create(
-                    self.user_manifest_id, 1, self.user_manifest_id, now, ciphered
+                    self.user_manifest_id, 1, self.user_manifest_id, timestamp, ciphered
                 )
             else:
                 rep = await self.backend_cmds.vlob_update(
-                    1, self.user_manifest_id, to_sync_um.version, now, ciphered
+                    1, self.user_manifest_id, to_sync_um.version, timestamp, ciphered
                 )
 
         except BackendNotAvailable as exc:
@@ -689,7 +693,7 @@ class UserFS:
         # Note we don't bother to check workspace's access roles given they
         # could be outdated (and backend will do the check anyway)
 
-        now = pendulum_now()
+        timestamp = self.device.timestamp()
 
         # Build the sharing message
         try:
@@ -698,7 +702,7 @@ class UserFS:
                     SharingGrantedMessageContent, SharingRevokedMessageContent
                 ] = SharingGrantedMessageContent(
                     author=self.device.device_id,
-                    timestamp=now,
+                    timestamp=timestamp,
                     name=workspace_entry.name,
                     id=workspace_entry.id,
                     encryption_revision=workspace_entry.encryption_revision,
@@ -708,7 +712,7 @@ class UserFS:
 
             else:
                 recipient_message = SharingRevokedMessageContent(
-                    author=self.device.device_id, timestamp=now, id=workspace_entry.id
+                    author=self.device.device_id, timestamp=timestamp, id=workspace_entry.id
                 )
 
             ciphered_recipient_message = recipient_message.dump_sign_and_encrypt_for(
@@ -721,7 +725,7 @@ class UserFS:
         # Build role certificate
         role_certificate = RealmRoleCertificateContent(
             author=self.device.device_id,
-            timestamp=now,
+            timestamp=timestamp,
             realm_id=workspace_id,
             user_id=recipient,
             role=role,
@@ -797,7 +801,8 @@ class UserFS:
                 user_manifest = self.get_user_manifest()
                 if user_manifest.last_processed_message < new_last_processed_message:
                     user_manifest = user_manifest.evolve_and_mark_updated(
-                        last_processed_message=new_last_processed_message
+                        last_processed_message=new_last_processed_message,
+                        timestamp=self.device.timestamp(),
                     )
                     await self.set_user_manifest(user_manifest)
                     self.event_bus.send(CoreEvent.FS_ENTRY_UPDATED, id=self.user_manifest_id)
@@ -870,6 +875,7 @@ class UserFS:
         self_role = roles.get(self.device.user_id)
 
         # Finally insert the new workspace entry into our user manifest
+        timestamp = self.device.timestamp()
         workspace_entry = WorkspaceEntry(
             # Name are not required to be unique across workspaces, so no check to do here
             name=msg.name,
@@ -878,7 +884,7 @@ class UserFS:
             encryption_revision=msg.encryption_revision,
             encrypted_on=msg.encrypted_on,
             role=self_role,
-            role_cached_on=pendulum_now(),
+            role_cached_on=timestamp,
         )
 
         async with self._update_user_manifest_lock:
@@ -892,7 +898,10 @@ class UserFS:
                     None, workspace_entry, already_existing_entry
                 )
 
-            user_manifest = user_manifest.evolve_workspaces_and_mark_updated(workspace_entry)
+            timestamp = self.device.timestamp()
+            user_manifest = user_manifest.evolve_workspaces_and_mark_updated(
+                timestamp, workspace_entry
+            )
             await self.set_user_manifest(user_manifest)
             self.event_bus.send(CoreEvent.USERFS_UPDATED)
 
@@ -937,16 +946,20 @@ class UserFS:
                 # No workspace entry, nothing to update then
                 return
 
+            timestamp = self.device.timestamp()
             workspace_entry = merge_workspace_entry(
                 None,
                 existing_workspace_entry,
-                existing_workspace_entry.evolve(role=None, role_cached_on=pendulum_now()),
+                existing_workspace_entry.evolve(role=None, role_cached_on=timestamp),
             )
             if existing_workspace_entry == workspace_entry:
                 # Cheap idempotent check
                 return
 
-            user_manifest = user_manifest.evolve_workspaces_and_mark_updated(workspace_entry)
+            timestamp = self.device.timestamp()
+            user_manifest = user_manifest.evolve_workspaces_and_mark_updated(
+                timestamp, workspace_entry
+            )
             await self.set_user_manifest(user_manifest)
             self.event_bus.send(CoreEvent.USERFS_UPDATED)
             self.event_bus.send(
@@ -978,7 +991,7 @@ class UserFS:
         self,
         new_workspace_entry: WorkspaceEntry,
         users: List[UserCertificateContent],
-        now: DateTime,
+        timestamp: DateTime,
     ) -> Dict[UserID, bytes]:
         """
         Raises:
@@ -986,7 +999,7 @@ class UserFS:
         """
         msg = SharingReencryptedMessageContent(
             author=self.device.device_id,
-            timestamp=now,
+            timestamp=timestamp,
             name=new_workspace_entry.name,
             id=new_workspace_entry.id,
             encryption_revision=new_workspace_entry.encryption_revision,
@@ -1062,10 +1075,10 @@ class UserFS:
         if not workspace_entry:
             raise FSWorkspaceNotFoundError(f"Unknown workspace `{workspace_id}`")
 
-        now = pendulum_now()
+        timestamp = self.device.timestamp()
         new_workspace_entry = workspace_entry.evolve(
             encryption_revision=workspace_entry.encryption_revision + 1,
-            encrypted_on=now,
+            encrypted_on=timestamp,
             key=SecretKey.generate(),
         )
 
@@ -1074,12 +1087,15 @@ class UserFS:
             # encrypt a message for each of them
             participants = await self._retrieve_participants(workspace_entry.id)
             reencryption_msgs = self._generate_reencryption_messages(
-                new_workspace_entry, participants, now
+                new_workspace_entry, participants, timestamp
             )
 
             # Actually ask the backend to start the reencryption
             ok = await self._send_start_reencryption_cmd(
-                workspace_entry.id, new_workspace_entry.encryption_revision, now, reencryption_msgs
+                workspace_entry.id,
+                new_workspace_entry.encryption_revision,
+                timestamp,
+                reencryption_msgs,
             )
             if not ok:
                 # Participant list has changed concurrently, retry

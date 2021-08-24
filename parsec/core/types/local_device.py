@@ -147,6 +147,9 @@ class LocalDevice(BaseLocalData):
     def device_display(self) -> str:
         return str(self.device_label or self.device_id.device_name)
 
+    def timestamp(self) -> DateTime:
+        return pendulum_now()
+
 
 @attr.s(slots=True, frozen=True, auto_attribs=True)
 class UserInfo:
@@ -166,7 +169,7 @@ class UserInfo:
 
     @property
     def is_revoked(self):
-        return pendulum_now() >= self.revoked_on if self.revoked_on else False
+        return bool(self.revoked_on)
 
     def __repr__(self):
         return f"<UserInfo {self.user_display}>"

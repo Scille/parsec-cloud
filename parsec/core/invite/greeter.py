@@ -3,7 +3,6 @@
 import attr
 from uuid import UUID
 from typing import Optional, List, Tuple
-from pendulum import now as pendulum_now
 
 from parsec.crypto import (
     generate_shared_secret_key,
@@ -278,11 +277,11 @@ class UserGreetInProgress4Ctx:
     ) -> None:
         device_id = DeviceID.new()
         try:
-            now = pendulum_now()
+            timestamp = author.timestamp()
 
             user_certificate = UserCertificateContent(
                 author=author.device_id,
-                timestamp=now,
+                timestamp=timestamp,
                 user_id=device_id.user_id,
                 human_handle=human_handle,
                 public_key=self._public_key,
@@ -292,7 +291,7 @@ class UserGreetInProgress4Ctx:
 
             device_certificate = DeviceCertificateContent(
                 author=author.device_id,
-                timestamp=now,
+                timestamp=timestamp,
                 device_id=device_id,
                 device_label=device_label,
                 verify_key=self._verify_key,
@@ -356,11 +355,11 @@ class DeviceGreetInProgress4Ctx:
     async def do_create_new_device(self, author: LocalDevice, device_label: Optional[str]) -> None:
         device_id = author.user_id.to_device_id(DeviceName.new())
         try:
-            now = pendulum_now()
+            timestamp = author.timestamp()
 
             device_certificate = DeviceCertificateContent(
                 author=author.device_id,
-                timestamp=now,
+                timestamp=timestamp,
                 device_id=device_id,
                 device_label=device_label,
                 verify_key=self._verify_key,

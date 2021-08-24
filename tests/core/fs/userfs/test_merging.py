@@ -29,7 +29,7 @@ def test_merge_local_user_manifest_no_changes_in_diverged_placeholder(
 ):
     d1, d2, d3, d4, d5, d6, d7 = [gen_date() for _ in range(7)]
 
-    w1 = WorkspaceEntry.new(name="w1", now=d2)
+    w1 = WorkspaceEntry.new(name="w1", timestamp=d2)
     base = UserManifest(
         author=alice.device_id,
         timestamp=d4,
@@ -76,7 +76,7 @@ def test_merge_local_user_manifest_no_changes_in_diverged_placeholder(
 def test_created_field_modified_by_remote(gen_date, alice, with_local_changes):
     d1, d2, d3, d4 = [gen_date() for _ in range(4)]
 
-    w1 = WorkspaceEntry.new(name="w1", now=d2)
+    w1 = WorkspaceEntry.new(name="w1", timestamp=d2)
     base = UserManifest(
         author=alice.device_id,
         timestamp=d2,
@@ -90,7 +90,7 @@ def test_created_field_modified_by_remote(gen_date, alice, with_local_changes):
 
     local = LocalUserManifest.from_remote(base)
     if with_local_changes:
-        w2 = WorkspaceEntry.new(name="w1", now=d3)
+        w2 = WorkspaceEntry.new(name="w1", timestamp=d3)
         local = local.evolve(
             need_sync=True, updated=d3, last_processed_message=1, workspaces=(w1, w2)
         )
@@ -107,12 +107,15 @@ def test_created_field_modified_by_remote(gen_date, alice, with_local_changes):
 def test_merge_local_user_manifest_changes_placeholder(gen_date, alice, speculative_placeholder):
     d1, d2, d3, d4 = [gen_date() for _ in range(4)]
 
-    w1 = WorkspaceEntry.new(name="w1", now=d2)
-    w2 = WorkspaceEntry.new(name="w2", now=d2)
-    w3 = WorkspaceEntry.new(name="w3", now=d2)
+    w1 = WorkspaceEntry.new(name="w1", timestamp=d2)
+    w2 = WorkspaceEntry.new(name="w2", timestamp=d2)
+    w3 = WorkspaceEntry.new(name="w3", timestamp=d2)
 
     diverged = LocalUserManifest.new_placeholder(
-        alice.device_id, id=alice.user_manifest_id, now=d4, speculative=speculative_placeholder
+        alice.device_id,
+        id=alice.user_manifest_id,
+        timestamp=d4,
+        speculative=speculative_placeholder,
     ).evolve(last_processed_message=30, workspaces=(w1, w3))
     target = UserManifest(
         author=alice.device_id,
@@ -146,9 +149,9 @@ def test_merge_speculative_with_it_unsuspected_former_self(alice, local_changes)
 
     # 1) User manifest is originally created by our device
     local = LocalUserManifest.new_placeholder(
-        author=alice.device_id, id=alice.user_manifest_id, now=d1, speculative=False
+        author=alice.device_id, id=alice.user_manifest_id, timestamp=d1, speculative=False
     )
-    w1 = WorkspaceEntry.new("foo", now=d1)
+    w1 = WorkspaceEntry.new("foo", timestamp=d1)
     local = local.evolve(workspaces=(w1,), last_processed_message=1)
 
     # 2) We sync the user manifest
@@ -156,10 +159,10 @@ def test_merge_speculative_with_it_unsuspected_former_self(alice, local_changes)
 
     # 3) Now let's pretend we lost local storage, hence creating a new speculative manifest
     new_local = LocalUserManifest.new_placeholder(
-        author=alice.device_id, id=alice.user_manifest_id, now=d3, speculative=True
+        author=alice.device_id, id=alice.user_manifest_id, timestamp=d3, speculative=True
     )
     if local_changes:
-        w2 = WorkspaceEntry.new("bar", now=d3)
+        w2 = WorkspaceEntry.new("bar", timestamp=d3)
         new_local = new_local.evolve(workspaces=(w2,), last_processed_message=2)
 
     # 4) When syncing the manifest, we shouldn't remove any data from the remote

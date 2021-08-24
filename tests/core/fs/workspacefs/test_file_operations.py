@@ -2,6 +2,8 @@
 
 import pytest
 from typing import Tuple
+from pendulum import DateTime
+
 from hypothesis import strategies
 from hypothesis.stateful import RuleBasedStateMachine, rule, invariant, run_state_machine_as_test
 
@@ -61,24 +63,30 @@ class Storage(dict):
         chunks = prepare_read(manifest, size, offset)
         return self.build_data(chunks)
 
-    def write(self, manifest: LocalFileManifest, content: bytes, offset: int) -> LocalFileManifest:
+    def write(
+        self, manifest: LocalFileManifest, content: bytes, offset: int, timestamp: DateTime
+    ) -> LocalFileManifest:
         # No-op
         if len(content) == 0:
             return manifest
         # Write
-        manifest, write_operations, removed_ids = prepare_write(manifest, len(content), offset)
+        manifest, write_operations, removed_ids = prepare_write(
+            manifest, len(content), offset, timestamp
+        )
         for chunk, offset in write_operations:
             self.write_chunk(chunk, content, offset)
         for removed_id in removed_ids:
             self.clear_chunk_data(removed_id)
         return manifest
 
-    def resize(self, manifest: LocalFileManifest, size: int) -> LocalFileManifest:
+    def resize(
+        self, manifest: LocalFileManifest, size: int, timestamp: DateTime
+    ) -> LocalFileManifest:
         # No-op
         if size == manifest.size:
             return manifest
         # Resize
-        new_manifest, write_operations, removed_ids = prepare_resize(manifest, size)
+        new_manifest, write_operations, removed_ids = prepare_resize(manifest, size, timestamp)
         for chunk, offset in write_operations:
             self.write_chunk(chunk, b"", offset)
         for removed_id in removed_ids:
@@ -102,14 +110,14 @@ class Storage(dict):
 def test_complete_scenario():
     storage = Storage()
 
-    with freeze_time("2000-01-01"):
+    with freeze_time("2000-01-01") as t1:
         base = manifest = LocalFileManifest.new_placeholder(
-            DeviceID.new(), parent=EntryID.new(), blocksize=16
+            DeviceID.new(), parent=EntryID.new(), blocksize=16, timestamp=t1
         )
         assert manifest == base.evolve(size=0)
 
     with freeze_time("2000-01-02") as t2:
-        manifest = storage.write(manifest, b"Hello ", 0)
+        manifest = storage.write(manifest, b"Hello ", 0, timestamp=t2)
         assert storage.read(manifest, 6, 0) == b"Hello "
 
     (chunk0,), = manifest.blocks
@@ -118,7 +126,7 @@ def test_complete_scenario():
     assert storage[chunk0.id] == b"Hello "
 
     with freeze_time("2000-01-03") as t3:
-        manifest = storage.write(manifest, b"world !", 6)
+        manifest = storage.write(manifest, b"world !", 6, t3)
         assert storage.read(manifest, 13, 0) == b"Hello world !"
 
     (_, chunk1), = manifest.blocks
@@ -127,7 +135,7 @@ def test_complete_scenario():
     assert storage[chunk1.id] == b"world !"
 
     with freeze_time("2000-01-04") as t4:
-        manifest = storage.write(manifest, b"\n More kontent", 13)
+        manifest = storage.write(manifest, b"\n More kontent", 13, t4)
         assert storage.read(manifest, 27, 0) == b"Hello world !\n More kontent"
 
     (_, _, chunk2), (chunk3,) = manifest.blocks
@@ -138,7 +146,7 @@ def test_complete_scenario():
     )
 
     with freeze_time("2000-01-05") as t5:
-        manifest = storage.write(manifest, b"c", 20)
+        manifest = storage.write(manifest, b"c", 20, t5)
         assert storage.read(manifest, 27, 0) == b"Hello world !\n More content"
 
     chunk4, chunk5, chunk6 = manifest.blocks[1]
@@ -149,7 +157,7 @@ def test_complete_scenario():
     )
 
     with freeze_time("2000-01-06") as t6:
-        manifest = storage.resize(manifest, 40)
+        manifest = storage.resize(manifest, 40, t6)
         expected = b"Hello world !\n More content" + b"\x00" * 13
         assert storage.read(manifest, 40, 0) == expected
 
@@ -163,7 +171,7 @@ def test_complete_scenario():
     )
 
     with freeze_time("2000-01-07") as t7:
-        manifest = storage.resize(manifest, 25)
+        manifest = storage.resize(manifest, 25, t7)
         expected = b"Hello world !\n More conte"
         assert storage.read(manifest, 25, 0) == expected
 
@@ -187,13 +195,13 @@ def test_complete_scenario():
 
 
 @pytest.mark.slow
-def test_file_operations(hypothesis_settings, tmpdir):
+def test_file_operations(hypothesis_settings, tmpdir, alice):
     class FileOperations(RuleBasedStateMachine):
         def __init__(self) -> None:
             super().__init__()
             self.oracle = open(tmpdir / "oracle.txt", "w+b")
             self.manifest = LocalFileManifest.new_placeholder(
-                DeviceID.new(), parent=EntryID.new(), blocksize=8
+                alice.device_id, parent=EntryID.new(), blocksize=8, timestamp=alice.timestamp()
             )
             self.storage = Storage()
 
@@ -219,13 +227,13 @@ def test_file_operations(hypothesis_settings, tmpdir):
 
         @rule(content=strategies.binary(max_size=MAX_SIZE), offset=size)
         def write(self, content: bytes, offset: int) -> None:
-            self.manifest = self.storage.write(self.manifest, content, offset)
+            self.manifest = self.storage.write(self.manifest, content, offset, alice.timestamp())
             self.oracle.seek(offset)
             self.oracle.write(content)
 
         @rule(length=size)
         def resize(self, length: int) -> None:
-            self.manifest = self.storage.resize(self.manifest, length)
+            self.manifest = self.storage.resize(self.manifest, length, alice.timestamp())
             self.oracle.truncate(length)
 
         @rule()

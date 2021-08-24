@@ -5,6 +5,7 @@
 import bisect
 from functools import partial
 from typing import Tuple, List, Set, Iterator, Callable, Union, Sequence
+from pendulum import DateTime
 
 from parsec.core.types import BlockID, LocalFileManifest, Chunk, ChunkID
 
@@ -134,7 +135,7 @@ def block_write(
 
 
 def prepare_write(
-    manifest: LocalFileManifest, size: int, offset: int
+    manifest: LocalFileManifest, size: int, offset: int, timestamp: DateTime
 ) -> Tuple[LocalFileManifest, WriteOperationList, ChunkIDSet]:
     # Prepare
     padding = 0
@@ -170,7 +171,9 @@ def prepare_write(
 
     # Evolve manifest
     new_size = max(manifest.size, offset + size)
-    new_manifest = manifest.evolve_and_mark_updated(size=new_size, blocks=tuple(blocks))
+    new_manifest = manifest.evolve_and_mark_updated(
+        size=new_size, blocks=tuple(blocks), timestamp=timestamp
+    )
 
     # Return write result
     return new_manifest, write_operations, removed_ids
@@ -180,7 +183,7 @@ def prepare_write(
 
 
 def prepare_truncate(
-    manifest: LocalFileManifest, size: int
+    manifest: LocalFileManifest, size: int, timestamp: DateTime
 ) -> Tuple[LocalFileManifest, ChunkIDSet]:
     # Prepare
     block, remainder = locate(size, manifest.blocksize)
@@ -202,18 +205,18 @@ def prepare_truncate(
         removed_ids |= chunk_id_set(chunks)
 
     # Craft new manifest
-    new_manifest = manifest.evolve_and_mark_updated(size=size, blocks=blocks)
+    new_manifest = manifest.evolve_and_mark_updated(size=size, blocks=blocks, timestamp=timestamp)
 
     # Return truncate result
     return new_manifest, removed_ids
 
 
 def prepare_resize(
-    manifest: LocalFileManifest, size: int
+    manifest: LocalFileManifest, size: int, timestamp: DateTime
 ) -> Tuple[LocalFileManifest, WriteOperationList, ChunkIDSet]:
     if size >= manifest.size:
-        return prepare_write(manifest, 0, size)
-    manifest, removed_ids = prepare_truncate(manifest, size)
+        return prepare_write(manifest, 0, size, timestamp)
+    manifest, removed_ids = prepare_truncate(manifest, size, timestamp)
     return manifest, [], removed_ids
 
 

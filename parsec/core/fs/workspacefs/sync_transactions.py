@@ -3,7 +3,7 @@
 from itertools import count
 from typing import Optional, List, Dict, AsyncIterator, Union, Pattern
 
-from pendulum import now as pendulum_now
+from pendulum import DateTime
 
 from parsec.api.protocol import DeviceID
 from parsec.core.core_events import CoreEvent
@@ -159,6 +159,7 @@ def merge_folder_children(
 
 def merge_manifests(
     local_author: DeviceID,
+    timestamp: DateTime,
     prevent_sync_pattern: Pattern[str],
     local_manifest: BaseLocalManifest,
     remote_manifest: Optional[BaseRemoteManifest] = None,
@@ -168,7 +169,7 @@ def merge_manifests(
     if force_apply_pattern and isinstance(
         local_manifest, (LocalFolderManifest, LocalWorkspaceManifest)
     ):
-        local_manifest = local_manifest.apply_prevent_sync_pattern(prevent_sync_pattern)
+        local_manifest = local_manifest.apply_prevent_sync_pattern(prevent_sync_pattern, timestamp)
 
     # The remote hasn't changed
     if remote_manifest is None or remote_manifest.version <= local_manifest.base_version:
@@ -179,7 +180,7 @@ def merge_manifests(
     remote_version = remote_manifest.version
     local_version = local_manifest.base_version
     local_from_remote = BaseLocalManifest.from_remote_with_local_context(
-        remote_manifest, prevent_sync_pattern, local_manifest
+        remote_manifest, prevent_sync_pattern, local_manifest, timestamp
     )
 
     # Only the remote has changed
@@ -256,7 +257,7 @@ def merge_manifests(
     if new_children == local_from_remote.children:
         return local_from_remote
     else:
-        return local_from_remote.evolve_and_mark_updated(children=new_children)
+        return local_from_remote.evolve_and_mark_updated(children=new_children, timestamp=timestamp)
 
 
 class SyncTransactions(EntryTransactions):
@@ -279,7 +280,8 @@ class SyncTransactions(EntryTransactions):
         manifest = await self.local_storage.get_manifest(entry_id)
         if not manifest.is_placeholder:
             return None
-        return manifest.base.evolve(author=self.local_author, timestamp=pendulum_now(), version=1)
+        timestamp = self.device.timestamp()
+        return manifest.base.evolve(author=self.local_author, timestamp=timestamp, version=1)
 
     # Atomic transactions
 
@@ -294,7 +296,10 @@ class SyncTransactions(EntryTransactions):
                 return
 
             # Craft new local manifest
-            new_local_manifest = local_manifest.apply_prevent_sync_pattern(prevent_sync_pattern)
+            timestamp = self.device.timestamp()
+            new_local_manifest = local_manifest.apply_prevent_sync_pattern(
+                prevent_sync_pattern, timestamp
+            )
 
             # Set the new base manifest
             if new_local_manifest != local_manifest:
@@ -350,10 +355,12 @@ class SyncTransactions(EntryTransactions):
                 assert local_manifest.is_reshaped()
 
             # Merge manifests
+            timestamp = self.device.timestamp()
             prevent_sync_pattern = self.local_storage.get_prevent_sync_pattern()
             force_apply_pattern = not self.local_storage.get_prevent_sync_pattern_fully_applied()
             new_local_manifest = merge_manifests(
                 self.local_author,
+                timestamp,
                 prevent_sync_pattern,
                 local_manifest,
                 remote_manifest,
@@ -385,7 +392,8 @@ class SyncTransactions(EntryTransactions):
                 return None
 
             # Produce the new remote manifest to upload
-            return new_local_manifest.to_remote(self.local_author, pendulum_now())
+            timestamp = self.device.timestamp()
+            return new_local_manifest.to_remote(self.local_author, timestamp)
 
     async def file_reshape(self, entry_id: EntryID) -> None:
 
@@ -453,15 +461,19 @@ class SyncTransactions(EntryTransactions):
                     new_blocks.append(tuple(new_chunks))
 
                 # Prepare
+                timestamp = self.device.timestamp()
                 prevent_sync_pattern = self.local_storage.get_prevent_sync_pattern()
                 new_name = get_conflict_filename(
                     filename, list(parent_manifest.children), remote_manifest.author
                 )
                 new_manifest = LocalFileManifest.new_placeholder(
-                    self.local_author, parent=parent_id
+                    self.local_author, parent=parent_id, timestamp=timestamp
                 ).evolve(size=current_manifest.size, blocks=tuple(new_blocks))
+                timestamp = self.device.timestamp()
                 new_parent_manifest = parent_manifest.evolve_children_and_mark_updated(
-                    {new_name: new_manifest.id}, prevent_sync_pattern=prevent_sync_pattern
+                    {new_name: new_manifest.id},
+                    prevent_sync_pattern=prevent_sync_pattern,
+                    timestamp=timestamp,
                 )
                 other_manifest = BaseLocalManifest.from_remote(
                     remote_manifest, prevent_sync_pattern=prevent_sync_pattern
