@@ -547,44 +547,43 @@ def backend_data_binder_factory(request, backend_addr, initial_user_manifest_sta
         async def bind_organization(
             self,
             org: OrganizationFullData,
-            first_device: LocalDevice = None,
+            first_device: LocalDevice,
             initial_user_manifest_in_v0: bool = False,
         ):
-            bootstrap_token = f"<{org.organization_id}-bootstrap-token>"
-            await self.backend.organization.create(org.organization_id, bootstrap_token)
-            if first_device:
-                assert org.organization_id == first_device.organization_id
-                backend_user, backend_first_device = local_device_to_backend_user(first_device, org)
-                await self.backend.organization.bootstrap(
-                    org.organization_id,
-                    backend_user,
-                    backend_first_device,
-                    bootstrap_token,
-                    org.root_verify_key,
-                )
-                self.certificates_store.store_user(
-                    org.organization_id,
-                    backend_user.user_id,
-                    backend_user.user_certificate,
-                    backend_user.redacted_user_certificate,
-                )
-                self.certificates_store.store_device(
-                    org.organization_id,
-                    backend_first_device.device_id,
-                    backend_first_device.device_certificate,
-                    backend_first_device.redacted_device_certificate,
-                )
-                self.binded_local_devices.append(first_device)
+            await self.backend.organization.create(
+                org.organization_id, org.bootstrap_token, **create_kwargs
+            )
+            assert org.organization_id == first_device.organization_id
+            backend_user, backend_first_device = local_device_to_backend_user(first_device, org)
+            await self.backend.organization.bootstrap(
+                org.organization_id,
+                backend_user,
+                backend_first_device,
+                org.bootstrap_token,
+                org.root_verify_key,
+            )
+            self.certificates_store.store_user(
+                org.organization_id,
+                backend_user.user_id,
+                backend_user.user_certificate,
+                backend_user.redacted_user_certificate,
+            )
+            self.certificates_store.store_device(
+                org.organization_id,
+                backend_first_device.device_id,
+                backend_first_device.device_certificate,
+                backend_first_device.redacted_device_certificate,
+            )
+            self.binded_local_devices.append(first_device)
 
-                if not initial_user_manifest_in_v0:
-                    await self._create_realm_and_first_vlob(first_device)
+            if not initial_user_manifest_in_v0:
+                await self._create_realm_and_first_vlob(first_device)
 
         async def bind_device(
             self,
             device: LocalDevice,
             certifier: Optional[LocalDevice] = None,
-            initial_user_manifest_in_v0: bool = False,
-            is_admin: bool = False,
+            initial_user_manifest_in_v0: Optional[bool] = None,
         ):
             if not certifier:
                 try:
@@ -600,6 +599,11 @@ def backend_data_binder_factory(request, backend_addr, initial_user_manifest_sta
 
             if any(d for d in self.binded_local_devices if d.user_id == device.user_id):
                 # User already created, only add device
+
+                # For clarity, user manifest state in backend should be only specified
+                # when creating the user
+                assert initial_user_manifest_in_v0 is None
+
                 await self.backend.user.create_device(device.organization_id, backend_device)
                 self.certificates_store.store_device(
                     device.organization_id,
@@ -625,8 +629,8 @@ def backend_data_binder_factory(request, backend_addr, initial_user_manifest_sta
                     backend_device.device_certificate,
                     backend_device.redacted_device_certificate,
                 )
-
-                if not initial_user_manifest_in_v0:
+                # By default we create user manifest v1 in backend
+                if initial_user_manifest_in_v0 in (None, False):
                     await self._create_realm_and_first_vlob(device)
 
             self.binded_local_devices.append(device)
