@@ -298,7 +298,7 @@ class UserFS:
                 raise FSWorkspaceNotFoundError(f"Unknown workspace `{workspace_id}`")
             return workspace_entry
 
-        async def get_previous_workspace_entry() -> WorkspaceEntry:
+        async def get_previous_workspace_entry() -> Optional[WorkspaceEntry]:
             """
             Return the most recent workspace entry using the previous encryption revision.
             This requires one or several calls to the backend.
@@ -1129,11 +1129,15 @@ class UserFS:
             raise FSError("Bad encryption revision")
 
         previous_workspace_entry = await self._get_previous_workspace_entry(workspace_entry)
+        if not previous_workspace_entry:
+            raise FSError(
+                f"Never had access to encryption revision {workspace_entry.encryption_revision - 1}"
+            )
         return ReencryptionJob(self.backend_cmds, workspace_entry, previous_workspace_entry)
 
     async def _get_previous_workspace_entry(
         self, workspace_entry: WorkspaceEntry
-    ) -> WorkspaceEntry:
+    ) -> Optional[WorkspaceEntry]:
         """
         Return the most recent workspace entry using the previous encryption revision.
 
@@ -1153,9 +1157,7 @@ class UserFS:
                 workspace_entry.id
             )
             if not previous_workspace_entry:
-                raise FSError(
-                    f"Never had access to encryption revision {current_encryption_revision - 1}"
-                )
+                return None
 
             if previous_workspace_entry.encryption_revision == current_encryption_revision - 1:
                 return previous_workspace_entry

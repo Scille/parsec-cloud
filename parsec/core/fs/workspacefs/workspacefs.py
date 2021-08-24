@@ -73,7 +73,7 @@ class WorkspaceFS:
         self,
         workspace_id: EntryID,
         get_workspace_entry: Callable[[], WorkspaceEntry],
-        get_previous_workspace_entry: Callable[[], Awaitable[WorkspaceEntry]],
+        get_previous_workspace_entry: Callable[[], Awaitable[Optional[WorkspaceEntry]]],
         device: LocalDevice,
         local_storage: BaseWorkspaceStorage,
         backend_cmds: BackendAuthenticatedCmds,
