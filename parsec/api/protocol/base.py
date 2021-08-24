@@ -1,5 +1,7 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2016-2021 Scille SAS
 
+from typing import Dict, Type, cast, TypeVar, Union, Mapping
+
 from parsec.serde import (
     BaseSchema,
     fields,
@@ -10,11 +12,7 @@ from parsec.serde import (
     packb as _packb,
     unpackb as _unpackb,
 )
-
-
 from parsec.serde.schema import OneOfSchemaLegacy
-
-from typing import Dict, Type, cast, TypeVar, Union
 
 
 __all__ = ("ProtocolError", "BaseReqSchema", "BaseRepSchema", "CmdSerializer")
@@ -32,11 +30,11 @@ class MessageSerializationError(SerdePackingError, ProtocolError):
     pass
 
 
-def packb(data: Dict[str, object]) -> bytes:
+def packb(data: Mapping) -> bytes:  # type: ignore[type-arg]
     return _packb(data, MessageSerializationError)
 
 
-def unpackb(data: bytes) -> Dict[str, object]:
+def unpackb(data: bytes) -> dict:  # type: ignore[type-arg]
     return _unpackb(data, MessageSerializationError)
 
 

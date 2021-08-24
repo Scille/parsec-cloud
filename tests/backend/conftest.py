@@ -12,9 +12,7 @@ from parsec.api.protocol import (
     InvitationType,
     AuthenticatedClientHandshake,
     InvitedClientHandshake,
-    APIV1_AuthenticatedClientHandshake,
     APIV1_AnonymousClientHandshake,
-    APIV1_AdministrationClientHandshake,
 )
 from parsec.api.transport import Transport
 from parsec.backend.realm import RealmGrantedRole
@@ -55,14 +53,9 @@ def apiv1_backend_sock_factory(backend_raw_transport_factory, coolorg):
                     # TODO: for legacy test, refactorise this ?
                     ch = APIV1_AnonymousClientHandshake(coolorg.organization_id)
                 elif auth_as == "administration":
-                    ch = APIV1_AdministrationClientHandshake(backend.config.administration_token)
+                    assert False, "APIv1 Administration sock no longer supported"
                 else:
-                    ch = APIV1_AuthenticatedClientHandshake(
-                        auth_as.organization_id,
-                        auth_as.device_id,
-                        auth_as.signing_key,
-                        auth_as.root_verify_key,
-                    )
+                    assert False, "APIv1 Authenticated sock no longer supported"
                 challenge_req = await transport.recv()
                 answer_req = ch.process_challenge_req(challenge_req)
                 await transport.send(answer_req)

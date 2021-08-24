@@ -57,19 +57,6 @@ async def test_handshake_organization_expired(running_backend, expiredorg):
 
 
 @pytest.mark.trio
-async def test_handshake_rvk_mismatch(running_backend, coolorg, otherorg):
-    bad_rvk_org_addr = BackendOrganizationAddr.build(
-        backend_addr=coolorg.addr,
-        organization_id=coolorg.organization_id,
-        root_verify_key=otherorg.root_verify_key,
-    )
-    with pytest.raises(BackendConnectionRefused) as exc:
-        async with apiv1_backend_anonymous_cmds_factory(bad_rvk_org_addr) as cmds:
-            await cmds.ping()
-    assert str(exc.value) == "Root verify key for organization differs between client and server"
-
-
-@pytest.mark.trio
 async def test_handshake_unknown_organization(running_backend, coolorg):
     unknown_org_addr = BackendOrganizationAddr.build(
         backend_addr=coolorg.addr, organization_id="dummy", root_verify_key=coolorg.root_verify_key

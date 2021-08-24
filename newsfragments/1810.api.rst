@@ -1,0 +1,3 @@
+Remove most parts of APIv1 (only `organization_bootsrap` command is kept from APIv1 for backward compatibility).
+Remove `expiration_date` from `organization_config` command.
+Introduce the administration REST api to create & get informations on organizations.

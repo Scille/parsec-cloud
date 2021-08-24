@@ -76,8 +76,8 @@ TRUNCATE TABLE
 
     user_,
     device,
-    user_invitation,
-    device_invitation,
+    human,
+    invitation,
 
     message,
 

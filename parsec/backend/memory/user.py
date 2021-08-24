@@ -14,8 +14,6 @@ from parsec.backend.user import (
     Trustchain,
     GetUserAndDevicesResult,
     HumanFindResultItem,
-    UserInvitation,
-    DeviceInvitation,
     UserAlreadyExistsError,
     UserAlreadyRevokedError,
     UserNotFoundError,
@@ -28,7 +26,6 @@ class OrganizationStore:
     human_handle_to_user_id: Dict[HumanHandle, UserID] = attr.ib(factory=dict)
     users: Dict[UserID, User] = attr.ib(factory=dict)
     devices: Dict[UserID, Dict[DeviceName, Device]] = attr.ib(factory=lambda: defaultdict(dict))
-    invitations: Dict[UserID, UserInvitation] = attr.ib(factory=dict)
 
 
 class MemoryUserComponent(BaseUserComponent):
@@ -313,101 +310,6 @@ class MemoryUserComponent(BaseUserComponent):
         paginated_results = results[(page - 1) * per_page : page * per_page]
 
         return paginated_results, total
-
-    async def create_user_invitation(
-        self, organization_id: OrganizationID, invitation: UserInvitation
-    ) -> None:
-        org = self._organizations[organization_id]
-
-        if invitation.user_id in org.users:
-            raise UserAlreadyExistsError(f"User `{invitation.user_id}` already exists")
-        org.invitations[invitation.user_id] = invitation
-
-    async def get_user_invitation(
-        self, organization_id: OrganizationID, user_id: UserID
-    ) -> UserInvitation:
-        org = self._organizations[organization_id]
-
-        if user_id in org.users:
-            raise UserAlreadyExistsError(user_id)
-        try:
-            return org.invitations[user_id]
-        except KeyError:
-            raise UserNotFoundError(user_id)
-
-    async def claim_user_invitation(
-        self, organization_id: OrganizationID, user_id: UserID, encrypted_claim: bytes = b""
-    ) -> UserInvitation:
-        invitation = await self.get_user_invitation(organization_id, user_id)
-        await self._send_event(
-            BackendEvent.USER_CLAIMED,
-            organization_id=organization_id,
-            user_id=invitation.user_id,
-            encrypted_claim=encrypted_claim,
-        )
-        return invitation
-
-    async def cancel_user_invitation(
-        self, organization_id: OrganizationID, user_id: UserID
-    ) -> None:
-        org = self._organizations[organization_id]
-
-        if org.invitations.pop(user_id, None):
-            await self._send_event(
-                BackendEvent.USER_INVITATION_CANCELLED,
-                organization_id=organization_id,
-                user_id=user_id,
-            )
-
-    async def create_device_invitation(
-        self, organization_id: OrganizationID, invitation: DeviceInvitation
-    ) -> None:
-        org = self._organizations[organization_id]
-
-        user_devices = self._get_user_devices(organization_id, invitation.device_id.user_id)
-        if invitation.device_id.device_name in user_devices:
-            raise UserAlreadyExistsError(f"Device `{invitation.device_id}` already exists")
-
-        org.invitations[invitation.device_id] = invitation
-
-    async def get_device_invitation(
-        self, organization_id: OrganizationID, device_id: DeviceID
-    ) -> DeviceInvitation:
-        org = self._organizations[organization_id]
-
-        user_devices = self._get_user_devices(organization_id, device_id.user_id)
-        if device_id.device_name in user_devices:
-            raise UserAlreadyExistsError(device_id)
-
-        try:
-            return org.invitations[device_id]
-
-        except KeyError:
-            raise UserNotFoundError(device_id)
-
-    async def claim_device_invitation(
-        self, organization_id: OrganizationID, device_id: DeviceID, encrypted_claim: bytes = b""
-    ) -> DeviceInvitation:
-        invitation = await self.get_device_invitation(organization_id, device_id)
-        await self._send_event(
-            BackendEvent.DEVICE_CLAIMED,
-            organization_id=organization_id,
-            device_id=invitation.device_id,
-            encrypted_claim=encrypted_claim,
-        )
-        return invitation
-
-    async def cancel_device_invitation(
-        self, organization_id: OrganizationID, device_id: DeviceID
-    ) -> None:
-        org = self._organizations[organization_id]
-
-        if org.invitations.pop(device_id, None):
-            await self._send_event(
-                BackendEvent.DEVICE_INVITATION_CANCELLED,
-                organization_id=organization_id,
-                device_id=device_id,
-            )
 
     async def revoke_user(
         self,

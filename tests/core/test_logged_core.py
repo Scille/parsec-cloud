@@ -5,10 +5,12 @@ import trio
 from unittest.mock import ANY
 from pendulum import datetime
 
+from parsec.api.protocol import UserProfile
 from parsec.core import logged_core_factory
-from parsec.core.types import UserInfo, DeviceInfo
+from parsec.core.types import UserInfo, DeviceInfo, OrganizationStats, UsersPerProfileDetailItem
 from parsec.core.backend_connection import (
     BackendConnStatus,
+    BackendConnectionError,
     BackendNotAvailable,
     BackendNotFoundError,
 )
@@ -146,3 +148,29 @@ async def test_revoke_user(running_backend, alice_core, bob, user_cached):
         assert after_info.human_handle == before_info.human_handle
         assert after_info.profile == before_info.profile
         assert after_info.created_on == before_info.created_on
+
+
+@pytest.mark.trio
+async def test_get_organization_stats(running_backend, alice_core, bob_core):
+    # Administrators have access to stats...
+    stats = await alice_core.get_organization_stats()
+    assert stats == OrganizationStats(
+        data_size=ANY,
+        metadata_size=ANY,
+        realms=3,
+        users=3,
+        active_users=3,
+        users_per_profile_detail=[
+            UsersPerProfileDetailItem(active=2, profile=UserProfile.ADMIN, revoked=0),
+            UsersPerProfileDetailItem(active=1, profile=UserProfile.STANDARD, revoked=0),
+            UsersPerProfileDetailItem(active=0, profile=UserProfile.OUTSIDER, revoked=0),
+        ],
+    )
+
+    # ...but not mere mortals !
+    with pytest.raises(BackendConnectionError) as exc:
+        await bob_core.get_organization_stats()
+    assert (
+        str(exc.value)
+        == "Backend error: {'reason': 'User `bob` is not admin', 'status': 'not_allowed'}"
+    )

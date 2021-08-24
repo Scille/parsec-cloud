@@ -96,7 +96,7 @@ class BaseBlockComponent:
         organization_id: OrganizationID,
         author: DeviceID,
         block_id: UUID,
-        realm: UUID,
+        realm_id: UUID,
         block: bytes,
     ) -> None:
         """

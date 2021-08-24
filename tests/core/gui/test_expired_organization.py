@@ -1,6 +1,5 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2016-2021 Scille SAS
 
-import pendulum
 import pytest
 from PyQt5 import QtCore
 
@@ -106,9 +105,7 @@ async def test_expired_notification_from_update(
 
     # Set expiration date
     with running_backend.backend.event_bus.listen() as spy:
-        await running_backend.backend.organization.update(
-            id=alice.organization_id, expiration_date=pendulum.datetime(1989, 1, 1)
-        )
+        await running_backend.backend.organization.update(id=alice.organization_id, is_expired=True)
         await spy.wait_with_timeout(BackendEvent.ORGANIZATION_EXPIRED)
 
     def _expired_notified():

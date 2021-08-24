@@ -5,7 +5,7 @@ import trio
 import ssl
 from async_generator import asynccontextmanager
 from structlog import get_logger
-from typing import Optional, Union
+from typing import Optional
 
 from parsec.crypto import SigningKey
 from parsec.api.transport import Transport, TransportError, TransportClosedByPeer
@@ -17,17 +17,13 @@ from parsec.api.protocol import (
     AuthenticatedClientHandshake,
     InvitedClientHandshake,
     APIV1_AnonymousClientHandshake,
-    APIV1_AuthenticatedClientHandshake,
-    APIV1_AdministrationClientHandshake,
 )
 from parsec.core.types import (
-    BackendAddr,
     BackendOrganizationAddr,
     BackendOrganizationBootstrapAddr,
     BackendInvitationAddr,
 )
 from parsec.core.backend_connection.exceptions import (
-    BackendConnectionError,
     BackendNotAvailable,
     BackendConnectionRefused,
     BackendInvitationAlreadyUsed,
@@ -40,46 +36,13 @@ logger = get_logger()
 
 
 async def apiv1_connect(
-    addr: Union[BackendAddr, BackendOrganizationBootstrapAddr, BackendOrganizationAddr],
-    device_id: Optional[DeviceID] = None,
-    signing_key: Optional[SigningKey] = None,
-    administration_token: Optional[str] = None,
-    keepalive: Optional[int] = None,
+    addr: BackendOrganizationBootstrapAddr, keepalive: Optional[int] = None
 ) -> Transport:
     """
     Raises:
         BackendConnectionError
     """
-    handshake: BaseClientHandshake
-
-    if administration_token:
-        if not isinstance(addr, BackendAddr):
-            raise BackendConnectionError(f"Invalid url format `{addr}`")
-        handshake = APIV1_AdministrationClientHandshake(administration_token)
-
-    elif not device_id:
-        if isinstance(addr, BackendOrganizationBootstrapAddr):
-            handshake = APIV1_AnonymousClientHandshake(addr.organization_id)
-        elif isinstance(addr, BackendOrganizationAddr):
-            handshake = APIV1_AnonymousClientHandshake(addr.organization_id, addr.root_verify_key)
-        else:
-            raise BackendConnectionError(
-                f"Invalid url format `{addr}` "
-                "(should be an organization url or organization bootstrap url)"
-            )
-
-    else:
-        if not isinstance(addr, BackendOrganizationAddr):
-            raise BackendConnectionError(
-                f"Invalid url format `{addr}` (should be an organization url)"
-            )
-
-        if not signing_key:
-            raise BackendConnectionError(f"Missing signing_key to connect as `{device_id}`")
-        handshake = APIV1_AuthenticatedClientHandshake(
-            addr.organization_id, device_id, signing_key, addr.root_verify_key
-        )
-
+    handshake = APIV1_AnonymousClientHandshake(addr.organization_id)
     return await _connect(addr.hostname, addr.port, addr.use_ssl, keepalive, handshake)
 
 

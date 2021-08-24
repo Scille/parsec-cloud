@@ -9,18 +9,6 @@ from parsec.backend.postgresql.user_queries.get import (
     query_get_user_with_devices_and_trustchain,
     query_get_user_with_device,
 )
-from parsec.backend.postgresql.user_queries.user_invitation import (
-    query_create_user_invitation,
-    query_get_user_invitation,
-    query_claim_user_invitation,
-    query_cancel_user_invitation,
-)
-from parsec.backend.postgresql.user_queries.device_invitation import (
-    query_create_device_invitation,
-    query_get_device_invitation,
-    query_claim_device_invitation,
-    query_cancel_device_invitation,
-)
 from parsec.backend.postgresql.user_queries.revoke import query_revoke_user
 
 
@@ -34,13 +22,5 @@ __all__ = (
     "query_get_user_with_device_and_trustchain",
     "query_get_user_with_devices_and_trustchain",
     "query_get_user_with_device",
-    "query_create_user_invitation",
-    "query_get_user_invitation",
-    "query_claim_user_invitation",
-    "query_cancel_user_invitation",
-    "query_create_device_invitation",
-    "query_get_device_invitation",
-    "query_claim_device_invitation",
-    "query_cancel_device_invitation",
     "query_revoke_user",
 )

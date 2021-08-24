@@ -3,7 +3,7 @@
 from uuid import UUID
 from enum import Enum
 from typing import Optional, Union, Tuple, Set, Dict
-
+from structlog import BoundLogger
 import trio
 
 from parsec.crypto import VerifyKey, PublicKey
@@ -26,6 +26,7 @@ from parsec.backend.invite import Invitation
 
 class BaseClientContext:
     __slots__ = ("transport", "handshake")
+    logger: BoundLogger
 
     def __init__(self, transport: Transport, handshake: ServerHandshake):
         self.transport = transport

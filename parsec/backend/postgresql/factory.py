@@ -51,23 +51,29 @@ async def components_factory(
     block = PGBlockComponent(dbh, blockstore, vlob)
     events = EventsComponent(realm, send_event=_send_event)
 
+    components = {
+        "events": events,
+        "webhooks": webhooks,
+        "http": http,
+        "organization": organization,
+        "user": user,
+        "invite": invite,
+        "message": message,
+        "realm": realm,
+        "vlob": vlob,
+        "ping": ping,
+        "block": block,
+        "blockstore": blockstore,
+    }
+    for component in components.values():
+        method = getattr(component, "register_components", None)
+        if method is not None:
+            method(**components)
+
     async with open_service_nursery() as nursery:
         await dbh.init(nursery)
         try:
-            yield {
-                "events": events,
-                "webhooks": webhooks,
-                "http": http,
-                "organization": organization,
-                "user": user,
-                "invite": invite,
-                "message": message,
-                "realm": realm,
-                "vlob": vlob,
-                "ping": ping,
-                "block": block,
-                "blockstore": blockstore,
-            }
+            yield components
 
         finally:
             await dbh.teardown()
