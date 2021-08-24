@@ -94,10 +94,11 @@ async def apiv1_anonymous_backend_cmds(running_backend, coolorg):
 
 
 @pytest.fixture
-def user_fs_factory(data_base_dir, event_bus_factory, initialize_userfs_storage_v1, coolorg):
+def user_fs_factory(data_base_dir, event_bus_factory):
     @asynccontextmanager
-    async def _user_fs_factory(device, event_bus=None, initialize_in_v0: bool = False):
+    async def _user_fs_factory(device, event_bus=None):
         event_bus = event_bus or event_bus_factory()
+
         async with backend_authenticated_cmds_factory(
             device.organization_addr, device.device_id, device.signing_key
         ) as cmds:
@@ -105,26 +106,43 @@ def user_fs_factory(data_base_dir, event_bus_factory, initialize_userfs_storage_
             async with UserFS.run(
                 data_base_dir, device, cmds, rdm, event_bus, get_prevent_sync_pattern()
             ) as user_fs:
-                if not initialize_in_v0:
-                    await initialize_userfs_storage_v1(user_fs.storage)
+
                 yield user_fs
 
     return _user_fs_factory
 
 
 @pytest.fixture
-async def alice_user_fs(user_fs_factory, alice):
+async def alice_user_fs(
+    data_base_dir, fixtures_customization, initialize_local_user_manifest, user_fs_factory, alice
+):
+    initial_user_manifest = fixtures_customization.get("alice_initial_local_user_manifest", "v1")
+    await initialize_local_user_manifest(
+        data_base_dir, alice, initial_user_manifest=initial_user_manifest
+    )
     async with user_fs_factory(alice) as user_fs:
         yield user_fs
 
 
 @pytest.fixture
-async def alice2_user_fs(user_fs_factory, alice2):
+async def alice2_user_fs(
+    data_base_dir, fixtures_customization, initialize_local_user_manifest, user_fs_factory, alice2
+):
+    initial_user_manifest = fixtures_customization.get("alice2_initial_local_user_manifest", "v1")
+    await initialize_local_user_manifest(
+        data_base_dir, alice2, initial_user_manifest=initial_user_manifest
+    )
     async with user_fs_factory(alice2) as user_fs:
         yield user_fs
 
 
 @pytest.fixture
-async def bob_user_fs(user_fs_factory, bob):
+async def bob_user_fs(
+    data_base_dir, fixtures_customization, initialize_local_user_manifest, user_fs_factory, bob
+):
+    initial_user_manifest = fixtures_customization.get("bob_initial_local_user_manifest", "v1")
+    await initialize_local_user_manifest(
+        data_base_dir, bob, initial_user_manifest=initial_user_manifest
+    )
     async with user_fs_factory(bob) as user_fs:
         yield user_fs

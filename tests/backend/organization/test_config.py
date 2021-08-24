@@ -2,15 +2,7 @@
 
 import pytest
 
-from parsec.api.protocol import organization_config_serializer
-
-
-async def organization_config(sock):
-    raw_rep = await sock.send(
-        organization_config_serializer.req_dumps({"cmd": "organization_config"})
-    )
-    raw_rep = await sock.recv()
-    return organization_config_serializer.rep_loads(raw_rep)
+from tests.backend.common import organization_config
 
 
 @pytest.mark.trio

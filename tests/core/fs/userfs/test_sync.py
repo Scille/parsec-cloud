@@ -227,12 +227,20 @@ async def test_sync_under_concurrency(
 
 @pytest.mark.trio
 async def test_modify_user_manifest_placeholder(
-    running_backend, backend_data_binder, local_device_factory, user_fs_factory
+    running_backend,
+    backend_data_binder,
+    local_device_factory,
+    user_fs_factory,
+    data_base_dir,
+    initialize_local_user_manifest,
 ):
     device = local_device_factory()
-    await backend_data_binder.bind_device(device, initial_user_manifest_in_v0=True)
+    await backend_data_binder.bind_device(device, initial_user_manifest="not_synced")
+    await initialize_local_user_manifest(
+        data_base_dir, device, initial_user_manifest="non_speculative_v0"
+    )
 
-    async with user_fs_factory(device, initialize_in_v0=True) as user_fs:
+    async with user_fs_factory(device) as user_fs:
         um_v0 = user_fs.get_user_manifest()
         with freeze_time("2000-01-02"):
             wid = await user_fs.workspace_create("w1")
@@ -255,24 +263,38 @@ async def test_modify_user_manifest_placeholder(
         assert um == expected_um
 
     # Make sure we can fetch back data from the database on user_fs restart
-    async with user_fs_factory(device, initialize_in_v0=True) as user_fs2:
+    async with user_fs_factory(device) as user_fs2:
         um2 = user_fs2.get_user_manifest()
         assert um2 == expected_um
 
 
 @pytest.mark.trio
 @pytest.mark.parametrize("with_workspace", (False, True))
+@pytest.mark.parametrize("initial_user_manifest", ("non_speculative_v0", "speculative_v0"))
 async def test_sync_placeholder(
-    running_backend, backend_data_binder, local_device_factory, user_fs_factory, with_workspace
+    running_backend,
+    backend_data_binder,
+    local_device_factory,
+    user_fs_factory,
+    data_base_dir,
+    initialize_local_user_manifest,
+    with_workspace,
+    initial_user_manifest,
 ):
     device = local_device_factory()
-    await backend_data_binder.bind_device(device, initial_user_manifest_in_v0=True)
+    await backend_data_binder.bind_device(device, initial_user_manifest="not_synced")
+    await initialize_local_user_manifest(
+        data_base_dir, device, initial_user_manifest=initial_user_manifest
+    )
 
-    async with user_fs_factory(device, initialize_in_v0=True) as user_fs:
+    async with user_fs_factory(device) as user_fs:
         um_v0 = user_fs.get_user_manifest()
 
         expected_um = LocalUserManifest.new_placeholder(
-            device.device_id, id=device.user_manifest_id, now=um_v0.created, speculative=True
+            device.device_id,
+            id=device.user_manifest_id,
+            now=um_v0.created,
+            speculative=(initial_user_manifest == "speculative_v0"),
         )
         assert um_v0 == expected_um
 
@@ -323,17 +345,27 @@ async def test_sync_placeholder(
 @pytest.mark.trio
 @pytest.mark.parametrize("dev2_has_changes", (False, True))
 async def test_concurrent_sync_placeholder(
-    running_backend, backend_data_binder, local_device_factory, user_fs_factory, dev2_has_changes
+    running_backend,
+    backend_data_binder,
+    local_device_factory,
+    user_fs_factory,
+    data_base_dir,
+    initialize_local_user_manifest,
+    dev2_has_changes,
 ):
     device1 = local_device_factory("a@1")
-    await backend_data_binder.bind_device(device1, initial_user_manifest_in_v0=True)
+    await backend_data_binder.bind_device(device1, initial_user_manifest="not_synced")
+    await initialize_local_user_manifest(
+        data_base_dir, device1, initial_user_manifest="non_speculative_v0"
+    )
 
     device2 = local_device_factory("a@2")
-    await backend_data_binder.bind_device(device2, initial_user_manifest_in_v0=True)
+    await backend_data_binder.bind_device(device2)
+    await initialize_local_user_manifest(
+        data_base_dir, device2, initial_user_manifest="speculative_v0"
+    )
 
-    async with user_fs_factory(device1, initialize_in_v0=True) as user_fs1, user_fs_factory(
-        device2, initialize_in_v0=True
-    ) as user_fs2:
+    async with user_fs_factory(device1) as user_fs1, user_fs_factory(device2) as user_fs2:
         # fs2's created value is different and will be overwritten when
         # merging synced manifest from fs1
         um_created_v0_fs1 = user_fs1.get_user_manifest().created

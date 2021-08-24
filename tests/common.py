@@ -1,6 +1,5 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2016-2021 Scille SAS
 
-from parsec.core.core_events import CoreEvent
 from unittest.mock import Mock
 from inspect import iscoroutinefunction
 from contextlib import ExitStack, contextmanager
@@ -9,6 +8,7 @@ import trio
 import attr
 import pendulum
 
+from parsec.core.core_events import CoreEvent
 from parsec.core.types import WorkspaceRole
 from parsec.core.logged_core import LoggedCore
 from parsec.core.fs import UserFS
@@ -229,15 +229,23 @@ def compare_fs_dumps(entry_1, entry_2):
 
 _FIXTURES_CUSTOMIZATIONS = {
     "alice_profile",
+    "alice_initial_local_user_manifest",
+    "alice2_initial_local_user_manifest",
+    "alice_initial_remote_user_manifest",
     "alice_has_human_handle",
     "alice_has_device_label",
     "bob_profile",
+    "bob_initial_local_user_manifest",
+    "bob_initial_remote_user_manifest",
     "bob_has_human_handle",
     "bob_has_device_label",
     "adam_profile",
+    "adam_initial_local_user_manifest",
+    "adam_initial_remote_user_manifest",
     "adam_has_human_handle",
     "adam_has_device_label",
     "mallory_profile",
+    "mallory_initial_local_user_manifest",
     "mallory_has_human_handle",
     "mallory_has_device_label",
     "backend_not_populated",

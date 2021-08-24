@@ -18,9 +18,10 @@ from parsec.api.data import (
     RealmRoleCertificateContent,
 )
 from parsec.api.protocol import OrganizationID, UserID, DeviceID, HumanHandle, RealmRole
-from parsec.backend.backend_events import BackendEvent
 from parsec.core.types import LocalDevice, LocalUserManifest, BackendOrganizationBootstrapAddr
 from parsec.core.local_device import generate_new_device
+from parsec.core.fs.storage import UserStorage
+from parsec.backend.backend_events import BackendEvent
 from parsec.backend.user import User as BackendUser, Device as BackendDevice
 from parsec.backend.realm import RealmGrantedRole
 
@@ -329,18 +330,38 @@ def initial_user_manifest_state():
 
 
 @pytest.fixture
-def initialize_userfs_storage_v1(initial_user_manifest_state):
-    async def _initialize_userfs_storage(storage):
-        if storage.get_user_manifest().base_version == 0:
-            with freeze_time("2000-01-01"):
-                user_manifest = initial_user_manifest_state.get_user_manifest_v1_for_device(
-                    storage.device
-                )
-            await storage.set_user_manifest(user_manifest)
-            # Chcekpoint 1 *is* the upload of user manifest v1
-            await storage.update_realm_checkpoint(1, {})
+def initialize_local_user_manifest(initial_user_manifest_state):
+    async def _initialize_local_user_manifest(
+        data_base_dir, device, initial_user_manifest: str
+    ) -> None:
+        assert initial_user_manifest in ("non_speculative_v0", "speculative_v0", "v1")
+        # Create a storage just for this operation (the underlying database
+        # will be reused by the core's storage thanks to `persistent_mockup`)
+        with freeze_time("2000-01-01"):
+            async with UserStorage.run(data_base_dir, device) as storage:
+                assert storage.get_user_manifest().base_version == 0
 
-    return _initialize_userfs_storage
+                if initial_user_manifest == "v1":
+                    user_manifest = initial_user_manifest_state.get_user_manifest_v1_for_device(
+                        storage.device
+                    )
+                    await storage.set_user_manifest(user_manifest)
+                    # Chcekpoint 1 *is* the upload of user manifest v1
+                    await storage.update_realm_checkpoint(1, {})
+
+                elif initial_user_manifest == "non_speculative_v0":
+                    user_manifest = LocalUserManifest.new_placeholder(
+                        author=storage.device.device_id,
+                        id=storage.device.user_manifest_id,
+                        speculative=False,
+                    )
+                    await storage.set_user_manifest(user_manifest)
+
+                else:
+                    # Nothing to do given speculative placeholder is the default
+                    assert initial_user_manifest == "speculative_v0"
+
+    return _initialize_local_user_manifest
 
 
 def local_device_to_backend_user(
@@ -548,11 +569,11 @@ def backend_data_binder_factory(request, backend_addr, initial_user_manifest_sta
             self,
             org: OrganizationFullData,
             first_device: LocalDevice,
-            initial_user_manifest_in_v0: bool = False,
+            initial_user_manifest: str = "v1",
         ):
-            await self.backend.organization.create(
-                org.organization_id, org.bootstrap_token, **create_kwargs
-            )
+            assert initial_user_manifest in ("v1", "not_synced")
+
+            await self.backend.organization.create(org.organization_id, org.bootstrap_token)
             assert org.organization_id == first_device.organization_id
             backend_user, backend_first_device = local_device_to_backend_user(first_device, org)
             await self.backend.organization.bootstrap(
@@ -576,15 +597,17 @@ def backend_data_binder_factory(request, backend_addr, initial_user_manifest_sta
             )
             self.binded_local_devices.append(first_device)
 
-            if not initial_user_manifest_in_v0:
+            if initial_user_manifest == "v1":
                 await self._create_realm_and_first_vlob(first_device)
 
         async def bind_device(
             self,
             device: LocalDevice,
             certifier: Optional[LocalDevice] = None,
-            initial_user_manifest_in_v0: Optional[bool] = None,
+            initial_user_manifest: Optional[str] = None,
         ):
+            assert initial_user_manifest in (None, "v1", "not_synced")
+
             if not certifier:
                 try:
                     certifier = next(
@@ -602,7 +625,7 @@ def backend_data_binder_factory(request, backend_addr, initial_user_manifest_sta
 
                 # For clarity, user manifest state in backend should be only specified
                 # when creating the user
-                assert initial_user_manifest_in_v0 is None
+                assert initial_user_manifest is None
 
                 await self.backend.user.create_device(device.organization_id, backend_device)
                 self.certificates_store.store_device(
@@ -630,7 +653,7 @@ def backend_data_binder_factory(request, backend_addr, initial_user_manifest_sta
                     backend_device.redacted_device_certificate,
                 )
                 # By default we create user manifest v1 in backend
-                if initial_user_manifest_in_v0 in (None, False):
+                if initial_user_manifest in (None, "v1"):
                     await self._create_realm_and_first_vlob(device)
 
             self.binded_local_devices.append(device)

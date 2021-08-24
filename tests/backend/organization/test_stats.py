@@ -5,18 +5,10 @@ import pendulum
 from uuid import uuid4
 from unittest.mock import ANY
 
-from parsec.api.protocol import organization_stats_serializer
 from parsec.api.data import UserProfile
 
 from tests.common import customize_fixtures
-
-
-async def organization_stats(sock, **kwargs):
-    await sock.send(
-        organization_stats_serializer.req_dumps({"cmd": "organization_stats", **kwargs})
-    )
-    raw_rep = await sock.recv()
-    return organization_stats_serializer.rep_loads(raw_rep)
+from tests.backend.common import organization_stats
 
 
 @pytest.mark.trio
@@ -121,7 +113,7 @@ async def test_organization_stats_users(
         base_human_handle="Godfrey Ho <godfrey.ho@ifd.com>",
         profile=UserProfile.ADMIN,
     )
-    await binder.bind_organization(org, godfrey1, initial_user_manifest_in_v0=True)
+    await binder.bind_organization(org, godfrey1, initial_user_manifest="not_synced")
 
     expected_stats = {
         "status": "ok",
@@ -145,7 +137,7 @@ async def test_organization_stats_users(
                 if v["profile"] == profile
             ][0]
             device = local_device_factory(profile=profile, org=org)
-            await binder.bind_device(device, certifier=godfrey1, initial_user_manifest_in_v0=True)
+            await binder.bind_device(device, certifier=godfrey1, initial_user_manifest="not_synced")
             expected_stats["users"] += 1
             expected_stats["active_users"] += 1
             expected_stats["users_per_profile_detail"][i]["active"] += 1
@@ -161,7 +153,7 @@ async def test_organization_stats_users(
 
     # Also make sure stats are isolated between organizations
     otherorg_device = local_device_factory(org=otherorg, profile=UserProfile.ADMIN)
-    await binder.bind_organization(otherorg, otherorg_device, initial_user_manifest_in_v0=True)
+    await binder.bind_organization(otherorg, otherorg_device, initial_user_manifest="not_synced")
     async with backend_sock_factory(backend, otherorg_device) as sock:
         stats = await organization_stats(sock)
     assert stats == {

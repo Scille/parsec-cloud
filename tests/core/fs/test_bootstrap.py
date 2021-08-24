@@ -15,7 +15,7 @@ from tests.common import freeze_time
 @pytest.mark.trio
 async def test_user_manifest_access_while_speculative(user_fs_factory, alice):
     with freeze_time("2000-01-01"):
-        async with user_fs_factory(alice, initialize_in_v0=True) as user_fs:
+        async with user_fs_factory(alice) as user_fs:
             with freeze_time("2000-01-02"):
                 user_manifest = user_fs.get_user_manifest()
 
@@ -79,11 +79,11 @@ async def test_concurrent_devices_agree_on_user_manifest(
     # I call this "diagonal programming"...
 
     with freeze_time("2000-01-01"):
-        async with user_fs_factory(alice, initialize_in_v0=True) as user_fs1:
+        async with user_fs_factory(alice) as user_fs1:
             wksp1_id = await user_fs1.workspace_create("wksp1")
 
             with freeze_time("2000-01-02"):
-                async with user_fs_factory(alice2, initialize_in_v0=True) as user_fs2:
+                async with user_fs_factory(alice2) as user_fs2:
                     wksp2_id = await user_fs2.workspace_create("wksp2")
 
                     with freeze_time("2000-01-03"):
@@ -93,11 +93,9 @@ async def test_concurrent_devices_agree_on_user_manifest(
 
                             binder = backend_data_binder_factory(backend)
                             await binder.bind_organization(
-                                coolorg, alice, initial_user_manifest_in_v0=True
+                                coolorg, alice, initial_user_manifest="not_synced"
                             )
-                            await binder.bind_device(
-                                alice2, certifier=alice, initial_user_manifest_in_v0=True
-                            )
+                            await binder.bind_device(alice2, certifier=alice)
 
                             async with server_factory(backend.handle_client, backend_addr):
 
@@ -154,8 +152,11 @@ async def test_concurrent_devices_agree_on_user_manifest(
 
 @pytest.mark.trio
 async def test_concurrent_devices_agree_on_workspace_manifest(
-    running_backend, user_fs_factory, alice, alice2
+    running_backend, user_fs_factory, data_base_dir, initialize_local_user_manifest, alice, alice2
 ):
+    await initialize_local_user_manifest(data_base_dir, alice, initial_user_manifest="v1")
+    await initialize_local_user_manifest(data_base_dir, alice2, initial_user_manifest="v1")
+
     async with user_fs_factory(alice) as alice_user_fs:
         async with user_fs_factory(alice2) as alice2_user_fs:
             with freeze_time("2000-01-01"):
@@ -209,7 +210,7 @@ async def test_empty_user_manifest_placeholder_noop_on_resolve_sync(
     running_backend, user_fs_factory, alice, alice2
 ):
     # Alice creates a workspace and sync it
-    async with user_fs_factory(alice, initialize_in_v0=True) as alice_user_fs:
+    async with user_fs_factory(alice) as alice_user_fs:
         with freeze_time("2000-01-02"):
             await alice_user_fs.workspace_create("wksp1")
         with freeze_time("2000-01-03"):
@@ -227,7 +228,7 @@ async def test_empty_user_manifest_placeholder_noop_on_resolve_sync(
 
         with freeze_time("2000-01-04"):
             # Now Alice2 comes into play with it user manifest placeholder
-            async with user_fs_factory(alice2, initialize_in_v0=True) as alice2_user_fs:
+            async with user_fs_factory(alice2) as alice2_user_fs:
                 with freeze_time("2000-01-05"):
                     # Access the user manifest to ensure it is created, but do not modify it !
                     alice2_user_manifest_v0 = alice2_user_fs.get_user_manifest()
@@ -250,8 +251,11 @@ async def test_empty_user_manifest_placeholder_noop_on_resolve_sync(
 
 @pytest.mark.trio
 async def test_empty_workspace_manifest_placeholder_noop_on_resolve_sync(
-    running_backend, user_fs_factory, alice, alice2
+    running_backend, user_fs_factory, data_base_dir, initialize_local_user_manifest, alice, alice2
 ):
+    await initialize_local_user_manifest(data_base_dir, alice, initial_user_manifest="v1")
+    await initialize_local_user_manifest(data_base_dir, alice2, initial_user_manifest="v1")
+
     async with user_fs_factory(alice) as alice_user_fs:
         async with user_fs_factory(alice2) as alice2_user_fs:
             # First Alice creates a workspace, then populates and syncs it
