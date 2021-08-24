@@ -329,7 +329,7 @@ def initial_user_manifest_state():
 
 
 @pytest.fixture
-def initialize_userfs_storage_v1(initial_user_manifest_state, persistent_mockup):
+def initialize_userfs_storage_v1(initial_user_manifest_state):
     async def _initialize_userfs_storage(storage):
         if storage.get_user_manifest().base_version == 0:
             with freeze_time("2000-01-01"):

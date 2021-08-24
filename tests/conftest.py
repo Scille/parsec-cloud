@@ -465,8 +465,12 @@ def backend_addr(tcp_stream_spy, fixtures_customization, monkeypatch):
     return addr
 
 
-@pytest.fixture
-def persistent_mockup(monkeypatch):
+@pytest.fixture(autouse=True)
+def persistent_mockup(monkeypatch, fixtures_customization):
+    if fixtures_customization.get("real_data_storage", False):
+        yield
+        return
+
     @attr.s
     class MockupContext:
 

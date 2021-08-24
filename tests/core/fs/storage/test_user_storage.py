@@ -5,6 +5,8 @@ import pytest
 from parsec.core.fs.storage import UserStorage
 from parsec.core.types import LocalUserManifest, EntryID
 
+from tests.common import customize_fixtures
+
 
 @pytest.fixture
 def user_manifest(alice):
@@ -18,6 +20,7 @@ async def alice_user_storage(data_base_dir, alice):
 
 
 @pytest.mark.trio
+@customize_fixtures(real_data_storage=True)
 async def test_initialization(alice, data_base_dir, alice_user_storage, user_manifest):
     aus = alice_user_storage
 
@@ -42,6 +45,7 @@ async def test_initialization(alice, data_base_dir, alice_user_storage, user_man
 
 
 @pytest.mark.trio
+@customize_fixtures(real_data_storage=True)
 async def test_realm_checkpoint(alice, alice_user_storage, initial_user_manifest_state):
     aws = alice_user_storage
     user_manifest_id = alice.user_manifest_id
@@ -85,12 +89,14 @@ async def test_realm_checkpoint(alice, alice_user_storage, initial_user_manifest
 
 
 @pytest.mark.trio
+@customize_fixtures(real_data_storage=True)
 async def test_vacuum(alice_user_storage):
     # Should be no-op
     await alice_user_storage.run_vacuum()
 
 
 @pytest.mark.trio
+@customize_fixtures(real_data_storage=True)
 async def test_storage_file_tree(tmp_path, alice):
     manifest_sqlite_db = tmp_path / alice.slug / "user_data-v1.sqlite"
 

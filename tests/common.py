@@ -248,6 +248,7 @@ _FIXTURES_CUSTOMIZATIONS = {
     "logged_gui_as_admin",
     "fake_preferred_org_creation_backend_addr",
     "blockstore_mode",
+    "real_data_storage",
 }
 
 

@@ -17,6 +17,8 @@ from parsec.core.types import (
     Chunk,
 )
 
+from tests.common import customize_fixtures
+
 
 def create_manifest(device, type=LocalWorkspaceManifest, use_legacy_none_author=False):
     author = device.device_id
@@ -44,6 +46,7 @@ async def alice_workspace_storage(data_base_dir, alice, workspace_id):
 
 
 @pytest.mark.trio
+@customize_fixtures(real_data_storage=True)
 async def test_lock_required(alice_workspace_storage):
     manifest = create_manifest(alice_workspace_storage.device)
     msg = f"Entry `{manifest.id}` modified without beeing locked"
@@ -64,6 +67,7 @@ async def test_lock_required(alice_workspace_storage):
 
 
 @pytest.mark.trio
+@customize_fixtures(real_data_storage=True)
 async def test_basic_set_get_clear(data_base_dir, alice_workspace_storage):
     aws = alice_workspace_storage
     manifest = create_manifest(aws.device)
@@ -93,6 +97,7 @@ async def test_basic_set_get_clear(data_base_dir, alice_workspace_storage):
 
 
 @pytest.mark.trio
+@customize_fixtures(real_data_storage=True)
 async def test_cache_set_get(data_base_dir, alice, workspace_id):
     manifest = create_manifest(alice)
 
@@ -130,6 +135,7 @@ async def test_cache_set_get(data_base_dir, alice, workspace_id):
 
 
 @pytest.mark.trio
+@customize_fixtures(real_data_storage=True)
 @pytest.mark.parametrize("cache_only", (False, True))
 @pytest.mark.parametrize("clear_manifest", (False, True))
 async def test_chunk_clearing(alice_workspace_storage, cache_only, clear_manifest):
@@ -183,6 +189,7 @@ async def test_chunk_clearing(alice_workspace_storage, cache_only, clear_manifes
 
 
 @pytest.mark.trio
+@customize_fixtures(real_data_storage=True)
 async def test_cache_flushed_on_exit(data_base_dir, alice, workspace_id):
     manifest = create_manifest(alice)
 
@@ -195,6 +202,7 @@ async def test_cache_flushed_on_exit(data_base_dir, alice, workspace_id):
 
 
 @pytest.mark.trio
+@customize_fixtures(real_data_storage=True)
 async def test_clear_cache(alice_workspace_storage):
     aws = alice_workspace_storage
     manifest1 = create_manifest(aws.device)
@@ -229,6 +237,7 @@ async def test_clear_cache(alice_workspace_storage):
     "type", [LocalWorkspaceManifest, LocalFolderManifest, LocalFileManifest, LocalUserManifest]
 )
 @pytest.mark.trio
+@customize_fixtures(real_data_storage=True)
 async def test_serialize_types(data_base_dir, alice, workspace_id, type):
     manifest = create_manifest(alice, type)
     async with WorkspaceStorage.run(data_base_dir, alice, workspace_id) as aws:
@@ -243,6 +252,7 @@ async def test_serialize_types(data_base_dir, alice, workspace_id, type):
     "type", [LocalWorkspaceManifest, LocalFolderManifest, LocalFileManifest, LocalUserManifest]
 )
 @pytest.mark.trio
+@customize_fixtures(real_data_storage=True)
 async def test_deserialize_legacy_types(data_base_dir, alice, workspace_id, type):
     # In parsec < 1.15, the author field used to be None for placeholders
     # That means those manifests can still exist in the local storage
@@ -262,6 +272,7 @@ async def test_deserialize_legacy_types(data_base_dir, alice, workspace_id, type
 
 
 @pytest.mark.trio
+@customize_fixtures(real_data_storage=True)
 async def test_serialize_non_empty_local_file_manifest(data_base_dir, alice, workspace_id):
     manifest = create_manifest(alice, LocalFileManifest)
     chunk1 = Chunk.new(0, 7).evolve_as_block(b"0123456")
@@ -279,6 +290,7 @@ async def test_serialize_non_empty_local_file_manifest(data_base_dir, alice, wor
 
 
 @pytest.mark.trio
+@customize_fixtures(real_data_storage=True)
 async def test_realm_checkpoint(alice_workspace_storage):
     aws = alice_workspace_storage
     manifest = create_manifest(aws.device, LocalFileManifest)
@@ -318,6 +330,7 @@ async def test_realm_checkpoint(alice_workspace_storage):
 
 
 @pytest.mark.trio
+@customize_fixtures(real_data_storage=True)
 async def test_lock_manifest(data_base_dir, alice, workspace_id):
     manifest = create_manifest(alice, LocalFileManifest)
     async with WorkspaceStorage.run(data_base_dir, alice, workspace_id) as aws:
@@ -336,6 +349,7 @@ async def test_lock_manifest(data_base_dir, alice, workspace_id):
 
 
 @pytest.mark.trio
+@customize_fixtures(real_data_storage=True)
 async def test_block_interface(alice_workspace_storage):
     data = b"0123456"
     aws = alice_workspace_storage
@@ -365,6 +379,7 @@ async def test_block_interface(alice_workspace_storage):
 
 
 @pytest.mark.trio
+@customize_fixtures(real_data_storage=True)
 async def test_chunk_interface(alice_workspace_storage):
     data = b"0123456"
     aws = alice_workspace_storage
@@ -394,6 +409,7 @@ async def test_chunk_interface(alice_workspace_storage):
 
 
 @pytest.mark.trio
+@customize_fixtures(real_data_storage=True)
 async def test_file_descriptor(alice_workspace_storage):
     aws = alice_workspace_storage
     manifest = create_manifest(aws.device, LocalFileManifest)
@@ -412,12 +428,14 @@ async def test_file_descriptor(alice_workspace_storage):
 
 
 @pytest.mark.trio
+@customize_fixtures(real_data_storage=True)
 async def test_run_vacuum(alice_workspace_storage):
     # Should be a no-op
     await alice_workspace_storage.run_vacuum()
 
 
 @pytest.mark.trio
+@customize_fixtures(real_data_storage=True)
 async def test_timestamped_storage(alice_workspace_storage):
     timestamp = now()
     aws = alice_workspace_storage
@@ -467,6 +485,7 @@ async def test_timestamped_storage(alice_workspace_storage):
 
 
 @pytest.mark.trio
+@customize_fixtures(real_data_storage=True)
 async def test_vacuum(data_base_dir, alice, workspace_id):
     data_size = 1 * 1024 * 1024
     chunk = Chunk.new(0, data_size)
@@ -510,6 +529,7 @@ async def test_vacuum(data_base_dir, alice, workspace_id):
 
 
 @pytest.mark.trio
+@customize_fixtures(real_data_storage=True)
 async def test_garbage_collection(data_base_dir, alice, workspace_id):
     block_size = DEFAULT_BLOCK_SIZE
     cache_size = 1 * block_size
@@ -533,6 +553,7 @@ async def test_garbage_collection(data_base_dir, alice, workspace_id):
 
 
 @pytest.mark.trio
+@customize_fixtures(real_data_storage=True)
 async def test_storage_file_tree(data_base_dir, alice, workspace_id):
     manifest_sqlite_db = data_base_dir / alice.slug / str(workspace_id) / "workspace_data-v1.sqlite"
     chunk_sqlite_db = data_base_dir / alice.slug / str(workspace_id) / "workspace_data-v1.sqlite"
