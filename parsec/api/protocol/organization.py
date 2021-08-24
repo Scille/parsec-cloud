@@ -1,4 +1,5 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2016-2021 Scille SAS
+
 from parsec.serde import fields, BaseSchema, JSONSerializer
 from parsec.api.protocol.base import BaseReqSchema, BaseRepSchema, CmdSerializer
 from parsec.api.protocol.types import OrganizationIDField, DeviceIDField, UserProfileField
