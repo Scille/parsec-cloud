@@ -12,7 +12,7 @@ from parsec.core.types import EntryID, WorkspaceRole
 from parsec.core.fs.workspacefs import ReencryptionNeed
 
 from parsec.core.gui.lang import translate as _, format_datetime
-from parsec.core.gui.workspace_roles import get_role_translation
+from parsec.core.gui.workspace_roles import NOT_SHARED_KEY, get_role_translation
 from parsec.core.gui.custom_dialogs import show_info
 from parsec.core.gui.custom_widgets import ensure_string_size
 
@@ -136,7 +136,14 @@ class WorkspaceButton(QWidget, Ui_WorkspaceButton):
             widget_temp = self.widget_empty.layout().itemAt(0).widget()
             widget_temp.label_timestamp.setText(format_datetime(self.timestamp))
 
-        self.label_role.setText(get_role_translation(self.current_role))
+        # Retrieve current role for ourself
+        user_id = self.workspace_fs.device.user_id
+        try:
+            current_role, _ = self.users_roles[user_id]
+        except KeyError:
+            current_role = NOT_SHARED_KEY
+
+        self.label_role.setText(get_role_translation(current_role))
         self.label_owner.setVisible(self.is_owner)
         self.label_shared.setVisible(self.is_shared)
         self.reload_workspace_name(self.workspace_name)
@@ -180,11 +187,6 @@ class WorkspaceButton(QWidget, Ui_WorkspaceButton):
     def is_owner(self):
         user_id = self.workspace_fs.device.user_id
         return user_id in self.users_roles and self.users_roles[user_id][0] == WorkspaceRole.OWNER
-
-    @property
-    def current_role(self):
-        user_id = self.workspace_fs.device.user_id
-        return self.users_roles[user_id][0]
 
     def show_context_menu(self, pos):
         global_pos = self.mapToGlobal(pos)
