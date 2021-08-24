@@ -36,6 +36,7 @@ from parsec.core.cli.utils import (
     core_config_options,
 )
 
+
 async def _invite_device(config, device):
     async with spinner("Creating device invitation"):
         async with backend_authenticated_cmds_factory(
