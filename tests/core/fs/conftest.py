@@ -159,9 +159,9 @@ def user_fs_online_state_machine(
     user_fs_offline_state_machine, backend_factory, server_factory, backend_addr, reset_testbed
 ):
     class UserFSOnlineStateMachine(user_fs_offline_state_machine):
-        async def start_backend(self):
+        async def start_backend(self, **kwargs):
             async def _backend_controlled_cb(started_cb):
-                async with backend_factory() as backend:
+                async with backend_factory(**kwargs) as backend:
                     async with server_factory(backend.handle_client, backend_addr) as server:
                         await started_cb(backend=backend, server=server)
 

@@ -1,19 +1,33 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2016-2021 Scille SAS
 
-import pendulum
 import pytest
 from hypothesis import strategies as st
 from hypothesis_trio.stateful import initialize, rule
+from pendulum import now
 
-from parsec.api.protocol import RealmRole
+from parsec.api.protocol import RealmRole, UserProfile
 from parsec.core.fs.exceptions import FSReadOnlyError, FSWorkspaceNoWriteAccess
-
-from tests.common import freeze_time
 
 
 @pytest.mark.slow
-def test_timestamp_causality(user_fs_online_state_machine, alice, bob, carl, diana):
+def test_timestamp_causality(
+    user_fs_online_state_machine,
+    coolorg,
+    local_device_factory,
+    backend_data_binder_factory,
+    monkeypatch,
+):
     small_offset = st.integers(min_value=0, max_value=5)
+    alice = local_device_factory("alice-causality@dev1", profile=UserProfile.ADMIN)
+    bob = local_device_factory("bob-causality@dev1", profile=UserProfile.STANDARD)
+    carl = local_device_factory("carl-causality@dev1", profile=UserProfile.STANDARD)
+    diana = local_device_factory("diana-causality@dev1", profile=UserProfile.STANDARD)
+
+    per_device_time_offsets = {device.device_id: 0 for device in (alice, bob, carl, diana)}
+    monkeypatch.setattr(
+        "parsec.core.types.LocalDevice.timestamp",
+        lambda local_device: now().add(seconds=per_device_time_offsets[local_device.device_id]),
+    )
 
     class TimestampCausality(user_fs_online_state_machine):
         """
@@ -42,6 +56,8 @@ def test_timestamp_causality(user_fs_online_state_machine, alice, bob, carl, dia
             return self.diana_controller.user_fs
 
         async def reset_all(self):
+            nonlocal per_device_time_offsets
+            per_device_time_offsets = {device.device_id: 0 for device in (alice, bob, carl, diana)}
             for name in ["alice", "bob", "carl", "diana"]:
                 controller_name = f"{name}_controller"
                 try:
@@ -49,7 +65,7 @@ def test_timestamp_causality(user_fs_online_state_machine, alice, bob, carl, dia
                 except AttributeError:
                     pass
                 else:
-                    controller.stop()
+                    await controller.stop()
                     delattr(self, controller_name)
             await super().reset_all()
 
@@ -63,8 +79,16 @@ def test_timestamp_causality(user_fs_online_state_machine, alice, bob, carl, dia
             # Reset all
             await self.reset_all()
 
-            # Start all
-            await self.start_backend()
+            # Start backend
+            await self.start_backend(populated=False)
+
+            # Carl and diana are not bound to the default organization
+            binder = backend_data_binder_factory(self.backend)
+            await binder.bind_organization(coolorg, alice)
+            for local_device in (bob, carl, diana):
+                await binder.bind_device(local_device)
+
+            # Start user FS
             self.alice_controller = await self.start_user_fs(alice)
             self.bob_controller = await self.start_user_fs(bob)
             self.carl_controller = await self.start_user_fs(carl)
@@ -99,26 +123,28 @@ def test_timestamp_causality(user_fs_online_state_machine, alice, bob, carl, dia
             # Clear Alice's cache since the offsets have not been applied yet
             self.alice_fs.remote_loader.clear_realm_role_certificate_cache()
 
-            # Set the time shifts in seconds
-            self.alice_offset = alice_offset
-            self.bob_offset = bob_offset
-            self.carl_offset = carl_offset
-            self.diana_offset = diana_offset
+            # Patch LocalDevice.timestamp()
+            nonlocal per_device_time_offsets
+            per_device_time_offsets = {
+                alice.device_id: alice_offset,
+                bob.device_id: bob_offset,
+                carl.device_id: carl_offset,
+                diana.device_id: diana_offset,
+            }
 
         @rule()
         async def bob_updates_the_file(self):
-            with freeze_time(pendulum.now().add(seconds=self.bob_offset)):
-                try:
-                    async with await self.bob_workspace.open_file("/file.txt", "ab") as file_txt:
-                        await file_txt.write(b"a")
-                        length = file_txt.tell()
-                except FSReadOnlyError:
-                    return
-                try:
-                    await self.bob_workspace.sync()
-                except FSWorkspaceNoWriteAccess:
-                    return
-                self.current_length = length
+            try:
+                async with await self.bob_workspace.open_file("/file.txt", "ab") as file_txt:
+                    await file_txt.write(b"a")
+                    length = file_txt.tell()
+            except FSReadOnlyError:
+                return
+            try:
+                await self.bob_workspace.sync()
+            except FSWorkspaceNoWriteAccess:
+                return
+            self.current_length = length
 
         @rule()
         async def alice_clears_her_cache_certificate(self):
@@ -126,35 +152,31 @@ def test_timestamp_causality(user_fs_online_state_machine, alice, bob, carl, dia
 
         @rule()
         async def alice_reads_the_file(self):
-            with freeze_time(pendulum.now().add(seconds=self.alice_offset)):
-                await self.alice_workspace.sync()
-                assert (
-                    await self.alice_workspace.read_bytes("/file.txt") == b"a" * self.current_length
-                )
+            await self.alice_workspace.sync()
+            assert await self.alice_workspace.read_bytes("/file.txt") == b"a" * self.current_length
 
         @rule()
         async def carl_grants_bob_write_rights(self):
-            with freeze_time(pendulum.now().add(seconds=self.carl_offset)):
-                await self.carl_fs.workspace_share(self.wid, bob.user_id, RealmRole.CONTRIBUTOR)
-                await self.carl_fs.sync()
+            await self.carl_fs.workspace_share(self.wid, bob.user_id, RealmRole.CONTRIBUTOR)
+            await self.carl_fs.sync()
 
         @rule()
         async def bob_synchronizes(self):
-            with freeze_time(pendulum.now().add(seconds=self.bob_offset)):
-                await self.bob_fs.process_last_messages()
-                await self.bob_fs.sync()
+            await self.bob_fs.process_last_messages()
+            await self.bob_fs.sync()
 
         @rule()
         async def diana_revokes_bob_write_rights(self):
-            with freeze_time(pendulum.now().add(seconds=self.diana_offset)):
-                await self.diana_fs.workspace_share(self.wid, bob.user_id, RealmRole.READER)
-                await self.diana_fs.sync()
+            await self.diana_fs.workspace_share(self.wid, bob.user_id, RealmRole.READER)
+            await self.diana_fs.sync()
 
-        @rule()
-        async def a_second_goes_by(self):
-            self.alice_offset += 1
-            self.bob_offset += 1
-            self.carl_offset += 1
-            self.diana_offset += 1
+        @rule(seconds=st.integers(min_value=1, max_value=60))
+        async def a_few_seconds_goes_by(self, seconds):
+            nonlocal per_device_time_offsets
+            for key, value in per_device_time_offsets.items():
+                per_device_time_offsets[key] = value + seconds
+
+        async def teardown(self):
+            await self.reset_all()
 
     TimestampCausality.run_as_test()
