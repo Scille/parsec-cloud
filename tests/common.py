@@ -247,6 +247,7 @@ _FIXTURES_CUSTOMIZATIONS = {
     "backend_spontaneous_organization_boostrap",
     "logged_gui_as_admin",
     "fake_preferred_org_creation_backend_addr",
+    "blockstore_mode",
 }
 
 

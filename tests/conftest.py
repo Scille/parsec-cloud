@@ -466,23 +466,24 @@ def backend_store(request):
 
 
 @pytest.fixture
-def blockstore(request, backend_store):
+def blockstore(request, backend_store, fixtures_customization):
     # TODO: allow to test against swift ?
     if backend_store.startswith("postgresql://"):
         config = PostgreSQLBlockStoreConfig()
     else:
         config = MockedBlockStoreConfig()
 
-    # More or less a hack to be able to to configure this fixture from
-    # the test function by adding tags to it
-    if request.node.get_closest_marker("raid0_blockstore"):
+    raid = fixtures_customization.get("blockstore_mode", "NO_RAID").upper()
+    if raid == "RAID0":
         config = RAID0BlockStoreConfig(blockstores=[config, MockedBlockStoreConfig()])
-    if request.node.get_closest_marker("raid1_blockstore"):
+    elif raid == "RAID1":
         config = RAID1BlockStoreConfig(blockstores=[config, MockedBlockStoreConfig()])
-    if request.node.get_closest_marker("raid5_blockstore"):
+    elif raid == "RAID5":
         config = RAID5BlockStoreConfig(
             blockstores=[config, MockedBlockStoreConfig(), MockedBlockStoreConfig()]
         )
+    else:
+        assert "NO_RAID"
 
     return config
 
