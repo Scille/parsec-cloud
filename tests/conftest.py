@@ -788,7 +788,10 @@ def core_config(tmpdir, backend_addr, unused_tcp_port, fixtures_customization):
 def core_factory(request, running_backend_ready, event_bus_factory, core_config):
     @asynccontextmanager
     async def _core_factory(device, event_bus=None):
-        await running_backend_ready.wait()
+        # Ensure test doesn't stay frozen if a bug in a fixture prevent the
+        # backend from starting
+        with trio.fail_after(3):
+            await running_backend_ready.wait()
         event_bus = event_bus or event_bus_factory()
 
         with event_bus.listen() as spy:
