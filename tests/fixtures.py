@@ -25,7 +25,7 @@ from parsec.backend.backend_events import BackendEvent
 from parsec.backend.user import User as BackendUser, Device as BackendDevice
 from parsec.backend.realm import RealmGrantedRole
 
-from tests.common import freeze_time, addr_with_device_subdomain
+from tests.common import afreeze_time, freeze_time, addr_with_device_subdomain
 
 
 @pytest.fixture
@@ -337,7 +337,7 @@ def initialize_local_user_manifest(initial_user_manifest_state):
         assert initial_user_manifest in ("non_speculative_v0", "speculative_v0", "v1")
         # Create a storage just for this operation (the underlying database
         # will be reused by the core's storage thanks to `persistent_mockup`)
-        with freeze_time("2000-01-01"):
+        async with afreeze_time("2000-01-01"):
             async with UserStorage.run(data_base_dir, device) as storage:
                 assert storage.get_user_manifest().base_version == 0
 

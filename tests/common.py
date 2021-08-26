@@ -1,5 +1,6 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2016-2021 Scille SAS
 
+from async_generator import asynccontextmanager
 from unittest.mock import Mock
 from inspect import iscoroutinefunction
 from contextlib import ExitStack, contextmanager
@@ -26,10 +27,43 @@ def addr_with_device_subdomain(addr, device_id):
 
 @contextmanager
 def freeze_time(time):
+    global __freeze_time_task
     if isinstance(time, str):
         time = pendulum.parse(time)
-    with pendulum.test(time):
+
+    # Save previous context
+    previous_task = __freeze_time_task
+    previous_time = pendulum.get_test_now()
+
+    # Get current trio task
+    try:
+        current_task = trio.lowlevel.current_task()
+    except RuntimeError:
+        current_task = None
+
+    # Ensure time has not been frozen from another coroutine
+    assert __freeze_time_task in (None, current_task)
+
+    try:
+        # Set new context
+        __freeze_time_task = current_task
+        pendulum.set_test_now(time)
         yield time
+    finally:
+        # Restore previous context
+        __freeze_time_task = previous_task
+        pendulum.set_test_now(previous_time)
+
+
+__freeze_time_task = None
+__freeze_time_lock = trio.Lock()
+
+
+@asynccontextmanager
+async def afreeze_time(time):
+    async with __freeze_time_lock:
+        with freeze_time(time) as time:
+            yield time
 
 
 class AsyncMock(Mock):
