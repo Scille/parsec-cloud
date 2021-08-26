@@ -16,6 +16,7 @@ from parsec.backend.raid5_blockstore import (
 )
 from parsec.api.protocol import block_create_serializer, block_read_serializer, packb, RealmRole
 
+from tests.common import customize_fixtures
 from tests.backend.common import block_create, block_read
 
 
@@ -131,13 +132,13 @@ async def test_block_create_and_read(alice_backend_sock, realm):
 
 
 @pytest.mark.trio
-@pytest.mark.raid1_blockstore
+@customize_fixtures(blockstore_mode="RAID1")
 async def test_raid1_block_create_and_read(alice_backend_sock, realm):
     await test_block_create_and_read(alice_backend_sock, realm)
 
 
 @pytest.mark.trio
-@pytest.mark.raid1_blockstore
+@customize_fixtures(blockstore_mode="RAID1")
 async def test_raid1_block_create_partial_failure(alice_backend_sock, backend, realm):
     async def mock_create(organization_id, id, block):
         await trio.sleep(0)
@@ -150,7 +151,7 @@ async def test_raid1_block_create_partial_failure(alice_backend_sock, backend, r
 
 
 @pytest.mark.trio
-@pytest.mark.raid1_blockstore
+@customize_fixtures(blockstore_mode="RAID1")
 async def test_raid1_block_create_partial_exists(alice_backend_sock, alice, backend, realm):
     await backend.blockstore.blockstores[1].create(alice.organization_id, BLOCK_ID, BLOCK_DATA)
 
@@ -158,7 +159,7 @@ async def test_raid1_block_create_partial_exists(alice_backend_sock, alice, back
 
 
 @pytest.mark.trio
-@pytest.mark.raid1_blockstore
+@customize_fixtures(blockstore_mode="RAID1")
 async def test_raid1_block_read_partial_failure(alice_backend_sock, backend, block):
     async def mock_read(organization_id, id):
         await trio.sleep(0)
@@ -171,19 +172,19 @@ async def test_raid1_block_read_partial_failure(alice_backend_sock, backend, blo
 
 
 @pytest.mark.trio
-@pytest.mark.raid0_blockstore
+@customize_fixtures(blockstore_mode="RAID0")
 async def test_raid0_block_create_and_read(alice_backend_sock, realm):
     await test_block_create_and_read(alice_backend_sock, realm)
 
 
 @pytest.mark.trio
-@pytest.mark.raid5_blockstore
+@customize_fixtures(blockstore_mode="RAID5")
 async def test_raid5_block_create_and_read(alice_backend_sock, realm):
     await test_block_create_and_read(alice_backend_sock, realm)
 
 
 @pytest.mark.trio
-@pytest.mark.raid5_blockstore
+@customize_fixtures(blockstore_mode="RAID5")
 @pytest.mark.parametrize("failing_blockstore", (0, 1, 2))
 async def test_raid5_block_create_single_failure(
     caplog, alice_backend_sock, backend, realm, failing_blockstore
@@ -204,7 +205,7 @@ async def test_raid5_block_create_single_failure(
 
 
 @pytest.mark.trio
-@pytest.mark.raid5_blockstore
+@customize_fixtures(blockstore_mode="RAID5")
 @pytest.mark.parametrize("failing_blockstores", [(0, 1), (0, 2)])
 async def test_raid5_block_create_multiple_failure(
     caplog, alice_backend_sock, backend, realm, failing_blockstores
@@ -237,7 +238,7 @@ async def test_raid5_block_create_multiple_failure(
 
 
 @pytest.mark.trio
-@pytest.mark.raid5_blockstore
+@customize_fixtures(blockstore_mode="RAID5")
 async def test_raid5_block_create_partial_exists(alice_backend_sock, alice, backend, realm):
     await backend.blockstore.blockstores[1].create(alice.organization_id, BLOCK_ID, BLOCK_DATA)
 
@@ -245,7 +246,7 @@ async def test_raid5_block_create_partial_exists(alice_backend_sock, alice, back
 
 
 @pytest.mark.trio
-@pytest.mark.raid5_blockstore
+@customize_fixtures(blockstore_mode="RAID5")
 @pytest.mark.parametrize("failing_blockstore", (0, 1))  # Ignore checksum blockstore
 async def test_raid5_block_read_single_failure(
     caplog, alice_backend_sock, backend, block, failing_blockstore
@@ -267,7 +268,7 @@ async def test_raid5_block_read_single_failure(
 
 
 @pytest.mark.trio
-@pytest.mark.raid5_blockstore
+@customize_fixtures(blockstore_mode="RAID5")
 @pytest.mark.parametrize("bad_chunk", (b"", b"too big"))
 async def test_raid5_block_read_single_invalid_chunk_size(
     alice_backend_sock, alice, backend, block, bad_chunk
@@ -283,7 +284,7 @@ async def test_raid5_block_read_single_invalid_chunk_size(
 
 
 @pytest.mark.trio
-@pytest.mark.raid5_blockstore
+@customize_fixtures(blockstore_mode="RAID5")
 @pytest.mark.parametrize("failing_blockstores", [(0, 1), (0, 2)])
 async def test_raid5_block_read_multiple_failure(
     caplog, alice_backend_sock, backend, block, failing_blockstores
