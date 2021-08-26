@@ -36,7 +36,7 @@ async def freeze_sync_monitor_mockpoint():
     pass
 
 
-def timestamp():
+def current_time():
     # Use time from trio clock to easily mock it
     return current_clock().current_time()
 
@@ -129,7 +129,7 @@ class SyncContext:
 
         # 3) Compute local and remote changes that need to be synced
         need_sync_local, need_sync_remote = await self._get_local_storage().get_need_sync_entries()
-        now = timestamp()
+        now = current_time()
         # Ignore local changes in read only mode
         if not self.read_only:
             self._local_changes = {entry_id: LocalChange(now) for entry_id in need_sync_local}
@@ -156,7 +156,7 @@ class SyncContext:
                 wake_up = True
 
         # Update local_changes dictionnary
-        now = timestamp()
+        now = current_time()
         try:
             new_due_time = self._local_changes[entry_id].changed(now)
         except KeyError:
@@ -173,7 +173,7 @@ class SyncContext:
 
     def set_remote_change(self, entry_id: EntryID) -> bool:
         self._remote_changes.add(entry_id)
-        self.due_time = timestamp()
+        self.due_time = current_time()
         return True
 
     def set_confined_entry(self, entry_id: EntryID, cause_id: EntryID) -> None:
@@ -181,7 +181,7 @@ class SyncContext:
 
     def _compute_due_time(self, now=None, min_due_time=None):
         if self._remote_changes:
-            self.due_time = now or timestamp()
+            self.due_time = now or current_time()
         elif self._local_changes:
             # TODO: index changes by due_time to avoid this O(n) operation
             self.due_time = min(
@@ -200,7 +200,7 @@ class SyncContext:
         return self.due_time
 
     async def tick(self) -> float:
-        now = timestamp()
+        now = current_time()
         if self.due_time > now:
             return self.due_time
 
@@ -378,7 +378,7 @@ async def monitor_sync(user_fs, event_bus, task_status):
             if ctx:
                 # Change the due_time so the context understants the early
                 # wakeup is for him
-                ctx.due_time = timestamp()
+                ctx.due_time = current_time()
                 _trigger_early_wakeup()
 
     def _on_entry_confined(event, entry_id, cause_id, workspace_id):
@@ -398,7 +398,7 @@ async def monitor_sync(user_fs, event_bus, task_status):
             ctx = ctxs.get(ctx.id)
             if ctx:
                 # Add small cooldown just to be sure not end up in a crazy busy error loop
-                ctx.due_time = timestamp() + TICK_CRASH_COOLDOWN
+                ctx.due_time = current_time() + TICK_CRASH_COOLDOWN
                 return ctx.due_time
             else:
                 return math.inf
