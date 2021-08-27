@@ -15,14 +15,18 @@ ALTER TABLE organization ALTER COLUMN is_expired SET NOT NULL;
 
 ALTER TABLE organization RENAME COLUMN expiration_date TO _expired_on;
 
-ALTER TABLE organization ADD _created_on TIMESTAMPTZ;
-UPDATE organization SET _created_on = (
+ALTER TABLE organization ADD _bootstrapped_on TIMESTAMPTZ;
+UPDATE organization SET _bootstrapped_on = (
     CASE WHEN root_verify_key IS NOT NULL THEN
         -- If bootstrapped, use creation date of the first user
         (SELECT user_.created_on FROM user_ WHERE user_.organization = organization._id AND user_.user_certifier IS NULL)
     ELSE
-        -- Else fallback by using the expired date if any or the current date
-        LEAST(organization._expired_on, NOW())
+        -- Else fallback by using the expired date if any
+        organization._expired_on
     END
 );
+
+ALTER TABLE organization ADD _created_on TIMESTAMPTZ;
+-- _created_on is mandatory, so fallback to current date
+UPDATE organization SET _created_on = LEAST(_bootstrapped_on, NOW());
 ALTER TABLE organization ALTER COLUMN _created_on SET NOT NULL;
