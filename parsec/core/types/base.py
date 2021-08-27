@@ -6,7 +6,7 @@ from typing import Tuple, Iterable, Union, TypeVar
 from trio import Path as TrioPath
 
 from parsec.serde import BaseSchema, MsgpackSerializer
-from parsec.api.data import BaseData, EntryName
+from parsec.api.data import BaseData, EntryName, EntryNameTooLongError
 
 __all__ = ("BaseLocalData", "FsPath", "AnyPath")
 
@@ -17,6 +17,16 @@ class BaseLocalData(BaseData):
 
     SCHEMA_CLS = BaseSchema
     SERIALIZER_CLS = MsgpackSerializer
+
+
+def _entry_name_for_fspath(raw_part: str) -> EntryName:
+    try:
+        return EntryName(raw_part)
+    except EntryNameTooLongError:
+        # TODO: solve circular imports
+        from parsec.core.fs import FSNameTooLongError
+
+        raise FSNameTooLongError(raw_part)
 
 
 class FsPath:
@@ -48,7 +58,7 @@ class FsPath:
                         parts.pop()
                     continue
                 else:
-                    parts.append(EntryName(raw_part))
+                    parts.append(_entry_name_for_fspath(raw_part))
 
         self._parts = tuple(parts)
 
@@ -58,8 +68,10 @@ class FsPath:
     def __repr__(self):
         return f"{type(self).__name__}({str(self)!r})"
 
-    def __truediv__(self, entry):
-        return type(self)([*self._parts, EntryName(entry)])
+    def __truediv__(self, entry: Union[str, EntryName]) -> "FsPath":
+        if isinstance(entry, str):
+            entry = _entry_name_for_fspath(entry)
+        return type(self)([*self._parts, entry])
 
     def __eq__(self, other):
         if isinstance(other, FsPath):

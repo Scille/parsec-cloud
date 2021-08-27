@@ -20,6 +20,10 @@ class DataError(Exception):
     pass
 
 
+class EntryNameTooLongError(DataError):
+    pass
+
+
 class DataValidationError(SerdeValidationError, DataError):
     pass
 

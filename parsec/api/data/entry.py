@@ -5,7 +5,7 @@ from uuid import UUID, uuid4
 from typing import Union, Type, TypeVar
 
 from parsec.serde import fields
-
+from parsec.api.data.base import EntryNameTooLongError
 
 __all__ = ("EntryID", "EntryIDField", "EntryName", "EntryNameField")
 
@@ -44,13 +44,9 @@ class EntryName(str):
         # - no `.` or `..` name
         # - no `/` or null byte in the name
         # - max 255 bytes long name
-        if (
-            not 0 < len(raw.encode("utf8")) < 256
-            or raw == "."
-            or raw == ".."
-            or "/" in raw
-            or "\x00" in raw
-        ):
+        if len(raw.encode("utf8")) >= 256:
+            raise EntryNameTooLongError(raw)
+        if raw == "." or raw == ".." or "/" in raw or "\x00" in raw:
             raise ValueError("Invalid entry name")
         return super(EntryName, cls).__new__(cls, raw)
 

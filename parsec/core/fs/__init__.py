@@ -23,6 +23,7 @@ from parsec.core.fs.exceptions import (
     FSInvalidFileDescriptor,
     FSInvalidArgumentError,
     FSEndOfFileError,
+    FSNameTooLongError,
     # Remote operation errors
     FSBackendOfflineError,
     FSRemoteManifestNotFound,
@@ -69,6 +70,7 @@ __all__ = (
     "FSInvalidFileDescriptor",
     "FSInvalidArgumentError",
     "FSEndOfFileError",
+    "FSNameTooLongError",
     # Remote operation error
     "FSBackendOfflineError",
     "FSRemoteManifestNotFound",

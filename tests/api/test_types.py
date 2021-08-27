@@ -4,7 +4,7 @@ import pytest
 from unicodedata import normalize
 
 from parsec.api.protocol import UserID, DeviceID, DeviceName, OrganizationID, HumanHandle
-from parsec.api.data import SASCode, EntryName
+from parsec.api.data import SASCode, EntryName, EntryNameTooLongError
 
 
 @pytest.mark.parametrize("cls", (UserID, DeviceName, OrganizationID))
@@ -176,11 +176,15 @@ def test_valid_entry_name(data):
     EntryName(data)
 
 
+@pytest.mark.parametrize("data", ("x" * 256, "飞" * 85 + "x"))
+def test_entry_name_too_long(data):
+    with pytest.raises(EntryNameTooLongError):
+        EntryName(data)
+
+
 @pytest.mark.parametrize(
     "data",
     (
-        "x" * 256,  # Too long
-        "飞" * 85 + "x",  # Unicode too long
         ".",  # Not allowed
         "..",  # Not allowed
         "/x",  # Slash not allowed

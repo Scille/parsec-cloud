@@ -60,10 +60,12 @@ def full_name(name: EntryName, *suffixes: str) -> EntryName:
     # No extension
     suffix_string = "".join(f" ({suffix})" for suffix in suffixes)
     if "." not in name[1:]:
+        # TODO: Adding a suffix string might cause the entry name to exceed 255 bytes
         return EntryName(name + suffix_string)
 
     # Extension
     first_name, *ext = name.split(".")
+    # TODO: Adding a suffix string might cause the entry name to exceed 255 bytes
     return EntryName(".".join([first_name + suffix_string, *ext]))
 
 

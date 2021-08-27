@@ -15,6 +15,7 @@ from parsec.core.types import (
     FsPath,
     AnyPath,
     EntryID,
+    EntryName,
     LocalDevice,
     WorkspaceRole,
     WorkspaceEntry,
@@ -291,7 +292,7 @@ class WorkspaceFS:
         info = await self.transactions.entry_info(path)
         if "children" not in info:
             raise FSNotADirectoryError(filename=str(path))
-        for child in cast(Dict[str, EntryID], info["children"]):
+        for child in cast(Dict[EntryName, EntryID], info["children"]):
             yield path / child
 
     async def listdir(self, path: AnyPath) -> List[FsPath]:

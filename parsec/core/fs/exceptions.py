@@ -223,6 +223,11 @@ class FSEndOfFileError(FSLocalOperationError):
     NTSTATUS = ntstatus.STATUS_END_OF_FILE
 
 
+class FSNameTooLongError(FSLocalOperationError):
+    ERRNO = errno.ENAMETOOLONG
+    NTSTATUS = ntstatus.STATUS_NAME_TOO_LONG
+
+
 # Remote operation errors
 
 

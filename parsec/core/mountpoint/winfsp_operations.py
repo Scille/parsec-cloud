@@ -1,10 +1,10 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2016-2021 Scille SAS
 
-from functools import partial, wraps
-from typing import Optional
-from pendulum import DateTime
 from pathlib import PurePath
+from pendulum import DateTime
+from functools import partial, wraps
 from contextlib import contextmanager
+from typing import Optional, Union, Iterator
 from trio import Cancelled, RunFinishedError
 from structlog import get_logger
 from winfspy import (
@@ -41,17 +41,41 @@ def _parsec_to_winpath(path: FsPath) -> str:
     return "\\" + "\\".join(winify_entry_name(entry) for entry in path.parts)
 
 
+class OpenedFolder:
+    def __init__(self, path):
+        self.path = path
+        self.deleted = False
+
+    def is_root(self):
+        return self.path.is_root()
+
+
+class OpenedFile:
+    def __init__(self, path, fd):
+        self.path = path
+        self.fd = fd
+        self.deleted = False
+
+
 @contextmanager
-def translate_error(
+def get_path_and_translate_error(
     event_bus: EventBus,
     operation: str,
-    path: FsPath,
+    file_context: Union[OpenedFile, OpenedFolder, str],
     mountpoint: PurePath,
     workspace_id: EntryID,
     timestamp: Optional[DateTime],
-):
+) -> Iterator[FsPath]:
+    path: FsPath = FsPath("/<unkonwn>")
     try:
-        yield
+        if isinstance(file_context, (OpenedFile, OpenedFolder)):
+            path = file_context.path
+        else:
+            # FsPath conversion might raise an FSNameTooLongError so make
+            # sure it runs within the try-except so it can be caught by the
+            # FSLocalOperationError filter.
+            path = _winpath_to_parsec(file_context)
+        yield path
 
     except NTStatusError:
         raise
@@ -143,30 +167,13 @@ def stat_to_winfsp_attributes(stat):
     return attributes
 
 
-class OpenedFolder:
-    def __init__(self, path):
-        self.path = path
-        self.deleted = False
-
-    def is_root(self):
-        return self.path.is_root()
-
-
-class OpenedFile:
-    def __init__(self, path, fd):
-        self.path = path
-        self.fd = fd
-        self.deleted = False
-
-
 def handle_error(func):
     """A decorator to handle error in wfspy operations"""
     operation = func.__name__
 
     @wraps(func)
     def wrapper(self, arg, *args, **kwargs):
-        path = arg.path if isinstance(arg, (OpenedFile, OpenedFolder)) else _winpath_to_parsec(arg)
-        with self._translate_error(operation=operation, path=path):
+        with self._translate_error(operation=operation, file_context=arg):
             return func.__get__(self)(arg, *args, **kwargs)
 
     return wrapper
@@ -201,7 +208,7 @@ class WinFSPOperations(BaseFileSystemOperations):
         }
 
         self._translate_error = partial(
-            translate_error,
+            get_path_and_translate_error,
             event_bus=self.event_bus,
             mountpoint=mountpoint,
             workspace_id=workspace_id,

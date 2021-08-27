@@ -2,6 +2,7 @@
 
 from parsec.api.data.base import (
     DataError,
+    EntryNameTooLongError,
     BaseData,
     BaseAPIData,
     BaseSchema,
@@ -55,6 +56,7 @@ from parsec.api.data.manifest import (
 __all__ = (
     # Base
     "DataError",
+    "EntryNameTooLongError",
     "BaseData",
     "BaseAPIData",
     "BaseSchema",
