@@ -3,7 +3,6 @@
 import pytest
 import trio
 
-from pendulum import datetime
 from parsec.backend.backend_events import BackendEvent
 from parsec.api.protocol import RealmRole, HandshakeType
 from parsec.core.types import OrganizationConfig
@@ -44,7 +43,6 @@ async def test_init_with_backend_online(
     async def _mocked_organization_config(client_ctx, msg):
         if apiv22_organization_cmd_supported:
             return {
-                "expiration_date": datetime(2000, 1, 1),
                 "user_profile_outsider_allowed": True,
                 "active_users_limit": None,
                 "status": "ok",
@@ -71,7 +69,7 @@ async def test_init_with_backend_online(
     )
     assert conn.status == BackendConnStatus.LOST
     default_organization_config = OrganizationConfig(
-        expiration_date=None, user_profile_outsider_allowed=False, active_users_limit=None
+        user_profile_outsider_allowed=False, active_users_limit=None
     )
     assert conn.get_organization_config() == default_organization_config
 
@@ -97,9 +95,7 @@ async def test_init_with_backend_online(
             # Test organization config retrieval
             if apiv22_organization_cmd_supported:
                 assert conn.get_organization_config() == OrganizationConfig(
-                    expiration_date=datetime(2000, 1, 1),
-                    user_profile_outsider_allowed=True,
-                    active_users_limit=None,
+                    user_profile_outsider_allowed=True, active_users_limit=None
                 )
             else:
                 # Default value
@@ -128,7 +124,7 @@ async def test_init_with_backend_offline(event_bus, alice):
     )
     assert conn.status == BackendConnStatus.LOST
     default_organization_config = OrganizationConfig(
-        expiration_date=None, user_profile_outsider_allowed=False, active_users_limit=None
+        user_profile_outsider_allowed=False, active_users_limit=None
     )
     assert conn.get_organization_config() == default_organization_config
 

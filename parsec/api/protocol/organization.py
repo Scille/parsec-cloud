@@ -74,7 +74,6 @@ class OrganizationConfigReqSchema(BaseReqSchema):
 
 
 class OrganizationConfigRepSchema(BaseRepSchema):
-    expiration_date = fields.DateTime(allow_none=True, required=False)
     user_profile_outsider_allowed = fields.Boolean(required=True)
     # `None` stands for "no limit" here
     active_users_limit = fields.Integer(allow_none=True, required=True)
