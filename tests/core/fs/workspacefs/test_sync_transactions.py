@@ -58,7 +58,7 @@ def test_merge_folder_children():
 
     # Conflicting renaming
     result = merge_folder_children(a1, b1, c1, "a@a")
-    assert result == {"c (renamed by a@a).tar.gz": m1}
+    assert result == {"c.tar.gz": m1}
 
     # Conflicting names
     result = merge_folder_children({}, a1, a2, "a@a")
@@ -172,7 +172,7 @@ def test_merge_folder_manifests_with_concurrent_remote_change(local_change, remo
     )
 
     if remote_change == "same_entry_moved":
-        assert list(merged_manifest.children) == ["bar (renamed by b@2).txt"]
+        assert list(merged_manifest.children) == ["bar.txt"]
     else:
         assert remote_change == "new_entry_added"
         if local_change == "rename":

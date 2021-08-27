@@ -1,7 +1,7 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2016-2021 Scille SAS
 
 from itertools import count
-from typing import Optional, List, Dict, AsyncIterator, Tuple, Union, Pattern
+from typing import Optional, List, Dict, AsyncIterator, Union, Pattern
 
 from pendulum import now as pendulum_now
 
@@ -52,12 +52,9 @@ def get_conflict_filename(
     return new_filename
 
 
-def full_name(name: EntryName, *suffixes: str) -> EntryName:
-    # No suffix
-    if not suffixes:
-        return name
+def full_name(name: EntryName, suffix: str) -> EntryName:
     # Format the suffix string
-    suffix_string = "".join(f" ({suffix})" for suffix in suffixes)
+    suffix_string = f" ({suffix})"
     # Separate file name from the extentions (if any)
     if name.startswith("."):
         first_name, *ext = [str(name)]
@@ -93,8 +90,8 @@ def merge_folder_children(
     ids = set(local_reversed) | set(remote_reversed)
 
     # First map all ids to their rightful name
-    solved_local_children: Dict[EntryName, Tuple[EntryID, Tuple[str, ...]]] = {}
-    solved_remote_children: Dict[EntryName, Tuple[EntryID, Tuple[str, ...]]] = {}
+    solved_local_children: Dict[EntryName, EntryID] = {}
+    solved_remote_children: Dict[EntryName, EntryID] = {}
     for id in ids:
         base_name = base_reversed.get(id)
         local_name = local_reversed.get(id)
@@ -102,11 +99,11 @@ def merge_folder_children(
 
         # Added locally
         if base_name is None and local_name is not None:
-            solved_local_children[local_name] = local_children[local_name], ()
+            solved_local_children[local_name] = local_children[local_name]
 
         # Added remotely
         elif base_name is None and remote_name is not None:
-            solved_remote_children[remote_name] = remote_children[remote_name], ()
+            solved_remote_children[remote_name] = remote_children[remote_name]
 
         # Removed locally
         elif local_name is None:
@@ -121,29 +118,31 @@ def merge_folder_children(
 
         # Preserved remotely and locally with the same naming
         elif local_name == remote_name:
-            solved_local_children[local_name] = local_children[local_name], ()
+            solved_local_children[local_name] = local_children[local_name]
 
         # Name changed locally
         elif base_name == remote_name:
-            solved_local_children[local_name] = local_children[local_name], ()
+            solved_local_children[local_name] = local_children[local_name]
 
         # Name changed remotely
         elif base_name == local_name:
-            solved_remote_children[remote_name] = remote_children[remote_name], ()
+            solved_remote_children[remote_name] = remote_children[remote_name]
 
         # Name changed both locally and remotely
         else:
-            suffix = f"renamed by {remote_device_name}"
-            solved_remote_children[remote_name] = remote_children[remote_name], (suffix,)
+            # In this case, we simply decide that the remote is right since it means
+            # another user managed to upload their change first. Tough luck for the
+            # local device!
+            solved_remote_children[remote_name] = remote_children[remote_name]
 
     # Merge mappings and fix conflicting names
     children = {}
-    for name, (entry_id, suffixes) in solved_remote_children.items():
-        children[full_name(name, *suffixes)] = entry_id
-    for name, (entry_id, suffixes) in solved_local_children.items():
+    for name, entry_id in solved_remote_children.items():
+        children[name] = entry_id
+    for name, entry_id in solved_local_children.items():
         if name in children:
-            suffixes = *suffixes, f"conflicting with {remote_device_name}"
-        children[full_name(name, *suffixes)] = entry_id
+            name = full_name(name, f"conflicting with {remote_device_name}")
+        children[name] = entry_id
 
     # Return
     return children
