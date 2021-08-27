@@ -5,14 +5,27 @@ import pytest
 
 from parsec.api.protocol import DeviceID
 from parsec.core.core_events import CoreEvent
-from parsec.core.types import FsPath, EntryID, Chunk, LocalFolderManifest, LocalFileManifest
+from parsec.core.types import (
+    FsPath,
+    EntryID,
+    EntryName,
+    Chunk,
+    LocalFolderManifest,
+    LocalFileManifest,
+)
 
+from parsec.core.fs.workspacefs.sync_transactions import full_name
 from parsec.core.fs.workspacefs.sync_transactions import merge_manifests
 from parsec.core.fs.workspacefs.sync_transactions import merge_folder_children
 from parsec.core.fs.exceptions import FSFileConflictError
 
 
 empty_pattern = re.compile(r"^\b$")
+
+
+def test_full_name_with_long_names():
+    result = full_name(EntryName("abc" * 82 + ".tar.gz"), "conflicting with a@a")
+    assert result == "abc" * 72 + " (conflicting with a@a).tar.gz"
 
 
 def test_merge_folder_children():

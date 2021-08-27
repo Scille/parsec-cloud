@@ -7,7 +7,7 @@ from pendulum import now as pendulum_now
 
 from parsec.api.protocol import DeviceID
 from parsec.core.core_events import CoreEvent
-from parsec.api.data import BaseManifest as BaseRemoteManifest
+from parsec.api.data import EntryNameTooLongError, BaseManifest as BaseRemoteManifest
 from parsec.core.types import (
     Chunk,
     EntryID,
@@ -56,17 +56,23 @@ def full_name(name: EntryName, *suffixes: str) -> EntryName:
     # No suffix
     if not suffixes:
         return name
-
-    # No extension
+    # Format the suffix string
     suffix_string = "".join(f" ({suffix})" for suffix in suffixes)
-    if "." not in name[1:]:
-        # TODO: Adding a suffix string might cause the entry name to exceed 255 bytes
-        return EntryName(name + suffix_string)
-
-    # Extension
-    first_name, *ext = name.split(".")
-    # TODO: Adding a suffix string might cause the entry name to exceed 255 bytes
-    return EntryName(".".join([first_name + suffix_string, *ext]))
+    # Separate file name from the extentions (if any)
+    if name.startswith("."):
+        first_name, *ext = [str(name)]
+    else:
+        first_name, *ext = name.split(".")
+    # Loop over attemps, in case the produced entry name is too long
+    while True:
+        # Convert to EntryName
+        try:
+            return EntryName(".".join([first_name + suffix_string, *ext]))
+        # Entry name too long
+        except EntryNameTooLongError:
+            # Simply strip 10 characters from the first name then try again
+            assert len(first_name) > 0
+            first_name = first_name[:-10]
 
 
 # Merging helpers
