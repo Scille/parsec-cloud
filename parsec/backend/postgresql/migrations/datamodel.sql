@@ -62,7 +62,7 @@ CREATE TABLE user_ (
     revoked_user_certifier INTEGER,
     human INTEGER REFERENCES human (_id),
     redacted_user_certificate BYTEA NOT NULL,
-    profile user_profile,
+    profile user_profile NOT NULL,
 
     UNIQUE(organization, user_id)
 );

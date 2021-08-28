@@ -30,3 +30,8 @@ ALTER TABLE organization ADD _created_on TIMESTAMPTZ;
 -- _created_on is mandatory, so fallback to current date
 UPDATE organization SET _created_on = LEAST(_bootstrapped_on, NOW());
 ALTER TABLE organization ALTER COLUMN _created_on SET NOT NULL;
+
+-- This UPDATE shouldn't be needed in theory, but just to be sure...
+UPDATE user_ SET profile = 'STANDARD' WHERE profile IS NULL;
+-- Add missing constraint on user_.profile
+ALTER TABLE user_ ALTER COLUMN profile SET NOT NULL;
