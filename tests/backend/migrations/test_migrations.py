@@ -9,6 +9,7 @@ from asyncpg.cluster import TempCluster
 from contextlib import contextmanager
 import importlib_resources
 
+from parsec.backend.postgresql import migrations as migrations_module
 from parsec.backend.postgresql.handler import (
     retrieve_migrations,
     apply_migrations,
@@ -126,11 +127,10 @@ async def _trio_test_migration(postgresql_url, pg_dump, psql):
     # Now drop the database clean...
     await reset_db_schema()
 
-    # ...and reinitialize it with the database init script
+    # ...and reinitialize it with the current datamodel script
+    sql = importlib_resources.read_text(migrations_module, "datamodel.sql")
     async with triopg.connect(postgresql_url) as conn:
-        for migration in migrations:
-            result = await apply_migrations(postgresql_url, migrations, dry_run=False)
-            assert not result.error
+        await conn.execute(sql)
 
     # The resulting database schema should be equivalent to what we add after
     # all the migrations
