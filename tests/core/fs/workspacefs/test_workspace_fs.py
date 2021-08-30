@@ -6,7 +6,8 @@ from unittest.mock import ANY
 
 from parsec.api.protocol import DeviceID, RealmRole
 from parsec.api.data import BaseManifest as BaseRemoteManifest
-from parsec.core.types import FsPath, EntryID, DEFAULT_BLOCK_SIZE
+from parsec.core.types import EntryID, DEFAULT_BLOCK_SIZE
+from parsec.core.fs import FsPath
 from parsec.core.fs.exceptions import FSError, FSBackendOfflineError
 from parsec.core.fs.workspacefs.workspacefs import ReencryptionNeed
 from parsec.backend.block import BlockNotFoundError

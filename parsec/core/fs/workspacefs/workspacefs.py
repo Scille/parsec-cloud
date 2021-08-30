@@ -12,8 +12,6 @@ from parsec.api.data import BaseManifest as BaseRemoteManifest
 from parsec.api.data import FileManifest as RemoteFileManifest
 from parsec.api.protocol import UserID, MaintenanceType
 from parsec.core.types import (
-    FsPath,
-    AnyPath,
     EntryID,
     EntryName,
     LocalDevice,
@@ -28,6 +26,7 @@ from parsec.core.types import (
     DEFAULT_BLOCK_SIZE,
     BackendOrganizationFileLinkAddr,
 )
+from parsec.core.fs.path import AnyPath, FsPath
 from parsec.core.remote_devices_manager import RemoteDevicesManager
 from parsec.core.backend_connection import (
     BackendAuthenticatedCmds,

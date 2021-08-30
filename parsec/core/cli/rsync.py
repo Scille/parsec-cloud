@@ -11,8 +11,8 @@ from parsec.core import logged_core_factory
 from parsec.core.logged_core import LoggedCore
 from parsec.core.config import CoreConfig
 from parsec.api.data.entry import EntryID
-from parsec.core.types import DEFAULT_BLOCK_SIZE, FsPath, local_device
-from parsec.core.fs.workspacefs.workspacefs import AnyPath, WorkspaceFS
+from parsec.core.types import DEFAULT_BLOCK_SIZE, local_device
+from parsec.core.fs import FsPath, AnyPath, WorkspaceFS
 from parsec.core.cli.utils import core_config_and_device_options
 from parsec.cli_utils import cli_exception_handler
 

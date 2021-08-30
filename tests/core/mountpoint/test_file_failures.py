@@ -6,7 +6,7 @@ import trio
 import pytest
 from pathlib import Path
 
-from parsec.core.types import FsPath
+from parsec.core.fs import FsPath
 from parsec.core.core_events import CoreEvent
 from parsec.core.mountpoint.manager import mountpoint_manager_factory
 

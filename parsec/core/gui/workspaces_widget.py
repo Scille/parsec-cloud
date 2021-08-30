@@ -11,7 +11,6 @@ from contextlib import contextmanager
 
 from parsec.core.types import (
     UserInfo,
-    FsPath,
     EntryID,
     EntryName,
     BackendOrganizationFileLinkAddr,
@@ -19,6 +18,7 @@ from parsec.core.types import (
 )
 from parsec.core.backend_connection import BackendNotAvailable
 from parsec.core.fs import (
+    FsPath,
     WorkspaceFS,
     WorkspaceFSTimestamped,
     FSBackendOfflineError,

@@ -11,8 +11,8 @@ from structlog import get_logger
 
 from PyQt5.QtCore import Qt, pyqtSignal
 from PyQt5.QtWidgets import QFileDialog, QWidget
-from parsec.core.types import FsPath, WorkspaceRole
-from parsec.core.fs import WorkspaceFS, WorkspaceFSTimestamped
+from parsec.core.types import WorkspaceRole
+from parsec.core.fs import FsPath, WorkspaceFS, WorkspaceFSTimestamped
 from parsec.core.fs.exceptions import (
     FSRemoteManifestNotFound,
     FSInvalidArgumentError,

@@ -17,9 +17,8 @@ from winfspy.plumbing import dt_to_filetime, NTSTATUS, SecurityDescriptor
 
 from parsec.api.data import EntryID
 from parsec.event_bus import EventBus
-from parsec.core.types import FsPath
 from parsec.core.core_events import CoreEvent
-from parsec.core.fs import FSLocalOperationError, FSRemoteOperationError
+from parsec.core.fs import FsPath, FSLocalOperationError, FSRemoteOperationError
 from parsec.core.fs.workspacefs.sync_transactions import DEFAULT_BLOCK_SIZE
 from parsec.core.mountpoint.winify import winify_entry_name, unwinify_entry_name
 from parsec.core.mountpoint.thread_fs_access import ThreadFSAccess

@@ -15,9 +15,8 @@ from fuse import FuseOSError, Operations, LoggingMixIn, fuse_get_context, fuse_e
 
 from parsec.event_bus import EventBus
 from parsec.api.data import EntryID
-from parsec.core.types import FsPath
 from parsec.core.core_events import CoreEvent
-from parsec.core.fs import FSLocalOperationError, FSRemoteOperationError
+from parsec.core.fs import FsPath, FSLocalOperationError, FSRemoteOperationError
 from parsec.core.mountpoint.thread_fs_access import ThreadFSAccess
 
 

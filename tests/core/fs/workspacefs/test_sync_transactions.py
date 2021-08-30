@@ -5,19 +5,15 @@ import pytest
 
 from parsec.api.protocol import DeviceID
 from parsec.core.core_events import CoreEvent
-from parsec.core.types import (
-    FsPath,
-    EntryID,
-    EntryName,
-    Chunk,
-    LocalFolderManifest,
-    LocalFileManifest,
-)
+from parsec.core.types import EntryID, EntryName, Chunk, LocalFolderManifest, LocalFileManifest
 
-from parsec.core.fs.workspacefs.sync_transactions import full_name
-from parsec.core.fs.workspacefs.sync_transactions import merge_manifests
-from parsec.core.fs.workspacefs.sync_transactions import merge_folder_children
-from parsec.core.fs.exceptions import FSFileConflictError
+from parsec.core.fs import FsPath
+from parsec.core.fs.workspacefs.sync_transactions import (
+    full_name,
+    merge_manifests,
+    merge_folder_children,
+    FSFileConflictError,
+)
 
 
 empty_pattern = re.compile(r"^\b$")

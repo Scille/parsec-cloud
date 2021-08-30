@@ -15,7 +15,8 @@ from parsec.api.protocol import (
 from parsec.api.data.manifest import WorkspaceEntry
 from parsec.core.core_events import CoreEvent
 from parsec.core.logged_core import LoggedCore, OrganizationStats
-from parsec.core.types import UserInfo, BackendOrganizationFileLinkAddr, FsPath
+from parsec.core.types import UserInfo, BackendOrganizationFileLinkAddr
+from parsec.core.fs import FsPath
 from parsec.core.backend_connection import (
     BackendConnectionError,
     BackendNotAvailable,

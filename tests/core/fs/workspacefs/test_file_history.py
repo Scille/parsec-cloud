@@ -3,7 +3,7 @@
 import pytest
 
 from parsec.core.fs.workspacefs.versioning_helpers import VersionLister, TimestampBoundedData
-from parsec.core.types import FsPath
+from parsec.core.fs import FsPath
 from unittest.mock import ANY
 
 
