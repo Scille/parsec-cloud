@@ -32,6 +32,9 @@ empty_pattern = re.compile(r"^\b$")
         ("......", "...... (conflicting with a@a)"),  # Edge case of no non-empty parts
         ("abc" * 82 + ".data", "abc" * 75 + "a (conflicting with a@a).data"),
         ("ঔ" * 82 + ".data", "ঔ" * 72 + " (conflicting with a@a).data"),
+        ("This is a test." + "abc" * 80, "This is a test (conflicting with a@a)"),
+        ("This is a test." + "abc" * 78 + ".xyz", "This is a test (conflicting with a@a).xyz"),
+        ("This is a test.xyz." + "abc" * 78, "This is a test (conflicting with a@a)"),
     ],
 )
 def test_full_name(test_input, expected):

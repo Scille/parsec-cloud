@@ -198,8 +198,8 @@ async def test_mountpoint_path_already_in_use_concurrent_with_mountpoint(
 def test_create_a_file_with_a_name_exceeding_255_bytes(mountpoint_service, name):
     """
     This test is kept as a fuse/linux-only test since accesses to files with name
-    over 255 bytes on windows do not reach the `winfsp_operations` module. Weirdly
-    enough, the version with ascii characters return with an "Invalid argument" error
+    over 255 bytes on windows do not reach the `winfsp_operations` module. Also on
+    windows, the version with ascii characters return with an "Invalid argument" error
     while the version with unicode characters return with a "File not found" error.
     """
     w_path = mountpoint_service.wpath

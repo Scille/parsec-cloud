@@ -21,6 +21,9 @@ from parsec.core.fs.utils import ntstatus
 
 from typing import Optional, Union, TYPE_CHECKING
 
+# Avoid cyclic imports:
+# - `FsPath` methods might raise an `FSNameTooLongError` which inherits from `FsOperationError`
+# - `FsOperationError` initialization takes `AnyPath` arguments, defined as `Union[str, FsPath]`
 if TYPE_CHECKING:
     from parsec.core.fs.path import AnyPath
 

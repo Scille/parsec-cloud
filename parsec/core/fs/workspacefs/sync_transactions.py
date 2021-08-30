@@ -53,24 +53,32 @@ def get_conflict_filename(
 
 
 def full_name(name: EntryName, suffix: str) -> EntryName:
-    # Format the suffix string
-    suffix_string = f" ({suffix})"
     # Separate file name from the extentions (if any)
     name_parts = name.split(".")
     non_empty_indexes = (i for i, part in enumerate(name_parts) if part)
     first_non_empty_index = next(non_empty_indexes, len(name_parts) - 1)
-    base_name = ".".join(name_parts[: first_non_empty_index + 1])
-    extensions = name_parts[first_non_empty_index + 1 :]
+    original_base_name = ".".join(name_parts[: first_non_empty_index + 1])
+    original_extensions = name_parts[first_non_empty_index + 1 :]
     # Loop over attemps, in case the produced entry name is too long
+    base_name = original_base_name
+    extensions = original_extensions
     while True:
         # Convert to EntryName
         try:
-            return EntryName(".".join([base_name + suffix_string, *extensions]))
+            return EntryName(".".join([f"{base_name} ({suffix})", *extensions]))
         # Entry name too long
         except EntryNameTooLongError:
             # Simply strip 10 characters from the first name then try again
-            assert len(base_name) > 0
-            base_name = base_name[:-10]
+            if len(base_name) > 10:
+                base_name = base_name[:-10]
+            # Very rare case where the extensions are very long
+            else:
+                # This assert should only fail when the suffix is longer than 200 bytes,
+                # which should not happen
+                assert extensions
+                # Pop the left most extension and restore the original base name
+                extensions = extensions[1:]
+                base_name = original_base_name
 
 
 # Merging helpers
