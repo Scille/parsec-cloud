@@ -6,7 +6,8 @@ from enum import IntEnum
 from typing import Union, Optional, NoReturn, Type, Dict
 
 from parsec.core.fs.workspacefs.entry_transactions import EntryTransactions
-from parsec.core.types import FsPath, AnyPath, FileDescriptor
+from parsec.core.types import FileDescriptor
+from parsec.core.fs.path import FsPath, AnyPath
 from parsec.core.fs.exceptions import (
     FSUnsupportedOperation,
     FSOffsetError,

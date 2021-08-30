@@ -7,7 +7,7 @@ from typing import Union
 import io
 from parsec.core.fs.exceptions import FSUnsupportedOperation, FSOffsetError, FSInvalidFileDescriptor
 from parsec.core.fs.workspacefs.workspacefile import WorkspaceFile
-from parsec.core.types import FsPath
+from parsec.core.fs import FsPath
 
 AnyPath = Union[FsPath, str]
 

@@ -20,7 +20,8 @@ from parsec.core.mountpoint import (
 
 from parsec.core.core_events import CoreEvent
 from parsec.core import logged_core_factory
-from parsec.core.types import FsPath, WorkspaceRole
+from parsec.core.types import WorkspaceRole
+from parsec.core.fs import FsPath
 
 from tests.common import create_shared_workspace
 

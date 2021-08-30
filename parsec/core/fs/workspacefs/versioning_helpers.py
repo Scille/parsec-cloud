@@ -25,8 +25,9 @@ from pendulum import DateTime
 from collections import defaultdict
 
 from parsec.api.protocol import DeviceID
-from parsec.core.types import FsPath, EntryID
+from parsec.core.types import EntryID
 from parsec.utils import open_service_nursery
+from parsec.core.fs.path import FsPath
 from parsec.core.fs.exceptions import FSRemoteManifestNotFound
 from parsec.api.data import FileManifest, UserManifest, FolderManifest, WorkspaceManifest
 

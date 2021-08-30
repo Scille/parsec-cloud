@@ -6,7 +6,8 @@ import pytest
 from PyQt5 import QtCore, QtWidgets, QtGui
 from PyQt5.QtGui import QGuiApplication
 
-from parsec.core.types import WorkspaceRole, FsPath
+from parsec.core.types import WorkspaceRole
+from parsec.core.fs import FsPath
 
 from parsec.core.gui.lang import translate as _
 from parsec.core.gui.file_items import FileType, TYPE_DATA_INDEX

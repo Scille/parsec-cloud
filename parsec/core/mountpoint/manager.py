@@ -14,8 +14,8 @@ from subprocess import CalledProcessError
 from async_generator import asynccontextmanager
 
 from parsec.core.core_events import CoreEvent
-from parsec.core.types import FsPath, EntryID
-from parsec.core.fs.workspacefs import WorkspaceFSTimestamped
+from parsec.core.types import EntryID
+from parsec.core.fs import FsPath, WorkspaceFSTimestamped
 from parsec.utils import TaskStatus, start_task, open_service_nursery
 from parsec.core.fs.exceptions import FSWorkspaceNotFoundError, FSWorkspaceTimestampedTooEarly
 from parsec.core.mountpoint.exceptions import (

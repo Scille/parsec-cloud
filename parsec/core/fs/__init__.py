@@ -23,6 +23,7 @@ from parsec.core.fs.exceptions import (
     FSInvalidFileDescriptor,
     FSInvalidArgumentError,
     FSEndOfFileError,
+    FSNameTooLongError,
     # Remote operation errors
     FSBackendOfflineError,
     FSRemoteManifestNotFound,
@@ -41,13 +42,16 @@ from parsec.core.fs.exceptions import (
     FSDeviceNotFoundError,
     FSInvalidTrustchainEror,
 )
+from parsec.core.fs.path import FsPath, AnyPath
 from parsec.core.fs.workspacefs import WorkspaceFS, WorkspaceFSTimestamped
-
 
 __all__ = (
     "UserFS",
     "WorkspaceFS",
     "WorkspaceFSTimestamped",
+    # Path
+    "FsPath",
+    "AnyPath",
     # Generic error classes
     "FSError",
     "FSOperationError",
@@ -69,6 +73,7 @@ __all__ = (
     "FSInvalidFileDescriptor",
     "FSInvalidArgumentError",
     "FSEndOfFileError",
+    "FSNameTooLongError",
     # Remote operation error
     "FSBackendOfflineError",
     "FSRemoteManifestNotFound",

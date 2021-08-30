@@ -11,6 +11,7 @@ from parsec.core.fs.workspacefs.workspacefs import WorkspaceFS
 class WorkspaceFSTimestamped(WorkspaceFS):
     def __init__(self, workspacefs: WorkspaceFS, timestamp: pendulum.DateTime):
         self.workspace_id = workspacefs.workspace_id
+        self.get_workspace_entry: Callable[[], WorkspaceEntry]
         if isinstance(workspacefs, WorkspaceFSTimestamped):
             self.get_workspace_entry = workspacefs.get_workspace_entry
         else:

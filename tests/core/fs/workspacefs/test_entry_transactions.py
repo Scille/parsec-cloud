@@ -19,9 +19,10 @@ from hypothesis_trio.stateful import (
 )
 from hypothesis import strategies as st
 
+from parsec.core.fs import FsPath
 from parsec.core.fs.storage import WorkspaceStorage
 from parsec.core.fs.exceptions import FSRemoteManifestNotFound
-from parsec.core.types import FsPath, EntryID, LocalFolderManifest
+from parsec.core.types import EntryID, LocalFolderManifest
 
 from tests.common import freeze_time, call_with_control
 

@@ -1,11 +1,12 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2016-2021 Scille SAS
 
-from parsec.core.core_events import CoreEvent
 import os
 import trio
+import errno
 import pytest
 from unittest.mock import patch
 
+from parsec.core.core_events import CoreEvent
 from parsec.core.mountpoint import mountpoint_manager_factory, MountpointDriverCrash
 
 
@@ -189,3 +190,20 @@ async def test_mountpoint_path_already_in_use_concurrent_with_mountpoint(
 
         # Test is over, stop alice2 mountpoint and exit
         nursery.cancel_scope.cancel()
+
+
+@pytest.mark.linux
+@pytest.mark.mountpoint
+@pytest.mark.parametrize("name", ("x" * 256, "飞" * 85 + "x"))
+def test_create_a_file_with_a_name_exceeding_255_bytes(mountpoint_service, name):
+    """
+    This test is kept as a fuse/linux-only test since accesses to files with name
+    over 255 bytes on windows do not reach the `winfsp_operations` module. Also on
+    windows, the version with ascii characters return with an "Invalid argument" error
+    while the version with unicode characters return with a "File not found" error.
+    """
+    w_path = mountpoint_service.wpath
+    path = w_path / name
+    with pytest.raises(OSError) as e:
+        os.open(path, os.O_CREAT)
+    assert e.value.errno == errno.ENAMETOOLONG

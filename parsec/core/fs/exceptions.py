@@ -10,16 +10,22 @@ Define all the FSError classes, using the following hierarchy:
         +-- FSRemoteOperationError
 
 """
+from __future__ import annotations
 
 import os
 import errno
 import io
 
-from parsec.core.types import EntryID, ChunkID, AnyPath
+from parsec.core.types import EntryID, ChunkID
 from parsec.core.fs.utils import ntstatus
 
-from typing import Optional, Union
+from typing import Optional, Union, TYPE_CHECKING
 
+# Avoid cyclic imports:
+# - `FsPath` methods might raise an `FSNameTooLongError` which inherits from `FsOperationError`
+# - `FsOperationError` initialization takes `AnyPath` arguments, defined as `Union[str, FsPath]`
+if TYPE_CHECKING:
+    from parsec.core.fs.path import AnyPath
 
 # Base classes for all file system errors
 
@@ -221,6 +227,11 @@ class FSInvalidArgumentError(FSLocalOperationError):
 class FSEndOfFileError(FSLocalOperationError):
     ERRNO = errno.EINVAL
     NTSTATUS = ntstatus.STATUS_END_OF_FILE
+
+
+class FSNameTooLongError(FSLocalOperationError):
+    ERRNO = errno.ENAMETOOLONG
+    NTSTATUS = ntstatus.STATUS_NAME_TOO_LONG
 
 
 # Remote operation errors

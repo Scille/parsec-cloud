@@ -6,7 +6,7 @@ from unittest import mock
 from tests.common import AsyncMock
 from parsec.core.cli import rsync
 from parsec.crypto import HashDigest
-from parsec.core.types import FsPath
+from parsec.core.fs import FsPath
 from parsec.api.data.entry import EntryID
 
 

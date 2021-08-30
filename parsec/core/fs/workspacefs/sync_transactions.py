@@ -1,13 +1,13 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2016-2021 Scille SAS
 
 from itertools import count
-from typing import Optional, List, Dict, AsyncIterator, Tuple, Union, Pattern
+from typing import Optional, List, Dict, AsyncIterator, Union, Pattern
 
 from pendulum import now as pendulum_now
 
 from parsec.api.protocol import DeviceID
 from parsec.core.core_events import CoreEvent
-from parsec.api.data import BaseManifest as BaseRemoteManifest
+from parsec.api.data import EntryNameTooLongError, BaseManifest as BaseRemoteManifest
 from parsec.core.types import (
     Chunk,
     EntryID,
@@ -52,19 +52,33 @@ def get_conflict_filename(
     return new_filename
 
 
-def full_name(name: EntryName, *suffixes: str) -> EntryName:
-    # No suffix
-    if not suffixes:
-        return name
-
-    # No extension
-    suffix_string = "".join(f" ({suffix})" for suffix in suffixes)
-    if "." not in name[1:]:
-        return EntryName(name + suffix_string)
-
-    # Extension
-    first_name, *ext = name.split(".")
-    return EntryName(".".join([first_name + suffix_string, *ext]))
+def full_name(name: EntryName, suffix: str) -> EntryName:
+    # Separate file name from the extentions (if any)
+    name_parts = name.split(".")
+    non_empty_indexes = (i for i, part in enumerate(name_parts) if part)
+    first_non_empty_index = next(non_empty_indexes, len(name_parts) - 1)
+    original_base_name = ".".join(name_parts[: first_non_empty_index + 1])
+    original_extensions = name_parts[first_non_empty_index + 1 :]
+    # Loop over attemps, in case the produced entry name is too long
+    base_name = original_base_name
+    extensions = original_extensions
+    while True:
+        # Convert to EntryName
+        try:
+            return EntryName(".".join([f"{base_name} ({suffix})", *extensions]))
+        # Entry name too long
+        except EntryNameTooLongError:
+            # Simply strip 10 characters from the first name then try again
+            if len(base_name) > 10:
+                base_name = base_name[:-10]
+            # Very rare case where the extensions are very long
+            else:
+                # This assert should only fail when the suffix is longer than 200 bytes,
+                # which should not happen
+                assert extensions
+                # Pop the left most extension and restore the original base name
+                extensions = extensions[1:]
+                base_name = original_base_name
 
 
 # Merging helpers
@@ -85,8 +99,8 @@ def merge_folder_children(
     ids = set(local_reversed) | set(remote_reversed)
 
     # First map all ids to their rightful name
-    solved_local_children: Dict[EntryName, Tuple[EntryID, Tuple[str, ...]]] = {}
-    solved_remote_children: Dict[EntryName, Tuple[EntryID, Tuple[str, ...]]] = {}
+    solved_local_children: Dict[EntryName, EntryID] = {}
+    solved_remote_children: Dict[EntryName, EntryID] = {}
     for id in ids:
         base_name = base_reversed.get(id)
         local_name = local_reversed.get(id)
@@ -94,11 +108,11 @@ def merge_folder_children(
 
         # Added locally
         if base_name is None and local_name is not None:
-            solved_local_children[local_name] = local_children[local_name], ()
+            solved_local_children[local_name] = local_children[local_name]
 
         # Added remotely
         elif base_name is None and remote_name is not None:
-            solved_remote_children[remote_name] = remote_children[remote_name], ()
+            solved_remote_children[remote_name] = remote_children[remote_name]
 
         # Removed locally
         elif local_name is None:
@@ -113,29 +127,31 @@ def merge_folder_children(
 
         # Preserved remotely and locally with the same naming
         elif local_name == remote_name:
-            solved_local_children[local_name] = local_children[local_name], ()
+            solved_local_children[local_name] = local_children[local_name]
 
         # Name changed locally
         elif base_name == remote_name:
-            solved_local_children[local_name] = local_children[local_name], ()
+            solved_local_children[local_name] = local_children[local_name]
 
         # Name changed remotely
         elif base_name == local_name:
-            solved_remote_children[remote_name] = remote_children[remote_name], ()
+            solved_remote_children[remote_name] = remote_children[remote_name]
 
         # Name changed both locally and remotely
         else:
-            suffix = f"renamed by {remote_device_name}"
-            solved_remote_children[remote_name] = remote_children[remote_name], (suffix,)
+            # In this case, we simply decide that the remote is right since it means
+            # another user managed to upload their change first. Tough luck for the
+            # local device!
+            solved_remote_children[remote_name] = remote_children[remote_name]
 
     # Merge mappings and fix conflicting names
     children = {}
-    for name, (entry_id, suffixes) in solved_remote_children.items():
-        children[full_name(name, *suffixes)] = entry_id
-    for name, (entry_id, suffixes) in solved_local_children.items():
+    for name, entry_id in solved_remote_children.items():
+        children[name] = entry_id
+    for name, entry_id in solved_local_children.items():
         if name in children:
-            suffixes = *suffixes, f"conflicting with {remote_device_name}"
-        children[full_name(name, *suffixes)] = entry_id
+            name = full_name(name, f"conflicting with {remote_device_name}")
+        children[name] = entry_id
 
     # Return
     return children

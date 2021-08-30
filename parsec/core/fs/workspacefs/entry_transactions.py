@@ -5,7 +5,6 @@ from async_generator import asynccontextmanager
 
 from parsec.core.types import (
     EntryID,
-    FsPath,
     WorkspaceRole,
     BaseLocalManifest,
     LocalFileManifest,
@@ -17,6 +16,7 @@ from parsec.core.types import (
 
 
 from parsec.core.core_events import CoreEvent
+from parsec.core.fs.path import FsPath
 from parsec.core.fs.workspacefs.file_transactions import FileTransactions
 from parsec.core.fs.exceptions import (
     FSPermissionError,

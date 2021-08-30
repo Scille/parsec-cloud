@@ -5,14 +5,41 @@ import pytest
 
 from parsec.api.protocol import DeviceID
 from parsec.core.core_events import CoreEvent
-from parsec.core.types import FsPath, EntryID, Chunk, LocalFolderManifest, LocalFileManifest
+from parsec.core.types import EntryID, EntryName, Chunk, LocalFolderManifest, LocalFileManifest
 
-from parsec.core.fs.workspacefs.sync_transactions import merge_manifests
-from parsec.core.fs.workspacefs.sync_transactions import merge_folder_children
-from parsec.core.fs.exceptions import FSFileConflictError
+from parsec.core.fs import FsPath
+from parsec.core.fs.workspacefs.sync_transactions import (
+    full_name,
+    merge_manifests,
+    merge_folder_children,
+    FSFileConflictError,
+)
 
 
 empty_pattern = re.compile(r"^\b$")
+
+
+@pytest.mark.parametrize(
+    "test_input, expected",
+    [
+        ("my document", "my document (conflicting with a@a)"),
+        ("my document.doc", "my document (conflicting with a@a).doc"),
+        ("my document.tar.gz", "my document (conflicting with a@a).tar.gz"),
+        ("my document.tar.gz.0", "my document (conflicting with a@a).tar.gz.0"),
+        (".my document.tar.gz", ".my document (conflicting with a@a).tar.gz"),
+        ("..my document.tar.gz", "..my document (conflicting with a@a).tar.gz"),
+        ("...my document.tar.gz", "...my document (conflicting with a@a).tar.gz"),
+        ("......", "...... (conflicting with a@a)"),  # Edge case of no non-empty parts
+        ("abc" * 82 + ".data", "abc" * 75 + "a (conflicting with a@a).data"),
+        ("ঔ" * 82 + ".data", "ঔ" * 72 + " (conflicting with a@a).data"),
+        ("This is a test." + "abc" * 80, "This is a test (conflicting with a@a)"),
+        ("This is a test." + "abc" * 78 + ".xyz", "This is a test (conflicting with a@a).xyz"),
+        ("This is a test.xyz." + "abc" * 78, "This is a test (conflicting with a@a)"),
+    ],
+)
+def test_full_name(test_input, expected):
+    result = full_name(EntryName(test_input), "conflicting with a@a")
+    assert result == expected
 
 
 def test_merge_folder_children():
@@ -45,7 +72,7 @@ def test_merge_folder_children():
 
     # Conflicting renaming
     result = merge_folder_children(a1, b1, c1, "a@a")
-    assert result == {"c (renamed by a@a).tar.gz": m1}
+    assert result == {"c.tar.gz": m1}
 
     # Conflicting names
     result = merge_folder_children({}, a1, a2, "a@a")
@@ -159,7 +186,7 @@ def test_merge_folder_manifests_with_concurrent_remote_change(local_change, remo
     )
 
     if remote_change == "same_entry_moved":
-        assert list(merged_manifest.children) == ["bar (renamed by b@2).txt"]
+        assert list(merged_manifest.children) == ["bar.txt"]
     else:
         assert remote_change == "new_entry_added"
         if local_change == "rename":
