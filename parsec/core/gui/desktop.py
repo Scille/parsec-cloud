@@ -1,13 +1,32 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2016-2021 Scille SAS
 
-from PyQt5.QtCore import QUrl, QFileInfo, QSysInfo, QLocale
+import threading
+
+from PyQt5.QtCore import QUrl, QFileInfo, QSysInfo, QLocale, pyqtSignal, QObject
 from PyQt5.QtGui import QDesktopServices, QGuiApplication, QClipboard
 
 from parsec.api.protocol import DeviceName
 
 
-def open_file(path):
-    return QDesktopServices.openUrl(QUrl.fromLocalFile(QFileInfo(path).absoluteFilePath()))
+class FileOpener(QObject):
+    file_opened = pyqtSignal(object, bool, list)
+
+    def __init__(self):
+        super().__init__()
+        self.thread = None
+
+    def _thread_run(self, paths):
+        status = True
+        for p in paths:
+            status &= QDesktopServices.openUrl(QUrl.fromLocalFile(QFileInfo(p).absoluteFilePath()))
+        self.file_opened.emit(self, status, paths)
+
+    def open_files(self, paths):
+        self.thread = threading.Thread(target=self._thread_run, args=(paths,))
+        self.thread.start()
+
+    def finish(self):
+        self.thread.join()
 
 
 def open_url(url):
