@@ -57,14 +57,20 @@ class PeerControler:
                 print("REQ DONE", action.cmd)
                 req_done = True
                 await self._orders_ack_sender.send(None)
+
+                # Explicit use of `do_recv` instead of relying on the __aexit__
+                # which containts a `fail_after` timeout (some commands such
+                # as `1_wait_peer` wait for a peer to finish, on which we
+                # have here no control on)
+                await async_rep.do_recv()
+                print("REP", action.cmd, async_rep.rep)
+                await self._results_sender.send((False, async_rep.rep))
+
         except Exception as exc:
             print("EXCEPTION RAISED", action.cmd, repr(exc))
             if not req_done:
                 await self._orders_ack_sender.send(None)
             await self._results_sender.send((True, exc))
-        else:
-            print("REP", action.cmd, async_rep.rep)
-            await self._results_sender.send((False, async_rep.rep))
 
     async def peer_next_order(self):
         return await self._orders_receiver.receive()

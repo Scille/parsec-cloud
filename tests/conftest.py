@@ -190,6 +190,9 @@ def pytest_runtest_setup(item):
     if item.get_closest_marker("gui"):
         if not item.config.getoption("--rungui"):
             pytest.skip("need --rungui option to run")
+    if item.get_closest_marker("postgresql"):
+        if not item.config.getoption("--postgresql"):
+            pytest.skip("need --postgresql option to run")
 
 
 def pytest_collection_modifyitems(config, items):
@@ -241,10 +244,12 @@ def realcrypto(unmock_crypto):
         yield
 
 
-@pytest.fixture(scope="session")
+@pytest.fixture
 def postgresql_url(request):
-    if not request.config.getoption("--postgresql"):
-        pytest.skip("`--postgresql` option not provided")
+    if not request.node.get_closest_marker("postgresql"):
+        raise RuntimeError(
+            "`postgresql_url` can only be used in tests decorated with `@pytest.mark.postgresql`"
+        )
     return get_postgresql_url()
 
 

@@ -35,6 +35,7 @@ INSERT INTO organization (
     active_users_limit,
     user_profile_outsider_allowed,
     _created_on,
+    _bootstrapped_on,
     is_expired,
     _expired_on
 )
@@ -44,6 +45,7 @@ VALUES (
     $active_users_limit,
     $user_profile_outsider_allowed,
     NOW(),
+    NULL,
     FALSE,
     NULL
 )
@@ -82,7 +84,9 @@ FOR UPDATE
 _q_bootstrap_organization = Q(
     """
 UPDATE organization
-SET root_verify_key = $root_verify_key
+SET
+    root_verify_key = $root_verify_key,
+    _bootstrapped_on = NOW()
 WHERE
     organization_id = $organization_id
     AND bootstrap_token = $bootstrap_token

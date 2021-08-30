@@ -181,6 +181,7 @@ def _wait_for_regex(p, regex):
         raise AssertionError("Too slow")
 
 
+@pytest.mark.postgresql
 @pytest.mark.skipif(sys.platform == "win32", reason="Hard to test on Windows...")
 def test_migrate_backend(postgresql_url, unused_tcp_port):
     sql = "SELECT current_database();"  # Dummy migration content
