@@ -503,11 +503,17 @@ class WorkspacesWidget(QWidget, Ui_WorkspacesWidget):
                 if isinstance(workspace_fs, WorkspaceFSTimestamped)
                 else None,
             )
-            if not desktop.open_file(str(path)):
-                show_error(self, _("TEXT_FILE_OPEN_ERROR_file").format(file=str(file_name)))
+            fo = desktop.FileOpener()
+            fo.file_opened.connect(self._on_file_opened)
+            fo.open_files([str(path)])
         except MountpointNotMounted:
             # The mountpoint has been umounted in our back, nothing left to do
             show_error(self, _("TEXT_FILE_OPEN_ERROR_file").format(file=str(file_name)))
+
+    def _on_file_opened(self, file_opener, status, paths):
+        file_opener.finish()
+        if not status:
+            show_error(self, _("TEXT_FILE_OPEN_ERROR_file").format(file=str(paths[0])))
 
     def remount_workspace_ts(self, workspace_fs):
         def _on_finished(date, time):
