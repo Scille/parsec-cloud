@@ -173,7 +173,7 @@ def handle_error(func):
 
     @wraps(func)
     def wrapper(self, arg, *args, **kwargs):
-        with self._translate_error(operation=operation, file_context=arg):
+        with self._get_path_and_translate_error(operation=operation, file_context=arg):
             return func.__get__(self)(arg, *args, **kwargs)
 
     return wrapper
@@ -207,7 +207,7 @@ class WinFSPOperations(BaseFileSystemOperations):
             "volume_label": volume_label,
         }
 
-        self._translate_error = partial(
+        self._get_path_and_translate_error = partial(
             get_path_and_translate_error,
             event_bus=self.event_bus,
             mountpoint=mountpoint,

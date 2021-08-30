@@ -56,20 +56,21 @@ def full_name(name: EntryName, suffix: str) -> EntryName:
     # Format the suffix string
     suffix_string = f" ({suffix})"
     # Separate file name from the extentions (if any)
-    if name.startswith("."):
-        first_name, *ext = [str(name)]
-    else:
-        first_name, *ext = name.split(".")
+    name_parts = name.split(".")
+    non_empty_indexes = (i for i, part in enumerate(name_parts) if part)
+    first_non_empty_index = next(non_empty_indexes, len(name_parts) - 1)
+    base_name = ".".join(name_parts[: first_non_empty_index + 1])
+    extensions = name_parts[first_non_empty_index + 1 :]
     # Loop over attemps, in case the produced entry name is too long
     while True:
         # Convert to EntryName
         try:
-            return EntryName(".".join([first_name + suffix_string, *ext]))
+            return EntryName(".".join([base_name + suffix_string, *extensions]))
         # Entry name too long
         except EntryNameTooLongError:
             # Simply strip 10 characters from the first name then try again
-            assert len(first_name) > 0
-            first_name = first_name[:-10]
+            assert len(base_name) > 0
+            base_name = base_name[:-10]
 
 
 # Merging helpers

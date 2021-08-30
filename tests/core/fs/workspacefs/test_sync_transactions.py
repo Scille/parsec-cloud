@@ -23,9 +23,24 @@ from parsec.core.fs.exceptions import FSFileConflictError
 empty_pattern = re.compile(r"^\b$")
 
 
-def test_full_name_with_long_names():
-    result = full_name(EntryName("abc" * 82 + ".tar.gz"), "conflicting with a@a")
-    assert result == "abc" * 72 + " (conflicting with a@a).tar.gz"
+@pytest.mark.parametrize(
+    "test_input, expected",
+    [
+        ("my document", "my document (conflicting with a@a)"),
+        ("my document.doc", "my document (conflicting with a@a).doc"),
+        ("my document.tar.gz", "my document (conflicting with a@a).tar.gz"),
+        ("my document.tar.gz.0", "my document (conflicting with a@a).tar.gz.0"),
+        (".my document.tar.gz", ".my document (conflicting with a@a).tar.gz"),
+        ("..my document.tar.gz", "..my document (conflicting with a@a).tar.gz"),
+        ("...my document.tar.gz", "...my document (conflicting with a@a).tar.gz"),
+        ("......", "...... (conflicting with a@a)"),  # Edge case of no non-empty parts
+        ("abc" * 82 + ".data", "abc" * 75 + "a (conflicting with a@a).data"),
+        ("ঔ" * 82 + ".data", "ঔ" * 72 + " (conflicting with a@a).data"),
+    ],
+)
+def test_full_name(test_input, expected):
+    result = full_name(EntryName(test_input), "conflicting with a@a")
+    assert result == expected
 
 
 def test_merge_folder_children():
