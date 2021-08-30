@@ -2,7 +2,6 @@
 
 from parsec.api.data.base import (
     DataError,
-    EntryNameTooLongError,
     BaseData,
     BaseAPIData,
     BaseSchema,
@@ -10,7 +9,15 @@ from parsec.api.data.base import (
     BaseAPISignedData,
     BaseSignedDataSchema,
 )
-from parsec.api.data.entry import EntryID, EntryIDField, EntryName, EntryNameField
+from parsec.api.data.entry import (
+    EntryID,
+    EntryIDField,
+    EntryName,
+    EntryNameField,
+    EntryNameInvalidError,
+    EntryNameTooLongError,
+)
+
 from parsec.api.data.certif import (
     UserProfile,
     UserProfileField,
@@ -56,7 +63,6 @@ from parsec.api.data.manifest import (
 __all__ = (
     # Base
     "DataError",
-    "EntryNameTooLongError",
     "BaseData",
     "BaseAPIData",
     "BaseSchema",
@@ -68,6 +74,8 @@ __all__ = (
     "EntryIDField",
     "EntryName",
     "EntryNameField",
+    "EntryNameInvalidError",
+    "EntryNameTooLongError",
     # Certifs
     "UserProfile",
     "UserProfileField",
