@@ -8,21 +8,7 @@ from sentry_sdk.integrations.logging import LoggingIntegration
 from parsec import __version__
 
 
-_log_level = None
-
-
-def get_log_level():
-    global _log_level
-
-    if not _log_level:
-        _log_level = logging.getLogger().level
-    return _log_level
-
-
 def configure_logging(log_level=None, log_format=None, log_file=None):
-    global _log_level
-
-    _log_level = None
     shared_processors = [
         structlog.stdlib.add_logger_name,
         structlog.stdlib.add_log_level,

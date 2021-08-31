@@ -4,7 +4,6 @@ from typing import Dict, Optional, NoReturn
 import trio
 from trio.abc import Stream
 from structlog import get_logger
-from logging import DEBUG as LOG_LEVEL_DEBUG
 from async_generator import asynccontextmanager
 from wsgiref.handlers import format_date_time
 from http import HTTPStatus
@@ -13,7 +12,6 @@ import h11
 from parsec._version import __version__ as parsec_version
 from parsec.backend.backend_events import BackendEvent
 from parsec.event_bus import EventBus
-from parsec.logging import get_log_level
 from parsec.api.transport import TransportError, TransportClosedByPeer, Transport, TRANSPORT_TARGET
 from parsec.api.protocol import (
     packb,
@@ -45,10 +43,6 @@ logger = get_logger()
 MAX_INITIAL_HTTP_REQUEST_SIZE = 8 * 1024
 # Max size for HTTP body, 1Mo seems plenty given HTTP API never upload big chunk of data
 MAX_HTTP_BODY_SIZE = 1 * 1024 ** 2
-
-
-def _filter_binary_fields(data):
-    return {k: v if not isinstance(v, bytes) else b"[...]" for k, v in data.items()}
 
 
 @asynccontextmanager
@@ -409,8 +403,6 @@ class BackendApp:
             raw_req = raw_req or await transport.recv()
             rep: dict
             req = unpackb(raw_req)
-            if get_log_level() <= LOG_LEVEL_DEBUG:
-                client_ctx.logger.debug("Request", req=_filter_binary_fields(req))
             try:
                 cmd = req.get("cmd", "<missing>")
                 if not isinstance(cmd, str):
@@ -441,10 +433,7 @@ class BackendApp:
                     raw_req = exc.new_raw_req
                     continue
 
-            if get_log_level() <= LOG_LEVEL_DEBUG:
-                client_ctx.logger.debug("Response", rep=_filter_binary_fields(rep))
-            else:
-                client_ctx.logger.info("Request", cmd=cmd, status=rep["status"])
+            client_ctx.logger.info("Request", cmd=cmd, status=rep["status"])
             raw_rep = packb(rep)
             await transport.send(raw_rep)
             raw_req = None
