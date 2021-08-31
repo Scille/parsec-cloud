@@ -621,9 +621,10 @@ async def test_open_file_failed(monkeypatch, aqtbot, autoclose_dialog, files_wid
     await tb.workspace_fs.touch("/file2.txt")
     await tb.check_files_view(path="/", expected_entries=["file1.txt", "file2.txt"])
 
-    monkeypatch.setattr(
-        "parsec.core.gui.files_widget.desktop.open_file", lambda *args, **kwargs: (False)
-    )
+    async def _open_files_job(paths):
+        return False, paths
+
+    monkeypatch.setattr("parsec.core.gui.files_widget.desktop.open_files_job", _open_files_job)
     monkeypatch.setattr(
         "parsec.core.gui.files_widget.ask_question",
         lambda *args, **kwargs: (_("ACTION_FILE_OPEN_MULTIPLE")),

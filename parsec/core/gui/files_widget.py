@@ -2,7 +2,7 @@
 import trio
 import pathlib
 from uuid import UUID
-from typing import Optional
+from typing import Optional, Iterable
 
 from parsec.core.core_events import CoreEvent
 from pendulum import DateTime
@@ -271,6 +271,9 @@ class FilesWidget(QWidget, Ui_FilesWidget):
     move_success = pyqtSignal(QtToTrioJob)
     move_error = pyqtSignal(QtToTrioJob)
 
+    file_open_success = pyqtSignal(QtToTrioJob)
+    file_open_error = pyqtSignal(QtToTrioJob)
+
     import_progress = pyqtSignal(str, int)
 
     reload_timestamped_requested = pyqtSignal(DateTime, FsPath, FileType, bool, bool, bool)
@@ -345,6 +348,8 @@ class FilesWidget(QWidget, Ui_FilesWidget):
         self.copy_error.connect(self._on_copy_error)
         self.move_success.connect(self._on_move_success)
         self.move_error.connect(self._on_move_error)
+        self.file_open_success.connect(self._on_file_open_success)
+        self.file_open_error.connect(self._on_file_open_error)
 
         self.reload_timestamped_requested.connect(self._on_reload_timestamped_requested)
         self.reload_timestamped_success.connect(self._on_reload_timestamped_success)
@@ -588,14 +593,27 @@ class FilesWidget(QWidget, Ui_FilesWidget):
         )
 
     def on_open_current_dir_clicked(self):
-        self.open_file(None)
+        self.desktop_open_files([None])
+
+    def desktop_open_files(self, names: Iterable[Optional[str]]):
+        paths = [
+            self.core.mountpoint_manager.get_path_in_mountpoint(
+                self.workspace_fs.workspace_id,
+                self.current_directory / name if name else self.current_directory,
+                self.workspace_fs.timestamp
+                if isinstance(self.workspace_fs, WorkspaceFSTimestamped)
+                else None,
+            )
+            for name in names
+        ]
+        self.jobs_ctx.submit_job(
+            self.file_open_success, self.file_open_error, desktop.open_files_job, paths
+        )
 
     def open_files(self):
         files = self.table_files.selected_files()
         if len(files) == 1:
-            path = files[0].name
-            if not self.open_file(path):
-                show_error(self, _("TEXT_FILE_OPEN_ERROR_file").format(file=path))
+            self.desktop_open_files([files[0].name])
         else:
             result = ask_question(
                 self,
@@ -605,21 +623,18 @@ class FilesWidget(QWidget, Ui_FilesWidget):
             )
             if result != _("ACTION_FILE_OPEN_MULTIPLE"):
                 return
-            success = True
-            for f in files:
-                success &= self.open_file(f.name)
-            if not success:
-                show_error(self, _("TEXT_FILE_OPEN_MULTIPLE_ERROR"))
+            self.desktop_open_files([f.name for f in files])
 
-    def open_file(self, file_name):
-        path = self.core.mountpoint_manager.get_path_in_mountpoint(
-            self.workspace_fs.workspace_id,
-            self.current_directory / file_name if file_name else self.current_directory,
-            self.workspace_fs.timestamp
-            if isinstance(self.workspace_fs, WorkspaceFSTimestamped)
-            else None,
-        )
-        return desktop.open_file(str(path))
+    def _on_file_open_success(self, job):
+        status, paths = job.ret
+        if not status:
+            if len(paths) > 1:
+                show_error(self, _("TEXT_FILE_OPEN_MULTIPLE_ERROR"))
+            else:
+                show_error(self, _("TEXT_FILE_OPEN_ERROR_file").format(file=paths[0].name))
+
+    def _on_file_open_error(self, job):
+        logger.error("Failed to open a file, should not happen")
 
     def item_activated(self, file_type, file_name):
         if file_type == FileType.ParentFolder:
@@ -627,8 +642,7 @@ class FilesWidget(QWidget, Ui_FilesWidget):
         elif file_type == FileType.ParentWorkspace:
             self.back_clicked.emit()
         elif file_type == FileType.File:
-            if not self.open_file(file_name):
-                show_error(self, _("TEXT_FILE_OPEN_ERROR_file").format(file=file_name))
+            self.desktop_open_files([file_name])
         elif file_type == FileType.Folder:
             self.load(self.current_directory / file_name)
 
@@ -1077,7 +1091,7 @@ class FilesWidget(QWidget, Ui_FilesWidget):
         if reload_after_remount:
             self.update_version_list.emit(self.workspace_fs, path)
         if open_after_load:
-            self.open_file(path.name)
+            self.desktop_open_files(path.name)
 
     def _on_reload_timestamped_error(self, job):
         raise job.exc
