@@ -2,7 +2,7 @@
 import trio
 import pathlib
 from uuid import UUID
-from typing import Optional
+from typing import Optional, Iterable
 
 from parsec.core.core_events import CoreEvent
 from pendulum import DateTime
@@ -595,16 +595,14 @@ class FilesWidget(QWidget, Ui_FilesWidget):
     def on_open_current_dir_clicked(self):
         self.desktop_open_files([None])
 
-    def desktop_open_files(self, names):
+    def desktop_open_files(self, names: Iterable[Optional[str]]):
         paths = [
-            str(
-                self.core.mountpoint_manager.get_path_in_mountpoint(
-                    self.workspace_fs.workspace_id,
-                    self.current_directory / name if name else self.current_directory,
-                    self.workspace_fs.timestamp
-                    if isinstance(self.workspace_fs, WorkspaceFSTimestamped)
-                    else None,
-                )
+            self.core.mountpoint_manager.get_path_in_mountpoint(
+                self.workspace_fs.workspace_id,
+                self.current_directory / name if name else self.current_directory,
+                self.workspace_fs.timestamp
+                if isinstance(self.workspace_fs, WorkspaceFSTimestamped)
+                else None,
             )
             for name in names
         ]
@@ -633,7 +631,7 @@ class FilesWidget(QWidget, Ui_FilesWidget):
             if len(paths) > 1:
                 show_error(self, _("TEXT_FILE_OPEN_MULTIPLE_ERROR"))
             else:
-                show_error(self, _("TEXT_FILE_OPEN_ERROR_file").format(file=paths[0]))
+                show_error(self, _("TEXT_FILE_OPEN_ERROR_file").format(file=paths[0].name))
 
     def _on_file_open_error(self, job):
         logger.error("Failed to open a file, should not happen")

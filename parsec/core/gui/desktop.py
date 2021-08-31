@@ -1,18 +1,23 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2016-2021 Scille SAS
 
 import trio
+from typing import Iterable
+from pathlib import PurePath
 
-from PyQt5.QtCore import QUrl, QFileInfo, QSysInfo, QLocale
+from PyQt5.QtCore import QUrl, QSysInfo, QLocale
 from PyQt5.QtGui import QDesktopServices, QGuiApplication, QClipboard
 
 from parsec.api.protocol import DeviceName
 
 
-async def open_files_job(paths):
+async def open_files_job(paths: Iterable[PurePath]):
     status = True
     for path in paths:
+        assert path.is_absolute()
+        # Run QDesktopServices in a thread in order to avoid any accidental access
+        # to the parsec file system as this would cause a serious deadlock.
         status &= await trio.to_thread.run_sync(
-            lambda: QDesktopServices.openUrl(QUrl.fromLocalFile(QFileInfo(path).absoluteFilePath()))
+            lambda: QDesktopServices.openUrl(QUrl.fromLocalFile(str(path)))
         )
     return status, paths
 

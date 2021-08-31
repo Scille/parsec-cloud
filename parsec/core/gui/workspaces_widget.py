@@ -511,7 +511,7 @@ class WorkspacesWidget(QWidget, Ui_WorkspacesWidget):
                 else None,
             )
             self.jobs_ctx.submit_job(
-                self.file_open_success, self.file_open_error, desktop.open_files_job, [str(path)]
+                self.file_open_success, self.file_open_error, desktop.open_files_job, [path]
             )
         except MountpointNotMounted:
             # The mountpoint has been umounted in our back, nothing left to do
@@ -520,7 +520,7 @@ class WorkspacesWidget(QWidget, Ui_WorkspacesWidget):
     def _on_file_open_success(self, job):
         status, paths = job.ret
         if not status:
-            show_error(self, _("TEXT_FILE_OPEN_ERROR_file").format(file=str(paths[0])))
+            show_error(self, _("TEXT_FILE_OPEN_ERROR_file").format(file=paths[0].name))
 
     def _on_file_open_error(self, job):
         logger.error("Failed to open the workspace in the explorer")
