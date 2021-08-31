@@ -8,7 +8,7 @@ from PyQt5.QtWidgets import QWidget, QLabel
 import pendulum
 
 from contextlib import contextmanager
-
+from structlog import get_logger
 from parsec.core.types import (
     UserInfo,
     EntryID,
@@ -44,6 +44,9 @@ from parsec.core.gui.workspace_button import WorkspaceButton
 from parsec.core.gui.timestamped_workspace_widget import TimestampedWorkspaceWidget
 from parsec.core.gui.ui.workspaces_widget import Ui_WorkspacesWidget
 from parsec.core.gui.workspace_sharing_widget import WorkspaceSharingWidget
+
+
+logger = get_logger()
 
 
 async def _get_reencryption_needs(workspace_fs):
@@ -176,6 +179,8 @@ class WorkspacesWidget(QWidget, Ui_WorkspacesWidget):
     reencryption_needs_error = pyqtSignal(QtToTrioJob)
     ignore_success = pyqtSignal(QtToTrioJob)
     ignore_error = pyqtSignal(QtToTrioJob)
+    file_open_success = pyqtSignal(QtToTrioJob)
+    file_open_error = pyqtSignal(QtToTrioJob)
 
     def __init__(self, core, jobs_ctx, event_bus, **kwargs):
         super().__init__(**kwargs)
@@ -215,6 +220,8 @@ class WorkspacesWidget(QWidget, Ui_WorkspacesWidget):
         self.mount_error.connect(self.on_mount_error)
         self.unmount_success.connect(self.on_unmount_success)
         self.unmount_error.connect(self.on_unmount_error)
+        self.file_open_success.connect(self._on_file_open_success)
+        self.file_open_error.connect(self._on_file_open_error)
 
         self.workspace_reencryption_success.connect(self._on_workspace_reencryption_success)
         self.workspace_reencryption_error.connect(self._on_workspace_reencryption_error)
@@ -503,17 +510,20 @@ class WorkspacesWidget(QWidget, Ui_WorkspacesWidget):
                 if isinstance(workspace_fs, WorkspaceFSTimestamped)
                 else None,
             )
-            fo = desktop.FileOpener()
-            fo.file_opened.connect(self._on_file_opened)
-            fo.open_files([str(path)])
+            self.jobs_ctx.submit_job(
+                self.file_open_success, self.file_open_error, desktop.open_files_job, [str(path)]
+            )
         except MountpointNotMounted:
             # The mountpoint has been umounted in our back, nothing left to do
             show_error(self, _("TEXT_FILE_OPEN_ERROR_file").format(file=str(file_name)))
 
-    def _on_file_opened(self, file_opener, status, paths):
-        file_opener.finish()
+    def _on_file_open_success(self, job):
+        status, paths = job.ret
         if not status:
             show_error(self, _("TEXT_FILE_OPEN_ERROR_file").format(file=str(paths[0])))
+
+    def _on_file_open_error(self, job):
+        logger.error("Failed to open the workspace in the explorer")
 
     def remount_workspace_ts(self, workspace_fs):
         def _on_finished(date, time):
