@@ -6,7 +6,6 @@ from typing import List
 from functools import wraps
 from pathlib import Path
 
-from parsec.logging import configure_logging, configure_sentry_logging
 from parsec.core.config import get_default_config_dir, load_config
 from parsec.core.local_device import (
     AvailableDevice,
@@ -14,34 +13,24 @@ from parsec.core.local_device import (
     load_device_with_password,
     LocalDeviceError,
 )
+from parsec.cli_utils import logging_config_options
 
 
 def core_config_options(fn):
     @click.option("--config-dir", type=click.Path(exists=True, file_okay=False))
-    @click.option(
-        "--log-level",
-        "-l",
-        default="WARNING",
-        envvar="PARSEC_LOG_LEVEL",
-        type=click.Choice(("DEBUG", "INFO", "WARNING", "ERROR")),
-    )
-    @click.option("--log-format", "-f", type=click.Choice(("CONSOLE", "JSON")))
-    @click.option("--log-file", "-o")
+    # Add --log-level/--log-format/--log-file
+    @logging_config_options
     @wraps(fn)
-    def wrapper(config_dir, *args, **kwargs):
+    def wrapper(**kwargs):
         assert "config" not in kwargs
-
-        configure_logging(
-            log_level=kwargs["log_level"],
-            log_format=kwargs["log_format"],
-            log_file=kwargs["log_file"],
-        )
+        config_dir = kwargs["config_dir"]
+        # --sentry-url is only present for gui command
+        sentry_url = kwargs.get("sentry_url")
 
         config_dir = Path(config_dir) if config_dir else get_default_config_dir(os.environ)
-        config = load_config(config_dir, debug="DEBUG" in os.environ)
-
-        if config.telemetry_enabled and config.sentry_url:
-            configure_sentry_logging(config.sentry_url)
+        config = load_config(
+            config_dir=config_dir, sentry_url=sentry_url, debug="DEBUG" in os.environ
+        )
 
         kwargs["config"] = config
         return fn(**kwargs)

@@ -10,8 +10,7 @@ from collections import defaultdict
 import tempfile
 
 from parsec.utils import trio_run
-from parsec.cli_utils import cli_exception_handler
-from parsec.logging import configure_logging, configure_sentry_logging
+from parsec.cli_utils import cli_exception_handler, logging_config_options, sentry_config_options
 from parsec.backend import backend_app_factory
 from parsec.backend.config import (
     BackendConfig,
@@ -430,19 +429,9 @@ organization_id, device_id, device_label (can be null), human_email (can be null
     envvar="PARSEC_SSL_CERTFILE",
     help="SSL certificate file. This setting enables serving Parsec over SSL.",
 )
-@click.option(
-    "--log-level",
-    "-l",
-    default="WARNING",
-    show_default=True,
-    type=click.Choice(("DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL")),
-    envvar="PARSEC_LOG_LEVEL",
-)
-@click.option(
-    "--log-format", "-f", type=click.Choice(("CONSOLE", "JSON")), envvar="PARSEC_LOG_FORMAT"
-)
-@click.option("--log-file", "-o", envvar="PARSEC_LOG_FILE")
-@click.option("--sentry-url", envvar="PARSEC_SENTRY_URL", help="Sentry URL for telemetry report")
+# Add --log-level/--log-format/--log-file/--sentry-url
+@logging_config_options
+@sentry_config_options(configure_sentry=True)
 @click.option("--debug", is_flag=True, envvar="PARSEC_DEBUG")
 @click.option(
     "--dev",
@@ -488,11 +477,7 @@ def run_cmd(
     debug,
     dev,
 ):
-
     # Start a local backend
-    configure_logging(log_level=log_level, log_format=log_format, log_file=log_file)
-    if sentry_url:
-        configure_sentry_logging(sentry_url)
 
     with cli_exception_handler(debug):
 

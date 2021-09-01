@@ -1,11 +1,15 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2016-2021 Scille SAS
 
+import sys
 import trio
 import click
 import traceback
-from functools import partial
+from functools import partial, wraps
 from async_generator import asynccontextmanager
 from contextlib import contextmanager
+
+from parsec.logging import configure_logging, configure_sentry_logging
+
 
 # Scheme stolen from py-spinners
 # MIT License Copyright (c) 2017 Manraj Singh
@@ -116,3 +120,66 @@ async def aconfirm(*args, **kwargs):
 
 async def aprompt(*args, **kwargs):
     return await trio.to_thread.run_sync(partial(click.prompt, *args, **kwargs))
+
+
+def logging_config_options(fn):
+    @click.option(
+        "--log-level",
+        "-l",
+        type=click.Choice(("DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL")),
+        default="WARNING",
+        show_default=True,
+        envvar="PARSEC_LOG_LEVEL",
+    )
+    @click.option(
+        "--log-format",
+        "-f",
+        type=click.Choice(("CONSOLE", "JSON")),
+        default="CONSOLE",
+        show_default=True,
+        envvar="PARSEC_LOG_FORMAT",
+    )
+    @click.option(
+        "--log-file", "-o", default=None, envvar="PARSEC_LOG_FILE", help="[default: stderr]"
+    )
+    @wraps(fn)
+    def wrapper(**kwargs):
+        # `click.open_file` considers "-" to be stdout
+        if kwargs["log_file"] in (None, "-"):
+
+            @contextmanager
+            def open_log_file():
+                yield sys.stderr
+
+        else:
+            open_log_file = partial(click.open_file, kwargs["log_file"], "w")
+
+        with open_log_file() as fd:
+
+            configure_logging(
+                log_level=kwargs["log_level"], log_format=kwargs["log_format"], log_stream=fd
+            )
+
+            return fn(**kwargs)
+
+    return wrapper
+
+
+def sentry_config_options(configure_sentry: bool):
+    def _sentry_config_options(fn):
+        @click.option(
+            "--sentry-url",
+            metavar="URL",
+            envvar="PARSEC_SENTRY_URL",
+            help="Sentry URL for telemetry report",
+        )
+        @wraps(fn)
+        def wrapper(**kwargs):
+            if configure_sentry and kwargs["sentry_url"]:
+                configure_sentry_logging(kwargs["sentry_url"])
+
+            return fn(**kwargs)
+
+        return wrapper
+
+    return _sentry_config_options
