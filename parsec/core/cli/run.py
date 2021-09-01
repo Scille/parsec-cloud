@@ -34,11 +34,12 @@ else:
         """
         Run parsec GUI
         """
-        if config.telemetry_enabled and sentry_url:
-            configure_sentry_logging(sentry_url)
+        with cli_exception_handler(config.debug):
+            if config.telemetry_enabled and sentry_url:
+                configure_sentry_logging(sentry_url)
 
-        config = config.evolve(mountpoint_enabled=True)
-        _run_gui(config, start_arg=url, diagnose=diagnose)
+            config = config.evolve(mountpoint_enabled=True)
+            _run_gui(config, start_arg=url, diagnose=diagnose)
 
 
 async def _run_mountpoint(config, device, timestamp: DateTime = None):

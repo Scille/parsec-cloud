@@ -13,7 +13,7 @@ from parsec.core.local_device import (
     load_device_with_password,
     LocalDeviceError,
 )
-from parsec.cli_utils import logging_config_options
+from parsec.cli_utils import logging_config_options, debug_config_options
 
 
 def core_config_options(fn):
@@ -22,6 +22,8 @@ def core_config_options(fn):
     )
     # Add --log-level/--log-format/--log-file
     @logging_config_options
+    # Add --debug
+    @debug_config_options
     @wraps(fn)
     def wrapper(**kwargs):
         assert "config" not in kwargs
@@ -30,9 +32,7 @@ def core_config_options(fn):
         sentry_url = kwargs.get("sentry_url")
 
         config_dir = Path(config_dir) if config_dir else get_default_config_dir(os.environ)
-        config = load_config(
-            config_dir=config_dir, sentry_url=sentry_url, debug="DEBUG" in os.environ
-        )
+        config = load_config(config_dir=config_dir, sentry_url=sentry_url, debug=kwargs["debug"])
 
         kwargs["config"] = config
         return fn(**kwargs)

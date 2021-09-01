@@ -186,3 +186,14 @@ def sentry_config_options(configure_sentry: bool):
         return wrapper
 
     return _sentry_config_options
+
+
+def debug_config_options(fn):
+    decorator = click.option(
+        "--debug",
+        is_flag=True,
+        # Don't prefix with `PARSEC_` given devs are lazy
+        envvar="DEBUG",
+    )
+    decorator(fn)
+    return fn

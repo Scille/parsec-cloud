@@ -10,7 +10,12 @@ from collections import defaultdict
 import tempfile
 
 from parsec.utils import trio_run
-from parsec.cli_utils import cli_exception_handler, logging_config_options, sentry_config_options
+from parsec.cli_utils import (
+    cli_exception_handler,
+    logging_config_options,
+    sentry_config_options,
+    debug_config_options,
+)
 from parsec.backend import backend_app_factory
 from parsec.backend.config import (
     BackendConfig,
@@ -448,7 +453,6 @@ organization_id, device_id, device_label (can be null), human_email (can be null
 # Add --log-level/--log-format/--log-file/--sentry-url
 @logging_config_options
 @sentry_config_options(configure_sentry=True)
-@click.option("--debug", is_flag=True, envvar="PARSEC_DEBUG")
 @click.option(
     "--dev",
     cls=DevOption,
@@ -461,6 +465,8 @@ organization_id, device_id, device_label (can be null), human_email (can be null
         " --backend-addr=parsec://localhost:<port>(?no_ssl=False if ssl is not set)`"
     ),
 )
+# Add --debug
+@debug_config_options
 def run_cmd(
     host,
     port,
