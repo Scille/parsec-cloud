@@ -9,7 +9,7 @@ from functools import partial
 from structlog import get_logger
 from async_generator import asynccontextmanager
 from winfspy import FileSystem, enable_debug_log
-from winfspy.plumbing import filetime_now
+from winfspy.plumbing import filetime_now, FileSystemNotStarted
 
 from parsec.event_bus import EventBus
 from parsec.core.fs.userfs import UserFS
@@ -227,4 +227,9 @@ async def winfsp_mountpoint_runner(
         # Must run in thread given this call will wait for any winfsp operation
         # to finish so blocking the trio loop can produce a dead lock...
         with trio.CancelScope(shield=True):
-            await trio.to_thread.run_sync(fs.stop)
+            try:
+                await trio.to_thread.run_sync(fs.stop)
+            # The file system might not be started,
+            # if the task gets cancelled before running `fs.start` for instance
+            except FileSystemNotStarted:
+                pass
