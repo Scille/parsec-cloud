@@ -10,8 +10,12 @@ from collections import defaultdict
 import tempfile
 
 from parsec.utils import trio_run
-from parsec.cli_utils import cli_exception_handler
-from parsec.logging import configure_logging, configure_sentry_logging
+from parsec.cli_utils import (
+    cli_exception_handler,
+    logging_config_options,
+    sentry_config_options,
+    debug_config_options,
+)
 from parsec.backend import backend_app_factory
 from parsec.backend.config import (
     BackendConfig,
@@ -170,7 +174,7 @@ def _parse_blockstore_params(raw_params):
 
 
 def _parse_forward_proto_enforce_https_check_param(
-    raw_param: Optional[str]
+    raw_param: Optional[str],
 ) -> Optional[Tuple[str, str]]:
     if raw_param is None:
         return None
@@ -241,10 +245,15 @@ For instance:
     "--db",
     required=True,
     envvar="PARSEC_DB",
+    metavar="URL",
     help="""Database configuration.
 Allowed values:
+
+\b
 -`MOCKED`: Mocked in memory
 -`postgresql://<...>`: Use PostgreSQL database
+
+\b
 """,
 )
 @click.option(
@@ -282,8 +291,11 @@ Allowed values:
     multiple=True,
     callback=lambda ctx, param, value: _parse_blockstore_params(value),
     envvar="PARSEC_BLOCKSTORE",
+    metavar="CONFIG",
     help="""Blockstore configuration.
 Allowed values:
+
+\b
 -`MOCKED`: Mocked in memory
 -`POSTGRESQL`: Use the database specified in the `--db` param
 -`s3:[<endpoint_url>]:<region>:<bucket>:<key>:<secret>`: Use S3 storage
@@ -299,12 +311,15 @@ RAID0/1/5 cluster.
 Each configuration must be provided with the form
 `<raid_type>:<node>:<config>` with `<raid_type>` RAID0/RAID1/RAID5, `<node>` a
 integer and `<config>` the MOCKED/POSTGRESQL/S3/SWIFT config.
+
+\b
 """,
 )
 @click.option(
     "--administration-token",
     required=True,
     envvar="PARSEC_ADMINISTRATION_TOKEN",
+    metavar="TOKEN",
     help="Secret token to access the administration api",
 )
 @click.option(
@@ -325,6 +340,7 @@ reservation and change the bootstrap token)
 @click.option(
     "--organization-bootstrap-webhook",
     envvar="PARSEC_ORGANIZATION_BOOTSTRAP_WEBHOOK",
+    metavar="URL",
     help="""URL to notify 3rd party service that a new organization has been bootstrapped.
 
 Each time an organization is bootstrapped, an HTTP POST will be send to the URL
@@ -349,6 +365,7 @@ organization_id, device_id, device_label (can be null), human_email (can be null
     "--backend-addr",
     envvar="PARSEC_BACKEND_ADDR",
     required=True,
+    metavar="URL",
     type=BackendAddr.from_url,
     help="URL to reach this server (typically used in invitation emails)",
 )
@@ -401,7 +418,10 @@ organization_id, device_id, device_label (can be null), human_email (can be null
     ),
 )
 @click.option(
-    "--email-sender", envvar="PARSEC_EMAIL_SENDER", help="Sender address used in sent emails"
+    "--email-sender",
+    envvar="PARSEC_EMAIL_SENDER",
+    metavar="EMAIL",
+    help="Sender address used in sent emails",
 )
 @click.option(
     "--forward-proto-enforce-https",
@@ -430,20 +450,9 @@ organization_id, device_id, device_label (can be null), human_email (can be null
     envvar="PARSEC_SSL_CERTFILE",
     help="SSL certificate file. This setting enables serving Parsec over SSL.",
 )
-@click.option(
-    "--log-level",
-    "-l",
-    default="WARNING",
-    show_default=True,
-    type=click.Choice(("DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL")),
-    envvar="PARSEC_LOG_LEVEL",
-)
-@click.option(
-    "--log-format", "-f", type=click.Choice(("CONSOLE", "JSON")), envvar="PARSEC_LOG_FORMAT"
-)
-@click.option("--log-file", "-o", envvar="PARSEC_LOG_FILE")
-@click.option("--sentry-url", envvar="PARSEC_SENTRY_URL", help="Sentry URL for telemetry report")
-@click.option("--debug", is_flag=True, envvar="PARSEC_DEBUG")
+# Add --log-level/--log-format/--log-file/--sentry-url
+@logging_config_options
+@sentry_config_options(configure_sentry=True)
 @click.option(
     "--dev",
     cls=DevOption,
@@ -456,6 +465,8 @@ organization_id, device_id, device_label (can be null), human_email (can be null
         " --backend-addr=parsec://localhost:<port>(?no_ssl=False if ssl is not set)`"
     ),
 )
+# Add --debug
+@debug_config_options
 def run_cmd(
     host,
     port,
@@ -488,11 +499,7 @@ def run_cmd(
     debug,
     dev,
 ):
-
     # Start a local backend
-    configure_logging(log_level=log_level, log_format=log_format, log_file=log_file)
-    if sentry_url:
-        configure_sentry_logging(sentry_url)
 
     with cli_exception_handler(debug):
 

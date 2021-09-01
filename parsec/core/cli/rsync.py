@@ -190,9 +190,9 @@ async def _rsync(
 
 
 @click.command(short_help="rsync to parsec")
-@core_config_and_device_options
 @click.argument("source")
 @click.argument("destination")
+@core_config_and_device_options
 def run_rsync(config, device, source, destination, **kwargs):
     with cli_exception_handler(config.debug):
         trio_run(_rsync, config, device, source, destination)

@@ -8,7 +8,6 @@ import trio
 from tqdm import tqdm
 from humanize import naturalsize
 
-from parsec.logging import configure_logging
 from parsec.core.logged_core import logged_core_factory
 from parsec.core.fs import FsPath
 from parsec.core.config import get_default_config_dir, load_config
@@ -20,7 +19,6 @@ from parsec.test_utils import (
 )
 
 
-LOG_LEVEL = "WARNING"
 DEVICE_ID = "alice@laptop"
 PASSWORD = "test"
 
@@ -75,7 +73,6 @@ async def benchmark_file_writing(device, workspace):
 async def main():
 
     # Config
-    configure_logging(log_level=LOG_LEVEL)
     config_dir = get_default_config_dir(os.environ)
     config = load_config(config_dir)
     devices = list_available_devices(config_dir)

@@ -14,8 +14,8 @@ async def _create_workspace(config, device, name):
 
 
 @click.command(short_help="create workspace")
-@core_config_and_device_options
 @click.argument("name")
+@core_config_and_device_options
 def create_workspace(config, device, name, **kwargs):
     """
     Create a new workspace for the given device.

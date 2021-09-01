@@ -20,12 +20,12 @@ async def _share_workspace(config, device, name, user_id, user_role):
 
 
 @click.command(short_help="share workspace")
-@core_config_and_device_options
 @click.option("--workspace-name")
 @click.option("--user-id", type=UserID, required=True)
 @click.option(
     "--role", required=True, type=click.Choice(WORKSPACE_ROLE_CHOICES.keys(), case_sensitive=False)
 )
+@core_config_and_device_options
 def share_workspace(config, device, workspace_name, user_id, role, **kwargs):
     """
     Create a new workspace for the given device.

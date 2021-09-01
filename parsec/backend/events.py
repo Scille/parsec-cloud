@@ -39,7 +39,7 @@ class EventsComponent:
                     {"event": event, "realm_id": realm_id, "role": role}
                 )
             except trio.WouldBlock:
-                client_ctx.logger.warning(f"event queue is full for {client_ctx}")
+                client_ctx.logger.warning("dropping event (queue is full)")
 
         def _on_pinged(event, backend_event, organization_id, author, ping):
             if organization_id != client_ctx.organization_id or author == client_ctx.device_id:
@@ -48,7 +48,7 @@ class EventsComponent:
             try:
                 client_ctx.send_events_channel.send_nowait({"event": event, "ping": ping})
             except trio.WouldBlock:
-                client_ctx.logger.warning(f"event queue is full for {client_ctx}")
+                client_ctx.logger.warning("dropping event (queue is full)")
 
         def _on_realm_events(event, backend_event, organization_id, author, realm_id, **kwargs):
             if (
@@ -63,7 +63,7 @@ class EventsComponent:
                     {"event": event, "realm_id": realm_id, **kwargs}
                 )
             except trio.WouldBlock:
-                client_ctx.logger.warning(f"event queue is full for {client_ctx}")
+                client_ctx.logger.warning("dropping event (queue is full)")
 
         def _on_message_received(event, backend_event, organization_id, author, recipient, index):
             if organization_id != client_ctx.organization_id or recipient != client_ctx.user_id:
@@ -72,7 +72,7 @@ class EventsComponent:
             try:
                 client_ctx.send_events_channel.send_nowait({"event": event, "index": index})
             except trio.WouldBlock:
-                client_ctx.logger.warning(f"event queue is full for {client_ctx}")
+                client_ctx.logger.warning("dropping event (queue is full)")
 
         def _on_invite_status_changed(
             event, backend_event, organization_id, greeter, token, status
@@ -85,7 +85,7 @@ class EventsComponent:
                     {"event": event, "token": token, "invitation_status": status}
                 )
             except trio.WouldBlock:
-                client_ctx.logger.warning(f"event queue is full for {client_ctx}")
+                client_ctx.logger.warning("dropping event (queue is full)")
 
         # Command should be idempotent
         if not client_ctx.events_subscribed:

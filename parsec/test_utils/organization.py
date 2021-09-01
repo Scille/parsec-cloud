@@ -8,7 +8,6 @@ from pathlib import Path
 from uuid import uuid4
 from pendulum import now as pendulum_now
 
-from parsec.logging import configure_logging
 from parsec.api.data import UserProfile, UserCertificateContent, DeviceCertificateContent, EntryID
 from parsec.api.protocol import OrganizationID, DeviceID, HumanHandle, DeviceName
 from parsec.crypto import SigningKey
@@ -44,7 +43,6 @@ async def initialize_test_organization(
     additional_users_number: int,
     additional_devices_number: int,
 ) -> Tuple[LocalDevice, LocalDevice, LocalDevice]:
-    configure_logging(log_level="WARNING")
     organization_id = OrganizationID("Org")
 
     # Create organization

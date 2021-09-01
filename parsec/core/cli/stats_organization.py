@@ -1,6 +1,5 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2016-2021 Scille SAS
 
-import os
 import trio
 import click
 from urllib.request import urlopen, Request
@@ -8,9 +7,9 @@ from urllib.request import urlopen, Request
 from parsec.utils import trio_run
 from parsec.api.protocol import OrganizationID
 from parsec.api.rest import organization_stats_rep_serializer
-from parsec.logging import configure_logging
-from parsec.cli_utils import cli_exception_handler
+from parsec.cli_utils import cli_exception_handler, debug_config_options
 from parsec.core.types import BackendAddr
+from parsec.core.cli.utils import logging_config_options
 
 
 async def _stats_organization(organization_id, backend_addr, administration_token):
@@ -34,9 +33,8 @@ async def _stats_organization(organization_id, backend_addr, administration_toke
 @click.argument("organization_id", required=True, type=OrganizationID)
 @click.option("--addr", "-B", required=True, type=BackendAddr.from_url, envvar="PARSEC_ADDR")
 @click.option("--administration-token", "-T", required=True, envvar="PARSEC_ADMINISTRATION_TOKEN")
-def stats_organization(organization_id, addr, administration_token):
-    debug = "DEBUG" in os.environ
-    configure_logging(log_level="DEBUG" if debug else "WARNING")
-
+@logging_config_options
+@debug_config_options
+def stats_organization(organization_id, addr, administration_token, debug, **kwargs):
     with cli_exception_handler(debug):
         trio_run(_stats_organization, organization_id, addr, administration_token)

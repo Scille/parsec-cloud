@@ -127,10 +127,10 @@ async def test_remote_error_event(
                 with pytest.raises(OSError):
                     os.mkdir(str(trio_w / "dummy"))
             if sys.platform == "win32":
-                expected_log = "[exception] Unhandled exception in winfsp mountpoint [parsec.core.mountpoint.winfsp_operations]"
+                expected_log = "[error    ] Unhandled exception in winfsp mountpoint [parsec.core.mountpoint.winfsp_operations]"
             else:
-                expected_log = "[exception] Unhandled exception in fuse mountpoint [parsec.core.mountpoint.fuse_operations]"
-            caplog.assert_occured(expected_log)
+                expected_log = "[error    ] Unhandled exception in fuse mountpoint [parsec.core.mountpoint.fuse_operations]"
+            caplog.assert_occured_once(expected_log)
             spy.assert_event_occured(CoreEvent.MOUNTPOINT_UNHANDLED_ERROR)
 
         await trio.to_thread.run_sync(_testbed_online)

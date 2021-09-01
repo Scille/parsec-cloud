@@ -6,7 +6,6 @@ from typing import List
 from functools import wraps
 from pathlib import Path
 
-from parsec.logging import configure_logging, configure_sentry_logging
 from parsec.core.config import get_default_config_dir, load_config
 from parsec.core.local_device import (
     AvailableDevice,
@@ -14,34 +13,26 @@ from parsec.core.local_device import (
     load_device_with_password,
     LocalDeviceError,
 )
+from parsec.cli_utils import logging_config_options, debug_config_options
 
 
 def core_config_options(fn):
-    @click.option("--config-dir", type=click.Path(exists=True, file_okay=False))
     @click.option(
-        "--log-level",
-        "-l",
-        default="WARNING",
-        envvar="PARSEC_LOG_LEVEL",
-        type=click.Choice(("DEBUG", "INFO", "WARNING", "ERROR")),
+        "--config-dir", envvar="PARSEC_CONFIG_DIR", type=click.Path(exists=True, file_okay=False)
     )
-    @click.option("--log-format", "-f", type=click.Choice(("CONSOLE", "JSON")))
-    @click.option("--log-file", "-o")
+    # Add --log-level/--log-format/--log-file
+    @logging_config_options
+    # Add --debug
+    @debug_config_options
     @wraps(fn)
-    def wrapper(config_dir, *args, **kwargs):
+    def wrapper(**kwargs):
         assert "config" not in kwargs
-
-        configure_logging(
-            log_level=kwargs["log_level"],
-            log_format=kwargs["log_format"],
-            log_file=kwargs["log_file"],
-        )
+        config_dir = kwargs["config_dir"]
+        # --sentry-url is only present for gui command
+        sentry_url = kwargs.get("sentry_url")
 
         config_dir = Path(config_dir) if config_dir else get_default_config_dir(os.environ)
-        config = load_config(config_dir, debug="DEBUG" in os.environ)
-
-        if config.telemetry_enabled and config.sentry_url:
-            configure_sentry_logging(config.sentry_url)
+        config = load_config(config_dir=config_dir, sentry_url=sentry_url, debug=kwargs["debug"])
 
         kwargs["config"] = config
         return fn(**kwargs)
@@ -66,7 +57,6 @@ def format_available_devices(devices: List[AvailableDevice]) -> str:
 
 
 def core_config_and_device_options(fn):
-    @core_config_options
     @click.option(
         "--device",
         "-D",
@@ -74,7 +64,13 @@ def core_config_and_device_options(fn):
         envvar="PARSEC_DEVICE",
         help="Device to use designed by it ID, see `list_devices` command to get the available IDs",
     )
-    @click.option("--password", "-P", envvar="PARSEC_DEVICE_PASSWORD")
+    @click.option(
+        "--password",
+        "-P",
+        envvar="PARSEC_DEVICE_PASSWORD",
+        help="Password to decrypt Device, if not set a prompt will ask for it",
+    )
+    @core_config_options
     @wraps(fn)
     def wrapper(**kwargs):
         config = kwargs["config"]

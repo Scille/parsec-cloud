@@ -1057,11 +1057,7 @@ class UserFS:
                 workspace_entry.id, new_workspace_entry.encryption_revision, now, reencryption_msgs
             )
             if not ok:
-                # Participant list has changed concurrently
-                logger.info(
-                    "Realm participants list has changed during start reencryption tentative, retrying",
-                    workspace_id=workspace_id,
-                )
+                # Participant list has changed concurrently, retry
                 continue
 
             else:

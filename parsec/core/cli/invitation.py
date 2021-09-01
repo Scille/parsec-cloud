@@ -89,9 +89,9 @@ async def _invite_user(config, device, email, send_email):
 
 
 @click.command(short_help="create user invitation")
-@core_config_and_device_options
 @click.argument("email")
 @click.option("--send-email", is_flag=True)
+@core_config_and_device_options
 def invite_user(config, device, email, send_email, **kwargs):
     """
     Create new user invitation
@@ -222,8 +222,8 @@ async def _greet_invitation(config, device, token):
 
 
 @click.command(short_help="greet invitation")
-@core_config_and_device_options
 @click.argument("token", type=UUID)
+@core_config_and_device_options
 def greet_invitation(config, device, token, **kwargs):
     """
     Greet a new device or user into the organization
@@ -332,9 +332,9 @@ async def _claim_invitation(config, addr, password):
 
 
 @click.command(short_help="claim invitation")
-@core_config_options
 @click.argument("addr", type=BackendInvitationAddr.from_url)
 @click.password_option(prompt="Choose a password for the claimed device")
+@core_config_options
 def claim_invitation(config, addr, password, **kwargs):
     """
     Claim a device or user from a invitation
@@ -395,8 +395,8 @@ async def _cancel_invitation(config, device, token):
 
 
 @click.command(short_help="cancel invitations")
-@core_config_and_device_options
 @click.argument("token", type=UUID)
+@core_config_and_device_options
 def cancel_invitation(config, device, token, **kwargs):
     """
     Cancel invitation
