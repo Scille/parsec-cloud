@@ -195,5 +195,4 @@ def debug_config_options(fn):
         # Don't prefix with `PARSEC_` given devs are lazy
         envvar="DEBUG",
     )
-    decorator(fn)
-    return fn
+    return decorator(fn)

@@ -192,8 +192,8 @@ def configure_stdlib_logger(
 
 def build_sentry_configuration(sentry_url: str) -> dict:
     sentry_logging = LoggingIntegration(
-        level=logging.INFO,  # Capture warning and above as breadcrumbs
-        event_level=logging.ERROR,  # Send errors as events
+        level=logging.INFO,  # Capture as breadcrumbs
+        event_level=logging.ERROR,  # Send as Sentry event
     )
     return {"dsn": sentry_url, "release": __version__, "integrations": [sentry_logging]}
 
