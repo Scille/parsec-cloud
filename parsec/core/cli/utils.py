@@ -17,7 +17,9 @@ from parsec.cli_utils import logging_config_options
 
 
 def core_config_options(fn):
-    @click.option("--config-dir", type=click.Path(exists=True, file_okay=False))
+    @click.option(
+        "--config-dir", envvar="PARSEC_CONFIG_DIR", type=click.Path(exists=True, file_okay=False)
+    )
     # Add --log-level/--log-format/--log-file
     @logging_config_options
     @wraps(fn)
@@ -55,7 +57,6 @@ def format_available_devices(devices: List[AvailableDevice]) -> str:
 
 
 def core_config_and_device_options(fn):
-    @core_config_options
     @click.option(
         "--device",
         "-D",
@@ -63,7 +64,13 @@ def core_config_and_device_options(fn):
         envvar="PARSEC_DEVICE",
         help="Device to use designed by it ID, see `list_devices` command to get the available IDs",
     )
-    @click.option("--password", "-P", envvar="PARSEC_DEVICE_PASSWORD")
+    @click.option(
+        "--password",
+        "-P",
+        envvar="PARSEC_DEVICE_PASSWORD",
+        help="Password to decrypt Device, if not set a prompt will ask for it",
+    )
+    @core_config_options
     @wraps(fn)
     def wrapper(**kwargs):
         config = kwargs["config"]

@@ -39,12 +39,12 @@ async def _bootstrap_organization(config, addr, password, device_label, human_la
 
 
 @click.command(short_help="configure new organization")
-@core_config_options
 @click.argument("addr", type=BackendOrganizationBootstrapAddr.from_url)
 @click.password_option(prompt="Choose a password for the device")
 @click.option("--device-label")
 @click.option("--human-label")
 @click.option("--human-email")
+@core_config_options
 def bootstrap_organization(
     config, addr, password, device_label, human_label, human_email, **kwargs
 ):
