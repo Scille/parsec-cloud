@@ -312,13 +312,13 @@ def test_unhandled_crash_in_fs_operation(caplog, mountpoint_service, monkeypatch
 
     assert exc.value.errno == errno.EINVAL
     if sys.platform == "win32":
-        caplog.assert_occured(
-            "[exception] Unhandled exception in winfsp mountpoint [parsec.core.mountpoint.winfsp_operations]"
+        caplog.assert_occured_once(
+            "[error    ] Unhandled exception in winfsp mountpoint [parsec.core.mountpoint.winfsp_operations]"
         )
 
     else:
-        caplog.assert_occured(
-            "[exception] Unhandled exception in fuse mountpoint [parsec.core.mountpoint.fuse_operations]"
+        caplog.assert_occured_once(
+            "[error    ] Unhandled exception in fuse mountpoint [parsec.core.mountpoint.fuse_operations]"
         )
 
 

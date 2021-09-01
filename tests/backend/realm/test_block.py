@@ -198,7 +198,7 @@ async def test_raid5_block_create_single_failure(
     await block_create(alice_backend_sock, BLOCK_ID, realm, BLOCK_DATA)
 
     # Should be notified of blockstore malfunction
-    caplog.assert_occured(
+    caplog.assert_occured_once(
         f"[warning  ] Cannot reach RAID5 blockstore #{failing_blockstore} to "
         f"create block {BLOCK_ID} [parsec.backend.raid5_blockstore]"
     )
@@ -223,15 +223,15 @@ async def test_raid5_block_create_multiple_failure(
     assert rep == {"status": "timeout"}
 
     # Should be notified of blockstore malfunction
-    caplog.assert_occured(
+    caplog.assert_occured_once(
         f"[warning  ] Cannot reach RAID5 blockstore #{fb1} to "
         f"create block {BLOCK_ID} [parsec.backend.raid5_blockstore]"
     )
-    caplog.assert_occured(
+    caplog.assert_occured_once(
         f"[warning  ] Cannot reach RAID5 blockstore #{fb2} to "
         f"create block {BLOCK_ID} [parsec.backend.raid5_blockstore]"
     )
-    caplog.assert_occured(
+    caplog.assert_occured_once(
         f"[error    ] Block {BLOCK_ID} cannot be created: Too many failing "
         "blockstores in the RAID5 cluster [parsec.backend.raid5_blockstore]"
     )
@@ -261,7 +261,7 @@ async def test_raid5_block_read_single_failure(
     assert rep == {"status": "ok", "block": BLOCK_DATA}
 
     # Should be notified of blockstore malfunction
-    caplog.assert_occured(
+    caplog.assert_occured_once(
         f"[warning  ] Cannot reach RAID5 blockstore #{failing_blockstore} to "
         f"read block {block} [parsec.backend.raid5_blockstore]"
     )
@@ -301,15 +301,15 @@ async def test_raid5_block_read_multiple_failure(
     assert rep == {"status": "timeout"}
 
     # Should be notified of blockstore malfunction
-    caplog.assert_occured(
+    caplog.assert_occured_once(
         f"[warning  ] Cannot reach RAID5 blockstore #{fb1} to "
         f"read block {block} [parsec.backend.raid5_blockstore]"
     )
-    caplog.assert_occured(
+    caplog.assert_occured_once(
         f"[warning  ] Cannot reach RAID5 blockstore #{fb2} to "
         f"read block {block} [parsec.backend.raid5_blockstore]"
     )
-    caplog.assert_occured(
+    caplog.assert_occured_once(
         f"[error    ] Block {block} cannot be read: Too many failing "
         "blockstores in the RAID5 cluster [parsec.backend.raid5_blockstore]"
     )

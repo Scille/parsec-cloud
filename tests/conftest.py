@@ -138,21 +138,53 @@ def patch_caplog():
     def _remove_colors(msg):
         return re.sub(r"\x1B\[([0-9]{1,2}(;[0-9]{1,2})?)?[mGK]", "", str(msg))
 
+    def _find(self, log):
+        __tracebackhide__ = True
+        matches_msgs = []
+        matches_records = []
+        for record in self.records:
+            monochrome_msg = _remove_colors(record.msg)
+            if log in monochrome_msg:
+                matches_msgs.append(monochrome_msg)
+                matches_records.append(record)
+        return matches_msgs, matches_records
+
+    def _register_asserted_records(self, *records):
+        try:
+            asserted_records = self.asserted_records
+        except AttributeError:
+            asserted_records = set()
+            setattr(self, "asserted_records", asserted_records)
+        asserted_records.update(records)
+
     def _assert_occured(self, log):
         __tracebackhide__ = True
-        record = next((r for r in self.records if log in _remove_colors(r.msg)), None)
-        assert record is not None
-        if not hasattr(self, "asserted_records"):
-            self.asserted_records = set()
-        self.asserted_records.add(record)
+        matches_msgs, matches_records = _find(self, log)
+        assert matches_msgs
+        _register_asserted_records(self, *matches_records)
+        return matches_msgs
+
+    def _assert_occured_once(self, log):
+        __tracebackhide__ = True
+        matches_msgs, matches_records = _find(self, log)
+        assert len(matches_msgs) == 1
+        _register_asserted_records(self, matches_records[0])
+        return matches_msgs[0]
+
+    def _assert_not_occured(self, log):
+        __tracebackhide__ = True
+        matches_msgs, matches_records = _find(self, log)
+        assert not matches_msgs
 
     LogCaptureFixture.assert_occured = _assert_occured
+    LogCaptureFixture.assert_occured_once = _assert_occured_once
+    LogCaptureFixture.assert_not_occured = _assert_not_occured
 
 
 @pytest.fixture(autouse=True)
 def no_logs_gte_error(caplog):
     yield
-    # The test should use `caplog.assert_occured` to indicate a log was expected,
+    # The test should use `caplog.assert_occured_once` to indicate a log was expected,
     # otherwise we consider error logs as *actual* errors.
     asserted_records = getattr(caplog, "asserted_records", set())
     errors = [

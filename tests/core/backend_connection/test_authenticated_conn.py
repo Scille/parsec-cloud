@@ -167,8 +167,8 @@ async def test_monitor_crash(caplog, running_backend, event_bus, alice, during_b
                 {"status": BackendConnStatus.CRASHED, "status_exc": spy.ANY},
             )
             assert conn.status == BackendConnStatus.CRASHED
-            caplog.assert_occured(
-                "[exception] Unhandled exception            [parsec.core.backend_connection.authenticated]"
+            caplog.assert_occured_once(
+                "[error    ] Unhandled exception            [parsec.core.backend_connection.authenticated]"
             )
 
             # Test command not possible

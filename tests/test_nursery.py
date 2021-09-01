@@ -34,7 +34,7 @@ async def test_open_service_nursery_multierror_collapse(caplog):
             nursery.start_soon(_raise, RuntimeError())
             await _raise(ZeroDivisionError(1, 2, 3))
 
-    caplog.assert_occured("[exception] A MultiError has been detected [parsec.utils]")
+    caplog.assert_occured_once("[error    ] A MultiError has been detected [parsec.utils]")
 
     exception = ctx.value
     assert isinstance(exception, ZeroDivisionError)
