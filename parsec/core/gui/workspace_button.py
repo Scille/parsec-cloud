@@ -48,9 +48,9 @@ class WorkspaceButton(QWidget, Ui_WorkspaceButton):
     open_clicked = pyqtSignal(WorkspaceFS)
     switch_clicked = pyqtSignal(bool, WorkspaceFS, object)
 
-    def __init__(self, workspace_fs):
+    def __init__(self, workspace_fs, parent=None):
         # Initialize UI
-        super().__init__()
+        super().__init__(parent=parent)
         self.setupUi(self)
 
         # Read-only attributes
