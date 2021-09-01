@@ -12,6 +12,31 @@ from sentry_sdk.utils import event_from_exception
 from parsec import __version__
 
 
+# Long story short Python's logging is an overengineering mess, adding
+# structlog and Sentry brings another layer of complexity :/
+#
+# What we want to achieve here:
+# - Nice colored output for console
+# - JSON output for log processing tools
+# - structured logging and stacktrace formatting
+# - output to stdout (for 12 factor app server) or file (for client)
+# - Sentry integration for on-error telemetry
+#
+# What we need to do:
+# - Configure structlog with a stream handler to spit logs
+# - Configure stdlib with a separate stream handler to spit logs (redirecting
+#   structlog-to-stdlib or stdlib-to-structlog is very error-prone)
+# - Configure stdlib with a structlog formatter to have consistent output format
+# - Configure Sentry as a processor in structlog before it formatting processor
+#   (so Sentry don't end up with a single string log blob)
+# - Configure Sentry stdlib integration (so 3rd party logs are also captured)
+#
+# Note that makes stdlib and structlog strictly separated: they both happened to
+# output the same format at the same destination but don't know about each other.
+#
+# By the way, did you know Python's stdlib logging module was inspired by Java's ?
+
+
 def _build_formatter_renderer(log_format: str):
     if log_format == "CONSOLE":
         return structlog.dev.ConsoleRenderer()
@@ -116,6 +141,12 @@ def _structlog_to_sentry_processor(logger, method_name: str, event: dict) -> dic
 
 def build_structlog_configuration(log_level: str, log_format: str, log_stream: TextIO) -> dict:
     log_level = _cook_log_level(log_level)
+    # A bit of struclog architecture:
+    # - lazy proxy: component obtained through `structlog.get_logger()`, lazyness
+    #     is needed given it is imported very early on (later it bind operation
+    #     will initialize the logger wrapper)
+    # - logger wrapper: component responsible for all the cooking (e.g. calling processors)
+    # - logger: actual component that will spit out the log to stdout/file etc.
     return {
         "processors": [
             structlog.stdlib.add_log_level,
