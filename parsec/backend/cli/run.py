@@ -169,7 +169,7 @@ def _parse_blockstore_params(raw_params):
 
 
 def _parse_forward_proto_enforce_https_check_param(
-    raw_param: Optional[str]
+    raw_param: Optional[str],
 ) -> Optional[Tuple[str, str]]:
     if raw_param is None:
         return None
@@ -240,10 +240,15 @@ For instance:
     "--db",
     required=True,
     envvar="PARSEC_DB",
+    metavar="URL",
     help="""Database configuration.
 Allowed values:
+
+\b
 -`MOCKED`: Mocked in memory
 -`postgresql://<...>`: Use PostgreSQL database
+
+\b
 """,
 )
 @click.option(
@@ -281,8 +286,11 @@ Allowed values:
     multiple=True,
     callback=lambda ctx, param, value: _parse_blockstore_params(value),
     envvar="PARSEC_BLOCKSTORE",
+    metavar="CONFIG",
     help="""Blockstore configuration.
 Allowed values:
+
+\b
 -`MOCKED`: Mocked in memory
 -`POSTGRESQL`: Use the database specified in the `--db` param
 -`s3:[<endpoint_url>]:<region>:<bucket>:<key>:<secret>`: Use S3 storage
@@ -298,12 +306,15 @@ RAID0/1/5 cluster.
 Each configuration must be provided with the form
 `<raid_type>:<node>:<config>` with `<raid_type>` RAID0/RAID1/RAID5, `<node>` a
 integer and `<config>` the MOCKED/POSTGRESQL/S3/SWIFT config.
+
+\b
 """,
 )
 @click.option(
     "--administration-token",
     required=True,
     envvar="PARSEC_ADMINISTRATION_TOKEN",
+    metavar="TOKEN",
     help="Secret token to access the administration api",
 )
 @click.option(
@@ -324,6 +335,7 @@ reservation and change the bootstrap token)
 @click.option(
     "--organization-bootstrap-webhook",
     envvar="PARSEC_ORGANIZATION_BOOTSTRAP_WEBHOOK",
+    metavar="URL",
     help="""URL to notify 3rd party service that a new organization has been bootstrapped.
 
 Each time an organization is bootstrapped, an HTTP POST will be send to the URL
@@ -348,6 +360,7 @@ organization_id, device_id, device_label (can be null), human_email (can be null
     "--backend-addr",
     envvar="PARSEC_BACKEND_ADDR",
     required=True,
+    metavar="URL",
     type=BackendAddr.from_url,
     help="URL to reach this server (typically used in invitation emails)",
 )
@@ -400,7 +413,10 @@ organization_id, device_id, device_label (can be null), human_email (can be null
     ),
 )
 @click.option(
-    "--email-sender", envvar="PARSEC_EMAIL_SENDER", help="Sender address used in sent emails"
+    "--email-sender",
+    envvar="PARSEC_EMAIL_SENDER",
+    metavar="EMAIL",
+    help="Sender address used in sent emails",
 )
 @click.option(
     "--forward-proto-enforce-https",
