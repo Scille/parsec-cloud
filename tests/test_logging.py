@@ -1,11 +1,34 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2016-2021 Scille SAS
 
 import pytest
+from unittest.mock import ANY
 from io import StringIO
 import re
 import logging
+import sentry_sdk
 
-from parsec.logging import build_structlog_configuration, configure_stdlib_logger
+from parsec._version import __version__ as parsec_version
+from parsec.logging import (
+    build_structlog_configuration,
+    configure_stdlib_logger,
+    build_sentry_configuration,
+)
+
+
+@pytest.fixture
+def capsentry():
+    events = []
+
+    # This hub context isolates us from the "real" global one
+    with sentry_sdk.Hub():
+
+        def _collect_events(event):
+            events.append(event)
+
+        config = build_sentry_configuration("whatever")
+        sentry_sdk.init(**config, transport=_collect_events)
+
+        yield events
 
 
 def remove_colors(log: str) -> str:
@@ -307,3 +330,269 @@ def test_exception_handling(familly):
         logger.error("No more donuts", exc_info=True)
     log = cook_log(out.read())
     assert log == expected_log
+
+
+def test_sentry_structlog_integration(capsentry):
+    out = LogStream()
+    # Set log_level to DEBUG to make sure it is not filtered before reaching Sentry
+    logger = build_structlog_test_logger(
+        log_level="DEBUG", log_format="JSON", log_stream=out.stream
+    )
+
+    # Debug level is ignored by Sentry
+
+    logger.debug("Just ignore me, please.", name="chameleon")
+    assert capsentry == []
+
+    # Info&Warning are kept as breadcrumbs
+
+    logger.info("Keep me, I'm info !", name="Donkey")
+    logger.warning("Keep me, I'm warning !", name="Rhino")
+    assert capsentry == []
+    breadcrumbs = [
+        {
+            "type": "log",
+            "level": "info",
+            "category": "parsec.structlog",
+            "message": "Keep me, I'm info !",
+            "timestamp": ANY,
+            "data": {"name": "Donkey"},
+        },
+        {
+            "type": "log",
+            "level": "warning",
+            "category": "parsec.structlog",
+            "message": "Keep me, I'm warning !",
+            "timestamp": ANY,
+            "data": {"name": "Rhino"},
+        },
+    ]
+
+    # Error triggers Sentry
+
+    logger.error("Can't ignore me now !", name="Tyrannosaurus")
+    assert len(capsentry) == 1
+    report = capsentry[0]
+    assert report["level"] == "error"
+    assert report["logger"] == "parsec.structlog"
+    assert report["message"] == "Can't ignore me now !"
+    assert report["extra"] == {"name": "Tyrannosaurus", "sys.argv": ANY}
+    assert report["breadcrumbs"] == {"values": breadcrumbs}
+    assert report["release"] == parsec_version
+    assert not report.get("exception")
+    # Last error is also part of the breadcrumbs
+    breadcrumbs.append(
+        {
+            "type": "log",
+            "level": "error",
+            "category": "parsec.structlog",
+            "message": "Can't ignore me now !",
+            "timestamp": ANY,
+            "data": {"name": "Tyrannosaurus", "sys.argv": ANY},
+        }
+    )
+
+    # Another Sentry trigger, this time with exception info
+
+    capsentry.clear()
+    try:
+        raise ValueError("Ignored error")
+    except Exception:
+        logger.exception(
+            "No more donuts", name="Cookie Monster", exc_info=generate_raised_exception()
+        )
+    assert len(capsentry) == 1
+    report = capsentry[0]
+    assert report["level"] == "error"
+    assert report["logger"] == "parsec.structlog"
+    assert report["message"] == "No more donuts"
+    assert report["extra"] == {"name": "Cookie Monster", "sys.argv": ANY}
+    assert report["breadcrumbs"] == {"values": breadcrumbs}
+    assert report["release"] == parsec_version
+    assert report["exception"] == {
+        "values": [
+            {
+                "type": "ValueError",
+                "value": "Ignored error",
+                "module": None,
+                "mechanism": {"type": "structlog", "handled": True},
+                "stacktrace": {"frames": [ANY]},
+            },
+            {
+                "type": "RuntimeError",
+                "value": "D'oh !",
+                "module": None,
+                "mechanism": {"type": "structlog", "handled": True},
+                "stacktrace": {"frames": [ANY]},
+            },
+        ]
+    }
+    # Last error is also part of the breadcrumbs
+    breadcrumbs.append(
+        {
+            "type": "log",
+            "level": "error",
+            "category": "parsec.structlog",
+            "message": "No more donuts",
+            "timestamp": ANY,
+            "data": {"name": "Cookie Monster", "sys.argv": ANY},
+        }
+    )
+
+    # Finaly Sentry trigger, this time with implicit exception info
+
+    capsentry.clear()
+    try:
+        raise ValueError("Don't forget me !")
+    except Exception:
+        logger.exception("No more donuts", name="Homer J. Simpson")
+    assert len(capsentry) == 1
+    report = capsentry[0]
+    assert report["level"] == "error"
+    assert report["logger"] == "parsec.structlog"
+    assert report["message"] == "No more donuts"
+    assert report["extra"] == {"name": "Homer J. Simpson", "sys.argv": ANY}
+    assert report["breadcrumbs"] == {"values": breadcrumbs}
+    assert report["release"] == parsec_version
+    assert report["exception"] == {
+        "values": [
+            {
+                "type": "ValueError",
+                "value": "Don't forget me !",
+                "module": None,
+                "mechanism": {"type": "structlog", "handled": True},
+                "stacktrace": {"frames": [ANY]},
+            }
+        ]
+    }
+
+
+def test_sentry_stdlib_integration(capsentry):
+    out = LogStream()
+    # Set log_level to DEBUG to make sure it is not filtered before reaching Sentry
+    logger = build_stdlib_test_logger(log_level="DEBUG", log_format="JSON", log_stream=out.stream)
+
+    # Debug level is ignored by Sentry
+
+    logger.debug("Just ignore me, please.")
+    assert capsentry == []
+
+    # Info&Warning are kept as breadcrumbs
+
+    logger.info("Keep me, I'm info !")
+    logger.warning("Keep me, I'm warning !")
+    assert capsentry == []
+    breadcrumbs = [
+        {
+            "type": "log",
+            "level": "info",
+            "category": "my_test_logger",
+            "message": "Keep me, I'm info !",
+            "timestamp": ANY,
+            "data": {},
+        },
+        {
+            "type": "log",
+            "level": "warning",
+            "category": "my_test_logger",
+            "message": "Keep me, I'm warning !",
+            "timestamp": ANY,
+            "data": {},
+        },
+    ]
+
+    # Error triggers Sentry
+
+    logger.error("Can't ignore me now !")
+    assert len(capsentry) == 1
+    report = capsentry[0]
+    assert report["level"] == "error"
+    assert report["logger"] == "my_test_logger"
+    assert report["logentry"] == {"message": "Can't ignore me now !", "params": []}
+    assert report["extra"] == {"sys.argv": ANY}
+    assert report["breadcrumbs"] == {"values": breadcrumbs}
+    assert report["release"] == parsec_version
+    assert not report.get("exception")
+    # Last error is also part of the breadcrumbs
+    breadcrumbs.append(
+        {
+            "type": "log",
+            "level": "error",
+            "category": "my_test_logger",
+            "message": "Can't ignore me now !",
+            "timestamp": ANY,
+            "data": {},
+        }
+    )
+
+    # Another Sentry trigger, this time with exception info
+
+    capsentry.clear()
+    try:
+        raise ValueError("Ignored error")
+    except Exception:
+        logger.exception("No more donuts", exc_info=generate_raised_exception())
+    assert len(capsentry) == 1
+    report = capsentry[0]
+    assert report["level"] == "error"
+    assert report["logger"] == "my_test_logger"
+    assert report["logentry"] == {"message": "No more donuts", "params": []}
+    assert report["extra"] == {"sys.argv": ANY}
+    assert report["breadcrumbs"] == {"values": breadcrumbs}
+    assert report["release"] == parsec_version
+    assert report["exception"] == {
+        "values": [
+            {
+                "type": "ValueError",
+                "value": "Ignored error",
+                "module": None,
+                "mechanism": {"type": "logging", "handled": True},
+                "stacktrace": {"frames": [ANY]},
+            },
+            {
+                "type": "RuntimeError",
+                "value": "D'oh !",
+                "module": None,
+                "mechanism": {"type": "logging", "handled": True},
+                "stacktrace": {"frames": [ANY]},
+            },
+        ]
+    }
+    # Last error is also part of the breadcrumbs
+    breadcrumbs.append(
+        {
+            "type": "log",
+            "level": "error",
+            "category": "my_test_logger",
+            "message": "No more donuts",
+            "timestamp": ANY,
+            "data": {},
+        }
+    )
+
+    # Finaly Sentry trigger, this time with implicit exception info
+
+    capsentry.clear()
+    try:
+        raise ValueError("Don't forget me !")
+    except Exception:
+        logger.exception("No more donuts")
+    assert len(capsentry) == 1
+    report = capsentry[0]
+    assert report["level"] == "error"
+    assert report["logger"] == "my_test_logger"
+    assert report["logentry"] == {"message": "No more donuts", "params": []}
+    assert report["extra"] == {"sys.argv": ANY}
+    assert report["breadcrumbs"] == {"values": breadcrumbs}
+    assert report["release"] == parsec_version
+    assert report["exception"] == {
+        "values": [
+            {
+                "type": "ValueError",
+                "value": "Don't forget me !",
+                "module": None,
+                "mechanism": {"type": "logging", "handled": True},
+                "stacktrace": {"frames": [ANY]},
+            }
+        ]
+    }

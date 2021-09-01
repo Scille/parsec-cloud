@@ -1,10 +1,13 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2016-2021 Scille SAS
 
+import sys
+from datetime import datetime
 from typing import Optional, TextIO
 import structlog
 import logging
-import sentry_sdk
+from sentry_sdk import Hub as sentry_Hub, init as sentry_init
 from sentry_sdk.integrations.logging import LoggingIntegration
+from sentry_sdk.utils import event_from_exception
 
 from parsec import __version__
 
@@ -18,12 +21,22 @@ def _build_formatter_renderer(log_format: str):
         raise ValueError(f"Unknown log format `{log_format}`")
 
 
-def _build_timestamper():
-    # UTC everywhere is good to avoid confusions (i.e. the `Z` suffix from
-    # iso format make it very explicit). Of course if you live in place
-    # such as Chatham Islands you'll have some fun comparing to your
-    # local clock, but I assume you're already used to it ;)
-    return structlog.processors.TimeStamper(fmt="iso", utc=True)
+# UTC everywhere is good to avoid confusions (i.e. the `Z` suffix from
+# iso format make it very explicit). Of course if you live in place
+# such as Chatham Islands you'll have some fun comparing to your
+# local clock, but I assume you're already used to it ;)
+
+
+def _add_timestamp(logger, method_name: str, event: dict) -> dict:
+    # Don't use pendulum here given this will be passed to sentry_sdk which
+    # expects a regular timezone-naive datetime in UTC
+    event["timestamp"] = datetime.utcnow()
+    return event
+
+
+def _format_timestamp(logger, method_name: str, event: dict) -> dict:
+    event["timestamp"] = event["timestamp"].isoformat() + "Z"
+    return event
 
 
 def _cook_log_level(log_level: Optional[str]) -> int:
@@ -33,15 +46,88 @@ def _cook_log_level(log_level: Optional[str]) -> int:
     return getattr(logging, log_level)
 
 
+_SENTRY_BREADCRUMB_LEVELS = {"info", "warning", "error", "exception"}
+_SENTRY_EVENT_LEVELS = {"error", "exception"}
+
+
+def _structlog_to_sentry_processor(logger, method_name: str, event: dict) -> dict:
+    sentry_client = sentry_Hub.current.client
+    if not sentry_client:
+        return event
+
+    # Unlike stdlib logging, structlog doesn't provide a separate logger name
+    # for each place a logger is created. This is fine given event message
+    # should be unique enough.
+    logger_name = "parsec.structlog"
+    data = event.copy()
+    level = data.pop("level")
+    msg = data.pop("event")
+    timestamp = data.pop("timestamp")
+
+    if level in _SENTRY_EVENT_LEVELS:
+        # Cook the exception as a (class, exc, traceback) tuple
+        v = data.pop("exc_info", None)
+        if isinstance(v, BaseException):
+            exc_info = (v.__class__, v, v.__traceback__)
+        elif isinstance(v, tuple):
+            exc_info = v
+        elif v:
+            exc_info = sys.exc_info()
+            if exc_info[0] is None:
+                exc_info = None
+        else:
+            exc_info = None
+
+        if exc_info:
+            sentry_event, _ = event_from_exception(
+                exc_info=exc_info,
+                client_options=sentry_client.options,
+                mechanism={"type": "structlog", "handled": True},
+            )
+        else:
+            sentry_event = {}
+
+        sentry_event["level"] = level
+        sentry_event["logger"] = logger_name
+        sentry_event["timestamp"] = timestamp
+        # sentry_sdk's stdlib logging integration stores the message under
+        # `logentry` key with a dict containing `message` and `params`.
+        # However it seems rather exotic given everywhere else the simpler
+        # `message` key is used.
+        sentry_event["message"] = msg
+        sentry_event["extra"] = data
+
+        sentry_Hub.current.capture_event(sentry_event)
+
+    if level in _SENTRY_BREADCRUMB_LEVELS:
+        sentry_Hub.current.add_breadcrumb(
+            {
+                "type": "log",
+                "category": logger_name,
+                "level": level,
+                "message": msg,
+                "timestamp": timestamp,
+                "data": data,
+            }
+        )
+
+    return event
+
+
 def build_structlog_configuration(log_level: str, log_format: str, log_stream: TextIO) -> dict:
     log_level = _cook_log_level(log_level)
     return {
         "processors": [
             structlog.stdlib.add_log_level,
-            _build_timestamper(),
+            _add_timestamp,
+            # Set `exc_info=True` if method name is `exception` and `exc_info` not set
             structlog.dev.set_exc_info,
-            structlog.processors.format_exc_info,
+            # Given sentry need the whole event context as a dictionary,
+            # this processor must be kept just before we start formatting
+            _structlog_to_sentry_processor,
             # Finally flatten everything into a printable string
+            _format_timestamp,
+            structlog.processors.format_exc_info,
             _build_formatter_renderer(log_format),
         ],
         "wrapper_class": structlog.make_filtering_bound_logger(log_level),
@@ -60,7 +146,8 @@ def configure_stdlib_logger(
     formatter = structlog.stdlib.ProcessorFormatter(
         foreign_pre_chain=[
             structlog.stdlib.add_log_level,
-            _build_timestamper(),
+            _add_timestamp,
+            _format_timestamp,
             structlog.processors.format_exc_info,
         ],
         processor=_build_formatter_renderer(log_format),
@@ -70,6 +157,14 @@ def configure_stdlib_logger(
 
     logger.addHandler(handler)
     logger.setLevel(log_level)
+
+
+def build_sentry_configuration(sentry_url: str) -> dict:
+    sentry_logging = LoggingIntegration(
+        level=logging.INFO,  # Capture warning and above as breadcrumbs
+        event_level=logging.ERROR,  # Send errors as events
+    )
+    return {"dsn": sentry_url, "release": __version__, "integrations": [sentry_logging]}
 
 
 def configure_logging(log_level: str, log_format: str, log_stream: TextIO) -> None:
@@ -84,12 +179,9 @@ def configure_logging(log_level: str, log_format: str, log_stream: TextIO) -> No
 
 
 def configure_sentry_logging(sentry_url: str) -> None:
-    sentry_logging = LoggingIntegration(
-        level=logging.WARNING,  # Capture warning and above as breadcrumbs
-        event_level=logging.ERROR,  # Send errors as events
-    )
-    sentry_sdk.init(dsn=sentry_url, integrations=[sentry_logging], release=__version__)
+    config = build_sentry_configuration(sentry_url)
+    sentry_init(**config)
 
 
 def disable_sentry_logging() -> None:
-    sentry_sdk.init(dsn=None)
+    sentry_init(dsn=None)
