@@ -130,7 +130,7 @@ def logging_config_options(fn):
         "--log-level",
         "-l",
         type=click.Choice(("DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL")),
-        default="WARNING",
+        default="INFO",
         show_default=True,
         envvar="PARSEC_LOG_LEVEL",
     )
