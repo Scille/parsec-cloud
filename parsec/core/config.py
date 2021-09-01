@@ -190,7 +190,7 @@ def load_config(config_dir: Path, **extra_config) -> CoreConfig:
 
     except (ValueError, json.JSONDecodeError) as exc:
         # Config file broken, fallback to default
-        logger.warning(f"Ignoring invalid config in {config_file} ({exc})")
+        logger.warning("Ignoring invalid config", config_file=config_file, error=str(exc))
         data_conf = {}
 
     try:
@@ -220,7 +220,7 @@ def load_config(config_dir: Path, **extra_config) -> CoreConfig:
     except KeyError:
         pass
     except ValueError as exc:
-        logger.warning(f"Invalid value for `preferred_org_creation_backend_addr` ({exc})")
+        logger.warning("Invalid value for `preferred_org_creation_backend_addr`", error=str(exc))
         data_conf["preferred_org_creation_backend_addr"] = None
 
     try:
