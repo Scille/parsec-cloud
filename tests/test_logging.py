@@ -51,7 +51,8 @@ def pin_file_and_line(log: str) -> str:
     # This may breaks if your work dir contains very exotic stuff (e.g. \n, quotes)
     return re.sub(
         # Quotes escapes are present in JSON output but not in CONSOLE
-        r'File (\\?)".*/tests/test_logging.py(\\?)", line [0-9]+, ',
+        # Windows: wE uSE BaCKlaSH aS SepARaToR !
+        r'File (\\?)".*\\?[/\\]tests\\?[/\\]test_logging.py(\\?)", line [0-9]+, ',
         r'File \1"<workdir>/tests/test_logging.py\2", line 42, ',
         log,
     )
