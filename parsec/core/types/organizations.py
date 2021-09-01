@@ -2,7 +2,6 @@
 
 import attr
 from typing import Optional
-from pendulum import DateTime
 from typing import List
 
 from parsec.api.protocol import UserProfile
@@ -27,6 +26,5 @@ class OrganizationStats:
 
 @attr.s(frozen=True, slots=True, auto_attribs=True)
 class OrganizationConfig:
-    expiration_date: DateTime
     user_profile_outsider_allowed: bool
     active_users_limit: Optional[int]

@@ -713,11 +713,6 @@
                             "required": true,
                             "type": "Integer"
                         },
-                        "expiration_date": {
-                            "allow_none": true,
-                            "required": false,
-                            "type": "DateTime"
-                        },
                         "status": {
                             "allow_none": false,
                             "required": true,

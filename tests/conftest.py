@@ -1,6 +1,5 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2016-2021 Scille SAS
 
-from parsec.core.core_events import CoreEvent
 import pytest
 import os
 import re
@@ -28,6 +27,7 @@ import tempfile
 from parsec.monitoring import TaskMonitoringInstrument
 from parsec.core import CoreConfig
 from parsec.core.types import BackendAddr
+from parsec.core.core_events import CoreEvent
 from parsec.core.logged_core import logged_core_factory
 from parsec.core.backend_connection import BackendConnStatus
 from parsec.core.mountpoint.manager import get_mountpoint_runner

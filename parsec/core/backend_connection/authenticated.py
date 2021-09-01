@@ -177,7 +177,7 @@ class BackendAuthenticatedConn:
         # On top of that, we pre-populate the cache with a "good enough" default
         # value so organization config is guaranteed to be always available \o/
         self._organization_config = OrganizationConfig(
-            expiration_date=None, user_profile_outsider_allowed=False, active_users_limit=None
+            user_profile_outsider_allowed=False, active_users_limit=None
         )
         self.event_bus = event_bus
         self.max_cooldown = max_cooldown
@@ -296,7 +296,6 @@ class BackendAuthenticatedConn:
 
             else:
                 self._organization_config = OrganizationConfig(
-                    expiration_date=rep.get("expiration_date"),
                     user_profile_outsider_allowed=rep["user_profile_outsider_allowed"],
                     active_users_limit=rep["active_users_limit"],
                 )
