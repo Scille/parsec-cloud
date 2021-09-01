@@ -86,7 +86,10 @@ def cli_exception_handler(debug):
         raise SystemExit(0)
 
     except Exception as exc:
-        click.echo(click.style("Error: ", fg="red") + str(exc))
+        exc_msg = str(exc)
+        if not exc_msg.strip():
+            exc_msg = repr(exc)
+        click.echo(click.style("Error: ", fg="red") + exc_msg)
         if debug:
             raise
         else:
