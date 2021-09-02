@@ -28,7 +28,7 @@ import sys
 import argparse
 import pathlib
 from copy import copy
-from datetime import date
+from datetime import date, datetime
 from collections import defaultdict
 import subprocess
 import re
@@ -36,6 +36,7 @@ import textwrap
 import math
 
 
+LICENSE_CONVERSION_DELAY = 4 * 365 * 24 * 3600  # 4 years
 PROJECT_DIR = pathlib.Path(__file__).resolve().parent.parent
 HISTORY_FILE = PROJECT_DIR / "HISTORY.rst"
 BSL_LICENSE_FILE = PROJECT_DIR / "licenses/BSL-Scille.txt"
@@ -220,17 +221,16 @@ def update_version_file(new_version: Version) -> None:
     VERSION_FILE.write_text(updated_version_txt)
 
 
-def update_license_file(new_version: Version, new_release_date: str) -> None:
+def update_license_file(new_version: Version, new_release_date: date) -> None:
     license_txt = BSL_LICENSE_FILE.read_text()
     half_updated_license_txt = re.sub(
-        r"Change Date:.*", f"Change Date:  {new_release_date}", license_txt
+        r"Change Date:.*", f"Change Date:  {new_release_date.strftime('%b %d, %Y')}", license_txt
     )
-    assert half_updated_license_txt != license_txt
-    full_updated_version_txt = re.sub(
+    updated_version_txt = re.sub(
         r"Licensed Work:.*", f"Licensed Work:  Parsec {new_version}", half_updated_license_txt
     )
-    assert full_updated_version_txt != half_updated_license_txt
-    BSL_LICENSE_FILE.write_text(full_updated_version_txt)
+    assert updated_version_txt != half_updated_license_txt
+    BSL_LICENSE_FILE.write_text(updated_version_txt)
 
 
 def collect_newsfragments():
@@ -257,7 +257,13 @@ def build_release(version, stage_pause):
             f"Previous version incompatible with new one ({old_version} vs {version})"
         )
 
-    release_date = date.today().isoformat()
+    now = datetime.utcnow()
+    release_date = now.date()
+    # Cannot just add years to date given it wouldn't handle february 29th
+    license_conversion_date = datetime.fromtimestamp(
+        now.timestamp() + LICENSE_CONVERSION_DELAY
+    ).date()
+    assert release_date.toordinal() < license_conversion_date.toordinal()
 
     # Check repo is clean
     stdout = run_git("status --porcelain --untracked-files=no")
@@ -278,7 +284,7 @@ def build_release(version, stage_pause):
         history_body = history_txt
 
     newsfragments = collect_newsfragments()
-    new_entry_title = f"Parsec {version} ({release_date})"
+    new_entry_title = f"Parsec {version} ({release_date.isoformat()})"
     new_entry = f"\n\n{new_entry_title}\n{len(new_entry_title) * '-'}\n"
     issues_per_type = defaultdict(list)
     for fragment in newsfragments:
@@ -306,14 +312,16 @@ def build_release(version, stage_pause):
     HISTORY_FILE.write_text(updated_history_txt)
 
     # Update BSL license date marker & version info
-    update_license_file(version, release_date)
+    update_license_file(version, license_conversion_date)
 
     # Make git commit
     commit_msg = f"Bump version {old_version} -> {version}"
     print(f"Create commit `{commit_msg}`")
     if stage_pause:
         input("Pausing, press enter when ready")
-    run_git(f"add {HISTORY_FILE.absolute()} {VERSION_FILE.absolute()}")
+    run_git(
+        f"add {HISTORY_FILE.absolute()} {BSL_LICENSE_FILE.absolute()} {VERSION_FILE.absolute()}"
+    )
     if newsfragments:
         fragments_pathes = [str(x.absolute()) for x in newsfragments]
         run_git(f"rm {' '.join(fragments_pathes)}")
@@ -329,11 +337,11 @@ def build_release(version, stage_pause):
     dev_version = version.evolve(is_dev=True)
     commit_msg = f"Bump version {version} -> {dev_version}"
     print(f"Create commit `{commit_msg}`")
+    update_version_file(dev_version)
+    update_license_file(dev_version, license_conversion_date)
     if stage_pause:
         input("Pausing, press enter when ready")
-    update_version_file(dev_version)
-    update_license_file(dev_version, release_date)
-    run_git(f"add {VERSION_FILE.absolute()}")
+    run_git(f"add {BSL_LICENSE_FILE.absolute()} {VERSION_FILE.absolute()}")
     # Disable pre-commit hooks given this commit wouldn't pass `releaser check`
     run_git(f"commit -m '{commit_msg}' --no-verify")
 
