@@ -98,6 +98,16 @@ class SqlBSLLicenser(Licenser):
     )
 
 
+class SqlAGPLLicenser(Licenser):
+    NAME = "AGPLv3"
+    HEADER = (
+        f"-- Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2016-{THIS_YEAR} Scille SAS"
+    )
+    HEADER_RE = re.compile(
+        r"^-- Parsec Cloud \(https://parsec\.cloud\) Copyright \(c\) AGPLv3 2016-(?P<year>[0-9]{4}) Scille SAS$"
+    )
+
+
 class SkipLicenser(Licenser):
     @classmethod
     def check_header(cls, file: Path) -> bool:
@@ -114,7 +124,8 @@ LICENSERS_MAP = {
     re.compile(r"^parsec/backend/.*\.py"): PythonBSLLicenser,
     re.compile(r"^parsec/core/gui/_resources_rc.py$"): SkipLicenser,
     re.compile(r"^parsec/core/gui/ui/"): SkipLicenser,
-    re.compile(r"^.*\.py"): PythonAGPLLicenser,
+    re.compile(r"^.*\.py$"): PythonAGPLLicenser,
+    re.compile(r"^.*\.sql$"): SqlAGPLLicenser,
 }
 
 
@@ -133,19 +144,28 @@ def get_licenser(path: Path) -> Licenser:
     for regex, licenser in LICENSERS_MAP.items():
         if regex.match(str(path.absolute().relative_to(PROJECT_DIR))):
             return licenser
+    else:
+        return None
 
 
 def check_headers(files: Iterable[Path]) -> int:
     ret = 0
     for file in get_files(files):
-        if not get_licenser(file).check_header(file):
+        licenser = get_licenser(file)
+        print(file, licenser)
+        if not licenser:
+            continue
+        if not licenser.check_header(file):
             ret = 1
     return ret
 
 
 def add_headers(files: Iterable[Path]) -> int:
     for file in get_files(files):
-        get_licenser(file).add_header(file)
+        licenser = get_licenser(file)
+        if not licenser:
+            continue
+        licenser.add_header(file)
     return 0
 
 
