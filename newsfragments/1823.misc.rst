@@ -1,1 +1,0 @@
-Improve error reports sent by telemetry and CLI arguments documentation.

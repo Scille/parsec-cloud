@@ -1,1 +1,0 @@
-Migrate to QTrio (using the trio guest loop mode) in order to have the core and the GUI running in the same thread.

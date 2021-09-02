@@ -5,6 +5,51 @@ History
 .. towncrier release notes start
 
 
+Parsec v2.5.0 (2021-09-02)
+--------------------------
+
+Bugfixes
+~~~~~~~~
+
+* Fixed a bug on MacOS where the window would freeze after the invitation
+  process  (`#1786 <https://github.com/Scille/parsec-cloud/issues/1786>`__)
+* Made the QR code easier to read by removing the logo and changing its color
+  (`#1787 <https://github.com/Scille/parsec-cloud/issues/1787>`__)
+* Generate the proper error when creating a file with a name larger than 255
+  bytes on linux  (`#1813 <https://github.com/Scille/parsec-
+  cloud/issues/1813>`__)
+* Fix file opening on Windows and MacOS (`#1822
+  <https://github.com/Scille/parsec-cloud/issues/1822>`__)
+
+Client/Backend API evolutions
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+* Add active user limit configurable on a per-organization basis. Also add
+  --organization-initial-user-profile-outsider-allowed and --organization-
+  initial-active-users-limit options in `backend run` command.  (`#1766
+  <https://github.com/Scille/parsec-cloud/issues/1766>`__)
+* Remove most parts of APIv1 (only `organization_bootsrap` command is kept from
+  APIv1 for backward compatibility). Remove `expiration_date` from
+  `organization_config` command. Introduce the administration REST api to create
+  & get informations on organizations.  (`#1810
+  <https://github.com/Scille/parsec-cloud/issues/1810>`__)
+
+Miscellaneous internal changes
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+* Images from email invitations are now hosted directly on the Parsec server
+  instead of relying on parsec.cloud website. (`#1780
+  <https://github.com/Scille/parsec-cloud/issues/1780>`__)
+* Change Parsec server license to Business Source License 1.1 (BSLv1.1).
+  (`#1785 <https://github.com/Scille/parsec-cloud/issues/1785>`__)
+* Improve claim/greet dialog in GUI when invitation is deleted.  (`#1806
+  <https://github.com/Scille/parsec-cloud/issues/1806>`__)
+* Improve the file size formatting by displaying for significant figures when
+  needed.  (`#1808 <https://github.com/Scille/parsec-cloud/issues/1808>`__)
+* Improve error reports sent by telemetry and CLI arguments documentation.
+  (`#1823 <https://github.com/Scille/parsec-cloud/issues/1823>`__)
+
+
 Parsec v2.4.2 (2021-07-06)
 --------------------------
 

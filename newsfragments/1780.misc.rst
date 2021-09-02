@@ -1,1 +1,0 @@
-Images from email invitations are now hosted directly on the Parsec server instead of relying on parsec.cloud website.
