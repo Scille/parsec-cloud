@@ -357,7 +357,7 @@ setup(
     author="Scille SAS",
     author_email="contact@scille.fr",
     url="https://github.com/Scille/parsec-cloud",
-    python_requires="~=3.6",
+    python_requires="~=3.7",
     packages=find_packages(include=["parsec", "parsec.*"]),
     package_dir={"parsec": "parsec"},
     setup_requires=[WHEEL_DEP, *GUI_DEPS, BABEL_DEP, DOCUTILS_DEP],  # To generate resources bundle
@@ -394,7 +394,6 @@ setup(
         "Operating System :: MacOS",
         "License :: OSI Approved :: GNU Affero General Public License v3 or later (AGPLv3+)",
         "Natural Language :: English",
-        "Programming Language :: Python :: 3.6",
         "Programming Language :: Python :: 3.7",
         "Programming Language :: Python :: 3.8",
     ],
