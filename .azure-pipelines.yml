@@ -393,8 +393,8 @@ jobs:
   condition: startsWith(variables['build.sourceBranch'], 'refs/tags/')
   timeoutInMinutes: 60
   pool:
-    # 18.04 requested to build a core18 image with --destructive-mode
-    vmImage: 'ubuntu-18.04'
+    # 20.04 requested to build a core20 image with --destructive-mode
+    vmImage: 'ubuntu-20.04'
   steps:
   - checkout: self
     submodules: true
@@ -410,6 +410,7 @@ jobs:
       cd snapbuild
       mkdir src
       cp -R $(Build.SourcesDirectory)/parsec src
+      cp $(Build.SourcesDirectory)/pre-requirements.txt src
       cp $(Build.SourcesDirectory)/setup.py src
       cp $(Build.SourcesDirectory)/README.rst src
       cp $(Build.SourcesDirectory)/HISTORY.rst src
@@ -559,10 +560,7 @@ jobs:
       NOT_AVAILABLES=$(parsec.cli --help | grep -i "not available")
       test "$(echo $NOT_AVAILABLES | grep -i 'backend')"
       test -z "$(echo $NOT_AVAILABLES | grep -i 'core')"
-      # xvfb-run parsec &
-      # sleep 5
-      # jobs  # returns error if parsec is not started
-      # kill %1
+      xvfb-run parsec --diagnose
     displayName: 'Test Snap'
 
 
