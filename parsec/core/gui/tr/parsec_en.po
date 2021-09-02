@@ -2465,6 +2465,12 @@ msgstr "Filter users"
 msgid "ACTION_FILTER_LIST_USERS"
 msgstr "Search users"
 
+msgid "ACTION_FILTER_REVOKED_USERS"
+msgstr "Hide revoked users"
+
+msgid "ACTION_FILTER_PENDING_INVITATION"
+msgstr "Hide pending invitations"
+
 msgid "ACTION_USER_INVITE_USER"
 msgstr "Invite a new user"
 
