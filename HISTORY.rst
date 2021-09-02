@@ -5,6 +5,16 @@ History
 .. towncrier release notes start
 
 
+Parsec v2.5.1 (2021-09-02)
+--------------------------
+
+Miscellaneous internal changes
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+* Update Linux Snap packaging to base image core20  (`#1826
+  <https://github.com/Scille/parsec-cloud/issues/1826>`__)
+
+
 Parsec v2.5.0 (2021-09-02)
 --------------------------
 

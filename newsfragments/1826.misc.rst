@@ -1,1 +1,0 @@
-Update Linux Snap packaging to base image core20
