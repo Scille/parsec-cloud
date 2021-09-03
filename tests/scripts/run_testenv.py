@@ -7,7 +7,6 @@ Create a temporary environment and initialize a test setup for parsec.
 Run `tests/scripts/run_testenv.sh --help` for more information.
 """
 
-
 import pkg_resources
 
 # Make sure parsec is fully installed (core, backend, dev)
@@ -29,6 +28,7 @@ from parsec.utils import trio_run
 from parsec.core.types import BackendAddr
 from parsec.core.config import get_default_config_dir
 from parsec.test_utils import initialize_test_organization
+from parsec.cli_utils import logging_config_options
 
 
 DEFAULT_BACKEND_PORT = 6888
@@ -186,7 +186,8 @@ async def restart_local_backend(administration_token, backend_port, email_host, 
 @click.option("--add-random-devices", show_default=True, default=0)
 @click.option("-e", "--empty", is_flag=True)
 @click.option("--source-file", hidden=True)
-def main(**kwargs):
+@logging_config_options
+def main(log_level, log_file, log_format, **kwargs):
     """Create a temporary environment and initialize a test setup for parsec.
 
     WARNING: it also leaves an in-memory backend running in the background
