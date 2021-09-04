@@ -6,7 +6,7 @@ from parsec.utils import trio_run
 from parsec.api.protocol import UserID
 from parsec.cli_utils import cli_exception_handler
 from parsec.core import logged_core_factory
-from parsec.core.cli.utils import core_config_and_device_options
+from parsec.core.cli.utils import cli_command_base_options, core_config_and_device_options
 from parsec.core.types import WorkspaceRole
 
 
@@ -26,6 +26,7 @@ async def _share_workspace(config, device, name, user_id, user_role):
     "--role", required=True, type=click.Choice(WORKSPACE_ROLE_CHOICES.keys(), case_sensitive=False)
 )
 @core_config_and_device_options
+@cli_command_base_options
 def share_workspace(config, device, workspace_name, user_id, role, **kwargs):
     """
     Create a new workspace for the given device.

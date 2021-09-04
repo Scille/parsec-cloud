@@ -13,17 +13,41 @@ from parsec.core.local_device import (
     load_device_with_password,
     LocalDeviceError,
 )
-from parsec.cli_utils import logging_config_options, debug_config_options
+from parsec.cli_utils import logging_config_options, debug_config_options, sentry_config_options
+
+
+def gui_command_base_options(fn):
+    for decorator in (
+        # Add --log-level/--log-format/--log-file
+        logging_config_options(default_log_level="INFO"),
+        # Add --sentry-url
+        sentry_config_options(configure_sentry=False),
+        # Add --debug
+        debug_config_options,
+    ):
+        fn = decorator(fn)
+    return fn
+
+
+def cli_command_base_options(fn):
+    # Unlike GUI, CLI command have a meaningful output, so we should avoid
+    # polluting it with INFO logs.
+    # On top of that, they are mostly short-running command so we don't
+    # bother enabling Sentry.
+    for decorator in (
+        # Add --log-level/--log-format/--log-file
+        logging_config_options(default_log_level="WARNING"),
+        # Add --debug
+        debug_config_options,
+    ):
+        fn = decorator(fn)
+    return fn
 
 
 def core_config_options(fn):
     @click.option(
         "--config-dir", envvar="PARSEC_CONFIG_DIR", type=click.Path(exists=True, file_okay=False)
     )
-    # Add --log-level/--log-format/--log-file
-    @logging_config_options
-    # Add --debug
-    @debug_config_options
     @wraps(fn)
     def wrapper(**kwargs):
         assert "config" not in kwargs

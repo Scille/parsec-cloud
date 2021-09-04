@@ -7,13 +7,14 @@ from pendulum import DateTime, parse as pendulum_parse
 
 from parsec.utils import trio_run
 from parsec.logging import configure_sentry_logging
-from parsec.cli_utils import (
-    cli_exception_handler,
-    generate_not_available_cmd,
-    sentry_config_options,
-)
+from parsec.cli_utils import cli_exception_handler, generate_not_available_cmd
 from parsec.core import logged_core_factory
-from parsec.core.cli.utils import core_config_and_device_options, core_config_options
+from parsec.core.cli.utils import (
+    cli_command_base_options,
+    gui_command_base_options,
+    core_config_and_device_options,
+    core_config_options,
+)
 
 try:
     from parsec.core.gui import run_gui as _run_gui
@@ -28,8 +29,7 @@ else:
     @click.argument("url", required=False)
     @click.option("--diagnose", "-d", is_flag=True)
     @core_config_options
-    # Add --sentry-url
-    @sentry_config_options(configure_sentry=False)
+    @gui_command_base_options
     def run_gui(config, url, diagnose, sentry_url, **kwargs):
         """
         Run parsec GUI
@@ -56,6 +56,7 @@ async def _run_mountpoint(config, device, timestamp: DateTime = None):
 @click.option("--mountpoint", "-m", type=click.Path(exists=False))
 @click.option("--timestamp", "-t", type=lambda t: pendulum_parse(t, tz="local"))
 @core_config_and_device_options
+@cli_command_base_options
 def run_mountpoint(config, device, mountpoint, timestamp, **kwargs):
     """
     Expose device's parsec drive on the given mountpoint.
