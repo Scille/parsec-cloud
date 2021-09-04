@@ -1,0 +1,1 @@
+Make Standard profile the default choice when greeting new user in GUI.
