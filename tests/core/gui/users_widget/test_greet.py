@@ -9,7 +9,7 @@ from functools import partial
 
 from parsec.utils import start_task
 from parsec.core.gui.lang import translate
-from parsec.api.protocol import InvitationType, HumanHandle, InvitationDeletedReason
+from parsec.api.protocol import InvitationType, HumanHandle, InvitationDeletedReason, UserProfile
 from parsec.core.types import BackendInvitationAddr
 from parsec.core.backend_connection import backend_invited_cmds_factory
 from parsec.core.invite import claimer_retrieve_info
@@ -40,8 +40,12 @@ def GreetUserTestBed(
 ):
     class _GreetUserTestBed:
         def __init__(self):
-            self.requested_human_handle = HumanHandle(email="pfry@pe.com", label="Philip J. Fry")
+            self.requested_email = "pfry@pe.com"
+            self.requested_label = "Philip J. Fry"
             self.requested_device_label = "PC1"
+            self.granted_email = self.requested_email
+            self.granted_label = self.requested_label
+            self.granted_device_label = self.requested_device_label
             self.steps_done = []
 
             # Set during bootstrap
@@ -62,8 +66,10 @@ def GreetUserTestBed(
 
         async def run(self):
             await self.bootstrap()
-            async with trio.open_nursery() as self.nursery:
-                async with backend_invited_cmds_factory(addr=self.invitation_addr) as self.cmds:
+            async with backend_invited_cmds_factory(addr=self.invitation_addr) as self.cmds:
+                # Nursery used to run the claimer, should be closed before tearing down
+                # invited cmds otherwise deadlock may occur
+                async with trio.open_nursery() as self.nursery:
                     next_step = "step_1_start_greet"
                     while True:
                         current_step = next_step
@@ -76,7 +82,7 @@ def GreetUserTestBed(
 
         async def bootstrap(self):
             author = logged_gui.test_get_central_widget().core.device
-            claimer_email = self.requested_human_handle.email
+            claimer_email = self.requested_email
 
             # Create new invitation
 
@@ -246,9 +252,12 @@ def GreetUserTestBed(
 
             async def _claimer_claim(in_progress_ctx, task_status=trio.TASK_STATUS_IGNORED):
                 task_status.started()
+                requested_human_handle = HumanHandle(
+                    email=self.requested_email, label=self.requested_label
+                )
                 await in_progress_ctx.do_claim_user(
                     requested_device_label=self.requested_device_label,
-                    requested_human_handle=self.requested_human_handle,
+                    requested_human_handle=requested_human_handle,
                 )
 
             self.claimer_claim_task = await start_task(
@@ -257,12 +266,14 @@ def GreetUserTestBed(
 
             def _check_info_displayed():
                 assert guci_w.isVisible()
-                assert guci_w.line_edit_user_full_name.text() == self.requested_human_handle.label
-                assert guci_w.line_edit_user_email.text() == self.requested_human_handle.email
+                assert guci_w.line_edit_user_full_name.text() == self.requested_label
+                assert guci_w.line_edit_user_email.text() == self.requested_email
                 assert guci_w.line_edit_device.text() == self.requested_device_label
                 assert guci_w.label_warning.text() == translate(
                     "TEXT_LABEL_USER_ROLE_RECOMMANDATIONS"
                 )
+                # Default profile choice is STANDARD
+                assert guci_w.combo_profile.currentData() == UserProfile.STANDARD
 
             await aqtbot.wait_until(_check_info_displayed)
 
@@ -289,7 +300,8 @@ def GreetUserTestBed(
                 assert u_w.layout_users.count() == 4
                 user_widget = u_w.layout_users.itemAt(3).widget()
                 assert isinstance(user_widget, UserButton)
-                assert user_widget.user_info.human_handle == self.requested_human_handle
+                assert user_widget.user_info.human_handle.email == self.granted_email
+                assert user_widget.user_info.human_handle.label == self.granted_label
 
             await aqtbot.wait_until(_greet_done)
 
@@ -303,6 +315,53 @@ def GreetUserTestBed(
 @customize_fixtures(logged_gui_as_admin=True)
 async def test_greet_user(GreetUserTestBed):
     await GreetUserTestBed().run()
+
+
+@pytest.mark.gui
+@pytest.mark.trio
+@customize_fixtures(logged_gui_as_admin=True)
+async def test_greet_user_modified_claim_info(GreetUserTestBed, backend, coolorg):
+    granted_email = "zorro@example.com"
+    granted_label = "Don Diego De La Vega"
+    granted_device_label = "Tornado"
+
+    class ModifiedClaimInfoTestBed(GreetUserTestBed):
+        async def step_5_provide_claim_info(self):
+            await super().step_5_provide_claim_info()
+
+            self.granted_email = granted_email
+            self.granted_label = granted_label
+            self.granted_device_label = granted_device_label
+
+            guci_w = self.greet_user_check_informations_widget
+
+            guci_w.line_edit_user_full_name.setText(self.granted_label)
+            guci_w.line_edit_user_email.setText(self.granted_email)
+            guci_w.line_edit_device.setText(self.granted_device_label)
+            for index in range(guci_w.combo_profile.model().rowCount()):
+                item = guci_w.combo_profile.model().item(index)
+                if item.text() == translate("TEXT_USER_PROFILE_ADMIN"):
+                    item = guci_w.combo_profile.setCurrentIndex(index)
+                    break
+            else:
+                assert False
+
+            return "step_6_validate_claim_info"
+
+    await ModifiedClaimInfoTestBed().run()
+
+    # Now check in the backend if everything went as expected
+    results, _ = await backend.user.find_humans(
+        organization_id=coolorg.organization_id, query="zorro"
+    )
+    assert len(results) == 1
+    assert results[0].human_handle.label == granted_label
+    assert results[0].human_handle.email == granted_email
+    user = await backend.user.get_user(
+        organization_id=coolorg.organization_id, user_id=results[0].user_id
+    )
+    assert user.profile == UserProfile.ADMIN
+    # TODO: BaseUserComponent should provide a way to check device label without device_id
 
 
 @pytest.mark.gui
