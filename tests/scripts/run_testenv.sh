@@ -26,7 +26,7 @@ fi
 if [[ "$(uname)" == "Darwin" ]]; then
   source_file="$TMPDIR/parsec-$(uuidgen)"
 else
-  source_file=$(tempfile)
+  source_file=$(python -c "import tempfile; print(tempfile.mkstemp()[1])")
 fi
 $script_dir/run_testenv.py --source-file $source_file $@ || return $?
 source $source_file
