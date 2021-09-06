@@ -17,9 +17,11 @@ from parsec.cli_utils import logging_config_options, debug_config_options, sentr
 
 
 def gui_command_base_options(fn):
+    # Skip INFO logs by default allows to know in a glance if something went
+    # wrong when running the GUI from a terminal
     for decorator in (
         # Add --log-level/--log-format/--log-file
-        logging_config_options(default_log_level="INFO"),
+        logging_config_options(default_log_level="WARNING"),
         # Add --sentry-url
         sentry_config_options(configure_sentry=False),
         # Add --debug
@@ -30,8 +32,8 @@ def gui_command_base_options(fn):
 
 
 def cli_command_base_options(fn):
-    # Unlike GUI, CLI command have a meaningful output, so we should avoid
-    # polluting it with INFO logs.
+    # CLI command have a meaningful output, so we should avoid polluting it
+    # with INFO logs.
     # On top of that, they are mostly short-running command so we don't
     # bother enabling Sentry.
     for decorator in (
