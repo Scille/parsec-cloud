@@ -77,7 +77,7 @@ async def test_process_while_offline(
 @pytest.mark.trio
 @customize_fixtures(backend_not_populated=True)
 async def test_autosync_placeholder_user_manifest(
-    autojump_clock,
+    # autojump_clock, # TODO: @touilleMan I summon you
     running_backend,
     backend_data_binder,
     event_bus_factory,
@@ -91,13 +91,10 @@ async def test_autosync_placeholder_user_manifest(
     # Don't use `core_factory` fixture given it whole point is to waits for
     # monitors to be idle before returning the core
     async with logged_core_factory(core_config, alice, event_bus=event_bus_factory()) as alice_core:
-        # assert not alice_core.are_monitors_idle()
+        # Wait for the sync monitor to sync the new workspace
         with alice_core.event_bus.listen() as spy:
-            # Wait for the sync monitor to sync the new workspace
-            with trio.fail_after(120):  # autojump, so not *really* 60s
-                await alice_core.wait_idle_monitors()
-            spy.assert_events_occured(
-                [(CoreEvent.FS_ENTRY_SYNCED, {"id": alice.user_manifest_id})], in_order=False
+            await spy.wait_with_timeout(
+                CoreEvent.FS_ENTRY_SYNCED, {"id": alice.user_manifest_id}, timeout=60.0
             )
 
     # Sync with existing realm&vlob on server side
@@ -105,21 +102,17 @@ async def test_autosync_placeholder_user_manifest(
     async with logged_core_factory(
         core_config, alice2, event_bus=event_bus_factory()
     ) as alice2_core:
-        # assert not alice_core.are_monitors_idle()
         with alice2_core.event_bus.listen() as spy:
             # Wait for the sync monitor to sync the new workspace
-            with trio.fail_after(60):  # autojump, so not *really* 60s
-                await alice2_core.wait_idle_monitors()
-            spy.assert_events_occured(
-                [(CoreEvent.FS_ENTRY_REMOTE_CHANGED, {"id": alice2.user_manifest_id, "path": "/"})],
-                in_order=False,
+            await spy.wait_with_timeout(
+                CoreEvent.FS_ENTRY_REMOTE_CHANGED, {"id": alice2.user_manifest_id, "path": "/"}
             )
 
 
 @pytest.mark.trio
 @customize_fixtures(backend_not_populated=True)
 async def test_autosync_placeholder_workspace_manifest(
-    autojump_clock,
+    # autojump_clock,  # TODO: @touilleMan I summon you
     running_backend,
     backend_data_binder,
     event_bus_factory,
@@ -136,28 +129,24 @@ async def test_autosync_placeholder_workspace_manifest(
         with alice_core.event_bus.listen() as spy:
             w1id = await alice_core.user_fs.workspace_create("w1")
             # Wait for the sync monitor to sync the new workspace
-            with trio.fail_after(60):  # autojump, so not *really* 60s
-                await alice_core.wait_idle_monitors()
-            spy.assert_events_occured(
+            await spy.wait_multiple_with_timeout(
                 [
                     (CoreEvent.FS_ENTRY_SYNCED, {"id": alice.user_manifest_id}),
                     (CoreEvent.FS_ENTRY_SYNCED, {"workspace_id": w1id, "id": w1id}),
                 ],
                 in_order=False,
+                timeout=60.0,
             )
 
     # Workspace created on a synced user manifest
-    await backend_data_binder.bind_device(coolorg, alice2)
+    await backend_data_binder.bind_device(alice2)
     async with logged_core_factory(
         core_config, alice2, event_bus=event_bus_factory()
     ) as alice2_core:
         # Workspace created before user manifest placeholder sync
         with alice2_core.event_bus.listen() as spy:
             w2id = await alice2_core.user_fs.workspace_create("w2")
-            # Wait for the sync monitor to sync the new workspace
-            with trio.fail_after(60):  # autojump, so not *really* 60s
-                await alice2_core.wait_idle_monitors()
-            spy.assert_events_occured(
+            await spy.wait_multiple_with_timeout(
                 [
                     (CoreEvent.FS_ENTRY_SYNCED, {"id": alice2.user_manifest_id}),
                     (CoreEvent.FS_ENTRY_SYNCED, {"workspace_id": w2id, "id": w2id}),
