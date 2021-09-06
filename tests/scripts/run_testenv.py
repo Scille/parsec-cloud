@@ -140,7 +140,8 @@ MimeType=x-scheme-handler/parsec;
 async def restart_local_backend(administration_token, backend_port, email_host, db, blockstore):
     pattern = f"parsec.* backend.* run.* -P {backend_port}"
     command = (
-        f"{sys.executable} -Wignore -m parsec.cli backend run -b {blockstore} --db {db} "
+        f"{sys.executable} -Wignore -m parsec.cli backend run --log-level=WARNING "
+        f"-b {blockstore} --db {db} "
         f"--email-host={email_host} -P {backend_port} "
         f"--spontaneous-organization-bootstrap "
         f"--administration-token {administration_token} --backend-addr parsec://localhost:{backend_port}?no_ssl=true"
