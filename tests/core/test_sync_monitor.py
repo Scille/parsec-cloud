@@ -17,6 +17,8 @@ from tests.common import create_shared_workspace, customize_fixtures
 
 @pytest.mark.trio
 async def test_monitors_idle(autojump_clock, running_backend, alice_core, alice):
+    autojump_clock.setup()
+
     assert alice_core.are_monitors_idle()
 
     # Force wakeup of the sync monitor
@@ -29,6 +31,8 @@ async def test_monitors_idle(autojump_clock, running_backend, alice_core, alice)
 
 @pytest.mark.trio
 async def test_monitor_switch_offline(autojump_clock, running_backend, alice_core, alice):
+    autojump_clock.setup()
+
     assert alice_core.are_monitors_idle()
     assert alice_core.backend_status == BackendConnStatus.READY
 
@@ -57,6 +61,8 @@ async def test_monitor_switch_offline(autojump_clock, running_backend, alice_cor
 async def test_process_while_offline(
     autojump_clock, running_backend, alice_core, bob_user_fs, alice, bob
 ):
+    autojump_clock.setup()
+
     assert alice_core.backend_status == BackendConnStatus.READY
 
     with running_backend.offline():
@@ -77,7 +83,7 @@ async def test_process_while_offline(
 @pytest.mark.trio
 @customize_fixtures(backend_not_populated=True)
 async def test_autosync_placeholder_user_manifest(
-    # autojump_clock, # TODO: @touilleMan I summon you
+    autojump_clock,
     running_backend,
     backend_data_binder,
     event_bus_factory,
@@ -86,6 +92,8 @@ async def test_autosync_placeholder_user_manifest(
     alice,
     alice2,
 ):
+    autojump_clock.setup()
+
     # Sync with realm&vlob not creation on server side
     await backend_data_binder.bind_organization(coolorg, alice, initial_user_manifest_in_v0=True)
     # Don't use `core_factory` fixture given it whole point is to waits for
@@ -94,7 +102,7 @@ async def test_autosync_placeholder_user_manifest(
         # Wait for the sync monitor to sync the new workspace
         with alice_core.event_bus.listen() as spy:
             await spy.wait_with_timeout(
-                CoreEvent.FS_ENTRY_SYNCED, {"id": alice.user_manifest_id}, timeout=60.0
+                CoreEvent.FS_ENTRY_SYNCED, {"id": alice.user_manifest_id}, timeout=60
             )
 
     # Sync with existing realm&vlob on server side
@@ -105,14 +113,16 @@ async def test_autosync_placeholder_user_manifest(
         with alice2_core.event_bus.listen() as spy:
             # Wait for the sync monitor to sync the new workspace
             await spy.wait_with_timeout(
-                CoreEvent.FS_ENTRY_REMOTE_CHANGED, {"id": alice2.user_manifest_id, "path": "/"}
+                CoreEvent.FS_ENTRY_REMOTE_CHANGED,
+                {"id": alice2.user_manifest_id, "path": "/"},
+                timeout=60,
             )
 
 
 @pytest.mark.trio
 @customize_fixtures(backend_not_populated=True)
 async def test_autosync_placeholder_workspace_manifest(
-    # autojump_clock,  # TODO: @touilleMan I summon you
+    autojump_clock,
     running_backend,
     backend_data_binder,
     event_bus_factory,
@@ -121,6 +131,8 @@ async def test_autosync_placeholder_workspace_manifest(
     alice,
     alice2,
 ):
+    autojump_clock.setup()
+
     # Workspace created before user manifest placeholder sync
     await backend_data_binder.bind_organization(coolorg, alice, initial_user_manifest_in_v0=True)
     # Don't use `core_factory` fixture given it whole point is to waits for
@@ -135,7 +147,7 @@ async def test_autosync_placeholder_workspace_manifest(
                     (CoreEvent.FS_ENTRY_SYNCED, {"workspace_id": w1id, "id": w1id}),
                 ],
                 in_order=False,
-                timeout=60.0,
+                timeout=60,
             )
 
     # Workspace created on a synced user manifest
@@ -152,6 +164,7 @@ async def test_autosync_placeholder_workspace_manifest(
                     (CoreEvent.FS_ENTRY_SYNCED, {"workspace_id": w2id, "id": w2id}),
                 ],
                 in_order=False,
+                timeout=60,
             )
 
 
@@ -159,6 +172,8 @@ async def test_autosync_placeholder_workspace_manifest(
 async def test_autosync_on_modification(
     autojump_clock, running_backend, alice, alice_core, alice2_user_fs
 ):
+    autojump_clock.setup()
+
     with alice_core.event_bus.listen() as spy:
         wid = await alice_core.user_fs.workspace_create("w")
         workspace = alice_core.user_fs.get_workspace(wid)
@@ -199,6 +214,8 @@ async def test_autosync_on_modification(
 async def test_autosync_on_remote_modifications(
     autojump_clock, running_backend, alice, alice_core, alice2_user_fs
 ):
+    autojump_clock.setup()
+
     with alice_core.event_bus.listen() as spy:
         wid = await alice2_user_fs.workspace_create("w")
         await alice2_user_fs.sync()
@@ -256,6 +273,8 @@ async def test_autosync_on_remote_modifications(
 async def test_reconnect_with_remote_changes(
     autojump_clock, alice2, running_backend, alice_core, alice2_user_fs
 ):
+    autojump_clock.setup()
+
     wid = await alice_core.user_fs.workspace_create("w")
     alice_w = alice_core.user_fs.get_workspace(wid)
     await alice_w.mkdir("/foo")
@@ -338,6 +357,8 @@ async def test_reconnect_with_remote_changes(
 async def test_sync_confined_children_after_rename(
     autojump_clock, alice, running_backend, alice_core
 ):
+    autojump_clock.setup()
+
     # Create a workspace
     wid = await alice_core.user_fs.workspace_create("w")
     alice_w = alice_core.user_fs.get_workspace(wid)
@@ -417,8 +438,10 @@ async def test_sync_confined_children_after_rename(
 
 @pytest.mark.trio
 async def test_sync_monitor_while_changing_roles(
-    running_backend, alice_core, bob_core, autojump_clock
+    autojump_clock, running_backend, alice_core, bob_core
 ):
+    autojump_clock.setup()
+
     # Create a shared workspace
     wid = await create_shared_workspace("w", alice_core, bob_core)
     alice_workspace = alice_core.user_fs.get_workspace(wid)
@@ -472,8 +495,10 @@ async def test_sync_monitor_while_changing_roles(
 
 @pytest.mark.trio
 async def test_sync_with_concurrent_reencryption(
-    running_backend, alice_core, bob_user_fs, autojump_clock, monkeypatch
+    autojump_clock, running_backend, alice_core, bob_user_fs, monkeypatch
 ):
+    autojump_clock.setup()
+
     # Create a shared workspace
     wid = await create_shared_workspace("w", bob_user_fs, alice_core)
     alice_workspace = alice_core.user_fs.get_workspace(wid)
