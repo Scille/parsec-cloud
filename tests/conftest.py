@@ -11,6 +11,7 @@ import trustme
 import socket
 import contextlib
 import pendulum
+import math
 from unittest.mock import patch
 import logging
 import structlog
@@ -302,17 +303,54 @@ async def asyncio_loop(request):
 
 @pytest.fixture
 def autojump_clock(request):
-    # Event dispatching through PostgreSQL LISTEN/NOTIFY is
-    # invisible from trio point of view, hence waiting for
-    # event with autojump_threshold=0 means we jump to timeout
-    # Qt also need a non-zero threshold, otherwise Qt and trio threads fight in
-    # busy loops which makes the test a lot slower (and toast your CPU) !
+    # We don't mock the clock during fixture initialization to avoid weird
+    # too slow errors (e.g. logged core monitors waiting for backend).
+    clock = MockClock(rate=1, autojump_threshold=math.inf)
+
     if request.config.getoption("--postgresql"):
-        return MockClock(autojump_threshold=0.1)
+        # Event dispatching through PostgreSQL LISTEN/NOTIFY is
+        # invisible from trio point of view, hence waiting for
+        # event with autojump_threshold=0 means we jump to timeout
+        autojump_threshold = 0.1
+        rate = 0
+
     elif request.node.get_closest_marker("gui"):
-        return MockClock(autojump_threshold=0.01)
+        # Qt also need a non-zero threshold, otherwise Qt and trio threads fight in
+        # busy loops which makes the test a lot slower (and toast your CPU) !
+        autojump_threshold = 0.01
+        rate = 0
+
     else:
-        return MockClock(autojump_threshold=0)
+        # Data storage makes use of lock and `trio.to_thread.run_sync` which
+        # produces a jump in case of concurrent access
+        autojump_threshold = 0.01
+        rate = 0
+
+    used = False
+
+    def _setup():
+        nonlocal used
+        used = True
+        clock.autojump_threshold = autojump_threshold
+        clock.rate = rate
+
+    clock.setup = _setup
+    yield clock
+
+    # Easy to forget this fixture must be explicitly used
+    assert used
+
+    # Note we don't revert clock setup, so in theory fixtures teardown could
+    # suffer (for the same reason we protected fixtures init).
+    # This is because we cannot guarantee we are the first fixture to teardown,
+    # hence we don't know *when* we would be unsetting the clock, but this
+    # is fine for now given, unlike init, tearndown doesn't do complex waits.
+    #
+    # BTW, you might be thinking of providing a context manager instead of the
+    # setup method to fix this, however the current fixture must return the
+    # clock object (so pytest know this is the clock we want to use, and pytest
+    # doesn't support a fixture of fixture returning the clock) so we would have
+    # to put __enter__/__exit__ to the clock object which is a bit too much :/
 
 
 @pytest.fixture(scope="session")
@@ -591,8 +629,6 @@ def backend_factory(
 
         if not event_bus:
             event_bus = event_bus_factory()
-        # TODO: backend connection to postgresql will timeout if we use a trio
-        # mock clock with autothreshold. We should detect this and do something here...
         async with backend_app_factory(config, event_bus=event_bus) as backend:
             if populated:
                 with freeze_time("2000-01-01"):
