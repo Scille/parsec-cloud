@@ -77,6 +77,9 @@ class InvitationInvalidStateError(InvitationError):
 class InvitationAlreadyMemberError(InvitationError):
     pass
 
+class InvitationEmailError(InvitationError):
+    pass
+
 
 class ConduitState(Enum):
     STATE_1_WAIT_PEERS = "1_WAIT_PEERS"
@@ -207,6 +210,7 @@ async def _smtp_send_mail(email_config: SmtpEmailConfig, to_addr: str, message: 
 
         except smtplib.SMTPException as e:
             logger.warning("SMTP error", exc_info=e, to_addr=to_addr, subject=message["Subject"])
+            raise InvitationEmailError from e
 
     await trio.to_thread.run_sync(_do)
 
@@ -314,12 +318,14 @@ class BaseInviteComponent:
                     invitation_url=_to_http_redirection_url(client_ctx, invitation),
                     backend_url=self._config.backend_addr.to_http_domain_url(),
                 )
-                await send_email(
-                    email_config=self._config.email_config,
-                    to_addr=invitation.claimer_email,
-                    message=message,
-                )
-
+                try:
+                    await send_email(
+                        email_config=self._config.email_config,
+                        to_addr=invitation.claimer_email,
+                        message=message,
+                    )
+                except InvitationEmailError:
+                    return invite_new_serializer.rep_dump({"status": "Email not sent"})
         else:  # Device
             if msg["send_email"] and not client_ctx.human_handle:
                 return invite_new_serializer.rep_dump({"status": "not_available"})
@@ -338,11 +344,14 @@ class BaseInviteComponent:
                     invitation_url=_to_http_redirection_url(client_ctx, invitation),
                     backend_url=self._config.backend_addr.to_http_domain_url(),
                 )
-                await send_email(
-                    email_config=self._config.email_config,
-                    to_addr=client_ctx.human_handle.email,
-                    message=message,
-                )
+                try:
+                    await send_email(
+                        email_config=self._config.email_config,
+                        to_addr=client_ctx.human_handle.email,
+                        message=message,
+                    )
+                except InvitationEmailError:
+                    return invite_new_serializer.rep_dump({"status": "Email not sent"})
 
         return invite_new_serializer.rep_dump({"status": "ok", "token": invitation.token})
 

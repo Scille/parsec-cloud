@@ -183,6 +183,7 @@ async def test_invite_with_send_mail(alice, alice_backend_sock, email_letterbox)
         claimer_email="zack@example.com",
         send_email=True,
     )
+
     assert rep == {"status": "ok", "token": ANY}
     token = rep["token"]
     email = await email_letterbox.get_next_with_timeout()
@@ -242,6 +243,20 @@ async def test_invite_with_send_mail(alice, alice_backend_sock, email_letterbox)
         '<img src="http://example.com:9999/static/parsec-vert.png" alt="Parsec Logo" title="Parsec" width="150" height="100"/>'
         in body
     )
+
+
+
+@pytest.mark.trio
+async def test_invite_with_mail_not_sent(alice, alice_backend_sock, email_failing_send, caplog):
+    
+    # User invitation
+    rep = await invite_new(
+        alice_backend_sock,
+        type=InvitationType.USER,
+        claimer_email="zack@example.com",
+        send_email=True,
+    )
+    assert rep == {"status": "Email not sent"}
 
 
 @pytest.mark.trio
