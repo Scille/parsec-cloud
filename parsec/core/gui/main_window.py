@@ -9,7 +9,7 @@ from distutils.version import LooseVersion
 
 from PyQt5.QtCore import QCoreApplication, pyqtSignal, Qt, QSize
 from PyQt5.QtGui import QColor, QIcon, QKeySequence, QResizeEvent, QCloseEvent
-from PyQt5.QtWidgets import QMainWindow, QMenu, QShortcut
+from PyQt5.QtWidgets import QMainWindow, QMenu, QShortcut, QMenuBar
 
 from parsec import __version__ as PARSEC_VERSION
 from parsec.event_bus import EventBus, EventCallback
@@ -125,6 +125,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):  # type: ignore[misc]
         self.tab_center.currentChanged.connect(self.on_current_tab_changed)
         self._define_shortcuts()
         self.ensurePolished()
+        self._createMenuBar()
 
     def _define_shortcuts(self) -> None:
         self.shortcut_close = QShortcut(QKeySequence(QKeySequence.Close), self)
@@ -182,6 +183,55 @@ class MainWindow(QMainWindow, Ui_MainWindow):  # type: ignore[misc]
             if win.objectName() == "GreyedDialog":
                 win.resize(event.size())
                 win.move(0, 0)
+
+    def _createMenuBar(self) -> None:
+        menuBar = QMenuBar()
+
+        action = menuBar.addAction(_("ACTION_MAIN_MENU_ABOUT"))
+        action.triggered.connect(self._show_about)
+
+        fileMenu = QMenu("&File", self)
+        menuBar.addMenu(fileMenu)
+        action = fileMenu.addAction(_("ACTION_MAIN_MENU_CREATE_ORGANIZATION"))
+        action.triggered.connect(self._on_create_org_clicked)
+        action.setShortcut(self.shortcut_create_org.key())
+        action.setShortcutVisibleInContextMenu(True)
+
+        action = fileMenu.addAction(_("ACTION_MAIN_MENU_JOIN_ORGANIZATION"))
+        action.triggered.connect(self._on_join_org_clicked)
+        action.setShortcut(self.shortcut_join_org.key())
+        action.setShortcutVisibleInContextMenu(True)
+
+        action = fileMenu.addAction(_("ACTION_MAIN_MENU_MANAGE_KEYS"))
+        action.triggered.connect(self._on_manage_keys)
+
+        fileMenu.addSeparator()
+
+        action = fileMenu.addAction(_("ACTION_MAIN_MENU_SETTINGS"))
+        action.triggered.connect(self._show_settings)
+        action.setShortcut(self.shortcut_settings.key())
+        action.setShortcutVisibleInContextMenu(True)
+
+        action = fileMenu.addAction(_("ACTION_MAIN_MENU_OPEN_DOCUMENTATION"))
+        action.triggered.connect(self._on_show_doc_clicked)
+        action.setShortcut(self.shortcut_help.key())
+        action.setShortcutVisibleInContextMenu(True)
+
+        # action = fileMenu.addAction(_("ACTION_MAIN_MENU_ABOUT"))
+        # action.triggered.connect(self._show_about)
+        action = fileMenu.addAction(_("ACTION_MAIN_MENU_CHANGELOG"))
+        action.triggered.connect(self._show_changelog)
+        action = fileMenu.addAction(_("ACTION_MAIN_MENU_LICENSE"))
+        action.triggered.connect(self._show_license)
+        action = fileMenu.addAction(_("ACTION_MAIN_MENU_FEEDBACK_SEND"))
+        action.triggered.connect(self._on_send_feedback_clicked)
+        fileMenu.addSeparator()
+        action = fileMenu.addAction(_("ACTION_MAIN_MENU_QUIT_PARSEC"))
+        action.triggered.connect(self.close_app)
+        action.setShortcut(self.shortcut_quit.key())
+        action.setShortcutVisibleInContextMenu(True)
+
+        self.setMenuBar(menuBar)
 
     def _show_menu(self) -> None:
         menu = QMenu(self)
