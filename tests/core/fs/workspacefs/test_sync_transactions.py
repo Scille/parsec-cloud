@@ -44,6 +44,7 @@ def test_full_name(test_input, expected):
 def test_merge_folder_children():
     m1 = EntryID.new()
     m2 = EntryID.new()
+    m3 = EntryID.new()
     a1 = {"a": m1}
     a2 = {"a": m2}
     b1 = {"b.txt": m1}
@@ -80,6 +81,15 @@ def test_merge_folder_children():
     assert result == {"b.txt": m2, "b (conflicting with a@a).txt": m1}
     result = merge_folder_children({}, c1, c2, "a@a")
     assert result == {"c.tar.gz": m2, "c (conflicting with a@a).tar.gz": m1}
+
+    # Conflicting name with special pattern filename
+    base = {"a (conflicting with a@a)": m3}
+
+    a3 = {**base, **a1}
+    b3 = {**base, **a2}
+
+    result = merge_folder_children(base, a3, b3, "a@a")
+    assert result == {"a": m2, "a (conflicting with a@a)": m3, "a (conflicting with a@a - 2)": m1}
 
 
 def test_merge_folder_manifests(alice, bob):
