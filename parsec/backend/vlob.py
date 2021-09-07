@@ -274,7 +274,7 @@ class BaseVlobComponent:
                 {"status": "not_allowed"}
             )
 
-        # Not need to catch VlobNotFoundError given unknown vlob/version in batch are ignored
+        # No need to catch VlobNotFoundError given unknown vlob/version in batch are ignored
         except VlobRealmNotFoundError as exc:
             return vlob_maintenance_save_reencryption_batch_serializer.rep_dump(
                 {"status": "not_found", "reason": str(exc)}
