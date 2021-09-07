@@ -84,7 +84,8 @@ class Reencryption:
             try:
                 del self._todo[key]
             except KeyError:
-                raise VlobNotFoundError()
+                # Unknown item, just ignore it just like we do in PostgreSQL
+                continue
             self._done[key] = data
 
         return self._total, len(self._done)

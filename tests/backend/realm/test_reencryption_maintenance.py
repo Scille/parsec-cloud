@@ -8,6 +8,7 @@ from pendulum import datetime, now as pendulum_now
 from parsec.backend.backend_events import BackendEvent
 from parsec.api.protocol import RealmRole, MaintenanceType, APIEvent
 from parsec.backend.realm import RealmGrantedRole
+from parsec.backend.vlob import VlobNotFoundError, VlobVersionError
 
 from tests.common import freeze_time
 from tests.backend.test_message import message_get
@@ -440,6 +441,68 @@ async def test_reencryption(alice, alice_backend_sock, realm, vlob_atoms):
     for vlob_id, version in vlob_atoms:
         rep = await vlob_read(alice_backend_sock, vlob_id, version, encryption_revision=2)
         assert rep["blob"] == f"{vlob_id}::{version} reencrypted".encode()
+
+
+@pytest.mark.trio
+async def test_reencryption_provide_unknown_vlob_atom_and_duplications(
+    backend, alice, alice_backend_sock, realm, vlob_atoms
+):
+    await realm_start_reencryption_maintenance(
+        alice_backend_sock, realm, 2, pendulum_now(), {"alice": b"foo"}
+    )
+    rep = await vlob_maintenance_get_reencryption_batch(alice_backend_sock, realm, 2)
+    assert rep["status"] == "ok"
+    assert len(rep["batch"]) == 3
+
+    unknown_vlob_id = uuid4()
+    duplicated_vlob_id = rep["batch"][0]["vlob_id"]
+    duplicated_version = rep["batch"][0]["version"]
+    duplicated_expected_blob = rep["batch"][0]["blob"]
+    reencrypted_batch = [
+        # Reencryption as identity
+        *rep["batch"],
+        # Add an unknown vlob
+        {"vlob_id": unknown_vlob_id, "version": 1, "blob": b"ignored"},
+        # Valid vlob ID with invalid version
+        {"vlob_id": duplicated_vlob_id, "version": 99, "blob": b"ignored"},
+        # Duplicate a vlob atom, should be ignored given the reencryption has already be done for it
+        {"vlob_id": duplicated_vlob_id, "version": duplicated_version, "blob": b"ignored"},
+    ]
+
+    # Another level of duplication !
+    for i in range(2):
+        rep = await vlob_maintenance_save_reencryption_batch(
+            alice_backend_sock, realm, 2, reencrypted_batch
+        )
+        assert rep == {"status": "ok", "total": 3, "done": 3}
+
+    # Finish the reencryption
+    await realm_finish_reencryption_maintenance(alice_backend_sock, realm, 2)
+
+    # Check the vlobs
+    with pytest.raises(VlobNotFoundError):
+        await backend.vlob.read(
+            organization_id=alice.organization_id,
+            author=alice.device_id,
+            encryption_revision=2,
+            vlob_id=unknown_vlob_id,
+        )
+    with pytest.raises(VlobVersionError):
+        await backend.vlob.read(
+            organization_id=alice.organization_id,
+            author=alice.device_id,
+            encryption_revision=2,
+            vlob_id=duplicated_vlob_id,
+            version=99,
+        )
+    _, content, _, _ = await backend.vlob.read(
+        organization_id=alice.organization_id,
+        author=alice.device_id,
+        encryption_revision=2,
+        vlob_id=duplicated_vlob_id,
+        version=duplicated_version,
+    )
+    assert content == duplicated_expected_blob
 
 
 @pytest.mark.trio
