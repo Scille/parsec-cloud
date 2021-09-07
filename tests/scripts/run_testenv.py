@@ -125,8 +125,16 @@ StartupWMClass=Parsec
 MimeType=x-scheme-handler/parsec;
 """
     )
-    await trio.run_process("update-desktop-database -q".split(), check=False)
-    await trio.run_process("xdg-mime default parsec.desktop x-scheme-handler/parsec".split())
+    try:
+        await trio.run_process("update-desktop-database -q".split(), check=False)
+    except FileNotFoundError:
+        # Ignore if command is not available
+        pass
+    try:
+        await trio.run_process("xdg-mime default parsec.desktop x-scheme-handler/parsec".split())
+    except FileNotFoundError:
+        # Ignore if command is not available
+        pass
 
 
 async def restart_local_backend(administration_token, backend_port, email_host, db, blockstore):
