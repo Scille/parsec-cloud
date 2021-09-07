@@ -257,6 +257,10 @@ async def test_invite_with_mail_not_sent(alice, alice_backend_sock, email_failin
     )
     assert rep == {"status": "email_not_sent"}
 
+    # Device invitation
+    rep = await invite_new(alice_backend_sock, type=InvitationType.DEVICE, send_email=True)
+    assert rep == {"status": "email_not_sent"}
+
 
 @pytest.mark.trio
 @customize_fixtures(alice_has_human_handle=False)
