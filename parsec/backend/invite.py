@@ -77,6 +77,7 @@ class InvitationInvalidStateError(InvitationError):
 class InvitationAlreadyMemberError(InvitationError):
     pass
 
+
 class InvitationEmailError(InvitationError):
     pass
 
@@ -325,7 +326,7 @@ class BaseInviteComponent:
                         message=message,
                     )
                 except InvitationEmailError:
-                    return invite_new_serializer.rep_dump({"status": "Email not sent"})
+                    return invite_new_serializer.rep_dump({"status": "email_not_sent"})
         else:  # Device
             if msg["send_email"] and not client_ctx.human_handle:
                 return invite_new_serializer.rep_dump({"status": "not_available"})

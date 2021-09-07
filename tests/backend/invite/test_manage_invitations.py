@@ -245,10 +245,9 @@ async def test_invite_with_send_mail(alice, alice_backend_sock, email_letterbox)
     )
 
 
-
 @pytest.mark.trio
-async def test_invite_with_mail_not_sent(alice, alice_backend_sock, email_failing_send, caplog):
-    
+async def test_invite_with_mail_not_sent(alice, alice_backend_sock, email_failing_send):
+
     # User invitation
     rep = await invite_new(
         alice_backend_sock,
@@ -256,7 +255,7 @@ async def test_invite_with_mail_not_sent(alice, alice_backend_sock, email_failin
         claimer_email="zack@example.com",
         send_email=True,
     )
-    assert rep == {"status": "Email not sent"}
+    assert rep == {"status": "email_not_sent"}
 
 
 @pytest.mark.trio
