@@ -92,7 +92,9 @@ async def test_autosync_placeholder_user_manifest(
     alice,
     alice2,
 ):
-    autojump_clock.setup()
+    # Local database run sqlite operations in thread that can create timeout
+    # if autojump is too greedy
+    autojump_clock.setup(autojump_threshold=0.1)
 
     # Sync with realm&vlob not creation on server side
     await backend_data_binder.bind_organization(coolorg, alice, initial_user_manifest_in_v0=True)
@@ -131,7 +133,9 @@ async def test_autosync_placeholder_workspace_manifest(
     alice,
     alice2,
 ):
-    autojump_clock.setup()
+    # Local database run sqlite operations in thread that can create timeout
+    # if autojump is too greedy
+    autojump_clock.setup(autojump_threshold=0.1)
 
     # Workspace created before user manifest placeholder sync
     await backend_data_binder.bind_organization(coolorg, alice, initial_user_manifest_in_v0=True)
