@@ -311,24 +311,24 @@ def autojump_clock(request):
         # Event dispatching through PostgreSQL LISTEN/NOTIFY is
         # invisible from trio point of view, hence waiting for
         # event with autojump_threshold=0 means we jump to timeout
-        autojump_threshold = 0.1
-        rate = 0
+        default_autojump_threshold = 0.1
+        default_rate = 0
 
     elif request.node.get_closest_marker("gui"):
         # Qt also need a non-zero threshold, otherwise Qt and trio threads fight in
         # busy loops which makes the test a lot slower (and toast your CPU) !
-        autojump_threshold = 0.01
-        rate = 0
+        default_autojump_threshold = 0.01
+        default_rate = 0
 
     else:
         # Data storage makes use of lock and `trio.to_thread.run_sync` which
         # produces a jump in case of concurrent access
-        autojump_threshold = 0.01
-        rate = 0
+        default_autojump_threshold = 0.01
+        default_rate = 0
 
     used = False
 
-    def _setup():
+    def _setup(autojump_threshold=default_autojump_threshold, rate=default_rate):
         nonlocal used
         used = True
         clock.autojump_threshold = autojump_threshold
