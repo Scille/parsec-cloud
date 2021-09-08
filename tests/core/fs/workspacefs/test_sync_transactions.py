@@ -92,6 +92,19 @@ def test_merge_folder_children():
     result = merge_folder_children(base, a3, b3, "a@a")
     assert result == {"a": m2, "a (conflicting with a@a)": m3, "a (conflicting with a@a - 2)": m1}
 
+    m4 = EntryID.new()
+    base = {**base, "a (conflicting with a@a - 2)": m4}
+    a3 = {**base, **a1}
+    b3 = {**base, **a2}
+
+    result = merge_folder_children(base, a3, b3, "a@a")
+    assert result == {
+        "a": m2,
+        "a (conflicting with a@a)": m3,
+        "a (conflicting with a@a - 2)": m4,
+        "a (conflicting with a@a - 3)": m1,
+    }
+
 
 def test_merge_folder_manifests():
     my_device = DeviceID("b@b")

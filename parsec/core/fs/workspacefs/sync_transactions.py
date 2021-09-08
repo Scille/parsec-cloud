@@ -127,7 +127,7 @@ def merge_folder_children(
 
         # Preserved remotely and locally with the same naming
         elif local_name == remote_name:
-            solved_local_children[local_name] = local_children[local_name]
+            solved_remote_children[remote_name] = remote_children[remote_name]
 
         # Name changed locally
         elif base_name == remote_name:
@@ -149,8 +149,9 @@ def merge_folder_children(
     for name, entry_id in solved_remote_children.items():
         children[name] = entry_id
     for name, entry_id in solved_local_children.items():
-        if name in children:
-            name = full_name(name, f"conflicting with {remote_device_name}")
+        while name in children:
+            filenames = list(children.keys())
+            name = get_conflict_filename(name, filenames, remote_device_name)
         children[name] = entry_id
 
     # Return
