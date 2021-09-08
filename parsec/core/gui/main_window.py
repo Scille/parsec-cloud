@@ -200,17 +200,12 @@ class MainWindow(QMainWindow, Ui_MainWindow):  # type: ignore[misc]
         action.triggered.connect(self._show_about)
         action = fileMenu.addAction("settings")
         action.triggered.connect(self._show_settings)
-
         action = fileMenu.addAction(_("ACTION_MAIN_MENU_CREATE_ORGANIZATION"))
         action.triggered.connect(self._on_create_org_clicked)
         action.setShortcut(self.shortcut_create_org.key())
-        action.setShortcutVisibleInContextMenu(True)
-
         action = fileMenu.addAction(_("ACTION_MAIN_MENU_JOIN_ORGANIZATION"))
         action.triggered.connect(self._on_join_org_clicked)
         action.setShortcut(self.shortcut_join_org.key())
-        action.setShortcutVisibleInContextMenu(True)
-
         action = fileMenu.addAction(_("ACTION_MAIN_MENU_MANAGE_KEYS"))
         action.triggered.connect(self._on_manage_keys)
 
@@ -218,9 +213,6 @@ class MainWindow(QMainWindow, Ui_MainWindow):  # type: ignore[misc]
 
         action = fileMenu.addAction(_("ACTION_MAIN_MENU_OPEN_DOCUMENTATION"))
         action.triggered.connect(self._on_show_doc_clicked)
-        action.setShortcut(self.shortcut_help.key())
-        action.setShortcutVisibleInContextMenu(True)
-
         action = fileMenu.addAction(_("ACTION_MAIN_MENU_CHANGELOG"))
         action.triggered.connect(self._show_changelog)
         action = fileMenu.addAction(_("ACTION_MAIN_MENU_LICENSE"))
