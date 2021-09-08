@@ -7,6 +7,15 @@ if not contains "$_" $SOURCE_COMMANDS
   exit 1
 end
 
+# Prevent pre-commit from losing it work dir
+if test -z "$PRE_COMMIT_HOME"
+  if test -z "$XDG_CACHE_HOME"
+    set --export PRE_COMMIT_HOME "$HOME/.cache/pre-commit"
+  else
+    set --export PRE_COMMIT_HOME "$XDG_CACHE_HOME/pre-commit"
+  end
+end
+
 # Cross-shell script directory detection
 # set SCRIPT_DIR (dirname (realpath -s $argv[1]))
 set SCRIPT_DIR (dirname (realpath (status -f)))
