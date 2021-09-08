@@ -43,12 +43,16 @@ def get_filename(manifest: LocalFolderishManifests, entry_id: EntryID) -> Option
 
 
 def get_conflict_filename(
-    filename: EntryName, filenames: List[EntryName], author: DeviceID
+    filename: EntryName, filenames: List[EntryName], content_conflict: bool = False
 ) -> EntryName:
     counter = count(2)
-    new_filename = full_name(filename, f"conflicting with {author}")
+    suffix = "filename conflict"
+    if content_conflict:
+        suffix = "file's content conflict"
+    suffix = f"Parsec::{suffix}"
+    new_filename = full_name(filename, suffix)
     while new_filename in filenames:
-        new_filename = full_name(filename, f"conflicting with {author} - {next(counter)}")
+        new_filename = full_name(filename, f"{suffix} ({next(counter)})")
     return new_filename
 
 
@@ -151,7 +155,7 @@ def merge_folder_children(
     for name, entry_id in solved_local_children.items():
         while name in children:
             filenames = list(children.keys())
-            name = get_conflict_filename(name, filenames, remote_device_name)
+            name = get_conflict_filename(name, filenames)
         children[name] = entry_id
 
     # Return
@@ -412,9 +416,7 @@ class SyncTransactions(EntryTransactions):
 
                 # Prepare
                 prevent_sync_pattern = self.local_storage.get_prevent_sync_pattern()
-                new_name = get_conflict_filename(
-                    filename, list(parent_manifest.children), remote_manifest.author
-                )
+                new_name = get_conflict_filename(filename, list(parent_manifest.children), True)
                 new_manifest = LocalFileManifest.new_placeholder(
                     self.local_author, parent=parent_id
                 ).evolve(size=current_manifest.size, blocks=tuple(new_blocks))
