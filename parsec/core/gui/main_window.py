@@ -227,11 +227,6 @@ class MainWindow(QMainWindow, Ui_MainWindow):  # type: ignore[misc]
         action.triggered.connect(self._show_license)
         action = fileMenu.addAction(_("ACTION_MAIN_MENU_FEEDBACK_SEND"))
         action.triggered.connect(self._on_send_feedback_clicked)
-        fileMenu.addSeparator()
-        action = fileMenu.addAction(_("ACTION_MAIN_MENU_QUIT_PARSEC"))
-        action.triggered.connect(self.close_app)
-        action.setShortcut(self.shortcut_quit.key())
-        action.setShortcutVisibleInContextMenu(True)
 
         self.setMenuBar(menuBar)
 
