@@ -5,6 +5,16 @@ History
 .. towncrier release notes start
 
 
+Parsec v2.5.2 (2021-09-08)
+--------------------------
+
+Miscellaneous internal changes
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+* Make Standard profile the default choice when greeting new user in GUI.
+  (`#1830 <https://github.com/Scille/parsec-cloud/issues/1830>`__)
+
+
 Parsec v2.5.1 (2021-09-02)
 --------------------------
 
