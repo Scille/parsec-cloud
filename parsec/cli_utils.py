@@ -125,47 +125,53 @@ async def aprompt(*args, **kwargs):
     return await trio.to_thread.run_sync(partial(click.prompt, *args, **kwargs))
 
 
-def logging_config_options(fn):
-    @click.option(
-        "--log-level",
-        "-l",
-        type=click.Choice(("DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL")),
-        default="INFO",
-        show_default=True,
-        envvar="PARSEC_LOG_LEVEL",
-    )
-    @click.option(
-        "--log-format",
-        "-f",
-        type=click.Choice(("CONSOLE", "JSON")),
-        default="CONSOLE",
-        show_default=True,
-        envvar="PARSEC_LOG_FORMAT",
-    )
-    @click.option(
-        "--log-file", "-o", default=None, envvar="PARSEC_LOG_FILE", help="[default: stderr]"
-    )
-    @wraps(fn)
-    def wrapper(**kwargs):
-        # `click.open_file` considers "-" to be stdout
-        if kwargs["log_file"] in (None, "-"):
+def logging_config_options(default_log_level: str):
+    LOG_LEVELS = ("DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL")
+    assert default_log_level in LOG_LEVELS
 
-            @contextmanager
-            def open_log_file():
-                yield sys.stderr
+    def _logging_config_options(fn):
+        @click.option(
+            "--log-level",
+            "-l",
+            type=click.Choice(LOG_LEVELS),
+            default=default_log_level,
+            show_default=True,
+            envvar="PARSEC_LOG_LEVEL",
+        )
+        @click.option(
+            "--log-format",
+            "-f",
+            type=click.Choice(("CONSOLE", "JSON")),
+            default="CONSOLE",
+            show_default=True,
+            envvar="PARSEC_LOG_FORMAT",
+        )
+        @click.option(
+            "--log-file", "-o", default=None, envvar="PARSEC_LOG_FILE", help="[default: stderr]"
+        )
+        @wraps(fn)
+        def wrapper(**kwargs):
+            # `click.open_file` considers "-" to be stdout
+            if kwargs["log_file"] in (None, "-"):
 
-        else:
-            open_log_file = partial(click.open_file, kwargs["log_file"], "w")
+                @contextmanager
+                def open_log_file():
+                    yield sys.stderr
 
-        with open_log_file() as fd:
+            else:
+                open_log_file = partial(click.open_file, kwargs["log_file"], "w")
 
-            configure_logging(
-                log_level=kwargs["log_level"], log_format=kwargs["log_format"], log_stream=fd
-            )
+            with open_log_file() as fd:
 
-            return fn(**kwargs)
+                configure_logging(
+                    log_level=kwargs["log_level"], log_format=kwargs["log_format"], log_stream=fd
+                )
 
-    return wrapper
+                return fn(**kwargs)
+
+        return wrapper
+
+    return _logging_config_options
 
 
 def sentry_config_options(configure_sentry: bool):

@@ -26,6 +26,7 @@ import psutil
 
 from parsec import __version__ as PARSEC_VERSION
 from parsec.utils import trio_run
+from parsec.cli_utils import logging_config_options
 from parsec.core.types import BackendAddr
 from parsec.core.config import get_default_config_dir
 from parsec.test_utils import initialize_test_organization
@@ -140,7 +141,8 @@ MimeType=x-scheme-handler/parsec;
 async def restart_local_backend(administration_token, backend_port, email_host, db, blockstore):
     pattern = f"parsec.* backend.* run.* -P {backend_port}"
     command = (
-        f"{sys.executable} -Wignore -m parsec.cli backend run -b {blockstore} --db {db} "
+        f"{sys.executable} -Wignore -m parsec.cli backend run --log-level=WARNING "
+        f"-b {blockstore} --db {db} "
         f"--email-host={email_host} -P {backend_port} "
         f"--spontaneous-organization-bootstrap "
         f"--administration-token {administration_token} --backend-addr parsec://localhost:{backend_port}?no_ssl=true"
@@ -194,7 +196,8 @@ async def restart_local_backend(administration_token, backend_port, email_host, 
 @click.option("--add-random-devices", show_default=True, default=0)
 @click.option("-e", "--empty", is_flag=True)
 @click.option("--source-file", hidden=True)
-def main(**kwargs):
+@logging_config_options(default_log_level="WARNING")
+def main(log_level, log_file, log_format, **kwargs):
     """Create a temporary environment and initialize a test setup for parsec.
 
     WARNING: it also leaves an in-memory backend running in the background

@@ -29,7 +29,11 @@ from parsec.core.invite import (
     claimer_retrieve_info,
 )
 from parsec.core.local_device import save_device_with_password
-from parsec.core.cli.utils import core_config_and_device_options, core_config_options
+from parsec.core.cli.utils import (
+    cli_command_base_options,
+    core_config_and_device_options,
+    core_config_options,
+)
 
 
 async def _invite_device(config, device):
@@ -56,6 +60,7 @@ async def _invite_device(config, device):
 
 @click.command(short_help="create device invitation")
 @core_config_and_device_options
+@cli_command_base_options
 def invite_device(config, device, **kwargs):
     """
     Create new device invitation
@@ -92,6 +97,7 @@ async def _invite_user(config, device, email, send_email):
 @click.argument("email")
 @click.option("--send-email", is_flag=True)
 @core_config_and_device_options
+@cli_command_base_options
 def invite_user(config, device, email, send_email, **kwargs):
     """
     Create new user invitation
@@ -224,6 +230,7 @@ async def _greet_invitation(config, device, token):
 @click.command(short_help="greet invitation")
 @click.argument("token", type=UUID)
 @core_config_and_device_options
+@cli_command_base_options
 def greet_invitation(config, device, token, **kwargs):
     """
     Greet a new device or user into the organization
@@ -335,6 +342,7 @@ async def _claim_invitation(config, addr, password):
 @click.argument("addr", type=BackendInvitationAddr.from_url)
 @click.password_option(prompt="Choose a password for the claimed device")
 @core_config_options
+@cli_command_base_options
 def claim_invitation(config, addr, password, **kwargs):
     """
     Claim a device or user from a invitation
@@ -373,6 +381,7 @@ async def _list_invitations(config, device):
 
 @click.command(short_help="list invitations")
 @core_config_and_device_options
+@cli_command_base_options
 def list_invitations(config, device, **kwargs):
     """
     List invitations
@@ -397,6 +406,7 @@ async def _cancel_invitation(config, device, token):
 @click.command(short_help="cancel invitations")
 @click.argument("token", type=UUID)
 @core_config_and_device_options
+@cli_command_base_options
 def cancel_invitation(config, device, token, **kwargs):
     """
     Cancel invitation

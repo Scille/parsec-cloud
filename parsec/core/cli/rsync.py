@@ -13,7 +13,7 @@ from parsec.core.config import CoreConfig
 from parsec.api.data.entry import EntryID
 from parsec.core.types import DEFAULT_BLOCK_SIZE, local_device
 from parsec.core.fs import FsPath, AnyPath, WorkspaceFS
-from parsec.core.cli.utils import core_config_and_device_options
+from parsec.core.cli.utils import cli_command_base_options, core_config_and_device_options
 from parsec.cli_utils import cli_exception_handler
 
 
@@ -193,6 +193,7 @@ async def _rsync(
 @click.argument("source")
 @click.argument("destination")
 @core_config_and_device_options
+@cli_command_base_options
 def run_rsync(config, device, source, destination, **kwargs):
     with cli_exception_handler(config.debug):
         trio_run(_rsync, config, device, source, destination)

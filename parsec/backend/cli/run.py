@@ -450,8 +450,9 @@ organization_id, device_id, device_label (can be null), human_email (can be null
     envvar="PARSEC_SSL_CERTFILE",
     help="SSL certificate file. This setting enables serving Parsec over SSL.",
 )
-# Add --log-level/--log-format/--log-file/--sentry-url
-@logging_config_options
+# Add --log-level/--log-format/--log-file
+@logging_config_options(default_log_level="INFO")
+# Add --sentry-url
 @sentry_config_options(configure_sentry=True)
 @click.option(
     "--dev",

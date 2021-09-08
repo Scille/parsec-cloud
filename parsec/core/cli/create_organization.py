@@ -7,9 +7,9 @@ from urllib.request import urlopen, Request
 from parsec.api.protocol import OrganizationID
 from parsec.api.rest import organization_create_req_serializer, organization_create_rep_serializer
 from parsec.utils import trio_run
-from parsec.cli_utils import debug_config_options, spinner, cli_exception_handler
+from parsec.cli_utils import spinner, cli_exception_handler
 from parsec.core.types import BackendAddr, BackendOrganizationBootstrapAddr
-from parsec.core.cli.utils import logging_config_options
+from parsec.core.cli.utils import cli_command_base_options
 
 
 async def create_organization_req(
@@ -53,8 +53,7 @@ async def _create_organization(
 @click.argument("organization_id", required=True, type=OrganizationID)
 @click.option("--addr", "-B", required=True, type=BackendAddr.from_url, envvar="PARSEC_ADDR")
 @click.option("--administration-token", "-T", required=True, envvar="PARSEC_ADMINISTRATION_TOKEN")
-@logging_config_options
-@debug_config_options
+@cli_command_base_options
 def create_organization(organization_id, addr, administration_token, debug, **kwargs):
     with cli_exception_handler(debug):
         trio_run(_create_organization, organization_id, addr, administration_token)

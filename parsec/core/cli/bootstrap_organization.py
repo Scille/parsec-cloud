@@ -10,7 +10,7 @@ from parsec.core.types import BackendOrganizationBootstrapAddr
 from parsec.core.backend_connection import apiv1_backend_anonymous_cmds_factory
 from parsec.core.local_device import save_device_with_password
 from parsec.core.invite import bootstrap_organization as do_bootstrap_organization
-from parsec.core.cli.utils import core_config_options
+from parsec.core.cli.utils import cli_command_base_options, core_config_options
 
 
 async def _bootstrap_organization(config, addr, password, device_label, human_label, human_email):
@@ -45,6 +45,7 @@ async def _bootstrap_organization(config, addr, password, device_label, human_la
 @click.option("--human-label")
 @click.option("--human-email")
 @core_config_options
+@cli_command_base_options
 def bootstrap_organization(
     config, addr, password, device_label, human_label, human_email, **kwargs
 ):

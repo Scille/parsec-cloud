@@ -4,15 +4,15 @@ import os
 import click
 from pathlib import Path
 
-from parsec.cli_utils import cli_exception_handler, debug_config_options
+from parsec.cli_utils import cli_exception_handler
 from parsec.core.config import get_default_config_dir
 from parsec.core.local_device import list_available_devices
-from parsec.core.cli.utils import format_available_devices
+from parsec.core.cli.utils import cli_command_base_options, format_available_devices
 
 
 @click.command()
 @click.option("--config-dir", type=click.Path(exists=True, file_okay=False))
-@debug_config_options
+@cli_command_base_options
 def list_devices(config_dir, debug, **kwargs):
     with cli_exception_handler(debug):
         config_dir = Path(config_dir) if config_dir else get_default_config_dir(os.environ)
