@@ -1590,6 +1590,9 @@ msgstr "Vous n'avez aucun appareil sur cet ordinateur."
 msgid "TEXT_PARSEC_WINDOW_TITLE_version"
 msgstr "PARSEC {version}"
 
+msgid "TEXT_MENU_FILE"
+msgstr "Fichier"
+
 msgid "ACTION_MAIN_MENU_SHOW"
 msgstr "Menu"
 

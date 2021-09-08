@@ -125,7 +125,10 @@ class MainWindow(QMainWindow, Ui_MainWindow):  # type: ignore[misc]
         self.tab_center.currentChanged.connect(self.on_current_tab_changed)
         self._define_shortcuts()
         self.ensurePolished()
-        self._createMenuBar()
+
+        if sys.platform == "darwin":
+            # Native menu bar on MacOS
+            self._createMacosMenuBar()
 
     def _define_shortcuts(self) -> None:
         self.shortcut_close = QShortcut(QKeySequence(QKeySequence.Close), self)
@@ -184,14 +187,20 @@ class MainWindow(QMainWindow, Ui_MainWindow):  # type: ignore[misc]
                 win.resize(event.size())
                 win.move(0, 0)
 
-    def _createMenuBar(self) -> None:
+    def _createMacosMenuBar(self) -> None:
         menuBar = QMenuBar()
 
-        action = menuBar.addAction(_("ACTION_MAIN_MENU_ABOUT"))
-        action.triggered.connect(self._show_about)
-
-        fileMenu = QMenu("&File", self)
+        fileMenu = QMenu(_("TEXT_MENU_FILE"), self)
         menuBar.addMenu(fileMenu)
+
+        # 'settings' and 'about' are key words processed by Qt to make standard
+        # MacOS submenus associated with standard key bindings
+
+        action = fileMenu.addAction("about")
+        action.triggered.connect(self._show_about)
+        action = fileMenu.addAction("settings")
+        action.triggered.connect(self._show_settings)
+
         action = fileMenu.addAction(_("ACTION_MAIN_MENU_CREATE_ORGANIZATION"))
         action.triggered.connect(self._on_create_org_clicked)
         action.setShortcut(self.shortcut_create_org.key())
@@ -207,18 +216,11 @@ class MainWindow(QMainWindow, Ui_MainWindow):  # type: ignore[misc]
 
         fileMenu.addSeparator()
 
-        action = fileMenu.addAction(_("ACTION_MAIN_MENU_SETTINGS"))
-        action.triggered.connect(self._show_settings)
-        action.setShortcut(self.shortcut_settings.key())
-        action.setShortcutVisibleInContextMenu(True)
-
         action = fileMenu.addAction(_("ACTION_MAIN_MENU_OPEN_DOCUMENTATION"))
         action.triggered.connect(self._on_show_doc_clicked)
         action.setShortcut(self.shortcut_help.key())
         action.setShortcutVisibleInContextMenu(True)
 
-        # action = fileMenu.addAction(_("ACTION_MAIN_MENU_ABOUT"))
-        # action.triggered.connect(self._show_about)
         action = fileMenu.addAction(_("ACTION_MAIN_MENU_CHANGELOG"))
         action.triggered.connect(self._show_changelog)
         action = fileMenu.addAction(_("ACTION_MAIN_MENU_LICENSE"))
