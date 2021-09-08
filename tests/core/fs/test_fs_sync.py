@@ -373,14 +373,14 @@ async def test_concurrent_update(running_backend, alice_user_fs, alice2_user_fs)
             # TODO: add more events
         ]
     )
-    root_expected = ["/bar", "/foo (conflicting with alice@dev1).txt", "/foo.txt"]
+    root_expected = ["/bar", "/foo (Parsec::file's content conflict).txt", "/foo.txt"]
     bar_expected = [
-        "/bar/buzz (conflicting with alice@dev1).txt",
+        "/bar/buzz (Parsec::filename conflict).txt",
         "/bar/buzz.txt",
         "/bar/from_alice",
         "/bar/from_alice2",
         "/bar/spam",
-        "/bar/spam (conflicting with alice@dev1)",
+        "/bar/spam (Parsec::filename conflict)",
     ]
     root_children = sorted(str(x) for x in await workspace2.listdir("/"))
     bar_children = sorted(str(x) for x in await workspace2.listdir("/bar"))

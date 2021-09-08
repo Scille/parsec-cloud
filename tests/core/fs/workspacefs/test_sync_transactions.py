@@ -76,32 +76,37 @@ def test_merge_folder_children():
 
     # Conflicting names
     result = merge_folder_children({}, a1, a2, "a@a")
-    assert result == {"a": m2, "a (conflicting with a@a)": m1}
+    assert result == {"a": m2, "a (Parsec::filename conflict)": m1}
     result = merge_folder_children({}, b1, b2, "a@a")
-    assert result == {"b.txt": m2, "b (conflicting with a@a).txt": m1}
+    assert result == {"b.txt": m2, "b (Parsec::filename conflict).txt": m1}
     result = merge_folder_children({}, c1, c2, "a@a")
-    assert result == {"c.tar.gz": m2, "c (conflicting with a@a).tar.gz": m1}
+    assert result == {"c.tar.gz": m2, "c (Parsec::filename conflict).tar.gz": m1}
 
     # Conflicting name with special pattern filename
-    base = {"a (conflicting with a@a)": m3}
+    base = {"a (Parsec::filename conflict)": m3}
 
-    a3 = {**base, **a1}
-    b3 = {**base, **a2}
-
-    result = merge_folder_children(base, a3, b3, "a@a")
-    assert result == {"a": m2, "a (conflicting with a@a)": m3, "a (conflicting with a@a - 2)": m1}
-
-    m4 = EntryID.new()
-    base = {**base, "a (conflicting with a@a - 2)": m4}
     a3 = {**base, **a1}
     b3 = {**base, **a2}
 
     result = merge_folder_children(base, a3, b3, "a@a")
     assert result == {
         "a": m2,
-        "a (conflicting with a@a)": m3,
-        "a (conflicting with a@a - 2)": m4,
-        "a (conflicting with a@a - 3)": m1,
+        "a (Parsec::filename conflict)": m3,
+        "a (Parsec::filename conflict (2))": m1,
+    }
+
+    m4 = EntryID.new()
+    base = {**base, "a (Parsec::filename conflict (2))": m4}
+    a3 = {**base, **a1}
+    b3 = {**base, **a2}
+
+    result = merge_folder_children(base, a3, b3, "a@a")
+
+    assert result == {
+        "a": m2,
+        "a (Parsec::filename conflict)": m3,
+        "a (Parsec::filename conflict (2))": m4,
+        "a (Parsec::filename conflict (3))": m1,
     }
 
 
@@ -443,14 +448,14 @@ async def test_file_conflict(alice_sync_transactions):
     await sync_transactions.fd_write(fd, b"ghi", offset=6)
 
     # Also create a fake previous conflict file
-    await sync_transactions.file_create(FsPath("/a (conflicting with b@b)"), open=False)
+    await sync_transactions.file_create(FsPath("/a (Parsec::file's content conflict)"), open=False)
 
     # Solve conflict
     with sync_transactions.event_bus.listen() as spy:
         await sync_transactions.file_conflict(a_id, local, remote)
     assert await sync_transactions.fd_read(fd, size=-1, offset=0) == b""
     a2_id, fd2 = await sync_transactions.file_open(
-        FsPath("/a (conflicting with b@b - 2)"), write_mode=False
+        FsPath("/a (Parsec::file's content conflict (2))"), write_mode=False
     )
     assert await sync_transactions.fd_read(fd2, size=-1, offset=0) == b"abcdefghi"
     spy.assert_events_exactly_occured(
