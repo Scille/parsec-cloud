@@ -1860,6 +1860,9 @@ msgstr "This user is already a member of this organization."
 msgid "TEXT_INVITE_USER_INVITE_ERROR"
 msgstr "Could not invite the user."
 
+msgid "TEXT_INVITE_USER_EMAIL_NOT_SENT_ERROR"
+msgstr "Could not send the invite by mail to the user."
+
 msgid "ACTION_WORKSPACE_OPEN_IN_FINDER"
 msgstr "Open in Finder"
 

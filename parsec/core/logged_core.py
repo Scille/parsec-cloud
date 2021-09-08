@@ -28,6 +28,7 @@ from parsec.core.backend_connection import (
     BackendInvitationOnExistingMember,
     BackendConnStatus,
     BackendNotAvailable,
+    BackendInvitationNotSentByEmail,
 )
 from parsec.core.invite import (
     UserGreetInitialCtx,
@@ -262,6 +263,8 @@ class LoggedCore:
         )
         if rep["status"] == "already_member":
             raise BackendInvitationOnExistingMember("An user already exist with this email")
+        elif rep["status"] == "email_not_sent":
+            raise BackendInvitationNotSentByEmail("Invitation could not be sent by email")
         elif rep["status"] != "ok":
             raise BackendConnectionError(f"Backend error: {rep}")
         return BackendInvitationAddr.build(

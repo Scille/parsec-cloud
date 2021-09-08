@@ -17,6 +17,10 @@ class BackendConnectionRefused(BackendConnectionError):
     pass
 
 
+class BackendInvitationNotSentByEmail(BackendConnectionError):
+    pass
+
+
 class BackendInvitationAlreadyUsed(BackendConnectionRefused):
     pass
 

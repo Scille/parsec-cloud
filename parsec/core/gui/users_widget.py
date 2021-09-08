@@ -1,6 +1,5 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2016-2021 Scille SAS
 
-
 from uuid import UUID
 
 from PyQt5.QtCore import Qt, pyqtSignal
@@ -16,6 +15,7 @@ from parsec.core.backend_connection import (
     BackendConnectionError,
     BackendNotAvailable,
     BackendInvitationOnExistingMember,
+    BackendInvitationNotSentByEmail,
 )
 
 from parsec.core.gui.trio_jobs import JobResultError, QtToTrioJob
@@ -184,6 +184,7 @@ async def _do_list_users_and_invitations(core, page, pattern=None):
             return total, users, []
     except BackendNotAvailable as exc:
         raise JobResultError("offline") from exc
+
     except BackendConnectionError as exc:
         raise JobResultError("error") from exc
 
@@ -205,6 +206,8 @@ async def _do_invite_user(core, email):
         raise JobResultError("offline") from exc
     except BackendInvitationOnExistingMember as exc:
         raise JobResultError("already_member") from exc
+    except BackendInvitationNotSentByEmail as exc:
+        raise JobResultError("email_failed") from exc
     except BackendConnectionError as exc:
         raise JobResultError("error") from exc
 
@@ -512,6 +515,8 @@ class UsersWidget(QWidget, Ui_UsersWidget):
             errmsg = _("TEXT_INVITE_USER_INVITE_OFFLINE")
         elif status == "already_member":
             errmsg = _("TEXT_INVITE_USER_ALREADY_MEMBER_ERROR")
+        elif status == "email_failed":
+            errmsg = _("TEXT_INVITE_USER_EMAIL_NOT_SENT_ERROR")
         else:
             errmsg = _("TEXT_INVITE_USER_INVITE_ERROR")
 
