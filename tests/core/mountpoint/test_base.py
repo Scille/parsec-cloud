@@ -397,12 +397,7 @@ async def test_mountpoint_revoke_access(
             await bar_path.unlink()
 
         def sync_open():
-            for flag in (
-                os.O_WRONLY,
-                os.O_RDWR,
-                os.O_RDWR | os.O_APPEND,
-                os.O_WRONLY | os.O_NONBLOCK,
-            ):
+            for flag in (os.O_WRONLY, os.O_RDWR, os.O_RDWR | os.O_APPEND, os.O_WRONLY | os.O_EXCL):
                 with pytest.raises(expected_error) as ctx:
                     os.open(foo_path, flag)
                 assert ctx.value.errno == expected_errno
