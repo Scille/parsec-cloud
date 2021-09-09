@@ -97,7 +97,7 @@ async def test_autosync_placeholder_user_manifest(
     autojump_clock.setup(autojump_threshold=0.1)
 
     # Sync with realm&vlob not creation on server side
-    await backend_data_binder.bind_organization(coolorg, alice, initial_user_manifest_in_v0=True)
+    await backend_data_binder.bind_organization(coolorg, alice, initial_user_manifest="not_synced")
     # Don't use `core_factory` fixture given it whole point is to waits for
     # monitors to be idle before returning the core
     async with logged_core_factory(core_config, alice, event_bus=event_bus_factory()) as alice_core:
@@ -108,7 +108,7 @@ async def test_autosync_placeholder_user_manifest(
             )
 
     # Sync with existing realm&vlob on server side
-    await backend_data_binder.bind_device(alice2, initial_user_manifest_in_v0=True)
+    await backend_data_binder.bind_device(alice2)
     async with logged_core_factory(
         core_config, alice2, event_bus=event_bus_factory()
     ) as alice2_core:
@@ -138,7 +138,7 @@ async def test_autosync_placeholder_workspace_manifest(
     autojump_clock.setup(autojump_threshold=0.1)
 
     # Workspace created before user manifest placeholder sync
-    await backend_data_binder.bind_organization(coolorg, alice, initial_user_manifest_in_v0=True)
+    await backend_data_binder.bind_organization(coolorg, alice, initial_user_manifest="not_synced")
     # Don't use `core_factory` fixture given it whole point is to waits for
     # monitors to be idle before returning the core
     async with logged_core_factory(core_config, alice, event_bus=event_bus_factory()) as alice_core:
