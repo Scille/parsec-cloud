@@ -184,7 +184,9 @@ class GreetDeviceInstructionsWidget(QWidget, Ui_GreetDeviceInstructionsWidget):
         else:
             show_info(
                 self,
-                _("TEXT_INVITE_USER_EMAIL_NOT_SENT_directlink").format(directlink=self.invite_addr),
+                _("TEXT_INVITE_DEVICE_EMAIL_NOT_SENT_directlink").format(
+                    directlink=self.invite_addr
+                ),
             )
             self.button_send_email.setDisabled(False)
 

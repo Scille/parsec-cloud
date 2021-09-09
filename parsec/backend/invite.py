@@ -196,7 +196,6 @@ async def _smtp_send_mail(email_config: SmtpEmailConfig, to_addr: str, message: 
     def _do():
         try:
             context = ssl.create_default_context()
-            raise smtplib.SMTPException("SMTPT ERROR")
             if email_config.use_ssl:
                 server = smtplib.SMTP_SSL(email_config.host, email_config.port, context=context)
             else:

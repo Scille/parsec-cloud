@@ -312,6 +312,11 @@ msgstr "Le serveur est hors-ligne ou vous n'avez pas de connexion internet."
 msgid "TEXT_INVITE_DEVICE_INVITE_ERROR"
 msgstr "Impossible d'inviter un nouvel appareil"
 
+
+msgid "TEXT_INVITE_DEVICE_EMAIL_NOT_SENT_directlink"
+msgstr "Impossible d'envoyer l'invitation par mail, voici le lien à ouvrir sur votre autre appareil"
+" <b><a href=\"{directlink}\">{directlink}</a></b>"
+
 msgid "TEXT_DEVICE_LIST_RETRIEVABLE_FAILURE"
 msgstr "Impossible de récupérer la liste de vos appareils."
 

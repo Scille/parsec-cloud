@@ -284,7 +284,6 @@ class LoggedCore:
         if rep["status"] != "ok":
             raise BackendConnectionError(f"Backend error: {rep}")
         email_sent = not ("email_sent" in rep)
-        logger.warning(email_sent)
         return BackendInvitationAddr.build(
             backend_addr=self.device.organization_addr,
             organization_id=self.device.organization_id,

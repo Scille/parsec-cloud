@@ -624,6 +624,11 @@
             "invite_new": {
                 "rep": {
                     "fields": {
+                        "email_sent": {
+                            "allow_none": false,
+                            "required": false,
+                            "type": "Boolean"
+                        },
                         "status": {
                             "allow_none": false,
                             "required": true,
