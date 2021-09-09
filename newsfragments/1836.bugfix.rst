@@ -1,0 +1,1 @@
+Fixed a bug where some text editor could still edit files in a workspace as reader
