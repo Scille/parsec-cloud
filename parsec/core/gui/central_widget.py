@@ -39,6 +39,7 @@ from parsec.core.gui.custom_widgets import Pixmap
 from parsec.core.gui.custom_dialogs import show_error
 from parsec.core.gui.ui.central_widget import Ui_CentralWidget
 from parsec.core.gui.trio_jobs import JobResultError, QtToTrioJob
+import time
 
 
 async def _do_get_organization_stats(core: LoggedCore) -> OrganizationStats:
@@ -73,6 +74,7 @@ class CentralWidget(QWidget, Ui_CentralWidget):  # type: ignore[misc]
         CoreEvent.MOUNTPOINT_REMOTE_ERROR,
         CoreEvent.MOUNTPOINT_UNHANDLED_ERROR,
         CoreEvent.MOUNTPOINT_TRIO_DEADLOCK_ERROR,
+        CoreEvent.MOUNTPOINT_READONLY,
         CoreEvent.SHARING_UPDATED,
     ]
 
@@ -101,6 +103,7 @@ class CentralWidget(QWidget, Ui_CentralWidget):  # type: ignore[misc]
         self.core = core
         self.event_bus = event_bus
         self.systray_notification = systray_notification
+        self.last_notification = 0.0
 
         self.menu = MenuWidget(parent=self)
         self.widget_menu.layout().addWidget(self.menu)
@@ -207,6 +210,13 @@ class CentralWidget(QWidget, Ui_CentralWidget):  # type: ignore[misc]
             assert isinstance(kwargs["status"], BackendConnStatus)
             assert kwargs["status_exc"] is None or isinstance(kwargs["status_exc"], Exception)
             self.connection_state_changed.emit(kwargs["status"], kwargs["status_exc"])
+        elif event == CoreEvent.MOUNTPOINT_READONLY:
+            actual_time = time.time()
+            if self.last_notification == 0.0 or actual_time >= self.last_notification + 3:  # 3s
+                self.systray_notification.emit(
+                    "", _("NOTIF_INFO_WORKSPACE_READ_ONLY"), 3000
+                )  # 3000ms
+                self.last_notification = actual_time
         elif event == CoreEvent.MOUNTPOINT_STOPPED:
             self.new_notification.emit("WARNING", _("NOTIF_WARN_MOUNTPOINT_UNMOUNTED"))
         elif event == CoreEvent.MOUNTPOINT_REMOTE_ERROR:

@@ -30,6 +30,7 @@ class CoreEvent(Enum):
     MOUNTPOINT_STARTED = "mountpoint.started"
     MOUNTPOINT_STOPPING = "mountpoint.stopping"
     MOUNTPOINT_STOPPED = "mountpoint.stopped"
+    MOUNTPOINT_READONLY = "mountpoint.readonly"
     MOUNTPOINT_UNHANDLED_ERROR = "mountpoint.unhandled_error"
     MOUNTPOINT_TRIO_DEADLOCK_ERROR = "mountpoint.trio_deadlock_error"
     # Others

@@ -59,6 +59,12 @@ msgstr ""
 msgid "NOTIF_INFO_WORKSPACE_UNSHARED_{}"
 msgstr ""
 
+msgid "NOTIF_INFO_WORKSPACE_READ_ONLY"
+msgstr "This workspace is read-only"
+
+msgid "NOTIF_WARN_SYNC_CONFLICT_{}"
+msgstr ""
+
 msgid "TEXT_BACKEND_STATE_CONNECTED"
 msgstr "Connected"
 
