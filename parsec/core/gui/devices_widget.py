@@ -39,7 +39,8 @@ class DeviceButton(QWidget, Ui_DeviceButton):
 
 async def _do_invite_device(core):
     try:
-        return await core.new_device_invitation(send_email=False)
+        rep = await core.new_device_invitation(send_email=False)
+        return rep
     except BackendNotAvailable as exc:
         raise JobResultError("offline") from exc
     except BackendConnectionError as exc:

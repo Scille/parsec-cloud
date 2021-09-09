@@ -60,6 +60,7 @@ class InviteNewReqSchema(OneOfSchema):
 
 class InviteNewRepSchema(BaseRepSchema):
     token = fields.UUID(required=True)
+    email_sent = fields.Boolean(required=False)
 
 
 invite_new_serializer = CmdSerializer(InviteNewReqSchema, InviteNewRepSchema)

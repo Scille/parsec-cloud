@@ -196,6 +196,7 @@ async def _smtp_send_mail(email_config: SmtpEmailConfig, to_addr: str, message: 
     def _do():
         try:
             context = ssl.create_default_context()
+            raise smtplib.SMTPException("SMTPT ERROR")
             if email_config.use_ssl:
                 server = smtplib.SMTP_SSL(email_config.host, email_config.port, context=context)
             else:
@@ -326,7 +327,9 @@ class BaseInviteComponent:
                         message=message,
                     )
                 except InvitationEmailError:
-                    return invite_new_serializer.rep_dump({"status": "email_not_sent"})
+                    return invite_new_serializer.rep_dump(
+                        {"status": "ok", "token": invitation.token, "email_sent": False}
+                    )
         else:  # Device
             if msg["send_email"] and not client_ctx.human_handle:
                 return invite_new_serializer.rep_dump({"status": "not_available"})
@@ -351,8 +354,11 @@ class BaseInviteComponent:
                         to_addr=client_ctx.human_handle.email,
                         message=message,
                     )
+
                 except InvitationEmailError:
-                    return invite_new_serializer.rep_dump({"status": "Email not sent"})
+                    return invite_new_serializer.rep_dump(
+                        {"status": "ok", "token": invitation.token, "email_sent": False}
+                    )
 
         return invite_new_serializer.rep_dump({"status": "ok", "token": invitation.token})
 

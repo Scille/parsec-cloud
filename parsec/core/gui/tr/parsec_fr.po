@@ -1911,8 +1911,10 @@ msgstr "Cet utilisateur fait déjà parti de cette organisation."
 msgid "TEXT_INVITE_USER_INVITE_ERROR"
 msgstr "Impossible d'inviter l'utilisateur."
 
-msgid "TEXT_INVITE_USER_EMAIL_NOT_SENT_ERROR"
-msgstr "Impossible d'envoyer l'invitation par mail à l'utilisateur."
+msgid "TEXT_INVITE_USER_EMAIL_NOT_SENT_directlink"
+msgstr "Impossible d'envoyer l'invitation par mail à l'utilisateur, "
+"voici le lien que l'utilisateur doit ouvrir<b><a href=\"{directlink}\">{directlink}</a></b>"
+
 
 msgid "ACTION_WORKSPACE_OPEN_IN_FINDER"
 msgstr "Ouvrir dans le Finder"

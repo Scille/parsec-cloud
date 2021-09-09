@@ -15,7 +15,6 @@ from parsec.core.backend_connection import (
     BackendConnectionError,
     BackendNotAvailable,
     BackendInvitationOnExistingMember,
-    BackendInvitationNotSentByEmail,
 )
 
 from parsec.core.gui.trio_jobs import JobResultError, QtToTrioJob
@@ -200,14 +199,12 @@ async def _do_cancel_invitation(core, token):
 
 async def _do_invite_user(core, email):
     try:
-        await core.new_user_invitation(email=email, send_email=True)
-        return email
+        rep = await core.new_user_invitation(email=email, send_email=True)
+        return email, rep
     except BackendNotAvailable as exc:
         raise JobResultError("offline") from exc
     except BackendInvitationOnExistingMember as exc:
         raise JobResultError("already_member") from exc
-    except BackendInvitationNotSentByEmail as exc:
-        raise JobResultError("email_failed") from exc
     except BackendConnectionError as exc:
         raise JobResultError("error") from exc
 
@@ -502,8 +499,11 @@ class UsersWidget(QWidget, Ui_UsersWidget):
         assert job.is_finished()
         assert job.status == "ok"
 
-        email = job.ret
-        show_info(self, _("TEXT_USER_INVITE_SUCCESS_email").format(email=email))
+        email, rep = job.ret
+        if rep.email_sent:
+            show_info(self, _("TEXT_USER_INVITE_SUCCESS_email").format(email=email))
+        else:
+            show_info(self, _("TEXT_INVITE_USER_EMAIL_NOT_SENT_directlink").format(directlink=rep))
         self.reset()
 
     def _on_invite_user_error(self, job):
@@ -515,8 +515,6 @@ class UsersWidget(QWidget, Ui_UsersWidget):
             errmsg = _("TEXT_INVITE_USER_INVITE_OFFLINE")
         elif status == "already_member":
             errmsg = _("TEXT_INVITE_USER_ALREADY_MEMBER_ERROR")
-        elif status == "email_failed":
-            errmsg = _("TEXT_INVITE_USER_EMAIL_NOT_SENT_ERROR")
         else:
             errmsg = _("TEXT_INVITE_USER_INVITE_ERROR")
 

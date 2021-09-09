@@ -115,7 +115,9 @@ class Greeter:
 
 async def _do_send_email(core):
     try:
-        return await core.new_device_invitation(send_email=True)
+        rep = await core.new_device_invitation(send_email=True)
+        return rep
+
     except BackendNotAvailable as exc:
         raise JobResultError("offline") from exc
     except BackendConnectionError as exc:
@@ -175,8 +177,16 @@ class GreetDeviceInstructionsWidget(QWidget, Ui_GreetDeviceInstructionsWidget):
     def _on_send_email_success(self, job):
         # In theory the invitation address shouldn't have changed, but better safe than sorry
         self.invite_addr = job.ret
-        self.button_send_email.setText(_("TEXT_GREET_DEVICE_EMAIL_SENT"))
-        self.button_send_email.setDisabled(True)
+
+        if job.ret.email_sent:
+            self.button_send_email.setText(_("TEXT_GREET_DEVICE_EMAIL_SENT"))
+            self.button_send_email.setDisabled(True)
+        else:
+            show_info(
+                self,
+                _("TEXT_INVITE_USER_EMAIL_NOT_SENT_directlink").format(directlink=self.invite_addr),
+            )
+            self.button_send_email.setDisabled(False)
 
     def _on_send_email_error(self, job):
         show_error(self, _("TEXT_GREET_DEVICE_SEND_EMAIL_ERROR"), exception=job.exc)
