@@ -202,7 +202,7 @@ class FuseOperations(LoggingMixIn, Operations):
 
     def open(self, path: FsPath, flags: int = 0):
         # Filter file status and file creation flags
-        write_mode = flags in (os.O_WRONLY, os.O_RDWR)
+        write_mode = flags & (os.O_WRONLY | os.O_RDWR)
         _, fd = self.fs_access.file_open(path, write_mode=write_mode)
         return fd
 
