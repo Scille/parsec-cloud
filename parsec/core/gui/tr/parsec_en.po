@@ -297,7 +297,7 @@ msgstr "Could not invite the device."
 
 
 msgid "TEXT_INVITE_DEVICE_EMAIL_NOT_SENT_directlink"
-msgstr "Could not send the invite by mail, here is the link "
+msgstr "Could not send the invitation by mail, here is the link "
 "to open on your other device <b><a href=\"{directlink}\">{directlink}</a></b>"
 
 
@@ -1867,9 +1867,18 @@ msgstr "This user is already a member of this organization."
 msgid "TEXT_INVITE_USER_INVITE_ERROR"
 msgstr "Could not invite the user."
 
-msgid "TEXT_INVITE_USER_EMAIL_NOT_SENT_directlink"
-msgstr "Could not send the invite by mail to the user, here is the link the "
-"user need to open <b><a href=\"{directlink}\">{directlink}</a></b>"
+msgid "TEXT_INVITE_USER_EMAIL_BAD_RECIPIENT_directlink"
+msgstr "Could not send the invitation by mail to the user, "
+"the email provided seems to be invalid, here is the link the "
+"user needs to open <b><a href=\"{directlink}\">{directlink}</a></b>"
+
+
+msgid "TEXT_INVITE_USER_EMAIL_NOT_AVAILABLE_directlink"
+msgstr "Could not send the invitation by mail to the user, "
+"the server is not available, here is the link the "
+"user needs to open <b><a href=\"{directlink}\">{directlink}</a></b>"
+
+
 
 msgid "ACTION_WORKSPACE_OPEN_IN_FINDER"
 msgstr "Open in Finder"

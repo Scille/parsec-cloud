@@ -337,7 +337,7 @@ class BaseInviteComponent:
                 except InvitationEmailRecipientError:
                     email_sent_status = InvitationEmailSentStatus.BAD_RECIPIENT
                 else:
-                    email_sent_status = InvitationEmailSentStatus.SUCESS
+                    email_sent_status = InvitationEmailSentStatus.SUCCESS
                 finally:
                     return invite_new_serializer.rep_dump(
                         {"status": "ok", "token": invitation.token, "email_sent": email_sent_status}
@@ -362,7 +362,6 @@ class BaseInviteComponent:
                     backend_url=self._config.backend_addr.to_http_domain_url(),
                 )
                 try:
-
                     await send_email(
                         email_config=self._config.email_config,
                         to_addr=client_ctx.human_handle.email,
@@ -373,7 +372,7 @@ class BaseInviteComponent:
                 except InvitationEmailRecipientError:
                     email_sent_status = InvitationEmailSentStatus.BAD_RECIPIENT
                 else:
-                    email_sent_status = InvitationEmailSentStatus.SUCESS
+                    email_sent_status = InvitationEmailSentStatus.SUCCESS
                 finally:
                     return invite_new_serializer.rep_dump(
                         {"status": "ok", "token": invitation.token, "email_sent": email_sent_status}

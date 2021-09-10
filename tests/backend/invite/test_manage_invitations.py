@@ -185,7 +185,7 @@ async def test_invite_with_send_mail(alice, alice_backend_sock, email_letterbox)
         send_email=True,
     )
 
-    assert rep == {"status": "ok", "token": ANY, "email_sent": InvitationEmailSentStatus.SUCESS}
+    assert rep == {"status": "ok", "token": ANY, "email_sent": InvitationEmailSentStatus.SUCCESS}
     token = rep["token"]
     email = await email_letterbox.get_next_with_timeout()
     assert email == ("zack@example.com", ANY)
@@ -216,7 +216,7 @@ async def test_invite_with_send_mail(alice, alice_backend_sock, email_letterbox)
 
     # Device invitation
     rep = await invite_new(alice_backend_sock, type=InvitationType.DEVICE, send_email=True)
-    assert rep == {"status": "ok", "token": ANY, "email_sent": InvitationEmailSentStatus.SUCESS}
+    assert rep == {"status": "ok", "token": ANY, "email_sent": InvitationEmailSentStatus.SUCCESS}
     token = rep["token"]
     email = await email_letterbox.get_next_with_timeout()
     assert email == (alice.human_handle.email, ANY)
@@ -317,7 +317,7 @@ async def test_invite_with_send_mail_and_greeter_without_human_handle(
         claimer_email="zack@example.com",
         send_email=True,
     )
-    assert rep == {"status": "ok", "token": ANY, "email_sent": InvitationEmailSentStatus.SUCESS}
+    assert rep == {"status": "ok", "token": ANY, "email_sent": InvitationEmailSentStatus.SUCCESS}
     token = rep["token"]
     email = await email_letterbox.get_next_with_timeout()
     assert email == ("zack@example.com", ANY)

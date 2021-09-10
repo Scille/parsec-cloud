@@ -502,13 +502,23 @@ class UsersWidget(QWidget, Ui_UsersWidget):
         assert job.status == "ok"
 
         email, invitation_addr, email_sent_status = job.ret
-        if email_sent_status == InvitationEmailSentStatus.SUCESS:
+        if email_sent_status == InvitationEmailSentStatus.SUCCESS:
             show_info(self, _("TEXT_USER_INVITE_SUCCESS_email").format(email=email))
+        elif email_sent_status == InvitationEmailSentStatus.BAD_RECIPIENT:
+            show_info(
+                self,
+                _("TEXT_INVITE_USER_EMAIL_BAD_RECIPIENT_directlink").format(
+                    directlink=invitation_addr
+                ),
+            )
         else:
             show_info(
                 self,
-                _("TEXT_INVITE_USER_EMAIL_NOT_SENT_directlink").format(directlink=invitation_addr),
+                _("TEXT_INVITE_USER_EMAIL_NOT_AVAILABLE_directlink").format(
+                    directlink=invitation_addr
+                ),
             )
+
         self.reset()
 
     def _on_invite_user_error(self, job):

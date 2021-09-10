@@ -627,7 +627,7 @@
                         "email_sent": {
                             "allow_none": false,
                             "enum_allowed_values": [
-                                "SUCESS",
+                                "SUCCESS",
                                 "NOT_AVAILABLE",
                                 "BAD_RECIPIENT"
                             ],

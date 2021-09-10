@@ -271,7 +271,7 @@ class LoggedCore:
             raise BackendConnectionError(f"Backend error: {rep}")
 
         if not ("email_sent" in rep):
-            email_sent = InvitationEmailSentStatus.SUCESS
+            email_sent = InvitationEmailSentStatus.SUCCESS
         else:
             email_sent = rep["email_sent"]
 
@@ -297,7 +297,7 @@ class LoggedCore:
             raise BackendConnectionError(f"Backend error: {rep}")
 
         if not ("email_sent" in rep):
-            email_sent = InvitationEmailSentStatus.SUCESS
+            email_sent = InvitationEmailSentStatus.SUCCESS
         else:
             email_sent = rep["email_sent"]
 

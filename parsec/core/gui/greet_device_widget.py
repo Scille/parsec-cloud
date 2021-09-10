@@ -180,16 +180,24 @@ class GreetDeviceInstructionsWidget(QWidget, Ui_GreetDeviceInstructionsWidget):
 
         self.invite_addr, email_sent_status = job.ret
 
-        if email_sent_status == InvitationEmailSentStatus.SUCESS:
+        if email_sent_status == InvitationEmailSentStatus.SUCCESS:
             self.button_send_email.setText(_("TEXT_GREET_DEVICE_EMAIL_SENT"))
             self.button_send_email.setDisabled(True)
         else:
-            show_info(
-                self,
-                _("TEXT_INVITE_DEVICE_EMAIL_NOT_SENT_directlink").format(
-                    directlink=self.invite_addr
-                ),
-            )
+            if email_sent_status == InvitationEmailSentStatus.BAD_RECIPIENT:
+                show_info(
+                    self,
+                    _("TEXT_INVITE_USER_EMAIL_BAD_RECIPIENT_directlink").format(
+                        directlink=self.invite_addr
+                    ),
+                )
+            else:
+                show_info(
+                    self,
+                    _("TEXT_INVITE_USER_EMAIL_NOT_AVAILABLE_directlink").format(
+                        directlink=self.invite_addr
+                    ),
+                )
             self.button_send_email.setDisabled(False)
 
     def _on_send_email_error(self, job):

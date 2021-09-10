@@ -12,6 +12,7 @@ from parsec.api.protocol import (
     HumanHandle,
     InvitationStatus,
     InvitationType,
+    InvitationEmailSentStatus,
     InvitationDeletedReason,
 )
 from parsec.core.types import BackendInvitationAddr
@@ -47,6 +48,9 @@ async def _invite_device(config, device):
             rep = await cmds.invite_new(type=InvitationType.DEVICE)
             if rep["status"] != "ok":
                 raise RuntimeError(f"Backend refused to create device invitation: {rep}")
+            if "email_sent" in rep:
+                if rep["email_sent"] != InvitationEmailSentStatus.SUCCESS:
+                    click.secho("Email could not be sent", fg="red")
 
     action_addr = BackendInvitationAddr.build(
         backend_addr=device.organization_addr,
@@ -82,6 +86,9 @@ async def _invite_user(config, device, email, send_email):
             )
             if rep["status"] != "ok":
                 raise RuntimeError(f"Backend refused to create user invitation: {rep}")
+            if send_email and "email_sent" in rep:
+                if rep["email_sent"] != InvitationEmailSentStatus.SUCCESS:
+                    click.secho("Email could not be sent", fg="red")
 
     action_addr = BackendInvitationAddr.build(
         backend_addr=device.organization_addr,

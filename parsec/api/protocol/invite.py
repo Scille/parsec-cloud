@@ -59,7 +59,7 @@ class InviteNewReqSchema(OneOfSchema):
 
 
 class InvitationEmailSentStatus(Enum):
-    SUCESS = "SUCESS"
+    SUCCESS = "SUCCESS"
     NOT_AVAILABLE = "NOT_AVAILABLE"
     BAD_RECIPIENT = "BAD_RECIPIENT"
 
