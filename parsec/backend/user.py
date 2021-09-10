@@ -488,16 +488,6 @@ class BaseUserComponent:
         """
         raise NotImplementedError()
 
-    async def find(
-        self,
-        organization_id: OrganizationID,
-        query: Optional[str] = None,
-        page: int = 1,
-        per_page: int = 100,
-        omit_revoked: bool = False,
-    ) -> Tuple[List[UserID], int]:
-        raise NotImplementedError()
-
     async def find_humans(
         self,
         organization_id: OrganizationID,
