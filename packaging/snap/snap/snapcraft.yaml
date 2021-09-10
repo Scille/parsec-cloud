@@ -242,6 +242,9 @@ parts:
       - libxcb1
       - libxkbcommon-x11-0
       - libxkbcommon0
+      # OpenGL and friends seem needed for some widgets...
+      - libgl1
+      - libegl1
       # fuse package contains fusermount which is sometime needed by libfuse2
       # (see: https://github.com/Scille/parsec-cloud/issues/1253)
       - fuse
