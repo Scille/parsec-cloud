@@ -11,6 +11,7 @@ from parsec.api.protocol import (
     InvitationStatus,
     InvitationDeletedReason,
     InvitationType,
+    InvitationEmailSentStatus,
     HandshakeBadIdentity,
     APIEvent,
 )
@@ -184,7 +185,7 @@ async def test_invite_with_send_mail(alice, alice_backend_sock, email_letterbox)
         send_email=True,
     )
 
-    assert rep == {"status": "ok", "token": ANY}
+    assert rep == {"status": "ok", "token": ANY, "email_sent": InvitationEmailSentStatus.SUCESS}
     token = rep["token"]
     email = await email_letterbox.get_next_with_timeout()
     assert email == ("zack@example.com", ANY)
@@ -215,7 +216,7 @@ async def test_invite_with_send_mail(alice, alice_backend_sock, email_letterbox)
 
     # Device invitation
     rep = await invite_new(alice_backend_sock, type=InvitationType.DEVICE, send_email=True)
-    assert rep == {"status": "ok", "token": ANY}
+    assert rep == {"status": "ok", "token": ANY, "email_sent": InvitationEmailSentStatus.SUCESS}
     token = rep["token"]
     email = await email_letterbox.get_next_with_timeout()
     assert email == (alice.human_handle.email, ANY)
@@ -246,7 +247,13 @@ async def test_invite_with_send_mail(alice, alice_backend_sock, email_letterbox)
 
 
 @pytest.mark.trio
-async def test_invite_with_mail_not_sent(alice, alice_backend_sock, email_failing_send):
+async def test_invite_with_mail_error(alice, alice_backend_sock, monkeypatch):
+    async def _mocked_send_email(email_config, to_addr, message):
+        from parsec.backend.invite import InvitationEmailConfigError
+
+        raise InvitationEmailConfigError(Exception())
+
+    monkeypatch.setattr("parsec.backend.invite.send_email", _mocked_send_email)
 
     # User invitation
     rep = await invite_new(
@@ -255,11 +262,47 @@ async def test_invite_with_mail_not_sent(alice, alice_backend_sock, email_failin
         claimer_email="zack@example.com",
         send_email=True,
     )
-    assert rep == {"status": "ok", "token": ANY, "email_sent": False}
+    assert rep == {
+        "status": "ok",
+        "token": ANY,
+        "email_sent": InvitationEmailSentStatus.NOT_AVAILABLE,
+    }
 
     # Device invitation
     rep = await invite_new(alice_backend_sock, type=InvitationType.DEVICE, send_email=True)
-    assert rep == {"status": "ok", "token": ANY, "email_sent": False}
+    assert rep == {
+        "status": "ok",
+        "token": ANY,
+        "email_sent": InvitationEmailSentStatus.NOT_AVAILABLE,
+    }
+
+    async def _mocked_send_email(email_config, to_addr, message):
+        from parsec.backend.invite import InvitationEmailRecipientError
+
+        raise InvitationEmailRecipientError(Exception())
+
+    monkeypatch.setattr("parsec.backend.invite.send_email", _mocked_send_email)
+
+    # User invitation
+    rep = await invite_new(
+        alice_backend_sock,
+        type=InvitationType.USER,
+        claimer_email="zack@example.com",
+        send_email=True,
+    )
+    assert rep == {
+        "status": "ok",
+        "token": ANY,
+        "email_sent": InvitationEmailSentStatus.BAD_RECIPIENT,
+    }
+
+    # Device invitation
+    rep = await invite_new(alice_backend_sock, type=InvitationType.DEVICE, send_email=True)
+    assert rep == {
+        "status": "ok",
+        "token": ANY,
+        "email_sent": InvitationEmailSentStatus.BAD_RECIPIENT,
+    }
 
 
 @pytest.mark.trio
@@ -274,7 +317,7 @@ async def test_invite_with_send_mail_and_greeter_without_human_handle(
         claimer_email="zack@example.com",
         send_email=True,
     )
-    assert rep == {"status": "ok", "token": ANY}
+    assert rep == {"status": "ok", "token": ANY, "email_sent": InvitationEmailSentStatus.SUCESS}
     token = rep["token"]
     email = await email_letterbox.get_next_with_timeout()
     assert email == ("zack@example.com", ANY)

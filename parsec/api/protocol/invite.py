@@ -69,6 +69,7 @@ InvitationEmailSentStatusField = fields.enum_field_factory(InvitationEmailSentSt
 
 class InviteNewRepSchema(BaseRepSchema):
     token = fields.UUID(required=True)
+    # Field used when the invitation is correctly created but the invitation email cannot be sent
     email_sent = InvitationEmailSentStatusField(required=False, allow_none=False)
 
 

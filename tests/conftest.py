@@ -700,16 +700,6 @@ def email_letterbox(monkeypatch):
 
 
 @pytest.fixture
-def email_failing_send(monkeypatch):
-    async def _mocked_send_email(email_config, to_addr, message):
-        from parsec.backend.invite import InvitationEmailError
-
-        raise InvitationEmailError(Exception())
-
-    monkeypatch.setattr("parsec.backend.invite.send_email", _mocked_send_email)
-
-
-@pytest.fixture
 def webhook_spy(monkeypatch):
     events = []
 

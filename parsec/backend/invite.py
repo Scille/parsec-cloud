@@ -79,7 +79,11 @@ class InvitationAlreadyMemberError(InvitationError):
     pass
 
 
-class InvitationEmailError(InvitationError):
+class InvitationEmailConfigError(InvitationError):
+    pass
+
+
+class InvitationEmailRecipientError(InvitationError):
     pass
 
 
@@ -210,9 +214,11 @@ async def _smtp_send_mail(email_config: SmtpEmailConfig, to_addr: str, message: 
                     server.login(email_config.host_user, email_config.host_password)
                 server.sendmail(email_config.sender, to_addr, message.as_string())
 
+        except smtplib.SMTPRecipientsRefused as e:
+            raise InvitationEmailRecipientError from e
         except smtplib.SMTPException as e:
             logger.warning("SMTP error", exc_info=e, to_addr=to_addr, subject=message["Subject"])
-            raise InvitationEmailError from e
+            raise InvitationEmailConfigError from e
 
     await trio.to_thread.run_sync(_do)
 
@@ -326,14 +332,17 @@ class BaseInviteComponent:
                         to_addr=invitation.claimer_email,
                         message=message,
                     )
-                except InvitationEmailError:
+                except InvitationEmailConfigError:
+                    email_sent_status = InvitationEmailSentStatus.NOT_AVAILABLE
+                except InvitationEmailRecipientError:
+                    email_sent_status = InvitationEmailSentStatus.BAD_RECIPIENT
+                else:
+                    email_sent_status = InvitationEmailSentStatus.SUCESS
+                finally:
                     return invite_new_serializer.rep_dump(
-                        {
-                            "status": "ok",
-                            "token": invitation.token,
-                            "email_sent": InvitationEmailSentStatus.NOT_AVAILABLE,
-                        }
+                        {"status": "ok", "token": invitation.token, "email_sent": email_sent_status}
                     )
+
         else:  # Device
             if msg["send_email"] and not client_ctx.human_handle:
                 return invite_new_serializer.rep_dump({"status": "not_available"})
@@ -353,19 +362,21 @@ class BaseInviteComponent:
                     backend_url=self._config.backend_addr.to_http_domain_url(),
                 )
                 try:
+
                     await send_email(
                         email_config=self._config.email_config,
                         to_addr=client_ctx.human_handle.email,
                         message=message,
                     )
-
-                except InvitationEmailError:
+                except InvitationEmailConfigError:
+                    email_sent_status = InvitationEmailSentStatus.NOT_AVAILABLE
+                except InvitationEmailRecipientError:
+                    email_sent_status = InvitationEmailSentStatus.BAD_RECIPIENT
+                else:
+                    email_sent_status = InvitationEmailSentStatus.SUCESS
+                finally:
                     return invite_new_serializer.rep_dump(
-                        {
-                            "status": "ok",
-                            "token": invitation.token,
-                            "email_sent": InvitationEmailSentStatus.NOT_AVAILABLE,
-                        }
+                        {"status": "ok", "token": invitation.token, "email_sent": email_sent_status}
                     )
 
         return invite_new_serializer.rep_dump({"status": "ok", "token": invitation.token})

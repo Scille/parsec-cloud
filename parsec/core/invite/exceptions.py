@@ -28,8 +28,3 @@ class InviteTimestampError(InviteError):
 class InviteActiveUsersLimitReachedError(InviteError):
     def __init__(self, msg="Active users limit reached"):
         super().__init__(msg)
-
-
-class InviteEmailNotSentError(InviteError):
-    def __init__(self, msg="Invite email not sent"):
-        super().__init__(msg)

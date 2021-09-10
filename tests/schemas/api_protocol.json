@@ -626,8 +626,14 @@
                     "fields": {
                         "email_sent": {
                             "allow_none": false,
+                            "enum_allowed_values": [
+                                "SUCESS",
+                                "NOT_AVAILABLE",
+                                "BAD_RECIPIENT"
+                            ],
+                            "enum_type": "InvitationEmailSentStatus",
                             "required": false,
-                            "type": "Boolean"
+                            "type": "InvitationEmailSentStatusField"
                         },
                         "status": {
                             "allow_none": false,

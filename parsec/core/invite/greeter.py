@@ -36,7 +36,6 @@ from parsec.core.invite.exceptions import (
     InviteNotFoundError,
     InviteAlreadyUsedError,
     InviteActiveUsersLimitReachedError,
-    InviteEmailNotSentError,
 )
 
 
@@ -49,8 +48,6 @@ def _check_rep(rep, step_name):
         raise InvitePeerResetError
     elif rep["status"] == "active_users_limit_reached":
         raise InviteActiveUsersLimitReachedError
-    elif rep["status"] == "email_not_sent":
-        raise InviteEmailNotSentError
     elif rep["status"] != "ok":
         raise InviteError(f"Backend error during {step_name}: {rep}")
 
@@ -65,7 +62,12 @@ class BaseGreetInitialCtx:
         rep = await self._cmds.invite_1_greeter_wait_peer(
             token=self.token, greeter_public_key=greeter_private_key.public_key
         )
-        _check_rep(rep, step_name="step 1")
+        if rep["status"] == "not_found":
+            raise InviteNotFoundError
+        elif rep["status"] == "already_deleted":
+            raise InviteAlreadyUsedError()
+        elif rep["status"] != "ok":
+            raise InviteError(f"Backend error during step 1: {rep}")
 
         shared_secret_key = generate_shared_secret_key(
             our_private_key=greeter_private_key, peer_public_key=rep["claimer_public_key"]
