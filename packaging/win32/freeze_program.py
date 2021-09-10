@@ -89,7 +89,7 @@ def main(program_source):
     shutil.move(pyinstaller_dist / "parsec", target_dir)
 
     # Include LICENSE file
-    (target_dir / "LICENSE.txt").write_text((program_source / "LICENSE").read_text())
+    (target_dir / "LICENSE.txt").write_text((program_source / "licenses/AGPL3.txt").read_text())
 
     # Create build info file for NSIS installer
     (BUILD_DIR / "BUILD.tmp").write_text(
