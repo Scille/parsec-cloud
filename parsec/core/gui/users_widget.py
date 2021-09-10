@@ -253,8 +253,8 @@ class UsersWidget(QWidget, Ui_UsersWidget):
         self.invite_user_error.connect(self._on_invite_user_error)
         self.cancel_invitation_success.connect(self._on_cancel_invitation_success)
         self.cancel_invitation_error.connect(self._on_cancel_invitation_error)
-        self.checkbox_filter_revoked.clicked.connect(self.reset)
-        self.checkbox_filter_invitation.clicked.connect(self.reset)
+        self.checkbox_filter_revoked.clicked.connect(lambda: self.reset(True))
+        self.checkbox_filter_invitation.clicked.connect(lambda: self.reset(True))
 
     def show(self):
         self._page = 1
@@ -525,11 +525,11 @@ class UsersWidget(QWidget, Ui_UsersWidget):
 
         show_error(self, errmsg, exception=job.exc)
 
-    def reset(self):
+    def reset(self, disable_filters=False):
         self.layout_users.clear()
         self.label_page_info.hide()
-        self.button_users_filter.setEnabled(False)
-        self.line_edit_search.setEnabled(False)
+        self.button_users_filter.setEnabled(disable_filters)
+        self.line_edit_search.setEnabled(disable_filters)
         self.button_previous_page.hide()
         self.button_next_page.hide()
         self.spinner.show()
