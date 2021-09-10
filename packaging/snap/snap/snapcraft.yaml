@@ -16,11 +16,13 @@ apps:
     command: parsec
     desktop: parsec.desktop
     environment:
+      SSL_CAFILE: ${SNAP}/cacert.pem
       SENTRY_URL: https://863e60bbef39406896d2b7a5dbd491bb@sentry.io/1212848
       PREFERRED_ORG_CREATION_BACKEND_ADDR: parsec://saas.parsec.cloud/
   cli:
     command: parsec-cli
     environment:
+      SSL_CAFILE: ${SNAP}/cacert.pem
       SENTRY_URL: https://863e60bbef39406896d2b7a5dbd491bb@sentry.io/1212848
       PREFERRED_ORG_CREATION_BACKEND_ADDR: parsec://saas.parsec.cloud/
 
@@ -54,6 +56,16 @@ parts:
       /usr/bin/python3.8 -m venv ${VENV}  # must use absolute path here
       ${VENV}/bin/python -m pip install -Ur pre-requirements.txt
       ${VENV}/bin/python -m pip install -U .[core]
+
+      # Bundled libssl doesn't know where host OS stores it CA certificates,
+      # hence we bundle them instead.
+      # For this, Certifi provides the Mozilla-curated certifs bundled as a
+      # single file and we just have to copy it into our Snap.
+      # Note we don't use ubuntu package's  `ca-certificate` here given it
+      # comes as multiple pem files that must be cooked with `update-ca-certificate`
+      # command before being actually usable by openssl.
+      ${VENV}/bin/python -m pip install -U certifi
+      cp $(${VENV}/bin/python -m certifi) ${SNAPCRAFT_PART_INSTALL}/cacert.pem
 
       # ...then only keep the installed packages from the virtual env
       # this is fine given the same python is used between build and runtime
@@ -230,6 +242,9 @@ parts:
       - libxcb1
       - libxkbcommon-x11-0
       - libxkbcommon0
+      # OpenGL and friends seem needed for some widgets...
+      - libgl1
+      - libegl1
       # fuse package contains fusermount which is sometime needed by libfuse2
       # (see: https://github.com/Scille/parsec-cloud/issues/1253)
       - fuse
