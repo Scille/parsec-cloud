@@ -1,1 +1,0 @@
-Added a native menu and keyboard shortcuts for MacOS

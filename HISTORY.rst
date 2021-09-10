@@ -5,6 +5,22 @@ History
 .. towncrier release notes start
 
 
+Parsec v2.5.3 (2021-09-10)
+--------------------------
+
+Bugfixes
+~~~~~~~~
+
+* Fix mountpoint bug on Linux where some text editor could still edit files in
+  a workspace as reader  (`#1836 <https://github.com/Scille/parsec-cloud/issues/1836>`__)
+
+Miscellaneous internal changes
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+* Added a native menu and keyboard shortcuts for MacOS  (`#1838
+  <https://github.com/Scille/parsec-cloud/issues/1838>`__)
+
+
 Parsec v2.5.2 (2021-09-08)
 --------------------------
 
