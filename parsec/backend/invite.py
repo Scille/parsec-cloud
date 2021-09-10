@@ -28,6 +28,7 @@ from parsec.api.protocol import (
     InvitationType,
     InvitationDeletedReason,
     InvitationStatus,
+    InvitationEmailSentStatus,
     invite_new_serializer,
     invite_delete_serializer,
     invite_list_serializer,
@@ -327,7 +328,11 @@ class BaseInviteComponent:
                     )
                 except InvitationEmailError:
                     return invite_new_serializer.rep_dump(
-                        {"status": "ok", "token": invitation.token, "email_sent": False}
+                        {
+                            "status": "ok",
+                            "token": invitation.token,
+                            "email_sent": InvitationEmailSentStatus.NOT_AVAILABLE,
+                        }
                     )
         else:  # Device
             if msg["send_email"] and not client_ctx.human_handle:
@@ -356,7 +361,11 @@ class BaseInviteComponent:
 
                 except InvitationEmailError:
                     return invite_new_serializer.rep_dump(
-                        {"status": "ok", "token": invitation.token, "email_sent": False}
+                        {
+                            "status": "ok",
+                            "token": invitation.token,
+                            "email_sent": InvitationEmailSentStatus.NOT_AVAILABLE,
+                        }
                     )
 
         return invite_new_serializer.rep_dump({"status": "ok", "token": invitation.token})

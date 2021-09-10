@@ -7,7 +7,7 @@ from PyQt5.QtWidgets import QWidget, QMenu, QGraphicsDropShadowEffect, QLabel
 from PyQt5.QtGui import QColor
 from math import ceil
 
-from parsec.api.protocol import InvitationType
+from parsec.api.protocol import InvitationType, InvitationEmailSentStatus
 from parsec.api.data import UserProfile
 from parsec.core.types import BackendInvitationAddr, UserInfo
 
@@ -502,7 +502,7 @@ class UsersWidget(QWidget, Ui_UsersWidget):
         assert job.status == "ok"
 
         email, invitation_addr, email_sent_status = job.ret
-        if email_sent_status:
+        if email_sent_status == InvitationEmailSentStatus.SUCESS:
             show_info(self, _("TEXT_USER_INVITE_SUCCESS_email").format(email=email))
         else:
             show_info(

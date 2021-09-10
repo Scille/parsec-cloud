@@ -78,6 +78,7 @@ from parsec.api.protocol.invite import (
     invite_3b_greeter_signify_trust_serializer,
     invite_4_greeter_communicate_serializer,
     invite_4_claimer_communicate_serializer,
+    InvitationEmailSentStatus,
 )
 from parsec.api.protocol.message import message_get_serializer
 from parsec.api.protocol.realm import (
@@ -163,6 +164,7 @@ __all__ = (
     "InvitationType",
     "InvitationDeletedReason",
     "InvitationStatus",
+    "InvitationEmailSentStatus",
     "invite_new_serializer",
     "invite_delete_serializer",
     "invite_list_serializer",

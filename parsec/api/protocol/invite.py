@@ -58,9 +58,18 @@ class InviteNewReqSchema(OneOfSchema):
         return cast(InvitationType, obj["type"])
 
 
+class InvitationEmailSentStatus(Enum):
+    SUCESS = "SUCESS"
+    NOT_AVAILABLE = "NOT_AVAILABLE"
+    BAD_RECIPIENT = "BAD_RECIPIENT"
+
+
+InvitationEmailSentStatusField = fields.enum_field_factory(InvitationEmailSentStatus)
+
+
 class InviteNewRepSchema(BaseRepSchema):
     token = fields.UUID(required=True)
-    email_sent = fields.Boolean(required=False)
+    email_sent = InvitationEmailSentStatusField(required=False, allow_none=False)
 
 
 invite_new_serializer = CmdSerializer(InviteNewReqSchema, InviteNewRepSchema)

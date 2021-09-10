@@ -6,6 +6,7 @@ from PyQt5.QtCore import pyqtSignal
 from PyQt5.QtGui import QFont
 from PyQt5.QtWidgets import QWidget
 
+from parsec.api.protocol import InvitationEmailSentStatus
 from parsec.core.backend_connection import BackendNotAvailable, BackendConnectionError
 from parsec.core.invite import InviteError, InvitePeerResetError, InviteAlreadyUsedError
 from parsec.core.gui.trio_jobs import JobResultError, QtToTrioJob
@@ -16,10 +17,6 @@ from parsec.core.gui import desktop
 from parsec.core.gui.ui.greet_device_widget import Ui_GreetDeviceWidget
 from parsec.core.gui.ui.greet_device_code_exchange_widget import Ui_GreetDeviceCodeExchangeWidget
 from parsec.core.gui.ui.greet_device_instructions_widget import Ui_GreetDeviceInstructionsWidget
-
-from structlog import get_logger
-
-logger = get_logger()
 
 
 class Greeter:
@@ -181,10 +178,9 @@ class GreetDeviceInstructionsWidget(QWidget, Ui_GreetDeviceInstructionsWidget):
     def _on_send_email_success(self, job):
         # In theory the invitation address shouldn't have changed, but better safe than sorry
 
-        logger.warning(job.ret)
         self.invite_addr, email_sent_status = job.ret
 
-        if email_sent_status:
+        if email_sent_status == InvitationEmailSentStatus.SUCESS:
             self.button_send_email.setText(_("TEXT_GREET_DEVICE_EMAIL_SENT"))
             self.button_send_email.setDisabled(True)
         else:

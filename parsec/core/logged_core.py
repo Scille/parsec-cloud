@@ -13,7 +13,12 @@ from functools import partial
 from async_generator import asynccontextmanager
 
 from parsec.event_bus import EventBus
-from parsec.api.protocol import UserID, InvitationType, InvitationDeletedReason
+from parsec.api.protocol import (
+    UserID,
+    InvitationType,
+    InvitationDeletedReason,
+    InvitationEmailSentStatus,
+)
 from parsec.api.data import RevokedUserCertificateContent
 from parsec.core.types import LocalDevice, UserInfo, DeviceInfo, BackendInvitationAddr
 from parsec.core import resources as core_resources
@@ -264,7 +269,12 @@ class LoggedCore:
             raise BackendInvitationOnExistingMember("An user already exist with this email")
         elif rep["status"] != "ok":
             raise BackendConnectionError(f"Backend error: {rep}")
-        email_sent = not ("email_sent" in rep)
+
+        if not ("email_sent" in rep):
+            email_sent = InvitationEmailSentStatus.SUCESS
+        else:
+            email_sent = rep["email_sent"]
+
         return (
             BackendInvitationAddr.build(
                 backend_addr=self.device.organization_addr,
@@ -285,7 +295,12 @@ class LoggedCore:
         )
         if rep["status"] != "ok":
             raise BackendConnectionError(f"Backend error: {rep}")
-        email_sent = not ("email_sent" in rep)
+
+        if not ("email_sent" in rep):
+            email_sent = InvitationEmailSentStatus.SUCESS
+        else:
+            email_sent = rep["email_sent"]
+
         return (
             BackendInvitationAddr.build(
                 backend_addr=self.device.organization_addr,
