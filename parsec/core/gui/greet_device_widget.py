@@ -17,6 +17,10 @@ from parsec.core.gui.ui.greet_device_widget import Ui_GreetDeviceWidget
 from parsec.core.gui.ui.greet_device_code_exchange_widget import Ui_GreetDeviceCodeExchangeWidget
 from parsec.core.gui.ui.greet_device_instructions_widget import Ui_GreetDeviceInstructionsWidget
 
+from structlog import get_logger
+
+logger = get_logger()
+
 
 class Greeter:
     class Step(IntEnum):
@@ -115,8 +119,8 @@ class Greeter:
 
 async def _do_send_email(core):
     try:
-        rep = await core.new_device_invitation(send_email=True)
-        return rep
+        addr, email_sent_status = await core.new_device_invitation(send_email=True)
+        return addr, email_sent_status
 
     except BackendNotAvailable as exc:
         raise JobResultError("offline") from exc
@@ -176,9 +180,11 @@ class GreetDeviceInstructionsWidget(QWidget, Ui_GreetDeviceInstructionsWidget):
 
     def _on_send_email_success(self, job):
         # In theory the invitation address shouldn't have changed, but better safe than sorry
-        self.invite_addr = job.ret
 
-        if job.ret.email_sent:
+        logger.warning(job.ret)
+        self.invite_addr, email_sent_status = job.ret
+
+        if email_sent_status:
             self.button_send_email.setText(_("TEXT_GREET_DEVICE_EMAIL_SENT"))
             self.button_send_email.setDisabled(True)
         else:

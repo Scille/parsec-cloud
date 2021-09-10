@@ -438,21 +438,19 @@ class BackendInvitationAddr(BackendActionAddr):
     (e.g. ``parsec://parsec.example.com/my_org?action=claim_user&token=3a50b191122b480ebb113b10216ef343``)
     """
 
-    __slots__ = ("_organization_id", "_invitation_type", "_token", "_email_sent")
+    __slots__ = ("_organization_id", "_invitation_type", "_token")
 
     def __init__(
         self,
         organization_id: OrganizationID,
         invitation_type: InvitationType,
         token: UUID,
-        email_sent: Optional[bool] = True,
         **kwargs,
     ):
         super().__init__(**kwargs)
         self._organization_id = organization_id
         self._invitation_type = invitation_type
         self._token = token
-        self._email_sent = email_sent
 
     @classmethod
     def _from_url_parse_path(cls, path):
@@ -507,7 +505,6 @@ class BackendInvitationAddr(BackendActionAddr):
         organization_id: OrganizationID,
         invitation_type: InvitationType,
         token: UUID,
-        email_sent: Optional[bool] = True,
     ) -> "BackendInvitationAddr":
         return cls(
             hostname=backend_addr.hostname,
@@ -516,7 +513,6 @@ class BackendInvitationAddr(BackendActionAddr):
             organization_id=organization_id,
             invitation_type=invitation_type,
             token=token,
-            email_sent=email_sent,
         )
 
     def generate_organization_addr(self, root_verify_key: VerifyKey) -> BackendOrganizationAddr:
@@ -535,7 +531,3 @@ class BackendInvitationAddr(BackendActionAddr):
     @property
     def token(self) -> UUID:
         return self._token
-
-    @property
-    def email_sent(self) -> bool:
-        return self._email_sent

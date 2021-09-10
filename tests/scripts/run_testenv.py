@@ -34,7 +34,7 @@ from parsec.test_utils import initialize_test_organization
 
 DEFAULT_BACKEND_PORT = 6888
 DEFAULT_ADMINISTRATION_TOKEN = "V8VjaXrOz6gUC6ZEHPab0DSsjfq6DmcJ"
-DEFAULT_EMAIL_HOST = "MOCKED"
+DEFAULT_EMAIL_HOST = "smtp.gmail.com"
 DEFAULT_DEVICE_PASSWORD = "test"
 DEFAULT_DATABASE = "MOCKED"
 DEFAULT_BLOCKSTORE = "MOCKED"
@@ -144,8 +144,13 @@ async def restart_local_backend(administration_token, backend_port, email_host, 
         f"{sys.executable} -Wignore -m parsec.cli backend run --log-level=WARNING "
         f"-b {blockstore} --db {db} "
         f"--email-host={email_host} -P {backend_port} "
+        f"--email-port=25 "
+        f"--email-sender=camarcherapas2"
+        f"--email-host-user=camarcherapas2@gmail.fr "
+        f"--email-host-password=camarcherapas2 "
+        f"--email-use-tls "
         f"--spontaneous-organization-bootstrap "
-        f"--administration-token {administration_token} --backend-addr parsec://localhost:{backend_port}?no_ssl=true"
+        f"--administration-token {administration_token} --backend-addr parsec://localhost:{backend_port}?no_ssl=false"
     )
 
     # Trio does not support subprocess in windows yet

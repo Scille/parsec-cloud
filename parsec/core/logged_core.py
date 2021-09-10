@@ -265,12 +265,14 @@ class LoggedCore:
         elif rep["status"] != "ok":
             raise BackendConnectionError(f"Backend error: {rep}")
         email_sent = not ("email_sent" in rep)
-        return BackendInvitationAddr.build(
-            backend_addr=self.device.organization_addr,
-            organization_id=self.device.organization_id,
-            invitation_type=InvitationType.USER,
-            token=rep["token"],
-            email_sent=email_sent,
+        return (
+            BackendInvitationAddr.build(
+                backend_addr=self.device.organization_addr,
+                organization_id=self.device.organization_id,
+                invitation_type=InvitationType.USER,
+                token=rep["token"],
+            ),
+            email_sent,
         )
 
     async def new_device_invitation(self, send_email: bool) -> BackendInvitationAddr:
@@ -284,12 +286,14 @@ class LoggedCore:
         if rep["status"] != "ok":
             raise BackendConnectionError(f"Backend error: {rep}")
         email_sent = not ("email_sent" in rep)
-        return BackendInvitationAddr.build(
-            backend_addr=self.device.organization_addr,
-            organization_id=self.device.organization_id,
-            invitation_type=InvitationType.DEVICE,
-            token=rep["token"],
-            email_sent=email_sent,
+        return (
+            BackendInvitationAddr.build(
+                backend_addr=self.device.organization_addr,
+                organization_id=self.device.organization_id,
+                invitation_type=InvitationType.DEVICE,
+                token=rep["token"],
+            ),
+            email_sent,
         )
 
     async def delete_invitation(

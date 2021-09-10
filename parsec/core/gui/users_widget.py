@@ -199,8 +199,10 @@ async def _do_cancel_invitation(core, token):
 
 async def _do_invite_user(core, email):
     try:
-        rep = await core.new_user_invitation(email=email, send_email=True)
-        return email, rep
+        invitation_addr, email_sent_status = await core.new_user_invitation(
+            email=email, send_email=True
+        )
+        return email, invitation_addr, email_sent_status
     except BackendNotAvailable as exc:
         raise JobResultError("offline") from exc
     except BackendInvitationOnExistingMember as exc:
@@ -499,11 +501,14 @@ class UsersWidget(QWidget, Ui_UsersWidget):
         assert job.is_finished()
         assert job.status == "ok"
 
-        email, rep = job.ret
-        if rep.email_sent:
+        email, invitation_addr, email_sent_status = job.ret
+        if email_sent_status:
             show_info(self, _("TEXT_USER_INVITE_SUCCESS_email").format(email=email))
         else:
-            show_info(self, _("TEXT_INVITE_USER_EMAIL_NOT_SENT_directlink").format(directlink=rep))
+            show_info(
+                self,
+                _("TEXT_INVITE_USER_EMAIL_NOT_SENT_directlink").format(directlink=invitation_addr),
+            )
         self.reset()
 
     def _on_invite_user_error(self, job):
