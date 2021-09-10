@@ -206,18 +206,29 @@ class MainWindow(QMainWindow, Ui_MainWindow):  # type: ignore[misc]
         action = fileMenu.addAction(_("ACTION_MAIN_MENU_JOIN_ORGANIZATION"))
         action.triggered.connect(self._on_join_org_clicked)
         action.setShortcut(self.shortcut_join_org.key())
-        action = fileMenu.addAction(_("ACTION_MAIN_MENU_MANAGE_KEYS"))
+
+        deviceMenu = QMenu(_("TEXT_MENU_DEVICE"), self)
+        menuBar.addMenu(deviceMenu)
+
+        action = deviceMenu.addAction(_("ACTION_MAIN_MENU_MANAGE_KEYS"))
         action.triggered.connect(self._on_manage_keys)
 
-        fileMenu.addSeparator()
+        helpMenu = QMenu(_("TEXT_MENU_HELP"), self)
+        menuBar.addMenu(helpMenu)
 
-        action = fileMenu.addAction(_("ACTION_MAIN_MENU_OPEN_DOCUMENTATION"))
+        action = helpMenu.addAction(_("ACTION_MAIN_MENU_OPEN_DOCUMENTATION"))
         action.triggered.connect(self._on_show_doc_clicked)
-        action = fileMenu.addAction(_("ACTION_MAIN_MENU_CHANGELOG"))
+        action = helpMenu.addAction(_("ACTION_MAIN_MENU_CHANGELOG"))
         action.triggered.connect(self._show_changelog)
-        action = fileMenu.addAction(_("ACTION_MAIN_MENU_LICENSE"))
+
+        helpMenu.addSeparator()
+
+        action = helpMenu.addAction(_("ACTION_MAIN_MENU_LICENSE"))
         action.triggered.connect(self._show_license)
-        action = fileMenu.addAction(_("ACTION_MAIN_MENU_FEEDBACK_SEND"))
+
+        helpMenu.addSeparator()
+
+        action = helpMenu.addAction(_("ACTION_MAIN_MENU_FEEDBACK_SEND"))
         action.triggered.connect(self._on_send_feedback_clicked)
 
         self.setMenuBar(menuBar)

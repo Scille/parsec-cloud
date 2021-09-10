@@ -1593,6 +1593,12 @@ msgstr "PARSEC {version}"
 msgid "TEXT_MENU_FILE"
 msgstr "Fichier"
 
+msgid "TEXT_MENU_DEVICE"
+msgstr "Appareil"
+
+msgid "TEXT_MENU_HELP"
+msgstr "Aide"
+
 msgid "ACTION_MAIN_MENU_SHOW"
 msgstr "Menu"
 
