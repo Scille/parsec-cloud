@@ -396,6 +396,14 @@ async def test_mountpoint_revoke_access(
         with pytest.raises(expected_error) as ctx:
             await bar_path.unlink()
 
+        def sync_open():
+            for flag in (os.O_WRONLY, os.O_RDWR, os.O_RDWR | os.O_APPEND, os.O_WRONLY | os.O_EXCL):
+                with pytest.raises(expected_error) as ctx:
+                    os.open(foo_path, flag)
+                assert ctx.value.errno == expected_errno
+
+        await trio.to_thread.run_sync(sync_open)
+
     async with mountpoint_manager_factory(
         alice_user_fs, event_bus, base_mountpoint
     ) as mountpoint_manager:
