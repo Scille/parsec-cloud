@@ -1541,6 +1541,15 @@ msgstr "You do not have any device on this computer."
 msgid "TEXT_PARSEC_WINDOW_TITLE_version"
 msgstr "PARSEC {version}"
 
+msgid "TEXT_MENU_FILE"
+msgstr "File"
+
+msgid "TEXT_MENU_DEVICE"
+msgstr "Device"
+
+msgid "TEXT_MENU_HELP"
+msgstr "Help"
+
 msgid "ACTION_MAIN_MENU_SHOW"
 msgstr "Menu"
 
