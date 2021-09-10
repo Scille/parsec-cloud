@@ -2533,7 +2533,7 @@ msgid "ACTION_FILTER_LIST_USERS"
 msgstr "Rechercher utilisateurs"
 
 msgid "ACTION_FILTER_REVOKED_USERS"
-msgstr "Masquer les utilisteurs révoqués"
+msgstr "Masquer les utilisateurs révoqués"
 
 msgid "ACTION_FILTER_PENDING_INVITATION"
 msgstr "Masquer les invitations"
