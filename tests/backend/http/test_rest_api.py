@@ -73,18 +73,6 @@ async def test_organization_create(backend, backend_rest_send):
 
 
 @pytest.mark.trio
-async def test_organization_create_bad_organization_id(backend_rest_send):
-    for bad in ["", "x" * 33, "My!Org"]:  # Empty  # Too long  # Forbidden characters
-        status, _, body = await backend_rest_send(
-            f"/administration/organizations", method="POST", body={"organization_id": bad}
-        )
-        assert (status, body) == (
-            (400, "Bad Request"),
-            {"error": "bad_data", "reason": {"organization_id": ["Invalid organization ID"]}},
-        )
-
-
-@pytest.mark.trio
 async def test_organization_create_bad_data(backend_rest_send):
     organization_id = OrganizationID("NewOrg")
     for bad_body in [
@@ -92,6 +80,7 @@ async def test_organization_create_bad_data(backend_rest_send):
         {"organization_id": ""},  # Empty
         {"organization_id": "x" * 33},  # Too long
         {"organization_id": "My!Org"},  # Forbidden characters
+        {"organization_id": "C%C3%A9TAC%C3%A9"},  # Unexpected url escape (so forbidden characters)
         # Missing required field
         {"active_users_limit": 10},
         # Bad field value
