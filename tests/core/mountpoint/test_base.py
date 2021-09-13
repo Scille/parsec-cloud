@@ -613,7 +613,7 @@ async def test_cancel_mount_workspace(base_mountpoint, alice_user_fs, event_bus)
 
 
 @pytest.mark.mountpoint
-def test_deadlock_detection(mountpoint_service, caplog):
+def test_deadlock_detection(mountpoint_service, caplog, monkeypatch):
     async def _in_trio_land(user_fs, mountpoint_manager):
         # We're in trio-land, performing a sync-call to the mountpoint
         # This creates a deadlock as the file system thread is going to try
@@ -631,4 +631,8 @@ def test_deadlock_detection(mountpoint_service, caplog):
                 "[error    ] The trio thread is unreachable, a deadlock might have occured [parsec.core.mountpoint.fuse_operations]"
             )
 
+    # Lower the deadlock timeout detection to 100 ms to make the test faster
+    monkeypatch.setattr(
+        "parsec.core.mountpoint.thread_fs_access.ThreadFSAccess.DEADLOCK_TIMEOUT", 0.1
+    )
     mountpoint_service.execute(_in_trio_land)

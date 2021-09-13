@@ -11,7 +11,7 @@ class TrioDealockTimeoutError(Exception):
     pass
 
 
-def _run_from_thread_to_trio(trio_token, afn, *args, deadlock_timeout=1.0):
+def _run_from_thread_to_trio(trio_token, afn, *args, deadlock_timeout=None):
     # Thread-safe communication
     queue = Queue()
     cancelled = False
@@ -54,20 +54,25 @@ def _run_from_thread_to_trio(trio_token, afn, *args, deadlock_timeout=1.0):
 
 
 class ThreadFSAccess:
+
+    DEADLOCK_TIMEOUT = 1.0  # second
+
     def __init__(self, trio_token, workspace_fs, event_bus):
         self._trio_token = trio_token
         self.workspace_fs = workspace_fs
         self.event_bus = event_bus
 
     def _run(self, afn, *args):
-        return _run_from_thread_to_trio(self._trio_token, afn, *args)
+        return _run_from_thread_to_trio(
+            self._trio_token, afn, *args, deadlock_timeout=self.DEADLOCK_TIMEOUT
+        )
 
     def _run_sync(self, fn, *args):
         @functools.wraps(fn)
         async def afn(*args):
             return fn(*args)
 
-        return _run_from_thread_to_trio(self._trio_token, afn, *args)
+        return self._run(afn, *args)
 
     # Events
 
