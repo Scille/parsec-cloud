@@ -375,3 +375,16 @@ def show_info_link(parent, title, message, button_text, url):
     w.dialog = d
     w.button_ok.setFocus()
     return d.open()
+
+
+class InfoCopyLinkWidget(InfoLinkWidget):
+    def _on_button_clicked(self, button):
+        desktop.copy_to_clipboard(self.url)
+
+
+def show_info_copy_link(parent, title, message, button_text, url):
+    w = InfoCopyLinkWidget(message, url, button_text)
+    d = GreyedDialog(w, title=title, parent=parent)
+    w.dialog = d
+    w.button_ok.setFocus()
+    return d.open()

@@ -18,7 +18,13 @@ from parsec.core.backend_connection import (
 )
 
 from parsec.core.gui.trio_jobs import JobResultError, QtToTrioJob
-from parsec.core.gui.custom_dialogs import show_error, show_info, ask_question, get_text_input
+from parsec.core.gui.custom_dialogs import (
+    show_error,
+    show_info,
+    ask_question,
+    get_text_input,
+    show_info_copy_link,
+)
 from parsec.core.gui.custom_widgets import ensure_string_size
 from parsec.core.gui.flow_layout import FlowLayout
 from parsec.core.gui import validators
@@ -503,20 +509,27 @@ class UsersWidget(QWidget, Ui_UsersWidget):
 
         email, invitation_addr, email_sent_status = job.ret
         if email_sent_status == InvitationEmailSentStatus.SUCCESS:
+
             show_info(self, _("TEXT_USER_INVITE_SUCCESS_email").format(email=email))
         elif email_sent_status == InvitationEmailSentStatus.BAD_RECIPIENT:
-            show_info(
+            show_info_copy_link(
                 self,
+                _("TEXT_EMAIL_FAILED_TO_SEND_TITLE"),
                 _("TEXT_INVITE_USER_EMAIL_BAD_RECIPIENT_directlink").format(
                     directlink=invitation_addr
                 ),
+                _("ACTION_COPY_ADDR"),
+                str(invitation_addr),
             )
         else:
-            show_info(
+            show_info_copy_link(
                 self,
+                _("TEXT_EMAIL_FAILED_TO_SEND_TITLE"),
                 _("TEXT_INVITE_USER_EMAIL_NOT_AVAILABLE_directlink").format(
                     directlink=invitation_addr
                 ),
+                _("ACTION_COPY_ADDR"),
+                str(invitation_addr),
             )
 
         self.reset()

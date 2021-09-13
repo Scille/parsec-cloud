@@ -10,7 +10,7 @@ from parsec.api.protocol import InvitationEmailSentStatus
 from parsec.core.backend_connection import BackendNotAvailable, BackendConnectionError
 from parsec.core.invite import InviteError, InvitePeerResetError, InviteAlreadyUsedError
 from parsec.core.gui.trio_jobs import JobResultError, QtToTrioJob
-from parsec.core.gui.custom_dialogs import show_error, GreyedDialog, show_info
+from parsec.core.gui.custom_dialogs import show_error, GreyedDialog, show_info, show_info_copy_link
 from parsec.core.gui.lang import translate as _
 from parsec.core.gui.qrcode_widget import generate_qr_code
 from parsec.core.gui import desktop
@@ -185,18 +185,24 @@ class GreetDeviceInstructionsWidget(QWidget, Ui_GreetDeviceInstructionsWidget):
             self.button_send_email.setDisabled(True)
         else:
             if email_sent_status == InvitationEmailSentStatus.BAD_RECIPIENT:
-                show_info(
+                show_info_copy_link(
                     self,
-                    _("TEXT_INVITE_USER_EMAIL_BAD_RECIPIENT_directlink").format(
+                    _("TEXT_EMAIL_FAILED_TO_SEND_TITLE"),
+                    _("TEXT_INVITE_DEVICE_EMAIL_BAD_RECIPIENT_directlink").format(
                         directlink=self.invite_addr
                     ),
+                    _("ACTION_COPY_ADDR"),
+                    str(self.invite_addr),
                 )
             else:
-                show_info(
+                show_info_copy_link(
                     self,
-                    _("TEXT_INVITE_USER_EMAIL_NOT_AVAILABLE_directlink").format(
+                    _("TEXT_EMAIL_FAILED_TO_SEND_TITLE"),
+                    _("TEXT_INVITE_DEVICE_EMAIL_NOT_AVAILABLE_directlink").format(
                         directlink=self.invite_addr
                     ),
+                    _("ACTION_COPY_ADDR"),
+                    str(self.invite_addr),
                 )
             self.button_send_email.setDisabled(False)
 

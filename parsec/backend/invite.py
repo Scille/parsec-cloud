@@ -332,6 +332,7 @@ class BaseInviteComponent:
                         to_addr=invitation.claimer_email,
                         message=message,
                     )
+                    email_sent_status = InvitationEmailSentStatus.SUCCESS
                 except InvitationEmailConfigError:
                     email_sent_status = InvitationEmailSentStatus.NOT_AVAILABLE
                 except InvitationEmailRecipientError:
@@ -367,6 +368,7 @@ class BaseInviteComponent:
                         to_addr=client_ctx.human_handle.email,
                         message=message,
                     )
+                    email_sent_status = InvitationEmailSentStatus.SUCCESS
                 except InvitationEmailConfigError:
                     email_sent_status = InvitationEmailSentStatus.NOT_AVAILABLE
                 except InvitationEmailRecipientError:

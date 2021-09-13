@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PROJECT VERSION\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2021-03-03 13:29+0100\n"
+"POT-Creation-Date: 2021-09-13 14:29+0200\n"
 "PO-Revision-Date: 2020-10-15 10:30+0200\n"
 "Last-Translator: \n"
 "Language: en\n"
@@ -57,9 +57,6 @@ msgid "NOTIF_INFO_WORKSPACE_ROLE_UPDATED_{}"
 msgstr ""
 
 msgid "NOTIF_INFO_WORKSPACE_UNSHARED_{}"
-msgstr ""
-
-msgid "NOTIF_WARN_SYNC_CONFLICT_{}"
 msgstr ""
 
 msgid "TEXT_BACKEND_STATE_CONNECTED"
@@ -295,13 +292,6 @@ msgstr "The server is offline or you have no access to the internet."
 msgid "TEXT_INVITE_DEVICE_INVITE_ERROR"
 msgstr "Could not invite the device."
 
-
-msgid "TEXT_INVITE_DEVICE_EMAIL_NOT_SENT_directlink"
-msgstr "Could not send the invitation by mail, here is the link "
-"to open on your other device <b><a href=\"{directlink}\">{directlink}</a></b>"
-
-
-
 msgid "TEXT_DEVICE_LIST_RETRIEVABLE_FAILURE"
 msgstr "Failed to retrieve the device list from the server."
 
@@ -320,20 +310,20 @@ msgstr "The file is synced."
 msgid "TEXT_FILE_ITEM_IS_NOT_SYNCED_TOOLTIP"
 msgstr "The file is not synced yet."
 
-msgid "TEXT_FILE_SIZE_TB"
-msgstr "TB"
-
-msgid "TEXT_FILE_SIZE_GB"
-msgstr "GB"
-
-msgid "TEXT_FILE_SIZE_MB"
-msgstr "MB"
+msgid "TEXT_FILE_SIZE_B"
+msgstr "B"
 
 msgid "TEXT_FILE_SIZE_KB"
 msgstr "KB"
 
-msgid "TEXT_FILE_SIZE_B"
-msgstr "B"
+msgid "TEXT_FILE_SIZE_MB"
+msgstr "MB"
+
+msgid "TEXT_FILE_SIZE_GB"
+msgstr "GB"
+
+msgid "TEXT_FILE_SIZE_TB"
+msgstr "TB"
 
 msgid "ACTION_FILE_OPEN_CURRENT_DIRECTORY_MAC"
 msgstr "Open current directory in Finder"
@@ -438,9 +428,6 @@ msgstr "Are you sure you want to delete {count} files?"
 msgid "ACTION_FILE_DELETE_MULTIPLE"
 msgstr "Delete"
 
-msgid "TEXT_FILE_OPEN_ERROR_file"
-msgstr "The file <b>{file}</b> could not be opened.\n"
-
 msgid "TEXT_FILE_OPEN_MULTIPLE_TITLE_count"
 msgstr "Open {count} files"
 
@@ -452,6 +439,9 @@ msgstr "Open the files"
 
 msgid "TEXT_FILE_OPEN_MULTIPLE_ERROR"
 msgstr "Some or all files could not be opened."
+
+msgid "TEXT_FILE_OPEN_ERROR_file"
+msgstr "The file <b>{file}</b> could not be opened.\n"
 
 msgid "TEXT_FILE_IMPORT_LOADING_TITLE"
 msgstr "Importing"
@@ -559,6 +549,24 @@ msgstr "The invitation link has been copied to the clipboard"
 msgid "TEXT_GREET_DEVICE_EMAIL_SENT"
 msgstr "Email sent"
 
+msgid "TEXT_EMAIL_FAILED_TO_SEND_TITLE"
+msgstr "Failed to send email"
+
+msgid "TEXT_INVITE_DEVICE_EMAIL_BAD_RECIPIENT_directlink"
+msgstr ""
+"Could not send the invitation by mail, the email provided seems to be "
+"invalid, here is the link  to open on your other device\n"
+" <b><a href=\"{directlink}\">{directlink}</a></b>"
+
+msgid "ACTION_COPY_ADDR"
+msgstr "Copy invitation link to the clipboard"
+
+msgid "TEXT_INVITE_DEVICE_EMAIL_NOT_AVAILABLE_directlink"
+msgstr ""
+"Could not send the invitation by mail, the server is not available, here "
+"is the link to open on your other device\n"
+" <b><a href=\"{directlink}\">{directlink}</a></b>"
+
 msgid "TEXT_GREET_DEVICE_SEND_EMAIL_ERROR"
 msgstr "Could not send the email."
 
@@ -620,23 +628,28 @@ msgstr ""
 msgid "TEXT_GREET_USER_PEER_RESET"
 msgstr "The invitee has reset the process. We will restart from the beginning."
 
-msgid "TEXT_GREET_USER_ACTIVE_USERS_LIMIT_REACHED"
-msgstr "Active users limit reached, increase the limit or revoke some users before retrying."
+msgid "TEXT_USER_PROFILE_OUTSIDER"
+msgstr "Outsider"
 
 msgid "TEXT_USER_PROFILE_STANDARD"
 msgstr "Standard"
 
-msgid "NOT_ALLOWED_OUTSIDER_PROFILE_TOOLTIP"
-msgstr "Your organization does not authorize this kind of profile."
-
 msgid "TEXT_USER_PROFILE_ADMIN"
 msgstr "Administrator"
+
+msgid "NOT_ALLOWED_OUTSIDER_PROFILE_TOOLTIP"
+msgstr "Your organization does not authorize this kind of profile."
 
 msgid "TEXT_GREET_USER_INVALID_HUMAN_HANDLE"
 msgstr "The email is invalid."
 
 msgid "TEXT_GREET_USER_CREATE_USER_ERROR"
 msgstr "An error occured while creating the user. Please restart the process."
+
+msgid "TEXT_GREET_USER_ACTIVE_USERS_LIMIT_REACHED"
+msgstr ""
+"Active users limit reached, increase the limit or revoke some users "
+"before retrying."
 
 msgid "TEXT_GREET_USER_GET_REQUESTS_ERROR"
 msgstr "Internal error. Please restart the process."
@@ -677,6 +690,19 @@ msgstr "Internal error. Please restart the process."
 msgid "TEXT_GREET_USER_TITLE"
 msgstr "Greet a new user"
 
+msgid "TEXT_MACFUSE_INSTALL_WINDOW_TITLE"
+msgstr "One last step: Install macFUSE"
+
+msgid "TEXT_LOGIN_ERROR_MACFUSE_NOT_AVAILABLE"
+msgstr ""
+"To finalize your installation, macFUSE must be installed for certain key "
+"features to function.<br><br>On macOS versions 11.0 onwards, it's "
+"necessary to allow macFUSE in security settings after installation, "
+"requiring a system reboot afterwards."
+
+msgid "TEXT_MACFUSE_DOWNLOAD_BUTTON"
+msgstr "Download macFUSE"
+
 msgid "TEXT_LOGIN_ERROR_DEVICE_REVOKED"
 msgstr "This device has been revoked and can no longer be used to log in."
 
@@ -689,19 +715,6 @@ msgid "TEXT_LOGIN_ERROR_FUSE_NOT_AVAILABLE"
 msgstr ""
 "FUSE could not be loaded. \n"
 "Please check your installation."
-
-msgid "TEXT_LOGIN_ERROR_MACFUSE_NOT_AVAILABLE"
-msgstr ""
-"To finalize your installation, macFUSE must be installed for certain key "
-"features to function.<br><br>On macOS versions 11.0 onwards, it's necessary "
-"to allow macFUSE in security settings after installation, requiring a system "
-"reboot afterwards."
-
-msgid "TEXT_MACFUSE_INSTALL_WINDOW_TITLE"
-msgstr "One last step: Install macFUSE"
-
-msgid "TEXT_MACFUSE_DOWNLOAD_BUTTON"
-msgstr "Download macFUSE"
 
 msgid "TEXT_LOGIN_UNKNOWN_ERROR"
 msgstr "Cannot log in."
@@ -1631,10 +1644,12 @@ msgstr "Enable telemetry"
 
 msgid "TEXT_ENABLE_TELEMETRY_INSTRUCTIONS"
 msgstr ""
-"Telemetry is used by Parsec to automatically send anonymous crash reports.<br />\n"
+"Telemetry is used by Parsec to automatically send anonymous crash "
+"reports.<br />\n"
 "Those information helps us improve your user experience.<br />\n"
 "<br />\n"
-"Do you want to enable Telemetry? This can later be changed in the settings."
+"Do you want to enable Telemetry? This can later be changed in the "
+"settings."
 
 msgid "ACTION_ENABLE_TELEMETRY_ACCEPT"
 msgstr "Enable Telemetry"
@@ -1774,9 +1789,6 @@ msgstr "Copy email"
 msgid "TEXT_USER_IS_CURRENT"
 msgstr "you"
 
-msgid "TEXT_USER_PROFILE_OUTSIDER"
-msgstr "Outsider"
-
 msgid "TEXT_USER_IS_REVOKED"
 msgstr "Revoked"
 
@@ -1858,6 +1870,18 @@ msgstr ""
 "The invitation to join your organization was successfuly sent at : "
 "<b>{email}</b>"
 
+msgid "TEXT_INVITE_USER_EMAIL_BAD_RECIPIENT_directlink"
+msgstr ""
+"Could not send the invitation by mail to the user, the email provided "
+"seems to be invalid, here is the link the user needs to open\n"
+" <b><a href=\"{directlink}\">{directlink}</a></b>"
+
+msgid "TEXT_INVITE_USER_EMAIL_NOT_AVAILABLE_directlink"
+msgstr ""
+"Could not send the invitation by mail to the user, the server is not "
+"available, here is the link the user needs to open\n"
+" <b><a href=\"{directlink}\">{directlink}</a></b>"
+
 msgid "TEXT_INVITE_USER_INVITE_OFFLINE"
 msgstr "The server is offline or you have no access to the internet."
 
@@ -1866,19 +1890,6 @@ msgstr "This user is already a member of this organization."
 
 msgid "TEXT_INVITE_USER_INVITE_ERROR"
 msgstr "Could not invite the user."
-
-msgid "TEXT_INVITE_USER_EMAIL_BAD_RECIPIENT_directlink"
-msgstr "Could not send the invitation by mail to the user, "
-"the email provided seems to be invalid, here is the link the "
-"user needs to open <b><a href=\"{directlink}\">{directlink}</a></b>"
-
-
-msgid "TEXT_INVITE_USER_EMAIL_NOT_AVAILABLE_directlink"
-msgstr "Could not send the invitation by mail to the user, "
-"the server is not available, here is the link the "
-"user needs to open <b><a href=\"{directlink}\">{directlink}</a></b>"
-
-
 
 msgid "ACTION_WORKSPACE_OPEN_IN_FINDER"
 msgstr "Open in Finder"
@@ -2186,6 +2197,9 @@ msgstr "Organization name"
 msgid "TEXT_LABEL_ORG_NAME_RECOMMANDATIONS"
 msgstr "Letters, digits, underscores and hyphens only. No spaces."
 
+msgid "ACTION_CREATE_ON_COMMERCIAL_BACKEND"
+msgstr "Use PARSEC main server"
+
 msgid "ACTION_ACCEPT_CONTRACT"
 msgstr ""
 "I accept the <a href=\"https://parsec.cloud/pdf/Parsec-Privacy-Policy-"
@@ -2198,9 +2212,6 @@ msgstr "I have my own PARSEC server"
 
 msgid "TEXT_LABEL_BACKEND_ADDR_PLACEHOLDER"
 msgstr "parsec://host:port"
-
-msgid "ACTION_CREATE_ON_COMMERCIAL_BACKEND"
-msgstr "Use PARSEC main server"
 
 msgid "TEXT_CREATE_ORGANIZATION_INSTRUCTIONS"
 msgstr "Please fill out the following information to create your organization."
@@ -2304,9 +2315,6 @@ msgstr "Waiting for information..."
 
 msgid "ACTION_SEND_EMAIL"
 msgstr "Send an email"
-
-msgid "ACTION_COPY_ADDR"
-msgstr "Copy invitation link to the clipboard"
 
 msgid "TEXT_GREET_DEVICE_INSTRUCTIONS_START"
 msgstr ""
@@ -2412,6 +2420,13 @@ msgstr "And then chose a new one:"
 msgid "ACTION_CHANGE_PASSWORD"
 msgstr "Change password"
 
+msgid "TEXT_PASSWORD_WARNING"
+msgstr ""
+"Your password is extremely important. Be sure to chose a secure password "
+"that you will remember. Your data will be encrypted with it and it is not"
+" possible to recover them if your forget it.<br />We also advise that you"
+" create multiple devices if possible and share your workspaces."
+
 msgid "TEXT_LABEL_PASSWORD"
 msgstr "Password"
 
@@ -2420,13 +2435,6 @@ msgstr "Password confirmation"
 
 msgid "TEXT_PASSWORD_CHOICE_MISMATCH"
 msgstr "Does not match the password."
-
-msgid "TEXT_PASSWORD_WARNING"
-msgstr ""
-"Your password is extremely important. Be sure to chose a secure password "
-"that you will remember. Your data will be encrypted with it and it is not"
-" possible to recover them if your forget it.<br />We also advise that you"
-" create multiple devices if possible and share your workspaces."
 
 msgid "TEXT_SETTINGS_BEHAVIOR_TITLE"
 msgstr "Application behavior"
@@ -2538,3 +2546,13 @@ msgstr "Create a new workspace"
 
 msgid "ACTION_WORKSPACE_GOTO_FILE_LINK"
 msgstr "Go to a file using a link"
+
+#~ msgid "NOTIF_WARN_SYNC_CONFLICT_{}"
+#~ msgstr ""
+
+#~ msgid "EMAIL_BAD_RECIPIENT"
+#~ msgstr ""
+
+#~ msgid "EMAIL_NOT_AVAILABLE"
+#~ msgstr ""
+

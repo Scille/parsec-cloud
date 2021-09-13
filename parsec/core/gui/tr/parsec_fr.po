@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PROJECT VERSION\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2021-03-03 13:29+0100\n"
+"POT-Creation-Date: 2021-09-13 14:29+0200\n"
 "PO-Revision-Date: 2020-10-15 10:31+0200\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language: fr\n"
@@ -57,9 +57,6 @@ msgid "NOTIF_INFO_WORKSPACE_ROLE_UPDATED_{}"
 msgstr ""
 
 msgid "NOTIF_INFO_WORKSPACE_UNSHARED_{}"
-msgstr ""
-
-msgid "NOTIF_WARN_SYNC_CONFLICT_{}"
 msgstr ""
 
 msgid "TEXT_BACKEND_STATE_CONNECTED"
@@ -312,11 +309,6 @@ msgstr "Le serveur est hors-ligne ou vous n'avez pas de connexion internet."
 msgid "TEXT_INVITE_DEVICE_INVITE_ERROR"
 msgstr "Impossible d'inviter un nouvel appareil"
 
-
-msgid "TEXT_INVITE_DEVICE_EMAIL_NOT_SENT_directlink"
-msgstr "Impossible d'envoyer l'invitation par mail, voici le lien à ouvrir sur votre autre appareil"
-" <b><a href=\"{directlink}\">{directlink}</a></b>"
-
 msgid "TEXT_DEVICE_LIST_RETRIEVABLE_FAILURE"
 msgstr "Impossible de récupérer la liste de vos appareils."
 
@@ -337,20 +329,20 @@ msgstr "Ce fichier est synchronisé."
 msgid "TEXT_FILE_ITEM_IS_NOT_SYNCED_TOOLTIP"
 msgstr "Ce fichier n'est pas encore synchronisé."
 
-msgid "TEXT_FILE_SIZE_TB"
-msgstr "To"
-
-msgid "TEXT_FILE_SIZE_GB"
-msgstr "Go"
-
-msgid "TEXT_FILE_SIZE_MB"
-msgstr "Mo"
+msgid "TEXT_FILE_SIZE_B"
+msgstr "o"
 
 msgid "TEXT_FILE_SIZE_KB"
 msgstr "Ko"
 
-msgid "TEXT_FILE_SIZE_B"
-msgstr "o"
+msgid "TEXT_FILE_SIZE_MB"
+msgstr "Mo"
+
+msgid "TEXT_FILE_SIZE_GB"
+msgstr "Go"
+
+msgid "TEXT_FILE_SIZE_TB"
+msgstr "To"
 
 msgid "ACTION_FILE_OPEN_CURRENT_DIRECTORY_MAC"
 msgstr "Ouvrir le répertoire dans le Finder"
@@ -457,9 +449,6 @@ msgstr "Êtes-vous sûr de vouloir supprimer les {count} fichiers ?"
 msgid "ACTION_FILE_DELETE_MULTIPLE"
 msgstr "Supprimer"
 
-msgid "TEXT_FILE_OPEN_ERROR_file"
-msgstr "Le fichier <b>{file}</b> n'a pas pû être ouvert."
-
 msgid "TEXT_FILE_OPEN_MULTIPLE_TITLE_count"
 msgstr "Ouvrir plusieurs fichiers"
 
@@ -473,6 +462,9 @@ msgstr "Ouvrir les fichiers"
 
 msgid "TEXT_FILE_OPEN_MULTIPLE_ERROR"
 msgstr "Certains fichiers n'ont pas pû être ouverts."
+
+msgid "TEXT_FILE_OPEN_ERROR_file"
+msgstr "Le fichier <b>{file}</b> n'a pas pû être ouvert."
 
 msgid "TEXT_FILE_IMPORT_LOADING_TITLE"
 msgstr "En cours d'import"
@@ -585,6 +577,24 @@ msgstr "Le lien d'invitation a été copié dans le presse-papier."
 msgid "TEXT_GREET_DEVICE_EMAIL_SENT"
 msgstr "Email envoyé"
 
+msgid "TEXT_EMAIL_FAILED_TO_SEND_TITLE"
+msgstr "Échec de l'envoi de l'email"
+
+msgid "TEXT_INVITE_DEVICE_EMAIL_BAD_RECIPIENT_directlink"
+msgstr ""
+"Impossible d'envoyer l'invitation par mail, l'email fourni semble être "
+"invalide,  voici le lien à ouvrir sur votre autre appareil\n"
+" <b><a href=\"{directlink}\">{directlink}</a></b>"
+
+msgid "ACTION_COPY_ADDR"
+msgstr "Copier le lien d'invitation"
+
+msgid "TEXT_INVITE_DEVICE_EMAIL_NOT_AVAILABLE_directlink"
+msgstr ""
+"Impossible d'envoyer l'invitation par mail, le serveur n'est pas "
+"disponible, voici le lien à ouvrir sur votre autre appareil\n"
+" <b><a href=\"{directlink}\">{directlink}</a></b>"
+
 msgid "TEXT_GREET_DEVICE_SEND_EMAIL_ERROR"
 msgstr "Impossible d'envoyer l'email"
 
@@ -650,19 +660,17 @@ msgstr "Suite à une annulation de l'invité, il faut redémarrer le precessus"
 msgid "TEXT_GREET_USER_PEER_RESET"
 msgstr "Suite à une annulation de l'invité, il faut redémarrer le processus."
 
-msgid "TEXT_GREET_USER_ACTIVE_USERS_LIMIT_REACHED"
-msgstr ""
-"Limite d'utilisateurs actifs atteinte, augmentez cette limite ou bien "
-"revoquez des utilisateurs avant de réessayer."
+msgid "TEXT_USER_PROFILE_OUTSIDER"
+msgstr "Externe"
 
 msgid "TEXT_USER_PROFILE_STANDARD"
 msgstr "Standard"
 
-msgid "NOT_ALLOWED_OUTSIDER_PROFILE_TOOLTIP"
-msgstr "Votre configuration actuelle n'autorise pas ce type de profil"
-
 msgid "TEXT_USER_PROFILE_ADMIN"
 msgstr "Administrateur"
+
+msgid "NOT_ALLOWED_OUTSIDER_PROFILE_TOOLTIP"
+msgstr "Votre configuration actuelle n'autorise pas ce type de profil"
 
 msgid "TEXT_GREET_USER_INVALID_HUMAN_HANDLE"
 msgstr "L'email n'est pas valide."
@@ -671,6 +679,11 @@ msgid "TEXT_GREET_USER_CREATE_USER_ERROR"
 msgstr ""
 "Une erreur est survenue lors de la création de l'utilisateur. Veuillez "
 "redémarrer le processus."
+
+msgid "TEXT_GREET_USER_ACTIVE_USERS_LIMIT_REACHED"
+msgstr ""
+"Limite d'utilisateurs actifs atteinte, augmentez cette limite ou bien "
+"revoquez des utilisateurs avant de réessayer."
 
 msgid "TEXT_GREET_USER_GET_REQUESTS_ERROR"
 msgstr "Erreur interne. Veuillez redémarrer le processus."
@@ -719,6 +732,20 @@ msgstr "Erreur interne. Veuillez redémarrer le processus."
 msgid "TEXT_GREET_USER_TITLE"
 msgstr "Accueillir un nouvel utilisateur"
 
+msgid "TEXT_MACFUSE_INSTALL_WINDOW_TITLE"
+msgstr "Dernière étape : Installer macFUSE"
+
+msgid "TEXT_LOGIN_ERROR_MACFUSE_NOT_AVAILABLE"
+msgstr ""
+"Pour finaliser votre installation, macFUSE doit être installé pour "
+"permettre l'utilisation de certaines fonctions de Parsec.<br><br>Sur les "
+"versions 11.x de macOS, il est nécessaire d'autoriser macFUSE dans les "
+"paramètres de sécurité de votre Mac après installation, requérant un "
+"redémarrage de votre ordinateur."
+
+msgid "TEXT_MACFUSE_DOWNLOAD_BUTTON"
+msgstr "Télécharger macFUSE"
+
 msgid "TEXT_LOGIN_ERROR_DEVICE_REVOKED"
 msgstr "Cet appareil a été révoqué et ne peut plus se connecter."
 
@@ -731,20 +758,6 @@ msgid "TEXT_LOGIN_ERROR_FUSE_NOT_AVAILABLE"
 msgstr ""
 "FUSE n'a pas pu être chargé. \n"
 "Merci de vérifier votre installation."
-
-msgid "TEXT_LOGIN_ERROR_MACFUSE_NOT_AVAILABLE"
-msgstr ""
-"Pour finaliser votre installation, macFUSE doit être installé pour permettre "
-"l'utilisation de certaines fonctions de Parsec.<br><br>Sur les versions 11.x "
-"de macOS, il est nécessaire d'autoriser macFUSE dans les paramètres de "
-"sécurité de votre Mac après installation, requérant un redémarrage de votre "
-"ordinateur."
-
-msgid "TEXT_MACFUSE_INSTALL_WINDOW_TITLE"
-msgstr "Dernière étape : Installer macFUSE"
-
-msgid "TEXT_MACFUSE_DOWNLOAD_BUTTON"
-msgstr "Télécharger macFUSE"
 
 msgid "TEXT_LOGIN_UNKNOWN_ERROR"
 msgstr "Impossible de se connecter."
@@ -1678,11 +1691,13 @@ msgstr "Rapport d'erreur"
 
 msgid "TEXT_ENABLE_TELEMETRY_INSTRUCTIONS"
 msgstr ""
-"La télémétrie est utilisée dans Parsec pour automatiquement envoyer "
-"des rapports d'erreur anonymes.<br />\n"
-"Ces informations nous aident à améliorer votre expérience utilisateur.<br />\n"
+"La télémétrie est utilisée dans Parsec pour automatiquement envoyer des "
+"rapports d'erreur anonymes.<br />\n"
+"Ces informations nous aident à améliorer votre expérience utilisateur.<br"
+" />\n"
 "<br />\n"
-"Voulez-vous activer la télémétrie ? Vous pourrez modifier cette option dans la configuration."
+"Voulez-vous activer la télémétrie ? Vous pourrez modifier cette option "
+"dans la configuration."
 
 msgid "ACTION_ENABLE_TELEMETRY_ACCEPT"
 msgstr "Activer la télémétrie"
@@ -1823,9 +1838,6 @@ msgstr "Copier l'adresse email"
 msgid "TEXT_USER_IS_CURRENT"
 msgstr "vous"
 
-msgid "TEXT_USER_PROFILE_OUTSIDER"
-msgstr "Externe"
-
 msgid "TEXT_USER_IS_REVOKED"
 msgstr "Révoqué"
 
@@ -1907,6 +1919,19 @@ msgstr ""
 "L'invitation à rejoindre votre organisation a été envoyée avec succès à "
 "l'adresse : <b>{email}</b>"
 
+msgid "TEXT_INVITE_USER_EMAIL_BAD_RECIPIENT_directlink"
+msgstr ""
+"Impossible d'envoyer l'invitation par mail à l'utilisateur, l'email "
+"fourni semble être invalide, voici le lien que l' utilisateur doit ouvrir"
+"\n"
+" <b><a href=\"{directlink}\">{directlink}</a></b>"
+
+msgid "TEXT_INVITE_USER_EMAIL_NOT_AVAILABLE_directlink"
+msgstr ""
+"Impossible d'envoyer l'invitation par mail à l'utilisateur, le serveur "
+"n'est pas disponible, voici le lien que l' utilisateur doit ouvrir\n"
+" <b><a href=\"{directlink}\">{directlink}</a></b>"
+
 msgid "TEXT_INVITE_USER_INVITE_OFFLINE"
 msgstr "Le serveur est hors-ligne ou vous n'avez pas de connexion internet."
 
@@ -1915,16 +1940,6 @@ msgstr "Cet utilisateur fait déjà parti de cette organisation."
 
 msgid "TEXT_INVITE_USER_INVITE_ERROR"
 msgstr "Impossible d'inviter l'utilisateur."
-
-msgid "TEXT_INVITE_USER_EMAIL_BAD_RECIPIENT_directlink"
-msgstr "Impossible d'envoyer l'invitation par mail à l'utilisateur, "
-"l'email fourni semble être invalide, voici le lien que l' "
-"utilisateur doit ouvrir <b><a href=\"{directlink}\">{directlink}</a></b>"
-
-msgid "TEXT_INVITE_USER_EMAIL_NOT_AVAILABLE_directlink"
-msgstr "Impossible d'envoyer l'invitation par mail à l'utilisateur, "
-"le serveur n'est pas disponible, voici le lien que l' "
-"utilisateur doit ouvrir <b><a href=\"{directlink}\">{directlink}</a></b>"
 
 msgid "ACTION_WORKSPACE_OPEN_IN_FINDER"
 msgstr "Ouvrir dans le Finder"
@@ -2237,6 +2252,9 @@ msgstr "Nom de l'organisation"
 msgid "TEXT_LABEL_ORG_NAME_RECOMMANDATIONS"
 msgstr "Lettres, chiffres, underscores et tirets seulement. Aucun espace."
 
+msgid "ACTION_CREATE_ON_COMMERCIAL_BACKEND"
+msgstr "Utiliser le server PARSEC principal"
+
 msgid "ACTION_ACCEPT_CONTRACT"
 msgstr ""
 "J'accepte la <a href=\"https://parsec.cloud/pdf/Parsec-Privacy-Policy-"
@@ -2251,9 +2269,6 @@ msgstr "Je dispose de mon propre serveur PARSEC"
 
 msgid "TEXT_LABEL_BACKEND_ADDR_PLACEHOLDER"
 msgstr "parsec://hote:port"
-
-msgid "ACTION_CREATE_ON_COMMERCIAL_BACKEND"
-msgstr "Utiliser le server PARSEC principal"
 
 msgid "TEXT_CREATE_ORGANIZATION_INSTRUCTIONS"
 msgstr "Veuillez fournir les informations suivantes pour créer votre organisation."
@@ -2357,9 +2372,6 @@ msgstr "En attente des informations"
 
 msgid "ACTION_SEND_EMAIL"
 msgstr "Envoyer un email"
-
-msgid "ACTION_COPY_ADDR"
-msgstr "Copier le lien d'invitation"
 
 msgid "TEXT_GREET_DEVICE_INSTRUCTIONS_START"
 msgstr ""
@@ -2473,6 +2485,14 @@ msgstr "Puis choisissez-en un nouveau :"
 msgid "ACTION_CHANGE_PASSWORD"
 msgstr "Modifier le mot de passe"
 
+msgid "TEXT_PASSWORD_WARNING"
+msgstr ""
+"Votre mot de passe est extrêmement important. Veuillez choisir un mot de "
+"passe sécurisé que vous retiendrez. Vos données seront chiffrées avec "
+"celui-ci et il est impossible de les récupérer si vous l'oubliez.<br "
+"/>Nous vous conseillons également de créer plusieurs appareils et de "
+"partager vos espaces de travail."
+
 msgid "TEXT_LABEL_PASSWORD"
 msgstr "Mot de passe"
 
@@ -2481,14 +2501,6 @@ msgstr "Confirmation du mot de passe"
 
 msgid "TEXT_PASSWORD_CHOICE_MISMATCH"
 msgstr "Ne correspond pas au mot de passe."
-
-msgid "TEXT_PASSWORD_WARNING"
-msgstr ""
-"Votre mot de passe est extrêmement important. Veuillez choisir un mot de "
-"passe sécurisé que vous retiendrez. Vos données seront chiffrées avec "
-"celui-ci et il est impossible de les récupérer si vous l'oubliez.<br "
-"/>Nous vous conseillons également de créer plusieurs appareils et de "
-"partager vos espaces de travail."
 
 msgid "TEXT_SETTINGS_BEHAVIOR_TITLE"
 msgstr "Comportement"
