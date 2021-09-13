@@ -31,6 +31,7 @@ class CoreEvent(Enum):
     MOUNTPOINT_STOPPING = "mountpoint.stopping"
     MOUNTPOINT_STOPPED = "mountpoint.stopped"
     MOUNTPOINT_UNHANDLED_ERROR = "mountpoint.unhandled_error"
+    MOUNTPOINT_TRIO_DEADLOCK_ERROR = "mountpoint.trio_deadlock_error"
     # Others
     SHARING_UPDATED = "sharing.updated"
     USERFS_UPDATED = "userfs.updated"

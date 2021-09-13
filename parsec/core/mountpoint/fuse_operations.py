@@ -17,7 +17,7 @@ from parsec.event_bus import EventBus
 from parsec.api.data import EntryID
 from parsec.core.core_events import CoreEvent
 from parsec.core.fs import FsPath, FSLocalOperationError, FSRemoteOperationError
-from parsec.core.mountpoint.thread_fs_access import ThreadFSAccess
+from parsec.core.mountpoint.thread_fs_access import ThreadFSAccess, TrioDealockTimeoutError
 
 
 logger = get_logger()
@@ -76,6 +76,27 @@ def get_path_and_translate_error(
             timestamp=timestamp,
         )
         raise FuseOSError(exc.errno) from exc
+
+    except TrioDealockTimeoutError as exc:
+        logger.error(
+            "The trio thread is unreachable, a deadlock might have occured",
+            operation=operation,
+            path=str(path),
+            mountpoint=str(mountpoint),
+            workspace_id=workspace_id,
+            timestamp=timestamp,
+        )
+        event_bus.send(
+            CoreEvent.MOUNTPOINT_TRIO_DEADLOCK_ERROR,
+            exc=exc,
+            operation=operation,
+            path=path,
+            mountpoint=mountpoint,
+            workspace_id=workspace_id,
+            timestamp=timestamp,
+        )
+        # Use EINVAL as error code, so it behaves the same as internal errors
+        raise FuseOSError(errno.EINVAL) from exc
 
     except Exception as exc:
         logger.exception(

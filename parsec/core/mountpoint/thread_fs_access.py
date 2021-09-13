@@ -1,6 +1,56 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2016-2021 Scille SAS
 
 import trio
+import outcome
+import functools
+import threading
+from queue import Queue
+
+
+class TrioDealockTimeoutError(Exception):
+    pass
+
+
+def _run_from_thread_to_trio(trio_token, afn, *args, deadlock_timeout=1.0):
+    # Thread-safe communication
+    queue = Queue()
+    cancelled = False
+    condition = threading.Condition()
+
+    def callback():
+        # Notify the call has started and check for cancellation in a thread-safe way
+        with condition:
+            condition.notify()
+            if cancelled:
+                queue.put_nowait(RuntimeError("Cancelled"))
+                return
+
+        # Wrapper for the asynchronous function
+        @trio.lowlevel.disable_ki_protection
+        async def unprotected_afn():
+            coro = trio._util.coroutine_or_error(afn, *args)
+            return await coro
+
+        # Task target
+        async def await_in_trio_thread_task():
+            queue.put_nowait(await outcome.acapture(unprotected_afn))
+
+        # Spawn system task
+        try:
+            trio.lowlevel.spawn_system_task(await_in_trio_thread_task, name=afn)
+        except RuntimeError:  # system nursery is closed
+            queue.put_nowait(outcome.Error(trio.RunFinishedError("system nursery is closed")))
+
+    with condition:
+        # Run the callback soon
+        trio_token.run_sync_soon(callback)
+        # Detect deadlock and cancel the callback in a thread-safe way
+        if not condition.wait(deadlock_timeout):
+            cancelled = True
+            raise TrioDealockTimeoutError
+
+    # Wait for the outcome and unwrap it
+    return queue.get().unwrap()
 
 
 class ThreadFSAccess:
@@ -8,11 +58,15 @@ class ThreadFSAccess:
         self.workspace_fs = workspace_fs
         self._trio_token = trio_token
 
-    def _run(self, fn, *args):
-        return trio.from_thread.run(fn, *args, trio_token=self._trio_token)
+    def _run(self, afn, *args):
+        return _run_from_thread_to_trio(self._trio_token, afn, *args)
 
     def _run_sync(self, fn, *args):
-        return trio.from_thread.run_sync(fn, *args, trio_token=self._trio_token)
+        @functools.wraps(fn)
+        async def afn(*args):
+            return fn(*args)
+
+        return _run_from_thread_to_trio(self._trio_token, afn, *args)
 
     # Rights check
 
