@@ -54,9 +54,10 @@ def _run_from_thread_to_trio(trio_token, afn, *args, deadlock_timeout=1.0):
 
 
 class ThreadFSAccess:
-    def __init__(self, trio_token, workspace_fs):
-        self.workspace_fs = workspace_fs
+    def __init__(self, trio_token, workspace_fs, event_bus):
         self._trio_token = trio_token
+        self.workspace_fs = workspace_fs
+        self.event_bus = event_bus
 
     def _run(self, afn, *args):
         return _run_from_thread_to_trio(self._trio_token, afn, *args)
@@ -67,6 +68,16 @@ class ThreadFSAccess:
             return fn(*args)
 
         return _run_from_thread_to_trio(self._trio_token, afn, *args)
+
+    # Events
+
+    def send_event(self, event, **kwargs):
+        @trio.lowlevel.disable_ki_protection
+        def callback():
+            self.event_bus.send(event, **kwargs)
+
+        # Do not use any kind of synchronization, events are fire-and-forget
+        self._trio_token.run_sync_soon(callback)
 
     # Rights check
 

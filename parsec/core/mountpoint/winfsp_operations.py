@@ -16,7 +16,6 @@ from winfspy import (
 from winfspy.plumbing import dt_to_filetime, NTSTATUS, SecurityDescriptor
 
 from parsec.api.data import EntryID
-from parsec.event_bus import EventBus
 from parsec.core.core_events import CoreEvent
 from parsec.core.fs import FsPath, FSLocalOperationError, FSRemoteOperationError
 from parsec.core.fs.workspacefs.sync_transactions import DEFAULT_BLOCK_SIZE
@@ -58,7 +57,7 @@ class OpenedFile:
 
 @contextmanager
 def get_path_and_translate_error(
-    event_bus: EventBus,
+    fs_access: ThreadFSAccess,
     operation: str,
     file_context: Union[OpenedFile, OpenedFolder, str],
     mountpoint: PurePath,
@@ -83,7 +82,7 @@ def get_path_and_translate_error(
         raise NTStatusError(exc.ntstatus) from exc
 
     except FSRemoteOperationError as exc:
-        event_bus.send(
+        fs_access.send_event(
             CoreEvent.MOUNTPOINT_REMOTE_ERROR,
             exc=exc,
             operation=operation,
@@ -108,7 +107,7 @@ def get_path_and_translate_error(
             workspace_id=workspace_id,
             timestamp=timestamp,
         )
-        event_bus.send(
+        fs_access.send_event(
             CoreEvent.MOUNTPOINT_TRIO_DEADLOCK_ERROR,
             exc=exc,
             operation=operation,
@@ -128,7 +127,7 @@ def get_path_and_translate_error(
             workspace_id=workspace_id,
             timestamp=timestamp,
         )
-        event_bus.send(
+        fs_access.send_event(
             CoreEvent.MOUNTPOINT_UNHANDLED_ERROR,
             exc=exc,
             operation=operation,
@@ -201,7 +200,6 @@ def handle_error(func):
 class WinFSPOperations(BaseFileSystemOperations):
     def __init__(
         self,
-        event_bus: EventBus,
         fs_access: ThreadFSAccess,
         volume_label: str,
         mountpoint: PurePath,
@@ -214,7 +212,6 @@ class WinFSPOperations(BaseFileSystemOperations):
             # "O:BAG:BAD:P(A;;FA;;;SY)(A;;FA;;;BA)(A;;FA;;;WD)"
             "O:BAG:BAD:NO_ACCESS_CONTROL"
         )
-        self.event_bus = event_bus
         self.fs_access = fs_access
 
         # We have currently no way of easily getting the size of workspace
@@ -228,7 +225,7 @@ class WinFSPOperations(BaseFileSystemOperations):
 
         self._get_path_and_translate_error = partial(
             get_path_and_translate_error,
-            event_bus=self.event_bus,
+            fs_access=self.fs_access,
             mountpoint=mountpoint,
             workspace_id=workspace_id,
             timestamp=timestamp,

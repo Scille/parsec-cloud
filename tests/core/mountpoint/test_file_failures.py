@@ -101,11 +101,15 @@ async def test_remote_error_event(
                 fd = os.open(str(trio_w / "foo.txt"), os.O_RDONLY)
                 with pytest.raises(OSError):
                     os.read(fd, 10)
+                # Let the trio loop tick before exiting the spy context
+                trio.from_thread.run_sync(lambda: None)
             spy.assert_event_occured(CoreEvent.MOUNTPOINT_REMOTE_ERROR)
 
             # But should still be able to do local stuff though without remote errors
             with alice_user_fs.event_bus.listen() as spy:
                 os.open(str(trio_w / "bar.txt"), os.O_RDWR | os.O_CREAT)
+                # Let the trio loop tick before exiting the spy context
+                trio.from_thread.run_sync(lambda: None)
             assert os.listdir(str(trio_w)) == ["bar.txt", "foo.txt"]
             assert CoreEvent.MOUNTPOINT_REMOTE_ERROR not in [e.event for e in spy.events]
 
@@ -126,6 +130,8 @@ async def test_remote_error_event(
             with alice_user_fs.event_bus.listen() as spy:
                 with pytest.raises(OSError):
                     os.mkdir(str(trio_w / "dummy"))
+                # Let the trio loop tick before exiting the spy context
+                trio.from_thread.run_sync(lambda: None)
             if sys.platform == "win32":
                 expected_log = "[error    ] Unhandled exception in winfsp mountpoint [parsec.core.mountpoint.winfsp_operations]"
             else:

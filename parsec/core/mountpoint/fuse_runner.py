@@ -105,7 +105,7 @@ async def fuse_mountpoint_runner(
     fuse_thread_started = threading.Event()
     fuse_thread_stopped = threading.Event()
     trio_token = trio.lowlevel.current_trio_token()
-    fs_access = ThreadFSAccess(trio_token, workspace_fs)
+    fs_access = ThreadFSAccess(trio_token, workspace_fs, event_bus)
 
     mountpoint_path, initial_st_dev = await _bootstrap_mountpoint(
         base_mountpoint_path, workspace_fs
@@ -118,7 +118,7 @@ async def fuse_mountpoint_runner(
         "timestamp": getattr(workspace_fs, "timestamp", None),
     }
 
-    fuse_operations = FuseOperations(event_bus, fs_access, **event_kwargs)
+    fuse_operations = FuseOperations(fs_access, **event_kwargs)
 
     try:
         teardown_cancel_scope = None

@@ -12,8 +12,6 @@ from contextlib import contextmanager
 from stat import S_IRWXU, S_IFDIR, S_IFREG
 from fuse import FuseOSError, Operations, LoggingMixIn, fuse_get_context, fuse_exit
 
-
-from parsec.event_bus import EventBus
 from parsec.api.data import EntryID
 from parsec.core.core_events import CoreEvent
 from parsec.core.fs import FsPath, FSLocalOperationError, FSRemoteOperationError
@@ -39,7 +37,7 @@ def is_banned(name):
 
 @contextmanager
 def get_path_and_translate_error(
-    event_bus: EventBus,
+    fs_access: ThreadFSAccess,
     operation: str,
     context: Optional[str],
     mountpoint: PurePath,
@@ -66,7 +64,7 @@ def get_path_and_translate_error(
         raise FuseOSError(exc.errno) from exc
 
     except FSRemoteOperationError as exc:
-        event_bus.send(
+        fs_access.send_event(
             CoreEvent.MOUNTPOINT_REMOTE_ERROR,
             exc=exc,
             operation=operation,
@@ -86,7 +84,7 @@ def get_path_and_translate_error(
             workspace_id=workspace_id,
             timestamp=timestamp,
         )
-        event_bus.send(
+        fs_access.send_event(
             CoreEvent.MOUNTPOINT_TRIO_DEADLOCK_ERROR,
             exc=exc,
             operation=operation,
@@ -107,7 +105,7 @@ def get_path_and_translate_error(
             workspace_id=workspace_id,
             timestamp=timestamp,
         )
-        event_bus.send(
+        fs_access.send_event(
             CoreEvent.MOUNTPOINT_UNHANDLED_ERROR,
             exc=exc,
             operation=operation,
@@ -127,20 +125,18 @@ def get_path_and_translate_error(
 class FuseOperations(LoggingMixIn, Operations):
     def __init__(
         self,
-        event_bus: EventBus,
         fs_access: ThreadFSAccess,
         mountpoint: PurePath,
         workspace_id: EntryID,
         timestamp: Optional[DateTime],
     ):
         super().__init__()
-        self.event_bus = event_bus
         self.fs_access = fs_access
         self.fds = {}
         self._need_exit = False
         self._get_path_and_translate_error = partial(
             get_path_and_translate_error,
-            event_bus=self.event_bus,
+            fs_access=self.fs_access,
             mountpoint=mountpoint,
             workspace_id=workspace_id,
             timestamp=timestamp,
