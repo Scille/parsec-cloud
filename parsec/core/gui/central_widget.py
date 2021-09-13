@@ -211,12 +211,12 @@ class CentralWidget(QWidget, Ui_CentralWidget):  # type: ignore[misc]
             assert kwargs["status_exc"] is None or isinstance(kwargs["status_exc"], Exception)
             self.connection_state_changed.emit(kwargs["status"], kwargs["status_exc"])
         elif event == CoreEvent.MOUNTPOINT_READONLY:
-            actual_time = time.time()
-            if self.last_notification == 0.0 or actual_time >= self.last_notification + 3:  # 3s
+            current_time = time.time()
+            if self.last_notification == 0.0 or current_time >= self.last_notification + 3:  # 3s
                 self.systray_notification.emit(
                     "", _("NOTIF_INFO_WORKSPACE_READ_ONLY"), 3000
                 )  # 3000ms
-                self.last_notification = actual_time
+                self.last_notification = current_time
         elif event == CoreEvent.MOUNTPOINT_STOPPED:
             self.new_notification.emit("WARNING", _("NOTIF_WARN_MOUNTPOINT_UNMOUNTED"))
         elif event == CoreEvent.MOUNTPOINT_REMOTE_ERROR:
