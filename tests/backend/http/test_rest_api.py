@@ -73,18 +73,6 @@ async def test_organization_create(backend, backend_rest_send):
 
 
 @pytest.mark.trio
-async def test_organization_create_bad_organization_id(backend_rest_send):
-    for bad in ["", "x" * 33, "My!Org"]:  # Empty  # Too long  # Forbidden characters
-        status, _, body = await backend_rest_send(
-            f"/administration/organizations", method="POST", body={"organization_id": bad}
-        )
-        assert (status, body) == (
-            (400, "Bad Request"),
-            {"error": "bad_data", "reason": {"organization_id": ["Invalid organization ID"]}},
-        )
-
-
-@pytest.mark.trio
 async def test_organization_create_bad_data(backend_rest_send):
     organization_id = OrganizationID("NewOrg")
     for bad_body in [
@@ -92,6 +80,7 @@ async def test_organization_create_bad_data(backend_rest_send):
         {"organization_id": ""},  # Empty
         {"organization_id": "x" * 33},  # Too long
         {"organization_id": "My!Org"},  # Forbidden characters
+        {"organization_id": "C%C3%A9TAC%C3%A9"},  # Unexpected url escape (so forbidden characters)
         # Missing required field
         {"active_users_limit": 10},
         # Bad field value
@@ -218,8 +207,10 @@ async def test_organization_create_with_custom_initial_config(backend, backend_r
 
 
 @pytest.mark.trio
-async def test_organization_config_not_found(backend_rest_send):
-    status, _, body = await backend_rest_send("/administration/organizations/dummy")
+@pytest.mark.parametrize("type", ("unknown", "invalid"))
+async def test_organization_config_not_found(backend_rest_send, type):
+    org = "dummy" if type == "unknown" else "x" * 33
+    status, _, body = await backend_rest_send(f"/administration/organizations/{org}")
     assert (status, body) == ((404, "Not Found"), {"error": "not_found"})
 
 
@@ -261,9 +252,11 @@ async def test_organization_config_ok(backend, backend_rest_send, coolorg, boots
 
 
 @pytest.mark.trio
-async def test_organization_update_not_found(backend_rest_send):
+@pytest.mark.parametrize("type", ("unknown", "invalid"))
+async def test_organization_update_not_found(backend_rest_send, type):
+    org = "dummy" if type == "unknown" else "x" * 33
     status, _, body = await backend_rest_send(
-        f"/administration/organizations/dummy", method="PATCH", body={"bootstrap_token": "123"}
+        f"/administration/organizations/{org}", method="PATCH", body={"bootstrap_token": "123"}
     )
     assert (status, body) == ((404, "Not Found"), {"error": "not_found"})
 
@@ -398,8 +391,10 @@ async def test_organization_update_bad_data(backend_rest_send, coolorg):
 
 
 @pytest.mark.trio
-async def test_organization_stats_not_found(backend_rest_send):
-    status, _, body = await backend_rest_send(f"/administration/organizations/dummy/stats")
+@pytest.mark.parametrize("type", ("unknown", "invalid"))
+async def test_organization_stats_not_found(backend_rest_send, type):
+    org = "dummy" if type == "unknown" else "x" * 33
+    status, _, body = await backend_rest_send(f"/administration/organizations/{org}/stats")
     assert (status, body) == ((404, "Not Found"), {"error": "not_found"})
 
 
@@ -567,3 +562,36 @@ async def test_organization_stats_users(
         "metadata_size": 0,
         "realms": 0,
     }
+
+
+@pytest.mark.trio
+async def test_handles_escaped_path(backend, backend_rest_send):
+    organization_id = "CéTACé"
+    escaped_organization_id = "C%C3%A9TAC%C3%A9"
+    bad_escaped_organization_id = "C%C3%A9TAC%+C3%A9"
+
+    ROUTES_PATTERN = (
+        "/administration/organizations/{organization_id}",
+        "/administration/organizations/{organization_id}/stats",
+    )
+
+    # Not found
+    for route_pattern in ROUTES_PATTERN:
+        route = route_pattern.format(organization_id=escaped_organization_id)
+        status, _, body = await backend_rest_send(route)
+        assert (status, body) == ((404, "Not Found"), {"error": "not_found"}), route
+
+    # Now create the org
+    status, _, body = await backend_rest_send(
+        f"/administration/organizations", method="POST", body={"organization_id": organization_id}
+    )
+
+    # Found !
+    for route_pattern in ROUTES_PATTERN:
+        route = route_pattern.format(organization_id=escaped_organization_id)
+        status, _, _ = await backend_rest_send(route)
+        assert status == (200, "OK"), route
+
+        route = route_pattern.format(organization_id=bad_escaped_organization_id)
+        status, _, _ = await backend_rest_send(route)
+        assert status == (404, "Not Found"), route
