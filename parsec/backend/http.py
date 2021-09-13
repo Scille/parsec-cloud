@@ -5,7 +5,7 @@ import attr
 import json
 from typing import Awaitable, Callable, List, Dict, Set, Optional, Pattern, Tuple, Union
 import mimetypes
-from urllib.parse import parse_qs, urlsplit, urlunsplit, urlencode
+from urllib.parse import parse_qs, urlsplit, urlunsplit, urlencode, unquote_plus
 import importlib_resources
 import h11
 
@@ -64,13 +64,16 @@ class HTTPRequest:
     ) -> "HTTPRequest":
         # h11 makes sure the headers and target are ISO-8859-1
         target_split = urlsplit(h11_req.target.decode("ISO-8859-1"))
+        # Deal with percent-encoding of non-ASCII characters
+        path = unquote_plus(target_split.path)
+        # `parse_qs` also handles percent-encoding of non-ASCII characters
         query_params = parse_qs(target_split.query)
 
         # Note h11 already does normalization on headers
         # (see https://h11.readthedocs.io/en/latest/api.html?highlight=request#headers-format)
         return cls(
             method=h11_req.method.decode(),
-            path=target_split.path,
+            path=path,
             query=query_params,
             headers=dict(h11_req.headers),
             get_body=get_body,
@@ -224,17 +227,17 @@ class HTTPComponent:
         )
 
     async def _http_api_organization_config(self, req: HTTPRequest, **kwargs: str) -> HTTPResponse:
-        try:
-            organization_id = OrganizationID(kwargs["organization_id"])
-        except ValueError:
-            return HTTPResponse.build_rest(400, {"error": "bad_data"})
-
         if req.method == "GET":
             error_rep, _ = await self._api_check_auth_and_load_body(
                 req, organization_config_req_serializer
             )
             if error_rep:
                 return error_rep
+
+            try:
+                organization_id = OrganizationID(kwargs["organization_id"])
+            except ValueError:
+                return HTTPResponse.build_rest(404, {"error": "not_found"})
 
             try:
                 organization = await self._organization_component.get(id=organization_id)
@@ -255,11 +258,17 @@ class HTTPComponent:
 
         else:
             assert req.method == "PATCH"
+
             error_rep, data = await self._api_check_auth_and_load_body(
                 req, organization_update_req_serializer
             )
             if error_rep:
                 return error_rep
+
+            try:
+                organization_id = OrganizationID(kwargs["organization_id"])
+            except ValueError:
+                return HTTPResponse.build_rest(404, {"error": "not_found"})
 
             try:
                 await self._organization_component.update(id=organization_id, **data)
@@ -269,16 +278,16 @@ class HTTPComponent:
             return HTTPResponse.build_rest(200, organization_update_rep_serializer.dump({}))
 
     async def _http_api_organization_stats(self, req: HTTPRequest, **kwargs: str) -> HTTPResponse:
-        try:
-            organization_id = OrganizationID(kwargs["organization_id"])
-        except ValueError:
-            return HTTPResponse.build_rest(400, {"error": "bad_data"})
-
         error_rep, _ = await self._api_check_auth_and_load_body(
             req, organization_stats_req_serializer
         )
         if error_rep:
             return error_rep
+
+        try:
+            organization_id = OrganizationID(kwargs["organization_id"])
+        except ValueError:
+            return HTTPResponse.build_rest(404, {"error": "not_found"})
 
         try:
             stats = await self._organization_component.stats(id=organization_id)
@@ -316,8 +325,6 @@ class HTTPComponent:
         except SerdeValidationError as exc:
             return HTTPResponse.build_rest(400, {"error": "bad_data", "reason": exc.errors}), None
         except SerdePackingError:
-            breakpoint()
-
             return (
                 HTTPResponse.build_rest(400, {"error": "bad_data", "reason": "Invalid JSON"}),
                 None,
