@@ -276,7 +276,7 @@ class BackendApp:
         await self._send_http_reply(
             stream, conn, status_code=rep.status_code, headers=rep.headers, data=rep.data
         )
-        logger.info("Request", path=req.path, status=rep.status_code)
+        logger.info("Request", method=req.method, path=req.path, status=rep.status_code)
 
     async def _handle_client_websocket(self, stream: Stream, request: h11.Request) -> None:
         selected_logger = logger
