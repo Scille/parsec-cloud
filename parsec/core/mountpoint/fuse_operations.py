@@ -76,6 +76,14 @@ def get_path_and_translate_error(
         raise FuseOSError(exc.errno) from exc
 
     except TrioDealockTimeoutError as exc:
+        # This exception is raised when the trio thread cannot be reached.
+        # This is likely due to a deadlock, i.e the trio thread performing
+        # a synchronous call to access the fuse file system (this can easily
+        # happen in a third party library, e.g `QDesktopServices::openUrl`).
+        # The fuse/winfsp kernel driver being involved in the deadlock, the
+        # effects can easily propagate to the file explorer or the system
+        # in general. This is why it is much better to break out of it with
+        # and to return an error code indicating that the operation failed.
         logger.error(
             "The trio thread is unreachable, a deadlock might have occured",
             operation=operation,

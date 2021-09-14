@@ -12,37 +12,52 @@ class TrioDealockTimeoutError(Exception):
 
 
 def _run_from_thread_to_trio(trio_token, afn, *args, deadlock_timeout=None):
-    # Thread-safe communication
-    queue = Queue()
+    """
+    Most of this code is directly taken from:
+    - `trio._threads.from_thread_run`
+    - `trio._threads._run_fn_as_system_task`
+
+    It's been altered to add a deadlock detection with proper cancellation.
+    """
+    # Condition and flag to safely deal with cancellation
     cancelled = False
     condition = threading.Condition()
 
+    # Queue to receive the outcome of the task to run
+    queue = Queue()
+
+    # Sync callback running in the trio thread
     def callback():
-        # Notify the call has started and check for cancellation in a thread-safe way
+        # Protect against race-conditions
         with condition:
+            # Notify the fuse thread/winfsp that the call has started
             condition.notify()
+            # Check for cancellation in a thread-safe way
             if cancelled:
                 queue.put_nowait(RuntimeError("Cancelled"))
                 return
 
         # Wrapper for the asynchronous function
+        # Keyboard interrupt is enabled when using `trio_token.run_sync_soon`,
+        # So let's disable it as we're heading back to user code.
         @trio.lowlevel.disable_ki_protection
         async def unprotected_afn():
-            coro = trio._util.coroutine_or_error(afn, *args)
-            return await coro
+            return await afn(*args)
 
-        # Task target
+        # System task target
         async def await_in_trio_thread_task():
             queue.put_nowait(await outcome.acapture(unprotected_afn))
 
         # Spawn system task
         try:
             trio.lowlevel.spawn_system_task(await_in_trio_thread_task, name=afn)
-        except RuntimeError:  # system nursery is closed
+        # System nursery is closed
+        except RuntimeError:
             queue.put_nowait(outcome.Error(trio.RunFinishedError("system nursery is closed")))
 
+    # Protect against race conditions
     with condition:
-        # Run the callback soon
+        # Run the trio callback soon
         trio_token.run_sync_soon(callback)
         # Detect deadlock and cancel the callback in a thread-safe way
         if not condition.wait(deadlock_timeout):
@@ -55,6 +70,11 @@ def _run_from_thread_to_trio(trio_token, afn, *args, deadlock_timeout=None):
 
 class ThreadFSAccess:
 
+    # One second seems like a sensible value, as it is very unlikely to
+    # produce false positive (the trio loop would have to be busy processing
+    # other earlier callbacks for more than a second, which would probably be
+    # the indicator of another bug). It's also small enough to fail fast
+    # enough from the user perspective.
     DEADLOCK_TIMEOUT = 1.0  # second
 
     def __init__(self, trio_token, workspace_fs, event_bus):
@@ -68,6 +88,8 @@ class ThreadFSAccess:
         )
 
     def _run_sync(self, fn, *args):
+        # This `_run_sync` method is only used for the `can_delete` winfsp operation,
+        # so wrapping the sync function as an async one is good enough ¯\_(ツ)_/¯
         @functools.wraps(fn)
         async def afn(*args):
             return fn(*args)
@@ -77,11 +99,14 @@ class ThreadFSAccess:
     # Events
 
     def send_event(self, event, **kwargs):
+        # Keyboard interrupt is enabled when using `trio_token.run_sync_soon`,
+        # So let's disable it as we're heading back to user code.
         @trio.lowlevel.disable_ki_protection
         def callback():
             self.event_bus.send(event, **kwargs)
 
         # Do not use any kind of synchronization, events are fire-and-forget
+        # This also means that there is no risk of deadlock.
         self._trio_token.run_sync_soon(callback)
 
     # Rights check

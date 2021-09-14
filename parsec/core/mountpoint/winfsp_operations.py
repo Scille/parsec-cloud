@@ -99,6 +99,7 @@ def get_path_and_translate_error(
         raise NTStatusError(NTSTATUS.STATUS_NO_SUCH_DEVICE) from exc
 
     except TrioDealockTimeoutError as exc:
+        # See the similar clause in `fuse_operations` for a detailed explanation
         logger.error(
             "The trio thread is unreachable, a deadlock might have occured",
             operation=operation,
