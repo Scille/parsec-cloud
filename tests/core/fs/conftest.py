@@ -17,7 +17,7 @@ from tests.common import call_with_control
 
 
 @pytest.fixture
-def transactions_factory(event_bus, remote_devices_manager_factory):
+def transactions_factory(event_bus, remote_devices_manager_factory, core_config):
     async def _transactions_factory(device, backend_cmds, local_storage, cls=SyncTransactions):
         def _get_workspace_entry():
             return workspace_entry
@@ -51,6 +51,7 @@ def transactions_factory(event_bus, remote_devices_manager_factory):
             local_storage,
             remote_loader,
             event_bus,
+            core_config,
         )
 
     return _transactions_factory

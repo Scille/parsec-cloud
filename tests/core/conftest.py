@@ -94,7 +94,7 @@ async def apiv1_anonymous_backend_cmds(running_backend, coolorg):
 
 
 @pytest.fixture
-def user_fs_factory(data_base_dir, event_bus_factory):
+def user_fs_factory(data_base_dir, event_bus_factory, core_config):
     @asynccontextmanager
     async def _user_fs_factory(device, event_bus=None):
         event_bus = event_bus or event_bus_factory()
@@ -104,7 +104,7 @@ def user_fs_factory(data_base_dir, event_bus_factory):
         ) as cmds:
             rdm = RemoteDevicesManager(cmds, device.root_verify_key)
             async with UserFS.run(
-                data_base_dir, device, cmds, rdm, event_bus, get_prevent_sync_pattern()
+                data_base_dir, device, cmds, rdm, event_bus, get_prevent_sync_pattern(), core_config
             ) as user_fs:
 
                 yield user_fs
