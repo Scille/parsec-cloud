@@ -8,6 +8,7 @@ from PyQt5.QtGui import QPainter, QValidator
 from PyQt5.QtWidgets import (
     QWidget,
     QCompleter,
+    QLineEdit,
     QDialog,
     QApplication,
     QStyleOption,
@@ -211,6 +212,7 @@ class TextInputWidget(QWidget, Ui_InputWidget):
         completion=None,
         button_text=None,
         validator=None,
+        hidden=False,
     ):
         super().__init__()
         self.setupUi(self)
@@ -221,6 +223,8 @@ class TextInputWidget(QWidget, Ui_InputWidget):
         self.line_edit_text.setPlaceholderText(placeholder)
         self.line_edit_text.setText(default_text)
         self.line_edit_text.set_validator(validator)
+        if hidden:
+            self.line_edit_text.setEchoMode(QLineEdit.Password)
         self.line_edit_text.validity_changed.connect(self._on_validity_changed)
         self.button_ok.setEnabled(self.line_edit_text.is_input_valid())
         if completion:
@@ -262,6 +266,7 @@ def get_text_input(
     completion=None,
     button_text=None,
     validator=None,
+    hidden=False,
 ):
     w = TextInputWidget(
         message=message,
@@ -270,6 +275,7 @@ def get_text_input(
         completion=completion,
         button_text=button_text,
         validator=validator,
+        hidden=hidden,
     )
     d = GreyedDialog(w, title=title, parent=parent)
     w.dialog = d

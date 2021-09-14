@@ -299,7 +299,9 @@ def load_device_with_password(key_file: Path, password: str) -> LocalDevice:
         raise LocalDeviceValidationError(f"Cannot load local device: {exc}") from exc
 
 
-def save_device_with_password(config_dir: Path, device: LocalDevice, password: str) -> Path:
+def save_device_with_password_in_config(
+    config_dir: Path, device: LocalDevice, password: str
+) -> Path:
     """
         LocalDeviceError
         LocalDeviceNotFoundError
@@ -318,11 +320,11 @@ def save_device_with_password(config_dir: Path, device: LocalDevice, password: s
     #   not possible in theory, but could occur in case of a rollback in the
     #   Parsec server), in this case the old device object is now invalid
     #   and it's a good thing to replace it.
-    _save_device_with_password(key_file, device, password, force=True)
+    save_device_with_password(key_file, device, password, force=True)
     return key_file
 
 
-def _save_device_with_password(
+def save_device_with_password(
     key_file: Path, device: LocalDevice, password: str, force: bool
 ) -> None:
     if key_file.exists() and not force:
@@ -365,4 +367,4 @@ def change_device_password(key_file: Path, old_password: str, new_password: str)
         LocalDevicePackingError
     """
     device = load_device_with_password(key_file, password=old_password)
-    _save_device_with_password(key_file, device, password=new_password, force=True)
+    save_device_with_password(key_file, device, password=new_password, force=True)

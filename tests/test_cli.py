@@ -23,7 +23,7 @@ from async_generator import asynccontextmanager
 
 from parsec import __version__ as parsec_version
 from parsec.backend.postgresql import MigrationItem
-from parsec.core.local_device import save_device_with_password
+from parsec.core.local_device import save_device_with_password_in_config
 from parsec.cli import cli
 from parsec.core.cli.share_workspace import WORKSPACE_ROLE_CHOICES
 
@@ -64,7 +64,7 @@ def test_share_workspace(tmpdir, alice, bob, cli_workspace_role):
     factory_mock.return_value.find_workspace_from_name.return_value.id = "ws1_id"
 
     password = "S3cr3t"
-    save_device_with_password(Path(config_dir), bob, password)
+    save_device_with_password_in_config(Path(config_dir), bob, password)
 
     with patch("parsec.core.cli.share_workspace.logged_core_factory", logged_core_factory):
         runner = CliRunner()

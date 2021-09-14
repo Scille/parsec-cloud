@@ -40,6 +40,7 @@ FORMS += forms/main_window.ui \
     forms/empty_workspace_widget.ui \
     forms/loading_widget.ui \
     forms/password_strength_widget.ui \
+    forms/password_recovery.ui \
     forms/file_history_button.ui \
     forms/create_org_widget.ui \
     forms/greet_user_widget.ui \
@@ -69,7 +70,12 @@ FORMS += forms/main_window.ui \
     forms/temporary_workspace_widget.ui \
     forms/key_widget.ui \
     forms/keys_widget.ui \
-    forms/qrcode_widget.ui
-
+    forms/qrcode_widget.ui \
+    forms/device_recovery_export_widget.ui \
+    forms/device_recovery_export_page1_widget.ui \
+    forms/device_recovery_export_page2_widget.ui \
+    forms/device_recovery_import_page1_widget.ui \
+    forms/device_recovery_import_widget.ui \
+    forms/device_recovery_import_page2_widget.ui
 RESOURCES += rc/resources.qrc \
     forms/rc/resources.qrc

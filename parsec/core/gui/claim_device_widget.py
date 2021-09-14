@@ -8,7 +8,7 @@ from PyQt5.QtGui import QFont
 from PyQt5.QtWidgets import QWidget
 
 from parsec.core.types import LocalDevice
-from parsec.core.local_device import save_device_with_password
+from parsec.core.local_device import save_device_with_password_in_config
 from parsec.core.invite import claimer_retrieve_info, InvitePeerResetError
 from parsec.core.backend_connection import (
     backend_invited_cmds_factory,
@@ -602,7 +602,7 @@ class ClaimDeviceWidget(QWidget, Ui_ClaimDeviceWidget):
         self.main_layout.insertWidget(0, page)
 
     def _on_finished(self, new_device, password):
-        save_device_with_password(
+        save_device_with_password_in_config(
             config_dir=self.config.config_dir, device=new_device, password=password
         )
         show_info(self, _("TEXT_CLAIM_DEVICE_SUCCESSFUL"))

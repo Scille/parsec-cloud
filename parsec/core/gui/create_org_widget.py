@@ -19,11 +19,11 @@ from parsec.core.invite import (
     InviteTimestampError,
     InviteError,
 )
-from parsec.core.local_device import save_device_with_password
 from parsec.core.fs.storage.user_storage import user_storage_non_speculative_init
+from parsec.core.local_device import save_device_with_password_in_config
 
 from parsec.core.gui.trio_jobs import QtToTrioJob
-from parsec.core.gui.custom_dialogs import GreyedDialog, show_error, show_info
+from parsec.core.gui.custom_dialogs import GreyedDialog, show_error
 from parsec.core.gui.trio_jobs import JobResultError
 from parsec.core.gui.desktop import get_default_device
 from parsec.core.gui.lang import translate as _
@@ -48,7 +48,7 @@ async def _do_create_org(config, human_handle, device_name, password, backend_ad
             await user_storage_non_speculative_init(
                 data_base_dir=config.data_base_dir, device=new_device
             )
-            save_device_with_password(
+            save_device_with_password_in_config(
                 config_dir=config.config_dir, device=new_device, password=password
             )
             return new_device, password
@@ -310,13 +310,6 @@ class CreateOrgWidget(QWidget, Ui_CreateOrgWidget):
 
         self.status = self.create_job.ret
         self.create_job = None
-        show_info(
-            parent=self,
-            message=_("TEXT_BOOTSTRAP_ORG_SUCCESS_organization").format(
-                organization=self.status[0].organization_id
-            ),
-            button_text=_("ACTION_CONTINUE"),
-        )
         if self.dialog:
             self.dialog.accept()
         elif QApplication.activeModalWidget():

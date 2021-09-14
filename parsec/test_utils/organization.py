@@ -25,8 +25,8 @@ from parsec.core.backend_connection import (
     apiv1_backend_anonymous_cmds_factory,
     backend_authenticated_cmds_factory,
 )
-from parsec.core.local_device import generate_new_device, save_device_with_password
 from parsec.core.fs.storage.user_storage import user_storage_non_speculative_init
+from parsec.core.local_device import generate_new_device, save_device_with_password_in_config
 from parsec.core.invite import (
     bootstrap_organization,
     DeviceGreetInitialCtx,
@@ -67,7 +67,9 @@ async def initialize_test_organization(
         await user_storage_non_speculative_init(
             data_base_dir=config.data_base_dir, device=alice_device
         )
-        save_device_with_password(config_dir=config_dir, device=alice_device, password=password)
+        save_device_with_password_in_config(
+            config_dir=config_dir, device=alice_device, password=password
+        )
 
     # Create context manager, alice_core will be needed for the rest of the script
     async with logged_core_factory(config, alice_device) as alice_core:
@@ -81,7 +83,7 @@ async def initialize_test_organization(
             other_alice_device = await _register_new_device(
                 cmds=alice_cmds, author=alice_device, device_label="pc"
             )
-            save_device_with_password(
+            save_device_with_password_in_config(
                 config_dir=config_dir, device=other_alice_device, password=password
             )
             # Invite Bob in organization
@@ -95,7 +97,9 @@ async def initialize_test_organization(
             await user_storage_non_speculative_init(
                 data_base_dir=config.data_base_dir, device=bob_device
             )
-            save_device_with_password(config_dir=config_dir, device=bob_device, password=password)
+            save_device_with_password_in_config(
+                config_dir=config_dir, device=bob_device, password=password
+            )
 
             # Invite Toto in organization
             toto_device = await _register_new_user(
@@ -108,7 +112,9 @@ async def initialize_test_organization(
             await user_storage_non_speculative_init(
                 data_base_dir=config.data_base_dir, device=toto_device
             )
-            save_device_with_password(config_dir=config_dir, device=toto_device, password=password)
+            save_device_with_password_in_config(
+                config_dir=config_dir, device=toto_device, password=password
+            )
             # Create Alice workspace
             alice_ws_id = await alice_core.user_fs.workspace_create("alice_workspace")
             # Create context manager

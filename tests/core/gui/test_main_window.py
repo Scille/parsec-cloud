@@ -10,8 +10,8 @@ from parsec.core.gui.login_widget import LoginPasswordInputWidget
 from parsec.core.local_device import (
     AvailableDevice,
     DeviceFileType,
-    _save_device_with_password,
     save_device_with_password,
+    save_device_with_password_in_config,
 )
 from parsec.core.types import EntryID
 from parsec.core.types import (
@@ -79,7 +79,7 @@ async def user_invitation_addr(backend, bob):
 @pytest.fixture
 def bob_available_device(bob, tmp_path):
     key_file_path = tmp_path / "bob_device.key"
-    _save_device_with_password(key_file=key_file_path, device=bob, password="", force=True)
+    save_device_with_password(key_file=key_file_path, device=bob, password="", force=True)
     return AvailableDevice(
         key_file_path=key_file_path,
         organization_id=bob.organization_id,
@@ -452,7 +452,7 @@ async def test_link_claim_user_disconnected(
 @pytest.mark.trio
 async def test_tab_login_logout(gui_factory, core_config, alice, monkeypatch):
     password = "P@ssw0rd"
-    save_device_with_password(core_config.config_dir, alice, password)
+    save_device_with_password_in_config(core_config.config_dir, alice, password)
     gui = await gui_factory()
 
     # Fix the return value of ensure_string_size, because it can depend of the size of the window
@@ -482,7 +482,7 @@ async def test_tab_login_logout(gui_factory, core_config, alice, monkeypatch):
 @pytest.mark.trio
 async def test_tab_login_logout_two_tabs(aqtbot, gui_factory, core_config, alice, monkeypatch):
     password = "P@ssw0rd"
-    save_device_with_password(core_config.config_dir, alice, password)
+    save_device_with_password_in_config(core_config.config_dir, alice, password)
     gui = await gui_factory()
 
     # Fix the return value of ensure_string_size, because it can depend of the size of the window
@@ -522,7 +522,7 @@ async def test_tab_login_logout_two_tabs_logged_in(
     aqtbot, gui_factory, core_config, alice, bob, monkeypatch
 ):
     password = "P@ssw0rd"
-    save_device_with_password(core_config.config_dir, alice, password)
+    save_device_with_password_in_config(core_config.config_dir, alice, password)
     gui = await gui_factory()
 
     # Fix the return value of ensure_string_size, because it can depend of the size of the window
@@ -543,7 +543,7 @@ async def test_tab_login_logout_two_tabs_logged_in(
     assert gui.tab_center.tabText(0) == "CoolOrg - Alicey..."
     assert gui.tab_center.tabText(1) == translate("TEXT_TAB_TITLE_LOG_IN_SCREEN")
 
-    save_device_with_password(core_config.config_dir, bob, password)
+    save_device_with_password_in_config(core_config.config_dir, bob, password)
     await gui.test_switch_to_logged_in(bob)
     assert gui.tab_center.count() == 2
     assert gui.tab_center.tabText(0) == "CoolOrg - Alicey..."
@@ -570,7 +570,7 @@ async def test_link_file_unknown_org(
     core_config, gui_factory, autoclose_dialog, running_backend, alice
 ):
     password = "P@ssw0rd"
-    save_device_with_password(core_config.config_dir, alice, password)
+    save_device_with_password_in_config(core_config.config_dir, alice, password)
 
     # Cheating a bit but it does not matter, we just want a link that appears valid with
     # an unknown organization
