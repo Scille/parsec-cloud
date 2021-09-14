@@ -21,6 +21,7 @@ class WorkspaceFSTimestamped(WorkspaceFS):
         self.backend_cmds = workspacefs.backend_cmds
         self.event_bus = workspacefs.event_bus
         self.remote_devices_manager = workspacefs.remote_devices_manager
+        self.core_config = workspacefs.core_config
 
         self.timestamp = timestamp
 
@@ -32,6 +33,7 @@ class WorkspaceFSTimestamped(WorkspaceFS):
             self.local_storage,
             self.remote_loader,
             self.event_bus,
+            self.core_config,
         )
 
     def timestamp_get_entry(

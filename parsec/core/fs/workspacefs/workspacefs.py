@@ -26,6 +26,7 @@ from parsec.core.types import (
     DEFAULT_BLOCK_SIZE,
     BackendOrganizationFileLinkAddr,
 )
+from parsec.core.config import CoreConfig
 from parsec.core.fs.path import AnyPath, FsPath
 from parsec.core.remote_devices_manager import RemoteDevicesManager
 from parsec.core.backend_connection import (
@@ -79,6 +80,7 @@ class WorkspaceFS:
         backend_cmds: BackendAuthenticatedCmds,
         event_bus: EventBus,
         remote_devices_manager: RemoteDevicesManager,
+        core_config: CoreConfig,
     ):
         self.workspace_id = workspace_id
         self.get_workspace_entry = get_workspace_entry
@@ -88,6 +90,7 @@ class WorkspaceFS:
         self.backend_cmds = backend_cmds
         self.event_bus = event_bus
         self.remote_devices_manager = remote_devices_manager
+        self.core_config = core_config
         self.sync_locks: Dict[EntryID, trio.Lock] = defaultdict(trio.Lock)
 
         self.remote_loader = RemoteLoader(
@@ -106,6 +109,7 @@ class WorkspaceFS:
             self.local_storage,
             self.remote_loader,
             self.event_bus,
+            self.core_config,
         )
 
     def __repr__(self) -> str:
