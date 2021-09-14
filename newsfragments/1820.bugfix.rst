@@ -1,0 +1,1 @@
+Fix the logic to solve the conflict in the core
