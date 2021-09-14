@@ -42,7 +42,7 @@ def test_full_name(test_input, expected):
     assert result == expected
 
 
-def test_merge_folder_children():
+def test_merge_folder_children(core_config):
     m1 = EntryID.new()
     m2 = EntryID.new()
     m3 = EntryID.new()
@@ -54,25 +54,25 @@ def test_merge_folder_children():
     c2 = {"c.tar.gz": m2}
 
     # Empty folder
-    assert merge_folder_children({}, {}, {}, "a@a") == {}
+    assert merge_folder_children({}, {}, {}, "a@a", core_config) == {}
 
     # Adding children
-    assert merge_folder_children({}, a1, {}, "a@a") == a1
-    assert merge_folder_children({}, {}, a1, "a@a") == a1
-    assert merge_folder_children({}, a1, a1, "a@a") == a1
+    assert merge_folder_children({}, a1, {}, "a@a", core_config) == a1
+    assert merge_folder_children({}, {}, a1, "a@a", core_config) == a1
+    assert merge_folder_children({}, a1, a1, "a@a", core_config) == a1
 
     # Removing children
-    assert merge_folder_children(a1, {}, a1, "a@a") == {}
-    assert merge_folder_children(a1, a1, {}, "a@a") == {}
-    assert merge_folder_children(a1, {}, {}, "a@a") == {}
+    assert merge_folder_children(a1, {}, a1, "a@a", core_config) == {}
+    assert merge_folder_children(a1, a1, {}, "a@a", core_config) == {}
+    assert merge_folder_children(a1, {}, {}, "a@a", core_config) == {}
 
     # Renaming children
-    assert merge_folder_children(a1, a1, b1, "a@a") == b1
-    assert merge_folder_children(a1, b1, a1, "a@a") == b1
-    assert merge_folder_children(a1, b1, b1, "a@a") == b1
+    assert merge_folder_children(a1, a1, b1, "a@a", core_config) == b1
+    assert merge_folder_children(a1, b1, a1, "a@a", core_config) == b1
+    assert merge_folder_children(a1, b1, b1, "a@a", core_config) == b1
 
     # Conflicting renaming
-    result = merge_folder_children(a1, b1, c1, "a@a")
+    result = merge_folder_children(a1, b1, c1, "a@a", core_config)
     assert result == {"c.tar.gz": m1}
 
     # Conflicting names
@@ -89,7 +89,7 @@ def test_merge_folder_children():
     a3 = {**base, **a1}
     b3 = {**base, **a2}
 
-    result = merge_folder_children(base, a3, b3, "a@a")
+    result = merge_folder_children(base, a3, b3, "a@a", core_config)
     assert result == {
         "a": m2,
         "a (Parsec - name conflict)": m3,
@@ -101,7 +101,7 @@ def test_merge_folder_children():
     a3 = {**base, **a1}
     b3 = {**base, **a2}
 
-    result = merge_folder_children(base, a3, b3, "a@a")
+    result = merge_folder_children(base, a3, b3, "a@a", core_config)
 
     assert result == {
         "a": m2,
@@ -111,7 +111,7 @@ def test_merge_folder_children():
     }
 
 
-def test_merge_folder_manifests():
+def test_merge_folder_manifests(core_config):
     my_device = DeviceID("b@b")
     other_device = DeviceID("a@a")
     parent = EntryID.new()
@@ -121,49 +121,51 @@ def test_merge_folder_manifests():
 
     # Initial base manifest
     m1 = LocalFolderManifest.from_remote(v1, empty_pattern)
-    assert merge_manifests(my_device, empty_pattern, m1) == m1
+    assert merge_manifests(my_device, core_config, empty_pattern, m1) == m1
 
     # Local change
     m2 = m1.evolve_children_and_mark_updated({"a": EntryID.new()}, empty_pattern)
-    assert merge_manifests(my_device, empty_pattern, m2) == m2
+    assert merge_manifests(my_device, core_config, empty_pattern, m2) == m2
 
     # Successful upload
     v2 = m2.to_remote(author=my_device)
-    m3 = merge_manifests(my_device, empty_pattern, m2, v2)
+    m3 = merge_manifests(my_device, core_config, empty_pattern, m2, v2)
     assert m3 == LocalFolderManifest.from_remote(v2, empty_pattern)
 
     # Two local changes
     m4 = m3.evolve_children_and_mark_updated({"b": EntryID.new()}, empty_pattern)
-    assert merge_manifests(my_device, empty_pattern, m4) == m4
+    assert merge_manifests(my_device, core_config, empty_pattern, m4) == m4
     m5 = m4.evolve_children_and_mark_updated({"c": EntryID.new()}, empty_pattern)
-    assert merge_manifests(my_device, empty_pattern, m4) == m4
+    assert merge_manifests(my_device, core_config, empty_pattern, m4) == m4
 
     # M4 has been successfully uploaded
     v3 = m4.to_remote(author=my_device)
-    m6 = merge_manifests(my_device, empty_pattern, m5, v3)
+    m6 = merge_manifests(my_device, core_config, empty_pattern, m5, v3)
     assert m6 == m5.evolve(base=v3)
 
     # The remote has changed
     v4 = v3.evolve(version=4, children={"d": EntryID.new(), **v3.children}, author=other_device)
-    m7 = merge_manifests(my_device, empty_pattern, m6, v4)
+    m7 = merge_manifests(my_device, core_config, empty_pattern, m6, v4)
     assert m7.base_version == 4
     assert sorted(m7.children) == ["a", "b", "c", "d"]
     assert m7.need_sync
 
     # Successful upload
     v5 = m7.to_remote(author=my_device)
-    m8 = merge_manifests(my_device, empty_pattern, m7, v5)
+    m8 = merge_manifests(my_device, core_config, empty_pattern, m7, v5)
     assert m8 == LocalFolderManifest.from_remote(v5, empty_pattern)
 
     # The remote has changed
     v6 = v5.evolve(version=6, children={"e": EntryID.new(), **v5.children}, author=other_device)
-    m9 = merge_manifests(my_device, empty_pattern, m8, v6)
+    m9 = merge_manifests(my_device, core_config, empty_pattern, m8, v6)
     assert m9 == LocalFolderManifest.from_remote(v6, empty_pattern)
 
 
 @pytest.mark.parametrize("local_change", ("rename", "prevent_sync_rename"))
 @pytest.mark.parametrize("remote_change", ("same_entry_moved", "new_entry_added"))
-def test_merge_folder_manifests_with_concurrent_remote_change(local_change, remote_change):
+def test_merge_folder_manifests_with_concurrent_remote_change(
+    core_config, local_change, remote_change
+):
     my_device = DeviceID("b@1")
     other_device = DeviceID("b@2")
     parent = EntryID.new()
@@ -207,6 +209,7 @@ def test_merge_folder_manifests_with_concurrent_remote_change(local_change, remo
     # Now merging should detect the duplication
     merged_manifest = merge_manifests(
         local_author=my_device,
+        core_config=core_config,
         prevent_sync_pattern=prevent_sync_pattern,
         local_manifest=local_manifest,
         remote_manifest=remote_manifest_v2,
@@ -224,31 +227,31 @@ def test_merge_folder_manifests_with_concurrent_remote_change(local_change, remo
             assert list(merged_manifest.children) == ["bar.txt", "foo.txt.tmp"]
 
 
-def test_merge_manifests_with_a_placeholder():
+def test_merge_manifests_with_a_placeholder(core_config):
     my_device = DeviceID("b@b")
     other_device = DeviceID("a@a")
     parent = EntryID.new()
 
     m1 = LocalFolderManifest.new_placeholder(my_device, parent=parent)
-    m2 = merge_manifests(my_device, empty_pattern, m1)
+    m2 = merge_manifests(my_device, core_config, empty_pattern, m1)
     assert m2 == m1
     v1 = m1.to_remote(author=my_device)
 
-    m2a = merge_manifests(my_device, empty_pattern, m1, v1)
+    m2a = merge_manifests(my_device, core_config, empty_pattern, m1, v1)
     assert m2a == LocalFolderManifest.from_remote(v1, empty_pattern)
 
     m2b = m1.evolve_children_and_mark_updated({"a": EntryID.new()}, empty_pattern)
-    m3b = merge_manifests(my_device, empty_pattern, m2b, v1)
+    m3b = merge_manifests(my_device, core_config, empty_pattern, m2b, v1)
     assert m3b == m2b.evolve(base=v1)
 
     v2 = v1.evolve(version=2, author=other_device, children={"b": EntryID.new()})
     m2c = m1.evolve_children_and_mark_updated({"a": EntryID.new()}, empty_pattern)
-    m3c = merge_manifests(my_device, empty_pattern, m2c, v2)
+    m3c = merge_manifests(my_device, core_config, empty_pattern, m2c, v2)
     children = {**v2.children, **m2c.children}
     assert m3c == m2c.evolve(base=v2, children=children, updated=m3c.updated)
 
 
-def test_merge_file_manifests():
+def test_merge_file_manifests(core_config):
     my_device = DeviceID("b@b")
     other_device = DeviceID("a@a")
     parent = EntryID.new()
@@ -261,32 +264,32 @@ def test_merge_file_manifests():
 
     # Initial base manifest
     m1 = LocalFileManifest.from_remote(v1)
-    assert merge_manifests(my_device, empty_pattern, m1) == m1
+    assert merge_manifests(my_device, core_config, empty_pattern, m1) == m1
 
     # Local change
     m2 = evolve(m1, 1)
-    assert merge_manifests(my_device, empty_pattern, m2) == m2
+    assert merge_manifests(my_device, core_config, empty_pattern, m2) == m2
 
     # Successful upload
     v2 = m2.to_remote(author=my_device)
-    m3 = merge_manifests(my_device, empty_pattern, m2, v2)
+    m3 = merge_manifests(my_device, core_config, empty_pattern, m2, v2)
     assert m3 == LocalFileManifest.from_remote(v2)
 
     # Two local changes
     m4 = evolve(m3, 2)
-    assert merge_manifests(my_device, empty_pattern, m4) == m4
+    assert merge_manifests(my_device, core_config, empty_pattern, m4) == m4
     m5 = evolve(m4, 3)
-    assert merge_manifests(my_device, empty_pattern, m4) == m4
+    assert merge_manifests(my_device, core_config, empty_pattern, m4) == m4
 
     # M4 has been successfully uploaded
     v3 = m4.to_remote(author=my_device)
-    m6 = merge_manifests(my_device, empty_pattern, m5, v3)
+    m6 = merge_manifests(my_device, core_config, empty_pattern, m5, v3)
     assert m6 == m5.evolve(base=v3)
 
     # The remote has changed
     v4 = v3.evolve(version=4, size=0, author=other_device)
     with pytest.raises(FSFileConflictError):
-        merge_manifests(my_device, empty_pattern, m6, v4)
+        merge_manifests(my_device, core_config, empty_pattern, m6, v4)
 
 
 @pytest.mark.trio

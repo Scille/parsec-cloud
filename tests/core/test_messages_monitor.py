@@ -51,6 +51,7 @@ async def test_process_while_offline(
         with alice_core.event_bus.listen() as spy:
             # Force wakeup of the message monitor
             alice_core.event_bus.send(CoreEvent.BACKEND_MESSAGE_RECEIVED, index=42)
+
             assert not alice_core.are_monitors_idle()
 
             with trio.fail_after(60):  # autojump, so not *really* 60s
