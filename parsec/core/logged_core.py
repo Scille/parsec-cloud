@@ -381,6 +381,7 @@ async def logged_core_factory(
         remote_devices_manager,
         event_bus,
         prevent_sync_pattern,
+        config,
     ) as user_fs:
 
         backend_conn.register_monitor(partial(monitor_messages, user_fs, event_bus))

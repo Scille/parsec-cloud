@@ -9,6 +9,7 @@ from async_generator import asynccontextmanager
 from parsec.event_bus import EventBus
 from parsec.api.protocol import DeviceID
 from parsec.core.types import FileDescriptor, EntryID, LocalDevice
+from parsec.core.config import CoreConfig
 
 from parsec.core.fs.remote_loader import RemoteLoader
 from parsec.core.fs.storage import BaseWorkspaceStorage
@@ -84,6 +85,7 @@ class FileTransactions:
         local_storage: BaseWorkspaceStorage,
         remote_loader: RemoteLoader,
         event_bus: EventBus,
+        core_config: CoreConfig,
     ):
         self.workspace_id = workspace_id
         self.get_workspace_entry = get_workspace_entry
@@ -92,6 +94,7 @@ class FileTransactions:
         self.remote_loader = remote_loader
         self.event_bus = event_bus
         self._write_count: Dict[FileDescriptor, int] = defaultdict(int)
+        self.core_config = core_config
 
     @property
     def local_author(self) -> DeviceID:

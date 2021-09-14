@@ -7,6 +7,7 @@ from pendulum import DateTime
 
 from parsec.api.protocol import DeviceID
 from parsec.core.core_events import CoreEvent
+from parsec.core.config import CoreConfig
 from parsec.api.data import EntryNameTooLongError, BaseManifest as BaseRemoteManifest
 from parsec.core.types import (
     Chunk,
@@ -92,6 +93,7 @@ def merge_folder_children(
     local_children: Dict[EntryName, EntryID],
     remote_children: Dict[EntryName, EntryID],
     remote_device_name: DeviceID,
+    core_config: CoreConfig,
 ) -> Dict[EntryName, EntryID]:
     # Prepare lookups
     base_reversed = {entry_id: name for name, entry_id in base_children.items()}
@@ -163,6 +165,7 @@ def merge_folder_children(
 def merge_manifests(
     local_author: DeviceID,
     timestamp: DateTime,
+    core_config: CoreConfig,
     prevent_sync_pattern: Pattern[str],
     local_manifest: BaseLocalManifest,
     remote_manifest: Optional[BaseRemoteManifest] = None,
@@ -237,6 +240,7 @@ def merge_manifests(
         local_children=local_manifest.children,
         remote_children=local_from_remote.children,
         remote_device_name=remote_manifest.author,
+        core_config=core_config,
     )
 
     # Children merge can end up with nothing to sync.
@@ -364,6 +368,7 @@ class SyncTransactions(EntryTransactions):
             new_local_manifest = merge_manifests(
                 self.local_author,
                 timestamp,
+                self.core_config,
                 prevent_sync_pattern,
                 local_manifest,
                 remote_manifest,
