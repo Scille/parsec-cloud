@@ -3110,3 +3110,6 @@ msgstr "Créer un nouvel espace de travail"
 
 msgid "ACTION_WORKSPACE_GOTO_FILE_LINK"
 msgstr "Trouver un fichier via son lien"
+
+msgid "TEXT_WORKSPACES_HIDE_UNMOUNTED"
+msgstr "Masquer les espaces de travail désactivés"

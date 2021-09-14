@@ -249,6 +249,9 @@ class WorkspaceButton(QWidget, Ui_WorkspaceButton):
     def workspace_id(self):
         return self.workspace_fs.workspace_id
 
+    def is_mounted(self):
+        return self.switch_button.isChecked()
+
     @property
     def timestamp(self):
         return getattr(self.workspace_fs, "timestamp", None)

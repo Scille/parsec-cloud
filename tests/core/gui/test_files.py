@@ -199,6 +199,9 @@ def create_files_widget_testbed(monkeypatch, aqtbot, logged_gui, user_fs, wfs, f
 async def files_widget_testbed(monkeypatch, aqtbot, logged_gui):
     c_w = logged_gui.test_get_central_widget()
     w_w = logged_gui.test_get_workspaces_widget()
+
+    w_w.check_hide_unmounted.setChecked(False)
+
     workspace_name = EntryName("wksp1")
 
     # Create the workspace
