@@ -7,7 +7,7 @@ from pendulum import DateTime
 
 from parsec.api.protocol import DeviceID
 from parsec.core.core_events import CoreEvent
-from parsec.core.config import CoreConfig
+from parsec.core.config import CoreConfig, translate
 from parsec.api.data import EntryNameTooLongError, BaseManifest as BaseRemoteManifest
 from parsec.core.types import (
     Chunk,
@@ -33,8 +33,8 @@ from parsec.core.fs.exceptions import (
 __all__ = "SyncTransactions"
 
 DEFAULT_BLOCK_SIZE = 512 * 1024  # 512Ko
-NAME_CONFLICT_SUFFIX = "name conflict"
-CONTENT_CONFLICT_SUFFIX = "content conflict"
+FILENAME_CONFLICT_KEY = "FILENAME_CONFLICT"
+FILE_CONTENT_CONFLICT_KEY = "FILE_CONTENT_CONFLICT"
 
 # Helpers
 
@@ -45,10 +45,14 @@ def get_filename(manifest: LocalFolderishManifests, entry_id: EntryID) -> Option
 
 
 def get_conflict_filename(
-    filename: EntryName, filenames: Iterable[EntryName], suffix: str = NAME_CONFLICT_SUFFIX
+    filename: EntryName,
+    filenames: Iterable[EntryName],
+    core_config: CoreConfig,
+    suffix_key: str = FILENAME_CONFLICT_KEY,
 ) -> EntryName:
     counter = count(2)
-    suffix = f"Parsec - {suffix}"
+
+    suffix = translate(core_config, suffix_key)
     new_filename = full_name(filename, suffix)
     filename_set = set(filenames)
     while new_filename in filename_set:
@@ -155,7 +159,7 @@ def merge_folder_children(
         children[name] = entry_id
     for name, entry_id in solved_local_children.items():
         if name in children:
-            name = get_conflict_filename(name, children.keys())
+            name = get_conflict_filename(name, children.keys(), core_config)
         children[name] = entry_id
 
     # Return
@@ -472,7 +476,10 @@ class SyncTransactions(EntryTransactions):
                 timestamp = self.device.timestamp()
                 prevent_sync_pattern = self.local_storage.get_prevent_sync_pattern()
                 new_name = get_conflict_filename(
-                    filename, parent_manifest.children.keys(), CONTENT_CONFLICT_SUFFIX
+                    filename,
+                    parent_manifest.children.keys(),
+                    self.core_config,
+                    FILE_CONTENT_CONFLICT_KEY,
                 )
                 new_manifest = LocalFileManifest.new_placeholder(
                     self.local_author, parent=parent_id, timestamp=timestamp
