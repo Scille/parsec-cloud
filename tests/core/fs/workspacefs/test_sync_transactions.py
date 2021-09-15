@@ -76,11 +76,12 @@ def test_merge_folder_children(core_config):
     assert result == {"c.tar.gz": m1}
 
     # Conflicting names
-    result = merge_folder_children({}, a1, a2, "a@a")
+    result = merge_folder_children({}, a1, a2, "a@a", core_config)
+    print(core_config)
     assert result == {"a": m2, "a (Parsec - name conflict)": m1}
-    result = merge_folder_children({}, b1, b2, "a@a")
+    result = merge_folder_children({}, b1, b2, "a@a", core_config)
     assert result == {"b.txt": m2, "b (Parsec - name conflict).txt": m1}
-    result = merge_folder_children({}, c1, c2, "a@a")
+    result = merge_folder_children({}, c1, c2, "a@a", core_config)
     assert result == {"c.tar.gz": m2, "c (Parsec - name conflict).tar.gz": m1}
 
     # Conflicting name with special pattern filename

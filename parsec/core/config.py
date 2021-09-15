@@ -87,6 +87,17 @@ class CoreConfig:
     gui_show_confined: bool = False
     gui_geometry: bytes = None
 
+    translations = {
+        "en": {
+            "FILENAME_CONFLICT": "Parsec - name conflict",
+            "FILE_CONTENT_CONFLICT": "Parsec - content conflict",
+        },
+        "fr": {
+            "FILENAME_CONFLICT": "Parsec - Conflit de nom",
+            "FILE_CONTENT_CONFLICT": "Parsec - Conflit de contenu",
+        },
+    }
+
     ipc_socket_file: Path = None
     ipc_win32_mutex_name: str = "parsec-cloud"
 
@@ -275,3 +286,13 @@ def save_config(config: CoreConfig):
             indent=True,
         )
     )
+
+
+def translate(core_config: CoreConfig, key: str) -> str:
+    res = key
+    try:
+        translations = core_config.translations[core_config.gui_language or "en"]
+    except KeyError:
+        return res
+
+    return translations.get(key, key)
