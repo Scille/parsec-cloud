@@ -74,7 +74,10 @@ class QtToTrioJob:
                     result = self._fn(*self._args, **self._kwargs)
                 else:
                     result = await self._fn(*self._args, **self._kwargs)
-                self.set_result(result)
+                if isinstance(result, JobResultError):
+                    self.set_exception(result)
+                else:
+                    self.set_result(result)
 
             except Exception as exc:
                 self.set_exception(exc)
@@ -120,7 +123,8 @@ class QtToTrioJob:
     def _set_done(self):
         self._done.set()
         signal = self._on_success if self.is_ok() else self._on_error
-        signal.emit(self)
+        if signal is not None:
+            signal.emit(self)
 
     def cancel(self):
         self.cancel_scope.cancel()

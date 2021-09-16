@@ -2,7 +2,7 @@
 import trio
 import pathlib
 from uuid import UUID
-from typing import Optional, Iterable
+from typing import Optional, Iterable, Tuple, List
 
 from parsec.core.core_events import CoreEvent
 from pendulum import DateTime
@@ -41,6 +41,10 @@ from parsec.core.types import DEFAULT_BLOCK_SIZE
 
 
 logger = get_logger()
+
+# Type alias for files to import
+# Files are copied from a trio path to an FS path.
+ImportFiles = List[Tuple[trio.Path, FsPath]]
 
 
 class CancelException(Exception):
@@ -184,38 +188,6 @@ async def _do_folder_create(workspace_fs, path):
         raise JobResultError("already-exists") from exc
 
 
-async def _do_import(workspace_fs, files, total_size, progress_signal):
-    current_size = 0
-    errors = []
-    for src, dst in files:
-        try:
-            if dst.parent != FsPath("/"):
-                await workspace_fs.mkdir(dst.parent, parents=True, exist_ok=True)
-            progress_signal.emit(src.name, current_size)
-
-            async with await trio.open_file(src, "rb") as f:
-                async with await workspace_fs.open_file(dst, "wb") as dest_file:
-                    read_size = 0
-                    while True:
-                        chunk = await f.read(DEFAULT_BLOCK_SIZE)
-                        if not chunk:
-                            break
-                        await dest_file.write(chunk)
-                        read_size += len(chunk)
-                        progress_signal.emit(src.name, current_size + read_size)
-            current_size += read_size + 1
-            progress_signal.emit(src.name, current_size)
-        except trio.Cancelled as exc:
-            errors.append(exc)
-            raise JobResultError(
-                "cancelled", last_file=dst, file_count=len(files), exceptions=errors
-            ) from exc
-        except PermissionError as exc:
-            errors.append(exc)
-    if errors:
-        raise JobResultError("error", exceptions=errors, file_count=len(files))
-
-
 async def _do_remount_timestamped(
     mountpoint_manager,
     workspace_fs,
@@ -263,8 +235,8 @@ class FilesWidget(QWidget, Ui_FilesWidget):
     folder_stat_error = pyqtSignal(QtToTrioJob)
     folder_create_success = pyqtSignal(QtToTrioJob)
     folder_create_error = pyqtSignal(QtToTrioJob)
-    import_success = pyqtSignal(QtToTrioJob)
     import_error = pyqtSignal(QtToTrioJob)
+    import_success = pyqtSignal(QtToTrioJob)
 
     copy_success = pyqtSignal(QtToTrioJob)
     copy_error = pyqtSignal(QtToTrioJob)
@@ -297,7 +269,6 @@ class FilesWidget(QWidget, Ui_FilesWidget):
         self.jobs_ctx = jobs_ctx
         self.event_bus = event_bus
         self.workspace_fs = None
-        self.import_job = None
         self.clipboard = None
 
         self.button_back.clicked.connect(self.back_clicked)
@@ -342,8 +313,6 @@ class FilesWidget(QWidget, Ui_FilesWidget):
         self.folder_stat_error.connect(self._on_folder_stat_error)
         self.folder_create_success.connect(self._on_folder_create_success)
         self.folder_create_error.connect(self._on_folder_create_error)
-        self.import_success.connect(self._on_import_success)
-        self.import_error.connect(self._on_import_error)
         self.copy_success.connect(self._on_copy_success)
         self.copy_error.connect(self._on_copy_error)
         self.move_success.connect(self._on_move_success)
@@ -354,9 +323,6 @@ class FilesWidget(QWidget, Ui_FilesWidget):
         self.reload_timestamped_requested.connect(self._on_reload_timestamped_requested)
         self.reload_timestamped_success.connect(self._on_reload_timestamped_success)
         self.reload_timestamped_error.connect(self._on_reload_timestamped_error)
-
-        self.loading_dialog = None
-        self.import_progress.connect(self._on_import_progress)
 
         self.event_bus.connect(CoreEvent.FS_ENTRY_SYNCED, self._on_fs_entry_synced)
         self.event_bus.connect(CoreEvent.FS_ENTRY_UPDATED, self._on_fs_entry_updated)
@@ -671,66 +637,7 @@ class FilesWidget(QWidget, Ui_FilesWidget):
             default_selection=default_selection,
         )
 
-    def import_all(self, files, total_size):
-        assert not self.import_job
-
-        wl = LoadingWidget(total_size=total_size + len(files))
-        self.loading_dialog = GreyedDialog(wl, _("TEXT_FILE_IMPORT_LOADING_TITLE"), parent=self)
-        wl.cancelled.connect(self.cancel_import)
-        self.loading_dialog.show()
-
-        self.import_job = self.jobs_ctx.submit_job(
-            self.import_success,
-            self.import_error,
-            _do_import,
-            workspace_fs=self.workspace_fs,
-            files=files,
-            total_size=total_size,
-            progress_signal=self.import_progress,
-        )
-
-    def cancel_import(self):
-        assert self.import_job
-        assert self.loading_dialog
-
-        self.import_job.cancel()
-
-    def _on_import_progress(self, file_name, progress):
-        if not self.loading_dialog:
-            return
-        self.loading_dialog.center_widget.set_progress(progress)
-        self.loading_dialog.center_widget.set_current_file(file_name)
-
-    def get_files(self, paths, dst_dir=None):
-        files = []
-        total_size = 0
-        for path in paths:
-            p = pathlib.Path(path)
-            if dst_dir is not None:
-                dst = dst_dir / p.name
-            else:
-                dst = self.current_directory / p.name
-            files.append((p, dst))
-            total_size += p.stat().st_size
-        return files, total_size
-
-    def get_folder(self, src, dst_dir=None):
-        files = []
-        total_size = 0
-        if dst_dir is None:
-            dst = self.current_directory / src.name
-        else:
-            dst = dst_dir / src.name
-        for f in src.iterdir():
-            if f.is_dir():
-                new_files, new_size = self.get_folder(f, dst_dir=dst)
-                files.extend(new_files)
-                total_size += new_size
-            elif f.is_file():
-                new_dst = dst / f.name
-                files.append((f, new_dst))
-                total_size += f.stat().st_size
-        return files, total_size
+    # Import entry points
 
     def import_files_clicked(self):
         paths, x = QFileDialog.getOpenFileNames(
@@ -738,10 +645,10 @@ class FilesWidget(QWidget, Ui_FilesWidget):
         )
         if not paths:
             return
-        files, total_size = self.get_files(paths)
-        f = files[0][0]
-        self.default_import_path = str(f.parent)
-        self.import_all(files, total_size)
+        self.default_import_path = str(pathlib.Path(paths[0]).parent)
+        self.jobs_ctx.submit_job(
+            self.import_success, self.import_error, self._do_import, paths, self.current_directory
+        )
 
     def import_folder_clicked(self):
         path = QFileDialog.getExistingDirectory(
@@ -749,32 +656,174 @@ class FilesWidget(QWidget, Ui_FilesWidget):
         )
         if not path:
             return
-        p = pathlib.Path(path)
-        files, total_size = self.get_folder(p)
-        self.default_import_path = str(p)
-        self.import_all(files, total_size)
+        self.default_import_path = str(path)
+        self.jobs_ctx.submit_job(
+            self.import_success, self.import_error, self._do_import, [path], self.current_directory
+        )
 
-    def on_files_dropped(self, srcs, dst):
+    def on_files_dropped(self, sources, dest):
+        if dest == "..":
+            dest = self.current_directory.parent
+        elif dest == ".":
+            dest = self.current_directory
+        else:
+            dest = self.current_directory / dest
+        self.jobs_ctx.submit_job(
+            self.import_success, self.import_error, self._do_import, sources, dest
+        )
+
+    # Import job
+
+    async def _do_import(self, sources: Iterable[str], dest: FsPath) -> None:
+        # The file list is used in the error handler
+        files = []
+        try:
+
+            # Get the list of files to import with the corresponding size
+            files, total_size = await self._get_files_from_sources(sources, dest)
+
+            # Make the job cancellable
+            with trio.CancelScope() as cancel_scope:
+
+                # Create loading dialog and connect to the cancel scope
+                wl = LoadingWidget(total_size=total_size + len(files))
+                loading_dialog = GreyedDialog(wl, _("TEXT_FILE_IMPORT_LOADING_TITLE"), parent=self)
+                wl.cancelled.connect(cancel_scope.cancel)
+
+                # Control the visibility andl life-cyle of the loading dialog
+                try:
+                    loading_dialog.show()
+
+                    # Actually perform the import
+                    errors = await self._import_all(files, loading_dialog)
+
+                finally:
+                    loading_dialog.hide()
+                    loading_dialog.setParent(None)
+
+                # Process the errors
+                if errors:
+                    text = (
+                        _("TEXT_FILE_IMPORT_ONE_PERMISSION_ERROR")
+                        if len(files) == 1
+                        else _("TEXT_FILE_IMPORT_MULTIPLE_PERMISSION_ERROR")
+                    )
+                    show_error(self, text, exception=errors[0])
+                    raise JobResultError("error", exceptions=errors)
+
+            if cancel_scope.cancel_called:
+                raise JobResultError("cancelled")
+
+        # Propagate job result errors
+        except JobResultError:
+            raise
+
+        # Show a dialog when an unexpected error occurs
+        except Exception as exc:
+            text = (
+                _("TEXT_FILE_IMPORT_ONE_ERROR")
+                if len(files) == 1
+                else _("TEXT_FILE_IMPORT_MULTIPLE_ERROR")
+            )
+            show_error(self, text, exception=exc)
+            raise
+
+    # Import async helpers
+
+    async def _get_files(self, source: trio.Path, dest: FsPath) -> Tuple[ImportFiles, int]:
+        # Source is a file
+        if await source.is_file():
+            stat = await source.stat()
+            return [(source, dest / source.name)], stat.st_size
+        # Source is a directory
         files = []
         total_size = 0
+        # Loop over children and aggregate
+        for child in await source.iterdir():
+            child_files, child_size = await self._get_files(child, dest / source.name)
+            files.extend(child_files)
+            total_size += child_size
+        return files, total_size
 
-        if dst == "..":
-            dst_dir = self.current_directory.parent
-        elif dst == ".":
-            dst_dir = self.current_directory
-        else:
-            dst_dir = self.current_directory / dst
+    async def _get_files_from_sources(
+        self, sources: Iterable[str], dest: FsPath
+    ) -> Tuple[ImportFiles, int]:
+        files = []
+        total_size = 0
+        # Loop over sources and make sure to work with trio paths
+        for source in sources:
+            source = trio.Path(source)
+            # Aggregate the results
+            source_files, source_size = await self._get_files(source, dest)
+            files.extend(source_files)
+            total_size += source_size
+        return files, total_size
 
-        for src in srcs:
-            if src.is_dir():
-                tmp_files, tmp_total_size = self.get_folder(src, dst_dir=dst_dir)
-                files.extend(tmp_files)
-                total_size += tmp_total_size
-            elif src.is_file():
-                tmp_files, tmp_total_size = self.get_files([src], dst_dir=dst_dir)
-                files.extend(tmp_files)
-                total_size += tmp_total_size
-        self.import_all(files, total_size)
+    async def _import_all(
+        self, files: ImportFiles, loading_dialog: LoadingWidget
+    ) -> List[PermissionError]:
+        # Initialize current size
+        errors = []
+        current_size = 0
+        loading_dialog.center_widget.set_progress(current_size)
+
+        # Loop over files to import
+        for source, dest in files:
+
+            # Import the corresponding file and update the current size
+            try:
+                current_size = await self._import_one(source, dest, loading_dialog, current_size)
+
+            # Register permission errors and keep going
+            except PermissionError as exc:
+                errors.append(exc)
+
+            # The import failed for some other reason
+            except (Exception, trio.Cancelled):
+                # Shield against cancellation
+                with trio.CancelScope(shield=True):
+                    # Remove the last partially written file
+                    to_delete = [(dest, FileType.File)]
+                    await _do_delete(self.workspace_fs, to_delete, silent=True)
+                raise
+
+        # Return the permission errors
+        return errors
+
+    async def _import_one(
+        self, source: trio.Path, dest: FsPath, loading_dialog: LoadingWidget, current_size: int
+    ) -> int:
+        # Update loading widget
+        loading_dialog.center_widget.set_current_file(source.name)
+
+        # Create parent directory
+        if dest.parent != FsPath("/"):
+            await self.workspace_fs.mkdir(dest.parent, parents=True, exist_ok=True)
+
+        # Open the file to import
+        async with await trio.open_file(source, "rb") as f:
+
+            # Open the file to create
+            async with await self.workspace_fs.open_file(dest, "wb") as dest_file:
+
+                # Loop over chunks of DEFAULT_BLOCK_SIZE, i.e. 512KB
+                read_size = 0
+                while True:
+
+                    # Read a chunk and write it back
+                    chunk = await f.read(DEFAULT_BLOCK_SIZE)
+                    if not chunk:
+                        break
+                    await dest_file.write(chunk)
+
+                    # Update the size
+                    read_size += len(chunk)
+                    loading_dialog.center_widget.set_progress(current_size + read_size)
+
+        # Update and return the current size
+        current_size += read_size + 1
+        loading_dialog.center_widget.set_progress(current_size)
+        return current_size
 
     def on_table_files_file_moved(self, file_type, file_name, target_name):
         src_path = self.current_directory / file_name
@@ -930,62 +979,6 @@ class FilesWidget(QWidget, Ui_FilesWidget):
             show_error(self, _("TEXT_FILE_FOLDER_CREATE_ERROR_ALREADY_EXISTS"))
         else:
             show_error(self, _("TEXT_FILE_FOLDER_CREATE_ERROR_UNKNOWN"))
-
-    def _on_import_success(self, job):
-        assert self.import_job is job
-        assert self.loading_dialog
-        self.loading_dialog.hide()
-        self.loading_dialog.setParent(None)
-        self.loading_dialog = None
-        self.import_job = None
-
-    def _on_import_error(self, job):
-        def _display_import_error(file_count, exceptions=None):
-            if exceptions and all(isinstance(exc, PermissionError) for exc in exceptions):
-                if file_count and file_count == 1:
-                    show_error(
-                        self, _("TEXT_FILE_IMPORT_ONE_PERMISSION_ERROR"), exception=exceptions[0]
-                    )
-                else:
-                    show_error(
-                        self,
-                        _("TEXT_FILE_IMPORT_MULTIPLE_PERMISSION_ERROR"),
-                        exception=exceptions[0],
-                    )
-            else:
-                if file_count and file_count == 1:
-                    show_error(
-                        self,
-                        _("TEXT_FILE_IMPORT_ONE_ERROR"),
-                        exception=exceptions[0] if exceptions else None,
-                    )
-                else:
-                    show_error(
-                        self,
-                        _("TEXT_FILE_IMPORT_MULTIPLE_ERROR"),
-                        exception=exceptions[0] if exceptions else None,
-                    )
-
-        assert self.loading_dialog
-
-        if hasattr(self.import_job.exc, "status") and self.import_job.exc.status == "cancelled":
-            self.jobs_ctx.submit_job(
-                self.delete_success,
-                self.delete_error,
-                _do_delete,
-                workspace_fs=self.workspace_fs,
-                files=[(self.import_job.exc.params["last_file"], FileType.File)],
-                silent=True,
-            )
-        else:
-            _display_import_error(
-                file_count=self.import_job.exc.params.get("file_count", 0),
-                exceptions=self.import_job.exc.params.get("exceptions", None),
-            )
-        self.loading_dialog.hide()
-        self.loading_dialog.setParent(None)
-        self.loading_dialog = None
-        self.import_job = None
 
     def _on_fs_entry_downsynced(self, event, workspace_id=None, id=None):
         # No workspace FS
