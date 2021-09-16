@@ -147,6 +147,7 @@ class FuseOperations(LoggingMixIn, Operations):
             "f_blocks": 512 * 1024,  # 512 K blocks is 1 TB
             "f_bfree": 512 * 1024,  # 512 K blocks is 1 TB
             "f_bavail": 512 * 1024,  # 512 K blocks is 1 TB
+            "f_namemax": 255,  # 255 bytes as maximum length for filenames
         }
 
     def getattr(self, path: FsPath, fh: Optional[int] = None):

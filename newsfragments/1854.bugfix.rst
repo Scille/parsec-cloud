@@ -1,0 +1,1 @@
+Fix incorrect maximum file length detection on linux, e.g in the Nautilus file explorer.
