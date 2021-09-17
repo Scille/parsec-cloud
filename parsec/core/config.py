@@ -15,6 +15,17 @@ from parsec.core.types import BackendAddr
 
 logger = get_logger()
 
+TRANSLATIONS = {
+    "en": {
+        "FILENAME_CONFLICT": "Parsec - name conflict",
+        "FILE_CONTENT_CONFLICT": "Parsec - content conflict",
+    },
+    "fr": {
+        "FILENAME_CONFLICT": "Parsec - Conflit de nom",
+        "FILE_CONTENT_CONFLICT": "Parsec - Conflit de contenu",
+    },
+}
+
 
 def get_default_data_base_dir(environ: dict) -> Path:
     if sys.platform == "win32":
@@ -86,17 +97,6 @@ class CoreConfig:
     gui_allow_multiple_instances: bool = False
     gui_show_confined: bool = False
     gui_geometry: bytes = None
-
-    translations = {
-        "en": {
-            "FILENAME_CONFLICT": "Parsec - name conflict",
-            "FILE_CONTENT_CONFLICT": "Parsec - content conflict",
-        },
-        "fr": {
-            "FILENAME_CONFLICT": "Parsec - Conflit de nom",
-            "FILE_CONTENT_CONFLICT": "Parsec - Conflit de contenu",
-        },
-    }
 
     ipc_socket_file: Path = None
     ipc_win32_mutex_name: str = "parsec-cloud"
@@ -291,7 +291,7 @@ def save_config(config: CoreConfig):
 def translate(core_config: CoreConfig, key: str) -> str:
     res = key
     try:
-        translations = core_config.translations[core_config.gui_language or "en"]
+        translations = TRANSLATIONS[core_config.gui_language or "en"]
     except KeyError:
         return res
 
