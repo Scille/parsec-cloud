@@ -767,7 +767,10 @@ class MainWindow(QMainWindow, Ui_MainWindow):  # type: ignore[misc]
         self._toggle_add_tab_button()
 
     def closeEvent(self, event: QCloseEvent) -> None:
-        if self.minimize_on_close and not self.need_close:
+        # The MacOS condition is temporarily here to streamline the closeEvent
+        # regardless of how the app was closed. TODO find a way to handle cmd+Q
+        # to have separate behaviours between red X and cmd+Q on MacOS.
+        if self.minimize_on_close and not self.need_close and sys.platform != "darwin":
             self.hide()
             event.ignore()
 
@@ -795,5 +798,5 @@ class MainWindow(QMainWindow, Ui_MainWindow):  # type: ignore[misc]
             state = self.saveGeometry()
             self.event_bus.send(CoreEvent.GUI_CONFIG_CHANGED, gui_geometry=state)
             self.close_all_tabs()
-            event.accept()
             self.quit_callback()
+            event.ignore()
