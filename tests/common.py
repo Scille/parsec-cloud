@@ -336,6 +336,7 @@ _FIXTURES_CUSTOMIZATIONS = {
     "fake_preferred_org_creation_backend_addr",
     "blockstore_mode",
     "real_data_storage",
+    "gui_language",
 }
 
 
