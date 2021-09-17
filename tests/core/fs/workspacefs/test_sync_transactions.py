@@ -150,7 +150,7 @@ def test_merge_folder_manifests(alice, bob, core_config):
 
     # The remote has changed
     v4 = v3.evolve(version=4, children={"d": EntryID.new(), **v3.children}, author=other_device)
-    m7 = merge_manifests(my_device, timestamp, core_config empty_pattern, m6, v4)
+    m7 = merge_manifests(my_device, timestamp, core_config, empty_pattern, m6, v4)
     assert m7.base_version == 4
     assert sorted(m7.children) == ["a", "b", "c", "d"]
     assert m7.need_sync
@@ -243,7 +243,7 @@ def test_merge_manifests_with_a_placeholder(alice, bob, core_config):
     parent = EntryID.new()
 
     m1 = LocalFolderManifest.new_placeholder(my_device, parent=parent, timestamp=timestamp)
-    m2 = merge_manifests(my_device, timestamp, empty_pattern, m1)
+    m2 = merge_manifests(my_device, timestamp, core_config, empty_pattern, m1)
     assert m2 == m1
     v1 = m1.to_remote(author=my_device, timestamp=timestamp)
 

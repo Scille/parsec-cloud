@@ -45,10 +45,7 @@ def get_filename(manifest: LocalFolderishManifests, entry_id: EntryID) -> Option
 
 
 def get_conflict_filename(
-    filename: EntryName,
-    filenames: Iterable[EntryName],
-    core_config: CoreConfig,
-    suffix_key: str = FILENAME_CONFLICT_KEY,
+    filename: EntryName, filenames: Iterable[EntryName], core_config: CoreConfig, suffix_key: str
 ) -> EntryName:
     counter = count(2)
 
@@ -159,7 +156,7 @@ def merge_folder_children(
         children[name] = entry_id
     for name, entry_id in solved_local_children.items():
         if name in children:
-            name = get_conflict_filename(name, children.keys(), core_config)
+            name = get_conflict_filename(name, children.keys(), core_config, FILENAME_CONFLICT_KEY)
         children[name] = entry_id
 
     # Return
