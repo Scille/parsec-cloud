@@ -760,6 +760,7 @@ def core_config(tmpdir, backend_addr, unused_tcp_port, fixtures_customization):
         data_base_dir=tmpdir / "data",
         mountpoint_base_dir=tmpdir / "mnt",
         preferred_org_creation_backend_addr=backend_addr,
+        gui_language=fixtures_customization.get("gui_language"),
     )
 
 

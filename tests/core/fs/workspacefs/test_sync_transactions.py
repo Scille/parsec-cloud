@@ -42,7 +42,11 @@ def test_full_name(test_input, expected):
     assert result == expected
 
 
-def test_merge_folder_children(core_config):
+@pytest.mark.parametrize(
+    "gui_language, suffix", [("en", "name conflict"), ("fr", "Conflit de nom")]
+)
+def test_merge_folder_children(core_config, gui_language, suffix):
+    core_config = core_config.evolve(gui_language=gui_language)
     m1 = EntryID.new()
     m2 = EntryID.new()
     m3 = EntryID.new()
@@ -52,7 +56,6 @@ def test_merge_folder_children(core_config):
     b2 = {"b.txt": m2}
     c1 = {"c.tar.gz": m1}
     c2 = {"c.tar.gz": m2}
-
     # Empty folder
     assert merge_folder_children({}, {}, {}, "a@a", core_config) == {}
 
@@ -77,28 +80,23 @@ def test_merge_folder_children(core_config):
 
     # Conflicting names
     result = merge_folder_children({}, a1, a2, "a@a", core_config)
-    print(core_config)
-    assert result == {"a": m2, "a (Parsec - name conflict)": m1}
+    assert result == {"a": m2, f"a (Parsec - {suffix})": m1}
     result = merge_folder_children({}, b1, b2, "a@a", core_config)
-    assert result == {"b.txt": m2, "b (Parsec - name conflict).txt": m1}
+    assert result == {"b.txt": m2, f"b (Parsec - {suffix}).txt": m1}
     result = merge_folder_children({}, c1, c2, "a@a", core_config)
-    assert result == {"c.tar.gz": m2, "c (Parsec - name conflict).tar.gz": m1}
+    assert result == {"c.tar.gz": m2, f"c (Parsec - {suffix}).tar.gz": m1}
 
     # Conflicting name with special pattern filename
-    base = {"a (Parsec - name conflict)": m3}
+    base = {f"a (Parsec - {suffix})": m3}
 
     a3 = {**base, **a1}
     b3 = {**base, **a2}
 
     result = merge_folder_children(base, a3, b3, "a@a", core_config)
-    assert result == {
-        "a": m2,
-        "a (Parsec - name conflict)": m3,
-        "a (Parsec - name conflict (2))": m1,
-    }
+    assert result == {"a": m2, f"a (Parsec - {suffix})": m3, f"a (Parsec - {suffix} (2))": m1}
 
     m4 = EntryID.new()
-    base = {**base, "a (Parsec - name conflict (2))": m4}
+    base = {**base, f"a (Parsec - {suffix} (2))": m4}
     a3 = {**base, **a1}
     b3 = {**base, **a2}
 
@@ -106,9 +104,9 @@ def test_merge_folder_children(core_config):
 
     assert result == {
         "a": m2,
-        "a (Parsec - name conflict)": m3,
-        "a (Parsec - name conflict (2))": m4,
-        "a (Parsec - name conflict (3))": m1,
+        f"a (Parsec - {suffix})": m3,
+        f"a (Parsec - {suffix} (2))": m4,
+        f"a (Parsec - {suffix} (3))": m1,
     }
 
 
@@ -410,9 +408,12 @@ async def test_get_minimal_remote_manifest(alice, alice_sync_transactions):
 
 
 @pytest.mark.trio
-async def test_file_conflict(alice_sync_transactions):
+@pytest.mark.parametrize(
+    "gui_language, suffix", [("en", "content conflict"), ("fr", "Conflit de contenu")]
+)
+async def test_file_conflict(alice_sync_transactions, gui_language, suffix):
     sync_transactions = alice_sync_transactions
-
+    sync_transactions.core_config = sync_transactions.core_config.evolve(gui_language=gui_language)
     # Prepare
     a_id, fd = await sync_transactions.file_create(FsPath("/a"))
     await sync_transactions.fd_write(fd, b"abc", offset=0)
@@ -432,14 +433,14 @@ async def test_file_conflict(alice_sync_transactions):
     await sync_transactions.fd_write(fd, b"ghi", offset=6)
 
     # Also create a fake previous conflict file
-    await sync_transactions.file_create(FsPath("/a (Parsec - content conflict)"), open=False)
+    await sync_transactions.file_create(FsPath(f"/a (Parsec - {suffix})"), open=False)
 
     # Solve conflict
     with sync_transactions.event_bus.listen() as spy:
         await sync_transactions.file_conflict(a_id, local, remote)
     assert await sync_transactions.fd_read(fd, size=-1, offset=0) == b""
     a2_id, fd2 = await sync_transactions.file_open(
-        FsPath("/a (Parsec - content conflict (2))"), write_mode=False
+        FsPath(f"/a (Parsec - {suffix} (2))"), write_mode=False
     )
     assert await sync_transactions.fd_read(fd2, size=-1, offset=0) == b"abcdefghi"
     spy.assert_events_exactly_occured(
