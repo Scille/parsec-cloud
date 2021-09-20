@@ -28,6 +28,9 @@ else:
     # Let the GUI handle the parsing of the url to display dialog on error
     @click.argument("url", required=False)
     @click.option("--diagnose", "-d", is_flag=True)
+    @click.option(
+        "-m", hidden=True, help="Reserved by packaging as an access to the python interpreter"
+    )
     @core_config_options
     @gui_command_base_options
     def run_gui(config, url, diagnose, sentry_url, **kwargs):
