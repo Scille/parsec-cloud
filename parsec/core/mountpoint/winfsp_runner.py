@@ -122,7 +122,7 @@ async def winfsp_mountpoint_runner(
     device = workspace_fs.device
     workspace_name = winify_entry_name(workspace_fs.get_workspace_name())
     trio_token = trio.lowlevel.current_trio_token()
-    fs_access = ThreadFSAccess(trio_token, workspace_fs)
+    fs_access = ThreadFSAccess(trio_token, workspace_fs, event_bus)
 
     user_manifest = user_fs.get_user_manifest()
     workspace_ids = [entry.id for entry in user_manifest.workspaces]
@@ -148,9 +148,7 @@ async def winfsp_mountpoint_runner(
         .decode("ascii")
     )
     volume_serial_number = _generate_volume_serial_number(device, workspace_fs.workspace_id)
-    operations = WinFSPOperations(
-        event_bus=event_bus, fs_access=fs_access, volume_label=volume_label, **event_kwargs
-    )
+    operations = WinFSPOperations(fs_access=fs_access, volume_label=volume_label, **event_kwargs)
     # See https://docs.microsoft.com/en-us/windows/desktop/api/fileapi/nf-fileapi-getvolumeinformationa  # noqa
     fs = FileSystem(
         mountpoint_path.drive,

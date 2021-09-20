@@ -12,12 +12,10 @@ from contextlib import contextmanager
 from stat import S_IRWXU, S_IFDIR, S_IFREG
 from fuse import FuseOSError, Operations, LoggingMixIn, fuse_get_context, fuse_exit
 
-
-from parsec.event_bus import EventBus
 from parsec.api.data import EntryID
 from parsec.core.core_events import CoreEvent
 from parsec.core.fs import FsPath, FSLocalOperationError, FSRemoteOperationError
-from parsec.core.mountpoint.thread_fs_access import ThreadFSAccess
+from parsec.core.mountpoint.thread_fs_access import ThreadFSAccess, TrioDealockTimeoutError
 
 
 logger = get_logger()
@@ -39,7 +37,7 @@ def is_banned(name):
 
 @contextmanager
 def get_path_and_translate_error(
-    event_bus: EventBus,
+    fs_access: ThreadFSAccess,
     operation: str,
     context: Optional[str],
     mountpoint: PurePath,
@@ -66,7 +64,7 @@ def get_path_and_translate_error(
         raise FuseOSError(exc.errno) from exc
 
     except FSRemoteOperationError as exc:
-        event_bus.send(
+        fs_access.send_event(
             CoreEvent.MOUNTPOINT_REMOTE_ERROR,
             exc=exc,
             operation=operation,
@@ -77,6 +75,35 @@ def get_path_and_translate_error(
         )
         raise FuseOSError(exc.errno) from exc
 
+    except TrioDealockTimeoutError as exc:
+        # This exception is raised when the trio thread cannot be reached.
+        # This is likely due to a deadlock, i.e the trio thread performing
+        # a synchronous call to access the fuse file system (this can easily
+        # happen in a third party library, e.g `QDesktopServices::openUrl`).
+        # The fuse/winfsp kernel driver being involved in the deadlock, the
+        # effects can easily propagate to the file explorer or the system
+        # in general. This is why it is much better to break out of it with
+        # and to return an error code indicating that the operation failed.
+        logger.error(
+            "The trio thread is unreachable, a deadlock might have occured",
+            operation=operation,
+            path=str(path),
+            mountpoint=str(mountpoint),
+            workspace_id=workspace_id,
+            timestamp=timestamp,
+        )
+        fs_access.send_event(
+            CoreEvent.MOUNTPOINT_TRIO_DEADLOCK_ERROR,
+            exc=exc,
+            operation=operation,
+            path=path,
+            mountpoint=mountpoint,
+            workspace_id=workspace_id,
+            timestamp=timestamp,
+        )
+        # Use EINVAL as error code, so it behaves the same as internal errors
+        raise FuseOSError(errno.EINVAL) from exc
+
     except Exception as exc:
         logger.exception(
             "Unhandled exception in fuse mountpoint",
@@ -86,7 +113,7 @@ def get_path_and_translate_error(
             workspace_id=workspace_id,
             timestamp=timestamp,
         )
-        event_bus.send(
+        fs_access.send_event(
             CoreEvent.MOUNTPOINT_UNHANDLED_ERROR,
             exc=exc,
             operation=operation,
@@ -106,20 +133,18 @@ def get_path_and_translate_error(
 class FuseOperations(LoggingMixIn, Operations):
     def __init__(
         self,
-        event_bus: EventBus,
         fs_access: ThreadFSAccess,
         mountpoint: PurePath,
         workspace_id: EntryID,
         timestamp: Optional[DateTime],
     ):
         super().__init__()
-        self.event_bus = event_bus
         self.fs_access = fs_access
         self.fds = {}
         self._need_exit = False
         self._get_path_and_translate_error = partial(
             get_path_and_translate_error,
-            event_bus=self.event_bus,
+            fs_access=self.fs_access,
             mountpoint=mountpoint,
             workspace_id=workspace_id,
             timestamp=timestamp,

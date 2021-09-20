@@ -95,42 +95,45 @@ async def test_remote_error_event(
 
         # Offline test
 
-        def _testbed_offline():
-            # Accessing workspace data in the backend should end up in remote error
-            with alice_user_fs.event_bus.listen() as spy:
-                fd = os.open(str(trio_w / "foo.txt"), os.O_RDONLY)
-                with pytest.raises(OSError):
-                    os.read(fd, 10)
-            spy.assert_event_occured(CoreEvent.MOUNTPOINT_REMOTE_ERROR)
-
-            # But should still be able to do local stuff though without remote errors
-            with alice_user_fs.event_bus.listen() as spy:
-                os.open(str(trio_w / "bar.txt"), os.O_RDWR | os.O_CREAT)
-            assert os.listdir(str(trio_w)) == ["bar.txt", "foo.txt"]
-            assert CoreEvent.MOUNTPOINT_REMOTE_ERROR not in [e.event for e in spy.events]
-
         with running_backend.offline():
-            await trio.to_thread.run_sync(_testbed_offline)
+
+            with alice_user_fs.event_bus.listen() as spy:
+                # Accessing workspace data in the backend should end up in remote error
+                fd = await trio.to_thread.run_sync(os.open, str(trio_w / "foo.txt"), os.O_RDONLY)
+                with pytest.raises(OSError):
+                    await trio.to_thread.run_sync(os.read, fd, 10)
+                await spy.wait_with_timeout(CoreEvent.MOUNTPOINT_REMOTE_ERROR)
+
+            with alice_user_fs.event_bus.listen() as spy:
+                # But should still be able to do local stuff though without remote errors
+                await trio.to_thread.run_sync(
+                    os.open, str(trio_w / "bar.txt"), os.O_RDWR | os.O_CREAT
+                )
+                assert await trio.to_thread.run_sync(os.listdir, str(trio_w)) == [
+                    "bar.txt",
+                    "foo.txt",
+                ]
+                # Let the loop process the potential `MOUNTPOINT_REMOTE_ERROR` we want to check are absent
+                await trio.testing.wait_all_tasks_blocked()
+                assert CoreEvent.MOUNTPOINT_REMOTE_ERROR not in [e.event for e in spy.events]
 
         # Online test
 
-        def _testbed_online():
-            # Finally test unhandled error
-            def _crash(*args, **kwargs):
-                raise RuntimeError("D'Oh !")
+        def _crash(*args, **kwargs):
+            raise RuntimeError("D'Oh !")
 
-            monkeypatch.setattr(
-                "parsec.core.fs.workspacefs.entry_transactions.EntryTransactions.folder_create",
-                _crash,
-            )
-            with alice_user_fs.event_bus.listen() as spy:
-                with pytest.raises(OSError):
-                    os.mkdir(str(trio_w / "dummy"))
-            if sys.platform == "win32":
-                expected_log = "[error    ] Unhandled exception in winfsp mountpoint [parsec.core.mountpoint.winfsp_operations]"
-            else:
-                expected_log = "[error    ] Unhandled exception in fuse mountpoint [parsec.core.mountpoint.fuse_operations]"
-            caplog.assert_occured_once(expected_log)
-            spy.assert_event_occured(CoreEvent.MOUNTPOINT_UNHANDLED_ERROR)
+        monkeypatch.setattr(
+            "parsec.core.fs.workspacefs.entry_transactions.EntryTransactions.folder_create", _crash
+        )
 
-        await trio.to_thread.run_sync(_testbed_online)
+        with alice_user_fs.event_bus.listen() as spy:
+            with pytest.raises(OSError):
+                await trio.to_thread.run_sync(os.mkdir, str(trio_w / "dummy"))
+            await spy.wait_with_timeout(CoreEvent.MOUNTPOINT_UNHANDLED_ERROR)
+
+        if sys.platform == "win32":
+            expected_log = "[error    ] Unhandled exception in winfsp mountpoint [parsec.core.mountpoint.winfsp_operations]"
+        else:
+            expected_log = "[error    ] Unhandled exception in fuse mountpoint [parsec.core.mountpoint.fuse_operations]"
+
+        caplog.assert_occured_once(expected_log)

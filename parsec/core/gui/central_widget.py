@@ -72,6 +72,7 @@ class CentralWidget(QWidget, Ui_CentralWidget):  # type: ignore[misc]
         CoreEvent.MOUNTPOINT_STOPPED,
         CoreEvent.MOUNTPOINT_REMOTE_ERROR,
         CoreEvent.MOUNTPOINT_UNHANDLED_ERROR,
+        CoreEvent.MOUNTPOINT_TRIO_DEADLOCK_ERROR,
         CoreEvent.SHARING_UPDATED,
     ]
 
@@ -223,7 +224,10 @@ class CentralWidget(QWidget, Ui_CentralWidget):  # type: ignore[misc]
             else:
                 msg = _("NOTIF_WARN_MOUNTPOINT_REMOTE_ERROR_{}_{}").format(abspath, str(exc))
             self.new_notification.emit("WARNING", msg)
-        elif event == CoreEvent.MOUNTPOINT_UNHANDLED_ERROR:
+        elif event in (
+            CoreEvent.MOUNTPOINT_UNHANDLED_ERROR,
+            CoreEvent.MOUNTPOINT_TRIO_DEADLOCK_ERROR,
+        ):
             assert isinstance(kwargs["exc"], Exception)
             assert isinstance(kwargs["operation"], str)
             assert isinstance(kwargs["mountpoint"], PurePath)
