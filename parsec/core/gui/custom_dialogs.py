@@ -1,8 +1,9 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2016-2021 Scille SAS
 
 import sys
+import json
 
-from PyQt5.QtCore import Qt, pyqtSignal
+from PyQt5.QtCore import Qt, pyqtSignal, QProcess
 from PyQt5.QtGui import QPainter, QValidator
 from PyQt5.QtWidgets import (
     QWidget,
@@ -120,6 +121,69 @@ class GreyedDialog(QDialog, Ui_GreyedDialog):
         # Resetting the parent on MacOS causes a crash.
         if sys.platform != "darwin":
             self.setParent(None)
+
+
+class QFileDialogInProcess(GreyedDialog):
+    def __init__(self, parent=None):
+        super().__init__(QWidget(), "", parent, hide_close=True)
+        self.MainWidget.hide()
+
+    @classmethod
+    def _exec_method(cls, method, parent, *args, **kwargs):
+        # Serialize input data
+        bytes_in = json.dumps((method, args, kwargs)).encode()
+        # Show the dialog
+        dialog = cls(parent=parent)
+        dialog.show()
+        # Create the process and connect with the dialog
+        process = QProcess(parent=dialog)
+        process.finished.connect(lambda *args: dialog.close())
+        # Start the subprocess and write the input payload
+        process.start(sys.executable, ["-m", "parsec._file_dialog"])
+        process.write(bytes_in)
+        process.closeWriteChannel()
+        # Run the dialog until either the process is finished or the dialog is closed
+        dialog.exec_()
+        # Terminate the process if the dialog exited first
+        if process.state() != process.ProcessState.NotRunning:
+            process.terminate()
+            process.waitForFinished()
+            raise EOFError
+        # Check exit code
+        if process.exitCode() != 0:
+            trace = bytes(process.readAllStandardError()).decode()
+            raise RuntimeError(trace)
+        # Deserialize and return output data
+        bytes_out = bytes(process.readAllStandardOutput())
+        return json.loads(bytes_out.decode())
+
+    @classmethod
+    def getOpenFileName(cls, *args, **kwargs):
+        try:
+            return cls._exec_method("getOpenFileName", *args, **kwargs)
+        except EOFError:
+            return "", ""
+
+    @classmethod
+    def getOpenFileNames(cls, *args, **kwargs):
+        try:
+            return cls._exec_method("getOpenFileNames", *args, **kwargs)
+        except EOFError:
+            return [], ""
+
+    @classmethod
+    def getExistingDirectory(cls, *args, **kwargs):
+        try:
+            return cls._exec_method("getExistingDirectory", *args, **kwargs)
+        except EOFError:
+            return ""
+
+    @classmethod
+    def getSaveFileName(cls, *args, **kwargs):
+        try:
+            return cls._exec_method("getSaveFileName", *args, **kwargs)
+        except EOFError:
+            return "", ""
 
 
 class TextInputWidget(QWidget, Ui_InputWidget):

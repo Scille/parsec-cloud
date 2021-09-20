@@ -1,4 +1,5 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2016-2021 Scille SAS
+
 import trio
 import pathlib
 from uuid import UUID
@@ -10,7 +11,7 @@ from enum import IntEnum
 from structlog import get_logger
 
 from PyQt5.QtCore import Qt, pyqtSignal
-from PyQt5.QtWidgets import QFileDialog, QWidget
+from PyQt5.QtWidgets import QWidget
 from parsec.core.types import WorkspaceRole
 from parsec.core.fs import FsPath, WorkspaceFS, WorkspaceFSTimestamped
 from parsec.core.fs.exceptions import (
@@ -28,6 +29,7 @@ from parsec.core.gui.custom_dialogs import (
     get_text_input,
     show_info,
     GreyedDialog,
+    QFileDialogInProcess,
 )
 
 from parsec.core.gui.custom_widgets import CenteredSpinnerWidget
@@ -640,7 +642,7 @@ class FilesWidget(QWidget, Ui_FilesWidget):
     # Import entry points
 
     def import_files_clicked(self):
-        paths, x = QFileDialog.getOpenFileNames(
+        paths, filters = QFileDialogInProcess.getOpenFileNames(
             self, _("TEXT_FILE_IMPORT_FILES"), self.default_import_path
         )
         if not paths:
@@ -651,7 +653,7 @@ class FilesWidget(QWidget, Ui_FilesWidget):
         )
 
     def import_folder_clicked(self):
-        path = QFileDialog.getExistingDirectory(
+        path = QFileDialogInProcess.getExistingDirectory(
             self, _("TEXT_FILE_IMPORT_FOLDER"), self.default_import_path
         )
         if not path:
@@ -678,7 +680,6 @@ class FilesWidget(QWidget, Ui_FilesWidget):
         # The file list is used in the error handler
         files = []
         try:
-
             # Get the list of files to import with the corresponding size
             files, total_size = await self._get_files_from_sources(sources, dest)
 

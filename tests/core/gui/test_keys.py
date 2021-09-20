@@ -43,7 +43,8 @@ def test_keys_export(qtbot, core_config, alice, bob, monkeypatch, keys_widget):
     tmp_path.mkdir()
     dest_file = tmp_path.joinpath("mydevice.keys")
     monkeypatch.setattr(
-        "parsec.core.gui.keys_widget.QFileDialog.getSaveFileName", lambda *x, **y: (dest_file, "")
+        "parsec.core.gui.custom_dialogs.QFileDialogInProcess.getSaveFileName",
+        lambda *x, **y: (dest_file, ""),
     )
 
     key_w = keys_layout.itemAt(0).widget()
@@ -76,7 +77,7 @@ def test_keys_import(qtbot, core_config, alice, bob, monkeypatch):
     assert len(key_glob) == 1
 
     monkeypatch.setattr(
-        "parsec.core.gui.keys_widget.QFileDialog.getOpenFileName",
+        "parsec.core.gui.custom_dialogs.QFileDialogInProcess.getOpenFileName",
         lambda *x, **y: (key_glob[0], None),
     )
 
