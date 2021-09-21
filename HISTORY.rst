@@ -5,6 +5,22 @@ History
 .. towncrier release notes start
 
 
+Parsec v2.5.4 (2021-09-21)
+--------------------------
+
+Bugfixes
+~~~~~~~~
+
+* Fix 400 errors when accessing organization containing non-ascii characters
+  with REST API. (`#1849 <https://github.com/Scille/parsec-
+  cloud/issues/1849>`__)
+* Fix incorrect maximum file length detection on linux, e.g in the Nautilus file
+  explorer.  (`#1854 <https://github.com/Scille/parsec-cloud/issues/1854>`__)
+* Fix a freeze when a user import a file or a folder from another parsec
+  workspace through the file explorer provided by the application.  (`#1856
+  <https://github.com/Scille/parsec-cloud/issues/1856>`__)
+
+
 Parsec v2.5.3 (2021-09-10)
 --------------------------
 

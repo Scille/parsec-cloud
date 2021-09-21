@@ -1,1 +1,0 @@
-Fix 400 errors when accessing organization containing non-ascii characters with REST API.

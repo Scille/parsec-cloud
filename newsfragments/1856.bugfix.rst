@@ -1,1 +1,0 @@
-Fix a freeze when a user import a file or a folder from another parsec workspace through the file explorer provided by the application.
