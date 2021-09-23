@@ -255,6 +255,8 @@ async def test_share_with_outsider_limit_roles(
         assert select_bob_w.label_email.text() == "bob@example.com"
         # Switch bob to an invalid role
         assert select_bob_w.combo_role.itemText(role_index) == role_name
+        assert select_bob_w.combo_role.model().item(role_index).isEnabled() is False
+
         select_bob_w.combo_role.setCurrentIndex(3)
 
         def _error_shown():

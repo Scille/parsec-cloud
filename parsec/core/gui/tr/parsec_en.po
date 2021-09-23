@@ -640,6 +640,9 @@ msgstr "Administrator"
 msgid "NOT_ALLOWED_OUTSIDER_PROFILE_TOOLTIP"
 msgstr "Your organization does not authorize this kind of profile."
 
+msgid "NOT_ALLOWED_FOR_OUTSIDER_PROFILE_TOOLTIP"
+msgstr "Role not allowed for the outsider users."
+
 msgid "TEXT_GREET_USER_INVALID_HUMAN_HANDLE"
 msgstr "The email is invalid."
 
@@ -2555,4 +2558,3 @@ msgstr "Go to a file using a link"
 
 #~ msgid "EMAIL_NOT_AVAILABLE"
 #~ msgstr ""
-

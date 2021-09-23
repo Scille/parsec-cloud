@@ -672,6 +672,9 @@ msgstr "Administrateur"
 msgid "NOT_ALLOWED_OUTSIDER_PROFILE_TOOLTIP"
 msgstr "Votre configuration actuelle n'autorise pas ce type de profil"
 
+msgid "NOT_ALLOWED_FOR_OUTSIDER_PROFILE_TOOLTIP"
+msgstr "Rôle non autorisé pour les utilisateurs externes."
+
 msgid "TEXT_GREET_USER_INVALID_HUMAN_HANDLE"
 msgstr "L'email n'est pas valide."
 
