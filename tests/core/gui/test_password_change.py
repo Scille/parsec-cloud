@@ -2,7 +2,6 @@
 
 import pytest
 from PyQt5 import QtCore
-from parsec.core.gui.login_widget import LoginPasswordInputWidget
 
 
 @pytest.fixture
@@ -58,7 +57,7 @@ async def test_change_password_invalid_password_check(
 @pytest.mark.gui
 @pytest.mark.trio
 async def test_change_password_success(
-    aqtbot, running_backend, logged_gui, catch_password_change_widget, autoclose_dialog
+    aqtbot, running_backend, logged_gui, bob, catch_password_change_widget, autoclose_dialog
 ):
     c_w = logged_gui.test_get_central_widget()
 
@@ -81,26 +80,9 @@ async def test_change_password_success(
     await logged_gui.test_logout_and_switch_to_login_widget()
 
     # ...with old password...
-    await logged_gui.test_proceed_to_login("P@ssw0rd", error=True)
+    await logged_gui.test_proceed_to_login(bob, "P@ssw0rd", error=True)
     assert autoclose_dialog.dialogs == [("Error", "The password is incorrect.")]
+    autoclose_dialog.reset()
 
     # ...and new password
-    l_w = logged_gui.test_get_login_widget()
-    password_w = l_w.widget.layout().itemAt(0).widget()
-    assert isinstance(password_w, LoginPasswordInputWidget)
-
-    aqtbot.key_clicks(password_w.line_edit_password, "P@ssw0rd2")
-
-    print(password_w.line_edit_password.text())
-
-    tabw = logged_gui.test_get_tab()
-
-    async with aqtbot.wait_signals([l_w.login_with_password_clicked, tabw.logged_in]):
-        aqtbot.mouse_click(password_w.button_login, QtCore.Qt.LeftButton)
-
-    def _wait_logged_in():
-        assert not l_w.isVisible()
-        c_w = logged_gui.test_get_central_widget()
-        assert c_w.isVisible()
-
-    await aqtbot.wait_until(_wait_logged_in)
+    await logged_gui.test_proceed_to_login(bob, "P@ssw0rd2")

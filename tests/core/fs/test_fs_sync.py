@@ -621,4 +621,50 @@ async def test_sync_data_before_workspace(running_backend, alice_user_fs):
     }
 
 
+@pytest.mark.trio
+async def test_merge_resulting_in_no_need_for_sync(running_backend, user_fs_factory, alice, alice2):
+    async with user_fs_factory(alice) as alice_user_fs:
+        async with user_fs_factory(alice2) as alice2_user_fs:
+            # Create a workspace with an entry
+            with freeze_time("2000-01-02"):
+                wksp_id = await alice_user_fs.workspace_create("wksp")
+                alice_wksp = alice_user_fs.get_workspace(wksp_id)
+                await alice_wksp.mkdir("/foo")
+
+            # Sync for Alice and Alice2
+            with freeze_time("2000-01-03"):
+                await alice_user_fs.sync()
+                await alice_wksp.sync()
+                await alice2_user_fs.sync()
+                alice2_wksp = alice2_user_fs.get_workspace(wksp_id)
+                await alice2_wksp.sync()
+
+            # Alice remove the entry and sync this
+            with freeze_time("2000-01-04"):
+                await alice_wksp.rmdir("/foo")
+                await alice_wksp.sync()
+
+            # Now Alice2 does the same, this should not create any remote changes
+            with freeze_time("2000-01-05"):
+                await alice2_wksp.rmdir("/foo")
+                await alice2_wksp.sync()
+
+            # Now, both user fs should have the same view on workspace
+            expected_alice_wksp_stat = {
+                "id": wksp_id,
+                "base_version": 3,
+                "created": datetime(2000, 1, 2),
+                "updated": datetime(2000, 1, 4),
+                "is_placeholder": False,
+                "need_sync": False,
+                "type": "folder",
+                "children": [],
+                "confinement_point": None,
+            }
+            alice_wksp_stat = await alice_wksp.path_info("/")
+            alice2_wksp_stat = await alice2_wksp.path_info("/")
+            assert alice_wksp_stat == expected_alice_wksp_stat
+            assert alice2_wksp_stat == expected_alice_wksp_stat
+
+
 # TODO: test data/manifest updated between failed and new syncs

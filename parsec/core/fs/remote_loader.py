@@ -87,7 +87,7 @@ class UserRemoteLoader:
         device: LocalDevice,
         workspace_id: EntryID,
         get_workspace_entry: Callable[[], WorkspaceEntry],
-        get_previous_workspace_entry: Callable[[], Awaitable[WorkspaceEntry]],
+        get_previous_workspace_entry: Callable[[], Awaitable[Optional[WorkspaceEntry]]],
         backend_cmds: BackendAuthenticatedCmds,
         remote_devices_manager: RemoteDevicesManager,
     ):
@@ -306,7 +306,7 @@ class RemoteLoader(UserRemoteLoader):
         device: LocalDevice,
         workspace_id: EntryID,
         get_workspace_entry: Callable[[], WorkspaceEntry],
-        get_previous_workspace_entry: Callable[[], Awaitable[WorkspaceEntry]],
+        get_previous_workspace_entry: Callable[[], Awaitable[Optional[WorkspaceEntry]]],
         backend_cmds: BackendAuthenticatedCmds,
         remote_devices_manager: RemoteDevicesManager,
         local_storage: BaseWorkspaceStorage,
@@ -463,19 +463,20 @@ class RemoteLoader(UserRemoteLoader):
             # - FSWorkspaceInMaintenance
             # It is fine to let those exceptions bubble up as there all valid reasons for failing to load a manifest.
             previous_workspace_entry = await self.get_previous_workspace_entry()
-            # Make sure we don't fall into an infinite loop because of some other bug
-            assert (
-                previous_workspace_entry.encryption_revision
-                < self.get_workspace_entry().encryption_revision
-            )
-            # Recursive call to `load_manifest`, requiring an older encryption revision than the current one
-            return await self.load_manifest(
-                entry_id,
-                version=version,
-                timestamp=timestamp,
-                expected_backend_timestamp=expected_backend_timestamp,
-                workspace_entry=previous_workspace_entry,
-            )
+            if previous_workspace_entry is not None:
+                # Make sure we don't fall into an infinite loop because of some other bug
+                assert (
+                    previous_workspace_entry.encryption_revision
+                    < self.get_workspace_entry().encryption_revision
+                )
+                # Recursive call to `load_manifest`, requiring an older encryption revision than the current one
+                return await self.load_manifest(
+                    entry_id,
+                    version=version,
+                    timestamp=timestamp,
+                    expected_backend_timestamp=expected_backend_timestamp,
+                    workspace_entry=previous_workspace_entry,
+                )
 
         if rep["status"] == "not_found":
             raise FSRemoteManifestNotFound(entry_id)

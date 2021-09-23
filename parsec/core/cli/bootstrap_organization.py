@@ -9,6 +9,7 @@ from parsec.api.protocol import HumanHandle
 from parsec.core.types import BackendOrganizationBootstrapAddr
 from parsec.core.backend_connection import apiv1_backend_anonymous_cmds_factory
 from parsec.core.local_device import save_device_with_password
+from parsec.core.fs.storage.user_storage import user_storage_non_speculative_init
 from parsec.core.invite import bootstrap_organization as do_bootstrap_organization
 from parsec.core.cli.utils import cli_command_base_options, core_config_options
 
@@ -33,6 +34,11 @@ async def _bootstrap_organization(config, addr, password, device_label, human_la
         # given their names are base on the device's slughash which is intended
         # to be globally unique.
         with operation(f"Saving device {device_display}"):
+            # The organization is brand new, of course there is no existing
+            # remote user manifest, hence our placeholder is non-speculative.
+            await user_storage_non_speculative_init(
+                data_base_dir=config.data_base_dir, device=new_device
+            )
             save_device_with_password(
                 config_dir=config.config_dir, device=new_device, password=password
             )

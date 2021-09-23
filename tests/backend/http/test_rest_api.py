@@ -510,7 +510,7 @@ async def test_organization_stats_users(
         base_human_handle="Godfrey Ho <godfrey.ho@ifd.com>",
         profile=UserProfile.ADMIN,
     )
-    await binder.bind_organization(org, godfrey1, initial_user_manifest_in_v0=True)
+    await binder.bind_organization(org, godfrey1, initial_user_manifest="not_synced")
 
     expected_stats = {
         "users": 1,
@@ -532,7 +532,7 @@ async def test_organization_stats_users(
             if v["profile"] == profile
         ][0]
         device = local_device_factory(profile=profile, org=org)
-        await binder.bind_device(device, certifier=godfrey1, initial_user_manifest_in_v0=True)
+        await binder.bind_device(device, certifier=godfrey1, initial_user_manifest="not_synced")
         expected_stats["users"] += 1
         expected_stats["active_users"] += 1
         expected_stats["users_per_profile_detail"][i]["active"] += 1
@@ -548,7 +548,7 @@ async def test_organization_stats_users(
 
     # Also make sure stats are isolated between organizations
     otherorg_device = local_device_factory(org=otherorg, profile=UserProfile.ADMIN)
-    await binder.bind_organization(otherorg, otherorg_device, initial_user_manifest_in_v0=True)
+    await binder.bind_organization(otherorg, otherorg_device, initial_user_manifest="not_synced")
     stats = await organization_stats(otherorg_device.organization_id)
     assert stats == {
         "users": 1,

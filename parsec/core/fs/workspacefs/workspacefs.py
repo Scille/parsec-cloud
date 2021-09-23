@@ -73,7 +73,7 @@ class WorkspaceFS:
         self,
         workspace_id: EntryID,
         get_workspace_entry: Callable[[], WorkspaceEntry],
-        get_previous_workspace_entry: Callable[[], Awaitable[WorkspaceEntry]],
+        get_previous_workspace_entry: Callable[[], Awaitable[Optional[WorkspaceEntry]]],
         device: LocalDevice,
         local_storage: BaseWorkspaceStorage,
         backend_cmds: BackendAuthenticatedCmds,
@@ -151,8 +151,8 @@ class WorkspaceFS:
             FSBackendOfflineError
         """
         try:
-            workspace_manifest = await self.local_storage.get_manifest(self.workspace_id)
-            if workspace_manifest.is_placeholder:
+            workspace_manifest = self.local_storage.get_workspace_manifest()
+            if workspace_manifest.is_placeholder and not workspace_manifest.speculative:
                 return {self.device.user_id: WorkspaceRole.OWNER}
 
         except FSLocalMissError:
@@ -174,8 +174,8 @@ class WorkspaceFS:
         """
         wentry = self.get_workspace_entry()
         try:
-            workspace_manifest = await self.local_storage.get_manifest(self.workspace_id)
-            if workspace_manifest.is_placeholder:
+            workspace_manifest = self.local_storage.get_workspace_manifest()
+            if workspace_manifest.is_placeholder and not workspace_manifest.speculative:
                 return ReencryptionNeed(
                     user_revoked=(), role_revoked=(), reencryption_already_in_progress=False
                 )
@@ -633,15 +633,11 @@ class WorkspaceFS:
                 remote_manifest = new_remote_manifest
 
     async def _create_realm_if_needed(self) -> None:
-        # Get workspace manifest
-        try:
-            workspace_manifest = await self.local_storage.get_manifest(self.workspace_id)
-
-        # Cannot be a placeholder if we know about it but don't have it in local
-        except FSLocalMissError:
-            return
-
-        if workspace_manifest.is_placeholder:
+        workspace_manifest = self.local_storage.get_workspace_manifest()
+        # Non-placeholder means sync already occured, speculative placeholder
+        # means the realm has been created by somebody else
+        if workspace_manifest.is_placeholder and not workspace_manifest.speculative:
+            # Realm creation is idempotent
             await self.remote_loader.create_realm(self.workspace_id)
 
     async def sync_by_id(

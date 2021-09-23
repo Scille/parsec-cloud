@@ -10,6 +10,7 @@ from PyQt5.QtWidgets import QWidget
 from parsec.api.protocol import HumanHandle
 from parsec.core.types import LocalDevice
 from parsec.core.local_device import save_device_with_password
+from parsec.core.fs.storage.user_storage import user_storage_non_speculative_init
 from parsec.core.invite import claimer_retrieve_info, InvitePeerResetError
 from parsec.core.backend_connection import (
     backend_invited_cmds_factory,
@@ -111,6 +112,11 @@ class Claimer:
 
                     new_device = await in_progress_ctx.do_claim_user(
                         requested_device_label=device_label, requested_human_handle=human_handle
+                    )
+                    # Claiming a user means we are it first device, hence we know there
+                    # is no existing user manifest (hence our placeholder is non-speculative)
+                    await user_storage_non_speculative_init(
+                        data_base_dir=config.data_base_dir, device=new_device
                     )
                     await self.job_oob_send.send((True, None, new_device))
                 except Exception as exc:

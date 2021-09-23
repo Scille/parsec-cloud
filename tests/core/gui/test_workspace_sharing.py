@@ -9,7 +9,6 @@ from parsec.core.types import WorkspaceRole
 from parsec.core.local_device import save_device_with_password
 from parsec.core.gui.workspace_button import WorkspaceButton
 from parsec.core.gui.lang import translate
-from parsec.core.gui.login_widget import LoginPasswordInputWidget
 
 from tests.common import customize_fixtures
 
@@ -83,15 +82,14 @@ async def test_share_workspace(
     autoclose_dialog,
     core_config,
     alice,
+    bob,
     adam,
     catch_share_workspace_widget,
     monkeypatch,
 ):
-    password = "P@ssw0rd"
-    save_device_with_password(core_config.config_dir, alice, password)
-    save_device_with_password(core_config.config_dir, adam, password)
-
     _, w_w, share_w_w = gui_workspace_sharing
+
+    # 1) Logged as Bob, we share our workspace with Adam
 
     # Fix the return value of ensure_string_size, because it can depend of the size of the window
     monkeypatch.setattr(
@@ -106,7 +104,7 @@ async def test_share_workspace(
 
     user_w = share_w_w.scroll_content.layout().itemAt(1).widget()
     assert user_w.combo_role.currentIndex() == 0
-    user_name = user_w.user_info.short_user_display
+    assert user_w.user_info.short_user_display == adam.human_handle.label
     user_w.status_timer.setInterval(200)
 
     async with aqtbot.wait_signal(share_w_w.share_success):
@@ -126,6 +124,8 @@ async def test_share_workspace(
 
     await aqtbot.wait_until(_timer_stopped)
 
+    # 2) Sharing info should now be displayed in the workspaces list view
+
     # We have to be careful about keeping a reference to the parent.
     # Otherwise, it's garbage collected later on and can trigger a
     # sporadic segfault, causing the test to become inconsistent
@@ -144,29 +144,12 @@ async def test_share_workspace(
 
     await aqtbot.wait_until(_workspace_listed, timeout=2000)
 
-    login_w = await logged_gui.test_logout_and_switch_to_login_widget()
+    # 3) Now loggin as Adam and check the workspaces view
 
-    accounts_w = login_w.widget.layout().itemAt(0).widget()
-
-    for i in range(accounts_w.accounts_widget.layout().count() - 1):
-        acc_w = accounts_w.accounts_widget.layout().itemAt(i).widget()
-        if acc_w.label_name.text() == user_name:
-            async with aqtbot.wait_signal(accounts_w.account_clicked):
-                aqtbot.mouse_click(acc_w, QtCore.Qt.LeftButton)
-            break
-
-    def _password_widget_shown():
-        assert isinstance(login_w.widget.layout().itemAt(0).widget(), LoginPasswordInputWidget)
-
-    await aqtbot.wait_until(_password_widget_shown)
-
-    password_w = login_w.widget.layout().itemAt(0).widget()
-    aqtbot.key_clicks(password_w.line_edit_password, password)
-
-    tabw = logged_gui.test_get_tab()
-
-    async with aqtbot.wait_signals([login_w.login_with_password_clicked, tabw.logged_in]):
-        aqtbot.mouse_click(password_w.button_login, QtCore.Qt.LeftButton)
+    password = "P@ssw0rd"
+    save_device_with_password(core_config.config_dir, adam, password)
+    await logged_gui.test_logout()
+    await logged_gui.test_proceed_to_login(adam, password)
 
     w_w = await logged_gui.test_switch_to_workspaces_widget()
 
@@ -184,6 +167,8 @@ async def test_share_workspace(
     assert w_b.workspace_name == "Workspace"
     assert w_b.is_owner is False
 
+    # Also check the workspace shared with view
+
     aqtbot.mouse_click(w_b.button_share, QtCore.Qt.LeftButton)
     share_w_w = await catch_share_workspace_widget()
 
@@ -193,14 +178,23 @@ async def test_share_workspace(
     await aqtbot.wait_until(_users_listed)
 
     user_w = share_w_w.scroll_content.layout().itemAt(0).widget()
+    assert user_w.user_info.user_id == bob.user_id
+    assert user_w.role == WorkspaceRole.OWNER
+    assert not user_w.is_current_user
     assert user_w.combo_role.currentIndex() == 4
     assert user_w.isEnabled() is False
 
     user_w = share_w_w.scroll_content.layout().itemAt(1).widget()
+    assert user_w.user_info.user_id == adam.user_id
+    assert user_w.role == WorkspaceRole.MANAGER
+    assert user_w.is_current_user
     assert user_w.combo_role.currentIndex() == 3
     assert user_w.isEnabled() is False
 
     user_w = share_w_w.scroll_content.layout().itemAt(2).widget()
+    assert user_w.user_info.user_id == alice.user_id
+    assert user_w.role == "NOT_SHARED"
+    assert not user_w.is_current_user
     assert user_w.combo_role.currentIndex() == 0
     assert user_w.isEnabled() is True
 

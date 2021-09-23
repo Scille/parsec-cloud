@@ -1,11 +1,11 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2016-2021 Scille SAS
 
-from pathlib import Path
-
 import pytest
 
 from parsec.core.fs.storage import UserStorage
 from parsec.core.types import LocalUserManifest, EntryID
+
+from tests.common import customize_fixtures
 
 
 @pytest.fixture
@@ -14,13 +14,14 @@ def user_manifest(alice):
 
 
 @pytest.fixture
-async def alice_user_storage(tmpdir, alice):
-    async with UserStorage.run(alice, tmpdir) as aus:
+async def alice_user_storage(data_base_dir, alice):
+    async with UserStorage.run(data_base_dir, alice) as aus:
         yield aus
 
 
 @pytest.mark.trio
-async def test_initialization(alice, alice_user_storage, user_manifest):
+@customize_fixtures(real_data_storage=True)
+async def test_initialization(alice, data_base_dir, alice_user_storage, user_manifest):
     aus = alice_user_storage
 
     # Brand new user storage contains user manifest placeholder
@@ -33,17 +34,18 @@ async def test_initialization(alice, alice_user_storage, user_manifest):
 
     await aus.set_user_manifest(user_manifest)
     assert aus.get_user_manifest() == user_manifest
-    async with UserStorage.run(aus.device, aus.path) as aus2:
+    async with UserStorage.run(data_base_dir, aus.device) as aus2:
         assert aus2.get_user_manifest() == user_manifest
 
     new_user_manifest = user_manifest.evolve(need_sync=False)
     await aus.set_user_manifest(new_user_manifest)
     assert aus.get_user_manifest() == new_user_manifest
-    async with UserStorage.run(aus.device, aus.path) as aus2:
+    async with UserStorage.run(data_base_dir, aus.device) as aus2:
         assert aus2.get_user_manifest() == new_user_manifest
 
 
 @pytest.mark.trio
+@customize_fixtures(real_data_storage=True)
 async def test_realm_checkpoint(alice, alice_user_storage, initial_user_manifest_state):
     aws = alice_user_storage
     user_manifest_id = alice.user_manifest_id
@@ -87,17 +89,18 @@ async def test_realm_checkpoint(alice, alice_user_storage, initial_user_manifest
 
 
 @pytest.mark.trio
+@customize_fixtures(real_data_storage=True)
 async def test_vacuum(alice_user_storage):
     # Should be no-op
     await alice_user_storage.run_vacuum()
 
 
 @pytest.mark.trio
-async def test_storage_file_tree(tmpdir, alice):
-    path = Path(tmpdir)
-    manifest_sqlite_db = path / "user_data-v1.sqlite"
+@customize_fixtures(real_data_storage=True)
+async def test_storage_file_tree(tmp_path, alice):
+    manifest_sqlite_db = tmp_path / alice.slug / "user_data-v1.sqlite"
 
-    async with UserStorage.run(alice, tmpdir) as aus:
+    async with UserStorage.run(tmp_path, alice) as aus:
         assert aus.manifest_storage.path == manifest_sqlite_db
 
-    assert set(path.iterdir()) == {manifest_sqlite_db}
+    assert manifest_sqlite_db.is_file()

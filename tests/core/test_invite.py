@@ -5,7 +5,12 @@ import trio
 
 from pendulum import now as pendulum_now
 from parsec.api.data import UserProfile
-from parsec.api.protocol import HumanHandle, InvitationType, InvitationDeletedReason
+from parsec.api.protocol import (
+    HumanHandle,
+    InvitationType,
+    InvitationDeletedReason,
+    InvitationStatus,
+)
 
 from parsec.core.backend_connection import (
     backend_invited_cmds_factory,
@@ -24,7 +29,7 @@ from parsec.core.invite import (
 
 from parsec.backend.backend_events import BackendEvent
 from parsec.core.backend_connection.exceptions import BackendInvitationAlreadyUsed
-from parsec.api.protocol import InvitationStatus
+from parsec.core.fs.storage.user_storage import user_storage_non_speculative_init
 
 
 @pytest.mark.trio
@@ -139,7 +144,7 @@ async def test_good_device_claim(
     # Test the behavior of this new device
     async with user_fs_factory(bob) as bobfs:
         async with user_fs_factory(alice) as alicefs:
-            async with user_fs_factory(new_device, initialize_in_v0=True) as newfs:
+            async with user_fs_factory(new_device) as newfs:
                 # Old device modify user manifest
                 await alicefs.workspace_create("wa")
                 await alicefs.sync()
@@ -162,7 +167,7 @@ async def test_good_device_claim(
 @pytest.mark.trio
 @pytest.mark.parametrize("with_labels", [False, True])
 async def test_good_user_claim(
-    backend, running_backend, alice, alice_backend_cmds, user_fs_factory, with_labels
+    backend, running_backend, data_base_dir, alice, alice_backend_cmds, user_fs_factory, with_labels
 ):
     claimer_email = "zack@example.com"
 
@@ -223,6 +228,9 @@ async def test_good_user_claim(
                 requested_human_handle=requested_human_handle,
             )
             assert isinstance(new_device, LocalDevice)
+            # User storage should be populated with non-speculative user manifest
+            # before save the device
+            await user_storage_non_speculative_init(data_base_dir=data_base_dir, device=new_device)
 
     async def _run_greeter():
         initial_ctx = UserGreetInitialCtx(cmds=alice_backend_cmds, token=invitation_addr.token)
@@ -294,7 +302,7 @@ async def test_good_user_claim(
 
     # Test the behavior of this new user device
     async with user_fs_factory(alice) as alicefs:
-        async with user_fs_factory(new_device, initialize_in_v0=True) as newfs:
+        async with user_fs_factory(new_device) as newfs:
             # Share a workspace with new user
             aw_id = await alicefs.workspace_create("alice_workspace")
             await alicefs.workspace_share(aw_id, new_device.user_id, WorkspaceRole.CONTRIBUTOR)

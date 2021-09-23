@@ -57,6 +57,14 @@ async def test_empty_blob(testbed):
 
 
 @pytest.mark.trio
+async def test_invalid_blob(testbed):
+    blob = b"\x01" * 200
+    with pytest.raises(FSError) as exc:
+        await testbed.run(blob=blob)
+    assert "Invalid user manifest" in str(exc.value)
+
+
+@pytest.mark.trio
 async def test_invalid_signature(testbed, alice2):
     with pytest.raises(FSError) as exc:
         await testbed.run(author_signkey=alice2.signing_key)

@@ -41,7 +41,7 @@ async def test_good(
     assert new_device.profile == UserProfile.ADMIN
 
     # Test the behavior of this new device
-    async with user_fs_factory(new_device, initialize_in_v0=True) as newfs:
+    async with user_fs_factory(new_device) as newfs:
         await newfs.workspace_create("wa")
         await newfs.sync()
 

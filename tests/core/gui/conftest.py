@@ -22,6 +22,9 @@ from parsec.core.gui.parsec_application import ParsecApp
 from parsec.core.local_device import LocalDeviceAlreadyExistsError
 
 
+DEFAULT_PASSWORD = "P@ssw0rd"
+
+
 @pytest.fixture
 @pytest.mark.trio
 async def job_scheduler():
@@ -268,7 +271,7 @@ async def logged_gui(aqtbot, gui_factory, core_config, alice, bob, fixtures_cust
     else:
         device = bob
 
-    save_device_with_password(core_config.config_dir, device, "P@ssw0rd")
+    save_device_with_password(core_config.config_dir, device, DEFAULT_PASSWORD)
 
     gui = await gui_factory()
     await gui.test_switch_to_logged_in(device)
@@ -345,20 +348,31 @@ def testing_main_window_cls(aqtbot):
             await self.test_logout()
             return self.test_get_login_widget()
 
-        async def test_proceed_to_login(self, password, error=False):
+        async def test_proceed_to_login(self, device, password=DEFAULT_PASSWORD, error=False):
             l_w = self.test_get_login_widget()
 
-            accounts_w = l_w.widget.layout().itemAt(0).widget()
+            # Don't keep reference to the widget to avoid Qt segfault
+            def get_accounts_w():
+                return l_w.widget.layout().itemAt(0).widget()
+
             tabw = self.test_get_tab()
 
-            if isinstance(accounts_w, LoginAccountsWidget):
-                async with aqtbot.wait_signal(accounts_w.account_clicked):
-                    aqtbot.mouse_click(
-                        accounts_w.accounts_widget.layout().itemAt(0).widget(), QtCore.Qt.LeftButton
-                    )
+            # Only one device available
+            accounts_w = get_accounts_w()
+            if isinstance(accounts_w, LoginPasswordInputWidget):
+                assert accounts_w.device.slug == device.slug
+
+            else:
+                assert isinstance(accounts_w, LoginAccountsWidget)
+                for i in range(accounts_w.accounts_widget.layout().count() - 1):
+                    acc_w = accounts_w.accounts_widget.layout().itemAt(i).widget()
+                    if acc_w.device.slug == device.slug:
+                        async with aqtbot.wait_signal(accounts_w.account_clicked):
+                            aqtbot.mouse_click(acc_w, QtCore.Qt.LeftButton)
+                        break
 
             def _password_widget_shown():
-                assert isinstance(l_w.widget.layout().itemAt(0).widget(), LoginPasswordInputWidget)
+                assert isinstance(get_accounts_w(), LoginPasswordInputWidget)
 
             await aqtbot.wait_until(_password_widget_shown)
             password_w = l_w.widget.layout().itemAt(0).widget()
@@ -426,37 +440,16 @@ def testing_main_window_cls(aqtbot):
             await aqtbot.wait_until(f_w.spinner.isHidden)
             return f_w
 
-        async def test_switch_to_logged_in(self, device):
+        async def test_switch_to_logged_in(self, device, password=DEFAULT_PASSWORD):
             try:
-                save_device_with_password(self.config.config_dir, device, "P@ssw0rd")
+                save_device_with_password(self.config.config_dir, device, password)
             except LocalDeviceAlreadyExistsError:
                 pass
 
-            lw = self.test_get_login_widget()
             # Reload to take into account the new saved device
-            lw.reload_devices()
-            tabw = self.test_get_tab()
+            self.test_get_login_widget().reload_devices()
 
-            accounts_w = lw.widget.layout().itemAt(0).widget()
-            assert accounts_w
-
-            if isinstance(accounts_w, LoginAccountsWidget):
-                async with aqtbot.wait_signal(accounts_w.account_clicked):
-                    aqtbot.mouse_click(
-                        accounts_w.accounts_widget.layout().itemAt(0).widget(), QtCore.Qt.LeftButton
-                    )
-
-            def _password_widget_shown():
-                assert isinstance(lw.widget.layout().itemAt(0).widget(), LoginPasswordInputWidget)
-
-            await aqtbot.wait_until(_password_widget_shown)
-
-            password_w = lw.widget.layout().itemAt(0).widget()
-
-            aqtbot.key_clicks(password_w.line_edit_password, "P@ssw0rd")
-
-            async with aqtbot.wait_signals([lw.login_with_password_clicked, tabw.logged_in]):
-                aqtbot.mouse_click(password_w.button_login, QtCore.Qt.LeftButton)
+            await self.test_proceed_to_login(device, password)
 
             central_widget = self.test_get_central_widget()
             assert central_widget is not None

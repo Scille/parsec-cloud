@@ -32,7 +32,7 @@ from parsec.core.core_events import CoreEvent
 from parsec.core.logged_core import logged_core_factory
 from parsec.core.backend_connection import BackendConnStatus
 from parsec.core.mountpoint.manager import get_mountpoint_runner
-from parsec.core.fs.storage import LocalDatabase, UserStorage
+from parsec.core.fs.storage import LocalDatabase
 
 from parsec.backend import backend_app_factory
 from parsec.backend.config import (
@@ -49,7 +49,7 @@ from parsec.backend.config import (
 # TODO: needed ?
 pytest.register_assert_rewrite("tests.event_bus_spy")
 
-from tests.common import freeze_time, addr_with_device_subdomain
+from tests.common import afreeze_time, addr_with_device_subdomain
 from tests.postgresql import (
     get_postgresql_url,
     bootstrap_postgresql_testbed,
@@ -465,8 +465,12 @@ def backend_addr(tcp_stream_spy, fixtures_customization, monkeypatch):
     return addr
 
 
-@pytest.fixture
-def persistent_mockup(monkeypatch):
+@pytest.fixture(autouse=True)
+def persistent_mockup(monkeypatch, fixtures_customization):
+    if fixtures_customization.get("real_data_storage", False):
+        yield
+        return
+
     @attr.s
     class MockupContext:
 
@@ -631,15 +635,33 @@ def backend_factory(
             event_bus = event_bus_factory()
         async with backend_app_factory(config, event_bus=event_bus) as backend:
             if populated:
-                with freeze_time("2000-01-01"):
+                async with afreeze_time("2000-01-01"):
                     binder = backend_data_binder_factory(backend)
-                    await binder.bind_organization(coolorg, alice)
+                    await binder.bind_organization(
+                        coolorg,
+                        alice,
+                        initial_user_manifest=fixtures_customization.get(
+                            "alice_initial_remote_user_manifest", "v1"
+                        ),
+                    )
                     await binder.bind_organization(expiredorg, expiredorgalice)
                     await backend.organization.update(expiredorg.organization_id, is_expired=True)
                     await binder.bind_organization(otherorg, otheralice)
                     await binder.bind_device(alice2, certifier=alice)
-                    await binder.bind_device(adam, certifier=alice2)
-                    await binder.bind_device(bob, certifier=adam)
+                    await binder.bind_device(
+                        adam,
+                        certifier=alice2,
+                        initial_user_manifest=fixtures_customization.get(
+                            "adam_initial_remote_user_manifest", "v1"
+                        ),
+                    )
+                    await binder.bind_device(
+                        bob,
+                        certifier=adam,
+                        initial_user_manifest=fixtures_customization.get(
+                            "bob_initial_remote_user_manifest", "v1"
+                        ),
+                    )
 
             yield backend
 
@@ -647,7 +669,7 @@ def backend_factory(
 
 
 @pytest.fixture
-async def backend(backend_factory, request, fixtures_customization, backend_addr):
+async def backend(backend_factory, fixtures_customization, backend_addr):
     populated = not fixtures_customization.get("backend_not_populated", False)
     config = {}
     tmpdir = tempfile.mkdtemp(prefix="tmp-email-folder-")
@@ -756,7 +778,6 @@ def core_config(tmpdir, backend_addr, unused_tcp_port, fixtures_customization):
     tmpdir = Path(tmpdir)
     return CoreConfig(
         config_dir=tmpdir / "config",
-        cache_base_dir=tmpdir / "cache",
         data_base_dir=tmpdir / "data",
         mountpoint_base_dir=tmpdir / "mnt",
         preferred_org_creation_backend_addr=backend_addr,
@@ -764,20 +785,14 @@ def core_config(tmpdir, backend_addr, unused_tcp_port, fixtures_customization):
 
 
 @pytest.fixture
-def core_factory(
-    request, running_backend_ready, event_bus_factory, core_config, initialize_userfs_storage_v1
-):
+def core_factory(request, running_backend_ready, event_bus_factory, core_config):
     @asynccontextmanager
-    async def _core_factory(device, event_bus=None, user_manifest_in_v0=False):
-        await running_backend_ready.wait()
+    async def _core_factory(device, event_bus=None):
+        # Ensure test doesn't stay frozen if a bug in a fixture prevent the
+        # backend from starting
+        with trio.fail_after(3):
+            await running_backend_ready.wait()
         event_bus = event_bus or event_bus_factory()
-
-        if not user_manifest_in_v0:
-            # Create a storage just for this operation (the underlying database
-            # will be reused by the core's storage thanks to `persistent_mockup`)
-            path = core_config.data_base_dir / device.slug
-            async with UserStorage.run(device=device, path=path) as storage:
-                await initialize_userfs_storage_v1(storage)
 
         with event_bus.listen() as spy:
             async with logged_core_factory(core_config, device, event_bus) as core:
@@ -798,31 +813,57 @@ def core_factory(
 
 
 @pytest.fixture
-async def alice_core(core_factory, alice):
+async def alice_core(
+    core_config, fixtures_customization, initialize_local_user_manifest, core_factory, alice
+):
+    initial_user_manifest = fixtures_customization.get("alice_initial_local_user_manifest", "v1")
+    await initialize_local_user_manifest(
+        core_config.data_base_dir, alice, initial_user_manifest=initial_user_manifest
+    )
     async with core_factory(alice) as core:
         yield core
 
 
 @pytest.fixture
-async def alice2_core(core_factory, alice2):
-
+async def alice2_core(
+    core_config, fixtures_customization, initialize_local_user_manifest, core_factory, alice2
+):
+    initial_user_manifest = fixtures_customization.get("alice2_initial_local_user_manifest", "v1")
+    await initialize_local_user_manifest(
+        core_config.data_base_dir, alice2, initial_user_manifest=initial_user_manifest
+    )
     async with core_factory(alice2) as core:
         yield core
 
 
 @pytest.fixture
-async def otheralice_core(core_factory, otheralice):
+async def otheralice_core(core_config, initialize_local_user_manifest, core_factory, otheralice):
+    await initialize_local_user_manifest(
+        core_config.data_base_dir, otheralice, initial_user_manifest="v1"
+    )
     async with core_factory(otheralice) as core:
         yield core
 
 
 @pytest.fixture
-async def adam_core(core_factory, adam):
+async def adam_core(
+    core_config, fixtures_customization, initialize_local_user_manifest, core_factory, adam
+):
+    initial_user_manifest = fixtures_customization.get("adam_initial_local_user_manifest", "v1")
+    await initialize_local_user_manifest(
+        core_config.data_base_dir, adam, initial_user_manifest=initial_user_manifest
+    )
     async with core_factory(adam) as core:
         yield core
 
 
 @pytest.fixture
-async def bob_core(core_factory, bob):
+async def bob_core(
+    core_config, fixtures_customization, initialize_local_user_manifest, core_factory, bob
+):
+    initial_user_manifest = fixtures_customization.get("bob_initial_local_user_manifest", "v1")
+    await initialize_local_user_manifest(
+        core_config.data_base_dir, bob, initial_user_manifest=initial_user_manifest
+    )
     async with core_factory(bob) as core:
         yield core

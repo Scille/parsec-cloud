@@ -67,8 +67,8 @@ def file_transactions_factory(event_bus, remote_devices_manager_factory, transac
 
 
 @pytest.fixture
-async def alice_transaction_local_storage(alice, persistent_mockup):
-    async with WorkspaceStorage.run(alice, Path("/dummy"), EntryID.new()) as storage:
+async def alice_transaction_local_storage(alice):
+    async with WorkspaceStorage.run(Path("/dummy"), alice, EntryID.new()) as storage:
         yield storage
 
 

@@ -20,6 +20,7 @@ from parsec.core.invite import (
     InviteError,
 )
 from parsec.core.local_device import save_device_with_password
+from parsec.core.fs.storage.user_storage import user_storage_non_speculative_init
 
 from parsec.core.gui.trio_jobs import QtToTrioJob
 from parsec.core.gui.custom_dialogs import GreyedDialog, show_error, show_info
@@ -41,6 +42,11 @@ async def _do_create_org(config, human_handle, device_name, password, backend_ad
         async with apiv1_backend_anonymous_cmds_factory(addr=backend_addr) as cmds:
             new_device = await bootstrap_organization(
                 cmds=cmds, human_handle=human_handle, device_label=device_name
+            )
+            # The organization is brand new, of course there is no existing
+            # remote user manifest, hence our placeholder is non-speculative.
+            await user_storage_non_speculative_init(
+                data_base_dir=config.data_base_dir, device=new_device
             )
             save_device_with_password(
                 config_dir=config.config_dir, device=new_device, password=password

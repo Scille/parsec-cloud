@@ -84,8 +84,10 @@ class WorkspaceEntry(BaseData):
     role: Optional[RealmRole]
 
     @classmethod
-    def new(cls: Type[WorkspaceEntryTypeVar], name: str) -> "WorkspaceEntry":
-        now = pendulum_now()
+    def new(
+        cls: Type[WorkspaceEntryTypeVar], name: str, now: Optional[DateTime] = None
+    ) -> "WorkspaceEntry":
+        now = now or pendulum_now()
         return WorkspaceEntry(
             name=EntryName(name),
             id=EntryID.new(),

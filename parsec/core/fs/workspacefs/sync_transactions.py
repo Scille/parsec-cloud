@@ -193,27 +193,70 @@ def merge_manifests(
     if local_manifest.match_remote(remote_manifest):
         return local_from_remote
 
-    # The remote changes are ours, simply acknowledge them and keep our local changes
-    if remote_manifest.author == local_author:
+    # The remote changes are ours (our current local changes occurs while
+    # we were uploading previous local changes that became the remote changes),
+    # simply acknowledge them remote changes and keep our local changes
+    #
+    # However speculative manifest can lead to a funny behavior:
+    # 1) alice has access to the workspace
+    # 2) alice upload a new remote workspace manifest
+    # 3) alice gets it local storage removed
+    # So next time alice tries to access this workspace she will
+    # creates a speculative workspace manifest.
+    # This speculative manifest will eventually be synced against
+    # the previous remote remote manifest which appears to be remote
+    # changes we know about (given we are the author of it !).
+    # If the speculative flag is not taken into account, we would
+    # consider we have  willingly removed all entries from the remote,
+    # hence uploading a new expurged remote manifest.
+    #
+    # Of course removing local storage is an unlikely situation, but:
+    # - it cannot be ruled out and would produce rare&exotic behavior
+    #   that would be considered as bug :/
+    # - the fixtures and backend data binder system used in the tests
+    #   makes it much more likely
+    speculative = isinstance(local_manifest, LocalWorkspaceManifest) and local_manifest.speculative
+    if remote_manifest.author == local_author and not speculative:
         return local_manifest.evolve(base=remote_manifest)
 
     # The remote has been updated by some other device
-    assert remote_manifest.author != local_author
+    assert remote_manifest.author != local_author or speculative is True
 
     # Cannot solve a file conflict directly
-    if not isinstance(local_manifest, (LocalFolderManifest, LocalWorkspaceManifest)):
+    if isinstance(local_manifest, LocalFileManifest):
         raise FSFileConflictError(local_manifest, remote_manifest)
 
+    assert isinstance(local_manifest, (LocalFolderManifest, LocalWorkspaceManifest))
     # Solve the folder conflict
     new_children = merge_folder_children(
-        local_manifest.base.children,
-        local_manifest.children,
-        local_from_remote.children,
-        remote_manifest.author,
+        base_children=local_manifest.base.children,
+        local_children=local_manifest.children,
+        remote_children=local_from_remote.children,
+        remote_device_name=remote_manifest.author,
     )
 
-    # Mark as updated
-    return local_from_remote.evolve_and_mark_updated(children=new_children)
+    # Children merge can end up with nothing to sync.
+    #
+    # This is typically the case when we sync for the first time a workspace
+    # shared with us that we didn't modified:
+    # - the workspace manifest is a speculative placeholder (with arbitrary update&create dates)
+    # - on sync the update date is different than in the remote, so a merge occurs
+    # - given we didn't modify the workspace, the children merge is trivial
+    # So without this check each each user we share the workspace with would
+    # sync a new workspace manifest version with only it updated date changing :/
+    #
+    # Another case where this happen:
+    # - we have local change on our workspace manifest for removing an entry
+    # - we rely on a base workspace manifest in version N
+    # - remote workspace manifest is in version N+1 and already integrate the removal
+    #
+    # /!\ Extra attention should be payed here if we want to add new fields
+    # /!\ with they own sync logic, as this optimization may shadow them !
+
+    if new_children == local_from_remote.children:
+        return local_from_remote
+    else:
+        return local_from_remote.evolve_and_mark_updated(children=new_children)
 
 
 class SyncTransactions(EntryTransactions):

@@ -7,6 +7,8 @@ from async_generator import asynccontextmanager
 
 from parsec.api.protocol import (
     ping_serializer,
+    organization_stats_serializer,
+    organization_config_serializer,
     block_create_serializer,
     block_read_serializer,
     realm_create_serializer,
@@ -112,6 +114,19 @@ ping = CmdSock(
     ping_serializer,
     parse_args=lambda self, ping="foo": {"ping": ping},
     check_rep_by_default=True,
+)
+
+
+### Organization ###
+
+
+organization_config = CmdSock(
+    "organization_config", organization_config_serializer, check_rep_by_default=True
+)
+
+
+organization_stats = CmdSock(
+    "organization_stats", organization_stats_serializer, check_rep_by_default=True
 )
 
 

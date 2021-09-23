@@ -1,6 +1,6 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2016-2021 Scille SAS
 
-from parsec.core.core_events import CoreEvent
+from async_generator import asynccontextmanager
 from unittest.mock import Mock
 from inspect import iscoroutinefunction
 from contextlib import ExitStack, contextmanager
@@ -9,6 +9,7 @@ import trio
 import attr
 import pendulum
 
+from parsec.core.core_events import CoreEvent
 from parsec.core.types import WorkspaceRole
 from parsec.core.logged_core import LoggedCore
 from parsec.core.fs import UserFS
@@ -26,10 +27,43 @@ def addr_with_device_subdomain(addr, device_id):
 
 @contextmanager
 def freeze_time(time):
+    global __freeze_time_task
     if isinstance(time, str):
         time = pendulum.parse(time)
-    with pendulum.test(time):
+
+    # Save previous context
+    previous_task = __freeze_time_task
+    previous_time = pendulum.get_test_now()
+
+    # Get current trio task
+    try:
+        current_task = trio.lowlevel.current_task()
+    except RuntimeError:
+        current_task = None
+
+    # Ensure time has not been frozen from another coroutine
+    assert __freeze_time_task in (None, current_task)
+
+    try:
+        # Set new context
+        __freeze_time_task = current_task
+        pendulum.set_test_now(time)
         yield time
+    finally:
+        # Restore previous context
+        __freeze_time_task = previous_task
+        pendulum.set_test_now(previous_time)
+
+
+__freeze_time_task = None
+__freeze_time_lock = trio.Lock()
+
+
+@asynccontextmanager
+async def afreeze_time(time):
+    async with __freeze_time_lock:
+        with freeze_time(time) as time:
+            yield time
 
 
 class AsyncMock(Mock):
@@ -229,15 +263,23 @@ def compare_fs_dumps(entry_1, entry_2):
 
 _FIXTURES_CUSTOMIZATIONS = {
     "alice_profile",
+    "alice_initial_local_user_manifest",
+    "alice2_initial_local_user_manifest",
+    "alice_initial_remote_user_manifest",
     "alice_has_human_handle",
     "alice_has_device_label",
     "bob_profile",
+    "bob_initial_local_user_manifest",
+    "bob_initial_remote_user_manifest",
     "bob_has_human_handle",
     "bob_has_device_label",
     "adam_profile",
+    "adam_initial_local_user_manifest",
+    "adam_initial_remote_user_manifest",
     "adam_has_human_handle",
     "adam_has_device_label",
     "mallory_profile",
+    "mallory_initial_local_user_manifest",
     "mallory_has_human_handle",
     "mallory_has_device_label",
     "backend_not_populated",
@@ -248,6 +290,7 @@ _FIXTURES_CUSTOMIZATIONS = {
     "logged_gui_as_admin",
     "fake_preferred_org_creation_backend_addr",
     "blockstore_mode",
+    "real_data_storage",
 }
 
 
