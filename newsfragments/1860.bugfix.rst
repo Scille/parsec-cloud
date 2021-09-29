@@ -1,0 +1,1 @@
+Fixed app behaviour on MacOS when closing with command-Q and red X.
