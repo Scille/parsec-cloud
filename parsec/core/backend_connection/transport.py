@@ -3,6 +3,7 @@
 import os
 import trio
 import ssl
+import certifi
 from async_generator import asynccontextmanager
 from structlog import get_logger
 from typing import Optional
@@ -108,13 +109,20 @@ async def _connect(
 def _upgrade_stream_to_ssl(raw_stream, hostname):
     # The ssl context should be generated once and stored into the config
     # however this is tricky (should ssl configuration be stored per device ?)
-    cafile = os.environ.get("SSL_CAFILE")
 
-    ssl_context = ssl.create_default_context(ssl.Purpose.SERVER_AUTH)
+    # Don't load default system certificates and rely on our own instead.
+    # This is because system certificates are less reliable (and system
+    # certificates are tried first, so they can lead to a failure even if
+    # we bundle a valid certificate...)
+    # Certifi provides Mozilla's carefully curated collection of Root Certificates.
+    ssl_context = ssl.create_default_context(
+        purpose=ssl.Purpose.SERVER_AUTH, cadata=certifi.contents()
+    )
+
+    # Also provide custom certificates if any
+    cafile = os.environ.get("SSL_CAFILE")
     if cafile:
         ssl_context.load_verify_locations(cafile)
-    else:
-        ssl_context.load_default_certs()
 
     return trio.SSLStream(raw_stream, ssl_context, server_hostname=hostname)
 

@@ -272,6 +272,7 @@ with open("HISTORY.rst") as history_file:
 
 
 requirements = [
+    "certifi==2021.5.30",
     "attrs==21.2.0",
     "click==7.1.2",
     "msgpack==0.6.0",
