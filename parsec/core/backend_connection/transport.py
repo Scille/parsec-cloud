@@ -80,7 +80,9 @@ async def _connect(
         stream = await trio.open_tcp_stream(hostname, port)
 
     except OSError as exc:
-        logger.debug("Impossible to connect to backend", reason=exc)
+        logger.warning(
+            "Impossible to connect to backend", hostname=hostname, port=port, exc_info=exc
+        )
         raise BackendNotAvailable(exc) from exc
 
     if use_ssl:
@@ -92,14 +94,14 @@ async def _connect(
         transport.keepalive = keepalive
 
     except TransportError as exc:
-        logger.debug("Connection lost during transport creation", reason=exc)
+        logger.warning("Connection lost during transport creation", exc_info=exc)
         raise BackendNotAvailable(exc) from exc
 
     try:
         await _do_handshake(transport, handshake)
 
     except Exception as exc:
-        transport.logger.debug("Connection lost during handshake", reason=exc)
+        transport.logger.warning("Connection lost during handshake", exc_info=exc)
         await transport.aclose()
         raise
 
