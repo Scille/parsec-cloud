@@ -2318,11 +2318,6 @@ msgstr "Send an email"
 
 msgid "TEXT_GREET_DEVICE_INSTRUCTIONS_START"
 msgstr ""
-"To greet your new device, Parsec needs to be started on both devices.\n"
-"\n"
-"You will have to exchange codes between the two devices. This way, we can"
-" be certain that the process is secure.\n"
-"\n"
 "Once Parsec is installed on your other device and you've clicked on the "
 "invitation link, you can click <i>Start</i> to begin the process."
 
