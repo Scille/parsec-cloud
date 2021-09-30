@@ -5,6 +5,17 @@ History
 .. towncrier release notes start
 
 
+Parsec v2.5.5 (2021-09-30)
+--------------------------
+
+Miscellaneous internal changes
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+* Bundle Mozilla’s carefully curated collection of SSL Root Certificates and use
+  them instead of system certificates to improve reliability.  (`#1871
+  <https://github.com/Scille/parsec-cloud/issues/1871>`__)
+
+
 Parsec v2.5.4 (2021-09-21)
 --------------------------
 
