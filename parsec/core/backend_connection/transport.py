@@ -3,6 +3,7 @@
 import os
 import trio
 import ssl
+import certifi
 from async_generator import asynccontextmanager
 from structlog import get_logger
 from typing import Optional
@@ -79,7 +80,9 @@ async def _connect(
         stream = await trio.open_tcp_stream(hostname, port)
 
     except OSError as exc:
-        logger.debug("Impossible to connect to backend", reason=exc)
+        logger.warning(
+            "Impossible to connect to backend", hostname=hostname, port=port, exc_info=exc
+        )
         raise BackendNotAvailable(exc) from exc
 
     if use_ssl:
@@ -91,14 +94,14 @@ async def _connect(
         transport.keepalive = keepalive
 
     except TransportError as exc:
-        logger.debug("Connection lost during transport creation", reason=exc)
+        logger.warning("Connection lost during transport creation", exc_info=exc)
         raise BackendNotAvailable(exc) from exc
 
     try:
         await _do_handshake(transport, handshake)
 
     except Exception as exc:
-        transport.logger.debug("Connection lost during handshake", reason=exc)
+        transport.logger.warning("Connection lost during handshake", exc_info=exc)
         await transport.aclose()
         raise
 
@@ -108,13 +111,20 @@ async def _connect(
 def _upgrade_stream_to_ssl(raw_stream, hostname):
     # The ssl context should be generated once and stored into the config
     # however this is tricky (should ssl configuration be stored per device ?)
-    cafile = os.environ.get("SSL_CAFILE")
 
-    ssl_context = ssl.create_default_context(ssl.Purpose.SERVER_AUTH)
+    # Don't load default system certificates and rely on our own instead.
+    # This is because system certificates are less reliable (and system
+    # certificates are tried first, so they can lead to a failure even if
+    # we bundle a valid certificate...)
+    # Certifi provides Mozilla's carefully curated collection of Root Certificates.
+    ssl_context = ssl.create_default_context(
+        purpose=ssl.Purpose.SERVER_AUTH, cadata=certifi.contents()
+    )
+
+    # Also provide custom certificates if any
+    cafile = os.environ.get("SSL_CAFILE")
     if cafile:
         ssl_context.load_verify_locations(cafile)
-    else:
-        ssl_context.load_default_certs()
 
     return trio.SSLStream(raw_stream, ssl_context, server_hostname=hostname)
 

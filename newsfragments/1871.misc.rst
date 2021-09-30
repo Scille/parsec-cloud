@@ -1,0 +1,1 @@
+Bundle Mozilla’s carefully curated collection of SSL Root Certificates and use them instead of system certificates to improve reliability.
