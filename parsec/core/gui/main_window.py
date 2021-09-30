@@ -128,7 +128,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):  # type: ignore[misc]
 
         if sys.platform == "darwin":
             # Native menu bar on MacOS
-            self._createMacosMenuBar()
+            self._create_mac_menu_bar()
 
     def _define_shortcuts(self) -> None:
         self.shortcut_close = QShortcut(QKeySequence(QKeySequence.Close), self)
@@ -187,19 +187,24 @@ class MainWindow(QMainWindow, Ui_MainWindow):  # type: ignore[misc]
                 win.resize(event.size())
                 win.move(0, 0)
 
-    def _createMacosMenuBar(self) -> None:
+    def _create_mac_menu_bar(self) -> None:
         menuBar = QMenuBar()
 
         fileMenu = QMenu(_("TEXT_MENU_FILE"), self)
         menuBar.addMenu(fileMenu)
 
         # 'settings' and 'about' are key words processed by Qt to make standard
-        # MacOS submenus associated with standard key bindings
+        # MacOS submenus associated with standard key bindings. 'quit' links
+        # cmd+Q to the close confirmation widget, and leaves the red X to its
+        # standard behaviour depending on the `minimize_on_close` option.
 
         action = fileMenu.addAction("about")
         action.triggered.connect(self._show_about)
         action = fileMenu.addAction("settings")
         action.triggered.connect(self._show_settings)
+        action = fileMenu.addAction("quit")
+        action.triggered.connect(self.close_app)
+
         action = fileMenu.addAction(_("ACTION_MAIN_MENU_CREATE_ORGANIZATION"))
         action.triggered.connect(self._on_create_org_clicked)
         action.setShortcut(self.shortcut_create_org.key())
@@ -767,10 +772,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):  # type: ignore[misc]
         self._toggle_add_tab_button()
 
     def closeEvent(self, event: QCloseEvent) -> None:
-        # The MacOS condition is temporarily here to streamline the closeEvent
-        # regardless of how the app was closed. TODO find a way to handle cmd+Q
-        # to have separate behaviours between red X and cmd+Q on MacOS.
-        if self.minimize_on_close and not self.need_close and sys.platform != "darwin":
+        if self.minimize_on_close and not self.need_close:
             self.hide()
             event.ignore()
 
