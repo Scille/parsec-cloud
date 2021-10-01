@@ -220,7 +220,7 @@ jobs:
   dependsOn: s0_build_wheel
   timeoutInMinutes: 60
   pool:
-    vmImage: 'macOS-10.15'
+    vmImage: 'macOS-11'
   variables:
     PGINSTALLATION: '/usr/local/bin'
   steps:
@@ -228,7 +228,7 @@ jobs:
     submodules: true
   - task: UsePythonVersion@0
     inputs:
-      versionSpec: '$(python.version)'
+      versionSpec: '$(python.version_for_macos_packaging)'
   - download: current
     artifact: wheel
   - bash: |
@@ -447,7 +447,7 @@ jobs:
   condition: startsWith(variables['build.sourceBranch'], 'refs/tags/')
   timeoutInMinutes: 60
   pool:
-    vmImage: 'macOS-10.15'
+    vmImage: 'macOS-11'
   steps:
   - checkout: self
     submodules: true
