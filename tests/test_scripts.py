@@ -65,7 +65,7 @@ def run_testenv():
 
 @pytest.mark.slow
 @pytest.mark.skipif(
-    "linux" not in sys.platform,
+    sys.platform == "win32",
     reason="causes a freeze in appveyor for some reasons, and crashes on Catalina",
 )
 def test_run_testenv(run_testenv):

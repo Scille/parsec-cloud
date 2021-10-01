@@ -325,8 +325,8 @@ def test_unhandled_crash_in_fs_operation(caplog, mountpoint_service, monkeypatch
 
 @pytest.mark.trio
 @pytest.mark.mountpoint
+@pytest.mark.skipif(sys.platform == "darwin", reason="Not raising PermissionError on MacOS")
 @pytest.mark.parametrize("revoking", ["read", "write"])
-@pytest.mark.skipif(sys.platform == "darwin", reason="TODO : crash on macOS")
 async def test_mountpoint_revoke_access(
     base_mountpoint,
     alice_user_fs,
