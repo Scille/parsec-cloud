@@ -216,9 +216,7 @@ class WorkspacesWidget(QWidget, Ui_WorkspacesWidget):
         self.reencryption_needs_success.connect(self.on_reencryption_needs_success)
         self.reencryption_needs_error.connect(self.on_reencryption_needs_error)
         self.workspace_reencryption_progress.connect(self._on_workspace_reencryption_progress)
-        self.mount_success.connect(self.on_mount_success)
         self.mount_error.connect(self.on_mount_error)
-        self.unmount_success.connect(self.on_unmount_success)
         self.unmount_error.connect(self.on_unmount_error)
         self.file_open_success.connect(self._on_file_open_success)
         self.file_open_error.connect(self._on_file_open_error)
@@ -440,9 +438,6 @@ class WorkspacesWidget(QWidget, Ui_WorkspacesWidget):
         label.setAlignment(Qt.AlignHCenter | Qt.AlignVCenter)
         self.layout_workspaces.addWidget(label)
 
-    def on_mount_success(self, job):
-        self.reset()
-
     def on_mount_error(self, job):
         if isinstance(job.exc, MountpointError):
             workspace_id = job.arguments.get("workspace_id")
@@ -454,9 +449,6 @@ class WorkspacesWidget(QWidget, Ui_WorkspacesWidget):
                 show_error(self, _("TEXT_WORKSPACE_CANNOT_MOUNT_NO_DRIVE"), exception=job.exc)
             else:
                 show_error(self, _("TEXT_WORKSPACE_CANNOT_MOUNT"), exception=job.exc)
-
-    def on_unmount_success(self, job):
-        self.reset()
 
     def on_unmount_error(self, job):
         if isinstance(job.exc, MountpointError):
@@ -540,6 +532,10 @@ class WorkspacesWidget(QWidget, Ui_WorkspacesWidget):
         )
 
     def mount_workspace(self, workspace_id, timestamp=None):
+        # In successful cases, the events MOUNTPOINT_STARTED 
+        # will take care of refreshing the state of the button,
+        # the mount_success signal is not connected to anything but
+        # is being kept for potential testing purposes
         self.jobs_ctx.submit_job(
             self.mount_success,
             self.mount_error,
@@ -550,6 +546,10 @@ class WorkspacesWidget(QWidget, Ui_WorkspacesWidget):
         )
 
     def unmount_workspace(self, workspace_id, timestamp=None):
+        # In successful cases, the event MOUNTPOINT_STOPPED
+        # will take care of refreshing the state of the button,
+        # the unmount_success signal is not connected to anything but
+        # is being kept for potential testing purposes
         self.jobs_ctx.submit_job(
             self.unmount_success,
             self.unmount_error,
