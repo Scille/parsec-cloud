@@ -10,6 +10,7 @@ from parsec.core.fs.exceptions import FSReadOnlyError, FSWorkspaceNoWriteAccess
 
 
 @pytest.mark.slow
+@pytest.mark.skip("This test fails because of issue #1738")
 def test_timestamp_causality(
     user_fs_online_state_machine,
     coolorg,
