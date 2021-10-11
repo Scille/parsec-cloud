@@ -165,6 +165,7 @@ QRadioButton::indicator:checked {
 QTimeEdit {
     background-color: #FFFFFF;
     border: 1px solid #99999980;
+    color: #333333;
     padding-left: 15px;
     border-radius: 4px;
     height: 38px;
