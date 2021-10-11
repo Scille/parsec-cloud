@@ -338,15 +338,11 @@ class WorkspaceButton(QWidget, Ui_WorkspaceButton):
             self.clicked.emit(self.workspace_fs)
 
     def _on_switch_clicked(self, state):
-        self.set_mountpoint_state(state)
         self.switch_clicked.emit(state, self.workspace_fs, self.timestamp)
 
     def set_mountpoint_state(self, state):
         if self.timestamped:
             return
-        # TODO: we should be waiting for the mount to be done before switching
-        # state. Currently we risk concurrent issues if the user click while the
-        # mount is not finished
         self.switch_button.setChecked(state)
         if state:
             self.widget.setStyleSheet("background-color: #FFFFFF;")
