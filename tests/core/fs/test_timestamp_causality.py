@@ -27,17 +27,24 @@ def test_timestamp_causality(
     per_device_time_offsets = {device.device_id: 0 for device in (alice, bob, carl, diana)}
     monkeypatch.setattr(
         "parsec.core.types.LocalDevice.timestamp",
+        # We're using `now()` plus an offset to control each device time.
+        # Using `now()` allows for a realistic progress of time, only shifted for each device.
+        # Then the `a_few_seconds_goes_by` rule allows hypothesis to flash-forward.
         lambda local_device: now().add(seconds=per_device_time_offsets[local_device.device_id]),
     )
 
     class TimestampCausality(user_fs_online_state_machine):
         """
-        Let's make sure no corruption occurs in the following scenario, despite running with shifted clocks:
+        Let's make sure no corruption occurs while the following operations are performed repeatedely
+        and concurrently, despite the devices running with shifted clocks:
 
-        - Bob tries to upload new manifests to a workspace
-        - Alice downloads and checks Bob's manifests
-        - Carl grants Bob's write rights
-        - Diana revokes Bob's write rights
+        1. Bob tries to upload new manifests to a workspace (if it has write rights)
+        2. Alice downloads and checks Bob's manifests (alice always have read rights)
+        3. Carl grants Bob's write rights (carl always have owner rights)
+        4. Diana revokes Bob's write rights (diana always have owner rights)
+
+        Note that the operations 1, 3 and 4 are going to produce timestamps that will affect the checking
+        in operation 2, which means operation 2 is the one we expect to fail.
         """
 
         @property
@@ -135,16 +142,21 @@ def test_timestamp_causality(
 
         @rule()
         async def bob_updates_the_file(self):
+            # Write a single character to the file
             try:
                 async with await self.bob_workspace.open_file("/file.txt", "ab") as file_txt:
                     await file_txt.write(b"a")
                     length = file_txt.tell()
+            # Maybe Diana revoked our write rights and we know about it
             except FSReadOnlyError:
                 return
+            # Synchronize the workspace
             try:
                 await self.bob_workspace.sync()
+            # Maybe Diana revoked our write and we didn't know about it
             except FSWorkspaceNoWriteAccess:
                 return
+            # Upload is successful, update the expected file length
             self.current_length = length
 
         @rule()
@@ -153,6 +165,11 @@ def test_timestamp_causality(
 
         @rule()
         async def alice_reads_the_file(self):
+            """This is the rule that is the most likely to fail in the scenarions we want to test.
+            This is because the timestamps produced by other devices in the other rules will affect
+            the checking performed here when alice checks the validity of the manifest they've just
+            downloaded.
+            """
             await self.alice_workspace.sync()
             assert await self.alice_workspace.read_bytes("/file.txt") == b"a" * self.current_length
 

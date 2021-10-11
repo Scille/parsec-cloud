@@ -72,6 +72,7 @@ class AsyncQtBot:
                 result = callback()
             except AssertionError as exc:
                 if timed_out():
+                    # Raise from the last AssertionError in order to produce a helpful trace
                     raise TimeoutError(timeout_msg) from exc
             else:
                 if result not in (None, True, False):
