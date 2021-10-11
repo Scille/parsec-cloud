@@ -208,53 +208,6 @@ class MemoryUserComponent(BaseUserComponent):
         device = self._get_device(organization_id, device_id)
         return user, device
 
-    async def find(
-        self,
-        organization_id: OrganizationID,
-        query: Optional[str] = None,
-        page: int = 1,
-        per_page: int = 100,
-        omit_revoked: bool = False,
-    ):
-        assert page >= 1
-        assert per_page >= 1
-
-        org = self._organizations[organization_id]
-        users = org.users
-
-        if query:
-            try:
-                UserID(query)
-            except ValueError:
-                # Contains invalid caracters, no need to go further
-                return ([], 0)
-
-            results = [
-                user_id for user_id in users.keys() if user_id.lower().find(query.lower()) != -1
-            ]
-
-        else:
-            results = users.keys()
-
-        if omit_revoked:
-            now = pendulum.now()
-
-            def _user_is_revoked(user_id):
-                revoked_on = org.users[user_id].revoked_on
-                return revoked_on is not None and revoked_on <= now
-
-            results = [user_id for user_id in results if not _user_is_revoked(user_id)]
-
-        total = len(results)
-
-        # PostgreSQL does case insensitive sort
-        sorted_results = sorted(results, key=lambda s: s.lower())
-
-        # Handle pagination
-        paginated_results = sorted_results[(page - 1) * per_page : page * per_page]
-
-        return paginated_results, total
-
     async def find_humans(
         self,
         organization_id: OrganizationID,

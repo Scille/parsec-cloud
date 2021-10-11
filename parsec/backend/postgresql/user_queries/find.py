@@ -22,47 +22,6 @@ LIMIT 1
 
 
 @lru_cache()
-def _q_factory(with_query: bool, omit_revoked: bool) -> Q:
-    conditions = []
-    if with_query:
-        conditions.append("AND user_id ~* $query")
-    if omit_revoked:
-        conditions.append("AND (revoked_on IS NULL OR revoked_on > $now)")
-    return Q(
-        f"""
-WITH full_results AS (
-    SELECT
-        user_id,
-        ROW_NUMBER() OVER (ORDER BY user_id) AS row_order
-    FROM user_
-    WHERE
-        organization = { q_organization_internal_id("$organization_id") }
-        { " ".join(conditions) }
-    ORDER BY user_id
-)
-(
-    SELECT
-        '' AS user_id,
-        0 AS row_order,
-        count(*) AS total
-    FROM full_results
-)
-UNION ALL
-(
-    SELECT
-        user_id AS user_id,
-        row_order,
-        0 AS total
-    FROM full_results
-    LIMIT $limit
-    OFFSET $offset
-)
-ORDER BY row_order
-"""
-    )
-
-
-@lru_cache()
 def _q_human_factory(with_query: bool, omit_revoked: bool, omit_non_human: bool) -> Q:
     conditions = []
     if omit_revoked:
@@ -123,53 +82,6 @@ UNION ALL
 ORDER BY row_order
 """
     )
-
-
-@query()
-async def query_find(
-    conn,
-    organization_id: OrganizationID,
-    page: int = 1,
-    per_page: int = 100,
-    omit_revoked: bool = False,
-    query: Optional[str] = None,
-) -> Tuple[List[UserID], int]:
-    if page >= 1:
-        offset = (page - 1) * per_page
-    else:
-        return ([], 0)
-    if query:
-        try:
-            UserID(query)
-        except ValueError:
-            # Contains invalid caracters, no need to go further
-            return ([], 0)
-
-    q = _q_factory(with_query=bool(query), omit_revoked=omit_revoked)
-    if query:
-        if omit_revoked:
-            args = q(
-                organization_id=organization_id,
-                now=pendulum_now(),
-                query=query,
-                offset=offset,
-                limit=per_page,
-            )
-        else:
-            args = q(organization_id=organization_id, query=query, offset=offset, limit=per_page)
-    else:
-        if omit_revoked:
-            args = q(
-                organization_id=organization_id, now=pendulum_now(), offset=offset, limit=per_page
-            )
-        else:
-            args = q(organization_id=organization_id, offset=offset, limit=per_page)
-
-    raw_results = await conn.fetch(*args)
-    total = raw_results[0]["total"]
-    results = [UserID(x["user_id"]) for x in raw_results[1:]]
-
-    return results, total
 
 
 @query()
