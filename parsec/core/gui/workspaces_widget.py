@@ -532,7 +532,7 @@ class WorkspacesWidget(QWidget, Ui_WorkspacesWidget):
         )
 
     def mount_workspace(self, workspace_id, timestamp=None):
-        # In successful cases, the events MOUNTPOINT_STARTED 
+        # In successful cases, the events MOUNTPOINT_STARTED
         # will take care of refreshing the state of the button,
         # the mount_success signal is not connected to anything but
         # is being kept for potential testing purposes
