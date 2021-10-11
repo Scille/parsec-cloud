@@ -6,6 +6,7 @@ from PyQt5.QtCore import QCoreApplication, pyqtSignal, QEvent, QTimer
 from PyQt5.QtGui import QPixmap, QColor
 from PyQt5.QtWidgets import QWidget, QComboBox
 
+from parsec.api.protocol.types import UserProfile
 from parsec.core.types import UserInfo
 from parsec.core.fs import FSError, FSBackendOfflineError
 from parsec.core.types import WorkspaceRole
@@ -116,6 +117,13 @@ class SharingWidget(QWidget, Ui_SharingWidget):
                 if current_index < index:
                     break
                 self.combo_role.insertItem(index, get_role_translation(role))
+                if self.user_info.profile == UserProfile.OUTSIDER and role in (
+                    WorkspaceRole.MANAGER,
+                    WorkspaceRole.OWNER,
+                ):
+                    item = self.combo_role.model().item(index)
+                    item.setEnabled(False)
+                    item.setToolTip(_("NOT_ALLOWED_FOR_OUTSIDER_PROFILE_TOOLTIP"))
 
         self.combo_role.setCurrentIndex(_ROLES_TO_INDEX[self.role])
         self.combo_role.currentIndexChanged.connect(self.on_role_changed)
