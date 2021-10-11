@@ -16,7 +16,6 @@ from parsec.backend.postgresql.handler import PGHandler
 from parsec.backend.postgresql.user_queries import (
     query_create_user,
     query_create_device,
-    query_find,
     query_find_humans,
     query_get_user,
     query_get_user_with_trustchain,
@@ -73,24 +72,6 @@ class PGUserComponent(BaseUserComponent):
     ) -> Tuple[User, Device]:
         async with self.dbh.pool.acquire() as conn:
             return await query_get_user_with_device(conn, organization_id, device_id)
-
-    async def find(
-        self,
-        organization_id: OrganizationID,
-        query: Optional[str] = None,
-        page: int = 1,
-        per_page: int = 100,
-        omit_revoked: bool = False,
-    ) -> Tuple[List[UserID], int]:
-        async with self.dbh.pool.acquire() as conn:
-            return await query_find(
-                conn=conn,
-                organization_id=organization_id,
-                query=query,
-                page=page,
-                per_page=per_page,
-                omit_revoked=omit_revoked,
-            )
 
     async def find_humans(
         self,
