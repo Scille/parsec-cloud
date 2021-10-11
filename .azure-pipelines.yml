@@ -119,10 +119,10 @@ jobs:
     condition: eq(variables['Build.Reason'], 'PullRequest')
     displayName: 'Newsfragment'
     failOnStderr: true
-  - bash: |
-      git fetch --tags  # Needed by releaser.py to have a consistent `git describe`
-      python ./misc/releaser.py check --verbose
-    displayName: 'Version check'
+#  - bash: |
+#      git fetch --tags  # Needed by releaser.py to have a consistent `git describe`
+#      python ./misc/releaser.py check --verbose
+#    displayName: 'Version check'
 
 
 #################################################################################
