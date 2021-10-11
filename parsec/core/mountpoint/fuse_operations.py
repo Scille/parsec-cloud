@@ -62,7 +62,7 @@ def get_path_and_translate_error(
         raise
 
     except FSReadOnlyError as exc:
-        event_bus.send(
+        fs_access.send_event(
             CoreEvent.MOUNTPOINT_READONLY,
             exc=exc,
             operation=operation,
