@@ -16,6 +16,7 @@ from parsec.api.data import EntryID
 from parsec.core.core_events import CoreEvent
 from parsec.core.fs import FsPath, FSLocalOperationError, FSRemoteOperationError
 from parsec.core.mountpoint.thread_fs_access import ThreadFSAccess, TrioDealockTimeoutError
+from parsec.core.fs.exceptions import FSReadOnlyError
 
 
 logger = get_logger()
@@ -44,7 +45,7 @@ def get_path_and_translate_error(
     workspace_id: EntryID,
     timestamp: Optional[DateTime],
 ) -> Iterator[FsPath]:
-    path: FsPath = FsPath("/<unkonwn>")
+    path: FsPath = FsPath("/<unknown>")
     try:
         # The context argument might be None or "-" in some special cases
         # related to `release` and `releasedir` (when the file descriptor
@@ -59,6 +60,18 @@ def get_path_and_translate_error(
 
     except FuseOSError:
         raise
+
+    except FSReadOnlyError as exc:
+        fs_access.send_event(
+            CoreEvent.MOUNTPOINT_READONLY,
+            exc=exc,
+            operation=operation,
+            path=path,
+            mountpoint=mountpoint,
+            workspace_id=workspace_id,
+            timestamp=timestamp,
+        )
+        raise FuseOSError(exc.errno) from exc
 
     except FSLocalOperationError as exc:
         raise FuseOSError(exc.errno) from exc
