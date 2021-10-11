@@ -178,14 +178,20 @@ async def _do_revoke_user(core, user_info):
         raise JobResultError("error") from exc
 
 
-async def _do_list_users_and_invitations(core, page, pattern=None):
+async def _do_list_users_and_invitations(
+    core, page, pattern=None, omit_revoked=False, omit_invitation=False
+):
     try:
         if pattern is None:
-            users, total = await core.find_humans(page=page, per_page=USERS_PER_PAGE)
-            invitations = await core.list_invitations()
+            users, total = await core.find_humans(
+                page=page, per_page=USERS_PER_PAGE, omit_revoked=omit_revoked
+            )
+            invitations = [] if omit_invitation else await core.list_invitations()
             return total, users, [inv for inv in invitations if inv["type"] == InvitationType.USER]
         else:
-            users, total = await core.find_humans(page=page, per_page=USERS_PER_PAGE, query=pattern)
+            users, total = await core.find_humans(
+                page=page, per_page=USERS_PER_PAGE, query=pattern, omit_revoked=omit_revoked
+            )
             return total, users, []
     except BackendNotAvailable as exc:
         raise JobResultError("offline") from exc
@@ -255,6 +261,8 @@ class UsersWidget(QWidget, Ui_UsersWidget):
         self.invite_user_error.connect(self._on_invite_user_error)
         self.cancel_invitation_success.connect(self._on_cancel_invitation_success)
         self.cancel_invitation_error.connect(self._on_cancel_invitation_error)
+        self.checkbox_filter_revoked.clicked.connect(lambda: self.reset(True))
+        self.checkbox_filter_invitation.clicked.connect(lambda: self.reset(True))
 
     def show(self):
         self._page = 1
@@ -548,11 +556,11 @@ class UsersWidget(QWidget, Ui_UsersWidget):
 
         show_error(self, errmsg, exception=job.exc)
 
-    def reset(self):
+    def reset(self, disable_filters=False):
         self.layout_users.clear()
         self.label_page_info.hide()
-        self.button_users_filter.setEnabled(False)
-        self.line_edit_search.setEnabled(False)
+        self.button_users_filter.setEnabled(disable_filters)
+        self.line_edit_search.setEnabled(disable_filters)
         self.button_previous_page.hide()
         self.button_next_page.hide()
         self.spinner.show()
@@ -562,4 +570,6 @@ class UsersWidget(QWidget, Ui_UsersWidget):
             _do_list_users_and_invitations,
             core=self.core,
             page=self._page,
+            omit_revoked=self.checkbox_filter_revoked.isChecked(),
+            omit_invitation=self.checkbox_filter_invitation.isChecked(),
         )

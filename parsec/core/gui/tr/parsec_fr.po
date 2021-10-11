@@ -2562,6 +2562,12 @@ msgstr "Filtrer les utilisateurs"
 msgid "ACTION_FILTER_LIST_USERS"
 msgstr "Rechercher utilisateurs"
 
+msgid "ACTION_FILTER_REVOKED_USERS"
+msgstr "Masquer les utilisateurs révoqués"
+
+msgid "ACTION_FILTER_PENDING_INVITATION"
+msgstr "Masquer les invitations"
+
 msgid "ACTION_USER_INVITE_USER"
 msgstr "Inviter un utilisateur"
 
