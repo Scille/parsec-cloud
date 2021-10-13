@@ -2,6 +2,7 @@
 
 import trio
 import click
+import multiprocessing
 from pathlib import Path
 from pendulum import DateTime, parse as pendulum_parse
 
@@ -28,15 +29,16 @@ else:
     # Let the GUI handle the parsing of the url to display dialog on error
     @click.argument("url", required=False)
     @click.option("--diagnose", "-d", is_flag=True)
-    @click.option(
-        "-m", hidden=True, help="Reserved by packaging as an access to the python interpreter"
-    )
     @core_config_options
     @gui_command_base_options
     def run_gui(config, url, diagnose, sentry_url, **kwargs):
         """
         Run parsec GUI
         """
+        # Necessary for DialogInProcess since it's not the default on windows
+        # This method should only be called once which is why we do it here.
+        multiprocessing.set_start_method("spawn")
+
         with cli_exception_handler(config.debug):
             if config.telemetry_enabled and sentry_url:
                 configure_sentry_logging(sentry_url)

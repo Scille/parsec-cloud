@@ -1,9 +1,9 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2016-2021 Scille SAS
 
 import sys
-import json
+import multiprocessing
 
-from PyQt5.QtCore import Qt, pyqtSignal, QProcess
+from PyQt5.QtCore import Qt, pyqtSignal
 from PyQt5.QtGui import QPainter, QValidator
 from PyQt5.QtWidgets import (
     QWidget,
@@ -13,10 +13,12 @@ from PyQt5.QtWidgets import (
     QStyleOption,
     QStyle,
     QSizePolicy,
+    QFileDialog,
 )
 
 from structlog import get_logger
 
+from parsec import _subprocess_dialog
 from parsec.core.gui.lang import translate as _
 from parsec.core.gui import desktop
 from parsec.core.gui.custom_widgets import Button
@@ -123,66 +125,69 @@ class GreyedDialog(QDialog, Ui_GreyedDialog):
             self.setParent(None)
 
 
-class QFileDialogInProcess(GreyedDialog):
+class QDialogInProcess(GreyedDialog):
+
+    process_finished = pyqtSignal()
+
+    class DialogCancelled(Exception):
+        pass
+
     def __init__(self, parent=None):
         super().__init__(QWidget(), "", parent, hide_close=True)
         self.MainWidget.hide()
 
     @classmethod
-    def _exec_method(cls, method, parent, *args, **kwargs):
-        # Serialize input data
-        bytes_in = json.dumps((method, args, kwargs)).encode()
+    def _exec_method(cls, target_cls, target_method, parent, *args, **kwargs):
+        assert hasattr(target_cls, target_method)
         # Show the dialog
         dialog = cls(parent=parent)
+        dialog.process_finished.connect(dialog.close)
         dialog.show()
-        # Create the process and connect with the dialog
-        process = QProcess(parent=dialog)
-        process.finished.connect(lambda *args: dialog.close())
-        # Start the subprocess and write the input payload
-        process.start(sys.executable, ["-m", "parsec._file_dialog"])
-        process.write(bytes_in)
-        process.closeWriteChannel()
-        # Run the dialog until either the process is finished or the dialog is closed
-        dialog.exec_()
-        # Terminate the process if the dialog exited first
-        if process.state() != process.ProcessState.NotRunning:
-            process.terminate()
-            process.waitForFinished()
-            raise EOFError
-        # Check exit code
-        if process.exitCode() != 0:
-            trace = bytes(process.readAllStandardError()).decode()
-            raise RuntimeError(trace)
-        # Deserialize and return output data
-        bytes_out = bytes(process.readAllStandardOutput())
-        return json.loads(bytes_out.decode())
+        # Fire up the process pool
+        with multiprocessing.Pool(processes=1) as pool:
+            # Start the subprocess
+            async_result = pool.apply_async(
+                _subprocess_dialog.run_dialog,
+                (target_cls, target_method, *args),
+                kwargs,
+                lambda result: dialog.process_finished.emit(),
+                lambda error: dialog.process_finished.emit(),
+            )
+            # Run the dialog until either the process is finished or the dialog is closed
+            dialog.exec_()
+            # Terminate the process if the dialog exited first
+            if not async_result.ready():
+                pool.terminate()
+                raise dialog.DialogCancelled
+            # Return result
+            return async_result.get()
 
     @classmethod
     def getOpenFileName(cls, *args, **kwargs):
         try:
-            return cls._exec_method("getOpenFileName", *args, **kwargs)
-        except EOFError:
+            return cls._exec_method(QFileDialog, "getOpenFileName", *args, **kwargs)
+        except cls.DialogCancelled:
             return "", ""
 
     @classmethod
     def getOpenFileNames(cls, *args, **kwargs):
         try:
-            return cls._exec_method("getOpenFileNames", *args, **kwargs)
-        except EOFError:
+            return cls._exec_method(QFileDialog, "getOpenFileNames", *args, **kwargs)
+        except cls.DialogCancelled:
             return [], ""
 
     @classmethod
     def getExistingDirectory(cls, *args, **kwargs):
         try:
-            return cls._exec_method("getExistingDirectory", *args, **kwargs)
-        except EOFError:
+            return cls._exec_method(QFileDialog, "getExistingDirectory", *args, **kwargs)
+        except cls.DialogCancelled:
             return ""
 
     @classmethod
     def getSaveFileName(cls, *args, **kwargs):
         try:
-            return cls._exec_method("getSaveFileName", *args, **kwargs)
-        except EOFError:
+            return cls._exec_method(QFileDialog, "getSaveFileName", *args, **kwargs)
+        except cls.DialogCancelled:
             return "", ""
 
 

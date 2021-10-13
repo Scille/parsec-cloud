@@ -16,7 +16,7 @@ from parsec.core.local_device import (
 
 from parsec.core.gui.ui.keys_widget import Ui_KeysWidget
 from parsec.core.gui.ui.key_widget import Ui_KeyWidget
-from parsec.core.gui.custom_dialogs import QFileDialogInProcess, show_error, ask_question
+from parsec.core.gui.custom_dialogs import QDialogInProcess, show_error, ask_question
 from parsec.core.gui.lang import translate
 
 
@@ -73,7 +73,7 @@ class KeysWidget(QWidget, Ui_KeysWidget):
 
     def _on_export_key(self, device):
         default_key_name = f"parsec-{device.organization_id}-{device.human_handle.label}-{device.device_label}.keys"
-        key_path, _ = QFileDialogInProcess.getSaveFileName(
+        key_path, _ = QDialogInProcess.getSaveFileName(
             self,
             translate("TEXT_EXPORT_KEY"),
             str(Path.home().joinpath(default_key_name)),
@@ -89,7 +89,7 @@ class KeysWidget(QWidget, Ui_KeysWidget):
             show_error(self, translate("EXPORT_KEY_ERROR"), err)
 
     def _on_import_key(self):
-        key_file, _ = QFileDialogInProcess.getOpenFileName(
+        key_file, _ = QDialogInProcess.getOpenFileName(
             parent=self,
             caption=translate("ACTION_IMPORT_KEY"),
             filter=translate("IMPORT_KEY_FILTERS"),

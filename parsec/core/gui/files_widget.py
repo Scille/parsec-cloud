@@ -29,7 +29,7 @@ from parsec.core.gui.custom_dialogs import (
     get_text_input,
     show_info,
     GreyedDialog,
-    QFileDialogInProcess,
+    QDialogInProcess,
 )
 
 from parsec.core.gui.custom_widgets import CenteredSpinnerWidget
@@ -642,7 +642,7 @@ class FilesWidget(QWidget, Ui_FilesWidget):
     # Import entry points
 
     def import_files_clicked(self):
-        paths, filters = QFileDialogInProcess.getOpenFileNames(
+        paths, filters = QDialogInProcess.getOpenFileNames(
             self, _("TEXT_FILE_IMPORT_FILES"), self.default_import_path
         )
         if not paths:
@@ -653,7 +653,7 @@ class FilesWidget(QWidget, Ui_FilesWidget):
         )
 
     def import_folder_clicked(self):
-        path = QFileDialogInProcess.getExistingDirectory(
+        path = QDialogInProcess.getExistingDirectory(
             self, _("TEXT_FILE_IMPORT_FOLDER"), self.default_import_path
         )
         if not path:
