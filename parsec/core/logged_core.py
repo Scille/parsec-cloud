@@ -360,7 +360,10 @@ class LoggedCore:
 
 @asynccontextmanager
 async def logged_core_factory(
-    config: CoreConfig, device: LocalDevice, event_bus: Optional[EventBus] = None
+    config: CoreConfig,
+    device: LocalDevice,
+    event_bus: Optional[EventBus] = None,
+    allow_sync: bool = True,
 ):
     event_bus = event_bus or EventBus()
     prevent_sync_pattern = get_prevent_sync_pattern(config.prevent_sync_pattern_path)
@@ -385,7 +388,7 @@ async def logged_core_factory(
     ) as user_fs:
 
         backend_conn.register_monitor(partial(monitor_messages, user_fs, event_bus))
-        backend_conn.register_monitor(partial(monitor_sync, user_fs, event_bus))
+        backend_conn.register_monitor(partial(monitor_sync, user_fs, event_bus, allow_sync))
 
         async with backend_conn.run():
             async with mountpoint_manager_factory(

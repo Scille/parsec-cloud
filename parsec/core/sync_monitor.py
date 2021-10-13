@@ -68,10 +68,11 @@ class SyncContext:
       storage to get the list of changes (entry id + version) it has missed
     """
 
-    def __init__(self, user_fs, id: EntryID, read_only: bool = False):
+    def __init__(self, user_fs, id: EntryID, allow_sync: bool, read_only: bool = False):
         self.user_fs = user_fs
         self.id = id
         self.read_only = read_only
+        self.allow_sync = allow_sync
         self.due_time = math.inf
         self._changes_loaded = False
         self._local_changes = {}
@@ -209,6 +210,9 @@ class SyncContext:
         if not await self._load_changes():
             return self.due_time
 
+        if not self.allow_sync:
+            return self.due_time
+
         min_due_time = None
 
         # Remote changes sync have priority over local changes
@@ -279,10 +283,10 @@ class SyncContext:
 
 
 class WorkspaceSyncContext(SyncContext):
-    def __init__(self, user_fs, id: EntryID):
+    def __init__(self, user_fs, id: EntryID, allow_sync: bool):
         self.workspace = user_fs.get_workspace(id)
         read_only = self.workspace.get_workspace_entry().role == WorkspaceRole.READER
-        super().__init__(user_fs, id, read_only=read_only)
+        super().__init__(user_fs, id, read_only=read_only, allow_sync=allow_sync)
 
     async def _sync(self, entry_id: EntryID):
         # No recursion here: only the manifest that has changed
@@ -314,9 +318,10 @@ class SyncContextStore:
     when a newly created workspace is modified for the first time)
     """
 
-    def __init__(self, user_fs):
+    def __init__(self, user_fs, allow_sync):
         self.user_fs = user_fs
         self._ctxs = {}
+        self.allow_sync = allow_sync
 
     def iter(self):
         return self._ctxs.copy().values()
@@ -326,10 +331,10 @@ class SyncContextStore:
             return self._ctxs[entry_id]
         except KeyError:
             if entry_id == self.user_fs.user_manifest_id:
-                ctx = UserManifestSyncContext(self.user_fs, entry_id)
+                ctx = UserManifestSyncContext(self.user_fs, entry_id, True)
             else:
                 try:
-                    ctx = WorkspaceSyncContext(self.user_fs, entry_id)
+                    ctx = WorkspaceSyncContext(self.user_fs, entry_id, self.allow_sync)
                 except FSWorkspaceNotFoundError:
                     # It's possible the workspace is not yet available
                     # (this can happen when a workspace is just shared with
@@ -343,8 +348,8 @@ class SyncContextStore:
         self._ctxs.pop(entry_id, None)
 
 
-async def monitor_sync(user_fs, event_bus, task_status):
-    ctxs = SyncContextStore(user_fs)
+async def monitor_sync(user_fs, event_bus, allow_sync, task_status):
+    ctxs = SyncContextStore(user_fs, allow_sync)
     early_wakeup = trio.Event()
 
     def _trigger_early_wakeup():
