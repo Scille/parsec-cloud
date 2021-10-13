@@ -127,6 +127,7 @@ class GreyedDialog(QDialog, Ui_GreyedDialog):
 
 class QDialogInProcess(GreyedDialog):
 
+    pool = None
     process_finished = pyqtSignal()
 
     class DialogCancelled(Exception):
@@ -139,28 +140,38 @@ class QDialogInProcess(GreyedDialog):
     @classmethod
     def _exec_method(cls, target_cls, target_method, parent, *args, **kwargs):
         assert hasattr(target_cls, target_method)
-        # Show the dialog
-        dialog = cls(parent=parent)
-        dialog.process_finished.connect(dialog.close)
-        dialog.show()
-        # Fire up the process pool
-        with multiprocessing.Pool(processes=1) as pool:
+        # Fire up the process pool is necessary
+        if cls.pool is None:
+            cls.pool = multiprocessing.Pool(processes=1)
+        # Control the lifetime of the pool
+        try:
+            # Show the dialog
+            dialog = cls(parent=parent)
+            dialog.process_finished.connect(dialog.close)
+            dialog.show()
             # Start the subprocess
-            async_result = pool.apply_async(
+            async_result = cls.pool.apply_async(
                 _subprocess_dialog.run_dialog,
                 (target_cls, target_method, *args),
                 kwargs,
-                lambda result: dialog.process_finished.emit(),
-                lambda error: dialog.process_finished.emit(),
+                lambda *args: dialog.process_finished.emit(),
+                lambda *args: dialog.process_finished.emit(),
             )
             # Run the dialog until either the process is finished or the dialog is closed
             dialog.exec_()
-            # Terminate the process if the dialog exited first
+            # Terminate the process and close the pool if the dialog exited first
             if not async_result.ready():
-                pool.terminate()
+                cls.pool.terminate()
+                cls.pool = None
                 raise dialog.DialogCancelled
             # Return result
             return async_result.get()
+        finally:
+            # On OSX, using the same process for several dialogs messes up with the OS
+            # In particular, the parsec icon corresponding to the dialog window persists between calls
+            if sys.platform == "darwin" and cls.pool is not None:
+                cls.pool.close()
+                cls.pool = None
 
     @classmethod
     def getOpenFileName(cls, *args, **kwargs):

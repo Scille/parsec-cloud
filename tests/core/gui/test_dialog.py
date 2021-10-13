@@ -1,12 +1,23 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2016-2021 Scille SAS
 
 import pytest
+import multiprocessing
 from parsec.core.gui.custom_dialogs import QDialogInProcess
+
+
+@pytest.fixture
+def close_process_pool():
+    if multiprocessing.get_start_method(allow_none=True) is None:
+        multiprocessing.set_start_method("spawn")
+    assert multiprocessing.get_start_method() == "spawn"
+    yield
+    QDialogInProcess.pool.terminate()
+    QDialogInProcess.pool.join()
 
 
 @pytest.mark.gui
 @pytest.mark.trio
-async def test_file_dialog_in_process(gui):
+async def test_file_dialog_in_process(gui, close_process_pool):
     assert QDialogInProcess.getOpenFileName(gui, "title", dir="dir", testing=True) == (
         "getOpenFileName",
         ("title",),
