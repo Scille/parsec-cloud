@@ -3,7 +3,7 @@
 import attr
 import functools
 from typing import Optional, Tuple, TypeVar, Type, Union, FrozenSet, Pattern, Dict
-from pendulum import DateTime, now as pendulum_now
+from pendulum import DateTime
 
 from parsec.types import UUID4, FrozenDict
 from parsec.crypto import SecretKey, HashDigest
@@ -256,11 +256,11 @@ class BaseLocalManifest(BaseLocalData):
 
     # Evolve methods
 
-    def evolve_and_mark_updated(self: LocalManifestTypeVar, **data) -> LocalManifestTypeVar:
-        if "updated" not in data:
-            data["updated"] = pendulum_now()
+    def evolve_and_mark_updated(
+        self: LocalManifestTypeVar, timestamp: DateTime, **data
+    ) -> LocalManifestTypeVar:
         data.setdefault("need_sync", True)
-        return self.evolve(**data)
+        return self.evolve(updated=timestamp, **data)
 
     # Remote methods
 
@@ -284,16 +284,17 @@ class BaseLocalManifest(BaseLocalData):
         remote: BaseRemoteManifest,
         prevent_sync_pattern: Pattern,
         local_manifest: LocalManifestTypeVar,
+        timestamp: DateTime,
     ) -> LocalManifestsTypeVar:
         if isinstance(remote, RemoteFileManifest):
             return LocalFileManifest.from_remote(remote)
         elif isinstance(remote, RemoteFolderManifest):
             return LocalFolderManifest.from_remote_with_local_context(
-                remote, prevent_sync_pattern, local_manifest
+                remote, prevent_sync_pattern, local_manifest, timestamp=timestamp
             )
         elif isinstance(remote, RemoteWorkspaceManifest):
             return LocalWorkspaceManifest.from_remote_with_local_context(
-                remote, prevent_sync_pattern, local_manifest
+                remote, prevent_sync_pattern, local_manifest, timestamp=timestamp
             )
         elif isinstance(remote, RemoteUserManifest):
             return LocalUserManifest.from_remote(remote)
@@ -364,27 +365,26 @@ class LocalFileManifest(BaseLocalManifest):
         cls,
         author: DeviceID,
         parent: EntryID,
-        now: DateTime = None,
+        timestamp: DateTime,
         blocksize: int = DEFAULT_BLOCK_SIZE,
     ) -> "LocalFileManifest":
         id = EntryID.new()
-        now = now or pendulum_now()
         blocks = ()
         return cls(
             base=RemoteFileManifest(
                 author=author,
-                timestamp=now,
+                timestamp=timestamp,
                 id=id,
                 parent=parent,
                 version=0,
-                created=now,
-                updated=now,
+                created=timestamp,
+                updated=timestamp,
                 blocksize=blocksize,
                 size=0,
                 blocks=blocks,
             ),
             need_sync=True,
-            updated=now,
+            updated=timestamp,
             blocksize=blocksize,
             size=0,
             blocks=blocks,
@@ -448,7 +448,7 @@ class LocalFileManifest(BaseLocalManifest):
             blocks=tuple((Chunk.from_block_acess(block_access),) for block_access in remote.blocks),
         )
 
-    def to_remote(self, author: DeviceID, timestamp: DateTime = None) -> RemoteFileManifest:
+    def to_remote(self, author: DeviceID, timestamp: DateTime) -> RemoteFileManifest:
         # Checks
         self.assert_integrity()
         assert self.is_reshaped()
@@ -458,7 +458,7 @@ class LocalFileManifest(BaseLocalManifest):
 
         return RemoteFileManifest(
             author=author,
-            timestamp=timestamp or pendulum_now(),
+            timestamp=timestamp,
             id=self.id,
             parent=self.parent,
             version=self.base_version + 1,
@@ -489,8 +489,9 @@ class LocalFolderishManifestMixin:
         self: LocalFolderishManifestTypeVar,
         data: Dict[str, Optional[EntryID]],
         prevent_sync_pattern: Pattern,
+        timestamp: DateTime,
     ) -> LocalFolderishManifestTypeVar:
-        updated = False
+        actually_updated = False
         new_children = dict(self.children)
         new_local_confinement_points = set(self.local_confinement_points)
 
@@ -508,7 +509,7 @@ class LocalFolderishManifestMixin:
             if old_entry_id in new_local_confinement_points:
                 new_local_confinement_points.discard(old_entry_id)
             else:
-                updated = True
+                actually_updated = True
 
         # Make sure no entry_id is duplicated
         assert not set(data.values()).intersection(new_children.values())
@@ -522,15 +523,17 @@ class LocalFolderishManifestMixin:
             if prevent_sync_pattern.match(name):
                 new_local_confinement_points.add(entry_id)
             else:
-                updated = True
+                actually_updated = True
 
         new_local_confinement_points = frozenset(new_local_confinement_points)
-        if not updated:
+        if not actually_updated:
             return self.evolve(
                 children=new_children, local_confinement_points=new_local_confinement_points
             )
         return self.evolve_and_mark_updated(
-            children=new_children, local_confinement_points=new_local_confinement_points
+            children=new_children,
+            local_confinement_points=new_local_confinement_points,
+            timestamp=timestamp,
         )
 
     # Filtering and confinement helpers
@@ -551,6 +554,7 @@ class LocalFolderishManifestMixin:
         self: LocalFolderishManifestTypeVar,
         other: LocalFolderishManifestTypeVar,
         prevent_sync_pattern: Pattern,
+        timestamp: DateTime,
     ) -> LocalFolderishManifestTypeVar:
         # Using self.remote_confinement_points is useful to restore entries that were present locally
         # before applying a new filter that filtered those entries from the remote manifest
@@ -569,7 +573,7 @@ class LocalFolderishManifestMixin:
             )
         }
         return self.evolve_children_and_mark_updated(
-            previously_local_confinement_points, prevent_sync_pattern
+            previously_local_confinement_points, prevent_sync_pattern, timestamp
         )
 
     def _filter_remote_entries(
@@ -605,7 +609,7 @@ class LocalFolderishManifestMixin:
     # Apply "prevent sync" pattern
 
     def apply_prevent_sync_pattern(
-        self: LocalFolderishManifestTypeVar, prevent_sync_pattern: Pattern
+        self: LocalFolderishManifestTypeVar, prevent_sync_pattern: Pattern, timestamp: DateTime
     ) -> LocalFolderishManifestTypeVar:
         # Filter local confinement points
         result = self._filter_local_confinement_points()
@@ -614,7 +618,9 @@ class LocalFolderishManifestMixin:
         # Filter remote confinement_points
         result = result._filter_remote_entries(prevent_sync_pattern)
         # Restore local confinement points
-        return result._restore_local_confinement_points(self, prevent_sync_pattern)
+        return result._restore_local_confinement_points(
+            self, prevent_sync_pattern, timestamp=timestamp
+        )
 
 
 @attr.s(slots=True, frozen=True, auto_attribs=True, kw_only=True, eq=False)
@@ -651,24 +657,23 @@ class LocalFolderManifest(BaseLocalManifest, LocalFolderishManifestMixin):
 
     @classmethod
     def new_placeholder(
-        cls, author: DeviceID, parent: EntryID, now: DateTime = None
+        cls, author: DeviceID, parent: EntryID, timestamp: DateTime
     ) -> "LocalFolderManifest":
         id = EntryID.new()
-        now = now or pendulum_now()
         children = FrozenDict()
         return cls(
             base=RemoteFolderManifest(
                 author=author,
-                timestamp=now,
+                timestamp=timestamp,
                 id=id,
                 parent=parent,
                 version=0,
-                created=now,
-                updated=now,
+                created=timestamp,
+                updated=timestamp,
                 children=children,
             ),
             need_sync=True,
-            updated=now,
+            updated=timestamp,
             children=children,
             local_confinement_points=frozenset(),
             remote_confinement_points=frozenset(),
@@ -710,11 +715,14 @@ class LocalFolderManifest(BaseLocalManifest, LocalFolderishManifestMixin):
         remote: RemoteFolderManifest,
         prevent_sync_pattern: Pattern,
         local_manifest: "LocalFolderManifest",
+        timestamp: DateTime,
     ) -> "LocalFolderManifest":
         result = cls.from_remote(remote, prevent_sync_pattern)
-        return result._restore_local_confinement_points(local_manifest, prevent_sync_pattern)
+        return result._restore_local_confinement_points(
+            local_manifest, prevent_sync_pattern, timestamp=timestamp
+        )
 
-    def to_remote(self, author: DeviceID, timestamp: DateTime = None) -> RemoteFolderManifest:
+    def to_remote(self, author: DeviceID, timestamp: DateTime) -> RemoteFolderManifest:
         # Filter confined entries
         processed_manifest = self._filter_local_confinement_points()
         # Restore filtered entries
@@ -722,7 +730,7 @@ class LocalFolderManifest(BaseLocalManifest, LocalFolderishManifestMixin):
         # Create remote manifest
         return RemoteFolderManifest(
             author=author,
-            timestamp=timestamp or pendulum_now(),
+            timestamp=timestamp,
             id=self.id,
             parent=self.parent,
             version=self.base_version + 1,
@@ -783,22 +791,21 @@ class LocalWorkspaceManifest(BaseLocalManifest, LocalFolderishManifestMixin):
 
     @classmethod
     def new_placeholder(
-        cls, author: DeviceID, id: EntryID = None, speculative: bool = False, now: DateTime = None
+        cls, author: DeviceID, timestamp: DateTime, id: EntryID = None, speculative: bool = False
     ) -> "LocalWorkspaceManifest":
-        now = now or pendulum_now()
         children = FrozenDict()
         return cls(
             base=RemoteWorkspaceManifest(
                 author=author,
-                timestamp=now,
+                timestamp=timestamp,
                 id=id or EntryID.new(),
                 version=0,
-                created=now,
-                updated=now,
+                created=timestamp,
+                updated=timestamp,
                 children=children,
             ),
             need_sync=True,
-            updated=now,
+            updated=timestamp,
             children=children,
             local_confinement_points=frozenset(),
             remote_confinement_points=frozenset(),
@@ -838,11 +845,14 @@ class LocalWorkspaceManifest(BaseLocalManifest, LocalFolderishManifestMixin):
         remote: RemoteFolderManifest,
         prevent_sync_pattern: Pattern,
         local_manifest: "LocalWorkspaceManifest",
+        timestamp: DateTime,
     ) -> "LocalWorkspaceManifest":
         result = cls.from_remote(remote, prevent_sync_pattern)
-        return result._restore_local_confinement_points(local_manifest, prevent_sync_pattern)
+        return result._restore_local_confinement_points(
+            local_manifest, prevent_sync_pattern, timestamp=timestamp
+        )
 
-    def to_remote(self, author: DeviceID, timestamp: DateTime = None) -> RemoteWorkspaceManifest:
+    def to_remote(self, author: DeviceID, timestamp: DateTime) -> RemoteWorkspaceManifest:
         # Filter confined entries
         processed_manifest = self._filter_local_confinement_points()
         # Restore filtered entries
@@ -850,7 +860,7 @@ class LocalWorkspaceManifest(BaseLocalManifest, LocalFolderishManifestMixin):
         # Create remote manifest
         return RemoteWorkspaceManifest(
             author=author,
-            timestamp=timestamp or pendulum_now(),
+            timestamp=timestamp,
             id=self.id,
             version=self.base_version + 1,
             created=self.created,
@@ -900,22 +910,21 @@ class LocalUserManifest(BaseLocalManifest):
 
     @classmethod
     def new_placeholder(
-        cls, author: DeviceID, id: EntryID = None, speculative: bool = False, now: DateTime = None
+        cls, author: DeviceID, timestamp: DateTime, id: EntryID = None, speculative: bool = False
     ) -> "LocalUserManifest":
-        now = now or pendulum_now()
         return cls(
             base=RemoteUserManifest(
                 author=author,
-                timestamp=now,
+                timestamp=timestamp,
                 id=id or EntryID.new(),
                 version=0,
-                created=now,
-                updated=now,
+                created=timestamp,
+                updated=timestamp,
                 last_processed_message=0,
                 workspaces=(),
             ),
             need_sync=True,
-            updated=now,
+            updated=timestamp,
             last_processed_message=0,
             workspaces=(),
             speculative=speculative,
@@ -928,9 +937,11 @@ class LocalUserManifest(BaseLocalManifest):
 
     # Evolve methods
 
-    def evolve_workspaces_and_mark_updated(self, *data) -> "LocalUserManifest":
+    def evolve_workspaces_and_mark_updated(self, timestamp: DateTime, *data) -> "LocalUserManifest":
         workspaces = {**{w.id: w for w in self.workspaces}, **{w.id: w for w in data}}
-        return self.evolve_and_mark_updated(workspaces=tuple(workspaces.values()))
+        return self.evolve_and_mark_updated(
+            workspaces=tuple(workspaces.values()), timestamp=timestamp
+        )
 
     def evolve_workspaces(self, *data) -> "LocalUserManifest":
         workspaces = {**{w.id: w for w in self.workspaces}, **{w.id: w for w in data}}
@@ -949,10 +960,10 @@ class LocalUserManifest(BaseLocalManifest):
             speculative=False,
         )
 
-    def to_remote(self, author: DeviceID, timestamp: DateTime = None) -> RemoteUserManifest:
+    def to_remote(self, author: DeviceID, timestamp: DateTime) -> RemoteUserManifest:
         return RemoteUserManifest(
             author=author,
-            timestamp=timestamp or pendulum_now(),
+            timestamp=timestamp,
             id=self.id,
             version=self.base_version + 1,
             created=self.created,

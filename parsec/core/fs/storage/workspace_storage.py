@@ -49,8 +49,9 @@ async def workspace_storage_non_speculative_init(
         # Manifest storage service
         async with ManifestStorage.run(device, data_localdb, workspace_id) as manifest_storage:
 
+            timestamp = device.timestamp()
             manifest = LocalWorkspaceManifest.new_placeholder(
-                author=device.device_id, id=workspace_id, speculative=False
+                author=device.device_id, id=workspace_id, timestamp=timestamp, speculative=False
             )
             await manifest_storage.set_manifest(workspace_id, manifest)
 
@@ -342,8 +343,12 @@ class WorkspaceStorage(BaseWorkspaceStorage):
             # This is especially important when the workspace is accessed from
             # file system mountpoint given having a weird error popup when clicking
             # on the mountpoint from the file explorer really feel like a bug :/
+            timestamp = self.device.timestamp()
             manifest = LocalWorkspaceManifest.new_placeholder(
-                author=self.device.device_id, id=self.workspace_id, speculative=True
+                author=self.device.device_id,
+                id=self.workspace_id,
+                timestamp=timestamp,
+                speculative=True,
             )
             await self.manifest_storage.set_manifest(self.workspace_id, manifest)
 

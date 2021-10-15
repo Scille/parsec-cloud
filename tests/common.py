@@ -1,6 +1,5 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2016-2021 Scille SAS
 
-from async_generator import asynccontextmanager
 from unittest.mock import Mock
 from inspect import iscoroutinefunction
 from contextlib import ExitStack, contextmanager
@@ -14,6 +13,7 @@ from parsec.core.types import WorkspaceRole
 from parsec.core.logged_core import LoggedCore
 from parsec.core.fs import UserFS
 from parsec.api.transport import Transport, TransportError
+from parsec.core.types.local_device import LocalDevice, DeviceID
 
 
 def addr_with_device_subdomain(addr, device_id):
@@ -25,8 +25,64 @@ def addr_with_device_subdomain(addr, device_id):
     return type(addr).from_url(addr.to_url().replace(addr.hostname, device_specific_hostname, 1))
 
 
+__freeze_time_dict = {}
+
+
+def _timestamp_mockup(device):
+    _, time = __freeze_time_dict.get(device.device_id, (None, None))
+    return time if time is not None else pendulum.now()
+
+
 @contextmanager
-def freeze_time(time):
+def freeze_device_time(device, current_time):
+    # Parse time
+    if isinstance(current_time, str):
+        current_time = pendulum.parse(current_time)
+
+    # Get device id
+    if isinstance(device, LocalDevice):
+        device_id = device.device_id
+    elif isinstance(device, DeviceID):
+        device_id = device
+    else:
+        assert False, device
+
+    # Apply mockup (idempotent)
+    type(device).timestamp = _timestamp_mockup
+
+    # Save previous context
+    previous_task, previous_time = __freeze_time_dict.get(device_id, (None, None))
+
+    # Get current trio task
+    try:
+        current_task = trio.lowlevel.current_task()
+    except RuntimeError:
+        current_task = None
+
+    # Ensure time has not been frozen from another coroutine
+    assert previous_task in (None, current_task)
+
+    try:
+        # Set new context
+        __freeze_time_dict[device_id] = (current_task, current_time)
+        yield current_time
+    finally:
+        # Restore previous context
+        __freeze_time_dict[device_id] = (previous_task, previous_time)
+
+
+__freeze_time_task = None
+
+
+@contextmanager
+def freeze_time(time, device=None):
+    # Freeze a single device
+    if device is not None:
+        with freeze_device_time(device, time) as time:
+            yield time
+        return
+
+    # Parse time
     global __freeze_time_task
     if isinstance(time, str):
         time = pendulum.parse(time)
@@ -42,7 +98,7 @@ def freeze_time(time):
         current_task = None
 
     # Ensure time has not been frozen from another coroutine
-    assert __freeze_time_task in (None, current_task)
+    assert previous_task in (None, current_task)
 
     try:
         # Set new context
@@ -53,17 +109,6 @@ def freeze_time(time):
         # Restore previous context
         __freeze_time_task = previous_task
         pendulum.set_test_now(previous_time)
-
-
-__freeze_time_task = None
-__freeze_time_lock = trio.Lock()
-
-
-@asynccontextmanager
-async def afreeze_time(time):
-    async with __freeze_time_lock:
-        with freeze_time(time) as time:
-            yield time
 
 
 class AsyncMock(Mock):

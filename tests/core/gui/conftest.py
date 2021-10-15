@@ -70,15 +70,20 @@ class AsyncQtBot:
         while True:
             try:
                 result = callback()
-            except AssertionError:
-                result = False
-            if result not in (None, True, False):
-                msg = f"waitUntil() callback must return None, True or False, returned {result!r}"
-                raise ValueError(msg)
-            if result in (True, None):
-                return
-            if timed_out():
-                raise TimeoutError(timeout_msg)
+            except AssertionError as exc:
+                if timed_out():
+                    # Raise from the last AssertionError in order to produce a helpful trace
+                    raise TimeoutError(timeout_msg) from exc
+            else:
+                if result not in (None, True, False):
+                    msg = (
+                        f"waitUntil() callback must return None, True or False, returned {result!r}"
+                    )
+                    raise ValueError(msg)
+                if result in (True, None):
+                    return
+                if timed_out():
+                    raise TimeoutError(timeout_msg)
             await trio.sleep(0.010)
 
     @asynccontextmanager

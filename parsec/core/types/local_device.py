@@ -147,6 +147,15 @@ class LocalDevice(BaseLocalData):
     def device_display(self) -> str:
         return str(self.device_label or self.device_id.device_name)
 
+    def timestamp(self) -> DateTime:
+        """This method centralizes the production of parsec timestamps for a given device.
+        At the moment it is simply an alias to `pendulum.now` but it has two main benefits:
+        1. Allowing for easier testing by patching this method in device-sepecific way
+        2. Allowing for other implementation in the future allowing to track, check and
+           possibly alter the production of timestamps.
+        """
+        return pendulum_now()
+
 
 @attr.s(slots=True, frozen=True, auto_attribs=True)
 class UserInfo:
@@ -166,7 +175,12 @@ class UserInfo:
 
     @property
     def is_revoked(self):
-        return pendulum_now() >= self.revoked_on if self.revoked_on else False
+        # Note that we might consider a user revoked even though our current time is still
+        # below the revokation timestamp. This is because there is no clear causality between
+        # our time and the production of the revokation timestamp (as it might have been produced
+        # by another device). So we simply consider a user revoked if a revokation timestamp has
+        # been issued.
+        return bool(self.revoked_on)
 
     def __repr__(self):
         return f"<UserInfo {self.user_display}>"

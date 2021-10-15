@@ -23,8 +23,12 @@ async def user_storage_non_speculative_init(data_base_dir: Path, device: LocalDe
             device, localdb, device.user_manifest_id
         ) as manifest_storage:
 
+            timestamp = device.timestamp()
             manifest = LocalUserManifest.new_placeholder(
-                author=device.device_id, id=device.user_manifest_id, speculative=False
+                author=device.device_id,
+                id=device.user_manifest_id,
+                timestamp=timestamp,
+                speculative=False,
             )
             await manifest_storage.set_manifest(device.user_manifest_id, manifest)
 
@@ -101,8 +105,12 @@ class UserStorage:
             # which is a good enough aproximation of the very first version
             # of the manifest (field `created` is invalid, but it will be
             # correction by the merge during sync).
+            timestamp = self.device.timestamp()
             manifest = LocalUserManifest.new_placeholder(
-                self.device.device_id, id=self.device.user_manifest_id, speculative=True
+                self.device.device_id,
+                id=self.device.user_manifest_id,
+                timestamp=timestamp,
+                speculative=True,
             )
             await self.manifest_storage.set_manifest(self.user_manifest_id, manifest)
 

@@ -534,11 +534,11 @@ async def test_create_organization_wrong_timestamp(
 
     # Patch the pendulum.now() just for the organization creation in the core so we have
     # a different date than the server
-    def _fake_pendulum_now():
+    def _timestamp(device):
         with freeze_time("2000-01-01"):
             return pendulum.now()
 
-    monkeypatch.setattr("parsec.core.invite.organization.pendulum_now", _fake_pendulum_now)
+    monkeypatch.setattr("parsec.core.types.LocalDevice.timestamp", _timestamp)
 
     await _do_creation_process(aqtbot, co_w)
 

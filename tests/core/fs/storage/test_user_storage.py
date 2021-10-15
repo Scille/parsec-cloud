@@ -10,7 +10,10 @@ from tests.common import customize_fixtures
 
 @pytest.fixture
 def user_manifest(alice):
-    return LocalUserManifest.new_placeholder(alice.device_id, id=alice.user_manifest_id)
+    timestamp = alice.timestamp()
+    return LocalUserManifest.new_placeholder(
+        alice.device_id, id=alice.user_manifest_id, timestamp=timestamp
+    )
 
 
 @pytest.fixture

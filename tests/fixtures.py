@@ -3,7 +3,6 @@
 import attr
 import re
 import pytest
-import pendulum
 from collections import defaultdict
 from typing import Union, Optional, Tuple
 from async_generator import asynccontextmanager
@@ -25,7 +24,7 @@ from parsec.backend.backend_events import BackendEvent
 from parsec.backend.user import User as BackendUser, Device as BackendDevice
 from parsec.backend.realm import RealmGrantedRole
 
-from tests.common import afreeze_time, freeze_time, addr_with_device_subdomain
+from tests.common import freeze_time, addr_with_device_subdomain
 
 
 @pytest.fixture
@@ -285,15 +284,14 @@ class InitialUserManifestState:
             return self._v1[(device.organization_id, device.user_id)]
 
         except KeyError:
-            now = pendulum.now()
-
+            timestamp = device.timestamp()
             remote_user_manifest = UserManifest(
                 author=device.device_id,
-                timestamp=now,
+                timestamp=timestamp,
                 id=device.user_manifest_id,
                 version=1,
-                created=now,
-                updated=now,
+                created=timestamp,
+                updated=timestamp,
                 last_processed_message=0,
                 workspaces=(),
             )
@@ -337,7 +335,7 @@ def initialize_local_user_manifest(initial_user_manifest_state):
         assert initial_user_manifest in ("non_speculative_v0", "speculative_v0", "v1")
         # Create a storage just for this operation (the underlying database
         # will be reused by the core's storage thanks to `persistent_mockup`)
-        async with afreeze_time("2000-01-01"):
+        with freeze_time("2000-01-01", device=device) as timestamp:
             async with UserStorage.run(data_base_dir, device) as storage:
                 assert storage.get_user_manifest().base_version == 0
 
@@ -353,6 +351,7 @@ def initialize_local_user_manifest(initial_user_manifest_state):
                     user_manifest = LocalUserManifest.new_placeholder(
                         author=storage.device.device_id,
                         id=storage.device.user_manifest_id,
+                        timestamp=timestamp,
                         speculative=False,
                     )
                     await storage.set_user_manifest(user_manifest)
@@ -374,11 +373,11 @@ def local_device_to_backend_user(
         certifier_id = certifier.device_id
         certifier_signing_key = certifier.signing_key
 
-    now = pendulum.now()
+    timestamp = device.timestamp()
 
     user_certificate = UserCertificateContent(
         author=certifier_id,
-        timestamp=now,
+        timestamp=timestamp,
         user_id=device.user_id,
         public_key=device.public_key,
         profile=device.profile,
@@ -386,7 +385,7 @@ def local_device_to_backend_user(
     )
     device_certificate = DeviceCertificateContent(
         author=certifier_id,
-        timestamp=now,
+        timestamp=timestamp,
         device_id=device.device_id,
         device_label=device.device_label,
         verify_key=device.verify_key,
@@ -401,7 +400,7 @@ def local_device_to_backend_user(
         user_certificate=user_certificate.dump_and_sign(certifier_signing_key),
         redacted_user_certificate=redacted_user_certificate.dump_and_sign(certifier_signing_key),
         user_certifier=certifier_id,
-        created_on=now,
+        created_on=timestamp,
     )
 
     first_device = BackendDevice(
@@ -412,7 +411,7 @@ def local_device_to_backend_user(
             certifier_signing_key
         ),
         device_certifier=certifier_id,
-        created_on=now,
+        created_on=timestamp,
     )
 
     return user, first_device
@@ -659,8 +658,9 @@ def backend_data_binder_factory(request, backend_addr, initial_user_manifest_sta
             self.binded_local_devices.append(device)
 
         async def bind_revocation(self, user_id: UserID, certifier: LocalDevice):
+            timestamp = certifier.timestamp()
             revoked_user_certificate = RevokedUserCertificateContent(
-                author=certifier.device_id, timestamp=pendulum.now(), user_id=user_id
+                author=certifier.device_id, timestamp=timestamp, user_id=user_id
             ).dump_and_sign(certifier.signing_key)
             await self.backend.user.revoke_user(
                 certifier.organization_id, user_id, revoked_user_certificate, certifier.device_id

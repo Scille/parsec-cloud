@@ -6,7 +6,6 @@ import fnmatch
 from uuid import UUID
 from pathlib import Path
 import importlib_resources
-from pendulum import now as pendulum_now
 from typing import Optional, Tuple, List, Pattern
 from structlog import get_logger
 from functools import partial
@@ -244,9 +243,9 @@ class LoggedCore:
         Raises:
             BackendConnectionError
         """
-        now = pendulum_now()
+        timestamp = self.device.timestamp()
         revoked_user_certificate = RevokedUserCertificateContent(
-            author=self.device.device_id, timestamp=now, user_id=user_id
+            author=self.device.device_id, timestamp=timestamp, user_id=user_id
         ).dump_and_sign(self.device.signing_key)
         rep = await self._backend_conn.cmds.user_revoke(
             revoked_user_certificate=revoked_user_certificate

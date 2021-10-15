@@ -1,7 +1,6 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2016-2021 Scille SAS
 
 from typing import Optional
-from pendulum import now as pendulum_now
 
 from parsec.crypto import SigningKey
 from parsec.api.data import UserCertificateContent, DeviceCertificateContent, UserProfile
@@ -52,10 +51,10 @@ async def bootstrap_organization(
         device_label=device_label,
     )
 
-    now = pendulum_now()
+    timestamp = device.timestamp()
     user_certificate = UserCertificateContent(
         author=None,
-        timestamp=now,
+        timestamp=timestamp,
         user_id=device.user_id,
         human_handle=device.human_handle,
         public_key=device.public_key,
@@ -64,7 +63,7 @@ async def bootstrap_organization(
     redacted_user_certificate = user_certificate.evolve(human_handle=None)
     device_certificate = DeviceCertificateContent(
         author=None,
-        timestamp=now,
+        timestamp=timestamp,
         device_id=device.device_id,
         device_label=device.device_label,
         verify_key=device.verify_key,

@@ -3,7 +3,6 @@
 import re
 import pytest
 
-from parsec.api.protocol import DeviceID
 from parsec.core.core_events import CoreEvent
 from parsec.core.types import EntryID, EntryName, Chunk, LocalFolderManifest, LocalFileManifest
 
@@ -83,67 +82,77 @@ def test_merge_folder_children():
     assert result == {"c.tar.gz": m2, "c (conflicting with a@a).tar.gz": m1}
 
 
-def test_merge_folder_manifests():
-    my_device = DeviceID("b@b")
-    other_device = DeviceID("a@a")
+def test_merge_folder_manifests(alice, bob):
+    timestamp = alice.timestamp()
+    my_device = alice.device_id
+    other_device = bob.device_id
     parent = EntryID.new()
-    v1 = LocalFolderManifest.new_placeholder(my_device, parent=parent).to_remote(
-        author=other_device
-    )
+    v1 = LocalFolderManifest.new_placeholder(
+        my_device, parent=parent, timestamp=timestamp
+    ).to_remote(author=other_device, timestamp=timestamp)
 
     # Initial base manifest
     m1 = LocalFolderManifest.from_remote(v1, empty_pattern)
-    assert merge_manifests(my_device, empty_pattern, m1) == m1
+    assert merge_manifests(my_device, timestamp, empty_pattern, m1) == m1
 
     # Local change
-    m2 = m1.evolve_children_and_mark_updated({"a": EntryID.new()}, empty_pattern)
-    assert merge_manifests(my_device, empty_pattern, m2) == m2
+    m2 = m1.evolve_children_and_mark_updated(
+        {"a": EntryID.new()}, empty_pattern, timestamp=timestamp
+    )
+    assert merge_manifests(my_device, timestamp, empty_pattern, m2) == m2
 
     # Successful upload
-    v2 = m2.to_remote(author=my_device)
-    m3 = merge_manifests(my_device, empty_pattern, m2, v2)
+    v2 = m2.to_remote(author=my_device, timestamp=timestamp)
+    m3 = merge_manifests(my_device, timestamp, empty_pattern, m2, v2)
     assert m3 == LocalFolderManifest.from_remote(v2, empty_pattern)
 
     # Two local changes
-    m4 = m3.evolve_children_and_mark_updated({"b": EntryID.new()}, empty_pattern)
-    assert merge_manifests(my_device, empty_pattern, m4) == m4
-    m5 = m4.evolve_children_and_mark_updated({"c": EntryID.new()}, empty_pattern)
-    assert merge_manifests(my_device, empty_pattern, m4) == m4
+    m4 = m3.evolve_children_and_mark_updated(
+        {"b": EntryID.new()}, empty_pattern, timestamp=timestamp
+    )
+    assert merge_manifests(my_device, timestamp, empty_pattern, m4) == m4
+    m5 = m4.evolve_children_and_mark_updated(
+        {"c": EntryID.new()}, empty_pattern, timestamp=timestamp
+    )
+    assert merge_manifests(my_device, timestamp, empty_pattern, m4) == m4
 
     # M4 has been successfully uploaded
-    v3 = m4.to_remote(author=my_device)
-    m6 = merge_manifests(my_device, empty_pattern, m5, v3)
+    v3 = m4.to_remote(author=my_device, timestamp=timestamp)
+    m6 = merge_manifests(my_device, timestamp, empty_pattern, m5, v3)
     assert m6 == m5.evolve(base=v3)
 
     # The remote has changed
     v4 = v3.evolve(version=4, children={"d": EntryID.new(), **v3.children}, author=other_device)
-    m7 = merge_manifests(my_device, empty_pattern, m6, v4)
+    m7 = merge_manifests(my_device, timestamp, empty_pattern, m6, v4)
     assert m7.base_version == 4
     assert sorted(m7.children) == ["a", "b", "c", "d"]
     assert m7.need_sync
 
     # Successful upload
-    v5 = m7.to_remote(author=my_device)
-    m8 = merge_manifests(my_device, empty_pattern, m7, v5)
+    v5 = m7.to_remote(author=my_device, timestamp=timestamp)
+    m8 = merge_manifests(my_device, timestamp, empty_pattern, m7, v5)
     assert m8 == LocalFolderManifest.from_remote(v5, empty_pattern)
 
     # The remote has changed
     v6 = v5.evolve(version=6, children={"e": EntryID.new(), **v5.children}, author=other_device)
-    m9 = merge_manifests(my_device, empty_pattern, m8, v6)
+    m9 = merge_manifests(my_device, timestamp, empty_pattern, m8, v6)
     assert m9 == LocalFolderManifest.from_remote(v6, empty_pattern)
 
 
 @pytest.mark.parametrize("local_change", ("rename", "prevent_sync_rename"))
 @pytest.mark.parametrize("remote_change", ("same_entry_moved", "new_entry_added"))
-def test_merge_folder_manifests_with_concurrent_remote_change(local_change, remote_change):
-    my_device = DeviceID("b@1")
-    other_device = DeviceID("b@2")
+def test_merge_folder_manifests_with_concurrent_remote_change(
+    local_change, remote_change, alice, bob
+):
+    timestamp = alice.timestamp()
+    my_device = alice.device_id
+    other_device = bob.device_id
     parent = EntryID.new()
     foo_txt = EntryID.new()
     remote_manifest_v1 = (
-        LocalFolderManifest.new_placeholder(my_device, parent=parent)
+        LocalFolderManifest.new_placeholder(my_device, parent=parent, timestamp=timestamp)
         .evolve(children={"foo.txt": foo_txt})
-        .to_remote(author=my_device)
+        .to_remote(author=my_device, timestamp=timestamp)
     )
 
     prevent_sync_pattern = re.compile(r".*\.tmp\Z")
@@ -160,7 +169,9 @@ def test_merge_folder_manifests_with_concurrent_remote_change(local_change, remo
         assert local_change == "prevent_sync_rename"
         foo_txt_new_name = "foo.txt.tmp"
     local_manifest = local_manifest.evolve_children_and_mark_updated(
-        data={"foo.txt": None, foo_txt_new_name: foo_txt}, prevent_sync_pattern=prevent_sync_pattern
+        data={"foo.txt": None, foo_txt_new_name: foo_txt},
+        prevent_sync_pattern=prevent_sync_pattern,
+        timestamp=timestamp,
     )
 
     # In remote, a change also occurs
@@ -179,6 +190,7 @@ def test_merge_folder_manifests_with_concurrent_remote_change(local_change, remo
     # Now merging should detect the duplication
     merged_manifest = merge_manifests(
         local_author=my_device,
+        timestamp=timestamp,
         prevent_sync_pattern=prevent_sync_pattern,
         local_manifest=local_manifest,
         remote_manifest=remote_manifest_v2,
@@ -196,69 +208,77 @@ def test_merge_folder_manifests_with_concurrent_remote_change(local_change, remo
             assert list(merged_manifest.children) == ["bar.txt", "foo.txt.tmp"]
 
 
-def test_merge_manifests_with_a_placeholder():
-    my_device = DeviceID("b@b")
-    other_device = DeviceID("a@a")
+def test_merge_manifests_with_a_placeholder(alice, bob):
+    timestamp = alice.timestamp()
+    my_device = alice.device_id
+    other_device = bob.device_id
     parent = EntryID.new()
 
-    m1 = LocalFolderManifest.new_placeholder(my_device, parent=parent)
-    m2 = merge_manifests(my_device, empty_pattern, m1)
+    m1 = LocalFolderManifest.new_placeholder(my_device, parent=parent, timestamp=timestamp)
+    m2 = merge_manifests(my_device, timestamp, empty_pattern, m1)
     assert m2 == m1
-    v1 = m1.to_remote(author=my_device)
+    v1 = m1.to_remote(author=my_device, timestamp=timestamp)
 
-    m2a = merge_manifests(my_device, empty_pattern, m1, v1)
+    m2a = merge_manifests(my_device, timestamp, empty_pattern, m1, v1)
     assert m2a == LocalFolderManifest.from_remote(v1, empty_pattern)
 
-    m2b = m1.evolve_children_and_mark_updated({"a": EntryID.new()}, empty_pattern)
-    m3b = merge_manifests(my_device, empty_pattern, m2b, v1)
+    m2b = m1.evolve_children_and_mark_updated(
+        {"a": EntryID.new()}, empty_pattern, timestamp=timestamp
+    )
+    m3b = merge_manifests(my_device, timestamp, empty_pattern, m2b, v1)
     assert m3b == m2b.evolve(base=v1)
 
     v2 = v1.evolve(version=2, author=other_device, children={"b": EntryID.new()})
-    m2c = m1.evolve_children_and_mark_updated({"a": EntryID.new()}, empty_pattern)
-    m3c = merge_manifests(my_device, empty_pattern, m2c, v2)
+    m2c = m1.evolve_children_and_mark_updated(
+        {"a": EntryID.new()}, empty_pattern, timestamp=timestamp
+    )
+    m3c = merge_manifests(my_device, timestamp, empty_pattern, m2c, v2)
     children = {**v2.children, **m2c.children}
     assert m3c == m2c.evolve(base=v2, children=children, updated=m3c.updated)
 
 
-def test_merge_file_manifests():
-    my_device = DeviceID("b@b")
-    other_device = DeviceID("a@a")
+def test_merge_file_manifests(alice, bob):
+    timestamp = alice.timestamp()
+    my_device = alice.device_id
+    other_device = bob.device_id
     parent = EntryID.new()
-    v1 = LocalFileManifest.new_placeholder(my_device, parent=parent).to_remote(author=other_device)
+    v1 = LocalFileManifest.new_placeholder(my_device, parent=parent, timestamp=timestamp).to_remote(
+        author=other_device, timestamp=timestamp
+    )
 
     def evolve(m, n):
         chunk = Chunk.new(0, n).evolve_as_block(b"a" * n)
         blocks = ((chunk,),)
-        return m1.evolve_and_mark_updated(size=n, blocks=blocks)
+        return m1.evolve_and_mark_updated(size=n, blocks=blocks, timestamp=timestamp)
 
     # Initial base manifest
     m1 = LocalFileManifest.from_remote(v1)
-    assert merge_manifests(my_device, empty_pattern, m1) == m1
+    assert merge_manifests(my_device, timestamp, empty_pattern, m1) == m1
 
     # Local change
     m2 = evolve(m1, 1)
-    assert merge_manifests(my_device, empty_pattern, m2) == m2
+    assert merge_manifests(my_device, timestamp, empty_pattern, m2) == m2
 
     # Successful upload
-    v2 = m2.to_remote(author=my_device)
-    m3 = merge_manifests(my_device, empty_pattern, m2, v2)
+    v2 = m2.to_remote(author=my_device, timestamp=timestamp)
+    m3 = merge_manifests(my_device, timestamp, empty_pattern, m2, v2)
     assert m3 == LocalFileManifest.from_remote(v2)
 
     # Two local changes
     m4 = evolve(m3, 2)
-    assert merge_manifests(my_device, empty_pattern, m4) == m4
+    assert merge_manifests(my_device, timestamp, empty_pattern, m4) == m4
     m5 = evolve(m4, 3)
-    assert merge_manifests(my_device, empty_pattern, m4) == m4
+    assert merge_manifests(my_device, timestamp, empty_pattern, m4) == m4
 
     # M4 has been successfully uploaded
-    v3 = m4.to_remote(author=my_device)
-    m6 = merge_manifests(my_device, empty_pattern, m5, v3)
+    v3 = m4.to_remote(author=my_device, timestamp=timestamp)
+    m6 = merge_manifests(my_device, timestamp, empty_pattern, m5, v3)
     assert m6 == m5.evolve(base=v3)
 
     # The remote has changed
     v4 = v3.evolve(version=4, size=0, author=other_device)
     with pytest.raises(FSFileConflictError):
-        merge_manifests(my_device, empty_pattern, m6, v4)
+        merge_manifests(my_device, timestamp, empty_pattern, m6, v4)
 
 
 @pytest.mark.trio

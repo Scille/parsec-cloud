@@ -26,9 +26,9 @@ def transactions_factory(event_bus, remote_devices_manager_factory):
             # The tests shouldn't need this yet
             assert False
 
-        workspace_entry = WorkspaceEntry.new("test")
+        workspace_entry = WorkspaceEntry.new("test", device.timestamp())
         workspace_manifest = LocalWorkspaceManifest.new_placeholder(
-            device.device_id, id=workspace_entry.id, now=datetime(2000, 1, 1)
+            device.device_id, id=workspace_entry.id, timestamp=datetime(2000, 1, 1)
         )
         async with local_storage.lock_entry_id(workspace_entry.id):
             await local_storage.set_manifest(workspace_entry.id, workspace_manifest)
@@ -122,6 +122,7 @@ def user_fs_offline_state_machine(
             self.user_fs_controller = await self.get_root_nursery().start(
                 call_with_control, _user_fs_controlled_cb
             )
+            return self.user_fs_controller
 
         async def stop_user_fs(self):
             try:
@@ -158,9 +159,9 @@ def user_fs_online_state_machine(
     user_fs_offline_state_machine, backend_factory, server_factory, backend_addr, reset_testbed
 ):
     class UserFSOnlineStateMachine(user_fs_offline_state_machine):
-        async def start_backend(self):
+        async def start_backend(self, **kwargs):
             async def _backend_controlled_cb(started_cb):
-                async with backend_factory() as backend:
+                async with backend_factory(**kwargs) as backend:
                     async with server_factory(backend.handle_client, backend_addr) as server:
                         await started_cb(backend=backend, server=server)
 

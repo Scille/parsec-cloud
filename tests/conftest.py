@@ -49,7 +49,7 @@ from parsec.backend.config import (
 # TODO: needed ?
 pytest.register_assert_rewrite("tests.event_bus_spy")
 
-from tests.common import afreeze_time, addr_with_device_subdomain
+from tests.common import freeze_time, addr_with_device_subdomain
 from tests.postgresql import (
     get_postgresql_url,
     bootstrap_postgresql_testbed,
@@ -635,7 +635,7 @@ def backend_factory(
             event_bus = event_bus_factory()
         async with backend_app_factory(config, event_bus=event_bus) as backend:
             if populated:
-                async with afreeze_time("2000-01-01"):
+                with freeze_time("2000-01-01"):
                     binder = backend_data_binder_factory(backend)
                     await binder.bind_organization(
                         coolorg,
