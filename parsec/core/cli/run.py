@@ -2,6 +2,7 @@
 
 import trio
 import click
+import multiprocessing
 from pathlib import Path
 from pendulum import DateTime, parse as pendulum_parse
 
@@ -34,6 +35,10 @@ else:
         """
         Run parsec GUI
         """
+        # Necessary for DialogInProcess since it's not the default on windows
+        # This method should only be called once which is why we do it here.
+        multiprocessing.set_start_method("spawn")
+
         with cli_exception_handler(config.debug):
             if config.telemetry_enabled and sentry_url:
                 configure_sentry_logging(sentry_url)

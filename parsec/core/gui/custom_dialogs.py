@@ -1,6 +1,7 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2016-2021 Scille SAS
 
 import sys
+import multiprocessing
 
 from PyQt5.QtCore import Qt, pyqtSignal
 from PyQt5.QtGui import QPainter, QValidator
@@ -12,10 +13,12 @@ from PyQt5.QtWidgets import (
     QStyleOption,
     QStyle,
     QSizePolicy,
+    QFileDialog,
 )
 
 from structlog import get_logger
 
+from parsec import _subprocess_dialog
 from parsec.core.gui.lang import translate as _
 from parsec.core.gui import desktop
 from parsec.core.gui.custom_widgets import Button
@@ -120,6 +123,83 @@ class GreyedDialog(QDialog, Ui_GreyedDialog):
         # Resetting the parent on MacOS causes a crash.
         if sys.platform != "darwin":
             self.setParent(None)
+
+
+class QDialogInProcess(GreyedDialog):
+
+    pool = None
+    process_finished = pyqtSignal()
+
+    class DialogCancelled(Exception):
+        pass
+
+    def __init__(self, parent=None):
+        super().__init__(QWidget(), "", parent, hide_close=True)
+        self.MainWidget.hide()
+
+    @classmethod
+    def _exec_method(cls, target_cls, target_method, parent, *args, **kwargs):
+        assert hasattr(target_cls, target_method)
+        # Fire up the process pool is necessary
+        if cls.pool is None:
+            cls.pool = multiprocessing.Pool(processes=1)
+        # Control the lifetime of the pool
+        try:
+            # Show the dialog
+            dialog = cls(parent=parent)
+            dialog.process_finished.connect(dialog.close)
+            dialog.show()
+            # Start the subprocess
+            async_result = cls.pool.apply_async(
+                _subprocess_dialog.run_dialog,
+                (target_cls, target_method, *args),
+                kwargs,
+                lambda *args: dialog.process_finished.emit(),
+                lambda *args: dialog.process_finished.emit(),
+            )
+            # Run the dialog until either the process is finished or the dialog is closed
+            dialog.exec_()
+            # Terminate the process and close the pool if the dialog exited first
+            if not async_result.ready():
+                cls.pool.terminate()
+                cls.pool = None
+                raise dialog.DialogCancelled
+            # Return result
+            return async_result.get()
+        finally:
+            # On OSX, using the same process for several dialogs messes up with the OS
+            # In particular, the parsec icon corresponding to the dialog window persists between calls
+            if sys.platform == "darwin" and cls.pool is not None:
+                cls.pool.close()
+                cls.pool = None
+
+    @classmethod
+    def getOpenFileName(cls, *args, **kwargs):
+        try:
+            return cls._exec_method(QFileDialog, "getOpenFileName", *args, **kwargs)
+        except cls.DialogCancelled:
+            return "", ""
+
+    @classmethod
+    def getOpenFileNames(cls, *args, **kwargs):
+        try:
+            return cls._exec_method(QFileDialog, "getOpenFileNames", *args, **kwargs)
+        except cls.DialogCancelled:
+            return [], ""
+
+    @classmethod
+    def getExistingDirectory(cls, *args, **kwargs):
+        try:
+            return cls._exec_method(QFileDialog, "getExistingDirectory", *args, **kwargs)
+        except cls.DialogCancelled:
+            return ""
+
+    @classmethod
+    def getSaveFileName(cls, *args, **kwargs):
+        try:
+            return cls._exec_method(QFileDialog, "getSaveFileName", *args, **kwargs)
+        except cls.DialogCancelled:
+            return "", ""
 
 
 class TextInputWidget(QWidget, Ui_InputWidget):

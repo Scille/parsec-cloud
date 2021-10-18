@@ -240,7 +240,7 @@ async def test_file_browsing_and_edit(
 
     # Import files
     monkeypatch.setattr(
-        "PyQt5.QtWidgets.QFileDialog.getOpenFileNames",
+        "parsec.core.gui.custom_dialogs.QDialogInProcess.getOpenFileNames",
         classmethod(
             lambda *args, **kwargs: (
                 [out_of_parsec_data / "file1.txt", out_of_parsec_data / "file2.txt"],
@@ -256,7 +256,7 @@ async def test_file_browsing_and_edit(
 
     # Import folder
     monkeypatch.setattr(
-        "PyQt5.QtWidgets.QFileDialog.getExistingDirectory",
+        "parsec.core.gui.custom_dialogs.QDialogInProcess.getExistingDirectory",
         classmethod(lambda *args, **kwargs: out_of_parsec_data / "dir3"),
     )
     async with aqtbot.wait_signal(f_w.import_success):
@@ -569,7 +569,7 @@ async def test_import_file_permission_denied(
         # Try importing one file
 
         monkeypatch.setattr(
-            "PyQt5.QtWidgets.QFileDialog.getOpenFileNames",
+            "parsec.core.gui.custom_dialogs.QDialogInProcess.getOpenFileNames",
             classmethod(lambda *args, **kwargs: ([file1], True)),
         )
 
@@ -589,7 +589,7 @@ async def test_import_file_permission_denied(
         # Try importing multiple files
 
         monkeypatch.setattr(
-            "PyQt5.QtWidgets.QFileDialog.getOpenFileNames",
+            "parsec.core.gui.custom_dialogs.QDialogInProcess.getOpenFileNames",
             classmethod(lambda *args, **kwargs: ([file1, file2], True)),
         )
 
