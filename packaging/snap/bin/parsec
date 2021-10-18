@@ -1,9 +1,14 @@
 #! /bin/sh
 
 mkdir -p ~/.config/parsec
-export XDG_CURRENT_DESKTOP=unknown
 PYTHON=${SNAP}/usr/bin/python3.8
 export PYTHONPATH=${SNAP}/site-packages
+
+# This was a hot fix from 2019 for a segfault with ubuntu 18
+# See https://github.com/Scille/parsec-cloud/issues/162 for more information.
+# This is likely why we don't have native dialogs on linux with snap.
+# TODO: Investigate whether this is still necessary or not
+export XDG_CURRENT_DESKTOP=unknown
 
 # SNAP env variable is used by Qt to determine we are within a sandbox
 # and hence should use xdg-desktop-portal. However this is broken
