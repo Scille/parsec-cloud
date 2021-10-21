@@ -19,6 +19,7 @@ from parsec.backend.realm import (
     RealmIncompatibleProfileError,
     RealmAlreadyExistsError,
     RealmRoleAlreadyGranted,
+    RealmRoleRequireGreaterTimestampError,
     RealmNotFoundError,
     RealmEncryptionRevisionError,
     RealmParticipantsMismatchError,
@@ -47,6 +48,13 @@ class Realm:
             else:
                 roles[x.user_id] = x.role
         return roles
+
+    def get_latest_role(self, user_id: UserID) -> Optional[RealmGrantedRole]:
+        filtered_roles = [role for role in self.granted_roles if role.user_id == user_id]
+        try:
+            return max(filtered_roles, key=lambda role: role.granted_on)
+        except ValueError:
+            return None
 
 
 class MemoryRealmComponent(BaseRealmComponent):
@@ -198,6 +206,19 @@ class MemoryRealmComponent(BaseRealmComponent):
 
         if existing_user_role == new_role.role:
             raise RealmRoleAlreadyGranted()
+
+        latest_role = realm.get_latest_role(new_role.user_id)
+        realm_last_change = self._vlob_component._get_last_change(
+            organization_id, new_role.realm_id
+        )
+        if (realm_last_change is not None and realm_last_change > new_role.granted_on) or (
+            latest_role is not None and latest_role.granted_on > new_role.granted_on
+        ):
+            latest_role_granted_on = None if latest_role is None else latest_role.granted_on
+            max_timestamp: pendulum.DateTime = max(
+                filter(None, [realm_last_change, latest_role_granted_on])
+            )
+            raise RealmRoleRequireGreaterTimestampError(max_timestamp)
 
         realm.granted_roles.append(new_role)
 

@@ -616,12 +616,11 @@ class WorkspaceFS:
             if isinstance(new_remote_manifest, RemoteFileManifest):
                 await self._upload_blocks(cast(RemoteFileManifest, new_remote_manifest))
 
-            # Restamp the remote manifest
-            new_remote_manifest = new_remote_manifest.evolve(timestamp=self.device.timestamp())
-
             # Upload the new manifest containing the latest changes
             try:
-                await self.remote_loader.upload_manifest(entry_id, new_remote_manifest)
+                remote_manifest = await self.remote_loader.upload_manifest(
+                    entry_id, new_remote_manifest
+                )
 
             # The upload has failed: download the latest remote manifest
             except FSRemoteSyncError:
@@ -630,7 +629,6 @@ class WorkspaceFS:
             # The upload has succeeded: loop one last time to acknowledge this new version
             else:
                 final = True
-                remote_manifest = new_remote_manifest
 
     async def _create_realm_if_needed(self) -> None:
         workspace_manifest = self.local_storage.get_workspace_manifest()

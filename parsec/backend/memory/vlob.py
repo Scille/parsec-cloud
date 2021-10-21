@@ -22,7 +22,9 @@ from parsec.backend.vlob import (
     VlobEncryptionRevisionError,
     VlobInMaintenanceError,
     VlobNotInMaintenanceError,
+    VlobRequireGreaterTimestampError,
 )
+from parsec.serde.fields import DateTime
 
 
 @attr.s
@@ -96,6 +98,7 @@ class Changes:
     checkpoint: int = attr.ib(default=0)
     changes: Dict[UUID, Tuple[DeviceID, int, int]] = attr.ib(factory=dict)
     reencryption: Reencryption = attr.ib(default=None)
+    last_change: DateTime = attr.ib(default=None)
 
 
 class MemoryVlobComponent(BaseVlobComponent):
@@ -139,18 +142,32 @@ class MemoryVlobComponent(BaseVlobComponent):
         except KeyError:
             raise VlobNotFoundError(f"Vlob `{vlob_id}` doesn't exist")
 
-    def _check_realm_read_access(self, organization_id, realm_id, user_id, encryption_revision):
-        self._check_realm_access(
-            organization_id, realm_id, user_id, encryption_revision, OperationKind.DATA_READ
+    def _check_realm_read_access(
+        self, organization_id, realm_id, user_id, encryption_revision, timestamp
+    ):
+        return self._check_realm_access(
+            organization_id,
+            realm_id,
+            user_id,
+            encryption_revision,
+            timestamp,
+            OperationKind.DATA_READ,
         )
 
-    def _check_realm_write_access(self, organization_id, realm_id, user_id, encryption_revision):
-        self._check_realm_access(
-            organization_id, realm_id, user_id, encryption_revision, OperationKind.DATA_WRITE
+    def _check_realm_write_access(
+        self, organization_id, realm_id, user_id, encryption_revision, timestamp
+    ):
+        return self._check_realm_access(
+            organization_id,
+            realm_id,
+            user_id,
+            encryption_revision,
+            timestamp,
+            OperationKind.DATA_WRITE,
         )
 
     def _check_realm_access(
-        self, organization_id, realm_id, user_id, encryption_revision, operation_kind
+        self, organization_id, realm_id, user_id, encryption_revision, timestamp, operation_kind
     ):
         try:
             realm = self._realm_component._get_realm(organization_id, realm_id)
@@ -177,6 +194,11 @@ class MemoryVlobComponent(BaseVlobComponent):
         # Check the role
         if realm.roles.get(user_id) not in allowed_roles:
             raise VlobAccessError()
+
+        # Check the timestamp for write operations
+        latest_role_granted_on = realm.get_latest_role(user_id).granted_on
+        if operation_kind == OperationKind.DATA_WRITE and latest_role_granted_on > timestamp:
+            raise VlobRequireGreaterTimestampError(latest_role_granted_on)
 
         # Special case of reading while in reencryption
         if operation_kind == OperationKind.DATA_READ and realm.status.in_reencryption:
@@ -219,17 +241,31 @@ class MemoryVlobComponent(BaseVlobComponent):
             ):
                 raise VlobEncryptionRevisionError()
 
+        # Return the real for later use
+        return realm
+
     def _check_realm_in_maintenance_access(
         self, organization_id, realm_id, user_id, encryption_revision
     ):
-        self._check_realm_access(
-            organization_id, realm_id, user_id, encryption_revision, OperationKind.MAINTENANCE
+        return self._check_realm_access(
+            organization_id, realm_id, user_id, encryption_revision, None, OperationKind.MAINTENANCE
         )
 
-    async def _update_changes(self, organization_id, author, realm_id, src_id, src_version=1):
+    def _get_last_change(
+        self, organization_id: OrganizationID, realm_id: UUID
+    ) -> Optional[DateTime]:
+        changes = self._per_realm_changes[(organization_id, realm_id)]
+        return changes.last_change
+
+    async def _update_changes(
+        self, organization_id, author, realm_id, src_id, timestamp, src_version=1
+    ):
         changes = self._per_realm_changes[(organization_id, realm_id)]
         changes.checkpoint += 1
         changes.changes[src_id] = (author, changes.checkpoint, src_version)
+        changes.last_change = (
+            timestamp if changes.last_change is None else max(changes.last_change, timestamp)
+        )
         await self._send_event(
             BackendEvent.REALM_VLOBS_UPDATED,
             organization_id=organization_id,
@@ -251,7 +287,7 @@ class MemoryVlobComponent(BaseVlobComponent):
         blob: bytes,
     ) -> None:
         self._check_realm_write_access(
-            organization_id, realm_id, author.user_id, encryption_revision
+            organization_id, realm_id, author.user_id, encryption_revision, timestamp
         )
 
         key = (organization_id, vlob_id)
@@ -260,7 +296,7 @@ class MemoryVlobComponent(BaseVlobComponent):
 
         self._vlobs[key] = Vlob(realm_id, [(blob, author, timestamp)])
 
-        await self._update_changes(organization_id, author, realm_id, vlob_id)
+        await self._update_changes(organization_id, author, realm_id, vlob_id, timestamp)
 
     async def read(
         self,
@@ -270,11 +306,11 @@ class MemoryVlobComponent(BaseVlobComponent):
         vlob_id: UUID,
         version: Optional[int] = None,
         timestamp: Optional[pendulum.DateTime] = None,
-    ) -> Tuple[int, bytes, DeviceID, pendulum.DateTime]:
+    ) -> Tuple[int, bytes, DeviceID, pendulum.DateTime, pendulum.DateTime]:
         vlob = self._get_vlob(organization_id, vlob_id)
 
-        self._check_realm_read_access(
-            organization_id, vlob.realm_id, author.user_id, encryption_revision
+        realm = self._check_realm_read_access(
+            organization_id, vlob.realm_id, author.user_id, encryption_revision, timestamp
         )
 
         if version is None:
@@ -289,7 +325,8 @@ class MemoryVlobComponent(BaseVlobComponent):
                     raise VlobVersionError()
         try:
             vlob_data, vlob_device_id, vlob_timestamp = vlob.data[version - 1]
-            return (version, vlob_data, vlob_device_id, vlob_timestamp)
+            last_role_granted_on = realm.get_latest_role(vlob_device_id.user_id).granted_on
+            return (version, vlob_data, vlob_device_id, vlob_timestamp, last_role_granted_on)
 
         except IndexError:
             raise VlobVersionError()
@@ -307,7 +344,7 @@ class MemoryVlobComponent(BaseVlobComponent):
         vlob = self._get_vlob(organization_id, vlob_id)
 
         self._check_realm_write_access(
-            organization_id, vlob.realm_id, author.user_id, encryption_revision
+            organization_id, vlob.realm_id, author.user_id, encryption_revision, timestamp
         )
 
         if version - 1 != vlob.current_version:
@@ -316,12 +353,14 @@ class MemoryVlobComponent(BaseVlobComponent):
             raise VlobTimestampError(timestamp, vlob.data[vlob.current_version - 1][2])
         vlob.data.append((blob, author, timestamp))
 
-        await self._update_changes(organization_id, author, vlob.realm_id, vlob_id, version)
+        await self._update_changes(
+            organization_id, author, vlob.realm_id, vlob_id, timestamp, version
+        )
 
     async def poll_changes(
         self, organization_id: OrganizationID, author: DeviceID, realm_id: UUID, checkpoint: int
     ) -> Tuple[int, Dict[UUID, int]]:
-        self._check_realm_read_access(organization_id, realm_id, author.user_id, None)
+        self._check_realm_read_access(organization_id, realm_id, author.user_id, None, None)
 
         changes = self._per_realm_changes[(organization_id, realm_id)]
         changes_since_checkpoint = {
@@ -336,7 +375,7 @@ class MemoryVlobComponent(BaseVlobComponent):
     ) -> Dict[int, Tuple[pendulum.DateTime, DeviceID]]:
         vlobs = self._get_vlob(organization_id, vlob_id)
 
-        self._check_realm_read_access(organization_id, vlobs.realm_id, author.user_id, None)
+        self._check_realm_read_access(organization_id, vlobs.realm_id, author.user_id, None, None)
         return {k: (v[2], v[1]) for (k, v) in enumerate(vlobs.data, 1)}
 
     async def maintenance_get_reencryption_batch(

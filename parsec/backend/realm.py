@@ -68,6 +68,12 @@ class RealmMaintenanceError(RealmError):
     pass
 
 
+class RealmRoleRequireGreaterTimestampError(RealmError):
+    @property
+    def timestamp(self):
+        return self.args[0]
+
+
 @attr.s(slots=True, frozen=True, auto_attribs=True)
 class RealmStatus:
     maintenance_type: Optional[MaintenanceType]
@@ -289,6 +295,11 @@ class BaseRealmComponent:
 
         except RealmAccessError:
             return realm_update_roles_serializer.rep_dump({"status": "not_allowed"})
+
+        except RealmRoleRequireGreaterTimestampError as exc:
+            return realm_update_roles_serializer.rep_dump(
+                {"status": "require_greater_timestamp", "timestamp": exc.timestamp}
+            )
 
         except RealmIncompatibleProfileError as exc:
             return realm_update_roles_serializer.rep_dump(

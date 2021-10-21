@@ -53,7 +53,7 @@ class PGVlobComponent(BaseVlobComponent):
         vlob_id: UUID,
         version: Optional[int] = None,
         timestamp: Optional[pendulum.DateTime] = None,
-    ) -> Tuple[int, bytes, DeviceID, pendulum.DateTime]:
+    ) -> Tuple[int, bytes, DeviceID, pendulum.DateTime, pendulum.DateTime]:
         async with self.dbh.pool.acquire() as conn:
             return await query_read(
                 conn, organization_id, author, encryption_revision, vlob_id, version, timestamp

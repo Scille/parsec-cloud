@@ -20,7 +20,7 @@ from structlog import get_logger
 
 from async_generator import asynccontextmanager
 
-from parsec.utils import open_service_nursery
+from parsec.utils import open_service_nursery, timestamps_in_the_ballpark
 from parsec.core.core_events import CoreEvent
 from parsec.event_bus import EventBus
 from parsec.crypto import SecretKey
@@ -556,7 +556,7 @@ class UserFS:
                 # retrying the sync
                 await self._inbound_sync()
 
-    async def _outbound_sync_inner(self) -> bool:
+    async def _outbound_sync_inner(self, timestamp_greater_than: Optional[DateTime] = None) -> bool:
         base_um = self.get_user_manifest()
         if not base_um.need_sync:
             return True
@@ -592,6 +592,8 @@ class UserFS:
 
         # Build vlob
         timestamp = self.device.timestamp()
+        if timestamp_greater_than is not None:
+            timestamp = max(timestamp, timestamp_greater_than.add(microseconds=1))
         to_sync_um = base_um.to_remote(author=self.device.device_id, timestamp=timestamp)
         ciphered = to_sync_um.dump_sign_and_encrypt(
             author_signkey=self.device.signing_key, key=self.device.user_manifest_key
@@ -623,6 +625,8 @@ class UserFS:
             raise FSWorkspaceInMaintenance(
                 f"Cannot modify workspace data while it is in maintenance: {rep}"
             )
+        elif rep["status"] == "require_greater_timestamp":
+            return await self._outbound_sync_inner(rep["timestamp"])
         elif rep["status"] != "ok":
             raise FSError(f"Cannot sync user manifest: {rep}")
 
@@ -664,7 +668,11 @@ class UserFS:
             pass
 
     async def workspace_share(
-        self, workspace_id: EntryID, recipient: UserID, role: Optional[WorkspaceRole]
+        self,
+        workspace_id: EntryID,
+        recipient: UserID,
+        role: Optional[WorkspaceRole],
+        timestamp_greater_than: Optional[DateTime] = None,
     ) -> None:
         """
         Raises:
@@ -694,6 +702,9 @@ class UserFS:
         # could be outdated (and backend will do the check anyway)
 
         timestamp = self.device.timestamp()
+        if timestamp_greater_than is not None:
+            assert timestamps_in_the_ballpark(timestamp, timestamp_greater_than)
+            timestamp = max(timestamp, timestamp_greater_than.add(microseconds=1))
 
         # Build the sharing message
         try:
@@ -747,6 +758,8 @@ class UserFS:
             raise FSSharingNotAllowedError(
                 f"Must be Owner or Manager on the workspace is mandatory to share it: {rep}"
             )
+        elif rep["status"] == "require_greater_timestamp":
+            return await self.workspace_share(workspace_id, recipient, role, rep["timestamp"])
         elif rep["status"] == "in_maintenance":
             raise FSWorkspaceInMaintenance(
                 f"Cannot share workspace while it is in maintenance: {rep}"

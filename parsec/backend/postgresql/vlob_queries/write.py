@@ -128,7 +128,7 @@ async def query_update(
 ) -> None:
     realm_id = await _get_realm_id_from_vlob_id(conn, organization_id, vlob_id)
     await _check_realm_and_write_access(
-        conn, organization_id, author, realm_id, encryption_revision
+        conn, organization_id, author, realm_id, encryption_revision, timestamp
     )
 
     previous = await conn.fetchrow(
@@ -211,7 +211,7 @@ async def query_create(
     blob: bytes,
 ) -> None:
     await _check_realm_and_write_access(
-        conn, organization_id, author, realm_id, encryption_revision
+        conn, organization_id, author, realm_id, encryption_revision, timestamp
     )
 
     # Actually create the vlob

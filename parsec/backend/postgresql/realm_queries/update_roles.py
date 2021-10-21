@@ -1,5 +1,6 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) BSLv1.1 (eventually AGPLv3) 2016-2021 Scille SAS
 
+import pendulum
 from typing import Optional, Tuple
 
 from parsec.backend.backend_events import BackendEvent
@@ -12,6 +13,7 @@ from parsec.backend.realm import (
     RealmRoleAlreadyGranted,
     RealmNotFoundError,
     RealmInMaintenanceError,
+    RealmRoleRequireGreaterTimestampError,
 )
 from parsec.backend.postgresql.handler import send_signal
 from parsec.backend.postgresql.message import send_message
@@ -45,7 +47,7 @@ _q_get_roles = Q(
 SELECT
     { q_user_internal_id(organization_id="$organization_id", user_id="needle_user_id") },
     (
-        SELECT role
+        SELECT ROW(role::text, certified_on)
         FROM realm_user_role
         WHERE
             user_ = { q_user_internal_id(organization_id="$organization_id", user_id="needle_user_id") }
@@ -73,6 +75,17 @@ INSERT INTO realm_user_role(
     $certificate,
     { q_device_internal_id(organization_id="$organization_id", device_id="$granted_by") },
     $granted_on
+"""
+)
+
+
+_q_get_last_change = Q(
+    f"""
+SELECT
+    created_on
+FROM vlob_atom
+ORDER BY created_on DESC
+LIMIT 1
 """
 )
 
@@ -121,9 +134,15 @@ async def query_update_roles(
     assert user_id
 
     if author_role is not None:
-        author_role = RealmRole(author_role)
+        author_role, _ = author_role
+        if author_role is not None:
+            author_role = RealmRole(author_role)
+
+    latest_role_granted_on = None
     if existing_user_role is not None:
-        existing_user_role = RealmRole(existing_user_role)
+        existing_user_role, latest_role_granted_on = existing_user_role
+        if existing_user_role is not None:
+            existing_user_role = RealmRole(existing_user_role)
 
     owner_only = (RealmRole.OWNER,)
     owner_or_manager = (RealmRole.OWNER, RealmRole.MANAGER)
@@ -139,6 +158,18 @@ async def query_update_roles(
 
     if existing_user_role == new_role.role:
         raise RealmRoleAlreadyGranted()
+
+    # TODO: How do make it organization/realm/user specific?
+    realm_last_change = await conn.fetchrow(*_q_get_last_change())
+    if realm_last_change is not None:
+        realm_last_change, = realm_last_change
+    if (realm_last_change is not None and realm_last_change > new_role.granted_on) or (
+        latest_role_granted_on is not None and latest_role_granted_on > new_role.granted_on
+    ):
+        max_timestamp: pendulum.DateTime = max(
+            filter(None, [realm_last_change, latest_role_granted_on])
+        )
+        raise RealmRoleRequireGreaterTimestampError(max_timestamp)
 
     await conn.execute(
         *_q_insert_realm_user_role(

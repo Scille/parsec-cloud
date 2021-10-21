@@ -63,6 +63,12 @@ class VlobMaintenanceError(VlobError):
     pass
 
 
+class VlobRequireGreaterTimestampError(VlobError):
+    @property
+    def timestamp(self):
+        return self.args[0]
+
+
 class BaseVlobComponent:
     @api("vlob_create")
     @catch_protocol_errors
@@ -82,6 +88,11 @@ class BaseVlobComponent:
         except (VlobAccessError, VlobRealmNotFoundError):
             return vlob_create_serializer.rep_dump({"status": "not_allowed"})
 
+        except VlobRequireGreaterTimestampError as exc:
+            return vlob_create_serializer.rep_dump(
+                {"status": "require_greater_timestamp", "timestamp": exc.timestamp}
+            )
+
         except VlobEncryptionRevisionError:
             return vlob_create_serializer.rep_dump({"status": "bad_encryption_revision"})
 
@@ -96,7 +107,7 @@ class BaseVlobComponent:
         msg = vlob_read_serializer.req_load(msg)
 
         try:
-            version, blob, author, created_on = await self.read(
+            version, blob, author, created_on, last_role_granted_on = await self.read(
                 client_ctx.organization_id, client_ctx.device_id, **msg
             )
 
@@ -125,6 +136,7 @@ class BaseVlobComponent:
                 "version": version,
                 "author": author,
                 "timestamp": created_on,
+                "last_role_granted_on": last_role_granted_on,
             }
         )
 
@@ -145,6 +157,11 @@ class BaseVlobComponent:
 
         except VlobAccessError:
             return vlob_update_serializer.rep_dump({"status": "not_allowed"})
+
+        except VlobRequireGreaterTimestampError as exc:
+            return vlob_update_serializer.rep_dump(
+                {"status": "require_greater_timestamp", "timestamp": exc.timestamp}
+            )
 
         except VlobVersionError:
             return vlob_update_serializer.rep_dump({"status": "bad_version"})
@@ -323,7 +340,7 @@ class BaseVlobComponent:
         vlob_id: UUID,
         version: Optional[int] = None,
         timestamp: Optional[pendulum.DateTime] = None,
-    ) -> Tuple[int, bytes, DeviceID, pendulum.DateTime]:
+    ) -> Tuple[int, bytes, DeviceID, pendulum.DateTime, pendulum.DateTime]:
         """
         Raises:
             VlobAccessError
