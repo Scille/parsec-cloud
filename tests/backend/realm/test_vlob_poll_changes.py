@@ -10,7 +10,7 @@ from parsec.api.protocol import RealmRole
 from tests.backend.common import realm_update_roles, vlob_update, vlob_poll_changes
 
 
-NOW = datetime(2000, 1, 1)
+NOW = datetime(2000, 1, 3)
 VLOB_ID = UUID("00000000000000000000000000000001")
 OTHER_VLOB_ID = UUID("00000000000000000000000000000002")
 YET_ANOTHER_VLOB_ID = UUID("00000000000000000000000000000003")

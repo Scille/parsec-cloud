@@ -1579,6 +1579,11 @@
                             "required": true,
                             "type": "bytesField"
                         },
+                        "last_role_granted_on": {
+                            "allow_none": true,
+                            "required": false,
+                            "type": "DateTime"
+                        },
                         "status": {
                             "allow_none": false,
                             "required": true,

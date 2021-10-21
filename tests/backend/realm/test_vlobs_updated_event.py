@@ -11,7 +11,7 @@ from parsec.backend.backend_events import BackendEvent
 from tests.backend.common import events_subscribe, events_listen_nowait
 
 
-NOW = datetime(2000, 1, 1)
+NOW = datetime(2000, 1, 3)
 VLOB_ID = UUID("00000000000000000000000000000001")
 OTHER_VLOB_ID = UUID("00000000000000000000000000000002")
 YET_ANOTHER_VLOB_ID = UUID("00000000000000000000000000000003")

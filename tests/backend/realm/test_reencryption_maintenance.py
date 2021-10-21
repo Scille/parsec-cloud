@@ -495,7 +495,7 @@ async def test_reencryption_provide_unknown_vlob_atom_and_duplications(
             vlob_id=duplicated_vlob_id,
             version=99,
         )
-    _, content, _, _ = await backend.vlob.read(
+    _, content, _, _, _ = await backend.vlob.read(
         organization_id=alice.organization_id,
         author=alice.device_id,
         encryption_revision=2,

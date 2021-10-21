@@ -105,6 +105,7 @@ async def test_invalid_timestamp(testbed, alice, alice2):
 
 
 @pytest.mark.trio
+@pytest.mark.skip("How do we test this error now that the backend no longer allows it?")
 async def test_no_user_certif(testbed, alice, bob):
     # Data created before workspace manifest access
     exc_msg = "Manifest was created at 2000-01-02T00:00:00+00:00 by `bob@dev1` which had no right to access the workspace at that time"
