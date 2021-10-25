@@ -11,6 +11,7 @@ from parsec.api.protocol import OrganizationID, DeviceID, HumanHandle
 from parsec.core.types import LocalDevice
 from parsec.core.local_device import (
     AvailableDevice,
+    DeviceFileType,
     get_key_file,
     get_default_key_file,
     get_devices_dir,
@@ -80,6 +81,7 @@ def test_list_devices(organization_factory, local_device_factory, config_dir):
             human_handle=d.human_handle,
             device_label=d.device_label,
             slug=d.slug,
+            type=DeviceFileType.PASSWORD,
         )
         for d in [o1d11, o1d12, o1d21, o2d11, o2d12, o2d21]
     }
@@ -102,6 +104,7 @@ def test_list_devices_support_legacy_file_without_labels(config_dir):
         human_handle=None,
         device_label=None,
         slug=slug,
+        type=DeviceFileType.PASSWORD,
     )
     assert devices == [expected_device]
 
@@ -114,6 +117,7 @@ def test_available_device_display(config_dir, alice):
         human_handle=None,
         device_label=None,
         slug=alice.slug,
+        type=DeviceFileType.PASSWORD,
     )
 
     with_labels = AvailableDevice(
@@ -123,6 +127,7 @@ def test_available_device_display(config_dir, alice):
         human_handle=alice.human_handle,
         device_label=alice.device_label,
         slug=alice.slug,
+        type=DeviceFileType.PASSWORD,
     )
 
     assert without_labels.device_display == alice.device_name
@@ -143,6 +148,7 @@ def test_available_devices_slughash_uniqueness(
             human_handle=device.human_handle,
             device_label=device.device_label,
             slug=device.slug,
+            type=DeviceFileType.PASSWORD,
         )
 
     def _assert_different_as_available(d1, d2):
@@ -334,6 +340,60 @@ def test_list_devices_support_legacy_file_with_meaningful_name(config_dir):
         human_handle=HumanHandle(human_email, human_label),
         device_label=device_label,
         slug=slug,
+        type=DeviceFileType.PASSWORD,
+    )
+    assert devices == [expected_device]
+    assert get_key_file(config_dir, expected_device) == key_file_path
+
+
+@pytest.mark.parametrize("type", ("password", "smartcard"))
+def test_list_devices_support_key_file(config_dir, type):
+    if type == "password":
+        data_extra = {"type": "password"}
+        available_device_extra = {"type": DeviceFileType.PASSWORD}
+
+    elif type == "smartcard":
+        data_extra = {"type": "smartcard", "id": 42}
+        available_device_extra = {"type": DeviceFileType.SMARTCARD}
+
+    # Device information
+    user_id = uuid4().hex
+    device_name = uuid4().hex
+    organization_id = "Org"
+    rvk_hash = (uuid4().hex)[:10]
+    device_id = f"{user_id}@{device_name}"
+    slug = f"{rvk_hash}#{organization_id}#{device_id}"
+    human_label = "Billy Mc BillFace"
+    human_email = "billy@bill.com"
+    device_label = "My device"
+
+    # Craft file data
+    key_file_data = packb(
+        {
+            "salt": b"12345",
+            "ciphertext": b"whatever",
+            "human_handle": (human_email.encode(), human_label.encode()),
+            "device_label": device_label.encode(),
+            "device_id": device_id,
+            "organization_id": organization_id,
+            "slug": slug,
+            **data_extra,
+        }
+    )
+
+    key_file_path = get_devices_dir(config_dir) / "device.keys"
+    key_file_path.parent.mkdir(parents=True)
+    key_file_path.write_bytes(key_file_data)
+
+    devices = list_available_devices(config_dir)
+    expected_device = AvailableDevice(
+        key_file_path=key_file_path,
+        organization_id=OrganizationID(organization_id),
+        device_id=DeviceID(device_id),
+        human_handle=HumanHandle(human_email, human_label),
+        device_label=device_label,
+        slug=slug,
+        **available_device_extra,
     )
     assert devices == [expected_device]
     assert get_key_file(config_dir, expected_device) == key_file_path
