@@ -7,7 +7,7 @@ from typing import List, Tuple, Dict, Optional
 from collections import defaultdict
 
 from parsec.backend.backend_events import BackendEvent
-from parsec.api.protocol import DeviceID, OrganizationID
+from parsec.api.protocol import DeviceID, OrganizationID, UserID
 from parsec.api.protocol import RealmRole
 from parsec.backend.utils import OperationKind
 from parsec.backend.realm import BaseRealmComponent, RealmNotFoundError
@@ -98,7 +98,7 @@ class Changes:
     checkpoint: int = attr.ib(default=0)
     changes: Dict[UUID, Tuple[DeviceID, int, int]] = attr.ib(factory=dict)
     reencryption: Reencryption = attr.ib(default=None)
-    last_change: DateTime = attr.ib(default=None)
+    last_vlob_update_per_user: Dict[UserID, DateTime] = attr.ib(factory=dict)
 
 
 class MemoryVlobComponent(BaseVlobComponent):
@@ -254,11 +254,11 @@ class MemoryVlobComponent(BaseVlobComponent):
             organization_id, realm_id, user_id, encryption_revision, None, OperationKind.MAINTENANCE
         )
 
-    def _get_last_change(
-        self, organization_id: OrganizationID, realm_id: UUID
+    def _get_last_vlob_update(
+        self, organization_id: OrganizationID, realm_id: UUID, user_id: UserID
     ) -> Optional[DateTime]:
         changes = self._per_realm_changes[(organization_id, realm_id)]
-        return changes.last_change
+        return changes.last_vlob_update_per_user.get(user_id)
 
     async def _update_changes(
         self, organization_id, author, realm_id, src_id, timestamp, src_version=1
@@ -266,8 +266,10 @@ class MemoryVlobComponent(BaseVlobComponent):
         changes = self._per_realm_changes[(organization_id, realm_id)]
         changes.checkpoint += 1
         changes.changes[src_id] = (author, changes.checkpoint, src_version)
-        changes.last_change = (
-            timestamp if changes.last_change is None else max(changes.last_change, timestamp)
+
+        current_value = changes.last_vlob_update_per_user.get(author.user_id)
+        changes.last_vlob_update_per_user[author.user_id] = (
+            timestamp if current_value is None else max(current_value, timestamp)
         )
         await self._send_event(
             BackendEvent.REALM_VLOBS_UPDATED,

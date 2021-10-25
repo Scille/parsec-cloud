@@ -38,6 +38,7 @@ class Realm:
     status: RealmStatus = attr.ib(factory=lambda: RealmStatus(None, None, None, 1))
     checkpoint: int = attr.ib(default=0)
     granted_roles: List[RealmGrantedRole] = attr.ib(factory=list)
+    last_role_change_per_user: Dict[UserID, pendulum.DateTime] = attr.ib(factory=dict)
 
     @property
     def roles(self):
@@ -216,13 +217,29 @@ class MemoryRealmComponent(BaseRealmComponent):
         if new_role.role in (RealmRole.READER, None):
 
             # The change of role needs to occur strictly after the last upload for this user
-            realm_last_change = self._vlob_component._get_last_change(
-                organization_id, new_role.realm_id
+            realm_last_vlob_update = self._vlob_component._get_last_vlob_update(
+                organization_id, new_role.realm_id, new_role.user_id
             )
-            if realm_last_change is not None and realm_last_change >= new_role.granted_on:
-                raise RealmRoleRequireGreaterTimestampError(realm_last_change)
+            if realm_last_vlob_update is not None and realm_last_vlob_update >= new_role.granted_on:
+                raise RealmRoleRequireGreaterTimestampError(realm_last_vlob_update)
 
+        # Perform extra checks when removing management rights
+        if new_role.role in (RealmRole.CONTRIBUTOR, RealmRole.READER, None):
+
+            # The change of role needs to occur strictly after the last change of role performed by this user
+            realm_last_role_change = realm.last_role_change_per_user.get(new_role.user_id)
+            if realm_last_role_change is not None and realm_last_role_change >= new_role.granted_on:
+                raise RealmRoleRequireGreaterTimestampError(realm_last_role_change)
+
+        # Update role and record last change timestamp for this user
         realm.granted_roles.append(new_role)
+        author_user_id = new_role.granted_by.user_id
+        current_value = realm.last_role_change_per_user.get(author_user_id)
+        realm.last_role_change_per_user[author_user_id] = (
+            new_role.granted_on
+            if current_value is None
+            else max(current_value, new_role.granted_on)
+        )
 
         await self._send_event(
             BackendEvent.REALM_ROLES_UPDATED,
