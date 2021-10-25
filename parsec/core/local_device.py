@@ -5,6 +5,7 @@ from pathlib import Path
 from hashlib import sha256
 from typing import List, Optional, Iterator
 
+from parsec.core.types.local_device import AuthenticationType
 from parsec.serde import BaseSchema, fields, MsgpackSerializer
 from parsec.crypto import (
     SecretKey,
@@ -97,6 +98,7 @@ def generate_new_device(
     device_label: Optional[str] = None,
     signing_key: Optional[SigningKey] = None,
     private_key: Optional[PrivateKey] = None,
+    auth_type: AuthenticationType = AuthenticationType.PASSWORD,
 ) -> LocalDevice:
     return LocalDevice(
         organization_addr=organization_addr,
@@ -109,6 +111,7 @@ def generate_new_device(
         user_manifest_id=EntryID.new(),
         user_manifest_key=SecretKey.generate(),
         local_symkey=SecretKey.generate(),
+        auth_type=auth_type,
     )
 
 
@@ -304,6 +307,7 @@ def _save_device_with_password(
             "organization_id": device.organization_id,
             "device_id": device.device_id,
             "slug": device.slug,
+            "auth_type": device.auth_type,
         }
     )
 

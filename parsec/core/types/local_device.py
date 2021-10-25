@@ -1,4 +1,5 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2016-2021 Scille SAS
+from enum import Enum
 
 import attr
 from typing import Tuple, Optional
@@ -21,6 +22,14 @@ from parsec.core.types.base import BaseLocalData
 from parsec.core.types.backend_address import BackendOrganizationAddr, BackendOrganizationAddrField
 
 
+class AuthenticationType(Enum):
+    PASSWORD = "password"
+    SMARTCARD = "smartcard"
+
+
+AuthenticationTypeField = fields.enum_field_factory(AuthenticationType)
+
+
 @attr.s(slots=True, frozen=True, auto_attribs=True, kw_only=True, eq=False)
 class LocalDevice(BaseLocalData):
     class SCHEMA_CLS(BaseSchema):
@@ -37,9 +46,13 @@ class LocalDevice(BaseLocalData):
         user_manifest_id = EntryIDField(required=True)
         user_manifest_key = fields.SecretKey(required=True)
         local_symkey = fields.SecretKey(required=True)
+        auth_type = AuthenticationTypeField(required=True, missing=None)
 
         @post_load
         def make_obj(self, data):
+            # Auth type not being present means the device was made when you could only connect via password
+            if not data["auth_type"]:
+                data["auth_type"] = AuthenticationType.PASSWORD
             # Handle legacy `is_admin` field
             default_profile = UserProfile.ADMIN if data.pop("is_admin") else UserProfile.STANDARD
             try:
@@ -64,6 +77,7 @@ class LocalDevice(BaseLocalData):
     user_manifest_id: EntryID
     user_manifest_key: SecretKey
     local_symkey: SecretKey
+    auth_type: AuthenticationType
 
     # Only used during schema serialization
     @property

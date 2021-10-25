@@ -126,6 +126,7 @@ def str_based_field_factory(value_type):
         return str(value)
 
     def _deserialize(self, value, attr, data):
+
         if not isinstance(value, str):
             raise ValidationError("Not string")
 

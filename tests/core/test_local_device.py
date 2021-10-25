@@ -291,6 +291,7 @@ def test_supports_legacy_is_admin_field(alice):
         "profile": alice.profile.value,
         "human_handle": None,
         "device_label": None,
+        "auth_type": "password",
     }
 
 

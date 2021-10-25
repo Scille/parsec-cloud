@@ -3,6 +3,7 @@
 import attr
 from typing import Union, Optional, List, Tuple
 
+from parsec.core.types.local_device import AuthenticationType
 from parsec.crypto import (
     generate_shared_secret_key,
     generate_nonce,
@@ -305,4 +306,5 @@ class DeviceClaimInProgress3Ctx:
             user_manifest_id=confirmation.user_manifest_id,
             user_manifest_key=confirmation.user_manifest_key,
             local_symkey=SecretKey.generate(),
+            auth_type=AuthenticationType.PASSWORD,
         )
