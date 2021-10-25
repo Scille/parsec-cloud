@@ -5,7 +5,8 @@ from pathlib import Path
 from hashlib import sha256
 from typing import List, Optional, Iterator
 
-from parsec.core.types.local_device import AuthenticationType
+
+from parsec.core.types.local_device import AuthenticationType, AuthenticationTypeField
 from parsec.serde import BaseSchema, fields, MsgpackSerializer
 from parsec.crypto import (
     SecretKey,
@@ -63,6 +64,9 @@ class LegacyDeviceFileSchema(BaseSchema):
     # the GUI can use them to provide useful information.
     human_handle = HumanHandleField(allow_none=True, missing=None)
     device_label = fields.String(allow_none=True, missing=None)
+    auth_type = AuthenticationTypeField(
+        required=False, missing=AuthenticationType.PASSWORD.value, allow_none=False
+    )
 
 
 class DeviceFileSchema(LegacyDeviceFileSchema):
@@ -143,6 +147,7 @@ class AvailableDevice:
     human_handle: Optional[HumanHandle]
     device_label: Optional[str]
     slug: str
+    auth_type: AuthenticationType
 
     @property
     def user_display(self) -> str:
@@ -173,6 +178,7 @@ def _load_legacy_device_file(key_file_path: Path) -> Optional[AvailableDevice]:
 
     try:
         data = legacy_key_file_serializer.loads(key_file_path.read_bytes())
+
     except (FileNotFoundError, LocalDeviceError):
         # Not a valid device file, ignore this file
         return None
@@ -184,16 +190,17 @@ def _load_legacy_device_file(key_file_path: Path) -> Optional[AvailableDevice]:
         human_handle=data["human_handle"],
         device_label=data["device_label"],
         slug=slug,
+        auth_type=data["auth_type"],
     )
 
 
 def load_device_file(key_file_path: Path) -> Optional[AvailableDevice]:
     try:
         data = key_file_serializer.loads(key_file_path.read_bytes())
+
     except (FileNotFoundError, LocalDeviceError):
         # Not a valid device file, ignore this folder
         return None
-
     return AvailableDevice(
         key_file_path=key_file_path,
         organization_id=data["organization_id"],
@@ -201,6 +208,7 @@ def load_device_file(key_file_path: Path) -> Optional[AvailableDevice]:
         human_handle=data["human_handle"],
         device_label=data["device_label"],
         slug=data["slug"],
+        auth_type=data["auth_type"],
     )
 
 

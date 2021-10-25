@@ -46,13 +46,12 @@ class LocalDevice(BaseLocalData):
         user_manifest_id = EntryIDField(required=True)
         user_manifest_key = fields.SecretKey(required=True)
         local_symkey = fields.SecretKey(required=True)
-        auth_type = AuthenticationTypeField(required=True, missing=None)
+        auth_type = AuthenticationTypeField(
+            required=False, missing=AuthenticationType.PASSWORD.value, allow_none=False
+        )
 
         @post_load
         def make_obj(self, data):
-            # Auth type not being present means the device was made when you could only connect via password
-            if not data["auth_type"]:
-                data["auth_type"] = AuthenticationType.PASSWORD
             # Handle legacy `is_admin` field
             default_profile = UserProfile.ADMIN if data.pop("is_admin") else UserProfile.STANDARD
             try:

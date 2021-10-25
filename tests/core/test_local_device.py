@@ -5,6 +5,7 @@ import pytest
 from pathlib import Path
 from uuid import UUID, uuid4
 
+from parsec.core.types.local_device import AuthenticationType
 from parsec.crypto import SigningKey
 from parsec.serde import packb, unpackb
 from parsec.api.protocol import OrganizationID, DeviceID, HumanHandle
@@ -80,6 +81,7 @@ def test_list_devices(organization_factory, local_device_factory, config_dir):
             human_handle=d.human_handle,
             device_label=d.device_label,
             slug=d.slug,
+            auth_type=d.auth_type,
         )
         for d in [o1d11, o1d12, o1d21, o2d11, o2d12, o2d21]
     }
@@ -102,6 +104,7 @@ def test_list_devices_support_legacy_file_without_labels(config_dir):
         human_handle=None,
         device_label=None,
         slug=slug,
+        auth_type=AuthenticationType.PASSWORD,
     )
     assert devices == [expected_device]
 
@@ -114,6 +117,7 @@ def test_available_device_display(config_dir, alice):
         human_handle=None,
         device_label=None,
         slug=alice.slug,
+        auth_type=alice.auth_type,
     )
 
     with_labels = AvailableDevice(
@@ -123,6 +127,7 @@ def test_available_device_display(config_dir, alice):
         human_handle=alice.human_handle,
         device_label=alice.device_label,
         slug=alice.slug,
+        auth_type=alice.auth_type,
     )
 
     assert without_labels.device_display == alice.device_name
@@ -143,6 +148,7 @@ def test_available_devices_slughash_uniqueness(
             human_handle=device.human_handle,
             device_label=device.device_label,
             slug=device.slug,
+            auth_type=device.auth_type,
         )
 
     def _assert_different_as_available(d1, d2):
@@ -291,7 +297,7 @@ def test_supports_legacy_is_admin_field(alice):
         "profile": alice.profile.value,
         "human_handle": None,
         "device_label": None,
-        "auth_type": "password",
+        "auth_type": AuthenticationType.PASSWORD.value,
     }
 
 
@@ -335,6 +341,7 @@ def test_list_devices_support_legacy_file_with_meaningful_name(config_dir):
         human_handle=HumanHandle(human_email, human_label),
         device_label=device_label,
         slug=slug,
+        auth_type=AuthenticationType.PASSWORD,
     )
     assert devices == [expected_device]
     assert get_key_file(config_dir, expected_device) == key_file_path

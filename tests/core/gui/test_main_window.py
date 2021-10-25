@@ -86,6 +86,7 @@ def bob_available_device(bob, tmp_path):
         human_handle=bob.human_handle,
         device_label=bob.device_label,
         slug=bob.slug,
+        auth_type=bob.auth_type,
     )
 
 

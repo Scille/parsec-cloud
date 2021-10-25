@@ -2,13 +2,13 @@
     "LocalDevice": {
         "fields": {
             "auth_type": {
-                "allow_none": true,
+                "allow_none": false,
                 "enum_allowed_values": [
                     "password",
                     "smartcard"
                 ],
                 "enum_type": "AuthenticationType",
-                "required": true,
+                "required": false,
                 "type": "AuthenticationTypeField"
             },
             "device_id": {
