@@ -1,5 +1,6 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2016-2021 Scille SAS
 
+import pendulum
 import pytest
 from uuid import UUID, uuid4
 from pendulum import datetime
@@ -110,6 +111,7 @@ async def test_create_check_access_rights(backend, alice, bob, bob_backend_sock,
                 user_id=bob.user_id,
                 role=role,
                 granted_by=alice.device_id,
+                granted_on=pendulum.now(),
             ),
         )
         vlob_id = uuid4()
@@ -131,6 +133,7 @@ async def test_create_check_access_rights(backend, alice, bob, bob_backend_sock,
             user_id=bob.user_id,
             role=None,
             granted_by=alice.device_id,
+            granted_on=pendulum.now(),
         ),
     )
     rep = await vlob_create(bob_backend_sock, realm, vlob_id, b"Initial version.", check_rep=False)
@@ -245,6 +248,7 @@ async def test_read_check_access_rights(backend, alice, bob, bob_backend_sock, r
                 user_id=bob.user_id,
                 role=role,
                 granted_by=alice.device_id,
+                granted_on=pendulum.now(),
             ),
         )
         rep = await vlob_read(bob_backend_sock, vlobs[0])
@@ -259,6 +263,7 @@ async def test_read_check_access_rights(backend, alice, bob, bob_backend_sock, r
             user_id=bob.user_id,
             role=None,
             granted_by=alice.device_id,
+            granted_on=pendulum.now(),
         ),
     )
     rep = await vlob_read(bob_backend_sock, vlobs[0])
@@ -356,6 +361,7 @@ async def test_update_check_access_rights(backend, alice, bob, bob_backend_sock,
                 user_id=bob.user_id,
                 role=role,
                 granted_by=alice.device_id,
+                granted_on=pendulum.now(),
             ),
         )
         rep = await vlob_update(
@@ -377,6 +383,7 @@ async def test_update_check_access_rights(backend, alice, bob, bob_backend_sock,
             user_id=bob.user_id,
             role=None,
             granted_by=alice.device_id,
+            granted_on=pendulum.now(),
         ),
     )
     rep = await vlob_update(
@@ -492,6 +499,7 @@ async def test_list_versions_check_access_rights(
                 user_id=bob.user_id,
                 role=role,
                 granted_by=alice.device_id,
+                granted_on=pendulum.now(),
             ),
         )
         rep = await vlob_list_versions(bob_backend_sock, vlobs[0])
@@ -506,6 +514,7 @@ async def test_list_versions_check_access_rights(
             user_id=bob.user_id,
             role=None,
             granted_by=alice.device_id,
+            granted_on=pendulum.now(),
         ),
     )
     rep = await vlob_list_versions(bob_backend_sock, vlobs[0])

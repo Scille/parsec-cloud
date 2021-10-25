@@ -49,6 +49,7 @@ async def test_block_read_check_access_rights(backend, alice, bob, bob_backend_s
                 user_id=bob.user_id,
                 role=role,
                 granted_by=alice.device_id,
+                granted_on=pendulum.now(),
             ),
         )
         rep = await block_read(bob_backend_sock, block)
@@ -63,6 +64,7 @@ async def test_block_read_check_access_rights(backend, alice, bob, bob_backend_s
             user_id=bob.user_id,
             role=None,
             granted_by=alice.device_id,
+            granted_on=pendulum.now(),
         ),
     )
     rep = await block_read(bob_backend_sock, block)
@@ -92,6 +94,7 @@ async def test_block_create_check_access_rights(backend, alice, bob, bob_backend
                 user_id=bob.user_id,
                 role=role,
                 granted_by=alice.device_id,
+                granted_on=pendulum.now(),
             ),
         )
         block_id = uuid4()
@@ -111,6 +114,7 @@ async def test_block_create_check_access_rights(backend, alice, bob, bob_backend
             user_id=bob.user_id,
             role=None,
             granted_by=alice.device_id,
+            granted_on=pendulum.now(),
         ),
     )
     rep = await block_create(bob_backend_sock, block_id, realm, BLOCK_DATA, check_rep=False)
@@ -392,6 +396,7 @@ async def test_block_check_other_organization(
                 user_id=sock.device.user_id,
                 role=RealmRole.OWNER,
                 granted_by=sock.device.device_id,
+                granted_on=pendulum.now(),
             ),
         )
         await block_create(sock, block, realm, b"other org data")

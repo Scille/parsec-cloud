@@ -113,7 +113,7 @@ class RealmGrantedRole:
     user_id: UserID
     role: Optional[RealmRole]
     granted_by: Optional[DeviceID]
-    granted_on: pendulum.DateTime = attr.ib(factory=pendulum.now)
+    granted_on: pendulum.DateTime
 
 
 class BaseRealmComponent:

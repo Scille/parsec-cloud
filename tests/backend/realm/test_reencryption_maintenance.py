@@ -1,5 +1,6 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2016-2021 Scille SAS
 
+import pendulum
 import pytest
 import trio
 from uuid import uuid4
@@ -59,6 +60,7 @@ async def test_start_bad_per_participant_message(
             user_id=bob.user_id,
             role=RealmRole.READER,
             granted_by=alice.device_id,
+            granted_on=pendulum.now(),
         ),
     )
     await backend.realm.update_roles(
@@ -69,6 +71,7 @@ async def test_start_bad_per_participant_message(
             user_id=bob.user_id,
             role=None,
             granted_by=alice.device_id,
+            granted_on=pendulum.now(),
         ),
     )
     # Adam is still part of the realm, but is revoked
@@ -80,6 +83,7 @@ async def test_start_bad_per_participant_message(
             user_id=adam.user_id,
             role=RealmRole.READER,
             granted_by=alice.device_id,
+            granted_on=pendulum.now(),
         ),
     )
     await backend.user.revoke_user(
@@ -121,6 +125,7 @@ async def test_start_send_message_to_participants(
             user_id=bob.user_id,
             role=RealmRole.READER,
             granted_by=alice.device_id,
+            granted_on=pendulum.now(),
         ),
     )
 
@@ -198,6 +203,7 @@ async def test_start_check_access_rights(backend, bob_backend_sock, alice, bob, 
                 user_id=bob.user_id,
                 role=not_allowed_role,
                 granted_by=alice.device_id,
+                granted_on=pendulum.now(),
             ),
         )
 
@@ -220,6 +226,7 @@ async def test_start_check_access_rights(backend, bob_backend_sock, alice, bob, 
             user_id=bob.user_id,
             role=RealmRole.OWNER,
             granted_by=alice.device_id,
+            granted_on=pendulum.now(),
         ),
     )
 
@@ -340,6 +347,7 @@ async def test_reencrypt_and_finish_check_access_rights(
                 user_id=bob.user_id,
                 role=not_allowed_role,
                 granted_by=alice.device_id,
+                granted_on=pendulum.now(),
             ),
         )
         await _ready_to_finish(bob_in_workspace=not_allowed_role is not None)
@@ -355,6 +363,7 @@ async def test_reencrypt_and_finish_check_access_rights(
             user_id=bob.user_id,
             role=RealmRole.OWNER,
             granted_by=alice.device_id,
+            granted_on=pendulum.now(),
         ),
     )
     await _ready_to_finish(bob_in_workspace=True)
