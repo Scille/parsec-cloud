@@ -6,6 +6,7 @@ from pendulum import datetime
 from unittest.mock import ANY
 
 from parsec.api.data import UserManifest
+from parsec.core.fs.remote_loader import MANIFEST_STAMP_AHEAD_MS
 from parsec.core.types import (
     WorkspaceEntry,
     WorkspaceRole,
@@ -323,8 +324,8 @@ async def test_sync_placeholder(
         um = user_fs.get_user_manifest()
         expected_base_um = UserManifest(
             author=device.device_id,
-            # Extra millisecond due to the user realm being created at 2000-01-02
-            timestamp=datetime(2000, 1, 2, 0, 0, 0, 1),
+            # Add extra time due to the user realm being already created at 2000-01-02
+            timestamp=datetime(2000, 1, 2).add(microseconds=MANIFEST_STAMP_AHEAD_MS),
             id=device.user_manifest_id,
             version=1,
             created=expected_um.created,

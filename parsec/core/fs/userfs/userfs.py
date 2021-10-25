@@ -55,6 +55,7 @@ from parsec.core.remote_devices_manager import RemoteDevicesManager
 
 from parsec.core.fs.workspacefs import WorkspaceFS
 from parsec.core.fs.remote_loader import UserRemoteLoader
+from parsec.core.fs.remote_loader import ROLE_CERTIFICATE_STAMP_AHEAD_MS, MANIFEST_STAMP_AHEAD_MS
 from parsec.core.fs.storage import (
     UserStorage,
     WorkspaceStorage,
@@ -593,7 +594,9 @@ class UserFS:
         # Build vlob
         timestamp = self.device.timestamp()
         if timestamp_greater_than is not None:
-            timestamp = max(timestamp, timestamp_greater_than.add(microseconds=1))
+            timestamp = max(
+                timestamp, timestamp_greater_than.add(microseconds=MANIFEST_STAMP_AHEAD_MS)
+            )
         to_sync_um = base_um.to_remote(author=self.device.device_id, timestamp=timestamp)
         ciphered = to_sync_um.dump_sign_and_encrypt(
             author_signkey=self.device.signing_key, key=self.device.user_manifest_key
@@ -704,7 +707,9 @@ class UserFS:
         timestamp = self.device.timestamp()
         if timestamp_greater_than is not None:
             assert timestamps_in_the_ballpark(timestamp, timestamp_greater_than)
-            timestamp = max(timestamp, timestamp_greater_than.add(microseconds=1))
+            timestamp = max(
+                timestamp, timestamp_greater_than.add(microseconds=ROLE_CERTIFICATE_STAMP_AHEAD_MS)
+            )
 
         # Build the sharing message
         try:

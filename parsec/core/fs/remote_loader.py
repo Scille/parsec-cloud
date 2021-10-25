@@ -55,6 +55,19 @@ from parsec.core.fs.exceptions import (
 from parsec.core.fs.storage import BaseWorkspaceStorage
 
 
+# This value is used to increment the timestamp provided by the backend
+# when a manifest restamping is required. This value should be kept small
+# compared to the certificate stamp ahead value, so the certificate updates have
+# priority over manfiest updates.
+MANIFEST_STAMP_AHEAD_MS = 100_000  # microseconds, or 0.1 seconds
+
+# This value is used to increment the timestamp provided by the backend
+# when a certificate restamping is required. This value should be kept big
+# compared to the manifest stamp ahead value, so the certificate updates have
+# priority over manfiest updates.
+ROLE_CERTIFICATE_STAMP_AHEAD_MS = 500_000  # microseconds, or 0.5 seconds
+
+
 class VlobRequireGreaterTimestampError(Exception):
     @property
     def timestamp(self) -> DateTime:
@@ -588,7 +601,9 @@ class RemoteLoader(UserRemoteLoader):
         timestamp = self.device.timestamp()
         if timestamp_greater_than is not None:
             assert timestamps_in_the_ballpark(timestamp, timestamp_greater_than)
-            timestamp = max(timestamp, timestamp_greater_than.add(microseconds=1))
+            timestamp = max(
+                timestamp, timestamp_greater_than.add(microseconds=MANIFEST_STAMP_AHEAD_MS)
+            )
 
         manifest = manifest.evolve(timestamp=timestamp)
 
