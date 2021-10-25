@@ -30,6 +30,8 @@ async def alice_workspace(alice_user_fs, running_backend):
         workspace = alice_user_fs.get_workspace(wid)
         await workspace.mkdir("/foo")
         # No sync, we want alice_workspace.to_timestamped to fail at day0
+        # Still let's create the realm now to avoid restamping
+        await alice_user_fs.remote_loader.create_realm(wid)
     with freeze_time(day1):
         await workspace.sync()
     with freeze_time(day2):

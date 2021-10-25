@@ -24,7 +24,7 @@ VLOB_ID = UUID("00000000000000000000000000000001")
 @pytest.mark.trio
 async def test_create_and_read(alice, alice_backend_sock, alice2_backend_sock, realm):
     blob = b"Initial commit."
-    with freeze_time("2000-01-02"):
+    with freeze_time("2000-01-03"):
         await vlob_create(alice_backend_sock, realm, VLOB_ID, blob)
 
     rep = await vlob_read(alice2_backend_sock, VLOB_ID)
@@ -33,7 +33,7 @@ async def test_create_and_read(alice, alice_backend_sock, alice2_backend_sock, r
         "version": 1,
         "blob": blob,
         "author": alice.device_id,
-        "timestamp": datetime(2000, 1, 2),
+        "timestamp": datetime(2000, 1, 3),
         "last_role_granted_on": datetime(2000, 1, 2),
     }
 
@@ -167,7 +167,7 @@ async def test_read_ok_v1(alice, alice_backend_sock, vlobs):
         "blob": b"r:A b:1 v:1",
         "version": 1,
         "author": alice.device_id,
-        "timestamp": datetime(2000, 1, 2),
+        "timestamp": datetime(2000, 1, 2, 1),
         "last_role_granted_on": datetime(2000, 1, 2),
     }
 
@@ -206,20 +206,20 @@ async def test_read_ok_timestamp_between_v1_and_v2(alice, alice_backend_sock, vl
         "blob": b"r:A b:1 v:1",
         "version": 1,
         "author": alice.device_id,
-        "timestamp": datetime(2000, 1, 2),
+        "timestamp": datetime(2000, 1, 2, 1),
         "last_role_granted_on": datetime(2000, 1, 2),
     }
 
 
 @pytest.mark.trio
 async def test_read_ok_timestamp_is_v1(alice, alice_backend_sock, vlobs):
-    rep = await vlob_read(alice_backend_sock, vlobs[0], timestamp=datetime(2000, 1, 2))
+    rep = await vlob_read(alice_backend_sock, vlobs[0], timestamp=datetime(2000, 1, 2, 1))
     assert rep == {
         "status": "ok",
         "blob": b"r:A b:1 v:1",
         "version": 1,
         "author": alice.device_id,
-        "timestamp": datetime(2000, 1, 2),
+        "timestamp": datetime(2000, 1, 2, 1),
         "last_role_granted_on": datetime(2000, 1, 2),
     }
 
@@ -460,8 +460,8 @@ async def test_list_versions_ok(alice, alice_backend_sock, vlobs):
     assert rep == {
         "status": "ok",
         "versions": {
-            1: (datetime(2000, 1, 2, 00, 00, 00), alice.device_id),
-            2: (datetime(2000, 1, 3, 00, 00, 00), alice.device_id),
+            1: (datetime(2000, 1, 2, 1, 0, 0), alice.device_id),
+            2: (datetime(2000, 1, 3, 0, 0, 0), alice.device_id),
         },
     }
 

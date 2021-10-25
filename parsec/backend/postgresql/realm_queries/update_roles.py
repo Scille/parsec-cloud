@@ -163,8 +163,8 @@ async def query_update_roles(
     realm_last_change = await conn.fetchrow(*_q_get_last_change())
     if realm_last_change is not None:
         realm_last_change, = realm_last_change
-    if (realm_last_change is not None and realm_last_change > new_role.granted_on) or (
-        latest_role_granted_on is not None and latest_role_granted_on > new_role.granted_on
+    if (realm_last_change is not None and realm_last_change >= new_role.granted_on) or (
+        latest_role_granted_on is not None and latest_role_granted_on >= new_role.granted_on
     ):
         max_timestamp: pendulum.DateTime = max(
             filter(None, [realm_last_change, latest_role_granted_on])

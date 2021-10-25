@@ -120,7 +120,7 @@ async def _check_realm_and_write_access(
         conn, organization_id, realm_id, author, can_write_roles
     )
     # The timestamp is too old, restamping is required
-    if role_granted_on > timestamp:
+    if role_granted_on >= timestamp:
         raise VlobRequireGreaterTimestampError(timestamp)
 
 

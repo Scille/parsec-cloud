@@ -507,6 +507,9 @@ def backend_data_binder_factory(request, backend_addr, initial_user_manifest_sta
 
             with self.backend.event_bus.listen() as spy:
 
+                # The realm needs to be created srictly before the manfiest timestamp
+                realm_create_timestamp = manifest.timestamp.subtract(microseconds=1)
+
                 await self.backend.realm.create(
                     organization_id=author.organization_id,
                     self_granted_role=RealmGrantedRole(
@@ -514,14 +517,14 @@ def backend_data_binder_factory(request, backend_addr, initial_user_manifest_sta
                         user_id=author.user_id,
                         certificate=RealmRoleCertificateContent(
                             author=author.device_id,
-                            timestamp=manifest.timestamp,
+                            timestamp=realm_create_timestamp,
                             realm_id=realm_id,
                             user_id=author.user_id,
                             role=RealmRole.OWNER,
                         ).dump_and_sign(author.signing_key),
                         role=RealmRole.OWNER,
                         granted_by=author.device_id,
-                        granted_on=manifest.timestamp,
+                        granted_on=realm_create_timestamp,
                     ),
                 )
 

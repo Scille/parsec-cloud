@@ -237,7 +237,7 @@ async def vlobs(backend, alice, realm):
         realm_id=realm,
         encryption_revision=1,
         vlob_id=vlob_ids[0],
-        timestamp=datetime(2000, 1, 2),
+        timestamp=datetime(2000, 1, 2, 1),
         blob=b"r:A b:1 v:1",
     )
     await backend.vlob.update(

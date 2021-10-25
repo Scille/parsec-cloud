@@ -323,7 +323,8 @@ async def test_sync_placeholder(
         um = user_fs.get_user_manifest()
         expected_base_um = UserManifest(
             author=device.device_id,
-            timestamp=datetime(2000, 1, 2),
+            # Extra millisecond due to the user realm being created at 2000-01-02
+            timestamp=datetime(2000, 1, 2, 0, 0, 0, 1),
             id=device.user_manifest_id,
             version=1,
             created=expected_um.created,
@@ -339,6 +340,7 @@ async def test_sync_placeholder(
             workspaces=expected_base_um.workspaces,
             speculative=False,
         )
+        assert um.base == expected_base_um
         assert um == expected_um
 
 
@@ -371,6 +373,9 @@ async def test_concurrent_sync_placeholder(
         um_created_v0_fs1 = user_fs1.get_user_manifest().created
 
         with freeze_time("2000-01-01"):
+            # Sync user manfiests now to avoid extra milliseconds from restamping
+            await user_fs1.sync()
+            await user_fs2.sync()
             w1id = await user_fs1.workspace_create("w1")
         if dev2_has_changes:
             with freeze_time("2000-01-02"):
@@ -391,7 +396,7 @@ async def test_concurrent_sync_placeholder(
                 author=device2.device_id,
                 id=device2.user_manifest_id,
                 timestamp=datetime(2000, 1, 4),
-                version=2,
+                version=3,
                 created=um_created_v0_fs1,
                 updated=datetime(2000, 1, 2),
                 last_processed_message=0,
@@ -430,7 +435,7 @@ async def test_concurrent_sync_placeholder(
                 author=device1.device_id,
                 timestamp=datetime(2000, 1, 3),
                 id=device1.user_manifest_id,
-                version=1,
+                version=2,
                 created=um_created_v0_fs1,
                 updated=datetime(2000, 1, 1),
                 last_processed_message=0,

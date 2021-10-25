@@ -197,7 +197,7 @@ class MemoryVlobComponent(BaseVlobComponent):
 
         # Check the timestamp for write operations
         latest_role_granted_on = realm.get_latest_role(user_id).granted_on
-        if operation_kind == OperationKind.DATA_WRITE and latest_role_granted_on > timestamp:
+        if operation_kind == OperationKind.DATA_WRITE and latest_role_granted_on >= timestamp:
             raise VlobRequireGreaterTimestampError(latest_role_granted_on)
 
         # Special case of reading while in reencryption

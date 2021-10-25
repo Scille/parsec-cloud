@@ -211,8 +211,8 @@ class MemoryRealmComponent(BaseRealmComponent):
         realm_last_change = self._vlob_component._get_last_change(
             organization_id, new_role.realm_id
         )
-        if (realm_last_change is not None and realm_last_change > new_role.granted_on) or (
-            latest_role is not None and latest_role.granted_on > new_role.granted_on
+        if (realm_last_change is not None and realm_last_change >= new_role.granted_on) or (
+            latest_role is not None and latest_role.granted_on >= new_role.granted_on
         ):
             latest_role_granted_on = None if latest_role is None else latest_role.granted_on
             max_timestamp: pendulum.DateTime = max(

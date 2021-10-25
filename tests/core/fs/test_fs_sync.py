@@ -413,7 +413,7 @@ async def test_update_invalid_timestamp(running_backend, alice_user_fs, alice2_u
         wid = await create_shared_workspace("w", alice_user_fs, alice2_user_fs)
     workspace = alice_user_fs.get_workspace(wid)
     await workspace.touch("/foo.txt")
-    with freeze_time("2000-01-01"):
+    with freeze_time("2000-01-02"):
         await workspace.sync()
     await workspace.write_bytes("/foo.txt", b"ok")
     with freeze_time("2000-01-03"):
