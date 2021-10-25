@@ -121,7 +121,7 @@ async def _check_realm_and_write_access(
     )
     # Write operations should always occurs strictly after the last change of role for this user
     if last_role_granted_on >= timestamp:
-        raise VlobRequireGreaterTimestampError(timestamp)
+        raise VlobRequireGreaterTimestampError(last_role_granted_on)
 
 
 _q_get_realm_id_from_vlob_id = Q(

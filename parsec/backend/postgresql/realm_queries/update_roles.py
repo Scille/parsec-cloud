@@ -78,13 +78,43 @@ INSERT INTO realm_user_role(
 )
 
 
-_q_get_last_change = Q(
+_q_get_last_vlob_update = Q(
     f"""
-SELECT
-    created_on
-FROM vlob_atom
-ORDER BY created_on DESC
-LIMIT 1
+SELECT last_vlob_update
+FROM realm_user_change
+WHERE realm={ q_realm_internal_id(organization_id="$organization_id", realm_id="$realm_id") }
+AND user_={ q_user_internal_id(organization_id="$organization_id", user_id="$user_id") }
+"""
+)
+
+
+_q_get_last_role_change = Q(
+    f"""
+SELECT last_role_change
+FROM realm_user_change
+WHERE realm={ q_realm_internal_id(organization_id="$organization_id", realm_id="$realm_id") }
+AND user_={ q_user_internal_id(organization_id="$organization_id", user_id="$user_id") }
+"""
+)
+
+
+_q_set_last_role_change = Q(
+    f"""
+INSERT INTO realm_user_change(realm, user_, last_role_change, last_vlob_update)
+VALUES (
+    { q_realm_internal_id(organization_id="$organization_id", realm_id="$realm_id") },
+    { q_user_internal_id(organization_id="$organization_id", user_id="$user_id") },
+    $granted_on,
+    NULL
+)
+ON CONFLICT (realm, user_)
+DO UPDATE SET last_role_change = (
+    SELECT GREATEST($granted_on, last_role_change)
+    FROM realm_user_change
+    WHERE realm={ q_realm_internal_id(organization_id="$organization_id", realm_id="$realm_id") }
+    AND user_={ q_user_internal_id(organization_id="$organization_id", user_id="$user_id") }
+    LIMIT 1
+)
 """
 )
 
@@ -166,10 +196,31 @@ async def query_update_roles(
     if new_role.role in (RealmRole.READER, None):
 
         # The change of role needs to occur strictly after the last upload for this user
-        # TODO: How do make it organization/realm/user specific?
-        realm_last_change = await conn.fetchrow(*_q_get_last_change())
-        if realm_last_change is not None and realm_last_change >= new_role.granted_on:
-            raise RealmRoleRequireGreaterTimestampError(realm_last_change)
+        rep = await conn.fetchrow(
+            *_q_get_last_vlob_update(
+                organization_id=organization_id,
+                realm_id=new_role.realm_id,
+                user_id=new_role.user_id,
+            )
+        )
+        realm_last_vlob_update = None if not rep else rep[0]
+        if realm_last_vlob_update is not None and realm_last_vlob_update >= new_role.granted_on:
+            raise RealmRoleRequireGreaterTimestampError(realm_last_vlob_update)
+
+    # Perform extra checks when removing management rights
+    if new_role.role in (RealmRole.CONTRIBUTOR, RealmRole.READER, None):
+
+        # The change of role needs to occur strictly after the last change of role performed by this user
+        rep = await conn.fetchrow(
+            *_q_get_last_role_change(
+                organization_id=organization_id,
+                realm_id=new_role.realm_id,
+                user_id=new_role.user_id,
+            )
+        )
+        realm_last_role_change = None if not rep else rep[0]
+        if realm_last_role_change is not None and realm_last_role_change >= new_role.granted_on:
+            raise RealmRoleRequireGreaterTimestampError(realm_last_role_change)
 
     await conn.execute(
         *_q_insert_realm_user_role(
@@ -179,6 +230,15 @@ async def query_update_roles(
             role=new_role.role.value if new_role.role else None,
             certificate=new_role.certificate,
             granted_by=new_role.granted_by,
+            granted_on=new_role.granted_on,
+        )
+    )
+
+    await conn.execute(
+        *_q_set_last_role_change(
+            organization_id=organization_id,
+            realm_id=new_role.realm_id,
+            user_id=new_role.granted_by.user_id,
             granted_on=new_role.granted_on,
         )
     )

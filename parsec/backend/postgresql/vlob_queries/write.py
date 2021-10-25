@@ -12,6 +12,7 @@ from parsec.backend.postgresql.utils import (
     q_device_internal_id,
     q_realm_internal_id,
     q_vlob_encryption_revision_internal_id,
+    q_user_internal_id,
 )
 from parsec.backend.vlob import (
     VlobVersionError,
@@ -27,7 +28,7 @@ from parsec.backend.postgresql.vlob_queries.utils import (
 from parsec.backend.backend_events import BackendEvent
 
 
-q_vlob_updated = Q(
+_q_vlob_updated = Q(
     f"""
 INSERT INTO realm_vlob_update (
 realm, index, vlob_atom
@@ -45,15 +46,45 @@ RETURNING index
 )
 
 
+_q_set_last_vlob_update = Q(
+    f"""
+INSERT INTO realm_user_change(realm, user_, last_role_change, last_vlob_update)
+VALUES (
+    { q_realm_internal_id(organization_id="$organization_id", realm_id="$realm_id") },
+    { q_user_internal_id(organization_id="$organization_id", user_id="$user_id") },
+    NULL,
+    $timestamp
+)
+ON CONFLICT (realm, user_)
+DO UPDATE SET last_vlob_update = (
+    SELECT GREATEST($timestamp, last_vlob_update)
+    FROM realm_user_change
+    WHERE realm={ q_realm_internal_id(organization_id="$organization_id", realm_id="$realm_id") }
+    AND user_={ q_user_internal_id(organization_id="$organization_id", user_id="$user_id") }
+    LIMIT 1
+)
+"""
+)
+
+
 @query(in_transaction=True)
 async def query_vlob_updated(
-    conn, vlob_atom_internal_id, organization_id, author, realm_id, src_id, src_version=1
+    conn, vlob_atom_internal_id, organization_id, author, realm_id, src_id, timestamp, src_version=1
 ):
     index = await conn.fetchval(
-        *q_vlob_updated(
+        *_q_vlob_updated(
             organization_id=organization_id,
             realm_id=realm_id,
             vlob_atom_internal_id=vlob_atom_internal_id,
+        )
+    )
+
+    await conn.execute(
+        *_q_set_last_vlob_update(
+            organization_id=organization_id,
+            realm_id=realm_id,
+            user_id=author.user_id,
+            timestamp=timestamp,
         )
     )
 
@@ -163,7 +194,7 @@ async def query_update(
         raise VlobVersionError()
 
     await query_vlob_updated(
-        conn, vlob_atom_internal_id, organization_id, author, realm_id, vlob_id, version
+        conn, vlob_atom_internal_id, organization_id, author, realm_id, vlob_id, timestamp, version
     )
 
 
@@ -233,5 +264,5 @@ async def query_create(
         raise VlobAlreadyExistsError()
 
     await query_vlob_updated(
-        conn, vlob_atom_internal_id, organization_id, author, realm_id, vlob_id
+        conn, vlob_atom_internal_id, organization_id, author, realm_id, vlob_id, timestamp
     )
