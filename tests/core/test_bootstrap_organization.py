@@ -12,7 +12,14 @@ from parsec.core.invite import bootstrap_organization, InviteNotFoundError, Invi
 @pytest.mark.trio
 @pytest.mark.parametrize("with_labels", [False, True])
 async def test_good(
-    running_backend, backend, alice, bob, alice_backend_cmds, user_fs_factory, with_labels
+    running_backend,
+    backend,
+    alice,
+    bob,
+    alice_backend_cmds,
+    user_fs_factory,
+    with_labels,
+    core_config,
 ):
     org_id = OrganizationID("NewOrg")
     org_token = "123456"

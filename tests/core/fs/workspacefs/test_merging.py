@@ -22,7 +22,7 @@ def gen_date():
 
 # Guessing by it name, this test is directed by M. Night Shyamalan ;-)
 @pytest.mark.parametrize("local_changes", (False, True))
-def test_merge_speculative_with_it_unsuspected_former_self(local_changes):
+def test_merge_speculative_with_it_unsuspected_former_self(local_changes, core_config):
     d1 = datetime(2000, 1, 1)
     d2 = datetime(2000, 1, 2)
     d3 = datetime(2000, 1, 3)
@@ -47,7 +47,7 @@ def test_merge_speculative_with_it_unsuspected_former_self(local_changes):
         new_local = new_local.evolve(updated=d4, children=FrozenDict({"bar": bar_id}))
 
     # 4) When syncing the manifest, we shouldn't remove any data from the remote
-    merged = merge_manifests(my_device, d5, empty_pattern, new_local, v1)
+    merged = merge_manifests(my_device, d5, core_config, empty_pattern, new_local, v1)
 
     if local_changes:
         assert merged == LocalWorkspaceManifest(
