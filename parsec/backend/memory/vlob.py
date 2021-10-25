@@ -195,10 +195,13 @@ class MemoryVlobComponent(BaseVlobComponent):
         if realm.roles.get(user_id) not in allowed_roles:
             raise VlobAccessError()
 
-        # Check the timestamp for write operations
-        latest_role_granted_on = realm.get_latest_role(user_id).granted_on
-        if operation_kind == OperationKind.DATA_WRITE and latest_role_granted_on >= timestamp:
-            raise VlobRequireGreaterTimestampError(latest_role_granted_on)
+        # Extra check for write operations
+        if operation_kind == OperationKind.DATA_WRITE:
+
+            # Write operations should always occurs strictly after the last change of role for this user
+            last_role_granted_on = realm.get_latest_role(user_id).granted_on
+            if last_role_granted_on >= timestamp:
+                raise VlobRequireGreaterTimestampError(last_role_granted_on)
 
         # Special case of reading while in reencryption
         if operation_kind == OperationKind.DATA_READ and realm.status.in_reencryption:

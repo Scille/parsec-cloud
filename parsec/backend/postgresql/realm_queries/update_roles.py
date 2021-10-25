@@ -1,6 +1,5 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) BSLv1.1 (eventually AGPLv3) 2016-2021 Scille SAS
 
-import pendulum
 from typing import Optional, Tuple
 
 from parsec.backend.backend_events import BackendEvent
@@ -138,9 +137,9 @@ async def query_update_roles(
         if author_role is not None:
             author_role = RealmRole(author_role)
 
-    latest_role_granted_on = None
+    last_role_granted_on = None
     if existing_user_role is not None:
-        existing_user_role, latest_role_granted_on = existing_user_role
+        existing_user_role, last_role_granted_on = existing_user_role
         if existing_user_role is not None:
             existing_user_role = RealmRole(existing_user_role)
 
@@ -159,17 +158,18 @@ async def query_update_roles(
     if existing_user_role == new_role.role:
         raise RealmRoleAlreadyGranted()
 
-    # TODO: How do make it organization/realm/user specific?
-    realm_last_change = await conn.fetchrow(*_q_get_last_change())
-    if realm_last_change is not None:
-        realm_last_change, = realm_last_change
-    if (realm_last_change is not None and realm_last_change >= new_role.granted_on) or (
-        latest_role_granted_on is not None and latest_role_granted_on >= new_role.granted_on
-    ):
-        max_timestamp: pendulum.DateTime = max(
-            filter(None, [realm_last_change, latest_role_granted_on])
-        )
-        raise RealmRoleRequireGreaterTimestampError(max_timestamp)
+    # Timestamps for the role certificates of a given user should be striclty increasing
+    if last_role_granted_on is not None and last_role_granted_on >= new_role.granted_on:
+        raise RealmRoleRequireGreaterTimestampError(last_role_granted_on)
+
+    # Perfrom extra checks when removing write rights
+    if new_role.role in (RealmRole.READER, None):
+
+        # The change of role needs to occur strictly after the last upload for this user
+        # TODO: How do make it organization/realm/user specific?
+        realm_last_change = await conn.fetchrow(*_q_get_last_change())
+        if realm_last_change is not None and realm_last_change >= new_role.granted_on:
+            raise RealmRoleRequireGreaterTimestampError(realm_last_change)
 
     await conn.execute(
         *_q_insert_realm_user_role(

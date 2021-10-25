@@ -207,18 +207,20 @@ class MemoryRealmComponent(BaseRealmComponent):
         if existing_user_role == new_role.role:
             raise RealmRoleAlreadyGranted()
 
+        # Timestamps for the role certificates of a given user should be striclty increasing
         latest_role = realm.get_latest_role(new_role.user_id)
-        realm_last_change = self._vlob_component._get_last_change(
-            organization_id, new_role.realm_id
-        )
-        if (realm_last_change is not None and realm_last_change >= new_role.granted_on) or (
-            latest_role is not None and latest_role.granted_on >= new_role.granted_on
-        ):
-            latest_role_granted_on = None if latest_role is None else latest_role.granted_on
-            max_timestamp: pendulum.DateTime = max(
-                filter(None, [realm_last_change, latest_role_granted_on])
+        if latest_role is not None and latest_role.granted_on >= new_role.granted_on:
+            raise RealmRoleRequireGreaterTimestampError(latest_role.granted_on)
+
+        # Perfrom extra checks when removing write rights
+        if new_role.role in (RealmRole.READER, None):
+
+            # The change of role needs to occur strictly after the last upload for this user
+            realm_last_change = self._vlob_component._get_last_change(
+                organization_id, new_role.realm_id
             )
-            raise RealmRoleRequireGreaterTimestampError(max_timestamp)
+            if realm_last_change is not None and realm_last_change >= new_role.granted_on:
+                raise RealmRoleRequireGreaterTimestampError(realm_last_change)
 
         realm.granted_roles.append(new_role)
 

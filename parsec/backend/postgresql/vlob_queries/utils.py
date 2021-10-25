@@ -116,11 +116,11 @@ async def _check_realm_and_write_access(
         conn, organization_id, realm_id, encryption_revision, OperationKind.DATA_WRITE
     )
     can_write_roles = (RealmRole.OWNER, RealmRole.MANAGER, RealmRole.CONTRIBUTOR)
-    role_granted_on = await _check_realm_access(
+    last_role_granted_on = await _check_realm_access(
         conn, organization_id, realm_id, author, can_write_roles
     )
-    # The timestamp is too old, restamping is required
-    if role_granted_on >= timestamp:
+    # Write operations should always occurs strictly after the last change of role for this user
+    if last_role_granted_on >= timestamp:
         raise VlobRequireGreaterTimestampError(timestamp)
 
 
