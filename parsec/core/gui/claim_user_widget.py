@@ -9,6 +9,11 @@ from PyQt5.QtWidgets import QWidget
 
 from parsec.api.protocol import HumanHandle
 from parsec.core.types import LocalDevice
+from parsec.core.local_device import (
+    save_device_with_password,
+    save_device_with_smartcard,
+    DeviceFileType,
+)
 from parsec.core.fs.storage.user_storage import user_storage_non_speculative_init
 from parsec.core.local_device import save_device_with_password_in_config
 from parsec.core.invite import claimer_retrieve_info, InvitePeerResetError
@@ -22,6 +27,7 @@ from parsec.core.gui import validators
 from parsec.core.gui.trio_jobs import JobResultError, QtToTrioJob
 from parsec.core.gui.desktop import get_default_device
 from parsec.core.gui.custom_dialogs import show_error, GreyedDialog, show_info
+from parsec.core.gui.authentication_choice_widget import AuthenticationChoiceWidget
 from parsec.core.gui.lang import translate as _
 from parsec.core.gui.ui.claim_user_widget import Ui_ClaimUserWidget
 from parsec.core.gui.ui.claim_user_code_exchange_widget import Ui_ClaimUserCodeExchangeWidget
@@ -175,7 +181,7 @@ class Claimer:
 
 
 class ClaimUserFinalizeWidget(QWidget, Ui_ClaimUserFinalizeWidget):
-    succeeded = pyqtSignal(LocalDevice, str)
+    succeeded = pyqtSignal(LocalDevice, DeviceFileType, str)
     failed = pyqtSignal(object)  # QtToTrioJob or None
 
     def __init__(self, config, jobs_ctx, new_device):
@@ -185,7 +191,7 @@ class ClaimUserFinalizeWidget(QWidget, Ui_ClaimUserFinalizeWidget):
         self.jobs_ctx = jobs_ctx
         self.new_device = new_device
 
-        self.widget_password.set_excluded_strings(
+        self.widget_auth.exclude_strings(
             [
                 new_device.organization_addr.organization_id,
                 new_device.device_label,
@@ -193,23 +199,28 @@ class ClaimUserFinalizeWidget(QWidget, Ui_ClaimUserFinalizeWidget):
                 new_device.human_handle.label,
             ]
         )
-
-        self.widget_password.info_changed.connect(self.check_infos)
+        self.widget_auth.authentication_state_changed.connect(self.check_infos)
         self.button_finalize.setDisabled(True)
         self.button_finalize.clicked.connect(self._on_finalize_clicked)
 
     def check_infos(self, _=""):
-        if self.widget_password.is_valid():
+        if self.widget_auth.is_auth_valid():
             self.button_finalize.setDisabled(False)
         else:
             self.button_finalize.setDisabled(True)
 
     def _on_finalize_clicked(self):
-        password = self.widget_password.password
-        save_device_with_password_in_config(
-            config_dir=self.config.config_dir, device=self.new_device, password=password
+        if self.widget_auth.get_auth_method() == DeviceFileType.PASSWORD:
+            save_device_with_password_in_config(
+                config_dir=self.config.config_dir,
+                device=self.new_device,
+                password=self.widget_auth.get_auth(),
+            )
+        elif self.widget_auth.get_auth_method() == DeviceFileType.SMARTCARD:
+            save_device_with_smartcard(config_dir=self.config.config_dir, device=self.new_device)
+        self.succeeded.emit(
+            self.new_device, self.widget_auth.get_auth_method(), self.widget_auth.get_auth()
         )
-        self.succeeded.emit(self.new_device, password)
 
 
 class ClaimUserCodeExchangeWidget(QWidget, Ui_ClaimUserCodeExchangeWidget):
@@ -691,8 +702,9 @@ class ClaimUserWidget(QWidget, Ui_ClaimUserWidget):
         page.failed.connect(self._on_page_failed_force_reject)
         self.main_layout.insertWidget(0, page)
 
-    def _on_finished(self, device, password):
-        self.status = (device, password)
+    def _on_finished(self, device, auth_method, password):
+        show_info(self, _("TEXT_CLAIM_USER_SUCCESSFUL"))
+        self.status = (device, auth_method, password)
         self.dialog.accept()
 
     def _on_claimer_success(self, job):

@@ -286,8 +286,13 @@ def ClaimUserTestBed(
 
             assert not cuf_w.button_finalize.isEnabled()
 
-            aqtbot.key_clicks(cuf_w.widget_password.line_edit_password, self.password)
-            aqtbot.key_clicks(cuf_w.widget_password.line_edit_password_check, self.password)
+            aqtbot.key_clicks(
+                cuf_w.widget_auth.main_layout.itemAt(0).widget().line_edit_password, self.password
+            )
+            aqtbot.key_clicks(
+                cuf_w.widget_auth.main_layout.itemAt(0).widget().line_edit_password_check,
+                self.password,
+            )
 
             assert cuf_w.button_finalize.isEnabled()
             aqtbot.mouse_click(cuf_w.button_finalize, QtCore.Qt.LeftButton)

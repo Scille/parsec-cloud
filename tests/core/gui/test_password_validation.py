@@ -4,7 +4,7 @@ import pytest
 
 from parsec.core.gui.password_validation import get_password_strength, get_password_strength_text
 from parsec.core.gui.lang import switch_language
-from parsec.core.gui.password_validation import PasswordChoiceWidget
+from parsec.core.gui.password_authentication_widget import PasswordAuthenticationWidget
 
 
 @pytest.mark.gui
@@ -41,7 +41,7 @@ def test_password_validation_with_user_inputs():
 def test_password_choice_widget(qtbot, core_config):
     switch_language(core_config, "en")
 
-    p = PasswordChoiceWidget(parent=None)
+    p = PasswordAuthenticationWidget(parent=None)
     qtbot.add_widget(p)
 
     p.line_edit_password.setText("William J Blazkowicz")
@@ -49,14 +49,14 @@ def test_password_choice_widget(qtbot, core_config):
 
     assert p.pwd_str_widget.label.text() == "Password strength: EXCELLENT"
     assert p.password == "William J Blazkowicz"
-    assert p.is_valid()
+    assert p.is_auth_valid()
 
 
 @pytest.mark.gui
 def test_password_choice_widget_mismatch(qtbot, core_config):
     switch_language(core_config, "en")
 
-    p = PasswordChoiceWidget(parent=None)
+    p = PasswordAuthenticationWidget(parent=None)
     qtbot.add_widget(p)
 
     p.line_edit_password.setText("William J Blazkowicz")
@@ -64,7 +64,7 @@ def test_password_choice_widget_mismatch(qtbot, core_config):
 
     assert p.pwd_str_widget.label.text() == "Password strength: EXCELLENT"
     assert p.password == "William J Blazkowicz"
-    assert not p.is_valid()
+    assert not p.is_auth_valid()
     assert not p.label_mismatch.isHidden()
     assert p.label_mismatch.text() == "Does not match the password."
 
@@ -73,7 +73,7 @@ def test_password_choice_widget_mismatch(qtbot, core_config):
 def test_password_choice_widget_with_excluded_strings(qtbot, core_config):
     switch_language(core_config, "en")
 
-    p = PasswordChoiceWidget(parent=None)
+    p = PasswordAuthenticationWidget(parent=None)
     p.set_excluded_strings(["william.j.blazkowicz@wolfenstein.de"])
     assert p.pwd_str_widget._excluded_strings == ["william", "blazkowicz", "wolfenstein"]
     qtbot.add_widget(p)

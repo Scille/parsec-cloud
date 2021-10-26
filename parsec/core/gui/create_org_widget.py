@@ -19,6 +19,11 @@ from parsec.core.invite import (
     InviteTimestampError,
     InviteError,
 )
+from parsec.core.local_device import (
+    save_device_with_password,
+    save_device_with_smartcard,
+    DeviceFileType,
+)
 from parsec.core.fs.storage.user_storage import user_storage_non_speculative_init
 from parsec.core.local_device import save_device_with_password_in_config
 
@@ -37,7 +42,9 @@ from parsec.core.gui.ui.create_org_device_info_widget import Ui_CreateOrgDeviceI
 logger = get_logger()
 
 
-async def _do_create_org(config, human_handle, device_name, password, backend_addr):
+async def _do_create_org(
+    config, human_handle, device_name, backend_addr, auth_method, password=None
+):
     try:
         async with apiv1_backend_anonymous_cmds_factory(addr=backend_addr) as cmds:
             new_device = await bootstrap_organization(
@@ -48,10 +55,13 @@ async def _do_create_org(config, human_handle, device_name, password, backend_ad
             await user_storage_non_speculative_init(
                 data_base_dir=config.data_base_dir, device=new_device
             )
-            save_device_with_password_in_config(
-                config_dir=config.config_dir, device=new_device, password=password
-            )
-            return new_device, password
+            if auth_method == DeviceFileType.PASSWORD:
+                save_device_with_password_in_config(
+                    config_dir=config.config_dir, device=new_device, password=password
+                )
+            elif auth_method == DeviceFileType.SMARTCARD:
+                save_device_with_smartcard(config.config_dir, device=new_device)
+            return new_device, auth_method, password
     except InviteNotFoundError as exc:
         raise JobResultError("invite-not-found", exc=exc)
     except InviteAlreadyUsedError as exc:
@@ -67,8 +77,7 @@ async def _do_create_org(config, human_handle, device_name, password, backend_ad
 
 
 class CreateOrgUserInfoWidget(QWidget, Ui_CreateOrgUserInfoWidget):
-    valid_info_entered = pyqtSignal()
-    invalid_info_entered = pyqtSignal()
+    info_filled = pyqtSignal(bool)
 
     def __init__(self):
         super().__init__()
@@ -109,10 +118,7 @@ class CreateOrgUserInfoWidget(QWidget, Ui_CreateOrgUserInfoWidget):
         self.check_infos()
 
     def check_infos(self, _=None):
-        if self._are_inputs_valid():
-            self.valid_info_entered.emit()
-        else:
-            self.invalid_info_entered.emit()
+        self.info_filled.emit(self._are_inputs_valid())
 
     @property
     def backend_addr(self):
@@ -124,29 +130,31 @@ class CreateOrgUserInfoWidget(QWidget, Ui_CreateOrgUserInfoWidget):
 
 
 class CreateOrgDeviceInfoWidget(QWidget, Ui_CreateOrgDeviceInfoWidget):
-    valid_info_entered = pyqtSignal()
-    invalid_info_entered = pyqtSignal()
+    info_filled = pyqtSignal(bool)
 
     def __init__(self):
         super().__init__()
         self.setupUi(self)
-        self.widget_password.info_changed.connect(self.check_infos)
+        self.widget_auth.authentication_state_changed.connect(
+            lambda _, valid: self.check_infos(valid)
+        )
         self.line_edit_device.setText(get_default_device())
         self.line_edit_device.validity_changed.connect(self.check_infos)
         self.line_edit_device.set_validator(validators.DeviceNameValidator())
 
     def check_infos(self, _=None):
-        if self.line_edit_device.is_input_valid() and self.widget_password.is_valid():
-            self.valid_info_entered.emit()
-        else:
-            self.invalid_info_entered.emit()
+        self.info_filled.emit(
+            bool(self.line_edit_device.is_input_valid() and self.widget_auth.is_auth_valid())
+        )
 
     def set_excluded_strings(self, excluded_strings):
-        self.widget_password.excluded_strings = excluded_strings
+        self.widget_auth.excluded_strings = excluded_strings
 
-    @property
-    def password(self):
-        return self.widget_password.password
+    def get_auth(self):
+        return self.widget_auth.get_auth()
+
+    def get_auth_method(self):
+        return self.widget_auth.get_auth_method()
 
 
 class CreateOrgWidget(QWidget, Ui_CreateOrgWidget):
@@ -163,12 +171,10 @@ class CreateOrgWidget(QWidget, Ui_CreateOrgWidget):
         self.status = None
 
         self.device_widget = CreateOrgDeviceInfoWidget()
-        self.device_widget.valid_info_entered.connect(self._on_info_valid)
-        self.device_widget.invalid_info_entered.connect(self._on_info_invalid)
+        self.device_widget.info_filled.connect(self._on_info_filled)
 
         self.user_widget = CreateOrgUserInfoWidget()
-        self.user_widget.valid_info_entered.connect(self._on_info_valid)
-        self.user_widget.invalid_info_entered.connect(self._on_info_invalid)
+        self.user_widget.info_filled.connect(self._on_info_filled)
 
         self.main_layout.addWidget(self.user_widget)
         self.main_layout.addWidget(self.device_widget)
@@ -210,11 +216,8 @@ class CreateOrgWidget(QWidget, Ui_CreateOrgWidget):
                 self.user_widget.radio_use_commercial.setChecked(True)
                 self.user_widget.radio_use_custom.setDisabled(True)
 
-    def _on_info_valid(self):
-        self.button_validate.setEnabled(True)
-
-    def _on_info_invalid(self):
-        self.button_validate.setEnabled(False)
+    def _on_info_filled(self, valid):
+        self.button_validate.setEnabled(valid)
 
     def on_close(self):
         self.status = None
@@ -298,8 +301,9 @@ class CreateOrgWidget(QWidget, Ui_CreateOrgWidget):
             config=self.config,
             human_handle=human_handle,
             device_name=device_name,
-            password=self.device_widget.password,
+            password=self.device_widget.get_auth(),
             backend_addr=backend_addr,
+            auth_method=self.device_widget.get_auth_method(),
         )
         self.button_validate.setEnabled(False)
 
