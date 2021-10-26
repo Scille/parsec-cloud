@@ -5,7 +5,6 @@ from typing import Dict, Optional, List, Tuple, cast, Iterator, Callable, Awaita
 
 from pendulum import DateTime
 
-from parsec.utils import timestamps_in_the_ballpark
 from parsec.crypto import HashDigest, CryptoError
 from parsec.api.protocol import UserID, DeviceID, RealmRole
 from parsec.api.data import (
@@ -600,7 +599,6 @@ class RemoteLoader(UserRemoteLoader):
         # Restamp the manifest before uploading
         timestamp = self.device.timestamp()
         if timestamp_greater_than is not None:
-            assert timestamps_in_the_ballpark(timestamp, timestamp_greater_than)
             timestamp = max(
                 timestamp, timestamp_greater_than.add(microseconds=MANIFEST_STAMP_AHEAD_MS)
             )

@@ -20,7 +20,7 @@ from structlog import get_logger
 
 from async_generator import asynccontextmanager
 
-from parsec.utils import open_service_nursery, timestamps_in_the_ballpark
+from parsec.utils import open_service_nursery
 from parsec.core.core_events import CoreEvent
 from parsec.event_bus import EventBus
 from parsec.crypto import SecretKey
@@ -706,7 +706,6 @@ class UserFS:
 
         timestamp = self.device.timestamp()
         if timestamp_greater_than is not None:
-            assert timestamps_in_the_ballpark(timestamp, timestamp_greater_than)
             timestamp = max(
                 timestamp, timestamp_greater_than.add(microseconds=ROLE_CERTIFICATE_STAMP_AHEAD_MS)
             )
