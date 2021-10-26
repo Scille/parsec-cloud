@@ -15,8 +15,8 @@ from parsec.backend.postgresql.utils import (
     q_user_internal_id,
 )
 from parsec.backend.vlob import (
+    VlobRequireGreaterTimestampError,
     VlobVersionError,
-    VlobTimestampError,
     VlobNotFoundError,
     VlobAlreadyExistsError,
 )
@@ -172,7 +172,7 @@ async def query_update(
         raise VlobVersionError()
 
     elif previous["created_on"] > timestamp:
-        raise VlobTimestampError()
+        raise VlobRequireGreaterTimestampError(previous["created_on"])
 
     try:
         vlob_atom_internal_id = await conn.fetchval(
