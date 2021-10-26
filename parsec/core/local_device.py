@@ -1,13 +1,12 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2016-2021 Scille SAS
 
 import attr
+from enum import Enum
 from pathlib import Path
 from hashlib import sha256
-from typing import List, Optional, Iterator
+from typing import List, Optional, Iterator, Dict, Type
 
-
-from parsec.core.types.local_device import AuthenticationType, AuthenticationTypeField
-from parsec.serde import BaseSchema, fields, MsgpackSerializer
+from parsec.serde import BaseSchema, fields, MsgpackSerializer, OneOfSchema
 from parsec.crypto import (
     SecretKey,
     SigningKey,
@@ -51,10 +50,15 @@ class LocalDevicePackingError(LocalDeviceError):
     pass
 
 
+class DeviceFileType(Enum):
+    PASSWORD = "password"
+    SMARTCARD = "smartcard"
+
+
 class LegacyDeviceFileSchema(BaseSchema):
     """Schema for legacy device files where the filename contains complementary information."""
 
-    type = fields.CheckedConstant("password", required=True)
+    type = fields.EnumCheckedConstant(DeviceFileType.PASSWORD, required=True)
     salt = fields.Bytes(required=True)
     ciphertext = fields.Bytes(required=True)
 
@@ -64,13 +68,13 @@ class LegacyDeviceFileSchema(BaseSchema):
     # the GUI can use them to provide useful information.
     human_handle = HumanHandleField(allow_none=True, missing=None)
     device_label = fields.String(allow_none=True, missing=None)
-    auth_type = AuthenticationTypeField(
-        required=False, missing=AuthenticationType.PASSWORD.value, allow_none=True
-    )
 
 
-class DeviceFileSchema(LegacyDeviceFileSchema):
+class BaseDeviceFileSchema(BaseSchema):
     """Schema for device files that does not rely on the filename for complementary information."""
+
+    salt = fields.Bytes(required=True)
+    ciphertext = fields.Bytes(required=True)
 
     # Override those fields to make them required (although `None` is still valid)
     human_handle = HumanHandleField(required=True, allow_none=True)
@@ -81,6 +85,31 @@ class DeviceFileSchema(LegacyDeviceFileSchema):
     device_id = DeviceIDField(required=True)
     organization_id = OrganizationIDField(required=True)
     slug = fields.String(required=True)
+
+
+class PasswordDeviceFileSchema(BaseDeviceFileSchema):
+    type = fields.EnumCheckedConstant(DeviceFileType.PASSWORD, required=True)
+
+
+class SmartcardDeviceFileSchema(BaseDeviceFileSchema):
+    type = fields.EnumCheckedConstant(DeviceFileType.SMARTCARD, required=True)
+    # certif_id = fields.String(required=True)
+
+
+class DeviceFileSchema(OneOfSchema):
+    type_field = "type"
+
+    @property
+    def type_schemas(  # type: ignore[override]
+        self
+    ) -> Dict[DeviceFileType, Type[OneOfSchema]]:
+        return {
+            DeviceFileType.PASSWORD: PasswordDeviceFileSchema,
+            DeviceFileType.SMARTCARD: SmartcardDeviceFileSchema,
+        }
+
+    def get_obj_type(self, obj: Dict[str, object]) -> object:
+        return obj["type"]
 
 
 legacy_key_file_serializer = MsgpackSerializer(
@@ -102,7 +131,6 @@ def generate_new_device(
     device_label: Optional[str] = None,
     signing_key: Optional[SigningKey] = None,
     private_key: Optional[PrivateKey] = None,
-    auth_type: AuthenticationType = AuthenticationType.PASSWORD,
 ) -> LocalDevice:
     return LocalDevice(
         organization_addr=organization_addr,
@@ -115,7 +143,6 @@ def generate_new_device(
         user_manifest_id=EntryID.new(),
         user_manifest_key=SecretKey.generate(),
         local_symkey=SecretKey.generate(),
-        auth_type=auth_type,
     )
 
 
@@ -147,7 +174,7 @@ class AvailableDevice:
     human_handle: Optional[HumanHandle]
     device_label: Optional[str]
     slug: str
-    auth_type: AuthenticationType
+    type: DeviceFileType
 
     @property
     def user_display(self) -> str:
@@ -190,7 +217,7 @@ def _load_legacy_device_file(key_file_path: Path) -> Optional[AvailableDevice]:
         human_handle=data["human_handle"],
         device_label=data["device_label"],
         slug=slug,
-        auth_type=data["auth_type"],
+        type=data["type"],
     )
 
 
@@ -201,6 +228,7 @@ def load_device_file(key_file_path: Path) -> Optional[AvailableDevice]:
     except (FileNotFoundError, LocalDeviceError):
         # Not a valid device file, ignore this folder
         return None
+
     return AvailableDevice(
         key_file_path=key_file_path,
         organization_id=data["organization_id"],
@@ -208,7 +236,7 @@ def load_device_file(key_file_path: Path) -> Optional[AvailableDevice]:
         human_handle=data["human_handle"],
         device_label=data["device_label"],
         slug=data["slug"],
-        auth_type=data["auth_type"],
+        type=data["type"],
     )
 
 
@@ -308,6 +336,7 @@ def _save_device_with_password(
 
     key_file_content = key_file_serializer.dumps(
         {
+            "type": DeviceFileType.PASSWORD,
             "salt": salt,
             "ciphertext": ciphertext,
             "human_handle": device.human_handle,
@@ -315,7 +344,6 @@ def _save_device_with_password(
             "organization_id": device.organization_id,
             "device_id": device.device_id,
             "slug": device.slug,
-            "auth_type": device.auth_type,
         }
     )
 

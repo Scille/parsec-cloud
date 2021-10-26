@@ -317,7 +317,6 @@ async def _register_new_device(
         user_manifest_id=author.user_manifest_id,
         user_manifest_key=author.user_manifest_key,
         local_symkey=author.local_symkey,
-        auth_type=author.auth_type,
     )
     now = pendulum_now()
 

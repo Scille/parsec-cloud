@@ -9,6 +9,7 @@ from parsec.core.gui.lang import translate
 from parsec.core.gui.login_widget import LoginPasswordInputWidget
 from parsec.core.local_device import (
     AvailableDevice,
+    DeviceFileType,
     _save_device_with_password,
     save_device_with_password,
 )
@@ -86,7 +87,7 @@ def bob_available_device(bob, tmp_path):
         human_handle=bob.human_handle,
         device_label=bob.device_label,
         slug=bob.slug,
-        auth_type=bob.auth_type,
+        type=DeviceFileType.PASSWORD,
     )
 
 
