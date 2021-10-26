@@ -3,6 +3,7 @@
 import attr
 import re
 import pytest
+import pendulum
 from collections import defaultdict
 from typing import Union, Optional, Tuple
 from async_generator import asynccontextmanager
@@ -33,6 +34,25 @@ def fixtures_customization(request):
         return request.node.function._fixtures_customization
     except AttributeError:
         return {}
+
+
+@pytest.fixture
+def next_timestamp():
+    """On windows, 2 calls to `pendulum.now()` can yield the same value.
+    For some tests, this creates edges cases we want to avoid.
+    """
+    last_timestamp = None
+
+    def _next_timestamp():
+        if pendulum.has_test_now():
+            return pendulum.now()
+        nonlocal last_timestamp
+        while last_timestamp == pendulum.now():
+            pass
+        last_timestamp = pendulum.now()
+        return last_timestamp
+
+    return _next_timestamp
 
 
 @attr.s

@@ -49,7 +49,7 @@ async def test_start_bad_timestamp(alice_backend_sock, realm):
 
 @pytest.mark.trio
 async def test_start_bad_per_participant_message(
-    backend, alice_backend_sock, alice, bob, adam, realm
+    backend, alice_backend_sock, alice, bob, adam, realm, next_timestamp
 ):
     # Bob used to be part of the realm
     await backend.realm.update_roles(
@@ -60,7 +60,7 @@ async def test_start_bad_per_participant_message(
             user_id=bob.user_id,
             role=RealmRole.READER,
             granted_by=alice.device_id,
-            granted_on=pendulum.now(),
+            granted_on=next_timestamp(),
         ),
     )
     await backend.realm.update_roles(
@@ -71,7 +71,7 @@ async def test_start_bad_per_participant_message(
             user_id=bob.user_id,
             role=None,
             granted_by=alice.device_id,
-            granted_on=pendulum.now(),
+            granted_on=next_timestamp(),
         ),
     )
     # Adam is still part of the realm, but is revoked
@@ -83,7 +83,7 @@ async def test_start_bad_per_participant_message(
             user_id=adam.user_id,
             role=RealmRole.READER,
             granted_by=alice.device_id,
-            granted_on=pendulum.now(),
+            granted_on=next_timestamp(),
         ),
     )
     await backend.user.revoke_user(
@@ -100,7 +100,7 @@ async def test_start_bad_per_participant_message(
         {alice.user_id: b"ok", adam.user_id: b"bad"},
     ]:
         rep = await realm_start_reencryption_maintenance(
-            alice_backend_sock, realm, 2, pendulum_now(), msg, check_rep=False
+            alice_backend_sock, realm, 2, next_timestamp(), msg, check_rep=False
         )
         assert rep == {
             "status": "participants_mismatch",
@@ -109,7 +109,7 @@ async def test_start_bad_per_participant_message(
 
     # Finally make sure the reencryption is possible
     await realm_start_reencryption_maintenance(
-        alice_backend_sock, realm, 2, pendulum_now(), {alice.user_id: b"ok"}
+        alice_backend_sock, realm, 2, next_timestamp(), {alice.user_id: b"ok"}
     )
 
 
@@ -186,7 +186,9 @@ async def test_start_already_in_maintenance(alice_backend_sock, realm):
 
 
 @pytest.mark.trio
-async def test_start_check_access_rights(backend, bob_backend_sock, alice, bob, realm):
+async def test_start_check_access_rights(
+    backend, bob_backend_sock, alice, bob, realm, next_timestamp
+):
     # User not part of the realm
     rep = await realm_start_reencryption_maintenance(
         bob_backend_sock, realm, 2, pendulum_now(), {"alice": b"wathever"}, check_rep=False
@@ -203,7 +205,7 @@ async def test_start_check_access_rights(backend, bob_backend_sock, alice, bob, 
                 user_id=bob.user_id,
                 role=not_allowed_role,
                 granted_by=alice.device_id,
-                granted_on=pendulum.now(),
+                granted_on=next_timestamp(),
             ),
         )
 
@@ -211,7 +213,7 @@ async def test_start_check_access_rights(backend, bob_backend_sock, alice, bob, 
             bob_backend_sock,
             realm,
             2,
-            pendulum_now(),
+            next_timestamp(),
             {"alice": b"foo", "bob": b"bar"},
             check_rep=False,
         )
@@ -226,7 +228,7 @@ async def test_start_check_access_rights(backend, bob_backend_sock, alice, bob, 
             user_id=bob.user_id,
             role=RealmRole.OWNER,
             granted_by=alice.device_id,
-            granted_on=pendulum.now(),
+            granted_on=next_timestamp(),
         ),
     )
 
@@ -287,7 +289,7 @@ async def test_finish_while_reencryption_not_done(alice_backend_sock, realm, vlo
 
 @pytest.mark.trio
 async def test_reencrypt_and_finish_check_access_rights(
-    backend, alice_backend_sock, bob_backend_sock, alice, bob, realm, vlobs
+    backend, alice_backend_sock, bob_backend_sock, alice, bob, realm, vlobs, next_timestamp
 ):
     encryption_revision = 1
 
@@ -347,7 +349,7 @@ async def test_reencrypt_and_finish_check_access_rights(
                 user_id=bob.user_id,
                 role=not_allowed_role,
                 granted_by=alice.device_id,
-                granted_on=pendulum.now(),
+                granted_on=next_timestamp(),
             ),
         )
         await _ready_to_finish(bob_in_workspace=not_allowed_role is not None)
@@ -363,7 +365,7 @@ async def test_reencrypt_and_finish_check_access_rights(
             user_id=bob.user_id,
             role=RealmRole.OWNER,
             granted_by=alice.device_id,
-            granted_on=pendulum.now(),
+            granted_on=next_timestamp(),
         ),
     )
     await _ready_to_finish(bob_in_workspace=True)
@@ -515,7 +517,9 @@ async def test_reencryption_provide_unknown_vlob_atom_and_duplications(
 
 
 @pytest.mark.trio
-async def test_access_during_reencryption(backend, alice_backend_sock, alice, realm_factory):
+async def test_access_during_reencryption(
+    backend, alice_backend_sock, alice, realm_factory, next_timestamp
+):
     # First initialize a nice realm with block and vlob
     realm_id = await realm_factory(backend, author=alice)
     vlob_id = uuid4()
@@ -526,7 +530,7 @@ async def test_access_during_reencryption(backend, alice_backend_sock, alice, re
         realm_id=realm_id,
         encryption_revision=1,
         vlob_id=vlob_id,
-        timestamp=pendulum_now(),
+        timestamp=next_timestamp(),
         blob=b"v1",
     )
     await backend.block.create(

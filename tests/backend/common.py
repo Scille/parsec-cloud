@@ -228,7 +228,7 @@ vlob_read = CmdSock(
 vlob_update = CmdSock(
     "vlob_update",
     vlob_update_serializer,
-    parse_args=lambda self, vlob_id, version, blob, encryption_revision=1, timestamp=None: {
+    parse_args=lambda self, vlob_id, version, blob, timestamp=None, encryption_revision=1: {
         "vlob_id": vlob_id,
         "version": version,
         "blob": blob,
