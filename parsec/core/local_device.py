@@ -65,7 +65,7 @@ class LegacyDeviceFileSchema(BaseSchema):
     human_handle = HumanHandleField(allow_none=True, missing=None)
     device_label = fields.String(allow_none=True, missing=None)
     auth_type = AuthenticationTypeField(
-        required=False, missing=AuthenticationType.PASSWORD.value, allow_none=True
+        required=False, missing=AuthenticationType.PASSWORD.value, allow_none=False
     )
 
 
