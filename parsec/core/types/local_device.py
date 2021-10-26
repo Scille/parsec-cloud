@@ -47,7 +47,7 @@ class LocalDevice(BaseLocalData):
         user_manifest_key = fields.SecretKey(required=True)
         local_symkey = fields.SecretKey(required=True)
         auth_type = AuthenticationTypeField(
-            required=False, missing=AuthenticationType.PASSWORD.value, allow_none=False
+            required=False, missing=AuthenticationType.PASSWORD.value, allow_none=True
         )
 
         @post_load
