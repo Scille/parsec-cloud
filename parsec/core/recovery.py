@@ -144,6 +144,11 @@ def generate_recovery_device_name() -> str:
     return f"recovery-{date.year}-{date.month}-{date.day}"
 
 
+# We want to provide the user with an easier to type format for the recovery password.
+# We use base32 so all characters are in one case, and the alphabet contains less
+# colliding letters (ie 0 O) then form 4 letters groups separated by dashes.
+# When decoding, we remove any characters not included in the alphabet (spaces, new lines, ...)
+# and decode to get our password back.
 def generate_passphrase_from_recovery_password(recovery_password: str) -> str:
     b32 = base64.b32encode(bytes.fromhex(recovery_password)).decode().rstrip("=")
     return "-".join(b32[i : i + 4] for i in range(0, len(b32), 4))
