@@ -3,6 +3,7 @@
 import attr
 from typing import Union, Optional, List, Tuple
 
+
 from parsec.crypto import (
     generate_shared_secret_key,
     generate_nonce,
