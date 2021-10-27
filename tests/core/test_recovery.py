@@ -1,88 +1,106 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2016-2021 Scille SAS
 
-from pathlib import Path
-
 import pytest
 
-from parsec.backend.user import Device
-from parsec.core.backend_connection import backend_authenticated_cmds_factory
-from parsec.core.local_device import get_key_file, load_device_with_password
-from parsec.core.recovery import (
-    generate_new_device_from_original,
-    create_new_device_from_original,
-    generate_recovery_password,
-    generate_passphrase_from_recovery_password,
-    get_recovery_password_from_passphrase,
-    is_valid_passphrase,
+from parsec.core.local_device import (
+    get_recovery_device_file_name,
+    load_recovery_device,
+    save_recovery_device,
 )
+from parsec.core.recovery import generate_recovery_device, generate_new_device_from_recovery
+from parsec.core.backend_connection import BackendNotAvailable, BackendConnectionRefused
+from parsec.crypto import generate_recovery_passphrase, derivate_secret_key_from_recovery_passphrase
+
+
+def test_recovery_passphrase():
+    passphrase, key = generate_recovery_passphrase()
+
+    key2 = derivate_secret_key_from_recovery_passphrase(passphrase)
+    assert key2 == key
+
+    # Add dummy stuff to the passphrase should not cause issues
+    altered_passphrase = passphrase.lower().replace("-", "@  白")
+    key3 = derivate_secret_key_from_recovery_passphrase(altered_passphrase)
+    assert key3 == key
+
+
+@pytest.mark.parametrize(
+    "bad_passphrase",
+    [
+        # Empty
+        "",
+        # Only invalid characters (so endup empty)
+        "-@//白",
+        # Too short
+        "D5VR-53YO-QYJW-VJ4A-4DQR-4LVC-W425-3CXN-F3AQ-J6X2-YVPZ-XBAO",
+        # Too long
+        "D5VR-53YO-QYJW-VJ4A-4DQR-4LVC-W425-3CXN-F3AQ-J6X2-YVPZ-XBAO-NU4Q-NU4Q",
+    ],
+)
+def test_invalid_passphrase(bad_passphrase):
+    with pytest.raises(ValueError):
+        derivate_secret_key_from_recovery_passphrase(bad_passphrase)
 
 
 @pytest.mark.trio
-async def test_generate_new_device_from_original(backend, running_backend, bob):
-    new_device_label = "NEWDEVICE"
-    async with backend_authenticated_cmds_factory(
-        addr=bob.organization_addr, device_id=bob.device_id, signing_key=bob.signing_key
-    ) as cmds:
-        new_device = await generate_new_device_from_original(cmds, bob, new_device_label)
+async def test_recovery_ok(tmp_path, user_fs_factory, running_backend, bob):
+    # 1) Create recovery device and export it as file
 
-    assert bob.organization_addr == new_device.organization_addr
-    assert bob.human_handle == new_device.human_handle
-    assert bob.profile == new_device.profile
-    assert bob.private_key == new_device.private_key
-    assert bob.user_manifest_id == new_device.user_manifest_id
-    assert bob.user_manifest_key == new_device.user_manifest_key
-    assert bob.local_symkey == new_device.local_symkey
+    recovery_device = await generate_recovery_device(bob)
 
-    assert bob.device_id != new_device.device_id
-    assert (
-        bob.device_label != new_device.device_label and new_device_label == new_device.device_label
-    )
-    assert bob.signing_key != new_device.signing_key
+    assert recovery_device.organization_addr == bob.organization_addr
+    assert recovery_device.device_id != bob.device_id
+    assert recovery_device.device_label != bob.device_label
+    assert recovery_device.human_handle == bob.human_handle
+    assert recovery_device.signing_key != bob.signing_key
+    assert recovery_device.private_key == bob.private_key
+    assert recovery_device.profile == bob.profile
+    assert recovery_device.user_manifest_id == bob.user_manifest_id
+    assert recovery_device.user_manifest_key == bob.user_manifest_key
+    assert recovery_device.local_symkey != bob.local_symkey
 
-    _, backend_new_device = await backend.user.get_user_with_device(
-        new_device.organization_id, new_device.device_id
-    )
-    _, backend_bob_device = await backend.user.get_user_with_device(
-        bob.organization_id, bob.device_id
-    )
-    backend_new_device: Device
-    backend_bob_device: Device
+    file_name = get_recovery_device_file_name(recovery_device)
 
-    assert backend_new_device != backend_bob_device
+    file_path = tmp_path / file_name
+    passphrase = save_recovery_device(file_path, recovery_device)
 
-    assert backend_new_device.user_id == backend_bob_device.user_id
+    # 2) Load recovery device file and create a new device
 
-    assert backend_new_device.device_id != backend_bob_device.device_id
-    assert (
-        backend_new_device.device_label != backend_bob_device.device_label
-        and backend_new_device.device_label == new_device_label
-    )
-    assert backend_new_device.device_certificate != backend_bob_device.device_certificate
-    assert backend_new_device.device_certifier != backend_bob_device.device_certifier
-    assert backend_new_device.created_on != backend_bob_device.created_on
-    assert backend_new_device.device_name != backend_bob_device.device_name
+    recovery_device2 = load_recovery_device(file_path, passphrase)
+
+    new_device = await generate_new_device_from_recovery(recovery_device2, "new_device")
+
+    assert new_device.organization_addr == recovery_device.organization_addr
+    assert new_device.device_id != recovery_device.device_id
+    assert new_device.device_label != recovery_device.device_label
+    assert new_device.human_handle == recovery_device.human_handle
+    assert new_device.signing_key != recovery_device.signing_key
+    assert new_device.private_key == recovery_device.private_key
+    assert new_device.profile == recovery_device.profile
+    assert new_device.user_manifest_id == recovery_device.user_manifest_id
+    assert new_device.user_manifest_key == recovery_device.user_manifest_key
+    assert new_device.local_symkey != recovery_device.local_symkey
+
+    # 3) Make sure the new device can connect to the backend
+    async with user_fs_factory(new_device) as new_device_fs:
+        await new_device_fs.sync()
 
 
 @pytest.mark.trio
-async def test_create_new_device_from_original(tmpdir, running_backend, core_config, alice):
-    new_device_label = "NEWDEVICE"
-    password = "NEWPASSWORD"
-    config_dir = Path(tmpdir)
-    new_alice = await create_new_device_from_original(alice, new_device_label, password, config_dir)
+async def test_recovery_while_offline(alice):
+    with pytest.raises(BackendNotAvailable):
+        await generate_recovery_device(alice)
 
-    key_file = get_key_file(config_dir, new_alice)
-    alice_reloaded = load_device_with_password(key_file, password)
-    assert new_alice == alice_reloaded
-    assert new_alice != alice
+    with pytest.raises(BackendNotAvailable):
+        await generate_new_device_from_recovery(alice, "new_device")
 
 
-def test_create_recovery_password():
-    recovery_password_orig = generate_recovery_password()
+@pytest.mark.trio
+async def test_recovery_with_revoked_user(running_backend, backend_data_binder, alice, bob):
+    await backend_data_binder.bind_revocation(bob.user_id, alice)
 
-    passphrase = generate_passphrase_from_recovery_password(recovery_password_orig)
-    assert is_valid_passphrase(passphrase) is True
-    assert is_valid_passphrase("ABDEEFKFWDWDJWDWNDJWDJ") is False
-    assert is_valid_passphrase("\n" + passphrase + "  ") is True
-    assert is_valid_passphrase(passphrase.replace("-", "")) is True
-    recovery_password = get_recovery_password_from_passphrase(passphrase)
-    assert recovery_password_orig == recovery_password
+    with pytest.raises(BackendConnectionRefused):
+        await generate_recovery_device(bob)
+
+    with pytest.raises(BackendConnectionRefused):
+        await generate_new_device_from_recovery(bob, "new_device")
