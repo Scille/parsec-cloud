@@ -374,7 +374,7 @@ async def test_concurrent_sync_placeholder(
         um_created_v0_fs1 = user_fs1.get_user_manifest().created
 
         with freeze_time("2000-01-01"):
-            # Sync user manfiests now to avoid extra milliseconds from restamping
+            # Sync user manifests now to avoid extra milliseconds from restamping
             await user_fs1.sync()
             await user_fs2.sync()
             w1id = await user_fs1.workspace_create("w1")

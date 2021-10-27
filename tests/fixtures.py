@@ -527,7 +527,7 @@ def backend_data_binder_factory(request, backend_addr, initial_user_manifest_sta
 
             with self.backend.event_bus.listen() as spy:
 
-                # The realm needs to be created srictly before the manfiest timestamp
+                # The realm needs to be created srictly before the manifest timestamp
                 realm_create_timestamp = manifest.timestamp.subtract(microseconds=1)
 
                 await self.backend.realm.create(

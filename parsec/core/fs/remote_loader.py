@@ -57,19 +57,19 @@ from parsec.core.fs.storage import BaseWorkspaceStorage
 # This value is used to increment the timestamp provided by the backend
 # when a manifest restamping is required. This value should be kept small
 # compared to the certificate stamp ahead value, so the certificate updates have
-# priority over manfiest updates.
+# priority over manifest updates.
 MANIFEST_STAMP_AHEAD_MS = 100_000  # microseconds, or 0.1 seconds
 
 # This value is used to increment the timestamp provided by the backend
 # when a certificate restamping is required. This value should be kept big
 # compared to the manifest stamp ahead value, so the certificate updates have
-# priority over manfiest updates.
+# priority over manifest updates.
 ROLE_CERTIFICATE_STAMP_AHEAD_MS = 500_000  # microseconds, or 0.5 seconds
 
 
 class VlobRequireGreaterTimestampError(Exception):
     @property
-    def timestamp(self) -> DateTime:
+    def strictly_greater_than(self) -> DateTime:
         return self.args[0]
 
 
@@ -121,7 +121,7 @@ class UserRemoteLoader:
         self._realm_role_certificates_cache = None
 
     async def _get_user_realm_role_at(
-        self, user_id: UserID, timestamp: DateTime, last_role_granted_on: DateTime
+        self, user_id: UserID, timestamp: DateTime, author_last_role_granted_on: DateTime
     ) -> Optional[RealmRole]:
 
         # Lazily iterate over user certificates from newest to oldest
@@ -135,7 +135,8 @@ class UserRemoteLoader:
         # Reload cache certificates if necessary
         last_certif = next(_get_user_certificates_from_cache(), None)
         if last_certif is None or (
-            last_certif.timestamp < timestamp and last_certif.timestamp < last_role_granted_on
+            last_certif.timestamp < timestamp
+            and last_certif.timestamp < author_last_role_granted_on
         ):
             self._realm_role_certificates_cache, _ = await self._load_realm_role_certificates()
 
@@ -558,14 +559,14 @@ class RemoteLoader(UserRemoteLoader):
             raise FSError(f"Cannot decrypt vlob: {exc}") from exc
 
         # Get the timestamp of the last role for this particular user
-        last_role_granted_on = rep["last_role_granted_on"]
+        author_last_role_granted_on = rep["author_last_role_granted_on"]
         # Compatibility with older backends (best effort strategy)
-        if last_role_granted_on is None:
-            last_role_granted_on = self.device.timestamp()
+        if author_last_role_granted_on is None:
+            author_last_role_granted_on = self.device.timestamp()
 
         # Finally make sure author was allowed to create this manifest
         role_at_timestamp = await self._get_user_realm_role_at(
-            expected_author.user_id, expected_timestamp, last_role_granted_on
+            expected_author.user_id, expected_timestamp, author_last_role_granted_on
         )
         if role_at_timestamp is None:
             raise FSError(
@@ -630,7 +631,7 @@ class RemoteLoader(UserRemoteLoader):
                 )
         # The backend notified us that some restamping is required
         except VlobRequireGreaterTimestampError as exc:
-            return await self.upload_manifest(entry_id, manifest, exc.timestamp)
+            return await self.upload_manifest(entry_id, manifest, exc.strictly_greater_than)
         else:
             return manifest
 
@@ -659,7 +660,7 @@ class RemoteLoader(UserRemoteLoader):
             # Seems we lost the access to the realm
             raise FSWorkspaceNoWriteAccess("Cannot upload manifest: no write access")
         elif rep["status"] == "require_greater_timestamp":
-            raise VlobRequireGreaterTimestampError(rep["timestamp"])
+            raise VlobRequireGreaterTimestampError(rep["strictly_greater_than"])
         elif rep["status"] == "bad_encryption_revision":
             raise FSBadEncryptionRevision(
                 f"Cannot create vlob {entry_id}: Bad encryption revision provided"
@@ -701,7 +702,7 @@ class RemoteLoader(UserRemoteLoader):
             # Seems we lost the access to the realm
             raise FSWorkspaceNoWriteAccess("Cannot upload manifest: no write access")
         elif rep["status"] == "require_greater_timestamp":
-            raise VlobRequireGreaterTimestampError(rep["timestamp"])
+            raise VlobRequireGreaterTimestampError(rep["strictly_greater_than"])
         elif rep["status"] == "bad_version":
             raise FSRemoteSyncError(entry_id)
         elif rep["status"] == "bad_timestamp":

@@ -34,7 +34,7 @@ async def test_create_and_read(alice, alice_backend_sock, alice2_backend_sock, r
         "blob": blob,
         "author": alice.device_id,
         "timestamp": datetime(2000, 1, 3),
-        "last_role_granted_on": datetime(2000, 1, 2),
+        "author_last_role_granted_on": datetime(2000, 1, 2),
     }
 
 
@@ -163,7 +163,7 @@ async def test_read_ok(alice, alice_backend_sock, vlobs):
         "version": 2,
         "author": alice.device_id,
         "timestamp": datetime(2000, 1, 3),
-        "last_role_granted_on": datetime(2000, 1, 2),
+        "author_last_role_granted_on": datetime(2000, 1, 2),
     }
 
 
@@ -176,7 +176,7 @@ async def test_read_ok_v1(alice, alice_backend_sock, vlobs):
         "version": 1,
         "author": alice.device_id,
         "timestamp": datetime(2000, 1, 2, 1),
-        "last_role_granted_on": datetime(2000, 1, 2),
+        "author_last_role_granted_on": datetime(2000, 1, 2),
     }
 
 
@@ -189,7 +189,7 @@ async def test_read_ok_timestamp_after_v2(alice, alice_backend_sock, vlobs):
         "version": 2,
         "author": alice.device_id,
         "timestamp": datetime(2000, 1, 3),
-        "last_role_granted_on": datetime(2000, 1, 2),
+        "author_last_role_granted_on": datetime(2000, 1, 2),
     }
 
 
@@ -202,7 +202,7 @@ async def test_read_ok_timestamp_is_v2(alice, alice_backend_sock, vlobs):
         "version": 2,
         "author": alice.device_id,
         "timestamp": datetime(2000, 1, 3),
-        "last_role_granted_on": datetime(2000, 1, 2),
+        "author_last_role_granted_on": datetime(2000, 1, 2),
     }
 
 
@@ -215,7 +215,7 @@ async def test_read_ok_timestamp_between_v1_and_v2(alice, alice_backend_sock, vl
         "version": 1,
         "author": alice.device_id,
         "timestamp": datetime(2000, 1, 2, 1),
-        "last_role_granted_on": datetime(2000, 1, 2),
+        "author_last_role_granted_on": datetime(2000, 1, 2),
     }
 
 
@@ -228,7 +228,7 @@ async def test_read_ok_timestamp_is_v1(alice, alice_backend_sock, vlobs):
         "version": 1,
         "author": alice.device_id,
         "timestamp": datetime(2000, 1, 2, 1),
-        "last_role_granted_on": datetime(2000, 1, 2),
+        "author_last_role_granted_on": datetime(2000, 1, 2),
     }
 
 

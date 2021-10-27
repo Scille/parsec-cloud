@@ -61,7 +61,7 @@ class VlobMaintenanceError(VlobError):
 
 class VlobRequireGreaterTimestampError(VlobError):
     @property
-    def timestamp(self):
+    def strictly_greater_than(self):
         return self.args[0]
 
 
@@ -86,7 +86,10 @@ class BaseVlobComponent:
 
         except VlobRequireGreaterTimestampError as exc:
             return vlob_create_serializer.rep_dump(
-                {"status": "require_greater_timestamp", "timestamp": exc.timestamp}
+                {
+                    "status": "require_greater_timestamp",
+                    "strictly_greater_than": exc.strictly_greater_than,
+                }
             )
 
         except VlobEncryptionRevisionError:
@@ -103,7 +106,7 @@ class BaseVlobComponent:
         msg = vlob_read_serializer.req_load(msg)
 
         try:
-            version, blob, author, created_on, last_role_granted_on = await self.read(
+            version, blob, author, created_on, author_last_role_granted_on = await self.read(
                 client_ctx.organization_id, client_ctx.device_id, **msg
             )
 
@@ -129,7 +132,7 @@ class BaseVlobComponent:
                 "version": version,
                 "author": author,
                 "timestamp": created_on,
-                "last_role_granted_on": last_role_granted_on,
+                "author_last_role_granted_on": author_last_role_granted_on,
             }
         )
 
@@ -153,7 +156,10 @@ class BaseVlobComponent:
 
         except VlobRequireGreaterTimestampError as exc:
             return vlob_update_serializer.rep_dump(
-                {"status": "require_greater_timestamp", "timestamp": exc.timestamp}
+                {
+                    "status": "require_greater_timestamp",
+                    "strictly_greater_than": exc.strictly_greater_than,
+                }
             )
 
         except VlobVersionError:

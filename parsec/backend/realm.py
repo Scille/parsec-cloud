@@ -70,7 +70,7 @@ class RealmMaintenanceError(RealmError):
 
 class RealmRoleRequireGreaterTimestampError(RealmError):
     @property
-    def timestamp(self):
+    def strictly_greater_than(self):
         return self.args[0]
 
 
@@ -298,7 +298,10 @@ class BaseRealmComponent:
 
         except RealmRoleRequireGreaterTimestampError as exc:
             return realm_update_roles_serializer.rep_dump(
-                {"status": "require_greater_timestamp", "timestamp": exc.timestamp}
+                {
+                    "status": "require_greater_timestamp",
+                    "strictly_greater_than": exc.strictly_greater_than,
+                }
             )
 
         except RealmIncompatibleProfileError as exc:

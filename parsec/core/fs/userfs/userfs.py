@@ -629,7 +629,7 @@ class UserFS:
                 f"Cannot modify workspace data while it is in maintenance: {rep}"
             )
         elif rep["status"] == "require_greater_timestamp":
-            return await self._outbound_sync_inner(rep["timestamp"])
+            return await self._outbound_sync_inner(rep["strictly_greater_than"])
         elif rep["status"] != "ok":
             raise FSError(f"Cannot sync user manifest: {rep}")
 
@@ -763,7 +763,9 @@ class UserFS:
                 f"Must be Owner or Manager on the workspace is mandatory to share it: {rep}"
             )
         elif rep["status"] == "require_greater_timestamp":
-            return await self.workspace_share(workspace_id, recipient, role, rep["timestamp"])
+            return await self.workspace_share(
+                workspace_id, recipient, role, rep["strictly_greater_than"]
+            )
         elif rep["status"] == "in_maintenance":
             raise FSWorkspaceInMaintenance(
                 f"Cannot share workspace while it is in maintenance: {rep}"

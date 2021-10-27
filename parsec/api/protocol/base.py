@@ -74,7 +74,7 @@ class RequireGreaterTimestampRepSchema(BaseRepSchema):
     status: fields.CheckedConstant = fields.CheckedConstant(
         "require_greater_timestamp", required=True
     )
-    timestamp = fields.DateTime(required=True, allow_none=False)
+    strictly_greater_than = fields.DateTime(required=True, allow_none=False)
 
 
 class CmdSerializer:

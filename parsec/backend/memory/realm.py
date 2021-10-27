@@ -50,7 +50,7 @@ class Realm:
                 roles[x.user_id] = x.role
         return roles
 
-    def get_latest_role(self, user_id: UserID) -> Optional[RealmGrantedRole]:
+    def get_last_role(self, user_id: UserID) -> Optional[RealmGrantedRole]:
         filtered_roles = [role for role in self.granted_roles if role.user_id == user_id]
         try:
             return max(filtered_roles, key=lambda role: role.granted_on)
@@ -209,9 +209,9 @@ class MemoryRealmComponent(BaseRealmComponent):
             raise RealmRoleAlreadyGranted()
 
         # Timestamps for the role certificates of a given user should be striclty increasing
-        latest_role = realm.get_latest_role(new_role.user_id)
-        if latest_role is not None and latest_role.granted_on >= new_role.granted_on:
-            raise RealmRoleRequireGreaterTimestampError(latest_role.granted_on)
+        last_role = realm.get_last_role(new_role.user_id)
+        if last_role is not None and last_role.granted_on >= new_role.granted_on:
+            raise RealmRoleRequireGreaterTimestampError(last_role.granted_on)
 
         # Perfrom extra checks when removing write rights
         if new_role.role in (RealmRole.READER, None):

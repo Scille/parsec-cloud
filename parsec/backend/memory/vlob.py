@@ -191,16 +191,17 @@ class MemoryVlobComponent(BaseVlobComponent):
             assert False, f"Operation kind {operation_kind} not supported"
 
         # Check the role
-        if realm.roles.get(user_id) not in allowed_roles:
+        last_role = realm.get_last_role(user_id)
+        if last_role is None or last_role.role not in allowed_roles:
             raise VlobAccessError()
 
         # Extra check for write operations
         if operation_kind == OperationKind.DATA_WRITE:
 
             # Write operations should always occurs strictly after the last change of role for this user
-            last_role_granted_on = realm.get_latest_role(user_id).granted_on
-            if last_role_granted_on >= timestamp:
-                raise VlobRequireGreaterTimestampError(last_role_granted_on)
+            assert last_role is not None
+            if last_role.granted_on >= timestamp:
+                raise VlobRequireGreaterTimestampError(last_role.granted_on)
 
         # Special case of reading while in reencryption
         if operation_kind == OperationKind.DATA_READ and realm.status.in_reencryption:
@@ -329,7 +330,8 @@ class MemoryVlobComponent(BaseVlobComponent):
                     raise VlobVersionError()
         try:
             vlob_data, vlob_device_id, vlob_timestamp = vlob.data[version - 1]
-            last_role_granted_on = realm.get_latest_role(vlob_device_id.user_id).granted_on
+            last_role = realm.get_last_role(vlob_device_id.user_id)
+            last_role_granted_on = last_role.granted_on if last_role is not None else None
             return (version, vlob_data, vlob_device_id, vlob_timestamp, last_role_granted_on)
 
         except IndexError:

@@ -52,8 +52,11 @@ class VlobReadRepSchema(BaseRepSchema):
     blob = fields.Bytes(required=True)
     author = DeviceIDField(required=True)
     timestamp = fields.DateTime(required=True)
-    # XXX: Should we maintain new clients + old backend compatibility?
-    last_role_granted_on = fields.DateTime(allow_none=True, missing=None)
+    # This field is used by the client to figure out if its role certificate cache is up-to-date enough
+    # to be able to perform the proper integrity checks on the manifest timestamp.
+    # The `missing=None` argument is used to provide compatibilty of new clients with old backends.
+    # New in API version 2.3
+    author_last_role_granted_on = fields.DateTime(allow_none=True, missing=None)
 
 
 vlob_read_serializer = CmdSerializer(VlobReadReqSchema, VlobReadRepSchema)

@@ -141,10 +141,10 @@ async def query_read(
             raise VlobVersionError()
 
     version, blob, vlob_author, created_on = data
-    last_role_granted_on = await _get_last_role_granted_on(
+    author_last_role_granted_on = await _get_last_role_granted_on(
         conn, organization_id, realm_id, DeviceID(vlob_author)
     )
-    return version, blob, vlob_author, created_on, last_role_granted_on
+    return version, blob, vlob_author, created_on, author_last_role_granted_on
 
 
 _q_poll_changes = Q(
