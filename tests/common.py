@@ -329,6 +329,7 @@ _FIXTURES_CUSTOMIZATIONS = {
     "mallory_has_device_label",
     "backend_not_populated",
     "backend_has_webhook",
+    "backend_force_mocked",
     "backend_over_ssl",
     "backend_forward_proto_enforce_https",
     "backend_spontaneous_organization_boostrap",

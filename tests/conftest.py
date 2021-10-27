@@ -562,7 +562,7 @@ def blockstore(request, backend_store, fixtures_customization):
             blockstores=[config, MockedBlockStoreConfig(), MockedBlockStoreConfig()]
         )
     else:
-        assert "NO_RAID"
+        assert raid == "NO_RAID"
 
     return config
 
@@ -613,6 +613,12 @@ def backend_factory(
     @asynccontextmanager
     async def _backend_factory(populated=True, config={}, event_bus=None):
         ssl_context = fixtures_customization.get("backend_over_ssl", False)
+        nonlocal backend_store, blockstore
+        if fixtures_customization.get("backend_force_mocked"):
+            backend_store = "MOCKED"
+            assert fixtures_customization.get("blockstore_mode", "NO_RAID") == "NO_RAID"
+            blockstore = MockedBlockStoreConfig()
+
         config = BackendConfig(
             **{
                 "administration_token": "s3cr3t",
