@@ -1,8 +1,9 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2016-2021 Scille SAS
 
 import attr
+import trio
 from enum import Enum
-from pathlib import Path
+from pathlib import Path, PurePath
 from hashlib import sha256
 from typing import List, Optional, Iterator, Dict, Type
 
@@ -398,7 +399,7 @@ def change_device_password(key_file: Path, old_password: str, new_password: str)
     save_device_with_password(key_file, device, password=new_password, force=True)
 
 
-def load_recovery_device(key_file: Path, passphrase: str) -> LocalDevice:
+async def load_recovery_device(key_file: PurePath, passphrase: str) -> LocalDevice:
     """
     Raises:
         LocalDeviceError
@@ -407,8 +408,9 @@ def load_recovery_device(key_file: Path, passphrase: str) -> LocalDevice:
         LocalDeviceValidationError
         LocalDevicePackingError
     """
+    key_file = trio.Path(key_file)
     try:
-        ciphertext = key_file.read_bytes()
+        ciphertext = await key_file.read_bytes()
     except OSError as exc:
         raise LocalDeviceNotFoundError(f"Recovery file `{key_file}` is missing") from exc
 
@@ -438,13 +440,14 @@ def load_recovery_device(key_file: Path, passphrase: str) -> LocalDevice:
         raise LocalDeviceValidationError(f"Cannot load local device: {exc}") from exc
 
 
-def save_recovery_device(key_file: Path, device: LocalDevice, force: bool = False) -> str:
+async def save_recovery_device(key_file: PurePath, device: LocalDevice, force: bool = False) -> str:
     """
     Return the recovery passphrase
     """
     assert key_file.suffix == RECOVERY_DEVICE_FILE_SUFFIX
+    key_file = trio.Path(key_file)
 
-    if key_file.exists() and not force:
+    if await key_file.exists() and not force:
         raise LocalDeviceAlreadyExistsError(f"Device key file `{key_file}` already exists")
 
     passphrase, key = generate_recovery_passphrase()
@@ -468,8 +471,8 @@ def save_recovery_device(key_file: Path, device: LocalDevice, force: bool = Fals
     )
 
     try:
-        key_file.parent.mkdir(mode=0o700, exist_ok=True, parents=True)
-        key_file.write_bytes(key_file_content)
+        await key_file.parent.mkdir(mode=0o700, exist_ok=True, parents=True)
+        await key_file.write_bytes(key_file_content)
 
     except OSError as exc:
         raise LocalDeviceError(f"Cannot save {key_file}: {exc}") from exc

@@ -31,7 +31,7 @@ async def _export_recovery_device(
     file_path = output / file_name
     file_path_display = click.style(str(file_path.absolute()), fg="yellow")
     with operation(f"Saving recovery device file in {file_path_display}"):
-        passphrase = save_recovery_device(file_path, recovery_device)
+        passphrase = await save_recovery_device(file_path, recovery_device)
 
     p1 = click.style("Save the recovery passphrase in a safe place:", fg="red")
     p2 = click.style(passphrase, fg="green")
@@ -66,7 +66,7 @@ async def _import_recovery_device(
     new_device_label: str,
 ) -> None:
 
-    recovery_device = load_recovery_device(recovery_file, passphrase)
+    recovery_device = await load_recovery_device(recovery_file, passphrase)
 
     device_label_display = click.style(new_device_label, fg="yellow")
     async with spinner(f"Creating new device {device_label_display}"):

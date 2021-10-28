@@ -5,7 +5,7 @@ from PyQt5.QtWidgets import QWidget, QFileDialog
 from PyQt5.QtPrintSupport import QPrinter, QPrintDialog
 from PyQt5.QtGui import QTextDocument
 
-from pathlib import Path
+from pathlib import Path, PurePath
 
 from parsec.core.recovery import generate_recovery_device
 from parsec.core.backend_connection import BackendConnectionError
@@ -48,7 +48,7 @@ class DeviceRecoveryExportPage2Widget(QWidget, Ui_DeviceRecoveryExportPage2Widge
         self.edit_passphrase.setText(passphrase)
 
     def _on_path_clicked(self, file_path):
-        self.jobs_ctx.submit_job(None, None, open_files_job, [Path(file_path).parent])
+        self.jobs_ctx.submit_job(None, None, open_files_job, [PurePath(file_path).parent])
 
     def _print_recovery_key(self):
         printer = QPrinter(QPrinter.HighResolution)
@@ -58,7 +58,7 @@ class DeviceRecoveryExportPage2Widget(QWidget, Ui_DeviceRecoveryExportPage2Widge
                 organization=self.device.organization_id,
                 label=self.device.user_display,
                 password=self.passphrase,
-                keyname=Path(self.label_file_path.text()).name,
+                keyname=PurePath(self.label_file_path.text()).name,
             )
             doc = QTextDocument()
             doc.setHtml(html)
@@ -99,7 +99,7 @@ class DeviceRecoveryExportPage1Widget(QWidget, Ui_DeviceRecoveryExportPage1Widge
         return self.devices[self.combo_devices.currentData()]
 
     def get_save_path(self):
-        return Path(self.label_file_path.text())
+        return PurePath(self.label_file_path.text())
 
     def get_password(self):
         return self.edit_password.text()
@@ -148,7 +148,7 @@ class DeviceRecoveryExportWidget(QWidget, Ui_DeviceRecoveryExportWidget):
             recovery_device = await generate_recovery_device(device)
             file_name = get_recovery_device_file_name(recovery_device)
             file_path = export_path / file_name
-            passphrase = save_recovery_device(file_path, recovery_device)
+            passphrase = await save_recovery_device(file_path, recovery_device)
             return recovery_device, file_path, passphrase
         except BackendConnectionError as exc:
             show_error(self, translate("EXPORT_KEY_BACKEND_ERROR"), exception=exc)

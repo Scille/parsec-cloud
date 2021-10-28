@@ -3,7 +3,7 @@
 from PyQt5.QtCore import pyqtSignal
 from PyQt5.QtWidgets import QWidget, QFileDialog
 
-from pathlib import Path
+from pathlib import Path, PurePath
 
 from parsec.core.backend_connection import BackendConnectionError
 from parsec.core.recovery import generate_new_device_from_recovery
@@ -105,6 +105,8 @@ class DeviceRecoveryImportPage1Widget(QWidget, Ui_DeviceRecoveryImportPage1Widge
 class DeviceRecoveryImportWidget(QWidget, Ui_DeviceRecoveryImportWidget):
     create_new_device_success = pyqtSignal(QtToTrioJob)
     create_new_device_failure = pyqtSignal(QtToTrioJob)
+    load_recovery_device_success = pyqtSignal(QtToTrioJob)
+    load_recovery_device_failure = pyqtSignal(QtToTrioJob)
 
     def __init__(self, config, jobs_ctx, parent=None):
         super().__init__(parent)
@@ -139,29 +141,35 @@ class DeviceRecoveryImportWidget(QWidget, Ui_DeviceRecoveryImportWidget):
         except Exception as exc:
             show_error(self, translate("IMPORT_KEY_ERROR"), exception=exc)
 
+    async def _load_recovery_device(self, file, passphrase):
+        try:
+            self.button_validate.setEnabled(False)
+            self.recovery_device = await load_recovery_device(file, passphrase)
+        except LocalDeviceError as exc:
+            self.button_validate.setEnabled(True)
+            if "Decryption failed" in str(exc):
+                show_error(self, translate("TEXT_IMPORT_KEY_WRONG_PASSPHRASE"), exception=exc)
+            else:
+                show_error(self, translate("IMPORT_KEY_LOCAL_DEVICE_ERROR"), exception=exc)
+        except Exception as exc:
+            self.button_validate.setEnabled(True)
+            show_error(self, translate("IMPORT_KEY_ERROR"), exception=exc)
+        else:
+            self.main_layout.removeWidget(self.current_page)
+            self.current_page = DeviceRecoveryImportPage2Widget(parent=self)
+            self.current_page.info_filled.connect(self._on_page2_info_filled)
+            self.main_layout.addWidget(self.current_page)
+            self.button_validate.setText(translate("ACTION_CREATE_DEVICE"))
+
     def _on_validate_clicked(self):
         if isinstance(self.current_page, DeviceRecoveryImportPage1Widget):
-            try:
-                self.button_validate.setEnabled(False)
-                self.recovery_device = load_recovery_device(
-                    Path(self.current_page.get_recovery_key_file()),
-                    self.current_page.get_passphrase(),
-                )
-            except LocalDeviceError as exc:
-                self.button_validate.setEnabled(True)
-                if "Decryption failed" in str(exc):
-                    show_error(self, translate("TEXT_IMPORT_KEY_WRONG_PASSPHRASE"), exception=exc)
-                else:
-                    show_error(self, translate("IMPORT_KEY_LOCAL_DEVICE_ERROR"), exception=exc)
-            except Exception as exc:
-                self.button_validate.setEnabled(True)
-                show_error(self, translate("IMPORT_KEY_ERROR"), exception=exc)
-            else:
-                self.main_layout.removeWidget(self.current_page)
-                self.current_page = DeviceRecoveryImportPage2Widget(parent=self)
-                self.current_page.info_filled.connect(self._on_page2_info_filled)
-                self.main_layout.addWidget(self.current_page)
-                self.button_validate.setText(translate("ACTION_CREATE_DEVICE"))
+            self.jobs_ctx.submit_job(
+                self.load_recovery_device_success,
+                self.load_recovery_device_failure,
+                self._load_recovery_device,
+                file=PurePath(self.current_page.get_recovery_key_file()),
+                passphrase=self.current_page.get_passphrase(),
+            )
         else:
             self.jobs_ctx.submit_job(
                 self.create_new_device_success,
@@ -177,6 +185,12 @@ class DeviceRecoveryImportWidget(QWidget, Ui_DeviceRecoveryImportWidget):
         self.dialog.accept()
 
     def _on_create_new_device_failure(self, job):
+        pass
+
+    def _on_load_recovery_device_success(self, job):
+        pass
+
+    def _on_load_recovery_device_failure(self, job):
         pass
 
     @classmethod

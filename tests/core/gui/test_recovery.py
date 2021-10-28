@@ -116,7 +116,7 @@ async def test_import_recovery_device(
     recovery_device = await generate_recovery_device(alice)
     file_name = get_recovery_device_file_name(recovery_device)
     file_path = tmp_path / file_name
-    passphrase = save_recovery_device(file_path, recovery_device)
+    passphrase = await save_recovery_device(file_path, recovery_device)
 
     with monkeypatch.context() as m:
         m.setattr(

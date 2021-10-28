@@ -62,11 +62,11 @@ async def test_recovery_ok(tmp_path, user_fs_factory, running_backend, bob):
     file_name = get_recovery_device_file_name(recovery_device)
 
     file_path = tmp_path / file_name
-    passphrase = save_recovery_device(file_path, recovery_device)
+    passphrase = await save_recovery_device(file_path, recovery_device)
 
     # 2) Load recovery device file and create a new device
 
-    recovery_device2 = load_recovery_device(file_path, passphrase)
+    recovery_device2 = await load_recovery_device(file_path, passphrase)
 
     new_device = await generate_new_device_from_recovery(recovery_device2, "new_device")
 
