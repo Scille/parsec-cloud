@@ -78,7 +78,7 @@ async def user_invitation_addr(backend, bob):
 
 @pytest.fixture
 def bob_available_device(bob, tmp_path):
-    key_file_path = tmp_path / "bob_device.key"
+    key_file_path = tmp_path / "bob_device.keys"
     save_device_with_password(key_file=key_file_path, device=bob, password="", force=True)
     return AvailableDevice(
         key_file_path=key_file_path,

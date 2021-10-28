@@ -7,17 +7,16 @@ from PyQt5.QtGui import QTextDocument
 
 from pathlib import Path
 
-from parsec.core.recovery import (
-    create_new_device_from_original,
-    RecoveryLocalDeviceError,
-    RecoveryBackendError,
-    generate_recovery_key_name,
-    generate_recovery_device_name,
-    generate_recovery_password,
-    generate_passphrase_from_recovery_password,
+from parsec.core.recovery import generate_recovery_device
+from parsec.core.backend_connection import BackendConnectionError
+from parsec.core.local_device import (
+    load_device_with_password,
+    LocalDeviceError,
+    get_key_file,
+    get_recovery_device_file_name,
+    save_recovery_device,
+    LocalDeviceAlreadyExistsError,
 )
-
-from parsec.core.local_device import load_device_with_password, LocalDeviceError, get_key_file
 from parsec.core.gui.trio_jobs import QtToTrioJob
 from parsec.core.gui.lang import translate
 from parsec.core.gui.desktop import open_files_job
@@ -40,7 +39,7 @@ class DeviceRecoveryExportPage2Widget(QWidget, Ui_DeviceRecoveryExportPage2Widge
         self.device = device
         self.jobs_ctx = jobs_ctx
         self.passphrase = passphrase
-        self.label_file_path.setText(save_path)
+        self.label_file_path.setText(str(save_path))
         font = self.label_file_path.font()
         font.setUnderline(True)
         self.label_file_path.setFont(font)
@@ -84,17 +83,11 @@ class DeviceRecoveryExportPage1Widget(QWidget, Ui_DeviceRecoveryExportPage1Widge
         self._check_infos()
 
     def _on_select_file_clicked(self):
-        device = self.devices[self.combo_devices.currentData()]
-        default_key_name = generate_recovery_key_name(device)
-        key_path, _ = QFileDialog.getSaveFileName(
-            self,
-            translate("TEXT_EXPORT_KEY"),
-            str(Path.home().joinpath(default_key_name)),
-            filter=translate("RECOVERY_KEY_FILTERS"),
-            initialFilter=translate("RECOVERY_KEY_INITIAL_FILTER"),
+        key_dir = QFileDialog.getExistingDirectory(
+            self, translate("TEXT_EXPORT_KEY"), str(Path.home())
         )
-        if key_path:
-            self.label_file_path.setText(key_path)
+        if key_dir:
+            self.label_file_path.setText(key_dir)
         self._check_infos()
 
     def _check_infos(self):
@@ -106,7 +99,7 @@ class DeviceRecoveryExportPage1Widget(QWidget, Ui_DeviceRecoveryExportPage1Widge
         return self.devices[self.combo_devices.currentData()]
 
     def get_save_path(self):
-        return self.label_file_path.text()
+        return Path(self.label_file_path.text())
 
     def get_password(self):
         return self.edit_password.text()
@@ -131,11 +124,14 @@ class DeviceRecoveryExportWidget(QWidget, Ui_DeviceRecoveryExportWidget):
         self.export_failure.connect(self._on_export_failure)
 
     def _on_export_success(self, job):
-        device, _, recovery_password, export_path = job.ret
+        recovery_device, file_path, passphrase = job.ret
         self.main_layout.removeWidget(self.current_page)
-        passphrase = generate_passphrase_from_recovery_password(recovery_password)
         self.current_page = DeviceRecoveryExportPage2Widget(
-            self.jobs_ctx, device=device, save_path=export_path, passphrase=passphrase, parent=self
+            self.jobs_ctx,
+            device=recovery_device,
+            save_path=file_path,
+            passphrase=passphrase,
+            parent=self,
         )
         self.main_layout.addWidget(self.current_page)
         self.button_validate.setText(translate("ACTION_CLOSE"))
@@ -149,17 +145,15 @@ class DeviceRecoveryExportWidget(QWidget, Ui_DeviceRecoveryExportWidget):
 
     async def _export_recovery_device(self, config_dir, device, export_path):
         try:
-            device_label = generate_recovery_device_name()
-            recovery_password = generate_recovery_password()
-
-            await create_new_device_from_original(
-                device, device_label, recovery_password, config_dir, Path(export_path)
-            )
-            return device, device_label, recovery_password, export_path
-        except RecoveryLocalDeviceError as exc:
-            show_error(self, translate("EXPORT_KEY_LOCAL_DEVICE_ERROR"), exception=exc)
-        except RecoveryBackendError as exc:
+            recovery_device = await generate_recovery_device(device)
+            file_name = get_recovery_device_file_name(recovery_device)
+            file_path = export_path / file_name
+            passphrase = save_recovery_device(file_path, recovery_device)
+            return recovery_device, file_path, passphrase
+        except BackendConnectionError as exc:
             show_error(self, translate("EXPORT_KEY_BACKEND_ERROR"), exception=exc)
+        except LocalDeviceAlreadyExistsError as exc:
+            show_error(self, translate("TEXT_RECOVERY_DEVICE_FILE_ALREADY_EXISTS"), exception=exc)
         except Exception as exc:
             show_error(self, translate("EXPORT_KEY_ERROR"), exception=exc)
         self.button_validate.setEnabled(True)

@@ -5,15 +5,14 @@ from PyQt5.QtWidgets import QWidget, QFileDialog
 
 from pathlib import Path
 
-from parsec.core.local_device import load_device_file, load_device_with_password, LocalDeviceError
-
-from parsec.core.recovery import (
-    create_new_device_from_original,
-    RecoveryLocalDeviceError,
-    RecoveryBackendError,
-    is_valid_passphrase,
-    get_recovery_password_from_passphrase,
+from parsec.core.backend_connection import BackendConnectionError
+from parsec.core.recovery import generate_new_device_from_recovery
+from parsec.core.local_device import (
+    save_device_with_password_in_config,
+    load_recovery_device,
+    LocalDeviceError,
 )
+from parsec.crypto import derivate_secret_key_from_recovery_passphrase
 
 from parsec.core.gui.trio_jobs import QtToTrioJob
 from parsec.core.gui.lang import translate
@@ -75,8 +74,15 @@ class DeviceRecoveryImportPage1Widget(QWidget, Ui_DeviceRecoveryImportPage1Widge
             self.label_key_file.setText(key_file)
         self._check_infos()
 
+    def _is_valid_passphrase(self, passphrase):
+        try:
+            derivate_secret_key_from_recovery_passphrase(passphrase)
+            return True
+        except ValueError:
+            return False
+
     def _on_passphrase_text_changed(self):
-        if not is_valid_passphrase(self.edit_passphrase.toPlainText()):
+        if not self._is_valid_passphrase(self.edit_passphrase.toPlainText()):
             self.label_passphrase_error.setText(translate("TEXT_RECOVERY_INVALID_PASSPHRASE"))
             self.label_passphrase_error.show()
         else:
@@ -85,14 +91,14 @@ class DeviceRecoveryImportPage1Widget(QWidget, Ui_DeviceRecoveryImportPage1Widge
 
     def _check_infos(self):
         self.info_filled.emit(
-            is_valid_passphrase(self.edit_passphrase.toPlainText())
+            self._is_valid_passphrase(self.edit_passphrase.toPlainText())
             and len(self.label_key_file.text()) > 0
         )
 
-    def get_recovery_password(self):
-        return get_recovery_password_from_passphrase(self.edit_passphrase.toPlainText())
+    def get_passphrase(self):
+        return self.edit_passphrase.toPlainText()
 
-    def get_recovery_key(self):
+    def get_recovery_key_file(self):
         return self.label_key_file.text()
 
 
@@ -106,7 +112,7 @@ class DeviceRecoveryImportWidget(QWidget, Ui_DeviceRecoveryImportWidget):
         self.dialog = None
         self.config = config
         self.jobs_ctx = jobs_ctx
-        self.initial_device = None
+        self.recovery_device = None
         self.button_validate.clicked.connect(self._on_validate_clicked)
         self.button_validate.setEnabled(False)
         self.current_page = DeviceRecoveryImportPage1Widget(self)
@@ -121,15 +127,14 @@ class DeviceRecoveryImportWidget(QWidget, Ui_DeviceRecoveryImportWidget):
     def _on_page2_info_filled(self, valid):
         self.button_validate.setEnabled(valid)
 
-    async def _create_new_device(self, config_dir, initial_device, device_label, password):
+    async def _create_new_device(self, config_dir, recovery_device, device_label, password):
         try:
-            await create_new_device_from_original(
-                initial_device, device_label, password, config_dir=config_dir
+            new_device = await generate_new_device_from_recovery(recovery_device, device_label)
+            save_device_with_password_in_config(
+                config_dir=config_dir, device=new_device, password=password
             )
             show_info(self, translate("TEXT_RECOVERY_IMPORT_SUCCESS"))
-        except RecoveryLocalDeviceError as exc:
-            show_error(self, translate("IMPORT_KEY_LOCAL_DEVICE_ERROR"), exception=exc)
-        except RecoveryBackendError as exc:
+        except BackendConnectionError as exc:
             show_error(self, translate("IMPORT_KEY_BACKEND_ERROR"), exception=exc)
         except Exception as exc:
             show_error(self, translate("IMPORT_KEY_ERROR"), exception=exc)
@@ -138,19 +143,18 @@ class DeviceRecoveryImportWidget(QWidget, Ui_DeviceRecoveryImportWidget):
         if isinstance(self.current_page, DeviceRecoveryImportPage1Widget):
             try:
                 self.button_validate.setEnabled(False)
-                device_file = load_device_file(Path(self.current_page.get_recovery_key()))
-                self.initial_device = load_device_with_password(
-                    device_file.key_file_path, password=self.current_page.get_recovery_password()
+                self.recovery_device = load_recovery_device(
+                    Path(self.current_page.get_recovery_key_file()),
+                    self.current_page.get_passphrase(),
                 )
-                assert self.initial_device
-            except AssertionError as exc:
-                show_error(self, translate("TEXT_INVALID_DEVICE_KEY"), exception=exc)
             except LocalDeviceError as exc:
+                self.button_validate.setEnabled(True)
                 if "Decryption failed" in str(exc):
                     show_error(self, translate("TEXT_IMPORT_KEY_WRONG_PASSPHRASE"), exception=exc)
                 else:
                     show_error(self, translate("IMPORT_KEY_LOCAL_DEVICE_ERROR"), exception=exc)
             except Exception as exc:
+                self.button_validate.setEnabled(True)
                 show_error(self, translate("IMPORT_KEY_ERROR"), exception=exc)
             else:
                 self.main_layout.removeWidget(self.current_page)
@@ -164,7 +168,7 @@ class DeviceRecoveryImportWidget(QWidget, Ui_DeviceRecoveryImportWidget):
                 self.create_new_device_failure,
                 self._create_new_device,
                 config_dir=self.config.config_dir,
-                initial_device=self.initial_device,
+                recovery_device=self.recovery_device,
                 device_label=self.current_page.get_device_name(),
                 password=self.current_page.get_password(),
             )

@@ -8,7 +8,6 @@ import trio
 from structlog import get_logger
 from parsec.core.fs import FSError
 from parsec.core.mountpoint import MountpointError
-from parsec.core.recovery import RecoveryError
 from parsec.utils import split_multi_error
 
 
@@ -110,7 +109,7 @@ class QtToTrioJob:
         if isinstance(exc, JobResultError):
             self.status = exc.status
             self.exc = exc
-        elif isinstance(exc, (FSError, MountpointError, RecoveryError)):
+        elif isinstance(exc, (FSError, MountpointError)):
             self.status = "ko"
             self.exc = exc
         else:

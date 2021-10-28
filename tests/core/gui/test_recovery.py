@@ -4,13 +4,14 @@ import pytest
 
 from PyQt5 import QtCore
 
-from parsec.core.local_device import save_device_with_password_in_config
-from parsec.core.recovery import (
-    create_new_device_from_original,
-    generate_recovery_device_name,
-    generate_recovery_password,
-    generate_passphrase_from_recovery_password,
+from pathlib import Path
+
+from parsec.core.local_device import (
+    save_device_with_password_in_config,
+    get_recovery_device_file_name,
+    save_recovery_device,
 )
+from parsec.core.recovery import generate_recovery_device
 
 from parsec.core.gui.lang import translate
 from parsec.core.gui.device_recovery_export_widget import (
@@ -50,7 +51,6 @@ async def test_export_recovery_device(
     alice,
 ):
     PASSWORD = "P@ssw0rd"
-    RECOVERY_KEY_FILE_NAME = "alice.psrk"
     save_device_with_password_in_config(core_config.config_dir, alice, PASSWORD)
 
     with monkeypatch.context() as m:
@@ -69,7 +69,7 @@ async def test_export_recovery_device(
     assert exp_w.current_page.combo_devices.count() == 1
     assert exp_w.current_page.combo_devices.currentData() == alice.slug
 
-    exp_w.current_page.label_file_path.setText(str(tmp_path / RECOVERY_KEY_FILE_NAME))
+    exp_w.current_page.label_file_path.setText(str(tmp_path))
 
     assert not exp_w.button_validate.isEnabled()
 
@@ -85,11 +85,12 @@ async def test_export_recovery_device(
 
     await aqtbot.wait_until(_page2_shown)
 
-    assert (tmp_path / RECOVERY_KEY_FILE_NAME).is_file()
-    assert (tmp_path / RECOVERY_KEY_FILE_NAME).stat().st_size > 0
+    recovery_file = Path(exp_w.current_page.label_file_path.text())
+
+    assert recovery_file.is_file()
+    assert recovery_file.stat().st_size > 0
 
     assert len(exp_w.current_page.edit_passphrase.toPlainText()) > 0
-    assert exp_w.current_page.label_file_path.text() == str(tmp_path / RECOVERY_KEY_FILE_NAME)
 
     assert exp_w.button_validate.isEnabled()
     aqtbot.mouse_click(exp_w.button_validate, QtCore.Qt.LeftButton)
@@ -110,19 +111,13 @@ async def test_import_recovery_device(
 ):
     PASSWORD = "P@ssw0rd"
     NEW_DEVICE_LABEL = "Alice_New_Device"
-    RECOVERY_KEY_FILE_NAME = "alice.psrk"
     save_device_with_password_in_config(core_config.config_dir, alice, PASSWORD)
 
-    device_label = generate_recovery_device_name()
-    recovery_password = generate_recovery_password()
+    recovery_device = await generate_recovery_device(alice)
+    file_name = get_recovery_device_file_name(recovery_device)
+    file_path = tmp_path / file_name
+    passphrase = save_recovery_device(file_path, recovery_device)
 
-    await create_new_device_from_original(
-        alice,
-        device_label,
-        recovery_password,
-        core_config.config_dir,
-        tmp_path / RECOVERY_KEY_FILE_NAME,
-    )
     with monkeypatch.context() as m:
         m.setattr(
             "parsec.core.gui.main_window.ask_question",
@@ -135,7 +130,7 @@ async def test_import_recovery_device(
     assert isinstance(imp_w.current_page, DeviceRecoveryImportPage1Widget)
     assert not imp_w.button_validate.isEnabled()
 
-    imp_w.current_page.label_key_file.setText(str(tmp_path / RECOVERY_KEY_FILE_NAME))
+    imp_w.current_page.label_key_file.setText(str(file_path))
     assert not imp_w.button_validate.isEnabled()
 
     aqtbot.key_clicks(imp_w.current_page.edit_passphrase, "abcdef")
@@ -144,8 +139,6 @@ async def test_import_recovery_device(
         "TEXT_RECOVERY_INVALID_PASSPHRASE"
     )
     assert imp_w.current_page.label_passphrase_error.isVisible()
-
-    passphrase = generate_passphrase_from_recovery_password(recovery_password)
 
     imp_w.current_page.edit_passphrase.setText("")
     aqtbot.key_clicks(imp_w.current_page.edit_passphrase, passphrase)
