@@ -17,7 +17,7 @@ from parsec.core.local_device import (
     save_recovery_device,
     LocalDeviceAlreadyExistsError,
 )
-from parsec.core.gui.trio_jobs import QtToTrioJob
+from parsec.core.gui.trio_jobs import QtToTrioJob, JobResultError
 from parsec.core.gui.lang import translate
 from parsec.core.gui.desktop import open_files_job
 from parsec.core.gui.custom_dialogs import GreyedDialog, show_error
@@ -138,7 +138,7 @@ class DeviceRecoveryExportWidget(QWidget, Ui_DeviceRecoveryExportWidget):
         self.button_validate.setEnabled(True)
 
     def _on_export_failure(self, job):
-        pass
+        self.button_validate.setEnabled(True)
 
     def _on_page1_info_filled(self, valid):
         self.button_validate.setEnabled(valid)
@@ -152,10 +152,13 @@ class DeviceRecoveryExportWidget(QWidget, Ui_DeviceRecoveryExportWidget):
             return recovery_device, file_path, passphrase
         except BackendConnectionError as exc:
             show_error(self, translate("EXPORT_KEY_BACKEND_ERROR"), exception=exc)
+            raise JobResultError("backend-error") from exc
         except LocalDeviceAlreadyExistsError as exc:
             show_error(self, translate("TEXT_RECOVERY_DEVICE_FILE_ALREADY_EXISTS"), exception=exc)
+            raise JobResultError("already-exists") from exc
         except Exception as exc:
             show_error(self, translate("EXPORT_KEY_ERROR"), exception=exc)
+            raise JobResultError("error") from exc
         self.button_validate.setEnabled(True)
 
     def _on_validate_clicked(self):

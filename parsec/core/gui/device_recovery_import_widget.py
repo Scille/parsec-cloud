@@ -14,7 +14,7 @@ from parsec.core.local_device import (
 )
 from parsec.crypto import derivate_secret_key_from_recovery_passphrase
 
-from parsec.core.gui.trio_jobs import QtToTrioJob
+from parsec.core.gui.trio_jobs import QtToTrioJob, JobResultError
 from parsec.core.gui.lang import translate
 from parsec.core.gui.custom_dialogs import GreyedDialog, show_error, show_info
 from parsec.core.gui import validators
@@ -138,8 +138,10 @@ class DeviceRecoveryImportWidget(QWidget, Ui_DeviceRecoveryImportWidget):
             show_info(self, translate("TEXT_RECOVERY_IMPORT_SUCCESS"))
         except BackendConnectionError as exc:
             show_error(self, translate("IMPORT_KEY_BACKEND_ERROR"), exception=exc)
+            raise JobResultError("backend-error") from exc
         except Exception as exc:
             show_error(self, translate("IMPORT_KEY_ERROR"), exception=exc)
+            raise JobResultError("error") from exc
 
     async def _load_recovery_device(self, file, passphrase):
         try:
@@ -151,9 +153,11 @@ class DeviceRecoveryImportWidget(QWidget, Ui_DeviceRecoveryImportWidget):
                 show_error(self, translate("TEXT_IMPORT_KEY_WRONG_PASSPHRASE"), exception=exc)
             else:
                 show_error(self, translate("IMPORT_KEY_LOCAL_DEVICE_ERROR"), exception=exc)
+            raise JobResultError("error") from exc
         except Exception as exc:
             self.button_validate.setEnabled(True)
             show_error(self, translate("IMPORT_KEY_ERROR"), exception=exc)
+            raise JobResultError("error") from exc
         else:
             self.main_layout.removeWidget(self.current_page)
             self.current_page = DeviceRecoveryImportPage2Widget(parent=self)
@@ -191,7 +195,7 @@ class DeviceRecoveryImportWidget(QWidget, Ui_DeviceRecoveryImportWidget):
         pass
 
     def _on_load_recovery_device_failure(self, job):
-        pass
+        self.button_validate.setEnabled(True)
 
     @classmethod
     def show_modal(cls, config, jobs_ctx, parent, on_finished):
