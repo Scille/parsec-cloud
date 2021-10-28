@@ -8,8 +8,8 @@ from parsec.cli_utils import spinner, operation, cli_exception_handler, aprompt
 from parsec.api.protocol import HumanHandle
 from parsec.core.types import BackendOrganizationBootstrapAddr
 from parsec.core.backend_connection import apiv1_backend_anonymous_cmds_factory
-from parsec.core.local_device import save_device_with_password
 from parsec.core.fs.storage.user_storage import user_storage_non_speculative_init
+from parsec.core.local_device import save_device_with_password_in_config
 from parsec.core.invite import bootstrap_organization as do_bootstrap_organization
 from parsec.core.cli.utils import cli_command_base_options, core_config_options
 
@@ -39,7 +39,7 @@ async def _bootstrap_organization(config, addr, password, device_label, human_la
             await user_storage_non_speculative_init(
                 data_base_dir=config.data_base_dir, device=new_device
             )
-            save_device_with_password(
+            save_device_with_password_in_config(
                 config_dir=config.config_dir, device=new_device, password=password
             )
 

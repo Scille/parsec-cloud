@@ -9,7 +9,7 @@ from parsec.core.backend_connection import (
     backend_authenticated_cmds_factory,
 )
 from parsec.core.gui.login_widget import LoginPasswordInputWidget
-from parsec.core.local_device import save_device_with_password
+from parsec.core.local_device import save_device_with_password_in_config
 from tests.common import customize_fixtures, freeze_time
 
 
@@ -20,7 +20,7 @@ async def test_expired_notification_logging(
 ):
 
     # Log has alice on an expired organization
-    save_device_with_password(core_config.config_dir, expiredorgalice, "P@ssw0rd")
+    save_device_with_password_in_config(core_config.config_dir, expiredorgalice, "P@ssw0rd")
 
     gui = await gui_factory()
     lw = gui.test_get_login_widget()
@@ -50,7 +50,7 @@ async def test_expired_notification_logging(
 async def test_expired_notification_from_connection(
     aqtbot, running_backend, autoclose_dialog, expiredorgalice, gui_factory, core_config
 ):
-    save_device_with_password(core_config.config_dir, expiredorgalice, "P@ssw0rd")
+    save_device_with_password_in_config(core_config.config_dir, expiredorgalice, "P@ssw0rd")
     gui = await gui_factory()
     lw = gui.test_get_login_widget()
     tabw = gui.test_get_tab()

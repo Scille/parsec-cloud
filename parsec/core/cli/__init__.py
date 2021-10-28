@@ -2,8 +2,9 @@
 
 import click
 
-from parsec.core.cli import list_devices, status_organization
-
+from parsec.core.cli import list_devices
+from parsec.core.cli import status_organization
+from parsec.core.cli import recovery
 from parsec.core.cli import invitation
 from parsec.core.cli import create_organization
 from parsec.core.cli import stats_organization
@@ -28,6 +29,8 @@ core_cmd.add_command(rsync.run_rsync, "rsync")
 core_cmd.add_command(create_workspace.create_workspace, "create_workspace")
 core_cmd.add_command(share_workspace.share_workspace, "share_workspace")
 core_cmd.add_command(list_devices.list_devices, "list_devices")
+core_cmd.add_command(recovery.export_recovery_device, "export_recovery_device")
+core_cmd.add_command(recovery.import_recovery_device, "import_recovery_device")
 
 core_cmd.add_command(invitation.invite_user, "invite_user")
 core_cmd.add_command(invitation.invite_device, "invite_device")

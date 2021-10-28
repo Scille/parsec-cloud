@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PROJECT VERSION\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2021-09-13 14:29+0200\n"
+"POT-Creation-Date: 2021-10-28 11:52+0200\n"
 "PO-Revision-Date: 2020-10-15 10:30+0200\n"
 "Last-Translator: \n"
 "Language: en\n"
@@ -31,6 +31,9 @@ msgid "TEXT_FILE_LINK_WORKSPACE_NOT_FOUND_organization"
 msgstr ""
 "You do not have access to the workspace containing the file. It may not "
 "have been shared with you."
+
+msgid "NOTIF_INFO_WORKSPACE_READ_ONLY"
+msgstr "This workspace is read-only"
 
 msgid "NOTIF_WARN_MOUNTPOINT_UNMOUNTED"
 msgstr ""
@@ -57,12 +60,6 @@ msgid "NOTIF_INFO_WORKSPACE_ROLE_UPDATED_{}"
 msgstr ""
 
 msgid "NOTIF_INFO_WORKSPACE_UNSHARED_{}"
-msgstr ""
-
-msgid "NOTIF_INFO_WORKSPACE_READ_ONLY"
-msgstr "This workspace is read-only"
-
-msgid "NOTIF_WARN_SYNC_CONFLICT_{}"
 msgstr ""
 
 msgid "TEXT_BACKEND_STATE_CONNECTED"
@@ -125,8 +122,8 @@ msgstr "Error while acknowledging SAS code. Please restart the process."
 
 msgid "TEXT_CLAIM_DEVICE_WAIT_PEER_TRUST_ERROR"
 msgstr ""
-"Error while waiting for peer SAS code acknowledgement. Please restart the "
-"process."
+"Error while waiting for peer SAS code acknowledgement. Please restart the"
+" process."
 
 msgid "TEXT_CLAIM_DEVICE_CLAIM_ERROR"
 msgstr "Error while validating invite information. Please restart the process."
@@ -182,8 +179,8 @@ msgstr "Error while acknowledging SAS code. Please restart the process."
 
 msgid "TEXT_CLAIM_USER_WAIT_PEER_TRUST_ERROR"
 msgstr ""
-"Error while waiting for peer SAS code acknowledgement. Please restart the "
-"process."
+"Error while waiting for peer SAS code acknowledgement. Please restart the"
+" process."
 
 msgid "TEXT_CLAIM_USER_INVALID_HUMAN_HANDLE"
 msgstr "The email is invalid."
@@ -199,11 +196,6 @@ msgstr "Error while waiting for the other user. Please restart the process."
 
 msgid "TEXT_CLAIM_USER_FAILED_TO_RETRIEVE_INFO"
 msgstr "Failed to retrieve information about the invitation."
-
-msgid "TEXT_CLAIM_USER_SUCCESSFUL"
-msgstr ""
-"The user was successfully created. You will now be logged in.\n"
-"Welcome to Parsec!"
 
 msgid "TEXT_CLAIM_USER_INVITATION_NOT_FOUND"
 msgstr "The invitation was not found."
@@ -236,19 +228,6 @@ msgstr "The device name is invalid."
 
 msgid "TEXT_ORG_WIZARD_INVALID_HUMAN_HANDLE"
 msgstr "The email address is invalid."
-
-msgid "TEXT_BOOTSTRAP_ORG_SUCCESS_organization"
-msgstr ""
-"You organization <b>{organization}</b> has been created!<br />\n"
-"<br />\n"
-"You will now be automatically logged in.<br />\n"
-"<br />\n"
-"To help you start with PARSEC, you can read the <a "
-"href=\"https://docs.parsec.cloud/en/stable/\" title=\"User guide\">user "
-"guide</a>."
-
-msgid "ACTION_CONTINUE"
-msgstr "Continue"
 
 msgid "TEXT_ORG_WIZARD_ORGANIZATION_ALREADY_EXISTS"
 msgstr "This organization name is already used."
@@ -288,6 +267,66 @@ msgstr "OK"
 
 msgid "TEXT_ERR_DIALOG_TITLE"
 msgstr "Error"
+
+msgid "ACTION_CONTINUE"
+msgstr "Continue"
+
+msgid "TEXT_RECOVERY_HTML_EXPORT_user-organization-keyname-password"
+msgstr ""
+"<h1 align=center>PARSEC RECOVERY KEY</h1><h2>USER: "
+"{label}<br>ORGANIZATION: {organization}<br>KEY_NAME: "
+"{keyname}<br>PASSWORD: {password}<br></h2>"
+
+msgid "TEXT_EXPORT_KEY"
+msgstr "Create recovery device"
+
+msgid "ACTION_CLOSE"
+msgstr "Close"
+
+msgid "EXPORT_KEY_BACKEND_ERROR"
+msgstr "Cannot create recovery device, an error occured in the backend"
+
+msgid "TEXT_RECOVERY_DEVICE_FILE_ALREADY_EXISTS"
+msgstr "A recovery file for this device already exists in the selected location."
+
+msgid "EXPORT_KEY_ERROR"
+msgstr "Cannot create recovery device"
+
+msgid "TEXT_LOGIN_ERROR_AUTHENTICATION_FAILED"
+msgstr "The password is incorrect."
+
+msgid "TEXT_DEVICE_RECOVERY_EXPORT_WIZARD_TITLE"
+msgstr "Create a recovery device"
+
+msgid "ACTION_IMPORT_KEY"
+msgstr "Recover a device"
+
+msgid "RECOVERY_KEY_FILTERS"
+msgstr "Recovery device files (*.psrk);;All files (*)"
+
+msgid "RECOVERY_KEY_INITIAL_FILTER"
+msgstr "Recovery device files (*.psrk)"
+
+msgid "TEXT_RECOVERY_INVALID_PASSPHRASE"
+msgstr "The passphrase is invalid."
+
+msgid "TEXT_RECOVERY_IMPORT_SUCCESS"
+msgstr "The device has been successfully recovered"
+
+msgid "IMPORT_KEY_BACKEND_ERROR"
+msgstr "Cannot recover device, an error occured in the backend"
+
+msgid "IMPORT_KEY_ERROR"
+msgstr "Cannot import device key"
+
+msgid "TEXT_IMPORT_KEY_WRONG_PASSPHRASE"
+msgstr "The passphrase is incorrect."
+
+msgid "IMPORT_KEY_LOCAL_DEVICE_ERROR"
+msgstr "Cannot import device key, an error occured with the recovery device"
+
+msgid "ACTION_CREATE_DEVICE"
+msgstr "Create the device"
 
 msgid "TEXT_DEVICE_IS_CURRENT"
 msgstr "current"
@@ -449,14 +488,32 @@ msgstr "Some or all files could not be opened."
 msgid "TEXT_FILE_OPEN_ERROR_file"
 msgstr "The file <b>{file}</b> could not be opened.\n"
 
-msgid "TEXT_FILE_IMPORT_LOADING_TITLE"
-msgstr "Importing"
-
 msgid "TEXT_FILE_IMPORT_FILES"
 msgstr "Import files"
 
 msgid "TEXT_FILE_IMPORT_FOLDER"
 msgstr "Import a folder"
+
+msgid "TEXT_FILE_IMPORT_LOADING_TITLE"
+msgstr "Importing"
+
+msgid "TEXT_FILE_IMPORT_ONE_PERMISSION_ERROR"
+msgstr "You don't have the permission to import this file."
+
+msgid "TEXT_FILE_IMPORT_MULTIPLE_PERMISSION_ERROR"
+msgstr ""
+"You don't have the permission to access some of these files. Some files "
+"may not have been imported."
+
+msgid "TEXT_FILE_IMPORT_ONE_ERROR"
+msgstr ""
+"There has been an error while import the file. The file could not be "
+"imported."
+
+msgid "TEXT_FILE_IMPORT_MULTIPLE_ERROR"
+msgstr ""
+"There has been an error while importing the files. Some files may not "
+"have been imported."
 
 msgid "TEXT_FILE_CREATE_FOLDER_TITLE"
 msgstr "Create a folder"
@@ -497,24 +554,6 @@ msgstr "A folder with the same name already exists."
 
 msgid "TEXT_FILE_FOLDER_CREATE_ERROR_UNKNOWN"
 msgstr "Cannot create the new folder."
-
-msgid "TEXT_FILE_IMPORT_ONE_PERMISSION_ERROR"
-msgstr "You don't have the permission to import this file."
-
-msgid "TEXT_FILE_IMPORT_MULTIPLE_PERMISSION_ERROR"
-msgstr ""
-"You don't have the permission to access some of these files. Some files "
-"may not have been imported."
-
-msgid "TEXT_FILE_IMPORT_ONE_ERROR"
-msgstr ""
-"There has been an error while import the file. The file could not be "
-"imported."
-
-msgid "TEXT_FILE_IMPORT_MULTIPLE_ERROR"
-msgstr ""
-"There has been an error while importing the files. Some files may not "
-"have been imported."
 
 msgid "TEXT_FILE_SHARING_REVOKED_workspace"
 msgstr ""
@@ -560,8 +599,8 @@ msgstr "Failed to send email"
 
 msgid "TEXT_INVITE_DEVICE_EMAIL_BAD_RECIPIENT_directlink"
 msgstr ""
-"Could not send the invitation by email, the provided email address seems to "
-"be invalid. Here is the link to open on your other device\n"
+"Could not send the invitation by email, the provided email address seems "
+"to be invalid. Here is the link to open on your other device\n"
 " <b><a href=\"{directlink}\">{directlink}</a></b>"
 
 msgid "ACTION_COPY_ADDR"
@@ -569,8 +608,8 @@ msgstr "Copy invitation link to the clipboard"
 
 msgid "TEXT_INVITE_DEVICE_EMAIL_NOT_AVAILABLE_directlink"
 msgstr ""
-"Could not send the invitation by email, the server is not available. Here "
-"is the link to open on your other device\n"
+"Could not send the invitation by email, the server is not available. Here"
+" is the link to open on your other device\n"
 " <b><a href=\"{directlink}\">{directlink}</a></b>"
 
 msgid "TEXT_GREET_DEVICE_SEND_EMAIL_ERROR"
@@ -611,8 +650,8 @@ msgstr "Error while acknowledging SAS code. Please restart the process."
 
 msgid "TEXT_GREET_DEVICE_WAIT_PEER_TRUST_ERROR"
 msgstr ""
-"Error while waiting for peer SAS code acknowledgement. Please restart the "
-"process."
+"Error while waiting for peer SAS code acknowledgement. Please restart the"
+" process."
 
 msgid "TEXT_DEVICE_GREET_SUCCESSFUL"
 msgstr "The device was successfully created."
@@ -645,9 +684,6 @@ msgstr "Administrator"
 
 msgid "NOT_ALLOWED_OUTSIDER_PROFILE_TOOLTIP"
 msgstr "Your organization does not authorize this kind of profile."
-
-msgid "NOT_ALLOWED_FOR_OUTSIDER_PROFILE_TOOLTIP"
-msgstr "Role not allowed for the outsider users."
 
 msgid "TEXT_GREET_USER_INVALID_HUMAN_HANDLE"
 msgstr "The email is invalid."
@@ -687,8 +723,8 @@ msgstr "Error while acknowledging SAS code. Please restart the process."
 
 msgid "TEXT_GREET_USER_WAIT_PEER_TRUST_ERROR"
 msgstr ""
-"Error while waiting for peer SAS code acknowledgement. Please restart the "
-"process."
+"Error while waiting for peer SAS code acknowledgement. Please restart the"
+" process."
 
 msgid "TEXT_USER_GREET_SUCCESSFUL"
 msgstr "The user was successfully greeted in your organization."
@@ -731,52 +767,8 @@ msgstr "Cannot log in."
 msgid "TEXT_LOGIN_ERROR_ALREADY_CONNECTED"
 msgstr "This device is already logged in, probably in another tab."
 
-msgid "TEXT_LOGIN_ERROR_AUTHENTICATION_FAILED"
-msgstr "The password is incorrect."
-
 msgid "TEXT_LOGIN_MOUNTPOINT_ERROR"
 msgstr "Cannot log in. The workspaces could not be mounted."
-
-msgid "ASK_OVERWRITE_KEY"
-msgstr "Overwrite device key"
-
-msgid "TEXT_OVERWRITE_KEY"
-msgstr "This device key already exists, do you want to overwrite it?"
-
-msgid "ACTION_OVERWRITE_KEY_YES"
-msgstr "Overwrite"
-
-msgid "ACTION_IMPORT_NO"
-msgstr "Cancel"
-
-msgid "TEXT_EXPORT_KEY"
-msgstr "Export device key"
-
-msgid "IMPORT_KEY_FILTERS"
-msgstr "Key files (*.keys);;All files (*)"
-
-msgid "IMPORT_KEY_INITIAL_FILTER"
-msgstr "Key files (*.keys)"
-
-msgid "EXPORT_KEY_ERROR"
-msgstr "Cannot export device key"
-
-msgid "ACTION_IMPORT_KEY"
-msgstr "Import a device key"
-
-msgid "TEXT_INVALID_DEVICE_KEY"
-msgstr "This file does not contain a valid device key."
-
-msgid "ASK_IMPORT_KEY"
-msgstr "Import this device key?"
-
-msgid "TEXT_IMPORT_KEY_CONFIRM_organization-user-device"
-msgstr ""
-"Organization: <b>{organization}</b><br />User: <b>{user}</b><br />Device:"
-" <b>{device}</b>"
-
-msgid "ACTION_IMPORT_YES"
-msgstr "Import"
 
 msgid "TEXT_PARSEC_LICENSE"
 msgstr ""
@@ -1570,26 +1562,20 @@ msgstr "You do not have any device on this computer."
 msgid "TEXT_PARSEC_WINDOW_TITLE_version"
 msgstr "PARSEC {version}"
 
-msgid "TEXT_MENU_FILE"
-msgstr "File"
-
-msgid "TEXT_MENU_DEVICE"
-msgstr "Device"
-
-msgid "TEXT_MENU_HELP"
-msgstr "Help"
-
 msgid "ACTION_MAIN_MENU_SHOW"
 msgstr "Menu"
 
 msgid "Ctrl+K"
 msgstr ""
 
+msgid "Ctrl+I"
+msgstr ""
+
 msgid "Alt+E"
 msgstr ""
 
-msgid "ACTION_MAIN_MENU_ADD_INSTANCE"
-msgstr "Open a new tab"
+msgid "TEXT_MENU_FILE"
+msgstr "File"
 
 msgid "ACTION_MAIN_MENU_CREATE_ORGANIZATION"
 msgstr "Create an organization"
@@ -1597,17 +1583,17 @@ msgstr "Create an organization"
 msgid "ACTION_MAIN_MENU_JOIN_ORGANIZATION"
 msgstr "Join an organization"
 
-msgid "ACTION_MAIN_MENU_MANAGE_KEYS"
-msgstr "Import/Export device keys"
+msgid "TEXT_MENU_DEVICE"
+msgstr "Device"
 
-msgid "ACTION_MAIN_MENU_SETTINGS"
-msgstr "Settings"
+msgid "ACTION_MAIN_MENU_MANAGE_KEYS"
+msgstr "Recovery device"
+
+msgid "TEXT_MENU_HELP"
+msgstr "Help"
 
 msgid "ACTION_MAIN_MENU_OPEN_DOCUMENTATION"
 msgstr "Documentation"
-
-msgid "ACTION_MAIN_MENU_ABOUT"
-msgstr "About PARSEC"
 
 msgid "ACTION_MAIN_MENU_CHANGELOG"
 msgstr "Software changelog"
@@ -1617,6 +1603,15 @@ msgstr "Software license"
 
 msgid "ACTION_MAIN_MENU_FEEDBACK_SEND"
 msgstr "Give your feedback"
+
+msgid "ACTION_MAIN_MENU_ADD_INSTANCE"
+msgstr "Open a new tab"
+
+msgid "ACTION_MAIN_MENU_SETTINGS"
+msgstr "Settings"
+
+msgid "ACTION_MAIN_MENU_ABOUT"
+msgstr "About PARSEC"
 
 msgid "ACTION_MAIN_MENU_QUIT_PARSEC"
 msgstr "Quit"
@@ -1630,8 +1625,36 @@ msgstr "PARSEC Changelog"
 msgid "TEXT_SETTINGS_TITLE"
 msgstr "Settings"
 
-msgid "TEXT_KEYS_DIALOG"
-msgstr "Manage device keys"
+msgid "ACTION_RECOVER_DEVICE"
+msgstr "Recover a device"
+
+msgid "ACTION_CREATE_RECOVERY_DEVICE"
+msgstr "Create a recovery device"
+
+msgid "TEXT_DEVICE_RECOVERY_TITLE"
+msgstr "Device recovery"
+
+msgid "TEXT_DEVICE_RECOVERY_QUESTION"
+msgstr "What would you like to do?"
+
+msgid "TEXT_BOOTSTRAP_ORG_SUCCESS_TITLE"
+msgstr "Your organization was successfully created!"
+
+msgid "TEXT_BOOTSTRAP_ORG_SUCCESS_organization"
+msgstr ""
+"You organization <b>{organization}</b> has been created!<br />\n"
+"<br />\n"
+"You will now be automatically logged in.<br />\n"
+"<br />\n"
+"To help you start with PARSEC, you can read the <a "
+"href=\"https://docs.parsec.cloud/en/stable/\" title=\"User guide\">user "
+"guide</a>.<br /><br />\n"
+"\n"
+"We advice that you create a recovery device. Would you like to create one"
+" now?"
+
+msgid "ACTION_NO"
+msgstr "No"
 
 msgid "TEXT_JOIN_ORG_URL_TITLE"
 msgstr "Join an organization"
@@ -1647,6 +1670,17 @@ msgstr "The link is invalid."
 
 msgid "TEXT_INVALID_URL"
 msgstr "The link is invalid."
+
+msgid "TEXT_CLAIM_USER_SUCCESSFUL_TITLE"
+msgstr "You have joined a new organization!"
+
+msgid "TEXT_CLAIM_USER_SUCCESSFUL"
+msgstr ""
+"The user was successfully created. You will now be logged in.\n"
+"Welcome to Parsec!<br /><br />\n"
+"\n"
+"We advice that you create a recovery device. Would you like to create one"
+" now?"
 
 msgid "TEXT_ENABLE_TELEMETRY_TITLE"
 msgstr "Enable telemetry"
@@ -1957,6 +1991,9 @@ msgstr "Not shared"
 msgid "TEXT_WORKSPACE_SHARING_USER_HAS_BEEN_REVOKED"
 msgstr "This user has been revoked."
 
+msgid "NOT_ALLOWED_FOR_OUTSIDER_PROFILE_TOOLTIP"
+msgstr "Role not allowed for the outsider users."
+
 msgid "TEXT_WORKSPACE_SHARING_OFFLINE"
 msgstr "The server is offline or you have no access to the internet."
 
@@ -2052,9 +2089,9 @@ msgstr "The workspace has been unshared with a user."
 
 msgid "TEXT_WORKSPACE_NEED_REENCRYPTION_INSTRUCTIONS"
 msgstr ""
-"This operation will reencrypt the workspace in order to prevent users that "
-"should not have access to it to see the data it contains. It is a very "
-"important step to ensure the security of your files.<br /><br />\n"
+"This operation will reencrypt the workspace in order to prevent users "
+"that should not have access to it to see the data it contains. It is a "
+"very important step to ensure the security of your files.<br /><br />\n"
 "\n"
 "The operation may take some time, depending on the workspace size, and "
 "synchronization will not be available.<br /><br />\n"
@@ -2134,9 +2171,6 @@ msgstr "Device name"
 msgid "TEXT_LABEL_DEVICE_PLACEHOLDER"
 msgstr "device"
 
-msgid "ACTION_CREATE_DEVICE"
-msgstr "Create the device"
-
 msgid "TEXT_CLAIM_DEVICE_WAIT_FOR_DEVICE_INFO"
 msgstr "Waiting for the new device to provide the information..."
 
@@ -2188,9 +2222,7 @@ msgid "TEXT_LABEL_USER_EMAIL_PLACEHOLDER"
 msgstr "user@host.com"
 
 msgid "TEXT_CLAIM_USER_WAIT_FOR_USER_INFO"
-msgstr ""
-"We are waiting for the person who invited you to confirm this "
-"information."
+msgstr "We are waiting for the person who invited you to confirm this information."
 
 msgid "ACTION_CODE_NONE"
 msgstr ""
@@ -2206,9 +2238,6 @@ msgstr "Organization name"
 msgid "TEXT_LABEL_ORG_NAME_RECOMMANDATIONS"
 msgstr "Letters, digits, underscores and hyphens only. No spaces."
 
-msgid "ACTION_CREATE_ON_COMMERCIAL_BACKEND"
-msgstr "Use PARSEC main server"
-
 msgid "ACTION_ACCEPT_CONTRACT"
 msgstr ""
 "I accept the <a href=\"https://parsec.cloud/pdf/Parsec-Privacy-Policy-"
@@ -2222,11 +2251,78 @@ msgstr "I have my own PARSEC server"
 msgid "TEXT_LABEL_BACKEND_ADDR_PLACEHOLDER"
 msgstr "parsec://host:port"
 
+msgid "ACTION_CREATE_ON_COMMERCIAL_BACKEND"
+msgstr "Use PARSEC main server"
+
 msgid "TEXT_CREATE_ORGANIZATION_INSTRUCTIONS"
 msgstr "Please fill out the following information to create your organization."
 
 msgid "ACTION_PREVIOUS"
 msgstr "Previous"
+
+msgid "TEXT_DEVICE_RECOVERY_EXPORT_INSTRUCTIONS"
+msgstr ""
+"You will be able to create a recovery device.<br />\n"
+"A recovery device is composed of a file and a passphrase that will allow "
+"you to get you device back in case you lose it."
+
+msgid "TEXT_DEVICE_RECOVERY_EXPORT_SELECT_DEVICE_LABEL"
+msgstr "Select the device you want to create a recovery for"
+
+msgid "TEXT_DEVICE_RECOVERY_EXPORT_DEVICE_PASSWORD_LABEL"
+msgstr "Enter the device password"
+
+msgid "TEXT_DEVICE_RECOVERY_EXPORT_SELECT_FILE_LABEL"
+msgstr "Select where the file will be exported"
+
+msgid "ACTION_DEVICE_RECOVERY_EXPORT_SELECT_FILE"
+msgstr "Select"
+
+msgid "TEXT_RECOVERY_EXPORT_KEEP_INFO_INSTRUCTIONS"
+msgstr ""
+"We created a file and a passphrase that will allow you to regain access "
+"to your data in case you lose your device.<br />\n"
+"Keep them safe and ideally not next to each other.<br />\n"
+"Any person gaining access to both at once will be able to access your "
+"data."
+
+msgid "TEXT_RECOVERY_EXPORT_FILE_PATH_LABEL"
+msgstr "The recovery file"
+
+msgid "TEXT_RECOVERY_EXPORT_KEY_LABEL"
+msgstr "The passphrase"
+
+msgid "ACTION_PRINT_RECOVERY_KEY"
+msgstr "Print the passphrase"
+
+msgid "TEXT_RECOVERY_IMPORT_INSTRUCTIONS"
+msgstr ""
+"We will restore your device using a previously created recovery "
+"device.<br />\n"
+"Select the file and enter the passphrase."
+
+msgid "TEXT_RECOVERY_IMPORT_SELECT_KEY_FILE_LABEL"
+msgstr "The recovery file"
+
+msgid "ACTION_RECOVERY_IMPORT_KEY_FILE"
+msgstr "Select the recovery file"
+
+msgid "TEXT_RECOVERY_IMPORT_PASSPHRASE_LABEL"
+msgstr "Enter the passphrase associated with this recovery file"
+
+msgid "TEXT_RECOVERY_IMPORT_CREATE_DEVICE"
+msgstr ""
+"We are able to create a new device from your recovery file.<br />\n"
+"Please choose a name for your new device, and its password."
+
+msgid "TEXT_RECOVERY_IMPORT_DEVICE_NAME"
+msgstr "Device name"
+
+msgid "TEXT_RECOVERY_NEW_PASSWORD_INSTRUCTION"
+msgstr "Choose the new password for this device."
+
+msgid "ACTION_RECOVERY_IMPORT_NEW_DEVICE"
+msgstr "Recover device"
 
 msgid "TEXT_DEVICE_ADD_NEW_TOOLTIP"
 msgstr "Invite a new device"
@@ -2377,13 +2473,10 @@ msgid "TEXT_DIALOG_CLOSE_TOOLTIP"
 msgstr "Close the window."
 
 msgid "TEXT_EXPORT_KEY_TOOLTIP"
-msgstr "Export this device key"
+msgstr "Create a recovery device key"
 
 msgid "ACTION_EXPORT_KEY"
-msgstr "Export this key"
-
-msgid "TEXT_IMPORT_KEY_TOOLTIP"
-msgstr "Import a new key to Parsec"
+msgstr "Generate this recovery device"
 
 msgid "TEXT_IMPORT_FILES_PROGRESS"
 msgstr "Importing file"
@@ -2406,9 +2499,6 @@ msgstr "Could not check for new versions."
 msgid "TEXT_NEW_VERSION_UP_TO_DATE"
 msgstr "Your PARSEC is up-to-date!"
 
-msgid "ACTION_CLOSE"
-msgstr "Close"
-
 msgid "LABEL_NOTIFICATIONS"
 msgstr ""
 
@@ -2424,13 +2514,6 @@ msgstr "And then chose a new one:"
 msgid "ACTION_CHANGE_PASSWORD"
 msgstr "Change password"
 
-msgid "TEXT_PASSWORD_WARNING"
-msgstr ""
-"Your password is extremely important. Be sure to chose a secure password "
-"that you will remember. Your data will be encrypted with it and it is not"
-" possible to recover them if your forget it.<br />We also advise that you"
-" create multiple devices if possible and share your workspaces."
-
 msgid "TEXT_LABEL_PASSWORD"
 msgstr "Password"
 
@@ -2439,6 +2522,13 @@ msgstr "Password confirmation"
 
 msgid "TEXT_PASSWORD_CHOICE_MISMATCH"
 msgstr "Does not match the password."
+
+msgid "TEXT_PASSWORD_WARNING"
+msgstr ""
+"Your password is extremely important. Be sure to chose a secure password "
+"that you will remember. Your data will be encrypted with it and it is not"
+" possible to recover them if your forget it.<br />We also advise that you"
+" create multiple devices if possible and share your workspaces."
 
 msgid "TEXT_SETTINGS_BEHAVIOR_TITLE"
 msgstr "Application behavior"
@@ -2461,12 +2551,6 @@ msgstr "Check for new versions on startup"
 msgid "ACTION_SETTINGS_CHECK_NEW_VERSION"
 msgstr "Check for new version now"
 
-msgid "TEXT_SETTINGS_TELEMETRY_TITLE"
-msgstr "Telemetry"
-
-msgid "TEXT_SETTINGS_ENABLE_TELEMETRY"
-msgstr "Enable telemetry for automatic crash reporting"
-
 msgid "TEXT_SETTINGS_INTERFACE_TITLE"
 msgstr "Interface"
 
@@ -2478,6 +2562,12 @@ msgstr "Use colors for workspaces"
 
 msgid "ACTION_SAVE"
 msgstr "Save"
+
+msgid "TEXT_SETTINGS_TELEMETRY_TITLE"
+msgstr "Telemetry"
+
+msgid "TEXT_SETTINGS_ENABLE_TELEMETRY"
+msgstr "Enable telemetry for automatic crash reporting"
 
 msgid "TEXT_WORKSPACE_TEMPORARY_TITLE"
 msgstr "Snapshot"
@@ -2506,12 +2596,6 @@ msgstr "Filter users"
 msgid "ACTION_FILTER_LIST_USERS"
 msgstr "Search users"
 
-msgid "ACTION_FILTER_REVOKED_USERS"
-msgstr "Hide revoked users"
-
-msgid "ACTION_FILTER_PENDING_INVITATION"
-msgstr "Hide pending invitations"
-
 msgid "ACTION_USER_INVITE_USER"
 msgstr "Invite a new user"
 
@@ -2520,6 +2604,12 @@ msgstr "Previous page"
 
 msgid "ACTION_LIST_NEXT_PAGE"
 msgstr "Next page"
+
+msgid "ACTION_FILTER_REVOKED_USERS"
+msgstr "Hide revoked users"
+
+msgid "ACTION_FILTER_PENDING_INVITATION"
+msgstr "Hide pending invitations"
 
 msgid "TEXT_WORKSPACE_IS_SHARED_TOOLTIP"
 msgstr "This workspace is shared."
@@ -2557,11 +2647,3 @@ msgstr "Create a new workspace"
 msgid "ACTION_WORKSPACE_GOTO_FILE_LINK"
 msgstr "Go to a file using a link"
 
-#~ msgid "NOTIF_WARN_SYNC_CONFLICT_{}"
-#~ msgstr ""
-
-#~ msgid "EMAIL_BAD_RECIPIENT"
-#~ msgstr ""
-
-#~ msgid "EMAIL_NOT_AVAILABLE"
-#~ msgstr ""

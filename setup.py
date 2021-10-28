@@ -274,7 +274,7 @@ with open("HISTORY.rst") as history_file:
 requirements = [
     "certifi==2021.5.30",
     "attrs==21.2.0",
-    "click==7.1.2",
+    "click==8.0.3",
     "msgpack==0.6.0",
     "wsproto==1.0.0",
     "h11==0.12.0",

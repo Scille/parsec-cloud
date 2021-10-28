@@ -9,8 +9,8 @@ from PyQt5.QtWidgets import QWidget
 
 from parsec.api.protocol import HumanHandle
 from parsec.core.types import LocalDevice
-from parsec.core.local_device import save_device_with_password
 from parsec.core.fs.storage.user_storage import user_storage_non_speculative_init
+from parsec.core.local_device import save_device_with_password_in_config
 from parsec.core.invite import claimer_retrieve_info, InvitePeerResetError
 from parsec.core.backend_connection import (
     backend_invited_cmds_factory,
@@ -178,10 +178,11 @@ class ClaimUserFinalizeWidget(QWidget, Ui_ClaimUserFinalizeWidget):
     succeeded = pyqtSignal(LocalDevice, str)
     failed = pyqtSignal(object)  # QtToTrioJob or None
 
-    def __init__(self, config, new_device):
+    def __init__(self, config, jobs_ctx, new_device):
         super().__init__()
         self.setupUi(self)
         self.config = config
+        self.jobs_ctx = jobs_ctx
         self.new_device = new_device
 
         self.widget_password.set_excluded_strings(
@@ -205,7 +206,7 @@ class ClaimUserFinalizeWidget(QWidget, Ui_ClaimUserFinalizeWidget):
 
     def _on_finalize_clicked(self):
         password = self.widget_password.password
-        save_device_with_password(
+        save_device_with_password_in_config(
             config_dir=self.config.config_dir, device=self.new_device, password=password
         )
         self.succeeded.emit(self.new_device, password)
@@ -685,13 +686,12 @@ class ClaimUserWidget(QWidget, Ui_ClaimUserWidget):
         new_device = current_page.new_device
         current_page.hide()
         current_page.setParent(None)
-        page = ClaimUserFinalizeWidget(self.config, new_device)
+        page = ClaimUserFinalizeWidget(self.config, self.jobs_ctx, new_device)
         page.succeeded.connect(self._on_finished)
         page.failed.connect(self._on_page_failed_force_reject)
         self.main_layout.insertWidget(0, page)
 
     def _on_finished(self, device, password):
-        show_info(self, _("TEXT_CLAIM_USER_SUCCESSFUL"))
         self.status = (device, password)
         self.dialog.accept()
 

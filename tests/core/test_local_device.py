@@ -17,7 +17,7 @@ from parsec.core.local_device import (
     get_devices_dir,
     list_available_devices,
     load_device_with_password,
-    save_device_with_password,
+    save_device_with_password_in_config,
     change_device_password,
     LocalDeviceCryptoError,
     LocalDeviceNotFoundError,
@@ -58,10 +58,10 @@ def test_list_devices(organization_factory, local_device_factory, config_dir):
     o2d21 = local_device_factory("d2@1", org2, has_human_handle=False, has_device_label=False)
 
     for device in [o1d11, o1d12, o1d21]:
-        save_device_with_password(config_dir, device, "S3Cr37")
+        save_device_with_password_in_config(config_dir, device, "S3Cr37")
 
     for device in [o2d11, o2d12, o2d21]:
-        save_device_with_password(config_dir, device, "secret")
+        save_device_with_password_in_config(config_dir, device, "secret")
 
     # Also add dummy stuff that should be ignored
     device_dir = config_dir / "devices"
@@ -187,7 +187,7 @@ def test_available_devices_slughash_uniqueness(
     _assert_different_as_available(o1u1d1, o1u1d1_bad_rvk)
 
     # Finally make sure slughash is stable through save/load
-    save_device_with_password(config_dir, o1u1d1, "S3Cr37")
+    save_device_with_password_in_config(config_dir, o1u1d1, "S3Cr37")
     key_file = get_key_file(config_dir, o1u1d1)
     o1u1d1_reloaded = load_device_with_password(key_file, "S3Cr37")
     available_device = _to_available(o1u1d1)
@@ -198,7 +198,7 @@ def test_available_devices_slughash_uniqueness(
 @pytest.mark.parametrize("path_exists", (True, False))
 def test_password_save_and_load(path_exists, config_dir, alice):
     config_dir = config_dir if path_exists else config_dir / "dummy"
-    save_device_with_password(config_dir, alice, "S3Cr37")
+    save_device_with_password_in_config(config_dir, alice, "S3Cr37")
 
     key_file = get_key_file(config_dir, alice)
     alice_reloaded = load_device_with_password(key_file, "S3Cr37")
@@ -206,7 +206,7 @@ def test_password_save_and_load(path_exists, config_dir, alice):
 
 
 def test_load_bad_password(config_dir, alice):
-    save_device_with_password(config_dir, alice, "S3Cr37")
+    save_device_with_password_in_config(config_dir, alice, "S3Cr37")
 
     with pytest.raises(LocalDeviceCryptoError):
         key_file = get_key_file(config_dir, alice)
@@ -223,14 +223,14 @@ def test_load_bad_data(config_dir, alice):
 
 
 def test_password_save_already_existing(config_dir, alice, alice2, otheralice):
-    save_device_with_password(config_dir, alice, "S3Cr37")
+    save_device_with_password_in_config(config_dir, alice, "S3Cr37")
 
     # Different devices should not overwrite each other
-    save_device_with_password(config_dir, otheralice, "S3Cr37")
-    save_device_with_password(config_dir, alice2, "S3Cr37")
+    save_device_with_password_in_config(config_dir, otheralice, "S3Cr37")
+    save_device_with_password_in_config(config_dir, alice2, "S3Cr37")
 
     # Overwritting self is allowed
-    save_device_with_password(config_dir, alice, "S3Cr37")
+    save_device_with_password_in_config(config_dir, alice, "S3Cr37")
 
     devices = list_available_devices(config_dir)
     assert len(devices) == 3
@@ -246,7 +246,7 @@ def test_same_device_id_different_orginazations(config_dir, alice, otheralice):
     devices = (alice, otheralice)
 
     for device in devices:
-        save_device_with_password(config_dir, device, f"S3Cr37-{device.organization_id}")
+        save_device_with_password_in_config(config_dir, device, f"S3Cr37-{device.organization_id}")
 
     for device in devices:
         key_file = get_key_file(config_dir, device)
@@ -258,7 +258,7 @@ def test_change_password(config_dir, alice):
     old_password = "0ldP@ss"
     new_password = "N3wP@ss"
 
-    save_device_with_password(config_dir, alice, old_password)
+    save_device_with_password_in_config(config_dir, alice, old_password)
     key_file = get_key_file(config_dir, alice)
 
     change_device_password(key_file, old_password, new_password)
@@ -400,7 +400,7 @@ def test_list_devices_support_key_file(config_dir, type):
 
 
 def test_multiple_files_same_device(config_dir, alice):
-    path = save_device_with_password(config_dir, alice, "test")
+    path = save_device_with_password_in_config(config_dir, alice, "test")
 
     # File names contain the slughash
     assert path.stem == alice.slughash

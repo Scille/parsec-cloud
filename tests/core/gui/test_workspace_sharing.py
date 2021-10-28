@@ -6,7 +6,7 @@ from PyQt5 import QtCore, QtWidgets
 
 from parsec.api.data import UserProfile
 from parsec.core.types import WorkspaceRole
-from parsec.core.local_device import save_device_with_password
+from parsec.core.local_device import save_device_with_password_in_config
 from parsec.core.gui.workspace_button import WorkspaceButton
 from parsec.core.gui.lang import translate
 
@@ -87,6 +87,7 @@ async def test_share_workspace(
     catch_share_workspace_widget,
     monkeypatch,
 ):
+
     _, w_w, share_w_w = gui_workspace_sharing
 
     # 1) Logged as Bob, we share our workspace with Adam
@@ -147,7 +148,7 @@ async def test_share_workspace(
     # 3) Now loggin as Adam and check the workspaces view
 
     password = "P@ssw0rd"
-    save_device_with_password(core_config.config_dir, adam, password)
+    save_device_with_password_in_config(core_config.config_dir, adam, password)
     await logged_gui.test_logout()
     await logged_gui.test_proceed_to_login(adam, password)
 

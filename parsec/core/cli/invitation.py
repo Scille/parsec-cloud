@@ -29,8 +29,8 @@ from parsec.core.invite import (
     UserGreetInitialCtx,
     claimer_retrieve_info,
 )
-from parsec.core.local_device import save_device_with_password
 from parsec.core.fs.storage.user_storage import user_storage_non_speculative_init
+from parsec.core.local_device import save_device_with_password_in_config
 from parsec.core.cli.utils import (
     cli_command_base_options,
     core_config_and_device_options,
@@ -347,7 +347,7 @@ async def _claim_invitation(config, addr, password):
                 await user_storage_non_speculative_init(
                     data_base_dir=config.data_base_dir, device=new_device
                 )
-            save_device_with_password(
+            save_device_with_password_in_config(
                 config_dir=config.config_dir, device=new_device, password=password
             )
 

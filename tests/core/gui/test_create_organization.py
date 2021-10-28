@@ -97,11 +97,10 @@ async def test_create_organization(
     def _modal_shown():
         assert autoclose_dialog.dialogs == [
             (
-                "",
-                "You organization <b>AnomalousMaterials</b> has been created!<br />\n<br />\n"
-                "You will now be automatically logged in.<br />\n<br />\n"
-                "To help you start with PARSEC, you can read the "
-                '<a href="https://docs.parsec.cloud/en/stable/" title="User guide">user guide</a>.',
+                translate("TEXT_BOOTSTRAP_ORG_SUCCESS_TITLE"),
+                translate("TEXT_BOOTSTRAP_ORG_SUCCESS_organization").format(
+                    organization="AnomalousMaterials"
+                ),
             )
         ]
 
@@ -276,11 +275,10 @@ async def test_create_organization_bootstrap_only(
     def _modal_shown():
         assert autoclose_dialog.dialogs == [
             (
-                "",
-                "You organization <b>AnomalousMaterials</b> has been created!<br />\n<br />\n"
-                "You will now be automatically logged in.<br />\n<br />\n"
-                "To help you start with PARSEC, you can read the "
-                '<a href="https://docs.parsec.cloud/en/stable/" title="User guide">user guide</a>.',
+                translate("TEXT_BOOTSTRAP_ORG_SUCCESS_TITLE"),
+                translate("TEXT_BOOTSTRAP_ORG_SUCCESS_organization").format(
+                    organization="AnomalousMaterials"
+                ),
             )
         ]
 
@@ -346,11 +344,10 @@ async def test_create_organization_bootstrap_only_custom_server(
     def _modal_shown():
         assert autoclose_dialog.dialogs == [
             (
-                "",
-                "You organization <b>AnomalousMaterials</b> has been created!<br />\n<br />\n"
-                "You will now be automatically logged in.<br />\n<br />\n"
-                "To help you start with PARSEC, you can read the "
-                '<a href="https://docs.parsec.cloud/en/stable/" title="User guide">user guide</a>.',
+                translate("TEXT_BOOTSTRAP_ORG_SUCCESS_TITLE"),
+                translate("TEXT_BOOTSTRAP_ORG_SUCCESS_organization").format(
+                    organization="AnomalousMaterials"
+                ),
             )
         ]
 
@@ -511,11 +508,10 @@ async def test_create_organization_custom_backend(
     def _modal_shown():
         assert autoclose_dialog.dialogs == [
             (
-                "",
-                "You organization <b>AnomalousMaterials</b> has been created!<br />\n<br />\n"
-                "You will now be automatically logged in.<br />\n<br />\n"
-                "To help you start with PARSEC, you can read the "
-                '<a href="https://docs.parsec.cloud/en/stable/" title="User guide">user guide</a>.',
+                translate("TEXT_BOOTSTRAP_ORG_SUCCESS_TITLE"),
+                translate("TEXT_BOOTSTRAP_ORG_SUCCESS_organization").format(
+                    organization="AnomalousMaterials"
+                ),
             )
         ]
 
@@ -631,11 +627,10 @@ async def test_create_organization_with_boostrap_token(
             def _modal_shown():
                 assert autoclose_dialog.dialogs == [
                     (
-                        "",
-                        "You organization <b>AnomalousMaterials</b> has been created!<br />\n<br />\n"
-                        "You will now be automatically logged in.<br />\n<br />\n"
-                        "To help you start with PARSEC, you can read the "
-                        '<a href="https://docs.parsec.cloud/en/stable/" title="User guide">user guide</a>.',
+                        translate("TEXT_BOOTSTRAP_ORG_SUCCESS_TITLE"),
+                        translate("TEXT_BOOTSTRAP_ORG_SUCCESS_organization").format(
+                            organization=str(organization_id)
+                        ),
                     )
                 ]
 

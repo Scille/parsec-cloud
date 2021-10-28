@@ -35,7 +35,6 @@ from parsec.core.gui.claim_device_widget import ClaimDeviceWidget
 from parsec.core.gui.license_widget import LicenseWidget
 from parsec.core.gui.about_widget import AboutWidget
 from parsec.core.gui.settings_widget import SettingsWidget
-from parsec.core.gui.keys_widget import KeysWidget
 from parsec.core.gui.custom_dialogs import (
     ask_question,
     show_error,
@@ -43,6 +42,8 @@ from parsec.core.gui.custom_dialogs import (
     GreyedDialog,
     get_text_input,
 )
+from parsec.core.gui.device_recovery_export_widget import DeviceRecoveryExportWidget
+from parsec.core.gui.device_recovery_import_widget import DeviceRecoveryImportWidget
 from parsec.core.gui.custom_widgets import Button, ensure_string_size
 from parsec.core.gui.create_org_widget import CreateOrgWidget
 from parsec.core.gui.ui.main_window import Ui_MainWindow
@@ -137,6 +138,8 @@ class MainWindow(QMainWindow, Ui_MainWindow):  # type: ignore[misc]
         self.shortcut_new_tab.activated.connect(self._shortcut_proxy(self._on_add_instance_clicked))
         self.shortcut_settings = QShortcut(QKeySequence(_("Ctrl+K")), self)
         self.shortcut_settings.activated.connect(self._shortcut_proxy(self._show_settings))
+        self.shortcut_recovery = QShortcut(QKeySequence(_("Ctrl+I")), self)
+        self.shortcut_recovery.activated.connect(self._shortcut_proxy(self._on_manage_keys))
         self.shortcut_menu = QShortcut(QKeySequence(_("Alt+E")), self)
         self.shortcut_menu.activated.connect(self._shortcut_proxy(self._show_menu))
         self.shortcut_help = QShortcut(QKeySequence(QKeySequence.HelpContents), self)
@@ -217,6 +220,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):  # type: ignore[misc]
 
         action = deviceMenu.addAction(_("ACTION_MAIN_MENU_MANAGE_KEYS"))
         action.triggered.connect(self._on_manage_keys)
+        action.setShortcut(self.shortcut_recovery.key())
 
         helpMenu = QMenu(_("TEXT_MENU_HELP"), self)
         menuBar.addMenu(helpMenu)
@@ -264,6 +268,8 @@ class MainWindow(QMainWindow, Ui_MainWindow):  # type: ignore[misc]
 
         action = menu.addAction(_("ACTION_MAIN_MENU_MANAGE_KEYS"))
         action.triggered.connect(self._on_manage_keys)
+        action.setShortcut(self.shortcut_recovery.key())
+        action.setShortcutVisibleInContextMenu(True)
 
         menu.addSeparator()
 
@@ -318,10 +324,19 @@ class MainWindow(QMainWindow, Ui_MainWindow):  # type: ignore[misc]
         d.exec_()
 
     def _on_manage_keys(self) -> None:
-        w = KeysWidget(config=self.config, parent=self)
-        w.key_imported.connect(self.reload_login_devices)
-        d = GreyedDialog(w, title=_("TEXT_KEYS_DIALOG"), parent=self, width=800)
-        d.exec()
+        devices = [device for device in list_available_devices(self.config.config_dir)]
+        options = [_("ACTION_CANCEL"), _("ACTION_RECOVER_DEVICE")]
+        if len(devices):
+            options.append(_("ACTION_CREATE_RECOVERY_DEVICE"))
+        result = ask_question(
+            self, _("TEXT_DEVICE_RECOVERY_TITLE"), _("TEXT_DEVICE_RECOVERY_QUESTION"), options
+        )
+        if result == _("ACTION_RECOVER_DEVICE"):
+            DeviceRecoveryImportWidget.show_modal(
+                self.config, self.jobs_ctx, parent=self, on_finished=self.reload_login_devices
+            )
+        elif result == _("ACTION_CREATE_RECOVERY_DEVICE"):
+            DeviceRecoveryExportWidget.show_modal(self.config, self.jobs_ctx, devices, parent=self)
 
     def _on_show_doc_clicked(self) -> None:
         desktop.open_doc_link()
@@ -341,6 +356,19 @@ class MainWindow(QMainWindow, Ui_MainWindow):  # type: ignore[misc]
             self.reload_login_devices()
             device, password = ret
             self.try_login(device, password)
+            answer = ask_question(
+                self,
+                _("TEXT_BOOTSTRAP_ORG_SUCCESS_TITLE"),
+                _("TEXT_BOOTSTRAP_ORG_SUCCESS_organization").format(
+                    organization=device.organization_id
+                ),
+                [_("ACTION_CREATE_RECOVERY_DEVICE"), _("ACTION_NO")],
+                oriented_question=True,
+            )
+            if answer == _("ACTION_CREATE_RECOVERY_DEVICE"):
+                DeviceRecoveryExportWidget.show_modal(
+                    self.config, self.jobs_ctx, [device], parent=self
+                )
 
         CreateOrgWidget.show_modal(
             self.jobs_ctx, self.config, self, on_finished=_on_finished, start_addr=addr
@@ -390,6 +418,15 @@ class MainWindow(QMainWindow, Ui_MainWindow):  # type: ignore[misc]
             device, password = widget.status
             self.reload_login_devices()
             self.try_login(device, password)
+            answer = ask_question(
+                self,
+                _("TEXT_CLAIM_USER_SUCCESSFUL_TITLE"),
+                _("TEXT_CLAIM_USER_SUCCESSFUL"),
+                [_("ACTION_CREATE_RECOVERY_DEVICE"), _("ACTION_NO")],
+                oriented_question=True,
+            )
+            if answer == _("ACTION_CREATE_RECOVERY_DEVICE"):
+                DeviceRecoveryExportWidget.show_modal(self.config, self.jobs_ctx, [device], self)
 
         widget = ClaimUserWidget.show_modal(
             jobs_ctx=self.jobs_ctx,

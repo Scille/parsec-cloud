@@ -23,7 +23,7 @@ from async_generator import asynccontextmanager
 
 from parsec import __version__ as parsec_version
 from parsec.backend.postgresql import MigrationItem
-from parsec.core.local_device import save_device_with_password
+from parsec.core.local_device import save_device_with_password_in_config
 from parsec.cli import cli
 from parsec.core.cli.share_workspace import WORKSPACE_ROLE_CHOICES
 
@@ -64,7 +64,7 @@ def test_share_workspace(tmpdir, alice, bob, cli_workspace_role):
     factory_mock.return_value.find_workspace_from_name.return_value.id = "ws1_id"
 
     password = "S3cr3t"
-    save_device_with_password(Path(config_dir), bob, password)
+    save_device_with_password_in_config(Path(config_dir), bob, password)
 
     with patch("parsec.core.cli.share_workspace.logged_core_factory", logged_core_factory):
         runner = CliRunner()
@@ -257,9 +257,14 @@ def ssl_conf(request):
 
 @pytest.mark.slow
 @pytest.mark.skipif(sys.platform == "win32", reason="Hard to test on Windows...")
-def test_full_run(coolorg, unused_tcp_port, tmpdir, ssl_conf):
+def test_full_run(coolorg, unused_tcp_port, tmp_path, ssl_conf):
     # As usual Windows path require a big hack...
-    config_dir = tmpdir.strpath.replace("\\", "\\\\")
+    def escape_backslashes(path):
+        return str(path).replace("\\", "\\\\")
+
+    config_dir = tmp_path / "config"
+    config_dir.mkdir()
+    config_dir = escape_backslashes(config_dir)
     org = coolorg.organization_id
 
     alice_human_handle_label = "Alice"
@@ -268,6 +273,7 @@ def test_full_run(coolorg, unused_tcp_port, tmpdir, ssl_conf):
     bob_human_handle_email = "bob@example.com"
     alice1_device_label = "PC1"
     alice2_device_label = "PC2"
+    alice3_device_label = "PC3"
     bob_device_label = "Desktop"
 
     password = "P@ssw0rd."
@@ -539,6 +545,38 @@ def test_full_run(coolorg, unused_tcp_port, tmpdir, ssl_conf):
         _run(
             "core create_workspace wksp2 "
             f"--config-dir={config_dir} --device={alice2_slughash} --password={password}",
+            env=ssl_conf.client_env,
+        )
+
+        print("####### Recovery device #######")
+        recovery_dir = tmp_path / "recovery"
+        recovery_dir.mkdir()
+        p = _run(
+            f"core export_recovery_device --output={escape_backslashes(recovery_dir)} "
+            f"--config-dir={config_dir} --device={alice1_slughash} --password={password}",
+            env=ssl_conf.client_env,
+        )
+        stdout = p.stdout.decode()
+        # Retrieve passphrase
+        match = re.search(r"Save the recovery passphrase in a safe place: ([a-zA-Z0-9\-]+)", stdout)
+        passphrase = match.group(1)
+        # Retrieve recovery file
+        recovery_file = next(recovery_dir.glob("*.psrk"))
+        # Do the import
+        p = _run(
+            f"core import_recovery_device {escape_backslashes(recovery_file)} "
+            f"--passphrase={passphrase} --device-label={alice3_device_label} "
+            f"--config-dir={config_dir} --password={password}",
+            env=ssl_conf.client_env,
+        )
+        stdout = p.stdout.decode()
+        match = re.search(r"Saving device ([a-zA-Z0-9]+)", stdout)
+        alice3_slughash = match.group(1)
+
+        print("####### Recovered device can communicate with backend #######")
+        _run(
+            "core create_workspace wksp3 "
+            f"--config-dir={config_dir} --device={alice3_slughash} --password={password}",
             env=ssl_conf.client_env,
         )
 

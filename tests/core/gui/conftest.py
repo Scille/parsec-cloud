@@ -11,7 +11,7 @@ from PyQt5 import QtCore, QtTest
 from pytestqt.exceptions import TimeoutError
 
 from parsec import __version__ as parsec_version
-from parsec.core.local_device import save_device_with_password
+from parsec.core.local_device import save_device_with_password_in_config
 from parsec.core.gui.main_window import MainWindow
 from parsec.core.gui.workspaces_widget import WorkspaceButton
 from parsec.core.gui.trio_jobs import QtToTrioJobScheduler
@@ -276,7 +276,7 @@ async def logged_gui(aqtbot, gui_factory, core_config, alice, bob, fixtures_cust
     else:
         device = bob
 
-    save_device_with_password(core_config.config_dir, device, DEFAULT_PASSWORD)
+    save_device_with_password_in_config(core_config.config_dir, device, DEFAULT_PASSWORD)
 
     gui = await gui_factory()
     await gui.test_switch_to_logged_in(device)
@@ -447,7 +447,7 @@ def testing_main_window_cls(aqtbot):
 
         async def test_switch_to_logged_in(self, device, password=DEFAULT_PASSWORD):
             try:
-                save_device_with_password(self.config.config_dir, device, password)
+                save_device_with_password_in_config(self.config.config_dir, device, password)
             except LocalDeviceAlreadyExistsError:
                 pass
 
