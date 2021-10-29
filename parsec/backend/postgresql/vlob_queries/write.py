@@ -67,8 +67,7 @@ DO UPDATE SET last_vlob_update = (
 )
 
 
-@query(in_transaction=True)
-async def query_vlob_updated(
+async def _set_vlob_updated(
     conn, vlob_atom_internal_id, organization_id, author, realm_id, src_id, timestamp, src_version=1
 ):
     index = await conn.fetchval(
@@ -193,7 +192,7 @@ async def query_update(
         # Should not occur in theory given we are in a transaction
         raise VlobVersionError()
 
-    await query_vlob_updated(
+    await _set_vlob_updated(
         conn, vlob_atom_internal_id, organization_id, author, realm_id, vlob_id, timestamp, version
     )
 
@@ -263,6 +262,6 @@ async def query_create(
     except UniqueViolationError:
         raise VlobAlreadyExistsError()
 
-    await query_vlob_updated(
+    await _set_vlob_updated(
         conn, vlob_atom_internal_id, organization_id, author, realm_id, vlob_id, timestamp
     )
