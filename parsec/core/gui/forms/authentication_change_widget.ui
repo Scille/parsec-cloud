@@ -30,7 +30,11 @@
     <number>0</number>
    </property>
    <item>
-    <layout class="QVBoxLayout" name="main_layout"/>
+    <layout class="QVBoxLayout" name="main_layout">
+     <item>
+      <widget class="AuthenticationChoiceWidget" name="widget_auth" native="true"/>
+     </item>
+    </layout>
    </item>
    <item>
     <layout class="QHBoxLayout" name="horizontalLayout">
@@ -58,6 +62,14 @@
    </item>
   </layout>
  </widget>
+ <customwidgets>
+  <customwidget>
+   <class>AuthenticationChoiceWidget</class>
+   <extends>QWidget</extends>
+   <header>parsec.core.gui.authentication_choice_widget</header>
+   <container>1</container>
+  </customwidget>
+ </customwidgets>
  <resources/>
  <connections/>
 </ui>

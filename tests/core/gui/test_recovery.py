@@ -71,14 +71,15 @@ async def test_export_recovery_device(
 
     exp_w.current_page.label_file_path.setText(str(tmp_path))
 
-    assert not exp_w.button_validate.isEnabled()
+    exp_w.current_page._check_infos()
 
-    aqtbot.key_clicks(exp_w.current_page.edit_password, PASSWORD)
-
-    assert exp_w.button_validate.isEnabled()
-
-    async with aqtbot.wait_signal(exp_w.export_success):
-        aqtbot.mouse_click(exp_w.button_validate, QtCore.Qt.LeftButton)
+    with monkeypatch.context() as m:
+        m.setattr(
+            "parsec.core.gui.device_recovery_export_widget.get_text_input",
+            lambda *args, **kwargs: PASSWORD,
+        )
+        async with aqtbot.wait_signal(exp_w.export_success):
+            aqtbot.mouse_click(exp_w.button_validate, QtCore.Qt.LeftButton)
 
     def _page2_shown():
         assert isinstance(exp_w.current_page, DeviceRecoveryExportPage2Widget)
@@ -158,9 +159,14 @@ async def test_import_recovery_device(
     imp_w.current_page.line_edit_device.setText("")
     aqtbot.key_clicks(imp_w.current_page.line_edit_device, NEW_DEVICE_LABEL)
     assert not imp_w.button_validate.isEnabled()
-    aqtbot.key_clicks(imp_w.current_page.widget_password.line_edit_password, PASSWORD)
+    aqtbot.key_clicks(
+        imp_w.current_page.widget_auth.main_layout.itemAt(0).widget().line_edit_password, PASSWORD
+    )
     assert not imp_w.button_validate.isEnabled()
-    aqtbot.key_clicks(imp_w.current_page.widget_password.line_edit_password_check, PASSWORD)
+    aqtbot.key_clicks(
+        imp_w.current_page.widget_auth.main_layout.itemAt(0).widget().line_edit_password_check,
+        PASSWORD,
+    )
     assert imp_w.button_validate.isEnabled()
 
     async with aqtbot.wait_signal(imp_w.create_new_device_success):
