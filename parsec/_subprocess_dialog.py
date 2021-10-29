@@ -23,6 +23,83 @@ def set_parsec_icon(app):
     app.setWindowIcon(icon)
 
 
+class PrintHelper:
+    @classmethod
+    def get_printer(cls, parent, testing_print=False):
+        from PyQt5.QtPrintSupport import QPrinter, QPrintDialog
+
+        printer = QPrinter(QPrinter.HighResolution)
+        dialog = QPrintDialog(printer, parent)
+        result = dialog.Accepted if testing_print else dialog.exec_()
+        return None if result != dialog.Accepted else cls.printer_to_dict(printer)
+
+    @classmethod
+    def printer_to_dict(cls, printer):
+        from PyQt5.QtPrintSupport import QPrinter
+
+        result = {}
+        setters = [
+            "setCollateCopies",
+            "setColorMode",
+            "setCopyCount",
+            "setCreator",
+            "setDocName",
+            "setDoubleSidedPrinting",
+            "setDuplex",
+            "setFontEmbeddingEnabled",
+            "setFullPage",
+            "setOrientation",
+            "setOutputFileName",
+            "setOutputFormat",
+            "setPageOrder",
+            "setPaperName",
+            "setPaperSize",
+            "setPaperSource",
+            "setPdfVersion",
+            "setPrintProgram",
+            "setPrintRange",
+            "setPrinterName",
+            "setPrinterSelectionOption",
+            "setResolution",
+        ]
+
+        # Prepare generic setters
+        for name in setters:
+            getter = name[3].lower() + name[4:]
+            value = getattr(printer, getter)()
+            result[name] = ((type(value), value),)
+
+        # Prepare layout setters
+        layout = printer.pageLayout()
+        page_size = layout.pageSize()
+        margins = layout.margins()
+        orientation = layout.orientation()
+        units = layout.units()
+        result["setPageOrientation"] = ((type(orientation), orientation),)
+        result["setPageSize"] = ((type(page_size), page_size.sizePoints(), page_size.name()),)
+        result["setPageMargins"] = (
+            (float, margins.left()),
+            (float, margins.top()),
+            (float, margins.right()),
+            (float, margins.bottom()),
+            (QPrinter.Unit, units),
+        )
+
+        # Prepare from to setters
+        result["setFromTo"] = (int, printer.fromPage()), (int, printer.toPage())
+        return result
+
+    @classmethod
+    def dict_to_printer(cls, dct):
+        from PyQt5.QtPrintSupport import QPrinter
+
+        printer = QPrinter(QPrinter.HighResolution)
+        for method, args_info in dct.items():
+            args = [arg_type(*subargs) for arg_type, *subargs in args_info]
+            getattr(printer, method)(*args)
+        return printer
+
+
 @contextlib.contextmanager
 def safe_app():
     from PyQt5.QtWidgets import QApplication

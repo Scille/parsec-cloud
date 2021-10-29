@@ -2,7 +2,6 @@
 
 from PyQt5.QtCore import pyqtSignal
 from PyQt5.QtWidgets import QWidget
-from PyQt5.QtPrintSupport import QPrinter, QPrintDialog
 from PyQt5.QtGui import QTextDocument
 
 from pathlib import Path, PurePath
@@ -51,9 +50,8 @@ class DeviceRecoveryExportPage2Widget(QWidget, Ui_DeviceRecoveryExportPage2Widge
         self.jobs_ctx.submit_job(None, None, open_files_job, [PurePath(file_path).parent])
 
     def _print_recovery_key(self):
-        printer = QPrinter(QPrinter.HighResolution)
-        dialog = QPrintDialog(printer, self)
-        if dialog.exec_() == QPrintDialog.Accepted:
+        printer = QDialogInProcess.get_printer(self)
+        if printer is not None:
             html = translate("TEXT_RECOVERY_HTML_EXPORT_user-organization-keyname-password").format(
                 organization=self.device.organization_id,
                 label=self.device.user_display,
