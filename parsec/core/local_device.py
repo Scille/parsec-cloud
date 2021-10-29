@@ -165,30 +165,6 @@ def generate_new_device(
     )
 
 
-def get_key_file(config_dir: Path, device: LocalDevice) -> Path:
-    for available_device in _iter_available_devices(config_dir):
-        if available_device.slug == device.slug:
-            return available_device.key_file_path
-    raise FileNotFoundError
-
-
-def get_default_key_file(config_dir: Path, device: LocalDevice) -> Path:
-    """Return the default keyfile path for a given device.
-
-    Note that the filename does not carry any intrinsic meaning.
-    Here, we simply use the slughash to avoid name collision.
-    """
-    return get_devices_dir(config_dir) / f"{device.slughash}{DEVICE_FILE_SUFFIX}"
-
-
-def get_recovery_device_file_name(recovery_device: LocalDevice) -> str:
-    return f"parsec-recovery-{recovery_device.organization_id}-{recovery_device.short_user_display}{RECOVERY_DEVICE_FILE_SUFFIX}"
-
-
-def get_devices_dir(config_dir: Path) -> Path:
-    return config_dir / "devices"
-
-
 @attr.s(slots=True, frozen=True, auto_attribs=True)
 class AvailableDevice:
     key_file_path: Path
@@ -214,6 +190,34 @@ class AvailableDevice:
     @property
     def slughash(self) -> str:
         return sha256(self.slug.encode()).hexdigest()
+
+
+def get_available_device(config_dir: Path, device: LocalDevice) -> AvailableDevice:
+    for available_device in _iter_available_devices(config_dir):
+        if available_device.slug == device.slug:
+            return available_device
+    raise FileNotFoundError
+
+
+def get_key_file(config_dir: Path, device: LocalDevice) -> Path:
+    return get_available_device(config_dir, device).key_file_path
+
+
+def get_default_key_file(config_dir: Path, device: LocalDevice) -> Path:
+    """Return the default keyfile path for a given device.
+
+    Note that the filename does not carry any intrinsic meaning.
+    Here, we simply use the slughash to avoid name collision.
+    """
+    return get_devices_dir(config_dir) / f"{device.slughash}{DEVICE_FILE_SUFFIX}"
+
+
+def get_recovery_device_file_name(recovery_device: LocalDevice) -> str:
+    return f"parsec-recovery-{recovery_device.organization_id}-{recovery_device.short_user_display}{RECOVERY_DEVICE_FILE_SUFFIX}"
+
+
+def get_devices_dir(config_dir: Path) -> Path:
+    return config_dir / "devices"
 
 
 def _load_legacy_device_file(key_file_path: Path) -> Optional[AvailableDevice]:
