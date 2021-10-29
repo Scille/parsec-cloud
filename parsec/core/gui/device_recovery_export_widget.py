@@ -1,7 +1,7 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2016-2021 Scille SAS
 
 from PyQt5.QtCore import pyqtSignal
-from PyQt5.QtWidgets import QWidget, QFileDialog
+from PyQt5.QtWidgets import QWidget
 from PyQt5.QtPrintSupport import QPrinter, QPrintDialog
 from PyQt5.QtGui import QTextDocument
 
@@ -20,7 +20,7 @@ from parsec.core.local_device import (
 from parsec.core.gui.trio_jobs import QtToTrioJob, JobResultError
 from parsec.core.gui.lang import translate
 from parsec.core.gui.desktop import open_files_job
-from parsec.core.gui.custom_dialogs import GreyedDialog, show_error
+from parsec.core.gui.custom_dialogs import GreyedDialog, QDialogInProcess, show_error
 
 from parsec.core.gui.ui.device_recovery_export_widget import Ui_DeviceRecoveryExportWidget
 from parsec.core.gui.ui.device_recovery_export_page1_widget import (
@@ -83,7 +83,7 @@ class DeviceRecoveryExportPage1Widget(QWidget, Ui_DeviceRecoveryExportPage1Widge
         self._check_infos()
 
     def _on_select_file_clicked(self):
-        key_dir = QFileDialog.getExistingDirectory(
+        key_dir = QDialogInProcess.getExistingDirectory(
             self, translate("TEXT_EXPORT_KEY"), str(Path.home())
         )
         if key_dir:
