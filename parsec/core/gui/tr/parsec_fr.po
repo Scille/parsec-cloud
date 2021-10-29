@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PROJECT VERSION\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2021-10-28 11:52+0200\n"
+"POT-Creation-Date: 2021-10-29 18:13+0200\n"
 "PO-Revision-Date: 2020-10-15 10:31+0200\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language: fr\n"
@@ -21,8 +21,33 @@ msgstr ""
 msgid "TEXT_PARSEC_VERSION_version"
 msgstr "PARSEC version {version}"
 
-msgid "ACTION_DEVICE_MENU_CHANGE_PASSWORD"
-msgstr "Changer le mot de passe"
+msgid "TEXT_AUTH_CHANGE_SUCCESS"
+msgstr "L'authentification a été changée avec succès !"
+
+msgid "TEXT_DEVICE_UNLOCK_TITLE"
+msgstr "Ré-authentification"
+
+msgid "TEXT_DEVICE_UNLOCK_LABEL"
+msgstr "Veuillez vous authentifier pour changer votre authentification."
+
+msgid "TEXT_LOGIN_ERROR_AUTHENTICATION_FAILED"
+msgstr "Le mot de passe n'est pas correct."
+
+msgid "TEXT_CHANGE_AUTHENTICATION_TITLE"
+msgstr "Changer l'authentification"
+
+msgid "TEXT_AUTH_METHOD_PASSWORD"
+msgstr "Mot de passe"
+
+msgid "TEXT_AUTH_METHOD_SMARTCARD"
+msgstr "Carte à puce"
+
+msgid "TEXT_ONLY_ONE_AUTH_METHOD_AVAILABLE"
+msgstr "Une seule méthode d'authentification est "
+"disponible dans cette version de Parsec."
+
+msgid "ACTION_DEVICE_MENU_CHANGE_AUTHENTICATION"
+msgstr "Changer l'authentification"
 
 msgid "ACTION_LOG_OUT"
 msgstr "Se déconnecter"
@@ -309,9 +334,6 @@ msgstr "Un fichier de récupération existe déjà pour cet appareil à cet endr
 
 msgid "EXPORT_KEY_ERROR"
 msgstr "Impossible de créer un appareil de récupération"
-
-msgid "TEXT_LOGIN_ERROR_AUTHENTICATION_FAILED"
-msgstr "Le mot de passe n'est pas correct."
 
 msgid "TEXT_DEVICE_RECOVERY_EXPORT_WIZARD_TITLE"
 msgstr "Crér une appareil de récupération"
@@ -1592,16 +1614,20 @@ msgstr ""
 "\n"
 "</body></html>"
 
-msgid "TEXT_LOGIN_ENTER_PASSWORD_INSTRUCTIONS_organization-device-user-email"
-msgstr ""
-"Content de vous revoir <b>{user}</b> ! Veuillez entrer le mot de passe de"
-" votre appareil <b>{device}</b>."
+msgid "TEXT_LOGIN_SELECT_SMARTCARD_INSTRUCTIONS_organization-device-user-email"
+msgstr "Content de vous revoir <b>{user}</b> ! Il vous sera demandé votre "
+"carte à puce pour vous identifier sur votre appareil <b>{device}</b>."
 
 msgid "ACTION_LOGGING_IN"
 msgstr "En cours de connexion..."
 
 msgid "ACTION_LOG_IN"
 msgstr "Se connecter"
+
+msgid "TEXT_LOGIN_ENTER_PASSWORD_INSTRUCTIONS_organization-device-user-email"
+msgstr ""
+"Content de vous revoir <b>{user}</b> ! Veuillez entrer le mot de passe de"
+" votre appareil <b>{device}</b>."
 
 msgid "TEXT_LOGIN_NO_AVAILABLE_DEVICE"
 msgstr ""
@@ -1814,14 +1840,11 @@ msgstr ""
 msgid "TEXT_PARSEC_NEW_VERSION_AVAILABLE_version"
 msgstr "La version <b>{version}</b> de PARSEC est disponible !"
 
-msgid "TEXT_CHANGE_PASSWORD_SUCCESS"
-msgstr "Le mot de passe a été modifié avec succès."
+msgid "TEXT_PASSWORD_CHECK_MATCH"
+msgstr "Le mot de passe et la confirmation sont les mêmes."
 
-msgid "TEXT_CHANGE_PASSWORD_INVALID_PASSWORD"
-msgstr "Vous n'avez pas fourni le bon mot de passe pour cet appareil."
-
-msgid "TEXT_CHANGE_PASSWORD_TITLE"
-msgstr "Modifier le mot de passe"
+msgid "TEXT_PASSWORD_CHECK_NO_MATCH"
+msgstr "La confirmation diffère du mot de passe."
 
 msgid "TEXT_PASSWORD_VALIDATION_TOO_SHORT"
 msgstr "TROP COURT"
@@ -1843,12 +1866,6 @@ msgstr "EXCELLENT"
 
 msgid "TEXT_PASSWORD_VALIDATION_PASSWORD_STRENGTH_strength"
 msgstr "Force du mot de passe : {strength}"
-
-msgid "TEXT_PASSWORD_CHECK_MATCH"
-msgstr "Le mot de passe et la confirmation sont les mêmes."
-
-msgid "TEXT_PASSWORD_CHECK_NO_MATCH"
-msgstr "La confirmation diffère du mot de passe."
 
 msgid "TEXT_CLICK_TO_ENLARGE"
 msgstr "Cliquer pour élargir"
@@ -2210,6 +2227,9 @@ msgstr ""
 "href=\"https://www.flaticon.com/\" title=\"Flaticon\" style=\"color: "
 "#0092FF; font-weight: bold;\">www.flaticon.com</a>"
 
+msgid "TEXT_AUTHENTICATION_METHOD_CHOICE"
+msgstr "Méthode d'authentication"
+
 msgid "TEXT_CLAIM_DEVICE_CODE_EXCHANGE_GET_CODE_INSTRUCTIONS"
 msgstr "Récupérer le code sur votre autre appareil."
 
@@ -2332,9 +2352,6 @@ msgstr ""
 
 msgid "TEXT_DEVICE_RECOVERY_EXPORT_SELECT_DEVICE_LABEL"
 msgstr "Choisissez l'appareil pour lequel vous souhaitez créer une récupération"
-
-msgid "TEXT_DEVICE_RECOVERY_EXPORT_DEVICE_PASSWORD_LABEL"
-msgstr "Entrez son mot de passe"
 
 msgid "TEXT_DEVICE_RECOVERY_EXPORT_SELECT_FILE_LABEL"
 msgstr "Choisissez un emplacement pour le fichier de récupération"
@@ -2571,19 +2588,13 @@ msgstr "Votre application est à jour."
 msgid "LABEL_NOTIFICATIONS"
 msgstr ""
 
-msgid "TEXT_PASSWORD_CHANGE_OLD_PASSWORD_INSTRUCTIONS"
+msgid "TEXT_PASSWORD_WARNING"
 msgstr ""
-"Pour modifier votre mot de passe, veuillez entrer votre ancien mot de "
-"passe :"
-
-msgid "TEXT_LABEL_PASSWORD_OLD"
-msgstr "Mot de passe actuel"
-
-msgid "TEXT_PASSWORD_CHANGE_NEW_PASSWORD_INSTRUCTIONS"
-msgstr "Puis choisissez-en un nouveau :"
-
-msgid "ACTION_CHANGE_PASSWORD"
-msgstr "Modifier le mot de passe"
+"Votre mot de passe est extrêmement important. Veuillez choisir un mot de "
+"passe sécurisé que vous retiendrez. Vos données seront chiffrées avec "
+"celui-ci et il est impossible de les récupérer si vous l'oubliez.<br "
+"/>Nous vous conseillons également de créer plusieurs appareils et de "
+"partager vos espaces de travail."
 
 msgid "TEXT_LABEL_PASSWORD"
 msgstr "Mot de passe"
@@ -2593,14 +2604,6 @@ msgstr "Confirmation du mot de passe"
 
 msgid "TEXT_PASSWORD_CHOICE_MISMATCH"
 msgstr "Ne correspond pas au mot de passe."
-
-msgid "TEXT_PASSWORD_WARNING"
-msgstr ""
-"Votre mot de passe est extrêmement important. Veuillez choisir un mot de "
-"passe sécurisé que vous retiendrez. Vos données seront chiffrées avec "
-"celui-ci et il est impossible de les récupérer si vous l'oubliez.<br "
-"/>Nous vous conseillons également de créer plusieurs appareils et de "
-"partager vos espaces de travail."
 
 msgid "TEXT_SETTINGS_BEHAVIOR_TITLE"
 msgstr "Comportement"
@@ -2640,6 +2643,9 @@ msgstr "Télémétrie"
 
 msgid "TEXT_SETTINGS_ENABLE_TELEMETRY"
 msgstr "Activer la télémétrie pour l'envoi automatique de rapports d'erreur"
+
+msgid "TEXT_SELECT_SMARTCARD"
+msgstr "Il vous sera demandé de sélectionner votre carte à puce"
 
 msgid "TEXT_WORKSPACE_TEMPORARY_TITLE"
 msgstr "Vue instantanée"
@@ -2786,4 +2792,34 @@ msgstr "Trouver un fichier via son lien"
 
 #~ msgid "TEXT_RECOVERY_IMPORT_TITLE"
 #~ msgstr "Choisissez le nouveau nom et mot de passe de l'appareil "
+
+#~ msgid "ACTION_DEVICE_MENU_CHANGE_PASSWORD"
+#~ msgstr "Changer le mot de passe"
+
+#~ msgid "TEXT_CHANGE_PASSWORD_SUCCESS"
+#~ msgstr "Le mot de passe a été modifié avec succès."
+
+#~ msgid "TEXT_CHANGE_PASSWORD_INVALID_PASSWORD"
+#~ msgstr "Vous n'avez pas fourni le bon mot de passe pour cet appareil."
+
+#~ msgid "TEXT_CHANGE_PASSWORD_TITLE"
+#~ msgstr "Modifier le mot de passe"
+
+#~ msgid "TEXT_DEVICE_RECOVERY_EXPORT_DEVICE_PASSWORD_LABEL"
+#~ msgstr "Entrez son mot de passe"
+
+#~ msgid "TEXT_PASSWORD_CHANGE_OLD_PASSWORD_INSTRUCTIONS"
+#~ msgstr ""
+#~ "Pour modifier votre mot de passe, "
+#~ "veuillez entrer votre ancien mot de "
+#~ "passe :"
+
+#~ msgid "TEXT_LABEL_PASSWORD_OLD"
+#~ msgstr "Mot de passe actuel"
+
+#~ msgid "TEXT_PASSWORD_CHANGE_NEW_PASSWORD_INSTRUCTIONS"
+#~ msgstr "Puis choisissez-en un nouveau :"
+
+#~ msgid "ACTION_CHANGE_PASSWORD"
+#~ msgstr "Modifier le mot de passe"
 

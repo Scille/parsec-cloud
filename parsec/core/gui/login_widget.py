@@ -1,5 +1,7 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2016-2021 Scille SAS
 
+from pathlib import Path
+
 from PyQt5.QtCore import pyqtSignal, Qt
 from PyQt5.QtWidgets import QWidget
 
@@ -138,8 +140,8 @@ class LoginNoDevicesWidget(QWidget, Ui_LoginNoDevicesWidget):
 
 
 class LoginWidget(QWidget, Ui_LoginWidget):
-    login_with_password_clicked = pyqtSignal(AvailableDevice, str)
-    login_with_smartcard_clicked = pyqtSignal(AvailableDevice)
+    login_with_password_clicked = pyqtSignal(Path, str)
+    login_with_smartcard_clicked = pyqtSignal(Path)
     create_organization_clicked = pyqtSignal()
     join_organization_clicked = pyqtSignal()
     login_canceled = pyqtSignal()
@@ -216,10 +218,10 @@ class LoginWidget(QWidget, Ui_LoginWidget):
         self.reload_devices()
 
     def try_login_with_password(self, device, password):
-        self.login_with_password_clicked.emit(device, password)
+        self.login_with_password_clicked.emit(device.key_file_path, password)
 
     def try_login_with_smartcard(self, device):
-        self.login_with_smartcard_clicked.emit(device)
+        self.login_with_smartcard_clicked.emit(device.key_file_path)
 
     def disconnect_all(self):
         pass

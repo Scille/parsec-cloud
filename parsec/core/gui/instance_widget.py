@@ -11,7 +11,11 @@ from PyQt5.QtWidgets import QWidget, QVBoxLayout, QApplication
 from parsec.event_bus import EventBus
 from parsec.api.protocol import HandshakeRevokedDevice
 from parsec.core import logged_core_factory
-from parsec.core.local_device import LocalDeviceError, load_device_with_password
+from parsec.core.local_device import (
+    LocalDeviceError,
+    load_device_with_password,
+    load_device_with_smartcard,
+)
 from parsec.core.mountpoint import (
     MountpointConfigurationError,
     MountpointDriverCrash,
@@ -208,11 +212,11 @@ class InstanceWidget(QWidget):
     def logout(self):
         self.stop_core()
 
-    def login_with_password(self, local_device, password):
+    def login_with_password(self, key_file, password):
         message = None
         exception = None
         try:
-            device = load_device_with_password(local_device.key_file_path, password)
+            device = load_device_with_password(key_file, password)
             if ParsecApp.is_device_connected(
                 device.organization_addr.organization_id, device.device_id
             ):
@@ -236,11 +240,11 @@ class InstanceWidget(QWidget):
                 show_error(self, message, exception=exception)
                 self.login_failed.emit()
 
-    def login_with_smartcard(self, local_device):
+    def login_with_smartcard(self, key_file):
         message = None
         exception = None
         try:
-            device = load_device_with_smartcard(local_device.key_file_path)
+            device = load_device_with_smartcard(key_file)
             if ParsecApp.is_device_connected(
                 device.organization_addr.organization_id, device.device_id
             ):

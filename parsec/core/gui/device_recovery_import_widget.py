@@ -9,6 +9,8 @@ from parsec.core.backend_connection import BackendConnectionError
 from parsec.core.recovery import generate_new_device_from_recovery
 from parsec.core.local_device import (
     save_device_with_password_in_config,
+    save_device_with_smartcard_in_config,
+    DeviceFileType,
     load_recovery_device,
     LocalDeviceError,
 )
@@ -35,18 +37,21 @@ class DeviceRecoveryImportPage2Widget(QWidget, Ui_DeviceRecoveryImportPage2Widge
     def __init__(self, parent=None):
         super().__init__(parent)
         self.setupUi(self)
-        self.widget_password.info_changed.connect(self.check_infos)
+        self.widget_auth.authentication_state_changed.connect(self.check_infos)
         self.line_edit_device.setText(get_default_device())
         self.line_edit_device.validity_changed.connect(self.check_infos)
         self.line_edit_device.set_validator(validators.DeviceNameValidator())
 
     def check_infos(self, _=None):
         self.info_filled.emit(
-            bool(self.line_edit_device.is_input_valid() and self.widget_password.is_valid())
+            bool(self.line_edit_device.is_input_valid() and self.widget_auth.is_auth_valid())
         )
 
-    def get_password(self):
-        return self.widget_password.password
+    def get_auth(self):
+        return self.widget_auth.get_auth()
+
+    def get_auth_method(self):
+        return self.widget_auth.get_auth_method()
 
     def get_device_name(self):
         return self.line_edit_device.text()
@@ -129,12 +134,17 @@ class DeviceRecoveryImportWidget(QWidget, Ui_DeviceRecoveryImportWidget):
     def _on_page2_info_filled(self, valid):
         self.button_validate.setEnabled(valid)
 
-    async def _create_new_device(self, config_dir, recovery_device, device_label, password):
+    async def _create_new_device(
+        self, config_dir, recovery_device, device_label, auth_type, password=None
+    ):
         try:
             new_device = await generate_new_device_from_recovery(recovery_device, device_label)
-            save_device_with_password_in_config(
-                config_dir=config_dir, device=new_device, password=password
-            )
+            if auth_type == DeviceFileType.PASSWORD:
+                save_device_with_password_in_config(
+                    config_dir=config_dir, device=new_device, password=password
+                )
+            else:
+                save_device_with_smartcard_in_config(config_dir=config_dir, device=new_device)
             show_info(self, translate("TEXT_RECOVERY_IMPORT_SUCCESS"))
         except BackendConnectionError as exc:
             show_error(self, translate("IMPORT_KEY_BACKEND_ERROR"), exception=exc)
@@ -182,7 +192,8 @@ class DeviceRecoveryImportWidget(QWidget, Ui_DeviceRecoveryImportWidget):
                 config_dir=self.config.config_dir,
                 recovery_device=self.recovery_device,
                 device_label=self.current_page.get_device_name(),
-                password=self.current_page.get_password(),
+                auth_type=self.current_page.get_auth_method(),
+                password=self.current_page.get_auth(),
             )
 
     def _on_create_new_device_success(self, job):

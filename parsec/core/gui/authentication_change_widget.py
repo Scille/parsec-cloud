@@ -1,7 +1,6 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2016-2021 Scille SAS
 
-from PyQt5.QtWidgets import QWidget, QLineEdit
-from PyQt5.QtCore import pyqtSignal
+from PyQt5.QtWidgets import QWidget, QApplication
 
 from structlog import get_logger
 
@@ -11,90 +10,79 @@ from parsec.core.local_device import (
     load_device_with_smartcard,
     save_device_with_password,
     save_device_with_smartcard,
+    LocalDeviceError,
     DeviceFileType,
+    get_available_device,
 )
 
-from parsec.core.gui.custom_dialogs import GreyedDialog  # show_error, show_info, GreyedDialog
+from parsec.core.gui.custom_dialogs import GreyedDialog, get_text_input, show_error, show_info
 from parsec.core.gui.lang import translate as _
 
 from parsec.core.gui.ui.authentication_change_widget import Ui_AuthenticationChangeWidget
-from parsec.core.gui.ui.authentication_change_page1_widget import Ui_AuthenticationChangePage1Widget
-from parsec.core.gui.ui.authentication_change_page2_widget import Ui_AuthenticationChangePage2Widget
 
 
 logger = get_logger()
 
 
-class AuthenticationChangePage2Widget(QWidget, Ui_AuthenticationChangePage2Widget):
-    info_filled = pyqtSignal(bool)
-
-    def __init__(self, device):
-        super().__init__()
-        self.setupUi(self)
-        self.widget_auth.authentication_state_changed.connect(self.check_infos)
-        self.widget_auth.excluded_strings = [
-            device.organization_id,
-            device.user_display,
-            device.short_user_display,
-            device.device_display,
-        ]
-        self.widget_auth.authentication_state_changed.connect(
-            lambda _, valid: self.info_filled.emit(valid)
-        )
-
-    def set_excluded_strings(self, excluded_strings):
-        self.widget_auth.excluded_strings = excluded_strings
-
-
-class AuthenticationChangePage1Widget(QWidget, Ui_AuthenticationChangePage1Widget):
-    info_filled = pyqtSignal(bool)
-
-    def __init__(self):
-        super().__init__()
-        self.setupUi(self)
-        self.widget = None
-        if True:
-            self.widget = QLineEdit()
-            self.widget.setEchoMode(QLineEdit.Password)
-            self.widget.textChanged.connect(self._on_password_changed)
-            self.layout_old_auth.insertWidget(0, self.widget)
-
-    def _on_password_changed(self, text):
-        self.info_filled.emit(bool(len(text)))
-
-    def get_current_authentication(self):
-        if True:  # current_auth == PASSWORD
-            return self.widget.text()
-
-
 class AuthenticationChangeWidget(QWidget, Ui_AuthenticationChangeWidget):
-    def __init__(self, core, jobs_ctx):
+    def __init__(self, core, jobs_ctx, loaded_device):
         super().__init__()
         self.setupUi(self)
         self.core = core
         self.jobs_ctx = jobs_ctx
         self.dialog = None
         self.button_validate.clicked.connect(self._on_validate_clicked)
-        self.current_page = AuthenticationChangePage1Widget()
-        self.current_page.info_filled.connect(self._on_info_filled)
-        self.main_layout.addWidget(self.current_page)
+        self.widget_auth.authentication_state_changed.connect(self._on_info_filled)
         self.button_validate.setEnabled(False)
+        self.loaded_device = loaded_device
 
-    def _on_info_filled(self, valid):
+    def _on_info_filled(self, auth_method, valid):
         self.button_validate.setEnabled(valid)
 
     def _on_validate_clicked(self):
-        if isinstance(self.current_page, AuthenticationChangePage1Widget):
-            if True:  # if device.auth_type == PASSWORD
-                _ = get_key_file(self.core.config.config_dir, self.core.device)
-                # load device
+        auth_method = self.widget_auth.get_auth_method()
+        kf = get_key_file(self.core.config.config_dir, self.loaded_device)
+        if auth_method == DeviceFileType.PASSWORD:
+            save_device_with_password(
+                kf, self.loaded_device, self.widget_auth.get_auth(), force=True
+            )
+        elif auth_method == DeviceFileType.SMARTCARD:
+            save_device_with_smartcard(kf, self.loaded_device, force=True)
+        show_info(self, _("TEXT_AUTH_CHANGE_SUCCESS"))
+        if self.dialog:
+            self.dialog.accept()
+        elif QApplication.activeModalWidget():
+            QApplication.activeModalWidget().accept()
         else:
-            pass
+            logger.warning("Cannot close dialog when changing password info")
 
     @classmethod
     def show_modal(cls, core, jobs_ctx, parent, on_finished=None):
-        w = cls(core=core, jobs_ctx=jobs_ctx)
-        d = GreyedDialog(w, title=_("TEXT_CHANGE_PASSWORD_TITLE"), parent=parent)
+        available_device = get_available_device(core.config.config_dir, core.device)
+        loaded_device = None
+
+        try:
+            if available_device.type == DeviceFileType.PASSWORD:
+                password = get_text_input(
+                    parent,
+                    _("TEXT_DEVICE_UNLOCK_TITLE"),
+                    _("TEXT_DEVICE_UNLOCK_LABEL"),
+                    placeholder="",
+                    default_text="",
+                    completion=None,
+                    button_text=None,
+                    validator=None,
+                    hidden=True,
+                )
+                loaded_device = load_device_with_password(available_device.key_file_path, password)
+            else:
+                loaded_device = load_device_with_smartcard(available_device.key_file_path)
+        except LocalDeviceError:
+            show_error(parent, _("TEXT_LOGIN_ERROR_AUTHENTICATION_FAILED"))
+            return
+
+        w = cls(core=core, jobs_ctx=jobs_ctx, loaded_device=loaded_device)
+        d = GreyedDialog(w, title=_("TEXT_CHANGE_AUTHENTICATION_TITLE"), parent=parent)
         w.dialog = d
 
         if on_finished:
@@ -102,20 +90,3 @@ class AuthenticationChangeWidget(QWidget, Ui_AuthenticationChangeWidget):
         # Unlike exec_, show is asynchronous and works within the main Qt loop
         d.show()
         return w
-
-
-"""  def change_password(self):
-        key_file = get_key_file(self.core.config.config_dir, self.core.device)
-        try:
-            change_device_password(
-                key_file, self.line_edit_old_password.text(), self.widget_new_auth.get_auth()
-            )
-            show_info(self, _("TEXT_CHANGE_PASSWORD_SUCCESS"))
-            if self.dialog:
-                self.dialog.accept()
-            elif QApplication.activeModalWidget():
-                QApplication.activeModalWidget().accept()
-            else:
-                logger.warning("Cannot close dialog when changing password info")
-        except LocalDeviceCryptoError as exc:
-            show_error(self, _("TEXT_CHANGE_PASSWORD_INVALID_PASSWORD"), exception=exc) """

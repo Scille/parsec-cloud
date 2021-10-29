@@ -10,12 +10,11 @@ from PyQt5.QtWidgets import QWidget
 from parsec.api.protocol import HumanHandle
 from parsec.core.types import LocalDevice
 from parsec.core.local_device import (
-    save_device_with_password,
-    save_device_with_smartcard,
+    save_device_with_password_in_config,
+    save_device_with_smartcard_in_config,
     DeviceFileType,
 )
 from parsec.core.fs.storage.user_storage import user_storage_non_speculative_init
-from parsec.core.local_device import save_device_with_password_in_config
 from parsec.core.invite import claimer_retrieve_info, InvitePeerResetError
 from parsec.core.backend_connection import (
     backend_invited_cmds_factory,
@@ -27,7 +26,6 @@ from parsec.core.gui import validators
 from parsec.core.gui.trio_jobs import JobResultError, QtToTrioJob
 from parsec.core.gui.desktop import get_default_device
 from parsec.core.gui.custom_dialogs import show_error, GreyedDialog, show_info
-from parsec.core.gui.authentication_choice_widget import AuthenticationChoiceWidget
 from parsec.core.gui.lang import translate as _
 from parsec.core.gui.ui.claim_user_widget import Ui_ClaimUserWidget
 from parsec.core.gui.ui.claim_user_code_exchange_widget import Ui_ClaimUserCodeExchangeWidget
@@ -217,7 +215,9 @@ class ClaimUserFinalizeWidget(QWidget, Ui_ClaimUserFinalizeWidget):
                 password=self.widget_auth.get_auth(),
             )
         elif self.widget_auth.get_auth_method() == DeviceFileType.SMARTCARD:
-            save_device_with_smartcard(config_dir=self.config.config_dir, device=self.new_device)
+            save_device_with_smartcard_in_config(
+                config_dir=self.config.config_dir, device=self.new_device
+            )
         self.succeeded.emit(
             self.new_device, self.widget_auth.get_auth_method(), self.widget_auth.get_auth()
         )
@@ -703,7 +703,6 @@ class ClaimUserWidget(QWidget, Ui_ClaimUserWidget):
         self.main_layout.insertWidget(0, page)
 
     def _on_finished(self, device, auth_method, password):
-        show_info(self, _("TEXT_CLAIM_USER_SUCCESSFUL"))
         self.status = (device, auth_method, password)
         self.dialog.accept()
 

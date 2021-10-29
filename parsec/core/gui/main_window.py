@@ -463,9 +463,9 @@ class MainWindow(QMainWindow, Ui_MainWindow):  # type: ignore[misc]
             tab = self.tab_center.widget(idx)
         kf = get_key_file(self.config.config_dir, device)
         if auth_method == DeviceFileType.PASSWORD:
-            tab.login_with_password(device, password)
+            tab.login_with_password(kf, password)
         elif auth_method == DeviceFileType.SMARTCARD:
-            tab.login_with_smartcard(device)
+            tab.login_with_smartcard(kf)
 
     def reload_login_devices(self) -> None:
         idx = self._get_login_tab_index()

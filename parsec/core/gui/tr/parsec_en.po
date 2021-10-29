@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PROJECT VERSION\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2021-10-28 11:52+0200\n"
+"POT-Creation-Date: 2021-10-29 18:13+0200\n"
 "PO-Revision-Date: 2020-10-15 10:30+0200\n"
 "Last-Translator: \n"
 "Language: en\n"
@@ -21,8 +21,32 @@ msgstr ""
 msgid "TEXT_PARSEC_VERSION_version"
 msgstr "PARSEC version {version}"
 
-msgid "ACTION_DEVICE_MENU_CHANGE_PASSWORD"
-msgstr "Change password"
+msgid "TEXT_AUTH_CHANGE_SUCCESS"
+msgstr "Authentication has been successfully changed!"
+
+msgid "TEXT_DEVICE_UNLOCK_TITLE"
+msgstr "Re-authentication"
+
+msgid "TEXT_DEVICE_UNLOCK_LABEL"
+msgstr "Please re-authenticate to change your authentication."
+
+msgid "TEXT_LOGIN_ERROR_AUTHENTICATION_FAILED"
+msgstr "The password is incorrect."
+
+msgid "TEXT_CHANGE_AUTHENTICATION_TITLE"
+msgstr "Change authentication"
+
+msgid "TEXT_AUTH_METHOD_PASSWORD"
+msgstr "Password"
+
+msgid "TEXT_AUTH_METHOD_SMARTCARD"
+msgstr "Smartcard"
+
+msgid "TEXT_ONLY_ONE_AUTH_METHOD_AVAILABLE"
+msgstr "Only one method authentication method is available in this version of Parsec."
+
+msgid "ACTION_DEVICE_MENU_CHANGE_AUTHENTICATION"
+msgstr "Change authentication"
 
 msgid "ACTION_LOG_OUT"
 msgstr "Log Out"
@@ -291,9 +315,6 @@ msgstr "A recovery file for this device already exists in the selected location.
 
 msgid "EXPORT_KEY_ERROR"
 msgstr "Cannot create recovery device"
-
-msgid "TEXT_LOGIN_ERROR_AUTHENTICATION_FAILED"
-msgstr "The password is incorrect."
 
 msgid "TEXT_DEVICE_RECOVERY_EXPORT_WIZARD_TITLE"
 msgstr "Create a recovery device"
@@ -1542,16 +1563,20 @@ msgstr ""
 "\n"
 "</body></html>"
 
-msgid "TEXT_LOGIN_ENTER_PASSWORD_INSTRUCTIONS_organization-device-user-email"
-msgstr ""
-"Welcome back to PARSEC <b>{user}</b>! Please enter the password of your "
-"<b>{device}</b> device."
+msgid "TEXT_LOGIN_SELECT_SMARTCARD_INSTRUCTIONS_organization-device-user-email"
+msgstr "Welcome back to PARSEC <b>{user}</b>! You will be asked to provide "
+"your smartcard to authenticate to <b>{device}</b>."
 
 msgid "ACTION_LOGGING_IN"
 msgstr "Logging in..."
 
 msgid "ACTION_LOG_IN"
 msgstr "Log In"
+
+msgid "TEXT_LOGIN_ENTER_PASSWORD_INSTRUCTIONS_organization-device-user-email"
+msgstr ""
+"Welcome back to PARSEC <b>{user}</b>! Please enter the password of your "
+"<b>{device}</b> device."
 
 msgid "TEXT_LOGIN_NO_AVAILABLE_DEVICE"
 msgstr "No other device is available on this computer."
@@ -1760,14 +1785,11 @@ msgstr ""
 msgid "TEXT_PARSEC_NEW_VERSION_AVAILABLE_version"
 msgstr "The version <b>{version}</b> of PARSEC is available!"
 
-msgid "TEXT_CHANGE_PASSWORD_SUCCESS"
-msgstr "The password has been successfully changed."
+msgid "TEXT_PASSWORD_CHECK_MATCH"
+msgstr "The password and the confirmation match."
 
-msgid "TEXT_CHANGE_PASSWORD_INVALID_PASSWORD"
-msgstr "You did not provide the right password for this device."
-
-msgid "TEXT_CHANGE_PASSWORD_TITLE"
-msgstr "Change password"
+msgid "TEXT_PASSWORD_CHECK_NO_MATCH"
+msgstr "The confirmation does not match the password."
 
 msgid "TEXT_PASSWORD_VALIDATION_TOO_SHORT"
 msgstr "TOO SHORT"
@@ -1789,12 +1811,6 @@ msgstr "EXCELLENT"
 
 msgid "TEXT_PASSWORD_VALIDATION_PASSWORD_STRENGTH_strength"
 msgstr "Password strength: {strength}"
-
-msgid "TEXT_PASSWORD_CHECK_MATCH"
-msgstr "The password and the confirmation match."
-
-msgid "TEXT_PASSWORD_CHECK_NO_MATCH"
-msgstr "The confirmation does not match the password."
 
 msgid "TEXT_CLICK_TO_ENLARGE"
 msgstr "Click to enlarge"
@@ -2146,6 +2162,9 @@ msgstr ""
 "title=\"Flaticon\" style=\"color: #0092FF; font-weight: "
 "bold;\">www.flaticon.com</a>"
 
+msgid "TEXT_AUTHENTICATION_METHOD_CHOICE"
+msgstr "Choose your authentication method"
+
 msgid "TEXT_CLAIM_DEVICE_CODE_EXCHANGE_GET_CODE_INSTRUCTIONS"
 msgstr "Get the code from your other device."
 
@@ -2268,9 +2287,6 @@ msgstr ""
 
 msgid "TEXT_DEVICE_RECOVERY_EXPORT_SELECT_DEVICE_LABEL"
 msgstr "Select the device you want to create a recovery for"
-
-msgid "TEXT_DEVICE_RECOVERY_EXPORT_DEVICE_PASSWORD_LABEL"
-msgstr "Enter the device password"
 
 msgid "TEXT_DEVICE_RECOVERY_EXPORT_SELECT_FILE_LABEL"
 msgstr "Select where the file will be exported"
@@ -2502,17 +2518,12 @@ msgstr "Your PARSEC is up-to-date!"
 msgid "LABEL_NOTIFICATIONS"
 msgstr ""
 
-msgid "TEXT_PASSWORD_CHANGE_OLD_PASSWORD_INSTRUCTIONS"
-msgstr "To change your password, please enter your old password:"
-
-msgid "TEXT_LABEL_PASSWORD_OLD"
-msgstr "Current password"
-
-msgid "TEXT_PASSWORD_CHANGE_NEW_PASSWORD_INSTRUCTIONS"
-msgstr "And then chose a new one:"
-
-msgid "ACTION_CHANGE_PASSWORD"
-msgstr "Change password"
+msgid "TEXT_PASSWORD_WARNING"
+msgstr ""
+"Your password is extremely important. Be sure to chose a secure password "
+"that you will remember. Your data will be encrypted with it and it is not"
+" possible to recover them if your forget it.<br />We also advise that you"
+" create multiple devices if possible and share your workspaces."
 
 msgid "TEXT_LABEL_PASSWORD"
 msgstr "Password"
@@ -2522,13 +2533,6 @@ msgstr "Password confirmation"
 
 msgid "TEXT_PASSWORD_CHOICE_MISMATCH"
 msgstr "Does not match the password."
-
-msgid "TEXT_PASSWORD_WARNING"
-msgstr ""
-"Your password is extremely important. Be sure to chose a secure password "
-"that you will remember. Your data will be encrypted with it and it is not"
-" possible to recover them if your forget it.<br />We also advise that you"
-" create multiple devices if possible and share your workspaces."
 
 msgid "TEXT_SETTINGS_BEHAVIOR_TITLE"
 msgstr "Application behavior"
@@ -2568,6 +2572,9 @@ msgstr "Telemetry"
 
 msgid "TEXT_SETTINGS_ENABLE_TELEMETRY"
 msgstr "Enable telemetry for automatic crash reporting"
+
+msgid "TEXT_SELECT_SMARTCARD"
+msgstr "You will be asked to select your smartcard."
 
 msgid "TEXT_WORKSPACE_TEMPORARY_TITLE"
 msgstr "Snapshot"
