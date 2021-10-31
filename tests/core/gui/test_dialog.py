@@ -92,7 +92,6 @@ def test_print_helper():
         (printer.setPrintProgram, ["", "some_program"]),
         (printer.setPrintRange, [0, 1]),
         (printer.setPrinterName, ["", "some_printer"]),
-        (printer.setPrinterSelectionOption, ["", "some_selection_option"]),
         (printer.setResolution, [1200, 1000]),
         (printer.setPageOrientation, [0, 1]),
         (printer.setPageSize, [0, 1]),

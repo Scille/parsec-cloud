@@ -59,7 +59,6 @@ class PrintHelper:
             "setPrintProgram",
             "setPrintRange",
             "setPrinterName",
-            "setPrinterSelectionOption",
             "setResolution",
         ]
 
