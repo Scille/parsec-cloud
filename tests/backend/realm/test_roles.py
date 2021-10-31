@@ -10,7 +10,7 @@ from parsec.api.data import RealmRoleCertificateContent, UserProfile
 from parsec.backend.realm import RealmGrantedRole
 
 from tests.common import freeze_time, customize_fixtures
-from tests.backend.common import realm_update_roles, realm_get_role_certificates
+from tests.backend.common import realm_update_roles, realm_get_role_certificates, vlob_create
 
 
 NOW = datetime(2000, 1, 1)
@@ -462,3 +462,64 @@ async def test_get_role_certificates_no_longer_allowed(
 
     rep = await realm_get_role_certificates(alice_backend_sock, realm)
     assert rep == {"status": "not_allowed"}
+
+
+@pytest.mark.trio
+async def test_update_roles_causality_checks(
+    backend,
+    alice,
+    bob,
+    adam,
+    alice_backend_sock,
+    bob_backend_sock,
+    realm,
+    realm_generate_certif_and_update_roles_or_fail,
+    next_timestamp,
+):
+    # Use this timestamp as reference
+    ref = next_timestamp()
+
+    # Grant a role to bob
+    rep = await realm_generate_certif_and_update_roles_or_fail(
+        alice_backend_sock, alice, realm, bob.user_id, RealmRole.MANAGER, ref
+    )
+    assert rep == {"status": "ok"}
+
+    # Now try to change bob's role with the same timestamp or lower, this should fail
+    for timestamp in (ref, ref.subtract(seconds=1)):
+        rep = await realm_generate_certif_and_update_roles_or_fail(
+            alice_backend_sock, alice, realm, bob.user_id, RealmRole.CONTRIBUTOR, timestamp
+        )
+        assert rep == {"status": "require_greater_timestamp", "strictly_greater_than": ref}
+
+    # Advance ref
+    ref = ref.add(seconds=10)
+
+    # Now bob invites someone at timestamp ref
+    rep = await realm_generate_certif_and_update_roles_or_fail(
+        bob_backend_sock, bob, realm, adam.user_id, RealmRole.CONTRIBUTOR, ref
+    )
+    assert rep == {"status": "ok"}
+
+    # Now try to remove bob's management rights with the same timestamp or lower: this should fail
+    for timestamp in (ref, ref.subtract(seconds=1)):
+        rep = await realm_generate_certif_and_update_roles_or_fail(
+            alice_backend_sock, alice, realm, bob.user_id, RealmRole.CONTRIBUTOR, timestamp
+        )
+        assert rep == {"status": "require_greater_timestamp", "strictly_greater_than": ref}
+
+    # Advance ref
+    ref = ref.add(seconds=10)
+
+    # Now bob writes to the corresponding realm
+    rep = await vlob_create(
+        bob_backend_sock, realm, VLOB_ID, blob=b"ciphered", timestamp=ref, check_rep=False
+    )
+    assert rep == {"status": "ok"}
+
+    # Now try to remove bob's write rights with the same timestamp or lower: this should fail
+    for timestamp in (ref, ref.subtract(seconds=1)):
+        rep = await realm_generate_certif_and_update_roles_or_fail(
+            alice_backend_sock, alice, realm, bob.user_id, RealmRole.READER, timestamp
+        )
+        assert rep == {"status": "require_greater_timestamp", "strictly_greater_than": ref}

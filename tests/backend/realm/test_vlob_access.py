@@ -16,7 +16,10 @@ from parsec.backend.realm import RealmGrantedRole
 
 from tests.common import freeze_time
 from tests.backend.common import vlob_create, vlob_update, vlob_read, vlob_list_versions
+from tests.backend.realm.test_roles import realm_generate_certif_and_update_roles_or_fail
 
+# Fixture
+realm_generate_certif_and_update_roles_or_fail
 
 VLOB_ID = UUID("00000000000000000000000000000001")
 
@@ -612,3 +615,52 @@ async def test_access_during_maintenance(backend, alice, alice_backend_sock, rea
         check_rep=False,
     )
     assert rep == {"status": "in_maintenance"}
+
+
+@pytest.mark.trio
+async def test_vlob_updates_causality_checks(
+    backend,
+    alice,
+    bob,
+    adam,
+    alice_backend_sock,
+    bob_backend_sock,
+    realm,
+    realm_generate_certif_and_update_roles_or_fail,
+    next_timestamp,
+):
+    # Use this timestamp as reference
+    ref = next_timestamp()
+
+    # Grant a role to bob
+    rep = await realm_generate_certif_and_update_roles_or_fail(
+        alice_backend_sock, alice, realm, bob.user_id, RealmRole.MANAGER, ref
+    )
+    assert rep == {"status": "ok"}
+
+    # Now bob writes to the corresponding realm with the same timestamp or lower: this should fail
+    for timestamp in (ref, ref.subtract(seconds=1)):
+        rep = await vlob_create(
+            bob_backend_sock, realm, VLOB_ID, blob=b"ciphered", timestamp=timestamp, check_rep=False
+        )
+        assert rep == {"status": "require_greater_timestamp", "strictly_greater_than": ref}
+
+    # Advance ref
+    ref = ref.add(seconds=10)
+
+    # Bob successfuly write version 1
+    rep = await vlob_create(
+        bob_backend_sock, realm, VLOB_ID, blob=b"ciphered", timestamp=ref, check_rep=False
+    )
+    assert rep == {"status": "ok"}
+
+    # Now bob writes to the corresponding vlob with a lower timestamp: this should fail
+    rep = await vlob_update(
+        bob_backend_sock,
+        VLOB_ID,
+        version=2,
+        blob=b"ciphered",
+        timestamp=ref.subtract(seconds=1),
+        check_rep=False,
+    )
+    assert rep == {"status": "require_greater_timestamp", "strictly_greater_than": ref}
