@@ -1,7 +1,7 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2016-2021 Scille SAS
 
 from PyQt5.QtCore import pyqtSignal
-from PyQt5.QtWidgets import QWidget, QFileDialog
+from PyQt5.QtWidgets import QWidget
 
 from pathlib import Path, PurePath
 
@@ -16,7 +16,7 @@ from parsec.crypto import derivate_secret_key_from_recovery_passphrase
 
 from parsec.core.gui.trio_jobs import QtToTrioJob, JobResultError
 from parsec.core.gui.lang import translate
-from parsec.core.gui.custom_dialogs import GreyedDialog, show_error, show_info
+from parsec.core.gui.custom_dialogs import GreyedDialog, QDialogInProcess, show_error, show_info
 from parsec.core.gui import validators
 from parsec.core.gui.desktop import get_default_device
 
@@ -63,7 +63,7 @@ class DeviceRecoveryImportPage1Widget(QWidget, Ui_DeviceRecoveryImportPage1Widge
         self.edit_passphrase.textChanged.connect(self._on_passphrase_text_changed)
 
     def _on_import_key_clicked(self):
-        key_file, _ = QFileDialog.getOpenFileName(
+        key_file, _ = QDialogInProcess.getOpenFileName(
             self,
             translate("ACTION_IMPORT_KEY"),
             str(Path.home()),

@@ -1,10 +1,13 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2016-2021 Scille SAS
 
 from PyQt5.QtCore import pyqtSignal
-from PyQt5.QtWidgets import QWidget, QFileDialog
-from PyQt5.QtPrintSupport import QPrinter, QPrintDialog
+from PyQt5.QtWidgets import QWidget
 from PyQt5.QtGui import QTextDocument
 
+import os
+import trio
+import shutil
+import tempfile
 from pathlib import Path, PurePath
 
 from parsec.core.recovery import generate_recovery_device
@@ -20,7 +23,7 @@ from parsec.core.local_device import (
 from parsec.core.gui.trio_jobs import QtToTrioJob, JobResultError
 from parsec.core.gui.lang import translate
 from parsec.core.gui.desktop import open_files_job
-from parsec.core.gui.custom_dialogs import GreyedDialog, show_error
+from parsec.core.gui.custom_dialogs import GreyedDialog, QDialogInProcess, show_error
 
 from parsec.core.gui.ui.device_recovery_export_widget import Ui_DeviceRecoveryExportWidget
 from parsec.core.gui.ui.device_recovery_export_page1_widget import (
@@ -51,9 +54,8 @@ class DeviceRecoveryExportPage2Widget(QWidget, Ui_DeviceRecoveryExportPage2Widge
         self.jobs_ctx.submit_job(None, None, open_files_job, [PurePath(file_path).parent])
 
     def _print_recovery_key(self):
-        printer = QPrinter(QPrinter.HighResolution)
-        dialog = QPrintDialog(printer, self)
-        if dialog.exec_() == QPrintDialog.Accepted:
+        printer = QDialogInProcess.get_printer(self)
+        if printer is not None:
             html = translate("TEXT_RECOVERY_HTML_EXPORT_user-organization-keyname-password").format(
                 organization=self.device.organization_id,
                 label=self.device.user_display,
@@ -62,7 +64,24 @@ class DeviceRecoveryExportPage2Widget(QWidget, Ui_DeviceRecoveryExportPage2Widge
             )
             doc = QTextDocument()
             doc.setHtml(html)
+
+            # Use a real printer
+            if not printer.outputFileName():
+                doc.print_(printer)
+                return
+
+            # Print to a temporary file
+            output_filename = printer.outputFileName()
+            fd, temp_filename = tempfile.mkstemp()
+            os.close(fd)
+            printer.setOutputFileName(temp_filename)
             doc.print_(printer)
+
+            # Move the file safely, avoiding deadlocks in case the target is in a parsec mounpoint
+            async def _do_move():
+                await trio.to_thread.run_sync(shutil.move, temp_filename, output_filename)
+
+            self.jobs_ctx.submit_job(None, None, _do_move)
 
 
 class DeviceRecoveryExportPage1Widget(QWidget, Ui_DeviceRecoveryExportPage1Widget):
@@ -83,7 +102,7 @@ class DeviceRecoveryExportPage1Widget(QWidget, Ui_DeviceRecoveryExportPage1Widge
         self._check_infos()
 
     def _on_select_file_clicked(self):
-        key_dir = QFileDialog.getExistingDirectory(
+        key_dir = QDialogInProcess.getExistingDirectory(
             self, translate("TEXT_EXPORT_KEY"), str(Path.home())
         )
         if key_dir:
