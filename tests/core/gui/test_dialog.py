@@ -69,7 +69,8 @@ async def test_file_dialog_in_process(gui, close_process_pool):
 
 
 @pytest.mark.gui
-def test_print_helper():
+@pytest.mark.trio
+async def test_print_helper(gui):
     printer = QPrinter(QPrinter.HighResolution)
     for setter, values in [
         (printer.setCollateCopies, [False, True]),
