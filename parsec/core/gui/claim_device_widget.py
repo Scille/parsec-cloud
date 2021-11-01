@@ -10,7 +10,7 @@ from PyQt5.QtWidgets import QWidget
 from parsec.core.types import LocalDevice
 from parsec.core.local_device import (
     save_device_with_password_in_config,
-    save_device_with_smartcard,
+    save_device_with_smartcard_in_config,
     DeviceFileType,
 )
 from parsec.core.invite import claimer_retrieve_info, InvitePeerResetError
@@ -613,7 +613,9 @@ class ClaimDeviceWidget(QWidget, Ui_ClaimDeviceWidget):
                 config_dir=self.config.config_dir, device=new_device, password=password
             )
         elif auth_method == DeviceFileType.SMARTCARD:
-            save_device_with_smartcard(config_dir=self.config.config_dir, device=new_device)
+            save_device_with_smartcard_in_config(
+                config_dir=self.config.config_dir, device=new_device
+            )
         show_info(self, _("TEXT_CLAIM_DEVICE_SUCCESSFUL"))
         self.status = (new_device, auth_method, password)
         self.dialog.accept()

@@ -19,13 +19,12 @@ from parsec.core.invite import (
     InviteTimestampError,
     InviteError,
 )
-from parsec.core.local_device import (
-    save_device_with_password,
-    save_device_with_smartcard,
-    DeviceFileType,
-)
 from parsec.core.fs.storage.user_storage import user_storage_non_speculative_init
-from parsec.core.local_device import save_device_with_password_in_config
+from parsec.core.local_device import (
+    DeviceFileType,
+    save_device_with_password_in_config,
+    save_device_with_smartcard_in_config,
+)
 
 from parsec.core.gui.trio_jobs import QtToTrioJob
 from parsec.core.gui.custom_dialogs import GreyedDialog, show_error
@@ -60,7 +59,9 @@ async def _do_create_org(
                     config_dir=config.config_dir, device=new_device, password=password
                 )
             elif auth_method == DeviceFileType.SMARTCARD:
-                save_device_with_smartcard(config.config_dir, device=new_device)
+                save_device_with_smartcard_in_config(
+                    config_dir=config.config_dir, device=new_device
+                )
             return new_device, auth_method, password
     except InviteNotFoundError as exc:
         raise JobResultError("invite-not-found", exc=exc)

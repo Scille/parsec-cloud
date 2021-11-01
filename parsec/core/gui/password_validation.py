@@ -4,7 +4,6 @@ from zxcvbn import zxcvbn
 
 import re
 
-from PyQt5.QtCore import pyqtSignal
 from PyQt5.QtWidgets import QWidget
 
 from parsec.core.gui.lang import translate as _
