@@ -326,8 +326,11 @@ msgstr "Fermer"
 
 msgid "EXPORT_KEY_BACKEND_ERROR"
 msgstr ""
-"Impossible de créer un appareil de récupération, une erreur s'est "
-"produite dans le backend"
+"Impossible de créer un appareil de récupération : demande refusée par le serveur"
+
+msgid "EXPORT_KEY_BACKEND_OFFLINE"
+msgstr ""
+"Impossible de créer un appareil de récupération : pas de connexion avec le serveur"
 
 msgid "TEXT_RECOVERY_DEVICE_FILE_ALREADY_EXISTS"
 msgstr "Un fichier de récupération existe déjà pour cet appareil à cet endroit."
@@ -336,7 +339,7 @@ msgid "EXPORT_KEY_ERROR"
 msgstr "Impossible de créer un appareil de récupération"
 
 msgid "TEXT_DEVICE_RECOVERY_EXPORT_WIZARD_TITLE"
-msgstr "Crér une appareil de récupération"
+msgstr "Créer une appareil de récupération"
 
 msgid "ACTION_IMPORT_KEY"
 msgstr "Récupérer un appareil"
@@ -355,8 +358,11 @@ msgstr "L'appareil a été récupéré avec succès"
 
 msgid "IMPORT_KEY_BACKEND_ERROR"
 msgstr ""
-"Impossible de récupérer l'appareil, une erreur s'est produite dans le "
-"backend"
+"Impossible de récupérer l'appareil : demande refusée par le serveur"
+
+msgid "EXPORT_KEY_BACKEND_OFFLINE"
+msgstr ""
+"Impossible de récupérer l'appareil : pas de connexion avec le serveur"
 
 msgid "IMPORT_KEY_ERROR"
 msgstr "Impossible d'importer cette clef d'appareil."
