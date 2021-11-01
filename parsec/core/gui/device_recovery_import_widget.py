@@ -5,7 +5,7 @@ from PyQt5.QtWidgets import QWidget
 
 from pathlib import Path, PurePath
 
-from parsec.core.backend_connection import BackendConnectionError
+from parsec.core.backend_connection import BackendConnectionError, BackendNotAvailable
 from parsec.core.recovery import generate_new_device_from_recovery
 from parsec.core.local_device import (
     save_device_with_password_in_config,
@@ -146,6 +146,9 @@ class DeviceRecoveryImportWidget(QWidget, Ui_DeviceRecoveryImportWidget):
             else:
                 save_device_with_smartcard_in_config(config_dir=config_dir, device=new_device)
             show_info(self, translate("TEXT_RECOVERY_IMPORT_SUCCESS"))
+        except BackendNotAvailable as exc:
+            show_error(self, translate("IMPORT_KEY_BACKEND_OFFLINE"), exception=exc)
+            raise JobResultError("backend-error") from exc
         except BackendConnectionError as exc:
             show_error(self, translate("IMPORT_KEY_BACKEND_ERROR"), exception=exc)
             raise JobResultError("backend-error") from exc

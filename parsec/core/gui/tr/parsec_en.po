@@ -308,7 +308,10 @@ msgid "ACTION_CLOSE"
 msgstr "Close"
 
 msgid "EXPORT_KEY_BACKEND_ERROR"
-msgstr "Cannot create recovery device, an error occured in the backend"
+msgstr "Cannot create recovery device: query refused by server"
+
+msgid "EXPORT_KEY_BACKEND_OFFLINE"
+msgstr "Cannot create recovery device: no connection with the server"
 
 msgid "TEXT_RECOVERY_DEVICE_FILE_ALREADY_EXISTS"
 msgstr "A recovery file for this device already exists in the selected location."
@@ -335,7 +338,10 @@ msgid "TEXT_RECOVERY_IMPORT_SUCCESS"
 msgstr "The device has been successfully recovered"
 
 msgid "IMPORT_KEY_BACKEND_ERROR"
-msgstr "Cannot recover device, an error occured in the backend"
+msgstr "Cannot recover device: query refused by server"
+
+msgid "EXPORT_KEY_BACKEND_OFFLINE"
+msgstr "Cannot recover device: no connection with the server"
 
 msgid "IMPORT_KEY_ERROR"
 msgstr "Cannot import device key"

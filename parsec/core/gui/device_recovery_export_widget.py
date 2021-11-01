@@ -6,7 +6,7 @@ from PyQt5.QtWidgets import QWidget
 from pathlib import Path, PurePath
 
 from parsec.core.recovery import generate_recovery_device
-from parsec.core.backend_connection import BackendConnectionError
+from parsec.core.backend_connection import BackendConnectionError, BackendNotAvailable
 from parsec.core.types import LocalDevice
 from parsec.core.local_device import (
     load_device_with_password,
@@ -142,6 +142,9 @@ class DeviceRecoveryExportWidget(QWidget, Ui_DeviceRecoveryExportWidget):
             file_path = export_path / file_name
             passphrase = await save_recovery_device(file_path, recovery_device)
             return recovery_device, file_path, passphrase
+        except BackendNotAvailable as exc:
+            show_error(self, translate("EXPORT_KEY_BACKEND_OFFLINE"), exception=exc)
+            raise JobResultError("backend-error") from exc
         except BackendConnectionError as exc:
             show_error(self, translate("EXPORT_KEY_BACKEND_ERROR"), exception=exc)
             raise JobResultError("backend-error") from exc
