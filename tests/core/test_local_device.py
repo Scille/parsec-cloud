@@ -349,11 +349,16 @@ def test_list_devices_support_legacy_file_with_meaningful_name(config_dir):
 @pytest.mark.parametrize("type", ("password", "smartcard"))
 def test_list_devices_support_key_file(config_dir, type):
     if type == "password":
-        data_extra = {"type": "password"}
+        data_extra = {"type": "password", "salt": b"12345"}
         available_device_extra = {"type": DeviceFileType.PASSWORD}
 
     elif type == "smartcard":
-        data_extra = {"type": "smartcard", "id": 42}
+        data_extra = {
+            "type": "smartcard",
+            "encrypted_key": b"12345",
+            "certificate_id": "42",
+            "certificate_sha1": b"12345",
+        }
         available_device_extra = {"type": DeviceFileType.SMARTCARD}
 
     # Device information
@@ -370,7 +375,6 @@ def test_list_devices_support_key_file(config_dir, type):
     # Craft file data
     key_file_data = packb(
         {
-            "salt": b"12345",
             "ciphertext": b"whatever",
             "human_handle": (human_email.encode(), human_label.encode()),
             "device_label": device_label.encode(),

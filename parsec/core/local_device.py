@@ -5,7 +5,8 @@ import trio
 from enum import Enum
 from pathlib import Path, PurePath
 from hashlib import sha256
-from typing import List, Optional, Iterator, Dict, Type
+from typing import Callable, List, Optional, Iterator, Dict, Type, Tuple
+from importlib import import_module
 
 from parsec.serde import BaseSchema, fields, MsgpackSerializer, OneOfSchema
 from parsec.crypto import (
@@ -108,8 +109,9 @@ class RecoveryDeviceFileSchema(BaseDeviceFileSchema):
 
 class SmartcardDeviceFileSchema(BaseDeviceFileSchema):
     type = fields.EnumCheckedConstant(DeviceFileType.SMARTCARD, required=True)
-    # This schema is provisional and content may be added to it in the future, for example smartcard information in
-    # another field
+    encrypted_key = fields.Bytes(required=True)
+    certificate_id = fields.String(required=True)
+    certificate_sha1 = fields.Bytes(allow_none=True, missing=None)
 
 
 class DeviceFileSchema(OneOfSchema):
@@ -163,30 +165,6 @@ def generate_new_device(
     )
 
 
-def get_key_file(config_dir: Path, device: LocalDevice) -> Path:
-    for available_device in _iter_available_devices(config_dir):
-        if available_device.slug == device.slug:
-            return available_device.key_file_path
-    raise FileNotFoundError
-
-
-def get_default_key_file(config_dir: Path, device: LocalDevice) -> Path:
-    """Return the default keyfile path for a given device.
-
-    Note that the filename does not carry any intrinsic meaning.
-    Here, we simply use the slughash to avoid name collision.
-    """
-    return get_devices_dir(config_dir) / f"{device.slughash}{DEVICE_FILE_SUFFIX}"
-
-
-def get_recovery_device_file_name(recovery_device: LocalDevice) -> str:
-    return f"parsec-recovery-{recovery_device.organization_id}-{recovery_device.short_user_display}{RECOVERY_DEVICE_FILE_SUFFIX}"
-
-
-def get_devices_dir(config_dir: Path) -> Path:
-    return config_dir / "devices"
-
-
 @attr.s(slots=True, frozen=True, auto_attribs=True)
 class AvailableDevice:
     key_file_path: Path
@@ -212,6 +190,34 @@ class AvailableDevice:
     @property
     def slughash(self) -> str:
         return sha256(self.slug.encode()).hexdigest()
+
+
+def get_available_device(config_dir: Path, device: LocalDevice) -> AvailableDevice:
+    for available_device in _iter_available_devices(config_dir):
+        if available_device.slug == device.slug:
+            return available_device
+    raise FileNotFoundError
+
+
+def get_key_file(config_dir: Path, device: LocalDevice) -> Path:
+    return get_available_device(config_dir, device).key_file_path
+
+
+def get_default_key_file(config_dir: Path, device: LocalDevice) -> Path:
+    """Return the default keyfile path for a given device.
+
+    Note that the filename does not carry any intrinsic meaning.
+    Here, we simply use the slughash to avoid name collision.
+    """
+    return get_devices_dir(config_dir) / f"{device.slughash}{DEVICE_FILE_SUFFIX}"
+
+
+def get_recovery_device_file_name(recovery_device: LocalDevice) -> str:
+    return f"parsec-recovery-{recovery_device.organization_id}-{recovery_device.short_user_display}{RECOVERY_DEVICE_FILE_SUFFIX}"
+
+
+def get_devices_dir(config_dir: Path) -> Path:
+    return config_dir / "devices"
 
 
 def _load_legacy_device_file(key_file_path: Path) -> Optional[AvailableDevice]:
@@ -298,6 +304,21 @@ def load_device_with_password(key_file: Path, password: str) -> LocalDevice:
         LocalDeviceValidationError
         LocalDevicePackingError
     """
+
+    def _decrypt_ciphertext(data: dict) -> bytes:
+        if data["type"] != DeviceFileType.PASSWORD:
+            raise LocalDeviceValidationError("Not a password-protected device file")
+
+        try:
+            key, _ = derivate_secret_key_from_password(password, data["salt"])
+            return key.decrypt(data["ciphertext"])
+        except CryptoError as exc:
+            raise LocalDeviceCryptoError(str(exc)) from exc
+
+    return _load_device(key_file, _decrypt_ciphertext)
+
+
+def _load_device(key_file: Path, decrypt_ciphertext: Callable[[dict], bytes]) -> LocalDevice:
     try:
         ciphertext = key_file.read_bytes()
     except OSError as exc:
@@ -308,11 +329,7 @@ def load_device_with_password(key_file: Path, password: str) -> LocalDevice:
     except LocalDeviceError:
         data = legacy_key_file_serializer.loads(ciphertext)
 
-    try:
-        key, _ = derivate_secret_key_from_password(password, data["salt"])
-        plaintext = key.decrypt(data["ciphertext"])
-    except CryptoError as exc:
-        raise LocalDeviceCryptoError(str(exc)) from exc
+    plaintext = decrypt_ciphertext(data)
 
     try:
         return LocalDevice.load(plaintext)
@@ -354,22 +371,38 @@ def save_device_with_password(
         LocalDeviceValidationError
         LocalDevicePackingError
     """
+
+    def _encrypt_dump(cleartext: bytes) -> Tuple[DeviceFileType, bytes, dict]:
+        try:
+            key, salt = derivate_secret_key_from_password(password)
+            ciphertext = key.encrypt(cleartext)
+
+        except CryptoError as exc:
+            raise LocalDeviceValidationError(f"Cannot dump local device: {exc}") from exc
+
+        extra_args = {"salt": salt}
+        return DeviceFileType.PASSWORD, ciphertext, extra_args
+
+    _save_device(key_file, device, force, _encrypt_dump)
+
+
+def _save_device(
+    key_file: Path,
+    device: LocalDevice,
+    force: bool,
+    encrypt_dump: Callable[[bytes], Tuple[DeviceFileType, bytes, dict]],
+) -> None:
     assert key_file.suffix == DEVICE_FILE_SUFFIX
 
     if key_file.exists() and not force:
         raise LocalDeviceAlreadyExistsError(f"Device key file `{key_file}` already exists")
 
-    try:
-        key, salt = derivate_secret_key_from_password(password)
-        ciphertext = key.encrypt(device.dump())
-
-    except (CryptoError, DataError) as exc:
-        raise LocalDeviceValidationError(f"Cannot dump local device: {exc}") from exc
-
+    cleartext = device.dump()
+    type, ciphertext, extra_args = encrypt_dump(cleartext)
     key_file_content = key_file_serializer.dumps(
         {
-            "type": DeviceFileType.PASSWORD,
-            "salt": salt,
+            "type": type,
+            **extra_args,
             "ciphertext": ciphertext,
             "human_handle": device.human_handle,
             "device_label": device.device_label,
@@ -478,3 +511,64 @@ async def save_recovery_device(key_file: PurePath, device: LocalDevice, force: b
         raise LocalDeviceError(f"Cannot save {key_file}: {exc}") from exc
 
     return passphrase
+
+
+def _load_smartcard_extension():
+    try:
+        return import_module("parsec_ext.smartcard")
+    except ModuleNotFoundError as exc:
+        raise ModuleNotFoundError("Parsec smartcard extension not available") from exc
+
+
+def is_smartcard_extension_available() -> bool:
+    try:
+        _load_smartcard_extension()
+        return True
+    except ModuleNotFoundError:
+        return False
+
+
+def load_device_with_smartcard(key_file: Path) -> LocalDevice:
+    """
+        LocalDeviceError
+        LocalDeviceNotFoundError
+        LocalDeviceCryptoError
+        LocalDeviceValidationError
+        LocalDevicePackingError
+    """
+    return _load_smartcard_extension().load_device_with_smartcard(key_file)
+
+
+def save_device_with_smartcard_in_config(config_dir: Path, device: LocalDevice) -> Path:
+    """
+    Raises:
+        LocalDeviceError
+        LocalDeviceNotFoundError
+        LocalDeviceCryptoError
+        LocalDeviceValidationError
+        LocalDevicePackingError
+    """
+    key_file = get_default_key_file(config_dir, device)
+    # Why do we use `force=True` here ?
+    # Key file name is per-device unique (given it contains the device slughash),
+    # hence there is no risk to overwrite another device.
+    # So if we are overwritting a key file it could be by:
+    # - the same device object, hence overwritting has no effect
+    # - a device object with same slughash but different device/user keys
+    #   This would mean the device enrollment has been replayed (which is
+    #   not possible in theory, but could occur in case of a rollback in the
+    #   Parsec server), in this case the old device object is now invalid
+    #   and it's a good thing to replace it.
+    _load_smartcard_extension().save_device_with_smartcard(key_file, device, force=True)
+    return key_file
+
+
+def save_device_with_smartcard(key_file: Path, device: LocalDevice, force: bool) -> None:
+    """
+        LocalDeviceError
+        LocalDeviceNotFoundError
+        LocalDeviceCryptoError
+        LocalDeviceValidationError
+        LocalDevicePackingError
+    """
+    _load_smartcard_extension().save_device_with_smartcard(key_file, device, force)
