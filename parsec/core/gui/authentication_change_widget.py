@@ -85,6 +85,8 @@ class AuthenticationChangeWidget(QWidget, Ui_AuthenticationChangeWidget):
                     validator=None,
                     hidden=True,
                 )
+                if not password:
+                    return
                 loaded_device = load_device_with_password(available_device.key_file_path, password)
             else:
                 loaded_device = load_device_with_smartcard(available_device.key_file_path)
