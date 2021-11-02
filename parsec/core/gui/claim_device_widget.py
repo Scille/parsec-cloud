@@ -624,10 +624,10 @@ class ClaimDeviceWidget(QWidget, Ui_ClaimDeviceWidget):
             self.status = (new_device, auth_method, password)
             self.dialog.accept()
         except LocalDeviceCryptoError as exc:
-            if self.widget_auth.get_auth_method() == DeviceFileType.SMARTCARD:
+            if auth_method == DeviceFileType.SMARTCARD:
                 show_error(self, _("TEXT_INVALID_SMARTCARD"), exception=exc)
         except LocalDeviceNotFoundError as exc:
-            if self.widget_auth.get_auth_method() == DeviceFileType.PASSWORD:
+            if auth_method == DeviceFileType.PASSWORD:
                 show_error(self, _("TEXT_CANNOT_SAVE_DEVICE"), exception=exc)
         except LocalDeviceError as exc:
             show_error(self, _("TEXT_CANNOT_SAVE_DEVICE"), exception=exc)
