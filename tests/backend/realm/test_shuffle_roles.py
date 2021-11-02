@@ -13,7 +13,6 @@ from hypothesis_trio.stateful import (
     multiple,
 )
 from unittest.mock import ANY
-from pendulum import now as pendulum_now
 
 from parsec.api.data import RealmRoleCertificateContent
 from parsec.api.protocol import RealmRole
@@ -35,6 +34,7 @@ def test_shuffle_roles(
     realm_factory,
     coolorg,
     alice,
+    next_timestamp,
 ):
     class ShuffleRoles(TrioAsyncioRuleBasedStateMachine):
         realm_role_strategy = st.one_of(st.just(x) for x in RealmRole)
@@ -107,7 +107,7 @@ def test_shuffle_roles(
 
             certif = RealmRoleCertificateContent(
                 author=author.device_id,
-                timestamp=pendulum_now(),
+                timestamp=next_timestamp(),
                 realm_id=self.realm_id,
                 user_id=recipient.user_id,
                 role=role,

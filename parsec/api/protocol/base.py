@@ -70,6 +70,13 @@ class ErrorRepSchema(BaseRepSchema):
     errors = fields.Dict(allow_none=True)
 
 
+class RequireGreaterTimestampRepSchema(BaseRepSchema):
+    status: fields.CheckedConstant = fields.CheckedConstant(
+        "require_greater_timestamp", required=True
+    )
+    strictly_greater_than = fields.DateTime(required=True, allow_none=False)
+
+
 class CmdSerializer:
     def __repr__(self) -> str:
         return (
@@ -84,7 +91,10 @@ class CmdSerializer:
         class RepWithErrorSchema(OneOfSchemaLegacy):
             type_field = "status"
             fallback_type_schema = ErrorRepSchema
-            type_schemas = {"ok": self.rep_noerror_schema}
+            type_schemas = {
+                "ok": self.rep_noerror_schema,
+                "require_greater_timestamp": RequireGreaterTimestampRepSchema,
+            }
 
             def get_obj_type(self, obj: Dict[str, object]) -> str:
                 try:

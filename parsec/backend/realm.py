@@ -68,6 +68,12 @@ class RealmMaintenanceError(RealmError):
     pass
 
 
+class RealmRoleRequireGreaterTimestampError(RealmError):
+    @property
+    def strictly_greater_than(self):
+        return self.args[0]
+
+
 @attr.s(slots=True, frozen=True, auto_attribs=True)
 class RealmStatus:
     maintenance_type: Optional[MaintenanceType]
@@ -107,7 +113,7 @@ class RealmGrantedRole:
     user_id: UserID
     role: Optional[RealmRole]
     granted_by: Optional[DeviceID]
-    granted_on: pendulum.DateTime = attr.ib(factory=pendulum.now)
+    granted_on: pendulum.DateTime
 
 
 class BaseRealmComponent:
@@ -233,6 +239,27 @@ class BaseRealmComponent:
     @api("realm_update_roles")
     @catch_protocol_errors
     async def api_realm_update_roles(self, client_ctx, msg):
+        """
+        This API call, when successful, performs the writing of a new role certificate to the database.
+        Before adding new entries, extra care should be taken in order to guarantee the consistency in
+        the ordering of the different timestamps stored in the database.
+
+        In particular, the backend server performs the following checks:
+        - The certificate must have a timestamp strictly greater than the last certificate for
+          the same user in the same realm.
+        - If the certificate corresponds to a role without write rights, its timestamp should
+          be strictly greater than the timestamp of the last vlob update performed by the
+          corresponding user in the corresponding realm.
+        - If the certificate corresponds to a role without management rights, its timestamp should
+          be strictly greater than the timestamp of the last role certificate uploaded by the
+          corresponding user in the corresponding realm.
+
+        If one of those constraints is not satisfied, an error is returned with the status
+        `require_greater_timestamp` indicating to the client that it should craft a new certificate
+        with a timestamp strictly greater than the timestamp provided with the error.
+
+        The `api_vlob_create` and `api_vlob_update` calls also perform similar checks.
+        """
         # An OUTSIDER is allowed to create a realm (given he needs to have one
         # to store it user manifest). However he cannot be MANAGER or OWNER in
         # a shared realm as well.
@@ -289,6 +316,14 @@ class BaseRealmComponent:
 
         except RealmAccessError:
             return realm_update_roles_serializer.rep_dump({"status": "not_allowed"})
+
+        except RealmRoleRequireGreaterTimestampError as exc:
+            return realm_update_roles_serializer.rep_dump(
+                {
+                    "status": "require_greater_timestamp",
+                    "strictly_greater_than": exc.strictly_greater_than,
+                }
+            )
 
         except RealmIncompatibleProfileError as exc:
             return realm_update_roles_serializer.rep_dump(

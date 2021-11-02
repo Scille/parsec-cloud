@@ -3,6 +3,7 @@
 import attr
 import re
 import pytest
+import pendulum
 from collections import defaultdict
 from typing import Union, Optional, Tuple
 from async_generator import asynccontextmanager
@@ -33,6 +34,25 @@ def fixtures_customization(request):
         return request.node.function._fixtures_customization
     except AttributeError:
         return {}
+
+
+@pytest.fixture
+def next_timestamp():
+    """On windows, 2 calls to `pendulum.now()` can yield the same value.
+    For some tests, this creates edges cases we want to avoid.
+    """
+    last_timestamp = None
+
+    def _next_timestamp():
+        if pendulum.has_test_now():
+            return pendulum.now()
+        nonlocal last_timestamp
+        while last_timestamp == pendulum.now():
+            pass
+        last_timestamp = pendulum.now()
+        return last_timestamp
+
+    return _next_timestamp
 
 
 @attr.s
@@ -507,6 +527,9 @@ def backend_data_binder_factory(request, backend_addr, initial_user_manifest_sta
 
             with self.backend.event_bus.listen() as spy:
 
+                # The realm needs to be created srictly before the manifest timestamp
+                realm_create_timestamp = manifest.timestamp.subtract(microseconds=1)
+
                 await self.backend.realm.create(
                     organization_id=author.organization_id,
                     self_granted_role=RealmGrantedRole(
@@ -514,14 +537,14 @@ def backend_data_binder_factory(request, backend_addr, initial_user_manifest_sta
                         user_id=author.user_id,
                         certificate=RealmRoleCertificateContent(
                             author=author.device_id,
-                            timestamp=manifest.timestamp,
+                            timestamp=realm_create_timestamp,
                             realm_id=realm_id,
                             user_id=author.user_id,
                             role=RealmRole.OWNER,
                         ).dump_and_sign(author.signing_key),
                         role=RealmRole.OWNER,
                         granted_by=author.device_id,
-                        granted_on=manifest.timestamp,
+                        granted_on=realm_create_timestamp,
                     ),
                 )
 

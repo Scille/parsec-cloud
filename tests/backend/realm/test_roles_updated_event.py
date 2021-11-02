@@ -28,14 +28,14 @@ async def test_realm_create(backend, alice, alice_backend_sock):
 
 @pytest.mark.trio
 async def test_roles_updated_for_participant(
-    backend, alice, bob, alice_backend_sock, bob_backend_sock, realm
+    backend, alice, bob, alice_backend_sock, bob_backend_sock, realm, next_timestamp
 ):
     async def _update_role_and_check_events(role):
 
         with backend.event_bus.listen() as spy:
             certif = RealmRoleCertificateContent(
                 author=alice.device_id,
-                timestamp=pendulum.now(),
+                timestamp=next_timestamp(),
                 realm_id=realm,
                 user_id=bob.user_id,
                 role=role,

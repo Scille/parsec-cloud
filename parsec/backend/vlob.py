@@ -31,10 +31,6 @@ class VlobVersionError(VlobError):
     pass
 
 
-class VlobTimestampError(VlobError):
-    pass
-
-
 class VlobNotFoundError(VlobError):
     pass
 
@@ -63,10 +59,24 @@ class VlobMaintenanceError(VlobError):
     pass
 
 
+class VlobRequireGreaterTimestampError(VlobError):
+    @property
+    def strictly_greater_than(self):
+        return self.args[0]
+
+
 class BaseVlobComponent:
     @api("vlob_create")
     @catch_protocol_errors
     async def api_vlob_create(self, client_ctx, msg):
+        """
+        This API call, when successful, performs the writing of a new vlob version to the database.
+        Before adding new entries, extra care should be taken in order to guarantee the consistency in
+        the ordering of the different timestamps stored in the database.
+
+        See the `api_vlob_update` docstring for more information about the checks performed and the
+        error returned in case those checks failed.
+        """
         msg = vlob_create_serializer.req_load(msg)
 
         now = pendulum.now()
@@ -82,6 +92,14 @@ class BaseVlobComponent:
         except (VlobAccessError, VlobRealmNotFoundError):
             return vlob_create_serializer.rep_dump({"status": "not_allowed"})
 
+        except VlobRequireGreaterTimestampError as exc:
+            return vlob_create_serializer.rep_dump(
+                {
+                    "status": "require_greater_timestamp",
+                    "strictly_greater_than": exc.strictly_greater_than,
+                }
+            )
+
         except VlobEncryptionRevisionError:
             return vlob_create_serializer.rep_dump({"status": "bad_encryption_revision"})
 
@@ -96,7 +114,7 @@ class BaseVlobComponent:
         msg = vlob_read_serializer.req_load(msg)
 
         try:
-            version, blob, author, created_on = await self.read(
+            version, blob, author, created_on, author_last_role_granted_on = await self.read(
                 client_ctx.organization_id, client_ctx.device_id, **msg
             )
 
@@ -108,9 +126,6 @@ class BaseVlobComponent:
 
         except VlobVersionError:
             return vlob_read_serializer.rep_dump({"status": "bad_version"})
-
-        except VlobTimestampError:
-            return vlob_read_serializer.rep_dump({"status": "bad_timestamp"})
 
         except VlobEncryptionRevisionError:
             return vlob_create_serializer.rep_dump({"status": "bad_encryption_revision"})
@@ -125,12 +140,30 @@ class BaseVlobComponent:
                 "version": version,
                 "author": author,
                 "timestamp": created_on,
+                "author_last_role_granted_on": author_last_role_granted_on,
             }
         )
 
     @api("vlob_update")
     @catch_protocol_errors
     async def api_vlob_update(self, client_ctx, msg):
+        """
+        This API call, when successful, performs the writing of a new vlob version to the database.
+        Before adding new entries, extra care should be taken in order to guarantee the consistency in
+        the ordering of the different timestamps stored in the database.
+
+        In particular, the backend server performs the following checks:
+        - The vlob version must have a timestamp greater or equal than the timestamp of the previous
+          version of the same vlob.
+        - The vlob version must have a timestamp strictly greater than the timestamp of the last role
+          certificate for the corresponding user in the corresponding realm.
+
+        If one of those constraints is not satisfied, an error is returned with the status
+        `require_greater_timestamp` indicating to the client that it should craft a new certificate
+        with a timestamp strictly greater than the timestamp provided with the error.
+
+        The `api_realm_update_roles` and `api_vlob_create` calls also perform similar checks.
+        """
         msg = vlob_update_serializer.req_load(msg)
 
         now = pendulum.now()
@@ -146,11 +179,16 @@ class BaseVlobComponent:
         except VlobAccessError:
             return vlob_update_serializer.rep_dump({"status": "not_allowed"})
 
+        except VlobRequireGreaterTimestampError as exc:
+            return vlob_update_serializer.rep_dump(
+                {
+                    "status": "require_greater_timestamp",
+                    "strictly_greater_than": exc.strictly_greater_than,
+                }
+            )
+
         except VlobVersionError:
             return vlob_update_serializer.rep_dump({"status": "bad_version"})
-
-        except VlobTimestampError:
-            return vlob_update_serializer.rep_dump({"status": "bad_timestamp"})
 
         except VlobEncryptionRevisionError:
             return vlob_create_serializer.rep_dump({"status": "bad_encryption_revision"})
@@ -323,7 +361,7 @@ class BaseVlobComponent:
         vlob_id: UUID,
         version: Optional[int] = None,
         timestamp: Optional[pendulum.DateTime] = None,
-    ) -> Tuple[int, bytes, DeviceID, pendulum.DateTime]:
+    ) -> Tuple[int, bytes, DeviceID, pendulum.DateTime, pendulum.DateTime]:
         """
         Raises:
             VlobAccessError
@@ -348,7 +386,6 @@ class BaseVlobComponent:
         Raises:
             VlobAccessError
             VlobVersionError
-            VlobTimestampError
             VlobNotFoundError
             VlobEncryptionRevisionError: if encryption_revision mismatch
             VlobInMaintenanceError

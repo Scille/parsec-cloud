@@ -2,7 +2,7 @@
 
 import pytest
 from uuid import UUID, uuid4
-from pendulum import datetime, now as pendulum_now
+from pendulum import datetime
 from async_generator import asynccontextmanager
 
 from parsec.api.data import RealmRoleCertificateContent
@@ -197,10 +197,10 @@ def backend_invited_sock_factory(backend_raw_transport_factory):
 
 
 @pytest.fixture
-def realm_factory():
+def realm_factory(next_timestamp):
     async def _realm_factory(backend, author, realm_id=None, now=None):
         realm_id = realm_id or uuid4()
-        now = now or pendulum_now()
+        now = now or next_timestamp()
         certif = RealmRoleCertificateContent.build_realm_root_certif(
             author=author.device_id, timestamp=now, realm_id=realm_id
         ).dump_and_sign(author.signing_key)
@@ -237,7 +237,7 @@ async def vlobs(backend, alice, realm):
         realm_id=realm,
         encryption_revision=1,
         vlob_id=vlob_ids[0],
-        timestamp=datetime(2000, 1, 2),
+        timestamp=datetime(2000, 1, 2, 1),
         blob=b"r:A b:1 v:1",
     )
     await backend.vlob.update(

@@ -5,7 +5,6 @@ from typing import Dict, Optional, List, Tuple, cast, Iterator, Callable, Awaita
 
 from pendulum import DateTime
 
-from parsec.utils import timestamps_in_the_ballpark
 from parsec.crypto import HashDigest, CryptoError
 from parsec.api.protocol import UserID, DeviceID, RealmRole
 from parsec.api.data import (
@@ -55,6 +54,25 @@ from parsec.core.fs.exceptions import (
 from parsec.core.fs.storage import BaseWorkspaceStorage
 
 
+# This value is used to increment the timestamp provided by the backend
+# when a manifest restamping is required. This value should be kept small
+# compared to the certificate stamp ahead value, so the certificate updates have
+# priority over manifest updates.
+MANIFEST_STAMP_AHEAD_MS = 100_000  # microseconds, or 0.1 seconds
+
+# This value is used to increment the timestamp provided by the backend
+# when a certificate restamping is required. This value should be kept big
+# compared to the manifest stamp ahead value, so the certificate updates have
+# priority over manifest updates.
+ROLE_CERTIFICATE_STAMP_AHEAD_MS = 500_000  # microseconds, or 0.5 seconds
+
+
+class VlobRequireGreaterTimestampError(Exception):
+    @property
+    def strictly_greater_than(self) -> DateTime:
+        return self.args[0]
+
+
 @contextmanager
 def translate_remote_devices_manager_errors() -> Iterator[None]:
     try:
@@ -98,28 +116,34 @@ class UserRemoteLoader:
         self.backend_cmds = backend_cmds
         self.remote_devices_manager = remote_devices_manager
         self._realm_role_certificates_cache: Optional[List[RealmRoleCertificateContent]] = None
-        self._realm_role_certificates_cache_timestamp: Optional[DateTime] = None
 
     def clear_realm_role_certificate_cache(self) -> None:
         self._realm_role_certificates_cache = None
-        self._realm_role_certificates_cache_timestamp = None
 
     async def _get_user_realm_role_at(
-        self, user_id: UserID, timestamp: DateTime
+        self, user_id: UserID, timestamp: DateTime, author_last_role_granted_on: DateTime
     ) -> Optional[RealmRole]:
-        if (
-            self._realm_role_certificates_cache is None
-            or self._realm_role_certificates_cache_timestamp is None
-            or self._realm_role_certificates_cache_timestamp <= timestamp
-        ):
-            cache_timestamp = self.device.timestamp()
-            self._realm_role_certificates_cache, _ = await self._load_realm_role_certificates()
-            # Set the cache timestamp in two times to avoid invalid value in case of exception
-            self._realm_role_certificates_cache_timestamp = cache_timestamp
 
+        # Lazily iterate over user certificates from newest to oldest
+        def _get_user_certificates_from_cache() -> Iterator[RealmRoleCertificateContent]:
+            if self._realm_role_certificates_cache is None:
+                return
+            for certif in reversed(self._realm_role_certificates_cache):
+                if certif.user_id == user_id:
+                    yield certif
+
+        # Reload cache certificates if necessary
+        last_certif = next(_get_user_certificates_from_cache(), None)
+        if last_certif is None or (
+            last_certif.timestamp < timestamp
+            and last_certif.timestamp < author_last_role_granted_on
+        ):
+            self._realm_role_certificates_cache, _ = await self._load_realm_role_certificates()
+
+        # Find the corresponding role
         assert self._realm_role_certificates_cache is not None
-        for certif in reversed(self._realm_role_certificates_cache):
-            if certif.user_id == user_id and certif.timestamp <= timestamp:
+        for certif in _get_user_certificates_from_cache():
+            if certif.timestamp <= timestamp:
                 return certif.role
         else:
             return None
@@ -534,9 +558,15 @@ class RemoteLoader(UserRemoteLoader):
         except DataError as exc:
             raise FSError(f"Cannot decrypt vlob: {exc}") from exc
 
+        # Get the timestamp of the last role for this particular user
+        author_last_role_granted_on = rep["author_last_role_granted_on"]
+        # Compatibility with older backends (best effort strategy)
+        if author_last_role_granted_on is None:
+            author_last_role_granted_on = self.device.timestamp()
+
         # Finally make sure author was allowed to create this manifest
         role_at_timestamp = await self._get_user_realm_role_at(
-            expected_author.user_id, expected_timestamp
+            expected_author.user_id, expected_timestamp, author_last_role_granted_on
         )
         if role_at_timestamp is None:
             raise FSError(
@@ -551,7 +581,12 @@ class RemoteLoader(UserRemoteLoader):
 
         return remote_manifest
 
-    async def upload_manifest(self, entry_id: EntryID, manifest: BaseRemoteManifest) -> None:
+    async def upload_manifest(
+        self,
+        entry_id: EntryID,
+        manifest: BaseRemoteManifest,
+        timestamp_greater_than: Optional[DateTime] = None,
+    ) -> BaseRemoteManifest:
         """
         Raises:
             FSError
@@ -561,7 +596,15 @@ class RemoteLoader(UserRemoteLoader):
             FSBadEncryptionRevision
         """
         assert manifest.author == self.device.device_id
-        assert timestamps_in_the_ballpark(manifest.timestamp, self.device.timestamp())
+
+        # Restamp the manifest before uploading
+        timestamp = self.device.timestamp()
+        if timestamp_greater_than is not None:
+            timestamp = max(
+                timestamp, timestamp_greater_than.add(microseconds=MANIFEST_STAMP_AHEAD_MS)
+            )
+
+        manifest = manifest.evolve(timestamp=timestamp)
 
         workspace_entry = self.get_workspace_entry()
 
@@ -573,18 +616,24 @@ class RemoteLoader(UserRemoteLoader):
             raise FSError(f"Cannot encrypt vlob: {exc}") from exc
 
         # Upload the vlob
-        if manifest.version == 1:
-            await self._vlob_create(
-                workspace_entry.encryption_revision, entry_id, ciphered, manifest.timestamp
-            )
+        try:
+            if manifest.version == 1:
+                await self._vlob_create(
+                    workspace_entry.encryption_revision, entry_id, ciphered, manifest.timestamp
+                )
+            else:
+                await self._vlob_update(
+                    workspace_entry.encryption_revision,
+                    entry_id,
+                    ciphered,
+                    manifest.timestamp,
+                    manifest.version,
+                )
+        # The backend notified us that some restamping is required
+        except VlobRequireGreaterTimestampError as exc:
+            return await self.upload_manifest(entry_id, manifest, exc.strictly_greater_than)
         else:
-            await self._vlob_update(
-                workspace_entry.encryption_revision,
-                entry_id,
-                ciphered,
-                manifest.timestamp,
-                manifest.version,
-            )
+            return manifest
 
     async def _vlob_create(
         self, encryption_revision: int, entry_id: EntryID, ciphered: bytes, now: DateTime
@@ -610,6 +659,8 @@ class RemoteLoader(UserRemoteLoader):
         elif rep["status"] == "not_allowed":
             # Seems we lost the access to the realm
             raise FSWorkspaceNoWriteAccess("Cannot upload manifest: no write access")
+        elif rep["status"] == "require_greater_timestamp":
+            raise VlobRequireGreaterTimestampError(rep["strictly_greater_than"])
         elif rep["status"] == "bad_encryption_revision":
             raise FSBadEncryptionRevision(
                 f"Cannot create vlob {entry_id}: Bad encryption revision provided"
@@ -650,6 +701,8 @@ class RemoteLoader(UserRemoteLoader):
         elif rep["status"] == "not_allowed":
             # Seems we lost the access to the realm
             raise FSWorkspaceNoWriteAccess("Cannot upload manifest: no write access")
+        elif rep["status"] == "require_greater_timestamp":
+            raise VlobRequireGreaterTimestampError(rep["strictly_greater_than"])
         elif rep["status"] == "bad_version":
             raise FSRemoteSyncError(entry_id)
         elif rep["status"] == "bad_timestamp":
@@ -681,7 +734,6 @@ class RemoteLoaderTimestamped(RemoteLoader):
         self.remote_devices_manager = remote_loader.remote_devices_manager
         self.local_storage = remote_loader.local_storage.to_timestamped(timestamp)
         self._realm_role_certificates_cache = None
-        self._realm_role_certificates_cache_timestamp = None
         self.timestamp = timestamp
 
     async def upload_block(self, access: BlockAccess, data: bytes) -> None:
@@ -721,7 +773,12 @@ class RemoteLoaderTimestamped(RemoteLoader):
             workspace_entry=workspace_entry,
         )
 
-    async def upload_manifest(self, entry_id: EntryID, manifest: BaseRemoteManifest) -> None:
+    async def upload_manifest(
+        self,
+        entry_id: EntryID,
+        manifest: BaseRemoteManifest,
+        timestamp_greater_than: Optional[DateTime] = None,
+    ) -> BaseRemoteManifest:
         raise FSError("Cannot upload manifest through a timestamped remote loader")
 
     async def _vlob_create(

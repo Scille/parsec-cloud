@@ -12,10 +12,11 @@ from parsec.backend.postgresql.utils import (
     q_device_internal_id,
     q_realm_internal_id,
     q_vlob_encryption_revision_internal_id,
+    q_user_internal_id,
 )
 from parsec.backend.vlob import (
+    VlobRequireGreaterTimestampError,
     VlobVersionError,
-    VlobTimestampError,
     VlobNotFoundError,
     VlobAlreadyExistsError,
 )
@@ -27,7 +28,7 @@ from parsec.backend.postgresql.vlob_queries.utils import (
 from parsec.backend.backend_events import BackendEvent
 
 
-q_vlob_updated = Q(
+_q_vlob_updated = Q(
     f"""
 INSERT INTO realm_vlob_update (
 realm, index, vlob_atom
@@ -45,15 +46,44 @@ RETURNING index
 )
 
 
-@query(in_transaction=True)
-async def query_vlob_updated(
-    conn, vlob_atom_internal_id, organization_id, author, realm_id, src_id, src_version=1
+_q_set_last_vlob_update = Q(
+    f"""
+INSERT INTO realm_user_change(realm, user_, last_role_change, last_vlob_update)
+VALUES (
+    { q_realm_internal_id(organization_id="$organization_id", realm_id="$realm_id") },
+    { q_user_internal_id(organization_id="$organization_id", user_id="$user_id") },
+    NULL,
+    $timestamp
+)
+ON CONFLICT (realm, user_)
+DO UPDATE SET last_vlob_update = (
+    SELECT GREATEST($timestamp, last_vlob_update)
+    FROM realm_user_change
+    WHERE realm={ q_realm_internal_id(organization_id="$organization_id", realm_id="$realm_id") }
+    AND user_={ q_user_internal_id(organization_id="$organization_id", user_id="$user_id") }
+    LIMIT 1
+)
+"""
+)
+
+
+async def _set_vlob_updated(
+    conn, vlob_atom_internal_id, organization_id, author, realm_id, src_id, timestamp, src_version=1
 ):
     index = await conn.fetchval(
-        *q_vlob_updated(
+        *_q_vlob_updated(
             organization_id=organization_id,
             realm_id=realm_id,
             vlob_atom_internal_id=vlob_atom_internal_id,
+        )
+    )
+
+    await conn.execute(
+        *_q_set_last_vlob_update(
+            organization_id=organization_id,
+            realm_id=realm_id,
+            user_id=author.user_id,
+            timestamp=timestamp,
         )
     )
 
@@ -128,7 +158,7 @@ async def query_update(
 ) -> None:
     realm_id = await _get_realm_id_from_vlob_id(conn, organization_id, vlob_id)
     await _check_realm_and_write_access(
-        conn, organization_id, author, realm_id, encryption_revision
+        conn, organization_id, author, realm_id, encryption_revision, timestamp
     )
 
     previous = await conn.fetchrow(
@@ -141,7 +171,7 @@ async def query_update(
         raise VlobVersionError()
 
     elif previous["created_on"] > timestamp:
-        raise VlobTimestampError()
+        raise VlobRequireGreaterTimestampError(previous["created_on"])
 
     try:
         vlob_atom_internal_id = await conn.fetchval(
@@ -162,8 +192,8 @@ async def query_update(
         # Should not occur in theory given we are in a transaction
         raise VlobVersionError()
 
-    await query_vlob_updated(
-        conn, vlob_atom_internal_id, organization_id, author, realm_id, vlob_id, version
+    await _set_vlob_updated(
+        conn, vlob_atom_internal_id, organization_id, author, realm_id, vlob_id, timestamp, version
     )
 
 
@@ -211,7 +241,7 @@ async def query_create(
     blob: bytes,
 ) -> None:
     await _check_realm_and_write_access(
-        conn, organization_id, author, realm_id, encryption_revision
+        conn, organization_id, author, realm_id, encryption_revision, timestamp
     )
 
     # Actually create the vlob
@@ -232,6 +262,6 @@ async def query_create(
     except UniqueViolationError:
         raise VlobAlreadyExistsError()
 
-    await query_vlob_updated(
-        conn, vlob_atom_internal_id, organization_id, author, realm_id, vlob_id
+    await _set_vlob_updated(
+        conn, vlob_atom_internal_id, organization_id, author, realm_id, vlob_id, timestamp
     )
