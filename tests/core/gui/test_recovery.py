@@ -38,15 +38,18 @@ def catch_export_recovery_widget(widget_catcher_factory):
 
 @pytest.mark.gui
 @pytest.mark.trio
+@pytest.mark.parametrize("kind", ["ok", "offline", "already_exists"])
 async def test_export_recovery_device(
     gui,
     aqtbot,
     monkeypatch,
     core_config,
     running_backend,
+    autoclose_dialog,
     catch_export_recovery_widget,
     tmp_path,
     alice,
+    kind,
 ):
     PASSWORD = "P@ssw0rd"
     save_device_with_password_in_config(core_config.config_dir, alice, PASSWORD)
@@ -71,32 +74,57 @@ async def test_export_recovery_device(
 
     exp_w.current_page._check_infos()
 
-    with monkeypatch.context() as m:
-        m.setattr(
-            "parsec.core.gui.device_recovery_export_widget.get_text_input",
-            lambda *args, **kwargs: PASSWORD,
-        )
-        async with aqtbot.wait_signal(exp_w.export_success):
+    monkeypatch.setattr(
+        "parsec.core.gui.device_recovery_export_widget.get_text_input",
+        lambda *args, **kwargs: PASSWORD,
+    )
+
+    if kind == "ok":
+        aqtbot.mouse_click(exp_w.button_validate, QtCore.Qt.LeftButton)
+
+        def _page2_shown():
+            assert isinstance(exp_w.current_page, DeviceRecoveryExportPage2Widget)
+
+        await aqtbot.wait_until(_page2_shown)
+
+        recovery_file = Path(exp_w.current_page.label_file_path.text())
+
+        assert recovery_file.is_file()
+        assert recovery_file.stat().st_size > 0
+
+        assert len(exp_w.current_page.edit_passphrase.toPlainText()) > 0
+
+        assert exp_w.button_validate.isEnabled()
+        aqtbot.mouse_click(exp_w.button_validate, QtCore.Qt.LeftButton)
+
+    elif kind == "offline":
+        with running_backend.offline():
             aqtbot.mouse_click(exp_w.button_validate, QtCore.Qt.LeftButton)
 
-    def _page2_shown():
-        assert isinstance(exp_w.current_page, DeviceRecoveryExportPage2Widget)
+            def _error_shown():
+                assert autoclose_dialog.dialogs == [
+                    ("Error", translate("EXPORT_KEY_BACKEND_OFFLINE"))
+                ]
 
-    await aqtbot.wait_until(_page2_shown)
+            await aqtbot.wait_until(_error_shown)
 
-    recovery_file = Path(exp_w.current_page.label_file_path.text())
+    elif kind == "already_exists":
+        file_name = get_recovery_device_file_name(alice)
+        (tmp_path / file_name).touch()
 
-    assert recovery_file.is_file()
-    assert recovery_file.stat().st_size > 0
+        aqtbot.mouse_click(exp_w.button_validate, QtCore.Qt.LeftButton)
 
-    assert len(exp_w.current_page.edit_passphrase.toPlainText()) > 0
+        def _error_shown():
+            assert autoclose_dialog.dialogs == [
+                ("Error", translate("TEXT_RECOVERY_DEVICE_FILE_ALREADY_EXISTS"))
+            ]
 
-    assert exp_w.button_validate.isEnabled()
-    aqtbot.mouse_click(exp_w.button_validate, QtCore.Qt.LeftButton)
+        await aqtbot.wait_until(_error_shown)
 
 
 @pytest.mark.gui
 @pytest.mark.trio
+@pytest.mark.parametrize("kind", ["ok", "offline"])
 async def test_import_recovery_device(
     gui,
     aqtbot,
@@ -107,6 +135,7 @@ async def test_import_recovery_device(
     autoclose_dialog,
     tmp_path,
     alice,
+    kind,
 ):
     PASSWORD = "P@ssw0rd"
     NEW_DEVICE_LABEL = "Alice_New_Device"
@@ -149,36 +178,49 @@ async def test_import_recovery_device(
     aqtbot.key_clicks(imp_w.current_page.line_edit_device, NEW_DEVICE_LABEL)
     assert imp_w.button_validate.isEnabled()
 
-    async with aqtbot.wait_signal(imp_w.create_new_device_success):
+    if kind == "ok":
+
+        async with aqtbot.wait_signal(imp_w.create_new_device_success):
+            aqtbot.mouse_click(imp_w.button_validate, QtCore.Qt.LeftButton)
+
+        def _page2_shown():
+            assert isinstance(imp_w.current_page, AuthenticationChoiceWidget)
+
+        await aqtbot.wait_until(_page2_shown)
+
+        assert not imp_w.button_validate.isEnabled()
+        aqtbot.key_clicks(
+            imp_w.current_page.main_layout.itemAt(0).widget().line_edit_password, PASSWORD
+        )
+        assert not imp_w.button_validate.isEnabled()
+        aqtbot.key_clicks(
+            imp_w.current_page.main_layout.itemAt(0).widget().line_edit_password_check, PASSWORD
+        )
+        assert imp_w.button_validate.isEnabled()
+
         aqtbot.mouse_click(imp_w.button_validate, QtCore.Qt.LeftButton)
+        assert autoclose_dialog.dialogs == [("", translate("TEXT_RECOVERY_IMPORT_SUCCESS"))]
 
-    def _page2_shown():
-        assert isinstance(imp_w.current_page, AuthenticationChoiceWidget)
+        lw = gui.test_get_login_widget()
 
-    await aqtbot.wait_until(_page2_shown)
+        accounts_w = lw.widget.layout().itemAt(0).widget()
+        assert accounts_w.accounts_widget.layout().count() == 3
 
-    assert not imp_w.button_validate.isEnabled()
-    aqtbot.key_clicks(
-        imp_w.current_page.main_layout.itemAt(0).widget().line_edit_password, PASSWORD
-    )
-    assert not imp_w.button_validate.isEnabled()
-    aqtbot.key_clicks(
-        imp_w.current_page.main_layout.itemAt(0).widget().line_edit_password_check, PASSWORD
-    )
-    assert imp_w.button_validate.isEnabled()
+        assert any(
+            accounts_w.accounts_widget.layout().itemAt(i).widget() is not None
+            and accounts_w.accounts_widget.layout().itemAt(i).widget().label_device.text()
+            == NEW_DEVICE_LABEL
+            for i in range(accounts_w.accounts_widget.layout().count())
+        )
 
-    aqtbot.mouse_click(imp_w.button_validate, QtCore.Qt.LeftButton)
+    elif kind == "offline":
 
-    assert autoclose_dialog.dialogs == [("", translate("TEXT_RECOVERY_IMPORT_SUCCESS"))]
+        with running_backend.offline():
+            aqtbot.mouse_click(imp_w.button_validate, QtCore.Qt.LeftButton)
 
-    lw = gui.test_get_login_widget()
+            def _error_shown():
+                assert autoclose_dialog.dialogs == [
+                    ("Error", translate("IMPORT_KEY_BACKEND_OFFLINE"))
+                ]
 
-    accounts_w = lw.widget.layout().itemAt(0).widget()
-    assert accounts_w.accounts_widget.layout().count() == 3
-
-    assert any(
-        accounts_w.accounts_widget.layout().itemAt(i).widget() is not None
-        and accounts_w.accounts_widget.layout().itemAt(i).widget().label_device.text()
-        == NEW_DEVICE_LABEL
-        for i in range(accounts_w.accounts_widget.layout().count())
-    )
+            await aqtbot.wait_until(_error_shown)
