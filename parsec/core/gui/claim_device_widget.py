@@ -12,6 +12,9 @@ from parsec.core.local_device import (
     save_device_with_password_in_config,
     save_device_with_smartcard_in_config,
     DeviceFileType,
+    LocalDeviceCryptoError,
+    LocalDeviceError,
+    LocalDeviceNotFoundError,
 )
 from parsec.core.invite import claimer_retrieve_info, InvitePeerResetError
 from parsec.core.backend_connection import (
@@ -608,17 +611,26 @@ class ClaimDeviceWidget(QWidget, Ui_ClaimDeviceWidget):
         self.main_layout.insertWidget(0, page)
 
     def _on_finished(self, new_device, auth_method, password):
-        if auth_method == DeviceFileType.PASSWORD:
-            save_device_with_password_in_config(
-                config_dir=self.config.config_dir, device=new_device, password=password
-            )
-        elif auth_method == DeviceFileType.SMARTCARD:
-            save_device_with_smartcard_in_config(
-                config_dir=self.config.config_dir, device=new_device
-            )
-        show_info(self, _("TEXT_CLAIM_DEVICE_SUCCESSFUL"))
-        self.status = (new_device, auth_method, password)
-        self.dialog.accept()
+        try:
+            if auth_method == DeviceFileType.PASSWORD:
+                save_device_with_password_in_config(
+                    config_dir=self.config.config_dir, device=new_device, password=password
+                )
+            elif auth_method == DeviceFileType.SMARTCARD:
+                save_device_with_smartcard_in_config(
+                    config_dir=self.config.config_dir, device=new_device
+                )
+            show_info(self, _("TEXT_CLAIM_DEVICE_SUCCESSFUL"))
+            self.status = (new_device, auth_method, password)
+            self.dialog.accept()
+        except LocalDeviceCryptoError as exc:
+            if self.widget_auth.get_auth_method() == DeviceFileType.SMARTCARD:
+                show_error(self, _("TEXT_INVALID_SMARTCARD"), exception=exc)
+        except LocalDeviceNotFoundError as exc:
+            if self.widget_auth.get_auth_method() == DeviceFileType.PASSWORD:
+                show_error(self, _("TEXT_CANNOT_SAVE_DEVICE"), exception=exc)
+        except LocalDeviceError as exc:
+            show_error(self, _("TEXT_CANNOT_SAVE_DEVICE"), exception=exc)
 
     def _on_claimer_success(self, job):
         if self.claimer_job is not job:

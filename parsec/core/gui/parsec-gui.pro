@@ -74,7 +74,6 @@ FORMS += forms/main_window.ui \
     forms/device_recovery_export_page2_widget.ui \
     forms/device_recovery_import_page1_widget.ui \
     forms/device_recovery_import_widget.ui \
-    forms/device_recovery_import_page2_widget.ui \
     forms/smartcard_authentication_widget.ui \
     forms/authentication_choice_widget.ui \
     forms/authentication_change_widget.ui \
