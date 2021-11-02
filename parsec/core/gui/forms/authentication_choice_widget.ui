@@ -31,6 +31,15 @@
    </property>
    <item>
     <widget class="QScrollArea" name="scrollArea">
+     <property name="frameShape">
+      <enum>QFrame::NoFrame</enum>
+     </property>
+     <property name="frameShadow">
+      <enum>QFrame::Plain</enum>
+     </property>
+     <property name="lineWidth">
+      <number>0</number>
+     </property>
      <property name="horizontalScrollBarPolicy">
       <enum>Qt::ScrollBarAlwaysOff</enum>
      </property>
@@ -42,8 +51,8 @@
        <rect>
         <x>0</x>
         <y>0</y>
-        <width>395</width>
-        <height>173</height>
+        <width>397</width>
+        <height>175</height>
        </rect>
       </property>
       <layout class="QVBoxLayout" name="verticalLayout_4">
