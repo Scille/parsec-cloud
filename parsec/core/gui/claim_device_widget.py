@@ -368,6 +368,7 @@ class ClaimDeviceProvideInfoWidget(QWidget, Ui_ClaimDeviceProvideInfoWidget):
         self.jobs_ctx = jobs_ctx
         self.claimer = claimer
         self.claim_job = None
+        self.new_device = None
         self.line_edit_device.setFocus()
         self.line_edit_device.set_validator(validators.DeviceNameValidator())
         self.line_edit_device.setText(get_default_device())
@@ -390,16 +391,21 @@ class ClaimDeviceProvideInfoWidget(QWidget, Ui_ClaimDeviceProvideInfoWidget):
             self.button_ok.setDisabled(True)
 
     def _on_claim_clicked(self):
-        device_label = self.line_edit_device.text()
-        self.button_ok.setDisabled(True)
-        self.widget_info.setDisabled(True)
-        self.label_wait.show()
-        self.claim_job = self.jobs_ctx.submit_job(
-            self.claim_success,
-            self.claim_error,
-            self.claimer.claim_device,
-            device_label=device_label,
-        )
+        if not self.new_device:
+            device_label = self.line_edit_device.text()
+            self.button_ok.setDisabled(True)
+            self.widget_info.setDisabled(True)
+            self.label_wait.show()
+            self.claim_job = self.jobs_ctx.submit_job(
+                self.claim_success,
+                self.claim_error,
+                self.claimer.claim_device,
+                device_label=device_label,
+            )
+        else:
+            self.succeeded.emit(
+                self.new_device, self.widget_auth.get_auth_method(), self.widget_auth.get_auth()
+            )
 
     def _on_claim_success(self, job):
         if self.claim_job is not job:
@@ -408,9 +414,10 @@ class ClaimDeviceProvideInfoWidget(QWidget, Ui_ClaimDeviceProvideInfoWidget):
         assert job
         assert job.is_finished()
         assert job.status == "ok"
-        new_device = job.ret
+        self.new_device = job.ret
+        self.button_ok.setDisabled(False)
         self.succeeded.emit(
-            new_device, self.widget_auth.get_auth_method(), self.widget_auth.get_auth()
+            self.new_device, self.widget_auth.get_auth_method(), self.widget_auth.get_auth()
         )
 
     def _on_claim_error(self, job):
@@ -431,6 +438,7 @@ class ClaimDeviceProvideInfoWidget(QWidget, Ui_ClaimDeviceProvideInfoWidget):
                     msg = _("TEXT_INVITATION_ALREADY_USED")
             show_error(self, msg, exception=exc)
         self.check_infos()
+        self.button_ok.setDisabled(False)
         self.widget_info.setDisabled(False)
         self.label_wait.hide()
         self.failed.emit(job)
