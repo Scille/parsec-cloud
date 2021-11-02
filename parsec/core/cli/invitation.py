@@ -345,7 +345,7 @@ async def _claim_invitation(config, addr, save_device_with_selected_auth):
             await user_storage_non_speculative_init(
                 data_base_dir=config.data_base_dir, device=new_device
             )
-        save_device_with_selected_auth(config_dir=config.config_dir, device=new_device)
+        await save_device_with_selected_auth(config_dir=config.config_dir, device=new_device)
 
 
 @click.command(short_help="claim invitation")

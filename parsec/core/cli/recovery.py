@@ -72,7 +72,7 @@ async def _import_recovery_device(
     async with spinner(f"Creating new device {device_label_display}"):
         new_device = await generate_new_device_from_recovery(recovery_device, new_device_label)
 
-    save_device_with_selected_auth(config_dir=config.config_dir, device=new_device)
+    await save_device_with_selected_auth(config_dir=config.config_dir, device=new_device)
 
 
 @click.command(short_help="import recovery device")

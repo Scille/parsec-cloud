@@ -39,7 +39,7 @@ async def _bootstrap_organization(
         await user_storage_non_speculative_init(
             data_base_dir=config.data_base_dir, device=new_device
         )
-        save_device_with_selected_auth(config_dir=config.config_dir, device=new_device)
+        await save_device_with_selected_auth(config_dir=config.config_dir, device=new_device)
 
 
 @click.command(short_help="configure new organization")
