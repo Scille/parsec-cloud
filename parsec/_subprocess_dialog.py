@@ -8,15 +8,21 @@ to run the file selection dialog in a subprocess.
 import sys
 import contextlib
 import importlib_resources
+import functools
+
+FIRST_APP = None
+
+
+@functools.lru_cache()
+def get_parsec_icon_data():
+    filename = "parsec.icns" if sys.platform == "darwin" else "parsec.ico"
+    return importlib_resources.read_binary("parsec.core.resources", filename)
 
 
 def set_parsec_icon(app):
     from PyQt5.QtGui import QIcon, QPixmap
 
-    # TODO: This end up importing the core and all the corresponding dependencies
-    # This slows down the startup time of the first dialog, we might want to do better
-    filename = "parsec.icns" if sys.platform == "darwin" else "parsec.ico"
-    icon_data = importlib_resources.read_binary("parsec.core.resources", filename)
+    icon_data = get_parsec_icon_data()
     pixmap = QPixmap()
     pixmap.loadFromData(icon_data)
     icon = QIcon(pixmap)
@@ -25,78 +31,18 @@ def set_parsec_icon(app):
 
 class PrintHelper:
     @classmethod
-    def get_printer(cls, parent, testing_print=False):
+    def print_html(cls, parent, html):
         from PyQt5.QtPrintSupport import QPrinter, QPrintDialog
+        from PyQt5.QtGui import QTextDocument
 
         printer = QPrinter(QPrinter.HighResolution)
         dialog = QPrintDialog(printer, parent)
-        result = dialog.Accepted if testing_print else dialog.exec_()
-        return None if result != dialog.Accepted else cls.printer_to_dict(printer)
-
-    @classmethod
-    def printer_to_dict(cls, printer):
-        from PyQt5.QtPrintSupport import QPrinter
-
-        result = {}
-        setters = [
-            "setCollateCopies",
-            "setColorMode",
-            "setCopyCount",
-            "setCreator",
-            "setDocName",
-            "setDoubleSidedPrinting",
-            "setDuplex",
-            "setFontEmbeddingEnabled",
-            "setFullPage",
-            "setOrientation",
-            "setOutputFileName",
-            "setOutputFormat",
-            "setPageOrder",
-            "setPaperName",
-            "setPaperSize",
-            "setPaperSource",
-            "setPdfVersion",
-            "setPrintProgram",
-            "setPrintRange",
-            "setPrinterName",
-            "setResolution",
-        ]
-
-        # Prepare generic setters
-        for name in setters:
-            getter = name[3].lower() + name[4:]
-            value = getattr(printer, getter)()
-            result[name] = ((type(value), value),)
-
-        # Prepare layout setters
-        layout = printer.pageLayout()
-        page_size = layout.pageSize()
-        margins = layout.margins()
-        orientation = layout.orientation()
-        units = layout.units()
-        result["setPageOrientation"] = ((type(orientation), orientation),)
-        result["setPageSize"] = ((type(page_size), page_size.sizePoints(), page_size.name()),)
-        result["setPageMargins"] = (
-            (float, margins.left()),
-            (float, margins.top()),
-            (float, margins.right()),
-            (float, margins.bottom()),
-            (QPrinter.Unit, units),
-        )
-
-        # Prepare from to setters
-        result["setFromTo"] = (int, printer.fromPage()), (int, printer.toPage())
+        result = dialog.exec_()
+        if result == dialog.Accepted:
+            doc = QTextDocument()
+            doc.setHtml(html)
+            doc.print_(printer)
         return result
-
-    @classmethod
-    def dict_to_printer(cls, dct):
-        from PyQt5.QtPrintSupport import QPrinter
-
-        printer = QPrinter(QPrinter.HighResolution)
-        for method, args_info in dct.items():
-            args = [arg_type(*subargs) for arg_type, *subargs in args_info]
-            getattr(printer, method)(*args)
-        return printer
 
 
 @contextlib.contextmanager
@@ -104,7 +50,13 @@ def safe_app():
     from PyQt5.QtWidgets import QApplication
     from PyQt5.QtCore import QEventLoop
 
-    app = QApplication(sys.argv)
+    # Reuse the first application if availablee
+    global FIRST_APP
+    if FIRST_APP is None:
+        app = QApplication(sys.argv)
+    else:
+        app, FIRST_APP = FIRST_APP, None
+
     try:
         # The icon is already set properly for frozen executables.
         # Also, the icon is not set properly for native dialogs due to a bug in pyqt.
@@ -114,7 +66,7 @@ def safe_app():
         frozen = getattr(sys, "frozen", False)
         if not frozen:
             set_parsec_icon(app)
-        yield
+        yield app
     finally:
         # Exiting the app, necessary on macos
         app.exit()
@@ -124,8 +76,29 @@ def safe_app():
         del app
 
 
-def run_dialog(cls, method, *args, **kwargs):
+def load_resources(with_printer=False):
+    from PyQt5.QtWidgets import QApplication
 
+    # Loading resources require an application
+    # Save this application globally so it can be use by the first dialog
+    global FIRST_APP
+    FIRST_APP = QApplication(sys.argv)
+
+    # Populate `get_parsec_icon_data` cache if necessary
+    frozen = getattr(sys, "frozen", False)
+    if not frozen:
+        get_parsec_icon_data()
+
+    # First printer instanciation might take a long time on windows
+    # when network printers are involved. See the bug report:
+    # https://bugreports.qt.io/browse/QTBUG-49560
+    if with_printer:
+        from PyQt5.QtPrintSupport import QPrinter
+
+        QPrinter(QPrinter.HighResolution)
+
+
+def run_dialog(cls, method, *args, **kwargs):
     with safe_app():
         method = getattr(cls, method)
         # Bypass the actual dialog method, used for testing

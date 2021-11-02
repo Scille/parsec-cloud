@@ -14,6 +14,7 @@ from PyQt5.QtWidgets import QApplication
 from parsec.event_bus import EventBus
 from parsec.core.core_events import CoreEvent
 from parsec.core.config import CoreConfig
+from parsec.core.gui.custom_dialogs import QDialogInProcess
 from parsec.core.ipcinterface import (
     run_ipc_server,
     send_to_ipc_server,
@@ -217,9 +218,10 @@ async def _run_gui(
         if lang_key:
             event_bus.send(CoreEvent.GUI_CONFIG_CHANGED, gui_language=lang_key)
 
-        if diagnose:
-            with fail_on_first_exception(kill_window):
-                await trio.sleep_forever()
-        else:
-            with log_pyqt_exceptions():
-                await trio.sleep_forever()
+        with QDialogInProcess.manage_pools():
+            if diagnose:
+                with fail_on_first_exception(kill_window):
+                    await trio.sleep_forever()
+            else:
+                with log_pyqt_exceptions():
+                    await trio.sleep_forever()
