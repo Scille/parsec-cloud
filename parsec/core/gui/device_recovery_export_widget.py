@@ -2,12 +2,7 @@
 
 from PyQt5.QtCore import pyqtSignal
 from PyQt5.QtWidgets import QWidget
-from PyQt5.QtGui import QTextDocument
 
-import os
-import trio
-import shutil
-import tempfile
 from pathlib import Path, PurePath
 
 from parsec.core.recovery import generate_recovery_device
@@ -54,34 +49,13 @@ class DeviceRecoveryExportPage2Widget(QWidget, Ui_DeviceRecoveryExportPage2Widge
         self.jobs_ctx.submit_job(None, None, open_files_job, [PurePath(file_path).parent])
 
     def _print_recovery_key(self):
-        printer = QDialogInProcess.get_printer(self)
-        if printer is not None:
-            html = translate("TEXT_RECOVERY_HTML_EXPORT_user-organization-keyname-password").format(
-                organization=self.device.organization_id,
-                label=self.device.user_display,
-                password=self.passphrase,
-                keyname=PurePath(self.label_file_path.text()).name,
-            )
-            doc = QTextDocument()
-            doc.setHtml(html)
-
-            # Use a real printer
-            if not printer.outputFileName():
-                doc.print_(printer)
-                return
-
-            # Print to a temporary file
-            output_filename = printer.outputFileName()
-            fd, temp_filename = tempfile.mkstemp()
-            os.close(fd)
-            printer.setOutputFileName(temp_filename)
-            doc.print_(printer)
-
-            # Move the file safely, avoiding deadlocks in case the target is in a parsec mounpoint
-            async def _do_move():
-                await trio.to_thread.run_sync(shutil.move, temp_filename, output_filename)
-
-            self.jobs_ctx.submit_job(None, None, _do_move)
+        html = translate("TEXT_RECOVERY_HTML_EXPORT_user-organization-keyname-password").format(
+            organization=self.device.organization_id,
+            label=self.device.user_display,
+            password=self.passphrase,
+            keyname=PurePath(self.label_file_path.text()).name,
+        )
+        QDialogInProcess.print_html(self, html)
 
 
 class DeviceRecoveryExportPage1Widget(QWidget, Ui_DeviceRecoveryExportPage1Widget):

@@ -203,16 +203,11 @@ class QDialogInProcess(GreyedDialog):
             return "", ""
 
     @classmethod
-    def get_printer(cls, *args, **kwargs):
+    def print_html(cls, *args, **kwargs):
         try:
-            result = cls._exec_method(
-                _subprocess_dialog.PrintHelper, "get_printer", *args, **kwargs
-            )
+            return cls._exec_method(_subprocess_dialog.PrintHelper, "print_html", *args, **kwargs)
         except cls.DialogCancelled:
             return None
-        if result is None:
-            return None
-        return _subprocess_dialog.PrintHelper.dict_to_printer(result)
 
 
 class TextInputWidget(QWidget, Ui_InputWidget):
