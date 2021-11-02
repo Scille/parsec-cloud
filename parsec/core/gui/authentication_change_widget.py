@@ -57,7 +57,7 @@ class AuthenticationChangeWidget(QWidget, Ui_AuthenticationChangeWidget):
             elif QApplication.activeModalWidget():
                 QApplication.activeModalWidget().accept()
             else:
-                logger.warning("Cannot close dialog when changing password info")                
+                logger.warning("Cannot close dialog when changing password info")
         except LocalDeviceCryptoError as exc:
             if auth_method == DeviceFileType.SMARTCARD:
                 show_error(self, _("TEXT_INVALID_SMARTCARD"), exception=exc)
@@ -77,7 +77,7 @@ class AuthenticationChangeWidget(QWidget, Ui_AuthenticationChangeWidget):
                 password = get_text_input(
                     parent,
                     _("TEXT_DEVICE_UNLOCK_TITLE"),
-                    _("TEXT_DEVICE_UNLOCK_LABEL"),
+                    _("TEXT_DEVICE_UNLOCK_FOR_AUTH_CHANGE_LABEL"),
                     placeholder="",
                     default_text="",
                     completion=None,

@@ -170,7 +170,7 @@ class DeviceRecoveryExportWidget(QWidget, Ui_DeviceRecoveryExportWidget):
                 password = get_text_input(
                     self,
                     translate("TEXT_DEVICE_UNLOCK_TITLE"),
-                    translate("TEXT_DEVICE_UNLOCK_LABEL"),
+                    translate("TEXT_DEVICE_UNLOCK_FOR_RECOVERY_LABEL"),
                     placeholder="",
                     default_text="",
                     completion=None,

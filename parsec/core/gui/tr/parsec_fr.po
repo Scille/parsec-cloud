@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PROJECT VERSION\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2021-10-29 18:13+0200\n"
+"POT-Creation-Date: 2021-11-02 17:21+0100\n"
 "PO-Revision-Date: 2020-10-15 10:31+0200\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language: fr\n"
@@ -24,11 +24,18 @@ msgstr "PARSEC version {version}"
 msgid "TEXT_AUTH_CHANGE_SUCCESS"
 msgstr "L'authentification a été changée avec succès !"
 
+msgid "TEXT_INVALID_SMARTCARD"
+msgstr "Cette carte à puece ne peut pas être utilisée "
+"pour s'authentifier."
+
+msgid "TEXT_CANNOT_SAVE_DEVICE"
+msgstr "Impossible de sauvegarder l'appareil. Veuillez réessayer."
+
 msgid "TEXT_DEVICE_UNLOCK_TITLE"
 msgstr "Ré-authentification"
 
-msgid "TEXT_DEVICE_UNLOCK_LABEL"
-msgstr "Veuillez vous authentifier pour changer votre authentification."
+msgid "TEXT_DEVICE_UNLOCK_FOR_AUTH_CHANGE_LABEL"
+msgstr "Veuillez entrer votre mot de passe pour débloquer cet appareil."
 
 msgid "TEXT_LOGIN_ERROR_AUTHENTICATION_FAILED"
 msgstr "Le mot de passe n'est pas correct."
@@ -43,8 +50,9 @@ msgid "TEXT_AUTH_METHOD_SMARTCARD"
 msgstr "Carte à puce"
 
 msgid "TEXT_ONLY_ONE_AUTH_METHOD_AVAILABLE"
-msgstr "Une seule méthode d'authentification est "
-"disponible dans cette version de Parsec."
+msgstr ""
+"Une seule méthode d'authentification est disponible dans cette version de"
+" Parsec."
 
 msgid "ACTION_DEVICE_MENU_CHANGE_AUTHENTICATION"
 msgstr "Changer l'authentification"
@@ -252,23 +260,20 @@ msgstr ""
 "Veuillez fournir les informations suivantes pour démarrer l'organisation "
 "<b>{organization}</b>."
 
-msgid "ACTION_NEXT"
-msgstr "Suivant"
-
-msgid "ACTION_CREATE_ORG"
-msgstr "Créer l'organisation"
-
 msgid "TEXT_ORG_WIZARD_INVALID_ORGANIZATION_ID"
 msgstr "Le nom d'organisation n'est pas valide."
 
 msgid "TEXT_ORG_WIZARD_INVALID_BACKEND_ADDR"
 msgstr "L'adresse du serveur n'est pas valide."
 
+msgid "TEXT_ORG_WIZARD_INVALID_HUMAN_HANDLE"
+msgstr "L'adresse email n'est pas valide."
+
 msgid "TEXT_ORG_WIZARD_INVALID_DEVICE_NAME"
 msgstr "Le nom de d'appareil n'est pas valide."
 
-msgid "TEXT_ORG_WIZARD_INVALID_HUMAN_HANDLE"
-msgstr "L'adresse email n'est pas valide."
+msgid "ACTION_CREATE_ORG"
+msgstr "Créer l'organisation"
 
 msgid "TEXT_ORG_WIZARD_ORGANIZATION_ALREADY_EXISTS"
 msgstr "Une organisation du même nom existe déjà."
@@ -324,19 +329,24 @@ msgstr "Créer un appareil de récupération"
 msgid "ACTION_CLOSE"
 msgstr "Fermer"
 
-msgid "EXPORT_KEY_BACKEND_ERROR"
-msgstr ""
-"Impossible de créer un appareil de récupération : demande refusée par le serveur"
-
 msgid "EXPORT_KEY_BACKEND_OFFLINE"
 msgstr ""
-"Impossible de créer un appareil de récupération : pas de connexion avec le serveur"
+"Impossible de créer un appareil de récupération : pas de connexion avec "
+"le serveur"
+
+msgid "EXPORT_KEY_BACKEND_ERROR"
+msgstr ""
+"Impossible de créer un appareil de récupération : demande refusée par le "
+"serveur"
 
 msgid "TEXT_RECOVERY_DEVICE_FILE_ALREADY_EXISTS"
 msgstr "Un fichier de récupération existe déjà pour cet appareil à cet endroit."
 
 msgid "EXPORT_KEY_ERROR"
 msgstr "Impossible de créer un appareil de récupération"
+
+msgid "TEXT_DEVICE_UNLOCK_FOR_RECOVERY_LABEL"
+msgstr "Veuillez entrer votre mot de passe pour déverouiller cet appareil."
 
 msgid "TEXT_DEVICE_RECOVERY_EXPORT_WIZARD_TITLE"
 msgstr "Créer une appareil de récupération"
@@ -353,20 +363,6 @@ msgstr "Fichiers de l'appareil de récupération (*.psrk)"
 msgid "TEXT_RECOVERY_INVALID_PASSPHRASE"
 msgstr "La phrase secrète est invalide."
 
-msgid "TEXT_RECOVERY_IMPORT_SUCCESS"
-msgstr "L'appareil a été récupéré avec succès"
-
-msgid "IMPORT_KEY_BACKEND_ERROR"
-msgstr ""
-"Impossible de récupérer l'appareil : demande refusée par le serveur"
-
-msgid "EXPORT_KEY_BACKEND_OFFLINE"
-msgstr ""
-"Impossible de récupérer l'appareil : pas de connexion avec le serveur"
-
-msgid "IMPORT_KEY_ERROR"
-msgstr "Impossible d'importer cette clef d'appareil."
-
 msgid "TEXT_IMPORT_KEY_WRONG_PASSPHRASE"
 msgstr "La phrase secrète est incorrecte."
 
@@ -374,6 +370,18 @@ msgid "IMPORT_KEY_LOCAL_DEVICE_ERROR"
 msgstr ""
 "Impossible d'importer la clé, une erreur s'est produite avec l'appareil "
 "de récupération."
+
+msgid "IMPORT_KEY_BACKEND_OFFLINE"
+msgstr "Impossible de récupérer l'appareil : le serveur ne répond pas."
+
+msgid "IMPORT_KEY_BACKEND_ERROR"
+msgstr "Impossible de récupérer l'appareil : demande refusée par le serveur"
+
+msgid "IMPORT_KEY_ERROR"
+msgstr "Impossible d'importer cette clef d'appareil."
+
+msgid "TEXT_RECOVERY_IMPORT_SUCCESS"
+msgstr "L'appareil a été récupéré avec succès"
 
 msgid "ACTION_CREATE_DEVICE"
 msgstr "Créer l'appareil"
@@ -1621,8 +1629,9 @@ msgstr ""
 "</body></html>"
 
 msgid "TEXT_LOGIN_SELECT_SMARTCARD_INSTRUCTIONS_organization-device-user-email"
-msgstr "Content de vous revoir <b>{user}</b> ! Il vous sera demandé votre "
-"carte à puce pour vous identifier sur votre appareil <b>{device}</b>."
+msgstr ""
+"Content de vous revoir <b>{user}</b> ! Il vous sera demandé votre carte à"
+" puce pour vous identifier sur votre appareil <b>{device}</b>."
 
 msgid "ACTION_LOGGING_IN"
 msgstr "En cours de connexion..."
@@ -2233,6 +2242,9 @@ msgstr ""
 "href=\"https://www.flaticon.com/\" title=\"Flaticon\" style=\"color: "
 "#0092FF; font-weight: bold;\">www.flaticon.com</a>"
 
+msgid "ACTION_NEXT"
+msgstr "Suivant"
+
 msgid "TEXT_AUTHENTICATION_METHOD_CHOICE"
 msgstr "Méthode d'authentication"
 
@@ -2317,9 +2329,6 @@ msgstr ""
 "Aucun de\n"
 "ces codes"
 
-msgid "TEXT_LABEL_DEVICE_NAME"
-msgstr "Nom d'appareil"
-
 msgid "TEXT_LABEL_ORG_NAME"
 msgstr "Nom de l'organisation"
 
@@ -2344,11 +2353,11 @@ msgstr "parsec://hote:port"
 msgid "ACTION_CREATE_ON_COMMERCIAL_BACKEND"
 msgstr "Utiliser le serveur PARSEC principal"
 
+msgid "TEXT_LABEL_DEVICE_NAME"
+msgstr "Nom d'appareil"
+
 msgid "TEXT_CREATE_ORGANIZATION_INSTRUCTIONS"
 msgstr "Veuillez fournir les informations suivantes pour créer votre organisation."
-
-msgid "ACTION_PREVIOUS"
-msgstr "Précédent"
 
 msgid "TEXT_DEVICE_RECOVERY_EXPORT_INSTRUCTIONS"
 msgstr ""
@@ -2395,12 +2404,6 @@ msgstr "Sélectionnez le fichier de récupération"
 
 msgid "TEXT_RECOVERY_IMPORT_PASSPHRASE_LABEL"
 msgstr "La phrase secrète associée à cet appareil de récupération"
-
-msgid "TEXT_RECOVERY_IMPORT_CREATE_DEVICE"
-msgstr ""
-"Nous allons pouvoir restaurer votre appareil depuis votre appareil de "
-"récupération.<br />\n"
-"Choisissez un nom et un mot de passe."
 
 msgid "TEXT_RECOVERY_IMPORT_DEVICE_NAME"
 msgstr "Nom de l'appareil"
@@ -2828,4 +2831,20 @@ msgstr "Trouver un fichier via son lien"
 
 #~ msgid "ACTION_CHANGE_PASSWORD"
 #~ msgstr "Modifier le mot de passe"
+
+#~ msgid "ACTION_PREVIOUS"
+#~ msgstr "Précédent"
+
+#~ msgid "TEXT_RECOVERY_IMPORT_CREATE_DEVICE"
+#~ msgstr ""
+#~ "Nous allons pouvoir restaurer votre "
+#~ "appareil depuis votre appareil de "
+#~ "récupération.<br />\n"
+#~ "Choisissez un nom et un mot de passe."
+
+#~ msgid "TEXT_DEVICE_UNLOCK_FOR_AUTH_CHANGE_TITLE"
+#~ msgstr ""
+
+#~ msgid "TEXT_DEVICE_UNLOCK_LABEL"
+#~ msgstr "Veuillez vous authentifier pour changer votre authentification."
 
