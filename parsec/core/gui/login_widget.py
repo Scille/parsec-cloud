@@ -72,7 +72,7 @@ class LoginSmartcardInputWidget(QWidget, Ui_LoginSmartcardInputWidget):
     def _on_log_in_clicked(self):
         self.button_login.setDisabled(True)
         self.button_login.setText(_("ACTION_LOGGING_IN"))
-        self.log_in_clicked.emit(self.device.key_file_path)
+        self.log_in_clicked.emit(self.device)
 
     def keyPressEvent(self, event):
         if event.key() in (Qt.Key_Return, Qt.Key_Enter) and self.button_login.isEnabled():
