@@ -18,10 +18,8 @@ from parsec.core.gui.device_recovery_export_widget import (
     DeviceRecoveryExportPage1Widget,
     DeviceRecoveryExportPage2Widget,
 )
-from parsec.core.gui.device_recovery_import_widget import (
-    DeviceRecoveryImportPage1Widget,
-    DeviceRecoveryImportPage2Widget,
-)
+from parsec.core.gui.device_recovery_import_widget import DeviceRecoveryImportPage1Widget
+from parsec.core.gui.authentication_choice_widget import AuthenticationChoiceWidget
 
 
 @pytest.fixture
@@ -131,6 +129,8 @@ async def test_import_recovery_device(
     assert isinstance(imp_w.current_page, DeviceRecoveryImportPage1Widget)
     assert not imp_w.button_validate.isEnabled()
 
+    imp_w.current_page.line_edit_device.setText("")
+
     imp_w.current_page.label_key_file.setText(str(file_path))
     assert not imp_w.button_validate.isEnabled()
 
@@ -143,34 +143,31 @@ async def test_import_recovery_device(
 
     imp_w.current_page.edit_passphrase.setText("")
     aqtbot.key_clicks(imp_w.current_page.edit_passphrase, passphrase)
-
-    assert imp_w.button_validate.isEnabled()
     assert not imp_w.current_page.label_passphrase_error.isVisible()
-
-    aqtbot.mouse_click(imp_w.button_validate, QtCore.Qt.LeftButton)
-
-    def _page2_shown():
-        assert isinstance(imp_w.current_page, DeviceRecoveryImportPage2Widget)
-
-    await aqtbot.wait_until(_page2_shown)
-
     assert not imp_w.button_validate.isEnabled()
 
-    imp_w.current_page.line_edit_device.setText("")
     aqtbot.key_clicks(imp_w.current_page.line_edit_device, NEW_DEVICE_LABEL)
-    assert not imp_w.button_validate.isEnabled()
-    aqtbot.key_clicks(
-        imp_w.current_page.widget_auth.main_layout.itemAt(0).widget().line_edit_password, PASSWORD
-    )
-    assert not imp_w.button_validate.isEnabled()
-    aqtbot.key_clicks(
-        imp_w.current_page.widget_auth.main_layout.itemAt(0).widget().line_edit_password_check,
-        PASSWORD,
-    )
     assert imp_w.button_validate.isEnabled()
 
     async with aqtbot.wait_signal(imp_w.create_new_device_success):
         aqtbot.mouse_click(imp_w.button_validate, QtCore.Qt.LeftButton)
+
+    def _page2_shown():
+        assert isinstance(imp_w.current_page, AuthenticationChoiceWidget)
+
+    await aqtbot.wait_until(_page2_shown)
+
+    assert not imp_w.button_validate.isEnabled()
+    aqtbot.key_clicks(
+        imp_w.current_page.main_layout.itemAt(0).widget().line_edit_password, PASSWORD
+    )
+    assert not imp_w.button_validate.isEnabled()
+    aqtbot.key_clicks(
+        imp_w.current_page.main_layout.itemAt(0).widget().line_edit_password_check, PASSWORD
+    )
+    assert imp_w.button_validate.isEnabled()
+
+    aqtbot.mouse_click(imp_w.button_validate, QtCore.Qt.LeftButton)
 
     assert autoclose_dialog.dialogs == [("", translate("TEXT_RECOVERY_IMPORT_SUCCESS"))]
 

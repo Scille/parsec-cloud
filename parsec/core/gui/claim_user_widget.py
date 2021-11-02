@@ -13,6 +13,9 @@ from parsec.core.local_device import (
     save_device_with_password_in_config,
     save_device_with_smartcard_in_config,
     DeviceFileType,
+    LocalDeviceCryptoError,
+    LocalDeviceError,
+    LocalDeviceNotFoundError,
 )
 from parsec.core.fs.storage.user_storage import user_storage_non_speculative_init
 from parsec.core.invite import claimer_retrieve_info, InvitePeerResetError
@@ -208,19 +211,28 @@ class ClaimUserFinalizeWidget(QWidget, Ui_ClaimUserFinalizeWidget):
             self.button_finalize.setDisabled(True)
 
     def _on_finalize_clicked(self):
-        if self.widget_auth.get_auth_method() == DeviceFileType.PASSWORD:
-            save_device_with_password_in_config(
-                config_dir=self.config.config_dir,
-                device=self.new_device,
-                password=self.widget_auth.get_auth(),
+        try:
+            if self.widget_auth.get_auth_method() == DeviceFileType.PASSWORD:
+                save_device_with_password_in_config(
+                    config_dir=self.config.config_dir,
+                    device=self.new_device,
+                    password=self.widget_auth.get_auth(),
+                )
+            elif self.widget_auth.get_auth_method() == DeviceFileType.SMARTCARD:
+                save_device_with_smartcard_in_config(
+                    config_dir=self.config.config_dir, device=self.new_device
+                )
+            self.succeeded.emit(
+                self.new_device, self.widget_auth.get_auth_method(), self.widget_auth.get_auth()
             )
-        elif self.widget_auth.get_auth_method() == DeviceFileType.SMARTCARD:
-            save_device_with_smartcard_in_config(
-                config_dir=self.config.config_dir, device=self.new_device
-            )
-        self.succeeded.emit(
-            self.new_device, self.widget_auth.get_auth_method(), self.widget_auth.get_auth()
-        )
+        except LocalDeviceCryptoError as exc:
+            if self.widget_auth.get_auth_method() == DeviceFileType.SMARTCARD:
+                show_error(self, _("TEXT_INVALID_SMARTCARD"), exception=exc)
+        except LocalDeviceNotFoundError as exc:
+            if self.widget_auth.get_auth_method() == DeviceFileType.PASSWORD:
+                show_error(self, _("TEXT_CANNOT_SAVE_DEVICE"), exception=exc)
+        except LocalDeviceError as exc:
+            show_error(self, _("TEXT_CANNOT_SAVE_DEVICE"), exception=exc)
 
 
 class ClaimUserCodeExchangeWidget(QWidget, Ui_ClaimUserCodeExchangeWidget):
