@@ -464,7 +464,7 @@ def test_full_run(coolorg, unused_tcp_port, tmp_path, ssl_conf):
             with _running(
                 "core greet_invitation "
                 f"--config-dir={config_dir} --device={alice1_slughash} "
-                f"--password={password} {device_invitation_token}",
+                f"--password={password} {device_invitation_url}",
                 env=ssl_conf.client_env,
             ) as p_greeter:
 
