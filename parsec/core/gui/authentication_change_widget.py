@@ -11,6 +11,8 @@ from parsec.core.local_device import (
     save_device_with_password,
     save_device_with_smartcard,
     LocalDeviceError,
+    LocalDeviceNotFoundError,
+    LocalDeviceCryptoError,
     DeviceFileType,
     get_available_device,
 )
@@ -42,19 +44,28 @@ class AuthenticationChangeWidget(QWidget, Ui_AuthenticationChangeWidget):
     def _on_validate_clicked(self):
         auth_method = self.widget_auth.get_auth_method()
         kf = get_key_file(self.core.config.config_dir, self.loaded_device)
-        if auth_method == DeviceFileType.PASSWORD:
-            save_device_with_password(
-                kf, self.loaded_device, self.widget_auth.get_auth(), force=True
-            )
-        elif auth_method == DeviceFileType.SMARTCARD:
-            save_device_with_smartcard(kf, self.loaded_device, force=True)
-        show_info(self, _("TEXT_AUTH_CHANGE_SUCCESS"))
-        if self.dialog:
-            self.dialog.accept()
-        elif QApplication.activeModalWidget():
-            QApplication.activeModalWidget().accept()
-        else:
-            logger.warning("Cannot close dialog when changing password info")
+        try:
+            if auth_method == DeviceFileType.PASSWORD:
+                save_device_with_password(
+                    kf, self.loaded_device, self.widget_auth.get_auth(), force=True
+                )
+            elif auth_method == DeviceFileType.SMARTCARD:
+                save_device_with_smartcard(kf, self.loaded_device, force=True)
+            show_info(self, _("TEXT_AUTH_CHANGE_SUCCESS"))
+            if self.dialog:
+                self.dialog.accept()
+            elif QApplication.activeModalWidget():
+                QApplication.activeModalWidget().accept()
+            else:
+                logger.warning("Cannot close dialog when changing password info")                
+        except LocalDeviceCryptoError as exc:
+            if auth_method == DeviceFileType.SMARTCARD:
+                show_error(self, _("TEXT_INVALID_SMARTCARD"), exception=exc)
+        except LocalDeviceNotFoundError as exc:
+            if auth_method == DeviceFileType.PASSWORD:
+                show_error(self, _("TEXT_CANNOT_SAVE_DEVICE"), exception=exc)
+        except LocalDeviceError as exc:
+            show_error(self, _("TEXT_CANNOT_SAVE_DEVICE"), exception=exc)
 
     @classmethod
     def show_modal(cls, core, jobs_ctx, parent, on_finished=None):
