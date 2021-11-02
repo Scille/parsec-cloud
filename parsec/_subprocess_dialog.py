@@ -13,8 +13,6 @@ import importlib_resources
 def set_parsec_icon(app):
     from PyQt5.QtGui import QIcon, QPixmap
 
-    # TODO: This end up importing the core and all the corresponding dependencies
-    # This slows down the startup time of the first dialog, we might want to do better
     filename = "parsec.icns" if sys.platform == "darwin" else "parsec.ico"
     icon_data = importlib_resources.read_binary("parsec.core.resources", filename)
     pixmap = QPixmap()
@@ -64,8 +62,22 @@ def safe_app():
         del app
 
 
-def run_dialog(cls, method, *args, **kwargs):
+def load_resources(with_printer=False):
 
+    # First instanciation of the app might take some time because of
+    # imports, in particular parsec resources when they are required.
+    with safe_app():
+
+        # First printer instanciation might take a long time on windows
+        # when network printers are involved. See the bug report:
+        # https://bugreports.qt.io/browse/QTBUG-49560
+        if with_printer:
+            from PyQt5.QtPrintSupport import QPrinter
+
+            QPrinter(QPrinter.HighResolution)
+
+
+def run_dialog(cls, method, *args, **kwargs):
     with safe_app():
         method = getattr(cls, method)
         # Bypass the actual dialog method, used for testing

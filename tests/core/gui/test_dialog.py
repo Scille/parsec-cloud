@@ -11,8 +11,10 @@ def close_process_pool():
         multiprocessing.set_start_method("spawn")
     assert multiprocessing.get_start_method() == "spawn"
     yield
-    QDialogInProcess.pool.terminate()
-    QDialogInProcess.pool.join()
+    for pool in QDialogInProcess.pools.values():
+        pool.terminate()
+        pool.join()
+    QDialogInProcess.pools.clear()
 
 
 @pytest.mark.gui

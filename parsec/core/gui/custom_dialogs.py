@@ -2,6 +2,7 @@
 
 import sys
 import multiprocessing
+from contextlib import contextmanager
 
 from PyQt5.QtCore import Qt, pyqtSignal
 from PyQt5.QtGui import QPainter, QValidator
@@ -128,7 +129,7 @@ class GreyedDialog(QDialog, Ui_GreyedDialog):
 
 class QDialogInProcess(GreyedDialog):
 
-    pool = None
+    pools = {}
     process_finished = pyqtSignal()
 
     class DialogCancelled(Exception):
@@ -139,11 +140,29 @@ class QDialogInProcess(GreyedDialog):
         self.MainWidget.hide()
 
     @classmethod
+    @contextmanager
+    def manage_pools(cls):
+        # No pool for you OSX
+        if sys.platform == "darwin":
+            yield
+            return
+        with multiprocessing.Pool(processes=1) as dialog_pool:
+            with multiprocessing.Pool(processes=1) as printer_pool:
+                cls.pools[QFileDialog] = dialog_pool
+                dialog_pool.apply_async(_subprocess_dialog.load_resources, ())
+                cls.pools[_subprocess_dialog.PrintHelper] = printer_pool
+                printer_pool.apply_async(
+                    _subprocess_dialog.load_resources, (), {"with_printer": True}
+                )
+                yield
+
+    @classmethod
     def _exec_method(cls, target_cls, target_method, parent, *args, **kwargs):
         assert hasattr(target_cls, target_method)
         # Fire up the process pool is necessary
-        if cls.pool is None:
-            cls.pool = multiprocessing.Pool(processes=1)
+        pool = cls.pools.get(target_cls)
+        if pool is None:
+            cls.pools[target_cls] = pool = multiprocessing.Pool(processes=1)
         # Control the lifetime of the pool
         try:
             # Show the dialog
@@ -151,7 +170,7 @@ class QDialogInProcess(GreyedDialog):
             dialog.process_finished.connect(dialog.close)
             dialog.show()
             # Start the subprocess
-            async_result = cls.pool.apply_async(
+            async_result = pool.apply_async(
                 _subprocess_dialog.run_dialog,
                 (target_cls, target_method, *args),
                 kwargs,
@@ -162,17 +181,17 @@ class QDialogInProcess(GreyedDialog):
             dialog.exec_()
             # Terminate the process and close the pool if the dialog exited first
             if not async_result.ready():
-                cls.pool.terminate()
-                cls.pool = None
+                pool.terminate()
+                cls.pools.pop(target_cls, None)
                 raise dialog.DialogCancelled
             # Return result
             return async_result.get()
         finally:
             # On OSX, using the same process for several dialogs messes up with the OS
             # In particular, the parsec icon corresponding to the dialog window persists between calls
-            if sys.platform == "darwin" and cls.pool is not None:
-                cls.pool.close()
-                cls.pool = None
+            if sys.platform == "darwin":
+                pool.close()
+                cls.pools.pop(target_cls, None)
 
     @classmethod
     def getOpenFileName(cls, *args, **kwargs):
