@@ -61,11 +61,10 @@ class LoginSmartcardInputWidget(QWidget, Ui_LoginSmartcardInputWidget):
         self.button_back.clicked.connect(self.back_clicked.emit)
         self.button_login.clicked.connect(self._on_log_in_clicked)
         self.label_instructions.setText(
-            _("TEXT_LOGIN_SELECT_SMARTCARD_INSTRUCTIONS_organization-device-user-email").format(
+            _("TEXT_LOGIN_SELECT_SMARTCARD_INSTRUCTIONS_organization-device-user").format(
                 organization=self.device.organization_id,
                 user=self.device.short_user_display,
                 device=self.device.device_display,
-                email="",
             )
         )
 
@@ -97,11 +96,10 @@ class LoginPasswordInputWidget(QWidget, Ui_LoginPasswordInputWidget):
         self.button_back.clicked.connect(self.back_clicked.emit)
         self.button_login.clicked.connect(self._on_log_in_clicked)
         self.label_instructions.setText(
-            _("TEXT_LOGIN_ENTER_PASSWORD_INSTRUCTIONS_organization-device-user-email").format(
+            _("TEXT_LOGIN_ENTER_PASSWORD_INSTRUCTIONS_organization-device-user").format(
                 organization=self.device.organization_id,
                 user=self.device.short_user_display,
                 device=self.device.device_display,
-                email="",
             )
         )
 
