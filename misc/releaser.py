@@ -400,8 +400,9 @@ if __name__ == "__main__":
         if args.command == "build":
             if not args.version:
                 raise SystemExit("version is required for build command")
-            current_version = get_version_from_repo_describe_tag(args.verbose)
-            check_non_release(current_version)
+            # TODO: rethink the non-release checks
+            # current_version = get_version_from_repo_describe_tag(args.verbose)
+            # check_non_release(current_version)
             build_release(args.version, args.stage_pause)
 
         else:  # Check
@@ -412,7 +413,9 @@ if __name__ == "__main__":
                 version = args.version
 
             if version.is_dev:
-                check_non_release(version)
+                # TODO: rethink the non-release checks
+                # check_non_release(version)
+                pass
 
             else:
                 check_release(version)
