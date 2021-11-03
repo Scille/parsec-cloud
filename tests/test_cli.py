@@ -364,6 +364,24 @@ def test_full_run(coolorg, unused_tcp_port, tmp_path, ssl_conf):
         device_invitation_url = re.search(r"^url: (.*)$", p.stdout.decode(), re.MULTILINE).group(1)
         device_invitation_token = re.search(r"token=([^&]+)", device_invitation_url).group(1)
 
+        print("####### Cancel invitation #######")
+
+        p = _run(
+            "core invite_user "
+            f"--config-dir={config_dir} --device={alice1_slughash} "
+            f"--password={password} zack@example.com",
+            env=ssl_conf.client_env,
+        )
+        to_cancel_invitation_url = re.search(r"^url: (.*)$", p.stdout.decode(), re.MULTILINE).group(
+            1
+        )
+        p = _run(
+            "core cancel_invitation "
+            f"--config-dir={config_dir} --device={alice1_slughash} "
+            f"--password={password} {to_cancel_invitation_url}",
+            env=ssl_conf.client_env,
+        )
+
         print("####### List invitations #######")
 
         p = _run(
@@ -464,7 +482,7 @@ def test_full_run(coolorg, unused_tcp_port, tmp_path, ssl_conf):
             with _running(
                 "core greet_invitation "
                 f"--config-dir={config_dir} --device={alice1_slughash} "
-                f"--password={password} {device_invitation_token}",
+                f"--password={password} {device_invitation_url}",
                 env=ssl_conf.client_env,
             ) as p_greeter:
 
