@@ -245,6 +245,17 @@ def _parse_invitation_token_or_url(raw):
             raise ValueError("Must be an invitation URL or Token")
 
 
+def extract_token_from_token_or_url(token_or_url, device):
+    if isinstance(token_or_url, BackendInvitationAddr):
+        if device.organization_addr != token_or_url.generate_organization_addr(
+            device.root_verify_key
+        ):
+            raise ValueError("Invitation URL comes from a different organization")
+        return token_or_url.token
+    else:
+        return token_or_url
+
+
 @click.command(short_help="greet invitation")
 @click.argument("token_or_url", type=_parse_invitation_token_or_url)
 @core_config_and_device_options
@@ -254,14 +265,7 @@ def greet_invitation(config, device, token_or_url, **kwargs):
     Greet a new device or user into the organization
     """
     with cli_exception_handler(config.debug):
-        if isinstance(token_or_url, BackendInvitationAddr):
-            if device.organization_addr != token_or_url.generate_organization_addr(
-                device.root_verify_key
-            ):
-                raise ValueError("Greeter and invitation URL have different organizations")
-            token = token_or_url.token
-        else:
-            token = token_or_url
+        token = extract_token_from_token_or_url(token_or_url, device)
         # Disable task monitoring given user prompt will block the coroutine
         trio_run(_greet_invitation, config, device, token)
 
@@ -436,12 +440,13 @@ async def _cancel_invitation(config, device, token):
 
 
 @click.command(short_help="cancel invitations")
-@click.argument("token", type=UUID)
+@click.argument("token_or_url", type=_parse_invitation_token_or_url)
 @core_config_and_device_options
 @cli_command_base_options
-def cancel_invitation(config, device, token, **kwargs):
+def cancel_invitation(config, device, token_or_url, **kwargs):
     """
     Cancel invitation
     """
     with cli_exception_handler(config.debug):
+        token = extract_token_from_token_or_url(token_or_url, device)
         trio_run(_cancel_invitation, config, device, token)
