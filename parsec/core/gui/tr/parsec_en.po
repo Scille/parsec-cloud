@@ -2663,18 +2663,3 @@ msgstr "Create a new workspace"
 
 msgid "ACTION_WORKSPACE_GOTO_FILE_LINK"
 msgstr "Go to a file using a link"
-
-#~ msgid "ACTION_PREVIOUS"
-#~ msgstr "Previous"
-
-#~ msgid "TEXT_RECOVERY_IMPORT_CREATE_DEVICE"
-#~ msgstr ""
-#~ "We are able to create a new device from your recovery file.<br />\n"
-#~ "Please choose a name for your new device, and its password."
-
-#~ msgid "TEXT_DEVICE_UNLOCK_FOR_AUTH_CHANGE_TITLE"
-#~ msgstr ""
-
-#~ msgid "TEXT_DEVICE_UNLOCK_LABEL"
-#~ msgstr "Please re-authenticate to change your authentication."
-
