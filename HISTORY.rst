@@ -5,6 +5,46 @@ History
 .. towncrier release notes start
 
 
+Parsec v2.6.0-rc1 (2021-11-03)
+------------------------------
+
+Features
+~~~~~~~~
+
+* Add filters for revoked users and pending invitations in User gui  (`#1744
+  <https://github.com/Scille/parsec-cloud/issues/1744>`__)
+* Show a window with the invitation link when an invitation is failing to be
+  sent via email  (`#1751 <https://github.com/Scille/parsec-
+  cloud/issues/1751>`__)
+* Added the ability to recover device via exporting recovery device and
+  importing them when needed  (`#1855 <https://github.com/Scille/parsec-
+  cloud/issues/1855>`__)
+
+Bugfixes
+~~~~~~~~
+
+* Fix sporadic errors that might occur when clients with slightly different
+  clocks perform actions sur as reading/writing to workspaces and changing roles
+  concurrently.  (`#1811 <https://github.com/Scille/parsec-
+  cloud/issues/1811>`__)
+* Fix rare error when offline while accessing a workspace mounpoint for the
+  first time.  (`#1812 <https://github.com/Scille/parsec-cloud/issues/1812>`__)
+* Fix the logic to solve the conflict in the core  (`#1820
+  <https://github.com/Scille/parsec-cloud/issues/1820>`__)
+* Do not refresh workspace list when mounting/unmounting a workspace (`#1858
+  <https://github.com/Scille/parsec-cloud/issues/1858>`__)
+* Fixed app behaviour on MacOS when closing with command-Q and red X.  (`#1860
+  <https://github.com/Scille/parsec-cloud/issues/1860>`__)
+
+Miscellaneous internal changes
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+* Create a pop-up notification when trying to edit a workspace as a Reader
+  (`#1479 <https://github.com/Scille/parsec-cloud/issues/1479>`__)
+* Add GUI support for extension-based smartcard authentication.  (`#1878
+  <https://github.com/Scille/parsec-cloud/issues/1878>`__)
+
+
 Parsec v2.5.5 (2021-09-30)
 --------------------------
 

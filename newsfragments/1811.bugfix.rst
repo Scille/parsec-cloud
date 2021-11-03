@@ -1,1 +1,0 @@
-Fix sporadic errors that might occur when clients with slightly different clocks perform actions sur as reading/writing to workspaces and changing roles concurrently.
