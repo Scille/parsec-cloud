@@ -6,7 +6,6 @@ from pathlib import Path
 from parsec.core import CoreConfig
 from parsec.core.recovery import generate_recovery_device, generate_new_device_from_recovery
 from parsec.core.local_device import (
-    save_device_with_password_in_config,
     get_recovery_device_file_name,
     load_recovery_device,
     save_recovery_device,
@@ -18,6 +17,7 @@ from parsec.core.cli.utils import (
     cli_command_base_options,
     core_config_and_device_options,
     core_config_options,
+    save_device_options,
 )
 
 
@@ -62,8 +62,8 @@ async def _import_recovery_device(
     config: CoreConfig,
     recovery_file: Path,
     passphrase: str,
-    new_device_password: str,
     new_device_label: str,
+    save_device_with_selected_auth,
 ) -> None:
 
     recovery_device = await load_recovery_device(recovery_file, passphrase)
@@ -72,11 +72,7 @@ async def _import_recovery_device(
     async with spinner(f"Creating new device {device_label_display}"):
         new_device = await generate_new_device_from_recovery(recovery_device, new_device_label)
 
-    device_display = click.style(new_device.slughash, fg="yellow")
-    with operation(f"Saving device {device_display}"):
-        save_device_with_password_in_config(
-            config_dir=config.config_dir, device=new_device, password=new_device_password
-        )
+    await save_device_with_selected_auth(config_dir=config.config_dir, device=new_device)
 
 
 @click.command(short_help="import recovery device")
@@ -92,15 +88,27 @@ async def _import_recovery_device(
     prompt=True,
     required=True,
 )
-@click.password_option(prompt="Choose a password for the device")
 @click.option("--device-label", "-L", help="Label for the new device", prompt="New device label")
+@save_device_options
 @core_config_options
 @cli_command_base_options
 def import_recovery_device(
-    config: CoreConfig, file: Path, passphrase: str, password: str, device_label: str, **kwargs
+    config: CoreConfig,
+    file: Path,
+    passphrase: str,
+    device_label: str,
+    save_device_with_selected_auth,
+    **kwargs,
 ):
     """
     Create a new device from a .psrk recovery device file.
     """
     with cli_exception_handler(config.debug):
-        trio_run(_import_recovery_device, config, file, passphrase, password, device_label)
+        trio_run(
+            _import_recovery_device,
+            config,
+            file,
+            passphrase,
+            device_label,
+            save_device_with_selected_auth,
+        )

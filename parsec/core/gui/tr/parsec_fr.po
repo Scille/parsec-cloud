@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PROJECT VERSION\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2021-10-28 11:52+0200\n"
+"POT-Creation-Date: 2021-11-02 17:21+0100\n"
 "PO-Revision-Date: 2020-10-15 10:31+0200\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language: fr\n"
@@ -21,8 +21,41 @@ msgstr ""
 msgid "TEXT_PARSEC_VERSION_version"
 msgstr "PARSEC version {version}"
 
-msgid "ACTION_DEVICE_MENU_CHANGE_PASSWORD"
-msgstr "Changer le mot de passe"
+msgid "TEXT_AUTH_CHANGE_SUCCESS"
+msgstr "L'authentification a été changée avec succès !"
+
+msgid "TEXT_INVALID_SMARTCARD"
+msgstr "Cette carte à puece ne peut pas être utilisée "
+"pour s'authentifier."
+
+msgid "TEXT_CANNOT_SAVE_DEVICE"
+msgstr "Impossible de sauvegarder l'appareil. Veuillez réessayer."
+
+msgid "TEXT_DEVICE_UNLOCK_TITLE"
+msgstr "Ré-authentification"
+
+msgid "TEXT_DEVICE_UNLOCK_FOR_AUTH_CHANGE_LABEL"
+msgstr "Veuillez entrer votre mot de passe pour débloquer cet appareil."
+
+msgid "TEXT_LOGIN_ERROR_AUTHENTICATION_FAILED"
+msgstr "Le mot de passe n'est pas correct."
+
+msgid "TEXT_CHANGE_AUTHENTICATION_TITLE"
+msgstr "Changer l'authentification"
+
+msgid "TEXT_AUTH_METHOD_PASSWORD"
+msgstr "Mot de passe"
+
+msgid "TEXT_AUTH_METHOD_SMARTCARD"
+msgstr "Carte à puce"
+
+msgid "TEXT_ONLY_ONE_AUTH_METHOD_AVAILABLE"
+msgstr ""
+"Une seule méthode d'authentification est disponible dans cette version de"
+" Parsec."
+
+msgid "ACTION_DEVICE_MENU_CHANGE_AUTHENTICATION"
+msgstr "Changer l'authentification"
 
 msgid "ACTION_LOG_OUT"
 msgstr "Se déconnecter"
@@ -227,23 +260,20 @@ msgstr ""
 "Veuillez fournir les informations suivantes pour démarrer l'organisation "
 "<b>{organization}</b>."
 
-msgid "ACTION_NEXT"
-msgstr "Suivant"
-
-msgid "ACTION_CREATE_ORG"
-msgstr "Créer l'organisation"
-
 msgid "TEXT_ORG_WIZARD_INVALID_ORGANIZATION_ID"
 msgstr "Le nom d'organisation n'est pas valide."
 
 msgid "TEXT_ORG_WIZARD_INVALID_BACKEND_ADDR"
 msgstr "L'adresse du serveur n'est pas valide."
 
+msgid "TEXT_ORG_WIZARD_INVALID_HUMAN_HANDLE"
+msgstr "L'adresse email n'est pas valide."
+
 msgid "TEXT_ORG_WIZARD_INVALID_DEVICE_NAME"
 msgstr "Le nom de d'appareil n'est pas valide."
 
-msgid "TEXT_ORG_WIZARD_INVALID_HUMAN_HANDLE"
-msgstr "L'adresse email n'est pas valide."
+msgid "ACTION_CREATE_ORG"
+msgstr "Créer l'organisation"
 
 msgid "TEXT_ORG_WIZARD_ORGANIZATION_ALREADY_EXISTS"
 msgstr "Une organisation du même nom existe déjà."
@@ -299,10 +329,15 @@ msgstr "Créer un appareil de récupération"
 msgid "ACTION_CLOSE"
 msgstr "Fermer"
 
+msgid "EXPORT_KEY_BACKEND_OFFLINE"
+msgstr ""
+"Impossible de créer un appareil de récupération : pas de connexion avec "
+"le serveur"
+
 msgid "EXPORT_KEY_BACKEND_ERROR"
 msgstr ""
-"Impossible de créer un appareil de récupération, une erreur s'est "
-"produite dans le backend"
+"Impossible de créer un appareil de récupération : demande refusée par le "
+"serveur"
 
 msgid "TEXT_RECOVERY_DEVICE_FILE_ALREADY_EXISTS"
 msgstr "Un fichier de récupération existe déjà pour cet appareil à cet endroit."
@@ -310,11 +345,11 @@ msgstr "Un fichier de récupération existe déjà pour cet appareil à cet endr
 msgid "EXPORT_KEY_ERROR"
 msgstr "Impossible de créer un appareil de récupération"
 
-msgid "TEXT_LOGIN_ERROR_AUTHENTICATION_FAILED"
-msgstr "Le mot de passe n'est pas correct."
+msgid "TEXT_DEVICE_UNLOCK_FOR_RECOVERY_LABEL"
+msgstr "Veuillez entrer votre mot de passe pour déverouiller cet appareil."
 
 msgid "TEXT_DEVICE_RECOVERY_EXPORT_WIZARD_TITLE"
-msgstr "Crér une appareil de récupération"
+msgstr "Créer une appareil de récupération"
 
 msgid "ACTION_IMPORT_KEY"
 msgstr "Récupérer un appareil"
@@ -328,17 +363,6 @@ msgstr "Fichiers de l'appareil de récupération (*.psrk)"
 msgid "TEXT_RECOVERY_INVALID_PASSPHRASE"
 msgstr "La phrase secrète est invalide."
 
-msgid "TEXT_RECOVERY_IMPORT_SUCCESS"
-msgstr "L'appareil a été récupéré avec succès"
-
-msgid "IMPORT_KEY_BACKEND_ERROR"
-msgstr ""
-"Impossible de récupérer l'appareil, une erreur s'est produite dans le "
-"backend"
-
-msgid "IMPORT_KEY_ERROR"
-msgstr "Impossible d'importer cette clef d'appareil."
-
 msgid "TEXT_IMPORT_KEY_WRONG_PASSPHRASE"
 msgstr "La phrase secrète est incorrecte."
 
@@ -346,6 +370,18 @@ msgid "IMPORT_KEY_LOCAL_DEVICE_ERROR"
 msgstr ""
 "Impossible d'importer la clé, une erreur s'est produite avec l'appareil "
 "de récupération."
+
+msgid "IMPORT_KEY_BACKEND_OFFLINE"
+msgstr "Impossible de récupérer l'appareil : le serveur ne répond pas."
+
+msgid "IMPORT_KEY_BACKEND_ERROR"
+msgstr "Impossible de récupérer l'appareil : demande refusée par le serveur"
+
+msgid "IMPORT_KEY_ERROR"
+msgstr "Impossible d'importer cette clef d'appareil."
+
+msgid "TEXT_RECOVERY_IMPORT_SUCCESS"
+msgstr "L'appareil a été récupéré avec succès"
 
 msgid "ACTION_CREATE_DEVICE"
 msgstr "Créer l'appareil"
@@ -1592,16 +1628,21 @@ msgstr ""
 "\n"
 "</body></html>"
 
-msgid "TEXT_LOGIN_ENTER_PASSWORD_INSTRUCTIONS_organization-device-user-email"
+msgid "TEXT_LOGIN_SELECT_SMARTCARD_INSTRUCTIONS_organization-device-user"
 msgstr ""
-"Content de vous revoir <b>{user}</b> ! Veuillez entrer le mot de passe de"
-" votre appareil <b>{device}</b>."
+"Content de vous revoir <b>{user}</b> ! Il vous sera demandé votre carte à"
+" puce pour vous identifier sur votre appareil <b>{device}</b>."
 
 msgid "ACTION_LOGGING_IN"
 msgstr "En cours de connexion..."
 
 msgid "ACTION_LOG_IN"
 msgstr "Se connecter"
+
+msgid "TEXT_LOGIN_ENTER_PASSWORD_INSTRUCTIONS_organization-device-user"
+msgstr ""
+"Content de vous revoir <b>{user}</b> ! Veuillez entrer le mot de passe de"
+" votre appareil <b>{device}</b>."
 
 msgid "TEXT_LOGIN_NO_AVAILABLE_DEVICE"
 msgstr ""
@@ -1814,14 +1855,11 @@ msgstr ""
 msgid "TEXT_PARSEC_NEW_VERSION_AVAILABLE_version"
 msgstr "La version <b>{version}</b> de PARSEC est disponible !"
 
-msgid "TEXT_CHANGE_PASSWORD_SUCCESS"
-msgstr "Le mot de passe a été modifié avec succès."
+msgid "TEXT_PASSWORD_CHECK_MATCH"
+msgstr "Le mot de passe et la confirmation sont les mêmes."
 
-msgid "TEXT_CHANGE_PASSWORD_INVALID_PASSWORD"
-msgstr "Vous n'avez pas fourni le bon mot de passe pour cet appareil."
-
-msgid "TEXT_CHANGE_PASSWORD_TITLE"
-msgstr "Modifier le mot de passe"
+msgid "TEXT_PASSWORD_CHECK_NO_MATCH"
+msgstr "La confirmation diffère du mot de passe."
 
 msgid "TEXT_PASSWORD_VALIDATION_TOO_SHORT"
 msgstr "TROP COURT"
@@ -1843,12 +1881,6 @@ msgstr "EXCELLENT"
 
 msgid "TEXT_PASSWORD_VALIDATION_PASSWORD_STRENGTH_strength"
 msgstr "Force du mot de passe : {strength}"
-
-msgid "TEXT_PASSWORD_CHECK_MATCH"
-msgstr "Le mot de passe et la confirmation sont les mêmes."
-
-msgid "TEXT_PASSWORD_CHECK_NO_MATCH"
-msgstr "La confirmation diffère du mot de passe."
 
 msgid "TEXT_CLICK_TO_ENLARGE"
 msgstr "Cliquer pour élargir"
@@ -2210,6 +2242,12 @@ msgstr ""
 "href=\"https://www.flaticon.com/\" title=\"Flaticon\" style=\"color: "
 "#0092FF; font-weight: bold;\">www.flaticon.com</a>"
 
+msgid "ACTION_NEXT"
+msgstr "Suivant"
+
+msgid "TEXT_AUTHENTICATION_METHOD_CHOICE"
+msgstr "Méthode d'authentication"
+
 msgid "TEXT_CLAIM_DEVICE_CODE_EXCHANGE_GET_CODE_INSTRUCTIONS"
 msgstr "Récupérer le code sur votre autre appareil."
 
@@ -2291,9 +2329,6 @@ msgstr ""
 "Aucun de\n"
 "ces codes"
 
-msgid "TEXT_LABEL_DEVICE_NAME"
-msgstr "Nom d'appareil"
-
 msgid "TEXT_LABEL_ORG_NAME"
 msgstr "Nom de l'organisation"
 
@@ -2318,11 +2353,11 @@ msgstr "parsec://hote:port"
 msgid "ACTION_CREATE_ON_COMMERCIAL_BACKEND"
 msgstr "Utiliser le serveur PARSEC principal"
 
+msgid "TEXT_LABEL_DEVICE_NAME"
+msgstr "Nom d'appareil"
+
 msgid "TEXT_CREATE_ORGANIZATION_INSTRUCTIONS"
 msgstr "Veuillez fournir les informations suivantes pour créer votre organisation."
-
-msgid "ACTION_PREVIOUS"
-msgstr "Précédent"
 
 msgid "TEXT_DEVICE_RECOVERY_EXPORT_INSTRUCTIONS"
 msgstr ""
@@ -2332,9 +2367,6 @@ msgstr ""
 
 msgid "TEXT_DEVICE_RECOVERY_EXPORT_SELECT_DEVICE_LABEL"
 msgstr "Choisissez l'appareil pour lequel vous souhaitez créer une récupération"
-
-msgid "TEXT_DEVICE_RECOVERY_EXPORT_DEVICE_PASSWORD_LABEL"
-msgstr "Entrez son mot de passe"
 
 msgid "TEXT_DEVICE_RECOVERY_EXPORT_SELECT_FILE_LABEL"
 msgstr "Choisissez un emplacement pour le fichier de récupération"
@@ -2372,12 +2404,6 @@ msgstr "Sélectionnez le fichier de récupération"
 
 msgid "TEXT_RECOVERY_IMPORT_PASSPHRASE_LABEL"
 msgstr "La phrase secrète associée à cet appareil de récupération"
-
-msgid "TEXT_RECOVERY_IMPORT_CREATE_DEVICE"
-msgstr ""
-"Nous allons pouvoir restaurer votre appareil depuis votre appareil de "
-"récupération.<br />\n"
-"Choisissez un nom et un mot de passe."
 
 msgid "TEXT_RECOVERY_IMPORT_DEVICE_NAME"
 msgstr "Nom de l'appareil"
@@ -2571,19 +2597,13 @@ msgstr "Votre application est à jour."
 msgid "LABEL_NOTIFICATIONS"
 msgstr ""
 
-msgid "TEXT_PASSWORD_CHANGE_OLD_PASSWORD_INSTRUCTIONS"
+msgid "TEXT_PASSWORD_WARNING"
 msgstr ""
-"Pour modifier votre mot de passe, veuillez entrer votre ancien mot de "
-"passe :"
-
-msgid "TEXT_LABEL_PASSWORD_OLD"
-msgstr "Mot de passe actuel"
-
-msgid "TEXT_PASSWORD_CHANGE_NEW_PASSWORD_INSTRUCTIONS"
-msgstr "Puis choisissez-en un nouveau :"
-
-msgid "ACTION_CHANGE_PASSWORD"
-msgstr "Modifier le mot de passe"
+"Votre mot de passe est extrêmement important. Veuillez choisir un mot de "
+"passe sécurisé que vous retiendrez. Vos données seront chiffrées avec "
+"celui-ci et il est impossible de les récupérer si vous l'oubliez.<br "
+"/>Nous vous conseillons également de créer plusieurs appareils et de "
+"partager vos espaces de travail."
 
 msgid "TEXT_LABEL_PASSWORD"
 msgstr "Mot de passe"
@@ -2593,14 +2613,6 @@ msgstr "Confirmation du mot de passe"
 
 msgid "TEXT_PASSWORD_CHOICE_MISMATCH"
 msgstr "Ne correspond pas au mot de passe."
-
-msgid "TEXT_PASSWORD_WARNING"
-msgstr ""
-"Votre mot de passe est extrêmement important. Veuillez choisir un mot de "
-"passe sécurisé que vous retiendrez. Vos données seront chiffrées avec "
-"celui-ci et il est impossible de les récupérer si vous l'oubliez.<br "
-"/>Nous vous conseillons également de créer plusieurs appareils et de "
-"partager vos espaces de travail."
 
 msgid "TEXT_SETTINGS_BEHAVIOR_TITLE"
 msgstr "Comportement"
@@ -2640,6 +2652,9 @@ msgstr "Télémétrie"
 
 msgid "TEXT_SETTINGS_ENABLE_TELEMETRY"
 msgstr "Activer la télémétrie pour l'envoi automatique de rapports d'erreur"
+
+msgid "TEXT_SELECT_SMARTCARD"
+msgstr "Il vous sera demandé de sélectionner votre carte à puce"
 
 msgid "TEXT_WORKSPACE_TEMPORARY_TITLE"
 msgstr "Vue instantanée"
@@ -2718,72 +2733,3 @@ msgstr "Créer un nouvel espace de travail"
 
 msgid "ACTION_WORKSPACE_GOTO_FILE_LINK"
 msgstr "Trouver un fichier via son lien"
-
-#~ msgid "NOTIF_WARN_SYNC_CONFLICT_{}"
-#~ msgstr ""
-
-#~ msgid "TEXT_KEYS_DIALOG"
-#~ msgstr "Gerer les clés de l'appareil"
-
-#~ msgid "TEXT_RECOVERY_EXPORT_SUCCESS"
-#~ msgstr ""
-#~ "Appareil de récupération généré avec "
-#~ "succès, n'oubliez pas de conserver votre"
-#~ " fichier *.psrk et mot de passe "
-#~ "dans un endroit sûr."
-
-#~ msgid "TEXT_RECOVERY_EXPORT_PASSWORD_TITLE"
-#~ msgstr "Mot de passe de l'appareil de récupération"
-
-#~ msgid "TEXT_RECOVERY_EXPORT_MESSAGE_password"
-#~ msgstr ""
-#~ "Le mot de passe de l'appareil de récupération est :<b>{password}</b>\n"
-#~ "<p style=\"color:red;\">Ce mot de passe "
-#~ "n'est donné qu'une seule fois, il "
-#~ "est donc fortement recommandé de "
-#~ "l'imprimer.</p></b>"
-
-#~ msgid "ACTION_RECOVERY_PRINT_PASSWORD"
-#~ msgstr "Imprimer"
-
-#~ msgid "ACTION_RECOVERY_QUIT"
-#~ msgstr "Quitter"
-
-#~ msgid "TEXT_RECOVERY_PASSWORD_TITLE"
-#~ msgstr "Mot de passe de l'appareil"
-
-#~ msgid "TEXT_RECOVERY_PASSWORD_MESSAGE"
-#~ msgstr "Saisissez le mot de passe de l'appareil"
-
-#~ msgid "ACTION_EXPORT_DEVICE"
-#~ msgstr ""
-
-#~ msgid "TEXT_IMPORT_KEY_TOOLTIP"
-#~ msgstr "Récupérer un appareil à l'aide d'une clé *.psrk"
-
-#~ msgid "TEXT_RECOVERY_DEVICE_KEY_INSTRUCTION"
-#~ msgstr ""
-#~ "<b><p style=\"color:orange;\">Générez l'appareil de"
-#~ " récupération et enregistrez-le au "
-#~ "cas où vous perdriez votre "
-#~ "appareil</b></p>"
-
-#~ msgid "EXPORT_KEY_LOCAL_DEVICE_ERROR"
-#~ msgstr ""
-#~ "Impossible de créer un appareil de "
-#~ "récupération, une erreur s'est produite "
-#~ "avec l'appareil d'origine"
-
-#~ msgid "TEXT_INVALID_DEVICE_KEY"
-#~ msgstr "Ce fichier ne contient pas de clef d'appareil valide."
-
-#~ msgid "TEXT_IMPORT_KEY_CONFIRM_organization-user-device"
-#~ msgstr ""
-#~ "<b>Informations sur l'appareil de "
-#~ "récupération</b><br />Organisation : "
-#~ "<b>{organization}</b><br />Utilisateur : "
-#~ "<b>{user}</b><br />Appareil : <b>{device}</b>"
-
-#~ msgid "TEXT_RECOVERY_IMPORT_TITLE"
-#~ msgstr "Choisissez le nouveau nom et mot de passe de l'appareil "
-

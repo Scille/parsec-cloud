@@ -9,8 +9,15 @@ from PyQt5.QtWidgets import QWidget
 
 from parsec.api.protocol import HumanHandle
 from parsec.core.types import LocalDevice
+from parsec.core.local_device import (
+    save_device_with_password_in_config,
+    save_device_with_smartcard_in_config,
+    DeviceFileType,
+    LocalDeviceCryptoError,
+    LocalDeviceError,
+    LocalDeviceNotFoundError,
+)
 from parsec.core.fs.storage.user_storage import user_storage_non_speculative_init
-from parsec.core.local_device import save_device_with_password_in_config
 from parsec.core.invite import claimer_retrieve_info, InvitePeerResetError
 from parsec.core.backend_connection import (
     backend_invited_cmds_factory,
@@ -175,7 +182,7 @@ class Claimer:
 
 
 class ClaimUserFinalizeWidget(QWidget, Ui_ClaimUserFinalizeWidget):
-    succeeded = pyqtSignal(LocalDevice, str)
+    succeeded = pyqtSignal(LocalDevice, DeviceFileType, str)
     failed = pyqtSignal(object)  # QtToTrioJob or None
 
     def __init__(self, config, jobs_ctx, new_device):
@@ -185,7 +192,7 @@ class ClaimUserFinalizeWidget(QWidget, Ui_ClaimUserFinalizeWidget):
         self.jobs_ctx = jobs_ctx
         self.new_device = new_device
 
-        self.widget_password.set_excluded_strings(
+        self.widget_auth.exclude_strings(
             [
                 new_device.organization_addr.organization_id,
                 new_device.device_label,
@@ -193,23 +200,39 @@ class ClaimUserFinalizeWidget(QWidget, Ui_ClaimUserFinalizeWidget):
                 new_device.human_handle.label,
             ]
         )
-
-        self.widget_password.info_changed.connect(self.check_infos)
+        self.widget_auth.authentication_state_changed.connect(self.check_infos)
         self.button_finalize.setDisabled(True)
         self.button_finalize.clicked.connect(self._on_finalize_clicked)
 
     def check_infos(self, _=""):
-        if self.widget_password.is_valid():
+        if self.widget_auth.is_auth_valid():
             self.button_finalize.setDisabled(False)
         else:
             self.button_finalize.setDisabled(True)
 
     def _on_finalize_clicked(self):
-        password = self.widget_password.password
-        save_device_with_password_in_config(
-            config_dir=self.config.config_dir, device=self.new_device, password=password
-        )
-        self.succeeded.emit(self.new_device, password)
+        try:
+            if self.widget_auth.get_auth_method() == DeviceFileType.PASSWORD:
+                save_device_with_password_in_config(
+                    config_dir=self.config.config_dir,
+                    device=self.new_device,
+                    password=self.widget_auth.get_auth(),
+                )
+            elif self.widget_auth.get_auth_method() == DeviceFileType.SMARTCARD:
+                save_device_with_smartcard_in_config(
+                    config_dir=self.config.config_dir, device=self.new_device
+                )
+            self.succeeded.emit(
+                self.new_device, self.widget_auth.get_auth_method(), self.widget_auth.get_auth()
+            )
+        except LocalDeviceCryptoError as exc:
+            if self.widget_auth.get_auth_method() == DeviceFileType.SMARTCARD:
+                show_error(self, _("TEXT_INVALID_SMARTCARD"), exception=exc)
+        except LocalDeviceNotFoundError as exc:
+            if self.widget_auth.get_auth_method() == DeviceFileType.PASSWORD:
+                show_error(self, _("TEXT_CANNOT_SAVE_DEVICE"), exception=exc)
+        except LocalDeviceError as exc:
+            show_error(self, _("TEXT_CANNOT_SAVE_DEVICE"), exception=exc)
 
 
 class ClaimUserCodeExchangeWidget(QWidget, Ui_ClaimUserCodeExchangeWidget):
@@ -691,8 +714,8 @@ class ClaimUserWidget(QWidget, Ui_ClaimUserWidget):
         page.failed.connect(self._on_page_failed_force_reject)
         self.main_layout.insertWidget(0, page)
 
-    def _on_finished(self, device, password):
-        self.status = (device, password)
+    def _on_finished(self, device, auth_method, password):
+        self.status = (device, auth_method, password)
         self.dialog.accept()
 
     def _on_claimer_success(self, job):

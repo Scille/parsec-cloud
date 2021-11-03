@@ -6,7 +6,7 @@ from uuid import UUID
 from functools import partial
 
 from parsec.utils import trio_run
-from parsec.cli_utils import cli_exception_handler, spinner, operation, aprompt
+from parsec.cli_utils import cli_exception_handler, spinner, aprompt
 from parsec.api.data import UserProfile
 from parsec.api.protocol import (
     HumanHandle,
@@ -30,11 +30,11 @@ from parsec.core.invite import (
     claimer_retrieve_info,
 )
 from parsec.core.fs.storage.user_storage import user_storage_non_speculative_init
-from parsec.core.local_device import save_device_with_password_in_config
 from parsec.core.cli.utils import (
     cli_command_base_options,
     core_config_and_device_options,
     core_config_options,
+    save_device_options,
 )
 
 
@@ -333,7 +333,7 @@ async def _do_claim_device(initial_ctx):
     return new_device
 
 
-async def _claim_invitation(config, addr, password):
+async def _claim_invitation(config, addr, save_device_with_selected_auth):
     async with backend_invited_cmds_factory(
         addr=addr, keepalive=config.backend_connection_keepalive
     ) as cmds:
@@ -361,31 +361,27 @@ async def _claim_invitation(config, addr, password):
                 click.secho(str(exc), fg="red")
             click.secho("Restarting the invitation process", fg="red")
 
-        device_display = click.style(new_device.slughash, fg="yellow")
-        with operation(f"Saving device {device_display}"):
-            # Claiming a user means we are it first device, hence we know there
-            # is no existing user manifest (hence our placeholder is non-speculative)
-            if addr.invitation_type == InvitationType.USER:
-                await user_storage_non_speculative_init(
-                    data_base_dir=config.data_base_dir, device=new_device
-                )
-            save_device_with_password_in_config(
-                config_dir=config.config_dir, device=new_device, password=password
+        # Claiming a user means we are it first device, hence we know there
+        # is no existing user manifest (hence our placeholder is non-speculative)
+        if addr.invitation_type == InvitationType.USER:
+            await user_storage_non_speculative_init(
+                data_base_dir=config.data_base_dir, device=new_device
             )
+        await save_device_with_selected_auth(config_dir=config.config_dir, device=new_device)
 
 
 @click.command(short_help="claim invitation")
 @click.argument("addr", type=BackendInvitationAddr.from_url)
-@click.password_option(prompt="Choose a password for the claimed device")
+@save_device_options
 @core_config_options
 @cli_command_base_options
-def claim_invitation(config, addr, password, **kwargs):
+def claim_invitation(config, addr, save_device_with_selected_auth, **kwargs):
     """
     Claim a device or user from a invitation
     """
     with cli_exception_handler(config.debug):
         # Disable task monitoring given user prompt will block the coroutine
-        trio_run(_claim_invitation, config, addr, password)
+        trio_run(_claim_invitation, config, addr, save_device_with_selected_auth)
 
 
 async def _list_invitations(config, device):

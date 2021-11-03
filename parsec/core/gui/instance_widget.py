@@ -11,7 +11,11 @@ from PyQt5.QtWidgets import QWidget, QVBoxLayout, QApplication
 from parsec.event_bus import EventBus
 from parsec.api.protocol import HandshakeRevokedDevice
 from parsec.core import logged_core_factory
-from parsec.core.local_device import LocalDeviceError, load_device_with_password
+from parsec.core.local_device import (
+    LocalDeviceError,
+    load_device_with_password,
+    load_device_with_smartcard,
+)
 from parsec.core.mountpoint import (
     MountpointConfigurationError,
     MountpointDriverCrash,
@@ -236,6 +240,34 @@ class InstanceWidget(QWidget):
                 show_error(self, message, exception=exception)
                 self.login_failed.emit()
 
+    def login_with_smartcard(self, key_file):
+        message = None
+        exception = None
+        try:
+            device = load_device_with_smartcard(key_file)
+            if ParsecApp.is_device_connected(
+                device.organization_addr.organization_id, device.device_id
+            ):
+                message = _("TEXT_LOGIN_ERROR_ALREADY_CONNECTED")
+            else:
+                self.start_core(device)
+        except LocalDeviceError as exc:
+            message = _("TEXT_LOGIN_ERROR_AUTHENTICATION_FAILED")
+            exception = exc
+
+        except (RuntimeError, MountpointConfigurationError, MountpointDriverCrash) as exc:
+            message = _("TEXT_LOGIN_MOUNTPOINT_ERROR")
+            exception = exc
+
+        except Exception as exc:
+            message = _("TEXT_LOGIN_UNKNOWN_ERROR")
+            exception = exc
+            logger.exception("Unhandled error during login")
+        finally:
+            if message:
+                show_error(self, message, exception=exception)
+                self.login_failed.emit()
+
     def show_central_widget(self):
         self.clear_widgets()
         # The core can be set to None at any time if do_run_core get an error, is cancelled or
@@ -264,6 +296,7 @@ class InstanceWidget(QWidget):
         self.layout().addWidget(login_widget)
 
         login_widget.login_with_password_clicked.connect(self.login_with_password)
+        login_widget.login_with_smartcard_clicked.connect(self.login_with_smartcard)
         login_widget.join_organization_clicked.connect(self.join_organization_clicked.emit)
         login_widget.create_organization_clicked.connect(self.create_organization_clicked.emit)
         login_widget.login_canceled.connect(self.reset_workspace_path)

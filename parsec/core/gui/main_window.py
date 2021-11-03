@@ -13,7 +13,7 @@ from PyQt5.QtWidgets import QMainWindow, QMenu, QShortcut, QMenuBar
 
 from parsec import __version__ as PARSEC_VERSION
 from parsec.event_bus import EventBus, EventCallback
-from parsec.core.local_device import list_available_devices, get_key_file
+from parsec.core.local_device import list_available_devices, get_key_file, DeviceFileType
 from parsec.core.config import CoreConfig, save_config
 from parsec.core.types import (
     BackendActionAddr,
@@ -350,12 +350,12 @@ class MainWindow(QMainWindow, Ui_MainWindow):  # type: ignore[misc]
     def _on_create_org_clicked(
         self, addr: Optional[BackendOrganizationBootstrapAddr] = None
     ) -> None:
-        def _on_finished(ret: Optional[Tuple[LocalDevice, str]]) -> None:
+        def _on_finished(ret: Optional[Tuple[LocalDevice, DeviceFileType, str]]) -> None:
             if ret is None:
                 return
             self.reload_login_devices()
-            device, password = ret
-            self.try_login(device, password)
+            device, auth_method, password = ret
+            self.try_login(device, auth_method, password)
             answer = ask_question(
                 self,
                 _("TEXT_BOOTSTRAP_ORG_SUCCESS_TITLE"),
@@ -415,9 +415,9 @@ class MainWindow(QMainWindow, Ui_MainWindow):  # type: ignore[misc]
             nonlocal widget
             if not widget.status:
                 return
-            device, password = widget.status
+            device, auth_method, password = widget.status
             self.reload_login_devices()
-            self.try_login(device, password)
+            self.try_login(device, auth_method, password)
             answer = ask_question(
                 self,
                 _("TEXT_CLAIM_USER_SUCCESSFUL_TITLE"),
@@ -443,9 +443,9 @@ class MainWindow(QMainWindow, Ui_MainWindow):  # type: ignore[misc]
             nonlocal widget
             if not widget.status:
                 return
-            device, password = widget.status
+            device, auth_method, password = widget.status
             self.reload_login_devices()
-            self.try_login(device, password)
+            self.try_login(device, auth_method, password)
 
         widget = ClaimDeviceWidget.show_modal(
             jobs_ctx=self.jobs_ctx,
@@ -455,14 +455,17 @@ class MainWindow(QMainWindow, Ui_MainWindow):  # type: ignore[misc]
             on_finished=_on_finished,
         )
 
-    def try_login(self, device: LocalDevice, password: str) -> None:
+    def try_login(self, device: LocalDevice, auth_method: DeviceFileType, password: str) -> None:
         idx = self._get_login_tab_index()
         if idx == -1:
             tab = self.add_new_tab()
         else:
             tab = self.tab_center.widget(idx)
         kf = get_key_file(self.config.config_dir, device)
-        tab.login_with_password(kf, password)
+        if auth_method == DeviceFileType.PASSWORD:
+            tab.login_with_password(kf, password)
+        elif auth_method == DeviceFileType.SMARTCARD:
+            tab.login_with_smartcard(kf)
 
     def reload_login_devices(self) -> None:
         idx = self._get_login_tab_index()

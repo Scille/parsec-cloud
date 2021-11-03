@@ -1,19 +1,32 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2016-2021 Scille SAS
 
 import os
+import trio
 import click
 from typing import List
-from functools import wraps
+from functools import wraps, partial
 from pathlib import Path
 
 from parsec.core.config import get_default_config_dir, load_config
 from parsec.core.local_device import (
+    LocalDeviceError,
+    DeviceFileType,
     AvailableDevice,
     list_available_devices,
+    is_smartcard_extension_available,
     load_device_with_password,
-    LocalDeviceError,
+    load_device_with_smartcard,
+    save_device_with_password_in_config,
+    save_device_with_smartcard_in_config,
 )
-from parsec.cli_utils import logging_config_options, debug_config_options, sentry_config_options
+from parsec.cli_utils import (
+    logging_config_options,
+    debug_config_options,
+    sentry_config_options,
+    operation,
+    aprompt,
+)
+from parsec.core.types.local_device import LocalDevice
 
 
 def gui_command_base_options(fn):
@@ -120,15 +133,79 @@ def core_config_and_device_options(fn):
                 f"{format_available_devices(devices)}"
             )
 
+        available_device = devices[0]
         try:
-            if password is None:
-                password = click.prompt("password", hide_input=True)
-            device = load_device_with_password(devices[0].key_file_path, password)
+            if available_device.type == DeviceFileType.PASSWORD:
+                if password is None:
+                    password = click.prompt("password", hide_input=True)
+                device = load_device_with_password(devices[0].key_file_path, password)
+            elif available_device.type == DeviceFileType.SMARTCARD:
+                device = load_device_with_smartcard(devices[0].key_file_path)
+            else:
+                raise SystemExit(f"Unsuported device file authentication `{available_device.type}`")
 
         except LocalDeviceError as exc:
             raise SystemExit(f"Cannot load device {device_slughash}: {exc}")
 
         kwargs["device"] = device
+        return fn(**kwargs)
+
+    return wrapper
+
+
+def save_device_options(fn):
+    @click.option(
+        "--password", help="Password to protect the new device (you'll be prompted if not set)"
+    )
+    @wraps(fn)
+    def wrapper(**kwargs):
+        async def _save_device(config_dir: Path, device: LocalDevice) -> Path:
+            password = kwargs["password"]
+            device_display = click.style(device.slughash, fg="yellow")
+            while True:
+                try:
+                    if password is None and is_smartcard_extension_available():
+                        click.echo("Choose how to protect the new device:")
+                        click.echo(f"1 - {click.style('Password', fg='yellow')} (default)")
+                        click.echo(f"2 - {click.style('Smartcard', fg='yellow')}")
+                        choice = await aprompt(
+                            "Your choice", type=click.Choice(["1", "2"]), default="1"
+                        )
+                        auth_type = "password" if choice == "1" else "smartcard"
+                    else:
+                        auth_type = "password"
+
+                    if auth_type == "password":
+                        password = password or await aprompt(
+                            "Select password for the new device",
+                            confirmation_prompt=True,
+                            hide_input=True,
+                        )
+                        with operation(f"Saving device {device_display}"):
+                            return await trio.to_thread.run_sync(
+                                partial(
+                                    save_device_with_password_in_config,
+                                    config_dir=config_dir,
+                                    device=device,
+                                    password=password,
+                                )
+                            )
+
+                    else:  # smartcard
+                        with operation(f"Saving device {device_display}"):
+                            return await trio.to_thread.run_sync(
+                                partial(
+                                    save_device_with_smartcard_in_config,
+                                    config_dir=config_dir,
+                                    device=device,
+                                )
+                            )
+
+                except LocalDeviceError as exc:
+                    password = None  # Reset choice
+                    click.echo(f"{click.style('Error:', fg='red')} Cannot save new device ({exc})")
+
+        kwargs["save_device_with_selected_auth"] = _save_device
         return fn(**kwargs)
 
     return wrapper

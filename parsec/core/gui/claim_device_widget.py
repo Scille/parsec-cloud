@@ -8,7 +8,14 @@ from PyQt5.QtGui import QFont
 from PyQt5.QtWidgets import QWidget
 
 from parsec.core.types import LocalDevice
-from parsec.core.local_device import save_device_with_password_in_config
+from parsec.core.local_device import (
+    save_device_with_password_in_config,
+    save_device_with_smartcard_in_config,
+    DeviceFileType,
+    LocalDeviceCryptoError,
+    LocalDeviceError,
+    LocalDeviceNotFoundError,
+)
 from parsec.core.invite import claimer_retrieve_info, InvitePeerResetError
 from parsec.core.backend_connection import (
     backend_invited_cmds_factory,
@@ -349,7 +356,7 @@ class ClaimDeviceCodeExchangeWidget(QWidget, Ui_ClaimDeviceCodeExchangeWidget):
 
 
 class ClaimDeviceProvideInfoWidget(QWidget, Ui_ClaimDeviceProvideInfoWidget):
-    succeeded = pyqtSignal(LocalDevice, str)
+    succeeded = pyqtSignal(LocalDevice, DeviceFileType, str)
     failed = pyqtSignal(object)
 
     claim_success = pyqtSignal(QtToTrioJob)
@@ -361,12 +368,13 @@ class ClaimDeviceProvideInfoWidget(QWidget, Ui_ClaimDeviceProvideInfoWidget):
         self.jobs_ctx = jobs_ctx
         self.claimer = claimer
         self.claim_job = None
+        self.new_device = None
         self.line_edit_device.setFocus()
         self.line_edit_device.set_validator(validators.DeviceNameValidator())
         self.line_edit_device.setText(get_default_device())
         self.line_edit_device.textChanged.connect(self._on_device_text_changed)
         self.line_edit_device.validity_changed.connect(self.check_infos)
-        self.widget_password.info_changed.connect(self.check_infos)
+        self.widget_auth.authentication_state_changed.connect(self.check_infos)
         self.button_ok.setDisabled(True)
         self.claim_success.connect(self._on_claim_success)
         self.claim_error.connect(self._on_claim_error)
@@ -374,25 +382,30 @@ class ClaimDeviceProvideInfoWidget(QWidget, Ui_ClaimDeviceProvideInfoWidget):
         self.button_ok.clicked.connect(self._on_claim_clicked)
 
     def _on_device_text_changed(self, device_text):
-        self.widget_password.set_excluded_strings([device_text])
+        self.widget_auth.exclude_strings([device_text])
 
     def check_infos(self, _=""):
-        if self.line_edit_device.is_input_valid() and self.widget_password.is_valid():
+        if self.line_edit_device.is_input_valid() and self.widget_auth.is_auth_valid():
             self.button_ok.setDisabled(False)
         else:
             self.button_ok.setDisabled(True)
 
     def _on_claim_clicked(self):
-        device_label = self.line_edit_device.text()
-        self.button_ok.setDisabled(True)
-        self.widget_info.setDisabled(True)
-        self.label_wait.show()
-        self.claim_job = self.jobs_ctx.submit_job(
-            self.claim_success,
-            self.claim_error,
-            self.claimer.claim_device,
-            device_label=device_label,
-        )
+        if not self.new_device:
+            device_label = self.line_edit_device.text()
+            self.button_ok.setDisabled(True)
+            self.widget_info.setDisabled(True)
+            self.label_wait.show()
+            self.claim_job = self.jobs_ctx.submit_job(
+                self.claim_success,
+                self.claim_error,
+                self.claimer.claim_device,
+                device_label=device_label,
+            )
+        else:
+            self.succeeded.emit(
+                self.new_device, self.widget_auth.get_auth_method(), self.widget_auth.get_auth()
+            )
 
     def _on_claim_success(self, job):
         if self.claim_job is not job:
@@ -401,8 +414,11 @@ class ClaimDeviceProvideInfoWidget(QWidget, Ui_ClaimDeviceProvideInfoWidget):
         assert job
         assert job.is_finished()
         assert job.status == "ok"
-        new_device = job.ret
-        self.succeeded.emit(new_device, self.widget_password.password)
+        self.new_device = job.ret
+        self.button_ok.setDisabled(False)
+        self.succeeded.emit(
+            self.new_device, self.widget_auth.get_auth_method(), self.widget_auth.get_auth()
+        )
 
     def _on_claim_error(self, job):
         if self.claim_job is not job:
@@ -422,6 +438,7 @@ class ClaimDeviceProvideInfoWidget(QWidget, Ui_ClaimDeviceProvideInfoWidget):
                     msg = _("TEXT_INVITATION_ALREADY_USED")
             show_error(self, msg, exception=exc)
         self.check_infos()
+        self.button_ok.setDisabled(False)
         self.widget_info.setDisabled(False)
         self.label_wait.hide()
         self.failed.emit(job)
@@ -601,13 +618,27 @@ class ClaimDeviceWidget(QWidget, Ui_ClaimDeviceWidget):
         page.failed.connect(self._on_page_failed)
         self.main_layout.insertWidget(0, page)
 
-    def _on_finished(self, new_device, password):
-        save_device_with_password_in_config(
-            config_dir=self.config.config_dir, device=new_device, password=password
-        )
-        show_info(self, _("TEXT_CLAIM_DEVICE_SUCCESSFUL"))
-        self.status = (new_device, password)
-        self.dialog.accept()
+    def _on_finished(self, new_device, auth_method, password):
+        try:
+            if auth_method == DeviceFileType.PASSWORD:
+                save_device_with_password_in_config(
+                    config_dir=self.config.config_dir, device=new_device, password=password
+                )
+            elif auth_method == DeviceFileType.SMARTCARD:
+                save_device_with_smartcard_in_config(
+                    config_dir=self.config.config_dir, device=new_device
+                )
+            show_info(self, _("TEXT_CLAIM_DEVICE_SUCCESSFUL"))
+            self.status = (new_device, auth_method, password)
+            self.dialog.accept()
+        except LocalDeviceCryptoError as exc:
+            if auth_method == DeviceFileType.SMARTCARD:
+                show_error(self, _("TEXT_INVALID_SMARTCARD"), exception=exc)
+        except LocalDeviceNotFoundError as exc:
+            if auth_method == DeviceFileType.PASSWORD:
+                show_error(self, _("TEXT_CANNOT_SAVE_DEVICE"), exception=exc)
+        except LocalDeviceError as exc:
+            show_error(self, _("TEXT_CANNOT_SAVE_DEVICE"), exception=exc)
 
     def _on_claimer_success(self, job):
         if self.claimer_job is not job:

@@ -6,19 +6,27 @@ from PyQt5.QtWidgets import QWidget
 from pathlib import Path, PurePath
 
 from parsec.core.recovery import generate_recovery_device
-from parsec.core.backend_connection import BackendConnectionError
+from parsec.core.backend_connection import BackendConnectionError, BackendNotAvailable
+from parsec.core.types import LocalDevice
 from parsec.core.local_device import (
     load_device_with_password,
+    load_device_with_smartcard,
     LocalDeviceError,
-    get_key_file,
     get_recovery_device_file_name,
     save_recovery_device,
+    get_available_device,
     LocalDeviceAlreadyExistsError,
+    DeviceFileType,
 )
 from parsec.core.gui.trio_jobs import QtToTrioJob, JobResultError
 from parsec.core.gui.lang import translate
 from parsec.core.gui.desktop import open_files_job
-from parsec.core.gui.custom_dialogs import GreyedDialog, QDialogInProcess, show_error
+from parsec.core.gui.custom_dialogs import (
+    GreyedDialog,
+    QDialogInProcess,
+    show_error,
+    get_text_input,
+)
 
 from parsec.core.gui.ui.device_recovery_export_widget import Ui_DeviceRecoveryExportWidget
 from parsec.core.gui.ui.device_recovery_export_page1_widget import (
@@ -70,10 +78,6 @@ class DeviceRecoveryExportPage1Widget(QWidget, Ui_DeviceRecoveryExportPage1Widge
             self.combo_devices.addItem(
                 f"{device.device_display} - {device.user_display}", device.slug
             )
-        self.edit_password.textChanged.connect(self._on_password_changed)
-
-    def _on_password_changed(self, _):
-        self._check_infos()
 
     def _on_select_file_clicked(self):
         key_dir = QDialogInProcess.getExistingDirectory(
@@ -84,18 +88,13 @@ class DeviceRecoveryExportPage1Widget(QWidget, Ui_DeviceRecoveryExportPage1Widge
         self._check_infos()
 
     def _check_infos(self):
-        self.info_filled.emit(
-            len(self.label_file_path.text()) > 0 and len(self.edit_password.text()) > 0
-        )
+        self.info_filled.emit(len(self.label_file_path.text()) > 0)
 
     def get_selected_device(self):
         return self.devices[self.combo_devices.currentData()]
 
     def get_save_path(self):
         return PurePath(self.label_file_path.text())
-
-    def get_password(self):
-        return self.edit_password.text()
 
 
 class DeviceRecoveryExportWidget(QWidget, Ui_DeviceRecoveryExportWidget):
@@ -143,6 +142,9 @@ class DeviceRecoveryExportWidget(QWidget, Ui_DeviceRecoveryExportWidget):
             file_path = export_path / file_name
             passphrase = await save_recovery_device(file_path, recovery_device)
             return recovery_device, file_path, passphrase
+        except BackendNotAvailable as exc:
+            show_error(self, translate("EXPORT_KEY_BACKEND_OFFLINE"), exception=exc)
+            raise JobResultError("backend-error") from exc
         except BackendConnectionError as exc:
             show_error(self, translate("EXPORT_KEY_BACKEND_ERROR"), exception=exc)
             raise JobResultError("backend-error") from exc
@@ -159,17 +161,36 @@ class DeviceRecoveryExportWidget(QWidget, Ui_DeviceRecoveryExportWidget):
             self.button_validate.setEnabled(False)
             selected_device = self.current_page.get_selected_device()
             save_path = self.current_page.get_save_path()
-            password = self.current_page.get_password()
             device = None
-            try:
+
+            if isinstance(selected_device, LocalDevice):
+                selected_device = get_available_device(self.config.config_dir, selected_device)
+
+            if selected_device.type == DeviceFileType.PASSWORD:
+                password = get_text_input(
+                    self,
+                    translate("TEXT_DEVICE_UNLOCK_TITLE"),
+                    translate("TEXT_DEVICE_UNLOCK_FOR_RECOVERY_LABEL"),
+                    placeholder="",
+                    default_text="",
+                    completion=None,
+                    button_text=None,
+                    validator=None,
+                    hidden=True,
+                )
                 try:
                     device = load_device_with_password(selected_device.key_file_path, password)
-                except AttributeError:
-                    kf = get_key_file(self.config.config_dir, selected_device)
-                    device = load_device_with_password(kf, password)
-            except LocalDeviceError:
-                show_error(self, translate("TEXT_LOGIN_ERROR_AUTHENTICATION_FAILED"))
-                return
+                except LocalDeviceError:
+                    show_error(self, translate("TEXT_LOGIN_ERROR_AUTHENTICATION_FAILED"))
+                    self.button_validate.setEnabled(True)
+                    return
+            elif selected_device.type == DeviceFileType.SMARTCARD:
+                try:
+                    device = load_device_with_smartcard(selected_device.key_file_path)
+                except LocalDeviceError:
+                    show_error(self, translate("TEXT_LOGIN_ERROR_AUTHENTICATION_FAILED"))
+                    self.button_validate.setEnabled(True)
+                    return
             self.jobs_ctx.submit_job(
                 self.export_success,
                 self.export_failure,
