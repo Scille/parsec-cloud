@@ -149,6 +149,7 @@ class DeviceRecoveryImportWidget(QWidget, Ui_DeviceRecoveryImportWidget):
             )
         else:
             try:
+                self.button_validate.setEnabled(False)
                 auth_method = self.current_page.get_auth_method()
                 if auth_method == DeviceFileType.PASSWORD:
                     save_device_with_password_in_config(
@@ -163,13 +164,16 @@ class DeviceRecoveryImportWidget(QWidget, Ui_DeviceRecoveryImportWidget):
                 show_info(self, translate("TEXT_RECOVERY_IMPORT_SUCCESS"))
                 self.dialog.accept()
             except LocalDeviceCryptoError as exc:
+                self.button_validate.setEnabled(True)
                 if auth_method == DeviceFileType.SMARTCARD:
                     show_error(self, translate("TEXT_INVALID_SMARTCARD"), exception=exc)
             except LocalDeviceNotFoundError as exc:
                 if auth_method == DeviceFileType.PASSWORD:
                     show_error(self, translate("TEXT_CANNOT_SAVE_DEVICE"), exception=exc)
+                self.button_validate.setEnabled(True)
             except LocalDeviceError as exc:
                 show_error(self, translate("TEXT_CANNOT_SAVE_DEVICE"), exception=exc)
+                self.button_validate.setEnabled(True)
 
     def _on_create_new_device_success(self, job):
         self.new_device = job.ret

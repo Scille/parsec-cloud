@@ -182,12 +182,14 @@ class DeviceRecoveryExportWidget(QWidget, Ui_DeviceRecoveryExportWidget):
                     device = load_device_with_password(selected_device.key_file_path, password)
                 except LocalDeviceError:
                     show_error(self, translate("TEXT_LOGIN_ERROR_AUTHENTICATION_FAILED"))
+                    self.button_validate.setEnabled(True)
                     return
             elif selected_device.type == DeviceFileType.SMARTCARD:
                 try:
                     device = load_device_with_smartcard(selected_device.key_file_path)
                 except LocalDeviceError:
                     show_error(self, translate("TEXT_LOGIN_ERROR_AUTHENTICATION_FAILED"))
+                    self.button_validate.setEnabled(True)
                     return
             self.jobs_ctx.submit_job(
                 self.export_success,

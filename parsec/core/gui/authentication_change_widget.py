@@ -42,6 +42,7 @@ class AuthenticationChangeWidget(QWidget, Ui_AuthenticationChangeWidget):
         self.button_validate.setEnabled(valid)
 
     def _on_validate_clicked(self):
+        self.button_validate.setEnabled(False)
         auth_method = self.widget_auth.get_auth_method()
         kf = get_key_file(self.core.config.config_dir, self.loaded_device)
         try:
@@ -59,12 +60,15 @@ class AuthenticationChangeWidget(QWidget, Ui_AuthenticationChangeWidget):
             else:
                 logger.warning("Cannot close dialog when changing password info")
         except LocalDeviceCryptoError as exc:
+            self.button_validate.setEnabled(True)
             if auth_method == DeviceFileType.SMARTCARD:
                 show_error(self, _("TEXT_INVALID_SMARTCARD"), exception=exc)
         except LocalDeviceNotFoundError as exc:
+            self.button_validate.setEnabled(True)
             if auth_method == DeviceFileType.PASSWORD:
                 show_error(self, _("TEXT_CANNOT_SAVE_DEVICE"), exception=exc)
         except LocalDeviceError as exc:
+            self.button_validate.setEnabled(True)
             show_error(self, _("TEXT_CANNOT_SAVE_DEVICE"), exception=exc)
 
     @classmethod
