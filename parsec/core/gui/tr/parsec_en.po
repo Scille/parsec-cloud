@@ -325,7 +325,7 @@ msgid "EXPORT_KEY_ERROR"
 msgstr "Cannot create recovery device"
 
 msgid "TEXT_DEVICE_UNLOCK_FOR_RECOVERY_LABEL"
-msgstr "Please re-enter this device password."
+msgstr "Please enter the device password."
 
 msgid "TEXT_DEVICE_RECOVERY_EXPORT_WIZARD_TITLE"
 msgstr "Create a recovery device"
@@ -2297,11 +2297,11 @@ msgstr "Please fill out the following information to create your organization."
 msgid "TEXT_DEVICE_RECOVERY_EXPORT_INSTRUCTIONS"
 msgstr ""
 "You will be able to create a recovery device.<br />\n"
-"A recovery device is composed of a file and a passphrase that will allow "
-"you to get you device back in case you lose it."
+"A recovery device is stored on a file protected by a passphrase and allow "
+"you to re-create new devices in case you lost your current one."
 
 msgid "TEXT_DEVICE_RECOVERY_EXPORT_SELECT_DEVICE_LABEL"
-msgstr "Select the device you want to create a recovery for"
+msgstr "Select the user you want to create a recovery for"
 
 msgid "TEXT_DEVICE_RECOVERY_EXPORT_SELECT_FILE_LABEL"
 msgstr "Select where the file will be exported"
