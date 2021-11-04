@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PROJECT VERSION\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2021-11-02 17:21+0100\n"
+"POT-Creation-Date: 2021-11-04 09:29+0100\n"
 "PO-Revision-Date: 2020-10-15 10:31+0200\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language: fr\n"
@@ -25,8 +25,7 @@ msgid "TEXT_AUTH_CHANGE_SUCCESS"
 msgstr "L'authentification a été changée avec succès !"
 
 msgid "TEXT_INVALID_SMARTCARD"
-msgstr "Cette carte à puece ne peut pas être utilisée "
-"pour s'authentifier."
+msgstr "Cette carte à puece ne peut pas être utilisée pour s'authentifier."
 
 msgid "TEXT_CANNOT_SAVE_DEVICE"
 msgstr "Impossible de sauvegarder l'appareil. Veuillez réessayer."
@@ -53,6 +52,9 @@ msgid "TEXT_ONLY_ONE_AUTH_METHOD_AVAILABLE"
 msgstr ""
 "Une seule méthode d'authentification est disponible dans cette version de"
 " Parsec."
+
+msgid "ACTION_COPY_BACKEND_ADDR"
+msgstr "Copier l'adresse du serveur"
 
 msgid "ACTION_DEVICE_MENU_CHANGE_AUTHENTICATION"
 msgstr "Changer l'authentification"
@@ -2733,3 +2735,4 @@ msgstr "Créer un nouvel espace de travail"
 
 msgid "ACTION_WORKSPACE_GOTO_FILE_LINK"
 msgstr "Trouver un fichier via son lien"
+
