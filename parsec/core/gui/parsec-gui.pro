@@ -77,7 +77,8 @@ FORMS += forms/main_window.ui \
     forms/smartcard_authentication_widget.ui \
     forms/authentication_choice_widget.ui \
     forms/authentication_change_widget.ui \
-    forms/login_smartcard_input_widget.ui
+    forms/login_smartcard_input_widget.ui \
+    forms/snackbar_widget.ui
 
 RESOURCES += rc/resources.qrc \
     forms/rc/resources.qrc

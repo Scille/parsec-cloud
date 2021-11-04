@@ -52,6 +52,7 @@ from parsec.core.gui.central_widget import (
     GoToFileLinkBadWorkspaceIDError,
     GoToFileLinkPathDecryptionError,
 )
+from parsec.core.gui.snackbar_widget import SnackbarManager
 
 
 logger = get_logger()
