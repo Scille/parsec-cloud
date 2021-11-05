@@ -363,3 +363,12 @@ class FileTransactions:
 
         # Return missing block ids
         return missing
+
+    async def get_missing_blocks(self, manifest: LocalFileManifest) -> AsyncIterator[BlockAccess]:
+        for blocks in manifest.blocks:
+            for chunk in blocks:
+                try:
+                    await self._read_chunk(chunk)
+                except FSLocalMissError:
+                    assert chunk.access is not None
+                    yield chunk.access

@@ -8,7 +8,7 @@ from pendulum import DateTime
 
 from parsec.crypto import CryptoError
 from parsec.event_bus import EventBus
-from parsec.api.data import BaseManifest as BaseRemoteManifest
+from parsec.api.data import BaseManifest as BaseRemoteManifest, BlockAccess
 from parsec.api.data import FileManifest as RemoteFileManifest
 from parsec.api.protocol import UserID, MaintenanceType
 from parsec.core.types import (
@@ -117,6 +117,10 @@ class WorkspaceFS:
         except Exception:
             name = "<could not retrieve name>"
         return f"<{type(self).__name__}(id={self.workspace_id!r}, name={name!r})>"
+
+    async def get_file_blocks_to_load(self, path: AnyPath) -> Tuple[int, int, List[BlockAccess]]:
+        path = FsPath(path)
+        return await self.transactions.entry_missing_data(path)
 
     def get_workspace_name(self) -> str:
         return self.get_workspace_entry().name
