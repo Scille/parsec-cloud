@@ -363,3 +363,7 @@ class FileTransactions:
 
         # Return missing block ids
         return missing
+
+    async def get_missing_blocks(self, chunks: List[Chunk]) -> List[BlockAccess]:
+        data, missing = await self._build_data(tuple(chunks))
+        return missing

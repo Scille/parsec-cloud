@@ -8,7 +8,7 @@ from pendulum import DateTime
 
 from parsec.crypto import CryptoError
 from parsec.event_bus import EventBus
-from parsec.api.data import BaseManifest as BaseRemoteManifest
+from parsec.api.data import BaseManifest as BaseRemoteManifest, BlockAccess
 from parsec.api.data import FileManifest as RemoteFileManifest
 from parsec.api.protocol import UserID, MaintenanceType
 from parsec.core.types import (
@@ -117,6 +117,26 @@ class WorkspaceFS:
         except Exception:
             name = "<could not retrieve name>"
         return f"<{type(self).__name__}(id={self.workspace_id!r}, name={name!r})>"
+
+    async def get_file_blocks_to_load(self, path: AnyPath) -> Tuple[List[BlockAccess], int]:
+        path = FsPath(path)
+        # Check read rights
+        self.transactions.check_read_rights(path)
+        # Fetch data
+        manifest, confinement_point = await self.transactions._get_manifest_from_path(path)
+        manifest: LocalFileManifest
+        missing_chunks = []
+        # Find out of sync chunks
+        for blocks in manifest.blocks:
+            for chunk in blocks:
+                try:
+                    await self.local_storage.get_chunk(chunk.id)
+                except FSLocalMissError:
+                    missing_chunks.append(chunk)
+
+        missing_blocks = await self.transactions.get_missing_blocks(missing_chunks)
+
+        return missing_blocks, manifest.size
 
     def get_workspace_name(self) -> str:
         return self.get_workspace_entry().name

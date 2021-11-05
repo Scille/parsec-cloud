@@ -444,6 +444,64 @@ async def test_get_reencryption_need(alice_workspace, running_backend, monkeypat
 
 
 @pytest.mark.trio
+async def test_backend_block_data_online(
+    alice_user_fs, alice2_user_fs, running_backend, monkeypatch
+):
+    wid = await alice_user_fs.workspace_create("w")
+    await alice_user_fs.sync()
+    await alice2_user_fs.sync()
+
+    alice_workspace = alice_user_fs.get_workspace(wid)
+    alice2_workspace = alice2_user_fs.get_workspace(wid)
+
+    fspath = "/taz"
+
+    await alice_workspace.touch(fspath)
+    # Placeholder sync always starts by a "minimal sync" (i.e. an empty manifest is synchronized so that
+    # parent folder don't have to wait for the full sync before syncing itself).
+    # Here we force the minimal sync so to avoid this corner-case in the rest of the test.
+    await alice_workspace.sync()
+    await alice2_workspace.sync()
+
+    # Fill the file with multiple blocks worth of data so that parallel upload will occurs
+    TAZ_V2_BLOCKS = 6
+    await alice_workspace.write_bytes(fspath, b"a" * TAZ_V2_BLOCKS * DEFAULT_BLOCK_SIZE)
+
+    info = await alice_workspace.path_info(fspath)
+
+    assert info["base_version"] == 1
+    assert info["is_placeholder"] is False
+    assert info["need_sync"] is True
+
+    await alice_workspace.sync()
+
+    blocks, size = await alice_workspace.get_file_blocks_to_load(fspath)
+    assert blocks == []
+
+    # Check the blocks to download and the size of the total manifest
+    blocks, size = await alice2_workspace.get_file_blocks_to_load(fspath)
+    size_to_download = 0
+    for block in blocks:
+        size_to_download += block.size
+    assert size == size_to_download
+
+    # load one block
+    block = blocks[0]
+    await alice2_workspace.remote_loader.load_block(block)
+
+    blocks, size = await alice2_workspace.get_file_blocks_to_load(fspath)
+    assert len(blocks) == TAZ_V2_BLOCKS - 1
+
+    # load the rest
+    await alice2_workspace.remote_loader.load_blocks(blocks)
+
+    blocks, size = await alice2_workspace.get_file_blocks_to_load(fspath)
+
+    assert blocks == []
+    assert size == TAZ_V2_BLOCKS * DEFAULT_BLOCK_SIZE
+
+
+@pytest.mark.trio
 async def test_backend_block_upload_error_during_sync(
     alice_user_fs, alice2_user_fs, running_backend, monkeypatch
 ):
