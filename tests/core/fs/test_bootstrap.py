@@ -8,6 +8,7 @@ from parsec.api.data import UserManifest, WorkspaceEntry
 from parsec.core.types import LocalUserManifest, WorkspaceRole
 from parsec.core.fs.storage.local_database import LocalDatabase
 from parsec.core.fs.storage.manifest_storage import ManifestStorage
+from parsec.core.fs.storage.user_storage import user_storage_non_speculative_init
 
 from tests.common import freeze_time
 
@@ -31,10 +32,14 @@ async def test_user_manifest_access_while_speculative(user_fs_factory, alice):
 
 @pytest.mark.trio
 async def test_workspace_manifest_access_while_speculative(user_fs_factory, alice):
+    # Speculative workspace occurs when workspace is shared to a new user, or
+    # when a device gets it local data removed. We use the latter here (even if
+    # it is the less likely of the two) given it is simpler to do in the test.
+
     with freeze_time("2000-01-01"):
         async with user_fs_factory(alice) as user_fs:
             wksp_id = await user_fs.workspace_create("wksp")
-            # Remove the workspace manifest from the local storage
+            # Retreive where the database is stored
             wksp = user_fs.get_workspace(wksp_id)
             wksp_manifest_storage_db_path = wksp.local_storage.manifest_storage.path
 
@@ -66,24 +71,33 @@ async def test_workspace_manifest_access_while_speculative(user_fs_factory, alic
 
 
 @pytest.mark.trio
+@pytest.mark.parametrize("with_speculative", ("none", "alice2", "both"))
 async def test_concurrent_devices_agree_on_user_manifest(
     backend_factory,
     backend_addr,
     backend_data_binder_factory,
     server_factory,
+    data_base_dir,
     user_fs_factory,
     coolorg,
     alice,
     alice2,
+    with_speculative,
 ):
-    # I call this "diagonal programming"...
 
+    # I call this "diagonal programming"...
     with freeze_time("2000-01-01"):
-        async with user_fs_factory(alice) as user_fs1:
+        if with_speculative != "both":
+            await user_storage_non_speculative_init(data_base_dir=data_base_dir, device=alice)
+        async with user_fs_factory(alice, data_base_dir=data_base_dir) as user_fs1:
             wksp1_id = await user_fs1.workspace_create("wksp1")
 
             with freeze_time("2000-01-02"):
-                async with user_fs_factory(alice2) as user_fs2:
+                if with_speculative not in ("both", "alice2"):
+                    await user_storage_non_speculative_init(
+                        data_base_dir=data_base_dir, device=alice2
+                    )
+                async with user_fs_factory(alice2, data_base_dir=data_base_dir) as user_fs2:
                     wksp2_id = await user_fs2.workspace_create("wksp2")
 
                     with freeze_time("2000-01-03"):
@@ -166,7 +180,7 @@ async def test_concurrent_devices_agree_on_workspace_manifest(
             with freeze_time("2000-01-02"):
                 await alice_user_fs.sync()
 
-            # Retrieve the user manifest
+            # Retrieve the user manifest but not the workpace manifest, Alice2 hence has a speculative workspace manifest
             with freeze_time("2000-01-03"):
                 await alice2_user_fs.sync()
 
@@ -227,7 +241,7 @@ async def test_empty_user_manifest_placeholder_noop_on_resolve_sync(
         }
 
         with freeze_time("2000-01-04"):
-            # Now Alice2 comes into play with it user manifest placeholder
+            # Now Alice2 comes into play with it speculative user manifest
             async with user_fs_factory(alice2) as alice2_user_fs:
                 with freeze_time("2000-01-05"):
                     # Access the user manifest to ensure it is created, but do not modify it !
@@ -269,6 +283,7 @@ async def test_empty_workspace_manifest_placeholder_noop_on_resolve_sync(
                 await alice_user_fs.sync()
 
             # Alice2 retrieves the user manifest but NOT the workspace manifest
+            # hence Alice2 end up with a speculative workspace manifest
             with freeze_time("2000-01-04"):
                 await alice2_user_fs.sync()
             alice2_wksp = alice2_user_fs.get_workspace(wksp_id)
