@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PROJECT VERSION\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2021-11-02 17:21+0100\n"
+"POT-Creation-Date: 2021-11-08 13:19+0100\n"
 "PO-Revision-Date: 2020-10-15 10:31+0200\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language: fr\n"
@@ -25,8 +25,7 @@ msgid "TEXT_AUTH_CHANGE_SUCCESS"
 msgstr "L'authentification a été changée avec succès !"
 
 msgid "TEXT_INVALID_SMARTCARD"
-msgstr "Cette carte à puece ne peut pas être utilisée "
-"pour s'authentifier."
+msgstr "Cette carte à puce ne peut pas être utilisée pour s'authentifier."
 
 msgid "TEXT_CANNOT_SAVE_DEVICE"
 msgstr "Impossible de sauvegarder l'appareil. Veuillez réessayer."
@@ -2656,6 +2655,9 @@ msgstr "Activer la télémétrie pour l'envoi automatique de rapports d'erreur"
 msgid "TEXT_SELECT_SMARTCARD"
 msgstr "Il vous sera demandé de sélectionner votre carte à puce"
 
+msgid "ACTION_DISMISS"
+msgstr "Masquer"
+
 msgid "TEXT_WORKSPACE_TEMPORARY_TITLE"
 msgstr "Vue instantanée"
 
@@ -2733,3 +2735,4 @@ msgstr "Créer un nouvel espace de travail"
 
 msgid "ACTION_WORKSPACE_GOTO_FILE_LINK"
 msgstr "Trouver un fichier via son lien"
+

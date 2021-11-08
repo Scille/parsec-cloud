@@ -151,6 +151,29 @@ def autoclose_dialog(monkeypatch):
 
 
 @pytest.fixture
+def snackbar_catcher(monkeypatch):
+    class SnackbarSpy:
+        def __init__(self):
+            self.snackbars = []
+
+        def reset(self):
+            self.snackars = []
+
+    spy = SnackbarSpy()
+
+    def _show_snackbar(message, *args, **kargs):
+        print(message)
+        spy.snackbars.append(message)
+
+    monkeypatch.setattr("parsec.core.gui.snackbar_widget.SnackbarManager.warn", _show_snackbar)
+    monkeypatch.setattr("parsec.core.gui.snackbar_widget.SnackbarManager.inform", _show_snackbar)
+    monkeypatch.setattr(
+        "parsec.core.gui.snackbar_widget.SnackbarManager.congratulate", _show_snackbar
+    )
+    return spy
+
+
+@pytest.fixture
 def widget_catcher_factory(aqtbot, monkeypatch):
     """Useful to capture lazily created widget such as modals"""
 

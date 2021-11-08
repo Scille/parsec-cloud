@@ -96,19 +96,16 @@ class SnackbarWidget(QWidget, Ui_SnackbarWidget):
         painter.drawRoundedRect(rect, 10, 10)
 
     def move_popup(self):
-        width = min(500, self.main_window.size().width() - 40)
-        height = 75
-        if platform.system() == "Windows":
-            height = 101
-            self.resize(QSize(width, height))
         offset = 10
+        height = 101 if platform.system() == "Windows" else 75
+        width = min(500, self.main_window.size().width() - 40)
+        self.resize(QSize(width, height))
 
-        # x = (self.main_window.size().width() - width - 20) / 2
         x = self.main_window.size().width() - width - 20
         y = self.main_window.size().height() - ((height + offset) * (self.index + 1))
-
+        # Hide the snackbar if the main window does not have enough space to show it
+        self.set_visible(y > 30)
         pos = self.main_window.mapToGlobal(QPoint(x, y))
-
         self.setGeometry(pos.x(), pos.y(), width, height)
 
     def _on_timeout(self):
@@ -145,7 +142,7 @@ class SnackbarManager(QObject):
 
     def eventFilter(self, obj, event):
         if event.type() == QEvent.Move or event.type() == QEvent.Resize:
-            for i, sb in enumerate(self.snackbars):
+            for sb in self.snackbars:
                 sb.move_popup()
         elif event.type() == QEvent.Hide:
             for sb in self.snackbars:
@@ -188,7 +185,7 @@ class SnackbarManager(QObject):
 
     @classmethod
     def inform(cls, msg, timeout=3000, action_text=None, action=None):
-        pix = Pixmap(":/icons/images/material/info_outline.svg")
+        pix = Pixmap(":/icons/images/material/info.svg")
         pix.replace_color(QColor(0, 0, 0), QColor(73, 153, 208))
         snackbar = SnackbarWidget(
             msg, icon=pix, timeout=timeout, action_text=action_text, action=action
@@ -197,7 +194,7 @@ class SnackbarManager(QObject):
 
     @classmethod
     def congratulate(cls, msg, timeout=3000, action_text=None, action=None):
-        pix = Pixmap(":/icons/images/material/done.svg")
+        pix = Pixmap(":/icons/images/material/check_circle.svg")
         pix.replace_color(QColor(0, 0, 0), QColor(73, 208, 86))
         snackbar = SnackbarWidget(
             msg, icon=pix, timeout=timeout, action_text=action_text, action=action
@@ -206,7 +203,7 @@ class SnackbarManager(QObject):
 
     @classmethod
     def warn(cls, msg, timeout=3000, action_text=None, action=None):
-        pix = Pixmap(":/icons/images/material/error_outline.svg")
+        pix = Pixmap(":/icons/images/material/report_problem.svg")
         pix.replace_color(QColor(0, 0, 0), QColor(208, 102, 73))
         snackbar = SnackbarWidget(
             msg, icon=pix, timeout=timeout, action_text=action_text, action=action

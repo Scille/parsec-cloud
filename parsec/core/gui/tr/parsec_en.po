@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PROJECT VERSION\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2021-11-02 17:21+0100\n"
+"POT-Creation-Date: 2021-11-08 13:19+0100\n"
 "PO-Revision-Date: 2020-10-15 10:30+0200\n"
 "Last-Translator: \n"
 "Language: en\n"
@@ -2586,6 +2586,9 @@ msgstr "Enable telemetry for automatic crash reporting"
 msgid "TEXT_SELECT_SMARTCARD"
 msgstr "You will be asked to select your smartcard."
 
+msgid "ACTION_DISMISS"
+msgstr "Dismiss"
+
 msgid "TEXT_WORKSPACE_TEMPORARY_TITLE"
 msgstr "Snapshot"
 
@@ -2663,3 +2666,4 @@ msgstr "Create a new workspace"
 
 msgid "ACTION_WORKSPACE_GOTO_FILE_LINK"
 msgstr "Go to a file using a link"
+
