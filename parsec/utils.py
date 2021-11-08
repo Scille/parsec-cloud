@@ -19,7 +19,43 @@ __all__ = [
 ]
 
 logger = get_logger()
-TIMESTAMP_MAX_DT = 30 * 60
+
+# This value is used by the backend to determine whether the client
+# operates in an acceptable time window. A value of 60 seconds means
+# clients can be up to 1 minute late or 1 minute in advance compare
+# to the backend clock.
+#
+# This value used to be higher (30 minutes), but an argument for
+# decreasing this value is that client clocks are usually either
+# fully synchronized (with NTP) or fully desynchronized (with an
+# incorrect configuration). It's possible for a client clock to
+# slowly drift over time if it lost access to an NTP but drifting
+# an entire minute would take weeks or months.
+#
+# Note that this value also has to take into account the fact the
+# that the timestamps being compared are not produced at the same
+# moment. Typically:
+# - The client generates a timestamp
+# - The client generates a request including this timestamp
+# - The client sends this request to the backend over the network
+# - The backend receives and processes the request
+# - The backend compares the timestamp to its current time
+# The worse case scenario would be a slow client machine, a large
+# request, a slow network connection and a busy server. Even
+# in this scenario, a 30 seconds time difference is hardly
+# imaginable on a functionnning system and it still leaves 30
+# seconds to accept slighty desynchronized clocks.
+#
+# Still, this is an argument for making this comparison asymetrical: with no
+# clock drift between client and server, communication latency makes data
+# arriving to the backend always in the past. Hence we should be more
+# forgiving of data in the past than in the future !
+#
+# A more radical check would be to not accept more that 10 seconds
+# delay and 10 seconds shifting, yielding a -10/20 seconds window
+# (10 seconds in advance or 20 seconds late). This would effectively
+# reduce the current -60/60 seconds time widown by a factor of 4.
+TIMESTAMP_MAX_DT = 60  # seconds
 
 
 def timestamps_in_the_ballpark(ts1: DateTime, ts2: DateTime, max_dt=TIMESTAMP_MAX_DT) -> bool:
