@@ -118,9 +118,35 @@ class WorkspaceFS:
             name = "<could not retrieve name>"
         return f"<{type(self).__name__}(id={self.workspace_id!r}, name={name!r})>"
 
-    async def get_file_blocks_to_load(self, path: AnyPath) -> Tuple[int, int, List[BlockAccess]]:
+    async def get_file_blocks_to_load(
+        self, path: AnyPath, limit: int = 1000000000
+    ) -> Tuple[int, int, List[BlockAccess]]:
         path = FsPath(path)
-        return await self.transactions.entry_missing_data(path)
+        return await self.transactions.entry_missing_data(path, limit)
+
+    async def load_block(self, block: BlockAccess) -> None:
+        """
+        Raises:
+            FSError
+            FSRemoteBlockNotFound
+            FSBackendOfflineError
+            FSRemoteOperationError
+            FSWorkspaceInMaintenance
+            FSWorkspaceNoAccess
+        """
+        await self.remote_loader.load_block(block)
+
+    async def load_blocks(self, blocks: List[BlockAccess]) -> None:
+        """
+        Raises:
+            FSError
+            FSRemoteBlockNotFound
+            FSBackendOfflineError
+            FSRemoteOperationError
+            FSWorkspaceInMaintenance
+            FSWorkspaceNoAccess
+        """
+        await self.remote_loader.load_blocks(blocks)
 
     def get_workspace_name(self) -> str:
         return self.get_workspace_entry().name

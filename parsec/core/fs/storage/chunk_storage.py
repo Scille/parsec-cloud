@@ -1,5 +1,5 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2016-2021 Scille SAS
-
+import secrets
 import time
 
 import trio
@@ -97,20 +97,40 @@ class ChunkStorage:
         return bool(manifest_row)
 
     async def are_chunks(self, chunk_id: List[ChunkID]) -> List[bool]:
-        boolean_chunk_list = []
-        bytes_id_list = [id.bytes for id in chunk_id]
+
+        boolean_chunk_list = [False] * len(chunk_id)
+        bytes_id_list = [(id.bytes,) for id in chunk_id]
+
         async with self._open_cursor() as cursor:
-            # Can't use execute many with SELECT so we make the query by hand
-            query = "SELECT chunk_id FROM chunks WHERE chunk_id in ({0})".format(
-                ", ".join("?" for _ in chunk_id)
+            # Can't use execute many with SELECT so we have to make a temporary table filled with the needed chunk_id
+            # and intersect it with the normal table
+            # create random name for the temporary table to avoid asynchronous errors
+            table_name = "temp" + secrets.token_hex(12)
+            table_name = "".join(chr for chr in table_name if chr.isalnum())
+
+            cursor.execute(f"""DROP TABLE IF EXISTS {table_name}""")
+            cursor.execute(
+                f"""CREATE TABLE IF NOT EXISTS {table_name}
+                    (chunk_id BLOB PRIMARY KEY NOT NULL -- UUID
+                );"""
             )
 
-            cursor.execute(query, bytes_id_list)
-            manifest_rows = cursor.fetchall()
+            cursor.executemany(
+                f"""INSERT OR REPLACE INTO
+            {table_name} (chunk_id)
+            VALUES (?)""",
+                iter(bytes_id_list),
+            )
 
-        size = len(manifest_rows)
-        for i in range(len(chunk_id)):
-            boolean_chunk_list.append(bool(manifest_rows[i] if i < size else False))
+            cursor.execute(
+                f"""SELECT chunk_id FROM chunks INTERSECT SELECT chunk_id FROM {table_name}"""
+            )
+
+            manifest_rows = cursor.fetchall()
+            cursor.execute(f"""DROP TABLE IF EXISTS {table_name}""")
+        for row in manifest_rows:
+            index = bytes_id_list.index(row)
+            boolean_chunk_list[index] = True
 
         return boolean_chunk_list
 
