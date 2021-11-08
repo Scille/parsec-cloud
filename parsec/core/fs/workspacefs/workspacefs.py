@@ -118,17 +118,9 @@ class WorkspaceFS:
             name = "<could not retrieve name>"
         return f"<{type(self).__name__}(id={self.workspace_id!r}, name={name!r})>"
 
-    async def get_file_blocks_to_load(
-        self, path: AnyPath
-    ) -> Tuple[AsyncIterator[BlockAccess], int]:
+    async def get_file_blocks_to_load(self, path: AnyPath) -> Tuple[int, int, List[BlockAccess]]:
         path = FsPath(path)
-        # Check read rights
-        self.transactions.check_read_rights(path)
-        # Fetch data
-        manifest, confinement_point = await self.transactions._get_manifest_from_path(path)
-        manifest: LocalFileManifest
-
-        return self.transactions.get_missing_blocks(manifest), manifest.size
+        return await self.transactions.entry_missing_data(path)
 
     def get_workspace_name(self) -> str:
         return self.get_workspace_entry().name

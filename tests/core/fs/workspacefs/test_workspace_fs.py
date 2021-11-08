@@ -482,33 +482,33 @@ async def test_backend_block_data_online(
 
     await alice_workspace.sync()
 
-    blocks, size = await alice_workspace.get_file_blocks_to_load(fspath)
-    assert len(await get_blocks_list(blocks)) == 0
+    missing_size, total_size, blocks = await alice_workspace.get_file_blocks_to_load(fspath)
+    assert len(blocks) == 0
+    assert total_size == TAZ_V2_BLOCKS * DEFAULT_BLOCK_SIZE
+    assert missing_size == 0
 
     # Check the blocks to download and the size of the total manifest
-    blocks, size = await alice2_workspace.get_file_blocks_to_load(fspath)
-    blocks = await get_blocks_list(blocks)
-    size_to_download = 0
-    for block in blocks:
-        size_to_download += block.size
-    assert size == size_to_download
+    missing_size, total_size, blocks = await alice2_workspace.get_file_blocks_to_load(fspath)
+    assert len(blocks) == TAZ_V2_BLOCKS
+    assert total_size == TAZ_V2_BLOCKS * DEFAULT_BLOCK_SIZE
+    assert missing_size == (TAZ_V2_BLOCKS) * DEFAULT_BLOCK_SIZE
 
     # load one block
     block = blocks[0]
     await alice2_workspace.remote_loader.load_block(block)
 
-    blocks, size = await alice2_workspace.get_file_blocks_to_load(fspath)
-    blocks = await get_blocks_list(blocks)
+    missing_size, total_size, blocks = await alice2_workspace.get_file_blocks_to_load(fspath)
     assert len(blocks) == TAZ_V2_BLOCKS - 1
+    assert total_size == TAZ_V2_BLOCKS * DEFAULT_BLOCK_SIZE
+    assert missing_size == (TAZ_V2_BLOCKS - 1) * DEFAULT_BLOCK_SIZE
 
     # load the rest
     await alice2_workspace.remote_loader.load_blocks(blocks)
 
-    blocks, size = await alice2_workspace.get_file_blocks_to_load(fspath)
-    blocks = await get_blocks_list(blocks)
-
-    assert blocks == []
-    assert size == TAZ_V2_BLOCKS * DEFAULT_BLOCK_SIZE
+    missing_size, total_size, blocks = await alice2_workspace.get_file_blocks_to_load(fspath)
+    assert len(blocks) == 0
+    assert total_size == TAZ_V2_BLOCKS * DEFAULT_BLOCK_SIZE
+    assert missing_size == 0
 
 
 @pytest.mark.trio
