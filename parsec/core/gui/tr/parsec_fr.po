@@ -25,7 +25,7 @@ msgid "TEXT_AUTH_CHANGE_SUCCESS"
 msgstr "L'authentification a été changée avec succès !"
 
 msgid "TEXT_INVALID_SMARTCARD"
-msgstr "Cette carte à puece ne peut pas être utilisée "
+msgstr "Cette carte à puce ne peut pas être utilisée "
 "pour s'authentifier."
 
 msgid "TEXT_CANNOT_SAVE_DEVICE"
