@@ -7,7 +7,6 @@ from pendulum import DateTime
 
 from parsec.api.protocol import DeviceID
 from parsec.core.core_events import CoreEvent
-from parsec.core.config import translate
 from parsec.api.data import EntryNameTooLongError, BaseManifest as BaseRemoteManifest
 from parsec.core.types import (
     Chunk,
@@ -35,8 +34,28 @@ __all__ = "SyncTransactions"
 DEFAULT_BLOCK_SIZE = 512 * 1024  # 512Ko
 FILENAME_CONFLICT_KEY = "FILENAME_CONFLICT"
 FILE_CONTENT_CONFLICT_KEY = "FILE_CONTENT_CONFLICT"
+TRANSLATIONS = {
+    "en": {
+        "FILENAME_CONFLICT": "Parsec - name conflict",
+        "FILE_CONTENT_CONFLICT": "Parsec - content conflict",
+    },
+    "fr": {
+        "FILENAME_CONFLICT": "Parsec - Conflit de nom",
+        "FILE_CONTENT_CONFLICT": "Parsec - Conflit de contenu",
+    },
+}
+
 
 # Helpers
+
+
+def get_translated_message(prefered_lang: str, key: str) -> str:
+    try:
+        translations = TRANSLATIONS[prefered_lang]
+    except KeyError:  # Default to english
+        translations = TRANSLATIONS["en"]
+
+    return translations.get(key, key)
 
 
 def get_filename(manifest: LocalFolderishManifests, entry_id: EntryID) -> Optional[EntryName]:
@@ -49,7 +68,7 @@ def get_conflict_filename(
 ) -> EntryName:
     counter = count(2)
 
-    suffix = translate(prefered_lang, suffix_key)
+    suffix = get_translated_message(prefered_lang, suffix_key)
     new_filename = full_name(filename, suffix)
     filename_set = set(filenames)
     while new_filename in filename_set:
