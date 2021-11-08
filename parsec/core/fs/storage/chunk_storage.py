@@ -98,15 +98,31 @@ class ChunkStorage:
 
     async def are_chunks(self, chunk_id: List[ChunkID]) -> List[bool]:
         boolean_chunk_list = []
-        bytes_id_list = [id.bytes for id in chunk_id]
+        bytes_id_list = [(id.bytes,) for id in chunk_id]
         async with self._open_cursor() as cursor:
-            # Can't use execute many with SELECT so we make the query by hand
-            query = "SELECT chunk_id FROM chunks WHERE chunk_id in ({0})".format(
-                ", ".join("?" for _ in chunk_id)
+            # Can't use execute many with SELECT so we have to make a temporary table filled with the needed chunk_id
+            # and intersect it with the normal table
+
+            cursor.execute("""DROP TABLE IF EXISTS tmpchunks""")
+            cursor.execute(
+                """CREATE TABLE IF NOT EXISTS tmpchunks
+                    (chunk_id BLOB PRIMARY KEY NOT NULL -- UUID
+                );"""
             )
 
-            cursor.execute(query, bytes_id_list)
+            cursor.executemany(
+                """INSERT OR REPLACE INTO
+            tmpchunks (chunk_id)
+            VALUES (?)""",
+                iter(bytes_id_list),
+            )
+
+            cursor.execute(
+                """SELECT chunk_id FROM chunks INTERSECT SELECT chunk_id FROM tmpchunks"""
+            )
+
             manifest_rows = cursor.fetchall()
+            cursor.execute("""DROP TABLE IF EXISTS tmpchunks""")
 
         size = len(manifest_rows)
         for i in range(len(chunk_id)):
