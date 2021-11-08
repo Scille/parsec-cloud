@@ -42,10 +42,10 @@ def test_full_name(test_input, expected):
 
 
 @pytest.mark.parametrize(
-    "gui_language, suffix", [("en", "name conflict"), ("fr", "Conflit de nom")]
+    "prefered_lang, suffix",
+    [("en", "name conflict"), ("fr", "Conflit de nom"), ("dummy", "name conflict")],
 )
-def test_merge_folder_children(core_config, gui_language, suffix):
-    core_config = core_config.evolve(gui_language=gui_language)
+def test_merge_folder_children(prefered_lang, suffix):
     m1 = EntryID.new()
     m2 = EntryID.new()
     m3 = EntryID.new()
@@ -56,33 +56,33 @@ def test_merge_folder_children(core_config, gui_language, suffix):
     c1 = {"c.tar.gz": m1}
     c2 = {"c.tar.gz": m2}
     # Empty folder
-    assert merge_folder_children({}, {}, {}, "a@a", core_config) == {}
+    assert merge_folder_children({}, {}, {}, "a@a", prefered_lang) == {}
 
     # Adding children
-    assert merge_folder_children({}, a1, {}, "a@a", core_config) == a1
-    assert merge_folder_children({}, {}, a1, "a@a", core_config) == a1
-    assert merge_folder_children({}, a1, a1, "a@a", core_config) == a1
+    assert merge_folder_children({}, a1, {}, "a@a", prefered_lang) == a1
+    assert merge_folder_children({}, {}, a1, "a@a", prefered_lang) == a1
+    assert merge_folder_children({}, a1, a1, "a@a", prefered_lang) == a1
 
     # Removing children
-    assert merge_folder_children(a1, {}, a1, "a@a", core_config) == {}
-    assert merge_folder_children(a1, a1, {}, "a@a", core_config) == {}
-    assert merge_folder_children(a1, {}, {}, "a@a", core_config) == {}
+    assert merge_folder_children(a1, {}, a1, "a@a", prefered_lang) == {}
+    assert merge_folder_children(a1, a1, {}, "a@a", prefered_lang) == {}
+    assert merge_folder_children(a1, {}, {}, "a@a", prefered_lang) == {}
 
     # Renaming children
-    assert merge_folder_children(a1, a1, b1, "a@a", core_config) == b1
-    assert merge_folder_children(a1, b1, a1, "a@a", core_config) == b1
-    assert merge_folder_children(a1, b1, b1, "a@a", core_config) == b1
+    assert merge_folder_children(a1, a1, b1, "a@a", prefered_lang) == b1
+    assert merge_folder_children(a1, b1, a1, "a@a", prefered_lang) == b1
+    assert merge_folder_children(a1, b1, b1, "a@a", prefered_lang) == b1
 
     # Conflicting renaming
-    result = merge_folder_children(a1, b1, c1, "a@a", core_config)
+    result = merge_folder_children(a1, b1, c1, "a@a", prefered_lang)
     assert result == {"c.tar.gz": m1}
 
     # Conflicting names
-    result = merge_folder_children({}, a1, a2, "a@a", core_config)
+    result = merge_folder_children({}, a1, a2, "a@a", prefered_lang)
     assert result == {"a": m2, f"a (Parsec - {suffix})": m1}
-    result = merge_folder_children({}, b1, b2, "a@a", core_config)
+    result = merge_folder_children({}, b1, b2, "a@a", prefered_lang)
     assert result == {"b.txt": m2, f"b (Parsec - {suffix}).txt": m1}
-    result = merge_folder_children({}, c1, c2, "a@a", core_config)
+    result = merge_folder_children({}, c1, c2, "a@a", prefered_lang)
     assert result == {"c.tar.gz": m2, f"c (Parsec - {suffix}).tar.gz": m1}
 
     # Conflicting name with special pattern filename
@@ -91,7 +91,7 @@ def test_merge_folder_children(core_config, gui_language, suffix):
     a3 = {**base, **a1}
     b3 = {**base, **a2}
 
-    result = merge_folder_children(base, a3, b3, "a@a", core_config)
+    result = merge_folder_children(base, a3, b3, "a@a", prefered_lang)
     assert result == {"a": m2, f"a (Parsec - {suffix})": m3, f"a (Parsec - {suffix} (2))": m1}
 
     m4 = EntryID.new()
@@ -99,7 +99,7 @@ def test_merge_folder_children(core_config, gui_language, suffix):
     a3 = {**base, **a1}
     b3 = {**base, **a2}
 
-    result = merge_folder_children(base, a3, b3, "a@a", core_config)
+    result = merge_folder_children(base, a3, b3, "a@a", prefered_lang)
 
     assert result == {
         "a": m2,
@@ -109,7 +109,7 @@ def test_merge_folder_children(core_config, gui_language, suffix):
     }
 
 
-def test_merge_folder_manifests(alice, bob, core_config):
+def test_merge_folder_manifests(alice, bob):
     timestamp = alice.timestamp()
     my_device = alice.device_id
     other_device = bob.device_id
@@ -120,56 +120,56 @@ def test_merge_folder_manifests(alice, bob, core_config):
 
     # Initial base manifest
     m1 = LocalFolderManifest.from_remote(v1, empty_pattern)
-    assert merge_manifests(my_device, timestamp, core_config, empty_pattern, m1) == m1
+    assert merge_manifests(my_device, timestamp, empty_pattern, m1) == m1
 
     # Local change
     m2 = m1.evolve_children_and_mark_updated(
         {"a": EntryID.new()}, empty_pattern, timestamp=timestamp
     )
-    assert merge_manifests(my_device, timestamp, core_config, empty_pattern, m2) == m2
+    assert merge_manifests(my_device, timestamp, empty_pattern, m2) == m2
 
     # Successful upload
     v2 = m2.to_remote(author=my_device, timestamp=timestamp)
-    m3 = merge_manifests(my_device, timestamp, core_config, empty_pattern, m2, v2)
+    m3 = merge_manifests(my_device, timestamp, empty_pattern, m2, v2)
     assert m3 == LocalFolderManifest.from_remote(v2, empty_pattern)
 
     # Two local changes
     m4 = m3.evolve_children_and_mark_updated(
         {"b": EntryID.new()}, empty_pattern, timestamp=timestamp
     )
-    assert merge_manifests(my_device, timestamp, core_config, empty_pattern, m4) == m4
+    assert merge_manifests(my_device, timestamp, empty_pattern, m4) == m4
     m5 = m4.evolve_children_and_mark_updated(
         {"c": EntryID.new()}, empty_pattern, timestamp=timestamp
     )
-    assert merge_manifests(my_device, timestamp, core_config, empty_pattern, m4) == m4
+    assert merge_manifests(my_device, timestamp, empty_pattern, m4) == m4
 
     # M4 has been successfully uploaded
     v3 = m4.to_remote(author=my_device, timestamp=timestamp)
-    m6 = merge_manifests(my_device, timestamp, core_config, empty_pattern, m5, v3)
+    m6 = merge_manifests(my_device, timestamp, empty_pattern, m5, v3)
     assert m6 == m5.evolve(base=v3)
 
     # The remote has changed
     v4 = v3.evolve(version=4, children={"d": EntryID.new(), **v3.children}, author=other_device)
-    m7 = merge_manifests(my_device, timestamp, core_config, empty_pattern, m6, v4)
+    m7 = merge_manifests(my_device, timestamp, empty_pattern, m6, v4)
     assert m7.base_version == 4
     assert sorted(m7.children) == ["a", "b", "c", "d"]
     assert m7.need_sync
 
     # Successful upload
     v5 = m7.to_remote(author=my_device, timestamp=timestamp)
-    m8 = merge_manifests(my_device, timestamp, core_config, empty_pattern, m7, v5)
+    m8 = merge_manifests(my_device, timestamp, empty_pattern, m7, v5)
     assert m8 == LocalFolderManifest.from_remote(v5, empty_pattern)
 
     # The remote has changed
     v6 = v5.evolve(version=6, children={"e": EntryID.new(), **v5.children}, author=other_device)
-    m9 = merge_manifests(my_device, timestamp, core_config, empty_pattern, m8, v6)
+    m9 = merge_manifests(my_device, timestamp, empty_pattern, m8, v6)
     assert m9 == LocalFolderManifest.from_remote(v6, empty_pattern)
 
 
 @pytest.mark.parametrize("local_change", ("rename", "prevent_sync_rename"))
 @pytest.mark.parametrize("remote_change", ("same_entry_moved", "new_entry_added"))
 def test_merge_folder_manifests_with_concurrent_remote_change(
-    local_change, remote_change, alice, bob, core_config
+    local_change, remote_change, alice, bob
 ):
     timestamp = alice.timestamp()
     my_device = alice.device_id
@@ -218,7 +218,6 @@ def test_merge_folder_manifests_with_concurrent_remote_change(
     merged_manifest = merge_manifests(
         local_author=my_device,
         timestamp=timestamp,
-        core_config=core_config,
         prevent_sync_pattern=prevent_sync_pattern,
         local_manifest=local_manifest,
         remote_manifest=remote_manifest_v2,
@@ -236,36 +235,36 @@ def test_merge_folder_manifests_with_concurrent_remote_change(
             assert list(merged_manifest.children) == ["bar.txt", "foo.txt.tmp"]
 
 
-def test_merge_manifests_with_a_placeholder(alice, bob, core_config):
+def test_merge_manifests_with_a_placeholder(alice, bob):
     timestamp = alice.timestamp()
     my_device = alice.device_id
     other_device = bob.device_id
     parent = EntryID.new()
 
     m1 = LocalFolderManifest.new_placeholder(my_device, parent=parent, timestamp=timestamp)
-    m2 = merge_manifests(my_device, timestamp, core_config, empty_pattern, m1)
+    m2 = merge_manifests(my_device, timestamp, empty_pattern, m1)
     assert m2 == m1
     v1 = m1.to_remote(author=my_device, timestamp=timestamp)
 
-    m2a = merge_manifests(my_device, timestamp, core_config, empty_pattern, m1, v1)
+    m2a = merge_manifests(my_device, timestamp, empty_pattern, m1, v1)
     assert m2a == LocalFolderManifest.from_remote(v1, empty_pattern)
 
     m2b = m1.evolve_children_and_mark_updated(
         {"a": EntryID.new()}, empty_pattern, timestamp=timestamp
     )
-    m3b = merge_manifests(my_device, timestamp, core_config, empty_pattern, m2b, v1)
+    m3b = merge_manifests(my_device, timestamp, empty_pattern, m2b, v1)
     assert m3b == m2b.evolve(base=v1)
 
     v2 = v1.evolve(version=2, author=other_device, children={"b": EntryID.new()})
     m2c = m1.evolve_children_and_mark_updated(
         {"a": EntryID.new()}, empty_pattern, timestamp=timestamp
     )
-    m3c = merge_manifests(my_device, timestamp, core_config, empty_pattern, m2c, v2)
+    m3c = merge_manifests(my_device, timestamp, empty_pattern, m2c, v2)
     children = {**v2.children, **m2c.children}
     assert m3c == m2c.evolve(base=v2, children=children, updated=m3c.updated)
 
 
-def test_merge_file_manifests(alice, bob, core_config):
+def test_merge_file_manifests(alice, bob):
     timestamp = alice.timestamp()
     my_device = alice.device_id
     other_device = bob.device_id
@@ -281,32 +280,32 @@ def test_merge_file_manifests(alice, bob, core_config):
 
     # Initial base manifest
     m1 = LocalFileManifest.from_remote(v1)
-    assert merge_manifests(my_device, timestamp, core_config, empty_pattern, m1) == m1
+    assert merge_manifests(my_device, timestamp, empty_pattern, m1) == m1
 
     # Local change
     m2 = evolve(m1, 1)
-    assert merge_manifests(my_device, timestamp, core_config, empty_pattern, m2) == m2
+    assert merge_manifests(my_device, timestamp, empty_pattern, m2) == m2
 
     # Successful upload
     v2 = m2.to_remote(author=my_device, timestamp=timestamp)
-    m3 = merge_manifests(my_device, timestamp, core_config, empty_pattern, m2, v2)
+    m3 = merge_manifests(my_device, timestamp, empty_pattern, m2, v2)
     assert m3 == LocalFileManifest.from_remote(v2)
 
     # Two local changes
     m4 = evolve(m3, 2)
-    assert merge_manifests(my_device, timestamp, core_config, empty_pattern, m4) == m4
+    assert merge_manifests(my_device, timestamp, empty_pattern, m4) == m4
     m5 = evolve(m4, 3)
-    assert merge_manifests(my_device, timestamp, core_config, empty_pattern, m4) == m4
+    assert merge_manifests(my_device, timestamp, empty_pattern, m4) == m4
 
     # M4 has been successfully uploaded
     v3 = m4.to_remote(author=my_device, timestamp=timestamp)
-    m6 = merge_manifests(my_device, timestamp, core_config, empty_pattern, m5, v3)
+    m6 = merge_manifests(my_device, timestamp, empty_pattern, m5, v3)
     assert m6 == m5.evolve(base=v3)
 
     # The remote has changed
     v4 = v3.evolve(version=4, size=0, author=other_device)
     with pytest.raises(FSFileConflictError):
-        merge_manifests(my_device, timestamp, core_config, empty_pattern, m6, v4)
+        merge_manifests(my_device, timestamp, empty_pattern, m6, v4)
 
 
 @pytest.mark.trio
@@ -427,11 +426,12 @@ async def test_get_minimal_remote_manifest(alice, alice_sync_transactions):
 
 @pytest.mark.trio
 @pytest.mark.parametrize(
-    "gui_language, suffix", [("en", "content conflict"), ("fr", "Conflit de contenu")]
+    "prefered_lang, suffix",
+    [("en", "content conflict"), ("fr", "Conflit de contenu"), ("dummy", "content conflict")],
 )
-async def test_file_conflict(alice_sync_transactions, gui_language, suffix):
+async def test_file_conflict(alice_sync_transactions, prefered_lang, suffix):
     sync_transactions = alice_sync_transactions
-    sync_transactions.core_config = sync_transactions.core_config.evolve(gui_language=gui_language)
+    sync_transactions.prefered_lang = prefered_lang
     # Prepare
     a_id, fd = await sync_transactions.file_create(FsPath("/a"))
     await sync_transactions.fd_write(fd, b"abc", offset=0)

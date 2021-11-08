@@ -64,7 +64,7 @@ def get_filename(manifest: LocalFolderishManifests, entry_id: EntryID) -> Option
 
 
 def get_conflict_filename(
-    filename: EntryName, filenames: Iterable[EntryName], prefered_lang: str, suffix_key: str
+    filename: EntryName, filenames: Iterable[EntryName], suffix_key: str, prefered_lang: str = "en"
 ) -> EntryName:
     counter = count(2)
 
@@ -113,7 +113,7 @@ def merge_folder_children(
     local_children: Dict[EntryName, EntryID],
     remote_children: Dict[EntryName, EntryID],
     remote_device_name: DeviceID,
-    prefered_lang: str,
+    prefered_lang: str = "en",
 ) -> Dict[EntryName, EntryID]:
     # Prepare lookups
     base_reversed = {entry_id: name for name, entry_id in base_children.items()}
@@ -176,7 +176,10 @@ def merge_folder_children(
     for name, entry_id in solved_local_children.items():
         if name in children:
             name = get_conflict_filename(
-                name, children.keys(), prefered_lang, FILENAME_CONFLICT_KEY
+                filename=name,
+                filenames=children.keys(),
+                suffix_key=FILENAME_CONFLICT_KEY,
+                prefered_lang=prefered_lang,
             )
         children[name] = entry_id
 
@@ -187,11 +190,11 @@ def merge_folder_children(
 def merge_manifests(
     local_author: DeviceID,
     timestamp: DateTime,
-    prefered_lang: str,
     prevent_sync_pattern: Pattern[str],
     local_manifest: BaseLocalManifest,
     remote_manifest: Optional[BaseRemoteManifest] = None,
     force_apply_pattern: Optional[bool] = False,
+    prefered_lang: str = "en",
 ) -> BaseLocalManifest:
     # Start by re-applying pattern (idempotent)
     if force_apply_pattern and isinstance(
@@ -388,13 +391,13 @@ class SyncTransactions(EntryTransactions):
             prevent_sync_pattern = self.local_storage.get_prevent_sync_pattern()
             force_apply_pattern = not self.local_storage.get_prevent_sync_pattern_fully_applied()
             new_local_manifest = merge_manifests(
-                self.local_author,
-                timestamp,
-                self.prefered_lang,
-                prevent_sync_pattern,
-                local_manifest,
-                remote_manifest,
-                force_apply_pattern,
+                local_author=self.local_author,
+                timestamp=timestamp,
+                prevent_sync_pattern=prevent_sync_pattern,
+                local_manifest=local_manifest,
+                remote_manifest=remote_manifest,
+                force_apply_pattern=force_apply_pattern,
+                prefered_lang=self.prefered_lang,
             )
 
             # Extract authors
@@ -494,10 +497,10 @@ class SyncTransactions(EntryTransactions):
                 timestamp = self.device.timestamp()
                 prevent_sync_pattern = self.local_storage.get_prevent_sync_pattern()
                 new_name = get_conflict_filename(
-                    filename,
-                    parent_manifest.children.keys(),
-                    self.prefered_lang,
-                    FILE_CONTENT_CONFLICT_KEY,
+                    filename=filename,
+                    filenames=parent_manifest.children.keys(),
+                    suffix_key=FILE_CONTENT_CONFLICT_KEY,
+                    prefered_lang=self.prefered_lang,
                 )
                 new_manifest = LocalFileManifest.new_placeholder(
                     self.local_author, parent=parent_id, timestamp=timestamp
