@@ -50,5 +50,7 @@ def get_locale_language():
 
 
 def copy_to_clipboard(text):
-    QGuiApplication.clipboard().setText(text, QClipboard.Clipboard)
-    QGuiApplication.clipboard().setText(text, QClipboard.Selection)
+    clipboard = QGuiApplication.clipboard()
+    clipboard.setText(text, QClipboard.Clipboard)
+    if clipboard.supportsSelection():
+        clipboard.setText(text, QClipboard.Selection)
