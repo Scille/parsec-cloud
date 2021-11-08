@@ -13,7 +13,6 @@ from parsec.core.types import (
     LocalWorkspaceManifest,
     FileDescriptor,
     LocalFolderishManifests,
-    Chunk,
 )
 
 
@@ -186,7 +185,7 @@ class EntryTransactions(FileTransactions):
         missing_blocks = []
         manifest, confinement_point = await self._get_manifest_from_path(path)
         manifest: LocalFileManifest
-        accessible_chunks: List[Chunk] = []
+        accessible_chunks = []
         accessible_ids = []
         missing_size = 0
         for blocks in manifest.blocks:
@@ -203,7 +202,7 @@ class EntryTransactions(FileTransactions):
                 missing_blocks.append(chunk.access)
                 missing_size += chunk.raw_size
         # ignoring return type since mypy treat missing_blocks as List[Optional[BlockAccess]] since chunk.access is
-        # Optional but in our case, chink.access always returns
+        # Optional but in our case, chunk.access always returns
         return missing_size, manifest.size, missing_blocks  # type: ignore
 
     async def entry_info(self, path: FsPath) -> Dict[str, object]:
