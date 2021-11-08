@@ -335,7 +335,7 @@ def build_release(version, stage_pause):
     print(f"Create tag {version}")
     if stage_pause:
         input("Pausing, press enter when ready")
-    run_git("tag", str(version), "-m", "Release version {version}", "-a", "-s")
+    run_git("tag", str(version), "-m", f"Release version {version}", "-a", "-s")
 
     # Update __version__ with dev suffix
     dev_version = version.evolve(is_dev=True)
