@@ -178,7 +178,7 @@ class UserFS:
         remote_devices_manager: RemoteDevicesManager,
         event_bus: EventBus,
         prevent_sync_pattern: Pattern[str],
-        prefered_lang: str,
+        preferred_language: str,
     ):
         self.data_base_dir = data_base_dir
         self.device = device
@@ -186,7 +186,7 @@ class UserFS:
         self.remote_devices_manager = remote_devices_manager
         self.event_bus = event_bus
         self.prevent_sync_pattern = prevent_sync_pattern
-        self.prefered_lang = prefered_lang
+        self.preferred_language = preferred_language
 
         self.storage: UserStorage  # Setup by UserStorage.run factory
 
@@ -230,7 +230,7 @@ class UserFS:
         remote_devices_manager: RemoteDevicesManager,
         event_bus: EventBus,
         prevent_sync_pattern: Pattern[str],
-        prefered_lang: str = "en",
+        preferred_language: str = "en",
     ) -> AsyncIterator[UserFSTypeVar]:
         self = cls(
             data_base_dir,
@@ -239,7 +239,7 @@ class UserFS:
             remote_devices_manager,
             event_bus,
             prevent_sync_pattern,
-            prefered_lang,
+            preferred_language,
         )
 
         # Run user storage
@@ -339,7 +339,7 @@ class UserFS:
             backend_cmds=self.backend_cmds,
             event_bus=self.event_bus,
             remote_devices_manager=self.remote_devices_manager,
-            prefered_lang=self.prefered_lang,
+            preferred_language=self.preferred_language,
         )
 
         # Apply the current "prevent sync" pattern

@@ -49,9 +49,9 @@ TRANSLATIONS = {
 # Helpers
 
 
-def get_translated_message(prefered_lang: str, key: str) -> str:
+def get_translated_message(preferred_language: str, key: str) -> str:
     try:
-        translations = TRANSLATIONS[prefered_lang]
+        translations = TRANSLATIONS[preferred_language]
     except KeyError:  # Default to english
         translations = TRANSLATIONS["en"]
 
@@ -64,11 +64,14 @@ def get_filename(manifest: LocalFolderishManifests, entry_id: EntryID) -> Option
 
 
 def get_conflict_filename(
-    filename: EntryName, filenames: Iterable[EntryName], suffix_key: str, prefered_lang: str = "en"
+    filename: EntryName,
+    filenames: Iterable[EntryName],
+    suffix_key: str,
+    preferred_language: str = "en",
 ) -> EntryName:
     counter = count(2)
 
-    suffix = get_translated_message(prefered_lang, suffix_key)
+    suffix = get_translated_message(preferred_language, suffix_key)
     new_filename = full_name(filename, suffix)
     filename_set = set(filenames)
     while new_filename in filename_set:
@@ -112,7 +115,7 @@ def merge_folder_children(
     base_children: Dict[EntryName, EntryID],
     local_children: Dict[EntryName, EntryID],
     remote_children: Dict[EntryName, EntryID],
-    prefered_lang: str = "en",
+    preferred_language: str = "en",
 ) -> Dict[EntryName, EntryID]:
     # Prepare lookups
     base_reversed = {entry_id: name for name, entry_id in base_children.items()}
@@ -178,7 +181,7 @@ def merge_folder_children(
                 filename=name,
                 filenames=children.keys(),
                 suffix_key=FILENAME_CONFLICT_KEY,
-                prefered_lang=prefered_lang,
+                preferred_language=preferred_language,
             )
         children[name] = entry_id
 
@@ -193,7 +196,7 @@ def merge_manifests(
     local_manifest: BaseLocalManifest,
     remote_manifest: Optional[BaseRemoteManifest] = None,
     force_apply_pattern: Optional[bool] = False,
-    prefered_lang: str = "en",
+    preferred_language: str = "en",
 ) -> BaseLocalManifest:
     # Start by re-applying pattern (idempotent)
     if force_apply_pattern and isinstance(
@@ -263,7 +266,7 @@ def merge_manifests(
         base_children=local_manifest.base.children,
         local_children=local_manifest.children,
         remote_children=local_from_remote.children,
-        prefered_lang=prefered_lang,
+        preferred_language=preferred_language,
     )
 
     # Children merge can end up with nothing to sync.
@@ -395,7 +398,7 @@ class SyncTransactions(EntryTransactions):
                 local_manifest=local_manifest,
                 remote_manifest=remote_manifest,
                 force_apply_pattern=force_apply_pattern,
-                prefered_lang=self.prefered_lang,
+                preferred_language=self.preferred_language,
             )
 
             # Extract authors
@@ -498,7 +501,7 @@ class SyncTransactions(EntryTransactions):
                     filename=filename,
                     filenames=parent_manifest.children.keys(),
                     suffix_key=FILE_CONTENT_CONFLICT_KEY,
-                    prefered_lang=self.prefered_lang,
+                    preferred_language=self.preferred_language,
                 )
                 new_manifest = LocalFileManifest.new_placeholder(
                     self.local_author, parent=parent_id, timestamp=timestamp

@@ -42,10 +42,10 @@ def test_full_name(test_input, expected):
 
 
 @pytest.mark.parametrize(
-    "prefered_lang, suffix",
+    "preferred_language, suffix",
     [("en", "name conflict"), ("fr", "Conflit de nom"), ("dummy", "name conflict")],
 )
-def test_merge_folder_children(prefered_lang, suffix):
+def test_merge_folder_children(preferred_language, suffix):
     m1 = EntryID.new()
     m2 = EntryID.new()
     m3 = EntryID.new()
@@ -56,33 +56,33 @@ def test_merge_folder_children(prefered_lang, suffix):
     c1 = {"c.tar.gz": m1}
     c2 = {"c.tar.gz": m2}
     # Empty folder
-    assert merge_folder_children({}, {}, {}, prefered_lang) == {}
+    assert merge_folder_children({}, {}, {}, preferred_language) == {}
 
     # Adding children
-    assert merge_folder_children({}, a1, {}, prefered_lang) == a1
-    assert merge_folder_children({}, {}, a1, prefered_lang) == a1
-    assert merge_folder_children({}, a1, a1, prefered_lang) == a1
+    assert merge_folder_children({}, a1, {}, preferred_language) == a1
+    assert merge_folder_children({}, {}, a1, preferred_language) == a1
+    assert merge_folder_children({}, a1, a1, preferred_language) == a1
 
     # Removing children
-    assert merge_folder_children(a1, {}, a1, prefered_lang) == {}
-    assert merge_folder_children(a1, a1, {}, prefered_lang) == {}
-    assert merge_folder_children(a1, {}, {}, prefered_lang) == {}
+    assert merge_folder_children(a1, {}, a1, preferred_language) == {}
+    assert merge_folder_children(a1, a1, {}, preferred_language) == {}
+    assert merge_folder_children(a1, {}, {}, preferred_language) == {}
 
     # Renaming children
-    assert merge_folder_children(a1, a1, b1, prefered_lang) == b1
-    assert merge_folder_children(a1, b1, a1, prefered_lang) == b1
-    assert merge_folder_children(a1, b1, b1, prefered_lang) == b1
+    assert merge_folder_children(a1, a1, b1, preferred_language) == b1
+    assert merge_folder_children(a1, b1, a1, preferred_language) == b1
+    assert merge_folder_children(a1, b1, b1, preferred_language) == b1
 
     # Conflicting renaming
-    result = merge_folder_children(a1, b1, c1, prefered_lang)
+    result = merge_folder_children(a1, b1, c1, preferred_language)
     assert result == {"c.tar.gz": m1}
 
     # Conflicting names
-    result = merge_folder_children({}, a1, a2, prefered_lang)
+    result = merge_folder_children({}, a1, a2, preferred_language)
     assert result == {"a": m2, f"a (Parsec - {suffix})": m1}
-    result = merge_folder_children({}, b1, b2, prefered_lang)
+    result = merge_folder_children({}, b1, b2, preferred_language)
     assert result == {"b.txt": m2, f"b (Parsec - {suffix}).txt": m1}
-    result = merge_folder_children({}, c1, c2, prefered_lang)
+    result = merge_folder_children({}, c1, c2, preferred_language)
     assert result == {"c.tar.gz": m2, f"c (Parsec - {suffix}).tar.gz": m1}
 
     # Conflicting name with special pattern filename
@@ -91,7 +91,7 @@ def test_merge_folder_children(prefered_lang, suffix):
     a3 = {**base, **a1}
     b3 = {**base, **a2}
 
-    result = merge_folder_children(base, a3, b3, prefered_lang)
+    result = merge_folder_children(base, a3, b3, preferred_language)
     assert result == {"a": m2, f"a (Parsec - {suffix})": m3, f"a (Parsec - {suffix} (2))": m1}
 
     m4 = EntryID.new()
@@ -99,7 +99,7 @@ def test_merge_folder_children(prefered_lang, suffix):
     a3 = {**base, **a1}
     b3 = {**base, **a2}
 
-    result = merge_folder_children(base, a3, b3, prefered_lang)
+    result = merge_folder_children(base, a3, b3, preferred_language)
 
     assert result == {
         "a": m2,
@@ -426,12 +426,12 @@ async def test_get_minimal_remote_manifest(alice, alice_sync_transactions):
 
 @pytest.mark.trio
 @pytest.mark.parametrize(
-    "prefered_lang, suffix",
+    "preferred_language, suffix",
     [("en", "content conflict"), ("fr", "Conflit de contenu"), ("dummy", "content conflict")],
 )
-async def test_file_conflict(alice_sync_transactions, prefered_lang, suffix):
+async def test_file_conflict(alice_sync_transactions, preferred_language, suffix):
     sync_transactions = alice_sync_transactions
-    sync_transactions.prefered_lang = prefered_lang
+    sync_transactions.preferred_language = preferred_language
     # Prepare
     a_id, fd = await sync_transactions.file_create(FsPath("/a"))
     await sync_transactions.fd_write(fd, b"abc", offset=0)

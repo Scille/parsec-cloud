@@ -84,7 +84,7 @@ class FileTransactions:
         local_storage: BaseWorkspaceStorage,
         remote_loader: RemoteLoader,
         event_bus: EventBus,
-        prefered_lang: str,
+        preferred_language: str,
     ):
         self.workspace_id = workspace_id
         self.get_workspace_entry = get_workspace_entry
@@ -93,7 +93,7 @@ class FileTransactions:
         self.remote_loader = remote_loader
         self.event_bus = event_bus
         self._write_count: Dict[FileDescriptor, int] = defaultdict(int)
-        self.prefered_lang = prefered_lang
+        self.preferred_language = preferred_language
 
     @property
     def local_author(self) -> DeviceID:

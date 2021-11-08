@@ -79,7 +79,7 @@ class WorkspaceFS:
         backend_cmds: BackendAuthenticatedCmds,
         event_bus: EventBus,
         remote_devices_manager: RemoteDevicesManager,
-        prefered_lang: str = "en",
+        preferred_language: str = "en",
     ):
         self.workspace_id = workspace_id
         self.get_workspace_entry = get_workspace_entry
@@ -89,7 +89,7 @@ class WorkspaceFS:
         self.backend_cmds = backend_cmds
         self.event_bus = event_bus
         self.remote_devices_manager = remote_devices_manager
-        self.prefered_lang = prefered_lang
+        self.preferred_language = preferred_language
         self.sync_locks: Dict[EntryID, trio.Lock] = defaultdict(trio.Lock)
 
         self.remote_loader = RemoteLoader(
@@ -108,7 +108,7 @@ class WorkspaceFS:
             self.local_storage,
             self.remote_loader,
             self.event_bus,
-            self.prefered_lang,
+            self.preferred_language,
         )
 
     def __repr__(self) -> str:
