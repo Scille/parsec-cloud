@@ -47,7 +47,13 @@ def test_merge_speculative_with_it_unsuspected_former_self(local_changes, core_c
         new_local = new_local.evolve(updated=d4, children=FrozenDict({"bar": bar_id}))
 
     # 4) When syncing the manifest, we shouldn't remove any data from the remote
-    merged = merge_manifests(my_device, d5, core_config, empty_pattern, new_local, v1)
+    merged = merge_manifests(
+        local_author=my_device,
+        timestamp=d5,
+        prevent_sync_pattern=empty_pattern,
+        local_manifest=new_local,
+        remote_manifest=v1,
+    )
 
     if local_changes:
         assert merged == LocalWorkspaceManifest(

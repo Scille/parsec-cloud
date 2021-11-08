@@ -33,6 +33,7 @@ def catch_claim_device_widget(widget_catcher_factory):
 
 @pytest.fixture
 def ClaimDeviceTestBed(
+    monkeypatch,
     aqtbot,
     catch_claim_device_widget,
     autoclose_dialog,
@@ -42,6 +43,11 @@ def ClaimDeviceTestBed(
     alice,
     alice_backend_cmds,
 ):
+    # Disable the sync monitor to avoid concurrent sync right when the claim finish
+    monkeypatch.setattr(
+        "parsec.core.sync_monitor.freeze_sync_monitor_mockpoint", trio.sleep_forever
+    )
+
     class _ClaimDeviceTestBed:
         def __init__(self):
             self.requested_device_label = "PC1"
@@ -269,6 +275,10 @@ def ClaimDeviceTestBed(
                 central_widget = gui.test_get_central_widget()
                 assert central_widget and central_widget.isVisible()
                 assert autoclose_dialog.dialogs == [("", "The device was successfully created!")]
+
+                # Claimed device should start with a speculative user manifest
+                um = central_widget.core.user_fs.get_user_manifest()
+                assert um.speculative
 
             await aqtbot.wait_until(_claim_done)
 

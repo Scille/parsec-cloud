@@ -145,6 +145,11 @@ async def test_good_device_claim(
     async with user_fs_factory(bob) as bobfs:
         async with user_fs_factory(alice) as alicefs:
             async with user_fs_factory(new_device) as newfs:
+                # New device should start with a speculative user manifest
+                um = newfs.get_user_manifest()
+                assert um.is_placeholder
+                assert um.speculative
+
                 # Old device modify user manifest
                 await alicefs.workspace_create("wa")
                 await alicefs.sync()
@@ -303,6 +308,11 @@ async def test_good_user_claim(
     # Test the behavior of this new user device
     async with user_fs_factory(alice) as alicefs:
         async with user_fs_factory(new_device) as newfs:
+            # New user should start with a non-speculative user manifest
+            um = newfs.get_user_manifest()
+            assert um.is_placeholder
+            assert not um.speculative
+
             # Share a workspace with new user
             aw_id = await alicefs.workspace_create("alice_workspace")
             await alicefs.workspace_share(aw_id, new_device.user_id, WorkspaceRole.CONTRIBUTOR)
