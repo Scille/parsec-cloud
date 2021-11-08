@@ -22,7 +22,6 @@ from async_generator import asynccontextmanager
 
 from parsec.utils import open_service_nursery
 from parsec.core.core_events import CoreEvent
-from parsec.core.config import CoreConfig
 from parsec.event_bus import EventBus
 from parsec.crypto import SecretKey
 from parsec.api.data import (
@@ -179,7 +178,7 @@ class UserFS:
         remote_devices_manager: RemoteDevicesManager,
         event_bus: EventBus,
         prevent_sync_pattern: Pattern[str],
-        core_config: CoreConfig,
+        prefered_lang: str,
     ):
         self.data_base_dir = data_base_dir
         self.device = device
@@ -187,7 +186,7 @@ class UserFS:
         self.remote_devices_manager = remote_devices_manager
         self.event_bus = event_bus
         self.prevent_sync_pattern = prevent_sync_pattern
-        self.core_config = core_config
+        self.prefered_lang = prefered_lang
 
         self.storage: UserStorage  # Setup by UserStorage.run factory
 
@@ -231,7 +230,7 @@ class UserFS:
         remote_devices_manager: RemoteDevicesManager,
         event_bus: EventBus,
         prevent_sync_pattern: Pattern[str],
-        core_config: CoreConfig,
+        prefered_lang: str = "en",
     ) -> AsyncIterator[UserFSTypeVar]:
         self = cls(
             data_base_dir,
@@ -240,7 +239,7 @@ class UserFS:
             remote_devices_manager,
             event_bus,
             prevent_sync_pattern,
-            core_config,
+            prefered_lang,
         )
 
         # Run user storage
@@ -340,7 +339,7 @@ class UserFS:
             backend_cmds=self.backend_cmds,
             event_bus=self.event_bus,
             remote_devices_manager=self.remote_devices_manager,
-            core_config=self.core_config,
+            prefered_lang=self.prefered_lang,
         )
 
         # Apply the current "prevent sync" pattern

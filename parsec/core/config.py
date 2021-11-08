@@ -268,10 +268,10 @@ def save_config(config: CoreConfig):
     )
 
 
-def translate(core_config: CoreConfig, key: str) -> str:
+def translate(prefered_lang: str, key: str) -> str:
     res = key
     try:
-        translations = TRANSLATIONS[core_config.gui_language or "en"]
+        translations = TRANSLATIONS[prefered_lang]
     except KeyError:
         return res
 

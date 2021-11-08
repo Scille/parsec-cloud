@@ -7,7 +7,7 @@ from pendulum import DateTime
 
 from parsec.api.protocol import DeviceID
 from parsec.core.core_events import CoreEvent
-from parsec.core.config import CoreConfig, translate
+from parsec.core.config import translate
 from parsec.api.data import EntryNameTooLongError, BaseManifest as BaseRemoteManifest
 from parsec.core.types import (
     Chunk,
@@ -45,11 +45,11 @@ def get_filename(manifest: LocalFolderishManifests, entry_id: EntryID) -> Option
 
 
 def get_conflict_filename(
-    filename: EntryName, filenames: Iterable[EntryName], core_config: CoreConfig, suffix_key: str
+    filename: EntryName, filenames: Iterable[EntryName], prefered_lang: str, suffix_key: str
 ) -> EntryName:
     counter = count(2)
 
-    suffix = translate(core_config, suffix_key)
+    suffix = translate(prefered_lang, suffix_key)
     new_filename = full_name(filename, suffix)
     filename_set = set(filenames)
     while new_filename in filename_set:
@@ -94,7 +94,7 @@ def merge_folder_children(
     local_children: Dict[EntryName, EntryID],
     remote_children: Dict[EntryName, EntryID],
     remote_device_name: DeviceID,
-    core_config: CoreConfig,
+    prefered_lang: str,
 ) -> Dict[EntryName, EntryID]:
     # Prepare lookups
     base_reversed = {entry_id: name for name, entry_id in base_children.items()}
@@ -156,7 +156,9 @@ def merge_folder_children(
         children[name] = entry_id
     for name, entry_id in solved_local_children.items():
         if name in children:
-            name = get_conflict_filename(name, children.keys(), core_config, FILENAME_CONFLICT_KEY)
+            name = get_conflict_filename(
+                name, children.keys(), prefered_lang, FILENAME_CONFLICT_KEY
+            )
         children[name] = entry_id
 
     # Return
@@ -166,7 +168,7 @@ def merge_folder_children(
 def merge_manifests(
     local_author: DeviceID,
     timestamp: DateTime,
-    core_config: CoreConfig,
+    prefered_lang: str,
     prevent_sync_pattern: Pattern[str],
     local_manifest: BaseLocalManifest,
     remote_manifest: Optional[BaseRemoteManifest] = None,
@@ -241,7 +243,7 @@ def merge_manifests(
         local_children=local_manifest.children,
         remote_children=local_from_remote.children,
         remote_device_name=remote_manifest.author,
-        core_config=core_config,
+        prefered_lang=prefered_lang,
     )
 
     # Children merge can end up with nothing to sync.
@@ -369,7 +371,7 @@ class SyncTransactions(EntryTransactions):
             new_local_manifest = merge_manifests(
                 self.local_author,
                 timestamp,
-                self.core_config,
+                self.prefered_lang,
                 prevent_sync_pattern,
                 local_manifest,
                 remote_manifest,
@@ -475,7 +477,7 @@ class SyncTransactions(EntryTransactions):
                 new_name = get_conflict_filename(
                     filename,
                     parent_manifest.children.keys(),
-                    self.core_config,
+                    self.prefered_lang,
                     FILE_CONTENT_CONFLICT_KEY,
                 )
                 new_manifest = LocalFileManifest.new_placeholder(
