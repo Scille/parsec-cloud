@@ -443,13 +443,6 @@ async def test_get_reencryption_need(alice_workspace, running_backend, monkeypat
             await alice_workspace.get_reencryption_need()
 
 
-async def get_blocks_list(blocks):
-    block_list = []
-    async for block in blocks:
-        block_list.append(block)
-    return block_list
-
-
 @pytest.mark.trio
 async def test_backend_block_data_online(
     alice_user_fs, alice2_user_fs, running_backend, monkeypatch

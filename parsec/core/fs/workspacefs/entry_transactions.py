@@ -181,20 +181,29 @@ class EntryTransactions(FileTransactions):
             await self._load_manifest(entry_id)
 
     # Transactions
-
     async def entry_missing_data(self, path: FsPath) -> Tuple[int, int, List[BlockAccess]]:
         missing_blocks = []
         manifest, confinement_point = await self._get_manifest_from_path(path)
         manifest: LocalFileManifest
+        accessible_chunks = []
+        accessible_ids = []
         missing_size = 0
         for blocks in manifest.blocks:
             for chunk in blocks:
                 if chunk.access:
-                    if not await self.local_storage.block_storage.is_chunk(chunk.id):
-                        missing_blocks.append(chunk.access)
-                        missing_size += chunk.raw_size
+                    accessible_chunks.append(chunk)
+                    accessible_ids.append(chunk.id)
 
-        return missing_size, manifest.size, missing_blocks
+        boolean_chunk_list = await self.local_storage.block_storage.are_chunks(accessible_ids)
+
+        for count, b in enumerate(boolean_chunk_list):
+            if not b:
+                chunk = accessible_chunks[count]
+                missing_blocks.append(chunk.access)
+                missing_size += chunk.raw_size
+        # ignoring return type since mypy treat missing_blocks as List[Optional[BlockAccess]] since chunk.access is
+        # Optional but in our case, chunk.access always returns
+        return missing_size, manifest.size, missing_blocks  # type: ignore
 
     async def entry_info(self, path: FsPath) -> Dict[str, object]:
         # Check read rights
