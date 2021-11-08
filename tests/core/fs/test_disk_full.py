@@ -33,7 +33,7 @@ async def alice_fs_context(loopback_fs, event_bus_factory, alice):
         ) as cmds:
             rdm = RemoteDevicesManager(cmds, alice.root_verify_key)
             async with UserFS.run(
-                alice, path, cmds, rdm, event_bus, get_prevent_sync_pattern()
+                path, alice, cmds, rdm, event_bus, get_prevent_sync_pattern()
             ) as user_fs:
                 yield user_fs
 
