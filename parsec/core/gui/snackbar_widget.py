@@ -97,7 +97,7 @@ class SnackbarWidget(QWidget, Ui_SnackbarWidget):
 
     def move_popup(self):
         width = min(500, self.main_window.size().width() - 40)
-        height = 75        
+        height = 75
         if platform.system() == "Windows":
             height = 101
             self.resize(QSize(width, height))
