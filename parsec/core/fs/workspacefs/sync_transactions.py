@@ -247,7 +247,7 @@ def merge_manifests(
     # Children merge can end up with nothing to sync.
     #
     # This is typically the case when we sync for the first time a workspace
-    # shared with us that we didn't modified:
+    # shared with us that we didn't modify:
     # - the workspace manifest is a speculative placeholder (with arbitrary update&create dates)
     # - on sync the update date is different than in the remote, so a merge occurs
     # - given we didn't modify the workspace, the children merge is trivial
