@@ -443,6 +443,13 @@ async def test_get_reencryption_need(alice_workspace, running_backend, monkeypat
             await alice_workspace.get_reencryption_need()
 
 
+async def get_blocks_list(blocks):
+    block_list = []
+    async for block in blocks:
+        block_list.append(block)
+    return block_list
+
+
 @pytest.mark.trio
 async def test_backend_block_data_online(
     alice_user_fs, alice2_user_fs, running_backend, monkeypatch
@@ -476,10 +483,11 @@ async def test_backend_block_data_online(
     await alice_workspace.sync()
 
     blocks, size = await alice_workspace.get_file_blocks_to_load(fspath)
-    assert blocks == []
+    assert len(await get_blocks_list(blocks)) == 0
 
     # Check the blocks to download and the size of the total manifest
     blocks, size = await alice2_workspace.get_file_blocks_to_load(fspath)
+    blocks = await get_blocks_list(blocks)
     size_to_download = 0
     for block in blocks:
         size_to_download += block.size
@@ -490,12 +498,14 @@ async def test_backend_block_data_online(
     await alice2_workspace.remote_loader.load_block(block)
 
     blocks, size = await alice2_workspace.get_file_blocks_to_load(fspath)
+    blocks = await get_blocks_list(blocks)
     assert len(blocks) == TAZ_V2_BLOCKS - 1
 
     # load the rest
     await alice2_workspace.remote_loader.load_blocks(blocks)
 
     blocks, size = await alice2_workspace.get_file_blocks_to_load(fspath)
+    blocks = await get_blocks_list(blocks)
 
     assert blocks == []
     assert size == TAZ_V2_BLOCKS * DEFAULT_BLOCK_SIZE
