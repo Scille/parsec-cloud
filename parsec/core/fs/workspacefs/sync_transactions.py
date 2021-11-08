@@ -112,7 +112,6 @@ def merge_folder_children(
     base_children: Dict[EntryName, EntryID],
     local_children: Dict[EntryName, EntryID],
     remote_children: Dict[EntryName, EntryID],
-    remote_device_name: DeviceID,
     prefered_lang: str = "en",
 ) -> Dict[EntryName, EntryID]:
     # Prepare lookups
@@ -264,7 +263,6 @@ def merge_manifests(
         base_children=local_manifest.base.children,
         local_children=local_manifest.children,
         remote_children=local_from_remote.children,
-        remote_device_name=remote_manifest.author,
         prefered_lang=prefered_lang,
     )
 

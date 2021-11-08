@@ -56,33 +56,33 @@ def test_merge_folder_children(prefered_lang, suffix):
     c1 = {"c.tar.gz": m1}
     c2 = {"c.tar.gz": m2}
     # Empty folder
-    assert merge_folder_children({}, {}, {}, "a@a", prefered_lang) == {}
+    assert merge_folder_children({}, {}, {}, prefered_lang) == {}
 
     # Adding children
-    assert merge_folder_children({}, a1, {}, "a@a", prefered_lang) == a1
-    assert merge_folder_children({}, {}, a1, "a@a", prefered_lang) == a1
-    assert merge_folder_children({}, a1, a1, "a@a", prefered_lang) == a1
+    assert merge_folder_children({}, a1, {}, prefered_lang) == a1
+    assert merge_folder_children({}, {}, a1, prefered_lang) == a1
+    assert merge_folder_children({}, a1, a1, prefered_lang) == a1
 
     # Removing children
-    assert merge_folder_children(a1, {}, a1, "a@a", prefered_lang) == {}
-    assert merge_folder_children(a1, a1, {}, "a@a", prefered_lang) == {}
-    assert merge_folder_children(a1, {}, {}, "a@a", prefered_lang) == {}
+    assert merge_folder_children(a1, {}, a1, prefered_lang) == {}
+    assert merge_folder_children(a1, a1, {}, prefered_lang) == {}
+    assert merge_folder_children(a1, {}, {}, prefered_lang) == {}
 
     # Renaming children
-    assert merge_folder_children(a1, a1, b1, "a@a", prefered_lang) == b1
-    assert merge_folder_children(a1, b1, a1, "a@a", prefered_lang) == b1
-    assert merge_folder_children(a1, b1, b1, "a@a", prefered_lang) == b1
+    assert merge_folder_children(a1, a1, b1, prefered_lang) == b1
+    assert merge_folder_children(a1, b1, a1, prefered_lang) == b1
+    assert merge_folder_children(a1, b1, b1, prefered_lang) == b1
 
     # Conflicting renaming
-    result = merge_folder_children(a1, b1, c1, "a@a", prefered_lang)
+    result = merge_folder_children(a1, b1, c1, prefered_lang)
     assert result == {"c.tar.gz": m1}
 
     # Conflicting names
-    result = merge_folder_children({}, a1, a2, "a@a", prefered_lang)
+    result = merge_folder_children({}, a1, a2, prefered_lang)
     assert result == {"a": m2, f"a (Parsec - {suffix})": m1}
-    result = merge_folder_children({}, b1, b2, "a@a", prefered_lang)
+    result = merge_folder_children({}, b1, b2, prefered_lang)
     assert result == {"b.txt": m2, f"b (Parsec - {suffix}).txt": m1}
-    result = merge_folder_children({}, c1, c2, "a@a", prefered_lang)
+    result = merge_folder_children({}, c1, c2, prefered_lang)
     assert result == {"c.tar.gz": m2, f"c (Parsec - {suffix}).tar.gz": m1}
 
     # Conflicting name with special pattern filename
@@ -91,7 +91,7 @@ def test_merge_folder_children(prefered_lang, suffix):
     a3 = {**base, **a1}
     b3 = {**base, **a2}
 
-    result = merge_folder_children(base, a3, b3, "a@a", prefered_lang)
+    result = merge_folder_children(base, a3, b3, prefered_lang)
     assert result == {"a": m2, f"a (Parsec - {suffix})": m3, f"a (Parsec - {suffix} (2))": m1}
 
     m4 = EntryID.new()
@@ -99,7 +99,7 @@ def test_merge_folder_children(prefered_lang, suffix):
     a3 = {**base, **a1}
     b3 = {**base, **a2}
 
-    result = merge_folder_children(base, a3, b3, "a@a", prefered_lang)
+    result = merge_folder_children(base, a3, b3, prefered_lang)
 
     assert result == {
         "a": m2,
