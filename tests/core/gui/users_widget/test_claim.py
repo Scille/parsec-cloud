@@ -36,6 +36,7 @@ def catch_claim_user_widget(widget_catcher_factory):
 
 @pytest.fixture
 def ClaimUserTestBed(
+    monkeypatch,
     aqtbot,
     catch_claim_user_widget,
     autoclose_dialog,
@@ -45,6 +46,11 @@ def ClaimUserTestBed(
     alice,
     alice_backend_cmds,
 ):
+    # Disable the sync monitor to avoid concurrent sync right when the claim finish
+    monkeypatch.setattr(
+        "parsec.core.sync_monitor.freeze_sync_monitor_mockpoint", trio.sleep_forever
+    )
+
     class _ClaimUserTestBed:
         def __init__(self):
             self.requested_human_handle = HumanHandle(email="pfry@pe.com", label="Philip J. Fry")
@@ -303,6 +309,10 @@ def ClaimUserTestBed(
                 # Should be logged in with the new device
                 central_widget = gui.test_get_central_widget()
                 assert central_widget and central_widget.isVisible()
+
+                # Claimed user should start with a non-speculative user manifest
+                um = central_widget.core.user_fs.get_user_manifest()
+                assert not um.speculative
 
             await aqtbot.wait_until(_claim_done)
 
