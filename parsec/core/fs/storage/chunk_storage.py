@@ -4,7 +4,7 @@ import time
 
 import trio
 from pathlib import Path
-from typing import AsyncIterator, AsyncContextManager, TypeVar
+from typing import AsyncIterator, AsyncContextManager, TypeVar, List
 from async_generator import asynccontextmanager
 
 
@@ -95,6 +95,24 @@ class ChunkStorage:
             cursor.execute("SELECT chunk_id FROM chunks WHERE chunk_id = ?", (chunk_id.bytes,))
             manifest_row = cursor.fetchone()
         return bool(manifest_row)
+
+    async def are_chunks(self, chunk_id: List[ChunkID]) -> List[bool]:
+        boolean_chunk_list = []
+        bytes_id_list = [id.bytes for id in chunk_id]
+        async with self._open_cursor() as cursor:
+            # Can't use execute many with SELECT so we make the query by hand
+            query = "SELECT chunk_id FROM chunks WHERE chunk_id in ({0})".format(
+                ", ".join("?" for _ in chunk_id)
+            )
+
+            cursor.execute(query, bytes_id_list)
+            manifest_rows = cursor.fetchall()
+
+        size = len(manifest_rows)
+        for i in range(len(chunk_id)):
+            boolean_chunk_list.append(bool(manifest_rows[i] if i < size else False))
+
+        return boolean_chunk_list
 
     async def get_chunk(self, chunk_id: ChunkID) -> bytes:
         async with self._open_cursor() as cursor:
