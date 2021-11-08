@@ -9,28 +9,65 @@ from parsec.api.protocol import RealmRole, UserProfile
 from parsec.core.fs.exceptions import FSReadOnlyError, FSWorkspaceNoWriteAccess
 
 
+@pytest.fixture
+def shift_now(monkeypatch):
+    testing = True
+    current_delay_us = 0
+
+    def get_real_now():
+        nonlocal testing
+        try:
+            testing = False
+            return now()
+        finally:
+            testing = True
+
+    def _shift_now(delay):
+        nonlocal current_delay_us
+        current_delay_us += int(delay * 1_000_000)
+
+    monkeypatch.setattr("pendulum.has_test_now", lambda: testing)
+    monkeypatch.setattr(
+        "pendulum.get_test_now", lambda: get_real_now().add(microseconds=current_delay_us)
+    )
+
+    return _shift_now
+
+
+@pytest.fixture
+def set_device_time_offset(monkeypatch):
+    per_device_time_offsets_us = {}
+
+    def _set_device_time_offset(device, offset):
+        per_device_time_offsets_us[device.device_id] = int(offset * 1_000_000)
+
+    monkeypatch.setattr(
+        "parsec.core.types.LocalDevice.timestamp",
+        # We're using `now()` plus an offset to control each device time.
+        # Using `now()` allows for a realistic progress of time, only shifted for each device.
+        # Then the `shift_now` fixture can be used to flash-forward.
+        lambda local_device: now().add(
+            microseconds=per_device_time_offsets_us[local_device.device_id]
+        ),
+    )
+
+    return _set_device_time_offset
+
+
 @pytest.mark.slow
 def test_timestamp_causality(
     user_fs_online_state_machine,
     coolorg,
     local_device_factory,
     backend_data_binder_factory,
-    monkeypatch,
+    set_device_time_offset,
+    shift_now,
 ):
     small_offset = st.integers(min_value=0, max_value=5)
     alice = local_device_factory("alice-causality@dev1", profile=UserProfile.ADMIN)
     bob = local_device_factory("bob-causality@dev1", profile=UserProfile.STANDARD)
     carl = local_device_factory("carl-causality@dev1", profile=UserProfile.STANDARD)
     diana = local_device_factory("diana-causality@dev1", profile=UserProfile.STANDARD)
-
-    per_device_time_offsets = {device.device_id: 0 for device in (alice, bob, carl, diana)}
-    monkeypatch.setattr(
-        "parsec.core.types.LocalDevice.timestamp",
-        # We're using `now()` plus an offset to control each device time.
-        # Using `now()` allows for a realistic progress of time, only shifted for each device.
-        # Then the `a_few_seconds_goes_by` rule allows hypothesis to flash-forward.
-        lambda local_device: now().add(seconds=per_device_time_offsets[local_device.device_id]),
-    )
 
     class TimestampCausality(user_fs_online_state_machine):
         """
@@ -63,8 +100,8 @@ def test_timestamp_causality(
             return self.diana_controller.user_fs
 
         async def reset_all(self):
-            nonlocal per_device_time_offsets
-            per_device_time_offsets = {device.device_id: 0 for device in (alice, bob, carl, diana)}
+            for device in (alice, bob, carl, diana):
+                set_device_time_offset(device, 0.0)
             for name in ["alice", "bob", "carl", "diana"]:
                 controller_name = f"{name}_controller"
                 try:
@@ -130,14 +167,11 @@ def test_timestamp_causality(
             # Clear Alice's cache since the offsets have not been applied yet
             self.alice_fs.remote_loader.clear_realm_role_certificate_cache()
 
-            # Patch LocalDevice.timestamp()
-            nonlocal per_device_time_offsets
-            per_device_time_offsets = {
-                alice.device_id: alice_offset,
-                bob.device_id: bob_offset,
-                carl.device_id: carl_offset,
-                diana.device_id: diana_offset,
-            }
+            # Set device time offsets
+            set_device_time_offset(alice, alice_offset)
+            set_device_time_offset(bob, bob_offset)
+            set_device_time_offset(carl, carl_offset)
+            set_device_time_offset(diana, diana_offset)
 
         @rule()
         async def bob_updates_the_file(self):
@@ -189,9 +223,7 @@ def test_timestamp_causality(
 
         @rule(seconds=st.integers(min_value=1, max_value=60))
         async def a_few_seconds_goes_by(self, seconds):
-            nonlocal per_device_time_offsets
-            for key, value in per_device_time_offsets.items():
-                per_device_time_offsets[key] = value + seconds
+            shift_now(seconds)
 
         async def teardown(self):
             await self.reset_all()

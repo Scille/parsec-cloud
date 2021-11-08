@@ -10,8 +10,6 @@ import contextlib
 import importlib_resources
 import functools
 
-FIRST_APP = None
-
 
 @functools.lru_cache()
 def get_parsec_icon_data():
@@ -50,13 +48,7 @@ def safe_app():
     from PyQt5.QtWidgets import QApplication
     from PyQt5.QtCore import QEventLoop
 
-    # Reuse the first application if availablee
-    global FIRST_APP
-    if FIRST_APP is None:
-        app = QApplication(sys.argv)
-    else:
-        app, FIRST_APP = FIRST_APP, None
-
+    app = QApplication(sys.argv)
     try:
         # The icon is already set properly for frozen executables.
         # Also, the icon is not set properly for native dialogs due to a bug in pyqt.
@@ -66,7 +58,9 @@ def safe_app():
         frozen = getattr(sys, "frozen", False)
         if not frozen:
             set_parsec_icon(app)
-        yield app
+
+        yield
+
     finally:
         # Exiting the app, necessary on macos
         app.exit()
@@ -77,25 +71,17 @@ def safe_app():
 
 
 def load_resources(with_printer=False):
-    from PyQt5.QtWidgets import QApplication
 
     # Loading resources require an application
-    # Save this application globally so it can be use by the first dialog
-    global FIRST_APP
-    FIRST_APP = QApplication(sys.argv)
+    with safe_app():
 
-    # Populate `get_parsec_icon_data` cache if necessary
-    frozen = getattr(sys, "frozen", False)
-    if not frozen:
-        get_parsec_icon_data()
+        # First printer instanciation might take a long time on windows
+        # when network printers are involved. See the bug report:
+        # https://bugreports.qt.io/browse/QTBUG-49560
+        if with_printer:
+            from PyQt5.QtPrintSupport import QPrinter
 
-    # First printer instanciation might take a long time on windows
-    # when network printers are involved. See the bug report:
-    # https://bugreports.qt.io/browse/QTBUG-49560
-    if with_printer:
-        from PyQt5.QtPrintSupport import QPrinter
-
-        QPrinter(QPrinter.HighResolution)
+            QPrinter(QPrinter.HighResolution)
 
 
 def run_dialog(cls, method, *args, **kwargs):

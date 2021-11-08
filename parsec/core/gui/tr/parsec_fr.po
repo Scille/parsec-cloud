@@ -25,7 +25,7 @@ msgid "TEXT_AUTH_CHANGE_SUCCESS"
 msgstr "L'authentification a été changée avec succès !"
 
 msgid "TEXT_INVALID_SMARTCARD"
-msgstr "Cette carte à puece ne peut pas être utilisée "
+msgstr "Cette carte à puce ne peut pas être utilisée "
 "pour s'authentifier."
 
 msgid "TEXT_CANNOT_SAVE_DEVICE"
@@ -2362,11 +2362,11 @@ msgstr "Veuillez fournir les informations suivantes pour créer votre organisati
 msgid "TEXT_DEVICE_RECOVERY_EXPORT_INSTRUCTIONS"
 msgstr ""
 "Vous allez pouvoir créer un appareil de récupération.<br />\n"
-"Il est composé d'un fichier et d'une phrase secrète qui vous permettront "
-"de récupérer votre appareil si vous le perdez."
+"Un appareil de récupération est constitué d'un fichier protégé par une phrase "
+"secrète et vous permet de re-créer des appareils si vous perdez votre appareil actuel."
 
 msgid "TEXT_DEVICE_RECOVERY_EXPORT_SELECT_DEVICE_LABEL"
-msgstr "Choisissez l'appareil pour lequel vous souhaitez créer une récupération"
+msgstr "Choisissez l'utilisateur pour lequel vous souhaitez créer une récupération"
 
 msgid "TEXT_DEVICE_RECOVERY_EXPORT_SELECT_FILE_LABEL"
 msgstr "Choisissez un emplacement pour le fichier de récupération"
