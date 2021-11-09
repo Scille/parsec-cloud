@@ -329,8 +329,8 @@ msgstr "Please enter the device password."
 
 msgid "TEXT_UNLOCK_ERROR_SMARTCARD_NOT_AVAILABLE"
 msgstr ""
-"This device was created with a smartcard but this version of Parsec does "
-"not support smartcards. We cannot unlock this device."
+"This device is protected by smartcard authentication, which is not "
+"supported by this version of Parsec."
 
 msgid "TEXT_DEVICE_RECOVERY_EXPORT_WIZARD_TITLE"
 msgstr "Create a recovery device"
@@ -812,8 +812,8 @@ msgstr "Cannot log in. The workspaces could not be mounted."
 
 msgid "TEXT_LOGIN_SMARTCARD_NOT_AVAILABLE"
 msgstr ""
-"This device was created with a smartcard but this version of Parsec does "
-"not support smartcards."
+"This device is protected by smartcard authentication, which is not "
+"supported by this version of Parsec."
 
 msgid "TEXT_PARSEC_LICENSE"
 msgstr ""

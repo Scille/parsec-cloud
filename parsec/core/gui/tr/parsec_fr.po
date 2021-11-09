@@ -349,8 +349,8 @@ msgstr "Veuillez entrer votre mot de passe pour déverouiller cet appareil."
 
 msgid "TEXT_UNLOCK_ERROR_SMARTCARD_NOT_AVAILABLE"
 msgstr ""
-"Cet appareil a été créé avec une carte à puce, mais cette version de "
-"Parsec ne supporte pas les cartes à puce."
+"Cet appareil est protogé par une authentification via carte à puce, "
+"toutefois cette version de Parsec ne supporte ce type d'authentification."
 
 msgid "TEXT_DEVICE_RECOVERY_EXPORT_WIZARD_TITLE"
 msgstr "Créer une appareil de récupération"
@@ -862,8 +862,8 @@ msgstr ""
 
 msgid "TEXT_LOGIN_SMARTCARD_NOT_AVAILABLE"
 msgstr ""
-"Cet appareil a été créé avec une carte à puce, mais cette version de "
-"Parsec ne supporte pas les cartes à puce."
+"Cet appareil est protogé par une authentification via carte à puce, "
+"toutefois cette version de Parsec ne supporte ce type d'authentification."
 
 msgid "TEXT_PARSEC_LICENSE"
 msgstr ""
