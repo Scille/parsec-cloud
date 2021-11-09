@@ -122,6 +122,30 @@ class WorkspaceFS:
         path = FsPath(path)
         return await self.transactions.entry_missing_data(path)
 
+    async def load_block(self, block: BlockAccess) -> None:
+        """
+        Raises:
+            FSError
+            FSRemoteBlockNotFound
+            FSBackendOfflineError
+            FSRemoteOperationError
+            FSWorkspaceInMaintenance
+            FSWorkspaceNoAccess
+        """
+        await self.remote_loader.load_block(block)
+
+    async def load_blocks(self, blocks: List[BlockAccess]) -> None:
+        """
+        Raises:
+            FSError
+            FSRemoteBlockNotFound
+            FSBackendOfflineError
+            FSRemoteOperationError
+            FSWorkspaceInMaintenance
+            FSWorkspaceNoAccess
+        """
+        await self.remote_loader.load_blocks(blocks)
+
     def get_workspace_name(self) -> str:
         return self.get_workspace_entry().name
 

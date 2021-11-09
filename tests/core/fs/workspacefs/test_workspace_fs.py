@@ -488,7 +488,7 @@ async def test_backend_block_data_online(
 
     # load one block
     block = blocks[0]
-    await alice2_workspace.remote_loader.load_block(block)
+    await alice2_workspace.load_block(block)
 
     missing_size, total_size, blocks = await alice2_workspace.get_file_blocks_to_load(fspath)
     assert len(blocks) == TAZ_V2_BLOCKS - 1
@@ -496,7 +496,7 @@ async def test_backend_block_data_online(
     assert missing_size == (TAZ_V2_BLOCKS - 1) * DEFAULT_BLOCK_SIZE
 
     # load the rest
-    await alice2_workspace.remote_loader.load_blocks(blocks)
+    await alice2_workspace.load_blocks(blocks)
 
     missing_size, total_size, blocks = await alice2_workspace.get_file_blocks_to_load(fspath)
     assert len(blocks) == 0
