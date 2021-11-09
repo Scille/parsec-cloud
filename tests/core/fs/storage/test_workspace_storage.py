@@ -412,6 +412,26 @@ async def test_chunk_interface(alice_workspace_storage):
 
 @pytest.mark.trio
 @customize_fixtures(real_data_storage=True)
+async def test_chunk_many(alice_workspace_storage):
+    data = b"0123456"
+    aws = alice_workspace_storage
+    # More than the sqLite max argument limit to prevent regression
+    chunks_number = 1000
+    chunks = []
+    for i in range(chunks_number):
+        c = Chunk.new(0, 7)
+        chunks.append(c.id)
+        await aws.chunk_storage.set_chunk(c.id, data)
+
+    assert len(chunks) == chunks_number
+    ret = await aws.chunk_storage.are_chunks(chunks)
+    for i in range(len(ret)):
+        assert ret[i]
+    assert len(ret) == chunks_number
+
+
+@pytest.mark.trio
+@customize_fixtures(real_data_storage=True)
 async def test_file_descriptor(alice_workspace_storage):
     aws = alice_workspace_storage
     manifest = create_manifest(aws.device, LocalFileManifest)

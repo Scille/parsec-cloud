@@ -97,12 +97,13 @@ class ChunkStorage:
         return bool(manifest_row)
 
     async def are_chunks(self, chunk_id: List[ChunkID]) -> List[bool]:
+
         boolean_chunk_list = []
         bytes_id_list = [(id.bytes,) for id in chunk_id]
+
         async with self._open_cursor() as cursor:
             # Can't use execute many with SELECT so we have to make a temporary table filled with the needed chunk_id
             # and intersect it with the normal table
-
             cursor.execute("""DROP TABLE IF EXISTS tmpchunks""")
             cursor.execute(
                 """CREATE TABLE IF NOT EXISTS tmpchunks
