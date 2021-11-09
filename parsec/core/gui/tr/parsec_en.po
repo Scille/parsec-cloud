@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PROJECT VERSION\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2021-11-02 17:21+0100\n"
+"POT-Creation-Date: 2021-11-09 09:49+0100\n"
 "PO-Revision-Date: 2020-10-15 10:30+0200\n"
 "Last-Translator: \n"
 "Language: en\n"
@@ -326,6 +326,11 @@ msgstr "Cannot create recovery device"
 
 msgid "TEXT_DEVICE_UNLOCK_FOR_RECOVERY_LABEL"
 msgstr "Please enter the device password."
+
+msgid "TEXT_UNLOCK_ERROR_SMARTCARD_NOT_AVAILABLE"
+msgstr ""
+"This device is protected by smartcard authentication, which is not "
+"supported by this version of Parsec."
 
 msgid "TEXT_DEVICE_RECOVERY_EXPORT_WIZARD_TITLE"
 msgstr "Create a recovery device"
@@ -804,6 +809,11 @@ msgstr "This device is already logged in, probably in another tab."
 
 msgid "TEXT_LOGIN_MOUNTPOINT_ERROR"
 msgstr "Cannot log in. The workspaces could not be mounted."
+
+msgid "TEXT_LOGIN_SMARTCARD_NOT_AVAILABLE"
+msgstr ""
+"This device is protected by smartcard authentication, which is not "
+"supported by this version of Parsec."
 
 msgid "TEXT_PARSEC_LICENSE"
 msgstr ""
@@ -2297,8 +2307,8 @@ msgstr "Please fill out the following information to create your organization."
 msgid "TEXT_DEVICE_RECOVERY_EXPORT_INSTRUCTIONS"
 msgstr ""
 "You will be able to create a recovery device.<br />\n"
-"A recovery device is stored on a file protected by a passphrase and allow "
-"you to re-create new devices in case you lost your current one."
+"A recovery device is stored on a file protected by a passphrase and allow"
+" you to re-create new devices in case you lost your current one."
 
 msgid "TEXT_DEVICE_RECOVERY_EXPORT_SELECT_DEVICE_LABEL"
 msgstr "Select the user you want to create a recovery for"
@@ -2663,3 +2673,4 @@ msgstr "Create a new workspace"
 
 msgid "ACTION_WORKSPACE_GOTO_FILE_LINK"
 msgstr "Go to a file using a link"
+

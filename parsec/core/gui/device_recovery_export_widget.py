@@ -189,8 +189,16 @@ class DeviceRecoveryExportWidget(QWidget, Ui_DeviceRecoveryExportWidget):
             elif selected_device.type == DeviceFileType.SMARTCARD:
                 try:
                     device = load_device_with_smartcard(selected_device.key_file_path)
-                except LocalDeviceError:
-                    show_error(self, translate("TEXT_LOGIN_ERROR_AUTHENTICATION_FAILED"))
+                except LocalDeviceError as exc:
+                    show_error(
+                        self, translate("TEXT_LOGIN_ERROR_AUTHENTICATION_FAILED"), exception=exc
+                    )
+                    self.button_validate.setEnabled(True)
+                    return
+                except ModuleNotFoundError as exc:
+                    show_error(
+                        self, translate("TEXT_UNLOCK_ERROR_SMARTCARD_NOT_AVAILABLE"), exception=exc
+                    )
                     self.button_validate.setEnabled(True)
                     return
             self.jobs_ctx.submit_job(

@@ -254,7 +254,9 @@ class InstanceWidget(QWidget):
         except LocalDeviceError as exc:
             message = _("TEXT_LOGIN_ERROR_AUTHENTICATION_FAILED")
             exception = exc
-
+        except ModuleNotFoundError as exc:
+            message = _("TEXT_LOGIN_SMARTCARD_NOT_AVAILABLE")
+            exception = exc
         except (RuntimeError, MountpointConfigurationError, MountpointDriverCrash) as exc:
             message = _("TEXT_LOGIN_MOUNTPOINT_ERROR")
             exception = exc
