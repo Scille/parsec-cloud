@@ -416,7 +416,7 @@ async def test_chunk_many(alice_workspace_storage):
     data = b"0123456"
     aws = alice_workspace_storage
     # More than the sqLite max argument limit to prevent regression
-    chunks_number = 1000
+    chunks_number = 2000
     chunks = []
     for i in range(chunks_number):
         c = Chunk.new(0, 7)

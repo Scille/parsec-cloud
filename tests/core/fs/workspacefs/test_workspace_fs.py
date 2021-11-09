@@ -480,15 +480,36 @@ async def test_backend_block_data_online(
     assert total_size == TAZ_V2_BLOCKS * DEFAULT_BLOCK_SIZE
     assert missing_size == 0
 
+    missing_size, total_size, blocks = await alice_workspace.get_file_blocks_to_load(
+        fspath, DEFAULT_BLOCK_SIZE
+    )
+    assert len(blocks) == 0
+    assert total_size == DEFAULT_BLOCK_SIZE
+    assert missing_size == 0
+
     # Check the blocks to download and the size of the total manifest
     missing_size, total_size, blocks = await alice2_workspace.get_file_blocks_to_load(fspath)
     assert len(blocks) == TAZ_V2_BLOCKS
     assert total_size == TAZ_V2_BLOCKS * DEFAULT_BLOCK_SIZE
     assert missing_size == (TAZ_V2_BLOCKS) * DEFAULT_BLOCK_SIZE
 
+    missing_size, total_size, blocks = await alice2_workspace.get_file_blocks_to_load(
+        fspath, DEFAULT_BLOCK_SIZE
+    )
+    assert len(blocks) == 1
+    assert total_size == DEFAULT_BLOCK_SIZE
+    assert missing_size == DEFAULT_BLOCK_SIZE
+
     # load one block
     block = blocks[0]
     await alice2_workspace.load_block(block)
+
+    missing_size, total_size, blocks = await alice2_workspace.get_file_blocks_to_load(
+        fspath, DEFAULT_BLOCK_SIZE
+    )
+    assert len(blocks) == 0
+    assert total_size == DEFAULT_BLOCK_SIZE
+    assert missing_size == 0
 
     missing_size, total_size, blocks = await alice2_workspace.get_file_blocks_to_load(fspath)
     assert len(blocks) == TAZ_V2_BLOCKS - 1

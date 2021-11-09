@@ -104,26 +104,26 @@ class ChunkStorage:
         async with self._open_cursor() as cursor:
             # Can't use execute many with SELECT so we have to make a temporary table filled with the needed chunk_id
             # and intersect it with the normal table
-            cursor.execute("""DROP TABLE IF EXISTS tmpchunks""")
+            cursor.execute("""DROP TABLE IF EXISTS tempchunks""")
             cursor.execute(
-                """CREATE TABLE IF NOT EXISTS tmpchunks
+                """CREATE TABLE IF NOT EXISTS tempchunks
                     (chunk_id BLOB PRIMARY KEY NOT NULL -- UUID
                 );"""
             )
 
             cursor.executemany(
                 """INSERT OR REPLACE INTO
-            tmpchunks (chunk_id)
+            tempchunks (chunk_id)
             VALUES (?)""",
                 iter(bytes_id_list),
             )
 
             cursor.execute(
-                """SELECT chunk_id FROM chunks INTERSECT SELECT chunk_id FROM tmpchunks"""
+                """SELECT chunk_id FROM chunks INTERSECT SELECT chunk_id FROM tempchunks"""
             )
 
             manifest_rows = cursor.fetchall()
-            cursor.execute("""DROP TABLE IF EXISTS tmpchunks""")
+            cursor.execute("""DROP TABLE IF EXISTS tempchunks""")
 
         size = len(manifest_rows)
         for i in range(len(chunk_id)):
