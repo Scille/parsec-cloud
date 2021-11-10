@@ -61,6 +61,10 @@ app = BUNDLE(coll,
             'CFBundleURLName': 'com.scille.parsec',
             'CFBundleURLSchemes': ['parsec']
          }
-      ]
+      ],
+      'LSEnvironment': {
+         'LANG': 'en_US.UTF-8',
+         'LC_CTYPE': 'en_US.UTF-8'
+      },
    },
 )
