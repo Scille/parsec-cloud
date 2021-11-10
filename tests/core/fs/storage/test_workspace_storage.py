@@ -1,5 +1,4 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2016-2021 Scille SAS
-
 import pytest
 from pendulum import now
 
@@ -422,7 +421,6 @@ async def test_chunk_many(alice_workspace_storage):
         c = Chunk.new(0, 7)
         chunks.append(c.id)
         await aws.chunk_storage.set_chunk(c.id, data)
-
     assert len(chunks) == chunks_number
     ret = await aws.chunk_storage.are_chunks(chunks)
     for i in range(len(ret)):
