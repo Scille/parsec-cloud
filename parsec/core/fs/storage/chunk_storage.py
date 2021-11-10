@@ -1,5 +1,5 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2016-2021 Scille SAS
-
+import secrets
 import time
 
 import trio
@@ -104,26 +104,28 @@ class ChunkStorage:
         async with self._open_cursor() as cursor:
             # Can't use execute many with SELECT so we have to make a temporary table filled with the needed chunk_id
             # and intersect it with the normal table
-            cursor.execute("""DROP TABLE IF EXISTS tempchunks""")
+            # create random name for the temporary table to avoid asynchronous errors
+            randomName = "temp" + secrets.token_hex(12)
+            cursor.execute(f"""DROP TABLE IF EXISTS {randomName}""")
             cursor.execute(
-                """CREATE TABLE IF NOT EXISTS tempchunks
+                f"""CREATE TABLE IF NOT EXISTS {randomName}
                     (chunk_id BLOB PRIMARY KEY NOT NULL -- UUID
                 );"""
             )
 
             cursor.executemany(
-                """INSERT OR REPLACE INTO
-            tempchunks (chunk_id)
+                f"""INSERT OR REPLACE INTO
+            {randomName} (chunk_id)
             VALUES (?)""",
                 iter(bytes_id_list),
             )
 
             cursor.execute(
-                """SELECT chunk_id FROM chunks INTERSECT SELECT chunk_id FROM tempchunks"""
+                f"""SELECT chunk_id FROM chunks INTERSECT SELECT chunk_id FROM {randomName}"""
             )
 
             manifest_rows = cursor.fetchall()
-            cursor.execute("""DROP TABLE IF EXISTS tempchunks""")
+            cursor.execute(f"""DROP TABLE IF EXISTS {randomName}""")
 
         size = len(manifest_rows)
         for i in range(len(chunk_id)):
