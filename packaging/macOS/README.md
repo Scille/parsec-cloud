@@ -39,10 +39,11 @@ You can also use the `-i` or `--install` option to directly install the applicat
 ### 3 - Sign the application
 
 ```shell
-$ codesign --deep -s <identity> --timestamp -v --entitlements entitlements.plist -o runtime dist/parsec.app
+$ codesign --deep --force -s <identity> --timestamp -v --entitlements entitlements.plist -o runtime dist/parsec.app
 ```
 
 `identity` being the signing certificate, to be downloaded with proper access here : https://developer.apple.com/account/resources/certificates/list
+From PyInstaller versions >=4.4, the bundle will already be signed. To avoid notarization issues with this signature, the `--force` option is used to override it.
 
 You can check the codesign using:
 ```shell
