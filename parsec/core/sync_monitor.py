@@ -285,6 +285,7 @@ class WorkspaceSyncContext(SyncContext):
         super().__init__(user_fs, id, read_only=read_only)
 
     async def _sync(self, entry_id: EntryID):
+        # logger.warning("SYNC MONITOR:"+str(entry_id))
         # No recursion here: only the manifest that has changed
         # (remotely or locally) should get synchronized
         await self.workspace.sync_by_id(entry_id, recursive=False)
@@ -354,13 +355,18 @@ async def monitor_sync(user_fs, event_bus, task_status):
         # not yet notified to task_status
         task_status.awake()
 
-    def _on_entry_updated(event, id, workspace_id=None):
+    def _on_entry_updated(event, id: EntryID, workspace_id=None):
+
         if workspace_id is None:
             # User manifest
             assert id == user_fs.user_manifest_id
             ctx = ctxs.get(id)
+            # logger.warning("ENTRY UPDATED:" + str())
         else:
             ctx = ctxs.get(workspace_id)
+            ctx: WorkspaceSyncContext
+            # ctx.workspace.local_storage.get_manifest(id)
+
         if ctx and ctx.set_local_change(id):
             _trigger_early_wakeup()
 

@@ -1,6 +1,6 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2016-2021 Scille SAS
 
-from typing import Optional, cast
+from typing import Optional, cast, Set, Tuple
 from pathlib import PurePath
 from PyQt5.QtCore import pyqtSignal
 from PyQt5.QtGui import QPixmap, QColor, QIcon
@@ -106,6 +106,8 @@ class CentralWidget(QWidget, Ui_CentralWidget):  # type: ignore[misc]
         self.systray_notification = systray_notification
         self.last_notification = 0.0
 
+        self.file_sync_set: Set[Tuple[object, object]] = set()
+
         self.menu = MenuWidget(parent=self)
         self.widget_menu.layout().addWidget(self.menu)
 
@@ -114,6 +116,10 @@ class CentralWidget(QWidget, Ui_CentralWidget):  # type: ignore[misc]
 
         self.event_bus.connect(CoreEvent.FS_ENTRY_SYNCED, self._on_vlobs_updated)
         self.event_bus.connect(CoreEvent.BACKEND_REALM_VLOBS_UPDATED, self._on_vlobs_updated)
+
+        self.event_bus.connect(CoreEvent.FS_ENTRY_SYNCED, self._on_synced_local)
+        self.event_bus.connect(CoreEvent.FS_ENTRY_UPDATED, self._on_synced_updated)
+        # self.event_bus.connect(CoreEvent.BACKEND_REALM_VLOBS_UPDATED, self._on_synced_remote)
 
         self.set_user_info()
         menu = QMenu()
@@ -293,6 +299,31 @@ class CentralWidget(QWidget, Ui_CentralWidget):  # type: ignore[misc]
 
     def _on_vlobs_updated(self, *args: object, **kwargs: object) -> None:
         self._load_organization_stats(delay=self.REFRESH_ORGANIZATION_STATS_DELAY)
+
+    def _on_synced_updated(self, *args: object, **kwargs: object) -> None:
+        from structlog import get_logger
+
+        logger = get_logger()
+        # event = args[0]
+        workspace_id = kwargs["workspace_id"]
+        id = kwargs["id"]
+        if id != workspace_id:
+            self.file_sync_set.add((workspace_id, id))
+            logger.warning(self.file_sync_set)
+            # logger.warning("REMOTE:" + str(workspace_id) + " " + str(id))
+
+    def _on_synced_local(self, *args: object, **kwargs: object) -> None:
+
+        from structlog import get_logger
+
+        logger = get_logger()
+        # event = args[0]
+        workspace_id = kwargs["workspace_id"]
+        id = kwargs["id"]
+        if id != workspace_id:
+            self.file_sync_set.remove((workspace_id, id))
+            logger.warning("LOCAL: " + str(workspace_id) + " " + str(id))
+            logger.warning(self.file_sync_set)
 
     def _on_connection_state_changed(
         self, status: BackendConnStatus, status_exc: Optional[Exception], allow_systray: bool = True

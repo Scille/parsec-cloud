@@ -36,7 +36,7 @@ from parsec.core.backend_connection import (
 )
 from parsec.core.fs.remote_loader import RemoteLoader
 from parsec.core.fs import workspacefs  # Needed to break cyclic import with WorkspaceFSTimestamped
-from parsec.core.fs.workspacefs.sync_transactions import SyncTransactions
+from parsec.core.fs.workspacefs.sync_transactions import SyncTransactions, get_filename
 from parsec.core.fs.workspacefs.versioning_helpers import VersionLister
 from parsec.core.fs.exceptions import (
     FSRemoteManifestNotFound,
@@ -55,6 +55,11 @@ from parsec.core.fs.exceptions import (
 )
 from parsec.core.fs.workspacefs.workspacefile import WorkspaceFile
 from parsec.core.fs.storage import BaseWorkspaceStorage
+
+
+from structlog import get_logger
+
+logger = get_logger()
 
 
 @attr.s(slots=True, frozen=True, auto_attribs=True)
@@ -578,6 +583,25 @@ class WorkspaceFS:
         except FSLocalMissError:
             pass
 
+    async def get_name(self, entry_id: EntryID) -> Optional[EntryName]:
+        try:
+            manifest = await self.local_storage.get_manifest(entry_id)
+        except FSLocalMissError:
+            return None
+        if isinstance(manifest, (LocalFileManifest, RemoteFileManifest)):
+            folder_manifest = await self.local_storage.get_manifest(manifest.parent)
+            assert isinstance(folder_manifest, (LocalFolderManifest, LocalWorkspaceManifest))
+            name = get_filename(folder_manifest, entry_id)
+            return name
+        return None
+
+    async def send_sync_event(self, entry_id: EntryID, status: str) -> None:
+        name = await self.get_name(entry_id)
+        if name:
+            logger.warning(
+                status + " " + self.get_workspace_name() + ": " + name + " " + str(entry_id)
+            )
+
     async def _sync_by_id(
         self, entry_id: EntryID, remote_changed: bool = True
     ) -> BaseRemoteManifest:
@@ -592,6 +616,7 @@ class WorkspaceFS:
         This guarantees that any change prior to the call is saved remotely when this
         method returns.
         """
+
         # Get the current remote manifest if it has changed
         remote_manifest = None
         if remote_changed:
@@ -600,8 +625,11 @@ class WorkspaceFS:
             except FSRemoteManifestNotFound:
                 pass
 
+        await self.send_sync_event(entry_id, "SYNCING")
+
         # Loop over sync transactions
         final = False
+        # logger.warning("SYNCINC:" + str(entry_id))
         while True:
 
             # Protect against race conditions on the entry id
@@ -620,11 +648,16 @@ class WorkspaceFS:
 
             # The manifest doesn't exist locally
             except FSLocalMissError:
+                await self.send_sync_event(entry_id, "SYNCED FROM REMOTE")
                 raise FSNoSynchronizationRequired(entry_id)
 
             # No new manifest to upload, the entry is synced!
             if new_remote_manifest is None:
-                return remote_manifest or (await self.local_storage.get_manifest(entry_id)).base
+                manifest = remote_manifest or (
+                    (await self.local_storage.get_manifest(entry_id)).base
+                )
+                await self.send_sync_event(entry_id, "SYNCED")
+                return manifest
 
             # Synchronize placeholder children
             if isinstance(new_remote_manifest, (RemoteFolderManifest, RemoteWorkspaceManifest)):
