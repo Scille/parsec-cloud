@@ -62,6 +62,8 @@ app = BUNDLE(coll,
             'CFBundleURLSchemes': ['parsec']
          }
       ],
+      # Encoding is specified here to force UTF-8 when launching app instead of
+      # default ascii, which caused issues with click
       'LSEnvironment': {
          'LANG': 'en_US.UTF-8',
          'LC_CTYPE': 'en_US.UTF-8'
