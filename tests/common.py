@@ -75,7 +75,11 @@ __freeze_time_task = None
 
 
 @contextmanager
-def freeze_time(time, device=None):
+def freeze_time(time=None, device=None):
+    # Get current time if not provided
+    if time is None:
+        time = pendulum.now()
+
     # Freeze a single device
     if device is not None:
         with freeze_device_time(device, time) as time:

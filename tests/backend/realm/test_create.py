@@ -4,7 +4,7 @@ import pytest
 import pendulum
 from uuid import UUID
 
-from parsec.utils import TIMESTAMP_MAX_DT
+from parsec.utils import BALLPARK_CLIENT_LATE_OFFSET
 from parsec.api.data import RealmRoleCertificateContent, UserProfile
 from parsec.api.protocol import RealmRole
 from parsec.backend.backend_events import BackendEvent
@@ -92,11 +92,15 @@ async def test_create_certif_too_old(alice, alice_backend_sock):
     certif = RealmRoleCertificateContent.build_realm_root_certif(
         author=alice.device_id, timestamp=now, realm_id=realm_id
     ).dump_and_sign(alice.signing_key)
-    with freeze_time(now.add(seconds=TIMESTAMP_MAX_DT)):
+    later = now.add(seconds=BALLPARK_CLIENT_LATE_OFFSET)
+    with freeze_time(later):
         rep = await realm_create(alice_backend_sock, certif)
     assert rep == {
-        "status": "invalid_certification",
-        "reason": "Invalid timestamp in certification.",
+        "status": "bad_timestamp",
+        "backend_timestamp": later,
+        "ballpark_client_early_offset": 60,
+        "ballpark_client_late_offset": 60,
+        "client_timestamp": now,
     }
 
 

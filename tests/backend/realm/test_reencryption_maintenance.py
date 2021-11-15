@@ -41,10 +41,22 @@ async def test_start_bad_encryption_revision(alice_backend_sock, realm):
 
 @pytest.mark.trio
 async def test_start_bad_timestamp(alice_backend_sock, realm):
-    rep = await realm_start_reencryption_maintenance(
-        alice_backend_sock, realm, 2, datetime(2000, 1, 1), {"alice": b"wathever"}, check_rep=False
-    )
-    assert rep == {"status": "bad_timestamp", "reason": "Timestamp is out of date."}
+    with freeze_time() as now:
+        rep = await realm_start_reencryption_maintenance(
+            alice_backend_sock,
+            realm,
+            2,
+            datetime(2000, 1, 1),
+            {"alice": b"wathever"},
+            check_rep=False,
+        )
+    assert rep == {
+        "status": "bad_timestamp",
+        "backend_timestamp": now,
+        "ballpark_client_early_offset": 60,
+        "ballpark_client_late_offset": 60,
+        "client_timestamp": datetime(2000, 1, 1),
+    }
 
 
 @pytest.mark.trio

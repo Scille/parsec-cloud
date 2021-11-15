@@ -55,15 +55,23 @@ logger = get_logger()
 # delay and 10 seconds shifting, yielding a -10/20 seconds window
 # (10 seconds in advance or 20 seconds late). This would effectively
 # reduce the current -60/60 seconds time widown by a factor of 4.
-TIMESTAMP_MAX_DT = 60  # seconds
+
+BALLPARK_CLIENT_EARLY_OFFSET = 60.0
+BALLPARK_CLIENT_LATE_OFFSET = 60.0
 
 
-def timestamps_in_the_ballpark(ts1: DateTime, ts2: DateTime, max_dt=TIMESTAMP_MAX_DT) -> bool:
+def timestamps_in_the_ballpark(
+    client: DateTime,
+    backend: DateTime,
+    client_early_offset: float = BALLPARK_CLIENT_EARLY_OFFSET,
+    client_late_offset: float = BALLPARK_CLIENT_LATE_OFFSET,
+) -> bool:
     """
     Useful to compare signed message timestamp with the one stored by the
     backend.
     """
-    return abs((ts1 - ts2).total_seconds()) < max_dt
+    seconds = (backend - client).total_seconds()
+    return -client_early_offset < seconds < client_late_offset
 
 
 # Task status

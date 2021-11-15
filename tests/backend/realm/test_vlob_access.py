@@ -50,7 +50,13 @@ async def test_create_bad_timestamp(alice_backend_sock, realm):
         rep = await vlob_create(
             alice_backend_sock, realm, VLOB_ID, blob, timestamp=d2, check_rep=False
         )
-    assert rep == {"status": "bad_timestamp", "reason": "Timestamp is out of date."}
+    assert rep == {
+        "status": "bad_timestamp",
+        "backend_timestamp": d1,
+        "ballpark_client_early_offset": 60,
+        "ballpark_client_late_offset": 60,
+        "client_timestamp": d2,
+    }
 
 
 @pytest.mark.parametrize(
@@ -333,7 +339,13 @@ async def test_update_bad_timestamp(alice_backend_sock, vlobs):
         rep = await vlob_update(
             alice_backend_sock, vlobs[0], version=3, blob=blob, timestamp=d2, check_rep=False
         )
-    assert rep == {"status": "bad_timestamp", "reason": "Timestamp is out of date."}
+    assert rep == {
+        "status": "bad_timestamp",
+        "backend_timestamp": d1,
+        "ballpark_client_early_offset": 60,
+        "ballpark_client_late_offset": 60,
+        "client_timestamp": d2,
+    }
 
 
 @pytest.mark.trio
