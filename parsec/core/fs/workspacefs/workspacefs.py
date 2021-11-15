@@ -620,7 +620,6 @@ class WorkspaceFS:
 
         # Loop over sync transactions
         final = False
-        # logger.warning("SYNCINC:" + str(entry_id))
         while True:
 
             # Protect against race conditions on the entry id
@@ -643,10 +642,7 @@ class WorkspaceFS:
 
             # No new manifest to upload, the entry is synced!
             if new_remote_manifest is None:
-                manifest = remote_manifest or (
-                    (await self.local_storage.get_manifest(entry_id)).base
-                )
-                return manifest
+                return remote_manifest or (await self.local_storage.get_manifest(entry_id)).base
 
             # Synchronize placeholder children
             if isinstance(new_remote_manifest, (RemoteFolderManifest, RemoteWorkspaceManifest)):

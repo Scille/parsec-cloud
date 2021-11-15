@@ -361,11 +361,8 @@ async def monitor_sync(user_fs, event_bus, task_status):
             # User manifest
             assert id == user_fs.user_manifest_id
             ctx = ctxs.get(id)
-            # logger.warning("ENTRY UPDATED:" + str())
         else:
             ctx = ctxs.get(workspace_id)
-            ctx: WorkspaceSyncContext
-            # ctx.workspace.local_storage.get_manifest(id)
 
         if ctx and ctx.set_local_change(id):
             _trigger_early_wakeup()
