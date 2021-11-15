@@ -14,14 +14,18 @@ from parsec.api.protocol import DeviceID, APIEvent, AUTHENTICATED_CMDS
 from parsec.core.types import BackendOrganizationAddr, OrganizationConfig
 from parsec.core.backend_connection import cmds
 from parsec.core.backend_connection.transport import connect_as_authenticated, TransportPool
-from parsec.core.backend_connection.exceptions import BackendNotAvailable, BackendConnectionRefused
+from parsec.core.backend_connection.exceptions import (
+    BackendNotAvailable,
+    BackendConnectionRefused,
+    BackendOutOfBallparkError,
+)
 from parsec.core.backend_connection.expose_cmds import expose_cmds_with_retrier
 from parsec.core.core_events import CoreEvent
 
 logger = get_logger()
 
 
-BackendConnStatus = Enum("BackendConnStatus", "READY LOST INITIALIZING REFUSED CRASHED")
+BackendConnStatus = Enum("BackendConnStatus", "READY LOST INITIALIZING REFUSED CRASHED DESYNC")
 
 
 # Helper to copy exceptions (discarding the traceback but keeping the cause)
@@ -269,10 +273,18 @@ class BackendAuthenticatedConn:
                 self._backend_connection_failures += 1
                 logger.info("Backend offline", cooldown_time=cooldown_time)
                 await trio.sleep(cooldown_time)
-            else:
+            if self.status == BackendConnStatus.REFUSED:
                 # It's most likely useless to retry connection anyway
                 logger.info("Backend connection refused", status=self.status)
                 await trio.sleep_forever()
+            if self.status == BackendConnStatus.CRASHED:
+                # It's most likely useless to retry connection anyway
+                logger.info("Backend connection has crashed", status=self.status)
+                await trio.sleep_forever()
+            if self.status == BackendConnStatus.DESYNC:
+                # Try again in 10 seconds
+                logger.info("Backend connection is desync", status=self.status)
+                await trio.sleep(10)
 
     def _cancel_manager_connect(self):
         if self._manager_connect_cancel_scope:
@@ -366,6 +378,14 @@ class BackendAuthenticatedConn:
             self.set_status(BackendConnStatus.REFUSED, exc)
             self._cancel_manager_connect()
             raise
+
+        except BackendOutOfBallparkError as exc:
+            # Caller doesn't need to know about the desync,
+            # simply pretend that we lost the connection instead
+            exc = BackendNotAvailable()
+            self.set_status(BackendConnStatus.DESYNC, exc)
+            self._cancel_manager_connect()
+            raise exc
 
 
 @asynccontextmanager

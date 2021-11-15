@@ -33,3 +33,7 @@ class BackendNotFoundError(BackendConnectionError):
 # TODO: hack needed by `LoggedCore.new_user_invitation`
 class BackendInvitationOnExistingMember(BackendConnectionError):
     pass
+
+
+class BackendOutOfBallparkError(BackendConnectionError):
+    pass

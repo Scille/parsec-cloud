@@ -118,6 +118,9 @@ msgstr "Unknown"
 msgid "TEXT_BACKEND_STATE_CRASHED_cause"
 msgstr "Connection to the server lost"
 
+msgid "TEXT_BACKEND_STATE_DESYNC"
+msgstr "Your clock is out-of-sync, please synchronize it"
+
 msgid "TEXT_SYSTRAY_BACKEND_DISCONNECT_organization"
 msgstr "{organization}: Disconnected"
 

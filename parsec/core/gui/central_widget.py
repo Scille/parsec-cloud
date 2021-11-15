@@ -346,6 +346,14 @@ class CentralWidget(QWidget, Ui_CentralWidget):  # type: ignore[misc]
             notif = ("ERROR", tooltip)
             disconnected = True
 
+        elif status == BackendConnStatus.DESYNC:
+            assert isinstance(status_exc, Exception)
+            text = _("TEXT_BACKEND_STATE_DISCONNECTED")
+            tooltip = _("TEXT_BACKEND_STATE_DESYNC")
+            icon = QPixmap(":/icons/images/material/cloud_off.svg")
+            notif = ("DESYNC", tooltip)
+            disconnected = True
+
         self.menu.set_connection_state(text, tooltip, icon)
         if notif:
             self.new_notification.emit(*notif)
@@ -374,7 +382,7 @@ class CentralWidget(QWidget, Ui_CentralWidget):  # type: ignore[misc]
         self.menu.label_organization_size.clear()
 
     def on_new_notification(self, notif_type: str, msg: str) -> None:
-        if notif_type in ["REVOKED", "EXPIRED"]:
+        if notif_type in ["REVOKED", "EXPIRED", "DESYNC"]:
             show_error(self, msg)
 
     def go_to_file_link(self, addr: BackendOrganizationFileLinkAddr, mount: bool = True) -> None:

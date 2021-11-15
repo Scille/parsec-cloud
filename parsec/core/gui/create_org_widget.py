@@ -11,12 +11,12 @@ from parsec.core.backend_connection import (
     BackendConnectionRefused,
     BackendNotAvailable,
 )
+from parsec.core.backend_connection.exceptions import BackendOutOfBallparkError
 from parsec.core.types import BackendOrganizationBootstrapAddr, BackendAddr
 from parsec.core.invite import (
     bootstrap_organization,
     InviteNotFoundError,
     InviteAlreadyUsedError,
-    InviteTimestampError,
     InviteError,
 )
 from parsec.core.fs.storage.user_storage import user_storage_non_speculative_init
@@ -65,7 +65,7 @@ async def _do_create_org(config, human_handle, device_name, backend_addr):
         raise JobResultError("connection-refused", exc=exc)
     except BackendNotAvailable as exc:
         raise JobResultError("connection-error", exc=exc)
-    except InviteTimestampError as exc:
+    except BackendOutOfBallparkError as exc:
         raise JobResultError("timestamp-error", exc=exc)
     except InviteError as exc:
         raise JobResultError("invite-error", exc=exc)
