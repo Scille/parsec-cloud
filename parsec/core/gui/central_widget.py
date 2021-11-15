@@ -116,9 +116,6 @@ class CentralWidget(QWidget, Ui_CentralWidget):  # type: ignore[misc]
 
         self.event_bus.connect(CoreEvent.FS_ENTRY_SYNCED, self._on_vlobs_updated)
         self.event_bus.connect(CoreEvent.BACKEND_REALM_VLOBS_UPDATED, self._on_vlobs_updated)
-
-        self.event_bus.connect(CoreEvent.FS_ENTRY_SYNCED, self._on_synced_local)
-        self.event_bus.connect(CoreEvent.FS_ENTRY_UPDATED, self._on_synced_updated)
         # self.event_bus.connect(CoreEvent.BACKEND_REALM_VLOBS_UPDATED, self._on_synced_remote)
 
         self.set_user_info()
@@ -300,30 +297,66 @@ class CentralWidget(QWidget, Ui_CentralWidget):  # type: ignore[misc]
     def _on_vlobs_updated(self, *args: object, **kwargs: object) -> None:
         self._load_organization_stats(delay=self.REFRESH_ORGANIZATION_STATS_DELAY)
 
-    def _on_synced_updated(self, *args: object, **kwargs: object) -> None:
+    def _on_sync_outbound(self, *args: object, **kwargs: object) -> None:
         from structlog import get_logger
 
         logger = get_logger()
         # event = args[0]
-        workspace_id = kwargs["workspace_id"]
-        id = kwargs["id"]
-        if id != workspace_id:
-            self.file_sync_set.add((workspace_id, id))
-            logger.warning(self.file_sync_set)
-            # logger.warning("REMOTE:" + str(workspace_id) + " " + str(id))
+        if ("workspace_id" in kwargs) and ("id" in kwargs):
+            workspace_id = kwargs["workspace_id"]
+            id = kwargs["id"]
+            if id != workspace_id:
+                file_sync = (workspace_id, id)
+                if file_sync not in self.file_sync_set:
+                    self.file_sync_set.add(file_sync)
+                    logger.warning("OUTBOUND" + str(self.file_sync_set))
+                # logger.warning("REMOTE:" + str(workspace_id) + " " + str(id))
 
-    def _on_synced_local(self, *args: object, **kwargs: object) -> None:
+    def _on_sync_inbound(self, *args: object, **kwargs: object) -> None:
+        from structlog import get_logger
+
+        logger = get_logger()
+        logger.warning("INBOUND" + str(kwargs))
+        # event = args[0]
+        if ("workspace_id" in kwargs) and ("id" in kwargs):
+            workspace_id = kwargs["workspace_id"]
+            id = kwargs["id"]
+            if id != workspace_id:
+                file_sync = (workspace_id, id)
+                if file_sync not in self.file_sync_set:
+                    self.file_sync_set.add(file_sync)
+                    logger.warning("INBOUND" + str(self.file_sync_set))
+                # logger.warning("REMOTE:" + str(workspace_id) + " " + str(id))
+
+    def _on_synced_inbound_finished(self, *args: object, **kwargs: object) -> None:
+        from structlog import get_logger
+
+        logger = get_logger()
+        # event = args[0]
+        if ("workspace_id" in kwargs) and ("id" in kwargs):
+            workspace_id = kwargs["workspace_id"]
+            id = kwargs["id"]
+            if id != workspace_id:
+                file_sync = (workspace_id, id)
+                if file_sync in self.file_sync_set:
+                    self.file_sync_set.remove(file_sync)
+                    logger.warning("INBOUND FINISHED" + str(self.file_sync_set))
+                # logger.warning("REMOTE:" + str(workspace_id) + " " + str(id))
+
+    def _on_sync_outbound_finished(self, *args: object, **kwargs: object) -> None:
 
         from structlog import get_logger
 
         logger = get_logger()
         # event = args[0]
-        workspace_id = kwargs["workspace_id"]
-        id = kwargs["id"]
-        if id != workspace_id:
-            self.file_sync_set.remove((workspace_id, id))
-            logger.warning("LOCAL: " + str(workspace_id) + " " + str(id))
-            logger.warning(self.file_sync_set)
+        if ("workspace_id" in kwargs) and ("id" in kwargs):
+            workspace_id = kwargs["workspace_id"]
+            id = kwargs["id"]
+            if id != workspace_id:
+                file_sync = (workspace_id, id)
+                if file_sync in self.file_sync_set:
+                    self.file_sync_set.remove(file_sync)
+                    logger.warning("OUTBOUND FINISHED" + str(self.file_sync_set))
 
     def _on_connection_state_changed(
         self, status: BackendConnStatus, status_exc: Optional[Exception], allow_systray: bool = True

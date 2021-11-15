@@ -3,7 +3,7 @@
 import trio
 import pathlib
 from uuid import UUID
-from typing import Optional, Iterable, Tuple, List
+from typing import Optional, Iterable, Tuple, List, Set
 
 from parsec.core.core_events import CoreEvent
 from pendulum import DateTime
@@ -258,6 +258,8 @@ class FilesWidget(QWidget, Ui_FilesWidget):
 
     folder_changed = pyqtSignal(str, str)
 
+    empty = pyqtSignal(QtToTrioJob)
+
     def __init__(self, core, jobs_ctx, event_bus, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.setupUi(self)
@@ -291,6 +293,8 @@ class FilesWidget(QWidget, Ui_FilesWidget):
         # no longer exists
         self.current_directory: FsPath = FsPath("/")
         self.current_directory_uuid: Optional[UUID] = None
+
+        self.file_sync_set: Set[Tuple[object, object]] = set()
 
         self.default_import_path = str(pathlib.Path.home())
         self.table_files.config = self.core.config
@@ -326,10 +330,40 @@ class FilesWidget(QWidget, Ui_FilesWidget):
         self.reload_timestamped_success.connect(self._on_reload_timestamped_success)
         self.reload_timestamped_error.connect(self._on_reload_timestamped_error)
 
-        self.event_bus.connect(CoreEvent.FS_ENTRY_SYNCED, self._on_fs_entry_synced)
-        self.event_bus.connect(CoreEvent.FS_ENTRY_UPDATED, self._on_fs_entry_updated)
-        self.event_bus.connect(CoreEvent.FS_ENTRY_DOWNSYNCED, self._on_fs_entry_downsynced)
+        self.event_bus.connect(CoreEvent.FS_ENTRY_SYNCED, self._on_fs_event)
+        self.event_bus.connect(CoreEvent.FS_ENTRY_UPDATED, self._on_fs_event)
+        self.event_bus.connect(CoreEvent.FS_ENTRY_DOWNSYNCED, self._on_fs_event)
         self.event_bus.connect(CoreEvent.SHARING_UPDATED, self._on_sharing_updated)
+
+        self.empty.connect(lambda *args: None)
+
+    async def print_sync_add(self, workspace_id, id, text):
+
+        if workspace_id and id:
+            if id != workspace_id:
+
+                file_sync = (workspace_id, id)
+                if file_sync not in self.file_sync_set:
+                    name = await self.workspace_fs.get_name(id)
+                    workspace_name = self.workspace_fs.get_workspace_name()
+                    self.file_sync_set.add(file_sync)
+                    logger.warning(
+                        f"{text}: WORKSPACE: {str(workspace_name)} FILENAME:{str(name)} FILE TO SYNC: {str(len(self.file_sync_set))}"
+                    )
+
+    async def print_sync_remove(self, workspace_id, id, text):
+
+        if workspace_id and id:
+            if id != workspace_id:
+                file_sync = (workspace_id, id)
+                if file_sync in self.file_sync_set:
+                    name = await self.workspace_fs.get_name(id)
+                    workspace_name = self.workspace_fs.get_workspace_name()
+
+                    self.file_sync_set.remove(file_sync)
+                    logger.warning(
+                        f"{text}: WORKSPACE: {str(workspace_name)} FILENAME:{str(name)} FILE TO SYNC: {str(len(self.file_sync_set))}"
+                    )
 
     def disconnect_all(self):
         pass
@@ -981,13 +1015,49 @@ class FilesWidget(QWidget, Ui_FilesWidget):
         else:
             show_error(self, _("TEXT_FILE_FOLDER_CREATE_ERROR_UNKNOWN"))
 
-    def _on_fs_entry_downsynced(self, event, workspace_id=None, id=None):
+    def _on_fs_event(self, event, **kwargs):
+        id, workspace_id = None, None
+        if "workspace_id" in kwargs:
+            workspace_id = kwargs["workspace_id"]
+        if "id" in kwargs:
+            id = kwargs["id"]
+
+        if event == CoreEvent.FS_ENTRY_DOWNSYNCED:
+            self.jobs_ctx.submit_job(
+                self.empty,
+                self.empty,
+                self._on_fs_entry_downsynced,
+                event=event,
+                id=id,
+                workspace_id=workspace_id,
+            )
+        elif event == CoreEvent.FS_ENTRY_SYNCED:
+            self.jobs_ctx.submit_job(
+                self.empty,
+                self.empty,
+                self._on_fs_entry_synced,
+                event=event,
+                id=id,
+                workspace_id=workspace_id,
+            )
+        else:
+            self.jobs_ctx.submit_job(
+                self.empty,
+                self.empty,
+                self._on_fs_entry_updated,
+                event=event,
+                id=id,
+                workspace_id=workspace_id,
+            )
+
+    async def _on_fs_entry_downsynced(self, event, workspace_id=None, id=None):
         # No workspace FS
         if not self.workspace_fs:
             return
         # Not the corresponding workspace
         if workspace_id != self.workspace_fs.workspace_id:
             return
+        await self.print_sync_remove(workspace_id, id, "INBOUND FINISHED ")
         # Reload, as it might correspond to the current directory
         if self.current_directory_uuid is None:
             self.reload()
@@ -997,12 +1067,13 @@ class FilesWidget(QWidget, Ui_FilesWidget):
             self.reload()
             return
 
-    def _on_fs_entry_synced(self, event, id, workspace_id=None):
+    async def _on_fs_entry_synced(self, event, id, workspace_id=None):
         if not self.workspace_fs:
             return
 
         if self.current_directory_uuid == id:
             return
+        await self.print_sync_remove(workspace_id, id, "OUTBOUND FINISHED ")
 
         for i in range(1, self.table_files.rowCount()):
             item = self.table_files.item(i, 0)
@@ -1014,7 +1085,7 @@ class FilesWidget(QWidget, Ui_FilesWidget):
                     item.confined = False
                     item.is_synced = True
 
-    def _on_fs_entry_updated(self, event, workspace_id=None, id=None):
+    async def _on_fs_entry_updated(self, event, workspace_id=None, id=None):
         assert id is not None
         # No workspace FS
         if not self.workspace_fs:
@@ -1022,6 +1093,8 @@ class FilesWidget(QWidget, Ui_FilesWidget):
         # Not the corresponding workspace
         if workspace_id != self.workspace_fs.workspace_id:
             return
+
+        await self.print_sync_add(workspace_id, id, "OUTBOUND")
         # Reload, as it might correspond to the current directory
         if self.current_directory_uuid is None:
             self.reload()
