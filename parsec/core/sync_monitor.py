@@ -285,7 +285,6 @@ class WorkspaceSyncContext(SyncContext):
         super().__init__(user_fs, id, read_only=read_only)
 
     async def _sync(self, entry_id: EntryID):
-        # logger.warning("SYNC MONITOR:"+str(entry_id))
         # No recursion here: only the manifest that has changed
         # (remotely or locally) should get synchronized
         await self.workspace.sync_by_id(entry_id, recursive=False)
