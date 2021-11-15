@@ -212,7 +212,7 @@ async def files_widget_testbed(monkeypatch, aqtbot, logged_gui):
 @pytest.mark.gui
 @pytest.mark.trio
 async def test_file_browsing_and_edit(
-    monkeypatch, tmpdir, aqtbot, autoclose_dialog, files_widget_testbed
+    monkeypatch, tmpdir, aqtbot, autoclose_dialog, files_widget_testbed, snackbar_catcher
 ):
     tb = files_widget_testbed
     f_w = files_widget_testbed.files_widget
@@ -298,19 +298,15 @@ async def test_file_browsing_and_edit(
 
     # ...but not a non-empty folder !
     def _error_displayed():
-        assert len(autoclose_dialog.dialogs) == 1
-        assert autoclose_dialog.dialogs[0][0] == "Error"
-        assert autoclose_dialog.dialogs[0][1] == "The file could not be renamed."
+        assert snackbar_catcher.snackbars == ["The file could not be renamed."]
 
     await tb.rename(selection="dir1", new_name="dir3", wait_until=_error_displayed)
-    autoclose_dialog.reset()
+    snackbar_catcher.reset()
     await tb.check_files_view(path="/", expected_entries=["dir1/", "dir3/", "zdir2/", "file1.txt"])
 
     # Overwriting between file and folder is not ok
     def _error_displayed():
-        assert len(autoclose_dialog.dialogs) == 1
-        assert autoclose_dialog.dialogs[0][0] == "Error"
-        assert autoclose_dialog.dialogs[0][1] == "The file could not be renamed."
+        assert snackbar_catcher.snackbars == ["The file could not be renamed."]
 
     for selection, new_name in (("dir1", "file1.txt"), ("file1.txt", "dir1")):
         await tb.rename(selection=selection, new_name=new_name, wait_until=_error_displayed)
@@ -318,7 +314,7 @@ async def test_file_browsing_and_edit(
         await tb.check_files_view(
             path="/", expected_entries=["dir1/", "dir3/", "zdir2/", "file1.txt"]
         )
-        autoclose_dialog.reset()
+        snackbar_catcher.reset()
 
     # Jump into sub folder /dir3
     await tb.cd("dir3")
@@ -330,12 +326,10 @@ async def test_file_browsing_and_edit(
 
     # Retry to create another folder with the same name !
     def _error_displayed():
-        assert len(autoclose_dialog.dialogs) == 1
-        assert autoclose_dialog.dialogs[0][0] == "Error"
-        assert autoclose_dialog.dialogs[0][1] == "A folder with the same name already exists."
+        snackbar_catcher.snackbars == ["A folder with the same name already exists."]
 
     await tb.create_folder("dir33", wait_until=_error_displayed)
-    autoclose_dialog.reset()
+    snackbar_catcher.reset()
 
     # Copy a folder /dir3/dir31
     await tb.copy("dir31")
@@ -550,7 +544,7 @@ async def test_drag_and_drop(tmpdir, aqtbot, autoclose_dialog, files_widget_test
 @pytest.mark.gui
 @pytest.mark.trio
 async def test_import_file_permission_denied(
-    monkeypatch, tmpdir, aqtbot, autoclose_dialog, files_widget_testbed
+    monkeypatch, tmpdir, aqtbot, autoclose_dialog, files_widget_testbed, snackbar_catcher
 ):
     tb = files_widget_testbed
     f_w = files_widget_testbed.files_widget
@@ -577,14 +571,12 @@ async def test_import_file_permission_denied(
             aqtbot.mouse_click(f_w.button_import_files, QtCore.Qt.LeftButton)
 
         def _import_failed():
-            assert autoclose_dialog.dialogs == [
-                ("Error", _("TEXT_FILE_IMPORT_ONE_PERMISSION_ERROR"))
-            ]
+            assert snackbar_catcher.snackbars == [_("TEXT_FILE_IMPORT_ONE_PERMISSION_ERROR")]
             assert tb.ls() == []
             assert tb.pwd() == "/"
 
         await aqtbot.wait_until(_import_failed)
-        autoclose_dialog.dialogs = []
+        snackbar_catcher.reset()
 
         # Try importing multiple files
 
@@ -597,9 +589,7 @@ async def test_import_file_permission_denied(
             aqtbot.mouse_click(f_w.button_import_files, QtCore.Qt.LeftButton)
 
         def _import_error_shown():
-            assert autoclose_dialog.dialogs == [
-                ("Error", _("TEXT_FILE_IMPORT_MULTIPLE_PERMISSION_ERROR"))
-            ]
+            assert snackbar_catcher.snackbars == [_("TEXT_FILE_IMPORT_MULTIPLE_PERMISSION_ERROR")]
             assert tb.ls() == ["file2.txt"]
             assert tb.pwd() == "/"
 
@@ -612,7 +602,9 @@ async def test_import_file_permission_denied(
 
 @pytest.mark.gui
 @pytest.mark.trio
-async def test_open_file_failed(monkeypatch, aqtbot, autoclose_dialog, files_widget_testbed):
+async def test_open_file_failed(
+    monkeypatch, aqtbot, autoclose_dialog, files_widget_testbed, snackbar_catcher
+):
     tb = files_widget_testbed
     f_w = files_widget_testbed.files_widget
 
@@ -635,32 +627,32 @@ async def test_open_file_failed(monkeypatch, aqtbot, autoclose_dialog, files_wid
     f_w.table_files.open_clicked.emit()
 
     def _open_single_file_error_shown():
-        assert autoclose_dialog.dialogs == [
-            ("Error", _("TEXT_FILE_OPEN_ERROR_file").format(file="file1.txt"))
+        assert snackbar_catcher.snackbars == [
+            _("TEXT_FILE_OPEN_ERROR_file").format(file="file1.txt")
         ]
 
     await aqtbot.wait_until(_open_single_file_error_shown)
     await tb.reset_selection()
-    autoclose_dialog.reset()
+    snackbar_catcher.reset()
 
     # Open a file by double click
     f_w.table_files.item_activated.emit(FileType.File, "file1.txt")
     await aqtbot.wait_until(_open_single_file_error_shown)
-    autoclose_dialog.reset()
+    snackbar_catcher.reset()
 
     # Open multiple files
     await tb.apply_selection(["file1.txt", "file2.txt"])
     f_w.table_files.open_clicked.emit()
 
     def _open_multiple_files_error_shown():
-        assert autoclose_dialog.dialogs == [("Error", _("TEXT_FILE_OPEN_MULTIPLE_ERROR"))]
+        assert snackbar_catcher.snackbars == [_("TEXT_FILE_OPEN_MULTIPLE_ERROR")]
 
     await aqtbot.wait_until(_open_multiple_files_error_shown)
 
 
 @pytest.mark.gui
 @pytest.mark.trio
-async def test_copy_file_link(aqtbot, autoclose_dialog, files_widget_testbed):
+async def test_copy_file_link(aqtbot, autoclose_dialog, files_widget_testbed, snackbar_catcher):
     tb = files_widget_testbed
     f_w = files_widget_testbed.files_widget
 
@@ -675,7 +667,7 @@ async def test_copy_file_link(aqtbot, autoclose_dialog, files_widget_testbed):
     f_w.table_files.file_path_clicked.emit()
 
     def _file_link_copied_dialog():
-        assert autoclose_dialog.dialogs == [("", _("TEXT_FILE_LINK_COPIED_TO_CLIPBOARD"))]
+        assert snackbar_catcher.snackbars == [_("TEXT_FILE_LINK_COPIED_TO_CLIPBOARD")]
         url = QGuiApplication.clipboard().text()
         assert url.startswith("parsec://")
 

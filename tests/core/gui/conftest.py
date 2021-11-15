@@ -19,6 +19,7 @@ from parsec.core.gui.login_widget import LoginWidget, LoginPasswordInputWidget, 
 from parsec.core.gui.central_widget import CentralWidget
 from parsec.core.gui.lang import switch_language
 from parsec.core.gui.parsec_application import ParsecApp
+from parsec.core.gui.snackbar_widget import SnackbarManager
 from parsec.core.local_device import LocalDeviceAlreadyExistsError
 
 
@@ -157,12 +158,11 @@ def snackbar_catcher(monkeypatch):
             self.snackbars = []
 
         def reset(self):
-            self.snackars = []
+            self.snackbars = []
 
     spy = SnackbarSpy()
 
     def _show_snackbar(message, *args, **kargs):
-        print(message)
         spy.snackbars.append(message)
 
     monkeypatch.setattr("parsec.core.gui.snackbar_widget.SnackbarManager.warn", _show_snackbar)
@@ -260,6 +260,7 @@ def gui_factory(
         main_w = testing_main_window_cls(
             job_scheduler, job_scheduler.close, event_bus, core_config, minimize_on_close=True
         )
+        SnackbarManager.get_manager().clear()
         aqtbot.add_widget(main_w)
         main_w.show_window(skip_dialogs=skip_dialogs)
         main_w.show_top()

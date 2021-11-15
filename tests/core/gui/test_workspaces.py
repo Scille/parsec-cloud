@@ -9,13 +9,20 @@ from parsec.core.types import WorkspaceRole
 from parsec.core.core_events import CoreEvent
 from parsec.core.fs import FSWorkspaceNoReadAccess
 from parsec.core.gui.workspace_button import WorkspaceButton
+from parsec.core.gui.lang import translate
 
 
 @pytest.mark.gui
 @pytest.mark.trio
 @pytest.mark.parametrize("invalid_name", (False, True))
 async def test_add_workspace(
-    aqtbot, running_backend, logged_gui, monkeypatch, autoclose_dialog, invalid_name
+    aqtbot,
+    running_backend,
+    logged_gui,
+    monkeypatch,
+    autoclose_dialog,
+    invalid_name,
+    snackbar_catcher,
 ):
     w_w = await logged_gui.test_switch_to_workspaces_widget()
 
@@ -37,17 +44,14 @@ async def test_add_workspace(
                 w_w.layout_workspaces.itemAt(0).widget().text()
                 == "No workspace has been created yet."
             )
-            assert autoclose_dialog.dialogs == [
-                (
-                    "Error",
-                    "Could not create the workspace. This name is not a valid workspace name.",
-                )
+            assert snackbar_catcher.snackbars == [
+                "Could not create the workspace. This name is not a valid workspace name."
             ]
         else:
             wk_button = w_w.layout_workspaces.itemAt(0).widget()
             assert isinstance(wk_button, WorkspaceButton)
             assert wk_button.name == "Workspace1"
-            assert not autoclose_dialog.dialogs
+            assert snackbar_catcher.snackbars == [translate("TEXT_WORKSPACE_HAS_BEEN_CREATED")]
 
     await aqtbot.wait_until(_outcome_occured, timeout=2000)
 
@@ -56,7 +60,13 @@ async def test_add_workspace(
 @pytest.mark.trio
 @pytest.mark.parametrize("invalid_name", (False, True))
 async def test_rename_workspace(
-    aqtbot, running_backend, logged_gui, monkeypatch, autoclose_dialog, invalid_name
+    aqtbot,
+    running_backend,
+    logged_gui,
+    monkeypatch,
+    autoclose_dialog,
+    invalid_name,
+    snackbar_catcher,
 ):
     w_w = await logged_gui.test_switch_to_workspaces_widget()
 
@@ -87,15 +97,10 @@ async def test_rename_workspace(
         assert new_wk_button.workspace_fs is wk_button.workspace_fs
         if invalid_name:
             assert wk_button.name == "Workspace1"
-            assert autoclose_dialog.dialogs == [
-                (
-                    "Error",
-                    "Could not rename the workspace. This name is not a valid workspace name.",
-                )
-            ]
+            snackbar_catcher.snackbars == "Could not rename the workspace. This name is not a valid workspace name."
         else:
             assert wk_button.name == "Workspace1_Renamed"
-            assert not autoclose_dialog.dialogs
+            snackbar_catcher.snackbars == translate("TEXT_WORKSPACE_HAS_BEEN_RENAMED")
 
     await aqtbot.wait_until(_outcome_occured)
 

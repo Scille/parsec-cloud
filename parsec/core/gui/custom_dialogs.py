@@ -27,6 +27,7 @@ from parsec.core.gui.lang import translate as _
 from parsec.core.gui import desktop
 from parsec.core.gui.custom_widgets import Button
 from parsec.core.gui.parsec_application import ParsecApp
+from parsec.core.gui.snackbar_widget import SnackbarManager
 
 from parsec.core.gui.ui.error_widget import Ui_ErrorWidget
 from parsec.core.gui.ui.info_widget import Ui_InfoWidget
@@ -539,6 +540,7 @@ class InfoLinkWidget(QWidget, Ui_InfoWidget):
 
     def _on_button_clicked(self, button):
         desktop.open_url(self.url)
+        SnackbarManager.inform(_("TEXT_COPIED_TO_CLIPBOARD"))
 
 
 def show_info_link(parent, title, message, button_text, url):
@@ -552,6 +554,7 @@ def show_info_link(parent, title, message, button_text, url):
 class InfoCopyLinkWidget(InfoLinkWidget):
     def _on_button_clicked(self, button):
         desktop.copy_to_clipboard(self.url)
+        SnackbarManager.inform(_("TEXT_COPIED_TO_CLIPBOARD"))
 
 
 def show_info_copy_link(parent, title, message, button_text, url):

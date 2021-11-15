@@ -18,13 +18,8 @@ from parsec.core.backend_connection import (
 )
 
 from parsec.core.gui.trio_jobs import JobResultError, QtToTrioJob
-from parsec.core.gui.custom_dialogs import (
-    show_error,
-    show_info,
-    ask_question,
-    get_text_input,
-    show_info_copy_link,
-)
+from parsec.core.gui.custom_dialogs import ask_question, get_text_input, show_info_copy_link
+from parsec.core.gui.snackbar_widget import SnackbarManager
 from parsec.core.gui.custom_widgets import ensure_string_size
 from parsec.core.gui.flow_layout import FlowLayout
 from parsec.core.gui import validators
@@ -363,8 +358,8 @@ class UsersWidget(QWidget, Ui_UsersWidget):
         assert job.status == "ok"
 
         user_info = job.ret
-        show_info(
-            self, _("TEXT_USER_REVOKE_SUCCESS_user").format(user=user_info.short_user_display)
+        SnackbarManager.congratulate(
+            _("TEXT_USER_REVOKE_SUCCESS_user").format(user=user_info.short_user_display)
         )
         for i in range(self.layout_users.count()):
             item = self.layout_users.itemAt(i)
@@ -392,7 +387,7 @@ class UsersWidget(QWidget, Ui_UsersWidget):
             errmsg = _("TEXT_USER_REVOCATION_BACKEND_OFFLINE")
         else:
             errmsg = _("TEXT_USER_REVOCATION_UNKNOWN_FAILURE")
-        show_error(self, errmsg, exception=job.exc)
+        SnackbarManager.warn(errmsg)
 
     def revoke_user(self, user_info):
         result = ask_question(
@@ -498,18 +493,18 @@ class UsersWidget(QWidget, Ui_UsersWidget):
         else:
             errmsg = _("TEXT_USER_LIST_RETRIEVABLE_FAILURE")
         self.spinner.hide()
-        show_error(self, errmsg, exception=job.exc)
+        SnackbarManager.warn(errmsg)
 
     def _on_cancel_invitation_success(self, job):
         assert job.is_finished()
         assert job.status == "ok"
+        SnackbarManager.congratulate(_("TEXT_INVITE_USER_CANCELLATION_SUCCESS"))
         self.reset()
 
     def _on_cancel_invitation_error(self, job):
         assert job.is_finished()
         assert job.status != "ok"
-
-        show_error(self, _("TEXT_INVITE_USER_CANCEL_ERROR"), exception=job.exc)
+        SnackbarManager.warn(_("TEXT_INVITE_USER_CANCEL_ERROR"))
 
     def _on_invite_user_success(self, job):
         assert job.is_finished()
@@ -517,7 +512,7 @@ class UsersWidget(QWidget, Ui_UsersWidget):
 
         email, invitation_addr, email_sent_status = job.ret
         if email_sent_status == InvitationEmailSentStatus.SUCCESS:
-            show_info(self, _("TEXT_USER_INVITE_SUCCESS_email").format(email=email))
+            SnackbarManager.inform(_("TEXT_USER_INVITE_SUCCESS_email").format(email=email))
         elif email_sent_status == InvitationEmailSentStatus.BAD_RECIPIENT:
             show_info_copy_link(
                 self,
@@ -552,8 +547,7 @@ class UsersWidget(QWidget, Ui_UsersWidget):
             errmsg = _("TEXT_INVITE_USER_ALREADY_MEMBER_ERROR")
         else:
             errmsg = _("TEXT_INVITE_USER_INVITE_ERROR")
-
-        show_error(self, errmsg, exception=job.exc)
+        SnackbarManager.warn(errmsg)
 
     def reset(self, disable_filters=False):
         self.layout_users.clear()

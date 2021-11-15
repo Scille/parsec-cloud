@@ -337,7 +337,7 @@ async def test_share_workspace_while_connected(
 @pytest.mark.gui
 @pytest.mark.trio
 async def test_unshare_workspace_while_connected(
-    aqtbot, running_backend, logged_gui, autoclose_dialog, alice_user_fs, bob
+    aqtbot, running_backend, logged_gui, autoclose_dialog, alice_user_fs, bob, snackbar_catcher
 ):
     w_w = await logged_gui.test_switch_to_workspaces_widget()
     wid = await alice_user_fs.workspace_create("Workspace")
@@ -361,10 +361,9 @@ async def test_unshare_workspace_while_connected(
 
     await aqtbot.wait_until(_no_workspace_listed, timeout=2000)
 
-    assert autoclose_dialog.dialogs[0] == (
-        "Error",
-        translate("TEXT_FILE_SHARING_REVOKED_workspace").format(workspace="Workspace"),
-    )
+    assert snackbar_catcher.snackbars == [
+        translate("TEXT_FILE_SHARING_REVOKED_workspace").format(workspace="Workspace")
+    ]
 
 
 @pytest.mark.skip(

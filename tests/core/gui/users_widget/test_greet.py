@@ -36,7 +36,13 @@ def catch_greet_user_widget(widget_catcher_factory):
 
 @pytest.fixture
 def GreetUserTestBed(
-    aqtbot, catch_greet_user_widget, autoclose_dialog, backend, running_backend, logged_gui
+    aqtbot,
+    catch_greet_user_widget,
+    autoclose_dialog,
+    backend,
+    running_backend,
+    logged_gui,
+    snackbar_catcher,
 ):
     class _GreetUserTestBed:
         def __init__(self):
@@ -293,8 +299,8 @@ def GreetUserTestBed(
 
             def _greet_done():
                 assert not gu_w.isVisible()
-                assert autoclose_dialog.dialogs == [
-                    ("", "The user was successfully greeted in your organization.")
+                snackbar_catcher.snackbars == [
+                    "The user was successfully greeted in your organization."
                 ]
                 # User list should be updated
                 assert u_w.layout_users.count() == 4

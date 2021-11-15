@@ -27,7 +27,9 @@ def catch_greet_device_widget(widget_catcher_factory):
 
 @pytest.mark.gui
 @pytest.mark.trio
-async def test_invite_device_offline(aqtbot, logged_gui, autoclose_dialog, running_backend):
+async def test_invite_device_offline(
+    aqtbot, logged_gui, autoclose_dialog, running_backend, snackbar_catcher
+):
     d_w = await logged_gui.test_switch_to_devices_widget()
 
     # TODO: not sure why but this timeout without running_backend fixture...
@@ -35,8 +37,8 @@ async def test_invite_device_offline(aqtbot, logged_gui, autoclose_dialog, runni
         aqtbot.mouse_click(d_w.button_add_device, QtCore.Qt.LeftButton)
 
         def _invite_failed():
-            assert autoclose_dialog.dialogs == [
-                ("Error", "The server is offline or you have no access to the internet.")
+            snackbar_catcher.snackbars == [
+                "The server is offline or you have no access to the internet."
             ]
 
         await aqtbot.wait_until(_invite_failed)

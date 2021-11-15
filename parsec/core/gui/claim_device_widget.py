@@ -28,6 +28,7 @@ from parsec.core.gui.trio_jobs import JobResultError, QtToTrioJob
 from parsec.core.gui.desktop import get_default_device
 from parsec.core.gui.custom_dialogs import show_error, GreyedDialog, show_info
 from parsec.core.gui.lang import translate as _
+from parsec.core.gui.snackbar_widget import SnackbarManager
 from parsec.core.gui.ui.claim_device_widget import Ui_ClaimDeviceWidget
 from parsec.core.gui.ui.claim_device_code_exchange_widget import Ui_ClaimDeviceCodeExchangeWidget
 from parsec.core.gui.ui.claim_device_provide_info_widget import Ui_ClaimDeviceProvideInfoWidget
@@ -628,7 +629,7 @@ class ClaimDeviceWidget(QWidget, Ui_ClaimDeviceWidget):
                 save_device_with_smartcard_in_config(
                     config_dir=self.config.config_dir, device=new_device
                 )
-            show_info(self, _("TEXT_CLAIM_DEVICE_SUCCESSFUL"))
+            SnackbarManager.congratulate(_("TEXT_CLAIM_DEVICE_SUCCESSFUL"))
             self.status = (new_device, auth_method, password)
             self.dialog.accept()
         except LocalDeviceCryptoError as exc:

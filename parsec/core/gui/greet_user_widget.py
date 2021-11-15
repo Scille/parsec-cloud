@@ -18,6 +18,7 @@ from parsec.core.invite import (
 from parsec.core.gui.trio_jobs import JobResultError, QtToTrioJob
 from parsec.core.gui.custom_dialogs import show_error, GreyedDialog, show_info
 from parsec.core.gui import validators
+from parsec.core.gui.snackbar_widget import SnackbarManager
 from parsec.core.gui.lang import translate as _
 from parsec.core.gui.ui.greet_user_widget import Ui_GreetUserWidget
 from parsec.core.gui.ui.greet_user_code_exchange_widget import Ui_GreetUserCodeExchangeWidget
@@ -646,8 +647,8 @@ class GreetUserWidget(QWidget, Ui_GreetUserWidget):
         self.main_layout.addWidget(page)
 
     def _on_finished(self):
-        show_info(self, _("TEXT_USER_GREET_SUCCESSFUL"))
         self.dialog.accept()
+        SnackbarManager.congratulate(_("TEXT_USER_GREET_SUCCESSFUL"))
 
     def _on_greeter_success(self, job):
         if self.greeter_job != job:

@@ -15,7 +15,15 @@ from tests.common import customize_fixtures
 @pytest.mark.parametrize("online", (True, False))
 @customize_fixtures(logged_gui_as_admin=True)
 async def test_invite_user(
-    aqtbot, logged_gui, bob, running_backend, monkeypatch, autoclose_dialog, email_letterbox, online
+    aqtbot,
+    logged_gui,
+    bob,
+    running_backend,
+    monkeypatch,
+    autoclose_dialog,
+    email_letterbox,
+    online,
+    snackbar_catcher,
 ):
     u_w = await logged_gui.test_switch_to_users_widget()
 
@@ -35,16 +43,13 @@ async def test_invite_user(
             assert isinstance(inv_btn, UserInvitationButton)
             assert inv_btn.email == "hubert.farnsworth@pe.com"
             assert email_letterbox.emails == [(inv_btn.email, ANY)]
-            assert autoclose_dialog.dialogs == [
-                (
-                    "",
-                    "The invitation to join your organization was successfully sent to : <b>hubert.farnsworth@pe.com</b>",
-                )
+            snackbar_catcher.snackbars = [
+                "The invitation to join your organization was successfully sent to : <b>hubert.farnsworth@pe.com</b>"
             ]
 
         await aqtbot.wait_until(_new_invitation_displayed)
 
-        autoclose_dialog.reset()
+        snackbar_catcher.reset()
 
         # Also checks that an invitation already exists for this user
 
@@ -55,9 +60,7 @@ async def test_invite_user(
         aqtbot.mouse_click(u_w.button_add_user, QtCore.Qt.LeftButton)
 
         def _already_member():
-            assert autoclose_dialog.dialogs == [
-                ("Error", _("TEXT_INVITE_USER_ALREADY_MEMBER_ERROR"))
-            ]
+            assert snackbar_catcher.snackbars == [_("TEXT_INVITE_USER_ALREADY_MEMBER_ERROR")]
 
         await aqtbot.wait_until(_already_member)
 
@@ -66,8 +69,8 @@ async def test_invite_user(
             aqtbot.mouse_click(u_w.button_add_user, QtCore.Qt.LeftButton)
 
             def _email_send_failed():
-                assert autoclose_dialog.dialogs == [
-                    ("Error", "The server is offline or you have no access to the internet.")
+                assert snackbar_catcher.snackbars == [
+                    "The server is offline or you have no access to the internet."
                 ]
 
             await aqtbot.wait_until(_email_send_failed)
@@ -78,7 +81,7 @@ async def test_invite_user(
 @pytest.mark.trio
 @customize_fixtures(logged_gui_as_admin=True)
 async def test_invite_and_greet_user_whith_active_users_limit_reached(
-    aqtbot, gui, alice, running_backend, monkeypatch, autoclose_dialog
+    aqtbot, gui, alice, running_backend, monkeypatch, autoclose_dialog, snackbar_catcher
 ):
     # Set the active user limit before login to ensure no cache information has been kept
     await running_backend.backend.organization.update(alice.organization_id, active_users_limit=1)
@@ -102,11 +105,8 @@ async def test_invite_and_greet_user_whith_active_users_limit_reached(
         inv_btn = u_w.layout_users.itemAt(0).widget()
         assert isinstance(inv_btn, UserInvitationButton)
         assert inv_btn.email == "hubert.farnsworth@pe.com"
-        assert autoclose_dialog.dialogs == [
-            (
-                "",
-                "The invitation to join your organization was successfully sent to : <b>hubert.farnsworth@pe.com</b>",
-            )
+        assert snackbar_catcher.snackbars == [
+            "The invitation to join your organization was successfully sent to : <b>hubert.farnsworth@pe.com</b>"
         ]
 
     await aqtbot.wait_until(_new_invitation_displayed)
@@ -126,7 +126,7 @@ async def test_invite_user_not_allowed(logged_gui, running_backend):
 @pytest.mark.parametrize("online", (True, False))
 @customize_fixtures(logged_gui_as_admin=True)
 async def test_revoke_user(
-    aqtbot, running_backend, autoclose_dialog, monkeypatch, logged_gui, online
+    aqtbot, running_backend, autoclose_dialog, monkeypatch, logged_gui, online, snackbar_catcher
 ):
     u_w = await logged_gui.test_switch_to_users_widget()
 
@@ -146,11 +146,8 @@ async def test_revoke_user(
 
         def _revocation_done():
             assert bob_w.user_info.is_revoked is True
-            assert autoclose_dialog.dialogs == [
-                (
-                    "",
-                    "The user <b>Boby McBobFace</b> has been successfully revoked. Do no forget to reencrypt the workspaces that were shared with them.",
-                )
+            assert snackbar_catcher.snackbars == [
+                "The user <b>Boby McBobFace</b> has been successfully revoked. Do no forget to reencrypt the workspaces that were shared with them."
             ]
 
         await aqtbot.wait_until(_revocation_done)
@@ -161,8 +158,8 @@ async def test_revoke_user(
 
             def _revocation_error():
                 assert bob_w.user_info.is_revoked is False
-                assert autoclose_dialog.dialogs == [
-                    ("Error", "The server is offline or you have no access to the internet.")
+                assert snackbar_catcher.snackbars == [
+                    "The server is offline or you have no access to the internet."
                 ]
 
             await aqtbot.wait_until(_revocation_error)
@@ -171,7 +168,7 @@ async def test_revoke_user(
 @pytest.mark.gui
 @pytest.mark.trio
 async def test_revoke_user_not_allowed(
-    aqtbot, running_backend, autoclose_dialog, monkeypatch, logged_gui
+    aqtbot, running_backend, autoclose_dialog, monkeypatch, logged_gui, snackbar_catcher
 ):
     u_w = await logged_gui.test_switch_to_users_widget()
 
@@ -191,7 +188,7 @@ async def test_revoke_user_not_allowed(
 
     def _revocation_error():
         assert alice_w.user_info.is_revoked is False
-        assert autoclose_dialog.dialogs == [("Error", "Could not revoke this user.")]
+        assert snackbar_catcher.snackbars == ["Could not revoke this user."]
 
     await aqtbot.wait_until(_revocation_error)
 
@@ -208,6 +205,7 @@ async def test_cancel_user_invitation(
     monkeypatch,
     alice,
     email_letterbox,
+    snackbar_catcher,
 ):
 
     email = "i@like.coffee"
@@ -227,15 +225,12 @@ async def test_cancel_user_invitation(
 
     def _new_invitation_displayed():
         assert u_w.layout_users.count() == 4
-        assert autoclose_dialog.dialogs == [
-            (
-                "",
-                f"The invitation to join your organization was successfully sent to : <b>{ email }</b>",
-            )
+        assert snackbar_catcher.snackbars == [
+            f"The invitation to join your organization was successfully sent to : <b>{ email }</b>"
         ]
 
     await aqtbot.wait_until(_new_invitation_displayed)
-    autoclose_dialog.reset()
+    snackbar_catcher.reset()
     user_invitation_w = u_w.layout_users.itemAt(0).widget()
     assert user_invitation_w.email == email
 
@@ -246,4 +241,4 @@ async def test_cancel_user_invitation(
         assert u_w.layout_users.count() == 3
 
     await aqtbot.wait_until(_new_invitation_removed)
-    assert not autoclose_dialog.dialogs
+    assert snackbar_catcher.snackbars == ["TEXT_INVITE_USER_CANCELLATION_SUCCESS"]

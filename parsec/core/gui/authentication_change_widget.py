@@ -17,8 +17,9 @@ from parsec.core.local_device import (
     get_available_device,
 )
 
-from parsec.core.gui.custom_dialogs import GreyedDialog, get_text_input, show_error, show_info
+from parsec.core.gui.custom_dialogs import GreyedDialog, get_text_input, show_error
 from parsec.core.gui.lang import translate as _
+from parsec.core.gui.snackbar_widget import SnackbarManager
 
 from parsec.core.gui.ui.authentication_change_widget import Ui_AuthenticationChangeWidget
 
@@ -52,7 +53,7 @@ class AuthenticationChangeWidget(QWidget, Ui_AuthenticationChangeWidget):
                 )
             elif auth_method == DeviceFileType.SMARTCARD:
                 save_device_with_smartcard(kf, self.loaded_device, force=True)
-            show_info(self, _("TEXT_AUTH_CHANGE_SUCCESS"))
+            SnackbarManager.congratulate(_("TEXT_AUTH_CHANGE_SUCCESS"))
             if self.dialog:
                 self.dialog.accept()
             elif QApplication.activeModalWidget():

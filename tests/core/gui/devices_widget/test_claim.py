@@ -41,6 +41,7 @@ def ClaimDeviceTestBed(
     gui,
     alice,
     alice_backend_cmds,
+    snackbar_catcher,
 ):
     class _ClaimDeviceTestBed:
         def __init__(self):
@@ -268,7 +269,7 @@ def ClaimDeviceTestBed(
                 # Should be logged in with the new device
                 central_widget = gui.test_get_central_widget()
                 assert central_widget and central_widget.isVisible()
-                assert autoclose_dialog.dialogs == [("", "The device was successfully created!")]
+                assert snackbar_catcher.snackbars == ["The device was successfully created!"]
 
             await aqtbot.wait_until(_claim_done)
 

@@ -7,8 +7,8 @@ from PyQt5.QtWidgets import QWidget
 
 from parsec.core.gui import lang
 from parsec.core.gui.lang import translate as _
-from parsec.core.gui.custom_dialogs import show_info
 from parsec.core.gui.new_version import CheckNewVersion
+from parsec.core.gui.snackbar_widget import SnackbarManager
 from parsec.core.gui.ui.settings_widget import Ui_SettingsWidget
 
 
@@ -52,4 +52,4 @@ class SettingsWidget(QWidget, Ui_SettingsWidget):
             gui_workspace_color=self.check_box_workspace_color.isChecked(),
             gui_show_confined=self.check_box_show_confined.isChecked(),
         )
-        show_info(self, _("TEXT_SETTINGS_NEED_RESTART"))
+        SnackbarManager.inform(_("TEXT_SETTINGS_NEED_RESTART"))

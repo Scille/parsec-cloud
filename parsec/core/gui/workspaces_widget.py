@@ -44,6 +44,7 @@ from parsec.core.gui.workspace_button import WorkspaceButton
 from parsec.core.gui.timestamped_workspace_widget import TimestampedWorkspaceWidget
 from parsec.core.gui.ui.workspaces_widget import Ui_WorkspacesWidget
 from parsec.core.gui.workspace_sharing_widget import WorkspaceSharingWidget
+from parsec.core.gui.snackbar_widget import SnackbarManager
 
 
 logger = get_logger()
@@ -310,23 +311,25 @@ class WorkspacesWidget(QWidget, Ui_WorkspacesWidget):
 
     def on_create_success(self, job):
         self.remove_user_filter()
+        SnackbarManager.congratulate(_("TEXT_WORKSPACE_HAS_BEEN_CREATED"))
 
     def on_create_error(self, job):
         if job.status == "invalid-name":
-            show_error(self, _("TEXT_WORKSPACE_CREATE_NEW_INVALID_NAME"), exception=job.exc)
+            SnackbarManager.warn(_("TEXT_WORKSPACE_CREATE_NEW_INVALID_NAME"))
         else:
-            show_error(self, _("TEXT_WORKSPACE_CREATE_NEW_UNKNOWN_ERROR"), exception=job.exc)
+            SnackbarManager.warn(_("TEXT_WORKSPACE_CREATE_NEW_UNKNOWN_ERROR"))
 
     def on_rename_success(self, job):
         workspace_button, workspace_name = job.ret
         if workspace_button:
             workspace_button.reload_workspace_name(workspace_name)
+        SnackbarManager.inform(_("TEXT_WORKSPACE_HAS_BEEN_RENAMED"))
 
     def on_rename_error(self, job):
         if job.status == "invalid-name":
-            show_error(self, _("TEXT_WORKSPACE_RENAME_INVALID_NAME"), exception=job.exc)
+            SnackbarManager.warn(_("TEXT_WORKSPACE_RENAME_INVALID_NAME"))
         else:
-            show_error(self, _("TEXT_WORKSPACE_RENAME_UNKNOWN_ERROR"), exception=job.exc)
+            SnackbarManager.warn(_("TEXT_WORKSPACE_RENAME_UNKNOWN_ERROR"))
 
     def on_list_success(self, job):
         # Hide the spinner in case it was visible
@@ -446,13 +449,13 @@ class WorkspacesWidget(QWidget, Ui_WorkspacesWidget):
             if wb:
                 wb.set_mountpoint_state(False)
             if isinstance(job.exc, MountpointNoDriveAvailable):
-                show_error(self, _("TEXT_WORKSPACE_CANNOT_MOUNT_NO_DRIVE"), exception=job.exc)
+                SnackbarManager.warn(_("TEXT_WORKSPACE_CANNOT_MOUNT_NO_DRIVE"))
             else:
-                show_error(self, _("TEXT_WORKSPACE_CANNOT_MOUNT"), exception=job.exc)
+                SnackbarManager.warn(_("TEXT_WORKSPACE_CANNOT_MOUNT"))
 
     def on_unmount_error(self, job):
         if isinstance(job.exc, MountpointError):
-            show_error(self, _("TEXT_WORKSPACE_CANNOT_UNMOUNT"), exception=job.exc)
+            SnackbarManager.warn(_("TEXT_WORKSPACE_CANNOT_UNMOUNT"))
 
     def on_reencryption_needs_success(self, job):
         workspace_id, reencryption_needs = job.ret
@@ -507,12 +510,12 @@ class WorkspacesWidget(QWidget, Ui_WorkspacesWidget):
             )
         except MountpointNotMounted:
             # The mountpoint has been umounted in our back, nothing left to do
-            show_error(self, _("TEXT_FILE_OPEN_ERROR_file").format(file=str(file_name)))
+            SnackbarManager.warn(_("TEXT_FILE_OPEN_ERROR_file").format(file=str(file_name)))
 
     def _on_file_open_success(self, job):
         status, paths = job.ret
         if not status:
-            show_error(self, _("TEXT_FILE_OPEN_ERROR_file").format(file=paths[0].name))
+            SnackbarManager.warn(_("TEXT_FILE_OPEN_ERROR_file").format(file=paths[0].name))
 
     def _on_file_open_error(self, job):
         logger.error("Failed to open the workspace in the explorer")
@@ -712,7 +715,7 @@ class WorkspacesWidget(QWidget, Ui_WorkspacesWidget):
             err_msg = _("TEXT_WORKPACE_REENCRYPT_FS_ERROR")
         else:
             err_msg = _("TEXT_WORKSPACE_REENCRYPT_UNKOWN_ERROR")
-        show_error(self, err_msg, exception=job.exc)
+        SnackbarManager.warn(err_msg)
 
     def get_workspace_button(self, workspace_id, timestamp=None):
         key = (workspace_id, timestamp)

@@ -27,7 +27,6 @@ from parsec.core.gui.custom_dialogs import (
     ask_question,
     show_error,
     get_text_input,
-    show_info,
     GreyedDialog,
     QDialogInProcess,
 )
@@ -40,6 +39,7 @@ from parsec.core.gui.workspace_roles import get_role_translation
 from parsec.core.gui.ui.files_widget import Ui_FilesWidget
 from parsec.core.gui.file_table import PasteStatus
 from parsec.core.types import DEFAULT_BLOCK_SIZE
+from parsec.core.gui.snackbar_widget import SnackbarManager
 
 
 logger = get_logger()
@@ -381,7 +381,7 @@ class FilesWidget(QWidget, Ui_FilesWidget):
         path = self.current_directory / files[0].name
         addr = self.workspace_fs.generate_file_link(path)
         desktop.copy_to_clipboard(addr.to_url())
-        show_info(self, _("TEXT_FILE_LINK_COPIED_TO_CLIPBOARD"))
+        SnackbarManager.inform(_("TEXT_FILE_LINK_COPIED_TO_CLIPBOARD"))
 
     def on_copy_clicked(self):
         files = self.table_files.selected_files()
@@ -597,9 +597,9 @@ class FilesWidget(QWidget, Ui_FilesWidget):
         status, paths = job.ret
         if not status:
             if len(paths) > 1:
-                show_error(self, _("TEXT_FILE_OPEN_MULTIPLE_ERROR"))
+                SnackbarManager.warn(_("TEXT_FILE_OPEN_MULTIPLE_ERROR"))
             else:
-                show_error(self, _("TEXT_FILE_OPEN_ERROR_file").format(file=paths[0].name))
+                SnackbarManager.warn(_("TEXT_FILE_OPEN_ERROR_file").format(file=paths[0].name))
 
     def _on_file_open_error(self, job):
         logger.error("Failed to open a file, should not happen")
@@ -709,7 +709,7 @@ class FilesWidget(QWidget, Ui_FilesWidget):
                         if len(files) == 1
                         else _("TEXT_FILE_IMPORT_MULTIPLE_PERMISSION_ERROR")
                     )
-                    show_error(self, text, exception=errors[0])
+                    SnackbarManager.warn(text)
                     raise JobResultError("error", exceptions=errors)
 
             if cancel_scope.cancel_called:
@@ -720,13 +720,13 @@ class FilesWidget(QWidget, Ui_FilesWidget):
             raise
 
         # Show a dialog when an unexpected error occurs
-        except Exception as exc:
+        except Exception:
             text = (
                 _("TEXT_FILE_IMPORT_ONE_ERROR")
                 if len(files) == 1
                 else _("TEXT_FILE_IMPORT_MULTIPLE_ERROR")
             )
-            show_error(self, text, exception=exc)
+            SnackbarManager.warn(text)
             raise
 
     # Import async helpers
@@ -884,9 +884,9 @@ class FilesWidget(QWidget, Ui_FilesWidget):
         if not getattr(job.exc, "params", None):
             return
         if job.exc.params.get("multi"):
-            show_error(self, _("TEXT_FILE_RENAME_MULTIPLE_ERROR"), exception=job.exc)
+            SnackbarManager.warn(_("TEXT_FILE_RENAME_MULTIPLE_ERROR"))
         else:
-            show_error(self, _("TEXT_FILE_RENAME_ERROR"), exception=job.exc)
+            SnackbarManager.warn(_("TEXT_FILE_RENAME_ERROR"))
 
     def _on_delete_success(self, job):
         self.reset()
@@ -895,9 +895,9 @@ class FilesWidget(QWidget, Ui_FilesWidget):
         if not getattr(job.exc, "params", None):
             return
         if job.exc.params.get("multi"):
-            show_error(self, _("TEXT_FILE_DELETE_MULTIPLE_ERROR"), exception=job.exc)
+            SnackbarManager.warn(_("TEXT_FILE_DELETE_MULTIPLE_ERROR"))
         else:
-            show_error(self, _("TEXT_FILE_DELETE_ERROR"), exception=job.exc)
+            SnackbarManager.warn(_("TEXT_FILE_DELETE_ERROR"))
 
     def _on_folder_stat_success(self, job):
         # Extract job information
@@ -964,7 +964,7 @@ class FilesWidget(QWidget, Ui_FilesWidget):
         self.table_files.clear()
         self.spinner.hide()
         if isinstance(job.exc, FSFileNotFoundError):
-            show_error(self, _("TEXT_FILE_FOLDER_NOT_FOUND"))
+            SnackbarManager.warn(_("TEXT_FILE_FOLDER_NOT_FOUND"))
             self.table_files.add_parent_workspace()
             return
         if self.current_directory == FsPath("/"):
@@ -977,9 +977,9 @@ class FilesWidget(QWidget, Ui_FilesWidget):
 
     def _on_folder_create_error(self, job):
         if job.status == "already-exists":
-            show_error(self, _("TEXT_FILE_FOLDER_CREATE_ERROR_ALREADY_EXISTS"))
+            SnackbarManager.warn(_("TEXT_FILE_FOLDER_CREATE_ERROR_ALREADY_EXISTS"))
         else:
-            show_error(self, _("TEXT_FILE_FOLDER_CREATE_ERROR_UNKNOWN"))
+            SnackbarManager.warn(_("TEXT_FILE_FOLDER_CREATE_ERROR_UNKNOWN"))
 
     def _on_fs_entry_downsynced(self, event, workspace_id=None, id=None):
         # No workspace FS
@@ -1038,11 +1038,10 @@ class FilesWidget(QWidget, Ui_FilesWidget):
     def _on_sharing_updated(self, event, new_entry, previous_entry):
         if new_entry is None or new_entry.role is None:
             # Sharing revoked
-            show_error(
-                self, _("TEXT_FILE_SHARING_REVOKED_workspace").format(workspace=previous_entry.name)
+            SnackbarManager.warn(
+                _("TEXT_FILE_SHARING_REVOKED_workspace").format(workspace=previous_entry.name)
             )
             self.back_clicked.emit()
-
         elif previous_entry is not None and previous_entry.role is not None:
             self.current_user_role = new_entry.role
             self.label_role.setText(get_role_translation(self.current_user_role))
@@ -1050,7 +1049,7 @@ class FilesWidget(QWidget, Ui_FilesWidget):
                 previous_entry.role != WorkspaceRole.READER
                 and new_entry.role == WorkspaceRole.READER
             ):
-                show_error(self, _("TEXT_FILE_SHARING_DEMOTED_TO_READER"))
+                SnackbarManager.warn(_("TEXT_FILE_SHARING_DEMOTED_TO_READER"))
 
     def _on_reload_timestamped_requested(
         self, timestamp, path, file_type, open_after_load, close_after_remount, reload_after_remount

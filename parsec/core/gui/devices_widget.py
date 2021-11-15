@@ -9,8 +9,8 @@ from parsec.core.gui.trio_jobs import JobResultError, QtToTrioJob
 from parsec.core.gui.greet_device_widget import GreetDeviceWidget
 from parsec.core.gui.lang import translate as _
 from parsec.core.gui.custom_widgets import ensure_string_size
-from parsec.core.gui.custom_dialogs import show_error
 from parsec.core.gui.flow_layout import FlowLayout
+from parsec.core.gui.snackbar_widget import SnackbarManager
 from parsec.core.gui.ui.devices_widget import Ui_DevicesWidget
 from parsec.core.gui.ui.device_button import Ui_DeviceButton
 
@@ -110,8 +110,7 @@ class DevicesWidget(QWidget, Ui_DevicesWidget):
             errmsg = _("TEXT_INVITE_DEVICE_INVITE_OFFLINE")
         else:
             errmsg = _("TEXT_INVITE_DEVICE_INVITE_ERROR")
-
-        show_error(self, errmsg, exception=job.exc)
+        SnackbarManager.warn(errmsg)
 
     def add_device(self, device_info, is_current_device):
         button = DeviceButton(device_info, is_current_device)
@@ -135,6 +134,7 @@ class DevicesWidget(QWidget, Ui_DevicesWidget):
 
         status = job.status
         if status in ["error", "offline"]:
+            SnackbarManager.warn(_("TEXT_DEVICE_LIST_RETRIEVABLE_FAILURE"))
             self.layout_devices.clear()
             label = QLabel(_("TEXT_DEVICE_LIST_RETRIEVABLE_FAILURE"))
             label.setAlignment(Qt.AlignHCenter | Qt.AlignVCenter)

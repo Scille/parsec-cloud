@@ -77,6 +77,7 @@ async def test_change_password_success(
     catch_auth_change_widget,
     autoclose_dialog,
     monkeypatch,
+    snackbar_catcher,
 ):
     c_w = logged_gui.test_get_central_widget()
 
@@ -101,8 +102,8 @@ async def test_change_password_success(
     assert pc_w.button_validate.isEnabled()
     aqtbot.mouse_click(pc_w.button_validate, QtCore.Qt.LeftButton)
 
-    assert autoclose_dialog.dialogs == [("", translate("TEXT_AUTH_CHANGE_SUCCESS"))]
-    autoclose_dialog.reset()
+    assert snackbar_catcher.snackbars == [translate("TEXT_AUTH_CHANGE_SUCCESS")]
+    snackbar_catcher.reset()
 
     # Retry to login...
     await logged_gui.test_logout_and_switch_to_login_widget()

@@ -5,6 +5,9 @@ from PyQt5.QtCore import QFile, QIODevice
 
 from structlog import get_logger
 
+from parsec.core.gui.lang import translate as _
+from parsec.core.gui.snackbar_widget import SnackbarManager
+
 from parsec.core.gui.ui.changelog_widget import Ui_ChangelogWidget
 
 
@@ -18,6 +21,7 @@ class ChangelogWidget(QWidget, Ui_ChangelogWidget):
         rc_file = QFile(":/generated_misc/generated_misc/history.html")
         if not rc_file.open(QIODevice.ReadOnly):
             logger.warning("Unable to read the changelog")
+            SnackbarManager.warn(_("TEXT_CANNOT_READ_CHANGELOG"))
         else:
             self.text_changelog.setHtml(rc_file.readAll().data().decode("utf-8"))
             rc_file.close()

@@ -154,6 +154,7 @@ async def test_workspace_reencryption_offline_backend(
     autoclose_dialog,
     monkeypatch,
     reencryption_needed_workspace,
+    snackbar_catcher,
 ):
 
     w_w = await logged_gui.test_switch_to_workspaces_widget()
@@ -164,9 +165,8 @@ async def test_workspace_reencryption_offline_backend(
         aqtbot.mouse_click(wk_button.button_reencrypt, QtCore.Qt.LeftButton)
 
         def _assert_error():
-            assert len(autoclose_dialog.dialogs) == 1
-            assert autoclose_dialog.dialogs == [
-                ("Error", translate("TEXT_WORKPACE_REENCRYPT_OFFLINE_ERROR"))
+            assert snackbar_catcher.snackbars == [
+                translate("TEXT_WORKPACE_REENCRYPT_OFFLINE_ERROR")
             ]
             assert wk_button.button_reencrypt.isVisible()
 
@@ -184,6 +184,7 @@ async def test_workspace_reencryption_fs_error(
     alice_user_fs,
     monkeypatch,
     reencryption_needed_workspace,
+    snackbar_catcher,
 ):
 
     w_w = await logged_gui.test_switch_to_workspaces_widget()
@@ -195,10 +196,8 @@ async def test_workspace_reencryption_fs_error(
     aqtbot.mouse_click(wk_button.button_reencrypt, QtCore.Qt.LeftButton)
 
     def _assert_error():
-        assert len(autoclose_dialog.dialogs) == 1
-        assert autoclose_dialog.dialogs == [
-            ("Error", translate("TEXT_WORKPACE_REENCRYPT_FS_ERROR"))
-        ]
+        print(snackbar_catcher.snackbars)
+        snackbar_catcher.snackbars == [translate("TEXT_WORKPACE_REENCRYPT_FS_ERROR")]
         assert wk_button.button_reencrypt.isVisible()
 
     await aqtbot.wait_until(_assert_error)
@@ -218,6 +217,7 @@ async def test_workspace_reencryption_access_error(
     adam,
     monkeypatch,
     reencryption_needed_workspace,
+    snackbar_catcher,
 ):
 
     w_w = await logged_gui.test_switch_to_workspaces_widget()
@@ -238,11 +238,8 @@ async def test_workspace_reencryption_access_error(
     aqtbot.mouse_click(wk_button.button_reencrypt, QtCore.Qt.LeftButton)
 
     def _assert_error():
-        assert len(autoclose_dialog.dialogs) == 2
-        assert (
-            "Error",
-            translate("TEXT_WORKPACE_REENCRYPT_ACCESS_ERROR"),
-        ) in autoclose_dialog.dialogs
+        assert len(snackbar_catcher.snackbars) == 2
+        assert translate("TEXT_WORKPACE_REENCRYPT_ACCESS_ERROR") in snackbar_catcher.snackbars
         assert wk_button.button_reencrypt.isVisible()
 
     await aqtbot.wait_until(_assert_error)
@@ -258,6 +255,7 @@ async def test_workspace_reencryption_not_found_error(
     autoclose_dialog,
     monkeypatch,
     reencryption_needed_workspace,
+    snackbar_catcher,
 ):
 
     w_w = await logged_gui.test_switch_to_workspaces_widget()
@@ -275,10 +273,8 @@ async def test_workspace_reencryption_not_found_error(
     aqtbot.mouse_click(wk_button.button_reencrypt, QtCore.Qt.LeftButton)
 
     def _assert_error():
-        assert len(autoclose_dialog.dialogs) == 1
-        assert autoclose_dialog.dialogs == [
-            ("Error", translate("TEXT_WORKPACE_REENCRYPT_NOT_FOUND_ERROR"))
-        ]
+        assert len(snackbar_catcher.snackbars) == 1
+        assert snackbar_catcher.snackbars == [translate("TEXT_WORKPACE_REENCRYPT_NOT_FOUND_ERROR")]
         assert wk_button.button_reencrypt.isVisible()
 
     await aqtbot.wait_until(_assert_error)
@@ -300,6 +296,7 @@ async def test_workspace_reencryption_do_one_batch_error(
     monkeypatch,
     reencryption_needed_workspace,
     error_type,
+    snackbar_catcher,
 ):
 
     expected_errors = {
@@ -328,8 +325,8 @@ async def test_workspace_reencryption_do_one_batch_error(
     aqtbot.mouse_click(wk_button.button_reencrypt, QtCore.Qt.LeftButton)
 
     def _assert_error():
-        assert len(autoclose_dialog.dialogs) == 1
-        assert autoclose_dialog.dialogs == [("Error", expected_errors[error_type])]
+        assert len(snackbar_catcher.snackbars) == 1
+        assert snackbar_catcher.snackbars == [expected_errors[error_type]]
         assert wk_button.button_reencrypt.isVisible()
 
     await aqtbot.wait_until(_assert_error)

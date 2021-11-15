@@ -29,6 +29,7 @@ from parsec.core.local_device import (
     LocalDeviceNotFoundError,
 )
 
+from parsec.core.gui.snackbar_widget import SnackbarManager
 from parsec.core.gui.trio_jobs import QtToTrioJob
 from parsec.core.gui.custom_dialogs import GreyedDialog, show_error
 from parsec.core.gui.trio_jobs import JobResultError
@@ -251,6 +252,7 @@ class CreateOrgWidget(QWidget, Ui_CreateOrgWidget):
                     save_device_with_smartcard_in_config(self.config.config_dir, self.new_device)
                 self.status = (self.new_device, auth_method, self.current_widget.get_auth())
 
+                SnackbarManager.congratulate(_("TEXT_CREATE_ORG_SUCCESSFUL"))
                 if self.dialog:
                     self.dialog.accept()
                 elif QApplication.activeModalWidget():

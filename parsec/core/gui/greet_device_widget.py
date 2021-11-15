@@ -14,6 +14,7 @@ from parsec.core.gui.custom_dialogs import show_error, GreyedDialog, show_info, 
 from parsec.core.gui.lang import translate as _
 from parsec.core.gui.qrcode_widget import generate_qr_code
 from parsec.core.gui import desktop
+from parsec.core.gui.snackbar_widget import SnackbarManager
 from parsec.core.gui.ui.greet_device_widget import Ui_GreetDeviceWidget
 from parsec.core.gui.ui.greet_device_code_exchange_widget import Ui_GreetDeviceCodeExchangeWidget
 from parsec.core.gui.ui.greet_device_instructions_widget import Ui_GreetDeviceInstructionsWidget
@@ -167,7 +168,7 @@ class GreetDeviceInstructionsWidget(QWidget, Ui_GreetDeviceInstructionsWidget):
 
     def _on_copy_addr_clicked(self):
         desktop.copy_to_clipboard(self.invite_addr.to_url())
-        show_info(self, _("TEXT_GREET_DEVICE_ADDR_COPIED_TO_CLIPBOARD"))
+        SnackbarManager.inform(_("TEXT_GREET_DEVICE_ADDR_COPIED_TO_CLIPBOARD"))
 
     def _on_button_send_email_clicked(self):
         self.button_send_email.setDisabled(True)

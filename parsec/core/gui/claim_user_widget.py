@@ -26,6 +26,7 @@ from parsec.core.backend_connection import (
     BackendNotAvailable,
 )
 from parsec.core.gui import validators
+from parsec.core.gui.snackbar_widget import SnackbarManager
 from parsec.core.gui.trio_jobs import JobResultError, QtToTrioJob
 from parsec.core.gui.desktop import get_default_device
 from parsec.core.gui.custom_dialogs import show_error, GreyedDialog, show_info
@@ -716,6 +717,7 @@ class ClaimUserWidget(QWidget, Ui_ClaimUserWidget):
 
     def _on_finished(self, device, auth_method, password):
         self.status = (device, auth_method, password)
+        SnackbarManager.congratulate(_("TEXT_USER_CLAIM_SUCCESSFUL"))
         self.dialog.accept()
 
     def _on_claimer_success(self, job):

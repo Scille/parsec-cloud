@@ -10,17 +10,14 @@ from urllib.request import urlopen, Request, URLError
 from packaging.version import Version
 from structlog import get_logger
 
-from PyQt5.QtCore import Qt, pyqtSignal, QSysInfo
-from PyQt5.QtWidgets import QDialog, QWidget
+from PyQt5.QtCore import pyqtSignal, QSysInfo, QObject
 
 from parsec import __version__
 from parsec.serde import BaseSchema, fields, JSONSerializer, SerdeError
 from parsec.core.gui import desktop
 from parsec.core.gui.lang import translate as _
 from parsec.core.gui.trio_jobs import QtToTrioJob
-from parsec.core.gui.ui.new_version_dialog import Ui_NewVersionDialog
-from parsec.core.gui.ui.new_version_info import Ui_NewVersionInfo
-from parsec.core.gui.ui.new_version_available import Ui_NewVersionAvailable
+from parsec.core.gui.snackbar_widget import SnackbarManager
 
 
 logger = get_logger()
@@ -133,68 +130,15 @@ async def do_check_new_version(
     return None
 
 
-class NewVersionInfo(QWidget, Ui_NewVersionInfo):
-    close_clicked = pyqtSignal()
-
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        self.setupUi(self)
-        self.button_close.clicked.connect(self.close_clicked.emit)
-        self.show_waiting()
-
-    def show_error(self):
-        self.label_waiting.hide()
-        self.label_error.show()
-        self.label_up_to_date.hide()
-
-    def show_up_to_date(self):
-        self.label_waiting.hide()
-        self.label_error.hide()
-        self.label_up_to_date.show()
-
-    def show_waiting(self):
-        self.label_waiting.show()
-        self.label_error.hide()
-        self.label_up_to_date.hide()
-
-
-class NewVersionAvailable(QWidget, Ui_NewVersionAvailable):
-    download_clicked = pyqtSignal()
-    close_clicked = pyqtSignal()
-
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        self.setupUi(self)
-        self.button_download.clicked.connect(self.download_clicked.emit)
-        self.button_ignore.clicked.connect(self.close_clicked.emit)
-
-    def set_version(self, version):
-        if version:
-            self.label.setText(
-                _("TEXT_PARSEC_NEW_VERSION_AVAILABLE_version").format(version=str(version))
-            )
-
-
-class CheckNewVersion(QDialog, Ui_NewVersionDialog):
+class CheckNewVersion(QObject):
     check_new_version_success = pyqtSignal(QtToTrioJob)
     check_new_version_error = pyqtSignal(QtToTrioJob)
 
     def __init__(self, jobs_ctx, event_bus, config, **kwargs):
         super().__init__(**kwargs)
-        self.setupUi(self)
 
         if get_platform_and_arch()[0] not in ("win32", "darwin"):
             return
-
-        self.widget_info = NewVersionInfo(parent=self)
-        self.widget_available = NewVersionAvailable(parent=self)
-        self.widget_available.hide()
-        self.layout.addWidget(self.widget_info)
-        self.layout.addWidget(self.widget_available)
-
-        self.widget_info.close_clicked.connect(self.ignore)
-        self.widget_available.close_clicked.connect(self.ignore)
-        self.widget_available.download_clicked.connect(self.download)
 
         self.jobs_ctx = jobs_ctx
         self.event_bus = event_bus
@@ -210,7 +154,6 @@ class CheckNewVersion(QDialog, Ui_NewVersionDialog):
             api_url=self.config.gui_check_version_api_url,
             allow_prerelease=self.config.gui_check_version_allow_pre_release,
         )
-        self.setWindowFlags(Qt.SplashScreen)
 
     def on_check_new_version_success(self, job):
         assert job is self.version_job
@@ -220,38 +163,21 @@ class CheckNewVersion(QDialog, Ui_NewVersionDialog):
         self.version_job = None
         if version_job_ret:
             new_version, url = version_job_ret
-            self.widget_available.show()
-            self.widget_info.hide()
-            self.widget_available.set_version(new_version)
-            self.download_url = url
-            if not self.isVisible():
-                self.exec_()
+
+            def _on_download_clicked():
+                desktop.open_url(url)
+
+            SnackbarManager.inform(
+                _("TEXT_PARSEC_NEW_VERSION_AVAILABLE_version").format(version=str(new_version)),
+                action_text=_("ACTION_DOWNLOAD"),
+                action=_on_download_clicked,
+            )
         else:
-            if not self.isVisible():
-                self.ignore()
-            self.widget_available.hide()
-            self.widget_info.show()
-            self.widget_info.show_up_to_date()
+            SnackbarManager.congratulate(_("TEXT_NEW_VERSION_UP_TO_DATE"))
 
     def on_check_new_version_error(self, job):
         assert job is self.version_job
         assert self.version_job.is_finished()
         assert self.version_job.status != "ok"
         self.version_job = None
-        if not self.isVisible():
-            self.ignore()
-        self.widget_available.hide()
-        self.widget_info.show()
-        self.widget_info.show_error()
-
-    def download(self):
-        desktop.open_url(self.download_url)
-        self.accept()
-
-    def ignore(self):
-        self.reject()
-
-    def closeEvent(self, event):
-        if self.version_job:
-            self.version_job.cancel()
-        event.accept()
+        SnackbarManager.warn(_("TEXT_NEW_VERSION_CHECK_FAILED"))
