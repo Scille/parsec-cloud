@@ -595,13 +595,6 @@ class WorkspaceFS:
             return name
         return None
 
-    async def send_sync_event(self, entry_id: EntryID, status: str) -> None:
-        name = await self.get_name(entry_id)
-        if name:
-            logger.warning(
-                status + " " + self.get_workspace_name() + ": " + name + " " + str(entry_id)
-            )
-
     async def _sync_by_id(
         self, entry_id: EntryID, remote_changed: bool = True
     ) -> BaseRemoteManifest:
@@ -625,8 +618,6 @@ class WorkspaceFS:
             except FSRemoteManifestNotFound:
                 pass
 
-        await self.send_sync_event(entry_id, "SYNCING")
-
         # Loop over sync transactions
         final = False
         # logger.warning("SYNCINC:" + str(entry_id))
@@ -648,7 +639,6 @@ class WorkspaceFS:
 
             # The manifest doesn't exist locally
             except FSLocalMissError:
-                await self.send_sync_event(entry_id, "SYNCED FROM REMOTE")
                 raise FSNoSynchronizationRequired(entry_id)
 
             # No new manifest to upload, the entry is synced!
@@ -656,7 +646,6 @@ class WorkspaceFS:
                 manifest = remote_manifest or (
                     (await self.local_storage.get_manifest(entry_id)).base
                 )
-                await self.send_sync_event(entry_id, "SYNCED")
                 return manifest
 
             # Synchronize placeholder children

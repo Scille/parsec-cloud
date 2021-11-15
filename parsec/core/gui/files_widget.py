@@ -1040,7 +1040,7 @@ class FilesWidget(QWidget, Ui_FilesWidget):
                 id=id,
                 workspace_id=workspace_id,
             )
-        else:
+        elif event == CoreEvent.FS_ENTRY_UPDATED:
             self.jobs_ctx.submit_job(
                 self.empty,
                 self.empty,
@@ -1057,14 +1057,15 @@ class FilesWidget(QWidget, Ui_FilesWidget):
         # Not the corresponding workspace
         if workspace_id != self.workspace_fs.workspace_id:
             return
-        await self.print_sync_remove(workspace_id, id, "INBOUND FINISHED ")
         # Reload, as it might correspond to the current directory
         if self.current_directory_uuid is None:
             self.reload()
+            await self.print_sync_remove(workspace_id, id, "INBOUND FINISHED ")
             return
         # Reload, as it definitely corresponds to the current directory
         if self.current_directory_uuid == id:
             self.reload()
+            await self.print_sync_remove(workspace_id, id, "INBOUND FINISHED ")
             return
 
     async def _on_fs_entry_synced(self, event, id, workspace_id=None):
