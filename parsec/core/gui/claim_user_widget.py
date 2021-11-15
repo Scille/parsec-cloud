@@ -717,7 +717,11 @@ class ClaimUserWidget(QWidget, Ui_ClaimUserWidget):
 
     def _on_finished(self, device, auth_method, password):
         self.status = (device, auth_method, password)
-        SnackbarManager.congratulate(_("TEXT_USER_CLAIM_SUCCESSFUL"))
+        SnackbarManager.congratulate(
+            _("TEXT_USER_CLAIM_SUCCESSFUL_organization").format(
+                organization=self.addr.organization_id
+            )
+        )
         self.dialog.accept()
 
     def _on_claimer_success(self, job):

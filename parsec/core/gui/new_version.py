@@ -170,7 +170,7 @@ class CheckNewVersion(QObject):
             SnackbarManager.inform(
                 _("TEXT_PARSEC_NEW_VERSION_AVAILABLE_version").format(version=str(new_version)),
                 timeout=5000,
-                action_text=_("ACTION_DOWNLOAD"),
+                action_text=_("ACTION_PARSEC_DOWNLOAD_NEW_VERSION"),
                 action=_on_download_clicked,
             )
         else:

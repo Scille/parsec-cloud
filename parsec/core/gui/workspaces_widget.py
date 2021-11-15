@@ -311,7 +311,11 @@ class WorkspacesWidget(QWidget, Ui_WorkspacesWidget):
 
     def on_create_success(self, job):
         self.remove_user_filter()
-        SnackbarManager.congratulate(_("TEXT_WORKSPACE_HAS_BEEN_CREATED"))
+        SnackbarManager.congratulate(
+            _("TEXT_WORKSPACE_HAS_BEEN_CREATED_workspace").format(
+                workspace=job.arguments["workspace_name"]
+            )
+        )
 
     def on_create_error(self, job):
         if job.status == "invalid-name":

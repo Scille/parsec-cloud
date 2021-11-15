@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PROJECT VERSION\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2021-11-08 13:19+0100\n"
+"POT-Creation-Date: 2021-11-15 09:59+0100\n"
 "PO-Revision-Date: 2020-10-15 10:31+0200\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language: fr\n"
@@ -127,6 +127,9 @@ msgstr "Utilisateurs"
 msgid "ACTION_MENU_DEVICES"
 msgstr "Mes appareils"
 
+msgid "TEXT_CANNOT_READ_CHANGELOG"
+msgstr "Impossible de récupérer la liste des modifications."
+
 msgid "TEXT_CLAIM_DEVICE_INVALID_CODE_CLICKED"
 msgstr ""
 "Vous n'avez pas cliqué sur le bon code. Vous devez redémarrer le "
@@ -245,6 +248,9 @@ msgstr ""
 msgid "TEXT_CLAIM_USER_FAILED_TO_RETRIEVE_INFO"
 msgstr "Impossible de récupérer les informations de l'invitation."
 
+msgid "TEXT_USER_CLAIM_SUCCESSFUL_organization"
+msgstr "Vous avez rejoint l'organisation <b>{organization}</b>"
+
 msgid "TEXT_CLAIM_USER_INVITATION_NOT_FOUND"
 msgstr "Aucune invitation trouvée."
 
@@ -270,6 +276,9 @@ msgstr "L'adresse email n'est pas valide."
 
 msgid "TEXT_ORG_WIZARD_INVALID_DEVICE_NAME"
 msgstr "Le nom de d'appareil n'est pas valide."
+
+msgid "TEXT_CREATE_ORG_SUCCESSFUL"
+msgstr "Votre nouvelle organisation a été créée !"
 
 msgid "ACTION_CREATE_ORG"
 msgstr "Créer l'organisation"
@@ -315,6 +324,9 @@ msgstr "Erreur"
 
 msgid "ACTION_CONTINUE"
 msgstr "Continuer"
+
+msgid "TEXT_COPIED_TO_CLIPBOARD"
+msgstr "Copié dans le presse-papier"
 
 msgid "TEXT_RECOVERY_HTML_EXPORT_user-organization-keyname-password"
 msgstr ""
@@ -1854,6 +1866,15 @@ msgstr ""
 msgid "TEXT_PARSEC_NEW_VERSION_AVAILABLE_version"
 msgstr "La version <b>{version}</b> de PARSEC est disponible !"
 
+msgid "ACTION_PARSEC_DOWNLOAD_NEW_VERSION"
+msgstr "Télécharger la nouvelle version"
+
+msgid "TEXT_NEW_VERSION_UP_TO_DATE"
+msgstr "Votre application est à jour."
+
+msgid "TEXT_NEW_VERSION_CHECK_FAILED"
+msgstr "Impossible de vérifier si une nouvelle version est disponble."
+
 msgid "TEXT_PASSWORD_CHECK_MATCH"
 msgstr "Le mot de passe et la confirmation sont les mêmes."
 
@@ -1991,6 +2012,9 @@ msgstr ""
 msgid "TEXT_USER_LIST_RETRIEVABLE_FAILURE"
 msgstr "Impossible de récupérer la liste des utilisateurs depuis le serveur."
 
+msgid "TEXT_INVITE_USER_CANCELLATION_SUCCESS"
+msgstr "L'invitation a été annulée."
+
 msgid "TEXT_INVITE_USER_CANCEL_ERROR"
 msgstr "Impossible d'annuler l'invitation."
 
@@ -2082,7 +2106,7 @@ msgid "NOT_ALLOWED_FOR_OUTSIDER_PROFILE_TOOLTIP"
 msgstr "Rôle non autorisé pour les utilisateurs externes."
 
 msgid "TEXT_WORKSPACE_SHARING_OFFLINE"
-msgstr ""
+msgstr "Impossible de contacter le serveur."
 
 msgid "TEXT_WORKSPACE_SHARING_UNSHARE_ERROR_workspace-user"
 msgstr ""
@@ -2120,11 +2144,17 @@ msgstr ""
 "Impossible de trouver l'espace de travail de ce fichier. Peut-être qu'il "
 "n'a pas été partagé avec vous."
 
+msgid "TEXT_WORKSPACE_HAS_BEEN_CREATED_workspace"
+msgstr "Votre espace de travail <b>{workspace}</b> a été créé."
+
 msgid "TEXT_WORKSPACE_CREATE_NEW_INVALID_NAME"
 msgstr "Le nom fourni n'est pas un nom d'espace de travail valide."
 
 msgid "TEXT_WORKSPACE_CREATE_NEW_UNKNOWN_ERROR"
 msgstr "Impossible de créer l'espace de travail."
+
+msgid "TEXT_WORKSPACE_HAS_BEEN_RENAMED"
+msgstr "L'espace de travail a été renommé."
 
 msgid "TEXT_WORKSPACE_RENAME_INVALID_NAME"
 msgstr ""
@@ -2578,20 +2608,11 @@ msgstr "Import du fichier"
 msgid "ACTION_BACK"
 msgstr "Retour"
 
-msgid "ACTION_PARSEC_DOWNLOAD_NEW_VERSION"
-msgstr "Télécharger la nouvelle version"
-
 msgid "ACTION_PARSEC_IGNORE_NEW_VERSION"
 msgstr "Ignorer"
 
 msgid "TEXT_NEW_VERSION_CHECKING_IN_PROGRESS"
 msgstr "En cours de vérification d'une nouvelle version"
-
-msgid "TEXT_NEW_VERSION_CHECK_FAILED"
-msgstr "Impossible de vérifier si une nouvelle version est disponble."
-
-msgid "TEXT_NEW_VERSION_UP_TO_DATE"
-msgstr "Votre application est à jour."
 
 msgid "LABEL_NOTIFICATIONS"
 msgstr ""
@@ -2735,4 +2756,3 @@ msgstr "Créer un nouvel espace de travail"
 
 msgid "ACTION_WORKSPACE_GOTO_FILE_LINK"
 msgstr "Trouver un fichier via son lien"
-

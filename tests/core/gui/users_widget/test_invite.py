@@ -241,4 +241,4 @@ async def test_cancel_user_invitation(
         assert u_w.layout_users.count() == 3
 
     await aqtbot.wait_until(_new_invitation_removed)
-    assert snackbar_catcher.snackbars == ["TEXT_INVITE_USER_CANCELLATION_SUCCESS"]
+    assert snackbar_catcher.snackbars == [_("TEXT_INVITE_USER_CANCELLATION_SUCCESS")]

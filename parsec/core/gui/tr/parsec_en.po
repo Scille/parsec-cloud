@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PROJECT VERSION\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2021-11-08 13:19+0100\n"
+"POT-Creation-Date: 2021-11-15 09:59+0100\n"
 "PO-Revision-Date: 2020-10-15 10:30+0200\n"
 "Last-Translator: \n"
 "Language: en\n"
@@ -127,6 +127,9 @@ msgstr "Users"
 msgid "ACTION_MENU_DEVICES"
 msgstr "My devices"
 
+msgid "TEXT_CANNOT_READ_CHANGELOG"
+msgstr "Could not access the changelog"
+
 msgid "TEXT_CLAIM_DEVICE_INVALID_CODE_CLICKED"
 msgstr ""
 "You did not provide the right code. You will have to restart the process."
@@ -229,6 +232,9 @@ msgstr "Error while waiting for the other user. Please restart the process."
 msgid "TEXT_CLAIM_USER_FAILED_TO_RETRIEVE_INFO"
 msgstr "Failed to retrieve information about the invitation."
 
+msgid "TEXT_USER_CLAIM_SUCCESSFUL_organization"
+msgstr "You have join the organization <b>{organization}</b>"
+
 msgid "TEXT_CLAIM_USER_INVITATION_NOT_FOUND"
 msgstr "The invitation was not found."
 
@@ -254,6 +260,9 @@ msgstr "The email address is invalid."
 
 msgid "TEXT_ORG_WIZARD_INVALID_DEVICE_NAME"
 msgstr "The device name is invalid."
+
+msgid "TEXT_CREATE_ORG_SUCCESSFUL"
+msgstr "Your new organization was created!"
 
 msgid "ACTION_CREATE_ORG"
 msgstr "Create the organization"
@@ -299,6 +308,9 @@ msgstr "Error"
 
 msgid "ACTION_CONTINUE"
 msgstr "Continue"
+
+msgid "TEXT_COPIED_TO_CLIPBOARD"
+msgstr "Copied to clipboard"
 
 msgid "TEXT_RECOVERY_HTML_EXPORT_user-organization-keyname-password"
 msgstr ""
@@ -1800,6 +1812,15 @@ msgstr ""
 msgid "TEXT_PARSEC_NEW_VERSION_AVAILABLE_version"
 msgstr "The version <b>{version}</b> of PARSEC is available!"
 
+msgid "ACTION_PARSEC_DOWNLOAD_NEW_VERSION"
+msgstr "Download the new version"
+
+msgid "TEXT_NEW_VERSION_UP_TO_DATE"
+msgstr "Your PARSEC is up-to-date!"
+
+msgid "TEXT_NEW_VERSION_CHECK_FAILED"
+msgstr "Could not check for new versions."
+
 msgid "TEXT_PASSWORD_CHECK_MATCH"
 msgstr "The password and the confirmation match."
 
@@ -1936,6 +1957,9 @@ msgstr ""
 msgid "TEXT_USER_LIST_RETRIEVABLE_FAILURE"
 msgstr "Failed to retrieve the user list from the server."
 
+msgid "TEXT_INVITE_USER_CANCELLATION_SUCCESS"
+msgstr "The invitation was cancelled."
+
 msgid "TEXT_INVITE_USER_CANCEL_ERROR"
 msgstr "Could not cancel the invitation."
 
@@ -2060,11 +2084,17 @@ msgstr ""
 "Could not find the workspace this file belongs to. Maybe it has not been "
 "shared with you."
 
+msgid "TEXT_WORKSPACE_HAS_BEEN_CREATED_workspace"
+msgstr "The workspace <b>{workspace}</b> has been created."
+
 msgid "TEXT_WORKSPACE_CREATE_NEW_INVALID_NAME"
 msgstr "Could not create the workspace. This name is not a valid workspace name."
 
 msgid "TEXT_WORKSPACE_CREATE_NEW_UNKNOWN_ERROR"
 msgstr "Cannot create the workspace."
+
+msgid "TEXT_WORKSPACE_HAS_BEEN_RENAMED"
+msgstr "The workspace has been renamed."
 
 msgid "TEXT_WORKSPACE_RENAME_INVALID_NAME"
 msgstr "Could not rename the workspace. This name is not a valid workspace name."
@@ -2510,20 +2540,11 @@ msgstr "Importing file"
 msgid "ACTION_BACK"
 msgstr "Back"
 
-msgid "ACTION_PARSEC_DOWNLOAD_NEW_VERSION"
-msgstr "Download the new version"
-
 msgid "ACTION_PARSEC_IGNORE_NEW_VERSION"
 msgstr "Ignore"
 
 msgid "TEXT_NEW_VERSION_CHECKING_IN_PROGRESS"
 msgstr "Checking if a new version is available"
-
-msgid "TEXT_NEW_VERSION_CHECK_FAILED"
-msgstr "Could not check for new versions."
-
-msgid "TEXT_NEW_VERSION_UP_TO_DATE"
-msgstr "Your PARSEC is up-to-date!"
 
 msgid "LABEL_NOTIFICATIONS"
 msgstr ""
@@ -2666,4 +2687,3 @@ msgstr "Create a new workspace"
 
 msgid "ACTION_WORKSPACE_GOTO_FILE_LINK"
 msgstr "Go to a file using a link"
-

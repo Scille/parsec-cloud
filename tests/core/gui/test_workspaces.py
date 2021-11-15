@@ -51,7 +51,11 @@ async def test_add_workspace(
             wk_button = w_w.layout_workspaces.itemAt(0).widget()
             assert isinstance(wk_button, WorkspaceButton)
             assert wk_button.name == "Workspace1"
-            assert snackbar_catcher.snackbars == [translate("TEXT_WORKSPACE_HAS_BEEN_CREATED")]
+            assert snackbar_catcher.snackbars == [
+                translate("TEXT_WORKSPACE_HAS_BEEN_CREATED_workspace").format(
+                    workspace="Workspace1"
+                )
+            ]
 
     await aqtbot.wait_until(_outcome_occured, timeout=2000)
 
