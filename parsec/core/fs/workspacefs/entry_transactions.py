@@ -201,7 +201,6 @@ class EntryTransactions(FileTransactions):
         missing_size = 0
 
         boolean_chunk_list = await self.local_storage.block_storage.are_chunks(accessible_chunk_ids)
-
         for chunk, b in zip(accessible_chunks, boolean_chunk_list):
             if not b:
                 assert chunk.access is not None
