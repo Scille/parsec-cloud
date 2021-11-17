@@ -1,0 +1,1 @@
+Addind monitoring section to see if files are synchronized
