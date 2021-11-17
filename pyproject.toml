@@ -1,0 +1,12 @@
+[build-system]
+requires = [
+    "setuptools>=49.2.0",
+    "wheel>=0.34.2",
+
+    # To generate resources bundle
+    "PyQt5==5.15.2",
+    "pyqt5-sip==12.8.1",
+    "Babel==2.6.0",
+    "docutils==0.15"
+]
+build-backend = "setuptools.build_meta"
