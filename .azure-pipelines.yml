@@ -48,7 +48,7 @@ jobs:
     displayName: 'Bootstrap'
   - bash: |
       set -eux
-      python setup.py bdist_wheel
+      python -m build --wheel
     displayName: 'Build Wheel'
   - publish: dist/
     artifact: wheel

@@ -287,7 +287,7 @@ requirements = [
     "trio_typing==0.5.0",
     "async_generator>=1.9",
     'contextvars==2.1;python_version<"3.7"',
-    'typing-extensions==3.10.0.0;python_version<"3.8"',
+    'typing-extensions==3.10.0.2;python_version<"3.8"',
     "sentry-sdk==1.3.1",
     "structlog==21.1.0",
     "importlib_resources==1.0.2",
@@ -319,15 +319,13 @@ test_requirements = [
 ]
 
 
-PYQT_DEPS = ["PyQt5==5.15.2", "pyqt5-sip==12.8.1", "qtrio==0.5.0"]
-GUI_DEPS = [*PYQT_DEPS, "qrcode==6.1"]
-BABEL_DEP = "Babel==2.6.0"
-WHEEL_DEP = "wheel==0.34.2"
-DOCUTILS_DEP = "docutils==0.15"
 extra_requirements = {
     "core": [
-        *GUI_DEPS,
-        BABEL_DEP,
+        "PyQt5==5.15.2",
+        "pyqt5-sip==12.8.1",
+        "qtrio==0.5.0",
+        "qrcode==6.1",
+        "Babel==2.6.0",
         'fusepy==3.0.1;platform_system=="Linux" or platform_system=="Darwin"',
         'winfspy==0.8.2;platform_system=="Windows"',
         "zxcvbn==4.4.27",
@@ -361,7 +359,6 @@ setup(
     python_requires="~=3.7",
     packages=find_packages(include=["parsec", "parsec.*"]),
     package_dir={"parsec": "parsec"},
-    setup_requires=[WHEEL_DEP, *GUI_DEPS, BABEL_DEP, DOCUTILS_DEP],  # To generate resources bundle
     install_requires=requirements,
     extras_require=extra_requirements,
     cmdclass={
