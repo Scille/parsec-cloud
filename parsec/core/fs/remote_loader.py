@@ -387,9 +387,8 @@ class RemoteLoader(UserRemoteLoader):
                     await send_channel.send(access)
 
         nursery.start_soon(_loader, send_channel)
-        nursery.start_soon(_loader, send_channel.clone())
-        nursery.start_soon(_loader, send_channel.clone())
-        nursery.start_soon(_loader, send_channel.clone())
+        for _ in range(3):
+            nursery.start_soon(_loader, send_channel.clone())
 
         return receive_channel
 

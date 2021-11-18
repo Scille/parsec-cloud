@@ -200,12 +200,15 @@ class EntryTransactions(FileTransactions):
         accessible_chunk_ids = [chunk.id for chunk in accessible_chunks]
         missing_size = 0
 
-        boolean_chunk_list = await self.local_storage.block_storage.are_chunks(accessible_chunk_ids)
-        for chunk, b in zip(accessible_chunks, boolean_chunk_list):
-            if not b:
+        local_chunk_ids = await self.local_storage.block_storage.get_local_chunk_ids(
+            accessible_chunk_ids
+        )
+        for chunk in accessible_chunks:
+            if chunk.id not in local_chunk_ids:
                 assert chunk.access is not None
                 missing_blocks.append(chunk.access)
                 missing_size += chunk.raw_size
+
         return missing_size, total_size, missing_blocks
 
     async def entry_info(self, path: FsPath) -> Dict[str, object]:
