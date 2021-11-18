@@ -74,6 +74,10 @@ jobs:
       sudo apt-get update
       python --version
       pip install pre-commit
+      # Rust stuff (needed by pre-commit)
+      curl https://sh.rustup.rs -sSf | sh -s -- -y
+      echo "##vso[task.setvariable variable=PATH;]$PATH:$HOME/.cargo/bin"
+      rustup component add rustfmt clippy
     displayName: 'Bootstrap'
   - bash: |
       set -eux
