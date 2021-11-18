@@ -325,7 +325,6 @@ extra_requirements = {
         "pyqt5-sip==12.8.1",
         "qtrio==0.5.0",
         "qrcode==6.1",
-        "Babel==2.6.0",
         'fusepy==3.0.1;platform_system=="Linux" or platform_system=="Darwin"',
         'winfspy==0.8.2;platform_system=="Windows"',
         "zxcvbn==4.4.27",
