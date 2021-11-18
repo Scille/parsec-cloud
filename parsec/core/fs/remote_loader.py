@@ -50,6 +50,7 @@ from parsec.core.fs.exceptions import (
     FSUserNotFoundError,
     FSDeviceNotFoundError,
     FSInvalidTrustchainEror,
+    FSLocalMissError,
 )
 from parsec.core.fs.storage import BaseWorkspaceStorage
 
@@ -58,6 +59,8 @@ from parsec.core.fs.storage import BaseWorkspaceStorage
 # when a manifest restamping is required. This value should be kept small
 # compared to the certificate stamp ahead value, so the certificate updates have
 # priority over manifest updates.
+from parsec.service_nursery import open_service_nursery
+
 MANIFEST_STAMP_AHEAD_US = 100_000  # microseconds, or 0.1 seconds
 
 # This value is used to increment the timestamp provided by the backend
@@ -350,7 +353,7 @@ class RemoteLoader(UserRemoteLoader):
         )
         self.local_storage = local_storage
 
-    async def load_blocks(self, accesses: List[BlockAccess]) -> None:
+    async def load_blocks(self, blocks: List[BlockAccess]) -> None:
         """
         Raises:
             FSError
@@ -358,8 +361,18 @@ class RemoteLoader(UserRemoteLoader):
             FSBackendOfflineError
             FSWorkspaceInMaintenance
         """
-        for access in accesses:
-            await self.load_block(access)
+        blocks_iter = iter(blocks)
+
+        async def _loader() -> None:
+            while True:
+                access = next(blocks_iter, None)
+                if not access:
+                    break
+                await self.load_block(access)
+
+        async with open_service_nursery() as nursery:
+            for _ in range(4):
+                nursery.start_soon(_loader)
 
     async def load_block(self, access: BlockAccess) -> None:
         """
@@ -397,6 +410,24 @@ class RemoteLoader(UserRemoteLoader):
         # TODO: let encryption manager do the digest check ?
         assert HashDigest.from_data(block) == access.digest, access
         await self.local_storage.set_clean_block(access.id, block)
+
+    async def upload_blocks(self, blocks: List[BlockAccess]) -> None:
+        blocks_iter = iter(blocks)
+
+        async def _uploader() -> None:
+            while True:
+                access = next(blocks_iter, None)
+                if not access:
+                    break
+                try:
+                    data = await self.local_storage.get_dirty_block(access.id)
+                except FSLocalMissError:
+                    continue
+                await self.upload_block(access, data)
+
+        async with open_service_nursery() as nursery:
+            for _ in range(4):
+                nursery.start_soon(_uploader)
 
     async def upload_block(self, access: BlockAccess, data: bytes) -> None:
         """
