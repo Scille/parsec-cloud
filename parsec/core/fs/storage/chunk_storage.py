@@ -96,9 +96,8 @@ class ChunkStorage:
             manifest_row = cursor.fetchone()
         return bool(manifest_row)
 
-    async def are_chunks(self, chunk_id: List[ChunkID]) -> List[bool]:
+    async def get_local_chunk_ids(self, chunk_id: List[ChunkID]) -> List[ChunkID]:
 
-        boolean_chunk_list = [False] * len(chunk_id)
         bytes_id_list = [(id.bytes,) for id in chunk_id]
 
         async with self._open_cursor() as cursor:
@@ -106,7 +105,7 @@ class ChunkStorage:
             # and intersect it with the normal table
             # create random name for the temporary table to avoid asynchronous errors
             table_name = "temp" + secrets.token_hex(12)
-            table_name = "".join(chr for chr in table_name if chr.isalnum())
+            assert table_name.isalnum()
 
             cursor.execute(f"""DROP TABLE IF EXISTS {table_name}""")
             cursor.execute(
@@ -126,13 +125,10 @@ class ChunkStorage:
                 f"""SELECT chunk_id FROM chunks INTERSECT SELECT chunk_id FROM {table_name}"""
             )
 
-            manifest_rows = cursor.fetchall()
+            intersect_rows = cursor.fetchall()
             cursor.execute(f"""DROP TABLE IF EXISTS {table_name}""")
-        for row in manifest_rows:
-            index = bytes_id_list.index(row)
-            boolean_chunk_list[index] = True
 
-        return boolean_chunk_list
+        return [ChunkID(bytes=id_bytes) for (id_bytes,) in intersect_rows]
 
     async def get_chunk(self, chunk_id: ChunkID) -> bytes:
         async with self._open_cursor() as cursor:

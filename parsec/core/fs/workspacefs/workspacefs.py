@@ -54,7 +54,6 @@ from parsec.core.fs.exceptions import (
 )
 from parsec.core.fs.workspacefs.workspacefile import WorkspaceFile
 from parsec.core.fs.storage import BaseWorkspaceStorage
-from parsec.utils import open_service_nursery
 
 
 @attr.s(slots=True, frozen=True, auto_attribs=True)
@@ -543,22 +542,7 @@ class WorkspaceFS:
             await self.minimal_sync(child)
 
     async def _upload_blocks(self, manifest: RemoteFileManifest) -> None:
-        blocks_iter = iter(manifest.blocks)
-
-        async def _uploader() -> None:
-            while True:
-                access = next(blocks_iter, None)
-                if not access:
-                    break
-                try:
-                    data = await self.local_storage.get_dirty_block(access.id)
-                except FSLocalMissError:
-                    continue
-                await self.remote_loader.upload_block(access, data)
-
-        async with open_service_nursery() as nursery:
-            for _ in range(4):
-                nursery.start_soon(_uploader)
+        await self.remote_loader.upload_blocks(list(manifest.blocks))
 
     async def minimal_sync(self, entry_id: EntryID) -> None:
         """

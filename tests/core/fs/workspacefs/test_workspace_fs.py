@@ -8,7 +8,7 @@ from parsec.api.protocol import DeviceID, RealmRole
 from parsec.api.data import BaseManifest as BaseRemoteManifest
 from parsec.core.types import EntryID, DEFAULT_BLOCK_SIZE
 from parsec.core.fs import FsPath
-from parsec.core.fs.exceptions import FSError, FSBackendOfflineError
+from parsec.core.fs.exceptions import FSError, FSBackendOfflineError, FSLocalMissError
 from parsec.core.fs.workspacefs.workspacefs import ReencryptionNeed
 from parsec.backend.block import BlockNotFoundError
 
@@ -465,7 +465,13 @@ async def test_backend_block_data_online(
 
     # Fill the file with multiple blocks worth of data so that parallel upload will occurs
     TAZ_V2_BLOCKS = 6
-    await alice_workspace.write_bytes(fspath, b"a" * TAZ_V2_BLOCKS * DEFAULT_BLOCK_SIZE)
+    data_list = []
+    data = b""
+    for i in range(6):
+        data_list.append((bytes(chr(ord("a") + i), "utf-8")) * DEFAULT_BLOCK_SIZE)
+        data += data_list[i]
+
+    await alice_workspace.write_bytes(fspath, data)
 
     info = await alice_workspace.path_info(fspath)
 
@@ -493,6 +499,13 @@ async def test_backend_block_data_online(
     assert total_size == TAZ_V2_BLOCKS * DEFAULT_BLOCK_SIZE
     assert missing_size == (TAZ_V2_BLOCKS) * DEFAULT_BLOCK_SIZE
 
+    for i in range(6):
+        try:
+            await alice2_workspace.local_storage.block_storage.get_chunk(blocks[i].id)
+        except FSLocalMissError:
+            continue
+        assert False
+
     missing_size, total_size, blocks = await alice2_workspace.get_file_blocks_to_load(
         fspath, DEFAULT_BLOCK_SIZE
     )
@@ -500,16 +513,13 @@ async def test_backend_block_data_online(
     assert total_size == DEFAULT_BLOCK_SIZE
     assert missing_size == DEFAULT_BLOCK_SIZE
 
-    # load one block
-    block = blocks[0]
-    await alice2_workspace.load_block(block)
-
     missing_size, total_size, blocks = await alice2_workspace.get_file_blocks_to_load(
-        fspath, DEFAULT_BLOCK_SIZE
+        fspath, DEFAULT_BLOCK_SIZE * TAZ_V2_BLOCKS
     )
-    assert len(blocks) == 0
-    assert total_size == DEFAULT_BLOCK_SIZE
-    assert missing_size == 0
+    # load one block
+    block = blocks[3]
+    await alice2_workspace.load_block(block)
+    assert await alice2_workspace.local_storage.block_storage.get_chunk(block.id) == data_list[3]
 
     missing_size, total_size, blocks = await alice2_workspace.get_file_blocks_to_load(fspath)
     assert len(blocks) == TAZ_V2_BLOCKS - 1

@@ -187,25 +187,27 @@ class EntryTransactions(FileTransactions):
         missing_blocks = []
         manifest, confinement_point = await self._get_manifest_from_path(path)
         manifest: LocalFileManifest
-        accessible_chunks = []
+        blocks = []
         total_size = 0
-        for blocks in manifest.blocks:
-            for chunk in blocks:
+        for manifest_blocks in manifest.blocks:
+            for chunk in manifest_blocks:
                 if limit < (total_size + chunk.raw_size):
                     break
                 if chunk.access:
-                    accessible_chunks.append(chunk)
+                    blocks.append(chunk)
                     total_size += chunk.raw_size
 
-        accessible_chunk_ids = [chunk.id for chunk in accessible_chunks]
+        block_ids = [chunk.id for chunk in blocks]
         missing_size = 0
 
-        boolean_chunk_list = await self.local_storage.block_storage.are_chunks(accessible_chunk_ids)
-        for chunk, b in zip(accessible_chunks, boolean_chunk_list):
-            if not b:
+        local_chunk_ids = await self.local_storage.block_storage.get_local_chunk_ids(block_ids)
+        local_chunk_ids_set = set(local_chunk_ids)
+        for chunk in blocks:
+            if chunk.id not in local_chunk_ids_set:
                 assert chunk.access is not None
                 missing_blocks.append(chunk.access)
                 missing_size += chunk.raw_size
+
         return missing_size, total_size, missing_blocks
 
     async def entry_info(self, path: FsPath) -> Dict[str, object]:
