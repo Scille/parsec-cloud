@@ -40,4 +40,9 @@ repos:
       entry: python ./misc/license_headers.py add
       language: python
       language_version: python3
-      types_or: [python, sql]
+      types_or: [python, sql, rust]
+-   repo: https://github.com/doublify/pre-commit-rust
+    rev: v1.0
+    hooks:
+    - id: fmt
+    - id: clippy
