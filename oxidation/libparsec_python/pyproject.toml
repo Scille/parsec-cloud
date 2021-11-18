@@ -1,0 +1,8 @@
+[build-system]
+requires = ["maturin>=0.11,<0.12"]
+build-backend = "maturin"
+
+[project]
+name = "libparsec"
+version = "1.0.0"
+dependencies = []
