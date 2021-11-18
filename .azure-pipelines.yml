@@ -17,7 +17,6 @@ variables:
   pytest.base_args: |
     --log-level=DEBUG \
     --durations=10 -v \
-    --cov=parsec --cov-config=setup.cfg --cov-append --cov-report= \
   debug.stress_flaky_tests: 0  # Repeat all flaky tests X times
 
 jobs:
@@ -198,13 +197,6 @@ jobs:
   #       tests -m gui --runmountpoint --runslow --rungui -x \
   #       --junitxml=test-results-gui.xml
   #   displayName: 'Tests GUI'
-  - bash: |
-      set -eux
-      pip install -U codecov
-      coverage xml -o coverage.xml
-      grep -E '( filename=|<package )' coverage.xml
-      codecov --file=coverage.xml --commit=$(Build.SourceVersion)
-    displayName: 'Codecov upload'
   - task: PublishTestResults@2
     inputs:
       testResultsFiles: 'test-results-*.xml'
@@ -265,13 +257,6 @@ jobs:
   #      tests -m gui --runmountpoint --runslow --rungui -x \
   #      --junitxml=test-results-gui.xml
   #  displayName: 'Tests GUI'
-  - bash: |
-      set -eux
-      pip install -U codecov
-      coverage xml -o coverage.xml
-      grep -E '( filename=|<package )' coverage.xml
-      codecov --file=coverage.xml --commit=$(Build.SourceVersion)
-    displayName: 'Codecov upload'
   - task: PublishTestResults@2
     inputs:
       testResultsFiles: 'test-results-*.xml'
@@ -360,13 +345,6 @@ jobs:
         -n auto --max-worker-restart=0 -x \
         --junitxml=test-results-slow.xml
     displayName: 'Tests slow'
-  - bash: |
-      set -eux
-      pip install -U codecov
-      coverage xml -o coverage.xml
-      grep -E '( filename=|<package )' coverage.xml
-      codecov --file=coverage.xml --commit=$(Build.SourceVersion)
-    displayName: 'Codecov upload'
   - task: PublishTestResults@2
     inputs:
       testResultsFiles: 'test-results-*.xml'
