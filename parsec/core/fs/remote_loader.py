@@ -3,7 +3,9 @@
 from contextlib import contextmanager
 from typing import Dict, Optional, List, Tuple, cast, Iterator, Callable, Awaitable
 
+import trio
 from pendulum import DateTime
+from trio import open_memory_channel, MemorySendChannel, MemoryReceiveChannel
 
 from parsec.crypto import HashDigest, CryptoError
 from parsec.api.protocol import UserID, DeviceID, RealmRole
@@ -353,26 +355,43 @@ class RemoteLoader(UserRemoteLoader):
         )
         self.local_storage = local_storage
 
-    async def load_blocks(self, blocks: List[BlockAccess]) -> None:
-        """
-        Raises:
-            FSError
-            FSRemoteBlockNotFound
-            FSBackendOfflineError
-            FSWorkspaceInMaintenance
-        """
-        blocks_iter = iter(blocks)
-
-        async def _loader() -> None:
-            while True:
-                access = next(blocks_iter, None)
-                if not access:
-                    break
-                await self.load_block(access)
-
+    async def load_blocks(self, accesses: List[BlockAccess]) -> None:
         async with open_service_nursery() as nursery:
-            for _ in range(4):
-                nursery.start_soon(_loader)
+            async with await self.receive_load_blocks(accesses, nursery) as receive_channel:
+                async for value in receive_channel:
+                    pass
+
+    async def receive_load_blocks(
+        self, blocks: List[BlockAccess], nursery: trio.Nursery
+    ) -> "MemoryReceiveChannel[BlockAccess]":
+        """
+           Raises:
+               FSError
+               FSRemoteBlockNotFound
+               FSBackendOfflineError
+               FSWorkspaceInMaintenance
+           """
+        blocks_iter = iter(blocks)
+        channels: Tuple[
+            "MemorySendChannel[BlockAccess]", "MemoryReceiveChannel[BlockAccess]"
+        ] = open_memory_channel(0)
+        send_channel, receive_channel = channels
+
+        async def _loader(send_channel: "MemorySendChannel[BlockAccess]") -> None:
+            async with send_channel:
+                while True:
+                    access = next(blocks_iter, None)
+                    if not access:
+                        break
+                    await self.load_block(access)
+                    await send_channel.send(access)
+
+        nursery.start_soon(_loader, send_channel)
+        nursery.start_soon(_loader, send_channel.clone())
+        nursery.start_soon(_loader, send_channel.clone())
+        nursery.start_soon(_loader, send_channel.clone())
+
+        return receive_channel
 
     async def load_block(self, access: BlockAccess) -> None:
         """
