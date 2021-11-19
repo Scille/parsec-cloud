@@ -1,5 +1,5 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2016-2021 Scille SAS
-
+import math
 from contextlib import contextmanager
 from typing import Dict, Optional, List, Tuple, cast, Iterator, Callable, Awaitable
 
@@ -372,10 +372,8 @@ class RemoteLoader(UserRemoteLoader):
                FSWorkspaceInMaintenance
            """
         blocks_iter = iter(blocks)
-        channels: Tuple[
-            "MemorySendChannel[BlockAccess]", "MemoryReceiveChannel[BlockAccess]"
-        ] = open_memory_channel(0)
-        send_channel, receive_channel = channels
+
+        send_channel, receive_channel = open_memory_channel[BlockAccess](math.inf)
 
         async def _loader(send_channel: "MemorySendChannel[BlockAccess]") -> None:
             async with send_channel:
@@ -386,9 +384,9 @@ class RemoteLoader(UserRemoteLoader):
                     await self.load_block(access)
                     await send_channel.send(access)
 
-        nursery.start_soon(_loader, send_channel)
-        for _ in range(3):
-            nursery.start_soon(_loader, send_channel.clone())
+        async with send_channel:
+            for _ in range(4):
+                nursery.start_soon(_loader, send_channel.clone())
 
         return receive_channel
 
