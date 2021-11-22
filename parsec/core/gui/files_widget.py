@@ -346,9 +346,11 @@ class FilesWidget(QWidget, Ui_FilesWidget):
                 if file_sync not in self.file_sync_set:
                     name = await self.workspace_fs.get_name(id)
                     workspace_name = self.workspace_fs.get_workspace_name()
+                    manif = await self.workspace_fs.local_storage.get_manifest(id)
+                    val = manif.to_stats()["size"]
                     self.file_sync_set.add(file_sync)
                     logger.warning(
-                        f"{text}: WORKSPACE: {str(workspace_name)} FILENAME:{str(name)} FILE TO SYNC: {str(len(self.file_sync_set))}"
+                        f"{text}: WORKSPACE: {str(workspace_name)} FILENAME:{str(name)} {id} SIZE {val} FILE TO SYNC: {str(len(self.file_sync_set))}"
                     )
 
     async def print_sync_remove(self, workspace_id, id, text):
@@ -361,8 +363,10 @@ class FilesWidget(QWidget, Ui_FilesWidget):
                     workspace_name = self.workspace_fs.get_workspace_name()
 
                     self.file_sync_set.remove(file_sync)
+                    manif = await self.workspace_fs.local_storage.get_manifest(id)
+                    val = manif.to_stats()["size"]
                     logger.warning(
-                        f"{text}: WORKSPACE: {str(workspace_name)} FILENAME:{str(name)} FILE TO SYNC: {str(len(self.file_sync_set))}"
+                        f"{text}: WORKSPACE: {str(workspace_name)} FILENAME:{str(name)} {id} SIZE {val} FILE TO SYNC: {str(len(self.file_sync_set))}"
                     )
 
     def disconnect_all(self):

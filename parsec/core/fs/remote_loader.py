@@ -430,6 +430,8 @@ class RemoteLoader(UserRemoteLoader):
     async def upload_blocks(self, blocks: List[BlockAccess]) -> None:
         blocks_iter = iter(blocks)
 
+
+
         async def _uploader() -> None:
             while True:
                 access = next(blocks_iter, None)
