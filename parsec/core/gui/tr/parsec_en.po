@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PROJECT VERSION\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2021-11-25 14:05+0100\n"
+"POT-Creation-Date: 2021-12-07 11:16+0100\n"
 "PO-Revision-Date: 2020-10-15 10:30+0200\n"
 "Last-Translator: \n"
 "Language: en\n"
@@ -16,7 +16,7 @@ msgstr ""
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=utf-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"Generated-By: Babel 2.9.1\n"
+"Generated-By: Babel 2.6.0\n"
 
 msgid "TEXT_PARSEC_VERSION_version"
 msgstr "PARSEC version {version}"
@@ -413,6 +413,9 @@ msgstr "GB"
 msgid "TEXT_FILE_SIZE_TB"
 msgstr "TB"
 
+msgid "TEXT_FILE_STATUS_TITLE_name"
+msgstr ""
+
 msgid "ACTION_FILE_OPEN_CURRENT_DIRECTORY_MAC"
 msgstr "Open current directory in Finder"
 
@@ -436,6 +439,9 @@ msgstr "Cut"
 
 msgid "ACTION_FILE_MENU_SHOW_FILE_HISTORY"
 msgstr "Show history"
+
+msgid "ACTION_FILE_MENU_SHOW_FILE_STATUS"
+msgstr ""
 
 msgid "ACTION_FILE_MENU_GET_FILE_LINK"
 msgstr "Get a link to the file"
@@ -468,6 +474,9 @@ msgid "TEXT_FILE_HISTORY_MULTIPLE_FILES_SELECTED_ERROR"
 msgstr ""
 "Cannot show the history of multiple files at once. Please select a single"
 " file."
+
+msgid "TEXT_FILE_STATUS_MULTIPLE_FILES_SELECTED_ERROR"
+msgstr ""
 
 msgid "TEXT_FILE_RENAME_TITLE"
 msgstr "Rename a file"
@@ -606,8 +615,9 @@ msgstr ""
 
 msgid "TEXT_FILE_SHARING_DEMOTED_TO_READER_workspace"
 msgstr ""
-"Your role on the workspace <b>{workspace}</b> has changed to <b>Reader</b>. "
-"You can no longer add, update or delete files, but you can still see them."
+"Your role on the workspace <b>{workspace}</b> has changed to "
+"<b>Reader</b>. You can no longer add, update or delete files, but you can"
+" still see them."
 
 msgid "TEXT_GREET_DEVICE_INSTRUCTIONS_NO_EMAIL"
 msgstr ""
@@ -2296,9 +2306,6 @@ msgstr "Organization name"
 msgid "TEXT_LABEL_ORG_NAME_RECOMMANDATIONS"
 msgstr "Letters, digits, underscores and hyphens only. No spaces."
 
-msgid "TEXT_LABEL_DEVICE_NAME"
-msgstr "Device name"
-
 msgid "ACTION_CREATE_ON_COMMERCIAL_BACKEND"
 msgstr "Use PARSEC main server"
 
@@ -2314,6 +2321,9 @@ msgstr "I have my own PARSEC server"
 
 msgid "TEXT_LABEL_BACKEND_ADDR_PLACEHOLDER"
 msgstr "parsec://host:port"
+
+msgid "TEXT_LABEL_DEVICE_NAME"
+msgstr "Device name"
 
 msgid "TEXT_CREATE_ORGANIZATION_INSTRUCTIONS"
 msgstr "Please fill out the following information to create your organization."
@@ -2422,6 +2432,39 @@ msgstr "By"
 
 msgid "ACTION_FILE_HISTORY_LOAD_MORE_ENTRIES"
 msgstr "Load more entries"
+
+msgid "TEXT_FILE_INFO_LOCATION"
+msgstr ""
+
+msgid "TEXT_FILE_INFO_TYPE"
+msgstr ""
+
+msgid "TEXT_FILE_INFO_SIZE"
+msgstr ""
+
+msgid "TEXT_FILE_INFO_WORKSPACE"
+msgstr ""
+
+msgid "TEXT_FILE_INFO_CREATED_ON"
+msgstr ""
+
+msgid "TEXT_FILE_INFO_CREATED_BY"
+msgstr ""
+
+msgid "TEXT_FILE_INFO_UPDATED_ON"
+msgstr ""
+
+msgid "TEXT_FILE_INFO_UPDATED_BY"
+msgstr ""
+
+msgid "TEXT_FILE_INFO_AVAILABILITY"
+msgstr ""
+
+msgid "TEXT_FILE_INFO_UPLOADED"
+msgstr ""
+
+msgid "TEXT_FILE_INFO_BLOCKS_local_remote_both"
+msgstr "Local blocks: {local} Remote blocks: {remote} Local and remote blocks: {both}"
 
 msgid "TEXT_FILE_BACK_TO_WORKSPACES_TOOLTIP"
 msgstr "Return to the list of workspaces."
@@ -2589,12 +2632,6 @@ msgstr "Check for new versions on startup"
 msgid "ACTION_SETTINGS_CHECK_NEW_VERSION"
 msgstr "Check for new version now"
 
-msgid "TEXT_SETTINGS_TELEMETRY_TITLE"
-msgstr "Telemetry"
-
-msgid "TEXT_SETTINGS_ENABLE_TELEMETRY"
-msgstr "Enable telemetry for automatic crash reporting"
-
 msgid "TEXT_SETTINGS_INTERFACE_TITLE"
 msgstr "Interface"
 
@@ -2606,6 +2643,12 @@ msgstr "Use colors for workspaces"
 
 msgid "ACTION_SAVE"
 msgstr "Save"
+
+msgid "TEXT_SETTINGS_TELEMETRY_TITLE"
+msgstr "Telemetry"
+
+msgid "TEXT_SETTINGS_ENABLE_TELEMETRY"
+msgstr "Enable telemetry for automatic crash reporting"
 
 msgid "TEXT_SELECT_SMARTCARD"
 msgstr "You will be asked to select your smartcard."
@@ -2640,17 +2683,17 @@ msgstr "Search users"
 msgid "ACTION_USER_INVITE_USER"
 msgstr "Invite a new user"
 
-msgid "ACTION_FILTER_REVOKED_USERS"
-msgstr "Hide revoked users"
-
-msgid "ACTION_FILTER_PENDING_INVITATION"
-msgstr "Hide pending invitations"
-
 msgid "ACTION_LIST_PREVIOUS_PAGE"
 msgstr "Previous page"
 
 msgid "ACTION_LIST_NEXT_PAGE"
 msgstr "Next page"
+
+msgid "ACTION_FILTER_REVOKED_USERS"
+msgstr "Hide revoked users"
+
+msgid "ACTION_FILTER_PENDING_INVITATION"
+msgstr "Hide pending invitations"
 
 msgid "TEXT_WORKSPACE_IS_SHARED_TOOLTIP"
 msgstr "This workspace is shared."

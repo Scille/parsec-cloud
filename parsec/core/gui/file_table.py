@@ -90,6 +90,7 @@ class FileTable(QTableWidget):
     rename_clicked = pyqtSignal()
     open_clicked = pyqtSignal()
     show_history_clicked = pyqtSignal()
+    show_status_clicked = pyqtSignal()
     paste_clicked = pyqtSignal()
     cut_clicked = pyqtSignal()
     copy_clicked = pyqtSignal()
@@ -219,6 +220,8 @@ class FileTable(QTableWidget):
         if len(selected) == 1:
             action = menu.addAction(_("ACTION_FILE_MENU_SHOW_FILE_HISTORY"))
             action.triggered.connect(self.show_history_clicked.emit)
+            action = menu.addAction(_("ACTION_FILE_MENU_SHOW_FILE_STATUS"))
+            action.triggered.connect(self.show_status_clicked.emit)
             action = menu.addAction(_("ACTION_FILE_MENU_GET_FILE_LINK"))
             action.triggered.connect(self.file_path_clicked.emit)
         if not self.is_read_only():
