@@ -135,17 +135,19 @@ class WorkspaceFS:
         """
         await self.remote_loader.load_block(block)
 
-    async def load_blocks(self, blocks: List[BlockAccess]) -> None:
+    async def receive_load_blocks(
+        self, blocks: List[BlockAccess], nursery: trio.Nursery
+    ) -> "trio.MemoryReceiveChannel[BlockAccess]":
         """
         Raises:
-            FSError
-            FSRemoteBlockNotFound
-            FSBackendOfflineError
-            FSRemoteOperationError
-            FSWorkspaceInMaintenance
-            FSWorkspaceNoAccess
+                FSError
+                FSRemoteBlockNotFound
+                FSBackendOfflineError
+                FSRemoteOperationError
+                FSWorkspaceInMaintenance
+                FSWorkspaceInMaintenance
         """
-        await self.remote_loader.load_blocks(blocks)
+        return await self.remote_loader.receive_load_blocks(blocks, nursery)
 
     def get_workspace_name(self) -> str:
         return self.get_workspace_entry().name
