@@ -73,6 +73,10 @@ jobs:
       sudo apt-get update
       python --version
       pip install pre-commit
+      # Rust stuff (needed by pre-commit)
+      curl https://sh.rustup.rs -sSf | sh -s -- -y
+      echo "##vso[task.setvariable variable=PATH;]$PATH:$HOME/.cargo/bin"
+      rustup component add rustfmt clippy
     displayName: 'Bootstrap'
   - bash: |
       set -eux
@@ -122,6 +126,43 @@ jobs:
 #      git fetch --tags  # Needed by releaser.py to have a consistent `git describe`
 #      python ./misc/releaser.py check --verbose
 #    displayName: 'Version check'
+
+
+#################################################################################
+
+
+- job: 's1_oxidation'
+  displayName: 'Rust Oxidation'
+  timeoutInMinutes: 60
+  pool:
+    vmImage: 'ubuntu-latest'
+  steps:
+  - checkout: self
+    submodules: true
+  - task: UsePythonVersion@0
+    inputs:
+      versionSpec: '$(python.version)'
+  - bash: |
+      set -eux
+      sudo apt-get update
+      python --version
+      # Rust stuff
+      curl https://sh.rustup.rs -sSf | sh -s -- -y
+      echo "##vso[task.setvariable variable=PATH;]$PATH:$HOME/.cargo/bin"
+      # pip 20.3 introduces the new dependency resolver
+      pip install pip>=20.3 --user --upgrade
+      pip install -r pre-requirements.txt
+    displayName: 'Bootstrap'
+  - bash: |
+      set -eux
+      pip install .[all,oxidation]
+      # Remove the parsec folder from the source to force use of the wheel
+      rm -rf parsec
+    displayName: 'Install'
+  - bash: |
+      set -eux
+      py.test $(pytest.base_args) tests -n auto
+    displayName: 'Tests'
 
 
 #################################################################################

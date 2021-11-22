@@ -2,7 +2,7 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2016-2021 Scille SAS
 
 import os
-
+from pathlib import Path
 from setuptools import setup, find_packages, distutils, Command
 from setuptools.command.build_py import build_py
 
@@ -343,8 +343,14 @@ extra_requirements = {
         "pbr==4.0.2",
     ],
     "dev": test_requirements,
+    # Oxidation is a special case: for the moment it is experimental (i.e. not
+    # shipped in production) and only contains rewriting of Python parts so
+    # it can be safely ignored for any purpose.
+    "oxidation": [
+        f"libparsec @ file://{ (Path(__file__) / '../oxidation/libparsec_python').resolve().absolute() }"
+    ],
 }
-extra_requirements["all"] = sum(extra_requirements.values(), [])
+extra_requirements["all"] = sum([v for k, v in extra_requirements.items() if k != "oxidation"], [])
 extra_requirements["oeuf-jambon-fromage"] = extra_requirements["all"]
 
 setup(

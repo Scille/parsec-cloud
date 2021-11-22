@@ -202,7 +202,7 @@ invite_1_greeter_wait_peer_serializer = CmdSerializer(
 
 
 class Invite2aClaimerSendHashedNonceHashNonceReqSchema(BaseReqSchema):
-    claimer_hashed_nonce = fields.Bytes(required=True)
+    claimer_hashed_nonce = fields.HashDigest(required=True)
 
 
 class Invite2aClaimerSendHashedNonceHashNonceRepSchema(BaseRepSchema):
@@ -220,7 +220,7 @@ class Invite2aGreeterGetHashedNonceReqSchema(BaseReqSchema):
 
 
 class Invite2aGreeterGetHashedNonceRepSchema(BaseRepSchema):
-    claimer_hashed_nonce = fields.Bytes(required=True)
+    claimer_hashed_nonce = fields.HashDigest(required=True)
 
 
 invite_2a_greeter_get_hashed_nonce_serializer = CmdSerializer(

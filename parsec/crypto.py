@@ -1,6 +1,6 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2016-2021 Scille SAS
 
-from typing import Tuple
+from typing import Tuple, TYPE_CHECKING
 from base64 import b32decode, b32encode
 from hashlib import sha256
 
@@ -81,13 +81,43 @@ class SecretKey(bytes):
         return blake2b(data, digest_size=digest_size, key=self, encoder=RawEncoder)
 
 
-class HashDigest(bytes):
-    __slots__ = ()
+class _Py_HashDigest:
+    __slots__ = ("_digest",)
+
+    def __init__(self, digest: bytes):
+        self._digest = digest
+
+    def __repr__(self) -> str:
+        return f"HashDigest({self.hexdigest()})"
+
+    def __eq__(self, other):
+        if not isinstance(other, _Py_HashDigest):
+            return NotImplemented
+        return self.digest == other.digest
 
     @classmethod
     def from_data(self, data: bytes) -> "HashDigest":
         # nacl's sha256 doesn't accept bytearray, so stick to `hashlib.sha256`
-        return HashDigest(sha256(data).digest())
+        return _Py_HashDigest(sha256(data).digest())
+
+    @property
+    def digest(self) -> bytes:
+        return self._digest
+
+    def hexdigest(self) -> str:
+        return self._digest.hex()
+
+
+if not TYPE_CHECKING:
+    # Try to overwrite Python implementation with Rust one
+    try:
+        from libparsec.hazmat import _Rs_HashDigest  # noqa: F811
+
+        HashDigest = _Rs_HashDigest
+    except ImportError:
+        HashDigest = _Py_HashDigest
+else:
+    HashDigest = _Py_HashDigest
 
 
 # Basically just add comparison support to nacl keys
