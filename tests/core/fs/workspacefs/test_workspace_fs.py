@@ -4,6 +4,8 @@ import errno
 import pytest
 from unittest.mock import ANY
 
+from trio import open_nursery
+
 from parsec.api.protocol import DeviceID, RealmRole
 from parsec.api.data import BaseManifest as BaseRemoteManifest
 from parsec.core.types import EntryID, DEFAULT_BLOCK_SIZE
@@ -527,7 +529,10 @@ async def test_backend_block_data_online(
     assert missing_size == (TAZ_V2_BLOCKS - 1) * DEFAULT_BLOCK_SIZE
 
     # load the rest
-    await alice2_workspace.load_blocks(blocks)
+    async with open_nursery() as nursery:
+        async with await alice2_workspace.receive_load_blocks(blocks, nursery) as receive_channel:
+            async for value in receive_channel:
+                assert value
 
     missing_size, total_size, blocks = await alice2_workspace.get_file_blocks_to_load(fspath)
     assert len(blocks) == 0
