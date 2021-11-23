@@ -1786,7 +1786,7 @@ msgstr ""
 "Souhaitez-vous en créer un maintenant ?"
 
 msgid "TEXT_ENABLE_TELEMETRY_TITLE"
-msgstr "Rapport d'erreur"
+msgstr "Activer la télémétrie"
 
 msgid "TEXT_ENABLE_TELEMETRY_INSTRUCTIONS"
 msgstr ""
