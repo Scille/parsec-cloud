@@ -632,7 +632,9 @@ async def test_open_file_failed(monkeypatch, aqtbot, autoclose_dialog, files_wid
 
     # Open the file selected
     await tb.apply_selection("file1.txt")
-    f_w.table_files.open_clicked.emit()
+
+    async with aqtbot.wait_signal(f_w.load_blocks_success):
+        f_w.table_files.open_clicked.emit()
 
     def _open_single_file_error_shown():
         assert autoclose_dialog.dialogs == [

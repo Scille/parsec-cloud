@@ -12,12 +12,13 @@ from structlog import get_logger
 
 from PyQt5.QtCore import Qt, pyqtSignal
 from PyQt5.QtWidgets import QWidget
-from parsec.core.types import WorkspaceRole
+from parsec.core.types import WorkspaceRole, DEFAULT_BLOCK_SIZE
 from parsec.core.fs import FsPath, WorkspaceFS, WorkspaceFSTimestamped
 from parsec.core.fs.exceptions import (
     FSRemoteManifestNotFound,
     FSInvalidArgumentError,
     FSFileNotFoundError,
+    FSBackendOfflineError,
 )
 
 from parsec.core.gui.trio_jobs import JobResultError, QtToTrioJob
@@ -39,7 +40,6 @@ from parsec.core.gui.lang import translate as _
 from parsec.core.gui.workspace_roles import get_role_translation
 from parsec.core.gui.ui.files_widget import Ui_FilesWidget
 from parsec.core.gui.file_table import PasteStatus
-from parsec.core.types import DEFAULT_BLOCK_SIZE
 
 
 logger = get_logger()
@@ -248,6 +248,9 @@ class FilesWidget(QWidget, Ui_FilesWidget):
     file_open_success = pyqtSignal(QtToTrioJob)
     file_open_error = pyqtSignal(QtToTrioJob)
 
+    load_blocks_success = pyqtSignal(QtToTrioJob)
+    load_blocks_error = pyqtSignal(QtToTrioJob)
+
     import_progress = pyqtSignal(str, int)
 
     reload_timestamped_requested = pyqtSignal(DateTime, FsPath, FileType, bool, bool, bool)
@@ -321,6 +324,7 @@ class FilesWidget(QWidget, Ui_FilesWidget):
         self.move_error.connect(self._on_move_error)
         self.file_open_success.connect(self._on_file_open_success)
         self.file_open_error.connect(self._on_file_open_error)
+        self.load_blocks_success.connect(self._on_load_blocks_success)
 
         self.reload_timestamped_requested.connect(self._on_reload_timestamped_requested)
         self.reload_timestamped_success.connect(self._on_reload_timestamped_success)
@@ -578,10 +582,81 @@ class FilesWidget(QWidget, Ui_FilesWidget):
             self.file_open_success, self.file_open_error, desktop.open_files_job, paths
         )
 
+    async def _load_missing_blocks(self, files):
+        try:
+            missing_files = {}
+            missing_blocks_total = 0
+            for file_to_load in files:
+                missing, _total, blocks = await self.workspace_fs.get_file_blocks_to_load(
+                    file_to_load
+                )
+                if missing > 0:
+                    missing_files[str(file_to_load)] = blocks
+                    missing_blocks_total = missing
+
+            if not missing_files:
+                return
+
+            # Make the job cancellable
+            with trio.CancelScope() as cancel_scope:
+
+                # Create loading dialog and connect to the cancel scope
+                wl = LoadingWidget(
+                    total_size=missing_blocks_total + len(missing_files),
+                    message=_("TEXT_FILE_DOWNLOAD_BLOCKS_MESSAGE"),
+                )
+                loading_dialog = GreyedDialog(wl, _("TEXT_FILE_DOWNLOAD_BLOCKS_TITLE"), parent=self)
+                wl.cancelled.connect(cancel_scope.cancel)
+
+                # Control the visibility andl life-cyle of the loading dialog
+                try:
+                    loading_dialog.show()
+                    current_size = 0
+                    for file_to_load, blocks in missing_files.items():
+                        wl.set_current_file(FsPath(file_to_load).name)
+
+                        async with trio.open_nursery() as nursery:
+                            async with await self.workspace_fs.receive_load_blocks(
+                                blocks, nursery
+                            ) as receive_channel:
+                                async for _value in receive_channel:
+                                    current_size += DEFAULT_BLOCK_SIZE
+                                    wl.set_progress(current_size)
+                        current_size += 1
+                        wl.set_progress(current_size)
+                    self.desktop_open_files([f.name for f in files])
+                except Exception:
+                    raise
+                finally:
+                    loading_dialog.hide()
+                    loading_dialog.setParent(None)
+            if cancel_scope.cancel_called:
+                raise JobResultError("cancelled")
+        except FSBackendOfflineError as exc:
+            show_error(self, _("TEXT_BLOCKS_DOWNLOAD_ERROR_OFFLINE"), exception=exc)
+            raise JobResultError("offline") from exc
+        except JobResultError as exc:
+            if exc.status == "cancelled":
+                show_error(self, _("TEXT_BLOCKS_DOWNLOAD_ERROR_CANCELLED"), exception=exc)
+            else:
+                show_error(self, _("TEXT_BLOCKS_DOWNLOAD_ERROR"), exception=exc)
+            raise
+        except Exception as exc:
+            show_error(self, _("TEXT_BLOCKS_DOWNLOAD_ERROR"), exception=exc)
+            raise JobResultError("error") from exc
+
+    def _on_load_blocks_success(self, job):
+        self.desktop_open_files([f.name for f in job.arguments["files"]])
+
     def open_files(self):
         files = self.table_files.selected_files()
         if len(files) == 1:
-            self.desktop_open_files([files[0].name])
+            self.jobs_ctx.submit_job(
+                self.load_blocks_success,
+                self.load_blocks_error,
+                self._load_missing_blocks,
+                [self.current_directory / files[0].name],
+            )
         else:
             result = ask_question(
                 self,
@@ -591,7 +666,12 @@ class FilesWidget(QWidget, Ui_FilesWidget):
             )
             if result != _("ACTION_FILE_OPEN_MULTIPLE"):
                 return
-            self.desktop_open_files([f.name for f in files])
+            self.jobs_ctx.submit_job(
+                self.load_blocks_success,
+                self.load_blocks_error,
+                self._load_missing_blocks,
+                [self.current_directory / f.name for f in files],
+            )
 
     def _on_file_open_success(self, job):
         status, paths = job.ret
@@ -610,7 +690,12 @@ class FilesWidget(QWidget, Ui_FilesWidget):
         elif file_type == FileType.ParentWorkspace:
             self.back_clicked.emit()
         elif file_type == FileType.File:
-            self.desktop_open_files([file_name])
+            self.jobs_ctx.submit_job(
+                self.load_blocks_success,
+                self.load_blocks_error,
+                self._load_missing_blocks,
+                [self.current_directory / file_name],
+            )
         elif file_type == FileType.Folder:
             self.load(self.current_directory / file_name)
 
@@ -687,7 +772,10 @@ class FilesWidget(QWidget, Ui_FilesWidget):
             with trio.CancelScope() as cancel_scope:
 
                 # Create loading dialog and connect to the cancel scope
-                wl = LoadingWidget(total_size=total_size + len(files))
+                wl = LoadingWidget(
+                    total_size=total_size + len(files),
+                    message=_("TEXT_FILE_IMPORT_LOADING_MESSAGE"),
+                )
                 loading_dialog = GreyedDialog(wl, _("TEXT_FILE_IMPORT_LOADING_TITLE"), parent=self)
                 wl.cancelled.connect(cancel_scope.cancel)
 

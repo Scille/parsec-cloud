@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PROJECT VERSION\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2021-11-09 09:49+0100\n"
+"POT-Creation-Date: 2021-11-23 09:32+0100\n"
 "PO-Revision-Date: 2020-10-15 10:30+0200\n"
 "Last-Translator: \n"
 "Language: en\n"
@@ -513,6 +513,23 @@ msgstr "Are you sure you want to delete {count} files?"
 msgid "ACTION_FILE_DELETE_MULTIPLE"
 msgstr "Delete"
 
+msgid "TEXT_FILE_DOWNLOAD_BLOCKS_MESSAGE"
+msgstr "Your file is not fully available locally, we're downloading "
+"the missing parts from the server."
+
+msgid "TEXT_FILE_DOWNLOAD_BLOCKS_TITLE"
+msgstr "Downloading missing parts of the file"
+
+msgid "TEXT_BLOCKS_DOWNLOAD_ERROR_OFFLINE"
+msgstr "The file is not fully available locally but we cannot reach "
+"the server to download the missing parts."
+
+msgid "TEXT_BLOCKS_DOWNLOAD_ERROR_CANCELLED"
+msgstr "You cancelled the download, we cannot open the file."
+
+msgid "TEXT_BLOCKS_DOWNLOAD_ERROR"
+msgstr "Could not download the missing parts of your file."
+
 msgid "TEXT_FILE_OPEN_MULTIPLE_TITLE_count"
 msgstr "Open {count} files"
 
@@ -534,8 +551,11 @@ msgstr "Import files"
 msgid "TEXT_FILE_IMPORT_FOLDER"
 msgstr "Import a folder"
 
+msgid "TEXT_FILE_IMPORT_LOADING_MESSAGE"
+msgstr "We're importing your file(s) into Parsec."
+
 msgid "TEXT_FILE_IMPORT_LOADING_TITLE"
-msgstr "Importing"
+msgstr "Importing the file(s)"
 
 msgid "TEXT_FILE_IMPORT_ONE_PERMISSION_ERROR"
 msgstr "You don't have the permission to import this file."
@@ -2514,9 +2534,6 @@ msgstr "Create a recovery device key"
 msgid "ACTION_EXPORT_KEY"
 msgstr "Generate this recovery device"
 
-msgid "TEXT_IMPORT_FILES_PROGRESS"
-msgstr "Importing file"
-
 msgid "ACTION_BACK"
 msgstr "Back"
 
@@ -2673,4 +2690,7 @@ msgstr "Create a new workspace"
 
 msgid "ACTION_WORKSPACE_GOTO_FILE_LINK"
 msgstr "Go to a file using a link"
+
+#~ msgid "TEXT_IMPORT_FILES_PROGRESS"
+#~ msgstr "Importing file"
 

@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PROJECT VERSION\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2021-11-09 09:49+0100\n"
+"POT-Creation-Date: 2021-11-23 09:32+0100\n"
 "PO-Revision-Date: 2020-10-15 10:31+0200\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language: fr\n"
@@ -539,6 +539,24 @@ msgstr "Êtes-vous sûr de vouloir supprimer les {count} fichiers ?"
 msgid "ACTION_FILE_DELETE_MULTIPLE"
 msgstr "Supprimer"
 
+msgid "TEXT_FILE_DOWNLOAD_BLOCKS_MESSAGE"
+msgstr "Votre fichier n'est pas entièrement disponible localement, "
+"nous téléchargeons les parts manquantes depuis le serveur."
+
+msgid "TEXT_FILE_DOWNLOAD_BLOCKS_TITLE"
+msgstr "Téléchargements des parts manquantes du fichier"
+
+msgid "TEXT_BLOCKS_DOWNLOAD_ERROR_OFFLINE"
+msgstr "Le fichier n'est pas entièrement disponible localement "
+"mais nous ne pouvons pas contacter le serveur pour récupérer "
+"les parts manquantes."
+
+msgid "TEXT_BLOCKS_DOWNLOAD_ERROR_CANCELLED"
+msgstr "Le téléchargement a été annulé, nous ne pouvons pas ouvrir le fichier."
+
+msgid "TEXT_BLOCKS_DOWNLOAD_ERROR"
+msgstr "Impossible de récupérer les parts manquantes du fichier."
+
 msgid "TEXT_FILE_OPEN_MULTIPLE_TITLE_count"
 msgstr "Ouvrir plusieurs fichiers"
 
@@ -562,8 +580,11 @@ msgstr "Importer des fichiers"
 msgid "TEXT_FILE_IMPORT_FOLDER"
 msgstr "Importer un répertoire"
 
+msgid "TEXT_FILE_IMPORT_LOADING_MESSAGE"
+msgstr "Nous importons vos fichiers dans Parsec"
+
 msgid "TEXT_FILE_IMPORT_LOADING_TITLE"
-msgstr "En cours d'import"
+msgstr "Import de fichiers"
 
 msgid "TEXT_FILE_IMPORT_ONE_PERMISSION_ERROR"
 msgstr ""
@@ -2583,9 +2604,6 @@ msgstr "Créer une clé d'appareil de récupération"
 msgid "ACTION_EXPORT_KEY"
 msgstr "Générer cet appareil de récupération"
 
-msgid "TEXT_IMPORT_FILES_PROGRESS"
-msgstr "Import du fichier"
-
 msgid "ACTION_BACK"
 msgstr "Retour"
 
@@ -2743,4 +2761,7 @@ msgstr "Créer un nouvel espace de travail"
 
 msgid "ACTION_WORKSPACE_GOTO_FILE_LINK"
 msgstr "Trouver un fichier via son lien"
+
+#~ msgid "TEXT_IMPORT_FILES_PROGRESS"
+#~ msgstr "Import du fichier"
 
