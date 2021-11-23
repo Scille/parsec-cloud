@@ -3,7 +3,6 @@
 use ed25519_dalek::{
     Keypair, Signature, Signer, Verifier, PUBLIC_KEY_LENGTH, SECRET_KEY_LENGTH, SIGNATURE_LENGTH,
 };
-use rand::rngs::OsRng;
 use serde::{Deserialize, Serialize};
 use serde_bytes::ByteBuf;
 
@@ -37,7 +36,7 @@ impl SigningKey {
     }
 
     pub fn generate() -> Self {
-        Self(Keypair::generate(&mut OsRng::default()))
+        Self(Keypair::generate(&mut rand_07::thread_rng()))
     }
 
     pub fn sign(&self, data: &[u8]) -> Vec<u8> {

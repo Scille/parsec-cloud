@@ -46,16 +46,15 @@ mod sealed_box {
     pub fn seal(data: &[u8], pk: &PublicKey) -> Vec<u8> {
         let mut out = Vec::with_capacity(SEALED_OVERHEAD + data.len());
 
-        let mut rng = crypto_box::rand_core::OsRng;
-        let ep_sk = SecretKey::generate(&mut rng);
+        let ep_sk = SecretKey::generate(&mut rand_08::thread_rng());
         let ep_pk = ep_sk.public_key();
         out.extend_from_slice(ep_pk.as_bytes());
 
-        let nonce = get_nonce(&ep_pk, &pk);
+        let nonce = get_nonce(&ep_pk, pk);
         let nonce = aead::generic_array::GenericArray::from_slice(&nonce);
 
-        let salsabox = SalsaBox::new(&pk, &ep_sk);
-        let encrypted = salsabox.encrypt(&nonce, &data[..]).unwrap();
+        let salsabox = SalsaBox::new(pk, &ep_sk);
+        let encrypted = salsabox.encrypt(nonce, data).unwrap();
 
         out.extend_from_slice(&encrypted);
         out
@@ -75,7 +74,7 @@ mod sealed_box {
         let ephemeral_pk = {
             let bytes = &ciphertext[..32];
             let mut array = [0u8; 32];
-            array.copy_from_slice(&bytes);
+            array.copy_from_slice(bytes);
             array.into()
         };
 
@@ -83,9 +82,9 @@ mod sealed_box {
         let nonce = aead::generic_array::GenericArray::from_slice(&nonce);
 
         let encrypted = &ciphertext[32..];
-        let salsabox = SalsaBox::new(&ephemeral_pk, &sk);
+        let salsabox = SalsaBox::new(&ephemeral_pk, sk);
 
-        salsabox.decrypt(&nonce, &encrypted[..]).ok()
+        salsabox.decrypt(nonce, encrypted).ok()
     }
 }
 
@@ -121,8 +120,7 @@ impl PrivateKey {
     }
 
     pub fn generate() -> Self {
-        let mut rng = crypto_box::rand_core::OsRng;
-        Self(crypto_box::SecretKey::generate(&mut rng))
+        Self(crypto_box::SecretKey::generate(&mut rand_08::thread_rng()))
     }
 
     pub fn decrypt_from_self(&self, ciphered: &[u8]) -> Result<Vec<u8>, &'static str> {
