@@ -601,10 +601,10 @@ msgstr ""
 "You can no longer interact with the workspace or see any files it "
 "contains."
 
-msgid "TEXT_FILE_SHARING_DEMOTED_TO_READER"
+msgid "TEXT_FILE_SHARING_DEMOTED_TO_READER_workspace"
 msgstr ""
-"Your role on this workspace has changed to <b>Reader</b>. You can no "
-"longer add, update or delete files, but you can still see them."
+"Your role on the workspace <b>{workspace}</b> has changed to <b>Reader</b>. "
+"You can no longer add, update or delete files, but you can still see them."
 
 msgid "TEXT_GREET_DEVICE_INSTRUCTIONS_NO_EMAIL"
 msgstr ""

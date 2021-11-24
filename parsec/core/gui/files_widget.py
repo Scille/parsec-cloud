@@ -1050,7 +1050,12 @@ class FilesWidget(QWidget, Ui_FilesWidget):
                 previous_entry.role != WorkspaceRole.READER
                 and new_entry.role == WorkspaceRole.READER
             ):
-                show_error(self, _("TEXT_FILE_SHARING_DEMOTED_TO_READER"))
+                show_info(
+                    self,
+                    _("TEXT_FILE_SHARING_DEMOTED_TO_READER_workspace").format(
+                        workspace=previous_entry.name
+                    ),
+                )
 
     def _on_reload_timestamped_requested(
         self, timestamp, path, file_type, open_after_load, close_after_remount, reload_after_remount
