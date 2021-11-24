@@ -1,10 +1,12 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BSLv1.1 (eventually AGPLv3) 2016-2021 Scille SAS
 
 use pyo3::basic::CompareOp;
-use pyo3::types::{PyBool, PyByteArray};
-use pyo3::{exceptions::PyValueError, prelude::*, types::PyBytes};
+use pyo3::exceptions::PyValueError;
+use pyo3::prelude::*;
+use pyo3::types::{PyByteArray, PyBytes};
 
 #[pyclass(name = "_Rs_HashDigest")]
+#[derive(PartialEq, Eq)]
 pub(crate) struct HashDigest(parsec_api_crypto::HashDigest);
 
 #[pymethods]
@@ -43,11 +45,11 @@ impl HashDigest {
         Ok(format!("HashDigest({})", self.0.hexdigest()))
     }
 
-    fn __richcmp__(&self, py: Python, value: &HashDigest, op: CompareOp) -> PyResult<PyObject> {
+    fn __richcmp__(&self, py: Python, value: &HashDigest, op: CompareOp) -> PyObject {
         match op {
-            CompareOp::Eq => Ok(PyBool::new(py, self.0 == value.0).into_py(py)),
-            CompareOp::Ne => Ok(PyBool::new(py, self.0 != value.0).into_py(py)),
-            _ => Ok(py.NotImplemented()),
+            CompareOp::Eq => (self == value).into_py(py),
+            CompareOp::Ne => (self != value).into_py(py),
+            _ => py.NotImplemented(),
         }
     }
 }

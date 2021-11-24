@@ -1,6 +1,6 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BSLv1.1 (eventually AGPLv3) 2016-2021 Scille SAS
 
-use pyo3::{prelude::*, py_run};
+use pyo3::prelude::*;
 
 mod crypto;
 
@@ -19,16 +19,15 @@ fn _libparsec(py: Python, m: &PyModule) -> PyResult<()> {
     // Submodule to store all the stuff that shouldn't be exposed by libparsec
     // but must be for the moment
     let submodule = PyModule::new(py, "hazmat")?;
-
     submodule.add_class::<crypto::HashDigest>()?;
-
-    // py_run! is quick-and-dirty; should be replaced by PyO3 API calls in actual code
-    py_run!(
-        py,
-        submodule,
-        "import sys; sys.modules['libparsec.hazmat'] = submodule"
-    );
     m.add_submodule(submodule)?;
+
+    // It turns out that importing submodules from extensions is not properly supported.
+    // The recommended fix is to simply add the submodules to `sys.modules` under the correct name.
+    // See the following issue for more information: https://github.com/PyO3/pyo3/issues/759
+    py.import("sys")?
+        .getattr("modules")?
+        .set_item("libparsec.hazmat", submodule)?;
 
     Ok(())
 }
