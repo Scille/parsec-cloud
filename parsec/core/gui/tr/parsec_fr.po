@@ -119,7 +119,7 @@ msgid "TEXT_BACKEND_STATE_CRASHED_cause"
 msgstr "La connexion au serveur a été perdue"
 
 msgid "TEXT_BACKEND_STATE_DESYNC"
-msgstr "Votre horloge est désynchronisée, veuillez la resynchroniser"
+msgstr "Votre horloge système est désynchronisée, veuillez la resynchroniser"
 
 msgid "TEXT_SYSTRAY_BACKEND_DISCONNECT_organization"
 msgstr "{organization}: Déconnecté"

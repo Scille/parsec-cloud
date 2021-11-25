@@ -63,15 +63,15 @@ BALLPARK_CLIENT_LATE_OFFSET = 60.0
 def timestamps_in_the_ballpark(
     client: DateTime,
     backend: DateTime,
-    client_early_offset: float = BALLPARK_CLIENT_EARLY_OFFSET,
-    client_late_offset: float = BALLPARK_CLIENT_LATE_OFFSET,
+    ballpark_client_early_offset: float = BALLPARK_CLIENT_EARLY_OFFSET,
+    ballpark_client_late_offset: float = BALLPARK_CLIENT_LATE_OFFSET,
 ) -> bool:
     """
     Useful to compare signed message timestamp with the one stored by the
     backend.
     """
     seconds = (backend - client).total_seconds()
-    return -client_early_offset < seconds < client_late_offset
+    return -ballpark_client_early_offset < seconds < ballpark_client_late_offset
 
 
 # Task status

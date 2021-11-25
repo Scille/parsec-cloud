@@ -379,7 +379,7 @@ class BackendAuthenticatedConn:
             self._cancel_manager_connect()
             raise
 
-        except BackendOutOfBallparkError as exc:
+        except BackendOutOfBallparkError:
             # Caller doesn't need to know about the desync,
             # simply pretend that we lost the connection instead
             exc = BackendNotAvailable()
