@@ -5,7 +5,7 @@ use pyo3::exceptions::PyValueError;
 use pyo3::prelude::*;
 use pyo3::types::{PyByteArray, PyBytes};
 
-#[pyclass(name = "_Rs_HashDigest")]
+#[pyclass]
 #[derive(PartialEq, Eq)]
 pub(crate) struct HashDigest(parsec_api_crypto::HashDigest);
 
@@ -21,12 +21,8 @@ impl HashDigest {
 
     #[staticmethod]
     fn from_data(py: Python, data: PyObject) -> PyResult<HashDigest> {
-        let copy;
         let bytes = match data.extract::<&PyByteArray>(py) {
-            Ok(x) => {
-                copy = x.to_vec();
-                &copy
-            }
+            Ok(x) => unsafe { x.as_bytes() },
             Err(_) => data.extract::<&PyBytes>(py)?.as_bytes(),
         };
         Ok(Self(parsec_api_crypto::HashDigest::from_data(bytes)))

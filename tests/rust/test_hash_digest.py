@@ -6,12 +6,12 @@ import pytest
 @pytest.mark.rust
 @pytest.mark.parametrize("bytes_cls", [bytes, bytearray])
 def test_hash_digest(bytes_cls):
-    from parsec.crypto import _Py_HashDigest, _Rs_HashDigest, HashDigest
+    from parsec.crypto import _PyHashDigest, _RsHashDigest, HashDigest
 
-    assert HashDigest is _Rs_HashDigest
+    assert HashDigest is _RsHashDigest
 
     rst = HashDigest.from_data(bytes_cls(b"abc"))
-    py = _Py_HashDigest.from_data(bytes_cls(b"abc"))
+    py = _PyHashDigest.from_data(bytes_cls(b"abc"))
     assert rst.digest == py.digest
     assert rst.hexdigest() == py.hexdigest()
     assert repr(rst) == repr(py)
