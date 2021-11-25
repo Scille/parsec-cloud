@@ -83,7 +83,15 @@ async def test_recovery_ok(tmp_path, user_fs_factory, running_backend, bob):
 
     # 3) Make sure the new device can connect to the backend
     async with user_fs_factory(new_device) as new_device_fs:
+        # Recovered device should start with a speculative user manifest
+        um = new_device_fs.get_user_manifest()
+        assert um.is_placeholder
+        assert um.speculative
+
         await new_device_fs.sync()
+        um = new_device_fs.get_user_manifest()
+        assert not um.is_placeholder
+        assert not um.speculative
 
 
 @pytest.mark.trio

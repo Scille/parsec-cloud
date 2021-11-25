@@ -365,5 +365,25 @@ class PublicKey(Field):
 
 
 SecretKey = bytes_based_field_factory(_SecretKey)
-HashDigest = bytes_based_field_factory(_HashDigest)
 Bytes = bytes_based_field_factory(bytes)
+
+
+class HashDigestField(Field):
+    def _serialize(self, value, attr, obj):
+        if value is None:
+            return None
+
+        return value.digest
+
+    def _deserialize(self, value, attr, data):
+        if not isinstance(value, bytes):
+            raise ValidationError("Not bytes")
+
+        try:
+            return _HashDigest(value)
+
+        except Exception as exc:
+            raise ValidationError(str(exc)) from exc
+
+
+HashDigest = HashDigestField

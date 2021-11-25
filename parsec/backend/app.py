@@ -360,11 +360,14 @@ class BackendApp:
 
                 except CloseInviteConnection:
                     # If the invitation has been deleted after the invited handshake,
-                    # invitation commands can raise an InvitationAlreadyDeletedError.
-                    # This error is converted to a CloseInviteConnection
-                    # The connection shall be closed due to a BackendEvent.INVITE_STATUS_CHANGED
-                    # but nothing garantie that the event will be handled before cmd_func
-                    # errors returns. If this happen, let's also close the connection
+                    # an invitation commands can raise an InvitationAlreadyDeletedError.
+                    # This error is then converted by the api route to a
+                    # CloseInviteConnection and here we are.
+                    # In most cases the connection is closed from handling the
+                    # BackendEvent.INVITE_STATUS_CHANGED event, but nothing guarantee
+                    # that the event will be handled before a command is processed
+                    # and finish with this error.
+                    # So if this happens, let's also close the connection.
                     pass
 
                 finally:

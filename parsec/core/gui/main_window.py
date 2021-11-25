@@ -574,6 +574,8 @@ class MainWindow(QMainWindow, Ui_MainWindow):  # type: ignore[misc]
     def on_tab_state_changed(self, tab: InstanceWidget, state: str) -> None:
         idx = self.tab_center.indexOf(tab)
         if idx == -1:
+            if state == "logout":
+                self.reload_login_devices()
             return
         if state == "login":
             if self._get_login_tab_index() != -1:

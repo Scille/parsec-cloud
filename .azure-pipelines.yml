@@ -17,7 +17,6 @@ variables:
   pytest.base_args: |
     --log-level=DEBUG \
     --durations=10 -v \
-    --cov=parsec --cov-config=setup.cfg --cov-append --cov-report= \
   debug.stress_flaky_tests: 0  # Repeat all flaky tests X times
 
 jobs:
@@ -48,7 +47,7 @@ jobs:
     displayName: 'Bootstrap'
   - bash: |
       set -eux
-      python setup.py bdist_wheel
+      python -m build --wheel
     displayName: 'Build Wheel'
   - publish: dist/
     artifact: wheel
@@ -74,6 +73,10 @@ jobs:
       sudo apt-get update
       python --version
       pip install pre-commit
+      # Rust stuff (needed by pre-commit)
+      curl https://sh.rustup.rs -sSf | sh -s -- -y
+      echo "##vso[task.setvariable variable=PATH;]$PATH:$HOME/.cargo/bin"
+      rustup component add rustfmt clippy
     displayName: 'Bootstrap'
   - bash: |
       set -eux
@@ -123,6 +126,43 @@ jobs:
 #      git fetch --tags  # Needed by releaser.py to have a consistent `git describe`
 #      python ./misc/releaser.py check --verbose
 #    displayName: 'Version check'
+
+
+#################################################################################
+
+
+- job: 's1_oxidation'
+  displayName: 'Rust Oxidation'
+  timeoutInMinutes: 60
+  pool:
+    vmImage: 'ubuntu-latest'
+  steps:
+  - checkout: self
+    submodules: true
+  - task: UsePythonVersion@0
+    inputs:
+      versionSpec: '$(python.version)'
+  - bash: |
+      set -eux
+      sudo apt-get update
+      python --version
+      # Rust stuff
+      curl https://sh.rustup.rs -sSf | sh -s -- -y
+      echo "##vso[task.setvariable variable=PATH;]$PATH:$HOME/.cargo/bin"
+      # pip 20.3 introduces the new dependency resolver
+      pip install pip>=20.3 --user --upgrade
+      pip install -r pre-requirements.txt
+    displayName: 'Bootstrap'
+  - bash: |
+      set -eux
+      pip install .[all,oxidation]
+      # Remove the parsec folder from the source to force use of the wheel
+      rm -rf parsec
+    displayName: 'Install'
+  - bash: |
+      set -eux
+      py.test $(pytest.base_args) tests -n auto
+    displayName: 'Tests'
 
 
 #################################################################################
@@ -181,7 +221,7 @@ jobs:
         tests/backend tests/test_cli.py --postgresql --runslow \
         -n auto --max-worker-restart=0 -x \
         --junitxml=test-results-postgresql.xml
-    displayName: 'Tests postgresql'
+    displayName: 'Tests PostgreSQL'
   # The full disk test are run separately since they rely on running a sqlite3 database
   # on a fuse mountpoint which can deadlock if run with the rest of the test suite
   # TEMPORARILY DISABLED BECAUSE THEY CAUSE ISSUES
@@ -198,13 +238,6 @@ jobs:
   #       tests -m gui --runmountpoint --runslow --rungui -x \
   #       --junitxml=test-results-gui.xml
   #   displayName: 'Tests GUI'
-  - bash: |
-      set -eux
-      pip install -U codecov
-      coverage xml -o coverage.xml
-      grep -E '( filename=|<package )' coverage.xml
-      codecov --file=coverage.xml --commit=$(Build.SourceVersion)
-    displayName: 'Codecov upload'
   - task: PublishTestResults@2
     inputs:
       testResultsFiles: 'test-results-*.xml'
@@ -238,10 +271,8 @@ jobs:
       pip install pip>=20.3 --user --upgrade
       pip install -r pre-requirements.txt
       brew install \
-        postgres \
         desktop-file-utils  # Provides `update-desktop-database` used by `tests/scripts/run_testenv.sh`
       brew install --cask osxfuse
-      psql --version
     displayName: 'Bootstrap'
   - bash: |
       set -eux
@@ -261,27 +292,12 @@ jobs:
         -n auto --max-worker-restart=0 -x \
         --junitxml=test-results-memory.xml
     displayName: 'Tests memory'
-  - bash: |
-      set -eux
-      # `test_cli.py` uses `--postgresql` option to test DB migration cli
-      py.test $(pytest.base_args) \
-        tests/backend tests/test_cli.py --postgresql --runslow \
-        -n auto --max-worker-restart=0 -x \
-        --junitxml=test-results-postgresql.xml
-    displayName: 'Tests postgresql'
   #- bash: |
   #    set -eux
   #    py.test $(pytest.base_args) \
   #      tests -m gui --runmountpoint --runslow --rungui -x \
   #      --junitxml=test-results-gui.xml
   #  displayName: 'Tests GUI'
-  - bash: |
-      set -eux
-      pip install -U codecov
-      coverage xml -o coverage.xml
-      grep -E '( filename=|<package )' coverage.xml
-      codecov --file=coverage.xml --commit=$(Build.SourceVersion)
-    displayName: 'Codecov upload'
   - task: PublishTestResults@2
     inputs:
       testResultsFiles: 'test-results-*.xml'
@@ -370,13 +386,6 @@ jobs:
         -n auto --max-worker-restart=0 -x \
         --junitxml=test-results-slow.xml
     displayName: 'Tests slow'
-  - bash: |
-      set -eux
-      pip install -U codecov
-      coverage xml -o coverage.xml
-      grep -E '( filename=|<package )' coverage.xml
-      codecov --file=coverage.xml --commit=$(Build.SourceVersion)
-    displayName: 'Codecov upload'
   - task: PublishTestResults@2
     inputs:
       testResultsFiles: 'test-results-*.xml'

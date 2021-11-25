@@ -111,7 +111,7 @@ color: #0092FF;
          </spacer>
         </item>
         <item>
-         <widget class="IconLabel" name="label_icon">
+         <widget class="QLabel" name="label_icon">
           <property name="minimumSize">
            <size>
             <width>64</width>
@@ -127,18 +127,8 @@ color: #0092FF;
           <property name="text">
            <string/>
           </property>
-          <property name="pixmap">
-           <pixmap resource="../rc/resources.qrc">:/icons/images/material/account_circle.svg</pixmap>
-          </property>
           <property name="scaledContents">
            <bool>true</bool>
-          </property>
-          <property name="color" stdset="0">
-           <color>
-            <red>153</red>
-            <green>153</green>
-            <blue>153</blue>
-           </color>
           </property>
          </widget>
         </item>
@@ -222,15 +212,6 @@ color: #0092FF;
    </item>
   </layout>
  </widget>
- <customwidgets>
-  <customwidget>
-   <class>IconLabel</class>
-   <extends>QLabel</extends>
-   <header>parsec.core.gui.custom_widgets</header>
-  </customwidget>
- </customwidgets>
- <resources>
-  <include location="../rc/resources.qrc"/>
- </resources>
+ <resources/>
  <connections/>
 </ui>

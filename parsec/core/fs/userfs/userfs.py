@@ -22,7 +22,6 @@ from async_generator import asynccontextmanager
 
 from parsec.utils import open_service_nursery
 from parsec.core.core_events import CoreEvent
-from parsec.core.config import CoreConfig
 from parsec.event_bus import EventBus
 from parsec.crypto import SecretKey
 from parsec.api.data import (
@@ -56,7 +55,7 @@ from parsec.core.remote_devices_manager import RemoteDevicesManager
 
 from parsec.core.fs.workspacefs import WorkspaceFS
 from parsec.core.fs.remote_loader import UserRemoteLoader
-from parsec.core.fs.remote_loader import ROLE_CERTIFICATE_STAMP_AHEAD_MS, MANIFEST_STAMP_AHEAD_MS
+from parsec.core.fs.remote_loader import ROLE_CERTIFICATE_STAMP_AHEAD_US, MANIFEST_STAMP_AHEAD_US
 from parsec.core.fs.storage import (
     UserStorage,
     WorkspaceStorage,
@@ -179,7 +178,7 @@ class UserFS:
         remote_devices_manager: RemoteDevicesManager,
         event_bus: EventBus,
         prevent_sync_pattern: Pattern[str],
-        core_config: CoreConfig,
+        preferred_language: str,
     ):
         self.data_base_dir = data_base_dir
         self.device = device
@@ -187,7 +186,7 @@ class UserFS:
         self.remote_devices_manager = remote_devices_manager
         self.event_bus = event_bus
         self.prevent_sync_pattern = prevent_sync_pattern
-        self.core_config = core_config
+        self.preferred_language = preferred_language
 
         self.storage: UserStorage  # Setup by UserStorage.run factory
 
@@ -231,7 +230,7 @@ class UserFS:
         remote_devices_manager: RemoteDevicesManager,
         event_bus: EventBus,
         prevent_sync_pattern: Pattern[str],
-        core_config: CoreConfig,
+        preferred_language: str = "en",
     ) -> AsyncIterator[UserFSTypeVar]:
         self = cls(
             data_base_dir,
@@ -240,7 +239,7 @@ class UserFS:
             remote_devices_manager,
             event_bus,
             prevent_sync_pattern,
-            core_config,
+            preferred_language,
         )
 
         # Run user storage
@@ -340,7 +339,7 @@ class UserFS:
             backend_cmds=self.backend_cmds,
             event_bus=self.event_bus,
             remote_devices_manager=self.remote_devices_manager,
-            core_config=self.core_config,
+            preferred_language=self.preferred_language,
         )
 
         # Apply the current "prevent sync" pattern
@@ -601,7 +600,7 @@ class UserFS:
         timestamp = self.device.timestamp()
         if timestamp_greater_than is not None:
             timestamp = max(
-                timestamp, timestamp_greater_than.add(microseconds=MANIFEST_STAMP_AHEAD_MS)
+                timestamp, timestamp_greater_than.add(microseconds=MANIFEST_STAMP_AHEAD_US)
             )
         to_sync_um = base_um.to_remote(author=self.device.device_id, timestamp=timestamp)
         ciphered = to_sync_um.dump_sign_and_encrypt(
@@ -713,7 +712,7 @@ class UserFS:
         timestamp = self.device.timestamp()
         if timestamp_greater_than is not None:
             timestamp = max(
-                timestamp, timestamp_greater_than.add(microseconds=ROLE_CERTIFICATE_STAMP_AHEAD_MS)
+                timestamp, timestamp_greater_than.add(microseconds=ROLE_CERTIFICATE_STAMP_AHEAD_US)
             )
 
         # Build the sharing message

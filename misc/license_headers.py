@@ -108,6 +108,14 @@ class SqlAGPLLicenser(Licenser):
     )
 
 
+class RustBSLLicenser(Licenser):
+    NAME = "BSL"
+    HEADER = f"// Parsec Cloud (https://parsec.cloud) Copyright (c) BSLv1.1 (eventually AGPLv3) 2016-{THIS_YEAR} Scille SAS"
+    HEADER_RE = re.compile(
+        r"^// Parsec Cloud \(https://parsec\.cloud\) Copyright \(c\) BSLv1.1 \(eventually AGPLv3\) 2016-(?P<year>[0-9]{4}) Scille SAS$"
+    )
+
+
 class SkipLicenser(Licenser):
     @classmethod
     def check_header(cls, file: Path) -> bool:
@@ -124,6 +132,10 @@ LICENSERS_MAP = {
     re.compile(r"^parsec/backend/.*\.py"): PythonBSLLicenser,
     re.compile(r"^parsec/core/gui/_resources_rc.py$"): SkipLicenser,
     re.compile(r"^parsec/core/gui/ui/"): SkipLicenser,
+    re.compile(r"^oxidation/(.*/)?target/"): SkipLicenser,
+    re.compile(r"^oxidation/.*\.rs$"): RustBSLLicenser,
+    re.compile(r"^oxidation/.*\.py$"): PythonBSLLicenser,
+    re.compile(r"^oxidation/.*\.sql$"): SqlBSLLicenser,
     re.compile(r"^.*\.py$"): PythonAGPLLicenser,
     re.compile(r"^.*\.sql$"): SqlAGPLLicenser,
 }
@@ -132,7 +144,7 @@ LICENSERS_MAP = {
 def get_files(pathes: Iterable[Path]) -> Iterator[Path]:
     for path in pathes:
         if path.is_dir():
-            for f in chain(Path(path).glob("**/*.py"), Path(path).glob("**/*.sql")):
+            for f in chain(path.glob("**/*.py"), path.glob("**/*.sql"), path.glob("**/*.rs")):
                 yield f
         elif path.is_file():
             yield path
@@ -152,7 +164,6 @@ def check_headers(files: Iterable[Path]) -> int:
     ret = 0
     for file in get_files(files):
         licenser = get_licenser(file)
-        print(file, licenser)
         if not licenser:
             continue
         if not licenser.check_header(file):
@@ -172,7 +183,9 @@ def add_headers(files: Iterable[Path]) -> int:
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("cmd", choices=["check", "add"])
-    parser.add_argument("files", nargs="*", type=Path, default=[Path("parsec"), Path("tests")])
+    parser.add_argument(
+        "files", nargs="*", type=Path, default=[Path("parsec"), Path("tests"), Path("oxidation")]
+    )
 
     args = parser.parse_args()
     if args.cmd == "check":

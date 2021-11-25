@@ -15,17 +15,6 @@ from parsec.core.types import BackendAddr
 
 logger = get_logger()
 
-TRANSLATIONS = {
-    "en": {
-        "FILENAME_CONFLICT": "Parsec - name conflict",
-        "FILE_CONTENT_CONFLICT": "Parsec - content conflict",
-    },
-    "fr": {
-        "FILENAME_CONFLICT": "Parsec - Conflit de nom",
-        "FILE_CONTENT_CONFLICT": "Parsec - Conflit de contenu",
-    },
-}
-
 
 def get_default_data_base_dir(environ: dict) -> Path:
     if sys.platform == "win32":
@@ -266,13 +255,3 @@ def save_config(config: CoreConfig):
             indent=True,
         )
     )
-
-
-def translate(core_config: CoreConfig, key: str) -> str:
-    res = key
-    try:
-        translations = TRANSLATIONS[core_config.gui_language or "en"]
-    except KeyError:
-        return res
-
-    return translations.get(key, key)

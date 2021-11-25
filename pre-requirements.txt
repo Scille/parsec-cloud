@@ -6,3 +6,4 @@
 pip>=20.3
 setuptools>=49.2.0
 wheel>=0.34.2
+build>=0.7.0

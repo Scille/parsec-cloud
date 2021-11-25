@@ -7,7 +7,6 @@ from pendulum import DateTime
 
 from parsec.api.protocol import DeviceID
 from parsec.core.core_events import CoreEvent
-from parsec.core.config import CoreConfig, translate
 from parsec.api.data import EntryNameTooLongError, BaseManifest as BaseRemoteManifest
 from parsec.core.types import (
     Chunk,
@@ -35,8 +34,28 @@ __all__ = "SyncTransactions"
 DEFAULT_BLOCK_SIZE = 512 * 1024  # 512Ko
 FILENAME_CONFLICT_KEY = "FILENAME_CONFLICT"
 FILE_CONTENT_CONFLICT_KEY = "FILE_CONTENT_CONFLICT"
+TRANSLATIONS = {
+    "en": {
+        "FILENAME_CONFLICT": "Parsec - name conflict",
+        "FILE_CONTENT_CONFLICT": "Parsec - content conflict",
+    },
+    "fr": {
+        "FILENAME_CONFLICT": "Parsec - Conflit de nom",
+        "FILE_CONTENT_CONFLICT": "Parsec - Conflit de contenu",
+    },
+}
+
 
 # Helpers
+
+
+def get_translated_message(preferred_language: str, key: str) -> str:
+    try:
+        translations = TRANSLATIONS[preferred_language]
+    except KeyError:  # Default to english
+        translations = TRANSLATIONS["en"]
+
+    return translations.get(key, key)
 
 
 def get_filename(manifest: LocalFolderishManifests, entry_id: EntryID) -> Optional[EntryName]:
@@ -45,11 +64,14 @@ def get_filename(manifest: LocalFolderishManifests, entry_id: EntryID) -> Option
 
 
 def get_conflict_filename(
-    filename: EntryName, filenames: Iterable[EntryName], core_config: CoreConfig, suffix_key: str
+    filename: EntryName,
+    filenames: Iterable[EntryName],
+    suffix_key: str,
+    preferred_language: str = "en",
 ) -> EntryName:
     counter = count(2)
 
-    suffix = translate(core_config, suffix_key)
+    suffix = get_translated_message(preferred_language, suffix_key)
     new_filename = full_name(filename, suffix)
     filename_set = set(filenames)
     while new_filename in filename_set:
@@ -93,8 +115,7 @@ def merge_folder_children(
     base_children: Dict[EntryName, EntryID],
     local_children: Dict[EntryName, EntryID],
     remote_children: Dict[EntryName, EntryID],
-    remote_device_name: DeviceID,
-    core_config: CoreConfig,
+    preferred_language: str = "en",
 ) -> Dict[EntryName, EntryID]:
     # Prepare lookups
     base_reversed = {entry_id: name for name, entry_id in base_children.items()}
@@ -156,7 +177,12 @@ def merge_folder_children(
         children[name] = entry_id
     for name, entry_id in solved_local_children.items():
         if name in children:
-            name = get_conflict_filename(name, children.keys(), core_config, FILENAME_CONFLICT_KEY)
+            name = get_conflict_filename(
+                filename=name,
+                filenames=children.keys(),
+                suffix_key=FILENAME_CONFLICT_KEY,
+                preferred_language=preferred_language,
+            )
         children[name] = entry_id
 
     # Return
@@ -166,11 +192,11 @@ def merge_folder_children(
 def merge_manifests(
     local_author: DeviceID,
     timestamp: DateTime,
-    core_config: CoreConfig,
     prevent_sync_pattern: Pattern[str],
     local_manifest: BaseLocalManifest,
     remote_manifest: Optional[BaseRemoteManifest] = None,
     force_apply_pattern: Optional[bool] = False,
+    preferred_language: str = "en",
 ) -> BaseLocalManifest:
     # Start by re-applying pattern (idempotent)
     if force_apply_pattern and isinstance(
@@ -240,14 +266,13 @@ def merge_manifests(
         base_children=local_manifest.base.children,
         local_children=local_manifest.children,
         remote_children=local_from_remote.children,
-        remote_device_name=remote_manifest.author,
-        core_config=core_config,
+        preferred_language=preferred_language,
     )
 
     # Children merge can end up with nothing to sync.
     #
     # This is typically the case when we sync for the first time a workspace
-    # shared with us that we didn't modified:
+    # shared with us that we didn't modify:
     # - the workspace manifest is a speculative placeholder (with arbitrary update&create dates)
     # - on sync the update date is different than in the remote, so a merge occurs
     # - given we didn't modify the workspace, the children merge is trivial
@@ -367,13 +392,13 @@ class SyncTransactions(EntryTransactions):
             prevent_sync_pattern = self.local_storage.get_prevent_sync_pattern()
             force_apply_pattern = not self.local_storage.get_prevent_sync_pattern_fully_applied()
             new_local_manifest = merge_manifests(
-                self.local_author,
-                timestamp,
-                self.core_config,
-                prevent_sync_pattern,
-                local_manifest,
-                remote_manifest,
-                force_apply_pattern,
+                local_author=self.local_author,
+                timestamp=timestamp,
+                prevent_sync_pattern=prevent_sync_pattern,
+                local_manifest=local_manifest,
+                remote_manifest=remote_manifest,
+                force_apply_pattern=force_apply_pattern,
+                preferred_language=self.preferred_language,
             )
 
             # Extract authors
@@ -473,10 +498,10 @@ class SyncTransactions(EntryTransactions):
                 timestamp = self.device.timestamp()
                 prevent_sync_pattern = self.local_storage.get_prevent_sync_pattern()
                 new_name = get_conflict_filename(
-                    filename,
-                    parent_manifest.children.keys(),
-                    self.core_config,
-                    FILE_CONTENT_CONFLICT_KEY,
+                    filename=filename,
+                    filenames=parent_manifest.children.keys(),
+                    suffix_key=FILE_CONTENT_CONFLICT_KEY,
+                    preferred_language=self.preferred_language,
                 )
                 new_manifest = LocalFileManifest.new_placeholder(
                     self.local_author, parent=parent_id, timestamp=timestamp

@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PROJECT VERSION\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2021-11-04 09:29+0100\n"
+"POT-Creation-Date: 2021-11-25 14:05+0100\n"
 "PO-Revision-Date: 2020-10-15 10:31+0200\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language: fr\n"
@@ -16,7 +16,7 @@ msgstr ""
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=utf-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"Generated-By: Babel 2.6.0\n"
+"Generated-By: Babel 2.9.1\n"
 
 msgid "TEXT_PARSEC_VERSION_version"
 msgstr "PARSEC version {version}"
@@ -25,7 +25,7 @@ msgid "TEXT_AUTH_CHANGE_SUCCESS"
 msgstr "L'authentification a été changée avec succès !"
 
 msgid "TEXT_INVALID_SMARTCARD"
-msgstr "Cette carte à puece ne peut pas être utilisée pour s'authentifier."
+msgstr "Cette carte à puce ne peut pas être utilisée pour s'authentifier."
 
 msgid "TEXT_CANNOT_SAVE_DEVICE"
 msgstr "Impossible de sauvegarder l'appareil. Veuillez réessayer."
@@ -349,6 +349,11 @@ msgstr "Impossible de créer un appareil de récupération"
 
 msgid "TEXT_DEVICE_UNLOCK_FOR_RECOVERY_LABEL"
 msgstr "Veuillez entrer votre mot de passe pour déverouiller cet appareil."
+
+msgid "TEXT_UNLOCK_ERROR_SMARTCARD_NOT_AVAILABLE"
+msgstr ""
+"Cet appareil est protogé par une authentification via carte à puce, "
+"toutefois cette version de Parsec ne supporte ce type d'authentification."
 
 msgid "TEXT_DEVICE_RECOVERY_EXPORT_WIZARD_TITLE"
 msgstr "Créer une appareil de récupération"
@@ -857,6 +862,11 @@ msgid "TEXT_LOGIN_MOUNTPOINT_ERROR"
 msgstr ""
 "Impossible de se connecter. Les espaces de travail n'ont pas pu être "
 "montés."
+
+msgid "TEXT_LOGIN_SMARTCARD_NOT_AVAILABLE"
+msgstr ""
+"Cet appareil est protogé par une authentification via carte à puce, "
+"toutefois cette version de Parsec ne supporte ce type d'authentification."
 
 msgid "TEXT_PARSEC_LICENSE"
 msgstr ""
@@ -1779,7 +1789,7 @@ msgstr ""
 "Souhaitez-vous en créer un maintenant ?"
 
 msgid "TEXT_ENABLE_TELEMETRY_TITLE"
-msgstr "Rapport d'erreur"
+msgstr "Activer la télémétrie"
 
 msgid "TEXT_ENABLE_TELEMETRY_INSTRUCTIONS"
 msgstr ""
@@ -2337,6 +2347,12 @@ msgstr "Nom de l'organisation"
 msgid "TEXT_LABEL_ORG_NAME_RECOMMANDATIONS"
 msgstr "Lettres, chiffres, underscores et tirets seulement. Aucun espace."
 
+msgid "TEXT_LABEL_DEVICE_NAME"
+msgstr "Nom d'appareil"
+
+msgid "ACTION_CREATE_ON_COMMERCIAL_BACKEND"
+msgstr "Utiliser le serveur PARSEC principal"
+
 msgid "ACTION_ACCEPT_CONTRACT"
 msgstr ""
 "J'accepte la <a href=\"https://parsec.cloud/pdf/Parsec-Privacy-Policy-"
@@ -2352,23 +2368,18 @@ msgstr "Je dispose de mon propre serveur PARSEC"
 msgid "TEXT_LABEL_BACKEND_ADDR_PLACEHOLDER"
 msgstr "parsec://hote:port"
 
-msgid "ACTION_CREATE_ON_COMMERCIAL_BACKEND"
-msgstr "Utiliser le serveur PARSEC principal"
-
-msgid "TEXT_LABEL_DEVICE_NAME"
-msgstr "Nom d'appareil"
-
 msgid "TEXT_CREATE_ORGANIZATION_INSTRUCTIONS"
 msgstr "Veuillez fournir les informations suivantes pour créer votre organisation."
 
 msgid "TEXT_DEVICE_RECOVERY_EXPORT_INSTRUCTIONS"
 msgstr ""
 "Vous allez pouvoir créer un appareil de récupération.<br />\n"
-"Il est composé d'un fichier et d'une phrase secrète qui vous permettront "
-"de récupérer votre appareil si vous le perdez."
+"Un appareil de récupération est constitué d'un fichier protégé par une "
+"phrase secrète et vous permet de re-créer des appareils si vous perdez "
+"votre appareil actuel."
 
 msgid "TEXT_DEVICE_RECOVERY_EXPORT_SELECT_DEVICE_LABEL"
-msgstr "Choisissez l'appareil pour lequel vous souhaitez créer une récupération"
+msgstr "Choisissez l'utilisateur pour lequel vous souhaitez créer une récupération"
 
 msgid "TEXT_DEVICE_RECOVERY_EXPORT_SELECT_FILE_LABEL"
 msgstr "Choisissez un emplacement pour le fichier de récupération"
@@ -2637,6 +2648,12 @@ msgstr "Vérifier la disponibilité d'une nouvelle version au démarrage"
 msgid "ACTION_SETTINGS_CHECK_NEW_VERSION"
 msgstr "Vérifier la disponibilité d'une nouvelle version maintenant"
 
+msgid "TEXT_SETTINGS_TELEMETRY_TITLE"
+msgstr "Télémétrie"
+
+msgid "TEXT_SETTINGS_ENABLE_TELEMETRY"
+msgstr "Activer la télémétrie pour l'envoi automatique de rapports d'erreur"
+
 msgid "TEXT_SETTINGS_INTERFACE_TITLE"
 msgstr "Interface"
 
@@ -2648,12 +2665,6 @@ msgstr "Utiliser des couleurs pour les espaces de travail"
 
 msgid "ACTION_SAVE"
 msgstr "Sauvegarder"
-
-msgid "TEXT_SETTINGS_TELEMETRY_TITLE"
-msgstr "Télémétrie"
-
-msgid "TEXT_SETTINGS_ENABLE_TELEMETRY"
-msgstr "Activer la télémétrie pour l'envoi automatique de rapports d'erreur"
 
 msgid "TEXT_SELECT_SMARTCARD"
 msgstr "Il vous sera demandé de sélectionner votre carte à puce"
@@ -2688,17 +2699,17 @@ msgstr "Rechercher utilisateurs"
 msgid "ACTION_USER_INVITE_USER"
 msgstr "Inviter un utilisateur"
 
-msgid "ACTION_LIST_PREVIOUS_PAGE"
-msgstr "Page précédente"
-
-msgid "ACTION_LIST_NEXT_PAGE"
-msgstr "Page suivante"
-
 msgid "ACTION_FILTER_REVOKED_USERS"
 msgstr "Masquer les utilisateurs révoqués"
 
 msgid "ACTION_FILTER_PENDING_INVITATION"
 msgstr "Masquer les invitations"
+
+msgid "ACTION_LIST_PREVIOUS_PAGE"
+msgstr "Page précédente"
+
+msgid "ACTION_LIST_NEXT_PAGE"
+msgstr "Page suivante"
 
 msgid "TEXT_WORKSPACE_IS_SHARED_TOOLTIP"
 msgstr "L'espace de travail est partagé."

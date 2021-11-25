@@ -357,7 +357,7 @@ organization_id, device_id, device_label (can be null), human_email (can be null
 @click.option(
     "--organization-initial-user-profile-outsider-allowed",
     envvar="PARSEC_ORGANIZATION_INITIAL_USER_PROFILE_OUTSIDER_ALLOWED",
-    help="Allow the outsider profiles for the newly created organizations (default: False)",
+    help="Allow the outsider profiles for the newly created organizations (default: True)",
     default=True,
     type=bool,
 )

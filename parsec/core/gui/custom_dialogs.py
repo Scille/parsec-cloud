@@ -1,8 +1,10 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2016-2021 Scille SAS
 
 import sys
+import time
 import multiprocessing
 from contextlib import contextmanager
+from concurrent.futures import ThreadPoolExecutor
 
 from PyQt5.QtCore import Qt, pyqtSignal
 from PyQt5.QtGui import QPainter, QValidator
@@ -34,6 +36,63 @@ from parsec.core.gui.ui.greyed_dialog import Ui_GreyedDialog
 
 
 logger = get_logger()
+
+
+@contextmanager
+def bring_process_window_to_top(pool, timeout=3.0):
+    # This feature is windows only
+    if sys.platform != "win32":
+        yield
+        return
+
+    def _bring_to_top(pid_target):
+        import ctypes
+        from ctypes import wintypes as win
+
+        # Prepare ctypes
+        enum_windows = ctypes.windll.user32.EnumWindows
+        get_window_thread_process_id = ctypes.windll.user32.GetWindowThreadProcessId
+        set_foreground_window = ctypes.windll.user32.SetForegroundWindow
+        callback_type = ctypes.WINFUNCTYPE(win.BOOL, win.HWND, win.LPARAM)
+
+        # Callback enumerating the windows
+        def enum_windows_callback(hwnd, param):
+            nonlocal success
+            # Get pid of the current window
+            pid = win.DWORD()
+            get_window_thread_process_id(hwnd, ctypes.byref(pid))
+            # Keep enumerating
+            if pid.value != pid_target:
+                return True
+            # Stop enumerating
+            success = set_foreground_window(hwnd)
+            return False
+
+        # Run the callback in a loop
+        success = False
+        deadline = time.monotonic() + timeout
+        callback = callback_type(enum_windows_callback)
+        while not success:
+            enum_windows(callback)
+            if time.monotonic() > deadline:
+                raise TimeoutError
+
+    # Run the call in a thread
+    pid = pool._pool[0].pid
+    executor = ThreadPoolExecutor()
+    try:
+        future = executor.submit(_bring_to_top, pid)
+        yield
+    # Safely shutdown the executor without waiting
+    finally:
+        executor.shutdown(wait=False)
+        if future.done():
+            try:
+                future.result()
+            except TimeoutError:
+                logger.warning("The call to `bring_to_top` timed out")
+            except Exception:
+                logger.exception("The call to `bring_to_top` failed unexpectedly")
 
 
 class GreyedDialog(QDialog, Ui_GreyedDialog):
@@ -178,7 +237,8 @@ class QDialogInProcess(GreyedDialog):
                 lambda *args: dialog.process_finished.emit(),
             )
             # Run the dialog until either the process is finished or the dialog is closed
-            dialog.exec_()
+            with bring_process_window_to_top(pool):
+                dialog.exec_()
             # Terminate the process and close the pool if the dialog exited first
             if not async_result.ready():
                 pool.terminate()

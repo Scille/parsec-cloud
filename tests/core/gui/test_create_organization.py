@@ -1,9 +1,8 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2016-2021 Scille SAS
 
 import pytest
-
+import trio
 import pendulum
-
 from PyQt5 import QtCore
 
 from tests.fixtures import local_device_to_backend_user
@@ -83,8 +82,13 @@ async def _do_creation_process(aqtbot, co_w):
 @pytest.mark.trio
 @customize_fixtures(backend_spontaneous_organization_boostrap=True)
 async def test_create_organization(
-    gui, aqtbot, running_backend, catch_create_org_widget, autoclose_dialog
+    monkeypatch, gui, aqtbot, running_backend, catch_create_org_widget, autoclose_dialog
 ):
+    # Disable the sync monitor to avoid concurrent sync right when the claim finish
+    monkeypatch.setattr(
+        "parsec.core.sync_monitor.freeze_sync_monitor_mockpoint", trio.sleep_forever
+    )
+
     # The org creation window is usually opened using a sub-menu.
     # Sub-menus can be a bit challenging to open in tests so we cheat
     # using the keyboard shortcut Ctrl+N that has the same effect.
@@ -111,6 +115,10 @@ async def test_create_organization(
         c_w = gui.test_get_central_widget()
         assert c_w
         assert c_w.button_user.text() == "AnomalousMaterials\nGordon Freeman"
+
+        # Claimed user should start with a non-speculative user manifest
+        um = c_w.core.user_fs.get_user_manifest()
+        assert not um.speculative
 
     await aqtbot.wait_until(_logged_in)
 

@@ -73,7 +73,7 @@ async def test_chunks_from_path():
 
 
 @pytest.mark.trio
-async def test_update_file(alice_workspace):
+async def test_update_file(alice_workspace, monkeypatch):
     block_mock1 = mock.Mock()
     block_mock1.digest = b"block1"
     block_mock2 = mock.Mock()
@@ -90,7 +90,7 @@ async def test_update_file(alice_workspace):
 
     sync_by_id_mock = AsyncMock(spec=mock.Mock)
     alice_workspace.sync_by_id = sync_by_id_mock
-    HashDigest.from_data = mock.Mock(side_effect=lambda x: x)
+    monkeypatch.setattr(HashDigest, "from_data", mock.Mock(side_effect=lambda x: x))
 
     with mock.patch(
         "parsec.core.cli.rsync._chunks_from_path",

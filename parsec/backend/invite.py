@@ -17,7 +17,7 @@ from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
 from structlog import get_logger
 
-from parsec.crypto import PublicKey
+from parsec.crypto import PublicKey, HashDigest
 from parsec.event_bus import EventBus, EventCallback, EventFilterCallback
 from parsec.api.data import UserProfile
 from parsec.api.protocol import (
@@ -527,7 +527,7 @@ class BaseInviteComponent:
                 greeter=None,
                 token=client_ctx.invitation.token,
                 state=ConduitState.STATE_2_1_CLAIMER_HASHED_NONCE,
-                payload=msg["claimer_hashed_nonce"],
+                payload=msg["claimer_hashed_nonce"].digest,
             )
 
             greeter_nonce = await self.conduit_exchange(
@@ -565,6 +565,8 @@ class BaseInviteComponent:
                 state=ConduitState.STATE_2_1_CLAIMER_HASHED_NONCE,
                 payload=b"",
             )
+            # Should not fail given data is check on DB insertion
+            claimer_hashed_nonce = HashDigest(claimer_hashed_nonce)
 
         except InvitationNotFoundError:
             return {"status": "not_found"}

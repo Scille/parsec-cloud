@@ -387,7 +387,7 @@
                         "claimer_hashed_nonce": {
                             "allow_none": false,
                             "required": true,
-                            "type": "bytesField"
+                            "type": "HashDigestField"
                         },
                         "status": {
                             "allow_none": false,
@@ -1574,15 +1574,15 @@
                             "required": true,
                             "type": "DeviceIDField"
                         },
-                        "blob": {
-                            "allow_none": false,
-                            "required": true,
-                            "type": "bytesField"
-                        },
                         "author_last_role_granted_on": {
                             "allow_none": true,
                             "required": false,
                             "type": "DateTime"
+                        },
+                        "blob": {
+                            "allow_none": false,
+                            "required": true,
+                            "type": "bytesField"
                         },
                         "status": {
                             "allow_none": false,
@@ -1739,7 +1739,7 @@
                         "claimer_hashed_nonce": {
                             "allow_none": false,
                             "required": true,
-                            "type": "bytesField"
+                            "type": "HashDigestField"
                         },
                         "cmd": {
                             "allow_none": false,
