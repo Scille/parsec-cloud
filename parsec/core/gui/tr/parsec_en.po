@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PROJECT VERSION\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2021-11-09 09:49+0100\n"
+"POT-Creation-Date: 2021-11-25 14:05+0100\n"
 "PO-Revision-Date: 2020-10-15 10:30+0200\n"
 "Last-Translator: \n"
 "Language: en\n"
@@ -16,7 +16,7 @@ msgstr ""
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=utf-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"Generated-By: Babel 2.6.0\n"
+"Generated-By: Babel 2.9.1\n"
 
 msgid "TEXT_PARSEC_VERSION_version"
 msgstr "PARSEC version {version}"
@@ -52,6 +52,9 @@ msgid "TEXT_ONLY_ONE_AUTH_METHOD_AVAILABLE"
 msgstr ""
 "Only one method authentication method is available in this version of "
 "Parsec."
+
+msgid "ACTION_COPY_BACKEND_ADDR"
+msgstr "Copy server address"
 
 msgid "ACTION_DEVICE_MENU_CHANGE_AUTHENTICATION"
 msgstr "Change authentication"
@@ -2282,6 +2285,12 @@ msgstr "Organization name"
 msgid "TEXT_LABEL_ORG_NAME_RECOMMANDATIONS"
 msgstr "Letters, digits, underscores and hyphens only. No spaces."
 
+msgid "TEXT_LABEL_DEVICE_NAME"
+msgstr "Device name"
+
+msgid "ACTION_CREATE_ON_COMMERCIAL_BACKEND"
+msgstr "Use PARSEC main server"
+
 msgid "ACTION_ACCEPT_CONTRACT"
 msgstr ""
 "I accept the <a href=\"https://parsec.cloud/pdf/Parsec-Privacy-Policy-"
@@ -2294,12 +2303,6 @@ msgstr "I have my own PARSEC server"
 
 msgid "TEXT_LABEL_BACKEND_ADDR_PLACEHOLDER"
 msgstr "parsec://host:port"
-
-msgid "ACTION_CREATE_ON_COMMERCIAL_BACKEND"
-msgstr "Use PARSEC main server"
-
-msgid "TEXT_LABEL_DEVICE_NAME"
-msgstr "Device name"
 
 msgid "TEXT_CREATE_ORGANIZATION_INSTRUCTIONS"
 msgstr "Please fill out the following information to create your organization."
@@ -2575,6 +2578,12 @@ msgstr "Check for new versions on startup"
 msgid "ACTION_SETTINGS_CHECK_NEW_VERSION"
 msgstr "Check for new version now"
 
+msgid "TEXT_SETTINGS_TELEMETRY_TITLE"
+msgstr "Telemetry"
+
+msgid "TEXT_SETTINGS_ENABLE_TELEMETRY"
+msgstr "Enable telemetry for automatic crash reporting"
+
 msgid "TEXT_SETTINGS_INTERFACE_TITLE"
 msgstr "Interface"
 
@@ -2586,12 +2595,6 @@ msgstr "Use colors for workspaces"
 
 msgid "ACTION_SAVE"
 msgstr "Save"
-
-msgid "TEXT_SETTINGS_TELEMETRY_TITLE"
-msgstr "Telemetry"
-
-msgid "TEXT_SETTINGS_ENABLE_TELEMETRY"
-msgstr "Enable telemetry for automatic crash reporting"
 
 msgid "TEXT_SELECT_SMARTCARD"
 msgstr "You will be asked to select your smartcard."
@@ -2626,17 +2629,17 @@ msgstr "Search users"
 msgid "ACTION_USER_INVITE_USER"
 msgstr "Invite a new user"
 
-msgid "ACTION_LIST_PREVIOUS_PAGE"
-msgstr "Previous page"
-
-msgid "ACTION_LIST_NEXT_PAGE"
-msgstr "Next page"
-
 msgid "ACTION_FILTER_REVOKED_USERS"
 msgstr "Hide revoked users"
 
 msgid "ACTION_FILTER_PENDING_INVITATION"
 msgstr "Hide pending invitations"
+
+msgid "ACTION_LIST_PREVIOUS_PAGE"
+msgstr "Previous page"
+
+msgid "ACTION_LIST_NEXT_PAGE"
+msgstr "Next page"
 
 msgid "TEXT_WORKSPACE_IS_SHARED_TOOLTIP"
 msgstr "This workspace is shared."
