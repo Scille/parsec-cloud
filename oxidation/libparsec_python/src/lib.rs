@@ -8,13 +8,6 @@ mod crypto;
 /// the `lib.name` setting in the `Cargo.toml`, else Python will not be able to
 /// import the module.
 #[pymodule]
-fn libparsec(py: Python, m: &PyModule) -> PyResult<()> {
-    // Rust-analyzer produce a false positive "unresolved macro `proc_macro_call`"
-    // which makes the entire function pretty unreadable without this hack
-    // (see. https://github.com/rust-analyzer/rust-analyzer/issues/9606)
-    _libparsec(py, m)
-}
-
 fn _libparsec(_py: Python, m: &PyModule) -> PyResult<()> {
     m.add_class::<crypto::HashDigest>()?;
     Ok(())
