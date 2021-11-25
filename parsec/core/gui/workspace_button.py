@@ -329,6 +329,10 @@ class WorkspaceButton(QWidget, Ui_WorkspaceButton):
             display += "-" + _("TEXT_WORKSPACE_IS_TIMESTAMPED_date").format(
                 date=format_datetime(self.workspace_fs.timestamp)
             )
+            if self.is_shared:
+                extra_space += 40
+            if self.is_owner:
+                extra_space += 40
         self.label_title.setToolTip(display)
         size = self.size().width() - extra_space
         self.label_title.setText(ensure_string_size(display, size, self.label_title.font()))
