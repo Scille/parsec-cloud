@@ -105,6 +105,7 @@ class CentralWidget(QWidget, Ui_CentralWidget):  # type: ignore[misc]
         self.event_bus = event_bus
         self.systray_notification = systray_notification
         self.last_notification = 0.0
+        self.desync_notified = False
 
         self.menu = MenuWidget(parent=self)
         self.widget_menu.layout().addWidget(self.menu)
@@ -351,8 +352,18 @@ class CentralWidget(QWidget, Ui_CentralWidget):  # type: ignore[misc]
             text = _("TEXT_BACKEND_STATE_DISCONNECTED")
             tooltip = _("TEXT_BACKEND_STATE_DESYNC")
             icon = QPixmap(":/icons/images/material/cloud_off.svg")
-            notif = ("DESYNC", tooltip)
-            disconnected = True
+            notif = None
+            disconnected = False
+
+            # The disconnection for being out-of-sync with the backend
+            # is only shown once per login. This is useful in the case
+            # of backends with API version 2.3 and older as it's going
+            # to successfully connect every 10 seconds before being
+            # thrown off by the sync monitor.
+            if not self.desync_notified:
+                self.desync_notified = True
+                notif = ("DESYNC", tooltip)
+                disconnected = True
 
         self.menu.set_connection_state(text, tooltip, icon)
         if notif:
