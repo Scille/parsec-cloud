@@ -346,11 +346,17 @@ class WorkspacesWidget(QWidget, Ui_WorkspacesWidget):
             key = (workspace_fs.workspace_id, getattr(workspace_fs, "timestamp", None))
             button = old_mapping.pop(key, None)
 
+            # Retrieve current role for ourself
+            user_id = workspace_fs.device.user_id
+            current_role, _ = users_roles.get(user_id)
+
             # Create and bind button if it doesn't exist
             if button is None:
                 button = WorkspaceButton(workspace_fs, parent=self)
                 button.clicked.connect(self.load_workspace)
                 if self.core.device.is_outsider:
+                    button.button_share.hide()
+                elif current_role in (WorkspaceRole.READER, WorkspaceRole.CONTRIBUTOR):
                     button.button_share.hide()
                 else:
                     button.share_clicked.connect(self.share_workspace)

@@ -9,6 +9,14 @@ from parsec.core.types import WorkspaceRole
 from parsec.core.core_events import CoreEvent
 from parsec.core.fs import FSWorkspaceNoReadAccess
 from parsec.core.gui.workspace_button import WorkspaceButton
+from parsec.core.gui.timestamped_workspace_widget import TimestampedWorkspaceWidget
+
+
+@pytest.fixture
+def catch_timestamped_workspace_widget(widget_catcher_factory):
+    return widget_catcher_factory(
+        "parsec.core.gui.timestamped_workspace_widget.TimestampedWorkspaceWidget"
+    )
 
 
 @pytest.mark.gui
@@ -336,3 +344,47 @@ async def test_workspace_filter_user_new_workspace(
         assert not w_w.filter_remove_button.isVisible()
 
     await aqtbot.wait_until(_new_workspace_listed, timeout=2000)
+
+
+@pytest.mark.gui
+@pytest.mark.trio
+async def test_display_timestamped_workspace_in_worspaces_list(
+    aqtbot,
+    running_backend,
+    logged_gui,
+    monkeypatch,
+    autoclose_dialog,
+    catch_timestamped_workspace_widget,
+):
+    w_w = await logged_gui.test_switch_to_workspaces_widget()
+
+    # Create a workspace and make sure the workspace is displayed
+    core = logged_gui.test_get_core()
+    await core.user_fs.workspace_create("Workspace1")
+
+    def _workspace_displayed():
+        assert w_w.layout_workspaces.count() == 1
+        wk_button: WorkspaceButton = w_w.layout_workspaces.itemAt(0).widget()
+        assert isinstance(wk_button, WorkspaceButton)
+        assert wk_button.name == "Workspace1"
+
+    await aqtbot.wait_until(_workspace_displayed, timeout=2000)
+    wk_button: WorkspaceButton = w_w.layout_workspaces.itemAt(0).widget()
+
+    # Now make a timestamp and make sure he is displayed
+    aqtbot.mouse_click(wk_button.button_remount_ts, QtCore.Qt.LeftButton)
+    ts_wk_w: TimestampedWorkspaceWidget = await catch_timestamped_workspace_widget()
+    assert ts_wk_w
+    assert isinstance(ts_wk_w, TimestampedWorkspaceWidget)
+    aqtbot.mouse_click(ts_wk_w.button_show, QtCore.Qt.LeftButton)
+
+    def _new_workspace_listed():
+        assert w_w.layout_workspaces.count() == 2
+        wk_button1 = w_w.layout_workspaces.itemAt(0).widget()
+        wk_button2 = w_w.layout_workspaces.itemAt(1).widget()
+        assert isinstance(wk_button1, WorkspaceButton)
+        assert isinstance(wk_button2, WorkspaceButton)
+        assert not w_w.filter_remove_button.isVisible()
+
+    await aqtbot.wait_until(_new_workspace_listed, timeout=2000)
+    # assert w_w.layout_workspaces.count() == 2
