@@ -33,7 +33,7 @@ async def test_conduit_exchange_good(exchange_testbed, leader):
     greeter_rep = await tb.get_result("greeter")
     assert greeter_rep == {
         "status": "ok",
-        "claimer_hashed_nonce": HashDigest(b"<claimer_hashed_nonce>"),
+        "claimer_hashed_nonce": HashDigest.from_data(b"<claimer_nonce>"),
     }
     await tb.send_order("greeter", "2b_send_nonce")
 

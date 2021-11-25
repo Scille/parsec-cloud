@@ -184,7 +184,7 @@ async def exchange_testbed(backend, alice, alice_backend_sock, backend_invited_s
                 await peer_controller.peer_do(
                     invite_2a_claimer_send_hashed_nonce,
                     tb.claimer_sock,
-                    claimer_hashed_nonce=HashDigest(b"<claimer_hashed_nonce>"),
+                    claimer_hashed_nonce=HashDigest.from_data(b"<claimer_nonce>"),
                 )
 
             elif order == "2b_send_nonce":

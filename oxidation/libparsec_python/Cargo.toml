@@ -4,7 +4,7 @@ version = "0.1.0"
 edition = "2021"
 
 [package.metadata.maturin]
-python-source = "./py"
+name = "libparsec._libparsec"
 
 [lib]
 name = "libparsec"

@@ -82,6 +82,7 @@ def pytest_addoption(parser):
     parser.addoption(
         "--realcrypto", action="store_true", help="Don't mock crypto operation to save time"
     )
+    parser.addoption("--runrust", action="store_true", help="Don't skip rust tests")
     parser.addoption(
         "--run-postgresql-cluster",
         action="store_true",
@@ -226,6 +227,8 @@ def pytest_runtest_setup(item):
     if item.get_closest_marker("postgresql"):
         if not item.config.getoption("--postgresql"):
             pytest.skip("need --postgresql option to run")
+    if item.get_closest_marker("rust") and not item.config.getoption("--runrust"):
+        pytest.skip("need --runrust option to run")
 
 
 def pytest_collection_modifyitems(config, items):
