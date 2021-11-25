@@ -22,6 +22,9 @@ impl HashDigest {
     #[staticmethod]
     fn from_data(py: Python, data: PyObject) -> PyResult<HashDigest> {
         let bytes = match data.extract::<&PyByteArray>(py) {
+            // Using PyByteArray::as_bytes is safe as long as the corresponding memory is not modified.
+            // Here, the GIL is held during the entire access to `bytes` so there is no risk of another
+            // python thread modifying the bytearray behind our back.
             Ok(x) => unsafe { x.as_bytes() },
             Err(_) => data.extract::<&PyBytes>(py)?.as_bytes(),
         };
