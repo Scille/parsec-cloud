@@ -12,6 +12,7 @@ from parsec.serde import BaseSchema, OneOfSchema, fields, validate
 from parsec.utils import (
     BALLPARK_CLIENT_EARLY_OFFSET,
     BALLPARK_CLIENT_LATE_OFFSET,
+    BALLPARK_CLIENT_TOLERANCE,
     timestamps_in_the_ballpark,
 )
 from parsec.api.protocol.base import ProtocolError, InvalidMessageError, serializer_factory
@@ -372,11 +373,13 @@ class BaseClientHandshake:
             # Check whether our system clock is in sync with the backend
             client_timestamp = cast(pendulum.DateTime, self.challenge_data["client_timestamp"])
             backend_timestamp = cast(pendulum.DateTime, self.challenge_data["backend_timestamp"])
-            ballpark_client_early_offset = cast(
-                float, self.challenge_data["ballpark_client_early_offset"]
+            ballpark_client_early_offset = (
+                cast(float, self.challenge_data["ballpark_client_early_offset"])
+                * BALLPARK_CLIENT_TOLERANCE
             )
-            ballpark_client_late_offset = cast(
-                float, self.challenge_data["ballpark_client_late_offset"]
+            ballpark_client_late_offset = (
+                cast(float, self.challenge_data["ballpark_client_late_offset"])
+                * BALLPARK_CLIENT_TOLERANCE
             )
             if not timestamps_in_the_ballpark(
                 client=client_timestamp,
