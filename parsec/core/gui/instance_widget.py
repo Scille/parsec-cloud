@@ -47,6 +47,24 @@ async def _do_run_core(config, device, qt_on_ready):
                 await trio.sleep_forever()
 
 
+def check_macfuse_version() -> bool:
+    import os
+
+    macfuse_plist_path = "/Library/Filesystems/macfuse.fs/Contents/Info.plist"
+    if not os.path.exists(macfuse_plist_path):
+        # osxfuse installed, not macfuse
+        return False
+
+    import plistlib
+    import requests
+
+    local_version = plistlib.readPlist(macfuse_plist_path)["CFBundleVersion"]
+    remote_version = requests.get("https://api.github.com/repos/osxfuse/osxfuse/releases/latest")
+    if local_version < remote_version.json()["name"].split()[1]:
+        return False
+    return True
+
+
 def ensure_macfuse_available_or_show_dialogue(window):
     try:
         import fuse  # noqa
@@ -58,6 +76,15 @@ def ensure_macfuse_available_or_show_dialogue(window):
             _("TEXT_MACFUSE_DOWNLOAD_BUTTON"),
             "https://osxfuse.github.io",
         )
+    else:
+        if not check_macfuse_version():
+            show_info_link(
+                window,
+                _("TEXT_UPDATE_MACFUSE_TITLE"),
+                _("TEXT_UPDATE_MACFUSE"),
+                _("TEXT_UPDATE_MACFUSE_BUTTON"),
+                "https://osxfuse.github.io",
+            )
 
 
 class InstanceWidget(QWidget):

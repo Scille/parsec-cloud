@@ -836,6 +836,17 @@ msgstr ""
 msgid "TEXT_MACFUSE_DOWNLOAD_BUTTON"
 msgstr "Télécharger macFUSE"
 
+msgid "TEXT_UPDATE_MACFUSE_TITLE"
+msgstr "Mise à jour de macFUSE nécessaire"
+
+msgid "TEXT_UPDATE_MACFUSE"
+msgstr ""
+"Votre version de macFUSE est obsolète. Pour assurer le bon fonctionnement de "
+"Parsec, vous pouvez le mettre à jour en suivant le lien ci-dessous."
+
+msgid "TEXT_UPDATE_MACFUSE_BUTTON"
+msgstr "Télécharger la dernière version de macFUSE"
+
 msgid "TEXT_LOGIN_ERROR_DEVICE_REVOKED"
 msgstr "Cet appareil a été révoqué et ne peut plus se connecter."
 
