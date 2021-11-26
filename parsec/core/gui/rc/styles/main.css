@@ -96,6 +96,10 @@ QComboBox QListView::item {
     height: 38px;
 }
 
+QComboBox QListView::item:disabled {
+    background-color: #BBBBBB;
+}
+
 QComboBox QListView::item:selected {
     background-color: #0092FF;
     color: #FFFFFF;
