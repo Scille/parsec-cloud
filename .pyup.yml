@@ -28,8 +28,6 @@ search: True
 requirements:
   - pre-requirements.txt:
       update: all
-  - pyproject.toml:
-      update: all
   - requirement/install_requirement.txt:
       update: all
   - requirement/core_requirement.txt:
@@ -38,19 +36,6 @@ requirements:
       update: all
   - requirement/test_requirement.txt:
       update: all
-  - Cargo.lock:
-      update: all
-  - Cargo.toml:
-      update: all
-
-
-#  - requirements/dev.txt:
-      # don't update dependencies, use global 'pin' default
-#      update: False
-#  - requirements/prod.txt:
-      # update insecure only, pin all
-#      update: insecure
-#      pin: True
 
 # add a label to pull requests, default is not set
 # requires private repo permissions, even on public repos
