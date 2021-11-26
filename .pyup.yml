@@ -30,7 +30,13 @@ requirements:
       update: all
   - pyproject.toml:
       update: all
-  - setup.py:
+  - requirement/install_requirement.txt:
+      update: all
+  - requirement/core_requirement.txt:
+      update: all
+  - requirement/backend_requirement.txt:
+      update: all
+  - requirement/test_requirement.txt:
       update: all
   - Cargo.lock:
       update: all

@@ -1,0 +1,10 @@
+jinja2==2.11.2
+# PostgreSQL
+triopg==0.6.0
+trio-asyncio==0.12.0
+# S3
+boto3==1.12.34
+botocore==1.15.34
+# Swift
+python-swiftclient==3.5.0
+pbr==4.0.2
