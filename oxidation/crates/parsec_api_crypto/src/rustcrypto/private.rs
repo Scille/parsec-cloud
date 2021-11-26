@@ -184,6 +184,7 @@ impl From<PrivateKey> for ByteBuf {
 /*
  * PublicKey
  */
+
 #[derive(Clone, Debug, Deserialize, Serialize)]
 #[serde(into = "ByteBuf", try_from = "ByteBuf")]
 pub struct PublicKey(crypto_box::PublicKey);
