@@ -284,42 +284,8 @@
                   <number>0</number>
                  </property>
                  <item>
-                  <widget class="IconLabel" name="icon_title3">
-                   <property name="minimumSize">
-                    <size>
-                     <width>10</width>
-                     <height>10</height>
-                    </size>
-                   </property>
-                   <property name="maximumSize">
-                    <size>
-                     <width>10</width>
-                     <height>10</height>
-                    </size>
-                   </property>
-                   <property name="text">
-                    <string/>
-                   </property>
-                   <property name="pixmap">
-                    <pixmap resource="../rc/resources.qrc">:/icons/images/material/fiber_manual_record.svg</pixmap>
-                   </property>
-                   <property name="scaledContents">
-                    <bool>true</bool>
-                   </property>
-                   <property name="color" stdset="0">
-                    <color>
-                     <red>153</red>
-                     <green>153</green>
-                     <blue>153</blue>
-                    </color>
-                   </property>
-                  </widget>
-                 </item>
-                 <item>
-                  <widget class="QLineEdit" name="label_title3">
-                   <property name="readOnly">
-                    <bool>true</bool>
-                   </property>
+                  <widget class="NavigationBarWidget" name="navigation_bar_widget" native="true">
+                   <layout class="QHBoxLayout" name="horizontalLayout_7"/>
                   </widget>
                  </item>
                 </layout>
@@ -359,6 +325,9 @@
                  <font>
                   <pointsize>11</pointsize>
                  </font>
+                </property>
+                <property name="cursor">
+                 <cursorShape>PointingHandCursor</cursorShape>
                 </property>
                 <property name="layoutDirection">
                  <enum>Qt::LeftToRight</enum>
@@ -483,6 +452,12 @@
    <class>IconLabel</class>
    <extends>QLabel</extends>
    <header>parsec.core.gui.custom_widgets</header>
+  </customwidget>
+  <customwidget>
+   <class>NavigationBarWidget</class>
+   <extends>QWidget</extends>
+   <header>parsec.core.gui.navigation_bar_widget</header>
+   <container>1</container>
   </customwidget>
  </customwidgets>
  <resources>

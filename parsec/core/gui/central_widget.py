@@ -143,10 +143,8 @@ class CentralWidget(QWidget, Ui_CentralWidget):  # type: ignore[misc]
         self.connection_state_changed.connect(self._on_connection_state_changed)
 
         self.widget_title2.hide()
-        self.icon_title3.hide()
-        self.label_title3.setText("")
-        self.icon_title3.apply_style()
-        self.icon_title3.apply_style()
+        self.navigation_bar_widget.clear()
+        self.navigation_bar_widget.route_clicked.connect(self._on_route_clicked)
 
         effect = QGraphicsDropShadowEffect(self)
         effect.setColor(QColor(100, 100, 100))
@@ -202,16 +200,17 @@ class CentralWidget(QWidget, Ui_CentralWidget):  # type: ignore[misc]
             core=self.core, jobs_ctx=self.jobs_ctx, parent=self, on_finished=None
         )
 
+    def _on_route_clicked(self, path):
+        self.mount_widget.load_path(path)
+
     def _on_folder_changed(self, workspace_name: Optional[str], path: Optional[str]) -> None:
         if workspace_name and path:
             self.widget_title2.show()
             self.label_title2.setText(workspace_name)
-            self.icon_title3.show()
-            self.label_title3.setText(path)
+            self.navigation_bar_widget.from_path(path)
         else:
             self.widget_title2.hide()
-            self.icon_title3.hide()
-            self.label_title3.setText("")
+            self.navigation_bar_widget.clear()
 
     def handle_event(self, event: CoreEvent, **kwargs: object) -> None:
         if event == CoreEvent.BACKEND_CONNECTION_CHANGED:
@@ -421,8 +420,7 @@ class CentralWidget(QWidget, Ui_CentralWidget):  # type: ignore[misc]
 
     def clear_widgets(self) -> None:
         self.widget_title2.hide()
-        self.icon_title3.hide()
-        self.label_title3.setText("")
+        self.navigation_bar_widget.clear()
         self.users_widget.hide()
         self.mount_widget.hide()
         self.devices_widget.hide()
