@@ -292,9 +292,6 @@ extra_requirements = {
     ],
 }
 
-
-print(extra_requirements)
-
 extra_requirements["all"] = sum([v for k, v in extra_requirements.items() if k != "oxidation"], [])
 extra_requirements["oeuf-jambon-fromage"] = extra_requirements["all"]
 
