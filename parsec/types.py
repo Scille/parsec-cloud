@@ -32,12 +32,14 @@ class FrozenDict(typing.Dict[K, V]):
 class UUID4(UUID):
     __slots__ = ()
 
-    def __init__(self, init=None):
-        init = uuid4() if init is None else init
-        if isinstance(init, UUID):
-            super().__init__(bytes=init.bytes)
+    def __init__(self, *args, **kwargs):
+        if not args and not kwargs:
+            super().__init__(bytes=uuid4().bytes)
         else:
-            super().__init__(init)
+            if len(args) == 1 and isinstance(args[0], UUID):
+                super().__init__(bytes=args[0].bytes)
+            else:
+                super().__init__(*args, **kwargs)
 
 
 # Cheap typing

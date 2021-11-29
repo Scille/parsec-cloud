@@ -1,8 +1,9 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2016-2021 Scille SAS
 
-from typing import Tuple, cast, Optional, AsyncIterator, Dict
+from typing import Tuple, cast, Optional, AsyncIterator, Dict, List
 from async_generator import asynccontextmanager
 
+from parsec.api.data import BlockAccess
 from parsec.core.types import (
     EntryID,
     WorkspaceRole,
@@ -180,6 +181,34 @@ class EntryTransactions(FileTransactions):
             await self._load_manifest(entry_id)
 
     # Transactions
+    async def entry_missing_data(
+        self, path: FsPath, limit: int
+    ) -> Tuple[int, int, List[BlockAccess]]:
+        missing_blocks = []
+        manifest, confinement_point = await self._get_manifest_from_path(path)
+        manifest: LocalFileManifest
+        blocks = []
+        total_size = 0
+        for manifest_blocks in manifest.blocks:
+            for chunk in manifest_blocks:
+                if limit < (total_size + chunk.raw_size):
+                    break
+                if chunk.access:
+                    blocks.append(chunk)
+                    total_size += chunk.raw_size
+
+        block_ids = [chunk.id for chunk in blocks]
+        missing_size = 0
+
+        local_chunk_ids = await self.local_storage.block_storage.get_local_chunk_ids(block_ids)
+        local_chunk_ids_set = set(local_chunk_ids)
+        for chunk in blocks:
+            if chunk.id not in local_chunk_ids_set:
+                assert chunk.access is not None
+                missing_blocks.append(chunk.access)
+                missing_size += chunk.raw_size
+
+        return missing_size, total_size, missing_blocks
 
     async def entry_info(self, path: FsPath) -> Dict[str, object]:
         # Check read rights

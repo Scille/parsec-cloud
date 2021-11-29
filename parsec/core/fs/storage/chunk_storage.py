@@ -1,10 +1,10 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2016-2021 Scille SAS
-
+import secrets
 import time
 
 import trio
 from pathlib import Path
-from typing import AsyncIterator, AsyncContextManager, TypeVar
+from typing import AsyncIterator, AsyncContextManager, TypeVar, List
 from async_generator import asynccontextmanager
 
 
@@ -95,6 +95,40 @@ class ChunkStorage:
             cursor.execute("SELECT chunk_id FROM chunks WHERE chunk_id = ?", (chunk_id.bytes,))
             manifest_row = cursor.fetchone()
         return bool(manifest_row)
+
+    async def get_local_chunk_ids(self, chunk_id: List[ChunkID]) -> List[ChunkID]:
+
+        bytes_id_list = [(id.bytes,) for id in chunk_id]
+
+        async with self._open_cursor() as cursor:
+            # Can't use execute many with SELECT so we have to make a temporary table filled with the needed chunk_id
+            # and intersect it with the normal table
+            # create random name for the temporary table to avoid asynchronous errors
+            table_name = "temp" + secrets.token_hex(12)
+            assert table_name.isalnum()
+
+            cursor.execute(f"""DROP TABLE IF EXISTS {table_name}""")
+            cursor.execute(
+                f"""CREATE TABLE IF NOT EXISTS {table_name}
+                    (chunk_id BLOB PRIMARY KEY NOT NULL -- UUID
+                );"""
+            )
+
+            cursor.executemany(
+                f"""INSERT OR REPLACE INTO
+            {table_name} (chunk_id)
+            VALUES (?)""",
+                iter(bytes_id_list),
+            )
+
+            cursor.execute(
+                f"""SELECT chunk_id FROM chunks INTERSECT SELECT chunk_id FROM {table_name}"""
+            )
+
+            intersect_rows = cursor.fetchall()
+            cursor.execute(f"""DROP TABLE IF EXISTS {table_name}""")
+
+        return [ChunkID(bytes=id_bytes) for (id_bytes,) in intersect_rows]
 
     async def get_chunk(self, chunk_id: ChunkID) -> bytes:
         async with self._open_cursor() as cursor:
