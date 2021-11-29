@@ -263,22 +263,45 @@ class build_py_with_pyqt_resource_bundle_generation(build_py):
         return super().run()
 
 
-with open("README.rst") as readme_file:
+with open("README.rst", encoding="utf-8") as readme_file:
     readme = readme_file.read()
 
-with open("HISTORY.rst") as history_file:
+with open("HISTORY.rst", encoding="utf-8") as history_file:
     history = history_file.read()
 
 
 def get_requirement_from_file(file):
-    with open(file) as requirements_txt:
-        return str(requirements_txt.read()).split("\n")
+    with open(file, encoding="utf-8") as requirements_txt:
+
+        def _maybe_add_as_continuation(current_line, previous_lines):
+            try:
+                last_line = previous_lines[-1]
+            except IndexError:
+                return False
+            if last_line.endswith("\\"):
+                previous_lines[-1] = last_line[:-1].strip() + current_line
+                return True
+            else:
+                return False
+
+        lines = []
+        for line in requirements_txt.readlines():
+            if not line or line.startswith("#"):
+                continue
+            # Drop comments -- a hash without a space may be in a URL.
+            line = line[: line.find(" #")]
+            # If there is a line continuation, drop it, and append the next line.
+            if not _maybe_add_as_continuation(line, lines):
+                lines.append(line)
+            _maybe_add_as_continuation("", lines)  # In case file finish with \\ and no further line
+        return lines
 
 
 requirements = get_requirement_from_file("requirement/install_requirement.txt")
 test_requirements = get_requirement_from_file("requirement/test_requirement.txt")
 core_requirements = get_requirement_from_file("requirement/core_requirement.txt")
 backend_requirements = get_requirement_from_file("requirement/backend_requirement.txt")
+
 
 extra_requirements = {
     "core": core_requirements,
