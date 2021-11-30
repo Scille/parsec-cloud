@@ -420,11 +420,22 @@ async def monitor_sync(user_fs, event_bus, task_status):
             else:
                 return math.inf
 
+    def _on_upload_list(event, manifest_id, blocks):
+        logger.warning(event)
+        logger.warning(manifest_id)
+        logger.warning(blocks)
+
+    def _on_upload_one(event, block):
+        logger.warning(event)
+        logger.warning(block)
+
     with event_bus.connect_in_context(
         (CoreEvent.FS_ENTRY_UPDATED, _on_entry_updated),
         (CoreEvent.BACKEND_REALM_VLOBS_UPDATED, _on_realm_vlobs_updated),
         (CoreEvent.SHARING_UPDATED, _on_sharing_updated),
         (CoreEvent.FS_ENTRY_CONFINED, _on_entry_confined),
+        (CoreEvent.SYNCHRONISE_UPLOAD_LIST, _on_upload_list),
+        (CoreEvent.SYNCHRONISE_UPLOAD_ONE, _on_upload_one),
     ):
         due_times = []
         # Init userfs sync context

@@ -372,6 +372,9 @@ class RemoteLoader(UserRemoteLoader):
                FSWorkspaceInMaintenance
            """
         blocks_iter = iter(blocks)
+        from structlog import get_logger
+
+        logger = get_logger()
 
         send_channel, receive_channel = open_memory_channel[BlockAccess](math.inf)
 
@@ -381,6 +384,7 @@ class RemoteLoader(UserRemoteLoader):
                     access = next(blocks_iter, None)
                     if not access:
                         break
+                    logger.warning("LOAD ONE" + str(access.id))
                     await self.load_block(access)
                     await send_channel.send(access)
 
@@ -429,14 +433,17 @@ class RemoteLoader(UserRemoteLoader):
 
     async def upload_blocks(self, blocks: List[BlockAccess]) -> None:
         blocks_iter = iter(blocks)
+        from structlog import get_logger
 
-
+        logger = get_logger()
 
         async def _uploader() -> None:
             while True:
                 access = next(blocks_iter, None)
                 if not access:
                     break
+
+                logger.warning("ONE UPLOAD: " + str(access.id))
                 try:
                     data = await self.local_storage.get_dirty_block(access.id)
                 except FSLocalMissError:

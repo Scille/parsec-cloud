@@ -33,6 +33,9 @@ class CoreEvent(Enum):
     MOUNTPOINT_READONLY = "mountpoint.readonly"
     MOUNTPOINT_UNHANDLED_ERROR = "mountpoint.unhandled_error"
     MOUNTPOINT_TRIO_DEADLOCK_ERROR = "mountpoint.trio_deadlock_error"
+    # SYNCHRONISE
+    SYNCHRONISE_UPLOAD_LIST = "syncrhonise.upload_list"
+    SYNCHRONISE_UPLOAD_ONE = "syncrhonise.upload_one"
     # Others
     SHARING_UPDATED = "sharing.updated"
     USERFS_UPDATED = "userfs.updated"

@@ -7,6 +7,7 @@ from typing import List, Dict, Tuple, AsyncIterator, cast, Pattern, Callable, Op
 from pendulum import DateTime
 
 from parsec.core.fs.workspacefs.entry_transactions import BlockInfo
+from parsec.core.core_events import CoreEvent
 from parsec.crypto import CryptoError
 from parsec.event_bus import EventBus
 from parsec.api.data import BaseManifest as BaseRemoteManifest, BlockAccess
@@ -548,6 +549,15 @@ class WorkspaceFS:
             await self.minimal_sync(child)
 
     async def _upload_blocks(self, manifest: RemoteFileManifest) -> None:
+        from structlog import get_logger
+
+        logger = get_logger()
+        ids = [block.id for block in manifest.blocks]
+        if ids:
+            self.event_bus.send(
+                CoreEvent.SYNCHRONISE_UPLOAD_LIST, manifest_id=manifest.id, blocks=manifest.blocks
+            )
+            logger.warning("UPLOAD " + str(manifest.id) + " BLOCKS " + str(ids))
         await self.remote_loader.upload_blocks(list(manifest.blocks))
 
     async def minimal_sync(self, entry_id: EntryID) -> None:

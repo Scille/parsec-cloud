@@ -269,9 +269,19 @@ class FileTransactions:
     ) -> bytes:
         # Loop over attemps
         missing: List[BlockAccess] = []
-        while True:
+        manifest = await self.local_storage.load_file_descriptor(fd)
+        from structlog import get_logger
 
+        logger = get_logger()
+        while True:
             # Load missing blocks
+            if missing:
+                logger.warning(
+                    "ID LOAD: "
+                    + str(manifest.id)
+                    + " BLOCKS "
+                    + str([block.id for block in missing])
+                )
             await self.remote_loader.load_blocks(missing)
 
             # Fetch and lock
