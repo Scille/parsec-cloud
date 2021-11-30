@@ -349,13 +349,15 @@ async def test_workspace_filter_user_new_workspace(
 
 @pytest.mark.gui
 @pytest.mark.trio
-async def test_display_timestamped_workspace_in_worspaces_list(
+async def test_display_timestamped_workspace_in_workspaces_list(
     aqtbot,
     running_backend,
     logged_gui,
     monkeypatch,
     autoclose_dialog,
     catch_timestamped_workspace_widget,
+    tmpdir,
+    files_widget_testbed,
 ):
     w_w = await logged_gui.test_switch_to_workspaces_widget()
 
@@ -372,7 +374,7 @@ async def test_display_timestamped_workspace_in_worspaces_list(
         assert isinstance(wk_button, WorkspaceButton)
         assert wk_button.name == "Workspace1"
 
-    await aqtbot.wait_until(_workspace_displayed, timeout=2000)
+    await aqtbot.wait_until(_workspace_displayed, timeout=5000)
     wk_button = w_w.layout_workspaces.itemAt(0).widget()
     aqtbot.mouse_click(wk_button.button_remount_ts, QtCore.Qt.LeftButton)
     ts_wk_w = await catch_timestamped_workspace_widget()
@@ -388,9 +390,19 @@ async def test_display_timestamped_workspace_in_worspaces_list(
 
     def _new_workspace_listed():
         assert w_w.layout_workspaces.count() == 2
-        wk_button1 = w_w.layout_workspaces.itemAt(0).widget()
-        wk_button2 = w_w.layout_workspaces.itemAt(1).widget()
-        assert isinstance(wk_button1, WorkspaceButton)
-        assert isinstance(wk_button2, WorkspaceButton)
+        wk_button = w_w.layout_workspaces.itemAt(0).widget()
+        ts_wk_button = w_w.layout_workspaces.itemAt(1).widget()
+        assert isinstance(wk_button, WorkspaceButton)
+        assert isinstance(ts_wk_button, WorkspaceButton)
 
-    await aqtbot.wait_until(_new_workspace_listed, timeout=5000)
+    await aqtbot.wait_until(_new_workspace_listed, timeout=2000)
+
+    ts_wk_button = w_w.layout_workspaces.itemAt(1).widget()
+    aqtbot.mouse_click(ts_wk_button.button_delete, QtCore.Qt.LeftButton)
+
+    def _timestamped_workspace_delete():
+        assert w_w.layout_workspaces.count() == 1
+        wk_button = w_w.layout_workspaces.itemAt(0).widget()
+        assert isinstance(wk_button, WorkspaceButton)
+
+    await aqtbot.wait_until(_timestamped_workspace_delete)
