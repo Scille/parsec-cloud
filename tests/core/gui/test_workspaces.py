@@ -3,12 +3,15 @@
 import pytest
 from PyQt5 import QtCore
 from unittest.mock import Mock
+from pathlib import Path
 
 from parsec.core.types import WorkspaceRole
 from parsec.core.core_events import CoreEvent
 from parsec.core.fs import FSWorkspaceNoReadAccess
 from parsec.core.gui.workspace_button import WorkspaceButton
 from parsec.core.gui.timestamped_workspace_widget import TimestampedWorkspaceWidget
+
+from tests.core.gui.test_files import create_files_widget_testbed
 
 from tests.common import freeze_time
 
@@ -350,31 +353,60 @@ async def test_workspace_filter_user_new_workspace(
 @pytest.mark.gui
 @pytest.mark.trio
 async def test_display_timestamped_workspace_in_workspaces_list(
-    aqtbot,
-    running_backend,
-    logged_gui,
-    monkeypatch,
-    autoclose_dialog,
-    catch_timestamped_workspace_widget,
-    tmpdir,
-    files_widget_testbed,
+    aqtbot, running_backend, logged_gui, monkeypatch, catch_timestamped_workspace_widget, tmpdir
 ):
-    w_w = await logged_gui.test_switch_to_workspaces_widget()
+    c_w = logged_gui.test_get_central_widget()
+    w_w = logged_gui.test_get_workspaces_widget()
+    workspace_name = "wksp1"
 
-    # Create a workspace and make sure the workspace is displayed
-    core = logged_gui.test_get_core()
+    # Create the workspace
     with freeze_time("2000-03-30"):
-        await core.user_fs.workspace_create("Workspace1")
-        # Sync the workspace with the backend
-        await core.user_fs.sync()
+        user_fs = logged_gui.test_get_core().user_fs
+        wid = await user_fs.workspace_create(workspace_name)
+        wfs = user_fs.get_workspace(wid)
+        await user_fs.sync()
 
-    def _workspace_displayed():
+    # Now wait for GUI to take it into account
+    def _workspace_available():
         assert w_w.layout_workspaces.count() == 1
         wk_button = w_w.layout_workspaces.itemAt(0).widget()
         assert isinstance(wk_button, WorkspaceButton)
-        assert wk_button.name == "Workspace1"
+        assert wk_button.name == workspace_name
 
-    await aqtbot.wait_until(_workspace_displayed, timeout=5000)
+    await aqtbot.wait_until(_workspace_available)
+    f_w = await logged_gui.test_switch_to_files_widget(workspace_name)
+
+    tb = create_files_widget_testbed(monkeypatch, aqtbot, logged_gui, user_fs, wfs, f_w, c_w)
+
+    # Populate some files for import
+    out_of_parsec_data = Path(tmpdir) / "out_of_parsec_data"
+    out_of_parsec_data.mkdir(parents=True)
+    (out_of_parsec_data / "file1.txt").touch()
+    (out_of_parsec_data / "file2.txt").touch()
+
+    # Workspace starts empty
+    await tb.check_files_view(path="/", expected_entries=[])
+
+    with freeze_time("2010-03-30"):
+        # Import file 1
+        monkeypatch.setattr(
+            "parsec.core.gui.custom_dialogs.QDialogInProcess.getOpenFileNames",
+            classmethod(lambda *args, **kwargs: ([out_of_parsec_data / "file1.txt"], True)),
+        )
+        async with aqtbot.wait_signal(f_w.import_success):
+            aqtbot.mouse_click(f_w.button_import_files, QtCore.Qt.LeftButton)
+        await tb.check_files_view(path="/", expected_entries=["file1.txt"])
+
+    with freeze_time("2020-03-30"):
+        # Import file 2
+        monkeypatch.setattr(
+            "parsec.core.gui.custom_dialogs.QDialogInProcess.getOpenFileNames",
+            classmethod(lambda *args, **kwargs: ([out_of_parsec_data / "file2.txt"], True)),
+        )
+        async with aqtbot.wait_signal(f_w.import_success):
+            aqtbot.mouse_click(f_w.button_import_files, QtCore.Qt.LeftButton)
+        await tb.check_files_view(path="/", expected_entries=["file1.txt", "file2.txt"])
+
     wk_button = w_w.layout_workspaces.itemAt(0).widget()
     aqtbot.mouse_click(wk_button.button_remount_ts, QtCore.Qt.LeftButton)
     ts_wk_w = await catch_timestamped_workspace_widget()
@@ -386,6 +418,8 @@ async def test_display_timestamped_workspace_in_workspaces_list(
     await aqtbot.wait_until(_timestamped_widget_ready)
     assert ts_wk_w
     assert isinstance(ts_wk_w, TimestampedWorkspaceWidget)
+
+    ts_wk_w.calendar_widget.setSelectedDate(QtCore.QDate(2015, 3, 30))
     aqtbot.mouse_click(ts_wk_w.button_show, QtCore.Qt.LeftButton)
 
     def _new_workspace_listed():
@@ -396,6 +430,7 @@ async def test_display_timestamped_workspace_in_workspaces_list(
         assert isinstance(ts_wk_button, WorkspaceButton)
 
     await aqtbot.wait_until(_new_workspace_listed, timeout=2000)
+    await tb.check_files_view(path="/", expected_entries=["file1.txt"])
 
     ts_wk_button = w_w.layout_workspaces.itemAt(1).widget()
     aqtbot.mouse_click(ts_wk_button.button_delete, QtCore.Qt.LeftButton)

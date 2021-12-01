@@ -14,27 +14,8 @@ from parsec.core.gui.file_items import FileType, TYPE_DATA_INDEX
 from parsec.test_utils import create_inconsistent_workspace
 
 
-@pytest.fixture
-async def files_widget_testbed(monkeypatch, aqtbot, logged_gui):
-    c_w = logged_gui.test_get_central_widget()
-    w_w = logged_gui.test_get_workspaces_widget()
-    workspace_name = "wksp1"
-
-    # Create the workspace
-    user_fs = logged_gui.test_get_core().user_fs
-    wid = await user_fs.workspace_create(workspace_name)
-    wfs = user_fs.get_workspace(wid)
-
-    # Now wait for GUI to take it into account
-    def _workspace_available():
-        assert w_w.layout_workspaces.count() == 1
-
-    await aqtbot.wait_until(_workspace_available)
-
-    f_w = await logged_gui.test_switch_to_files_widget(workspace_name)
-
+def create_files_widget_testbed(monkeypatch, aqtbot, logged_gui, user_fs, wfs, f_w, c_w):
     # === Testbed class is full of helpers ===
-
     class FilesWidgetTestbed:
         def __init__(self):
             self.logged_gui = logged_gui
@@ -207,6 +188,28 @@ async def files_widget_testbed(monkeypatch, aqtbot, logged_gui):
             await aqtbot.wait_until(wait_until or _item_renamed)
 
     return FilesWidgetTestbed()
+
+
+@pytest.fixture
+async def files_widget_testbed(monkeypatch, aqtbot, logged_gui):
+    c_w = logged_gui.test_get_central_widget()
+    w_w = logged_gui.test_get_workspaces_widget()
+    workspace_name = "wksp1"
+
+    # Create the workspace
+    user_fs = logged_gui.test_get_core().user_fs
+    wid = await user_fs.workspace_create(workspace_name)
+    wfs = user_fs.get_workspace(wid)
+
+    # Now wait for GUI to take it into account
+    def _workspace_available():
+        assert w_w.layout_workspaces.count() == 1
+
+    await aqtbot.wait_until(_workspace_available)
+
+    f_w = await logged_gui.test_switch_to_files_widget(workspace_name)
+
+    return create_files_widget_testbed(monkeypatch, aqtbot, logged_gui, user_fs, wfs, f_w, c_w)
 
 
 @pytest.mark.gui
