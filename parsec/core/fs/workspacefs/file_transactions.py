@@ -270,19 +270,17 @@ class FileTransactions:
         # Loop over attemps
         missing: List[BlockAccess] = []
         manifest = await self.local_storage.load_file_descriptor(fd)
-        from structlog import get_logger
 
-        logger = get_logger()
         while True:
             # Load missing blocks
             if missing:
-                logger.warning(
-                    "ID LOAD: "
-                    + str(manifest.id)
-                    + " BLOCKS "
-                    + str([block.id for block in missing])
+                self.event_bus.send(
+                    CoreEvent.SYNCHRONISE_LOAD_LIST,
+                    workspace_id=self.workspace_id,
+                    id=manifest.id,
+                    blocks=[block.id for block in missing],
                 )
-            await self.remote_loader.load_blocks(missing)
+            await self.remote_loader.load_blocks(missing, self.event_bus)
 
             # Fetch and lock
             async with self._load_and_lock_file(fd) as manifest:

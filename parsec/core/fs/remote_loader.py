@@ -7,6 +7,7 @@ import trio
 from pendulum import DateTime
 from trio import open_memory_channel, MemorySendChannel, MemoryReceiveChannel
 
+from parsec.core.core_events import CoreEvent
 from parsec.crypto import HashDigest, CryptoError
 from parsec.api.protocol import UserID, DeviceID, RealmRole
 from parsec.api.data import (
@@ -61,6 +62,7 @@ from parsec.core.fs.storage import BaseWorkspaceStorage
 # when a manifest restamping is required. This value should be kept small
 # compared to the certificate stamp ahead value, so the certificate updates have
 # priority over manifest updates.
+from parsec.event_bus import EventBus
 from parsec.service_nursery import open_service_nursery
 
 MANIFEST_STAMP_AHEAD_US = 100_000  # microseconds, or 0.1 seconds
@@ -355,11 +357,15 @@ class RemoteLoader(UserRemoteLoader):
         )
         self.local_storage = local_storage
 
-    async def load_blocks(self, accesses: List[BlockAccess]) -> None:
+    async def load_blocks(self, accesses: List[BlockAccess], event_bus: EventBus) -> None:
         async with open_service_nursery() as nursery:
             async with await self.receive_load_blocks(accesses, nursery) as receive_channel:
                 async for value in receive_channel:
-                    pass
+                    event_bus.send(
+                        CoreEvent.SYNCHRONISE_LOAD_ONE,
+                        workspace_id=self.workspace_id,
+                        block=value.id,
+                    )
 
     async def receive_load_blocks(
         self, blocks: List[BlockAccess], nursery: trio.Nursery
@@ -372,9 +378,6 @@ class RemoteLoader(UserRemoteLoader):
                FSWorkspaceInMaintenance
            """
         blocks_iter = iter(blocks)
-        from structlog import get_logger
-
-        logger = get_logger()
 
         send_channel, receive_channel = open_memory_channel[BlockAccess](math.inf)
 
@@ -384,7 +387,6 @@ class RemoteLoader(UserRemoteLoader):
                     access = next(blocks_iter, None)
                     if not access:
                         break
-                    logger.warning("LOAD ONE" + str(access.id))
                     await self.load_block(access)
                     await send_channel.send(access)
 
@@ -431,19 +433,19 @@ class RemoteLoader(UserRemoteLoader):
         assert HashDigest.from_data(block) == access.digest, access
         await self.local_storage.set_clean_block(access.id, block)
 
-    async def upload_blocks(self, blocks: List[BlockAccess]) -> None:
+    async def upload_blocks(self, blocks: List[BlockAccess], event_bus: EventBus) -> None:
         blocks_iter = iter(blocks)
-        from structlog import get_logger
-
-        logger = get_logger()
 
         async def _uploader() -> None:
             while True:
                 access = next(blocks_iter, None)
                 if not access:
                     break
-
-                logger.warning("ONE UPLOAD: " + str(access.id))
+                event_bus.send(
+                    CoreEvent.SYNCHRONISE_UPLOAD_ONE,
+                    workspace_id=self.workspace_id,
+                    block=access.id,
+                )
                 try:
                     data = await self.local_storage.get_dirty_block(access.id)
                 except FSLocalMissError:

@@ -296,6 +296,9 @@ class FilesWidget(QWidget, Ui_FilesWidget):
 
         self.file_sync_set: Set[Tuple[object, object]] = set()
 
+        self.block_upload_sync_dict = dict()
+        self.block_load_sync_dict = dict()
+
         self.default_import_path = str(pathlib.Path.home())
         self.table_files.config = self.core.config
         self.table_files.file_moved.connect(self.on_table_files_file_moved)
@@ -333,9 +336,30 @@ class FilesWidget(QWidget, Ui_FilesWidget):
         self.event_bus.connect(CoreEvent.FS_ENTRY_SYNCED, self._on_fs_event)
         self.event_bus.connect(CoreEvent.FS_ENTRY_UPDATED, self._on_fs_event)
         self.event_bus.connect(CoreEvent.FS_ENTRY_DOWNSYNCED, self._on_fs_event)
+        self.event_bus.connect(CoreEvent.SYNCHRONISE_UPLOAD_LIST, self._on_fs_event)
+        self.event_bus.connect(CoreEvent.SYNCHRONISE_UPLOAD_ONE, self._on_fs_event)
+        self.event_bus.connect(CoreEvent.SYNCHRONISE_LOAD_LIST, self._on_fs_event)
+        self.event_bus.connect(CoreEvent.SYNCHRONISE_LOAD_ONE, self._on_fs_event)
         self.event_bus.connect(CoreEvent.SHARING_UPDATED, self._on_sharing_updated)
 
         self.empty.connect(lambda *args: None)
+
+    async def print_sync_block_add(self, block_dict, workspace_id, id, blocks):
+        if workspace_id not in block_dict:
+            block_dict[workspace_id] = dict()
+        block_dict[workspace_id][id] = set(list(blocks))
+
+        logger.warning(self.block_upload_sync_dict)
+
+    async def print_sync_block_remove(self, block_dict, workspace_id, block):
+        if workspace_id in block_dict:
+            for id in block_dict[workspace_id]:
+                if block in block_dict[workspace_id][id]:
+                    block_dict[workspace_id][id].remove(block)
+                    if not block_dict[workspace_id][id]:
+                        block_dict[workspace_id].pop(id, None)
+                    break
+        logger.warning(block_dict)
 
     async def print_sync_add(self, workspace_id, id, text):
 
@@ -363,6 +387,8 @@ class FilesWidget(QWidget, Ui_FilesWidget):
                     workspace_name = self.workspace_fs.get_workspace_name()
 
                     self.file_sync_set.remove(file_sync)
+                    if workspace_id in self.block_upload_sync_dict:
+                        self.block_upload_sync_dict[workspace_id].pop(id, None)
                     manif = await self.workspace_fs.local_storage.get_manifest(id)
                     val = manif.to_stats()["size"]
                     logger.warning(
@@ -1025,6 +1051,10 @@ class FilesWidget(QWidget, Ui_FilesWidget):
             workspace_id = kwargs["workspace_id"]
         if "id" in kwargs:
             id = kwargs["id"]
+        if "blocks" in kwargs:
+            blocks = kwargs["blocks"]
+        if "block" in kwargs:
+            block = kwargs["block"]
 
         if event == CoreEvent.FS_ENTRY_DOWNSYNCED:
             self.jobs_ctx.submit_job(
@@ -1053,6 +1083,81 @@ class FilesWidget(QWidget, Ui_FilesWidget):
                 id=id,
                 workspace_id=workspace_id,
             )
+        elif event == CoreEvent.SYNCHRONISE_UPLOAD_LIST:
+            self.jobs_ctx.submit_job(
+                self.empty,
+                self.empty,
+                self._on_synchronise_upload_list,
+                event=event,
+                workspace_id=workspace_id,
+                id=id,
+                blocks=blocks,
+            )
+        elif event == CoreEvent.SYNCHRONISE_LOAD_LIST:
+            self.jobs_ctx.submit_job(
+                self.empty,
+                self.empty,
+                self._on_synchronise_load_list,
+                event=event,
+                workspace_id=workspace_id,
+                id=id,
+                blocks=blocks,
+            )
+        elif event == CoreEvent.SYNCHRONISE_LOAD_ONE:
+            self.jobs_ctx.submit_job(
+                self.empty,
+                self.empty,
+                self._on_synchronise_load_one,
+                event=event,
+                workspace_id=workspace_id,
+                block=block,
+            )
+
+        elif event == CoreEvent.SYNCHRONISE_UPLOAD_ONE:
+            self.jobs_ctx.submit_job(
+                self.empty,
+                self.empty,
+                self._on_synchronise_upload_one,
+                event=event,
+                workspace_id=workspace_id,
+                block=block,
+            )
+
+    async def _on_synchronise_upload_list(self, event, workspace_id=None, id=None, blocks=None):
+        # No workspace FS
+        if not self.workspace_fs:
+            return
+        # Not the corresponding workspace
+        if workspace_id != self.workspace_fs.workspace_id:
+            return
+        await self.print_sync_block_add(self.block_upload_sync_dict, workspace_id, id, blocks)
+
+    async def _on_synchronise_upload_one(self, event, workspace_id=None, block=None):
+        # No workspace FS
+        if not self.workspace_fs:
+            return
+        # Not the corresponding workspace
+        if workspace_id != self.workspace_fs.workspace_id:
+            return
+        await self.print_sync_block_remove(self.block_upload_sync_dict, workspace_id, block)
+
+    async def _on_synchronise_load_list(self, event, workspace_id=None, id=None, blocks=None):
+        # No workspace FS
+        if not self.workspace_fs:
+            return
+        # Not the corresponding workspace
+        if workspace_id != self.workspace_fs.workspace_id:
+            return
+        await self.print_sync_block_add(self.block_load_sync_dict, workspace_id, id, blocks)
+
+    async def _on_synchronise_load_one(self, event, workspace_id=None, block=None):
+        # No workspace FS
+        if not self.workspace_fs:
+            return
+        # Not the corresponding workspace
+        if workspace_id != self.workspace_fs.workspace_id:
+            return
+        await self.print_sync_block_remove(self.block_load_sync_dict, workspace_id, block)
 
     async def _on_fs_entry_downsynced(self, event, workspace_id=None, id=None):
         # No workspace FS

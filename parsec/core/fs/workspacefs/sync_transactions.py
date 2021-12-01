@@ -461,7 +461,7 @@ class SyncTransactions(EntryTransactions):
                 return
 
             # Load missing blocks
-            await self.remote_loader.load_blocks(missing)
+            await self.remote_loader.load_blocks(missing, self.event_bus)
 
     async def file_conflict(
         self,

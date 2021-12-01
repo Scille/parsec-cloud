@@ -36,6 +36,8 @@ class CoreEvent(Enum):
     # SYNCHRONISE
     SYNCHRONISE_UPLOAD_LIST = "syncrhonise.upload_list"
     SYNCHRONISE_UPLOAD_ONE = "syncrhonise.upload_one"
+    SYNCHRONISE_LOAD_LIST = "syncrhonise.load_list"
+    SYNCHRONISE_LOAD_ONE = "syncrhonise.load_one"
     # Others
     SHARING_UPDATED = "sharing.updated"
     USERFS_UPDATED = "userfs.updated"

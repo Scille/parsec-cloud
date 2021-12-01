@@ -58,11 +58,6 @@ from parsec.core.fs.workspacefs.workspacefile import WorkspaceFile
 from parsec.core.fs.storage import BaseWorkspaceStorage
 
 
-from structlog import get_logger
-
-logger = get_logger()
-
-
 @attr.s(slots=True, frozen=True, auto_attribs=True)
 class ReencryptionNeed:
     user_revoked: Tuple[UserID, ...]
@@ -549,16 +544,15 @@ class WorkspaceFS:
             await self.minimal_sync(child)
 
     async def _upload_blocks(self, manifest: RemoteFileManifest) -> None:
-        from structlog import get_logger
-
-        logger = get_logger()
         ids = [block.id for block in manifest.blocks]
         if ids:
             self.event_bus.send(
-                CoreEvent.SYNCHRONISE_UPLOAD_LIST, manifest_id=manifest.id, blocks=manifest.blocks
+                CoreEvent.SYNCHRONISE_UPLOAD_LIST,
+                workspace_id=self.workspace_id,
+                id=manifest.id,
+                blocks=ids,
             )
-            logger.warning("UPLOAD " + str(manifest.id) + " BLOCKS " + str(ids))
-        await self.remote_loader.upload_blocks(list(manifest.blocks))
+        await self.remote_loader.upload_blocks(list(manifest.blocks), self.event_bus)
 
     async def minimal_sync(self, entry_id: EntryID) -> None:
         """
