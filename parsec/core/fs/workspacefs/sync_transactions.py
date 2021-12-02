@@ -338,18 +338,6 @@ class SyncTransactions(EntryTransactions):
             if new_local_manifest != local_manifest:
                 await self.local_storage.set_manifest(entry_id, new_local_manifest)
 
-    async def get_name(self, entry_id: EntryID) -> Optional[EntryName]:
-        try:
-            manifest = await self.local_storage.get_manifest(entry_id)
-        except FSLocalMissError:
-            return None
-        if isinstance(manifest, (LocalFileManifest)):
-            folder_manifest = await self.local_storage.get_manifest(manifest.parent)
-            assert isinstance(folder_manifest, (LocalFolderManifest, LocalWorkspaceManifest))
-            name = get_filename(folder_manifest, entry_id)
-            return name
-        return None
-
     async def synchronization_step(
         self,
         entry_id: EntryID,
