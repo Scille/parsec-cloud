@@ -334,16 +334,16 @@ class FilesWidget(QWidget, Ui_FilesWidget):
         self.reload_timestamped_success.connect(self._on_reload_timestamped_success)
         self.reload_timestamped_error.connect(self._on_reload_timestamped_error)
 
-        self.event_bus.connect(CoreEvent.FS_ENTRY_SYNCED, self._on_fs_event)
-        self.event_bus.connect(CoreEvent.FS_ENTRY_UPDATED, self._on_fs_event)
-        self.event_bus.connect(CoreEvent.FS_ENTRY_DOWNSYNCED, self._on_fs_event)
-        self.event_bus.connect(CoreEvent.FS_ENTRY_REMOTE_CHANGED, self._on_fs_event)
+        self.event_bus.connect(CoreEvent.FS_ENTRY_SYNCED, self._on_fs_entry_synced)
+        self.event_bus.connect(CoreEvent.FS_ENTRY_UPDATED, self._on_fs_entry_updated)
+        self.event_bus.connect(CoreEvent.FS_ENTRY_DOWNSYNCED, self._on_fs_entry_downsynced)
+        self.event_bus.connect(CoreEvent.FS_ENTRY_REMOTE_CHANGED, self._on_fs_entry_remote_changed)
+        self.event_bus.connect(CoreEvent.SHARING_UPDATED, self._on_sharing_updated)
+
         self.event_bus.connect(CoreEvent.SYNCHRONISE_UPLOAD_LIST, self._on_fs_event)
         self.event_bus.connect(CoreEvent.SYNCHRONISE_UPLOAD_ONE, self._on_fs_event)
         self.event_bus.connect(CoreEvent.SYNCHRONISE_LOAD_LIST, self._on_fs_event)
         self.event_bus.connect(CoreEvent.SYNCHRONISE_LOAD_ONE, self._on_fs_event)
-
-        self.event_bus.connect(CoreEvent.SHARING_UPDATED, self._on_sharing_updated)
 
         self.empty.connect(lambda *args: None)
 
@@ -1197,7 +1197,7 @@ class FilesWidget(QWidget, Ui_FilesWidget):
             return
         await self.print_sync_block_remove(self.block_load_sync_dict, workspace_id, block, "LOAD")
 
-    async def _on_fs_entry_downsynced(self, event, workspace_id=None, id=None):
+    def _on_fs_entry_downsynced(self, event, workspace_id=None, id=None):
         # No workspace FS
         if not self.workspace_fs:
             return
@@ -1207,35 +1207,25 @@ class FilesWidget(QWidget, Ui_FilesWidget):
         # Reload, as it might correspond to the current directory
         if self.current_directory_uuid is None:
             self.reload()
-            await self.print_sync_remove(
-                workspace_id, id, self.file_load_sync_set, "INBOUND FINISHED "
-            )
             return
         # Reload, as it definitely corresponds to the current directory
         if self.current_directory_uuid == id:
             self.reload()
-            await self.print_sync_remove(
-                workspace_id, id, self.file_load_sync_set, "INBOUND FINISHED "
-            )
             return
 
-    async def _on_fs_entry_remote_changed(self, event, id, workspace_id=None):
+    def _on_fs_entry_remote_changed(self, event, id, workspace_id=None):
         if not self.workspace_fs:
             return
 
         if self.current_directory_uuid == id:
             return
-        await self.print_sync_add(workspace_id, id, self.file_load_sync_set, "INBOUND ")
 
-    async def _on_fs_entry_synced(self, event, id, workspace_id=None):
+    def _on_fs_entry_synced(self, event, id, workspace_id=None):
         if not self.workspace_fs:
             return
 
         if self.current_directory_uuid == id:
             return
-        await self.print_sync_remove(
-            workspace_id, id, self.file_upload_sync_set, "OUTBOUND FINISHED "
-        )
 
         for i in range(1, self.table_files.rowCount()):
             item = self.table_files.item(i, 0)
@@ -1247,7 +1237,7 @@ class FilesWidget(QWidget, Ui_FilesWidget):
                     item.confined = False
                     item.is_synced = True
 
-    async def _on_fs_entry_updated(self, event, workspace_id=None, id=None):
+    def _on_fs_entry_updated(self, event, workspace_id=None, id=None):
         assert id is not None
         # No workspace FS
         if not self.workspace_fs:
@@ -1256,7 +1246,6 @@ class FilesWidget(QWidget, Ui_FilesWidget):
         if workspace_id != self.workspace_fs.workspace_id:
             return
 
-        await self.print_sync_add(workspace_id, id, self.file_upload_sync_set, "OUTBOUND")
         # Reload, as it might correspond to the current directory
         if self.current_directory_uuid is None:
             self.reload()
