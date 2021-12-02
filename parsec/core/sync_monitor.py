@@ -163,8 +163,6 @@ class SyncContext:
             local_change = LocalChange(now)
             self._local_changes[entry_id] = local_change
             new_due_time = local_change.due_time
-            # if(self.workspace and self.workspace.workspace_id != entry_id):
-            # logger.warning("SM OUT " + str(entry_id))
 
         # Trigger a wake up if necessary
         if new_due_time <= self.due_time:
@@ -279,18 +277,6 @@ class SyncContext:
         self._compute_due_time(now=now, min_due_time=min_due_time)
         return self.due_time
 
-    async def print_sync_add(self, id, text):
-        workspace_id = self.workspace.workspace_id
-        if workspace_id and id:
-            if id != workspace_id:
-                name = await self.workspace.get_name(id)
-                workspace_name = self.workspace.get_workspace_name()
-                # manif = await self.workspace.local_storage.get_manifest(id)
-                logger.warning(
-                    f"{text}: WORKSPACE: {str(workspace_name)} FILENAME:{str(name)} {id}"
-                )
-                # logger.warning(manif.to_stats())
-
 
 class WorkspaceSyncContext(SyncContext):
     def __init__(self, user_fs, id: EntryID):
@@ -301,7 +287,6 @@ class WorkspaceSyncContext(SyncContext):
     async def _sync(self, entry_id: EntryID):
         # No recursion here: only the manifest that has changed
         # (remotely or locally) should get synchronized
-        # await self.print_sync_add(id=entry_id,text="SM OUT FINISHED")
         await self.workspace.sync_by_id(entry_id, recursive=False)
 
     def _get_backend_cmds(self):
@@ -369,7 +354,7 @@ async def monitor_sync(user_fs, event_bus, task_status):
         # not yet notified to task_status
         task_status.awake()
 
-    def _on_entry_updated(event, id: EntryID, workspace_id=None):
+    def _on_entry_updated(event, id, workspace_id=None):
 
         if workspace_id is None:
             # User manifest
@@ -422,20 +407,24 @@ async def monitor_sync(user_fs, event_bus, task_status):
 
     def _on_upload_list(event, workspace_id, id, blocks):
         logger.warning(event)
+        logger.warning(workspace_id)
         logger.warning(id)
         logger.warning(blocks)
 
     def _on_upload_one(event, workspace_id, block):
         logger.warning(event)
+        logger.warning(workspace_id)
         logger.warning(block)
 
     def _on_load_list(event, workspace_id, id, blocks):
         logger.warning(event)
+        logger.warning(workspace_id)
         logger.warning(id)
         logger.warning(blocks)
 
     def _on_load_one(event, workspace_id, block):
         logger.warning(event)
+        logger.warning(workspace_id)
         logger.warning(block)
 
     with event_bus.connect_in_context(
