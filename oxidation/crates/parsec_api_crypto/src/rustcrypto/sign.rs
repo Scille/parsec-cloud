@@ -99,7 +99,7 @@ impl VerifyKey {
     pub const ALGORITHM: &'static str = "ed25519";
     pub const SIZE: usize = PUBLIC_KEY_LENGTH;
 
-    pub fn unsecure_unwrap<'a>(signed: &'a [u8]) -> Option<&'a [u8]> {
+    pub fn unsecure_unwrap(signed: &[u8]) -> Option<&[u8]> {
         signed.get(SIGNATURE_LENGTH..)
     }
 

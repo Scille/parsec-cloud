@@ -53,7 +53,6 @@ impl HashDigest {
     }
 }
 
-
 #[pyclass]
 #[derive(PartialEq, Eq)]
 pub(crate) struct SigningKey(parsec_api_crypto::SigningKey);
@@ -75,7 +74,7 @@ impl SigningKey {
 
     #[classmethod]
     fn generate(_cls: &PyType) -> PyResult<SigningKey> {
-       Ok(SigningKey(parsec_api_crypto::SigningKey::generate()))
+        Ok(SigningKey(parsec_api_crypto::SigningKey::generate()))
     }
 
     fn sign<'p>(&self, py: Python<'p>, data: &[u8]) -> PyResult<&'p PyBytes> {
@@ -94,7 +93,6 @@ impl SigningKey {
         }
     }
 }
-
 
 #[pyclass]
 #[derive(PartialEq, Eq)]
@@ -118,9 +116,13 @@ impl VerifyKey {
     }
 
     #[classmethod]
-    fn unsecure_unwrap<'p>(_cls: &PyType, py: Python<'p>, signed: &[u8]) -> PyResult<Option<&'p PyBytes>> {
+    fn unsecure_unwrap<'p>(
+        _cls: &PyType,
+        py: Python<'p>,
+        signed: &[u8],
+    ) -> PyResult<Option<&'p PyBytes>> {
         match parsec_api_crypto::VerifyKey::unsecure_unwrap(signed) {
-            Some(v) => Ok(Some(PyBytes::new(py, &v))),
+            Some(v) => Ok(Some(PyBytes::new(py, v))),
             None => Ok(None),
         }
     }

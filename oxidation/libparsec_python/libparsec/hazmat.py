@@ -2,4 +2,4 @@
 
 from ._libparsec import HashDigest, VerifyKey, SigningKey
 
-__all__ = ("HashDigest", "VerifyKey", "SigningKey",)
+__all__ = ("HashDigest", "VerifyKey", "SigningKey")

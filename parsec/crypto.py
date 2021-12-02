@@ -148,7 +148,6 @@ if not TYPE_CHECKING:
         SigningKey = _RsSigningKey
 
 
-
 class VerifyKey(_VerifyKey):
     __slots__ = ()
 
