@@ -547,7 +547,7 @@ class WorkspaceFS:
         ids = [block.id for block in manifest.blocks]
         if ids:
             self.event_bus.send(
-                CoreEvent.SYNCHRONISE_UPLOAD_LIST,
+                CoreEvent.SYNCHRONIZE_UPLOAD_LIST,
                 workspace_id=self.workspace_id,
                 id=manifest.id,
                 blocks=ids,

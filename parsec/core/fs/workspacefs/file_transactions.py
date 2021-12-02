@@ -275,7 +275,7 @@ class FileTransactions:
             # Load missing blocks
             if missing:
                 self.event_bus.send(
-                    CoreEvent.SYNCHRONISE_LOAD_LIST,
+                    CoreEvent.SYNCHRONIZE_LOAD_LIST,
                     workspace_id=self.workspace_id,
                     id=manifest.id,
                     blocks=[block.id for block in missing],

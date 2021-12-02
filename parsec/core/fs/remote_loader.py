@@ -362,7 +362,7 @@ class RemoteLoader(UserRemoteLoader):
             async with await self.receive_load_blocks(accesses, nursery) as receive_channel:
                 async for value in receive_channel:
                     event_bus.send(
-                        CoreEvent.SYNCHRONISE_LOAD_ONE,
+                        CoreEvent.SYNCHRONIZE_LOAD_ONE,
                         workspace_id=self.workspace_id,
                         block=value.id,
                     )
@@ -442,7 +442,7 @@ class RemoteLoader(UserRemoteLoader):
                 if not access:
                     break
                 event_bus.send(
-                    CoreEvent.SYNCHRONISE_UPLOAD_ONE,
+                    CoreEvent.SYNCHRONIZE_UPLOAD_ONE,
                     workspace_id=self.workspace_id,
                     block=access.id,
                 )

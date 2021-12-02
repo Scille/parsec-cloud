@@ -336,10 +336,10 @@ class FilesWidget(QWidget, Ui_FilesWidget):
         self.event_bus.connect(CoreEvent.FS_ENTRY_DOWNSYNCED, self._on_fs_entry_downsynced)
         self.event_bus.connect(CoreEvent.SHARING_UPDATED, self._on_sharing_updated)
 
-        self.event_bus.connect(CoreEvent.SYNCHRONISE_UPLOAD_LIST, self._on_sync_event)
-        self.event_bus.connect(CoreEvent.SYNCHRONISE_UPLOAD_ONE, self._on_sync_event)
-        self.event_bus.connect(CoreEvent.SYNCHRONISE_LOAD_LIST, self._on_sync_event)
-        self.event_bus.connect(CoreEvent.SYNCHRONISE_LOAD_ONE, self._on_sync_event)
+        self.event_bus.connect(CoreEvent.SYNCHRONIZE_UPLOAD_LIST, self._on_sync_event)
+        self.event_bus.connect(CoreEvent.SYNCHRONIZE_UPLOAD_ONE, self._on_sync_event)
+        self.event_bus.connect(CoreEvent.SYNCHRONIZE_LOAD_LIST, self._on_sync_event)
+        self.event_bus.connect(CoreEvent.SYNCHRONIZE_LOAD_ONE, self._on_sync_event)
 
         self.empty.connect(lambda *args: None)
 
@@ -1032,13 +1032,13 @@ class FilesWidget(QWidget, Ui_FilesWidget):
 
     def _on_sync_event(self, event, **kwargs):
 
-        if event == CoreEvent.SYNCHRONISE_UPLOAD_LIST:
+        if event == CoreEvent.SYNCHRONIZE_UPLOAD_LIST:
             function = self._on_synchronise_upload_list
-        elif event == CoreEvent.SYNCHRONISE_LOAD_LIST:
+        elif event == CoreEvent.SYNCHRONIZE_LOAD_LIST:
             function = self._on_synchronise_load_list
-        elif event == CoreEvent.SYNCHRONISE_LOAD_ONE:
+        elif event == CoreEvent.SYNCHRONIZE_LOAD_ONE:
             function = self._on_synchronise_load_one
-        elif event == CoreEvent.SYNCHRONISE_UPLOAD_ONE:
+        elif event == CoreEvent.SYNCHRONIZE_UPLOAD_ONE:
             function = self._on_synchronise_upload_one
         self.jobs_ctx.submit_job(self.empty, self.empty, function, event, **kwargs)
 
