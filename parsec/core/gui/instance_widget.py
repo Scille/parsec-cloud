@@ -7,6 +7,7 @@ import trio
 from structlog import get_logger
 from PyQt5.QtCore import pyqtSignal, pyqtSlot
 from PyQt5.QtWidgets import QWidget, QVBoxLayout, QApplication
+from packaging.version import Version
 
 from parsec.event_bus import EventBus
 from parsec.api.protocol import HandshakeRevokedDevice
@@ -34,6 +35,8 @@ from parsec.core.gui.central_widget import CentralWidget
 
 logger = get_logger()
 
+MIN_MACFUSE_VERSION = Version("4.2.3")
+
 
 async def _do_run_core(config, device, qt_on_ready):
     # Quick fix to avoid MultiError<Cancelled, ...> exception bubbling up
@@ -52,17 +55,17 @@ def check_macfuse_version() -> bool:
 
     macfuse_plist_path = "/Library/Filesystems/macfuse.fs/Contents/Info.plist"
     if not os.path.exists(macfuse_plist_path):
-        # osxfuse installed, not macfuse
+        # If macFUSE is installed, this file should exist at this path. If not,
+        # it probably means that its previous version, osxfuse, is installed
+        # instead (in a "osxfuse.fs" directory). Any current MacOS version is
+        # incompatible with osxfuse.
         return False
 
     import plistlib
-    import requests
 
-    local_version = plistlib.readPlist(macfuse_plist_path)["CFBundleVersion"]
-    remote_version = requests.get("https://api.github.com/repos/osxfuse/osxfuse/releases/latest")
-    if local_version < remote_version.json()["name"].split()[1]:
-        return False
-    return True
+    local_version = Version(plistlib.readPlist(macfuse_plist_path)["CFBundleVersion"])
+
+    return local_version >= MIN_MACFUSE_VERSION
 
 
 def ensure_macfuse_available_or_show_dialogue(window):
