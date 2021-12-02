@@ -3,7 +3,7 @@
 import trio
 import pathlib
 from uuid import UUID
-from typing import Optional, Iterable, Tuple, List, Set
+from typing import Optional, Iterable, Tuple, List
 
 from parsec.core.core_events import CoreEvent
 from pendulum import DateTime
@@ -294,9 +294,6 @@ class FilesWidget(QWidget, Ui_FilesWidget):
         self.current_directory: FsPath = FsPath("/")
         self.current_directory_uuid: Optional[UUID] = None
 
-        self.file_upload_sync_set: Set[Tuple[object, object]] = set()
-        self.file_load_sync_set: Set[Tuple[object, object]] = set()
-
         self.block_upload_sync_dict = dict()
         self.block_load_sync_dict = dict()
 
@@ -337,7 +334,6 @@ class FilesWidget(QWidget, Ui_FilesWidget):
         self.event_bus.connect(CoreEvent.FS_ENTRY_SYNCED, self._on_fs_entry_synced)
         self.event_bus.connect(CoreEvent.FS_ENTRY_UPDATED, self._on_fs_entry_updated)
         self.event_bus.connect(CoreEvent.FS_ENTRY_DOWNSYNCED, self._on_fs_entry_downsynced)
-        self.event_bus.connect(CoreEvent.FS_ENTRY_REMOTE_CHANGED, self._on_fs_entry_remote_changed)
         self.event_bus.connect(CoreEvent.SHARING_UPDATED, self._on_sharing_updated)
 
         self.event_bus.connect(CoreEvent.SYNCHRONISE_UPLOAD_LIST, self._on_sync_event)
@@ -1096,13 +1092,6 @@ class FilesWidget(QWidget, Ui_FilesWidget):
         # Reload, as it definitely corresponds to the current directory
         if self.current_directory_uuid == id:
             self.reload()
-            return
-
-    def _on_fs_entry_remote_changed(self, event, id, workspace_id=None):
-        if not self.workspace_fs:
-            return
-
-        if self.current_directory_uuid == id:
             return
 
     def _on_fs_entry_synced(self, event, id, workspace_id=None):
