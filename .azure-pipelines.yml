@@ -119,7 +119,7 @@ jobs:
         then exit 0; fi
       done
       echo "NO NEW NEWSFRAGMENT FOUND" >&2
-    condition: and(eq(variables['Build.Reason'], 'PullRequest'), not(startsWith(variables['Build.SourceBranch'], 'refs/heads/pyup')))
+    condition: and(eq(variables['Build.Reason'], 'PullRequest'), not(startsWith(variables['System.PullRequest.SourceBranch'], 'pyup')))
     displayName: 'Newsfragment'
     failOnStderr: true
 #  - bash: |
