@@ -445,6 +445,13 @@ async def test_get_reencryption_need(alice_workspace, running_backend, monkeypat
             await alice_workspace.get_reencryption_need()
 
 
+def get_blocks_size(blocks):
+    size = 0
+    for block in blocks:
+        size += block.size
+    return size
+
+
 @pytest.mark.trio
 async def test_backend_block_data_online(
     alice_user_fs, alice2_user_fs, running_backend, monkeypatch
@@ -481,63 +488,87 @@ async def test_backend_block_data_online(
     assert info["is_placeholder"] is False
     assert info["need_sync"] is True
 
+    local_and_remote_blocks, local_blocks, remote_blocks = await alice_workspace.get_blocks_by_type(
+        fspath
+    )
+    assert len(remote_blocks) == 0
+    assert len(local_blocks) == TAZ_V2_BLOCKS
+    assert len(local_and_remote_blocks) == 0
+    assert get_blocks_size(local_blocks) == TAZ_V2_BLOCKS * DEFAULT_BLOCK_SIZE
+
     await alice_workspace.sync()
+    local_and_remote_blocks, local_blocks, remote_blocks = await alice_workspace.get_blocks_by_type(
+        fspath
+    )
+    assert len(remote_blocks) == 0
+    assert len(local_blocks) == 0
+    assert len(local_and_remote_blocks) == TAZ_V2_BLOCKS
+    assert get_blocks_size(local_and_remote_blocks) == TAZ_V2_BLOCKS * DEFAULT_BLOCK_SIZE
 
-    missing_size, total_size, blocks = await alice_workspace.get_file_blocks_to_load(fspath)
-    assert len(blocks) == 0
-    assert total_size == TAZ_V2_BLOCKS * DEFAULT_BLOCK_SIZE
-    assert missing_size == 0
-
-    missing_size, total_size, blocks = await alice_workspace.get_file_blocks_to_load(
+    local_and_remote_blocks, local_blocks, remote_blocks = await alice_workspace.get_blocks_by_type(
         fspath, DEFAULT_BLOCK_SIZE
     )
-    assert len(blocks) == 0
-    assert total_size == DEFAULT_BLOCK_SIZE
-    assert missing_size == 0
+    assert len(remote_blocks) == 0
+    assert len(local_blocks) == 0
+    assert len(local_and_remote_blocks) == 1
+    assert get_blocks_size(local_and_remote_blocks) == DEFAULT_BLOCK_SIZE
 
     # Check the blocks to download and the size of the total manifest
-    missing_size, total_size, blocks = await alice2_workspace.get_file_blocks_to_load(fspath)
-    assert len(blocks) == TAZ_V2_BLOCKS
-    assert total_size == TAZ_V2_BLOCKS * DEFAULT_BLOCK_SIZE
-    assert missing_size == (TAZ_V2_BLOCKS) * DEFAULT_BLOCK_SIZE
+    local_and_remote_blocks, local_blocks, remote_blocks = await alice2_workspace.get_blocks_by_type(
+        fspath
+    )
+    assert len(remote_blocks) == TAZ_V2_BLOCKS
+    assert len(local_blocks) == 0
+    assert len(local_and_remote_blocks) == 0
+    assert get_blocks_size(remote_blocks) == TAZ_V2_BLOCKS * DEFAULT_BLOCK_SIZE
 
     for i in range(6):
         try:
-            await alice2_workspace.local_storage.block_storage.get_chunk(blocks[i].id)
+            await alice2_workspace.local_storage.block_storage.get_chunk(remote_blocks[i].id)
         except FSLocalMissError:
             continue
         assert False
 
-    missing_size, total_size, blocks = await alice2_workspace.get_file_blocks_to_load(
+    local_and_remote_blocks, local_blocks, remote_blocks = await alice2_workspace.get_blocks_by_type(
         fspath, DEFAULT_BLOCK_SIZE
     )
-    assert len(blocks) == 1
-    assert total_size == DEFAULT_BLOCK_SIZE
-    assert missing_size == DEFAULT_BLOCK_SIZE
+    assert len(remote_blocks) == 1
+    assert len(local_blocks) == 0
+    assert len(local_and_remote_blocks) == 0
+    assert get_blocks_size(remote_blocks) == DEFAULT_BLOCK_SIZE
 
-    missing_size, total_size, blocks = await alice2_workspace.get_file_blocks_to_load(
+    local_and_remote_blocks, local_blocks, remote_blocks = await alice2_workspace.get_blocks_by_type(
         fspath, DEFAULT_BLOCK_SIZE * TAZ_V2_BLOCKS
     )
     # load one block
-    block = blocks[3]
+    block = remote_blocks[3]
     await alice2_workspace.load_block(block)
     assert await alice2_workspace.local_storage.block_storage.get_chunk(block.id) == data_list[3]
 
-    missing_size, total_size, blocks = await alice2_workspace.get_file_blocks_to_load(fspath)
-    assert len(blocks) == TAZ_V2_BLOCKS - 1
-    assert total_size == TAZ_V2_BLOCKS * DEFAULT_BLOCK_SIZE
-    assert missing_size == (TAZ_V2_BLOCKS - 1) * DEFAULT_BLOCK_SIZE
+    local_and_remote_blocks, local_blocks, remote_blocks = await alice2_workspace.get_blocks_by_type(
+        fspath
+    )
+    assert len(remote_blocks) == TAZ_V2_BLOCKS - 1
+    assert len(local_blocks) == 0
+    assert len(local_and_remote_blocks) == 1
+    assert get_blocks_size(remote_blocks) == (TAZ_V2_BLOCKS - 1) * DEFAULT_BLOCK_SIZE
+    assert get_blocks_size(local_and_remote_blocks) == DEFAULT_BLOCK_SIZE
 
     # load the rest
     async with open_nursery() as nursery:
-        async with await alice2_workspace.receive_load_blocks(blocks, nursery) as receive_channel:
+        async with await alice2_workspace.receive_load_blocks(
+            remote_blocks, nursery
+        ) as receive_channel:
             async for value in receive_channel:
                 assert value
 
-    missing_size, total_size, blocks = await alice2_workspace.get_file_blocks_to_load(fspath)
-    assert len(blocks) == 0
-    assert total_size == TAZ_V2_BLOCKS * DEFAULT_BLOCK_SIZE
-    assert missing_size == 0
+    local_and_remote_blocks, local_blocks, remote_blocks = await alice2_workspace.get_blocks_by_type(
+        fspath
+    )
+    assert len(remote_blocks) == 0
+    assert len(local_blocks) == 0
+    assert len(local_and_remote_blocks) == TAZ_V2_BLOCKS
+    assert get_blocks_size(local_and_remote_blocks) == TAZ_V2_BLOCKS * DEFAULT_BLOCK_SIZE
 
 
 @pytest.mark.trio

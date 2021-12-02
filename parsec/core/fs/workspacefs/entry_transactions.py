@@ -181,10 +181,11 @@ class EntryTransactions(FileTransactions):
             await self._load_manifest(entry_id)
 
     # Transactions
-    async def entry_missing_data(
+    async def entry_get_blocks_by_type(
         self, path: FsPath, limit: int
-    ) -> Tuple[int, int, List[BlockAccess]]:
-        missing_blocks = []
+    ) -> Tuple[
+        List[Optional[BlockAccess]], List[Optional[BlockAccess]], List[Optional[BlockAccess]]
+    ]:
         manifest, confinement_point = await self._get_manifest_from_path(path)
         manifest: LocalFileManifest
         blocks = []
@@ -198,17 +199,30 @@ class EntryTransactions(FileTransactions):
                     total_size += chunk.raw_size
 
         block_ids = [chunk.id for chunk in blocks]
-        missing_size = 0
 
-        local_chunk_ids = await self.local_storage.block_storage.get_local_chunk_ids(block_ids)
+        local_blocks = []
+        remote_blocks = []
+        local_and_remote_blocks = []
+
+        # To avoid concurrency problems local storage is called first
+        local_and_remote_chunk_ids = await self.local_storage.block_storage.get_local_chunk_ids(
+            block_ids
+        )
+        local_and_remote_chunk_ids_set = set(local_and_remote_chunk_ids)
+
+        local_chunk_ids = await self.local_storage.chunk_storage.get_local_chunk_ids(block_ids)
         local_chunk_ids_set = set(local_chunk_ids)
-        for chunk in blocks:
-            if chunk.id not in local_chunk_ids_set:
-                assert chunk.access is not None
-                missing_blocks.append(chunk.access)
-                missing_size += chunk.raw_size
 
-        return missing_size, total_size, missing_blocks
+        for chunk in blocks:
+            assert chunk.is_block
+            if chunk.id in local_and_remote_chunk_ids_set:
+                local_and_remote_blocks.append(chunk.access)
+            elif chunk.id in local_chunk_ids_set:
+                local_blocks.append(chunk.access)
+            else:
+                remote_blocks.append(chunk.access)
+
+        return local_and_remote_blocks, local_blocks, remote_blocks
 
     async def entry_info(self, path: FsPath) -> Dict[str, object]:
         # Check read rights

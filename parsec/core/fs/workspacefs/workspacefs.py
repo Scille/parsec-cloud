@@ -117,11 +117,13 @@ class WorkspaceFS:
             name = "<could not retrieve name>"
         return f"<{type(self).__name__}(id={self.workspace_id!r}, name={name!r})>"
 
-    async def get_file_blocks_to_load(
+    async def get_blocks_by_type(
         self, path: AnyPath, limit: int = 1000000000
-    ) -> Tuple[int, int, List[BlockAccess]]:
+    ) -> Tuple[
+        List[Optional[BlockAccess]], List[Optional[BlockAccess]], List[Optional[BlockAccess]]
+    ]:
         path = FsPath(path)
-        return await self.transactions.entry_missing_data(path, limit)
+        return await self.transactions.entry_get_blocks_by_type(path, limit)
 
     async def load_block(self, block: BlockAccess) -> None:
         """
