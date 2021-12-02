@@ -33,7 +33,7 @@ class CoreEvent(Enum):
     MOUNTPOINT_READONLY = "mountpoint.readonly"
     MOUNTPOINT_UNHANDLED_ERROR = "mountpoint.unhandled_error"
     MOUNTPOINT_TRIO_DEADLOCK_ERROR = "mountpoint.trio_deadlock_error"
-    # SYNCHRONISE
+    # SYNCHRONIZE
     SYNCHRONIZE_UPLOAD_LIST = "synchronize.upload_list"
     SYNCHRONIZE_UPLOAD_ONE = "synchronize.upload_one"
     SYNCHRONIZE_LOAD_LIST = "synchronize.load_list"
