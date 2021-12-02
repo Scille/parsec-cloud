@@ -294,7 +294,8 @@ class FilesWidget(QWidget, Ui_FilesWidget):
         self.current_directory: FsPath = FsPath("/")
         self.current_directory_uuid: Optional[UUID] = None
 
-        self.file_sync_set: Set[Tuple[object, object]] = set()
+        self.file_upload_sync_set: Set[Tuple[object, object]] = set()
+        self.file_load_sync_set: Set[Tuple[object, object]] = set()
 
         self.block_upload_sync_dict = dict()
         self.block_load_sync_dict = dict()
@@ -336,63 +337,85 @@ class FilesWidget(QWidget, Ui_FilesWidget):
         self.event_bus.connect(CoreEvent.FS_ENTRY_SYNCED, self._on_fs_event)
         self.event_bus.connect(CoreEvent.FS_ENTRY_UPDATED, self._on_fs_event)
         self.event_bus.connect(CoreEvent.FS_ENTRY_DOWNSYNCED, self._on_fs_event)
+        self.event_bus.connect(CoreEvent.FS_ENTRY_REMOTE_CHANGED, self._on_fs_event)
         self.event_bus.connect(CoreEvent.SYNCHRONISE_UPLOAD_LIST, self._on_fs_event)
         self.event_bus.connect(CoreEvent.SYNCHRONISE_UPLOAD_ONE, self._on_fs_event)
         self.event_bus.connect(CoreEvent.SYNCHRONISE_LOAD_LIST, self._on_fs_event)
         self.event_bus.connect(CoreEvent.SYNCHRONISE_LOAD_ONE, self._on_fs_event)
+
         self.event_bus.connect(CoreEvent.SHARING_UPDATED, self._on_sharing_updated)
 
         self.empty.connect(lambda *args: None)
 
-    async def print_sync_block_add(self, block_dict, workspace_id, id, blocks):
+    async def print_sync_block_add(self, block_dict, workspace_id, id, blocks, text):
         if workspace_id not in block_dict:
             block_dict[workspace_id] = dict()
         block_dict[workspace_id][id] = set(list(blocks))
+        name = await self.workspace_fs.get_name(id)
+        workspace_name = self.workspace_fs.get_workspace_name()
 
-        logger.warning(self.block_upload_sync_dict)
+        logger.warning(
+            text
+            + " ADDED: workspace "
+            + str(workspace_name)
+            + " filename "
+            + str(name)
+            + " blocks "
+            + str(block_dict[workspace_id][id])
+        )
 
-    async def print_sync_block_remove(self, block_dict, workspace_id, block):
+    async def print_sync_block_remove(self, block_dict, workspace_id, block, text):
         if workspace_id in block_dict:
             for id in block_dict[workspace_id]:
                 if block in block_dict[workspace_id][id]:
                     block_dict[workspace_id][id].remove(block)
+                    name = await self.workspace_fs.get_name(id)
+                    workspace_name = self.workspace_fs.get_workspace_name()
+                    logger.warning(
+                        text
+                        + " REMOVED: workspace "
+                        + str(workspace_name)
+                        + " filename "
+                        + str(name)
+                        + " block "
+                        + str(block)
+                    )
                     if not block_dict[workspace_id][id]:
                         block_dict[workspace_id].pop(id, None)
                     break
-        logger.warning(block_dict)
 
-    async def print_sync_add(self, workspace_id, id, text):
+    async def print_sync_add(self, workspace_id, id, file_set, text):
 
         if workspace_id and id:
             if id != workspace_id:
 
                 file_sync = (workspace_id, id)
-                if file_sync not in self.file_sync_set:
+                if file_sync not in file_set:
                     name = await self.workspace_fs.get_name(id)
                     workspace_name = self.workspace_fs.get_workspace_name()
                     manif = await self.workspace_fs.local_storage.get_manifest(id)
                     val = manif.to_stats()["size"]
-                    self.file_sync_set.add(file_sync)
+                    file_set.add(file_sync)
                     logger.warning(
-                        f"{text}: WORKSPACE: {str(workspace_name)} FILENAME:{str(name)} {id} SIZE {val} FILE TO SYNC: {str(len(self.file_sync_set))}"
+                        f"{text}: WORKSPACE: {str(workspace_name)} FILENAME:{str(name)} {id} SIZE {val} FILE TO SYNC: {str(len(file_set))}"
                     )
 
-    async def print_sync_remove(self, workspace_id, id, text):
+    async def print_sync_remove(self, workspace_id, id, file_set, text):
 
         if workspace_id and id:
             if id != workspace_id:
                 file_sync = (workspace_id, id)
-                if file_sync in self.file_sync_set:
+                if file_sync in file_set:
                     name = await self.workspace_fs.get_name(id)
                     workspace_name = self.workspace_fs.get_workspace_name()
 
-                    self.file_sync_set.remove(file_sync)
-                    if workspace_id in self.block_upload_sync_dict:
-                        self.block_upload_sync_dict[workspace_id].pop(id, None)
+                    file_set.remove(file_sync)
+                    # if workspace_id in self.block_upload_sync_dict:
+                    #    self.block_upload_sync_dict[workspace_id].pop(id, None)
                     manif = await self.workspace_fs.local_storage.get_manifest(id)
                     val = manif.to_stats()["size"]
                     logger.warning(
-                        f"{text}: WORKSPACE: {str(workspace_name)} FILENAME:{str(name)} {id} SIZE {val} FILE TO SYNC: {str(len(self.file_sync_set))}"
+                        f"{text}: WORKSPACE: {str(workspace_name)} FILENAME:{str(name)} {id} SIZE {val} FILE TO SYNC: {str(len(file_set))}"
                     )
 
     def disconnect_all(self):
@@ -1057,6 +1080,7 @@ class FilesWidget(QWidget, Ui_FilesWidget):
             block = kwargs["block"]
 
         if event == CoreEvent.FS_ENTRY_DOWNSYNCED:
+            logger.warning(event)
             self.jobs_ctx.submit_job(
                 self.empty,
                 self.empty,
@@ -1070,6 +1094,16 @@ class FilesWidget(QWidget, Ui_FilesWidget):
                 self.empty,
                 self.empty,
                 self._on_fs_entry_synced,
+                event=event,
+                id=id,
+                workspace_id=workspace_id,
+            )
+        elif event == CoreEvent.FS_ENTRY_REMOTE_CHANGED:
+            logger.warning(event)
+            self.jobs_ctx.submit_job(
+                self.empty,
+                self.empty,
+                self._on_fs_entry_remote_changed,
                 event=event,
                 id=id,
                 workspace_id=workspace_id,
@@ -1130,7 +1164,9 @@ class FilesWidget(QWidget, Ui_FilesWidget):
         # Not the corresponding workspace
         if workspace_id != self.workspace_fs.workspace_id:
             return
-        await self.print_sync_block_add(self.block_upload_sync_dict, workspace_id, id, blocks)
+        await self.print_sync_block_add(
+            self.block_upload_sync_dict, workspace_id, id, blocks, "UPLOAD"
+        )
 
     async def _on_synchronise_upload_one(self, event, workspace_id=None, block=None):
         # No workspace FS
@@ -1139,7 +1175,9 @@ class FilesWidget(QWidget, Ui_FilesWidget):
         # Not the corresponding workspace
         if workspace_id != self.workspace_fs.workspace_id:
             return
-        await self.print_sync_block_remove(self.block_upload_sync_dict, workspace_id, block)
+        await self.print_sync_block_remove(
+            self.block_upload_sync_dict, workspace_id, block, "UPLOAD"
+        )
 
     async def _on_synchronise_load_list(self, event, workspace_id=None, id=None, blocks=None):
         # No workspace FS
@@ -1148,7 +1186,7 @@ class FilesWidget(QWidget, Ui_FilesWidget):
         # Not the corresponding workspace
         if workspace_id != self.workspace_fs.workspace_id:
             return
-        await self.print_sync_block_add(self.block_load_sync_dict, workspace_id, id, blocks)
+        await self.print_sync_block_add(self.block_load_sync_dict, workspace_id, id, blocks, "LOAD")
 
     async def _on_synchronise_load_one(self, event, workspace_id=None, block=None):
         # No workspace FS
@@ -1157,7 +1195,7 @@ class FilesWidget(QWidget, Ui_FilesWidget):
         # Not the corresponding workspace
         if workspace_id != self.workspace_fs.workspace_id:
             return
-        await self.print_sync_block_remove(self.block_load_sync_dict, workspace_id, block)
+        await self.print_sync_block_remove(self.block_load_sync_dict, workspace_id, block, "LOAD")
 
     async def _on_fs_entry_downsynced(self, event, workspace_id=None, id=None):
         # No workspace FS
@@ -1169,13 +1207,25 @@ class FilesWidget(QWidget, Ui_FilesWidget):
         # Reload, as it might correspond to the current directory
         if self.current_directory_uuid is None:
             self.reload()
-            await self.print_sync_remove(workspace_id, id, "INBOUND FINISHED ")
+            await self.print_sync_remove(
+                workspace_id, id, self.file_load_sync_set, "INBOUND FINISHED "
+            )
             return
         # Reload, as it definitely corresponds to the current directory
         if self.current_directory_uuid == id:
             self.reload()
-            await self.print_sync_remove(workspace_id, id, "INBOUND FINISHED ")
+            await self.print_sync_remove(
+                workspace_id, id, self.file_load_sync_set, "INBOUND FINISHED "
+            )
             return
+
+    async def _on_fs_entry_remote_changed(self, event, id, workspace_id=None):
+        if not self.workspace_fs:
+            return
+
+        if self.current_directory_uuid == id:
+            return
+        await self.print_sync_add(workspace_id, id, self.file_load_sync_set, "INBOUND ")
 
     async def _on_fs_entry_synced(self, event, id, workspace_id=None):
         if not self.workspace_fs:
@@ -1183,7 +1233,9 @@ class FilesWidget(QWidget, Ui_FilesWidget):
 
         if self.current_directory_uuid == id:
             return
-        await self.print_sync_remove(workspace_id, id, "OUTBOUND FINISHED ")
+        await self.print_sync_remove(
+            workspace_id, id, self.file_upload_sync_set, "OUTBOUND FINISHED "
+        )
 
         for i in range(1, self.table_files.rowCount()):
             item = self.table_files.item(i, 0)
@@ -1204,7 +1256,7 @@ class FilesWidget(QWidget, Ui_FilesWidget):
         if workspace_id != self.workspace_fs.workspace_id:
             return
 
-        await self.print_sync_add(workspace_id, id, "OUTBOUND")
+        await self.print_sync_add(workspace_id, id, self.file_upload_sync_set, "OUTBOUND")
         # Reload, as it might correspond to the current directory
         if self.current_directory_uuid is None:
             self.reload()
