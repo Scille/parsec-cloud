@@ -60,3 +60,43 @@ macro_rules! new_uuid_type {
 }
 
 pub(crate) use new_uuid_type;
+
+// TODO: move to it own crate ?
+/// Serialize/Deserialize DateTime as f64 unix timestamp with nanosecond precision
+pub mod ts_with_nanoseconds_as_double {
+    use chrono::{DateTime, TimeZone, Utc};
+    use core::fmt;
+    use serde::{de, ser};
+
+    pub fn serialize<S>(dt: &DateTime<Utc>, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: ser::Serializer,
+    {
+        serializer.serialize_f64(dt.timestamp() as f64 + (dt.timestamp_subsec_nanos() as f64 / 1e9))
+    }
+
+    struct TimestampVisitor;
+
+    pub fn deserialize<'de, D>(d: D) -> Result<DateTime<Utc>, D::Error>
+    where
+        D: de::Deserializer<'de>,
+    {
+        d.deserialize_f64(TimestampVisitor)
+    }
+
+    impl<'de> de::Visitor<'de> for TimestampVisitor {
+        type Value = DateTime<Utc>;
+
+        fn expecting(&self, formatter: &mut core::fmt::Formatter) -> fmt::Result {
+            formatter.write_str("a unix timestamp as 64 bits floating point number")
+        }
+
+        /// Deserialize a timestamp in milliseconds since the epoch
+        fn visit_f64<E>(self, value: f64) -> Result<DateTime<Utc>, E>
+        where
+            E: de::Error,
+        {
+            Ok(Utc.timestamp_nanos((value * 1e9) as i64))
+        }
+    }
+}

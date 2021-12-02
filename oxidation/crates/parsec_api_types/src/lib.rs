@@ -4,12 +4,17 @@
 extern crate lazy_static;
 
 mod addr;
+mod certif;
 mod id;
 mod invite;
 mod manifest;
+mod message;
 mod utils;
 
 pub use addr::*;
+pub use certif::*;
 pub use id::*;
 pub use invite::*;
 pub use manifest::*;
+pub use message::MessageContent;
+pub use message::*;
