@@ -376,18 +376,13 @@ async def test_display_timestamped_workspace_in_workspaces_list(
     await aqtbot.wait_until(_workspace_available)
     f_w = await logged_gui.test_switch_to_files_widget(workspace_name)
 
-    tb = create_files_widget_testbed(monkeypatch, aqtbot, logged_gui, user_fs, wfs, f_w, c_w)
-
     # Populate some files for import
     out_of_parsec_data = Path(tmpdir) / "out_of_parsec_data"
     out_of_parsec_data.mkdir(parents=True)
     (out_of_parsec_data / "file1.txt").touch()
     (out_of_parsec_data / "file2.txt").touch()
 
-    # Workspace starts empty
-    await tb.check_files_view(path="/", expected_entries=[])
-
-    with freeze_time("2010-03-30"):
+    with freeze_time("2010-03-30 00:00:00"):
         # Import file 1
         monkeypatch.setattr(
             "parsec.core.gui.custom_dialogs.QDialogInProcess.getOpenFileNames",
@@ -395,9 +390,8 @@ async def test_display_timestamped_workspace_in_workspaces_list(
         )
         async with aqtbot.wait_signal(f_w.import_success):
             aqtbot.mouse_click(f_w.button_import_files, QtCore.Qt.LeftButton)
-        await tb.check_files_view(path="/", expected_entries=["file1.txt"])
 
-    with freeze_time("2020-03-30"):
+    with freeze_time("2020-03-30 00:00:00"):
         # Import file 2
         monkeypatch.setattr(
             "parsec.core.gui.custom_dialogs.QDialogInProcess.getOpenFileNames",
@@ -405,22 +399,42 @@ async def test_display_timestamped_workspace_in_workspaces_list(
         )
         async with aqtbot.wait_signal(f_w.import_success):
             aqtbot.mouse_click(f_w.button_import_files, QtCore.Qt.LeftButton)
-        await tb.check_files_view(path="/", expected_entries=["file1.txt", "file2.txt"])
+
+    def _wait_for_files():
+        assert f_w.table_files.rowCount() == 3
+        assert f_w.table_files.item(1, 1).text() == "file1.txt"
+        assert f_w.table_files.item(1, 2).text() == "03/30/2010 12:00 AM"
+        assert f_w.table_files.item(1, 3).text() == "03/30/2010 12:00 AM"
+        assert f_w.table_files.item(2, 1).text() == "file2.txt"        
+        assert f_w.table_files.item(2, 2).text() == "03/30/2020 12:00 AM"
+        assert f_w.table_files.item(2, 3).text() == "03/30/2020 12:00 AM"
+
+    await aqtbot.wait_until(_wait_for_files)
+
+    aqtbot.mouse_click(f_w.button_back, QtCore.Qt.LeftButton)
+
+    def _wait_workspace_refreshed():
+        assert w_w.layout_workspaces.count() == 1
+        wk_button = w_w.layout_workspaces.itemAt(0).widget()
+        assert isinstance(wk_button, WorkspaceButton)
+        assert wk_button.name == workspace_name
+        assert wk_button.file1_name.text() == "file1.txt"
+        assert wk_button.file2_name.text() == "file2.txt"        
+
+    await aqtbot.wait_until(_wait_workspace_refreshed)
 
     wk_button = w_w.layout_workspaces.itemAt(0).widget()
     aqtbot.mouse_click(wk_button.button_remount_ts, QtCore.Qt.LeftButton)
     ts_wk_w = await catch_timestamped_workspace_widget()
 
-    def _timestamped_widget_ready():
-        assert ts_wk_w.creation_date
-        assert ts_wk_w.creation_time
-
-    await aqtbot.wait_until(_timestamped_widget_ready)
-    assert ts_wk_w
     assert isinstance(ts_wk_w, TimestampedWorkspaceWidget)
 
     ts_wk_w.calendar_widget.setSelectedDate(QtCore.QDate(2015, 3, 30))
-    aqtbot.mouse_click(ts_wk_w.button_show, QtCore.Qt.LeftButton)
+    assert ts_wk_w.date == QtCore.QDate(2015, 3, 30)
+    assert ts_wk_w.time == QtCore.QTime(0, 0)
+
+    async with aqtbot.wait_signal(w_w.mount_success):
+        aqtbot.mouse_click(ts_wk_w.button_show, QtCore.Qt.LeftButton)
 
     def _new_workspace_listed():
         assert w_w.layout_workspaces.count() == 2
@@ -428,8 +442,39 @@ async def test_display_timestamped_workspace_in_workspaces_list(
         ts_wk_button = w_w.layout_workspaces.itemAt(1).widget()
         assert isinstance(wk_button, WorkspaceButton)
         assert isinstance(ts_wk_button, WorkspaceButton)
+        assert not wk_button.timestamped
+        assert ts_wk_button.timestamped
 
-    await aqtbot.wait_until(_new_workspace_listed, timeout=2000)
+    await aqtbot.wait_until(_new_workspace_listed)
+
+    ts_wk_button = w_w.layout_workspaces.itemAt(1).widget()
+
+    aqtbot.mouse_click(ts_wk_button, QtCore.Qt.LeftButton)
+
+    f_w = logged_gui.test_get_files_widget()
+    assert f_w.isVisible()
+    wk_fs = f_w.workspace_fs
+
+    f = await wk_fs.listdir("/")
+    print(f)
+
+
+    def _files_listed():
+        f_w = logged_gui.test_get_files_widget()
+        assert f_w.isVisible()
+        assert f_w.table_files.rowCount() == 2
+        assert f_w.table_files.item(1, 1).text() == "file1.txt"
+        assert f_w.table_files.item(1, 2).text() == "03/30/2010 12:00 AM"
+        assert f_w.table_files.item(1, 3).text() == "03/30/2010 12:00 AM"        
+
+    await aqtbot.wait_until(_files_listed, timeout=2000)
+
+    assert False
+
+
+    w_f = logged_gui.test_switch_to_files_widget(workspace_name)
+
+
     await tb.check_files_view(path="/", expected_entries=["file1.txt"])
 
     ts_wk_button = w_w.layout_workspaces.itemAt(1).widget()
