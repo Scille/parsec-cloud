@@ -2,9 +2,9 @@
 
 import pytest
 import trio
-from pendulum import now as pendulum_now
 from PyQt5 import QtCore
 from async_generator import asynccontextmanager
+from pendulum import now as pendulum_now
 from functools import partial
 
 from uuid import uuid4
@@ -702,3 +702,31 @@ async def test_claim_user_with_bad_start_arg(event_bus, core_config, gui_factory
     assert len(autoclose_dialog.dialogs) == 1
     assert autoclose_dialog.dialogs[0][0] == "Error"
     assert autoclose_dialog.dialogs[0][1] == "The link is invalid."
+
+
+@pytest.mark.gui
+@pytest.mark.trio
+async def test_claim_user_backend_desync(
+    aqtbot, running_backend, backend, autoclose_dialog, alice, gui, monkeypatch
+):
+
+    # Client is 5 minutes ahead
+    def _timestamp(self):
+        return pendulum_now().add(minutes=5)
+
+    monkeypatch.setattr("parsec.api.protocol.BaseClientHandshake.timestamp", _timestamp)
+
+    invitation_addr = BackendInvitationAddr.build(
+        backend_addr=alice.organization_addr,
+        organization_id=alice.organization_id,
+        invitation_type=InvitationType.USER,
+        token=uuid4(),
+    )
+
+    gui.add_instance(invitation_addr.to_url())
+
+    def _assert_dialogs():
+        assert len(autoclose_dialog.dialogs) == 1
+        assert autoclose_dialog.dialogs == [("Error", translate("TEXT_BACKEND_STATE_DESYNC"))]
+
+    await aqtbot.wait_until(_assert_dialogs)

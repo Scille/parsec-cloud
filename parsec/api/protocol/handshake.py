@@ -6,6 +6,7 @@ from enum import Enum
 from secrets import token_bytes
 
 import pendulum
+from pendulum.datetime import DateTime
 
 from parsec.crypto import SigningKey, VerifyKey, CryptoError
 from parsec.serde import BaseSchema, OneOfSchema, fields, validate
@@ -352,9 +353,13 @@ class BaseClientHandshake:
     SUPPORTED_API_VERSIONS: Sequence[ApiVersion]  # Overwritten by subclasses
 
     def __init__(self) -> None:
-        self.challenge_data: Dict[str, object] = {"client_timestamp": pendulum.now()}
+        self.challenge_data: Dict[str, object] = {"client_timestamp": self.timestamp()}
         self.backend_api_version: ApiVersion
         self.client_api_version: ApiVersion
+
+    def timestamp(self) -> DateTime:
+        # Exposed as a method for easier testing and monkeypatching
+        return pendulum.now()
 
     def load_challenge_req(self, req: bytes) -> None:
         self.challenge_data.update(handshake_challenge_serializer.loads(req))
