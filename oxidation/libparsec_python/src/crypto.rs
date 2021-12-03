@@ -123,7 +123,7 @@ impl VerifyKey {
     ) -> PyResult<Option<&'p PyBytes>> {
         match parsec_api_crypto::VerifyKey::unsecure_unwrap(signed) {
             Some(v) => Ok(Some(PyBytes::new(py, v))),
-            None => Ok(None),
+            None => Ok(Some(PyBytes::new(py, &[]))),
         }
     }
 
