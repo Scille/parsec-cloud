@@ -24,6 +24,9 @@ from parsec.core.core_events import CoreEvent
 
 logger = get_logger()
 
+# Time before we try to reconnect after a desync
+DESYNC_RETRY_TIME = 10  # seconds
+
 
 BackendConnStatus = Enum("BackendConnStatus", "READY LOST INITIALIZING REFUSED CRASHED DESYNC")
 
@@ -284,7 +287,7 @@ class BackendAuthenticatedConn:
             if self.status == BackendConnStatus.DESYNC:
                 # Try again in 10 seconds
                 logger.info("Backend connection is desync", status=self.status)
-                await trio.sleep(10)
+                await trio.sleep(DESYNC_RETRY_TIME)
 
     def _cancel_manager_connect(self):
         if self._manager_connect_cancel_scope:
