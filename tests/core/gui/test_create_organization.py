@@ -612,9 +612,7 @@ async def test_create_organization_wrong_timestamp(
         aqtbot.mouse_click(co_w.button_validate, QtCore.Qt.LeftButton)
 
     def _error_shown():
-        assert autoclose_dialog.dialogs == [
-            ("Error", translate("TEXT_ORG_WIZARD_INVALID_TIMESTAMP"))
-        ]
+        assert autoclose_dialog.dialogs == [("Error", translate("TEXT_BACKEND_STATE_DESYNC"))]
 
     await aqtbot.wait_until(_error_shown)
 
