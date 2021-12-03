@@ -10,6 +10,7 @@ from parsec.core.fs.remote_loader import MANIFEST_STAMP_AHEAD_US
 from parsec.core.types import WorkspaceEntry, WorkspaceRole
 from parsec.core.backend_connection import BackendNotAvailable
 from parsec.core.fs.exceptions import FSBackendOfflineError, FSRemoteOperationError
+from parsec.utils import BALLPARK_CLIENT_EARLY_OFFSET, BALLPARK_CLIENT_LATE_OFFSET
 
 from tests.common import freeze_time, create_shared_workspace
 
@@ -431,8 +432,8 @@ async def test_update_invalid_timestamp(running_backend, alice_user_fs, alice2_u
             "status": "bad_timestamp",
             "client_timestamp": t3.add(microseconds=MANIFEST_STAMP_AHEAD_US),
             "backend_timestamp": t2,
-            "ballpark_client_early_offset": 60,
-            "ballpark_client_late_offset": 60,
+            "ballpark_client_early_offset": BALLPARK_CLIENT_EARLY_OFFSET,
+            "ballpark_client_late_offset": BALLPARK_CLIENT_LATE_OFFSET,
         }
 
 

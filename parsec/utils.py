@@ -54,15 +54,15 @@ logger = get_logger()
 # A more radical check would be to not accept more that 10 seconds
 # delay and 10 seconds shifting, yielding a -10/20 seconds window
 # (10 seconds in advance or 20 seconds late). This would effectively
-# reduce the current -60/60 seconds time widown by a factor of 4.
+# reduce the current -60/60 seconds time windown by a factor of 4.
 #
 # The ballpark client tolerance is the ratio applied to the offsets
 # while performing the ballpark checks. We use an arbitrary value of
 # 80% in order to make sure that a clock shift is caught during the
 # handshake instead of being caught by another API call later on.
 
-BALLPARK_CLIENT_EARLY_OFFSET = 60.0  # seconds
-BALLPARK_CLIENT_LATE_OFFSET = 60.0  # seconds
+BALLPARK_CLIENT_EARLY_OFFSET = 50.0  # seconds
+BALLPARK_CLIENT_LATE_OFFSET = 70.0  # seconds
 BALLPARK_CLIENT_TOLERANCE = 0.8  # 80%
 
 

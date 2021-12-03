@@ -13,6 +13,7 @@ from parsec.api.protocol import (
     vlob_list_versions_serializer,
 )
 from parsec.backend.realm import RealmGrantedRole
+from parsec.utils import BALLPARK_CLIENT_EARLY_OFFSET, BALLPARK_CLIENT_LATE_OFFSET
 
 from tests.common import freeze_time
 from tests.backend.common import vlob_create, vlob_update, vlob_read, vlob_list_versions
@@ -53,8 +54,8 @@ async def test_create_bad_timestamp(alice_backend_sock, realm):
     assert rep == {
         "status": "bad_timestamp",
         "backend_timestamp": d1,
-        "ballpark_client_early_offset": 60,
-        "ballpark_client_late_offset": 60,
+        "ballpark_client_early_offset": BALLPARK_CLIENT_EARLY_OFFSET,
+        "ballpark_client_late_offset": BALLPARK_CLIENT_LATE_OFFSET,
         "client_timestamp": d2,
     }
 
@@ -342,8 +343,8 @@ async def test_update_bad_timestamp(alice_backend_sock, vlobs):
     assert rep == {
         "status": "bad_timestamp",
         "backend_timestamp": d1,
-        "ballpark_client_early_offset": 60,
-        "ballpark_client_late_offset": 60,
+        "ballpark_client_early_offset": BALLPARK_CLIENT_EARLY_OFFSET,
+        "ballpark_client_late_offset": BALLPARK_CLIENT_LATE_OFFSET,
         "client_timestamp": d2,
     }
 
