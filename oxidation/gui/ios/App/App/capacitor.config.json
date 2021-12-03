@@ -1,0 +1,6 @@
+{
+	"appId": "io.ionic.starter",
+	"appName": "gui",
+	"webDir": "www",
+	"bundledWebRuntime": false
+}
