@@ -2,6 +2,7 @@
 
 import click
 
+from parsec.core.cli import human_find
 from parsec.core.cli import list_devices
 from parsec.core.cli import status_organization
 from parsec.core.cli import recovery
@@ -31,6 +32,7 @@ core_cmd.add_command(share_workspace.share_workspace, "share_workspace")
 core_cmd.add_command(list_devices.list_devices, "list_devices")
 core_cmd.add_command(recovery.export_recovery_device, "export_recovery_device")
 core_cmd.add_command(recovery.import_recovery_device, "import_recovery_device")
+core_cmd.add_command(human_find.human_find, "human_find")
 
 core_cmd.add_command(invitation.invite_user, "invite_user")
 core_cmd.add_command(invitation.invite_device, "invite_device")
