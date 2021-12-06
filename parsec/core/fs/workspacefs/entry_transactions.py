@@ -214,7 +214,7 @@ class EntryTransactions(FileTransactions):
         local_chunk_ids_set = set(local_chunk_ids)
 
         for chunk in blocks:
-            assert chunk.is_block
+            assert chunk.is_block()
             if chunk.id in local_and_remote_chunk_ids_set:
                 local_and_remote_blocks.append(chunk.access)
             elif chunk.id in local_chunk_ids_set:
