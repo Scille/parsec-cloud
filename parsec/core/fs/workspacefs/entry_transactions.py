@@ -1,6 +1,5 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2016-2021 Scille SAS
-
-from typing import Tuple, cast, Optional, AsyncIterator, Dict, List
+from typing import Tuple, cast, Optional, AsyncIterator, Dict, List, NamedTuple
 from async_generator import asynccontextmanager
 
 from parsec.api.data import BlockAccess
@@ -34,6 +33,15 @@ from parsec.core.fs.exceptions import (
 
 
 WRITE_RIGHT_ROLES = (WorkspaceRole.OWNER, WorkspaceRole.MANAGER, WorkspaceRole.CONTRIBUTOR)
+
+
+class BlockInfo(NamedTuple):
+    local_and_remote_blocks: List[Optional[BlockAccess]]
+    local_only_blocks: List[Optional[BlockAccess]]
+    remote_only_blocks: List[Optional[BlockAccess]]
+    file_size: int
+    proper_blocks_size: int
+    pending_chunks_size: int
 
 
 class EntryTransactions(FileTransactions):
@@ -181,48 +189,53 @@ class EntryTransactions(FileTransactions):
             await self._load_manifest(entry_id)
 
     # Transactions
-    async def entry_get_blocks_by_type(
-        self, path: FsPath, limit: int
-    ) -> Tuple[
-        List[Optional[BlockAccess]], List[Optional[BlockAccess]], List[Optional[BlockAccess]]
-    ]:
+    async def entry_get_blocks_by_type(self, path: FsPath, limit: int) -> BlockInfo:
+
         manifest, confinement_point = await self._get_manifest_from_path(path)
         manifest: LocalFileManifest
-        blocks = []
+        block_dict = {}
         total_size = 0
         for manifest_blocks in manifest.blocks:
             for chunk in manifest_blocks:
                 if limit < (total_size + chunk.raw_size):
                     break
                 if chunk.access:
-                    blocks.append(chunk)
+                    block_dict[chunk.id] = chunk
                     total_size += chunk.raw_size
 
-        block_ids = [chunk.id for chunk in blocks]
+        block_ids = set(block_dict)
 
-        local_blocks = []
-        remote_blocks = []
-        local_and_remote_blocks = []
-
-        # To avoid concurrency problems local storage is called first
-        local_and_remote_chunk_ids = await self.local_storage.block_storage.get_local_chunk_ids(
-            block_ids
+        file_size = manifest.size
+        proper_blocks_size = sum(
+            chunk.raw_size for chunks in manifest.blocks for chunk in chunks if chunk.is_block()
         )
-        local_and_remote_chunk_ids_set = set(local_and_remote_chunk_ids)
+        pending_chunks_size = sum(
+            chunk.raw_size for chunks in manifest.blocks for chunk in chunks if not chunk.is_block()
+        )
 
-        local_chunk_ids = await self.local_storage.chunk_storage.get_local_chunk_ids(block_ids)
-        local_chunk_ids_set = set(local_chunk_ids)
+        # To avoid concurrency problems block storage is called first
+        local_and_remote_block_ids = set(
+            await self.local_storage.block_storage.get_local_chunk_ids(list(block_ids))
+        )
+        local_only_block_ids = set(
+            await self.local_storage.chunk_storage.get_local_chunk_ids(list(block_ids))
+        )
+        remote_only_block_ids = block_ids - local_and_remote_block_ids - local_only_block_ids
 
-        for chunk in blocks:
-            assert chunk.is_block()
-            if chunk.id in local_and_remote_chunk_ids_set:
-                local_and_remote_blocks.append(chunk.access)
-            elif chunk.id in local_chunk_ids_set:
-                local_blocks.append(chunk.access)
-            else:
-                remote_blocks.append(chunk.access)
+        local_only_blocks = [block_dict[block_id].access for block_id in local_only_block_ids]
+        remote_only_blocks = [block_dict[block_id].access for block_id in remote_only_block_ids]
+        local_and_remote_blocks = [
+            block_dict[block_id].access for block_id in local_and_remote_block_ids
+        ]
 
-        return local_and_remote_blocks, local_blocks, remote_blocks
+        return BlockInfo(
+            local_and_remote_blocks,
+            local_only_blocks,
+            remote_only_blocks,
+            file_size,
+            proper_blocks_size,
+            pending_chunks_size,
+        )
 
     async def entry_info(self, path: FsPath) -> Dict[str, object]:
         # Check read rights
