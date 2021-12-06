@@ -6,6 +6,7 @@ from collections import defaultdict
 from typing import List, Dict, Tuple, AsyncIterator, cast, Pattern, Callable, Optional, Awaitable
 from pendulum import DateTime
 
+from parsec.core.fs.workspacefs.entry_transactions import BlockInfo
 from parsec.crypto import CryptoError
 from parsec.event_bus import EventBus
 from parsec.api.data import BaseManifest as BaseRemoteManifest, BlockAccess
@@ -117,11 +118,9 @@ class WorkspaceFS:
             name = "<could not retrieve name>"
         return f"<{type(self).__name__}(id={self.workspace_id!r}, name={name!r})>"
 
-    async def get_file_blocks_to_load(
-        self, path: AnyPath, limit: int = 1000000000
-    ) -> Tuple[int, int, List[BlockAccess]]:
+    async def get_blocks_by_type(self, path: AnyPath, limit: int = 1000000000) -> BlockInfo:
         path = FsPath(path)
-        return await self.transactions.entry_missing_data(path, limit)
+        return await self.transactions.entry_get_blocks_by_type(path, limit)
 
     async def load_block(self, block: BlockAccess) -> None:
         """
