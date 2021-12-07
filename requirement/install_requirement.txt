@@ -1,7 +1,7 @@
 certifi==2021.10.8
 attrs==21.2.0
 click==8.0.3
-msgpack==0.6.0 # updating break test
+msgpack==1.0.3
 wsproto==1.0.0
 h11==0.12.0
 # Can use marshmallow or the toasted flavour as you like ;-)
