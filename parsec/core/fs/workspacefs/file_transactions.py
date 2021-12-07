@@ -50,7 +50,7 @@ def padded_data(data: bytes, start: int, stop: int) -> bytes:
     if start <= stop <= 0:
         return b"\x00" * (stop - start)
     if 0 <= start <= stop:
-        return data[start:stop]
+        return bytes(data)[start:stop]
     return b"\x00" * (0 - start) + data[0:stop]
 
 
@@ -111,7 +111,7 @@ class FileTransactions:
         return data[chunk.start - chunk.raw_offset : chunk.stop - chunk.raw_offset]
 
     async def _write_chunk(self, chunk: Chunk, content: bytes, offset: int = 0) -> int:
-        data = padded_data(content, offset, offset + chunk.stop - chunk.start)
+        data: bytes = padded_data(content, offset, offset + chunk.stop - chunk.start)
         await self.local_storage.set_chunk(chunk.id, data)
         return len(data)
 

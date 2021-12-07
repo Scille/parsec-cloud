@@ -280,8 +280,8 @@ def test_supports_legacy_is_admin_field(alice):
         "private_key": alice.private_key.encode(),
         "is_admin": True,
         "user_manifest_id": UUID(alice.user_manifest_id.hex),
-        "user_manifest_key": bytes(alice.user_manifest_key),
-        "local_symkey": bytes(alice.local_symkey),
+        "user_manifest_key": bytes(alice.user_manifest_key.secret),
+        "local_symkey": bytes(alice.local_symkey.secret),
     }
     dumped_legacy_local_user = packb(raw_legacy_local_user)
 

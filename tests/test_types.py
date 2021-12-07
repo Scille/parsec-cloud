@@ -305,4 +305,4 @@ def organization_addr(exported_verify_key):
 @pytest.mark.parametrize("key_type", (SigningKey, PrivateKey, SecretKey))
 def test_keys_dont_leak_on_repr(key_type):
     key = key_type.generate()
-    assert repr(key).startswith(f"<{key_type.__module__}.{key_type.__qualname__} object at ")
+    assert repr(key).startswith(f"{key_type.__qualname__}")
