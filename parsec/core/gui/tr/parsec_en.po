@@ -791,6 +791,17 @@ msgstr ""
 msgid "TEXT_MACFUSE_DOWNLOAD_BUTTON"
 msgstr "Download macFUSE"
 
+msgid "TEXT_UPDATE_MACFUSE_TITLE"
+msgstr "macFUSE update needed"
+
+msgid "TEXT_UPDATE_MACFUSE"
+msgstr ""
+"Your macFUSE version is deprecated. You can update it following the link below"
+" to make sure Parsec keeps functioning properly."
+
+msgid "TEXT_UPDATE_MACFUSE_BUTTON"
+msgstr "Update to macFUSE latest version"
+
 msgid "TEXT_LOGIN_ERROR_DEVICE_REVOKED"
 msgstr "This device has been revoked and can no longer be used to log in."
 
