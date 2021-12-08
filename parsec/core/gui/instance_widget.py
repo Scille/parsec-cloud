@@ -63,7 +63,10 @@ def check_macfuse_version() -> bool:
 
     import plistlib
 
-    local_version = Version(plistlib.readPlist(macfuse_plist_path)["CFBundleVersion"])
+    try:
+        local_version = Version(plistlib.readPlist(macfuse_plist_path)["CFBundleVersion"])
+    except ValueError:
+        return False
 
     return local_version >= MIN_MACFUSE_VERSION
 
