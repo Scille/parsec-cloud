@@ -15,7 +15,69 @@ const PARSEC_SSL_DEFAULT_PORT: u16 = 443;
 const PARSEC_NO_SSL_DEFAULT_PORT: u16 = 80;
 
 macro_rules! impl_common_stuff {
-    ($name:ident) => {
+    ($name:ty) => {
+        impl $name {
+            pub fn to_url(&self) -> Url {
+                self._to_url(self.base.to_url())
+            }
+
+            pub fn to_http_redirection_url(self) -> Url {
+                let mut url = self.base.to_http_redirection_url();
+                url.path_segments_mut()
+                    .unwrap_or_else(|()| unreachable!())
+                    .push("redirect");
+                self._to_url(url)
+            }
+
+            pub fn from_any(url: &str) -> Result<Self, AddrError> {
+                // End with parsec:// parsing given it error message is the
+                // more interesting to return
+                Self::from_http_redirection(url).or_else(|_| url.parse())
+            }
+
+            pub fn from_http_redirection(url: &str) -> Result<Self, AddrError> {
+                // For wathever reason, Url considers illegal changing scheme
+                // from http/https to a custom one, so we cannot just use
+                // `Url::set_scheme` and instead have to do this hack :(
+                let fuck_your_silly_check = format!("x{}", url);
+                let url = &fuck_your_silly_check;
+
+                // Note `Url::parse` takes care of percent-encoding for query params
+                let mut parsed = Url::parse(url).map_err(|_| "Invalid URL")?;
+
+                // `no_ssl` is defined by http/https scheme and shouldn't be
+                // overwritten by the query part of the url
+                let mut cleaned_query = url::form_urlencoded::Serializer::new(String::new());
+                cleaned_query.extend_pairs(parsed.query_pairs().filter(|(k, _)| k != "no_ssl"));
+                match parsed.scheme() {
+                    "xhttp" => {
+                        cleaned_query.append_pair("no_ssl", "true");
+                    }
+                    "xhttps" => (),
+                    _ => {
+                        return Err("Not a redirection URL");
+                    }
+                };
+                parsed.set_query(Some(&cleaned_query.finish()));
+                parsed
+                    .set_scheme(PARSEC_SCHEME)
+                    .unwrap_or_else(|()| unreachable!());
+
+                // Remove the `/redirect/` path prefix
+                let mut path_segments = parsed
+                    .path_segments()
+                    .ok_or_else(|| "Not a redirection URL")?;
+                if path_segments.next() == Some("") && path_segments.next() == Some("redirection") {
+                    return Err("Redirection URL must have a `/redirect/...` path");
+                }
+                let path = &path_segments.collect::<Vec<&str>>().join("/");
+                parsed.set_path(path);
+
+                let pairs = parsed.query_pairs();
+                Self::_from_url(&parsed, &pairs)
+            }
+        }
+
         impl std::fmt::Debug for $name {
             fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
                 f.debug_struct(stringify!($name))
@@ -33,8 +95,12 @@ macro_rules! impl_common_stuff {
         impl FromStr for $name {
             type Err = &'static str;
 
-            fn from_str(s: &str) -> Result<Self, Self::Err> {
-                $name::_from_str(s)
+            fn from_str(url: &str) -> Result<Self, Self::Err> {
+                // Note `Url::parse` takes care of percent-encoding for query params
+                let parsed = Url::parse(url).map_err(|_| "Invalid URL")?;
+                let pairs = parsed.query_pairs();
+
+                Self::_from_url(&parsed, &pairs)
             }
         }
 
@@ -78,14 +144,14 @@ macro_rules! impl_common_stuff {
     };
 }
 
+type AddrError = &'static str;
+
 #[derive(Clone, PartialEq, Eq)]
 struct BaseBackendAddr {
     hostname: String,
     port: Option<u16>,
     use_ssl: bool,
 }
-
-type AddrError = &'static str;
 
 impl BaseBackendAddr {
     fn from_url(parsed: &Url, pairs: &url::form_urlencoded::Parse) -> Result<Self, AddrError> {
@@ -136,6 +202,13 @@ impl BaseBackendAddr {
         if !self.use_ssl {
             url.query_pairs_mut().append_pair("no_ssl", "true");
         }
+        url
+    }
+
+    pub fn to_http_redirection_url(&self) -> Url {
+        let scheme = if self.use_ssl { "https" } else { "http" };
+        let mut url = Url::parse(&format!("{}://{}", scheme, &self.hostname)).unwrap();
+        url.set_port(self.port).unwrap();
         url
     }
 }
@@ -200,12 +273,8 @@ impl BackendAddr {
         }
     }
 
-    fn _from_str(url: &str) -> Result<Self, AddrError> {
-        // Note `Url::parse` takes care of percent-encoding for query params
-        let parsed = Url::parse(url).map_err(|_| "Invalid url")?;
-        let pairs = parsed.query_pairs();
-
-        let base = BaseBackendAddr::from_url(&parsed, &pairs)?;
+    fn _from_url(parsed: &Url, pairs: &url::form_urlencoded::Parse) -> Result<Self, AddrError> {
+        let base = BaseBackendAddr::from_url(parsed, pairs)?;
 
         if parsed.path() != "" && parsed.path() != "/" {
             return Err("Cannot have path");
@@ -216,8 +285,8 @@ impl BackendAddr {
 
     expose_BaseBackendAddr_fields!();
 
-    pub fn to_url(&self) -> Url {
-        self.base.to_url()
+    pub fn _to_url(&self, url: Url) -> Url {
+        url
     }
 }
 
@@ -247,13 +316,9 @@ impl BackendOrganizationAddr {
         }
     }
 
-    fn _from_str(url: &str) -> Result<Self, AddrError> {
-        // Note `Url::parse` takes care of percent-encoding for query params
-        let parsed = Url::parse(url).map_err(|_| "Invalid url")?;
-        let pairs = parsed.query_pairs();
-
-        let base = BaseBackendAddr::from_url(&parsed, &pairs)?;
-        let organization_id = extract_organization_id(&parsed)?;
+    fn _from_url(parsed: &Url, pairs: &url::form_urlencoded::Parse) -> Result<Self, AddrError> {
+        let base = BaseBackendAddr::from_url(parsed, pairs)?;
+        let organization_id = extract_organization_id(parsed)?;
 
         let mut rvk_queries = pairs.filter(|(k, _)| k == "rvk");
         let root_verify_key = match rvk_queries.next() {
@@ -275,9 +340,10 @@ impl BackendOrganizationAddr {
 
     expose_BaseBackendAddr_fields!();
 
-    pub fn to_url(&self) -> Url {
-        let mut url = self.base.to_url();
-        url.set_path(&format!("/{}", self.organization_id));
+    pub fn _to_url(&self, mut url: Url) -> Url {
+        url.path_segments_mut()
+            .unwrap_or_else(|()| unreachable!())
+            .push(self.organization_id.as_ref());
         url.query_pairs_mut()
             .append_pair("rvk", &export_root_verify_key(&self.root_verify_key));
         url
@@ -345,14 +411,10 @@ impl BackendOrganizationBootstrapAddr {
         }
     }
 
-    fn _from_str(url: &str) -> Result<Self, AddrError> {
-        // Note `Url::parse` takes care of percent-encoding for query params
-        let parsed = Url::parse(url).map_err(|_| "Invalid url")?;
-        let pairs = parsed.query_pairs();
-
-        let base = BaseBackendAddr::from_url(&parsed, &pairs)?;
-        let organization_id = extract_organization_id(&parsed)?;
-        let action = extract_action(&pairs)?;
+    fn _from_url(parsed: &Url, pairs: &url::form_urlencoded::Parse) -> Result<Self, AddrError> {
+        let base = BaseBackendAddr::from_url(parsed, pairs)?;
+        let organization_id = extract_organization_id(parsed)?;
+        let action = extract_action(pairs)?;
         if action != "bootstrap_organization" {
             return Err("Expected `action=bootstrap_organization` query");
         }
@@ -372,9 +434,10 @@ impl BackendOrganizationBootstrapAddr {
 
     expose_BaseBackendAddr_fields!();
 
-    pub fn to_url(&self) -> Url {
-        let mut url = self.base.to_url();
-        url.set_path(&format!("/{}", self.organization_id));
+    pub fn _to_url(&self, mut url: Url) -> Url {
+        url.path_segments_mut()
+            .unwrap_or_else(|()| unreachable!())
+            .push(self.organization_id.as_ref());
         url.query_pairs_mut()
             .append_pair("action", "bootstrap_organization")
             // For legacy reasons, token must always be provided, hence default
@@ -422,14 +485,10 @@ impl BackendOrganizationFileLinkAddr {
         }
     }
 
-    fn _from_str(url: &str) -> Result<Self, AddrError> {
-        // Note `Url::parse` takes care of percent-encoding for query params
-        let parsed = Url::parse(url).map_err(|_| "Invalid url")?;
-        let pairs = parsed.query_pairs();
-
-        let base = BaseBackendAddr::from_url(&parsed, &pairs)?;
-        let organization_id = extract_organization_id(&parsed)?;
-        let action = extract_action(&pairs)?;
+    fn _from_url(parsed: &Url, pairs: &url::form_urlencoded::Parse) -> Result<Self, AddrError> {
+        let base = BaseBackendAddr::from_url(parsed, pairs)?;
+        let organization_id = extract_organization_id(parsed)?;
+        let action = extract_action(pairs)?;
         if action != "file_link" {
             return Err("Expected `action=file_link` query");
         }
@@ -466,9 +525,10 @@ impl BackendOrganizationFileLinkAddr {
 
     expose_BaseBackendAddr_fields!();
 
-    pub fn to_url(&self) -> Url {
-        let mut url = self.base.to_url();
-        url.set_path(&format!("/{}", self.organization_id));
+    pub fn _to_url(&self, mut url: Url) -> Url {
+        url.path_segments_mut()
+            .unwrap_or_else(|()| unreachable!())
+            .push(self.organization_id.as_ref());
         url.query_pairs_mut()
             .append_pair("action", "file_link")
             .append_pair("workspace_id", &self.workspace_id.to_string())
@@ -518,14 +578,10 @@ impl BackendInvitationAddr {
         }
     }
 
-    fn _from_str(url: &str) -> Result<Self, AddrError> {
-        // Note `Url::parse` takes care of percent-encoding for query params
-        let parsed = Url::parse(url).map_err(|_| "Invalid url")?;
-        let pairs = parsed.query_pairs();
-
-        let base = BaseBackendAddr::from_url(&parsed, &pairs)?;
-        let organization_id = extract_organization_id(&parsed)?;
-        let invitation_type = match extract_action(&pairs)? {
+    fn _from_url(parsed: &Url, pairs: &url::form_urlencoded::Parse) -> Result<Self, AddrError> {
+        let base = BaseBackendAddr::from_url(parsed, pairs)?;
+        let organization_id = extract_organization_id(parsed)?;
+        let invitation_type = match extract_action(pairs)? {
             x if x == "claim_user" => InvitationType::User,
             x if x == "claim_device" => InvitationType::Device,
             _ => return Err("Expected `action=claim_user` or `action=claim_device` query value"),
@@ -552,9 +608,10 @@ impl BackendInvitationAddr {
 
     expose_BaseBackendAddr_fields!();
 
-    pub fn to_url(&self) -> Url {
-        let mut url = self.base.to_url();
-        url.set_path(&format!("/{}", self.organization_id));
+    pub fn _to_url(&self, mut url: Url) -> Url {
+        url.path_segments_mut()
+            .unwrap_or_else(|()| unreachable!())
+            .push(self.organization_id.as_ref());
         url.query_pairs_mut()
             .append_pair(
                 "action",

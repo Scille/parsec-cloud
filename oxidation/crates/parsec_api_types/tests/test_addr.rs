@@ -35,3 +35,91 @@ fn test_addr_good() {
     );
     test_addr_good!(BackendInvitationAddr, "parsec://parsec.example.com/my_org?action=claim_user&token=3a50b191122b480ebb113b10216ef343");
 }
+
+macro_rules! test_redirection {
+    ($addr_type:ty, $parsec_url:literal, $stable_parsec_url:literal, $redirection_url:literal, $stable_redirection_url:literal $(,)?) => {
+        // From parsec scheme
+        let addr: $addr_type = $parsec_url.parse().unwrap();
+        assert_eq!(addr.clone().to_url().as_str(), $stable_parsec_url);
+        assert_eq!(
+            addr.clone().to_http_redirection_url().as_str(),
+            $stable_redirection_url
+        );
+
+        // From redirection schema
+        let addr2 = <$addr_type>::from_http_redirection($redirection_url).unwrap();
+        assert_eq!(&addr2, &addr);
+        assert_eq!(addr2.clone().to_url().as_str(), $stable_parsec_url);
+        assert_eq!(
+            addr2.clone().to_http_redirection_url().as_str(),
+            $stable_redirection_url
+        );
+
+        // From any
+        let addr3 = <$addr_type>::from_any($parsec_url).unwrap();
+        assert_eq!(&addr3, &addr);
+        assert_eq!(addr3.clone().to_url().as_str(), $stable_parsec_url);
+        assert_eq!(
+            addr3.clone().to_http_redirection_url().as_str(),
+            $stable_redirection_url
+        );
+
+        let addr4 = <$addr_type>::from_any($redirection_url).unwrap();
+        assert_eq!(&addr4, &addr);
+        assert_eq!(addr4.clone().to_url().as_str(), $stable_parsec_url);
+        assert_eq!(
+            addr4.clone().to_http_redirection_url().as_str(),
+            $stable_redirection_url
+        );
+    };
+    ($addr_type:ty, $parsec_url:literal, $stable_parsec_url:literal, $redirection_url:literal $(,)?) => {
+        test_redirection!(
+            $addr_type,
+            $parsec_url,
+            $stable_parsec_url,
+            $redirection_url,
+            $redirection_url
+        );
+    };
+    ($addr_type:ty, $parsec_url:literal, $redirection_url:literal $(,)?) => {
+        test_redirection!(
+            $addr_type,
+            $parsec_url,
+            $parsec_url,
+            $redirection_url,
+            $redirection_url
+        );
+    };
+}
+
+#[test]
+fn backend_addr_redirection() {
+    test_redirection!(
+        BackendAddr,
+        "parsec://example.com",
+        "https://example.com/redirect"
+    );
+    test_redirection!(
+        BackendAddr,
+        "parsec://example.com?no_ssl=false",
+        "parsec://example.com",
+        "https://example.com/redirect"
+    );
+    test_redirection!(
+        BackendAddr,
+        "parsec://example.com?no_ssl=true",
+        "http://example.com/redirect"
+    );
+
+    test_redirection!(
+        BackendOrganizationFileLinkAddr,
+        "parsec://parsec.example.com/my_org?action=file_link&workspace_id=3a50b191122b480ebb113b10216ef343&path=7NFDS4VQLP3XPCMTSEN34ZOXKGGIMTY2W2JI2SPIHB2P3M6K4YWAssss",
+        "https://parsec.example.com/redirect/my_org?action=file_link&workspace_id=3a50b191122b480ebb113b10216ef343&path=7NFDS4VQLP3XPCMTSEN34ZOXKGGIMTY2W2JI2SPIHB2P3M6K4YWAssss",
+    );
+    test_redirection!(
+        BackendOrganizationFileLinkAddr,
+        "parsec://parsec.example.com/my_org?action=file_link&no_ssl=true&workspace_id=3a50b191122b480ebb113b10216ef343&path=7NFDS4VQLP3XPCMTSEN34ZOXKGGIMTY2W2JI2SPIHB2P3M6K4YWAssss",
+        "parsec://parsec.example.com/my_org?no_ssl=true&action=file_link&workspace_id=3a50b191122b480ebb113b10216ef343&path=7NFDS4VQLP3XPCMTSEN34ZOXKGGIMTY2W2JI2SPIHB2P3M6K4YWAssss",
+        "http://parsec.example.com/redirect/my_org?action=file_link&workspace_id=3a50b191122b480ebb113b10216ef343&path=7NFDS4VQLP3XPCMTSEN34ZOXKGGIMTY2W2JI2SPIHB2P3M6K4YWAssss",
+    );
+}
