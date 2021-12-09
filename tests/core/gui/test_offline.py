@@ -66,6 +66,9 @@ async def test_backend_desync_notification(
     # Shift by 5 minutes
     minutes = 5
 
+    # Force sync by creating a workspace
+    await central_widget.core.user_fs.workspace_create("test1")
+
     # Wait until we get the notification
     async with aqtbot.wait_signal(central_widget.systray_notification):
         await aqtbot.wait_until(_offline)
@@ -73,11 +76,14 @@ async def test_backend_desync_notification(
     # Wait for the dialog
     await aqtbot.wait_until(_assert_desync_dialog)
 
+    # Clear dialogs
+    autoclose_dialog.dialogs.clear()
+
     # Wait half a second
     await aqtbot.wait(500)
 
-    # There should not more more dialogs than before
-    await aqtbot.wait_until(_assert_desync_dialog)
+    # There should be no new dialog
+    assert len(autoclose_dialog.dialogs) == 0
 
     # Re-sync
     minutes = 0
@@ -86,8 +92,11 @@ async def test_backend_desync_notification(
     # Shift again
     minutes = 5
 
+    # Force sync by creating a workspace
+    await central_widget.core.user_fs.workspace_create("test2")
+
     # Wait until we get the notification
     await aqtbot.wait_until(_offline)
 
-    # There should not more more dialogs than before
-    await aqtbot.wait_until(_assert_desync_dialog)
+    # There should be no new dialog
+    assert len(autoclose_dialog.dialogs) == 0
