@@ -3,7 +3,7 @@
 use chrono::prelude::*;
 use serde::{Deserialize, Serialize};
 
-use super::utils::ts_with_nanoseconds_as_double;
+use super::ext_types::DateTimeExtFormat;
 use crate::{EntryID, EntryName};
 use parsec_api_crypto::SecretKey;
 
@@ -15,7 +15,7 @@ pub enum MessageContent {
         name: EntryName,
         id: EntryID,
         encryption_revision: u32,
-        #[serde(with = "ts_with_nanoseconds_as_double")]
+        #[serde(with = "DateTimeExtFormat")]
         encrypted_on: DateTime<Utc>,
         key: SecretKey,
         // Don't include role given the only reliable way to get this information
@@ -32,7 +32,7 @@ pub enum MessageContent {
         name: EntryName,
         id: EntryID,
         encryption_revision: u32,
-        #[serde(with = "ts_with_nanoseconds_as_double")]
+        #[serde(with = "DateTimeExtFormat")]
         encrypted_on: DateTime<Utc>,
         key: SecretKey,
     },

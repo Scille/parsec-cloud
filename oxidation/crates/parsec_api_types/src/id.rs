@@ -146,12 +146,56 @@ impl From<DeviceID> for String {
 }
 
 /*
+ * DeviceLabel
+ */
+
+#[derive(Clone, SerializeDisplay, DeserializeFromStr, PartialEq, Eq)]
+pub struct DeviceLabel(String);
+
+impl std::convert::AsRef<str> for DeviceLabel {
+    #[inline]
+    fn as_ref(&self) -> &str {
+        &self.0
+    }
+}
+
+impl_debug_from_display!(DeviceLabel);
+
+// Note: Display is used for Serialization !
+impl std::fmt::Display for DeviceLabel {
+    fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
+        f.write_str(&self.0)
+    }
+}
+
+// Note: FromStr is used for Deserialization !
+impl FromStr for DeviceLabel {
+    type Err = &'static str;
+
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        let id: String = s.nfc().collect();
+        // Contained within 255 bytes
+        if id.len() <= 255 {
+            Ok(Self(id))
+        } else {
+            Err(concat!("Invalid DeviceLabel"))
+        }
+    }
+}
+
+impl From<DeviceLabel> for String {
+    fn from(item: DeviceLabel) -> String {
+        item.0
+    }
+}
+
+/*
  * HumanHandle
  */
 
 #[derive(Clone, Serialize, Deserialize, Eq)]
 #[serde(try_from = "(&str, &str)", into = "(String, String)")]
-#[non_exhaustive] // Prevent initialization within going through the factory
+#[non_exhaustive] // Prevent initialization without going through the factory
 pub struct HumanHandle {
     pub email: String,
     // Label is purely informative
@@ -212,7 +256,7 @@ impl From<HumanHandle> for (String, String) {
  * UserProfile
  */
 
-#[derive(Copy, Clone, Debug, Serialize, Deserialize, PartialEq, Eq)]
+#[derive(Copy, Clone, Debug, PartialEq, Eq)]
 pub enum UserProfile {
     /// Standard user can create new realms and invite new devices for himself.
     ///
@@ -222,13 +266,57 @@ pub enum UserProfile {
     /// access redacted certificates (i.e. the realms created by an outsider
     /// cannot be shared and the outsider cannot be OWNER/MANAGER
     /// on a realm shared with him)
-
-    #[serde(rename = "ADMIN")]
     Admin,
-    #[serde(rename = "STANDARD")]
     Standard,
-    #[serde(rename = "OUTSIDER")]
     Outsider,
+}
+
+impl Serialize for UserProfile {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: serde::ser::Serializer,
+    {
+        let value = match self {
+            UserProfile::Admin => "ADMIN",
+            UserProfile::Standard => "STANDARD",
+            UserProfile::Outsider => "OUTSIDER",
+        };
+        serializer.serialize_str(value)
+    }
+}
+
+impl<'de> Deserialize<'de> for UserProfile {
+    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
+    where
+        D: serde::de::Deserializer<'de>,
+    {
+        struct Visitor;
+
+        impl<'de> serde::de::Visitor<'de> for Visitor {
+            type Value = UserProfile;
+
+            fn expecting(&self, formatter: &mut std::fmt::Formatter) -> std::fmt::Result {
+                formatter.write_str(concat!("an user profile as string"))
+            }
+
+            fn visit_str<E>(self, v: &str) -> Result<Self::Value, E>
+            where
+                E: serde::de::Error,
+            {
+                match v {
+                    "ADMIN" => Ok(UserProfile::Admin),
+                    "STANDARD" => Ok(UserProfile::Standard),
+                    "OUTSIDER" => Ok(UserProfile::Outsider),
+                    _ => Err(serde::de::Error::invalid_type(
+                        serde::de::Unexpected::Str(v),
+                        &self,
+                    )),
+                }
+            }
+        }
+
+        deserializer.deserialize_str(Visitor)
+    }
 }
 
 #[cfg(test)]

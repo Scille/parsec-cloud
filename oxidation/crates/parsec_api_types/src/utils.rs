@@ -1,5 +1,11 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BSLv1.1 (eventually AGPLv3) 2016-2021 Scille SAS
 
+use byteorder::{ByteOrder, NetworkEndian};
+use chrono::prelude::*;
+use serde::{de, Deserializer, Serializer};
+use serde_bytes::ByteBuf;
+use serde_with::{DeserializeAs, SerializeAs};
+
 macro_rules! new_uuid_type {
     (pub $name:ident) => {
         #[derive(Clone, Debug, serde::Serialize, serde::Deserialize, PartialEq, Eq)]
@@ -25,6 +31,14 @@ macro_rules! new_uuid_type {
         impl Default for $name {
             fn default() -> Self {
                 Self(uuid::Uuid::new_v4())
+            }
+        }
+
+        impl std::ops::Deref for $name {
+            type Target = uuid::Uuid;
+
+            fn deref(&self) -> &Self::Target {
+                &self.0
             }
         }
 
@@ -62,41 +76,231 @@ macro_rules! new_uuid_type {
 pub(crate) use new_uuid_type;
 
 // TODO: move to it own crate ?
-/// Serialize/Deserialize DateTime as f64 unix timestamp with nanosecond precision
-pub mod ts_with_nanoseconds_as_double {
-    use chrono::{DateTime, TimeZone, Utc};
-    use core::fmt;
-    use serde::{de, ser};
 
-    pub fn serialize<S>(dt: &DateTime<Utc>, serializer: S) -> Result<S::Ok, S::Error>
+// /// Serialize/Deserialize DateTime as f64 unix timestamp with nanosecond precision
+// pub mod uuid_as_msgpack_extension {
+//     use chrono::{DateTime, TimeZone, Utc};
+//     use serde::{de, ser};
+
+//     pub fn serialize<S>(dt: &DateTime<Utc>, s: S) -> Result<S::Ok, S::Error>
+//     where
+//         S: ser::Serializer,
+//     {
+//         let timestamp = dt.timestamp() as f64 + (dt.timestamp_subsec_nanos() as f64 / 1e9);
+//         s.serialize_newtype_struct(rmp_serde::MSGPACK_EXT_STRUCT_NAME, &(crate::utils::DATETIME_EXT_ID, timestamp))
+//     }
+
+//     struct TimestampVisitor;
+
+//     pub fn deserialize<'de, D>(d: D) -> Result<DateTime<Utc>, D::Error>
+//     where
+//         D: de::Deserializer<'de>,
+//     {
+//         d.deserialize_newtype_struct(rmp_serde::MSGPACK_EXT_STRUCT_NAME, TimestampVisitor)
+//     }
+
+//     impl<'de> de::Visitor<'de> for TimestampVisitor {
+//         type Value = DateTime<Utc>;
+
+//         fn expecting(&self, formatter: &mut core::fmt::Formatter) -> core::fmt::Result {
+//             formatter.write_str("a unix timestamp as 64 bits floating point number")
+//         }
+
+//         fn visit_seq<A>(self, mut seq: A) -> Result<Self::Value, A::Error>
+//         where
+//             A: de::SeqAccess<'de>,
+//         {
+//             let ext_id: u8 = seq.next_element()?.unwrap();
+//             let ts: f64 = seq.next_element()?.unwrap();
+//             // seq.
+//             // if seq.next_element::<>()?.is_some() {
+//             // //     Err(A::Error))
+//             //     panic!("HAAAAAAAAAAAAA");
+//             // } else {
+//                 Ok(Utc.timestamp_nanos((ts * 1e9) as i64))
+//             // }
+//         }
+//     }
+// }
+
+// /// Serialize/Deserialize DateTime as f64 unix timestamp with nanosecond precision
+// pub mod datetime_as_msgpack_extension {
+//     use chrono::{DateTime, TimeZone, Utc};
+//     use serde::{de, ser};
+
+//     pub fn serialize<S>(dt: &DateTime<Utc>, s: S) -> Result<S::Ok, S::Error>
+//     where
+//         S: ser::Serializer,
+//     {
+//         let timestamp = dt.timestamp() as f64 + (dt.timestamp_subsec_nanos() as f64 / 1e9);
+//         s.serialize_newtype_struct(rmp_serde::MSGPACK_EXT_STRUCT_NAME, &(crate::utils::DATETIME_EXT_ID, timestamp))
+//     }
+
+//     struct TimestampVisitor;
+
+//     pub fn deserialize<'de, D>(d: D) -> Result<DateTime<Utc>, D::Error>
+//     where
+//         D: de::Deserializer<'de>,
+//     {
+//         d.deserialize_newtype_struct(rmp_serde::MSGPACK_EXT_STRUCT_NAME, TimestampVisitor)
+//     }
+
+//     impl<'de> de::Visitor<'de> for TimestampVisitor {
+//         type Value = DateTime<Utc>;
+
+//         fn expecting(&self, formatter: &mut core::fmt::Formatter) -> core::fmt::Result {
+//             formatter.write_str("a unix timestamp as 64 bits floating point number")
+//         }
+
+//         fn visit_seq<A>(self, mut seq: A) -> Result<Self::Value, A::Error>
+//         where
+//             A: de::SeqAccess<'de>,
+//         {
+//             let ext_id: u8 = seq.next_element()?.unwrap();
+//             let ts: f64 = seq.next_element()?.unwrap();
+//             // seq.
+//             // if seq.next_element::<>()?.is_some() {
+//             // //     Err(A::Error))
+//             //     panic!("HAAAAAAAAAAAAA");
+//             // } else {
+//                 Ok(Utc.timestamp_nanos((ts * 1e9) as i64))
+//             // }
+//         }
+//     }
+// }
+
+const DATETIME_EXT_ID: i8 = 1;
+const UUID_EXT_ID: i8 = 2;
+
+#[derive(Debug, PartialEq)]
+pub struct UuidExtFormat((i8, ByteBuf));
+
+impl SerializeAs<uuid::Uuid> for UuidExtFormat {
+    fn serialize_as<S>(id: &uuid::Uuid, serializer: S) -> Result<S::Ok, S::Error>
     where
-        S: ser::Serializer,
+        S: Serializer,
     {
-        serializer.serialize_f64(dt.timestamp() as f64 + (dt.timestamp_subsec_nanos() as f64 / 1e9))
+        // `rmp_serde::MSGPACK_EXT_STRUCT_NAME` is a magic value to tell
+        // rmp_serde this should be treated as an extension type
+        serializer.serialize_newtype_struct(
+            rmp_serde::MSGPACK_EXT_STRUCT_NAME,
+            &(UUID_EXT_ID, id.as_ref()),
+        )
     }
+}
 
-    struct TimestampVisitor;
-
-    pub fn deserialize<'de, D>(d: D) -> Result<DateTime<Utc>, D::Error>
+impl<'de> DeserializeAs<'de, uuid::Uuid> for UuidExtFormat {
+    fn deserialize_as<D>(deserializer: D) -> Result<uuid::Uuid, D::Error>
     where
-        D: de::Deserializer<'de>,
+        D: Deserializer<'de>,
     {
-        d.deserialize_f64(TimestampVisitor)
-    }
+        struct Visitor;
 
-    impl<'de> de::Visitor<'de> for TimestampVisitor {
-        type Value = DateTime<Utc>;
+        impl<'de> de::Visitor<'de> for Visitor {
+            type Value = uuid::Uuid;
 
-        fn expecting(&self, formatter: &mut core::fmt::Formatter) -> fmt::Result {
-            formatter.write_str("a unix timestamp as 64 bits floating point number")
+            fn expecting(&self, formatter: &mut core::fmt::Formatter) -> core::fmt::Result {
+                formatter.write_str("a sequence of tag & bytes")
+            }
+
+            fn visit_newtype_struct<D>(self, deserializer: D) -> Result<Self::Value, D::Error>
+            where
+                D: Deserializer<'de>,
+            {
+                deserializer.deserialize_tuple(2, self)
+            }
+
+            fn visit_seq<A>(self, mut seq: A) -> Result<Self::Value, A::Error>
+            where
+                A: serde::de::SeqAccess<'de>,
+            {
+                let tag: i8 = seq
+                    .next_element()?
+                    .ok_or_else(|| serde::de::Error::invalid_length(0, &self))?;
+                let data: ByteBuf = seq
+                    .next_element()?
+                    .ok_or_else(|| serde::de::Error::invalid_length(1, &self))?;
+                if tag == UUID_EXT_ID {
+                    uuid::Uuid::from_slice(&data)
+                        .map_err(|_| serde::de::Error::custom("invalid size of data extension"))
+                } else {
+                    let unexp = de::Unexpected::Signed(tag as i64);
+                    Err(serde::de::Error::invalid_value(unexp, &self))
+                }
+            }
         }
 
-        /// Deserialize a timestamp in milliseconds since the epoch
-        fn visit_f64<E>(self, value: f64) -> Result<DateTime<Utc>, E>
-        where
-            E: de::Error,
-        {
-            Ok(Utc.timestamp_nanos((value * 1e9) as i64))
+        // `rmp_serde::MSGPACK_EXT_STRUCT_NAME` is a magic value to tell
+        // rmp_serde this should be treated as an extension type
+        deserializer.deserialize_newtype_struct(rmp_serde::MSGPACK_EXT_STRUCT_NAME, Visitor)
+    }
+}
+
+#[derive(Debug, PartialEq)]
+pub struct DateTimeExtFormat((i8, f64));
+
+impl SerializeAs<DateTime<Utc>> for DateTimeExtFormat {
+    fn serialize_as<S>(dt: &DateTime<Utc>, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        let timestamp = dt.timestamp() as f64 + (dt.timestamp_subsec_nanos() as f64 / 1e9);
+        // `rmp_serde::MSGPACK_EXT_STRUCT_NAME` is a magic value to tell
+        // rmp_serde this should be treated as an extension type
+        serializer.serialize_newtype_struct(
+            rmp_serde::MSGPACK_EXT_STRUCT_NAME,
+            &(DATETIME_EXT_ID, timestamp),
+        )
+    }
+}
+
+impl<'de> DeserializeAs<'de, DateTime<Utc>> for DateTimeExtFormat {
+    fn deserialize_as<D>(deserializer: D) -> Result<DateTime<Utc>, D::Error>
+    where
+        D: Deserializer<'de>,
+    {
+        struct Visitor;
+
+        impl<'de> de::Visitor<'de> for Visitor {
+            type Value = DateTime<Utc>;
+
+            fn expecting(&self, formatter: &mut core::fmt::Formatter) -> core::fmt::Result {
+                formatter.write_str("a sequence of tag & double")
+            }
+
+            fn visit_newtype_struct<D>(self, deserializer: D) -> Result<Self::Value, D::Error>
+            where
+                D: Deserializer<'de>,
+            {
+                deserializer.deserialize_tuple(2, self)
+            }
+
+            fn visit_seq<A>(self, mut seq: A) -> Result<Self::Value, A::Error>
+            where
+                A: serde::de::SeqAccess<'de>,
+            {
+                let tag: i8 = seq
+                    .next_element()?
+                    .ok_or_else(|| serde::de::Error::invalid_length(0, &self))?;
+                let ts_raw: ByteBuf = seq
+                    .next_element()?
+                    .ok_or_else(|| serde::de::Error::invalid_length(1, &self))?;
+                if ts_raw.len() != 8 {
+                    return Err(serde::de::Error::custom("invalid size of data extension"));
+                }
+                let ts = NetworkEndian::read_f64(&ts_raw);
+
+                if tag == DATETIME_EXT_ID {
+                    Ok(Utc.timestamp_nanos((ts * 1e9) as i64))
+                } else {
+                    let unexp = de::Unexpected::Signed(tag as i64);
+                    Err(serde::de::Error::invalid_value(unexp, &self))
+                }
+            }
         }
+
+        // `rmp_serde::MSGPACK_EXT_STRUCT_NAME` is a magic value to tell
+        // rmp_serde this should be treated as an extension type
+        deserializer.deserialize_newtype_struct(rmp_serde::MSGPACK_EXT_STRUCT_NAME, Visitor)
     }
 }

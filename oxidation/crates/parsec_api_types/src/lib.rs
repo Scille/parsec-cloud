@@ -8,13 +8,13 @@ mod certif;
 mod id;
 mod invite;
 mod manifest;
-mod message;
-mod utils;
+// mod message;
+mod ext_types;
 
 pub use addr::*;
 pub use certif::*;
+pub use ext_types::*;
 pub use id::*;
 pub use invite::*;
 pub use manifest::*;
-pub use message::MessageContent;
-pub use message::*;
+// pub use message::*;

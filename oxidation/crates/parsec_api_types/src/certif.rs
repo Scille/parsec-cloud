@@ -1,123 +1,282 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BSLv1.1 (eventually AGPLv3) 2016-2021 Scille SAS
 
 use chrono::prelude::*;
+use flate2::read::ZlibDecoder;
+use flate2::write::ZlibEncoder;
 use serde::{Deserialize, Serialize};
+use serde_with::*;
+use std::io::{Read, Write};
 
-use super::utils::ts_with_nanoseconds_as_double;
-use crate::{DeviceID, EntryID, HumanHandle, RealmRole, UserID, UserProfile};
-use parsec_api_crypto::{PublicKey, VerifyKey};
+use crate::ext_types::DateTimeExtFormat;
+use crate::{DeviceID, DeviceLabel, EntryID, HumanHandle, RealmRole, UserID, UserProfile};
+use parsec_api_crypto::{PublicKey, SigningKey, VerifyKey};
+
+// Data pipeline:
+// content -> serialized -> compressed -> signed -> encrypted
 
 #[allow(unused_macros)]
-macro_rules! impl_serialization {
-    ($name:ident, $raw_name:ident) => {
-        impl $name {
-            pub fn dump(&self) -> Vec<u8> {
-                rmp_serde::to_vec(&self).unwrap();
+macro_rules! new_data_type_enum {
+    (
+        $name:ident,
+        $value:literal
+        $(,)?
+    ) => {
+        // Enum with single value works as a constant field
+        #[derive(Clone, Copy, Debug, PartialEq, Eq)]
+        enum $name {
+            Value,
+        }
+
+        impl Default for $name {
+            fn default() -> Self {
+                $name::Value
             }
+        }
 
-            pub fn dump_and_sign(&self, author_signkey: &SigningKey) -> Vec<u8> {
-                author_signkey.sign(&self.dump())
+        impl Serialize for $name {
+            fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+            where
+                S: serde::ser::Serializer,
+            {
+                serializer.serialize_str($value)
             }
+        }
 
-            pub fn dump_sign_and_encrypt(
-                &self,
-                author_signkey: &SigningKey,
-                key: &SecretKey,
-            ) -> Vec<u8> {
-                key.encrypt(&self.dump_and_sign(author_signkey))
-            }
+        impl<'de> Deserialize<'de> for $name {
+            fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
+            where
+                D: serde::de::Deserializer<'de>,
+            {
+                struct Visitor;
 
-            pub fn dump_sign_and_encrypt_for(
-                &self,
-                author_signkey: &SigningKey,
-                recipient_pubkey: &PublicKey,
-            ) -> Vec<u8> {
-                recipient_pubkey.encrypt_from_self(&self.dump_and_sign(author_signkey))
-            }
+                impl<'de> serde::de::Visitor<'de> for Visitor {
+                    type Value = $name;
 
-            pub fn unsecure_load(signed: &[u8]) -> $name {}
+                    fn expecting(&self, formatter: &mut std::fmt::Formatter) -> std::fmt::Result {
+                        formatter.write_str(concat!("the `", $value, "` string"))
+                    }
 
-            pub fn verify_and_load(
-                signed: &[u8],
-                author_verify_key: &VerifyKey,
-                expected_author: Option<DeviceID>,
-                expected_timestamp: Option<DateTime>,
-            ) -> Result<$name, &'static str> {
-                let serialized = author_verify_key.verify(signed)?;
-                content = $name::try_from(serialized)?;
-            }
+                    fn visit_str<E>(self, v: &str) -> Result<Self::Value, E>
+                    where
+                        E: serde::de::Error,
+                    {
+                        if v == $value {
+                            Ok($name::Value)
+                        } else {
+                            Err(serde::de::Error::invalid_type(
+                                serde::de::Unexpected::Str(v),
+                                &self,
+                            ))
+                        }
+                    }
+                }
 
-            pub fn decrypt_verify_and_load(
-                encrypted: bytes,
-                key: SecretKey,
-                author_verify_key: VerifyKey,
-                expected_author: DeviceID,
-                expected_timestamp: DateTime,
-            ) -> $name {
-            }
-
-            pub fn decrypt_verify_and_load_for(
-                encrypted: bytes,
-                recipient_privkey: PrivateKey,
-                author_verify_key: VerifyKey,
-                expected_author: DeviceID,
-                expected_timestamp: DateTime,
-            ) -> $name {
+                deserializer.deserialize_str(Visitor)
             }
         }
     };
 }
 
-#[derive(Debug, Serialize, Deserialize, PartialEq, Eq)]
-#[serde(tag = "type")]
-pub enum CertificateContent {
-    #[serde(rename = "user_certificate")]
-    User {
-        // Author is None if signed by the root key
-        author: Option<DeviceID>,
-        #[serde(with = "ts_with_nanoseconds_as_double")]
-        timestamp: DateTime<Utc>,
+#[allow(unused_macros)]
+macro_rules! new_data_struct_type {
+    (
+        $name:ident,
+        type: $type_value:literal,
+        $(
+            $( #[$field_cfgs:meta] )*
+            $field:ident : $field_type:ty
+        ),*
+        $(,)?
+    ) => {
 
-        user_id: UserID,
-        human_handle: Option<HumanHandle>,
-        public_key: PublicKey,
-        profile: UserProfile,
-    },
+        paste::paste! {
+            // Enum with single value works as a constant field
+            new_data_type_enum!([<$name DataType>], $type_value);
 
-    #[serde(rename = "revoked_user_certificate")]
-    RevokedUser {
-        author: DeviceID,
-        #[serde(with = "ts_with_nanoseconds_as_double")]
-        timestamp: DateTime<Utc>,
+            #[serde_as]
+            #[derive(Clone, Debug, Serialize, Deserialize, PartialEq, Eq)]
+            struct $name {
 
-        user_id: UserID,
-    },
+                #[serde(rename="type")]
+                type_: [<$name DataType>],
 
-    #[serde(rename = "device_certificate")]
-    Device {
-        // Author is None if signed by the root key
-        author: Option<DeviceID>,
-        #[serde(with = "ts_with_nanoseconds_as_double")]
-        timestamp: DateTime<Utc>,
+                $(
+                    $(#[$field_cfgs])*
+                    $field: $field_type
+                ),*
 
-        device_id: DeviceID,
-        // Device label can be none in case of redacted certificate
-        device_label: Option<String>,
-        verify_key: VerifyKey,
-    },
+            }
+        }
 
-    #[serde(rename = "realm_role_certificate")]
-    RealmRole {
-        // Author is None if signed by the root key
-        author: Option<DeviceID>,
-        #[serde(with = "ts_with_nanoseconds_as_double")]
-        timestamp: DateTime<Utc>,
+    };
+}
 
-        realm_id: EntryID,
-        user_id: UserID,
-        // Set to None if role removed
-        role: Option<RealmRole>,
-    },
+macro_rules! impl_transparent_data_format_convertion {
+    ($obj_type:ty, $data_type:ty, $($field:ident),* $(,)?) => {
+
+        impl From<$data_type> for $obj_type {
+            fn from(data: $data_type) -> Self {
+                Self {
+                    $($field: data.$field),*
+                }
+            }
+        }
+
+        impl From<$obj_type> for $data_type {
+            fn from(obj: $obj_type) -> Self {
+                Self {
+                    type_: Default::default(),
+                    $($field: obj.$field),*
+                }
+            }
+        }
+
+    };
+}
+
+#[allow(unused_macros)]
+macro_rules! impl_verify_and_load_allow_root {
+    ($name:ident) => {
+        impl $name {
+            pub fn verify_and_load<'a>(
+                signed: &[u8],
+                author_verify_key: &VerifyKey,
+                expected_author: CertificateSignerRef<'a>,
+            ) -> Result<$name, &'static str> {
+                let compressed = author_verify_key
+                    .verify(signed)
+                    .map_err(|_| "Invalid signature")?;
+                let mut serialized = vec![];
+                ZlibDecoder::new(&compressed[..])
+                    .read_to_end(&mut serialized)
+                    .map_err(|_| "Invalid compression")?;
+                let obj: $name =
+                    rmp_serde::from_read_ref(&serialized).map_err(|_| "Invalid serialization")?;
+                match (&obj.author, expected_author) {
+                    (CertificateSignerOwned::User(ref a_id), CertificateSignerRef::User(ea_id))
+                        if a_id == ea_id =>
+                    {
+                        Ok(obj)
+                    }
+                    (CertificateSignerOwned::Root, CertificateSignerRef::Root) => Ok(obj),
+                    _ => Err("Unexpected author"),
+                }
+            }
+        }
+    };
+}
+
+macro_rules! impl_verify_and_load_no_root {
+    ($name:ident) => {
+        impl $name {
+            pub fn verify_and_load(
+                signed: &[u8],
+                author_verify_key: &VerifyKey,
+                expected_author: &DeviceID,
+            ) -> Result<$name, &'static str> {
+                let compressed = author_verify_key
+                    .verify(signed)
+                    .map_err(|_| "Invalid signature")?;
+                let mut serialized = vec![];
+                ZlibDecoder::new(&compressed[..])
+                    .read_to_end(&mut serialized)
+                    .map_err(|_| "Invalid compression")?;
+                let obj: $name =
+                    rmp_serde::from_read_ref(&serialized).map_err(|_| "Invalid serialization")?;
+                if &obj.author != expected_author {
+                    Err("Unexpected author")
+                } else {
+                    Ok(obj)
+                }
+            }
+        }
+    };
+}
+
+macro_rules! impl_unsecure_load {
+    ($name:ident) => {
+        impl $name {
+            pub fn unsecure_load(signed: &[u8]) -> Result<$name, &'static str> {
+                let compressed = VerifyKey::unsecure_unwrap(signed).ok_or("Invalid signature")?;
+                let mut serialized = vec![];
+                ZlibDecoder::new(&compressed[..])
+                    .read_to_end(&mut serialized)
+                    .map_err(|_| "Invalid compression")?;
+                rmp_serde::from_read_ref(&serialized).map_err(|_| "Invalid serialization")
+            }
+        }
+    };
+}
+
+macro_rules! impl_dump_and_sign {
+    ($name:ident) => {
+        impl $name {
+            pub fn dump_and_sign(&self, author_signkey: &SigningKey) -> Vec<u8> {
+                let serialized = rmp_serde::to_vec_named(&self).unwrap();
+                println!("::::::{:?}", serialized);
+                let mut e = ZlibEncoder::new(Vec::new(), flate2::Compression::default());
+                e.write_all(&serialized).unwrap();
+                let compressed = e.finish().unwrap();
+                author_signkey.sign(&compressed)
+            }
+        }
+    };
+}
+
+/*
+ * CertificateSigner
+ */
+
+// Signature can be done either by a user (through one of it devices) or
+// by the Root Key when bootstrapping the organization (only the very first
+// user and device certificates are signed this way)
+
+pub enum CertificateSignerRef<'a> {
+    User(&'a DeviceID),
+    Root,
+}
+
+impl<'a> From<Option<&'a DeviceID>> for CertificateSignerRef<'a> {
+    fn from(item: Option<&'a DeviceID>) -> CertificateSignerRef {
+        match item {
+            Some(device_id) => CertificateSignerRef::User(device_id),
+            None => CertificateSignerRef::Root,
+        }
+    }
+}
+
+impl<'a> From<CertificateSignerRef<'a>> for Option<&'a DeviceID> {
+    fn from(item: CertificateSignerRef<'a>) -> Option<&'a DeviceID> {
+        match item {
+            CertificateSignerRef::User(device_id) => Some(device_id),
+            CertificateSignerRef::Root => None,
+        }
+    }
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
+#[serde(into = "Option<DeviceID>", try_from = "Option<DeviceID>")]
+pub enum CertificateSignerOwned {
+    User(DeviceID),
+    Root,
+}
+
+impl From<Option<DeviceID>> for CertificateSignerOwned {
+    fn from(item: Option<DeviceID>) -> CertificateSignerOwned {
+        match item {
+            Some(device_id) => CertificateSignerOwned::User(device_id),
+            None => CertificateSignerOwned::Root,
+        }
+    }
+}
+
+impl From<CertificateSignerOwned> for Option<DeviceID> {
+    fn from(item: CertificateSignerOwned) -> Option<DeviceID> {
+        match item {
+            CertificateSignerOwned::User(device_id) => Some(device_id),
+            CertificateSignerOwned::Root => None,
+        }
+    }
 }
 
 /*
@@ -125,52 +284,68 @@ pub enum CertificateContent {
  */
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
-#[serde(into = "CertificateContent", try_from = "CertificateContent")]
+#[serde(into = "UserCertificateData", from = "UserCertificateData")]
 pub struct UserCertificate {
-    // Author is None if signed by the root key
-    pub author: Option<DeviceID>,
+    pub author: CertificateSignerOwned,
     pub timestamp: DateTime<Utc>,
+
     pub user_id: UserID,
+    // Human handle can be none in case of redacted certificate
     pub human_handle: Option<HumanHandle>,
     pub public_key: PublicKey,
     pub profile: UserProfile,
 }
 
-impl TryFrom<CertificateContent> for UserCertificate {
-    type Error = &'static str;
-    fn try_from(data: CertificateContent) -> Result<Self, Self::Error> {
-        if let CertificateContent::User {
-            author,
-            timestamp,
-            user_id,
-            human_handle,
-            public_key,
+impl_verify_and_load_allow_root!(UserCertificate);
+impl_unsecure_load!(UserCertificate);
+impl_dump_and_sign!(UserCertificate);
+
+new_data_struct_type!(
+    UserCertificateData,
+    type: "user_certificate",
+
+    author: CertificateSignerOwned,
+    #[serde_as(as = "DateTimeExtFormat")]
+    timestamp: DateTime<Utc>,
+
+    user_id: UserID,
+    // Human handle can be none in case of redacted certificate
+    human_handle: Option<HumanHandle>,
+    public_key: PublicKey,
+    // `profile` replaces `is_admin` field (which is still required for
+    // backward compatibility)
+    is_admin: bool,
+    profile: Option<UserProfile>,
+);
+
+impl From<UserCertificateData> for UserCertificate {
+    fn from(data: UserCertificateData) -> Self {
+        let profile = data.profile.unwrap_or_else(|| match data.is_admin {
+            true => UserProfile::Admin,
+            false => UserProfile::Standard,
+        });
+        Self {
+            author: data.author,
+            timestamp: data.timestamp,
+            user_id: data.user_id,
+            human_handle: data.human_handle,
+            public_key: data.public_key,
             profile,
-        } = data
-        {
-            Ok(Self {
-                author,
-                timestamp,
-                user_id,
-                human_handle,
-                public_key,
-                profile,
-            })
-        } else {
-            Err("Invalid manifest type")
         }
     }
 }
 
-impl From<UserCertificate> for CertificateContent {
-    fn from(certif: UserCertificate) -> Self {
-        CertificateContent::User {
-            author: certif.author,
-            timestamp: certif.timestamp,
-            user_id: certif.user_id,
-            human_handle: certif.human_handle,
-            public_key: certif.public_key,
-            profile: certif.profile,
+impl From<UserCertificate> for UserCertificateData {
+    fn from(obj: UserCertificate) -> Self {
+        Self {
+            type_: Default::default(),
+            author: obj.author,
+            timestamp: obj.timestamp,
+            user_id: obj.user_id,
+            human_handle: obj.human_handle,
+            public_key: obj.public_key,
+            profile: Some(obj.profile),
+            is_admin: obj.profile == UserProfile::Admin,
         }
     }
 }
@@ -179,224 +354,125 @@ impl From<UserCertificate> for CertificateContent {
  * RevokedUserCertificate
  */
 
-#[derive(Debug, PartialEq, Eq)]
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
+#[serde(
+    into = "RevokedUserCertificateData",
+    from = "RevokedUserCertificateData"
+)]
 pub struct RevokedUserCertificate {
-    // Author is None if signed by the root key
-    pub author: Option<DeviceID>,
+    pub author: DeviceID,
     pub timestamp: DateTime<Utc>,
+
     pub user_id: UserID,
 }
+
+impl_verify_and_load_no_root!(RevokedUserCertificate);
+impl_unsecure_load!(RevokedUserCertificate);
+impl_dump_and_sign!(RevokedUserCertificate);
+
+new_data_struct_type!(
+    RevokedUserCertificateData,
+    type: "revoked_user_certificate",
+
+    author: DeviceID,
+    #[serde_as(as = "DateTimeExtFormat")]
+    timestamp: DateTime<Utc>,
+
+    user_id: UserID,
+);
+
+impl_transparent_data_format_convertion!(
+    RevokedUserCertificate,
+    RevokedUserCertificateData,
+    author,
+    timestamp,
+    user_id,
+);
 
 /*
  * DeviceCertificate
  */
 
-#[derive(Debug, PartialEq, Eq)]
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
+#[serde(into = "DeviceCertificateData", from = "DeviceCertificateData")]
 pub struct DeviceCertificate {
-    // Author is None if signed by the root key
-    pub author: Option<DeviceID>,
+    pub author: CertificateSignerOwned,
     pub timestamp: DateTime<Utc>,
+
     pub device_id: DeviceID,
     // Device label can be none in case of redacted certificate
-    pub device_label: Option<String>,
+    pub device_label: Option<DeviceLabel>,
     pub verify_key: VerifyKey,
 }
+
+impl_verify_and_load_allow_root!(DeviceCertificate);
+impl_unsecure_load!(DeviceCertificate);
+impl_dump_and_sign!(DeviceCertificate);
+
+new_data_struct_type!(
+    DeviceCertificateData,
+    type: "device_certificate",
+
+    author: CertificateSignerOwned,
+    #[serde_as(as = "DateTimeExtFormat")]
+    timestamp: DateTime<Utc>,
+
+    device_id: DeviceID,
+    // Device label can be none in case of redacted certificate
+    device_label: Option<DeviceLabel>,
+    verify_key: VerifyKey,
+);
+
+impl_transparent_data_format_convertion!(
+    DeviceCertificate,
+    DeviceCertificateData,
+    author,
+    timestamp,
+    device_id,
+    device_label,
+    verify_key,
+);
 
 /*
  * RealmRoleCertificate
  */
 
-#[derive(Debug, PartialEq, Eq)]
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
+#[serde(into = "RealmRoleCertificateData", from = "RealmRoleCertificateData")]
 pub struct RealmRoleCertificate {
-    // Author is None if signed by the root key
-    pub author: Option<DeviceID>,
+    pub author: DeviceID,
     pub timestamp: DateTime<Utc>,
 
     pub realm_id: EntryID,
     pub user_id: UserID,
     // Set to None if role removed
-    pub role: Option<RealmRole>,
+    pub role: Option<RealmRole>, // TODO: use a custom type instead
 }
 
-// @attr.s(slots=True, frozen=True, auto_attribs=True, kw_only=True, eq=False)
-// class UserCertificateContent(BaseAPISignedData):
-//     class SCHEMA_CLS(BaseSignedDataSchema):
-//         # Override author field to allow for None value if signed by the root key
-//         author = DeviceIDField(required=True, allow_none=True)
+impl_verify_and_load_no_root!(RealmRoleCertificate);
+impl_unsecure_load!(RealmRoleCertificate);
+impl_dump_and_sign!(RealmRoleCertificate);
 
-//         type = fields.CheckedConstant("user_certificate", required=True)
-//         user_id = UserIDField(required=True)
-//         # Human handle can be none in case of redacted certificate
-//         human_handle = HumanHandleField(allow_none=True, missing=None)
-//         public_key = fields.PublicKey(required=True)
-//         # `profile` replaces `is_admin` field (which is still required for backward
-//         # compatibility), hence `None` is not allowed
-//         is_admin = fields.Boolean(required=True)
-//         profile = UserProfileField(allow_none=False)
+new_data_struct_type!(
+    RealmRoleCertificateData,
+    type: "realm_role_certificate",
 
-//         @post_load
-//         def make_obj(self, data: Dict[str, Any]) -> "UserCertificateContent":
-//             data.pop("type")
+    author: DeviceID,
+    #[serde_as(as = "DateTimeExtFormat")]
+    timestamp: DateTime<Utc>,
 
-//             # Handle legacy `is_admin` field
-//             default_profile = UserProfile.ADMIN if data.pop("is_admin") else UserProfile.STANDARD
-//             try:
-//                 profile = data["profile"]
-//             except KeyError:
-//                 data["profile"] = default_profile
-//             else:
-//                 if default_profile == UserProfile.ADMIN and profile != UserProfile.ADMIN:
-//                     raise ValidationError(
-//                         "Fields `profile` and `is_admin` have incompatible values"
-//                     )
+    realm_id: EntryID,
+    user_id: UserID,
+    // Set to None if role removed
+    role: Option<RealmRole>,  // TODO: use a custom type instead
+);
 
-//             return UserCertificateContent(**data)
-
-//     # Override author attribute to allow for None value if signed by the root key
-//     author: Optional[DeviceID]  # type: ignore[assignment]
-
-//     user_id: UserID
-//     human_handle: Optional[HumanHandle]
-//     public_key: PublicKey
-//     profile: UserProfile
-
-//     # Only used during schema serialization
-//     @property
-//     def is_admin(self) -> bool:
-//         return self.profile == UserProfile.ADMIN
-
-//     @classmethod
-//     def verify_and_load(
-//         cls,
-//         *args,
-//         expected_user: Optional[UserID] = None,
-//         expected_human_handle: Optional[HumanHandle] = None,
-//         **kwargs,
-//     ) -> "UserCertificateContent":
-//         data = super().verify_and_load(*args, **kwargs)
-//         if expected_user is not None and data.user_id != expected_user:
-//             raise DataValidationError(
-//                 f"Invalid user ID: expected `{expected_user}`, got `{data.user_id}`"
-//             )
-//         if expected_human_handle is not None and data.human_handle != expected_human_handle:
-//             raise DataValidationError(
-//                 f"Invalid human handle: expected `{expected_human_handle}`, got `{data.human_handle}`"
-//             )
-//         return data
-
-// @attr.s(slots=True, frozen=True, auto_attribs=True, kw_only=True, eq=False)
-// class RevokedUserCertificateContent(BaseAPISignedData):
-//     class SCHEMA_CLS(BaseSignedDataSchema):
-//         type = fields.CheckedConstant("revoked_user_certificate", required=True)
-//         user_id = UserIDField(required=True)
-
-//         @post_load
-//         def make_obj(self, data: Dict[str, Any]) -> "RevokedUserCertificateContent":
-//             data.pop("type")
-//             return RevokedUserCertificateContent(**data)
-
-//     user_id: UserID
-
-//     @classmethod
-//     def verify_and_load(
-//         cls, *args, expected_user: Optional[UserID] = None, **kwargs
-//     ) -> "RevokedUserCertificateContent":
-//         data = super().verify_and_load(*args, **kwargs)
-//         if expected_user is not None and data.user_id != expected_user:
-//             raise DataValidationError(
-//                 f"Invalid user ID: expected `{expected_user}`, got `{data.user_id}`"
-//             )
-//         return data
-
-// DeviceCertificateContentTypeVar = TypeVar(
-//     "DeviceCertificateContentTypeVar", bound="DeviceCertificateContent"
-// )
-
-// @attr.s(slots=True, frozen=True, auto_attribs=True, kw_only=True, eq=False)
-// class DeviceCertificateContent(BaseAPISignedData):
-//     class SCHEMA_CLS(BaseSignedDataSchema):
-//         # Override author field to allow for None value if signed by the root key
-//         author = DeviceIDField(required=True, allow_none=True)
-
-//         type = fields.CheckedConstant("device_certificate", required=True)
-//         device_id = DeviceIDField(required=True)
-//         # Device label can be none in case of redacted certificate
-//         device_label = fields.String(allow_none=True, missing=None)
-//         verify_key = fields.VerifyKey(required=True)
-
-//         @post_load
-//         def make_obj(self, data: Dict[str, Any]) -> "DeviceCertificateContent":
-//             data.pop("type")
-//             return DeviceCertificateContent(**data)
-
-//     # Override author attribute to allow for None value if signed by the root key
-//     author: Optional[DeviceID]  # type: ignore[assignment]
-
-//     device_id: DeviceID
-//     device_label: Optional[str]
-//     verify_key: VerifyKey
-
-//     @classmethod
-//     def verify_and_load(
-//         cls: Type[DeviceCertificateContentTypeVar],
-//         *args: Any,
-//         expected_device: Optional[DeviceID] = None,
-//         **kwargs: Any,
-//     ) -> "DeviceCertificateContent":
-//         data = super().verify_and_load(*args, **kwargs)
-//         if expected_device is not None and data.device_id != expected_device:
-//             raise DataValidationError(
-//                 f"Invalid device ID: expected `{expected_device}`, got `{data.device_id}`"
-//             )
-//         return data
-
-// @attr.s(slots=True, frozen=True, auto_attribs=True, kw_only=True, eq=False)
-// class RealmRoleCertificateContent(BaseAPISignedData):
-//     class SCHEMA_CLS(BaseSignedDataSchema):
-//         type = fields.CheckedConstant("realm_role_certificate", required=True)
-//         realm_id = fields.UUID(required=True)
-//         user_id = UserIDField(required=True)
-//         role = RealmRoleField(required=True, allow_none=True)
-
-//         @post_load
-//         def make_obj(self, data: Dict[str, Any]) -> "RealmRoleCertificateContent":
-//             data.pop("type")
-//             return RealmRoleCertificateContent(**data)
-
-//     realm_id: UUID
-//     user_id: UserID
-//     role: Optional[RealmRole]  # Set to None if role removed
-
-//     @classmethod
-//     def build_realm_root_certif(cls, author, timestamp, realm_id):
-//         return cls(
-//             author=author,
-//             timestamp=timestamp,
-//             realm_id=realm_id,
-//             user_id=author.user_id,
-//             role=RealmRole.OWNER,
-//         )
-
-//     @classmethod
-//     def verify_and_load(
-//         cls,
-//         *args,
-//         expected_realm: Optional[UUID] = None,
-//         expected_user: Optional[UserID] = None,
-//         expected_role: Optional[RealmRole] = None,
-//         **kwargs,
-//     ) -> "RealmRoleCertificateContent":
-//         data = super().verify_and_load(*args, **kwargs)
-//         if expected_user is not None and data.user_id != expected_user:
-//             raise DataValidationError(
-//                 f"Invalid user ID: expected `{expected_user}`, got `{data.user_id}`"
-//             )
-//         if expected_realm is not None and data.realm_id != expected_realm:
-//             raise DataValidationError(
-//                 f"Invalid realm ID: expected `{expected_realm}`, got `{data.realm_id}`"
-//             )
-//         if expected_role is not None and data.role != expected_role:
-//             raise DataValidationError(
-//                 f"Invalid role: expected `{expected_role}`, got `{data.role}`"
-//             )
-//         return data
+impl_transparent_data_format_convertion!(
+    RealmRoleCertificate,
+    RealmRoleCertificateData,
+    author,
+    timestamp,
+    realm_id,
+    user_id,
+    role,
+);
