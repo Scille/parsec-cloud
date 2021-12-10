@@ -353,27 +353,32 @@ class BaseClientHandshake:
     SUPPORTED_API_VERSIONS: Sequence[ApiVersion]  # Overwritten by subclasses
 
     def __init__(self) -> None:
-        self.challenge_data: Dict[str, object] = {"client_timestamp": self.timestamp()}
+        self.challenge_data: Dict[str, object]
         self.backend_api_version: ApiVersion
         self.client_api_version: ApiVersion
+        self.client_timestamp = self.timestamp()
 
     def timestamp(self) -> DateTime:
         # Exposed as a method for easier testing and monkeypatching
         return pendulum.now()
 
     def load_challenge_req(self, req: bytes) -> None:
-        self.challenge_data.update(handshake_challenge_serializer.loads(req))
+        self.challenge_data = handshake_challenge_serializer.loads(req)
+
+        # API version matching
         supported_api_version = cast(
             Sequence[ApiVersion], self.challenge_data["supported_api_versions"]
         )
-
-        # API version matching
         self.backend_api_version, self.client_api_version = _settle_compatible_versions(
             supported_api_version, self.SUPPORTED_API_VERSIONS
         )
 
-        # Compatibility with backend version 2.3 or lower
+        # The `backend_timestamp` field is missing with backend version 2.3 or lower
         if "backend_timestamp" in self.challenge_data:
+
+            # Add `client_timestamp` to challenge data
+            # so the dictionnary exposes the same fields as `TimestampOutOfBallparkRepSchema`
+            self.challenge_data["client_timestamp"] = self.client_timestamp
 
             # Check whether our system clock is in sync with the backend
             client_timestamp = cast(pendulum.DateTime, self.challenge_data["client_timestamp"])
