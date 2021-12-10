@@ -1,8 +1,22 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2016-2021 Scille SAS
 
+import trio
 import pendulum
+
 import pytest
+
 from parsec.core.gui.lang import translate
+
+
+async def wait_for_log(caplog, logger, level, message, timeout=1.0, tick=0.01):
+    caplog.clear()
+    caplog.set_level(level)
+    with trio.fail_after(timeout):
+        while True:
+            await trio.sleep(tick)
+            for record in caplog.records:
+                if record.name == logger and message in record.message:
+                    return record
 
 
 @pytest.mark.gui
@@ -33,14 +47,14 @@ async def test_offline_notification(aqtbot, running_backend, logged_gui):
 @pytest.mark.gui
 @pytest.mark.trio
 async def test_backend_desync_notification(
-    aqtbot, running_backend, logged_gui, monkeypatch, autoclose_dialog
+    aqtbot, running_backend, logged_gui, monkeypatch, autoclose_dialog, caplog
 ):
     central_widget = logged_gui.test_get_central_widget()
     assert central_widget is not None
-    minutes = 0
+    timestamp_shift_minutes = 0
 
     def _timestamp(self):
-        return pendulum.now().subtract(minutes=minutes)
+        return pendulum.now().subtract(minutes=timestamp_shift_minutes)
 
     monkeypatch.setattr("parsec.api.protocol.BaseClientHandshake.timestamp", _timestamp)
     monkeypatch.setattr("parsec.core.types.local_device.LocalDevice.timestamp", _timestamp)
@@ -64,7 +78,7 @@ async def test_backend_desync_notification(
     await aqtbot.wait_until(_online)
 
     # Shift by 5 minutes
-    minutes = 5
+    timestamp_shift_minutes = 5
 
     # Force sync by creating a workspace
     await central_widget.core.user_fs.workspace_create("test1")
@@ -79,18 +93,25 @@ async def test_backend_desync_notification(
     # Clear dialogs
     autoclose_dialog.dialogs.clear()
 
-    # Wait half a second
-    await aqtbot.wait(500)
+    # Wait for a few reconnections
+    for _ in range(3):
+        await wait_for_log(
+            caplog,
+            "parsec.core.backend_connection.authenticated",
+            "INFO",
+            "Backend connection is desync",
+        )
 
     # There should be no new dialog
     assert len(autoclose_dialog.dialogs) == 0
 
     # Re-sync
-    minutes = 0
+    # DESYNC_RETRY_TIME has been monkeypatched so this should take less than 100 ms
+    timestamp_shift_minutes = 0
     await aqtbot.wait_until(_online)
 
     # Shift again
-    minutes = 5
+    timestamp_shift_minutes = 5
 
     # Force sync by creating a workspace
     await central_widget.core.user_fs.workspace_create("test2")
