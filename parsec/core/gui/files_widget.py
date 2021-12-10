@@ -496,6 +496,7 @@ class FilesWidget(QWidget, Ui_FilesWidget):
             jobs_ctx=self.jobs_ctx,
             workspace_fs=self.workspace_fs,
             path=selected_path,
+            core=self.core,
             parent=self,
             on_finished=None,
         )
