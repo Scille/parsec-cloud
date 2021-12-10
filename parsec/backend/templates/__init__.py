@@ -12,7 +12,7 @@ class PackageLoader(BaseLoader):
         from parsec.backend import templates  # Self import \o/
 
         try:
-            source = importlib_resources.files(templates).joinpath(template).read_text()
+            source = importlib_resources.read_text(templates, template)
         except FileNotFoundError as exc:
             raise TemplateNotFound(template) from exc
         return source, self.path, lambda: True

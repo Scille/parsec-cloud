@@ -39,8 +39,7 @@ class MigrationItem:
 def retrieve_migrations() -> List[MigrationItem]:
     migrations = []
     ids = []
-    for file in importlib_resources.files(migrations_module).iterdir():
-        file_name = file.name
+    for file_name in importlib_resources.contents(migrations_module):
         match = re.search(MIGRATION_FILE_PATTERN, file_name)
         if match:
             idx = int(match.group("id"))
@@ -50,7 +49,7 @@ def retrieve_migrations() -> List[MigrationItem]:
                     f"Inconsistent package (multiples migrations with {idx} as id)"
                 )
             ids.append(idx)
-            sql = importlib_resources.files(migrations_module).joinpath(file_name).read_text()
+            sql = importlib_resources.read_text(migrations_module, file_name)
             if not sql:
                 raise AssertionError(f"Empty migration file {file_name}")
             migrations.append(
