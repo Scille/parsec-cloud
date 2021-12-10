@@ -2,11 +2,13 @@
 from PyQt5.QtCore import pyqtSignal
 from PyQt5.QtWidgets import QWidget
 
+from parsec.core.fs import WorkspaceFSTimestamped
 from parsec.core.fs.workspacefs.entry_transactions import BlockInfo
 from parsec.core.gui.custom_dialogs import GreyedDialog
+from parsec.core.gui.file_size import get_filesize
 from parsec.core.gui.trio_jobs import QtToTrioJob
 from parsec.core.gui.ui.file_status_widget import Ui_FileInfoWidget
-from parsec.core.gui.lang import translate as _
+from parsec.core.gui.lang import translate as _, format_datetime
 
 
 class FileStatusWidget(QWidget, Ui_FileInfoWidget):
@@ -33,39 +35,53 @@ class FileStatusWidget(QWidget, Ui_FileInfoWidget):
         pass
 
     async def get_status(self):
-        block_info: BlockInfo = await self.workspace_fs.get_blocks_by_type(self.path)
         path_info = await self.workspace_fs.path_info(self.path)
+        block_info = None
+        if path_info["type"] == "file":
+            block_info: BlockInfo = await self.workspace_fs.get_blocks_by_type(self.path)
+            self.label_size.setText(get_filesize(path_info["size"]))
         version_lister = self.workspace_fs.get_version_lister()
-        version1 = await version_lister.list(path=self.path)
-        user_id = version1[0][0].creator.user_id
-        user_id_last = version1[0][-1].creator.user_id
+        version_list = await version_lister.list(path=self.path)
+        user_id = version_list[0][0].creator.user_id
+        user_id_last = version_list[0][-1].creator.user_id
         creator = await self.core.get_user_info(user_id)
-        creator_last = await self.core.get_user_info(user_id_last)
-        from structlog import get_logger
+        last_author = await self.core.get_user_info(user_id_last)
 
-        logger = get_logger()
-        self.label_location.setText(str(self.path))
+        full_path = self.core.mountpoint_manager.get_path_in_mountpoint(
+            self.workspace_fs.workspace_id,
+            self.path,
+            self.workspace_fs.timestamp
+            if isinstance(self.workspace_fs, WorkspaceFSTimestamped)
+            else None,
+        )
+        self.label_filename.setText(str(self.path))
+
+        self.label_location.setText(str(full_path))
         self.label_filetype.setText(str(path_info["type"]))
-        self.label_size.setText(str(path_info["size"]))
+
         self.label_workspace.setText(self.workspace_fs.get_workspace_name())
-        self.label_created_on.setText(str(path_info["created"]))
-        self.label_last_updated_on.setText(str(path_info["updated"]))
+        self.label_created_on.setText(format_datetime(path_info["created"]))
+        self.label_last_updated_on.setText(format_datetime(path_info["updated"]))
         self.label_created_by.setText(creator.short_user_display)
-        self.label_last_updated_by.setText(creator_last.short_user_display)
+        self.label_last_updated_by.setText(last_author.short_user_display)
 
-        local_blocks = str(len(block_info.local_only_blocks))
-        remote_blocks = str(len(block_info.remote_only_blocks))
-        local_and_remote_blocks = str(len(block_info.local_and_remote_blocks))
+        if block_info:
+            local_blocks = str(len(block_info.local_only_blocks))
+            remote_blocks = str(len(block_info.remote_only_blocks))
+            local_and_remote_blocks = str(len(block_info.local_and_remote_blocks))
+            if block_info.pending_chunks_size == 0:
+                self.label_availability.setText(_("TEXT_YES"))
+            else:
+                self.label_availability.setText(_("TEXT_NO"))
 
-        self.label_blocks.setText(f"{local_blocks} |  {remote_blocks} | {local_and_remote_blocks}")
-        if block_info.pending_chunks_size == 0:
-            self.label_availability.setText("Yes")
-        else:
-            self.label_availability.setText("No")
+            if block_info.local_only_blocks != 0:
+                self.label_uploaded.setText(_("TEXT_YES"))
+            else:
+                self.label_uploaded.setText(_("TEXT_NO"))
 
-        # other info if needed
-        logger.warning("Block size:" + str(block_info.proper_blocks_size))
-        logger.warning("Pending Chunk size:" + str(block_info.pending_chunks_size))
+            self.label_local.setText(local_blocks)
+            self.label_remote.setText(remote_blocks)
+            self.label_both.setText(local_and_remote_blocks)
 
     @classmethod
     def show_modal(cls, jobs_ctx, workspace_fs, path, core, parent, on_finished):

@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PROJECT VERSION\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2021-11-15 15:00+0100\n"
+"POT-Creation-Date: 2021-12-14 11:47+0100\n"
 "PO-Revision-Date: 2020-10-15 10:31+0200\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language: fr\n"
@@ -16,7 +16,7 @@ msgstr ""
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=utf-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"Generated-By: Babel 2.6.0\n"
+"Generated-By: Babel 2.9.1\n"
 
 msgid "TEXT_PARSEC_VERSION_version"
 msgstr "PARSEC version {version}"
@@ -437,8 +437,14 @@ msgstr "Go"
 msgid "TEXT_FILE_SIZE_TB"
 msgstr "To"
 
+msgid "TEXT_YES"
+msgstr "Oui"
+
+msgid "TEXT_NO"
+msgstr "Non"
+
 msgid "TEXT_FILE_STATUS_TITLE_name"
-msgstr ""
+msgstr "État"
 
 msgid "ACTION_FILE_OPEN_CURRENT_DIRECTORY_MAC"
 msgstr "Ouvrir le répertoire dans le Finder"
@@ -465,7 +471,7 @@ msgid "ACTION_FILE_MENU_SHOW_FILE_HISTORY"
 msgstr "Voir l'historique"
 
 msgid "ACTION_FILE_MENU_SHOW_FILE_STATUS"
-msgstr ""
+msgstr "Voir l'état"
 
 msgid "ACTION_FILE_MENU_GET_FILE_LINK"
 msgstr "Lien vers ce fichier"
@@ -502,7 +508,8 @@ msgstr ""
 "Veuillez ne sélectionner qu'un fichier."
 
 msgid "TEXT_FILE_STATUS_MULTIPLE_FILES_SELECTED_ERROR"
-msgstr ""
+msgstr "Impossible d'afficher l'état de plusieurs fichiers en une fois. "
+"Veuillez ne sélectionner qu'un fichier."
 
 msgid "TEXT_FILE_RENAME_TITLE"
 msgstr "Renommer un fichier"
@@ -2497,37 +2504,46 @@ msgid "ACTION_FILE_HISTORY_LOAD_MORE_ENTRIES"
 msgstr "Charger plus d'entrées"
 
 msgid "TEXT_FILE_INFO_LOCATION"
-msgstr ""
+msgstr "Emplacement"
 
 msgid "TEXT_FILE_INFO_TYPE"
-msgstr ""
+msgstr "Type"
 
 msgid "TEXT_FILE_INFO_SIZE"
-msgstr ""
+msgstr "Taille"
 
 msgid "TEXT_FILE_INFO_WORKSPACE"
-msgstr ""
+msgstr "Espace de travail"
 
 msgid "TEXT_FILE_INFO_CREATED_ON"
-msgstr ""
+msgstr "Créé le"
 
 msgid "TEXT_FILE_INFO_CREATED_BY"
-msgstr ""
+msgstr "Créé par"
 
 msgid "TEXT_FILE_INFO_UPDATED_ON"
-msgstr ""
+msgstr "Mise à jour le"
 
 msgid "TEXT_FILE_INFO_UPDATED_BY"
-msgstr ""
+msgstr "Mise à jour par"
 
 msgid "TEXT_FILE_INFO_AVAILABILITY"
-msgstr ""
+msgstr "Disponibilité"
 
 msgid "TEXT_FILE_INFO_UPLOADED"
-msgstr ""
+msgstr "Téléchargé"
 
-msgid "TEXT_FILE_INFO_BLOCKS_local_remote_both"
-msgstr ""
+msgid "TEXT_FILE_INFO_BLOCKS_LOCAL"
+msgstr "Blocs locaux uniquement"
+
+msgid "TEXT_FILE_INFO_BLOCKS_REMOTE"
+msgstr "Blocs distants uniquement"
+
+msgid "TEXT_FILE_INFO_BLOCKS_BOTH"
+msgstr "Blocs locaux et distants"
+
+msgid "TEXT_FILE_INFO_NON_APPLICABLE"
+msgstr "N/A"
 
 msgid "TEXT_FILE_BACK_TO_WORKSPACES_TOOLTIP"
 msgstr "Retour à la liste des espaces de travail"

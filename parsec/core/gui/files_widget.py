@@ -584,6 +584,7 @@ class FilesWidget(QWidget, Ui_FilesWidget):
         self.desktop_open_files([None])
 
     def desktop_open_files(self, names: Iterable[Optional[str]]):
+
         paths = [
             self.core.mountpoint_manager.get_path_in_mountpoint(
                 self.workspace_fs.workspace_id,
