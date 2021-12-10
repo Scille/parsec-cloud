@@ -85,7 +85,7 @@ async def test_backend_desync_notification(
 
     # Wait until we get the notification
     async with aqtbot.wait_signal(central_widget.systray_notification):
-        await aqtbot.wait_until(_offline)
+        await aqtbot.wait_until(_offline, timeout=3000)
 
     # Wait for the dialog
     await aqtbot.wait_until(_assert_desync_dialog)
@@ -117,7 +117,7 @@ async def test_backend_desync_notification(
     await central_widget.core.user_fs.workspace_create("test2")
 
     # Wait until we get the notification
-    await aqtbot.wait_until(_offline)
+    await aqtbot.wait_until(_offline, timeout=3000)
 
     # There should be no new dialog
     assert len(autoclose_dialog.dialogs) == 0

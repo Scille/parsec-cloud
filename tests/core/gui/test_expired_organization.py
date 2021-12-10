@@ -42,7 +42,7 @@ async def test_expired_notification_logging(
     def _expired_notified():
         assert autoclose_dialog.dialogs == [("Error", "The organization has expired")]
 
-    await aqtbot.wait_until(_expired_notified)
+    await aqtbot.wait_until(_expired_notified, timeout=3000)
 
 
 @pytest.mark.gui
