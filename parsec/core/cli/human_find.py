@@ -12,25 +12,27 @@ async def _human_find(
     config,
     device,
     query,
+    omit_revoked,
+    omit_non_human: bool = False,
     page: int = 1,
     per_page: int = 100,
-    omit_revoked: bool = False,
-    omit_non_human: bool = False,
 ):
     async with logged_core_factory(config, device) as core:
         user_info_tab, nb = await core.find_humans(
             query, page, per_page, omit_revoked, omit_non_human
         )
     for user in user_info_tab:
-        click.echo(f"{user.human_handle} - UserID: {user.user_id}")
+        is_revoked = " (revoked)" if user.revoked_on is not None else ""
+        click.echo(f"{user.human_handle} - UserID: {user.user_id}{is_revoked}")
     if not nb:
         click.echo("No human found!")
 
 
-@click.command(short_help="search user id from email address")
+@click.command(short_help="Retrieve user ID from human email/label")
 @click.argument("query", type=str)
+@click.option("--include-revoked", is_flag=True)
 @core_config_and_device_options
 @cli_command_base_options
-def human_find(config, device, query, **kwargs) -> dict:
+def human_find(config, device, query, include_revoked, **kwargs) -> dict:
     with cli_exception_handler(config.debug):
-        trio_run(_human_find, config, device, query)
+        trio_run(_human_find, config, device, query, not include_revoked)
