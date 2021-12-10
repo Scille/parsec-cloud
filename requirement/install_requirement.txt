@@ -9,11 +9,11 @@ h11==0.12.0
 toastedmarshmallow==0.2.6 # updating causes consitency problem in test
 pendulum==2.1.2
 PyNaCl==1.4.0
-trio==0.18.0 # updating break test
-trio_typing==0.5.1
+trio==0.19.0
+trio_typing==0.5.1 # updating causes conflict with qtrio dependency
 async_generator>=1.9
 contextvars==2.4;python_version<"3.7"
-typing-extensions==3.10.0.2;python_version<"3.8"
+typing-extensions==3.10.0.2;python_version<"3.8" # updating causes conflict with qtrio dependency
 sentry-sdk==1.5.0
 structlog==21.4.0
 importlib_resources==5.4.0
