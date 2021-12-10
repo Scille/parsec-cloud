@@ -19,13 +19,13 @@ async def _share_workspace(config, device, name, user_id, recipiant, user_role):
     async with logged_core_factory(config, device) as core:
         workspace = core.find_workspace_from_name(name)
         if recipiant:
-            user_info_tab, nb = await core.find_humans(recipiant, 1, 100, False, False)
+            user_info_tab, nb = await core.find_humans(
+                recipiant, page=1, per_page=100, omit_revoked=True, omit_non_human=False
+            )
             if nb == 0:
                 raise RuntimeError("Unknown recipiant")
             if nb != 1:
                 for user in user_info_tab:
-                    if user.revoked_on is not None:
-                        continue
                     click.echo(f"{user.human_handle} - UserID: {user.user_id}")
                 raise RuntimeError("Specify the user more precisely or use the --user-id option")
             user_id = user_info_tab[0].user_id

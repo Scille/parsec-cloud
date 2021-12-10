@@ -19,7 +19,7 @@ async def _human_find(
 ):
     async with logged_core_factory(config, device) as core:
         user_info_tab, nb = await core.find_humans(
-            query, page, per_page, omit_revoked, omit_non_human
+            query, page=1, per_page=100, omit_revoked=omit_revoked, omit_non_human=False
         )
     for user in user_info_tab:
         is_revoked = " (revoked)" if user.revoked_on is not None else ""
