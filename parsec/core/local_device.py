@@ -312,7 +312,7 @@ def load_device_with_password(key_file: Path, password: str) -> LocalDevice:
         try:
             key, _ = derivate_secret_key_from_password(password, data["salt"])
             return key.decrypt(data["ciphertext"])
-        except CryptoError as exc:
+        except ValueError as exc:
             raise LocalDeviceCryptoError(str(exc)) from exc
 
     return _load_device(key_file, _decrypt_ciphertext)

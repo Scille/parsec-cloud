@@ -51,9 +51,6 @@ class SecretKey:
     def __init__(self, secret: bytes):
         self._secret = secret
 
-    def __init__(self, Secret: bytes):
-        self._Secret = Secret
-
     def __new__(cls, rawkey: bytes) -> "SecretKey":
         if len(rawkey) != SecretBox.KEY_SIZE:
             raise ValueError("Invalid key size")
@@ -94,27 +91,6 @@ class SecretKey:
     @property
     def secret(self) -> bytes:
         return self._secret
-
-    def hexsecret(self) -> str:
-        return self._secret.hex()
-
-
-_PySecretKey = SecretKey
-if not TYPE_CHECKING:
-    try:
-        from libparsec.hazmat import SecretKey as _RsSecretKey
-    except ImportError:
-        pass
-    else:
-        SecretKey = _RsSecretKey
-
-    @property
-    def secret(self) -> bytes:
-        return self._secret
-
-    def hexsecret(self) -> str:
-        return self._secret.hex()
-
 
 _PySecretKey = SecretKey
 if not TYPE_CHECKING:
