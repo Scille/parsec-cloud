@@ -5,8 +5,17 @@ from uuid import UUID
 from enum import Enum
 from secrets import token_bytes
 
+import pendulum
+from pendulum.datetime import DateTime
+
 from parsec.crypto import SigningKey, VerifyKey, CryptoError
 from parsec.serde import BaseSchema, OneOfSchema, fields, validate
+from parsec.utils import (
+    BALLPARK_CLIENT_EARLY_OFFSET,
+    BALLPARK_CLIENT_LATE_OFFSET,
+    BALLPARK_CLIENT_TOLERANCE,
+    timestamps_in_the_ballpark,
+)
 from parsec.api.protocol.base import ProtocolError, InvalidMessageError, serializer_factory
 from parsec.api.protocol.types import OrganizationID, DeviceID, OrganizationIDField, DeviceIDField
 from parsec.api.protocol.invite import InvitationType, InvitationTypeField
@@ -38,6 +47,10 @@ class HandshakeRVKMismatch(HandshakeError):
 
 
 class HandshakeRevokedDevice(HandshakeError):
+    pass
+
+
+class HandshakeOutOfBallparkError(HandshakeError):
     pass
 
 
@@ -101,6 +114,12 @@ class HandshakeChallengeSchema(BaseSchema):
     handshake = fields.CheckedConstant("challenge", required=True)
     challenge = fields.Bytes(required=True)
     supported_api_versions = fields.List(ApiVersionField(), required=True)
+    # Those fields have been added to API version 2.4
+    # They are provided to the client in order to allow them to detect whether
+    # their system clock is out of sync and let them close the connection.
+    ballpark_client_early_offset = fields.Float(required=True, allow_none=False)
+    ballpark_client_late_offset = fields.Float(required=True, allow_none=False)
+    backend_timestamp = fields.DateTime(required=True, allow_none=False)
 
 
 handshake_challenge_serializer = serializer_factory(HandshakeChallengeSchema)
@@ -210,6 +229,9 @@ class ServerHandshake:
                 "handshake": "challenge",
                 "challenge": self.challenge,
                 "supported_api_versions": self.SUPPORTED_API_VERSIONS,
+                "ballpark_client_early_offset": BALLPARK_CLIENT_EARLY_OFFSET,
+                "ballpark_client_late_offset": BALLPARK_CLIENT_LATE_OFFSET,
+                "backend_timestamp": pendulum.now(),
             }
         )
 
@@ -334,17 +356,48 @@ class BaseClientHandshake:
         self.challenge_data: Dict[str, object]
         self.backend_api_version: ApiVersion
         self.client_api_version: ApiVersion
+        self.client_timestamp = self.timestamp()
+
+    def timestamp(self) -> DateTime:
+        # Exposed as a method for easier testing and monkeypatching
+        return pendulum.now()
 
     def load_challenge_req(self, req: bytes) -> None:
         self.challenge_data = handshake_challenge_serializer.loads(req)
+
+        # API version matching
         supported_api_version = cast(
             Sequence[ApiVersion], self.challenge_data["supported_api_versions"]
         )
-
-        # API version matching
         self.backend_api_version, self.client_api_version = _settle_compatible_versions(
             supported_api_version, self.SUPPORTED_API_VERSIONS
         )
+
+        # The `backend_timestamp` field is missing with backend version 2.3 or lower
+        if "backend_timestamp" in self.challenge_data:
+
+            # Add `client_timestamp` to challenge data
+            # so the dictionnary exposes the same fields as `TimestampOutOfBallparkRepSchema`
+            self.challenge_data["client_timestamp"] = self.client_timestamp
+
+            # Check whether our system clock is in sync with the backend
+            client_timestamp = cast(pendulum.DateTime, self.challenge_data["client_timestamp"])
+            backend_timestamp = cast(pendulum.DateTime, self.challenge_data["backend_timestamp"])
+            ballpark_client_early_offset = (
+                cast(float, self.challenge_data["ballpark_client_early_offset"])
+                * BALLPARK_CLIENT_TOLERANCE
+            )
+            ballpark_client_late_offset = (
+                cast(float, self.challenge_data["ballpark_client_late_offset"])
+                * BALLPARK_CLIENT_TOLERANCE
+            )
+            if not timestamps_in_the_ballpark(
+                client=client_timestamp,
+                backend=backend_timestamp,
+                ballpark_client_early_offset=ballpark_client_early_offset,
+                ballpark_client_late_offset=ballpark_client_late_offset,
+            ):
+                raise HandshakeOutOfBallparkError(self.challenge_data)
 
     def process_result_req(self, req: bytes) -> None:
         data = handshake_result_serializer.loads(req)
@@ -382,6 +435,7 @@ class AuthenticatedClientHandshake(BaseClientHandshake):
         user_signkey: SigningKey,
         root_verify_key: VerifyKey,
     ):
+        super().__init__()
         self.organization_id = organization_id
         self.device_id = device_id
         self.user_signkey = user_signkey
@@ -409,6 +463,7 @@ class InvitedClientHandshake(BaseClientHandshake):
     def __init__(
         self, organization_id: OrganizationID, invitation_type: InvitationType, token: UUID
     ):
+        super().__init__()
         self.organization_id = organization_id
         self.invitation_type = invitation_type
         self.token = token
@@ -433,6 +488,7 @@ class APIV1_AnonymousClientHandshake(BaseClientHandshake):
     def __init__(
         self, organization_id: OrganizationID, root_verify_key: Optional[VerifyKey] = None
     ):
+        super().__init__()
         self.organization_id = organization_id
         self.root_verify_key = root_verify_key
 

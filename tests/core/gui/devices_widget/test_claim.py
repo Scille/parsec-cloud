@@ -668,3 +668,31 @@ async def test_claim_device_with_bad_start_arg(
     assert len(autoclose_dialog.dialogs) == 1
     assert autoclose_dialog.dialogs[0][0] == "Error"
     assert autoclose_dialog.dialogs[0][1] == "The link is invalid."
+
+
+@pytest.mark.gui
+@pytest.mark.trio
+async def test_claim_device_backend_desync(
+    aqtbot, running_backend, backend, autoclose_dialog, alice, gui, monkeypatch
+):
+
+    # Client is 5 minutes ahead
+    def _timestamp(self):
+        return pendulum_now().add(minutes=5)
+
+    monkeypatch.setattr("parsec.api.protocol.BaseClientHandshake.timestamp", _timestamp)
+
+    invitation_addr = BackendInvitationAddr.build(
+        backend_addr=alice.organization_addr,
+        organization_id=alice.organization_id,
+        invitation_type=InvitationType.DEVICE,
+        token=uuid4(),
+    )
+
+    gui.add_instance(invitation_addr.to_url())
+
+    def _assert_dialogs():
+        assert len(autoclose_dialog.dialogs) == 1
+        assert autoclose_dialog.dialogs == [("Error", translate("TEXT_BACKEND_STATE_DESYNC"))]
+
+    await aqtbot.wait_until(_assert_dialogs)

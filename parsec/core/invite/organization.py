@@ -13,7 +13,6 @@ from parsec.core.invite.exceptions import (
     InviteNotFoundError,
     InviteAlreadyUsedError,
     InvitePeerResetError,
-    InviteTimestampError,
 )
 
 
@@ -24,8 +23,6 @@ def _check_rep(rep, step_name):
         raise InviteAlreadyUsedError
     elif rep["status"] == "invalid_state":
         raise InvitePeerResetError
-    elif rep["status"] == "invalid_certification" and "timestamp" in rep["reason"]:
-        raise InviteTimestampError
     elif rep["status"] != "ok":
         raise InviteError(f"Backend error during {step_name}: {rep}")
 

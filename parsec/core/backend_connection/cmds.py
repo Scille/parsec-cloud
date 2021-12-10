@@ -57,7 +57,11 @@ from parsec.api.protocol import (
     device_create_serializer,
 )
 from parsec.core.types import EntryID
-from parsec.core.backend_connection.exceptions import BackendNotAvailable, BackendProtocolError
+from parsec.core.backend_connection.exceptions import (
+    BackendNotAvailable,
+    BackendProtocolError,
+    BackendOutOfBallparkError,
+)
 
 
 async def _send_cmd(transport: Transport, serializer, **req) -> dict:
@@ -99,6 +103,13 @@ async def _send_cmd(transport: Transport, serializer, **req) -> dict:
     if rep["status"] == "invalid_msg_format":
         transport.logger.error("Invalid request data according to backend", cmd=req["cmd"], rep=rep)
         raise BackendProtocolError("Invalid request data according to backend")
+
+    if rep["status"] == "bad_timestamp":
+        raise BackendOutOfBallparkError(rep)
+
+    # Backward compatibility with older backends (<= v2.3)
+    if rep["status"] == "invalid_certification" and "timestamp" in rep["reason"]:
+        raise BackendOutOfBallparkError(rep)
 
     return rep
 

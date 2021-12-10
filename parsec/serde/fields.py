@@ -8,6 +8,7 @@ from marshmallow import ValidationError
 from marshmallow.fields import (
     # Republishing
     Int,
+    Float,
     String,
     List,
     Dict,
@@ -35,6 +36,7 @@ __all__ = (
     "str_based_field_factory",
     "uuid_based_field_factory",
     "Int",
+    "Float",
     "String",
     "List",
     "Dict",

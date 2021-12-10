@@ -7,6 +7,7 @@ import certifi
 from async_generator import asynccontextmanager
 from structlog import get_logger
 from typing import Optional
+from parsec.api.protocol.handshake import HandshakeOutOfBallparkError
 
 from parsec.crypto import SigningKey
 from parsec.api.transport import Transport, TransportError, TransportClosedByPeer
@@ -29,6 +30,7 @@ from parsec.core.backend_connection.exceptions import (
     BackendConnectionRefused,
     BackendInvitationAlreadyUsed,
     BackendInvitationNotFound,
+    BackendOutOfBallparkError,
     BackendProtocolError,
 )
 
@@ -100,6 +102,11 @@ async def _connect(
     try:
         await _do_handshake(transport, handshake)
 
+    except BackendOutOfBallparkError:
+        transport.logger.info("Abort handshake due to the system clock being out of sync")
+        await transport.aclose()
+        raise
+
     except Exception as exc:
         transport.logger.warning("Connection lost during handshake", exc_info=exc)
         await transport.aclose()
@@ -139,6 +146,9 @@ async def _do_handshake(transport: Transport, handshake):
 
     except TransportError as exc:
         raise BackendNotAvailable(exc) from exc
+
+    except HandshakeOutOfBallparkError as exc:
+        raise BackendOutOfBallparkError(exc) from exc
 
     except HandshakeError as exc:
         if str(exc) == "Invalid handshake: Invitation not found":

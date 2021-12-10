@@ -1,7 +1,9 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2016-2021 Scille SAS
 
+from pendulum import DateTime
 from typing import Dict, Type, cast, TypeVar, Union, Mapping
 
+from parsec.utils import BALLPARK_CLIENT_EARLY_OFFSET, BALLPARK_CLIENT_LATE_OFFSET
 from parsec.serde import (
     BaseSchema,
     fields,
@@ -77,6 +79,16 @@ class RequireGreaterTimestampRepSchema(BaseRepSchema):
     strictly_greater_than = fields.DateTime(required=True, allow_none=False)
 
 
+class TimestampOutOfBallparkRepSchema(BaseRepSchema):
+    # `bad_timestamp` is kept for backward compatibility,
+    # even though `timestamp_out_of_ballpark` would be more explicit
+    status: fields.CheckedConstant = fields.CheckedConstant("bad_timestamp", required=True)
+    ballpark_client_early_offset = fields.Float(required=True, allow_none=False)
+    ballpark_client_late_offset = fields.Float(required=True, allow_none=False)
+    client_timestamp = fields.DateTime(required=True, allow_none=False)
+    backend_timestamp = fields.DateTime(required=True, allow_none=False)
+
+
 class CmdSerializer:
     def __repr__(self) -> str:
         return (
@@ -94,6 +106,7 @@ class CmdSerializer:
             type_schemas = {
                 "ok": self.rep_noerror_schema,
                 "require_greater_timestamp": RequireGreaterTimestampRepSchema,
+                "bad_timestamp": TimestampOutOfBallparkRepSchema,
             }
 
             def get_obj_type(self, obj: Dict[str, object]) -> str:
@@ -115,3 +128,24 @@ class CmdSerializer:
         self.req_dumps = self._req_serializer.dumps
         self.rep_loads = self._rep_serializer.loads
         self.rep_dumps = self._rep_serializer.dumps
+
+    def require_greater_timestamp_rep_dump(
+        self, strictly_greater_than: DateTime
+    ) -> Dict[str, object]:
+        return self.rep_dump(
+            {"status": "require_greater_timestamp", "strictly_greater_than": strictly_greater_than}
+        )
+
+    def timestamp_out_of_ballpark_rep_dump(
+        self, backend_timestamp: DateTime, client_timestamp: DateTime
+    ) -> Dict[str, object]:
+        return self.rep_dump(
+            {
+                "status": "bad_timestamp",
+                "reason": "Timestamp is out of date.",
+                "ballpark_client_early_offset": BALLPARK_CLIENT_EARLY_OFFSET,
+                "ballpark_client_late_offset": BALLPARK_CLIENT_LATE_OFFSET,
+                "backend_timestamp": backend_timestamp,
+                "client_timestamp": client_timestamp,
+            }
+        )

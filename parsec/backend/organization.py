@@ -195,10 +195,9 @@ class BaseOrganizationComponent:
 
         now = pendulum.now()
         if not timestamps_in_the_ballpark(u_data.timestamp, now):
-            return {
-                "status": "invalid_certification",
-                "reason": f"Invalid timestamp in certification.",
-            }
+            return apiv1_organization_bootstrap_serializer.timestamp_out_of_ballpark_rep_dump(
+                backend_timestamp=now, client_timestamp=u_data.timestamp
+            )
 
         if ru_data:
             if ru_data.evolve(human_handle=u_data.human_handle) != u_data:

@@ -42,7 +42,6 @@ from parsec.core.fs.exceptions import (
     FSRemoteOperationError,
     FSRemoteManifestNotFound,
     FSRemoteManifestNotFoundBadVersion,
-    FSRemoteManifestNotFoundBadTimestamp,
     FSRemoteBlockNotFound,
     FSBackendOfflineError,
     FSWorkspaceInMaintenance,
@@ -561,8 +560,6 @@ class RemoteLoader(UserRemoteLoader):
             raise FSWorkspaceNoReadAccess("Cannot load manifest: no read access")
         elif rep["status"] == "bad_version":
             raise FSRemoteManifestNotFoundBadVersion(entry_id)
-        elif rep["status"] == "bad_timestamp":
-            raise FSRemoteManifestNotFoundBadTimestamp(entry_id)
         elif rep["status"] == "bad_encryption_revision":
             raise FSBadEncryptionRevision(
                 f"Cannot fetch vlob {entry_id}: Bad encryption revision provided"
@@ -752,10 +749,6 @@ class RemoteLoader(UserRemoteLoader):
             raise VlobRequireGreaterTimestampError(rep["strictly_greater_than"])
         elif rep["status"] == "bad_version":
             raise FSRemoteSyncError(entry_id)
-        elif rep["status"] == "bad_timestamp":
-            # Quick and dirty fix before a better version with a retry loop : go offline so we
-            # don't have to deal with another client updating manifest with a later timestamp
-            raise FSBackendOfflineError(rep)
         elif rep["status"] == "bad_encryption_revision":
             raise FSBadEncryptionRevision(
                 f"Cannot update vlob {entry_id}: Bad encryption revision provided"
