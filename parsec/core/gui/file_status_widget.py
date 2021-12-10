@@ -44,27 +44,26 @@ class FileStatusWidget(QWidget, Ui_FileInfoWidget):
         from structlog import get_logger
 
         logger = get_logger()
-        logger.warning(path_info)
-        logger.warning("LOCATION " + str(self.path))
-        logger.warning("WORKSPACE NAME " + self.workspace_fs.get_workspace_name())
-        logger.warning("CREATED BY " + creator.short_user_display)
-        logger.warning("CREATED ON " + str(path_info["created"]))
-        logger.warning("UPDATED BY " + creator_last.short_user_display)
-        logger.warning("UPDATED ON " + str(path_info["updated"]))
-        logger.warning("TYPE " + str(path_info["type"]))
-        logger.warning("SIZE " + str(path_info["size"]))
+        self.label_location.setText(str(self.path))
+        self.label_filetype.setText(str(path_info["type"]))
+        self.label_size.setText(str(path_info["size"]))
+        self.label_workspace.setText(self.workspace_fs.get_workspace_name())
+        self.label_created_on.setText(str(path_info["created"]))
+        self.label_last_updated_on.setText(str(path_info["updated"]))
+        self.label_created_by.setText(creator.short_user_display)
+        self.label_last_updated_by.setText(creator_last.short_user_display)
+
         local_blocks = str(len(block_info.local_only_blocks))
         remote_blocks = str(len(block_info.remote_only_blocks))
         local_and_remote_blocks = str(len(block_info.local_and_remote_blocks))
-        self.label_10.setText(
-            _("TEXT_FILE_INFO_BLOCKS_local_remote_both").format(
-                local=local_blocks, remote=remote_blocks, both=local_and_remote_blocks
-            )
-        )
-        logger.warning("Local and remote block:" + local_and_remote_blocks)
-        logger.warning("Local block:" + local_blocks)
-        logger.warning("Remote block:" + remote_blocks)
-        logger.warning("File size:" + str(block_info.file_size))
+
+        self.label_blocks.setText(f"{local_blocks} |  {remote_blocks} | {local_and_remote_blocks}")
+        if block_info.pending_chunks_size == 0:
+            self.label_availability.setText("Yes")
+        else:
+            self.label_availability.setText("No")
+
+        # other info if needed
         logger.warning("Block size:" + str(block_info.proper_blocks_size))
         logger.warning("Pending Chunk size:" + str(block_info.pending_chunks_size))
 

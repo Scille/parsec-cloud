@@ -450,7 +450,7 @@
                </font>
               </property>
               <property name="text">
-               <string>TEXT_FILE_INFO_BLOCKS_local_remote_both</string>
+               <string>TEXT_FILE_INFO_BLOCKS</string>
               </property>
              </widget>
             </item>
