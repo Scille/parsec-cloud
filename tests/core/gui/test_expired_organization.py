@@ -78,16 +78,16 @@ async def test_expired_notification_from_connection(
 
         await aqtbot.wait_until(_notified)
 
-    # Trigger another handshake
-    with pytest.raises(BackendConnectionRefused):
-        async with backend_authenticated_cmds_factory(
-            expiredorgalice.organization_addr,
-            expiredorgalice.device_id,
-            expiredorgalice.signing_key,
-        ) as cmds:
-            async with cmds.acquire_transport():
-                # This shall never happen, we shall have been rejected while acquiring the transport
-                assert False
+        # Trigger another handshake
+        with pytest.raises(BackendConnectionRefused):
+            async with backend_authenticated_cmds_factory(
+                expiredorgalice.organization_addr,
+                expiredorgalice.device_id,
+                expiredorgalice.signing_key,
+            ) as cmds:
+                async with cmds.acquire_transport():
+                    # This shall never happen, we shall have been rejected while acquiring the transport
+                    assert False
 
     # Assert dialog
     def _expired_notified():
