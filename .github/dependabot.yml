@@ -1,0 +1,34 @@
+version: 2
+updates:
+  - package-ecosystem: pip
+    directory: "/requirement"
+    ignore:
+      - dependency-name: "toastedmarshmallow"
+      - dependency-name: "trio_typing"
+      - dependency-name: "typing-extensions"
+    pull-request-branch-name:
+      separator: "-"
+    schedule:
+      interval: weekly
+
+  - package-ecosystem: cargo
+    directory: "/oxidation/libparsec_python"
+    pull-request-branch-name:
+      separator: "-"
+    schedule:
+      interval: monthly
+
+  - package-ecosystem: cargo
+    directory: "/oxidation/libparsec"
+    pull-request-branch-name:
+      separator: "-"
+    schedule:
+      interval: monthly
+
+  - package-ecosystem: cargo
+    directory: "/oxidation/crates/parsec_api_crypto"
+    pull-request-branch-name:
+      separator: "-"
+    schedule:
+      interval: monthly
+
