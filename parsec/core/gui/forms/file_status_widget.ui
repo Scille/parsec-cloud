@@ -152,7 +152,7 @@
                </font>
               </property>
               <property name="text">
-               <string/>
+               <string>TEXT_FILE_INFO_NON_APPLICABLE</string>
               </property>
               <property name="textInteractionFlags">
                <set>Qt::LinksAccessibleByMouse|Qt::TextSelectableByKeyboard|Qt::TextSelectableByMouse</set>
@@ -169,7 +169,7 @@
                </font>
               </property>
               <property name="text">
-               <string/>
+               <string>TEXT_FILE_INFO_NON_APPLICABLE</string>
               </property>
               <property name="textInteractionFlags">
                <set>Qt::LinksAccessibleByMouse|Qt::TextSelectableByKeyboard|Qt::TextSelectableByMouse</set>
@@ -186,7 +186,7 @@
                </font>
               </property>
               <property name="text">
-               <string/>
+               <string>TEXT_FILE_INFO_NON_APPLICABLE</string>
               </property>
               <property name="textInteractionFlags">
                <set>Qt::LinksAccessibleByMouse|Qt::TextSelectableByKeyboard|Qt::TextSelectableByMouse</set>
@@ -218,7 +218,7 @@
                </font>
               </property>
               <property name="text">
-               <string/>
+               <string>TEXT_FILE_INFO_NON_APPLICABLE</string>
               </property>
               <property name="textInteractionFlags">
                <set>Qt::LinksAccessibleByMouse|Qt::TextSelectableByKeyboard|Qt::TextSelectableByMouse</set>
@@ -342,7 +342,7 @@
                </font>
               </property>
               <property name="text">
-               <string/>
+               <string>TEXT_FILE_INFO_NON_APPLICABLE</string>
               </property>
               <property name="textInteractionFlags">
                <set>Qt::LinksAccessibleByMouse|Qt::TextSelectableByKeyboard|Qt::TextSelectableByMouse</set>
@@ -359,7 +359,7 @@
                </font>
               </property>
               <property name="text">
-               <string/>
+               <string>TEXT_FILE_INFO_NON_APPLICABLE</string>
               </property>
               <property name="textInteractionFlags">
                <set>Qt::LinksAccessibleByMouse|Qt::TextSelectableByKeyboard|Qt::TextSelectableByMouse</set>
@@ -376,7 +376,7 @@
                </font>
               </property>
               <property name="text">
-               <string/>
+               <string>TEXT_FILE_INFO_NON_APPLICABLE</string>
               </property>
               <property name="textInteractionFlags">
                <set>Qt::LinksAccessibleByMouse|Qt::TextSelectableByKeyboard|Qt::TextSelectableByMouse</set>
@@ -393,7 +393,7 @@
                </font>
               </property>
               <property name="text">
-               <string/>
+               <string>TEXT_FILE_INFO_NON_APPLICABLE</string>
               </property>
               <property name="textInteractionFlags">
                <set>Qt::LinksAccessibleByMouse|Qt::TextSelectableByKeyboard|Qt::TextSelectableByMouse</set>
@@ -535,7 +535,7 @@
                </font>
               </property>
               <property name="text">
-               <string/>
+               <string>TEXT_FILE_INFO_NON_APPLICABLE</string>
               </property>
               <property name="textInteractionFlags">
                <set>Qt::LinksAccessibleByMouse|Qt::TextSelectableByKeyboard|Qt::TextSelectableByMouse</set>
@@ -552,7 +552,7 @@
                </font>
               </property>
               <property name="text">
-               <string/>
+               <string>TEXT_FILE_INFO_NON_APPLICABLE</string>
               </property>
               <property name="textInteractionFlags">
                <set>Qt::LinksAccessibleByMouse|Qt::TextSelectableByKeyboard|Qt::TextSelectableByMouse</set>
@@ -569,7 +569,7 @@
                </font>
               </property>
               <property name="text">
-               <string/>
+               <string>TEXT_FILE_INFO_NON_APPLICABLE</string>
               </property>
               <property name="textInteractionFlags">
                <set>Qt::LinksAccessibleByMouse|Qt::TextSelectableByKeyboard|Qt::TextSelectableByMouse</set>
@@ -586,7 +586,7 @@
                </font>
               </property>
               <property name="text">
-               <string/>
+               <string>TEXT_FILE_INFO_NON_APPLICABLE</string>
               </property>
               <property name="textInteractionFlags">
                <set>Qt::LinksAccessibleByMouse|Qt::TextSelectableByKeyboard|Qt::TextSelectableByMouse</set>
@@ -603,7 +603,7 @@
                </font>
               </property>
               <property name="text">
-               <string/>
+               <string>TEXT_FILE_INFO_NON_APPLICABLE</string>
               </property>
               <property name="textInteractionFlags">
                <set>Qt::LinksAccessibleByMouse|Qt::TextSelectableByKeyboard|Qt::TextSelectableByMouse</set>
