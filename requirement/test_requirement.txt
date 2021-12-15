@@ -6,7 +6,7 @@ pytest-qt==4.0.2
 pytest-rerunfailures==10.2
 hypothesis==6.31.4
 hypothesis-trio==0.6.0
-trustme==0.6.0
+trustme==0.9.0
 winfspy[test]==0.8.2;platform_system=="Windows"
 docutils==0.17.1 # updating break test
 # Documentation generation requirements
