@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>502</width>
-    <height>365</height>
+    <width>589</width>
+    <height>452</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -30,25 +30,6 @@
     <number>0</number>
    </property>
    <item>
-    <layout class="QHBoxLayout" name="horizontalLayout">
-     <item>
-      <widget class="QLabel" name="label_filename">
-       <property name="font">
-        <font>
-         <pointsize>12</pointsize>
-        </font>
-       </property>
-       <property name="text">
-        <string>TEXT_FILE_INFO_NON_APPLICABLE</string>
-       </property>
-       <property name="textInteractionFlags">
-        <set>Qt::LinksAccessibleByMouse|Qt::TextSelectableByKeyboard|Qt::TextSelectableByMouse</set>
-       </property>
-      </widget>
-     </item>
-    </layout>
-   </item>
-   <item>
     <widget class="QScrollArea" name="scrollArea">
      <property name="horizontalScrollBarPolicy">
       <enum>Qt::ScrollBarAlwaysOff</enum>
@@ -61,8 +42,8 @@
        <rect>
         <x>0</x>
         <y>0</y>
-        <width>570</width>
-        <height>366</height>
+        <width>587</width>
+        <height>450</height>
        </rect>
       </property>
       <layout class="QVBoxLayout" name="verticalLayout_2">
@@ -73,13 +54,13 @@
         <number>0</number>
        </property>
        <property name="topMargin">
-        <number>0</number>
+        <number>10</number>
        </property>
        <property name="rightMargin">
         <number>0</number>
        </property>
        <property name="bottomMargin">
-        <number>0</number>
+        <number>10</number>
        </property>
        <item>
         <widget class="QFrame" name="frame">
@@ -100,13 +81,13 @@
            <number>10</number>
           </property>
           <property name="topMargin">
-           <number>0</number>
+           <number>10</number>
           </property>
           <property name="rightMargin">
-           <number>0</number>
+           <number>10</number>
           </property>
           <property name="bottomMargin">
-           <number>0</number>
+           <number>10</number>
           </property>
           <item>
            <layout class="QFormLayout" name="formLayout">
@@ -171,7 +152,7 @@
                </font>
               </property>
               <property name="text">
-               <string>TEXT_FILE_INFO_NON_APPLICABLE</string>
+               <string/>
               </property>
               <property name="textInteractionFlags">
                <set>Qt::LinksAccessibleByMouse|Qt::TextSelectableByKeyboard|Qt::TextSelectableByMouse</set>
@@ -188,7 +169,7 @@
                </font>
               </property>
               <property name="text">
-               <string>TEXT_FILE_INFO_NON_APPLICABLE</string>
+               <string/>
               </property>
               <property name="textInteractionFlags">
                <set>Qt::LinksAccessibleByMouse|Qt::TextSelectableByKeyboard|Qt::TextSelectableByMouse</set>
@@ -205,7 +186,7 @@
                </font>
               </property>
               <property name="text">
-               <string>TEXT_FILE_INFO_NON_APPLICABLE</string>
+               <string/>
               </property>
               <property name="textInteractionFlags">
                <set>Qt::LinksAccessibleByMouse|Qt::TextSelectableByKeyboard|Qt::TextSelectableByMouse</set>
@@ -237,7 +218,7 @@
                </font>
               </property>
               <property name="text">
-               <string>TEXT_FILE_INFO_NON_APPLICABLE</string>
+               <string/>
               </property>
               <property name="textInteractionFlags">
                <set>Qt::LinksAccessibleByMouse|Qt::TextSelectableByKeyboard|Qt::TextSelectableByMouse</set>
@@ -275,13 +256,13 @@
            <number>10</number>
           </property>
           <property name="topMargin">
-           <number>0</number>
+           <number>10</number>
           </property>
           <property name="rightMargin">
-           <number>0</number>
+           <number>10</number>
           </property>
           <property name="bottomMargin">
-           <number>0</number>
+           <number>10</number>
           </property>
           <item>
            <layout class="QFormLayout" name="formLayout_2">
@@ -361,7 +342,7 @@
                </font>
               </property>
               <property name="text">
-               <string>TEXT_FILE_INFO_NON_APPLICABLE</string>
+               <string/>
               </property>
               <property name="textInteractionFlags">
                <set>Qt::LinksAccessibleByMouse|Qt::TextSelectableByKeyboard|Qt::TextSelectableByMouse</set>
@@ -378,7 +359,7 @@
                </font>
               </property>
               <property name="text">
-               <string>TEXT_FILE_INFO_NON_APPLICABLE</string>
+               <string/>
               </property>
               <property name="textInteractionFlags">
                <set>Qt::LinksAccessibleByMouse|Qt::TextSelectableByKeyboard|Qt::TextSelectableByMouse</set>
@@ -395,7 +376,7 @@
                </font>
               </property>
               <property name="text">
-               <string>TEXT_FILE_INFO_NON_APPLICABLE</string>
+               <string/>
               </property>
               <property name="textInteractionFlags">
                <set>Qt::LinksAccessibleByMouse|Qt::TextSelectableByKeyboard|Qt::TextSelectableByMouse</set>
@@ -412,7 +393,7 @@
                </font>
               </property>
               <property name="text">
-               <string>TEXT_FILE_INFO_NON_APPLICABLE</string>
+               <string/>
               </property>
               <property name="textInteractionFlags">
                <set>Qt::LinksAccessibleByMouse|Qt::TextSelectableByKeyboard|Qt::TextSelectableByMouse</set>
@@ -453,13 +434,13 @@
            <number>10</number>
           </property>
           <property name="topMargin">
-           <number>0</number>
+           <number>10</number>
           </property>
           <property name="rightMargin">
-           <number>0</number>
+           <number>10</number>
           </property>
           <property name="bottomMargin">
-           <number>0</number>
+           <number>10</number>
           </property>
           <item>
            <layout class="QFormLayout" name="formLayout_3">
@@ -554,7 +535,7 @@
                </font>
               </property>
               <property name="text">
-               <string>TEXT_FILE_INFO_NON_APPLICABLE</string>
+               <string/>
               </property>
               <property name="textInteractionFlags">
                <set>Qt::LinksAccessibleByMouse|Qt::TextSelectableByKeyboard|Qt::TextSelectableByMouse</set>
@@ -571,7 +552,7 @@
                </font>
               </property>
               <property name="text">
-               <string>TEXT_FILE_INFO_NON_APPLICABLE</string>
+               <string/>
               </property>
               <property name="textInteractionFlags">
                <set>Qt::LinksAccessibleByMouse|Qt::TextSelectableByKeyboard|Qt::TextSelectableByMouse</set>
@@ -588,7 +569,7 @@
                </font>
               </property>
               <property name="text">
-               <string>TEXT_FILE_INFO_NON_APPLICABLE</string>
+               <string/>
               </property>
               <property name="textInteractionFlags">
                <set>Qt::LinksAccessibleByMouse|Qt::TextSelectableByKeyboard|Qt::TextSelectableByMouse</set>
@@ -605,7 +586,7 @@
                </font>
               </property>
               <property name="text">
-               <string>TEXT_FILE_INFO_NON_APPLICABLE</string>
+               <string/>
               </property>
               <property name="textInteractionFlags">
                <set>Qt::LinksAccessibleByMouse|Qt::TextSelectableByKeyboard|Qt::TextSelectableByMouse</set>
@@ -622,7 +603,7 @@
                </font>
               </property>
               <property name="text">
-               <string>TEXT_FILE_INFO_NON_APPLICABLE</string>
+               <string/>
               </property>
               <property name="textInteractionFlags">
                <set>Qt::LinksAccessibleByMouse|Qt::TextSelectableByKeyboard|Qt::TextSelectableByMouse</set>

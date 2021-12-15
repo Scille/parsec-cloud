@@ -54,7 +54,6 @@ class FileStatusWidget(QWidget, Ui_FileInfoWidget):
             if isinstance(self.workspace_fs, WorkspaceFSTimestamped)
             else None,
         )
-        self.label_filename.setText(str(self.path))
 
         self.label_location.setText(str(full_path))
         self.label_filetype.setText(str(path_info["type"]))
