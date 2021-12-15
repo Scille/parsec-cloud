@@ -54,7 +54,7 @@ class SecretKey:
     def __new__(cls, rawkey: bytes) -> "SecretKey":
         if len(rawkey) != SecretBox.KEY_SIZE:
             raise ValueError("Invalid key size")
-        return super(SecretKey, cls).__new__(cls)
+        return super().__new__(cls)
 
     def __eq__(self, other):
         if not isinstance(other, type(self)):
@@ -91,6 +91,7 @@ class SecretKey:
     @property
     def secret(self) -> bytes:
         return self._secret
+
 
 _PySecretKey = SecretKey
 if not TYPE_CHECKING:
