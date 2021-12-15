@@ -23,16 +23,8 @@ class FileStatusWidget(QWidget, Ui_FileInfoWidget):
         self.workspace_fs = workspace_fs
         self.path = path
         self.core = core
-        self.get_status_success.connect(self.on_get_status_success)
-        self.get_status_error.connect(self.on_get_status_error)
 
         self.jobs_ctx.submit_job(self.get_status_success, self.get_status_error, self.get_status)
-
-    def on_get_status_success(self):
-        pass
-
-    def on_get_status_error(self):
-        pass
 
     async def get_status(self):
         path_info = await self.workspace_fs.path_info(self.path)
@@ -40,10 +32,18 @@ class FileStatusWidget(QWidget, Ui_FileInfoWidget):
         if path_info["type"] == "file":
             block_info: BlockInfo = await self.workspace_fs.get_blocks_by_type(self.path)
             self.label_size.setText(get_filesize(path_info["size"]))
+
         version_lister = self.workspace_fs.get_version_lister()
+
         version_list = await version_lister.list(path=self.path)
         user_id = version_list[0][0].creator.user_id
+
+        created_time = version_list[0][0].updated
+        updated_time = path_info["updated"]
+
+        version_list = await version_lister.list(path=self.path, starting_timestamp=updated_time)
         user_id_last = version_list[0][-1].creator.user_id
+
         creator = await self.core.get_user_info(user_id)
         last_author = await self.core.get_user_info(user_id_last)
 
@@ -59,8 +59,8 @@ class FileStatusWidget(QWidget, Ui_FileInfoWidget):
         self.label_filetype.setText(str(path_info["type"]))
 
         self.label_workspace.setText(self.workspace_fs.get_workspace_name())
-        self.label_created_on.setText(format_datetime(path_info["created"]))
-        self.label_last_updated_on.setText(format_datetime(path_info["updated"]))
+        self.label_created_on.setText(format_datetime(created_time))
+        self.label_last_updated_on.setText(format_datetime(updated_time))
         self.label_created_by.setText(creator.short_user_display)
         self.label_last_updated_by.setText(last_author.short_user_display)
 
