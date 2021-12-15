@@ -8,7 +8,7 @@ hypothesis==6.31.4
 hypothesis-trio==0.6.0
 trustme==0.6.0
 winfspy[test]==0.8.2;platform_system=="Windows"
-docutils==0.17.1 # updating break test
+docutils==0.18.1 # updating break test
 # Documentation generation requirements
 sphinx==4.3.1
 sphinx-intl==2.0.1
