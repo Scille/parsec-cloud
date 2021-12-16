@@ -111,7 +111,7 @@ class FileTransactions:
         return data[chunk.start - chunk.raw_offset : chunk.stop - chunk.raw_offset]
 
     async def _write_chunk(self, chunk: Chunk, content: bytes, offset: int = 0) -> int:
-        data: bytes = padded_data(content, offset, offset + chunk.stop - chunk.start)
+        data = padded_data(content, offset, offset + chunk.stop - chunk.start)
         await self.local_storage.set_chunk(chunk.id, data)
         return len(data)
 

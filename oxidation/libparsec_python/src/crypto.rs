@@ -80,7 +80,7 @@ impl SecretKey {
         Ok(PyBytes::new(py, self.0.as_ref()))
     }
 
-    pub fn encrypt<'p>(&self, py: Python<'p>, data: &[u8]) -> Result<&'p PyBytes, PyErr> {
+    pub fn encrypt<'p>(&self, py: Python<'p>, data: &[u8]) -> PyResult<&'p PyBytes> {
         Ok(PyBytes::new(py, &self.0.encrypt(data)))
     }
 
@@ -96,8 +96,8 @@ impl SecretKey {
         py: Python<'p>,
         data: &[u8],
         digest_size: usize,
-    ) -> PyResult<&'p PyByteArray> {
-        Ok(PyByteArray::new(py, &self.0.hmac(data, digest_size)))
+    ) -> PyResult<&'p PyBytes> {
+        Ok(PyBytes::new(py, &self.0.hmac(data, digest_size)))
     }
 
     fn __repr__(&self) -> PyResult<String> {
