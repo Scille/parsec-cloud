@@ -17,6 +17,8 @@ from parsec.api.protocol import (
     RealmRoleField,
     UserProfileField,
     UserProfile,
+    DeviceLabel,
+    DeviceLabelField,
 )
 from parsec.api.data.base import DataValidationError, BaseAPISignedData, BaseSignedDataSchema
 import attr
@@ -128,7 +130,7 @@ class DeviceCertificateContent(BaseAPISignedData):
         type = fields.CheckedConstant("device_certificate", required=True)
         device_id = DeviceIDField(required=True)
         # Device label can be none in case of redacted certificate
-        device_label = fields.String(allow_none=True, missing=None)
+        device_label = DeviceLabelField(allow_none=True, missing=None)
         verify_key = fields.VerifyKey(required=True)
 
         @post_load
@@ -140,7 +142,7 @@ class DeviceCertificateContent(BaseAPISignedData):
     author: Optional[DeviceID]  # type: ignore[assignment]
 
     device_id: DeviceID
-    device_label: Optional[str]
+    device_label: DeviceLabel
     verify_key: VerifyKey
 
     @classmethod
