@@ -11,6 +11,13 @@ updates:
     schedule:
       interval: weekly
 
+  - package-ecosystem: pip
+    directory: "/oxidation/libparsec_python"
+    pull-request-branch-name:
+      separator: "-"
+    schedule:
+      interval: monthly
+
   - package-ecosystem: cargo
     directory: "/oxidation/libparsec_python"
     pull-request-branch-name:
