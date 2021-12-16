@@ -80,11 +80,13 @@ async def test_backend_desync_notification(
     # Shift by 5 minutes
     timestamp_shift_minutes = 5
 
-    # Force sync by creating a workspace
-    await central_widget.core.user_fs.workspace_create("test1")
-
     # Wait until we get the notification
     async with aqtbot.wait_signal(central_widget.systray_notification):
+
+        # Force sync by creating a workspace
+        await central_widget.core.user_fs.workspace_create("test1")
+
+        # Wait until we're offline
         await aqtbot.wait_until(_offline, timeout=3000)
 
     # Wait for the dialog
