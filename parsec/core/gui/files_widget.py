@@ -12,6 +12,8 @@ from structlog import get_logger
 
 from PyQt5.QtCore import Qt, pyqtSignal
 from PyQt5.QtWidgets import QWidget
+
+from parsec.core.gui.file_status_widget import FileStatusWidget
 from parsec.core.types import WorkspaceRole
 from parsec.core.fs import FsPath, WorkspaceFS, WorkspaceFSTimestamped
 from parsec.core.fs.exceptions import (
@@ -301,6 +303,7 @@ class FilesWidget(QWidget, Ui_FilesWidget):
         self.table_files.open_clicked.connect(self.open_files)
         self.table_files.files_dropped.connect(self.on_files_dropped)
         self.table_files.show_history_clicked.connect(self.show_history)
+        self.table_files.show_status_clicked.connect(self.show_status)
         self.table_files.paste_clicked.connect(self.on_paste_clicked)
         self.table_files.copy_clicked.connect(self.on_copy_clicked)
         self.table_files.cut_clicked.connect(self.on_cut_clicked)
@@ -469,6 +472,7 @@ class FilesWidget(QWidget, Ui_FilesWidget):
             show_error(self, _("TEXT_FILE_HISTORY_MULTIPLE_FILES_SELECTED_ERROR"))
             return
         selected_path = self.current_directory / files[0].name
+
         FileHistoryWidget.show_modal(
             jobs_ctx=self.jobs_ctx,
             workspace_fs=self.workspace_fs,
@@ -476,6 +480,22 @@ class FilesWidget(QWidget, Ui_FilesWidget):
             reload_timestamped_signal=self.reload_timestamped_requested,
             update_version_list=self.update_version_list,
             close_version_list=self.close_version_list,
+            core=self.core,
+            parent=self,
+            on_finished=None,
+        )
+
+    def show_status(self):
+        files = self.table_files.selected_files()
+        if len(files) > 1:
+            show_error(self, _("TEXT_FILE_STATUS_MULTIPLE_FILES_SELECTED_ERROR"))
+            return
+        selected_path = self.current_directory / files[0].name
+
+        FileStatusWidget.show_modal(
+            jobs_ctx=self.jobs_ctx,
+            workspace_fs=self.workspace_fs,
+            path=selected_path,
             core=self.core,
             parent=self,
             on_finished=None,
@@ -564,6 +584,7 @@ class FilesWidget(QWidget, Ui_FilesWidget):
         self.desktop_open_files([None])
 
     def desktop_open_files(self, names: Iterable[Optional[str]]):
+
         paths = [
             self.core.mountpoint_manager.get_path_in_mountpoint(
                 self.workspace_fs.workspace_id,

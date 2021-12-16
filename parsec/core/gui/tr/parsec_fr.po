@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PROJECT VERSION\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2021-11-15 15:00+0100\n"
+"POT-Creation-Date: 2021-12-14 11:47+0100\n"
 "PO-Revision-Date: 2020-10-15 10:31+0200\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language: fr\n"
@@ -437,6 +437,15 @@ msgstr "Go"
 msgid "TEXT_FILE_SIZE_TB"
 msgstr "To"
 
+msgid "TEXT_YES"
+msgstr "Oui"
+
+msgid "TEXT_NO"
+msgstr "Non"
+
+msgid "TEXT_FILE_STATUS_TITLE_name"
+msgstr "État"
+
 msgid "ACTION_FILE_OPEN_CURRENT_DIRECTORY_MAC"
 msgstr "Ouvrir le répertoire dans le Finder"
 
@@ -460,6 +469,9 @@ msgstr "Couper"
 
 msgid "ACTION_FILE_MENU_SHOW_FILE_HISTORY"
 msgstr "Voir l'historique"
+
+msgid "ACTION_FILE_MENU_SHOW_FILE_STATUS"
+msgstr "Voir l'état"
 
 msgid "ACTION_FILE_MENU_GET_FILE_LINK"
 msgstr "Lien vers ce fichier"
@@ -493,6 +505,10 @@ msgstr "Impossible de coller ce fichier à cet endroit."
 msgid "TEXT_FILE_HISTORY_MULTIPLE_FILES_SELECTED_ERROR"
 msgstr ""
 "Impossible d'afficher l'historique de plusieurs fichiers en une fois. "
+"Veuillez ne sélectionner qu'un fichier."
+
+msgid "TEXT_FILE_STATUS_MULTIPLE_FILES_SELECTED_ERROR"
+msgstr "Impossible d'afficher l'état de plusieurs fichiers en une fois. "
 "Veuillez ne sélectionner qu'un fichier."
 
 msgid "TEXT_FILE_RENAME_TITLE"
@@ -2358,9 +2374,6 @@ msgstr "Nom de l'organisation"
 msgid "TEXT_LABEL_ORG_NAME_RECOMMANDATIONS"
 msgstr "Lettres, chiffres, underscores et tirets seulement. Aucun espace."
 
-msgid "TEXT_LABEL_DEVICE_NAME"
-msgstr "Nom d'appareil"
-
 msgid "ACTION_CREATE_ON_COMMERCIAL_BACKEND"
 msgstr "Utiliser le serveur PARSEC principal"
 
@@ -2378,6 +2391,9 @@ msgstr "Je dispose de mon propre serveur PARSEC"
 
 msgid "TEXT_LABEL_BACKEND_ADDR_PLACEHOLDER"
 msgstr "parsec://hote:port"
+
+msgid "TEXT_LABEL_DEVICE_NAME"
+msgstr "Nom d'appareil"
 
 msgid "TEXT_CREATE_ORGANIZATION_INSTRUCTIONS"
 msgstr "Veuillez fournir les informations suivantes pour créer votre organisation."
@@ -2486,6 +2502,48 @@ msgstr "Par"
 
 msgid "ACTION_FILE_HISTORY_LOAD_MORE_ENTRIES"
 msgstr "Charger plus d'entrées"
+
+msgid "TEXT_FILE_INFO_LOCATION"
+msgstr "Emplacement"
+
+msgid "TEXT_FILE_INFO_TYPE"
+msgstr "Type"
+
+msgid "TEXT_FILE_INFO_SIZE"
+msgstr "Taille"
+
+msgid "TEXT_FILE_INFO_WORKSPACE"
+msgstr "Espace de travail"
+
+msgid "TEXT_FILE_INFO_CREATED_ON"
+msgstr "Créé le"
+
+msgid "TEXT_FILE_INFO_CREATED_BY"
+msgstr "Créé par"
+
+msgid "TEXT_FILE_INFO_UPDATED_ON"
+msgstr "Mise à jour le"
+
+msgid "TEXT_FILE_INFO_UPDATED_BY"
+msgstr "Mise à jour par"
+
+msgid "TEXT_FILE_INFO_AVAILABILITY"
+msgstr "Disponibilité"
+
+msgid "TEXT_FILE_INFO_UPLOADED"
+msgstr "Téléchargé"
+
+msgid "TEXT_FILE_INFO_BLOCKS_LOCAL"
+msgstr "Blocs locaux uniquement"
+
+msgid "TEXT_FILE_INFO_BLOCKS_REMOTE"
+msgstr "Blocs distants uniquement"
+
+msgid "TEXT_FILE_INFO_BLOCKS_BOTH"
+msgstr "Blocs locaux et distants"
+
+msgid "TEXT_FILE_INFO_NON_APPLICABLE"
+msgstr "N/A"
 
 msgid "TEXT_FILE_BACK_TO_WORKSPACES_TOOLTIP"
 msgstr "Retour à la liste des espaces de travail"
@@ -2659,12 +2717,6 @@ msgstr "Vérifier la disponibilité d'une nouvelle version au démarrage"
 msgid "ACTION_SETTINGS_CHECK_NEW_VERSION"
 msgstr "Vérifier la disponibilité d'une nouvelle version maintenant"
 
-msgid "TEXT_SETTINGS_TELEMETRY_TITLE"
-msgstr "Télémétrie"
-
-msgid "TEXT_SETTINGS_ENABLE_TELEMETRY"
-msgstr "Activer la télémétrie pour l'envoi automatique de rapports d'erreur"
-
 msgid "TEXT_SETTINGS_INTERFACE_TITLE"
 msgstr "Interface"
 
@@ -2676,6 +2728,12 @@ msgstr "Utiliser des couleurs pour les espaces de travail"
 
 msgid "ACTION_SAVE"
 msgstr "Sauvegarder"
+
+msgid "TEXT_SETTINGS_TELEMETRY_TITLE"
+msgstr "Télémétrie"
+
+msgid "TEXT_SETTINGS_ENABLE_TELEMETRY"
+msgstr "Activer la télémétrie pour l'envoi automatique de rapports d'erreur"
 
 msgid "TEXT_SELECT_SMARTCARD"
 msgstr "Il vous sera demandé de sélectionner votre carte à puce"
@@ -2710,17 +2768,17 @@ msgstr "Rechercher utilisateurs"
 msgid "ACTION_USER_INVITE_USER"
 msgstr "Inviter un utilisateur"
 
-msgid "ACTION_FILTER_REVOKED_USERS"
-msgstr "Masquer les utilisateurs révoqués"
-
-msgid "ACTION_FILTER_PENDING_INVITATION"
-msgstr "Masquer les invitations"
-
 msgid "ACTION_LIST_PREVIOUS_PAGE"
 msgstr "Page précédente"
 
 msgid "ACTION_LIST_NEXT_PAGE"
 msgstr "Page suivante"
+
+msgid "ACTION_FILTER_REVOKED_USERS"
+msgstr "Masquer les utilisateurs révoqués"
+
+msgid "ACTION_FILTER_PENDING_INVITATION"
+msgstr "Masquer les invitations"
 
 msgid "TEXT_WORKSPACE_IS_SHARED_TOOLTIP"
 msgstr "L'espace de travail est partagé."
