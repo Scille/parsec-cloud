@@ -709,3 +709,102 @@ async def test_use_file_link(aqtbot, autoclose_dialog, files_widget_testbed):
 
 
 # Note: other file link tests are in test_main_window.py
+
+
+@pytest.fixture
+def catch_file_status_widget(widget_catcher_factory):
+    return widget_catcher_factory("parsec.core.gui.file_status_widget.FileStatusWidget")
+
+
+@pytest.mark.gui
+@pytest.mark.trio
+async def test_show_file_status(
+    running_backend, aqtbot, autoclose_dialog, files_widget_testbed, catch_file_status_widget
+):
+    tb = files_widget_testbed
+    f_w = files_widget_testbed.files_widget
+
+    # Populate the workspace
+    await tb.workspace_fs.mkdir("/foo")
+    await tb.workspace_fs.mkdir("/foo/innerfoo")
+    await tb.workspace_fs.touch("/foo/bar.txt")
+    await tb.check_files_view(path="/", expected_entries=["foo/"])
+
+    await f_w.workspace_fs.sync()
+
+    await tb.cd("foo")
+
+    await tb.check_files_view(path="/foo", expected_entries=["innerfoo/", "bar.txt"])
+
+    # Try to open status with two files selected
+    await tb.apply_selection(["bar.txt", "innerfoo"])
+
+    selected_files = f_w.table_files.selected_files()
+    assert len(selected_files) == 2
+    f_w.show_status()
+
+    assert autoclose_dialog.dialogs == [
+        ("Error", _("TEXT_FILE_STATUS_MULTIPLE_FILES_SELECTED_ERROR"))
+    ]
+    autoclose_dialog.reset()
+
+    # Select a single file
+    await tb.apply_selection("bar.txt")
+    selected_files = f_w.table_files.selected_files()
+    assert len(selected_files) == 1
+
+    f_w.show_status()
+    file_status_w = await catch_file_status_widget()
+    assert file_status_w
+
+    def _wait_status_shown():
+        assert file_status_w.label_location.text().endswith(str(Path("/foo/bar.txt")))
+        assert file_status_w.label_workspace.text() == "wksp1"
+        assert file_status_w.label_filetype.text() == "file"
+        assert file_status_w.label_size.text() == "0 B"
+        assert file_status_w.label_created_on.text() != "" and file_status_w.label_created_on.text() != _(
+            "TEXT_FILE_INFO_NON_APPLICABLE"
+        )
+        assert file_status_w.label_created_by.text() == "Boby McBobFace"
+        assert file_status_w.label_last_updated_on.text() != "" and file_status_w.label_last_updated_on.text() != _(
+            "TEXT_FILE_INFO_NON_APPLICABLE"
+        )
+        assert file_status_w.label_last_updated_by.text() == "Boby McBobFace"
+        assert file_status_w.label_availability.text() == _("TEXT_YES")
+        assert file_status_w.label_uploaded.text() == _("TEXT_YES")
+        assert file_status_w.label_local.text() == "0"
+        assert file_status_w.label_remote.text() == "0"
+        assert file_status_w.label_both.text() == "0"
+
+    await aqtbot.wait_until(_wait_status_shown)
+    file_status_w.dialog.accept()
+
+    # Select a single dir
+    await tb.apply_selection("innerfoo")
+    selected_files = f_w.table_files.selected_files()
+    assert len(selected_files) == 1
+
+    f_w.show_status()
+    file_status_w = await catch_file_status_widget()
+    assert file_status_w
+
+    def _wait_status_shown():
+        assert file_status_w.label_location.text().endswith(str(Path("/foo/innerfoo")))
+        assert file_status_w.label_workspace.text() == "wksp1"
+        assert file_status_w.label_filetype.text() == "folder"
+        assert file_status_w.label_size.text() == _("TEXT_FILE_INFO_NON_APPLICABLE")
+        assert file_status_w.label_created_on.text() != "" and file_status_w.label_created_on.text() != _(
+            "TEXT_FILE_INFO_NON_APPLICABLE"
+        )
+        assert file_status_w.label_created_by.text() == "Boby McBobFace"
+        assert file_status_w.label_last_updated_on.text() != "" and file_status_w.label_last_updated_on.text() != _(
+            "TEXT_FILE_INFO_NON_APPLICABLE"
+        )
+        assert file_status_w.label_last_updated_by.text() == "Boby McBobFace"
+        assert file_status_w.label_availability.text() == _("TEXT_FILE_INFO_NON_APPLICABLE")
+        assert file_status_w.label_uploaded.text() == _("TEXT_FILE_INFO_NON_APPLICABLE")
+        assert file_status_w.label_local.text() == _("TEXT_FILE_INFO_NON_APPLICABLE")
+        assert file_status_w.label_remote.text() == _("TEXT_FILE_INFO_NON_APPLICABLE")
+        assert file_status_w.label_both.text() == _("TEXT_FILE_INFO_NON_APPLICABLE")
+
+    await aqtbot.wait_until(_wait_status_shown)
