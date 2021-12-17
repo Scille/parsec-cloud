@@ -15,8 +15,6 @@ from parsec.api.protocol import (
     HumanHandle,
     DeviceIDField,
     HumanHandleField,
-    DeviceLabel,
-    DeviceLabelField,
 )
 from parsec.api.data import BaseSchema, EntryID, EntryIDField, UserProfile, UserProfileField
 from parsec.core.types.base import BaseLocalData
@@ -28,7 +26,7 @@ class LocalDevice(BaseLocalData):
     class SCHEMA_CLS(BaseSchema):
         organization_addr = BackendOrganizationAddrField(required=True)
         device_id = DeviceIDField(required=True)
-        device_label = DeviceLabelField(allow_none=True, missing=None)
+        device_label = fields.String(allow_none=True, missing=None)
         human_handle = HumanHandleField(allow_none=True, missing=None)
         signing_key = fields.SigningKey(required=True)
         private_key = fields.PrivateKey(required=True)
@@ -58,7 +56,7 @@ class LocalDevice(BaseLocalData):
 
     organization_addr: BackendOrganizationAddr
     device_id: DeviceID
-    device_label: DeviceLabel
+    device_label: Optional[str]
     human_handle: Optional[HumanHandle]
     signing_key: SigningKey
     private_key: PrivateKey

@@ -6,14 +6,7 @@ from random import randint, shuffle
 
 from parsec.crypto import VerifyKey, PublicKey, PrivateKey, SecretKey
 from parsec.serde import fields, post_load
-from parsec.api.protocol import (
-    DeviceID,
-    DeviceIDField,
-    HumanHandle,
-    HumanHandleField,
-    DeviceLabel,
-    DeviceLabelField,
-)
+from parsec.api.protocol import DeviceID, DeviceIDField, HumanHandle, HumanHandleField
 from parsec.api.data.base import BaseAPIData, BaseSchema
 from parsec.api.data.entry import EntryID, EntryIDField
 from parsec.api.data.certif import UserProfile, UserProfileField
@@ -100,7 +93,7 @@ class InviteUserConfirmation(BaseAPIData):
     class SCHEMA_CLS(BaseSchema):
         type = fields.CheckedConstant("invite_user_confirmation", required=True)
         device_id = DeviceIDField(required=True)
-        device_label = DeviceLabelField(allow_none=True, missing=None)
+        device_label = fields.String(allow_none=True, missing=None)
         human_handle = HumanHandleField(allow_none=True, missing=None)
         profile = UserProfileField(required=True)
         root_verify_key = fields.VerifyKey(required=True)
@@ -139,7 +132,7 @@ class InviteDeviceConfirmation(BaseAPIData):
     class SCHEMA_CLS(BaseSchema):
         type = fields.CheckedConstant("invite_device_confirmation", required=True)
         device_id = DeviceIDField(required=True)
-        device_label = DeviceLabelField(allow_none=True, missing=None)
+        device_label = fields.String(allow_none=True, missing=None)
         human_handle = HumanHandleField(allow_none=True, missing=None)
         profile = UserProfileField(required=True)
         private_key = fields.PrivateKey(required=True)
@@ -155,7 +148,7 @@ class InviteDeviceConfirmation(BaseAPIData):
             return InviteDeviceConfirmation(**data)
 
     device_id: DeviceID
-    device_label: DeviceLabel
+    device_label: Optional[str]
     human_handle: Optional[HumanHandle]
     profile: UserProfile
     private_key: PrivateKey

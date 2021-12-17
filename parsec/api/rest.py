@@ -1,12 +1,7 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2016-2021 Scille SAS
 
 from parsec.serde import fields, BaseSchema, JSONSerializer
-from parsec.api.protocol.types import (
-    OrganizationIDField,
-    DeviceIDField,
-    UserProfileField,
-    DeviceLabelField,
-)
+from parsec.api.protocol.types import OrganizationIDField, DeviceIDField, UserProfileField
 
 
 ### Webhooks ###
@@ -15,7 +10,7 @@ from parsec.api.protocol.types import (
 class OrganizationBootstrapWebhookSchema(BaseSchema):
     organization_id = OrganizationIDField(required=True)
     device_id = DeviceIDField(required=True)
-    device_label = DeviceLabelField(allow_none=True, required=True)
+    device_label = fields.String(allow_none=True, required=True)
     human_email = fields.String(allow_none=True, required=True)
     human_label = fields.String(allow_none=True, required=True)
 
