@@ -11,8 +11,6 @@ from parsec.core.fs import FSWorkspaceNoReadAccess
 from parsec.core.gui.workspace_button import WorkspaceButton
 from parsec.core.gui.timestamped_workspace_widget import TimestampedWorkspaceWidget
 
-from tests.core.gui.test_files import create_files_widget_testbed
-
 from tests.common import freeze_time
 
 
@@ -355,15 +353,13 @@ async def test_workspace_filter_user_new_workspace(
 async def test_display_timestamped_workspace_in_workspaces_list(
     aqtbot, running_backend, logged_gui, monkeypatch, catch_timestamped_workspace_widget, tmpdir
 ):
-    c_w = logged_gui.test_get_central_widget()
     w_w = logged_gui.test_get_workspaces_widget()
     workspace_name = "wksp1"
 
     # Create the workspace
     with freeze_time("2000-03-30"):
         user_fs = logged_gui.test_get_core().user_fs
-        wid = await user_fs.workspace_create(workspace_name)
-        wfs = user_fs.get_workspace(wid)
+        await user_fs.workspace_create(workspace_name)
         await user_fs.sync()
 
     # Now wait for GUI to take it into account
@@ -390,7 +386,7 @@ async def test_display_timestamped_workspace_in_workspaces_list(
         )
         async with aqtbot.wait_signal(f_w.import_success):
             aqtbot.mouse_click(f_w.button_import_files, QtCore.Qt.LeftButton)
-        await f_w.workspace_fs.sync()            
+        await f_w.workspace_fs.sync()
 
     with freeze_time("2020-03-30 00:00:00"):
         # Import file 2
@@ -400,15 +396,14 @@ async def test_display_timestamped_workspace_in_workspaces_list(
         )
         async with aqtbot.wait_signal(f_w.import_success):
             aqtbot.mouse_click(f_w.button_import_files, QtCore.Qt.LeftButton)
-        await f_w.workspace_fs.sync()            
-
+        await f_w.workspace_fs.sync()
 
     def _wait_for_files():
         assert f_w.table_files.rowCount() == 3
         assert f_w.table_files.item(1, 1).text() == "file1.txt"
         assert f_w.table_files.item(1, 2).text() == "03/30/2010 12:00 AM"
         assert f_w.table_files.item(1, 3).text() == "03/30/2010 12:00 AM"
-        assert f_w.table_files.item(2, 1).text() == "file2.txt"        
+        assert f_w.table_files.item(2, 1).text() == "file2.txt"
         assert f_w.table_files.item(2, 2).text() == "03/30/2020 12:00 AM"
         assert f_w.table_files.item(2, 3).text() == "03/30/2020 12:00 AM"
 
@@ -422,7 +417,7 @@ async def test_display_timestamped_workspace_in_workspaces_list(
         assert isinstance(wk_button, WorkspaceButton)
         assert wk_button.name == workspace_name
         assert wk_button.file1_name.text() == "file1.txt"
-        assert wk_button.file2_name.text() == "file2.txt"        
+        assert wk_button.file2_name.text() == "file2.txt"
 
     await aqtbot.wait_until(_wait_workspace_refreshed)
 
@@ -463,12 +458,12 @@ async def test_display_timestamped_workspace_in_workspaces_list(
         assert f_w.table_files.rowCount() == 2
         assert f_w.table_files.item(1, 1).text() == "file1.txt"
         assert f_w.table_files.item(1, 2).text() == "03/30/2010 12:00 AM"
-        assert f_w.table_files.item(1, 3).text() == "03/30/2010 12:00 AM"        
+        assert f_w.table_files.item(1, 3).text() == "03/30/2010 12:00 AM"
 
     await aqtbot.wait_until(_files_listed)
 
     aqtbot.mouse_click(f_w.button_back, QtCore.Qt.LeftButton)
-     
+
     await aqtbot.wait_until(_new_workspace_listed)
 
     ts_wk_button = w_w.layout_workspaces.itemAt(1).widget()
