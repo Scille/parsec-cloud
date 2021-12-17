@@ -14,10 +14,10 @@ repos:
     hooks:
     - id: flake8
 -   repo: https://github.com/pre-commit/mirrors-mypy
-    rev: v0.920
+    rev: v0.812
     hooks:
     - id: mypy
-      additional_dependencies: [trio_typing, pendulum]
+      additional_dependencies: ['trio_typing==0.5.1', 'pendulum==2.1.2']
       # Mypy will complain if it find two files with the same name which
       # are not part of a package (typically occurs for packaging script helpers)
       files: ^(parsec|tests)/
