@@ -81,7 +81,7 @@ class SecretKey(bytes):
         return blake2b(data, digest_size=digest_size, key=self, encoder=RawEncoder)
 
 
-class _Py_HashDigest:
+class HashDigest:
     __slots__ = ("_digest",)
 
     def __init__(self, digest: bytes):
@@ -91,14 +91,14 @@ class _Py_HashDigest:
         return f"HashDigest({self.hexdigest()})"
 
     def __eq__(self, other):
-        if not isinstance(other, _Py_HashDigest):
+        if not isinstance(other, type(self)):
             return NotImplemented
         return self.digest == other.digest
 
     @classmethod
-    def from_data(self, data: bytes) -> "HashDigest":
+    def from_data(cls, data: bytes) -> "HashDigest":
         # nacl's sha256 doesn't accept bytearray, so stick to `hashlib.sha256`
-        return _Py_HashDigest(sha256(data).digest())
+        return cls(sha256(data).digest())
 
     @property
     def digest(self) -> bytes:
@@ -108,16 +108,14 @@ class _Py_HashDigest:
         return self._digest.hex()
 
 
+_PyHashDigest = HashDigest
 if not TYPE_CHECKING:
-    # Try to overwrite Python implementation with Rust one
     try:
-        from libparsec.hazmat import _Rs_HashDigest  # noqa: F811
-
-        HashDigest = _Rs_HashDigest
+        from libparsec.hazmat import HashDigest as _RsHashDigest
     except ImportError:
-        HashDigest = _Py_HashDigest
-else:
-    HashDigest = _Py_HashDigest
+        pass
+    else:
+        HashDigest = _RsHashDigest
 
 
 # Basically just add comparison support to nacl keys
@@ -147,7 +145,7 @@ class VerifyKey(_VerifyKey):
         return isinstance(other, _VerifyKey) and self._key == other._key
 
     @classmethod
-    def unsecure_unwrap(self, signed: bytes) -> bytes:
+    def unsecure_unwrap(cls, signed: bytes) -> bytes:
         return signed[crypto_sign_BYTES:]
 
 

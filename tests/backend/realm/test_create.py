@@ -4,10 +4,10 @@ import pytest
 import pendulum
 from uuid import UUID
 
-from parsec.utils import TIMESTAMP_MAX_DT
 from parsec.api.data import RealmRoleCertificateContent, UserProfile
 from parsec.api.protocol import RealmRole
 from parsec.backend.backend_events import BackendEvent
+from parsec.utils import BALLPARK_CLIENT_EARLY_OFFSET, BALLPARK_CLIENT_LATE_OFFSET
 
 from tests.common import freeze_time, customize_fixtures
 from tests.backend.test_events import events_subscribe
@@ -87,17 +87,61 @@ async def test_create_certif_role_not_owner(alice, alice_backend_sock):
 
 @pytest.mark.trio
 async def test_create_certif_too_old(alice, alice_backend_sock):
-    realm_id = UUID("C0000000000000000000000000000000")
     now = pendulum.now()
+
+    # Generate a certificate
+
+    realm_id = UUID("C0000000000000000000000000000000")
     certif = RealmRoleCertificateContent.build_realm_root_certif(
         author=alice.device_id, timestamp=now, realm_id=realm_id
     ).dump_and_sign(alice.signing_key)
-    with freeze_time(now.add(seconds=TIMESTAMP_MAX_DT)):
+
+    # Create a realm a tiny bit too late
+
+    later = now.add(seconds=BALLPARK_CLIENT_LATE_OFFSET)
+    with freeze_time(later):
         rep = await realm_create(alice_backend_sock, certif)
     assert rep == {
-        "status": "invalid_certification",
-        "reason": "Invalid timestamp in certification.",
+        "status": "bad_timestamp",
+        "backend_timestamp": later,
+        "ballpark_client_early_offset": BALLPARK_CLIENT_EARLY_OFFSET,
+        "ballpark_client_late_offset": BALLPARK_CLIENT_LATE_OFFSET,
+        "client_timestamp": now,
     }
+
+    #  Create a realm late but right before the deadline
+
+    later = now.add(seconds=BALLPARK_CLIENT_LATE_OFFSET, microseconds=-1)
+    with freeze_time(later):
+        rep = await realm_create(alice_backend_sock, certif)
+    assert rep["status"] == "ok"
+
+    # Generate a new certificate
+
+    realm_id = UUID("C0000000000000000000000000000001")
+    certif = RealmRoleCertificateContent.build_realm_root_certif(
+        author=alice.device_id, timestamp=now, realm_id=realm_id
+    ).dump_and_sign(alice.signing_key)
+
+    # Create a realm a tiny bit too soon
+
+    sooner = now.subtract(seconds=BALLPARK_CLIENT_EARLY_OFFSET)
+    with freeze_time(sooner):
+        rep = await realm_create(alice_backend_sock, certif)
+    assert rep == {
+        "status": "bad_timestamp",
+        "backend_timestamp": sooner,
+        "ballpark_client_early_offset": BALLPARK_CLIENT_EARLY_OFFSET,
+        "ballpark_client_late_offset": BALLPARK_CLIENT_LATE_OFFSET,
+        "client_timestamp": now,
+    }
+
+    # Create a realm soon but after the limit
+
+    sooner = now.subtract(seconds=BALLPARK_CLIENT_EARLY_OFFSET, microseconds=-1)
+    with freeze_time(sooner):
+        rep = await realm_create(alice_backend_sock, certif)
+    assert rep["status"] == "ok"
 
 
 @pytest.mark.trio

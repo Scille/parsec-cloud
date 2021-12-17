@@ -81,7 +81,9 @@ class BaseVlobComponent:
 
         now = pendulum.now()
         if not timestamps_in_the_ballpark(msg["timestamp"], now):
-            return {"status": "bad_timestamp", "reason": f"Timestamp is out of date."}
+            return vlob_create_serializer.timestamp_out_of_ballpark_rep_dump(
+                backend_timestamp=now, client_timestamp=msg["timestamp"]
+            )
 
         try:
             await self.create(client_ctx.organization_id, client_ctx.device_id, **msg)
@@ -93,11 +95,8 @@ class BaseVlobComponent:
             return vlob_create_serializer.rep_dump({"status": "not_allowed"})
 
         except VlobRequireGreaterTimestampError as exc:
-            return vlob_create_serializer.rep_dump(
-                {
-                    "status": "require_greater_timestamp",
-                    "strictly_greater_than": exc.strictly_greater_than,
-                }
+            return vlob_create_serializer.require_greater_timestamp_rep_dump(
+                exc.strictly_greater_than
             )
 
         except VlobEncryptionRevisionError:
@@ -168,7 +167,9 @@ class BaseVlobComponent:
 
         now = pendulum.now()
         if not timestamps_in_the_ballpark(msg["timestamp"], now):
-            return {"status": "bad_timestamp", "reason": f"Timestamp is out of date."}
+            return vlob_update_serializer.timestamp_out_of_ballpark_rep_dump(
+                backend_timestamp=now, client_timestamp=msg["timestamp"]
+            )
 
         try:
             await self.update(client_ctx.organization_id, client_ctx.device_id, **msg)
@@ -180,11 +181,8 @@ class BaseVlobComponent:
             return vlob_update_serializer.rep_dump({"status": "not_allowed"})
 
         except VlobRequireGreaterTimestampError as exc:
-            return vlob_update_serializer.rep_dump(
-                {
-                    "status": "require_greater_timestamp",
-                    "strictly_greater_than": exc.strictly_greater_than,
-                }
+            return vlob_update_serializer.require_greater_timestamp_rep_dump(
+                exc.strictly_greater_than
             )
 
         except VlobVersionError:

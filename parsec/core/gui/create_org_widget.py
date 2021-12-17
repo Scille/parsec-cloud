@@ -10,13 +10,13 @@ from parsec.core.backend_connection import (
     apiv1_backend_anonymous_cmds_factory,
     BackendConnectionRefused,
     BackendNotAvailable,
+    BackendOutOfBallparkError,
 )
 from parsec.core.types import BackendOrganizationBootstrapAddr, BackendAddr
 from parsec.core.invite import (
     bootstrap_organization,
     InviteNotFoundError,
     InviteAlreadyUsedError,
-    InviteTimestampError,
     InviteError,
 )
 from parsec.core.fs.storage.user_storage import user_storage_non_speculative_init
@@ -65,8 +65,8 @@ async def _do_create_org(config, human_handle, device_name, backend_addr):
         raise JobResultError("connection-refused", exc=exc)
     except BackendNotAvailable as exc:
         raise JobResultError("connection-error", exc=exc)
-    except InviteTimestampError as exc:
-        raise JobResultError("timestamp-error", exc=exc)
+    except BackendOutOfBallparkError as exc:
+        raise JobResultError("out-of-ballpark", exc=exc)
     except InviteError as exc:
         raise JobResultError("invite-error", exc=exc)
 
@@ -321,8 +321,8 @@ class CreateOrgWidget(QWidget, Ui_CreateOrgWidget):
             errmsg = _("TEXT_ORG_WIZARD_CONNECTION_REFUSED")
         elif status == "connection-error":
             errmsg = _("TEXT_ORG_WIZARD_CONNECTION_ERROR")
-        elif status == "timestamp-error":
-            errmsg = _("TEXT_ORG_WIZARD_INVALID_TIMESTAMP")
+        elif status == "out-of-ballpark":
+            errmsg = _("TEXT_BACKEND_STATE_DESYNC")
         else:
             errmsg = _("TEXT_ORG_WIZARD_UNKNOWN_FAILURE")
         exc = self.create_job.exc

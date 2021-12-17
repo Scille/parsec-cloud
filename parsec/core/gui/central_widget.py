@@ -33,6 +33,7 @@ from parsec.core.gui.mount_widget import MountWidget
 from parsec.core.gui.users_widget import UsersWidget
 from parsec.core.gui.devices_widget import DevicesWidget
 from parsec.core.gui.menu_widget import MenuWidget
+from parsec.core.gui import desktop
 from parsec.core.gui.authentication_change_widget import AuthenticationChangeWidget
 from parsec.core.gui.lang import translate as _
 from parsec.core.gui.custom_widgets import Pixmap
@@ -104,6 +105,7 @@ class CentralWidget(QWidget, Ui_CentralWidget):  # type: ignore[misc]
         self.event_bus = event_bus
         self.systray_notification = systray_notification
         self.last_notification = 0.0
+        self.desync_notified = False
 
         self.menu = MenuWidget(parent=self)
         self.widget_menu.layout().addWidget(self.menu)
@@ -116,6 +118,11 @@ class CentralWidget(QWidget, Ui_CentralWidget):  # type: ignore[misc]
 
         self.set_user_info()
         menu = QMenu()
+        copy_backend_addr_act = menu.addAction(_("ACTION_COPY_BACKEND_ADDR"))
+        copy_backend_addr_act.triggered.connect(
+            lambda: desktop.copy_to_clipboard(self.core.device.organization_addr.to_url())
+        )
+        menu.addSeparator()
         change_auth_act = menu.addAction(_("ACTION_DEVICE_MENU_CHANGE_AUTHENTICATION"))
         change_auth_act.triggered.connect(self.change_authentication)
         menu.addSeparator()
@@ -340,6 +347,24 @@ class CentralWidget(QWidget, Ui_CentralWidget):  # type: ignore[misc]
             notif = ("ERROR", tooltip)
             disconnected = True
 
+        elif status == BackendConnStatus.DESYNC:
+            assert isinstance(status_exc, Exception)
+            text = _("TEXT_BACKEND_STATE_DISCONNECTED")
+            tooltip = _("TEXT_BACKEND_STATE_DESYNC")
+            icon = QPixmap(":/icons/images/material/cloud_off.svg")
+            notif = None
+            disconnected = False
+
+            # The disconnection for being out-of-sync with the backend
+            # is only shown once per login. This is useful in the case
+            # of backends with API version 2.3 and older as it's going
+            # to successfully connect every 10 seconds before being
+            # thrown off by the sync monitor.
+            if not self.desync_notified:
+                self.desync_notified = True
+                notif = ("DESYNC", tooltip)
+                disconnected = True
+
         self.menu.set_connection_state(text, tooltip, icon)
         if notif:
             self.new_notification.emit(*notif)
@@ -368,7 +393,7 @@ class CentralWidget(QWidget, Ui_CentralWidget):  # type: ignore[misc]
         self.menu.label_organization_size.clear()
 
     def on_new_notification(self, notif_type: str, msg: str) -> None:
-        if notif_type in ["REVOKED", "EXPIRED"]:
+        if notif_type in ["REVOKED", "EXPIRED", "DESYNC"]:
             show_error(self, msg)
 
     def go_to_file_link(self, addr: BackendOrganizationFileLinkAddr, mount: bool = True) -> None:

@@ -137,10 +137,9 @@ class BaseRealmComponent:
 
         now = pendulum.now()
         if not timestamps_in_the_ballpark(data.timestamp, now):
-            return {
-                "status": "invalid_certification",
-                "reason": f"Invalid timestamp in certification.",
-            }
+            return realm_create_serializer.timestamp_out_of_ballpark_rep_dump(
+                backend_timestamp=now, client_timestamp=data.timestamp
+            )
 
         granted_role = RealmGrantedRole(
             certificate=msg["role_certificate"],
@@ -287,10 +286,9 @@ class BaseRealmComponent:
 
         now = pendulum.now()
         if not timestamps_in_the_ballpark(data.timestamp, now):
-            return {
-                "status": "invalid_certification",
-                "reason": f"Invalid timestamp in certification.",
-            }
+            return realm_update_roles_serializer.timestamp_out_of_ballpark_rep_dump(
+                backend_timestamp=now, client_timestamp=data.timestamp
+            )
 
         granted_role = RealmGrantedRole(
             certificate=msg["role_certificate"],
@@ -318,11 +316,8 @@ class BaseRealmComponent:
             return realm_update_roles_serializer.rep_dump({"status": "not_allowed"})
 
         except RealmRoleRequireGreaterTimestampError as exc:
-            return realm_update_roles_serializer.rep_dump(
-                {
-                    "status": "require_greater_timestamp",
-                    "strictly_greater_than": exc.strictly_greater_than,
-                }
+            return realm_update_roles_serializer.require_greater_timestamp_rep_dump(
+                exc.strictly_greater_than
             )
 
         except RealmIncompatibleProfileError as exc:
@@ -347,7 +342,9 @@ class BaseRealmComponent:
 
         now = pendulum.now()
         if not timestamps_in_the_ballpark(msg["timestamp"], now):
-            return {"status": "bad_timestamp", "reason": "Timestamp is out of date."}
+            return realm_start_reencryption_maintenance_serializer.timestamp_out_of_ballpark_rep_dump(
+                backend_timestamp=now, client_timestamp=msg["timestamp"]
+            )
 
         try:
             await self.start_reencryption_maintenance(

@@ -1,11 +1,9 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BSLv1.1 (eventually AGPLv3) 2016-2021 Scille SAS
 
-use rand::rngs::OsRng;
-use rand::Rng;
 use serde::{Deserialize, Serialize};
 use serde_bytes::ByteBuf;
 use xsalsa20poly1305::aead::{Aead, NewAead};
-use xsalsa20poly1305::{Key, Nonce, XSalsa20Poly1305, KEY_SIZE, NONCE_SIZE};
+use xsalsa20poly1305::{generate_nonce, Key, XSalsa20Poly1305, KEY_SIZE, NONCE_SIZE};
 
 #[derive(Clone, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(into = "ByteBuf", try_from = "ByteBuf")]
@@ -18,10 +16,7 @@ impl SecretKey {
     pub const SIZE: usize = KEY_SIZE;
 
     pub fn generate() -> Self {
-        // TODO: cannot use this given ed25519-dalek requires rand 0.7
-        // Self(XSalsa20Poly1305::generate_key(&mut OsRng::default()))
-        let key: [u8; Self::SIZE] = OsRng::default().gen();
-        Self(Key::from(key))
+        Self(XSalsa20Poly1305::generate_key(rand_08::thread_rng()))
     }
 
     pub fn encrypt(&self, data: &[u8]) -> Vec<u8> {
@@ -29,9 +24,7 @@ impl SecretKey {
         // TODO: zero copy with preallocated buffer
         // let mut ciphered = Vec::with_capacity(NONCE_SIZE + TAG_SIZE + data.len());
         let cipher = XSalsa20Poly1305::new(&self.0);
-        // TODO: cannot use this given ed25519-dalek requires rand 0.7
-        // let nonce = generate_nonce(&mut OsRng::default());
-        let nonce = Nonce::from(OsRng::default().gen::<[u8; NONCE_SIZE]>());
+        let nonce = generate_nonce(&mut rand_08::thread_rng());
         // TODO: handle this error ?
         let mut ciphered = cipher.encrypt(&nonce, data).expect("encryption failure !");
         let mut res = vec![];

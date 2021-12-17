@@ -91,7 +91,7 @@ def test_fs_online_tree_and_sync(user_fs_online_state_machine, oracle_fs_with_sy
                     await self.workspace.mkdir(path=get_path(path), exist_ok=False)
             return path
 
-        @rule(path=Files)
+        @rule(target=Files, path=Files)
         async def delete_file(self, path):
             expected_status = self.oracle_fs.unlink(path)
             if expected_status == "ok":
@@ -101,7 +101,7 @@ def test_fs_online_tree_and_sync(user_fs_online_state_machine, oracle_fs_with_sy
                     await self.workspace.unlink(path=get_path(path))
             return path
 
-        @rule(path=Folders)
+        @rule(target=Folders, path=Folders)
         async def delete_folder(self, path):
             expected_status = self.oracle_fs.rmdir(path)
             if expected_status == "ok":

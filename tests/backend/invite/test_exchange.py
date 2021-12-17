@@ -142,7 +142,7 @@ async def exchange_testbed(alice_backend_sock, invitation, invited_sock):
                 await peer_controller.peer_do(
                     invite_2a_claimer_send_hashed_nonce,
                     invited_sock,
-                    claimer_hashed_nonce=HashDigest(b"<claimer_hashed_nonce>"),
+                    claimer_hashed_nonce=HashDigest.from_data(b"<claimer_nonce>"),
                 )
 
             elif order == "2b_send_nonce":
@@ -204,7 +204,7 @@ async def test_conduit_exchange_good(exchange_testbed, leader):
     greeter_rep = await greeter_ctlr.get_result()
     assert greeter_rep == {
         "status": "ok",
-        "claimer_hashed_nonce": HashDigest(b"<claimer_hashed_nonce>"),
+        "claimer_hashed_nonce": HashDigest.from_data(b"<claimer_nonce>"),
     }
     await greeter_ctlr.send_order("2b_send_nonce")
 
@@ -621,7 +621,8 @@ async def test_claimer_step_2_retry(
 
                         # Claimer now arrives and try to do step 2a
                         rep = await invite_2a_claimer_send_hashed_nonce(
-                            invited_sock, claimer_hashed_nonce=HashDigest(b"hashed nonce")
+                            invited_sock,
+                            claimer_hashed_nonce=HashDigest.from_data(b"<claimer_nonce>"),
                         )
                         assert rep == {"status": "invalid_state"}
 
@@ -647,7 +648,7 @@ async def test_claimer_step_2_retry(
                 )
                 assert rep == {
                     "status": "ok",
-                    "claimer_hashed_nonce": HashDigest(b"retry hashed nonce"),
+                    "claimer_hashed_nonce": HashDigest.from_data(b"<retry_nonce>"),
                 }
                 rep = await invite_2b_greeter_send_nonce(
                     alice_backend_sock, token=invitation.token, greeter_nonce=b"greeter nonce"
@@ -656,7 +657,7 @@ async def test_claimer_step_2_retry(
 
             async def _greeter_step_2():
                 rep = await invite_2a_claimer_send_hashed_nonce(
-                    invited_sock, claimer_hashed_nonce=HashDigest(b"retry hashed nonce")
+                    invited_sock, claimer_hashed_nonce=HashDigest.from_data(b"<retry_nonce>")
                 )
                 assert rep == {"status": "ok", "greeter_nonce": b"greeter nonce"}
                 rep = await invite_2b_claimer_send_nonce(

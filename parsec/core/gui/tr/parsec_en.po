@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PROJECT VERSION\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2021-11-09 09:49+0100\n"
+"POT-Creation-Date: 2021-12-14 11:47+0100\n"
 "PO-Revision-Date: 2020-10-15 10:30+0200\n"
 "Last-Translator: \n"
 "Language: en\n"
@@ -16,7 +16,7 @@ msgstr ""
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=utf-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"Generated-By: Babel 2.6.0\n"
+"Generated-By: Babel 2.9.1\n"
 
 msgid "TEXT_PARSEC_VERSION_version"
 msgstr "PARSEC version {version}"
@@ -52,6 +52,9 @@ msgid "TEXT_ONLY_ONE_AUTH_METHOD_AVAILABLE"
 msgstr ""
 "Only one method authentication method is available in this version of "
 "Parsec."
+
+msgid "ACTION_COPY_BACKEND_ADDR"
+msgstr "Copy server address"
 
 msgid "ACTION_DEVICE_MENU_CHANGE_AUTHENTICATION"
 msgstr "Change authentication"
@@ -114,6 +117,12 @@ msgstr "Unknown"
 
 msgid "TEXT_BACKEND_STATE_CRASHED_cause"
 msgstr "Connection to the server lost"
+
+msgid "TEXT_BACKEND_STATE_DESYNC"
+msgstr ""
+"It seems that your machine does not have a correct date and time set up. "
+"Please check your date and time options and make sure that your time and "
+"timezone are correct.\n"
 
 msgid "TEXT_SYSTRAY_BACKEND_DISCONNECT_organization"
 msgstr "{organization}: Disconnected"
@@ -279,12 +288,6 @@ msgstr "The server refused the connection."
 msgid "TEXT_ORG_WIZARD_CONNECTION_ERROR"
 msgstr "Cannot connect to the server."
 
-msgid "TEXT_ORG_WIZARD_INVALID_TIMESTAMP"
-msgstr ""
-"It seems that your machine does not have a correct date and time set up. "
-"Please check your date and time options and make sure that your time and "
-"timezone are correct.\n"
-
 msgid "TEXT_ORG_WIZARD_UNKNOWN_FAILURE"
 msgstr "Could not create the organization."
 
@@ -410,6 +413,15 @@ msgstr "GB"
 msgid "TEXT_FILE_SIZE_TB"
 msgstr "TB"
 
+msgid "TEXT_YES"
+msgstr "Yes"
+
+msgid "TEXT_NO"
+msgstr "No"
+
+msgid "TEXT_FILE_STATUS_TITLE_name"
+msgstr "Status"
+
 msgid "ACTION_FILE_OPEN_CURRENT_DIRECTORY_MAC"
 msgstr "Open current directory in Finder"
 
@@ -433,6 +445,9 @@ msgstr "Cut"
 
 msgid "ACTION_FILE_MENU_SHOW_FILE_HISTORY"
 msgstr "Show history"
+
+msgid "ACTION_FILE_MENU_SHOW_FILE_STATUS"
+msgstr "Show status"
 
 msgid "ACTION_FILE_MENU_GET_FILE_LINK"
 msgstr "Get a link to the file"
@@ -465,6 +480,13 @@ msgid "TEXT_FILE_HISTORY_MULTIPLE_FILES_SELECTED_ERROR"
 msgstr ""
 "Cannot show the history of multiple files at once. Please select a single"
 " file."
+
+msgid "TEXT_FILE_STATUS_MULTIPLE_FILES_SELECTED_ERROR"
+msgstr ""
+"Cannot show the status of multiple files at once. Please select a single"
+" file."
+
+
 
 msgid "TEXT_FILE_RENAME_TITLE"
 msgstr "Rename a file"
@@ -601,10 +623,11 @@ msgstr ""
 "You can no longer interact with the workspace or see any files it "
 "contains."
 
-msgid "TEXT_FILE_SHARING_DEMOTED_TO_READER"
+msgid "TEXT_FILE_SHARING_DEMOTED_TO_READER_workspace"
 msgstr ""
-"Your role on this workspace has changed to <b>Reader</b>. You can no "
-"longer add, update or delete files, but you can still see them."
+"Your role on the workspace <b>{workspace}</b> has changed to "
+"<b>Reader</b>. You can no longer add, update or delete files, but you can"
+" still see them."
 
 msgid "TEXT_GREET_DEVICE_INSTRUCTIONS_NO_EMAIL"
 msgstr ""
@@ -787,6 +810,17 @@ msgstr ""
 
 msgid "TEXT_MACFUSE_DOWNLOAD_BUTTON"
 msgstr "Download macFUSE"
+
+msgid "TEXT_UPDATE_MACFUSE_TITLE"
+msgstr "macFUSE update needed"
+
+msgid "TEXT_UPDATE_MACFUSE"
+msgstr ""
+"Your macFUSE version is deprecated. You can update it following the link below"
+" to make sure Parsec keeps functioning properly."
+
+msgid "TEXT_UPDATE_MACFUSE_BUTTON"
+msgstr "Update to macFUSE latest version"
 
 msgid "TEXT_LOGIN_ERROR_DEVICE_REVOKED"
 msgstr "This device has been revoked and can no longer be used to log in."
@@ -2282,6 +2316,9 @@ msgstr "Organization name"
 msgid "TEXT_LABEL_ORG_NAME_RECOMMANDATIONS"
 msgstr "Letters, digits, underscores and hyphens only. No spaces."
 
+msgid "ACTION_CREATE_ON_COMMERCIAL_BACKEND"
+msgstr "Use PARSEC main server"
+
 msgid "ACTION_ACCEPT_CONTRACT"
 msgstr ""
 "I accept the <a href=\"https://parsec.cloud/pdf/Parsec-Privacy-Policy-"
@@ -2294,9 +2331,6 @@ msgstr "I have my own PARSEC server"
 
 msgid "TEXT_LABEL_BACKEND_ADDR_PLACEHOLDER"
 msgstr "parsec://host:port"
-
-msgid "ACTION_CREATE_ON_COMMERCIAL_BACKEND"
-msgstr "Use PARSEC main server"
 
 msgid "TEXT_LABEL_DEVICE_NAME"
 msgstr "Device name"
@@ -2408,6 +2442,48 @@ msgstr "By"
 
 msgid "ACTION_FILE_HISTORY_LOAD_MORE_ENTRIES"
 msgstr "Load more entries"
+
+msgid "TEXT_FILE_INFO_LOCATION"
+msgstr "Location"
+
+msgid "TEXT_FILE_INFO_TYPE"
+msgstr "Type"
+
+msgid "TEXT_FILE_INFO_SIZE"
+msgstr "Size"
+
+msgid "TEXT_FILE_INFO_WORKSPACE"
+msgstr "Workspace"
+
+msgid "TEXT_FILE_INFO_CREATED_ON"
+msgstr "Created on"
+
+msgid "TEXT_FILE_INFO_CREATED_BY"
+msgstr "Created by"
+
+msgid "TEXT_FILE_INFO_UPDATED_ON"
+msgstr "Updated on"
+
+msgid "TEXT_FILE_INFO_UPDATED_BY"
+msgstr "Updated by"
+
+msgid "TEXT_FILE_INFO_AVAILABILITY"
+msgstr "Availability"
+
+msgid "TEXT_FILE_INFO_UPLOADED"
+msgstr "Uploaded"
+
+msgid "TEXT_FILE_INFO_BLOCKS_LOCAL"
+msgstr "Local only blocks"
+
+msgid "TEXT_FILE_INFO_BLOCKS_REMOTE"
+msgstr "Remote only blocks"
+
+msgid "TEXT_FILE_INFO_BLOCKS_BOTH"
+msgstr "Local and remote blocks"
+
+msgid "TEXT_FILE_INFO_NON_APPLICABLE"
+msgstr "N/A"
 
 msgid "TEXT_FILE_BACK_TO_WORKSPACES_TOOLTIP"
 msgstr "Return to the list of workspaces."

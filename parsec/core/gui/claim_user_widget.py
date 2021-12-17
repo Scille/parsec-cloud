@@ -24,6 +24,7 @@ from parsec.core.backend_connection import (
     BackendConnectionRefused,
     BackendInvitationAlreadyUsed,
     BackendNotAvailable,
+    BackendOutOfBallparkError,
 )
 from parsec.core.gui import validators
 from parsec.core.gui.trio_jobs import JobResultError, QtToTrioJob
@@ -134,6 +135,8 @@ class Claimer:
             raise JobResultError(status="invitation-already-used", origin=exc)
         except BackendConnectionRefused as exc:
             raise JobResultError(status="invitation-not-found", origin=exc)
+        except BackendOutOfBallparkError as exc:
+            raise JobResultError(status="out-of-ballpark", origin=exc)
 
     async def retrieve_info(self):
         await self.main_oob_send.send(self.Step.RetrieveInfo)
@@ -746,6 +749,8 @@ class ClaimUserWidget(QWidget, Ui_ClaimUserWidget):
             msg = _("TEXT_INVITATION_ALREADY_USED")
         elif job.status == "backend-not-available":
             msg = _("TEXT_INVITATION_BACKEND_NOT_AVAILABLE")
+        elif job.status == "out-of-ballpark":
+            msg = _("TEXT_BACKEND_STATE_DESYNC")
         else:
             msg = _("TEXT_CLAIM_USER_UNKNOWN_ERROR")
         if job.exc:

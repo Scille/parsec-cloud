@@ -24,11 +24,6 @@ def generate_qr_code(text):
 
     qr.add_data(text)
     qr.make(fit=True)
-    # No idea why but SvgPathImage ignores the back_color and fill_color arguments and uses a const style.
-    # So we replace the QT_PATH_STYLE string by our own.
-    qrcode.image.svg.SvgPathImage.QR_PATH_STYLE = (
-        "fill:#000000;fill-opacity:1;fill-rule:nonzero;stroke:none"
-    )
     qr_img = qr.make_image(image_factory=qrcode.image.svg.SvgPathImage)
     stream = io.BytesIO()
     qr_img.save(stream)

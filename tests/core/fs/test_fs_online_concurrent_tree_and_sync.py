@@ -111,7 +111,7 @@ def test_fs_online_concurrent_tree_and_sync(
             except OSError:
                 pass
 
-        @rule(fs=FSs, path=Files)
+        @rule(target=Files, fs=FSs, path=Files)
         async def delete_file(self, fs, path):
             workspace = fs.get_workspace(self.wid)
             try:
@@ -120,7 +120,7 @@ def test_fs_online_concurrent_tree_and_sync(
                 pass
             return path
 
-        @rule(fs=FSs, path=Folders)
+        @rule(target=Folders, fs=FSs, path=Folders)
         async def delete_folder(self, fs, path):
             workspace = fs.get_workspace(self.wid)
             try:
