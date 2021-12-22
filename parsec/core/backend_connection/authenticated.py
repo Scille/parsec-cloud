@@ -204,7 +204,16 @@ class BackendAuthenticatedConn:
     def cmds(self) -> BackendAuthenticatedCmds:
         return self._cmds
 
-    def set_status(self, status: BackendConnStatus, status_exc: Optional[Exception] = None) -> None:
+    async def set_status(
+        self, status: BackendConnStatus, status_exc: Optional[Exception] = None
+    ) -> None:
+        # Do not set the status if we're being cancelled
+        # Not performing this check can lead to complicated race conditions.
+        # In particular, we have to remember that a cancelled task might still
+        # run code before the cancellation actually triggers. That means that
+        # a particular status might be overwritten between the call to cancel
+        # and the actual cancellation.
+        await trio.lowlevel.checkpoint_if_cancelled()
         old_status, self._status = self._status, status
         self._status_exc = status_exc
         if not self._status_event_sent or old_status != status:
@@ -250,7 +259,7 @@ class BackendAuthenticatedConn:
                     except (BackendNotAvailable, BackendConnectionRefused):
                         pass
                     except Exception as exc:
-                        self.set_status(
+                        await self.set_status(
                             BackendConnStatus.CRASHED,
                             BackendNotAvailable(f"Backend connection manager has crashed: {exc}"),
                         )
@@ -295,7 +304,7 @@ class BackendAuthenticatedConn:
 
     async def _manager_connect(self):
         async with self._acquire_transport(ignore_status=True, force_fresh=True) as transport:
-            self.set_status(BackendConnStatus.INITIALIZING)
+            await self.set_status(BackendConnStatus.INITIALIZING)
             self._backend_connection_failures = 0
             logger.info("Backend online")
 
@@ -346,7 +355,7 @@ class BackendAuthenticatedConn:
                                 monitors_nursery.start, partial(_wrap_monitor_cb, monitor_cb, idx)
                             )
 
-                    self.set_status(BackendConnStatus.READY)
+                    await self.set_status(BackendConnStatus.READY)
 
                     while True:
                         rep = await cmds.events_listen(transport, wait=True)
@@ -373,12 +382,12 @@ class BackendAuthenticatedConn:
 
         except BackendNotAvailable as exc:
             if not allow_not_available:
-                self.set_status(BackendConnStatus.LOST, exc)
+                await self.set_status(BackendConnStatus.LOST, exc)
                 self._cancel_manager_connect()
             raise
 
         except BackendConnectionRefused as exc:
-            self.set_status(BackendConnStatus.REFUSED, exc)
+            await self.set_status(BackendConnStatus.REFUSED, exc)
             self._cancel_manager_connect()
             raise
 
@@ -386,7 +395,7 @@ class BackendAuthenticatedConn:
             # Caller doesn't need to know about the desync,
             # simply pretend that we lost the connection instead
             exc = BackendNotAvailable()
-            self.set_status(BackendConnStatus.DESYNC, exc)
+            await self.set_status(BackendConnStatus.DESYNC, exc)
             self._cancel_manager_connect()
             raise exc
 
