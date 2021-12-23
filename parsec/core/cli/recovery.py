@@ -2,6 +2,7 @@
 
 import click
 from pathlib import Path
+from parsec.api.protocol.types import DeviceLabel
 
 from parsec.core import CoreConfig
 from parsec.core.recovery import generate_recovery_device, generate_new_device_from_recovery
@@ -62,7 +63,7 @@ async def _import_recovery_device(
     config: CoreConfig,
     recovery_file: Path,
     passphrase: str,
-    new_device_label: str,
+    new_device_label: DeviceLabel,
     save_device_with_selected_auth,
 ) -> None:
 
@@ -96,7 +97,7 @@ def import_recovery_device(
     config: CoreConfig,
     file: Path,
     passphrase: str,
-    device_label: str,
+    device_label: DeviceLabel,
     save_device_with_selected_auth,
     **kwargs,
 ):

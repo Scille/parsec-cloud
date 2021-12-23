@@ -18,6 +18,7 @@ from parsec.api.protocol import (
     DeviceName,
     DeviceID,
     HumanHandle,
+    DeviceLabel,
     HandshakeType,
     APIV1_HandshakeType,
 )
@@ -65,7 +66,7 @@ class AuthenticatedClientContext(BaseClientContext):
         organization_id: OrganizationID,
         device_id: DeviceID,
         human_handle: Optional[HumanHandle],
-        device_label: Optional[str],
+        device_label: Optional[DeviceLabel],
         profile: UserProfile,
         public_key: PublicKey,
         verify_key: VerifyKey,

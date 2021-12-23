@@ -191,7 +191,7 @@ class UserInfo:
 @attr.s(slots=True, frozen=True, auto_attribs=True)
 class DeviceInfo:
     device_id: DeviceID
-    device_label: Optional[str]
+    device_label: Optional[DeviceLabel]
     created_on: DateTime
 
     @property

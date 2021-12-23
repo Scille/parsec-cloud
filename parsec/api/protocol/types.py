@@ -105,14 +105,19 @@ class DeviceLabel(str):
         if not 0 < _bytes_size(device_label) < 255:
             raise ValueError("Invalid device_label")
 
-        return super(DeviceLabel, cls).__new__(cls)
+        return super(DeviceLabel, cls).__new__(cls, device_label)
+
+
+class DeviceLabelField(fields.String):  # type: ignore
+    def __init__(self, **kwargs: object):
+        device_label = fields.String(required=True)
+        super().__init__(device_label, **kwargs)
 
 
 OrganizationIDField = fields.str_based_field_factory(OrganizationID)
 UserIDField = fields.str_based_field_factory(UserID)
 DeviceNameField = fields.str_based_field_factory(DeviceName)
 DeviceIDField = fields.str_based_field_factory(DeviceID)
-DeviceLabelField = fields.str_based_field_factory(DeviceLabel)
 
 
 class HumanHandle(namedtuple("HumanHandle", "email label")):

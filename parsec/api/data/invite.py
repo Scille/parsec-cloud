@@ -77,7 +77,7 @@ class InviteUserData(BaseAPIData):
     class SCHEMA_CLS(BaseSchema):
         type = fields.CheckedConstant("invite_user_data", required=True)
         # Claimer ask for device_label/human_handle, but greeter has final word on this
-        requested_device_label = fields.String(allow_none=True, missing=None)
+        requested_device_label = DeviceLabelField(allow_none=True, missing=None)
         requested_human_handle = HumanHandleField(allow_none=True, missing=None)
         # Note claiming user also imply creating a first device
         public_key = fields.PublicKey(required=True)
@@ -89,7 +89,7 @@ class InviteUserData(BaseAPIData):
             data.pop("type")
             return InviteUserData(**data)
 
-    requested_device_label: Optional[str]
+    requested_device_label: Optional[DeviceLabel]
     requested_human_handle: Optional[HumanHandle]
     public_key: PublicKey
     verify_key: VerifyKey
@@ -111,7 +111,7 @@ class InviteUserConfirmation(BaseAPIData):
             return InviteUserConfirmation(**data)
 
     device_id: DeviceID
-    device_label: Optional[str]
+    device_label: Optional[DeviceLabel]
     human_handle: Optional[HumanHandle]
     profile: UserProfile
     root_verify_key: VerifyKey
@@ -122,7 +122,7 @@ class InviteDeviceData(BaseAPIData):
     class SCHEMA_CLS(BaseSchema):
         type = fields.CheckedConstant("invite_device_data", required=True)
         # Claimer ask for device_label, but greeter has final word on this
-        requested_device_label = fields.String(allow_none=True, missing=None)
+        requested_device_label = DeviceLabelField(allow_none=True, missing=None)
         verify_key = fields.VerifyKey(required=True)
 
         @post_load
@@ -130,7 +130,7 @@ class InviteDeviceData(BaseAPIData):
             data.pop("type")
             return InviteDeviceData(**data)
 
-    requested_device_label: Optional[str]
+    requested_device_label: Optional[DeviceLabel]
     verify_key: VerifyKey
 
 
