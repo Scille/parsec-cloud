@@ -324,7 +324,7 @@ def test_list_devices_support_legacy_file_with_meaningful_name(config_dir):
             "salt": b"12345",
             "ciphertext": b"whatever",
             "human_handle": (human_email.encode(), human_label.encode()),
-            "device_label": device_label.encode(),
+            "device_label": device_label,
         }
     )
 
@@ -377,7 +377,7 @@ def test_list_devices_support_key_file(config_dir, type):
         {
             "ciphertext": b"whatever",
             "human_handle": (human_email.encode(), human_label.encode()),
-            "device_label": device_label.encode(),
+            "device_label": device_label,
             "device_id": device_id,
             "organization_id": organization_id,
             "slug": slug,
