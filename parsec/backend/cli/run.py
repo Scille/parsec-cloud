@@ -221,7 +221,7 @@ Parameters can also be specified by using the special environment variable `PARS
 All available command line arguments can be used and environ variables within it will be expanded.
 For instance:
 
-    $ DB_URL=postgres:///parsec PARSEC_CMD_ARGS='--db=$DB_URL --host=0.0.0.0' parsec backend run
+    $ DB_URL=postgres:///parsec PARSEC_CMD_ARGS='--db=$DB_URL --host=0.0.0.0' parsec server run
 """,
 )
 @click.option(
@@ -329,7 +329,7 @@ integer and `<config>` the MOCKED/POSTGRESQL/S3/SWIFT config.
     help="""Allow organization bootstrap without prior creation.
 
 Without this flag, an organization must be created by administration (see
- `parsec core create_organization` command) before bootstrap can occur.
+ `parsec desktop create_organization` command) before bootstrap can occur.
 
 With this flag, the server allows anybody to bootstrap an organanization
 by providing an empty bootstrap token given 1) the organization is not boostrapped yet

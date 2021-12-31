@@ -10,7 +10,7 @@ Run `tests/scripts/run_testenv.sh --help` for more information.
 
 import pkg_resources
 
-# Make sure parsec is fully installed (core, backend, dev)
+# Make sure parsec is fully installed (desktop, server, dev)
 pkg_resources.require("parsec-cloud[all]")
 
 import os
@@ -118,7 +118,7 @@ async def configure_mime_types():
         """\
 [Desktop Entry]
 Name=Parsec
-Exec=parsec core gui %u
+Exec=parsec desktop gui %u
 Type=Application
 Terminal=false
 StartupNotify=false
@@ -141,7 +141,7 @@ MimeType=x-scheme-handler/parsec;
 async def restart_local_backend(administration_token, backend_port, email_host, db, blockstore):
     pattern = f"parsec.* backend.* run.* -P {backend_port}"
     command = (
-        f"{sys.executable} -Wignore -m parsec.cli backend run --log-level=WARNING "
+        f"{sys.executable} -Wignore -m parsec.cli server run --log-level=WARNING "
         f"-b {blockstore} --db {db} "
         f"--email-host={email_host} -P {backend_port} "
         f"--spontaneous-organization-bootstrap "
@@ -224,7 +224,7 @@ def main(log_level, log_file, log_format, **kwargs):
 
         \b
         $ source tests/scripts/run_testenv.sh
-        $ parsec core gui
+        $ parsec destop gui
         # Connect as bob@laptop and register a new device called pc
         # Copy the URL
 
@@ -300,9 +300,9 @@ Using existing backend: {backend_address}
         f"""\
 Mount alice and bob drives using:
 
-    $ parsec core run -P {password} -D {alice_device.slughash[:3]}  # Alice
-    $ parsec core run -P {password} -D {other_alice_device.slughash[:3]}  # Alice 2nd device
-    $ parsec core run -P {password} -D {bob_device.slughash[:3]}  # Bob
+    $ parsec desktop run -P {password} -D {alice_device.slughash[:3]}  # Alice
+    $ parsec desktop run -P {password} -D {other_alice_device.slughash[:3]}  # Alice 2nd device
+    $ parsec desktop run -P {password} -D {bob_device.slughash[:3]}  # Bob
 """
     )
 

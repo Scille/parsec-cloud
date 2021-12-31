@@ -55,7 +55,7 @@ parts:
       # Install Parsec & depedencies in a virtual env...
       /usr/bin/python3.8 -m venv ${VENV}  # must use absolute path here
       ${VENV}/bin/python -m pip install -Ur pre-requirements.txt
-      ${VENV}/bin/python -m pip install -U .[core]
+      ${VENV}/bin/python -m pip install -U .[desktop]
 
       # Bundled libssl doesn't know where host OS stores it CA certificates,
       # hence we bundle them instead.

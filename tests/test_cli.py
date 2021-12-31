@@ -96,7 +96,7 @@ def test_share_workspace(tmpdir, monkeypatch, alice, bob, cli_workspace_role):
             factory_mock.return_value.find_humans.assert_not_called()
 
     default_args = (
-        f"core share_workspace --password {password} "
+        f"desktop share_workspace --password {password} "
         f"--device={bob.slughash} --config-dir={config_dir} "
         f"--role={workspace_role} "
         f"--workspace-name=ws1 "
@@ -212,8 +212,8 @@ def _wait_for_regex(p, regex):
 @pytest.mark.skipif(sys.platform == "win32", reason="Hard to test on Windows...")
 def test_migrate_backend(postgresql_url, unused_tcp_port):
     sql = "SELECT current_database();"  # Dummy migration content
-    dry_run_args = f"backend migrate --db {postgresql_url} --dry-run"
-    apply_args = f"backend migrate --db {postgresql_url}"
+    dry_run_args = f"server migrate --db {postgresql_url} --dry-run"
+    apply_args = f"server migrate --db {postgresql_url}"
 
     with patch("parsec.backend.cli.migration.retrieve_migrations") as retrieve_migrations:
         retrieve_migrations.return_value = [
@@ -309,7 +309,7 @@ def test_full_run(coolorg, unused_tcp_port, tmp_path, ssl_conf):
     print("######## START BACKEND #########")
     with _running(
         (
-            f"backend run --db=MOCKED --blockstore=MOCKED"
+            f"server run --db=MOCKED --blockstore=MOCKED"
             f" --administration-token={administration_token}"
             f" --port={unused_tcp_port}"
             f" --backend-addr={BACKEND_ADDR}"
@@ -325,7 +325,7 @@ def test_full_run(coolorg, unused_tcp_port, tmp_path, ssl_conf):
             admin_url += "?no_ssl=true"
 
         p = _run(
-            "core create_organization "
+            "desktop create_organization "
             f"{org} --addr={admin_url} "
             f"--administration-token={administration_token}",
             env=ssl_conf.client_env,
@@ -336,7 +336,8 @@ def test_full_run(coolorg, unused_tcp_port, tmp_path, ssl_conf):
 
         print("####### Bootstrap organization #######")
         with _running(
-            "core bootstrap_organization " f"{url} --config-dir={config_dir} --password={password}",
+            "desktop bootstrap_organization "
+            f"{url} --config-dir={config_dir} --password={password}",
             env=ssl_conf.client_env,
             wait_for="User fullname:",
         ) as p:
@@ -358,7 +359,7 @@ def test_full_run(coolorg, unused_tcp_port, tmp_path, ssl_conf):
 
         print("####### Stats organization #######")
         _run(
-            "core stats_organization "
+            "desktop stats_organization "
             f"{org} --addr={admin_url} "
             f"--administration-token={administration_token}",
             env=ssl_conf.client_env,
@@ -366,7 +367,7 @@ def test_full_run(coolorg, unused_tcp_port, tmp_path, ssl_conf):
 
         print("####### Status organization #######")
         _run(
-            "core status_organization "
+            "desktop status_organization "
             f"{org} --addr={admin_url} "
             f"--administration-token={administration_token}",
             env=ssl_conf.client_env,
@@ -374,7 +375,7 @@ def test_full_run(coolorg, unused_tcp_port, tmp_path, ssl_conf):
 
         print("####### Create user&device invitations #######")
         p = _run(
-            "core invite_user "
+            "desktop invite_user "
             f"--config-dir={config_dir} --device={alice1_slughash} "
             f"--password={password} bob@example.com",
             env=ssl_conf.client_env,
@@ -383,7 +384,7 @@ def test_full_run(coolorg, unused_tcp_port, tmp_path, ssl_conf):
         user_invitation_token = re.search(r"token=([^&]+)", user_invitation_url).group(1)
 
         p = _run(
-            "core invite_device "
+            "desktop invite_device "
             f"--config-dir={config_dir} --device={alice1_slughash} "
             f"--password={password}",
             env=ssl_conf.client_env,
@@ -394,7 +395,7 @@ def test_full_run(coolorg, unused_tcp_port, tmp_path, ssl_conf):
         print("####### Cancel invitation #######")
 
         p = _run(
-            "core invite_user "
+            "desktop invite_user "
             f"--config-dir={config_dir} --device={alice1_slughash} "
             f"--password={password} zack@example.com",
             env=ssl_conf.client_env,
@@ -403,7 +404,7 @@ def test_full_run(coolorg, unused_tcp_port, tmp_path, ssl_conf):
             1
         )
         p = _run(
-            "core cancel_invitation "
+            "desktop cancel_invitation "
             f"--config-dir={config_dir} --device={alice1_slughash} "
             f"--password={password} {to_cancel_invitation_url}",
             env=ssl_conf.client_env,
@@ -412,7 +413,7 @@ def test_full_run(coolorg, unused_tcp_port, tmp_path, ssl_conf):
         print("####### List invitations #######")
 
         p = _run(
-            "core list_invitations "
+            "desktop list_invitations "
             f"--config-dir={config_dir} --device={alice1_slughash} "
             f"--password={password}",
             env=ssl_conf.client_env,
@@ -423,12 +424,12 @@ def test_full_run(coolorg, unused_tcp_port, tmp_path, ssl_conf):
 
         print("####### Claim user invitation #######")
         with _running(
-            "core claim_invitation "
+            "desktop claim_invitation "
             f"--config-dir={config_dir} --password={password} {user_invitation_url} ",
             env=ssl_conf.client_env,
         ) as p_claimer:
             with _running(
-                "core greet_invitation "
+                "desktop greet_invitation "
                 f"--config-dir={config_dir} --device={alice1_slughash} "
                 f"--password={password} {user_invitation_token}",
                 env=ssl_conf.client_env,
@@ -502,12 +503,12 @@ def test_full_run(coolorg, unused_tcp_port, tmp_path, ssl_conf):
 
         print("####### Claim device invitation #######")
         with _running(
-            "core claim_invitation "
+            "desktop claim_invitation "
             f"--config-dir={config_dir} --password={password} {device_invitation_url} ",
             env=ssl_conf.client_env,
         ) as p_claimer:
             with _running(
-                "core greet_invitation "
+                "desktop greet_invitation "
                 f"--config-dir={config_dir} --device={alice1_slughash} "
                 f"--password={password} {device_invitation_url}",
                 env=ssl_conf.client_env,
@@ -563,7 +564,7 @@ def test_full_run(coolorg, unused_tcp_port, tmp_path, ssl_conf):
                 p_claimer.wait()
 
         print("####### List users #######")
-        p = _run(f"core list_devices --config-dir={config_dir}", env=ssl_conf.client_env)
+        p = _run(f"desktop list_devices --config-dir={config_dir}", env=ssl_conf.client_env)
         stdout = p.stdout.decode()
         assert alice1_slughash[:3] in stdout
         assert (
@@ -583,12 +584,12 @@ def test_full_run(coolorg, unused_tcp_port, tmp_path, ssl_conf):
 
         print("####### New users can communicate with backend #######")
         _run(
-            "core create_workspace wksp1 "
+            "desktop create_workspace wksp1 "
             f"--config-dir={config_dir} --device={bob1_slughash} --password={password}",
             env=ssl_conf.client_env,
         )
         _run(
-            "core create_workspace wksp2 "
+            "desktop create_workspace wksp2 "
             f"--config-dir={config_dir} --device={alice2_slughash} --password={password}",
             env=ssl_conf.client_env,
         )
@@ -597,7 +598,7 @@ def test_full_run(coolorg, unused_tcp_port, tmp_path, ssl_conf):
         recovery_dir = tmp_path / "recovery"
         recovery_dir.mkdir()
         p = _run(
-            f"core export_recovery_device --output={escape_backslashes(recovery_dir)} "
+            f"desktop export_recovery_device --output={escape_backslashes(recovery_dir)} "
             f"--config-dir={config_dir} --device={alice1_slughash} --password={password}",
             env=ssl_conf.client_env,
         )
@@ -609,7 +610,7 @@ def test_full_run(coolorg, unused_tcp_port, tmp_path, ssl_conf):
         recovery_file = next(recovery_dir.glob("*.psrk"))
         # Do the import
         p = _run(
-            f"core import_recovery_device {escape_backslashes(recovery_file)} "
+            f"desktop import_recovery_device {escape_backslashes(recovery_file)} "
             f"--passphrase={passphrase} --device-label={alice3_device_label} "
             f"--config-dir={config_dir} --password={password}",
             env=ssl_conf.client_env,
@@ -620,7 +621,7 @@ def test_full_run(coolorg, unused_tcp_port, tmp_path, ssl_conf):
 
         print("####### Recovered device can communicate with backend #######")
         _run(
-            "core create_workspace wksp3 "
+            "desktop create_workspace wksp3 "
             f"--config-dir={config_dir} --device={alice3_slughash} --password={password}",
             env=ssl_conf.client_env,
         )
@@ -645,4 +646,4 @@ def test_full_run(coolorg, unused_tcp_port, tmp_path, ssl_conf):
     ],
 )
 def test_gui_with_diagnose_option(env):
-    _run(f"core gui --diagnose", env=env, capture=False)
+    _run(f"desktop gui --diagnose", env=env, capture=False)

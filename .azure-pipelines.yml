@@ -567,8 +567,8 @@ jobs:
       parsec.cli --version
       # Make sure snap contains core but not backend
       NOT_AVAILABLES=$(parsec.cli --help | grep -i "not available")
-      test "$(echo $NOT_AVAILABLES | grep -i 'backend')"
-      test -z "$(echo $NOT_AVAILABLES | grep -i 'core')"
+      test "$(echo $NOT_AVAILABLES | grep -i 'server')"
+      test -z "$(echo $NOT_AVAILABLES | grep -i 'desktop')"
       xvfb-run parsec --diagnose
     displayName: 'Test Snap'
 

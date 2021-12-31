@@ -55,7 +55,7 @@ laptop and pc. They each have their workspace, respectively `alice_workspace` an
 
 Check that the test organization has been properly created using parsec GUI:
 
-    $ parsec core gui
+    $ parsec desktop gui
 
 
 Parameterize `run_testenv`
@@ -100,7 +100,7 @@ using the `run_testenv` script and two terminals.
 In a first terminal, run the following commands:
 
 	$ source tests/scripts/run_testenv.sh
-	$ parsec core gui
+	$ parsec desktop gui
     # Connect as bob@laptop and register a new device called pc
     # Copy the URL
 

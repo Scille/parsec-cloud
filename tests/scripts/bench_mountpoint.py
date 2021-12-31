@@ -60,27 +60,27 @@ def main():
     mountdir.mkdir(exist_ok=True)
 
     # Start backend & create organization
-    with keep_running_cmd(f"{PARSEC_CLI} backend run --port={PORT}"):
+    with keep_running_cmd(f"{PARSEC_CLI} server run --port={PORT}"):
         backend_addr = f"parsec://127.0.0.1:{PORT}?no_ssl=true"
 
         out = run_cmd(
-            f"{PARSEC_CLI} core create_organization {ORGNAME}"
+            f"{PARSEC_CLI} destop create_organization {ORGNAME}"
             f" --addr={backend_addr} --administration-token={TOKEN}"
         )
 
         boostrap_addr = out.stdout.decode().split("Bootstrap organization url: ")[-1].strip()
         out = run_cmd(
-            f"{PARSEC_CLI} core bootstrap_organization {DEVICE}"
+            f"{PARSEC_CLI} desktop bootstrap_organization {DEVICE}"
             f" --addr={boostrap_addr} --config-dir={confdir} --password={PASSWORD}"
         )
 
         out = run_cmd(
-            f"{PARSEC_CLI} core create_workspace w1"
+            f"{PARSEC_CLI} desktop create_workspace w1"
             f" --config-dir={confdir} --device={DEVICE} --password={PASSWORD}"
         )
 
         with keep_running_cmd(
-            f"{PARSEC_PROFILE_CLI} core run -l INFO"
+            f"{PARSEC_PROFILE_CLI} desktop run -l INFO"
             f" --device={DEVICE} --password={PASSWORD} --mountpoint={mountdir} --config-dir={confdir}"
         ):
 

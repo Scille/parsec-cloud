@@ -1,7 +1,7 @@
 FROM python:3.7-slim-buster
 
 ADD . .
-RUN pip install --no-cache-dir -e .[backend]
+RUN pip install --no-cache-dir -e .[server]
 EXPOSE 6777
-ENTRYPOINT ["parsec", "backend"]
+ENTRYPOINT ["parsec", "server"]
 CMD ["run"]

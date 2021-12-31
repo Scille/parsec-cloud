@@ -39,15 +39,15 @@ Installation
 
     $ python -m venv venv
     $ . ./venv/bin/activate
-    $ pip install parsec-cloud[backend]
+    $ pip install parsec-cloud[server]
 
 
 Run
 ===
 
-Use the ``parsec backend run`` command to start Parsec server, for instance::
+Use the ``parsec server run`` command to start Parsec server, for instance::
 
-    $ parsec backend run --port $PORT --host 0.0.0.0 --db postgresql://<...> --blockstore s3:<...> --administration-token <token>
+    $ parsec server run --port $PORT --host 0.0.0.0 --db postgresql://<...> --blockstore s3:<...> --administration-token <token>
 
 
 Settings
@@ -60,7 +60,7 @@ Settings
     All available command line arguments can be used and environ variables
     within it will be expanded. For instance::
 
-        $ DB_URL=postgres:///parsec PARSEC_CMD_ARGS='--db=$DB_URL --host=0.0.0.0' parsec backend run
+        $ DB_URL=postgres:///parsec PARSEC_CMD_ARGS='--db=$DB_URL --host=0.0.0.0' parsec server run
 
 Host
 ----
@@ -140,7 +140,7 @@ integer and ``<config>`` the MOCKED/POSTGRESQL/S3/SWIFT config.
 
 For instance, to configure a RAID0 with 2 nodes::
 
-    $ parsec backend run -b RAID0:0:MOCKED -b RAID0:1:POSTGRESQL [...]
+    $ parsec server run -b RAID0:0:MOCKED -b RAID0:1:POSTGRESQL [...]
 
 .. warning::
 
@@ -260,7 +260,7 @@ Webhooks
 Allow organization bootstrap without prior creation.
 
 Without this flag, an organization must be created by administration
-(see ``parsec core create_organization`` command) before bootstrap can occur.
+(see ``parsec destop create_organization`` command) before bootstrap can occur.
 
 With this flag, the server allows anybody to bootstrap an organanization
 by providing an empty bootstrap token given 1) the organization is not boostrapped yet

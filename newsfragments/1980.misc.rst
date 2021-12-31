@@ -1,0 +1,1 @@
+ CLI commands core and backend have been renammed to desktop and server

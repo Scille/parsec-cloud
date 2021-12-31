@@ -89,9 +89,9 @@ msgstr "Démarrage"
 
 #: ../../hosting_server.rst:48
 msgid ""
-"Use the ``parsec backend run`` command to start Parsec server, for instance::"
+"Use the ``parsec server run`` command to start Parsec server, for instance::"
 msgstr ""
-"Utiliser la commande ``parsec backend run`` pour démarrer le server Parsec, "
+"Utiliser la commande ``parsec server run`` pour démarrer le server Parsec, "
 "par exemple::"
 
 #: ../../hosting_server.rst:54

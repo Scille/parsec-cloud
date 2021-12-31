@@ -57,11 +57,11 @@ def main(program_source):
 
     if not WHEELS_DIR.is_dir():
         print("### Generate wheels from Parsec, Parsec and dependencies ###")
-        # Generate wheels for parsec (with it core extra) and it dependencies
+        # Generate wheels for parsec (with it desktop extra) and it dependencies
         # Also generate wheels for PyInstaller in the same command so that
         # dependency resolution is done together with parsec.
         run(
-            f"{ TOOLS_VENV_DIR / 'Scripts/python' } -m pip wheel --wheel-dir {WHEELS_DIR} {program_source.absolute()}[core] pyinstaller"
+            f"{ TOOLS_VENV_DIR / 'Scripts/python' } -m pip wheel --wheel-dir {WHEELS_DIR} {program_source.absolute()}[desktop] pyinstaller"
         )
 
     # Bootstrap PyInstaller virtualenv
@@ -71,7 +71,7 @@ def main(program_source):
         run(f"python -m venv {pyinstaller_venv_dir}")
         run(f"{ pyinstaller_venv_dir / 'Scripts/python' } -m pip install pip --upgrade")
         run(
-            f"{ pyinstaller_venv_dir / 'Scripts/python' } -m pip install --no-index --find-links {WHEELS_DIR} parsec-cloud[core] pyinstaller"
+            f"{ pyinstaller_venv_dir / 'Scripts/python' } -m pip install --no-index --find-links {WHEELS_DIR} parsec-cloud[desktop] pyinstaller"
         )
 
     pyinstaller_build = BUILD_DIR / "pyinstaller_build"

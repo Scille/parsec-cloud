@@ -279,12 +279,12 @@ def get_requirement_from_file(file):
 
 requirements = get_requirement_from_file("requirement/install_requirement.txt")
 test_requirements = get_requirement_from_file("requirement/test_requirement.txt")
-core_requirements = get_requirement_from_file("requirement/core_requirement.txt")
-backend_requirements = get_requirement_from_file("requirement/backend_requirement.txt")
+desktop_requirements = get_requirement_from_file("requirement/desktop_requirement.txt")
+server_requirements = get_requirement_from_file("requirement/server_requirement.txt")
 
 extra_requirements = {
-    "core": core_requirements,
-    "backend": backend_requirements,
+    "desktop": desktop_requirements,
+    "server": server_requirements,
     "dev": test_requirements,
     # Oxidation is a special case: for the moment it is experimental (i.e. not
     # shipped in production) and only contains rewriting of Python parts so

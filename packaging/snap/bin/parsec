@@ -17,4 +17,4 @@ export XDG_CURRENT_DESKTOP=unknown
 # (i.e. without sandbox).
 unset SNAP
 
-exec $PYTHON -m parsec.cli core gui $@
+exec $PYTHON -m parsec.cli desktop gui $@

@@ -26,8 +26,8 @@ def cli():
     pass
 
 
-cli.add_command(core_cmd, "core")
-cli.add_command(backend_cmd, "backend")
+cli.add_command(core_cmd, "desktop")
+cli.add_command(backend_cmd, "server")
 
 # Add support for PARSEC_CMD_ARGS env var
 

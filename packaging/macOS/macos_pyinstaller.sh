@@ -7,7 +7,7 @@ cd $BASEDIR/../..
 python3 -m pip install 'pyinstaller==4.7'
 # Pyinstaller read the imports in the codebase recursively then copy the
 # corresponding needed packages from the current virtualenv.
-python3 -m pip install .[core]
+python3 -m pip install .[desktop]
 cd $BASEDIR
 
 if [[ "$1" = '-f' || "$1" = '--force' ]]
