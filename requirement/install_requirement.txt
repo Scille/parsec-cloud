@@ -1,5 +1,5 @@
 certifi==2021.10.8
-attrs==21.2.0
+attrs==21.4.0
 click==8.0.3
 msgpack==1.0.3
 wsproto==1.0.0
