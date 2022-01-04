@@ -1,9 +1,13 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BSLv1.1 (eventually AGPLv3) 2016-2021 Scille SAS
 
+use blake2::Blake2bMac;
+use digest::{consts::U32, Mac};
 use serde::{Deserialize, Serialize};
 use serde_bytes::ByteBuf;
 use xsalsa20poly1305::aead::{Aead, NewAead};
 use xsalsa20poly1305::{generate_nonce, Key, XSalsa20Poly1305, KEY_SIZE, NONCE_SIZE};
+
+type Blake2bMac256 = Blake2bMac<U32>;
 
 #[derive(Clone, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(into = "ByteBuf", try_from = "ByteBuf")]
@@ -43,17 +47,11 @@ impl SecretKey {
             .map_err(|_| "Decryption error")
     }
 
-    // TODO
-    pub fn hmac(&self, _data: &[u8], _digest_size: usize) -> Vec<u8> {
-        // // blake2b(data, digest_size=digest_size, key=self, encoder=RawEncoder)
-        // let key = blake2b::Key::from_slice(&self.0);
-        // blake2b::derive_from_key(
-        //     subkey: &mut [u8],
-        //     subkey_id: u64,
-        //     ctx: [u8; 8],
-        //     key,
-        // );
-        vec![]
+    pub fn hmac(&self, data: &[u8]) -> Vec<u8> {
+        let mut hasher = Blake2bMac256::new_from_slice(&self.0).unwrap();
+        hasher.update(data);
+        let res = hasher.finalize();
+        res.into_bytes().to_vec()
     }
 }
 

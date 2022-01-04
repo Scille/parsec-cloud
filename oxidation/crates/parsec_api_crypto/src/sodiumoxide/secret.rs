@@ -41,7 +41,7 @@ impl SecretKey {
     }
 
     // TODO
-    pub fn hmac(&self, _data: &[u8], _digest_size: usize) -> Vec<u8> {
+    pub fn hmac(&self, _data: &[u8]) -> Vec<u8> {
         // // blake2b(data, digest_size=digest_size, key=self, encoder=RawEncoder)
         // let key = blake2b::Key::from_slice(&self.0);
         // blake2b::derive_from_key(

@@ -91,13 +91,8 @@ impl SecretKey {
         }
     }
 
-    pub fn hmac<'p>(
-        &self,
-        py: Python<'p>,
-        data: &[u8],
-        digest_size: usize,
-    ) -> PyResult<&'p PyBytes> {
-        Ok(PyBytes::new(py, &self.0.hmac(data, digest_size)))
+    pub fn hmac<'p>(&self, py: Python<'p>, data: &[u8]) -> PyResult<&'p PyBytes> {
+        Ok(PyBytes::new(py, &self.0.hmac(data)))
     }
 
     fn __repr__(&self) -> PyResult<String> {

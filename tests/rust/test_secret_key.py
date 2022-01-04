@@ -30,9 +30,8 @@ def test_secret_key():
     assert rst.decrypt(ciphered_rst) == py.decrypt(ciphered_py)
     assert rst.decrypt(ciphered_py) == py.decrypt(ciphered_rst)
 
-    # TO-DO: test for hmac
-    # first we need to implement hmac in rust
-    # assert rst.hmac(data, digest_size) == py.hmac(data)
+    # check if we get the sane hmac
+    assert rst.hmac(MESSAGE) == py.hmac(MESSAGE)
 
     # Check if generate returns the right type
     assert isinstance(SecretKey.generate(), SecretKey)
