@@ -39,8 +39,8 @@ macro_rules! impl_common_stuff {
                 // For wathever reason, Url considers illegal changing scheme
                 // from http/https to a custom one, so we cannot just use
                 // `Url::set_scheme` and instead have to do this hack :(
-                let fuck_your_silly_check = format!("x{}", url);
-                let url = &fuck_your_silly_check;
+                let url_with_forced_custom_scheme = format!("x{}", url);
+                let url = &url_with_forced_custom_scheme;
 
                 // Note `Url::parse` takes care of percent-encoding for query params
                 let mut parsed = Url::parse(url).map_err(|_| "Invalid URL")?;
