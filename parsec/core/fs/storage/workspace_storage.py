@@ -20,6 +20,7 @@ from parsec.core.types import (
     LocalFileManifest,
     LocalWorkspaceManifest,
 )
+from parsec.core.config import DEFAULT_WORKSPACE_STORAGE_CACHE_SIZE
 from parsec.core.fs.exceptions import FSError, FSLocalMissError, FSInvalidFileDescriptor
 
 from parsec.core.fs.storage.local_database import LocalDatabase
@@ -33,8 +34,6 @@ from parsec.core.fs.storage.version import (
 
 logger = get_logger()
 
-# TODO: should be in config.py
-DEFAULT_BLOCK_CACHE_SIZE = 512 * 1024 * 1024
 DEFAULT_CHUNK_VACUUM_THRESHOLD = 512 * 1024 * 1024
 
 
@@ -251,7 +250,7 @@ class WorkspaceStorage(BaseWorkspaceStorage):
         data_base_dir: Path,
         device: LocalDevice,
         workspace_id: EntryID,
-        cache_size: int = DEFAULT_BLOCK_CACHE_SIZE,
+        cache_size: int = DEFAULT_WORKSPACE_STORAGE_CACHE_SIZE,
         vacuum_threshold: int = DEFAULT_CHUNK_VACUUM_THRESHOLD,
     ) -> AsyncIterator["WorkspaceStorage"]:
         data_path = get_workspace_data_storage_db_path(data_base_dir, device, workspace_id)
