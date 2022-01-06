@@ -2,7 +2,7 @@
 
 from parsec.serde import BaseSchema, fields, validate
 from parsec.api.protocol.base import BaseReqSchema, BaseRepSchema, CmdSerializer
-from parsec.api.protocol.types import DeviceIDField
+from parsec.api.protocol.types import DeviceIDField, EntryIDField
 
 
 __all__ = (
@@ -20,7 +20,7 @@ _validate_version = validate.Range(min=1)
 
 
 class VlobCreateReqSchema(BaseReqSchema):
-    realm_id = fields.UUID(required=True)
+    realm_id = EntryIDField(required=True)
     encryption_revision = fields.Integer(required=True)
     vlob_id = fields.UUID(required=True)
     # If blob contains a signed message, it timestamp cannot be directly enforced
@@ -78,7 +78,7 @@ vlob_update_serializer = CmdSerializer(VlobUpdateReqSchema, VlobUpdateRepSchema)
 
 
 class VlobPollChangesReqSchema(BaseReqSchema):
-    realm_id = fields.UUID(required=True)
+    realm_id = EntryIDField(required=True)
     last_checkpoint = fields.Integer(required=True)
 
 
@@ -110,7 +110,7 @@ vlob_list_versions_serializer = CmdSerializer(VlobListVersionsReqSchema, VlobLis
 
 
 class VlobMaintenanceGetReencryptionBatchReqSchema(BaseReqSchema):
-    realm_id = fields.UUID(required=True)
+    realm_id = EntryIDField(required=True)
     encryption_revision = fields.Integer(required=True)
     size = fields.Integer(required=True, validate=validate.Range(min=0, max=1000))
 
@@ -131,7 +131,7 @@ vlob_maintenance_get_reencryption_batch_serializer = CmdSerializer(
 
 
 class VlobMaintenanceSaveReencryptionBatchReqSchema(BaseReqSchema):
-    realm_id = fields.UUID(required=True)
+    realm_id = EntryIDField(required=True)
     encryption_revision = fields.Integer(required=True)
     batch = fields.List(fields.Nested(ReencryptionBatchEntrySchema), required=True)
 

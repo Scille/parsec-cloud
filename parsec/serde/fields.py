@@ -147,13 +147,13 @@ def str_based_field_factory(value_type):
 def uuid_based_field_factory(value_type):
     assert isinstance(value_type, type)
 
-    def _serialize(self, value, attr, data):
+    def _serialize_uuid(self, value, attr, data):
         if value is None:
             return None
 
         return value
 
-    def _deserialize(self, value, attr, data):
+    def _deserialize_uuid(self, value, attr, data):
         if not isinstance(value, _UUID):
             raise ValidationError("Not an UUID")
 
@@ -162,11 +162,32 @@ def uuid_based_field_factory(value_type):
         except ValueError as exc:
             raise ValidationError(str(exc)) from exc
 
-    return type(
-        f"{value_type.__name__}Field",
-        (Field,),
-        {"_serialize": _serialize, "_deserialize": _deserialize},
-    )
+    def _serialize_other(self, value, attr, data):
+        if hasattr(value, "bytes"):
+            return _UUID(bytes=value.bytes)
+        return value
+
+    def _deserialize_other(self, value, attr, data):
+        if not isinstance(value, _UUID):
+            raise ValidationError("Not an UUID")
+
+        try:
+            return value_type(str(value))
+        except ValueError as exc:
+            raise ValidationError(str(exc)) from exc
+
+    if issubclass(value_type, _UUID):
+        return type(
+            f"{value_type.__name__}Field",
+            (Field,),
+            {"_serialize": _serialize_uuid, "_deserialize": _deserialize_uuid},
+        )
+    else:
+        return type(
+            f"{value_type.__name__}Field",
+            (Field,),
+            {"_serialize": _serialize_other, "_deserialize": _deserialize_other},
+        )
 
 
 # TODO: test this field and use it everywhere in the api !

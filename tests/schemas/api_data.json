@@ -505,7 +505,7 @@
             "realm_id": {
                 "allow_none": false,
                 "required": true,
-                "type": "UUID"
+                "type": "EntryIDField"
             },
             "role": {
                 "allow_none": true,

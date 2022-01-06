@@ -3,11 +3,12 @@
 import re
 from unicodedata import normalize
 from typing import Union, TypeVar, Type, NoReturn
-from uuid import uuid4
+from uuid import uuid4, UUID
 from enum import Enum
 from collections import namedtuple
 from email.utils import parseaddr
 
+from parsec.types import UUID4
 from parsec.serde import fields
 
 UserIDTypeVar = TypeVar("UserIDTypeVar", bound="UserID")
@@ -170,3 +171,35 @@ class UserProfile(Enum):
 
 
 UserProfileField = fields.enum_field_factory(UserProfile)
+
+
+class BlockID(UUID4):
+    pass
+
+
+BlockIDField = fields.uuid_based_field_factory(BlockID)
+
+
+EntryIDTypeVar = TypeVar("EntryIDTypeVar", bound="EntryID")
+
+
+class EntryID(UUID):
+    __slots__ = ()
+
+    def __init__(self, raw: Union[UUID, bytes, str]):
+        if isinstance(raw, UUID):
+            super().__init__(bytes=raw.bytes)
+        elif isinstance(raw, bytes):
+            super().__init__(bytes=raw)
+        else:
+            super().__init__(hex=raw)
+
+    def __repr__(self) -> str:
+        return f"<EntryID {self.hex}>"
+
+    @classmethod
+    def new(cls: Type[EntryIDTypeVar]) -> EntryIDTypeVar:
+        return cls(uuid4())
+
+
+EntryIDField = fields.uuid_based_field_factory(EntryID)

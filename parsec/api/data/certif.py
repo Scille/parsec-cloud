@@ -1,7 +1,6 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2016-2021 Scille SAS
 
 from typing import Optional, Any, Dict, Type, TypeVar
-from uuid import UUID
 from marshmallow import ValidationError
 
 from parsec.crypto import VerifyKey, PublicKey
@@ -17,6 +16,8 @@ from parsec.api.protocol import (
     RealmRoleField,
     UserProfileField,
     UserProfile,
+    EntryID,
+    EntryIDField,
 )
 from parsec.api.data.base import DataValidationError, BaseAPISignedData, BaseSignedDataSchema
 import attr
@@ -162,7 +163,7 @@ class DeviceCertificateContent(BaseAPISignedData):
 class RealmRoleCertificateContent(BaseAPISignedData):
     class SCHEMA_CLS(BaseSignedDataSchema):
         type = fields.CheckedConstant("realm_role_certificate", required=True)
-        realm_id = fields.UUID(required=True)
+        realm_id = EntryIDField(required=True)
         user_id = UserIDField(required=True)
         role = RealmRoleField(required=True, allow_none=True)
 
@@ -171,7 +172,7 @@ class RealmRoleCertificateContent(BaseAPISignedData):
             data.pop("type")
             return RealmRoleCertificateContent(**data)
 
-    realm_id: UUID
+    realm_id: EntryID
     user_id: UserID
     role: Optional[RealmRole]  # Set to None if role removed
 
@@ -189,7 +190,7 @@ class RealmRoleCertificateContent(BaseAPISignedData):
     def verify_and_load(
         cls,
         *args,
-        expected_realm: Optional[UUID] = None,
+        expected_realm: Optional[EntryID] = None,
         expected_user: Optional[UserID] = None,
         expected_role: Optional[RealmRole] = None,
         **kwargs,

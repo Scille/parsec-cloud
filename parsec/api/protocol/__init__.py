@@ -20,6 +20,10 @@ from parsec.api.protocol.types import (
     HumanHandleField,
     UserProfileField,
     UserProfile,
+    BlockID,
+    BlockIDField,
+    EntryID,
+    EntryIDField,
 )
 from parsec.api.protocol.handshake import (
     HandshakeError,
@@ -141,6 +145,10 @@ __all__ = (
     "HumanHandleField",
     "UserProfileField",
     "UserProfile",
+    "BlockID",
+    "BlockIDField",
+    "EntryID",
+    "EntryIDField",
     # Organization
     "apiv1_organization_bootstrap_serializer",
     "organization_bootstrap_webhook_serializer",

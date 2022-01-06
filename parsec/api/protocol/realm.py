@@ -4,7 +4,7 @@ from enum import Enum
 
 from parsec.serde import fields
 from parsec.api.protocol.base import BaseReqSchema, BaseRepSchema, CmdSerializer
-from parsec.api.protocol.types import UserIDField, DeviceIDField
+from parsec.api.protocol.types import UserIDField, DeviceIDField, EntryIDField
 
 
 __all__ = (
@@ -50,7 +50,7 @@ realm_create_serializer = CmdSerializer(RealmCreateReqSchema, RealmCreateRepSche
 
 
 class RealmStatusReqSchema(BaseReqSchema):
-    realm_id = fields.UUID(required=True)
+    realm_id = EntryIDField(required=True)
 
 
 class RealmStatusRepSchema(BaseRepSchema):
@@ -65,7 +65,7 @@ realm_status_serializer = CmdSerializer(RealmStatusReqSchema, RealmStatusRepSche
 
 
 class RealmStatsReqSchema(BaseReqSchema):
-    realm_id = fields.UUID(required=True)
+    realm_id = EntryIDField(required=True)
 
 
 class RealmStatsRepSchema(BaseRepSchema):
@@ -77,7 +77,7 @@ realm_stats_serializer = CmdSerializer(RealmStatsReqSchema, RealmStatsRepSchema)
 
 
 class RealmGetRoleCertificatesReqSchema(BaseReqSchema):
-    realm_id = fields.UUID(required=True)
+    realm_id = EntryIDField(required=True)
     since = fields.DateTime(missing=None)
 
 
@@ -103,7 +103,7 @@ realm_update_roles_serializer = CmdSerializer(RealmUpdateRolesReqSchema, RealmUp
 
 
 class RealmStartReencryptionMaintenanceReqSchema(BaseReqSchema):
-    realm_id = fields.UUID(required=True)
+    realm_id = EntryIDField(required=True)
     encryption_revision = fields.Integer(required=True)
     timestamp = fields.DateTime(required=True)
     per_participant_message = fields.Map(UserIDField(), fields.Bytes(required=True), required=True)
@@ -119,7 +119,7 @@ realm_start_reencryption_maintenance_serializer = CmdSerializer(
 
 
 class RealmFinishReencryptionMaintenanceReqSchema(BaseReqSchema):
-    realm_id = fields.UUID(required=True)
+    realm_id = EntryIDField(required=True)
     encryption_revision = fields.Integer(required=True)
 
 

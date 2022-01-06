@@ -5,6 +5,7 @@ from typing import Dict, cast
 
 from parsec.serde import OneOfSchema, fields, validate
 from parsec.api.protocol.base import BaseReqSchema, BaseRepSchema, CmdSerializer
+from parsec.api.protocol.types import EntryIDField
 from parsec.api.protocol.realm import RealmRoleField
 from parsec.api.protocol.invite import InvitationStatusField
 
@@ -26,13 +27,13 @@ class EventsPingedRepSchema(BaseRepSchema):
 
 class EventsRealmRolesUpdatedRepSchema(BaseRepSchema):
     event = fields.EnumCheckedConstant(APIEvent.REALM_ROLES_UPDATED, required=True)
-    realm_id = fields.UUID(required=True)
+    realm_id = EntryIDField(required=True)
     role = RealmRoleField(required=True, allow_none=True)
 
 
 class EventsRealmVlobsUpdatedRepSchema(BaseRepSchema):
     event = fields.EnumCheckedConstant(APIEvent.REALM_VLOBS_UPDATED, required=True)
-    realm_id = fields.UUID(required=True)
+    realm_id = EntryIDField(required=True)
     checkpoint = fields.Integer(required=True)
     src_id = fields.UUID(required=True)
     src_version = fields.Integer(required=True)
@@ -40,13 +41,13 @@ class EventsRealmVlobsUpdatedRepSchema(BaseRepSchema):
 
 class EventsRealmMaintenanceStartedRepSchema(BaseRepSchema):
     event = fields.EnumCheckedConstant(APIEvent.REALM_MAINTENANCE_STARTED, required=True)
-    realm_id = fields.UUID(required=True)
+    realm_id = EntryIDField(required=True)
     encryption_revision = fields.Integer(required=True)
 
 
 class EventsRealmMaintenanceFinishedRepSchema(BaseRepSchema):
     event = fields.EnumCheckedConstant(APIEvent.REALM_MAINTENANCE_FINISHED, required=True)
-    realm_id = fields.UUID(required=True)
+    realm_id = EntryIDField(required=True)
     encryption_revision = fields.Integer(required=True)
 
 
