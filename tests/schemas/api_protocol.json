@@ -1313,7 +1313,7 @@
                         "vlob_id": {
                             "allow_none": false,
                             "required": true,
-                            "type": "UUID"
+                            "type": "EntryIDField"
                         }
                     },
                     "serializing": "msgpack"
@@ -1368,7 +1368,7 @@
                         "vlob_id": {
                             "allow_none": false,
                             "required": true,
-                            "type": "UUID"
+                            "type": "EntryIDField"
                         }
                     },
                     "serializing": "msgpack"
@@ -1397,7 +1397,7 @@
                                         "vlob_id": {
                                             "allow_none": false,
                                             "required": true,
-                                            "type": "UUID"
+                                            "type": "EntryIDField"
                                         }
                                     }
                                 },
@@ -1485,7 +1485,7 @@
                                         "vlob_id": {
                                             "allow_none": false,
                                             "required": true,
-                                            "type": "UUID"
+                                            "type": "EntryIDField"
                                         }
                                     }
                                 },
@@ -1628,7 +1628,7 @@
                         "vlob_id": {
                             "allow_none": false,
                             "required": true,
-                            "type": "UUID"
+                            "type": "EntryIDField"
                         }
                     },
                     "serializing": "msgpack"
@@ -1676,7 +1676,7 @@
                         "vlob_id": {
                             "allow_none": false,
                             "required": true,
-                            "type": "UUID"
+                            "type": "EntryIDField"
                         }
                     },
                     "serializing": "msgpack"

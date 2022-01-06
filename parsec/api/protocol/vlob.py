@@ -22,7 +22,7 @@ _validate_version = validate.Range(min=1)
 class VlobCreateReqSchema(BaseReqSchema):
     realm_id = EntryIDField(required=True)
     encryption_revision = fields.Integer(required=True)
-    vlob_id = fields.UUID(required=True)
+    vlob_id = EntryIDField(required=True)
     # If blob contains a signed message, it timestamp cannot be directly enforced
     # by the backend (given the message is probably also encrypted).
     # Hence the timestamp is passed in clear so backend can reject the message
@@ -42,7 +42,7 @@ vlob_create_serializer = CmdSerializer(VlobCreateReqSchema, VlobCreateRepSchema)
 
 class VlobReadReqSchema(BaseReqSchema):
     encryption_revision = fields.Integer(required=True)
-    vlob_id = fields.UUID(required=True)
+    vlob_id = EntryIDField(required=True)
     version = fields.Integer(validate=lambda n: n is None or _validate_version(n), missing=None)
     timestamp = fields.DateTime(allow_none=True, missing=None)
 
@@ -64,7 +64,7 @@ vlob_read_serializer = CmdSerializer(VlobReadReqSchema, VlobReadRepSchema)
 
 class VlobUpdateReqSchema(BaseReqSchema):
     encryption_revision = fields.Integer(required=True)
-    vlob_id = fields.UUID(required=True)
+    vlob_id = EntryIDField(required=True)
     timestamp = fields.DateTime(required=True)
     version = fields.Integer(required=True, validate=_validate_version)
     blob = fields.Bytes(required=True)
@@ -92,7 +92,7 @@ vlob_poll_changes_serializer = CmdSerializer(VlobPollChangesReqSchema, VlobPollC
 
 # List available vlobs
 class VlobListVersionsReqSchema(BaseReqSchema):
-    vlob_id = fields.UUID(required=True)
+    vlob_id = EntryIDField(required=True)
 
 
 class VlobListVersionsRepSchema(BaseRepSchema):
@@ -116,7 +116,7 @@ class VlobMaintenanceGetReencryptionBatchReqSchema(BaseReqSchema):
 
 
 class ReencryptionBatchEntrySchema(BaseSchema):
-    vlob_id = fields.UUID(required=True)
+    vlob_id = EntryIDField(required=True)
     version = fields.Integer(required=True, validate=validate.Range(min=0))
     blob = fields.Bytes(required=True)
 

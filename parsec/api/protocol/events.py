@@ -35,7 +35,7 @@ class EventsRealmVlobsUpdatedRepSchema(BaseRepSchema):
     event = fields.EnumCheckedConstant(APIEvent.REALM_VLOBS_UPDATED, required=True)
     realm_id = EntryIDField(required=True)
     checkpoint = fields.Integer(required=True)
-    src_id = fields.UUID(required=True)
+    src_id = EntryIDField(required=True)
     src_version = fields.Integer(required=True)
 
 
