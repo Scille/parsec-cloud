@@ -36,6 +36,22 @@ fn test_addr_good() {
     test_addr_good!(BackendInvitationAddr, "parsec://parsec.example.com/my_org?action=claim_user&token=3a50b191122b480ebb113b10216ef343");
 }
 
+#[test]
+fn test_addr_with_unicode_organization_id() {
+    let addr: BackendOrganizationAddr = "parsec://parsec.example.com/%E5%BA%B7%E7%86%99%E5%B8%9D?rvk=7NFDS4VQLP3XPCMTSEN34ZOXKGGIMTY2W2JI2SPIHB2P3M6K4YWAssss".parse().unwrap();
+    assert_eq!(
+        addr.organization_id(),
+        &"康熙帝".parse::<OrganizationID>().unwrap()
+    );
+}
+
+#[test]
+fn test_addr_with_bad_unicode_organization_id() {
+    // Not a valid percent-encoded utf8 string
+    let ret = "parsec://parsec.example.com/%E5%BA%B7%E7?rvk=7NFDS4VQLP3XPCMTSEN34ZOXKGGIMTY2W2JI2SPIHB2P3M6K4YWAssss".parse::<BackendOrganizationAddr>();
+    assert!(ret.is_err());
+}
+
 macro_rules! test_redirection {
     ($addr_type:ty, $parsec_url:literal, $stable_parsec_url:literal, $redirection_url:literal, $stable_redirection_url:literal $(,)?) => {
         // From parsec scheme
@@ -46,7 +62,7 @@ macro_rules! test_redirection {
             $stable_redirection_url
         );
 
-        // From redirection schema
+        // From redirection scheme
         let addr2 = <$addr_type>::from_http_redirection($redirection_url).unwrap();
         assert_eq!(&addr2, &addr);
         assert_eq!(addr2.clone().to_url().as_str(), $stable_parsec_url);

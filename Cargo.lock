@@ -589,6 +589,7 @@ dependencies = [
  "lazy_static",
  "parsec_api_crypto",
  "paste 1.0.6",
+ "percent-encoding",
  "pretty_assertions",
  "regex",
  "rmp-serde",
