@@ -83,7 +83,7 @@ class VlobPollChangesReqSchema(BaseReqSchema):
 
 
 class VlobPollChangesRepSchema(BaseRepSchema):
-    changes = fields.Map(fields.UUID(), fields.Integer(required=True), required=True)
+    changes = fields.Map(EntryIDField(), fields.Integer(required=True), required=True)
     current_checkpoint = fields.Integer(required=True)
 
 

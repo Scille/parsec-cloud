@@ -112,7 +112,7 @@ def _handle_event(event_bus: EventBus, rep: dict) -> None:
         event_bus.send(CoreEvent.BACKEND_PINGED, ping=rep["ping"])
 
     elif rep["event"] == APIEvent.REALM_ROLES_UPDATED:
-        realm_id = EntryID(rep["realm_id"])
+        realm_id = EntryID(str(rep["realm_id"]))
         event_bus.send(CoreEvent.BACKEND_REALM_ROLES_UPDATED, realm_id=realm_id, role=rep["role"])
 
     elif rep["event"] == APIEvent.REALM_VLOBS_UPDATED:

@@ -1521,7 +1521,7 @@
                             "key_type": {
                                 "allow_none": false,
                                 "required": false,
-                                "type": "UUID"
+                                "type": "EntryIDField"
                             },
                             "nested_type": {
                                 "allow_none": false,
