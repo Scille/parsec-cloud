@@ -67,7 +67,7 @@ class SecretKey:
 
     def __repr__(self):
         # Avoid leaking the key in logs
-        return "SecretKey"
+        return "SecretKey(<redacted>)"
 
     def encrypt(self, data: bytes) -> bytes:
         """
@@ -162,7 +162,7 @@ class SigningKey(_SigningKey):
     # Quick fix, waiting for binding signingKey
     def __repr__(self):
         # Avoid leaking the key in logs
-        return "SigningKey"
+        return "SigningKey(<redacted>)"
 
 
 class VerifyKey(_VerifyKey):
@@ -202,7 +202,7 @@ class PrivateKey(_PrivateKey):
     # Quick fix, waiting for binding privateKey
     def __repr__(self):
         # Avoid leaking the key in logs
-        return "PrivateKey"
+        return "PrivateKey(<redacted>)"
 
 
 class PublicKey(_PublicKey):

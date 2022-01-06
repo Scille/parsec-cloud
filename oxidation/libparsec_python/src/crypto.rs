@@ -80,8 +80,15 @@ impl SecretKey {
         Ok(PyBytes::new(py, self.0.as_ref()))
     }
 
-    pub fn encrypt<'p>(&self, py: Python<'p>, data: &[u8]) -> PyResult<&'p PyBytes> {
-        Ok(PyBytes::new(py, &self.0.encrypt(data)))
+    pub fn encrypt<'p>(&self, py: Python<'p>, data: PyObject) -> PyResult<&'p PyBytes> {
+        let bytes = match data.extract::<&PyByteArray>(py) {
+            // Using PyByteArray::as_bytes is safe as long as the corresponding memory is not modified.
+            // Here, the GIL is held during the entire access to `bytes` so there is no risk of another
+            // python thread modifying the bytearray behind our back.
+            Ok(x) => unsafe { x.as_bytes() },
+            Err(_) => data.extract::<&PyBytes>(py)?.as_bytes(),
+        };
+        Ok(PyBytes::new(py, &self.0.encrypt(bytes)))
     }
 
     pub fn decrypt<'p>(&self, py: Python<'p>, ciphered: &[u8]) -> PyResult<&'p PyBytes> {
@@ -91,12 +98,17 @@ impl SecretKey {
         }
     }
 
-    pub fn hmac<'p>(&self, py: Python<'p>, data: &[u8]) -> PyResult<&'p PyBytes> {
-        Ok(PyBytes::new(py, &self.0.hmac(data)))
+    pub fn hmac<'p>(
+        &self,
+        py: Python<'p>,
+        data: &[u8],
+        digest_size: usize,
+    ) -> PyResult<&'p PyBytes> {
+        Ok(PyBytes::new(py, &self.0.hmac(data, digest_size)))
     }
 
     fn __repr__(&self) -> PyResult<String> {
-        Ok(String::from("SecretKey"))
+        Ok(String::from("SecretKey(<redacted>)"))
     }
 
     fn __richcmp__(&self, py: Python, value: &SecretKey, op: CompareOp) -> PyObject {

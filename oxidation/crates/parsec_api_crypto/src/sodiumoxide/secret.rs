@@ -31,9 +31,7 @@ impl SecretKey {
     }
 
     pub fn decrypt(&self, ciphered: &[u8]) -> Result<Vec<u8>, &'static str> {
-        let nonce_slice = ciphered
-            .get(..NONCEBYTES)
-            .ok_or("The nonce must be exactly 24 bytes long")?;
+        let nonce_slice = ciphered.get(..NONCEBYTES).ok_or("Invalid data size")?;
         let nonce = Nonce::from_slice(nonce_slice).ok_or("Invalid data size")?;
         let plaintext =
             open(&ciphered[NONCEBYTES..], &nonce, &self.0).or(Err("Decryption error"))?;
@@ -41,7 +39,7 @@ impl SecretKey {
     }
 
     // TODO
-    pub fn hmac(&self, _data: &[u8]) -> Vec<u8> {
+    pub fn hmac(&self, _data: &[u8], digest_size: usize) -> Vec<u8> {
         // // blake2b(data, digest_size=digest_size, key=self, encoder=RawEncoder)
         // let key = blake2b::Key::from_slice(&self.0);
         // blake2b::derive_from_key(

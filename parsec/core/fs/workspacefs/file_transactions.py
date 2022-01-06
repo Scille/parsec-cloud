@@ -50,7 +50,7 @@ def padded_data(data: bytes, start: int, stop: int) -> bytes:
     if start <= stop <= 0:
         return b"\x00" * (stop - start)
     if 0 <= start <= stop:
-        return bytes(data)[start:stop]
+        return data[start:stop]
     return b"\x00" * (0 - start) + data[0:stop]
 
 
