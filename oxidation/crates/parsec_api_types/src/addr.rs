@@ -81,14 +81,14 @@ macro_rules! impl_common_stuff {
         impl std::fmt::Debug for $name {
             fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
                 f.debug_struct(stringify!($name))
-                    .field("url", &self)
+                    .field("url", &self.to_url().as_str())
                     .finish()
             }
         }
 
         impl std::fmt::Display for $name {
             fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
-                write!(f, "{}", &self)
+                write!(f, "{}", &self.to_url().as_str())
             }
         }
 
@@ -162,7 +162,10 @@ impl BaseBackendAddr {
             return Err(&SCHEME_ERROR_MSG);
         }
 
-        let hostname = parsed.host_str().ok_or("Missing mandatory hostname")?;
+        // Use the same error message than for `Url::parse` because
+        // `Url::parse` considers port with no hostname (e.g. `http://:8080`)
+        // invalid and we want to stay consistent to simplify testing
+        let hostname = parsed.host_str().ok_or("Invalid URL")?;
 
         let mut no_ssl_queries = pairs.filter(|(k, _)| k == "no_ssl");
         let use_ssl = match no_ssl_queries.next() {
@@ -425,9 +428,19 @@ impl BackendOrganizationBootstrapAddr {
 
         let mut token_queries = pairs.filter(|(k, _)| k == "token");
         let token = token_queries.next().map(|(_, v)| (*v).to_owned());
+        // Note invalid percent-encoding is not considered a failure here:
+        // the replacement character EF BF BD is used instead. This should be
+        // ok for our usecase (but it differs from Python implementation).
         if token_queries.next().is_some() {
             return Err("Multiple values for query `token`");
         }
+        // Consider empty token as no token
+        // It's important to do this cooking eagerly (instead of e.g. doing it in
+        // the token getter) to avoid broken comparison between empty and None tokens
+        let token = match token {
+            Some(content) if content.is_empty() => None,
+            token => token,
+        };
 
         Ok(Self {
             base,
@@ -632,8 +645,8 @@ impl BackendInvitationAddr {
         &self.organization_id
     }
 
-    pub fn invitation_type(&self) -> &InvitationType {
-        &self.invitation_type
+    pub fn invitation_type(&self) -> InvitationType {
+        self.invitation_type
     }
 
     pub fn token(&self) -> &InvitationToken {

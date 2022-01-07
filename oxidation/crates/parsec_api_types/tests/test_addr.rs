@@ -1,55 +1,416 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BSLv1.1 (eventually AGPLv3) 2016-2021 Scille SAS
 
 use pretty_assertions::assert_eq;
+use rstest::*;
+use rstest_reuse::*;
 use serde_test::{assert_tokens, Token};
 
 use parsec_api_types::*;
 
-#[test]
-fn test_addr_good() {
-    macro_rules! test_addr_good {
-        ($addr_type:ident, $url:expr) => {
-            test_addr_good_with_expected!($addr_type, $url, $url);
-        };
+const ORG: &'static str = "MyOrg";
+const RVK: &'static str = "P25GRG3XPSZKBEKXYQFBOLERWQNEDY3AO43MVNZCLPXPKN63JRYQssss";
+const TOKEN: &'static str = "a0000000000000000000000000000001";
+const DOMAIN: &'static str = "parsec.cloud.com";
+const ENCRYPTED_PATH: &'static str = "HRSW4Y3SPFYHIZLEL5YGC6LMN5QWIPQs";
+const WORKSPACE_ID: &'static str = "2d4ded1274064608833b7f57f01156e2";
+const INVITATION_TYPE: &'static str = "claim_user";
+
+/*
+ * Helpers to parametrize the tests on different addr types
+ */
+
+trait Testbed {
+    fn url(&self) -> String;
+
+    fn assert_addr_ok(&self, url: &str);
+    fn assert_addr_ok_with_expected(&self, url: &str, expected_url: &str);
+    fn assert_addr_err(&self, url: &str, err_msg: &str);
+
+    fn get_organization_id(&self, _url: &str) -> OrganizationID {
+        unimplemented!()
     }
-    macro_rules! test_addr_good_with_expected {
-        ($addr_type:ident, $url:expr, $expected_url:expr) => {
-            let addr = $url.parse::<$addr_type>().unwrap();
-            // Test identity
-            assert_eq!(addr.to_url().as_str(), $expected_url);
+    fn assert_redirection_addr_ok(&self, redirection_url: &str, expected_url: &str);
+    fn to_redirection_url(&self, _url: &str) -> String;
+}
+
+macro_rules! impl_testbed_common {
+    ($addr_type:ty) => {
+        fn assert_addr_ok(&self, url: &str) {
+            self.assert_addr_ok_with_expected(url, url)
+        }
+        fn assert_addr_ok_with_expected(&self, url: &str, expected_url: &str) {
+            let addr: $addr_type = url.parse().unwrap();
+            let expected_addr: $addr_type = expected_url.parse().unwrap();
+
+            // Compare the strings
+            assert_eq!(addr.to_url().as_str(), expected_url);
+
+            // Also compare the objects
+            assert_eq!(addr, expected_addr);
+
             // Test serde
-            assert_tokens(&addr, &[Token::Str($expected_url)]);
-        };
+            // `Token::Str` requires `&'static str` but we have a regular `&str` here...
+            // the solution is to explictly leak the memory *shoked*
+            let static_expected_url = Box::leak(expected_url.to_string().into_boxed_str());
+            assert_tokens(&addr, &[Token::Str(static_expected_url)]);
+        }
+        fn assert_addr_err(&self, url: &str, err_msg: &str) {
+            let ret = url.parse::<$addr_type>();
+            assert_eq!(ret, Err(err_msg));
+        }
+        fn assert_redirection_addr_ok(&self, redirection_url: &str, expected_url: &str) {
+            // From redirection scheme
+            let expected_addr: $addr_type = expected_url.parse().unwrap();
+            let addr = <$addr_type>::from_http_redirection(redirection_url).unwrap();
+            assert_eq!(addr, expected_addr);
+
+            // From any
+            let addr2 = <$addr_type>::from_any(redirection_url).unwrap();
+            assert_eq!(addr2, expected_addr);
+        }
+        fn to_redirection_url(&self, url: &str) -> String {
+            let addr: $addr_type = url.parse().unwrap();
+            addr.to_http_redirection_url().to_string()
+        }
+    };
+}
+
+macro_rules! impl_testbed_with_org {
+    ($addr_type:ty) => {
+        fn get_organization_id(&self, url: &str) -> OrganizationID {
+            let addr: $addr_type = url.parse().unwrap();
+            addr.organization_id().to_owned()
+        }
+    };
+}
+
+struct BackendAddrTestbed {}
+impl Testbed for BackendAddrTestbed {
+    impl_testbed_common!(BackendAddr);
+    fn url(&self) -> String {
+        format!("parsec://{}", DOMAIN)
+    }
+}
+
+struct BackendOrganizationAddrTestbed {}
+impl Testbed for BackendOrganizationAddrTestbed {
+    impl_testbed_common!(BackendOrganizationAddr);
+    impl_testbed_with_org!(BackendOrganizationAddr);
+    fn url(&self) -> String {
+        format!("parsec://{}/{}?rvk={}", DOMAIN, ORG, RVK)
+    }
+}
+
+struct BackendOrganizationBootstrapAddrTestbed {}
+impl Testbed for BackendOrganizationBootstrapAddrTestbed {
+    impl_testbed_common!(BackendOrganizationBootstrapAddr);
+    impl_testbed_with_org!(BackendOrganizationBootstrapAddr);
+    fn url(&self) -> String {
+        format!(
+            "parsec://{}/{}?action=bootstrap_organization&token={}",
+            DOMAIN, ORG, TOKEN
+        )
+    }
+}
+
+struct BackendOrganizationFileLinkAddrTestbed {}
+impl Testbed for BackendOrganizationFileLinkAddrTestbed {
+    impl_testbed_common!(BackendOrganizationFileLinkAddr);
+    impl_testbed_with_org!(BackendOrganizationFileLinkAddr);
+    fn url(&self) -> String {
+        format!(
+            "parsec://{}/{}?action=file_link&workspace_id={}&path={}",
+            DOMAIN, ORG, WORKSPACE_ID, ENCRYPTED_PATH
+        )
+    }
+}
+
+struct BackendInvitationAddrTestbed {}
+impl Testbed for BackendInvitationAddrTestbed {
+    impl_testbed_common!(BackendInvitationAddr);
+    impl_testbed_with_org!(BackendInvitationAddr);
+    fn url(&self) -> String {
+        format!(
+            "parsec://{}/{}?action={}&token={}",
+            DOMAIN, ORG, INVITATION_TYPE, TOKEN
+        )
+    }
+}
+
+#[template]
+#[rstest(
+    testbed,
+    case(&BackendAddrTestbed{}),
+    case(&BackendOrganizationAddrTestbed{}),
+    case(&BackendOrganizationBootstrapAddrTestbed{}),
+    case(&BackendOrganizationFileLinkAddrTestbed{}),
+    case(&BackendInvitationAddrTestbed{}),
+)]
+fn all_addr(testbed: &dyn Testbed) {}
+
+#[template]
+#[rstest(
+    testbed,
+    case(&BackendOrganizationAddrTestbed{}),
+    case(&BackendOrganizationBootstrapAddrTestbed{}),
+    case(&BackendOrganizationFileLinkAddrTestbed{}),
+    case(&BackendInvitationAddrTestbed{}),
+)]
+fn addr_with_org(testbed: &dyn Testbed) {}
+
+#[template]
+#[rstest(
+    testbed,
+    case(&BackendOrganizationBootstrapAddrTestbed{}),
+    // BackendInvitationAddrTestbed token format is different from apiv1's token
+)]
+fn addr_with_token(testbed: &dyn Testbed) {}
+
+/*
+ * Actual tests
+ */
+
+#[apply(all_addr)]
+fn test_good_addr(testbed: &dyn Testbed) {
+    testbed.assert_addr_ok(&testbed.url());
+}
+
+#[apply(all_addr)]
+fn test_good_addr_with_port(testbed: &dyn Testbed) {
+    let url = testbed.url().replace(DOMAIN, "example.com:4242");
+    testbed.assert_addr_ok(&url);
+}
+
+#[apply(all_addr)]
+fn test_addr_with_bad_port(testbed: &dyn Testbed) {
+    for bad_port in ["NaN", "999999"] {
+        let url = testbed
+            .url()
+            .replace(DOMAIN, &format!("{}:{}", DOMAIN, bad_port));
+        testbed.assert_addr_err(&url, "Invalid URL");
+    }
+}
+
+#[apply(all_addr)]
+fn test_addr_with_no_hostname(testbed: &dyn Testbed) {
+    for bad_domain in ["", ":4242"] {
+        let url = testbed.url().replace(DOMAIN, bad_domain);
+        testbed.assert_addr_err(&url, "Invalid URL");
+    }
+}
+
+#[apply(all_addr)]
+fn test_good_addr_with_unknown_field(testbed: &dyn Testbed) {
+    let base_url = testbed.url();
+    let mut url = url::Url::parse(&base_url).unwrap();
+    url.query_pairs_mut().append_pair("unknown_field", "ok");
+    testbed.assert_addr_ok_with_expected(url.as_str(), &base_url);
+}
+
+#[apply(addr_with_org)]
+fn test_addr_with_unicode_organization_id(testbed: &dyn Testbed) {
+    let orgname: OrganizationID = "康熙帝".parse().unwrap();
+    let orgname_percent_quoted = "%E5%BA%B7%E7%86%99%E5%B8%9D";
+    let url = testbed.url().replace(ORG, orgname_percent_quoted);
+    testbed.assert_addr_ok(&url);
+    assert_eq!(testbed.get_organization_id(&url), orgname);
+}
+
+#[apply(addr_with_org)]
+fn test_addr_with_bad_unicode_organization_id(testbed: &dyn Testbed) {
+    // Not a valid percent-encoded utf8 string
+    let orgname_percent_quoted = "%E5%BA%B7%E7";
+    let url = testbed.url().replace(ORG, orgname_percent_quoted);
+    testbed.assert_addr_err(&url, "Path doesn't form a valid organization id");
+}
+
+// Unlike for `BackendInvitationAddr`, here token is not required to be an UUID
+#[test]
+fn test_bootstrap_addr_unicode_token() {
+    let testbed = BackendOrganizationBootstrapAddrTestbed {};
+    let token = "康熙帝";
+    let token_percent_quoted = "%E5%BA%B7%E7%86%99%E5%B8%9D";
+    let url = testbed.url().replace(TOKEN, token_percent_quoted);
+    testbed.assert_addr_ok(&url);
+
+    let addr: BackendOrganizationBootstrapAddr = url.parse().unwrap();
+    assert_eq!(addr.token(), Some(token));
+}
+
+// Unlike for `BackendInvitationAddr`, here token is not required to be an UUID
+// Note: unlike with the Python implementation, invalid percent-encoding doesn't
+// cause a failure (the replacement character EF BF BD is used instead)
+#[test]
+fn test_bootstrap_addr_bad_unicode_token() {
+    let testbed = BackendOrganizationBootstrapAddrTestbed {};
+    // Not a valid percent-encoded utf8 string
+    let token_percent_quoted = "%E5%BA%B7%E7";
+    let url = testbed.url().replace(TOKEN, token_percent_quoted);
+    testbed.assert_addr_ok_with_expected(&url, &url.replace("%E7", "%EF%BF%BD"));
+}
+
+// Unlike for `BackendInvitationAddr`, here token is not required to be an UUID and can be missing
+#[test]
+fn test_bootstrap_addr_no_token() {
+    let testbed = BackendOrganizationBootstrapAddrTestbed {};
+
+    // Token param present in the url but with an empty value
+    let url_with = testbed.url().replace(TOKEN, "");
+    testbed.assert_addr_ok(&url_with);
+    let addr: BackendOrganizationBootstrapAddr = url_with.parse().unwrap();
+    assert_eq!(addr.token(), None);
+
+    // Token param not present in the url
+    let url_without = testbed.url().replace(&format!("token={}", TOKEN), "");
+    testbed.assert_addr_ok_with_expected(&url_without, &url_with);
+    let addr: BackendOrganizationBootstrapAddr = url_without.parse().unwrap();
+    assert_eq!(addr.token(), None);
+}
+
+#[test]
+fn test_file_link_addr_bad_workspace() {
+    let testbed = BackendOrganizationFileLinkAddrTestbed {};
+
+    // Workspace param present in the url but with bad and empty value
+    for bad_workspace in ["", "4def", "康熙帝"] {
+        let url = testbed.url().replace(WORKSPACE_ID, bad_workspace);
+        testbed.assert_addr_err(&url, "Invalid `workspace_id` query value");
     }
 
-    test_addr_good!(BackendAddr, "parsec://example.com");
-    test_addr_good_with_expected!(BackendAddr, "parsec://example.com/", "parsec://example.com");
-    test_addr_good!(BackendOrganizationAddr, "parsec://parsec.example.com/MyOrg?rvk=7NFDS4VQLP3XPCMTSEN34ZOXKGGIMTY2W2JI2SPIHB2P3M6K4YWAssss");
-    test_addr_good!(
-        BackendOrganizationBootstrapAddr,
-        "parsec://parsec.example.com/my_org?action=bootstrap_organization&token=1234ABCD"
-    );
-    test_addr_good!(
-        BackendOrganizationFileLinkAddr,
-        "parsec://parsec.example.com/my_org?action=file_link&workspace_id=3a50b191122b480ebb113b10216ef343&path=7NFDS4VQLP3XPCMTSEN34ZOXKGGIMTY2W2JI2SPIHB2P3M6K4YWAssss"
-    );
-    test_addr_good!(BackendInvitationAddr, "parsec://parsec.example.com/my_org?action=claim_user&token=3a50b191122b480ebb113b10216ef343");
+    // Workspace param not present in the url
+    let url = testbed
+        .url()
+        .replace(&format!("workspace_id={}", WORKSPACE_ID), "");
+    testbed.assert_addr_err(&url, "Missing mandatory `workspace_id` query");
 }
 
 #[test]
-fn test_addr_with_unicode_organization_id() {
-    let addr: BackendOrganizationAddr = "parsec://parsec.example.com/%E5%BA%B7%E7%86%99%E5%B8%9D?rvk=7NFDS4VQLP3XPCMTSEN34ZOXKGGIMTY2W2JI2SPIHB2P3M6K4YWAssss".parse().unwrap();
-    assert_eq!(
-        addr.organization_id(),
-        &"康熙帝".parse::<OrganizationID>().unwrap()
-    );
+fn test_file_link_addr_bad_encrypted_path() {
+    let testbed = BackendOrganizationFileLinkAddrTestbed {};
+
+    // Path param present in the url but with bad and empty value
+    for bad_path in ["__notbase32__", "康熙帝"] {
+        let url = testbed.url().replace(ENCRYPTED_PATH, bad_path);
+        testbed.assert_addr_err(&url, "Invalid `path` query value");
+    }
+
+    // Path param not present in the url
+    let url = testbed
+        .url()
+        .replace(&format!("path={}", ENCRYPTED_PATH), "");
+    testbed.assert_addr_err(&url, "Missing mandatory `path` query");
 }
 
 #[test]
-fn test_addr_with_bad_unicode_organization_id() {
-    // Not a valid percent-encoded utf8 string
-    let ret = "parsec://parsec.example.com/%E5%BA%B7%E7?rvk=7NFDS4VQLP3XPCMTSEN34ZOXKGGIMTY2W2JI2SPIHB2P3M6K4YWAssss".parse::<BackendOrganizationAddr>();
-    assert!(ret.is_err());
+fn test_file_link_addr_get_encrypted_path() {
+    let testbed = BackendOrganizationFileLinkAddrTestbed {};
+
+    let serialized_encrypted_path = "HRSW4Y3SPFYHIZLEL5YGC6LMN5QWIPQs";
+    let encrypted_path = b"<encrypted_payload>";
+
+    let url = testbed
+        .url()
+        .replace(ENCRYPTED_PATH, serialized_encrypted_path);
+
+    let addr: BackendOrganizationFileLinkAddr = url.parse().unwrap();
+    assert_eq!(addr.encrypted_path(), encrypted_path);
+}
+
+#[test]
+fn test_invitation_addr_bad_type() {
+    let testbed = BackendInvitationAddrTestbed {};
+
+    // Type param present in the url but with bad and empty value
+    for bad_type in ["claim", "claim_foo"] {
+        let url = testbed.url().replace(INVITATION_TYPE, bad_type);
+        testbed.assert_addr_err(
+            &url,
+            "Expected `action=claim_user` or `action=claim_device` query value",
+        );
+    }
+
+    // Type param not present in the url
+    let url = testbed
+        .url()
+        .replace(&format!("action={}", INVITATION_TYPE), "");
+    testbed.assert_addr_err(&url, "Missing mandatory `action` query");
+}
+
+#[test]
+fn test_invitation_addr_bad_token() {
+    let testbed = BackendInvitationAddrTestbed {};
+
+    // Token param present in the url but with and empty or bad value
+    for bad_token in ["", "not_an_uuid", "42", "康熙帝"] {
+        let url = testbed.url().replace(TOKEN, bad_token);
+        testbed.assert_addr_err(&url, "Invalid `token` query value");
+    }
+
+    // Token param not present in the url
+    let url = testbed.url().replace(&format!("token={}", TOKEN), "");
+    testbed.assert_addr_err(&url, "Missing mandatory `token` query");
+}
+
+#[test]
+fn test_invitation_addr_types() {
+    let testbed = BackendInvitationAddrTestbed {};
+
+    let url = testbed.url().replace(INVITATION_TYPE, "claim_user");
+    let addr: BackendInvitationAddr = url.parse().unwrap();
+    assert_eq!(addr.invitation_type(), InvitationType::User);
+
+    let url = testbed.url().replace(INVITATION_TYPE, "claim_device");
+    let addr: BackendInvitationAddr = url.parse().unwrap();
+    assert_eq!(addr.invitation_type(), InvitationType::Device);
+}
+
+#[rstest]
+fn test_invitation_addr_to_redirection(#[values("http", "https")] redirection_scheme: &str) {
+    let testbed = BackendInvitationAddrTestbed {};
+
+    // `no_ssl` param should be ignored when build a redirection url given
+    // this information is provided by the http/https scheme
+    let mut url = testbed.url();
+    if redirection_scheme == "http" {
+        url.push_str("&no_ssl=true")
+    }
+
+    let addr: BackendInvitationAddr = url.parse().unwrap();
+    let redirection_url = addr.clone().to_http_redirection_url().to_string();
+
+    let expected_redirection_url = testbed
+        .url()
+        .replacen("parsec", redirection_scheme, 1)
+        .replace(ORG, &format!("redirect/{}", ORG));
+    assert_eq!(redirection_url, expected_redirection_url);
+
+    let addr2 = BackendInvitationAddr::from_http_redirection(&redirection_url).unwrap();
+    assert_eq!(addr2, addr);
+}
+
+#[apply(all_addr)]
+fn test_addr_to_redirection(testbed: &dyn Testbed) {
+    for redirection_scheme in ["http", "https"] {
+        // `no_ssl` param should be ignored when build a redirection url given
+        // this information is provided by the http/https scheme
+        let mut url = testbed.url();
+        if redirection_scheme == "http" {
+            match url.find("?") {
+                Some(_) => url.push('&'),
+                None => url.push('?'),
+            }
+            url.push_str("no_ssl=true")
+        }
+
+        let redirection_url = testbed.to_redirection_url(&url);
+        let expected_redirection_url = testbed
+            .url()
+            .replacen("parsec", redirection_scheme, 1)
+            .replace(DOMAIN, &format!("{}/redirect", DOMAIN));
+        assert_eq!(redirection_url, expected_redirection_url);
+
+        testbed.assert_redirection_addr_ok(&redirection_url, &url);
+    }
 }
 
 macro_rules! test_redirection {

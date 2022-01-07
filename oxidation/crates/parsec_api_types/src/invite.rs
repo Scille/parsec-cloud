@@ -2,7 +2,7 @@
 
 use super::utils::new_uuid_type;
 
-#[derive(Copy, Clone, PartialEq, Eq)]
+#[derive(Debug, Copy, Clone, PartialEq, Eq)]
 pub enum InvitationType {
     User,
     Device,
