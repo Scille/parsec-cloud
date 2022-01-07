@@ -39,7 +39,9 @@ impl SecretKey {
 
     pub fn decrypt(&self, ciphered: &[u8]) -> Result<Vec<u8>, &'static str> {
         let cipher = XSalsa20Poly1305::new(&self.0);
-        let nonce_slice = ciphered.get(..NONCE_SIZE).ok_or("Invalid data size")?;
+        let nonce_slice = ciphered
+            .get(..NONCE_SIZE)
+            .ok_or("The nonce must be exactly 24 bytes long")?;
         cipher
             .decrypt(nonce_slice.into(), &ciphered[NONCE_SIZE..])
             .map_err(|_| "Decryption error")

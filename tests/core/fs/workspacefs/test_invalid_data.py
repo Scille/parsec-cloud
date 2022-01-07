@@ -70,7 +70,7 @@ async def testbed(running_backend, alice_user_fs, alice, bob):
 
 @pytest.mark.trio
 async def test_empty_blob(testbed):
-    exc_msg = "Cannot decrypt vlob: Invalid data size"
+    exc_msg = "Cannot decrypt vlob: The nonce must be exactly 24 bytes long"
     await testbed.run(blob=b"", exc_msg=exc_msg)
 
 
