@@ -248,8 +248,9 @@ fn extract_action<'a>(
 
 fn extract_organization_id(parsed: &Url) -> Result<OrganizationID, AddrError> {
     const ERR_MSG: &str = "Path doesn't form a valid organization id";
-    let raw = &parsed.path()[1..]; // Strip the initial `/`
-                                   // Handle percent-encoding
+    // Strip the initial `/`
+    let raw = &parsed.path().get(1..).ok_or(ERR_MSG)?;
+    // Handle percent-encoding
     let decoded = percent_encoding::percent_decode_str(raw)
         .decode_utf8()
         .map_err(|_| ERR_MSG)?;

@@ -224,6 +224,18 @@ fn test_addr_with_bad_unicode_organization_id(testbed: &dyn Testbed) {
     testbed.assert_addr_err(&url, "Path doesn't form a valid organization id");
 }
 
+#[apply(addr_with_org)]
+fn test_addr_with_missing_organization_id(
+    testbed: &dyn Testbed,
+    #[values("/", "")] bad_path: &str,
+) {
+    let url = testbed.url().replace(
+        &format!("{}/{}", DOMAIN, ORG),
+        &format!("{}{}", DOMAIN, bad_path),
+    );
+    testbed.assert_addr_err(&url, "Path doesn't form a valid organization id");
+}
+
 // Unlike for `BackendInvitationAddr`, here token is not required to be an UUID
 #[test]
 fn test_bootstrap_addr_unicode_token() {
