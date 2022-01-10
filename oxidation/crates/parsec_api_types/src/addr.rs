@@ -214,6 +214,17 @@ impl BaseBackendAddr {
         url.set_port(self.port).unwrap();
         url
     }
+
+    pub fn to_http_domain_url(&self, path: Option<&str>) -> Url {
+        let path = path.unwrap_or("");
+        let scheme = if self.use_ssl { "https" } else { "http" };
+
+        let mut url = Url::parse(&format!("{}://{}", scheme, &self.hostname)).unwrap();
+        url.set_port(self.port).unwrap();
+        url.set_path(path);
+
+        url
+    }
 }
 
 macro_rules! expose_BaseBackendAddr_fields {
@@ -279,6 +290,10 @@ impl BackendAddr {
                 use_ssl,
             },
         }
+    }
+
+    pub fn to_http_domain_url(&self, path: Option<&str>) -> Url {
+        self.base.to_http_domain_url(path)
     }
 
     fn _from_url(parsed: &Url, pairs: &url::form_urlencoded::Parse) -> Result<Self, AddrError> {

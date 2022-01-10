@@ -175,6 +175,51 @@ fn test_good_addr(testbed: &dyn Testbed) {
     testbed.assert_addr_ok(&testbed.url());
 }
 
+#[rstest(value, path, expected)]
+#[case::absolute_path(
+    "parsec://example.com",
+    Some("/foo/bar/"),
+    "https://example.com/foo/bar/"
+)]
+#[case::relative_path("parsec://example.com", Some("foo/bar"), "https://example.com/foo/bar")]
+#[case::root_path("parsec://example.com", Some("/"), "https://example.com/")]
+#[case::empty_path("parsec://example.com", Some(""), "https://example.com/")]
+#[case::no_path("parsec://example.com", None, "https://example.com/")]
+#[case::ip_as_domain(
+    "parsec://192.168.1.1:4242",
+    Some("foo"),
+    "https://192.168.1.1:4242/foo"
+)]
+#[case::no_ssl("parsec://example.com?no_ssl=true", None, "http://example.com/")]
+#[case::no_ssl_false("parsec://example.com:443?no_ssl=false", None, "https://example.com/")]
+#[case::no_ssl_with_port(
+    "parsec://example.com:4242?no_ssl=true",
+    None,
+    "http://example.com:4242/"
+)]
+#[case::no_ssl_with_default_port(
+    "parsec://example.com:80?no_ssl=true",
+    None,
+    "http://example.com/"
+)]
+#[case::default_port("parsec://example.com:443", None, "https://example.com/")]
+#[case::non_default_port("parsec://example.com:80", None, "https://example.com:80/")]
+#[case::unicode(
+    "parsec://example.com",
+    Some("你好"),
+    "https://example.com/%E4%BD%A0%E5%A5%BD"
+)]
+#[case::unicode_with_space(
+    "parsec://example.com",
+    Some("/El Niño/"),
+    "https://example.com/El%20Ni%C3%B1o/"
+)]
+fn test_backend_addr_to_http_domain_url(value: &str, path: Option<&str>, expected: &str) {
+    let addr: BackendAddr = value.parse().unwrap();
+    let result = addr.to_http_domain_url(path);
+    assert_eq!(result.as_str(), expected);
+}
+
 #[apply(all_addr)]
 fn test_good_addr_with_port(testbed: &dyn Testbed) {
     let url = testbed.url().replace(DOMAIN, "example.com:4242");
