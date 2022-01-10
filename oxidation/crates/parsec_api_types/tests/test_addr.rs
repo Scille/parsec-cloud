@@ -140,28 +140,28 @@ impl Testbed for BackendInvitationAddrTestbed {
 #[template]
 #[rstest(
     testbed,
-    case(&BackendAddrTestbed{}),
-    case(&BackendOrganizationAddrTestbed{}),
-    case(&BackendOrganizationBootstrapAddrTestbed{}),
-    case(&BackendOrganizationFileLinkAddrTestbed{}),
-    case(&BackendInvitationAddrTestbed{}),
+    case::backend_addr(&BackendAddrTestbed{}),
+    case::organization_addr(&BackendOrganizationAddrTestbed{}),
+    case::organization_bootstrap_addr(&BackendOrganizationBootstrapAddrTestbed{}),
+    case::organization_file_link_addr(&BackendOrganizationFileLinkAddrTestbed{}),
+    case::invitation_addr(&BackendInvitationAddrTestbed{}),
 )]
 fn all_addr(testbed: &dyn Testbed) {}
 
 #[template]
 #[rstest(
     testbed,
-    case(&BackendOrganizationAddrTestbed{}),
-    case(&BackendOrganizationBootstrapAddrTestbed{}),
-    case(&BackendOrganizationFileLinkAddrTestbed{}),
-    case(&BackendInvitationAddrTestbed{}),
+    case::backend_organization_addr(&BackendOrganizationAddrTestbed{}),
+    case::backend_organization_bootstrap_addr(&BackendOrganizationBootstrapAddrTestbed{}),
+    case::backend_organization_file_link_addr(&BackendOrganizationFileLinkAddrTestbed{}),
+    case::backend_invitation_addr(&BackendInvitationAddrTestbed{}),
 )]
 fn addr_with_org(testbed: &dyn Testbed) {}
 
 #[template]
 #[rstest(
     testbed,
-    case(&BackendOrganizationBootstrapAddrTestbed{}),
+    case::backend_organizationBootstrap_addr(&BackendOrganizationBootstrapAddrTestbed{}),
     // BackendInvitationAddrTestbed token format is different from apiv1's token
 )]
 fn addr_with_token(testbed: &dyn Testbed) {}
@@ -182,21 +182,17 @@ fn test_good_addr_with_port(testbed: &dyn Testbed) {
 }
 
 #[apply(all_addr)]
-fn test_addr_with_bad_port(testbed: &dyn Testbed) {
-    for bad_port in ["NaN", "999999"] {
-        let url = testbed
-            .url()
-            .replace(DOMAIN, &format!("{}:{}", DOMAIN, bad_port));
-        testbed.assert_addr_err(&url, "Invalid URL");
-    }
+fn test_addr_with_bad_port(testbed: &dyn Testbed, #[values("NaN", "999999")] bad_port: &str) {
+    let url = testbed
+        .url()
+        .replace(DOMAIN, &format!("{}:{}", DOMAIN, bad_port));
+    testbed.assert_addr_err(&url, "Invalid URL");
 }
 
 #[apply(all_addr)]
-fn test_addr_with_no_hostname(testbed: &dyn Testbed) {
-    for bad_domain in ["", ":4242"] {
-        let url = testbed.url().replace(DOMAIN, bad_domain);
-        testbed.assert_addr_err(&url, "Invalid URL");
-    }
+fn test_addr_with_no_hostname(testbed: &dyn Testbed, #[values("", ":4242")] bad_domain: &str) {
+    let url = testbed.url().replace(DOMAIN, bad_domain);
+    testbed.assert_addr_err(&url, "Invalid URL");
 }
 
 #[apply(all_addr)]
@@ -279,38 +275,48 @@ fn test_bootstrap_addr_no_token() {
     assert_eq!(addr.token(), None);
 }
 
-#[test]
-fn test_file_link_addr_bad_workspace() {
+#[rstest]
+fn test_file_link_addr_bad_workspace(
+    #[values(Some(""), Some("4def"), Some("康熙帝"), None)] bad_workspace: Option<&str>,
+) {
     let testbed = BackendOrganizationFileLinkAddrTestbed {};
 
-    // Workspace param present in the url but with bad and empty value
-    for bad_workspace in ["", "4def", "康熙帝"] {
-        let url = testbed.url().replace(WORKSPACE_ID, bad_workspace);
-        testbed.assert_addr_err(&url, "Invalid `workspace_id` query value");
+    match bad_workspace {
+        Some(bad_workspace) => {
+            // Workspace param present in the url but with bad and empty value
+            let url = testbed.url().replace(WORKSPACE_ID, bad_workspace);
+            testbed.assert_addr_err(&url, "Invalid `workspace_id` query value");
+        }
+        None => {
+            // Workspace param not present in the url
+            let url = testbed
+                .url()
+                .replace(&format!("workspace_id={}", WORKSPACE_ID), "");
+            testbed.assert_addr_err(&url, "Missing mandatory `workspace_id` query");
+        }
     }
-
-    // Workspace param not present in the url
-    let url = testbed
-        .url()
-        .replace(&format!("workspace_id={}", WORKSPACE_ID), "");
-    testbed.assert_addr_err(&url, "Missing mandatory `workspace_id` query");
 }
 
-#[test]
-fn test_file_link_addr_bad_encrypted_path() {
+#[rstest]
+fn test_file_link_addr_bad_encrypted_path(
+    #[values(Some("__notbase32__"), Some("康熙帝"), None)] bad_path: Option<&str>,
+) {
     let testbed = BackendOrganizationFileLinkAddrTestbed {};
 
-    // Path param present in the url but with bad and empty value
-    for bad_path in ["__notbase32__", "康熙帝"] {
-        let url = testbed.url().replace(ENCRYPTED_PATH, bad_path);
-        testbed.assert_addr_err(&url, "Invalid `path` query value");
+    match bad_path {
+        Some(bad_path) => {
+            // Path param present in the url but with bad and empty value
+            let url = testbed.url().replace(ENCRYPTED_PATH, bad_path);
+            testbed.assert_addr_err(&url, "Invalid `path` query value");
+        }
+        None => {
+            // Path param not present in the url
+            let url = testbed
+                .url()
+                .replace(&format!("path={}", ENCRYPTED_PATH), "");
+            testbed.assert_addr_err(&url, "Missing mandatory `path` query");
+        }
     }
-
-    // Path param not present in the url
-    let url = testbed
-        .url()
-        .replace(&format!("path={}", ENCRYPTED_PATH), "");
-    testbed.assert_addr_err(&url, "Missing mandatory `path` query");
 }
 
 #[test]
@@ -328,39 +334,51 @@ fn test_file_link_addr_get_encrypted_path() {
     assert_eq!(addr.encrypted_path(), encrypted_path);
 }
 
-#[test]
-fn test_invitation_addr_bad_type() {
+#[rstest]
+fn test_invitation_addr_bad_type(
+    #[values(Some("claim"), Some("claim_foo"), None)] bad_type: Option<&str>,
+) {
     let testbed = BackendInvitationAddrTestbed {};
 
-    // Type param present in the url but with bad and empty value
-    for bad_type in ["claim", "claim_foo"] {
-        let url = testbed.url().replace(INVITATION_TYPE, bad_type);
-        testbed.assert_addr_err(
-            &url,
-            "Expected `action=claim_user` or `action=claim_device` query value",
-        );
+    match bad_type {
+        Some(bad_type) => {
+            // Type param present in the url but with bad and empty value
+            let url = testbed.url().replace(INVITATION_TYPE, bad_type);
+            testbed.assert_addr_err(
+                &url,
+                "Expected `action=claim_user` or `action=claim_device` query value",
+            );
+        }
+        None => {
+            // Type param not present in the url
+            let url = testbed
+                .url()
+                .replace(&format!("action={}", INVITATION_TYPE), "");
+            testbed.assert_addr_err(&url, "Missing mandatory `action` query");
+        }
     }
-
-    // Type param not present in the url
-    let url = testbed
-        .url()
-        .replace(&format!("action={}", INVITATION_TYPE), "");
-    testbed.assert_addr_err(&url, "Missing mandatory `action` query");
 }
 
-#[test]
-fn test_invitation_addr_bad_token() {
+#[rstest]
+fn test_invitation_addr_bad_token(
+    #[values(Some(""), Some("not_an_uuid"), Some("42"), Some("康熙帝"), None)] bad_token: Option<
+        &str,
+    >,
+) {
     let testbed = BackendInvitationAddrTestbed {};
 
-    // Token param present in the url but with and empty or bad value
-    for bad_token in ["", "not_an_uuid", "42", "康熙帝"] {
-        let url = testbed.url().replace(TOKEN, bad_token);
-        testbed.assert_addr_err(&url, "Invalid `token` query value");
+    match bad_token {
+        Some(bad_token) => {
+            // Token param present in the url but with and empty or bad value
+            let url = testbed.url().replace(TOKEN, bad_token);
+            testbed.assert_addr_err(&url, "Invalid `token` query value");
+        }
+        None => {
+            // Token param not present in the url
+            let url = testbed.url().replace(&format!("token={}", TOKEN), "");
+            testbed.assert_addr_err(&url, "Missing mandatory `token` query");
+        }
     }
-
-    // Token param not present in the url
-    let url = testbed.url().replace(&format!("token={}", TOKEN), "");
-    testbed.assert_addr_err(&url, "Missing mandatory `token` query");
 }
 
 #[test]
@@ -401,28 +419,29 @@ fn test_invitation_addr_to_redirection(#[values("http", "https")] redirection_sc
 }
 
 #[apply(all_addr)]
-fn test_addr_to_redirection(testbed: &dyn Testbed) {
-    for redirection_scheme in ["http", "https"] {
-        // `no_ssl` param should be ignored when build a redirection url given
-        // this information is provided by the http/https scheme
-        let mut url = testbed.url();
-        if redirection_scheme == "http" {
-            match url.find("?") {
-                Some(_) => url.push('&'),
-                None => url.push('?'),
-            }
-            url.push_str("no_ssl=true")
+fn test_addr_to_redirection(
+    testbed: &dyn Testbed,
+    #[values("http", "https")] redirection_scheme: &str,
+) {
+    // `no_ssl` param should be ignored when build a redirection url given
+    // this information is provided by the http/https scheme
+    let mut url = testbed.url();
+    if redirection_scheme == "http" {
+        match url.find("?") {
+            Some(_) => url.push('&'),
+            None => url.push('?'),
         }
-
-        let redirection_url = testbed.to_redirection_url(&url);
-        let expected_redirection_url = testbed
-            .url()
-            .replacen("parsec", redirection_scheme, 1)
-            .replace(DOMAIN, &format!("{}/redirect", DOMAIN));
-        assert_eq!(redirection_url, expected_redirection_url);
-
-        testbed.assert_redirection_addr_ok(&redirection_url, &url);
+        url.push_str("no_ssl=true")
     }
+
+    let redirection_url = testbed.to_redirection_url(&url);
+    let expected_redirection_url = testbed
+        .url()
+        .replacen("parsec", redirection_scheme, 1)
+        .replace(DOMAIN, &format!("{}/redirect", DOMAIN));
+    assert_eq!(redirection_url, expected_redirection_url);
+
+    testbed.assert_redirection_addr_ok(&redirection_url, &url);
 }
 
 macro_rules! test_redirection {
