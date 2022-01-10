@@ -366,7 +366,6 @@ class PublicKey(Field):
             raise ValidationError("Invalid verify key.")
 
 
-SecretKey = bytes_based_field_factory(_SecretKey)
 Bytes = bytes_based_field_factory(bytes)
 
 
@@ -389,3 +388,24 @@ class HashDigestField(Field):
 
 
 HashDigest = HashDigestField
+
+
+class SecretKeyField(Field):
+    def _serialize(self, value, attr, obj):
+        if value is None:
+            return None
+
+        return value.secret
+
+    def _deserialize(self, value, attr, data):
+        if not isinstance(value, bytes):
+            raise ValidationError("Not bytes")
+
+        try:
+            return _SecretKey(value)
+
+        except Exception as exc:
+            raise ValidationError(str(exc)) from exc
+
+
+SecretKey = SecretKeyField

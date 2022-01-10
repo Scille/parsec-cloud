@@ -329,8 +329,8 @@ async def test_good_user_claim(
             alice_um = alicefs.get_user_manifest()
             zack_um = newfs.get_user_manifest()
 
-            assert {(w.id, w.key) for w in alice_um.workspaces} == {
-                (w.id, w.key) for w in zack_um.workspaces
+            assert {(w.id, w.key.secret) for w in alice_um.workspaces} == {
+                (w.id, w.key.secret) for w in zack_um.workspaces
             }
 
 
