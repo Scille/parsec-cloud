@@ -19,6 +19,7 @@ from parsec.api.protocol import (
     UserID,
     DeviceID,
     HumanHandle,
+    DeviceLabel,
     HandshakeType,
     user_get_serializer,
     human_find_serializer,
@@ -74,7 +75,7 @@ class Device:
         return DeviceCertificateContent.unsecure_load(self.device_certificate).verify_key
 
     device_id: DeviceID
-    device_label: Optional[str]
+    device_label: Optional[DeviceLabel]
     device_certificate: bytes
     redacted_device_certificate: bytes
     device_certifier: Optional[DeviceID]

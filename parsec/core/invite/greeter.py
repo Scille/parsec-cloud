@@ -26,7 +26,13 @@ from parsec.api.data import (
     DeviceCertificateContent,
     UserCertificateContent,
 )
-from parsec.api.protocol import DeviceName, DeviceID, HumanHandle, InvitationDeletedReason
+from parsec.api.protocol import (
+    DeviceName,
+    DeviceID,
+    HumanHandle,
+    InvitationDeletedReason,
+    DeviceLabel,
+)
 from parsec.core.backend_connection import BackendInvitedCmds
 from parsec.core.types import LocalDevice
 from parsec.core.invite.exceptions import (
@@ -260,7 +266,7 @@ class DeviceGreetInProgress3Ctx:
 @attr.s(slots=True, frozen=True, auto_attribs=True)
 class UserGreetInProgress4Ctx:
     token: UUID
-    requested_device_label: Optional[str]
+    requested_device_label: Optional[DeviceLabel]
     requested_human_handle: Optional[HumanHandle]
 
     _public_key: PublicKey
@@ -271,7 +277,7 @@ class UserGreetInProgress4Ctx:
     async def do_create_new_user(
         self,
         author: LocalDevice,
-        device_label: Optional[str],
+        device_label: Optional[DeviceLabel],
         human_handle: Optional[HumanHandle],
         profile: UserProfile,
     ) -> None:
@@ -346,13 +352,15 @@ class UserGreetInProgress4Ctx:
 @attr.s(slots=True, frozen=True, auto_attribs=True)
 class DeviceGreetInProgress4Ctx:
     token: UUID
-    requested_device_label: Optional[str]
+    requested_device_label: Optional[DeviceLabel]
 
     _verify_key: VerifyKey
     _shared_secret_key: SecretKey
     _cmds: BackendInvitedCmds
 
-    async def do_create_new_device(self, author: LocalDevice, device_label: Optional[str]) -> None:
+    async def do_create_new_device(
+        self, author: LocalDevice, device_label: Optional[DeviceLabel]
+    ) -> None:
         device_id = author.user_id.to_device_id(DeviceName.new())
         try:
             timestamp = author.timestamp()

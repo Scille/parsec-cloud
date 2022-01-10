@@ -102,7 +102,7 @@
             "device_label": {
                 "allow_none": true,
                 "required": false,
-                "type": "String"
+                "type": "DeviceLabelField"
             },
             "timestamp": {
                 "allow_none": false,
@@ -291,7 +291,7 @@
             "device_label": {
                 "allow_none": true,
                 "required": false,
-                "type": "String"
+                "type": "DeviceLabelField"
             },
             "human_handle": {
                 "allow_none": true,
@@ -355,7 +355,7 @@
             "requested_device_label": {
                 "allow_none": true,
                 "required": false,
-                "type": "String"
+                "type": "DeviceLabelField"
             },
             "type": {
                 "allow_none": false,
@@ -381,7 +381,7 @@
             "device_label": {
                 "allow_none": true,
                 "required": false,
-                "type": "String"
+                "type": "DeviceLabelField"
             },
             "human_handle": {
                 "allow_none": true,
@@ -435,7 +435,7 @@
             "requested_device_label": {
                 "allow_none": true,
                 "required": false,
-                "type": "String"
+                "type": "DeviceLabelField"
             },
             "requested_human_handle": {
                 "allow_none": true,
