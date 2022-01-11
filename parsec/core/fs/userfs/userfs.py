@@ -35,7 +35,7 @@ from parsec.api.data import (
     PingMessageContent,
     UserManifest,
 )
-from parsec.api.protocol import UserID, DeviceID, MaintenanceType
+from parsec.api.protocol import UserID, DeviceID, MaintenanceType, RealmID
 from parsec.core.types import (
     EntryID,
     EntryName,
@@ -746,7 +746,7 @@ class UserFS:
         role_certificate = RealmRoleCertificateContent(
             author=self.device.device_id,
             timestamp=timestamp,
-            realm_id=workspace_id,
+            realm_id=RealmID(workspace_id.bytes),
             user_id=recipient,
             role=role,
         ).dump_and_sign(self.device.signing_key)

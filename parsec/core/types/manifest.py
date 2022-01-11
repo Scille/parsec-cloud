@@ -44,7 +44,7 @@ WorkspaceRole = RealmRole
 
 
 class ChunkID(UUID4):
-    pass
+    __slots__ = ()
 
 
 ChunkIDField = fields.uuid_based_field_factory(ChunkID)
@@ -132,7 +132,7 @@ class Chunk(BaseData):
     def new(cls, start: int, stop: int) -> "Chunk":
         assert start < stop
         return cls(
-            id=ChunkID(),
+            id=ChunkID.new(),
             start=start,
             stop=stop,
             raw_offset=start,
