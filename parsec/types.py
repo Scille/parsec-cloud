@@ -1,14 +1,14 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2016-2021 Scille SAS
 
-import typing
+from typing import Union, Dict, Type, TypeVar
 from uuid import UUID, uuid4
 
 
-K = typing.TypeVar("K")
-V = typing.TypeVar("V")
+K = TypeVar("K")
+V = TypeVar("V")
 
 
-class FrozenDict(typing.Dict[K, V]):
+class FrozenDict(Dict[K, V]):
     __slots__ = ()
 
     def __repr__(self):
@@ -29,18 +29,58 @@ class FrozenDict(typing.Dict[K, V]):
         return FrozenDict(**self, **data)
 
 
-class UUID4(UUID):
-    __slots__ = ()
+EntryIDTypeVar = TypeVar("EntryIDTypeVar", bound="UUID4")
 
-    def __init__(self, *args, **kwargs):
-        if not args and not kwargs:
-            super().__init__(bytes=uuid4().bytes)
+
+class UUID4:
+    __slots__ = ("_uuid",)
+
+    def __init__(self, raw: Union[UUID, bytes, str]):
+        if isinstance(raw, UUID):
+            self._uuid = raw
+        elif isinstance(raw, bytes):
+            self._uuid = UUID(bytes=raw)
         else:
-            if len(args) == 1 and isinstance(args[0], UUID):
-                super().__init__(bytes=args[0].bytes)
-            else:
-                super().__init__(*args, **kwargs)
+            assert isinstance(raw, str)
+            self._uuid = UUID(hex=raw)
+
+    def __repr__(self) -> str:
+        return f"<{type(self).__name__} {self.hex}>"
+
+    def __str__(self) -> str:
+        return self._uuid.hex
+
+    def __eq__(self, other) -> bool:
+        if not isinstance(other, type(self)):
+            return NotImplemented
+        return self._uuid == other._uuid
+
+    def __lt__(self, other) -> bool:
+        if not isinstance(other, type(self)):
+            return NotImplemented
+        return self._uuid < self._uuid
+
+    def __hash__(self) -> int:
+        return self._uuid.__hash__()
+
+    @property
+    def bytes(self) -> bytes:
+        return self._uuid.bytes
+
+    @property
+    def uuid(self) -> UUID:
+        return self._uuid
+
+    @property
+    def hex(self) -> str:
+        return self._uuid.hex
+
+    @classmethod
+    def new(cls: Type[EntryIDTypeVar]) -> EntryIDTypeVar:
+        return cls(uuid4())
 
 
 # Cheap typing
+import typing
+
 typing.FrozenDict = FrozenDict
