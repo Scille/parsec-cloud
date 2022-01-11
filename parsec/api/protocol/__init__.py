@@ -61,6 +61,8 @@ from parsec.api.protocol.user import (
     human_find_serializer,
 )
 from parsec.api.protocol.invite import (
+    InvitationToken,
+    InvitationTokenField,
     InvitationType,
     InvitationDeletedReason,
     InvitationStatus,
@@ -84,6 +86,8 @@ from parsec.api.protocol.invite import (
 )
 from parsec.api.protocol.message import message_get_serializer
 from parsec.api.protocol.realm import (
+    RealmID,
+    RealmIDField,
     RealmRole,
     RealmRoleField,
     MaintenanceType,
@@ -96,8 +100,15 @@ from parsec.api.protocol.realm import (
     realm_start_reencryption_maintenance_serializer,
     realm_finish_reencryption_maintenance_serializer,
 )
-from parsec.api.protocol.block import block_create_serializer, block_read_serializer
+from parsec.api.protocol.block import (
+    BlockID,
+    BlockIDField,
+    block_create_serializer,
+    block_read_serializer,
+)
 from parsec.api.protocol.vlob import (
+    VlobID,
+    VlobIDField,
     vlob_create_serializer,
     vlob_read_serializer,
     vlob_update_serializer,
@@ -165,6 +176,8 @@ __all__ = (
     "device_create_serializer",
     "human_find_serializer",
     # Invite
+    "InvitationToken",
+    "InvitationTokenField",
     "InvitationType",
     "InvitationDeletedReason",
     "InvitationStatus",
@@ -187,7 +200,9 @@ __all__ = (
     "invite_4_claimer_communicate_serializer",
     # Message
     "message_get_serializer",
-    # Data group
+    # Realm
+    "RealmID",
+    "RealmIDField",
     "RealmRole",
     "RealmRoleField",
     "MaintenanceType",
@@ -200,6 +215,8 @@ __all__ = (
     "realm_start_reencryption_maintenance_serializer",
     "realm_finish_reencryption_maintenance_serializer",
     # Vlob
+    "VlobID",
+    "VlobIDField",
     "vlob_create_serializer",
     "vlob_read_serializer",
     "vlob_update_serializer",
@@ -208,6 +225,8 @@ __all__ = (
     "vlob_maintenance_get_reencryption_batch_serializer",
     "vlob_maintenance_save_reencryption_batch_serializer",
     # Block
+    "BlockID",
+    "BlockIDField",
     "block_create_serializer",
     "block_read_serializer",
     # List of cmds

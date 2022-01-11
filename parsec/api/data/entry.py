@@ -5,6 +5,7 @@ from unicodedata import normalize
 from parsec.types import UUID4
 from parsec.serde import fields
 
+
 __all__ = ("EntryID", "EntryIDField", "EntryName", "EntryNameField")
 
 
