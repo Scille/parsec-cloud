@@ -256,8 +256,15 @@ class WorkspaceStorage(BaseWorkspaceStorage):
         data_path = get_workspace_data_storage_db_path(data_base_dir, device, workspace_id)
         cache_path = get_workspace_cache_storage_db_path(data_base_dir, device, workspace_id)
 
+        # The cache database usually doesn't require vacuuming as it already has a maximum size.
+        # However, vacuuming might still be necessary after a change in the configuration.
+        # The cache size plus 10% seems like a reasonable configuration to avoid false positive.
+        cache_localdb_vaccuum_threshold = int(cache_size * 1.1)
+
         # Local cache storage service
-        async with LocalDatabase.run(cache_path) as cache_localdb:
+        async with LocalDatabase.run(
+            cache_path, vacuum_threshold=cache_localdb_vaccuum_threshold
+        ) as cache_localdb:
 
             # Local data storage service
             async with LocalDatabase.run(
@@ -268,6 +275,11 @@ class WorkspaceStorage(BaseWorkspaceStorage):
                 async with BlockStorage.run(
                     device, cache_localdb, cache_size=cache_size
                 ) as block_storage:
+
+                    # Clean up block storage and run vacuum if necessary
+                    # (e.g after changing the cache size)
+                    await block_storage.cleanup()
+                    await cache_localdb.run_vacuum()
 
                     # Manifest storage service
                     async with ManifestStorage.run(
