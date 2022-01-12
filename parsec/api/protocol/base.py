@@ -80,13 +80,23 @@ class RequireGreaterTimestampRepSchema(BaseRepSchema):
 
 
 class TimestampOutOfBallparkRepSchema(BaseRepSchema):
+    """This schema has been added to API version 2.4.
+
+    However, it re-uses the `bad_timestamp` status that was used for similar errors in previous backend versions.
+    For compatibility purposes, this schema should be compatible with `ErrorRepSchema` in the sense that:
+    - an `ErrorRepSchema` with status `bad_timestamp` should be able to deserialize into a `TimestampOutOfBallparkRepSchema`
+    - a `TimestampOutOfBallparkRepSchema` should be able to deserialize into an `ErrorRepSchema` with status `bad_timestamp
+
+    New clients who wishes to use those fields should check for their existence first.
+    """
+
     # `bad_timestamp` is kept for backward compatibility,
     # even though `timestamp_out_of_ballpark` would be more explicit
     status: fields.CheckedConstant = fields.CheckedConstant("bad_timestamp", required=True)
-    ballpark_client_early_offset = fields.Float(required=True, allow_none=False)
-    ballpark_client_late_offset = fields.Float(required=True, allow_none=False)
-    client_timestamp = fields.DateTime(required=True, allow_none=False)
-    backend_timestamp = fields.DateTime(required=True, allow_none=False)
+    ballpark_client_early_offset = fields.Float(required=False)
+    ballpark_client_late_offset = fields.Float(required=False)
+    client_timestamp = fields.DateTime(required=False)
+    backend_timestamp = fields.DateTime(required=False)
 
 
 class CmdSerializer:

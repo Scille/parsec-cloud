@@ -117,9 +117,10 @@ class HandshakeChallengeSchema(BaseSchema):
     # Those fields have been added to API version 2.4
     # They are provided to the client in order to allow them to detect whether
     # their system clock is out of sync and let them close the connection.
-    ballpark_client_early_offset = fields.Float(required=True, allow_none=False)
-    ballpark_client_late_offset = fields.Float(required=True, allow_none=False)
-    backend_timestamp = fields.DateTime(required=True, allow_none=False)
+    # They will be missing for older backend so they cannot be strictly required.
+    ballpark_client_early_offset = fields.Float(required=False)
+    ballpark_client_late_offset = fields.Float(required=False)
+    backend_timestamp = fields.DateTime(required=False)
 
 
 handshake_challenge_serializer = serializer_factory(HandshakeChallengeSchema)
