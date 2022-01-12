@@ -214,6 +214,17 @@ impl BaseBackendAddr {
         url.set_port(self.port).unwrap();
         url
     }
+
+    pub fn to_http_domain_url(&self, path: Option<&str>) -> Url {
+        let path = path.unwrap_or("");
+        let scheme = if self.use_ssl { "https" } else { "http" };
+
+        let mut url = Url::parse(&format!("{}://{}", scheme, &self.hostname)).unwrap();
+        url.set_port(self.port).unwrap();
+        url.set_path(path);
+
+        url
+    }
 }
 
 macro_rules! expose_BaseBackendAddr_fields {
@@ -248,8 +259,9 @@ fn extract_action<'a>(
 
 fn extract_organization_id(parsed: &Url) -> Result<OrganizationID, AddrError> {
     const ERR_MSG: &str = "Path doesn't form a valid organization id";
-    let raw = &parsed.path()[1..]; // Strip the initial `/`
-                                   // Handle percent-encoding
+    // Strip the initial `/`
+    let raw = &parsed.path().get(1..).ok_or(ERR_MSG)?;
+    // Handle percent-encoding
     let decoded = percent_encoding::percent_decode_str(raw)
         .decode_utf8()
         .map_err(|_| ERR_MSG)?;
@@ -278,6 +290,10 @@ impl BackendAddr {
                 use_ssl,
             },
         }
+    }
+
+    pub fn to_http_domain_url(&self, path: Option<&str>) -> Url {
+        self.base.to_http_domain_url(path)
     }
 
     fn _from_url(parsed: &Url, pairs: &url::form_urlencoded::Parse) -> Result<Self, AddrError> {
