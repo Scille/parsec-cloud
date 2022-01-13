@@ -1,14 +1,16 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2016-2021 Scille SAS
 
 import pytest
-from uuid import UUID, uuid4
 from pendulum import datetime
 from async_generator import asynccontextmanager
 
 from parsec.api.data import RealmRoleCertificateContent
 from parsec.api.protocol import (
     OrganizationID,
+    VlobID,
+    RealmID,
     RealmRole,
+    InvitationToken,
     InvitationType,
     AuthenticatedClientHandshake,
     InvitedClientHandshake,
@@ -176,7 +178,7 @@ def backend_invited_sock_factory(backend_raw_transport_factory):
         backend,
         organization_id: OrganizationID,
         invitation_type: InvitationType,
-        token: UUID,
+        token: InvitationToken,
         freeze_on_transport_error: bool = True,
     ):
         async with backend_raw_transport_factory(
@@ -199,7 +201,7 @@ def backend_invited_sock_factory(backend_raw_transport_factory):
 @pytest.fixture
 def realm_factory(next_timestamp):
     async def _realm_factory(backend, author, realm_id=None, now=None):
-        realm_id = realm_id or uuid4()
+        realm_id = realm_id or RealmID.new()
         now = now or next_timestamp()
         certif = RealmRoleCertificateContent.build_realm_root_certif(
             author=author.device_id, timestamp=now, realm_id=realm_id
@@ -224,13 +226,16 @@ def realm_factory(next_timestamp):
 
 @pytest.fixture
 async def realm(backend, alice, realm_factory):
-    realm_id = UUID("A0000000000000000000000000000000")
+    realm_id = RealmID("A0000000000000000000000000000000")
     return await realm_factory(backend, alice, realm_id, datetime(2000, 1, 2))
 
 
 @pytest.fixture
 async def vlobs(backend, alice, realm):
-    vlob_ids = (UUID("10000000000000000000000000000000"), UUID("20000000000000000000000000000000"))
+    vlob_ids = (
+        VlobID("10000000000000000000000000000000"),
+        VlobID("20000000000000000000000000000000"),
+    )
     await backend.vlob.create(
         organization_id=alice.organization_id,
         author=alice.device_id,
@@ -268,11 +273,11 @@ async def vlob_atoms(vlobs):
 
 @pytest.fixture
 async def other_realm(backend, alice, realm_factory):
-    realm_id = UUID("B0000000000000000000000000000000")
+    realm_id = RealmID("B0000000000000000000000000000000")
     return await realm_factory(backend, alice, realm_id, datetime(2000, 1, 2))
 
 
 @pytest.fixture
 async def bob_realm(backend, bob, realm_factory):
-    realm_id = UUID("C0000000000000000000000000000000")
+    realm_id = RealmID("C0000000000000000000000000000000")
     return await realm_factory(backend, bob, realm_id, datetime(2000, 1, 2))

@@ -3,10 +3,9 @@
 import pytest
 import trio
 import h11
-from uuid import uuid4
 
 from parsec import __version__ as parsec_version
-from parsec.api.protocol import OrganizationID, InvitationType
+from parsec.api.protocol import OrganizationID, InvitationToken, InvitationType
 from parsec.core.types.backend_address import BackendInvitationAddr
 from parsec.backend.app import MAX_INITIAL_HTTP_REQUEST_SIZE
 
@@ -349,7 +348,7 @@ async def test_get_redirect_invitation(backend_http_send, backend_addr):
         backend_addr=backend_addr,
         organization_id=OrganizationID("Org"),
         invitation_type=InvitationType.USER,
-        token=uuid4(),
+        token=InvitationToken.new(),
     )
     # TODO: should use invitation_addr.to_redirection_url() when available !
     *_, target = invitation_addr.to_url().split("/")

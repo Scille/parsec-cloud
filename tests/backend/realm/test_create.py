@@ -2,10 +2,9 @@
 
 import pytest
 import pendulum
-from uuid import UUID
 
 from parsec.api.data import RealmRoleCertificateContent, UserProfile
-from parsec.api.protocol import RealmRole
+from parsec.api.protocol import RealmID, RealmRole
 from parsec.backend.backend_events import BackendEvent
 from parsec.utils import BALLPARK_CLIENT_EARLY_OFFSET, BALLPARK_CLIENT_LATE_OFFSET
 
@@ -17,7 +16,7 @@ from tests.backend.common import realm_create
 async def _test_create_ok(backend, device, device_backend_sock):
     await events_subscribe(device_backend_sock)
 
-    realm_id = UUID("C0000000000000000000000000000000")
+    realm_id = RealmID("C0000000000000000000000000000000")
     certif = RealmRoleCertificateContent.build_realm_root_certif(
         author=device.device_id, timestamp=pendulum.now(), realm_id=realm_id
     ).dump_and_sign(device.signing_key)
@@ -40,7 +39,7 @@ async def test_create_allowed_for_outsider(backend, alice, alice_backend_sock):
 
 @pytest.mark.trio
 async def test_create_invalid_certif(bob, alice_backend_sock):
-    realm_id = UUID("C0000000000000000000000000000000")
+    realm_id = RealmID("C0000000000000000000000000000000")
     certif = RealmRoleCertificateContent.build_realm_root_certif(
         author=bob.device_id, timestamp=pendulum.now(), realm_id=realm_id
     ).dump_and_sign(bob.signing_key)
@@ -53,7 +52,7 @@ async def test_create_invalid_certif(bob, alice_backend_sock):
 
 @pytest.mark.trio
 async def test_create_certif_not_self_signed(alice, bob, alice_backend_sock):
-    realm_id = UUID("C0000000000000000000000000000000")
+    realm_id = RealmID("C0000000000000000000000000000000")
     certif = RealmRoleCertificateContent(
         author=alice.device_id,
         timestamp=pendulum.now(),
@@ -70,7 +69,7 @@ async def test_create_certif_not_self_signed(alice, bob, alice_backend_sock):
 
 @pytest.mark.trio
 async def test_create_certif_role_not_owner(alice, alice_backend_sock):
-    realm_id = UUID("C0000000000000000000000000000000")
+    realm_id = RealmID("C0000000000000000000000000000000")
     certif = RealmRoleCertificateContent(
         author=alice.device_id,
         timestamp=pendulum.now(),
@@ -91,7 +90,7 @@ async def test_create_certif_too_old(alice, alice_backend_sock):
 
     # Generate a certificate
 
-    realm_id = UUID("C0000000000000000000000000000000")
+    realm_id = RealmID("C0000000000000000000000000000000")
     certif = RealmRoleCertificateContent.build_realm_root_certif(
         author=alice.device_id, timestamp=now, realm_id=realm_id
     ).dump_and_sign(alice.signing_key)
@@ -118,7 +117,7 @@ async def test_create_certif_too_old(alice, alice_backend_sock):
 
     # Generate a new certificate
 
-    realm_id = UUID("C0000000000000000000000000000001")
+    realm_id = RealmID("C0000000000000000000000000000001")
     certif = RealmRoleCertificateContent.build_realm_root_certif(
         author=alice.device_id, timestamp=now, realm_id=realm_id
     ).dump_and_sign(alice.signing_key)

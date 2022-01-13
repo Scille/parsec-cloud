@@ -1,24 +1,26 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2016-2021 Scille SAS
 
 import pytest
-from uuid import UUID, uuid4
+
+from parsec.api.protocol import RealmID, VlobID, BlockID
 
 from tests.backend.common import realm_stats
 from tests.backend.common import vlob_create, block_create
 
-REALM_ID_FAKE = UUID("00000000-0000-0000-0000-000000000001")
+
+REALM_ID_FAKE = RealmID("00000000-0000-0000-0000-000000000001")
 
 
 @pytest.mark.trio
 async def test_realm_stats_ok(alice_backend_sock, realm):
 
     # Create new data
-    await block_create(alice_backend_sock, realm_id=realm, block_id=uuid4(), block=b"1234")
+    await block_create(alice_backend_sock, realm_id=realm, block_id=BlockID.new(), block=b"1234")
     rep = await realm_stats(alice_backend_sock, realm_id=realm)
     assert rep == {"status": "ok", "blocks_size": 4, "vlobs_size": 0}
 
     # Create new metadata
-    await vlob_create(alice_backend_sock, realm_id=realm, vlob_id=uuid4(), blob=b"1234")
+    await vlob_create(alice_backend_sock, realm_id=realm, vlob_id=VlobID.new(), blob=b"1234")
     rep = await realm_stats(alice_backend_sock, realm_id=realm)
     assert rep == {"status": "ok", "blocks_size": 4, "vlobs_size": 4}
 
@@ -35,7 +37,7 @@ async def test_realm_stats_ko(
     rep = await realm_stats(alice_backend_sock, realm_id=REALM_ID_FAKE)
     assert rep == {
         "status": "not_found",
-        "reason": "Realm `00000000-0000-0000-0000-000000000001` doesn't exist",
+        "reason": "Realm `00000000000000000000000000000001` doesn't exist",
     }
 
     # test with no access to the realm
@@ -47,5 +49,5 @@ async def test_realm_stats_ko(
         rep = await realm_stats(sock, realm_id=realm)
     assert rep == {
         "status": "not_found",
-        "reason": "Realm `a0000000-0000-0000-0000-000000000000` doesn't exist",
+        "reason": "Realm `a0000000000000000000000000000000` doesn't exist",
     }

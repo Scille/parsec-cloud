@@ -1,20 +1,19 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2016-2021 Scille SAS
 
 import pytest
-from uuid import UUID
 from pendulum import datetime
 
 from parsec.api.data import RealmRoleCertificateContent
-from parsec.api.protocol import RealmRole
+from parsec.api.protocol import VlobID, RealmID, RealmRole
 
 from tests.backend.common import realm_update_roles, vlob_update, vlob_poll_changes
 
 
 NOW = datetime(2000, 1, 3)
-VLOB_ID = UUID("00000000000000000000000000000001")
-OTHER_VLOB_ID = UUID("00000000000000000000000000000002")
-YET_ANOTHER_VLOB_ID = UUID("00000000000000000000000000000003")
-UNKNOWN_REALM_ID = UUID("0000000000000000000000000000000F")
+VLOB_ID = VlobID("00000000000000000000000000000001")
+OTHER_VLOB_ID = VlobID("00000000000000000000000000000002")
+YET_ANOTHER_VLOB_ID = VlobID("00000000000000000000000000000003")
+UNKNOWN_REALM_ID = RealmID("0000000000000000000000000000000F")
 
 
 @pytest.fixture
@@ -90,7 +89,7 @@ async def test_vlob_poll_changes_not_found(alice_backend_sock):
     rep = await vlob_poll_changes(alice_backend_sock, UNKNOWN_REALM_ID, 0)
     assert rep == {
         "status": "not_found",
-        "reason": "Realm `00000000-0000-0000-0000-00000000000f` doesn't exist",
+        "reason": "Realm `0000000000000000000000000000000f` doesn't exist",
     }
 
 
