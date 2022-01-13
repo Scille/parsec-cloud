@@ -1,11 +1,10 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) BSLv1.1 (eventually AGPLv3) 2016-2021 Scille SAS
 
-from uuid import UUID
 from typing import List, Tuple
 
 from parsec.backend.utils import OperationKind
 from parsec.backend.realm import RealmRole
-from parsec.api.protocol import DeviceID, OrganizationID
+from parsec.api.protocol import OrganizationID, DeviceID, RealmID, VlobID
 from parsec.backend.postgresql.utils import (
     Q,
     query,
@@ -134,10 +133,10 @@ async def query_maintenance_get_reencryption_batch(
     conn,
     organization_id: OrganizationID,
     author: DeviceID,
-    realm_id: UUID,
+    realm_id: RealmID,
     encryption_revision: int,
     size: int,
-) -> List[Tuple[UUID, int, bytes]]:
+) -> List[Tuple[VlobID, int, bytes]]:
     await _check_realm_and_maintenance_access(
         conn, organization_id, author, realm_id, encryption_revision
     )
@@ -149,7 +148,7 @@ async def query_maintenance_get_reencryption_batch(
             size=size,
         )
     )
-    return [(row["vlob_id"], row["version"], row["blob"]) for row in rep]
+    return [(VlobID(row["vlob_id"]), row["version"], row["blob"]) for row in rep]
 
 
 @query(in_transaction=True)
@@ -157,9 +156,9 @@ async def query_maintenance_save_reencryption_batch(
     conn,
     organization_id: OrganizationID,
     author: DeviceID,
-    realm_id: UUID,
+    realm_id: RealmID,
     encryption_revision: int,
-    batch: List[Tuple[UUID, int, bytes]],
+    batch: List[Tuple[VlobID, int, bytes]],
 ) -> Tuple[int, int]:
     await _check_realm_and_maintenance_access(
         conn, organization_id, author, realm_id, encryption_revision

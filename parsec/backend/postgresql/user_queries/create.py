@@ -2,9 +2,7 @@
 
 from parsec.backend.backend_events import BackendEvent
 import itertools
-from typing import Optional
 from triopg import UniqueViolationError
-from uuid import UUID
 from pendulum import now as pendulum_now
 
 from parsec.api.protocol import OrganizationID
@@ -257,11 +255,7 @@ async def _create_user(
 
 @query(in_transaction=True)
 async def query_create_user(
-    conn,
-    organization_id: OrganizationID,
-    user: User,
-    first_device: Device,
-    invitation_token: Optional[UUID] = None,
+    conn, organization_id: OrganizationID, user: User, first_device: Device
 ) -> None:
     record = await conn.fetchrow(*_q_check_active_users_limit(organization_id=organization_id))
     if not record["allowed"]:

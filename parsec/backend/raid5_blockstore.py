@@ -1,13 +1,12 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) BSLv1.1 (eventually AGPLv3) 2016-2021 Scille SAS
 
-from uuid import UUID
 import struct
 from structlog import get_logger
 from sys import byteorder
-from typing import List, Optional
+from typing import List, Optional, Union
 
 from parsec.utils import open_service_nursery
-from parsec.api.protocol import OrganizationID
+from parsec.api.protocol import OrganizationID, BlockID
 from parsec.backend.blockstore import BaseBlockStoreComponent
 from parsec.backend.block import BlockAlreadyExistsError, BlockNotFoundError, BlockTimeoutError
 
@@ -15,7 +14,7 @@ from parsec.backend.block import BlockAlreadyExistsError, BlockNotFoundError, Bl
 logger = get_logger()
 
 
-def _xor_buffers(*buffers):
+def _xor_buffers(*buffers: bytes) -> bytes:
     buff_len = len(buffers[0])
     xored = int.from_bytes(buffers[0], byteorder)
     for buff in buffers[1:]:
@@ -59,14 +58,14 @@ def rebuild_block_from_chunks(
 
 
 class RAID5BlockStoreComponent(BaseBlockStoreComponent):
-    def __init__(self, blockstores):
+    def __init__(self, blockstores: List[BaseBlockStoreComponent]):
         self.blockstores = blockstores
 
-    async def read(self, organization_id: OrganizationID, id: UUID) -> bytes:
+    async def read(self, organization_id: OrganizationID, id: BlockID) -> bytes:
         timeout_count = 0
-        fetch_results: List[Optional[bytes]] = [None] * len(self.blockstores)
+        fetch_results: List[Union[Exception, Optional[bytes]]] = [None] * len(self.blockstores)
 
-        async def _partial_blockstore_read(nursery, blockstore_index):
+        async def _partial_blockstore_read(nursery, blockstore_index: int) -> None:
             nonlocal timeout_count
             nonlocal fetch_results
             try:
@@ -102,7 +101,7 @@ class RAID5BlockStoreComponent(BaseBlockStoreComponent):
             assert fetch_results[-1] is None
             assert not len([res for res in fetch_results if isinstance(res, Exception)])
 
-            return rebuild_block_from_chunks(fetch_results[:-1], None)
+            return rebuild_block_from_chunks(fetch_results[:-1], None)  # type: ignore
 
         elif timeout_count == 1:
             checksum = fetch_results[-1]
@@ -125,7 +124,7 @@ class RAID5BlockStoreComponent(BaseBlockStoreComponent):
             )
             raise BlockTimeoutError("More than 1 blockstores has failed in the RAID5 cluster")
 
-    async def create(self, organization_id: OrganizationID, id: UUID, block: bytes) -> None:
+    async def create(self, organization_id: OrganizationID, id: BlockID, block: bytes) -> None:
         nb_chunks = len(self.blockstores) - 1
         chunks = split_block_in_chunks(block, nb_chunks)
         assert len(chunks) == nb_chunks
@@ -134,7 +133,9 @@ class RAID5BlockStoreComponent(BaseBlockStoreComponent):
         # Actually do the upload
         error_count = 0
 
-        async def _subblockstore_create(nursery, blockstore_index, chunk_or_checksum):
+        async def _subblockstore_create(
+            nursery, blockstore_index: int, chunk_or_checksum: bytes
+        ) -> None:
             nonlocal error_count
             try:
                 await self.blockstores[blockstore_index].create(

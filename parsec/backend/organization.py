@@ -329,7 +329,7 @@ class BaseOrganizationComponent:
         # `None` stands for "no limit"
         active_users_limit: Union[UnsetType, Optional[int]] = Unset,
         user_profile_outsider_allowed: Union[UnsetType, bool] = Unset,
-    ):
+    ) -> None:
         """
         Raises:
             OrganizationNotFoundError

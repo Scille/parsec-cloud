@@ -1,10 +1,9 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) BSLv1.1 (eventually AGPLv3) 2016-2021 Scille SAS
 
-import pendulum
-from uuid import UUID
+from pendulum import DateTime, instance as pendulum_instance
 from typing import Dict, Tuple, Optional
 
-from parsec.api.protocol import DeviceID, OrganizationID
+from parsec.api.protocol import OrganizationID, DeviceID, VlobID, RealmID
 from parsec.backend.vlob import VlobVersionError, VlobNotFoundError
 from parsec.backend.postgresql.utils import (
     Q,
@@ -95,10 +94,10 @@ async def query_read(
     organization_id: OrganizationID,
     author: DeviceID,
     encryption_revision: int,
-    vlob_id: UUID,
+    vlob_id: VlobID,
     version: Optional[int] = None,
-    timestamp: Optional[pendulum.DateTime] = None,
-) -> Tuple[int, bytes, DeviceID, pendulum.DateTime, pendulum.DateTime]:
+    timestamp: Optional[DateTime] = None,
+) -> Tuple[int, bytes, DeviceID, DateTime, DateTime]:
     realm_id = await _get_realm_id_from_vlob_id(conn, organization_id, vlob_id)
     await _check_realm_and_read_access(conn, organization_id, author, realm_id, encryption_revision)
 
@@ -141,9 +140,15 @@ async def query_read(
             raise VlobVersionError()
 
     version, blob, vlob_author, created_on = data
+    assert isinstance(version, int)
+    assert isinstance(blob, bytes)
+    vlob_author = DeviceID(vlob_author)
+    created_on = pendulum_instance(created_on)
+
     author_last_role_granted_on = await _get_last_role_granted_on(
-        conn, organization_id, realm_id, DeviceID(vlob_author)
+        conn, organization_id, realm_id, vlob_author
     )
+    assert isinstance(author_last_role_granted_on, DateTime)
     return version, blob, vlob_author, created_on, author_last_role_granted_on
 
 
@@ -180,23 +185,25 @@ ORDER BY version DESC
 
 @query(in_transaction=True)
 async def query_poll_changes(
-    conn, organization_id: OrganizationID, author: DeviceID, realm_id: UUID, checkpoint: int
-) -> Tuple[int, Dict[UUID, int]]:
+    conn, organization_id: OrganizationID, author: DeviceID, realm_id: RealmID, checkpoint: int
+) -> Tuple[int, Dict[VlobID, int]]:
     await _check_realm_and_read_access(conn, organization_id, author, realm_id, None)
 
     ret = await conn.fetch(
         *_q_poll_changes(organization_id=organization_id, realm_id=realm_id, checkpoint=checkpoint)
     )
 
-    changes_since_checkpoint = {src_id: src_version for _, src_id, src_version in ret}
-    new_checkpoint = ret[-1][0] if ret else checkpoint
+    changes_since_checkpoint: Dict[VlobID, int] = {
+        VlobID(src_id): src_version for _, src_id, src_version in ret
+    }
+    new_checkpoint: int = ret[-1][0] if ret else checkpoint
     return (new_checkpoint, changes_since_checkpoint)
 
 
 @query(in_transaction=True)
 async def query_list_versions(
-    conn, organization_id: OrganizationID, author: DeviceID, vlob_id: UUID
-) -> Dict[int, Tuple[pendulum.DateTime, DeviceID]]:
+    conn, organization_id: OrganizationID, author: DeviceID, vlob_id: VlobID
+) -> Dict[int, Tuple[DateTime, DeviceID]]:
     realm_id = await _get_realm_id_from_vlob_id(conn, organization_id, vlob_id)
     await _check_realm_and_read_access(conn, organization_id, author, realm_id, None)
 
@@ -206,4 +213,7 @@ async def query_list_versions(
     if not rows:
         raise VlobNotFoundError(f"Vlob `{vlob_id}` doesn't exist")
 
-    return {row["version"]: (row["created_on"], row["author"]) for row in rows}
+    return {
+        row["version"]: (pendulum_instance(row["created_on"]), DeviceID(row["author"]))
+        for row in rows
+    }

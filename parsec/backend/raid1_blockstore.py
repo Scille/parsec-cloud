@@ -1,19 +1,21 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) BSLv1.1 (eventually AGPLv3) 2016-2021 Scille SAS
 
-from uuid import UUID
+from typing import List
 
 from parsec.utils import open_service_nursery
-from parsec.api.protocol import OrganizationID
+from parsec.api.protocol import OrganizationID, BlockID
 from parsec.backend.blockstore import BaseBlockStoreComponent
 from parsec.backend.block import BlockAlreadyExistsError, BlockNotFoundError, BlockTimeoutError
 
 
 class RAID1BlockStoreComponent(BaseBlockStoreComponent):
-    def __init__(self, blockstores):
+    def __init__(self, blockstores: List[BaseBlockStoreComponent]):
         self.blockstores = blockstores
 
-    async def read(self, organization_id: OrganizationID, id: UUID) -> bytes:
-        async def _single_blockstore_read(nursery, blockstore):
+    async def read(self, organization_id: OrganizationID, id: BlockID) -> bytes:
+        value = None
+
+        async def _single_blockstore_read(nursery, blockstore: BaseBlockStoreComponent) -> None:
             nonlocal value
             try:
                 value = await blockstore.read(organization_id, id)
@@ -21,7 +23,6 @@ class RAID1BlockStoreComponent(BaseBlockStoreComponent):
             except (BlockNotFoundError, BlockTimeoutError):
                 pass
 
-        value = None
         async with open_service_nursery() as nursery:
             for blockstore in self.blockstores:
                 nursery.start_soon(_single_blockstore_read, nursery, blockstore)
@@ -31,8 +32,8 @@ class RAID1BlockStoreComponent(BaseBlockStoreComponent):
 
         return value
 
-    async def create(self, organization_id: OrganizationID, id: UUID, block: bytes) -> None:
-        async def _single_blockstore_create(blockstore):
+    async def create(self, organization_id: OrganizationID, id: BlockID, block: bytes) -> None:
+        async def _single_blockstore_create(blockstore: BaseBlockStoreComponent) -> None:
             try:
                 await blockstore.create(organization_id, id, block)
             except BlockAlreadyExistsError:

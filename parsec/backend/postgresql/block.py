@@ -1,10 +1,9 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) BSLv1.1 (eventually AGPLv3) 2016-2021 Scille SAS
 
 from triopg.exceptions import UniqueViolationError
-from uuid import UUID
 import pendulum
 
-from parsec.api.protocol import DeviceID, OrganizationID
+from parsec.api.protocol import OrganizationID, DeviceID, RealmID, BlockID
 from parsec.backend.utils import OperationKind
 from parsec.backend.vlob import BaseVlobComponent
 from parsec.backend.blockstore import BaseBlockStoreComponent
@@ -100,7 +99,7 @@ VALUES (
 
 
 async def _check_realm(
-    conn, organization_id: OrganizationID, realm_id: UUID, operation_kind: OperationKind
+    conn, organization_id: OrganizationID, realm_id: RealmID, operation_kind: OperationKind
 ) -> None:
     # Fetch the realm status maintenance type
     try:
@@ -129,14 +128,15 @@ class PGBlockComponent(BaseBlockComponent):
         self._vlob_component = vlob_component
 
     async def read(
-        self, organization_id: OrganizationID, author: DeviceID, block_id: UUID
+        self, organization_id: OrganizationID, author: DeviceID, block_id: BlockID
     ) -> bytes:
         async with self.dbh.pool.acquire() as conn, conn.transaction():
-            realm_id = await conn.fetchval(
+            realm_id_uuid = await conn.fetchval(
                 *_q_get_realm_id_from_block_id(organization_id=organization_id, block_id=block_id)
             )
-            if not realm_id:
-                raise BlockNotFoundError(f"Realm `{realm_id}` doesn't exist")
+            if not realm_id_uuid:
+                raise BlockNotFoundError()
+            realm_id = RealmID(realm_id_uuid)
             await _check_realm(conn, organization_id, realm_id, OperationKind.DATA_READ)
             ret = await conn.fetchrow(
                 *_q_get_block_meta(
@@ -155,8 +155,8 @@ class PGBlockComponent(BaseBlockComponent):
         self,
         organization_id: OrganizationID,
         author: DeviceID,
-        block_id: UUID,
-        realm_id: UUID,
+        block_id: BlockID,
+        realm_id: RealmID,
         block: bytes,
     ) -> None:
         async with self.dbh.pool.acquire() as conn, conn.transaction():
@@ -229,7 +229,7 @@ class PGBlockStoreComponent(BaseBlockStoreComponent):
     def __init__(self, dbh: PGHandler):
         self.dbh = dbh
 
-    async def read(self, organization_id: OrganizationID, id: UUID) -> bytes:
+    async def read(self, organization_id: OrganizationID, id: BlockID) -> bytes:
         async with self.dbh.pool.acquire() as conn:
             ret = await conn.fetchrow(
                 *_q_get_block_data(organization_id=organization_id, block_id=id)
@@ -239,7 +239,7 @@ class PGBlockStoreComponent(BaseBlockStoreComponent):
 
             return ret[0]
 
-    async def create(self, organization_id: OrganizationID, id: UUID, block: bytes) -> None:
+    async def create(self, organization_id: OrganizationID, id: BlockID, block: bytes) -> None:
         async with self.dbh.pool.acquire() as conn:
             try:
                 ret = await conn.execute(
