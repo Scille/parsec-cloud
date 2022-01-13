@@ -11,5 +11,7 @@ mod crypto;
 fn _libparsec(_py: Python, m: &PyModule) -> PyResult<()> {
     m.add_class::<crypto::HashDigest>()?;
     m.add_class::<crypto::SecretKey>()?;
+    m.add_class::<crypto::PrivateKey>()?;
+    m.add_class::<crypto::PublicKey>()?;
     Ok(())
 }

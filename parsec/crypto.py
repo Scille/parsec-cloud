@@ -159,7 +159,6 @@ class SigningKey(_SigningKey):
     def __eq__(self, other):
         return isinstance(other, _SigningKey) and self._signing_key == other._signing_key
 
-    # Quick fix, waiting for binding signingKey
     def __repr__(self):
         # Avoid leaking the key in logs
         return "SigningKey(<redacted>)"
@@ -199,10 +198,27 @@ class PrivateKey(_PrivateKey):
         """
         return SealedBox(self).decrypt(ciphered)
 
-    # Quick fix, waiting for binding privateKey
     def __repr__(self):
         # Avoid leaking the key in logs
         return "PrivateKey(<redacted>)"
+
+    # @property
+    # def public_key(self) -> bytes:
+    #     return self._public_key
+
+    # @property
+    # def private_key(self) -> bytes:
+    #     return self._private_key
+
+
+_PyPrivateKey = PrivateKey
+if not TYPE_CHECKING:
+    try:
+        from libparsec.hazmat import PrivateKey as _RsPrivateKey
+    except ImportError:
+        pass
+    else:
+        PrivateKey = _RsPrivateKey
 
 
 class PublicKey(_PublicKey):
@@ -217,6 +233,16 @@ class PublicKey(_PublicKey):
             CryptoError
         """
         return SealedBox(self).encrypt(data)
+
+
+_PyPublicKey = PublicKey
+if not TYPE_CHECKING:
+    try:
+        from libparsec.hazmat import PublicKey as _RsPublicKey
+    except ImportError:
+        pass
+    else:
+        PublicKey = _RsPublicKey
 
 
 # Helpers
