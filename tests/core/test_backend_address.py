@@ -1,8 +1,8 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2016-2021 Scille SAS
 
 import pytest
-from uuid import UUID
 import re
+from parsec.api.protocol.invite import InvitationToken
 
 from parsec.crypto import SigningKey
 from parsec.api.protocol import InvitationType, OrganizationID
@@ -376,8 +376,8 @@ def test_build_addrs():
         backend_addr=backend_addr,
         organization_id=organization_id,
         invitation_type=InvitationType.USER,
-        token=UUID("a0000000000000000000000000000001"),
+        token=InvitationToken("a0000000000000000000000000000001"),
     )
     assert invitation_addr.organization_id == organization_id
-    assert invitation_addr.token == UUID("a0000000000000000000000000000001")
+    assert invitation_addr.token == InvitationToken("a0000000000000000000000000000001")
     assert invitation_addr.invitation_type == InvitationType.USER

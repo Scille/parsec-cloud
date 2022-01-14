@@ -7,10 +7,13 @@ from async_generator import asynccontextmanager
 from pendulum import now as pendulum_now
 from functools import partial
 
-from uuid import uuid4
-
 from parsec.api.data import UserProfile
-from parsec.api.protocol import InvitationType, HumanHandle, InvitationDeletedReason
+from parsec.api.protocol import (
+    InvitationToken,
+    InvitationType,
+    HumanHandle,
+    InvitationDeletedReason,
+)
 from parsec.core.types import BackendInvitationAddr
 from parsec.core.invite import UserGreetInitialCtx
 from parsec.core.gui.lang import translate
@@ -678,7 +681,7 @@ async def test_claim_user_unknown_invitation(
         backend_addr=alice.organization_addr,
         organization_id=alice.organization_id,
         invitation_type=InvitationType.USER,
-        token=uuid4(),
+        token=InvitationToken.new(),
     )
 
     gui.add_instance(invitation_addr.to_url())
@@ -720,7 +723,7 @@ async def test_claim_user_backend_desync(
         backend_addr=alice.organization_addr,
         organization_id=alice.organization_id,
         invitation_type=InvitationType.USER,
-        token=uuid4(),
+        token=InvitationToken.new(),
     )
 
     gui.add_instance(invitation_addr.to_url())

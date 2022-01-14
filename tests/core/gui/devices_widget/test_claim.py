@@ -7,9 +7,7 @@ from PyQt5 import QtCore
 from async_generator import asynccontextmanager
 from functools import partial
 
-from uuid import uuid4
-
-from parsec.api.protocol import InvitationType, InvitationDeletedReason
+from parsec.api.protocol import InvitationToken, InvitationType, InvitationDeletedReason
 from parsec.core.types import BackendInvitationAddr
 from parsec.core.invite import DeviceGreetInitialCtx
 from parsec.core.gui.lang import translate
@@ -642,7 +640,7 @@ async def test_claim_device_unknown_invitation(
         backend_addr=alice.organization_addr,
         organization_id=alice.organization_id,
         invitation_type=InvitationType.DEVICE,
-        token=uuid4(),
+        token=InvitationToken.new(),
     )
 
     gui.add_instance(invitation_addr.to_url())
@@ -686,7 +684,7 @@ async def test_claim_device_backend_desync(
         backend_addr=alice.organization_addr,
         organization_id=alice.organization_id,
         invitation_type=InvitationType.DEVICE,
-        token=uuid4(),
+        token=InvitationToken.new(),
     )
 
     gui.add_instance(invitation_addr.to_url())
