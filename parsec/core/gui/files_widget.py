@@ -2,29 +2,25 @@
 
 import trio
 import pathlib
-from uuid import UUID
 from typing import Optional, Iterable, Tuple, List
-
-from parsec.core.core_events import CoreEvent
 from pendulum import DateTime
 from enum import IntEnum
 from structlog import get_logger
-
 from PyQt5.QtCore import Qt, pyqtSignal
 from PyQt5.QtWidgets import QWidget
 
+from parsec.core.core_events import CoreEvent
 from parsec.core.gui.file_status_widget import FileStatusWidget
-from parsec.core.types import WorkspaceRole
+from parsec.core.types import WorkspaceRole, EntryID
 from parsec.core.fs import FsPath, WorkspaceFS, WorkspaceFSTimestamped
 from parsec.core.fs.exceptions import (
     FSRemoteManifestNotFound,
     FSInvalidArgumentError,
     FSFileNotFoundError,
 )
-
 from parsec.core.gui.trio_jobs import JobResultError, QtToTrioJob
 from parsec.core.gui import desktop
-from parsec.core.gui.file_items import FileType, TYPE_DATA_INDEX, UUID_DATA_INDEX
+from parsec.core.gui.file_items import FileType, TYPE_DATA_INDEX, ENTRY_ID_DATA_INDEX
 from parsec.core.gui.custom_dialogs import (
     ask_question,
     show_error,
@@ -33,7 +29,6 @@ from parsec.core.gui.custom_dialogs import (
     GreyedDialog,
     QDialogInProcess,
 )
-
 from parsec.core.gui.custom_widgets import CenteredSpinnerWidget
 from parsec.core.gui.file_history_widget import FileHistoryWidget
 from parsec.core.gui.loading_widget import LoadingWidget
@@ -57,10 +52,10 @@ class CancelException(Exception):
 
 async def _do_rename(workspace_fs, paths):
     new_names = {}
-    for (old_path, new_path, uuid) in paths:
+    for (old_path, new_path, entry_id) in paths:
         try:
             await workspace_fs.rename(old_path, new_path)
-            new_names[uuid] = FsPath(new_path).name
+            new_names[entry_id] = FsPath(new_path).name
         except FileExistsError as exc:
             raise JobResultError("already-exists", multi=len(paths) > 1) from exc
         except OSError as exc:
@@ -286,13 +281,13 @@ class FilesWidget(QWidget, Ui_FilesWidget):
         self.line_edit_search.textChanged.connect(self.filter_files)
         self.line_edit_search.hide()
 
-        # Current directory UUID can be `None`.
-        # This means that the corresponding UUID is still unkown since the
+        # Current directory ID can be `None`.
+        # This means that the corresponding EntryID is still unkown since the
         # folder stat job has not returned the info yet. It could also be that
         # the job has failed to return properly, maybe because the directory
         # no longer exists
         self.current_directory: FsPath = FsPath("/")
-        self.current_directory_uuid: Optional[UUID] = None
+        self.current_directory_id: Optional[EntryID] = None
 
         self.default_import_path = str(pathlib.Path.home())
         self.table_files.config = self.core.config
@@ -523,7 +518,7 @@ class FilesWidget(QWidget, Ui_FilesWidget):
                     (
                         self.current_directory / files[0].name,
                         self.current_directory / new_name,
-                        files[0].uuid,
+                        files[0].entry_id,
                     )
                 ],
             )
@@ -548,7 +543,7 @@ class FilesWidget(QWidget, Ui_FilesWidget):
                         self.current_directory / f.name,
                         self.current_directory
                         / "{}_{}{}".format(new_name, i, ".".join(pathlib.Path(f.name).suffixes)),
-                        f.uuid,
+                        f.entry_id,
                     )
                     for i, f in enumerate(files, 1)
                 ],
@@ -650,7 +645,7 @@ class FilesWidget(QWidget, Ui_FilesWidget):
     def load(self, directory, default_selection=None):
         self.spinner.show()
         self.current_directory = directory
-        self.current_directory_uuid = None
+        self.current_directory_id = None
         self.jobs_ctx.submit_job(
             self.folder_stat_success,
             self.folder_stat_error,
@@ -922,13 +917,13 @@ class FilesWidget(QWidget, Ui_FilesWidget):
 
     def _on_folder_stat_success(self, job):
         # Extract job information
-        directory, directory_uuid, files_stats, default_selection = job.ret
+        directory, directory_id, files_stats, default_selection = job.ret
         # Ignore old refresh jobs
         if self.current_directory != directory:
             return
-        # Set the UUID
-        first_refresh = self.current_directory_uuid is None
-        self.current_directory_uuid = directory_uuid
+        # Set the EntryID
+        first_refresh = self.current_directory_id is None
+        self.current_directory_id = directory_id
         # Try to keep the current selection
         if first_refresh:
             old_selection = set()
@@ -1010,11 +1005,11 @@ class FilesWidget(QWidget, Ui_FilesWidget):
         if workspace_id != self.workspace_fs.workspace_id:
             return
         # Reload, as it might correspond to the current directory
-        if self.current_directory_uuid is None:
+        if self.current_directory_id is None:
             self.reload()
             return
         # Reload, as it definitely corresponds to the current directory
-        if self.current_directory_uuid == id:
+        if self.current_directory_id == id:
             self.reload()
             return
 
@@ -1022,12 +1017,12 @@ class FilesWidget(QWidget, Ui_FilesWidget):
         if not self.workspace_fs:
             return
 
-        if self.current_directory_uuid == id:
+        if self.current_directory_id == id:
             return
 
         for i in range(1, self.table_files.rowCount()):
             item = self.table_files.item(i, 0)
-            if item and item.data(UUID_DATA_INDEX) == id:
+            if item and item.data(ENTRY_ID_DATA_INDEX) == id:
                 if (
                     item.data(TYPE_DATA_INDEX) == FileType.File
                     or item.data(TYPE_DATA_INDEX) == FileType.Folder
@@ -1044,11 +1039,11 @@ class FilesWidget(QWidget, Ui_FilesWidget):
         if workspace_id != self.workspace_fs.workspace_id:
             return
         # Reload, as it might correspond to the current directory
-        if self.current_directory_uuid is None:
+        if self.current_directory_id is None:
             self.reload()
             return
         # Reload, as it definitely corresponds to the current directory
-        if self.current_directory_uuid == id:
+        if self.current_directory_id == id:
             self.reload()
             return
         # Reload, as the id appears in the table files

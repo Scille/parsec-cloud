@@ -1,7 +1,5 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2016-2021 Scille SAS
 
-from parsec.core.types.local_device import LocalDevice
-from parsec.core.core_events import CoreEvent
 import sys
 from typing import Callable, Optional, Tuple, cast
 from structlog import get_logger
@@ -9,19 +7,21 @@ from distutils.version import LooseVersion
 
 from PyQt5.QtCore import QCoreApplication, pyqtSignal, Qt, QSize
 from PyQt5.QtGui import QColor, QIcon, QKeySequence, QResizeEvent, QCloseEvent
-from PyQt5.QtWidgets import QMainWindow, QMenu, QShortcut, QMenuBar
+from PyQt5.QtWidgets import QWidget, QMainWindow, QMenu, QShortcut, QMenuBar
 
 from parsec import __version__ as PARSEC_VERSION
 from parsec.event_bus import EventBus, EventCallback
-from parsec.core.local_device import list_available_devices, get_key_file, DeviceFileType
-from parsec.core.config import CoreConfig, save_config
+from parsec.api.protocol import InvitationType
 from parsec.core.types import (
+    LocalDevice,
     BackendActionAddr,
     BackendInvitationAddr,
     BackendOrganizationBootstrapAddr,
     BackendOrganizationFileLinkAddr,
 )
-from parsec.api.protocol import InvitationType
+from parsec.core.core_events import CoreEvent
+from parsec.core.config import CoreConfig, save_config
+from parsec.core.local_device import list_available_devices, get_key_file, DeviceFileType
 from parsec.core.gui.trio_jobs import QtToTrioJobScheduler
 from parsec.core.gui.lang import translate as _
 from parsec.core.gui.instance_widget import InstanceWidget
@@ -73,9 +73,9 @@ class MainWindow(QMainWindow, Ui_MainWindow):  # type: ignore[misc]
         event_bus: EventBus,
         config: CoreConfig,
         minimize_on_close: bool = False,
-        **kwargs: object,
+        parent: Optional[QWidget] = None,
     ):
-        super().__init__(**kwargs)
+        super().__init__(parent=parent)
         self.setupUi(self)
 
         self.setMenuBar(None)
@@ -97,7 +97,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):  # type: ignore[misc]
         self.tab_center.tabCloseRequested.connect(self.close_tab)
 
         self.menu_button = Button()
-        self.menu_button.setCursor(Qt.PointingHandCursor)
+        self.menu_button.setCursor(Qt.CursorShape.PointingHandCursor)
         self.menu_button.setIcon(QIcon(":/icons/images/material/menu.svg"))
         self.menu_button.setIconSize(QSize(24, 24))
         self.menu_button.setText(_("ACTION_MAIN_MENU_SHOW"))
@@ -110,10 +110,10 @@ class MainWindow(QMainWindow, Ui_MainWindow):  # type: ignore[misc]
         )
         self.menu_button.apply_style()
         self.menu_button.clicked.connect(self._show_menu)
-        self.tab_center.setCornerWidget(self.menu_button, Qt.TopRightCorner)
+        self.tab_center.setCornerWidget(self.menu_button, Qt.Corner.TopRightCorner)
 
         self.add_tab_button = Button()
-        self.add_tab_button.setCursor(Qt.PointingHandCursor)
+        self.add_tab_button.setCursor(Qt.CursorShape.PointingHandCursor)
         self.add_tab_button.setIcon(QIcon(":/icons/images/material/add.svg"))
         self.add_tab_button.setIconSize(QSize(24, 24))
         self.add_tab_button.setProperty("color", QColor(0x00, 0x92, 0xFF))
@@ -121,7 +121,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):  # type: ignore[misc]
         self.add_tab_button.setStyleSheet("background: none; border: none;")
         self.add_tab_button.apply_style()
         self.add_tab_button.clicked.connect(self._on_add_instance_clicked)
-        self.tab_center.setCornerWidget(self.add_tab_button, Qt.TopLeftCorner)
+        self.tab_center.setCornerWidget(self.add_tab_button, Qt.Corner.TopLeftCorner)
 
         self.tab_center.currentChanged.connect(self.on_current_tab_changed)
         self._define_shortcuts()
@@ -186,7 +186,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):  # type: ignore[misc]
     def resizeEvent(self, event: QResizeEvent) -> None:
         super().resizeEvent(event)
         for win in self.children():
-            if win.objectName() == "GreyedDialog":
+            if isinstance(win, GreyedDialog):
                 win.resize(event.size())
                 win.move(0, 0)
 
@@ -567,7 +567,10 @@ class MainWindow(QMainWindow, Ui_MainWindow):  # type: ignore[misc]
 
     def show_top(self) -> None:
         self.activateWindow()
-        self.setWindowState((self.windowState() & ~Qt.WindowMinimized) | Qt.WindowActive)
+        state: Qt.WindowState = (
+            self.windowState() & ~Qt.WindowState.WindowMinimized
+        ) | Qt.WindowState.WindowActive
+        self.setWindowState(state)
         self.raise_()
         self.show()
 
