@@ -2,6 +2,7 @@
 
 from typing import Optional, Any, Dict, Type, TypeVar
 from marshmallow import ValidationError
+from pendulum import DateTime
 
 from parsec.crypto import VerifyKey, PublicKey
 from parsec.serde import fields, post_load
@@ -179,7 +180,7 @@ class RealmRoleCertificateContent(BaseAPISignedData):
     role: Optional[RealmRole]  # Set to None if role removed
 
     @classmethod
-    def build_realm_root_certif(cls, author, timestamp, realm_id):
+    def build_realm_root_certif(cls, author: DeviceID, timestamp: DateTime, realm_id: RealmID):
         return cls(
             author=author,
             timestamp=timestamp,

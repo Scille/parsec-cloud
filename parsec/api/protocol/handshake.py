@@ -342,7 +342,9 @@ class ServerHandshake:
                 )
 
             try:
-                returned_challenge = verify_key.verify(self.answer_data["answer"])
+                answer = self.answer_data["answer"]
+                assert isinstance(answer, bytes)
+                returned_challenge = verify_key.verify(answer)
                 if returned_challenge != self.challenge:
                     raise HandshakeFailedChallenge("Invalid returned challenge")
 
@@ -447,7 +449,9 @@ class AuthenticatedClientHandshake(BaseClientHandshake):
 
     def process_challenge_req(self, req: bytes) -> bytes:
         self.load_challenge_req(req)
-        answer = self.user_signkey.sign(self.challenge_data["challenge"])
+        challenge = self.challenge_data["challenge"]
+        assert isinstance(challenge, bytes)
+        answer = self.user_signkey.sign(challenge)
         return self.HANDSHAKE_ANSWER_SERIALIZER.dumps(
             {
                 "handshake": "answer",
