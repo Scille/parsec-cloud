@@ -7,7 +7,10 @@ from parsec.core.types import BackendAddr
 
 
 class BaseBlockStoreConfig:
-    pass
+    # Overloaded by children
+    @property
+    def type(self) -> str:
+        raise NotImplementedError
 
 
 @attr.s(frozen=True, auto_attribs=True)
