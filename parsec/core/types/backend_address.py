@@ -1,6 +1,5 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2016-2021 Scille SAS
 
-from uuid import UUID
 from typing import Tuple, Optional
 from urllib.parse import urlsplit, urlunsplit, parse_qs, quote_plus, unquote_plus, urlencode
 from marshmallow import ValidationError
@@ -13,7 +12,7 @@ from parsec.crypto import (
     binary_urlsafe_decode,
     binary_urlsafe_encode,
 )
-from parsec.api.protocol import OrganizationID, InvitationType
+from parsec.api.protocol import OrganizationID, InvitationType, InvitationToken
 from parsec.api.data import EntryID
 
 
@@ -444,7 +443,7 @@ class BackendInvitationAddr(BackendActionAddr):
         self,
         organization_id: OrganizationID,
         invitation_type: InvitationType,
-        token: UUID,
+        token: InvitationToken,
         **kwargs,
     ):
         super().__init__(**kwargs)
@@ -474,7 +473,7 @@ class BackendInvitationAddr(BackendActionAddr):
         if len(value) != 1:
             raise ValueError("Missing mandatory `token` param")
         try:
-            kwargs["token"] = UUID(value[0])
+            kwargs["token"] = InvitationToken(value[0])
         except ValueError:
             raise ValueError("Invalid `token` param value")
 
@@ -504,7 +503,7 @@ class BackendInvitationAddr(BackendActionAddr):
         backend_addr: BackendAddr,
         organization_id: OrganizationID,
         invitation_type: InvitationType,
-        token: UUID,
+        token: InvitationToken,
     ) -> "BackendInvitationAddr":
         return cls(
             hostname=backend_addr.hostname,
@@ -529,5 +528,5 @@ class BackendInvitationAddr(BackendActionAddr):
         return self._invitation_type
 
     @property
-    def token(self) -> UUID:
+    def token(self) -> InvitationToken:
         return self._token

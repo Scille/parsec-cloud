@@ -8,7 +8,7 @@ from pendulum import DateTime
 from trio import open_memory_channel, MemorySendChannel, MemoryReceiveChannel
 
 from parsec.crypto import HashDigest, CryptoError
-from parsec.api.protocol import UserID, DeviceID, RealmRole
+from parsec.api.protocol import UserID, DeviceID, RealmID, RealmRole, VlobID
 from parsec.api.data import (
     DataError,
     BlockAccess,
@@ -156,7 +156,9 @@ class UserRemoteLoader:
         self, realm_id: Optional[EntryID] = None
     ) -> Tuple[List[RealmRoleCertificateContent], Dict[UserID, RealmRole]]:
         with translate_backend_cmds_errors():
-            rep = await self.backend_cmds.realm_get_role_certificates(realm_id or self.workspace_id)
+            rep = await self.backend_cmds.realm_get_role_certificates(
+                RealmID((realm_id or self.workspace_id).uuid)
+            )
         if rep["status"] == "not_allowed":
             # Seems we lost the access to the realm
             raise FSWorkspaceNoReadAccess("Cannot get workspace roles: no read access")
@@ -294,7 +296,7 @@ class UserRemoteLoader:
             FSRemoteManifestNotFound
         """
         with translate_backend_cmds_errors():
-            rep = await self.backend_cmds.vlob_list_versions(entry_id)
+            rep = await self.backend_cmds.vlob_list_versions(VlobID(entry_id.uuid))
         if rep["status"] == "not_allowed":
             # Seems we lost the access to the realm
             raise FSWorkspaceNoReadAccess("Cannot load manifest: no read access")
@@ -318,7 +320,7 @@ class UserRemoteLoader:
         """
         timestamp = self.device.timestamp()
         certif = RealmRoleCertificateContent.build_realm_root_certif(
-            author=self.device.device_id, timestamp=timestamp, realm_id=realm_id
+            author=self.device.device_id, timestamp=timestamp, realm_id=RealmID(realm_id.uuid)
         ).dump_and_sign(self.device.signing_key)
 
         with translate_backend_cmds_errors():
@@ -463,7 +465,9 @@ class RemoteLoader(UserRemoteLoader):
 
         # Upload block
         with translate_backend_cmds_errors():
-            rep = await self.backend_cmds.block_create(access.id, self.workspace_id, ciphered)
+            rep = await self.backend_cmds.block_create(
+                access.id, RealmID(self.workspace_id.uuid), ciphered
+            )
 
         if rep["status"] == "already_exists":
             # Ignore exception if the block has already been uploaded
@@ -479,7 +483,7 @@ class RemoteLoader(UserRemoteLoader):
 
         # Update local storage
         await self.local_storage.set_clean_block(access.id, data)
-        await self.local_storage.clear_chunk(ChunkID(access.id), miss_ok=True)
+        await self.local_storage.clear_chunk(ChunkID(access.id.uuid), miss_ok=True)
 
     async def load_manifest(
         self,
@@ -519,7 +523,7 @@ class RemoteLoader(UserRemoteLoader):
         with translate_backend_cmds_errors():
             rep = await self.backend_cmds.vlob_read(
                 workspace_entry.encryption_revision,
-                entry_id,
+                VlobID(entry_id.uuid),
                 version=version,
                 timestamp=timestamp if version is None else None,
             )
@@ -696,7 +700,11 @@ class RemoteLoader(UserRemoteLoader):
         # Vlob upload
         with translate_backend_cmds_errors():
             rep = await self.backend_cmds.vlob_create(
-                self.workspace_id, encryption_revision, entry_id, now, ciphered
+                RealmID(self.workspace_id.uuid),
+                encryption_revision,
+                VlobID(entry_id.uuid),
+                now,
+                ciphered,
             )
         if rep["status"] == "already_exists":
             raise FSRemoteSyncError(entry_id)
@@ -737,7 +745,7 @@ class RemoteLoader(UserRemoteLoader):
         # Vlob upload
         with translate_backend_cmds_errors():
             rep = await self.backend_cmds.vlob_update(
-                encryption_revision, entry_id, version, now, ciphered
+                encryption_revision, VlobID(entry_id.uuid), version, now, ciphered
             )
 
         if rep["status"] == "not_found":

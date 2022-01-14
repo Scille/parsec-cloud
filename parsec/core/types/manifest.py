@@ -143,7 +143,7 @@ class Chunk(BaseData):
     @classmethod
     def from_block_acess(cls, block_access: BlockAccess):
         return cls(
-            id=ChunkID(block_access.id),
+            id=ChunkID(block_access.id.uuid),
             raw_offset=block_access.offset,
             raw_size=block_access.size,
             start=block_access.offset,
@@ -164,7 +164,7 @@ class Chunk(BaseData):
 
         # Craft access
         access = BlockAccess(
-            id=BlockID(self.id),
+            id=BlockID(self.id.uuid),
             key=SecretKey.generate(),
             offset=self.start,
             size=self.stop - self.start,

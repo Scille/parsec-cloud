@@ -9,9 +9,8 @@ from functools import partial
 
 from parsec.crypto import SigningKey
 from parsec.event_bus import EventBus
-from parsec.api.data import EntryID
 from parsec.api.protocol import DeviceID, APIEvent, AUTHENTICATED_CMDS
-from parsec.core.types import BackendOrganizationAddr, OrganizationConfig
+from parsec.core.types import EntryID, BackendOrganizationAddr, OrganizationConfig
 from parsec.core.backend_connection import cmds
 from parsec.core.backend_connection.transport import connect_as_authenticated, TransportPool
 from parsec.core.backend_connection.exceptions import (
@@ -112,31 +111,32 @@ def _handle_event(event_bus: EventBus, rep: dict) -> None:
         event_bus.send(CoreEvent.BACKEND_PINGED, ping=rep["ping"])
 
     elif rep["event"] == APIEvent.REALM_ROLES_UPDATED:
-        realm_id = EntryID(rep["realm_id"])
-        event_bus.send(CoreEvent.BACKEND_REALM_ROLES_UPDATED, realm_id=realm_id, role=rep["role"])
+        event_bus.send(
+            CoreEvent.BACKEND_REALM_ROLES_UPDATED,
+            realm_id=EntryID(rep["realm_id"].uuid),
+            role=rep["role"],
+        )
 
     elif rep["event"] == APIEvent.REALM_VLOBS_UPDATED:
-        src_id = EntryID(rep["src_id"])
-        realm_id = EntryID(rep["realm_id"])
         event_bus.send(
             CoreEvent.BACKEND_REALM_VLOBS_UPDATED,
-            realm_id=realm_id,
+            realm_id=EntryID(rep["realm_id"].uuid),
             checkpoint=rep["checkpoint"],
-            src_id=src_id,
+            src_id=EntryID(rep["src_id"].uuid),
             src_version=rep["src_version"],
         )
 
     elif rep["event"] == APIEvent.REALM_MAINTENANCE_STARTED:
         event_bus.send(
             CoreEvent.BACKEND_REALM_MAINTENANCE_STARTED,
-            realm_id=rep["realm_id"],
+            realm_id=EntryID(rep["realm_id"].uuid),
             encryption_revision=rep["encryption_revision"],
         )
 
     elif rep["event"] == APIEvent.REALM_MAINTENANCE_FINISHED:
         event_bus.send(
             CoreEvent.BACKEND_REALM_MAINTENANCE_FINISHED,
-            realm_id=rep["realm_id"],
+            realm_id=EntryID(rep["realm_id"].uuid),
             encryption_revision=rep["encryption_revision"],
         )
 
