@@ -4,6 +4,7 @@ import pytest
 from pendulum import datetime
 from unittest.mock import ANY
 
+from parsec.api.protocol import RealmID
 from parsec.core.types import EntryID
 from parsec.core.fs import (
     FSError,
@@ -13,6 +14,7 @@ from parsec.core.fs import (
     FSBadEncryptionRevision,
 )
 from parsec.backend.backend_events import BackendEvent
+
 from tests.common import freeze_time
 
 
@@ -48,7 +50,7 @@ async def test_do_reencryption(running_backend, workspace, alice, alice_user_fs)
                     {
                         "organization_id": alice.organization_id,
                         "author": alice.device_id,
-                        "realm_id": workspace,
+                        "realm_id": RealmID(workspace.uuid),
                         "encryption_revision": 2,
                     },
                 ),

@@ -6,7 +6,7 @@ from unittest.mock import ANY
 
 from trio import open_nursery
 
-from parsec.api.protocol import DeviceID, RealmRole
+from parsec.api.protocol import DeviceID, RealmID, RealmRole
 from parsec.api.data import BaseManifest as BaseRemoteManifest
 from parsec.core.types import EntryID, DEFAULT_BLOCK_SIZE
 from parsec.core.fs import FsPath
@@ -427,7 +427,7 @@ async def test_get_reencryption_need(alice_workspace, running_backend, monkeypat
 
     # Reproduce a backend offline after the certificates have been retrieved (see issue #1335)
     reply = await alice_workspace.remote_loader.backend_cmds.realm_get_role_certificates(
-        alice_workspace.workspace_id
+        RealmID(alice_workspace.workspace_id.uuid)
     )
     original = alice_workspace.remote_loader.backend_cmds.realm_get_role_certificates
 
