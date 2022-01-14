@@ -54,6 +54,12 @@ async def _create_organization(
 @click.option("--addr", "-B", required=True, type=BackendAddr.from_url, envvar="PARSEC_ADDR")
 @click.option("--administration-token", "-T", required=True, envvar="PARSEC_ADMINISTRATION_TOKEN")
 @cli_command_base_options
-def create_organization(organization_id, addr, administration_token, debug, **kwargs):
+def create_organization(
+    organization_id: OrganizationID,
+    addr: BackendAddr,
+    administration_token: str,
+    debug: bool,
+    **kwargs,
+) -> None:
     with cli_exception_handler(debug):
         trio_run(_create_organization, organization_id, addr, administration_token)
