@@ -25,7 +25,13 @@ def test_timestamp_out_of_ballpark_rep_schema_compatibility():
         .dump({"status": "bad_timestamp", "reason": "Timestamp is out of date."})
         .data
     )
-    assert realm_create_serializer.rep_load(data) == {"status": "bad_timestamp"}
+    assert realm_create_serializer.rep_load(data) == {
+        "status": "bad_timestamp",
+        "client_timestamp": None,
+        "backend_timestamp": None,
+        "ballpark_client_early_offset": None,
+        "ballpark_client_late_offset": None,
+    }
 
 
 def test_handshake_challenge_schema_compatibility():
@@ -46,6 +52,12 @@ def test_handshake_challenge_schema_compatibility():
         "ballpark_client_late_offset": 1.0,
         "backend_timestamp": timestamp,
     }
+    compat_data = {
+        **old_data,
+        "ballpark_client_early_offset": None,
+        "ballpark_client_late_offset": None,
+        "backend_timestamp": None,
+    }
 
     # Backend API >= 2.4 with older clients
     data = handshake_challenge_serializer.dumps(new_data)
@@ -53,4 +65,4 @@ def test_handshake_challenge_schema_compatibility():
 
     # Backend API < 2.4 with newer clients
     data = older_handshake_challenge_serializer.dumps(old_data)
-    assert handshake_challenge_serializer.loads(data) == old_data
+    assert handshake_challenge_serializer.loads(data) == compat_data

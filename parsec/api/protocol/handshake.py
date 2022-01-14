@@ -118,9 +118,9 @@ class HandshakeChallengeSchema(BaseSchema):
     # They are provided to the client in order to allow them to detect whether
     # their system clock is out of sync and let them close the connection.
     # They will be missing for older backend so they cannot be strictly required.
-    ballpark_client_early_offset = fields.Float(required=False)
-    ballpark_client_late_offset = fields.Float(required=False)
-    backend_timestamp = fields.DateTime(required=False)
+    ballpark_client_early_offset = fields.Float(required=False, missing=None)
+    ballpark_client_late_offset = fields.Float(required=False, missing=None)
+    backend_timestamp = fields.DateTime(required=False, missing=None)
 
 
 handshake_challenge_serializer = serializer_factory(HandshakeChallengeSchema)
@@ -374,26 +374,35 @@ class BaseClientHandshake:
             supported_api_version, self.SUPPORTED_API_VERSIONS
         )
 
-        # The `backend_timestamp` field is missing with backend version 2.3 or lower
-        if "backend_timestamp" in self.challenge_data:
+        # Parse and cast the challenge content
+        backend_timestamp = cast(
+            Optional[pendulum.DateTime], self.challenge_data.get("backend_timestamp")
+        )
+        ballpark_client_early_offset = cast(
+            Optional[float], self.challenge_data.get("ballpark_client_early_offset")
+        )
+        ballpark_client_late_offset = cast(
+            Optional[float], self.challenge_data.get("ballpark_client_late_offset")
+        )
+
+        # Those fields are missing with parsec API 2.3 and lower
+        if (
+            backend_timestamp is not None
+            and ballpark_client_early_offset is not None
+            and ballpark_client_late_offset is not None
+        ):
 
             # Add `client_timestamp` to challenge data
             # so the dictionnary exposes the same fields as `TimestampOutOfBallparkRepSchema`
             self.challenge_data["client_timestamp"] = self.client_timestamp
 
+            # The client is a bit less tolerant than the backend
+            ballpark_client_early_offset *= BALLPARK_CLIENT_TOLERANCE
+            ballpark_client_late_offset *= BALLPARK_CLIENT_TOLERANCE
+
             # Check whether our system clock is in sync with the backend
-            client_timestamp = cast(pendulum.DateTime, self.challenge_data["client_timestamp"])
-            backend_timestamp = cast(pendulum.DateTime, self.challenge_data["backend_timestamp"])
-            ballpark_client_early_offset = (
-                cast(float, self.challenge_data["ballpark_client_early_offset"])
-                * BALLPARK_CLIENT_TOLERANCE
-            )
-            ballpark_client_late_offset = (
-                cast(float, self.challenge_data["ballpark_client_late_offset"])
-                * BALLPARK_CLIENT_TOLERANCE
-            )
             if not timestamps_in_the_ballpark(
-                client=client_timestamp,
+                client=self.client_timestamp,
                 backend=backend_timestamp,
                 ballpark_client_early_offset=ballpark_client_early_offset,
                 ballpark_client_late_offset=ballpark_client_late_offset,

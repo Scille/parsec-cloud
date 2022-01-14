@@ -93,10 +93,10 @@ class TimestampOutOfBallparkRepSchema(BaseRepSchema):
     # `bad_timestamp` is kept for backward compatibility,
     # even though `timestamp_out_of_ballpark` would be more explicit
     status: fields.CheckedConstant = fields.CheckedConstant("bad_timestamp", required=True)
-    ballpark_client_early_offset = fields.Float(required=False)
-    ballpark_client_late_offset = fields.Float(required=False)
-    client_timestamp = fields.DateTime(required=False)
-    backend_timestamp = fields.DateTime(required=False)
+    ballpark_client_early_offset = fields.Float(required=False, missing=None)
+    ballpark_client_late_offset = fields.Float(required=False, missing=None)
+    client_timestamp = fields.DateTime(required=False, missing=None)
+    backend_timestamp = fields.DateTime(required=False, missing=None)
 
 
 class CmdSerializer:
