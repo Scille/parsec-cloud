@@ -180,12 +180,12 @@ class PrivateKey(_PrivateKey):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.public_key.__class__ = PublicKey
+        self.public_key.__class__ = _PyPublicKey
 
     @classmethod
     def generate(cls, *args, **kwargs) -> "PrivateKey":
         obj = super().generate(*args, **kwargs)
-        obj.__class__ = PrivateKey
+        obj.__class__ = cls
         return obj
 
     def __eq__(self, other):
@@ -201,14 +201,6 @@ class PrivateKey(_PrivateKey):
     def __repr__(self):
         # Avoid leaking the key in logs
         return "PrivateKey(<redacted>)"
-
-    # @property
-    # def public_key(self) -> bytes:
-    #     return self._public_key
-
-    # @property
-    # def private_key(self) -> bytes:
-    #     return self._private_key
 
 
 _PyPrivateKey = PrivateKey
