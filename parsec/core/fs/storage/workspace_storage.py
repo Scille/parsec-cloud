@@ -251,7 +251,7 @@ class WorkspaceStorage(BaseWorkspaceStorage):
         device: LocalDevice,
         workspace_id: EntryID,
         cache_size: int = DEFAULT_WORKSPACE_STORAGE_CACHE_SIZE,
-        vacuum_threshold: int = DEFAULT_CHUNK_VACUUM_THRESHOLD,
+        data_vacuum_threshold: int = DEFAULT_CHUNK_VACUUM_THRESHOLD,
     ) -> AsyncIterator["WorkspaceStorage"]:
         data_path = get_workspace_data_storage_db_path(data_base_dir, device, workspace_id)
         cache_path = get_workspace_cache_storage_db_path(data_base_dir, device, workspace_id)
@@ -268,7 +268,7 @@ class WorkspaceStorage(BaseWorkspaceStorage):
 
             # Local data storage service
             async with LocalDatabase.run(
-                data_path, vacuum_threshold=vacuum_threshold
+                data_path, vacuum_threshold=data_vacuum_threshold
             ) as data_localdb:
 
                 # Block storage service
