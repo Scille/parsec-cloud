@@ -1,6 +1,6 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2016-2021 Scille SAS
 
-from typing import Union, Dict, Type, TypeVar
+from typing import Dict, Type, TypeVar
 from uuid import UUID, uuid4
 
 
@@ -35,14 +35,18 @@ EntryIDTypeVar = TypeVar("EntryIDTypeVar", bound="UUID4")
 class UUID4:
     __slots__ = ("_uuid",)
 
-    def __init__(self, raw: Union[UUID, bytes, str]):
-        if isinstance(raw, UUID):
-            self._uuid = raw
-        elif isinstance(raw, bytes):
-            self._uuid = UUID(bytes=raw)
-        else:
-            assert isinstance(raw, str)
-            self._uuid = UUID(hex=raw)
+    def __init__(self, raw: UUID):
+        if not isinstance(raw, UUID):
+            breakpoint()
+        self._uuid = raw
+
+    @classmethod
+    def from_bytes(cls: Type[K], raw: bytes) -> K:
+        return cls(UUID(bytes=raw))
+
+    @classmethod
+    def from_hex(cls: Type[K], raw: str) -> K:
+        return cls(UUID(hex=raw))
 
     def __repr__(self) -> str:
         return f"<{type(self).__name__} {self.hex}>"

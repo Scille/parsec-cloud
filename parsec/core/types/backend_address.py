@@ -363,7 +363,7 @@ class BackendOrganizationFileLinkAddr(BackendActionAddr):
         if len(value) != 1:
             raise ValueError("Missing mandatory `workspace_id` param")
         try:
-            kwargs["workspace_id"] = EntryID(value[0])
+            kwargs["workspace_id"] = EntryID.from_hex(value[0])
         except ValueError as exc:
             raise ValueError("Invalid `workspace_id` param value") from exc
 
@@ -473,7 +473,7 @@ class BackendInvitationAddr(BackendActionAddr):
         if len(value) != 1:
             raise ValueError("Missing mandatory `token` param")
         try:
-            kwargs["token"] = InvitationToken(value[0])
+            kwargs["token"] = InvitationToken.from_hex(value[0])
         except ValueError:
             raise ValueError("Invalid `token` param value")
 

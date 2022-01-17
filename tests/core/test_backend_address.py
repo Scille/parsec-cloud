@@ -364,10 +364,10 @@ def test_build_addrs():
 
     organization_file_link_addr = BackendOrganizationFileLinkAddr.build(
         organization_addr=organization_addr,
-        workspace_id=EntryID("2d4ded12-7406-4608-833b-7f57f01156e2"),
+        workspace_id=EntryID.from_hex("2d4ded12-7406-4608-833b-7f57f01156e2"),
         encrypted_path=b"<encrypted_payload>",
     )
-    assert organization_file_link_addr.workspace_id == EntryID(
+    assert organization_file_link_addr.workspace_id == EntryID.from_hex(
         "2d4ded12-7406-4608-833b-7f57f01156e2"
     )
     assert organization_file_link_addr.encrypted_path == b"<encrypted_payload>"
@@ -376,8 +376,8 @@ def test_build_addrs():
         backend_addr=backend_addr,
         organization_id=organization_id,
         invitation_type=InvitationType.USER,
-        token=InvitationToken("a0000000000000000000000000000001"),
+        token=InvitationToken.from_hex("a0000000000000000000000000000001"),
     )
     assert invitation_addr.organization_id == organization_id
-    assert invitation_addr.token == InvitationToken("a0000000000000000000000000000001")
+    assert invitation_addr.token == InvitationToken.from_hex("a0000000000000000000000000000001")
     assert invitation_addr.invitation_type == InvitationType.USER

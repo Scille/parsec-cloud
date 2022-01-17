@@ -26,14 +26,14 @@ from tests.common import customize_fixtures
 from tests.backend.common import block_create, block_read
 
 
-BLOCK_ID = BlockID("00000000000000000000000000000001")
-VLOB_ID = VlobID("00000000000000000000000000000002")
+BLOCK_ID = BlockID.from_hex("00000000000000000000000000000001")
+VLOB_ID = VlobID.from_hex("00000000000000000000000000000002")
 BLOCK_DATA = b"Hodi ho !"
 
 
 @pytest.fixture
 async def block(backend, alice, realm):
-    block_id = BlockID("0000000000000000000000000000000C")
+    block_id = BlockID.from_hex("0000000000000000000000000000000C")
 
     await backend.block.create(alice.organization_id, alice.device_id, block_id, realm, BLOCK_DATA)
     return block_id
@@ -140,7 +140,7 @@ async def test_block_create_and_read(alice_backend_sock, realm):
 
     # Test not found as well
 
-    dummy_id = BlockID("00000000000000000000000000000002")
+    dummy_id = BlockID.from_hex("00000000000000000000000000000002")
     rep = await block_read(alice_backend_sock, dummy_id)
     assert rep == {"status": "not_found"}
 

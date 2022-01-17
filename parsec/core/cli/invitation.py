@@ -245,7 +245,7 @@ async def _greet_invitation(
 
 def _parse_invitation_token_or_url(raw: str) -> Union[BackendInvitationAddr, InvitationToken]:
     try:
-        return InvitationToken(raw)
+        return InvitationToken.from_hex(raw)
     except ValueError:
         try:
             return BackendInvitationAddr.from_url(raw)

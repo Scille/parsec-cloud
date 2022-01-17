@@ -15,7 +15,7 @@ from tests.backend.common import realm_create, realm_update_roles
 async def test_realm_create(backend, alice, alice_backend_sock):
     await events_subscribe(alice_backend_sock)
 
-    realm_id = RealmID("C0000000000000000000000000000000")
+    realm_id = RealmID.from_hex("C0000000000000000000000000000000")
     certif = RealmRoleCertificateContent.build_realm_root_certif(
         author=alice.device_id, timestamp=pendulum.now(), realm_id=realm_id
     ).dump_and_sign(alice.signing_key)
