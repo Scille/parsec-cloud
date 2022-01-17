@@ -261,7 +261,7 @@ msgstr "The server address is invalid."
 msgid "TEXT_ORG_WIZARD_INVALID_HUMAN_HANDLE"
 msgstr "The email address is invalid."
 
-msgid "TEXT_ORG_WIZARD_INVALID_DEVICE_NAME"
+msgid "TEXT_ORG_WIZARD_INVALID_DEVICE_LABEL"
 msgstr "The device name is invalid."
 
 msgid "ACTION_CREATE_ORG"

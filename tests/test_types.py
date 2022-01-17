@@ -3,6 +3,7 @@
 import pytest
 
 from parsec.api.protocol import DeviceID, UserID, DeviceName, OrganizationID
+from parsec.api.protocol.types import DeviceLabel, HumanHandle
 from parsec.crypto import SigningKey, PrivateKey, SecretKey, export_root_verify_key
 from parsec.core.types import BackendAddr, BackendOrganizationAddr, BackendOrganizationBootstrapAddr
 
@@ -14,10 +15,12 @@ def test_organization_id_user_id_and_device_name(raw):
     assert organization_id == OrganizationID(raw)
 
     user_id = UserID(raw)
-    assert user_id == raw
+    assert str(user_id) == raw
+    assert user_id == UserID(raw)
 
     device_name = DeviceName(raw)
-    assert device_name == raw
+    assert str(device_name) == raw
+    assert device_name == DeviceName(raw)
 
 
 @pytest.mark.parametrize("raw", ["x" * 33, "F~o", "f o"])
@@ -36,9 +39,9 @@ def test_bad_organization_id_user_id_and_device_name(raw):
 def test_device_id(raw):
     user_id, device_name = raw.split("@")
     device_id = DeviceID(raw)
-    assert device_id == raw
-    assert device_id.user_id == user_id
-    assert device_id.device_name == device_name
+    assert device_id == DeviceID(raw)
+    assert device_id.user_id == UserID(user_id)
+    assert device_id.device_name == DeviceName(device_name)
 
 
 @pytest.mark.parametrize(
@@ -183,22 +186,22 @@ def test_backend_organization_addr_good(base_url, expected, verify_key):
         (
             # missing org name
             "parsec://foo:42?rvk=<rvk>",
-            "Invalid organization ID",
+            "Invalid data",
         ),
         (
             # missing org name
             "parsec://foo:42/?rvk=<rvk>",
-            "Invalid organization ID",
+            "Invalid data",
         ),
         (
             # bad org name
             "parsec://foo:42/bad/org?rvk=<rvk>",
-            "Invalid organization ID",
+            "Invalid data",
         ),
         (
             # bad org name
             "parsec://foo:42/~org?rvk=<rvk>",
-            "Invalid organization ID",
+            "Invalid data",
         ),
     ],
 )
@@ -272,22 +275,22 @@ def test_backend_organization_bootstrap_addr_good(base_url, expected, verify_key
         (
             # missing org name
             "parsec://foo:42?action=bootstrap_organization&token=123",
-            "Invalid organization ID",
+            "Invalid data",
         ),
         (
             # missing org name
             "parsec://foo:42/?action=bootstrap_organization&token=123",
-            "Invalid organization ID",
+            "Invalid data",
         ),
         (
             # bad org name
             "parsec://foo:42/bad/org?action=bootstrap_organization&token=123",
-            "Invalid organization ID",
+            "Invalid data",
         ),
         (
             # bad org name
             "parsec://foo:42/~org?action=bootstrap_organization&token=123",
-            "Invalid organization ID",
+            "Invalid data",
         ),
     ],
 )
@@ -307,3 +310,19 @@ def organization_addr(exported_verify_key):
 def test_keys_dont_leak_on_repr(key_type):
     key = key_type.generate()
     assert repr(key).startswith(f"{key_type.__qualname__}(<redacted>)")
+
+
+def test_device_label_bad_size():
+    with pytest.raises(ValueError):
+        DeviceLabel("")
+
+
+def test_human_handle_bade_field_size():
+    for bad in ("", "x" * 256):
+        with pytest.raises(ValueError):
+            HumanHandle(email=bad, label="foo")
+
+    email_suffix = "@example.com"
+    for bad in ("", "x" * (256 - len(email_suffix)) + email_suffix):
+        with pytest.raises(ValueError):
+            HumanHandle(email="foo@example.com", label="")

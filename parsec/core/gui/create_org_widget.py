@@ -5,7 +5,7 @@ from structlog import get_logger
 from PyQt5.QtCore import pyqtSignal
 from PyQt5.QtWidgets import QWidget, QApplication, QDialog
 
-from parsec.api.protocol import OrganizationID, DeviceName, HumanHandle
+from parsec.api.protocol import OrganizationID, DeviceLabel, HumanHandle
 from parsec.core.backend_connection import (
     apiv1_backend_anonymous_cmds_factory,
     BackendConnectionRefused,
@@ -45,11 +45,11 @@ from parsec.core.gui.ui.create_org_user_info_widget import Ui_CreateOrgUserInfoW
 logger = get_logger()
 
 
-async def _do_create_org(config, human_handle, device_name, backend_addr):
+async def _do_create_org(config, human_handle, device_label, backend_addr):
     try:
         async with apiv1_backend_anonymous_cmds_factory(addr=backend_addr) as cmds:
             new_device = await bootstrap_organization(
-                cmds=cmds, human_handle=human_handle, device_label=device_name
+                cmds=cmds, human_handle=human_handle, device_label=device_label
             )
             # The organization is brand new, of course there is no existing
             # remote user manifest, hence our placeholder is non-speculative.
@@ -192,7 +192,7 @@ class CreateOrgWidget(QWidget, Ui_CreateOrgWidget):
         if isinstance(self.current_widget, CreateOrgUserInfoWidget):
             backend_addr = None
             org_id = None
-            device_name = None
+            device_label = None
             human_handle = None
 
             if self.start_addr:
@@ -225,9 +225,9 @@ class CreateOrgWidget(QWidget, Ui_CreateOrgWidget):
                 show_error(self, _("TEXT_ORG_WIZARD_INVALID_HUMAN_HANDLE"), exception=exc)
                 return
             try:
-                device_name = DeviceName(self.current_widget.line_edit_device.text())
+                device_label = DeviceLabel(self.current_widget.line_edit_device.text())
             except ValueError as exc:
-                show_error(self, _("TEXT_ORG_WIZARD_INVALID_DEVICE_NAME"), exception=exc)
+                show_error(self, _("TEXT_ORG_WIZARD_INVALID_DEVICE_LABEL"), exception=exc)
                 return
 
             self.create_job = self.jobs_ctx.submit_job(
@@ -236,7 +236,7 @@ class CreateOrgWidget(QWidget, Ui_CreateOrgWidget):
                 _do_create_org,
                 config=self.config,
                 human_handle=human_handle,
-                device_name=device_name,
+                device_label=device_label,
                 backend_addr=backend_addr,
             )
             self.button_validate.setEnabled(False)

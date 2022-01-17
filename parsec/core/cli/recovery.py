@@ -90,7 +90,13 @@ async def _import_recovery_device(
     prompt=True,
     required=True,
 )
-@click.option("--device-label", "-L", help="Label for the new device", prompt="New device label")
+@click.option(
+    "--device-label",
+    "-L",
+    help="Label for the new device",
+    prompt="New device label",
+    type=DeviceLabel,
+)
 @save_device_options
 @core_config_options
 @cli_command_base_options

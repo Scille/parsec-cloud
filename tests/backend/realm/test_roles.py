@@ -365,7 +365,7 @@ async def test_remove_role_dont_change_other_realms(
 
     # Bob should still have access to bob_realm
     roles = await backend.realm.get_current_roles(alice.organization_id, bob_realm)
-    assert roles == {"bob": RealmRole.OWNER}
+    assert roles == {bob.user_id: RealmRole.OWNER}
 
 
 @pytest.mark.trio
@@ -383,7 +383,7 @@ async def test_role_access_during_maintenance(
 
     # Get roles allowed...
     roles = await backend.realm.get_current_roles(alice.organization_id, realm)
-    assert roles == {"alice": RealmRole.OWNER}
+    assert roles == {alice.user_id: RealmRole.OWNER}
 
     rep = await realm_get_role_certificates(alice_backend_sock, realm)
     assert rep == {"status": "ok", "certificates": [ANY]}

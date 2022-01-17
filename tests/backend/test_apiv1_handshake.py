@@ -74,7 +74,7 @@ async def test_authenticated_handshake_no_longer_supported(backend, server_facto
             "client_api_version": ApiVersion(1, 3),
             "type": "AUTHENTICATED",
             "organization_id": str(alice.organization_id),
-            "device_id": alice.device_id,
+            "device_id": str(alice.device_id),
             "rvk": alice.root_verify_key.encode(),
             "answer": answer,
         }

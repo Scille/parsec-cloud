@@ -42,7 +42,7 @@ def get_default_device():
     device = QSysInfo.machineHostName()
     if device.lower() == "localhost":
         device = QSysInfo.productType()
-    return "".join([c for c in device if DeviceName.regex.match(c)])
+    return "".join([c for c in device if DeviceName.REGEX.match(c)])
 
 
 def get_locale_language():
