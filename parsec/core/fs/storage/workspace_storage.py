@@ -20,6 +20,7 @@ from parsec.core.types import (
     LocalFileManifest,
     LocalWorkspaceManifest,
 )
+from parsec.core.config import DEFAULT_WORKSPACE_STORAGE_CACHE_SIZE
 from parsec.core.fs.exceptions import FSError, FSLocalMissError, FSInvalidFileDescriptor
 
 from parsec.core.fs.storage.local_database import LocalDatabase
@@ -33,8 +34,6 @@ from parsec.core.fs.storage.version import (
 
 logger = get_logger()
 
-# TODO: should be in config.py
-DEFAULT_BLOCK_CACHE_SIZE = 512 * 1024 * 1024
 DEFAULT_CHUNK_VACUUM_THRESHOLD = 512 * 1024 * 1024
 
 
@@ -251,24 +250,36 @@ class WorkspaceStorage(BaseWorkspaceStorage):
         data_base_dir: Path,
         device: LocalDevice,
         workspace_id: EntryID,
-        cache_size: int = DEFAULT_BLOCK_CACHE_SIZE,
-        vacuum_threshold: int = DEFAULT_CHUNK_VACUUM_THRESHOLD,
+        cache_size: int = DEFAULT_WORKSPACE_STORAGE_CACHE_SIZE,
+        data_vacuum_threshold: int = DEFAULT_CHUNK_VACUUM_THRESHOLD,
     ) -> AsyncIterator["WorkspaceStorage"]:
         data_path = get_workspace_data_storage_db_path(data_base_dir, device, workspace_id)
         cache_path = get_workspace_cache_storage_db_path(data_base_dir, device, workspace_id)
 
+        # The cache database usually doesn't require vacuuming as it already has a maximum size.
+        # However, vacuuming might still be necessary after a change in the configuration.
+        # The cache size plus 10% seems like a reasonable configuration to avoid false positive.
+        cache_localdb_vaccuum_threshold = int(cache_size * 1.1)
+
         # Local cache storage service
-        async with LocalDatabase.run(cache_path) as cache_localdb:
+        async with LocalDatabase.run(
+            cache_path, vacuum_threshold=cache_localdb_vaccuum_threshold
+        ) as cache_localdb:
 
             # Local data storage service
             async with LocalDatabase.run(
-                data_path, vacuum_threshold=vacuum_threshold
+                data_path, vacuum_threshold=data_vacuum_threshold
             ) as data_localdb:
 
                 # Block storage service
                 async with BlockStorage.run(
                     device, cache_localdb, cache_size=cache_size
                 ) as block_storage:
+
+                    # Clean up block storage and run vacuum if necessary
+                    # (e.g after changing the cache size)
+                    await block_storage.cleanup()
+                    await cache_localdb.run_vacuum()
 
                     # Manifest storage service
                     async with ManifestStorage.run(

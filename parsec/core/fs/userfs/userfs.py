@@ -44,6 +44,7 @@ from parsec.core.types import (
     WorkspaceRole,
     LocalUserManifest,
 )
+from parsec.core.config import DEFAULT_WORKSPACE_STORAGE_CACHE_SIZE
 
 # TODO: handle exceptions status...
 from parsec.core.backend_connection import (
@@ -179,6 +180,7 @@ class UserFS:
         event_bus: EventBus,
         prevent_sync_pattern: Pattern[str],
         preferred_language: str,
+        workspace_storage_cache_size: int,
     ):
         self.data_base_dir = data_base_dir
         self.device = device
@@ -187,6 +189,7 @@ class UserFS:
         self.event_bus = event_bus
         self.prevent_sync_pattern = prevent_sync_pattern
         self.preferred_language = preferred_language
+        self.workspace_storage_cache_size = workspace_storage_cache_size
 
         self.storage: UserStorage  # Setup by UserStorage.run factory
 
@@ -231,6 +234,7 @@ class UserFS:
         event_bus: EventBus,
         prevent_sync_pattern: Pattern[str],
         preferred_language: str = "en",
+        workspace_storage_cache_size: int = DEFAULT_WORKSPACE_STORAGE_CACHE_SIZE,
     ) -> AsyncIterator[UserFSTypeVar]:
         self = cls(
             data_base_dir,
@@ -240,6 +244,7 @@ class UserFS:
             event_bus,
             prevent_sync_pattern,
             preferred_language,
+            workspace_storage_cache_size,
         )
 
         # Run user storage
@@ -322,7 +327,10 @@ class UserFS:
             task_status: TaskStatus[WorkspaceStorage] = trio.TASK_STATUS_IGNORED
         ) -> None:
             async with WorkspaceStorage.run(
-                data_base_dir=self.data_base_dir, device=self.device, workspace_id=workspace_id
+                data_base_dir=self.data_base_dir,
+                device=self.device,
+                workspace_id=workspace_id,
+                cache_size=self.workspace_storage_cache_size,
             ) as workspace_storage:
                 task_status.started(workspace_storage)
                 await trio.sleep_forever()
