@@ -217,7 +217,8 @@ def test_good_addr_with_unicode_org_name(addr_with_org_testbed):
     orgname_percent_quoted = "%E5%BA%B7%E7%86%99%E5%B8%9D"
     url = addr_with_org_testbed.generate_url(ORG=orgname_percent_quoted)
     addr = addr_with_org_testbed.cls.from_url(url)
-    assert addr.organization_id == orgname
+    assert isinstance(addr.organization_id, OrganizationID)
+    assert str(addr.organization_id) == orgname
     url2 = addr.to_url()
     assert url2 == url
 

@@ -21,6 +21,7 @@ from parsec.api.protocol import (
     OrganizationID,
     UserID,
     DeviceID,
+    DeviceLabel,
     HumanHandle,
     RealmRole,
     RealmID,
@@ -136,9 +137,9 @@ def local_device_factory(coolorg):
             assert base_device_label is None
             device_label = None
         elif not base_device_label:
-            device_label = f"My {device_id.device_name} machine"
+            device_label = DeviceLabel(f"My {device_id.device_name} machine")
         else:
-            device_label = base_device_label
+            device_label = DeviceLabel(base_device_label)
 
         if not has_human_handle:
             assert base_human_handle is None

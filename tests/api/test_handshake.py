@@ -324,7 +324,7 @@ def test_process_challenge_req_good_multiple_api_version(
 )
 def test_process_answer_req_bad_format(req, alice):
     for key, good_value in [
-        ("organization_id", alice.organization_id),
+        ("organization_id", str(alice.organization_id)),
         ("device_id", alice.device_id),
         ("rvk", alice.root_verify_key.encode()),
         ("token", uuid4()),
@@ -348,7 +348,7 @@ def test_build_result_req_bad_key(alice, bob):
         "handshake": "answer",
         "type": HandshakeType.AUTHENTICATED.value,
         "client_api_version": API_V2_VERSION,
-        "organization_id": alice.organization_id,
+        "organization_id": str(alice.organization_id),
         "device_id": alice.device_id,
         "rvk": alice.root_verify_key.encode(),
         "answer": alice.signing_key.sign(sh.challenge),
@@ -365,7 +365,7 @@ def test_build_result_req_bad_challenge(alice):
         "handshake": "answer",
         "type": HandshakeType.AUTHENTICATED.value,
         "client_api_version": API_V2_VERSION,
-        "organization_id": alice.organization_id,
+        "organization_id": str(alice.organization_id),
         "device_id": alice.device_id,
         "rvk": alice.root_verify_key.encode(),
         "answer": alice.signing_key.sign(sh.challenge + b"-dummy"),
@@ -393,7 +393,7 @@ def test_build_bad_outcomes(alice, method, expected_result):
         "handshake": "answer",
         "type": HandshakeType.AUTHENTICATED.value,
         "client_api_version": API_V2_VERSION,
-        "organization_id": alice.organization_id,
+        "organization_id": str(alice.organization_id),
         "device_id": alice.device_id,
         "rvk": alice.root_verify_key.encode(),
         "answer": alice.signing_key.sign(sh.challenge),

@@ -10,7 +10,8 @@ from parsec.core.types import BackendAddr, BackendOrganizationAddr, BackendOrgan
 @pytest.mark.parametrize("raw", ["foo42", "FOO", "f", "f-o-o", "f_o_o", "x" * 32, "三国"])
 def test_organization_id_user_id_and_device_name(raw):
     organization_id = OrganizationID(raw)
-    assert organization_id == raw
+    assert str(organization_id) == raw
+    assert organization_id == OrganizationID(raw)
 
     user_id = UserID(raw)
     assert user_id == raw

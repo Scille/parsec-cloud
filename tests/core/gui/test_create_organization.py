@@ -467,7 +467,7 @@ async def test_create_organization_already_bootstrapped(
     aqtbot.key_clicks(co_w.current_widget.line_edit_device, "HEV")
 
     def _user_widget_ready():
-        assert co_w.current_widget.line_edit_org_name.text() == org.organization_id
+        assert co_w.current_widget.line_edit_org_name.text() == str(org.organization_id)
         assert co_w.current_widget.line_edit_org_name.isReadOnly() is True
 
     await aqtbot.wait_until(_user_widget_ready)

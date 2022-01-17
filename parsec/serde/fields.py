@@ -125,8 +125,8 @@ def str_based_field_factory(value_type):
         if value is None:
             return None
 
-        assert isinstance(value, str)
-        return value
+        assert isinstance(value, value_type)
+        return str(value)
 
     def _deserialize(self, value, attr, data):
 

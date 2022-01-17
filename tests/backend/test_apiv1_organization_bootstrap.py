@@ -46,7 +46,7 @@ async def organization_bootstrap(
 
 @pytest.mark.trio
 @customize_fixtures(backend_has_webhook=True)
-async def test_organization__bootstrap(
+async def test_organization_bootstrap(
     webhook_spy,
     backend,
     organization_factory,

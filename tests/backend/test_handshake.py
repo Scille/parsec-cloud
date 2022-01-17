@@ -2,7 +2,7 @@
 
 import pytest
 
-from parsec.api.protocol import packb, unpackb, OrganizationID
+from parsec.api.protocol import packb, unpackb
 from parsec.api.version import ApiVersion, API_VERSION
 from parsec.api.transport import Transport
 from parsec.api.protocol import (
@@ -46,7 +46,7 @@ async def test_handshake_incompatible_version(backend, server_factory):
             "handshake": "answer",
             "type": "anonymous",
             "client_api_version": incompatible_version,
-            "organization_id": OrganizationID("Org"),
+            "organization_id": "Org",
             "token": "whatever",
         }
         await transport.send(packb(req))

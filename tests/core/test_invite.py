@@ -6,6 +6,7 @@ import trio
 from pendulum import now as pendulum_now
 from parsec.api.data import UserProfile
 from parsec.api.protocol import (
+    DeviceLabel,
     HumanHandle,
     InvitationType,
     InvitationDeletedReason,
@@ -48,8 +49,8 @@ async def test_good_device_claim(
     )
 
     if with_labels:
-        requested_device_label = "Foo's label"
-        granted_device_label = "Bar's label"
+        requested_device_label = DeviceLabel("Foo's label")
+        granted_device_label = DeviceLabel("Bar's label")
     else:
         requested_device_label = None
         granted_device_label = None
@@ -191,9 +192,9 @@ async def test_good_user_claim(
     if with_labels:
         # Let's pretent we invited a Fortnite player...
         requested_human_handle = HumanHandle(email="ZACK@example.com", label="xXx_Z4ck_xXx")
-        requested_device_label = "Ultr4_B00st"
+        requested_device_label = DeviceLabel("Ultr4_B00st")
         granted_human_handle = HumanHandle(email="zack@example.com", label="Zack")
-        granted_device_label = "Desktop"
+        granted_device_label = DeviceLabel("Desktop")
     else:
         requested_human_handle = None
         requested_device_label = None
@@ -488,7 +489,7 @@ async def test_claimer_handle_cancel_event(
                 async def _do_claimer_claim_device():
                     with pytest.raises(BackendInvitationAlreadyUsed) as exc_info:
                         await claimer_in_progress_ctx.do_claim_device(
-                            requested_device_label="TheSecretDevice"
+                            requested_device_label=DeviceLabel("TheSecretDevice")
                         )
                     assert str(exc_info.value) == "Invalid handshake: Invitation already deleted"
 
@@ -597,7 +598,7 @@ async def test_claimer_handle_command_failure(
                     await claimer_in_progress_ctx.do_wait_peer_trust()
                 elif fail_on_step == "claim_device":
                     await claimer_in_progress_ctx.do_claim_device(
-                        requested_device_label="TheSecretDevice"
+                        requested_device_label=DeviceLabel("TheSecretDevice")
                     )
                 else:
                     raise AssertionError(f"Unknown step {fail_on_step}")

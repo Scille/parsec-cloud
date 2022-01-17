@@ -155,7 +155,7 @@ class CreateOrgWidget(QWidget, Ui_CreateOrgWidget):
         self.start_addr = start_addr
 
         if self.start_addr:
-            self.current_widget.line_edit_org_name.setText(self.start_addr.organization_id)
+            self.current_widget.line_edit_org_name.setText(str(self.start_addr.organization_id))
             self.current_widget.line_edit_org_name.setReadOnly(True)
             self.label_instructions.setText(
                 _("TEXT_BOOTSTRAP_ORGANIZATION_INSTRUCTIONS_organization").format(

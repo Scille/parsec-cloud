@@ -20,18 +20,36 @@ def _bytes_size(txt: str) -> int:
     return len(txt.encode("utf8"))
 
 
-class OrganizationID(str):
-    __slots__ = ()
-    regex = re.compile(r"^[\w\-]{1,32}$")
+class OrganizationID:
+    __slots__ = ("_str",)
+    REGEX = re.compile(r"^[\w\-]{1,32}$")
 
-    def __new__(cls, raw: str) -> "OrganizationID":
+    def __init__(self, raw: str):
         raw = normalize("NFC", raw)
-        if not cls.regex.match(raw) or _bytes_size(raw) > 32:
+        if not self.REGEX.match(raw) or _bytes_size(raw) > 32:
             raise ValueError("Invalid organization ID")
-        return super(OrganizationID, cls).__new__(cls, raw)
+        self._str = raw
+
+    def __str__(self) -> str:
+        return self._str
 
     def __repr__(self) -> str:
-        return f"<OrganizationID {super().__repr__()}>"
+        return f"<OrganizationID {self._str}>"
+
+    def __eq__(self, other: object) -> bool:
+        if not isinstance(other, OrganizationID):
+            return NotImplemented
+        else:
+            return self._str == other._str
+
+    def __lt__(self, other: object) -> bool:
+        if not isinstance(other, OrganizationID):
+            return NotImplemented
+        else:
+            return self._str < other._str
+
+    def __hash__(self) -> int:
+        return self._str.__hash__()
 
 
 class UserID(str):
