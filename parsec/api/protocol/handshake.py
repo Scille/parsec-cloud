@@ -118,6 +118,7 @@ class HandshakeChallengeSchema(BaseSchema):
     # They are provided to the client in order to allow them to detect whether
     # their system clock is out of sync and let them close the connection.
     # They will be missing for older backend so they cannot be strictly required.
+    # TODO: This backward compatibility should be removed once Parsec < 2.4 support is dropped
     ballpark_client_early_offset = fields.Float(required=False, missing=None)
     ballpark_client_late_offset = fields.Float(required=False, missing=None)
     backend_timestamp = fields.DateTime(required=False, missing=None)

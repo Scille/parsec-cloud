@@ -88,6 +88,7 @@ class TimestampOutOfBallparkRepSchema(BaseRepSchema):
     - a `TimestampOutOfBallparkRepSchema` should be able to deserialize into an `ErrorRepSchema` with status `bad_timestamp
 
     New clients who wishes to use those fields should check for their existence first.
+    TODO: This backward compatibility should be removed once Parsec < 2.4 support is dropped
     """
 
     # `bad_timestamp` is kept for backward compatibility,
