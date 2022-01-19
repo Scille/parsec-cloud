@@ -52,6 +52,10 @@ class StrBased:
     def __hash__(self) -> int:
         return self._str.__hash__()
 
+    @property
+    def str(self) -> str:
+        return self._str
+
 
 class OrganizationID(StrBased):
     __slots__ = ()

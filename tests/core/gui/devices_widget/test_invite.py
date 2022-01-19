@@ -5,6 +5,7 @@ import trio
 from PyQt5 import QtCore
 from unittest.mock import ANY
 
+from parsec.api.protocol import DeviceLabel
 from parsec.core.backend_connection import backend_invited_cmds_factory
 from parsec.core.invite import claimer_retrieve_info
 from parsec.core.gui.greet_device_widget import (
@@ -135,7 +136,7 @@ async def test_invite_device_without_human_handle_cannot_send_email(
 async def test_invite_and_greet_device(
     aqtbot, logged_gui, running_backend, autoclose_dialog, catch_greet_device_widget, bob
 ):
-    requested_device_label = "PC1"
+    requested_device_label = DeviceLabel("PC1")
 
     # First switch to devices page, and click on "new device" button
 
@@ -260,7 +261,7 @@ async def test_invite_and_greet_device(
             # Devices list should be updated
             assert d_w.layout_devices.count() == 2
             item = d_w.layout_devices.itemAt(1)
-            assert item.widget().label_device_name.text() == requested_device_label
+            assert item.widget().label_device_name.text() == requested_device_label.str
             assert item.widget().label_is_current.text() == ""
 
         await aqtbot.wait_until(_greet_done)

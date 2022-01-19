@@ -2,7 +2,7 @@
 
 from typing import Tuple, Optional
 
-from parsec.api.protocol import OrganizationID, UserID, DeviceID, HumanHandle
+from parsec.api.protocol import OrganizationID, UserID, DeviceID, DeviceLabel, HumanHandle
 from parsec.api.data import UserProfile
 from parsec.backend.user import User, Device, Trustchain, UserNotFoundError, GetUserAndDevicesResult
 from parsec.backend.postgresql.utils import (
@@ -170,7 +170,9 @@ FROM cte2;
 
 
 async def _get_user(conn, organization_id: OrganizationID, user_id: UserID) -> User:
-    row = await conn.fetchrow(*_q_get_user(organization_id=organization_id, user_id=user_id))
+    row = await conn.fetchrow(
+        *_q_get_user(organization_id=organization_id.str, user_id=user_id.str)
+    )
     if not row:
         raise UserNotFoundError(user_id)
 
@@ -193,7 +195,9 @@ async def _get_user(conn, organization_id: OrganizationID, user_id: UserID) -> U
 
 
 async def _get_device(conn, organization_id: OrganizationID, device_id: DeviceID) -> Device:
-    row = await conn.fetchrow(*_q_get_device(organization_id=organization_id, device_id=device_id))
+    row = await conn.fetchrow(
+        *_q_get_device(organization_id=organization_id.str, device_id=device_id.str)
+    )
     if not row:
         raise UserNotFoundError(device_id)
 
@@ -211,7 +215,10 @@ async def _get_trustchain(
     conn, organization_id: OrganizationID, *device_ids: Optional[DeviceID], redacted: bool = False
 ) -> Trustchain:
     rows = await conn.fetch(
-        *_q_get_trustchain(organization_id=organization_id, device_ids=device_ids)
+        *_q_get_trustchain(
+            organization_id=organization_id.str,
+            device_ids=[d.str for d in device_ids if d is not None],
+        )
     )
     user_certif_field = "redacted_user_certificate" if redacted else "user_certificate"
     device_certif_field = "redacted_device_certificate" if redacted else "device_certificate"
@@ -236,7 +243,7 @@ async def _get_user_devices(
     conn, organization_id: OrganizationID, user_id: UserID
 ) -> Tuple[Device, ...]:
     results = await conn.fetch(
-        *_q_get_user_devices(organization_id=organization_id, user_id=user_id)
+        *_q_get_user_devices(organization_id=organization_id.str, user_id=user_id.str)
     )
 
     return tuple(
@@ -314,10 +321,10 @@ async def query_get_user_with_device(
     conn, organization_id: OrganizationID, device_id: DeviceID
 ) -> Tuple[User, Device]:
     d_row = await conn.fetchrow(
-        *_q_get_device(organization_id=organization_id, device_id=device_id)
+        *_q_get_device(organization_id=organization_id.str, device_id=device_id.str)
     )
     u_row = await conn.fetchrow(
-        *_q_get_user(organization_id=organization_id, user_id=device_id.user_id)
+        *_q_get_user(organization_id=organization_id.str, user_id=device_id.user_id.str)
     )
     if not u_row or not d_row:
         raise UserNotFoundError(device_id)
@@ -328,10 +335,10 @@ async def query_get_user_with_device(
 
     device = Device(
         device_id=device_id,
-        device_label=d_row["device_label"],
+        device_label=DeviceLabel(d_row["device_label"]),
         device_certificate=d_row["device_certificate"],
         redacted_device_certificate=d_row["redacted_device_certificate"],
-        device_certifier=d_row["device_certifier"],
+        device_certifier=DeviceID(d_row["device_certifier"]) if d_row["device_certifier"] else None,
         created_on=d_row["created_on"],
     )
     user = User(
@@ -344,6 +351,8 @@ async def query_get_user_with_device(
         created_on=u_row["created_on"],
         revoked_on=u_row["revoked_on"],
         revoked_user_certificate=u_row["revoked_user_certificate"],
-        revoked_user_certifier=u_row["revoked_user_certifier"],
+        revoked_user_certifier=DeviceID(u_row["revoked_user_certifier"])
+        if u_row["revoked_user_certifier"]
+        else None,
     )
     return user, device

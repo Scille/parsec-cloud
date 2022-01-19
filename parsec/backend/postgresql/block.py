@@ -132,7 +132,9 @@ class PGBlockComponent(BaseBlockComponent):
     ) -> bytes:
         async with self.dbh.pool.acquire() as conn, conn.transaction():
             realm_id_uuid = await conn.fetchval(
-                *_q_get_realm_id_from_block_id(organization_id=organization_id, block_id=block_id)
+                *_q_get_realm_id_from_block_id(
+                    organization_id=organization_id.str, block_id=block_id.uuid
+                )
             )
             if not realm_id_uuid:
                 raise BlockNotFoundError()
@@ -140,7 +142,9 @@ class PGBlockComponent(BaseBlockComponent):
             await _check_realm(conn, organization_id, realm_id, OperationKind.DATA_READ)
             ret = await conn.fetchrow(
                 *_q_get_block_meta(
-                    organization_id=organization_id, block_id=block_id, user_id=author.user_id
+                    organization_id=organization_id.str,
+                    block_id=block_id.uuid,
+                    user_id=author.user_id.str,
                 )
             )
             if not ret or ret["deleted_on"]:
@@ -165,10 +169,10 @@ class PGBlockComponent(BaseBlockComponent):
             # 1) Check access rights and block unicity
             ret = await conn.fetchrow(
                 *_q_get_block_write_right_and_unicity(
-                    organization_id=organization_id,
-                    user_id=author.user_id,
-                    realm_id=realm_id,
-                    block_id=block_id,
+                    organization_id=organization_id.str,
+                    user_id=author.user_id.str,
+                    realm_id=realm_id.uuid,
+                    block_id=block_id.uuid,
                 )
             )
 
@@ -192,10 +196,10 @@ class PGBlockComponent(BaseBlockComponent):
             # 3) Insert the block metadata into the database
             ret = await conn.execute(
                 *_q_insert_block(
-                    organization_id=organization_id,
-                    block_id=block_id,
-                    realm_id=realm_id,
-                    author=author,
+                    organization_id=organization_id.str,
+                    block_id=block_id.uuid,
+                    realm_id=realm_id.uuid,
+                    author=author.str,
                     size=len(block),
                     created_on=pendulum.now(),
                 )
@@ -232,7 +236,7 @@ class PGBlockStoreComponent(BaseBlockStoreComponent):
     async def read(self, organization_id: OrganizationID, id: BlockID) -> bytes:
         async with self.dbh.pool.acquire() as conn:
             ret = await conn.fetchrow(
-                *_q_get_block_data(organization_id=organization_id, block_id=id)
+                *_q_get_block_data(organization_id=organization_id.str, block_id=id.uuid)
             )
             if not ret:
                 raise BlockNotFoundError()
@@ -243,7 +247,9 @@ class PGBlockStoreComponent(BaseBlockStoreComponent):
         async with self.dbh.pool.acquire() as conn:
             try:
                 ret = await conn.execute(
-                    *_q_insert_block_data(organization_id=organization_id, block_id=id, data=block)
+                    *_q_insert_block_data(
+                        organization_id=organization_id.str, block_id=id.uuid, data=block
+                    )
                 )
                 if ret != "INSERT 0 1":
                     raise BlockError(f"Insertion error: {ret}")

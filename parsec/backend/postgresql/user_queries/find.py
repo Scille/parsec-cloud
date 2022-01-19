@@ -90,7 +90,7 @@ async def query_retrieve_active_human_by_email(
 ) -> Optional[UserID]:
     result = await conn.fetchrow(
         *_q_retrieve_active_human_by_email(
-            organization_id=organization_id, now=pendulum_now(), email=email
+            organization_id=organization_id.str, now=pendulum_now(), email=email
         )
     )
     if result:
@@ -118,14 +118,16 @@ async def query_find_humans(
     )
     if query:
         args = q(
-            organization_id=organization_id,
+            organization_id=organization_id.str,
             now=pendulum_now(),
             query=query,
             offset=offset,
             limit=per_page,
         )
     else:
-        args = q(organization_id=organization_id, now=pendulum_now(), offset=offset, limit=per_page)
+        args = q(
+            organization_id=organization_id.str, now=pendulum_now(), offset=offset, limit=per_page
+        )
 
     raw_results = await conn.fetch(*args)
     total = raw_results[0]["total"]

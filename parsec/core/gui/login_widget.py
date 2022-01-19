@@ -26,7 +26,7 @@ class AccountButton(QWidget, Ui_AccountButton):
         self.device = device
         self.label_device.setText(self.device.device_display)
         self.label_name.setText(self.device.short_user_display)
-        self.label_organization.setText(self.device.organization_id)
+        self.label_organization.setText(self.device.organization_id.str)
 
     def mousePressEvent(self, event):
         if event.button() & Qt.LeftButton:

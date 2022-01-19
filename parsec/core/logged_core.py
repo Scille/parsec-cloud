@@ -3,7 +3,6 @@
 import re
 import attr
 import fnmatch
-from uuid import UUID
 from pathlib import Path
 import importlib_resources
 from typing import Optional, Tuple, List, Pattern
@@ -15,6 +14,7 @@ from parsec.event_bus import EventBus
 from parsec.api.protocol import (
     UserID,
     InvitationType,
+    InvitationToken,
     InvitationDeletedReason,
     InvitationEmailSentStatus,
 )
@@ -311,7 +311,9 @@ class LoggedCore:
         )
 
     async def delete_invitation(
-        self, token: UUID, reason: InvitationDeletedReason = InvitationDeletedReason.CANCELLED
+        self,
+        token: InvitationToken,
+        reason: InvitationDeletedReason = InvitationDeletedReason.CANCELLED,
     ) -> None:
         """
         Raises:
@@ -335,7 +337,7 @@ class LoggedCore:
             raise BackendConnectionError(f"Backend error: {rep}")
         return rep["invitations"]
 
-    async def start_greeting_user(self, token: UUID) -> UserGreetInProgress1Ctx:
+    async def start_greeting_user(self, token: InvitationToken) -> UserGreetInProgress1Ctx:
         """
         Raises:
             BackendConnectionError
@@ -344,7 +346,7 @@ class LoggedCore:
         initial_ctx = UserGreetInitialCtx(cmds=self._backend_conn.cmds, token=token)
         return await initial_ctx.do_wait_peer()
 
-    async def start_greeting_device(self, token: UUID) -> DeviceGreetInProgress1Ctx:
+    async def start_greeting_device(self, token: InvitationToken) -> DeviceGreetInProgress1Ctx:
         """
         Raises:
             BackendConnectionError

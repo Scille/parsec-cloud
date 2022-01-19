@@ -108,7 +108,7 @@ async def query_get_status(
 ) -> RealmStatus:
     ret = await conn.fetchrow(
         *_q_get_realm_status(
-            organization_id=organization_id, realm_id=realm_id, user_id=author.user_id
+            organization_id=organization_id.str, realm_id=realm_id.uuid, user_id=author.user_id.str
         )
     )
     if not ret:
@@ -117,13 +117,14 @@ async def query_get_status(
     if not ret["has_access"]:
         raise RealmAccessError()
 
-    maintenance_type = (
-        MaintenanceType(ret["maintenance_type"]) if ret["maintenance_type"] is not None else None
-    )
     return RealmStatus(
-        maintenance_type=maintenance_type,
+        maintenance_type=MaintenanceType(ret["maintenance_type"])
+        if ret["maintenance_type"]
+        else None,
         maintenance_started_on=ret["maintenance_started_on"],
-        maintenance_started_by=ret["maintenance_started_by"],
+        maintenance_started_by=DeviceID(ret["maintenance_started_by"])
+        if ret["maintenance_started_by"]
+        else None,
         encryption_revision=ret["encryption_revision"],
     )
 
@@ -134,7 +135,7 @@ async def query_get_stats(
 ) -> RealmStats:
     ret = await conn.fetchrow(
         *_q_has_realm_access(
-            organization_id=organization_id, realm_id=realm_id, user_id=author.user_id
+            organization_id=organization_id.str, realm_id=realm_id.uuid, user_id=author.user_id.str
         )
     )
     if not ret:
@@ -143,10 +144,10 @@ async def query_get_stats(
     if not ret["has_access"]:
         raise RealmAccessError()
     blocks_size_rep = await conn.fetchrow(
-        *_q_get_blocks_size_from_realm(organization_id=organization_id, realm_id=realm_id)
+        *_q_get_blocks_size_from_realm(organization_id=organization_id.str, realm_id=realm_id.uuid)
     )
     vlobs_size_rep = await conn.fetchrow(
-        *_q_get_vlob_size_from_realm(organization_id=organization_id, realm_id=realm_id)
+        *_q_get_vlob_size_from_realm(organization_id=organization_id.str, realm_id=realm_id.uuid)
     )
 
     blocks_size = blocks_size_rep["sum"] or 0
@@ -160,7 +161,7 @@ async def query_get_current_roles(
     conn, organization_id: OrganizationID, realm_id: RealmID
 ) -> Dict[UserID, RealmRole]:
     ret = await conn.fetch(
-        *_q_get_current_roles(organization_id=organization_id, realm_id=realm_id)
+        *_q_get_current_roles(organization_id=organization_id.str, realm_id=realm_id.uuid)
     )
 
     if not ret:
@@ -179,7 +180,7 @@ async def query_get_role_certificates(
     since: pendulum.DateTime,
 ) -> List[bytes]:
     ret = await conn.fetch(
-        *_q_get_role_certificates(organization_id=organization_id, realm_id=realm_id)
+        *_q_get_role_certificates(organization_id=organization_id.str, realm_id=realm_id.uuid)
     )
 
     if not ret:
@@ -204,7 +205,9 @@ async def query_get_role_certificates(
 async def query_get_realms_for_user(
     conn, organization_id: OrganizationID, user: UserID
 ) -> Dict[RealmID, Optional[RealmRole]]:
-    rep = await conn.fetch(*_q_get_realms_for_user(organization_id=organization_id, user_id=user))
+    rep = await conn.fetch(
+        *_q_get_realms_for_user(organization_id=organization_id.str, user_id=user.str)
+    )
     return {
         RealmID(row["realm_id"]): RealmRole(row["role"]) for row in rep if row["role"] is not None
     }

@@ -100,7 +100,7 @@ async def _check_realm_access(
 ) -> DateTime:
     rep = await conn.fetchrow(
         *_q_check_realm_access(
-            organization_id=organization_id, realm_id=realm_id, user_id=author.user_id
+            organization_id=organization_id.str, realm_id=realm_id.uuid, user_id=author.user_id.str
         )
     )
 
@@ -175,7 +175,7 @@ async def _get_realm_id_from_vlob_id(
     conn, organization_id: OrganizationID, vlob_id: VlobID
 ) -> RealmID:
     realm_id_uuid = await conn.fetchval(
-        *_q_get_realm_id_from_vlob_id(organization_id=organization_id, vlob_id=vlob_id)
+        *_q_get_realm_id_from_vlob_id(organization_id=organization_id.str, vlob_id=vlob_id.uuid)
     )
     if not realm_id_uuid:
         raise VlobNotFoundError(f"Vlob `{vlob_id}` doesn't exist")
@@ -187,7 +187,7 @@ async def _get_last_role_granted_on(
 ) -> Optional[DateTime]:
     rep = await conn.fetchrow(
         *_q_check_realm_access(
-            organization_id=organization_id, realm_id=realm_id, user_id=author.user_id
+            organization_id=organization_id.str, realm_id=realm_id.uuid, user_id=author.user_id.str
         )
     )
     return None if rep is None else pendulum_instance(rep[1])

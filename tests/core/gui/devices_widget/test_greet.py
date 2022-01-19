@@ -8,8 +8,8 @@ from async_generator import asynccontextmanager
 from pendulum import now as pendulum_now
 
 from parsec.utils import start_task
+from parsec.api.protocol import InvitationType, HumanHandle, InvitationDeletedReason, DeviceLabel
 from parsec.core.gui.lang import translate
-from parsec.api.protocol import InvitationType, HumanHandle, InvitationDeletedReason
 from parsec.core.types import BackendInvitationAddr
 from parsec.core.backend_connection import backend_invited_cmds_factory
 from parsec.core.invite import claimer_retrieve_info
@@ -41,7 +41,7 @@ def GreetDeviceTestBed(
             self.requested_human_handle = HumanHandle(
                 email="brod@pe.com", label="Bender B. Rodriguez"
             )
-            self.requested_device_label = "PC1"
+            self.requested_device_label = DeviceLabel("PC1")
             self.steps_done = []
 
             # Set during bootstrap
@@ -232,7 +232,7 @@ def GreetDeviceTestBed(
                 assert self.devices_widget.layout_devices.count() == 3
                 device_button = self.devices_widget.layout_devices.itemAt(2).widget()
                 assert isinstance(device_button, DeviceButton)
-                assert device_button.device_info.device_label == "PC1"
+                assert device_button.device_info.device_label == DeviceLabel("PC1")
                 assert device_button.label_device_name.text() == "PC1"
 
             await aqtbot.wait_until(_greet_done)

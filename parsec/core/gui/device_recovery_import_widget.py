@@ -2,9 +2,10 @@
 
 from PyQt5.QtCore import pyqtSignal
 from PyQt5.QtWidgets import QWidget
-
 from pathlib import Path, PurePath
 
+from parsec.api.protocol import DeviceLabel
+from parsec.crypto import derivate_secret_key_from_recovery_passphrase
 from parsec.core.backend_connection import BackendConnectionError, BackendNotAvailable
 from parsec.core.recovery import generate_new_device_from_recovery
 from parsec.core.local_device import (
@@ -16,15 +17,12 @@ from parsec.core.local_device import (
     LocalDeviceCryptoError,
     LocalDeviceNotFoundError,
 )
-from parsec.crypto import derivate_secret_key_from_recovery_passphrase
-
 from parsec.core.gui.authentication_choice_widget import AuthenticationChoiceWidget
 from parsec.core.gui.trio_jobs import QtToTrioJob, JobResultError
 from parsec.core.gui.lang import translate
 from parsec.core.gui.custom_dialogs import GreyedDialog, QDialogInProcess, show_error, show_info
 from parsec.core.gui import validators
 from parsec.core.gui.desktop import get_default_device
-
 from parsec.core.gui.ui.device_recovery_import_widget import Ui_DeviceRecoveryImportWidget
 from parsec.core.gui.ui.device_recovery_import_page1_widget import (
     Ui_DeviceRecoveryImportPage1Widget,
@@ -41,7 +39,7 @@ class DeviceRecoveryImportPage1Widget(QWidget, Ui_DeviceRecoveryImportPage1Widge
         self.label_passphrase_error.hide()
         self.line_edit_device.setText(get_default_device())
         self.line_edit_device.validity_changed.connect(self._check_infos)
-        self.line_edit_device.set_validator(validators.DeviceNameValidator())
+        self.line_edit_device.set_validator(validators.DeviceLabelValidator())
         self.edit_passphrase.textChanged.connect(self._on_passphrase_text_changed)
 
     def _on_import_key_clicked(self):
@@ -139,11 +137,15 @@ class DeviceRecoveryImportWidget(QWidget, Ui_DeviceRecoveryImportWidget):
 
     def _on_validate_clicked(self):
         if isinstance(self.current_page, DeviceRecoveryImportPage1Widget):
+            # No try/except given `self.line_edit_device` has already been validated against `DeviceLabel`
+            device_label = DeviceLabel(
+                validators.trim_user_name(self.current_page.line_edit_device.text())
+            )
             self.jobs_ctx.submit_job(
                 self.create_new_device_success,
                 self.create_new_device_failure,
                 self._create_new_device,
-                device_label=self.current_page.line_edit_device.text(),
+                device_label=device_label,
                 file_path=PurePath(self.current_page.get_recovery_key_file()),
                 passphrase=self.current_page.get_passphrase(),
             )
