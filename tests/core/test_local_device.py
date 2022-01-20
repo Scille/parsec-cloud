@@ -179,7 +179,7 @@ def test_available_devices_slughash_uniqueness(
     dummy_key = SigningKey.generate().verify_key
     o1u1d1_bad_rvk = o1u1d1.evolve(
         organization_addr=o1u1d1.organization_addr.build(
-            backend_addr=o1u1d1.organization_addr,
+            backend_addr=o1u1d1.organization_addr.get_backend_addr(),
             organization_id=o1u1d1.organization_addr.organization_id,
             root_verify_key=dummy_key,
         )

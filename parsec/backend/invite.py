@@ -161,6 +161,8 @@ def generate_invite_email(
     invitation_url: str,
     backend_url: str,
 ) -> Message:
+    if backend_url.endswith("/"):
+        backend_url = backend_url[:-1]
     html = get_template("invitation_mail.html").render(
         greeter=greeter_name,
         organization_id=organization_id,

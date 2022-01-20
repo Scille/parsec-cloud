@@ -186,11 +186,13 @@ async def _get_user(conn, organization_id: OrganizationID, user_id: UserID) -> U
         profile=UserProfile(row["profile"]),
         user_certificate=row["user_certificate"],
         redacted_user_certificate=row["redacted_user_certificate"],
-        user_certifier=row["user_certifier"],
+        user_certifier=DeviceID(row["user_certifier"]) if row["user_certifier"] else None,
         created_on=row["created_on"],
         revoked_on=row["revoked_on"],
         revoked_user_certificate=row["revoked_user_certificate"],
-        revoked_user_certifier=row["revoked_user_certifier"],
+        revoked_user_certifier=DeviceID(row["revoked_user_certifier"])
+        if row["revoked_user_certifier"]
+        else None,
     )
 
 
@@ -203,10 +205,10 @@ async def _get_device(conn, organization_id: OrganizationID, device_id: DeviceID
 
     return Device(
         device_id=device_id,
-        device_label=row["device_label"],
+        device_label=DeviceLabel(row["device_label"]),
         device_certificate=row["device_certificate"],
         redacted_device_certificate=row["redacted_device_certificate"],
-        device_certifier=row["device_certifier"],
+        device_certifier=DeviceID(row["device_certifier"]),
         created_on=row["created_on"],
     )
 
@@ -249,10 +251,10 @@ async def _get_user_devices(
     return tuple(
         Device(
             device_id=DeviceID(row["device_id"]),
-            device_label=row["device_label"],
+            device_label=DeviceLabel(row["device_label"]) if row["device_label"] else None,
             device_certificate=row["device_certificate"],
             redacted_device_certificate=row["redacted_device_certificate"],
-            device_certifier=row["device_certifier"],
+            device_certifier=DeviceID(row["device_certifier"]) if row["device_certifier"] else None,
             created_on=row["created_on"],
         )
         for row in results
@@ -335,7 +337,7 @@ async def query_get_user_with_device(
 
     device = Device(
         device_id=device_id,
-        device_label=DeviceLabel(d_row["device_label"]),
+        device_label=DeviceLabel(d_row["device_label"]) if d_row["device_label"] else None,
         device_certificate=d_row["device_certificate"],
         redacted_device_certificate=d_row["redacted_device_certificate"],
         device_certifier=DeviceID(d_row["device_certifier"]) if d_row["device_certifier"] else None,
@@ -347,7 +349,7 @@ async def query_get_user_with_device(
         profile=UserProfile(u_row["profile"]),
         user_certificate=u_row["user_certificate"],
         redacted_user_certificate=u_row["redacted_user_certificate"],
-        user_certifier=u_row["user_certifier"],
+        user_certifier=DeviceID(u_row["user_certifier"]) if u_row["user_certifier"] else None,
         created_on=u_row["created_on"],
         revoked_on=u_row["revoked_on"],
         revoked_user_certificate=u_row["revoked_user_certificate"],

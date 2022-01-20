@@ -82,7 +82,7 @@ class DeviceRecoveryImportPage1Widget(QWidget, Ui_DeviceRecoveryImportPage1Widge
         return self.edit_passphrase.toPlainText()
 
     def get_device_label(self):
-        return self.line_edit_device.text()
+        return DeviceLabel(self.line_edit_device.text())
 
     def get_recovery_key_file(self):
         return self.label_key_file.text()

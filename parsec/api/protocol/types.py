@@ -2,7 +2,7 @@
 
 import re
 from unicodedata import normalize
-from typing import Union, TypeVar, Type, NoReturn, Pattern
+from typing import Union, TypeVar, Type, NoReturn, TYPE_CHECKING, Optional, Tuple, Pattern
 from uuid import uuid4
 from enum import Enum
 from collections import namedtuple
@@ -63,6 +63,16 @@ class OrganizationID(StrBased):
     MAX_BYTE_SIZE = 32
 
 
+_PyOrganizationID = OrganizationID
+if not TYPE_CHECKING:
+    try:
+        from libparsec.types import OrganizationID as _RsOrganizationID
+    except:
+        pass
+    else:
+        OrganizationID = _RsOrganizationID
+
+
 class UserID(StrBased):
     __slots__ = ()
     REGEX = re.compile(r"^[\w\-]{1,32}$")
@@ -76,6 +86,16 @@ class UserID(StrBased):
         return DeviceID(f"{self._str}@{device_name}")
 
 
+_PyUserID = UserID
+if not TYPE_CHECKING:
+    try:
+        from libparsec.types import UserID as _RsUserID
+    except:
+        pass
+    else:
+        UserID = _RsUserID
+
+
 class DeviceName(StrBased):
     __slots__ = ()
     REGEX = re.compile(r"^[\w\-]{1,32}$")
@@ -84,6 +104,16 @@ class DeviceName(StrBased):
     @classmethod
     def new(cls: Type[DeviceNameTypeVar]) -> DeviceNameTypeVar:
         return cls(uuid4().hex)
+
+
+_PyDeviceName = DeviceName
+if not TYPE_CHECKING:
+    try:
+        from libparsec.types import DeviceName as _RsDeviceName
+    except:
+        pass
+    else:
+        DeviceName = _RsDeviceName
 
 
 class DeviceID(StrBased):
@@ -104,10 +134,29 @@ class DeviceID(StrBased):
         return cls(f"{uuid4().hex}@{uuid4().hex}")
 
 
+_PyDeviceID = DeviceID
+if not TYPE_CHECKING:
+    try:
+        from libparsec.types import DeviceID as _RsDeviceID
+    except:
+        pass
+    else:
+        DeviceID = _RsDeviceID
+
+
 class DeviceLabel(StrBased):
     REGEX = re.compile(r"^.+$")  # At least 1 character
     MAX_BYTE_SIZE = 255
 
+
+_PyDeviceLabel = DeviceLabel
+if not TYPE_CHECKING:
+    try:
+        from libparsec.types import DeviceLabel as _RsDeviceLabel
+    except:
+        pass
+    else:
+        DeviceLabel = _RsDeviceLabel
 
 OrganizationIDField = fields.str_based_field_factory(OrganizationID)
 UserIDField = fields.str_based_field_factory(UserID)
@@ -134,7 +183,7 @@ class HumanHandle(namedtuple("HumanHandle", "email label")):
         if parsed_email != email or parsed_label != label:
             raise ValueError("Invalid email/label couple")
 
-        return super(HumanHandle, cls).__new__(cls, email, label)
+        return super(_PyHumanHandle, cls).__new__(cls, email, label)
 
     def __repr__(self) -> str:
         return f"<HumanHandle {str(self)} >"
@@ -153,11 +202,28 @@ class HumanHandle(namedtuple("HumanHandle", "email label")):
         return hash(self.email)
 
 
+_PyHumanHandle = HumanHandle
+if not TYPE_CHECKING:
+    try:
+        from libparsec.types import HumanHandle as _RsHumanHandle
+    except ImportError:
+        pass
+    else:
+        HumanHandle = _RsHumanHandle
+
+
 class HumanHandleField(fields.Tuple):
     def __init__(self, **kwargs: object):
         email = fields.String(required=True)
         label = fields.String(required=True)
         super().__init__(email, label, **kwargs)
+
+    def _serialize(
+        self, value: HumanHandle, attr: object, data: object
+    ) -> Optional[Tuple[str, str]]:
+        if value is None:
+            return None
+        return (value.email, value.label)
 
     def _deserialize(self, *args: object, **kwargs: object) -> HumanHandle:
         result = super()._deserialize(*args, **kwargs)

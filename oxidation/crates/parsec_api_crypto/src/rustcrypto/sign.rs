@@ -99,12 +99,16 @@ impl VerifyKey {
     pub const ALGORITHM: &'static str = "ed25519";
     pub const SIZE: usize = PUBLIC_KEY_LENGTH;
 
-    pub fn unsecure_unwrap<'a>(&self, signed: &'a [u8]) -> Option<&'a [u8]> {
+    pub fn unsecure_unwrap(signed: &[u8]) -> Option<&[u8]> {
         signed.get(SIGNATURE_LENGTH..)
     }
 
     pub fn verify(&self, signed: &[u8]) -> Result<Vec<u8>, &'static str> {
-        // TODO: handle wrong signed size
+        // Signature::try_from expects a [u8;64] and I have no idea how to get
+        // one except by slicing, so we make sure the array is large enough before slicing.
+        if signed.len() < SIGNATURE_LENGTH {
+            return Err("Invalid signature");
+        }
         let signature = Signature::try_from(&signed[..SIGNATURE_LENGTH]).unwrap();
         let message = &signed[SIGNATURE_LENGTH..];
         self.0

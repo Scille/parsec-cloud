@@ -474,7 +474,7 @@ class UsersWidget(QWidget, Ui_UsersWidget):
 
         for invitation in reversed(invitations):
             addr = BackendInvitationAddr.build(
-                backend_addr=self.core.device.organization_addr,
+                backend_addr=self.core.device.organization_addr.get_backend_addr(),
                 organization_id=self.core.device.organization_id,
                 invitation_type=InvitationType.USER,
                 token=invitation["token"],

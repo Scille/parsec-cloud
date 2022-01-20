@@ -1,7 +1,7 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2016-2021 Scille SAS
 
 from enum import Enum
-from typing import Dict, cast
+from typing import Dict, cast, TYPE_CHECKING
 
 from parsec.types import UUID4
 from parsec.serde import BaseSchema, OneOfSchema, fields
@@ -33,6 +33,16 @@ __all__ = (
 
 class InvitationToken(UUID4):
     __slots__ = ()
+
+
+_PyInvitationToken = InvitationToken
+if not TYPE_CHECKING:
+    try:
+        from libparsec.types import InvitationToken as _RsInvitationToken
+    except:
+        pass
+    else:
+        InvitationToken = _RsInvitationToken
 
 
 class InvitationType(Enum):

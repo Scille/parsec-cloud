@@ -63,6 +63,7 @@ async def test_user_create_ok(
     backend_user, backend_device = await backend.user.get_user_with_device(
         mallory.organization_id, mallory.device_id
     )
+
     assert backend_user == User(
         user_id=mallory.user_id,
         human_handle=mallory.human_handle if with_labels else None,

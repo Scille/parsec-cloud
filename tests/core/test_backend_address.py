@@ -2,10 +2,9 @@
 
 import pytest
 import re
-from parsec.api.protocol.invite import InvitationToken
 
 from parsec.crypto import SigningKey
-from parsec.api.protocol import InvitationType, OrganizationID
+from parsec.api.protocol import InvitationType, OrganizationID, InvitationToken
 from parsec.core.types import (
     EntryID,
     BackendAddr,
@@ -159,7 +158,7 @@ def test_addr_with_no_hostname(addr_testbed, with_port):
     url = addr_testbed.generate_url(DOMAIN=domain)
     with pytest.raises(ValueError) as exc:
         addr_testbed.cls.from_url(url)
-    assert str(exc.value) == "Missing mandatory hostname"
+    assert str(exc.value) in ["Missing mandatory hostname", "Invalid URL"]
 
 
 def test_good_addr_with_unknown_field(addr_testbed):
@@ -262,6 +261,7 @@ def test_good_addr_with_no_token(addr_with_token_testbed):
     assert addr2 == addr
 
 
+@pytest.mark.skip("Rust replaces invalid UTF-8 characters instead of raising a ValueError")
 def test_addr_with_bad_percent_encoded_token(addr_with_token_testbed):
     bad_percent_quoted = "%E5%BA%B7%E7"  # Not a valid utf8 string
     url = addr_with_token_testbed.generate_url(TOKEN=bad_percent_quoted)

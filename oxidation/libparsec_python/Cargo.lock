@@ -245,6 +245,7 @@ name = "libparsec"
 version = "0.1.0"
 dependencies = [
  "parsec_api_crypto",
+ "parsec_api_types",
 ]
 
 [[package]]
@@ -253,7 +254,9 @@ version = "0.1.0"
 dependencies = [
  "libparsec",
  "parsec_api_crypto",
+ "parsec_api_types",
  "pyo3",
+ "uuid",
 ]
 
 [[package]]

@@ -21,7 +21,7 @@ macro_rules! impl_common_stuff {
                 self._to_url(self.base.to_url())
             }
 
-            pub fn to_http_redirection_url(self) -> Url {
+            pub fn to_http_redirection_url(&self) -> Url {
                 let mut url = self.base.to_http_redirection_url();
                 url.path_segments_mut()
                     .unwrap_or_else(|()| unreachable!())
@@ -157,7 +157,8 @@ impl BaseBackendAddr {
     fn from_url(parsed: &Url, pairs: &url::form_urlencoded::Parse) -> Result<Self, AddrError> {
         if parsed.scheme() != PARSEC_SCHEME {
             lazy_static! {
-                static ref SCHEME_ERROR_MSG: String = format!("Must start with {}", PARSEC_SCHEME);
+                static ref SCHEME_ERROR_MSG: String =
+                    format!("Must start with `{}://`", PARSEC_SCHEME);
             }
             return Err(&SCHEME_ERROR_MSG);
         }
@@ -175,12 +176,12 @@ impl BaseBackendAddr {
                 "false" => true,
                 "true" => false,
                 _ => {
-                    return Err("Invalid `no_ssl` query value (must be true or false)");
+                    return Err("Invalid `no_ssl` param value (must be true or false)");
                 }
             },
         };
         if no_ssl_queries.next().is_some() {
-            return Err("Multiple values for query `no_ssl`");
+            return Err("Multiple values for param `no_ssl`");
         }
 
         let default_port = if use_ssl {
@@ -233,8 +234,24 @@ macro_rules! expose_BaseBackendAddr_fields {
             &self.base.hostname
         }
 
-        pub fn port(&self) -> Option<u16> {
-            self.base.port
+        pub fn port(&self) -> u16 {
+            match self.base.port {
+                Some(port) => port,
+                None => {
+                    if self.base.use_ssl {
+                        PARSEC_SSL_DEFAULT_PORT
+                    } else {
+                        PARSEC_NO_SSL_DEFAULT_PORT
+                    }
+                }
+            }
+        }
+
+        pub fn is_default_port(&self) -> bool {
+            match self.base.port {
+                Some(_) => false,
+                None => true,
+            }
         }
 
         pub fn use_ssl(&self) -> bool {
@@ -248,11 +265,11 @@ fn extract_action<'a>(
 ) -> Result<std::borrow::Cow<'a, str>, AddrError> {
     let mut action_queries = pairs.filter(|(k, _)| k == "action");
     let action = match action_queries.next() {
-        None => return Err("Missing mandatory `action` query"),
+        None => return Err("Missing mandatory `action` param"),
         Some((_, value)) => value,
     };
     if action_queries.next().is_some() {
-        return Err("Multiple values for query `action`");
+        return Err("Multiple values for param `action`");
     }
     Ok(action)
 }
@@ -345,13 +362,13 @@ impl BackendOrganizationAddr {
 
         let mut rvk_queries = pairs.filter(|(k, _)| k == "rvk");
         let root_verify_key = match rvk_queries.next() {
-            None => return Err("Missing mandatory `rvk` query"),
+            None => return Err("Missing mandatory `rvk` param"),
             Some((_, value)) => {
-                import_root_verify_key(&value).or(Err("Invalid `rvk` query value"))?
+                import_root_verify_key(&value).or(Err("Invalid `rvk` param value"))?
             }
         };
         if rvk_queries.next().is_some() {
-            return Err("Multiple values for query `rvk`");
+            return Err("Multiple values for param `rvk`");
         }
 
         Ok(Self {
@@ -389,6 +406,34 @@ pub enum BackendActionAddr {
     OrganizationBootstrap(BackendOrganizationBootstrapAddr),
     OrganizationFileLink(BackendOrganizationFileLinkAddr),
     Invitation(BackendInvitationAddr),
+}
+
+impl BackendActionAddr {
+    pub fn from_any(url: &str) -> Result<Self, AddrError> {
+        if let Ok(addr) = BackendOrganizationBootstrapAddr::from_any(url) {
+            return Ok(BackendActionAddr::OrganizationBootstrap(addr));
+        }
+        if let Ok(addr) = BackendOrganizationFileLinkAddr::from_any(url) {
+            return Ok(BackendActionAddr::OrganizationFileLink(addr));
+        }
+        if let Ok(addr) = BackendInvitationAddr::from_any(url) {
+            return Ok(BackendActionAddr::Invitation(addr));
+        }
+        Err("Invalid URL format")
+    }
+
+    pub fn from_http_redirection(url: &str) -> Result<Self, AddrError> {
+        if let Ok(addr) = BackendOrganizationBootstrapAddr::from_http_redirection(url) {
+            return Ok(BackendActionAddr::OrganizationBootstrap(addr));
+        }
+        if let Ok(addr) = BackendOrganizationFileLinkAddr::from_http_redirection(url) {
+            return Ok(BackendActionAddr::OrganizationFileLink(addr));
+        }
+        if let Ok(addr) = BackendInvitationAddr::from_http_redirection(url) {
+            return Ok(BackendActionAddr::Invitation(addr));
+        }
+        Err("Invalid URL format")
+    }
 }
 
 impl TryFrom<&str> for BackendActionAddr {
@@ -439,7 +484,7 @@ impl BackendOrganizationBootstrapAddr {
         let organization_id = extract_organization_id(parsed)?;
         let action = extract_action(pairs)?;
         if action != "bootstrap_organization" {
-            return Err("Expected `action=bootstrap_organization` query");
+            return Err("Expected `action=bootstrap_organization` value");
         }
 
         let mut token_queries = pairs.filter(|(k, _)| k == "token");
@@ -472,11 +517,15 @@ impl BackendOrganizationBootstrapAddr {
             .unwrap_or_else(|()| unreachable!())
             .push(self.organization_id.as_ref());
         url.query_pairs_mut()
-            .append_pair("action", "bootstrap_organization")
-            // For legacy reasons, token must always be provided, hence default
-            // token is the empty one (which is used for spontaneous organization
-            // bootstrap without prior organization creation)
-            .append_pair("token", if let Some(ref x) = self.token { x } else { "" });
+            .append_pair("action", "bootstrap_organization");
+        // For legacy reasons, token must always be provided, hence default
+        // token is the empty one (which is used for spontaneous organization
+        // bootstrap without prior organization creation)
+        if let Some(ref tk) = self.token {
+            if !tk.is_empty() {
+                url.query_pairs_mut().append_pair("token", tk);
+            }
+        }
         url
     }
 
@@ -617,7 +666,7 @@ impl BackendInvitationAddr {
         let invitation_type = match extract_action(pairs)? {
             x if x == "claim_user" => InvitationType::User,
             x if x == "claim_device" => InvitationType::Device,
-            _ => return Err("Expected `action=claim_user` or `action=claim_device` query value"),
+            _ => return Err("Expected `action=claim_user` or `action=claim_device` value"),
         };
 
         let mut token_queries = pairs.filter(|(k, _)| k == "token");

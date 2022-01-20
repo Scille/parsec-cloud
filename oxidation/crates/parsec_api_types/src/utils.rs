@@ -6,6 +6,16 @@ macro_rules! new_uuid_type {
         #[serde(transparent)]
         pub struct $name(uuid::Uuid);
 
+        impl $name {
+            pub fn as_bytes(&self) -> &uuid::Bytes {
+                self.0.as_bytes()
+            }
+
+            pub fn as_hyphenated(&self) -> String {
+                self.0.as_hyphenated().to_string()
+            }
+        }
+
         impl std::fmt::Display for $name {
             fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
                 write!(f, "{}", self.0.as_simple())

@@ -236,7 +236,7 @@ async def test_no_access_during_reencryption(running_backend, alice2_user_fs, wo
     await alice2_user_fs.process_last_messages()
     assert aw.get_encryption_revision() == 2
     file_info = await aw.path_info("/foo.txt")
-    assert file_info == {
+    assert {
         "id": ANY,
         "type": "file",
         "base_version": 2,
@@ -246,7 +246,7 @@ async def test_no_access_during_reencryption(running_backend, alice2_user_fs, wo
         "need_sync": False,
         "size": 2,
         "confinement_point": None,
-    }
+    } == file_info
 
     # Finally sync is ok
     await aw.sync_by_id(bar_id)

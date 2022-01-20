@@ -6,7 +6,6 @@ from structlog import get_logger
 from PyQt5.QtCore import pyqtSignal
 from PyQt5.QtGui import QFont
 from PyQt5.QtWidgets import QWidget
-from parsec.api.protocol.types import DeviceLabel
 
 from parsec.core.types import LocalDevice
 from parsec.core.local_device import (
@@ -17,6 +16,7 @@ from parsec.core.local_device import (
     LocalDeviceError,
     LocalDeviceNotFoundError,
 )
+from parsec.api.protocol import DeviceLabel
 from parsec.core.invite import claimer_retrieve_info, InvitePeerResetError
 from parsec.core.backend_connection import (
     backend_invited_cmds_factory,

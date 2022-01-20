@@ -1,5 +1,7 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2016-2021 Scille SAS
 
+from typing import TYPE_CHECKING
+
 from parsec.types import UUID4
 from parsec.serde import BaseSchema, fields, validate
 from parsec.api.protocol.base import BaseReqSchema, BaseRepSchema, CmdSerializer
@@ -22,6 +24,16 @@ __all__ = (
 
 class VlobID(UUID4):
     __slots__ = ()
+
+
+_PyVlobID = VlobID
+if not TYPE_CHECKING:
+    try:
+        from libparsec.types import VlobID as _RsVlobID
+    except:
+        pass
+    else:
+        VlobID = _RsVlobID
 
 
 VlobIDField = fields.uuid_based_field_factory(VlobID)

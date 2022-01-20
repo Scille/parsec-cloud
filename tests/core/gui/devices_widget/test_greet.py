@@ -80,7 +80,7 @@ def GreetDeviceTestBed(
                 organization_id=author.organization_id, greeter_user_id=author.user_id
             )
             invitation_addr = BackendInvitationAddr.build(
-                backend_addr=author.organization_addr,
+                backend_addr=author.organization_addr.get_backend_addr(),
                 organization_id=author.organization_id,
                 invitation_type=InvitationType.DEVICE,
                 token=invitation.token,
@@ -232,7 +232,7 @@ def GreetDeviceTestBed(
                 assert self.devices_widget.layout_devices.count() == 3
                 device_button = self.devices_widget.layout_devices.itemAt(2).widget()
                 assert isinstance(device_button, DeviceButton)
-                assert device_button.device_info.device_label == DeviceLabel("PC1")
+                assert device_button.device_info.device_label == self.requested_device_label
                 assert device_button.label_device_name.text() == "PC1"
 
             await aqtbot.wait_until(_greet_done)

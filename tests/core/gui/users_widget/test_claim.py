@@ -12,8 +12,8 @@ from parsec.api.protocol import (
     DeviceLabel,
     InvitationToken,
     InvitationType,
-    InvitationDeletedReason,
     HumanHandle,
+    InvitationDeletedReason,
 )
 from parsec.core.types import BackendInvitationAddr
 from parsec.core.invite import UserGreetInitialCtx
@@ -98,7 +98,7 @@ def ClaimUserTestBed(
                 claimer_email=claimer_email,
             )
             invitation_addr = BackendInvitationAddr.build(
-                backend_addr=self.author.organization_addr,
+                backend_addr=self.author.organization_addr.get_backend_addr(),
                 organization_id=self.author.organization_id,
                 invitation_type=InvitationType.USER,
                 token=invitation.token,
@@ -623,7 +623,7 @@ async def test_claim_user_already_deleted(
     )
 
     invitation_addr = BackendInvitationAddr.build(
-        backend_addr=alice.organization_addr,
+        backend_addr=alice.organization_addr.get_backend_addr(),
         organization_id=alice.organization_id,
         invitation_type=InvitationType.USER,
         token=invitation.token,
@@ -655,7 +655,7 @@ async def test_claim_user_offline_backend(
     )
 
     invitation_addr = BackendInvitationAddr.build(
-        backend_addr=alice.organization_addr,
+        backend_addr=alice.organization_addr.get_backend_addr(),
         organization_id=alice.organization_id,
         invitation_type=InvitationType.USER,
         token=invitation.token,
@@ -679,7 +679,7 @@ async def test_claim_user_unknown_invitation(
 ):
 
     invitation_addr = BackendInvitationAddr.build(
-        backend_addr=alice.organization_addr,
+        backend_addr=alice.organization_addr.get_backend_addr(),
         organization_id=alice.organization_id,
         invitation_type=InvitationType.USER,
         token=InvitationToken.new(),
@@ -721,7 +721,7 @@ async def test_claim_user_backend_desync(
     monkeypatch.setattr("parsec.api.protocol.BaseClientHandshake.timestamp", _timestamp)
 
     invitation_addr = BackendInvitationAddr.build(
-        backend_addr=alice.organization_addr,
+        backend_addr=alice.organization_addr.get_backend_addr(),
         organization_id=alice.organization_id,
         invitation_type=InvitationType.USER,
         token=InvitationToken.new(),

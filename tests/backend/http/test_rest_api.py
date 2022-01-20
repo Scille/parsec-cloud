@@ -91,10 +91,10 @@ async def test_organization_create_bad_data(backend_rest_send):
         # Missing required field
         {"active_users_limit": 10},
         # Bad field value
-        {"organization_id": organization_id, "active_users_limit": -1},
-        {"organization_id": organization_id, "active_users_limit": "foo"},
-        {"organization_id": organization_id, "user_profile_outsider_allowed": 42},
-        {"organization_id": organization_id, "user_profile_outsider_allowed": "foo"},
+        {"organization_id": str(organization_id), "active_users_limit": -1},
+        {"organization_id": str(organization_id), "active_users_limit": "foo"},
+        {"organization_id": str(organization_id), "user_profile_outsider_allowed": 42},
+        {"organization_id": str(organization_id), "user_profile_outsider_allowed": "foo"},
     ]:
         status, _, body = await backend_rest_send(
             f"/administration/organizations", method="POST", body=bad_body

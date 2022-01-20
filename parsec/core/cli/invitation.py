@@ -57,7 +57,7 @@ async def _invite_device(config: CoreConfig, device: LocalDevice) -> None:
                     click.secho("Email could not be sent", fg="red")
 
     action_addr = BackendInvitationAddr.build(
-        backend_addr=device.organization_addr,
+        backend_addr=device.organization_addr.get_backend_addr(),
         organization_id=device.organization_id,
         invitation_type=InvitationType.DEVICE,
         token=rep["token"],
@@ -97,7 +97,7 @@ async def _invite_user(
                     click.secho("Email could not be sent", fg="red")
 
     action_addr = BackendInvitationAddr.build(
-        backend_addr=device.organization_addr,
+        backend_addr=device.organization_addr.get_backend_addr(),
         organization_id=device.organization_id,
         invitation_type=InvitationType.USER,
         token=rep["token"],

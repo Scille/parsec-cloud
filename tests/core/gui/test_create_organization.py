@@ -387,10 +387,9 @@ async def test_create_organization_bootstrap_only_custom_server(
         assert not co_w.current_widget.radio_use_commercial.isEnabled()
         assert len(co_w.current_widget.line_edit_backend_addr.text())
         assert not co_w.current_widget.line_edit_backend_addr.isEnabled()
+        assert co_w.button_validate.isEnabled()
 
     await aqtbot.wait_until(_user_widget_ready)
-
-    aqtbot.mouse_click(co_w.current_widget.check_accept_contract, QtCore.Qt.LeftButton)
 
     aqtbot.mouse_click(co_w.button_validate, QtCore.Qt.LeftButton)
 

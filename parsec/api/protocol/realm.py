@@ -1,7 +1,7 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2016-2021 Scille SAS
 
 from enum import Enum
-
+from typing import TYPE_CHECKING
 from parsec.types import UUID4
 from parsec.serde import fields
 from parsec.api.protocol.base import BaseReqSchema, BaseRepSchema, CmdSerializer
@@ -27,6 +27,16 @@ __all__ = (
 
 class RealmID(UUID4):
     __slots__ = ()
+
+
+_PyRealmID = RealmID
+if not TYPE_CHECKING:
+    try:
+        from libparsec.types import RealmID as _RsRealmID
+    except:
+        pass
+    else:
+        RealmID = _RsRealmID
 
 
 class MaintenanceType(Enum):

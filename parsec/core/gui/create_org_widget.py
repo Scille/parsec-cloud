@@ -5,7 +5,7 @@ from structlog import get_logger
 from PyQt5.QtCore import pyqtSignal
 from PyQt5.QtWidgets import QWidget, QApplication, QDialog
 
-from parsec.api.protocol import OrganizationID, DeviceLabel, HumanHandle
+from parsec.api.protocol import OrganizationID, HumanHandle, DeviceLabel
 from parsec.core.backend_connection import (
     apiv1_backend_anonymous_cmds_factory,
     BackendConnectionRefused,

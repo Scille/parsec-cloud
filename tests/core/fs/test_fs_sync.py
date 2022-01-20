@@ -115,7 +115,7 @@ async def test_new_empty_entry(type, running_backend, alice_user_fs, alice2_user
 
     info = await workspace.path_info("/foo")
     if type == "file":
-        assert info == {
+        assert {
             "type": "file",
             "id": ANY,
             "is_placeholder": False,
@@ -125,9 +125,9 @@ async def test_new_empty_entry(type, running_backend, alice_user_fs, alice2_user
             "updated": datetime(2000, 1, 2),
             "size": 0,
             "confinement_point": None,
-        }
+        } == info
     else:
-        assert info == {
+        assert {
             "type": "folder",
             "id": ANY,
             "is_placeholder": False,
@@ -137,7 +137,7 @@ async def test_new_empty_entry(type, running_backend, alice_user_fs, alice2_user
             "updated": datetime(2000, 1, 2),
             "children": [],
             "confinement_point": None,
-        }
+        } == info
     info2 = await workspace2.path_info("/foo")
     assert info == info2
 
@@ -609,7 +609,7 @@ async def test_sync_data_before_workspace(running_backend, alice_user_fs):
     await alice_user_fs.sync()
 
     foo_info = await w.path_info("/bar/foo.txt")
-    assert foo_info == {
+    assert {
         "id": ANY,
         "type": "file",
         "base_version": 1,
@@ -619,9 +619,9 @@ async def test_sync_data_before_workspace(running_backend, alice_user_fs):
         "need_sync": False,
         "size": 2,
         "confinement_point": None,
-    }
+    } == foo_info
     root_info = await w.path_info("/")
-    assert root_info == {
+    assert {
         "id": wid,
         "type": "folder",
         "base_version": 1,
@@ -631,7 +631,7 @@ async def test_sync_data_before_workspace(running_backend, alice_user_fs):
         "need_sync": True,
         "children": ["bar"],
         "confinement_point": None,
-    }
+    } == root_info
 
 
 @pytest.mark.trio

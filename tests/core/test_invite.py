@@ -42,7 +42,7 @@ async def test_good_device_claim(
         organization_id=alice.organization_id, greeter_user_id=alice.user_id
     )
     invitation_addr = BackendInvitationAddr.build(
-        backend_addr=alice.organization_addr,
+        backend_addr=alice.organization_addr.get_backend_addr(),
         organization_id=alice.organization_id,
         invitation_type=InvitationType.DEVICE,
         token=invitation.token,
@@ -183,7 +183,7 @@ async def test_good_user_claim(
         claimer_email=claimer_email,
     )
     invitation_addr = BackendInvitationAddr.build(
-        backend_addr=alice.organization_addr,
+        backend_addr=alice.organization_addr.get_backend_addr(),
         organization_id=alice.organization_id,
         invitation_type=InvitationType.USER,
         token=invitation.token,
@@ -341,7 +341,7 @@ async def test_claimer_handle_reset(backend, running_backend, alice, alice_backe
         organization_id=alice.organization_id, greeter_user_id=alice.user_id
     )
     invitation_addr = BackendInvitationAddr.build(
-        backend_addr=alice.organization_addr,
+        backend_addr=alice.organization_addr.get_backend_addr(),
         organization_id=alice.organization_id,
         invitation_type=InvitationType.DEVICE,
         token=invitation.token,
@@ -413,7 +413,7 @@ async def test_claimer_handle_cancel_event(
         organization_id=alice.organization_id, greeter_user_id=alice.user_id
     )
     invitation_addr = BackendInvitationAddr.build(
-        backend_addr=alice.organization_addr,
+        backend_addr=alice.organization_addr.get_backend_addr(),
         organization_id=alice.organization_id,
         invitation_type=InvitationType.DEVICE,
         token=invitation.token,
@@ -520,7 +520,7 @@ async def test_claimer_handle_command_failure(
         organization_id=alice.organization_id, greeter_user_id=alice.user_id
     )
     invitation_addr = BackendInvitationAddr.build(
-        backend_addr=alice.organization_addr,
+        backend_addr=alice.organization_addr.get_backend_addr(),
         organization_id=alice.organization_id,
         invitation_type=InvitationType.DEVICE,
         token=invitation.token,
@@ -617,7 +617,7 @@ async def test_user_claim_but_active_users_limit_reached(backend, running_backen
         claimer_email="zack@example.com",
     )
     invitation_addr = BackendInvitationAddr.build(
-        backend_addr=alice.organization_addr,
+        backend_addr=alice.organization_addr.get_backend_addr(),
         organization_id=alice.organization_id,
         invitation_type=InvitationType.USER,
         token=invitation.token,

@@ -89,7 +89,7 @@ def ClaimDeviceTestBed(
                 organization_id=self.author.organization_id, greeter_user_id=self.author.user_id
             )
             invitation_addr = BackendInvitationAddr.build(
-                backend_addr=self.author.organization_addr,
+                backend_addr=self.author.organization_addr.get_backend_addr(),
                 organization_id=self.author.organization_id,
                 invitation_type=InvitationType.DEVICE,
                 token=invitation.token,
@@ -586,7 +586,7 @@ async def test_claim_device_already_deleted(
         organization_id=alice.organization_id, greeter_user_id=alice.user_id
     )
     invitation_addr = BackendInvitationAddr.build(
-        backend_addr=alice.organization_addr,
+        backend_addr=alice.organization_addr.get_backend_addr(),
         organization_id=alice.organization_id,
         invitation_type=InvitationType.DEVICE,
         token=invitation.token,
@@ -618,7 +618,7 @@ async def test_claim_device_offline_backend(
         organization_id=alice.organization_id, greeter_user_id=alice.user_id
     )
     invitation_addr = BackendInvitationAddr.build(
-        backend_addr=alice.organization_addr,
+        backend_addr=alice.organization_addr.get_backend_addr(),
         organization_id=alice.organization_id,
         invitation_type=InvitationType.DEVICE,
         token=invitation.token,
@@ -642,7 +642,7 @@ async def test_claim_device_unknown_invitation(
 ):
 
     invitation_addr = BackendInvitationAddr.build(
-        backend_addr=alice.organization_addr,
+        backend_addr=alice.organization_addr.get_backend_addr(),
         organization_id=alice.organization_id,
         invitation_type=InvitationType.DEVICE,
         token=InvitationToken.new(),
@@ -686,7 +686,7 @@ async def test_claim_device_backend_desync(
     monkeypatch.setattr("parsec.api.protocol.BaseClientHandshake.timestamp", _timestamp)
 
     invitation_addr = BackendInvitationAddr.build(
-        backend_addr=alice.organization_addr,
+        backend_addr=alice.organization_addr.get_backend_addr(),
         organization_id=alice.organization_id,
         invitation_type=InvitationType.DEVICE,
         token=InvitationToken.new(),

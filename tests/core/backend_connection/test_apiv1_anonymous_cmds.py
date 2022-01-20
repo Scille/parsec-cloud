@@ -60,7 +60,7 @@ async def test_handshake_organization_expired(running_backend, expiredorg):
 @pytest.mark.trio
 async def test_handshake_unknown_organization(running_backend, coolorg):
     unknown_org_addr = BackendOrganizationAddr.build(
-        backend_addr=coolorg.addr,
+        backend_addr=coolorg.addr.get_backend_addr(),
         organization_id=OrganizationID("dummy"),
         root_verify_key=coolorg.root_verify_key,
     )

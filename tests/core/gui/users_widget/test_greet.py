@@ -98,7 +98,7 @@ def GreetUserTestBed(
                 claimer_email=claimer_email,
             )
             invitation_addr = BackendInvitationAddr.build(
-                backend_addr=author.organization_addr,
+                backend_addr=author.organization_addr.get_backend_addr(),
                 organization_id=author.organization_id,
                 invitation_type=InvitationType.USER,
                 token=invitation.token,

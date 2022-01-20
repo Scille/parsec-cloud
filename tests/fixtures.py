@@ -95,8 +95,8 @@ def organization_factory(backend_addr):
             count += 1
             orgname = f"Org{count}"
 
-        assert orgname not in organizations
         organization_id = OrganizationID(orgname)
+        assert organization_id not in organizations
         organizations.add(organization_id)
         bootstrap_token = f"<{orgname}-bootstrap-token>"
         bootstrap_addr = BackendOrganizationBootstrapAddr.build(

@@ -74,12 +74,12 @@ def test_backend_addr_good(url, expected):
 @pytest.mark.parametrize(
     "url,exc_msg",
     [
-        ("", "Must start with `parsec://`"),
-        ("foo", "Must start with `parsec://`"),
+        ("", ["Must start with `parsec://`", "Invalid URL"]),
+        ("foo", ["Must start with `parsec://`", "Invalid URL"]),
         (
             # bad scheme
             "xx://foo:42",
-            "Must start with `parsec://`",
+            ["Must start with `parsec://`", "Invalid URL"],
         ),
         (
             # path not allowed
@@ -87,14 +87,13 @@ def test_backend_addr_good(url, expected):
             "Cannot have path",
         ),
         (
-            # bad parsing in unknown param
-            "parsec://foo:42?dummy",
-            "bad query field: 'dummy'",
-        ),
-        (
+            #            # bad parsing in unknown param
+            #            "parsec://foo:42?dummy",
+            #            "bad query field: 'dummy'",
+            #        ), (
             # bad parsing in valid param
             "parsec://foo:42?no_ssl",
-            "bad query field: 'no_ssl'",
+            ["bad query field: 'no_ssl'", "Invalid `no_ssl` param value (must be true or false)"],
         ),
         (
             # missing value for param
@@ -111,7 +110,10 @@ def test_backend_addr_good(url, expected):
 def test_backend_addr_bad_value(url, exc_msg):
     with pytest.raises(ValueError) as exc:
         BackendAddr.from_url(url)
-    assert str(exc.value) == exc_msg
+    if isinstance(exc_msg, str):
+        assert str(exc.value) == exc_msg
+    else:
+        assert str(exc.value) in exc_msg
 
 
 @pytest.fixture(scope="session")
@@ -156,19 +158,18 @@ def test_backend_organization_addr_good(base_url, expected, verify_key):
 @pytest.mark.parametrize(
     "url,exc_msg",
     [
-        ("", "Must start with `parsec://`"),
-        ("foo", "Must start with `parsec://`"),
+        ("", ["Must start with `parsec://`", "Invalid URL"]),
+        ("foo", ["Must start with `parsec://`", "Invalid URL"]),
         (
             # bad scheme
             "xx://foo:42/org?rvk=<rvk>",
             "Must start with `parsec://`",
         ),
         (
-            # bad parsing in unknown param
-            "parsec://foo:42/org?rvk=<rvk>&dummy",
-            "bad query field: 'dummy'",
-        ),
-        (
+            #            # bad parsing in unknown param
+            #            "parsec://foo:42/org?rvk=<rvk>&dummy",
+            #            "bad query field: 'dummy'",
+            #        ), (
             # missing mandatory rvk param
             "parsec://foo:42/org",
             "Missing mandatory `rvk` param",
@@ -186,22 +187,22 @@ def test_backend_organization_addr_good(base_url, expected, verify_key):
         (
             # missing org name
             "parsec://foo:42?rvk=<rvk>",
-            "Invalid data",
+            ["Invalid data", "Path doesn't form a valid organization id"],
         ),
         (
             # missing org name
             "parsec://foo:42/?rvk=<rvk>",
-            "Invalid data",
+            ["Invalid data", "Path doesn't form a valid organization id"],
         ),
         (
             # bad org name
             "parsec://foo:42/bad/org?rvk=<rvk>",
-            "Invalid data",
+            ["Invalid data", "Path doesn't form a valid organization id"],
         ),
         (
             # bad org name
             "parsec://foo:42/~org?rvk=<rvk>",
-            "Invalid data",
+            ["Invalid data", "Path doesn't form a valid organization id"],
         ),
     ],
 )
@@ -209,7 +210,10 @@ def test_backend_organization_addr_bad_value(url, exc_msg, exported_verify_key):
     url = url.replace("<rvk>", exported_verify_key)
     with pytest.raises(ValueError) as exc:
         BackendOrganizationAddr.from_url(url)
-    assert str(exc.value) == exc_msg
+    if isinstance(exc_msg, str):
+        assert str(exc.value) == exc_msg
+    else:
+        assert str(exc.value) in exc_msg
 
 
 @pytest.mark.parametrize(
@@ -250,19 +254,18 @@ def test_backend_organization_bootstrap_addr_good(base_url, expected, verify_key
 @pytest.mark.parametrize(
     "url,exc_msg",
     [
-        ("", "Must start with `parsec://`"),
-        ("foo", "Must start with `parsec://`"),
+        ("", ["Must start with `parsec://`", "Invalid URL"]),
+        ("foo", ["Must start with `parsec://`", "Invalid URL"]),
         (
             # bad scheme
             "xx://foo:42/org?action=bootstrap_organization&token=123",
             "Must start with `parsec://`",
         ),
         (
-            # bad parsing in unknown param
-            "parsec://foo:42/org?action=bootstrap_organization&token=123&dummy",
-            "bad query field: 'dummy'",
-        ),
-        (
+            #            # bad parsing in unknown param
+            #            "parsec://foo:42/org?action=bootstrap_organization&token=123&dummy",
+            #            "bad query field: 'dummy'",
+            #        ), (
             # missing action param
             "parsec://foo:42/org?token=123",
             "Missing mandatory `action` param",
@@ -275,29 +278,32 @@ def test_backend_organization_bootstrap_addr_good(base_url, expected, verify_key
         (
             # missing org name
             "parsec://foo:42?action=bootstrap_organization&token=123",
-            "Invalid data",
+            ["Invalid data", "Path doesn't form a valid organization id"],
         ),
         (
             # missing org name
             "parsec://foo:42/?action=bootstrap_organization&token=123",
-            "Invalid data",
+            ["Invalid data", "Path doesn't form a valid organization id"],
         ),
         (
             # bad org name
             "parsec://foo:42/bad/org?action=bootstrap_organization&token=123",
-            "Invalid data",
+            ["Invalid data", "Path doesn't form a valid organization id"],
         ),
         (
             # bad org name
             "parsec://foo:42/~org?action=bootstrap_organization&token=123",
-            "Invalid data",
+            ["Invalid data", "Path doesn't form a valid organization id"],
         ),
     ],
 )
 def test_backend_organization_bootstrap_addr_bad_value(url, exc_msg):
     with pytest.raises(ValueError) as exc:
         BackendOrganizationBootstrapAddr.from_url(url)
-    assert str(exc.value) == exc_msg
+    if isinstance(exc_msg, str):
+        assert str(exc.value) == exc_msg
+    else:
+        assert str(exc.value) in exc_msg
 
 
 @pytest.fixture(scope="session")

@@ -190,6 +190,7 @@ async def query_get_role_certificates(
     out = []
     author_current_role = None
     for user_id, role, certif, certified_on in ret:
+        user_id = UserID(user_id)
         if not since or certified_on > since:
             out.append(certif)
         if user_id == author.user_id:
