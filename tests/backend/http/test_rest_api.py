@@ -1,12 +1,17 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2016-2021 Scille SAS
 
 import trio
-from uuid import uuid4
 import pendulum
 import pytest
 from unittest.mock import ANY
 
-from parsec.api.protocol import OrganizationID, UserProfile, HandshakeOrganizationExpired
+from parsec.api.protocol import (
+    VlobID,
+    BlockID,
+    OrganizationID,
+    UserProfile,
+    HandshakeOrganizationExpired,
+)
 from parsec.api.rest import organization_stats_rep_serializer
 from parsec.backend.organization import Organization
 from parsec.backend.backend_events import BackendEvent
@@ -428,7 +433,7 @@ async def test_organization_stats_data(backend_rest_send, realm, realm_factory, 
         author=alice.device_id,
         realm_id=realm,
         encryption_revision=1,
-        vlob_id=uuid4(),
+        vlob_id=VlobID.new(),
         timestamp=pendulum.now(),
         blob=b"1234",
     )
@@ -450,7 +455,7 @@ async def test_organization_stats_data(backend_rest_send, realm, realm_factory, 
     await backend.block.create(
         organization_id=alice.organization_id,
         author=alice.device_id,
-        block_id=uuid4(),
+        block_id=BlockID.new(),
         realm_id=realm,
         block=b"1234",
     )

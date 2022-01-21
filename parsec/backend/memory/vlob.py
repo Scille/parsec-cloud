@@ -1,16 +1,15 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) BSLv1.1 (eventually AGPLv3) 2016-2021 Scille SAS
 
 import attr
-import pendulum
-from uuid import UUID
+from pendulum import DateTime
 from typing import List, Tuple, Dict, Optional
 from collections import defaultdict
 
 from parsec.backend.backend_events import BackendEvent
-from parsec.api.protocol import DeviceID, OrganizationID, UserID
-from parsec.api.protocol import RealmRole
+from parsec.api.protocol import DeviceID, OrganizationID, UserID, RealmID, RealmRole, VlobID
 from parsec.backend.utils import OperationKind
 from parsec.backend.realm import BaseRealmComponent, RealmNotFoundError
+from parsec.backend.memory.realm import Realm
 from parsec.backend.vlob import (
     BaseVlobComponent,
     VlobAccessError,
@@ -23,13 +22,15 @@ from parsec.backend.vlob import (
     VlobNotInMaintenanceError,
     VlobRequireGreaterTimestampError,
 )
-from parsec.serde.fields import DateTime
+
+
+VlobData = List[Tuple[bytes, DeviceID, DateTime]]
 
 
 @attr.s
 class Vlob:
-    realm_id: UUID = attr.ib()
-    data: List[Tuple[bytes, DeviceID, pendulum.DateTime]] = attr.ib(factory=list)
+    realm_id: RealmID = attr.ib()
+    data: VlobData = attr.ib(factory=list)
 
     @property
     def current_version(self):
@@ -37,18 +38,18 @@ class Vlob:
 
 
 class Reencryption:
-    def __init__(self, realm_id, vlobs):
+    def __init__(self, realm_id: RealmID, vlobs: Dict[VlobID, Vlob]):
         self.realm_id = realm_id
         self._original_vlobs = vlobs
-        self._todo = {}
-        self._done = {}
+        self._todo: Dict[Tuple[VlobID, int], bytes] = {}
+        self._done: Dict[Tuple[VlobID, int], bytes] = {}
         for vlob_id, vlob in vlobs.items():
             for index, (data, _, _) in enumerate(vlob.data):
                 version = index + 1
                 self._todo[(vlob_id, version)] = data
         self._total = len(self._todo)
 
-    def get_reencrypted_vlobs(self):
+    def get_reencrypted_vlobs(self) -> Dict[VlobID, Vlob]:
         assert self.is_finished()
         vlobs = {}
         for (vlob_id, version), data in sorted(self._done.items()):
@@ -66,10 +67,10 @@ class Reencryption:
 
         return vlobs
 
-    def is_finished(self):
+    def is_finished(self) -> bool:
         return not self._todo
 
-    def get_batch(self, size):
+    def get_batch(self, size: int) -> List[Tuple[VlobID, int, bytes]]:
         batch = []
         for (vlob_id, version), data in self._todo.items():
             if (vlob_id, version) in self._done:
@@ -77,7 +78,7 @@ class Reencryption:
             batch.append((vlob_id, version, data))
         return batch[:size]
 
-    def save_batch(self, batch):
+    def save_batch(self, batch: List[Tuple[VlobID, int, bytes]]) -> Tuple[int, int]:
         for vlob_id, version, data in batch:
             key = (vlob_id, version)
             if key in self._done:
@@ -95,8 +96,8 @@ class Reencryption:
 @attr.s
 class Changes:
     checkpoint: int = attr.ib(default=0)
-    changes: Dict[UUID, Tuple[DeviceID, int, int]] = attr.ib(factory=dict)
-    reencryption: Reencryption = attr.ib(default=None)
+    changes: Dict[VlobID, Tuple[DeviceID, int, int]] = attr.ib(factory=dict)
+    reencryption: Optional[Reencryption] = attr.ib(default=None)
     last_vlob_update_per_user: Dict[UserID, DateTime] = attr.ib(factory=dict)
 
 
@@ -104,13 +105,17 @@ class MemoryVlobComponent(BaseVlobComponent):
     def __init__(self, send_event):
         self._send_event = send_event
         self._realm_component = None
-        self._vlobs = {}
-        self._per_realm_changes = defaultdict(Changes)
+        self._vlobs: Dict[Tuple[OrganizationID, VlobID], Vlob] = {}
+        self._per_realm_changes: Dict[Tuple[OrganizationID, RealmID], Changes] = defaultdict(
+            Changes
+        )
 
-    def register_components(self, realm: BaseRealmComponent, **other_components):
+    def register_components(self, realm: BaseRealmComponent, **other_components) -> None:
         self._realm_component = realm
 
-    def _maintenance_reencryption_start_hook(self, organization_id, realm_id, encryption_revision):
+    def _maintenance_reencryption_start_hook(
+        self, organization_id: OrganizationID, realm_id: RealmID, encryption_revision: int
+    ) -> None:
         changes = self._per_realm_changes[(organization_id, realm_id)]
         assert not changes.reencryption
         realm_vlobs = {
@@ -121,8 +126,8 @@ class MemoryVlobComponent(BaseVlobComponent):
         changes.reencryption = Reencryption(realm_id, realm_vlobs)
 
     def _maintenance_reencryption_is_finished_hook(
-        self, organization_id, realm_id, encryption_revision
-    ):
+        self, organization_id: OrganizationID, realm_id: RealmID, encryption_revision: int
+    ) -> bool:
         changes = self._per_realm_changes[(organization_id, realm_id)]
         assert changes.reencryption
         if not changes.reencryption.is_finished():
@@ -134,7 +139,7 @@ class MemoryVlobComponent(BaseVlobComponent):
         changes.reencryption = None
         return True
 
-    def _get_vlob(self, organization_id, vlob_id):
+    def _get_vlob(self, organization_id: OrganizationID, vlob_id: VlobID) -> Vlob:
         try:
             return self._vlobs[(organization_id, vlob_id)]
 
@@ -142,8 +147,13 @@ class MemoryVlobComponent(BaseVlobComponent):
             raise VlobNotFoundError(f"Vlob `{vlob_id}` doesn't exist")
 
     def _check_realm_read_access(
-        self, organization_id, realm_id, user_id, encryption_revision, timestamp
-    ):
+        self,
+        organization_id: OrganizationID,
+        realm_id: RealmID,
+        user_id: UserID,
+        encryption_revision: Optional[int],
+        timestamp: Optional[DateTime],
+    ) -> Realm:
         return self._check_realm_access(
             organization_id,
             realm_id,
@@ -154,8 +164,13 @@ class MemoryVlobComponent(BaseVlobComponent):
         )
 
     def _check_realm_write_access(
-        self, organization_id, realm_id, user_id, encryption_revision, timestamp
-    ):
+        self,
+        organization_id: OrganizationID,
+        realm_id: RealmID,
+        user_id: UserID,
+        encryption_revision: Optional[int],
+        timestamp: Optional[DateTime],
+    ) -> Realm:
         return self._check_realm_access(
             organization_id,
             realm_id,
@@ -166,13 +181,20 @@ class MemoryVlobComponent(BaseVlobComponent):
         )
 
     def _check_realm_access(
-        self, organization_id, realm_id, user_id, encryption_revision, timestamp, operation_kind
-    ):
+        self,
+        organization_id: OrganizationID,
+        realm_id: RealmID,
+        user_id: UserID,
+        encryption_revision: Optional[int],
+        timestamp: Optional[DateTime],
+        operation_kind: OperationKind,
+    ) -> Realm:
         try:
             realm = self._realm_component._get_realm(organization_id, realm_id)
         except RealmNotFoundError:
             raise VlobRealmNotFoundError(f"Realm `{realm_id}` doesn't exist")
 
+        allowed_roles: Tuple[RealmRole, ...]
         # Only an owner can perform maintenance operation
         if operation_kind == OperationKind.MAINTENANCE:
             allowed_roles = (RealmRole.OWNER,)
@@ -200,6 +222,7 @@ class MemoryVlobComponent(BaseVlobComponent):
 
             # Write operations should always occurs strictly after the last change of role for this user
             assert last_role is not None
+            assert timestamp is not None
             if last_role.granted_on >= timestamp:
                 raise VlobRequireGreaterTimestampError(last_role.granted_on)
 
@@ -248,21 +271,31 @@ class MemoryVlobComponent(BaseVlobComponent):
         return realm
 
     def _check_realm_in_maintenance_access(
-        self, organization_id, realm_id, user_id, encryption_revision
-    ):
+        self,
+        organization_id: OrganizationID,
+        realm_id: RealmID,
+        user_id: UserID,
+        encryption_revision: int,
+    ) -> Realm:
         return self._check_realm_access(
             organization_id, realm_id, user_id, encryption_revision, None, OperationKind.MAINTENANCE
         )
 
     def _get_last_vlob_update(
-        self, organization_id: OrganizationID, realm_id: UUID, user_id: UserID
+        self, organization_id: OrganizationID, realm_id: RealmID, user_id: UserID
     ) -> Optional[DateTime]:
         changes = self._per_realm_changes[(organization_id, realm_id)]
         return changes.last_vlob_update_per_user.get(user_id)
 
     async def _update_changes(
-        self, organization_id, author, realm_id, src_id, timestamp, src_version=1
-    ):
+        self,
+        organization_id: OrganizationID,
+        author,
+        realm_id: RealmID,
+        src_id: VlobID,
+        timestamp: DateTime,
+        src_version: int = 1,
+    ) -> None:
         changes = self._per_realm_changes[(organization_id, realm_id)]
         changes.checkpoint += 1
         changes.changes[src_id] = (author, changes.checkpoint, src_version)
@@ -285,10 +318,10 @@ class MemoryVlobComponent(BaseVlobComponent):
         self,
         organization_id: OrganizationID,
         author: DeviceID,
-        realm_id: UUID,
+        realm_id: RealmID,
         encryption_revision: int,
-        vlob_id: UUID,
-        timestamp: pendulum.DateTime,
+        vlob_id: VlobID,
+        timestamp: DateTime,
         blob: bytes,
     ) -> None:
         self._check_realm_write_access(
@@ -308,10 +341,10 @@ class MemoryVlobComponent(BaseVlobComponent):
         organization_id: OrganizationID,
         author: DeviceID,
         encryption_revision: int,
-        vlob_id: UUID,
+        vlob_id: VlobID,
         version: Optional[int] = None,
-        timestamp: Optional[pendulum.DateTime] = None,
-    ) -> Tuple[int, bytes, DeviceID, pendulum.DateTime, pendulum.DateTime]:
+        timestamp: Optional[DateTime] = None,
+    ) -> Tuple[int, bytes, DeviceID, DateTime, DateTime]:
         vlob = self._get_vlob(organization_id, vlob_id)
 
         realm = self._check_realm_read_access(
@@ -331,8 +364,9 @@ class MemoryVlobComponent(BaseVlobComponent):
         try:
             vlob_data, vlob_device_id, vlob_timestamp = vlob.data[version - 1]
             last_role = realm.get_last_role(vlob_device_id.user_id)
-            last_role_granted_on = last_role.granted_on if last_role is not None else None
-            return (version, vlob_data, vlob_device_id, vlob_timestamp, last_role_granted_on)
+            # Given the vlob exists, the author must have had a role
+            assert last_role is not None
+            return (version, vlob_data, vlob_device_id, vlob_timestamp, last_role.granted_on)
 
         except IndexError:
             raise VlobVersionError()
@@ -342,9 +376,9 @@ class MemoryVlobComponent(BaseVlobComponent):
         organization_id: OrganizationID,
         author: DeviceID,
         encryption_revision: int,
-        vlob_id: UUID,
+        vlob_id: VlobID,
         version: int,
-        timestamp: pendulum.DateTime,
+        timestamp: DateTime,
         blob: bytes,
     ) -> None:
         vlob = self._get_vlob(organization_id, vlob_id)
@@ -364,8 +398,8 @@ class MemoryVlobComponent(BaseVlobComponent):
         )
 
     async def poll_changes(
-        self, organization_id: OrganizationID, author: DeviceID, realm_id: UUID, checkpoint: int
-    ) -> Tuple[int, Dict[UUID, int]]:
+        self, organization_id: OrganizationID, author: DeviceID, realm_id: RealmID, checkpoint: int
+    ) -> Tuple[int, Dict[VlobID, int]]:
         self._check_realm_read_access(organization_id, realm_id, author.user_id, None, None)
 
         changes = self._per_realm_changes[(organization_id, realm_id)]
@@ -377,8 +411,8 @@ class MemoryVlobComponent(BaseVlobComponent):
         return (changes.checkpoint, changes_since_checkpoint)
 
     async def list_versions(
-        self, organization_id: OrganizationID, author: DeviceID, vlob_id: UUID
-    ) -> Dict[int, Tuple[pendulum.DateTime, DeviceID]]:
+        self, organization_id: OrganizationID, author: DeviceID, vlob_id: VlobID
+    ) -> Dict[int, Tuple[DateTime, DeviceID]]:
         vlobs = self._get_vlob(organization_id, vlob_id)
 
         self._check_realm_read_access(organization_id, vlobs.realm_id, author.user_id, None, None)
@@ -388,10 +422,10 @@ class MemoryVlobComponent(BaseVlobComponent):
         self,
         organization_id: OrganizationID,
         author: DeviceID,
-        realm_id: UUID,
+        realm_id: RealmID,
         encryption_revision: int,
         size: int,
-    ) -> List[Tuple[UUID, int, bytes]]:
+    ) -> List[Tuple[VlobID, int, bytes]]:
         self._check_realm_in_maintenance_access(
             organization_id, realm_id, author.user_id, encryption_revision
         )
@@ -405,9 +439,9 @@ class MemoryVlobComponent(BaseVlobComponent):
         self,
         organization_id: OrganizationID,
         author: DeviceID,
-        realm_id: UUID,
+        realm_id: RealmID,
         encryption_revision: int,
-        batch: List[Tuple[UUID, int, bytes]],
+        batch: List[Tuple[VlobID, int, bytes]],
     ) -> Tuple[int, int]:
         self._check_realm_in_maintenance_access(
             organization_id, realm_id, author.user_id, encryption_revision

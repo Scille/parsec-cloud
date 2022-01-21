@@ -1,15 +1,24 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2016-2021 Scille SAS
 
+from parsec.types import UUID4
 from parsec.serde import fields
 from parsec.api.protocol.base import BaseReqSchema, BaseRepSchema, CmdSerializer
+from parsec.api.protocol.realm import RealmIDField
 
 
-__all__ = ("block_create_serializer", "block_read_serializer")
+__all__ = ("BlockID", "BlockIDField", "block_create_serializer", "block_read_serializer")
+
+
+class BlockID(UUID4):
+    __slots__ = ()
+
+
+BlockIDField = fields.uuid_based_field_factory(BlockID)
 
 
 class BlockCreateReqSchema(BaseReqSchema):
-    block_id = fields.UUID(required=True)
-    realm_id = fields.UUID(required=True)
+    block_id = BlockIDField(required=True)
+    realm_id = RealmIDField(required=True)
     block = fields.Bytes(required=True)
 
 
@@ -21,7 +30,7 @@ block_create_serializer = CmdSerializer(BlockCreateReqSchema, BlockCreateRepSche
 
 
 class BlockReadReqSchema(BaseReqSchema):
-    block_id = fields.UUID(required=True)
+    block_id = BlockIDField(required=True)
 
 
 class BlockReadRepSchema(BaseRepSchema):

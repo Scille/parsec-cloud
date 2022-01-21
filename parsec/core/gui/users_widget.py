@@ -1,13 +1,11 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2016-2021 Scille SAS
 
-from uuid import UUID
-
 from PyQt5.QtCore import Qt, pyqtSignal
 from PyQt5.QtWidgets import QWidget, QMenu, QGraphicsDropShadowEffect, QLabel
 from PyQt5.QtGui import QColor
 from math import ceil
 
-from parsec.api.protocol import InvitationType, InvitationEmailSentStatus
+from parsec.api.protocol import InvitationToken, InvitationType, InvitationEmailSentStatus
 from parsec.api.data import UserProfile
 from parsec.core.types import BackendInvitationAddr, UserInfo
 
@@ -39,8 +37,8 @@ USERS_PER_PAGE = 100
 
 
 class UserInvitationButton(QWidget, Ui_UserInvitationButton):
-    greet_clicked = pyqtSignal(UUID)
-    cancel_clicked = pyqtSignal(UUID)
+    greet_clicked = pyqtSignal(InvitationToken)
+    cancel_clicked = pyqtSignal(InvitationToken)
 
     def __init__(self, email, addr):
         super().__init__()

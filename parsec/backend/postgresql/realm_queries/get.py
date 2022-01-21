@@ -1,10 +1,16 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) BSLv1.1 (eventually AGPLv3) 2016-2021 Scille SAS
 
 import pendulum
-from uuid import UUID
 from typing import Dict, List, Optional
 
-from parsec.api.protocol import DeviceID, UserID, OrganizationID, RealmRole, MaintenanceType
+from parsec.api.protocol import (
+    OrganizationID,
+    DeviceID,
+    UserID,
+    RealmID,
+    RealmRole,
+    MaintenanceType,
+)
 from parsec.backend.realm import RealmStatus, RealmAccessError, RealmNotFoundError
 from parsec.backend.postgresql.utils import (
     Q,
@@ -98,7 +104,7 @@ ORDER BY realm, certified_on DESC
 
 @query()
 async def query_get_status(
-    conn, organization_id: OrganizationID, author: DeviceID, realm_id: UUID
+    conn, organization_id: OrganizationID, author: DeviceID, realm_id: RealmID
 ) -> RealmStatus:
     ret = await conn.fetchrow(
         *_q_get_realm_status(
@@ -124,7 +130,7 @@ async def query_get_status(
 
 @query(in_transaction=True)
 async def query_get_stats(
-    conn, organization_id: OrganizationID, author: DeviceID, realm_id: UUID
+    conn, organization_id: OrganizationID, author: DeviceID, realm_id: RealmID
 ) -> RealmStats:
     ret = await conn.fetchrow(
         *_q_has_realm_access(
@@ -151,7 +157,7 @@ async def query_get_stats(
 
 @query()
 async def query_get_current_roles(
-    conn, organization_id: OrganizationID, realm_id: UUID
+    conn, organization_id: OrganizationID, realm_id: RealmID
 ) -> Dict[UserID, RealmRole]:
     ret = await conn.fetch(
         *_q_get_current_roles(organization_id=organization_id, realm_id=realm_id)
@@ -169,7 +175,7 @@ async def query_get_role_certificates(
     conn,
     organization_id: OrganizationID,
     author: DeviceID,
-    realm_id: UUID,
+    realm_id: RealmID,
     since: pendulum.DateTime,
 ) -> List[bytes]:
     ret = await conn.fetch(
@@ -197,6 +203,8 @@ async def query_get_role_certificates(
 @query()
 async def query_get_realms_for_user(
     conn, organization_id: OrganizationID, user: UserID
-) -> Dict[UUID, Optional[RealmRole]]:
+) -> Dict[RealmID, Optional[RealmRole]]:
     rep = await conn.fetch(*_q_get_realms_for_user(organization_id=organization_id, user_id=user))
-    return {row["realm_id"]: RealmRole(row["role"]) for row in rep if row["role"] is not None}
+    return {
+        RealmID(row["realm_id"]): RealmRole(row["role"]) for row in rep if row["role"] is not None
+    }

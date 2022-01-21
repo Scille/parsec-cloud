@@ -125,7 +125,8 @@ def str_based_field_factory(value_type):
         if value is None:
             return None
 
-        return str(value)
+        assert isinstance(value, str)
+        return value
 
     def _deserialize(self, value, attr, data):
 
@@ -151,7 +152,8 @@ def uuid_based_field_factory(value_type):
         if value is None:
             return None
 
-        return value
+        assert isinstance(value, value_type)
+        return value.uuid
 
     def _deserialize(self, value, attr, data):
         if not isinstance(value, _UUID):

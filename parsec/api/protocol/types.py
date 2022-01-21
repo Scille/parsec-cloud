@@ -10,6 +10,7 @@ from email.utils import parseaddr
 
 from parsec.serde import fields
 
+
 UserIDTypeVar = TypeVar("UserIDTypeVar", bound="UserID")
 DeviceIDTypeVar = TypeVar("DeviceIDTypeVar", bound="DeviceID")
 DeviceNameTypeVar = TypeVar("DeviceNameTypeVar", bound="DeviceName")

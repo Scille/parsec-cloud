@@ -97,5 +97,5 @@ async def query_create(
         author=self_granted_role.granted_by,
         realm_id=self_granted_role.realm_id,
         user=self_granted_role.user_id,
-        role_str=self_granted_role.role.value,
+        role=self_granted_role.role,
     )

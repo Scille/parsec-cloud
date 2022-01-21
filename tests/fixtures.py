@@ -17,7 +17,15 @@ from parsec.api.data import (
     DeviceCertificateContent,
     RealmRoleCertificateContent,
 )
-from parsec.api.protocol import OrganizationID, UserID, DeviceID, HumanHandle, RealmRole
+from parsec.api.protocol import (
+    OrganizationID,
+    UserID,
+    DeviceID,
+    HumanHandle,
+    RealmRole,
+    RealmID,
+    VlobID,
+)
 from parsec.core.types import LocalDevice, LocalUserManifest, BackendOrganizationBootstrapAddr
 from parsec.core.local_device import generate_new_device
 from parsec.core.fs.storage import UserStorage
@@ -523,7 +531,8 @@ def backend_data_binder_factory(request, backend_addr, initial_user_manifest_sta
                 author = device
             else:
                 author = self.get_device(device.organization_id, manifest.author)
-            realm_id = author.user_manifest_id
+            realm_id = RealmID(author.user_manifest_id.uuid)
+            vlob_id = VlobID(author.user_manifest_id.uuid)
 
             with self.backend.event_bus.listen() as spy:
 
@@ -553,7 +562,7 @@ def backend_data_binder_factory(request, backend_addr, initial_user_manifest_sta
                     author=author.device_id,
                     realm_id=realm_id,
                     encryption_revision=1,
-                    vlob_id=author.user_manifest_id,
+                    vlob_id=vlob_id,
                     timestamp=manifest.timestamp,
                     blob=manifest.dump_sign_and_encrypt(
                         author_signkey=author.signing_key, key=author.user_manifest_key
@@ -568,7 +577,7 @@ def backend_data_binder_factory(request, backend_addr, initial_user_manifest_sta
                             {
                                 "organization_id": author.organization_id,
                                 "author": author.device_id,
-                                "realm_id": author.user_manifest_id,
+                                "realm_id": realm_id,
                                 "user": author.user_id,
                                 "role": RealmRole.OWNER,
                             },
@@ -578,9 +587,9 @@ def backend_data_binder_factory(request, backend_addr, initial_user_manifest_sta
                             {
                                 "organization_id": author.organization_id,
                                 "author": author.device_id,
-                                "realm_id": author.user_manifest_id,
+                                "realm_id": realm_id,
                                 "checkpoint": 1,
-                                "src_id": author.user_manifest_id,
+                                "src_id": vlob_id,
                                 "src_version": 1,
                             },
                         ),

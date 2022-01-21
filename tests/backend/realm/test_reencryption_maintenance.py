@@ -3,11 +3,10 @@
 import pendulum
 import pytest
 import trio
-from uuid import uuid4
 from pendulum import datetime, now as pendulum_now
 
 from parsec.backend.backend_events import BackendEvent
-from parsec.api.protocol import RealmRole, MaintenanceType, APIEvent
+from parsec.api.protocol import VlobID, BlockID, RealmRole, MaintenanceType, APIEvent
 from parsec.backend.realm import RealmGrantedRole
 from parsec.backend.vlob import VlobNotFoundError, VlobVersionError
 from parsec.utils import BALLPARK_CLIENT_EARLY_OFFSET, BALLPARK_CLIENT_LATE_OFFSET
@@ -264,7 +263,7 @@ async def test_start_other_organization(backend, sock_from_other_organization_fa
         )
     assert rep == {
         "status": "not_found",
-        "reason": "Realm `a0000000-0000-0000-0000-000000000000` doesn't exist",
+        "reason": "Realm `a0000000000000000000000000000000` doesn't exist",
     }
 
 
@@ -276,7 +275,7 @@ async def test_finish_not_in_maintenance(alice_backend_sock, realm):
         )
         assert rep == {
             "status": "not_in_maintenance",
-            "reason": "Realm `a0000000-0000-0000-0000-000000000000` not under maintenance",
+            "reason": "Realm `a0000000000000000000000000000000` not under maintenance",
         }
 
 
@@ -390,7 +389,7 @@ async def test_reencryption_batch_not_during_maintenance(alice_backend_sock, rea
     rep = await vlob_maintenance_get_reencryption_batch(alice_backend_sock, realm, 1)
     assert rep == {
         "status": "not_in_maintenance",
-        "reason": "Realm `a0000000-0000-0000-0000-000000000000` not under maintenance",
+        "reason": "Realm `a0000000000000000000000000000000` not under maintenance",
     }
 
     rep = await vlob_maintenance_save_reencryption_batch(
@@ -398,13 +397,13 @@ async def test_reencryption_batch_not_during_maintenance(alice_backend_sock, rea
     )
     assert rep == {
         "status": "not_in_maintenance",
-        "reason": "Realm `a0000000-0000-0000-0000-000000000000` not under maintenance",
+        "reason": "Realm `a0000000000000000000000000000000` not under maintenance",
     }
 
     rep = await realm_finish_reencryption_maintenance(alice_backend_sock, realm, 1, check_rep=False)
     assert rep == {
         "status": "not_in_maintenance",
-        "reason": "Realm `a0000000-0000-0000-0000-000000000000` not under maintenance",
+        "reason": "Realm `a0000000000000000000000000000000` not under maintenance",
     }
 
 
@@ -478,7 +477,7 @@ async def test_reencryption_provide_unknown_vlob_atom_and_duplications(
     assert rep["status"] == "ok"
     assert len(rep["batch"]) == 3
 
-    unknown_vlob_id = uuid4()
+    unknown_vlob_id = VlobID.new()
     duplicated_vlob_id = rep["batch"][0]["vlob_id"]
     duplicated_version = rep["batch"][0]["version"]
     duplicated_expected_blob = rep["batch"][0]["blob"]
@@ -535,8 +534,8 @@ async def test_access_during_reencryption(
 ):
     # First initialize a nice realm with block and vlob
     realm_id = await realm_factory(backend, author=alice)
-    vlob_id = uuid4()
-    block_id = uuid4()
+    vlob_id = VlobID.new()
+    block_id = BlockID.new()
     await backend.vlob.create(
         organization_id=alice.organization_id,
         author=alice.device_id,
@@ -558,7 +557,7 @@ async def test_access_during_reencryption(
         rep = await vlob_create(
             alice_backend_sock,
             realm_id=realm_id,
-            vlob_id=uuid4(),
+            vlob_id=VlobID.new(),
             blob=b"data",
             encryption_revision=encryption_revision,
             check_rep=False,

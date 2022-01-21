@@ -1,12 +1,14 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2016-2021 Scille SAS
 
 from typing import Optional, Any, Dict, Type, TypeVar
-from uuid import UUID
 from marshmallow import ValidationError
+from pendulum import DateTime
 
 from parsec.crypto import VerifyKey, PublicKey
 from parsec.serde import fields, post_load
 from parsec.api.protocol import (
+    RealmID,
+    RealmIDField,
     DeviceID,
     UserID,
     HumanHandle,
@@ -164,7 +166,7 @@ class DeviceCertificateContent(BaseAPISignedData):
 class RealmRoleCertificateContent(BaseAPISignedData):
     class SCHEMA_CLS(BaseSignedDataSchema):
         type = fields.CheckedConstant("realm_role_certificate", required=True)
-        realm_id = fields.UUID(required=True)
+        realm_id = RealmIDField(required=True)
         user_id = UserIDField(required=True)
         role = RealmRoleField(required=True, allow_none=True)
 
@@ -173,12 +175,12 @@ class RealmRoleCertificateContent(BaseAPISignedData):
             data.pop("type")
             return RealmRoleCertificateContent(**data)
 
-    realm_id: UUID
+    realm_id: RealmID
     user_id: UserID
     role: Optional[RealmRole]  # Set to None if role removed
 
     @classmethod
-    def build_realm_root_certif(cls, author, timestamp, realm_id):
+    def build_realm_root_certif(cls, author: DeviceID, timestamp: DateTime, realm_id: RealmID):
         return cls(
             author=author,
             timestamp=timestamp,
@@ -191,7 +193,7 @@ class RealmRoleCertificateContent(BaseAPISignedData):
     def verify_and_load(
         cls,
         *args,
-        expected_realm: Optional[UUID] = None,
+        expected_realm: Optional[RealmID] = None,
         expected_user: Optional[UserID] = None,
         expected_role: Optional[RealmRole] = None,
         **kwargs,

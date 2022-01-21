@@ -5,8 +5,9 @@ import trio
 import pytest
 from unittest.mock import ANY
 
-from parsec.core.backend_connection import BackendConnStatus
+from parsec.api.protocol import RealmID, VlobID
 from parsec.backend.backend_events import BackendEvent
+from parsec.core.backend_connection import BackendConnStatus
 from parsec.core.core_events import CoreEvent
 from parsec.core.types import WorkspaceRole
 from parsec.core.logged_core import logged_core_factory
@@ -319,9 +320,9 @@ async def test_reconnect_with_remote_changes(
                         {
                             "organization_id": alice2.organization_id,
                             "author": alice2.device_id,
-                            "realm_id": wid,
+                            "realm_id": RealmID(wid.uuid),
                             "checkpoint": ANY,
-                            "src_id": spam_id,
+                            "src_id": VlobID(spam_id.uuid),
                             "src_version": 1,
                         },
                     ),
@@ -330,9 +331,9 @@ async def test_reconnect_with_remote_changes(
                         {
                             "organization_id": alice2.organization_id,
                             "author": alice2.device_id,
-                            "realm_id": wid,
+                            "realm_id": RealmID(wid.uuid),
                             "checkpoint": ANY,
-                            "src_id": foo_id,
+                            "src_id": VlobID(foo_id.uuid),
                             "src_version": 2,
                         },
                     ),
@@ -341,9 +342,9 @@ async def test_reconnect_with_remote_changes(
                         {
                             "organization_id": alice2.organization_id,
                             "author": alice2.device_id,
-                            "realm_id": wid,
+                            "realm_id": RealmID(wid.uuid),
                             "checkpoint": ANY,
-                            "src_id": bar_id,
+                            "src_id": VlobID(bar_id.uuid),
                             "src_version": 2,
                         },
                     ),

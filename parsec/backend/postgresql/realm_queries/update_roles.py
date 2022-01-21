@@ -250,7 +250,7 @@ async def query_update_roles(
         author=new_role.granted_by,
         realm_id=new_role.realm_id,
         user=new_role.user_id,
-        role_str=new_role.role.value if new_role.role else None,
+        role=new_role.role,
     )
 
     if recipient_message:

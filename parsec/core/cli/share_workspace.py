@@ -1,19 +1,29 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2016-2021 Scille SAS
 
 import click
+from typing import Optional
+
 
 from parsec.utils import trio_run
-from parsec.api.protocol import UserID
+from parsec.api.protocol import UserID, RealmRole
 from parsec.cli_utils import cli_exception_handler
 from parsec.core import logged_core_factory
+from parsec.core.types import WorkspaceRole, LocalDevice
+from parsec.core.config import CoreConfig
 from parsec.core.cli.utils import cli_command_base_options, core_config_and_device_options
-from parsec.core.types import WorkspaceRole
 
 
 WORKSPACE_ROLE_CHOICES = {"NONE": None, **{role.value: role for role in WorkspaceRole}}
 
 
-async def _share_workspace(config, device, name, user_id, recipiant, user_role):
+async def _share_workspace(
+    config: CoreConfig,
+    device: LocalDevice,
+    name: str,
+    user_id: Optional[UserID],
+    recipiant: Optional[str],
+    user_role: RealmRole,
+) -> None:
     if recipiant and user_id or not recipiant and not user_id:
         raise click.ClickException("Either --recipiant or --user-id should be used, but not both")
     async with logged_core_factory(config, device) as core:
@@ -33,7 +43,7 @@ async def _share_workspace(config, device, name, user_id, recipiant, user_role):
 
 
 @click.command(short_help="share workspace")
-@click.option("--workspace-name")
+@click.option("--workspace-name", required=True)
 @click.option("--user-id", type=UserID)
 @click.option("--recipiant", help="Name or email to whom the workspace is shared with")
 @click.option(
@@ -41,7 +51,15 @@ async def _share_workspace(config, device, name, user_id, recipiant, user_role):
 )
 @core_config_and_device_options
 @cli_command_base_options
-def share_workspace(config, device, workspace_name, user_id, recipiant, role, **kwargs):
+def share_workspace(
+    config: CoreConfig,
+    device: LocalDevice,
+    workspace_name: str,
+    user_id: Optional[UserID],
+    recipiant: Optional[str],
+    role: RealmRole,
+    **kwargs,
+) -> None:
     """
     Create a new workspace for the given device.
     """

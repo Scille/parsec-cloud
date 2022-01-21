@@ -5,7 +5,7 @@ from typing import Optional
 from parsec.core.core_events import CoreEvent
 import trio
 from structlog import get_logger
-from PyQt5.QtCore import pyqtSignal, pyqtSlot
+from PyQt5.QtCore import pyqtSignal, pyqtBoundSignal, pyqtSlot
 from PyQt5.QtWidgets import QWidget, QVBoxLayout, QApplication
 from packaging.version import Version
 
@@ -109,7 +109,7 @@ class InstanceWidget(QWidget):
         jobs_ctx: QtToTrioJobScheduler,
         event_bus: EventBus,
         config: CoreConfig,
-        systray_notification: pyqtSignal,
+        systray_notification: pyqtBoundSignal,
         **kwargs
     ):
         super().__init__(**kwargs)

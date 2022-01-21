@@ -3,6 +3,7 @@
 import pytest
 from pendulum import datetime
 
+from parsec.api.protocol import VlobID
 from parsec.core.fs import FSError
 from parsec.core.types import WorkspaceRole
 
@@ -48,7 +49,7 @@ async def testbed(running_backend, alice_user_fs, alice, bob):
                 organization_id=alice.organization_id,
                 author=options["backend_author"],
                 encryption_revision=1,
-                vlob_id=wid,
+                vlob_id=VlobID(wid.uuid),
                 version=self._next_version,
                 timestamp=options["backend_timestamp"],
                 blob=options["blob"],

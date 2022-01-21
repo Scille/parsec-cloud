@@ -1,13 +1,13 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) BSLv1.1 (eventually AGPLv3) 2016-2021 Scille SAS
 
 from pendulum import DateTime, now as pendulum_now
-from uuid import UUID, uuid4
 from typing import List, Optional
 
 from parsec.api.protocol import (
     OrganizationID,
     UserID,
     HumanHandle,
+    InvitationToken,
     InvitationType,
     InvitationStatus,
     InvitationDeletedReason,
@@ -120,7 +120,7 @@ async def _do_delete_invitation(
     conn,
     organization_id: OrganizationID,
     greeter: UserID,
-    token: UUID,
+    token: InvitationToken,
     on: DateTime,
     reason: InvitationDeletedReason,
 ):
@@ -140,7 +140,7 @@ async def _do_delete_invitation(
         organization_id=organization_id,
         greeter=greeter,
         token=token,
-        status_str=InvitationStatus.DELETED.value,
+        status=InvitationStatus.DELETED,
     )
 
 
@@ -248,7 +248,7 @@ async def _conduit_talk(
     conn,
     organization_id: OrganizationID,
     greeter: Optional[UserID],
-    token: UUID,
+    token: InvitationToken,
     state: ConduitState,
     payload: bytes,
 ) -> ConduitListenCtx:
@@ -416,7 +416,7 @@ async def _do_new_user_invitation(
     greeter_user_id: UserID,
     claimer_email: Optional[str],
     created_on: DateTime,
-) -> UUID:
+) -> InvitationToken:
     if claimer_email:
         invitation_type = InvitationType.USER
         q = _q_retrieve_compatible_user_invitation(
@@ -436,10 +436,10 @@ async def _do_new_user_invitation(
     # Check if no compatible invitations already exists
     row = await conn.fetchrow(*q)
     if row:
-        token = row["token"]
+        token = InvitationToken(row["token"])
     else:
         # No risk of UniqueViolationError given token is a uuid4
-        token = uuid4()
+        token = InvitationToken.new()
         await conn.execute(
             *_q_insert_invitation(
                 organization_id=organization_id,
@@ -456,7 +456,7 @@ async def _do_new_user_invitation(
         organization_id=organization_id,
         greeter=greeter_user_id,
         token=token,
-        status_str=InvitationStatus.IDLE.value,
+        status=InvitationStatus.IDLE,
     )
     return token
 
@@ -528,7 +528,7 @@ class PGInviteComponent(BaseInviteComponent):
         self,
         organization_id: OrganizationID,
         greeter: UserID,
-        token: UUID,
+        token: InvitationToken,
         on: DateTime,
         reason: InvitationDeletedReason,
     ) -> None:
@@ -544,7 +544,7 @@ class PGInviteComponent(BaseInviteComponent):
         invitations_with_claimer_online = self._claimers_ready[organization_id]
         invitations = []
         for (
-            token,
+            token_uuid,
             type,
             greeter,
             greeter_human_handle_email,
@@ -554,6 +554,7 @@ class PGInviteComponent(BaseInviteComponent):
             deleted_on,
             deleted_reason,
         ) in rows:
+            token = InvitationToken(token_uuid)
             greeter_human_handle = None
             if greeter_human_handle_email:
                 greeter_human_handle = HumanHandle(
@@ -588,7 +589,7 @@ class PGInviteComponent(BaseInviteComponent):
             invitations.append(invitation)
         return invitations
 
-    async def info(self, organization_id: OrganizationID, token: UUID) -> Invitation:
+    async def info(self, organization_id: OrganizationID, token: InvitationToken) -> Invitation:
         async with self.dbh.pool.acquire() as conn:
             row = await conn.fetchrow(
                 *_q_info_invitation(organization_id=organization_id, token=token)
@@ -638,7 +639,7 @@ class PGInviteComponent(BaseInviteComponent):
         self,
         organization_id: OrganizationID,
         greeter: Optional[UserID],
-        token: UUID,
+        token: InvitationToken,
         state: ConduitState,
         payload: bytes,
     ) -> ConduitListenCtx:
@@ -650,7 +651,7 @@ class PGInviteComponent(BaseInviteComponent):
             return await _conduit_listen(conn, ctx)
 
     async def claimer_joined(
-        self, organization_id: OrganizationID, greeter: UserID, token: UUID
+        self, organization_id: OrganizationID, greeter: UserID, token: InvitationToken
     ) -> None:
         async with self.dbh.pool.acquire() as conn:
             await send_signal(
@@ -659,11 +660,11 @@ class PGInviteComponent(BaseInviteComponent):
                 organization_id=organization_id,
                 greeter=greeter,
                 token=token,
-                status_str=InvitationStatus.READY.value,
+                status=InvitationStatus.READY,
             )
 
     async def claimer_left(
-        self, organization_id: OrganizationID, greeter: UserID, token: UUID
+        self, organization_id: OrganizationID, greeter: UserID, token: InvitationToken
     ) -> None:
         async with self.dbh.pool.acquire() as conn:
             await send_signal(
@@ -672,5 +673,5 @@ class PGInviteComponent(BaseInviteComponent):
                 organization_id=organization_id,
                 greeter=greeter,
                 token=token,
-                status_str=InvitationStatus.IDLE.value,
+                status=InvitationStatus.IDLE,
             )

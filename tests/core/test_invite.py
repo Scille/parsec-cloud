@@ -578,7 +578,6 @@ async def test_claimer_handle_command_failure(
         async def _send_event(*args, **kwargs):
             if BackendEvent.INVITE_STATUS_CHANGED in args and (
                 kwargs.get("status") == InvitationStatus.DELETED
-                or kwargs.get("status_str") == InvitationStatus.DELETED.value
             ):
                 deleted_event.set()
             await trio.sleep(0)

@@ -1,11 +1,17 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) BSLv1.1 (eventually AGPLv3) 2016-2021 Scille SAS
 
 import pendulum
-from uuid import UUID
-from typing import Dict
+from typing import Dict, List, Optional
 
 from parsec.backend.backend_events import BackendEvent
-from parsec.api.protocol import DeviceID, UserID, OrganizationID, RealmRole, MaintenanceType
+from parsec.api.protocol import (
+    DeviceID,
+    UserID,
+    OrganizationID,
+    RealmID,
+    RealmRole,
+    MaintenanceType,
+)
 from parsec.backend.realm import (
     RealmStatus,
     RealmAccessError,
@@ -38,7 +44,7 @@ _q_get_realm_status = Q(
 )
 
 
-async def get_realm_status(conn, organization_id: OrganizationID, realm_id: UUID) -> RealmStatus:
+async def get_realm_status(conn, organization_id: OrganizationID, realm_id: RealmID) -> RealmStatus:
     rep = await conn.fetchrow(
         *_q_get_realm_status(organization_id=organization_id, realm_id=realm_id)
     )
@@ -88,7 +94,9 @@ ORDER BY user_, certified_on DESC
 )
 
 
-async def _get_realm_role_for_not_revoked(conn, organization_id, realm_id, users=None):
+async def _get_realm_role_for_not_revoked(
+    conn, organization_id: OrganizationID, realm_id: RealmID, users: Optional[List[UserID]] = None
+):
     now = pendulum.now()
 
     def _cook_role(row):
@@ -150,7 +158,7 @@ async def query_start_reencryption_maintenance(
     conn,
     organization_id: OrganizationID,
     author: DeviceID,
-    realm_id: UUID,
+    realm_id: RealmID,
     encryption_revision: int,
     per_participant_message: Dict[UserID, bytes],
     timestamp: pendulum.DateTime,
@@ -241,7 +249,7 @@ async def query_finish_reencryption_maintenance(
     conn,
     organization_id: OrganizationID,
     author: DeviceID,
-    realm_id: UUID,
+    realm_id: RealmID,
     encryption_revision: int,
 ) -> None:
     # Retrieve realm and make sure it is not under maintenance

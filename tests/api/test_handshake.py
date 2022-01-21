@@ -10,6 +10,7 @@ from parsec.api.protocol import (
     packb,
     unpackb,
     InvalidMessageError,
+    InvitationToken,
     InvitationType,
     HandshakeFailedChallenge,
     HandshakeBadIdentity,
@@ -61,7 +62,7 @@ def test_good_authenticated_handshake(alice):
 @pytest.mark.parametrize("invitation_type", (InvitationType.USER, InvitationType.DEVICE))
 def test_good_invited_handshake(coolorg, invitation_type):
     organization_id = OrganizationID("Org")
-    token = uuid4()
+    token = InvitationToken.new()
 
     sh = ServerHandshake()
     ch = InvitedClientHandshake(
