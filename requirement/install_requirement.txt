@@ -1,3 +1,5 @@
+docutils==0.17.1
+Babel==2.6.0
 certifi==2021.10.8
 attrs==21.4.0
 click==8.0.3

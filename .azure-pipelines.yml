@@ -420,6 +420,7 @@ jobs:
       mkdir src
       cp -R $(Build.SourcesDirectory)/parsec src
       cp $(Build.SourcesDirectory)/pre-requirements.txt src
+      cp -R $(Build.SourcesDirectory)/requirement src
       cp $(Build.SourcesDirectory)/setup.py src
       cp $(Build.SourcesDirectory)/README.rst src
       cp $(Build.SourcesDirectory)/HISTORY.rst src
