@@ -5,7 +5,7 @@ import pendulum
 
 from parsec.backend.user import INVITATION_VALIDITY, User, Device
 from parsec.api.data import UserCertificateContent, DeviceCertificateContent, UserProfile
-from parsec.api.protocol import DeviceID
+from parsec.api.protocol import DeviceID, DeviceLabel
 
 from tests.common import customize_fixtures, freeze_time
 from tests.backend.common import user_get, user_create
@@ -420,7 +420,7 @@ async def test_user_create_human_handle_already_exists(alice_backend_sock, alice
         author=alice.device_id,
         timestamp=now,
         device_id=bob2_device_id,
-        device_label="dev2",
+        device_label=DeviceLabel("dev2"),
         verify_key=bob.verify_key,
     )
     redacted_device_certificate = device_certificate.evolve(device_label=None)

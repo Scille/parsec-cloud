@@ -159,7 +159,7 @@ class FolderManifest(BaseManifest):
         def fix_legacy(self, data: Dict[str, Any]) -> Dict[str, Any]:
             # Compatibility with versions <= 1.14
             if data["author"] is None:
-                data["author"] = LOCAL_AUTHOR_LEGACY_PLACEHOLDER
+                data["author"] = str(LOCAL_AUTHOR_LEGACY_PLACEHOLDER)
             return data
 
         @post_load
@@ -206,7 +206,7 @@ class FileManifest(BaseManifest):
         def fix_legacy(self, data: Dict[str, T]) -> Dict[str, T]:
             # Compatibility with versions <= 1.14
             if data["author"] is None:
-                data["author"] = LOCAL_AUTHOR_LEGACY_PLACEHOLDER
+                data["author"] = str(LOCAL_AUTHOR_LEGACY_PLACEHOLDER)
             return data
 
         @post_load
@@ -252,7 +252,7 @@ class WorkspaceManifest(BaseManifest):
         def fix_legacy(self, data: Dict[str, T]) -> Dict[str, T]:
             # Compatibility with versions <= 1.14
             if data["author"] is None:
-                data["author"] = LOCAL_AUTHOR_LEGACY_PLACEHOLDER
+                data["author"] = str(LOCAL_AUTHOR_LEGACY_PLACEHOLDER)
             return data
 
         @post_load
@@ -282,7 +282,7 @@ class UserManifest(BaseManifest):
         def fix_legacy(self, data: Dict[str, T]) -> Dict[str, T]:
             # Compatibility with versions <= 1.14
             if data["author"] is None:
-                data["author"] = LOCAL_AUTHOR_LEGACY_PLACEHOLDER
+                data["author"] = str(LOCAL_AUTHOR_LEGACY_PLACEHOLDER)
             return data
 
         @post_load

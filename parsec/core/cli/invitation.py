@@ -9,6 +9,7 @@ from parsec.utils import trio_run
 from parsec.cli_utils import cli_exception_handler, spinner, aprompt
 from parsec.api.data import UserProfile
 from parsec.api.protocol import (
+    DeviceLabel,
     HumanHandle,
     InvitationStatus,
     InvitationToken,
@@ -165,7 +166,7 @@ async def _do_greet_user(device: LocalDevice, initial_ctx: UserGreetInitialCtx) 
     async with spinner("Creating the user in the backend"):
         await in_progress_ctx.do_create_new_user(
             author=device,
-            device_label=granted_device_label,
+            device_label=DeviceLabel(granted_device_label),
             human_handle=HumanHandle(email=granted_email, label=granted_label),
             profile=granted_profile,
         )
@@ -201,7 +202,9 @@ async def _do_greet_device(device: LocalDevice, initial_ctx: DeviceGreetInitialC
         "New device label", default=in_progress_ctx.requested_device_label
     )
     async with spinner("Creating the device in the backend"):
-        await in_progress_ctx.do_create_new_device(author=device, device_label=granted_device_label)
+        await in_progress_ctx.do_create_new_device(
+            author=device, device_label=DeviceLabel(granted_device_label)
+        )
 
     return True
 
@@ -312,7 +315,7 @@ async def _do_claim_user(initial_ctx: UserClaimInitialCtx) -> LocalDevice:
     requested_device_label = await aprompt("Device label", default=platform.node())
     async with spinner("Waiting for greeter (finalizing)"):
         new_device = await in_progress_ctx.do_claim_user(
-            requested_device_label=requested_device_label,
+            requested_device_label=DeviceLabel(requested_device_label),
             requested_human_handle=HumanHandle(email=requested_email, label=requested_label),
         )
 
@@ -343,7 +346,7 @@ async def _do_claim_device(initial_ctx: DeviceClaimInitialCtx) -> LocalDevice:
     requested_device_label = await aprompt("Device label", default=platform.node())
     async with spinner("Waiting for greeter (finalizing)"):
         new_device = await in_progress_ctx.do_claim_device(
-            requested_device_label=requested_device_label
+            requested_device_label=DeviceLabel(requested_device_label)
         )
 
     return new_device

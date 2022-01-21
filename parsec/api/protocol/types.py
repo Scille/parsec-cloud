@@ -2,7 +2,7 @@
 
 import re
 from unicodedata import normalize
-from typing import Union, TypeVar, Type, NoReturn
+from typing import Union, TypeVar, Type, NoReturn, Pattern
 from uuid import uuid4
 from enum import Enum
 from collections import namedtuple
@@ -20,93 +20,93 @@ def _bytes_size(txt: str) -> int:
     return len(txt.encode("utf8"))
 
 
-class OrganizationID(str):
-    __slots__ = ()
-    regex = re.compile(r"^[\w\-]{1,32}$")
+class StrBased:
+    __slots__ = ("_str",)
+    REGEX: Pattern[str]
+    MAX_BYTE_SIZE: int
 
-    def __new__(cls, raw: str) -> "OrganizationID":
+    def __init__(self, raw: str):
         raw = normalize("NFC", raw)
-        if not cls.regex.match(raw) or _bytes_size(raw) > 32:
-            raise ValueError("Invalid organization ID")
-        return super(OrganizationID, cls).__new__(cls, raw)
+        if not self.REGEX.match(raw) or _bytes_size(raw) > self.MAX_BYTE_SIZE:
+            raise ValueError("Invalid data")
+        self._str = raw
+
+    def __str__(self) -> str:
+        return self._str
 
     def __repr__(self) -> str:
-        return f"<OrganizationID {super().__repr__()}>"
+        return f"<{type(self).__name__} {self._str}>"
+
+    def __eq__(self, other: object) -> bool:
+        if not isinstance(other, type(self)):
+            return NotImplemented
+        else:
+            return self._str == other._str
+
+    def __lt__(self, other: object) -> bool:
+        if not isinstance(other, type(self)):
+            return NotImplemented
+        else:
+            return self._str < other._str
+
+    def __hash__(self) -> int:
+        return self._str.__hash__()
+
+    @property
+    def str(self) -> str:
+        return self._str
 
 
-class UserID(str):
+class OrganizationID(StrBased):
     __slots__ = ()
-    regex = re.compile(r"^[\w\-]{1,32}$")
+    REGEX = re.compile(r"^[\w\-]{1,32}$")
+    MAX_BYTE_SIZE = 32
 
-    def __new__(cls, raw: str) -> "UserID":
-        raw = normalize("NFC", raw)
-        if not cls.regex.match(raw) or _bytes_size(raw) > 32:
-            raise ValueError("Invalid user name")
-        return super(UserID, cls).__new__(cls, raw)
 
-    def __repr__(self) -> str:
-        return f"<UserID {super().__repr__()}>"
+class UserID(StrBased):
+    __slots__ = ()
+    REGEX = re.compile(r"^[\w\-]{1,32}$")
+    MAX_BYTE_SIZE = 32
 
     @classmethod
     def new(cls: Type[UserIDTypeVar]) -> UserIDTypeVar:
         return cls(uuid4().hex)
 
     def to_device_id(self, device_name: Union[str, "DeviceID"]) -> "DeviceID":
-        return DeviceID(f"{self}@{device_name}")
+        return DeviceID(f"{self._str}@{device_name}")
 
 
-class DeviceName(str):
+class DeviceName(StrBased):
     __slots__ = ()
-    regex = re.compile(r"^[\w\-]{1,32}$")
-
-    def __new__(cls, raw: str) -> "DeviceName":
-        raw = normalize("NFC", raw)
-        if not cls.regex.match(raw) or _bytes_size(raw) > 32:
-            raise ValueError("Invalid device name")
-        return super(DeviceName, cls).__new__(cls, raw)
-
-    def __repr__(self) -> str:
-        return f"<DeviceName {super().__repr__()}>"
+    REGEX = re.compile(r"^[\w\-]{1,32}$")
+    MAX_BYTE_SIZE = 32
 
     @classmethod
     def new(cls: Type[DeviceNameTypeVar]) -> DeviceNameTypeVar:
         return cls(uuid4().hex)
 
 
-class DeviceID(str):
+class DeviceID(StrBased):
     __slots__ = ()
-    regex = re.compile(r"^[\w\-]{1,32}@[\w\-]{1,32}$")
-
-    def __new__(cls, raw: str) -> "DeviceID":
-        raw = normalize("NFC", raw)
-        if not cls.regex.match(raw) or _bytes_size(raw) > 65:
-            raise ValueError("Invalid device ID")
-        return super(DeviceID, cls).__new__(cls, raw)
-
-    def __repr__(self) -> str:
-        return f"<DeviceID {super().__repr__()}>"
+    REGEX = re.compile(r"^[\w\-]{1,32}@[\w\-]{1,32}$")
+    MAX_BYTE_SIZE = 65
 
     @property
     def user_id(self) -> UserID:
-        return UserID(self.split("@")[0])
+        return UserID(self._str.split("@")[0])
 
     @property
     def device_name(self) -> DeviceName:
-        return DeviceName(self.split("@")[1])
+        return DeviceName(self._str.split("@")[1])
 
     @classmethod
     def new(cls: Type[DeviceIDTypeVar]) -> DeviceIDTypeVar:
         return cls(f"{uuid4().hex}@{uuid4().hex}")
 
 
-class DeviceLabel(str):
-    def __new__(cls, device_label: str) -> "DeviceLabel":
-        device_label = normalize("NFC", device_label)
-
-        if not 0 < _bytes_size(device_label) < 255:
-            raise ValueError("Invalid device label")
-
-        return super(DeviceLabel, cls).__new__(cls, device_label)
+class DeviceLabel(StrBased):
+    REGEX = re.compile(r"^.+$")  # At least 1 character
+    MAX_BYTE_SIZE = 255
 
 
 OrganizationIDField = fields.str_based_field_factory(OrganizationID)

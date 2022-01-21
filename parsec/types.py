@@ -36,8 +36,7 @@ class UUID4:
     __slots__ = ("_uuid",)
 
     def __init__(self, raw: UUID):
-        if not isinstance(raw, UUID):
-            breakpoint()
+        assert isinstance(raw, UUID)
         self._uuid = raw
 
     @classmethod

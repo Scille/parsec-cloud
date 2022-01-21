@@ -142,8 +142,8 @@ async def query_maintenance_get_reencryption_batch(
     )
     rep = await conn.fetch(
         *_q_maintenance_get_reencryption_batch(
-            organization_id=organization_id,
-            realm_id=realm_id,
+            organization_id=organization_id.str,
+            realm_id=realm_id.uuid,
             encryption_revision=encryption_revision,
             size=size,
         )
@@ -166,9 +166,9 @@ async def query_maintenance_save_reencryption_batch(
     for vlob_id, version, blob in batch:
         await conn.execute(
             *_q_maintenance_save_reencryption_batch(
-                organization_id=organization_id,
-                realm_id=realm_id,
-                vlob_id=vlob_id,
+                organization_id=organization_id.str,
+                realm_id=realm_id.uuid,
+                vlob_id=vlob_id.uuid,
                 version=version,
                 encryption_revision=encryption_revision,
                 blob=blob,
@@ -178,8 +178,8 @@ async def query_maintenance_save_reencryption_batch(
 
     rep = await conn.fetchrow(
         *_q_maintenance_save_reencryption_batch_get_stat(
-            organization_id=organization_id,
-            realm_id=realm_id,
+            organization_id=organization_id.str,
+            realm_id=realm_id.uuid,
             encryption_revision=encryption_revision,
         )
     )

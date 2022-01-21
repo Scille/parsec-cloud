@@ -29,7 +29,8 @@ async def _bootstrap_organization(
         human_email = await aprompt("User email")
     human_handle = HumanHandle(email=human_email, label=human_label)
     if not device_label:
-        device_label = await aprompt("Device label", default=platform.node())
+        device_label_raw = await aprompt("Device label", default=platform.node())
+        device_label = DeviceLabel(device_label_raw)
 
     async with apiv1_backend_anonymous_cmds_factory(addr=addr) as cmds:
         async with spinner("Bootstrapping organization in the backend"):

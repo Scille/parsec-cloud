@@ -3,6 +3,7 @@
 import trio
 import pytest
 import pendulum
+from parsec.api.protocol.types import OrganizationID
 
 from parsec.api.transport import Transport, Ping, Pong
 from parsec.api.data import RevokedUserCertificateContent
@@ -71,7 +72,7 @@ async def test_handshake_unknown_device(running_backend, alice, mallory):
 async def test_handshake_unknown_organization(running_backend, alice):
     unknown_org_addr = BackendOrganizationAddr.build(
         backend_addr=alice.organization_addr,
-        organization_id="dummy",
+        organization_id=OrganizationID("dummy"),
         root_verify_key=alice.organization_addr.root_verify_key,
     )
     with pytest.raises(BackendConnectionRefused) as exc:

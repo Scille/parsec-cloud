@@ -7,7 +7,7 @@ from PyQt5.QtCore import pyqtSignal
 from PyQt5.QtGui import QFont
 from PyQt5.QtWidgets import QWidget
 
-from parsec.api.protocol import HumanHandle
+from parsec.api.protocol import DeviceLabel, HumanHandle
 from parsec.core.types import LocalDevice
 from parsec.core.local_device import (
     save_device_with_password_in_config,
@@ -175,7 +175,7 @@ class Claimer:
         if not r:
             raise JobResultError(status="wait-trust-failed", origin=exc)
 
-    async def claim_user(self, device_label, human_handle):
+    async def claim_user(self, device_label: DeviceLabel, human_handle: HumanHandle):
         await self.main_oob_send.send(self.Step.ClaimUser)
         await self.main_oob_send.send((device_label, human_handle))
         r, exc, new_device = await self.job_oob_recv.receive()
@@ -197,8 +197,8 @@ class ClaimUserFinalizeWidget(QWidget, Ui_ClaimUserFinalizeWidget):
 
         self.widget_auth.exclude_strings(
             [
-                new_device.organization_addr.organization_id,
-                new_device.device_label,
+                new_device.organization_addr.organization_id.str,
+                new_device.device_label.str,
                 new_device.human_handle.email,
                 new_device.human_handle.label,
             ]
@@ -444,7 +444,7 @@ class ClaimUserProvideInfoWidget(QWidget, Ui_ClaimUserProvideInfoWidget):
         self.line_edit_user_email.validity_changed.connect(self.check_infos)
 
         self.line_edit_device.setText(get_default_device())
-        self.line_edit_device.set_validator(validators.DeviceNameValidator())
+        self.line_edit_device.set_validator(validators.DeviceLabelValidator())
         self.line_edit_device.validity_changed.connect(self.check_infos)
 
         self.claim_success.connect(self._on_claim_success)
@@ -464,7 +464,8 @@ class ClaimUserProvideInfoWidget(QWidget, Ui_ClaimUserProvideInfoWidget):
             self.button_ok.setDisabled(True)
 
     def _on_claim_clicked(self):
-        device_label = self.line_edit_device.text()
+        # No try/except given `self.line_edit_device` has already been validated against `DeviceLabel`
+        device_label = DeviceLabel(validators.trim_user_name(self.line_edit_device.text()))
         try:
             user_name = validators.trim_user_name(self.line_edit_user_full_name.text())
             human_handle = HumanHandle(email=self.line_edit_user_email.text(), label=user_name)

@@ -78,17 +78,17 @@ async def _set_vlob_updated(
 ):
     index = await conn.fetchval(
         *_q_vlob_updated(
-            organization_id=organization_id,
-            realm_id=realm_id,
+            organization_id=organization_id.str,
+            realm_id=realm_id.uuid,
             vlob_atom_internal_id=vlob_atom_internal_id,
         )
     )
 
     await conn.execute(
         *_q_set_last_vlob_update(
-            organization_id=organization_id,
-            realm_id=realm_id,
-            user_id=author.user_id,
+            organization_id=organization_id.str,
+            realm_id=realm_id.uuid,
+            user_id=author.user_id.str,
             timestamp=timestamp,
         )
     )
@@ -168,7 +168,7 @@ async def query_update(
     )
 
     previous = await conn.fetchrow(
-        *_q_get_vlob_version(organization_id=organization_id, vlob_id=vlob_id)
+        *_q_get_vlob_version(organization_id=organization_id.str, vlob_id=vlob_id.uuid)
     )
     if not previous:
         raise VlobNotFoundError(f"Vlob `{vlob_id}` doesn't exist")
@@ -182,11 +182,11 @@ async def query_update(
     try:
         vlob_atom_internal_id = await conn.fetchval(
             *_q_insert_vlob_atom(
-                organization_id=organization_id,
-                author=author,
-                realm_id=realm_id,
+                organization_id=organization_id.str,
+                author=author.str,
+                realm_id=realm_id.uuid,
                 encryption_revision=encryption_revision,
-                vlob_id=vlob_id,
+                vlob_id=vlob_id.uuid,
                 blob=blob,
                 blob_len=len(blob),
                 timestamp=timestamp,
@@ -254,11 +254,11 @@ async def query_create(
     try:
         vlob_atom_internal_id = await conn.fetchval(
             *_q_create(
-                organization_id=organization_id,
-                author=author,
-                realm_id=realm_id,
+                organization_id=organization_id.str,
+                author=author.str,
+                realm_id=realm_id.uuid,
                 encryption_revision=encryption_revision,
-                vlob_id=vlob_id,
+                vlob_id=vlob_id.uuid,
                 blob=blob,
                 blob_len=len(blob),
                 timestamp=timestamp,

@@ -125,7 +125,9 @@ async def _do_delete_invitation(
     reason: InvitationDeletedReason,
 ):
     row = await conn.fetchrow(
-        *_q_delete_invitation_info(organization_id=organization_id, greeter=greeter, token=token)
+        *_q_delete_invitation_info(
+            organization_id=organization_id.str, greeter=greeter.str, token=token.uuid
+        )
     )
     if not row:
         raise InvitationNotFoundError(token)
@@ -261,12 +263,14 @@ async def _conduit_talk(
         if is_greeter:
             row = await conn.fetchrow(
                 *_q_conduit_greeter_info(
-                    organization_id=organization_id, greeter_user_id=greeter, token=token
+                    organization_id=organization_id.str,
+                    greeter_user_id=greeter.str,  # type: ignore[union-attr]
+                    token=token.uuid,
                 )
             )
         else:
             row = await conn.fetchrow(
-                *_q_conduit_claimer_info(organization_id=organization_id, token=token)
+                *_q_conduit_claimer_info(organization_id=organization_id.str, token=token.uuid)
             )
 
         if not row:
@@ -338,14 +342,16 @@ async def _conduit_listen(conn, ctx: ConduitListenCtx) -> Optional[bytes]:
         if ctx.is_greeter:
             row = await conn.fetchrow(
                 *_q_conduit_greeter_info(
-                    organization_id=ctx.organization_id,
-                    greeter_user_id=ctx.greeter,
-                    token=ctx.token,
+                    organization_id=ctx.organization_id.str,
+                    greeter_user_id=ctx.greeter.str,  # type: ignore[union-attr]
+                    token=ctx.token.uuid,
                 )
             )
         else:
             row = await conn.fetchrow(
-                *_q_conduit_claimer_info(organization_id=ctx.organization_id, token=ctx.token)
+                *_q_conduit_claimer_info(
+                    organization_id=ctx.organization_id.str, token=ctx.token.uuid
+                )
             )
 
         if not row:
@@ -420,17 +426,17 @@ async def _do_new_user_invitation(
     if claimer_email:
         invitation_type = InvitationType.USER
         q = _q_retrieve_compatible_user_invitation(
-            organization_id=organization_id,
+            organization_id=organization_id.str,
             type=invitation_type.value,
-            greeter_user_id=greeter_user_id,
+            greeter_user_id=greeter_user_id.str,
             claimer_email=claimer_email,
         )
     else:
         invitation_type = InvitationType.DEVICE
         q = _q_retrieve_compatible_device_invitation(
-            organization_id=organization_id,
+            organization_id=organization_id.str,
             type=invitation_type.value,
-            greeter_user_id=greeter_user_id,
+            greeter_user_id=greeter_user_id.str,
         )
 
     # Check if no compatible invitations already exists
@@ -442,10 +448,10 @@ async def _do_new_user_invitation(
         token = InvitationToken.new()
         await conn.execute(
             *_q_insert_invitation(
-                organization_id=organization_id,
+                organization_id=organization_id.str,
                 type=invitation_type.value,
                 token=token,
-                greeter_user_id=greeter_user_id,
+                greeter_user_id=greeter_user_id.str,
                 claimer_email=claimer_email,
                 created_on=created_on,
             )
@@ -538,7 +544,9 @@ class PGInviteComponent(BaseInviteComponent):
     async def list(self, organization_id: OrganizationID, greeter: UserID) -> List[Invitation]:
         async with self.dbh.pool.acquire() as conn:
             rows = await conn.fetch(
-                *_q_list_invitations(organization_id=organization_id, greeter_user_id=greeter)
+                *_q_list_invitations(
+                    organization_id=organization_id.str, greeter_user_id=greeter.str
+                )
             )
 
         invitations_with_claimer_online = self._claimers_ready[organization_id]
@@ -592,7 +600,7 @@ class PGInviteComponent(BaseInviteComponent):
     async def info(self, organization_id: OrganizationID, token: InvitationToken) -> Invitation:
         async with self.dbh.pool.acquire() as conn:
             row = await conn.fetchrow(
-                *_q_info_invitation(organization_id=organization_id, token=token)
+                *_q_info_invitation(organization_id=organization_id.str, token=token.uuid)
             )
         if not row:
             raise InvitationNotFoundError(token)

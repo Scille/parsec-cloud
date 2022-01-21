@@ -7,7 +7,7 @@ from uuid import UUID, uuid4
 
 from parsec.crypto import SigningKey
 from parsec.serde import packb, unpackb
-from parsec.api.protocol import OrganizationID, DeviceID, HumanHandle
+from parsec.api.protocol import OrganizationID, DeviceID, DeviceLabel, HumanHandle
 from parsec.core.types import LocalDevice
 from parsec.core.local_device import (
     AvailableDevice,
@@ -130,10 +130,10 @@ def test_available_device_display(config_dir, alice):
         type=DeviceFileType.PASSWORD,
     )
 
-    assert without_labels.device_display == alice.device_name
-    assert without_labels.user_display == alice.user_id
+    assert without_labels.device_display == str(alice.device_name)
+    assert without_labels.user_display == str(alice.user_id)
 
-    assert with_labels.device_display == alice.device_label
+    assert with_labels.device_display == str(alice.device_label)
     assert with_labels.user_display == str(alice.human_handle)
 
 
@@ -338,7 +338,7 @@ def test_list_devices_support_legacy_file_with_meaningful_name(config_dir):
         organization_id=OrganizationID(organization_id),
         device_id=DeviceID(device_id),
         human_handle=HumanHandle(human_email, human_label),
-        device_label=device_label,
+        device_label=DeviceLabel(device_label),
         slug=slug,
         type=DeviceFileType.PASSWORD,
     )
@@ -395,7 +395,7 @@ def test_list_devices_support_key_file(config_dir, type):
         organization_id=OrganizationID(organization_id),
         device_id=DeviceID(device_id),
         human_handle=HumanHandle(human_email, human_label),
-        device_label=device_label,
+        device_label=DeviceLabel(device_label),
         slug=slug,
         **available_device_extra,
     )

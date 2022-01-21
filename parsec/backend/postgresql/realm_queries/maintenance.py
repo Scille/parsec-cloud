@@ -29,6 +29,7 @@ from parsec.backend.postgresql.utils import (
     query,
     q_organization_internal_id,
     q_user,
+    q_device,
     q_device_internal_id,
     q_realm,
     q_realm_internal_id,
@@ -39,25 +40,26 @@ _q_get_realm_status = Q(
     q_realm(
         organization_id="$organization_id",
         realm_id="$realm_id",
-        select="encryption_revision, maintenance_started_by, maintenance_started_on, maintenance_type",
+        select=f"encryption_revision, { q_device(_id='maintenance_started_by', select='device_id') } maintenance_started_by, maintenance_started_on, maintenance_type",
     )
 )
 
 
 async def get_realm_status(conn, organization_id: OrganizationID, realm_id: RealmID) -> RealmStatus:
     rep = await conn.fetchrow(
-        *_q_get_realm_status(organization_id=organization_id, realm_id=realm_id)
+        *_q_get_realm_status(organization_id=organization_id.str, realm_id=realm_id.uuid)
     )
     if not rep:
         raise RealmNotFoundError(f"Realm `{realm_id}` doesn't exist")
 
-    maintenance_type = (
-        MaintenanceType(rep["maintenance_type"]) if rep["maintenance_type"] is not None else None
-    )
     return RealmStatus(
-        maintenance_type=maintenance_type,
+        maintenance_type=MaintenanceType(rep["maintenance_type"])
+        if rep["maintenance_type"]
+        else None,
         maintenance_started_on=rep["maintenance_started_on"],
-        maintenance_started_by=rep["maintenance_started_by"],
+        maintenance_started_by=DeviceID(rep["maintenance_started_by"])
+        if rep["maintenance_started_by"]
+        else None,
         encryption_revision=rep["encryption_revision"],
     )
 
@@ -109,10 +111,12 @@ async def _get_realm_role_for_not_revoked(
     if users:
         rep = await conn.fetch(
             *_q_get_realm_role_for_not_revoked_with_users(
-                organization_id=organization_id, realm_id=realm_id, users_ids=users
+                organization_id=organization_id.str,
+                realm_id=realm_id.uuid,
+                users_ids=[u.str for u in users],
             )
         )
-        roles = {row["user_id"]: _cook_role(row) for row in rep}
+        roles = {UserID(row["user_id"]): _cook_role(row) for row in rep}
         for user in users or ():
             if user not in roles:
                 raise RealmNotFoundError(f"User `{user}` doesn't exist")
@@ -121,10 +125,14 @@ async def _get_realm_role_for_not_revoked(
 
     else:
         rep = await conn.fetch(
-            *_q_get_realm_role_for_not_revoked(organization_id=organization_id, realm_id=realm_id)
+            *_q_get_realm_role_for_not_revoked(
+                organization_id=organization_id.str, realm_id=realm_id.uuid
+            )
         )
 
-        return {row["user_id"]: _cook_role(row) for row in rep if _cook_role(row) is not None}
+        return {
+            UserID(row["user_id"]): _cook_role(row) for row in rep if _cook_role(row) is not None
+        }
 
 
 _q_query_start_reencryption_maintenance_update_realm = Q(
@@ -180,9 +188,9 @@ async def query_start_reencryption_maintenance(
 
     await conn.execute(
         *_q_query_start_reencryption_maintenance_update_realm(
-            organization_id=organization_id,
-            realm_id=realm_id,
-            maintenance_started_by=author,
+            organization_id=organization_id.str,
+            realm_id=realm_id.uuid,
+            maintenance_started_by=author.str,
             maintenance_started_on=timestamp,
             maintenance_type="REENCRYPTION",
             encryption_revision=encryption_revision,
@@ -191,8 +199,8 @@ async def query_start_reencryption_maintenance(
 
     await conn.execute(
         *_q_query_start_reencryption_maintenance_update_vlob_encryption_revision(
-            organization_id=organization_id,
-            realm_id=realm_id,
+            organization_id=organization_id.str,
+            realm_id=realm_id.uuid,
             encryption_revision=encryption_revision,
         )
     )
@@ -265,7 +273,7 @@ async def query_finish_reencryption_maintenance(
     # Test reencryption operations are over
     rep = await conn.fetch(
         *_query_finish_reencryption_maintenance_get_info(
-            organization_id=organization_id,
+            organization_id=organization_id.str,
             realm_id=realm_id,
             encryption_revision=encryption_revision,
         )
@@ -283,7 +291,7 @@ async def query_finish_reencryption_maintenance(
 
     await conn.execute(
         *_query_finish_reencryption_maintenance_update_realm(
-            organization_id=organization_id, realm_id=realm_id
+            organization_id=organization_id.str, realm_id=realm_id
         )
     )
 

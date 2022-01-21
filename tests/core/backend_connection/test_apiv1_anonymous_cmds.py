@@ -4,6 +4,7 @@ import pytest
 import trio
 
 from parsec.api.protocol import APIV1_ANONYMOUS_CMDS
+from parsec.api.protocol.types import OrganizationID
 from parsec.core.types import BackendOrganizationAddr
 from parsec.core.backend_connection import (
     BackendNotAvailable,
@@ -59,7 +60,9 @@ async def test_handshake_organization_expired(running_backend, expiredorg):
 @pytest.mark.trio
 async def test_handshake_unknown_organization(running_backend, coolorg):
     unknown_org_addr = BackendOrganizationAddr.build(
-        backend_addr=coolorg.addr, organization_id="dummy", root_verify_key=coolorg.root_verify_key
+        backend_addr=coolorg.addr,
+        organization_id=OrganizationID("dummy"),
+        root_verify_key=coolorg.root_verify_key,
     )
     with pytest.raises(BackendConnectionRefused) as exc:
         async with apiv1_backend_anonymous_cmds_factory(unknown_org_addr) as cmds:
