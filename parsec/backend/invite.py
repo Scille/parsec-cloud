@@ -161,6 +161,7 @@ def generate_invite_email(
     invitation_url: str,
     backend_url: str,
 ) -> Message:
+    # Quick fix to have a similar behavior between Rust and Python
     if backend_url.endswith("/"):
         backend_url = backend_url[:-1]
     html = get_template("invitation_mail.html").render(

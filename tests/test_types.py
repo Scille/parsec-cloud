@@ -87,10 +87,13 @@ def test_backend_addr_good(url, expected):
             "Cannot have path",
         ),
         (
-            #            # bad parsing in unknown param
-            #            "parsec://foo:42?dummy",
-            #            "bad query field: 'dummy'",
-            #        ), (
+            # Rust implementation ignores unknown params
+            #
+            # # bad parsing in unknown param
+            # "parsec://foo:42?dummy",
+            # "bad query field: 'dummy'",
+            # ), (
+            #
             # bad parsing in valid param
             "parsec://foo:42?no_ssl",
             ["bad query field: 'no_ssl'", "Invalid `no_ssl` param value (must be true or false)"],
@@ -166,10 +169,13 @@ def test_backend_organization_addr_good(base_url, expected, verify_key):
             "Must start with `parsec://`",
         ),
         (
-            #            # bad parsing in unknown param
-            #            "parsec://foo:42/org?rvk=<rvk>&dummy",
-            #            "bad query field: 'dummy'",
-            #        ), (
+            # Rust implementation ignores unknown params
+            #
+            # # bad parsing in unknown param
+            # "parsec://foo:42/org?rvk=<rvk>&dummy",
+            # "bad query field: 'dummy'",
+            # ), (
+            #
             # missing mandatory rvk param
             "parsec://foo:42/org",
             "Missing mandatory `rvk` param",
@@ -262,10 +268,13 @@ def test_backend_organization_bootstrap_addr_good(base_url, expected, verify_key
             "Must start with `parsec://`",
         ),
         (
-            #            # bad parsing in unknown param
-            #            "parsec://foo:42/org?action=bootstrap_organization&token=123&dummy",
-            #            "bad query field: 'dummy'",
-            #        ), (
+            # Rust implementation ignores unknown params
+            #
+            # bad parsing in unknown param
+            # "parsec://foo:42/org?action=bootstrap_organization&token=123&dummy",
+            # "bad query field: 'dummy'",
+            # ), (
+            #
             # missing action param
             "parsec://foo:42/org?token=123",
             "Missing mandatory `action` param",
