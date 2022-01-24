@@ -519,7 +519,7 @@ impl DeviceLabel {
     }
 
     fn __repr__(&self) -> PyResult<String> {
-        Ok(format!("<DeviceLabel '{}'>", self.0))
+        Ok(format!("<DeviceLabel {}>", self.0))
     }
 
     fn __hash__(&self, py: Python) -> PyResult<isize> {

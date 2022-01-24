@@ -102,7 +102,7 @@ new_string_based_id_type!(pub DeviceName, 32, r"^[\w\-]{1,32}$");
  * DeviceLabel
 */
 
-new_string_based_id_type!(pub DeviceLabel, 32, r"^.+$");
+new_string_based_id_type!(pub DeviceLabel, 255, r"^.+$");
 
 /*
  * DeviceID

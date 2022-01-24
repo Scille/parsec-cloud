@@ -150,6 +150,31 @@ def test_user_id():
 
 
 @pytest.mark.rust
+def test_device_label():
+    from parsec.api.protocol.types import DeviceLabel, _PyDeviceLabel, _RsDeviceLabel
+
+    assert DeviceLabel is _RsDeviceLabel
+
+    py_dl = _PyDeviceLabel("a" * 255)
+    rs_dl = DeviceLabel("a" * 255)
+
+    assert str(py_dl) == str(rs_dl)
+    assert py_dl.str == rs_dl.str
+    assert hash(py_dl) == hash(rs_dl)
+    assert repr(py_dl) == repr(rs_dl)
+    assert DeviceLabel("abcdef") == DeviceLabel("abcdef")
+    assert DeviceLabel("abcdef") != DeviceLabel("ghijkl")
+
+    with pytest.raises(ValueError) as excinfo:
+        _PyDeviceLabel("a" * 256)
+    assert str(excinfo.value) == "Invalid data"
+
+    with pytest.raises(ValueError) as excinfo:
+        DeviceLabel("a" * 256)
+    assert str(excinfo.value) == "Invalid DeviceLabel"
+
+
+@pytest.mark.rust
 def test_entry_id():
     from parsec.api.data.entry import EntryID, _RsEntryID, _PyEntryID
 
