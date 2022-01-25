@@ -61,7 +61,7 @@ def share_workspace(
     **kwargs,
 ) -> None:
     """
-    Create a new workspace for the given device.
+    Share a workspace with someone
     """
     role = WORKSPACE_ROLE_CHOICES[role]
     with cli_exception_handler(config.debug):
