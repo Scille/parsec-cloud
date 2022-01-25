@@ -4,12 +4,15 @@ import pytest
 from PyQt5 import QtCore
 from unittest.mock import Mock
 from pathlib import Path
+import pendulum
+import datetime
 
 from parsec.core.types import WorkspaceRole
 from parsec.core.core_events import CoreEvent
 from parsec.core.fs import FSWorkspaceNoReadAccess
 from parsec.core.gui.workspace_button import WorkspaceButton
 from parsec.core.gui.timestamped_workspace_widget import TimestampedWorkspaceWidget
+from parsec.core.gui.lang import translate, format_datetime
 
 from tests.common import freeze_time
 
@@ -353,11 +356,28 @@ async def test_workspace_filter_user_new_workspace(
 async def test_display_timestamped_workspace_in_workspaces_list(
     aqtbot, running_backend, logged_gui, monkeypatch, catch_timestamped_workspace_widget, tmpdir
 ):
-    w_w = logged_gui.test_get_workspaces_widget()
+    central_widget = logged_gui.test_get_central_widget()
     workspace_name = "wksp1"
 
+    def _online():
+        assert central_widget.menu.label_connection_state.text() == translate(
+            "TEXT_BACKEND_STATE_CONNECTED"
+        )
+
+    await aqtbot.wait_until(_online)
+
+    w_w = logged_gui.test_get_workspaces_widget()
+    await logged_gui.test_get_core().user_fs.sync()
+    await logged_gui.test_get_core().wait_idle_monitors()
+
+    year_n = datetime.datetime.now()
+    # Approximately 10 years from now
+    year_n10 = year_n + datetime.timedelta(days=10 * 365)
+    # Approximately 20 years from now
+    year_n20 = year_n + datetime.timedelta(days=20 * 365)
+
     # Create the workspace
-    with freeze_time("2000-03-30"):
+    with freeze_time(year_n.isoformat()):
         user_fs = logged_gui.test_get_core().user_fs
         await user_fs.workspace_create(workspace_name)
         await user_fs.sync()
@@ -378,7 +398,7 @@ async def test_display_timestamped_workspace_in_workspaces_list(
     (out_of_parsec_data / "file1.txt").touch()
     (out_of_parsec_data / "file2.txt").touch()
 
-    with freeze_time("2010-03-30 00:00:00"):
+    with freeze_time(year_n10.isoformat()):
         # Import file 1
         monkeypatch.setattr(
             "parsec.core.gui.custom_dialogs.QDialogInProcess.getOpenFileNames",
@@ -388,7 +408,7 @@ async def test_display_timestamped_workspace_in_workspaces_list(
             aqtbot.mouse_click(f_w.button_import_files, QtCore.Qt.LeftButton)
         await f_w.workspace_fs.sync()
 
-    with freeze_time("2020-03-30 00:00:00"):
+    with freeze_time(year_n20.isoformat()):
         # Import file 2
         monkeypatch.setattr(
             "parsec.core.gui.custom_dialogs.QDialogInProcess.getOpenFileNames",
@@ -401,11 +421,11 @@ async def test_display_timestamped_workspace_in_workspaces_list(
     def _wait_for_files():
         assert f_w.table_files.rowCount() == 3
         assert f_w.table_files.item(1, 1).text() == "file1.txt"
-        assert f_w.table_files.item(1, 2).text() == "03/30/2010 12:00 AM"
-        assert f_w.table_files.item(1, 3).text() == "03/30/2010 12:00 AM"
+        assert f_w.table_files.item(1, 2).text() == format_datetime(pendulum.instance(year_n10))
+        assert f_w.table_files.item(1, 3).text() == format_datetime(pendulum.instance(year_n10))
         assert f_w.table_files.item(2, 1).text() == "file2.txt"
-        assert f_w.table_files.item(2, 2).text() == "03/30/2020 12:00 AM"
-        assert f_w.table_files.item(2, 3).text() == "03/30/2020 12:00 AM"
+        assert f_w.table_files.item(2, 2).text() == format_datetime(pendulum.instance(year_n20))
+        assert f_w.table_files.item(2, 3).text() == format_datetime(pendulum.instance(year_n20))
 
     await aqtbot.wait_until(_wait_for_files)
 
@@ -427,8 +447,13 @@ async def test_display_timestamped_workspace_in_workspaces_list(
 
     assert isinstance(ts_wk_w, TimestampedWorkspaceWidget)
 
-    ts_wk_w.calendar_widget.setSelectedDate(QtCore.QDate(2015, 3, 30))
-    assert ts_wk_w.date == QtCore.QDate(2015, 3, 30)
+    # Approximately 15 years from now
+    selected_date = year_n10 + datetime.timedelta(days=5 * 365)
+
+    ts_wk_w.calendar_widget.setSelectedDate(
+        QtCore.QDate(selected_date.year, selected_date.month, selected_date.day)
+    )
+    assert ts_wk_w.date == QtCore.QDate(selected_date.year, selected_date.month, selected_date.day)
     assert ts_wk_w.time == QtCore.QTime(0, 0)
 
     async with aqtbot.wait_signal(w_w.mount_success):
@@ -457,8 +482,8 @@ async def test_display_timestamped_workspace_in_workspaces_list(
         assert f_w.isVisible()
         assert f_w.table_files.rowCount() == 2
         assert f_w.table_files.item(1, 1).text() == "file1.txt"
-        assert f_w.table_files.item(1, 2).text() == "03/30/2010 12:00 AM"
-        assert f_w.table_files.item(1, 3).text() == "03/30/2010 12:00 AM"
+        assert f_w.table_files.item(1, 2).text() == format_datetime(pendulum.instance(year_n10))
+        assert f_w.table_files.item(1, 3).text() == format_datetime(pendulum.instance(year_n10))
 
     await aqtbot.wait_until(_files_listed)
 
