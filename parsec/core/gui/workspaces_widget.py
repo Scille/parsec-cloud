@@ -348,7 +348,7 @@ class WorkspacesWidget(QWidget, Ui_WorkspacesWidget):
 
             # Retrieve current role for ourself
             user_id = workspace_fs.device.user_id
-            current_role, _ = users_roles.get(user_id)
+            current_role = users_roles.get(user_id)
 
             # Create and bind button if it doesn't exist
             if button is None:
