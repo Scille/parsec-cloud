@@ -7,10 +7,14 @@ from async_generator import asynccontextmanager
 from pendulum import now as pendulum_now
 from functools import partial
 
-from uuid import uuid4
-
 from parsec.api.data import UserProfile
-from parsec.api.protocol import InvitationType, HumanHandle, InvitationDeletedReason
+from parsec.api.protocol import (
+    DeviceLabel,
+    InvitationToken,
+    InvitationType,
+    HumanHandle,
+    InvitationDeletedReason,
+)
 from parsec.core.types import BackendInvitationAddr
 from parsec.core.invite import UserGreetInitialCtx
 from parsec.core.gui.lang import translate
@@ -54,7 +58,7 @@ def ClaimUserTestBed(
     class _ClaimUserTestBed:
         def __init__(self):
             self.requested_human_handle = HumanHandle(email="pfry@pe.com", label="Philip J. Fry")
-            self.requested_device_label = "PC1"
+            self.requested_device_label = DeviceLabel("PC1")
             self.password = "P@ssw0rd."
             self.steps_done = []
 
@@ -94,7 +98,7 @@ def ClaimUserTestBed(
                 claimer_email=claimer_email,
             )
             invitation_addr = BackendInvitationAddr.build(
-                backend_addr=self.author.organization_addr,
+                backend_addr=self.author.organization_addr.get_backend_addr(),
                 organization_id=self.author.organization_id,
                 invitation_type=InvitationType.USER,
                 token=invitation.token,
@@ -240,7 +244,7 @@ def ClaimUserTestBed(
             aqtbot.key_clicks(cupi_w.line_edit_user_email, human_email)
             aqtbot.key_clicks(cupi_w.line_edit_user_full_name, human_label)
             cupi_w.line_edit_device.clear()
-            aqtbot.key_clicks(cupi_w.line_edit_device, device_label)
+            aqtbot.key_clicks(cupi_w.line_edit_device, device_label.str)
             aqtbot.mouse_click(cupi_w.button_ok, QtCore.Qt.LeftButton)
 
             def _claim_info_submitted():
@@ -402,7 +406,7 @@ async def test_claim_user_offline(
                 aqtbot.key_clicks(cupi_w.line_edit_user_email, human_email)
                 aqtbot.key_clicks(cupi_w.line_edit_user_full_name, human_label)
                 cupi_w.line_edit_device.clear()
-                aqtbot.key_clicks(cupi_w.line_edit_device, device_label)
+                aqtbot.key_clicks(cupi_w.line_edit_device, device_label.str)
                 aqtbot.mouse_click(cupi_w.button_ok, QtCore.Qt.LeftButton)
                 await aqtbot.wait_until(partial(self._claim_aborted, expected_message))
 
@@ -482,7 +486,7 @@ async def test_claim_user_reset_by_peer(
                 aqtbot.key_clicks(cupi_w.line_edit_user_email, human_email)
                 aqtbot.key_clicks(cupi_w.line_edit_user_full_name, human_label)
                 cupi_w.line_edit_device.clear()
-                aqtbot.key_clicks(cupi_w.line_edit_device, device_label)
+                aqtbot.key_clicks(cupi_w.line_edit_device, device_label.str)
                 aqtbot.mouse_click(cupi_w.button_ok, QtCore.Qt.LeftButton)
                 await aqtbot.wait_until(partial(self._claim_restart, expected_message))
 
@@ -585,7 +589,7 @@ async def test_claim_user_invitation_cancelled(
             aqtbot.key_clicks(cupi_w.line_edit_user_email, human_email)
             aqtbot.key_clicks(cupi_w.line_edit_user_full_name, human_label)
             cupi_w.line_edit_device.clear()
-            aqtbot.key_clicks(cupi_w.line_edit_device, device_label)
+            aqtbot.key_clicks(cupi_w.line_edit_device, device_label.str)
             aqtbot.mouse_click(cupi_w.button_ok, QtCore.Qt.LeftButton)
             await aqtbot.wait_until(partial(self._claim_restart, expected_message))
 
@@ -619,7 +623,7 @@ async def test_claim_user_already_deleted(
     )
 
     invitation_addr = BackendInvitationAddr.build(
-        backend_addr=alice.organization_addr,
+        backend_addr=alice.organization_addr.get_backend_addr(),
         organization_id=alice.organization_id,
         invitation_type=InvitationType.USER,
         token=invitation.token,
@@ -651,7 +655,7 @@ async def test_claim_user_offline_backend(
     )
 
     invitation_addr = BackendInvitationAddr.build(
-        backend_addr=alice.organization_addr,
+        backend_addr=alice.organization_addr.get_backend_addr(),
         organization_id=alice.organization_id,
         invitation_type=InvitationType.USER,
         token=invitation.token,
@@ -675,10 +679,10 @@ async def test_claim_user_unknown_invitation(
 ):
 
     invitation_addr = BackendInvitationAddr.build(
-        backend_addr=alice.organization_addr,
+        backend_addr=alice.organization_addr.get_backend_addr(),
         organization_id=alice.organization_id,
         invitation_type=InvitationType.USER,
-        token=uuid4(),
+        token=InvitationToken.new(),
     )
 
     gui.add_instance(invitation_addr.to_url())
@@ -717,10 +721,10 @@ async def test_claim_user_backend_desync(
     monkeypatch.setattr("parsec.api.protocol.BaseClientHandshake.timestamp", _timestamp)
 
     invitation_addr = BackendInvitationAddr.build(
-        backend_addr=alice.organization_addr,
+        backend_addr=alice.organization_addr.get_backend_addr(),
         organization_id=alice.organization_id,
         invitation_type=InvitationType.USER,
-        token=uuid4(),
+        token=InvitationToken.new(),
     )
 
     gui.add_instance(invitation_addr.to_url())

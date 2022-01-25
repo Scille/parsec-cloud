@@ -10,21 +10,17 @@ from parsec.core.gui.lang import switch_language
 
 
 @pytest.mark.gui
-def test_device_name_validator(qtbot, core_config):
+def test_device_label_validator(qtbot, core_config):
     switch_language(core_config, "en")
 
     le = ValidatedLineEdit()
-    le.set_validator(validators.DeviceNameValidator())
+    le.set_validator(validators.DeviceLabelValidator())
     qtbot.add_widget(le)
     le.show()
 
     qtbot.keyClicks(le, "abcd")
     assert le.is_input_valid()
     assert le.property("validity") == QtGui.QValidator.Acceptable
-
-    qtbot.keyClicks(le, "~")
-    assert not le.is_input_valid()
-    assert le.property("validity") == QtGui.QValidator.Invalid
 
 
 @pytest.mark.gui

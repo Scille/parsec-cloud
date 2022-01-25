@@ -132,7 +132,7 @@ async def query_update_roles(
 
     # Make sure user profile is compatible
     rep = await conn.fetchrow(
-        *_q_get_user_profile(organization_id=organization_id, user_id=new_role.user_id)
+        *_q_get_user_profile(organization_id=organization_id.str, user_id=new_role.user_id.str)
     )
     if not rep:
         raise RealmNotFoundError(f"User `{new_role.user_id}` doesn't exist")
@@ -144,7 +144,7 @@ async def query_update_roles(
 
     # Retrieve realm and make sure it is not under maintenance
     rep = await conn.fetchrow(
-        *_q_get_realm_status(organization_id=organization_id, realm_id=new_role.realm_id)
+        *_q_get_realm_status(organization_id=organization_id.str, realm_id=new_role.realm_id.uuid)
     )
     if not rep:
         raise RealmNotFoundError(f"Realm `{new_role.realm_id}` doesn't exist")
@@ -154,9 +154,9 @@ async def query_update_roles(
     # Check access rights and user existance
     ((author_id, author_role), (user_id, existing_user_role)) = await conn.fetch(
         *_q_get_roles(
-            organization_id=organization_id,
-            realm_id=new_role.realm_id,
-            users_ids=(new_role.granted_by.user_id, new_role.user_id),
+            organization_id=organization_id.str,
+            realm_id=new_role.realm_id.uuid,
+            users_ids=(new_role.granted_by.user_id.str, new_role.user_id.str),
         )
     )
     assert author_id
@@ -198,9 +198,9 @@ async def query_update_roles(
         # The change of role needs to occur strictly after the last upload for this user
         rep = await conn.fetchrow(
             *_q_get_last_vlob_update(
-                organization_id=organization_id,
-                realm_id=new_role.realm_id,
-                user_id=new_role.user_id,
+                organization_id=organization_id.str,
+                realm_id=new_role.realm_id.uuid,
+                user_id=new_role.user_id.str,
             )
         )
         realm_last_vlob_update = None if not rep else rep[0]
@@ -213,9 +213,9 @@ async def query_update_roles(
         # The change of role needs to occur strictly after the last change of role performed by this user
         rep = await conn.fetchrow(
             *_q_get_last_role_change(
-                organization_id=organization_id,
-                realm_id=new_role.realm_id,
-                user_id=new_role.user_id,
+                organization_id=organization_id.str,
+                realm_id=new_role.realm_id.uuid,
+                user_id=new_role.user_id.str,
             )
         )
         realm_last_role_change = None if not rep else rep[0]
@@ -224,21 +224,21 @@ async def query_update_roles(
 
     await conn.execute(
         *_q_insert_realm_user_role(
-            organization_id=organization_id,
-            realm_id=new_role.realm_id,
-            user_id=new_role.user_id,
+            organization_id=organization_id.str,
+            realm_id=new_role.realm_id.uuid,
+            user_id=new_role.user_id.str,
             role=new_role.role.value if new_role.role else None,
             certificate=new_role.certificate,
-            granted_by=new_role.granted_by,
+            granted_by=new_role.granted_by.str,
             granted_on=new_role.granted_on,
         )
     )
 
     await conn.execute(
         *_q_set_last_role_change(
-            organization_id=organization_id,
-            realm_id=new_role.realm_id,
-            user_id=new_role.granted_by.user_id,
+            organization_id=organization_id.str,
+            realm_id=new_role.realm_id.uuid,
+            user_id=new_role.granted_by.user_id.str,
             granted_on=new_role.granted_on,
         )
     )
@@ -250,7 +250,7 @@ async def query_update_roles(
         author=new_role.granted_by,
         realm_id=new_role.realm_id,
         user=new_role.user_id,
-        role_str=new_role.role.value if new_role.role else None,
+        role=new_role.role,
     )
 
     if recipient_message:

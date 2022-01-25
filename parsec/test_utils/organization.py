@@ -62,7 +62,7 @@ async def initialize_test_organization(
         alice_device = await bootstrap_organization(
             cmds=anonymous_cmds,
             human_handle=HumanHandle(label="Alice", email="alice@example.com"),
-            device_label="laptop",
+            device_label=DeviceLabel("laptop"),
         )
         await user_storage_non_speculative_init(
             data_base_dir=config.data_base_dir, device=alice_device
@@ -81,7 +81,7 @@ async def initialize_test_organization(
 
             # Create new device "pc" for Alice
             other_alice_device = await _register_new_device(
-                cmds=alice_cmds, author=alice_device, device_label="pc"
+                cmds=alice_cmds, author=alice_device, device_label=DeviceLabel("pc")
             )
             save_device_with_password_in_config(
                 config_dir=config_dir, device=other_alice_device, password=password
@@ -90,7 +90,7 @@ async def initialize_test_organization(
             bob_device = await _register_new_user(
                 cmds=alice_cmds,
                 author=alice_device,
-                device_label="laptop",
+                device_label=DeviceLabel("laptop"),
                 human_handle=HumanHandle(email="bob@example.com", label="Bob"),
                 profile=UserProfile.STANDARD,
             )
@@ -105,7 +105,7 @@ async def initialize_test_organization(
             toto_device = await _register_new_user(
                 cmds=alice_cmds,
                 author=alice_device,
-                device_label="laptop",
+                device_label=DeviceLabel("laptop"),
                 human_handle=HumanHandle(email="toto@example.com", label="Toto"),
                 profile=UserProfile.OUTSIDER,
             )
@@ -156,7 +156,7 @@ async def initialize_test_organization(
 
 async def _add_random_device(cmds, device, additional_devices_number):
     for _ in range(additional_devices_number):
-        device_label = "device_" + str(uuid4())[:9]
+        device_label = DeviceLabel("device_" + str(uuid4())[:9])
         await _register_new_device(cmds=cmds, author=device, device_label=device_label)
 
 
@@ -186,7 +186,7 @@ async def _add_random_users(
         user_device = await _register_new_user(
             cmds=cmds,
             author=author,
-            device_label="desktop",
+            device_label=DeviceLabel("desktop"),
             human_handle=HumanHandle(email=f"{name}@gmail.com", label=name),
             profile=user_profile,
         )

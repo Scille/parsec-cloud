@@ -2,10 +2,10 @@
 
 import pytest
 import pendulum
-from uuid import uuid4
 from unittest.mock import ANY
 
 from parsec.api.data import UserProfile
+from parsec.api.protocol import VlobID, BlockID
 
 from tests.common import customize_fixtures
 from tests.backend.common import organization_stats
@@ -35,7 +35,7 @@ async def test_organization_stats_data(alice_backend_sock, realm, realm_factory,
         author=alice.device_id,
         realm_id=realm,
         encryption_revision=1,
-        vlob_id=uuid4(),
+        vlob_id=VlobID.new(),
         timestamp=pendulum.now(),
         blob=b"1234",
     )
@@ -58,7 +58,7 @@ async def test_organization_stats_data(alice_backend_sock, realm, realm_factory,
     await backend.block.create(
         organization_id=alice.organization_id,
         author=alice.device_id,
-        block_id=uuid4(),
+        block_id=BlockID.new(),
         realm_id=realm,
         block=b"1234",
     )

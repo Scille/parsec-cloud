@@ -12,7 +12,7 @@ from parsec.core.gui.custom_widgets import Pixmap
 
 NAME_DATA_INDEX = Qt.UserRole
 TYPE_DATA_INDEX = Qt.UserRole + 1
-UUID_DATA_INDEX = Qt.UserRole + 2
+ENTRY_ID_DATA_INDEX = Qt.UserRole + 2
 COPY_STATUS_DATA_INDEX = Qt.UserRole + 3
 
 

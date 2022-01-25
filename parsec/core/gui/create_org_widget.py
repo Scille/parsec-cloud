@@ -1,11 +1,11 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2016-2021 Scille SAS
 
+from typing import Optional
 from structlog import get_logger
-
 from PyQt5.QtCore import pyqtSignal
 from PyQt5.QtWidgets import QWidget, QApplication, QDialog
 
-from parsec.api.protocol import OrganizationID, DeviceName, HumanHandle
+from parsec.api.protocol import OrganizationID, HumanHandle, DeviceLabel
 from parsec.core.backend_connection import (
     apiv1_backend_anonymous_cmds_factory,
     BackendConnectionRefused,
@@ -28,16 +28,13 @@ from parsec.core.local_device import (
     LocalDeviceCryptoError,
     LocalDeviceNotFoundError,
 )
-
 from parsec.core.gui.trio_jobs import QtToTrioJob
 from parsec.core.gui.custom_dialogs import GreyedDialog, show_error
 from parsec.core.gui.trio_jobs import JobResultError
 from parsec.core.gui.desktop import get_default_device
 from parsec.core.gui.lang import translate as _
 from parsec.core.gui import validators
-
 from parsec.core.gui.authentication_choice_widget import AuthenticationChoiceWidget
-
 from parsec.core.gui.ui.create_org_widget import Ui_CreateOrgWidget
 from parsec.core.gui.ui.create_org_user_info_widget import Ui_CreateOrgUserInfoWidget
 
@@ -45,11 +42,16 @@ from parsec.core.gui.ui.create_org_user_info_widget import Ui_CreateOrgUserInfoW
 logger = get_logger()
 
 
-async def _do_create_org(config, human_handle, device_name, backend_addr):
+async def _do_create_org(
+    config,
+    human_handle: HumanHandle,
+    device_label: DeviceLabel,
+    backend_addr: BackendOrganizationBootstrapAddr,
+):
     try:
         async with apiv1_backend_anonymous_cmds_factory(addr=backend_addr) as cmds:
             new_device = await bootstrap_organization(
-                cmds=cmds, human_handle=human_handle, device_label=device_name
+                cmds=cmds, human_handle=human_handle, device_label=device_label
             )
             # The organization is brand new, of course there is no existing
             # remote user manifest, hence our placeholder is non-speculative.
@@ -83,7 +85,7 @@ class CreateOrgUserInfoWidget(QWidget, Ui_CreateOrgUserInfoWidget):
         self.line_edit_org_name.validity_changed.connect(self.check_infos)
         self.line_edit_device.setText(get_default_device())
         self.line_edit_device.validity_changed.connect(self.check_infos)
-        self.line_edit_device.set_validator(validators.DeviceNameValidator())
+        self.line_edit_device.set_validator(validators.DeviceLabelValidator())
         self.line_edit_org_name.set_validator(validators.OrganizationIDValidator())
         self.line_edit_backend_addr.set_validator(validators.BackendAddrValidator())
         self.line_edit_backend_addr.validity_changed.connect(self.check_infos)
@@ -132,7 +134,7 @@ class CreateOrgWidget(QWidget, Ui_CreateOrgWidget):
     req_success = pyqtSignal(QtToTrioJob)
     req_error = pyqtSignal(QtToTrioJob)
 
-    def __init__(self, jobs_ctx, config, start_addr):
+    def __init__(self, jobs_ctx, config, start_addr: Optional[BackendAddr]):
         super().__init__()
         self.setupUi(self)
         self.jobs_ctx = jobs_ctx
@@ -155,7 +157,7 @@ class CreateOrgWidget(QWidget, Ui_CreateOrgWidget):
         self.start_addr = start_addr
 
         if self.start_addr:
-            self.current_widget.line_edit_org_name.setText(self.start_addr.organization_id)
+            self.current_widget.line_edit_org_name.setText(self.start_addr.organization_id.str)
             self.current_widget.line_edit_org_name.setReadOnly(True)
             self.label_instructions.setText(
                 _("TEXT_BOOTSTRAP_ORGANIZATION_INSTRUCTIONS_organization").format(
@@ -192,7 +194,7 @@ class CreateOrgWidget(QWidget, Ui_CreateOrgWidget):
         if isinstance(self.current_widget, CreateOrgUserInfoWidget):
             backend_addr = None
             org_id = None
-            device_name = None
+            device_label = None
             human_handle = None
 
             if self.start_addr:
@@ -224,10 +226,11 @@ class CreateOrgWidget(QWidget, Ui_CreateOrgWidget):
             except ValueError as exc:
                 show_error(self, _("TEXT_ORG_WIZARD_INVALID_HUMAN_HANDLE"), exception=exc)
                 return
+            # No try/except given `self.current_widget.line_edit_device` has already been validated against `DeviceLabel`
             try:
-                device_name = DeviceName(self.current_widget.line_edit_device.text())
+                device_label = DeviceLabel(self.current_widget.line_edit_device.text())
             except ValueError as exc:
-                show_error(self, _("TEXT_ORG_WIZARD_INVALID_DEVICE_NAME"), exception=exc)
+                show_error(self, _("TEXT_ORG_WIZARD_INVALID_DEVICE_LABEL"), exception=exc)
                 return
 
             self.create_job = self.jobs_ctx.submit_job(
@@ -236,7 +239,7 @@ class CreateOrgWidget(QWidget, Ui_CreateOrgWidget):
                 _do_create_org,
                 config=self.config,
                 human_handle=human_handle,
-                device_name=device_name,
+                device_label=device_label,
                 backend_addr=backend_addr,
             )
             self.button_validate.setEnabled(False)

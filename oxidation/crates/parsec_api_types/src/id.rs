@@ -99,6 +99,12 @@ impl UserID {
 new_string_based_id_type!(pub DeviceName, 32, r"^[\w\-]{1,32}$");
 
 /*
+ * DeviceLabel
+*/
+
+new_string_based_id_type!(pub DeviceLabel, 255, r"^.+$");
+
+/*
  * DeviceID
  */
 
@@ -172,10 +178,10 @@ impl HumanHandle {
         let label = label.nfc().collect::<String>();
 
         // TODO: how to check the email  easily ?
-        if email.is_empty() || email.len() > 255 {
+        if email.is_empty() || email.len() >= 255 {
             return Err("Invalid email address");
         }
-        if label.is_empty() || label.len() > 255 {
+        if label.is_empty() || label.len() >= 255 {
             return Err("Invalid label");
         }
 

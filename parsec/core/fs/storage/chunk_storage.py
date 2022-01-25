@@ -128,7 +128,7 @@ class ChunkStorage:
             intersect_rows = cursor.fetchall()
             cursor.execute(f"""DROP TABLE IF EXISTS {table_name}""")
 
-        return [ChunkID(bytes=id_bytes) for (id_bytes,) in intersect_rows]
+        return [ChunkID.from_bytes(id_bytes) for (id_bytes,) in intersect_rows]
 
     async def get_chunk(self, chunk_id: ChunkID) -> bytes:
         async with self._open_cursor() as cursor:

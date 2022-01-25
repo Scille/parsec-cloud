@@ -36,7 +36,7 @@ async def bootstrap_organization(
     root_verify_key = root_signing_key.verify_key
 
     organization_addr = BackendOrganizationAddr.build(
-        backend_addr=cmds.addr,
+        backend_addr=cmds.addr.get_backend_addr(),
         organization_id=cmds.addr.organization_id,
         root_verify_key=root_verify_key,
     )

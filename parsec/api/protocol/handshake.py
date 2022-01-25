@@ -1,7 +1,6 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2016-2021 Scille SAS
 
 from typing import Tuple, Optional, cast, Dict, Sequence, Union
-from uuid import UUID
 from enum import Enum
 from secrets import token_bytes
 
@@ -18,7 +17,12 @@ from parsec.utils import (
 )
 from parsec.api.protocol.base import ProtocolError, InvalidMessageError, serializer_factory
 from parsec.api.protocol.types import OrganizationID, DeviceID, OrganizationIDField, DeviceIDField
-from parsec.api.protocol.invite import InvitationType, InvitationTypeField
+from parsec.api.protocol.invite import (
+    InvitationToken,
+    InvitationTokenField,
+    InvitationType,
+    InvitationTypeField,
+)
 from parsec.api.version import ApiVersion, API_V1_VERSION, API_V2_VERSION
 
 
@@ -151,7 +155,7 @@ class HandshakeInvitedAnswerSchema(BaseSchema):
     client_api_version = ApiVersionField(required=True)
     organization_id = OrganizationIDField(required=True)
     invitation_type = InvitationTypeField(required=True)
-    token = fields.UUID(required=True)
+    token = InvitationTokenField(required=True)
 
 
 class HandshakeAnswerSchema(OneOfSchema):
@@ -340,7 +344,9 @@ class ServerHandshake:
                 )
 
             try:
-                returned_challenge = verify_key.verify(self.answer_data["answer"])
+                answer = self.answer_data["answer"]
+                assert isinstance(answer, bytes)
+                returned_challenge = verify_key.verify(answer)
                 if returned_challenge != self.challenge:
                     raise HandshakeFailedChallenge("Invalid returned challenge")
 
@@ -454,7 +460,9 @@ class AuthenticatedClientHandshake(BaseClientHandshake):
 
     def process_challenge_req(self, req: bytes) -> bytes:
         self.load_challenge_req(req)
-        answer = self.user_signkey.sign(self.challenge_data["challenge"])
+        challenge = self.challenge_data["challenge"]
+        assert isinstance(challenge, bytes)
+        answer = self.user_signkey.sign(challenge)
         return self.HANDSHAKE_ANSWER_SERIALIZER.dumps(
             {
                 "handshake": "answer",
@@ -472,7 +480,10 @@ class InvitedClientHandshake(BaseClientHandshake):
     SUPPORTED_API_VERSIONS = (API_V2_VERSION,)
 
     def __init__(
-        self, organization_id: OrganizationID, invitation_type: InvitationType, token: UUID
+        self,
+        organization_id: OrganizationID,
+        invitation_type: InvitationType,
+        token: InvitationToken,
     ):
         super().__init__()
         self.organization_id = organization_id

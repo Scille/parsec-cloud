@@ -277,7 +277,7 @@ msgstr "L'adresse du serveur n'est pas valide."
 msgid "TEXT_ORG_WIZARD_INVALID_HUMAN_HANDLE"
 msgstr "L'adresse email n'est pas valide."
 
-msgid "TEXT_ORG_WIZARD_INVALID_DEVICE_NAME"
+msgid "TEXT_ORG_WIZARD_INVALID_DEVICE_LABEL"
 msgstr "Le nom de d'appareil n'est pas valide."
 
 msgid "ACTION_CREATE_ORG"

@@ -7,9 +7,12 @@ from PyQt5 import QtCore
 from async_generator import asynccontextmanager
 from functools import partial
 
-from uuid import uuid4
-
-from parsec.api.protocol import InvitationType, InvitationDeletedReason
+from parsec.api.protocol import (
+    InvitationToken,
+    InvitationType,
+    InvitationDeletedReason,
+    DeviceLabel,
+)
 from parsec.core.types import BackendInvitationAddr
 from parsec.core.invite import DeviceGreetInitialCtx
 from parsec.core.gui.lang import translate
@@ -50,7 +53,7 @@ def ClaimDeviceTestBed(
 
     class _ClaimDeviceTestBed:
         def __init__(self):
-            self.requested_device_label = "PC1"
+            self.requested_device_label = DeviceLabel("PC1")
             self.password = "P@ssw0rd."
             self.steps_done = []
 
@@ -86,7 +89,7 @@ def ClaimDeviceTestBed(
                 organization_id=self.author.organization_id, greeter_user_id=self.author.user_id
             )
             invitation_addr = BackendInvitationAddr.build(
-                backend_addr=self.author.organization_addr,
+                backend_addr=self.author.organization_addr.get_backend_addr(),
                 organization_id=self.author.organization_id,
                 invitation_type=InvitationType.DEVICE,
                 token=invitation.token,
@@ -232,7 +235,7 @@ def ClaimDeviceTestBed(
 
             assert not cdpi_w.button_ok.isEnabled()
 
-            aqtbot.key_clicks(cdpi_w.line_edit_device, device_label)
+            aqtbot.key_clicks(cdpi_w.line_edit_device, device_label.str)
             aqtbot.key_clicks(
                 cdpi_w.widget_auth.main_layout.itemAt(0).widget().line_edit_password, self.password
             )
@@ -357,7 +360,7 @@ async def test_claim_device_offline(
 
             with running_backend.offline():
                 cdpi_w.line_edit_device.clear()
-                aqtbot.key_clicks(cdpi_w.line_edit_device, device_label)
+                aqtbot.key_clicks(cdpi_w.line_edit_device, device_label.str)
                 aqtbot.key_clicks(
                     cdpi_w.widget_auth.main_layout.itemAt(0).widget().line_edit_password,
                     self.password,
@@ -440,7 +443,7 @@ async def test_claim_device_reset_by_peer(
 
             async with self._reset_greeter():
                 cdpi_w.line_edit_device.clear()
-                aqtbot.key_clicks(cdpi_w.line_edit_device, device_label)
+                aqtbot.key_clicks(cdpi_w.line_edit_device, device_label.str)
                 aqtbot.key_clicks(
                     cdpi_w.widget_auth.main_layout.itemAt(0).widget().line_edit_password,
                     self.password,
@@ -545,7 +548,7 @@ async def test_claim_device_invitation_cancelled(
             await self._cancel_invitation()
 
             cdpi_w.line_edit_device.clear()
-            aqtbot.key_clicks(cdpi_w.line_edit_device, device_label)
+            aqtbot.key_clicks(cdpi_w.line_edit_device, device_label.str)
             aqtbot.key_clicks(
                 cdpi_w.widget_auth.main_layout.itemAt(0).widget().line_edit_password, self.password
             )
@@ -583,7 +586,7 @@ async def test_claim_device_already_deleted(
         organization_id=alice.organization_id, greeter_user_id=alice.user_id
     )
     invitation_addr = BackendInvitationAddr.build(
-        backend_addr=alice.organization_addr,
+        backend_addr=alice.organization_addr.get_backend_addr(),
         organization_id=alice.organization_id,
         invitation_type=InvitationType.DEVICE,
         token=invitation.token,
@@ -615,7 +618,7 @@ async def test_claim_device_offline_backend(
         organization_id=alice.organization_id, greeter_user_id=alice.user_id
     )
     invitation_addr = BackendInvitationAddr.build(
-        backend_addr=alice.organization_addr,
+        backend_addr=alice.organization_addr.get_backend_addr(),
         organization_id=alice.organization_id,
         invitation_type=InvitationType.DEVICE,
         token=invitation.token,
@@ -639,10 +642,10 @@ async def test_claim_device_unknown_invitation(
 ):
 
     invitation_addr = BackendInvitationAddr.build(
-        backend_addr=alice.organization_addr,
+        backend_addr=alice.organization_addr.get_backend_addr(),
         organization_id=alice.organization_id,
         invitation_type=InvitationType.DEVICE,
-        token=uuid4(),
+        token=InvitationToken.new(),
     )
 
     gui.add_instance(invitation_addr.to_url())
@@ -683,10 +686,10 @@ async def test_claim_device_backend_desync(
     monkeypatch.setattr("parsec.api.protocol.BaseClientHandshake.timestamp", _timestamp)
 
     invitation_addr = BackendInvitationAddr.build(
-        backend_addr=alice.organization_addr,
+        backend_addr=alice.organization_addr.get_backend_addr(),
         organization_id=alice.organization_id,
         invitation_type=InvitationType.DEVICE,
-        token=uuid4(),
+        token=InvitationToken.new(),
     )
 
     gui.add_instance(invitation_addr.to_url())

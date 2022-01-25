@@ -3,7 +3,7 @@
 from PyQt5.QtCore import QRegularExpression
 from PyQt5.QtGui import QValidator, QIntValidator, QRegularExpressionValidator
 
-from parsec.api.protocol import OrganizationID, UserID, DeviceName, DeviceID
+from parsec.api.protocol import OrganizationID, UserID, DeviceLabel
 from parsec.core.types import (
     BackendAddr,
     BackendActionAddr,
@@ -88,23 +88,12 @@ class UserIDValidator(QValidator):
             return QValidator.Invalid, string, pos
 
 
-class DeviceNameValidator(QValidator):
+class DeviceLabelValidator(QValidator):
     def validate(self, string, pos):
         try:
             if len(string) == 0:
                 return QValidator.Intermediate, string, pos
-            DeviceName(string)
-            return QValidator.Acceptable, string, pos
-        except ValueError:
-            return QValidator.Invalid, string, pos
-
-
-class DeviceIDValidator(QValidator):
-    def validate(self, string, pos):
-        try:
-            if len(string) == 0:
-                return QValidator.Intermediate, string, pos
-            DeviceID(string)
+            DeviceLabel(string)
             return QValidator.Acceptable, string, pos
         except ValueError:
             return QValidator.Invalid, string, pos

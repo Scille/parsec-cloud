@@ -113,7 +113,7 @@
                         "block_id": {
                             "allow_none": false,
                             "required": true,
-                            "type": "UUID"
+                            "type": "BlockIDField"
                         },
                         "cmd": {
                             "allow_none": false,
@@ -123,7 +123,7 @@
                         "realm_id": {
                             "allow_none": false,
                             "required": true,
-                            "type": "UUID"
+                            "type": "RealmIDField"
                         }
                     },
                     "serializing": "msgpack"
@@ -151,7 +151,7 @@
                         "block_id": {
                             "allow_none": false,
                             "required": true,
-                            "type": "UUID"
+                            "type": "BlockIDField"
                         },
                         "cmd": {
                             "allow_none": false,
@@ -375,7 +375,7 @@
                         "token": {
                             "allow_none": false,
                             "required": true,
-                            "type": "UUID"
+                            "type": "InvitationTokenField"
                         }
                     },
                     "serializing": "msgpack"
@@ -408,7 +408,7 @@
                         "token": {
                             "allow_none": false,
                             "required": true,
-                            "type": "UUID"
+                            "type": "InvitationTokenField"
                         }
                     },
                     "serializing": "msgpack"
@@ -446,7 +446,7 @@
                         "token": {
                             "allow_none": false,
                             "required": true,
-                            "type": "UUID"
+                            "type": "InvitationTokenField"
                         }
                     },
                     "serializing": "msgpack"
@@ -474,7 +474,7 @@
                         "token": {
                             "allow_none": false,
                             "required": true,
-                            "type": "UUID"
+                            "type": "InvitationTokenField"
                         }
                     },
                     "serializing": "msgpack"
@@ -502,7 +502,7 @@
                         "token": {
                             "allow_none": false,
                             "required": true,
-                            "type": "UUID"
+                            "type": "InvitationTokenField"
                         }
                     },
                     "serializing": "msgpack"
@@ -540,7 +540,7 @@
                         "token": {
                             "allow_none": false,
                             "required": true,
-                            "type": "UUID"
+                            "type": "InvitationTokenField"
                         }
                     },
                     "serializing": "msgpack"
@@ -579,7 +579,7 @@
                         "token": {
                             "allow_none": false,
                             "required": true,
-                            "type": "UUID"
+                            "type": "InvitationTokenField"
                         }
                     },
                     "serializing": "msgpack"
@@ -644,7 +644,7 @@
                         "token": {
                             "allow_none": false,
                             "required": true,
-                            "type": "UUID"
+                            "type": "InvitationTokenField"
                         }
                     },
                     "serializing": "msgpack"
@@ -920,7 +920,7 @@
                         "realm_id": {
                             "allow_none": false,
                             "required": true,
-                            "type": "UUID"
+                            "type": "RealmIDField"
                         }
                     },
                     "serializing": "msgpack"
@@ -958,7 +958,7 @@
                         "realm_id": {
                             "allow_none": false,
                             "required": true,
-                            "type": "UUID"
+                            "type": "RealmIDField"
                         },
                         "since": {
                             "allow_none": true,
@@ -1011,7 +1011,7 @@
                         "realm_id": {
                             "allow_none": false,
                             "required": true,
-                            "type": "UUID"
+                            "type": "RealmIDField"
                         },
                         "timestamp": {
                             "allow_none": false,
@@ -1074,7 +1074,7 @@
                         "realm_id": {
                             "allow_none": false,
                             "required": true,
-                            "type": "UUID"
+                            "type": "RealmIDField"
                         }
                     },
                     "serializing": "msgpack"
@@ -1303,7 +1303,7 @@
                         "realm_id": {
                             "allow_none": false,
                             "required": true,
-                            "type": "UUID"
+                            "type": "RealmIDField"
                         },
                         "timestamp": {
                             "allow_none": false,
@@ -1313,7 +1313,7 @@
                         "vlob_id": {
                             "allow_none": false,
                             "required": true,
-                            "type": "UUID"
+                            "type": "VlobIDField"
                         }
                     },
                     "serializing": "msgpack"
@@ -1368,7 +1368,7 @@
                         "vlob_id": {
                             "allow_none": false,
                             "required": true,
-                            "type": "UUID"
+                            "type": "VlobIDField"
                         }
                     },
                     "serializing": "msgpack"
@@ -1397,7 +1397,7 @@
                                         "vlob_id": {
                                             "allow_none": false,
                                             "required": true,
-                                            "type": "UUID"
+                                            "type": "VlobIDField"
                                         }
                                     }
                                 },
@@ -1430,7 +1430,7 @@
                         "realm_id": {
                             "allow_none": false,
                             "required": true,
-                            "type": "UUID"
+                            "type": "RealmIDField"
                         },
                         "size": {
                             "allow_none": false,
@@ -1485,7 +1485,7 @@
                                         "vlob_id": {
                                             "allow_none": false,
                                             "required": true,
-                                            "type": "UUID"
+                                            "type": "VlobIDField"
                                         }
                                     }
                                 },
@@ -1507,7 +1507,7 @@
                         "realm_id": {
                             "allow_none": false,
                             "required": true,
-                            "type": "UUID"
+                            "type": "RealmIDField"
                         }
                     },
                     "serializing": "msgpack"
@@ -1521,7 +1521,7 @@
                             "key_type": {
                                 "allow_none": false,
                                 "required": false,
-                                "type": "UUID"
+                                "type": "VlobIDField"
                             },
                             "nested_type": {
                                 "allow_none": false,
@@ -1560,7 +1560,7 @@
                         "realm_id": {
                             "allow_none": false,
                             "required": true,
-                            "type": "UUID"
+                            "type": "RealmIDField"
                         }
                     },
                     "serializing": "msgpack"
@@ -1628,7 +1628,7 @@
                         "vlob_id": {
                             "allow_none": false,
                             "required": true,
-                            "type": "UUID"
+                            "type": "VlobIDField"
                         }
                     },
                     "serializing": "msgpack"
@@ -1676,7 +1676,7 @@
                         "vlob_id": {
                             "allow_none": false,
                             "required": true,
-                            "type": "UUID"
+                            "type": "VlobIDField"
                         }
                     },
                     "serializing": "msgpack"

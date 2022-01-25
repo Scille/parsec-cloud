@@ -2,7 +2,7 @@
 
 from typing import Optional, cast
 from pathlib import PurePath
-from PyQt5.QtCore import pyqtSignal
+from PyQt5.QtCore import pyqtSignal, pyqtBoundSignal
 from PyQt5.QtGui import QPixmap, QColor, QIcon
 from PyQt5.QtWidgets import QGraphicsDropShadowEffect, QWidget, QMenu
 
@@ -93,11 +93,11 @@ class CentralWidget(QWidget, Ui_CentralWidget):  # type: ignore[misc]
         core: LoggedCore,
         jobs_ctx: QtToTrioJobScheduler,
         event_bus: EventBus,
-        systray_notification: pyqtSignal,
+        systray_notification: pyqtBoundSignal,
         file_link_addr: Optional[BackendOrganizationFileLinkAddr] = None,
-        **kwargs: object,
+        parent: Optional[QWidget] = None,
     ):
-        super().__init__(**kwargs)
+        super().__init__(parent=parent)
 
         self.setupUi(self)
         self.jobs_ctx = jobs_ctx

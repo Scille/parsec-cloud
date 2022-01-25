@@ -26,7 +26,7 @@ async def test_file_history(alice, alice_workspace):
     # Checking again, should have the first version now
     versions_list, download_limit_reached = await VersionLister(alice_workspace).list(FsPath("/f"))
     assert download_limit_reached is True
-    assert versions_list == [
+    assert [
         TimestampBoundedData(
             id=ANY,
             version=1,
@@ -39,7 +39,7 @@ async def test_file_history(alice, alice_workspace):
             source=None,
             destination=None,
         )
-    ]
+    ] == versions_list
 
     # Updating the file a couple of time and sync again to test the version list
     for i in range(20):

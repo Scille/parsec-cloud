@@ -281,7 +281,6 @@ async def test_workspace_sharing_filter_users(
     def _users_visible():
         visible = 0
         for i in range(share_w_w.scroll_content.layout().count() - 1):
-            print(share_w_w.scroll_content.layout().itemAt(i).widget().label_name.text())
             if share_w_w.scroll_content.layout().itemAt(i).widget().isVisible():
                 visible += 1
         return visible

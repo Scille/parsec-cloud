@@ -3,8 +3,10 @@
 use super::utils::new_uuid_type;
 
 /*
- * EntryID & BlockID
+ * EntryID, BlockID, RealmID, VlobID
  */
 
 new_uuid_type!(pub EntryID);
 new_uuid_type!(pub BlockID);
+new_uuid_type!(pub RealmID);
+new_uuid_type!(pub VlobID);

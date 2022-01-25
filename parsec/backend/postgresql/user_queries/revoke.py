@@ -47,10 +47,10 @@ async def query_revoke_user(
 ) -> None:
     result = await conn.execute(
         *_q_revoke_user(
-            organization_id=organization_id,
-            user_id=user_id,
+            organization_id=organization_id.str,
+            user_id=user_id.str,
             revoked_user_certificate=revoked_user_certificate,
-            revoked_user_certifier=revoked_user_certifier,
+            revoked_user_certifier=revoked_user_certifier.str,
             revoked_on=revoked_on or pendulum.now(),
         )
     )
@@ -58,7 +58,7 @@ async def query_revoke_user(
     if result != "UPDATE 1":
         # TODO: avoid having to do another query to find the error
         err_result = await conn.fetchrow(
-            *_q_revoke_user_error(organization_id=organization_id, user_id=user_id)
+            *_q_revoke_user_error(organization_id=organization_id.str, user_id=user_id.str)
         )
         if not err_result:
             raise UserNotFoundError(user_id)

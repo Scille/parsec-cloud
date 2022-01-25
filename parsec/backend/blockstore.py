@@ -1,8 +1,6 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) BSLv1.1 (eventually AGPLv3) 2016-2021 Scille SAS
 
-from uuid import UUID
-
-from parsec.api.protocol import OrganizationID
+from parsec.api.protocol import OrganizationID, BlockID
 from parsec.backend.config import (
     BaseBlockStoreConfig,
     RAID0BlockStoreConfig,
@@ -16,7 +14,7 @@ from parsec.backend.config import (
 
 
 class BaseBlockStoreComponent:
-    async def read(self, organization_id: OrganizationID, id: UUID) -> bytes:
+    async def read(self, organization_id: OrganizationID, id: BlockID) -> bytes:
         """
         Raises:
             BlockNotFoundError
@@ -24,7 +22,7 @@ class BaseBlockStoreComponent:
         """
         raise NotImplementedError()
 
-    async def create(self, organization_id: OrganizationID, id: UUID, block: bytes) -> None:
+    async def create(self, organization_id: OrganizationID, id: BlockID, block: bytes) -> None:
         """
         Raises:
             BlockAlreadyExistsError

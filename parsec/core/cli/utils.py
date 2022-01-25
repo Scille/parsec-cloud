@@ -3,7 +3,7 @@
 import os
 import trio
 import click
-from typing import List
+from typing import List, TypeVar, Callable
 from functools import wraps, partial
 from pathlib import Path
 
@@ -29,7 +29,10 @@ from parsec.cli_utils import (
 from parsec.core.types.local_device import LocalDevice
 
 
-def gui_command_base_options(fn):
+F = TypeVar("F", bound=Callable)
+
+
+def gui_command_base_options(fn: F) -> F:
     # Skip INFO logs by default allows to know in a glance if something went
     # wrong when running the GUI from a terminal
     for decorator in (
@@ -44,7 +47,7 @@ def gui_command_base_options(fn):
     return fn
 
 
-def cli_command_base_options(fn):
+def cli_command_base_options(fn: F) -> F:
     # CLI command have a meaningful output, so we should avoid polluting it
     # with INFO logs.
     # On top of that, they are mostly short-running command so we don't
@@ -59,7 +62,7 @@ def cli_command_base_options(fn):
     return fn
 
 
-def core_config_options(fn):
+def core_config_options(fn: F) -> F:
     @click.option(
         "--config-dir", envvar="PARSEC_CONFIG_DIR", type=click.Path(exists=True, file_okay=False)
     )
@@ -95,7 +98,7 @@ def format_available_devices(devices: List[AvailableDevice]) -> str:
     return "\n".join(out)
 
 
-def core_config_and_device_options(fn):
+def core_config_and_device_options(fn: F) -> F:
     @click.option(
         "--device",
         "-D",
@@ -153,7 +156,7 @@ def core_config_and_device_options(fn):
     return wrapper
 
 
-def save_device_options(fn):
+def save_device_options(fn: F) -> F:
     @click.option(
         "--password", help="Password to protect the new device (you'll be prompted if not set)"
     )

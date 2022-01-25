@@ -17,7 +17,6 @@ from nacl.encoding import RawEncoder
 
 # Note to simplify things, we adopt `nacl.CryptoError` as our root error cls
 
-
 __all__ = (
     # Exceptions
     "CryptoError",
@@ -148,12 +147,12 @@ class SigningKey(_SigningKey):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.verify_key.__class__ = VerifyKey
+        self.verify_key.__class__ = _PyVerifyKey
 
     @classmethod
     def generate(cls, *args, **kwargs) -> "SigningKey":
         obj = super().generate(*args, **kwargs)
-        obj.__class__ = SigningKey
+        obj.__class__ = cls
         return obj
 
     def __eq__(self, other):
@@ -165,6 +164,16 @@ class SigningKey(_SigningKey):
         return "SigningKey(<redacted>)"
 
 
+_PySigningKey = SigningKey
+if not TYPE_CHECKING:
+    try:
+        from libparsec.hazmat import SigningKey as _RsSigningKey
+    except ImportError:
+        pass
+    else:
+        SigningKey = _RsSigningKey
+
+
 class VerifyKey(_VerifyKey):
     __slots__ = ()
 
@@ -174,6 +183,16 @@ class VerifyKey(_VerifyKey):
     @classmethod
     def unsecure_unwrap(cls, signed: bytes) -> bytes:
         return signed[crypto_sign_BYTES:]
+
+
+_PyVerifyKey = VerifyKey
+if not TYPE_CHECKING:
+    try:
+        from libparsec.hazmat import VerifyKey as _RsVerifyKey
+    except ImportError:
+        pass
+    else:
+        VerifyKey = _RsVerifyKey
 
 
 class PrivateKey(_PrivateKey):

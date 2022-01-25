@@ -6,7 +6,7 @@ from unittest.mock import ANY
 
 from trio import open_nursery
 
-from parsec.api.protocol import DeviceID, RealmRole
+from parsec.api.protocol import DeviceID, RealmID, RealmRole
 from parsec.api.data import BaseManifest as BaseRemoteManifest
 from parsec.core.types import EntryID, DEFAULT_BLOCK_SIZE
 from parsec.core.fs import FsPath
@@ -24,7 +24,7 @@ async def test_workspace_properties(alice_workspace):
 @pytest.mark.trio
 async def test_path_info(alice_workspace):
     info = await alice_workspace.path_info("/")
-    assert info == {
+    assert {
         "base_version": ANY,
         "children": ["foo"],
         "created": ANY,
@@ -34,10 +34,10 @@ async def test_path_info(alice_workspace):
         "type": "folder",
         "updated": ANY,
         "confinement_point": None,
-    }
+    } == info
 
     info = await alice_workspace.path_info("/foo")
-    assert info == {
+    assert {
         "base_version": ANY,
         "children": ["bar", "baz"],
         "created": ANY,
@@ -47,10 +47,10 @@ async def test_path_info(alice_workspace):
         "type": "folder",
         "updated": ANY,
         "confinement_point": None,
-    }
+    } == info
 
     info = await alice_workspace.path_info("/foo/bar")
-    assert info == {
+    assert {
         "base_version": ANY,
         "size": 0,
         "created": ANY,
@@ -60,7 +60,7 @@ async def test_path_info(alice_workspace):
         "type": "file",
         "updated": ANY,
         "confinement_point": None,
-    }
+    } == info
 
 
 @pytest.mark.trio
@@ -344,7 +344,7 @@ async def test_dump(alice_workspace):
     baz_id = await alice_workspace.path_id("/foo/baz")
     async with alice_workspace.local_storage.lock_entry_id(baz_id):
         await alice_workspace.local_storage.clear_manifest(baz_id)
-    assert await alice_workspace.dump() == {
+    assert {
         "base_version": 1,
         "children": {
             "foo": {
@@ -382,7 +382,7 @@ async def test_dump(alice_workspace):
         "local_confinement_points": [],
         "remote_confinement_points": [],
         "speculative": False,
-    }
+    } == await alice_workspace.dump()
 
 
 @pytest.mark.trio
@@ -427,7 +427,7 @@ async def test_get_reencryption_need(alice_workspace, running_backend, monkeypat
 
     # Reproduce a backend offline after the certificates have been retrieved (see issue #1335)
     reply = await alice_workspace.remote_loader.backend_cmds.realm_get_role_certificates(
-        alice_workspace.workspace_id
+        RealmID(alice_workspace.workspace_id.uuid)
     )
     original = alice_workspace.remote_loader.backend_cmds.realm_get_role_certificates
 

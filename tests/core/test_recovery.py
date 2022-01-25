@@ -1,6 +1,7 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2016-2021 Scille SAS
 
 import pytest
+from parsec.api.protocol.types import DeviceLabel
 
 from parsec.core.local_device import (
     get_recovery_device_file_name,
@@ -68,7 +69,9 @@ async def test_recovery_ok(tmp_path, user_fs_factory, running_backend, bob):
 
     recovery_device2 = await load_recovery_device(file_path, passphrase)
 
-    new_device = await generate_new_device_from_recovery(recovery_device2, "new_device")
+    new_device = await generate_new_device_from_recovery(
+        recovery_device2, DeviceLabel("new_device")
+    )
 
     assert new_device.organization_addr == recovery_device.organization_addr
     assert new_device.device_id != recovery_device.device_id
@@ -100,7 +103,7 @@ async def test_recovery_while_offline(alice):
         await generate_recovery_device(alice)
 
     with pytest.raises(BackendNotAvailable):
-        await generate_new_device_from_recovery(alice, "new_device")
+        await generate_new_device_from_recovery(alice, DeviceLabel("new_device"))
 
 
 @pytest.mark.trio
@@ -111,4 +114,4 @@ async def test_recovery_with_revoked_user(running_backend, backend_data_binder, 
         await generate_recovery_device(bob)
 
     with pytest.raises(BackendConnectionRefused):
-        await generate_new_device_from_recovery(bob, "new_device")
+        await generate_new_device_from_recovery(bob, DeviceLabel("new_device"))
