@@ -9,7 +9,7 @@ from uuid import uuid4
 from pendulum import now as pendulum_now
 
 from parsec.api.data import UserProfile, UserCertificateContent, DeviceCertificateContent, EntryID
-from parsec.api.protocol import OrganizationID, DeviceID, HumanHandle, DeviceName
+from parsec.api.protocol import OrganizationID, DeviceID, HumanHandle, DeviceName, DeviceLabel
 from parsec.crypto import SigningKey
 from parsec.core import logged_core_factory
 from parsec.core.logged_core import LoggedCore
@@ -261,7 +261,7 @@ async def _claim_device(cmds, requested_device_label):
 async def _register_new_user(
     cmds: BackendAuthenticatedCmds,
     author: LocalDevice,
-    device_label: Optional[str],
+    device_label: Optional[DeviceLabel],
     human_handle: Optional[HumanHandle],
     profile: UserProfile,
 ) -> LocalDevice:
@@ -310,7 +310,7 @@ async def _register_new_user(
 
 
 async def _register_new_device(
-    cmds: BackendAuthenticatedCmds, author: LocalDevice, device_label: Optional[str]
+    cmds: BackendAuthenticatedCmds, author: LocalDevice, device_label: Optional[DeviceLabel]
 ):
     new_device = LocalDevice(
         organization_addr=author.organization_addr,

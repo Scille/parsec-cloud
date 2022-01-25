@@ -88,19 +88,26 @@ class AsyncQtBot:
 
     @asynccontextmanager
     async def wait_signals(self, signals, *, timeout=5000):
-        with trio.fail_after(timeout / 1000):
-            async with AsyncExitStack() as stack:
-                for signal in signals:
-                    await stack.enter_async_context(qtrio._core.wait_signal_context(signal))
-                yield
+        __tracebackhide__ = True
+        try:
+            with trio.fail_after(timeout / 1000):
+                async with AsyncExitStack() as stack:
+                    for signal in signals:
+                        await stack.enter_async_context(qtrio._core.wait_signal_context(signal))
+                    yield
+        # Supress context in order to simplify the tracebacks in pytest
+        except trio.TooSlowError:
+            raise trio.TooSlowError from None
 
     @asynccontextmanager
     async def wait_signal(self, signal, *, timeout=5000):
+        __tracebackhide__ = True
         async with self.wait_signals((signal,), timeout=timeout):
             yield
 
     @asynccontextmanager
     async def wait_active(self, widget, *, timeout=5000):
+        __tracebackhide__ = True
         deadline = trio.current_time() + timeout / 1000
         yield
         while True:
@@ -112,6 +119,7 @@ class AsyncQtBot:
 
     @asynccontextmanager
     async def wait_exposed(self, widget, *, timeout=5000):
+        __tracebackhide__ = True
         deadline = trio.current_time() + timeout / 1000
         yield
         while True:

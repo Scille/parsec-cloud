@@ -510,7 +510,7 @@ async def test_vacuum(data_base_dir, alice, workspace_id):
     data_size = 1 * 1024 * 1024
     chunk = Chunk.new(0, data_size)
     async with WorkspaceStorage.run(
-        data_base_dir, alice, workspace_id, vacuum_threshold=data_size // 2
+        data_base_dir, alice, workspace_id, data_vacuum_threshold=data_size // 2
     ) as aws:
 
         # Make sure the storage is empty

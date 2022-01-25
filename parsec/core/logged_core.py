@@ -382,6 +382,7 @@ async def logged_core_factory(
         event_bus=event_bus,
         prevent_sync_pattern=prevent_sync_pattern,
         preferred_language=config.gui_language,
+        workspace_storage_cache_size=config.workspace_storage_cache_size,
     ) as user_fs:
 
         backend_conn.register_monitor(partial(monitor_messages, user_fs, event_bus))

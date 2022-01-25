@@ -4,7 +4,7 @@ import secrets
 import pendulum
 
 from parsec.api.data import DeviceCertificateContent
-from parsec.api.protocol import DeviceID, DeviceName
+from parsec.api.protocol import DeviceID, DeviceName, DeviceLabel
 from parsec.core.backend_connection import (
     backend_authenticated_cmds_factory,
     BackendConnectionError,
@@ -15,7 +15,7 @@ from pendulum import now as pendulum_now
 
 
 async def _create_new_device_for_self(
-    original_device: LocalDevice, new_device_label: str
+    original_device: LocalDevice, new_device_label: DeviceLabel
 ) -> LocalDevice:
     """
     Raises:
@@ -77,7 +77,7 @@ async def generate_recovery_device(original_device: LocalDevice,) -> LocalDevice
 
 
 async def generate_new_device_from_recovery(
-    recovery_device: LocalDevice, new_device_label: str
+    recovery_device: LocalDevice, new_device_label: DeviceLabel
 ) -> LocalDevice:
     """
     Raises:

@@ -9,7 +9,7 @@
             "device_label": {
                 "allow_none": true,
                 "required": false,
-                "type": "String"
+                "type": "DeviceLabelField"
             },
             "human_handle": {
                 "allow_none": true,

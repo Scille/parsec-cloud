@@ -45,13 +45,21 @@ CRYPTO_MEMLIMIT = argon2i.MEMLIMIT_INTERACTIVE
 # Types
 
 
-class SecretKey(bytes):
-    __slots__ = ()
+class SecretKey:
+    __slots__ = ("_secret",)
+
+    def __init__(self, secret: bytes):
+        self._secret = secret
 
     def __new__(cls, rawkey: bytes) -> "SecretKey":
         if len(rawkey) != SecretBox.KEY_SIZE:
             raise ValueError("Invalid key size")
-        return super(SecretKey, cls).__new__(cls, rawkey)
+        return super().__new__(cls)
+
+    def __eq__(self, other):
+        if not isinstance(other, type(self)):
+            return NotImplemented
+        return self.secret == other.secret
 
     @classmethod
     def generate(cls) -> "SecretKey":
@@ -59,14 +67,14 @@ class SecretKey(bytes):
 
     def __repr__(self):
         # Avoid leaking the key in logs
-        return f"<{type(self).__module__}.{type(self).__qualname__} object at {hex(id(self))}>"
+        return "SecretKey(<redacted>)"
 
     def encrypt(self, data: bytes) -> bytes:
         """
         Raises:
             CryptoError: if key is invalid.
         """
-        box = SecretBox(self)
+        box = SecretBox(self.secret)
         return box.encrypt(data)
 
     def decrypt(self, ciphered: bytes) -> bytes:
@@ -74,11 +82,25 @@ class SecretKey(bytes):
         Raises:
             CryptoError: if key is invalid.
         """
-        box = SecretBox(self)
+        box = SecretBox(self.secret)
         return box.decrypt(ciphered)
 
     def hmac(self, data: bytes, digest_size=BLAKE2B_BYTES) -> bytes:
-        return blake2b(data, digest_size=digest_size, key=self, encoder=RawEncoder)
+        return blake2b(data, digest_size=digest_size, key=self.secret, encoder=RawEncoder)
+
+    @property
+    def secret(self) -> bytes:
+        return self._secret
+
+
+_PySecretKey = SecretKey
+if not TYPE_CHECKING:
+    try:
+        from libparsec.hazmat import SecretKey as _RsSecretKey
+    except ImportError:
+        pass
+    else:
+        SecretKey = _RsSecretKey
 
 
 class HashDigest:
@@ -137,6 +159,11 @@ class SigningKey(_SigningKey):
     def __eq__(self, other):
         return isinstance(other, _SigningKey) and self._signing_key == other._signing_key
 
+    # Quick fix, waiting for binding signingKey
+    def __repr__(self):
+        # Avoid leaking the key in logs
+        return "SigningKey(<redacted>)"
+
 
 class VerifyKey(_VerifyKey):
     __slots__ = ()
@@ -171,6 +198,11 @@ class PrivateKey(_PrivateKey):
             CryptoError
         """
         return SealedBox(self).decrypt(ciphered)
+
+    # Quick fix, waiting for binding privateKey
+    def __repr__(self):
+        # Avoid leaking the key in logs
+        return "PrivateKey(<redacted>)"
 
 
 class PublicKey(_PublicKey):
@@ -272,7 +304,7 @@ def generate_recovery_passphrase() -> Tuple[str, SecretKey]:
     Yes, it looks like a good old CD key *insert keygen music*
     """
     key = SecretKey.generate()
-    b32 = b32encode(key).decode().rstrip("=")
+    b32 = b32encode(key.secret).decode().rstrip("=")
     passphrase = "-".join(b32[i : i + 4] for i in range(0, len(b32), 4))
     return passphrase, key
 

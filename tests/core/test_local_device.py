@@ -280,8 +280,8 @@ def test_supports_legacy_is_admin_field(alice):
         "private_key": alice.private_key.encode(),
         "is_admin": True,
         "user_manifest_id": UUID(alice.user_manifest_id.hex),
-        "user_manifest_key": bytes(alice.user_manifest_key),
-        "local_symkey": bytes(alice.local_symkey),
+        "user_manifest_key": bytes(alice.user_manifest_key.secret),
+        "local_symkey": bytes(alice.local_symkey.secret),
     }
     dumped_legacy_local_user = packb(raw_legacy_local_user)
 
@@ -324,7 +324,7 @@ def test_list_devices_support_legacy_file_with_meaningful_name(config_dir):
             "salt": b"12345",
             "ciphertext": b"whatever",
             "human_handle": (human_email.encode(), human_label.encode()),
-            "device_label": device_label.encode(),
+            "device_label": device_label,
         }
     )
 
@@ -377,7 +377,7 @@ def test_list_devices_support_key_file(config_dir, type):
         {
             "ciphertext": b"whatever",
             "human_handle": (human_email.encode(), human_label.encode()),
-            "device_label": device_label.encode(),
+            "device_label": device_label,
             "device_id": device_id,
             "organization_id": organization_id,
             "slug": slug,
