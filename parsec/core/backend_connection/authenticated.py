@@ -391,13 +391,14 @@ class BackendAuthenticatedConn:
             self._cancel_manager_connect()
             raise
 
-        except BackendOutOfBallparkError:
+        except BackendOutOfBallparkError as exc:
             # Caller doesn't need to know about the desync,
             # simply pretend that we lost the connection instead
-            exc = BackendNotAvailable()
-            await self.set_status(BackendConnStatus.DESYNC, exc)
+            new_exc = BackendNotAvailable()
+            new_exc.__cause__ = exc
+            await self.set_status(BackendConnStatus.DESYNC, new_exc)
             self._cancel_manager_connect()
-            raise exc
+            raise new_exc
 
 
 @asynccontextmanager

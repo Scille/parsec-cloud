@@ -764,14 +764,14 @@ QWidget#widget_title {
             <cursorShape>PointingHandCursor</cursorShape>
            </property>
            <property name="toolTip">
-            <string>TEXT_WORKSPACE_DELETE_WORKSPACE_TOOLTIP</string>
+            <string>TEXT_TIMESTAMPED_WORKSPACE_CLOSE_TOOLTIP</string>
            </property>
            <property name="text">
             <string/>
            </property>
            <property name="icon">
             <iconset resource="../rc/resources.qrc">
-             <normaloff>:/icons/images/material/delete.svg</normaloff>:/icons/images/material/delete.svg</iconset>
+             <normaloff>:/icons/images/material/close.svg</normaloff>:/icons/images/material/close.svg</iconset>
            </property>
            <property name="iconSize">
             <size>

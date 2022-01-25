@@ -2,13 +2,26 @@
 
 import pytest
 from PyQt5 import QtCore
-
 from unittest.mock import Mock
+from pathlib import Path
+import pendulum
+import datetime
 
 from parsec.core.types import WorkspaceRole
 from parsec.core.core_events import CoreEvent
 from parsec.core.fs import FSWorkspaceNoReadAccess
 from parsec.core.gui.workspace_button import WorkspaceButton
+from parsec.core.gui.timestamped_workspace_widget import TimestampedWorkspaceWidget
+from parsec.core.gui.lang import translate, format_datetime
+
+from tests.common import freeze_time
+
+
+@pytest.fixture
+def catch_timestamped_workspace_widget(widget_catcher_factory):
+    return widget_catcher_factory(
+        "parsec.core.gui.timestamped_workspace_widget.TimestampedWorkspaceWidget"
+    )
 
 
 @pytest.mark.gui
@@ -336,3 +349,154 @@ async def test_workspace_filter_user_new_workspace(
         assert not w_w.filter_remove_button.isVisible()
 
     await aqtbot.wait_until(_new_workspace_listed, timeout=2000)
+
+
+@pytest.mark.gui
+@pytest.mark.trio
+async def test_display_timestamped_workspace_in_workspaces_list(
+    aqtbot, running_backend, logged_gui, monkeypatch, catch_timestamped_workspace_widget, tmpdir
+):
+    central_widget = logged_gui.test_get_central_widget()
+    workspace_name = "wksp1"
+
+    def _online():
+        assert central_widget.menu.label_connection_state.text() == translate(
+            "TEXT_BACKEND_STATE_CONNECTED"
+        )
+
+    await aqtbot.wait_until(_online)
+
+    w_w = logged_gui.test_get_workspaces_widget()
+    await logged_gui.test_get_core().user_fs.sync()
+    await logged_gui.test_get_core().wait_idle_monitors()
+
+    year_n = datetime.datetime.now()
+    # Approximately 10 years from now
+    year_n10 = year_n + datetime.timedelta(days=10 * 365)
+    # Approximately 20 years from now
+    year_n20 = year_n + datetime.timedelta(days=20 * 365)
+
+    # Create the workspace
+    with freeze_time(year_n.isoformat()):
+        user_fs = logged_gui.test_get_core().user_fs
+        await user_fs.workspace_create(workspace_name)
+        await user_fs.sync()
+
+    # Now wait for GUI to take it into account
+    def _workspace_available():
+        assert w_w.layout_workspaces.count() == 1
+        wk_button = w_w.layout_workspaces.itemAt(0).widget()
+        assert isinstance(wk_button, WorkspaceButton)
+        assert wk_button.name == workspace_name
+
+    await aqtbot.wait_until(_workspace_available)
+    f_w = await logged_gui.test_switch_to_files_widget(workspace_name)
+
+    # Populate some files for import
+    out_of_parsec_data = Path(tmpdir) / "out_of_parsec_data"
+    out_of_parsec_data.mkdir(parents=True)
+    (out_of_parsec_data / "file1.txt").touch()
+    (out_of_parsec_data / "file2.txt").touch()
+
+    with freeze_time(year_n10.isoformat()):
+        # Import file 1
+        monkeypatch.setattr(
+            "parsec.core.gui.custom_dialogs.QDialogInProcess.getOpenFileNames",
+            classmethod(lambda *args, **kwargs: ([out_of_parsec_data / "file1.txt"], True)),
+        )
+        async with aqtbot.wait_signal(f_w.import_success):
+            aqtbot.mouse_click(f_w.button_import_files, QtCore.Qt.LeftButton)
+        await f_w.workspace_fs.sync()
+
+    with freeze_time(year_n20.isoformat()):
+        # Import file 2
+        monkeypatch.setattr(
+            "parsec.core.gui.custom_dialogs.QDialogInProcess.getOpenFileNames",
+            classmethod(lambda *args, **kwargs: ([out_of_parsec_data / "file2.txt"], True)),
+        )
+        async with aqtbot.wait_signal(f_w.import_success):
+            aqtbot.mouse_click(f_w.button_import_files, QtCore.Qt.LeftButton)
+        await f_w.workspace_fs.sync()
+
+    def _wait_for_files():
+        assert f_w.table_files.rowCount() == 3
+        assert f_w.table_files.item(1, 1).text() == "file1.txt"
+        assert f_w.table_files.item(1, 2).text() == format_datetime(pendulum.instance(year_n10))
+        assert f_w.table_files.item(1, 3).text() == format_datetime(pendulum.instance(year_n10))
+        assert f_w.table_files.item(2, 1).text() == "file2.txt"
+        assert f_w.table_files.item(2, 2).text() == format_datetime(pendulum.instance(year_n20))
+        assert f_w.table_files.item(2, 3).text() == format_datetime(pendulum.instance(year_n20))
+
+    await aqtbot.wait_until(_wait_for_files)
+
+    aqtbot.mouse_click(f_w.button_back, QtCore.Qt.LeftButton)
+
+    def _wait_workspace_refreshed():
+        assert w_w.layout_workspaces.count() == 1
+        wk_button = w_w.layout_workspaces.itemAt(0).widget()
+        assert isinstance(wk_button, WorkspaceButton)
+        assert wk_button.name == workspace_name
+        assert wk_button.file1_name.text() == "file1.txt"
+        assert wk_button.file2_name.text() == "file2.txt"
+
+    await aqtbot.wait_until(_wait_workspace_refreshed)
+
+    wk_button = w_w.layout_workspaces.itemAt(0).widget()
+    aqtbot.mouse_click(wk_button.button_remount_ts, QtCore.Qt.LeftButton)
+    ts_wk_w = await catch_timestamped_workspace_widget()
+
+    assert isinstance(ts_wk_w, TimestampedWorkspaceWidget)
+
+    # Approximately 15 years from now
+    selected_date = year_n10 + datetime.timedelta(days=5 * 365)
+
+    ts_wk_w.calendar_widget.setSelectedDate(
+        QtCore.QDate(selected_date.year, selected_date.month, selected_date.day)
+    )
+    assert ts_wk_w.date == QtCore.QDate(selected_date.year, selected_date.month, selected_date.day)
+    assert ts_wk_w.time == QtCore.QTime(0, 0)
+
+    async with aqtbot.wait_signal(w_w.mount_success):
+        aqtbot.mouse_click(ts_wk_w.button_show, QtCore.Qt.LeftButton)
+
+    def _new_workspace_listed():
+        assert w_w.layout_workspaces.count() == 2
+        wk_button = w_w.layout_workspaces.itemAt(0).widget()
+        ts_wk_button = w_w.layout_workspaces.itemAt(1).widget()
+        assert isinstance(wk_button, WorkspaceButton)
+        assert isinstance(ts_wk_button, WorkspaceButton)
+        assert not wk_button.timestamped
+        assert ts_wk_button.timestamped
+
+    await aqtbot.wait_until(_new_workspace_listed)
+
+    ts_wk_button = w_w.layout_workspaces.itemAt(1).widget()
+
+    aqtbot.mouse_click(ts_wk_button, QtCore.Qt.LeftButton)
+
+    f_w = logged_gui.test_get_files_widget()
+    assert f_w.isVisible()
+
+    def _files_listed():
+        f_w = logged_gui.test_get_files_widget()
+        assert f_w.isVisible()
+        assert f_w.table_files.rowCount() == 2
+        assert f_w.table_files.item(1, 1).text() == "file1.txt"
+        assert f_w.table_files.item(1, 2).text() == format_datetime(pendulum.instance(year_n10))
+        assert f_w.table_files.item(1, 3).text() == format_datetime(pendulum.instance(year_n10))
+
+    await aqtbot.wait_until(_files_listed)
+
+    aqtbot.mouse_click(f_w.button_back, QtCore.Qt.LeftButton)
+
+    await aqtbot.wait_until(_new_workspace_listed)
+
+    ts_wk_button = w_w.layout_workspaces.itemAt(1).widget()
+    aqtbot.mouse_click(ts_wk_button.button_delete, QtCore.Qt.LeftButton)
+
+    def _timestamped_workspace_delete():
+        assert w_w.layout_workspaces.count() == 1
+        wk_button = w_w.layout_workspaces.itemAt(0).widget()
+        assert isinstance(wk_button, WorkspaceButton)
+
+    await aqtbot.wait_until(_timestamped_workspace_delete)
