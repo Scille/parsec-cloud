@@ -356,7 +356,7 @@ msgstr ""
 "toutefois cette version de Parsec ne supporte ce type d'authentification."
 
 msgid "TEXT_DEVICE_RECOVERY_EXPORT_WIZARD_TITLE"
-msgstr "Créer une appareil de récupération"
+msgstr "Créer un appareil de récupération"
 
 msgid "ACTION_IMPORT_KEY"
 msgstr "Récupérer un appareil"
@@ -2406,7 +2406,7 @@ msgstr ""
 "votre appareil actuel."
 
 msgid "TEXT_DEVICE_RECOVERY_EXPORT_SELECT_DEVICE_LABEL"
-msgstr "Choisissez l'utilisateur pour lequel vous souhaitez créer une récupération"
+msgstr "Choisissez l'utilisateur pour lequel vous souhaitez créer un appareil de récupération"
 
 msgid "TEXT_DEVICE_RECOVERY_EXPORT_SELECT_FILE_LABEL"
 msgstr "Choisissez un emplacement pour le fichier de récupération"
