@@ -20,19 +20,21 @@ __all__ = [
 
 logger = get_logger()
 
-# This value is used by the backend to determine whether the client
-# operates in an acceptable time window. A value of 60 seconds means
-# clients can be up to 1 minute late or 1 minute in advance compare
-# to the backend clock.
+# Those values are used by the backend to determine whether the client
+# operates in an acceptable time window. A client early offset of
+# 50 seconds means that a timestamp provided by the client cannot be
+# higher than 50 seconds after the backend current time. A client late
+# offset of 70 seconds means that a timestamp provided by the client
+# cannot be lower than 70 seconds before the backend current time.
 #
-# This value used to be higher (30 minutes), but an argument for
+# Those values used to be higher (30 minutes), but an argument for
 # decreasing this value is that client clocks are usually either
 # fully synchronized (with NTP) or fully desynchronized (with an
 # incorrect configuration). It's possible for a client clock to
 # slowly drift over time if it lost access to an NTP but drifting
 # an entire minute would take weeks or months.
 #
-# Note that this value also has to take into account the fact the
+# Note that those values also have to take into account the fact the
 # that the timestamps being compared are not produced at the same
 # moment. Typically:
 # - The client generates a timestamp
@@ -42,28 +44,41 @@ logger = get_logger()
 # - The backend compares the timestamp to its current time
 # The worse case scenario would be a slow client machine, a large
 # request, a slow network connection and a busy server. Even
-# in this scenario, a 30 seconds time difference is hardly
-# imaginable on a functionnning system and it still leaves 30
-# seconds to accept slighty desynchronized clocks.
+# in this scenario, a 10 seconds time difference is hardly
+# imaginable on a properly functionnning system.
 #
-# Still, this is an argument for making this comparison asymetrical: with no
+# This is an argument for making this comparison asymetrical: with no
 # clock drift between client and server, communication latency makes data
 # arriving to the backend always in the past. Hence we should be more
 # forgiving of data in the past than in the future !
 #
 # A more radical check would be to not accept more that 10 seconds
-# delay and 10 seconds shifting, yielding a -10/20 seconds window
+# delay and 10 seconds shifting, yielding a 10/20 seconds window
 # (10 seconds in advance or 20 seconds late). This would effectively
-# reduce the current -60/60 seconds time widown by a factor of 4.
-TIMESTAMP_MAX_DT = 60  # seconds
+# reduce the current 50/70 seconds time window by a factor of 4.
+#
+# The ballpark client tolerance is the ratio applied to the offsets
+# while performing the ballpark checks. We use an arbitrary value of
+# 80% in order to make sure that a clock shift is caught during the
+# handshake instead of being caught by another API call later on.
+
+BALLPARK_CLIENT_EARLY_OFFSET = 50.0  # seconds
+BALLPARK_CLIENT_LATE_OFFSET = 70.0  # seconds
+BALLPARK_CLIENT_TOLERANCE = 0.8  # 80%
 
 
-def timestamps_in_the_ballpark(ts1: DateTime, ts2: DateTime, max_dt=TIMESTAMP_MAX_DT) -> bool:
+def timestamps_in_the_ballpark(
+    client: DateTime,
+    backend: DateTime,
+    ballpark_client_early_offset: float = BALLPARK_CLIENT_EARLY_OFFSET,
+    ballpark_client_late_offset: float = BALLPARK_CLIENT_LATE_OFFSET,
+) -> bool:
     """
     Useful to compare signed message timestamp with the one stored by the
     backend.
     """
-    return abs((ts1 - ts2).total_seconds()) < max_dt
+    seconds = (backend - client).total_seconds()
+    return -ballpark_client_early_offset < seconds < ballpark_client_late_offset
 
 
 # Task status

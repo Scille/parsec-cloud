@@ -6,7 +6,7 @@ mod sealed_box {
 
     use blake2::{
         digest::{Update, VariableOutput},
-        VarBlake2b,
+        Blake2bVar,
     };
     use crypto_box::{
         aead::{self, Aead},
@@ -27,7 +27,7 @@ mod sealed_box {
     /// nonce = Blake2b(ephemeral_pk||target_pk)
     /// nonce_length = 24
     fn get_nonce(ephemeral_pk: &PublicKey, target_pk: &PublicKey) -> [u8; BOX_NONCELENGTH] {
-        let mut hasher = VarBlake2b::new(BOX_NONCELENGTH).unwrap();
+        let mut hasher = Blake2bVar::new(BOX_NONCELENGTH).unwrap();
 
         hasher.update(ephemeral_pk.as_bytes());
         hasher.update(target_pk.as_bytes());
@@ -184,6 +184,7 @@ impl From<PrivateKey> for ByteBuf {
 /*
  * PublicKey
  */
+
 #[derive(Clone, Debug, Deserialize, Serialize)]
 #[serde(into = "ByteBuf", try_from = "ByteBuf")]
 pub struct PublicKey(crypto_box::PublicKey);

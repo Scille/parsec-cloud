@@ -3,7 +3,6 @@
 import attr
 from typing import Union, Optional, List, Tuple
 
-
 from parsec.crypto import (
     generate_shared_secret_key,
     generate_nonce,
@@ -22,7 +21,7 @@ from parsec.api.data import (
     InviteDeviceData,
     InviteDeviceConfirmation,
 )
-from parsec.api.protocol import UserID, HumanHandle, InvitationType
+from parsec.api.protocol import UserID, HumanHandle, InvitationType, DeviceLabel
 from parsec.core.local_device import generate_new_device
 from parsec.core.backend_connection import BackendInvitedCmds
 from parsec.core.types import LocalDevice, BackendOrganizationAddr
@@ -198,7 +197,9 @@ class UserClaimInProgress3Ctx:
     _cmds: BackendInvitedCmds
 
     async def do_claim_user(
-        self, requested_device_label: Optional[str], requested_human_handle: Optional[HumanHandle]
+        self,
+        requested_device_label: Optional[DeviceLabel],
+        requested_human_handle: Optional[HumanHandle],
     ) -> LocalDevice:
         # User&device keys are generated here and kept in memory until the end of
         # the enrollment process. This mean we can lost it if something goes wrong.
@@ -235,7 +236,7 @@ class UserClaimInProgress3Ctx:
             raise InviteError("Invalid InviteUserConfirmation payload provided by peer") from exc
 
         organization_addr = BackendOrganizationAddr.build(
-            backend_addr=self._cmds.addr,
+            backend_addr=self._cmds.addr.get_backend_addr(),
             organization_id=self._cmds.addr.organization_id,
             root_verify_key=confirmation.root_verify_key,
         )
@@ -258,7 +259,7 @@ class DeviceClaimInProgress3Ctx:
     _shared_secret_key: SecretKey
     _cmds: BackendInvitedCmds
 
-    async def do_claim_device(self, requested_device_label: Optional[str]) -> LocalDevice:
+    async def do_claim_device(self, requested_device_label: Optional[DeviceLabel]) -> LocalDevice:
         # Device key is generated here and kept in memory until the end of
         # the enrollment process. This mean we can lost it if something goes wrong.
         # This has no impact until step 4 (somewhere between data exchange and
@@ -290,7 +291,7 @@ class DeviceClaimInProgress3Ctx:
             raise InviteError("Invalid InviteDeviceConfirmation payload provided by peer") from exc
 
         organization_addr = BackendOrganizationAddr.build(
-            backend_addr=self._cmds.addr,
+            backend_addr=self._cmds.addr.get_backend_addr(),
             organization_id=self._cmds.addr.organization_id,
             root_verify_key=confirmation.root_verify_key,
         )

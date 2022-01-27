@@ -1,5 +1,5 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) BSLv1.1 (eventually AGPLv3) 2016-2021 Scille SAS
-
+import os
 import re
 import attr
 import json
@@ -170,6 +170,16 @@ class HTTPComponent:
         return HTTPResponse.build(302, headers={b"location": location_url.encode("ascii")})
 
     async def _http_static(self, req: HTTPRequest, **kwargs: str) -> HTTPResponse:
+        def normalize_path(path) -> str:
+            """Normalize a path by ensuring it is a string.
+            If the resulting string contains path separators, an exception is raised.
+            """
+            str_path = str(path)
+            parent, file_name = os.path.split(str_path)
+            if parent:
+                raise ValueError(f"{path!r} must be only a file name")
+            return file_name
+
         path = kwargs["path"]
         if path == "__init__.py":
             return HTTPResponse.build(404)
@@ -177,7 +187,11 @@ class HTTPComponent:
         try:
             # Note we don't support nested resources, this is fine for the moment
             # and it prevent us from malicious path containing `..`
-            data = importlib_resources.read_binary(http_static_module, path)
+            data = (
+                importlib_resources.files(http_static_module)
+                .joinpath(normalize_path(path))
+                .read_bytes()
+            )
         except (FileNotFoundError, ValueError):
             return HTTPResponse.build(404)
 

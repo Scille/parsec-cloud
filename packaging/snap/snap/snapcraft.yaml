@@ -103,7 +103,6 @@ parts:
         Multimedia \
         MultimediaWidgets \
         Network \
-        NetworkAuth \
         Nfc \
         OpenGL \
         Positioning \
@@ -125,7 +124,7 @@ parts:
         XmlPatterns
       do
         rm ${PYQT_DIR}/Qt${QT_MODULE}.*.so
-        rm ${PYQT_DIR}/Qt/lib/libQt5${QT_MODULE}.so.*
+        rm ${PYQT_DIR}/Qt5/lib/libQt5${QT_MODULE}.so.*
       done
       rm ${PYQT_DIR}/_QOpenGLFunctions_*.*.so
       # Remove extensions that requires module we removed
@@ -174,7 +173,7 @@ parts:
         texttospeech/libqtexttospeech_speechd.so \
         webview/libqtwebview_webengine.so
       do
-        rm ${PYQT_DIR}/Qt/plugins/${QT_PLUGIN}
+        rm ${PYQT_DIR}/Qt5/plugins/${QT_PLUGIN}
       done
 
     build-packages:

@@ -1,11 +1,12 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2016-2021 Scille SAS
 
 import pytest
-from uuid import UUID, uuid4
 from pendulum import datetime
 
 from parsec.api.protocol import (
     packb,
+    RealmID,
+    VlobID,
     RealmRole,
     vlob_create_serializer,
     vlob_read_serializer,
@@ -13,6 +14,7 @@ from parsec.api.protocol import (
     vlob_list_versions_serializer,
 )
 from parsec.backend.realm import RealmGrantedRole
+from parsec.utils import BALLPARK_CLIENT_EARLY_OFFSET, BALLPARK_CLIENT_LATE_OFFSET
 
 from tests.common import freeze_time
 from tests.backend.common import vlob_create, vlob_update, vlob_read, vlob_list_versions
@@ -21,7 +23,7 @@ from tests.backend.realm.test_roles import realm_generate_certif_and_update_role
 # Fixture
 realm_generate_certif_and_update_roles_or_fail
 
-VLOB_ID = UUID("00000000000000000000000000000001")
+VLOB_ID = VlobID.from_hex("00000000000000000000000000000001")
 
 
 @pytest.mark.trio
@@ -50,7 +52,13 @@ async def test_create_bad_timestamp(alice_backend_sock, realm):
         rep = await vlob_create(
             alice_backend_sock, realm, VLOB_ID, blob, timestamp=d2, check_rep=False
         )
-    assert rep == {"status": "bad_timestamp", "reason": "Timestamp is out of date."}
+    assert rep == {
+        "status": "bad_timestamp",
+        "backend_timestamp": d1,
+        "ballpark_client_early_offset": BALLPARK_CLIENT_EARLY_OFFSET,
+        "ballpark_client_late_offset": BALLPARK_CLIENT_LATE_OFFSET,
+        "client_timestamp": d2,
+    }
 
 
 @pytest.mark.parametrize(
@@ -83,7 +91,7 @@ async def test_create_but_already_exists(alice_backend_sock, realm):
 
 @pytest.mark.trio
 async def test_create_but_unknown_realm(alice_backend_sock):
-    bad_realm_id = uuid4()
+    bad_realm_id = RealmID.new()
     blob = b"Initial commit."
 
     rep = await vlob_create(alice_backend_sock, bad_realm_id, VLOB_ID, blob, check_rep=False)
@@ -94,7 +102,7 @@ async def test_create_but_unknown_realm(alice_backend_sock):
 async def test_create_check_access_rights(
     backend, alice, bob, bob_backend_sock, realm, next_timestamp
 ):
-    vlob_id = uuid4()
+    vlob_id = VlobID.new()
 
     # User not part of the realm
     rep = await vlob_create(
@@ -120,7 +128,7 @@ async def test_create_check_access_rights(
                 granted_on=next_timestamp(),
             ),
         )
-        vlob_id = uuid4()
+        vlob_id = VlobID.new()
         rep = await vlob_create(
             bob_backend_sock, realm, vlob_id, b"Initial version.", next_timestamp(), check_rep=False
         )
@@ -153,7 +161,7 @@ async def test_read_not_found(alice_backend_sock):
     rep = await vlob_read(alice_backend_sock, VLOB_ID)
     assert rep == {
         "status": "not_found",
-        "reason": "Vlob `00000000-0000-0000-0000-000000000001` doesn't exist",
+        "reason": "Vlob `00000000000000000000000000000001` doesn't exist",
     }
 
 
@@ -286,7 +294,7 @@ async def test_read_other_organization(backend, sock_from_other_organization_fac
         rep = await vlob_read(sock, vlobs[0])
     assert rep == {
         "status": "not_found",
-        "reason": "Vlob `10000000-0000-0000-0000-000000000000` doesn't exist",
+        "reason": "Vlob `10000000000000000000000000000000` doesn't exist",
     }
 
 
@@ -333,7 +341,13 @@ async def test_update_bad_timestamp(alice_backend_sock, vlobs):
         rep = await vlob_update(
             alice_backend_sock, vlobs[0], version=3, blob=blob, timestamp=d2, check_rep=False
         )
-    assert rep == {"status": "bad_timestamp", "reason": "Timestamp is out of date."}
+    assert rep == {
+        "status": "bad_timestamp",
+        "backend_timestamp": d1,
+        "ballpark_client_early_offset": BALLPARK_CLIENT_EARLY_OFFSET,
+        "ballpark_client_late_offset": BALLPARK_CLIENT_LATE_OFFSET,
+        "client_timestamp": d2,
+    }
 
 
 @pytest.mark.trio
@@ -343,7 +357,7 @@ async def test_update_not_found(alice_backend_sock):
     )
     assert rep == {
         "status": "not_found",
-        "reason": "Vlob `00000000-0000-0000-0000-000000000001` doesn't exist",
+        "reason": "Vlob `00000000000000000000000000000001` doesn't exist",
     }
 
 
@@ -425,7 +439,7 @@ async def test_update_other_organization(backend, sock_from_other_organization_f
         rep = await vlob_update(sock, vlobs[0], version=3, blob=b"Next version.", check_rep=False)
     assert rep == {
         "status": "not_found",
-        "reason": "Vlob `10000000-0000-0000-0000-000000000000` doesn't exist",
+        "reason": "Vlob `10000000000000000000000000000000` doesn't exist",
     }
 
 
@@ -505,7 +519,7 @@ async def test_list_versions_not_found(alice_backend_sock):
     rep = await vlob_list_versions(alice_backend_sock, VLOB_ID)
     assert rep == {
         "status": "not_found",
-        "reason": "Vlob `00000000-0000-0000-0000-000000000001` doesn't exist",
+        "reason": "Vlob `00000000000000000000000000000001` doesn't exist",
     }
 
 
@@ -556,7 +570,7 @@ async def test_list_versions_other_organization(
         rep = await vlob_list_versions(sock, vlobs[0])
     assert rep == {
         "status": "not_found",
-        "reason": "Vlob `10000000-0000-0000-0000-000000000000` doesn't exist",
+        "reason": "Vlob `10000000000000000000000000000000` doesn't exist",
     }
 
 

@@ -1,9 +1,13 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BSLv1.1 (eventually AGPLv3) 2016-2021 Scille SAS
 
+use blake2::Blake2bMac;
+use digest::{consts::U5, Mac};
 use serde::{Deserialize, Serialize};
 use serde_bytes::ByteBuf;
 use xsalsa20poly1305::aead::{Aead, NewAead};
 use xsalsa20poly1305::{generate_nonce, Key, XSalsa20Poly1305, KEY_SIZE, NONCE_SIZE};
+
+type Blake2bMac40 = Blake2bMac<U5>;
 
 #[derive(Clone, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(into = "ByteBuf", try_from = "ByteBuf")]
@@ -35,23 +39,26 @@ impl SecretKey {
 
     pub fn decrypt(&self, ciphered: &[u8]) -> Result<Vec<u8>, &'static str> {
         let cipher = XSalsa20Poly1305::new(&self.0);
-        let nonce_slice = ciphered.get(..NONCE_SIZE).ok_or("Invalid data size")?;
+        let nonce_slice = ciphered
+            .get(..NONCE_SIZE)
+            .ok_or("The nonce must be exactly 24 bytes long")?;
         cipher
             .decrypt(nonce_slice.into(), &ciphered[NONCE_SIZE..])
             .map_err(|_| "Decryption error")
     }
 
-    // TODO
-    pub fn hmac(&self, _data: &[u8], _digest_size: usize) -> Vec<u8> {
-        // // blake2b(data, digest_size=digest_size, key=self, encoder=RawEncoder)
-        // let key = blake2b::Key::from_slice(&self.0);
-        // blake2b::derive_from_key(
-        //     subkey: &mut [u8],
-        //     subkey_id: u64,
-        //     ctx: [u8; 8],
-        //     key,
-        // );
-        vec![]
+    pub fn hmac(&self, data: &[u8], digest_size: usize) -> Vec<u8> {
+        // TODO only work for 5 bytes -> need to improve
+        if digest_size != 5 {
+            panic!("Not implemeted for this digest size");
+        }
+        // TODO investigate why new() is not working
+        // let mut hasher = Blake2bMac40::new(&self.0);
+        // &self.0 always provide the correct key size
+        let mut hasher = Blake2bMac40::new_from_slice(&self.0).unwrap_or_else(|_| unreachable!());
+        hasher.update(data);
+        let res = hasher.finalize();
+        res.into_bytes().to_vec()
     }
 }
 

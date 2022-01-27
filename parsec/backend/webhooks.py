@@ -6,7 +6,12 @@ from structlog import get_logger
 from urllib.error import URLError
 from urllib.request import urlopen, Request
 
-from parsec.api.protocol import OrganizationID, DeviceID, organization_bootstrap_webhook_serializer
+from parsec.api.protocol import (
+    OrganizationID,
+    DeviceID,
+    DeviceLabel,
+    organization_bootstrap_webhook_serializer,
+)
 
 
 logger = get_logger()
@@ -35,7 +40,7 @@ class WebhooksComponent:
         self,
         organization_id: OrganizationID,
         device_id: DeviceID,
-        device_label: Optional[str],
+        device_label: Optional[DeviceLabel],
         human_email: Optional[str],
         human_label: Optional[str],
     ):

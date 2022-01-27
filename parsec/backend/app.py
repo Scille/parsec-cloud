@@ -4,6 +4,7 @@ from typing import Dict, Optional, NoReturn
 import trio
 from trio.abc import Stream
 from structlog import get_logger
+from functools import partial
 from async_generator import asynccontextmanager
 from wsgiref.handlers import format_date_time
 from http import HTTPStatus
@@ -20,6 +21,9 @@ from parsec.api.protocol import (
     MessageSerializationError,
     InvalidMessageError,
     InvitationStatus,
+    OrganizationID,
+    UserID,
+    InvitationToken,
 )
 from parsec.backend.utils import CancelledByNewRequest, collect_apis
 from parsec.backend.config import BackendConfig
@@ -314,22 +318,31 @@ class BackendApp:
                 with trio.CancelScope() as cancel_scope:
                     with self.event_bus.connection_context() as client_ctx.event_bus_ctx:
 
-                        def _on_revoked(event, organization_id, user_id):
+                        def _on_revoked(
+                            client_ctx: AuthenticatedClientContext,
+                            event: BackendEvent,
+                            organization_id: OrganizationID,
+                            user_id: UserID,
+                        ) -> None:
                             if (
                                 organization_id == client_ctx.organization_id
                                 and user_id == client_ctx.user_id
                             ):
                                 cancel_scope.cancel()
 
-                        def _on_expired(event, organization_id):
+                        def _on_expired(
+                            client_ctx: AuthenticatedClientContext,
+                            event: BackendEvent,
+                            organization_id: OrganizationID,
+                        ) -> None:
                             if organization_id == client_ctx.organization_id:
                                 cancel_scope.cancel()
 
                         client_ctx.event_bus_ctx.connect(
-                            BackendEvent.USER_REVOKED, _on_revoked  # type: ignore
+                            BackendEvent.USER_REVOKED, partial(_on_revoked, client_ctx)
                         )
                         client_ctx.event_bus_ctx.connect(
-                            BackendEvent.ORGANIZATION_EXPIRED, _on_expired  # type: ignore
+                            BackendEvent.ORGANIZATION_EXPIRED, partial(_on_expired, client_ctx)
                         )
                         await self._handle_client_websocket_loop(transport, client_ctx)
 
@@ -344,8 +357,13 @@ class BackendApp:
                         with self.event_bus.connection_context() as event_bus_ctx:
 
                             def _on_invite_status_changed(
-                                event, organization_id, greeter, token, status
-                            ):
+                                client_ctx: InvitedClientContext,
+                                event: BackendEvent,
+                                organization_id: OrganizationID,
+                                greeter: UserID,
+                                token: InvitationToken,
+                                status: InvitationStatus,
+                            ) -> None:
                                 if (
                                     status == InvitationStatus.DELETED
                                     and organization_id == client_ctx.organization_id
@@ -354,7 +372,8 @@ class BackendApp:
                                     cancel_scope.cancel()
 
                             event_bus_ctx.connect(
-                                BackendEvent.INVITE_STATUS_CHANGED, _on_invite_status_changed
+                                BackendEvent.INVITE_STATUS_CHANGED,
+                                partial(_on_invite_status_changed, client_ctx),
                             )
                             await self._handle_client_websocket_loop(transport, client_ctx)
 

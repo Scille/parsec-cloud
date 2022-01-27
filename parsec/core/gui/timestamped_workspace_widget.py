@@ -32,6 +32,8 @@ class TimestampedWorkspaceWidget(QWidget, Ui_TimestampedWorkspaceWidget):
         self.dialog = None
         self.workspace_fs = workspace_fs
         self.jobs_ctx = jobs_ctx
+        self.creation_date = None
+        self.creation_time = None
         self.calendar_widget.setLocale(get_qlocale())
         for d in (Qt.Saturday, Qt.Sunday):
             fmt = self.calendar_widget.weekdayTextFormat(d)

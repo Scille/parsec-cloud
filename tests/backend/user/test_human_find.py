@@ -167,6 +167,7 @@ async def test_search_multiple_user_same_human_handle(access_testbed, local_devi
     rep = await human_find(sock, query="Guzman Huerta")
     # Users have same label, the sort will have an nondeterminated ordered result.
     assert rep == {"status": "ok", "results": ANY, "per_page": 100, "page": 1, "total": 3}
+
     assert sorted(rep["results"], key=lambda x: x["user_id"]) == [
         {"user_id": nick2.user_id, "human_handle": nick2.human_handle, "revoked": True},
         {"user_id": nick1.user_id, "human_handle": nick1.human_handle, "revoked": True},
@@ -293,6 +294,7 @@ async def test_find_with_query_ignore_non_human(alice_backend_sock, alice, bob, 
     # Find all first
     rep = await human_find(alice_backend_sock)
     assert rep == {"status": "ok", "results": ANY, "per_page": 100, "page": 1, "total": 3}
+
     assert sorted(rep["results"], key=lambda x: x["user_id"]) == [
         {"user_id": adam.user_id, "revoked": False, "human_handle": None},
         {"user_id": alice.user_id, "revoked": False, "human_handle": None},

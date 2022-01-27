@@ -8,6 +8,7 @@ from marshmallow import ValidationError
 from marshmallow.fields import (
     # Republishing
     Int,
+    Float,
     String,
     List,
     Dict,
@@ -35,6 +36,7 @@ __all__ = (
     "str_based_field_factory",
     "uuid_based_field_factory",
     "Int",
+    "Float",
     "String",
     "List",
     "Dict",
@@ -123,6 +125,7 @@ def str_based_field_factory(value_type):
         if value is None:
             return None
 
+        assert isinstance(value, value_type)
         return str(value)
 
     def _deserialize(self, value, attr, data):
@@ -149,7 +152,8 @@ def uuid_based_field_factory(value_type):
         if value is None:
             return None
 
-        return value
+        assert isinstance(value, value_type)
+        return value.uuid
 
     def _deserialize(self, value, attr, data):
         if not isinstance(value, _UUID):
@@ -364,7 +368,6 @@ class PublicKey(Field):
             raise ValidationError("Invalid verify key.")
 
 
-SecretKey = bytes_based_field_factory(_SecretKey)
 Bytes = bytes_based_field_factory(bytes)
 
 
@@ -387,3 +390,24 @@ class HashDigestField(Field):
 
 
 HashDigest = HashDigestField
+
+
+class SecretKeyField(Field):
+    def _serialize(self, value, attr, obj):
+        if value is None:
+            return None
+
+        return value.secret
+
+    def _deserialize(self, value, attr, data):
+        if not isinstance(value, bytes):
+            raise ValidationError("Not bytes")
+
+        try:
+            return _SecretKey(value)
+
+        except Exception as exc:
+            raise ValidationError(str(exc)) from exc
+
+
+SecretKey = SecretKeyField

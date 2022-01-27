@@ -1,11 +1,10 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2016-2021 Scille SAS
 
 import pytest
-from uuid import UUID
 from pendulum import datetime
 from unittest.mock import ANY
 
-from parsec.api.protocol import RealmRole
+from parsec.api.protocol import VlobID, RealmID, RealmRole
 from parsec.api.data import RealmRoleCertificateContent, UserProfile
 from parsec.backend.realm import RealmGrantedRole
 
@@ -14,8 +13,8 @@ from tests.backend.common import realm_update_roles, realm_get_role_certificates
 
 
 NOW = datetime(2000, 1, 1)
-VLOB_ID = UUID("00000000000000000000000000000001")
-REALM_ID = UUID("0000000000000000000000000000000A")
+VLOB_ID = VlobID.from_hex("00000000000000000000000000000001")
+REALM_ID = RealmID.from_hex("0000000000000000000000000000000A")
 
 
 @pytest.mark.trio
@@ -23,7 +22,7 @@ async def test_get_roles_not_found(alice_backend_sock):
     rep = await realm_get_role_certificates(alice_backend_sock, REALM_ID)
     assert rep == {
         "status": "not_found",
-        "reason": "Realm `00000000-0000-0000-0000-00000000000a` doesn't exist",
+        "reason": "Realm `0000000000000000000000000000000a` doesn't exist",
     }
 
 
@@ -85,7 +84,7 @@ async def test_update_roles_not_found(
     )
     assert rep == {
         "status": "not_found",
-        "reason": "Realm `00000000-0000-0000-0000-00000000000a` doesn't exist",
+        "reason": "Realm `0000000000000000000000000000000a` doesn't exist",
     }
 
 
@@ -366,7 +365,7 @@ async def test_remove_role_dont_change_other_realms(
 
     # Bob should still have access to bob_realm
     roles = await backend.realm.get_current_roles(alice.organization_id, bob_realm)
-    assert roles == {"bob": RealmRole.OWNER}
+    assert roles == {bob.user_id: RealmRole.OWNER}
 
 
 @pytest.mark.trio
@@ -384,7 +383,7 @@ async def test_role_access_during_maintenance(
 
     # Get roles allowed...
     roles = await backend.realm.get_current_roles(alice.organization_id, realm)
-    assert roles == {"alice": RealmRole.OWNER}
+    assert roles == {alice.user_id: RealmRole.OWNER}
 
     rep = await realm_get_role_certificates(alice_backend_sock, realm)
     assert rep == {"status": "ok", "certificates": [ANY]}

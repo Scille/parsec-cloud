@@ -3,13 +3,13 @@
 import pendulum
 import pytest
 import trio
-from uuid import uuid4
 from pendulum import datetime, now as pendulum_now
 
 from parsec.backend.backend_events import BackendEvent
-from parsec.api.protocol import RealmRole, MaintenanceType, APIEvent
+from parsec.api.protocol import UserID, VlobID, BlockID, RealmRole, MaintenanceType, APIEvent
 from parsec.backend.realm import RealmGrantedRole
 from parsec.backend.vlob import VlobNotFoundError, VlobVersionError
+from parsec.utils import BALLPARK_CLIENT_EARLY_OFFSET, BALLPARK_CLIENT_LATE_OFFSET
 
 from tests.common import freeze_time
 from tests.backend.test_message import message_get
@@ -32,19 +32,31 @@ from tests.backend.common import (
 
 
 @pytest.mark.trio
-async def test_start_bad_encryption_revision(alice_backend_sock, realm):
+async def test_start_bad_encryption_revision(alice_backend_sock, realm, alice):
     rep = await realm_start_reencryption_maintenance(
-        alice_backend_sock, realm, 42, pendulum_now(), {"alice": b"wathever"}, check_rep=False
+        alice_backend_sock, realm, 42, pendulum_now(), {alice.user_id: b"wathever"}, check_rep=False
     )
     assert rep == {"status": "bad_encryption_revision"}
 
 
 @pytest.mark.trio
-async def test_start_bad_timestamp(alice_backend_sock, realm):
-    rep = await realm_start_reencryption_maintenance(
-        alice_backend_sock, realm, 2, datetime(2000, 1, 1), {"alice": b"wathever"}, check_rep=False
-    )
-    assert rep == {"status": "bad_timestamp", "reason": "Timestamp is out of date."}
+async def test_start_bad_timestamp(alice_backend_sock, realm, alice):
+    with freeze_time() as now:
+        rep = await realm_start_reencryption_maintenance(
+            alice_backend_sock,
+            realm,
+            2,
+            datetime(2000, 1, 1),
+            {alice.user_id: b"wathever"},
+            check_rep=False,
+        )
+    assert rep == {
+        "status": "bad_timestamp",
+        "backend_timestamp": now,
+        "ballpark_client_early_offset": BALLPARK_CLIENT_EARLY_OFFSET,
+        "ballpark_client_late_offset": BALLPARK_CLIENT_LATE_OFFSET,
+        "client_timestamp": datetime(2000, 1, 1),
+    }
 
 
 @pytest.mark.trio
@@ -96,7 +108,7 @@ async def test_start_bad_per_participant_message(
     for msg in [
         {},
         {alice.user_id: b"ok", bob.user_id: b"bad"},
-        {alice.user_id: b"ok", "zack": b"bad"},
+        {alice.user_id: b"ok", UserID("zack"): b"bad"},
         {alice.user_id: b"ok", adam.user_id: b"bad"},
     ]:
         rep = await realm_start_reencryption_maintenance(
@@ -131,7 +143,11 @@ async def test_start_send_message_to_participants(
 
     with freeze_time("2000-01-02"):
         await realm_start_reencryption_maintenance(
-            alice_backend_sock, realm, 2, pendulum_now(), {"alice": b"alice msg", "bob": b"bob msg"}
+            alice_backend_sock,
+            realm,
+            2,
+            pendulum_now(),
+            {alice.user_id: b"alice msg", bob.user_id: b"bob msg"},
         )
 
     # Each participant should have received a message
@@ -154,7 +170,7 @@ async def test_start_send_message_to_participants(
 async def test_start_reencryption_update_status(alice_backend_sock, alice, realm):
     with freeze_time("2000-01-02"):
         await realm_start_reencryption_maintenance(
-            alice_backend_sock, realm, 2, pendulum_now(), {"alice": b"foo"}
+            alice_backend_sock, realm, 2, pendulum_now(), {alice.user_id: b"foo"}
         )
     rep = await realm_status(alice_backend_sock, realm)
     assert rep == {
@@ -168,9 +184,9 @@ async def test_start_reencryption_update_status(alice_backend_sock, alice, realm
 
 
 @pytest.mark.trio
-async def test_start_already_in_maintenance(alice_backend_sock, realm):
+async def test_start_already_in_maintenance(alice_backend_sock, realm, alice):
     await realm_start_reencryption_maintenance(
-        alice_backend_sock, realm, 2, pendulum_now(), {"alice": b"wathever"}
+        alice_backend_sock, realm, 2, pendulum_now(), {alice.user_id: b"wathever"}
     )
     # Providing good or bad encryption revision shouldn't change anything
     for encryption_revision in (2, 3):
@@ -179,7 +195,7 @@ async def test_start_already_in_maintenance(alice_backend_sock, realm):
             realm,
             encryption_revision,
             pendulum_now(),
-            {"alice": b"wathever"},
+            {alice.user_id: b"wathever"},
             check_rep=False,
         )
         assert rep == {"status": "in_maintenance"}
@@ -191,7 +207,7 @@ async def test_start_check_access_rights(
 ):
     # User not part of the realm
     rep = await realm_start_reencryption_maintenance(
-        bob_backend_sock, realm, 2, pendulum_now(), {"alice": b"wathever"}, check_rep=False
+        bob_backend_sock, realm, 2, pendulum_now(), {alice.user_id: b"wathever"}, check_rep=False
     )
     assert rep == {"status": "not_allowed"}
 
@@ -214,7 +230,7 @@ async def test_start_check_access_rights(
             realm,
             2,
             next_timestamp(),
-            {"alice": b"foo", "bob": b"bar"},
+            {alice.user_id: b"foo", bob.user_id: b"bar"},
             check_rep=False,
         )
         assert rep == {"status": "not_allowed"}
@@ -237,21 +253,23 @@ async def test_start_check_access_rights(
         realm,
         2,
         pendulum_now(),
-        {"alice": b"foo", "bob": b"bar"},
+        {alice.user_id: b"foo", bob.user_id: b"bar"},
         check_rep=False,
     )
     assert rep == {"status": "ok"}
 
 
 @pytest.mark.trio
-async def test_start_other_organization(backend, sock_from_other_organization_factory, realm):
+async def test_start_other_organization(
+    backend, sock_from_other_organization_factory, realm, alice
+):
     async with sock_from_other_organization_factory(backend) as sock:
         rep = await realm_start_reencryption_maintenance(
-            sock, realm, 2, pendulum_now(), {"alice": b"foo"}, check_rep=False
+            sock, realm, 2, pendulum_now(), {alice.user_id: b"foo"}, check_rep=False
         )
     assert rep == {
         "status": "not_found",
-        "reason": "Realm `a0000000-0000-0000-0000-000000000000` doesn't exist",
+        "reason": "Realm `a0000000000000000000000000000000` doesn't exist",
     }
 
 
@@ -263,14 +281,14 @@ async def test_finish_not_in_maintenance(alice_backend_sock, realm):
         )
         assert rep == {
             "status": "not_in_maintenance",
-            "reason": "Realm `a0000000-0000-0000-0000-000000000000` not under maintenance",
+            "reason": "Realm `a0000000000000000000000000000000` not under maintenance",
         }
 
 
 @pytest.mark.trio
-async def test_finish_while_reencryption_not_done(alice_backend_sock, realm, vlobs):
+async def test_finish_while_reencryption_not_done(alice_backend_sock, realm, alice, vlobs):
     await realm_start_reencryption_maintenance(
-        alice_backend_sock, realm, 2, pendulum_now(), {"alice": b"wathever"}
+        alice_backend_sock, realm, 2, pendulum_now(), {alice.user_id: b"wathever"}
     )
     rep = await realm_finish_reencryption_maintenance(alice_backend_sock, realm, 2, check_rep=False)
     assert rep == {"status": "maintenance_error", "reason": "Reencryption operations are not over"}
@@ -299,9 +317,9 @@ async def test_reencrypt_and_finish_check_access_rights(
     async def _ready_to_finish(bob_in_workspace):
         nonlocal encryption_revision
         encryption_revision += 1
-        reencryption_msgs = {"alice": b"foo"}
+        reencryption_msgs = {alice.user_id: b"foo"}
         if bob_in_workspace:
-            reencryption_msgs["bob"] = b"bar"
+            reencryption_msgs[bob.user_id] = b"bar"
         await realm_start_reencryption_maintenance(
             alice_backend_sock, realm, encryption_revision, pendulum_now(), reencryption_msgs
         )
@@ -377,7 +395,7 @@ async def test_reencryption_batch_not_during_maintenance(alice_backend_sock, rea
     rep = await vlob_maintenance_get_reencryption_batch(alice_backend_sock, realm, 1)
     assert rep == {
         "status": "not_in_maintenance",
-        "reason": "Realm `a0000000-0000-0000-0000-000000000000` not under maintenance",
+        "reason": "Realm `a0000000000000000000000000000000` not under maintenance",
     }
 
     rep = await vlob_maintenance_save_reencryption_batch(
@@ -385,20 +403,20 @@ async def test_reencryption_batch_not_during_maintenance(alice_backend_sock, rea
     )
     assert rep == {
         "status": "not_in_maintenance",
-        "reason": "Realm `a0000000-0000-0000-0000-000000000000` not under maintenance",
+        "reason": "Realm `a0000000000000000000000000000000` not under maintenance",
     }
 
     rep = await realm_finish_reencryption_maintenance(alice_backend_sock, realm, 1, check_rep=False)
     assert rep == {
         "status": "not_in_maintenance",
-        "reason": "Realm `a0000000-0000-0000-0000-000000000000` not under maintenance",
+        "reason": "Realm `a0000000000000000000000000000000` not under maintenance",
     }
 
 
 @pytest.mark.trio
-async def test_reencryption_batch_bad_revisison(alice_backend_sock, realm):
+async def test_reencryption_batch_bad_revisison(alice_backend_sock, realm, alice):
     await realm_start_reencryption_maintenance(
-        alice_backend_sock, realm, 2, pendulum_now(), {"alice": b"foo"}
+        alice_backend_sock, realm, 2, pendulum_now(), {alice.user_id: b"foo"}
     )
 
     rep = await vlob_maintenance_get_reencryption_batch(alice_backend_sock, realm, 1)
@@ -412,7 +430,7 @@ async def test_reencryption_batch_bad_revisison(alice_backend_sock, realm):
 async def test_reencryption(alice, alice_backend_sock, realm, vlob_atoms):
     with freeze_time("2000-01-02"):
         await realm_start_reencryption_maintenance(
-            alice_backend_sock, realm, 2, pendulum_now(), {"alice": b"foo"}
+            alice_backend_sock, realm, 2, pendulum_now(), {alice.user_id: b"foo"}
         )
 
     # Each participant should have received a message
@@ -459,13 +477,13 @@ async def test_reencryption_provide_unknown_vlob_atom_and_duplications(
     backend, alice, alice_backend_sock, realm, vlob_atoms
 ):
     await realm_start_reencryption_maintenance(
-        alice_backend_sock, realm, 2, pendulum_now(), {"alice": b"foo"}
+        alice_backend_sock, realm, 2, pendulum_now(), {alice.user_id: b"foo"}
     )
     rep = await vlob_maintenance_get_reencryption_batch(alice_backend_sock, realm, 2)
     assert rep["status"] == "ok"
     assert len(rep["batch"]) == 3
 
-    unknown_vlob_id = uuid4()
+    unknown_vlob_id = VlobID.new()
     duplicated_vlob_id = rep["batch"][0]["vlob_id"]
     duplicated_version = rep["batch"][0]["version"]
     duplicated_expected_blob = rep["batch"][0]["blob"]
@@ -522,8 +540,8 @@ async def test_access_during_reencryption(
 ):
     # First initialize a nice realm with block and vlob
     realm_id = await realm_factory(backend, author=alice)
-    vlob_id = uuid4()
-    block_id = uuid4()
+    vlob_id = VlobID.new()
+    block_id = BlockID.new()
     await backend.vlob.create(
         organization_id=alice.organization_id,
         author=alice.device_id,
@@ -545,7 +563,7 @@ async def test_access_during_reencryption(
         rep = await vlob_create(
             alice_backend_sock,
             realm_id=realm_id,
-            vlob_id=uuid4(),
+            vlob_id=VlobID.new(),
             blob=b"data",
             encryption_revision=encryption_revision,
             check_rep=False,
@@ -637,7 +655,7 @@ async def test_access_during_reencryption(
 
 @pytest.mark.trio
 async def test_reencryption_events(
-    backend, alice_backend_sock, alice2_backend_sock, realm, vlobs, vlob_atoms
+    backend, alice_backend_sock, alice2_backend_sock, realm, alice, vlobs, vlob_atoms
 ):
 
     # Start listening events
@@ -646,7 +664,7 @@ async def test_reencryption_events(
     with backend.event_bus.listen() as spy:
         # Start maintenance and check for events
         await realm_start_reencryption_maintenance(
-            alice2_backend_sock, realm, 2, pendulum_now(), {"alice": b"foo"}
+            alice2_backend_sock, realm, 2, pendulum_now(), {alice.user_id: b"foo"}
         )
 
         with trio.fail_after(1):

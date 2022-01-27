@@ -239,14 +239,14 @@ def prepare_reshape(
     for block, chunks in enumerate(manifest.blocks):
 
         # Already a block
-        if len(chunks) == 1 and chunks[0].is_block:
+        if len(chunks) == 1 and chunks[0].is_block():
             continue
 
         # Update callback
         block_update = partial(update_manifest, block)
 
         # Already a pseudo-block
-        if len(chunks) == 1 and chunks[0].is_pseudo_block:
+        if len(chunks) == 1 and chunks[0].is_pseudo_block():
             yield (chunks, chunks[0], block_update, set())
             continue
 

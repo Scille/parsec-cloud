@@ -6,6 +6,7 @@ import trio
 from pendulum import now as pendulum_now
 from parsec.api.data import UserProfile
 from parsec.api.protocol import (
+    DeviceLabel,
     HumanHandle,
     InvitationType,
     InvitationDeletedReason,
@@ -41,15 +42,15 @@ async def test_good_device_claim(
         organization_id=alice.organization_id, greeter_user_id=alice.user_id
     )
     invitation_addr = BackendInvitationAddr.build(
-        backend_addr=alice.organization_addr,
+        backend_addr=alice.organization_addr.get_backend_addr(),
         organization_id=alice.organization_id,
         invitation_type=InvitationType.DEVICE,
         token=invitation.token,
     )
 
     if with_labels:
-        requested_device_label = "Foo's label"
-        granted_device_label = "Bar's label"
+        requested_device_label = DeviceLabel("Foo's label")
+        granted_device_label = DeviceLabel("Bar's label")
     else:
         requested_device_label = None
         granted_device_label = None
@@ -182,7 +183,7 @@ async def test_good_user_claim(
         claimer_email=claimer_email,
     )
     invitation_addr = BackendInvitationAddr.build(
-        backend_addr=alice.organization_addr,
+        backend_addr=alice.organization_addr.get_backend_addr(),
         organization_id=alice.organization_id,
         invitation_type=InvitationType.USER,
         token=invitation.token,
@@ -191,9 +192,9 @@ async def test_good_user_claim(
     if with_labels:
         # Let's pretent we invited a Fortnite player...
         requested_human_handle = HumanHandle(email="ZACK@example.com", label="xXx_Z4ck_xXx")
-        requested_device_label = "Ultr4_B00st"
+        requested_device_label = DeviceLabel("Ultr4_B00st")
         granted_human_handle = HumanHandle(email="zack@example.com", label="Zack")
-        granted_device_label = "Desktop"
+        granted_device_label = DeviceLabel("Desktop")
     else:
         requested_human_handle = None
         requested_device_label = None
@@ -329,8 +330,8 @@ async def test_good_user_claim(
             alice_um = alicefs.get_user_manifest()
             zack_um = newfs.get_user_manifest()
 
-            assert {(w.id, w.key) for w in alice_um.workspaces} == {
-                (w.id, w.key) for w in zack_um.workspaces
+            assert {(w.id, w.key.secret) for w in alice_um.workspaces} == {
+                (w.id, w.key.secret) for w in zack_um.workspaces
             }
 
 
@@ -340,7 +341,7 @@ async def test_claimer_handle_reset(backend, running_backend, alice, alice_backe
         organization_id=alice.organization_id, greeter_user_id=alice.user_id
     )
     invitation_addr = BackendInvitationAddr.build(
-        backend_addr=alice.organization_addr,
+        backend_addr=alice.organization_addr.get_backend_addr(),
         organization_id=alice.organization_id,
         invitation_type=InvitationType.DEVICE,
         token=invitation.token,
@@ -412,7 +413,7 @@ async def test_claimer_handle_cancel_event(
         organization_id=alice.organization_id, greeter_user_id=alice.user_id
     )
     invitation_addr = BackendInvitationAddr.build(
-        backend_addr=alice.organization_addr,
+        backend_addr=alice.organization_addr.get_backend_addr(),
         organization_id=alice.organization_id,
         invitation_type=InvitationType.DEVICE,
         token=invitation.token,
@@ -488,7 +489,7 @@ async def test_claimer_handle_cancel_event(
                 async def _do_claimer_claim_device():
                     with pytest.raises(BackendInvitationAlreadyUsed) as exc_info:
                         await claimer_in_progress_ctx.do_claim_device(
-                            requested_device_label="TheSecretDevice"
+                            requested_device_label=DeviceLabel("TheSecretDevice")
                         )
                     assert str(exc_info.value) == "Invalid handshake: Invitation already deleted"
 
@@ -519,7 +520,7 @@ async def test_claimer_handle_command_failure(
         organization_id=alice.organization_id, greeter_user_id=alice.user_id
     )
     invitation_addr = BackendInvitationAddr.build(
-        backend_addr=alice.organization_addr,
+        backend_addr=alice.organization_addr.get_backend_addr(),
         organization_id=alice.organization_id,
         invitation_type=InvitationType.DEVICE,
         token=invitation.token,
@@ -578,7 +579,6 @@ async def test_claimer_handle_command_failure(
         async def _send_event(*args, **kwargs):
             if BackendEvent.INVITE_STATUS_CHANGED in args and (
                 kwargs.get("status") == InvitationStatus.DELETED
-                or kwargs.get("status_str") == InvitationStatus.DELETED.value
             ):
                 deleted_event.set()
             await trio.sleep(0)
@@ -598,7 +598,7 @@ async def test_claimer_handle_command_failure(
                     await claimer_in_progress_ctx.do_wait_peer_trust()
                 elif fail_on_step == "claim_device":
                     await claimer_in_progress_ctx.do_claim_device(
-                        requested_device_label="TheSecretDevice"
+                        requested_device_label=DeviceLabel("TheSecretDevice")
                     )
                 else:
                     raise AssertionError(f"Unknown step {fail_on_step}")
@@ -617,7 +617,7 @@ async def test_user_claim_but_active_users_limit_reached(backend, running_backen
         claimer_email="zack@example.com",
     )
     invitation_addr = BackendInvitationAddr.build(
-        backend_addr=alice.organization_addr,
+        backend_addr=alice.organization_addr.get_backend_addr(),
         organization_id=alice.organization_id,
         invitation_type=InvitationType.USER,
         token=invitation.token,

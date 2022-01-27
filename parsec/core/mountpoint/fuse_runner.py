@@ -135,7 +135,9 @@ async def fuse_mountpoint_runner(
             encoding = sys.getfilesystemencoding()
 
             def _run_fuse_thread():
-                with importlib_resources.path(resources_module, "parsec.icns") as parsec_icns_path:
+                with importlib_resources.files(resources_module).joinpath(
+                    "parsec.icns"
+                ) as parsec_icns_path:
 
                     fuse_platform_options = {}
                     if sys.platform == "darwin":

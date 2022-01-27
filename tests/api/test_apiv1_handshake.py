@@ -1,5 +1,6 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2016-2021 Scille SAS
 
+import pendulum
 import pytest
 from unittest.mock import ANY
 
@@ -17,6 +18,7 @@ from parsec.api.protocol.handshake import (
     HandshakeOrganizationExpired,
 )
 from parsec.api.version import API_V1_VERSION, ApiVersion
+from parsec.utils import BALLPARK_CLIENT_EARLY_OFFSET, BALLPARK_CLIENT_LATE_OFFSET
 
 
 @pytest.mark.parametrize("check_rvk", (True, False))
@@ -116,6 +118,9 @@ def test_process_challenge_req_good_api_version(
         "handshake": "challenge",
         "challenge": b"1234567890",
         "supported_api_versions": [backend_version],
+        "backend_timestamp": pendulum.now(),
+        "ballpark_client_early_offset": BALLPARK_CLIENT_EARLY_OFFSET,
+        "ballpark_client_late_offset": BALLPARK_CLIENT_LATE_OFFSET,
     }
     monkeypatch.setattr(ch, "SUPPORTED_API_VERSIONS", [client_version])
 
@@ -176,6 +181,9 @@ def test_process_challenge_req_good_multiple_api_version(
         "handshake": "challenge",
         "challenge": b"1234567890",
         "supported_api_versions": list(backend_versions),
+        "backend_timestamp": pendulum.now(),
+        "ballpark_client_early_offset": BALLPARK_CLIENT_EARLY_OFFSET,
+        "ballpark_client_late_offset": BALLPARK_CLIENT_LATE_OFFSET,
     }
     monkeypatch.setattr(ch, "SUPPORTED_API_VERSIONS", client_versions)
 
@@ -231,8 +239,8 @@ def test_process_challenge_req_good_multiple_api_version(
 )
 def test_process_answer_req_bad_format(req, alice):
     for key, good_value in [
-        ("organization_id", alice.organization_id),
-        ("device_id", alice.device_id),
+        ("organization_id", str(alice.organization_id)),
+        ("device_id", str(alice.device_id)),
         ("rvk", alice.root_verify_key.encode()),
     ]:
         if req.get(key) == "<good>":
@@ -265,7 +273,7 @@ def test_build_bad_outcomes(alice, method, expected_result):
         "handshake": "answer",
         "type": APIV1_HandshakeType.ANONYMOUS.value,
         "client_api_version": API_V1_VERSION,
-        "organization_id": alice.organization_id,
+        "organization_id": str(alice.organization_id),
         "answer": alice.signing_key.sign(sh.challenge),
     }
     sh.process_answer_req(packb(answer))

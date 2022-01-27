@@ -177,7 +177,7 @@ class PGOrganizationComponent(BaseOrganizationComponent):
             try:
                 result = await conn.execute(
                     *_q_insert_organization(
-                        organization_id=id,
+                        organization_id=id.str,
                         bootstrap_token=bootstrap_token,
                         active_users_limit=active_users_limit,
                         user_profile_outsider_allowed=user_profile_outsider_allowed,
@@ -196,9 +196,9 @@ class PGOrganizationComponent(BaseOrganizationComponent):
     @staticmethod
     async def _get(conn, id: OrganizationID, for_update: bool = False) -> Organization:
         if for_update:
-            data = await conn.fetchrow(*_q_get_organization_for_update(organization_id=id))
+            data = await conn.fetchrow(*_q_get_organization_for_update(organization_id=id.str))
         else:
-            data = await conn.fetchrow(*_q_get_organization(organization_id=id))
+            data = await conn.fetchrow(*_q_get_organization(organization_id=id.str))
         if not data:
             raise OrganizationNotFoundError()
 
@@ -239,7 +239,7 @@ class PGOrganizationComponent(BaseOrganizationComponent):
 
             result = await conn.execute(
                 *_q_bootstrap_organization(
-                    organization_id=id,
+                    organization_id=id.str,
                     bootstrap_token=bootstrap_token,
                     root_verify_key=root_verify_key.encode(),
                 )
@@ -250,7 +250,7 @@ class PGOrganizationComponent(BaseOrganizationComponent):
 
     async def stats(self, id: OrganizationID) -> OrganizationStats:
         async with self.dbh.pool.acquire() as conn, conn.transaction():
-            result = await conn.fetchrow(*_q_get_stats(organization_id=id))
+            result = await conn.fetchrow(*_q_get_stats(organization_id=id.str))
             if not result["exist"]:
                 raise OrganizationNotFoundError()
 
@@ -322,7 +322,7 @@ class PGOrganizationComponent(BaseOrganizationComponent):
         )
 
         async with self.dbh.pool.acquire() as conn, conn.transaction():
-            result = await conn.execute(*q(organization_id=id, **fields))
+            result = await conn.execute(*q(organization_id=id.str, **fields))
 
             if result == "UPDATE 0":
                 raise OrganizationNotFoundError

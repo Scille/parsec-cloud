@@ -2,7 +2,9 @@
 
 import click
 from pathlib import Path
+from typing import Callable
 
+from parsec.api.protocol import DeviceLabel
 from parsec.core import CoreConfig
 from parsec.core.recovery import generate_recovery_device, generate_new_device_from_recovery
 from parsec.core.local_device import (
@@ -50,7 +52,7 @@ async def _export_recovery_device(
 )
 @core_config_and_device_options
 @cli_command_base_options
-def export_recovery_device(config: CoreConfig, device: LocalDevice, output: Path, **kwargs):
+def export_recovery_device(config: CoreConfig, device: LocalDevice, output: Path, **kwargs) -> None:
     """
     Create a new recovery device for the user.
     """
@@ -62,8 +64,8 @@ async def _import_recovery_device(
     config: CoreConfig,
     recovery_file: Path,
     passphrase: str,
-    new_device_label: str,
-    save_device_with_selected_auth,
+    new_device_label: DeviceLabel,
+    save_device_with_selected_auth: Callable,
 ) -> None:
 
     recovery_device = await load_recovery_device(recovery_file, passphrase)
@@ -88,7 +90,13 @@ async def _import_recovery_device(
     prompt=True,
     required=True,
 )
-@click.option("--device-label", "-L", help="Label for the new device", prompt="New device label")
+@click.option(
+    "--device-label",
+    "-L",
+    help="Label for the new device",
+    prompt="New device label",
+    type=DeviceLabel,
+)
 @save_device_options
 @core_config_options
 @cli_command_base_options
@@ -96,10 +104,10 @@ def import_recovery_device(
     config: CoreConfig,
     file: Path,
     passphrase: str,
-    device_label: str,
-    save_device_with_selected_auth,
+    device_label: DeviceLabel,
+    save_device_with_selected_auth: Callable,
     **kwargs,
-):
+) -> None:
     """
     Create a new device from a .psrk recovery device file.
     """

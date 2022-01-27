@@ -3,9 +3,9 @@
 import re
 import pytest
 
+from parsec.api.protocol import DeviceID
 from parsec.core.core_events import CoreEvent
 from parsec.core.types import EntryID, EntryName, Chunk, LocalFolderManifest, LocalFileManifest
-
 from parsec.core.fs import FsPath
 from parsec.core.fs.workspacefs.sync_transactions import (
     full_name,
@@ -344,15 +344,15 @@ async def test_synchronization_step_transaction(alice_sync_transactions, type):
     assert await synchronization_step(a_entry_id, a_manifest) is None
 
     # Acknowledge the manifest
-    assert sorted(manifest.children) == ["a"]
+    assert sorted(manifest.children) == [EntryName("a")]
     assert await synchronization_step(entry_id, manifest) is None
 
     # Local change
     b_id = await sync_transactions.folder_create(FsPath("/b"))
 
     # Remote change
-    children = {**manifest.children, "c": EntryID.new()}
-    manifest = manifest.evolve(version=5, children=children, author="b@b")
+    children = {**manifest.children, EntryName("c"): EntryID.new()}
+    manifest = manifest.evolve(version=5, children=children, author=DeviceID("b@b"))
 
     # Sync parent with a placeholder child
     manifest = await synchronization_step(entry_id, manifest)
@@ -367,7 +367,7 @@ async def test_synchronization_step_transaction(alice_sync_transactions, type):
     assert await synchronization_step(b_entry_id, b_manifest) is None
 
     # Acknowledge the manifest
-    assert sorted(manifest.children) == ["a", "b", "c"]
+    assert sorted(manifest.children) == [EntryName("a"), EntryName("b"), EntryName("c")]
     assert await synchronization_step(entry_id, manifest) is None
 
 
@@ -440,7 +440,7 @@ async def test_file_conflict(alice_sync_transactions, preferred_language, suffix
     assert await sync_transactions.synchronization_step(a_id, remote) is None
     await sync_transactions.fd_write(fd, b"def", offset=3)
     await sync_transactions.file_reshape(a_id)
-    changed_remote = remote.evolve(version=2, blocks=[], size=0, author="b@b")
+    changed_remote = remote.evolve(version=2, blocks=[], size=0, author=DeviceID("b@b"))
 
     # Try a synchronization
     with pytest.raises(FSFileConflictError) as ctx:

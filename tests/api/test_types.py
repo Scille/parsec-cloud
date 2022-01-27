@@ -32,9 +32,9 @@ def test_normalization(cls):
     nfd_str = normalize("NFD", nfc_str)
 
     assert nfc_str != nfd_str
-    assert cls(nfd_str) == nfc_str
-    assert cls(nfc_str) == nfc_str
-    assert cls(nfc_str + nfd_str) == nfc_str + nfc_str
+    assert str(cls(nfd_str)) == nfc_str
+    assert str(cls(nfc_str)) == nfc_str
+    assert str(cls(nfc_str + nfd_str)) == nfc_str + nfc_str
 
 
 @pytest.mark.parametrize("cls", (UserID, DeviceName, OrganizationID))

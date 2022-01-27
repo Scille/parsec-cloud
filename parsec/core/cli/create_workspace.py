@@ -5,10 +5,12 @@ import click
 from parsec.utils import trio_run
 from parsec.cli_utils import cli_exception_handler
 from parsec.core import logged_core_factory
+from parsec.core.types import LocalDevice
+from parsec.core.config import CoreConfig
 from parsec.core.cli.utils import cli_command_base_options, core_config_and_device_options
 
 
-async def _create_workspace(config, device, name):
+async def _create_workspace(config: CoreConfig, device: LocalDevice, name: str) -> None:
     async with logged_core_factory(config, device) as core:
         await core.user_fs.workspace_create(f"{name}")
 
@@ -17,7 +19,7 @@ async def _create_workspace(config, device, name):
 @click.argument("name")
 @core_config_and_device_options
 @cli_command_base_options
-def create_workspace(config, device, name, **kwargs):
+def create_workspace(config: CoreConfig, device: LocalDevice, name: str, **kwargs) -> None:
     """
     Create a new workspace for the given device.
     """
