@@ -6,14 +6,15 @@ from PyQt5.QtGui import QPixmap, QColor
 
 from PyQt5.QtWidgets import QHBoxLayout, QWidget, QSpacerItem, QSizePolicy
 
-from pathlib import Path
+from parsec.core.fs import FsPath
+from parsec.api.data import EntryName
 
 from parsec.core.gui.lang import translate
 from parsec.core.gui.custom_widgets import ClickableLabel, IconLabel
 
 
 class NavigationBarWidget(QWidget):
-    route_clicked = pyqtSignal(Path)
+    route_clicked = pyqtSignal(FsPath)
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -23,18 +24,22 @@ class NavigationBarWidget(QWidget):
 
     def _on_label_clicked(self, idx):
         def _internal_label_clicked(_title):
-            complete_path = Path(*[p for i, p in enumerate(self.paths) if i <= idx])
+            complete_path = FsPath(
+                [EntryName(p) for i, p in enumerate(self.paths) if i <= idx and i != 0]
+            )
             self.route_clicked.emit(complete_path)
 
         return _internal_label_clicked
 
     def get_current_path(self):
-        return Path(*self.paths)
+        return FsPath(self.paths[1:])
 
     def from_path(self, path):
         self.clear()
-        path = Path(path)
-        for idx, part in enumerate(path.parts):
+        path = FsPath(path)
+        parts = ["/"]
+        parts.extend(path.parts)
+        for idx, part in enumerate(parts):
             icon = IconLabel()
             icon.setScaledContents(True)
             icon.setProperty("color", QColor(153, 153, 153))

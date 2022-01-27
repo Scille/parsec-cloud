@@ -1,10 +1,10 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2016-2021 Scille SAS
 
 from typing import Optional, cast
-from pathlib import PurePath
 from PyQt5.QtCore import pyqtSignal, pyqtBoundSignal
 from PyQt5.QtGui import QPixmap, QColor, QIcon
 from PyQt5.QtWidgets import QGraphicsDropShadowEffect, QWidget, QMenu
+from pathlib import PurePath
 
 from parsec.event_bus import EventBus, EventCallback
 from parsec.api.protocol import (
@@ -201,7 +201,7 @@ class CentralWidget(QWidget, Ui_CentralWidget):  # type: ignore[misc]
             core=self.core, jobs_ctx=self.jobs_ctx, parent=self, on_finished=None
         )
 
-    def _on_route_clicked(self, path: PurePath) -> None:
+    def _on_route_clicked(self, path: FsPath) -> None:
         self.mount_widget.load_path(path)
 
     def _on_folder_changed(self, workspace_name: Optional[str], path: Optional[str]) -> None:
