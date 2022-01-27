@@ -9,7 +9,6 @@ from PyQt5.QtWidgets import QHBoxLayout, QWidget, QSpacerItem, QSizePolicy
 from parsec.core.fs import FsPath
 from parsec.api.data import EntryName
 
-from parsec.core.gui.lang import translate
 from parsec.core.gui.custom_widgets import ClickableLabel, IconLabel
 
 
@@ -34,10 +33,10 @@ class NavigationBarWidget(QWidget):
     def get_current_path(self):
         return FsPath(self.paths[1:])
 
-    def from_path(self, path):
+    def from_path(self, workspace_name, path):
         self.clear()
         path = FsPath(path)
-        parts = ["/"]
+        parts = [workspace_name]
         parts.extend(path.parts)
         for idx, part in enumerate(parts):
             icon = IconLabel()
@@ -51,7 +50,7 @@ class NavigationBarWidget(QWidget):
                 icon.setPixmap(QPixmap(":/icons/images/material/chevron_right.svg"))
             icon.apply_style()
             self.layout().insertWidget(self.layout().count() - 1, icon)
-            label = ClickableLabel(translate("TEXT_PATH_ROOT") if part == "/" else part)
+            label = ClickableLabel(part)
             font = label.font()
             font.setBold(True)
             font.setUnderline(True)

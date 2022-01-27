@@ -1877,9 +1877,6 @@ msgstr "Click to enlarge"
 msgid "TEXT_CLICK_TO_CLOSE"
 msgstr "Click to close"
 
-msgid "TEXT_PATH_ROOT"
-msgstr "Root"
-
 msgid "TEXT_SETTINGS_NEED_RESTART"
 msgstr "You will need to restart the application for the changes to take effect."
 

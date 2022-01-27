@@ -1927,9 +1927,6 @@ msgstr "Cliquer pour élargir"
 msgid "TEXT_CLICK_TO_CLOSE"
 msgstr "Cliquer pour fermer"
 
-msgid "TEXT_PATH_ROOT"
-msgstr "Racine"
-
 msgid "TEXT_SETTINGS_NEED_RESTART"
 msgstr "Les modifications seront prises en compte au redémarrage de l'application."
 

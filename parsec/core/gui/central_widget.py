@@ -143,7 +143,6 @@ class CentralWidget(QWidget, Ui_CentralWidget):  # type: ignore[misc]
         self.menu.devices_clicked.connect(self.show_devices_widget)
         self.connection_state_changed.connect(self._on_connection_state_changed)
 
-        self.widget_title2.hide()
         self.navigation_bar_widget.clear()
         self.navigation_bar_widget.route_clicked.connect(self._on_route_clicked)
 
@@ -206,11 +205,8 @@ class CentralWidget(QWidget, Ui_CentralWidget):  # type: ignore[misc]
 
     def _on_folder_changed(self, workspace_name: Optional[str], path: Optional[str]) -> None:
         if workspace_name and path:
-            self.widget_title2.show()
-            self.label_title2.setText(workspace_name)
-            self.navigation_bar_widget.from_path(path)
+            self.navigation_bar_widget.from_path(workspace_name, path)
         else:
-            self.widget_title2.hide()
             self.navigation_bar_widget.clear()
 
     def handle_event(self, event: CoreEvent, **kwargs: object) -> None:
@@ -438,7 +434,6 @@ class CentralWidget(QWidget, Ui_CentralWidget):  # type: ignore[misc]
         self.devices_widget.show()
 
     def clear_widgets(self) -> None:
-        self.widget_title2.hide()
         self.navigation_bar_widget.clear()
         self.users_widget.hide()
         self.mount_widget.hide()

@@ -182,81 +182,6 @@
                </widget>
               </item>
               <item>
-               <widget class="QWidget" name="widget_title2" native="true">
-                <property name="minimumSize">
-                 <size>
-                  <width>0</width>
-                  <height>0</height>
-                 </size>
-                </property>
-                <property name="font">
-                 <font>
-                  <pointsize>16</pointsize>
-                 </font>
-                </property>
-                <layout class="QHBoxLayout" name="horizontalLayout_3">
-                 <property name="leftMargin">
-                  <number>0</number>
-                 </property>
-                 <property name="topMargin">
-                  <number>0</number>
-                 </property>
-                 <property name="rightMargin">
-                  <number>0</number>
-                 </property>
-                 <property name="bottomMargin">
-                  <number>0</number>
-                 </property>
-                 <item>
-                  <widget class="IconLabel" name="icon_title2">
-                   <property name="minimumSize">
-                    <size>
-                     <width>10</width>
-                     <height>10</height>
-                    </size>
-                   </property>
-                   <property name="maximumSize">
-                    <size>
-                     <width>10</width>
-                     <height>10</height>
-                    </size>
-                   </property>
-                   <property name="text">
-                    <string/>
-                   </property>
-                   <property name="pixmap">
-                    <pixmap resource="../rc/resources.qrc">:/icons/images/material/fiber_manual_record.svg</pixmap>
-                   </property>
-                   <property name="scaledContents">
-                    <bool>true</bool>
-                   </property>
-                   <property name="color" stdset="0">
-                    <color>
-                     <red>153</red>
-                     <green>153</green>
-                     <blue>153</blue>
-                    </color>
-                   </property>
-                  </widget>
-                 </item>
-                 <item>
-                  <widget class="QLabel" name="label_title2">
-                   <property name="font">
-                    <font>
-                     <pointsize>16</pointsize>
-                     <weight>75</weight>
-                     <bold>true</bold>
-                    </font>
-                   </property>
-                   <property name="text">
-                    <string/>
-                   </property>
-                  </widget>
-                 </item>
-                </layout>
-               </widget>
-              </item>
-              <item>
                <widget class="QWidget" name="widget_title3" native="true">
                 <property name="sizePolicy">
                  <sizepolicy hsizetype="Expanding" vsizetype="Preferred">
@@ -448,11 +373,6 @@
   </layout>
  </widget>
  <customwidgets>
-  <customwidget>
-   <class>IconLabel</class>
-   <extends>QLabel</extends>
-   <header>parsec.core.gui.custom_widgets</header>
-  </customwidget>
   <customwidget>
    <class>NavigationBarWidget</class>
    <extends>QWidget</extends>
