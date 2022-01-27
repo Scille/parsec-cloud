@@ -31,7 +31,9 @@ impl SecretKey {
     }
 
     pub fn decrypt(&self, ciphered: &[u8]) -> Result<Vec<u8>, &'static str> {
-        let nonce_slice = ciphered.get(..NONCEBYTES).ok_or("Invalid data size")?;
+        let nonce_slice = ciphered
+            .get(..NONCEBYTES)
+            .ok_or("The nonce must be exactly 24 bytes long")?;
         let nonce = Nonce::from_slice(nonce_slice).ok_or("Invalid data size")?;
         let plaintext =
             open(&ciphered[NONCEBYTES..], &nonce, &self.0).or(Err("Decryption error"))?;
@@ -48,6 +50,7 @@ impl SecretKey {
         //     ctx: [u8; 8],
         //     key,
         // );
+        unimplemented!();
         vec![]
     }
 }

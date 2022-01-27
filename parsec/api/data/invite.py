@@ -6,7 +6,14 @@ from random import randint, shuffle
 
 from parsec.crypto import VerifyKey, PublicKey, PrivateKey, SecretKey
 from parsec.serde import fields, post_load
-from parsec.api.protocol import DeviceID, DeviceIDField, HumanHandle, HumanHandleField
+from parsec.api.protocol import (
+    DeviceID,
+    DeviceIDField,
+    HumanHandle,
+    HumanHandleField,
+    DeviceLabel,
+    DeviceLabelField,
+)
 from parsec.api.data.base import BaseAPIData, BaseSchema
 from parsec.api.data.entry import EntryID, EntryIDField
 from parsec.api.data.certif import UserProfile, UserProfileField
@@ -70,7 +77,7 @@ class InviteUserData(BaseAPIData):
     class SCHEMA_CLS(BaseSchema):
         type = fields.CheckedConstant("invite_user_data", required=True)
         # Claimer ask for device_label/human_handle, but greeter has final word on this
-        requested_device_label = fields.String(allow_none=True, missing=None)
+        requested_device_label = DeviceLabelField(allow_none=True, missing=None)
         requested_human_handle = HumanHandleField(allow_none=True, missing=None)
         # Note claiming user also imply creating a first device
         public_key = fields.PublicKey(required=True)
@@ -82,7 +89,7 @@ class InviteUserData(BaseAPIData):
             data.pop("type")
             return InviteUserData(**data)
 
-    requested_device_label: Optional[str]
+    requested_device_label: Optional[DeviceLabel]
     requested_human_handle: Optional[HumanHandle]
     public_key: PublicKey
     verify_key: VerifyKey
@@ -93,7 +100,7 @@ class InviteUserConfirmation(BaseAPIData):
     class SCHEMA_CLS(BaseSchema):
         type = fields.CheckedConstant("invite_user_confirmation", required=True)
         device_id = DeviceIDField(required=True)
-        device_label = fields.String(allow_none=True, missing=None)
+        device_label = DeviceLabelField(allow_none=True, missing=None)
         human_handle = HumanHandleField(allow_none=True, missing=None)
         profile = UserProfileField(required=True)
         root_verify_key = fields.VerifyKey(required=True)
@@ -104,7 +111,7 @@ class InviteUserConfirmation(BaseAPIData):
             return InviteUserConfirmation(**data)
 
     device_id: DeviceID
-    device_label: Optional[str]
+    device_label: Optional[DeviceLabel]
     human_handle: Optional[HumanHandle]
     profile: UserProfile
     root_verify_key: VerifyKey
@@ -115,7 +122,7 @@ class InviteDeviceData(BaseAPIData):
     class SCHEMA_CLS(BaseSchema):
         type = fields.CheckedConstant("invite_device_data", required=True)
         # Claimer ask for device_label, but greeter has final word on this
-        requested_device_label = fields.String(allow_none=True, missing=None)
+        requested_device_label = DeviceLabelField(allow_none=True, missing=None)
         verify_key = fields.VerifyKey(required=True)
 
         @post_load
@@ -123,7 +130,7 @@ class InviteDeviceData(BaseAPIData):
             data.pop("type")
             return InviteDeviceData(**data)
 
-    requested_device_label: Optional[str]
+    requested_device_label: Optional[DeviceLabel]
     verify_key: VerifyKey
 
 
@@ -132,7 +139,7 @@ class InviteDeviceConfirmation(BaseAPIData):
     class SCHEMA_CLS(BaseSchema):
         type = fields.CheckedConstant("invite_device_confirmation", required=True)
         device_id = DeviceIDField(required=True)
-        device_label = fields.String(allow_none=True, missing=None)
+        device_label = DeviceLabelField(allow_none=True, missing=None)
         human_handle = HumanHandleField(allow_none=True, missing=None)
         profile = UserProfileField(required=True)
         private_key = fields.PrivateKey(required=True)
@@ -148,7 +155,7 @@ class InviteDeviceConfirmation(BaseAPIData):
             return InviteDeviceConfirmation(**data)
 
     device_id: DeviceID
-    device_label: Optional[str]
+    device_label: Optional[DeviceLabel]
     human_handle: Optional[HumanHandle]
     profile: UserProfile
     private_key: PrivateKey

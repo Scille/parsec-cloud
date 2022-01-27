@@ -3,7 +3,6 @@
 import re
 import attr
 import fnmatch
-from uuid import UUID
 from pathlib import Path
 import importlib_resources
 from typing import Optional, Tuple, List, Pattern
@@ -15,6 +14,7 @@ from parsec.event_bus import EventBus
 from parsec.api.protocol import (
     UserID,
     InvitationType,
+    InvitationToken,
     InvitationDeletedReason,
     InvitationEmailSentStatus,
 )
@@ -97,7 +97,7 @@ def get_prevent_sync_pattern(prevent_sync_pattern_path: Optional[Path] = None) -
         pattern = _get_prevent_sync_pattern(prevent_sync_pattern_path)
     # Default to the pattern from the ignore file in the core resources
     if pattern is None:
-        with importlib_resources.path(core_resources, "default_pattern.ignore") as path:
+        with importlib_resources.files(core_resources).joinpath("default_pattern.ignore") as path:
             pattern = _get_prevent_sync_pattern(path)
     # As a last resort use the failsafe
     if pattern is None:
@@ -276,7 +276,7 @@ class LoggedCore:
 
         return (
             BackendInvitationAddr.build(
-                backend_addr=self.device.organization_addr,
+                backend_addr=self.device.organization_addr.get_backend_addr(),
                 organization_id=self.device.organization_id,
                 invitation_type=InvitationType.USER,
                 token=rep["token"],
@@ -302,7 +302,7 @@ class LoggedCore:
 
         return (
             BackendInvitationAddr.build(
-                backend_addr=self.device.organization_addr,
+                backend_addr=self.device.organization_addr.get_backend_addr(),
                 organization_id=self.device.organization_id,
                 invitation_type=InvitationType.DEVICE,
                 token=rep["token"],
@@ -311,7 +311,9 @@ class LoggedCore:
         )
 
     async def delete_invitation(
-        self, token: UUID, reason: InvitationDeletedReason = InvitationDeletedReason.CANCELLED
+        self,
+        token: InvitationToken,
+        reason: InvitationDeletedReason = InvitationDeletedReason.CANCELLED,
     ) -> None:
         """
         Raises:
@@ -335,7 +337,7 @@ class LoggedCore:
             raise BackendConnectionError(f"Backend error: {rep}")
         return rep["invitations"]
 
-    async def start_greeting_user(self, token: UUID) -> UserGreetInProgress1Ctx:
+    async def start_greeting_user(self, token: InvitationToken) -> UserGreetInProgress1Ctx:
         """
         Raises:
             BackendConnectionError
@@ -344,7 +346,7 @@ class LoggedCore:
         initial_ctx = UserGreetInitialCtx(cmds=self._backend_conn.cmds, token=token)
         return await initial_ctx.do_wait_peer()
 
-    async def start_greeting_device(self, token: UUID) -> DeviceGreetInProgress1Ctx:
+    async def start_greeting_device(self, token: InvitationToken) -> DeviceGreetInProgress1Ctx:
         """
         Raises:
             BackendConnectionError
@@ -382,6 +384,7 @@ async def logged_core_factory(
         event_bus=event_bus,
         prevent_sync_pattern=prevent_sync_pattern,
         preferred_language=config.gui_language,
+        workspace_storage_cache_size=config.workspace_storage_cache_size,
     ) as user_fs:
 
         backend_conn.register_monitor(partial(monitor_messages, user_fs, event_bus))

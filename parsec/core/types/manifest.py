@@ -44,7 +44,7 @@ WorkspaceRole = RealmRole
 
 
 class ChunkID(UUID4):
-    pass
+    __slots__ = ()
 
 
 ChunkIDField = fields.uuid_based_field_factory(ChunkID)
@@ -102,15 +102,12 @@ class Chunk(BaseData):
             return attr.astuple(self).__eq__(attr.astuple(other))
         raise TypeError
 
-    # Properties
-
-    @property
     def is_block(self):
         # Requires an access
         if self.access is None:
             return False
         # Pseudo block
-        if not self.is_pseudo_block:
+        if not self.is_pseudo_block():
             return False
         # Offset inconsistent
         if self.raw_offset != self.access.offset:
@@ -120,7 +117,6 @@ class Chunk(BaseData):
             return False
         return True
 
-    @property
     def is_pseudo_block(self):
         # Not left aligned
         if self.start != self.raw_offset:
@@ -136,7 +132,7 @@ class Chunk(BaseData):
     def new(cls, start: int, stop: int) -> "Chunk":
         assert start < stop
         return cls(
-            id=ChunkID(),
+            id=ChunkID.new(),
             start=start,
             stop=stop,
             raw_offset=start,
@@ -147,7 +143,7 @@ class Chunk(BaseData):
     @classmethod
     def from_block_acess(cls, block_access: BlockAccess):
         return cls(
-            id=ChunkID(block_access.id),
+            id=ChunkID(block_access.id.uuid),
             raw_offset=block_access.offset,
             raw_size=block_access.size,
             start=block_access.offset,
@@ -159,7 +155,7 @@ class Chunk(BaseData):
 
     def evolve_as_block(self, data: bytes) -> "Chunk":
         # No-op
-        if self.is_block:
+        if self.is_block():
             return self
 
         # Check alignement
@@ -168,7 +164,7 @@ class Chunk(BaseData):
 
         # Craft access
         access = BlockAccess(
-            id=BlockID(self.id),
+            id=BlockID(self.id.uuid),
             key=SecretKey.generate(),
             offset=self.start,
             size=self.stop - self.start,
@@ -181,7 +177,7 @@ class Chunk(BaseData):
     # Export
 
     def get_block_access(self) -> Optional[BlockAccess]:
-        if not self.is_block:
+        if not self.is_block():
             raise TypeError("This chunk does not correspond to a block")
         return self.access
 
@@ -414,7 +410,7 @@ class LocalFileManifest(BaseLocalManifest):
         for chunks in self.blocks:
             if len(chunks) != 1:
                 return False
-            if not chunks[0].is_block:
+            if not chunks[0].is_block():
                 return False
         return True
 

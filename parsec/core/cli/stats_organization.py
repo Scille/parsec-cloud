@@ -12,7 +12,9 @@ from parsec.core.types import BackendAddr
 from parsec.core.cli.utils import cli_command_base_options
 
 
-async def _stats_organization(organization_id, backend_addr, administration_token):
+async def _stats_organization(
+    organization_id: OrganizationID, backend_addr: BackendAddr, administration_token: str
+) -> None:
     url = backend_addr.to_http_domain_url(f"/administration/organizations/{organization_id}/stats")
 
     def _do_req():
@@ -34,6 +36,12 @@ async def _stats_organization(organization_id, backend_addr, administration_toke
 @click.option("--addr", "-B", required=True, type=BackendAddr.from_url, envvar="PARSEC_ADDR")
 @click.option("--administration-token", "-T", required=True, envvar="PARSEC_ADMINISTRATION_TOKEN")
 @cli_command_base_options
-def stats_organization(organization_id, addr, administration_token, debug, **kwargs):
+def stats_organization(
+    organization_id: OrganizationID,
+    addr: BackendAddr,
+    administration_token: str,
+    debug: bool,
+    **kwargs,
+) -> None:
     with cli_exception_handler(debug):
         trio_run(_stats_organization, organization_id, addr, administration_token)

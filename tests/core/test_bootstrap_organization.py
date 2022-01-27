@@ -3,7 +3,7 @@
 import pytest
 
 from parsec.api.data import UserProfile
-from parsec.api.protocol import OrganizationID, HumanHandle
+from parsec.api.protocol import OrganizationID, DeviceLabel, HumanHandle
 from parsec.core.backend_connection import apiv1_backend_anonymous_cmds_factory
 from parsec.core.types import BackendOrganizationBootstrapAddr
 from parsec.core.invite import bootstrap_organization, InviteNotFoundError, InviteAlreadyUsedError
@@ -23,7 +23,7 @@ async def test_good(running_backend, backend, user_fs_factory, with_labels, data
 
     if with_labels:
         human_handle = HumanHandle(email="zack@example.com", label="Zack")
-        device_label = "PC1"
+        device_label = DeviceLabel("PC1")
     else:
         human_handle = None
         device_label = None

@@ -1,5 +1,7 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2016-2021 Scille SAS
 
+from typing import List
+
 from PyQt5.QtCore import pyqtSignal
 from PyQt5.QtWidgets import QWidget
 from PyQt5.QtGui import QValidator
@@ -23,7 +25,7 @@ class PasswordAuthenticationWidget(QWidget, Ui_PasswordAuthenticationWidget):
         self.line_edit_password_check.textChanged.connect(self._check_match)
         self.label_mismatch.hide()
 
-    def set_excluded_strings(self, excluded_strings):
+    def set_excluded_strings(self, excluded_strings: List[str]):
         self.pwd_str_widget.set_excluded_strings(excluded_strings)
 
     def _check_match(self, text=""):

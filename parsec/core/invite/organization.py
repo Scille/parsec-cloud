@@ -4,7 +4,7 @@ from typing import Optional
 
 from parsec.crypto import SigningKey
 from parsec.api.data import UserCertificateContent, DeviceCertificateContent, UserProfile
-from parsec.api.protocol import HumanHandle
+from parsec.api.protocol import HumanHandle, DeviceLabel
 from parsec.core.types import LocalDevice, BackendOrganizationAddr
 from parsec.core.local_device import generate_new_device
 from parsec.core.backend_connection import APIV1_BackendAnonymousCmds
@@ -13,7 +13,6 @@ from parsec.core.invite.exceptions import (
     InviteNotFoundError,
     InviteAlreadyUsedError,
     InvitePeerResetError,
-    InviteTimestampError,
 )
 
 
@@ -24,8 +23,6 @@ def _check_rep(rep, step_name):
         raise InviteAlreadyUsedError
     elif rep["status"] == "invalid_state":
         raise InvitePeerResetError
-    elif rep["status"] == "invalid_certification" and "timestamp" in rep["reason"]:
-        raise InviteTimestampError
     elif rep["status"] != "ok":
         raise InviteError(f"Backend error during {step_name}: {rep}")
 
@@ -33,13 +30,13 @@ def _check_rep(rep, step_name):
 async def bootstrap_organization(
     cmds: APIV1_BackendAnonymousCmds,
     human_handle: Optional[HumanHandle],
-    device_label: Optional[str],
+    device_label: Optional[DeviceLabel],
 ) -> LocalDevice:
     root_signing_key = SigningKey.generate()
     root_verify_key = root_signing_key.verify_key
 
     organization_addr = BackendOrganizationAddr.build(
-        backend_addr=cmds.addr,
+        backend_addr=cmds.addr.get_backend_addr(),
         organization_id=cmds.addr.organization_id,
         root_verify_key=root_verify_key,
     )

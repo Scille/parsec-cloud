@@ -1,3 +1,5 @@
+# Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2016-2021 Scille SAS
+
 from PyQt5.QtCore import pyqtSignal
 
 from PyQt5.QtGui import QPixmap, QColor
@@ -44,8 +46,8 @@ class NavigationBarWidget(QWidget):
                 icon.setPixmap(QPixmap(":/icons/images/material/chevron_right.svg"))
             icon.apply_style()
             self.layout().insertWidget(self.layout().count() - 1, icon)
-            label = ClickableLabel(translate("TEXT_PATH_ROOT") if part == "/" else part)  
-            font = label.font()          
+            label = ClickableLabel(translate("TEXT_PATH_ROOT") if part == "/" else part)
+            font = label.font()
             font.setBold(True)
             font.setUnderline(True)
             label.setFont(font)
@@ -62,5 +64,3 @@ class NavigationBarWidget(QWidget):
                 w = item.widget()
                 self.layout().removeWidget(w)
                 w.hide()
-
-

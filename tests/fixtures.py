@@ -17,7 +17,16 @@ from parsec.api.data import (
     DeviceCertificateContent,
     RealmRoleCertificateContent,
 )
-from parsec.api.protocol import OrganizationID, UserID, DeviceID, HumanHandle, RealmRole
+from parsec.api.protocol import (
+    OrganizationID,
+    UserID,
+    DeviceID,
+    DeviceLabel,
+    HumanHandle,
+    RealmRole,
+    RealmID,
+    VlobID,
+)
 from parsec.core.types import LocalDevice, LocalUserManifest, BackendOrganizationBootstrapAddr
 from parsec.core.local_device import generate_new_device
 from parsec.core.fs.storage import UserStorage
@@ -86,8 +95,8 @@ def organization_factory(backend_addr):
             count += 1
             orgname = f"Org{count}"
 
-        assert orgname not in organizations
         organization_id = OrganizationID(orgname)
+        assert organization_id not in organizations
         organizations.add(organization_id)
         bootstrap_token = f"<{orgname}-bootstrap-token>"
         bootstrap_addr = BackendOrganizationBootstrapAddr.build(
@@ -106,13 +115,13 @@ def local_device_factory(coolorg):
     count = 0
 
     def _local_device_factory(
-        base_device_id: Optional[str] = None,
+        base_device_id: Optional[Union[str, DeviceID]] = None,
         org: OrganizationFullData = coolorg,
         profile: Optional[UserProfile] = None,
         has_human_handle: bool = True,
-        base_human_handle: Optional[str] = None,
+        base_human_handle: Optional[Union[str, HumanHandle]] = None,
         has_device_label: bool = True,
-        base_device_label: Optional[str] = None,
+        base_device_label: Optional[Union[str, DeviceLabel]] = None,
     ):
         nonlocal count
 
@@ -121,36 +130,40 @@ def local_device_factory(coolorg):
             base_device_id = f"user{count}@dev0"
 
         org_devices = devices[org.organization_id]
-        device_id = DeviceID(base_device_id)
+        if isinstance(base_device_id, DeviceID):
+            device_id = base_device_id
+        else:
+            device_id = DeviceID(base_device_id)
         assert not any(d for d in org_devices if d.device_id == device_id)
 
         if not has_device_label:
             assert base_device_label is None
             device_label = None
         elif not base_device_label:
-            device_label = f"My {device_id.device_name} machine"
-        else:
+            device_label = DeviceLabel(f"My {device_id.device_name} machine")
+        elif isinstance(base_device_label, DeviceLabel):
             device_label = base_device_label
+        else:
+            device_label = DeviceLabel(base_device_label)
 
         if not has_human_handle:
             assert base_human_handle is None
             human_handle = None
-        elif base_human_handle:
-            if isinstance(base_human_handle, HumanHandle):
-                human_handle = base_human_handle
-            else:
-                match = re.match(r"(.*) <(.*)>", base_human_handle)
-                if match:
-                    label, email = match.groups()
-                else:
-                    label = base_human_handle
-                    email = f"{device_id.user_id}@example.com"
-                human_handle = HumanHandle(email=email, label=label)
-        else:
-            name = device_id.user_id.capitalize()
+        elif not base_human_handle:
+            name = str(device_id.user_id).capitalize()
             human_handle = HumanHandle(
                 email=f"{device_id.user_id}@example.com", label=f"{name}y Mc{name}Face"
             )
+        elif isinstance(base_human_handle, HumanHandle):
+            human_handle = base_human_handle
+        else:
+            match = re.match(r"(.*) <(.*)>", base_human_handle)
+            if match:
+                label, email = match.groups()
+            else:
+                label = base_human_handle
+                email = f"{device_id.user_id}@example.com"
+            human_handle = HumanHandle(email=email, label=label)
 
         parent_device = None
         try:
@@ -523,7 +536,8 @@ def backend_data_binder_factory(request, backend_addr, initial_user_manifest_sta
                 author = device
             else:
                 author = self.get_device(device.organization_id, manifest.author)
-            realm_id = author.user_manifest_id
+            realm_id = RealmID(author.user_manifest_id.uuid)
+            vlob_id = VlobID(author.user_manifest_id.uuid)
 
             with self.backend.event_bus.listen() as spy:
 
@@ -553,7 +567,7 @@ def backend_data_binder_factory(request, backend_addr, initial_user_manifest_sta
                     author=author.device_id,
                     realm_id=realm_id,
                     encryption_revision=1,
-                    vlob_id=author.user_manifest_id,
+                    vlob_id=vlob_id,
                     timestamp=manifest.timestamp,
                     blob=manifest.dump_sign_and_encrypt(
                         author_signkey=author.signing_key, key=author.user_manifest_key
@@ -568,7 +582,7 @@ def backend_data_binder_factory(request, backend_addr, initial_user_manifest_sta
                             {
                                 "organization_id": author.organization_id,
                                 "author": author.device_id,
-                                "realm_id": author.user_manifest_id,
+                                "realm_id": realm_id,
                                 "user": author.user_id,
                                 "role": RealmRole.OWNER,
                             },
@@ -578,9 +592,9 @@ def backend_data_binder_factory(request, backend_addr, initial_user_manifest_sta
                             {
                                 "organization_id": author.organization_id,
                                 "author": author.device_id,
-                                "realm_id": author.user_manifest_id,
+                                "realm_id": realm_id,
                                 "checkpoint": 1,
-                                "src_id": author.user_manifest_id,
+                                "src_id": vlob_id,
                                 "src_version": 1,
                             },
                         ),

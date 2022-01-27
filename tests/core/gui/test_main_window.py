@@ -54,7 +54,7 @@ async def device_invitation_addr(backend, bob):
         organization_id=bob.organization_id, greeter_user_id=bob.user_id
     )
     return BackendInvitationAddr.build(
-        backend_addr=bob.organization_addr,
+        backend_addr=bob.organization_addr.get_backend_addr(),
         organization_id=bob.organization_id,
         invitation_type=InvitationType.DEVICE,
         token=invitation.token,
@@ -69,7 +69,7 @@ async def user_invitation_addr(backend, bob):
         claimer_email="billy@billy.corp",
     )
     return BackendInvitationAddr.build(
-        backend_addr=bob.organization_addr,
+        backend_addr=bob.organization_addr.get_backend_addr(),
         organization_id=bob.organization_id,
         invitation_type=InvitationType.USER,
         token=invitation.token,
@@ -575,7 +575,7 @@ async def test_link_file_unknown_org(
     # Cheating a bit but it does not matter, we just want a link that appears valid with
     # an unknown organization
     org_addr = BackendOrganizationAddr.build(
-        running_backend.addr, "UnknownOrg", alice.organization_addr.root_verify_key
+        running_backend.addr, OrganizationID("UnknownOrg"), alice.organization_addr.root_verify_key
     )
 
     file_link = BackendOrganizationFileLinkAddr.build(

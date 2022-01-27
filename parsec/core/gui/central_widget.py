@@ -2,7 +2,7 @@
 
 from typing import Optional, cast
 from pathlib import PurePath
-from PyQt5.QtCore import pyqtSignal
+from PyQt5.QtCore import pyqtSignal, pyqtBoundSignal
 from PyQt5.QtGui import QPixmap, QColor, QIcon
 from PyQt5.QtWidgets import QGraphicsDropShadowEffect, QWidget, QMenu
 
@@ -93,11 +93,11 @@ class CentralWidget(QWidget, Ui_CentralWidget):  # type: ignore[misc]
         core: LoggedCore,
         jobs_ctx: QtToTrioJobScheduler,
         event_bus: EventBus,
-        systray_notification: pyqtSignal,
+        systray_notification: pyqtBoundSignal,
         file_link_addr: Optional[BackendOrganizationFileLinkAddr] = None,
-        **kwargs: object,
+        parent: Optional[QWidget] = None,
     ):
-        super().__init__(**kwargs)
+        super().__init__(parent=parent)
 
         self.setupUi(self)
         self.jobs_ctx = jobs_ctx
@@ -105,6 +105,7 @@ class CentralWidget(QWidget, Ui_CentralWidget):  # type: ignore[misc]
         self.event_bus = event_bus
         self.systray_notification = systray_notification
         self.last_notification = 0.0
+        self.desync_notified = False
 
         self.menu = MenuWidget(parent=self)
         self.widget_menu.layout().addWidget(self.menu)
@@ -200,7 +201,7 @@ class CentralWidget(QWidget, Ui_CentralWidget):  # type: ignore[misc]
             core=self.core, jobs_ctx=self.jobs_ctx, parent=self, on_finished=None
         )
 
-    def _on_route_clicked(self, path):
+    def _on_route_clicked(self, path: PurePath) -> None:
         self.mount_widget.load_path(path)
 
     def _on_folder_changed(self, workspace_name: Optional[str], path: Optional[str]) -> None:
@@ -345,6 +346,24 @@ class CentralWidget(QWidget, Ui_CentralWidget):  # type: ignore[misc]
             notif = ("ERROR", tooltip)
             disconnected = True
 
+        elif status == BackendConnStatus.DESYNC:
+            assert isinstance(status_exc, Exception)
+            text = _("TEXT_BACKEND_STATE_DISCONNECTED")
+            tooltip = _("TEXT_BACKEND_STATE_DESYNC")
+            icon = QPixmap(":/icons/images/material/cloud_off.svg")
+            notif = None
+            disconnected = False
+
+            # The disconnection for being out-of-sync with the backend
+            # is only shown once per login. This is useful in the case
+            # of backends with API version 2.3 and older as it's going
+            # to successfully connect every 10 seconds before being
+            # thrown off by the sync monitor.
+            if not self.desync_notified:
+                self.desync_notified = True
+                notif = ("DESYNC", tooltip)
+                disconnected = True
+
         self.menu.set_connection_state(text, tooltip, icon)
         if notif:
             self.new_notification.emit(*notif)
@@ -373,7 +392,7 @@ class CentralWidget(QWidget, Ui_CentralWidget):  # type: ignore[misc]
         self.menu.label_organization_size.clear()
 
     def on_new_notification(self, notif_type: str, msg: str) -> None:
-        if notif_type in ["REVOKED", "EXPIRED"]:
+        if notif_type in ["REVOKED", "EXPIRED", "DESYNC"]:
             show_error(self, msg)
 
     def go_to_file_link(self, addr: BackendOrganizationFileLinkAddr, mount: bool = True) -> None:

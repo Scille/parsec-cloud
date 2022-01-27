@@ -4,10 +4,10 @@ import attr
 from typing import Optional, Tuple, Dict, Any, Type, TypeVar
 from pendulum import DateTime
 
-from parsec.types import UUID4, FrozenDict
+from parsec.types import FrozenDict
 from parsec.crypto import SecretKey, HashDigest
 from parsec.serde import fields, validate, post_load, OneOfSchema, pre_load
-from parsec.api.protocol import RealmRole, RealmRoleField, DeviceID
+from parsec.api.protocol import RealmRole, RealmRoleField, DeviceID, BlockID, BlockIDField
 from parsec.api.data.base import (
     BaseData,
     BaseSchema,
@@ -18,16 +18,10 @@ from parsec.api.data.base import (
 from parsec.api.data.entry import EntryID, EntryIDField, EntryName, EntryNameField
 from enum import Enum
 
+
 LOCAL_AUTHOR_LEGACY_PLACEHOLDER = DeviceID(
     "LOCAL_AUTHOR_LEGACY_PLACEHOLDER@LOCAL_AUTHOR_LEGACY_PLACEHOLDER"
 )
-
-
-class BlockID(UUID4):
-    pass
-
-
-BlockIDField = fields.uuid_based_field_factory(BlockID)
 
 
 class ManifestType(Enum):
@@ -165,7 +159,7 @@ class FolderManifest(BaseManifest):
         def fix_legacy(self, data: Dict[str, Any]) -> Dict[str, Any]:
             # Compatibility with versions <= 1.14
             if data["author"] is None:
-                data["author"] = LOCAL_AUTHOR_LEGACY_PLACEHOLDER
+                data["author"] = str(LOCAL_AUTHOR_LEGACY_PLACEHOLDER)
             return data
 
         @post_load
@@ -212,7 +206,7 @@ class FileManifest(BaseManifest):
         def fix_legacy(self, data: Dict[str, T]) -> Dict[str, T]:
             # Compatibility with versions <= 1.14
             if data["author"] is None:
-                data["author"] = LOCAL_AUTHOR_LEGACY_PLACEHOLDER
+                data["author"] = str(LOCAL_AUTHOR_LEGACY_PLACEHOLDER)
             return data
 
         @post_load
@@ -258,7 +252,7 @@ class WorkspaceManifest(BaseManifest):
         def fix_legacy(self, data: Dict[str, T]) -> Dict[str, T]:
             # Compatibility with versions <= 1.14
             if data["author"] is None:
-                data["author"] = LOCAL_AUTHOR_LEGACY_PLACEHOLDER
+                data["author"] = str(LOCAL_AUTHOR_LEGACY_PLACEHOLDER)
             return data
 
         @post_load
@@ -288,7 +282,7 @@ class UserManifest(BaseManifest):
         def fix_legacy(self, data: Dict[str, T]) -> Dict[str, T]:
             # Compatibility with versions <= 1.14
             if data["author"] is None:
-                data["author"] = LOCAL_AUTHOR_LEGACY_PLACEHOLDER
+                data["author"] = str(LOCAL_AUTHOR_LEGACY_PLACEHOLDER)
             return data
 
         @post_load

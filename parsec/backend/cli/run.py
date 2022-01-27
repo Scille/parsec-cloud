@@ -4,10 +4,11 @@ import ssl
 import trio
 import click
 from structlog import get_logger
-from typing import Tuple, Optional
+from typing import Optional, Tuple, List
 from itertools import count
 from collections import defaultdict
 import tempfile
+from pathlib import Path
 
 from parsec.utils import trio_run
 from parsec.cli_utils import (
@@ -16,9 +17,11 @@ from parsec.cli_utils import (
     sentry_config_options,
     debug_config_options,
 )
-from parsec.backend import backend_app_factory
+from parsec.backend import backend_app_factory, BackendApp
 from parsec.backend.config import (
     BackendConfig,
+    EmailConfig,
+    BaseBlockStoreConfig,
     SmtpEmailConfig,
     MockedEmailConfig,
     MockedBlockStoreConfig,
@@ -38,7 +41,7 @@ DEFAULT_BACKEND_PORT = 6777
 DEFAULT_EMAIL_SENDER = "no-reply@parsec.com"
 
 
-def _split_with_escaping(txt):
+def _split_with_escaping(txt: str) -> List[str]:
     """
     Simple colon (i.e. `:`) escaping with backslash
     Rules (using slash instead of backslash to avoid weird encoding error):
@@ -69,7 +72,7 @@ def _split_with_escaping(txt):
     return parts
 
 
-def _parse_blockstore_param(value):
+def _parse_blockstore_param(value: str) -> BaseBlockStoreConfig:
     if value.upper() == "MOCKED":
         return MockedBlockStoreConfig()
     elif value.upper() == "POSTGRESQL":
@@ -123,14 +126,16 @@ def _parse_blockstore_param(value):
             raise click.BadParameter(f"Invalid blockstore type `{parts[0]}`")
 
 
-def _parse_blockstore_params(raw_params):
+def _parse_blockstore_params(raw_params: str) -> BaseBlockStoreConfig:
     raid_configs = defaultdict(list)
     for raw_param in raw_params:
+        raid_mode: Optional[str]
+        raid_node: Optional[int]
         raw_param_parts = raw_param.split(":", 2)
         if raw_param_parts[0].upper() in ("RAID0", "RAID1", "RAID5") and len(raw_param_parts) == 3:
-            raid_mode, raid_node, node_param = raw_param_parts
+            raid_mode, raw_raid_node, node_param = raw_param_parts
             try:
-                raid_node = int(raid_node)
+                raid_node = int(raw_raid_node)
             except ValueError:
                 raise click.BadParameter(f"Invalid node index `{raid_node}` (must be integer)")
         else:
@@ -175,7 +180,7 @@ def _parse_blockstore_params(raw_params):
 
 def _parse_forward_proto_enforce_https_check_param(
     raw_param: Optional[str],
-) -> Optional[Tuple[str, str]]:
+) -> Optional[Tuple[bytes, bytes]]:
     if raw_param is None:
         return None
     try:
@@ -183,7 +188,7 @@ def _parse_forward_proto_enforce_https_check_param(
     except ValueError:
         raise click.BadParameter(f"Invalid format, should be `<header-name>:<header-value>`")
     # HTTP header key is case-insensitive unlike the header value
-    return (key.lower(), value)
+    return (key.lower().encode("utf8"), value.encode("utf8"))
 
 
 class DevOption(click.Option):
@@ -279,6 +284,7 @@ Allowed values:
 )
 @click.option(
     "--pause-before-retry-database-connection",
+    type=float,
     default=1.0,
     show_default=True,
     envvar="PARSEC_PAUSE_BEFORE_RETRY_DATABASE_CONNECTION",
@@ -469,41 +475,41 @@ organization_id, device_id, device_label (can be null), human_email (can be null
 # Add --debug
 @debug_config_options
 def run_cmd(
-    host,
-    port,
-    db,
-    db_min_connections,
-    db_max_connections,
-    maximum_database_connection_attempts,
-    pause_before_retry_database_connection,
-    blockstore,
-    administration_token,
-    spontaneous_organization_bootstrap,
-    organization_bootstrap_webhook,
-    organization_initial_active_users_limit,
-    organization_initial_user_profile_outsider_allowed,
-    backend_addr,
-    email_host,
-    email_port,
-    email_host_user,
-    email_host_password,
-    email_use_ssl,
-    email_use_tls,
-    email_sender,
-    forward_proto_enforce_https,
-    ssl_keyfile,
-    ssl_certfile,
-    log_level,
-    log_format,
-    log_file,
-    sentry_url,
-    debug,
-    dev,
-):
+    host: str,
+    port: int,
+    db: str,
+    db_min_connections: int,
+    db_max_connections: int,
+    maximum_database_connection_attempts: int,
+    pause_before_retry_database_connection: float,
+    blockstore: BaseBlockStoreConfig,
+    administration_token: str,
+    spontaneous_organization_bootstrap: bool,
+    organization_bootstrap_webhook: str,
+    organization_initial_active_users_limit: int,
+    organization_initial_user_profile_outsider_allowed: bool,
+    backend_addr: BackendAddr,
+    email_host: str,
+    email_port: int,
+    email_host_user: Optional[str],
+    email_host_password: Optional[str],
+    email_use_ssl: bool,
+    email_use_tls: bool,
+    email_sender: str,
+    forward_proto_enforce_https: Optional[Tuple[bytes, bytes]],
+    ssl_keyfile: Optional[Path],
+    ssl_certfile: Optional[Path],
+    log_level: str,
+    log_format: str,
+    log_file: Optional[str],
+    sentry_url: Optional[str],
+    debug: bool,
+    dev: bool,
+) -> None:
     # Start a local backend
 
     with cli_exception_handler(debug):
-
+        ssl_context: Optional[ssl.SSLContext]
         if ssl_certfile or ssl_keyfile:
             ssl_context = ssl.create_default_context(ssl.Purpose.CLIENT_AUTH)
             if ssl_certfile:
@@ -513,6 +519,7 @@ def run_cmd(
         else:
             ssl_context = None
 
+        email_config: EmailConfig
         if email_host == "MOCKED":
             tmpdir = tempfile.mkdtemp(prefix="tmp-email-folder-")
             if email_sender:
@@ -573,20 +580,26 @@ class RetryPolicy:
         self.pause_before_retry = pause_before_retry
         self.current_attempt = 0  # No attempt at the moment
 
-    def new_attempt(self):
+    def new_attempt(self) -> None:
         self.current_attempt += 1
 
-    def success(self):
+    def success(self) -> None:
         self.current_attempt = 0
 
-    def is_expired(self):
+    def is_expired(self) -> bool:
         return self.current_attempt >= self.maximum_attempts
 
-    async def pause(self):
+    async def pause(self) -> None:
         await trio.sleep(self.pause_before_retry)
 
 
-async def _run_backend(host, port, ssl_context, retry_policy, app_config):
+async def _run_backend(
+    host: str,
+    port: int,
+    ssl_context: Optional[ssl.SSLContext],
+    retry_policy: RetryPolicy,
+    app_config: BackendConfig,
+) -> None:
     # Loop over connection attempts
     while True:
         try:
@@ -613,9 +626,11 @@ async def _run_backend(host, port, ssl_context, retry_policy, app_config):
             await retry_policy.pause()
 
 
-async def _serve_backend(backend, host, port, ssl_context):
+async def _serve_backend(
+    backend: BackendApp, host: str, port: int, ssl_context: Optional[ssl.SSLContext]
+) -> None:
     # Client handler
-    async def _serve_client(stream):
+    async def _serve_client(stream: trio.abc.Stream) -> None:
         if ssl_context:
             stream = trio.SSLStream(stream, ssl_context, server_side=True)
 
@@ -632,5 +647,7 @@ async def _serve_backend(backend, host, port, ssl_context):
             await stream.aclose()
 
     # Provide a service nursery so multi-errors errors are handled
-    async with trio.open_service_nursery() as nursery:
-        await trio.serve_tcp(_serve_client, port, handler_nursery=nursery, host=host)
+    async with trio.open_service_nursery() as nursery:  # type: ignore[attr-defined]
+        await trio.serve_tcp(  # type: ignore[call-arg]
+            _serve_client, port, handler_nursery=nursery, host=host
+        )

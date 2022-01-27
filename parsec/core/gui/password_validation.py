@@ -1,13 +1,11 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2016-2021 Scille SAS
 
-from zxcvbn import zxcvbn
-
+from typing import List
 import re
-
+from zxcvbn import zxcvbn
 from PyQt5.QtWidgets import QWidget
 
 from parsec.core.gui.lang import translate as _
-
 from parsec.core.gui.ui.password_strength_widget import Ui_PasswordStrengthWidget
 
 
@@ -46,7 +44,7 @@ class PasswordStrengthWidget(QWidget, Ui_PasswordStrengthWidget):
         self.setupUi(self)
         self._excluded_strings = []
 
-    def set_excluded_strings(self, excluded_strings):
+    def set_excluded_strings(self, excluded_strings: List[str]):
         self._excluded_strings = []
         # User inputs are passed raw, we have to clean them up a bit
         # We split them up on the most common characters

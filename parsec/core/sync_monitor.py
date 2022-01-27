@@ -2,14 +2,16 @@
 
 import math
 from collections import defaultdict
-
+from typing import Optional, Union, Dict, Sequence
 import trio
 from trio.lowlevel import current_clock
 from structlog import get_logger
 
+from parsec.api.protocol import RealmID
 from parsec.core.core_events import CoreEvent
 from parsec.core.types import EntryID, WorkspaceRole
 from parsec.core.fs import (
+    UserFS,
     FSBackendOfflineError,
     FSBadEncryptionRevision,
     FSWorkspaceNotFoundError,
@@ -17,7 +19,13 @@ from parsec.core.fs import (
     FSWorkspaceNoWriteAccess,
     FSWorkspaceInMaintenance,
 )
-from parsec.core.backend_connection import BackendConnectionError, BackendNotAvailable
+from parsec.core.backend_connection import (
+    BackendConnectionError,
+    BackendNotAvailable,
+    BackendAuthenticatedCmds,
+)
+from parsec.core.fs.storage import UserStorage, WorkspaceStorage, BaseWorkspaceStorage
+from parsec.event_bus import EventBus
 
 
 logger = get_logger()
@@ -68,7 +76,7 @@ class SyncContext:
       storage to get the list of changes (entry id + version) it has missed
     """
 
-    def __init__(self, user_fs, id: EntryID, read_only: bool = False):
+    def __init__(self, user_fs: UserFS, id: EntryID, read_only: bool = False):
         self.user_fs = user_fs
         self.id = id
         self.read_only = read_only
@@ -78,16 +86,16 @@ class SyncContext:
         self._remote_changes = set()
         self._local_confinement_points = defaultdict(set)
 
-    def _sync(self, entry_id: EntryID):
+    def _sync(self, entry_id: EntryID) -> None:
         raise NotImplementedError
 
-    def _get_backend_cmds(self):
+    def _get_backend_cmds(self) -> BackendAuthenticatedCmds:
         raise NotImplementedError
 
-    def _get_local_storage(self):
+    def _get_local_storage(self) -> Union[UserStorage, BaseWorkspaceStorage]:
         raise NotImplementedError
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         return f"{type(self).__name__}(id={self.id!r})"
 
     async def _load_changes(self) -> bool:
@@ -102,7 +110,9 @@ class SyncContext:
         # 1) Fetch new checkpoint and changes
         realm_checkpoint = await self._get_local_storage().get_realm_checkpoint()
         try:
-            rep = await self._get_backend_cmds().vlob_poll_changes(self.id, realm_checkpoint)
+            rep = await self._get_backend_cmds().vlob_poll_changes(
+                RealmID(self.id.uuid), realm_checkpoint
+            )
 
         except BackendNotAvailable:
             raise
@@ -179,7 +189,7 @@ class SyncContext:
     def set_confined_entry(self, entry_id: EntryID, cause_id: EntryID) -> None:
         self._local_confinement_points[cause_id].add(entry_id)
 
-    def _compute_due_time(self, now=None, min_due_time=None):
+    def _compute_due_time(self, now: Optional[float] = None, min_due_time: Optional[float] = None):
         if self._remote_changes:
             self.due_time = now or current_time()
         elif self._local_changes:
@@ -279,32 +289,33 @@ class SyncContext:
 
 
 class WorkspaceSyncContext(SyncContext):
-    def __init__(self, user_fs, id: EntryID):
+    def __init__(self, user_fs: UserFS, id: EntryID):
         self.workspace = user_fs.get_workspace(id)
         read_only = self.workspace.get_workspace_entry().role == WorkspaceRole.READER
         super().__init__(user_fs, id, read_only=read_only)
 
-    async def _sync(self, entry_id: EntryID):
+    async def _sync(self, entry_id: EntryID) -> None:
         # No recursion here: only the manifest that has changed
         # (remotely or locally) should get synchronized
         await self.workspace.sync_by_id(entry_id, recursive=False)
 
-    def _get_backend_cmds(self):
+    def _get_backend_cmds(self) -> BackendAuthenticatedCmds:
         return self.workspace.backend_cmds
 
-    def _get_local_storage(self):
+    def _get_local_storage(self) -> WorkspaceStorage:
+        assert isinstance(self.workspace.local_storage, WorkspaceStorage)
         return self.workspace.local_storage
 
 
 class UserManifestSyncContext(SyncContext):
-    async def _sync(self, entry_id: EntryID):
+    async def _sync(self, entry_id: EntryID) -> None:
         assert entry_id == self.id
         await self.user_fs.sync()
 
-    def _get_backend_cmds(self):
+    def _get_backend_cmds(self) -> BackendAuthenticatedCmds:
         return self.user_fs.backend_cmds
 
-    def _get_local_storage(self):
+    def _get_local_storage(self) -> UserStorage:
         return self.user_fs.storage
 
 
@@ -314,14 +325,14 @@ class SyncContextStore:
     when a newly created workspace is modified for the first time)
     """
 
-    def __init__(self, user_fs):
+    def __init__(self, user_fs: UserFS):
         self.user_fs = user_fs
-        self._ctxs = {}
+        self._ctxs: Dict[EntryID, SyncContext] = {}
 
-    def iter(self):
+    def iter(self) -> Sequence[SyncContext]:
         return self._ctxs.copy().values()
 
-    def get(self, entry_id):
+    def get(self, entry_id: EntryID) -> Optional[SyncContext]:
         try:
             return self._ctxs[entry_id]
         except KeyError:
@@ -343,7 +354,7 @@ class SyncContextStore:
         self._ctxs.pop(entry_id, None)
 
 
-async def monitor_sync(user_fs, event_bus, task_status):
+async def monitor_sync(user_fs: UserFS, event_bus: EventBus, task_status):
     ctxs = SyncContextStore(user_fs)
     early_wakeup = trio.Event()
 

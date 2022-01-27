@@ -19,7 +19,7 @@ class TrustchainError(Exception):
 
 
 def _build_signature_path(*devices_ids):
-    return " <-sign- ".join(devices_ids)
+    return " <-sign- ".join([str(d) for d in devices_ids])
 
 
 class CertifState:

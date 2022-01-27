@@ -1,16 +1,17 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2016-2021 Scille SAS
 
-from parsec.core.core_events import CoreEvent
 import pytest
 import trio
 from unittest.mock import ANY
 from pendulum import datetime, now as pendulum_now
 
-from tests.common import create_shared_workspace, freeze_time
-
 from parsec.api.data import PingMessageContent
+from parsec.api.protocol import UserID
 from parsec.core.types import WorkspaceEntry, WorkspaceRole
+from parsec.core.core_events import CoreEvent
 from parsec.core.backend_connection import BackendConnStatus
+
+from tests.common import create_shared_workspace, freeze_time
 
 
 @pytest.mark.trio
@@ -92,7 +93,7 @@ async def test_new_sharing_trigger_event(alice_core, bob_core, running_backend):
     with bob_core.event_bus.listen() as spy:
         with freeze_time("2000-01-03"):
             await alice_core.user_fs.workspace_share(
-                wid, recipient="bob", role=WorkspaceRole.MANAGER
+                wid, recipient=UserID("bob"), role=WorkspaceRole.MANAGER
             )
 
         # Bob should get a notification
@@ -120,7 +121,7 @@ async def test_revoke_sharing_trigger_event(alice_core, bob_core, running_backen
 
     with bob_core.event_bus.listen() as spy:
         with freeze_time("2000-01-03"):
-            await alice_core.user_fs.workspace_share(wid, recipient="bob", role=None)
+            await alice_core.user_fs.workspace_share(wid, recipient=UserID("bob"), role=None)
 
         # Each workspace participant should get the message
         await spy.wait_with_timeout(

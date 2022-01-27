@@ -1,5 +1,4 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2016-2021 Scille SAS
-
 import pytest
 from pendulum import now
 
@@ -412,6 +411,25 @@ async def test_chunk_interface(alice_workspace_storage):
 
 @pytest.mark.trio
 @customize_fixtures(real_data_storage=True)
+async def test_chunk_many(alice_workspace_storage):
+    data = b"0123456"
+    aws = alice_workspace_storage
+    # More than the sqLite max argument limit to prevent regression
+    chunks_number = 2000
+    chunks = []
+    for i in range(chunks_number):
+        c = Chunk.new(0, 7)
+        chunks.append(c.id)
+        await aws.chunk_storage.set_chunk(c.id, data)
+    assert len(chunks) == chunks_number
+    ret = await aws.chunk_storage.get_local_chunk_ids(chunks)
+    for i in range(len(ret)):
+        assert ret[i]
+    assert len(ret) == chunks_number
+
+
+@pytest.mark.trio
+@customize_fixtures(real_data_storage=True)
 async def test_file_descriptor(alice_workspace_storage):
     aws = alice_workspace_storage
     manifest = create_manifest(aws.device, LocalFileManifest)
@@ -492,7 +510,7 @@ async def test_vacuum(data_base_dir, alice, workspace_id):
     data_size = 1 * 1024 * 1024
     chunk = Chunk.new(0, data_size)
     async with WorkspaceStorage.run(
-        data_base_dir, alice, workspace_id, vacuum_threshold=data_size // 2
+        data_base_dir, alice, workspace_id, data_vacuum_threshold=data_size // 2
     ) as aws:
 
         # Make sure the storage is empty
