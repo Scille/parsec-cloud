@@ -127,7 +127,7 @@ def create_files_widget_testbed(monkeypatch, aqtbot, logged_gui, user_fs, wfs, f
 
             def _view_ok():
                 # Check title (top part of the GUI)
-                assert c_w.label_title2.text() == workspace_name
+                assert c_w.navigation_bar_widget.workspace_name == workspace_name
                 assert str(c_w.navigation_bar_widget.get_current_path()) == path
                 # Now check actual files view
                 assert f_w.workspace_fs.get_workspace_name() == workspace_name
