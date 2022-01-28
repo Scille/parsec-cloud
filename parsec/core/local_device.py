@@ -187,7 +187,7 @@ class AvailableDevice:
 
     @property
     def device_display(self) -> str:
-        return self.device_label or str(self.device_id.device_name)
+        return str(self.device_label if self.device_label else self.device_id.device_name)
 
     @property
     def slughash(self) -> str:

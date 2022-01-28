@@ -12,6 +12,7 @@ import base64
 from parsec.api.data import EntryID
 from parsec.core.types import BackendAddr
 
+DEFAULT_WORKSPACE_STORAGE_CACHE_SIZE = 512 * 1024 * 1024
 
 logger = get_logger()
 
@@ -60,6 +61,7 @@ class CoreConfig:
 
     sentry_url: Optional[str] = None
     telemetry_enabled: bool = True
+    workspace_storage_cache_size: int = DEFAULT_WORKSPACE_STORAGE_CACHE_SIZE
 
     gui_last_device: Optional[str] = None
     gui_tray_enabled: bool = True
@@ -95,6 +97,7 @@ def config_factory(
     backend_max_connections: int = 4,
     sentry_url: str = None,
     telemetry_enabled: bool = True,
+    workspace_storage_cache_size: int = DEFAULT_WORKSPACE_STORAGE_CACHE_SIZE,
     debug: bool = False,
     gui_last_device: str = None,
     gui_tray_enabled: bool = True,
@@ -122,11 +125,14 @@ def config_factory(
             "parsec://localhost:6777?no_ssl=true"
         )
 
+    if mountpoint_base_dir is None:
+        mountpoint_base_dir = get_default_mountpoint_base_dir(environ)
+
     data_base_dir = data_base_dir or get_default_data_base_dir(environ)
     core_config = CoreConfig(
         config_dir=config_dir or get_default_config_dir(environ),
         data_base_dir=data_base_dir,
-        mountpoint_base_dir=get_default_mountpoint_base_dir(environ),
+        mountpoint_base_dir=mountpoint_base_dir,
         prevent_sync_pattern_path=prevent_sync_pattern_path,
         mountpoint_enabled=mountpoint_enabled,
         disabled_workspaces=disabled_workspaces,
@@ -134,6 +140,7 @@ def config_factory(
         backend_connection_keepalive=backend_connection_keepalive,
         backend_max_connections=backend_max_connections,
         telemetry_enabled=telemetry_enabled,
+        workspace_storage_cache_size=workspace_storage_cache_size,
         debug=debug,
         sentry_url=sentry_url,
         gui_last_device=gui_last_device,
@@ -190,7 +197,9 @@ def load_config(config_dir: Path, **extra_config) -> CoreConfig:
         pass
 
     try:
-        data_conf["disabled_workspaces"] = frozenset(map(EntryID, data_conf["disabled_workspaces"]))
+        data_conf["disabled_workspaces"] = frozenset(
+            map(EntryID.from_hex, data_conf["disabled_workspaces"])
+        )
     except (KeyError, ValueError):
         pass
 
@@ -237,6 +246,7 @@ def save_config(config: CoreConfig):
                 "disabled_workspaces": list(map(str, config.disabled_workspaces)),
                 "backend_max_cooldown": config.backend_max_cooldown,
                 "backend_connection_keepalive": config.backend_connection_keepalive,
+                "workspace_storage_cache_size": config.workspace_storage_cache_size,
                 "gui_last_device": config.gui_last_device,
                 "gui_tray_enabled": config.gui_tray_enabled,
                 "gui_language": config.gui_language,

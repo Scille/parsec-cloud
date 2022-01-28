@@ -11,7 +11,7 @@ from parsec.crypto import CryptoError
 from parsec.event_bus import EventBus
 from parsec.api.data import BaseManifest as BaseRemoteManifest, BlockAccess
 from parsec.api.data import FileManifest as RemoteFileManifest
-from parsec.api.protocol import UserID, MaintenanceType
+from parsec.api.protocol import UserID, MaintenanceType, RealmID
 from parsec.core.types import (
     EntryID,
     EntryName,
@@ -217,7 +217,7 @@ class WorkspaceFS:
             pass
 
         try:
-            rep = await self.backend_cmds.realm_status(self.workspace_id)
+            rep = await self.backend_cmds.realm_status(RealmID(self.workspace_id.uuid))
 
         except BackendNotAvailable as exc:
             raise FSBackendOfflineError(str(exc)) from exc

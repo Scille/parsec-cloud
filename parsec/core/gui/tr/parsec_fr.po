@@ -277,7 +277,7 @@ msgstr "L'adresse du serveur n'est pas valide."
 msgid "TEXT_ORG_WIZARD_INVALID_HUMAN_HANDLE"
 msgstr "L'adresse email n'est pas valide."
 
-msgid "TEXT_ORG_WIZARD_INVALID_DEVICE_NAME"
+msgid "TEXT_ORG_WIZARD_INVALID_DEVICE_LABEL"
 msgstr "Le nom de d'appareil n'est pas valide."
 
 msgid "ACTION_CREATE_ORG"
@@ -356,7 +356,7 @@ msgstr ""
 "toutefois cette version de Parsec ne supporte ce type d'authentification."
 
 msgid "TEXT_DEVICE_RECOVERY_EXPORT_WIZARD_TITLE"
-msgstr "Créer une appareil de récupération"
+msgstr "Créer un appareil de récupération"
 
 msgid "ACTION_IMPORT_KEY"
 msgstr "Récupérer un appareil"
@@ -2406,7 +2406,7 @@ msgstr ""
 "votre appareil actuel."
 
 msgid "TEXT_DEVICE_RECOVERY_EXPORT_SELECT_DEVICE_LABEL"
-msgstr "Choisissez l'utilisateur pour lequel vous souhaitez créer une récupération"
+msgstr "Choisissez l'utilisateur pour lequel vous souhaitez créer un appareil de récupération"
 
 msgid "TEXT_DEVICE_RECOVERY_EXPORT_SELECT_FILE_LABEL"
 msgstr "Choisissez un emplacement pour le fichier de récupération"
@@ -2804,8 +2804,8 @@ msgstr "Voir l'espace de travail tel qu'il était à une date donnée."
 msgid "TEXT_WORKSPACE_REENCRYPT_WORKSPACE_TOOLTIP"
 msgstr "Rechiffrer l'espace de travail."
 
-msgid "TEXT_WORKSPACE_DELETE_WORKSPACE_TOOLTIP"
-msgstr "Supprimer l'espace de travail"
+msgid "TEXT_TIMESTAMPED_WORKSPACE_CLOSE_TOOLTIP"
+msgstr "Fermer la vue instantanée."
 
 msgid "TEXT_WORKSPACE_FILTER_WORKSPACES_PLACEHOLDER"
 msgstr "Filtrer les espaces de travail"

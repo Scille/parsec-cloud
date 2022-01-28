@@ -2,20 +2,23 @@
 
 import click
 import platform
-from uuid import UUID
 from functools import partial
+from typing import Union, Callable
 
 from parsec.utils import trio_run
 from parsec.cli_utils import cli_exception_handler, spinner, aprompt
 from parsec.api.data import UserProfile
 from parsec.api.protocol import (
+    DeviceLabel,
     HumanHandle,
     InvitationStatus,
+    InvitationToken,
     InvitationType,
     InvitationEmailSentStatus,
     InvitationDeletedReason,
 )
-from parsec.core.types import BackendInvitationAddr
+from parsec.core.types import BackendInvitationAddr, LocalDevice
+from parsec.core.config import CoreConfig
 from parsec.core.backend_connection import (
     backend_authenticated_cmds_factory,
     backend_invited_cmds_factory,
@@ -38,7 +41,7 @@ from parsec.core.cli.utils import (
 )
 
 
-async def _invite_device(config, device):
+async def _invite_device(config: CoreConfig, device: LocalDevice) -> None:
     async with spinner("Creating device invitation"):
         async with backend_authenticated_cmds_factory(
             addr=device.organization_addr,
@@ -54,7 +57,7 @@ async def _invite_device(config, device):
                     click.secho("Email could not be sent", fg="red")
 
     action_addr = BackendInvitationAddr.build(
-        backend_addr=device.organization_addr,
+        backend_addr=device.organization_addr.get_backend_addr(),
         organization_id=device.organization_id,
         invitation_type=InvitationType.DEVICE,
         token=rep["token"],
@@ -66,7 +69,7 @@ async def _invite_device(config, device):
 @click.command(short_help="create device invitation")
 @core_config_and_device_options
 @cli_command_base_options
-def invite_device(config, device, **kwargs):
+def invite_device(config: CoreConfig, device: LocalDevice, **kwargs) -> None:
     """
     Create new device invitation
     """
@@ -74,7 +77,9 @@ def invite_device(config, device, **kwargs):
         trio_run(_invite_device, config, device)
 
 
-async def _invite_user(config, device, email, send_email):
+async def _invite_user(
+    config: CoreConfig, device: LocalDevice, email: str, send_email: bool
+) -> None:
     async with spinner("Creating user invitation"):
         async with backend_authenticated_cmds_factory(
             addr=device.organization_addr,
@@ -92,7 +97,7 @@ async def _invite_user(config, device, email, send_email):
                     click.secho("Email could not be sent", fg="red")
 
     action_addr = BackendInvitationAddr.build(
-        backend_addr=device.organization_addr,
+        backend_addr=device.organization_addr.get_backend_addr(),
         organization_id=device.organization_id,
         invitation_type=InvitationType.USER,
         token=rep["token"],
@@ -106,7 +111,9 @@ async def _invite_user(config, device, email, send_email):
 @click.option("--send-email", is_flag=True)
 @core_config_and_device_options
 @cli_command_base_options
-def invite_user(config, device, email, send_email, **kwargs):
+def invite_user(
+    config: CoreConfig, device: LocalDevice, email: str, send_email: bool, **kwargs
+) -> None:
     """
     Create new user invitation
     """
@@ -114,7 +121,7 @@ def invite_user(config, device, email, send_email, **kwargs):
         trio_run(_invite_user, config, device, email, send_email)
 
 
-async def _do_greet_user(device, initial_ctx):
+async def _do_greet_user(device: LocalDevice, initial_ctx: UserGreetInitialCtx) -> bool:
     async with spinner("Waiting for claimer"):
         in_progress_ctx = await initial_ctx.do_wait_peer()
 
@@ -159,7 +166,7 @@ async def _do_greet_user(device, initial_ctx):
     async with spinner("Creating the user in the backend"):
         await in_progress_ctx.do_create_new_user(
             author=device,
-            device_label=granted_device_label,
+            device_label=DeviceLabel(granted_device_label),
             human_handle=HumanHandle(email=granted_email, label=granted_label),
             profile=granted_profile,
         )
@@ -167,7 +174,7 @@ async def _do_greet_user(device, initial_ctx):
     return True
 
 
-async def _do_greet_device(device, initial_ctx):
+async def _do_greet_device(device: LocalDevice, initial_ctx: DeviceGreetInitialCtx) -> bool:
     async with spinner("Waiting for claimer"):
         in_progress_ctx = await initial_ctx.do_wait_peer()
 
@@ -195,12 +202,16 @@ async def _do_greet_device(device, initial_ctx):
         "New device label", default=in_progress_ctx.requested_device_label
     )
     async with spinner("Creating the device in the backend"):
-        await in_progress_ctx.do_create_new_device(author=device, device_label=granted_device_label)
+        await in_progress_ctx.do_create_new_device(
+            author=device, device_label=DeviceLabel(granted_device_label)
+        )
 
     return True
 
 
-async def _greet_invitation(config, device, token):
+async def _greet_invitation(
+    config: CoreConfig, device: LocalDevice, token: InvitationToken
+) -> None:
     async with backend_authenticated_cmds_factory(
         addr=device.organization_addr,
         device_id=device.device_id,
@@ -235,9 +246,9 @@ async def _greet_invitation(config, device, token):
             click.secho("Restarting the invitation process", fg="red")
 
 
-def _parse_invitation_token_or_url(raw):
+def _parse_invitation_token_or_url(raw: str) -> Union[BackendInvitationAddr, InvitationToken]:
     try:
-        return UUID(raw)
+        return InvitationToken.from_hex(raw)
     except ValueError:
         try:
             return BackendInvitationAddr.from_url(raw)
@@ -245,7 +256,9 @@ def _parse_invitation_token_or_url(raw):
             raise ValueError("Must be an invitation URL or Token")
 
 
-def extract_token_from_token_or_url(token_or_url, device):
+def extract_token_from_token_or_url(
+    token_or_url: Union[BackendInvitationAddr, InvitationToken], device: LocalDevice
+) -> InvitationToken:
     if isinstance(token_or_url, BackendInvitationAddr):
         if device.organization_addr != token_or_url.generate_organization_addr(
             device.root_verify_key
@@ -253,6 +266,7 @@ def extract_token_from_token_or_url(token_or_url, device):
             raise ValueError("Invitation URL comes from a different organization")
         return token_or_url.token
     else:
+        assert isinstance(token_or_url, InvitationToken)
         return token_or_url
 
 
@@ -260,7 +274,12 @@ def extract_token_from_token_or_url(token_or_url, device):
 @click.argument("token_or_url", type=_parse_invitation_token_or_url)
 @core_config_and_device_options
 @cli_command_base_options
-def greet_invitation(config, device, token_or_url, **kwargs):
+def greet_invitation(
+    config: CoreConfig,
+    device: LocalDevice,
+    token_or_url: Union[BackendInvitationAddr, InvitationToken],
+    **kwargs,
+) -> None:
     """
     Greet a new device or user into the organization
     """
@@ -270,7 +289,7 @@ def greet_invitation(config, device, token_or_url, **kwargs):
         trio_run(_greet_invitation, config, device, token)
 
 
-async def _do_claim_user(initial_ctx):
+async def _do_claim_user(initial_ctx: UserClaimInitialCtx) -> LocalDevice:
     async with spinner("Initializing connection with greeter for claiming user"):
         in_progress_ctx = await initial_ctx.do_wait_peer()
 
@@ -296,14 +315,14 @@ async def _do_claim_user(initial_ctx):
     requested_device_label = await aprompt("Device label", default=platform.node())
     async with spinner("Waiting for greeter (finalizing)"):
         new_device = await in_progress_ctx.do_claim_user(
-            requested_device_label=requested_device_label,
+            requested_device_label=DeviceLabel(requested_device_label),
             requested_human_handle=HumanHandle(email=requested_email, label=requested_label),
         )
 
     return new_device
 
 
-async def _do_claim_device(initial_ctx):
+async def _do_claim_device(initial_ctx: DeviceClaimInitialCtx) -> LocalDevice:
     async with spinner("Initializing connection with greeter for claiming device"):
         in_progress_ctx = await initial_ctx.do_wait_peer()
 
@@ -327,13 +346,15 @@ async def _do_claim_device(initial_ctx):
     requested_device_label = await aprompt("Device label", default=platform.node())
     async with spinner("Waiting for greeter (finalizing)"):
         new_device = await in_progress_ctx.do_claim_device(
-            requested_device_label=requested_device_label
+            requested_device_label=DeviceLabel(requested_device_label)
         )
 
     return new_device
 
 
-async def _claim_invitation(config, addr, save_device_with_selected_auth):
+async def _claim_invitation(
+    config: CoreConfig, addr: BackendInvitationAddr, save_device_with_selected_auth: Callable
+) -> None:
     async with backend_invited_cmds_factory(
         addr=addr, keepalive=config.backend_connection_keepalive
     ) as cmds:
@@ -375,7 +396,12 @@ async def _claim_invitation(config, addr, save_device_with_selected_auth):
 @save_device_options
 @core_config_options
 @cli_command_base_options
-def claim_invitation(config, addr, save_device_with_selected_auth, **kwargs):
+def claim_invitation(
+    config: CoreConfig,
+    addr: BackendInvitationAddr,
+    save_device_with_selected_auth: Callable,
+    **kwargs,
+) -> None:
     """
     Claim a device or user from a invitation
     """
@@ -384,7 +410,7 @@ def claim_invitation(config, addr, save_device_with_selected_auth, **kwargs):
         trio_run(_claim_invitation, config, addr, save_device_with_selected_auth)
 
 
-async def _list_invitations(config, device):
+async def _list_invitations(config: CoreConfig, device: LocalDevice) -> None:
     async with backend_authenticated_cmds_factory(
         addr=device.organization_addr,
         device_id=device.device_id,
@@ -414,7 +440,7 @@ async def _list_invitations(config, device):
 @click.command(short_help="list invitations")
 @core_config_and_device_options
 @cli_command_base_options
-def list_invitations(config, device, **kwargs):
+def list_invitations(config: CoreConfig, device: LocalDevice, **kwargs) -> None:
     """
     List invitations
     """
@@ -422,7 +448,9 @@ def list_invitations(config, device, **kwargs):
         trio_run(_list_invitations, config, device)
 
 
-async def _cancel_invitation(config, device, token):
+async def _cancel_invitation(
+    config: CoreConfig, device: LocalDevice, token: InvitationToken
+) -> None:
     async with backend_authenticated_cmds_factory(
         addr=device.organization_addr,
         device_id=device.device_id,
@@ -439,7 +467,12 @@ async def _cancel_invitation(config, device, token):
 @click.argument("token_or_url", type=_parse_invitation_token_or_url)
 @core_config_and_device_options
 @cli_command_base_options
-def cancel_invitation(config, device, token_or_url, **kwargs):
+def cancel_invitation(
+    config: CoreConfig,
+    device: LocalDevice,
+    token_or_url: Union[BackendInvitationAddr, InvitationToken],
+    **kwargs,
+) -> None:
     """
     Cancel invitation
     """

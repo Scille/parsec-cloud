@@ -72,7 +72,9 @@ async def generate_recovery_device(original_device: LocalDevice,) -> LocalDevice
     """
     now = pendulum.now()
     # Unique enough label is expected, but unicity is not strongly enforced
-    new_device_label = f"recovery-{now.year}-{now.month}-{now.day}-{secrets.token_hex(2)}"
+    new_device_label = DeviceLabel(
+        f"recovery-{now.year}-{now.month}-{now.day}-{secrets.token_hex(2)}"
+    )
     return await _create_new_device_for_self(original_device, new_device_label)
 
 

@@ -1,6 +1,5 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) BSLv1.1 (eventually AGPLv3) 2016-2021 Scille SAS
 
-from uuid import UUID
 from enum import Enum
 from typing import Optional, Union, Tuple, Set, Dict
 from structlog import BoundLogger
@@ -17,6 +16,7 @@ from parsec.api.protocol import (
     UserID,
     DeviceName,
     DeviceID,
+    RealmID,
     HumanHandle,
     DeviceLabel,
     HandshakeType,
@@ -82,7 +82,7 @@ class AuthenticatedClientContext(BaseClientContext):
 
         self.event_bus_ctx: EventBusConnectionContext
         self.channels = trio.open_memory_channel[Tuple[Enum, Dict[str, object]]](100)
-        self.realms: Set[UUID] = set()
+        self.realms: Set[RealmID] = set()
         self.events_subscribed = False
 
         self.conn_id = self.transport.conn_id

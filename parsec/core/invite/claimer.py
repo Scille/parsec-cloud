@@ -236,7 +236,7 @@ class UserClaimInProgress3Ctx:
             raise InviteError("Invalid InviteUserConfirmation payload provided by peer") from exc
 
         organization_addr = BackendOrganizationAddr.build(
-            backend_addr=self._cmds.addr,
+            backend_addr=self._cmds.addr.get_backend_addr(),
             organization_id=self._cmds.addr.organization_id,
             root_verify_key=confirmation.root_verify_key,
         )
@@ -291,7 +291,7 @@ class DeviceClaimInProgress3Ctx:
             raise InviteError("Invalid InviteDeviceConfirmation payload provided by peer") from exc
 
         organization_addr = BackendOrganizationAddr.build(
-            backend_addr=self._cmds.addr,
+            backend_addr=self._cmds.addr.get_backend_addr(),
             organization_id=self._cmds.addr.organization_id,
             root_verify_key=confirmation.root_verify_key,
         )

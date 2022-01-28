@@ -123,6 +123,9 @@ class SharingWidget(QWidget, Ui_SharingWidget):
                 ):
                     item = self.combo_role.model().item(index)
                     item.setEnabled(False)
+                    font = item.font()
+                    font.setStrikeOut(True)
+                    item.setFont(font)
                     item.setToolTip(_("NOT_ALLOWED_FOR_OUTSIDER_PROFILE_TOOLTIP"))
 
         self.combo_role.setCurrentIndex(_ROLES_TO_INDEX[self.role])

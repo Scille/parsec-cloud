@@ -3,11 +3,10 @@
 import trio
 from typing import Iterable
 from pathlib import PurePath
+import re
 
 from PyQt5.QtCore import QUrl, QSysInfo, QLocale
 from PyQt5.QtGui import QDesktopServices, QGuiApplication, QClipboard
-
-from parsec.api.protocol import DeviceName
 
 
 async def open_files_job(paths: Iterable[PurePath]):
@@ -42,7 +41,7 @@ def get_default_device():
     device = QSysInfo.machineHostName()
     if device.lower() == "localhost":
         device = QSysInfo.productType()
-    return "".join([c for c in device if DeviceName.regex.match(c)])
+    return "".join([c for c in device if re.match(r"[\w\-]", c)])
 
 
 def get_locale_language():

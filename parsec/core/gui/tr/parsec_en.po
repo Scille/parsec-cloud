@@ -261,7 +261,7 @@ msgstr "The server address is invalid."
 msgid "TEXT_ORG_WIZARD_INVALID_HUMAN_HANDLE"
 msgstr "The email address is invalid."
 
-msgid "TEXT_ORG_WIZARD_INVALID_DEVICE_NAME"
+msgid "TEXT_ORG_WIZARD_INVALID_DEVICE_LABEL"
 msgstr "The device name is invalid."
 
 msgid "ACTION_CREATE_ORG"
@@ -2738,8 +2738,8 @@ msgstr "See the workspace as it was at a precise date."
 msgid "TEXT_WORKSPACE_REENCRYPT_WORKSPACE_TOOLTIP"
 msgstr "Reencrypt the workspace."
 
-msgid "TEXT_WORKSPACE_DELETE_WORKSPACE_TOOLTIP"
-msgstr "Remove this workspace."
+msgid "TEXT_TIMESTAMPED_WORKSPACE_CLOSE_TOOLTIP"
+msgstr "Close the snapshot."
 
 msgid "TEXT_WORKSPACE_FILTER_WORKSPACES_PLACEHOLDER"
 msgstr "Filter the workspaces"

@@ -12,6 +12,7 @@ from parsec.core.local_device import (
     save_recovery_device,
 )
 from parsec.core.recovery import generate_recovery_device
+from parsec.api.protocol import DeviceLabel
 
 from parsec.core.gui.lang import translate
 from parsec.core.gui.device_recovery_export_widget import (
@@ -138,7 +139,7 @@ async def test_import_recovery_device(
     kind,
 ):
     PASSWORD = "P@ssw0rd"
-    NEW_DEVICE_LABEL = "Alice_New_Device"
+    NEW_DEVICE_LABEL = DeviceLabel("Alice_New_Device")
     save_device_with_password_in_config(core_config.config_dir, alice, PASSWORD)
 
     recovery_device = await generate_recovery_device(alice)
@@ -175,7 +176,7 @@ async def test_import_recovery_device(
     assert not imp_w.current_page.label_passphrase_error.isVisible()
     assert not imp_w.button_validate.isEnabled()
 
-    aqtbot.key_clicks(imp_w.current_page.line_edit_device, NEW_DEVICE_LABEL)
+    aqtbot.key_clicks(imp_w.current_page.line_edit_device, str(NEW_DEVICE_LABEL))
     assert imp_w.button_validate.isEnabled()
 
     if kind == "ok":
@@ -209,7 +210,7 @@ async def test_import_recovery_device(
         assert any(
             accounts_w.accounts_widget.layout().itemAt(i).widget() is not None
             and accounts_w.accounts_widget.layout().itemAt(i).widget().label_device.text()
-            == NEW_DEVICE_LABEL
+            == str(NEW_DEVICE_LABEL)
             for i in range(accounts_w.accounts_widget.layout().count())
         )
 

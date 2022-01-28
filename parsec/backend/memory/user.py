@@ -3,7 +3,7 @@
 from parsec.backend.backend_events import BackendEvent
 import attr
 import pendulum
-from typing import Tuple, List, Dict, Optional
+from typing import Iterable, Tuple, List, Dict, Optional
 from collections import defaultdict
 
 from parsec.api.protocol import OrganizationID, UserID, DeviceID, DeviceName, HumanHandle
@@ -32,9 +32,11 @@ class MemoryUserComponent(BaseUserComponent):
     def __init__(self, send_event, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self._send_event = send_event
-        self._organizations = defaultdict(OrganizationStore)
+        self._organizations: Dict[OrganizationID, OrganizationStore] = defaultdict(
+            OrganizationStore
+        )
 
-    def register_components(self, **other_components):
+    def register_components(self, **other_components) -> None:
         self._organization_component = other_components["organization"]
 
     async def create_user(
@@ -93,7 +95,7 @@ class MemoryUserComponent(BaseUserComponent):
 
     async def _get_trustchain(
         self, organization_id: OrganizationID, *devices_ids, redacted: bool = False
-    ):
+    ) -> Trustchain:
         trustchain_devices = set()
         trustchain_users = set()
         trustchain_revoked_users = set()
@@ -223,6 +225,7 @@ class MemoryUserComponent(BaseUserComponent):
         org = self._organizations[organization_id]
 
         # Query is run against human handle field, hence non-human are automatically ignored
+        users: Iterable[User]
         if query:
             users = []
             for user in org.users.values():
@@ -235,14 +238,14 @@ class MemoryUserComponent(BaseUserComponent):
         else:
             users = org.users.values()
             if omit_non_human:
-                users = [r for r in users if r.human_handle]
+                users = [r for r in users if r.human_handle is not None]
         # Sort human by label
         users = [
             *sorted(
-                [res for res in users if res.human_handle],
-                key=lambda r: r.human_handle.label.lower(),
+                [res for res in users if res.human_handle is not None],
+                key=lambda r: r.human_handle.label.lower(),  # type: ignore
             ),
-            *[res for res in users if not res.human_handle],
+            *[res for res in users if res.human_handle is None],
         ]
         now = pendulum.now()
         results = [

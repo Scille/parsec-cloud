@@ -8,7 +8,6 @@ import ssl
 import sys
 import tempfile
 from enum import Enum
-from uuid import UUID, uuid4
 from collections import defaultdict
 from typing import Dict, List, Optional, Union, Set, cast
 from pendulum import DateTime, now as pendulum_now
@@ -25,6 +24,7 @@ from parsec.api.protocol import (
     UserID,
     HumanHandle,
     HandshakeType,
+    InvitationToken,
     InvitationType,
     InvitationDeletedReason,
     InvitationStatus,
@@ -112,7 +112,7 @@ NEXT_CONDUIT_STATE = {
 class ConduitListenCtx:
     organization_id: OrganizationID
     greeter: Optional[UserID]
-    token: UUID
+    token: InvitationToken
     state: ConduitState
     payload: bytes
     peer_payload: Optional[bytes]
@@ -128,7 +128,7 @@ class UserInvitation:
     greeter_user_id: UserID
     greeter_human_handle: Optional[HumanHandle]
     claimer_email: str
-    token: UUID = attr.ib(factory=uuid4)
+    token: InvitationToken = attr.ib(factory=InvitationToken.new)
     created_on: DateTime = attr.ib(factory=pendulum_now)
     status: InvitationStatus = InvitationStatus.IDLE
 
@@ -141,7 +141,7 @@ class DeviceInvitation:
     TYPE = InvitationType.DEVICE
     greeter_user_id: UserID
     greeter_human_handle: Optional[HumanHandle]
-    token: UUID = attr.ib(factory=uuid4)
+    token: InvitationToken = attr.ib(factory=InvitationToken.new)
     created_on: DateTime = attr.ib(factory=pendulum_now)
     status: InvitationStatus = InvitationStatus.IDLE
 
@@ -161,6 +161,9 @@ def generate_invite_email(
     invitation_url: str,
     backend_url: str,
 ) -> Message:
+    # Quick fix to have a similar behavior between Rust and Python
+    if backend_url.endswith("/"):
+        backend_url = backend_url[:-1]
     html = get_template("invitation_mail.html").render(
         greeter=greeter_name,
         organization_id=organization_id,
@@ -267,15 +270,21 @@ class BaseInviteComponent:
         # - the backend the claimer is connected to crashes witout being able
         #   to notify the other backends
         # - a claimer open multiple connections at the same time, then is
-        #   considered disconnected as soon as it close one of it connections
+        #   considered disconnected as soon as he closes one of his connections
         #
         # This is considered "fine enough" given all the claimer has to do
         # to fix this is to retry a connection, which precisely the kind of
         # "I.T., have you tried to turn it off and on again ?" a human is
         # expected to do ;-)
-        self._claimers_ready: Dict[OrganizationID, Set[UUID]] = defaultdict(set)
+        self._claimers_ready: Dict[OrganizationID, Set[InvitationToken]] = defaultdict(set)
 
-        def _on_status_changed(event: Enum, organization_id, greeter, token, status) -> None:
+        def _on_status_changed(
+            event: BackendEvent,
+            organization_id: OrganizationID,
+            greeter: UserID,
+            token: InvitationToken,
+            status: InvitationStatus,
+        ) -> None:
             if status == InvitationStatus.READY:
                 self._claimers_ready[organization_id].add(token)
             else:  # Invitation deleted or back to idle
@@ -819,7 +828,7 @@ class BaseInviteComponent:
         self,
         organization_id: OrganizationID,
         greeter: Optional[UserID],
-        token: UUID,
+        token: InvitationToken,
         state: ConduitState,
         payload: bytes,
     ) -> bytes:
@@ -832,7 +841,9 @@ class BaseInviteComponent:
         filter_organization_id = organization_id
         filter_token = token
 
-        def _conduit_updated_filter(event: Enum, organization_id: OrganizationID, token: UUID):
+        def _conduit_updated_filter(
+            event: Enum, organization_id: OrganizationID, token: InvitationToken
+        ):
             return organization_id == filter_organization_id and token == filter_token
 
         with self._event_bus.waiter_on(
@@ -852,7 +863,7 @@ class BaseInviteComponent:
         self,
         organization_id: OrganizationID,
         greeter: Optional[UserID],  # None for claimer
-        token: UUID,
+        token: InvitationToken,
         state: ConduitState,
         payload: bytes,
     ) -> ConduitListenCtx:
@@ -901,7 +912,7 @@ class BaseInviteComponent:
         self,
         organization_id: OrganizationID,
         greeter: UserID,
-        token: UUID,
+        token: InvitationToken,
         on: DateTime,
         reason: InvitationDeletedReason,
     ) -> None:
@@ -918,7 +929,7 @@ class BaseInviteComponent:
         """
         raise NotImplementedError()
 
-    async def info(self, organization_id: OrganizationID, token: UUID) -> Invitation:
+    async def info(self, organization_id: OrganizationID, token: InvitationToken) -> Invitation:
         """
         Raises:
             InvitationNotFoundError
@@ -927,7 +938,7 @@ class BaseInviteComponent:
         raise NotImplementedError()
 
     async def claimer_joined(
-        self, organization_id: OrganizationID, greeter: UserID, token: UUID
+        self, organization_id: OrganizationID, greeter: UserID, token: InvitationToken
     ) -> None:
         """
         Raises: Nothing
@@ -935,7 +946,7 @@ class BaseInviteComponent:
         raise NotImplementedError()
 
     async def claimer_left(
-        self, organization_id: OrganizationID, greeter: UserID, token: UUID
+        self, organization_id: OrganizationID, greeter: UserID, token: InvitationToken
     ) -> None:
         """
         Raises: Nothing

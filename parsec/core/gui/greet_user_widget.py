@@ -7,7 +7,7 @@ from PyQt5.QtGui import QFont
 from PyQt5.QtWidgets import QWidget
 
 from parsec.api.data import UserProfile
-from parsec.api.protocol import HumanHandle
+from parsec.api.protocol import DeviceLabel, HumanHandle
 from parsec.core.backend_connection import BackendNotAvailable
 from parsec.core.invite import (
     InviteError,
@@ -155,7 +155,9 @@ class Greeter:
             raise JobResultError(status="get-claim-request-failed", origin=exc)
         return human_handle, device_label
 
-    async def create_new_user(self, human_handle, device_label, profile):
+    async def create_new_user(
+        self, human_handle: HumanHandle, device_label: DeviceLabel, profile: UserProfile
+    ) -> None:
         await self.main_mc_send.send(self.Step.CreateNewUser)
         await self.main_mc_send.send((human_handle, device_label, profile))
         r, exc = await self.job_mc_recv.receive()
@@ -243,7 +245,7 @@ class GreetUserCheckInfoWidget(QWidget, Ui_GreetUserCheckInfoWidget):
         self.line_edit_user_email.validity_changed.connect(self.check_infos)
         self.line_edit_user_email.set_validator(validators.EmailValidator())
         self.line_edit_device.validity_changed.connect(self.check_infos)
-        self.line_edit_device.set_validator(validators.DeviceNameValidator())
+        self.line_edit_device.set_validator(validators.DeviceLabelValidator())
 
         self.combo_profile.addItem(_("TEXT_USER_PROFILE_OUTSIDER"), UserProfile.OUTSIDER)
         self.combo_profile.addItem(_("TEXT_USER_PROFILE_STANDARD"), UserProfile.STANDARD)
@@ -280,7 +282,8 @@ class GreetUserCheckInfoWidget(QWidget, Ui_GreetUserCheckInfoWidget):
     def _on_create_user_clicked(self):
         assert not self.create_user_job
         handle = None
-        device_label = self.line_edit_device.text()
+        # No try/except given `self.line_edit_device` has already been validated against `DeviceLabel`
+        device_label = DeviceLabel(validators.trim_user_name(self.line_edit_device.text()))
         try:
             user_name = validators.trim_user_name(self.line_edit_user_full_name.text())
             handle = HumanHandle(label=user_name, email=self.line_edit_user_email.text())
@@ -340,7 +343,7 @@ class GreetUserCheckInfoWidget(QWidget, Ui_GreetUserCheckInfoWidget):
         self.widget_info.show()
         self.line_edit_user_full_name.setText(human_handle.label)
         self.line_edit_user_email.setText(human_handle.email)
-        self.line_edit_device.setText(device_label)
+        self.line_edit_device.setText(device_label.str)
         self.check_infos()
 
     def _on_get_requests_error(self, job):

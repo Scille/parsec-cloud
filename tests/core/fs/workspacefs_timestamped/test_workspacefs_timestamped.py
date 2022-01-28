@@ -13,7 +13,7 @@ async def test_path_info(alice_workspace, timestamp_0, alice_workspace_t1, alice
         await alice_workspace.to_timestamped(timestamp_0)
 
     info = await alice_workspace_t1.path_info("/")
-    assert info == {
+    assert {
         "base_version": ANY,
         "children": ["foo"],
         "created": ANY,
@@ -23,10 +23,10 @@ async def test_path_info(alice_workspace, timestamp_0, alice_workspace_t1, alice
         "type": "folder",
         "updated": ANY,
         "confinement_point": None,
-    }
+    } == info
 
     info = await alice_workspace_t1.path_info("/foo")
-    assert info == {
+    assert {
         "base_version": ANY,
         "children": [],
         "created": ANY,
@@ -36,13 +36,13 @@ async def test_path_info(alice_workspace, timestamp_0, alice_workspace_t1, alice
         "type": "folder",
         "updated": ANY,
         "confinement_point": None,
-    }
+    } == info
 
     with pytest.raises(FileNotFoundError):
         info = await alice_workspace_t1.path_info("/foo/bar")
 
     info = await alice_workspace_t2.path_info("/foo")
-    assert info == {
+    assert {
         "base_version": ANY,
         "children": ["bar"],
         "created": ANY,
@@ -52,10 +52,10 @@ async def test_path_info(alice_workspace, timestamp_0, alice_workspace_t1, alice
         "type": "folder",
         "updated": ANY,
         "confinement_point": None,
-    }
+    } == info
 
     info = await alice_workspace_t2.path_info("/foo/bar")
-    assert info == {
+    assert {
         "base_version": ANY,
         "size": 0,
         "created": ANY,
@@ -65,7 +65,7 @@ async def test_path_info(alice_workspace, timestamp_0, alice_workspace_t1, alice
         "type": "file",
         "updated": ANY,
         "confinement_point": None,
-    }
+    } == info
 
     with pytest.raises(FileNotFoundError):
         info = await alice_workspace_t2.path_info("/foo/baz")

@@ -16,6 +16,7 @@ from parsec.core.local_device import (
     LocalDeviceError,
     LocalDeviceNotFoundError,
 )
+from parsec.api.protocol import DeviceLabel
 from parsec.core.invite import claimer_retrieve_info, InvitePeerResetError
 from parsec.core.backend_connection import (
     backend_invited_cmds_factory,
@@ -167,7 +168,7 @@ class Claimer:
         if not r:
             raise JobResultError(status="wait-trust-failed", origin=exc)
 
-    async def claim_device(self, device_label):
+    async def claim_device(self, device_label: DeviceLabel) -> LocalDevice:
         await self.main_oob_send.send(self.Step.ClaimDevice)
         await self.main_oob_send.send(device_label)
         r, exc, new_device = await self.job_oob_recv.receive()
@@ -373,7 +374,7 @@ class ClaimDeviceProvideInfoWidget(QWidget, Ui_ClaimDeviceProvideInfoWidget):
         self.claim_job = None
         self.new_device = None
         self.line_edit_device.setFocus()
-        self.line_edit_device.set_validator(validators.DeviceNameValidator())
+        self.line_edit_device.set_validator(validators.DeviceLabelValidator())
         self.line_edit_device.setText(get_default_device())
         self.line_edit_device.textChanged.connect(self._on_device_text_changed)
         self.line_edit_device.validity_changed.connect(self.check_infos)
@@ -395,7 +396,8 @@ class ClaimDeviceProvideInfoWidget(QWidget, Ui_ClaimDeviceProvideInfoWidget):
 
     def _on_claim_clicked(self):
         if not self.new_device:
-            device_label = self.line_edit_device.text()
+            # No try/except given `self.line_edit_device` has already been validated against `DeviceLabel`
+            device_label = DeviceLabel(validators.trim_user_name(self.line_edit_device.text()))
             self.button_ok.setDisabled(True)
             self.widget_info.setDisabled(True)
             self.label_wait.show()

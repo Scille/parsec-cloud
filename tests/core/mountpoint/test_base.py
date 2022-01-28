@@ -3,12 +3,12 @@
 import os
 import sys
 import errno
-from uuid import uuid4
 from itertools import count
 import trio
 import pytest
 from pathlib import Path, PurePath
 
+from parsec.api.data import EntryID
 from parsec.core.mountpoint import (
     mountpoint_manager_factory,
     MountpointConfigurationError,
@@ -54,7 +54,7 @@ async def test_mount_unknown_workspace(base_mountpoint, alice_user_fs, event_bus
     async with mountpoint_manager_factory(
         alice_user_fs, event_bus, base_mountpoint
     ) as mountpoint_manager:
-        wid = uuid4()
+        wid = EntryID.new()
         with pytest.raises(MountpointConfigurationError) as exc:
             await mountpoint_manager.mount_workspace(wid)
 
