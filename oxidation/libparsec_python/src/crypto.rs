@@ -218,3 +218,89 @@ impl SecretKey {
         }
     }
 }
+
+#[pyclass]
+#[derive(PartialEq, Eq)]
+pub(crate) struct PrivateKey(parsec_api_crypto::PrivateKey);
+
+#[pymethods]
+impl PrivateKey {
+    #[new]
+    fn new(data: &[u8]) -> PyResult<Self> {
+        match parsec_api_crypto::PrivateKey::try_from(data) {
+            Ok(h) => Ok(Self(h)),
+            Err(err) => Err(PyValueError::new_err(err)),
+        }
+    }
+
+    #[classmethod]
+    fn generate(_cls: &PyType) -> PyResult<PrivateKey> {
+        Ok(PrivateKey(parsec_api_crypto::PrivateKey::generate()))
+    }
+
+    #[getter]
+    fn public_key(&self) -> PublicKey {
+        PublicKey(parsec_api_crypto::PrivateKey::public_key(&self.0))
+    }
+
+    fn decrypt_from_self<'p>(&self, py: Python<'p>, ciphered: &[u8]) -> PyResult<&'p PyBytes> {
+        match self.0.decrypt_from_self(ciphered) {
+            Ok(v) => Ok(PyBytes::new(py, &v)),
+            Err(err) => Err(CryptoError::new_err(err)),
+        }
+    }
+
+    fn encode(&self) -> &[u8] {
+        self.0.as_ref()
+    }
+
+    fn __repr__(&self) -> PyResult<String> {
+        Ok(String::from("PrivateKey(<redacted>)"))
+    }
+
+    fn __richcmp__(&self, py: Python, value: &PrivateKey, op: CompareOp) -> PyObject {
+        match op {
+            CompareOp::Eq => (self == value).into_py(py),
+            CompareOp::Ne => (self != value).into_py(py),
+            _ => py.NotImplemented(),
+        }
+    }
+}
+
+#[pyclass]
+#[derive(PartialEq, Eq)]
+pub(crate) struct PublicKey(parsec_api_crypto::PublicKey);
+
+#[pymethods]
+impl PublicKey {
+    #[new]
+    fn new(data: &[u8]) -> PyResult<Self> {
+        match parsec_api_crypto::PublicKey::try_from(data) {
+            Ok(h) => Ok(Self(h)),
+            Err(err) => Err(PyValueError::new_err(err)),
+        }
+    }
+
+    fn encrypt_for_self<'p>(&self, py: Python<'p>, data: PyObject) -> PyResult<&'p PyBytes> {
+        let bytes = match data.extract::<&PyByteArray>(py) {
+            // Using PyByteArray::as_bytes is safe as long as the corresponding memory is not modified.
+            // Here, the GIL is held during the entire access to `bytes` so there is no risk of another
+            // python thread modifying the bytearray behind our back.
+            Ok(x) => unsafe { x.as_bytes() },
+            Err(_) => data.extract::<&PyBytes>(py)?.as_bytes(),
+        };
+        Ok(PyBytes::new(py, &self.0.encrypt_from_self(bytes)))
+    }
+
+    fn encode(&self) -> &[u8] {
+        self.0.as_ref()
+    }
+
+    fn __richcmp__(&self, py: Python, value: &PublicKey, op: CompareOp) -> PyObject {
+        match op {
+            CompareOp::Eq => (self == value).into_py(py),
+            CompareOp::Ne => (self != value).into_py(py),
+            _ => py.NotImplemented(),
+        }
+    }
+}

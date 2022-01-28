@@ -17,6 +17,8 @@ fn _libparsec(_py: Python, m: &PyModule) -> PyResult<()> {
     m.add_class::<crypto::SigningKey>()?;
     m.add_class::<crypto::VerifyKey>()?;
     m.add_class::<crypto::SecretKey>()?;
+    m.add_class::<crypto::PrivateKey>()?;
+    m.add_class::<crypto::PublicKey>()?;
     m.add_class::<addrs::BackendAddr>()?;
     m.add_class::<addrs::BackendOrganizationAddr>()?;
     m.add_class::<addrs::BackendActionAddr>()?;
