@@ -24,7 +24,7 @@ def create_files_widget_testbed(monkeypatch, aqtbot, logged_gui, user_fs, wfs, f
             self.files_widget = f_w
 
         def pwd(self):
-            return c_w.label_title3.text()
+            return str(c_w.navigation_bar_widget.get_current_path())
 
         def ls(self):
             items = []
@@ -39,7 +39,7 @@ def create_files_widget_testbed(monkeypatch, aqtbot, logged_gui, user_fs, wfs, f
             return items
 
         async def cd(self, path):
-            current_path_parts = [x for x in c_w.label_title3.text().split("/") if x]
+            current_path_parts = [p for p in c_w.navigation_bar_widget.paths]
             if path.startswith("/"):
                 raise ValueError("Absolute path not supported")
             for name in path.split("/"):
@@ -57,7 +57,7 @@ def create_files_widget_testbed(monkeypatch, aqtbot, logged_gui, user_fs, wfs, f
                 def _path_reached():
                     fs_path = FsPath("/" + "/".join(current_path_parts))
                     assert f_w.current_directory == fs_path
-                    assert c_w.label_title3.text() == str(fs_path)
+                    assert str(c_w.navigation_bar_widget.get_current_path()) == str(fs_path)
 
                 await aqtbot.wait_until(_path_reached)
 
@@ -127,8 +127,8 @@ def create_files_widget_testbed(monkeypatch, aqtbot, logged_gui, user_fs, wfs, f
 
             def _view_ok():
                 # Check title (top part of the GUI)
-                assert c_w.label_title2.text() == workspace_name
-                assert c_w.label_title3.text() == path
+                assert c_w.navigation_bar_widget.workspace_name == workspace_name
+                assert str(c_w.navigation_bar_widget.get_current_path()) == path
                 # Now check actual files view
                 assert f_w.workspace_fs.get_workspace_name() == workspace_name
                 assert f_w.table_files.rowCount() == len(expected_table_files)

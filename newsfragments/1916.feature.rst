@@ -1,0 +1,1 @@
+Added a navigation bar to help navigate through a workspace

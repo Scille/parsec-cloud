@@ -1,10 +1,10 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2016-2021 Scille SAS
 
 from typing import Optional, cast
-from pathlib import PurePath
 from PyQt5.QtCore import pyqtSignal, pyqtBoundSignal
 from PyQt5.QtGui import QPixmap, QColor, QIcon
 from PyQt5.QtWidgets import QGraphicsDropShadowEffect, QWidget, QMenu
+from pathlib import PurePath
 
 from parsec.event_bus import EventBus, EventCallback
 from parsec.api.protocol import (
@@ -143,11 +143,8 @@ class CentralWidget(QWidget, Ui_CentralWidget):  # type: ignore[misc]
         self.menu.devices_clicked.connect(self.show_devices_widget)
         self.connection_state_changed.connect(self._on_connection_state_changed)
 
-        self.widget_title2.hide()
-        self.icon_title3.hide()
-        self.label_title3.setText("")
-        self.icon_title3.apply_style()
-        self.icon_title3.apply_style()
+        self.navigation_bar_widget.clear()
+        self.navigation_bar_widget.route_clicked.connect(self._on_route_clicked)
 
         effect = QGraphicsDropShadowEffect(self)
         effect.setColor(QColor(100, 100, 100))
@@ -203,16 +200,14 @@ class CentralWidget(QWidget, Ui_CentralWidget):  # type: ignore[misc]
             core=self.core, jobs_ctx=self.jobs_ctx, parent=self, on_finished=None
         )
 
+    def _on_route_clicked(self, path: FsPath) -> None:
+        self.mount_widget.load_path(path)
+
     def _on_folder_changed(self, workspace_name: Optional[str], path: Optional[str]) -> None:
         if workspace_name and path:
-            self.widget_title2.show()
-            self.label_title2.setText(workspace_name)
-            self.icon_title3.show()
-            self.label_title3.setText(path)
+            self.navigation_bar_widget.from_path(workspace_name, path)
         else:
-            self.widget_title2.hide()
-            self.icon_title3.hide()
-            self.label_title3.setText("")
+            self.navigation_bar_widget.clear()
 
     def handle_event(self, event: CoreEvent, **kwargs: object) -> None:
         if event == CoreEvent.BACKEND_CONNECTION_CHANGED:
@@ -439,9 +434,7 @@ class CentralWidget(QWidget, Ui_CentralWidget):  # type: ignore[misc]
         self.devices_widget.show()
 
     def clear_widgets(self) -> None:
-        self.widget_title2.hide()
-        self.icon_title3.hide()
-        self.label_title3.setText("")
+        self.navigation_bar_widget.clear()
         self.users_widget.hide()
         self.mount_widget.hide()
         self.devices_widget.hide()
