@@ -2,11 +2,10 @@
 
 import pytest
 import trio
-from uuid import uuid4
 from pendulum import datetime
 
 from parsec.crypto import PrivateKey
-from parsec.api.protocol import InvitationDeletedReason
+from parsec.api.protocol import InvitationDeletedReason, InvitationToken
 
 from tests.backend.common import (
     invite_1_greeter_wait_peer,
@@ -36,7 +35,7 @@ async def test_greeter_exchange_bad_access(alice, backend, alice_backend_sock, r
         status = "already_deleted"
     else:
         assert reason == "unknown_token"
-        token = uuid4()
+        token = InvitationToken.new()
         status = "not_found"
 
     greeter_privkey = PrivateKey.generate()

@@ -2,6 +2,8 @@
 
 import pytest
 
+from parsec.crypto import HashDigest
+
 
 @pytest.mark.trio
 @pytest.mark.parametrize("leader", ("claimer", "greeter"))
@@ -29,7 +31,10 @@ async def test_conduit_exchange_good(exchange_testbed, leader):
         await tb.send_order("greeter", "2a_get_hashed_nonce")
 
     greeter_rep = await tb.get_result("greeter")
-    assert greeter_rep == {"status": "ok", "claimer_hashed_nonce": b"<claimer_hashed_nonce>"}
+    assert greeter_rep == {
+        "status": "ok",
+        "claimer_hashed_nonce": HashDigest.from_data(b"<claimer_nonce>"),
+    }
     await tb.send_order("greeter", "2b_send_nonce")
 
     claimer_rep = await tb.get_result("claimer")

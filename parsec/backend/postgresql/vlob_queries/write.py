@@ -1,10 +1,9 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) BSLv1.1 (eventually AGPLv3) 2016-2021 Scille SAS
 
-import pendulum
-from uuid import UUID
+from pendulum import DateTime
 from triopg import UniqueViolationError
 
-from parsec.api.protocol import DeviceID, OrganizationID
+from parsec.api.protocol import OrganizationID, DeviceID, RealmID, VlobID
 from parsec.backend.postgresql.utils import (
     Q,
     query,
@@ -68,21 +67,28 @@ DO UPDATE SET last_vlob_update = (
 
 
 async def _set_vlob_updated(
-    conn, vlob_atom_internal_id, organization_id, author, realm_id, src_id, timestamp, src_version=1
+    conn,
+    vlob_atom_internal_id: int,
+    organization_id: OrganizationID,
+    author: DeviceID,
+    realm_id: RealmID,
+    src_id: VlobID,
+    timestamp: DateTime,
+    src_version: int = 1,
 ):
     index = await conn.fetchval(
         *_q_vlob_updated(
-            organization_id=organization_id,
-            realm_id=realm_id,
+            organization_id=organization_id.str,
+            realm_id=realm_id.uuid,
             vlob_atom_internal_id=vlob_atom_internal_id,
         )
     )
 
     await conn.execute(
         *_q_set_last_vlob_update(
-            organization_id=organization_id,
-            realm_id=realm_id,
-            user_id=author.user_id,
+            organization_id=organization_id.str,
+            realm_id=realm_id.uuid,
+            user_id=author.user_id.str,
             timestamp=timestamp,
         )
     )
@@ -151,9 +157,9 @@ async def query_update(
     organization_id: OrganizationID,
     author: DeviceID,
     encryption_revision: int,
-    vlob_id: UUID,
+    vlob_id: VlobID,
     version: int,
-    timestamp: pendulum.DateTime,
+    timestamp: DateTime,
     blob: bytes,
 ) -> None:
     realm_id = await _get_realm_id_from_vlob_id(conn, organization_id, vlob_id)
@@ -162,7 +168,7 @@ async def query_update(
     )
 
     previous = await conn.fetchrow(
-        *_q_get_vlob_version(organization_id=organization_id, vlob_id=vlob_id)
+        *_q_get_vlob_version(organization_id=organization_id.str, vlob_id=vlob_id.uuid)
     )
     if not previous:
         raise VlobNotFoundError(f"Vlob `{vlob_id}` doesn't exist")
@@ -176,11 +182,11 @@ async def query_update(
     try:
         vlob_atom_internal_id = await conn.fetchval(
             *_q_insert_vlob_atom(
-                organization_id=organization_id,
-                author=author,
-                realm_id=realm_id,
+                organization_id=organization_id.str,
+                author=author.str,
+                realm_id=realm_id.uuid,
                 encryption_revision=encryption_revision,
-                vlob_id=vlob_id,
+                vlob_id=vlob_id.uuid,
                 blob=blob,
                 blob_len=len(blob),
                 timestamp=timestamp,
@@ -234,10 +240,10 @@ async def query_create(
     conn,
     organization_id: OrganizationID,
     author: DeviceID,
-    realm_id: UUID,
+    realm_id: RealmID,
     encryption_revision: int,
-    vlob_id: UUID,
-    timestamp: pendulum.DateTime,
+    vlob_id: VlobID,
+    timestamp: DateTime,
     blob: bytes,
 ) -> None:
     await _check_realm_and_write_access(
@@ -248,11 +254,11 @@ async def query_create(
     try:
         vlob_atom_internal_id = await conn.fetchval(
             *_q_create(
-                organization_id=organization_id,
-                author=author,
-                realm_id=realm_id,
+                organization_id=organization_id.str,
+                author=author.str,
+                realm_id=realm_id.uuid,
                 encryption_revision=encryption_revision,
-                vlob_id=vlob_id,
+                vlob_id=vlob_id.uuid,
                 blob=blob,
                 blob_len=len(blob),
                 timestamp=timestamp,

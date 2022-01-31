@@ -1,5 +1,9 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) BSLv1.1 (eventually AGPLv3) 2016-2021 Scille SAS
 
+from typing import Optional, Tuple
+from pendulum import DateTime, instance as pendulum_instance
+
+from parsec.api.protocol import OrganizationID, RealmID, DeviceID, VlobID
 from parsec.backend.utils import OperationKind
 from parsec.backend.postgresql.utils import (
     Q,
@@ -20,7 +24,13 @@ from parsec.backend.vlob import (
 from parsec.backend.postgresql.realm_queries.maintenance import get_realm_status, RealmNotFoundError
 
 
-async def _check_realm(conn, organization_id, realm_id, encryption_revision, operation_kind):
+async def _check_realm(
+    conn,
+    organization_id: OrganizationID,
+    realm_id: RealmID,
+    encryption_revision: Optional[int],
+    operation_kind: OperationKind,
+) -> None:
     # Get the current realm status
     try:
         status = await get_realm_status(conn, organization_id, realm_id)
@@ -81,10 +91,16 @@ WHERE user_._id = { q_user_internal_id(organization_id="$organization_id", user_
 )
 
 
-async def _check_realm_access(conn, organization_id, realm_id, author, allowed_roles):
+async def _check_realm_access(
+    conn,
+    organization_id: OrganizationID,
+    realm_id: RealmID,
+    author: DeviceID,
+    allowed_roles: Tuple[RealmRole, ...],
+) -> DateTime:
     rep = await conn.fetchrow(
         *_q_check_realm_access(
-            organization_id=organization_id, realm_id=realm_id, user_id=author.user_id
+            organization_id=organization_id.str, realm_id=realm_id.uuid, user_id=author.user_id.str
         )
     )
 
@@ -100,18 +116,27 @@ async def _check_realm_access(conn, organization_id, realm_id, author, allowed_r
 
 
 async def _check_realm_and_read_access(
-    conn, organization_id, author, realm_id, encryption_revision
-):
+    conn,
+    organization_id: OrganizationID,
+    author: DeviceID,
+    realm_id: RealmID,
+    encryption_revision: Optional[int],
+) -> None:
     await _check_realm(
         conn, organization_id, realm_id, encryption_revision, OperationKind.DATA_READ
     )
     can_read_roles = (RealmRole.OWNER, RealmRole.MANAGER, RealmRole.CONTRIBUTOR, RealmRole.READER)
-    return await _check_realm_access(conn, organization_id, realm_id, author, can_read_roles)
+    await _check_realm_access(conn, organization_id, realm_id, author, can_read_roles)
 
 
 async def _check_realm_and_write_access(
-    conn, organization_id, author, realm_id, encryption_revision, timestamp
-):
+    conn,
+    organization_id: OrganizationID,
+    author: DeviceID,
+    realm_id: RealmID,
+    encryption_revision: Optional[int],
+    timestamp: DateTime,
+) -> None:
     await _check_realm(
         conn, organization_id, realm_id, encryption_revision, OperationKind.DATA_WRITE
     )
@@ -146,19 +171,23 @@ LIMIT 1
 )
 
 
-async def _get_realm_id_from_vlob_id(conn, organization_id, vlob_id):
-    realm_id = await conn.fetchval(
-        *_q_get_realm_id_from_vlob_id(organization_id=organization_id, vlob_id=vlob_id)
+async def _get_realm_id_from_vlob_id(
+    conn, organization_id: OrganizationID, vlob_id: VlobID
+) -> RealmID:
+    realm_id_uuid = await conn.fetchval(
+        *_q_get_realm_id_from_vlob_id(organization_id=organization_id.str, vlob_id=vlob_id.uuid)
     )
-    if not realm_id:
+    if not realm_id_uuid:
         raise VlobNotFoundError(f"Vlob `{vlob_id}` doesn't exist")
-    return realm_id
+    return RealmID(realm_id_uuid)
 
 
-async def _get_last_role_granted_on(conn, organization_id, realm_id, author):
+async def _get_last_role_granted_on(
+    conn, organization_id: OrganizationID, realm_id: RealmID, author: DeviceID
+) -> Optional[DateTime]:
     rep = await conn.fetchrow(
         *_q_check_realm_access(
-            organization_id=organization_id, realm_id=realm_id, user_id=author.user_id
+            organization_id=organization_id.str, realm_id=realm_id.uuid, user_id=author.user_id.str
         )
     )
-    return None if rep is None else rep[1]
+    return None if rep is None else pendulum_instance(rep[1])

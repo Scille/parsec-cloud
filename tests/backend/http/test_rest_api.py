@@ -1,12 +1,17 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2016-2021 Scille SAS
 
 import trio
-from uuid import uuid4
 import pendulum
 import pytest
 from unittest.mock import ANY
 
-from parsec.api.protocol import OrganizationID, UserProfile, HandshakeOrganizationExpired
+from parsec.api.protocol import (
+    VlobID,
+    BlockID,
+    OrganizationID,
+    UserProfile,
+    HandshakeOrganizationExpired,
+)
 from parsec.api.rest import organization_stats_rep_serializer
 from parsec.backend.organization import Organization
 from parsec.backend.backend_events import BackendEvent
@@ -57,7 +62,9 @@ async def test_administration_api_auth(backend_rest_send, coolorg, bad_auth_reas
 async def test_organization_create(backend, backend_rest_send):
     organization_id = OrganizationID("NewOrg")
     status, _, body = await backend_rest_send(
-        f"/administration/organizations", method="POST", body={"organization_id": organization_id}
+        f"/administration/organizations",
+        method="POST",
+        body={"organization_id": str(organization_id)},
     )
     assert (status, body) == ((200, "OK"), {"bootstrap_token": ANY})
 
@@ -74,7 +81,7 @@ async def test_organization_create(backend, backend_rest_send):
 
 @pytest.mark.trio
 async def test_organization_create_bad_data(backend_rest_send):
-    organization_id = OrganizationID("NewOrg")
+    organization_id = "NewOrg"
     for bad_body in [
         # Bad OrganizationID
         {"organization_id": ""},  # Empty
@@ -84,10 +91,10 @@ async def test_organization_create_bad_data(backend_rest_send):
         # Missing required field
         {"active_users_limit": 10},
         # Bad field value
-        {"organization_id": organization_id, "active_users_limit": -1},
-        {"organization_id": organization_id, "active_users_limit": "foo"},
-        {"organization_id": organization_id, "user_profile_outsider_allowed": 42},
-        {"organization_id": organization_id, "user_profile_outsider_allowed": "foo"},
+        {"organization_id": str(organization_id), "active_users_limit": -1},
+        {"organization_id": str(organization_id), "active_users_limit": "foo"},
+        {"organization_id": str(organization_id), "user_profile_outsider_allowed": 42},
+        {"organization_id": str(organization_id), "user_profile_outsider_allowed": "foo"},
     ]:
         status, _, body = await backend_rest_send(
             f"/administration/organizations", method="POST", body=bad_body
@@ -107,7 +114,9 @@ async def test_organization_create_already_exists_not_bootstrapped(
         await backend.organization.update(id=organization_id, is_expired=True)
 
     status, _, body = await backend_rest_send(
-        f"/administration/organizations", method="POST", body={"organization_id": organization_id}
+        f"/administration/organizations",
+        method="POST",
+        body={"organization_id": str(organization_id)},
     )
     assert (status, body) == ((200, "OK"), {"bootstrap_token": ANY})
 
@@ -132,7 +141,7 @@ async def test_organization_create_already_exists_and_bootstrapped(
     status, _, body = await backend_rest_send(
         f"/administration/organizations",
         method="POST",
-        body={"organization_id": coolorg.organization_id},
+        body={"organization_id": str(coolorg.organization_id)},
     )
     assert (status, body) == ((400, "Bad Request"), {"error": "already_exists"})
 
@@ -147,7 +156,7 @@ async def test_organization_create_with_custom_initial_config(backend, backend_r
         f"/administration/organizations",
         method="POST",
         body={
-            "organization_id": organization_id,
+            "organization_id": str(organization_id),
             "user_profile_outsider_allowed": False,
             "active_users_limit": None,
         },
@@ -169,7 +178,7 @@ async def test_organization_create_with_custom_initial_config(backend, backend_r
         f"/administration/organizations",
         method="POST",
         body={
-            "organization_id": organization_id,
+            "organization_id": str(organization_id),
             "user_profile_outsider_allowed": True,
             "active_users_limit": 10,
         },
@@ -188,7 +197,9 @@ async def test_organization_create_with_custom_initial_config(backend, backend_r
 
     # Default initial config should also be used if org is recreated without custom config
     status, _, body = await backend_rest_send(
-        f"/administration/organizations", method="POST", body={"organization_id": organization_id}
+        f"/administration/organizations",
+        method="POST",
+        body={"organization_id": str(organization_id)},
     )
     assert (status, body) == ((200, "OK"), {"bootstrap_token": ANY})
 
@@ -428,7 +439,7 @@ async def test_organization_stats_data(backend_rest_send, realm, realm_factory, 
         author=alice.device_id,
         realm_id=realm,
         encryption_revision=1,
-        vlob_id=uuid4(),
+        vlob_id=VlobID.new(),
         timestamp=pendulum.now(),
         blob=b"1234",
     )
@@ -450,7 +461,7 @@ async def test_organization_stats_data(backend_rest_send, realm, realm_factory, 
     await backend.block.create(
         organization_id=alice.organization_id,
         author=alice.device_id,
-        block_id=uuid4(),
+        block_id=BlockID.new(),
         realm_id=realm,
         block=b"1234",
     )
@@ -583,7 +594,9 @@ async def test_handles_escaped_path(backend, backend_rest_send):
 
     # Now create the org
     status, _, body = await backend_rest_send(
-        f"/administration/organizations", method="POST", body={"organization_id": organization_id}
+        f"/administration/organizations",
+        method="POST",
+        body={"organization_id": str(organization_id)},
     )
 
     # Found !

@@ -1,7 +1,6 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) BSLv1.1 (eventually AGPLv3) 2016-2021 Scille SAS
 
 from typing import Dict, List, Optional
-from uuid import UUID
 import pendulum
 import attr
 
@@ -11,6 +10,7 @@ from parsec.api.protocol import (
     OrganizationID,
     UserID,
     DeviceID,
+    RealmID,
     RealmRole,
     MaintenanceType,
     realm_status_serializer,
@@ -105,11 +105,11 @@ class RealmGrantedRole:
     def __repr__(self):
         return f"{self.__class__.__name__}({self.user_id} {self.role})"
 
-    def evolve(self, **kwargs):
+    def evolve(self, **kwargs) -> "RealmGrantedRole":
         return attr.evolve(self, **kwargs)
 
     certificate: bytes
-    realm_id: UUID
+    realm_id: RealmID
     user_id: UserID
     role: Optional[RealmRole]
     granted_by: Optional[DeviceID]
@@ -137,10 +137,9 @@ class BaseRealmComponent:
 
         now = pendulum.now()
         if not timestamps_in_the_ballpark(data.timestamp, now):
-            return {
-                "status": "invalid_certification",
-                "reason": f"Invalid timestamp in certification.",
-            }
+            return realm_create_serializer.timestamp_out_of_ballpark_rep_dump(
+                backend_timestamp=now, client_timestamp=data.timestamp
+            )
 
         granted_role = RealmGrantedRole(
             certificate=msg["role_certificate"],
@@ -287,10 +286,9 @@ class BaseRealmComponent:
 
         now = pendulum.now()
         if not timestamps_in_the_ballpark(data.timestamp, now):
-            return {
-                "status": "invalid_certification",
-                "reason": f"Invalid timestamp in certification.",
-            }
+            return realm_update_roles_serializer.timestamp_out_of_ballpark_rep_dump(
+                backend_timestamp=now, client_timestamp=data.timestamp
+            )
 
         granted_role = RealmGrantedRole(
             certificate=msg["role_certificate"],
@@ -318,11 +316,8 @@ class BaseRealmComponent:
             return realm_update_roles_serializer.rep_dump({"status": "not_allowed"})
 
         except RealmRoleRequireGreaterTimestampError as exc:
-            return realm_update_roles_serializer.rep_dump(
-                {
-                    "status": "require_greater_timestamp",
-                    "strictly_greater_than": exc.strictly_greater_than,
-                }
+            return realm_update_roles_serializer.require_greater_timestamp_rep_dump(
+                exc.strictly_greater_than
             )
 
         except RealmIncompatibleProfileError as exc:
@@ -347,7 +342,9 @@ class BaseRealmComponent:
 
         now = pendulum.now()
         if not timestamps_in_the_ballpark(msg["timestamp"], now):
-            return {"status": "bad_timestamp", "reason": "Timestamp is out of date."}
+            return realm_start_reencryption_maintenance_serializer.timestamp_out_of_ballpark_rep_dump(
+                backend_timestamp=now, client_timestamp=msg["timestamp"]
+            )
 
         try:
             await self.start_reencryption_maintenance(
@@ -435,7 +432,7 @@ class BaseRealmComponent:
         raise NotImplementedError()
 
     async def get_status(
-        self, organization_id: OrganizationID, author: DeviceID, realm_id: UUID
+        self, organization_id: OrganizationID, author: DeviceID, realm_id: RealmID
     ) -> RealmStatus:
         """
         Raises:
@@ -445,7 +442,7 @@ class BaseRealmComponent:
         raise NotImplementedError()
 
     async def get_stats(
-        self, organization_id: OrganizationID, author: DeviceID, realm_id: UUID
+        self, organization_id: OrganizationID, author: DeviceID, realm_id: RealmID
     ) -> RealmStats:
         """
         Raises:
@@ -455,7 +452,7 @@ class BaseRealmComponent:
         raise NotImplementedError()
 
     async def get_current_roles(
-        self, organization_id: OrganizationID, realm_id: UUID
+        self, organization_id: OrganizationID, realm_id: RealmID
     ) -> Dict[UserID, RealmRole]:
         """
         Raises:
@@ -467,7 +464,7 @@ class BaseRealmComponent:
         self,
         organization_id: OrganizationID,
         author: DeviceID,
-        realm_id: UUID,
+        realm_id: RealmID,
         since: pendulum.DateTime,
     ) -> List[bytes]:
         """
@@ -496,7 +493,7 @@ class BaseRealmComponent:
         self,
         organization_id: OrganizationID,
         author: DeviceID,
-        realm_id: UUID,
+        realm_id: RealmID,
         encryption_revision: int,
         per_participant_message: Dict[UserID, bytes],
         timestamp: pendulum.DateTime,
@@ -514,7 +511,7 @@ class BaseRealmComponent:
         self,
         organization_id: OrganizationID,
         author: DeviceID,
-        realm_id: UUID,
+        realm_id: RealmID,
         encryption_revision: int,
     ) -> None:
         """
@@ -527,7 +524,7 @@ class BaseRealmComponent:
 
     async def get_realms_for_user(
         self, organization_id: OrganizationID, user: UserID
-    ) -> Dict[UUID, RealmRole]:
+    ) -> Dict[RealmID, RealmRole]:
         """
         Raises: Nothing !
         """

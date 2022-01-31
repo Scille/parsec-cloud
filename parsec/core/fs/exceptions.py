@@ -250,10 +250,6 @@ class FSRemoteManifestNotFoundBadVersion(FSRemoteManifestNotFound):
     pass
 
 
-class FSRemoteManifestNotFoundBadTimestamp(FSRemoteManifestNotFound):
-    pass
-
-
 class FSRemoteBlockNotFound(FSRemoteOperationError):
     pass
 

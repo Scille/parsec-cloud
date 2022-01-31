@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PROJECT VERSION\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2021-11-08 13:19+0100\n"
+"POT-Creation-Date: 2021-11-26 11:58+0100\n"
 "PO-Revision-Date: 2020-10-15 10:30+0200\n"
 "Last-Translator: \n"
 "Language: en\n"
@@ -16,7 +16,7 @@ msgstr ""
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=utf-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"Generated-By: Babel 2.6.0\n"
+"Generated-By: Babel 2.9.1\n"
 
 msgid "TEXT_PARSEC_VERSION_version"
 msgstr "PARSEC version {version}"
@@ -52,6 +52,9 @@ msgid "TEXT_ONLY_ONE_AUTH_METHOD_AVAILABLE"
 msgstr ""
 "Only one method authentication method is available in this version of "
 "Parsec."
+
+msgid "ACTION_COPY_BACKEND_ADDR"
+msgstr "Copy server address"
 
 msgid "ACTION_DEVICE_MENU_CHANGE_AUTHENTICATION"
 msgstr "Change authentication"
@@ -114,6 +117,12 @@ msgstr "Unknown"
 
 msgid "TEXT_BACKEND_STATE_CRASHED_cause"
 msgstr "Connection to the server lost"
+
+msgid "TEXT_BACKEND_STATE_DESYNC"
+msgstr ""
+"It seems that your machine does not have a correct date and time set up. "
+"Please check your date and time options and make sure that your time and "
+"timezone are correct.\n"
 
 msgid "TEXT_SYSTRAY_BACKEND_DISCONNECT_organization"
 msgstr "{organization}: Disconnected"
@@ -252,7 +261,7 @@ msgstr "The server address is invalid."
 msgid "TEXT_ORG_WIZARD_INVALID_HUMAN_HANDLE"
 msgstr "The email address is invalid."
 
-msgid "TEXT_ORG_WIZARD_INVALID_DEVICE_NAME"
+msgid "TEXT_ORG_WIZARD_INVALID_DEVICE_LABEL"
 msgstr "The device name is invalid."
 
 msgid "ACTION_CREATE_ORG"
@@ -278,12 +287,6 @@ msgstr "The server refused the connection."
 
 msgid "TEXT_ORG_WIZARD_CONNECTION_ERROR"
 msgstr "Cannot connect to the server."
-
-msgid "TEXT_ORG_WIZARD_INVALID_TIMESTAMP"
-msgstr ""
-"It seems that your machine does not have a correct date and time set up. "
-"Please check your date and time options and make sure that your time and "
-"timezone are correct.\n"
 
 msgid "TEXT_ORG_WIZARD_UNKNOWN_FAILURE"
 msgstr "Could not create the organization."
@@ -325,7 +328,12 @@ msgid "EXPORT_KEY_ERROR"
 msgstr "Cannot create recovery device"
 
 msgid "TEXT_DEVICE_UNLOCK_FOR_RECOVERY_LABEL"
-msgstr "Please re-enter this device password."
+msgstr "Please enter the device password."
+
+msgid "TEXT_UNLOCK_ERROR_SMARTCARD_NOT_AVAILABLE"
+msgstr ""
+"This device is protected by smartcard authentication, which is not "
+"supported by this version of Parsec."
 
 msgid "TEXT_DEVICE_RECOVERY_EXPORT_WIZARD_TITLE"
 msgstr "Create a recovery device"
@@ -405,6 +413,15 @@ msgstr "GB"
 msgid "TEXT_FILE_SIZE_TB"
 msgstr "TB"
 
+msgid "TEXT_YES"
+msgstr "Yes"
+
+msgid "TEXT_NO"
+msgstr "No"
+
+msgid "TEXT_FILE_STATUS_TITLE_name"
+msgstr "Status"
+
 msgid "ACTION_FILE_OPEN_CURRENT_DIRECTORY_MAC"
 msgstr "Open current directory in Finder"
 
@@ -428,6 +445,9 @@ msgstr "Cut"
 
 msgid "ACTION_FILE_MENU_SHOW_FILE_HISTORY"
 msgstr "Show history"
+
+msgid "ACTION_FILE_MENU_SHOW_FILE_STATUS"
+msgstr "Show status"
 
 msgid "ACTION_FILE_MENU_GET_FILE_LINK"
 msgstr "Get a link to the file"
@@ -460,6 +480,13 @@ msgid "TEXT_FILE_HISTORY_MULTIPLE_FILES_SELECTED_ERROR"
 msgstr ""
 "Cannot show the history of multiple files at once. Please select a single"
 " file."
+
+msgid "TEXT_FILE_STATUS_MULTIPLE_FILES_SELECTED_ERROR"
+msgstr ""
+"Cannot show the status of multiple files at once. Please select a single"
+" file."
+
+
 
 msgid "TEXT_FILE_RENAME_TITLE"
 msgstr "Rename a file"
@@ -596,10 +623,11 @@ msgstr ""
 "You can no longer interact with the workspace or see any files it "
 "contains."
 
-msgid "TEXT_FILE_SHARING_DEMOTED_TO_READER"
+msgid "TEXT_FILE_SHARING_DEMOTED_TO_READER_workspace"
 msgstr ""
-"Your role on this workspace has changed to <b>Reader</b>. You can no "
-"longer add, update or delete files, but you can still see them."
+"Your role on the workspace <b>{workspace}</b> has changed to "
+"<b>Reader</b>. You can no longer add, update or delete files, but you can"
+" still see them."
 
 msgid "TEXT_GREET_DEVICE_INSTRUCTIONS_NO_EMAIL"
 msgstr ""
@@ -783,6 +811,17 @@ msgstr ""
 msgid "TEXT_MACFUSE_DOWNLOAD_BUTTON"
 msgstr "Download macFUSE"
 
+msgid "TEXT_UPDATE_MACFUSE_TITLE"
+msgstr "macFUSE update needed"
+
+msgid "TEXT_UPDATE_MACFUSE"
+msgstr ""
+"Your macFUSE version is deprecated. You can update it following the link below"
+" to make sure Parsec keeps functioning properly."
+
+msgid "TEXT_UPDATE_MACFUSE_BUTTON"
+msgstr "Update to macFUSE latest version"
+
 msgid "TEXT_LOGIN_ERROR_DEVICE_REVOKED"
 msgstr "This device has been revoked and can no longer be used to log in."
 
@@ -804,6 +843,11 @@ msgstr "This device is already logged in, probably in another tab."
 
 msgid "TEXT_LOGIN_MOUNTPOINT_ERROR"
 msgstr "Cannot log in. The workspaces could not be mounted."
+
+msgid "TEXT_LOGIN_SMARTCARD_NOT_AVAILABLE"
+msgstr ""
+"This device is protected by smartcard authentication, which is not "
+"supported by this version of Parsec."
 
 msgid "TEXT_PARSEC_LICENSE"
 msgstr ""
@@ -2272,6 +2316,9 @@ msgstr "Organization name"
 msgid "TEXT_LABEL_ORG_NAME_RECOMMANDATIONS"
 msgstr "Letters, digits, underscores and hyphens only. No spaces."
 
+msgid "ACTION_CREATE_ON_COMMERCIAL_BACKEND"
+msgstr "Use PARSEC main server"
+
 msgid "ACTION_ACCEPT_CONTRACT"
 msgstr ""
 "I accept the <a href=\"https://parsec.cloud/pdf/Parsec-Privacy-Policy-"
@@ -2285,9 +2332,6 @@ msgstr "I have my own PARSEC server"
 msgid "TEXT_LABEL_BACKEND_ADDR_PLACEHOLDER"
 msgstr "parsec://host:port"
 
-msgid "ACTION_CREATE_ON_COMMERCIAL_BACKEND"
-msgstr "Use PARSEC main server"
-
 msgid "TEXT_LABEL_DEVICE_NAME"
 msgstr "Device name"
 
@@ -2297,11 +2341,11 @@ msgstr "Please fill out the following information to create your organization."
 msgid "TEXT_DEVICE_RECOVERY_EXPORT_INSTRUCTIONS"
 msgstr ""
 "You will be able to create a recovery device.<br />\n"
-"A recovery device is composed of a file and a passphrase that will allow "
-"you to get you device back in case you lose it."
+"A recovery device is stored on a file protected by a passphrase and allow"
+" you to re-create new devices in case you lost your current one."
 
 msgid "TEXT_DEVICE_RECOVERY_EXPORT_SELECT_DEVICE_LABEL"
-msgstr "Select the device you want to create a recovery for"
+msgstr "Select the user you want to create a recovery for"
 
 msgid "TEXT_DEVICE_RECOVERY_EXPORT_SELECT_FILE_LABEL"
 msgstr "Select where the file will be exported"
@@ -2398,6 +2442,48 @@ msgstr "By"
 
 msgid "ACTION_FILE_HISTORY_LOAD_MORE_ENTRIES"
 msgstr "Load more entries"
+
+msgid "TEXT_FILE_INFO_LOCATION"
+msgstr "Location"
+
+msgid "TEXT_FILE_INFO_TYPE"
+msgstr "Type"
+
+msgid "TEXT_FILE_INFO_SIZE"
+msgstr "Size"
+
+msgid "TEXT_FILE_INFO_WORKSPACE"
+msgstr "Workspace"
+
+msgid "TEXT_FILE_INFO_CREATED_ON"
+msgstr "Created on"
+
+msgid "TEXT_FILE_INFO_CREATED_BY"
+msgstr "Created by"
+
+msgid "TEXT_FILE_INFO_UPDATED_ON"
+msgstr "Updated on"
+
+msgid "TEXT_FILE_INFO_UPDATED_BY"
+msgstr "Updated by"
+
+msgid "TEXT_FILE_INFO_AVAILABILITY"
+msgstr "Availability"
+
+msgid "TEXT_FILE_INFO_UPLOADED"
+msgstr "Uploaded"
+
+msgid "TEXT_FILE_INFO_BLOCKS_LOCAL"
+msgstr "Local only blocks"
+
+msgid "TEXT_FILE_INFO_BLOCKS_REMOTE"
+msgstr "Remote only blocks"
+
+msgid "TEXT_FILE_INFO_BLOCKS_BOTH"
+msgstr "Local and remote blocks"
+
+msgid "TEXT_FILE_INFO_NON_APPLICABLE"
+msgstr "N/A"
 
 msgid "TEXT_FILE_BACK_TO_WORKSPACES_TOOLTIP"
 msgstr "Return to the list of workspaces."
@@ -2655,8 +2741,8 @@ msgstr "See the workspace as it was at a precise date."
 msgid "TEXT_WORKSPACE_REENCRYPT_WORKSPACE_TOOLTIP"
 msgstr "Reencrypt the workspace."
 
-msgid "TEXT_WORKSPACE_DELETE_WORKSPACE_TOOLTIP"
-msgstr "Remove this workspace."
+msgid "TEXT_TIMESTAMPED_WORKSPACE_CLOSE_TOOLTIP"
+msgstr "Close the snapshot."
 
 msgid "TEXT_WORKSPACE_FILTER_WORKSPACES_PLACEHOLDER"
 msgstr "Filter the workspaces"

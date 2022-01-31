@@ -179,7 +179,7 @@ def parsec_drive_icon_context(letter):
         return
 
     # Safe context for removing the key after usage
-    with importlib_resources.path(resources, DRIVE_ICON_NAME) as drive_icon_path:
+    with importlib_resources.files(resources).joinpath(DRIVE_ICON_NAME) as drive_icon_path:
         set_parsec_drive_icon(letter, drive_icon_path)
         try:
             yield

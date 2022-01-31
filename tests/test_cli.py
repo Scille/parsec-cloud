@@ -13,7 +13,7 @@ import sys
 import subprocess
 from time import sleep
 from contextlib import contextmanager
-from unittest.mock import ANY, MagicMock, patch
+from unittest.mock import ANY, patch
 
 import attr
 import pytest
@@ -25,7 +25,10 @@ from parsec import __version__ as parsec_version
 from parsec.backend.postgresql import MigrationItem
 from parsec.core.local_device import save_device_with_password_in_config
 from parsec.cli import cli
+from parsec.core.types import UserInfo
 from parsec.core.cli.share_workspace import WORKSPACE_ROLE_CHOICES
+
+from tests.common import AsyncMock
 
 CWD = Path(__file__).parent.parent
 BACKEND_ADDR = "parsec://localhost"
@@ -45,42 +48,66 @@ def test_version():
     assert f"parsec, version {parsec_version}\n" in result.output
 
 
-def test_share_workspace(tmpdir, alice, bob, cli_workspace_role):
+def test_share_workspace(tmpdir, monkeypatch, alice, bob, cli_workspace_role):
     # As usual Windows path require a big hack...
     config_dir = tmpdir.strpath.replace("\\", "\\\\")
     # Mocking
-    factory_mock = MagicMock()
-    share_mock = MagicMock()
+    factory_mock = AsyncMock()
     workspace_role, expected_workspace_role = cli_workspace_role
 
     @asynccontextmanager
     async def logged_core_factory(*args, **kwargs):
         yield factory_mock(*args, **kwargs)
 
-    async def share(*args, **kwargs):
-        return share_mock(*args, **kwargs)
-
-    factory_mock.return_value.user_fs.workspace_share = share
-    factory_mock.return_value.find_workspace_from_name.return_value.id = "ws1_id"
-
     password = "S3cr3t"
     save_device_with_password_in_config(Path(config_dir), bob, password)
-
-    with patch("parsec.core.cli.share_workspace.logged_core_factory", logged_core_factory):
-        runner = CliRunner()
-        args = (
-            f"core share_workspace --password {password} "
-            f"--device={bob.slughash} --config-dir={config_dir} "
-            f"--role={workspace_role} "
-            f"--workspace-name=ws1 "
-            f"--user-id={alice.user_id}"
+    alice_info = [
+        UserInfo(
+            user_id=alice.user_id,
+            human_handle=alice.human_handle,
+            profile=alice.profile,
+            created_on=alice.timestamp(),
+            revoked_on=None,
         )
+    ]
+
+    def _run_cli_share_workspace_test(args, expected_error_code, use_recipiant):
+        factory_mock.reset_mock()
+
+        factory_mock.return_value.user_fs.workspace_share.is_async = True
+        factory_mock.return_value.find_humans.is_async = True
+        factory_mock.return_value.find_humans.return_value = (alice_info, 1)
+        factory_mock.return_value.find_workspace_from_name.return_value.id = "ws1_id"
+
+        monkeypatch.setattr(
+            "parsec.core.cli.share_workspace.logged_core_factory", logged_core_factory
+        )
+        runner = CliRunner()
         result = runner.invoke(cli, args)
 
-    assert result.exit_code == 0
+        assert result.exit_code == expected_error_code
+        factory_mock.assert_called_once_with(ANY, bob)
+        factory_mock.return_value.user_fs.workspace_share.assert_called_once_with(
+            "ws1_id", alice.user_id, expected_workspace_role
+        )
+        if use_recipiant:
+            factory_mock.return_value.find_humans.assert_called_once()
+        else:
+            factory_mock.return_value.find_humans.assert_not_called()
 
-    factory_mock.assert_called_once_with(ANY, bob)
-    share_mock.assert_called_once_with("ws1_id", alice.user_id, expected_workspace_role)
+    default_args = (
+        f"core share_workspace --password {password} "
+        f"--device={bob.slughash} --config-dir={config_dir} "
+        f"--role={workspace_role} "
+        f"--workspace-name=ws1 "
+    )
+
+    # Test with user-id
+    args = default_args + f"--user-id={alice.user_id}"
+    _run_cli_share_workspace_test(args, 0, False)
+    # Test with recipiant
+    args = default_args + f"--recipiant=alice@example.com"
+    _run_cli_share_workspace_test(args, 0, True)
 
 
 def _short_cmd(cmd):

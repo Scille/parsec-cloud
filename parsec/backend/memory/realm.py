@@ -2,11 +2,10 @@
 
 import attr
 import pendulum
-from uuid import UUID
 from typing import List, Dict, Optional, Tuple
 
 from parsec.api.data import UserProfile
-from parsec.api.protocol import DeviceID, UserID, OrganizationID
+from parsec.api.protocol import OrganizationID, DeviceID, UserID, RealmID
 from parsec.backend.backend_events import BackendEvent
 from parsec.backend.realm import (
     MaintenanceType,
@@ -29,8 +28,7 @@ from parsec.backend.realm import (
 )
 from parsec.backend.user import BaseUserComponent, UserNotFoundError
 from parsec.backend.message import BaseMessageComponent
-from parsec.backend.memory.vlob import MemoryVlobComponent
-from parsec.backend.memory.block import MemoryBlockComponent
+from parsec.backend import memory
 
 
 @attr.s
@@ -41,8 +39,8 @@ class Realm:
     last_role_change_per_user: Dict[UserID, pendulum.DateTime] = attr.ib(factory=dict)
 
     @property
-    def roles(self):
-        roles = {}
+    def roles(self) -> Dict[UserID, RealmRole]:
+        roles: Dict[UserID, RealmRole] = {}
         for x in sorted(self.granted_roles, key=lambda x: x.granted_on):
             if x.role is None:
                 roles.pop(x.user_id, None)
@@ -65,15 +63,15 @@ class MemoryRealmComponent(BaseRealmComponent):
         self._message_component = None
         self._vlob_component = None
         self._block_component = None
-        self._realms = {}
+        self._realms: Dict[Tuple[OrganizationID, RealmID], Realm] = {}
         self._maintenance_reencryption_is_finished_hook = None
 
     def register_components(
         self,
         user: BaseUserComponent,
         message: BaseMessageComponent,
-        vlob: MemoryVlobComponent,
-        block: MemoryBlockComponent,
+        vlob: "memory.vlob.MemoryVlobComponent",
+        block: "memory.block.MemoryBlockComponent",
         **other_components,
     ):
         self._user_component = user
@@ -81,7 +79,7 @@ class MemoryRealmComponent(BaseRealmComponent):
         self._vlob_component = vlob
         self._block_component = block
 
-    def _get_realm(self, organization_id, realm_id):
+    def _get_realm(self, organization_id: OrganizationID, realm_id: RealmID) -> Realm:
         try:
             return self._realms[(organization_id, realm_id)]
         except KeyError:
@@ -111,7 +109,7 @@ class MemoryRealmComponent(BaseRealmComponent):
             raise RealmAlreadyExistsError()
 
     async def get_status(
-        self, organization_id: OrganizationID, author: DeviceID, realm_id: UUID
+        self, organization_id: OrganizationID, author: DeviceID, realm_id: RealmID
     ) -> RealmStatus:
         realm = self._get_realm(organization_id, realm_id)
         if author.user_id not in realm.roles:
@@ -119,7 +117,7 @@ class MemoryRealmComponent(BaseRealmComponent):
         return realm.status
 
     async def get_stats(
-        self, organization_id: OrganizationID, author: DeviceID, realm_id: UUID
+        self, organization_id: OrganizationID, author: DeviceID, realm_id: RealmID
     ) -> RealmStats:
         realm = self._get_realm(organization_id, realm_id)
         if author.user_id not in realm.roles:
@@ -137,7 +135,7 @@ class MemoryRealmComponent(BaseRealmComponent):
         return RealmStats(blocks_size=blocks_size, vlobs_size=vlobs_size)
 
     async def get_current_roles(
-        self, organization_id: OrganizationID, realm_id: UUID
+        self, organization_id: OrganizationID, realm_id: RealmID
     ) -> Dict[UserID, RealmRole]:
         realm = self._get_realm(organization_id, realm_id)
         roles: Dict[UserID, RealmRole] = {}
@@ -152,7 +150,7 @@ class MemoryRealmComponent(BaseRealmComponent):
         self,
         organization_id: OrganizationID,
         author: DeviceID,
-        realm_id: UUID,
+        realm_id: RealmID,
         since: pendulum.DateTime,
     ) -> List[bytes]:
         realm = self._get_realm(organization_id, realm_id)
@@ -263,7 +261,7 @@ class MemoryRealmComponent(BaseRealmComponent):
         self,
         organization_id: OrganizationID,
         author: DeviceID,
-        realm_id: UUID,
+        realm_id: RealmID,
         encryption_revision: int,
         per_participant_message: Dict[UserID, bytes],
         timestamp: pendulum.DateTime,
@@ -313,7 +311,7 @@ class MemoryRealmComponent(BaseRealmComponent):
         self,
         organization_id: OrganizationID,
         author: DeviceID,
-        realm_id: UUID,
+        realm_id: RealmID,
         encryption_revision: int,
     ) -> None:
         realm = self._get_realm(organization_id, realm_id)
@@ -345,7 +343,7 @@ class MemoryRealmComponent(BaseRealmComponent):
 
     async def get_realms_for_user(
         self, organization_id: OrganizationID, user: UserID
-    ) -> Dict[UUID, RealmRole]:
+    ) -> Dict[RealmID, RealmRole]:
         user_realms = {}
         for (realm_org_id, realm_id), realm in self._realms.items():
             if realm_org_id != organization_id:

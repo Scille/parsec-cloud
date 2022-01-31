@@ -1,6 +1,6 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2016-2021 Scille SAS
 
-from typing import Tuple
+from typing import Tuple, TYPE_CHECKING
 from base64 import b32decode, b32encode
 from hashlib import sha256
 
@@ -16,7 +16,6 @@ from nacl.encoding import RawEncoder
 
 
 # Note to simplify things, we adopt `nacl.CryptoError` as our root error cls
-
 
 __all__ = (
     # Exceptions
@@ -45,13 +44,21 @@ CRYPTO_MEMLIMIT = argon2i.MEMLIMIT_INTERACTIVE
 # Types
 
 
-class SecretKey(bytes):
-    __slots__ = ()
+class SecretKey:
+    __slots__ = ("_secret",)
+
+    def __init__(self, secret: bytes):
+        self._secret = secret
 
     def __new__(cls, rawkey: bytes) -> "SecretKey":
         if len(rawkey) != SecretBox.KEY_SIZE:
             raise ValueError("Invalid key size")
-        return super(SecretKey, cls).__new__(cls, rawkey)
+        return super().__new__(cls)
+
+    def __eq__(self, other):
+        if not isinstance(other, type(self)):
+            return NotImplemented
+        return self.secret == other.secret
 
     @classmethod
     def generate(cls) -> "SecretKey":
@@ -59,14 +66,14 @@ class SecretKey(bytes):
 
     def __repr__(self):
         # Avoid leaking the key in logs
-        return f"<{type(self).__module__}.{type(self).__qualname__} object at {hex(id(self))}>"
+        return "SecretKey(<redacted>)"
 
     def encrypt(self, data: bytes) -> bytes:
         """
         Raises:
             CryptoError: if key is invalid.
         """
-        box = SecretBox(self)
+        box = SecretBox(self.secret)
         return box.encrypt(data)
 
     def decrypt(self, ciphered: bytes) -> bytes:
@@ -74,20 +81,62 @@ class SecretKey(bytes):
         Raises:
             CryptoError: if key is invalid.
         """
-        box = SecretBox(self)
+        box = SecretBox(self.secret)
         return box.decrypt(ciphered)
 
     def hmac(self, data: bytes, digest_size=BLAKE2B_BYTES) -> bytes:
-        return blake2b(data, digest_size=digest_size, key=self, encoder=RawEncoder)
+        return blake2b(data, digest_size=digest_size, key=self.secret, encoder=RawEncoder)
+
+    @property
+    def secret(self) -> bytes:
+        return self._secret
 
 
-class HashDigest(bytes):
-    __slots__ = ()
+_PySecretKey = SecretKey
+if not TYPE_CHECKING:
+    try:
+        from libparsec.hazmat import SecretKey as _RsSecretKey
+    except ImportError:
+        pass
+    else:
+        SecretKey = _RsSecretKey
+
+
+class HashDigest:
+    __slots__ = ("_digest",)
+
+    def __init__(self, digest: bytes):
+        self._digest = digest
+
+    def __repr__(self) -> str:
+        return f"HashDigest({self.hexdigest()})"
+
+    def __eq__(self, other):
+        if not isinstance(other, type(self)):
+            return NotImplemented
+        return self.digest == other.digest
 
     @classmethod
-    def from_data(self, data: bytes) -> "HashDigest":
+    def from_data(cls, data: bytes) -> "HashDigest":
         # nacl's sha256 doesn't accept bytearray, so stick to `hashlib.sha256`
-        return HashDigest(sha256(data).digest())
+        return cls(sha256(data).digest())
+
+    @property
+    def digest(self) -> bytes:
+        return self._digest
+
+    def hexdigest(self) -> str:
+        return self._digest.hex()
+
+
+_PyHashDigest = HashDigest
+if not TYPE_CHECKING:
+    try:
+        from libparsec.hazmat import HashDigest as _RsHashDigest
+    except ImportError:
+        pass
+    else:
+        HashDigest = _RsHashDigest
 
 
 # Basically just add comparison support to nacl keys
@@ -98,16 +147,30 @@ class SigningKey(_SigningKey):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.verify_key.__class__ = VerifyKey
+        self.verify_key.__class__ = _PyVerifyKey
 
     @classmethod
     def generate(cls, *args, **kwargs) -> "SigningKey":
         obj = super().generate(*args, **kwargs)
-        obj.__class__ = SigningKey
+        obj.__class__ = cls
         return obj
 
     def __eq__(self, other):
         return isinstance(other, _SigningKey) and self._signing_key == other._signing_key
+
+    def __repr__(self):
+        # Avoid leaking the key in logs
+        return "SigningKey(<redacted>)"
+
+
+_PySigningKey = SigningKey
+if not TYPE_CHECKING:
+    try:
+        from libparsec.hazmat import SigningKey as _RsSigningKey
+    except ImportError:
+        pass
+    else:
+        SigningKey = _RsSigningKey
 
 
 class VerifyKey(_VerifyKey):
@@ -117,8 +180,18 @@ class VerifyKey(_VerifyKey):
         return isinstance(other, _VerifyKey) and self._key == other._key
 
     @classmethod
-    def unsecure_unwrap(self, signed: bytes) -> bytes:
+    def unsecure_unwrap(cls, signed: bytes) -> bytes:
         return signed[crypto_sign_BYTES:]
+
+
+_PyVerifyKey = VerifyKey
+if not TYPE_CHECKING:
+    try:
+        from libparsec.hazmat import VerifyKey as _RsVerifyKey
+    except ImportError:
+        pass
+    else:
+        VerifyKey = _RsVerifyKey
 
 
 class PrivateKey(_PrivateKey):
@@ -126,12 +199,12 @@ class PrivateKey(_PrivateKey):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.public_key.__class__ = PublicKey
+        self.public_key.__class__ = _PyPublicKey
 
     @classmethod
     def generate(cls, *args, **kwargs) -> "PrivateKey":
         obj = super().generate(*args, **kwargs)
-        obj.__class__ = PrivateKey
+        obj.__class__ = cls
         return obj
 
     def __eq__(self, other):
@@ -143,6 +216,20 @@ class PrivateKey(_PrivateKey):
             CryptoError
         """
         return SealedBox(self).decrypt(ciphered)
+
+    def __repr__(self):
+        # Avoid leaking the key in logs
+        return "PrivateKey(<redacted>)"
+
+
+_PyPrivateKey = PrivateKey
+if not TYPE_CHECKING:
+    try:
+        from libparsec.hazmat import PrivateKey as _RsPrivateKey
+    except ImportError:
+        pass
+    else:
+        PrivateKey = _RsPrivateKey
 
 
 class PublicKey(_PublicKey):
@@ -157,6 +244,16 @@ class PublicKey(_PublicKey):
             CryptoError
         """
         return SealedBox(self).encrypt(data)
+
+
+_PyPublicKey = PublicKey
+if not TYPE_CHECKING:
+    try:
+        from libparsec.hazmat import PublicKey as _RsPublicKey
+    except ImportError:
+        pass
+    else:
+        PublicKey = _RsPublicKey
 
 
 # Helpers
@@ -244,7 +341,7 @@ def generate_recovery_passphrase() -> Tuple[str, SecretKey]:
     Yes, it looks like a good old CD key *insert keygen music*
     """
     key = SecretKey.generate()
-    b32 = b32encode(key).decode().rstrip("=")
+    b32 = b32encode(key.secret).decode().rstrip("=")
     passphrase = "-".join(b32[i : i + 4] for i in range(0, len(b32), 4))
     return passphrase, key
 

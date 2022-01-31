@@ -1,13 +1,16 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2016-2021 Scille SAS
 
+from parsec.core.backend_connection.exceptions import BackendOutOfBallparkError
 from parsec.core.core_events import CoreEvent
 import pytest
 from pendulum import datetime
 from unittest.mock import ANY
+from parsec.core.fs.remote_loader import MANIFEST_STAMP_AHEAD_US
 
 from parsec.core.types import WorkspaceEntry, WorkspaceRole
 from parsec.core.backend_connection import BackendNotAvailable
-from parsec.core.fs.exceptions import FSBackendOfflineError
+from parsec.core.fs.exceptions import FSBackendOfflineError, FSRemoteOperationError
+from parsec.utils import BALLPARK_CLIENT_EARLY_OFFSET, BALLPARK_CLIENT_LATE_OFFSET
 
 from tests.common import freeze_time, create_shared_workspace
 
@@ -112,7 +115,7 @@ async def test_new_empty_entry(type, running_backend, alice_user_fs, alice2_user
 
     info = await workspace.path_info("/foo")
     if type == "file":
-        assert info == {
+        assert {
             "type": "file",
             "id": ANY,
             "is_placeholder": False,
@@ -122,9 +125,9 @@ async def test_new_empty_entry(type, running_backend, alice_user_fs, alice2_user
             "updated": datetime(2000, 1, 2),
             "size": 0,
             "confinement_point": None,
-        }
+        } == info
     else:
-        assert info == {
+        assert {
             "type": "folder",
             "id": ANY,
             "is_placeholder": False,
@@ -134,7 +137,7 @@ async def test_new_empty_entry(type, running_backend, alice_user_fs, alice2_user
             "updated": datetime(2000, 1, 2),
             "children": [],
             "confinement_point": None,
-        }
+        } == info
     info2 = await workspace2.path_info("/foo")
     assert info == info2
 
@@ -413,15 +416,25 @@ async def test_update_invalid_timestamp(running_backend, alice_user_fs, alice2_u
         wid = await create_shared_workspace("w", alice_user_fs, alice2_user_fs)
     workspace = alice_user_fs.get_workspace(wid)
     await workspace.touch("/foo.txt")
-    with freeze_time("2000-01-02"):
+    with freeze_time("2000-01-02") as t2:
         await workspace.sync()
     await workspace.write_bytes("/foo.txt", b"ok")
-    with freeze_time("2000-01-03"):
+    with freeze_time("2000-01-03") as t3:
         await workspace.sync()
     await workspace.write_bytes("/foo.txt", b"ko")
-    with freeze_time("2000-01-02"):
-        with pytest.raises(FSBackendOfflineError):
+    with freeze_time(t2):
+        with pytest.raises(FSRemoteOperationError) as context:
             await workspace.sync()
+        cause = context.value.__cause__
+        assert isinstance(cause, BackendOutOfBallparkError)
+        rep, = cause.args
+        assert rep == {
+            "status": "bad_timestamp",
+            "client_timestamp": t3.add(microseconds=MANIFEST_STAMP_AHEAD_US),
+            "backend_timestamp": t2,
+            "ballpark_client_early_offset": BALLPARK_CLIENT_EARLY_OFFSET,
+            "ballpark_client_late_offset": BALLPARK_CLIENT_LATE_OFFSET,
+        }
 
 
 @pytest.mark.trio
@@ -596,7 +609,7 @@ async def test_sync_data_before_workspace(running_backend, alice_user_fs):
     await alice_user_fs.sync()
 
     foo_info = await w.path_info("/bar/foo.txt")
-    assert foo_info == {
+    assert {
         "id": ANY,
         "type": "file",
         "base_version": 1,
@@ -606,9 +619,9 @@ async def test_sync_data_before_workspace(running_backend, alice_user_fs):
         "need_sync": False,
         "size": 2,
         "confinement_point": None,
-    }
+    } == foo_info
     root_info = await w.path_info("/")
-    assert root_info == {
+    assert {
         "id": wid,
         "type": "folder",
         "base_version": 1,
@@ -618,7 +631,7 @@ async def test_sync_data_before_workspace(running_backend, alice_user_fs):
         "need_sync": True,
         "children": ["bar"],
         "confinement_point": None,
-    }
+    } == root_info
 
 
 @pytest.mark.trio

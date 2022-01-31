@@ -18,7 +18,7 @@ from parsec.core.backend_connection import (
 from parsec.core.trustchain import TrustchainContext, TrustchainError
 
 
-DEFAULT_CACHE_VALIDITY = 60 * 60  # 1h
+DEFAULT_CACHE_VALIDITY = 60 * 60  # 3600 seconds, 1 hour
 
 
 class RemoteDevicesManagerError(Exception):

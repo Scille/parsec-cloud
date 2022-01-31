@@ -13,7 +13,7 @@ from parsec.core.cli.utils import cli_command_base_options, format_available_dev
 @click.command()
 @click.option("--config-dir", type=click.Path(exists=True, file_okay=False))
 @cli_command_base_options
-def list_devices(config_dir, debug, **kwargs):
+def list_devices(config_dir: Path, debug: bool, **kwargs) -> None:
     with cli_exception_handler(debug):
         config_dir = Path(config_dir) if config_dir else get_default_config_dir(os.environ)
         devices = list_available_devices(config_dir)

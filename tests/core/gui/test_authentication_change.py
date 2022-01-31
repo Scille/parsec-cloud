@@ -31,7 +31,8 @@ async def test_change_password_invalid_old_password(
             "parsec.core.gui.authentication_change_widget.get_text_input",
             lambda *args, **kwargs: "INVALID_PASSWORD",
         )
-        c_w.button_user.menu().actions()[0].trigger()
+        # 0 is "Copy backend addr", 1 is a separator
+        c_w.button_user.menu().actions()[2].trigger()
 
     assert autoclose_dialog.dialogs == [
         (translate("TEXT_ERR_DIALOG_TITLE"), translate("TEXT_LOGIN_ERROR_AUTHENTICATION_FAILED"))
@@ -53,7 +54,7 @@ async def test_change_password_invalid_password_check(
             "parsec.core.gui.authentication_change_widget.get_text_input",
             lambda *args, **kwargs: "P@ssw0rd",
         )
-        c_w.button_user.menu().actions()[0].trigger()
+        c_w.button_user.menu().actions()[2].trigger()
 
     pc_w = await catch_auth_change_widget()
 
@@ -87,7 +88,7 @@ async def test_change_password_success(
             "parsec.core.gui.authentication_change_widget.get_text_input",
             lambda *args, **kwargs: "P@ssw0rd",
         )
-        c_w.button_user.menu().actions()[0].trigger()
+        c_w.button_user.menu().actions()[2].trigger()
 
     pc_w = await catch_auth_change_widget()
 

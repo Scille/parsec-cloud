@@ -1,11 +1,12 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) BSLv1.1 (eventually AGPLv3) 2016-2021 Scille SAS
 
 from typing import List, Tuple, Dict, Optional
-from uuid import UUID
-import pendulum
+from pendulum import DateTime, now as pendulum_now
 
 from parsec.utils import timestamps_in_the_ballpark
 from parsec.api.protocol import (
+    RealmID,
+    VlobID,
     DeviceID,
     OrganizationID,
     vlob_create_serializer,
@@ -79,9 +80,11 @@ class BaseVlobComponent:
         """
         msg = vlob_create_serializer.req_load(msg)
 
-        now = pendulum.now()
+        now = pendulum_now()
         if not timestamps_in_the_ballpark(msg["timestamp"], now):
-            return {"status": "bad_timestamp", "reason": f"Timestamp is out of date."}
+            return vlob_create_serializer.timestamp_out_of_ballpark_rep_dump(
+                backend_timestamp=now, client_timestamp=msg["timestamp"]
+            )
 
         try:
             await self.create(client_ctx.organization_id, client_ctx.device_id, **msg)
@@ -93,11 +96,8 @@ class BaseVlobComponent:
             return vlob_create_serializer.rep_dump({"status": "not_allowed"})
 
         except VlobRequireGreaterTimestampError as exc:
-            return vlob_create_serializer.rep_dump(
-                {
-                    "status": "require_greater_timestamp",
-                    "strictly_greater_than": exc.strictly_greater_than,
-                }
+            return vlob_create_serializer.require_greater_timestamp_rep_dump(
+                exc.strictly_greater_than
             )
 
         except VlobEncryptionRevisionError:
@@ -166,9 +166,11 @@ class BaseVlobComponent:
         """
         msg = vlob_update_serializer.req_load(msg)
 
-        now = pendulum.now()
+        now = pendulum_now()
         if not timestamps_in_the_ballpark(msg["timestamp"], now):
-            return {"status": "bad_timestamp", "reason": f"Timestamp is out of date."}
+            return vlob_update_serializer.timestamp_out_of_ballpark_rep_dump(
+                backend_timestamp=now, client_timestamp=msg["timestamp"]
+            )
 
         try:
             await self.update(client_ctx.organization_id, client_ctx.device_id, **msg)
@@ -180,11 +182,8 @@ class BaseVlobComponent:
             return vlob_update_serializer.rep_dump({"status": "not_allowed"})
 
         except VlobRequireGreaterTimestampError as exc:
-            return vlob_update_serializer.rep_dump(
-                {
-                    "status": "require_greater_timestamp",
-                    "strictly_greater_than": exc.strictly_greater_than,
-                }
+            return vlob_update_serializer.require_greater_timestamp_rep_dump(
+                exc.strictly_greater_than
             )
 
         except VlobVersionError:
@@ -339,10 +338,10 @@ class BaseVlobComponent:
         self,
         organization_id: OrganizationID,
         author: DeviceID,
-        realm_id: UUID,
+        realm_id: RealmID,
         encryption_revision: int,
-        vlob_id: UUID,
-        timestamp: pendulum.DateTime,
+        vlob_id: VlobID,
+        timestamp: DateTime,
         blob: bytes,
     ) -> None:
         """
@@ -358,10 +357,10 @@ class BaseVlobComponent:
         organization_id: OrganizationID,
         author: DeviceID,
         encryption_revision: int,
-        vlob_id: UUID,
+        vlob_id: VlobID,
         version: Optional[int] = None,
-        timestamp: Optional[pendulum.DateTime] = None,
-    ) -> Tuple[int, bytes, DeviceID, pendulum.DateTime, pendulum.DateTime]:
+        timestamp: Optional[DateTime] = None,
+    ) -> Tuple[int, bytes, DeviceID, DateTime, DateTime]:
         """
         Raises:
             VlobAccessError
@@ -377,9 +376,9 @@ class BaseVlobComponent:
         organization_id: OrganizationID,
         author: DeviceID,
         encryption_revision: int,
-        vlob_id: UUID,
+        vlob_id: VlobID,
         version: int,
-        timestamp: pendulum.DateTime,
+        timestamp: DateTime,
         blob: bytes,
     ) -> None:
         """
@@ -393,8 +392,8 @@ class BaseVlobComponent:
         raise NotImplementedError()
 
     async def poll_changes(
-        self, organization_id: OrganizationID, author: DeviceID, realm_id: UUID, checkpoint: int
-    ) -> Tuple[int, Dict[UUID, int]]:
+        self, organization_id: OrganizationID, author: DeviceID, realm_id: RealmID, checkpoint: int
+    ) -> Tuple[int, Dict[VlobID, int]]:
         """
         Raises:
             VlobInMaintenanceError
@@ -404,8 +403,8 @@ class BaseVlobComponent:
         raise NotImplementedError()
 
     async def list_versions(
-        self, organization_id: OrganizationID, author: DeviceID, vlob_id: UUID
-    ) -> Dict[int, Tuple[pendulum.DateTime, DeviceID]]:
+        self, organization_id: OrganizationID, author: DeviceID, vlob_id: VlobID
+    ) -> Dict[int, Tuple[DateTime, DeviceID]]:
         """
         Raises:
             VlobInMaintenanceError
@@ -418,10 +417,10 @@ class BaseVlobComponent:
         self,
         organization_id: OrganizationID,
         author: DeviceID,
-        realm_id: UUID,
+        realm_id: RealmID,
         encryption_revision: int,
         size: int,
-    ) -> List[Tuple[UUID, int, bytes]]:
+    ) -> List[Tuple[VlobID, int, bytes]]:
         """
         Raises:
             VlobNotFoundError
@@ -435,9 +434,9 @@ class BaseVlobComponent:
         self,
         organization_id: OrganizationID,
         author: DeviceID,
-        realm_id: UUID,
+        realm_id: RealmID,
         encryption_revision: int,
-        batch: List[Tuple[UUID, int, bytes]],
+        batch: List[Tuple[VlobID, int, bytes]],
     ) -> Tuple[int, int]:
         """
         Raises:

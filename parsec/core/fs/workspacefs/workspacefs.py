@@ -6,11 +6,12 @@ from collections import defaultdict
 from typing import List, Dict, Tuple, AsyncIterator, cast, Pattern, Callable, Optional, Awaitable
 from pendulum import DateTime
 
+from parsec.core.fs.workspacefs.entry_transactions import BlockInfo
 from parsec.crypto import CryptoError
 from parsec.event_bus import EventBus
-from parsec.api.data import BaseManifest as BaseRemoteManifest
+from parsec.api.data import BaseManifest as BaseRemoteManifest, BlockAccess
 from parsec.api.data import FileManifest as RemoteFileManifest
-from parsec.api.protocol import UserID, MaintenanceType
+from parsec.api.protocol import UserID, MaintenanceType, RealmID
 from parsec.core.types import (
     EntryID,
     EntryName,
@@ -26,7 +27,6 @@ from parsec.core.types import (
     DEFAULT_BLOCK_SIZE,
     BackendOrganizationFileLinkAddr,
 )
-from parsec.core.config import CoreConfig
 from parsec.core.fs.path import AnyPath, FsPath
 from parsec.core.remote_devices_manager import RemoteDevicesManager
 from parsec.core.backend_connection import (
@@ -55,7 +55,6 @@ from parsec.core.fs.exceptions import (
 )
 from parsec.core.fs.workspacefs.workspacefile import WorkspaceFile
 from parsec.core.fs.storage import BaseWorkspaceStorage
-from parsec.utils import open_service_nursery
 
 
 @attr.s(slots=True, frozen=True, auto_attribs=True)
@@ -80,7 +79,7 @@ class WorkspaceFS:
         backend_cmds: BackendAuthenticatedCmds,
         event_bus: EventBus,
         remote_devices_manager: RemoteDevicesManager,
-        core_config: CoreConfig,
+        preferred_language: str = "en",
     ):
         self.workspace_id = workspace_id
         self.get_workspace_entry = get_workspace_entry
@@ -90,7 +89,7 @@ class WorkspaceFS:
         self.backend_cmds = backend_cmds
         self.event_bus = event_bus
         self.remote_devices_manager = remote_devices_manager
-        self.core_config = core_config
+        self.preferred_language = preferred_language
         self.sync_locks: Dict[EntryID, trio.Lock] = defaultdict(trio.Lock)
 
         self.remote_loader = RemoteLoader(
@@ -109,7 +108,7 @@ class WorkspaceFS:
             self.local_storage,
             self.remote_loader,
             self.event_bus,
-            self.core_config,
+            self.preferred_language,
         )
 
     def __repr__(self) -> str:
@@ -118,6 +117,36 @@ class WorkspaceFS:
         except Exception:
             name = "<could not retrieve name>"
         return f"<{type(self).__name__}(id={self.workspace_id!r}, name={name!r})>"
+
+    async def get_blocks_by_type(self, path: AnyPath, limit: int = 1000000000) -> BlockInfo:
+        path = FsPath(path)
+        return await self.transactions.entry_get_blocks_by_type(path, limit)
+
+    async def load_block(self, block: BlockAccess) -> None:
+        """
+        Raises:
+            FSError
+            FSRemoteBlockNotFound
+            FSBackendOfflineError
+            FSRemoteOperationError
+            FSWorkspaceInMaintenance
+            FSWorkspaceNoAccess
+        """
+        await self.remote_loader.load_block(block)
+
+    async def receive_load_blocks(
+        self, blocks: List[BlockAccess], nursery: trio.Nursery
+    ) -> "trio.MemoryReceiveChannel[BlockAccess]":
+        """
+        Raises:
+                FSError
+                FSRemoteBlockNotFound
+                FSBackendOfflineError
+                FSRemoteOperationError
+                FSWorkspaceInMaintenance
+                FSWorkspaceInMaintenance
+        """
+        return await self.remote_loader.receive_load_blocks(blocks, nursery)
 
     def get_workspace_name(self) -> str:
         return self.get_workspace_entry().name
@@ -188,7 +217,7 @@ class WorkspaceFS:
             pass
 
         try:
-            rep = await self.backend_cmds.realm_status(self.workspace_id)
+            rep = await self.backend_cmds.realm_status(RealmID(self.workspace_id.uuid))
 
         except BackendNotAvailable as exc:
             raise FSBackendOfflineError(str(exc)) from exc
@@ -514,22 +543,7 @@ class WorkspaceFS:
             await self.minimal_sync(child)
 
     async def _upload_blocks(self, manifest: RemoteFileManifest) -> None:
-        blocks_iter = iter(manifest.blocks)
-
-        async def _uploader() -> None:
-            while True:
-                access = next(blocks_iter, None)
-                if not access:
-                    break
-                try:
-                    data = await self.local_storage.get_dirty_block(access.id)
-                except FSLocalMissError:
-                    continue
-                await self.remote_loader.upload_block(access, data)
-
-        async with open_service_nursery() as nursery:
-            for _ in range(4):
-                nursery.start_soon(_uploader)
+        await self.remote_loader.upload_blocks(list(manifest.blocks))
 
     async def minimal_sync(self, entry_id: EntryID) -> None:
         """

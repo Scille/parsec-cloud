@@ -5,11 +5,14 @@ import click
 import multiprocessing
 from pathlib import Path
 from pendulum import DateTime, parse as pendulum_parse
+from typing import Optional
 
 from parsec.utils import trio_run
 from parsec.logging import configure_sentry_logging
 from parsec.cli_utils import cli_exception_handler, generate_not_available_cmd
 from parsec.core import logged_core_factory
+from parsec.core.types import LocalDevice
+from parsec.core.config import CoreConfig
 from parsec.core.cli.utils import (
     cli_command_base_options,
     gui_command_base_options,
@@ -31,7 +34,7 @@ else:
     @click.option("--diagnose", "-d", is_flag=True)
     @core_config_options
     @gui_command_base_options
-    def run_gui(config, url, diagnose, sentry_url, **kwargs):
+    def run_gui(config: CoreConfig, url: str, diagnose: bool, sentry_url: str, **kwargs) -> None:
         """
         Run parsec GUI
         """
@@ -47,7 +50,9 @@ else:
             _run_gui(config, start_arg=url, diagnose=diagnose)
 
 
-async def _run_mountpoint(config, device, timestamp: DateTime = None):
+async def _run_mountpoint(
+    config: CoreConfig, device: LocalDevice, timestamp: Optional[DateTime] = None
+) -> None:
     config = config.evolve(mountpoint_enabled=True)
     async with logged_core_factory(config, device):
         display_device = click.style(device.device_id, fg="yellow")
@@ -62,7 +67,13 @@ async def _run_mountpoint(config, device, timestamp: DateTime = None):
 @click.option("--timestamp", "-t", type=lambda t: pendulum_parse(t, tz="local"))
 @core_config_and_device_options
 @cli_command_base_options
-def run_mountpoint(config, device, mountpoint, timestamp, **kwargs):
+def run_mountpoint(
+    config: CoreConfig,
+    device: LocalDevice,
+    mountpoint: Path,
+    timestamp: Optional[DateTime],
+    **kwargs,
+) -> None:
     """
     Expose device's parsec drive on the given mountpoint.
     """

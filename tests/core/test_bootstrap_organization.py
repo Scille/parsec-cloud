@@ -3,24 +3,16 @@
 import pytest
 
 from parsec.api.data import UserProfile
-from parsec.api.protocol import OrganizationID, HumanHandle
+from parsec.api.protocol import OrganizationID, DeviceLabel, HumanHandle
 from parsec.core.backend_connection import apiv1_backend_anonymous_cmds_factory
 from parsec.core.types import BackendOrganizationBootstrapAddr
 from parsec.core.invite import bootstrap_organization, InviteNotFoundError, InviteAlreadyUsedError
+from parsec.core.fs.storage.user_storage import user_storage_non_speculative_init
 
 
 @pytest.mark.trio
 @pytest.mark.parametrize("with_labels", [False, True])
-async def test_good(
-    running_backend,
-    backend,
-    alice,
-    bob,
-    alice_backend_cmds,
-    user_fs_factory,
-    with_labels,
-    core_config,
-):
+async def test_good(running_backend, backend, user_fs_factory, with_labels, data_base_dir):
     org_id = OrganizationID("NewOrg")
     org_token = "123456"
     await backend.organization.create(org_id, org_token)
@@ -31,7 +23,7 @@ async def test_good(
 
     if with_labels:
         human_handle = HumanHandle(email="zack@example.com", label="Zack")
-        device_label = "PC1"
+        device_label = DeviceLabel("PC1")
     else:
         human_handle = None
         device_label = None
@@ -47,10 +39,22 @@ async def test_good(
     assert new_device.human_handle == human_handle
     assert new_device.profile == UserProfile.ADMIN
 
+    # This function should always be called as part of bootstrap organization
+    # (yeah, we should improve the erognomics...)
+    await user_storage_non_speculative_init(data_base_dir=data_base_dir, device=new_device)
+
     # Test the behavior of this new device
-    async with user_fs_factory(new_device) as newfs:
+    async with user_fs_factory(new_device, data_base_dir=data_base_dir) as newfs:
+        # New user should start with a non-speculative user manifest
+        um = newfs.get_user_manifest()
+        assert um.is_placeholder
+        assert not um.speculative
+
         await newfs.workspace_create("wa")
         await newfs.sync()
+        um = newfs.get_user_manifest()
+        assert not um.is_placeholder
+        assert not um.speculative
 
     # Test the device in correct in the backend
     backend_user, backend_device = await backend.user.get_user_with_device(
@@ -92,9 +96,7 @@ async def test_invalid_token(running_backend, backend):
 
 
 @pytest.mark.trio
-async def test_already_bootstrapped(
-    running_backend, backend, alice, bob, alice_backend_cmds, user_fs_factory
-):
+async def test_already_bootstrapped(running_backend, backend):
     org_id = OrganizationID("NewOrg")
     org_token = "123456"
     await backend.organization.create(org_id, org_token)

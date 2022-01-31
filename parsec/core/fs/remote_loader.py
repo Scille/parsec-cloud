@@ -1,12 +1,14 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2016-2021 Scille SAS
-
+import math
 from contextlib import contextmanager
 from typing import Dict, Optional, List, Tuple, cast, Iterator, Callable, Awaitable
 
+import trio
 from pendulum import DateTime
+from trio import open_memory_channel, MemorySendChannel, MemoryReceiveChannel
 
 from parsec.crypto import HashDigest, CryptoError
-from parsec.api.protocol import UserID, DeviceID, RealmRole
+from parsec.api.protocol import UserID, DeviceID, RealmID, RealmRole, VlobID
 from parsec.api.data import (
     DataError,
     BlockAccess,
@@ -40,7 +42,6 @@ from parsec.core.fs.exceptions import (
     FSRemoteOperationError,
     FSRemoteManifestNotFound,
     FSRemoteManifestNotFoundBadVersion,
-    FSRemoteManifestNotFoundBadTimestamp,
     FSRemoteBlockNotFound,
     FSBackendOfflineError,
     FSWorkspaceInMaintenance,
@@ -50,6 +51,7 @@ from parsec.core.fs.exceptions import (
     FSUserNotFoundError,
     FSDeviceNotFoundError,
     FSInvalidTrustchainEror,
+    FSLocalMissError,
 )
 from parsec.core.fs.storage import BaseWorkspaceStorage
 
@@ -58,13 +60,15 @@ from parsec.core.fs.storage import BaseWorkspaceStorage
 # when a manifest restamping is required. This value should be kept small
 # compared to the certificate stamp ahead value, so the certificate updates have
 # priority over manifest updates.
-MANIFEST_STAMP_AHEAD_MS = 100_000  # microseconds, or 0.1 seconds
+from parsec.service_nursery import open_service_nursery
+
+MANIFEST_STAMP_AHEAD_US = 100_000  # microseconds, or 0.1 seconds
 
 # This value is used to increment the timestamp provided by the backend
 # when a certificate restamping is required. This value should be kept big
 # compared to the manifest stamp ahead value, so the certificate updates have
 # priority over manifest updates.
-ROLE_CERTIFICATE_STAMP_AHEAD_MS = 500_000  # microseconds, or 0.5 seconds
+ROLE_CERTIFICATE_STAMP_AHEAD_US = 500_000  # microseconds, or 0.5 seconds
 
 
 class VlobRequireGreaterTimestampError(Exception):
@@ -152,7 +156,9 @@ class UserRemoteLoader:
         self, realm_id: Optional[EntryID] = None
     ) -> Tuple[List[RealmRoleCertificateContent], Dict[UserID, RealmRole]]:
         with translate_backend_cmds_errors():
-            rep = await self.backend_cmds.realm_get_role_certificates(realm_id or self.workspace_id)
+            rep = await self.backend_cmds.realm_get_role_certificates(
+                RealmID((realm_id or self.workspace_id).uuid)
+            )
         if rep["status"] == "not_allowed":
             # Seems we lost the access to the realm
             raise FSWorkspaceNoReadAccess("Cannot get workspace roles: no read access")
@@ -290,7 +296,7 @@ class UserRemoteLoader:
             FSRemoteManifestNotFound
         """
         with translate_backend_cmds_errors():
-            rep = await self.backend_cmds.vlob_list_versions(entry_id)
+            rep = await self.backend_cmds.vlob_list_versions(VlobID(entry_id.uuid))
         if rep["status"] == "not_allowed":
             # Seems we lost the access to the realm
             raise FSWorkspaceNoReadAccess("Cannot load manifest: no read access")
@@ -314,7 +320,7 @@ class UserRemoteLoader:
         """
         timestamp = self.device.timestamp()
         certif = RealmRoleCertificateContent.build_realm_root_certif(
-            author=self.device.device_id, timestamp=timestamp, realm_id=realm_id
+            author=self.device.device_id, timestamp=timestamp, realm_id=RealmID(realm_id.uuid)
         ).dump_and_sign(self.device.signing_key)
 
         with translate_backend_cmds_errors():
@@ -351,15 +357,39 @@ class RemoteLoader(UserRemoteLoader):
         self.local_storage = local_storage
 
     async def load_blocks(self, accesses: List[BlockAccess]) -> None:
+        async with open_service_nursery() as nursery:
+            async with await self.receive_load_blocks(accesses, nursery) as receive_channel:
+                async for value in receive_channel:
+                    pass
+
+    async def receive_load_blocks(
+        self, blocks: List[BlockAccess], nursery: trio.Nursery
+    ) -> "MemoryReceiveChannel[BlockAccess]":
         """
-        Raises:
-            FSError
-            FSRemoteBlockNotFound
-            FSBackendOfflineError
-            FSWorkspaceInMaintenance
-        """
-        for access in accesses:
-            await self.load_block(access)
+           Raises:
+               FSError
+               FSRemoteBlockNotFound
+               FSBackendOfflineError
+               FSWorkspaceInMaintenance
+           """
+        blocks_iter = iter(blocks)
+
+        send_channel, receive_channel = open_memory_channel[BlockAccess](math.inf)
+
+        async def _loader(send_channel: "MemorySendChannel[BlockAccess]") -> None:
+            async with send_channel:
+                while True:
+                    access = next(blocks_iter, None)
+                    if not access:
+                        break
+                    await self.load_block(access)
+                    await send_channel.send(access)
+
+        async with send_channel:
+            for _ in range(4):
+                nursery.start_soon(_loader, send_channel.clone())
+
+        return receive_channel
 
     async def load_block(self, access: BlockAccess) -> None:
         """
@@ -398,6 +428,24 @@ class RemoteLoader(UserRemoteLoader):
         assert HashDigest.from_data(block) == access.digest, access
         await self.local_storage.set_clean_block(access.id, block)
 
+    async def upload_blocks(self, blocks: List[BlockAccess]) -> None:
+        blocks_iter = iter(blocks)
+
+        async def _uploader() -> None:
+            while True:
+                access = next(blocks_iter, None)
+                if not access:
+                    break
+                try:
+                    data = await self.local_storage.get_dirty_block(access.id)
+                except FSLocalMissError:
+                    continue
+                await self.upload_block(access, data)
+
+        async with open_service_nursery() as nursery:
+            for _ in range(4):
+                nursery.start_soon(_uploader)
+
     async def upload_block(self, access: BlockAccess, data: bytes) -> None:
         """
         Raises:
@@ -417,7 +465,9 @@ class RemoteLoader(UserRemoteLoader):
 
         # Upload block
         with translate_backend_cmds_errors():
-            rep = await self.backend_cmds.block_create(access.id, self.workspace_id, ciphered)
+            rep = await self.backend_cmds.block_create(
+                access.id, RealmID(self.workspace_id.uuid), ciphered
+            )
 
         if rep["status"] == "already_exists":
             # Ignore exception if the block has already been uploaded
@@ -433,7 +483,7 @@ class RemoteLoader(UserRemoteLoader):
 
         # Update local storage
         await self.local_storage.set_clean_block(access.id, data)
-        await self.local_storage.clear_chunk(ChunkID(access.id), miss_ok=True)
+        await self.local_storage.clear_chunk(ChunkID(access.id.uuid), miss_ok=True)
 
     async def load_manifest(
         self,
@@ -473,7 +523,7 @@ class RemoteLoader(UserRemoteLoader):
         with translate_backend_cmds_errors():
             rep = await self.backend_cmds.vlob_read(
                 workspace_entry.encryption_revision,
-                entry_id,
+                VlobID(entry_id.uuid),
                 version=version,
                 timestamp=timestamp if version is None else None,
             )
@@ -514,8 +564,6 @@ class RemoteLoader(UserRemoteLoader):
             raise FSWorkspaceNoReadAccess("Cannot load manifest: no read access")
         elif rep["status"] == "bad_version":
             raise FSRemoteManifestNotFoundBadVersion(entry_id)
-        elif rep["status"] == "bad_timestamp":
-            raise FSRemoteManifestNotFoundBadTimestamp(entry_id)
         elif rep["status"] == "bad_encryption_revision":
             raise FSBadEncryptionRevision(
                 f"Cannot fetch vlob {entry_id}: Bad encryption revision provided"
@@ -601,7 +649,7 @@ class RemoteLoader(UserRemoteLoader):
         timestamp = self.device.timestamp()
         if timestamp_greater_than is not None:
             timestamp = max(
-                timestamp, timestamp_greater_than.add(microseconds=MANIFEST_STAMP_AHEAD_MS)
+                timestamp, timestamp_greater_than.add(microseconds=MANIFEST_STAMP_AHEAD_US)
             )
 
         manifest = manifest.evolve(timestamp=timestamp)
@@ -652,7 +700,11 @@ class RemoteLoader(UserRemoteLoader):
         # Vlob upload
         with translate_backend_cmds_errors():
             rep = await self.backend_cmds.vlob_create(
-                self.workspace_id, encryption_revision, entry_id, now, ciphered
+                RealmID(self.workspace_id.uuid),
+                encryption_revision,
+                VlobID(entry_id.uuid),
+                now,
+                ciphered,
             )
         if rep["status"] == "already_exists":
             raise FSRemoteSyncError(entry_id)
@@ -693,7 +745,7 @@ class RemoteLoader(UserRemoteLoader):
         # Vlob upload
         with translate_backend_cmds_errors():
             rep = await self.backend_cmds.vlob_update(
-                encryption_revision, entry_id, version, now, ciphered
+                encryption_revision, VlobID(entry_id.uuid), version, now, ciphered
             )
 
         if rep["status"] == "not_found":
@@ -705,10 +757,6 @@ class RemoteLoader(UserRemoteLoader):
             raise VlobRequireGreaterTimestampError(rep["strictly_greater_than"])
         elif rep["status"] == "bad_version":
             raise FSRemoteSyncError(entry_id)
-        elif rep["status"] == "bad_timestamp":
-            # Quick and dirty fix before a better version with a retry loop : go offline so we
-            # don't have to deal with another client updating manifest with a later timestamp
-            raise FSBackendOfflineError(rep)
         elif rep["status"] == "bad_encryption_revision":
             raise FSBadEncryptionRevision(
                 f"Cannot update vlob {entry_id}: Bad encryption revision provided"

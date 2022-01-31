@@ -75,8 +75,10 @@ class DeviceRecoveryExportPage1Widget(QWidget, Ui_DeviceRecoveryExportPage1Widge
         self.button_select_file.clicked.connect(self._on_select_file_clicked)
         self.devices = {device.slug: device for device in devices}
         for device in devices:
+            # We consider it's unlikely to have multiple devices for the same user
+            # so we don't show the device label for better readability
             self.combo_devices.addItem(
-                f"{device.device_display} - {device.user_display}", device.slug
+                f"{device.organization_id} - {device.user_display}", device.slug
             )
 
     def _on_select_file_clicked(self):
@@ -187,8 +189,16 @@ class DeviceRecoveryExportWidget(QWidget, Ui_DeviceRecoveryExportWidget):
             elif selected_device.type == DeviceFileType.SMARTCARD:
                 try:
                     device = load_device_with_smartcard(selected_device.key_file_path)
-                except LocalDeviceError:
-                    show_error(self, translate("TEXT_LOGIN_ERROR_AUTHENTICATION_FAILED"))
+                except LocalDeviceError as exc:
+                    show_error(
+                        self, translate("TEXT_LOGIN_ERROR_AUTHENTICATION_FAILED"), exception=exc
+                    )
+                    self.button_validate.setEnabled(True)
+                    return
+                except ModuleNotFoundError as exc:
+                    show_error(
+                        self, translate("TEXT_UNLOCK_ERROR_SMARTCARD_NOT_AVAILABLE"), exception=exc
+                    )
                     self.button_validate.setEnabled(True)
                     return
             self.jobs_ctx.submit_job(

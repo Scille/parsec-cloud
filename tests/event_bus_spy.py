@@ -51,11 +51,51 @@ class PartialObj:
         return True
 
 
-@attr.s(frozen=True, slots=True)
+@attr.s(frozen=True, slots=True, eq=False)
 class SpiedEvent:
     event = attr.ib()
     kwargs = attr.ib(factory=dict)
     dt = attr.ib(factory=pendulum.now)
+
+    # When using Rust with pyo3 with some types,
+    # unittest.mock.ANY cannot be passed to the binding
+    # without implementing some specific magic in the binding
+    # itself.
+    # Instead, we try to let the ANY class to the comparaison.
+    # So, calls that were EntryID.__eq__(self, ANY) (which causes
+    # problems because ANY cannot be converted to EntryID) become
+    # ANY.__eq__(self, EntryID) instead.
+    def __eq__(self, other):
+        ret = True
+
+        if other.event is ANY:
+            ret &= other.event == self.event
+        else:
+            ret &= self.event == other.event
+
+        if other.dt is ANY:
+            ret &= other.dt == self.dt
+        else:
+            ret &= self.dt == other.dt
+
+        if other.kwargs is ANY:
+            return ret
+        elif self.kwargs is ANY:
+            return ret
+
+        ret &= len(other.kwargs) == len(self.kwargs)
+        ret &= all(k in self.kwargs for k in other.kwargs)
+
+        if not ret:
+            return ret
+
+        for k, v in other.kwargs.items():
+            if v is ANY:
+                ret &= v == self.kwargs[k]
+            else:
+                ret &= self.kwargs[k] == v
+
+        return ret
 
 
 @attr.s(repr=False, eq=False)
@@ -169,7 +209,7 @@ class EventBusSpy:
 
     def assert_events_exactly_occured(self, events):
         events = self._cook_events_params(events)
-        assert self.events == events
+        assert events == self.events
 
 
 class SpiedEventBus(EventBus):

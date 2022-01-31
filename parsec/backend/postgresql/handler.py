@@ -4,22 +4,21 @@ import trio
 import attr
 import re
 from pendulum import now as pendulum_now
+from uuid import uuid4
 import triopg
 from typing import List, Tuple, Optional, Iterable
 
 from triopg import UniqueViolationError, UndefinedTableError, PostgresError
-from uuid import uuid4
 from functools import wraps
 from structlog import get_logger
 from base64 import b64decode, b64encode
 import importlib_resources
 
 from parsec.event_bus import EventBus
-from parsec.serde import packb, unpackb
+from parsec.serde import SerdeValidationError, SerdePackingError
 from parsec.utils import start_task, TaskStatus
-from parsec.api.protocol import RealmRole, InvitationStatus
 from parsec.backend.postgresql import migrations as migrations_module
-from parsec.backend.backend_events import BackendEvent
+from parsec.backend.backend_events import BackendEvent, backend_event_serializer
 
 
 logger = get_logger()
@@ -39,7 +38,8 @@ class MigrationItem:
 def retrieve_migrations() -> List[MigrationItem]:
     migrations = []
     ids = []
-    for file_name in importlib_resources.contents(migrations_module):
+    for file in importlib_resources.files(migrations_module).iterdir():
+        file_name = file.name
         match = re.search(MIGRATION_FILE_PATTERN, file_name)
         if match:
             idx = int(match.group("id"))
@@ -49,7 +49,7 @@ def retrieve_migrations() -> List[MigrationItem]:
                     f"Inconsistent package (multiples migrations with {idx} as id)"
                 )
             ids.append(idx)
-            sql = importlib_resources.read_text(migrations_module, file_name)
+            sql = importlib_resources.files(migrations_module).joinpath(file_name).read_text()
             if not sql:
                 raise AssertionError(f"Empty migration file {file_name}")
             migrations.append(
@@ -194,19 +194,17 @@ class PGHandler:
             self._task_status.cancel()
 
     def _on_notification(self, conn, pid: int, channel: str, payload: str) -> None:
-        data = unpackb(b64decode(payload.encode("ascii")))
+        try:
+            data = backend_event_serializer.loads(b64decode(payload.encode("ascii")))
+        except (SerdeValidationError, SerdePackingError, ValueError) as exc:
+            logger.warning(
+                "Invalid notif received", pid=pid, channel=channel, payload=payload, exc_info=exc
+            )
+            return
+
+        logger.debug("notif received", pid=pid, channel=channel, payload=payload)
         data.pop("__id__")  # Simply discard the notification id
         signal = data.pop("__signal__")
-        logger.debug("notif received", pid=pid, channel=channel, payload=payload)
-        # Convert strings to enums
-        signal = BackendEvent(signal)
-        # Kind of a hack, but fine enough for the moment
-        if signal == BackendEvent.REALM_ROLES_UPDATED:
-            role_str = data.pop("role_str")
-            data["role"] = RealmRole(role_str) if role_str is not None else None
-        elif signal == BackendEvent.INVITE_STATUS_CHANGED:
-            status_str = data.pop("status_str")
-            data["status"] = InvitationStatus(status_str) if status_str is not None else None
         self.event_bus.send(signal, **data)
 
     async def teardown(self) -> None:
@@ -221,8 +219,8 @@ async def send_signal(conn, signal: BackendEvent, **kwargs) -> None:
     # Add UUID to ensure the payload is unique given it seems Postgresql can
     # drop duplicated NOTIFY (same channel/payload)
     # see: https://github.com/Scille/parsec-cloud/issues/199
-    raw_data = b64encode(
-        packb({"__id__": uuid4().hex, "__signal__": signal.value, **kwargs})
-    ).decode("ascii")
+    kwargs["__id__"] = uuid4().hex
+    kwargs["__signal__"] = signal
+    raw_data = b64encode(backend_event_serializer.dumps(kwargs)).decode("ascii")
     await conn.execute("SELECT pg_notify($1, $2)", "app_notification", raw_data)
     logger.debug("notif sent", signal=signal, kwargs=kwargs)

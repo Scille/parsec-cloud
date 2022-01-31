@@ -183,9 +183,9 @@ assert Version("1.2.3-b10+dev") < Version("1.2.3-rc1+dev")
 assert Version("1.2.3-b10+dev") < Version("1.2.3+dev")
 
 
-def run_git(cmd, verbose=False):
-    cmd = f"git {cmd}"
-    proc = subprocess.run(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True)
+def run_git(*cmd, verbose=False):
+    cmd = ["git", *cmd]
+    proc = subprocess.run(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
     if proc.returncode != 0:
         raise RuntimeError(
             f"Error while running `{cmd}`: returned {proc.returncode}\n"
@@ -200,12 +200,12 @@ def run_git(cmd, verbose=False):
 
 def get_version_from_repo_describe_tag(verbose=False):
     # Note we only search for annotated tags
-    return Version(run_git("describe --debug", verbose=verbose))
+    return Version(run_git("describe", "--debug", verbose=verbose))
 
 
 def get_version_from_code():
     global_dict = {}
-    exec((VERSION_FILE).read_text(), global_dict)
+    exec((VERSION_FILE).read_text(encoding="utf8"), global_dict)
     __version__ = global_dict.get("__version__")
     if not __version__:
         raise ReleaseError(f"Cannot find __version__ in {VERSION_FILE!s}")
@@ -213,16 +213,18 @@ def get_version_from_code():
 
 
 def update_version_file(new_version: Version) -> None:
-    version_txt = VERSION_FILE.read_text()
+    version_txt = VERSION_FILE.read_text(encoding="utf8")
     updated_version_txt = re.sub(
         r'__version__\W=\W".*"', f'__version__ = "{new_version}"', version_txt
     )
     assert updated_version_txt != version_txt
-    VERSION_FILE.write_text(updated_version_txt)
+    VERSION_FILE.write_bytes(
+        updated_version_txt.encode("utf8")
+    )  # Use write_bytes to keep \n on Windows
 
 
 def update_license_file(new_version: Version, new_release_date: date) -> None:
-    license_txt = BSL_LICENSE_FILE.read_text()
+    license_txt = BSL_LICENSE_FILE.read_text(encoding="utf8")
     half_updated_license_txt = re.sub(
         r"Change Date:.*", f"Change Date:  {new_release_date.strftime('%b %d, %Y')}", license_txt
     )
@@ -230,7 +232,9 @@ def update_license_file(new_version: Version, new_release_date: date) -> None:
         r"Licensed Work:.*", f"Licensed Work:  Parsec {new_version}", half_updated_license_txt
     )
     assert updated_version_txt != half_updated_license_txt
-    BSL_LICENSE_FILE.write_text(updated_version_txt)
+    BSL_LICENSE_FILE.write_bytes(
+        updated_version_txt.encode("utf8")
+    )  # Use write_bytes to keep \n on Windows
 
 
 def collect_newsfragments():
@@ -266,7 +270,7 @@ def build_release(version, stage_pause):
     assert release_date.toordinal() < license_conversion_date.toordinal()
 
     # Check repo is clean
-    stdout = run_git("status --porcelain --untracked-files=no")
+    stdout = run_git("status", "--porcelain", "--untracked-files=no")
     if stdout.strip():
         raise ReleaseError("Repository is not clean, aborting")
 
@@ -274,7 +278,7 @@ def build_release(version, stage_pause):
     update_version_file(version)
 
     # Update HISTORY.rst
-    history_txt = HISTORY_FILE.read_text()
+    history_txt = HISTORY_FILE.read_text(encoding="utf8")
     header_split = ".. towncrier release notes start\n"
     if header_split in history_txt:
         header, history_body = history_txt.split(header_split, 1)
@@ -292,7 +296,7 @@ def build_release(version, stage_pause):
         # Don't add empty fragments. Still needed to be collected as they will be deleted later
         if type == "empty":
             continue
-        issue_txt = f"{fragment.read_text()} (`#{issue_id} <https://github.com/Scille/parsec-cloud/issues/{issue_id}>`__)\n"
+        issue_txt = f"{fragment.read_text(encoding='utf8')} (`#{issue_id} <https://github.com/Scille/parsec-cloud/issues/{issue_id}>`__)\n"
         wrapped_issue_txt = textwrap.fill(
             issue_txt, width=80, break_long_words=False, initial_indent="* ", subsequent_indent="  "
         )
@@ -309,7 +313,9 @@ def build_release(version, stage_pause):
             new_entry += "\n"
 
     updated_history_txt = f"{history_header}{new_entry}{history_body}".strip() + "\n"
-    HISTORY_FILE.write_text(updated_history_txt)
+    HISTORY_FILE.write_bytes(
+        updated_history_txt.encode("utf8")
+    )  # Use write_bytes to keep \n on Windows
 
     # Update BSL license date marker & version info
     update_license_file(version, license_conversion_date)
@@ -319,19 +325,17 @@ def build_release(version, stage_pause):
     print(f"Create commit `{commit_msg}`")
     if stage_pause:
         input("Pausing, press enter when ready")
-    run_git(
-        f"add {HISTORY_FILE.absolute()} {BSL_LICENSE_FILE.absolute()} {VERSION_FILE.absolute()}"
-    )
+    run_git("add", HISTORY_FILE.absolute(), BSL_LICENSE_FILE.absolute(), VERSION_FILE.absolute())
     if newsfragments:
         fragments_pathes = [str(x.absolute()) for x in newsfragments]
-        run_git(f"rm {' '.join(fragments_pathes)}")
+        run_git("rm", *fragments_pathes)
     # Disable pre-commit hooks given this commit wouldn't pass `releaser check`
-    run_git(f"commit -m '{commit_msg}' --no-verify")
+    run_git("commit", "-m", commit_msg, "--no-verify")
 
     print(f"Create tag {version}")
     if stage_pause:
         input("Pausing, press enter when ready")
-    run_git(f"tag {version} -m 'Release version {version}' -a -s")
+    run_git("tag", str(version), "-m", f"Release version {version}", "-a", "-s")
 
     # Update __version__ with dev suffix
     dev_version = version.evolve(is_dev=True)
@@ -341,9 +345,9 @@ def build_release(version, stage_pause):
     update_license_file(dev_version, license_conversion_date)
     if stage_pause:
         input("Pausing, press enter when ready")
-    run_git(f"add {BSL_LICENSE_FILE.absolute()} {VERSION_FILE.absolute()}")
+    run_git("add", BSL_LICENSE_FILE.absolute(), VERSION_FILE.absolute())
     # Disable pre-commit hooks given this commit wouldn't pass `releaser check`
-    run_git(f"commit -m '{commit_msg}' --no-verify")
+    run_git("commit", "-m", commit_msg, "--no-verify")
 
 
 def check_release(version):
@@ -365,7 +369,7 @@ def check_release(version):
         )
 
     # Check tag exist and is an annotated&signed one
-    show_info = run_git(f"show --quiet {version}")
+    show_info = run_git("show", "--quiet", str(version))
     tag_type = show_info.split(" ", 1)[0]
     if tag_type != "tag":
         raise ReleaseError(f"{version} is not an annotated tag (type: {tag_type})")
@@ -400,8 +404,9 @@ if __name__ == "__main__":
         if args.command == "build":
             if not args.version:
                 raise SystemExit("version is required for build command")
-            current_version = get_version_from_repo_describe_tag(args.verbose)
-            check_non_release(current_version)
+            # TODO: rethink the non-release checks
+            # current_version = get_version_from_repo_describe_tag(args.verbose)
+            # check_non_release(current_version)
             build_release(args.version, args.stage_pause)
 
         else:  # Check
@@ -412,7 +417,9 @@ if __name__ == "__main__":
                 version = args.version
 
             if version.is_dev:
-                check_non_release(version)
+                # TODO: rethink the non-release checks
+                # check_non_release(version)
+                pass
 
             else:
                 check_release(version)

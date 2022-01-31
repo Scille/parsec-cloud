@@ -1,12 +1,11 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2016-2021 Scille SAS
 
 import pytest
-from uuid import uuid4
 from pendulum import datetime
 from unittest.mock import ANY
 
-from parsec.api.data import UserManifest
-from parsec.core.fs.remote_loader import MANIFEST_STAMP_AHEAD_MS
+from parsec.api.data import UserManifest, EntryID
+from parsec.core.fs.remote_loader import MANIFEST_STAMP_AHEAD_US
 from parsec.core.types import (
     WorkspaceEntry,
     WorkspaceRole,
@@ -108,7 +107,7 @@ async def test_rename_workspace_offline(
 
 @pytest.mark.trio
 async def test_rename_unknown_workspace(alice_user_fs):
-    dummy_id = uuid4()
+    dummy_id = EntryID.new()
     with pytest.raises(FSWorkspaceNotFoundError):
         await alice_user_fs.workspace_rename(dummy_id, "whatever")
 
@@ -325,7 +324,7 @@ async def test_sync_placeholder(
         expected_base_um = UserManifest(
             author=device.device_id,
             # Add extra time due to the user realm being already created at 2000-01-02
-            timestamp=datetime(2000, 1, 2).add(microseconds=MANIFEST_STAMP_AHEAD_MS),
+            timestamp=datetime(2000, 1, 2).add(microseconds=MANIFEST_STAMP_AHEAD_US),
             id=device.user_manifest_id,
             version=1,
             created=expected_um.created,

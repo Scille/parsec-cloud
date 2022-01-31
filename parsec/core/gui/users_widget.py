@@ -1,13 +1,11 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2016-2021 Scille SAS
 
-from uuid import UUID
-
 from PyQt5.QtCore import Qt, pyqtSignal
 from PyQt5.QtWidgets import QWidget, QMenu, QGraphicsDropShadowEffect, QLabel
 from PyQt5.QtGui import QColor
 from math import ceil
 
-from parsec.api.protocol import InvitationType, InvitationEmailSentStatus
+from parsec.api.protocol import InvitationToken, InvitationType, InvitationEmailSentStatus
 from parsec.api.data import UserProfile
 from parsec.core.types import BackendInvitationAddr, UserInfo
 
@@ -25,7 +23,7 @@ from parsec.core.gui.custom_dialogs import (
     get_text_input,
     show_info_copy_link,
 )
-from parsec.core.gui.custom_widgets import ensure_string_size
+from parsec.core.gui.custom_widgets import ensure_string_size, Pixmap
 from parsec.core.gui.flow_layout import FlowLayout
 from parsec.core.gui import validators
 from parsec.core.gui import desktop
@@ -39,8 +37,8 @@ USERS_PER_PAGE = 100
 
 
 class UserInvitationButton(QWidget, Ui_UserInvitationButton):
-    greet_clicked = pyqtSignal(UUID)
-    cancel_clicked = pyqtSignal(UUID)
+    greet_clicked = pyqtSignal(InvitationToken)
+    cancel_clicked = pyqtSignal(InvitationToken)
 
     def __init__(self, email, addr):
         super().__init__()
@@ -105,7 +103,6 @@ class UserButton(QWidget, Ui_UserButton):
 
         if self.is_current_user:
             self.label_is_current.setText("({})".format(_("TEXT_USER_IS_CURRENT")))
-        self.label_icon.apply_style()
         self.setContextMenuPolicy(Qt.CustomContextMenu)
         self.customContextMenuRequested.connect(self.show_context_menu)
         effect = QGraphicsDropShadowEffect(self)
@@ -126,7 +123,11 @@ class UserButton(QWidget, Ui_UserButton):
             UserProfile.STANDARD: _("TEXT_USER_PROFILE_STANDARD"),
             UserProfile.ADMIN: _("TEXT_USER_PROFILE_ADMIN"),
         }
-
+        profiles_icons = {
+            UserProfile.OUTSIDER: ":/icons/images/material/person_outline.svg",
+            UserProfile.STANDARD: ":/icons/images/material/person.svg",
+            UserProfile.ADMIN: ":/icons/images/material/manage_accounts.svg",
+        }
         self._user_info = val
         if self.user_info.is_revoked:
             self.setToolTip(_("TEXT_USER_IS_REVOKED"))
@@ -145,6 +146,9 @@ class UserButton(QWidget, Ui_UserButton):
         )
         self.label_username.setToolTip(self.user_info.short_user_display)
         self.label_role.setText(profiles_txt[self.user_info.profile])
+        pix = Pixmap(profiles_icons[self.user_info.profile])
+        pix.replace_color(QColor(0, 0, 0), QColor(153, 153, 153))
+        self.label_icon.setPixmap(pix)
 
     def show_context_menu(self, pos):
         if self.is_current_user:
@@ -470,7 +474,7 @@ class UsersWidget(QWidget, Ui_UsersWidget):
 
         for invitation in reversed(invitations):
             addr = BackendInvitationAddr.build(
-                backend_addr=self.core.device.organization_addr,
+                backend_addr=self.core.device.organization_addr.get_backend_addr(),
                 organization_id=self.core.device.organization_id,
                 invitation_type=InvitationType.USER,
                 token=invitation["token"],

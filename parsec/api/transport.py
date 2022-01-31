@@ -20,6 +20,7 @@ from wsproto.events import (
     Pong,
 )
 
+from parsec._version import __version__
 from parsec.api.protocol.handshake import ServerHandshake
 
 
@@ -29,6 +30,7 @@ __all__ = ("TransportError", "Transport")
 logger = get_logger()
 WEBSOCKET_HANDSHAKE_TIMEOUT = 3.0
 TRANSPORT_TARGET = "/ws"
+USER_AGENT = f"parsec/{__version__}"
 
 
 class TransportError(Exception):
@@ -118,7 +120,13 @@ class Transport:
 
         # Because this is a client WebSocket, we need to initiate the connection
         # handshake by sending a Request event.
-        await transport._net_send(Request(host=host, target=TRANSPORT_TARGET))
+        await transport._net_send(
+            Request(
+                host=host,
+                target=TRANSPORT_TARGET,
+                extra_headers=[(b"User-Agent", USER_AGENT.encode())],
+            )
+        )
 
         # Get handshake answer
         event = await transport._next_ws_event()

@@ -17,7 +17,7 @@ repos:
     rev: v0.812
     hooks:
     - id: mypy
-      additional_dependencies: [trio_typing, pendulum]
+      additional_dependencies: ['trio_typing==0.5.1', 'pendulum==2.1.2']
       # Mypy will complain if it find two files with the same name which
       # are not part of a package (typically occurs for packaging script helpers)
       files: ^(parsec|tests)/
@@ -40,4 +40,9 @@ repos:
       entry: python ./misc/license_headers.py add
       language: python
       language_version: python3
-      types_or: [python, sql]
+      types_or: [python, sql, rust]
+-   repo: https://github.com/doublify/pre-commit-rust
+    rev: v1.0
+    hooks:
+    - id: fmt
+    - id: clippy

@@ -3,11 +3,14 @@
 import pytest
 import trio
 from unittest import mock
-from tests.common import AsyncMock
-from parsec.core.cli import rsync
+from parsec.api.data.manifest import WorkspaceManifest
+
 from parsec.crypto import HashDigest
+from parsec.api.data import EntryID, FolderManifest
+from parsec.core.cli import rsync
 from parsec.core.fs import FsPath
-from parsec.api.data.entry import EntryID
+
+from tests.common import AsyncMock
 
 
 class ReadSideEffect:
@@ -73,13 +76,13 @@ async def test_chunks_from_path():
 
 
 @pytest.mark.trio
-async def test_update_file(alice_workspace):
+async def test_update_file(alice_workspace, monkeypatch):
     block_mock1 = mock.Mock()
     block_mock1.digest = b"block1"
     block_mock2 = mock.Mock()
     block_mock2.digest = b"block2"
 
-    manifest_mock = mock.Mock()
+    manifest_mock = mock.Mock(spec=FolderManifest)
     manifest_mock.blocks = [block_mock1, block_mock2]
 
     load_manifest_mock = AsyncMock(spec=mock.Mock, side_effect=lambda x: manifest_mock)
@@ -90,7 +93,7 @@ async def test_update_file(alice_workspace):
 
     sync_by_id_mock = AsyncMock(spec=mock.Mock)
     alice_workspace.sync_by_id = sync_by_id_mock
-    HashDigest.from_data = mock.Mock(side_effect=lambda x: x)
+    monkeypatch.setattr(HashDigest, "from_data", mock.Mock(side_effect=lambda x: x))
 
     with mock.patch(
         "parsec.core.cli.rsync._chunks_from_path",
@@ -156,7 +159,8 @@ async def test_create_path(alice_workspace):
     path_info_mock = AsyncMock(spec=mock.Mock, side_effect=lambda x: {"id": "mock_id"})
     alice_workspace.path_info = path_info_mock
 
-    get_manifest_mock = AsyncMock(spec=mock.Mock, side_effect=lambda x: "mock_manifest")
+    manifest_mock = mock.Mock(spec=FolderManifest)
+    get_manifest_mock = AsyncMock(spec=mock.Mock, side_effect=lambda x: manifest_mock)
     alice_workspace.local_storage.get_manifest = get_manifest_mock
 
     import_file_mock = AsyncMock(spec=mock.Mock)
@@ -171,7 +175,7 @@ async def test_create_path(alice_workspace):
         path_info_mock.assert_called_once_with(FsPath("/path_in_workspace/test"))
         get_manifest_mock.assert_called_once_with("mock_id")
         import_file_mock.assert_not_called()
-        assert res == "mock_manifest"
+        assert res is manifest_mock
 
     mkdir_mock.reset_mock()
     sync_mock.reset_mock()
@@ -274,11 +278,13 @@ async def test_clear_directory(alice_workspace):
 
 @pytest.mark.trio
 async def test_get_or_create_directory(alice_workspace):
+    manifest1 = mock.Mock(spec=FolderManifest)
+    manifest2 = mock.Mock(spec=FolderManifest)
 
-    load_manifest_mock = AsyncMock(spec=mock.Mock(), side_effect=lambda x: "load_manifest_mock")
+    load_manifest_mock = AsyncMock(spec=mock.Mock(), side_effect=lambda x: manifest1)
     alice_workspace.remote_loader.load_manifest = load_manifest_mock
 
-    _create_path_mock = AsyncMock(spec=mock.Mock(), side_effect=lambda *x: "_create_path_mock")
+    _create_path_mock = AsyncMock(spec=mock.Mock(), side_effect=lambda *x: manifest2)
     with mock.patch("parsec.core.cli.rsync._create_path", _create_path_mock):
         entry_id = EntryID.new()
         res = await rsync._get_or_create_directory(
@@ -286,7 +292,7 @@ async def test_get_or_create_directory(alice_workspace):
         )
         load_manifest_mock.assert_called_once_with(entry_id)
         _create_path_mock.assert_not_called()
-        assert res == "load_manifest_mock"
+        assert res is manifest1
 
     load_manifest_mock.reset_mock()
 
@@ -298,7 +304,7 @@ async def test_get_or_create_directory(alice_workspace):
         _create_path_mock.assert_called_once_with(
             alice_workspace, True, FsPath("/test_directory"), FsPath("/path_in_workspace")
         )
-        assert res == "_create_path_mock"
+        assert res is manifest2
 
 
 @pytest.mark.trio
@@ -510,7 +516,7 @@ def test_parse_destination():
 
 @pytest.mark.trio
 async def test_root_manifest_parent(alice_workspace):
-    workspace_manifest = mock.Mock()
+    workspace_manifest = mock.Mock(spec=WorkspaceManifest)
 
     _get_or_create_directory_mock = AsyncMock(spec=mock.Mock)
     with mock.patch(
@@ -521,13 +527,13 @@ async def test_root_manifest_parent(alice_workspace):
             None, alice_workspace, workspace_manifest
         )
         _get_or_create_directory_mock.assert_not_called()
-        assert root_manifest == workspace_manifest
+        assert root_manifest is workspace_manifest
         assert parent == FsPath("/")
 
     workspace_manifest.children = {"test": "id1"}
-    workspace_test_save_manifest = mock.Mock()
+    workspace_test_save_manifest = mock.Mock(spec=FolderManifest)
     workspace_test_save_manifest.children = {}
-    workspace_test_manifest = mock.Mock()
+    workspace_test_manifest = mock.Mock(spec=FolderManifest)
     _get_or_create_directory_mock.side_effect = [
         workspace_test_manifest,
         workspace_test_save_manifest,

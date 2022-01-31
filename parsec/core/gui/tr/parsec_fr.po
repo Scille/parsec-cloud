@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PROJECT VERSION\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2021-11-08 13:19+0100\n"
+"POT-Creation-Date: 2021-11-26 11:58+0100\n"
 "PO-Revision-Date: 2020-10-15 10:31+0200\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language: fr\n"
@@ -16,7 +16,7 @@ msgstr ""
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=utf-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"Generated-By: Babel 2.6.0\n"
+"Generated-By: Babel 2.9.1\n"
 
 msgid "TEXT_PARSEC_VERSION_version"
 msgstr "PARSEC version {version}"
@@ -52,6 +52,9 @@ msgid "TEXT_ONLY_ONE_AUTH_METHOD_AVAILABLE"
 msgstr ""
 "Une seule méthode d'authentification est disponible dans cette version de"
 " Parsec."
+
+msgid "ACTION_COPY_BACKEND_ADDR"
+msgstr "Copier l'adresse du serveur"
 
 msgid "ACTION_DEVICE_MENU_CHANGE_AUTHENTICATION"
 msgstr "Changer l'authentification"
@@ -114,6 +117,12 @@ msgstr "Inconnu"
 
 msgid "TEXT_BACKEND_STATE_CRASHED_cause"
 msgstr "La connexion au serveur a été perdue"
+
+msgid "TEXT_BACKEND_STATE_DESYNC"
+msgstr ""
+"Il semblerait que votre machine ne soit pas à la bonne date ou à la bonne"
+" heure. Veuillez vérifier votre configuration et vous assurer que la "
+"date, l'heure ainsi que le fuseau horaire sont corrects."
 
 msgid "TEXT_SYSTRAY_BACKEND_DISCONNECT_organization"
 msgstr "{organization}: Déconnecté"
@@ -268,7 +277,7 @@ msgstr "L'adresse du serveur n'est pas valide."
 msgid "TEXT_ORG_WIZARD_INVALID_HUMAN_HANDLE"
 msgstr "L'adresse email n'est pas valide."
 
-msgid "TEXT_ORG_WIZARD_INVALID_DEVICE_NAME"
+msgid "TEXT_ORG_WIZARD_INVALID_DEVICE_LABEL"
 msgstr "Le nom de d'appareil n'est pas valide."
 
 msgid "ACTION_CREATE_ORG"
@@ -294,12 +303,6 @@ msgstr "La connexion vers le serveur a été refusée."
 
 msgid "TEXT_ORG_WIZARD_CONNECTION_ERROR"
 msgstr "Impossible de se connecter au serveur."
-
-msgid "TEXT_ORG_WIZARD_INVALID_TIMESTAMP"
-msgstr ""
-"Il semblerait que votre machine ne soit pas à la bonne date ou à la bonne"
-" heure. Veuillez vérifier votre configuration et vous assurer que la "
-"date, l'heure ainsi que le fuseau horaire sont corrects."
 
 msgid "TEXT_ORG_WIZARD_UNKNOWN_FAILURE"
 msgstr "Impossible de créer l'organisation."
@@ -347,8 +350,13 @@ msgstr "Impossible de créer un appareil de récupération"
 msgid "TEXT_DEVICE_UNLOCK_FOR_RECOVERY_LABEL"
 msgstr "Veuillez entrer votre mot de passe pour déverouiller cet appareil."
 
+msgid "TEXT_UNLOCK_ERROR_SMARTCARD_NOT_AVAILABLE"
+msgstr ""
+"Cet appareil est protogé par une authentification via carte à puce, "
+"toutefois cette version de Parsec ne supporte ce type d'authentification."
+
 msgid "TEXT_DEVICE_RECOVERY_EXPORT_WIZARD_TITLE"
-msgstr "Créer une appareil de récupération"
+msgstr "Créer un appareil de récupération"
 
 msgid "ACTION_IMPORT_KEY"
 msgstr "Récupérer un appareil"
@@ -429,6 +437,15 @@ msgstr "Go"
 msgid "TEXT_FILE_SIZE_TB"
 msgstr "To"
 
+msgid "TEXT_YES"
+msgstr "Oui"
+
+msgid "TEXT_NO"
+msgstr "Non"
+
+msgid "TEXT_FILE_STATUS_TITLE_name"
+msgstr "État"
+
 msgid "ACTION_FILE_OPEN_CURRENT_DIRECTORY_MAC"
 msgstr "Ouvrir le répertoire dans le Finder"
 
@@ -452,6 +469,9 @@ msgstr "Couper"
 
 msgid "ACTION_FILE_MENU_SHOW_FILE_HISTORY"
 msgstr "Voir l'historique"
+
+msgid "ACTION_FILE_MENU_SHOW_FILE_STATUS"
+msgstr "Voir l'état"
 
 msgid "ACTION_FILE_MENU_GET_FILE_LINK"
 msgstr "Lien vers ce fichier"
@@ -485,6 +505,10 @@ msgstr "Impossible de coller ce fichier à cet endroit."
 msgid "TEXT_FILE_HISTORY_MULTIPLE_FILES_SELECTED_ERROR"
 msgstr ""
 "Impossible d'afficher l'historique de plusieurs fichiers en une fois. "
+"Veuillez ne sélectionner qu'un fichier."
+
+msgid "TEXT_FILE_STATUS_MULTIPLE_FILES_SELECTED_ERROR"
+msgstr "Impossible d'afficher l'état de plusieurs fichiers en une fois. "
 "Veuillez ne sélectionner qu'un fichier."
 
 msgid "TEXT_FILE_RENAME_TITLE"
@@ -624,11 +648,11 @@ msgstr ""
 "supprimées. Vous ne pouvez plus interagir avec l'espace de travail ou "
 "voir les fichiers qu'il contient."
 
-msgid "TEXT_FILE_SHARING_DEMOTED_TO_READER"
+msgid "TEXT_FILE_SHARING_DEMOTED_TO_READER_workspace"
 msgstr ""
-"Votre rôle sur cet espace de travail a été changé en <b>Lecteur</b>. Vous"
-" ne pouvez plus ajouter, modifier ou supprimer des fichiers, mais vous "
-"pouvez toujours les visionner."
+"Votre rôle sur l'espace de travail <b>{workspace}</b> a été changé en "
+"<b>Lecteur</b>. Vous ne pouvez plus ajouter, modifier ou supprimer des "
+"fichiers, mais vous pouvez toujours les visionner."
 
 msgid "TEXT_GREET_DEVICE_INSTRUCTIONS_NO_EMAIL"
 msgstr ""
@@ -831,6 +855,17 @@ msgstr ""
 msgid "TEXT_MACFUSE_DOWNLOAD_BUTTON"
 msgstr "Télécharger macFUSE"
 
+msgid "TEXT_UPDATE_MACFUSE_TITLE"
+msgstr "Mise à jour de macFUSE nécessaire"
+
+msgid "TEXT_UPDATE_MACFUSE"
+msgstr ""
+"Votre version de macFUSE est obsolète. Pour assurer le bon fonctionnement de "
+"Parsec, vous pouvez le mettre à jour en suivant le lien ci-dessous."
+
+msgid "TEXT_UPDATE_MACFUSE_BUTTON"
+msgstr "Télécharger la dernière version de macFUSE"
+
 msgid "TEXT_LOGIN_ERROR_DEVICE_REVOKED"
 msgstr "Cet appareil a été révoqué et ne peut plus se connecter."
 
@@ -854,6 +889,11 @@ msgid "TEXT_LOGIN_MOUNTPOINT_ERROR"
 msgstr ""
 "Impossible de se connecter. Les espaces de travail n'ont pas pu être "
 "montés."
+
+msgid "TEXT_LOGIN_SMARTCARD_NOT_AVAILABLE"
+msgstr ""
+"Cet appareil est protogé par une authentification via carte à puce, "
+"toutefois cette version de Parsec ne supporte ce type d'authentification."
 
 msgid "TEXT_PARSEC_LICENSE"
 msgstr ""
@@ -1776,7 +1816,7 @@ msgstr ""
 "Souhaitez-vous en créer un maintenant ?"
 
 msgid "TEXT_ENABLE_TELEMETRY_TITLE"
-msgstr "Rapport d'erreur"
+msgstr "Activer la télémétrie"
 
 msgid "TEXT_ENABLE_TELEMETRY_INSTRUCTIONS"
 msgstr ""
@@ -2334,6 +2374,9 @@ msgstr "Nom de l'organisation"
 msgid "TEXT_LABEL_ORG_NAME_RECOMMANDATIONS"
 msgstr "Lettres, chiffres, underscores et tirets seulement. Aucun espace."
 
+msgid "ACTION_CREATE_ON_COMMERCIAL_BACKEND"
+msgstr "Utiliser le serveur PARSEC principal"
+
 msgid "ACTION_ACCEPT_CONTRACT"
 msgstr ""
 "J'accepte la <a href=\"https://parsec.cloud/pdf/Parsec-Privacy-Policy-"
@@ -2349,9 +2392,6 @@ msgstr "Je dispose de mon propre serveur PARSEC"
 msgid "TEXT_LABEL_BACKEND_ADDR_PLACEHOLDER"
 msgstr "parsec://hote:port"
 
-msgid "ACTION_CREATE_ON_COMMERCIAL_BACKEND"
-msgstr "Utiliser le serveur PARSEC principal"
-
 msgid "TEXT_LABEL_DEVICE_NAME"
 msgstr "Nom d'appareil"
 
@@ -2361,11 +2401,12 @@ msgstr "Veuillez fournir les informations suivantes pour créer votre organisati
 msgid "TEXT_DEVICE_RECOVERY_EXPORT_INSTRUCTIONS"
 msgstr ""
 "Vous allez pouvoir créer un appareil de récupération.<br />\n"
-"Il est composé d'un fichier et d'une phrase secrète qui vous permettront "
-"de récupérer votre appareil si vous le perdez."
+"Un appareil de récupération est constitué d'un fichier protégé par une "
+"phrase secrète et vous permet de re-créer des appareils si vous perdez "
+"votre appareil actuel."
 
 msgid "TEXT_DEVICE_RECOVERY_EXPORT_SELECT_DEVICE_LABEL"
-msgstr "Choisissez l'appareil pour lequel vous souhaitez créer une récupération"
+msgstr "Choisissez l'utilisateur pour lequel vous souhaitez créer un appareil de récupération"
 
 msgid "TEXT_DEVICE_RECOVERY_EXPORT_SELECT_FILE_LABEL"
 msgstr "Choisissez un emplacement pour le fichier de récupération"
@@ -2461,6 +2502,48 @@ msgstr "Par"
 
 msgid "ACTION_FILE_HISTORY_LOAD_MORE_ENTRIES"
 msgstr "Charger plus d'entrées"
+
+msgid "TEXT_FILE_INFO_LOCATION"
+msgstr "Emplacement"
+
+msgid "TEXT_FILE_INFO_TYPE"
+msgstr "Type"
+
+msgid "TEXT_FILE_INFO_SIZE"
+msgstr "Taille"
+
+msgid "TEXT_FILE_INFO_WORKSPACE"
+msgstr "Espace de travail"
+
+msgid "TEXT_FILE_INFO_CREATED_ON"
+msgstr "Créé le"
+
+msgid "TEXT_FILE_INFO_CREATED_BY"
+msgstr "Créé par"
+
+msgid "TEXT_FILE_INFO_UPDATED_ON"
+msgstr "Mise à jour le"
+
+msgid "TEXT_FILE_INFO_UPDATED_BY"
+msgstr "Mise à jour par"
+
+msgid "TEXT_FILE_INFO_AVAILABILITY"
+msgstr "Disponibilité"
+
+msgid "TEXT_FILE_INFO_UPLOADED"
+msgstr "Téléchargé"
+
+msgid "TEXT_FILE_INFO_BLOCKS_LOCAL"
+msgstr "Blocs locaux uniquement"
+
+msgid "TEXT_FILE_INFO_BLOCKS_REMOTE"
+msgstr "Blocs distants uniquement"
+
+msgid "TEXT_FILE_INFO_BLOCKS_BOTH"
+msgstr "Blocs locaux et distants"
+
+msgid "TEXT_FILE_INFO_NON_APPLICABLE"
+msgstr "N/A"
 
 msgid "TEXT_FILE_BACK_TO_WORKSPACES_TOOLTIP"
 msgstr "Retour à la liste des espaces de travail"
@@ -2724,8 +2807,8 @@ msgstr "Voir l'espace de travail tel qu'il était à une date donnée."
 msgid "TEXT_WORKSPACE_REENCRYPT_WORKSPACE_TOOLTIP"
 msgstr "Rechiffrer l'espace de travail."
 
-msgid "TEXT_WORKSPACE_DELETE_WORKSPACE_TOOLTIP"
-msgstr "Supprimer l'espace de travail"
+msgid "TEXT_TIMESTAMPED_WORKSPACE_CLOSE_TOOLTIP"
+msgstr "Fermer la vue instantanée."
 
 msgid "TEXT_WORKSPACE_FILTER_WORKSPACES_PLACEHOLDER"
 msgstr "Filtrer les espaces de travail"

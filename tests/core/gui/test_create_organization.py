@@ -1,22 +1,20 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2016-2021 Scille SAS
 
 import pytest
-
+import trio
 import pendulum
-
 from PyQt5 import QtCore
 
-from tests.fixtures import local_device_to_backend_user
-from tests.common import customize_fixtures, freeze_time
-
-from parsec.api.protocol import OrganizationID, HumanHandle
+from parsec.api.protocol import OrganizationID, HumanHandle, DeviceLabel
 from parsec.core.backend_connection import apiv1_backend_anonymous_cmds_factory
 from parsec.core.types import BackendOrganizationBootstrapAddr
 from parsec.core.invite import bootstrap_organization
-
 from parsec.core.gui.create_org_widget import CreateOrgUserInfoWidget
 from parsec.core.gui.authentication_choice_widget import AuthenticationChoiceWidget
 from parsec.core.gui.lang import translate
+
+from tests.fixtures import local_device_to_backend_user
+from tests.common import customize_fixtures, freeze_time
 
 
 @pytest.fixture
@@ -83,8 +81,13 @@ async def _do_creation_process(aqtbot, co_w):
 @pytest.mark.trio
 @customize_fixtures(backend_spontaneous_organization_boostrap=True)
 async def test_create_organization(
-    gui, aqtbot, running_backend, catch_create_org_widget, autoclose_dialog
+    monkeypatch, gui, aqtbot, running_backend, catch_create_org_widget, autoclose_dialog
 ):
+    # Disable the sync monitor to avoid concurrent sync right when the claim finish
+    monkeypatch.setattr(
+        "parsec.core.sync_monitor.freeze_sync_monitor_mockpoint", trio.sleep_forever
+    )
+
     # The org creation window is usually opened using a sub-menu.
     # Sub-menus can be a bit challenging to open in tests so we cheat
     # using the keyboard shortcut Ctrl+N that has the same effect.
@@ -111,6 +114,10 @@ async def test_create_organization(
         c_w = gui.test_get_central_widget()
         assert c_w
         assert c_w.button_user.text() == "AnomalousMaterials\nGordon Freeman"
+
+        # Claimed user should start with a non-speculative user manifest
+        um = c_w.core.user_fs.get_user_manifest()
+        assert not um.speculative
 
     await aqtbot.wait_until(_logged_in)
 
@@ -170,7 +177,9 @@ async def test_create_organization_same_name(
     human_handle = HumanHandle(email="zack@example.com", label="Zack")
 
     async with apiv1_backend_anonymous_cmds_factory(addr=organization_bootstrap_addr) as cmds:
-        await bootstrap_organization(cmds, human_handle=human_handle, device_label="PC1")
+        await bootstrap_organization(
+            cmds, human_handle=human_handle, device_label=DeviceLabel("PC1")
+        )
 
     # Now create an org with the same name
     aqtbot.key_click(gui, "n", QtCore.Qt.ControlModifier, 200)
@@ -378,10 +387,9 @@ async def test_create_organization_bootstrap_only_custom_server(
         assert not co_w.current_widget.radio_use_commercial.isEnabled()
         assert len(co_w.current_widget.line_edit_backend_addr.text())
         assert not co_w.current_widget.line_edit_backend_addr.isEnabled()
+        assert co_w.button_validate.isEnabled()
 
     await aqtbot.wait_until(_user_widget_ready)
-
-    aqtbot.mouse_click(co_w.current_widget.check_accept_contract, QtCore.Qt.LeftButton)
 
     aqtbot.mouse_click(co_w.button_validate, QtCore.Qt.LeftButton)
 
@@ -459,7 +467,7 @@ async def test_create_organization_already_bootstrapped(
     aqtbot.key_clicks(co_w.current_widget.line_edit_device, "HEV")
 
     def _user_widget_ready():
-        assert co_w.current_widget.line_edit_org_name.text() == org.organization_id
+        assert co_w.current_widget.line_edit_org_name.text() == str(org.organization_id)
         assert co_w.current_widget.line_edit_org_name.isReadOnly() is True
 
     await aqtbot.wait_until(_user_widget_ready)
@@ -604,9 +612,7 @@ async def test_create_organization_wrong_timestamp(
         aqtbot.mouse_click(co_w.button_validate, QtCore.Qt.LeftButton)
 
     def _error_shown():
-        assert autoclose_dialog.dialogs == [
-            ("Error", translate("TEXT_ORG_WIZARD_INVALID_TIMESTAMP"))
-        ]
+        assert autoclose_dialog.dialogs == [("Error", translate("TEXT_BACKEND_STATE_DESYNC"))]
 
     await aqtbot.wait_until(_error_shown)
 

@@ -1,1 +1,0 @@
-Show a window with the invitation link when an invitation is failing to be sent via email

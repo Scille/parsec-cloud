@@ -5,6 +5,7 @@ from unittest.mock import ANY
 from pendulum import datetime
 
 from parsec.api.data import UserManifest, WorkspaceEntry
+from parsec.api.protocol import RealmID
 from parsec.core.core_events import CoreEvent
 from parsec.core.types import WorkspaceRole, LocalUserManifest, EntryID
 from parsec.core.fs import (
@@ -312,7 +313,7 @@ async def test_share_no_manager_right(running_backend, alice_user_fs, alice, bob
     await running_backend.backend.realm.update_roles(
         alice.organization_id,
         RealmGrantedRole(
-            realm_id=wid,
+            realm_id=RealmID(wid.uuid),
             user_id=bob.user_id,
             certificate=b"<dummy>",
             role=RealmRole.OWNER,
@@ -323,7 +324,7 @@ async def test_share_no_manager_right(running_backend, alice_user_fs, alice, bob
     await running_backend.backend.realm.update_roles(
         alice.organization_id,
         RealmGrantedRole(
-            realm_id=wid,
+            realm_id=RealmID(wid.uuid),
             user_id=alice.user_id,
             certificate=b"<dummy>",
             role=RealmRole.CONTRIBUTOR,

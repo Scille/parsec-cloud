@@ -4,7 +4,6 @@ import trio
 import pytest
 from unittest.mock import ANY
 import pendulum
-from uuid import UUID, uuid4
 from hypothesis import given, strategies as st
 
 from parsec.backend.block import BlockTimeoutError
@@ -14,20 +13,27 @@ from parsec.backend.raid5_blockstore import (
     generate_checksum_chunk,
     rebuild_block_from_chunks,
 )
-from parsec.api.protocol import block_create_serializer, block_read_serializer, packb, RealmRole
+from parsec.api.protocol import (
+    BlockID,
+    VlobID,
+    block_create_serializer,
+    block_read_serializer,
+    packb,
+    RealmRole,
+)
 
 from tests.common import customize_fixtures
 from tests.backend.common import block_create, block_read
 
 
-BLOCK_ID = UUID("00000000000000000000000000000001")
-VLOB_ID = UUID("00000000000000000000000000000002")
+BLOCK_ID = BlockID.from_hex("00000000000000000000000000000001")
+VLOB_ID = VlobID.from_hex("00000000000000000000000000000002")
 BLOCK_DATA = b"Hodi ho !"
 
 
 @pytest.fixture
 async def block(backend, alice, realm):
-    block_id = UUID("0000000000000000000000000000000C")
+    block_id = BlockID.from_hex("0000000000000000000000000000000C")
 
     await backend.block.create(alice.organization_id, alice.device_id, block_id, realm, BLOCK_DATA)
     return block_id
@@ -77,7 +83,7 @@ async def test_block_read_check_access_rights(
 async def test_block_create_check_access_rights(
     backend, alice, bob, bob_backend_sock, realm, next_timestamp
 ):
-    block_id = uuid4()
+    block_id = BlockID.new()
 
     # User not part of the realm
     rep = await block_create(bob_backend_sock, block_id, realm, BLOCK_DATA, check_rep=False)
@@ -101,7 +107,7 @@ async def test_block_create_check_access_rights(
                 granted_on=next_timestamp(),
             ),
         )
-        block_id = uuid4()
+        block_id = BlockID.new()
         rep = await block_create(bob_backend_sock, block_id, realm, BLOCK_DATA, check_rep=False)
         if access_granted:
             assert rep == {"status": "ok"}
@@ -134,7 +140,7 @@ async def test_block_create_and_read(alice_backend_sock, realm):
 
     # Test not found as well
 
-    dummy_id = UUID("00000000000000000000000000000002")
+    dummy_id = BlockID.from_hex("00000000000000000000000000000002")
     rep = await block_read(alice_backend_sock, dummy_id)
     assert rep == {"status": "not_found"}
 
