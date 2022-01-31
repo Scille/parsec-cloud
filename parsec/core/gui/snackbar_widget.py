@@ -35,14 +35,14 @@ class SnackbarWidget(QWidget, Ui_SnackbarWidget):
 
     opacity = pyqtProperty(float, fset=_set_opacity, fget=_get_opacity)
 
-    def __init__(self, msg, icon=None, timeout=3000, action_text=None, action=None):
+    def __init__(self, msg, icon=None, timeout=3000, action_text=None, action=None, animate=False):
         super().__init__()
         self.setupUi(self)
+        self.animate = animate
         self.setWindowFlags(Qt.FramelessWindowHint | Qt.Tool | Qt.WindowStaysOnTopHint)
         self.setAttribute(Qt.WA_TranslucentBackground)
         self.setAttribute(Qt.WA_ShowWithoutActivating)
         self.setObjectName("SnackbarWidget")
-        self._set_opacity(0.0)
         self.label.setText(msg)
         self.action = action
         if action_text and action:
@@ -59,25 +59,30 @@ class SnackbarWidget(QWidget, Ui_SnackbarWidget):
         self.main_window = ParsecApp.get_main_window()
         self.index = 0
 
-        self.show_animation = QPropertyAnimation(self, b"opacity")
-        self.show_animation.finished.connect(self.timer.start)
-        self.show_animation.setDuration(500)
-        self.show_animation.setStartValue(0.0)
-        self.show_animation.setEndValue(1.0)
-        self.show_animation.setEasingCurve(QEasingCurve.Linear)
+        if self.animate:
+            self._set_opacity(0.0)
+            self.show_animation = QPropertyAnimation(self, b"opacity")
+            self.show_animation.finished.connect(self.timer.start)
+            self.show_animation.setDuration(500)
+            self.show_animation.setStartValue(0.0)
+            self.show_animation.setEndValue(1.0)
+            self.show_animation.setEasingCurve(QEasingCurve.Linear)
 
-        self.hide_animation = QPropertyAnimation(self, b"opacity")
-        self.hide_animation.finished.connect(self.hide)
-        self.hide_animation.setDuration(500)
-        self.hide_animation.setStartValue(1.0)
-        self.hide_animation.setEndValue(0.0)
-        self.show_animation.setEasingCurve(QEasingCurve.Linear)
+            self.hide_animation = QPropertyAnimation(self, b"opacity")
+            self.hide_animation.finished.connect(self.hide)
+            self.hide_animation.setDuration(500)
+            self.hide_animation.setStartValue(1.0)
+            self.hide_animation.setEndValue(0.0)
+            self.show_animation.setEasingCurve(QEasingCurve.Linear)
+        else:
+            self._set_opacity(1.0)
 
     def _on_action_clicked(self):
         self.action()
-        self.show_animation.stop()
         self.timer.stop()
-        self.hide_animation.start()
+        if self.animate:
+            self.show_animation.stop()
+            self.hide_animation.start()
 
     def set_index(self, index):
         self.index = index
@@ -109,8 +114,11 @@ class SnackbarWidget(QWidget, Ui_SnackbarWidget):
         self.setGeometry(pos.x(), pos.y(), width, height)
 
     def _on_timeout(self):
-        self.show_animation.stop()
-        self.hide_animation.start()
+        if self.animate:
+            self.show_animation.stop()
+            self.hide_animation.start()
+        else:
+            self.hide()
 
     def set_visible(self, visible):
         if not visible:
@@ -119,17 +127,22 @@ class SnackbarWidget(QWidget, Ui_SnackbarWidget):
             super().show()
 
     def hide(self):
-        self.show_animation.stop()
-        self.hide_animation.stop()
+        if self.animate:
+            self.show_animation.stop()
+            self.hide_animation.stop()
         self.timer.stop()
         super().hide()
         self._dismissed.emit(self)
 
     def show(self):
         self.move_popup()
-        self._set_opacity(0.0)
         super().show()
-        self.show_animation.start()
+        if self.animate:
+            self._set_opacity(0.0)
+            self.show_animation.start()
+        else:
+            self._set_opacity(1.0)
+            self.timer.start()
 
 
 class SnackbarManager(QObject):
@@ -184,28 +197,28 @@ class SnackbarManager(QObject):
         return cls._manager
 
     @classmethod
-    def inform(cls, msg, timeout=3000, action_text=None, action=None):
+    def inform(cls, msg, timeout=3000, action_text=None, action=None, animate=False):
         pix = Pixmap(":/icons/images/material/info.svg")
         pix.replace_color(QColor(0, 0, 0), QColor(73, 153, 208))
         snackbar = SnackbarWidget(
-            msg, icon=pix, timeout=timeout, action_text=action_text, action=action
+            msg, icon=pix, timeout=timeout, action_text=action_text, action=action, animate=animate
         )
         cls.get_manager().add_snackbar(snackbar)
 
     @classmethod
-    def congratulate(cls, msg, timeout=3000, action_text=None, action=None):
+    def congratulate(cls, msg, timeout=3000, action_text=None, action=None, animate=False):
         pix = Pixmap(":/icons/images/material/check_circle.svg")
         pix.replace_color(QColor(0, 0, 0), QColor(73, 208, 86))
         snackbar = SnackbarWidget(
-            msg, icon=pix, timeout=timeout, action_text=action_text, action=action
+            msg, icon=pix, timeout=timeout, action_text=action_text, action=action, animate=animate
         )
         cls.get_manager().add_snackbar(snackbar)
 
     @classmethod
-    def warn(cls, msg, timeout=3000, action_text=None, action=None):
+    def warn(cls, msg, timeout=3000, action_text=None, action=None, animate=False):
         pix = Pixmap(":/icons/images/material/report_problem.svg")
         pix.replace_color(QColor(0, 0, 0), QColor(208, 102, 73))
         snackbar = SnackbarWidget(
-            msg, icon=pix, timeout=timeout, action_text=action_text, action=action
+            msg, icon=pix, timeout=timeout, action_text=action_text, action=action, animate=animate
         )
         cls.get_manager().add_snackbar(snackbar)
