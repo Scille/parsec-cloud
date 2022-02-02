@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PROJECT VERSION\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2021-11-26 11:58+0100\n"
+"POT-Creation-Date: 2022-02-01 11:33+0100\n"
 "PO-Revision-Date: 2020-10-15 10:31+0200\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language: fr\n"
@@ -67,35 +67,35 @@ msgstr ""
 "Vous n'avez pas accès à l'espace de travail auquel appartient ce fichier."
 " Il n'a peut-être pas été partagé avec vous."
 
+msgid "TEXT_BACKEND_ADDR_COPIED_TO_CLIPBOARD"
+msgstr "L'adresse du serveur a été copiée dans le presse-papier."
+
 msgid "NOTIF_INFO_WORKSPACE_READ_ONLY"
 msgstr "L'espace de travail est accessible en lecture seulement"
 
-msgid "NOTIF_WARN_MOUNTPOINT_UNMOUNTED"
-msgstr ""
-
 msgid "NOTIF_WARN_WORKSPACE_READ_ACCESS_LOST_{}"
-msgstr ""
+msgstr "Perte des droits en lecture sur l'espace de travail <b>{workspace}</b>."
 
 msgid "NOTIF_WARN_WORKSPACE_WRITE_ACCESS_LOST_{}"
-msgstr ""
+msgstr "Perte des droits en écriture sur l'espace de travail <b>{workspace}</b>."
 
 msgid "NOTIF_WARN_WORKSPACE_IN_MAINTENANCE_{}"
-msgstr ""
+msgstr "L'espace de travail <b>{workspace}</b> est en maintenance."
 
 msgid "NOTIF_WARN_MOUNTPOINT_REMOTE_ERROR_{}_{}"
-msgstr ""
+msgstr "Erreur de point de montage pour l'espace de travail <b>{workspace}</b>"
 
 msgid "NOTIF_ERR_MOUNTPOINT_UNEXPECTED_ERROR_{}_{}_{}"
-msgstr ""
+msgstr "Erreur de point de montage pour l'espace de travail <b>{workspace}</b>"
 
 msgid "NOTIF_INFO_WORKSPACE_SHARED_{}"
-msgstr ""
+msgstr "L'espace de travail <b>{workspace}</b> a été partagé avec vous."
 
 msgid "NOTIF_INFO_WORKSPACE_ROLE_UPDATED_{}"
-msgstr ""
+msgstr "Votre role sur l'espace de travail <b>{workspace}</b> a changé."
 
 msgid "NOTIF_INFO_WORKSPACE_UNSHARED_{}"
-msgstr ""
+msgstr "L'espace de travail <b>{workspace}</b> n'est plus partagé avec vous."
 
 msgid "TEXT_BACKEND_STATE_CONNECTED"
 msgstr "Connecté"
@@ -508,8 +508,9 @@ msgstr ""
 "Veuillez ne sélectionner qu'un fichier."
 
 msgid "TEXT_FILE_STATUS_MULTIPLE_FILES_SELECTED_ERROR"
-msgstr "Impossible d'afficher l'état de plusieurs fichiers en une fois. "
-"Veuillez ne sélectionner qu'un fichier."
+msgstr ""
+"Impossible d'afficher l'état de plusieurs fichiers en une fois. Veuillez "
+"ne sélectionner qu'un fichier."
 
 msgid "TEXT_FILE_RENAME_TITLE"
 msgstr "Renommer un fichier"
@@ -860,8 +861,8 @@ msgstr "Mise à jour de macFUSE nécessaire"
 
 msgid "TEXT_UPDATE_MACFUSE"
 msgstr ""
-"Votre version de macFUSE est obsolète. Pour assurer le bon fonctionnement de "
-"Parsec, vous pouvez le mettre à jour en suivant le lien ci-dessous."
+"Votre version de macFUSE est obsolète. Pour assurer le bon fonctionnement"
+" de Parsec, vous pouvez le mettre à jour en suivant le lien ci-dessous."
 
 msgid "TEXT_UPDATE_MACFUSE_BUTTON"
 msgstr "Télécharger la dernière version de macFUSE"
@@ -1955,6 +1956,12 @@ msgstr "Copier le lien d'invitation"
 msgid "ACTION_USER_INVITE_COPY_EMAIL"
 msgstr "Copier l'adresse email"
 
+msgid "TEXT_GREET_USER_ADDR_COPIED_TO_CLIPBOARD"
+msgstr "Le lien d'invitation a été copié dans le presse-papier.\""
+
+msgid "TEXT_GREET_USER_EMAIL_COPIED_TO_CLIPBOARD"
+msgstr "L'email a été copié dans le presse-papier."
+
 msgid "TEXT_USER_IS_CURRENT"
 msgstr "vous"
 
@@ -2122,7 +2129,7 @@ msgid "NOT_ALLOWED_FOR_OUTSIDER_PROFILE_TOOLTIP"
 msgstr "Rôle non autorisé pour les utilisateurs externes."
 
 msgid "TEXT_WORKSPACE_SHARING_OFFLINE"
-msgstr ""
+msgstr "Impossible de contacter le serveur."
 
 msgid "TEXT_WORKSPACE_SHARING_UNSHARE_ERROR_workspace-user"
 msgstr ""
@@ -2374,6 +2381,9 @@ msgstr "Nom de l'organisation"
 msgid "TEXT_LABEL_ORG_NAME_RECOMMANDATIONS"
 msgstr "Lettres, chiffres, underscores et tirets seulement. Aucun espace."
 
+msgid "TEXT_LABEL_DEVICE_NAME"
+msgstr "Nom d'appareil"
+
 msgid "ACTION_CREATE_ON_COMMERCIAL_BACKEND"
 msgstr "Utiliser le serveur PARSEC principal"
 
@@ -2392,9 +2402,6 @@ msgstr "Je dispose de mon propre serveur PARSEC"
 msgid "TEXT_LABEL_BACKEND_ADDR_PLACEHOLDER"
 msgstr "parsec://hote:port"
 
-msgid "TEXT_LABEL_DEVICE_NAME"
-msgstr "Nom d'appareil"
-
 msgid "TEXT_CREATE_ORGANIZATION_INSTRUCTIONS"
 msgstr "Veuillez fournir les informations suivantes pour créer votre organisation."
 
@@ -2406,7 +2413,9 @@ msgstr ""
 "votre appareil actuel."
 
 msgid "TEXT_DEVICE_RECOVERY_EXPORT_SELECT_DEVICE_LABEL"
-msgstr "Choisissez l'utilisateur pour lequel vous souhaitez créer un appareil de récupération"
+msgstr ""
+"Choisissez l'utilisateur pour lequel vous souhaitez créer un appareil de "
+"récupération"
 
 msgid "TEXT_DEVICE_RECOVERY_EXPORT_SELECT_FILE_LABEL"
 msgstr "Choisissez un emplacement pour le fichier de récupération"
@@ -2502,48 +2511,6 @@ msgstr "Par"
 
 msgid "ACTION_FILE_HISTORY_LOAD_MORE_ENTRIES"
 msgstr "Charger plus d'entrées"
-
-msgid "TEXT_FILE_INFO_LOCATION"
-msgstr "Emplacement"
-
-msgid "TEXT_FILE_INFO_TYPE"
-msgstr "Type"
-
-msgid "TEXT_FILE_INFO_SIZE"
-msgstr "Taille"
-
-msgid "TEXT_FILE_INFO_WORKSPACE"
-msgstr "Espace de travail"
-
-msgid "TEXT_FILE_INFO_CREATED_ON"
-msgstr "Créé le"
-
-msgid "TEXT_FILE_INFO_CREATED_BY"
-msgstr "Créé par"
-
-msgid "TEXT_FILE_INFO_UPDATED_ON"
-msgstr "Mise à jour le"
-
-msgid "TEXT_FILE_INFO_UPDATED_BY"
-msgstr "Mise à jour par"
-
-msgid "TEXT_FILE_INFO_AVAILABILITY"
-msgstr "Disponibilité"
-
-msgid "TEXT_FILE_INFO_UPLOADED"
-msgstr "Téléchargé"
-
-msgid "TEXT_FILE_INFO_BLOCKS_LOCAL"
-msgstr "Blocs locaux uniquement"
-
-msgid "TEXT_FILE_INFO_BLOCKS_REMOTE"
-msgstr "Blocs distants uniquement"
-
-msgid "TEXT_FILE_INFO_BLOCKS_BOTH"
-msgstr "Blocs locaux et distants"
-
-msgid "TEXT_FILE_INFO_NON_APPLICABLE"
-msgstr "N/A"
 
 msgid "TEXT_FILE_BACK_TO_WORKSPACES_TOOLTIP"
 msgstr "Retour à la liste des espaces de travail"
@@ -2717,6 +2684,12 @@ msgstr "Vérifier la disponibilité d'une nouvelle version au démarrage"
 msgid "ACTION_SETTINGS_CHECK_NEW_VERSION"
 msgstr "Vérifier la disponibilité d'une nouvelle version maintenant"
 
+msgid "TEXT_SETTINGS_TELEMETRY_TITLE"
+msgstr "Télémétrie"
+
+msgid "TEXT_SETTINGS_ENABLE_TELEMETRY"
+msgstr "Activer la télémétrie pour l'envoi automatique de rapports d'erreur"
+
 msgid "TEXT_SETTINGS_INTERFACE_TITLE"
 msgstr "Interface"
 
@@ -2728,12 +2701,6 @@ msgstr "Utiliser des couleurs pour les espaces de travail"
 
 msgid "ACTION_SAVE"
 msgstr "Sauvegarder"
-
-msgid "TEXT_SETTINGS_TELEMETRY_TITLE"
-msgstr "Télémétrie"
-
-msgid "TEXT_SETTINGS_ENABLE_TELEMETRY"
-msgstr "Activer la télémétrie pour l'envoi automatique de rapports d'erreur"
 
 msgid "TEXT_SELECT_SMARTCARD"
 msgstr "Il vous sera demandé de sélectionner votre carte à puce"
@@ -2771,17 +2738,17 @@ msgstr "Rechercher utilisateurs"
 msgid "ACTION_USER_INVITE_USER"
 msgstr "Inviter un utilisateur"
 
-msgid "ACTION_LIST_PREVIOUS_PAGE"
-msgstr "Page précédente"
-
-msgid "ACTION_LIST_NEXT_PAGE"
-msgstr "Page suivante"
-
 msgid "ACTION_FILTER_REVOKED_USERS"
 msgstr "Masquer les utilisateurs révoqués"
 
 msgid "ACTION_FILTER_PENDING_INVITATION"
 msgstr "Masquer les invitations"
+
+msgid "ACTION_LIST_PREVIOUS_PAGE"
+msgstr "Page précédente"
+
+msgid "ACTION_LIST_NEXT_PAGE"
+msgstr "Page suivante"
 
 msgid "TEXT_WORKSPACE_IS_SHARED_TOOLTIP"
 msgstr "L'espace de travail est partagé."
@@ -2818,4 +2785,52 @@ msgstr "Créer un nouvel espace de travail"
 
 msgid "ACTION_WORKSPACE_GOTO_FILE_LINK"
 msgstr "Trouver un fichier via son lien"
+
+#~ msgid "TEXT_FILE_INFO_LOCATION"
+#~ msgstr "Emplacement"
+
+#~ msgid "TEXT_FILE_INFO_TYPE"
+#~ msgstr "Type"
+
+#~ msgid "TEXT_FILE_INFO_SIZE"
+#~ msgstr "Taille"
+
+#~ msgid "TEXT_FILE_INFO_WORKSPACE"
+#~ msgstr "Espace de travail"
+
+#~ msgid "TEXT_FILE_INFO_CREATED_ON"
+#~ msgstr "Créé le"
+
+#~ msgid "TEXT_FILE_INFO_CREATED_BY"
+#~ msgstr "Créé par"
+
+#~ msgid "TEXT_FILE_INFO_UPDATED_ON"
+#~ msgstr "Mise à jour le"
+
+#~ msgid "TEXT_FILE_INFO_UPDATED_BY"
+#~ msgstr "Mise à jour par"
+
+#~ msgid "TEXT_FILE_INFO_AVAILABILITY"
+#~ msgstr "Disponibilité"
+
+#~ msgid "TEXT_FILE_INFO_UPLOADED"
+#~ msgstr "Téléchargé"
+
+#~ msgid "TEXT_FILE_INFO_BLOCKS_LOCAL"
+#~ msgstr "Blocs locaux uniquement"
+
+#~ msgid "TEXT_FILE_INFO_BLOCKS_REMOTE"
+#~ msgstr "Blocs distants uniquement"
+
+#~ msgid "TEXT_FILE_INFO_BLOCKS_BOTH"
+#~ msgstr "Blocs locaux et distants"
+
+#~ msgid "TEXT_FILE_INFO_NON_APPLICABLE"
+#~ msgstr "N/A"
+
+#~ msgid "NOTIF_WARN_MOUNTPOINT_UNMOUNTED"
+#~ msgstr ""
+
+#~ msgid "NOTIF_INFO_MOUNTPOINT_UNMOUNTED"
+#~ msgstr ""
 

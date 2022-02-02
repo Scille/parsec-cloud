@@ -56,7 +56,6 @@ class SnackbarWidget(QWidget, Ui_SnackbarWidget):
         self.timer.setInterval(timeout)
         self.timer.setSingleShot(True)
         self.timer.timeout.connect(self._on_timeout)
-        self.main_window = ParsecApp.get_main_window()
         self.index = 0
 
         if self.animate:
@@ -101,16 +100,19 @@ class SnackbarWidget(QWidget, Ui_SnackbarWidget):
         painter.drawRoundedRect(rect, 10, 10)
 
     def move_popup(self):
+        main_window = ParsecApp.get_main_window()
+        if not main_window:
+            return
         offset = 10
         height = 101 if platform.system() == "Windows" else 75
-        width = min(500, self.main_window.size().width() - 40)
+        width = min(500, main_window.size().width() - 40)
         self.resize(QSize(width, height))
 
-        x = self.main_window.size().width() - width - 20
-        y = self.main_window.size().height() - ((height + offset) * (self.index + 1))
+        x = main_window.size().width() - width - 20
+        y = main_window.size().height() - ((height + offset) * (self.index + 1))
         # Hide the snackbar if the main window does not have enough space to show it
         self.set_visible(y > 30)
-        pos = self.main_window.mapToGlobal(QPoint(x, y))
+        pos = main_window.mapToGlobal(QPoint(x, y))
         self.setGeometry(pos.x(), pos.y(), width, height)
 
     def _on_timeout(self):
@@ -152,6 +154,8 @@ class SnackbarManager(QObject):
         super().__init__()
         self.snackbars = []
         ParsecApp.get_main_window().installEventFilter(self)
+        self.setParent(ParsecApp.get_main_window())
+        self.destroyed.connect(self._on_destroyed)
 
     def eventFilter(self, obj, event):
         if event.type() == QEvent.Move or event.type() == QEvent.Resize:
@@ -174,6 +178,9 @@ class SnackbarManager(QObject):
         for i, sb in enumerate(self.snackbars):
             sb.set_index(i)
         snackbar.show()
+
+    def _on_destroyed(self, _):
+        self.snackbars = []
 
     def _remove_snackbar(self, snackbar):
         try:

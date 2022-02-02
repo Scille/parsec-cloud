@@ -165,18 +165,24 @@ def snackbar_catcher(monkeypatch):
             self.snackbars = []
 
         def reset(self):
-            self.snackars = []
+            self.snackbars = []
 
     spy = SnackbarSpy()
 
     def _show_snackbar(message, *args, **kargs):
-        print(message)
         spy.snackbars.append(message)
 
-    monkeypatch.setattr("parsec.core.gui.snackbar_widget.SnackbarManager.warn", _show_snackbar)
-    monkeypatch.setattr("parsec.core.gui.snackbar_widget.SnackbarManager.inform", _show_snackbar)
     monkeypatch.setattr(
-        "parsec.core.gui.snackbar_widget.SnackbarManager.congratulate", _show_snackbar
+        "parsec.core.gui.snackbar_widget.SnackbarManager.warn",
+        lambda msg, *args, **kwargs: _show_snackbar(("WARN", msg)),
+    )
+    monkeypatch.setattr(
+        "parsec.core.gui.snackbar_widget.SnackbarManager.inform",
+        lambda msg, *args, **kwargs: _show_snackbar(("INFO", msg)),
+    )
+    monkeypatch.setattr(
+        "parsec.core.gui.snackbar_widget.SnackbarManager.congratulate",
+        lambda msg, *args, **kwargs: _show_snackbar(("CONGRATULATE", msg)),
     )
     return spy
 

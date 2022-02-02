@@ -47,7 +47,7 @@ async def test_offline_notification(aqtbot, running_backend, logged_gui):
 @pytest.mark.gui
 @pytest.mark.trio
 async def test_backend_desync_notification(
-    aqtbot, running_backend, logged_gui, monkeypatch, autoclose_dialog, caplog
+    aqtbot, running_backend, logged_gui, monkeypatch, autoclose_dialog, caplog, snackbar_catcher
 ):
     central_widget = logged_gui.test_get_central_widget()
     assert central_widget is not None
@@ -71,8 +71,7 @@ async def test_backend_desync_notification(
         )
 
     def _assert_desync_dialog():
-        assert len(autoclose_dialog.dialogs) == 1
-        assert autoclose_dialog.dialogs == [("Error", translate("TEXT_BACKEND_STATE_DESYNC"))]
+        assert snackbar_catcher.snackbars == [("WARN", translate("TEXT_BACKEND_STATE_DESYNC"))]
 
     # Wait until we're online
     await aqtbot.wait_until(_online)

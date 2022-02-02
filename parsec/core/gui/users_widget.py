@@ -18,12 +18,12 @@ from parsec.core.backend_connection import (
 from parsec.core.gui.trio_jobs import JobResultError, QtToTrioJob
 from parsec.core.gui.custom_dialogs import (
     show_error,
-    show_info,
     ask_question,
     get_text_input,
     show_info_copy_link,
 )
 from parsec.core.gui.custom_widgets import ensure_string_size, Pixmap
+from parsec.core.gui.snackbar_widget import SnackbarManager
 from parsec.core.gui.flow_layout import FlowLayout
 from parsec.core.gui import validators
 from parsec.core.gui import desktop
@@ -74,9 +74,11 @@ class UserInvitationButton(QWidget, Ui_UserInvitationButton):
 
     def copy_addr(self):
         desktop.copy_to_clipboard(str(self.addr))
+        SnackbarManager.inform(_("TEXT_GREET_USER_ADDR_COPIED_TO_CLIPBOARD"))
 
     def copy_email(self):
         desktop.copy_to_clipboard(self.email)
+        SnackbarManager.inform(_("TEXT_GREET_USER_EMAIL_COPIED_TO_CLIPBOARD"))
 
     @property
     def token(self):
@@ -367,8 +369,9 @@ class UsersWidget(QWidget, Ui_UsersWidget):
         assert job.status == "ok"
 
         user_info = job.ret
-        show_info(
-            self, _("TEXT_USER_REVOKE_SUCCESS_user").format(user=user_info.short_user_display)
+        SnackbarManager.inform(
+            _("TEXT_USER_REVOKE_SUCCESS_user").format(user=user_info.short_user_display),
+            timeout=5000,
         )
         for i in range(self.layout_users.count()):
             item = self.layout_users.itemAt(i)
@@ -507,6 +510,7 @@ class UsersWidget(QWidget, Ui_UsersWidget):
     def _on_cancel_invitation_success(self, job):
         assert job.is_finished()
         assert job.status == "ok"
+        SnackbarManager.inform(_("TEXT_USER_INVITATION_CANCELLED"))
         self.reset()
 
     def _on_cancel_invitation_error(self, job):
@@ -521,7 +525,7 @@ class UsersWidget(QWidget, Ui_UsersWidget):
 
         email, invitation_addr, email_sent_status = job.ret
         if email_sent_status == InvitationEmailSentStatus.SUCCESS:
-            show_info(self, _("TEXT_USER_INVITE_SUCCESS_email").format(email=email))
+            SnackbarManager.inform(_("TEXT_USER_INVITE_SUCCESS_email").format(email=email))
         elif email_sent_status == InvitationEmailSentStatus.BAD_RECIPIENT:
             show_info_copy_link(
                 self,

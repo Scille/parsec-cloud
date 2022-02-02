@@ -29,6 +29,7 @@ from parsec.core.fs import (
     FSWorkspaceInMaintenance,
 )
 from parsec.core.gui.trio_jobs import QtToTrioJobScheduler
+from parsec.core.gui.snackbar_widget import SnackbarManager
 from parsec.core.gui.mount_widget import MountWidget
 from parsec.core.gui.users_widget import UsersWidget
 from parsec.core.gui.devices_widget import DevicesWidget
@@ -119,9 +120,7 @@ class CentralWidget(QWidget, Ui_CentralWidget):  # type: ignore[misc]
         self.set_user_info()
         menu = QMenu()
         copy_backend_addr_act = menu.addAction(_("ACTION_COPY_BACKEND_ADDR"))
-        copy_backend_addr_act.triggered.connect(
-            lambda: desktop.copy_to_clipboard(self.core.device.organization_addr.to_url())
-        )
+        copy_backend_addr_act.triggered.connect(self._on_copy_backend_addr)
         menu.addSeparator()
         change_auth_act = menu.addAction(_("ACTION_DEVICE_MENU_CHANGE_AUTHENTICATION"))
         change_auth_act.triggered.connect(self.change_authentication)
@@ -188,6 +187,10 @@ class CentralWidget(QWidget, Ui_CentralWidget):  # type: ignore[misc]
     def _show_user_menu(self) -> None:
         self.button_user.showMenu()
 
+    def _on_copy_backend_addr(self) -> None:
+        desktop.copy_to_clipboard(self.core.device.organization_addr.to_url())
+        SnackbarManager.inform(_("TEXT_BACKEND_ADDR_COPIED_TO_CLIPBOARD"))
+
     def set_user_info(self) -> None:
         org = self.core.device.organization_id
         username = self.core.device.short_user_display
@@ -222,7 +225,10 @@ class CentralWidget(QWidget, Ui_CentralWidget):  # type: ignore[misc]
                 )  # 3000ms
                 self.last_notification = current_time
         elif event == CoreEvent.MOUNTPOINT_STOPPED:
-            self.new_notification.emit("WARNING", _("NOTIF_WARN_MOUNTPOINT_UNMOUNTED"))
+            pass
+            # Not taking this event into account since we cannot yet distinguish
+            # whether the workspace has been unmounted by the user or not.
+            # self.new_notification.emit("INFO", _("NOTIF_WARN_MOUNTPOINT_UNMOUNTED"))
         elif event == CoreEvent.MOUNTPOINT_REMOTE_ERROR:
             assert isinstance(kwargs["exc"], Exception)
             assert isinstance(kwargs["mountpoint"], PurePath)
@@ -230,14 +236,16 @@ class CentralWidget(QWidget, Ui_CentralWidget):  # type: ignore[misc]
             exc = kwargs["exc"]
             abspath = kwargs["path"].with_mountpoint(kwargs["mountpoint"])
             if isinstance(exc, FSWorkspaceNoReadAccess):
-                msg = _("NOTIF_WARN_WORKSPACE_READ_ACCESS_LOST_{}").format(abspath)
+                msg = _("NOTIF_WARN_WORKSPACE_READ_ACCESS_LOST_{}").format(workspace=abspath)
             elif isinstance(exc, FSWorkspaceNoWriteAccess):
-                msg = _("NOTIF_WARN_WORKSPACE_WRITE_ACCESS_LOST_{}").format(abspath)
+                msg = _("NOTIF_WARN_WORKSPACE_WRITE_ACCESS_LOST_{}").format(workspace=abspath)
             elif isinstance(exc, FSWorkspaceInMaintenance):
-                msg = _("NOTIF_WARN_WORKSPACE_IN_MAINTENANCE_{}").format(abspath)
+                msg = _("NOTIF_WARN_WORKSPACE_IN_MAINTENANCE_{}").format(workspace=abspath)
             else:
-                msg = _("NOTIF_WARN_MOUNTPOINT_REMOTE_ERROR_{}_{}").format(abspath, str(exc))
-            self.new_notification.emit("WARNING", msg)
+                msg = _("NOTIF_WARN_MOUNTPOINT_REMOTE_ERROR_{}_{}").format(
+                    workspace=abspath, exc=str(exc)
+                )
+            self.new_notification.emit("WARN", msg)
         elif event in (
             CoreEvent.MOUNTPOINT_UNHANDLED_ERROR,
             CoreEvent.MOUNTPOINT_TRIO_DEADLOCK_ERROR,
@@ -249,9 +257,9 @@ class CentralWidget(QWidget, Ui_CentralWidget):  # type: ignore[misc]
             exc = kwargs["exc"]
             abspath = kwargs["path"].with_mountpoint(kwargs["mountpoint"])
             self.new_notification.emit(
-                "ERROR",
+                "WARN",
                 _("NOTIF_ERR_MOUNTPOINT_UNEXPECTED_ERROR_{}_{}_{}").format(
-                    kwargs["operation"], abspath, str(kwargs["exc"])
+                    operation=kwargs["operation"], workspace=abspath, exc=str(kwargs["exc"])
                 ),
             )
         elif event == CoreEvent.SHARING_UPDATED:
@@ -265,16 +273,17 @@ class CentralWidget(QWidget, Ui_CentralWidget):  # type: ignore[misc]
             previous_role = previous_entry.role if previous_entry is not None else None
             if new_role is not None and previous_role is None:
                 self.new_notification.emit(
-                    "INFO", _("NOTIF_INFO_WORKSPACE_SHARED_{}").format(new_entry.name)
+                    "INFO", _("NOTIF_INFO_WORKSPACE_SHARED_{}").format(workspace=new_entry.name)
                 )
             elif new_role is not None and previous_role is not None:
                 self.new_notification.emit(
-                    "INFO", _("NOTIF_INFO_WORKSPACE_ROLE_UPDATED_{}").format(new_entry.name)
+                    "INFO",
+                    _("NOTIF_INFO_WORKSPACE_ROLE_UPDATED_{}").format(workspace=new_entry.name),
                 )
             elif new_role is None and previous_role is not None:
                 name = previous_entry.name  # type: ignore
                 self.new_notification.emit(
-                    "INFO", _("NOTIF_INFO_WORKSPACE_UNSHARED_{}").format(name)
+                    "INFO", _("NOTIF_INFO_WORKSPACE_UNSHARED_{}").format(workspace=name)
                 )
 
     def _load_organization_stats(self, delay: float = 0) -> None:
@@ -314,32 +323,30 @@ class CentralWidget(QWidget, Ui_CentralWidget):  # type: ignore[misc]
 
         elif status == BackendConnStatus.REFUSED:
             disconnected = True
+            text = _("TEXT_BACKEND_STATE_DISCONNECTED")
+            icon = QPixmap(":/icons/images/material/cloud_off.svg")
             assert isinstance(status_exc, Exception)
             cause = status_exc.__cause__
             if isinstance(cause, HandshakeAPIVersionError):
-                tooltip = _("TEXT_BACKEND_STATE_API_MISMATCH_versions").format(
+                tooltip = text = _("TEXT_BACKEND_STATE_API_MISMATCH_versions").format(
                     versions=", ".join([str(v.version) for v in cause.backend_versions])
                 )
             elif isinstance(cause, HandshakeRevokedDevice):
                 tooltip = _("TEXT_BACKEND_STATE_REVOKED_DEVICE")
-                notif = ("REVOKED", tooltip)
-                self.new_notification.emit(*notif)
+                notif = ("WARN", tooltip)
             elif isinstance(cause, HandshakeOrganizationExpired):
                 tooltip = _("TEXT_BACKEND_STATE_ORGANIZATION_EXPIRED")
-                notif = ("EXPIRED", tooltip)
-                self.new_notification.emit(*notif)
+                notif = ("WARN", tooltip)
             else:
                 tooltip = _("TEXT_BACKEND_STATE_UNKNOWN")
-            text = _("TEXT_BACKEND_STATE_DISCONNECTED")
-            icon = QPixmap(":/icons/images/material/cloud_off.svg")
-            notif = ("WARNING", tooltip)
+                notif = ("WARN", tooltip)
 
         elif status == BackendConnStatus.CRASHED:
             assert isinstance(status_exc, Exception)
             text = _("TEXT_BACKEND_STATE_DISCONNECTED")
             tooltip = _("TEXT_BACKEND_STATE_CRASHED_cause").format(cause=str(status_exc.__cause__))
             icon = QPixmap(":/icons/images/material/cloud_off.svg")
-            notif = ("ERROR", tooltip)
+            notif = ("WARN", tooltip)
             disconnected = True
 
         elif status == BackendConnStatus.DESYNC:
@@ -357,7 +364,7 @@ class CentralWidget(QWidget, Ui_CentralWidget):  # type: ignore[misc]
             # thrown off by the sync monitor.
             if not self.desync_notified:
                 self.desync_notified = True
-                notif = ("DESYNC", tooltip)
+                notif = ("WARN", tooltip)
                 disconnected = True
 
         self.menu.set_connection_state(text, tooltip, icon)
@@ -388,8 +395,12 @@ class CentralWidget(QWidget, Ui_CentralWidget):  # type: ignore[misc]
         self.menu.label_organization_size.clear()
 
     def on_new_notification(self, notif_type: str, msg: str) -> None:
-        if notif_type in ["REVOKED", "EXPIRED", "DESYNC"]:
-            show_error(self, msg)
+        if notif_type == "CONGRATULATE":
+            SnackbarManager.congratulate(msg)
+        elif notif_type == "WARN":
+            SnackbarManager.warn(msg)
+        else:
+            SnackbarManager.inform(msg)
 
     def go_to_file_link(self, addr: BackendOrganizationFileLinkAddr, mount: bool = True) -> None:
         """
