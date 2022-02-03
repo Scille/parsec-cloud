@@ -146,50 +146,6 @@ impl From<DeviceID> for String {
 }
 
 /*
- * DeviceLabel
- */
-
-#[derive(Clone, SerializeDisplay, DeserializeFromStr, PartialEq, Eq)]
-pub struct DeviceLabel(String);
-
-impl std::convert::AsRef<str> for DeviceLabel {
-    #[inline]
-    fn as_ref(&self) -> &str {
-        &self.0
-    }
-}
-
-impl_debug_from_display!(DeviceLabel);
-
-// Note: Display is used for Serialization !
-impl std::fmt::Display for DeviceLabel {
-    fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
-        f.write_str(&self.0)
-    }
-}
-
-// Note: FromStr is used for Deserialization !
-impl FromStr for DeviceLabel {
-    type Err = &'static str;
-
-    fn from_str(s: &str) -> Result<Self, Self::Err> {
-        let id: String = s.nfc().collect();
-        // Contained within 255 bytes
-        if id.len() <= 255 {
-            Ok(Self(id))
-        } else {
-            Err(concat!("Invalid DeviceLabel"))
-        }
-    }
-}
-
-impl From<DeviceLabel> for String {
-    fn from(item: DeviceLabel) -> String {
-        item.0
-    }
-}
-
-/*
  * HumanHandle
  */
 

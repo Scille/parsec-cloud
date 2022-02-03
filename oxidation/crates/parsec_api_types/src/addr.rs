@@ -484,7 +484,7 @@ impl BackendOrganizationBootstrapAddr {
         let organization_id = extract_organization_id(parsed)?;
         let action = extract_action(pairs)?;
         if action != "bootstrap_organization" {
-            return Err("Expected `action=bootstrap_organization` value");
+            return Err("Expected `action=bootstrap_organization` param value");
         }
 
         let mut token_queries = pairs.filter(|(k, _)| k == "token");
@@ -493,7 +493,7 @@ impl BackendOrganizationBootstrapAddr {
         // the replacement character EF BF BD is used instead. This should be
         // ok for our usecase (but it differs from Python implementation).
         if token_queries.next().is_some() {
-            return Err("Multiple values for query `token`");
+            return Err("Multiple values for param `token`");
         }
         // Consider empty token as no token
         // It's important to do this cooking eagerly (instead of e.g. doing it in
@@ -518,9 +518,6 @@ impl BackendOrganizationBootstrapAddr {
             .push(self.organization_id.as_ref());
         url.query_pairs_mut()
             .append_pair("action", "bootstrap_organization");
-        // For legacy reasons, token must always be provided, hence default
-        // token is the empty one (which is used for spontaneous organization
-        // bootstrap without prior organization creation)
         if let Some(ref tk) = self.token {
             if !tk.is_empty() {
                 url.query_pairs_mut().append_pair("token", tk);
@@ -572,29 +569,29 @@ impl BackendOrganizationFileLinkAddr {
         let organization_id = extract_organization_id(parsed)?;
         let action = extract_action(pairs)?;
         if action != "file_link" {
-            return Err("Expected `action=file_link` query");
+            return Err("Expected `action=file_link` param value");
         }
 
         let mut workspace_id_queries = pairs.filter(|(k, _)| k == "workspace_id");
         let workspace_id = match workspace_id_queries.next() {
-            None => return Err("Missing mandatory `workspace_id` query"),
+            None => return Err("Missing mandatory `workspace_id` param"),
             Some((_, value)) => value
                 .parse::<EntryID>()
-                .or(Err("Invalid `workspace_id` query value"))?,
+                .or(Err("Invalid `workspace_id` param value"))?,
         };
         if workspace_id_queries.next().is_some() {
-            return Err("Multiple values for query `workspace_id`");
+            return Err("Multiple values for param `workspace_id`");
         }
 
         let mut path_queries = pairs.filter(|(k, _)| k == "path");
         let encrypted_path = match path_queries.next() {
-            None => return Err("Missing mandatory `path` query"),
+            None => return Err("Missing mandatory `path` param"),
             Some((_, value)) => {
-                binary_urlsafe_decode(&value).or(Err("Invalid `path` query value"))?
+                binary_urlsafe_decode(&value).or(Err("Invalid `path` param value"))?
             }
         };
         if path_queries.next().is_some() {
-            return Err("Multiple values for query `path`");
+            return Err("Multiple values for param `path`");
         }
 
         Ok(Self {
@@ -666,18 +663,18 @@ impl BackendInvitationAddr {
         let invitation_type = match extract_action(pairs)? {
             x if x == "claim_user" => InvitationType::User,
             x if x == "claim_device" => InvitationType::Device,
-            _ => return Err("Expected `action=claim_user` or `action=claim_device` value"),
+            _ => return Err("Expected `action=claim_user` or `action=claim_device` param value"),
         };
 
         let mut token_queries = pairs.filter(|(k, _)| k == "token");
         let token = match token_queries.next() {
-            None => return Err("Missing mandatory `token` query"),
+            None => return Err("Missing mandatory `token` param"),
             Some((_, value)) => value
                 .parse::<InvitationToken>()
-                .or(Err("Invalid `token` query value"))?,
+                .or(Err("Invalid `token` param value"))?,
         };
         if token_queries.next().is_some() {
-            return Err("Multiple values for query `token`");
+            return Err("Multiple values for param `token`");
         }
 
         Ok(Self {
