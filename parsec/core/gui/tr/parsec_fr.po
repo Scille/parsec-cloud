@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PROJECT VERSION\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2022-02-03 14:03+0100\n"
+"POT-Creation-Date: 2022-02-04 10:36+0100\n"
 "PO-Revision-Date: 2020-10-15 10:31+0200\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language: fr\n"
@@ -686,6 +686,9 @@ msgstr "Le lien d'invitation a été copié dans le presse-papier."
 
 msgid "TEXT_GREET_DEVICE_EMAIL_SENT"
 msgstr "Email envoyé"
+
+msgid "TEXT_GREET_DEVICE_EMAIL_SENT_email"
+msgstr "Email envoyé à <b>{email}</b>"
 
 msgid "TEXT_EMAIL_FAILED_TO_SEND_TITLE"
 msgstr "Échec de l'envoi de l'email"
