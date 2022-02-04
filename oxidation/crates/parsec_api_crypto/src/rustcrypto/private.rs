@@ -129,7 +129,7 @@ impl PrivateKey {
 
     pub fn generate_shared_secret_key(&self, peer_public_key: &PublicKey) -> SecretKey {
         SecretKey::from(x25519(
-            self.0.to_bytes(),
+            *self.0.as_bytes(),
             peer_public_key.0.as_bytes().to_owned(),
         ))
     }
@@ -177,7 +177,7 @@ impl TryFrom<ByteBuf> for PrivateKey {
 
 impl From<PrivateKey> for ByteBuf {
     fn from(data: PrivateKey) -> Self {
-        Self::from(data.0.to_bytes())
+        Self::from(*data.0.as_bytes())
     }
 }
 
