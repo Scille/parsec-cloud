@@ -22,6 +22,7 @@ async def test_mountpoint_notifs(aqtbot, logged_gui, snackbar_catcher):
     c_w = logged_gui.test_get_central_widget()
 
     def _snackbar_shown(sb):
+        print(snackbar_catcher.snackbars)
         assert snackbar_catcher.snackbars == sb
 
     kwargs = {
@@ -36,7 +37,9 @@ async def test_mountpoint_notifs(aqtbot, logged_gui, snackbar_catcher):
             [
                 (
                     "WARN",
-                    translate("NOTIF_WARN_WORKSPACE_READ_ACCESS_LOST_{}").format(workspace=wk_path),
+                    translate("TEXT_NOTIF_WARN_WORKSPACE_READ_ACCESS_LOST_workspace").format(
+                        workspace=wk_path
+                    ),
                 )
             ]
         )
@@ -50,7 +53,7 @@ async def test_mountpoint_notifs(aqtbot, logged_gui, snackbar_catcher):
             [
                 (
                     "WARN",
-                    translate("NOTIF_WARN_WORKSPACE_WRITE_ACCESS_LOST_{}").format(
+                    translate("TEXT_NOTIF_WARN_WORKSPACE_WRITE_ACCESS_LOST_workspace").format(
                         workspace=wk_path
                     ),
                 )
@@ -66,7 +69,9 @@ async def test_mountpoint_notifs(aqtbot, logged_gui, snackbar_catcher):
             [
                 (
                     "WARN",
-                    translate("NOTIF_WARN_WORKSPACE_IN_MAINTENANCE_{}").format(workspace=wk_path),
+                    translate("TEXT_NOTIF_WARN_WORKSPACE_IN_MAINTENANCE_workspace").format(
+                        workspace=wk_path
+                    ),
                 )
             ]
         )
@@ -80,8 +85,8 @@ async def test_mountpoint_notifs(aqtbot, logged_gui, snackbar_catcher):
             [
                 (
                     "WARN",
-                    translate("NOTIF_WARN_MOUNTPOINT_REMOTE_ERROR_{}_{}").format(
-                        workspace=wk_path, exc="exception"
+                    translate("TEXT_NOTIF_WARN_MOUNTPOINT_REMOTE_ERROR_workspace-error").format(
+                        workspace=wk_path, error="exception"
                     ),
                 )
             ]
@@ -97,9 +102,9 @@ async def test_mountpoint_notifs(aqtbot, logged_gui, snackbar_catcher):
             [
                 (
                     "WARN",
-                    translate("NOTIF_ERR_MOUNTPOINT_UNEXPECTED_ERROR_{}_{}_{}").format(
-                        workspace=wk_path, operation="unused", exc="exception"
-                    ),
+                    translate(
+                        "TEXT_NOTIF_ERR_MOUNTPOINT_UNEXPECTED_ERROR_workspace_operation_error"
+                    ).format(workspace=wk_path, operation="unused", error="exception"),
                 )
             ]
         )
@@ -114,9 +119,9 @@ async def test_mountpoint_notifs(aqtbot, logged_gui, snackbar_catcher):
             [
                 (
                     "WARN",
-                    translate("NOTIF_ERR_MOUNTPOINT_UNEXPECTED_ERROR_{}_{}_{}").format(
-                        workspace=wk_path, operation="unused", exc="exception"
-                    ),
+                    translate(
+                        "TEXT_NOTIF_ERR_MOUNTPOINT_UNEXPECTED_ERROR_workspace_operation_error"
+                    ).format(workspace=wk_path, operation="unused", error="exception"),
                 )
             ]
         )
@@ -142,7 +147,9 @@ async def test_sharing_notifs(aqtbot, logged_gui, snackbar_catcher, monkeypatch)
             [
                 (
                     "INFO",
-                    translate("NOTIF_INFO_WORKSPACE_ROLE_UPDATED_{}").format(workspace="Workspace"),
+                    translate("TEXT_NOTIF_INFO_WORKSPACE_ROLE_UPDATED_workspace").format(
+                        workspace="Workspace"
+                    ),
                 )
             ]
         )
@@ -152,7 +159,14 @@ async def test_sharing_notifs(aqtbot, logged_gui, snackbar_catcher, monkeypatch)
     c_w.handle_event(CoreEvent.SHARING_UPDATED, new_entry=ne, previous_entry=None)
     await aqtbot.wait_until(
         lambda: _snackbar_shown(
-            [("INFO", translate("NOTIF_INFO_WORKSPACE_SHARED_{}").format(workspace="Workspace"))]
+            [
+                (
+                    "INFO",
+                    translate("TEXT_NOTIF_INFO_WORKSPACE_SHARED_workspace").format(
+                        workspace="Workspace"
+                    ),
+                )
+            ]
         )
     )
 
@@ -162,6 +176,13 @@ async def test_sharing_notifs(aqtbot, logged_gui, snackbar_catcher, monkeypatch)
     c_w.handle_event(CoreEvent.SHARING_UPDATED, new_entry=ne, previous_entry=pe)
     await aqtbot.wait_until(
         lambda: _snackbar_shown(
-            [("INFO", translate("NOTIF_INFO_WORKSPACE_UNSHARED_{}").format(workspace="Workspace"))]
+            [
+                (
+                    "INFO",
+                    translate("TEXT_NOTIF_INFO_WORKSPACE_UNSHARED_workspace").format(
+                        workspace="Workspace"
+                    ),
+                )
+            ]
         )
     )

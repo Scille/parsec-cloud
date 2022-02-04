@@ -236,14 +236,20 @@ class CentralWidget(QWidget, Ui_CentralWidget):  # type: ignore[misc]
             exc = kwargs["exc"]
             abspath = kwargs["path"].with_mountpoint(kwargs["mountpoint"])
             if isinstance(exc, FSWorkspaceNoReadAccess):
-                msg = _("NOTIF_WARN_WORKSPACE_READ_ACCESS_LOST_{}").format(workspace=abspath)
+                msg = _("TEXT_NOTIF_WARN_WORKSPACE_READ_ACCESS_LOST_workspace").format(
+                    workspace=abspath
+                )
             elif isinstance(exc, FSWorkspaceNoWriteAccess):
-                msg = _("NOTIF_WARN_WORKSPACE_WRITE_ACCESS_LOST_{}").format(workspace=abspath)
+                msg = _("TEXT_NOTIF_WARN_WORKSPACE_WRITE_ACCESS_LOST_workspace").format(
+                    workspace=abspath
+                )
             elif isinstance(exc, FSWorkspaceInMaintenance):
-                msg = _("NOTIF_WARN_WORKSPACE_IN_MAINTENANCE_{}").format(workspace=abspath)
+                msg = _("TEXT_NOTIF_WARN_WORKSPACE_IN_MAINTENANCE_workspace").format(
+                    workspace=abspath
+                )
             else:
-                msg = _("NOTIF_WARN_MOUNTPOINT_REMOTE_ERROR_{}_{}").format(
-                    workspace=abspath, exc=str(exc)
+                msg = _("TEXT_NOTIF_WARN_MOUNTPOINT_REMOTE_ERROR_workspace-error").format(
+                    workspace=abspath, error=str(exc)
                 )
             self.new_notification.emit("WARN", msg)
         elif event in (
@@ -258,8 +264,8 @@ class CentralWidget(QWidget, Ui_CentralWidget):  # type: ignore[misc]
             abspath = kwargs["path"].with_mountpoint(kwargs["mountpoint"])
             self.new_notification.emit(
                 "WARN",
-                _("NOTIF_ERR_MOUNTPOINT_UNEXPECTED_ERROR_{}_{}_{}").format(
-                    operation=kwargs["operation"], workspace=abspath, exc=str(kwargs["exc"])
+                _("TEXT_NOTIF_ERR_MOUNTPOINT_UNEXPECTED_ERROR_workspace_operation_error").format(
+                    operation=kwargs["operation"], workspace=abspath, error=str(kwargs["exc"])
                 ),
             )
         elif event == CoreEvent.SHARING_UPDATED:
@@ -271,19 +277,25 @@ class CentralWidget(QWidget, Ui_CentralWidget):  # type: ignore[misc]
             previous_entry: Optional[WorkspaceEntry] = kwargs["previous_entry"]
             new_role = new_entry.role
             previous_role = previous_entry.role if previous_entry is not None else None
+            print(previous_role, new_role)
             if new_role is not None and previous_role is None:
                 self.new_notification.emit(
-                    "INFO", _("NOTIF_INFO_WORKSPACE_SHARED_{}").format(workspace=new_entry.name)
+                    "INFO",
+                    _("TEXT_NOTIF_INFO_WORKSPACE_SHARED_workspace").format(
+                        workspace=new_entry.name
+                    ),
                 )
-            elif new_role is not None and previous_role is not None:
+            elif new_role is not None and previous_role is not None and new_role != previous_role:
                 self.new_notification.emit(
                     "INFO",
-                    _("NOTIF_INFO_WORKSPACE_ROLE_UPDATED_{}").format(workspace=new_entry.name),
+                    _("TEXT_NOTIF_INFO_WORKSPACE_ROLE_UPDATED_workspace").format(
+                        workspace=new_entry.name
+                    ),
                 )
             elif new_role is None and previous_role is not None:
                 name = previous_entry.name  # type: ignore
                 self.new_notification.emit(
-                    "INFO", _("NOTIF_INFO_WORKSPACE_UNSHARED_{}").format(workspace=name)
+                    "INFO", _("TEXT_NOTIF_INFO_WORKSPACE_UNSHARED_workspace").format(workspace=name)
                 )
 
     def _load_organization_stats(self, delay: float = 0) -> None:

@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PROJECT VERSION\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2022-02-01 11:33+0100\n"
+"POT-Creation-Date: 2022-02-03 14:03+0100\n"
 "PO-Revision-Date: 2020-10-15 10:31+0200\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language: fr\n"
@@ -71,30 +71,30 @@ msgid "TEXT_BACKEND_ADDR_COPIED_TO_CLIPBOARD"
 msgstr "L'adresse du serveur a été copiée dans le presse-papier."
 
 msgid "NOTIF_INFO_WORKSPACE_READ_ONLY"
-msgstr "L'espace de travail est accessible en lecture seulement"
+msgstr ""
 
-msgid "NOTIF_WARN_WORKSPACE_READ_ACCESS_LOST_{}"
+msgid "TEXT_NOTIF_WARN_WORKSPACE_READ_ACCESS_LOST_workspace"
 msgstr "Perte des droits en lecture sur l'espace de travail <b>{workspace}</b>."
 
-msgid "NOTIF_WARN_WORKSPACE_WRITE_ACCESS_LOST_{}"
+msgid "TEXT_NOTIF_WARN_WORKSPACE_WRITE_ACCESS_LOST_workspace"
 msgstr "Perte des droits en écriture sur l'espace de travail <b>{workspace}</b>."
 
-msgid "NOTIF_WARN_WORKSPACE_IN_MAINTENANCE_{}"
+msgid "TEXT_NOTIF_WARN_WORKSPACE_IN_MAINTENANCE_workspace"
 msgstr "L'espace de travail <b>{workspace}</b> est en maintenance."
 
-msgid "NOTIF_WARN_MOUNTPOINT_REMOTE_ERROR_{}_{}"
+msgid "TEXT_NOTIF_WARN_MOUNTPOINT_REMOTE_ERROR_workspace-error"
+msgstr ""
+
+msgid "TEXT_NOTIF_ERR_MOUNTPOINT_UNEXPECTED_ERROR_workspace_operation_error"
 msgstr "Erreur de point de montage pour l'espace de travail <b>{workspace}</b>"
 
-msgid "NOTIF_ERR_MOUNTPOINT_UNEXPECTED_ERROR_{}_{}_{}"
-msgstr "Erreur de point de montage pour l'espace de travail <b>{workspace}</b>"
-
-msgid "NOTIF_INFO_WORKSPACE_SHARED_{}"
+msgid "TEXT_NOTIF_INFO_WORKSPACE_SHARED_workspace"
 msgstr "L'espace de travail <b>{workspace}</b> a été partagé avec vous."
 
-msgid "NOTIF_INFO_WORKSPACE_ROLE_UPDATED_{}"
+msgid "TEXT_NOTIF_INFO_WORKSPACE_ROLE_UPDATED_workspace"
 msgstr "Votre role sur l'espace de travail <b>{workspace}</b> a changé."
 
-msgid "NOTIF_INFO_WORKSPACE_UNSHARED_{}"
+msgid "TEXT_NOTIF_INFO_WORKSPACE_UNSHARED_workspace"
 msgstr "L'espace de travail <b>{workspace}</b> n'est plus partagé avec vous."
 
 msgid "TEXT_BACKEND_STATE_CONNECTED"
@@ -2038,6 +2038,9 @@ msgstr ""
 msgid "TEXT_USER_LIST_RETRIEVABLE_FAILURE"
 msgstr "Impossible de récupérer la liste des utilisateurs depuis le serveur."
 
+msgid "TEXT_USER_INVITATION_CANCELLED"
+msgstr ""
+
 msgid "TEXT_INVITE_USER_CANCEL_ERROR"
 msgstr "Impossible d'annuler l'invitation."
 
@@ -2127,6 +2130,19 @@ msgstr "Cet utilisateur a été révoqué."
 
 msgid "NOT_ALLOWED_FOR_OUTSIDER_PROFILE_TOOLTIP"
 msgstr "Rôle non autorisé pour les utilisateurs externes."
+
+msgid "TEXT_WORKSPACE_SHARING_NEW_OK_workspace-user"
+msgstr "L'espace de travail <b>{workspace}</b> a été partagé avec <b>{user}</b>."
+
+msgid "TEXT_WORKSPACE_SHARING_REMOVED_OK_workspace-user"
+msgstr ""
+"<b>{user}</b> a été exclu(e) du partage de l'espace de travail "
+"<b>{workspace}</b>."
+
+msgid "TEXT_WORKSPACE_SHARING_UPDATED_workspace-user"
+msgstr ""
+"Le rôle de <b>{user}</b> sur l'espace de travail <b>{workspace}</b> a été"
+" modifié."
 
 msgid "TEXT_WORKSPACE_SHARING_OFFLINE"
 msgstr "Impossible de contacter le serveur."
@@ -2832,5 +2848,14 @@ msgstr "Trouver un fichier via son lien"
 #~ msgstr ""
 
 #~ msgid "NOTIF_INFO_MOUNTPOINT_UNMOUNTED"
+#~ msgstr ""
+
+#~ msgid "TEXT_NOTIF_INFO_WORKSPACE_READ_ONLY"
+#~ msgstr "L'espace de travail est accessible en lecture seulement"
+
+#~ msgid "TEXT_NOTIF_WARN_MOUNTPOINT_REMOTE_ERROR_workspace-error"
+#~ msgstr "Erreur de point de montage pour l'espace de travail <b>{workspace}</b>"
+
+#~ msgid "TEXT_NOTIF_WARN_MOUNTPOINT_REMOTE_ERROR_workspace_error"
 #~ msgstr ""
 
