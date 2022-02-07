@@ -277,6 +277,24 @@ fn test_addr_with_missing_organization_id(
     testbed.assert_addr_err(&url, "Path doesn't form a valid organization id");
 }
 
+#[rstest]
+fn test_bootstrap_addr_bad_type(#[values(Some("dummy"), Some(""), None)] bad_type: Option<&str>) {
+    let testbed = BackendOrganizationBootstrapAddrTestbed {};
+
+    match bad_type {
+        Some(bad_type) => {
+            // Type param present in the url but with bad and empty value
+            let url = testbed.url().replace("bootstrap_organization", bad_type);
+            testbed.assert_addr_err(&url, "Expected `action=bootstrap_organization` param value");
+        }
+        None => {
+            // Type param not present in the url
+            let url = testbed.url().replace("action=bootstrap_organization&", "");
+            testbed.assert_addr_err(&url, "Missing mandatory `action` param");
+        }
+    }
+}
+
 // Unlike for `BackendInvitationAddr`, here token is not required to be an UUID
 #[test]
 fn test_bootstrap_addr_unicode_token() {
@@ -306,18 +324,36 @@ fn test_bootstrap_addr_bad_unicode_token() {
 #[test]
 fn test_bootstrap_addr_no_token() {
     let testbed = BackendOrganizationBootstrapAddrTestbed {};
+    let url_with = testbed.url().replace(TOKEN, "");
+    let url_without = testbed.url().replace(&format!("&token={}", TOKEN), "");
 
     // Token param present in the url but with an empty value
-    let url_with = testbed.url().replace(TOKEN, "");
-    testbed.assert_addr_ok(&url_with);
+    testbed.assert_addr_ok_with_expected(&url_with, &url_without);
     let addr: BackendOrganizationBootstrapAddr = url_with.parse().unwrap();
     assert_eq!(addr.token(), None);
 
     // Token param not present in the url
-    let url_without = testbed.url().replace(&format!("token={}", TOKEN), "");
-    testbed.assert_addr_ok_with_expected(&url_without, &url_with);
+    testbed.assert_addr_ok(&url_without);
     let addr: BackendOrganizationBootstrapAddr = url_without.parse().unwrap();
     assert_eq!(addr.token(), None);
+}
+
+#[rstest]
+fn test_file_link_addr_bad_type(#[values(Some("dummy"), Some(""), None)] bad_type: Option<&str>) {
+    let testbed = BackendOrganizationFileLinkAddrTestbed {};
+
+    match bad_type {
+        Some(bad_type) => {
+            // Type param present in the url but with bad and empty value
+            let url = testbed.url().replace("file_link", bad_type);
+            testbed.assert_addr_err(&url, "Expected `action=file_link` param value");
+        }
+        None => {
+            // Type param not present in the url
+            let url = testbed.url().replace("action=file_link&", "");
+            testbed.assert_addr_err(&url, "Missing mandatory `action` param");
+        }
+    }
 }
 
 #[rstest]
@@ -330,14 +366,14 @@ fn test_file_link_addr_bad_workspace(
         Some(bad_workspace) => {
             // Workspace param present in the url but with bad and empty value
             let url = testbed.url().replace(WORKSPACE_ID, bad_workspace);
-            testbed.assert_addr_err(&url, "Invalid `workspace_id` query value");
+            testbed.assert_addr_err(&url, "Invalid `workspace_id` param value");
         }
         None => {
             // Workspace param not present in the url
             let url = testbed
                 .url()
                 .replace(&format!("workspace_id={}", WORKSPACE_ID), "");
-            testbed.assert_addr_err(&url, "Missing mandatory `workspace_id` query");
+            testbed.assert_addr_err(&url, "Missing mandatory `workspace_id` param");
         }
     }
 }
@@ -352,14 +388,14 @@ fn test_file_link_addr_bad_encrypted_path(
         Some(bad_path) => {
             // Path param present in the url but with bad and empty value
             let url = testbed.url().replace(ENCRYPTED_PATH, bad_path);
-            testbed.assert_addr_err(&url, "Invalid `path` query value");
+            testbed.assert_addr_err(&url, "Invalid `path` param value");
         }
         None => {
             // Path param not present in the url
             let url = testbed
                 .url()
                 .replace(&format!("path={}", ENCRYPTED_PATH), "");
-            testbed.assert_addr_err(&url, "Missing mandatory `path` query");
+            testbed.assert_addr_err(&url, "Missing mandatory `path` param");
         }
     }
 }
@@ -391,15 +427,15 @@ fn test_invitation_addr_bad_type(
             let url = testbed.url().replace(INVITATION_TYPE, bad_type);
             testbed.assert_addr_err(
                 &url,
-                "Expected `action=claim_user` or `action=claim_device` query value",
+                "Expected `action=claim_user` or `action=claim_device` param value",
             );
         }
         None => {
             // Type param not present in the url
             let url = testbed
                 .url()
-                .replace(&format!("action={}", INVITATION_TYPE), "");
-            testbed.assert_addr_err(&url, "Missing mandatory `action` query");
+                .replace(&format!("action={}&", INVITATION_TYPE), "");
+            testbed.assert_addr_err(&url, "Missing mandatory `action` param");
         }
     }
 }
@@ -416,12 +452,12 @@ fn test_invitation_addr_bad_token(
         Some(bad_token) => {
             // Token param present in the url but with and empty or bad value
             let url = testbed.url().replace(TOKEN, bad_token);
-            testbed.assert_addr_err(&url, "Invalid `token` query value");
+            testbed.assert_addr_err(&url, "Invalid `token` param value");
         }
         None => {
             // Token param not present in the url
             let url = testbed.url().replace(&format!("token={}", TOKEN), "");
-            testbed.assert_addr_err(&url, "Missing mandatory `token` query");
+            testbed.assert_addr_err(&url, "Missing mandatory `token` param");
         }
     }
 }

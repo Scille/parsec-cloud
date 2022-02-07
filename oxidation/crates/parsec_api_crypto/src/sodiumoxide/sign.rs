@@ -86,7 +86,7 @@ impl VerifyKey {
     pub const ALGORITHM: &'static str = "ed25519";
     pub const SIZE: usize = PUBLICKEYBYTES;
 
-    pub fn unsecure_unwrap<'a>(&self, signed: &'a [u8]) -> Option<&'a [u8]> {
+    pub fn unsecure_unwrap(signed: &[u8]) -> Option<&[u8]> {
         signed.get(SIGNATUREBYTES..)
     }
 

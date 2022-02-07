@@ -154,7 +154,7 @@ def get_files(pathes: Iterable[Path]) -> Iterator[Path]:
 
 def get_licenser(path: Path) -> Licenser:
     for regex, licenser in LICENSERS_MAP.items():
-        if regex.match(str(path.absolute().relative_to(PROJECT_DIR))):
+        if regex.match(path.absolute().relative_to(PROJECT_DIR).as_posix()):
             return licenser
     else:
         return None

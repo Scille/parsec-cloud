@@ -309,7 +309,7 @@ class BackendOrganizationBootstrapAddr(_PyBackendActionAddr):
         if len(value) != 1:
             raise ValueError("Missing mandatory `action` param")
         if value[0] != "bootstrap_organization":
-            raise ValueError("Expected `action=bootstrap_organization` value")
+            raise ValueError("Expected `action=bootstrap_organization` param value")
 
         value = params.pop("token", ())
         if len(value) > 1:
@@ -403,7 +403,7 @@ class BackendOrganizationFileLinkAddr(_PyBackendActionAddr):
         if len(value) != 1:
             raise ValueError("Missing mandatory `action` param")
         if value[0] != "file_link":
-            raise ValueError("Expected `action=file_link` value")
+            raise ValueError("Expected `action=file_link` param value")
 
         value = params.pop("workspace_id", ())
         if len(value) != 1:
@@ -525,7 +525,7 @@ class BackendInvitationAddr(_PyBackendActionAddr):
         elif value[0] == "claim_device":
             kwargs["invitation_type"] = InvitationType.DEVICE
         else:
-            raise ValueError("Expected `action=claim_user` or `action=claim_device` value")
+            raise ValueError("Expected `action=claim_user` or `action=claim_device` param value")
 
         value = params.pop("token", ())
         if len(value) != 1:

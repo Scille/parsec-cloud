@@ -1,6 +1,6 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BSLv1.1 (eventually AGPLv3) 2016-2021 Scille SAS
 
-use super::utils::new_uuid_type;
+use super::ext_types::new_uuid_type;
 use std::str::FromStr;
 
 #[derive(Debug, Copy, Clone, PartialEq, Eq)]
