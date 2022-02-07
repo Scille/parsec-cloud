@@ -151,6 +151,15 @@ impl From<EntryName> for String {
     }
 }
 
+impl std::str::FromStr for EntryName {
+    type Err = &'static str;
+
+    #[inline]
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        EntryName::try_from(s)
+    }
+}
+
 /*
  * ManifestEntry
  */
