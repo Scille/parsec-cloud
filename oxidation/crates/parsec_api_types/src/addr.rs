@@ -436,10 +436,11 @@ impl BackendActionAddr {
     }
 }
 
-impl TryFrom<&str> for BackendActionAddr {
-    type Error = &'static str;
+impl std::str::FromStr for BackendActionAddr {
+    type Err = &'static str;
 
-    fn try_from(url: &str) -> Result<Self, Self::Error> {
+    #[inline]
+    fn from_str(url: &str) -> Result<Self, Self::Err> {
         if let Ok(addr) = url.parse::<BackendOrganizationBootstrapAddr>() {
             return Ok(BackendActionAddr::OrganizationBootstrap(addr));
         }
