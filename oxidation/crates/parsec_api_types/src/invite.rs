@@ -1,11 +1,17 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BSLv1.1 (eventually AGPLv3) 2016-2021 Scille SAS
 
-use super::ext_types::new_uuid_type;
 use rand::Rng;
 use regex::Regex;
+use serde::{Deserialize, Serialize};
+use serde_with::*;
 use std::str::FromStr;
 
-use parsec_api_crypto::SecretKey;
+use crate::data_macros::{
+    impl_transparent_data_format_convertion, new_data_struct_type, new_data_type_enum,
+};
+use crate::ext_types::new_uuid_type;
+use crate::{DeviceID, DeviceLabel, EntryID, HumanHandle, UserProfile};
+use parsec_api_crypto::{PrivateKey, PublicKey, SecretKey, VerifyKey};
 
 /*
  * InvitationType
@@ -156,3 +162,202 @@ impl SASCode {
         (claimer_sas, greeter_sas)
     }
 }
+
+/*
+ * Helpers
+ */
+
+macro_rules! impl_dump_and_encrypt {
+    ($name:ident) => {
+        impl $name {
+            pub fn dump_and_encrypt(&self, key: &::parsec_api_crypto::SecretKey) -> Vec<u8> {
+                let serialized = rmp_serde::to_vec_named(&self).unwrap();
+                let mut e =
+                    ::flate2::write::ZlibEncoder::new(Vec::new(), flate2::Compression::default());
+                use std::io::Write;
+                e.write_all(&serialized).unwrap();
+                let compressed = e.finish().unwrap();
+                key.encrypt(&compressed)
+            }
+        }
+    };
+}
+
+macro_rules! impl_decrypt_and_load {
+    ($name:ident) => {
+        impl $name {
+            pub fn decrypt_and_load(
+                encrypted: &[u8],
+                key: &::parsec_api_crypto::SecretKey,
+            ) -> Result<$name, &'static str> {
+                let compressed = key.decrypt(encrypted).map_err(|_| "Invalid encryption")?;
+                let mut serialized = vec![];
+                use std::io::Read;
+                ::flate2::read::ZlibDecoder::new(&compressed[..])
+                    .read_to_end(&mut serialized)
+                    .map_err(|_| "Invalid compression")?;
+                println!("===>{:?}", &serialized);
+                let obj: $name =
+                    rmp_serde::from_read_ref(&serialized).map_err(|_| "Invalid serialization")?;
+                Ok(obj)
+            }
+        }
+    };
+}
+
+/*
+ * InviteUserData
+ */
+
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
+#[serde(into = "InviteUserDataData", from = "InviteUserDataData")]
+pub struct InviteUserData {
+    // Claimer ask for device_label/human_handle, but greeter has final word on this
+    pub requested_device_label: Option<DeviceLabel>,
+    pub requested_human_handle: Option<HumanHandle>,
+    // Note claiming user also imply creating a first device
+    pub public_key: PublicKey,
+    pub verify_key: VerifyKey,
+}
+
+impl_dump_and_encrypt!(InviteUserData);
+impl_decrypt_and_load!(InviteUserData);
+
+new_data_struct_type!(
+    InviteUserDataData,
+    type: "invite_user_data",
+
+    requested_device_label: Option<DeviceLabel>,
+    requested_human_handle: Option<HumanHandle>,
+    public_key: PublicKey,
+    verify_key: VerifyKey,
+);
+
+impl_transparent_data_format_convertion!(
+    InviteUserData,
+    InviteUserDataData,
+    requested_device_label,
+    requested_human_handle,
+    public_key,
+    verify_key,
+);
+
+/*
+ * InviteUserConfirmation
+ */
+
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
+#[serde(
+    into = "InviteUserConfirmationData",
+    from = "InviteUserConfirmationData"
+)]
+pub struct InviteUserConfirmation {
+    pub device_id: DeviceID,
+    pub device_label: Option<DeviceLabel>,
+    pub human_handle: Option<HumanHandle>,
+    pub profile: UserProfile,
+    pub root_verify_key: VerifyKey,
+}
+
+impl_dump_and_encrypt!(InviteUserConfirmation);
+impl_decrypt_and_load!(InviteUserConfirmation);
+
+new_data_struct_type!(
+    InviteUserConfirmationData,
+    type: "invite_user_confirmation",
+
+    device_id: DeviceID,
+    device_label: Option<DeviceLabel>,
+    human_handle: Option<HumanHandle>,
+    profile: UserProfile,
+    root_verify_key: VerifyKey,
+);
+
+impl_transparent_data_format_convertion!(
+    InviteUserConfirmation,
+    InviteUserConfirmationData,
+    device_id,
+    device_label,
+    human_handle,
+    profile,
+    root_verify_key,
+);
+
+/*
+ * InviteDeviceData
+ */
+
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
+#[serde(into = "InviteDeviceDataData", from = "InviteDeviceDataData")]
+pub struct InviteDeviceData {
+    pub requested_device_label: Option<DeviceLabel>,
+    pub verify_key: VerifyKey,
+}
+
+impl_dump_and_encrypt!(InviteDeviceData);
+impl_decrypt_and_load!(InviteDeviceData);
+
+new_data_struct_type!(
+    InviteDeviceDataData,
+    type: "invite_device_data",
+
+    requested_device_label: Option<DeviceLabel>,
+    verify_key: VerifyKey,
+);
+
+impl_transparent_data_format_convertion!(
+    InviteDeviceData,
+    InviteDeviceDataData,
+    requested_device_label,
+    verify_key,
+);
+
+/*
+ * InviteDeviceConfirmation
+ */
+
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
+#[serde(
+    into = "InviteDeviceConfirmationData",
+    from = "InviteDeviceConfirmationData"
+)]
+pub struct InviteDeviceConfirmation {
+    pub device_id: DeviceID,
+    pub device_label: Option<DeviceLabel>,
+    pub human_handle: Option<HumanHandle>,
+    pub profile: UserProfile,
+    pub private_key: PrivateKey,
+    pub user_manifest_id: EntryID,
+    pub user_manifest_key: SecretKey,
+    pub root_verify_key: VerifyKey,
+}
+
+impl_dump_and_encrypt!(InviteDeviceConfirmation);
+impl_decrypt_and_load!(InviteDeviceConfirmation);
+
+new_data_struct_type!(
+    InviteDeviceConfirmationData,
+    type: "invite_device_confirmation",
+
+    device_id: DeviceID,
+    device_label: Option<DeviceLabel>,
+    human_handle: Option<HumanHandle>,
+    profile: UserProfile,
+    private_key: PrivateKey,
+    user_manifest_id: EntryID,
+    user_manifest_key: SecretKey,
+    root_verify_key: VerifyKey,
+);
+
+impl_transparent_data_format_convertion!(
+    InviteDeviceConfirmation,
+    InviteDeviceConfirmationData,
+    device_id,
+    device_label,
+    human_handle,
+    profile,
+    private_key,
+    user_manifest_id,
+    user_manifest_key,
+    root_verify_key,
+);

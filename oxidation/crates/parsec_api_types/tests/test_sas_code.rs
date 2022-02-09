@@ -31,10 +31,10 @@ fn generate_sas_codes() {
 }
 
 #[rstest]
-#[case(0, Ok("AAAA".parse().unwrap()))]
-#[case(123456, Ok("AU2D".parse().unwrap()))]
-#[case(2u32.pow(20) - 1, Ok("9999".parse().unwrap()))]
-#[case(2u32.pow(20), Err("Provided integer is too large"))]
+#[case::min(0, Ok("AAAA".parse().unwrap()))]
+#[case::typical(123456, Ok("AU2D".parse().unwrap()))]
+#[case::max(2u32.pow(20) - 1, Ok("9999".parse().unwrap()))]
+#[case::too_large(2u32.pow(20), Err("Provided integer is too large"))]
 fn sas_code_from_int(#[case] val: u32, #[case] result: Result<SASCode, &'static str>) {
     assert_eq!(SASCode::try_from(val), result);
 }
