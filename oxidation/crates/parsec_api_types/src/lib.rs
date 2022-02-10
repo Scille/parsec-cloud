@@ -5,18 +5,17 @@ extern crate lazy_static;
 
 mod addr;
 mod certif;
-// mod certif2;
+mod data_macros;
+mod ext_types;
 mod id;
 mod invite;
 mod manifest;
-// mod message;
-mod ext_types;
+mod message;
 
 pub use addr::*;
 pub use certif::*;
-// pub use certif2::*;
 pub use ext_types::*;
 pub use id::*;
 pub use invite::*;
 pub use manifest::*;
-// pub use message::*;
+pub use message::*;

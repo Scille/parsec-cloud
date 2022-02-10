@@ -633,6 +633,7 @@ dependencies = [
  "paste 1.0.6",
  "percent-encoding",
  "pretty_assertions",
+ "rand 0.8.4",
  "regex",
  "rmp-serde 0.15.5",
  "rstest",

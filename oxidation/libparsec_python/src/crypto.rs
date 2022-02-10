@@ -289,7 +289,7 @@ impl PublicKey {
             Ok(x) => unsafe { x.as_bytes() },
             Err(_) => data.extract::<&PyBytes>(py)?.as_bytes(),
         };
-        Ok(PyBytes::new(py, &self.0.encrypt_from_self(bytes)))
+        Ok(PyBytes::new(py, &self.0.encrypt_for_self(bytes)))
     }
 
     fn encode(&self) -> &[u8] {

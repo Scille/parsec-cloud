@@ -17,6 +17,7 @@ pub struct Device {
     pub user_manifest_id: EntryID,
     pub user_manifest_key: SecretKey,
     pub local_symkey: SecretKey,
+    pub root_verify_key: VerifyKey,
 }
 
 impl Device {
@@ -61,6 +62,7 @@ pub fn alice() -> Device {
         user_manifest_id: "a4031e8bcdd84df8ae12bd3d05e6e20f".parse().unwrap(),
         user_manifest_key: SecretKey::from(hex!("26bf35a98c1e54e90215e154af92a1af2d1142cdd0dba25b990426b0b30b0f9a")),
         local_symkey: SecretKey::from(hex!("125a78618995e2e0f9a19bc8617083c809c03deb5457d5b82df5bcaec9966cd4")),
+        root_verify_key: VerifyKey::from(hex!("be2976732cec8ca94eedcf0aafd413cd159363e0fadc9e68572c77a1e17d9bbd"))
     }
 }
 
@@ -78,5 +80,6 @@ pub fn bob() -> Device {
         user_manifest_id: "71568d41afcb4e2380b3d164ace4fb85".parse().unwrap(),
         user_manifest_key: SecretKey::from(hex!("65de53d2c6cd965aa53a1ba5cc7e54b331419e6103466121996fa99a97197a48")),
         local_symkey: SecretKey::from(hex!("93f25b18491016f20b10dcf4eb7986716d914653d6ab4e778701c13435e6bdf0")),
+        root_verify_key: VerifyKey::from(hex!("be2976732cec8ca94eedcf0aafd413cd159363e0fadc9e68572c77a1e17d9bbd"))
     }
 }

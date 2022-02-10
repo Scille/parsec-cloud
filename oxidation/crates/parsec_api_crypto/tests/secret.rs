@@ -32,7 +32,10 @@ fn round_trip() {
 fn bad_decrypt() {
     let sk = SecretKey::generate();
 
-    assert_eq!(sk.decrypt(b""), Err("Invalid data size"));
+    assert_eq!(
+        sk.decrypt(b""),
+        Err("The nonce must be exactly 24 bytes long")
+    );
 
     assert_eq!(sk.decrypt(&[0; 64]), Err("Decryption error"));
 }

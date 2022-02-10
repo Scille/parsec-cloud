@@ -66,7 +66,7 @@ impl PublicKey {
     pub const ALGORITHM: &'static str = "curve25519blake2bxsalsa20poly1305";
     pub const SIZE: usize = PUBLICKEYBYTES;
 
-    pub fn encrypt_from_self(&self, data: &[u8]) -> Vec<u8> {
+    pub fn encrypt_for_self(&self, data: &[u8]) -> Vec<u8> {
         seal(data, &self.0)
     }
 }

@@ -278,7 +278,7 @@ impl BackendActionAddr {
                 },
                 Err(err) => Err(PyValueError::new_err(err)),
             },
-            false => match parsec_api_types::BackendActionAddr::try_from(url) {
+            false => match url.parse::<parsec_api_types::BackendActionAddr>() {
                 Ok(ba) => match ba {
                     parsec_api_types::BackendActionAddr::OrganizationBootstrap(v) => {
                         Ok(BackendOrganizationBootstrapAddr(v)
