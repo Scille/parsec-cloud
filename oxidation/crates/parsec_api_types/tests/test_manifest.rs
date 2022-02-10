@@ -10,7 +10,7 @@ use parsec_api_types::*;
 use tests_fixtures::{alice, Device};
 
 #[rstest]
-fn serde_file_manifest(alice: Device) {
+fn serde_file_manifest(alice: &Device) {
     // Generated from Python implementation (Parsec v2.6.0)
     // Content:
     //   type: "file_manifest"
@@ -121,7 +121,7 @@ fn serde_file_manifest(alice: Device) {
 }
 
 #[rstest]
-fn serde_folder_manifest(alice: Device) {
+fn serde_folder_manifest(alice: &Device) {
     // Generated from Python implementation (Parsec v2.6.0)
     // Content:
     //   type: "folder_manifest"
@@ -197,7 +197,7 @@ fn serde_folder_manifest(alice: Device) {
 }
 
 #[rstest]
-fn serde_workspace_manifest(alice: Device) {
+fn serde_workspace_manifest(alice: &Device) {
     // Generated from Python implementation (Parsec v2.6.0)
     // Content:
     //   type: "workspace_manifest"
@@ -271,7 +271,7 @@ fn serde_workspace_manifest(alice: Device) {
 }
 
 #[rstest]
-fn serde_user_manifest(alice: Device) {
+fn serde_user_manifest(alice: &Device) {
     // Generated from Python implementation (Parsec v2.6.0)
     // Content:
     //   type: "user_manifest"

@@ -9,7 +9,7 @@ use parsec_api_types::*;
 use tests_fixtures::{alice, bob, Device};
 
 #[rstest]
-fn serde_sharing_granted_message(alice: Device, bob: Device) {
+fn serde_sharing_granted_message(alice: &Device, bob: &Device) {
     // Generated from Python implementation (Parsec v2.6.0)
     // Content:
     //   type: "sharing.granted"
@@ -70,7 +70,7 @@ fn serde_sharing_granted_message(alice: Device, bob: Device) {
 }
 
 #[rstest]
-fn serde_sharing_reencrypted_message(alice: Device, bob: Device) {
+fn serde_sharing_reencrypted_message(alice: &Device, bob: &Device) {
     // Generated from Python implementation (Parsec v2.6.0)
     // Content:
     //   type: "sharing.reencrypted"
@@ -131,7 +131,7 @@ fn serde_sharing_reencrypted_message(alice: Device, bob: Device) {
 }
 
 #[rstest]
-fn serde_sharing_revoked_message(alice: Device, bob: Device) {
+fn serde_sharing_revoked_message(alice: &Device, bob: &Device) {
     // Generated from Python implementation (Parsec v2.6.0)
     // Content:
     //   type: "sharing.revoked"
@@ -180,7 +180,7 @@ fn serde_sharing_revoked_message(alice: Device, bob: Device) {
 }
 
 #[rstest]
-fn serde_ping_message(alice: Device, bob: Device) {
+fn serde_ping_message(alice: &Device, bob: &Device) {
     // Generated from Python implementation (Parsec v2.6.0)
     // Content:
     //   type: "ping"

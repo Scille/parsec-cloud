@@ -40,7 +40,7 @@ pub struct Organization {
 }
 
 #[fixture]
-// #[once]  // TODO: rstest v0.12.0 is not yet released
+#[once]
 pub fn coolorg() -> Organization {
     Organization {
         addr: "parsec://example.com:9999/CoolOrg?no_ssl=true&rvk=XYUXM4ZM5SGKSTXNZ4FK7VATZUKZGY7A7LOJ42CXFR32DYL5TO6Qssss".parse().unwrap(),
@@ -49,7 +49,7 @@ pub fn coolorg() -> Organization {
 }
 
 #[fixture]
-// #[once]  // TODO: rstest v0.12.0 is not yet released
+#[once]
 pub fn alice() -> Device {
     Device {
         organization_addr: "parsec://alice_dev1.example.com:9999/CoolOrg?no_ssl=true&rvk=XYUXM4ZM5SGKSTXNZ4FK7VATZUKZGY7A7LOJ42CXFR32DYL5TO6Qssss".parse().unwrap(),
@@ -67,7 +67,7 @@ pub fn alice() -> Device {
 }
 
 #[fixture]
-// #[once]  // TODO: rstest v0.12.0 is not yet released
+#[once]
 pub fn bob() -> Device {
     Device {
         organization_addr: "parsec://bob_dev1.example.com:9999/CoolOrg?no_ssl=true&rvk=XYUXM4ZM5SGKSTXNZ4FK7VATZUKZGY7A7LOJ42CXFR32DYL5TO6Qssss".parse().unwrap(),

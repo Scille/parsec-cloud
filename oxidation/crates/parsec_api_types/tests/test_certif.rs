@@ -13,7 +13,7 @@ use tests_fixtures::{alice, bob, Device};
 // default/missing policy
 
 #[rstest]
-fn serde_user_certificate(alice: Device, bob: Device) {
+fn serde_user_certificate(alice: &Device, bob: &Device) {
     // Generated from Python implementation (Parsec v2.6.0)
     // Content:
     //   type: "user_certificate"
@@ -66,7 +66,7 @@ fn serde_user_certificate(alice: Device, bob: Device) {
 }
 
 #[rstest]
-fn serde_user_certificate_redacted(alice: Device, bob: Device) {
+fn serde_user_certificate_redacted(alice: &Device, bob: &Device) {
     // Generated from Python implementation (Parsec v2.6.0)
     // Content:
     //   type: "user_certificate"
@@ -118,7 +118,7 @@ fn serde_user_certificate_redacted(alice: Device, bob: Device) {
 }
 
 #[rstest]
-fn serde_user_certificate_legacy_format(alice: Device, bob: Device) {
+fn serde_user_certificate_legacy_format(alice: &Device, bob: &Device) {
     // Generated from Python implementation (Parsec v2.6.0)
     // Content:
     //   type: "user_certificate"
@@ -184,7 +184,7 @@ fn serde_user_certificate_legacy_format(alice: Device, bob: Device) {
 }
 
 #[rstest]
-fn serde_device_certificate(alice: Device, bob: Device) {
+fn serde_device_certificate(alice: &Device, bob: &Device) {
     // Generated from Python implementation (Parsec v2.6.0)
     // Content:
     //   type: "device_certificate"
@@ -234,7 +234,7 @@ fn serde_device_certificate(alice: Device, bob: Device) {
 }
 
 #[rstest]
-fn serde_device_certificate_redacted(alice: Device, bob: Device) {
+fn serde_device_certificate_redacted(alice: &Device, bob: &Device) {
     // Generated from Python implementation (Parsec v2.6.0)
     // Content:
     //   type: "device_certificate"
@@ -284,7 +284,7 @@ fn serde_device_certificate_redacted(alice: Device, bob: Device) {
 }
 
 #[rstest]
-fn serde_device_certificate_legacy_format(alice: Device, bob: Device) {
+fn serde_device_certificate_legacy_format(alice: &Device, bob: &Device) {
     // Generated from Python implementation (Parsec v2.6.0)
     // Content:
     //   type: "device_certificate"
@@ -321,7 +321,7 @@ fn serde_device_certificate_legacy_format(alice: Device, bob: Device) {
 }
 
 #[rstest]
-fn serde_revoked_user_certificate(alice: Device, bob: Device) {
+fn serde_revoked_user_certificate(alice: &Device, bob: &Device) {
     // Generated from Python implementation (Parsec v2.6.0)
     // Content:
     //   type: "revoked_user_certificate"
@@ -360,7 +360,7 @@ fn serde_revoked_user_certificate(alice: Device, bob: Device) {
 }
 
 #[rstest]
-fn serde_realm_role_certificate(alice: Device, bob: Device) {
+fn serde_realm_role_certificate(alice: &Device, bob: &Device) {
     // Generated from Python implementation (Parsec v2.6.0)
     // Content:
     //   type: "realm_role_certificate"
@@ -399,7 +399,7 @@ fn serde_realm_role_certificate(alice: Device, bob: Device) {
 }
 
 #[rstest]
-fn serde_realm_role_certificate_no_role(alice: Device, bob: Device) {
+fn serde_realm_role_certificate_no_role(alice: &Device, bob: &Device) {
     // Generated from Python implementation (Parsec v2.6.0)
     // Content:
     //   type: "realm_role_certificate"
