@@ -78,7 +78,7 @@ use tests_fixtures::{bob, Device};
     false,
 )]
 fn serde_invite_user_data(
-    bob: Device,
+    bob: &Device,
     #[case] encrypted: &[u8],
     #[case] with_device_label: bool,
     #[case] with_human_handle: bool,
@@ -186,7 +186,7 @@ fn serde_invite_user_data(
     false,
 )]
 fn serde_invite_user_confirmation(
-    bob: Device,
+    bob: &Device,
     #[case] encrypted: &[u8],
     #[case] with_device_label: bool,
     #[case] with_human_handle: bool,
@@ -204,7 +204,7 @@ fn serde_invite_user_confirmation(
             None
         },
         profile: UserProfile::Standard,
-        root_verify_key: bob.root_verify_key.to_owned(),
+        root_verify_key: bob.root_verify_key().to_owned(),
     };
 
     let key = SecretKey::from(hex!(
@@ -248,7 +248,7 @@ fn serde_invite_user_confirmation(
     false,
 )]
 fn serde_invite_device_data(
-    bob: Device,
+    bob: &Device,
     #[case] encrypted: &[u8],
     #[case] with_device_label: bool,
 ) {
@@ -372,7 +372,7 @@ fn serde_invite_device_data(
     false,
 )]
 fn serde_invite_device_confirmation(
-    bob: Device,
+    bob: &Device,
     #[case] encrypted: &[u8],
     #[case] with_device_label: bool,
     #[case] with_human_handle: bool,
@@ -393,7 +393,7 @@ fn serde_invite_device_confirmation(
         private_key: bob.private_key.to_owned(),
         user_manifest_id: bob.user_manifest_id.to_owned(),
         user_manifest_key: bob.user_manifest_key.to_owned(),
-        root_verify_key: bob.root_verify_key.to_owned(),
+        root_verify_key: bob.root_verify_key().to_owned(),
     };
 
     let key = SecretKey::from(hex!(
