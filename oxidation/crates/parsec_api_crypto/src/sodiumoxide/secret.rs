@@ -7,9 +7,11 @@ use sodiumoxide::crypto::secretbox::xsalsa20poly1305::{
 };
 use sodiumoxide::crypto::secretbox::{gen_nonce, open, seal, Nonce};
 
-#[derive(Clone, Debug, PartialEq, Eq, Deserialize, Serialize)]
+#[derive(Clone, PartialEq, Eq, Deserialize, Serialize)]
 #[serde(transparent)]
 pub struct SecretKey(Key);
+
+crate::macros::impl_key_debug!(SecretKey);
 
 super::utils::impl_try_from!(SecretKey, Key);
 

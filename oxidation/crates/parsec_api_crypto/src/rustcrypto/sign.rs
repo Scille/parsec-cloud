@@ -10,9 +10,11 @@ use serde_bytes::ByteBuf;
  * SigningKey
  */
 
-#[derive(Debug, Deserialize, Serialize)]
+#[derive(Deserialize, Serialize)]
 #[serde(into = "ByteBuf", try_from = "ByteBuf")]
 pub struct SigningKey(Keypair);
+
+crate::macros::impl_key_debug!(SigningKey);
 
 impl Clone for SigningKey {
     fn clone(&self) -> Self {
@@ -91,9 +93,11 @@ impl From<SigningKey> for ByteBuf {
  * VerifyKey
  */
 
-#[derive(Clone, Debug, PartialEq, Eq, Deserialize, Serialize)]
+#[derive(Clone, PartialEq, Eq, Deserialize, Serialize)]
 #[serde(into = "ByteBuf", try_from = "ByteBuf")]
 pub struct VerifyKey(ed25519_dalek::PublicKey);
+
+crate::macros::impl_key_debug!(VerifyKey);
 
 impl VerifyKey {
     pub const ALGORITHM: &'static str = "ed25519";
