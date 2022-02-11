@@ -47,6 +47,7 @@ class NavigationBarWidget(QWidget):
         self.layout().addWidget(self.scroll_area)
         self.inner_widget = QWidget()
         self.inner_widget.setFixedHeight(25)
+        self.inner_widget.setStyleSheet("background-color: #EEEEEE;")
         self.inner_widget.setLayout(QHBoxLayout())
         self.scroll_area.setWidget(self.inner_widget)
         self.inner_widget.layout().setContentsMargins(0, 3, 0, 0)
