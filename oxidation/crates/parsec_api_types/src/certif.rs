@@ -92,10 +92,10 @@ macro_rules! impl_dump_and_sign {
     ($name:ident) => {
         impl $name {
             pub fn dump_and_sign(&self, author_signkey: &SigningKey) -> Vec<u8> {
-                let serialized = rmp_serde::to_vec_named(&self).unwrap();
+                let serialized = rmp_serde::to_vec_named(&self).unwrap_or_else(|_| unreachable!());
                 let mut e = ZlibEncoder::new(Vec::new(), flate2::Compression::default());
-                e.write_all(&serialized).unwrap();
-                let compressed = e.finish().unwrap();
+                e.write_all(&serialized).unwrap_or_else(|_| unreachable!());
+                let compressed = e.finish().unwrap_or_else(|_| unreachable!());
                 author_signkey.sign(&compressed)
             }
         }

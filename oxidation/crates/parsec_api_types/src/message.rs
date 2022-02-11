@@ -117,10 +117,10 @@ impl MessageContent {
         author_signkey: &SigningKey,
         recipient_pubkey: &PublicKey,
     ) -> Vec<u8> {
-        let serialized = rmp_serde::to_vec_named(&self).unwrap();
+        let serialized = rmp_serde::to_vec_named(&self).unwrap_or_else(|_| unreachable!());
         let mut e = ZlibEncoder::new(Vec::new(), flate2::Compression::default());
-        e.write_all(&serialized).unwrap();
-        let compressed = e.finish().unwrap();
+        e.write_all(&serialized).unwrap_or_else(|_| unreachable!());
+        let compressed = e.finish().unwrap_or_else(|_| unreachable!());
         let signed = author_signkey.sign(&compressed);
         recipient_pubkey.encrypt_for_self(&signed)
     }

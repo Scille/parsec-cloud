@@ -79,7 +79,8 @@ impl FromStr for SASCode {
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
         lazy_static! {
-            static ref PATTERN: Regex = Regex::new(SAS_CODE_PATTERN).unwrap();
+            static ref PATTERN: Regex =
+                Regex::new(SAS_CODE_PATTERN).unwrap_or_else(|_| unreachable!());
         }
         if PATTERN.is_match(s) {
             Ok(Self(s.to_string()))
@@ -96,7 +97,10 @@ impl TryFrom<u32> for SASCode {
 
         for _ in 0..SAS_CODE_LEN {
             let subcode = num % SAS_CODE_CHARS.len() as u32;
-            let char = SAS_CODE_CHARS.chars().nth(subcode as usize).unwrap();
+            let char = SAS_CODE_CHARS
+                .chars()
+                .nth(subcode as usize)
+                .unwrap_or_else(|| unreachable!());
             str.push(char);
             num /= SAS_CODE_CHARS.len() as u32;
         }
@@ -171,12 +175,12 @@ macro_rules! impl_dump_and_encrypt {
     ($name:ident) => {
         impl $name {
             pub fn dump_and_encrypt(&self, key: &::parsec_api_crypto::SecretKey) -> Vec<u8> {
-                let serialized = rmp_serde::to_vec_named(&self).unwrap();
+                let serialized = rmp_serde::to_vec_named(&self).unwrap_or_else(|_| unreachable!());
                 let mut e =
                     ::flate2::write::ZlibEncoder::new(Vec::new(), flate2::Compression::default());
                 use std::io::Write;
-                e.write_all(&serialized).unwrap();
-                let compressed = e.finish().unwrap();
+                e.write_all(&serialized).unwrap_or_else(|_| unreachable!());
+                let compressed = e.finish().unwrap_or_else(|_| unreachable!());
                 key.encrypt(&compressed)
             }
         }

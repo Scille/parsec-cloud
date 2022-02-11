@@ -238,7 +238,9 @@ const LOCAL_AUTHOR_LEGACY_PLACEHOLDER: &str =
     "LOCAL_AUTHOR_LEGACY_PLACEHOLDER@LOCAL_AUTHOR_LEGACY_PLACEHOLDER";
 fn generate_local_author_legacy_placeholder() -> DeviceID {
     lazy_static! {
-        static ref LEGACY_PLACEHOLDER: DeviceID = LOCAL_AUTHOR_LEGACY_PLACEHOLDER.parse().unwrap();
+        static ref LEGACY_PLACEHOLDER: DeviceID = LOCAL_AUTHOR_LEGACY_PLACEHOLDER
+            .parse()
+            .unwrap_or_else(|_| unreachable!());
     }
     LEGACY_PLACEHOLDER.clone()
 }
@@ -251,12 +253,12 @@ macro_rules! impl_dump_sign_and_encrypt {
                 author_signkey: &::parsec_api_crypto::SigningKey,
                 key: &::parsec_api_crypto::SecretKey,
             ) -> Vec<u8> {
-                let serialized = rmp_serde::to_vec_named(&self).unwrap();
+                let serialized = rmp_serde::to_vec_named(&self).unwrap_or_else(|_| unreachable!());
                 let mut e =
                     ::flate2::write::ZlibEncoder::new(Vec::new(), flate2::Compression::default());
                 use std::io::Write;
-                e.write_all(&serialized).unwrap();
-                let compressed = e.finish().unwrap();
+                e.write_all(&serialized).unwrap_or_else(|_| unreachable!());
+                let compressed = e.finish().unwrap_or_else(|_| unreachable!());
                 let signed = author_signkey.sign(&compressed);
                 key.encrypt(&signed)
             }
