@@ -95,7 +95,7 @@ class NavigationBarWidget(QWidget):
                 )
             label = None
             if idx != len(parts) - 1:
-                obj_name = part.replace(" ", "_")
+                obj_name = str(idx)
                 label = ClickableLabel(part)
                 label.clicked.connect(self._on_label_clicked(idx))
                 label.setObjectName(f"label_{obj_name}")
