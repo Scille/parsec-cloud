@@ -6,9 +6,7 @@ use serde_with::*;
 use std::collections::HashMap;
 use unicode_normalization::UnicodeNormalization;
 
-use crate::data_macros::{
-    impl_transparent_data_format_convertion, new_data_struct_type, new_data_type_enum,
-};
+use crate::data_macros::{impl_transparent_data_format_convertion, new_data_struct_type};
 use crate::ext_types::{new_uuid_type, DateTimeExtFormat};
 use crate::DeviceID;
 use parsec_api_crypto::{HashDigest, SecretKey};

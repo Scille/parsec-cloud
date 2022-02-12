@@ -7,9 +7,7 @@ use serde::{Deserialize, Serialize};
 use serde_with::*;
 use std::io::{Read, Write};
 
-use crate::data_macros::{
-    impl_transparent_data_format_convertion, new_data_struct_type, new_data_type_enum,
-};
+use crate::data_macros::{impl_transparent_data_format_convertion, new_data_struct_type};
 use crate::ext_types::DateTimeExtFormat;
 use crate::{DeviceID, DeviceLabel, EntryID, HumanHandle, RealmRole, UserID, UserProfile};
 use parsec_api_crypto::{PublicKey, SigningKey, VerifyKey};

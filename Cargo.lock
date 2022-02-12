@@ -657,6 +657,7 @@ dependencies = [
  "hex-literal",
  "parsec_api_crypto",
  "parsec_api_types",
+ "paste 1.0.6",
  "pretty_assertions",
  "rmp-serde 0.15.5",
  "rstest",
@@ -1232,6 +1233,7 @@ dependencies = [
  "hex-literal",
  "parsec_api_crypto",
  "parsec_api_types",
+ "parsec_client_types",
  "rstest",
 ]
 

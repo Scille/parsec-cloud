@@ -78,9 +78,9 @@ macro_rules! new_data_struct_type {
         $(,)?
     ) => {
 
-        paste::paste! {
+        ::paste::paste! {
             // Enum with single value works as a constant field
-            new_data_type_enum!([<$name DataType>], $type_value);
+            $crate::data_macros::new_data_type_enum!([<$name DataType>], $type_value);
 
             #[serde_as]
             #[derive(Clone, Debug, Serialize, Deserialize, PartialEq, Eq)]
