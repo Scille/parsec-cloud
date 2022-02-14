@@ -2042,7 +2042,7 @@ msgid "TEXT_USER_LIST_RETRIEVABLE_FAILURE"
 msgstr "Impossible de récupérer la liste des utilisateurs depuis le serveur."
 
 msgid "TEXT_USER_INVITATION_CANCELLED"
-msgstr ""
+msgstr "L'invitation a été annulée."
 
 msgid "TEXT_INVITE_USER_CANCEL_ERROR"
 msgstr "Impossible d'annuler l'invitation."

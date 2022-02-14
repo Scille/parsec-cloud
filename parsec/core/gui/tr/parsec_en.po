@@ -1988,7 +1988,7 @@ msgid "TEXT_USER_LIST_RETRIEVABLE_FAILURE"
 msgstr "Failed to retrieve the user list from the server."
 
 msgid "TEXT_USER_INVITATION_CANCELLED"
-msgstr ""
+msgstr "The invitation has been cancelled."
 
 msgid "TEXT_INVITE_USER_CANCEL_ERROR"
 msgstr "Could not cancel the invitation."

@@ -124,6 +124,9 @@ QPushButton {
      </property>
      <item>
       <widget class="QPushButton" name="button_close">
+       <property name="cursor">
+        <cursorShape>PointingHandCursor</cursorShape>
+       </property>
        <property name="layoutDirection">
         <enum>Qt::RightToLeft</enum>
        </property>

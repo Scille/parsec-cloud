@@ -15,7 +15,7 @@ from PyQt5.QtCore import (
     QObject,
     QSize,
 )
-from PyQt5.QtGui import QPainter, QBrush, QColor
+from PyQt5.QtGui import QPainter, QBrush, QColor, QCursor
 from PyQt5.QtWidgets import QWidget
 
 from parsec.core.gui.custom_widgets import Pixmap
@@ -35,7 +35,7 @@ class SnackbarWidget(QWidget, Ui_SnackbarWidget):
 
     opacity = pyqtProperty(float, fset=_set_opacity, fget=_get_opacity)
 
-    def __init__(self, msg, icon=None, timeout=3000, action_text=None, action=None, animate=False):
+    def __init__(self, msg, icon=None, timeout=3000, action_text=None, action=None, animate=True):
         super().__init__()
         self.setupUi(self)
         self.animate = animate
@@ -48,6 +48,7 @@ class SnackbarWidget(QWidget, Ui_SnackbarWidget):
         if action_text and action:
             self.button_action.setText(action_text)
             self.button_action.clicked.connect(self._on_action_clicked)
+            self.button_action.setCursor(QCursor(Qt.PointingHandCursor))
         if icon:
             self.label_icon.setPixmap(icon)
         self.button_close.clicked.connect(self._on_timeout)
@@ -204,7 +205,7 @@ class SnackbarManager(QObject):
         return cls._manager
 
     @classmethod
-    def inform(cls, msg, timeout=3000, action_text=None, action=None, animate=False):
+    def inform(cls, msg, timeout=3000, action_text=None, action=None, animate=True):
         pix = Pixmap(":/icons/images/material/info.svg")
         pix.replace_color(QColor(0, 0, 0), QColor(73, 153, 208))
         snackbar = SnackbarWidget(
@@ -213,7 +214,7 @@ class SnackbarManager(QObject):
         cls.get_manager().add_snackbar(snackbar)
 
     @classmethod
-    def congratulate(cls, msg, timeout=3000, action_text=None, action=None, animate=False):
+    def congratulate(cls, msg, timeout=3000, action_text=None, action=None, animate=True):
         pix = Pixmap(":/icons/images/material/check_circle.svg")
         pix.replace_color(QColor(0, 0, 0), QColor(73, 208, 86))
         snackbar = SnackbarWidget(
@@ -222,7 +223,7 @@ class SnackbarManager(QObject):
         cls.get_manager().add_snackbar(snackbar)
 
     @classmethod
-    def warn(cls, msg, timeout=3000, action_text=None, action=None, animate=False):
+    def warn(cls, msg, timeout=3000, action_text=None, action=None, animate=True):
         pix = Pixmap(":/icons/images/material/report_problem.svg")
         pix.replace_color(QColor(0, 0, 0), QColor(208, 102, 73))
         snackbar = SnackbarWidget(
