@@ -521,7 +521,6 @@ class UsersWidget(QWidget, Ui_UsersWidget):
 
         email, invitation_addr, email_sent_status = job.ret
         if email_sent_status == InvitationEmailSentStatus.SUCCESS:
-
             show_info(self, _("TEXT_USER_INVITE_SUCCESS_email").format(email=email))
         elif email_sent_status == InvitationEmailSentStatus.BAD_RECIPIENT:
             show_info_copy_link(

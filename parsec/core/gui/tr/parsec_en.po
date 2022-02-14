@@ -2671,6 +2671,9 @@ msgstr "Enable telemetry for automatic crash reporting"
 msgid "TEXT_SELECT_SMARTCARD"
 msgstr "You will be asked to select your smartcard."
 
+msgid "ACTION_DISMISS"
+msgstr "Dismiss"
+
 msgid "TEXT_WORKSPACE_TEMPORARY_TITLE"
 msgstr "Snapshot"
 

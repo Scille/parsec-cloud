@@ -2736,6 +2736,9 @@ msgstr "Activer la télémétrie pour l'envoi automatique de rapports d'erreur"
 msgid "TEXT_SELECT_SMARTCARD"
 msgstr "Il vous sera demandé de sélectionner votre carte à puce"
 
+msgid "ACTION_DISMISS"
+msgstr "Masquer"
+
 msgid "TEXT_WORKSPACE_TEMPORARY_TITLE"
 msgstr "Vue instantanée"
 
