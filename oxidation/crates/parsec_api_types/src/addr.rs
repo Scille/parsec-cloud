@@ -201,8 +201,9 @@ impl BaseBackendAddr {
     }
 
     pub fn to_url(&self) -> Url {
-        let mut url = Url::parse(&format!("{}://{}", PARSEC_SCHEME, &self.hostname)).unwrap();
-        url.set_port(self.port).unwrap();
+        let mut url = Url::parse(&format!("{}://{}", PARSEC_SCHEME, &self.hostname))
+            .unwrap_or_else(|_| unreachable!());
+        url.set_port(self.port).unwrap_or_else(|_| unreachable!());
         if !self.use_ssl {
             url.query_pairs_mut().append_pair("no_ssl", "true");
         }
@@ -211,8 +212,9 @@ impl BaseBackendAddr {
 
     pub fn to_http_redirection_url(&self) -> Url {
         let scheme = if self.use_ssl { "https" } else { "http" };
-        let mut url = Url::parse(&format!("{}://{}", scheme, &self.hostname)).unwrap();
-        url.set_port(self.port).unwrap();
+        let mut url = Url::parse(&format!("{}://{}", scheme, &self.hostname))
+            .unwrap_or_else(|_| unreachable!());
+        url.set_port(self.port).unwrap_or_else(|_| unreachable!());
         url
     }
 
@@ -220,8 +222,9 @@ impl BaseBackendAddr {
         let path = path.unwrap_or("");
         let scheme = if self.use_ssl { "https" } else { "http" };
 
-        let mut url = Url::parse(&format!("{}://{}", scheme, &self.hostname)).unwrap();
-        url.set_port(self.port).unwrap();
+        let mut url = Url::parse(&format!("{}://{}", scheme, &self.hostname))
+            .unwrap_or_else(|_| unreachable!());
+        url.set_port(self.port).unwrap_or_else(|_| unreachable!());
         url.set_path(path);
 
         url

@@ -5,6 +5,7 @@ use rstest::*;
 
 use parsec_api_crypto::*;
 use parsec_api_types::*;
+use parsec_client_types::*;
 
 pub struct Device {
     pub organization_addr: BackendOrganizationAddr,
@@ -24,6 +25,10 @@ impl Device {
         &self.device_id.user_id
     }
 
+    pub fn organization_id(&self) -> &OrganizationID {
+        self.organization_addr.organization_id()
+    }
+
     pub fn verify_key(&self) -> VerifyKey {
         self.signing_key.verify_key()
     }
@@ -34,6 +39,21 @@ impl Device {
 
     pub fn root_verify_key(&self) -> &VerifyKey {
         self.organization_addr.root_verify_key()
+    }
+
+    pub fn local_device(&self) -> LocalDevice {
+        LocalDevice {
+            organization_addr: self.organization_addr.to_owned(),
+            device_id: self.device_id.to_owned(),
+            device_label: self.device_label.to_owned(),
+            human_handle: self.human_handle.to_owned(),
+            signing_key: self.signing_key.to_owned(),
+            private_key: self.private_key.to_owned(),
+            profile: self.profile.to_owned(),
+            user_manifest_id: self.user_manifest_id.to_owned(),
+            user_manifest_key: self.user_manifest_key.to_owned(),
+            local_symkey: self.local_symkey.to_owned(),
+        }
     }
 }
 

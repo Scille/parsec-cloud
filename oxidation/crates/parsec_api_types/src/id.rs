@@ -52,7 +52,8 @@ macro_rules! new_string_based_id_type {
             fn from_str(s: &str) -> Result<Self, Self::Err> {
                 let id: String = s.nfc().collect();
                 lazy_static! {
-                    static ref PATTERN: Regex = Regex::new($pattern).unwrap();
+                    static ref PATTERN: Regex =
+                        Regex::new($pattern).unwrap_or_else(|_| unreachable!());
                 }
                 // ID must respect regex AND be contained within $bytes_size bytes
                 if PATTERN.is_match(&id) && id.len() <= $bytes_size {

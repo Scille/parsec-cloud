@@ -5,7 +5,7 @@ extern crate lazy_static;
 
 mod addr;
 mod certif;
-mod data_macros;
+pub mod data_macros;
 mod ext_types;
 mod id;
 mod invite;

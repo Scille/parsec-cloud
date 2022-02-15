@@ -13,9 +13,11 @@ use crate::SecretKey;
  * PrivateKey
  */
 
-#[derive(Clone, Debug, PartialEq, Eq, Deserialize, Serialize)]
+#[derive(Clone, PartialEq, Eq, Deserialize, Serialize)]
 #[serde(transparent)]
 pub struct PrivateKey(curve25519xsalsa20poly1305::SecretKey);
+
+crate::macros::impl_key_debug!(PrivateKey);
 
 super::utils::impl_try_from!(PrivateKey, curve25519xsalsa20poly1305::SecretKey);
 
@@ -56,9 +58,11 @@ impl AsRef<[u8]> for PrivateKey {
  * PublicKey
  */
 
-#[derive(Clone, Debug, PartialEq, Eq, Deserialize, Serialize)]
+#[derive(Clone, PartialEq, Eq, Deserialize, Serialize)]
 #[serde(transparent)]
 pub struct PublicKey(curve25519xsalsa20poly1305::PublicKey);
+
+crate::macros::impl_key_debug!(PublicKey);
 
 super::utils::impl_try_from!(PublicKey, curve25519xsalsa20poly1305::PublicKey);
 

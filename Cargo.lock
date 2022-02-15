@@ -651,6 +651,27 @@ dependencies = [
 ]
 
 [[package]]
+name = "parsec_client_types"
+version = "0.0.0"
+dependencies = [
+ "hex-literal",
+ "parsec_api_crypto",
+ "parsec_api_types",
+ "paste 1.0.6",
+ "pretty_assertions",
+ "rmp-serde 0.15.5",
+ "rstest",
+ "rstest_reuse",
+ "serde",
+ "serde_bytes",
+ "serde_repr",
+ "serde_test",
+ "serde_with",
+ "sha2 0.10.1",
+ "tests_fixtures",
+]
+
+[[package]]
 name = "paste"
 version = "0.1.18"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1212,6 +1233,7 @@ dependencies = [
  "hex-literal",
  "parsec_api_crypto",
  "parsec_api_types",
+ "parsec_client_types",
  "rstest",
 ]
 

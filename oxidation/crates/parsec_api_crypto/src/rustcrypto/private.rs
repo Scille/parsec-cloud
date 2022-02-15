@@ -100,9 +100,11 @@ use crate::SecretKey;
  * PrivateKey
  */
 
-#[derive(Clone, Debug, Deserialize, Serialize)]
+#[derive(Clone, Deserialize, Serialize)]
 #[serde(into = "ByteBuf", try_from = "ByteBuf")]
 pub struct PrivateKey(crypto_box::SecretKey);
+
+crate::macros::impl_key_debug!(PrivateKey);
 
 impl PartialEq for PrivateKey {
     fn eq(&self, other: &Self) -> bool {
@@ -185,9 +187,11 @@ impl From<PrivateKey> for ByteBuf {
  * PublicKey
  */
 
-#[derive(Clone, Debug, Deserialize, Serialize)]
+#[derive(Clone, Deserialize, Serialize)]
 #[serde(into = "ByteBuf", try_from = "ByteBuf")]
 pub struct PublicKey(crypto_box::PublicKey);
+
+crate::macros::impl_key_debug!(PublicKey);
 
 impl PartialEq for PublicKey {
     fn eq(&self, other: &Self) -> bool {

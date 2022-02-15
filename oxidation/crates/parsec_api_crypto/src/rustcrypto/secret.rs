@@ -13,7 +13,7 @@ type Blake2bMac40 = Blake2bMac<U5>;
 #[serde(into = "ByteBuf", try_from = "ByteBuf")]
 pub struct SecretKey(Key);
 
-super::macros::impl_key_debug!(SecretKey);
+crate::macros::impl_key_debug!(SecretKey);
 
 impl SecretKey {
     pub const ALGORITHM: &'static str = "xsalsa20poly1305";

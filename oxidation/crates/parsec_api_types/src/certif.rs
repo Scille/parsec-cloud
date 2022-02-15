@@ -7,9 +7,7 @@ use serde::{Deserialize, Serialize};
 use serde_with::*;
 use std::io::{Read, Write};
 
-use crate::data_macros::{
-    impl_transparent_data_format_convertion, new_data_struct_type, new_data_type_enum,
-};
+use crate::data_macros::{impl_transparent_data_format_convertion, new_data_struct_type};
 use crate::ext_types::DateTimeExtFormat;
 use crate::{DeviceID, DeviceLabel, EntryID, HumanHandle, RealmRole, UserID, UserProfile};
 use parsec_api_crypto::{PublicKey, SigningKey, VerifyKey};
@@ -92,10 +90,10 @@ macro_rules! impl_dump_and_sign {
     ($name:ident) => {
         impl $name {
             pub fn dump_and_sign(&self, author_signkey: &SigningKey) -> Vec<u8> {
-                let serialized = rmp_serde::to_vec_named(&self).unwrap();
+                let serialized = rmp_serde::to_vec_named(&self).unwrap_or_else(|_| unreachable!());
                 let mut e = ZlibEncoder::new(Vec::new(), flate2::Compression::default());
-                e.write_all(&serialized).unwrap();
-                let compressed = e.finish().unwrap();
+                e.write_all(&serialized).unwrap_or_else(|_| unreachable!());
+                let compressed = e.finish().unwrap_or_else(|_| unreachable!());
                 author_signkey.sign(&compressed)
             }
         }
