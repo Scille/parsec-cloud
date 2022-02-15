@@ -347,7 +347,6 @@ fn serde_revoked_user_certificate(alice: &Device, bob: &Device) {
     let certif =
         RevokedUserCertificate::verify_and_load(&data, &alice.verify_key(), &alice.device_id)
             .unwrap();
-    println!("{:?}", certif);
     assert_eq!(certif, expected);
 
     // Also test serialization round trip

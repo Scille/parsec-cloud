@@ -198,7 +198,6 @@ macro_rules! impl_decrypt_and_load {
                 ::flate2::read::ZlibDecoder::new(&compressed[..])
                     .read_to_end(&mut serialized)
                     .map_err(|_| "Invalid compression")?;
-                println!("===>{:?}", &serialized);
                 let obj: $name =
                     rmp_serde::from_read_ref(&serialized).map_err(|_| "Invalid serialization")?;
                 Ok(obj)

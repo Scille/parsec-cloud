@@ -10,7 +10,7 @@ use parsec_client_types::*;
 use tests_fixtures::{alice, Device};
 
 #[rstest]
-#[case::need_sync(|alice: &Device| {
+#[case::need_sync(Box::new(|alice: &Device| {
     let now = "2021-12-04T11:50:43.208820992Z".parse().unwrap();
     (
         // Generated from Python implementation (Parsec v2.6.0)
@@ -59,7 +59,7 @@ use tests_fixtures::{alice, Device};
         //       role_cached_on: ext(1, 1638618643.208821)
         //     }
         //   ]
-        hex!(
+        &hex!(
             "ed02cad442320f04035cca2c094081b9995189a1645bc55568339a3a9233d91f8c31dee2c7"
             "9890f0c474fb7a799deb0ad4b7ecd102453c33268354e79b612934517d599f8d53a61a9372"
             "3dacae87922feb1a05ab987eb9922fcf751109e6ce279e38d09f6febbf3068b1bfd5390a13"
@@ -81,14 +81,12 @@ use tests_fixtures::{alice, Device};
             "b73a08470e5869e6c7b90e8a0c061cd66880ed90d6e57f09ff49ff4286ac82c33c7ecb75cd"
             "42abf37aa5abd4a7ef8bc406c022097f9271476503de00b476ccf3e750d9d242c49d7f6e3e"
             "940ef3704fdef14e33f7927786bc501f40"
-        ),
+        )[..],
         LocalUserManifest {
-            author: alice.device_id.to_owned(),
-            timestamp: now,
             updated: now,
             need_sync: true,
             speculative: false,
-            last_processed_message: 3,
+            last_processed_message: 4,
             base: UserManifest {
                 author: alice.device_id.to_owned(),
                 timestamp: now,
@@ -137,8 +135,8 @@ use tests_fixtures::{alice, Device};
             ],
         }
     )
-})]
-#[case::synced(|alice: &Device| {
+}))]
+#[case::synced(Box::new(|alice: &Device| {
     let now = "2021-12-04T11:50:43.208820992Z".parse().unwrap();
     (
         // Generated from Python implementation (Parsec v2.6.0)
@@ -178,7 +176,7 @@ use tests_fixtures::{alice, Device};
         //       role_cached_on: ext(1, 1638618643.208821)
         //     }
         //   ]
-        hex!(
+        &hex!(
             "07d50897a2530d094f195290dda1e120b6ca52e050aedb0d04dddc5f8d3886751cbdd62d86"
             "928c1052f8317ff32667efdf380fa12f4da793d874d15f0ace61d48df2ab981aaffb7041d7"
             "04fb61f0c540e1e3f7056809a31f499e32a6078be256b40cf0713984bd4040cbbe8f15aad5"
@@ -196,10 +194,8 @@ use tests_fixtures::{alice, Device};
             "58fa7879891e323aba8076e0a978cba6d5a9d6edc235184065f9a385a967547b4cfacf5efc"
             "28acfb004e86194a9f9402a423bf21469821ee00ff0a28ab90bfc150682e0ca430987c9dc9"
             "00aac57a581b7420073bef892a066f35c4f5f0"
-        ),
+        )[..],
         LocalUserManifest {
-            author: alice.device_id.to_owned(),
-            timestamp: now,
             updated: now,
             need_sync: false,
             speculative: false,
@@ -241,8 +237,8 @@ use tests_fixtures::{alice, Device};
             ],
         }
     )
-})]
-#[case::speculative(|alice: &Device| {
+}))]
+#[case::speculative(Box::new(|alice: &Device| {
     let now = "2021-12-04T11:50:43.208820992Z".parse().unwrap();
     (
         // Generated from Python implementation (Parsec v2.6.0)
@@ -263,7 +259,7 @@ use tests_fixtures::{alice, Device};
         //     updated: ext(1, 1638618643.208821)
         //     last_processed_message: 0
         //     workspaces: []
-        hex!(
+        &hex!(
             "ce0274b3890ec74dff002d7b587e591ba4876b7f08fa227eb1ba737f6eae2490c79c1be9c6"
             "211179274ce62439caeea5829c9265e46371fb6e198f3d13ef5e366e11653a64f049941a1b"
             "6c70ba424019f7e09bcab7f53872cc3d65a9f23b71ec85b2f5b4524f58a03528ccf335af19"
@@ -273,10 +269,8 @@ use tests_fixtures::{alice, Device};
             "c279e236e80564790efc67e61d8196cd4ba1806b7636070976bf4306be2f51fa705cbaa423"
             "890ba6a40b5b33ac75f71dd2a8e1bc93532a3bbee659da075245905b5c46583e0479e8c600"
             "60e0e8bfaa94af4c32a201f6b0"
-        ),
+        )[..],
         LocalUserManifest {
-            author: alice.device_id.to_owned(),
-            timestamp: now,
             updated: now,
             need_sync: true,
             speculative: true,
@@ -294,37 +288,76 @@ use tests_fixtures::{alice, Device};
             workspaces: vec![],
         }
     )
-})]
+}))]
+#[case::legacy_missing_speculative_field(Box::new(|alice: &Device| {
+    let now = "2021-12-04T11:50:43.208820992Z".parse().unwrap();
+    (
+        // Generated from Python implementation (Parsec v2.6.0)
+        // Content:
+        //   type: "local_user_manifest"
+        //   updated: ext(1, 1638618643.208821)
+        //   need_sync: false
+        //   last_processed_message: 0
+        //   workspaces: []
+        //   base: {
+        //       type: "user_manifest"
+        //       author: str(alice.device_id)
+        //       timestamp: ext(1, 1638618643.208821)
+        //       id: ext(2, hex!("87c6b5fd3b454c94bab51d6af1c6930b"))
+        //       version: 0
+        //       created: ext(1, 1638618643.208821)
+        //       updated: ext(1, 1638618643.208821)
+        //       last_processed_message: 0
+        //       workspaces: []
+        //   }
+        &hex!(
+            "7d38802a10c9b998d3cf460a48792a305113398fda609eb88ed2dbc40ad51098a5847e50a5"
+            "8f69bc374fba586d0b60cbc686819e4ae7d1507ed333d5f63caffae84ec5acf40ec7302c0c"
+            "62e75407b0820fdcf1f8211143ba0415074033b37b4d6d136a7ba956c4fb0e046499822d37"
+            "7d5a82e3155537db73e58c48adbd5ed41abc4d7498c72947219b49ce6de396beb42cef2f03"
+            "7e234792cebe3e46726b471ad3d0a1020a1f9d814d359b8763cb86992578c81e4c5f47d523"
+            "33694e5df74f303a99c3b744ef0c942074aacf695d4e6eb38952a1ec9b2a414e6a00f2924d"
+            "c4af0c349b0fc959a4422b6a92b7f9233403f71b1cb9bd6d367bf336b8acbc4eb82bfdacf9"
+            "48272fe53b3ecec4f06be968149c597f1e6afd529c2ece0410ec7cb6042e3eedf966c7248c"
+        )[..],
+        LocalUserManifest {
+            updated: now,
+            need_sync: false,
+            speculative: false,
+            last_processed_message: 0,
+            workspaces: vec![],
+            base: UserManifest {
+                author: alice.device_id.to_owned(),
+                timestamp: now,
+                id: "87c6b5fd3b454c94bab51d6af1c6930b".parse().unwrap(),
+                version: 0,
+                created: now,
+                updated: now,
+                last_processed_message: 0,
+                workspaces: vec![],
+            },
+        }
+    )
+}))]
 fn serde_local_user_manifest(
     alice: &Device,
-    #[case] generate_data_and_expected: &dyn Fn(&Device) -> (&'static [u8], LocalManifest),
+    #[case] generate_data_and_expected: Box<
+        dyn FnOnce(&Device) -> (&'static [u8], LocalUserManifest),
+    >,
 ) {
     let (data, expected) = generate_data_and_expected(alice);
     let key = SecretKey::from(hex!(
         "b1b52e16c1b46ab133c8bf576e82d26c887f1e9deae1af80043a258c36fcabf3"
     ));
 
-    let manifest = LocalUserManifest::decrypt_and_load(
-        &data,
-        &key,
-        &alice.verify_key(),
-        &alice.device_id,
-        &now,
-    )
-    .unwrap();
+    let manifest = LocalUserManifest::decrypt_and_load(&data, &key).unwrap();
 
     assert_eq!(manifest, expected);
 
     // Also test serialization round trip
-    let data2 = manifest.dump_and_encrypt(&alice.signing_key, &key);
+    let data2 = manifest.dump_and_encrypt(&key);
     // Note we cannot just compare with `data` due to encryption and keys order
-    let manifest2 = LocalUserManifest::decrypt_and_load(
-        &data2,
-        &key,
-        &alice.verify_key(),
-        &alice.device_id,
-        &now,
-    )
-    .unwrap();
+    let manifest2 = LocalUserManifest::decrypt_and_load(&data2, &key).unwrap();
+
     assert_eq!(manifest2, expected);
 }
