@@ -15,6 +15,8 @@ path = "tests/tests.rs"
 parsec_api_crypto = { version = "0.0.0", path = "../parsec_api_crypto" }
 parsec_api_types = { version = "0.0.0", path = "../parsec_api_types" }
 
+chrono = {version = "0.4.19", features = ["serde"]}
+flate2 = "1.0.22"
 serde = {version = "1.0.127", features = ["derive"]}
 serde_with = "1.11.0"
 serde_repr = "0.1.7"

@@ -233,7 +233,7 @@ impl WorkspaceEntry {
 
 const LOCAL_AUTHOR_LEGACY_PLACEHOLDER: &str =
     "LOCAL_AUTHOR_LEGACY_PLACEHOLDER@LOCAL_AUTHOR_LEGACY_PLACEHOLDER";
-fn generate_local_author_legacy_placeholder() -> DeviceID {
+pub fn generate_local_author_legacy_placeholder() -> DeviceID {
     lazy_static! {
         static ref LEGACY_PLACEHOLDER: DeviceID = LOCAL_AUTHOR_LEGACY_PLACEHOLDER
             .parse()
