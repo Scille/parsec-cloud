@@ -1,0 +1,11 @@
+[package]
+name = "parsec_data_format_macros"
+version = "0.0.0"
+edition = "2021"
+
+[lib]
+proc-macro = true
+
+[dependencies]
+syn = "1.0.86"
+quote = "1.0.15"

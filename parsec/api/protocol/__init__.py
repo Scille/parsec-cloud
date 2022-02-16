@@ -161,7 +161,6 @@ __all__ = (
     # Organization
     "apiv1_organization_bootstrap_serializer",
     "organization_bootstrap_webhook_serializer",
-    "organization_bootstrap_serializer",
     "organization_stats_serializer",
     "organization_config_serializer",
     "UsersPerProfileDetailItemSchema",
