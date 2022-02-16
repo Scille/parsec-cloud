@@ -15,6 +15,7 @@ class MenuWidget(QWidget, Ui_MenuWidget):
     files_clicked = pyqtSignal()
     users_clicked = pyqtSignal()
     devices_clicked = pyqtSignal()
+    enrollment_clicked = pyqtSignal()
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -22,9 +23,11 @@ class MenuWidget(QWidget, Ui_MenuWidget):
         self.button_files.clicked.connect(self.files_clicked.emit)
         self.button_users.clicked.connect(self.users_clicked.emit)
         self.button_devices.clicked.connect(self.devices_clicked.emit)
+        self.button_enrollment.clicked.connect(self.enrollment_clicked.emit)
         self.button_files.apply_style()
         self.button_users.apply_style()
         self.button_devices.apply_style()
+        self.button_enrollment.apply_style()
         self.icon_connection.apply_style()
 
     def paintEvent(self, _):
@@ -45,10 +48,15 @@ class MenuWidget(QWidget, Ui_MenuWidget):
         self._deactivate_all()
         self.button_users.setChecked(True)
 
+    def activate_enrollment(self):
+        self._deactivate_all()
+        self.button_enrollment.setChecked(True)
+
     def _deactivate_all(self):
         self.button_files.setChecked(False)
         self.button_users.setChecked(False)
         self.button_devices.setChecked(False)
+        self.button_enrollment.setChecked(False)
 
     def show_organization_stats(
         self, organization_id: OrganizationID, organization_stats: OrganizationStats
