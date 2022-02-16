@@ -6,7 +6,7 @@ use serde::{Deserialize, Serialize};
 use serde_with::*;
 use std::str::FromStr;
 
-use crate::data_macros::{impl_transparent_data_format_convertion, new_data_struct_type};
+use crate::data_macros::{impl_transparent_data_format_conversion, new_data_struct_type};
 use crate::ext_types::new_uuid_type;
 use crate::{DeviceID, DeviceLabel, EntryID, HumanHandle, UserProfile};
 use parsec_api_crypto::{PrivateKey, PublicKey, SecretKey, VerifyKey};
@@ -234,7 +234,7 @@ new_data_struct_type!(
     verify_key: VerifyKey,
 );
 
-impl_transparent_data_format_convertion!(
+impl_transparent_data_format_conversion!(
     InviteUserData,
     InviteUserDataData,
     requested_device_label,
@@ -274,7 +274,7 @@ new_data_struct_type!(
     root_verify_key: VerifyKey,
 );
 
-impl_transparent_data_format_convertion!(
+impl_transparent_data_format_conversion!(
     InviteUserConfirmation,
     InviteUserConfirmationData,
     device_id,
@@ -306,7 +306,7 @@ new_data_struct_type!(
     verify_key: VerifyKey,
 );
 
-impl_transparent_data_format_convertion!(
+impl_transparent_data_format_conversion!(
     InviteDeviceData,
     InviteDeviceDataData,
     requested_device_label,
@@ -350,7 +350,7 @@ new_data_struct_type!(
     root_verify_key: VerifyKey,
 );
 
-impl_transparent_data_format_convertion!(
+impl_transparent_data_format_conversion!(
     InviteDeviceConfirmation,
     InviteDeviceConfirmationData,
     device_id,

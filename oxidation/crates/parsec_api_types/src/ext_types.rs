@@ -90,7 +90,7 @@ impl<'de> DeserializeAs<'de, DateTime<Utc>> for DateTimeExtFormat {
 
 macro_rules! new_uuid_type {
     (pub $name:ident) => {
-        #[derive(Clone, Debug, PartialEq, Eq)]
+        #[derive(Clone, Debug, PartialEq, Eq, Hash)]
         pub struct $name(uuid::Uuid);
 
         impl $name {

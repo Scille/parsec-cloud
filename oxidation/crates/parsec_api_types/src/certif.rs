@@ -7,7 +7,7 @@ use serde::{Deserialize, Serialize};
 use serde_with::*;
 use std::io::{Read, Write};
 
-use crate::data_macros::{impl_transparent_data_format_convertion, new_data_struct_type};
+use crate::data_macros::{impl_transparent_data_format_conversion, new_data_struct_type};
 use crate::ext_types::DateTimeExtFormat;
 use crate::{DeviceID, DeviceLabel, EntryID, HumanHandle, RealmRole, UserID, UserProfile};
 use parsec_api_crypto::{PublicKey, SigningKey, VerifyKey};
@@ -258,7 +258,7 @@ new_data_struct_type!(
     user_id: UserID,
 );
 
-impl_transparent_data_format_convertion!(
+impl_transparent_data_format_conversion!(
     RevokedUserCertificate,
     RevokedUserCertificateData,
     author,
@@ -300,7 +300,7 @@ new_data_struct_type!(
     verify_key: VerifyKey,
 );
 
-impl_transparent_data_format_convertion!(
+impl_transparent_data_format_conversion!(
     DeviceCertificate,
     DeviceCertificateData,
     author,
@@ -344,7 +344,7 @@ new_data_struct_type!(
     role: Option<RealmRole>,  // TODO: use a custom type instead
 );
 
-impl_transparent_data_format_convertion!(
+impl_transparent_data_format_conversion!(
     RealmRoleCertificate,
     RealmRoleCertificateData,
     author,

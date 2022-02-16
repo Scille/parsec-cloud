@@ -6,7 +6,7 @@ use serde_with::*;
 use std::collections::HashMap;
 use unicode_normalization::UnicodeNormalization;
 
-use crate::data_macros::{impl_transparent_data_format_convertion, new_data_struct_type};
+use crate::data_macros::{impl_transparent_data_format_conversion, new_data_struct_type};
 use crate::ext_types::{new_uuid_type, DateTimeExtFormat};
 use crate::DeviceID;
 use parsec_api_crypto::{HashDigest, SecretKey};
@@ -169,7 +169,7 @@ impl std::str::FromStr for EntryName {
  * ManifestEntry
  */
 
-#[derive(Clone, Debug, Default, Serialize, Deserialize, PartialEq, Eq)]
+#[derive(Clone, Debug, Default, Serialize, Deserialize, PartialEq, Eq, Hash)]
 #[serde(transparent)]
 pub struct ManifestEntry(pub EntryID);
 
@@ -313,9 +313,9 @@ pub struct FileManifest {
     pub created: DateTime<Utc>,
     pub updated: DateTime<Utc>,
     /// Total size of the file
-    pub size: u32, // TODO: this limit file size to 8Go, is this okay ?
+    pub size: i64, // TODO: this limit file size to 8Go, is this okay ?
     /// Size of a single block
-    pub blocksize: u32,
+    pub blocksize: i64,
     pub blocks: Vec<BlockAccess>,
 }
 
@@ -338,13 +338,13 @@ new_data_struct_type!(
     created: DateTime<Utc>,
     #[serde_as(as = "DateTimeExtFormat")]
     updated: DateTime<Utc>,
-    size: u32,
-    blocksize: u32,
+    size: i64,
+    blocksize: i64,
     blocks: Vec<BlockAccess>,
 
 );
 
-impl_transparent_data_format_convertion!(
+impl_transparent_data_format_conversion!(
     FileManifest,
     FileManifestData,
     author,
@@ -400,7 +400,7 @@ new_data_struct_type!(
     children: HashMap<EntryName, ManifestEntry>,
 );
 
-impl_transparent_data_format_convertion!(
+impl_transparent_data_format_conversion!(
     FolderManifest,
     FolderManifestData,
     author,
@@ -452,7 +452,7 @@ new_data_struct_type!(
     children: HashMap<EntryName, ManifestEntry>,
 );
 
-impl_transparent_data_format_convertion!(
+impl_transparent_data_format_conversion!(
     WorkspaceManifest,
     WorkspaceManifestData,
     author,
@@ -511,7 +511,7 @@ new_data_struct_type!(
     workspaces: Vec<WorkspaceEntry>,
 );
 
-impl_transparent_data_format_convertion!(
+impl_transparent_data_format_conversion!(
     UserManifest,
     UserManifestData,
     author,

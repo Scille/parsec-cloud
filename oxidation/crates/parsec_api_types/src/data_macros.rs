@@ -101,7 +101,7 @@ macro_rules! new_data_struct_type {
 }
 
 #[macro_export]
-macro_rules! impl_transparent_data_format_convertion {
+macro_rules! impl_transparent_data_format_conversion {
     ($obj_type:ty, $data_type:ty, $($field:ident),* $(,)?) => {
 
         impl From<$data_type> for $obj_type {
@@ -124,6 +124,6 @@ macro_rules! impl_transparent_data_format_convertion {
     };
 }
 
-pub use impl_transparent_data_format_convertion;
+pub use impl_transparent_data_format_conversion;
 pub use new_data_struct_type;
 pub use new_data_type_enum;
