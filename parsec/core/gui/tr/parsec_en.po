@@ -136,6 +136,9 @@ msgstr "Users"
 msgid "ACTION_MENU_DEVICES"
 msgstr "My devices"
 
+msgid "ACTION_MENU_ENROLLMENT"
+msgstr ""
+
 msgid "TEXT_CLAIM_DEVICE_INVALID_CODE_CLICKED"
 msgstr ""
 "You did not provide the right code. You will have to restart the process."
@@ -385,6 +388,30 @@ msgstr "Could not invite the device."
 
 msgid "TEXT_DEVICE_LIST_RETRIEVABLE_FAILURE"
 msgstr "Failed to retrieve the device list from the server."
+
+msgid "TEXT_ENROLLMENT_CERTIFICATE_IS_VALID"
+msgstr "Valid certificate"
+
+msgid "TEXT_ENROLLMENT_CERTIFICATE_IS_INVALID"
+msgstr "Invalid certificate"
+
+msgid "TEXT_ENROLLMENT_NO_PENDING_RECRUITMENT"
+msgstr "No enrollment query at this time."
+
+msgid "TEXT_ENROLLMENT_FAILED_TO_RETRIEVE_LIST"
+msgstr "Couldn't not retrieve the enrollment list."
+
+msgid "TEXT_ENROLLMENT_ACCEPT_SUCCESS"
+msgstr "This demand was successfully accepted."
+
+msgid "TEXT_ENROLLMENT_ACCEPT_FAILURE"
+msgstr "Could not accept this demand."
+
+msgid "TEXT_ENROLLMENT_REJECT_SUCCESS"
+msgstr "This demand was successfully rejected."
+
+msgid "TEXT_ENROLLMENT_REJECT_FAILURE"
+msgstr "Could not reject this demand."
 
 msgid "TEXT_FILE_HISTORY_LIST_FAILURE"
 msgstr "Error while retrieving the file history."
@@ -2678,6 +2705,12 @@ msgstr "Password confirmation"
 
 msgid "TEXT_PASSWORD_CHOICE_MISMATCH"
 msgstr "Does not match the password."
+
+msgid "ACTION_ACCEPT_RECRUIT"
+msgstr "Accept"
+
+msgid "ACTION_REJECT_RECRUIT"
+msgstr "Reject"
 
 msgid "TEXT_SETTINGS_BEHAVIOR_TITLE"
 msgstr "Application behavior"

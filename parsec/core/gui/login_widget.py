@@ -1,6 +1,7 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2016-2021 Scille SAS
 
 from pathlib import Path
+from collections import namedtuple
 
 from PyQt5.QtCore import pyqtSignal, Qt
 from PyQt5.QtWidgets import QWidget
@@ -15,6 +16,40 @@ from parsec.core.gui.ui.login_accounts_widget import Ui_LoginAccountsWidget
 from parsec.core.gui.ui.login_password_input_widget import Ui_LoginPasswordInputWidget
 from parsec.core.gui.ui.login_smartcard_input_widget import Ui_LoginSmartcardInputWidget
 from parsec.core.gui.ui.login_no_devices_widget import Ui_LoginNoDevicesWidget
+from parsec.core.gui.ui.enrollment_pending_button import Ui_EnrollmentPendingButton
+
+
+PendingEnrollment = namedtuple("PendingEnrollment", ["token", "name", "org", "status", "date"])
+
+
+class EnrollmentPendingButton(QWidget, Ui_EnrollmentPendingButton):
+    finalize_clicked = pyqtSignal(QWidget)
+    clear_clicked = pyqtSignal(QWidget)
+
+    def __init__(self, enrollment_info):
+        super().__init__()
+        self.setupUi(self)
+        self.enrollment_info = enrollment_info
+        self.label_org.setText(self.enrollment_info.org)
+        self.label_name.setText(self.enrollment_info.name)
+        if self.enrollment_info.status == "rejected":
+            self.label_status.setText(_("TEXT_ENROLLMENT_STATUS_REJECTED"))
+            self.label_status.setToolTip(_("TEXT_ENROLLMENT_STATUS_REJECTED_TOOLTIP"))
+            self.button_action.setText(_("ACTION_ENROLLMENT_CLEAR"))
+            self.button_action.clicked.connect(lambda: self.clear_clicked.emit(self))
+        elif self.enrollment_info.status == "accepted":
+            self.label_status.setText(_("TEXT_ENROLLMENT_STATUS_ACCEPTED"))
+            self.label_status.setToolTip(_("TEXT_ENROLLMENT_STATUS_ACCEPTED_TOOLTIP"))
+            self.button_action.setText(_("ACTION_ENROLLMENT_FINALIZE"))
+            self.button_action.clicked.connect(lambda: self.finalize_clicked.emit(self))
+        else:
+            self.button_action.hide()
+            self.label_status.setText(_("TEXT_ENROLLMENT_STATUS_PENDING"))
+            self.label_status.setToolTip(_("TEXT_ENROLLMENT_STATUS_PENDING_TOOLTIP"))
+
+    @property
+    def token(self):
+        return self.enrollment_info.token
 
 
 class AccountButton(QWidget, Ui_AccountButton):
@@ -35,14 +70,27 @@ class AccountButton(QWidget, Ui_AccountButton):
 
 class LoginAccountsWidget(QWidget, Ui_LoginAccountsWidget):
     account_clicked = pyqtSignal(AvailableDevice)
+    pending_finalize_clicked = pyqtSignal(PendingEnrollment)
+    pending_clear_clicked = pyqtSignal(PendingEnrollment)
 
-    def __init__(self, devices):
+    def __init__(self, devices, pending):
         super().__init__()
         self.setupUi(self)
         for available_device in devices:
             ab = AccountButton(available_device)
             ab.clicked.connect(self.account_clicked.emit)
             self.accounts_widget.layout().insertWidget(0, ab)
+        for p in pending:
+            epb = EnrollmentPendingButton(p)
+            epb.finalize_clicked.connect(self._on_pending_finalize_clicked)
+            epb.clear_clicked.connect(self._on_pending_clear_clicked)
+            self.accounts_widget.layout().insertWidget(0, epb)
+
+    def _on_pending_clear_clicked(self, epb):
+        self.pending_clear_clicked.emit(epb.enrollment_info)
+
+    def _on_pending_finalize_clicked(self, epb):
+        self.pending_finalize_clicked.emit(epb.enrollment_info)
 
     def reset(self):
         pass
@@ -166,14 +214,24 @@ class LoginWidget(QWidget, Ui_LoginWidget):
             self.try_login()
         event.accept()
 
+    def list_pending_enrollments(self):
+        return [
+            PendingEnrollment("1", "Amy Wong", "Planet_Express", "pending", "16/02/3022"),
+            PendingEnrollment("2", "Kiff Kroker", "Planet_Express", "rejected", "16/02/3022"),
+            PendingEnrollment("3", "Hermes Conrad", "Planet_Express", "accepted", "16/02/3022"),
+        ]
+
     def reload_devices(self):
         self._clear_widget()
+        pending = self.list_pending_enrollments()
+
         devices = [
             device
             for device in list_available_devices(self.config.config_dir)
             if not ParsecApp.is_device_connected(device.organization_id, device.device_id)
         ]
-        if not len(devices):
+
+        if not len(devices) and not len(pending):
             no_device_widget = LoginNoDevicesWidget()
             no_device_widget.create_organization_clicked.connect(
                 self.create_organization_clicked.emit
@@ -181,10 +239,10 @@ class LoginWidget(QWidget, Ui_LoginWidget):
             no_device_widget.join_organization_clicked.connect(self.join_organization_clicked.emit)
             self.widget.layout().addWidget(no_device_widget)
             no_device_widget.setFocus()
-        elif len(devices) == 1:
+        elif len(devices) == 1 and not len(pending):
             self._on_account_clicked(devices[0], hide_back=True)
         else:
-            accounts_widget = LoginAccountsWidget(devices)
+            accounts_widget = LoginAccountsWidget(devices, pending)
             accounts_widget.account_clicked.connect(self._on_account_clicked)
             self.widget.layout().addWidget(accounts_widget)
             accounts_widget.setFocus()

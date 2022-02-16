@@ -136,6 +136,9 @@ msgstr "Utilisateurs"
 msgid "ACTION_MENU_DEVICES"
 msgstr "Mes appareils"
 
+msgid "ACTION_MENU_ENROLLMENT"
+msgstr ""
+
 msgid "TEXT_CLAIM_DEVICE_INVALID_CODE_CLICKED"
 msgstr ""
 "Vous n'avez pas cliqué sur le bon code. Vous devez redémarrer le "
@@ -407,6 +410,30 @@ msgstr "Impossible d'inviter un nouvel appareil"
 
 msgid "TEXT_DEVICE_LIST_RETRIEVABLE_FAILURE"
 msgstr "Impossible de récupérer la liste de vos appareils."
+
+msgid "TEXT_ENROLLMENT_CERTIFICATE_IS_VALID"
+msgstr ""
+
+msgid "TEXT_ENROLLMENT_CERTIFICATE_IS_INVALID"
+msgstr ""
+
+msgid "TEXT_ENROLLMENT_NO_PENDING_RECRUITMENT"
+msgstr ""
+
+msgid "TEXT_ENROLLMENT_FAILED_TO_RETRIEVE_LIST"
+msgstr ""
+
+msgid "TEXT_ENROLLMENT_ACCEPT_SUCCESS"
+msgstr ""
+
+msgid "TEXT_ENROLLMENT_ACCEPT_FAILURE"
+msgstr ""
+
+msgid "TEXT_ENROLLMENT_REJECT_SUCCESS"
+msgstr ""
+
+msgid "TEXT_ENROLLMENT_REJECT_FAILURE"
+msgstr ""
 
 msgid "TEXT_FILE_HISTORY_LIST_FAILURE"
 msgstr ""
@@ -2754,6 +2781,12 @@ msgstr "Confirmation du mot de passe"
 
 msgid "TEXT_PASSWORD_CHOICE_MISMATCH"
 msgstr "Ne correspond pas au mot de passe."
+
+msgid "ACTION_ACCEPT_RECRUIT"
+msgstr ""
+
+msgid "ACTION_REJECT_RECRUIT"
+msgstr ""
 
 msgid "TEXT_SETTINGS_BEHAVIOR_TITLE"
 msgstr "Comportement"
