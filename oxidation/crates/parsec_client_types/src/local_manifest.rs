@@ -5,6 +5,21 @@ use parsec_api_types::*;
 use serde::{Deserialize, Serialize};
 use serde_with::serde_as;
 
+/*
+ * LocalUserManifest
+ */
+
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
+#[serde(into = "LocalUserManifestData", from = "LocalUserManifestData")]
+pub struct LocalUserManifest {
+    pub base: UserManifest,
+    pub need_sync: bool,
+    pub updated: DateTime<Utc>,
+    pub last_processed_message: u32,
+    pub workspaces: Vec<WorkspaceEntry>,
+    pub speculative: bool,
+}
+
 impl LocalUserManifest {
     pub fn dump_and_encrypt(&self, key: &::parsec_api_crypto::SecretKey) -> Vec<u8> {
         let serialized = rmp_serde::to_vec_named(&self).unwrap_or_else(|_| unreachable!());
@@ -24,26 +39,9 @@ impl LocalUserManifest {
     }
 }
 
-/*
- * LocalUserManifest
- */
-
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
-#[serde(into = "LocalUserManifestData", from = "LocalUserManifestData")]
-pub struct LocalUserManifest {
-    pub base: UserManifest,
-    // Version 0 means the data is not synchronized
-    pub need_sync: bool,
-    pub updated: DateTime<Utc>,
-    pub last_processed_message: u32,
-    pub workspaces: Vec<WorkspaceEntry>,
-    pub speculative: bool,
-}
-
 new_data_struct_type!(
     LocalUserManifestData,
     type: "local_user_manifest",
-    // Compatibility with versions <= 1.14
     base: UserManifest,
     need_sync: bool,
     #[serde_as(as = "DateTimeExtFormat")]
