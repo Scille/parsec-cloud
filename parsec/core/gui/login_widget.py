@@ -1,6 +1,7 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2016-2021 Scille SAS
 
 from pathlib import Path
+from collections import namedtuple
 
 from PyQt5.QtCore import pyqtSignal, Qt
 from PyQt5.QtWidgets import QWidget
@@ -15,6 +16,42 @@ from parsec.core.gui.ui.login_accounts_widget import Ui_LoginAccountsWidget
 from parsec.core.gui.ui.login_password_input_widget import Ui_LoginPasswordInputWidget
 from parsec.core.gui.ui.login_smartcard_input_widget import Ui_LoginSmartcardInputWidget
 from parsec.core.gui.ui.login_no_devices_widget import Ui_LoginNoDevicesWidget
+from parsec.core.gui.ui.recruitment_pending_button import Ui_RecruitmentPendingButton
+
+
+PendingRecruitment = namedtuple("PendingRecruitment", ["token", "name", "org", "status", "date"])
+
+
+class RecruitmentPendingButton(QWidget, Ui_RecruitmentPendingButton):
+    finalize_clicked = pyqtSignal(QWidget)
+    clear_clicked = pyqtSignal(QWidget)
+
+    def __init__(self, recruitment_info):
+        super().__init__()
+        self.setupUi(self)
+        self.recruitment_info = recruitment_info
+        self.label_org.setText(self.recruitment_info.org)
+        self.label_name.setText(self.recruitment_info.name)
+        if self.recruitment_info.status == "rejected":
+            self.label_status.setText("Rejected")
+            self.label_status.setToolTip("Your request to join the organization has been rejected.")
+            self.button_action.setText("Clear")
+            self.button_action.clicked.connect(lambda: self.clear_clicked.emit(self))
+        elif self.recruitment_info.status == "accepted":
+            self.label_status.setText("Accepted")
+            self.label_status.setToolTip("Your request to join the organization has been accepted.")
+            self.button_action.setText("Finalize")
+            self.button_action.clicked.connect(lambda: self.finalize_clicked.emit(self))
+        else:
+            self.button_action.hide()
+            self.label_status.setText("Pending")
+            self.label_status.setToolTip(
+                "Waiting for an admin to approve your request to join the organization."
+            )
+
+    @property
+    def token(self):
+        return self.recruitment_info.token
 
 
 class AccountButton(QWidget, Ui_AccountButton):
@@ -35,14 +72,27 @@ class AccountButton(QWidget, Ui_AccountButton):
 
 class LoginAccountsWidget(QWidget, Ui_LoginAccountsWidget):
     account_clicked = pyqtSignal(AvailableDevice)
+    pending_finalize_clicked = pyqtSignal(PendingRecruitment)
+    pending_clear_clicked = pyqtSignal(PendingRecruitment)
 
-    def __init__(self, devices):
+    def __init__(self, devices, pending):
         super().__init__()
         self.setupUi(self)
         for available_device in devices:
             ab = AccountButton(available_device)
             ab.clicked.connect(self.account_clicked.emit)
             self.accounts_widget.layout().insertWidget(0, ab)
+        for p in pending:
+            rpb = RecruitmentPendingButton(p)
+            rpb.finalize_clicked.connect(self._on_pending_finalize_clicked)
+            rpb.clear_clicked.connect(self._on_pending_clear_clicked)
+            self.accounts_widget.layout().insertWidget(0, rpb)
+
+    def _on_pending_clear_clicked(self, rpb):
+        self.pending_clear_clicked.emit(rpb.recruitment_info)
+
+    def _on_pending_finalize_clicked(self, rpb):
+        self.pending_finalize_clicked.emit(rpb.recruitment_info)
 
     def reset(self):
         pass
@@ -168,12 +218,21 @@ class LoginWidget(QWidget, Ui_LoginWidget):
 
     def reload_devices(self):
         self._clear_widget()
+        # pending = list_pending_recruitements(self.config.config_dir)
+
+        pending = [
+            PendingRecruitment("1", "Amy Wong", "Planet_Express", "pending", "16/02/3022"),
+            PendingRecruitment("2", "Kiff Kroker", "Planet_Express", "rejected", "16/02/3022"),
+            PendingRecruitment("3", "Hermes Conrad", "Planet_Express", "accepted", "16/02/3022"),
+        ]
+
         devices = [
             device
             for device in list_available_devices(self.config.config_dir)
             if not ParsecApp.is_device_connected(device.organization_id, device.device_id)
         ]
-        if not len(devices):
+
+        if not len(devices) and not len(pending):
             no_device_widget = LoginNoDevicesWidget()
             no_device_widget.create_organization_clicked.connect(
                 self.create_organization_clicked.emit
@@ -181,10 +240,10 @@ class LoginWidget(QWidget, Ui_LoginWidget):
             no_device_widget.join_organization_clicked.connect(self.join_organization_clicked.emit)
             self.widget.layout().addWidget(no_device_widget)
             no_device_widget.setFocus()
-        elif len(devices) == 1:
+        elif len(devices) == 1 and not len(pending):
             self._on_account_clicked(devices[0], hide_back=True)
         else:
-            accounts_widget = LoginAccountsWidget(devices)
+            accounts_widget = LoginAccountsWidget(devices, pending)
             accounts_widget.account_clicked.connect(self._on_account_clicked)
             self.widget.layout().addWidget(accounts_widget)
             accounts_widget.setFocus()

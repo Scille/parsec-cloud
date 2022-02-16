@@ -34,6 +34,7 @@ from parsec.core.gui.snackbar_widget import SnackbarManager
 from parsec.core.gui.mount_widget import MountWidget
 from parsec.core.gui.users_widget import UsersWidget
 from parsec.core.gui.devices_widget import DevicesWidget
+from parsec.core.gui.enrollment_widget import EnrollmentWidget
 from parsec.core.gui.menu_widget import MenuWidget
 from parsec.core.gui import desktop
 from parsec.core.gui.authentication_change_widget import AuthenticationChangeWidget
@@ -135,12 +136,14 @@ class CentralWidget(QWidget, Ui_CentralWidget):  # type: ignore[misc]
         self.button_user.clicked.connect(self._show_user_menu)
 
         self.new_notification.connect(self.on_new_notification)
-        self.menu.files_clicked.connect(self.show_mount_widget)
+        if not self.core.device.is_admin:
+            self.menu.button_enrollment.hide()
         if self.core.device.is_outsider:
             self.menu.button_users.hide()
-        else:
-            self.menu.users_clicked.connect(self.show_users_widget)
+        self.menu.files_clicked.connect(self.show_mount_widget)
+        self.menu.users_clicked.connect(self.show_users_widget)
         self.menu.devices_clicked.connect(self.show_devices_widget)
+        self.menu.enrollment_clicked.connect(self.show_enrollment_widget)
         self.connection_state_changed.connect(self._on_connection_state_changed)
 
         self.navigation_bar_widget.clear()
@@ -166,6 +169,11 @@ class CentralWidget(QWidget, Ui_CentralWidget):  # type: ignore[misc]
 
         self.devices_widget = DevicesWidget(self.core, self.jobs_ctx, self.event_bus, parent=self)
         self.widget_central.layout().insertWidget(0, self.devices_widget)
+
+        self.enrollment_widget = EnrollmentWidget(
+            self.core, self.jobs_ctx, self.event_bus, parent=self
+        )
+        self.widget_central.layout().insertWidget(0, self.enrollment_widget)
 
         self._on_connection_state_changed(
             self.core.backend_status, self.core.backend_status_exc, allow_systray=False
@@ -457,8 +465,15 @@ class CentralWidget(QWidget, Ui_CentralWidget):  # type: ignore[misc]
         self.label_title.setText(_("ACTION_MENU_DEVICES"))
         self.devices_widget.show()
 
+    def show_enrollment_widget(self) -> None:
+        self.clear_widgets()
+        self.menu.activate_enrollment()
+        self.label_title.setText(_("ACTION_MENU_ENROLLMENT"))
+        self.enrollment_widget.show()
+
     def clear_widgets(self) -> None:
         self.navigation_bar_widget.clear()
         self.users_widget.hide()
         self.mount_widget.hide()
         self.devices_widget.hide()
+        self.enrollment_widget.hide()
