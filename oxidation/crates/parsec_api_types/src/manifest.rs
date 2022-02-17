@@ -323,7 +323,7 @@ pub struct FileManifest {
     pub created: DateTime<Utc>,
     pub updated: DateTime<Utc>,
     /// Total size of the file
-    pub size: i64, // TODO: this limit file size to 8Go, is this okay ?
+    pub size: i64,
     /// Size of a single block
     pub blocksize: i64,
     pub blocks: Vec<BlockAccess>,
