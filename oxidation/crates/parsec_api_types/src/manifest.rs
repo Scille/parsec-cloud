@@ -187,6 +187,15 @@ impl From<EntryID> for ManifestEntry {
     }
 }
 
+impl std::str::FromStr for ManifestEntry {
+    type Err = &'static str;
+
+    #[inline]
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        Ok(Self::from(s.parse::<EntryID>()?))
+    }
+}
+
 /*
  * WorkspaceEntry
  */

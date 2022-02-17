@@ -195,6 +195,319 @@ fn serde_local_file_manifest(
 }
 
 #[rstest]
+#[case::folder_manifest(Box::new(|alice: &Device| {
+    let now = "2021-12-04T11:50:43.208820992Z".parse().unwrap();
+    (
+        // Generated from Python implementation (Parsec v2.6.0+dev)
+        // Content:
+        //   type: "local_folder_manifest"
+        //   updated: ext(1, 1638618643.208821)
+        //   base: {
+        //     type: "folder_manifest"
+        //     author: "alice@dev1"
+        //     timestamp: ext(1, 1638618643.208821)
+        //     id: ext(2, hex!("87c6b5fd3b454c94bab51d6af1c6930b"))
+        //     version: 42
+        //     created: ext(1, 1638618643.208821)
+        //     updated: ext(1, 1638618643.208821)
+        //     children: {wksp1:ext(2, hex!("b82954f1138b4d719b7f5bd78915d20f"))}
+        //     parent: ext(2, hex!("07748fbf67a646428427865fd730bf3e"))
+        //   }
+        //   children: {wksp2:ext(2, hex!("d7e3af6a03e1414db0f4682901e9aa4b"))}
+        //   local_confinement_points: [ext(2, hex!("d7e3af6a03e1414db0f4682901e9aa4b"))]
+        //   need_sync: true
+        //   remote_confinement_points: [ext(2, hex!("b82954f1138b4d719b7f5bd78915d20f"))]
+        &hex!(
+            "282246c0ae88cca5c5b9eed98c0e5dc669c736f798fe61c8c23a399a48588242dd6f8007d2"
+            "72aba891e51fcac7f42569067c70fd9a003ebbf5bd93d993cc3250b323472a0941cbcf3209"
+            "9a4571e637c85bfb1430954c03490e1e22e481080526f54fb49aab2f454b41b96fe95cdcf8"
+            "f1da7eed5813f75f75d67dddee77886c4ed1bcc0b92856c47003b292e5e291b150f226579d"
+            "fe54bd5eeb334d83fe4255d83f516d297c20d01931c5d1b80ef07318fa0eea6d0f79d34aac"
+            "a63528e519b5305a7e546ddcf2030f2f524cdf20b99398712be017044d899eb84f911d586e"
+            "cbfac6223b2d34d8af7b72d92d1aee4c483f9913aee9447848a93fd15c9cfed019f2417b5a"
+            "8a1a7c3b3069750fe634c8a5fef093b31763a215db54749d11ac7439d8183dc84e0af45b50"
+            "c12746066643a1a664b4ca757447631c7f8262ec461acf0f40bfc529a248881fcaa8afa827"
+            "fdeeee2fb5b8f40daf5839936850d086e94c2b441180a029b5b2cf6bef4ca985f94e6da9e3"
+            "6786a311afa168c78119c139d5157596d6aae077c4de05b5696874c67acc99726f78d23ff9"
+            "a5ad66"
+        )[..],
+        LocalFolderManifest {
+            updated: now,
+            base: FolderManifest {
+                author: alice.device_id.to_owned(),
+                timestamp: now,
+                id: "87c6b5fd3b454c94bab51d6af1c6930b".parse().unwrap(),
+                version: 42,
+                created: now,
+                updated: now,
+                children: map!{
+                    "wksp1".parse().unwrap() => "b82954f1138b4d719b7f5bd78915d20f".parse().unwrap()
+                },
+                parent: "07748fbf67a646428427865fd730bf3e".parse().unwrap(),
+            },
+            children: map!{
+                "wksp2".parse().unwrap() => "d7e3af6a03e1414db0f4682901e9aa4b".parse().unwrap()
+            },
+            local_confinement_points: Some(set!{"d7e3af6a03e1414db0f4682901e9aa4b".parse().unwrap()}),
+            remote_confinement_points: Some(set!{"b82954f1138b4d719b7f5bd78915d20f".parse().unwrap()}),
+            need_sync: true,
+        }
+    )
+}))]
+#[case::folder_manifest_legacy_no_confinement_fields(Box::new(|alice: &Device| {
+    let now = "2021-12-04T11:50:43.208820992Z".parse().unwrap();
+    (
+        &hex!(
+            "9ff2aaf585d985bf38d333b6ac48e345a52c28c4d9645ec7ad8258d4c52c7e36acefd6cbb3"
+            "cc5fee4e3a3319f39cc91d9dbd0bcd108d417cf5a7f813cfc4d859585d56bbe7a89aeb9860"
+            "3d40226b25a02bafd6a1d3b1a93ee1cc75662e363a14b93df07790cb598da337bd86aa1e1b"
+            "078871b89e4254c25f80bff6b3dec3d7838d60d7eb021c7f7cbe7b2554df9f454e1a33be8e"
+            "515a4e9fe11c0f034939c41cc2ed3ca0299f0fbb02cbd229a65ecdb401fe733f7d2a1703e4"
+            "3f7bbef050707857c57886f5402a1b325c4660000e9c6171ac7e745699477ff271c641bed4"
+            "8a3f52cdaa58ab0234977e3eb5f9627dcad489c67a6fdbc46bc2648b213ad243d6b4141e2b"
+            "9f67491aa96d9ba9501b8b9fe2788ad687b8adaebce66ca05a89462182e4ba97628b129735"
+            "b693adfb83f25cb8d0a87a80787a9dda7a3d0f16c965340f77"
+        )[..],
+        LocalFolderManifest {
+            updated: now,
+            base: FolderManifest {
+                author: alice.device_id.to_owned(),
+                timestamp: now,
+                id: "87c6b5fd3b454c94bab51d6af1c6930b".parse().unwrap(),
+                version: 42,
+                created: now,
+                updated: now,
+                children: map!{
+                    "wksp2".parse().unwrap() => "d7e3af6a03e1414db0f4682901e9aa4b".parse().unwrap()
+                },
+                parent: "07748fbf67a646428427865fd730bf3e".parse().unwrap(),
+            },
+            children: map!{
+                "wksp2".parse().unwrap() => "d7e3af6a03e1414db0f4682901e9aa4b".parse().unwrap()
+            },
+            local_confinement_points: None,
+            remote_confinement_points: None,
+            need_sync: false,
+        }
+    )
+}))]
+fn serde_local_folder_manifest(
+    alice: &Device,
+    #[case] generate_data_and_expected: Box<
+        dyn FnOnce(&Device) -> (&'static [u8], LocalFolderManifest),
+    >,
+) {
+    let (data, expected) = generate_data_and_expected(alice);
+    let key = SecretKey::from(hex!(
+        "b1b52e16c1b46ab133c8bf576e82d26c887f1e9deae1af80043a258c36fcabf3"
+    ));
+
+    let manifest = LocalFolderManifest::decrypt_and_load(&data, &key).unwrap();
+
+    assert_eq!(manifest, expected);
+
+    // Also test serialization round trip
+    let data2 = manifest.dump_and_encrypt(&key);
+    // Note we cannot just compare with `data` due to encryption and keys order
+    let manifest2 = LocalFolderManifest::decrypt_and_load(&data2, &key).unwrap();
+
+    assert_eq!(manifest2, expected);
+}
+
+#[rstest]
+#[case::workspace_manifest(Box::new(|alice: &Device| {
+    let now = "2021-12-04T11:50:43.208820992Z".parse().unwrap();
+    (
+        // Generated from Python implementation (Parsec v2.6.0+dev)
+        // Content:
+        //   type: "local_workspace_manifest"
+        //   updated: ext(1, 1638618643.208821)
+        //   base: {
+        //     type: "workspace_manifest"
+        //     author: "alice@dev1"
+        //     timestamp: ext(1, 1638618643.208821)
+        //     id: ext(2, hex!("87c6b5fd3b454c94bab51d6af1c6930b"))
+        //     version: 42
+        //     created: ext(1, 1638618643.208821)
+        //     updated: ext(1, 1638618643.208821)
+        //     children: {wksp1:ext(2, hex!("b82954f1138b4d719b7f5bd78915d20f"))}
+        //   }
+        //   children: {wksp2:ext(2, hex!("d7e3af6a03e1414db0f4682901e9aa4b"))}
+        //   local_confinement_points: [ext(2, hex!("d7e3af6a03e1414db0f4682901e9aa4b"))]
+        //   need_sync: true
+        //   remote_confinement_points: [ext(2, hex!("b82954f1138b4d719b7f5bd78915d20f"))]
+        //   speculative: false
+        &hex!(
+            "7d8fd9ebeac56689cf29c1c16370e88d84673121bbc8cc4278ddbed40b612851464f01ccac"
+            "53b10aca3c59720968d652c86f1f2ae29387294d4a3f467d86cdb67ee40ac023a72f26c9c8"
+            "f785b2b31c20bb279a7c2824fe739b4029819ac59cad0b97cda4abc558916015fb3ea3fdd4"
+            "65f9e02168ae6c5c9e6fd4c2b9c2c394b6f355f764300e22e1f49fee02936a45bf494d7819"
+            "69c14d843d017269aeea5f69fbf08b9c0d7d7ec12168cbf8eed727cd3708d9752145bef4c5"
+            "ca20ae7da5eca90f4e60be5e3375092d4df96dc793469251f6188e6fef1d4128d78c134e9b"
+            "eb2134fa7e624528dfaa1c340167982dd7308211933044bbe7380e8f3862adf3a59307a171"
+            "8bf50a41095c39ab004db8eafaab0c3c51c3a48fa310488338bd6829532a75864fc437cc64"
+            "66992bfbc1f7ef8ea49ac0bef02d2046e6b475e6ef88d54156e18109ed88ba8bad25541be9"
+            "ef7d006d6bf79b6d467243aad8df333414a927d5bd35a78358292a6f4bbf63f6901cfcc216"
+            "bcd1a8244b875aee764e3265216a212244634171e7954a9895e8ba3972caaf786811"
+        )[..],
+        LocalWorkspaceManifest {
+            updated: now,
+            base: WorkspaceManifest {
+                author: alice.device_id.to_owned(),
+                timestamp: now,
+                id: "87c6b5fd3b454c94bab51d6af1c6930b".parse().unwrap(),
+                version: 42,
+                created: now,
+                updated: now,
+                children: map!{
+                    "wksp1".parse().unwrap() => "b82954f1138b4d719b7f5bd78915d20f".parse().unwrap()
+                },
+            },
+            children: map!{
+                "wksp2".parse().unwrap() => "d7e3af6a03e1414db0f4682901e9aa4b".parse().unwrap()
+            },
+            local_confinement_points: Some(set!{"d7e3af6a03e1414db0f4682901e9aa4b".parse().unwrap()}),
+            remote_confinement_points: Some(set!{"b82954f1138b4d719b7f5bd78915d20f".parse().unwrap()}),
+            need_sync: true,
+            speculative: false,
+        }
+    )
+}))]
+#[case::workspace_manifest_speculative(Box::new(|alice: &Device| {
+    let now = "2021-12-04T11:50:43.208820992Z".parse().unwrap();
+    (
+        // Generated from Python implementation (Parsec v2.6.0+dev)
+        // Content:
+        //   type: "local_workspace_manifest"
+        //   updated: ext(1, 1638618643.208821)
+        //   base: {
+        //     type: "workspace_manifest"
+        //     author: "alice@dev1"
+        //     timestamp: ext(1, 1638618643.208821)
+        //     id: ext(2, hex!("87c6b5fd3b454c94bab51d6af1c6930b"))
+        //     version: 42
+        //     created: ext(1, 1638618643.208821)
+        //     updated: ext(1, 1638618643.208821)
+        //     children: {wksp1:ext(2, hex!("b82954f1138b4d719b7f5bd78915d20f"))}
+        //   }
+        //   children: {wksp2:ext(2, hex!("d7e3af6a03e1414db0f4682901e9aa4b"))}
+        //   local_confinement_points: [ext(2, hex!("d7e3af6a03e1414db0f4682901e9aa4b"))]
+        //   need_sync: true
+        //   remote_confinement_points: [ext(2, hex!("b82954f1138b4d719b7f5bd78915d20f"))]
+        //   speculative: false
+        &hex!(
+            "7d8fd9ebeac56689cf29c1c16370e88d84673121bbc8cc4278ddbed40b612851464f01ccac"
+            "53b10aca3c59720968d652c86f1f2ae29387294d4a3f467d86cdb67ee40ac023a72f26c9c8"
+            "f785b2b31c20bb279a7c2824fe739b4029819ac59cad0b97cda4abc558916015fb3ea3fdd4"
+            "65f9e02168ae6c5c9e6fd4c2b9c2c394b6f355f764300e22e1f49fee02936a45bf494d7819"
+            "69c14d843d017269aeea5f69fbf08b9c0d7d7ec12168cbf8eed727cd3708d9752145bef4c5"
+            "ca20ae7da5eca90f4e60be5e3375092d4df96dc793469251f6188e6fef1d4128d78c134e9b"
+            "eb2134fa7e624528dfaa1c340167982dd7308211933044bbe7380e8f3862adf3a59307a171"
+            "8bf50a41095c39ab004db8eafaab0c3c51c3a48fa310488338bd6829532a75864fc437cc64"
+            "66992bfbc1f7ef8ea49ac0bef02d2046e6b475e6ef88d54156e18109ed88ba8bad25541be9"
+            "ef7d006d6bf79b6d467243aad8df333414a927d5bd35a78358292a6f4bbf63f6901cfcc216"
+            "bcd1a8244b875aee764e3265216a212244634171e7954a9895e8ba3972caaf786811"
+        )[..],
+        LocalWorkspaceManifest {
+            updated: now,
+            base: WorkspaceManifest {
+                author: alice.device_id.to_owned(),
+                timestamp: now,
+                id: "87c6b5fd3b454c94bab51d6af1c6930b".parse().unwrap(),
+                version: 42,
+                created: now,
+                updated: now,
+                children: map!{
+                    "wksp1".parse().unwrap() => "b82954f1138b4d719b7f5bd78915d20f".parse().unwrap()
+                },
+            },
+            children: map!{
+                "wksp2".parse().unwrap() => "d7e3af6a03e1414db0f4682901e9aa4b".parse().unwrap()
+            },
+            local_confinement_points: Some(set!{"d7e3af6a03e1414db0f4682901e9aa4b".parse().unwrap()}),
+            remote_confinement_points: Some(set!{"b82954f1138b4d719b7f5bd78915d20f".parse().unwrap()}),
+            need_sync: true,
+            speculative: false,
+        }
+    )
+}))]
+#[case::workspace_manifest_legacy_no_confinement_and_speculative_fields(Box::new(|alice: &Device| {
+    let now = "2021-12-04T11:50:43.208820992Z".parse().unwrap();
+    (
+        // Generated from Python implementation (Parsec v2.6.0+dev)
+        // Content:
+        //   type: "local_workspace_manifest"
+        //   updated: ext(1, 1638618643.208821)
+        //   base: {
+        //     type: "workspace_manifest"
+        //     author: "alice@dev1"
+        //     timestamp: ext(1, 1638618643.208821)
+        //     id: ext(2, hex!("87c6b5fd3b454c94bab51d6af1c6930b"))
+        //     version: 42
+        //     created: ext(1, 1638618643.208821)
+        //     updated: ext(1, 1638618643.208821)
+        //     children: {wksp2:ext(2, hex!("d7e3af6a03e1414db0f4682901e9aa4b"))}
+        //   }
+        //   children: {wksp2:ext(2, hex!("d7e3af6a03e1414db0f4682901e9aa4b"))}
+        //   need_sync: false
+        &hex!(
+            "edd81ceda3e081ad6b3329679e55e608943416fecf095ee2613ba33a9d35087a03a728080e"
+            "b63d6c1e038cc6a959f90fb24b7d9d224f68b21e8253ff607c2203983b372e6a84113231e3"
+            "e8752766d42df2e232c9b154046184bd81f6f2eb1aaad84f0aa098c651a47579f5320ea551"
+            "9d700eb6044827e96911ec695aa91a4f686a66ba361df539686a9d13cced69768a78a88e24"
+            "6a4a92f86168f2633203919b31d61902cd234b5462c0ca2b84f89428d42e9f1da2e012e940"
+            "67dbed57b641e28688f4fe46cec83831dc8d3101fa21541050eea7db4cd3da1c5319baf792"
+            "e21bc234b9a681d91ee2a818a7dd67511fd04d0fad40538e89e1981c2d2e3bf364b9641ae7"
+            "1872f93eb0a7f160c4e0347166a1026698d9adaaf2299afb96dc6476021d940f8b3957d34d"
+            "50dbdb08d9df"
+        )[..],
+        LocalWorkspaceManifest {
+            updated: now,
+            base: WorkspaceManifest {
+                author: alice.device_id.to_owned(),
+                timestamp: now,
+                id: "87c6b5fd3b454c94bab51d6af1c6930b".parse().unwrap(),
+                version: 42,
+                created: now,
+                updated: now,
+                children: map!{
+                    "wksp2".parse().unwrap() => "d7e3af6a03e1414db0f4682901e9aa4b".parse().unwrap()
+                },
+            },
+            children: map!{
+                "wksp2".parse().unwrap() => "d7e3af6a03e1414db0f4682901e9aa4b".parse().unwrap()
+            },
+            local_confinement_points: None,
+            remote_confinement_points: None,
+            need_sync: false,
+            speculative: false,
+        }
+    )
+}))]
+fn serde_local_workspace_manifest(
+    alice: &Device,
+    #[case] generate_data_and_expected: Box<
+        dyn FnOnce(&Device) -> (&'static [u8], LocalWorkspaceManifest),
+    >,
+) {
+    let (data, expected) = generate_data_and_expected(alice);
+    let key = SecretKey::from(hex!(
+        "b1b52e16c1b46ab133c8bf576e82d26c887f1e9deae1af80043a258c36fcabf3"
+    ));
+
+    let manifest = LocalWorkspaceManifest::decrypt_and_load(&data, &key).unwrap();
+
+    assert_eq!(manifest, expected);
+
+    // Also test serialization round trip
+    let data2 = manifest.dump_and_encrypt(&key);
+    // Note we cannot just compare with `data` due to encryption and keys order
+    let manifest2 = LocalWorkspaceManifest::decrypt_and_load(&data2, &key).unwrap();
+
+    assert_eq!(manifest2, expected);
+}
+
+#[rstest]
 #[case::need_sync(Box::new(|alice: &Device| {
     let now = "2021-12-04T11:50:43.208820992Z".parse().unwrap();
     (

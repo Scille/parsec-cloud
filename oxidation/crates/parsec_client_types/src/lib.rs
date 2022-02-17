@@ -7,3 +7,27 @@ mod local_manifest;
 pub use local_device::*;
 pub use local_device_file::*;
 pub use local_manifest::*;
+
+#[macro_export]
+macro_rules! set {
+    {} => (
+        std::collections::HashSet::new()
+    );
+    {$($x: expr),+ $(,)?} => ({
+        let mut set = std::collections::HashSet::new();
+        $(set.insert($x);)+
+        set
+    });
+}
+
+#[macro_export]
+macro_rules! map {
+    {} => (
+        std::collections::HashSet::new()
+    );
+    {$($x: expr => $y: expr),+ $(,)?} => ({
+        let mut set = std::collections::HashMap::new();
+        $(set.insert($x, $y);)+
+        set
+    });
+}

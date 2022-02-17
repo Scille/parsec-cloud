@@ -2,9 +2,26 @@
 
 use chrono::{DateTime, Utc};
 use parsec_api_types::*;
-use serde::{Deserialize, Serialize};
+use serde::{de::DeserializeOwned, Deserialize, Serialize};
 use serde_with::serde_as;
 use std::collections::{HashMap, HashSet};
+
+pub trait Encrypt
+where
+    Self: Sized + Serialize + DeserializeOwned,
+{
+    fn dump_and_encrypt(&self, key: &::parsec_api_crypto::SecretKey) -> Vec<u8> {
+        let serialized = rmp_serde::to_vec_named(&self).unwrap_or_else(|_| unreachable!());
+        key.encrypt(&serialized)
+    }
+    fn decrypt_and_load(
+        encrypted: &[u8],
+        key: &parsec_api_crypto::SecretKey,
+    ) -> Result<Self, &'static str> {
+        let serialized = key.decrypt(encrypted).map_err(|_| "Invalid encryption")?;
+        rmp_serde::from_read_ref::<_, Self>(&serialized).map_err(|_| "Invalid serialization")
+    }
+}
 
 /*
  * Chunk
@@ -59,24 +76,7 @@ impl_transparent_data_format_conversion!(
     blocks,
 );
 
-impl LocalFileManifest {
-    pub fn dump_and_encrypt(&self, key: &::parsec_api_crypto::SecretKey) -> Vec<u8> {
-        let serialized = rmp_serde::to_vec_named(&self).unwrap_or_else(|_| unreachable!());
-        key.encrypt(&serialized)
-    }
-}
-
-impl LocalFileManifest {
-    pub fn decrypt_and_load(
-        encrypted: &[u8],
-        key: &::parsec_api_crypto::SecretKey,
-    ) -> Result<LocalFileManifest, &'static str> {
-        let serialized = key.decrypt(encrypted).map_err(|_| "Invalid encryption")?;
-        let obj: LocalFileManifest =
-            rmp_serde::from_read_ref(&serialized).map_err(|_| "Invalid serialization")?;
-        Ok(obj)
-    }
-}
+impl Encrypt for LocalFileManifest {}
 
 /*
  * LocalFolderManifest
@@ -89,8 +89,8 @@ pub struct LocalFolderManifest {
     pub need_sync: bool,
     pub updated: DateTime<Utc>,
     pub children: HashMap<EntryName, ManifestEntry>,
-    pub local_confinement_points: HashSet<ManifestEntry>,
-    pub remote_confinement_points: HashSet<ManifestEntry>,
+    pub local_confinement_points: Option<HashSet<ManifestEntry>>,
+    pub remote_confinement_points: Option<HashSet<ManifestEntry>>,
 }
 
 new_data_struct_type!(
@@ -101,8 +101,8 @@ new_data_struct_type!(
     #[serde_as(as = "DateTimeExtFormat")]
     updated: DateTime<Utc>,
     children: HashMap<EntryName, ManifestEntry>,
-    local_confinement_points: HashSet<ManifestEntry>,
-    remote_confinement_points: HashSet<ManifestEntry>,
+    local_confinement_points: Option<HashSet<ManifestEntry>>,
+    remote_confinement_points: Option<HashSet<ManifestEntry>>,
 );
 
 impl_transparent_data_format_conversion!(
@@ -115,6 +115,8 @@ impl_transparent_data_format_conversion!(
     local_confinement_points,
     remote_confinement_points,
 );
+
+impl Encrypt for LocalFolderManifest {}
 
 /*
  * LocalWorkspaceManifest
@@ -130,8 +132,8 @@ pub struct LocalWorkspaceManifest {
     pub need_sync: bool,
     pub updated: DateTime<Utc>,
     pub children: HashMap<EntryName, ManifestEntry>,
-    pub local_confinement_points: HashSet<ManifestEntry>,
-    pub remote_confinement_points: HashSet<ManifestEntry>,
+    pub local_confinement_points: Option<HashSet<ManifestEntry>>,
+    pub remote_confinement_points: Option<HashSet<ManifestEntry>>,
     pub speculative: bool,
 }
 
@@ -143,10 +145,12 @@ new_data_struct_type!(
     #[serde_as(as = "DateTimeExtFormat")]
     updated: DateTime<Utc>,
     children: HashMap<EntryName, ManifestEntry>,
-    local_confinement_points: HashSet<ManifestEntry>,
-    remote_confinement_points: HashSet<ManifestEntry>,
+    local_confinement_points: Option<HashSet<ManifestEntry>>,
+    remote_confinement_points: Option<HashSet<ManifestEntry>>,
     speculative: Option<bool>,
 );
+
+impl Encrypt for LocalWorkspaceManifest {}
 
 impl From<LocalWorkspaceManifestData> for LocalWorkspaceManifest {
     fn from(data: LocalWorkspaceManifestData) -> Self {
@@ -192,24 +196,7 @@ pub struct LocalUserManifest {
     pub speculative: bool,
 }
 
-impl LocalUserManifest {
-    pub fn dump_and_encrypt(&self, key: &::parsec_api_crypto::SecretKey) -> Vec<u8> {
-        let serialized = rmp_serde::to_vec_named(&self).unwrap_or_else(|_| unreachable!());
-        key.encrypt(&serialized)
-    }
-}
-
-impl LocalUserManifest {
-    pub fn decrypt_and_load(
-        encrypted: &[u8],
-        key: &::parsec_api_crypto::SecretKey,
-    ) -> Result<LocalUserManifest, &'static str> {
-        let serialized = key.decrypt(encrypted).map_err(|_| "Invalid encryption")?;
-        let obj: LocalUserManifest =
-            rmp_serde::from_read_ref(&serialized).map_err(|_| "Invalid serialization")?;
-        Ok(obj)
-    }
-}
+impl Encrypt for LocalUserManifest {}
 
 new_data_struct_type!(
     LocalUserManifestData,
