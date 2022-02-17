@@ -10,24 +10,18 @@ pub use local_manifest::*;
 
 #[macro_export]
 macro_rules! set {
-    {} => (
-        std::collections::HashSet::new()
-    );
-    {$($x: expr),+ $(,)?} => ({
-        let mut set = std::collections::HashSet::new();
-        $(set.insert($x);)+
-        set
+    {$($v: expr),* $(,)?} => ({
+        use std::iter::{Iterator, IntoIterator};
+        use std::collections::HashSet;
+        Iterator::collect::<HashSet<_>>(IntoIterator::into_iter([$($v,)*]))
     });
 }
 
 #[macro_export]
 macro_rules! map {
-    {} => (
-        std::collections::HashMap::new()
-    );
-    {$($x: expr => $y: expr),+ $(,)?} => ({
-        let mut map = std::collections::HashMap::new();
-        $(map.insert($x, $y);)+
-        map
+    {$($k: expr => $v: expr),* $(,)?} => ({
+        use std::iter::{Iterator, IntoIterator};
+        use std::collections::HashMap;
+        Iterator::collect::<HashMap<_,_>>(IntoIterator::into_iter([$(($k, $v),)*]))
     });
 }
