@@ -23,11 +23,11 @@ macro_rules! set {
 #[macro_export]
 macro_rules! map {
     {} => (
-        std::collections::HashSet::new()
+        std::collections::HashMap::new()
     );
     {$($x: expr => $y: expr),+ $(,)?} => ({
-        let mut set = std::collections::HashMap::new();
-        $(set.insert($x, $y);)+
-        set
+        let mut map = std::collections::HashMap::new();
+        $(map.insert($x, $y);)+
+        map
     });
 }
