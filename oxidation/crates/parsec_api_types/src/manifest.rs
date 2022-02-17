@@ -19,6 +19,7 @@ new_uuid_type!(pub EntryID);
 new_uuid_type!(pub BlockID);
 new_uuid_type!(pub RealmID);
 new_uuid_type!(pub VlobID);
+new_uuid_type!(pub ChunkID);
 
 /*
  * BlockAccess

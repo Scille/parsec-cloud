@@ -7,6 +7,20 @@ use serde_with::serde_as;
 use std::collections::{HashMap, HashSet};
 
 /*
+ * Chunk
+ */
+
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
+pub struct Chunk {
+    pub id: ChunkID,
+    pub start: i64,
+    pub stop: i64,
+    pub raw_offset: i64,
+    pub raw_size: i64,
+    pub access: Option<BlockAccess>,
+}
+
+/*
  * LocalFileManifest
  */
 
@@ -19,7 +33,7 @@ pub struct LocalFileManifest {
     pub size: i64,
     // Is it ok if blocksize < 8 ? because FileManifest doesn't restrict
     pub blocksize: i64,
-    pub blocks: Vec<BlockAccess>,
+    pub blocks: Vec<Vec<Chunk>>,
 }
 
 new_data_struct_type!(
@@ -31,7 +45,7 @@ new_data_struct_type!(
     updated: DateTime<Utc>,
     size: i64,
     blocksize: i64,
-    blocks: Vec<BlockAccess>,
+    blocks: Vec<Vec<Chunk>>,
 );
 
 impl_transparent_data_format_conversion!(
@@ -44,6 +58,25 @@ impl_transparent_data_format_conversion!(
     blocksize,
     blocks,
 );
+
+impl LocalFileManifest {
+    pub fn dump_and_encrypt(&self, key: &::parsec_api_crypto::SecretKey) -> Vec<u8> {
+        let serialized = rmp_serde::to_vec_named(&self).unwrap_or_else(|_| unreachable!());
+        key.encrypt(&serialized)
+    }
+}
+
+impl LocalFileManifest {
+    pub fn decrypt_and_load(
+        encrypted: &[u8],
+        key: &::parsec_api_crypto::SecretKey,
+    ) -> Result<LocalFileManifest, &'static str> {
+        let serialized = key.decrypt(encrypted).map_err(|_| "Invalid encryption")?;
+        let obj: LocalFileManifest =
+            rmp_serde::from_read_ref(&serialized).map_err(|_| "Invalid serialization")?;
+        Ok(obj)
+    }
+}
 
 /*
  * LocalFolderManifest

@@ -17,11 +17,11 @@ from parsec.core.types import LocalDevice, BackendOrganizationAddr
 def generate_ALICE_local_device():
     return LocalDevice(
         organization_addr=BackendOrganizationAddr.from_url(
-            "parsec://ALICE_dev1.example.com:9999/CoolOrg?no_ssl=true&rvk=XYUXM4ZM5SGKSTXNZ4FK7VATZUKZGY7A7LOJ42CXFR32DYL5TO6Qssss"
+            "parsec://alice_dev1.example.com:9999/CoolOrg?no_ssl=true&rvk=XYUXM4ZM5SGKSTXNZ4FK7VATZUKZGY7A7LOJ42CXFR32DYL5TO6Qssss"
         ),
-        device_id=DeviceID("ALICE@dev1"),
+        device_id=DeviceID("alice@dev1"),
         device_label=DeviceLabel("My dev1 machine"),
-        human_handle=HumanHandle("ALICE@example.com", "ALICEy McALICEFace"),
+        human_handle=HumanHandle("alice@example.com", "Alicey McAliceFace"),
         signing_key=SigningKey(
             unhexlify("d544f66ece9c85d5b80275db9124b5f04bb038081622bed139c1e789c5217400")
         ),
@@ -42,11 +42,11 @@ def generate_ALICE_local_device():
 def generate_BOB_local_device():
     return LocalDevice(
         organization_addr=BackendOrganizationAddr.from_url(
-            "parsec://BOB_dev1.example.com:9999/CoolOrg?no_ssl=true&rvk=XYUXM4ZM5SGKSTXNZ4FK7VATZUKZGY7A7LOJ42CXFR32DYL5TO6Qssss"
+            "parsec://bob_dev1.example.com:9999/CoolOrg?no_ssl=true&rvk=XYUXM4ZM5SGKSTXNZ4FK7VATZUKZGY7A7LOJ42CXFR32DYL5TO6Qssss"
         ),
-        device_id=DeviceID("BOB@dev1"),
+        device_id=DeviceID("bob@dev1"),
         device_label=DeviceLabel("My dev1 machine"),
-        human_handle=HumanHandle("BOB@example.com", "BOBy McBOBFace"),
+        human_handle=HumanHandle("bob@example.com", "Boby McBobFace"),
         signing_key=SigningKey(
             unhexlify("85f47472a2c0f30f01b769617db248f3ec8d96a490602a9262f95e9e43432b30")
         ),
@@ -93,7 +93,7 @@ def _format_msgpack(content, max_width):
     return output
 
 
-INDENT_SIZE = 4
+INDENT_SIZE = 2
 
 
 def _format_item(value, max_width):

@@ -215,7 +215,7 @@ wm_legacy_no_confinment_and_speculative_fields = KEY.encrypt(
 )
 LocalWorkspaceManifest.decrypt_and_load(wm_legacy_no_confinment_and_speculative_fields, KEY)
 display(
-    "workspace manifest legacy no confinment and speculitve fields",
+    "workspace manifest legacy no confinment and speculative fields",
     wm_legacy_no_confinment_and_speculative_fields,
     [KEY],
 )
