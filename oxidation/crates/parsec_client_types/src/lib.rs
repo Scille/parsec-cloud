@@ -12,8 +12,7 @@ pub use local_manifest::*;
 macro_rules! set {
     {$($v: expr),* $(,)?} => ({
         use std::iter::{Iterator, IntoIterator};
-        use std::collections::HashSet;
-        Iterator::collect::<HashSet<_>>(IntoIterator::into_iter([$($v,)*]))
+        Iterator::collect(IntoIterator::into_iter([$($v,)*]))
     });
 }
 
@@ -21,7 +20,6 @@ macro_rules! set {
 macro_rules! map {
     {$($k: expr => $v: expr),* $(,)?} => ({
         use std::iter::{Iterator, IntoIterator};
-        use std::collections::HashMap;
-        Iterator::collect::<HashMap<_,_>>(IntoIterator::into_iter([$(($k, $v),)*]))
+        Iterator::collect(IntoIterator::into_iter([$(($k, $v),)*]))
     });
 }
