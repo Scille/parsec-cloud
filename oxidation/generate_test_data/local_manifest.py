@@ -192,7 +192,7 @@ wm_speculative = LocalWorkspaceManifest(
     remote_confinement_points=set(),
     speculative=True,
 ).dump_and_encrypt(key=KEY)
-display("workspace manifest speculative", wm, [KEY])
+display("workspace manifest speculative", wm_speculative, [KEY])
 
 raw_wm_legacy_no_confinment_and_speculative_fields = {
     "type": "local_workspace_manifest",
