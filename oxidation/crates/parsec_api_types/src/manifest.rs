@@ -29,8 +29,8 @@ new_uuid_type!(pub ChunkID);
 pub struct BlockAccess {
     pub id: BlockID,
     pub key: SecretKey,
-    pub offset: u32, // TODO: this limit file size to 8Go, is this okay ?
-    pub size: u32,
+    pub offset: u64,
+    pub size: u64,
     pub digest: HashDigest,
 }
 
@@ -329,6 +329,39 @@ pub struct FileManifest {
     pub blocks: Vec<BlockAccess>,
 }
 
+impl FileManifest {
+    pub fn new<T>(
+        author: DeviceID,
+        id: T,
+        parent: T,
+        version: u32,
+        blocksize: u64,
+        blocks: Vec<BlockAccess>,
+    ) -> Result<Self, &'static str>
+    where
+        EntryID: From<T>,
+    {
+        if blocksize < 8 {
+            return Err("Invalid blocksize");
+        }
+
+        let now = Utc::now();
+
+        Ok(Self {
+            author,
+            timestamp: now,
+            id: EntryID::from(id),
+            parent: EntryID::from(parent),
+            version,
+            updated: now,
+            created: now,
+            size: blocks.len() as u64,
+            blocksize,
+            blocks,
+        })
+    }
+}
+
 impl_dump_sign_and_encrypt!(FileManifest);
 impl_decrypt_verify_and_load!(FileManifest);
 
@@ -354,20 +387,41 @@ new_data_struct_type!(
 
 );
 
-impl_transparent_data_format_conversion!(
-    FileManifest,
-    FileManifestData,
-    author,
-    timestamp,
-    id,
-    parent,
-    version,
-    created,
-    updated,
-    size,
-    blocksize,
-    blocks,
-);
+impl TryFrom<FileManifestData> for FileManifest {
+    type Error = &'static str;
+    fn try_from(data: FileManifestData) -> Result<Self, Self::Error> {
+        Ok(Self {
+            author: data.author,
+            timestamp: data.timestamp,
+            id: data.id,
+            parent: data.parent,
+            version: data.version,
+            created: data.created,
+            updated: data.updated,
+            size: data.size,
+            blocksize: data.blocksize,
+            blocks: data.blocks,
+        })
+    }
+}
+
+impl From<FileManifest> for FileManifestData {
+    fn from(obj: FileManifest) -> Self {
+        Self {
+            type_: FileManifestDataDataType::Value,
+            author: obj.author,
+            timestamp: obj.timestamp,
+            id: obj.id,
+            parent: obj.parent,
+            version: obj.version,
+            created: obj.created,
+            updated: obj.updated,
+            size: obj.size,
+            blocksize: obj.blocksize,
+            blocks: obj.blocks,
+        }
+    }
+}
 
 /*
  * FolderManifest
