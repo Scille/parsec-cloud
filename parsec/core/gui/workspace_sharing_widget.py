@@ -89,6 +89,8 @@ class SharingWidget(QWidget, Ui_SharingWidget):
         self.setupUi(self)
 
         self.combo_role.installEventFilter(self)
+        if not enabled:
+            self.combo_role.setStyleSheet("background-color: #DDDDDD;")
 
         self.role = role
         self.current_user_role = current_user_role
@@ -179,6 +181,7 @@ class WorkspaceSharingWidget(QWidget, Ui_WorkspaceSharingWidget):
     def __init__(self, user_fs, workspace_fs, core, jobs_ctx):
         super().__init__()
         self.setupUi(self)
+        self.setStyleSheet("background-color: #FFFFFF;")
         self.user_fs = user_fs
         self.core = core
         self.jobs_ctx = jobs_ctx
