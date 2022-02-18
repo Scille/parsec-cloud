@@ -30,10 +30,10 @@ where
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
 pub struct Chunk {
     pub id: ChunkID,
-    pub start: i64,
-    pub stop: i64,
-    pub raw_offset: i64,
-    pub raw_size: i64,
+    pub start: u64,
+    pub stop: u64,
+    pub raw_offset: u64,
+    pub raw_size: u64,
     pub access: Option<BlockAccess>,
 }
 
@@ -47,9 +47,9 @@ pub struct LocalFileManifest {
     pub base: FileManifest,
     pub need_sync: bool,
     pub updated: DateTime<Utc>,
-    pub size: i64,
+    pub size: u64,
     // Is it ok if blocksize < 8 ? because FileManifest doesn't restrict
-    pub blocksize: i64,
+    pub blocksize: u64,
     pub blocks: Vec<Vec<Chunk>>,
 }
 
@@ -60,8 +60,8 @@ new_data_struct_type!(
     need_sync: bool,
     #[serde_as(as = "DateTimeExtFormat")]
     updated: DateTime<Utc>,
-    size: i64,
-    blocksize: i64,
+    size: u64,
+    blocksize: u64,
     blocks: Vec<Vec<Chunk>>,
 );
 

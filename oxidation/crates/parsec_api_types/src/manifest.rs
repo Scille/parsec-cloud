@@ -323,9 +323,9 @@ pub struct FileManifest {
     pub created: DateTime<Utc>,
     pub updated: DateTime<Utc>,
     /// Total size of the file
-    pub size: i64,
+    pub size: u64,
     /// Size of a single block
-    pub blocksize: i64,
+    pub blocksize: u64,
     pub blocks: Vec<BlockAccess>,
 }
 
@@ -348,8 +348,8 @@ new_data_struct_type!(
     created: DateTime<Utc>,
     #[serde_as(as = "DateTimeExtFormat")]
     updated: DateTime<Utc>,
-    size: i64,
-    blocksize: i64,
+    size: u64,
+    blocksize: u64,
     blocks: Vec<BlockAccess>,
 
 );
