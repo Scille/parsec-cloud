@@ -605,6 +605,7 @@ dependencies = [
  "getrandom 0.2.4",
  "hex",
  "hex-literal",
+ "libsodium-sys",
  "paste 1.0.6",
  "pretty_assertions",
  "rand 0.7.3",
