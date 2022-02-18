@@ -385,28 +385,26 @@ fn serde_local_folder_manifest(
         //     author: "alice@dev1"
         //     timestamp: ext(1, 1638618643.208821)
         //     id: ext(2, hex!("87c6b5fd3b454c94bab51d6af1c6930b"))
-        //     version: 42
+        //     version: 0
         //     created: ext(1, 1638618643.208821)
         //     updated: ext(1, 1638618643.208821)
-        //     children: {wksp1:ext(2, hex!("b82954f1138b4d719b7f5bd78915d20f"))}
+        //     children: {}
         //   }
-        //   children: {wksp2:ext(2, hex!("d7e3af6a03e1414db0f4682901e9aa4b"))}
-        //   local_confinement_points: [ext(2, hex!("d7e3af6a03e1414db0f4682901e9aa4b"))]
+        //   children: {}
+        //   local_confinement_points: []
         //   need_sync: true
-        //   remote_confinement_points: [ext(2, hex!("b82954f1138b4d719b7f5bd78915d20f"))]
+        //   remote_confinement_points: []
         //   speculative: false
         &hex!(
-            "7d8fd9ebeac56689cf29c1c16370e88d84673121bbc8cc4278ddbed40b612851464f01ccac"
-            "53b10aca3c59720968d652c86f1f2ae29387294d4a3f467d86cdb67ee40ac023a72f26c9c8"
-            "f785b2b31c20bb279a7c2824fe739b4029819ac59cad0b97cda4abc558916015fb3ea3fdd4"
-            "65f9e02168ae6c5c9e6fd4c2b9c2c394b6f355f764300e22e1f49fee02936a45bf494d7819"
-            "69c14d843d017269aeea5f69fbf08b9c0d7d7ec12168cbf8eed727cd3708d9752145bef4c5"
-            "ca20ae7da5eca90f4e60be5e3375092d4df96dc793469251f6188e6fef1d4128d78c134e9b"
-            "eb2134fa7e624528dfaa1c340167982dd7308211933044bbe7380e8f3862adf3a59307a171"
-            "8bf50a41095c39ab004db8eafaab0c3c51c3a48fa310488338bd6829532a75864fc437cc64"
-            "66992bfbc1f7ef8ea49ac0bef02d2046e6b475e6ef88d54156e18109ed88ba8bad25541be9"
-            "ef7d006d6bf79b6d467243aad8df333414a927d5bd35a78358292a6f4bbf63f6901cfcc216"
-            "bcd1a8244b875aee764e3265216a212244634171e7954a9895e8ba3972caaf786811"
+            "c33e89c2d046596ce6f30a66ea3f52488d7fa1dd02164cfba435445dc55ffb408da44094be"
+            "f5f8ee26e498072f80bc841e77dd98fe42b1499cd97b8883c76589a9613770f1c9f9b7a044"
+            "f798a7c73944dd5b4fe1675782049027b32791c5f06d687c589a0ca444080ff26ff912b53f"
+            "4878faf3a587b8f9e1924957da366bd59d7defa8954a52bbc2c2af4f3de3f7ed777a76b17b"
+            "78b9e0a12604107fb1d0dbd3f9f05e64cf1dffe1f527b6b0d08133d999bed5c9345f7af184"
+            "1951554f84037fa9aa28782bfba596ac00b59b38f5ac75753397abee6270800545a413a994"
+            "4f408fb51d76b0ce60fccbd49a10ef0736c50e98a2a4c44ccd4917f1bd8aee9923d23e732e"
+            "d91fcf90852a7c9567a20c289a874edc5343f8a2c77a070defe074f4564853f5ccedb3238a"
+            "5177f593f3dbf6ee8eda2d9721c8c29aea5d57fb2376f5c7"
         )[..],
         LocalWorkspaceManifest {
             updated: now,
@@ -414,20 +412,16 @@ fn serde_local_folder_manifest(
                 author: alice.device_id.to_owned(),
                 timestamp: now,
                 id: "87c6b5fd3b454c94bab51d6af1c6930b".parse().unwrap(),
-                version: 42,
+                version: 0,
                 created: now,
                 updated: now,
-                children: map!{
-                    "wksp1".parse().unwrap() => "b82954f1138b4d719b7f5bd78915d20f".parse().unwrap()
-                },
+                children: map!{},
             },
-            children: map!{
-                "wksp2".parse().unwrap() => "d7e3af6a03e1414db0f4682901e9aa4b".parse().unwrap()
-            },
-            local_confinement_points: Some(set!{"d7e3af6a03e1414db0f4682901e9aa4b".parse().unwrap()}),
-            remote_confinement_points: Some(set!{"b82954f1138b4d719b7f5bd78915d20f".parse().unwrap()}),
+            children: map!{},
+            local_confinement_points: Some(set!{}),
+            remote_confinement_points: Some(set!{}),
             need_sync: true,
-            speculative: false,
+            speculative: true,
         }
     )
 }))]

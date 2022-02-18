@@ -221,7 +221,7 @@ def display(name, raw, get_content_pipeline, max_width=89):
         "\n"
     ):
         output += f"// {line}\n"
-    output += _format_scalar(raw, max_width=max_width - INDENT_SIZE)
+    output += _format_scalar(raw, max_width=max_width - INDENT_SIZE - 9)
     output += "\n"
 
     print(output)
