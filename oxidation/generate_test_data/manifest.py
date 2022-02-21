@@ -107,3 +107,17 @@ film = FileManifest(
     ],
 ).dump_sign_and_encrypt(author_signkey=ALICE.signing_key, key=KEY)
 display("file manifest", film, [KEY, ALICE.verify_key, "zip"])
+
+film_invalid_blocksize = FileManifest(
+    author=ALICE.device_id,
+    timestamp=NOW,
+    id=EntryID.from_hex("87c6b5fd3b454c94bab51d6af1c6930b"),
+    parent=EntryID.from_hex("07748fbf67a646428427865fd730bf3e"),
+    version=42,
+    created=NOW,
+    updated=NOW,
+    size=700,
+    blocksize=2,
+    blocks=[],
+).dump_sign_and_encrypt(author_signkey=ALICE.signing_key, key=KEY)
+display("file manifest invalid blocksize", film_invalid_blocksize, [KEY, ALICE.verify_key, "zip"])

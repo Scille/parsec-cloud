@@ -5,6 +5,7 @@ use parsec_api_types::*;
 use serde::{de::DeserializeOwned, Deserialize, Serialize};
 use serde_with::serde_as;
 use std::collections::{HashMap, HashSet};
+use std::num::NonZeroU64;
 
 pub trait Encrypt
 where
@@ -31,9 +32,9 @@ where
 pub struct Chunk {
     pub id: ChunkID,
     pub start: u64,
-    pub stop: u64,
+    pub stop: NonZeroU64,
     pub raw_offset: u64,
-    pub raw_size: u64,
+    pub raw_size: NonZeroU64,
     pub access: Option<BlockAccess>,
 }
 
@@ -42,15 +43,36 @@ pub struct Chunk {
  */
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
-#[serde(into = "LocalFileManifestData", from = "LocalFileManifestData")]
+#[serde(into = "LocalFileManifestData", try_from = "LocalFileManifestData")]
 pub struct LocalFileManifest {
     pub base: FileManifest,
     pub need_sync: bool,
     pub updated: DateTime<Utc>,
     pub size: u64,
-    // Is it ok if blocksize < 8 ? because FileManifest doesn't restrict
     pub blocksize: u64,
     pub blocks: Vec<Vec<Chunk>>,
+}
+
+impl LocalFileManifest {
+    pub fn new(
+        base: FileManifest,
+        need_sync: bool,
+        blocksize: u64,
+        blocks: Vec<Vec<Chunk>>,
+    ) -> Result<Self, &'static str> {
+        if blocksize < 8 {
+            return Err("Invalid blocksize");
+        }
+
+        Ok(Self {
+            base,
+            need_sync,
+            updated: Utc::now(),
+            size: blocks.len() as u64,
+            blocksize,
+            blocks,
+        })
+    }
 }
 
 new_data_struct_type!(
@@ -65,16 +87,37 @@ new_data_struct_type!(
     blocks: Vec<Vec<Chunk>>,
 );
 
-impl_transparent_data_format_conversion!(
-    LocalFileManifest,
-    LocalFileManifestData,
-    base,
-    need_sync,
-    updated,
-    size,
-    blocksize,
-    blocks,
-);
+impl TryFrom<LocalFileManifestData> for LocalFileManifest {
+    type Error = &'static str;
+    fn try_from(data: LocalFileManifestData) -> Result<Self, Self::Error> {
+        if data.blocksize < 8 {
+            return Err("Invalid blocksize");
+        }
+
+        Ok(Self {
+            base: data.base,
+            need_sync: data.need_sync,
+            updated: data.updated,
+            size: data.size,
+            blocksize: data.blocksize,
+            blocks: data.blocks,
+        })
+    }
+}
+
+impl From<LocalFileManifest> for LocalFileManifestData {
+    fn from(obj: LocalFileManifest) -> Self {
+        Self {
+            type_: LocalFileManifestDataDataType,
+            base: obj.base,
+            need_sync: obj.need_sync,
+            updated: obj.updated,
+            size: obj.size,
+            blocksize: obj.blocksize,
+            blocks: obj.blocks,
+        }
+    }
+}
 
 impl Encrypt for LocalFileManifest {}
 

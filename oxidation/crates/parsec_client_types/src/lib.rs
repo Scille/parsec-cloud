@@ -7,19 +7,3 @@ mod local_manifest;
 pub use local_device::*;
 pub use local_device_file::*;
 pub use local_manifest::*;
-
-#[macro_export]
-macro_rules! set {
-    {$($v: expr),* $(,)?} => ({
-        use std::iter::{Iterator, IntoIterator};
-        Iterator::collect(IntoIterator::into_iter([$($v,)*]))
-    });
-}
-
-#[macro_export]
-macro_rules! map {
-    {$($k: expr => $v: expr),* $(,)?} => ({
-        use std::iter::{Iterator, IntoIterator};
-        Iterator::collect(IntoIterator::into_iter([$(($k, $v),)*]))
-    });
-}

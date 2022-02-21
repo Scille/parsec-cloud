@@ -344,3 +344,25 @@ fm = LocalFileManifest(
     ),
 ).dump_and_encrypt(key=KEY)
 display("file manifest", fm, [KEY])
+
+
+fm_invalid_blocksize = LocalFileManifest(
+    need_sync=True,
+    updated=NOW,
+    size=500,
+    blocksize=2,
+    blocks=[],
+    base=FileManifest(
+        author=ALICE.device_id,
+        timestamp=NOW,
+        id=EntryID.from_hex("87c6b5fd3b454c94bab51d6af1c6930b"),
+        parent=EntryID.from_hex("07748fbf67a646428427865fd730bf3e"),
+        version=42,
+        created=NOW,
+        updated=NOW,
+        size=700,
+        blocksize=512,
+        blocks=[],
+    ),
+).dump_and_encrypt(key=KEY)
+display("file manifest invalid blocksize", fm_invalid_blocksize, [KEY])

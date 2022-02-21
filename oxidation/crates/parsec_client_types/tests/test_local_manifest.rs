@@ -9,6 +9,8 @@ use parsec_client_types::*;
 
 use tests_fixtures::{alice, Device};
 
+use std::num::NonZeroU64;
+
 #[rstest]
 #[case::file_manifest(Box::new(|alice: &Device| {
     let now = "2021-12-04T11:50:43.208820992Z".parse().unwrap();
@@ -152,17 +154,17 @@ use tests_fixtures::{alice, Device};
                         size: 512,
                     }),
                     raw_offset: 0,
-                    raw_size: 512,
+                    raw_size: NonZeroU64::new(512).unwrap(),
                     start: 0,
-                    stop: 250,
+                    stop: NonZeroU64::new(250).unwrap(),
                 },
                 Chunk {
                     id: "2f99258022a94555b3109e81d34bdf97".parse().unwrap(),
                     access: None,
                     raw_offset: 250,
-                    raw_size: 250,
+                    raw_size: NonZeroU64::new(250).unwrap(),
                     start: 0,
-                    stop: 250,
+                    stop: NonZeroU64::new(250).unwrap(),
                 }
             ]],
             blocksize: 512,
@@ -192,6 +194,50 @@ fn serde_local_file_manifest(
     let manifest2 = LocalFileManifest::decrypt_and_load(&data2, &key).unwrap();
 
     assert_eq!(manifest2, expected);
+}
+
+#[rstest]
+fn serde_local_file_manifest_invalid_blocksize() {
+    // Generated from Python implementation (Parsec v2.6.0+dev)
+    // Content:
+    //   type: "local_file_manifest"
+    //   updated: ext(1, 1638618643.208821)
+    //   base: {
+    //     type: "file_manifest"
+    //     author: "alice@dev1"
+    //     timestamp: ext(1, 1638618643.208821)
+    //     id: ext(2, hex!("87c6b5fd3b454c94bab51d6af1c6930b"))
+    //     version: 42
+    //     created: ext(1, 1638618643.208821)
+    //     updated: ext(1, 1638618643.208821)
+    //     blocks: []
+    //     blocksize: 512
+    //     parent: ext(2, hex!("07748fbf67a646428427865fd730bf3e"))
+    //     size: 700
+    //   }
+    //   blocks: []
+    //   blocksize: 2
+    //   need_sync: true
+    //   size: 500
+    let data = hex!(
+        "9642b002d69dca6df364c5828c7308477aba91645175df36e2451798cce2a32b1b68f9138c"
+        "24779a4cf009ec1ef21363db76b779e50aaade081b476c9423d033f615a159455c3f79f9ba"
+        "eac79059b3aeafda5bb25cf6394b50d1c487fc193740cf207bba4a98803d81c672f05ec2a0"
+        "7a88701972bb92cd17400ae25c28344619d5b504b13ff4898831485653b7b260e9622899ac"
+        "e85d4897c86b013e2eac1443f1dbd0d3792af7db872c7c4ddece260fa55e24caeeb63b404a"
+        "4a775d4ddcfc461b48d4b7773cdf83e0861020c754f51a972bad16c73d5030b7a4f7c6136a"
+        "0a8e8eb9664ac5c9b697fd4b693776a6dc6f5eb3b32373d5339c4848ed27cb62f622caffaa"
+        "2a67c7a879e877030de49352b649a164902a9c2d74dd84fb84d45a47e811855d369c259bfa"
+        "eb7ff946f60d66d48a"
+    );
+
+    let key = SecretKey::from(hex!(
+        "b1b52e16c1b46ab133c8bf576e82d26c887f1e9deae1af80043a258c36fcabf3"
+    ));
+
+    let manifest = LocalFileManifest::decrypt_and_load(&data, &key);
+
+    assert!(manifest.is_err());
 }
 
 #[rstest]

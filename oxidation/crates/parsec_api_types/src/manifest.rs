@@ -341,6 +341,10 @@ new_data_struct_type!(
 impl TryFrom<FileManifestData> for FileManifest {
     type Error = &'static str;
     fn try_from(data: FileManifestData) -> Result<Self, Self::Error> {
+        if data.blocksize < 8 {
+            return Err("Invalid blocksize");
+        }
+
         Ok(Self {
             author: data.author,
             timestamp: data.timestamp,
