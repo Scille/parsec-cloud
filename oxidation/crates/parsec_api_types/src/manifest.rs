@@ -205,15 +205,14 @@ pub struct WorkspaceEntry {
 }
 
 impl WorkspaceEntry {
-    pub fn new(name: &EntryName) -> Self {
-        let now = Utc::now();
+    pub fn generate(name: EntryName, timestamp: DateTime<Utc>) -> Self {
         Self {
             id: EntryID::default(),
-            name: name.to_owned(),
+            name,
             key: SecretKey::generate(),
             encryption_revision: 1,
-            encrypted_on: now,
-            role_cached_on: now,
+            encrypted_on: timestamp,
+            role_cached_on: timestamp,
             role: Some(RealmRole::Owner),
         }
     }
