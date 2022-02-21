@@ -359,7 +359,7 @@ impl TryFrom<FileManifestData> for FileManifest {
 impl From<FileManifest> for FileManifestData {
     fn from(obj: FileManifest) -> Self {
         Self {
-            type_: FileManifestDataDataType::Value,
+            type_: FileManifestDataDataType,
             author: obj.author,
             timestamp: obj.timestamp,
             id: obj.id,

@@ -11,16 +11,8 @@ macro_rules! new_data_type_enum {
         $(,)?
     ) => {
         // Enum with single value works as a constant field
-        #[derive(Clone, Copy, Debug, PartialEq, Eq)]
-        enum $name {
-            Value,
-        }
-
-        impl Default for $name {
-            fn default() -> Self {
-                $name::Value
-            }
-        }
+        #[derive(Default, Clone, Copy, Debug, PartialEq, Eq)]
+        struct $name;
 
         impl Serialize for $name {
             fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
@@ -50,7 +42,7 @@ macro_rules! new_data_type_enum {
                         E: serde::de::Error,
                     {
                         if v == $value {
-                            Ok($name::Value)
+                            Ok($name)
                         } else {
                             Err(serde::de::Error::invalid_type(
                                 serde::de::Unexpected::Str(v),
