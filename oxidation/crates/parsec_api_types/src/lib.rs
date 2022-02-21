@@ -11,7 +11,6 @@ mod id;
 mod invite;
 mod manifest;
 mod message;
-mod protocol;
 
 pub use addr::*;
 pub use certif::*;
@@ -20,12 +19,11 @@ pub use id::*;
 pub use invite::*;
 pub use manifest::*;
 pub use message::*;
-pub use protocol::*;
 
 #[macro_export]
 macro_rules! set {
     {$($v: expr),* $(,)?} => ({
-        use std::iter::{Iterator, IntoIterator};
+        use ::std::iter::{Iterator, IntoIterator};
         Iterator::collect(IntoIterator::into_iter([$($v,)*]))
     });
 }
@@ -33,7 +31,7 @@ macro_rules! set {
 #[macro_export]
 macro_rules! map {
     {$($k: expr => $v: expr),* $(,)?} => ({
-        use std::iter::{Iterator, IntoIterator};
+        use ::std::iter::{Iterator, IntoIterator};
         Iterator::collect(IntoIterator::into_iter([$(($k, $v),)*]))
     });
 }

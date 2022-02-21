@@ -7,6 +7,8 @@ use serde_with::serde_as;
 use std::collections::{HashMap, HashSet};
 use std::num::NonZeroU64;
 
+use crate::Encrypt;
+
 /*
  * Chunk
  */

@@ -1,15 +1,71 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BSLv1.1 (eventually AGPLv3) 2016-2021 Scille SAS
 
-use chrono::prelude::*;
-use serde::{Deserialize, Serialize};
+use chrono::{DateTime, Utc};
+use flate2::{read::ZlibDecoder, write::ZlibEncoder, Compression};
+use serde::{de::DeserializeOwned, Deserialize, Serialize};
 use serde_with::*;
 use std::collections::HashMap;
+use std::io::{Read, Write};
 use unicode_normalization::UnicodeNormalization;
 
 use crate::data_macros::{impl_transparent_data_format_conversion, new_data_struct_type};
 use crate::ext_types::{new_uuid_type, DateTimeExtFormat};
-use crate::{CompSignEncrypt, DeviceID, Verify};
-use parsec_api_crypto::{HashDigest, SecretKey};
+use crate::DeviceID;
+use parsec_api_crypto::{HashDigest, SecretKey, SigningKey, VerifyKey};
+
+pub trait CompSignEncrypt
+where
+    Self: Sized + Serialize + DeserializeOwned,
+{
+    fn author(&self) -> &DeviceID;
+    fn timestamp(&self) -> DateTime<Utc>;
+
+    fn check(
+        self,
+        expected_author: &DeviceID,
+        expected_timestamp: DateTime<Utc>,
+    ) -> Result<Self, &'static str> {
+        if self.author() != expected_author {
+            Err("Unexpected author")
+        } else if self.timestamp() != expected_timestamp {
+            Err("Unexpected timestamp")
+        } else {
+            Ok(self)
+        }
+    }
+
+    fn dump_sign_and_encrypt(&self, author_signkey: &SigningKey, key: &SecretKey) -> Vec<u8> {
+        let serialized = rmp_serde::to_vec_named(&self).unwrap_or_else(|_| unreachable!());
+        let mut e = ZlibEncoder::new(Vec::new(), Compression::default());
+        e.write_all(&serialized).unwrap_or_else(|_| unreachable!());
+        let compressed = e.finish().unwrap_or_else(|_| unreachable!());
+        let signed = author_signkey.sign(&compressed);
+        key.encrypt(&signed)
+    }
+
+    fn decrypt_verify_and_load(
+        encrypted: &[u8],
+        key: &SecretKey,
+        author_verify_key: &VerifyKey,
+        expected_author: &DeviceID,
+        expected_timestamp: DateTime<Utc>,
+    ) -> Result<Self, &'static str> {
+        let signed = key.decrypt(encrypted).map_err(|_| "Invalid encryption")?;
+        let compressed = author_verify_key
+            .verify(&signed)
+            .map_err(|_| "Invalid signature")?;
+        let mut serialized = vec![];
+
+        ZlibDecoder::new(&compressed[..])
+            .read_to_end(&mut serialized)
+            .map_err(|_| "Invalid compression")?;
+
+        let obj = rmp_serde::from_read_ref::<_, Self>(&serialized)
+            .map_err(|_| "Invalid serialization")?;
+
+        obj.check(expected_author, expected_timestamp)
+    }
+}
 
 /*
  * EntryID, BlockID, RealmID, VlobID
@@ -227,17 +283,14 @@ pub struct FileManifest {
 }
 
 impl FileManifest {
-    pub fn new<T>(
+    pub fn new(
         author: DeviceID,
-        id: T,
-        parent: T,
+        id: EntryID,
+        parent: EntryID,
         version: u32,
         blocksize: u64,
         blocks: Vec<BlockAccess>,
-    ) -> Result<Self, &'static str>
-    where
-        EntryID: From<T>,
-    {
+    ) -> Result<Self, &'static str> {
         if blocksize < 8 {
             return Err("Invalid blocksize");
         }
@@ -247,8 +300,8 @@ impl FileManifest {
         Ok(Self {
             author,
             timestamp: now,
-            id: EntryID::from(id),
-            parent: EntryID::from(parent),
+            id,
+            parent,
             version,
             updated: now,
             created: now,
@@ -259,7 +312,7 @@ impl FileManifest {
     }
 }
 
-impl Verify for FileManifest {
+impl CompSignEncrypt for FileManifest {
     fn author(&self) -> &DeviceID {
         &self.author
     }
@@ -267,8 +320,6 @@ impl Verify for FileManifest {
         self.timestamp
     }
 }
-
-impl CompSignEncrypt for FileManifest {}
 
 new_data_struct_type!(
     FileManifestData,
@@ -351,7 +402,7 @@ pub struct FolderManifest {
     pub children: HashMap<EntryName, ManifestEntry>,
 }
 
-impl Verify for FolderManifest {
+impl CompSignEncrypt for FolderManifest {
     fn author(&self) -> &DeviceID {
         &self.author
     }
@@ -359,8 +410,6 @@ impl Verify for FolderManifest {
         self.timestamp
     }
 }
-
-impl CompSignEncrypt for FolderManifest {}
 
 new_data_struct_type!(
     FolderManifestData,
@@ -412,7 +461,7 @@ pub struct WorkspaceManifest {
     pub children: HashMap<EntryName, ManifestEntry>,
 }
 
-impl Verify for WorkspaceManifest {
+impl CompSignEncrypt for WorkspaceManifest {
     fn author(&self) -> &DeviceID {
         &self.author
     }
@@ -420,8 +469,6 @@ impl Verify for WorkspaceManifest {
         self.timestamp
     }
 }
-
-impl CompSignEncrypt for WorkspaceManifest {}
 
 new_data_struct_type!(
     WorkspaceManifestData,
@@ -478,7 +525,7 @@ impl UserManifest {
     }
 }
 
-impl Verify for UserManifest {
+impl CompSignEncrypt for UserManifest {
     fn author(&self) -> &DeviceID {
         &self.author
     }
@@ -486,8 +533,6 @@ impl Verify for UserManifest {
         self.timestamp
     }
 }
-
-impl CompSignEncrypt for UserManifest {}
 
 new_data_struct_type!(
     UserManifestData,
