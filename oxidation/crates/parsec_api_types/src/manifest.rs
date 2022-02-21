@@ -8,7 +8,7 @@ use unicode_normalization::UnicodeNormalization;
 
 use crate::data_macros::{impl_transparent_data_format_conversion, new_data_struct_type};
 use crate::ext_types::{new_uuid_type, DateTimeExtFormat};
-use crate::DeviceID;
+use crate::{CompSignEncrypt, DeviceID, Verify};
 use parsec_api_crypto::{HashDigest, SecretKey};
 
 /*
@@ -203,60 +203,6 @@ fn generate_local_author_legacy_placeholder() -> DeviceID {
     LEGACY_PLACEHOLDER.clone()
 }
 
-macro_rules! impl_dump_sign_and_encrypt {
-    ($name:ident) => {
-        impl $name {
-            pub fn dump_sign_and_encrypt(
-                &self,
-                author_signkey: &::parsec_api_crypto::SigningKey,
-                key: &::parsec_api_crypto::SecretKey,
-            ) -> Vec<u8> {
-                let serialized = rmp_serde::to_vec_named(&self).unwrap_or_else(|_| unreachable!());
-                let mut e =
-                    ::flate2::write::ZlibEncoder::new(Vec::new(), flate2::Compression::default());
-                use std::io::Write;
-                e.write_all(&serialized).unwrap_or_else(|_| unreachable!());
-                let compressed = e.finish().unwrap_or_else(|_| unreachable!());
-                let signed = author_signkey.sign(&compressed);
-                key.encrypt(&signed)
-            }
-        }
-    };
-}
-
-macro_rules! impl_decrypt_verify_and_load {
-    ($name:ident) => {
-        impl $name {
-            pub fn decrypt_verify_and_load(
-                encrypted: &[u8],
-                key: &::parsec_api_crypto::SecretKey,
-                author_verify_key: &::parsec_api_crypto::VerifyKey,
-                expected_author: &DeviceID,
-                expected_timestamp: &DateTime<Utc>,
-            ) -> Result<$name, &'static str> {
-                let signed = key.decrypt(encrypted).map_err(|_| "Invalid encryption")?;
-                let compressed = author_verify_key
-                    .verify(&signed)
-                    .map_err(|_| "Invalid signature")?;
-                let mut serialized = vec![];
-                use std::io::Read;
-                ::flate2::read::ZlibDecoder::new(&compressed[..])
-                    .read_to_end(&mut serialized)
-                    .map_err(|_| "Invalid compression")?;
-                let obj: $name =
-                    rmp_serde::from_read_ref(&serialized).map_err(|_| "Invalid serialization")?;
-                if &obj.author != expected_author {
-                    return Err("Unexpected author");
-                } else if &obj.timestamp != expected_timestamp {
-                    Err("Unexpected timestamp")
-                } else {
-                    Ok(obj)
-                }
-            }
-        }
-    };
-}
-
 /*
  * FileManifest
  */
@@ -313,8 +259,16 @@ impl FileManifest {
     }
 }
 
-impl_dump_sign_and_encrypt!(FileManifest);
-impl_decrypt_verify_and_load!(FileManifest);
+impl Verify for FileManifest {
+    fn author(&self) -> &DeviceID {
+        &self.author
+    }
+    fn timestamp(&self) -> DateTime<Utc> {
+        self.timestamp
+    }
+}
+
+impl CompSignEncrypt for FileManifest {}
 
 new_data_struct_type!(
     FileManifestData,
@@ -397,8 +351,16 @@ pub struct FolderManifest {
     pub children: HashMap<EntryName, ManifestEntry>,
 }
 
-impl_dump_sign_and_encrypt!(FolderManifest);
-impl_decrypt_verify_and_load!(FolderManifest);
+impl Verify for FolderManifest {
+    fn author(&self) -> &DeviceID {
+        &self.author
+    }
+    fn timestamp(&self) -> DateTime<Utc> {
+        self.timestamp
+    }
+}
+
+impl CompSignEncrypt for FolderManifest {}
 
 new_data_struct_type!(
     FolderManifestData,
@@ -450,8 +412,16 @@ pub struct WorkspaceManifest {
     pub children: HashMap<EntryName, ManifestEntry>,
 }
 
-impl_dump_sign_and_encrypt!(WorkspaceManifest);
-impl_decrypt_verify_and_load!(WorkspaceManifest);
+impl Verify for WorkspaceManifest {
+    fn author(&self) -> &DeviceID {
+        &self.author
+    }
+    fn timestamp(&self) -> DateTime<Utc> {
+        self.timestamp
+    }
+}
+
+impl CompSignEncrypt for WorkspaceManifest {}
 
 new_data_struct_type!(
     WorkspaceManifestData,
@@ -508,8 +478,16 @@ impl UserManifest {
     }
 }
 
-impl_dump_sign_and_encrypt!(UserManifest);
-impl_decrypt_verify_and_load!(UserManifest);
+impl Verify for UserManifest {
+    fn author(&self) -> &DeviceID {
+        &self.author
+    }
+    fn timestamp(&self) -> DateTime<Utc> {
+        self.timestamp
+    }
+}
+
+impl CompSignEncrypt for UserManifest {}
 
 new_data_struct_type!(
     UserManifestData,

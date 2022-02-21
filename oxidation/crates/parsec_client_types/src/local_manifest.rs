@@ -2,27 +2,10 @@
 
 use chrono::{DateTime, Utc};
 use parsec_api_types::*;
-use serde::{de::DeserializeOwned, Deserialize, Serialize};
+use serde::{Deserialize, Serialize};
 use serde_with::serde_as;
 use std::collections::{HashMap, HashSet};
 use std::num::NonZeroU64;
-
-pub trait Encrypt
-where
-    Self: Sized + Serialize + DeserializeOwned,
-{
-    fn dump_and_encrypt(&self, key: &::parsec_api_crypto::SecretKey) -> Vec<u8> {
-        let serialized = rmp_serde::to_vec_named(&self).unwrap_or_else(|_| unreachable!());
-        key.encrypt(&serialized)
-    }
-    fn decrypt_and_load(
-        encrypted: &[u8],
-        key: &parsec_api_crypto::SecretKey,
-    ) -> Result<Self, &'static str> {
-        let serialized = key.decrypt(encrypted).map_err(|_| "Invalid encryption")?;
-        rmp_serde::from_read_ref::<_, Self>(&serialized).map_err(|_| "Invalid serialization")
-    }
-}
 
 /*
  * Chunk

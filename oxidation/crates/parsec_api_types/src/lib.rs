@@ -11,6 +11,7 @@ mod id;
 mod invite;
 mod manifest;
 mod message;
+mod protocol;
 
 pub use addr::*;
 pub use certif::*;
@@ -19,6 +20,7 @@ pub use id::*;
 pub use invite::*;
 pub use manifest::*;
 pub use message::*;
+pub use protocol::*;
 
 #[macro_export]
 macro_rules! set {
