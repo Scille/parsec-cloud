@@ -48,7 +48,7 @@ impl LocalDevice {
     ///
     /// The purpose of the slog is simply to tell whether `LocalDevice` and
     /// `AvailableDevice` objects corresponds to the same device.
-    pub fn slug(self) -> String {
+    pub fn slug(&self) -> String {
         // Add a hash to avoid clash when the backend is reseted and we recreate
         // a device with same OrganizationID/DeviceID than a previous one
         let mut hasher = sha2::Sha256::new();
@@ -65,7 +65,7 @@ impl LocalDevice {
     /// Slug is long and not readable enough (given DeviceID is now made of uuids).
     /// Hence it's often simpler to rely on it hash instead (e.g. select the
     /// device to use in the CLI by providing the beginning of the hash)
-    pub fn slughash(self) -> String {
+    pub fn slughash(&self) -> String {
         let mut hasher = sha2::Sha256::new();
         hasher.update(self.slug().as_bytes()); // Slug is encoded as utf8
         format!("{:x}", hasher.finalize())
