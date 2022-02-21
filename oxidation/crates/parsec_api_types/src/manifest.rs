@@ -38,62 +38,13 @@ pub struct BlockAccess {
  * RealmRole
  */
 
-#[derive(Copy, Clone, Debug, PartialEq, Eq)]
+#[derive(Copy, Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(rename_all = "UPPERCASE")]
 pub enum RealmRole {
     Owner,
     Manager,
     Contributor,
     Reader,
-}
-
-impl Serialize for RealmRole {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: serde::ser::Serializer,
-    {
-        let value = match self {
-            RealmRole::Owner => "OWNER",
-            RealmRole::Manager => "MANAGER",
-            RealmRole::Contributor => "CONTRIBUTOR",
-            RealmRole::Reader => "READER",
-        };
-        serializer.serialize_str(value)
-    }
-}
-
-impl<'de> Deserialize<'de> for RealmRole {
-    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
-    where
-        D: serde::de::Deserializer<'de>,
-    {
-        struct Visitor;
-
-        impl<'de> serde::de::Visitor<'de> for Visitor {
-            type Value = RealmRole;
-
-            fn expecting(&self, formatter: &mut std::fmt::Formatter) -> std::fmt::Result {
-                formatter.write_str(concat!("an user profile as string"))
-            }
-
-            fn visit_str<E>(self, v: &str) -> Result<Self::Value, E>
-            where
-                E: serde::de::Error,
-            {
-                match v {
-                    "OWNER" => Ok(RealmRole::Owner),
-                    "MANAGER" => Ok(RealmRole::Manager),
-                    "CONTRIBUTOR" => Ok(RealmRole::Contributor),
-                    "READER" => Ok(RealmRole::Reader),
-                    _ => Err(serde::de::Error::invalid_type(
-                        serde::de::Unexpected::Str(v),
-                        &self,
-                    )),
-                }
-            }
-        }
-
-        deserializer.deserialize_str(Visitor)
-    }
 }
 
 /*
@@ -311,7 +262,7 @@ macro_rules! impl_decrypt_verify_and_load {
  */
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
-#[serde(into = "FileManifestData", from = "FileManifestData")]
+#[serde(into = "FileManifestData", try_from = "FileManifestData")]
 pub struct FileManifest {
     pub author: DeviceID,
     pub timestamp: DateTime<Utc>,

@@ -127,9 +127,8 @@ new_data_struct_type!(
 /// Schema for device files that does not rely on the filename for complementary information.
 #[serde_as]
 #[derive(Debug, Serialize, Deserialize, PartialEq, Eq)]
-#[serde(tag = "type")]
+#[serde(tag = "type", rename_all = "lowercase")]
 pub enum DeviceFile {
-    #[serde(rename = "password")]
     Password {
         ciphertext: ByteBuf,
 
@@ -145,8 +144,6 @@ pub enum DeviceFile {
         // Custom fields
         salt: ByteBuf,
     },
-
-    #[serde(rename = "recovery")]
     Recovery {
         ciphertext: ByteBuf,
 
@@ -161,8 +158,6 @@ pub enum DeviceFile {
         // Custom fields
         // *nothing*
     },
-
-    #[serde(rename = "smartcard")]
     Smartcard {
         ciphertext: ByteBuf,
 
