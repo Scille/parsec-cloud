@@ -217,7 +217,7 @@ impl WorkspaceEntry {
         }
     }
 
-    pub fn is_revoked(self) -> bool {
+    pub fn is_revoked(&self) -> bool {
         self.role.is_none()
     }
 }
