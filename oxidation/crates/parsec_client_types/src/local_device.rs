@@ -1,25 +1,11 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BSLv1.1 (eventually AGPLv3) 2016-2021 Scille SAS
 
-use serde::{de::DeserializeOwned, Deserialize, Serialize};
+use serde::{Deserialize, Serialize};
 use serde_with::*;
 
 use parsec_api_crypto::*;
 use parsec_api_types::*;
 use sha2::Digest;
-
-pub trait Encrypt
-where
-    Self: Sized + Serialize + DeserializeOwned,
-{
-    fn dump_and_encrypt(&self, key: &SecretKey) -> Vec<u8> {
-        let serialized = rmp_serde::to_vec_named(&self).unwrap_or_else(|_| unreachable!());
-        key.encrypt(&serialized)
-    }
-    fn decrypt_and_load(encrypted: &[u8], key: &SecretKey) -> Result<Self, &'static str> {
-        let serialized = key.decrypt(encrypted).map_err(|_| "Invalid encryption")?;
-        rmp_serde::from_read_ref::<_, Self>(&serialized).map_err(|_| "Invalid serialization")
-    }
-}
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
 #[serde(into = "LocalDeviceData", try_from = "LocalDeviceData")]

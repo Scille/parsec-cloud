@@ -6,6 +6,7 @@ use serde::{de::DeserializeOwned, Deserialize, Serialize};
 use serde_with::*;
 use std::collections::HashMap;
 use std::io::{Read, Write};
+use std::ops::Deref;
 use unicode_normalization::UnicodeNormalization;
 
 use crate::data_macros::{impl_transparent_data_format_conversion, new_data_struct_type};
@@ -13,26 +14,12 @@ use crate::ext_types::{new_uuid_type, DateTimeExtFormat};
 use crate::DeviceID;
 use parsec_api_crypto::{HashDigest, SecretKey, SigningKey, VerifyKey};
 
-pub trait CompSignEncrypt
+pub trait DumpLoad
 where
     Self: Sized + Serialize + DeserializeOwned,
 {
     fn author(&self) -> &DeviceID;
     fn timestamp(&self) -> DateTime<Utc>;
-
-    fn check(
-        self,
-        expected_author: &DeviceID,
-        expected_timestamp: DateTime<Utc>,
-    ) -> Result<Self, &'static str> {
-        if self.author() != expected_author {
-            Err("Unexpected author")
-        } else if self.timestamp() != expected_timestamp {
-            Err("Unexpected timestamp")
-        } else {
-            Ok(self)
-        }
-    }
 
     fn dump_sign_and_encrypt(&self, author_signkey: &SigningKey, key: &SecretKey) -> Vec<u8> {
         let serialized = rmp_serde::to_vec_named(&self).unwrap_or_else(|_| unreachable!());
@@ -63,7 +50,13 @@ where
         let obj = rmp_serde::from_read_ref::<_, Self>(&serialized)
             .map_err(|_| "Invalid serialization")?;
 
-        obj.check(expected_author, expected_timestamp)
+        if obj.author() != expected_author {
+            Err("Unexpected author")
+        } else if obj.timestamp() != expected_timestamp {
+            Err("Unexpected timestamp")
+        } else {
+            Ok(obj)
+        }
     }
 }
 
@@ -283,6 +276,14 @@ impl From<Blocksize> for u64 {
     }
 }
 
+impl Deref for Blocksize {
+    type Target = u64;
+
+    fn deref(&self) -> &Self::Target {
+        &self.0
+    }
+}
+
 /*
  * FileManifest
  */
@@ -306,7 +307,7 @@ pub struct FileManifest {
     pub blocks: Vec<BlockAccess>,
 }
 
-impl CompSignEncrypt for FileManifest {
+impl DumpLoad for FileManifest {
     fn author(&self) -> &DeviceID {
         &self.author
     }
@@ -392,7 +393,7 @@ pub struct FolderManifest {
     pub children: HashMap<EntryName, ManifestEntry>,
 }
 
-impl CompSignEncrypt for FolderManifest {
+impl DumpLoad for FolderManifest {
     fn author(&self) -> &DeviceID {
         &self.author
     }
@@ -451,7 +452,7 @@ pub struct WorkspaceManifest {
     pub children: HashMap<EntryName, ManifestEntry>,
 }
 
-impl CompSignEncrypt for WorkspaceManifest {
+impl DumpLoad for WorkspaceManifest {
     fn author(&self) -> &DeviceID {
         &self.author
     }
@@ -515,7 +516,7 @@ impl UserManifest {
     }
 }
 
-impl CompSignEncrypt for UserManifest {
+impl DumpLoad for UserManifest {
     fn author(&self) -> &DeviceID {
         &self.author
     }

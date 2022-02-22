@@ -8,7 +8,7 @@ use parsec_api_types::data_macros::new_data_struct_type;
 use parsec_api_types::*;
 
 // TODO: move this somewhere more generic
-mod maybe_field {
+pub mod maybe_field {
     use serde::{Deserialize, Deserializer, Serialize, Serializer};
 
     /// Any value that is present is considered Some value, including null.

@@ -1,13 +1,28 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BSLv1.1 (eventually AGPLv3) 2016-2021 Scille SAS
 
 use chrono::{DateTime, Utc};
+use parsec_api_crypto::SecretKey;
 use parsec_api_types::*;
-use serde::{Deserialize, Serialize};
+use serde::{de::DeserializeOwned, Deserialize, Serialize};
 use serde_with::serde_as;
 use std::collections::{HashMap, HashSet};
 use std::num::NonZeroU64;
 
-use crate::Encrypt;
+use crate::maybe_field;
+
+pub trait DumpLoad
+where
+    Self: Sized + Serialize + DeserializeOwned,
+{
+    fn dump_and_encrypt(&self, key: &SecretKey) -> Vec<u8> {
+        let serialized = rmp_serde::to_vec_named(&self).unwrap_or_else(|_| unreachable!());
+        key.encrypt(&serialized)
+    }
+    fn decrypt_and_load(encrypted: &[u8], key: &SecretKey) -> Result<Self, &'static str> {
+        let serialized = key.decrypt(encrypted).map_err(|_| "Invalid encryption")?;
+        rmp_serde::from_read_ref::<_, Self>(&serialized).map_err(|_| "Invalid serialization")
+    }
+}
 
 /*
  * Chunk
@@ -15,6 +30,19 @@ use crate::Encrypt;
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
 pub struct Chunk {
+    // Represents a chunk of a data in file manifest.
+    // The raw data is identified by its `id` attribute and is aligned using the
+    // `raw_offset` attribute with respect to the file addressing. The raw data
+    // size is stored as `raw_size`.
+
+    // The `start` and `stop` attributes then describes the span of the actual data
+    // still with respect to the file addressing.
+
+    // This means the following rule applies:
+    //     raw_offset <= start < stop <= raw_start + raw_size
+
+    // Access is an optional block access that can be used to produce a remote manifest
+    // when the chunk corresponds to an actual block within the context of this manifest.
     pub id: ChunkID,
     pub start: u64,
     pub stop: NonZeroU64,
@@ -78,7 +106,7 @@ impl From<LocalFileManifest> for LocalFileManifestData {
     }
 }
 
-impl Encrypt for LocalFileManifest {}
+impl DumpLoad for LocalFileManifest {}
 
 /*
  * LocalFolderManifest
@@ -91,8 +119,16 @@ pub struct LocalFolderManifest {
     pub need_sync: bool,
     pub updated: DateTime<Utc>,
     pub children: HashMap<EntryName, ManifestEntry>,
-    pub local_confinement_points: Option<HashSet<ManifestEntry>>,
-    pub remote_confinement_points: Option<HashSet<ManifestEntry>>,
+    // Confined entries are entries that are meant to stay locally and not be added
+    // to the uploaded remote manifest when synchronizing. The criteria for being
+    // confined is to have a filename that matched the "prevent sync" pattern at the time of
+    // the last change (or when a new filter was successfully applied)
+    pub local_confinement_points: HashSet<ManifestEntry>,
+    // Filtered entries are entries present in the base manifest that are not exposed
+    // locally. We keep track of them to remember that those entries have not been
+    // deleted locally and hence should be restored when crafting the remote manifest
+    // to upload.
+    pub remote_confinement_points: HashSet<ManifestEntry>,
 }
 
 new_data_struct_type!(
@@ -103,22 +139,46 @@ new_data_struct_type!(
     #[serde_as(as = "DateTimeExtFormat")]
     updated: DateTime<Utc>,
     children: HashMap<EntryName, ManifestEntry>,
+    #[serde(
+        default,
+        deserialize_with = "maybe_field::deserialize_some",
+    )]
     local_confinement_points: Option<HashSet<ManifestEntry>>,
+    #[serde(
+        default,
+        deserialize_with = "maybe_field::deserialize_some",
+    )]
     remote_confinement_points: Option<HashSet<ManifestEntry>>,
 );
 
-impl_transparent_data_format_conversion!(
-    LocalFolderManifest,
-    LocalFolderManifestData,
-    base,
-    need_sync,
-    updated,
-    children,
-    local_confinement_points,
-    remote_confinement_points,
-);
+impl From<LocalFolderManifestData> for LocalFolderManifest {
+    fn from(data: LocalFolderManifestData) -> Self {
+        Self {
+            base: data.base,
+            need_sync: data.need_sync,
+            updated: data.updated,
+            children: data.children,
+            local_confinement_points: data.local_confinement_points.unwrap_or_default(),
+            remote_confinement_points: data.remote_confinement_points.unwrap_or_default(),
+        }
+    }
+}
 
-impl Encrypt for LocalFolderManifest {}
+impl From<LocalFolderManifest> for LocalFolderManifestData {
+    fn from(obj: LocalFolderManifest) -> Self {
+        Self {
+            type_: Default::default(),
+            base: obj.base,
+            need_sync: obj.need_sync,
+            updated: obj.updated,
+            children: obj.children,
+            local_confinement_points: Some(obj.local_confinement_points),
+            remote_confinement_points: Some(obj.remote_confinement_points),
+        }
+    }
+}
+
+impl DumpLoad for LocalFolderManifest {}
 
 /*
  * LocalWorkspaceManifest
@@ -134,8 +194,26 @@ pub struct LocalWorkspaceManifest {
     pub need_sync: bool,
     pub updated: DateTime<Utc>,
     pub children: HashMap<EntryName, ManifestEntry>,
-    pub local_confinement_points: Option<HashSet<ManifestEntry>>,
-    pub remote_confinement_points: Option<HashSet<ManifestEntry>>,
+    // Confined entries are entries that are meant to stay locally and not be added
+    // to the uploaded remote manifest when synchronizing. The criteria for being
+    // confined is to have a filename that matched the "prevent sync" pattern at the time of
+    // the last change (or when a new filter was successfully applied)
+    pub local_confinement_points: HashSet<ManifestEntry>,
+    // Filtered entries are entries present in the base manifest that are not exposed
+    // locally. We keep track of them to remember that those entries have not been
+    // deleted locally and hence should be restored when crafting the remote manifest
+    // to upload.
+    pub remote_confinement_points: HashSet<ManifestEntry>,
+    // Speculative placeholders are created when we want to access a workspace
+    // but didn't retrieve manifest data from backend yet. This implies:
+    // - non-placeholders cannot be speculative
+    // - the only non-speculative placeholder is the placeholder initialized
+    //   during the initial workspace creation
+    // This speculative information is useful during merge to understand if
+    // a data is not present in the placeholder compared with a remote because:
+    // a) the data is not locally known (speculative is True)
+    // b) the data is known, but has been locally removed (speculative is False)
+    // Prevented to be `required=True` by backward compatibility
     pub speculative: bool,
 }
 
@@ -147,12 +225,24 @@ new_data_struct_type!(
     #[serde_as(as = "DateTimeExtFormat")]
     updated: DateTime<Utc>,
     children: HashMap<EntryName, ManifestEntry>,
+    #[serde(
+        default,
+        deserialize_with = "maybe_field::deserialize_some",
+    )]
     local_confinement_points: Option<HashSet<ManifestEntry>>,
+    #[serde(
+        default,
+        deserialize_with = "maybe_field::deserialize_some",
+    )]
     remote_confinement_points: Option<HashSet<ManifestEntry>>,
+    #[serde(
+        default,
+        deserialize_with = "maybe_field::deserialize_some",
+    )]
     speculative: Option<bool>,
 );
 
-impl Encrypt for LocalWorkspaceManifest {}
+impl DumpLoad for LocalWorkspaceManifest {}
 
 impl From<LocalWorkspaceManifestData> for LocalWorkspaceManifest {
     fn from(data: LocalWorkspaceManifestData) -> Self {
@@ -161,9 +251,9 @@ impl From<LocalWorkspaceManifestData> for LocalWorkspaceManifest {
             need_sync: data.need_sync,
             updated: data.updated,
             children: data.children,
-            local_confinement_points: data.local_confinement_points,
-            remote_confinement_points: data.remote_confinement_points,
-            speculative: data.speculative.unwrap_or(false),
+            local_confinement_points: data.local_confinement_points.unwrap_or_default(),
+            remote_confinement_points: data.remote_confinement_points.unwrap_or_default(),
+            speculative: data.speculative.unwrap_or_default(),
         }
     }
 }
@@ -176,8 +266,8 @@ impl From<LocalWorkspaceManifest> for LocalWorkspaceManifestData {
             need_sync: obj.need_sync,
             updated: obj.updated,
             children: obj.children,
-            local_confinement_points: obj.local_confinement_points,
-            remote_confinement_points: obj.remote_confinement_points,
+            local_confinement_points: Some(obj.local_confinement_points),
+            remote_confinement_points: Some(obj.remote_confinement_points),
             speculative: Some(obj.speculative),
         }
     }
@@ -195,10 +285,21 @@ pub struct LocalUserManifest {
     pub updated: DateTime<Utc>,
     pub last_processed_message: u32,
     pub workspaces: Vec<WorkspaceEntry>,
+    // Speculative placeholders are created when we want to access the
+    // user manifest but didn't retrieve it from backend yet. This implies:
+    // - non-placeholders cannot be speculative
+    // - the only non-speculative placeholder is the placeholder initialized
+    //   during the initial user claim (by opposition of subsequent device
+    //   claims on the same user)
+    // This speculative information is useful during merge to understand if
+    // a data is not present in the placeholder compared with a remote because:
+    // a) the data is not locally known (speculative is True)
+    // b) the data is known, but has been locally removed (speculative is False)
+    // Prevented to be `required=True` by backward compatibility
     pub speculative: bool,
 }
 
-impl Encrypt for LocalUserManifest {}
+impl DumpLoad for LocalUserManifest {}
 
 new_data_struct_type!(
     LocalUserManifestData,
@@ -209,6 +310,10 @@ new_data_struct_type!(
     updated: DateTime<Utc>,
     last_processed_message: u32,
     workspaces: Vec<WorkspaceEntry>,
+    #[serde(
+        default,
+        deserialize_with = "maybe_field::deserialize_some",
+    )]
     speculative: Option<bool>,
 );
 
@@ -220,7 +325,7 @@ impl From<LocalUserManifestData> for LocalUserManifest {
             updated: data.updated,
             last_processed_message: data.last_processed_message,
             workspaces: data.workspaces,
-            speculative: data.speculative.unwrap_or(false),
+            speculative: data.speculative.unwrap_or_default(),
         }
     }
 }
