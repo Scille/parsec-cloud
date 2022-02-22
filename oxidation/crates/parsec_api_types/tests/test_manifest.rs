@@ -6,6 +6,8 @@ use rstest::*;
 use parsec_api_crypto::*;
 use parsec_api_types::*;
 
+use std::collections::HashMap;
+
 use tests_fixtures::{alice, Device};
 
 #[rstest]
@@ -200,10 +202,16 @@ fn serde_folder_manifest(alice: &Device) {
         version: 42,
         created: now,
         updated: now,
-        children: map! {
-            "wksp1".parse().unwrap() => "b82954f1138b4d719b7f5bd78915d20f".parse().unwrap(),
-            "wksp2".parse().unwrap() => "d7e3af6a03e1414db0f4682901e9aa4b".parse().unwrap(),
-        },
+        children: HashMap::from([
+            (
+                "wksp1".parse().unwrap(),
+                "b82954f1138b4d719b7f5bd78915d20f".parse().unwrap(),
+            ),
+            (
+                "wksp2".parse().unwrap(),
+                "d7e3af6a03e1414db0f4682901e9aa4b".parse().unwrap(),
+            ),
+        ]),
     };
 
     let manifest = FolderManifest::decrypt_verify_and_load(
@@ -268,10 +276,16 @@ fn serde_workspace_manifest(alice: &Device) {
         version: 42,
         created: now,
         updated: now,
-        children: map! {
-            "wksp1".parse().unwrap() => "b82954f1138b4d719b7f5bd78915d20f".parse().unwrap(),
-            "wksp2".parse().unwrap() => "d7e3af6a03e1414db0f4682901e9aa4b".parse().unwrap(),
-        },
+        children: HashMap::from([
+            (
+                "wksp1".parse().unwrap(),
+                "b82954f1138b4d719b7f5bd78915d20f".parse().unwrap(),
+            ),
+            (
+                "wksp2".parse().unwrap(),
+                "d7e3af6a03e1414db0f4682901e9aa4b".parse().unwrap(),
+            ),
+        ]),
     };
 
     let manifest = WorkspaceManifest::decrypt_verify_and_load(

@@ -19,19 +19,3 @@ pub use id::*;
 pub use invite::*;
 pub use manifest::*;
 pub use message::*;
-
-#[macro_export]
-macro_rules! set {
-    {$($v: expr),* $(,)?} => ({
-        use ::std::iter::{Iterator, IntoIterator};
-        Iterator::collect(IntoIterator::into_iter([$($v,)*]))
-    });
-}
-
-#[macro_export]
-macro_rules! map {
-    {$($k: expr => $v: expr),* $(,)?} => ({
-        use ::std::iter::{Iterator, IntoIterator};
-        Iterator::collect(IntoIterator::into_iter([$(($k, $v),)*]))
-    });
-}

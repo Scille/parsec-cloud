@@ -9,6 +9,7 @@ use parsec_client_types::*;
 
 use tests_fixtures::{alice, Device};
 
+use std::collections::{HashMap, HashSet};
 use std::num::NonZeroU64;
 
 #[rstest]
@@ -286,16 +287,16 @@ fn serde_local_file_manifest_invalid_blocksize() {
                 version: 42,
                 created: now,
                 updated: now,
-                children: map!{
-                    "wksp1".parse().unwrap() => "b82954f1138b4d719b7f5bd78915d20f".parse().unwrap()
-                },
+                children: HashMap::from([
+                    ("wksp1".parse().unwrap(), "b82954f1138b4d719b7f5bd78915d20f".parse().unwrap())
+                ]),
                 parent: "07748fbf67a646428427865fd730bf3e".parse().unwrap(),
             },
-            children: map!{
-                "wksp2".parse().unwrap() => "d7e3af6a03e1414db0f4682901e9aa4b".parse().unwrap()
-            },
-            local_confinement_points: Some(set!{"d7e3af6a03e1414db0f4682901e9aa4b".parse().unwrap()}),
-            remote_confinement_points: Some(set!{"b82954f1138b4d719b7f5bd78915d20f".parse().unwrap()}),
+            children: HashMap::from([
+                ("wksp2".parse().unwrap(), "d7e3af6a03e1414db0f4682901e9aa4b".parse().unwrap())
+            ]),
+            local_confinement_points: Some(HashSet::from(["d7e3af6a03e1414db0f4682901e9aa4b".parse().unwrap()])),
+            remote_confinement_points: Some(HashSet::from(["b82954f1138b4d719b7f5bd78915d20f".parse().unwrap()])),
             need_sync: true,
         }
     )
@@ -323,14 +324,14 @@ fn serde_local_file_manifest_invalid_blocksize() {
                 version: 42,
                 created: now,
                 updated: now,
-                children: map!{
-                    "wksp2".parse().unwrap() => "d7e3af6a03e1414db0f4682901e9aa4b".parse().unwrap()
-                },
+                children: HashMap::from([
+                    ("wksp2".parse().unwrap(), "d7e3af6a03e1414db0f4682901e9aa4b".parse().unwrap())
+                ]),
                 parent: "07748fbf67a646428427865fd730bf3e".parse().unwrap(),
             },
-            children: map!{
-                "wksp2".parse().unwrap() => "d7e3af6a03e1414db0f4682901e9aa4b".parse().unwrap()
-            },
+            children: HashMap::from([
+                ("wksp2".parse().unwrap(), "d7e3af6a03e1414db0f4682901e9aa4b".parse().unwrap())
+            ]),
             local_confinement_points: None,
             remote_confinement_points: None,
             need_sync: false,
@@ -405,15 +406,15 @@ fn serde_local_folder_manifest(
                 version: 42,
                 created: now,
                 updated: now,
-                children: map!{
-                    "wksp1".parse().unwrap() => "b82954f1138b4d719b7f5bd78915d20f".parse().unwrap()
-                },
+                children: HashMap::from([
+                    ("wksp1".parse().unwrap(), "b82954f1138b4d719b7f5bd78915d20f".parse().unwrap())
+                ]),
             },
-            children: map!{
-                "wksp2".parse().unwrap() => "d7e3af6a03e1414db0f4682901e9aa4b".parse().unwrap()
-            },
-            local_confinement_points: Some(set!{"d7e3af6a03e1414db0f4682901e9aa4b".parse().unwrap()}),
-            remote_confinement_points: Some(set!{"b82954f1138b4d719b7f5bd78915d20f".parse().unwrap()}),
+            children: HashMap::from([
+                ("wksp2".parse().unwrap(), "d7e3af6a03e1414db0f4682901e9aa4b".parse().unwrap())
+            ]),
+            local_confinement_points: Some(HashSet::from(["d7e3af6a03e1414db0f4682901e9aa4b".parse().unwrap()])),
+            remote_confinement_points: Some(HashSet::from(["b82954f1138b4d719b7f5bd78915d20f".parse().unwrap()])),
             need_sync: true,
             speculative: false,
         }
@@ -461,11 +462,11 @@ fn serde_local_folder_manifest(
                 version: 0,
                 created: now,
                 updated: now,
-                children: map!{},
+                children: HashMap::new(),
             },
-            children: map!{},
-            local_confinement_points: Some(set!{}),
-            remote_confinement_points: Some(set!{}),
+            children: HashMap::new(),
+            local_confinement_points: Some(HashSet::new()),
+            remote_confinement_points: Some(HashSet::new()),
             need_sync: true,
             speculative: true,
         }
@@ -510,13 +511,13 @@ fn serde_local_folder_manifest(
                 version: 42,
                 created: now,
                 updated: now,
-                children: map!{
-                    "wksp2".parse().unwrap() => "d7e3af6a03e1414db0f4682901e9aa4b".parse().unwrap()
-                },
+                children: HashMap::from([
+                    ("wksp2".parse().unwrap(), "d7e3af6a03e1414db0f4682901e9aa4b".parse().unwrap())
+                ]),
             },
-            children: map!{
-                "wksp2".parse().unwrap() => "d7e3af6a03e1414db0f4682901e9aa4b".parse().unwrap()
-            },
+            children: HashMap::from([
+                ("wksp2".parse().unwrap(), "d7e3af6a03e1414db0f4682901e9aa4b".parse().unwrap())
+            ]),
             local_confinement_points: None,
             remote_confinement_points: None,
             need_sync: false,
