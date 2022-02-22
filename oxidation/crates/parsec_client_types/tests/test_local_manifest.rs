@@ -133,7 +133,7 @@ use std::num::NonZeroU64;
                         size: 188,
                     }
                 ],
-                blocksize: 512,
+                blocksize: Blocksize::try_from(512).unwrap(),
                 parent: "07748fbf67a646428427865fd730bf3e".parse().unwrap(),
                 size: 700,
             },
@@ -167,7 +167,7 @@ use std::num::NonZeroU64;
                     stop: NonZeroU64::new(250).unwrap(),
                 }
             ]],
-            blocksize: 512,
+            blocksize: Blocksize::try_from(512).unwrap(),
             need_sync: true,
             size: 500,
         }

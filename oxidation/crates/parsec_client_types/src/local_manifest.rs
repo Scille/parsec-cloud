@@ -34,30 +34,8 @@ pub struct LocalFileManifest {
     pub need_sync: bool,
     pub updated: DateTime<Utc>,
     pub size: u64,
-    pub blocksize: u64,
+    pub blocksize: Blocksize,
     pub blocks: Vec<Vec<Chunk>>,
-}
-
-impl LocalFileManifest {
-    pub fn new(
-        base: FileManifest,
-        need_sync: bool,
-        blocksize: u64,
-        blocks: Vec<Vec<Chunk>>,
-    ) -> Result<Self, &'static str> {
-        if blocksize < 8 {
-            return Err("Invalid blocksize");
-        }
-
-        Ok(Self {
-            base,
-            need_sync,
-            updated: Utc::now(),
-            size: blocks.len() as u64,
-            blocksize,
-            blocks,
-        })
-    }
 }
 
 new_data_struct_type!(
@@ -75,16 +53,12 @@ new_data_struct_type!(
 impl TryFrom<LocalFileManifestData> for LocalFileManifest {
     type Error = &'static str;
     fn try_from(data: LocalFileManifestData) -> Result<Self, Self::Error> {
-        if data.blocksize < 8 {
-            return Err("Invalid blocksize");
-        }
-
         Ok(Self {
             base: data.base,
             need_sync: data.need_sync,
             updated: data.updated,
             size: data.size,
-            blocksize: data.blocksize,
+            blocksize: data.blocksize.try_into()?,
             blocks: data.blocks,
         })
     }
@@ -98,7 +72,7 @@ impl From<LocalFileManifest> for LocalFileManifestData {
             need_sync: obj.need_sync,
             updated: obj.updated,
             size: obj.size,
-            blocksize: obj.blocksize,
+            blocksize: obj.blocksize.into(),
             blocks: obj.blocks,
         }
     }

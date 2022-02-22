@@ -260,6 +260,30 @@ fn generate_local_author_legacy_placeholder() -> DeviceID {
 }
 
 /*
+ * Blocksize
+ */
+
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
+pub struct Blocksize(u64);
+
+impl TryFrom<u64> for Blocksize {
+    type Error = &'static str;
+    fn try_from(data: u64) -> Result<Self, Self::Error> {
+        if data < 8 {
+            return Err("Invalid blocksize");
+        }
+
+        Ok(Self(data))
+    }
+}
+
+impl From<Blocksize> for u64 {
+    fn from(data: Blocksize) -> Self {
+        data.0
+    }
+}
+
+/*
  * FileManifest
  */
 
@@ -278,38 +302,8 @@ pub struct FileManifest {
     /// Total size of the file
     pub size: u64,
     /// Size of a single block
-    pub blocksize: u64,
+    pub blocksize: Blocksize,
     pub blocks: Vec<BlockAccess>,
-}
-
-impl FileManifest {
-    pub fn new(
-        author: DeviceID,
-        id: EntryID,
-        parent: EntryID,
-        version: u32,
-        blocksize: u64,
-        blocks: Vec<BlockAccess>,
-    ) -> Result<Self, &'static str> {
-        if blocksize < 8 {
-            return Err("Invalid blocksize");
-        }
-
-        let now = Utc::now();
-
-        Ok(Self {
-            author,
-            timestamp: now,
-            id,
-            parent,
-            version,
-            updated: now,
-            created: now,
-            size: blocks.len() as u64,
-            blocksize,
-            blocks,
-        })
-    }
 }
 
 impl CompSignEncrypt for FileManifest {
@@ -346,10 +340,6 @@ new_data_struct_type!(
 impl TryFrom<FileManifestData> for FileManifest {
     type Error = &'static str;
     fn try_from(data: FileManifestData) -> Result<Self, Self::Error> {
-        if data.blocksize < 8 {
-            return Err("Invalid blocksize");
-        }
-
         Ok(Self {
             author: data.author,
             timestamp: data.timestamp,
@@ -359,7 +349,7 @@ impl TryFrom<FileManifestData> for FileManifest {
             created: data.created,
             updated: data.updated,
             size: data.size,
-            blocksize: data.blocksize,
+            blocksize: data.blocksize.try_into()?,
             blocks: data.blocks,
         })
     }
@@ -377,7 +367,7 @@ impl From<FileManifest> for FileManifestData {
             created: obj.created,
             updated: obj.updated,
             size: obj.size,
-            blocksize: obj.blocksize,
+            blocksize: obj.blocksize.into(),
             blocks: obj.blocks,
         }
     }

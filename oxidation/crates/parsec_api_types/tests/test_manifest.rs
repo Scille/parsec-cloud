@@ -67,7 +67,7 @@ fn serde_file_manifest(alice: &Device) {
         created: now,
         updated: now,
         size: 700,
-        blocksize: 512,
+        blocksize: Blocksize::try_from(512).unwrap(),
         blocks: vec![
             BlockAccess {
                 id: "b82954f1138b4d719b7f5bd78915d20f".parse().unwrap(),
