@@ -25,6 +25,9 @@ from parsec.api.protocol import (
     InvitedClientHandshake,
     HandshakeOrganizationExpired,
 )
+from parsec.api.protocol.handshake import AnswerSchema
+from parsec.api.protocol.base import serializer_factory
+
 from parsec.api.version import API_V2_VERSION, ApiVersion
 from parsec.utils import BALLPARK_CLIENT_EARLY_OFFSET, BALLPARK_CLIENT_LATE_OFFSET
 
@@ -340,6 +343,8 @@ def test_process_answer_req_bad_format(req, alice):
 
 # 4) Server build result
 
+answer_serializer = serializer_factory(AnswerSchema)
+
 
 def test_build_result_req_bad_key(alice, bob):
     sh = ServerHandshake()
@@ -351,7 +356,7 @@ def test_build_result_req_bad_key(alice, bob):
         "organization_id": str(alice.organization_id),
         "device_id": str(alice.device_id),
         "rvk": alice.root_verify_key.encode(),
-        "answer": alice.signing_key.sign(sh.challenge),
+        "answer": answer_serializer.dumps({"answer": alice.signing_key.sign(sh.challenge)}),
     }
     sh.process_answer_req(packb(answer))
     with pytest.raises(HandshakeFailedChallenge):
@@ -368,7 +373,9 @@ def test_build_result_req_bad_challenge(alice):
         "organization_id": str(alice.organization_id),
         "device_id": str(alice.device_id),
         "rvk": alice.root_verify_key.encode(),
-        "answer": alice.signing_key.sign(sh.challenge + b"-dummy"),
+        "answer": alice.signing_key.sign(
+            answer_serializer.dumps({"answer": sh.challenge + b"-dummy"})
+        ),
     }
     sh.process_answer_req(packb(answer))
     with pytest.raises(HandshakeFailedChallenge):
@@ -396,7 +403,7 @@ def test_build_bad_outcomes(alice, method, expected_result):
         "organization_id": str(alice.organization_id),
         "device_id": str(alice.device_id),
         "rvk": alice.root_verify_key.encode(),
-        "answer": alice.signing_key.sign(sh.challenge),
+        "answer": alice.signing_key.sign(answer_serializer.dumps({"answer": sh.challenge})),
     }
     sh.process_answer_req(packb(answer))
     req = getattr(sh, method)()
