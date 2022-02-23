@@ -73,7 +73,7 @@ macro_rules! new_data_struct_type {
 
             #[serde_as]
             #[derive(Clone, Debug, Serialize, Deserialize, PartialEq, Eq)]
-            struct $name {
+            pub struct $name {
 
                 #[serde(rename="type")]
                 type_: [<$name DataType>],

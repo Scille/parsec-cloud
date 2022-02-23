@@ -20,7 +20,7 @@ macro_rules! impl_debug_from_display {
 
 macro_rules! new_string_based_id_type {
     (pub $name:ident, $bytes_size:expr, $pattern:expr) => {
-        #[derive(Clone, SerializeDisplay, DeserializeFromStr, PartialEq, Eq)]
+        #[derive(Clone, SerializeDisplay, DeserializeFromStr, PartialEq, Eq, Hash)]
         pub struct $name(String);
 
         impl Default for $name {
