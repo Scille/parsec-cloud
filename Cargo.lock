@@ -611,7 +611,6 @@ dependencies = [
 name = "parsec_api_protocol"
 version = "0.0.0"
 dependencies = [
- "chrono",
  "hex-literal",
  "parsec_api_crypto",
  "parsec_api_types",
@@ -626,7 +625,6 @@ dependencies = [
 name = "parsec_api_types"
 version = "0.0.0"
 dependencies = [
- "byteorder",
  "chrono",
  "data-encoding",
  "flate2",
@@ -657,7 +655,6 @@ dependencies = [
 name = "parsec_client_types"
 version = "0.0.0"
 dependencies = [
- "chrono",
  "flate2",
  "hex-literal",
  "parsec_api_crypto",

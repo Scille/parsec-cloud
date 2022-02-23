@@ -8,7 +8,8 @@ use pyo3::types::{PyBool, PyBytes, PyDict, PyTuple, PyType};
 
 use crate::binding_utils::{
     hash_generic, kwargs_extract_optional, kwargs_extract_optional_custom, kwargs_extract_required,
-    kwargs_extract_required_custom, py_to_rs_datetime, py_to_rs_realm_role, rs_to_py_realm_role,
+    kwargs_extract_required_custom, py_to_rs_datetime, py_to_rs_realm_role, rs_to_py_datetime,
+    rs_to_py_realm_role,
 };
 use crate::crypto::{HashDigest, SecretKey, SigningKey, VerifyKey};
 use crate::ids::{BlockID, DeviceID, EntryID};
@@ -201,18 +202,12 @@ impl WorkspaceEntry {
 
     #[getter]
     fn encrypted_on<'p>(&self, py: Python<'p>) -> PyResult<&'p PyAny> {
-        let pendulum = PyModule::import(py, "pendulum")?;
-        let fun = pendulum.getattr("parse")?;
-        let args = PyTuple::new(py, vec![self.0.encrypted_on.to_rfc3339()]);
-        fun.call1(args)
+        rs_to_py_datetime(py, self.0.encrypted_on)
     }
 
     #[getter]
     fn role_cached_on<'p>(&self, py: Python<'p>) -> PyResult<&'p PyAny> {
-        let pendulum = PyModule::import(py, "pendulum")?;
-        let fun = pendulum.getattr("parse")?;
-        let args = PyTuple::new(py, vec![self.0.role_cached_on.to_rfc3339()]);
-        fun.call1(args)
+        rs_to_py_datetime(py, self.0.role_cached_on)
     }
 
     #[getter]
@@ -519,26 +514,17 @@ impl FileManifest {
 
     #[getter]
     fn timestamp<'p>(&self, py: Python<'p>) -> PyResult<&'p PyAny> {
-        let pendulum = PyModule::import(py, "pendulum")?;
-        let fun = pendulum.getattr("parse")?;
-        let args = PyTuple::new(py, vec![self.0.timestamp.to_rfc3339()]);
-        fun.call1(args)
+        rs_to_py_datetime(py, self.0.timestamp)
     }
 
     #[getter]
     fn created<'p>(&self, py: Python<'p>) -> PyResult<&'p PyAny> {
-        let pendulum = PyModule::import(py, "pendulum")?;
-        let fun = pendulum.getattr("parse")?;
-        let args = PyTuple::new(py, vec![self.0.created.to_rfc3339()]);
-        fun.call1(args)
+        rs_to_py_datetime(py, self.0.created)
     }
 
     #[getter]
     fn updated<'p>(&self, py: Python<'p>) -> PyResult<&'p PyAny> {
-        let pendulum = PyModule::import(py, "pendulum")?;
-        let fun = pendulum.getattr("parse")?;
-        let args = PyTuple::new(py, vec![self.0.updated.to_rfc3339()]);
-        fun.call1(args)
+        rs_to_py_datetime(py, self.0.updated)
     }
 
     #[getter]
@@ -724,26 +710,17 @@ impl FolderManifest {
 
     #[getter]
     fn timestamp<'p>(&self, py: Python<'p>) -> PyResult<&'p PyAny> {
-        let pendulum = PyModule::import(py, "pendulum")?;
-        let fun = pendulum.getattr("parse")?;
-        let args = PyTuple::new(py, vec![self.0.timestamp.to_rfc3339()]);
-        fun.call1(args)
+        rs_to_py_datetime(py, self.0.timestamp)
     }
 
     #[getter]
     fn created<'p>(&self, py: Python<'p>) -> PyResult<&'p PyAny> {
-        let pendulum = PyModule::import(py, "pendulum")?;
-        let fun = pendulum.getattr("parse")?;
-        let args = PyTuple::new(py, vec![self.0.created.to_rfc3339()]);
-        fun.call1(args)
+        rs_to_py_datetime(py, self.0.created)
     }
 
     #[getter]
     fn updated<'p>(&self, py: Python<'p>) -> PyResult<&'p PyAny> {
-        let pendulum = PyModule::import(py, "pendulum")?;
-        let fun = pendulum.getattr("parse")?;
-        let args = PyTuple::new(py, vec![self.0.updated.to_rfc3339()]);
-        fun.call1(args)
+        rs_to_py_datetime(py, self.0.updated)
     }
 
     #[getter]
@@ -918,26 +895,17 @@ impl WorkspaceManifest {
 
     #[getter]
     fn timestamp<'p>(&self, py: Python<'p>) -> PyResult<&'p PyAny> {
-        let pendulum = PyModule::import(py, "pendulum")?;
-        let fun = pendulum.getattr("parse")?;
-        let args = PyTuple::new(py, vec![self.0.timestamp.to_rfc3339()]);
-        fun.call1(args)
+        rs_to_py_datetime(py, self.0.timestamp)
     }
 
     #[getter]
     fn created<'p>(&self, py: Python<'p>) -> PyResult<&'p PyAny> {
-        let pendulum = PyModule::import(py, "pendulum")?;
-        let fun = pendulum.getattr("parse")?;
-        let args = PyTuple::new(py, vec![self.0.created.to_rfc3339()]);
-        fun.call1(args)
+        rs_to_py_datetime(py, self.0.created)
     }
 
     #[getter]
     fn updated<'p>(&self, py: Python<'p>) -> PyResult<&'p PyAny> {
-        let pendulum = PyModule::import(py, "pendulum")?;
-        let fun = pendulum.getattr("parse")?;
-        let args = PyTuple::new(py, vec![self.0.updated.to_rfc3339()]);
-        fun.call1(args)
+        rs_to_py_datetime(py, self.0.updated)
     }
 
     #[getter]

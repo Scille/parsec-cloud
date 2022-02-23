@@ -1,12 +1,11 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BSLv1.1 (eventually AGPLv3) 2016-2021 Scille SAS
 
-use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 use serde_with::{serde_as, Bytes};
 
 use crate::{impl_api_protocol_dump_load, Status};
 use parsec_api_crypto::{HashDigest, PublicKey};
-use parsec_api_types::{DateTimeExtFormat, HumanHandle, InvitationToken, UserID};
+use parsec_api_types::{DateTime, HumanHandle, InvitationToken, UserID};
 
 /*
  * InvitationType
@@ -162,8 +161,7 @@ pub enum InvitationStatus {
 
 pub struct InviteListItemUserSchema {
     pub token: InvitationToken,
-    #[serde_as(as = "DateTimeExtFormat")]
-    pub created_on: DateTime<Utc>,
+    pub created_on: DateTime,
     pub claimer_email: String,
     pub status: InvitationStatus,
 }
@@ -176,8 +174,7 @@ pub struct InviteListItemUserSchema {
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
 pub struct InviteListItemDeviceSchema {
     pub token: InvitationToken,
-    #[serde_as(as = "DateTimeExtFormat")]
-    pub created_on: DateTime<Utc>,
+    pub created_on: DateTime,
     pub status: InvitationStatus,
 }
 

@@ -35,7 +35,7 @@ fn serde_user_certificate(alice: &Device, bob: &Device) {
 
     let expected = UserCertificate {
         author: CertificateSignerOwned::User(alice.device_id.to_owned()),
-        timestamp: "2021-12-04T11:50:43.208820992Z".parse().unwrap(),
+        timestamp: "2021-12-04T11:50:43.208821Z".parse().unwrap(),
         user_id: bob.user_id().to_owned(),
         human_handle: bob.human_handle.to_owned(),
         public_key: bob.public_key().to_owned(),
@@ -87,7 +87,7 @@ fn serde_user_certificate_redacted(alice: &Device, bob: &Device) {
 
     let expected = UserCertificate {
         author: CertificateSignerOwned::User(alice.device_id.to_owned()),
-        timestamp: "2021-12-04T11:50:43.208820992Z".parse().unwrap(),
+        timestamp: "2021-12-04T11:50:43.208821Z".parse().unwrap(),
         user_id: bob.user_id().to_owned(),
         human_handle: None,
         public_key: bob.public_key().to_owned(),
@@ -154,7 +154,7 @@ fn serde_user_certificate_legacy_format(alice: &Device, bob: &Device) {
 
     let expected_is_admin_true = UserCertificate {
         author: CertificateSignerOwned::User(alice.device_id.to_owned()),
-        timestamp: "2021-12-04T11:50:43.208820992Z".parse().unwrap(),
+        timestamp: "2021-12-04T11:50:43.208821Z".parse().unwrap(),
         user_id: bob.user_id().to_owned(),
         human_handle: None,
         public_key: bob.public_key().to_owned(),
@@ -204,7 +204,7 @@ fn serde_device_certificate(alice: &Device, bob: &Device) {
 
     let expected = DeviceCertificate {
         author: CertificateSignerOwned::User(alice.device_id.to_owned()),
-        timestamp: "2021-12-04T11:50:43.208820992Z".parse().unwrap(),
+        timestamp: "2021-12-04T11:50:43.208821Z".parse().unwrap(),
         device_id: bob.device_id.to_owned(),
         device_label: bob.device_label.to_owned(),
         verify_key: bob.verify_key().to_owned(),
@@ -254,7 +254,7 @@ fn serde_device_certificate_redacted(alice: &Device, bob: &Device) {
 
     let expected = DeviceCertificate {
         author: CertificateSignerOwned::User(alice.device_id.to_owned()),
-        timestamp: "2021-12-04T11:50:43.208820992Z".parse().unwrap(),
+        timestamp: "2021-12-04T11:50:43.208821Z".parse().unwrap(),
         device_id: bob.device_id.to_owned(),
         device_label: None,
         verify_key: bob.verify_key().to_owned(),
@@ -302,7 +302,7 @@ fn serde_device_certificate_legacy_format(alice: &Device, bob: &Device) {
 
     let expected = DeviceCertificate {
         author: CertificateSignerOwned::User(alice.device_id.to_owned()),
-        timestamp: "2021-12-04T11:50:43.208820992Z".parse().unwrap(),
+        timestamp: "2021-12-04T11:50:43.208821Z".parse().unwrap(),
         device_id: bob.device_id.to_owned(),
         device_label: None,
         verify_key: bob.verify_key().to_owned(),
@@ -337,7 +337,7 @@ fn serde_revoked_user_certificate(alice: &Device, bob: &Device) {
 
     let expected = RevokedUserCertificate {
         author: alice.device_id.to_owned(),
-        timestamp: "2021-12-04T11:50:43.208820992Z".parse().unwrap(),
+        timestamp: "2021-12-04T11:50:43.208821Z".parse().unwrap(),
         user_id: bob.user_id().to_owned(),
     };
 
@@ -381,7 +381,7 @@ fn serde_realm_role_certificate(alice: &Device, bob: &Device) {
 
     let expected = RealmRoleCertificate {
         author: alice.device_id.to_owned(),
-        timestamp: "2021-12-04T11:50:43.208820992Z".parse().unwrap(),
+        timestamp: "2021-12-04T11:50:43.208821Z".parse().unwrap(),
         realm_id: "4486e7cf02d747bd9126679ba58e0474".parse().unwrap(),
         user_id: bob.user_id().to_owned(),
         role: Some(RealmRole::Owner),
@@ -420,7 +420,7 @@ fn serde_realm_role_certificate_no_role(alice: &Device, bob: &Device) {
 
     let expected = RealmRoleCertificate {
         author: alice.device_id.to_owned(),
-        timestamp: "2021-12-04T11:50:43.208820992Z".parse().unwrap(),
+        timestamp: "2021-12-04T11:50:43.208821Z".parse().unwrap(),
         realm_id: "4486e7cf02d747bd9126679ba58e0474".parse().unwrap(),
         user_id: bob.user_id().to_owned(),
         role: None,

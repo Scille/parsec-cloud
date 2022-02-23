@@ -2,7 +2,6 @@
 
 use std::collections::HashMap;
 
-use chrono::{TimeZone, Utc};
 use hex_literal::hex;
 use rstest::rstest;
 
@@ -30,7 +29,7 @@ fn serde_vlob_create_req() {
         realm_id: "1d3353157d7d4e95ad2fdea7b3bd19c5".parse().unwrap(),
         encryption_revision: 8,
         vlob_id: "2b5f314728134a12863da1ce49c112f6".parse().unwrap(),
-        timestamp: Utc.ymd(2000, 1, 2).and_hms(1, 0, 0),
+        timestamp: "2000-1-2T01:00:00Z".parse().unwrap(),
         blob: b"foobar".to_vec(),
     };
 
@@ -85,7 +84,7 @@ fn serde_vlob_read_req() {
         encryption_revision: 8,
         vlob_id: "2b5f314728134a12863da1ce49c112f6".parse().unwrap(),
         version: Some(8),
-        timestamp: Some(Utc.ymd(2000, 1, 2).and_hms(1, 0, 0)),
+        timestamp: Some("2000-1-2T01:00:00Z".parse().unwrap()),
     };
 
     let schema = VlobReadReqSchema::load(&data).unwrap();
@@ -120,8 +119,8 @@ fn serde_vlob_read_rep() {
         version: 8,
         blob: b"foobar".to_vec(),
         author: "alice@dev1".parse().unwrap(),
-        timestamp: Utc.ymd(2000, 1, 2).and_hms(1, 0, 0),
-        author_last_role_granted_on: Some(Utc.ymd(2000, 1, 2).and_hms(1, 0, 0)),
+        timestamp: "2000-1-2T01:00:00Z".parse().unwrap(),
+        author_last_role_granted_on: Some("2000-1-2T01:00:00Z".parse().unwrap()),
     };
 
     let schema = VlobReadRepSchema::load(&data).unwrap();
@@ -155,7 +154,7 @@ fn serde_vlob_update_req() {
         cmd: "vlob_update".to_owned(),
         encryption_revision: 8,
         vlob_id: "2b5f314728134a12863da1ce49c112f6".parse().unwrap(),
-        timestamp: Utc.ymd(2000, 1, 2).and_hms(1, 0, 0),
+        timestamp: "2000-1-2T01:00:00Z".parse().unwrap(),
         version: 8,
         blob: b"foobar".to_vec(),
     };
@@ -292,7 +291,7 @@ fn serde_vlob_list_versions_rep() {
         versions: HashMap::from([(
             8,
             (
-                Utc.ymd(2000, 1, 2).and_hms(1, 0, 0),
+                "2000-1-2T01:00:00Z".parse().unwrap(),
                 "alice@dev1".parse().unwrap(),
             ),
         )]),

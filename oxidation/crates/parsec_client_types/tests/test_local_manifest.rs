@@ -13,7 +13,7 @@ use tests_fixtures::{alice, Device};
 
 #[rstest]
 #[case::file_manifest(Box::new(|alice: &Device| {
-    let now = "2021-12-04T11:50:43.208820992Z".parse().unwrap();
+    let now = "2021-12-04T11:50:43.208821Z".parse().unwrap();
     (
         // Generated from Python implementation (Parsec v2.6.0+dev)
         // Content:
@@ -242,7 +242,7 @@ fn serde_local_file_manifest_invalid_blocksize() {
 
 #[rstest]
 #[case::folder_manifest(Box::new(|alice: &Device| {
-    let now = "2021-12-04T11:50:43.208820992Z".parse().unwrap();
+    let now = "2021-12-04T11:50:43.208821Z".parse().unwrap();
     (
         // Generated from Python implementation (Parsec v2.6.0+dev)
         // Content:
@@ -301,7 +301,7 @@ fn serde_local_file_manifest_invalid_blocksize() {
     )
 }))]
 #[case::folder_manifest_legacy_no_confinement_fields(Box::new(|alice: &Device| {
-    let now = "2021-12-04T11:50:43.208820992Z".parse().unwrap();
+    let now = "2021-12-04T11:50:43.208821Z".parse().unwrap();
     (
         &hex!(
             "9ff2aaf585d985bf38d333b6ac48e345a52c28c4d9645ec7ad8258d4c52c7e36acefd6cbb3"
@@ -362,7 +362,7 @@ fn serde_local_folder_manifest(
 
 #[rstest]
 #[case::workspace_manifest(Box::new(|alice: &Device| {
-    let now = "2021-12-04T11:50:43.208820992Z".parse().unwrap();
+    let now = "2021-12-04T11:50:43.208821Z".parse().unwrap();
     (
         // Generated from Python implementation (Parsec v2.6.0+dev)
         // Content:
@@ -420,7 +420,7 @@ fn serde_local_folder_manifest(
     )
 }))]
 #[case::workspace_manifest_speculative(Box::new(|alice: &Device| {
-    let now = "2021-12-04T11:50:43.208820992Z".parse().unwrap();
+    let now = "2021-12-04T11:50:43.208821Z".parse().unwrap();
     (
         // Generated from Python implementation (Parsec v2.6.0+dev)
         // Content:
@@ -472,7 +472,7 @@ fn serde_local_folder_manifest(
     )
 }))]
 #[case::workspace_manifest_legacy_no_confinement_and_speculative_fields(Box::new(|alice: &Device| {
-    let now = "2021-12-04T11:50:43.208820992Z".parse().unwrap();
+    let now = "2021-12-04T11:50:43.208821Z".parse().unwrap();
     (
         // Generated from Python implementation (Parsec v2.6.0+dev)
         // Content:
@@ -549,7 +549,7 @@ fn serde_local_workspace_manifest(
 
 #[rstest]
 #[case::need_sync(Box::new(|alice: &Device| {
-    let now = "2021-12-04T11:50:43.208820992Z".parse().unwrap();
+    let now = "2021-12-04T11:50:43.208821Z".parse().unwrap();
     (
         // Generated from Python implementation (Parsec v2.6.0)
         // Content:
@@ -675,7 +675,7 @@ fn serde_local_workspace_manifest(
     )
 }))]
 #[case::synced(Box::new(|alice: &Device| {
-    let now = "2021-12-04T11:50:43.208820992Z".parse().unwrap();
+    let now = "2021-12-04T11:50:43.208821Z".parse().unwrap();
     (
         // Generated from Python implementation (Parsec v2.6.0)
         // Content:
@@ -777,7 +777,7 @@ fn serde_local_workspace_manifest(
     )
 }))]
 #[case::speculative(Box::new(|alice: &Device| {
-    let now = "2021-12-04T11:50:43.208820992Z".parse().unwrap();
+    let now = "2021-12-04T11:50:43.208821Z".parse().unwrap();
     (
         // Generated from Python implementation (Parsec v2.6.0)
         // Content:
@@ -828,7 +828,7 @@ fn serde_local_workspace_manifest(
     )
 }))]
 #[case::legacy_missing_speculative_field(Box::new(|alice: &Device| {
-    let now = "2021-12-04T11:50:43.208820992Z".parse().unwrap();
+    let now = "2021-12-04T11:50:43.208821Z".parse().unwrap();
     (
         // Generated from Python implementation (Parsec v2.6.0)
         // Content:

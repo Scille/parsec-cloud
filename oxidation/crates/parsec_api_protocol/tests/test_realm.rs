@@ -1,6 +1,5 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BSLv1.1 (eventually AGPLv3) 2016-2021 Scille SAS
 
-use chrono::{TimeZone, Utc};
 use hex_literal::hex;
 use rstest::rstest;
 use std::collections::HashMap;
@@ -103,7 +102,7 @@ fn serde_realm_status_rep() {
         status: Status::Ok,
         in_maintenance: true,
         maintenance_type: Some(MaintenanceType::GarbageCollection),
-        maintenance_started_on: Some(Utc.ymd(2000, 1, 2).and_hms(1, 0, 0)),
+        maintenance_started_on: Some("2000-1-2T01:00:00Z".parse().unwrap()),
         maintenance_started_by: Some("alice@dev1".parse().unwrap()),
         encryption_revision: 8,
     };
@@ -188,7 +187,7 @@ fn serde_realm_get_role_certificates_req() {
     let expected = RealmGetRoleCertificatesReqSchema {
         cmd: "realm_get_role_certificates".to_owned(),
         realm_id: "1d3353157d7d4e95ad2fdea7b3bd19c5".parse().unwrap(),
-        since: Some(Utc.ymd(2000, 1, 2).and_hms(1, 0, 0)),
+        since: Some("2000-1-2T01:00:00Z".parse().unwrap()),
     };
 
     let schema = RealmGetRoleCertificatesReqSchema::load(&data).unwrap();
@@ -297,7 +296,7 @@ fn serde_realm_start_reencryption_maintenance_req() {
         cmd: "realm_start_reencryption_maintenance".to_owned(),
         realm_id: "1d3353157d7d4e95ad2fdea7b3bd19c5".parse().unwrap(),
         encryption_revision: 8,
-        timestamp: Utc.ymd(2000, 1, 2).and_hms(1, 0, 0),
+        timestamp: "2000-1-2T01:00:00Z".parse().unwrap(),
         per_participant_message: HashMap::from([(
             "109b68ba5cdf428ea0017fc6bcc04d4a".parse().unwrap(),
             b"foobar".to_vec(),

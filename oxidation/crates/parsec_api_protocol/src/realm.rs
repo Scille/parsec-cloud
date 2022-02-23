@@ -1,11 +1,10 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BSLv1.1 (eventually AGPLv3) 2016-2021 Scille SAS
 
-use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 use serde_with::{serde_as, Bytes};
 use std::collections::HashMap;
 
-use parsec_api_types::{DateTimeExtFormat, DeviceID, RealmID, UserID};
+use parsec_api_types::{DateTime, DeviceID, RealmID, UserID};
 
 use crate::{impl_api_protocol_dump_load, Status};
 
@@ -63,8 +62,7 @@ pub struct RealmStatusRepSchema {
     pub status: Status,
     pub in_maintenance: bool,
     pub maintenance_type: Option<MaintenanceType>,
-    #[serde_as(as = "Option<DateTimeExtFormat>")]
-    pub maintenance_started_on: Option<DateTime<Utc>>,
+    pub maintenance_started_on: Option<DateTime>,
     pub maintenance_started_by: Option<DeviceID>,
     pub encryption_revision: u64,
 }
@@ -105,8 +103,7 @@ impl_api_protocol_dump_load!(RealmStatsRepSchema);
 pub struct RealmGetRoleCertificatesReqSchema {
     pub cmd: String,
     pub realm_id: RealmID,
-    #[serde_as(as = "Option<DateTimeExtFormat>")]
-    pub since: Option<DateTime<Utc>>,
+    pub since: Option<DateTime>,
 }
 
 impl_api_protocol_dump_load!(RealmGetRoleCertificatesReqSchema);
@@ -162,8 +159,7 @@ pub struct RealmStartReencryptionMaintenanceReqSchema {
     pub cmd: String,
     pub realm_id: RealmID,
     pub encryption_revision: u64,
-    #[serde_as(as = "DateTimeExtFormat")]
-    pub timestamp: DateTime<Utc>,
+    pub timestamp: DateTime,
     #[serde_as(as = "HashMap<_, Bytes>")]
     pub per_participant_message: HashMap<UserID, Vec<u8>>,
 }

@@ -54,7 +54,7 @@ fn serde_file_manifest(alice: &Device) {
         "a9e1c6274391f5f79f1cd1d38c0b6fb1f5b2f13500e706d607c5c5dcd7e6bd37bf70190626"
         "d7e43c85de28a72c8a55ffa405cb4c89ab32182b1959c175495058b965db96f44c"
     );
-    let now = "2021-12-04T11:50:43.208820992Z".parse().unwrap();
+    let now = "2021-12-04T11:50:43.208821Z".parse().unwrap();
     let key = SecretKey::from(hex!(
         "b1b52e16c1b46ab133c8bf576e82d26c887f1e9deae1af80043a258c36fcabf3"
     ));
@@ -145,7 +145,7 @@ fn serde_file_manifest_invalid_blocksize(alice: &Device) {
         "3dbbfe3c6d6aa46820ea7bed353d14892048cfb622144d99659e6ea429f54cc0e53840c86c"
         "9ac81147860b3e"
     );
-    let now = "2021-12-04T11:50:43.208820992Z".parse().unwrap();
+    let now = "2021-12-04T11:50:43.208821Z".parse().unwrap();
     let key = SecretKey::from(hex!(
         "b1b52e16c1b46ab133c8bf576e82d26c887f1e9deae1af80043a258c36fcabf3"
     ));
@@ -188,7 +188,7 @@ fn serde_folder_manifest(alice: &Device) {
         "0845af2dbe8fbb97201f3c617d5d63824ff36ce61fccd31ac8d5cb3c2f1609236a266b46ae"
         "9d01b508"
     );
-    let now = "2021-12-04T11:50:43.208820992Z".parse().unwrap();
+    let now = "2021-12-04T11:50:43.208821Z".parse().unwrap();
     let key = SecretKey::from(hex!(
         "b1b52e16c1b46ab133c8bf576e82d26c887f1e9deae1af80043a258c36fcabf3"
     ));
@@ -263,7 +263,7 @@ fn serde_workspace_manifest(alice: &Device) {
         "41f31a58d4eb6e7c3666220fe0c8a4fb21c9e21334299cc7397f94ea0829a6613383ce83ec"
         "2561f5c8758f71dc00df7b82bc6bdd9831de"
     );
-    let now = "2021-12-04T11:50:43.208820992Z".parse().unwrap();
+    let now = "2021-12-04T11:50:43.208821Z".parse().unwrap();
     let key = SecretKey::from(hex!(
         "b1b52e16c1b46ab133c8bf576e82d26c887f1e9deae1af80043a258c36fcabf3"
     ));
@@ -358,7 +358,7 @@ fn serde_user_manifest(alice: &Device) {
         "432c3cdc2750d5c27afd2a246146661115e941b2dd42ede908d766af56d2a766a08b3b517a"
         "297a9cca1a3d80e7d9454abbe28bf91e8012ebcfe367f290d46c22a8"
     );
-    let now = "2021-12-04T11:50:43.208820992Z".parse().unwrap();
+    let now = "2021-12-04T11:50:43.208821Z".parse().unwrap();
     let key = SecretKey::from(hex!(
         "b1b52e16c1b46ab133c8bf576e82d26c887f1e9deae1af80043a258c36fcabf3"
     ));

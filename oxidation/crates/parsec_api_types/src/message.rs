@@ -1,16 +1,13 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BSLv1.1 (eventually AGPLv3) 2016-2021 Scille SAS
 
-use chrono::prelude::*;
 use flate2::read::ZlibDecoder;
 use flate2::write::ZlibEncoder;
 use serde::{Deserialize, Serialize};
 use serde_with::*;
 use std::io::{Read, Write};
 
+use crate::{DateTime, DeviceID, EntryID, EntryName};
 use parsec_api_crypto::{PrivateKey, PublicKey, SecretKey, SigningKey, VerifyKey};
-
-use super::ext_types::DateTimeExtFormat;
-use crate::{DeviceID, EntryID, EntryName};
 
 #[serde_as]
 #[derive(Debug, Serialize, Deserialize, PartialEq, Eq)]
@@ -19,14 +16,12 @@ pub enum MessageContent {
     #[serde(rename = "sharing.granted")]
     SharingGranted {
         author: DeviceID,
-        #[serde_as(as = "DateTimeExtFormat")]
-        timestamp: DateTime<Utc>,
+        timestamp: DateTime,
 
         name: EntryName,
         id: EntryID,
         encryption_revision: u32,
-        #[serde_as(as = "DateTimeExtFormat")]
-        encrypted_on: DateTime<Utc>,
+        encrypted_on: DateTime,
         key: SecretKey,
         // Don't include role given the only reliable way to get this information
         // is to fetch the realm role certificate from the backend.
@@ -37,8 +32,7 @@ pub enum MessageContent {
     #[serde(rename = "sharing.reencrypted")]
     SharingReencrypted {
         author: DeviceID,
-        #[serde_as(as = "DateTimeExtFormat")]
-        timestamp: DateTime<Utc>,
+        timestamp: DateTime,
 
         // This message is similar to `sharing.granted`. Hence both can be processed
         // interchangeably, which avoid possible concurrency issues when a sharing
@@ -46,16 +40,14 @@ pub enum MessageContent {
         name: EntryName,
         id: EntryID,
         encryption_revision: u32,
-        #[serde_as(as = "DateTimeExtFormat")]
-        encrypted_on: DateTime<Utc>,
+        encrypted_on: DateTime,
         key: SecretKey,
     },
 
     #[serde(rename = "sharing.revoked")]
     SharingRevoked {
         author: DeviceID,
-        #[serde_as(as = "DateTimeExtFormat")]
-        timestamp: DateTime<Utc>,
+        timestamp: DateTime,
 
         id: EntryID,
     },
@@ -63,8 +55,7 @@ pub enum MessageContent {
     #[serde(rename = "ping")]
     Ping {
         author: DeviceID,
-        #[serde_as(as = "DateTimeExtFormat")]
-        timestamp: DateTime<Utc>,
+        timestamp: DateTime,
 
         ping: String,
     },
@@ -76,7 +67,7 @@ impl MessageContent {
         recipient_privkey: &PrivateKey,
         author_verify_key: &VerifyKey,
         expected_author: &DeviceID,
-        expected_timestamp: &DateTime<Utc>,
+        expected_timestamp: &DateTime,
     ) -> Result<MessageContent, &'static str> {
         let signed = recipient_privkey
             .decrypt_from_self(ciphered)

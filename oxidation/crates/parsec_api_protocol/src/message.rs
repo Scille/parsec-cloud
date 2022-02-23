@@ -1,11 +1,10 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BSLv1.1 (eventually AGPLv3) 2016-2021 Scille SAS
 
-use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 use serde_with::{serde_as, Bytes};
 
 use crate::{impl_api_protocol_dump_load, Status};
-use parsec_api_types::{DateTimeExtFormat, DeviceID};
+use parsec_api_types::{DateTime, DeviceID};
 
 /*
  * MessageGetReqSchema
@@ -28,8 +27,7 @@ impl_api_protocol_dump_load!(MessageGetReqSchema);
 pub struct MessageSchema {
     pub count: u64,
     pub sender: DeviceID,
-    #[serde_as(as = "DateTimeExtFormat")]
-    pub timestamp: DateTime<Utc>,
+    pub timestamp: DateTime,
     #[serde_as(as = "Bytes")]
     pub body: Vec<u8>,
 }

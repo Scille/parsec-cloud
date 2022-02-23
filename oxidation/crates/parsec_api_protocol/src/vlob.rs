@@ -1,12 +1,11 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BSLv1.1 (eventually AGPLv3) 2016-2021 Scille SAS
 
-use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 use serde_with::{serde_as, Bytes};
 use std::collections::HashMap;
 
 use crate::{impl_api_protocol_dump_load, Status};
-use parsec_api_types::{DateTimeExtFormat, DeviceID, RealmID, VlobID};
+use parsec_api_types::{DateTime, DeviceID, RealmID, VlobID};
 
 /*
  * VlobCreateReqSchema
@@ -25,8 +24,7 @@ pub struct VlobCreateReqSchema {
     // if it considers the timestamp invalid. On top of that each client asking
     // for the message will receive the declared timestamp to check against
     // the actual timestamp within the message.
-    #[serde_as(as = "DateTimeExtFormat")]
-    pub timestamp: DateTime<Utc>,
+    pub timestamp: DateTime,
     #[serde_as(as = "Bytes")]
     pub blob: Vec<u8>,
 }
@@ -55,8 +53,7 @@ pub struct VlobReadReqSchema {
     pub encryption_revision: u64,
     pub vlob_id: VlobID,
     pub version: Option<u64>,
-    #[serde_as(as = "Option<DateTimeExtFormat>")]
-    pub timestamp: Option<DateTime<Utc>>,
+    pub timestamp: Option<DateTime>,
 }
 
 impl_api_protocol_dump_load!(VlobReadReqSchema);
@@ -73,14 +70,12 @@ pub struct VlobReadRepSchema {
     #[serde_as(as = "Bytes")]
     pub blob: Vec<u8>,
     pub author: DeviceID,
-    #[serde_as(as = "DateTimeExtFormat")]
-    pub timestamp: DateTime<Utc>,
+    pub timestamp: DateTime,
     // This field is used by the client to figure out if its role certificate cache is up-to-date enough
     // to be able to perform the proper integrity checks on the manifest timestamp.
     // The `missing=None` argument is used to provide compatibilty of new clients with old backends.
     // New in API version 2.3
-    #[serde_as(as = "Option<DateTimeExtFormat>")]
-    pub author_last_role_granted_on: Option<DateTime<Utc>>,
+    pub author_last_role_granted_on: Option<DateTime>,
 }
 
 impl_api_protocol_dump_load!(VlobReadRepSchema);
@@ -95,8 +90,7 @@ pub struct VlobUpdateReqSchema {
     pub cmd: String,
     pub encryption_revision: u64,
     pub vlob_id: VlobID,
-    #[serde_as(as = "DateTimeExtFormat")]
-    pub timestamp: DateTime<Utc>,
+    pub timestamp: DateTime,
     pub version: u64,
     #[serde_as(as = "Bytes")]
     pub blob: Vec<u8>,
@@ -161,8 +155,7 @@ impl_api_protocol_dump_load!(VlobListVersionsReqSchema);
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
 pub struct VlobListVersionsRepSchema {
     pub status: Status,
-    #[serde_as(as = "HashMap<_, (DateTimeExtFormat, _)>")]
-    pub versions: HashMap<u64, (DateTime<Utc>, DeviceID)>,
+    pub versions: HashMap<u64, (DateTime, DeviceID)>,
 }
 
 impl_api_protocol_dump_load!(VlobListVersionsRepSchema);
