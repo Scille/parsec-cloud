@@ -1,27 +1,34 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BSLv1.1 (eventually AGPLv3) 2016-2021 Scille SAS
 
 use chrono::{DateTime, Utc};
-use parsec_api_crypto::SecretKey;
-use parsec_api_types::*;
-use serde::{de::DeserializeOwned, Deserialize, Serialize};
+use serde::{Deserialize, Serialize};
 use serde_with::serde_as;
 use std::collections::{HashMap, HashSet};
 use std::num::NonZeroU64;
 
+use parsec_api_crypto::SecretKey;
+use parsec_api_types::*;
+
 use crate::maybe_field;
 
-pub trait DumpLoad
-where
-    Self: Sized + Serialize + DeserializeOwned,
-{
-    fn dump_and_encrypt(&self, key: &SecretKey) -> Vec<u8> {
-        let serialized = rmp_serde::to_vec_named(&self).unwrap_or_else(|_| unreachable!());
-        key.encrypt(&serialized)
-    }
-    fn decrypt_and_load(encrypted: &[u8], key: &SecretKey) -> Result<Self, &'static str> {
-        let serialized = key.decrypt(encrypted).map_err(|_| "Invalid encryption")?;
-        rmp_serde::from_read_ref::<_, Self>(&serialized).map_err(|_| "Invalid serialization")
-    }
+macro_rules! impl_local_manifest_dump_load {
+    ($name:ident) => {
+        impl $name {
+            pub fn dump_and_encrypt(&self, key: &SecretKey) -> Vec<u8> {
+                let serialized = rmp_serde::to_vec_named(&self).unwrap_or_else(|_| unreachable!());
+                key.encrypt(&serialized)
+            }
+
+            pub fn decrypt_and_load(
+                encrypted: &[u8],
+                key: &SecretKey,
+            ) -> Result<Self, &'static str> {
+                let serialized = key.decrypt(encrypted).map_err(|_| "Invalid encryption")?;
+                rmp_serde::from_read_ref::<_, Self>(&serialized)
+                    .map_err(|_| "Invalid serialization")
+            }
+        }
+    };
 }
 
 /*
@@ -106,7 +113,7 @@ impl From<LocalFileManifest> for LocalFileManifestData {
     }
 }
 
-impl DumpLoad for LocalFileManifest {}
+impl_local_manifest_dump_load!(LocalFileManifest);
 
 /*
  * LocalFolderManifest
@@ -178,7 +185,7 @@ impl From<LocalFolderManifest> for LocalFolderManifestData {
     }
 }
 
-impl DumpLoad for LocalFolderManifest {}
+impl_local_manifest_dump_load!(LocalFolderManifest);
 
 /*
  * LocalWorkspaceManifest
@@ -242,7 +249,7 @@ new_data_struct_type!(
     speculative: Option<bool>,
 );
 
-impl DumpLoad for LocalWorkspaceManifest {}
+impl_local_manifest_dump_load!(LocalWorkspaceManifest);
 
 impl From<LocalWorkspaceManifestData> for LocalWorkspaceManifest {
     fn from(data: LocalWorkspaceManifestData) -> Self {
@@ -299,7 +306,7 @@ pub struct LocalUserManifest {
     pub speculative: bool,
 }
 
-impl DumpLoad for LocalUserManifest {}
+impl_local_manifest_dump_load!(LocalUserManifest);
 
 new_data_struct_type!(
     LocalUserManifestData,

@@ -2,62 +2,65 @@
 
 use chrono::{DateTime, Utc};
 use flate2::{read::ZlibDecoder, write::ZlibEncoder, Compression};
-use serde::{de::DeserializeOwned, Deserialize, Serialize};
+use serde::{Deserialize, Serialize};
 use serde_with::*;
 use std::collections::HashMap;
 use std::io::{Read, Write};
 use std::ops::Deref;
 use unicode_normalization::UnicodeNormalization;
 
+use parsec_api_crypto::{HashDigest, SecretKey, SigningKey, VerifyKey};
+
 use crate::data_macros::{impl_transparent_data_format_conversion, new_data_struct_type};
 use crate::ext_types::{new_uuid_type, DateTimeExtFormat};
 use crate::DeviceID;
-use parsec_api_crypto::{HashDigest, SecretKey, SigningKey, VerifyKey};
 
-pub trait DumpLoad
-where
-    Self: Sized + Serialize + DeserializeOwned,
-{
-    fn author(&self) -> &DeviceID;
-    fn timestamp(&self) -> DateTime<Utc>;
+macro_rules! impl_manifest_dump_load {
+    ($name:ident) => {
+        impl $name {
+            pub fn dump_sign_and_encrypt(
+                &self,
+                author_signkey: &SigningKey,
+                key: &SecretKey,
+            ) -> Vec<u8> {
+                let serialized = rmp_serde::to_vec_named(&self).unwrap_or_else(|_| unreachable!());
+                let mut e = ZlibEncoder::new(Vec::new(), Compression::default());
+                e.write_all(&serialized).unwrap_or_else(|_| unreachable!());
+                let compressed = e.finish().unwrap_or_else(|_| unreachable!());
+                let signed = author_signkey.sign(&compressed);
+                key.encrypt(&signed)
+            }
 
-    fn dump_sign_and_encrypt(&self, author_signkey: &SigningKey, key: &SecretKey) -> Vec<u8> {
-        let serialized = rmp_serde::to_vec_named(&self).unwrap_or_else(|_| unreachable!());
-        let mut e = ZlibEncoder::new(Vec::new(), Compression::default());
-        e.write_all(&serialized).unwrap_or_else(|_| unreachable!());
-        let compressed = e.finish().unwrap_or_else(|_| unreachable!());
-        let signed = author_signkey.sign(&compressed);
-        key.encrypt(&signed)
-    }
+            pub fn decrypt_verify_and_load(
+                encrypted: &[u8],
+                key: &SecretKey,
+                author_verify_key: &VerifyKey,
+                expected_author: &DeviceID,
+                expected_timestamp: DateTime<Utc>,
+            ) -> Result<Self, &'static str> {
+                let signed = key.decrypt(encrypted).map_err(|_| "Invalid encryption")?;
+                let compressed = author_verify_key
+                    .verify(&signed)
+                    .map_err(|_| "Invalid signature")?;
+                let mut serialized = vec![];
 
-    fn decrypt_verify_and_load(
-        encrypted: &[u8],
-        key: &SecretKey,
-        author_verify_key: &VerifyKey,
-        expected_author: &DeviceID,
-        expected_timestamp: DateTime<Utc>,
-    ) -> Result<Self, &'static str> {
-        let signed = key.decrypt(encrypted).map_err(|_| "Invalid encryption")?;
-        let compressed = author_verify_key
-            .verify(&signed)
-            .map_err(|_| "Invalid signature")?;
-        let mut serialized = vec![];
+                ZlibDecoder::new(&compressed[..])
+                    .read_to_end(&mut serialized)
+                    .map_err(|_| "Invalid compression")?;
 
-        ZlibDecoder::new(&compressed[..])
-            .read_to_end(&mut serialized)
-            .map_err(|_| "Invalid compression")?;
+                let obj = rmp_serde::from_read_ref::<_, Self>(&serialized)
+                    .map_err(|_| "Invalid serialization")?;
 
-        let obj = rmp_serde::from_read_ref::<_, Self>(&serialized)
-            .map_err(|_| "Invalid serialization")?;
-
-        if obj.author() != expected_author {
-            Err("Unexpected author")
-        } else if obj.timestamp() != expected_timestamp {
-            Err("Unexpected timestamp")
-        } else {
-            Ok(obj)
+                if obj.author != *expected_author {
+                    Err("Unexpected author")
+                } else if obj.timestamp != expected_timestamp {
+                    Err("Unexpected timestamp")
+                } else {
+                    Ok(obj)
+                }
+            }
         }
-    }
+    };
 }
 
 /*
@@ -307,14 +310,7 @@ pub struct FileManifest {
     pub blocks: Vec<BlockAccess>,
 }
 
-impl DumpLoad for FileManifest {
-    fn author(&self) -> &DeviceID {
-        &self.author
-    }
-    fn timestamp(&self) -> DateTime<Utc> {
-        self.timestamp
-    }
-}
+impl_manifest_dump_load!(FileManifest);
 
 new_data_struct_type!(
     FileManifestData,
@@ -393,14 +389,7 @@ pub struct FolderManifest {
     pub children: HashMap<EntryName, ManifestEntry>,
 }
 
-impl DumpLoad for FolderManifest {
-    fn author(&self) -> &DeviceID {
-        &self.author
-    }
-    fn timestamp(&self) -> DateTime<Utc> {
-        self.timestamp
-    }
-}
+impl_manifest_dump_load!(FolderManifest);
 
 new_data_struct_type!(
     FolderManifestData,
@@ -452,14 +441,7 @@ pub struct WorkspaceManifest {
     pub children: HashMap<EntryName, ManifestEntry>,
 }
 
-impl DumpLoad for WorkspaceManifest {
-    fn author(&self) -> &DeviceID {
-        &self.author
-    }
-    fn timestamp(&self) -> DateTime<Utc> {
-        self.timestamp
-    }
-}
+impl_manifest_dump_load!(WorkspaceManifest);
 
 new_data_struct_type!(
     WorkspaceManifestData,
@@ -516,14 +498,7 @@ impl UserManifest {
     }
 }
 
-impl DumpLoad for UserManifest {
-    fn author(&self) -> &DeviceID {
-        &self.author
-    }
-    fn timestamp(&self) -> DateTime<Utc> {
-        self.timestamp
-    }
-}
+impl_manifest_dump_load!(UserManifest);
 
 new_data_struct_type!(
     UserManifestData,
