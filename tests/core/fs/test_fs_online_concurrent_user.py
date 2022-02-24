@@ -11,6 +11,7 @@ from hypothesis_trio.stateful import (
     TrioAsyncioRuleBasedStateMachine,
 )
 
+from parsec.api.data import EntryName
 from parsec.core.fs.exceptions import FSWorkspaceNotFoundError
 from tests.common import call_with_control, compare_fs_dumps
 
@@ -67,7 +68,7 @@ def test_fs_online_concurrent_user(
             self.user_fs1_controller = await self.start_user_fs(self.device1)
             self.user_fs2_controller = await self.start_user_fs(self.device2)
 
-            self.wid = await self.user_fs1.workspace_create("w")
+            self.wid = await self.user_fs1.workspace_create(EntryName("w"))
             workspace = self.user_fs1.get_workspace(self.wid)
             await workspace.sync()
             await self.user_fs1.sync()
@@ -99,7 +100,7 @@ def test_fs_online_concurrent_user(
             if wid == "wrong":
                 return src[0], src[1]
             try:
-                await fs.workspace_rename(wid, dst_name)
+                await fs.workspace_rename(wid, EntryName(dst_name))
             except FSWorkspaceNotFoundError:
                 pass
             return wid, dst_name

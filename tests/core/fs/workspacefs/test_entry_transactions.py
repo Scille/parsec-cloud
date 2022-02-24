@@ -19,6 +19,7 @@ from hypothesis_trio.stateful import (
 )
 from hypothesis import strategies as st
 
+from parsec.api.data import EntryName
 from parsec.core.fs import FsPath
 from parsec.core.fs.storage import WorkspaceStorage
 from parsec.core.fs.exceptions import FSRemoteManifestNotFound
@@ -62,7 +63,7 @@ async def test_file_create(alice_entry_transactions, alice_file_transactions, al
         "need_sync": True,
         "created": datetime(2000, 1, 1),
         "updated": datetime(2000, 1, 2),
-        "children": ["foo.txt"],
+        "children": [EntryName("foo.txt")],
         "confinement_point": None,
     }
 
@@ -145,7 +146,7 @@ async def test_rename_non_empty_folder(alice_entry_transactions):
     foo2_id = await entry_transactions.entry_rename(FsPath("/foo"), FsPath("/foo2"))
     assert foo2_id == foo_id
     stat = await entry_transactions.entry_info(FsPath("/"))
-    assert stat["children"] == ["foo2"]
+    assert stat["children"] == [EntryName("foo2")]
 
     info = await entry_transactions.entry_info(FsPath("/foo2"))
     assert info["id"] == foo_id

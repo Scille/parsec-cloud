@@ -123,17 +123,17 @@ pub struct LocalFolderManifest {
     pub base: FolderManifest,
     pub need_sync: bool,
     pub updated: DateTime<Utc>,
-    pub children: HashMap<EntryName, ManifestEntry>,
+    pub children: HashMap<EntryName, EntryID>,
     // Confined entries are entries that are meant to stay locally and not be added
     // to the uploaded remote manifest when synchronizing. The criteria for being
     // confined is to have a filename that matched the "prevent sync" pattern at the time of
     // the last change (or when a new filter was successfully applied)
-    pub local_confinement_points: HashSet<ManifestEntry>,
+    pub local_confinement_points: HashSet<EntryID>,
     // Filtered entries are entries present in the base manifest that are not exposed
     // locally. We keep track of them to remember that those entries have not been
     // deleted locally and hence should be restored when crafting the remote manifest
     // to upload.
-    pub remote_confinement_points: HashSet<ManifestEntry>,
+    pub remote_confinement_points: HashSet<EntryID>,
 }
 
 new_data_struct_type!(
@@ -143,19 +143,19 @@ new_data_struct_type!(
     need_sync: bool,
     #[serde_as(as = "DateTimeExtFormat")]
     updated: DateTime<Utc>,
-    children: HashMap<EntryName, ManifestEntry>,
+    children: HashMap<EntryName, EntryID>,
     // Added in Parsec v1.15
     #[serde(
         default,
         deserialize_with = "maybe_field::deserialize_some",
     )]
-    local_confinement_points: Option<HashSet<ManifestEntry>>,
+    local_confinement_points: Option<HashSet<EntryID>>,
     // Added in Parsec v1.15
     #[serde(
         default,
         deserialize_with = "maybe_field::deserialize_some",
     )]
-    remote_confinement_points: Option<HashSet<ManifestEntry>>,
+    remote_confinement_points: Option<HashSet<EntryID>>,
 );
 
 impl From<LocalFolderManifestData> for LocalFolderManifest {
@@ -200,17 +200,17 @@ pub struct LocalWorkspaceManifest {
     pub base: WorkspaceManifest,
     pub need_sync: bool,
     pub updated: DateTime<Utc>,
-    pub children: HashMap<EntryName, ManifestEntry>,
+    pub children: HashMap<EntryName, EntryID>,
     // Confined entries are entries that are meant to stay locally and not be added
     // to the uploaded remote manifest when synchronizing. The criteria for being
     // confined is to have a filename that matched the "prevent sync" pattern at the time of
     // the last change (or when a new filter was successfully applied)
-    pub local_confinement_points: HashSet<ManifestEntry>,
+    pub local_confinement_points: HashSet<EntryID>,
     // Filtered entries are entries present in the base manifest that are not exposed
     // locally. We keep track of them to remember that those entries have not been
     // deleted locally and hence should be restored when crafting the remote manifest
     // to upload.
-    pub remote_confinement_points: HashSet<ManifestEntry>,
+    pub remote_confinement_points: HashSet<EntryID>,
     // Speculative placeholders are created when we want to access a workspace
     // but didn't retrieve manifest data from backend yet. This implies:
     // - non-placeholders cannot be speculative
@@ -231,19 +231,19 @@ new_data_struct_type!(
     need_sync: bool,
     #[serde_as(as = "DateTimeExtFormat")]
     updated: DateTime<Utc>,
-    children: HashMap<EntryName, ManifestEntry>,
+    children: HashMap<EntryName, EntryID>,
     // Added in Parsec v1.15
     #[serde(
         default,
         deserialize_with = "maybe_field::deserialize_some",
     )]
-    local_confinement_points: Option<HashSet<ManifestEntry>>,
+    local_confinement_points: Option<HashSet<EntryID>>,
     // Added in Parsec v1.15
     #[serde(
         default,
         deserialize_with = "maybe_field::deserialize_some",
     )]
-    remote_confinement_points: Option<HashSet<ManifestEntry>>,
+    remote_confinement_points: Option<HashSet<EntryID>>,
     // Added in Parsec v2.6
     #[serde(
         default,

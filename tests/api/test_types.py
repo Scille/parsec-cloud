@@ -207,6 +207,6 @@ def test_entry_name_normalization():
     nfd_str = normalize("NFD", nfc_str)
 
     assert nfc_str != nfd_str
-    assert EntryName(nfd_str) == nfc_str
-    assert EntryName(nfc_str) == nfc_str
-    assert EntryName(nfc_str + nfd_str) == nfc_str + nfc_str
+    assert EntryName(nfd_str).str == nfc_str
+    assert EntryName(nfc_str).str == nfc_str
+    assert EntryName(nfc_str + nfd_str).str == nfc_str + nfc_str

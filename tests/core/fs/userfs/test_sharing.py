@@ -4,8 +4,9 @@ import pytest
 from unittest.mock import ANY
 from pendulum import datetime
 
-from parsec.api.data import UserManifest, WorkspaceEntry
+from parsec.api.data import UserManifest, WorkspaceEntry, EntryName
 from parsec.api.protocol import RealmID
+from parsec.crypto import SecretKey
 from parsec.core.core_events import CoreEvent
 from parsec.core.types import WorkspaceRole, LocalUserManifest, EntryID
 from parsec.core.fs import (
@@ -19,6 +20,16 @@ from parsec.backend.realm import RealmGrantedRole, RealmRole
 from tests.common import freeze_time, create_shared_workspace
 
 
+KEY = SecretKey.generate()
+
+
+def _update_user_manifest_key(um):
+    return um.evolve(
+        base=um.base.evolve(workspaces=tuple(w.evolve(key=KEY) for w in um.base.workspaces)),
+        workspaces=tuple(w.evolve(key=KEY) for w in um.workspaces),
+    )
+
+
 @pytest.mark.trio
 async def test_share_unknown(running_backend, alice_user_fs, bob):
     wid = EntryID.new()
@@ -29,7 +40,7 @@ async def test_share_unknown(running_backend, alice_user_fs, bob):
 @pytest.mark.trio
 async def test_share_to_oneself(running_backend, alice_user_fs, alice):
     with freeze_time("2000-01-02"):
-        wid = await alice_user_fs.workspace_create("w1")
+        wid = await alice_user_fs.workspace_create(EntryName("w1"))
 
     with pytest.raises(FSError) as exc:
         await alice_user_fs.workspace_share(wid, alice.user_id, WorkspaceRole.MANAGER)
@@ -39,7 +50,7 @@ async def test_share_to_oneself(running_backend, alice_user_fs, alice):
 @pytest.mark.trio
 async def test_share_bad_recipient(running_backend, alice_user_fs, alice, mallory):
     with freeze_time("2000-01-02"):
-        wid = await alice_user_fs.workspace_create("w1")
+        wid = await alice_user_fs.workspace_create(EntryName("w1"))
 
     with pytest.raises(FSError) as exc:
         await alice_user_fs.workspace_share(wid, mallory.user_id, WorkspaceRole.MANAGER)
@@ -49,7 +60,7 @@ async def test_share_bad_recipient(running_backend, alice_user_fs, alice, mallor
 @pytest.mark.trio
 async def test_share_offline(running_backend, alice_user_fs, bob):
     with freeze_time("2000-01-02"):
-        wid = await alice_user_fs.workspace_create("w1")
+        wid = await alice_user_fs.workspace_create(EntryName("w1"))
 
     with running_backend.offline():
         with pytest.raises(FSBackendOfflineError):
@@ -60,7 +71,7 @@ async def test_share_offline(running_backend, alice_user_fs, bob):
 @pytest.mark.parametrize("presynced", (True, False))
 async def test_share_ok(running_backend, alice_user_fs, bob_user_fs, alice, bob, presynced):
     with freeze_time("2000-01-02"):
-        wid = await alice_user_fs.workspace_create("w1")
+        wid = await alice_user_fs.workspace_create(EntryName("w1"))
 
     if presynced:
         await alice_user_fs.sync()
@@ -71,14 +82,20 @@ async def test_share_ok(running_backend, alice_user_fs, bob_user_fs, alice, bob,
         with freeze_time("2000-01-03"):
             await bob_user_fs.process_last_messages()
     expected_bob_w1_workspace_entry = WorkspaceEntry(
-        name="w1",
+        name=EntryName("w1"),
         id=wid,
-        key=ANY,
+        key=KEY,
         encryption_revision=1,
         encrypted_on=datetime(2000, 1, 2),
         role_cached_on=datetime(2000, 1, 3),
         role=WorkspaceRole.MANAGER,
     )
+    new_events = []
+    for event in spy.events:
+        if event.event == CoreEvent.SHARING_UPDATED:
+            event.kwargs["new_entry"] = event.kwargs["new_entry"].evolve(key=KEY)
+        new_events.append(event)
+    spy.events = new_events
     spy.assert_event_occured(
         CoreEvent.SHARING_UPDATED,
         {"new_entry": expected_bob_w1_workspace_entry, "previous_entry": None},
@@ -86,6 +103,8 @@ async def test_share_ok(running_backend, alice_user_fs, bob_user_fs, alice, bob,
 
     aum = alice_user_fs.get_user_manifest()
     bum = bob_user_fs.get_user_manifest()
+    aum = _update_user_manifest_key(aum)
+    bum = _update_user_manifest_key(bum)
     assert bum.workspaces == (expected_bob_w1_workspace_entry,)
     assert bum.get_workspace_entry(wid).key == aum.get_workspace_entry(wid).key
 
@@ -96,14 +115,14 @@ async def test_share_workspace_then_rename_it(
 ):
     # Share a workspace between Alice and Bob
     with freeze_time("2000-01-02"):
-        wid = await alice_user_fs.workspace_create("w")
+        wid = await alice_user_fs.workspace_create(EntryName("w"))
     await alice_user_fs.workspace_share(wid, bob.user_id, WorkspaceRole.MANAGER)
     with freeze_time("2000-01-03"):
         await bob_user_fs.process_last_messages()
 
     # Now Bob and alice both rename the workpsace for there own taste
-    await bob_user_fs.workspace_rename(wid, "from_alice")
-    await alice_user_fs.workspace_rename(wid, "to_bob")
+    await bob_user_fs.workspace_rename(wid, EntryName("from_alice"))
+    await alice_user_fs.workspace_rename(wid, EntryName("to_bob"))
 
     await bob_user_fs.sync()
     await alice_user_fs.sync()
@@ -128,7 +147,7 @@ async def test_share_workspace_then_rename_it(
 async def test_unshare_ok(running_backend, alice_user_fs, bob_user_fs, alice, bob):
     # Share a workspace...
     with freeze_time("2000-01-02"):
-        wid = await alice_user_fs.workspace_create("w1")
+        wid = await alice_user_fs.workspace_create(EntryName("w1"))
     await alice_user_fs.workspace_share(wid, bob.user_id, WorkspaceRole.OWNER)
     await bob_user_fs.process_last_messages()
 
@@ -137,22 +156,31 @@ async def test_unshare_ok(running_backend, alice_user_fs, bob_user_fs, alice, bo
     with alice_user_fs.event_bus.listen() as spy:
         with freeze_time("2000-01-03"):
             await alice_user_fs.process_last_messages()
+
+    new_events = []
+    for event in spy.events:
+        if event.event == CoreEvent.SHARING_UPDATED:
+            event.kwargs["new_entry"] = event.kwargs["new_entry"].evolve(key=KEY)
+            event.kwargs["previous_entry"] = event.kwargs["previous_entry"].evolve(key=KEY)
+        new_events.append(event)
+    spy.events = new_events
+
     spy.assert_event_occured(
         CoreEvent.SHARING_UPDATED,
         {
             "new_entry": WorkspaceEntry(
-                name="w1",
+                name=EntryName("w1"),
                 id=wid,
-                key=ANY,
+                key=KEY,
                 encryption_revision=1,
                 encrypted_on=datetime(2000, 1, 2),
                 role_cached_on=datetime(2000, 1, 3),
                 role=None,
             ),
             "previous_entry": WorkspaceEntry(
-                name="w1",
+                name=EntryName("w1"),
                 id=wid,
-                key=ANY,
+                key=KEY,
                 encryption_revision=1,
                 encrypted_on=datetime(2000, 1, 2),
                 role_cached_on=datetime(2000, 1, 2),
@@ -171,7 +199,7 @@ async def test_unshare_ok(running_backend, alice_user_fs, bob_user_fs, alice, bo
 @pytest.mark.trio
 async def test_unshare_not_shared(running_backend, alice_user_fs, bob_user_fs, alice, bob):
     with freeze_time("2000-01-02"):
-        wid = await alice_user_fs.workspace_create("w1")
+        wid = await alice_user_fs.workspace_create(EntryName("w1"))
     await alice_user_fs.workspace_share(wid, bob.user_id, None)
     with alice_user_fs.event_bus.listen() as spy:
         await bob_user_fs.process_last_messages()
@@ -189,7 +217,7 @@ async def test_share_to_another_after_beeing_unshared(
 ):
     # Share a workspace...
     with freeze_time("2000-01-02"):
-        wid = await alice_user_fs.workspace_create("w1")
+        wid = await alice_user_fs.workspace_create(EntryName("w1"))
     await alice_user_fs.workspace_share(wid, bob.user_id, WorkspaceRole.MANAGER)
     await bob_user_fs.process_last_messages()
 
@@ -215,7 +243,7 @@ async def test_share_to_another_after_beeing_unshared(
 async def test_reshare_workspace(running_backend, alice_user_fs, bob_user_fs, alice, bob):
     # Share a workspace...
     with freeze_time("2000-01-02"):
-        wid = await alice_user_fs.workspace_create("w1")
+        wid = await alice_user_fs.workspace_create(EntryName("w1"))
     await alice_user_fs.workspace_share(wid, bob.user_id, WorkspaceRole.MANAGER)
     with freeze_time("2000-01-03"):
         await bob_user_fs.process_last_messages()
@@ -230,22 +258,31 @@ async def test_reshare_workspace(running_backend, alice_user_fs, bob_user_fs, al
     with bob_user_fs.event_bus.listen() as spy:
         with freeze_time("2000-01-05"):
             await bob_user_fs.process_last_messages()
+
+    new_events = []
+    for event in spy.events:
+        if event.event == CoreEvent.SHARING_UPDATED:
+            event.kwargs["new_entry"] = event.kwargs["new_entry"].evolve(key=KEY)
+            event.kwargs["previous_entry"] = event.kwargs["previous_entry"].evolve(key=KEY)
+        new_events.append(event)
+    spy.events = new_events
+
     spy.assert_event_occured(
         CoreEvent.SHARING_UPDATED,
         {
             "new_entry": WorkspaceEntry(
-                name="w1",
+                name=EntryName("w1"),
                 id=wid,
-                key=ANY,
+                key=KEY,
                 encryption_revision=1,
                 encrypted_on=datetime(2000, 1, 2),
                 role_cached_on=datetime(2000, 1, 5),
                 role=WorkspaceRole.MANAGER,
             ),
             "previous_entry": WorkspaceEntry(
-                name="w1",
+                name=EntryName("w1"),
                 id=wid,
-                key=ANY,
+                key=KEY,
                 encryption_revision=1,
                 encrypted_on=datetime(2000, 1, 2),
                 role_cached_on=datetime(2000, 1, 4),
@@ -262,7 +299,7 @@ async def test_reshare_workspace(running_backend, alice_user_fs, bob_user_fs, al
     aw = aum.workspaces[0]
     bw = bum.workspaces[0]
 
-    assert bw.name == "w1"
+    assert bw.name == EntryName("w1")
     assert bw.id == aw.id
     assert bw.role == WorkspaceRole.MANAGER
 
@@ -270,7 +307,7 @@ async def test_reshare_workspace(running_backend, alice_user_fs, bob_user_fs, al
 @pytest.mark.trio
 async def test_share_with_different_role(running_backend, alice_user_fs, bob_user_fs, alice, bob):
     with freeze_time("2000-01-02"):
-        wid = await alice_user_fs.workspace_create("w1")
+        wid = await alice_user_fs.workspace_create(EntryName("w1"))
     aum = alice_user_fs.get_user_manifest()
     aw = aum.workspaces[0]
 
@@ -280,7 +317,7 @@ async def test_share_with_different_role(running_backend, alice_user_fs, bob_use
         await alice_user_fs.workspace_share(wid, bob.user_id, role)
         with bob_user_fs.event_bus.listen() as spy:
             await bob_user_fs.process_last_messages()
-        new_entry = spy.partial_obj(WorkspaceEntry, name="w1", id=wid, role=role)
+        new_entry = spy.partial_obj(WorkspaceEntry, name=EntryName("w1"), id=wid, role=role)
         if not previous_entry:
             spy.assert_event_occured(
                 CoreEvent.SHARING_UPDATED, {"new_entry": new_entry, "previous_entry": None}
@@ -298,7 +335,7 @@ async def test_share_with_different_role(running_backend, alice_user_fs, bob_use
         assert len(bum.workspaces) == 1
         bw = bum.workspaces[0]
 
-        assert bw.name == "w1"
+        assert bw.name == EntryName("w1")
         assert bw.id == aw.id
         assert bw.role == role
 
@@ -306,7 +343,7 @@ async def test_share_with_different_role(running_backend, alice_user_fs, bob_use
 @pytest.mark.trio
 async def test_share_no_manager_right(running_backend, alice_user_fs, alice, bob):
     with freeze_time("2000-01-02"):
-        wid = await alice_user_fs.workspace_create("w1")
+        wid = await alice_user_fs.workspace_create(EntryName("w1"))
         await alice_user_fs.sync()
 
     # Drop manager right (and give to Bob the ownership)
@@ -347,9 +384,9 @@ async def test_share_with_sharing_name_already_taken(
 ):
     # Bob and Alice both has a workspace with similar name
     with freeze_time("2000-01-01"):
-        awid = await alice_user_fs.workspace_create("w")
-        bwid = await bob_user_fs.workspace_create("w")
-        bw2id = await bob_user_fs.workspace_create("w")
+        awid = await alice_user_fs.workspace_create(EntryName("w"))
+        bwid = await bob_user_fs.workspace_create(EntryName("w"))
+        bw2id = await bob_user_fs.workspace_create(EntryName("w"))
 
     # Sharing them shouldn't be a trouble
     await bob_user_fs.sync()
@@ -359,13 +396,19 @@ async def test_share_with_sharing_name_already_taken(
     with bob_user_fs.event_bus.listen() as spy:
         with freeze_time("2000-01-02"):
             await bob_user_fs.process_last_messages()
+    new_events = []
+    for event in spy.events:
+        if event.event == CoreEvent.SHARING_UPDATED:
+            event.kwargs["new_entry"] = event.kwargs["new_entry"].evolve(key=KEY)
+        new_events.append(event)
+    spy.events = new_events
     spy.assert_event_occured(
         CoreEvent.SHARING_UPDATED,
         {
             "new_entry": WorkspaceEntry(
-                name="w",
+                name=EntryName("w"),
                 id=awid,
-                key=ANY,
+                key=KEY,
                 encryption_revision=1,
                 encrypted_on=datetime(2000, 1, 1),
                 role_cached_on=datetime(2000, 1, 2),
@@ -377,11 +420,12 @@ async def test_share_with_sharing_name_already_taken(
 
     bob_user_manifest = bob_user_fs.get_user_manifest()
     assert len(bob_user_manifest.workspaces) == 3
+    bob_user_manifest = _update_user_manifest_key(bob_user_manifest)
     assert (
         WorkspaceEntry(
-            name="w",
+            name=EntryName("w"),
             id=bwid,
-            key=ANY,
+            key=KEY,
             encryption_revision=1,
             encrypted_on=datetime(2000, 1, 1),
             role_cached_on=datetime(2000, 1, 1),
@@ -391,9 +435,9 @@ async def test_share_with_sharing_name_already_taken(
     )
     assert (
         WorkspaceEntry(
-            name="w",
+            name=EntryName("w"),
             id=bw2id,
-            key=ANY,
+            key=KEY,
             encryption_revision=1,
             encrypted_on=datetime(2000, 1, 1),
             role_cached_on=datetime(2000, 1, 1),
@@ -403,9 +447,9 @@ async def test_share_with_sharing_name_already_taken(
     )
     assert (
         WorkspaceEntry(
-            name="w",
+            name=EntryName("w"),
             id=awid,
-            key=ANY,
+            key=KEY,
             encryption_revision=1,
             encrypted_on=datetime(2000, 1, 1),
             role_cached_on=datetime(2000, 1, 2),
@@ -422,7 +466,7 @@ async def test_share_workspace_then_conflict_on_rights(
 ):
     # Bob shares a workspace with Alice...
     with freeze_time("2000-01-01"):
-        wid = await bob_user_fs.workspace_create("w")
+        wid = await bob_user_fs.workspace_create(EntryName("w"))
     with freeze_time("2000-01-02"):
         await bob_user_fs.workspace_share(wid, alice.user_id, WorkspaceRole.MANAGER)
 
@@ -461,6 +505,8 @@ async def test_share_workspace_then_conflict_on_rights(
     with freeze_time("2000-01-08"):
         await first.sync()
 
+    KEY = SecretKey.generate()
+
     am = alice_user_fs.get_user_manifest()
     a2m = alice2_user_fs.get_user_manifest()
     expected_remote = UserManifest(
@@ -473,9 +519,9 @@ async def test_share_workspace_then_conflict_on_rights(
         last_processed_message=2,
         workspaces=(
             WorkspaceEntry(
-                name="w",
+                name=EntryName("w"),
                 id=wid,
-                key=ANY,
+                key=KEY,
                 encryption_revision=1,
                 encrypted_on=datetime(2000, 1, 1),
                 role_cached_on=datetime(2000, 1, 5),
@@ -490,6 +536,14 @@ async def test_share_workspace_then_conflict_on_rights(
         last_processed_message=expected_remote.last_processed_message,
         workspaces=expected_remote.workspaces,
         speculative=False,
+    )
+    am = am.evolve(
+        base=am.base.evolve(workspaces=tuple(w.evolve(key=KEY) for w in am.base.workspaces)),
+        workspaces=tuple(w.evolve(key=KEY) for w in am.workspaces),
+    )
+    a2m = a2m.evolve(
+        base=a2m.base.evolve(workspaces=tuple(w.evolve(key=KEY) for w in a2m.base.workspaces)),
+        workspaces=tuple(w.evolve(key=KEY) for w in a2m.workspaces),
     )
     assert am == expected
     assert a2m == expected
@@ -516,15 +570,17 @@ async def test_share_workspace_then_conflict_on_rights(
     }
     assert a_w_stat == a2_w_stat
 
+    a_w_entry = a_w_entry.evolve(key=KEY)
     assert a_w_entry == WorkspaceEntry(
-        name=f"w",
+        name=EntryName("w"),
         id=wid,
-        key=ANY,
+        key=KEY,
         encryption_revision=1,
         encrypted_on=datetime(2000, 1, 1),
         role_cached_on=datetime(2000, 1, 5),
         role=WorkspaceRole.CONTRIBUTOR,
     )
+    a2_w_entry = a2_w_entry.evolve(key=KEY)
     assert a2_w_entry == a_w_entry
 
 
@@ -534,19 +590,25 @@ async def test_sharing_events_triggered_on_sync(
 ):
     # Share a first workspace
     with freeze_time("2000-01-02"):
-        wid = await create_shared_workspace("w", bob_user_fs, alice_user_fs)
+        wid = await create_shared_workspace(EntryName("w"), bob_user_fs, alice_user_fs)
 
     with alice2_user_fs.event_bus.listen() as spy:
         await alice2_user_fs.sync()
     expected_entry_v1 = WorkspaceEntry(
-        name="w",
+        name=EntryName("w"),
         id=wid,
-        key=ANY,
+        key=KEY,
         encryption_revision=1,
         encrypted_on=datetime(2000, 1, 2),
         role_cached_on=datetime(2000, 1, 2),
         role=WorkspaceRole.MANAGER,
     )
+    new_events = []
+    for event in spy.events:
+        if event.event == CoreEvent.SHARING_UPDATED:
+            event.kwargs["new_entry"] = event.kwargs["new_entry"].evolve(key=KEY)
+        new_events.append(event)
+    spy.events = new_events
     spy.assert_event_occured(
         CoreEvent.SHARING_UPDATED, {"new_entry": expected_entry_v1, "previous_entry": None}
     )
@@ -560,14 +622,21 @@ async def test_sharing_events_triggered_on_sync(
     with alice2_user_fs.event_bus.listen() as spy:
         await alice2_user_fs.sync()
     expected_entry_v2 = WorkspaceEntry(
-        name="w",
+        name=EntryName("w"),
         id=wid,
-        key=ANY,
+        key=KEY,
         encryption_revision=1,
         encrypted_on=datetime(2000, 1, 2),
         role_cached_on=datetime(2000, 1, 3),
         role=WorkspaceRole.OWNER,
     )
+    new_events = []
+    for event in spy.events:
+        if event.event == CoreEvent.SHARING_UPDATED:
+            event.kwargs["new_entry"] = event.kwargs["new_entry"].evolve(key=KEY)
+            event.kwargs["previous_entry"] = event.kwargs["previous_entry"].evolve(key=KEY)
+        new_events.append(event)
+    spy.events = new_events
     spy.assert_event_occured(
         CoreEvent.SHARING_UPDATED,
         {"new_entry": expected_entry_v2, "previous_entry": expected_entry_v1},
@@ -582,14 +651,21 @@ async def test_sharing_events_triggered_on_sync(
     with alice2_user_fs.event_bus.listen() as spy:
         await alice2_user_fs.sync()
     expected_entry_v3 = WorkspaceEntry(
-        name="w",
+        name=EntryName("w"),
         id=wid,
-        key=ANY,
+        key=KEY,
         encryption_revision=1,
         encrypted_on=datetime(2000, 1, 2),
         role_cached_on=datetime(2000, 1, 4),
         role=None,
     )
+    new_events = []
+    for event in spy.events:
+        if event.event == CoreEvent.SHARING_UPDATED:
+            event.kwargs["new_entry"] = event.kwargs["new_entry"].evolve(key=KEY)
+            event.kwargs["previous_entry"] = event.kwargs["previous_entry"].evolve(key=KEY)
+        new_events.append(event)
+    spy.events = new_events
     spy.assert_event_occured(
         CoreEvent.SHARING_UPDATED,
         {"new_entry": expected_entry_v3, "previous_entry": expected_entry_v2},
@@ -601,7 +677,7 @@ async def test_no_sharing_event_on_sync_on_unknown_workspace(
     running_backend, alice_user_fs, alice2_user_fs, bob_user_fs, alice, bob
 ):
     # Share a workspace...
-    wid = await create_shared_workspace("w", bob_user_fs, alice_user_fs)
+    wid = await create_shared_workspace(EntryName("w"), bob_user_fs, alice_user_fs)
 
     # ...and unshare it before alice2 even know about it
     await bob_user_fs.workspace_share(wid, alice.user_id, None)
@@ -620,11 +696,13 @@ async def test_sharing_event_on_sync_if_same_role(
 ):
     # Share a workspace, alice2 knows about it
     with freeze_time("2000-01-02"):
-        wid = await create_shared_workspace("w", bob_user_fs, alice_user_fs, alice2_user_fs)
+        wid = await create_shared_workspace(
+            EntryName("w"), bob_user_fs, alice_user_fs, alice2_user_fs
+        )
     expected_entry_v1 = WorkspaceEntry(
-        name="w",
+        name=EntryName("w"),
         id=wid,
-        key=ANY,
+        key=KEY,
         encryption_revision=1,
         encrypted_on=datetime(2000, 1, 2),
         role_cached_on=datetime(2000, 1, 2),
@@ -647,6 +725,14 @@ async def test_sharing_event_on_sync_if_same_role(
     # A single sharing event should be triggered
     with alice2_user_fs.event_bus.listen() as spy:
         await alice2_user_fs.sync()
+
+    new_events = []
+    for event in spy.events:
+        if event.event == CoreEvent.SHARING_UPDATED:
+            event.kwargs["new_entry"] = event.kwargs["new_entry"].evolve(key=KEY)
+            event.kwargs["previous_entry"] = event.kwargs["previous_entry"].evolve(key=KEY)
+        new_events.append(event)
+    spy.events = new_events
     spy.assert_event_occured(
         CoreEvent.SHARING_UPDATED,
         {"new_entry": expected_entry_v3, "previous_entry": expected_entry_v1},

@@ -16,6 +16,7 @@ from hypothesis.stateful import (
     run_state_machine_as_test,
 )
 from hypothesis import strategies as st
+from parsec.api.data import EntryName
 
 
 # The point is not to find breaking filenames here, so keep it simple
@@ -105,7 +106,7 @@ def test_folder_operations(tmpdir, caplog, hypothesis_settings, mountpoint_servi
             caplog.clear()
 
             async def _bootstrap(user_fs, mountpoint_manager):
-                wid = await user_fs.workspace_create("w")
+                wid = await user_fs.workspace_create(EntryName("w"))
                 self.parsec_root = Path(await mountpoint_manager.mount_workspace(wid))
 
             self.mountpoint_service = mountpoint_service_factory(_bootstrap)

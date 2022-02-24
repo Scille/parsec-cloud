@@ -3,6 +3,7 @@ import pytest
 
 from unittest.mock import ANY
 
+from parsec.api.data import EntryName
 from parsec.core.core_events import CoreEvent
 
 
@@ -12,7 +13,7 @@ async def test_event_entry_updated(alice_user_fs, running_backend):
 
     # Testing event when creating a workspace
     with event_bus.listen() as spy:
-        wid = await alice_user_fs.workspace_create("tempw")
+        wid = await alice_user_fs.workspace_create(EntryName("tempw"))
     spy.assert_events_exactly_occured(
         [
             (CoreEvent.FS_ENTRY_UPDATED, {"id": ANY}),
@@ -22,7 +23,7 @@ async def test_event_entry_updated(alice_user_fs, running_backend):
 
     # Testing event when renaming a workspace
     with event_bus.listen() as spy:
-        await alice_user_fs.workspace_rename(wid, "w")
+        await alice_user_fs.workspace_rename(wid, EntryName("w"))
     spy.assert_events_exactly_occured([(CoreEvent.FS_ENTRY_UPDATED, {"id": ANY})])
     workspace = alice_user_fs.get_workspace(wid)
 

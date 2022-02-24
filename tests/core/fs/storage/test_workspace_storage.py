@@ -252,6 +252,7 @@ async def test_serialize_types(data_base_dir, alice, workspace_id, type):
     "type", [LocalWorkspaceManifest, LocalFolderManifest, LocalFileManifest, LocalUserManifest]
 )
 @pytest.mark.trio
+@pytest.mark.skip("Legacy types are not handled in Rust")
 @customize_fixtures(real_data_storage=True)
 async def test_deserialize_legacy_types(data_base_dir, alice, workspace_id, type):
     # In parsec < 1.15, the author field used to be None for placeholders

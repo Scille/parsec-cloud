@@ -97,14 +97,14 @@ class NavigationBarWidget(QWidget):
             label = None
             if idx != len(parts) - 1:
                 obj_name = str(idx)
-                label = ClickableLabel(part)
+                label = ClickableLabel(part.str)
                 label.clicked.connect(self._on_label_clicked(idx))
                 label.setObjectName(f"label_{obj_name}")
                 label.setStyleSheet(
                     f"#label_{obj_name} {{ color: #999999; }} #label_{obj_name}:hover {{ color: #0092FF; }}"
                 )
             else:
-                label = QLabel(part)
+                label = QLabel(part.str)
                 label.setStyleSheet("color: #999999;")
             font = label.font()
             font.setBold(True)

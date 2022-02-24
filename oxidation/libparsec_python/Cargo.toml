@@ -17,6 +17,7 @@ libparsec = { version = "0.1.0", path = "../libparsec" }
 parsec_api_crypto = { version = "0.0.0", path = "../crates/parsec_api_crypto" }
 parsec_api_types = { version = "0.0.0", path = "../crates/parsec_api_types" }
 uuid = { version = "1.0.0-alpha.1", features = ["serde", "v4", "fast-rng"] }
+chrono = {version = "0.4.19", features = ["serde"]}
 
 [dependencies.pyo3]
 version = "0.15.1"

@@ -9,6 +9,7 @@ from structlog import get_logger
 from PyQt5.QtCore import Qt, pyqtSignal
 from PyQt5.QtWidgets import QWidget
 
+from parsec.api.data import EntryName
 from parsec.core.core_events import CoreEvent
 from parsec.core.gui.file_status_widget import FileStatusWidget
 from parsec.core.types import WorkspaceRole, EntryID
@@ -80,7 +81,7 @@ async def _do_copy_files(workspace_fs, target_dir, source_files, source_workspac
     for src, src_type in source_files:
         # In order to be able to rename the file if a file of the same name already exists
         # we need the name without extensions.
-        name_we, *_ = src.name.split(".", 1)
+        name_we, *_ = src.name.str.split(".", 1)
         count = 2
         file_name = src.name
         while True:
@@ -93,8 +94,8 @@ async def _do_copy_files(workspace_fs, target_dir, source_files, source_workspac
                 break
             except FileExistsError:
                 # File already exists, we append a counter at the end of its name
-                file_name = "{} ({}){}".format(
-                    name_we, count, "".join(pathlib.Path(src.name).suffixes)
+                file_name = EntryName(
+                    "{} ({}){}".format(name_we, count, "".join(pathlib.Path(src.name.str).suffixes))
                 )
                 count += 1
             except FSInvalidArgumentError as exc:
@@ -123,7 +124,7 @@ async def _do_move_files(workspace_fs, target_dir, source_files, source_workspac
     for src, src_type in source_files:
         # In order to be able to rename the file if a file of the same name already exists
         # we need the name without extensions.
-        name_we, *_ = src.name.split(".", 1)
+        name_we, *_ = src.name.str.split(".", 1)
         file_name = src.name
         count = 2
         while True:
@@ -133,8 +134,8 @@ async def _do_move_files(workspace_fs, target_dir, source_files, source_workspac
                 break
             except FileExistsError:
                 # File already exists, we append a counter at the end of its name
-                file_name = "{} ({}){}".format(
-                    name_we, count, "".join(pathlib.Path(src.name).suffixes)
+                file_name = EntryName(
+                    "{} ({}){}".format(name_we, count, "".join(pathlib.Path(src.name.str).suffixes))
                 )
                 count += 1
             except FSInvalidArgumentError as exc:
@@ -253,7 +254,7 @@ class FilesWidget(QWidget, Ui_FilesWidget):
     update_version_list = pyqtSignal(WorkspaceFS, FsPath)
     close_version_list = pyqtSignal()
 
-    folder_changed = pyqtSignal(str, str)
+    folder_changed = pyqtSignal(EntryName, str)
 
     def __init__(self, core, jobs_ctx, event_bus, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -361,7 +362,7 @@ class FilesWidget(QWidget, Ui_FilesWidget):
                 # Sending the source_workspace name for paste text
                 self.table_files.paste_status = PasteStatus(
                     status=PasteStatus.Status.Enabled,
-                    source_workspace=str(self.clipboard.source_workspace.get_workspace_name()),
+                    source_workspace=self.clipboard.source_workspace.get_workspace_name().str,
                 )
         self.reset(default_selection)
 
@@ -370,7 +371,7 @@ class FilesWidget(QWidget, Ui_FilesWidget):
         # Reload without any delay
         self.reload(default_selection, delay=0)
         self.table_files.sortItems(0)
-        self.folder_changed.emit(str(workspace_name), str(self.current_directory))
+        self.folder_changed.emit(workspace_name, str(self.current_directory))
 
     def on_get_file_path_clicked(self):
         files = self.table_files.selected_files()
@@ -542,7 +543,9 @@ class FilesWidget(QWidget, Ui_FilesWidget):
                     (
                         self.current_directory / f.name,
                         self.current_directory
-                        / "{}_{}{}".format(new_name, i, ".".join(pathlib.Path(f.name).suffixes)),
+                        / "{}_{}{}".format(
+                            new_name, i, ".".join(pathlib.Path(f.name.str).suffixes)
+                        ),
                         f.entry_id,
                     )
                     for i, f in enumerate(files, 1)
@@ -974,7 +977,7 @@ class FilesWidget(QWidget, Ui_FilesWidget):
         if default_selection and not file_found:
             show_error(self, _("TEXT_FILE_GOTO_LINK_NOT_FOUND"))
         workspace_name = self.workspace_fs.get_workspace_name()
-        self.folder_changed.emit(str(workspace_name), str(self.current_directory))
+        self.folder_changed.emit(workspace_name, str(self.current_directory))
 
     def _on_folder_stat_error(self, job):
         self.table_files.clear()

@@ -56,7 +56,7 @@ class FsPath:
         self._parts = tuple(parts)
 
     def __str__(self) -> str:
-        return "/" + "/".join(self._parts)
+        return "/" + "/".join([part.str for part in self._parts])
 
     def __repr__(self) -> str:
         return f"{type(self).__name__}({str(self)!r})"
@@ -90,7 +90,7 @@ class FsPath:
     T = TypeVar("T", PurePath, TrioPath)
 
     def with_mountpoint(self, mountpoint: T) -> T:
-        return mountpoint / "/".join(self._parts)
+        return mountpoint / "/".join([part.str for part in self._parts])
 
 
 AnyPath = Union[FsPath, str]

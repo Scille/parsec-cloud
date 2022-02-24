@@ -2,7 +2,7 @@
 
 import pytest
 
-from parsec.api.data import UserProfile
+from parsec.api.data import UserProfile, EntryName
 from parsec.api.protocol import OrganizationID, DeviceLabel, HumanHandle
 from parsec.core.backend_connection import apiv1_backend_anonymous_cmds_factory
 from parsec.core.types import BackendOrganizationBootstrapAddr
@@ -50,7 +50,7 @@ async def test_good(running_backend, backend, user_fs_factory, with_labels, data
         assert um.is_placeholder
         assert not um.speculative
 
-        await newfs.workspace_create("wa")
+        await newfs.workspace_create(EntryName("wa"))
         await newfs.sync()
         um = newfs.get_user_manifest()
         assert not um.is_placeholder

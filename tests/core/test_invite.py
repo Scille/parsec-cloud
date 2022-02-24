@@ -13,6 +13,7 @@ from parsec.api.protocol import (
     InvitationStatus,
 )
 
+from parsec.api.data import EntryName
 from parsec.core.backend_connection import (
     backend_invited_cmds_factory,
     backend_authenticated_cmds_factory,
@@ -152,11 +153,11 @@ async def test_good_device_claim(
                 assert um.speculative
 
                 # Old device modify user manifest
-                await alicefs.workspace_create("wa")
+                await alicefs.workspace_create(EntryName("wa"))
                 await alicefs.sync()
 
                 # New sharing from other user
-                wb_id = await bobfs.workspace_create("wb")
+                wb_id = await bobfs.workspace_create(EntryName("wb"))
                 await bobfs.workspace_share(wb_id, alice.user_id, WorkspaceRole.CONTRIBUTOR)
 
                 # Test new device get access to both new workspaces
@@ -315,11 +316,11 @@ async def test_good_user_claim(
             assert not um.speculative
 
             # Share a workspace with new user
-            aw_id = await alicefs.workspace_create("alice_workspace")
+            aw_id = await alicefs.workspace_create(EntryName("alice_workspace"))
             await alicefs.workspace_share(aw_id, new_device.user_id, WorkspaceRole.CONTRIBUTOR)
 
             # New user cannot create a new workspace
-            zw_id = await newfs.workspace_create("zack_workspace")
+            zw_id = await newfs.workspace_create(EntryName("zack_workspace"))
             await newfs.workspace_share(zw_id, alice.user_id, WorkspaceRole.READER)
 
             # Now both users should have the same workspaces

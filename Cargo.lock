@@ -468,6 +468,7 @@ dependencies = [
 name = "libparsec_python"
 version = "0.1.0"
 dependencies = [
+ "chrono",
  "libparsec",
  "parsec_api_crypto",
  "parsec_api_types",

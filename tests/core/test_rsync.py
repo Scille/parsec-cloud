@@ -6,7 +6,7 @@ from unittest import mock
 from parsec.api.data.manifest import WorkspaceManifest
 
 from parsec.crypto import HashDigest
-from parsec.api.data import EntryID, FolderManifest
+from parsec.api.data import EntryID, FolderManifest, EntryName
 from parsec.core.cli import rsync
 from parsec.core.fs import FsPath
 
@@ -29,7 +29,7 @@ class ReadSideEffect:
 @pytest.fixture
 @pytest.mark.trio
 async def alice_workspace(alice_user_fs, running_backend):
-    wid = await alice_user_fs.workspace_create("w")
+    wid = await alice_user_fs.workspace_create(EntryName("w"))
     workspace = alice_user_fs.get_workspace(wid)
     await workspace.mkdir("/foo")
     await workspace.touch("/foo/bar")
