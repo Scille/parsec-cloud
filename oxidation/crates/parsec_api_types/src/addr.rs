@@ -734,12 +734,12 @@ impl BackendInvitationAddr {
 //   but backward compatibility prevent us from doing it :'(
 
 pub fn binary_urlsafe_encode(data: &[u8]) -> String {
-    BASE32.encode(data).replace("=", "s")
+    BASE32.encode(data).replace('=', "s")
 }
 
 pub fn binary_urlsafe_decode(data: &str) -> Result<Vec<u8>, &'static str> {
     let err = Err("Invalid base32 data");
-    BASE32.decode(data.replace("s", "=").as_bytes()).or(err)
+    BASE32.decode(data.replace('s', "=").as_bytes()).or(err)
 }
 
 pub fn export_root_verify_key(key: &VerifyKey) -> String {
@@ -748,7 +748,7 @@ pub fn export_root_verify_key(key: &VerifyKey) -> String {
 
 pub fn import_root_verify_key(encoded: &str) -> Result<VerifyKey, &'static str> {
     let err_msg = "Invalid root verify key";
-    let encoded_b32 = encoded.replace("s", "=");
+    let encoded_b32 = encoded.replace('s', "=");
     // TODO: would be better to directly decode into key
     let buff = BASE32.decode(encoded_b32.as_bytes()).or(Err(err_msg))?;
     VerifyKey::try_from(buff.as_slice()).map_err(|_| err_msg)

@@ -201,7 +201,7 @@ new_data_struct_type!(
 
 impl From<UserCertificateData> for UserCertificate {
     fn from(data: UserCertificateData) -> Self {
-        let profile = data.profile.unwrap_or_else(|| match data.is_admin {
+        let profile = data.profile.unwrap_or(match data.is_admin {
             true => UserProfile::Admin,
             false => UserProfile::Standard,
         });
