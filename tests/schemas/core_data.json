@@ -364,7 +364,7 @@
                 },
                 "nested_type": {
                     "allow_none": false,
-                    "required": true,
+                    "required": false,
                     "type": "EntryIDField"
                 },
                 "required": true,
@@ -374,7 +374,7 @@
                 "allow_none": false,
                 "container_type": {
                     "allow_none": false,
-                    "required": true,
+                    "required": false,
                     "type": "EntryIDField"
                 },
                 "required": false,
@@ -389,7 +389,7 @@
                 "allow_none": false,
                 "container_type": {
                     "allow_none": false,
-                    "required": true,
+                    "required": false,
                     "type": "EntryIDField"
                 },
                 "required": false,
@@ -783,7 +783,7 @@
                 },
                 "nested_type": {
                     "allow_none": false,
-                    "required": true,
+                    "required": false,
                     "type": "EntryIDField"
                 },
                 "required": true,
@@ -793,7 +793,7 @@
                 "allow_none": false,
                 "container_type": {
                     "allow_none": false,
-                    "required": true,
+                    "required": false,
                     "type": "EntryIDField"
                 },
                 "required": false,
@@ -808,7 +808,7 @@
                 "allow_none": false,
                 "container_type": {
                     "allow_none": false,
-                    "required": true,
+                    "required": false,
                     "type": "EntryIDField"
                 },
                 "required": false,

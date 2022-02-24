@@ -673,26 +673,27 @@ class LocalFolderManifest(BaseLocalManifest, LocalFolderishManifestMixin):
         base = fields.Nested(_PyFolderManifest.SCHEMA_CLS, required=True)
         need_sync = fields.Boolean(required=True)
         updated = fields.DateTime(required=True)
-        children = fields.FrozenMap(EntryNameField(), EntryIDField(required=True), required=True)
+        children = fields.FrozenMap(EntryNameField(), EntryIDField(), required=True)
         # Added in Parsec v1.15
         # Confined entries are entries that are meant to stay locally and not be added
         # to the uploaded remote manifest when synchronizing. The criteria for being
         # confined is to have a filename that matched the "prevent sync" pattern at the time of
         # the last change (or when a new filter was successfully applied)
-        local_confinement_points = fields.FrozenSet(EntryIDField(required=True))
-
+        local_confinement_points = fields.FrozenSet(
+            EntryIDField(), allow_none=False, required=False, missing=frozenset()
+        )
         # Added in Parsec v1.15
         # Filtered entries are entries present in the base manifest that are not exposed
         # locally. We keep track of them to remember that those entries have not been
         # deleted locally and hence should be restored when crafting the remote manifest
         # to upload.
-        remote_confinement_points = fields.FrozenSet(EntryIDField(required=True))
+        remote_confinement_points = fields.FrozenSet(
+            EntryIDField(), allow_none=False, required=False, missing=frozenset()
+        )
 
         @post_load
         def make_obj(self, data):
             data.pop("type")
-            data.setdefault("local_confinement_points", frozenset())
-            data.setdefault("remote_confinement_points", frozenset())
             return LocalFolderManifest(**data)
 
     base: RemoteFolderManifest
@@ -802,19 +803,23 @@ class LocalWorkspaceManifest(BaseLocalManifest, LocalFolderishManifestMixin):
         base = fields.Nested(_PyWorkspaceManifest.SCHEMA_CLS, required=True)
         need_sync = fields.Boolean(required=True)
         updated = fields.DateTime(required=True)
-        children = fields.FrozenMap(EntryNameField(), EntryIDField(required=True), required=True)
+        children = fields.FrozenMap(EntryNameField(), EntryIDField(), required=True)
         # Added in Parsec v1.15
         # Confined entries are entries that are meant to stay locally and not be added
         # to the uploaded remote manifest when synchronizing. The criteria for being
         # confined is to have a filename that matched the "prevent sync" pattern at the time of
         # the last change (or when a new filter was successfully applied)
-        local_confinement_points = fields.FrozenSet(EntryIDField(required=True))
+        local_confinement_points = fields.FrozenSet(
+            EntryIDField(), allow_none=False, required=False, missing=frozenset()
+        )
         # Added in Parsec v1.15
         # Filtered entries are entries present in the base manifest that are not exposed
         # locally. We keep track of them to remember that those entries have not been
         # deleted locally and hence should be restored when crafting the remote manifest
         # to upload.
-        remote_confinement_points = fields.FrozenSet(EntryIDField(required=True))
+        remote_confinement_points = fields.FrozenSet(
+            EntryIDField(), allow_none=False, required=False, missing=frozenset()
+        )
         # Added in Parsec v1.15
         # Speculative placeholders are created when we want to access a workspace
         # but didn't retrieve manifest data from backend yet. This implies:
@@ -836,8 +841,6 @@ class LocalWorkspaceManifest(BaseLocalManifest, LocalFolderishManifestMixin):
             # TODO: but in theory remote workspace manifest should assert version > 0 !
             assert data["base"].version != 0 or not data["base"].children
             data.pop("type")
-            data.setdefault("local_confinement_points", frozenset())
-            data.setdefault("remote_confinement_points", frozenset())
             return LocalWorkspaceManifest(**data)
 
     base: RemoteWorkspaceManifest
