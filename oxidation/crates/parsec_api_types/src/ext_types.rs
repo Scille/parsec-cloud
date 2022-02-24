@@ -230,3 +230,22 @@ impl<'de> serde::de::Visitor<'de> for UuidExtVisitor {
         }
     }
 }
+
+/*
+ * Optional field helper (used for backward compatibility)
+ */
+
+pub mod maybe_field {
+    use serde::{Deserialize, Deserializer};
+
+    /// Any value that is present is considered Some value, including null.
+    pub fn deserialize_some<'de, T, D>(deserializer: D) -> Result<Option<T>, D::Error>
+    where
+        T: Deserialize<'de>,
+        D: Deserializer<'de>,
+    {
+        Deserialize::deserialize(deserializer).map(Some)
+    }
+
+    // serialize is not needed given we never omit fields
+}

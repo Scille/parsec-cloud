@@ -7,29 +7,6 @@ use serde_with::*;
 use parsec_api_types::data_macros::new_data_struct_type;
 use parsec_api_types::*;
 
-// TODO: move this somewhere more generic
-pub mod maybe_field {
-    use serde::{Deserialize, Deserializer, Serialize, Serializer};
-
-    /// Any value that is present is considered Some value, including null.
-    pub fn deserialize_some<'de, T, D>(deserializer: D) -> Result<Option<T>, D::Error>
-    where
-        T: Deserialize<'de>,
-        D: Deserializer<'de>,
-    {
-        Deserialize::deserialize(deserializer).map(Some)
-    }
-
-    /// Any value that is present is considered Some value, including null.
-    pub fn serialize_some<T, S>(x: &Option<T>, s: S) -> Result<S::Ok, S::Error>
-    where
-        T: Serialize,
-        S: Serializer,
-    {
-        x.serialize(s)
-    }
-}
-
 /*
  * Schema for legacy device files where the filename contains complementary information.
  */
@@ -41,6 +18,7 @@ new_data_struct_type!(
     salt: Vec<u8>,
     ciphertext: Vec<u8>,
 
+    // Added in Parsec v1.14
     // Since human_handle/device_label has been introduced, device_id is
     // redacted (i.e. user_id and device_name are 2 random uuids), hence
     // those fields have been added to the device file so the login page in
@@ -48,13 +26,12 @@ new_data_struct_type!(
     #[serde(
         default,
         deserialize_with = "maybe_field::deserialize_some",
-        serialize_with = "maybe_field::serialize_some"
     )]
     human_handle: Option<Option<HumanHandle>>,
+    // Added in Parsec v1.14
     #[serde(
         default,
         deserialize_with = "maybe_field::deserialize_some",
-        serialize_with = "maybe_field::serialize_some"
     )]
     device_label: Option<Option<DeviceLabel>>,
 );

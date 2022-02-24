@@ -9,8 +9,6 @@ use std::num::NonZeroU64;
 use parsec_api_crypto::SecretKey;
 use parsec_api_types::*;
 
-use crate::maybe_field;
-
 macro_rules! impl_local_manifest_dump_load {
     ($name:ident) => {
         impl $name {
@@ -146,11 +144,13 @@ new_data_struct_type!(
     #[serde_as(as = "DateTimeExtFormat")]
     updated: DateTime<Utc>,
     children: HashMap<EntryName, ManifestEntry>,
+    // Added in Parsec v1.15
     #[serde(
         default,
         deserialize_with = "maybe_field::deserialize_some",
     )]
     local_confinement_points: Option<HashSet<ManifestEntry>>,
+    // Added in Parsec v1.15
     #[serde(
         default,
         deserialize_with = "maybe_field::deserialize_some",
@@ -232,16 +232,19 @@ new_data_struct_type!(
     #[serde_as(as = "DateTimeExtFormat")]
     updated: DateTime<Utc>,
     children: HashMap<EntryName, ManifestEntry>,
+    // Added in Parsec v1.15
     #[serde(
         default,
         deserialize_with = "maybe_field::deserialize_some",
     )]
     local_confinement_points: Option<HashSet<ManifestEntry>>,
+    // Added in Parsec v1.15
     #[serde(
         default,
         deserialize_with = "maybe_field::deserialize_some",
     )]
     remote_confinement_points: Option<HashSet<ManifestEntry>>,
+    // Added in Parsec v2.6
     #[serde(
         default,
         deserialize_with = "maybe_field::deserialize_some",
@@ -316,6 +319,7 @@ new_data_struct_type!(
     updated: DateTime<Utc>,
     last_processed_message: u32,
     workspaces: Vec<WorkspaceEntry>,
+    // Added in Parsec v2.6
     #[serde(
         default,
         deserialize_with = "maybe_field::deserialize_some",

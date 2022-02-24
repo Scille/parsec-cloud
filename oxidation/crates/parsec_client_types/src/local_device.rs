@@ -140,46 +140,17 @@ impl LocalDevice {
     // }
 }
 
-// TODO: move this somewhere more generic
-mod maybe_field {
-    use serde::{Deserialize, Deserializer, Serialize, Serializer};
-
-    /// Any value that is present is considered Some value, including null.
-    pub fn deserialize_some<'de, T, D>(deserializer: D) -> Result<Option<T>, D::Error>
-    where
-        T: Deserialize<'de>,
-        D: Deserializer<'de>,
-    {
-        Deserialize::deserialize(deserializer).map(Some)
-    }
-
-    /// Any value that is present is considered Some value, including null.
-    pub fn serialize_some<T, S>(x: &Option<T>, s: S) -> Result<S::Ok, S::Error>
-    where
-        T: Serialize,
-        S: Serializer,
-    {
-        x.serialize(s)
-    }
-}
-
 #[derive(Debug, Serialize, Deserialize)]
 struct LocalDeviceData {
     pub organization_addr: BackendOrganizationAddr,
     pub device_id: DeviceID,
+    // Added in Parsec v1.14
     // `device_label` and `human_handle` are new fields (so legacy data may not contain
     // them) that are optional. Hence missing field is handled similarly that `None`.
-    #[serde(
-        default,
-        deserialize_with = "maybe_field::deserialize_some",
-        serialize_with = "maybe_field::serialize_some"
-    )]
+    #[serde(default, deserialize_with = "maybe_field::deserialize_some")]
     pub device_label: Option<Option<DeviceLabel>>,
-    #[serde(
-        default,
-        deserialize_with = "maybe_field::deserialize_some",
-        serialize_with = "maybe_field::serialize_some"
-    )]
+    // Added in Parsec v1.13
+    #[serde(default, deserialize_with = "maybe_field::deserialize_some")]
     pub human_handle: Option<Option<HumanHandle>>,
     pub signing_key: SigningKey,
     pub private_key: PrivateKey,
@@ -187,11 +158,8 @@ struct LocalDeviceData {
     // backward compatibility), hence `None` is not a valid value (only missing
     // allowed
     pub is_admin: bool,
-    #[serde(
-        default,
-        deserialize_with = "maybe_field::deserialize_some",
-        serialize_with = "maybe_field::serialize_some"
-    )]
+    // Added in Parsec v1.14
+    #[serde(default, deserialize_with = "maybe_field::deserialize_some")]
     pub profile: Option<UserProfile>,
     pub user_manifest_id: EntryID,
     pub user_manifest_key: SecretKey,
