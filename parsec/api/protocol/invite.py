@@ -87,6 +87,7 @@ InvitationEmailSentStatusField = fields.enum_field_factory(InvitationEmailSentSt
 
 class InviteNewRepSchema(BaseRepSchema):
     token = InvitationTokenField(required=True)
+    # Added in API 2.3 (Parsec v2.6.0)
     # Field used when the invitation is correctly created but the invitation email cannot be sent
     email_sent = InvitationEmailSentStatusField(required=False, allow_none=False)
 

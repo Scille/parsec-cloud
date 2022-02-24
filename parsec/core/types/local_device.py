@@ -28,13 +28,16 @@ class LocalDevice(BaseLocalData):
     class SCHEMA_CLS(BaseSchema):
         organization_addr = BackendOrganizationAddrField(required=True)
         device_id = DeviceIDField(required=True)
+        # Added in Parsec v1.14
         device_label = DeviceLabelField(allow_none=True, missing=None)
+        # Added in Parsec v1.13
         human_handle = HumanHandleField(allow_none=True, missing=None)
         signing_key = fields.SigningKey(required=True)
         private_key = fields.PrivateKey(required=True)
         # `profile` replaces `is_admin` field (which is still required for backward
         # compatibility), hence `None` is not allowed
         is_admin = fields.Boolean(required=True)
+        # Added in Parsec v1.14
         profile = UserProfileField(allow_none=False)
         user_manifest_id = EntryIDField(required=True)
         user_manifest_key = fields.SecretKey(required=True)

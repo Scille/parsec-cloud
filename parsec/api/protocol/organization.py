@@ -15,6 +15,7 @@ class APIV1_OrganizationBootstrapReqSchema(BaseReqSchema):
     root_verify_key = fields.VerifyKey(required=True)
     user_certificate = fields.Bytes(required=True)
     device_certificate = fields.Bytes(required=True)
+    # Added Parsec 1.14.0, but we forgot to bump API V1 revision :'(
     # Same certificates than above, but expurged of human_handle/device_label
     # Backward compatibility prevent those field to be required, however
     # they should be considered so by recent version of Parsec (hence the

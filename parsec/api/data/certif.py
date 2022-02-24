@@ -34,12 +34,14 @@ class UserCertificateContent(BaseAPISignedData):
 
         type = fields.CheckedConstant("user_certificate", required=True)
         user_id = UserIDField(required=True)
+        # Added in Parsec v1.13
         # Human handle can be none in case of redacted certificate
         human_handle = HumanHandleField(allow_none=True, missing=None)
         public_key = fields.PublicKey(required=True)
         # `profile` replaces `is_admin` field (which is still required for backward
         # compatibility), hence `None` is not allowed
         is_admin = fields.Boolean(required=True)
+        # Added in Parsec v1.14
         profile = UserProfileField(allow_none=False)
 
         @post_load
@@ -150,6 +152,7 @@ class DeviceCertificateContent(BaseAPISignedData):
 
         type = fields.CheckedConstant("device_certificate", required=True)
         device_id = DeviceIDField(required=True)
+        # Added in Parsec v1.14
         # Device label can be none in case of redacted certificate
         device_label = DeviceLabelField(allow_none=True, missing=None)
         verify_key = fields.VerifyKey(required=True)

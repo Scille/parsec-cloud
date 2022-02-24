@@ -103,7 +103,9 @@ class LegacyDeviceFileSchema(BaseSchema):
     # redacted (i.e. user_id and device_name are 2 random uuids), hence
     # those fields have been added to the device file so the login page in
     # the GUI can use them to provide useful information.
+    # Added in Parsec v1.14
     human_handle = HumanHandleField(allow_none=True, missing=None)
+    # Added in Parsec v1.14
     device_label = DeviceLabelField(allow_none=True, missing=None)
 
 
