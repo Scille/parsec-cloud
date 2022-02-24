@@ -1,8 +1,5 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BSLv1.1 (eventually AGPLv3) 2016-2021 Scille SAS
 
-// Data pipeline:
-// content -> serialized -> compressed -> signed -> encrypted
-
 #[macro_export]
 macro_rules! new_data_type_enum {
     (
