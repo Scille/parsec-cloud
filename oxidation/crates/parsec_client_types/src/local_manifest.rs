@@ -263,7 +263,7 @@ impl From<LocalWorkspaceManifestData> for LocalWorkspaceManifest {
             children: data.children,
             local_confinement_points: data.local_confinement_points.unwrap_or_default(),
             remote_confinement_points: data.remote_confinement_points.unwrap_or_default(),
-            speculative: data.speculative.unwrap_or_default(),
+            speculative: data.speculative.unwrap_or(false),
         }
     }
 }
@@ -335,7 +335,7 @@ impl From<LocalUserManifestData> for LocalUserManifest {
             updated: data.updated,
             last_processed_message: data.last_processed_message,
             workspaces: data.workspaces,
-            speculative: data.speculative.unwrap_or_default(),
+            speculative: data.speculative.unwrap_or(false),
         }
     }
 }
