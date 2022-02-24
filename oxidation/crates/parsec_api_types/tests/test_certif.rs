@@ -3,7 +3,7 @@
 use hex_literal::hex;
 use parsec_api_types::UserCertificate;
 use pretty_assertions::assert_eq;
-use rstest::*;
+use rstest::rstest;
 
 use parsec_api_types::*;
 
