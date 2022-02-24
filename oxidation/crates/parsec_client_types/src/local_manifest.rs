@@ -41,13 +41,13 @@ pub struct Chunk {
     // The raw data is identified by its `id` attribute and is aligned using the
     // `raw_offset` attribute with respect to the file addressing. The raw data
     // size is stored as `raw_size`.
-
+    //
     // The `start` and `stop` attributes then describes the span of the actual data
     // still with respect to the file addressing.
-
+    //
     // This means the following rule applies:
     //     raw_offset <= start < stop <= raw_start + raw_size
-
+    //
     // Access is an optional block access that can be used to produce a remote manifest
     // when the chunk corresponds to an actual block within the context of this manifest.
     pub id: ChunkID,
@@ -302,7 +302,6 @@ pub struct LocalUserManifest {
     // a data is not present in the placeholder compared with a remote because:
     // a) the data is not locally known (speculative is True)
     // b) the data is known, but has been locally removed (speculative is False)
-    // Prevented to be `required=True` by backward compatibility
     pub speculative: bool,
 }
 
