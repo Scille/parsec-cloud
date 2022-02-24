@@ -52,7 +52,6 @@ jobs:
   - publish: dist/
     artifact: wheel
 
-
 #################################################################################
 # Step 1: Tests
 
@@ -155,6 +154,11 @@ jobs:
     displayName: 'Bootstrap'
   - bash: |
       set -eux
+      cargo test
+    workingDirectory: $(Build.SourcesDirectory)/oxidation
+    displayName: 'Rust Tests'
+  - bash: |
+      set -eux
       pip install .[all,oxidation]
       # Remove the parsec folder from the source to force use of the wheel
       rm -rf parsec
@@ -162,7 +166,7 @@ jobs:
   - bash: |
       set -eux
       py.test $(pytest.base_args) tests -n auto --runrust
-    displayName: 'Tests'
+    displayName: 'Python Tests'
 
 
 #################################################################################
