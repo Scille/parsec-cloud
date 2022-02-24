@@ -2,6 +2,8 @@
 
 use serde::{Deserialize, Serialize};
 
+use crate::{impl_api_protocol_dump_load, Status};
+
 /*
  * PingReqSchema
  */
@@ -12,11 +14,16 @@ pub struct PingReqSchema {
     pub ping: String,
 }
 
+impl_api_protocol_dump_load!(PingReqSchema);
+
 /*
  * PingRepSchema
  */
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
 pub struct PingRepSchema {
-    pub ping: String,
+    pub status: Status,
+    pub pong: String,
 }
+
+impl_api_protocol_dump_load!(PingRepSchema);

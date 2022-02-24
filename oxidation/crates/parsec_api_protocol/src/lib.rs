@@ -19,3 +19,26 @@ pub use ping::*;
 pub use realm::*;
 pub use user::*;
 pub use vlob::*;
+
+use serde::{Deserialize, Serialize};
+
+#[macro_export]
+macro_rules! impl_api_protocol_dump_load {
+    ($name:ident) => {
+        impl $name {
+            pub fn dump(&self) -> Vec<u8> {
+                rmp_serde::to_vec_named(&self).unwrap_or_else(|_| unreachable!())
+            }
+
+            pub fn load(data: &[u8]) -> Result<Self, &'static str> {
+                rmp_serde::from_read_ref::<_, Self>(&data).map_err(|_| "Invalid data")
+            }
+        }
+    };
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
+#[serde(rename_all = "lowercase")]
+pub enum Status {
+    Ok,
+}

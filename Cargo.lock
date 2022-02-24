@@ -625,9 +625,12 @@ name = "parsec_api_protocol"
 version = "0.0.0"
 dependencies = [
  "chrono",
+ "hex-literal",
  "parsec_api_crypto",
  "parsec_api_types",
  "paste 1.0.6",
+ "rmp-serde",
+ "rstest",
  "serde",
  "serde_with",
 ]

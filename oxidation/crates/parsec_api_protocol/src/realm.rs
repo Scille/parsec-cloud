@@ -7,6 +7,8 @@ use std::collections::HashMap;
 
 use parsec_api_types::{DateTimeExtFormat, DeviceID, RealmID, UserID};
 
+use crate::Status;
+
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
 #[serde(rename_all = "SCREAMING_SNAKE_CASE")]
 pub enum MaintenanceType {
@@ -29,7 +31,9 @@ pub struct RealmCreateReqSchema {
  */
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
-pub struct RealmCreateRepSchema;
+pub struct RealmCreateRepSchema {
+    pub status: Status,
+}
 
 /*
  * RealmStatusReqSchema
@@ -48,6 +52,7 @@ pub struct RealmStatusReqSchema {
 #[serde_as]
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
 pub struct RealmStatusRepSchema {
+    pub status: Status,
     pub in_maintenance: bool,
     pub maintenance_type: Option<MaintenanceType>,
     #[serde_as(as = "Option<DateTimeExtFormat>")]
@@ -72,6 +77,7 @@ pub struct RealmStatsReqSchema {
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
 pub struct RealmStatsRepSchema {
+    pub status: Status,
     pub blocks_size: u64,
     pub vlobs_size: u64,
 }
@@ -95,6 +101,7 @@ pub struct RealmGetRoleCertificatesReqSchema {
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
 pub struct RealmGetRoleCertificatesRepSchema {
+    pub status: Status,
     pub certificates: Vec<Vec<u8>>,
 }
 
@@ -114,7 +121,9 @@ pub struct RealmUpdateRolesReqSchema {
  */
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
-pub struct RealmUpdateRolesRepSchema;
+pub struct RealmUpdateRolesRepSchema {
+    pub status: Status,
+}
 
 /*
  * RealmStartReencryptionMaintenanceReqSchema
@@ -136,7 +145,9 @@ pub struct RealmStartReencryptionMaintenanceReqSchema {
  */
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
-pub struct RealmStartReencryptionMaintenanceRepSchema;
+pub struct RealmStartReencryptionMaintenanceRepSchema {
+    pub status: Status,
+}
 
 /*
  * RealmFinishReencryptionMaintenanceReqSchema
@@ -154,4 +165,6 @@ pub struct RealmFinishReencryptionMaintenanceReqSchema {
  */
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
-pub struct RealmFinishReencryptionMaintenanceRepSchema;
+pub struct RealmFinishReencryptionMaintenanceRepSchema {
+    pub status: Status,
+}

@@ -54,7 +54,6 @@ pub struct RealmRolesUdpated;
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
 pub struct EventsPingedRepSchema {
-    pub cmd: String,
     pub event: Pinged,
     pub ping: String,
 }
@@ -65,7 +64,6 @@ pub struct EventsPingedRepSchema {
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
 pub struct EventsRealmRolesUpdatedRepSchema {
-    pub cmd: String,
     pub event: RealmRolesUdpated,
     pub realm_id: RealmID,
     pub role: RealmRole,
@@ -77,7 +75,6 @@ pub struct EventsRealmRolesUpdatedRepSchema {
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
 pub struct EventsRealmVlobsUpdatedRepSchema {
-    pub cmd: String,
     pub event: RealmVlobsUpdated,
     pub realm_id: RealmID,
     pub checkpoint: u64,
@@ -91,7 +88,6 @@ pub struct EventsRealmVlobsUpdatedRepSchema {
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
 pub struct EventsRealmMaintenanceStartedRepSchema {
-    pub cmd: String,
     pub event: RealmMaintenanceStarted,
     pub realm_id: RealmID,
     pub encryption_revision: u64,
@@ -103,7 +99,6 @@ pub struct EventsRealmMaintenanceStartedRepSchema {
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
 pub struct EventsRealmMaintenanceFinishedRepSchema {
-    pub cmd: String,
     pub event: RealmMaintenanceFinished,
     pub realm_id: RealmID,
     pub encryption_revision: u64,
@@ -115,7 +110,6 @@ pub struct EventsRealmMaintenanceFinishedRepSchema {
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
 pub struct EventsMessageReceivedRepSchema {
-    pub cmd: String,
     pub event: MessageReceived,
     pub index: u64,
 }
@@ -126,7 +120,6 @@ pub struct EventsMessageReceivedRepSchema {
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
 pub struct EventsInviteStatusChangedRepSchema {
-    pub cmd: String,
     pub event: InviteStatusChanged,
     pub token: InvitationToken,
     pub invitation_status: InvitationStatus,
@@ -155,7 +148,6 @@ pub struct Event;
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
 pub struct EventsListenRepSchema {
-    pub cmd: String,
     pub type_field: Event,
     pub type_schemas: APIEvent,
 }

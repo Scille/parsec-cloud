@@ -9,7 +9,7 @@ macro_rules! new_data_type_enum {
     ) => {
         // Enum with single value works as a constant field
         #[derive(Default, Clone, Copy, Debug, PartialEq, Eq)]
-        struct $name;
+        pub struct $name;
 
         impl Serialize for $name {
             fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
@@ -76,11 +76,11 @@ macro_rules! new_data_struct_type {
             pub struct $name {
 
                 #[serde(rename="type")]
-                type_: [<$name DataType>],
+                pub type_: [<$name DataType>],
 
                 $(
                     $(#[$field_cfgs])*
-                    $field: $field_type
+                    pub $field: $field_type
                 ),*
 
             }
