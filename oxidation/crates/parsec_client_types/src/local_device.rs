@@ -2,10 +2,10 @@
 
 use serde::{Deserialize, Serialize};
 use serde_with::*;
+use sha2::Digest;
 
 use parsec_api_crypto::*;
 use parsec_api_types::*;
-use sha2::Digest;
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
 #[serde(into = "LocalDeviceData", try_from = "LocalDeviceData")]

@@ -7,9 +7,10 @@ use serde::{Deserialize, Serialize};
 use serde_with::*;
 use std::io::{Read, Write};
 
+use parsec_api_crypto::{PrivateKey, PublicKey, SecretKey, SigningKey, VerifyKey};
+
 use super::ext_types::DateTimeExtFormat;
 use crate::{DeviceID, EntryID, EntryName};
-use parsec_api_crypto::{PrivateKey, PublicKey, SecretKey, SigningKey, VerifyKey};
 
 #[serde_as]
 #[derive(Debug, Serialize, Deserialize, PartialEq, Eq)]

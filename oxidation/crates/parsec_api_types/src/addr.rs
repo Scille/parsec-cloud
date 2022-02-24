@@ -7,8 +7,9 @@ use std::convert::TryFrom;
 use std::str::FromStr;
 use url::Url;
 
-use super::{EntryID, InvitationToken, InvitationType, OrganizationID};
 use parsec_api_crypto::VerifyKey;
+
+use super::{EntryID, InvitationToken, InvitationType, OrganizationID};
 
 const PARSEC_SCHEME: &str = "parsec";
 const PARSEC_SSL_DEFAULT_PORT: u16 = 443;

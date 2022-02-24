@@ -6,10 +6,11 @@ use serde::{Deserialize, Serialize};
 use serde_with::*;
 use std::str::FromStr;
 
+use parsec_api_crypto::{PrivateKey, PublicKey, SecretKey, VerifyKey};
+
 use crate::data_macros::{impl_transparent_data_format_conversion, new_data_struct_type};
 use crate::ext_types::new_uuid_type;
 use crate::{DeviceID, DeviceLabel, EntryID, HumanHandle, UserProfile};
-use parsec_api_crypto::{PrivateKey, PublicKey, SecretKey, VerifyKey};
 
 /*
  * InvitationType

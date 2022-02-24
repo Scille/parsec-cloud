@@ -2,11 +2,10 @@
 
 use hex_literal::hex;
 use rstest::*;
+use std::collections::HashMap;
 
 use parsec_api_crypto::*;
 use parsec_api_types::*;
-
-use std::collections::HashMap;
 
 use tests_fixtures::{alice, Device};
 

@@ -7,10 +7,11 @@ use serde::{Deserialize, Serialize};
 use serde_with::*;
 use std::io::{Read, Write};
 
+use parsec_api_crypto::{PublicKey, SigningKey, VerifyKey};
+
 use crate::data_macros::{impl_transparent_data_format_conversion, new_data_struct_type};
 use crate::ext_types::DateTimeExtFormat;
 use crate::{DeviceID, DeviceLabel, EntryID, HumanHandle, RealmRole, UserID, UserProfile};
-use parsec_api_crypto::{PublicKey, SigningKey, VerifyKey};
 
 #[allow(unused_macros)]
 macro_rules! impl_verify_and_load_allow_root {
