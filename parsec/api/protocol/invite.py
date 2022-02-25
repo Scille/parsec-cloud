@@ -170,13 +170,13 @@ class InviteInfoUserRepSchema(BaseRepSchema):
     type = fields.EnumCheckedConstant(InvitationType.USER, required=True)
     claimer_email = fields.String(required=True)
     greeter_user_id = UserIDField(required=True)
-    greeter_human_handle = HumanHandleField(allow_none=True, missing=True)
+    greeter_human_handle = HumanHandleField(allow_none=True, required=True)
 
 
 class InviteInfoDeviceRepSchema(BaseRepSchema):
     type = fields.EnumCheckedConstant(InvitationType.DEVICE, required=True)
     greeter_user_id = UserIDField(required=True)
-    greeter_human_handle = HumanHandleField(allow_none=True, missing=True)
+    greeter_human_handle = HumanHandleField(allow_none=True, required=True)
 
 
 class InviteInfoRepSchema(OneOfSchema):
