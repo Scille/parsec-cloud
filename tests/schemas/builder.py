@@ -5,7 +5,13 @@ import json
 import pkgutil
 import importlib
 
-from parsec.serde import BaseSerializer, JSONSerializer, MsgpackSerializer, ZipMsgpackSerializer
+from parsec.serde import (
+    BaseSerializer,
+    JSONSerializer,
+    MsgpackSerializer,
+    ZipMsgpackSerializer,
+    OneOfSchema,
+)
 from parsec.serde.fields import (
     List,
     Map,
@@ -83,7 +89,16 @@ def field_to_spec(field):
 
 
 def schema_to_spec(schema):
-    return {"fields": {k: field_to_spec(v) for k, v in schema.fields.items()}}
+    if isinstance(schema, OneOfSchema):
+        return {
+            "oneof_field": schema.type_field,
+            "oneof_schemas": {k.value: schema_to_spec(v) for k, v in schema.type_schemas.items()},
+            "oneof_fallback_schema": schema_to_spec(schema.fallback_type_schema)
+            if schema.fallback_type_schema
+            else None,
+        }
+    else:
+        return {"fields": {k: field_to_spec(v) for k, v in schema.fields.items()}}
 
 
 def data_class_to_spec(data_class):
