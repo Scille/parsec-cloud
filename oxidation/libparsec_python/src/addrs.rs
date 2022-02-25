@@ -4,14 +4,11 @@ use pyo3::basic::CompareOp;
 use pyo3::exceptions::PyValueError;
 use pyo3::prelude::*;
 use pyo3::types::{PyBytes, PyDict, PyString, PyType};
-
-use super::ids::{EntryID, OrganizationID};
-
 use std::str::FromStr;
 
-use crate::binding_utils::comp_op;
-use crate::binding_utils::hash_generic;
-use crate::crypto;
+use crate::binding_utils::{comp_op, hash_generic};
+use crate::crypto::VerifyKey;
+use crate::ids::{EntryID, OrganizationID};
 use crate::invite::InvitationToken;
 
 #[pyclass]
@@ -108,7 +105,7 @@ impl BackendOrganizationAddr {
     #[args(py_kwargs = "**")]
     fn new(
         organization_id: OrganizationID,
-        root_verify_key: crypto::VerifyKey,
+        root_verify_key: VerifyKey,
         py_kwargs: Option<&PyDict>,
     ) -> PyResult<Self> {
         let addr = match py_kwargs {
@@ -178,9 +175,9 @@ impl BackendOrganizationAddr {
     }
 
     #[getter]
-    fn root_verify_key(&self) -> PyResult<crypto::VerifyKey> {
+    fn root_verify_key(&self) -> PyResult<VerifyKey> {
         let data = self.0.root_verify_key().as_ref();
-        Ok(crypto::VerifyKey::new(data).unwrap())
+        Ok(VerifyKey::new(data).unwrap())
     }
 
     fn __str__(&self) -> PyResult<String> {
@@ -237,7 +234,7 @@ impl BackendOrganizationAddr {
         _cls: &PyType,
         backend_addr: BackendAddr,
         organization_id: OrganizationID,
-        root_verify_key: crypto::VerifyKey,
+        root_verify_key: VerifyKey,
     ) -> PyResult<Self> {
         Ok(Self(parsec_api_types::BackendOrganizationAddr::new(
             backend_addr.0,
@@ -420,7 +417,7 @@ impl BackendOrganizationBootstrapAddr {
     fn generate_organization_addr(
         &self,
         py: Python,
-        root_verify_key: crypto::VerifyKey,
+        root_verify_key: VerifyKey,
     ) -> PyResult<BackendOrganizationAddr> {
         match BackendOrganizationAddr::build(
             PyType::new::<BackendOrganizationAddr>(py),
@@ -782,7 +779,7 @@ impl BackendInvitationAddr {
     fn generate_organization_addr(
         &self,
         py: Python,
-        root_verify_key: crypto::VerifyKey,
+        root_verify_key: VerifyKey,
     ) -> PyResult<BackendOrganizationAddr> {
         match BackendOrganizationAddr::build(
             PyType::new::<BackendOrganizationAddr>(py),

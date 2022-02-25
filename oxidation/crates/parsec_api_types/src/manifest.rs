@@ -229,7 +229,7 @@ fn generate_local_author_legacy_placeholder() -> DeviceID {
  * Blocksize
  */
 
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
+#[derive(Debug, Clone, Copy, Serialize, Deserialize, PartialEq, Eq)]
 pub struct Blocksize(u64);
 
 impl TryFrom<u64> for Blocksize {

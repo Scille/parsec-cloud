@@ -1,6 +1,6 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BSLv1.1 (eventually AGPLv3) 2016-2021 Scille SAS
 
-use pyo3::prelude::*;
+use pyo3::prelude::{pymodule, PyModule, PyResult, Python};
 
 mod addrs;
 mod binding_utils;

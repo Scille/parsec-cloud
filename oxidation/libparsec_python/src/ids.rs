@@ -6,8 +6,7 @@ use pyo3::prelude::*;
 use pyo3::types::{IntoPyDict, PyBytes, PyString, PyType};
 use uuid::Uuid;
 
-use crate::binding_utils::comp_op;
-use crate::binding_utils::hash_generic;
+use crate::binding_utils::{comp_op, hash_generic};
 
 #[pyclass]
 #[derive(PartialEq, Eq, Clone)]
