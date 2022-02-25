@@ -3,7 +3,7 @@
 use hex_literal::hex;
 use parsec_api_types::UserCertificate;
 use pretty_assertions::assert_eq;
-use rstest::*;
+use rstest::rstest;
 
 use parsec_api_types::*;
 
@@ -347,7 +347,6 @@ fn serde_revoked_user_certificate(alice: &Device, bob: &Device) {
     let certif =
         RevokedUserCertificate::verify_and_load(&data, &alice.verify_key(), &alice.device_id)
             .unwrap();
-    println!("{:?}", certif);
     assert_eq!(certif, expected);
 
     // Also test serialization round trip

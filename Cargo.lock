@@ -610,7 +610,7 @@ dependencies = [
  "pretty_assertions",
  "rand 0.7.3",
  "rand 0.8.4",
- "rmp-serde 1.0.0",
+ "rmp-serde",
  "serde",
  "serde_bytes",
  "serde_test",
@@ -636,7 +636,7 @@ dependencies = [
  "pretty_assertions",
  "rand 0.8.4",
  "regex",
- "rmp-serde 0.15.5",
+ "rmp-serde",
  "rstest",
  "rstest_reuse",
  "serde",
@@ -655,12 +655,14 @@ dependencies = [
 name = "parsec_client_types"
 version = "0.0.0"
 dependencies = [
+ "chrono",
+ "flate2",
  "hex-literal",
  "parsec_api_crypto",
  "parsec_api_types",
  "paste 1.0.6",
  "pretty_assertions",
- "rmp-serde 0.15.5",
+ "rmp-serde",
  "rstest",
  "rstest_reuse",
  "serde",
@@ -934,17 +936,6 @@ checksum = "4f55e5fa1446c4d5dd1f5daeed2a4fe193071771a2636274d0d7a3b082aa7ad6"
 dependencies = [
  "byteorder",
  "num-traits",
-]
-
-[[package]]
-name = "rmp-serde"
-version = "0.15.5"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "723ecff9ad04f4ad92fe1c8ca6c20d2196d9286e9c60727c4cb5511629260e9d"
-dependencies = [
- "byteorder",
- "rmp",
- "serde",
 ]
 
 [[package]]

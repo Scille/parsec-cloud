@@ -90,7 +90,7 @@ impl<'de> DeserializeAs<'de, DateTime<Utc>> for DateTimeExtFormat {
 
 macro_rules! new_uuid_type {
     (pub $name:ident) => {
-        #[derive(Clone, Debug, PartialEq, Eq)]
+        #[derive(Clone, Debug, PartialEq, Eq, Hash)]
         pub struct $name(uuid::Uuid);
 
         impl $name {
@@ -229,4 +229,23 @@ impl<'de> serde::de::Visitor<'de> for UuidExtVisitor {
             Err(serde::de::Error::invalid_value(unexp, &self))
         }
     }
+}
+
+/*
+ * Optional field helper (used for backward compatibility)
+ */
+
+pub mod maybe_field {
+    use serde::{Deserialize, Deserializer};
+
+    /// Any value that is present is considered Some value, including null.
+    pub fn deserialize_some<'de, T, D>(deserializer: D) -> Result<Option<T>, D::Error>
+    where
+        T: Deserialize<'de>,
+        D: Deserializer<'de>,
+    {
+        Deserialize::deserialize(deserializer).map(Some)
+    }
+
+    // serialize is not needed given we never omit fields
 }

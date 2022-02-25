@@ -7,10 +7,11 @@ use serde::{Deserialize, Serialize};
 use serde_with::*;
 use std::io::{Read, Write};
 
-use crate::data_macros::{impl_transparent_data_format_convertion, new_data_struct_type};
-use crate::ext_types::DateTimeExtFormat;
-use crate::{DeviceID, DeviceLabel, EntryID, HumanHandle, RealmRole, UserID, UserProfile};
 use parsec_api_crypto::{PublicKey, SigningKey, VerifyKey};
+
+use crate::data_macros::{impl_transparent_data_format_conversion, new_data_struct_type};
+use crate::ext_types::{maybe_field, DateTimeExtFormat};
+use crate::{DeviceID, DeviceLabel, EntryID, HumanHandle, RealmRole, UserID, UserProfile};
 
 #[allow(unused_macros)]
 macro_rules! impl_verify_and_load_allow_root {
@@ -186,18 +187,21 @@ new_data_struct_type!(
     timestamp: DateTime<Utc>,
 
     user_id: UserID,
-    // Human handle can be none in case of redacted certificate
-    human_handle: Option<HumanHandle>,
+    // Added in Parsec v1.13
+    #[serde(default, deserialize_with = "maybe_field::deserialize_some")]
+    human_handle: Option<Option<HumanHandle>>,
     public_key: PublicKey,
     // `profile` replaces `is_admin` field (which is still required for
     // backward compatibility)
     is_admin: bool,
+    // Added in Parsec v1.14
+    #[serde(default, deserialize_with = "maybe_field::deserialize_some")]
     profile: Option<UserProfile>,
 );
 
 impl From<UserCertificateData> for UserCertificate {
     fn from(data: UserCertificateData) -> Self {
-        let profile = data.profile.unwrap_or_else(|| match data.is_admin {
+        let profile = data.profile.unwrap_or(match data.is_admin {
             true => UserProfile::Admin,
             false => UserProfile::Standard,
         });
@@ -205,7 +209,7 @@ impl From<UserCertificateData> for UserCertificate {
             author: data.author,
             timestamp: data.timestamp,
             user_id: data.user_id,
-            human_handle: data.human_handle,
+            human_handle: data.human_handle.unwrap_or_default(),
             public_key: data.public_key,
             profile,
         }
@@ -219,7 +223,7 @@ impl From<UserCertificate> for UserCertificateData {
             author: obj.author,
             timestamp: obj.timestamp,
             user_id: obj.user_id,
-            human_handle: obj.human_handle,
+            human_handle: Some(obj.human_handle),
             public_key: obj.public_key,
             profile: Some(obj.profile),
             is_admin: obj.profile == UserProfile::Admin,
@@ -258,7 +262,7 @@ new_data_struct_type!(
     user_id: UserID,
 );
 
-impl_transparent_data_format_convertion!(
+impl_transparent_data_format_conversion!(
     RevokedUserCertificate,
     RevokedUserCertificateData,
     author,
@@ -295,20 +299,36 @@ new_data_struct_type!(
     timestamp: DateTime<Utc>,
 
     device_id: DeviceID,
-    // Device label can be none in case of redacted certificate
-    device_label: Option<DeviceLabel>,
+    // Added in Parsec v1.14
+    #[serde(default, deserialize_with = "maybe_field::deserialize_some")]
+    device_label: Option<Option<DeviceLabel>>,
     verify_key: VerifyKey,
 );
 
-impl_transparent_data_format_convertion!(
-    DeviceCertificate,
-    DeviceCertificateData,
-    author,
-    timestamp,
-    device_id,
-    device_label,
-    verify_key,
-);
+impl From<DeviceCertificateData> for DeviceCertificate {
+    fn from(data: DeviceCertificateData) -> Self {
+        Self {
+            author: data.author,
+            timestamp: data.timestamp,
+            device_id: data.device_id,
+            device_label: data.device_label.unwrap_or_default(),
+            verify_key: data.verify_key,
+        }
+    }
+}
+
+impl From<DeviceCertificate> for DeviceCertificateData {
+    fn from(obj: DeviceCertificate) -> Self {
+        Self {
+            type_: Default::default(),
+            author: obj.author,
+            timestamp: obj.timestamp,
+            device_id: obj.device_id,
+            device_label: Some(obj.device_label),
+            verify_key: obj.verify_key,
+        }
+    }
+}
 
 /*
  * RealmRoleCertificate
@@ -344,7 +364,7 @@ new_data_struct_type!(
     role: Option<RealmRole>,  // TODO: use a custom type instead
 );
 
-impl_transparent_data_format_convertion!(
+impl_transparent_data_format_conversion!(
     RealmRoleCertificate,
     RealmRoleCertificateData,
     author,

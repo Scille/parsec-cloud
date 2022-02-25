@@ -174,7 +174,7 @@ impl BackendOrganizationAddr {
 
     #[getter]
     fn organization_id(&self) -> PyResult<OrganizationID> {
-        Ok(OrganizationID::new(&self.0.organization_id().to_string()).unwrap())
+        Ok(OrganizationID::new(self.0.organization_id().as_ref()).unwrap())
     }
 
     #[getter]
@@ -363,7 +363,7 @@ impl BackendOrganizationBootstrapAddr {
 
     #[getter]
     fn organization_id(&self) -> PyResult<OrganizationID> {
-        Ok(OrganizationID::new(&self.0.organization_id().to_string()).unwrap())
+        Ok(OrganizationID::new(self.0.organization_id().as_ref()).unwrap())
     }
 
     #[getter]
@@ -545,7 +545,7 @@ impl BackendOrganizationFileLinkAddr {
 
     #[getter]
     fn organization_id(&self) -> PyResult<OrganizationID> {
-        Ok(OrganizationID::new(&self.0.organization_id().to_string()).unwrap())
+        Ok(OrganizationID::new(self.0.organization_id().as_ref()).unwrap())
     }
 
     #[getter]
@@ -712,7 +712,7 @@ impl BackendInvitationAddr {
 
     #[getter]
     fn organization_id(&self) -> PyResult<OrganizationID> {
-        Ok(OrganizationID::new(&self.0.organization_id().to_string()).unwrap())
+        Ok(OrganizationID::new(self.0.organization_id().as_ref()).unwrap())
     }
 
     #[getter]

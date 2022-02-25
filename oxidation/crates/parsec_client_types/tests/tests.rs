@@ -2,3 +2,4 @@
 
 mod test_local_device;
 mod test_local_device_file;
+mod test_local_manifest;
