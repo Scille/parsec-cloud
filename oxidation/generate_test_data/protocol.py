@@ -453,3 +453,24 @@ display("realm_finish_reencryption_maintenance_req", serialized, [])
 serialized = serializer.rep_dumps({})
 serializer.rep_loads(serialized)
 display("realm_finish_reencryption_maintenance_rep", serialized, [])
+
+################### Message ##################
+
+serializer = message_get_serializer
+
+serialized = serializer.req_dumps({"cmd": "message_get", "offset": 8})
+serializer.req_loads(serialized)
+display("message_get_req", serialized, [])
+
+serialized = serializer.rep_dumps(
+    {
+        "messages": {
+            "count": 1,
+            "sender": DeviceID("alice@dev1"),
+            "timestamp": datetime(2000, 1, 2, 1),
+            "body": b"foobar",
+        }
+    }
+)
+serializer.rep_loads(serialized)
+display("message_get_rep", serialized, [])

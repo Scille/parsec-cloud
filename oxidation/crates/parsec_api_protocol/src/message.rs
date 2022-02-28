@@ -2,8 +2,9 @@
 
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
-use serde_with::serde_as;
+use serde_with::{serde_as, Bytes};
 
+use crate::{impl_api_protocol_dump_load, Status};
 use parsec_api_types::{DateTimeExtFormat, DeviceID};
 
 /*
@@ -16,6 +17,8 @@ pub struct MessageGetReqSchema {
     pub offset: u64,
 }
 
+impl_api_protocol_dump_load!(MessageGetReqSchema);
+
 /*
  * MessageSchema
  */
@@ -27,6 +30,7 @@ pub struct MessageSchema {
     pub sender: DeviceID,
     #[serde_as(as = "DateTimeExtFormat")]
     pub timestamp: DateTime<Utc>,
+    #[serde_as(as = "Bytes")]
     pub body: Vec<u8>,
 }
 
@@ -36,5 +40,8 @@ pub struct MessageSchema {
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
 pub struct MessageGetRepSchema {
+    pub status: Status,
     pub messages: Vec<MessageSchema>,
 }
+
+impl_api_protocol_dump_load!(MessageGetRepSchema);
