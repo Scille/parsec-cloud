@@ -37,6 +37,7 @@ class AuthenticationChangeWidget(QWidget, Ui_AuthenticationChangeWidget):
         self.widget_auth.authentication_state_changed.connect(self._on_info_filled)
         self.button_validate.setEnabled(False)
         self.loaded_device = loaded_device
+        self.widget_auth.setStyleSheet("background-color: #F4F4F4;")
 
     def _on_info_filled(self, auth_method, valid):
         self.button_validate.setEnabled(valid)
