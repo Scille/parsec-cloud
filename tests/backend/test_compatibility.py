@@ -7,8 +7,12 @@ from parsec.api.protocol.base import ErrorRepSchema, packb
 from parsec.api.protocol import realm_create_serializer
 from parsec.api.protocol.handshake import (
     AuthenticatedClientHandshake,
+    ServerHandshake,
     handshake_challenge_serializer,
+    handshake_answer_serializer,
+    handshake_result_serializer,
     ApiVersionField,
+    HandshakeType,
 )
 from parsec.api.protocol.base import serializer_factory
 
@@ -76,27 +80,37 @@ def test_handshake_challenge_schema_compatibility():
 
 
 # This test would be useless when all clients and server will be up to date
-def test_handshake_challenge_client_server_compatibility(alice, monkeypatch):
-    ch = AuthenticatedClientHandshake(
-        alice.organization_id, alice.device_id, alice.signing_key, alice.root_verify_key
+def test_handshake_challenge_client_server_compatibility(mallory, alice, monkeypatch):
+    ash = ServerHandshake()
+
+    bsh = ServerHandshake()
+    bch = AuthenticatedClientHandshake(
+        mallory.organization_id, mallory.device_id, mallory.signing_key, mallory.root_verify_key
     )
+
+    challenge = b"1234567890"
 
     # Backend API >= 2.5 and Client API < 2.5
     client_version = ApiVersion(2, 4)
     backend_version = ApiVersion(2, 5)
 
-    req = {
-        "handshake": "challenge",
-        "challenge": b"1234567890",
-        "supported_api_versions": [backend_version],
-        "backend_timestamp": pendulum.now(),
-        "ballpark_client_early_offset": BALLPARK_CLIENT_EARLY_OFFSET,
-        "ballpark_client_late_offset": BALLPARK_CLIENT_LATE_OFFSET,
+    answer = {
+        "handshake": "answer",
+        "type": HandshakeType.AUTHENTICATED.value,
+        "client_api_version": client_version,
+        "organization_id": str(alice.organization_id),
+        "device_id": str(alice.device_id),
+        "rvk": alice.root_verify_key.encode(),
+        "answer": alice.signing_key.sign(challenge),
     }
 
-    monkeypatch.setattr(ch, "SUPPORTED_API_VERSIONS", [client_version])
+    ash.build_challenge_req()
+    ash.challenge = challenge
+    ash.process_answer_req(packb(answer))
+    result_req = ash.build_result_req(alice.verify_key)
 
-    ch.process_challenge_req(packb(req))
+    result = handshake_result_serializer.loads(result_req)
+    assert result["result"] == "ok"
 
     # Backend API < 2.5 and Client API >= 2.5
     client_version = ApiVersion(2, 5)
@@ -104,13 +118,17 @@ def test_handshake_challenge_client_server_compatibility(alice, monkeypatch):
 
     req = {
         "handshake": "challenge",
-        "challenge": b"1234567890",
+        "challenge": challenge,
         "supported_api_versions": [backend_version],
         "backend_timestamp": pendulum.now(),
         "ballpark_client_early_offset": BALLPARK_CLIENT_EARLY_OFFSET,
         "ballpark_client_late_offset": BALLPARK_CLIENT_LATE_OFFSET,
     }
 
-    monkeypatch.setattr(ch, "SUPPORTED_API_VERSIONS", [client_version])
+    monkeypatch.setattr(bch, "SUPPORTED_API_VERSIONS", [client_version])
 
-    ch.process_challenge_req(packb(req))
+    bsh.build_challenge_req()
+    answer_req = bch.process_challenge_req(packb(req))
+
+    answer = handshake_answer_serializer.loads(answer_req)
+    assert mallory.verify_key.verify(answer["answer"]) == challenge
