@@ -3,7 +3,6 @@
 
 from pendulum import datetime
 from utils import *
-from uuid import UUID
 from parsec.crypto import *
 from parsec.api.protocol import *
 from parsec.api.data import *
@@ -714,3 +713,25 @@ display("vlob_maintenance_save_reencryption_batch_req", serialized, [])
 serialized = serializer.rep_dumps({"total": 8, "done": 8})
 serializer.rep_loads(serialized)
 display("vlob_maintenance_save_reencryption_batch_rep", serialized, [])
+
+################### Events ##################
+
+serializer = events_listen_serializer
+
+serialized = serializer.req_dumps({"cmd": "events_listen", "wait": False})
+serializer.req_loads(serialized)
+display("events_listen_req", serialized, [])
+
+serialized = serializer.rep_dumps({"event": APIEvent.PINGED, "ping": "foobar"})
+serializer.rep_loads(serialized)
+display("events_listen_rep", serialized, [])
+
+serializer = events_subscribe_serializer
+
+serialized = serializer.req_dumps({"cmd": "events_subscribe"})
+serializer.req_loads(serialized)
+display("events_subscribe_req", serialized, [])
+
+serialized = serializer.rep_dumps({})
+serializer.rep_loads(serialized)
+display("events_subscribe_rep", serialized, [])
