@@ -2,9 +2,10 @@
 
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
-use serde_with::serde_as;
+use serde_with::{serde_as, Bytes};
 use std::collections::HashMap;
 
+use crate::{impl_api_protocol_dump_load, Status};
 use parsec_api_types::{DateTimeExtFormat, DeviceID, RealmID, VlobID};
 
 /*
@@ -26,15 +27,22 @@ pub struct VlobCreateReqSchema {
     // the actual timestamp within the message.
     #[serde_as(as = "DateTimeExtFormat")]
     pub timestamp: DateTime<Utc>,
+    #[serde_as(as = "Bytes")]
     pub blob: Vec<u8>,
 }
+
+impl_api_protocol_dump_load!(VlobCreateReqSchema);
 
 /*
  * VlobCreateRepSchema
  */
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
-pub struct VlobCreateRepSchema;
+pub struct VlobCreateRepSchema {
+    pub status: Status,
+}
+
+impl_api_protocol_dump_load!(VlobCreateRepSchema);
 
 /*
  * VlobReadReqSchema
@@ -51,6 +59,8 @@ pub struct VlobReadReqSchema {
     pub timestamp: Option<DateTime<Utc>>,
 }
 
+impl_api_protocol_dump_load!(VlobReadReqSchema);
+
 /*
  * VlobReadRepSchema
  */
@@ -58,7 +68,9 @@ pub struct VlobReadReqSchema {
 #[serde_as]
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
 pub struct VlobReadRepSchema {
+    pub status: Status,
     pub version: u64,
+    #[serde_as(as = "Bytes")]
     pub blob: Vec<u8>,
     pub author: DeviceID,
     #[serde_as(as = "DateTimeExtFormat")]
@@ -70,6 +82,8 @@ pub struct VlobReadRepSchema {
     #[serde_as(as = "Option<DateTimeExtFormat>")]
     pub author_last_role_granted_on: Option<DateTime<Utc>>,
 }
+
+impl_api_protocol_dump_load!(VlobReadRepSchema);
 
 /*
  * VlobUpdateReqSchema
@@ -84,15 +98,22 @@ pub struct VlobUpdateReqSchema {
     #[serde_as(as = "DateTimeExtFormat")]
     pub timestamp: DateTime<Utc>,
     pub version: u64,
+    #[serde_as(as = "Bytes")]
     pub blob: Vec<u8>,
 }
+
+impl_api_protocol_dump_load!(VlobUpdateReqSchema);
 
 /*
  * VlobUpdateRepSchema
  */
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
-pub struct VlobUpdateRepSchema;
+pub struct VlobUpdateRepSchema {
+    pub status: Status,
+}
+
+impl_api_protocol_dump_load!(VlobUpdateRepSchema);
 
 /*
  * VlobPollChangesReqSchema
@@ -105,15 +126,20 @@ pub struct VlobPollChangesReqSchema {
     pub last_checkpoint: u64,
 }
 
+impl_api_protocol_dump_load!(VlobPollChangesReqSchema);
+
 /*
  * VlobPollChangesRepSchema
  */
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
 pub struct VlobPollChangesRepSchema {
+    pub status: Status,
     pub changes: HashMap<VlobID, u64>,
     pub current_checkpoint: u64,
 }
+
+impl_api_protocol_dump_load!(VlobPollChangesRepSchema);
 
 /*
  * VlobPollChangesRepSchema
@@ -125,6 +151,8 @@ pub struct VlobListVersionsReqSchema {
     pub vlob_id: VlobID,
 }
 
+impl_api_protocol_dump_load!(VlobListVersionsReqSchema);
+
 /*
  * VlobListVersionsRepSchema
  */
@@ -132,9 +160,12 @@ pub struct VlobListVersionsReqSchema {
 #[serde_as]
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
 pub struct VlobListVersionsRepSchema {
+    pub status: Status,
     #[serde_as(as = "HashMap<_, (DateTimeExtFormat, _)>")]
     pub versions: HashMap<u64, (DateTime<Utc>, DeviceID)>,
 }
+
+impl_api_protocol_dump_load!(VlobListVersionsRepSchema);
 
 /*
  * VlobMaintenanceGetReencryptionBatchReqSchema
@@ -148,14 +179,18 @@ pub struct VlobMaintenanceGetReencryptionBatchReqSchema {
     pub size: u64,
 }
 
+impl_api_protocol_dump_load!(VlobMaintenanceGetReencryptionBatchReqSchema);
+
 /*
  * ReencryptionBatchEntrySchema
  */
 
+#[serde_as]
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
 pub struct ReencryptionBatchEntrySchema {
     pub vlob_id: VlobID,
     pub version: u64,
+    #[serde_as(as = "Bytes")]
     pub blob: Vec<u8>,
 }
 
@@ -165,8 +200,11 @@ pub struct ReencryptionBatchEntrySchema {
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
 pub struct VlobMaintenanceGetReencryptionBatchRepSchema {
+    pub status: Status,
     pub batch: Vec<ReencryptionBatchEntrySchema>,
 }
+
+impl_api_protocol_dump_load!(VlobMaintenanceGetReencryptionBatchRepSchema);
 
 /*
  * VlobMaintenanceSaveReencryptionBatchReqSchema
@@ -180,12 +218,17 @@ pub struct VlobMaintenanceSaveReencryptionBatchReqSchema {
     pub batch: Vec<ReencryptionBatchEntrySchema>,
 }
 
+impl_api_protocol_dump_load!(VlobMaintenanceSaveReencryptionBatchReqSchema);
+
 /*
  * VlobMaintenanceSaveReencryptionBatchReqSchema
  */
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
 pub struct VlobMaintenanceSaveReencryptionBatchRepSchema {
+    pub status: Status,
     pub total: u64,
     pub done: u64,
 }
+
+impl_api_protocol_dump_load!(VlobMaintenanceSaveReencryptionBatchRepSchema);

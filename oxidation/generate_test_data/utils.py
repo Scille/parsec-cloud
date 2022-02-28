@@ -207,7 +207,7 @@ def display(name, raw, get_content_pipeline, max_width=89):
             content = zlib.decompress(content)
         else:
             raise RuntimeError(f"Unknown pipeline element {item!r}")
-    content = msgpack.unpackb(content)
+    content = msgpack.unpackb(content, strict_map_key=False)
 
     output = ""
     output += "\n"

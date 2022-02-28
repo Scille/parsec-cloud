@@ -6,3 +6,4 @@ mod test_organization;
 mod test_ping;
 mod test_realm;
 mod test_user;
+mod test_vlob;

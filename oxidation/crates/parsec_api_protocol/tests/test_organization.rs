@@ -40,9 +40,6 @@ fn serde_api_v1_organization_bootstrap_req() {
         redacted_device_certificate: Some(b"foobar".to_vec()),
     };
 
-    println!("{:?}", String::from_utf8_lossy(&data));
-    println!("{:?}", String::from_utf8_lossy(&expected.dump()));
-
     let schema = APIV1OrganizationBootstrapReqSchema::load(&data).unwrap();
 
     assert_eq!(schema, expected);
