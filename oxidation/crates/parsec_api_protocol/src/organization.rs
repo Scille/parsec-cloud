@@ -1,7 +1,9 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BSLv1.1 (eventually AGPLv3) 2016-2021 Scille SAS
 
 use serde::{Deserialize, Serialize};
+use serde_with::{serde_as, Bytes};
 
+use crate::{impl_api_protocol_dump_load, Status};
 use parsec_api_crypto::VerifyKey;
 use parsec_api_types::{DeviceID, DeviceLabel, OrganizationID, UserProfile};
 
@@ -9,13 +11,16 @@ use parsec_api_types::{DeviceID, DeviceLabel, OrganizationID, UserProfile};
  * APIV1_OrganizationBootstrapReqSchema
  */
 
+#[serde_as]
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
 #[serde(rename = "APIV1_OrganizationBootstrapReqSchema")]
 pub struct APIV1OrganizationBootstrapReqSchema {
     pub cmd: String,
     pub bootstrap_token: String,
     pub root_verify_key: VerifyKey,
+    #[serde_as(as = "Bytes")]
     pub user_certificate: Vec<u8>,
+    #[serde_as(as = "Bytes")]
     pub device_certificate: Vec<u8>,
     // Same certificates than above, but expurged of human_handle/device_label
     // Backward compatibility prevent those field to be required, however
@@ -25,9 +30,13 @@ pub struct APIV1OrganizationBootstrapReqSchema {
     // redacted fields. In such case we consider the non-redacted can also
     // be used as redacted given the to-be-redacted fields have been introduce
     // in later version of Parsec.
-    pub redacted_user_certificates: Vec<u8>,
-    pub redacted_device_certificate: Vec<u8>,
+    #[serde_as(as = "Option<Bytes>")]
+    pub redacted_user_certificate: Option<Vec<u8>>,
+    #[serde_as(as = "Option<Bytes>")]
+    pub redacted_device_certificate: Option<Vec<u8>>,
 }
+
+impl_api_protocol_dump_load!(APIV1OrganizationBootstrapReqSchema);
 
 /*
  * APIV1_OrganizationBootstrapRepSchema
@@ -35,7 +44,11 @@ pub struct APIV1OrganizationBootstrapReqSchema {
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
 #[serde(rename = "APIV1_OrganizationBootstrapRepSchema")]
-pub struct APIV1OrganizationBootstrapRepSchema;
+pub struct APIV1OrganizationBootstrapRepSchema {
+    pub status: Status,
+}
+
+impl_api_protocol_dump_load!(APIV1OrganizationBootstrapRepSchema);
 
 /*
  * OrganizationBootstrapWebhookSchema
@@ -70,12 +83,15 @@ pub struct OrganizationStatsReqSchema {
     pub cmd: String,
 }
 
+impl_api_protocol_dump_load!(OrganizationStatsReqSchema);
+
 /*
  * OrganizationStatsRepSchema
  */
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
 pub struct OrganizationStatsRepSchema {
+    pub status: Status,
     pub data_size: u64,
     pub metadata_size: u64,
     pub realms: u64,
@@ -83,6 +99,8 @@ pub struct OrganizationStatsRepSchema {
     pub active_users: u64,
     pub users_per_profile_detail: Vec<UsersPerProfileDetailItemSchema>,
 }
+
+impl_api_protocol_dump_load!(OrganizationStatsRepSchema);
 
 /*
  * OrganizationConfigReqSchema
@@ -93,6 +111,8 @@ pub struct OrganizationConfigReqSchema {
     pub cmd: String,
 }
 
+impl_api_protocol_dump_load!(OrganizationConfigReqSchema);
+
 /*
  * OrganizationConfigRepSchema
  */
@@ -102,3 +122,5 @@ pub struct OrganizationConfigRepSchema {
     pub user_profile_outsider_allowed: bool,
     pub active_users_limit: Option<u64>,
 }
+
+impl_api_protocol_dump_load!(OrganizationConfigRepSchema);

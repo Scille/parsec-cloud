@@ -2,11 +2,11 @@
 
 use chrono::{TimeZone, Utc};
 use hex_literal::hex;
-use parsec_api_crypto::{HashDigest, PublicKey};
-use parsec_api_types::HumanHandle;
 use rstest::rstest;
 
+use parsec_api_crypto::{HashDigest, PublicKey};
 use parsec_api_protocol::*;
+use parsec_api_types::HumanHandle;
 
 #[rstest]
 fn serde_invite_new_req() {
