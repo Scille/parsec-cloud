@@ -5,3 +5,4 @@ mod test_message;
 mod test_organization;
 mod test_ping;
 mod test_realm;
+mod test_user;
