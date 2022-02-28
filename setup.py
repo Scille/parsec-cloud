@@ -290,7 +290,7 @@ extra_requirements = {
     # shipped in production) and only contains rewriting of Python parts so
     # it can be safely ignored for any purpose.
     "oxidation": [
-        f"libparsec @ file://{(Path(__file__) / '../oxidation/libparsec_python').resolve().absolute()}"
+        f"libparsec @ file://localhost{Path(os.path.dirname(os.path.abspath(__file__))) / 'oxidation/libparsec_python'}"
     ],
 }
 
