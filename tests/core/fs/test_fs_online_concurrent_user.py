@@ -87,7 +87,7 @@ def test_fs_online_concurrent_user(
         @rule(target=Workspaces, fs=FSs, name=st_entry_name)
         async def create_workspace(self, fs, name):
             try:
-                wid = await fs.workspace_create(name)
+                wid = await fs.workspace_create(EntryName(name))
                 workspace = fs.get_workspace(wid)
                 await workspace.sync()
             except AssertionError:
