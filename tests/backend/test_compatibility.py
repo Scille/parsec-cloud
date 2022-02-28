@@ -3,10 +3,17 @@
 import pendulum
 
 from parsec.serde import BaseSchema, fields
-from parsec.api.protocol.base import ErrorRepSchema
+from parsec.api.protocol.base import ErrorRepSchema, packb
 from parsec.api.protocol import realm_create_serializer
-from parsec.api.protocol.handshake import handshake_challenge_serializer, ApiVersionField
+from parsec.api.protocol.handshake import (
+    AuthenticatedClientHandshake,
+    handshake_challenge_serializer,
+    ApiVersionField,
+)
 from parsec.api.protocol.base import serializer_factory
+
+from parsec.api.version import ApiVersion
+from parsec.utils import BALLPARK_CLIENT_EARLY_OFFSET, BALLPARK_CLIENT_LATE_OFFSET
 
 
 def test_timestamp_out_of_ballpark_rep_schema_compatibility():
@@ -66,3 +73,44 @@ def test_handshake_challenge_schema_compatibility():
     # Backend API < 2.4 with newer clients
     data = older_handshake_challenge_serializer.dumps(old_data)
     assert handshake_challenge_serializer.loads(data) == compat_data
+
+
+# This test would be useless when all clients and server will be up to date
+def test_handshake_challenge_client_server_compatibility(alice, monkeypatch):
+    ch = AuthenticatedClientHandshake(
+        alice.organization_id, alice.device_id, alice.signing_key, alice.root_verify_key
+    )
+
+    # Backend API >= 2.5 and Client API < 2.5
+    client_version = ApiVersion(2, 4)
+    backend_version = ApiVersion(2, 5)
+
+    req = {
+        "handshake": "challenge",
+        "challenge": b"1234567890",
+        "supported_api_versions": [backend_version],
+        "backend_timestamp": pendulum.now(),
+        "ballpark_client_early_offset": BALLPARK_CLIENT_EARLY_OFFSET,
+        "ballpark_client_late_offset": BALLPARK_CLIENT_LATE_OFFSET,
+    }
+
+    monkeypatch.setattr(ch, "SUPPORTED_API_VERSIONS", [client_version])
+
+    ch.process_challenge_req(packb(req))
+
+    # Backend API < 2.5 and Client API >= 2.5
+    client_version = ApiVersion(2, 5)
+    backend_version = ApiVersion(2, 4)
+
+    req = {
+        "handshake": "challenge",
+        "challenge": b"1234567890",
+        "supported_api_versions": [backend_version],
+        "backend_timestamp": pendulum.now(),
+        "ballpark_client_early_offset": BALLPARK_CLIENT_EARLY_OFFSET,
+        "ballpark_client_late_offset": BALLPARK_CLIENT_LATE_OFFSET,
+    }
+
+    monkeypatch.setattr(ch, "SUPPORTED_API_VERSIONS", [client_version])
+
+    ch.process_challenge_req(packb(req))
