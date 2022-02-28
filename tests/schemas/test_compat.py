@@ -2,6 +2,8 @@
 
 import json
 
+import pytest
+
 import importlib_resources
 
 import tests.schemas
@@ -20,6 +22,13 @@ def test_api_protocol_compat():
 
 
 def test_api_data_compat():
+    try:
+        import libparsec  # noqa: F401
+    except:
+        pass
+    else:
+        pytest.skip("Not running this test with libparsec installed")
+
     specs = json.loads(
         importlib_resources.files(tests.schemas).joinpath("api_data.json").read_text()
     )
