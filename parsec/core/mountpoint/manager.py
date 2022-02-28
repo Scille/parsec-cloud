@@ -88,7 +88,7 @@ class MountpointManager:
 
         if sys.platform == "win32":
             self._build_mountpoint_path = lambda base_path, parts: base_path / "\\".join(
-                winify_entry_name(x.str) for x in parts
+                winify_entry_name(x) for x in parts
             )
         else:
             self._build_mountpoint_path = lambda base_path, parts: base_path / "/".join(

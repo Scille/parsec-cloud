@@ -32,7 +32,7 @@ FILE_WRITE_DATA = 1 << 1
 
 def _winpath_to_parsec(path: str) -> FsPath:
     # Given / is not allowed, no need to check if path already contains it
-    return FsPath(unwinify_entry_name(path.replace("\\", "/")))
+    return FsPath(unwinify_entry_name(x) for x in path.replace("\\", "/").split("/"))
 
 
 def _parsec_to_winpath(path: FsPath) -> str:
