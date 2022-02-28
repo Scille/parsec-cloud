@@ -1,9 +1,6 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2016-2021 Scille SAS
 
 import json
-
-import pytest
-
 import importlib_resources
 
 import tests.schemas
@@ -14,6 +11,10 @@ from tests.schemas.builder import (
 )
 
 
+# /!\ Those tests only deal with pure Python schemas (even if running with --runrust, /!\
+# /!\ even if the Rust schemas are the one exposed by core and api packages)          /!\
+
+
 def test_api_protocol_compat():
     specs = json.loads(
         importlib_resources.files(tests.schemas).joinpath("api_protocol.json").read_text()
@@ -22,13 +23,6 @@ def test_api_protocol_compat():
 
 
 def test_api_data_compat():
-    try:
-        import libparsec  # noqa: F401
-    except:
-        pass
-    else:
-        pytest.skip("Not running this test with libparsec installed")
-
     specs = json.loads(
         importlib_resources.files(tests.schemas).joinpath("api_data.json").read_text()
     )
