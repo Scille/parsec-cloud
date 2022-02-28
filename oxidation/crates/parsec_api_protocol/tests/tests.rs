@@ -3,3 +3,4 @@ mod test_block;
 mod test_invite;
 mod test_organization;
 mod test_ping;
+mod test_realm;

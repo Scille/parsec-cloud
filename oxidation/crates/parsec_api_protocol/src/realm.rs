@@ -2,12 +2,12 @@
 
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
-use serde_with::serde_as;
+use serde_with::{serde_as, Bytes};
 use std::collections::HashMap;
 
 use parsec_api_types::{DateTimeExtFormat, DeviceID, RealmID, UserID};
 
-use crate::Status;
+use crate::{impl_api_protocol_dump_load, Status};
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
 #[serde(rename_all = "SCREAMING_SNAKE_CASE")]
@@ -20,11 +20,15 @@ pub enum MaintenanceType {
  * RealmCreateReqSchema
  */
 
+#[serde_as]
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
 pub struct RealmCreateReqSchema {
     pub cmd: String,
+    #[serde_as(as = "Bytes")]
     pub role_certificate: Vec<u8>,
 }
+
+impl_api_protocol_dump_load!(RealmCreateReqSchema);
 
 /*
  * RealmCreateRepSchema
@@ -35,6 +39,8 @@ pub struct RealmCreateRepSchema {
     pub status: Status,
 }
 
+impl_api_protocol_dump_load!(RealmCreateRepSchema);
+
 /*
  * RealmStatusReqSchema
  */
@@ -44,6 +50,8 @@ pub struct RealmStatusReqSchema {
     pub cmd: String,
     pub realm_id: RealmID,
 }
+
+impl_api_protocol_dump_load!(RealmStatusReqSchema);
 
 /*
  * RealmStatusRepSchema
@@ -61,6 +69,8 @@ pub struct RealmStatusRepSchema {
     pub encryption_revision: u64,
 }
 
+impl_api_protocol_dump_load!(RealmStatusRepSchema);
+
 /*
  * RealmStatsReqSchema
  */
@@ -70,6 +80,8 @@ pub struct RealmStatsReqSchema {
     pub cmd: String,
     pub realm_id: RealmID,
 }
+
+impl_api_protocol_dump_load!(RealmStatsReqSchema);
 
 /*
  * RealmStatsRepSchema
@@ -81,6 +93,8 @@ pub struct RealmStatsRepSchema {
     pub blocks_size: u64,
     pub vlobs_size: u64,
 }
+
+impl_api_protocol_dump_load!(RealmStatsRepSchema);
 
 /*
  * RealmGetRoleCertificatesReqSchema
@@ -95,26 +109,37 @@ pub struct RealmGetRoleCertificatesReqSchema {
     pub since: Option<DateTime<Utc>>,
 }
 
+impl_api_protocol_dump_load!(RealmGetRoleCertificatesReqSchema);
+
 /*
  * RealmGetRoleCertificatesRepSchema
  */
 
+#[serde_as]
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
 pub struct RealmGetRoleCertificatesRepSchema {
     pub status: Status,
+    #[serde_as(as = "Vec<Bytes>")]
     pub certificates: Vec<Vec<u8>>,
 }
+
+impl_api_protocol_dump_load!(RealmGetRoleCertificatesRepSchema);
 
 /*
  * RealmUpdateRolesReqSchema
  */
 
+#[serde_as]
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
 pub struct RealmUpdateRolesReqSchema {
     pub cmd: String,
+    #[serde_as(as = "Bytes")]
     pub role_certificate: Vec<u8>,
+    #[serde_as(as = "Option<Bytes>")]
     pub recipient_message: Option<Vec<u8>>,
 }
+
+impl_api_protocol_dump_load!(RealmUpdateRolesReqSchema);
 
 /*
  * RealmUpdateRolesRepSchema
@@ -124,6 +149,8 @@ pub struct RealmUpdateRolesReqSchema {
 pub struct RealmUpdateRolesRepSchema {
     pub status: Status,
 }
+
+impl_api_protocol_dump_load!(RealmUpdateRolesRepSchema);
 
 /*
  * RealmStartReencryptionMaintenanceReqSchema
@@ -137,8 +164,11 @@ pub struct RealmStartReencryptionMaintenanceReqSchema {
     pub encryption_revision: u64,
     #[serde_as(as = "DateTimeExtFormat")]
     pub timestamp: DateTime<Utc>,
+    #[serde_as(as = "HashMap<_, Bytes>")]
     pub per_participant_message: HashMap<UserID, Vec<u8>>,
 }
+
+impl_api_protocol_dump_load!(RealmStartReencryptionMaintenanceReqSchema);
 
 /*
  * RealmStartReencryptionMaintenanceRepSchema
@@ -148,6 +178,8 @@ pub struct RealmStartReencryptionMaintenanceReqSchema {
 pub struct RealmStartReencryptionMaintenanceRepSchema {
     pub status: Status,
 }
+
+impl_api_protocol_dump_load!(RealmStartReencryptionMaintenanceRepSchema);
 
 /*
  * RealmFinishReencryptionMaintenanceReqSchema
@@ -160,6 +192,8 @@ pub struct RealmFinishReencryptionMaintenanceReqSchema {
     pub encryption_revision: u64,
 }
 
+impl_api_protocol_dump_load!(RealmFinishReencryptionMaintenanceReqSchema);
+
 /*
  * RealmFinishReencryptionMaintenanceRepSchema
  */
@@ -168,3 +202,5 @@ pub struct RealmFinishReencryptionMaintenanceReqSchema {
 pub struct RealmFinishReencryptionMaintenanceRepSchema {
     pub status: Status,
 }
+
+impl_api_protocol_dump_load!(RealmFinishReencryptionMaintenanceRepSchema);
