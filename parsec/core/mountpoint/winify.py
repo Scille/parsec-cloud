@@ -2,6 +2,10 @@
 
 import re
 
+from typing import Union
+
+from parsec.api.data import EntryName
+
 # https://docs.microsoft.com/en-us/windows/win32/fileio/naming-a-file
 # tl;dr: https://twitter.com/foone/status/1058676834940776450
 _WIN32_RES_CHARS = tuple(chr(x) for x in range(1, 32)) + (
@@ -40,7 +44,9 @@ _WIN32_RES_NAMES = (
 )
 
 
-def winify_entry_name(name: str) -> str:
+def winify_entry_name(name: Union[str, EntryName]) -> str:
+    if not isinstance(name, str):
+        name = name.str
     prefix, *suffixes = name.split(".", 1)
     if prefix in _WIN32_RES_NAMES:
         full_suffix = f".{'.'.join(suffixes)}" if suffixes else ""
@@ -56,7 +62,10 @@ def winify_entry_name(name: str) -> str:
     return name
 
 
-def unwinify_entry_name(name: str) -> str:
+def unwinify_entry_name(name: Union[str, EntryName]) -> str:
+    if not isinstance(name, str):
+        name = name.str
+
     # Given / is not allowed, no need to check if path already contains it
     if "~" not in name:
         return name
