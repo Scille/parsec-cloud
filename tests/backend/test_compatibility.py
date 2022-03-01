@@ -79,11 +79,11 @@ def test_handshake_challenge_schema_compatibility():
     assert handshake_challenge_serializer.loads(data) == compat_data
 
 
-# This test would be useless when all clients and server will be up to date
-def test_handshake_challenge_client_server_compatibility(mallory, alice, monkeypatch):
+def test_handshake_challenge_schema_for_client_server_api_compatibility(
+    mallory, alice, monkeypatch
+):
     ash = ServerHandshake()
 
-    bsh = ServerHandshake()
     bch = AuthenticatedClientHandshake(
         mallory.organization_id, mallory.device_id, mallory.signing_key, mallory.root_verify_key
     )
@@ -106,6 +106,7 @@ def test_handshake_challenge_client_server_compatibility(mallory, alice, monkeyp
 
     ash.build_challenge_req()
     ash.challenge = challenge
+
     ash.process_answer_req(packb(answer))
     result_req = ash.build_result_req(alice.verify_key)
 
@@ -127,7 +128,6 @@ def test_handshake_challenge_client_server_compatibility(mallory, alice, monkeyp
 
     monkeypatch.setattr(bch, "SUPPORTED_API_VERSIONS", [client_version])
 
-    bsh.build_challenge_req()
     answer_req = bch.process_challenge_req(packb(req))
 
     answer = handshake_answer_serializer.loads(answer_req)

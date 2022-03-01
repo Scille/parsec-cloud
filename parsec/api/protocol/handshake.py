@@ -354,8 +354,7 @@ class ServerHandshake:
                 answer = self.answer_data["answer"]
                 assert isinstance(answer, bytes)
 
-                # TO-DO remove the else for the next release
-                if self.client_api_version.version >= 2 and self.client_api_version.revision >= 5:
+                if self.client_api_version >= (2, 5):
                     returned_challenge = answer_serializer.loads(verify_key.verify(answer))[
                         "answer"
                     ]
@@ -480,7 +479,7 @@ class AuthenticatedClientHandshake(BaseClientHandshake):
         assert isinstance(challenge, bytes)
 
         # TO-DO remove the else for the next release
-        if self.backend_api_version.version >= 2 and self.backend_api_version.revision >= 5:
+        if self.backend_api_version >= (2, 5):
             # TO-DO Need to use "BaseSignedData" ?
             answer = self.user_signkey.sign(answer_serializer.dumps({"answer": challenge}))
         else:
