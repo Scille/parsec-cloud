@@ -56,8 +56,7 @@ fn serde_user_get_rep() {
         "727469666963617465c406666f6f626172"
     );
 
-    let expected = UserGetRepSchema {
-        status: Status::Ok,
+    let expected = UserGetRepSchema::Ok {
         user_certificate: b"foobar".to_vec(),
         revoked_user_certificate: b"foobar".to_vec(),
         device_certificates: vec![b"foobar".to_vec()],
@@ -121,7 +120,7 @@ fn serde_user_create_rep() {
     //   status: "ok"
     let data = hex!("81a6737461747573a26f6b");
 
-    let expected = UserCreateRepSchema { status: Status::Ok };
+    let expected = UserCreateRepSchema::Ok;
 
     let schema = UserCreateRepSchema::load(&data).unwrap();
 
@@ -168,7 +167,7 @@ fn serde_user_revoke_rep() {
     //   status: "ok"
     let data = hex!("81a6737461747573a26f6b");
 
-    let expected = UserRevokeRepSchema { status: Status::Ok };
+    let expected = UserRevokeRepSchema::Ok;
 
     let schema = UserRevokeRepSchema::load(&data).unwrap();
 
@@ -218,7 +217,7 @@ fn serde_device_create_rep() {
     //   status: "ok"
     let data = hex!("81a6737461747573a26f6b");
 
-    let expected = DeviceCreateRepSchema { status: Status::Ok };
+    let expected = DeviceCreateRepSchema::Ok;
 
     let schema = DeviceCreateRepSchema::load(&data).unwrap();
 
@@ -289,8 +288,7 @@ fn serde_human_find_rep() {
         "73a26f6ba5746f74616c08"
     );
 
-    let expected = HumanFindRepSchema {
-        status: Status::Ok,
+    let expected = HumanFindRepSchema::Ok {
         results: vec![HumanFindResultItemSchema {
             user_id: "109b68ba5cdf428ea0017fc6bcc04d4a".parse().unwrap(),
             human_handle: Some(HumanHandle::new("bob@dev1", "bob").unwrap()),

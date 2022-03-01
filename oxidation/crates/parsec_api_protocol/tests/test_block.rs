@@ -43,7 +43,7 @@ fn serde_block_create_rep() {
     //   status: "ok"
     let data = hex!("81a6737461747573a26f6b");
 
-    let expected = BlockCreateRepSchema { status: Status::Ok };
+    let expected = BlockCreateRepSchema::Ok;
 
     let schema = BlockCreateRepSchema::load(&data).unwrap();
 
@@ -89,8 +89,7 @@ fn serde_block_read_rep() {
     //   status: "ok"
     let data = hex!("82a5626c6f636bc406666f6f626172a6737461747573a26f6b");
 
-    let expected = BlockReadRepSchema {
-        status: Status::Ok,
+    let expected = BlockReadRepSchema::Ok {
         block: b"foobar".to_vec(),
     };
 

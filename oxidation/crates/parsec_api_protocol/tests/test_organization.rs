@@ -58,7 +58,7 @@ fn serde_api_v1_organization_bootstrap_rep() {
     //   status: "ok"
     let data = hex!("81a6737461747573a26f6b");
 
-    let expected = APIV1OrganizationBootstrapRepSchema { status: Status::Ok };
+    let expected = APIV1OrganizationBootstrapRepSchema::Ok;
 
     let schema = APIV1OrganizationBootstrapRepSchema::load(&data).unwrap();
 
@@ -111,8 +111,7 @@ fn serde_organization_stats_rep() {
         "69766501a77265766f6b656400"
     );
 
-    let expected = OrganizationStatsRepSchema {
-        status: Status::Ok,
+    let expected = OrganizationStatsRepSchema::Ok {
         data_size: 8,
         metadata_size: 8,
         realms: 1,
@@ -170,7 +169,7 @@ fn serde_organization_config_rep() {
         "70726f66696c655f6f757473696465725f616c6c6f776564c2"
     );
 
-    let expected = OrganizationConfigRepSchema {
+    let expected = OrganizationConfigRepSchema::Ok {
         user_profile_outsider_allowed: false,
         active_users_limit: Some(1),
     };

@@ -4,7 +4,7 @@ use serde::{Deserialize, Serialize};
 use serde_with::{serde_as, Bytes};
 use std::num::NonZeroU64;
 
-use crate::{impl_api_protocol_dump_load, Status};
+use crate::impl_api_protocol_dump_load;
 use parsec_api_types::{HumanHandle, UserID};
 
 /*** Access user API ***/
@@ -42,15 +42,17 @@ impl_api_protocol_dump_load!(UserGetReqSchema);
 
 #[serde_as]
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
-pub struct UserGetRepSchema {
-    pub status: Status,
-    #[serde_as(as = "Bytes")]
-    pub user_certificate: Vec<u8>,
-    #[serde_as(as = "Bytes")]
-    pub revoked_user_certificate: Vec<u8>,
-    #[serde_as(as = "Vec<Bytes>")]
-    pub device_certificates: Vec<Vec<u8>>,
-    pub trustchain: TrustchainSchema,
+#[serde(tag = "status", rename_all = "snake_case")]
+pub enum UserGetRepSchema {
+    Ok {
+        #[serde_as(as = "Bytes")]
+        user_certificate: Vec<u8>,
+        #[serde_as(as = "Bytes")]
+        revoked_user_certificate: Vec<u8>,
+        #[serde_as(as = "Vec<Bytes>")]
+        device_certificates: Vec<Vec<u8>>,
+        trustchain: TrustchainSchema,
+    },
 }
 
 impl_api_protocol_dump_load!(UserGetRepSchema);
@@ -83,8 +85,9 @@ impl_api_protocol_dump_load!(UserCreateReqSchema);
  */
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
-pub struct UserCreateRepSchema {
-    pub status: Status,
+#[serde(tag = "status", rename_all = "snake_case")]
+pub enum UserCreateRepSchema {
+    Ok,
 }
 
 impl_api_protocol_dump_load!(UserCreateRepSchema);
@@ -108,8 +111,9 @@ impl_api_protocol_dump_load!(UserRevokeReqSchema);
  */
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
-pub struct UserRevokeRepSchema {
-    pub status: Status,
+#[serde(tag = "status", rename_all = "snake_case")]
+pub enum UserRevokeRepSchema {
+    Ok,
 }
 
 impl_api_protocol_dump_load!(UserRevokeRepSchema);
@@ -138,8 +142,9 @@ impl_api_protocol_dump_load!(DeviceCreateReqSchema);
  */
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
-pub struct DeviceCreateRepSchema {
-    pub status: Status,
+#[serde(tag = "status", rename_all = "snake_case")]
+pub enum DeviceCreateRepSchema {
+    Ok,
 }
 
 impl_api_protocol_dump_load!(DeviceCreateRepSchema);
@@ -178,12 +183,14 @@ pub struct HumanFindResultItemSchema {
  */
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
-pub struct HumanFindRepSchema {
-    pub status: Status,
-    pub results: Vec<HumanFindResultItemSchema>,
-    pub page: NonZeroU64,
-    pub per_page: NonZeroU64,
-    pub total: u64,
+#[serde(tag = "status", rename_all = "snake_case")]
+pub enum HumanFindRepSchema {
+    Ok {
+        results: Vec<HumanFindResultItemSchema>,
+        page: NonZeroU64,
+        per_page: NonZeroU64,
+        total: u64,
+    },
 }
 
 impl_api_protocol_dump_load!(HumanFindRepSchema);

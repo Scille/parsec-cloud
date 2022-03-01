@@ -51,7 +51,7 @@ fn serde_vlob_create_rep() {
     //   status: "ok"
     let data = hex!("81a6737461747573a26f6b");
 
-    let expected = VlobCreateRepSchema { status: Status::Ok };
+    let expected = VlobCreateRepSchema::Ok;
 
     let schema = VlobCreateRepSchema::load(&data).unwrap();
 
@@ -114,8 +114,7 @@ fn serde_vlob_read_rep() {
         "747573a26f6ba974696d657374616d70d70141cc375188000000a776657273696f6e08"
     );
 
-    let expected = VlobReadRepSchema {
-        status: Status::Ok,
+    let expected = VlobReadRepSchema::Ok {
         version: 8,
         blob: b"foobar".to_vec(),
         author: "alice@dev1".parse().unwrap(),
@@ -177,7 +176,7 @@ fn serde_vlob_update_rep() {
     //   status: "ok"
     let data = hex!("81a6737461747573a26f6b");
 
-    let expected = VlobUpdateRepSchema { status: Status::Ok };
+    let expected = VlobUpdateRepSchema::Ok;
 
     let schema = VlobUpdateRepSchema::load(&data).unwrap();
 
@@ -231,8 +230,7 @@ fn serde_vlob_poll_changes_rep() {
         "5f636865636b706f696e7408a6737461747573a26f6b"
     );
 
-    let expected = VlobPollChangesRepSchema {
-        status: Status::Ok,
+    let expected = VlobPollChangesRepSchema::Ok {
         changes: HashMap::from([("2b5f314728134a12863da1ce49c112f6".parse().unwrap(), 8)]),
         current_checkpoint: 8,
     };
@@ -286,8 +284,7 @@ fn serde_vlob_list_versions_rep() {
         "63654064657631"
     );
 
-    let expected = VlobListVersionsRepSchema {
-        status: Status::Ok,
+    let expected = VlobListVersionsRepSchema::Ok {
         versions: HashMap::from([(
             8,
             (
@@ -357,8 +354,7 @@ fn serde_vlob_maintenance_get_reencryption_batch_rep() {
         "3da1ce49c112f6a4626c6f62c406666f6f626172a6737461747573a26f6b"
     );
 
-    let expected = VlobMaintenanceGetReencryptionBatchRepSchema {
-        status: Status::Ok,
+    let expected = VlobMaintenanceGetReencryptionBatchRepSchema::Ok {
         batch: vec![ReencryptionBatchEntrySchema {
             vlob_id: "2b5f314728134a12863da1ce49c112f6".parse().unwrap(),
             version: 8,
@@ -430,11 +426,7 @@ fn serde_vlob_maintenance_save_reencryption_batch_rep() {
     //   total: 8
     let data = hex!("83a4646f6e6508a6737461747573a26f6ba5746f74616c08");
 
-    let expected = VlobMaintenanceSaveReencryptionBatchRepSchema {
-        status: Status::Ok,
-        total: 8,
-        done: 8,
-    };
+    let expected = VlobMaintenanceSaveReencryptionBatchRepSchema::Ok { total: 8, done: 8 };
 
     let schema = VlobMaintenanceSaveReencryptionBatchRepSchema::load(&data).unwrap();
 

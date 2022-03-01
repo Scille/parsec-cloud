@@ -3,7 +3,7 @@
 use serde::{Deserialize, Serialize};
 use serde_with::{serde_as, Bytes};
 
-use crate::{impl_api_protocol_dump_load, Status};
+use crate::impl_api_protocol_dump_load;
 use parsec_api_types::{DateTime, DeviceID};
 
 /*
@@ -37,9 +37,9 @@ pub struct MessageSchema {
  */
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
-pub struct MessageGetRepSchema {
-    pub status: Status,
-    pub messages: Vec<MessageSchema>,
+#[serde(tag = "status", rename_all = "snake_case")]
+pub enum MessageGetRepSchema {
+    Ok { messages: Vec<MessageSchema> },
 }
 
 impl_api_protocol_dump_load!(MessageGetRepSchema);

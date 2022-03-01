@@ -4,7 +4,7 @@ use serde::{Deserialize, Serialize};
 use serde_with::{serde_as, Bytes};
 use std::collections::HashMap;
 
-use crate::{impl_api_protocol_dump_load, Status};
+use crate::impl_api_protocol_dump_load;
 use parsec_api_types::{DateTime, DeviceID, RealmID, VlobID};
 
 /*
@@ -36,8 +36,9 @@ impl_api_protocol_dump_load!(VlobCreateReqSchema);
  */
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
-pub struct VlobCreateRepSchema {
-    pub status: Status,
+#[serde(tag = "status", rename_all = "snake_case")]
+pub enum VlobCreateRepSchema {
+    Ok,
 }
 
 impl_api_protocol_dump_load!(VlobCreateRepSchema);
@@ -64,18 +65,20 @@ impl_api_protocol_dump_load!(VlobReadReqSchema);
 
 #[serde_as]
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
-pub struct VlobReadRepSchema {
-    pub status: Status,
-    pub version: u64,
-    #[serde_as(as = "Bytes")]
-    pub blob: Vec<u8>,
-    pub author: DeviceID,
-    pub timestamp: DateTime,
-    // This field is used by the client to figure out if its role certificate cache is up-to-date enough
-    // to be able to perform the proper integrity checks on the manifest timestamp.
-    // The `missing=None` argument is used to provide compatibilty of new clients with old backends.
-    // New in API version 2.3
-    pub author_last_role_granted_on: Option<DateTime>,
+#[serde(tag = "status", rename_all = "snake_case")]
+pub enum VlobReadRepSchema {
+    Ok {
+        version: u64,
+        #[serde_as(as = "Bytes")]
+        blob: Vec<u8>,
+        author: DeviceID,
+        timestamp: DateTime,
+        // This field is used by the client to figure out if its role certificate cache is up-to-date enough
+        // to be able to perform the proper integrity checks on the manifest timestamp.
+        // The `missing=None` argument is used to provide compatibilty of new clients with old backends.
+        // New in API version 2.3
+        author_last_role_granted_on: Option<DateTime>,
+    },
 }
 
 impl_api_protocol_dump_load!(VlobReadRepSchema);
@@ -103,8 +106,9 @@ impl_api_protocol_dump_load!(VlobUpdateReqSchema);
  */
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
-pub struct VlobUpdateRepSchema {
-    pub status: Status,
+#[serde(tag = "status", rename_all = "snake_case")]
+pub enum VlobUpdateRepSchema {
+    Ok,
 }
 
 impl_api_protocol_dump_load!(VlobUpdateRepSchema);
@@ -127,10 +131,12 @@ impl_api_protocol_dump_load!(VlobPollChangesReqSchema);
  */
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
-pub struct VlobPollChangesRepSchema {
-    pub status: Status,
-    pub changes: HashMap<VlobID, u64>,
-    pub current_checkpoint: u64,
+#[serde(tag = "status", rename_all = "snake_case")]
+pub enum VlobPollChangesRepSchema {
+    Ok {
+        changes: HashMap<VlobID, u64>,
+        current_checkpoint: u64,
+    },
 }
 
 impl_api_protocol_dump_load!(VlobPollChangesRepSchema);
@@ -151,11 +157,12 @@ impl_api_protocol_dump_load!(VlobListVersionsReqSchema);
  * VlobListVersionsRepSchema
  */
 
-#[serde_as]
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
-pub struct VlobListVersionsRepSchema {
-    pub status: Status,
-    pub versions: HashMap<u64, (DateTime, DeviceID)>,
+#[serde(tag = "status", rename_all = "snake_case")]
+pub enum VlobListVersionsRepSchema {
+    Ok {
+        versions: HashMap<u64, (DateTime, DeviceID)>,
+    },
 }
 
 impl_api_protocol_dump_load!(VlobListVersionsRepSchema);
@@ -192,9 +199,11 @@ pub struct ReencryptionBatchEntrySchema {
  */
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
-pub struct VlobMaintenanceGetReencryptionBatchRepSchema {
-    pub status: Status,
-    pub batch: Vec<ReencryptionBatchEntrySchema>,
+#[serde(tag = "status", rename_all = "snake_case")]
+pub enum VlobMaintenanceGetReencryptionBatchRepSchema {
+    Ok {
+        batch: Vec<ReencryptionBatchEntrySchema>,
+    },
 }
 
 impl_api_protocol_dump_load!(VlobMaintenanceGetReencryptionBatchRepSchema);
@@ -218,10 +227,9 @@ impl_api_protocol_dump_load!(VlobMaintenanceSaveReencryptionBatchReqSchema);
  */
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
-pub struct VlobMaintenanceSaveReencryptionBatchRepSchema {
-    pub status: Status,
-    pub total: u64,
-    pub done: u64,
+#[serde(tag = "status", rename_all = "snake_case")]
+pub enum VlobMaintenanceSaveReencryptionBatchRepSchema {
+    Ok { total: u64, done: u64 },
 }
 
 impl_api_protocol_dump_load!(VlobMaintenanceSaveReencryptionBatchRepSchema);

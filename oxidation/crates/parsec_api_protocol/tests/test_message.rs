@@ -48,8 +48,7 @@ fn serde_message_get_rep() {
         "747573a26f6b"
     );
 
-    let expected = MessageGetRepSchema {
-        status: Status::Ok,
+    let expected = MessageGetRepSchema::Ok {
         messages: vec![MessageSchema {
             count: 1,
             sender: "alice@dev1".parse().unwrap(),

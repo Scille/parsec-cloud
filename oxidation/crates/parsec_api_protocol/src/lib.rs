@@ -20,8 +20,6 @@ pub use realm::*;
 pub use user::*;
 pub use vlob::*;
 
-use serde::{Deserialize, Serialize};
-
 macro_rules! impl_api_protocol_dump_load {
     ($name:ident) => {
         impl $name {
@@ -37,9 +35,3 @@ macro_rules! impl_api_protocol_dump_load {
 }
 
 pub(crate) use impl_api_protocol_dump_load;
-
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
-#[serde(rename_all = "lowercase")]
-pub enum Status {
-    Ok,
-}

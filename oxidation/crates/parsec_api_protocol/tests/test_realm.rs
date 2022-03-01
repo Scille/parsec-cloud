@@ -40,7 +40,7 @@ fn serde_realm_create_rep() {
     //   status: "ok"
     let data = hex!("81a6737461747573a26f6b");
 
-    let expected = RealmCreateRepSchema { status: Status::Ok };
+    let expected = RealmCreateRepSchema::Ok;
 
     let schema = RealmCreateRepSchema::load(&data).unwrap();
 
@@ -98,8 +98,7 @@ fn serde_realm_status_rep() {
         "a26f6b"
     );
 
-    let expected = RealmStatusRepSchema {
-        status: Status::Ok,
+    let expected = RealmStatusRepSchema::Ok {
         in_maintenance: true,
         maintenance_type: Some(MaintenanceType::GarbageCollection),
         maintenance_started_on: Some("2000-1-2T01:00:00Z".parse().unwrap()),
@@ -154,8 +153,7 @@ fn serde_realm_stats_rep() {
     //   vlobs_size: 8
     let data = hex!("83ab626c6f636b735f73697a6508a6737461747573a26f6baa766c6f62735f73697a6508");
 
-    let expected = RealmStatsRepSchema {
-        status: Status::Ok,
+    let expected = RealmStatsRepSchema::Ok {
         blocks_size: 8,
         vlobs_size: 8,
     };
@@ -209,8 +207,7 @@ fn serde_realm_get_role_certificates_rep() {
     //   status: "ok"
     let data = hex!("82ac63657274696669636174657391c406666f6f626172a6737461747573a26f6b");
 
-    let expected = RealmGetRoleCertificatesRepSchema {
-        status: Status::Ok,
+    let expected = RealmGetRoleCertificatesRepSchema::Ok {
         certificates: vec![b"foobar".to_vec()],
     };
 
@@ -262,7 +259,7 @@ fn serde_realm_update_roles_rep() {
     //   status: "ok"
     let data = hex!("81a6737461747573a26f6b");
 
-    let expected = RealmUpdateRolesRepSchema { status: Status::Ok };
+    let expected = RealmUpdateRolesRepSchema::Ok;
 
     let schema = RealmUpdateRolesRepSchema::load(&data).unwrap();
 
@@ -321,7 +318,7 @@ fn serde_realm_start_reencryption_maintenance_rep() {
     //   status: "ok"
     let data = hex!("81a6737461747573a26f6b");
 
-    let expected = RealmStartReencryptionMaintenanceRepSchema { status: Status::Ok };
+    let expected = RealmStartReencryptionMaintenanceRepSchema::Ok;
 
     let schema = RealmStartReencryptionMaintenanceRepSchema::load(&data).unwrap();
 
@@ -371,7 +368,7 @@ fn serde_realm_finish_reencryption_maintenance_rep() {
     //   status: "ok"
     let data = hex!("81a6737461747573a26f6b");
 
-    let expected = RealmFinishReencryptionMaintenanceRepSchema { status: Status::Ok };
+    let expected = RealmFinishReencryptionMaintenanceRepSchema::Ok;
 
     let schema = RealmFinishReencryptionMaintenanceRepSchema::load(&data).unwrap();
 

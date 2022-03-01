@@ -20,11 +20,11 @@ use parsec_api_types::HumanHandle;
             "84ad636c61696d65725f656d61696caa616c6963654064657631a3636d64aa696e76697465"
             "5f6e6577aa73656e645f656d61696cc3a474797065a455534552"
         )[..],
-        InviteNewReqSchema(InviteNewUserOrDeviceReq::User(InviteNewUserReqSchema {
+        InviteNewReqSchema::User {
             cmd: "invite_new".to_owned(),
             claimer_email: "alice@dev1".to_owned(),
             send_email: true,
-        }))
+        }
     )
 )]
 #[case::device(
@@ -38,10 +38,10 @@ use parsec_api_types::HumanHandle;
             "83a3636d64aa696e766974655f6e6577aa73656e645f656d61696cc3a474797065a6444556"
             "494345"
         )[..],
-        InviteNewReqSchema(InviteNewUserOrDeviceReq::Device(InviteNewDeviceReqSchema {
+        InviteNewReqSchema::Device {
             cmd: "invite_new".to_owned(),
             send_email: true,
-        }))
+        }
     )
 )]
 fn serde_invite_new_req(#[case] data_expected: (&[u8], InviteNewReqSchema)) {
@@ -70,8 +70,7 @@ fn serde_invite_new_rep() {
         "02d864b93ded264aae9ae583fd3d40c45a"
     );
 
-    let expected = InviteNewRepSchema {
-        status: Status::Ok,
+    let expected = InviteNewRepSchema::Ok {
         token: "d864b93ded264aae9ae583fd3d40c45a".parse().unwrap(),
         email_sent: InvitationEmailSentStatus::Success,
     };
@@ -123,7 +122,7 @@ fn serde_invite_delete_rep() {
     //   status: "ok"
     let data = hex!("81a6737461747573a26f6b");
 
-    let expected = InviteDeleteRepSchema { status: Status::Ok };
+    let expected = InviteDeleteRepSchema::Ok;
 
     let schema = InviteDeleteRepSchema::load(&data).unwrap();
 
@@ -187,22 +186,19 @@ fn serde_invite_list_rep() {
         "6f6b"
     );
 
-    let expected = InviteListRepSchema {
-        status: Status::Ok,
+    let expected = InviteListRepSchema::Ok {
         invitations: vec![
-            InviteListItemSchema(InviteListItemUserOrDevice::User(InviteListItemUserSchema {
+            InviteListItemSchema::User {
                 token: "d864b93ded264aae9ae583fd3d40c45a".parse().unwrap(),
                 created_on: "2000-1-2T01:00:00Z".parse().unwrap(),
                 claimer_email: "alice@dev1".to_owned(),
                 status: InvitationStatus::Idle,
-            })),
-            InviteListItemSchema(InviteListItemUserOrDevice::Device(
-                InviteListItemDeviceSchema {
-                    token: "d864b93ded264aae9ae583fd3d40c45a".parse().unwrap(),
-                    created_on: Utc.ymd(2000, 1, 2).and_hms(1, 0, 0),
-                    status: InvitationStatus::Idle,
-                },
-            )),
+            },
+            InviteListItemSchema::Device {
+                token: "d864b93ded264aae9ae583fd3d40c45a".parse().unwrap(),
+                created_on: "2000-1-2T01:00:00Z".parse().unwrap(),
+                status: InvitationStatus::Idle,
+            },
         ],
     };
 
@@ -255,12 +251,11 @@ fn serde_invite_info_req() {
             "5f6964d9203130396236386261356364663432386561303031376663366263633034643461"
             "a6737461747573a26f6ba474797065a455534552"
         )[..],
-        InviteInfoRepSchema(InviteInfoUserOrDeviceRep::User(InviteInfoUserRepSchema {
-            status: Status::Ok,
+        InviteInfoRepSchema::Ok(InviteInfoUserOrDeviceRep::User {
             claimer_email: "alice@dev1".to_owned(),
             greeter_user_id: "109b68ba5cdf428ea0017fc6bcc04d4a".parse().unwrap(),
             greeter_human_handle: HumanHandle::new("bob@dev1", "bob").unwrap(),
-        }))
+        })
     )
 )]
 #[case::device(
@@ -276,11 +271,11 @@ fn serde_invite_info_req() {
             "677265657465725f757365725f6964d9203130396236386261356364663432386561303031"
             "376663366263633034643461a6737461747573a26f6ba474797065a6444556494345"
         )[..],
-        InviteInfoRepSchema(InviteInfoUserOrDeviceRep::Device(InviteInfoDeviceRepSchema {
-            status: Status::Ok,
-            greeter_user_id: "109b68ba5cdf428ea0017fc6bcc04d4a".parse().unwrap(),
-            greeter_human_handle: HumanHandle::new("bob@dev1", "bob").unwrap(),
-        }))
+        InviteInfoRepSchema::Ok(InviteInfoUserOrDeviceRep::Device {
+                greeter_user_id: "109b68ba5cdf428ea0017fc6bcc04d4a".parse().unwrap(),
+                greeter_human_handle: HumanHandle::new("bob@dev1", "bob").unwrap(),
+            }
+        )
     )
 )]
 fn serde_invite_info_rep(#[case] data_expected: (&[u8], InviteInfoRepSchema)) {
@@ -338,8 +333,7 @@ fn serde_invite_1_claimer_wait_peer_rep() {
         "ac56141b126e44f352ea46c5f22cd5ac57a6737461747573a26f6b"
     );
 
-    let expected = Invite1ClaimerWaitPeerRepSchema {
-        status: Status::Ok,
+    let expected = Invite1ClaimerWaitPeerRepSchema::Ok {
         greeter_public_key: PublicKey::from(hex!(
             "6507907d33bae6b5980b32fa03f3ebac56141b126e44f352ea46c5f22cd5ac57"
         )),
@@ -399,8 +393,7 @@ fn serde_invite_1_greeter_wait_peer_rep() {
         "ac56141b126e44f352ea46c5f22cd5ac57a6737461747573a26f6b"
     );
 
-    let expected = Invite1GreeterWaitPeerRepSchema {
-        status: Status::Ok,
+    let expected = Invite1GreeterWaitPeerRepSchema::Ok {
         claimer_public_key: PublicKey::from(hex!(
             "6507907d33bae6b5980b32fa03f3ebac56141b126e44f352ea46c5f22cd5ac57"
         )),
@@ -455,8 +448,7 @@ fn serde_invite_2a_claimer_send_hashed_nonce_hash_nonce_rep() {
     //   status: "ok"
     let data = hex!("82ad677265657465725f6e6f6e6365c406666f6f626172a6737461747573a26f6b");
 
-    let expected = Invite2aClaimerSendHashedNonceHashNonceRepSchema {
-        status: Status::Ok,
+    let expected = Invite2aClaimerSendHashedNonceHashNonceRepSchema::Ok {
         greeter_nonce: b"foobar".to_vec(),
     };
 
@@ -482,8 +474,7 @@ fn serde_invite_2a_greeter_get_hashed_nonce_rep() {
         "345420b76313a885c6ccc6e3b5547857b3ecc6a6737461747573a26f6b"
     );
 
-    let expected = Invite2aGreeterGetHashedNonceRepSchema {
-        status: Status::Ok,
+    let expected = Invite2aGreeterGetHashedNonceRepSchema::Ok {
         claimer_hashed_nonce: HashDigest::from(hex!(
             "e37ce3b00a1f15b3de62029972345420b76313a885c6ccc6e3b5547857b3ecc6"
         )),
@@ -508,8 +499,7 @@ fn serde_invite_2b_greeter_send_nonce_rep() {
     //   status: "ok"
     let data = hex!("82ad636c61696d65725f6e6f6e6365c406666f6f626172a6737461747573a26f6b");
 
-    let expected = Invite2bGreeterSendNonceRepSchema {
-        status: Status::Ok,
+    let expected = Invite2bGreeterSendNonceRepSchema::Ok {
         claimer_nonce: b"foobar".to_vec(),
     };
 
@@ -558,7 +548,7 @@ fn serde_invite_2b_claimer_send_nonce_rep() {
     //   status: "ok"
     let data = hex!("81a6737461747573a26f6b");
 
-    let expected = Invite2bClaimerSendNonceRepSchema { status: Status::Ok };
+    let expected = Invite2bClaimerSendNonceRepSchema::Ok;
 
     let schema = Invite2bClaimerSendNonceRepSchema::load(&data).unwrap();
 
@@ -605,7 +595,7 @@ fn serde_invite_3a_greeter_wait_peer_trust_rep() {
     //   status: "ok"
     let data = hex!("81a6737461747573a26f6b");
 
-    let expected = Invite3aGreeterWaitPeerTrustRepSchema { status: Status::Ok };
+    let expected = Invite3aGreeterWaitPeerTrustRepSchema::Ok;
 
     let schema = Invite3aGreeterWaitPeerTrustRepSchema::load(&data).unwrap();
 
@@ -650,7 +640,7 @@ fn serde_invite_3b_claimer_wait_peer_trust_rep() {
     //   status: "ok"
     let data = hex!("81a6737461747573a26f6b");
 
-    let expected = Invite3bClaimerWaitPeerTrustRepSchema { status: Status::Ok };
+    let expected = Invite3bClaimerWaitPeerTrustRepSchema::Ok;
 
     let schema = Invite3bClaimerWaitPeerTrustRepSchema::load(&data).unwrap();
 
@@ -697,7 +687,7 @@ fn serde_invite_3b_greeter_signify_trust_rep() {
     //   status: "ok"
     let data = hex!("81a6737461747573a26f6b");
 
-    let expected = Invite3bGreeterSignifyTrustRepSchema { status: Status::Ok };
+    let expected = Invite3bGreeterSignifyTrustRepSchema::Ok;
 
     let schema = Invite3bGreeterSignifyTrustRepSchema::load(&data).unwrap();
 
@@ -739,7 +729,7 @@ fn serde_invite_3a_claimer_signify_trust_rep() {
     //   status: "ok"
     let data = hex!("81a6737461747573a26f6b");
 
-    let expected = Invite3aClaimerSignifyTrustRepSchema { status: Status::Ok };
+    let expected = Invite3aClaimerSignifyTrustRepSchema::Ok;
 
     let schema = Invite3aClaimerSignifyTrustRepSchema::load(&data).unwrap();
 
@@ -789,8 +779,7 @@ fn serde_invite_4_greeter_communicate_rep() {
     //   status: "ok"
     let data = hex!("82a77061796c6f6164c406666f6f626172a6737461747573a26f6b");
 
-    let expected = Invite4GreeterCommunicateRepSchema {
-        status: Status::Ok,
+    let expected = Invite4GreeterCommunicateRepSchema::Ok {
         payload: b"foobar".to_vec(),
     };
 
@@ -840,8 +829,7 @@ fn serde_invite_4_claimer_communicate_rep() {
     //   status: "ok"
     let data = hex!("82a77061796c6f6164c406666f6f626172a6737461747573a26f6b");
 
-    let expected = Invite4ClaimerCommunicateRepSchema {
-        status: Status::Ok,
+    let expected = Invite4ClaimerCommunicateRepSchema::Ok {
         payload: b"foobar".to_vec(),
     };
 

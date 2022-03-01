@@ -3,7 +3,7 @@
 use serde::{Deserialize, Serialize};
 use serde_with::{serde_as, Bytes};
 
-use crate::{impl_api_protocol_dump_load, Status};
+use crate::impl_api_protocol_dump_load;
 use parsec_api_types::{BlockID, RealmID};
 
 /*
@@ -27,8 +27,9 @@ impl_api_protocol_dump_load!(BlockCreateReqSchema);
  */
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
-pub struct BlockCreateRepSchema {
-    pub status: Status,
+#[serde(tag = "status", rename_all = "snake_case")]
+pub enum BlockCreateRepSchema {
+    Ok,
 }
 
 impl_api_protocol_dump_load!(BlockCreateRepSchema);
@@ -51,10 +52,12 @@ impl_api_protocol_dump_load!(BlockReadReqSchema);
 
 #[serde_as]
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
-pub struct BlockReadRepSchema {
-    pub status: Status,
-    #[serde_as(as = "Bytes")]
-    pub block: Vec<u8>,
+#[serde(tag = "status", rename_all = "snake_case")]
+pub enum BlockReadRepSchema {
+    Ok {
+        #[serde_as(as = "Bytes")]
+        block: Vec<u8>,
+    },
 }
 
 impl_api_protocol_dump_load!(BlockReadRepSchema);

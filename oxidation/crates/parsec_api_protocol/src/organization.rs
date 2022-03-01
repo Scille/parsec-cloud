@@ -3,7 +3,7 @@
 use serde::{Deserialize, Serialize};
 use serde_with::{serde_as, Bytes};
 
-use crate::{impl_api_protocol_dump_load, Status};
+use crate::impl_api_protocol_dump_load;
 use parsec_api_crypto::VerifyKey;
 use parsec_api_types::{DeviceID, DeviceLabel, OrganizationID, UserProfile};
 
@@ -44,8 +44,9 @@ impl_api_protocol_dump_load!(APIV1OrganizationBootstrapReqSchema);
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
 #[serde(rename = "APIV1_OrganizationBootstrapRepSchema")]
-pub struct APIV1OrganizationBootstrapRepSchema {
-    pub status: Status,
+#[serde(tag = "status", rename_all = "snake_case")]
+pub enum APIV1OrganizationBootstrapRepSchema {
+    Ok,
 }
 
 impl_api_protocol_dump_load!(APIV1OrganizationBootstrapRepSchema);
@@ -90,14 +91,16 @@ impl_api_protocol_dump_load!(OrganizationStatsReqSchema);
  */
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
-pub struct OrganizationStatsRepSchema {
-    pub status: Status,
-    pub data_size: u64,
-    pub metadata_size: u64,
-    pub realms: u64,
-    pub users: u64,
-    pub active_users: u64,
-    pub users_per_profile_detail: Vec<UsersPerProfileDetailItemSchema>,
+#[serde(tag = "status", rename_all = "snake_case")]
+pub enum OrganizationStatsRepSchema {
+    Ok {
+        data_size: u64,
+        metadata_size: u64,
+        realms: u64,
+        users: u64,
+        active_users: u64,
+        users_per_profile_detail: Vec<UsersPerProfileDetailItemSchema>,
+    },
 }
 
 impl_api_protocol_dump_load!(OrganizationStatsRepSchema);
@@ -118,9 +121,12 @@ impl_api_protocol_dump_load!(OrganizationConfigReqSchema);
  */
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
-pub struct OrganizationConfigRepSchema {
-    pub user_profile_outsider_allowed: bool,
-    pub active_users_limit: Option<u64>,
+#[serde(tag = "status", rename_all = "snake_case")]
+pub enum OrganizationConfigRepSchema {
+    Ok {
+        user_profile_outsider_allowed: bool,
+        active_users_limit: Option<u64>,
+    },
 }
 
 impl_api_protocol_dump_load!(OrganizationConfigRepSchema);

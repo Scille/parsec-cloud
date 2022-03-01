@@ -41,8 +41,7 @@ fn serde_events_listen_req() {
         &hex!(
             "83a56576656e74a670696e676564a470696e67a6666f6f626172a6737461747573a26f6b"
         )[..],
-        EventsListenRepSchema(APIEvent::Pinged(EventsPingedRepSchema {
-            status: Status::Ok,
+        EventsListenRepSchema::Ok(APIEvent::Pinged(EventsPingedRepSchema {
             ping: "foobar".to_owned(),
         }))
     )
@@ -58,8 +57,7 @@ fn serde_events_listen_req() {
             "83a56576656e74b06d6573736167652e7265636569766564a5696e64657800a67374617475"
             "73a26f6b"
         )[..],
-        EventsListenRepSchema(APIEvent::MessageReceived(EventsMessageReceivedRepSchema {
-            status: Status::Ok,
+        EventsListenRepSchema::Ok(APIEvent::MessageReceived(EventsMessageReceivedRepSchema {
             index: 0,
         }))
     )
@@ -77,9 +75,8 @@ fn serde_events_listen_req() {
             "696f6e5f737461747573a449444c45a6737461747573a26f6ba5746f6b656ed802d864b93d"
             "ed264aae9ae583fd3d40c45a"
         )[..],
-        EventsListenRepSchema(APIEvent::InviteStatusChanged(
+        EventsListenRepSchema::Ok(APIEvent::InviteStatusChanged(
             EventsInviteStatusChangedRepSchema {
-                status: Status::Ok,
                 invitation_status: InvitationStatus::Idle,
                 token: "d864b93ded264aae9ae583fd3d40c45a".parse().unwrap(),
             },
@@ -99,9 +96,8 @@ fn serde_events_listen_req() {
             "696e74656e616e63655f66696e6973686564a87265616c6d5f6964d8021d3353157d7d4e95"
             "ad2fdea7b3bd19c5a6737461747573a26f6b"
         )[..],
-        EventsListenRepSchema(APIEvent::RealmMaintenanceFinished(
+        EventsListenRepSchema::Ok(APIEvent::RealmMaintenanceFinished(
             EventsRealmMaintenanceFinishedRepSchema {
-                status: Status::Ok,
                 realm_id: "1d3353157d7d4e95ad2fdea7b3bd19c5".parse().unwrap(),
                 encryption_revision: 0,
             }
@@ -121,9 +117,8 @@ fn serde_events_listen_req() {
             "696e74656e616e63655f73746172746564a87265616c6d5f6964d8021d3353157d7d4e95ad"
             "2fdea7b3bd19c5a6737461747573a26f6b"
         )[..],
-        EventsListenRepSchema(APIEvent::RealmMaintenanceStarted(
+        EventsListenRepSchema::Ok(APIEvent::RealmMaintenanceStarted(
             EventsRealmMaintenanceStartedRepSchema {
-                status: Status::Ok,
                 realm_id: "1d3353157d7d4e95ad2fdea7b3bd19c5".parse().unwrap(),
                 encryption_revision: 0,
             }
@@ -146,9 +141,8 @@ fn serde_events_listen_req() {
             "022b5f314728134a12863da1ce49c112f6ab7372635f76657273696f6e00a6737461747573"
             "a26f6b"
         )[..],
-        EventsListenRepSchema(APIEvent::RealmVlobsUpdated(
+        EventsListenRepSchema::Ok(APIEvent::RealmVlobsUpdated(
             EventsRealmVlobsUpdatedRepSchema {
-                status: Status::Ok,
                 realm_id: "1d3353157d7d4e95ad2fdea7b3bd19c5".parse().unwrap(),
                 checkpoint: 0,
                 src_id: "2b5f314728134a12863da1ce49c112f6".parse().unwrap(),
@@ -170,9 +164,8 @@ fn serde_events_listen_req() {
             "021d3353157d7d4e95ad2fdea7b3bd19c5a4726f6c65a54f574e4552a6737461747573a26f"
             "6b"
         )[..],
-        EventsListenRepSchema(APIEvent::RealmRolesUdpated(
+        EventsListenRepSchema::Ok(APIEvent::RealmRolesUdpated(
             EventsRealmRolesUpdatedRepSchema {
-                status: Status::Ok,
                 realm_id: "1d3353157d7d4e95ad2fdea7b3bd19c5".parse().unwrap(),
                 role: RealmRole::Owner,
             }
@@ -222,7 +215,7 @@ fn serde_events_subscribe_rep() {
     //   status: "ok"
     let data = hex!("81a6737461747573a26f6b");
 
-    let expected = EventsSubscribeRepSchema { status: Status::Ok };
+    let expected = EventsSubscribeRepSchema::Ok;
 
     let schema = EventsSubscribeRepSchema::load(&data).unwrap();
 

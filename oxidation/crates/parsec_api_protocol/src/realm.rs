@@ -4,9 +4,8 @@ use serde::{Deserialize, Serialize};
 use serde_with::{serde_as, Bytes};
 use std::collections::HashMap;
 
+use crate::impl_api_protocol_dump_load;
 use parsec_api_types::{DateTime, DeviceID, RealmID, UserID};
-
-use crate::{impl_api_protocol_dump_load, Status};
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
 #[serde(rename_all = "SCREAMING_SNAKE_CASE")]
@@ -34,8 +33,9 @@ impl_api_protocol_dump_load!(RealmCreateReqSchema);
  */
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
-pub struct RealmCreateRepSchema {
-    pub status: Status,
+#[serde(tag = "status", rename_all = "snake_case")]
+pub enum RealmCreateRepSchema {
+    Ok,
 }
 
 impl_api_protocol_dump_load!(RealmCreateRepSchema);
@@ -58,13 +58,15 @@ impl_api_protocol_dump_load!(RealmStatusReqSchema);
 
 #[serde_as]
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
-pub struct RealmStatusRepSchema {
-    pub status: Status,
-    pub in_maintenance: bool,
-    pub maintenance_type: Option<MaintenanceType>,
-    pub maintenance_started_on: Option<DateTime>,
-    pub maintenance_started_by: Option<DeviceID>,
-    pub encryption_revision: u64,
+#[serde(tag = "status", rename_all = "snake_case")]
+pub enum RealmStatusRepSchema {
+    Ok {
+        in_maintenance: bool,
+        maintenance_type: Option<MaintenanceType>,
+        maintenance_started_on: Option<DateTime>,
+        maintenance_started_by: Option<DeviceID>,
+        encryption_revision: u64,
+    },
 }
 
 impl_api_protocol_dump_load!(RealmStatusRepSchema);
@@ -86,10 +88,9 @@ impl_api_protocol_dump_load!(RealmStatsReqSchema);
  */
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
-pub struct RealmStatsRepSchema {
-    pub status: Status,
-    pub blocks_size: u64,
-    pub vlobs_size: u64,
+#[serde(tag = "status", rename_all = "snake_case")]
+pub enum RealmStatsRepSchema {
+    Ok { blocks_size: u64, vlobs_size: u64 },
 }
 
 impl_api_protocol_dump_load!(RealmStatsRepSchema);
@@ -114,10 +115,12 @@ impl_api_protocol_dump_load!(RealmGetRoleCertificatesReqSchema);
 
 #[serde_as]
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
-pub struct RealmGetRoleCertificatesRepSchema {
-    pub status: Status,
-    #[serde_as(as = "Vec<Bytes>")]
-    pub certificates: Vec<Vec<u8>>,
+#[serde(tag = "status", rename_all = "snake_case")]
+pub enum RealmGetRoleCertificatesRepSchema {
+    Ok {
+        #[serde_as(as = "Vec<Bytes>")]
+        certificates: Vec<Vec<u8>>,
+    },
 }
 
 impl_api_protocol_dump_load!(RealmGetRoleCertificatesRepSchema);
@@ -143,8 +146,9 @@ impl_api_protocol_dump_load!(RealmUpdateRolesReqSchema);
  */
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
-pub struct RealmUpdateRolesRepSchema {
-    pub status: Status,
+#[serde(tag = "status", rename_all = "snake_case")]
+pub enum RealmUpdateRolesRepSchema {
+    Ok,
 }
 
 impl_api_protocol_dump_load!(RealmUpdateRolesRepSchema);
@@ -171,8 +175,9 @@ impl_api_protocol_dump_load!(RealmStartReencryptionMaintenanceReqSchema);
  */
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
-pub struct RealmStartReencryptionMaintenanceRepSchema {
-    pub status: Status,
+#[serde(tag = "status", rename_all = "snake_case")]
+pub enum RealmStartReencryptionMaintenanceRepSchema {
+    Ok,
 }
 
 impl_api_protocol_dump_load!(RealmStartReencryptionMaintenanceRepSchema);
@@ -195,8 +200,9 @@ impl_api_protocol_dump_load!(RealmFinishReencryptionMaintenanceReqSchema);
  */
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
-pub struct RealmFinishReencryptionMaintenanceRepSchema {
-    pub status: Status,
+#[serde(tag = "status", rename_all = "snake_case")]
+pub enum RealmFinishReencryptionMaintenanceRepSchema {
+    Ok,
 }
 
 impl_api_protocol_dump_load!(RealmFinishReencryptionMaintenanceRepSchema);

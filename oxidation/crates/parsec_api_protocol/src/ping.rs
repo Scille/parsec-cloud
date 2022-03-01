@@ -2,7 +2,7 @@
 
 use serde::{Deserialize, Serialize};
 
-use crate::{impl_api_protocol_dump_load, Status};
+use crate::impl_api_protocol_dump_load;
 
 /*
  * PingReqSchema
@@ -21,9 +21,9 @@ impl_api_protocol_dump_load!(PingReqSchema);
  */
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
-pub struct PingRepSchema {
-    pub status: Status,
-    pub pong: String,
+#[serde(tag = "status", rename_all = "snake_case")]
+pub enum PingRepSchema {
+    Ok { pong: String },
 }
 
 impl_api_protocol_dump_load!(PingRepSchema);

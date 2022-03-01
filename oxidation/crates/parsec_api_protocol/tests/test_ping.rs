@@ -37,8 +37,7 @@ fn serde_ping_rep() {
     //   status: "ok"
     let data = hex!("82a4706f6e67a4706f6e67a6737461747573a26f6b");
 
-    let expected = PingRepSchema {
-        status: Status::Ok,
+    let expected = PingRepSchema::Ok {
         pong: "pong".to_owned(),
     };
 

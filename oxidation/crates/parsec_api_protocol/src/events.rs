@@ -2,7 +2,7 @@
 
 use serde::{Deserialize, Serialize};
 
-use crate::{impl_api_protocol_dump_load, InvitationStatus, Status};
+use crate::{impl_api_protocol_dump_load, InvitationStatus};
 use parsec_api_types::{InvitationToken, RealmID, RealmRole, VlobID};
 
 /*
@@ -34,7 +34,6 @@ pub enum APIEvent {
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
 pub struct EventsPingedRepSchema {
-    pub status: Status,
     pub ping: String,
 }
 
@@ -44,7 +43,6 @@ pub struct EventsPingedRepSchema {
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
 pub struct EventsRealmRolesUpdatedRepSchema {
-    pub status: Status,
     pub realm_id: RealmID,
     pub role: RealmRole,
 }
@@ -55,7 +53,6 @@ pub struct EventsRealmRolesUpdatedRepSchema {
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
 pub struct EventsRealmVlobsUpdatedRepSchema {
-    pub status: Status,
     pub realm_id: RealmID,
     pub checkpoint: u64,
     pub src_id: VlobID,
@@ -68,7 +65,6 @@ pub struct EventsRealmVlobsUpdatedRepSchema {
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
 pub struct EventsRealmMaintenanceStartedRepSchema {
-    pub status: Status,
     pub realm_id: RealmID,
     pub encryption_revision: u64,
 }
@@ -79,7 +75,6 @@ pub struct EventsRealmMaintenanceStartedRepSchema {
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
 pub struct EventsRealmMaintenanceFinishedRepSchema {
-    pub status: Status,
     pub realm_id: RealmID,
     pub encryption_revision: u64,
 }
@@ -90,7 +85,6 @@ pub struct EventsRealmMaintenanceFinishedRepSchema {
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
 pub struct EventsMessageReceivedRepSchema {
-    pub status: Status,
     pub index: u64,
 }
 
@@ -100,7 +94,6 @@ pub struct EventsMessageReceivedRepSchema {
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
 pub struct EventsInviteStatusChangedRepSchema {
-    pub status: Status,
     pub token: InvitationToken,
     pub invitation_status: InvitationStatus,
 }
@@ -122,7 +115,10 @@ impl_api_protocol_dump_load!(EventsListenReqSchema);
  */
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
-pub struct EventsListenRepSchema(pub APIEvent);
+#[serde(tag = "status", rename_all = "snake_case")]
+pub enum EventsListenRepSchema {
+    Ok(APIEvent),
+}
 
 impl_api_protocol_dump_load!(EventsListenRepSchema);
 
@@ -142,8 +138,9 @@ impl_api_protocol_dump_load!(EventsSubscribeReqSchema);
  */
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
-pub struct EventsSubscribeRepSchema {
-    pub status: Status,
+#[serde(tag = "status", rename_all = "snake_case")]
+pub enum EventsSubscribeRepSchema {
+    Ok,
 }
 
 impl_api_protocol_dump_load!(EventsSubscribeRepSchema);
