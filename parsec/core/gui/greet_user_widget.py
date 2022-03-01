@@ -266,7 +266,7 @@ class GreetUserCheckInfoWidget(QWidget, Ui_GreetUserCheckInfoWidget):
             item = self.combo_profile.model().item(1)
             item.setToolTip(_("TEXT_USER_PROFILE_OUTSIDER_TOOLTIP"))
 
-        # Default profile choice is STANDARD
+        # No profile by default, forcing the greeter to choose one
         self.combo_profile.setCurrentIndex(0)
 
         self.get_requests_success.connect(self._on_get_requests_success)
