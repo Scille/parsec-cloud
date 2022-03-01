@@ -60,7 +60,11 @@ serialized = serializer.req_dumps(
     {"type": "USER", "cmd": "invite_new", "claimer_email": "alice@dev1", "send_email": True}
 )
 serializer.req_loads(serialized)
-display("invite_new_req", serialized, [])
+display("invite_new_req_user", serialized, [])
+
+serialized = serializer.req_dumps({"type": "DEVICE", "cmd": "invite_new", "send_email": True})
+serializer.req_loads(serialized)
+display("invite_new_req_device", serialized, [])
 
 serialized = serializer.rep_dumps(
     {
@@ -102,7 +106,13 @@ serialized = serializer.rep_dumps(
                 "created_on": datetime(2000, 1, 2, 1),
                 "claimer_email": "alice@dev1",
                 "status": InvitationStatus.IDLE,
-            }
+            },
+            {
+                "type": "DEVICE",
+                "token": InvitationToken.from_hex("d864b93ded264aae9ae583fd3d40c45a"),
+                "created_on": datetime(2000, 1, 2, 1),
+                "status": InvitationStatus.IDLE,
+            },
         ]
     }
 )
@@ -124,7 +134,17 @@ serialized = serializer.rep_dumps(
     }
 )
 serializer.rep_loads(serialized)
-display("invite_info_rep", serialized, [])
+display("invite_info_rep_user", serialized, [])
+
+serialized = serializer.rep_dumps(
+    {
+        "type": "DEVICE",
+        "greeter_user_id": UserID("109b68ba5cdf428ea0017fc6bcc04d4a"),
+        "greeter_human_handle": HumanHandle("bob@dev1", "bob"),
+    }
+)
+serializer.rep_loads(serialized)
+display("invite_info_rep_device", serialized, [])
 
 serializer = invite_1_claimer_wait_peer_serializer
 
@@ -724,7 +744,63 @@ display("events_listen_req", serialized, [])
 
 serialized = serializer.rep_dumps({"event": APIEvent.PINGED, "ping": "foobar"})
 serializer.rep_loads(serialized)
-display("events_listen_rep", serialized, [])
+display("events_listen_rep_pinged", serialized, [])
+
+serialized = serializer.rep_dumps({"event": APIEvent.MESSAGE_RECEIVED, "index": 0})
+serializer.rep_loads(serialized)
+display("events_listen_rep_message_received", serialized, [])
+
+serialized = serializer.rep_dumps(
+    {
+        "event": APIEvent.INVITE_STATUS_CHANGED,
+        "invitation_status": InvitationStatus.IDLE,
+        "token": InvitationToken.from_hex("d864b93ded264aae9ae583fd3d40c45a"),
+    }
+)
+serializer.rep_loads(serialized)
+display("events_listen_rep_invite_status_changed", serialized, [])
+
+serialized = serializer.rep_dumps(
+    {
+        "event": APIEvent.REALM_MAINTENANCE_FINISHED,
+        "realm_id": RealmID.from_hex("1d3353157d7d4e95ad2fdea7b3bd19c5"),
+        "encryption_revision": 0,
+    }
+)
+serializer.rep_loads(serialized)
+display("events_listen_rep_realm_maintenance_finished", serialized, [])
+
+serialized = serializer.rep_dumps(
+    {
+        "event": APIEvent.REALM_MAINTENANCE_STARTED,
+        "realm_id": RealmID.from_hex("1d3353157d7d4e95ad2fdea7b3bd19c5"),
+        "encryption_revision": 0,
+    }
+)
+serializer.rep_loads(serialized)
+display("events_listen_rep_realm_maintenance_started", serialized, [])
+
+serialized = serializer.rep_dumps(
+    {
+        "event": APIEvent.REALM_VLOBS_UPDATED,
+        "realm_id": RealmID.from_hex("1d3353157d7d4e95ad2fdea7b3bd19c5"),
+        "checkpoint": 0,
+        "src_id": VlobID.from_hex("2b5f314728134a12863da1ce49c112f6"),
+        "src_version": 0,
+    }
+)
+serializer.rep_loads(serialized)
+display("events_listen_rep_realm_vlobs_updated", serialized, [])
+
+serialized = serializer.rep_dumps(
+    {
+        "event": APIEvent.REALM_ROLES_UPDATED,
+        "realm_id": RealmID.from_hex("1d3353157d7d4e95ad2fdea7b3bd19c5"),
+        "role": RealmRole.OWNER,
+    }
+)
+serializer.rep_loads(serialized)
+display("events_listen_rep_realm_roles_updated", serialized, [])
 
 serializer = events_subscribe_serializer
 

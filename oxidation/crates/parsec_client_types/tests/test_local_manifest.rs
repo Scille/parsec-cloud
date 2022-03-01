@@ -303,6 +303,23 @@ fn serde_local_file_manifest_invalid_blocksize() {
 #[case::folder_manifest_legacy_no_confinement_fields(Box::new(|alice: &Device| {
     let now = "2021-12-04T11:50:43.208821Z".parse().unwrap();
     (
+        // Generated from Python implementation (Parsec v2.6.0+dev)
+        // Content:
+        //   type: "local_folder_manifest"
+        //   updated: ext(1, 1638618643.208821)
+        //   base: {
+        //     type: "folder_manifest"
+        //     author: "alice@dev1"
+        //     timestamp: ext(1, 1638618643.208821)
+        //     id: ext(2, hex!("87c6b5fd3b454c94bab51d6af1c6930b"))
+        //     version: 42
+        //     created: ext(1, 1638618643.208821)
+        //     updated: ext(1, 1638618643.208821)
+        //     children: {wksp2:ext(2, hex!("d7e3af6a03e1414db0f4682901e9aa4b"))}
+        //     parent: ext(2, hex!("07748fbf67a646428427865fd730bf3e"))
+        //   }
+        //   children: {wksp2:ext(2, hex!("d7e3af6a03e1414db0f4682901e9aa4b"))}
+        //   need_sync: false
         &hex!(
             "9ff2aaf585d985bf38d333b6ac48e345a52c28c4d9645ec7ad8258d4c52c7e36acefd6cbb3"
             "cc5fee4e3a3319f39cc91d9dbd0bcd108d417cf5a7f813cfc4d859585d56bbe7a89aeb9860"

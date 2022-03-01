@@ -226,6 +226,7 @@ impl_api_protocol_dump_load!(InviteInfoReqSchema);
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
 pub struct InviteInfoUserRepSchema {
+    pub status: Status,
     pub claimer_email: String,
     pub greeter_user_id: UserID,
     pub greeter_human_handle: HumanHandle,
@@ -237,6 +238,7 @@ pub struct InviteInfoUserRepSchema {
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
 pub struct InviteInfoDeviceRepSchema {
+    pub status: Status,
     pub greeter_user_id: UserID,
     pub greeter_human_handle: HumanHandle,
 }

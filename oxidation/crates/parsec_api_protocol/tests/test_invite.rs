@@ -8,23 +8,44 @@ use parsec_api_protocol::*;
 use parsec_api_types::HumanHandle;
 
 #[rstest]
-fn serde_invite_new_req() {
-    // Generated from Python implementation (Parsec v2.6.0+dev)
-    // Content:
-    //   type: "USER"
-    //   claimer_email: "alice@dev1"
-    //   cmd: "invite_new"
-    //   send_email: true
-    let data = hex!(
-        "84ad636c61696d65725f656d61696caa616c6963654064657631a3636d64aa696e76697465"
-        "5f6e6577aa73656e645f656d61696cc3a474797065a455534552"
-    );
-
-    let expected = InviteNewReqSchema(InviteNewUserOrDeviceReq::User(InviteNewUserReqSchema {
-        claimer_email: "alice@dev1".to_owned(),
-        cmd: "invite_new".to_owned(),
-        send_email: true,
-    }));
+#[case::user(
+    (
+        // Generated from Python implementation (Parsec v2.6.0+dev)
+        // Content:
+        //   type: "USER"
+        //   claimer_email: "alice@dev1"
+        //   cmd: "invite_new"
+        //   send_email: true
+        &hex!(
+            "84ad636c61696d65725f656d61696caa616c6963654064657631a3636d64aa696e76697465"
+            "5f6e6577aa73656e645f656d61696cc3a474797065a455534552"
+        )[..],
+        InviteNewReqSchema(InviteNewUserOrDeviceReq::User(InviteNewUserReqSchema {
+            cmd: "invite_new".to_owned(),
+            claimer_email: "alice@dev1".to_owned(),
+            send_email: true,
+        }))
+    )
+)]
+#[case::device(
+    (
+        // Generated from Python implementation (Parsec v2.6.0+dev)
+        // Content:
+        //   type: "DEVICE"
+        //   cmd: "invite_new"
+        //   send_email: true
+        &hex!(
+            "83a3636d64aa696e766974655f6e6577aa73656e645f656d61696cc3a474797065a6444556"
+            "494345"
+        )[..],
+        InviteNewReqSchema(InviteNewUserOrDeviceReq::Device(InviteNewDeviceReqSchema {
+            cmd: "invite_new".to_owned(),
+            send_email: true,
+        }))
+    )
+)]
+fn serde_invite_new_req(#[case] data_expected: (&[u8], InviteNewReqSchema)) {
+    let (data, expected) = data_expected;
 
     let schema = InviteNewReqSchema::load(&data).unwrap();
 
@@ -149,25 +170,40 @@ fn serde_invite_list_rep() {
     //       status: "IDLE"
     //       token: ext(2, hex!("d864b93ded264aae9ae583fd3d40c45a"))
     //     }
+    //     {
+    //       type: "DEVICE"
+    //       created_on: ext(1, 946774800.0)
+    //       status: "IDLE"
+    //       token: ext(2, hex!("d864b93ded264aae9ae583fd3d40c45a"))
+    //     }
     //   ]
     //   status: "ok"
     let data = hex!(
-        "82ab696e7669746174696f6e739185ad636c61696d65725f656d61696caa616c6963654064"
+        "82ab696e7669746174696f6e739285ad636c61696d65725f656d61696caa616c6963654064"
         "657631aa637265617465645f6f6ed70141cc375188000000a6737461747573a449444c45a5"
-        "746f6b656ed802d864b93ded264aae9ae583fd3d40c45aa474797065a455534552a6737461"
-        "747573a26f6b"
+        "746f6b656ed802d864b93ded264aae9ae583fd3d40c45aa474797065a45553455284aa6372"
+        "65617465645f6f6ed70141cc375188000000a6737461747573a449444c45a5746f6b656ed8"
+        "02d864b93ded264aae9ae583fd3d40c45aa474797065a6444556494345a6737461747573a2"
+        "6f6b"
     );
 
     let expected = InviteListRepSchema {
         status: Status::Ok,
-        invitations: vec![InviteListItemSchema(InviteListItemUserOrDevice::User(
-            InviteListItemUserSchema {
+        invitations: vec![
+            InviteListItemSchema(InviteListItemUserOrDevice::User(InviteListItemUserSchema {
                 token: "d864b93ded264aae9ae583fd3d40c45a".parse().unwrap(),
                 created_on: "2000-1-2T01:00:00Z".parse().unwrap(),
                 claimer_email: "alice@dev1".to_owned(),
                 status: InvitationStatus::Idle,
-            },
-        ))],
+            })),
+            InviteListItemSchema(InviteListItemUserOrDevice::Device(
+                InviteListItemDeviceSchema {
+                    token: "d864b93ded264aae9ae583fd3d40c45a".parse().unwrap(),
+                    created_on: Utc.ymd(2000, 1, 2).and_hms(1, 0, 0),
+                    status: InvitationStatus::Idle,
+                },
+            )),
+        ],
     };
 
     let schema = InviteListRepSchema::load(&data).unwrap();
@@ -204,26 +240,51 @@ fn serde_invite_info_req() {
 }
 
 #[rstest]
-fn serde_invite_info_rep() {
-    // Generated from Python implementation (Parsec v2.6.0+dev)
-    // Content:
-    //   type: "USER"
-    //   claimer_email: "alice@dev1"
-    //   greeter_human_handle: ["bob@dev1", "bob"]
-    //   greeter_user_id: "109b68ba5cdf428ea0017fc6bcc04d4a"
-    //   status: "ok"
-    let data = hex!(
-        "85ad636c61696d65725f656d61696caa616c6963654064657631b4677265657465725f6875"
-        "6d616e5f68616e646c6592a8626f624064657631a3626f62af677265657465725f75736572"
-        "5f6964d9203130396236386261356364663432386561303031376663366263633034643461"
-        "a6737461747573a26f6ba474797065a455534552"
-    );
-
-    let expected = InviteInfoRepSchema(InviteInfoUserOrDeviceRep::User(InviteInfoUserRepSchema {
-        claimer_email: "alice@dev1".to_owned(),
-        greeter_user_id: "109b68ba5cdf428ea0017fc6bcc04d4a".parse().unwrap(),
-        greeter_human_handle: HumanHandle::new("bob@dev1", "bob").unwrap(),
-    }));
+#[case::user(
+    (
+        // Generated from Python implementation (Parsec v2.6.0+dev)
+        // Content:
+        //   type: "USER"
+        //   claimer_email: "alice@dev1"
+        //   greeter_human_handle: ["bob@dev1", "bob"]
+        //   greeter_user_id: "109b68ba5cdf428ea0017fc6bcc04d4a"
+        //   status: "ok"
+        &hex!(
+            "85ad636c61696d65725f656d61696caa616c6963654064657631b4677265657465725f6875"
+            "6d616e5f68616e646c6592a8626f624064657631a3626f62af677265657465725f75736572"
+            "5f6964d9203130396236386261356364663432386561303031376663366263633034643461"
+            "a6737461747573a26f6ba474797065a455534552"
+        )[..],
+        InviteInfoRepSchema(InviteInfoUserOrDeviceRep::User(InviteInfoUserRepSchema {
+            status: Status::Ok,
+            claimer_email: "alice@dev1".to_owned(),
+            greeter_user_id: "109b68ba5cdf428ea0017fc6bcc04d4a".parse().unwrap(),
+            greeter_human_handle: HumanHandle::new("bob@dev1", "bob").unwrap(),
+        }))
+    )
+)]
+#[case::device(
+    (
+        // Generated from Python implementation (Parsec v2.6.0+dev)
+        // Content:
+        //   type: "DEVICE"
+        //   greeter_human_handle: ["bob@dev1", "bob"]
+        //   greeter_user_id: "109b68ba5cdf428ea0017fc6bcc04d4a"
+        //   status: "ok"
+        &hex!(
+            "84b4677265657465725f68756d616e5f68616e646c6592a8626f624064657631a3626f62af"
+            "677265657465725f757365725f6964d9203130396236386261356364663432386561303031"
+            "376663366263633034643461a6737461747573a26f6ba474797065a6444556494345"
+        )[..],
+        InviteInfoRepSchema(InviteInfoUserOrDeviceRep::Device(InviteInfoDeviceRepSchema {
+            status: Status::Ok,
+            greeter_user_id: "109b68ba5cdf428ea0017fc6bcc04d4a".parse().unwrap(),
+            greeter_human_handle: HumanHandle::new("bob@dev1", "bob").unwrap(),
+        }))
+    )
+)]
+fn serde_invite_info_rep(#[case] data_expected: (&[u8], InviteInfoRepSchema)) {
+    let (data, expected) = data_expected;
 
     let schema = InviteInfoRepSchema::load(&data).unwrap();
 
