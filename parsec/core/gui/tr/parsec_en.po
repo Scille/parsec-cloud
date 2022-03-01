@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PROJECT VERSION\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2022-03-01 11:02+0100\n"
+"POT-Creation-Date: 2022-03-01 15:32+0100\n"
 "PO-Revision-Date: 2020-10-15 10:30+0200\n"
 "Last-Translator: \n"
 "Language: en\n"
@@ -2463,6 +2463,48 @@ msgstr "By"
 msgid "ACTION_FILE_HISTORY_LOAD_MORE_ENTRIES"
 msgstr "Load more entries"
 
+msgid "TEXT_FILE_INFO_LOCATION"
+msgstr "Location"
+
+msgid "TEXT_FILE_INFO_TYPE"
+msgstr "Type"
+
+msgid "TEXT_FILE_INFO_SIZE"
+msgstr "Size"
+
+msgid "TEXT_FILE_INFO_NON_APPLICABLE"
+msgstr "N/A"
+
+msgid "TEXT_FILE_INFO_WORKSPACE"
+msgstr "Workspace"
+
+msgid "TEXT_FILE_INFO_CREATED_ON"
+msgstr "Created on"
+
+msgid "TEXT_FILE_INFO_CREATED_BY"
+msgstr "Created by"
+
+msgid "TEXT_FILE_INFO_UPDATED_ON"
+msgstr "Updated on"
+
+msgid "TEXT_FILE_INFO_UPDATED_BY"
+msgstr "Updated by"
+
+msgid "TEXT_FILE_INFO_AVAILABILITY"
+msgstr "Availability"
+
+msgid "TEXT_FILE_INFO_UPLOADED"
+msgstr "Uploaded"
+
+msgid "TEXT_FILE_INFO_BLOCKS_LOCAL"
+msgstr "Local only blocks"
+
+msgid "TEXT_FILE_INFO_BLOCKS_REMOTE"
+msgstr "Remote only blocks"
+
+msgid "TEXT_FILE_INFO_BLOCKS_BOTH"
+msgstr "Local and remote blocks"
+
 msgid "TEXT_FILE_BACK_TO_WORKSPACES_TOOLTIP"
 msgstr "Return to the list of workspaces."
 
@@ -2730,46 +2772,4 @@ msgstr "Create a new workspace"
 
 msgid "ACTION_WORKSPACE_GOTO_FILE_LINK"
 msgstr "Go to a file using a link"
-
-#~ msgid "TEXT_FILE_INFO_LOCATION"
-#~ msgstr "Location"
-
-#~ msgid "TEXT_FILE_INFO_TYPE"
-#~ msgstr "Type"
-
-#~ msgid "TEXT_FILE_INFO_SIZE"
-#~ msgstr "Size"
-
-#~ msgid "TEXT_FILE_INFO_WORKSPACE"
-#~ msgstr "Workspace"
-
-#~ msgid "TEXT_FILE_INFO_CREATED_ON"
-#~ msgstr "Created on"
-
-#~ msgid "TEXT_FILE_INFO_CREATED_BY"
-#~ msgstr "Created by"
-
-#~ msgid "TEXT_FILE_INFO_UPDATED_ON"
-#~ msgstr "Updated on"
-
-#~ msgid "TEXT_FILE_INFO_UPDATED_BY"
-#~ msgstr "Updated by"
-
-#~ msgid "TEXT_FILE_INFO_AVAILABILITY"
-#~ msgstr "Availability"
-
-#~ msgid "TEXT_FILE_INFO_UPLOADED"
-#~ msgstr "Uploaded"
-
-#~ msgid "TEXT_FILE_INFO_BLOCKS_LOCAL"
-#~ msgstr "Local only blocks"
-
-#~ msgid "TEXT_FILE_INFO_BLOCKS_REMOTE"
-#~ msgstr "Remote only blocks"
-
-#~ msgid "TEXT_FILE_INFO_BLOCKS_BOTH"
-#~ msgstr "Local and remote blocks"
-
-#~ msgid "TEXT_FILE_INFO_NON_APPLICABLE"
-#~ msgstr "N/A"
 
