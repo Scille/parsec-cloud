@@ -246,18 +246,28 @@ class GreetUserCheckInfoWidget(QWidget, Ui_GreetUserCheckInfoWidget):
         self.line_edit_user_email.set_validator(validators.EmailValidator())
         self.line_edit_device.validity_changed.connect(self.check_infos)
         self.line_edit_device.set_validator(validators.DeviceLabelValidator())
+        self.combo_profile.currentIndexChanged.connect(self.check_infos)
 
+        self.combo_profile.addItem(_("TEXT_SELECT_USER_PROFILE"), None)
         self.combo_profile.addItem(_("TEXT_USER_PROFILE_OUTSIDER"), UserProfile.OUTSIDER)
         self.combo_profile.addItem(_("TEXT_USER_PROFILE_STANDARD"), UserProfile.STANDARD)
         self.combo_profile.addItem(_("TEXT_USER_PROFILE_ADMIN"), UserProfile.ADMIN)
 
-        # Default profile choice is STANDARD
-        self.combo_profile.setCurrentIndex(1)
+        item = self.combo_profile.model().item(2)
+        item.setToolTip(_("TEXT_USER_PROFILE_STANDARD_TOOLTIP"))
+        item = self.combo_profile.model().item(3)
+        item.setToolTip(_("TEXT_USER_PROFILE_ADMIN_TOOLTIP"))
 
         if not user_profile_outsider_allowed:
-            item = self.combo_profile.model().item(0)
+            item = self.combo_profile.model().item(1)
             item.setEnabled(False)
             item.setToolTip(_("NOT_ALLOWED_OUTSIDER_PROFILE_TOOLTIP"))
+        else:
+            item = self.combo_profile.model().item(1)
+            item.setToolTip(_("TEXT_USER_PROFILE_OUTSIDER_TOOLTIP"))
+
+        # Default profile choice is STANDARD
+        self.combo_profile.setCurrentIndex(0)
 
         self.get_requests_success.connect(self._on_get_requests_success)
         self.get_requests_error.connect(self._on_get_requests_error)
@@ -274,6 +284,7 @@ class GreetUserCheckInfoWidget(QWidget, Ui_GreetUserCheckInfoWidget):
             self.line_edit_user_full_name.is_input_valid()
             and self.line_edit_device.is_input_valid()
             and self.line_edit_user_email.is_input_valid()
+            and self.combo_profile.currentIndex() != 0
         ):
             self.button_create_user.setDisabled(False)
         else:
