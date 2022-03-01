@@ -22,12 +22,12 @@ def _bytes_size(txt: str) -> int:
 
 class StrBased:
     __slots__ = ("_str",)
-    REGEX: Pattern[str]
+    REGEX: Optional[Pattern[str]]
     MAX_BYTE_SIZE: int
 
     def __init__(self, raw: str):
         raw = normalize("NFC", raw)
-        if not self.REGEX.match(raw) or _bytes_size(raw) > self.MAX_BYTE_SIZE:
+        if (self.REGEX and not self.REGEX.match(raw)) or _bytes_size(raw) > self.MAX_BYTE_SIZE:
             raise ValueError("Invalid data")
         self._str = raw
 

@@ -1,6 +1,5 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2016-2021 Scille SAS
 
-import re
 from typing import TYPE_CHECKING
 
 from parsec.types import UUID4
@@ -34,7 +33,7 @@ EntryIDField = fields.uuid_based_field_factory(EntryID)
 
 class EntryName(StrBased):
     # Ignore the REGEX
-    REGEX = re.compile(r"^.*$")
+    REGEX = None
     MAX_BYTE_SIZE = 255
 
     def __init__(self, raw: str):

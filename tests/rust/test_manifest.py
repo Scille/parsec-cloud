@@ -248,6 +248,7 @@ def test_folder_manifest():
     _assert_folder_manifest_eq(py_wm, rs_wm)
 
 
+@pytest.mark.xfail(reason="Waiting for a fix on datetimes serialization")
 @pytest.mark.rust
 def test_workspace_manifest():
     from parsec.api.data.manifest import (
