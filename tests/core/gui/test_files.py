@@ -6,6 +6,7 @@ import pytest
 from PyQt5 import QtCore, QtWidgets, QtGui
 from PyQt5.QtGui import QGuiApplication
 
+from parsec.api.data import EntryName
 from parsec.core.types import WorkspaceRole
 from parsec.core.fs import FsPath
 
@@ -52,12 +53,12 @@ def create_files_widget_testbed(monkeypatch, aqtbot, logged_gui, user_fs, wfs, f
                     current_path_parts.pop()
                 else:
                     f_w.table_files.item_activated.emit(FileType.Folder, name)
-                    current_path_parts.append(name)
+                    current_path_parts.append(EntryName(name))
 
                 def _path_reached():
-                    fs_path = FsPath("/" + "/".join(current_path_parts))
+                    fs_path = FsPath("/" + "/".join([part.str for part in current_path_parts]))
                     assert f_w.current_directory == fs_path
-                    assert str(c_w.navigation_bar_widget.get_current_path()) == str(fs_path)
+                    assert c_w.navigation_bar_widget.get_current_path() == fs_path
 
                 await aqtbot.wait_until(_path_reached)
 
@@ -109,7 +110,7 @@ def create_files_widget_testbed(monkeypatch, aqtbot, logged_gui, user_fs, wfs, f
             async with aqtbot.wait_signal(f_w.table_files.paste_clicked):
                 aqtbot.key_click(f_w.table_files, "V", modifier=QtCore.Qt.ControlModifier)
 
-        async def check_files_view(self, path, expected_entries, workspace_name="wksp1"):
+        async def check_files_view(self, path, expected_entries, workspace_name=EntryName("wksp1")):
             expected_table_files = []
             # Parent dir line brings to workspaces list if we looking into workspace's root
             if path == "/":
@@ -194,7 +195,7 @@ def create_files_widget_testbed(monkeypatch, aqtbot, logged_gui, user_fs, wfs, f
 async def files_widget_testbed(monkeypatch, aqtbot, logged_gui):
     c_w = logged_gui.test_get_central_widget()
     w_w = logged_gui.test_get_workspaces_widget()
-    workspace_name = "wksp1"
+    workspace_name = EntryName("wksp1")
 
     # Create the workspace
     user_fs = logged_gui.test_get_core().user_fs
@@ -415,7 +416,7 @@ async def test_show_inconsistent_dir(
 
     # Create a new workspace and make user GUI knows about it
     await tb.logged_gui.test_switch_to_workspaces_widget()
-    await create_inconsistent_workspace(user_fs=tb.user_fs, name="wksp2")
+    await create_inconsistent_workspace(user_fs=tb.user_fs, name=EntryName("wksp2"))
 
     # Now wait for GUI to take it into account
     def _workspace_available():
@@ -424,13 +425,15 @@ async def test_show_inconsistent_dir(
     await aqtbot.wait_until(_workspace_available)
 
     # Jump into the workspace, should be fine
-    await tb.logged_gui.test_switch_to_files_widget(workspace_name="wksp2")
-    await tb.check_files_view(workspace_name="wksp2", path="/", expected_entries=["rep/"])
+    await tb.logged_gui.test_switch_to_files_widget(workspace_name=EntryName("wksp2"))
+    await tb.check_files_view(
+        workspace_name=EntryName("wksp2"), path="/", expected_entries=["rep/"]
+    )
 
     # Now go into the folder containing the `newfail.txt` inconsistent file
     await tb.cd("rep")
     await tb.check_files_view(
-        workspace_name="wksp2", path="/rep", expected_entries=["foo.txt", "newfail.txt!"]
+        workspace_name=EntryName("wksp2"), path="/rep", expected_entries=["foo.txt", "newfail.txt!"]
     )
 
 
@@ -441,7 +444,7 @@ async def test_copy_cut_between_workspaces(aqtbot, autoclose_dialog, files_widge
 
     # Create a new workspace and make user GUI knows about it
     await tb.logged_gui.test_switch_to_workspaces_widget()
-    await tb.user_fs.workspace_create("wksp2")
+    await tb.user_fs.workspace_create(EntryName("wksp2"))
 
     # Now wait for GUI to take it into account
     def _workspace_available():
@@ -457,23 +460,25 @@ async def test_copy_cut_between_workspaces(aqtbot, autoclose_dialog, files_widge
 
     # 1) Test the copy
     await tb.copy("foo")
-    await tb.logged_gui.test_switch_to_files_widget(workspace_name="wksp2")
+    await tb.logged_gui.test_switch_to_files_widget(workspace_name=EntryName("wksp2"))
     await tb.paste()
-    await tb.check_files_view(workspace_name="wksp2", path="/", expected_entries=["foo/"])
+    await tb.check_files_view(
+        workspace_name=EntryName("wksp2"), path="/", expected_entries=["foo/"]
+    )
     await tb.cd("foo")
     await tb.check_files_view(
-        workspace_name="wksp2", path="/foo", expected_entries=["bar.txt", "spam.txt"]
+        workspace_name=EntryName("wksp2"), path="/foo", expected_entries=["bar.txt", "spam.txt"]
     )
 
     # 2) Test the cut
     await tb.cut(["bar.txt", "spam.txt"])
-    await tb.logged_gui.test_switch_to_files_widget(workspace_name="wksp1")
+    await tb.logged_gui.test_switch_to_files_widget(workspace_name=EntryName("wksp1"))
     await tb.paste()
     await tb.check_files_view(path="/", expected_entries=["foo/", "bar.txt", "spam.txt"])
     # Make sure the files are no longer in the initial workspace
-    await tb.logged_gui.test_switch_to_files_widget(workspace_name="wksp2")
+    await tb.logged_gui.test_switch_to_files_widget(workspace_name=EntryName("wksp2"))
     await tb.cd("foo")
-    await tb.check_files_view(workspace_name="wksp2", path="/foo", expected_entries=[])
+    await tb.check_files_view(workspace_name=EntryName("wksp2"), path="/foo", expected_entries=[])
 
 
 @pytest.mark.gui

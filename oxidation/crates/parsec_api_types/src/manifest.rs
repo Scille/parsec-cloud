@@ -170,36 +170,6 @@ impl std::str::FromStr for EntryName {
 }
 
 /*
- * ManifestEntry
- */
-
-#[derive(Clone, Debug, Default, Serialize, Deserialize, PartialEq, Eq, Hash)]
-#[serde(transparent)]
-pub struct ManifestEntry(pub EntryID);
-
-impl AsRef<EntryID> for ManifestEntry {
-    #[inline]
-    fn as_ref(&self) -> &EntryID {
-        &self.0
-    }
-}
-
-impl From<EntryID> for ManifestEntry {
-    fn from(entry_id: EntryID) -> Self {
-        Self(entry_id)
-    }
-}
-
-impl std::str::FromStr for ManifestEntry {
-    type Err = &'static str;
-
-    #[inline]
-    fn from_str(s: &str) -> Result<Self, Self::Err> {
-        Ok(Self::from(s.parse::<EntryID>()?))
-    }
-}
-
-/*
  * WorkspaceEntry
  */
 
@@ -259,7 +229,7 @@ fn generate_local_author_legacy_placeholder() -> DeviceID {
  * Blocksize
  */
 
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
+#[derive(Debug, Clone, Copy, Serialize, Deserialize, PartialEq, Eq)]
 pub struct Blocksize(u64);
 
 impl TryFrom<u64> for Blocksize {
@@ -386,7 +356,7 @@ pub struct FolderManifest {
     pub version: u32,
     pub created: DateTime<Utc>,
     pub updated: DateTime<Utc>,
-    pub children: HashMap<EntryName, ManifestEntry>,
+    pub children: HashMap<EntryName, EntryID>,
 }
 
 impl_manifest_dump_load!(FolderManifest);
@@ -407,7 +377,7 @@ new_data_struct_type!(
     created: DateTime<Utc>,
     #[serde_as(as = "DateTimeExtFormat")]
     updated: DateTime<Utc>,
-    children: HashMap<EntryName, ManifestEntry>,
+    children: HashMap<EntryName, EntryID>,
 );
 
 impl_transparent_data_format_conversion!(
@@ -438,7 +408,7 @@ pub struct WorkspaceManifest {
     pub version: u32,
     pub created: DateTime<Utc>,
     pub updated: DateTime<Utc>,
-    pub children: HashMap<EntryName, ManifestEntry>,
+    pub children: HashMap<EntryName, EntryID>,
 }
 
 impl_manifest_dump_load!(WorkspaceManifest);
@@ -458,7 +428,7 @@ new_data_struct_type!(
     created: DateTime<Utc>,
     #[serde_as(as = "DateTimeExtFormat")]
     updated: DateTime<Utc>,
-    children: HashMap<EntryName, ManifestEntry>,
+    children: HashMap<EntryName, EntryID>,
 );
 
 impl_transparent_data_format_conversion!(

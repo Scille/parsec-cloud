@@ -4,6 +4,8 @@ import pytest
 from hypothesis import strategies as st
 from hypothesis_trio.stateful import initialize, rule
 
+from parsec.api.data import EntryName
+
 from tests.oracles import FileOracle
 
 
@@ -20,7 +22,7 @@ def test_fs_online_rwfile_and_sync(user_fs_online_state_machine, alice):
             self.device = alice
             await self.start_backend()
             await self.restart_user_fs(self.device)
-            self.wid = await self.user_fs.workspace_create("w")
+            self.wid = await self.user_fs.workspace_create(EntryName("w"))
             workspace = self.user_fs.get_workspace(self.wid)
             await workspace.touch("/foo.txt")
             await workspace.sync()

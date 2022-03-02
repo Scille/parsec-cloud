@@ -107,7 +107,7 @@ def collect_data_classes_from_module(mod):
         if item.SERIALIZER_CLS is BaseSerializer:
             continue
         # Ignore imported classes (avoid to populate current module collection
-        # with extenal imported schema.
+        # with external imported schema.
         # Example: Avoid to add imported api schemas while generating parsec.core.types)
         if not item.__module__.startswith(mod.__name__):
             continue
@@ -118,7 +118,13 @@ def collect_data_classes_from_module(mod):
 def generate_api_data_specs():
     import parsec.api.data
 
-    data_classes = collect_data_classes_from_module(parsec.api.data)
+    package = parsec.api.data
+
+    data_classes = set()
+    for submod_info in pkgutil.walk_packages(package.__path__, prefix=f"{package.__name__}."):
+        submod = importlib.import_module(submod_info.name)
+        data_classes.update(collect_data_classes_from_module(submod))
+
     return {data_cls.__name__: data_class_to_spec(data_cls) for data_cls in data_classes}
 
 
@@ -149,7 +155,7 @@ def collect_cmd_serializers_from_module(mod):
         if item.SERIALIZER_CLS is BaseSerializer:
             continue
         # Ignore imported classes (avoid to populate current module collection
-        # with extenal imported schema.
+        # with external imported schema.
         # Example: Avoid to add imported api schemas while generating parsec.core.types)
         if not item.__module__.startswith(mod.__name__):
             continue
@@ -172,13 +178,9 @@ def cmd_serializer_to_spec(cmd_serializer: CmdSerializer):
     }
 
 
-def generate_api_protocol_specs():
-    # First collect all command serializers
-    from parsec.api import protocol as protocol_mod
-
-    cmd_serializers = {}
-    for item_name in dir(protocol_mod):
-        item = getattr(protocol_mod, item_name)
+def collect_cmd_serializer_from_module(mod, cmd_serializers):
+    for item_name in dir(mod):
+        item = getattr(mod, item_name)
         if not isinstance(item, CmdSerializer):
             continue
         # This is where things start to be hacky: given we don't use enum
@@ -188,6 +190,19 @@ def generate_api_protocol_specs():
         match = re.match(r"^(?P<name>(apiv1_)?[a-z][a-z0-9_]+)_serializer$", item_name)
         assert match, f"Invalid name `{item_name}` for CmdSerializer !"
         cmd_serializers[match.group("name")] = item
+    return cmd_serializers
+
+
+def generate_api_protocol_specs():
+    # First collect all command serializers
+    import parsec.api.protocol
+
+    package = parsec.api.protocol
+
+    cmd_serializers = {}
+    for submod_info in pkgutil.walk_packages(package.__path__, prefix=f"{package.__name__}."):
+        submod = importlib.import_module(submod_info.name)
+        collect_cmd_serializer_from_module(submod, cmd_serializers)
 
     # Now retrieve the per-familly commands sets and generate specs
     from parsec.api.protocol import cmds as cmds_mod

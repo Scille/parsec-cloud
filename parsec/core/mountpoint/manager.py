@@ -91,7 +91,9 @@ class MountpointManager:
                 winify_entry_name(x) for x in parts
             )
         else:
-            self._build_mountpoint_path = lambda base_path, parts: base_path / "/".join(parts)
+            self._build_mountpoint_path = lambda base_path, parts: base_path / "/".join(
+                [part.str for part in parts]
+            )
 
     def _get_workspace(self, workspace_id: EntryID):
         try:

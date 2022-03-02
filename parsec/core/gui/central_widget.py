@@ -12,6 +12,7 @@ from parsec.api.protocol import (
     HandshakeRevokedDevice,
     HandshakeOrganizationExpired,
 )
+from parsec.api.data import EntryName
 from parsec.api.data.manifest import WorkspaceEntry
 from parsec.core.core_events import CoreEvent
 from parsec.core.logged_core import LoggedCore, OrganizationStats
@@ -203,7 +204,7 @@ class CentralWidget(QWidget, Ui_CentralWidget):  # type: ignore[misc]
     def _on_route_clicked(self, path: FsPath) -> None:
         self.mount_widget.load_path(path)
 
-    def _on_folder_changed(self, workspace_name: Optional[str], path: Optional[str]) -> None:
+    def _on_folder_changed(self, workspace_name: Optional[EntryName], path: Optional[str]) -> None:
         if workspace_name and path:
             self.navigation_bar_widget.from_path(workspace_name, path)
         else:

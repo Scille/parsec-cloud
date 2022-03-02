@@ -6,6 +6,7 @@ import errno
 import pytest
 from unittest.mock import patch
 
+from parsec.api.data import EntryName
 from parsec.core.core_events import CoreEvent
 from parsec.core.mountpoint import mountpoint_manager_factory, MountpointDriverCrash
 
@@ -38,7 +39,7 @@ def test_delete_then_close_file(mountpoint_service):
 @pytest.mark.trio
 @pytest.mark.mountpoint
 async def test_unmount_with_fusermount(base_mountpoint, alice, alice_user_fs, event_bus):
-    wid = await alice_user_fs.workspace_create("w")
+    wid = await alice_user_fs.workspace_create(EntryName("w"))
     workspace = alice_user_fs.get_workspace(wid)
     await workspace.touch("/bar.txt")
 
@@ -68,7 +69,7 @@ async def test_unmount_with_fusermount(base_mountpoint, alice, alice_user_fs, ev
 @pytest.mark.trio
 @pytest.mark.mountpoint
 async def test_hard_crash_in_fuse_thread(base_mountpoint, alice_user_fs):
-    wid = await alice_user_fs.workspace_create("w")
+    wid = await alice_user_fs.workspace_create(EntryName("w"))
     mountpoint_path = base_mountpoint / "w"
 
     class ToughLuckError(Exception):
@@ -97,7 +98,7 @@ async def test_hard_crash_in_fuse_thread(base_mountpoint, alice_user_fs):
 @pytest.mark.mountpoint
 async def test_unmount_due_to_cancelled_scope(base_mountpoint, alice, alice_user_fs, event_bus):
     mountpoint_path = base_mountpoint / "w"
-    wid = await alice_user_fs.workspace_create("w")
+    wid = await alice_user_fs.workspace_create(EntryName("w"))
 
     with trio.CancelScope() as cancel_scope:
         async with mountpoint_manager_factory(
@@ -117,7 +118,7 @@ async def test_unmount_due_to_cancelled_scope(base_mountpoint, alice, alice_user
 async def test_mountpoint_path_already_in_use_concurrent_with_non_empty_dir(
     monkeypatch, base_mountpoint, alice_user_fs
 ):
-    wid = await alice_user_fs.workspace_create("w")
+    wid = await alice_user_fs.workspace_create(EntryName("w"))
     mountpoint_path = base_mountpoint.absolute() / "w"
 
     # Here instead of checking the path can be used as a mountpoint, we
@@ -151,7 +152,7 @@ async def test_mountpoint_path_already_in_use_concurrent_with_mountpoint(
     monkeypatch, base_mountpoint, running_backend, alice_user_fs, alice2_user_fs
 ):
     # Create a workspace and make it available in two devices
-    wid = await alice_user_fs.workspace_create("w")
+    wid = await alice_user_fs.workspace_create(EntryName("w"))
     await alice_user_fs.sync()
     await alice2_user_fs.sync()
 

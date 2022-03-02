@@ -1,12 +1,13 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BSLv1.1 (eventually AGPLv3) 2016-2021 Scille SAS
 
-use pyo3::prelude::*;
+use pyo3::prelude::{pymodule, PyModule, PyResult, Python};
 
 mod addrs;
 mod binding_utils;
 mod crypto;
 mod ids;
 mod invite;
+mod manifest;
 
 /// A Python module implemented in Rust. The name of this function must match
 /// the `lib.name` setting in the `Cargo.toml`, else Python will not be able to
@@ -36,5 +37,12 @@ fn _libparsec(_py: Python, m: &PyModule) -> PyResult<()> {
     m.add_class::<ids::DeviceLabel>()?;
     m.add_class::<ids::UserID>()?;
     m.add_class::<invite::InvitationToken>()?;
+    m.add_class::<manifest::EntryName>()?;
+    m.add_class::<manifest::WorkspaceEntry>()?;
+    m.add_class::<manifest::BlockAccess>()?;
+    m.add_class::<manifest::FileManifest>()?;
+    m.add_class::<manifest::FolderManifest>()?;
+    m.add_class::<manifest::WorkspaceEntry>()?;
+    m.add_class::<manifest::WorkspaceManifest>()?;
     Ok(())
 }

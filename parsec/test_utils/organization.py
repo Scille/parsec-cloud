@@ -8,7 +8,13 @@ from pathlib import Path
 from uuid import uuid4
 from pendulum import now as pendulum_now
 
-from parsec.api.data import UserProfile, UserCertificateContent, DeviceCertificateContent, EntryID
+from parsec.api.data import (
+    UserProfile,
+    UserCertificateContent,
+    DeviceCertificateContent,
+    EntryID,
+    EntryName,
+)
 from parsec.api.protocol import OrganizationID, DeviceID, HumanHandle, DeviceName, DeviceLabel
 from parsec.crypto import SigningKey
 from parsec.core import logged_core_factory
@@ -116,11 +122,11 @@ async def initialize_test_organization(
                 config_dir=config_dir, device=toto_device, password=password
             )
             # Create Alice workspace
-            alice_ws_id = await alice_core.user_fs.workspace_create("alice_workspace")
+            alice_ws_id = await alice_core.user_fs.workspace_create(EntryName("alice_workspace"))
             # Create context manager
             async with logged_core_factory(config, bob_device) as bob_core:
                 # Create Bob workspace
-                bob_ws_id = await bob_core.user_fs.workspace_create("bob_workspace")
+                bob_ws_id = await bob_core.user_fs.workspace_create(EntryName("bob_workspace"))
                 # Bob share workspace with Alice
                 await bob_core.user_fs.workspace_share(
                     bob_ws_id, alice_device.user_id, WorkspaceRole.MANAGER

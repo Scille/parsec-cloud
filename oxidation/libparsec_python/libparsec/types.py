@@ -19,6 +19,12 @@ try:
         VlobID,
         InvitationToken,
         DeviceLabel,
+        EntryName,
+        WorkspaceEntry,
+        BlockAccess,
+        FileManifest,
+        FolderManifest,
+        WorkspaceManifest,
     )
 except ImportError as exc:
     print(f"Import error in libparsec/types: {exc}")
@@ -41,4 +47,10 @@ __all__ = (
     "VlobID",
     "InvitationToken",
     "DeviceLabel",
+    "EntryName",
+    "WorkspaceEntry",
+    "BlockAccess",
+    "FileManifest",
+    "FolderManifest",
+    "WorkspaceManifest",
 )

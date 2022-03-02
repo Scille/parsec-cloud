@@ -384,12 +384,9 @@ class UserFS:
 
         return workspace
 
-    async def workspace_create(self, name: AnyEntryName) -> EntryID:
-        """
-        Raises:
-            ValueError: if name is passed as str but cannot be converted to `EntryName`
-        """
-        name = EntryName(name)
+    async def workspace_create(self, name: EntryName) -> EntryID:
+        assert isinstance(name, EntryName)
+
         async with self._update_user_manifest_lock:
             timestamp = self.device.timestamp()
             workspace_entry = WorkspaceEntry.new(name, timestamp=timestamp)
@@ -422,13 +419,13 @@ class UserFS:
 
         return workspace_entry.id
 
-    async def workspace_rename(self, workspace_id: EntryID, new_name: AnyEntryName) -> None:
+    async def workspace_rename(self, workspace_id: EntryID, new_name: EntryName) -> None:
         """
         Raises:
             FSWorkspaceNotFoundError
-            ValueError: if name is passed as str but cannot be converted to `EntryName`
         """
-        new_name = EntryName(new_name)
+        assert isinstance(new_name, EntryName)
+
         async with self._update_user_manifest_lock:
             user_manifest = self.get_user_manifest()
             workspace_entry = user_manifest.get_workspace_entry(workspace_id)

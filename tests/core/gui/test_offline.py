@@ -5,6 +5,7 @@ import pendulum
 
 import pytest
 
+from parsec.api.data import EntryName
 from parsec.core.gui.lang import translate
 
 
@@ -84,7 +85,7 @@ async def test_backend_desync_notification(
     async with aqtbot.wait_signal(central_widget.systray_notification):
 
         # Force sync by creating a workspace
-        await central_widget.core.user_fs.workspace_create("test1")
+        await central_widget.core.user_fs.workspace_create(EntryName("test1"))
 
         # Wait until we're offline
         await aqtbot.wait_until(_offline, timeout=3000)
@@ -116,7 +117,7 @@ async def test_backend_desync_notification(
     timestamp_shift_minutes = 5
 
     # Force sync by creating a workspace
-    await central_widget.core.user_fs.workspace_create("test2")
+    await central_widget.core.user_fs.workspace_create(EntryName("test2"))
 
     # Wait until we get the notification
     await aqtbot.wait_until(_offline, timeout=3000)

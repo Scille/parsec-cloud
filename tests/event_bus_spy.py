@@ -122,22 +122,31 @@ class EventBusSpy:
     def clear(self):
         self.events.clear()
 
-    async def wait_with_timeout(self, event, kwargs=ANY, dt=ANY, timeout=1):
+    async def wait_with_timeout(self, event, kwargs=ANY, dt=ANY, timeout=1, update_event_func=None):
         with trio.fail_after(timeout):
-            await self.wait(event, kwargs, dt)
+            await self.wait(event, kwargs, dt, update_event_func)
 
-    async def wait(self, event, kwargs=ANY, dt=ANY):
+    async def wait(self, event, kwargs=ANY, dt=ANY, update_event_func=None):
         expected = SpiedEvent(event, kwargs, dt)
         for occured_event in reversed(self.events):
+            if update_event_func:
+                occured_event = update_event_func(occured_event)
             if expected == occured_event:
                 return occured_event
 
-        return await self._wait(expected)
+        return await self._wait(expected, update_event_func)
 
-    async def _wait(self, cooked_expected_event):
+    async def _wait(self, cooked_expected_event, update_event_func=None):
         send_channel, receive_channel = trio.open_memory_channel(1)
 
         def _waiter(cooked_event):
+            from parsec.core.core_events import CoreEvent
+
+            if update_event_func:
+                cooked_event = update_event_func(cooked_event)
+            if cooked_event.event == CoreEvent.SHARING_UPDATED:
+                print("a", cooked_event)
+                print("b", cooked_expected_event)
             if cooked_expected_event == cooked_event:
                 send_channel.send_nowait(cooked_event)
                 self._waiters.remove(_waiter)

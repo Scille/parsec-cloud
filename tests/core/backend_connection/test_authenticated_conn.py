@@ -3,6 +3,7 @@
 import pytest
 import trio
 
+from parsec.api.data import EntryName
 from parsec.backend.backend_events import BackendEvent
 from parsec.api.protocol import RealmRole, HandshakeType
 from parsec.core.types import OrganizationConfig
@@ -252,7 +253,7 @@ async def test_concurrency_sends(running_backend, alice, event_bus):
 
 @pytest.mark.trio
 async def test_realm_notif_on_new_entry_sync(running_backend, alice_backend_conn, alice2_user_fs):
-    wid = await alice2_user_fs.workspace_create("foo")
+    wid = await alice2_user_fs.workspace_create(EntryName("foo"))
     workspace = alice2_user_fs.get_workspace(wid)
 
     await workspace.touch("/foo")
@@ -281,7 +282,7 @@ async def test_realm_notif_on_new_workspace_sync(
     running_backend, alice_backend_conn, alice2_user_fs
 ):
     uid = alice2_user_fs.user_manifest_id
-    wid = await alice2_user_fs.workspace_create("foo")
+    wid = await alice2_user_fs.workspace_create(EntryName("foo"))
 
     with alice_backend_conn.event_bus.listen() as spy:
         await alice2_user_fs.sync()
@@ -305,7 +306,7 @@ async def test_realm_notif_on_new_workspace_sync(
 
 @pytest.mark.trio
 async def test_realm_notif_maintenance(running_backend, alice_backend_conn, alice2_user_fs):
-    wid = await alice2_user_fs.workspace_create("foo")
+    wid = await alice2_user_fs.workspace_create(EntryName("foo"))
     await alice2_user_fs.sync()
 
     with alice_backend_conn.event_bus.listen() as spy:

@@ -58,7 +58,7 @@ class FileStatusWidget(QWidget, Ui_FileInfoWidget):
         self.label_location.setText(str(full_path))
         self.label_filetype.setText(str(path_info["type"]))
 
-        self.label_workspace.setText(self.workspace_fs.get_workspace_name())
+        self.label_workspace.setText(self.workspace_fs.get_workspace_name().str)
         self.label_created_on.setText(format_datetime(created_time))
         self.label_last_updated_on.setText(format_datetime(updated_time))
         self.label_created_by.setText(creator.short_user_display)

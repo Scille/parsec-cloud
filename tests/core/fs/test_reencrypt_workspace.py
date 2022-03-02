@@ -4,6 +4,7 @@ import pytest
 from pendulum import datetime
 from unittest.mock import ANY
 
+from parsec.api.data import EntryName
 from parsec.api.protocol import RealmID
 from parsec.core.types import EntryID
 from parsec.core.fs import (
@@ -21,7 +22,7 @@ from tests.common import freeze_time
 @pytest.fixture
 async def workspace(running_backend, alice_user_fs):
     with freeze_time("2000-01-02"):
-        wid = await alice_user_fs.workspace_create("w1")
+        wid = await alice_user_fs.workspace_create(EntryName("w1"))
         # Sync workspace manifest v1
         await alice_user_fs.sync()
         w = alice_user_fs.get_workspace(wid)
@@ -84,7 +85,7 @@ async def test_do_reencryption(running_backend, workspace, alice, alice_user_fs)
 
 @pytest.mark.trio
 async def test_reencrypt_placeholder(running_backend, alice, alice_user_fs):
-    wid = await alice_user_fs.workspace_create("w1")
+    wid = await alice_user_fs.workspace_create(EntryName("w1"))
     with pytest.raises(FSError):
         await alice_user_fs.workspace_start_reencryption(wid)
 
@@ -156,7 +157,7 @@ async def test_concurrent_continue_reencryption(running_backend, workspace, alic
 @pytest.mark.trio
 async def test_reencryption_already_started(running_backend, alice_user_fs):
     with freeze_time("2000-01-02"):
-        wid = await alice_user_fs.workspace_create("w1")
+        wid = await alice_user_fs.workspace_create(EntryName("w1"))
     await alice_user_fs.sync()
 
     await alice_user_fs.workspace_start_reencryption(wid)
@@ -190,7 +191,7 @@ async def test_no_access_during_reencryption(running_backend, alice2_user_fs, wo
         "updated": datetime(2000, 1, 2),
         "is_placeholder": False,
         "need_sync": False,
-        "children": ["foo.txt"],
+        "children": [EntryName("foo.txt")],
         "confinement_point": None,
     }
     # Data not in local cache can be downloaded
@@ -221,7 +222,7 @@ async def test_no_access_during_reencryption(running_backend, alice2_user_fs, wo
         "updated": datetime(2000, 1, 3),
         "is_placeholder": False,
         "need_sync": True,
-        "children": ["bar.txt", "foo.txt"],
+        "children": [EntryName("bar.txt"), EntryName("foo.txt")],
         "confinement_point": None,
     }
     foo_info = await aw.path_info("/foo.txt")

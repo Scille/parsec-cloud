@@ -291,7 +291,7 @@ class ManifestCache:
             current_manifest = parent_manifest
 
         # Return the path
-        return FsPath("/" + "/".join(reversed(parts)))
+        return FsPath("/" + "/".join(reversed([part.str for part in parts])))
 
 
 class ManifestCacheCounter:

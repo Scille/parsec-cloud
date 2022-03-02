@@ -11,6 +11,7 @@ from PyQt5 import QtCore, QtTest
 from pytestqt.exceptions import TimeoutError
 
 from parsec import __version__ as parsec_version
+from parsec.api.data import EntryName
 from parsec.core.local_device import save_device_with_password_in_config
 from parsec.core.gui.main_window import MainWindow
 from parsec.core.gui.workspaces_widget import WorkspaceButton
@@ -452,6 +453,7 @@ def testing_main_window_cls(aqtbot):
             return w_w
 
         async def test_switch_to_files_widget(self, workspace_name, error=False):
+            assert isinstance(workspace_name, EntryName)
             w_w = await self.test_switch_to_workspaces_widget()
 
             for i in range(w_w.layout_workspaces.count()):

@@ -9,8 +9,8 @@ use pyo3::types::{PyByteArray, PyBytes, PyType};
 import_exception!(nacl.exceptions, CryptoError);
 
 #[pyclass]
-#[derive(PartialEq, Eq)]
-pub(crate) struct HashDigest(parsec_api_crypto::HashDigest);
+#[derive(PartialEq, Eq, Clone)]
+pub(crate) struct HashDigest(pub parsec_api_crypto::HashDigest);
 
 #[pymethods]
 impl HashDigest {
@@ -58,7 +58,7 @@ impl HashDigest {
 
 #[pyclass]
 #[derive(PartialEq, Eq)]
-pub(crate) struct SigningKey(parsec_api_crypto::SigningKey);
+pub(crate) struct SigningKey(pub parsec_api_crypto::SigningKey);
 
 #[pymethods]
 impl SigningKey {
@@ -156,8 +156,8 @@ impl VerifyKey {
 }
 
 #[pyclass]
-#[derive(PartialEq, Eq)]
-pub(crate) struct SecretKey(parsec_api_crypto::SecretKey);
+#[derive(PartialEq, Eq, Clone)]
+pub(crate) struct SecretKey(pub parsec_api_crypto::SecretKey);
 
 #[pymethods]
 impl SecretKey {

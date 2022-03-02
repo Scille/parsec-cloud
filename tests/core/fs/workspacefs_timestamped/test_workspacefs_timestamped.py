@@ -3,6 +3,7 @@
 import pytest
 from unittest.mock import ANY
 
+from parsec.api.data import EntryName
 from parsec.core.fs import FsPath
 from parsec.core.fs.exceptions import FSWorkspaceTimestampedTooEarly
 
@@ -15,7 +16,7 @@ async def test_path_info(alice_workspace, timestamp_0, alice_workspace_t1, alice
     info = await alice_workspace_t1.path_info("/")
     assert {
         "base_version": ANY,
-        "children": ["foo"],
+        "children": [EntryName("foo")],
         "created": ANY,
         "id": ANY,
         "is_placeholder": False,
@@ -44,7 +45,7 @@ async def test_path_info(alice_workspace, timestamp_0, alice_workspace_t1, alice
     info = await alice_workspace_t2.path_info("/foo")
     assert {
         "base_version": ANY,
-        "children": ["bar"],
+        "children": [EntryName("bar")],
         "created": ANY,
         "id": ANY,
         "is_placeholder": False,

@@ -7,6 +7,7 @@ from pathlib import Path
 import pendulum
 import datetime
 
+from parsec.api.data import EntryName
 from parsec.core.types import WorkspaceRole
 from parsec.core.core_events import CoreEvent
 from parsec.core.fs import FSWorkspaceNoReadAccess
@@ -59,7 +60,7 @@ async def test_add_workspace(
         else:
             wk_button = w_w.layout_workspaces.itemAt(0).widget()
             assert isinstance(wk_button, WorkspaceButton)
-            assert wk_button.name == "Workspace1"
+            assert wk_button.name == EntryName("Workspace1")
             assert not autoclose_dialog.dialogs
 
     await aqtbot.wait_until(_outcome_occured, timeout=2000)
@@ -75,13 +76,13 @@ async def test_rename_workspace(
 
     # Create a workspace and make sure the workspace is displayed
     core = logged_gui.test_get_core()
-    await core.user_fs.workspace_create("Workspace1")
+    await core.user_fs.workspace_create(EntryName("Workspace1"))
 
     def _workspace_displayed():
         assert w_w.layout_workspaces.count() == 1
         wk_button = w_w.layout_workspaces.itemAt(0).widget()
         assert isinstance(wk_button, WorkspaceButton)
-        assert wk_button.name == "Workspace1"
+        assert wk_button.name == EntryName("Workspace1")
 
     await aqtbot.wait_until(_workspace_displayed, timeout=2000)
     wk_button = w_w.layout_workspaces.itemAt(0).widget()
@@ -99,7 +100,7 @@ async def test_rename_workspace(
         assert isinstance(new_wk_button, WorkspaceButton)
         assert new_wk_button.workspace_fs is wk_button.workspace_fs
         if invalid_name:
-            assert wk_button.name == "Workspace1"
+            assert wk_button.name == EntryName("Workspace1")
             assert autoclose_dialog.dialogs == [
                 (
                     "Error",
@@ -107,7 +108,7 @@ async def test_rename_workspace(
                 )
             ]
         else:
-            assert wk_button.name == "Workspace1_Renamed"
+            assert wk_button.name == EntryName("Workspace1_Renamed")
             assert not autoclose_dialog.dialogs
 
     await aqtbot.wait_until(_outcome_occured)
@@ -157,7 +158,7 @@ async def test_mountpoint_open_in_explorer_button(aqtbot, running_backend, logge
 
     # Create a new workspace
     core = logged_gui.test_get_core()
-    wid = await core.user_fs.workspace_create("wksp1")
+    wid = await core.user_fs.workspace_create(EntryName("wksp1"))
 
     w_w = await logged_gui.test_switch_to_workspaces_widget()
 
@@ -220,9 +221,9 @@ async def test_workspace_filter_user(
     aqtbot, running_backend, logged_gui, autoclose_dialog, alice_user_fs, bob, bob_user_fs, alice
 ):
     w_w = await logged_gui.test_switch_to_workspaces_widget()
-    wid_alice = await alice_user_fs.workspace_create("Workspace1")
-    wid_bob = await bob_user_fs.workspace_create("Workspace2")
-    await bob_user_fs.workspace_create("Workspace3")
+    wid_alice = await alice_user_fs.workspace_create(EntryName("Workspace1"))
+    wid_bob = await bob_user_fs.workspace_create(EntryName("Workspace2"))
+    await bob_user_fs.workspace_create(EntryName("Workspace3"))
 
     await alice_user_fs.workspace_share(wid_alice, bob.user_id, WorkspaceRole.MANAGER)
     await bob_user_fs.workspace_share(wid_bob, alice.user_id, WorkspaceRole.READER)
@@ -263,8 +264,8 @@ async def test_workspace_filter_user(
         wk_button_2 = w_w.layout_workspaces.itemAt(1).widget()
         assert isinstance(wk_button_1, WorkspaceButton)
         assert isinstance(wk_button_2, WorkspaceButton)
-        assert wk_button_1.name in ["Workspace1", "Workspace2"]
-        assert wk_button_2.name in ["Workspace1", "Workspace2"]
+        assert wk_button_1.name in [EntryName("Workspace1"), EntryName("Workspace2")]
+        assert wk_button_2.name in [EntryName("Workspace1"), EntryName("Workspace2")]
         assert w_w.filter_remove_button.isVisible()
         assert w_w.filter_label.text() == "Common workspaces with {}".format(
             alice.short_user_display
@@ -293,7 +294,7 @@ async def test_workspace_filter_user_new_workspace(
     monkeypatch,
 ):
     w_w = await logged_gui.test_switch_to_workspaces_widget()
-    wid_alice = await alice_user_fs.workspace_create("Workspace1")
+    wid_alice = await alice_user_fs.workspace_create(EntryName("Workspace1"))
 
     await alice_user_fs.workspace_share(wid_alice, bob.user_id, WorkspaceRole.MANAGER)
 
@@ -325,7 +326,7 @@ async def test_workspace_filter_user_new_workspace(
         assert w_w.layout_workspaces.count() == 1
         wk_button_1 = w_w.layout_workspaces.itemAt(0).widget()
         assert isinstance(wk_button_1, WorkspaceButton)
-        assert wk_button_1.name == "Workspace1"
+        assert wk_button_1.name == EntryName("Workspace1")
         assert w_w.filter_remove_button.isVisible()
         assert w_w.filter_label.text() == "Common workspaces with {}".format(
             alice.short_user_display
@@ -344,8 +345,8 @@ async def test_workspace_filter_user_new_workspace(
         wk_button2 = w_w.layout_workspaces.itemAt(1).widget()
         assert isinstance(wk_button1, WorkspaceButton)
         assert isinstance(wk_button2, WorkspaceButton)
-        assert wk_button1.name in ["Workspace1", "Workspace2"]
-        assert wk_button2.name in ["Workspace1", "Workspace2"]
+        assert wk_button1.name in [EntryName("Workspace1"), EntryName("Workspace2")]
+        assert wk_button2.name in [EntryName("Workspace1"), EntryName("Workspace2")]
         assert not w_w.filter_remove_button.isVisible()
 
     await aqtbot.wait_until(_new_workspace_listed, timeout=2000)
@@ -357,7 +358,7 @@ async def test_display_timestamped_workspace_in_workspaces_list(
     aqtbot, running_backend, logged_gui, monkeypatch, catch_timestamped_workspace_widget, tmpdir
 ):
     central_widget = logged_gui.test_get_central_widget()
-    workspace_name = "wksp1"
+    workspace_name = EntryName("wksp1")
 
     def _online():
         assert central_widget.menu.label_connection_state.text() == translate(
