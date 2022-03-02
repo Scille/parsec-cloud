@@ -30,6 +30,11 @@ impl_api_protocol_dump_load!(BlockCreateReqSchema);
 #[serde(tag = "status", rename_all = "snake_case")]
 pub enum BlockCreateRepSchema {
     Ok,
+    AlreadyExists,
+    NotFound,
+    Timeout,
+    NotAllowed,
+    InMaintenance,
 }
 
 impl_api_protocol_dump_load!(BlockCreateRepSchema);
@@ -58,6 +63,10 @@ pub enum BlockReadRepSchema {
         #[serde_as(as = "Bytes")]
         block: Vec<u8>,
     },
+    NotFound,
+    Timeout,
+    NotAllowed,
+    InMaintenance,
 }
 
 impl_api_protocol_dump_load!(BlockReadRepSchema);

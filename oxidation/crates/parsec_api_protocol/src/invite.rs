@@ -62,6 +62,9 @@ pub enum InviteNewRepSchema {
         token: InvitationToken,
         email_sent: InvitationEmailSentStatus,
     },
+    NotAllowed,
+    AlreadyMember,
+    NotAvailable,
 }
 
 impl_api_protocol_dump_load!(InviteNewRepSchema);
@@ -99,6 +102,8 @@ impl_api_protocol_dump_load!(InviteDeleteReqSchema);
 #[serde(tag = "status", rename_all = "snake_case")]
 pub enum InviteDeleteRepSchema {
     Ok,
+    NotFound,
+    AlreadyDeleted,
 }
 
 impl_api_protocol_dump_load!(InviteDeleteRepSchema);
@@ -223,6 +228,8 @@ impl_api_protocol_dump_load!(Invite1ClaimerWaitPeerReqSchema);
 #[serde(tag = "status", rename_all = "snake_case")]
 pub enum Invite1ClaimerWaitPeerRepSchema {
     Ok { greeter_public_key: PublicKey },
+    NotFound,
+    InvalidState,
 }
 
 impl_api_protocol_dump_load!(Invite1ClaimerWaitPeerRepSchema);
@@ -248,6 +255,9 @@ impl_api_protocol_dump_load!(Invite1GreeterWaitPeerReqSchema);
 #[serde(tag = "status", rename_all = "snake_case")]
 pub enum Invite1GreeterWaitPeerRepSchema {
     Ok { claimer_public_key: PublicKey },
+    NotFound,
+    AlreadyDeleted,
+    InvalidState,
 }
 
 impl_api_protocol_dump_load!(Invite1GreeterWaitPeerRepSchema);
@@ -276,6 +286,9 @@ pub enum Invite2aClaimerSendHashedNonceHashNonceRepSchema {
         #[serde_as(as = "Bytes")]
         greeter_nonce: Vec<u8>,
     },
+    NotFound,
+    AlreadyDeleted,
+    InvalidState,
 }
 
 impl_api_protocol_dump_load!(Invite2aClaimerSendHashedNonceHashNonceRepSchema);
@@ -288,6 +301,9 @@ impl_api_protocol_dump_load!(Invite2aClaimerSendHashedNonceHashNonceRepSchema);
 #[serde(tag = "status", rename_all = "snake_case")]
 pub enum Invite2aGreeterGetHashedNonceRepSchema {
     Ok { claimer_hashed_nonce: HashDigest },
+    NotFound,
+    AlreadyDeleted,
+    InvalidState,
 }
 
 impl_api_protocol_dump_load!(Invite2aGreeterGetHashedNonceRepSchema);
@@ -304,6 +320,9 @@ pub enum Invite2bGreeterSendNonceRepSchema {
         #[serde_as(as = "Bytes")]
         claimer_nonce: Vec<u8>,
     },
+    NotFound,
+    AlreadyDeleted,
+    InvalidState,
 }
 
 impl_api_protocol_dump_load!(Invite2bGreeterSendNonceRepSchema);
@@ -330,6 +349,8 @@ impl_api_protocol_dump_load!(Invite2bClaimerSendNonceReqSchema);
 #[serde(tag = "status", rename_all = "snake_case")]
 pub enum Invite2bClaimerSendNonceRepSchema {
     Ok,
+    NotFound,
+    InvalidState,
 }
 
 impl_api_protocol_dump_load!(Invite2bClaimerSendNonceRepSchema);
@@ -354,6 +375,9 @@ impl_api_protocol_dump_load!(Invite3aGreeterWaitPeerTrustReqSchema);
 #[serde(tag = "status", rename_all = "snake_case")]
 pub enum Invite3aGreeterWaitPeerTrustRepSchema {
     Ok,
+    NotFound,
+    AlreadyDeleted,
+    InvalidState,
 }
 
 impl_api_protocol_dump_load!(Invite3aGreeterWaitPeerTrustRepSchema);
@@ -377,6 +401,8 @@ impl_api_protocol_dump_load!(Invite3bClaimerWaitPeerTrustReqSchema);
 #[serde(tag = "status", rename_all = "snake_case")]
 pub enum Invite3bClaimerWaitPeerTrustRepSchema {
     Ok,
+    NotFound,
+    InvalidState,
 }
 
 impl_api_protocol_dump_load!(Invite3bClaimerWaitPeerTrustRepSchema);
@@ -401,6 +427,9 @@ impl_api_protocol_dump_load!(Invite3bGreeterSignifyTrustReqSchema);
 #[serde(tag = "status", rename_all = "snake_case")]
 pub enum Invite3bGreeterSignifyTrustRepSchema {
     Ok,
+    NotFound,
+    AlreadyDeleted,
+    InvalidState,
 }
 
 impl_api_protocol_dump_load!(Invite3bGreeterSignifyTrustRepSchema);
@@ -424,6 +453,8 @@ impl_api_protocol_dump_load!(Invite3aClaimerSignifyTrustReqSchema);
 #[serde(tag = "status", rename_all = "snake_case")]
 pub enum Invite3aClaimerSignifyTrustRepSchema {
     Ok,
+    NotFound,
+    InvalidState,
 }
 
 impl_api_protocol_dump_load!(Invite3aClaimerSignifyTrustRepSchema);
@@ -455,6 +486,9 @@ pub enum Invite4GreeterCommunicateRepSchema {
         #[serde_as(as = "Bytes")]
         payload: Vec<u8>,
     },
+    NotFound,
+    AlreadyDeleted,
+    InvalidState,
 }
 
 impl_api_protocol_dump_load!(Invite4GreeterCommunicateRepSchema);
@@ -485,6 +519,8 @@ pub enum Invite4ClaimerCommunicateRepSchema {
         #[serde_as(as = "Bytes")]
         payload: Vec<u8>,
     },
+    NotFound,
+    InvalidState,
 }
 
 impl_api_protocol_dump_load!(Invite4ClaimerCommunicateRepSchema);

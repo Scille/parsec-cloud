@@ -110,14 +110,12 @@ pub struct EventsListenReqSchema {
 
 impl_api_protocol_dump_load!(EventsListenReqSchema);
 
-/*
- * EventsListenRepSchema
- */
-
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
 #[serde(tag = "status", rename_all = "snake_case")]
 pub enum EventsListenRepSchema {
     Ok(APIEvent),
+    Cancelled { reason: String },
+    NoEvents,
 }
 
 impl_api_protocol_dump_load!(EventsListenRepSchema);

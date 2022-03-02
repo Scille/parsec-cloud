@@ -47,6 +47,10 @@ impl_api_protocol_dump_load!(APIV1OrganizationBootstrapReqSchema);
 #[serde(tag = "status", rename_all = "snake_case")]
 pub enum APIV1OrganizationBootstrapRepSchema {
     Ok,
+    InvalidCertification { reason: String },
+    InvalidData { reason: String },
+    AlreadyBootstrapped,
+    NotFound,
 }
 
 impl_api_protocol_dump_load!(APIV1OrganizationBootstrapRepSchema);
@@ -101,6 +105,10 @@ pub enum OrganizationStatsRepSchema {
         active_users: u64,
         users_per_profile_detail: Vec<UsersPerProfileDetailItemSchema>,
     },
+    NotAllowed {
+        reason: String,
+    },
+    NotFound,
 }
 
 impl_api_protocol_dump_load!(OrganizationStatsRepSchema);
@@ -127,6 +135,7 @@ pub enum OrganizationConfigRepSchema {
         user_profile_outsider_allowed: bool,
         active_users_limit: Option<u64>,
     },
+    NotFound,
 }
 
 impl_api_protocol_dump_load!(OrganizationConfigRepSchema);

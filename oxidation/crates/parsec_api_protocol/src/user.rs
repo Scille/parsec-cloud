@@ -53,6 +53,7 @@ pub enum UserGetRepSchema {
         device_certificates: Vec<Vec<u8>>,
         trustchain: TrustchainSchema,
     },
+    NotFound,
 }
 
 impl_api_protocol_dump_load!(UserGetRepSchema);
@@ -88,6 +89,11 @@ impl_api_protocol_dump_load!(UserCreateReqSchema);
 #[serde(tag = "status", rename_all = "snake_case")]
 pub enum UserCreateRepSchema {
     Ok,
+    NotAllowed { reason: String },
+    InvalidCertification { reason: String },
+    InvalidData { reason: String },
+    AlreadyExists { reason: String },
+    ActiveUsersLimitReached { reason: String },
 }
 
 impl_api_protocol_dump_load!(UserCreateRepSchema);
@@ -114,6 +120,10 @@ impl_api_protocol_dump_load!(UserRevokeReqSchema);
 #[serde(tag = "status", rename_all = "snake_case")]
 pub enum UserRevokeRepSchema {
     Ok,
+    NotAllowed { reason: String },
+    InvalidCertification { reason: String },
+    NotFound,
+    AlreadyRevoked { reason: String },
 }
 
 impl_api_protocol_dump_load!(UserRevokeRepSchema);
@@ -145,6 +155,10 @@ impl_api_protocol_dump_load!(DeviceCreateReqSchema);
 #[serde(tag = "status", rename_all = "snake_case")]
 pub enum DeviceCreateRepSchema {
     Ok,
+    InvalidCertification { reason: String },
+    BadUserId { reason: String },
+    InvalidData { reason: String },
+    AlreadyExists { reason: String },
 }
 
 impl_api_protocol_dump_load!(DeviceCreateRepSchema);
@@ -190,6 +204,9 @@ pub enum HumanFindRepSchema {
         page: NonZeroU64,
         per_page: NonZeroU64,
         total: u64,
+    },
+    NotAllowed {
+        reason: String,
     },
 }
 

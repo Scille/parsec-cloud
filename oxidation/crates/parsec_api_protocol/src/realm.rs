@@ -36,6 +36,10 @@ impl_api_protocol_dump_load!(RealmCreateReqSchema);
 #[serde(tag = "status", rename_all = "snake_case")]
 pub enum RealmCreateRepSchema {
     Ok,
+    InvalidCertification { reason: String },
+    InvalidData { reason: String },
+    NotFound { reason: String },
+    AlreadyExists,
 }
 
 impl_api_protocol_dump_load!(RealmCreateRepSchema);
@@ -67,6 +71,10 @@ pub enum RealmStatusRepSchema {
         maintenance_started_by: Option<DeviceID>,
         encryption_revision: u64,
     },
+    NotAllowed,
+    NotFound {
+        reason: String,
+    },
 }
 
 impl_api_protocol_dump_load!(RealmStatusRepSchema);
@@ -91,6 +99,8 @@ impl_api_protocol_dump_load!(RealmStatsReqSchema);
 #[serde(tag = "status", rename_all = "snake_case")]
 pub enum RealmStatsRepSchema {
     Ok { blocks_size: u64, vlobs_size: u64 },
+    NotAllowed,
+    NotFound { reason: String },
 }
 
 impl_api_protocol_dump_load!(RealmStatsRepSchema);
@@ -121,6 +131,10 @@ pub enum RealmGetRoleCertificatesRepSchema {
         #[serde_as(as = "Vec<Bytes>")]
         certificates: Vec<Vec<u8>>,
     },
+    NotAllowed,
+    NotFound {
+        reason: String,
+    },
 }
 
 impl_api_protocol_dump_load!(RealmGetRoleCertificatesRepSchema);
@@ -149,6 +163,13 @@ impl_api_protocol_dump_load!(RealmUpdateRolesReqSchema);
 #[serde(tag = "status", rename_all = "snake_case")]
 pub enum RealmUpdateRolesRepSchema {
     Ok,
+    NotAllowed { reason: Option<String> },
+    InvalidCertification { reason: String },
+    InvalidData { reason: String },
+    AlreadyGranted,
+    IncompatibleProfile { reason: String },
+    NotFound { reason: String },
+    InMaintenance,
 }
 
 impl_api_protocol_dump_load!(RealmUpdateRolesRepSchema);
@@ -178,6 +199,12 @@ impl_api_protocol_dump_load!(RealmStartReencryptionMaintenanceReqSchema);
 #[serde(tag = "status", rename_all = "snake_case")]
 pub enum RealmStartReencryptionMaintenanceRepSchema {
     Ok,
+    NotAllowed,
+    NotFound { reason: String },
+    BadEncryptionRevision,
+    ParticipantMismatch { reason: String },
+    MaintenanceError { reason: String },
+    InMaintenance,
 }
 
 impl_api_protocol_dump_load!(RealmStartReencryptionMaintenanceRepSchema);
@@ -203,6 +230,11 @@ impl_api_protocol_dump_load!(RealmFinishReencryptionMaintenanceReqSchema);
 #[serde(tag = "status", rename_all = "snake_case")]
 pub enum RealmFinishReencryptionMaintenanceRepSchema {
     Ok,
+    NotAllowed,
+    NotFound { reason: String },
+    BadEncryptionRevision,
+    NotInMaintenance { reason: String },
+    MaintenanceError { reason: String },
 }
 
 impl_api_protocol_dump_load!(RealmFinishReencryptionMaintenanceRepSchema);

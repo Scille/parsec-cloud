@@ -39,6 +39,10 @@ impl_api_protocol_dump_load!(VlobCreateReqSchema);
 #[serde(tag = "status", rename_all = "snake_case")]
 pub enum VlobCreateRepSchema {
     Ok,
+    AlreadyExists { reason: String },
+    NotAllowed,
+    BadEncryptionRevision,
+    InMaintenance,
 }
 
 impl_api_protocol_dump_load!(VlobCreateRepSchema);
@@ -79,6 +83,13 @@ pub enum VlobReadRepSchema {
         // New in API version 2.3
         author_last_role_granted_on: Option<DateTime>,
     },
+    NotFound {
+        reason: String,
+    },
+    NotAllowed,
+    BadVersion,
+    BadEncryptionRevision,
+    InMaintenance,
 }
 
 impl_api_protocol_dump_load!(VlobReadRepSchema);
@@ -109,6 +120,11 @@ impl_api_protocol_dump_load!(VlobUpdateReqSchema);
 #[serde(tag = "status", rename_all = "snake_case")]
 pub enum VlobUpdateRepSchema {
     Ok,
+    NotFound { reason: String },
+    NotAllowed,
+    BadVersion,
+    BadEncryptionRevision,
+    InMaintenance,
 }
 
 impl_api_protocol_dump_load!(VlobUpdateRepSchema);
@@ -137,6 +153,11 @@ pub enum VlobPollChangesRepSchema {
         changes: HashMap<VlobID, u64>,
         current_checkpoint: u64,
     },
+    NotAllowed,
+    NotFound {
+        reason: String,
+    },
+    InMaintenance,
 }
 
 impl_api_protocol_dump_load!(VlobPollChangesRepSchema);
@@ -163,6 +184,11 @@ pub enum VlobListVersionsRepSchema {
     Ok {
         versions: HashMap<u64, (DateTime, DeviceID)>,
     },
+    NotAllowed,
+    NotFound {
+        reason: String,
+    },
+    InMaintenance,
 }
 
 impl_api_protocol_dump_load!(VlobListVersionsRepSchema);
@@ -204,6 +230,17 @@ pub enum VlobMaintenanceGetReencryptionBatchRepSchema {
     Ok {
         batch: Vec<ReencryptionBatchEntrySchema>,
     },
+    NotAllowed,
+    NotFound {
+        reason: String,
+    },
+    NotInMaintenance {
+        reason: String,
+    },
+    BadEncryptionRevision,
+    MaintenanceError {
+        reason: String,
+    },
 }
 
 impl_api_protocol_dump_load!(VlobMaintenanceGetReencryptionBatchRepSchema);
@@ -230,6 +267,11 @@ impl_api_protocol_dump_load!(VlobMaintenanceSaveReencryptionBatchReqSchema);
 #[serde(tag = "status", rename_all = "snake_case")]
 pub enum VlobMaintenanceSaveReencryptionBatchRepSchema {
     Ok { total: u64, done: u64 },
+    NotAllowed,
+    NotFound { reason: String },
+    NotInMaintenance { reason: String },
+    BadEncryptionRevision,
+    MaintenanceError { reason: String },
 }
 
 impl_api_protocol_dump_load!(VlobMaintenanceSaveReencryptionBatchRepSchema);
