@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PROJECT VERSION\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2021-11-26 11:58+0100\n"
+"POT-Creation-Date: 2022-03-01 15:32+0100\n"
 "PO-Revision-Date: 2020-10-15 10:31+0200\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language: fr\n"
@@ -508,8 +508,9 @@ msgstr ""
 "Veuillez ne sélectionner qu'un fichier."
 
 msgid "TEXT_FILE_STATUS_MULTIPLE_FILES_SELECTED_ERROR"
-msgstr "Impossible d'afficher l'état de plusieurs fichiers en une fois. "
-"Veuillez ne sélectionner qu'un fichier."
+msgstr ""
+"Impossible d'afficher l'état de plusieurs fichiers en une fois. Veuillez "
+"ne sélectionner qu'un fichier."
 
 msgid "TEXT_FILE_RENAME_TITLE"
 msgstr "Renommer un fichier"
@@ -769,6 +770,9 @@ msgstr "Suite à une annulation de l'invité, il faut redémarrer le precessus"
 msgid "TEXT_GREET_USER_PEER_RESET"
 msgstr "Suite à une annulation de l'invité, il faut redémarrer le processus."
 
+msgid "TEXT_SELECT_USER_PROFILE"
+msgstr "Veuillez sélectionner le profil de l'utilisateur :"
+
 msgid "TEXT_USER_PROFILE_OUTSIDER"
 msgstr "Externe"
 
@@ -778,8 +782,29 @@ msgstr "Standard"
 msgid "TEXT_USER_PROFILE_ADMIN"
 msgstr "Administrateur"
 
+msgid "TEXT_USER_PROFILE_STANDARD_TOOLTIP"
+msgstr ""
+"Le profil <b>Utilisateur Standard</b> accède aux espaces de travail dans "
+"lesquelles il est invité ; il peut créer un espace de travail et le "
+"partager ; il peut accéder à l'annuaire des utilisateurs de "
+"l'organisation."
+
+msgid "TEXT_USER_PROFILE_ADMIN_TOOLTIP"
+msgstr ""
+"Le profil <b>Administrateur</b> gère l'organisation. Les administrateurs "
+"peuvent ajouter ou retirer des utilisateurs de l'organisation. Un "
+"administrateur a également accès aux fonctionnalités d'un utilisateur "
+"standard."
+
 msgid "NOT_ALLOWED_OUTSIDER_PROFILE_TOOLTIP"
 msgstr "Votre configuration actuelle n'autorise pas ce type de profil"
+
+msgid "TEXT_USER_PROFILE_OUTSIDER_TOOLTIP"
+msgstr ""
+"Le profil <b>Utilisateur Externe</b> est invité à partager les données "
+"d'un espace de travail en mode <b>Lecteur</b> ou <b>Contributeur</b> mais"
+" ne peut pas créer d'espace de travail ni ne peut accéder à l'annuaire "
+"des utilisateurs de l'organisation"
 
 msgid "TEXT_GREET_USER_INVALID_HUMAN_HANDLE"
 msgstr "L'email n'est pas valide."
@@ -860,8 +885,8 @@ msgstr "Mise à jour de macFUSE nécessaire"
 
 msgid "TEXT_UPDATE_MACFUSE"
 msgstr ""
-"Votre version de macFUSE est obsolète. Pour assurer le bon fonctionnement de "
-"Parsec, vous pouvez le mettre à jour en suivant le lien ci-dessous."
+"Votre version de macFUSE est obsolète. Pour assurer le bon fonctionnement"
+" de Parsec, vous pouvez le mettre à jour en suivant le lien ci-dessous."
 
 msgid "TEXT_UPDATE_MACFUSE_BUTTON"
 msgstr "Télécharger la dernière version de macFUSE"
@@ -1820,9 +1845,10 @@ msgstr "Activer la télémétrie"
 
 msgid "TEXT_ENABLE_TELEMETRY_INSTRUCTIONS"
 msgstr ""
-"En cas de bug ou dysfonctionnement du logiciel, la télémétrie permet l'envoi "
-"automatique de rapports anonymes à notre support technique, et ainsi "
-"d’améliorer votre expérience utilisateur avec Parsec.<br />\n<br />\n"
+"En cas de bug ou dysfonctionnement du logiciel, la télémétrie permet "
+"l'envoi automatique de rapports anonymes à notre support technique, et "
+"ainsi d’améliorer votre expérience utilisateur avec Parsec.<br />\n"
+"<br />\n"
 "Voulez-vous activer la télémétrie ? Vous pourrez modifier cette option "
 "dans la configuration."
 
@@ -2372,6 +2398,9 @@ msgstr "Nom de l'organisation"
 msgid "TEXT_LABEL_ORG_NAME_RECOMMANDATIONS"
 msgstr "Lettres, chiffres, underscores et tirets seulement. Aucun espace."
 
+msgid "TEXT_LABEL_DEVICE_NAME"
+msgstr "Nom d'appareil"
+
 msgid "ACTION_CREATE_ON_COMMERCIAL_BACKEND"
 msgstr "Utiliser le serveur PARSEC principal"
 
@@ -2390,9 +2419,6 @@ msgstr "Je dispose de mon propre serveur PARSEC"
 msgid "TEXT_LABEL_BACKEND_ADDR_PLACEHOLDER"
 msgstr "parsec://hote:port"
 
-msgid "TEXT_LABEL_DEVICE_NAME"
-msgstr "Nom d'appareil"
-
 msgid "TEXT_CREATE_ORGANIZATION_INSTRUCTIONS"
 msgstr "Veuillez fournir les informations suivantes pour créer votre organisation."
 
@@ -2404,7 +2430,9 @@ msgstr ""
 "votre appareil actuel."
 
 msgid "TEXT_DEVICE_RECOVERY_EXPORT_SELECT_DEVICE_LABEL"
-msgstr "Choisissez l'utilisateur pour lequel vous souhaitez créer un appareil de récupération"
+msgstr ""
+"Choisissez l'utilisateur pour lequel vous souhaitez créer un appareil de "
+"récupération"
 
 msgid "TEXT_DEVICE_RECOVERY_EXPORT_SELECT_FILE_LABEL"
 msgstr "Choisissez un emplacement pour le fichier de récupération"
@@ -2510,6 +2538,9 @@ msgstr "Type"
 msgid "TEXT_FILE_INFO_SIZE"
 msgstr "Taille"
 
+msgid "TEXT_FILE_INFO_NON_APPLICABLE"
+msgstr "N/A"
+
 msgid "TEXT_FILE_INFO_WORKSPACE"
 msgstr "Espace de travail"
 
@@ -2539,9 +2570,6 @@ msgstr "Blocs distants uniquement"
 
 msgid "TEXT_FILE_INFO_BLOCKS_BOTH"
 msgstr "Blocs locaux et distants"
-
-msgid "TEXT_FILE_INFO_NON_APPLICABLE"
-msgstr "N/A"
 
 msgid "TEXT_FILE_BACK_TO_WORKSPACES_TOOLTIP"
 msgstr "Retour à la liste des espaces de travail"
@@ -2715,6 +2743,12 @@ msgstr "Vérifier la disponibilité d'une nouvelle version au démarrage"
 msgid "ACTION_SETTINGS_CHECK_NEW_VERSION"
 msgstr "Vérifier la disponibilité d'une nouvelle version maintenant"
 
+msgid "TEXT_SETTINGS_TELEMETRY_TITLE"
+msgstr "Télémétrie"
+
+msgid "TEXT_SETTINGS_ENABLE_TELEMETRY"
+msgstr "Activer la télémétrie pour l'envoi automatique de rapports d'erreur"
+
 msgid "TEXT_SETTINGS_INTERFACE_TITLE"
 msgstr "Interface"
 
@@ -2726,12 +2760,6 @@ msgstr "Utiliser des couleurs pour les espaces de travail"
 
 msgid "ACTION_SAVE"
 msgstr "Sauvegarder"
-
-msgid "TEXT_SETTINGS_TELEMETRY_TITLE"
-msgstr "Télémétrie"
-
-msgid "TEXT_SETTINGS_ENABLE_TELEMETRY"
-msgstr "Activer la télémétrie pour l'envoi automatique de rapports d'erreur"
 
 msgid "TEXT_SELECT_SMARTCARD"
 msgstr "Il vous sera demandé de sélectionner votre carte à puce"
@@ -2769,17 +2797,17 @@ msgstr "Rechercher utilisateurs"
 msgid "ACTION_USER_INVITE_USER"
 msgstr "Inviter un utilisateur"
 
-msgid "ACTION_LIST_PREVIOUS_PAGE"
-msgstr "Page précédente"
-
-msgid "ACTION_LIST_NEXT_PAGE"
-msgstr "Page suivante"
-
 msgid "ACTION_FILTER_REVOKED_USERS"
 msgstr "Masquer les utilisateurs révoqués"
 
 msgid "ACTION_FILTER_PENDING_INVITATION"
 msgstr "Masquer les invitations"
+
+msgid "ACTION_LIST_PREVIOUS_PAGE"
+msgstr "Page précédente"
+
+msgid "ACTION_LIST_NEXT_PAGE"
+msgstr "Page suivante"
 
 msgid "TEXT_WORKSPACE_IS_SHARED_TOOLTIP"
 msgstr "L'espace de travail est partagé."
