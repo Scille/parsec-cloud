@@ -38,6 +38,10 @@ async def test_greeter_event_on_claimer_join_and_leave(
 
         with trio.fail_after(1):
             rep = await events_listen_wait(alice_backend_sock)
+            # PostgreSQL event dispatching might be lagging behind and return
+            # the IDLE event first
+            if rep.get("invitation_status") == InvitationStatus.IDLE:
+                rep = await events_listen_wait(alice_backend_sock)
         assert rep == {
             "status": "ok",
             "event": APIEvent.INVITE_STATUS_CHANGED,
