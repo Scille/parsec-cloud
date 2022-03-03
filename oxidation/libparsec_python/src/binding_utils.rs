@@ -1,11 +1,10 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BSLv1.1 (eventually AGPLv3) 2016-2021 Scille SAS
 
-use chrono::prelude::{DateTime, Utc};
 use pyo3::basic::CompareOp;
 use pyo3::conversion::IntoPy;
 use pyo3::exceptions::PyValueError;
 use pyo3::prelude::PyModule;
-use pyo3::types::PyDict;
+use pyo3::types::{PyDict, PyTuple};
 use pyo3::FromPyObject;
 use pyo3::{PyAny, PyObject, PyResult, Python};
 
@@ -29,14 +28,17 @@ pub fn hash_generic(value_to_hash: &str, py: Python) -> PyResult<isize> {
     Ok(hash)
 }
 
-pub fn py_to_rs_datetime(timestamp: &PyAny) -> PyResult<chrono::DateTime<chrono::Utc>> {
-    let ts_any = Python::with_gil(|_py| -> PyResult<&PyAny> {
-        timestamp.getattr("to_iso8601_string")?.call0()
-    })?;
-    let ts = ts_any.extract::<&str>()?;
-    Ok(DateTime::<Utc>::from(
-        DateTime::parse_from_rfc3339(ts).unwrap_or_else(|_| unreachable!()),
-    ))
+pub fn py_to_rs_datetime(timestamp: &PyAny) -> PyResult<parsec_api_types::DateTime> {
+    let ts_any =
+        Python::with_gil(|_py| -> PyResult<&PyAny> { timestamp.getattr("timestamp")?.call0() })?;
+    let ts = ts_any.extract::<f64>()?;
+    Ok(parsec_api_types::DateTime::from_f64_with_us_precision(ts))
+}
+
+pub fn rs_to_py_datetime(py: Python, datetime: parsec_api_types::DateTime) -> PyResult<&PyAny> {
+    let pendulum = PyModule::import(py, "pendulum")?;
+    let args = PyTuple::new(py, vec![datetime.get_f64_with_us_precision()]);
+    pendulum.call_method1("from_timestamp", args)
 }
 
 pub fn rs_to_py_realm_role(role: &parsec_api_types::RealmRole) -> PyResult<PyObject> {

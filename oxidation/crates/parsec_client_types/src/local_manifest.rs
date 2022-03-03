@@ -1,6 +1,5 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BSLv1.1 (eventually AGPLv3) 2016-2021 Scille SAS
 
-use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 use serde_with::serde_as;
 use std::collections::{HashMap, HashSet};
@@ -65,7 +64,7 @@ pub struct Chunk {
 pub struct LocalFileManifest {
     pub base: FileManifest,
     pub need_sync: bool,
-    pub updated: DateTime<Utc>,
+    pub updated: DateTime,
     pub size: u64,
     pub blocksize: Blocksize,
     pub blocks: Vec<Vec<Chunk>>,
@@ -76,8 +75,7 @@ new_data_struct_type!(
     type: "local_file_manifest",
     base: FileManifest,
     need_sync: bool,
-    #[serde_as(as = "DateTimeExtFormat")]
-    updated: DateTime<Utc>,
+    updated: DateTime,
     size: u64,
     blocksize: u64,
     blocks: Vec<Vec<Chunk>>,
@@ -122,7 +120,7 @@ impl_local_manifest_dump_load!(LocalFileManifest);
 pub struct LocalFolderManifest {
     pub base: FolderManifest,
     pub need_sync: bool,
-    pub updated: DateTime<Utc>,
+    pub updated: DateTime,
     pub children: HashMap<EntryName, EntryID>,
     // Confined entries are entries that are meant to stay locally and not be added
     // to the uploaded remote manifest when synchronizing. The criteria for being
@@ -141,8 +139,7 @@ new_data_struct_type!(
     type: "local_folder_manifest",
     base: FolderManifest,
     need_sync: bool,
-    #[serde_as(as = "DateTimeExtFormat")]
-    updated: DateTime<Utc>,
+    updated: DateTime,
     children: HashMap<EntryName, EntryID>,
     // Added in Parsec v1.15
     #[serde(
@@ -199,7 +196,7 @@ impl_local_manifest_dump_load!(LocalFolderManifest);
 pub struct LocalWorkspaceManifest {
     pub base: WorkspaceManifest,
     pub need_sync: bool,
-    pub updated: DateTime<Utc>,
+    pub updated: DateTime,
     pub children: HashMap<EntryName, EntryID>,
     // Confined entries are entries that are meant to stay locally and not be added
     // to the uploaded remote manifest when synchronizing. The criteria for being
@@ -229,8 +226,7 @@ new_data_struct_type!(
     type: "local_workspace_manifest",
     base: WorkspaceManifest,
     need_sync: bool,
-    #[serde_as(as = "DateTimeExtFormat")]
-    updated: DateTime<Utc>,
+    updated: DateTime,
     children: HashMap<EntryName, EntryID>,
     // Added in Parsec v1.15
     #[serde(
@@ -292,7 +288,7 @@ impl From<LocalWorkspaceManifest> for LocalWorkspaceManifestData {
 pub struct LocalUserManifest {
     pub base: UserManifest,
     pub need_sync: bool,
-    pub updated: DateTime<Utc>,
+    pub updated: DateTime,
     pub last_processed_message: u32,
     pub workspaces: Vec<WorkspaceEntry>,
     // Speculative placeholders are created when we want to access the
@@ -315,8 +311,7 @@ new_data_struct_type!(
     type: "local_user_manifest",
     base: UserManifest,
     need_sync: bool,
-    #[serde_as(as = "DateTimeExtFormat")]
-    updated: DateTime<Utc>,
+    updated: DateTime,
     last_processed_message: u32,
     workspaces: Vec<WorkspaceEntry>,
     // Added in Parsec v2.6

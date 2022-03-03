@@ -1,6 +1,5 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BSLv1.1 (eventually AGPLv3) 2016-2021 Scille SAS
 
-use chrono::{DateTime, Utc};
 use flate2::{read::ZlibDecoder, write::ZlibEncoder, Compression};
 use serde::{Deserialize, Serialize};
 use serde_with::*;
@@ -12,8 +11,8 @@ use unicode_normalization::UnicodeNormalization;
 use parsec_api_crypto::{HashDigest, SecretKey, SigningKey, VerifyKey};
 
 use crate::data_macros::{impl_transparent_data_format_conversion, new_data_struct_type};
-use crate::ext_types::{new_uuid_type, DateTimeExtFormat};
-use crate::DeviceID;
+use crate::ext_types::new_uuid_type;
+use crate::{DateTime, DeviceID};
 
 macro_rules! impl_manifest_dump_load {
     ($name:ident) => {
@@ -36,7 +35,7 @@ macro_rules! impl_manifest_dump_load {
                 key: &SecretKey,
                 author_verify_key: &VerifyKey,
                 expected_author: &DeviceID,
-                expected_timestamp: DateTime<Utc>,
+                expected_timestamp: DateTime,
             ) -> Result<Self, &'static str> {
                 let signed = key.decrypt(encrypted).map_err(|_| "Invalid encryption")?;
                 let compressed = author_verify_key
@@ -180,15 +179,13 @@ pub struct WorkspaceEntry {
     pub name: EntryName,
     pub key: SecretKey,
     pub encryption_revision: u32,
-    #[serde_as(as = "DateTimeExtFormat")]
-    pub encrypted_on: DateTime<Utc>,
-    #[serde_as(as = "DateTimeExtFormat")]
-    pub role_cached_on: DateTime<Utc>,
+    pub encrypted_on: DateTime,
+    pub role_cached_on: DateTime,
     pub role: Option<RealmRole>,
 }
 
 impl WorkspaceEntry {
-    pub fn generate(name: EntryName, timestamp: DateTime<Utc>) -> Self {
+    pub fn generate(name: EntryName, timestamp: DateTime) -> Self {
         Self {
             id: EntryID::default(),
             name,
@@ -265,14 +262,14 @@ impl Deref for Blocksize {
 #[serde(into = "FileManifestData", try_from = "FileManifestData")]
 pub struct FileManifest {
     pub author: DeviceID,
-    pub timestamp: DateTime<Utc>,
+    pub timestamp: DateTime,
 
     pub id: EntryID,
     pub parent: EntryID,
     // Version 0 means the data is not synchronized
     pub version: u32,
-    pub created: DateTime<Utc>,
-    pub updated: DateTime<Utc>,
+    pub created: DateTime,
+    pub updated: DateTime,
     /// Total size of the file
     pub size: u64,
     /// Size of a single block
@@ -289,15 +286,12 @@ new_data_struct_type!(
     // Compatibility with versions <= 1.14
     #[serde(default = "generate_local_author_legacy_placeholder")]
     author: DeviceID,
-    #[serde_as(as = "DateTimeExtFormat")]
-    timestamp: DateTime<Utc>,
+    timestamp: DateTime,
     id: EntryID,
     parent: EntryID,
     version: u32,
-    #[serde_as(as = "DateTimeExtFormat")]
-    created: DateTime<Utc>,
-    #[serde_as(as = "DateTimeExtFormat")]
-    updated: DateTime<Utc>,
+    created: DateTime,
+    updated: DateTime,
     size: u64,
     blocksize: u64,
     blocks: Vec<BlockAccess>,
@@ -348,14 +342,14 @@ impl From<FileManifest> for FileManifestData {
 #[serde(into = "FolderManifestData", from = "FolderManifestData")]
 pub struct FolderManifest {
     pub author: DeviceID,
-    pub timestamp: DateTime<Utc>,
+    pub timestamp: DateTime,
 
     pub id: EntryID,
     pub parent: EntryID,
     // Version 0 means the data is not synchronized
     pub version: u32,
-    pub created: DateTime<Utc>,
-    pub updated: DateTime<Utc>,
+    pub created: DateTime,
+    pub updated: DateTime,
     pub children: HashMap<EntryName, EntryID>,
 }
 
@@ -368,15 +362,12 @@ new_data_struct_type!(
     // Compatibility with versions <= 1.14
     #[serde(default = "generate_local_author_legacy_placeholder")]
     author: DeviceID,
-    #[serde_as(as = "DateTimeExtFormat")]
-    timestamp: DateTime<Utc>,
+    timestamp: DateTime,
     id: EntryID,
     parent: EntryID,
     version: u32,
-    #[serde_as(as = "DateTimeExtFormat")]
-    created: DateTime<Utc>,
-    #[serde_as(as = "DateTimeExtFormat")]
-    updated: DateTime<Utc>,
+    created: DateTime,
+    updated: DateTime,
     children: HashMap<EntryName, EntryID>,
 );
 
@@ -401,13 +392,13 @@ impl_transparent_data_format_conversion!(
 #[serde(into = "WorkspaceManifestData", from = "WorkspaceManifestData")]
 pub struct WorkspaceManifest {
     pub author: DeviceID,
-    pub timestamp: DateTime<Utc>,
+    pub timestamp: DateTime,
 
     pub id: EntryID,
     // Version 0 means the data is not synchronized
     pub version: u32,
-    pub created: DateTime<Utc>,
-    pub updated: DateTime<Utc>,
+    pub created: DateTime,
+    pub updated: DateTime,
     pub children: HashMap<EntryName, EntryID>,
 }
 
@@ -420,14 +411,11 @@ new_data_struct_type!(
     // Compatibility with versions <= 1.14
     #[serde(default = "generate_local_author_legacy_placeholder")]
     author: DeviceID,
-    #[serde_as(as = "DateTimeExtFormat")]
-    timestamp: DateTime<Utc>,
+    timestamp: DateTime,
     id: EntryID,
     version: u32,
-    #[serde_as(as = "DateTimeExtFormat")]
-    created: DateTime<Utc>,
-    #[serde_as(as = "DateTimeExtFormat")]
-    updated: DateTime<Utc>,
+    created: DateTime,
+    updated: DateTime,
     children: HashMap<EntryName, EntryID>,
 );
 
@@ -451,13 +439,13 @@ impl_transparent_data_format_conversion!(
 #[serde(into = "UserManifestData", from = "UserManifestData")]
 pub struct UserManifest {
     pub author: DeviceID,
-    pub timestamp: DateTime<Utc>,
+    pub timestamp: DateTime,
 
     pub id: EntryID,
     // Version 0 means the data is not synchronized
     pub version: u32,
-    pub created: DateTime<Utc>,
-    pub updated: DateTime<Utc>,
+    pub created: DateTime,
+    pub updated: DateTime,
     pub last_processed_message: u32,
     pub workspaces: Vec<WorkspaceEntry>,
 }
@@ -477,14 +465,11 @@ new_data_struct_type!(
     // Compatibility with versions <= 1.14
     #[serde(default = "generate_local_author_legacy_placeholder")]
     author: DeviceID,
-    #[serde_as(as = "DateTimeExtFormat")]
-    timestamp: DateTime<Utc>,
+    timestamp: DateTime,
     id: EntryID,
     version: u32,
-    #[serde_as(as = "DateTimeExtFormat")]
-    created: DateTime<Utc>,
-    #[serde_as(as = "DateTimeExtFormat")]
-    updated: DateTime<Utc>,
+    created: DateTime,
+    updated: DateTime,
     last_processed_message: u32,
     workspaces: Vec<WorkspaceEntry>,
 );
