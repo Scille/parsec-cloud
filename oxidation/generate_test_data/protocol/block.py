@@ -2,7 +2,7 @@
 # flake8: noqa
 
 from pendulum import datetime
-from utils import *
+from oxidation.generate_test_data.utils import *
 from parsec.crypto import *
 from parsec.api.protocol import *
 from parsec.api.data import *
@@ -20,11 +20,31 @@ serialized = serializer.req_dumps(
     }
 )
 serializer.req_loads(serialized)
-display("block create req", serialized, [])
+display("block_create_req", serialized, [])
 
 serialized = serializer.rep_dumps({})
 serializer.rep_loads(serialized)
-display("block create rep", serialized, [])
+display("block_create_rep", serialized, [])
+
+serialized = serializer.rep_dumps({"status": "already_exists"})
+serializer.rep_loads(serialized)
+display("block_create_rep_already_exists", serialized, [])
+
+serialized = serializer.rep_dumps({"status": "not_found"})
+serializer.rep_loads(serialized)
+display("block_create_rep_not_found", serialized, [])
+
+serialized = serializer.rep_dumps({"status": "timeout"})
+serializer.rep_loads(serialized)
+display("block_create_rep_timeout", serialized, [])
+
+serialized = serializer.rep_dumps({"status": "not_allowed"})
+serializer.rep_loads(serialized)
+display("block_create_rep_not_allowed", serialized, [])
+
+serialized = serializer.rep_dumps({"status": "in_maintenance"})
+serializer.rep_loads(serialized)
+display("block_create_rep_in_maintenance", serialized, [])
 
 ################### BlockRead ##################
 
@@ -34,8 +54,24 @@ serialized = serializer.req_dumps(
     {"cmd": "block_read", "block_id": BlockID.from_hex("57c629b69d6c4abbaf651cafa46dbc93")}
 )
 serializer.req_loads(serialized)
-display("block read req", serialized, [])
+display("block_read_req", serialized, [])
 
 serialized = serializer.rep_dumps({"block": b"foobar"})
 serializer.rep_loads(serialized)
-display("block read rep", serialized, [])
+display("block_read_rep", serialized, [])
+
+serialized = serializer.rep_dumps({"status": "not_found"})
+serializer.rep_loads(serialized)
+display("block_read_rep_not_found", serialized, [])
+
+serialized = serializer.rep_dumps({"status": "timeout"})
+serializer.rep_loads(serialized)
+display("block_read_rep_timeout", serialized, [])
+
+serialized = serializer.rep_dumps({"status": "not_allowed"})
+serializer.rep_loads(serialized)
+display("block_read_rep_not_allowed", serialized, [])
+
+serialized = serializer.rep_dumps({"status": "in_maintenance"})
+serializer.rep_loads(serialized)
+display("block_read_rep_in_maintenance", serialized, [])

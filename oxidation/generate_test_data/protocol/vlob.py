@@ -2,7 +2,7 @@
 # flake8: noqa
 
 from pendulum import datetime
-from utils import *
+from oxidation.generate_test_data.utils import *
 from parsec.crypto import *
 from parsec.api.protocol import *
 from parsec.api.data import *
@@ -27,6 +27,22 @@ display("vlob_create_req", serialized, [])
 serialized = serializer.rep_dumps({})
 serializer.rep_loads(serialized)
 display("vlob_create_rep", serialized, [])
+
+serialized = serializer.rep_dumps({"status": "already_exists", "reason": "foobar"})
+serializer.rep_loads(serialized)
+display("vlob_create_rep_already_exists", serialized, [])
+
+serialized = serializer.rep_dumps({"status": "not_allowed"})
+serializer.rep_loads(serialized)
+display("vlob_create_rep_not_allowed", serialized, [])
+
+serialized = serializer.rep_dumps({"status": "bad_encryption_revision"})
+serializer.rep_loads(serialized)
+display("vlob_create_rep_bad_encryption_revision", serialized, [])
+
+serialized = serializer.rep_dumps({"status": "in_maintenance"})
+serializer.rep_loads(serialized)
+display("vlob_create_rep_in_maintenance", serialized, [])
 
 ################### VlobRead ##################
 
@@ -56,6 +72,26 @@ serialized = serializer.rep_dumps(
 serializer.rep_loads(serialized)
 display("vlob_read_rep", serialized, [])
 
+serialized = serializer.rep_dumps({"status": "not_found", "reason": "foobar"})
+serializer.rep_loads(serialized)
+display("vlob_read_rep_not_found", serialized, [])
+
+serialized = serializer.rep_dumps({"status": "not_allowed"})
+serializer.rep_loads(serialized)
+display("vlob_read_rep_not_allowed", serialized, [])
+
+serialized = serializer.rep_dumps({"status": "bad_version"})
+serializer.rep_loads(serialized)
+display("vlob_read_rep_bad_version", serialized, [])
+
+serialized = serializer.rep_dumps({"status": "bad_encryption_revision"})
+serializer.rep_loads(serialized)
+display("vlob_read_rep_bad_encryption_revision", serialized, [])
+
+serialized = serializer.rep_dumps({"status": "in_maintenance"})
+serializer.rep_loads(serialized)
+display("vlob_read_rep_in_maintenance", serialized, [])
+
 ################### VlobUpdate ##################
 
 serializer = vlob_update_serializer
@@ -77,6 +113,26 @@ serialized = serializer.rep_dumps({})
 serializer.rep_loads(serialized)
 display("vlob_update_rep", serialized, [])
 
+serialized = serializer.rep_dumps({"status": "not_found", "reason": "foobar"})
+serializer.rep_loads(serialized)
+display("vlob_update_rep_not_found", serialized, [])
+
+serialized = serializer.rep_dumps({"status": "not_allowed"})
+serializer.rep_loads(serialized)
+display("vlob_update_rep_not_allowed", serialized, [])
+
+serialized = serializer.rep_dumps({"status": "bad_version"})
+serializer.rep_loads(serialized)
+display("vlob_update_rep_bad_version", serialized, [])
+
+serialized = serializer.rep_dumps({"status": "bad_encryption_revision"})
+serializer.rep_loads(serialized)
+display("vlob_update_rep_bad_encryption_revision", serialized, [])
+
+serialized = serializer.rep_dumps({"status": "in_maintenance"})
+serializer.rep_loads(serialized)
+display("vlob_update_rep_in_maintenance", serialized, [])
+
 ################### VlobPollChanges ##################
 
 serializer = vlob_poll_changes_serializer
@@ -97,6 +153,18 @@ serialized = serializer.rep_dumps(
 serializer.rep_loads(serialized)
 display("vlob_poll_changes_rep", serialized, [])
 
+serialized = serializer.rep_dumps({"status": "not_allowed"})
+serializer.rep_loads(serialized)
+display("vlob_poll_changes_rep_not_allowed", serialized, [])
+
+serialized = serializer.rep_dumps({"status": "not_found", "reason": "foobar"})
+serializer.rep_loads(serialized)
+display("vlob_poll_changes_rep_not_found", serialized, [])
+
+serialized = serializer.rep_dumps({"status": "in_maintenance"})
+serializer.rep_loads(serialized)
+display("vlob_poll_changes_rep_in_maintenance", serialized, [])
+
 ################### VlobListVersions ##################
 
 serializer = vlob_list_versions_serializer
@@ -112,6 +180,18 @@ serialized = serializer.rep_dumps(
 )
 serializer.rep_loads(serialized)
 display("vlob_list_versions_rep", serialized, [])
+
+serialized = serializer.rep_dumps({"status": "not_allowed"})
+serializer.rep_loads(serialized)
+display("vlob_list_versions_rep_not_allowed", serialized, [])
+
+serialized = serializer.rep_dumps({"status": "not_found", "reason": "foobar"})
+serializer.rep_loads(serialized)
+display("vlob_list_versions_rep_not_found", serialized, [])
+
+serialized = serializer.rep_dumps({"status": "in_maintenance"})
+serializer.rep_loads(serialized)
+display("vlob_list_versions_rep_in_maintenance", serialized, [])
 
 ################### VlobMaintenanceGetReencryptionBatch ##################
 
@@ -140,6 +220,26 @@ serialized = serializer.rep_dumps(
 serializer.rep_loads(serialized)
 display("vlob_maintenance_get_reencryption_batch_rep", serialized, [])
 
+serialized = serializer.rep_dumps({"status": "not_allowed"})
+serializer.rep_loads(serialized)
+display("vlob_maintenance_get_reencryption_batch_rep_not_allowed", serialized, [])
+
+serialized = serializer.rep_dumps({"status": "not_found", "reason": "foobar"})
+serializer.rep_loads(serialized)
+display("vlob_maintenance_get_reencryption_batch_rep_not_found", serialized, [])
+
+serialized = serializer.rep_dumps({"status": "not_in_maintenance", "reason": "foobar"})
+serializer.rep_loads(serialized)
+display("vlob_maintenance_get_reencryption_batch_rep_not_in_maintenance", serialized, [])
+
+serialized = serializer.rep_dumps({"status": "bad_encryption_revision"})
+serializer.rep_loads(serialized)
+display("vlob_maintenance_get_reencryption_batch_rep_bad_encryption_revision", serialized, [])
+
+serialized = serializer.rep_dumps({"status": "maintenance_error", "reason": "foobar"})
+serializer.rep_loads(serialized)
+display("vlob_maintenance_get_reencryption_batch_rep_maintenance_error", serialized, [])
+
 ################### VlobMaintenanceSaveReencryptionBatch ##################
 
 serializer = vlob_maintenance_save_reencryption_batch_serializer
@@ -162,3 +262,23 @@ display("vlob_maintenance_save_reencryption_batch_req", serialized, [])
 serialized = serializer.rep_dumps({"total": 8, "done": 8})
 serializer.rep_loads(serialized)
 display("vlob_maintenance_save_reencryption_batch_rep", serialized, [])
+
+serialized = serializer.rep_dumps({"status": "not_allowed"})
+serializer.rep_loads(serialized)
+display("vlob_maintenance_save_reencryption_batch_rep_not_allowed", serialized, [])
+
+serialized = serializer.rep_dumps({"status": "not_found", "reason": "foobar"})
+serializer.rep_loads(serialized)
+display("vlob_maintenance_save_reencryption_batch_rep_not_found", serialized, [])
+
+serialized = serializer.rep_dumps({"status": "not_in_maintenance", "reason": "foobar"})
+serializer.rep_loads(serialized)
+display("vlob_maintenance_save_reencryption_batch_rep_not_in_maintenance", serialized, [])
+
+serialized = serializer.rep_dumps({"status": "bad_encryption_revision"})
+serializer.rep_loads(serialized)
+display("vlob_maintenance_save_reencryption_batch_rep_bad_encryption_revision", serialized, [])
+
+serialized = serializer.rep_dumps({"status": "maintenance_error", "reason": "foobar"})
+serializer.rep_loads(serialized)
+display("vlob_maintenance_save_reencryption_batch_rep_maintenance_error", serialized, [])

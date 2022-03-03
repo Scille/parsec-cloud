@@ -2,7 +2,7 @@
 # flake8: noqa
 
 from pendulum import datetime
-from utils import *
+from oxidation.generate_test_data.utils import *
 from parsec.crypto import *
 from parsec.api.protocol import *
 from parsec.api.data import *
@@ -26,9 +26,21 @@ serialized = serializer.req_dumps(
 serializer.req_loads(serialized)
 display("api_v1_organization_bootstrap_req", serialized, [])
 
-serialized = serializer.rep_dumps({})
+serialized = serializer.rep_dumps({"status": "invalid_certification", "reason": "foobar"})
 serializer.rep_loads(serialized)
-display("api_v1_organization_bootstrap_rep", serialized, [])
+display("api_v1_organization_bootstrap_rep_invalid_certification", serialized, [])
+
+serialized = serializer.rep_dumps({"status": "invalid_data", "reason": "foobar"})
+serializer.rep_loads(serialized)
+display("api_v1_organization_bootstrap_rep_invalid_data", serialized, [])
+
+serialized = serializer.rep_dumps({"status": "already_bootstrapped"})
+serializer.rep_loads(serialized)
+display("api_v1_organization_bootstrap_rep_already_bootstrapped", serialized, [])
+
+serialized = serializer.rep_dumps({"status": "not_found"})
+serializer.rep_loads(serialized)
+display("api_v1_organization_bootstrap_rep_not_found", serialized, [])
 
 ################### OrganizationStats ##################
 
@@ -51,6 +63,14 @@ serialized = serializer.rep_dumps(
 serializer.rep_loads(serialized)
 display("organization_stats_rep", serialized, [])
 
+serialized = serializer.rep_dumps({"status": "not_allowed", "reason": "foobar"})
+serializer.rep_loads(serialized)
+display("organization_stats_rep_not_allowed", serialized, [])
+
+serialized = serializer.rep_dumps({"status": "not_found"})
+serializer.rep_loads(serialized)
+display("organization_stats_rep_not_found", serialized, [])
+
 ################### OrganizationConfig ##################
 
 serializer = organization_config_serializer
@@ -62,3 +82,7 @@ display("organization_config_req", serialized, [])
 serialized = serializer.rep_dumps({"user_profile_outsider_allowed": False, "active_users_limit": 1})
 serializer.rep_loads(serialized)
 display("organization_config_rep", serialized, [])
+
+serialized = serializer.rep_dumps({"status": "not_found"})
+serializer.rep_loads(serialized)
+display("organization_config_rep_not_found", serialized, [])

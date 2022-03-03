@@ -37,13 +37,74 @@ fn serde_block_create_req() {
 }
 
 #[rstest]
-fn serde_block_create_rep() {
-    // Generated from Python implementation (Parsec v2.6.0+dev)
-    // Content:
-    //   status: "ok"
-    let data = hex!("81a6737461747573a26f6b");
-
-    let expected = BlockCreateRepSchema::Ok;
+#[case::ok(
+    (
+        // Generated from Python implementation (Parsec v2.6.0+dev)
+        // Content:
+        //   status: "ok"
+        &hex!(
+            "81a6737461747573a26f6b"
+        )[..],
+        BlockCreateRepSchema::Ok
+    )
+)]
+#[case::already_exists(
+    (
+        // Generated from Python implementation (Parsec v2.6.0+dev)
+        // Content:
+        //   status: "already_exists"
+        &hex!(
+            "81a6737461747573ae616c72656164795f657869737473"
+        )[..],
+        BlockCreateRepSchema::AlreadyExists
+    )
+)]
+#[case::not_found(
+    (
+        // Generated from Python implementation (Parsec v2.6.0+dev)
+        // Content:
+        //   status: "not_found"
+        &hex!(
+            "81a6737461747573a96e6f745f666f756e64"
+        )[..],
+        BlockCreateRepSchema::NotFound
+    )
+)]
+#[case::timeout(
+    (
+        // Generated from Python implementation (Parsec v2.6.0+dev)
+        // Content:
+        //   status: "timeout"
+        &hex!(
+            "81a6737461747573a774696d656f7574"
+        )[..],
+        BlockCreateRepSchema::Timeout
+    )
+)]
+#[case::not_allowed(
+    (
+        // Generated from Python implementation (Parsec v2.6.0+dev)
+        // Content:
+        //   status: "not_allowed"
+        &hex!(
+            "81a6737461747573ab6e6f745f616c6c6f776564"
+        )[..],
+        BlockCreateRepSchema::NotAllowed
+    )
+)]
+#[case::in_maintenance(
+    (
+        // Generated from Python implementation (Parsec v2.6.0+dev)
+        // Content:
+        //   status: "in_maintenance"
+        &hex!(
+            "81a6737461747573ae696e5f6d61696e74656e616e6365"
+        )[..],
+        BlockCreateRepSchema::InMaintenance
+    )
+)]
+fn serde_block_create_rep(#[case] data_expected: (&[u8], BlockCreateRepSchema)) {
+    let (data, expected) = data_expected;
 
     let schema = BlockCreateRepSchema::load(&data).unwrap();
 
@@ -82,16 +143,66 @@ fn serde_block_read_req() {
 }
 
 #[rstest]
-fn serde_block_read_rep() {
-    // Generated from Python implementation (Parsec v2.6.0+dev)
-    // Content:
-    //   block: hex!("666f6f626172")
-    //   status: "ok"
-    let data = hex!("82a5626c6f636bc406666f6f626172a6737461747573a26f6b");
-
-    let expected = BlockReadRepSchema::Ok {
-        block: b"foobar".to_vec(),
-    };
+#[case::ok(
+    (
+        // Generated from Python implementation (Parsec v2.6.0+dev)
+        // Content:
+        //   block: hex!("666f6f626172")
+        //   status: "ok"
+        &hex!(
+            "82a5626c6f636bc406666f6f626172a6737461747573a26f6b"
+        )[..],
+        BlockReadRepSchema::Ok {
+            block: b"foobar".to_vec(),
+        }
+    )
+)]
+#[case::not_found(
+    (
+        // Generated from Python implementation (Parsec v2.6.0+dev)
+        // Content:
+        //   status: "not_found"
+        &hex!(
+            "81a6737461747573a96e6f745f666f756e64"
+        )[..],
+        BlockReadRepSchema::NotFound
+    )
+)]
+#[case::timeout(
+    (
+        // Generated from Python implementation (Parsec v2.6.0+dev)
+        // Content:
+        //   status: "timeout"
+        &hex!(
+            "81a6737461747573a774696d656f7574"
+        )[..],
+        BlockReadRepSchema::Timeout
+    )
+)]
+#[case::not_allowed(
+    (
+        // Generated from Python implementation (Parsec v2.6.0+dev)
+        // Content:
+        //   status: "not_allowed"
+        &hex!(
+            "81a6737461747573ab6e6f745f616c6c6f776564"
+        )[..],
+        BlockReadRepSchema::NotAllowed
+    )
+)]
+#[case::in_maintenance(
+    (
+        // Generated from Python implementation (Parsec v2.6.0+dev)
+        // Content:
+        //   status: "in_maintenance"
+        &hex!(
+            "81a6737461747573ae696e5f6d61696e74656e616e6365"
+        )[..],
+        BlockReadRepSchema::InMaintenance
+    )
+)]
+fn serde_block_read_rep(#[case] data_expected: (&[u8], BlockReadRepSchema)) {
+    let (data, expected) = data_expected;
 
     let schema = BlockReadRepSchema::load(&data).unwrap();
 

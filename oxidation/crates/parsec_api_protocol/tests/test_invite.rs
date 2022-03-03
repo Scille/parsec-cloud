@@ -59,21 +59,58 @@ fn serde_invite_new_req(#[case] data_expected: (&[u8], InviteNewReqSchema)) {
 }
 
 #[rstest]
-fn serde_invite_new_rep() {
-    // Generated from Python implementation (Parsec v2.6.0+dev)
-    // Content:
-    //   email_sent: "SUCCESS"
-    //   status: "ok"
-    //   token: ext(2, hex!("d864b93ded264aae9ae583fd3d40c45a"))
-    let data = hex!(
-        "83aa656d61696c5f73656e74a753554343455353a6737461747573a26f6ba5746f6b656ed8"
-        "02d864b93ded264aae9ae583fd3d40c45a"
-    );
-
-    let expected = InviteNewRepSchema::Ok {
-        token: "d864b93ded264aae9ae583fd3d40c45a".parse().unwrap(),
-        email_sent: InvitationEmailSentStatus::Success,
-    };
+#[case::ok(
+    (
+        // Generated from Python implementation (Parsec v2.6.0+dev)
+        // Content:
+        //   email_sent: "SUCCESS"
+        //   status: "ok"
+        //   token: ext(2, hex!("d864b93ded264aae9ae583fd3d40c45a"))
+        &hex!(
+            "83aa656d61696c5f73656e74a753554343455353a6737461747573a26f6ba5746f6b656ed8"
+            "02d864b93ded264aae9ae583fd3d40c45a"
+        )[..],
+        InviteNewRepSchema::Ok {
+            token: "d864b93ded264aae9ae583fd3d40c45a".parse().unwrap(),
+            email_sent: InvitationEmailSentStatus::Success,
+        }
+    )
+)]
+#[case::not_allowed(
+    (
+        // Generated from Python implementation (Parsec v2.6.0+dev)
+        // Content:
+        //   status: "not_allowed"
+        &hex!(
+            "81a6737461747573ab6e6f745f616c6c6f776564"
+        )[..],
+        InviteNewRepSchema::NotAllowed
+    )
+)]
+#[case::already_member(
+    (
+        // Generated from Python implementation (Parsec v2.6.0+dev)
+        // Content:
+        //   status: "already_member"
+        &hex!(
+            "81a6737461747573ae616c72656164795f6d656d626572"
+        )[..],
+        InviteNewRepSchema::AlreadyMember
+    )
+)]
+#[case::not_available(
+    (
+        // Generated from Python implementation (Parsec v2.6.0+dev)
+        // Content:
+        //   status: "not_available"
+        &hex!(
+            "81a6737461747573ad6e6f745f617661696c61626c65"
+        )[..],
+        InviteNewRepSchema::NotAvailable
+    )
+)]
+fn serde_invite_new_rep(#[case] data_expected: (&[u8], InviteNewRepSchema)) {
+    let (data, expected) = data_expected;
 
     let schema = InviteNewRepSchema::load(&data).unwrap();
 
@@ -116,13 +153,41 @@ fn serde_invite_delete_req() {
 }
 
 #[rstest]
-fn serde_invite_delete_rep() {
-    // Generated from Python implementation (Parsec v2.6.0+dev)
-    // Content:
-    //   status: "ok"
-    let data = hex!("81a6737461747573a26f6b");
-
-    let expected = InviteDeleteRepSchema::Ok;
+#[case::ok(
+    (
+        // Generated from Python implementation (Parsec v2.6.0+dev)
+        // Content:
+        //   status: "ok"
+        &hex!(
+            "81a6737461747573a26f6b"
+        )[..],
+        InviteDeleteRepSchema::Ok
+    )
+)]
+#[case::not_found(
+    (
+        // Generated from Python implementation (Parsec v2.6.0+dev)
+        // Content:
+        //   status: "not_found"
+        &hex!(
+            "81a6737461747573a96e6f745f666f756e64"
+        )[..],
+        InviteDeleteRepSchema::NotFound
+    )
+)]
+#[case::already_deleted(
+    (
+        // Generated from Python implementation (Parsec v2.6.0+dev)
+        // Content:
+        //   status: "already_deleted"
+        &hex!(
+            "81a6737461747573af616c72656164795f64656c65746564"
+        )[..],
+        InviteDeleteRepSchema::AlreadyDeleted
+    )
+)]
+fn serde_invite_delete_rep(#[case] data_expected: (&[u8], InviteDeleteRepSchema)) {
+    let (data, expected) = data_expected;
 
     let schema = InviteDeleteRepSchema::load(&data).unwrap();
 
@@ -323,21 +388,49 @@ fn serde_invite_1_claimer_wait_peer_req() {
 }
 
 #[rstest]
-fn serde_invite_1_claimer_wait_peer_rep() {
-    // Generated from Python implementation (Parsec v2.6.0+dev)
-    // Content:
-    //   greeter_public_key: hex!("6507907d33bae6b5980b32fa03f3ebac56141b126e44f352ea46c5f22cd5ac57")
-    //   status: "ok"
-    let data = hex!(
-        "82b2677265657465725f7075626c69635f6b6579c4206507907d33bae6b5980b32fa03f3eb"
-        "ac56141b126e44f352ea46c5f22cd5ac57a6737461747573a26f6b"
-    );
-
-    let expected = Invite1ClaimerWaitPeerRepSchema::Ok {
-        greeter_public_key: PublicKey::from(hex!(
-            "6507907d33bae6b5980b32fa03f3ebac56141b126e44f352ea46c5f22cd5ac57"
-        )),
-    };
+#[case::ok(
+    (
+        // Generated from Python implementation (Parsec v2.6.0+dev)
+        // Content:
+        //   greeter_public_key: hex!("6507907d33bae6b5980b32fa03f3ebac56141b126e44f352ea46c5f22cd5ac57")
+        //   status: "ok"
+        &hex!(
+            "82b2677265657465725f7075626c69635f6b6579c4206507907d33bae6b5980b32fa03f3eb"
+            "ac56141b126e44f352ea46c5f22cd5ac57a6737461747573a26f6b"
+        )[..],
+        Invite1ClaimerWaitPeerRepSchema::Ok {
+            greeter_public_key: PublicKey::from(hex!(
+                "6507907d33bae6b5980b32fa03f3ebac56141b126e44f352ea46c5f22cd5ac57"
+            )),
+        }
+    )
+)]
+#[case::not_found(
+    (
+        // Generated from Python implementation (Parsec v2.6.0+dev)
+        // Content:
+        //   status: "not_found"
+        &hex!(
+            "81a6737461747573a96e6f745f666f756e64"
+        )[..],
+        Invite1ClaimerWaitPeerRepSchema::NotFound
+    )
+)]
+#[case::invalid_state(
+    (
+        // Generated from Python implementation (Parsec v2.6.0+dev)
+        // Content:
+        //   status: "invalid_state"
+        &hex!(
+            "81a6737461747573ad696e76616c69645f7374617465"
+        )[..],
+        Invite1ClaimerWaitPeerRepSchema::InvalidState
+    )
+)]
+fn serde_invite_1_claimer_wait_peer_rep(
+    #[case] data_expected: (&[u8], Invite1ClaimerWaitPeerRepSchema),
+) {
+    let (data, expected) = data_expected;
 
     let schema = Invite1ClaimerWaitPeerRepSchema::load(&data).unwrap();
 
@@ -383,21 +476,60 @@ fn serde_invite_1_greeter_wait_peer_req() {
 }
 
 #[rstest]
-fn serde_invite_1_greeter_wait_peer_rep() {
-    // Generated from Python implementation (Parsec v2.6.0+dev)
-    // Content:
-    //   claimer_public_key: hex!("6507907d33bae6b5980b32fa03f3ebac56141b126e44f352ea46c5f22cd5ac57")
-    //   status: "ok"
-    let data = hex!(
-        "82b2636c61696d65725f7075626c69635f6b6579c4206507907d33bae6b5980b32fa03f3eb"
-        "ac56141b126e44f352ea46c5f22cd5ac57a6737461747573a26f6b"
-    );
-
-    let expected = Invite1GreeterWaitPeerRepSchema::Ok {
-        claimer_public_key: PublicKey::from(hex!(
-            "6507907d33bae6b5980b32fa03f3ebac56141b126e44f352ea46c5f22cd5ac57"
-        )),
-    };
+#[case::ok(
+    (
+        // Generated from Python implementation (Parsec v2.6.0+dev)
+        // Content:
+        //   claimer_public_key: hex!("6507907d33bae6b5980b32fa03f3ebac56141b126e44f352ea46c5f22cd5ac57")
+        //   status: "ok"
+        &hex!(
+            "82b2636c61696d65725f7075626c69635f6b6579c4206507907d33bae6b5980b32fa03f3eb"
+            "ac56141b126e44f352ea46c5f22cd5ac57a6737461747573a26f6b"
+        )[..],
+        Invite1GreeterWaitPeerRepSchema::Ok {
+            claimer_public_key: PublicKey::from(hex!(
+                "6507907d33bae6b5980b32fa03f3ebac56141b126e44f352ea46c5f22cd5ac57"
+            )),
+        }
+    )
+)]
+#[case::not_found(
+    (
+        // Generated from Python implementation (Parsec v2.6.0+dev)
+        // Content:
+        //   status: "not_found"
+        &hex!(
+            "81a6737461747573a96e6f745f666f756e64"
+        )[..],
+        Invite1GreeterWaitPeerRepSchema::NotFound
+    )
+)]
+#[case::already_deleted(
+    (
+        // Generated from Python implementation (Parsec v2.6.0+dev)
+        // Content:
+        //   status: "already_deleted"
+        &hex!(
+            "81a6737461747573af616c72656164795f64656c65746564"
+        )[..],
+        Invite1GreeterWaitPeerRepSchema::AlreadyDeleted
+    )
+)]
+#[case::invalid_state(
+    (
+        // Generated from Python implementation (Parsec v2.6.0+dev)
+        // Content:
+        //   status: "invalid_state"
+        &hex!(
+            "81a6737461747573ad696e76616c69645f7374617465"
+        )[..],
+        Invite1GreeterWaitPeerRepSchema::InvalidState
+    )
+)]
+fn serde_invite_1_greeter_wait_peer_rep(
+    #[case] data_expected: (&[u8], Invite1GreeterWaitPeerRepSchema),
+) {
+    let (data, expected) = data_expected;
 
     let schema = Invite1GreeterWaitPeerRepSchema::load(&data).unwrap();
 
@@ -441,16 +573,57 @@ fn serde_invite_2a_claimer_send_hashed_nonce_hash_nonce_req() {
 }
 
 #[rstest]
-fn serde_invite_2a_claimer_send_hashed_nonce_hash_nonce_rep() {
-    // Generated from Python implementation (Parsec v2.6.0+dev)
-    // Content:
-    //   greeter_nonce: hex!("666f6f626172")
-    //   status: "ok"
-    let data = hex!("82ad677265657465725f6e6f6e6365c406666f6f626172a6737461747573a26f6b");
-
-    let expected = Invite2aClaimerSendHashedNonceHashNonceRepSchema::Ok {
-        greeter_nonce: b"foobar".to_vec(),
-    };
+#[case::ok(
+    (
+        // Generated from Python implementation (Parsec v2.6.0+dev)
+        // Content:
+        //   greeter_nonce: hex!("666f6f626172")
+        //   status: "ok"
+        &hex!(
+            "82ad677265657465725f6e6f6e6365c406666f6f626172a6737461747573a26f6b"
+        )[..],
+        Invite2aClaimerSendHashedNonceHashNonceRepSchema::Ok {
+            greeter_nonce: b"foobar".to_vec(),
+        }
+    )
+)]
+#[case::not_found(
+    (
+        // Generated from Python implementation (Parsec v2.6.0+dev)
+        // Content:
+        //   status: "not_found"
+        &hex!(
+            "81a6737461747573a96e6f745f666f756e64"
+        )[..],
+        Invite2aClaimerSendHashedNonceHashNonceRepSchema::NotFound
+    )
+)]
+// Generated from Python implementation (Parsec v2.6.0+dev)
+// Content:
+//   status: "already_deleted"
+#[case::already_deleted(
+    (
+        &hex!(
+            "81a6737461747573af616c72656164795f64656c65746564"
+        )[..],
+        Invite2aClaimerSendHashedNonceHashNonceRepSchema::AlreadyDeleted
+    )
+)]
+// Generated from Python implementation (Parsec v2.6.0+dev)
+// Content:
+//   status: "invalid_state"
+#[case::invalid_state(
+    (
+        &hex!(
+            "81a6737461747573ad696e76616c69645f7374617465"
+        )[..],
+        Invite2aClaimerSendHashedNonceHashNonceRepSchema::InvalidState
+    )
+)]
+fn serde_invite_2a_claimer_send_hashed_nonce_hash_nonce_rep(
+    #[case] data_expected: (&[u8], Invite2aClaimerSendHashedNonceHashNonceRepSchema),
+) {
+    let (data, expected) = data_expected;
 
     let schema = Invite2aClaimerSendHashedNonceHashNonceRepSchema::load(&data).unwrap();
 
@@ -464,21 +637,60 @@ fn serde_invite_2a_claimer_send_hashed_nonce_hash_nonce_rep() {
 }
 
 #[rstest]
-fn serde_invite_2a_greeter_get_hashed_nonce_rep() {
-    // Generated from Python implementation (Parsec v2.6.0+dev)
-    // Content:
-    //   claimer_hashed_nonce: hex!("e37ce3b00a1f15b3de62029972345420b76313a885c6ccc6e3b5547857b3ecc6")
-    //   status: "ok"
-    let data = hex!(
-        "82b4636c61696d65725f6861736865645f6e6f6e6365c420e37ce3b00a1f15b3de62029972"
-        "345420b76313a885c6ccc6e3b5547857b3ecc6a6737461747573a26f6b"
-    );
-
-    let expected = Invite2aGreeterGetHashedNonceRepSchema::Ok {
-        claimer_hashed_nonce: HashDigest::from(hex!(
-            "e37ce3b00a1f15b3de62029972345420b76313a885c6ccc6e3b5547857b3ecc6"
-        )),
-    };
+#[case::ok(
+    (
+        // Generated from Python implementation (Parsec v2.6.0+dev)
+        // Content:
+        //   claimer_hashed_nonce: hex!("e37ce3b00a1f15b3de62029972345420b76313a885c6ccc6e3b5547857b3ecc6")
+        //   status: "ok"
+        &hex!(
+            "82b4636c61696d65725f6861736865645f6e6f6e6365c420e37ce3b00a1f15b3de62029972"
+            "345420b76313a885c6ccc6e3b5547857b3ecc6a6737461747573a26f6b"
+        )[..],
+        Invite2aGreeterGetHashedNonceRepSchema::Ok {
+            claimer_hashed_nonce: HashDigest::from(hex!(
+                "e37ce3b00a1f15b3de62029972345420b76313a885c6ccc6e3b5547857b3ecc6"
+            )),
+        }
+    )
+)]
+#[case::not_found(
+    (
+        // Generated from Python implementation (Parsec v2.6.0+dev)
+        // Content:
+        //   status: "not_found"
+        &hex!(
+            "81a6737461747573a96e6f745f666f756e64"
+        )[..],
+        Invite2aGreeterGetHashedNonceRepSchema::NotFound
+    )
+)]
+#[case::already_deleted(
+    (
+        // Generated from Python implementation (Parsec v2.6.0+dev)
+        // Content:
+        //   status: "already_deleted"
+        &hex!(
+            "81a6737461747573af616c72656164795f64656c65746564"
+        )[..],
+        Invite2aGreeterGetHashedNonceRepSchema::AlreadyDeleted
+    )
+)]
+#[case::invalid_state(
+    (
+        // Generated from Python implementation (Parsec v2.6.0+dev)
+        // Content:
+        //   status: "invalid_state"
+        &hex!(
+            "81a6737461747573ad696e76616c69645f7374617465"
+        )[..],
+        Invite2aGreeterGetHashedNonceRepSchema::InvalidState
+    )
+)]
+fn serde_invite_2a_greeter_get_hashed_nonce_rep(
+    #[case] data_expected: (&[u8], Invite2aGreeterGetHashedNonceRepSchema),
+) {
+    let (data, expected) = data_expected;
 
     let schema = Invite2aGreeterGetHashedNonceRepSchema::load(&data).unwrap();
 
@@ -492,16 +704,57 @@ fn serde_invite_2a_greeter_get_hashed_nonce_rep() {
 }
 
 #[rstest]
-fn serde_invite_2b_greeter_send_nonce_rep() {
-    // Generated from Python implementation (Parsec v2.6.0+dev)
-    // Content:
-    //   claimer_nonce: hex!("666f6f626172")
-    //   status: "ok"
-    let data = hex!("82ad636c61696d65725f6e6f6e6365c406666f6f626172a6737461747573a26f6b");
-
-    let expected = Invite2bGreeterSendNonceRepSchema::Ok {
-        claimer_nonce: b"foobar".to_vec(),
-    };
+#[case::ok(
+    (
+        // Generated from Python implementation (Parsec v2.6.0+dev)
+        // Content:
+        //   claimer_nonce: hex!("666f6f626172")
+        //   status: "ok"
+        &hex!(
+            "82ad636c61696d65725f6e6f6e6365c406666f6f626172a6737461747573a26f6b"
+        )[..],
+        Invite2bGreeterSendNonceRepSchema::Ok {
+            claimer_nonce: b"foobar".to_vec(),
+        }
+    )
+)]
+#[case::not_found(
+    (
+        // Generated from Python implementation (Parsec v2.6.0+dev)
+        // Content:
+        //   status: "not_found"
+        &hex!(
+            "81a6737461747573a96e6f745f666f756e64"
+        )[..],
+        Invite2bGreeterSendNonceRepSchema::NotFound
+    )
+)]
+#[case::already_deleted(
+    (
+        // Generated from Python implementation (Parsec v2.6.0+dev)
+        // Content:
+        //   status: "already_deleted"
+        &hex!(
+            "81a6737461747573af616c72656164795f64656c65746564"
+        )[..],
+        Invite2bGreeterSendNonceRepSchema::AlreadyDeleted
+    )
+)]
+#[case::invalid_state(
+    (
+        // Generated from Python implementation (Parsec v2.6.0+dev)
+        // Content:
+        //   status: "invalid_state"
+        &hex!(
+            "81a6737461747573ad696e76616c69645f7374617465"
+        )[..],
+        Invite2bGreeterSendNonceRepSchema::InvalidState
+    )
+)]
+fn serde_invite_2b_greeter_send_nonce_rep(
+    #[case] data_expected: (&[u8], Invite2bGreeterSendNonceRepSchema),
+) {
+    let (data, expected) = data_expected;
 
     let schema = Invite2bGreeterSendNonceRepSchema::load(&data).unwrap();
 
@@ -542,13 +795,43 @@ fn serde_invite_2b_claimer_send_nonce_req() {
 }
 
 #[rstest]
-fn serde_invite_2b_claimer_send_nonce_rep() {
-    // Generated from Python implementation (Parsec v2.6.0+dev)
-    // Content:
-    //   status: "ok"
-    let data = hex!("81a6737461747573a26f6b");
-
-    let expected = Invite2bClaimerSendNonceRepSchema::Ok;
+#[case::ok(
+    (
+        // Generated from Python implementation (Parsec v2.6.0+dev)
+        // Content:
+        //   status: "ok"
+        &hex!(
+            "81a6737461747573a26f6b"
+        )[..],
+        Invite2bClaimerSendNonceRepSchema::Ok
+    )
+)]
+#[case::not_found(
+    (
+        // Generated from Python implementation (Parsec v2.6.0+dev)
+        // Content:
+        //   status: "not_found"
+        &hex!(
+            "81a6737461747573a96e6f745f666f756e64"
+        )[..],
+        Invite2bClaimerSendNonceRepSchema::NotFound
+    )
+)]
+#[case::invalid_state(
+    (
+        // Generated from Python implementation (Parsec v2.6.0+dev)
+        // Content:
+        //   status: "invalid_state"
+        &hex!(
+            "81a6737461747573ad696e76616c69645f7374617465"
+        )[..],
+        Invite2bClaimerSendNonceRepSchema::InvalidState
+    )
+)]
+fn serde_invite_2b_claimer_send_nonce_rep(
+    #[case] data_expected: (&[u8], Invite2bClaimerSendNonceRepSchema),
+) {
+    let (data, expected) = data_expected;
 
     let schema = Invite2bClaimerSendNonceRepSchema::load(&data).unwrap();
 
@@ -589,13 +872,54 @@ fn serde_invite_3a_greeter_wait_peer_trust_req() {
 }
 
 #[rstest]
-fn serde_invite_3a_greeter_wait_peer_trust_rep() {
-    // Generated from Python implementation (Parsec v2.6.0+dev)
-    // Content:
-    //   status: "ok"
-    let data = hex!("81a6737461747573a26f6b");
-
-    let expected = Invite3aGreeterWaitPeerTrustRepSchema::Ok;
+#[case::ok(
+    (
+        // Generated from Python implementation (Parsec v2.6.0+dev)
+        // Content:
+        //   status: "ok"
+        &hex!(
+            "81a6737461747573a26f6b"
+        )[..],
+        Invite3aGreeterWaitPeerTrustRepSchema::Ok
+    )
+)]
+#[case::not_found(
+    (
+        // Generated from Python implementation (Parsec v2.6.0+dev)
+        // Content:
+        //   status: "not_found"
+        &hex!(
+            "81a6737461747573a96e6f745f666f756e64"
+        )[..],
+        Invite3aGreeterWaitPeerTrustRepSchema::NotFound
+    )
+)]
+#[case::already_deleted(
+    (
+        // Generated from Python implementation (Parsec v2.6.0+dev)
+        // Content:
+        //   status: "already_deleted"
+        &hex!(
+            "81a6737461747573af616c72656164795f64656c65746564"
+        )[..],
+        Invite3aGreeterWaitPeerTrustRepSchema::AlreadyDeleted
+    )
+)]
+#[case::invalid_state(
+    (
+        // Generated from Python implementation (Parsec v2.6.0+dev)
+        // Content:
+        //   status: "invalid_state"
+        &hex!(
+            "81a6737461747573ad696e76616c69645f7374617465"
+        )[..],
+        Invite3aGreeterWaitPeerTrustRepSchema::InvalidState
+    )
+)]
+fn serde_invite_3a_greeter_wait_peer_trust_rep(
+    #[case] data_expected: (&[u8], Invite3aGreeterWaitPeerTrustRepSchema),
+) {
+    let (data, expected) = data_expected;
 
     let schema = Invite3aGreeterWaitPeerTrustRepSchema::load(&data).unwrap();
 
@@ -634,13 +958,43 @@ fn serde_invite_3b_claimer_wait_peer_trust_req() {
 }
 
 #[rstest]
-fn serde_invite_3b_claimer_wait_peer_trust_rep() {
-    // Generated from Python implementation (Parsec v2.6.0+dev)
-    // Content:
-    //   status: "ok"
-    let data = hex!("81a6737461747573a26f6b");
-
-    let expected = Invite3bClaimerWaitPeerTrustRepSchema::Ok;
+#[case::ok(
+    (
+        // Generated from Python implementation (Parsec v2.6.0+dev)
+        // Content:
+        //   status: "ok"
+        &hex!(
+            "81a6737461747573a26f6b"
+        )[..],
+        Invite3bClaimerWaitPeerTrustRepSchema::Ok
+    )
+)]
+#[case::not_found(
+    (
+        // Generated from Python implementation (Parsec v2.6.0+dev)
+        // Content:
+        //   status: "not_found"
+        &hex!(
+            "81a6737461747573a96e6f745f666f756e64"
+        )[..],
+        Invite3bClaimerWaitPeerTrustRepSchema::NotFound
+    )
+)]
+#[case::invalid_state(
+    (
+        // Generated from Python implementation (Parsec v2.6.0+dev)
+        // Content:
+        //   status: "invalid_state"
+        &hex!(
+            "81a6737461747573ad696e76616c69645f7374617465"
+        )[..],
+        Invite3bClaimerWaitPeerTrustRepSchema::InvalidState
+    )
+)]
+fn serde_invite_3b_claimer_wait_peer_trust_rep(
+    #[case] data_expected: (&[u8], Invite3bClaimerWaitPeerTrustRepSchema),
+) {
+    let (data, expected) = data_expected;
 
     let schema = Invite3bClaimerWaitPeerTrustRepSchema::load(&data).unwrap();
 
@@ -681,13 +1035,54 @@ fn serde_invite_3b_greeter_signify_trust_req() {
 }
 
 #[rstest]
-fn serde_invite_3b_greeter_signify_trust_rep() {
-    // Generated from Python implementation (Parsec v2.6.0+dev)
-    // Content:
-    //   status: "ok"
-    let data = hex!("81a6737461747573a26f6b");
-
-    let expected = Invite3bGreeterSignifyTrustRepSchema::Ok;
+#[case::ok(
+    (
+        // Generated from Python implementation (Parsec v2.6.0+dev)
+        // Content:
+        //   status: "ok"
+        &hex!(
+            "81a6737461747573a26f6b"
+        )[..],
+        Invite3bGreeterSignifyTrustRepSchema::Ok
+    )
+)]
+#[case::not_found(
+    (
+        // Generated from Python implementation (Parsec v2.6.0+dev)
+        // Content:
+        //   status: "not_found"
+        &hex!(
+            "81a6737461747573a96e6f745f666f756e64"
+        )[..],
+        Invite3bGreeterSignifyTrustRepSchema::NotFound
+    )
+)]
+#[case::already_deleted(
+    (
+        // Generated from Python implementation (Parsec v2.6.0+dev)
+        // Content:
+        //   status: "already_deleted"
+        &hex!(
+            "81a6737461747573af616c72656164795f64656c65746564"
+        )[..],
+        Invite3bGreeterSignifyTrustRepSchema::AlreadyDeleted
+    )
+)]
+#[case::invalid_state(
+    (
+        // Generated from Python implementation (Parsec v2.6.0+dev)
+        // Content:
+        //   status: "invalid_state"
+        &hex!(
+            "81a6737461747573ad696e76616c69645f7374617465"
+        )[..],
+        Invite3bGreeterSignifyTrustRepSchema::InvalidState
+    )
+)]
+fn serde_invite_3b_greeter_signify_trust_rep(
+    #[case] data_expected: (&[u8], Invite3bGreeterSignifyTrustRepSchema),
+) {
+    let (data, expected) = data_expected;
 
     let schema = Invite3bGreeterSignifyTrustRepSchema::load(&data).unwrap();
 
@@ -723,13 +1118,43 @@ fn serde_invite_3a_claimer_signify_trust_req() {
 }
 
 #[rstest]
-fn serde_invite_3a_claimer_signify_trust_rep() {
-    // Generated from Python implementation (Parsec v2.6.0+dev)
-    // Content:
-    //   status: "ok"
-    let data = hex!("81a6737461747573a26f6b");
-
-    let expected = Invite3aClaimerSignifyTrustRepSchema::Ok;
+#[case::ok(
+    (
+        // Generated from Python implementation (Parsec v2.6.0+dev)
+        // Content:
+        //   status: "ok"
+        &hex!(
+            "81a6737461747573a26f6b"
+        )[..],
+        Invite3aClaimerSignifyTrustRepSchema::Ok
+    )
+)]
+#[case::not_found(
+    (
+        // Generated from Python implementation (Parsec v2.6.0+dev)
+        // Content:
+        //   status: "not_found"
+        &hex!(
+            "81a6737461747573a96e6f745f666f756e64"
+        )[..],
+        Invite3aClaimerSignifyTrustRepSchema::NotFound
+    )
+)]
+#[case::invalid_state(
+    (
+        // Generated from Python implementation (Parsec v2.6.0+dev)
+        // Content:
+        //   status: "invalid_state"
+        &hex!(
+            "81a6737461747573ad696e76616c69645f7374617465"
+        )[..],
+        Invite3aClaimerSignifyTrustRepSchema::InvalidState
+    )
+)]
+fn serde_invite_3a_claimer_signify_trust_rep(
+    #[case] data_expected: (&[u8], Invite3aClaimerSignifyTrustRepSchema),
+) {
+    let (data, expected) = data_expected;
 
     let schema = Invite3aClaimerSignifyTrustRepSchema::load(&data).unwrap();
 
@@ -772,16 +1197,57 @@ fn serde_invite_4_greeter_communicate_req() {
 }
 
 #[rstest]
-fn serde_invite_4_greeter_communicate_rep() {
-    // Generated from Python implementation (Parsec v2.6.0+dev)
-    // Content:
-    //   payload: hex!("666f6f626172")
-    //   status: "ok"
-    let data = hex!("82a77061796c6f6164c406666f6f626172a6737461747573a26f6b");
-
-    let expected = Invite4GreeterCommunicateRepSchema::Ok {
-        payload: b"foobar".to_vec(),
-    };
+#[case::ok(
+    (
+        // Generated from Python implementation (Parsec v2.6.0+dev)
+        // Content:
+        //   payload: hex!("666f6f626172")
+        //   status: "ok"
+        &hex!(
+            "82a77061796c6f6164c406666f6f626172a6737461747573a26f6b"
+        )[..],
+        Invite4GreeterCommunicateRepSchema::Ok {
+            payload: b"foobar".to_vec(),
+        }
+    )
+)]
+#[case::not_found(
+    (
+        // Generated from Python implementation (Parsec v2.6.0+dev)
+        // Content:
+        //   status: "not_found"
+        &hex!(
+            "81a6737461747573a96e6f745f666f756e64"
+        )[..],
+        Invite4GreeterCommunicateRepSchema::NotFound
+    )
+)]
+#[case::already_deleted(
+    (
+        // Generated from Python implementation (Parsec v2.6.0+dev)
+        // Content:
+        //   status: "already_deleted"
+        &hex!(
+            "81a6737461747573af616c72656164795f64656c65746564"
+        )[..],
+        Invite4GreeterCommunicateRepSchema::AlreadyDeleted
+    )
+)]
+#[case::invalid_state(
+    (
+        // Generated from Python implementation (Parsec v2.6.0+dev)
+        // Content:
+        //   status: "invalid_state"
+        &hex!(
+            "81a6737461747573ad696e76616c69645f7374617465"
+        )[..],
+        Invite4GreeterCommunicateRepSchema::InvalidState
+    )
+)]
+fn serde_invite_4_greeter_communicate_rep(
+    #[case] data_expected: (&[u8], Invite4GreeterCommunicateRepSchema),
+) {
+    let (data, expected) = data_expected;
 
     let schema = Invite4GreeterCommunicateRepSchema::load(&data).unwrap();
 
@@ -822,16 +1288,46 @@ fn serde_invite_4_claimer_communicate_req() {
 }
 
 #[rstest]
-fn serde_invite_4_claimer_communicate_rep() {
-    // Generated from Python implementation (Parsec v2.6.0+dev)
-    // Content:
-    //   payload: hex!("666f6f626172")
-    //   status: "ok"
-    let data = hex!("82a77061796c6f6164c406666f6f626172a6737461747573a26f6b");
-
-    let expected = Invite4ClaimerCommunicateRepSchema::Ok {
-        payload: b"foobar".to_vec(),
-    };
+#[case::ok(
+    (
+        // Generated from Python implementation (Parsec v2.6.0+dev)
+        // Content:
+        //   payload: hex!("666f6f626172")
+        //   status: "ok"
+        &hex!(
+            "82a77061796c6f6164c406666f6f626172a6737461747573a26f6b"
+        )[..],
+        Invite4ClaimerCommunicateRepSchema::Ok {
+            payload: b"foobar".to_vec(),
+        }
+    )
+)]
+#[case::not_found(
+    (
+        // Generated from Python implementation (Parsec v2.6.0+dev)
+        // Content:
+        //   status: "not_found"
+        &hex!(
+            "81a6737461747573a96e6f745f666f756e64"
+        )[..],
+        Invite4ClaimerCommunicateRepSchema::NotFound
+    )
+)]
+#[case::invalid_state(
+    (
+        // Generated from Python implementation (Parsec v2.6.0+dev)
+        // Content:
+        //   status: "invalid_state"
+        &hex!(
+            "81a6737461747573ad696e76616c69645f7374617465"
+        )[..],
+        Invite4ClaimerCommunicateRepSchema::InvalidState
+    )
+)]
+fn serde_invite_4_claimer_communicate_rep(
+    #[case] data_expected: (&[u8], Invite4ClaimerCommunicateRepSchema),
+) {
+    let (data, expected) = data_expected;
 
     let schema = Invite4ClaimerCommunicateRepSchema::load(&data).unwrap();
 

@@ -52,13 +52,72 @@ fn serde_api_v1_organization_bootstrap_req() {
 }
 
 #[rstest]
-fn serde_api_v1_organization_bootstrap_rep() {
-    // Generated from Python implementation (Parsec v2.6.0+dev)
-    // Content:
-    //   status: "ok"
-    let data = hex!("81a6737461747573a26f6b");
-
-    let expected = APIV1OrganizationBootstrapRepSchema::Ok;
+#[case::ok(
+    (
+        // Generated from Python implementation (Parsec v2.6.0+dev)
+        // Content:
+        //   status: "ok"
+        &hex!(
+            "81a6737461747573a26f6b"
+        )[..],
+        APIV1OrganizationBootstrapRepSchema::Ok
+    )
+)]
+#[case::invalid_certification(
+    (
+        // Generated from Python implementation (Parsec v2.6.0+dev)
+        // Content:
+        //   reason: "foobar"
+        //   status: "invalid_certification"
+        &hex!(
+            "82a6726561736f6ea6666f6f626172a6737461747573b5696e76616c69645f636572746966"
+            "69636174696f6e"
+        )[..],
+        APIV1OrganizationBootstrapRepSchema::InvalidCertification {
+            reason: "foobar".to_owned()
+        }
+    )
+)]
+#[case::invalid_data(
+    (
+        // Generated from Python implementation (Parsec v2.6.0+dev)
+        // Content:
+        //   reason: "foobar"
+        //   status: "invalid_data"
+        &hex!(
+            "82a6726561736f6ea6666f6f626172a6737461747573ac696e76616c69645f64617461"
+        )[..],
+        APIV1OrganizationBootstrapRepSchema::InvalidData {
+            reason: "foobar".to_owned()
+        }
+    )
+)]
+#[case::already_bootstrapped(
+    (
+        // Generated from Python implementation (Parsec v2.6.0+dev)
+        // Content:
+        //   status: "already_bootstrapped"
+        &hex!(
+            "81a6737461747573b4616c72656164795f626f6f747374726170706564"
+        )[..],
+        APIV1OrganizationBootstrapRepSchema::AlreadyBootstrapped
+    )
+)]
+#[case::not_found(
+    (
+        // Generated from Python implementation (Parsec v2.6.0+dev)
+        // Content:
+        //   status: "not_found"
+        &hex!(
+            "81a6737461747573a96e6f745f666f756e64"
+        )[..],
+        APIV1OrganizationBootstrapRepSchema::NotFound
+    )
+)]
+fn serde_api_v1_organization_bootstrap_rep(
+    #[case] data_expected: (&[u8], APIV1OrganizationBootstrapRepSchema),
+) {
+    let (data, expected) = data_expected;
 
     let schema = APIV1OrganizationBootstrapRepSchema::load(&data).unwrap();
 
@@ -94,35 +153,64 @@ fn serde_organization_stats_req() {
 }
 
 #[rstest]
-fn serde_organization_stats_rep() {
-    // Generated from Python implementation (Parsec v2.6.0+dev)
-    // Content:
-    //   active_users: 1
-    //   data_size: 8
-    //   metadata_size: 8
-    //   realms: 1
-    //   status: "ok"
-    //   users: 1
-    //   users_per_profile_detail: [{active:1, profile:"ADMIN", revoked:0}]
-    let data = hex!(
-        "87ac6163746976655f757365727301a9646174615f73697a6508ad6d657461646174615f73"
-        "697a6508a67265616c6d7301a6737461747573a26f6ba5757365727301b875736572735f70"
-        "65725f70726f66696c655f64657461696c9183a770726f66696c65a541444d494ea6616374"
-        "69766501a77265766f6b656400"
-    );
-
-    let expected = OrganizationStatsRepSchema::Ok {
-        data_size: 8,
-        metadata_size: 8,
-        realms: 1,
-        users: 1,
-        active_users: 1,
-        users_per_profile_detail: vec![UsersPerProfileDetailItemSchema {
-            profile: UserProfile::Admin,
-            active: 1,
-            revoked: 0,
-        }],
-    };
+#[case::ok(
+    (
+        // Generated from Python implementation (Parsec v2.6.0+dev)
+        // Content:
+        //   active_users: 1
+        //   data_size: 8
+        //   metadata_size: 8
+        //   realms: 1
+        //   status: "ok"
+        //   users: 1
+        //   users_per_profile_detail: [{active:1, profile:"ADMIN", revoked:0}]
+        &hex!(
+            "87ac6163746976655f757365727301a9646174615f73697a6508ad6d657461646174615f73"
+            "697a6508a67265616c6d7301a6737461747573a26f6ba5757365727301b875736572735f70"
+            "65725f70726f66696c655f64657461696c9183a770726f66696c65a541444d494ea6616374"
+            "69766501a77265766f6b656400"
+        )[..],
+        OrganizationStatsRepSchema::Ok {
+            data_size: 8,
+            metadata_size: 8,
+            realms: 1,
+            users: 1,
+            active_users: 1,
+            users_per_profile_detail: vec![UsersPerProfileDetailItemSchema {
+                profile: UserProfile::Admin,
+                active: 1,
+                revoked: 0,
+            }],
+        }
+    )
+)]
+#[case::not_allowed(
+    (
+        // Generated from Python implementation (Parsec v2.6.0+dev)
+        // Content:
+        //   reason: "foobar"
+        //   status: "not_allowed"
+        &hex!(
+            "82a6726561736f6ea6666f6f626172a6737461747573ab6e6f745f616c6c6f776564"
+        )[..],
+        OrganizationStatsRepSchema::NotAllowed {
+            reason: "foobar".to_owned()
+        }
+    )
+)]
+#[case::not_found(
+    (
+        // Generated from Python implementation (Parsec v2.6.0+dev)
+        // Content:
+        //   status: "not_found"
+        &hex!(
+            "81a6737461747573a96e6f745f666f756e64"
+        )[..],
+        OrganizationStatsRepSchema::NotFound
+    )
+)]
+fn serde_organization_stats_rep(#[case] data_expected: (&[u8], OrganizationStatsRepSchema)) {
+    let (data, expected) = data_expected;
 
     let schema = OrganizationStatsRepSchema::load(&data).unwrap();
 
@@ -158,21 +246,36 @@ fn serde_organization_config_req() {
 }
 
 #[rstest]
-fn serde_organization_config_rep() {
-    // Generated from Python implementation (Parsec v2.6.0+dev)
-    // Content:
-    //   active_users_limit: 1
-    //   status: "ok"
-    //   user_profile_outsider_allowed: false
-    let data = hex!(
-        "83b26163746976655f75736572735f6c696d697401a6737461747573a26f6bbd757365725f"
-        "70726f66696c655f6f757473696465725f616c6c6f776564c2"
-    );
-
-    let expected = OrganizationConfigRepSchema::Ok {
-        user_profile_outsider_allowed: false,
-        active_users_limit: Some(1),
-    };
+#[case::ok(
+    (
+        // Generated from Python implementation (Parsec v2.6.0+dev)
+        // Content:
+        //   active_users_limit: 1
+        //   status: "ok"
+        //   user_profile_outsider_allowed: false
+        &hex!(
+            "83b26163746976655f75736572735f6c696d697401a6737461747573a26f6bbd757365725f"
+            "70726f66696c655f6f757473696465725f616c6c6f776564c2"
+        )[..],
+        OrganizationConfigRepSchema::Ok {
+            user_profile_outsider_allowed: false,
+            active_users_limit: Some(1),
+        }
+    )
+)]
+#[case::not_found(
+    (
+        // Generated from Python implementation (Parsec v2.6.0+dev)
+        // Content:
+        //   status: "not_found"
+        &hex!(
+            "81a6737461747573a96e6f745f666f756e64"
+        )[..],
+        OrganizationConfigRepSchema::NotFound
+    )
+)]
+fn serde_organization_config_rep(#[case] data_expected: (&[u8], OrganizationConfigRepSchema)) {
+    let (data, expected) = data_expected;
 
     let schema = OrganizationConfigRepSchema::load(&data).unwrap();
 

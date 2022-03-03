@@ -2,7 +2,7 @@
 # flake8: noqa
 
 from pendulum import datetime
-from utils import *
+from oxidation.generate_test_data.utils import *
 from parsec.crypto import *
 from parsec.api.protocol import *
 from parsec.api.data import *
@@ -30,6 +30,18 @@ serialized = serializer.rep_dumps(
 serializer.rep_loads(serialized)
 display("invite_new_rep", serialized, [])
 
+serialized = serializer.rep_dumps({"status": "not_allowed"})
+serializer.rep_loads(serialized)
+display("invite_new_rep_not_allowed", serialized, [])
+
+serialized = serializer.rep_dumps({"status": "already_member"})
+serializer.rep_loads(serialized)
+display("invite_new_rep_already_member", serialized, [])
+
+serialized = serializer.rep_dumps({"status": "not_available"})
+serializer.rep_loads(serialized)
+display("invite_new_rep_not_available", serialized, [])
+
 ################### InviteDelete ##################
 
 serializer = invite_delete_serializer
@@ -47,6 +59,14 @@ display("invite_delete_req", serialized, [])
 serialized = serializer.rep_dumps({})
 serializer.rep_loads(serialized)
 display("invite_delete_rep", serialized, [])
+
+serialized = serializer.rep_dumps({"status": "not_found"})
+serializer.rep_loads(serialized)
+display("invite_delete_rep_not_found", serialized, [])
+
+serialized = serializer.rep_dumps({"status": "already_deleted"})
+serializer.rep_loads(serialized)
+display("invite_delete_rep_already_deleted", serialized, [])
 
 ################### InviteList ##################
 
@@ -132,6 +152,14 @@ serialized = serializer.rep_dumps(
 serializer.rep_loads(serialized)
 display("invite_1_claimer_wait_peer_rep", serialized, [])
 
+serialized = serializer.rep_dumps({"status": "not_found"})
+serializer.rep_loads(serialized)
+display("invite_1_claimer_wait_peer_rep_not_found", serialized, [])
+
+serialized = serializer.rep_dumps({"status": "invalid_state"})
+serializer.rep_loads(serialized)
+display("invite_1_claimer_wait_peer_rep_invalid_state", serialized, [])
+
 ################### Invite1GreeterWaitPeer ##################
 
 serializer = invite_1_greeter_wait_peer_serializer
@@ -158,6 +186,18 @@ serialized = serializer.rep_dumps(
 serializer.rep_loads(serialized)
 display("invite_1_greeter_wait_peer_rep", serialized, [])
 
+serialized = serializer.rep_dumps({"status": "not_found"})
+serializer.rep_loads(serialized)
+display("invite_1_greeter_wait_peer_rep_not_found", serialized, [])
+
+serialized = serializer.rep_dumps({"status": "already_deleted"})
+serializer.rep_loads(serialized)
+display("invite_1_greeter_wait_peer_rep_already_deleted", serialized, [])
+
+serialized = serializer.rep_dumps({"status": "invalid_state"})
+serializer.rep_loads(serialized)
+display("invite_1_greeter_wait_peer_rep_invalid_state", serialized, [])
+
 ################### Invite2aClaimerSendHashedNonce ##################
 
 serializer = invite_2a_claimer_send_hashed_nonce_serializer
@@ -177,6 +217,18 @@ serialized = serializer.rep_dumps({"greeter_nonce": b"foobar"})
 serializer.rep_loads(serialized)
 display("invite_2a_claimer_send_hashed_nonce_hash_nonce_rep", serialized, [])
 
+serialized = serializer.rep_dumps({"status": "not_found"})
+serializer.rep_loads(serialized)
+display("invite_2a_claimer_send_hashed_nonce_hash_nonce_rep_not_found", serialized, [])
+
+serialized = serializer.rep_dumps({"status": "already_deleted"})
+serializer.rep_loads(serialized)
+display("invite_2a_claimer_send_hashed_nonce_hash_nonce_rep_already_deleted", serialized, [])
+
+serialized = serializer.rep_dumps({"status": "invalid_state"})
+serializer.rep_loads(serialized)
+display("invite_2a_claimer_send_hashed_nonce_hash_nonce_rep_invalid_state", serialized, [])
+
 ################### Invite2aGreeterGetHashedNonce ##################
 
 serializer = invite_2a_greeter_get_hashed_nonce_serializer
@@ -191,6 +243,18 @@ serialized = serializer.rep_dumps(
 serializer.rep_loads(serialized)
 display("invite_2a_greeter_get_hashed_nonce_rep", serialized, [])
 
+serialized = serializer.rep_dumps({"status": "not_found"})
+serializer.rep_loads(serialized)
+display("invite_2a_greeter_get_hashed_nonce_rep_not_found", serialized, [])
+
+serialized = serializer.rep_dumps({"status": "already_deleted"})
+serializer.rep_loads(serialized)
+display("invite_2a_greeter_get_hashed_nonce_rep_already_deleted", serialized, [])
+
+serialized = serializer.rep_dumps({"status": "invalid_state"})
+serializer.rep_loads(serialized)
+display("invite_2a_greeter_get_hashed_nonce_rep_invalid_state", serialized, [])
+
 ################### Invite2bGreeterSendNonce ##################
 
 serializer = invite_2b_greeter_send_nonce_serializer
@@ -198,6 +262,18 @@ serializer = invite_2b_greeter_send_nonce_serializer
 serialized = serializer.rep_dumps({"claimer_nonce": b"foobar"})
 serializer.rep_loads(serialized)
 display("invite_2b_greeter_send_nonce_rep", serialized, [])
+
+serialized = serializer.rep_dumps({"status": "not_found"})
+serializer.rep_loads(serialized)
+display("invite_2b_greeter_send_nonce_rep_not_found", serialized, [])
+
+serialized = serializer.rep_dumps({"status": "already_deleted"})
+serializer.rep_loads(serialized)
+display("invite_2b_greeter_send_nonce_rep_already_deleted", serialized, [])
+
+serialized = serializer.rep_dumps({"status": "invalid_state"})
+serializer.rep_loads(serialized)
+display("invite_2b_greeter_send_nonce_rep_invalid_state", serialized, [])
 
 ################### Invite2bClaimerSendNonce ##################
 
@@ -212,6 +288,14 @@ display("invite_2b_claimer_send_nonce_req", serialized, [])
 serialized = serializer.rep_dumps({})
 serializer.rep_loads(serialized)
 display("invite_2b_claimer_send_nonce_rep", serialized, [])
+
+serialized = serializer.rep_dumps({"status": "not_found"})
+serializer.rep_loads(serialized)
+display("invite_2b_claimer_send_nonce_rep_not_found", serialized, [])
+
+serialized = serializer.rep_dumps({"status": "invalid_state"})
+serializer.rep_loads(serialized)
+display("invite_2b_claimer_send_nonce_rep_invalid_state", serialized, [])
 
 ################### Invite3aGreeterWaitPeerTrust ##################
 
@@ -230,6 +314,18 @@ serialized = serializer.rep_dumps({})
 serializer.rep_loads(serialized)
 display("invite_3a_greeter_wait_peer_trust_rep", serialized, [])
 
+serialized = serializer.rep_dumps({"status": "not_found"})
+serializer.rep_loads(serialized)
+display("invite_3a_greeter_wait_peer_trust_rep_not_found", serialized, [])
+
+serialized = serializer.rep_dumps({"status": "already_deleted"})
+serializer.rep_loads(serialized)
+display("invite_3a_greeter_wait_peer_trust_rep_already_deleted", serialized, [])
+
+serialized = serializer.rep_dumps({"status": "invalid_state"})
+serializer.rep_loads(serialized)
+display("invite_3a_greeter_wait_peer_trust_rep_invalid_state", serialized, [])
+
 ################### Invite3bClaimerWaitPeerTrust ##################
 
 serializer = invite_3b_claimer_wait_peer_trust_serializer
@@ -241,6 +337,14 @@ display("invite_3b_claimer_wait_peer_trust_req", serialized, [])
 serialized = serializer.rep_dumps({})
 serializer.rep_loads(serialized)
 display("invite_3b_claimer_wait_peer_trust_rep", serialized, [])
+
+serialized = serializer.rep_dumps({"status": "not_found"})
+serializer.rep_loads(serialized)
+display("invite_3b_claimer_wait_peer_trust_rep_not_found", serialized, [])
+
+serialized = serializer.rep_dumps({"status": "invalid_state"})
+serializer.rep_loads(serialized)
+display("invite_3b_claimer_wait_peer_trust_rep_invalid_state", serialized, [])
 
 ################### Invite3bGreeterSignifyTrust ##################
 
@@ -259,6 +363,18 @@ serialized = serializer.rep_dumps({})
 serializer.rep_loads(serialized)
 display("invite_3b_greeter_signify_trust_rep", serialized, [])
 
+serialized = serializer.rep_dumps({"status": "not_found"})
+serializer.rep_loads(serialized)
+display("invite_3b_greeter_signify_trust_rep_not_found", serialized, [])
+
+serialized = serializer.rep_dumps({"status": "already_deleted"})
+serializer.rep_loads(serialized)
+display("invite_3b_greeter_signify_trust_rep_already_deleted", serialized, [])
+
+serialized = serializer.rep_dumps({"status": "invalid_state"})
+serializer.rep_loads(serialized)
+display("invite_3b_greeter_signify_trust_rep_invalid_state", serialized, [])
+
 ################### Invite3aClaimerSignifyTrust ##################
 
 serializer = invite_3a_claimer_signify_trust_serializer
@@ -270,6 +386,14 @@ display("invite_3a_claimer_signify_trust_req", serialized, [])
 serialized = serializer.rep_dumps({})
 serializer.rep_loads(serialized)
 display("invite_3a_claimer_signify_trust_rep", serialized, [])
+
+serialized = serializer.rep_dumps({"status": "not_found"})
+serializer.rep_loads(serialized)
+display("invite_3a_claimer_signify_trust_rep_not_found", serialized, [])
+
+serialized = serializer.rep_dumps({"status": "invalid_state"})
+serializer.rep_loads(serialized)
+display("invite_3a_claimer_signify_trust_rep_invalid_state", serialized, [])
 
 ################### Invite4GreeterCommunicate ##################
 
@@ -289,6 +413,18 @@ serialized = serializer.rep_dumps({"payload": b"foobar"})
 serializer.rep_loads(serialized)
 display("invite_4_greeter_communicate_rep", serialized, [])
 
+serialized = serializer.rep_dumps({"status": "not_found"})
+serializer.rep_loads(serialized)
+display("invite_4_greeter_communicate_rep_not_found", serialized, [])
+
+serialized = serializer.rep_dumps({"status": "already_deleted"})
+serializer.rep_loads(serialized)
+display("invite_4_greeter_communicate_rep_already_deleted", serialized, [])
+
+serialized = serializer.rep_dumps({"status": "invalid_state"})
+serializer.rep_loads(serialized)
+display("invite_4_greeter_communicate_rep_invalid_state", serialized, [])
+
 ################### Invite4ClaimerCommunicate ##################
 
 serializer = invite_4_claimer_communicate_serializer
@@ -300,3 +436,11 @@ display("invite_4_claimer_communicate_req", serialized, [])
 serialized = serializer.rep_dumps({"payload": b"foobar"})
 serializer.rep_loads(serialized)
 display("invite_4_claimer_communicate_rep", serialized, [])
+
+serialized = serializer.rep_dumps({"status": "not_found"})
+serializer.rep_loads(serialized)
+display("invite_4_claimer_communicate_rep_not_found", serialized, [])
+
+serialized = serializer.rep_dumps({"status": "invalid_state"})
+serializer.rep_loads(serialized)
+display("invite_4_claimer_communicate_rep_invalid_state", serialized, [])

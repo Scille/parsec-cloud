@@ -172,6 +172,31 @@ fn serde_events_listen_req() {
         ))
     )
 )]
+#[case::cancelled(
+    (
+        // Generated from Python implementation (Parsec v2.6.0+dev)
+        // Content:
+        //   reason: "foobar"
+        //   status: "cancelled"
+        &hex!(
+            "82a6726561736f6ea6666f6f626172a6737461747573a963616e63656c6c6564"
+        )[..],
+        EventsListenRepSchema::Cancelled {
+            reason: "foobar".to_owned()
+        }
+    )
+)]
+#[case::no_events(
+    (
+        // Generated from Python implementation (Parsec v2.6.0+dev)
+        // Content:
+        //   status: "no_events"
+        &hex!(
+            "81a6737461747573a96e6f5f6576656e7473"
+        )[..],
+        EventsListenRepSchema::NoEvents
+    )
+)]
 fn serde_events_listen_rep(#[case] data_expected: (&[u8], EventsListenRepSchema)) {
     let (data, expected) = data_expected;
 

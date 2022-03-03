@@ -34,13 +34,73 @@ fn serde_realm_create_req() {
 }
 
 #[rstest]
-fn serde_realm_create_rep() {
-    // Generated from Python implementation (Parsec v2.6.0+dev)
-    // Content:
-    //   status: "ok"
-    let data = hex!("81a6737461747573a26f6b");
-
-    let expected = RealmCreateRepSchema::Ok;
+#[case::ok(
+    (
+        // Generated from Python implementation (Parsec v2.6.0+dev)
+        // Content:
+        //   status: "ok"
+        &hex!(
+            "81a6737461747573a26f6b"
+        )[..],
+        RealmCreateRepSchema::Ok
+    )
+)]
+#[case::invalid_certification(
+    (
+        // Generated from Python implementation (Parsec v2.6.0+dev)
+        // Content:
+        //   reason: "foobar"
+        //   status: "invalid_certification"
+        &hex!(
+            "82a6726561736f6ea6666f6f626172a6737461747573b5696e76616c69645f636572746966"
+            "69636174696f6e"
+        )[..],
+        RealmCreateRepSchema::InvalidCertification {
+            reason: "foobar".to_owned(),
+        }
+    )
+)]
+#[case::invalid_data(
+    (
+        // Generated from Python implementation (Parsec v2.6.0+dev)
+        // Content:
+        //   reason: "foobar"
+        //   status: "invalid_data"
+        &hex!(
+            "82a6726561736f6ea6666f6f626172a6737461747573ac696e76616c69645f64617461"
+        )[..],
+        RealmCreateRepSchema::InvalidData {
+            reason: "foobar".to_owned(),
+        }
+    )
+)]
+#[case::not_found(
+    (
+        // Generated from Python implementation (Parsec v2.6.0+dev)
+        // Content:
+        //   reason: "foobar"
+        //   status: "not_found"
+        &hex!(
+            "82a6726561736f6ea6666f6f626172a6737461747573a96e6f745f666f756e64"
+        )[..],
+        RealmCreateRepSchema::NotFound {
+            reason: "foobar".to_owned(),
+        }
+    )
+)]
+#[case::already_exists(
+    (
+        // Generated from Python implementation (Parsec v2.6.0+dev)
+        // Content:
+        //   status: "already_exists"
+        &hex!(
+            "81a6737461747573ae616c72656164795f657869737473"
+        )[..],
+        RealmCreateRepSchema::AlreadyExists
+    )
+)]
+fn serde_realm_create_rep(#[case] data_expected: (&[u8], RealmCreateRepSchema)) {
+    let (data, expected) = data_expected;
 
     let schema = RealmCreateRepSchema::load(&data).unwrap();
 
@@ -81,30 +141,59 @@ fn serde_realm_status_req() {
 }
 
 #[rstest]
-fn serde_realm_status_rep() {
-    // Generated from Python implementation (Parsec v2.6.0+dev)
-    // Content:
-    //   encryption_revision: 8
-    //   in_maintenance: true
-    //   maintenance_started_by: "alice@dev1"
-    //   maintenance_started_on: ext(1, 946774800.0)
-    //   maintenance_type: "GARBAGE_COLLECTION"
-    //   status: "ok"
-    let data = hex!(
-        "86b3656e6372797074696f6e5f7265766973696f6e08ae696e5f6d61696e74656e616e6365"
-        "c3b66d61696e74656e616e63655f737461727465645f6279aa616c6963654064657631b66d"
-        "61696e74656e616e63655f737461727465645f6f6ed70141cc375188000000b06d61696e74"
-        "656e616e63655f74797065b2474152424147455f434f4c4c454354494f4ea6737461747573"
-        "a26f6b"
-    );
-
-    let expected = RealmStatusRepSchema::Ok {
-        in_maintenance: true,
-        maintenance_type: Some(MaintenanceType::GarbageCollection),
-        maintenance_started_on: Some("2000-1-2T01:00:00Z".parse().unwrap()),
-        maintenance_started_by: Some("alice@dev1".parse().unwrap()),
-        encryption_revision: 8,
-    };
+#[case::ok(
+    (
+        // Generated from Python implementation (Parsec v2.6.0+dev)
+        // Content:
+        //   encryption_revision: 8
+        //   in_maintenance: true
+        //   maintenance_started_by: "alice@dev1"
+        //   maintenance_started_on: ext(1, 946774800.0)
+        //   maintenance_type: "GARBAGE_COLLECTION"
+        //   status: "ok"
+        &hex!(
+            "86b3656e6372797074696f6e5f7265766973696f6e08ae696e5f6d61696e74656e616e6365"
+            "c3b66d61696e74656e616e63655f737461727465645f6279aa616c6963654064657631b66d"
+            "61696e74656e616e63655f737461727465645f6f6ed70141cc375188000000b06d61696e74"
+            "656e616e63655f74797065b2474152424147455f434f4c4c454354494f4ea6737461747573"
+            "a26f6b"
+        )[..],
+        RealmStatusRepSchema::Ok {
+            in_maintenance: true,
+            maintenance_type: Some(MaintenanceType::GarbageCollection),
+            maintenance_started_on: Some("2000-1-2T01:00:00Z".parse().unwrap()),
+            maintenance_started_by: Some("alice@dev1".parse().unwrap()),
+            encryption_revision: 8,
+        }
+    )
+)]
+#[case::not_allowed(
+    (
+        // Generated from Python implementation (Parsec v2.6.0+dev)
+        // Content:
+        //   status: "not_allowed"
+        &hex!(
+            "81a6737461747573ab6e6f745f616c6c6f776564"
+        )[..],
+        RealmStatusRepSchema::NotAllowed
+    )
+)]
+#[case::not_found(
+    (
+        // Generated from Python implementation (Parsec v2.6.0+dev)
+        // Content:
+        //   reason: "foobar"
+        //   status: "not_found"
+        &hex!(
+            "82a6726561736f6ea6666f6f626172a6737461747573a96e6f745f666f756e64"
+        )[..],
+        RealmStatusRepSchema::NotFound {
+            reason: "foobar".to_owned()
+        }
+    )
+)]
+fn serde_realm_status_rep(#[case] data_expected: (&[u8], RealmStatusRepSchema)) {
+    let (data, expected) = data_expected;
 
     let schema = RealmStatusRepSchema::load(&data).unwrap();
 
@@ -145,18 +234,49 @@ fn serde_realm_stats_req() {
 }
 
 #[rstest]
-fn serde_realm_stats_rep() {
-    // Generated from Python implementation (Parsec v2.6.0+dev)
-    // Content:
-    //   blocks_size: 8
-    //   status: "ok"
-    //   vlobs_size: 8
-    let data = hex!("83ab626c6f636b735f73697a6508a6737461747573a26f6baa766c6f62735f73697a6508");
-
-    let expected = RealmStatsRepSchema::Ok {
-        blocks_size: 8,
-        vlobs_size: 8,
-    };
+#[case::ok(
+    (
+        // Generated from Python implementation (Parsec v2.6.0+dev)
+        // Content:
+        //   blocks_size: 8
+        //   status: "ok"
+        //   vlobs_size: 8
+        &hex!(
+            "83ab626c6f636b735f73697a6508a6737461747573a26f6baa766c6f62735f73697a6508"
+        )[..],
+        RealmStatsRepSchema::Ok {
+            blocks_size: 8,
+            vlobs_size: 8,
+        }
+    )
+)]
+#[case::not_allowed(
+    (
+        // Generated from Python implementation (Parsec v2.6.0+dev)
+        // Content:
+        //   status: "not_allowed"
+        &hex!(
+            "81a6737461747573ab6e6f745f616c6c6f776564"
+        )[..],
+        RealmStatsRepSchema::NotAllowed
+    )
+)]
+#[case::not_found(
+    (
+        // Generated from Python implementation (Parsec v2.6.0+dev)
+        // Content:
+        //   reason: "foobar"
+        //   status: "not_found"
+        &hex!(
+            "82a6726561736f6ea6666f6f626172a6737461747573a96e6f745f666f756e64"
+        )[..],
+        RealmStatsRepSchema::NotFound {
+            reason: "foobar".to_owned()
+        }
+    )
+)]
+fn serde_realm_stats_rep(#[case] data_expected: (&[u8], RealmStatsRepSchema)) {
+    let (data, expected) = data_expected;
 
     let schema = RealmStatsRepSchema::load(&data).unwrap();
 
@@ -200,16 +320,49 @@ fn serde_realm_get_role_certificates_req() {
 }
 
 #[rstest]
-fn serde_realm_get_role_certificates_rep() {
-    // Generated from Python implementation (Parsec v2.6.0+dev)
-    // Content:
-    //   certificates: [hex!("666f6f626172")]
-    //   status: "ok"
-    let data = hex!("82ac63657274696669636174657391c406666f6f626172a6737461747573a26f6b");
-
-    let expected = RealmGetRoleCertificatesRepSchema::Ok {
-        certificates: vec![b"foobar".to_vec()],
-    };
+#[case::ok(
+    (
+        // Generated from Python implementation (Parsec v2.6.0+dev)
+        // Content:
+        //   certificates: [hex!("666f6f626172")]
+        //   status: "ok"
+        &hex!(
+            "82ac63657274696669636174657391c406666f6f626172a6737461747573a26f6b"
+        )[..],
+        RealmGetRoleCertificatesRepSchema::Ok {
+            certificates: vec![b"foobar".to_vec()],
+        }
+    )
+)]
+#[case::not_allowed(
+    (
+        // Generated from Python implementation (Parsec v2.6.0+dev)
+        // Content:
+        //   status: "not_allowed"
+        &hex!(
+            "81a6737461747573ab6e6f745f616c6c6f776564"
+        )[..],
+        RealmGetRoleCertificatesRepSchema::NotAllowed
+    )
+)]
+#[case::not_found(
+    (
+        // Generated from Python implementation (Parsec v2.6.0+dev)
+        // Content:
+        //   reason: "foobar"
+        //   status: "not_found"
+        &hex!(
+            "82a6726561736f6ea6666f6f626172a6737461747573a96e6f745f666f756e64"
+        )[..],
+        RealmGetRoleCertificatesRepSchema::NotFound {
+            reason: "foobar".to_owned()
+        }
+    )
+)]
+fn serde_realm_get_role_certificates_rep(
+    #[case] data_expected: (&[u8], RealmGetRoleCertificatesRepSchema),
+) {
+    let (data, expected) = data_expected;
 
     let schema = RealmGetRoleCertificatesRepSchema::load(&data).unwrap();
 
@@ -253,13 +406,113 @@ fn serde_realm_update_roles_req() {
 }
 
 #[rstest]
-fn serde_realm_update_roles_rep() {
-    // Generated from Python implementation (Parsec v2.6.0+dev)
-    // Content:
-    //   status: "ok"
-    let data = hex!("81a6737461747573a26f6b");
-
-    let expected = RealmUpdateRolesRepSchema::Ok;
+#[case::ok(
+    (
+        // Generated from Python implementation (Parsec v2.6.0+dev)
+        // Content:
+        //   status: "ok"
+        &hex!(
+            "81a6737461747573a26f6b"
+        )[..],
+        RealmUpdateRolesRepSchema::Ok
+    )
+)]
+#[case::not_allowed(
+    (
+        // Generated from Python implementation (Parsec v2.6.0+dev)
+        // Content:
+        //   reason: "foobar"
+        //   status: "not_allowed"
+        &hex!(
+            "82a6726561736f6ea6666f6f626172a6737461747573ab6e6f745f616c6c6f776564"
+        )[..],
+        RealmUpdateRolesRepSchema::NotAllowed {
+            reason: Some("foobar".to_owned())
+        }
+    )
+)]
+#[case::invalid_certification(
+    (
+        // Generated from Python implementation (Parsec v2.6.0+dev)
+        // Content:
+        //   reason: "foobar"
+        //   status: "invalid_certification"
+        &hex!(
+            "82a6726561736f6ea6666f6f626172a6737461747573b5696e76616c69645f636572746966"
+            "69636174696f6e"
+        )[..],
+        RealmUpdateRolesRepSchema::InvalidCertification {
+            reason: "foobar".to_owned()
+        }
+    )
+)]
+#[case::invalid_data(
+    (
+        // Generated from Python implementation (Parsec v2.6.0+dev)
+        // Content:
+        //   reason: "foobar"
+        //   status: "invalid_data"
+        &hex!(
+            "82a6726561736f6ea6666f6f626172a6737461747573ac696e76616c69645f64617461"
+        )[..],
+        RealmUpdateRolesRepSchema::InvalidData {
+            reason: "foobar".to_owned()
+        }
+    )
+)]
+#[case::already_granted(
+    (
+        // Generated from Python implementation (Parsec v2.6.0+dev)
+        // Content:
+        //   status: "already_granted"
+        &hex!(
+            "81a6737461747573af616c72656164795f6772616e746564"
+        )[..],
+        RealmUpdateRolesRepSchema::AlreadyGranted
+    )
+)]
+#[case::incompatible_profile(
+    (
+        // Generated from Python implementation (Parsec v2.6.0+dev)
+        // Content:
+        //   reason: "foobar"
+        //   status: "incompatible_profile"
+        &hex!(
+            "82a6726561736f6ea6666f6f626172a6737461747573b4696e636f6d70617469626c655f70"
+            "726f66696c65"
+        )[..],
+        RealmUpdateRolesRepSchema::IncompatibleProfile {
+            reason: "foobar".to_owned()
+        }
+    )
+)]
+#[case::not_found(
+    (
+        // Generated from Python implementation (Parsec v2.6.0+dev)
+        // Content:
+        //   reason: "foobar"
+        //   status: "not_found"
+        &hex!(
+            "82a6726561736f6ea6666f6f626172a6737461747573a96e6f745f666f756e64"
+        )[..],
+        RealmUpdateRolesRepSchema::NotFound {
+            reason: "foobar".to_owned()
+        }
+    )
+)]
+#[case::in_maintenance(
+    (
+        // Generated from Python implementation (Parsec v2.6.0+dev)
+        // Content:
+        //   status: "in_maintenance"
+        &hex!(
+            "81a6737461747573ae696e5f6d61696e74656e616e6365"
+        )[..],
+        RealmUpdateRolesRepSchema::InMaintenance
+    )
+)]
+fn serde_realm_update_roles_rep(#[case] data_expected: (&[u8], RealmUpdateRolesRepSchema)) {
+    let (data, expected) = data_expected;
 
     let schema = RealmUpdateRolesRepSchema::load(&data).unwrap();
 
@@ -312,13 +565,98 @@ fn serde_realm_start_reencryption_maintenance_req() {
 }
 
 #[rstest]
-fn serde_realm_start_reencryption_maintenance_rep() {
-    // Generated from Python implementation (Parsec v2.6.0+dev)
-    // Content:
-    //   status: "ok"
-    let data = hex!("81a6737461747573a26f6b");
-
-    let expected = RealmStartReencryptionMaintenanceRepSchema::Ok;
+#[case::ok(
+    (
+        // Generated from Python implementation (Parsec v2.6.0+dev)
+        // Content:
+        //   status: "ok"
+        &hex!(
+            "81a6737461747573a26f6b"
+        )[..],
+        RealmStartReencryptionMaintenanceRepSchema::Ok
+    )
+)]
+#[case::not_allowed(
+    (
+        // Generated from Python implementation (Parsec v2.6.0+dev)
+        // Content:
+        //   status: "not_allowed"
+        &hex!(
+            "81a6737461747573ab6e6f745f616c6c6f776564"
+        )[..],
+        RealmStartReencryptionMaintenanceRepSchema::NotAllowed
+    )
+)]
+#[case::not_found(
+    (
+        // Generated from Python implementation (Parsec v2.6.0+dev)
+        // Content:
+        //   reason: "foobar"
+        //   status: "not_found"
+        &hex!(
+            "82a6726561736f6ea6666f6f626172a6737461747573a96e6f745f666f756e64"
+        )[..],
+        RealmStartReencryptionMaintenanceRepSchema::NotFound {
+            reason: "foobar".to_owned()
+        }
+    )
+)]
+#[case::bad_encryption(
+    (
+        // Generated from Python implementation (Parsec v2.6.0+dev)
+        // Content:
+        //   status: "bad_encryption_revision"
+        &hex!(
+            "81a6737461747573b76261645f656e6372797074696f6e5f7265766973696f6e"
+        )[..],
+        RealmStartReencryptionMaintenanceRepSchema::BadEncryptionRevision
+    )
+)]
+#[case::participant_mismatch(
+    (
+        // Generated from Python implementation (Parsec v2.6.0+dev)
+        // Content:
+        //   reason: "foobar"
+        //   status: "participant_mismatch"
+        &hex!(
+            "82a6726561736f6ea6666f6f626172a6737461747573b47061727469636970616e745f6d69"
+            "736d61746368"
+        )[..],
+        RealmStartReencryptionMaintenanceRepSchema::ParticipantMismatch {
+            reason: "foobar".to_owned()
+        }
+    )
+)]
+#[case::maintenance_error(
+    (
+        // Generated from Python implementation (Parsec v2.6.0+dev)
+        // Content:
+        //   reason: "foobar"
+        //   status: "maintenance_error"
+        &hex!(
+            "82a6726561736f6ea6666f6f626172a6737461747573b16d61696e74656e616e63655f6572"
+            "726f72"
+        )[..],
+        RealmStartReencryptionMaintenanceRepSchema::MaintenanceError {
+            reason: "foobar".to_owned()
+        }
+    )
+)]
+#[case::in_maintenance(
+    (
+        // Generated from Python implementation (Parsec v2.6.0+dev)
+        // Content:
+        //   status: "in_maintenance"
+        &hex!(
+            "81a6737461747573ae696e5f6d61696e74656e616e6365"
+        )[..],
+        RealmStartReencryptionMaintenanceRepSchema::InMaintenance
+    )
+)]
+fn serde_realm_start_reencryption_maintenance_rep(
+    #[case] data_expected: (&[u8], RealmStartReencryptionMaintenanceRepSchema),
+) {
+    let (data, expected) = data_expected;
 
     let schema = RealmStartReencryptionMaintenanceRepSchema::load(&data).unwrap();
 
@@ -362,13 +700,87 @@ fn serde_realm_finish_reencryption_maintenance_req() {
 }
 
 #[rstest]
-fn serde_realm_finish_reencryption_maintenance_rep() {
-    // Generated from Python implementation (Parsec v2.6.0+dev)
-    // Content:
-    //   status: "ok"
-    let data = hex!("81a6737461747573a26f6b");
-
-    let expected = RealmFinishReencryptionMaintenanceRepSchema::Ok;
+#[case::ok(
+    (
+        // Generated from Python implementation (Parsec v2.6.0+dev)
+        // Content:
+        //   status: "ok"
+        &hex!(
+            "81a6737461747573a26f6b"
+        )[..],
+        RealmFinishReencryptionMaintenanceRepSchema::Ok
+    )
+)]
+#[case::not_allowed(
+    (
+        // Generated from Python implementation (Parsec v2.6.0+dev)
+        // Content:
+        //   status: "not_allowed"
+        &hex!(
+            "81a6737461747573ab6e6f745f616c6c6f776564"
+        )[..],
+        RealmFinishReencryptionMaintenanceRepSchema::NotAllowed
+    )
+)]
+#[case::not_found(
+    (
+        // Generated from Python implementation (Parsec v2.6.0+dev)
+        // Content:
+        //   reason: "foobar"
+        //   status: "not_found"
+        &hex!(
+            "82a6726561736f6ea6666f6f626172a6737461747573a96e6f745f666f756e64"
+        )[..],
+        RealmFinishReencryptionMaintenanceRepSchema::NotFound {
+            reason: "foobar".to_owned()
+        }
+    )
+)]
+#[case::bad_encryption_revision(
+    (
+        // Generated from Python implementation (Parsec v2.6.0+dev)
+        // Content:
+        //   status: "bad_encryption_revision"
+        &hex!(
+            "81a6737461747573b76261645f656e6372797074696f6e5f7265766973696f6e"
+        )[..],
+        RealmFinishReencryptionMaintenanceRepSchema::BadEncryptionRevision
+    )
+)]
+#[case::not_in_maintenance(
+    (
+        // Generated from Python implementation (Parsec v2.6.0+dev)
+        // Content:
+        //   reason: "foobar"
+        //   status: "not_in_maintenance"
+        &hex!(
+            "82a6726561736f6ea6666f6f626172a6737461747573b26e6f745f696e5f6d61696e74656e"
+            "616e6365"
+        )[..],
+        RealmFinishReencryptionMaintenanceRepSchema::NotInMaintenance {
+            reason: "foobar".to_owned()
+        }
+    )
+)]
+#[case::maintenance_error(
+    (
+        // Generated from Python implementation (Parsec v2.6.0+dev)
+        // Content:
+        //   reason: "foobar"
+        //   status: "maintenance_error"
+        &hex!(
+            "82a6726561736f6ea6666f6f626172a6737461747573b16d61696e74656e616e63655f6572"
+            "726f72"
+        )[..],
+        RealmFinishReencryptionMaintenanceRepSchema::MaintenanceError {
+            reason: "foobar".to_owned()
+        }
+    )
+)]
+fn serde_realm_finish_reencryption_maintenance_rep(
+    #[case] data_expected: (&[u8], RealmFinishReencryptionMaintenanceRepSchema),
+) {
+    let (data, expected) = data_expected;
 
     let schema = RealmFinishReencryptionMaintenanceRepSchema::load(&data).unwrap();
 

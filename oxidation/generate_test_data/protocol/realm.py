@@ -2,7 +2,7 @@
 # flake8: noqa
 
 from pendulum import datetime
-from utils import *
+from oxidation.generate_test_data.utils import *
 from parsec.crypto import *
 from parsec.api.protocol import *
 from parsec.api.data import *
@@ -18,6 +18,22 @@ display("realm_create_req", serialized, [])
 serialized = serializer.rep_dumps({})
 serializer.rep_loads(serialized)
 display("realm_create_rep", serialized, [])
+
+serialized = serializer.rep_dumps({"status": "invalid_certification", "reason": "foobar"})
+serializer.rep_loads(serialized)
+display("realm_create_rep_invalid_certification", serialized, [])
+
+serialized = serializer.rep_dumps({"status": "invalid_data", "reason": "foobar"})
+serializer.rep_loads(serialized)
+display("realm_create_rep_invalid_data", serialized, [])
+
+serialized = serializer.rep_dumps({"status": "not_found", "reason": "foobar"})
+serializer.rep_loads(serialized)
+display("realm_create_rep_not_found", serialized, [])
+
+serialized = serializer.rep_dumps({"status": "already_exists"})
+serializer.rep_loads(serialized)
+display("realm_create_rep_already_exists", serialized, [])
 
 ################### RealmStatus ##################
 
@@ -41,6 +57,14 @@ serialized = serializer.rep_dumps(
 serializer.rep_loads(serialized)
 display("realm_status_rep", serialized, [])
 
+serialized = serializer.rep_dumps({"status": "not_allowed"})
+serializer.rep_loads(serialized)
+display("realm_status_rep_not_allowed", serialized, [])
+
+serialized = serializer.rep_dumps({"status": "not_found", "reason": "foobar"})
+serializer.rep_loads(serialized)
+display("realm_status_rep_not_found", serialized, [])
+
 ################### RealmStats ##################
 
 serializer = realm_stats_serializer
@@ -54,6 +78,14 @@ display("realm_stats_req", serialized, [])
 serialized = serializer.rep_dumps({"blocks_size": 8, "vlobs_size": 8})
 serializer.rep_loads(serialized)
 display("realm_stats_rep", serialized, [])
+
+serialized = serializer.rep_dumps({"status": "not_allowed"})
+serializer.rep_loads(serialized)
+display("realm_stats_rep_not_allowed", serialized, [])
+
+serialized = serializer.rep_dumps({"status": "not_found", "reason": "foobar"})
+serializer.rep_loads(serialized)
+display("realm_stats_rep_not_found", serialized, [])
 
 ################### RealmGetRoleCertificates ##################
 
@@ -73,6 +105,14 @@ serialized = serializer.rep_dumps({"certificates": [b"foobar"]})
 serializer.rep_loads(serialized)
 display("realm_get_role_certificates_rep", serialized, [])
 
+serialized = serializer.rep_dumps({"status": "not_allowed"})
+serializer.rep_loads(serialized)
+display("realm_get_role_certificates_rep_not_allowed", serialized, [])
+
+serialized = serializer.rep_dumps({"status": "not_found", "reason": "foobar"})
+serializer.rep_loads(serialized)
+display("realm_get_role_certificates_rep_not_found", serialized, [])
+
 ################### RealmUpdateRoles ##################
 
 serializer = realm_update_roles_serializer
@@ -86,6 +126,34 @@ display("realm_update_roles_req", serialized, [])
 serialized = serializer.rep_dumps({})
 serializer.rep_loads(serialized)
 display("realm_update_roles_rep", serialized, [])
+
+serialized = serializer.rep_dumps({"status": "not_allowed", "reason": "foobar"})
+serializer.rep_loads(serialized)
+display("realm_update_roles_rep_not_allowed", serialized, [])
+
+serialized = serializer.rep_dumps({"status": "invalid_certification", "reason": "foobar"})
+serializer.rep_loads(serialized)
+display("realm_update_roles_rep_invalid_certification", serialized, [])
+
+serialized = serializer.rep_dumps({"status": "invalid_data", "reason": "foobar"})
+serializer.rep_loads(serialized)
+display("realm_update_roles_rep_invalid_data", serialized, [])
+
+serialized = serializer.rep_dumps({"status": "already_granted"})
+serializer.rep_loads(serialized)
+display("realm_update_roles_rep_already_granted", serialized, [])
+
+serialized = serializer.rep_dumps({"status": "incompatible_profile", "reason": "foobar"})
+serializer.rep_loads(serialized)
+display("realm_update_roles_rep_incompatible_profile", serialized, [])
+
+serialized = serializer.rep_dumps({"status": "not_found", "reason": "foobar"})
+serializer.rep_loads(serialized)
+display("realm_update_roles_rep_not_found", serialized, [])
+
+serialized = serializer.rep_dumps({"status": "in_maintenance"})
+serializer.rep_loads(serialized)
+display("realm_update_roles_rep_in_maintenance", serialized, [])
 
 ################### RealmStartReencryptionMaintenance ##################
 
@@ -107,6 +175,30 @@ serialized = serializer.rep_dumps({})
 serializer.rep_loads(serialized)
 display("realm_start_reencryption_maintenance_rep", serialized, [])
 
+serialized = serializer.rep_dumps({"status": "not_allowed"})
+serializer.rep_loads(serialized)
+display("realm_start_reencryption_maintenance_rep_not_allowed", serialized, [])
+
+serialized = serializer.rep_dumps({"status": "not_found", "reason": "foobar"})
+serializer.rep_loads(serialized)
+display("realm_start_reencryption_maintenance_rep_not_found", serialized, [])
+
+serialized = serializer.rep_dumps({"status": "bad_encryption_revision"})
+serializer.rep_loads(serialized)
+display("realm_start_reencryption_maintenance_rep_bad_encryption_revision", serialized, [])
+
+serialized = serializer.rep_dumps({"status": "participant_mismatch", "reason": "foobar"})
+serializer.rep_loads(serialized)
+display("realm_start_reencryption_maintenance_rep_participant_mismatch", serialized, [])
+
+serialized = serializer.rep_dumps({"status": "maintenance_error", "reason": "foobar"})
+serializer.rep_loads(serialized)
+display("realm_start_reencryption_maintenance_rep_maintenance_error", serialized, [])
+
+serialized = serializer.rep_dumps({"status": "in_maintenance"})
+serializer.rep_loads(serialized)
+display("realm_start_reencryption_maintenance_rep_in_maintenance", serialized, [])
+
 ################### RealmFinishReecryptionMaintenance ##################
 
 serializer = realm_finish_reencryption_maintenance_serializer
@@ -124,3 +216,23 @@ display("realm_finish_reencryption_maintenance_req", serialized, [])
 serialized = serializer.rep_dumps({})
 serializer.rep_loads(serialized)
 display("realm_finish_reencryption_maintenance_rep", serialized, [])
+
+serialized = serializer.rep_dumps({"status": "not_allowed"})
+serializer.rep_loads(serialized)
+display("realm_finish_reencryption_maintenance_rep_not_allowed", serialized, [])
+
+serialized = serializer.rep_dumps({"status": "not_found", "reason": "foobar"})
+serializer.rep_loads(serialized)
+display("realm_finish_reencryption_maintenance_rep_not_found", serialized, [])
+
+serialized = serializer.rep_dumps({"status": "bad_encryption_revision"})
+serializer.rep_loads(serialized)
+display("realm_finish_reencryption_maintenance_rep_bad_encryption_revision", serialized, [])
+
+serialized = serializer.rep_dumps({"status": "not_in_maintenance", "reason": "foobar"})
+serializer.rep_loads(serialized)
+display("realm_finish_reencryption_maintenance_rep_not_in_maintenance", serialized, [])
+
+serialized = serializer.rep_dumps({"status": "maintenance_error", "reason": "foobar"})
+serializer.rep_loads(serialized)
+display("realm_finish_reencryption_maintenance_rep_maintenance_error", serialized, [])

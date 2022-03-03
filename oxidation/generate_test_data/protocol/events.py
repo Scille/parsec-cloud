@@ -2,7 +2,7 @@
 # flake8: noqa
 
 from pendulum import datetime
-from utils import *
+from oxidation.generate_test_data.utils import *
 from parsec.crypto import *
 from parsec.api.protocol import *
 from parsec.api.data import *
@@ -74,6 +74,14 @@ serialized = serializer.rep_dumps(
 )
 serializer.rep_loads(serialized)
 display("events_listen_rep_realm_roles_updated", serialized, [])
+
+serialized = serializer.rep_dumps({"status": "cancelled", "reason": "foobar"})
+serializer.rep_loads(serialized)
+display("events_listen_rep_cancelled", serialized, [])
+
+serialized = serializer.rep_dumps({"status": "no_events"})
+serializer.rep_loads(serialized)
+display("events_listen_rep_no_events", serialized, [])
 
 ################### EventsSubscribe ##################
 

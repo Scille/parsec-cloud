@@ -2,7 +2,7 @@
 # flake8: noqa
 
 from pendulum import datetime
-from utils import *
+from oxidation.generate_test_data.utils import *
 from parsec.crypto import *
 from parsec.api.protocol import *
 from parsec.api.data import *
@@ -28,6 +28,10 @@ serialized = serializer.rep_dumps(
 serializer.rep_loads(serialized)
 display("user_get_rep", serialized, [])
 
+serialized = serializer.rep_dumps({"status": "not_found"})
+serializer.rep_loads(serialized)
+display("user_get_rep", serialized, [])
+
 ################### UserCreate ##################
 
 serializer = user_create_serializer
@@ -48,6 +52,26 @@ serialized = serializer.rep_dumps({})
 serializer.rep_loads(serialized)
 display("user_create_rep", serialized, [])
 
+serialized = serializer.rep_dumps({"status": "not_allowed", "reason": "foobar"})
+serializer.rep_loads(serialized)
+display("user_create_rep_not_allowed", serialized, [])
+
+serialized = serializer.rep_dumps({"status": "invalid_certification", "reason": "foobar"})
+serializer.rep_loads(serialized)
+display("user_create_rep_invalid_certification", serialized, [])
+
+serialized = serializer.rep_dumps({"status": "invalid_data", "reason": "foobar"})
+serializer.rep_loads(serialized)
+display("user_create_rep_invalid_data", serialized, [])
+
+serialized = serializer.rep_dumps({"status": "already_exists", "reason": "foobar"})
+serializer.rep_loads(serialized)
+display("user_create_rep_already_exists", serialized, [])
+
+serialized = serializer.rep_dumps({"status": "active_users_limit_reached", "reason": "foobar"})
+serializer.rep_loads(serialized)
+display("user_create_rep_active_users_limit_reached", serialized, [])
+
 ################### UserRevoke ##################
 
 serializer = user_revoke_serializer
@@ -60,7 +84,23 @@ serialized = serializer.rep_dumps({})
 serializer.rep_loads(serialized)
 display("user_revoke_rep", serialized, [])
 
-################### UserCreate ##################
+serialized = serializer.rep_dumps({"status": "not_allowed", "reason": "foobar"})
+serializer.rep_loads(serialized)
+display("user_revoke_rep_not_allowed", serialized, [])
+
+serialized = serializer.rep_dumps({"status": "invalid_certification", "reason": "foobar"})
+serializer.rep_loads(serialized)
+display("user_revoke_rep_invalid_certification", serialized, [])
+
+serialized = serializer.rep_dumps({"status": "not_found"})
+serializer.rep_loads(serialized)
+display("user_revoke_rep_not_found", serialized, [])
+
+serialized = serializer.rep_dumps({"status": "already_revoked", "reason": "foobar"})
+serializer.rep_loads(serialized)
+display("user_revoke_rep_already_revoked", serialized, [])
+
+################### DeviceCreate ##################
 
 serializer = device_create_serializer
 
@@ -77,6 +117,22 @@ display("device_create_req", serialized, [])
 serialized = serializer.rep_dumps({})
 serializer.rep_loads(serialized)
 display("device_create_rep", serialized, [])
+
+serialized = serializer.rep_dumps({"status": "invalid_certification", "reason": "foobar"})
+serializer.rep_loads(serialized)
+display("device_create_rep_invalid_certification", serialized, [])
+
+serialized = serializer.rep_dumps({"status": "bad_user_id", "reason": "foobar"})
+serializer.rep_loads(serialized)
+display("device_create_rep_bad_user_id", serialized, [])
+
+serialized = serializer.rep_dumps({"status": "invalid_data", "reason": "foobar"})
+serializer.rep_loads(serialized)
+display("device_create_rep_invalid_data", serialized, [])
+
+serialized = serializer.rep_dumps({"status": "already_exists", "reason": "foobar"})
+serializer.rep_loads(serialized)
+display("device_create_rep_already_exists", serialized, [])
 
 ################### HumanFind ##################
 
@@ -108,5 +164,9 @@ serialized = serializer.rep_dumps(
         "total": 8,
     }
 )
+serializer.rep_loads(serialized)
+display("human_find_rep", serialized, [])
+
+serialized = serializer.rep_dumps({"status": "not_allowed", "reason": "foobar"})
 serializer.rep_loads(serialized)
 display("human_find_rep", serialized, [])
