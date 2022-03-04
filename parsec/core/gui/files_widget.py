@@ -543,9 +543,7 @@ class FilesWidget(QWidget, Ui_FilesWidget):
                     (
                         self.current_directory / f.name,
                         self.current_directory
-                        / "{}_{}{}".format(
-                            new_name, i, ".".join(pathlib.Path(f.name.str).suffixes)
-                        ),
+                        / "{}_{}{}".format(new_name, i, ".".join(pathlib.Path(f.name).suffixes)),
                         f.entry_id,
                     )
                     for i, f in enumerate(files, 1)

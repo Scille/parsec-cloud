@@ -323,16 +323,15 @@ class FileTable(QTableWidget):
     def add_folder(self, folder_name, entry_id, is_synced, is_confined, selected=False):
         if is_confined and not self.config.gui_show_confined:
             return
+        folder_name = folder_name.str
         row_idx = self.rowCount()
         self.insertRow(row_idx)
         item = FolderTableItem(is_synced, is_confined)
         item.setData(ENTRY_ID_DATA_INDEX, entry_id)
         self.setItem(row_idx, Column.ICON, item)
-        item = CustomTableItem(folder_name.str)
+        item = CustomTableItem(folder_name)
         item.setData(NAME_DATA_INDEX, folder_name)
-        item.setToolTip(
-            "\n".join(folder_name.str[i : i + 64] for i in range(0, len(folder_name.str), 64))
-        )
+        item.setToolTip("\n".join(folder_name[i : i + 64] for i in range(0, len(folder_name), 64)))
         item.setData(TYPE_DATA_INDEX, FileType.Folder)
         item.setData(ENTRY_ID_DATA_INDEX, entry_id)
         self.setItem(row_idx, Column.NAME, item)
@@ -369,17 +368,16 @@ class FileTable(QTableWidget):
     ):
         if is_confined and not self.config.gui_show_confined:
             return
+        file_name = file_name.str
         row_idx = self.rowCount()
         self.insertRow(row_idx)
-        item = FileTableItem(is_synced, is_confined, file_name.str)
+        item = FileTableItem(is_synced, is_confined, file_name)
         item.setData(NAME_DATA_INDEX, 1)
         item.setData(TYPE_DATA_INDEX, FileType.File)
         item.setData(ENTRY_ID_DATA_INDEX, entry_id)
         self.setItem(row_idx, Column.ICON, item)
-        item = CustomTableItem(file_name.str)
-        item.setToolTip(
-            "\n".join(file_name.str[i : i + 64] for i in range(0, len(file_name.str), 64))
-        )
+        item = CustomTableItem(file_name)
+        item.setToolTip("\n".join(file_name[i : i + 64] for i in range(0, len(file_name), 64)))
         item.setData(NAME_DATA_INDEX, file_name)
         item.setData(TYPE_DATA_INDEX, FileType.File)
         item.setData(ENTRY_ID_DATA_INDEX, entry_id)

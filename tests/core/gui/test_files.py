@@ -7,6 +7,8 @@ from PyQt5 import QtCore, QtWidgets, QtGui
 from PyQt5.QtGui import QGuiApplication
 
 from parsec.api.data import EntryName
+from parsec.core.fs.workspacefs.sync_transactions import DEFAULT_BLOCK_SIZE
+from parsec.core.gui.file_size import get_filesize
 from parsec.core.types import WorkspaceRole
 from parsec.core.fs import FsPath
 
@@ -780,9 +782,9 @@ async def test_show_file_status(
         assert file_status_w.label_last_updated_by.text() == "Boby McBobFace"
         assert file_status_w.label_availability.text() == _("TEXT_YES")
         assert file_status_w.label_uploaded.text() == _("TEXT_YES")
-        assert file_status_w.label_local.text() == "0"
-        assert file_status_w.label_remote.text() == "0"
-        assert file_status_w.label_both.text() == "0"
+        assert file_status_w.label_local.text() == "0/0 (100%)"
+        assert file_status_w.label_remote.text() == "0/0 (100%)"
+        assert file_status_w.label_default_block_size.text() == get_filesize(DEFAULT_BLOCK_SIZE)
 
     await aqtbot.wait_until(_wait_status_shown)
     file_status_w.dialog.accept()
@@ -813,6 +815,6 @@ async def test_show_file_status(
         assert file_status_w.label_uploaded.text() == _("TEXT_FILE_INFO_NON_APPLICABLE")
         assert file_status_w.label_local.text() == _("TEXT_FILE_INFO_NON_APPLICABLE")
         assert file_status_w.label_remote.text() == _("TEXT_FILE_INFO_NON_APPLICABLE")
-        assert file_status_w.label_both.text() == _("TEXT_FILE_INFO_NON_APPLICABLE")
+        assert file_status_w.label_default_block_size.text() == _("TEXT_FILE_INFO_NON_APPLICABLE")
 
     await aqtbot.wait_until(_wait_status_shown)
