@@ -582,6 +582,7 @@ dependencies = [
  "libparsec",
  "parsec_api_crypto",
  "parsec_api_types",
+ "parsec_client_types",
  "pyo3",
  "uuid",
 ]

@@ -242,7 +242,7 @@ mod tests {
 
 macro_rules! new_uuid_type {
     (pub $name:ident) => {
-        #[derive(Clone, Debug, PartialEq, Eq, Hash)]
+        #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash)]
         pub struct $name(uuid::Uuid);
 
         impl $name {

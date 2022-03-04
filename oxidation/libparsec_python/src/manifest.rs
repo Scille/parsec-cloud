@@ -27,7 +27,9 @@ impl EntryName {
         match name.parse::<parsec_api_types::EntryName>() {
             Ok(en) => Ok(Self(en)),
             Err(err) => match err {
-                "Name too long" => Err(EntryNameTooLongError::new_err("Invalid data")),
+                parsec_api_types::EntryNameError::NameTooLong => {
+                    Err(EntryNameTooLongError::new_err("Invalid data"))
+                }
                 _ => Err(PyValueError::new_err("Invalid data")),
             },
         }
@@ -158,31 +160,24 @@ impl WorkspaceEntry {
         ))
     }
 
-    fn __richcmp__(&self, py: Python, other: &WorkspaceEntry, op: CompareOp) -> PyObject {
+    fn eq(&self, other: &Self) -> bool {
+        self.0.id == other.0.id
+            && self.0.name == other.0.name
+            && self.0.encryption_revision == other.0.encryption_revision
+            && self.0.role == other.0.role
+    }
+
+    fn __richcmp__(&self, py: Python, other: &Self, op: CompareOp) -> PyObject {
         match op {
-            CompareOp::Eq => PyBool::new(
-                py,
-                self.0.id == other.0.id
-                    && self.0.name == other.0.name
-                    && self.0.encryption_revision == other.0.encryption_revision
-                    && self.0.role == other.0.role,
-            )
-            .into_py(py),
-            CompareOp::Ne => PyBool::new(
-                py,
-                self.0.id != other.0.id
-                    || self.0.name != other.0.name
-                    || self.0.encryption_revision != other.0.encryption_revision
-                    || self.0.role != other.0.role,
-            )
-            .into_py(py),
+            CompareOp::Eq => PyBool::new(py, self.eq(other)).into_py(py),
+            CompareOp::Ne => PyBool::new(py, !self.eq(other)).into_py(py),
             _ => py.NotImplemented(),
         }
     }
 
     #[getter]
     fn id(&self) -> PyResult<EntryID> {
-        Ok(EntryID(self.0.id.clone()))
+        Ok(EntryID(self.0.id))
     }
 
     #[getter]
@@ -270,29 +265,21 @@ impl BlockAccess {
         Ok(Self(r))
     }
 
-    fn __richcmp__(&self, py: Python, other: &BlockAccess, op: CompareOp) -> PyObject {
+    fn eq(&self, other: &Self) -> bool {
+        self.0.id == other.0.id && self.0.offset == other.0.offset && self.0.size == other.0.size
+    }
+
+    fn __richcmp__(&self, py: Python, other: &Self, op: CompareOp) -> PyObject {
         match op {
-            CompareOp::Eq => PyBool::new(
-                py,
-                self.0.id == other.0.id
-                    && self.0.offset == other.0.offset
-                    && self.0.size == other.0.size,
-            )
-            .into_py(py),
-            CompareOp::Ne => PyBool::new(
-                py,
-                self.0.id != other.0.id
-                    || self.0.offset != other.0.offset
-                    || self.0.size != other.0.size,
-            )
-            .into_py(py),
+            CompareOp::Eq => PyBool::new(py, self.eq(other)).into_py(py),
+            CompareOp::Ne => PyBool::new(py, !self.eq(other)).into_py(py),
             _ => py.NotImplemented(),
         }
     }
 
     #[getter]
     fn id(&self) -> PyResult<BlockID> {
-        Ok(BlockID(self.0.id.clone()))
+        Ok(BlockID(self.0.id))
     }
 
     #[getter]
@@ -452,32 +439,21 @@ impl FileManifest {
         Ok(Self(r))
     }
 
-    fn __richcmp__(&self, py: Python, other: &FileManifest, op: CompareOp) -> PyObject {
+    fn eq(&self, other: &Self) -> bool {
+        self.0.author == other.0.author
+            && self.0.id == other.0.id
+            && self.0.version == other.0.version
+            && self.0.parent == other.0.parent
+            && self.0.timestamp == other.0.timestamp
+            && self.0.created == other.0.created
+            && self.0.updated == other.0.updated
+            && self.0.blocks == other.0.blocks
+    }
+
+    fn __richcmp__(&self, py: Python, other: &Self, op: CompareOp) -> PyObject {
         match op {
-            CompareOp::Eq => PyBool::new(
-                py,
-                self.0.author == other.0.author
-                    && self.0.id == other.0.id
-                    && self.0.version == other.0.version
-                    && self.0.parent == other.0.parent
-                    && self.0.timestamp == other.0.timestamp
-                    && self.0.created == other.0.created
-                    && self.0.updated == other.0.updated
-                    && self.0.blocks == other.0.blocks,
-            )
-            .into_py(py),
-            CompareOp::Ne => PyBool::new(
-                py,
-                self.0.author != other.0.author
-                    || self.0.id != other.0.id
-                    || self.0.version != other.0.version
-                    || self.0.parent == other.0.parent
-                    || self.0.timestamp != other.0.timestamp
-                    || self.0.created != other.0.created
-                    || self.0.updated != other.0.updated
-                    || self.0.blocks != other.0.blocks,
-            )
-            .into_py(py),
+            CompareOp::Eq => PyBool::new(py, self.eq(other)).into_py(py),
+            CompareOp::Ne => PyBool::new(py, !self.eq(other)).into_py(py),
             _ => py.NotImplemented(),
         }
     }
@@ -489,12 +465,12 @@ impl FileManifest {
 
     #[getter]
     fn id(&self) -> PyResult<EntryID> {
-        Ok(EntryID(self.0.id.clone()))
+        Ok(EntryID(self.0.id))
     }
 
     #[getter]
     fn parent(&self) -> PyResult<EntryID> {
-        Ok(EntryID(self.0.parent.clone()))
+        Ok(EntryID(self.0.parent))
     }
 
     #[getter]
@@ -658,32 +634,21 @@ impl FolderManifest {
         Ok(Self(r))
     }
 
-    fn __richcmp__(&self, py: Python, other: &FolderManifest, op: CompareOp) -> PyObject {
+    fn eq(&self, other: &Self) -> bool {
+        self.0.author == other.0.author
+            && self.0.id == other.0.id
+            && self.0.version == other.0.version
+            && self.0.parent == other.0.parent
+            && self.0.timestamp == other.0.timestamp
+            && self.0.created == other.0.created
+            && self.0.updated == other.0.updated
+            && self.0.children == other.0.children
+    }
+
+    fn __richcmp__(&self, py: Python, other: &Self, op: CompareOp) -> PyObject {
         match op {
-            CompareOp::Eq => PyBool::new(
-                py,
-                self.0.author == other.0.author
-                    && self.0.id == other.0.id
-                    && self.0.version == other.0.version
-                    && self.0.parent == other.0.parent
-                    && self.0.timestamp == other.0.timestamp
-                    && self.0.created == other.0.created
-                    && self.0.updated == other.0.updated
-                    && self.0.children == other.0.children,
-            )
-            .into_py(py),
-            CompareOp::Ne => PyBool::new(
-                py,
-                self.0.author != other.0.author
-                    || self.0.id != other.0.id
-                    || self.0.version != other.0.version
-                    || self.0.parent == other.0.parent
-                    || self.0.timestamp != other.0.timestamp
-                    || self.0.created != other.0.created
-                    || self.0.updated != other.0.updated
-                    || self.0.children != other.0.children,
-            )
-            .into_py(py),
+            CompareOp::Eq => PyBool::new(py, self.eq(other)).into_py(py),
+            CompareOp::Ne => PyBool::new(py, !self.eq(other)).into_py(py),
             _ => py.NotImplemented(),
         }
     }
@@ -695,12 +660,12 @@ impl FolderManifest {
 
     #[getter]
     fn id(&self) -> PyResult<EntryID> {
-        Ok(EntryID(self.0.id.clone()))
+        Ok(EntryID(self.0.id))
     }
 
     #[getter]
     fn parent(&self) -> PyResult<EntryID> {
-        Ok(EntryID(self.0.parent.clone()))
+        Ok(EntryID(self.0.parent))
     }
 
     #[getter]
@@ -729,7 +694,7 @@ impl FolderManifest {
 
         for (k, v) in &self.0.children {
             let en = EntryName(k.clone()).into_py(py);
-            let me = EntryID(v.clone()).into_py(py);
+            let me = EntryID(*v).into_py(py);
             let _ = d.set_item(en, me);
         }
         Ok(d)
@@ -850,30 +815,20 @@ impl WorkspaceManifest {
         Ok(Self(r))
     }
 
+    fn eq(&self, other: &Self) -> bool {
+        self.0.author == other.0.author
+            && self.0.id == other.0.id
+            && self.0.version == other.0.version
+            && self.0.timestamp == other.0.timestamp
+            && self.0.created == other.0.created
+            && self.0.updated == other.0.updated
+            && self.0.children == other.0.children
+    }
+
     fn __richcmp__(&self, py: Python, other: &WorkspaceManifest, op: CompareOp) -> PyObject {
         match op {
-            CompareOp::Eq => PyBool::new(
-                py,
-                self.0.author == other.0.author
-                    && self.0.id == other.0.id
-                    && self.0.version == other.0.version
-                    && self.0.timestamp == other.0.timestamp
-                    && self.0.created == other.0.created
-                    && self.0.updated == other.0.updated
-                    && self.0.children == other.0.children,
-            )
-            .into_py(py),
-            CompareOp::Ne => PyBool::new(
-                py,
-                self.0.author != other.0.author
-                    || self.0.id != other.0.id
-                    || self.0.version != other.0.version
-                    || self.0.timestamp != other.0.timestamp
-                    || self.0.created != other.0.created
-                    || self.0.updated != other.0.updated
-                    || self.0.children != other.0.children,
-            )
-            .into_py(py),
+            CompareOp::Eq => PyBool::new(py, self.eq(other)).into_py(py),
+            CompareOp::Ne => PyBool::new(py, !self.eq(other)).into_py(py),
             _ => py.NotImplemented(),
         }
     }
@@ -885,7 +840,7 @@ impl WorkspaceManifest {
 
     #[getter]
     fn id(&self) -> PyResult<EntryID> {
-        Ok(EntryID(self.0.id.clone()))
+        Ok(EntryID(self.0.id))
     }
 
     #[getter]
@@ -914,7 +869,7 @@ impl WorkspaceManifest {
 
         for (k, v) in &self.0.children {
             let en = EntryName(k.clone()).into_py(py);
-            let me = EntryID(v.clone()).into_py(py);
+            let me = EntryID(*v).into_py(py);
             let _ = d.set_item(en, me);
         }
         Ok(d)

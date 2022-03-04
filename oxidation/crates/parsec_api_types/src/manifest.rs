@@ -129,8 +129,22 @@ impl std::fmt::Debug for EntryName {
     }
 }
 
+#[derive(Debug, Clone, Copy, Serialize, Deserialize)]
+pub enum EntryNameError {
+    #[serde(rename = "Name too long")]
+    NameTooLong,
+    #[serde(rename = "Invalid name")]
+    InvalidName,
+}
+
+impl std::fmt::Display for EntryNameError {
+    fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
+        write!(f, "{:?}", self)
+    }
+}
+
 impl TryFrom<&str> for EntryName {
-    type Error = &'static str;
+    type Error = EntryNameError;
 
     fn try_from(id: &str) -> Result<Self, Self::Error> {
         let id: String = id.nfc().collect();
@@ -140,14 +154,14 @@ impl TryFrom<&str> for EntryName {
         // - no `/` or null byte in the name
         // - max 255 bytes long name
         if id.len() >= 256 {
-            Err("Name too long")
+            Err(Self::Error::NameTooLong)
         } else if id.is_empty()
             || id == "."
             || id == ".."
             || id.find('/').is_some()
             || id.find('\x00').is_some()
         {
-            Err("Invalid name")
+            Err(Self::Error::InvalidName)
         } else {
             Ok(Self(id))
         }
@@ -161,7 +175,7 @@ impl From<EntryName> for String {
 }
 
 impl std::str::FromStr for EntryName {
-    type Err = &'static str;
+    type Err = EntryNameError;
 
     #[inline]
     fn from_str(s: &str) -> Result<Self, Self::Err> {
