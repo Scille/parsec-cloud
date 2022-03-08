@@ -10,20 +10,27 @@ from PyQt5.Qt import Qt
 from parsec.core.gui.lang import translate
 
 
+@pytest.fixture
+def str_len_limiter(monkeypatch):
+    monkeypatch.setattr(
+        "parsec.core.gui.users_widget.ensure_string_size", lambda s, size, font: (s[:12] + "...")
+    )
+
+
 def _assert_all_users_visible(u_w, index=0):
     assert u_w.layout_users.count() == index + 3
 
     adam_w = u_w.layout_users.itemAt(index).widget()
-    assert adam_w.label_username.text() == "Adamy McAdamFace"
-    assert adam_w.label_email.text() == "adam@example.com"
+    assert adam_w.label_username.text() == "Adamy McAdam..."
+    assert adam_w.label_email.text() == "adam@example..."
 
     alice_w = u_w.layout_users.itemAt(index + 1).widget()
-    assert alice_w.label_username.text() == "Alicey McAliceFace"
-    assert alice_w.label_email.text() == "alice@example.com"
+    assert alice_w.label_username.text() == "Alicey McAli..."
+    assert alice_w.label_email.text() == "alice@exampl..."
 
     bob_w = u_w.layout_users.itemAt(index + 2).widget()
-    assert bob_w.label_username.text() == "Boby McBobFace"
-    assert bob_w.label_email.text() == "bob@example.com"
+    assert bob_w.label_username.text() == "Boby McBobFa..."
+    assert bob_w.label_email.text() == "bob@example...."
 
     assert alice_w.isVisible() is True
     assert bob_w.isVisible() is True
@@ -32,7 +39,7 @@ def _assert_all_users_visible(u_w, index=0):
 
 @pytest.mark.gui
 @pytest.mark.trio
-async def test_list_users(aqtbot, running_backend, logged_gui, autoclose_dialog):
+async def test_list_users(aqtbot, running_backend, logged_gui, autoclose_dialog, str_len_limiter):
     u_w = await logged_gui.test_switch_to_users_widget()
     _assert_all_users_visible(u_w)
 
@@ -41,12 +48,8 @@ async def test_list_users(aqtbot, running_backend, logged_gui, autoclose_dialog)
 @pytest.mark.trio
 @customize_fixtures(logged_gui_as_admin=True)
 async def test_list_users_and_invitations(
-    aqtbot, running_backend, logged_gui, autoclose_dialog, alice, monkeypatch
+    aqtbot, running_backend, logged_gui, autoclose_dialog, alice, str_len_limiter
 ):
-    monkeypatch.setattr(
-        "parsec.core.gui.users_widget.ensure_string_size", lambda s, size, font: (s[:12] + "...")
-    )
-
     # Also populate some invitations
     await running_backend.backend.invite.new_for_user(
         alice.organization_id, greeter_user_id=alice.user_id, claimer_email="fry@pe.com"
@@ -85,11 +88,7 @@ async def test_list_users_offline(aqtbot, logged_gui, autoclose_dialog):
 
 @pytest.mark.gui
 @pytest.mark.trio
-async def test_filter_users(aqtbot, running_backend, logged_gui, monkeypatch):
-    monkeypatch.setattr(
-        "parsec.core.gui.users_widget.ensure_string_size", lambda s, size, font: (s[:12] + "...")
-    )
-
+async def test_filter_users(aqtbot, running_backend, logged_gui, str_len_limiter):
     def _users_shown(count: int):
         assert u_w.layout_users.count() == count
         items = (u_w.layout_users.itemAt(i) for i in range(u_w.layout_users.count()))
@@ -145,7 +144,7 @@ async def test_filter_users(aqtbot, running_backend, logged_gui, monkeypatch):
 @pytest.mark.gui
 @pytest.mark.trio
 async def test_filter_revoked_user(
-    aqtbot, alice, adam, running_backend, backend, logged_gui, autoclose_dialog
+    aqtbot, alice, adam, running_backend, backend, logged_gui, autoclose_dialog, str_len_limiter
 ):
     u_w = await logged_gui.test_switch_to_users_widget()
 
@@ -153,14 +152,14 @@ async def test_filter_revoked_user(
         assert u_w.layout_users.count() == 2
 
         item = u_w.layout_users.itemAt(0)
-        assert item.widget().label_username.text() == "Alicey McAliceFace"
-        assert item.widget().label_email.text() == "alice@example.com"
+        assert item.widget().label_username.text() == "Alicey McAli..."
+        assert item.widget().label_email.text() == "alice@exampl..."
         assert item.widget().label_is_current.text() == ""
         assert item.widget().label_role.text() == "Administrator"
 
         item = u_w.layout_users.itemAt(1)
-        assert item.widget().label_username.text() == "Boby McBobFace"
-        assert item.widget().label_email.text() == "bob@example.com"
+        assert item.widget().label_username.text() == "Boby McBobFa..."
+        assert item.widget().label_email.text() == "bob@example...."
         assert item.widget().label_is_current.text() == "(you)"
         assert item.widget().label_role.text() == "Standard"
 

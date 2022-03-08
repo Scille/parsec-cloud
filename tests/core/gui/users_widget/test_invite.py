@@ -10,6 +10,13 @@ from parsec.core.gui.lang import translate as _
 from tests.common import customize_fixtures
 
 
+@pytest.fixture
+def str_len_limiter(monkeypatch):
+    monkeypatch.setattr(
+        "parsec.core.gui.users_widget.ensure_string_size", lambda s, size, font: (s[:12] + "...")
+    )
+
+
 @pytest.mark.gui
 @pytest.mark.trio
 @pytest.mark.parametrize("online", (True, False))
@@ -126,14 +133,14 @@ async def test_invite_user_not_allowed(logged_gui, running_backend):
 @pytest.mark.parametrize("online", (True, False))
 @customize_fixtures(logged_gui_as_admin=True)
 async def test_revoke_user(
-    aqtbot, running_backend, autoclose_dialog, monkeypatch, logged_gui, online
+    aqtbot, running_backend, autoclose_dialog, monkeypatch, logged_gui, online, str_len_limiter
 ):
     u_w = await logged_gui.test_switch_to_users_widget()
 
     assert u_w.layout_users.count() == 3
     bob_w = u_w.layout_users.itemAt(2).widget()
-    assert bob_w.label_username.text() == "Boby McBobFace"
-    assert bob_w.label_email.text() == "bob@example.com"
+    assert bob_w.label_username.text() == "Boby McBobFa..."
+    assert bob_w.label_email.text() == "bob@example...."
     assert bob_w.user_info.is_revoked is False
 
     monkeypatch.setattr(
