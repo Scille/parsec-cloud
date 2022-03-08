@@ -1,7 +1,5 @@
-# Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
+# Parsec Cloud (https://parsec.cloud) Copyright (c) BSLv1.1 (eventually AGPLv3) 2016-2021 Scille SAS
 
-from parsec.backend.backend_events import BackendEvent
-import trio
 import attr
 from typing import List, Optional, Tuple
 import pendulum
@@ -21,26 +19,15 @@ from parsec.api.protocol import (
     UserID,
     DeviceID,
     HumanHandle,
+    DeviceLabel,
     HandshakeType,
-    APIV1_HandshakeType,
     user_get_serializer,
-    apiv1_user_find_serializer,
     human_find_serializer,
-    apiv1_user_get_invitation_creator_serializer,
-    apiv1_user_invite_serializer,
-    apiv1_user_claim_serializer,
-    apiv1_user_cancel_invitation_serializer,
-    apiv1_user_create_serializer,
     user_create_serializer,
     user_revoke_serializer,
-    apiv1_device_get_invitation_creator_serializer,
-    apiv1_device_invite_serializer,
-    apiv1_device_claim_serializer,
-    apiv1_device_cancel_invitation_serializer,
-    apiv1_device_create_serializer,
     device_create_serializer,
 )
-from parsec.backend.utils import catch_protocol_errors, run_with_breathing_transport, api
+from parsec.backend.utils import catch_protocol_errors, api
 
 
 class UserError(Exception):
@@ -56,6 +43,10 @@ class UserAlreadyExistsError(UserError):
 
 
 class UserAlreadyRevokedError(UserError):
+    pass
+
+
+class UserActiveUsersLimitReached(UserError):
     pass
 
 
@@ -84,7 +75,7 @@ class Device:
         return DeviceCertificateContent.unsecure_load(self.device_certificate).verify_key
 
     device_id: DeviceID
-    device_label: Optional[str]
+    device_label: Optional[DeviceLabel]
     device_certificate: bytes
     redacted_device_certificate: bytes
     device_certifier: Optional[DeviceID]
@@ -128,11 +119,11 @@ class Trustchain:
 @attr.s(slots=True, auto_attribs=True)
 class GetUserAndDevicesResult:
     user_certificate: bytes
-    device_certificates: bytes
+    device_certificates: Tuple[bytes, ...]
     revoked_user_certificate: Optional[bytes]
-    trustchain_user_certificates: List[bytes]
-    trustchain_device_certificates: List[bytes]
-    trustchain_revoked_user_certificates: List[bytes]
+    trustchain_user_certificates: Tuple[bytes, ...]
+    trustchain_device_certificates: Tuple[bytes, ...]
+    trustchain_revoked_user_certificates: Tuple[bytes, ...]
 
 
 @attr.s(slots=True, frozen=True, auto_attribs=True)
@@ -140,36 +131,6 @@ class HumanFindResultItem:
     user_id: UserID
     revoked: bool
     human_handle: Optional[HumanHandle] = None
-
-
-@attr.s(slots=True, frozen=True, repr=False, auto_attribs=True)
-class UserInvitation:
-    def __repr__(self):
-        return f"{self.__class__.__name__}({self.user_id})"
-
-    user_id: UserID
-    creator: DeviceID
-    created_on: pendulum.DateTime = attr.ib(factory=pendulum.now)
-
-    @property
-    def organization_id(self) -> OrganizationID:
-        return self.user_id.organization_id
-
-    def is_valid(self) -> bool:
-        return (pendulum.now() - self.created_on).total_seconds() < INVITATION_VALIDITY
-
-
-@attr.s(slots=True, frozen=True, repr=False, auto_attribs=True)
-class DeviceInvitation:
-    def __repr__(self):
-        return f"{self.__class__.__name__}({self.device_id})"
-
-    device_id: DeviceID
-    creator: DeviceID
-    created_on: pendulum.DateTime = attr.ib(factory=pendulum.now)
-
-    def is_valid(self) -> bool:
-        return (pendulum.now() - self.created_on).total_seconds() < INVITATION_VALIDITY
 
 
 class BaseUserComponent:
@@ -205,31 +166,7 @@ class BaseUserComponent:
             }
         )
 
-    @api("user_find", handshake_types=[APIV1_HandshakeType.AUTHENTICATED])
-    @catch_protocol_errors
-    async def api_user_find(self, client_ctx, msg):
-        if client_ctx.profile == UserProfile.OUTSIDER:
-            return {
-                "status": "not_allowed",
-                "reason": "Not allowed for user with OUTSIDER profile.",
-            }
-
-        msg = apiv1_user_find_serializer.req_load(msg)
-        results, total = await self.find(client_ctx.organization_id, **msg)
-        return apiv1_user_find_serializer.rep_dump(
-            {
-                "status": "ok",
-                "results": results,
-                "page": msg["page"],
-                "per_page": msg["per_page"],
-                "total": total,
-            }
-        )
-
-    @api(
-        "human_find",
-        handshake_types=[HandshakeType.AUTHENTICATED, APIV1_HandshakeType.AUTHENTICATED],
-    )
+    @api("human_find", handshake_types=[HandshakeType.AUTHENTICATED])
     @catch_protocol_errors
     async def api_human_find(self, client_ctx, msg):
         if client_ctx.profile == UserProfile.OUTSIDER:
@@ -249,188 +186,6 @@ class BaseUserComponent:
                 "total": total,
             }
         )
-
-    #### User creation API ####
-
-    @api("user_invite", handshake_types=[APIV1_HandshakeType.AUTHENTICATED])
-    @catch_protocol_errors
-    async def api_user_invite(self, client_ctx, msg):
-        if client_ctx.profile != UserProfile.ADMIN:
-            return {"status": "not_allowed", "reason": "Only allowed for user with ADMIN profile."}
-
-        msg = apiv1_user_invite_serializer.req_load(msg)
-
-        # Setting the cancel scope here instead of just were we are waiting
-        # for the event make testing easier.
-        with trio.move_on_after(PEER_EVENT_MAX_WAIT) as cancel_scope:
-            rep = await run_with_breathing_transport(
-                client_ctx.transport, self._api_user_invite, client_ctx, msg
-            )
-
-        if cancel_scope.cancelled_caught:
-            rep = {
-                "status": "timeout",
-                "reason": "Timeout while waiting for new user to be claimed.",
-            }
-
-        return apiv1_user_invite_serializer.rep_dump(rep)
-
-    async def _api_user_invite(self, client_ctx, msg):
-        invitation = UserInvitation(msg["user_id"], client_ctx.device_id)
-
-        def _filter_on_user_claimed(event, organization_id, user_id, encrypted_claim):
-            return organization_id == client_ctx.organization_id and user_id == invitation.user_id
-
-        with self._event_bus.waiter_on(
-            BackendEvent.USER_CLAIMED, filter=_filter_on_user_claimed
-        ) as waiter:
-
-            try:
-                await self.create_user_invitation(client_ctx.organization_id, invitation)
-
-            except UserAlreadyExistsError as exc:
-                return {"status": "already_exists", "reason": str(exc)}
-
-            # Wait for invited user to send `user_claim`
-            _, event_data = await waiter.wait()
-
-        return {"status": "ok", "encrypted_claim": event_data["encrypted_claim"]}
-
-    @api("user_get_invitation_creator", handshake_types=[APIV1_HandshakeType.ANONYMOUS])
-    @catch_protocol_errors
-    async def api_user_get_invitation_creator(self, client_ctx, msg):
-        msg = apiv1_user_get_invitation_creator_serializer.req_load(msg)
-
-        try:
-            invitation = await self.get_user_invitation(
-                client_ctx.organization_id, msg["invited_user_id"]
-            )
-            if not invitation.is_valid():
-                return {"status": "not_found"}
-
-            creator_user, creator_device, trustchain = await self.get_user_with_device_and_trustchain(
-                client_ctx.organization_id, invitation.creator
-            )
-
-        except UserNotFoundError:
-            return {"status": "not_found"}
-
-        return apiv1_user_get_invitation_creator_serializer.rep_dump(
-            {
-                "status": "ok",
-                "device_certificate": creator_device.device_certificate,
-                "user_certificate": creator_user.user_certificate,
-                "trustchain": {
-                    "devices": trustchain.devices,
-                    "users": trustchain.users,
-                    "revoked_users": trustchain.revoked_users,
-                },
-            }
-        )
-
-    @api("user_claim", handshake_types=[APIV1_HandshakeType.ANONYMOUS])
-    @catch_protocol_errors
-    async def api_user_claim(self, client_ctx, msg):
-        msg = apiv1_user_claim_serializer.req_load(msg)
-
-        # Setting the cancel scope here instead of just were we are waiting
-        # for the event make testing easier.
-        with trio.move_on_after(PEER_EVENT_MAX_WAIT) as cancel_scope:
-            rep = await run_with_breathing_transport(
-                client_ctx.transport, self._api_user_claim, client_ctx, msg
-            )
-
-        if cancel_scope.cancelled_caught:
-            rep = {
-                "status": "timeout",
-                "reason": "Timeout while waiting for invitation creator to answer.",
-            }
-
-        return apiv1_user_claim_serializer.rep_dump(rep)
-
-    async def _api_user_claim(self, client_ctx, msg):
-        replied_ok = False
-
-        # Must start listening events before calling `claim_user_invitation`
-        # given this function will send the `user.claimed` event the creator
-        # is waiting for.
-
-        send_channel, recv_channel = trio.open_memory_channel(1000)
-
-        def _on_organization_events(
-            event,
-            organization_id,
-            user_id,
-            first_device_id=None,
-            user_certificate=None,
-            first_device_certificate=None,
-        ):
-            if organization_id == client_ctx.organization_id:
-                send_channel.send_nowait(
-                    (event, user_id, first_device_id, user_certificate, first_device_certificate)
-                )
-
-        with self._event_bus.connect_in_context(
-            (BackendEvent.USER_CREATED, _on_organization_events),
-            (BackendEvent.USER_INVITATION_CANCELLED, _on_organization_events),
-        ):
-            try:
-                invitation = await self.claim_user_invitation(
-                    client_ctx.organization_id, msg["invited_user_id"], msg["encrypted_claim"]
-                )
-                if not invitation.is_valid():
-                    return {"status": "not_found"}
-
-            except UserAlreadyExistsError:
-                return {"status": "not_found"}
-
-            except UserNotFoundError:
-                return {"status": "not_found"}
-
-            # Wait for creator user to accept (or refuse) our claim
-            async for event, user_id, first_device_id, user_certificate, first_device_certificate in recv_channel:
-                if user_id == invitation.user_id:
-                    replied_ok = event == BackendEvent.USER_CREATED
-                    break
-
-        if not replied_ok:
-            return {"status": "denied", "reason": "Invitation creator rejected us."}
-
-        else:
-            return {
-                "status": "ok",
-                "user_certificate": user_certificate,
-                "device_certificate": first_device_certificate,
-            }
-
-    @api("user_cancel_invitation", handshake_types=[APIV1_HandshakeType.AUTHENTICATED])
-    @catch_protocol_errors
-    async def api_user_cancel_invitation(self, client_ctx, msg):
-        if client_ctx.profile != UserProfile.ADMIN:
-            return {
-                "status": "not_allowed",
-                "reason": f"User `{client_ctx.device_id.user_id}` is not admin",
-            }
-
-        msg = apiv1_user_cancel_invitation_serializer.req_load(msg)
-
-        await self.cancel_user_invitation(client_ctx.organization_id, msg["user_id"])
-
-        return apiv1_user_cancel_invitation_serializer.rep_dump({"status": "ok"})
-
-    @api("user_create", handshake_types=[APIV1_HandshakeType.AUTHENTICATED])
-    @catch_protocol_errors
-    async def apiv1_user_create(self, client_ctx, msg):
-        if client_ctx.profile != UserProfile.ADMIN:
-            return {
-                "status": "not_allowed",
-                "reason": f"User `{client_ctx.device_id.user_id}` is not admin",
-            }
-        msg = apiv1_user_create_serializer.req_load(msg)
-        msg["redacted_user_certificate"] = msg["user_certificate"]
-        msg["redacted_device_certificate"] = msg["device_certificate"]
-        rep = await self._api_user_create(client_ctx, msg)
-        return apiv1_user_create_serializer.rep_dump(rep)
 
     @api("user_create", handshake_types=[HandshakeType.AUTHENTICATED])
     @catch_protocol_errors
@@ -538,6 +293,8 @@ class BaseUserComponent:
 
         except UserAlreadyExistsError as exc:
             return {"status": "already_exists", "reason": str(exc)}
+        except UserActiveUsersLimitReached:
+            return {"status": "active_users_limit_reached"}
 
         return {"status": "ok"}
 
@@ -590,213 +347,6 @@ class BaseUserComponent:
             return {"status": "already_revoked", "reason": f"User `{data.user_id}` already revoked"}
 
         return user_revoke_serializer.rep_dump({"status": "ok"})
-
-    #### Device creation API ####
-
-    @api("device_invite", handshake_types=[APIV1_HandshakeType.AUTHENTICATED])
-    @catch_protocol_errors
-    async def api_device_invite(self, client_ctx, msg):
-        msg = apiv1_device_invite_serializer.req_load(msg)
-
-        # Setting the cancel scope here instead of just were we are waiting
-        # for the event make testing easier.
-        with trio.move_on_after(PEER_EVENT_MAX_WAIT) as cancel_scope:
-            rep = await run_with_breathing_transport(
-                client_ctx.transport, self._api_device_invite, client_ctx, msg
-            )
-
-        if cancel_scope.cancelled_caught:
-            rep = {
-                "status": "timeout",
-                "reason": "Timeout while waiting for new device to be claimed.",
-            }
-
-        return apiv1_device_invite_serializer.rep_dump(rep)
-
-    async def _api_device_invite(self, client_ctx, msg):
-        invited_device_id = client_ctx.device_id.user_id.to_device_id(msg["invited_device_name"])
-        invitation = DeviceInvitation(invited_device_id, client_ctx.device_id)
-
-        def _filter_on_device_claimed(event, organization_id, device_id, encrypted_claim):
-            return organization_id == client_ctx.organization_id and device_id == invited_device_id
-
-        with self._event_bus.waiter_on(
-            BackendEvent.DEVICE_CLAIMED, filter=_filter_on_device_claimed
-        ) as waiter:
-
-            try:
-                await self.create_device_invitation(client_ctx.organization_id, invitation)
-
-            except UserAlreadyExistsError as exc:
-                return {"status": "already_exists", "reason": str(exc)}
-
-            # Wait for invited user to send `user_claim`
-            _, event_data = await waiter.wait()
-
-        return {"status": "ok", "encrypted_claim": event_data["encrypted_claim"]}
-
-    @api("device_get_invitation_creator", handshake_types=[APIV1_HandshakeType.ANONYMOUS])
-    @catch_protocol_errors
-    async def api_device_get_invitation_creator(self, client_ctx, msg):
-        msg = apiv1_device_get_invitation_creator_serializer.req_load(msg)
-
-        try:
-            invitation = await self.get_device_invitation(
-                client_ctx.organization_id, msg["invited_device_id"]
-            )
-            if not invitation.is_valid():
-                return {"status": "not_found"}
-
-            creator_user, creator_device, trustchain = await self.get_user_with_device_and_trustchain(
-                client_ctx.organization_id, invitation.creator
-            )
-
-        except UserNotFoundError:
-            return {"status": "not_found"}
-
-        return apiv1_device_get_invitation_creator_serializer.rep_dump(
-            {
-                "status": "ok",
-                "device_certificate": creator_device.device_certificate,
-                "user_certificate": creator_user.user_certificate,
-                "trustchain": {
-                    "devices": trustchain.devices,
-                    "users": trustchain.users,
-                    "revoked_users": trustchain.revoked_users,
-                },
-            }
-        )
-
-    @api("device_claim", handshake_types=[APIV1_HandshakeType.ANONYMOUS])
-    @catch_protocol_errors
-    async def api_device_claim(self, client_ctx, msg):
-        msg = apiv1_device_claim_serializer.req_load(msg)
-
-        # Setting the cancel scope here instead of just were we are waiting
-        # for the event make testing easier.
-        with trio.move_on_after(PEER_EVENT_MAX_WAIT) as cancel_scope:
-            rep = await run_with_breathing_transport(
-                client_ctx.transport, self._api_device_claim, client_ctx, msg
-            )
-
-        if cancel_scope.cancelled_caught:
-            rep = {
-                "status": "timeout",
-                "reason": "Timeout while waiting for invitation creator to answer.",
-            }
-
-        return apiv1_device_claim_serializer.rep_dump(rep)
-
-    async def _api_device_claim(self, client_ctx, msg):
-        replied_ok = False
-
-        # Must start listening events before calling `claim_device_invitation`
-        # given this function will send the `device.claimed` event the creator
-        # is waiting for.
-
-        send_channel, recv_channel = trio.open_memory_channel(1000)
-
-        def _on_organization_events(
-            event, organization_id, device_id, device_certificate=None, encrypted_answer=None
-        ):
-            if organization_id == client_ctx.organization_id:
-                send_channel.send_nowait((event, device_id, device_certificate, encrypted_answer))
-
-        with self._event_bus.connect_in_context(
-            (BackendEvent.DEVICE_CREATED, _on_organization_events),
-            (BackendEvent.DEVICE_INVITATION_CANCELLED, _on_organization_events),
-        ):
-            try:
-                invitation = await self.claim_device_invitation(
-                    client_ctx.organization_id, msg["invited_device_id"], msg["encrypted_claim"]
-                )
-                if not invitation.is_valid():
-                    return {"status": "not_found"}
-
-            except UserAlreadyExistsError:
-                return {"status": "not_found"}
-
-            except UserNotFoundError:
-                return {"status": "not_found"}
-
-            # Wait for creator device to accept (or refuse) our claim
-            async for event, device_id, device_certificate, encrypted_answer in recv_channel:
-                if device_id == invitation.device_id:
-                    replied_ok = event == BackendEvent.DEVICE_CREATED
-                    break
-
-        if not replied_ok:
-            return {"status": "denied", "reason": ("Invitation creator rejected us.")}
-
-        else:
-            return apiv1_device_claim_serializer.rep_dump(
-                {
-                    "status": "ok",
-                    "device_certificate": device_certificate,
-                    "encrypted_answer": encrypted_answer,
-                }
-            )
-
-    @api("device_cancel_invitation", handshake_types=[APIV1_HandshakeType.AUTHENTICATED])
-    @catch_protocol_errors
-    async def api_device_cancel_invitation(self, client_ctx, msg):
-        msg = apiv1_device_cancel_invitation_serializer.req_load(msg)
-
-        invited_device_id = client_ctx.device_id.user_id.to_device_id(msg["invited_device_name"])
-
-        await self.cancel_device_invitation(client_ctx.organization_id, invited_device_id)
-
-        return apiv1_device_cancel_invitation_serializer.rep_dump({"status": "ok"})
-
-    @api("device_create", handshake_types=[APIV1_HandshakeType.AUTHENTICATED])
-    @catch_protocol_errors
-    async def apiv1_device_create(self, client_ctx, msg):
-        msg = apiv1_device_create_serializer.req_load(msg)
-
-        try:
-            data = DeviceCertificateContent.verify_and_load(
-                msg["device_certificate"],
-                author_verify_key=client_ctx.verify_key,
-                expected_author=client_ctx.device_id,
-            )
-
-        except DataError as exc:
-            return {
-                "status": "invalid_certification",
-                "reason": f"Invalid certification data ({exc}).",
-            }
-
-        if not timestamps_in_the_ballpark(data.timestamp, pendulum.now()):
-            return {
-                "status": "invalid_certification",
-                "reason": f"Invalid timestamp in certification.",
-            }
-
-        if data.device_label:
-            return {
-                "status": "invalid_data",
-                "reason": "Redacted Device certificate must not contain a device_label field.",
-            }
-
-        if data.device_id.user_id != client_ctx.user_id:
-            return {"status": "bad_user_id", "reason": "Device must be handled by it own user."}
-
-        try:
-            device = Device(
-                device_id=data.device_id,
-                device_label=None,
-                device_certificate=msg["device_certificate"],
-                redacted_device_certificate=msg["device_certificate"],
-                device_certifier=data.author,
-                created_on=data.timestamp,
-            )
-            await self.create_device(
-                client_ctx.organization_id, device, encrypted_answer=msg["encrypted_answer"]
-            )
-        except UserAlreadyExistsError as exc:
-            return {"status": "already_exists", "reason": str(exc)}
-
-        return apiv1_device_create_serializer.rep_dump({"status": "ok"})
 
     @api("device_create", handshake_types=[HandshakeType.AUTHENTICATED])
     @catch_protocol_errors
@@ -887,7 +437,7 @@ class BaseUserComponent:
         user_id: UserID,
         revoked_user_certificate: bytes,
         revoked_user_certifier: DeviceID,
-        revoked_on: pendulum.DateTime = None,
+        revoked_on: Optional[pendulum.DateTime] = None,
     ) -> None:
         """
         Raises:
@@ -939,98 +489,13 @@ class BaseUserComponent:
         """
         raise NotImplementedError()
 
-    async def find(
-        self,
-        organization_id: OrganizationID,
-        query: str = None,
-        page: int = 1,
-        per_page: int = 100,
-        omit_revoked: bool = False,
-    ) -> Tuple[List[UserID], int]:
-        raise NotImplementedError()
-
     async def find_humans(
         self,
         organization_id: OrganizationID,
-        query: str = None,
+        query: Optional[str] = None,
         page: int = 1,
         per_page: int = 100,
         omit_revoked: bool = False,
         omit_non_human: bool = False,
     ) -> Tuple[List[HumanFindResultItem], int]:
-        raise NotImplementedError()
-
-    async def create_user_invitation(
-        self, organization_id: OrganizationID, invitation: UserInvitation
-    ) -> None:
-        """
-        Raises:
-            UserAlreadyExistsError
-        """
-        raise NotImplementedError()
-
-    async def get_user_invitation(
-        self, organization_id: OrganizationID, user_id: UserID
-    ) -> UserInvitation:
-        """
-        Raises:
-            UserAlreadyExistsError
-            UserNotFoundError
-        """
-        raise NotImplementedError()
-
-    async def claim_user_invitation(
-        self, organization_id: OrganizationID, user_id: UserID, encrypted_claim: bytes = b""
-    ) -> UserInvitation:
-        """
-        Raises:
-            UserAlreadyExistsError
-            UserNotFoundError
-        """
-        raise NotImplementedError()
-
-    async def cancel_user_invitation(
-        self, organization_id: OrganizationID, user_id: UserID
-    ) -> None:
-        """
-        Raises: Nothing
-        """
-        raise NotImplementedError()
-
-    async def create_device_invitation(
-        self, organization_id: OrganizationID, invitation: DeviceInvitation
-    ) -> None:
-        """
-        Raises:
-            UserAlreadyExistsError
-            UserNotFoundError
-        """
-        raise NotImplementedError()
-
-    async def get_device_invitation(
-        self, organization_id: OrganizationID, device_id: DeviceID
-    ) -> DeviceInvitation:
-        """
-        Raises:
-            UserAlreadyExistsError
-            UserNotFoundError
-        """
-        raise NotImplementedError()
-
-    async def claim_device_invitation(
-        self, organization_id: OrganizationID, device_id: DeviceID, encrypted_claim: bytes = b""
-    ) -> DeviceInvitation:
-        """
-        Raises:
-            UserAlreadyExistsError
-            UserNotFoundError
-        """
-        raise NotImplementedError()
-
-    async def cancel_device_invitation(
-        self, organization_id: OrganizationID, device_id: DeviceID
-    ) -> None:
-        """
-        Raises: Nothing
-        """
         raise NotImplementedError()

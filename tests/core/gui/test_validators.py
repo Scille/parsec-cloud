@@ -1,4 +1,4 @@
-# Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
+# Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2016-2021 Scille SAS
 
 import pytest
 
@@ -10,21 +10,17 @@ from parsec.core.gui.lang import switch_language
 
 
 @pytest.mark.gui
-def test_device_name_validator(qtbot, core_config):
+def test_device_label_validator(qtbot, core_config):
     switch_language(core_config, "en")
 
     le = ValidatedLineEdit()
-    le.set_validator(validators.DeviceNameValidator())
-    qtbot.addWidget(le)
+    le.set_validator(validators.DeviceLabelValidator())
+    qtbot.add_widget(le)
     le.show()
 
     qtbot.keyClicks(le, "abcd")
     assert le.is_input_valid()
     assert le.property("validity") == QtGui.QValidator.Acceptable
-
-    qtbot.keyClicks(le, "~")
-    assert not le.is_input_valid()
-    assert le.property("validity") == QtGui.QValidator.Invalid
 
 
 @pytest.mark.gui
@@ -33,7 +29,7 @@ def test_email_validator(qtbot, core_config):
 
     le = ValidatedLineEdit()
     le.set_validator(validators.EmailValidator())
-    qtbot.addWidget(le)
+    qtbot.add_widget(le)
     le.show()
 
     qtbot.keyClicks(le, "maurice")
@@ -55,7 +51,7 @@ def test_organization_validator(qtbot, core_config):
 
     le = ValidatedLineEdit()
     le.set_validator(validators.OrganizationIDValidator())
-    qtbot.addWidget(le)
+    qtbot.add_widget(le)
     le.show()
 
     qtbot.keyClicks(le, "Reynholm")

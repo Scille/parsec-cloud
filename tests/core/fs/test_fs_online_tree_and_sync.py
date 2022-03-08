@@ -1,10 +1,11 @@
-# Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
+# Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2016-2021 Scille SAS
 
-import os
+import sys
 import pytest
 from string import ascii_lowercase
 from hypothesis import strategies as st
 from hypothesis_trio.stateful import Bundle, initialize, rule
+from parsec.api.data import EntryName
 
 
 def get_path(path):
@@ -16,7 +17,7 @@ st_entry_name = st.text(alphabet=ascii_lowercase, min_size=1, max_size=3)
 
 
 @pytest.mark.slow
-@pytest.mark.skipif(os.name == "nt", reason="Windows path style not compatible with oracle")
+@pytest.mark.skipif(sys.platform == "win32", reason="Windows path style not compatible with oracle")
 def test_fs_online_tree_and_sync(user_fs_online_state_machine, oracle_fs_with_sync_factory, alice):
     class FSOnlineTreeAndSync(user_fs_online_state_machine):
         Files = Bundle("file")
@@ -35,7 +36,7 @@ def test_fs_online_tree_and_sync(user_fs_online_state_machine, oracle_fs_with_sy
 
             await self.start_backend()
             await self.restart_user_fs(self.device)
-            self.wid = await self.user_fs.workspace_create("w")
+            self.wid = await self.user_fs.workspace_create(EntryName("w"))
             workspace = self.user_fs.get_workspace(self.wid)
             await workspace.sync()
             await self.user_fs.sync()
@@ -52,6 +53,8 @@ def test_fs_online_tree_and_sync(user_fs_online_state_machine, oracle_fs_with_sy
             self.oracle_fs.reset()
             self.oracle_fs.create_workspace("/w")
             await self.user_fs.sync()
+            # Retrieve workspace manifest v1 to replace the default empty speculative placeholder
+            await self.user_fs.get_workspace(self.wid).sync()
 
         @rule()
         async def sync_root(self):
@@ -89,7 +92,7 @@ def test_fs_online_tree_and_sync(user_fs_online_state_machine, oracle_fs_with_sy
                     await self.workspace.mkdir(path=get_path(path), exist_ok=False)
             return path
 
-        @rule(path=Files)
+        @rule(target=Files, path=Files)
         async def delete_file(self, path):
             expected_status = self.oracle_fs.unlink(path)
             if expected_status == "ok":
@@ -99,7 +102,7 @@ def test_fs_online_tree_and_sync(user_fs_online_state_machine, oracle_fs_with_sy
                     await self.workspace.unlink(path=get_path(path))
             return path
 
-        @rule(path=Folders)
+        @rule(target=Folders, path=Folders)
         async def delete_folder(self, path):
             expected_status = self.oracle_fs.rmdir(path)
             if expected_status == "ok":

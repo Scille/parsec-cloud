@@ -1,9 +1,7 @@
-# Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
+# Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2016-2021 Scille SAS
 
 import attr
-from uuid import UUID
 from typing import Optional, List, Tuple
-from pendulum import now as pendulum_now
 
 from parsec.crypto import (
     generate_shared_secret_key,
@@ -27,7 +25,14 @@ from parsec.api.data import (
     DeviceCertificateContent,
     UserCertificateContent,
 )
-from parsec.api.protocol import DeviceName, DeviceID, HumanHandle, InvitationDeletedReason
+from parsec.api.protocol import (
+    DeviceName,
+    DeviceID,
+    HumanHandle,
+    InvitationToken,
+    InvitationDeletedReason,
+    DeviceLabel,
+)
 from parsec.core.backend_connection import BackendInvitedCmds
 from parsec.core.types import LocalDevice
 from parsec.core.invite.exceptions import (
@@ -35,6 +40,7 @@ from parsec.core.invite.exceptions import (
     InvitePeerResetError,
     InviteNotFoundError,
     InviteAlreadyUsedError,
+    InviteActiveUsersLimitReachedError,
 )
 
 
@@ -45,13 +51,15 @@ def _check_rep(rep, step_name):
         raise InviteAlreadyUsedError
     elif rep["status"] == "invalid_state":
         raise InvitePeerResetError
+    elif rep["status"] == "active_users_limit_reached":
+        raise InviteActiveUsersLimitReachedError
     elif rep["status"] != "ok":
         raise InviteError(f"Backend error during {step_name}: {rep}")
 
 
 @attr.s(slots=True, frozen=True, auto_attribs=True)
 class BaseGreetInitialCtx:
-    token: UUID
+    token: InvitationToken
     _cmds: BackendInvitedCmds
 
     async def _do_wait_peer(self) -> Tuple[SASCode, SASCode, SecretKey]:
@@ -123,7 +131,7 @@ class DeviceGreetInitialCtx(BaseGreetInitialCtx):
 
 @attr.s(slots=True, frozen=True, auto_attribs=True)
 class BaseGreetInProgress1Ctx:
-    token: UUID
+    token: InvitationToken
     greeter_sas: SASCode
 
     _claimer_sas: SASCode
@@ -163,7 +171,7 @@ class DeviceGreetInProgress1Ctx(BaseGreetInProgress1Ctx):
 
 @attr.s(slots=True, frozen=True, auto_attribs=True)
 class BaseGreetInProgress2Ctx:
-    token: UUID
+    token: InvitationToken
     claimer_sas: SASCode
 
     _shared_secret_key: SecretKey
@@ -199,7 +207,7 @@ class DeviceGreetInProgress2Ctx(BaseGreetInProgress2Ctx):
 
 @attr.s(slots=True, frozen=True, auto_attribs=True)
 class UserGreetInProgress3Ctx:
-    token: UUID
+    token: InvitationToken
 
     _shared_secret_key: SecretKey
     _cmds: BackendInvitedCmds
@@ -229,7 +237,7 @@ class UserGreetInProgress3Ctx:
 
 @attr.s(slots=True, frozen=True, auto_attribs=True)
 class DeviceGreetInProgress3Ctx:
-    token: UUID
+    token: InvitationToken
 
     _shared_secret_key: SecretKey
     _cmds: BackendInvitedCmds
@@ -257,8 +265,8 @@ class DeviceGreetInProgress3Ctx:
 
 @attr.s(slots=True, frozen=True, auto_attribs=True)
 class UserGreetInProgress4Ctx:
-    token: UUID
-    requested_device_label: Optional[str]
+    token: InvitationToken
+    requested_device_label: Optional[DeviceLabel]
     requested_human_handle: Optional[HumanHandle]
 
     _public_key: PublicKey
@@ -269,17 +277,17 @@ class UserGreetInProgress4Ctx:
     async def do_create_new_user(
         self,
         author: LocalDevice,
-        device_label: Optional[str],
+        device_label: Optional[DeviceLabel],
         human_handle: Optional[HumanHandle],
         profile: UserProfile,
     ) -> None:
         device_id = DeviceID.new()
         try:
-            now = pendulum_now()
+            timestamp = author.timestamp()
 
             user_certificate = UserCertificateContent(
                 author=author.device_id,
-                timestamp=now,
+                timestamp=timestamp,
                 user_id=device_id.user_id,
                 human_handle=human_handle,
                 public_key=self._public_key,
@@ -289,7 +297,7 @@ class UserGreetInProgress4Ctx:
 
             device_certificate = DeviceCertificateContent(
                 author=author.device_id,
-                timestamp=now,
+                timestamp=timestamp,
                 device_id=device_id,
                 device_label=device_label,
                 verify_key=self._verify_key,
@@ -312,8 +320,14 @@ class UserGreetInProgress4Ctx:
             redacted_user_certificate=redacted_user_certificate,
             redacted_device_certificate=redacted_device_certificate,
         )
-        if rep["status"] != "ok":
-            raise InviteError(f"Cannot create device: {rep}")
+        _check_rep(rep, step_name="step 4 (user certificates upload)")
+
+        # From now on the user has been created on the server, but greeter
+        # is not aware of it yet. If something goes wrong, we can end up with
+        # the greeter losing it private keys.
+        # This is considered acceptable given 1) the error window is small and
+        # 2) if this occurs the inviter can revoke the user and retry the
+        # enrollment process to fix this
 
         try:
             payload = InviteUserConfirmation(
@@ -329,26 +343,31 @@ class UserGreetInProgress4Ctx:
         rep = await self._cmds.invite_4_greeter_communicate(token=self.token, payload=payload)
         _check_rep(rep, step_name="step 4 (confirmation exchange)")
 
+        # Invitation deletion is not strictly necessary (enrollment has succeeded
+        # anyway) so it's no big deal if something goes wrong before it can be
+        # done (and it can be manually deleted from invitation list).
         await self._cmds.invite_delete(token=self.token, reason=InvitationDeletedReason.FINISHED)
 
 
 @attr.s(slots=True, frozen=True, auto_attribs=True)
 class DeviceGreetInProgress4Ctx:
-    token: UUID
-    requested_device_label: Optional[str]
+    token: InvitationToken
+    requested_device_label: Optional[DeviceLabel]
 
     _verify_key: VerifyKey
     _shared_secret_key: SecretKey
     _cmds: BackendInvitedCmds
 
-    async def do_create_new_device(self, author: LocalDevice, device_label: Optional[str]) -> None:
+    async def do_create_new_device(
+        self, author: LocalDevice, device_label: Optional[DeviceLabel]
+    ) -> None:
         device_id = author.user_id.to_device_id(DeviceName.new())
         try:
-            now = pendulum_now()
+            timestamp = author.timestamp()
 
             device_certificate = DeviceCertificateContent(
                 author=author.device_id,
-                timestamp=now,
+                timestamp=timestamp,
                 device_id=device_id,
                 device_label=device_label,
                 verify_key=self._verify_key,
@@ -367,7 +386,14 @@ class DeviceGreetInProgress4Ctx:
             device_certificate=device_certificate,
             redacted_device_certificate=redacted_device_certificate,
         )
-        _check_rep(rep, step_name="device creation")
+        _check_rep(rep, step_name="step 4 (device certificates upload)")
+
+        # From now on the device has been created on the server, but greeter
+        # is not aware of it yet. If something goes wrong, we can end up with
+        # the greeter losing it private keys.
+        # This is considered acceptable given 1) the error window is small and
+        # 2) if this occurs the inviter can revoke the device and retry the
+        # enrollment process to fix this
 
         try:
             payload = InviteDeviceConfirmation(
@@ -386,4 +412,7 @@ class DeviceGreetInProgress4Ctx:
         rep = await self._cmds.invite_4_greeter_communicate(token=self.token, payload=payload)
         _check_rep(rep, step_name="step 4 (confirmation exchange)")
 
+        # Invitation deletion is not strictly necessary (enrollment has succeeded
+        # anyway) so it's no big deal if something goes wrong before it can be
+        # done (and it can be manually deleted from invitation list).
         await self._cmds.invite_delete(token=self.token, reason=InvitationDeletedReason.FINISHED)

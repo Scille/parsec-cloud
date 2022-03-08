@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PROJECT VERSION\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2020-12-08 11:12+0100\n"
+"POT-Creation-Date: 2022-03-01 15:32+0100\n"
 "PO-Revision-Date: 2020-10-15 10:31+0200\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language: fr\n"
@@ -16,10 +16,48 @@ msgstr ""
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=utf-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"Generated-By: Babel 2.6.0\n"
+"Generated-By: Babel 2.9.1\n"
 
 msgid "TEXT_PARSEC_VERSION_version"
 msgstr "PARSEC version {version}"
+
+msgid "TEXT_AUTH_CHANGE_SUCCESS"
+msgstr "L'authentification a été changée avec succès !"
+
+msgid "TEXT_INVALID_SMARTCARD"
+msgstr "Cette carte à puce ne peut pas être utilisée pour s'authentifier."
+
+msgid "TEXT_CANNOT_SAVE_DEVICE"
+msgstr "Impossible de sauvegarder l'appareil. Veuillez réessayer."
+
+msgid "TEXT_DEVICE_UNLOCK_TITLE"
+msgstr "Ré-authentification"
+
+msgid "TEXT_DEVICE_UNLOCK_FOR_AUTH_CHANGE_LABEL"
+msgstr "Veuillez entrer votre mot de passe pour débloquer cet appareil."
+
+msgid "TEXT_LOGIN_ERROR_AUTHENTICATION_FAILED"
+msgstr "Le mot de passe n'est pas correct."
+
+msgid "TEXT_CHANGE_AUTHENTICATION_TITLE"
+msgstr "Changer l'authentification"
+
+msgid "TEXT_AUTH_METHOD_PASSWORD"
+msgstr "Mot de passe"
+
+msgid "TEXT_AUTH_METHOD_SMARTCARD"
+msgstr "Carte à puce"
+
+msgid "TEXT_ONLY_ONE_AUTH_METHOD_AVAILABLE"
+msgstr ""
+"Une seule méthode d'authentification est disponible dans cette version de"
+" Parsec."
+
+msgid "ACTION_COPY_BACKEND_ADDR"
+msgstr "Copier l'adresse du serveur"
+
+msgid "ACTION_DEVICE_MENU_CHANGE_AUTHENTICATION"
+msgstr "Changer l'authentification"
 
 msgid "ACTION_LOG_OUT"
 msgstr "Se déconnecter"
@@ -28,6 +66,9 @@ msgid "TEXT_FILE_LINK_WORKSPACE_NOT_FOUND_organization"
 msgstr ""
 "Vous n'avez pas accès à l'espace de travail auquel appartient ce fichier."
 " Il n'a peut-être pas été partagé avec vous."
+
+msgid "NOTIF_INFO_WORKSPACE_READ_ONLY"
+msgstr "L'espace de travail est accessible en lecture seulement"
 
 msgid "NOTIF_WARN_MOUNTPOINT_UNMOUNTED"
 msgstr ""
@@ -56,9 +97,6 @@ msgstr ""
 msgid "NOTIF_INFO_WORKSPACE_UNSHARED_{}"
 msgstr ""
 
-msgid "NOTIF_WARN_SYNC_CONFLICT_{}"
-msgstr ""
-
 msgid "TEXT_BACKEND_STATE_CONNECTED"
 msgstr "Connecté"
 
@@ -80,6 +118,12 @@ msgstr "Inconnu"
 msgid "TEXT_BACKEND_STATE_CRASHED_cause"
 msgstr "La connexion au serveur a été perdue"
 
+msgid "TEXT_BACKEND_STATE_DESYNC"
+msgstr ""
+"Il semblerait que votre machine ne soit pas à la bonne date ou à la bonne"
+" heure. Veuillez vérifier votre configuration et vous assurer que la "
+"date, l'heure ainsi que le fuseau horaire sont corrects."
+
 msgid "TEXT_SYSTRAY_BACKEND_DISCONNECT_organization"
 msgstr "{organization}: Déconnecté"
 
@@ -95,7 +139,7 @@ msgstr "Mes appareils"
 msgid "TEXT_CLAIM_DEVICE_INVALID_CODE_CLICKED"
 msgstr ""
 "Vous n'avez pas cliqué sur le bon code. Vous devez redémarrer le "
-"processus du début. Nous voulons être certain que le processus est "
+"processus du début. Nous voulons être certains que le processus est "
 "sécurisé."
 
 msgid "TEXT_CLAIM_DEVICE_NONE_CODE_CLICKED"
@@ -158,13 +202,10 @@ msgstr "Erreur interne. Veuillez redémarrer le processus."
 msgid "TEXT_CLAIM_DEVICE_TITLE"
 msgstr "Enregistrer un appareil"
 
-msgid "TEXT_CLAIM_USER_DEVICE_ALREADY_EXISTS"
-msgstr "Un appareil du même nom existe déjà."
-
 msgid "TEXT_CLAIM_USER_INVALID_CODE_CLICKED"
 msgstr ""
 "Vous n'avez pas cliqué sur le bon code. Vous devez redémarrer le "
-"processus du début. Nous voulons être certain que cette invitation vous "
+"processus du début. Nous voulons être certains que cette invitation vous "
 "était bien destinée."
 
 msgid "TEXT_CLAIM_USER_NONE_CODE_CLICKED"
@@ -213,12 +254,6 @@ msgstr ""
 msgid "TEXT_CLAIM_USER_FAILED_TO_RETRIEVE_INFO"
 msgstr "Impossible de récupérer les informations de l'invitation."
 
-msgid "TEXT_CLAIM_USER_SUCCESSFUL"
-msgstr ""
-"L'utilisateur a été créé avec succès. Vous allez maintenant être "
-"connecté.\n"
-"Bienvenue dans PARSEC !"
-
 msgid "TEXT_CLAIM_USER_INVITATION_NOT_FOUND"
 msgstr "Aucune invitation trouvée."
 
@@ -233,36 +268,20 @@ msgstr ""
 "Veuillez fournir les informations suivantes pour démarrer l'organisation "
 "<b>{organization}</b>."
 
-msgid "ACTION_NEXT"
-msgstr "Suivant"
-
-msgid "ACTION_CREATE_ORG"
-msgstr "Créer l'organisation"
-
 msgid "TEXT_ORG_WIZARD_INVALID_ORGANIZATION_ID"
 msgstr "Le nom d'organisation n'est pas valide."
 
 msgid "TEXT_ORG_WIZARD_INVALID_BACKEND_ADDR"
 msgstr "L'adresse du serveur n'est pas valide."
 
-msgid "TEXT_ORG_WIZARD_INVALID_DEVICE_NAME"
-msgstr "Le nom de d'appareil n'est pas valide."
-
 msgid "TEXT_ORG_WIZARD_INVALID_HUMAN_HANDLE"
 msgstr "L'adresse email n'est pas valide."
 
-msgid "TEXT_BOOTSTRAP_ORG_SUCCESS_organization"
-msgstr ""
-"Votre organisation <b>{organization}</b> a été créée !<br />\n"
-"<br />\n"
-"Vous allez maintenant être automatiquement connecté.<br />\n"
-"<br />\n"
-"Pour une meilleure prise en main du logiciel, vous pouvez vous référer au"
-" <a href=\"https://docs.parsec.cloud/fr/stable/\" title=\"Guide "
-"d'utilisation\">guide d'utilisation PARSEC."
+msgid "TEXT_ORG_WIZARD_INVALID_DEVICE_LABEL"
+msgstr "Le nom de d'appareil n'est pas valide."
 
-msgid "ACTION_CONTINUE"
-msgstr "Continuer"
+msgid "ACTION_CREATE_ORG"
+msgstr "Créer l'organisation"
 
 msgid "TEXT_ORG_WIZARD_ORGANIZATION_ALREADY_EXISTS"
 msgstr "Une organisation du même nom existe déjà."
@@ -285,12 +304,6 @@ msgstr "La connexion vers le serveur a été refusée."
 msgid "TEXT_ORG_WIZARD_CONNECTION_ERROR"
 msgstr "Impossible de se connecter au serveur."
 
-msgid "TEXT_ORG_WIZARD_INVALID_TIMESTAMP"
-msgstr ""
-"Il semblerait que votre machine ne soit pas à la bonne date ou à la bonne"
-" heure. Veuillez vérifier votre configuration et vous assurez que la "
-"date, l'heure ainsi que le fuseau horaire sont corrects."
-
 msgid "TEXT_ORG_WIZARD_UNKNOWN_FAILURE"
 msgstr "Impossible de créer l'organisation."
 
@@ -303,11 +316,85 @@ msgstr "OK"
 msgid "TEXT_ERR_DIALOG_TITLE"
 msgstr "Erreur"
 
+msgid "ACTION_CONTINUE"
+msgstr "Continuer"
+
+msgid "TEXT_RECOVERY_HTML_EXPORT_user-organization-keyname-password"
+msgstr ""
+"<h1 align=center>CLÉ DE RÉCUPÉRATION PARSEC</h1><h2>UTILISATEUR : "
+"{label}<br>ORGANISATION : {organization}<br>NOM DE LA CLÉ : "
+"{keyname}<br>MOT DE PASSE : {password}<br></h2>"
+
+msgid "TEXT_EXPORT_KEY"
+msgstr "Créer un appareil de récupération"
+
+msgid "ACTION_CLOSE"
+msgstr "Fermer"
+
+msgid "EXPORT_KEY_BACKEND_OFFLINE"
+msgstr ""
+"Impossible de créer un appareil de récupération : pas de connexion avec "
+"le serveur"
+
+msgid "EXPORT_KEY_BACKEND_ERROR"
+msgstr ""
+"Impossible de créer un appareil de récupération : demande refusée par le "
+"serveur"
+
+msgid "TEXT_RECOVERY_DEVICE_FILE_ALREADY_EXISTS"
+msgstr "Un fichier de récupération existe déjà pour cet appareil à cet endroit."
+
+msgid "EXPORT_KEY_ERROR"
+msgstr "Impossible de créer un appareil de récupération"
+
+msgid "TEXT_DEVICE_UNLOCK_FOR_RECOVERY_LABEL"
+msgstr "Veuillez entrer votre mot de passe pour déverouiller cet appareil."
+
+msgid "TEXT_UNLOCK_ERROR_SMARTCARD_NOT_AVAILABLE"
+msgstr ""
+"Cet appareil est protogé par une authentification via carte à puce, "
+"toutefois cette version de Parsec ne supporte ce type d'authentification."
+
+msgid "TEXT_DEVICE_RECOVERY_EXPORT_WIZARD_TITLE"
+msgstr "Créer un appareil de récupération"
+
+msgid "ACTION_IMPORT_KEY"
+msgstr "Récupérer un appareil"
+
+msgid "RECOVERY_KEY_FILTERS"
+msgstr "Fichiers de l'appareil de récupération (*.psrk);;Tous les fichiers (*)"
+
+msgid "RECOVERY_KEY_INITIAL_FILTER"
+msgstr "Fichiers de l'appareil de récupération (*.psrk)"
+
+msgid "TEXT_RECOVERY_INVALID_PASSPHRASE"
+msgstr "La phrase secrète est invalide."
+
+msgid "TEXT_IMPORT_KEY_WRONG_PASSPHRASE"
+msgstr "La phrase secrète est incorrecte."
+
+msgid "IMPORT_KEY_LOCAL_DEVICE_ERROR"
+msgstr ""
+"Impossible d'importer la clé, une erreur s'est produite avec l'appareil "
+"de récupération."
+
+msgid "IMPORT_KEY_BACKEND_OFFLINE"
+msgstr "Impossible de récupérer l'appareil : le serveur ne répond pas."
+
+msgid "IMPORT_KEY_BACKEND_ERROR"
+msgstr "Impossible de récupérer l'appareil : demande refusée par le serveur"
+
+msgid "IMPORT_KEY_ERROR"
+msgstr "Impossible d'importer cette clef d'appareil."
+
+msgid "TEXT_RECOVERY_IMPORT_SUCCESS"
+msgstr "L'appareil a été récupéré avec succès"
+
+msgid "ACTION_CREATE_DEVICE"
+msgstr "Créer l'appareil"
+
 msgid "TEXT_DEVICE_IS_CURRENT"
 msgstr "actuel"
-
-msgid "ACTION_DEVICE_MENU_CHANGE_PASSWORD"
-msgstr "Changer le mot de passe"
 
 msgid "TEXT_INVITE_DEVICE_INVITE_OFFLINE"
 msgstr "Le serveur est hors-ligne ou vous n'avez pas de connexion internet."
@@ -335,20 +422,32 @@ msgstr "Ce fichier est synchronisé."
 msgid "TEXT_FILE_ITEM_IS_NOT_SYNCED_TOOLTIP"
 msgstr "Ce fichier n'est pas encore synchronisé."
 
-msgid "TEXT_FILE_SIZE_TB"
-msgstr "To"
-
-msgid "TEXT_FILE_SIZE_GB"
-msgstr "Go"
-
-msgid "TEXT_FILE_SIZE_MB"
-msgstr "Mo"
+msgid "TEXT_FILE_SIZE_B"
+msgstr "o"
 
 msgid "TEXT_FILE_SIZE_KB"
 msgstr "Ko"
 
-msgid "TEXT_FILE_SIZE_B"
-msgstr "o"
+msgid "TEXT_FILE_SIZE_MB"
+msgstr "Mo"
+
+msgid "TEXT_FILE_SIZE_GB"
+msgstr "Go"
+
+msgid "TEXT_FILE_SIZE_TB"
+msgstr "To"
+
+msgid "TEXT_YES"
+msgstr "Oui"
+
+msgid "TEXT_NO"
+msgstr "Non"
+
+msgid "TEXT_FILE_STATUS_TITLE_name"
+msgstr "État"
+
+msgid "ACTION_FILE_OPEN_CURRENT_DIRECTORY_MAC"
+msgstr "Ouvrir le répertoire dans le Finder"
 
 msgid "ACTION_FILE_OPEN_CURRENT_DIRECTORY"
 msgstr "Ouvrir le répertoire dans l'explorateur de fichiers"
@@ -370,6 +469,9 @@ msgstr "Couper"
 
 msgid "ACTION_FILE_MENU_SHOW_FILE_HISTORY"
 msgstr "Voir l'historique"
+
+msgid "ACTION_FILE_MENU_SHOW_FILE_STATUS"
+msgstr "Voir l'état"
 
 msgid "ACTION_FILE_MENU_GET_FILE_LINK"
 msgstr "Lien vers ce fichier"
@@ -404,6 +506,11 @@ msgid "TEXT_FILE_HISTORY_MULTIPLE_FILES_SELECTED_ERROR"
 msgstr ""
 "Impossible d'afficher l'historique de plusieurs fichiers en une fois. "
 "Veuillez ne sélectionner qu'un fichier."
+
+msgid "TEXT_FILE_STATUS_MULTIPLE_FILES_SELECTED_ERROR"
+msgstr ""
+"Impossible d'afficher l'état de plusieurs fichiers en une fois. Veuillez "
+"ne sélectionner qu'un fichier."
 
 msgid "TEXT_FILE_RENAME_TITLE"
 msgstr "Renommer un fichier"
@@ -452,9 +559,6 @@ msgstr "Êtes-vous sûr de vouloir supprimer les {count} fichiers ?"
 msgid "ACTION_FILE_DELETE_MULTIPLE"
 msgstr "Supprimer"
 
-msgid "TEXT_FILE_OPEN_ERROR_file"
-msgstr "Le fichier <b>{file}</b> n'a pas pû être ouvert."
-
 msgid "TEXT_FILE_OPEN_MULTIPLE_TITLE_count"
 msgstr "Ouvrir plusieurs fichiers"
 
@@ -469,14 +573,35 @@ msgstr "Ouvrir les fichiers"
 msgid "TEXT_FILE_OPEN_MULTIPLE_ERROR"
 msgstr "Certains fichiers n'ont pas pû être ouverts."
 
-msgid "TEXT_FILE_IMPORT_LOADING_TITLE"
-msgstr "En cours d'import"
+msgid "TEXT_FILE_OPEN_ERROR_file"
+msgstr "Le fichier <b>{file}</b> n'a pas pû être ouvert."
 
 msgid "TEXT_FILE_IMPORT_FILES"
 msgstr "Importer des fichiers"
 
 msgid "TEXT_FILE_IMPORT_FOLDER"
 msgstr "Importer un répertoire"
+
+msgid "TEXT_FILE_IMPORT_LOADING_TITLE"
+msgstr "En cours d'import"
+
+msgid "TEXT_FILE_IMPORT_ONE_PERMISSION_ERROR"
+msgstr ""
+"Le fichier n'a pas pu être importé car vous ne disposez pas des "
+"permissions suffisantes."
+
+msgid "TEXT_FILE_IMPORT_MULTIPLE_PERMISSION_ERROR"
+msgstr ""
+"Certains fichiers n'ont pas été importés car vous ne disposez pas des "
+"permissions suffisantes."
+
+msgid "TEXT_FILE_IMPORT_ONE_ERROR"
+msgstr "Un problème est survenu lors de l'import du fichier."
+
+msgid "TEXT_FILE_IMPORT_MULTIPLE_ERROR"
+msgstr ""
+"Un problème est survenu lors de l'import des fichiers. Certains fichiers "
+"n'ont peut-être pas été importés."
 
 msgid "TEXT_FILE_CREATE_FOLDER_TITLE"
 msgstr "Créer un répertoire"
@@ -518,35 +643,17 @@ msgstr "Un répertoire du même nom existe déjà."
 msgid "TEXT_FILE_FOLDER_CREATE_ERROR_UNKNOWN"
 msgstr "Impossible de créer le nouveau répertoire."
 
-msgid "TEXT_FILE_IMPORT_ONE_PERMISSION_ERROR"
-msgstr ""
-"Le fichier n'a pas pu être importé car vous ne disposez pas des "
-"permissions suffisantes."
-
-msgid "TEXT_FILE_IMPORT_MULTIPLE_PERMISSION_ERROR"
-msgstr ""
-"Certains fichiers n'ont pas été importes car vous ne disposez pas des "
-"permissions suffisantes."
-
-msgid "TEXT_FILE_IMPORT_ONE_ERROR"
-msgstr "Un problème est survenu lors de l'import du fichier."
-
-msgid "TEXT_FILE_IMPORT_MULTIPLE_ERROR"
-msgstr ""
-"Un problème est survenu lors de l'import des fichiers. Certains fichiers "
-"n'ont peut-être pas été importés."
-
 msgid "TEXT_FILE_SHARING_REVOKED_workspace"
 msgstr ""
 "Vos permissions sur l'espace de travail <b>{workspace}</b> ont été "
 "supprimées. Vous ne pouvez plus interagir avec l'espace de travail ou "
 "voir les fichiers qu'il contient."
 
-msgid "TEXT_FILE_SHARING_DEMOTED_TO_READER"
+msgid "TEXT_FILE_SHARING_DEMOTED_TO_READER_workspace"
 msgstr ""
-"Votre rôle sur cet espace de travail a été changé en <b>Lecteur</b>. Vous"
-" ne pouvez plus ajouter, modifier ou supprimer des fichiers, mais vous "
-"pouvez toujours les visionner."
+"Votre rôle sur l'espace de travail <b>{workspace}</b> a été changé en "
+"<b>Lecteur</b>. Vous ne pouvez plus ajouter, modifier ou supprimer des "
+"fichiers, mais vous pouvez toujours les visionner."
 
 msgid "TEXT_GREET_DEVICE_INSTRUCTIONS_NO_EMAIL"
 msgstr ""
@@ -580,6 +687,24 @@ msgstr "Le lien d'invitation a été copié dans le presse-papier."
 msgid "TEXT_GREET_DEVICE_EMAIL_SENT"
 msgstr "Email envoyé"
 
+msgid "TEXT_EMAIL_FAILED_TO_SEND_TITLE"
+msgstr "Échec de l'envoi de l'email"
+
+msgid "TEXT_INVITE_DEVICE_EMAIL_BAD_RECIPIENT_directlink"
+msgstr ""
+"Impossible d'envoyer l'invitation par mail, l'email fourni semble être "
+"invalide. Voici le lien à ouvrir sur votre autre appareil\n"
+" <b><a href=\"{directlink}\">{directlink}</a></b>"
+
+msgid "ACTION_COPY_ADDR"
+msgstr "Copier le lien d'invitation"
+
+msgid "TEXT_INVITE_DEVICE_EMAIL_NOT_AVAILABLE_directlink"
+msgstr ""
+"Impossible d'envoyer l'invitation par mail, le serveur n'est pas "
+"disponible. Voici le lien à ouvrir sur votre autre appareil\n"
+" <b><a href=\"{directlink}\">{directlink}</a></b>"
+
 msgid "TEXT_GREET_DEVICE_SEND_EMAIL_ERROR"
 msgstr "Impossible d'envoyer l'email"
 
@@ -595,7 +720,7 @@ msgstr "Le processus va redémarrer suite à une annulation."
 msgid "TEXT_GREET_DEVICE_INVALID_CODE_CLICKED"
 msgstr ""
 "Vous n'avez pas cliqué sur le bon code. Vous devez redémarrer le "
-"processus du début. Nous voulons être certain que cette invitation vous "
+"processus du début. Nous voulons être certains que cette invitation vous "
 "était bien destinée."
 
 msgid "TEXT_GREET_DEVICE_NONE_CODE_CLICKED"
@@ -645,11 +770,41 @@ msgstr "Suite à une annulation de l'invité, il faut redémarrer le precessus"
 msgid "TEXT_GREET_USER_PEER_RESET"
 msgstr "Suite à une annulation de l'invité, il faut redémarrer le processus."
 
+msgid "TEXT_SELECT_USER_PROFILE"
+msgstr "Veuillez sélectionner le profil de l'utilisateur :"
+
+msgid "TEXT_USER_PROFILE_OUTSIDER"
+msgstr "Externe"
+
 msgid "TEXT_USER_PROFILE_STANDARD"
 msgstr "Standard"
 
 msgid "TEXT_USER_PROFILE_ADMIN"
 msgstr "Administrateur"
+
+msgid "TEXT_USER_PROFILE_STANDARD_TOOLTIP"
+msgstr ""
+"Le profil <b>Utilisateur Standard</b> accède aux espaces de travail dans "
+"lesquelles il est invité ; il peut créer un espace de travail et le "
+"partager ; il peut accéder à l'annuaire des utilisateurs de "
+"l'organisation."
+
+msgid "TEXT_USER_PROFILE_ADMIN_TOOLTIP"
+msgstr ""
+"Le profil <b>Administrateur</b> gère l'organisation. Les administrateurs "
+"peuvent ajouter ou retirer des utilisateurs de l'organisation. Un "
+"administrateur a également accès aux fonctionnalités d'un utilisateur "
+"standard."
+
+msgid "NOT_ALLOWED_OUTSIDER_PROFILE_TOOLTIP"
+msgstr "Votre configuration actuelle n'autorise pas ce type de profil"
+
+msgid "TEXT_USER_PROFILE_OUTSIDER_TOOLTIP"
+msgstr ""
+"Le profil <b>Utilisateur Externe</b> est invité à partager les données "
+"d'un espace de travail en mode <b>Lecteur</b> ou <b>Contributeur</b> mais"
+" ne peut pas créer d'espace de travail ni ne peut accéder à l'annuaire "
+"des utilisateurs de l'organisation"
 
 msgid "TEXT_GREET_USER_INVALID_HUMAN_HANDLE"
 msgstr "L'email n'est pas valide."
@@ -659,13 +814,18 @@ msgstr ""
 "Une erreur est survenue lors de la création de l'utilisateur. Veuillez "
 "redémarrer le processus."
 
+msgid "TEXT_GREET_USER_ACTIVE_USERS_LIMIT_REACHED"
+msgstr ""
+"Limite d'utilisateurs actifs atteinte, augmentez cette limite ou bien "
+"révoquez des utilisateurs avant de réessayer."
+
 msgid "TEXT_GREET_USER_GET_REQUESTS_ERROR"
 msgstr "Erreur interne. Veuillez redémarrer le processus."
 
 msgid "TEXT_GREET_USER_INVALID_CODE_CLICKED"
 msgstr ""
 "Vous n'avez pas cliqué sur le bon code. Vous devez redémarrer le "
-"processus du début. Nous voulons être certain que cette invitation vous "
+"processus du début. Nous voulons être certains que cette invitation vous "
 "était bien destinée."
 
 msgid "TEXT_GREET_USER_NONE_CODE_CLICKED"
@@ -706,6 +866,31 @@ msgstr "Erreur interne. Veuillez redémarrer le processus."
 msgid "TEXT_GREET_USER_TITLE"
 msgstr "Accueillir un nouvel utilisateur"
 
+msgid "TEXT_MACFUSE_INSTALL_WINDOW_TITLE"
+msgstr "Dernière étape : Installer macFUSE"
+
+msgid "TEXT_LOGIN_ERROR_MACFUSE_NOT_AVAILABLE"
+msgstr ""
+"Pour finaliser votre installation, macFUSE doit être installé pour "
+"permettre l'utilisation de certaines fonctions de Parsec.<br><br>Sur les "
+"versions 11.x de macOS, il est nécessaire d'autoriser macFUSE dans les "
+"paramètres de sécurité de votre Mac après installation, requérant un "
+"redémarrage de votre ordinateur."
+
+msgid "TEXT_MACFUSE_DOWNLOAD_BUTTON"
+msgstr "Télécharger macFUSE"
+
+msgid "TEXT_UPDATE_MACFUSE_TITLE"
+msgstr "Mise à jour de macFUSE nécessaire"
+
+msgid "TEXT_UPDATE_MACFUSE"
+msgstr ""
+"Votre version de macFUSE est obsolète. Pour assurer le bon fonctionnement"
+" de Parsec, vous pouvez le mettre à jour en suivant le lien ci-dessous."
+
+msgid "TEXT_UPDATE_MACFUSE_BUTTON"
+msgstr "Télécharger la dernière version de macFUSE"
+
 msgid "TEXT_LOGIN_ERROR_DEVICE_REVOKED"
 msgstr "Cet appareil a été révoqué et ne peut plus se connecter."
 
@@ -716,13 +901,8 @@ msgstr ""
 
 msgid "TEXT_LOGIN_ERROR_FUSE_NOT_AVAILABLE"
 msgstr ""
-"FUSE n'a pas pu être chargé.<br>Merci de vérifier votre "
-"installation.<br><br>Sur Mac, il est nécessaire d'installer OSXFUSE (FUSE"
-" for MacOS) et de l'accepter dans les réglages de sécurité.<br>À partir "
-"de Mac OS 11.x, un rédémarrage est nécessaire après l'installation de "
-"osxfuse.<br><br><a "
-"href=\"https://osxfuse.github.io/2020/10/05/OSXFUSE-3.11.2.html\">Télécharger"
-" osxfuse ici</a>"
+"FUSE n'a pas pu être chargé. \n"
+"Merci de vérifier votre installation."
 
 msgid "TEXT_LOGIN_UNKNOWN_ERROR"
 msgstr "Impossible de se connecter."
@@ -730,54 +910,15 @@ msgstr "Impossible de se connecter."
 msgid "TEXT_LOGIN_ERROR_ALREADY_CONNECTED"
 msgstr "Cet appareil est déjà connecté, probablement dans un autre onglet."
 
-msgid "TEXT_LOGIN_ERROR_AUTHENTICATION_FAILED"
-msgstr "Le mot de passe n'est pas correct."
-
 msgid "TEXT_LOGIN_MOUNTPOINT_ERROR"
 msgstr ""
 "Impossible de se connecter. Les espaces de travail n'ont pas pu être "
 "montés."
 
-msgid "ASK_OVERWRITE_KEY"
-msgstr "Remplacer la clef d'appareil"
-
-msgid "TEXT_OVERWRITE_KEY"
-msgstr "Cette clef d'appareil existe déjà, souhaitez-vous la remplacer ?"
-
-msgid "ACTION_OVERWRITE_KEY_YES"
-msgstr "Remplacer"
-
-msgid "ACTION_IMPORT_NO"
-msgstr "Annuler"
-
-msgid "TEXT_EXPORT_KEY"
-msgstr "Exporter la clef d'appareil"
-
-msgid "IMPORT_KEY_FILTERS"
-msgstr "Clefs d'appareil (*.keys);;Tous les fichiers (*)"
-
-msgid "IMPORT_KEY_INITIAL_FILTER"
-msgstr "Clefs d'appareil (*.keys)"
-
-msgid "EXPORT_KEY_ERROR"
-msgstr "Impossible d'exporter cette clef."
-
-msgid "ACTION_IMPORT_KEY"
-msgstr "Importer une clé d'appareil"
-
-msgid "TEXT_INVALID_DEVICE_KEY"
-msgstr "Ce fichier ne contient pas de clef d'appareil valide."
-
-msgid "ASK_IMPORT_KEY"
-msgstr "Importer cette clef d'appareil ?"
-
-msgid "TEXT_IMPORT_KEY_CONFIRM_organization-user-device"
+msgid "TEXT_LOGIN_SMARTCARD_NOT_AVAILABLE"
 msgstr ""
-"Organisation : <b>{organization}</b><br />Utilisateur : <b>{user}</b><br "
-"/>Appareil : <b>{device}</b>"
-
-msgid "ACTION_IMPORT_YES"
-msgstr "Importer"
+"Cet appareil est protogé par une authentification via carte à puce, "
+"toutefois cette version de Parsec ne supporte ce type d'authentification."
 
 msgid "TEXT_PARSEC_LICENSE"
 msgstr ""
@@ -1551,16 +1692,21 @@ msgstr ""
 "\n"
 "</body></html>"
 
-msgid "TEXT_LOGIN_ENTER_PASSWORD_INSTRUCTIONS_organization-device-user-email"
+msgid "TEXT_LOGIN_SELECT_SMARTCARD_INSTRUCTIONS_organization-device-user"
 msgstr ""
-"Content de vous revoir <b>{user}</b> ! Veuillez entrer le mot de passe de"
-" votre appareil <b>{device}</b>."
+"Content de vous revoir <b>{user}</b> ! Il vous sera demandé votre carte à"
+" puce pour vous identifier sur votre appareil <b>{device}</b>."
 
 msgid "ACTION_LOGGING_IN"
 msgstr "En cours de connexion..."
 
 msgid "ACTION_LOG_IN"
 msgstr "Se connecter"
+
+msgid "TEXT_LOGIN_ENTER_PASSWORD_INSTRUCTIONS_organization-device-user"
+msgstr ""
+"Content de vous revoir <b>{user}</b> ! Veuillez entrer le mot de passe de"
+" votre appareil <b>{device}</b>."
 
 msgid "TEXT_LOGIN_NO_AVAILABLE_DEVICE"
 msgstr ""
@@ -1579,11 +1725,14 @@ msgstr "Menu"
 msgid "Ctrl+K"
 msgstr ""
 
+msgid "Ctrl+I"
+msgstr ""
+
 msgid "Alt+E"
 msgstr ""
 
-msgid "ACTION_MAIN_MENU_ADD_INSTANCE"
-msgstr "Ouvrir un nouvel onglet"
+msgid "TEXT_MENU_FILE"
+msgstr "Fichier"
 
 msgid "ACTION_MAIN_MENU_CREATE_ORGANIZATION"
 msgstr "Créer une organisation"
@@ -1591,17 +1740,17 @@ msgstr "Créer une organisation"
 msgid "ACTION_MAIN_MENU_JOIN_ORGANIZATION"
 msgstr "Rejoindre une organisation"
 
-msgid "ACTION_MAIN_MENU_MANAGE_KEYS"
-msgstr "Importer/Exporter les clés de l'appareil"
+msgid "TEXT_MENU_DEVICE"
+msgstr "Appareil"
 
-msgid "ACTION_MAIN_MENU_SETTINGS"
-msgstr "Configuration"
+msgid "ACTION_MAIN_MENU_MANAGE_KEYS"
+msgstr "Récupération d'appareil"
+
+msgid "TEXT_MENU_HELP"
+msgstr "Aide"
 
 msgid "ACTION_MAIN_MENU_OPEN_DOCUMENTATION"
 msgstr "Documentation"
-
-msgid "ACTION_MAIN_MENU_ABOUT"
-msgstr "À propos"
 
 msgid "ACTION_MAIN_MENU_CHANGELOG"
 msgstr "Journal des modifications"
@@ -1611,6 +1760,15 @@ msgstr "Licence"
 
 msgid "ACTION_MAIN_MENU_FEEDBACK_SEND"
 msgstr "Donnez votre avis"
+
+msgid "ACTION_MAIN_MENU_ADD_INSTANCE"
+msgstr "Ouvrir un nouvel onglet"
+
+msgid "ACTION_MAIN_MENU_SETTINGS"
+msgstr "Configuration"
+
+msgid "ACTION_MAIN_MENU_ABOUT"
+msgstr "À propos"
 
 msgid "ACTION_MAIN_MENU_QUIT_PARSEC"
 msgstr "Quitter"
@@ -1624,8 +1782,36 @@ msgstr "Journal des modifications de PARSEC"
 msgid "TEXT_SETTINGS_TITLE"
 msgstr "Configuration"
 
-msgid "TEXT_KEYS_DIALOG"
-msgstr "Gerer les clés de l'appareil"
+msgid "ACTION_RECOVER_DEVICE"
+msgstr "Récupérer un appareil"
+
+msgid "ACTION_CREATE_RECOVERY_DEVICE"
+msgstr "Créer un appareil de récupération"
+
+msgid "TEXT_DEVICE_RECOVERY_TITLE"
+msgstr "Récupération d'appareil"
+
+msgid "TEXT_DEVICE_RECOVERY_QUESTION"
+msgstr "Que souhaitez-vous faire ?"
+
+msgid "TEXT_BOOTSTRAP_ORG_SUCCESS_TITLE"
+msgstr "Votre organisation a été créée avec succès !"
+
+msgid "TEXT_BOOTSTRAP_ORG_SUCCESS_organization"
+msgstr ""
+"Votre organisation <b>{organization}</b> a été créée !<br />\n"
+"<br />\n"
+"Vous allez maintenant être automatiquement connecté.<br />\n"
+"<br />\n"
+"Pour une meilleure prise en main du logiciel, vous pouvez vous référer au"
+" <a href=\"https://docs.parsec.cloud/fr/stable/\" title=\"Guide "
+"d'utilisation\">guide d'utilisation PARSEC.<br /><br />\n"
+"\n"
+"Nous vous conseillons de créer un appareil de récupération.<br />\n"
+"Souhaitez-vous en créer un maintenant ?"
+
+msgid "ACTION_NO"
+msgstr "Non"
 
 msgid "TEXT_JOIN_ORG_URL_TITLE"
 msgstr "Rejoindre une organisation"
@@ -1642,22 +1828,34 @@ msgstr "L'URL n'est pas valide."
 msgid "TEXT_INVALID_URL"
 msgstr "L'URL n'est pas valide."
 
-msgid "TEXT_ERROR_REPORTING_TITLE"
-msgstr "Rapport d'erreur"
+msgid "TEXT_CLAIM_USER_SUCCESSFUL_TITLE"
+msgstr "Vous avez rejoint une nouvelle organisation !"
 
-msgid "TEXT_ERROR_REPORTING_INSTRUCTIONS"
+msgid "TEXT_CLAIM_USER_SUCCESSFUL"
 msgstr ""
-"PARSEC peut automatiquement envoyer des données quand une erreur est "
-"rencontrée. Cette information nous aide à améliorer votre expérience "
-"utilisateur.<br /><br />\n"
+"L'utilisateur a été créé avec succès. Vous allez maintenant être "
+"connecté.\n"
+"Bienvenue dans PARSEC !<br /><br />\n"
 "\n"
-"Autorisez-vous PARSEC à envoyer automatiquement des rapports d'erreur ? "
-"Vous pourrez désactiver cette fonctionnalité dans la configuration."
+"Nous vous conseillons de créer un appareil de récupération.<br />\n"
+"Souhaitez-vous en créer un maintenant ?"
 
-msgid "ACTION_ERROR_REPORTING_ACCEPT"
-msgstr "Autoriser les rapports d'erreur"
+msgid "TEXT_ENABLE_TELEMETRY_TITLE"
+msgstr "Activer la télémétrie"
 
-msgid "ACTION_NO"
+msgid "TEXT_ENABLE_TELEMETRY_INSTRUCTIONS"
+msgstr ""
+"En cas de bug ou dysfonctionnement du logiciel, la télémétrie permet "
+"l'envoi automatique de rapports anonymes à notre support technique, et "
+"ainsi d’améliorer votre expérience utilisateur avec Parsec.<br />\n"
+"<br />\n"
+"Voulez-vous activer la télémétrie ? Vous pourrez modifier cette option "
+"dans la configuration."
+
+msgid "ACTION_ENABLE_TELEMETRY_ACCEPT"
+msgstr "Oui"
+
+msgid "ACTION_ENABLE_TELEMETRY_REFUSE"
 msgstr "Non"
 
 msgid "TEXT_KICKSTART_PARSEC_WHAT_TO_DO_TITLE"
@@ -1678,7 +1876,7 @@ msgstr "Connexion"
 msgid "TEXT_FILE_LINK_NOT_IN_ORG_organization"
 msgstr ""
 "Vous ne pouvez pas accéder à ce fichier car vous n'avez aucun appareil "
-"appartenant à l'organisation {organization} on this machine."
+"appartenant à l'organisation {organization} sur cet ordinateur."
 
 msgid "TEXT_FILE_LINK_PLEASE_LOG_IN_organization"
 msgstr ""
@@ -1720,14 +1918,11 @@ msgstr ""
 msgid "TEXT_PARSEC_NEW_VERSION_AVAILABLE_version"
 msgstr "La version <b>{version}</b> de PARSEC est disponible !"
 
-msgid "TEXT_CHANGE_PASSWORD_SUCCESS"
-msgstr "Le mot de passe a été changé avec succès."
+msgid "TEXT_PASSWORD_CHECK_MATCH"
+msgstr "Le mot de passe et la confirmation sont les mêmes."
 
-msgid "TEXT_CHANGE_PASSWORD_INVALID_PASSWORD"
-msgstr "Vous n'avez pas fourni le bon mot de passe pour cet appareil."
-
-msgid "TEXT_CHANGE_PASSWORD_TITLE"
-msgstr "Modifier le mot de passe"
+msgid "TEXT_PASSWORD_CHECK_NO_MATCH"
+msgstr "La confirmation diffère du mot de passe."
 
 msgid "TEXT_PASSWORD_VALIDATION_TOO_SHORT"
 msgstr "TROP COURT"
@@ -1750,14 +1945,14 @@ msgstr "EXCELLENT"
 msgid "TEXT_PASSWORD_VALIDATION_PASSWORD_STRENGTH_strength"
 msgstr "Force du mot de passe : {strength}"
 
-msgid "TEXT_PASSWORD_CHECK_MATCH"
-msgstr "Le mot de passe et la confirmation sont les mêmes."
+msgid "TEXT_CLICK_TO_ENLARGE"
+msgstr "Cliquer pour élargir"
 
-msgid "TEXT_PASSWORD_CHECK_NO_MATCH"
-msgstr "La confirmation diffère du mot de passe."
+msgid "TEXT_CLICK_TO_CLOSE"
+msgstr "Cliquer pour fermer"
 
 msgid "TEXT_SETTINGS_NEED_RESTART"
-msgstr "Les modification seront prises en compte au redémarrage de l'application."
+msgstr "Les modifications seront prises en compte au redémarrage de l'application."
 
 msgid "ACTION_SYSTRAY_SHOW_WINDOW"
 msgstr "Afficher Parsec"
@@ -1786,9 +1981,6 @@ msgstr "Copier l'adresse email"
 
 msgid "TEXT_USER_IS_CURRENT"
 msgstr "vous"
-
-msgid "TEXT_USER_PROFILE_OUTSIDER"
-msgstr "Externe"
 
 msgid "TEXT_USER_IS_REVOKED"
 msgstr "Révoqué"
@@ -1871,14 +2063,30 @@ msgstr ""
 "L'invitation à rejoindre votre organisation a été envoyée avec succès à "
 "l'adresse : <b>{email}</b>"
 
+msgid "TEXT_INVITE_USER_EMAIL_BAD_RECIPIENT_directlink"
+msgstr ""
+"Impossible d'envoyer l'invitation par mail à l'utilisateur, l'email "
+"fourni semble être invalide. Voici le lien que l'utilisateur doit ouvrir"
+"\n"
+" <b><a href=\"{directlink}\">{directlink}</a></b>"
+
+msgid "TEXT_INVITE_USER_EMAIL_NOT_AVAILABLE_directlink"
+msgstr ""
+"Impossible d'envoyer l'invitation par mail à l'utilisateur, le serveur "
+"n'est pas disponible. Voici le lien que l'utilisateur doit ouvrir\n"
+" <b><a href=\"{directlink}\">{directlink}</a></b>"
+
 msgid "TEXT_INVITE_USER_INVITE_OFFLINE"
 msgstr "Le serveur est hors-ligne ou vous n'avez pas de connexion internet."
 
 msgid "TEXT_INVITE_USER_ALREADY_MEMBER_ERROR"
-msgstr "Cet utilisateur fait déjà parti de cette organisation."
+msgstr "Cet utilisateur fait déjà partie de cette organisation."
 
 msgid "TEXT_INVITE_USER_INVITE_ERROR"
 msgstr "Impossible d'inviter l'utilisateur."
+
+msgid "ACTION_WORKSPACE_OPEN_IN_FINDER"
+msgstr "Ouvrir dans le Finder"
 
 msgid "ACTION_WORKSPACE_OPEN_IN_FILE_EXPLORER"
 msgstr "Ouvrir dans l'explorateur de fichiers"
@@ -1934,8 +2142,11 @@ msgstr "Non partagé"
 msgid "TEXT_WORKSPACE_SHARING_USER_HAS_BEEN_REVOKED"
 msgstr "Cet utilisateur a été révoqué."
 
-msgid "TEXT_WORKSPACE_SHesARING_OFFLINE"
-msgstr "Le serveur est hors-ligne ou vous n'avez pas de connexion internet."
+msgid "NOT_ALLOWED_FOR_OUTSIDER_PROFILE_TOOLTIP"
+msgstr "Rôle non autorisé pour les utilisateurs externes."
+
+msgid "TEXT_WORKSPACE_SHARING_OFFLINE"
+msgstr ""
 
 msgid "TEXT_WORKSPACE_SHARING_UNSHARE_ERROR_workspace-user"
 msgstr ""
@@ -2010,7 +2221,7 @@ msgstr "Supprimer l'espace de travail"
 msgid "TEXT_WORKSPACE_DELETE_INSTRUCTIONS_workspace"
 msgstr ""
 "L'espace de travail <b>{workspace}</b> sera supprimé. S'il s'agit d'un "
-"espace de travail temporaire, ne vous inquiéter pas, vos fichiers sont "
+"espace de travail temporaire, ne vous inquiétez pas, vos fichiers seront "
 "toujours accessibles.<br /><br />\n"
 "Voulez-vous continuer ?"
 
@@ -2055,18 +2266,18 @@ msgid "ACTION_WORKSPACE_REENCRYPTION_CONFIRM"
 msgstr "Rechiffrer"
 
 msgid "TEXT_WORKPACE_REENCRYPT_OFFLINE_ERROR"
-msgstr "Echec lors du rechiffrement, impossible de joindre le serveur."
+msgstr "Échec lors du rechiffrement, impossible de joindre le serveur."
 
 msgid "TEXT_WORKPACE_REENCRYPT_ACCESS_ERROR"
 msgstr ""
-"Echec lors du rechiffrement, vous n'avez pas la permission de rechiffrer "
+"Échec lors du rechiffrement, vous n'avez pas la permission de rechiffrer "
 "cet espace de travail."
 
 msgid "TEXT_WORKPACE_REENCRYPT_NOT_FOUND_ERROR"
-msgstr "Echec lors du rechiffrement, l'espace de travail n'a pas été trouvé."
+msgstr "Échec lors du rechiffrement, l'espace de travail n'a pas été trouvé."
 
 msgid "TEXT_WORKPACE_REENCRYPT_FS_ERROR"
-msgstr "Echec lors du rechiffrement, l'espace de travail est déja en maintenance."
+msgstr "Échec lors du rechiffrement, l'espace de travail est déjà en maintenance."
 
 msgid "TEXT_WORKSPACE_REENCRYPT_UNKOWN_ERROR"
 msgstr "Le rechiffrement a échoué pour une raison inconnue."
@@ -2094,6 +2305,12 @@ msgstr ""
 "href=\"https://www.flaticon.com/\" title=\"Flaticon\" style=\"color: "
 "#0092FF; font-weight: bold;\">www.flaticon.com</a>"
 
+msgid "ACTION_NEXT"
+msgstr "Suivant"
+
+msgid "TEXT_AUTHENTICATION_METHOD_CHOICE"
+msgstr "Méthode d'authentication"
+
 msgid "TEXT_CLAIM_DEVICE_CODE_EXCHANGE_GET_CODE_INSTRUCTIONS"
 msgstr "Récupérer le code sur votre autre appareil."
 
@@ -2119,16 +2336,13 @@ msgstr "Nom de l'appareil"
 msgid "TEXT_LABEL_DEVICE_PLACEHOLDER"
 msgstr "portable, téléphone, travail, fixe, ..."
 
-msgid "ACTION_CREATE_DEVICE"
-msgstr "Créer l'appareil"
-
 msgid "TEXT_CLAIM_DEVICE_WAIT_FOR_DEVICE_INFO"
 msgstr "En attente de l'autre appareil"
 
 msgid "TEXT_CLAIM_USER_CODE_EXCHANGE_GET_CODE_INSTRUCTIONS"
 msgstr ""
 "La personne qui vous a invité vous fournira un code. Veuillez "
-"sélectionner le bon code parmis les choix ci-dessous."
+"sélectionner le bon code parmi les choix ci-dessous."
 
 msgid "TEXT_CLAIM_USER_CODE_EXCHANGE_GIVE_CODE_INSTRUCTIONS"
 msgstr "Parfait ! Veuillez maintenant fournir le code suivant à la personne :"
@@ -2147,9 +2361,8 @@ msgstr ""
 "\n"
 "Si vous lisez ceci, quelqu'un vous a invité à rejoindre PARSEC.\n"
 "\n"
-"Pour se prévenir de toute attaque malicieuse, vous devrez être en contact"
-" direct (par téléphone par exemple) avec la personne qui vous a invitée."
-"\n"
+"Pour se prémunir de toute attaque malicieuse, vous devrez être en contact"
+" direct (par téléphone par exemple) avec la personne qui vous a invité.\n"
 "\n"
 "L'invitant doit se rendre dans la liste des utilisateurs et cliquer sur "
 "Accueillir.\n"
@@ -2179,14 +2392,17 @@ msgstr ""
 "Aucun de\n"
 "ces codes"
 
-msgid "TEXT_LABEL_DEVICE_NAME"
-msgstr "Nom d'appareil"
-
 msgid "TEXT_LABEL_ORG_NAME"
 msgstr "Nom de l'organisation"
 
 msgid "TEXT_LABEL_ORG_NAME_RECOMMANDATIONS"
 msgstr "Lettres, chiffres, underscores et tirets seulement. Aucun espace."
+
+msgid "TEXT_LABEL_DEVICE_NAME"
+msgstr "Nom d'appareil"
+
+msgid "ACTION_CREATE_ON_COMMERCIAL_BACKEND"
+msgstr "Utiliser le serveur PARSEC principal"
 
 msgid "ACTION_ACCEPT_CONTRACT"
 msgstr ""
@@ -2203,14 +2419,66 @@ msgstr "Je dispose de mon propre serveur PARSEC"
 msgid "TEXT_LABEL_BACKEND_ADDR_PLACEHOLDER"
 msgstr "parsec://hote:port"
 
-msgid "ACTION_CREATE_ON_COMMERCIAL_BACKEND"
-msgstr "Utiliser le server PARSEC principal"
-
 msgid "TEXT_CREATE_ORGANIZATION_INSTRUCTIONS"
 msgstr "Veuillez fournir les informations suivantes pour créer votre organisation."
 
-msgid "ACTION_PREVIOUS"
-msgstr "Précédent"
+msgid "TEXT_DEVICE_RECOVERY_EXPORT_INSTRUCTIONS"
+msgstr ""
+"Vous allez pouvoir créer un appareil de récupération.<br />\n"
+"Un appareil de récupération est constitué d'un fichier protégé par une "
+"phrase secrète et vous permet de re-créer des appareils si vous perdez "
+"votre appareil actuel."
+
+msgid "TEXT_DEVICE_RECOVERY_EXPORT_SELECT_DEVICE_LABEL"
+msgstr ""
+"Choisissez l'utilisateur pour lequel vous souhaitez créer un appareil de "
+"récupération"
+
+msgid "TEXT_DEVICE_RECOVERY_EXPORT_SELECT_FILE_LABEL"
+msgstr "Choisissez un emplacement pour le fichier de récupération"
+
+msgid "ACTION_DEVICE_RECOVERY_EXPORT_SELECT_FILE"
+msgstr "Choisir"
+
+msgid "TEXT_RECOVERY_EXPORT_KEEP_INFO_INSTRUCTIONS"
+msgstr ""
+"Nous avons créer un fichier et une phrase secrète qui vous permettront de"
+" récupérer votre appareil.<br />\n"
+"Conservez les dans un endroit sûr, et si possible, séparément.<br />\n"
+"Toute personne ayant accès à ces deux éléments simultanément sera capable"
+" d'accéder à vos données."
+
+msgid "TEXT_RECOVERY_EXPORT_FILE_PATH_LABEL"
+msgstr "Le fichier de récupération"
+
+msgid "TEXT_RECOVERY_EXPORT_KEY_LABEL"
+msgstr "La phrase secrète"
+
+msgid "ACTION_PRINT_RECOVERY_KEY"
+msgstr "Imprimer la phrase secrète"
+
+msgid "TEXT_RECOVERY_IMPORT_INSTRUCTIONS"
+msgstr ""
+"Nous allons restaurer votre appareil en utilisant un appareil de "
+"récupération créé précédement."
+
+msgid "TEXT_RECOVERY_IMPORT_SELECT_KEY_FILE_LABEL"
+msgstr "Le fichier de récupération"
+
+msgid "ACTION_RECOVERY_IMPORT_KEY_FILE"
+msgstr "Sélectionnez le fichier de récupération"
+
+msgid "TEXT_RECOVERY_IMPORT_PASSPHRASE_LABEL"
+msgstr "La phrase secrète associée à cet appareil de récupération"
+
+msgid "TEXT_RECOVERY_IMPORT_DEVICE_NAME"
+msgstr "Nom de l'appareil"
+
+msgid "TEXT_RECOVERY_NEW_PASSWORD_INSTRUCTION"
+msgstr "Choisissez le nouveau mot de passe pour cet appareil."
+
+msgid "ACTION_RECOVERY_IMPORT_NEW_DEVICE"
+msgstr "Récupérer l'appareil"
 
 msgid "TEXT_DEVICE_ADD_NEW_TOOLTIP"
 msgstr "Inviter un nouvel appareil"
@@ -2261,6 +2529,48 @@ msgstr "Par"
 msgid "ACTION_FILE_HISTORY_LOAD_MORE_ENTRIES"
 msgstr "Charger plus d'entrées"
 
+msgid "TEXT_FILE_INFO_LOCATION"
+msgstr "Emplacement"
+
+msgid "TEXT_FILE_INFO_TYPE"
+msgstr "Type"
+
+msgid "TEXT_FILE_INFO_SIZE"
+msgstr "Taille"
+
+msgid "TEXT_FILE_INFO_NON_APPLICABLE"
+msgstr "N/A"
+
+msgid "TEXT_FILE_INFO_WORKSPACE"
+msgstr "Espace de travail"
+
+msgid "TEXT_FILE_INFO_CREATED_ON"
+msgstr "Créé le"
+
+msgid "TEXT_FILE_INFO_CREATED_BY"
+msgstr "Créé par"
+
+msgid "TEXT_FILE_INFO_UPDATED_ON"
+msgstr "Mise à jour le"
+
+msgid "TEXT_FILE_INFO_UPDATED_BY"
+msgstr "Mise à jour par"
+
+msgid "TEXT_FILE_INFO_AVAILABILITY"
+msgstr "Disponibilité"
+
+msgid "TEXT_FILE_INFO_UPLOADED"
+msgstr "Téléchargé"
+
+msgid "TEXT_FILE_INFO_BLOCKS_LOCAL"
+msgstr "Blocs locaux uniquement"
+
+msgid "TEXT_FILE_INFO_BLOCKS_REMOTE"
+msgstr "Blocs distants uniquement"
+
+msgid "TEXT_FILE_INFO_BLOCKS_BOTH"
+msgstr "Blocs locaux et distants"
+
 msgid "TEXT_FILE_BACK_TO_WORKSPACES_TOOLTIP"
 msgstr "Retour à la liste des espaces de travail"
 
@@ -2309,24 +2619,15 @@ msgstr "En attente des informations"
 msgid "ACTION_SEND_EMAIL"
 msgstr "Envoyer un email"
 
-msgid "ACTION_COPY_ADDR"
-msgstr "Copier le lien d'invitation"
-
 msgid "TEXT_GREET_DEVICE_INSTRUCTIONS_START"
 msgstr ""
-"Pour accueillir votre nouvel appareil, PARSEC doit être démarré sur les "
-"deux appareils.\n"
-"\n"
-"Vous devrez échanger un code entre les appareils. De cette manière, nous "
-"pouvons nous assurer que le processus se déroule en toute sécurité.\n"
-"\n"
 "Une fois que Parsec est installé sur votre nouvel appareil et que vous "
 "avez cliqué sur le lien d'invitation, vous pouvez cliquer sur "
 "<i>Démarrer</i> pour commencer le processus."
 
 msgid "TEXT_GREET_USER_WAITING_FOR_INFO"
 msgstr ""
-"Nous attentons que l'invité fournisse ses informations. Vous devrez "
+"Nous attendons que l'invité fournisse ses informations. Vous devrez "
 "ensuite les valider."
 
 msgid "TEXT_LABEL_USER_ROLE"
@@ -2334,7 +2635,7 @@ msgstr "Rôle de l'utilisateur"
 
 msgid "TEXT_USER_ROLES_TOOLTIP"
 msgstr ""
-"Externe : ne peut pas créer d'espace de travail ou voir les utilisateurs "
+"Externe : ne peut pas créer d'espace de travail ni voir les utilisateurs "
 "de l'organisation\n"
 "Standard : peut créer des espaces des travail et voir les autres "
 "utilisateurs, mais ne peut pas inviter de nouveaux utilisateurs\n"
@@ -2356,7 +2657,7 @@ msgstr "Nous attendons que l'utilisateur rentre le code."
 
 msgid "TEXT_GREET_USER_CODE_EXCHANGE_GET_CODE_INSTRUCTIONS"
 msgstr ""
-"L'utilisateur nous fournira un code. Veuillez sélectionner le choix "
+"L'utilisateur vous fournira un code. Veuillez sélectionner le choix "
 "correct ci-dessous."
 
 msgid "TEXT_GREET_USER_INSTRUCTIONS"
@@ -2364,10 +2665,10 @@ msgstr ""
 "Pendant ce processus, un nouvel utilisateur sera créé au sein de votre "
 "organisation.\n"
 "\n"
-"Pour se prévenir de toute attaque,  vous devrez être en contact direct "
+"Pour se prémunir de toute attaque, vous devrez être en contact direct "
 "avec la personne invitée.\n"
 "\n"
-"La personne invitée doit avoir reçue les instructions par email.\n"
+"La personne invitée doit avoir reçu les instructions par email.\n"
 "\n"
 "Quand vous êtes prêt, cliquez sur Démarrer."
 
@@ -2375,13 +2676,10 @@ msgid "TEXT_DIALOG_CLOSE_TOOLTIP"
 msgstr "Fermer la fenêtre."
 
 msgid "TEXT_EXPORT_KEY_TOOLTIP"
-msgstr "Exporter cette clé"
+msgstr "Créer une clé d'appareil de récupération"
 
 msgid "ACTION_EXPORT_KEY"
-msgstr "Exporter cette clef"
-
-msgid "TEXT_IMPORT_KEY_TOOLTIP"
-msgstr "Importer une nouvelle clef dans Parsec"
+msgstr "Générer cet appareil de récupération"
 
 msgid "TEXT_IMPORT_FILES_PROGRESS"
 msgstr "Import du fichier"
@@ -2404,25 +2702,16 @@ msgstr "Impossible de vérifier si une nouvelle version est disponble."
 msgid "TEXT_NEW_VERSION_UP_TO_DATE"
 msgstr "Votre application est à jour."
 
-msgid "ACTION_CLOSE"
-msgstr "Fermer"
-
 msgid "LABEL_NOTIFICATIONS"
 msgstr ""
 
-msgid "TEXT_PASSWORD_CHANGE_OLD_PASSWORD_INSTRUCTIONS"
+msgid "TEXT_PASSWORD_WARNING"
 msgstr ""
-"Pour modifier votre mot de passe, veuillez entrer votre ancien mot de "
-"passe :"
-
-msgid "TEXT_LABEL_PASSWORD_OLD"
-msgstr "Mot de passe actuel"
-
-msgid "TEXT_PASSWORD_CHANGE_NEW_PASSWORD_INSTRUCTIONS"
-msgstr "Puis choisissez-en un nouveau :"
-
-msgid "ACTION_CHANGE_PASSWORD"
-msgstr "Modifier le mot de passe"
+"Votre mot de passe est extrêmement important. Veuillez choisir un mot de "
+"passe sécurisé que vous retiendrez. Vos données seront chiffrées avec "
+"celui-ci et il est impossible de les récupérer si vous l'oubliez.<br "
+"/>Nous vous conseillons également de créer plusieurs appareils et de "
+"partager vos espaces de travail."
 
 msgid "TEXT_LABEL_PASSWORD"
 msgstr "Mot de passe"
@@ -2432,14 +2721,6 @@ msgstr "Confirmation du mot de passe"
 
 msgid "TEXT_PASSWORD_CHOICE_MISMATCH"
 msgstr "Ne correspond pas au mot de passe."
-
-msgid "TEXT_PASSWORD_WARNING"
-msgstr ""
-"Votre mot de passe est extrêmement important. Veuillez choisir un mot de "
-"passe sécurisé que vous retiendrez. Vos données seront chiffrées avec "
-"celui-ci et il est impossible de les récupérer si vous l'oubliez.<br "
-"/>Nous vous conseillons également de créer plusieurs appareils et de "
-"partager vos espaces de travail."
 
 msgid "TEXT_SETTINGS_BEHAVIOR_TITLE"
 msgstr "Comportement"
@@ -2462,11 +2743,11 @@ msgstr "Vérifier la disponibilité d'une nouvelle version au démarrage"
 msgid "ACTION_SETTINGS_CHECK_NEW_VERSION"
 msgstr "Vérifier la disponibilité d'une nouvelle version maintenant"
 
-msgid "TEXT_SETTINGS_ERROR_REPORTING_TITLE"
-msgstr "Rapport d'erreur"
+msgid "TEXT_SETTINGS_TELEMETRY_TITLE"
+msgstr "Télémétrie"
 
-msgid "TEXT_SETTINGS_CHECK_SEND_CRASH_REPORT"
-msgstr "Envoyer les rapports d'erreur"
+msgid "TEXT_SETTINGS_ENABLE_TELEMETRY"
+msgstr "Activer la télémétrie pour l'envoi automatique de rapports d'erreur"
 
 msgid "TEXT_SETTINGS_INTERFACE_TITLE"
 msgstr "Interface"
@@ -2479,6 +2760,12 @@ msgstr "Utiliser des couleurs pour les espaces de travail"
 
 msgid "ACTION_SAVE"
 msgstr "Sauvegarder"
+
+msgid "TEXT_SELECT_SMARTCARD"
+msgstr "Il vous sera demandé de sélectionner votre carte à puce"
+
+msgid "ACTION_DISMISS"
+msgstr "Masquer"
 
 msgid "TEXT_WORKSPACE_TEMPORARY_TITLE"
 msgstr "Vue instantanée"
@@ -2510,6 +2797,12 @@ msgstr "Rechercher utilisateurs"
 msgid "ACTION_USER_INVITE_USER"
 msgstr "Inviter un utilisateur"
 
+msgid "ACTION_FILTER_REVOKED_USERS"
+msgstr "Masquer les utilisateurs révoqués"
+
+msgid "ACTION_FILTER_PENDING_INVITATION"
+msgstr "Masquer les invitations"
+
 msgid "ACTION_LIST_PREVIOUS_PAGE"
 msgstr "Page précédente"
 
@@ -2540,8 +2833,8 @@ msgstr "Voir l'espace de travail tel qu'il était à une date donnée."
 msgid "TEXT_WORKSPACE_REENCRYPT_WORKSPACE_TOOLTIP"
 msgstr "Rechiffrer l'espace de travail."
 
-msgid "TEXT_WORKSPACE_DELETE_WORKSPACE_TOOLTIP"
-msgstr "Supprimer l'espace de travail"
+msgid "TEXT_TIMESTAMPED_WORKSPACE_CLOSE_TOOLTIP"
+msgstr "Fermer la vue instantanée."
 
 msgid "TEXT_WORKSPACE_FILTER_WORKSPACES_PLACEHOLDER"
 msgstr "Filtrer les espaces de travail"

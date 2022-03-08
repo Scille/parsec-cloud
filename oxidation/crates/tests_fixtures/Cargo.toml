@@ -1,0 +1,12 @@
+[package]
+name = "tests_fixtures"
+version = "0.0.0"
+edition = "2021"
+
+[dependencies]
+parsec_api_crypto = { version = "0.0.0", path = "../parsec_api_crypto" }
+parsec_api_types = { version = "0.0.0", path = "../parsec_api_types" }
+parsec_client_types = { version = "0.0.0", path = "../parsec_client_types" }
+
+rstest = "0.12.0"
+hex-literal = "0.3.3"

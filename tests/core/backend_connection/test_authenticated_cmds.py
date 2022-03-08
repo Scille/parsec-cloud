@@ -1,4 +1,4 @@
-# Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
+# Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2016-2021 Scille SAS
 
 import trio
 import pytest
@@ -6,7 +6,13 @@ import pendulum
 
 from parsec.api.transport import Transport, Ping, Pong
 from parsec.api.data import RevokedUserCertificateContent
-from parsec.api.protocol import ServerHandshake, HandshakeType, AUTHENTICATED_CMDS, APIEvent
+from parsec.api.protocol import (
+    ServerHandshake,
+    HandshakeType,
+    AUTHENTICATED_CMDS,
+    APIEvent,
+    OrganizationID,
+)
 from parsec.core.types import BackendOrganizationAddr
 from parsec.core.backend_connection import (
     BackendNotAvailable,
@@ -70,8 +76,8 @@ async def test_handshake_unknown_device(running_backend, alice, mallory):
 @pytest.mark.trio
 async def test_handshake_unknown_organization(running_backend, alice):
     unknown_org_addr = BackendOrganizationAddr.build(
-        backend_addr=alice.organization_addr,
-        organization_id="dummy",
+        backend_addr=alice.organization_addr.get_backend_addr(),
+        organization_id=OrganizationID("dummy"),
         root_verify_key=alice.organization_addr.root_verify_key,
     )
     with pytest.raises(BackendConnectionRefused) as exc:
@@ -85,7 +91,7 @@ async def test_handshake_unknown_organization(running_backend, alice):
 @pytest.mark.trio
 async def test_handshake_rvk_mismatch(running_backend, alice, otherorg):
     bad_rvk_org_addr = BackendOrganizationAddr.build(
-        backend_addr=alice.organization_addr,
+        backend_addr=alice.organization_addr.get_backend_addr(),
         organization_id=alice.organization_id,
         root_verify_key=otherorg.root_verify_key,
     )

@@ -1,8 +1,10 @@
-# Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
+# Parsec Cloud (https://parsec.cloud) Copyright (c) BSLv1.1 (eventually AGPLv3) 2016-2021 Scille SAS
 
 import trio
+from enum import Enum
 from functools import wraps
-from typing import Union, List
+from typing_extensions import Final, Literal
+from typing import Union, Sequence
 
 from parsec.api.protocol import (
     ProtocolError,
@@ -13,21 +15,37 @@ from parsec.api.protocol import (
 from parsec.api.version import API_V1_VERSION, API_V2_VERSION
 
 
+PEER_EVENT_MAX_WAIT = 3  # 5mn
 ALLOWED_API_VERSIONS = {API_V1_VERSION.version, API_V2_VERSION.version}
+
+
+# Enumeration used to check access rights for a given kind of operation
+OperationKind = Enum("OperationKind", "DATA_READ DATA_WRITE MAINTENANCE")
 
 
 def api(
     cmd: str,
     *,
-    handshake_types: List[Union[HandshakeType, APIV1_HandshakeType]] = (
+    long_request: bool = False,
+    handshake_types: Sequence[Union[HandshakeType, APIV1_HandshakeType]] = (
         HandshakeType.AUTHENTICATED,
-        APIV1_HandshakeType.AUTHENTICATED,
     ),
 ):
     def wrapper(fn):
-        assert not hasattr(fn, "_api_info")
-        fn._api_info = {"cmd": cmd, "handshake_types": handshake_types}
-        return fn
+        if long_request:
+
+            @wraps(fn)
+            async def wrapped(self, client_ctx, *args, **kwargs):
+                return await run_with_breathing_transport(
+                    client_ctx.transport, fn, self, client_ctx, *args, **kwargs
+                )
+
+        else:
+            wrapped = fn
+
+        assert not hasattr(wrapped, "_api_info")
+        wrapped._api_info = {"cmd": cmd, "handshake_types": handshake_types}
+        return wrapped
 
     return wrapper
 
@@ -47,7 +65,6 @@ def collect_apis(*components):
 
                 assert info["cmd"] not in apis[handshake_type]
                 apis[handshake_type][info["cmd"]] = meth
-
     return apis
 
 
@@ -107,3 +124,12 @@ async def run_with_breathing_transport(transport, fn, *args, **kwargs):
         nursery.start_soon(_keep_transport_breathing)
 
     return rep
+
+
+# Unset singleton used as default value in function parameter when `None`
+# can be a valid value.
+# We implement this as an enum to satisfy type checker (see
+# https://github.com/python/typing/issues/689#issuecomment-561425237)
+UnsetType = Enum("UnsetType", "Unset")
+Unset: Final = UnsetType.Unset
+UnsetType = Literal[UnsetType.Unset]

@@ -1,14 +1,19 @@
-# Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
+# Parsec Cloud (https://parsec.cloud) Copyright (c) BSLv1.1 (eventually AGPLv3) 2016-2021 Scille SAS
 
 from parsec.backend.backend_events import BackendEvent
 import itertools
-from typing import Optional
 from triopg import UniqueViolationError
-from uuid import UUID
 from pendulum import now as pendulum_now
 
 from parsec.api.protocol import OrganizationID
-from parsec.backend.user import User, Device, UserError, UserNotFoundError, UserAlreadyExistsError
+from parsec.backend.user import (
+    User,
+    Device,
+    UserError,
+    UserNotFoundError,
+    UserAlreadyExistsError,
+    UserActiveUsersLimitReached,
+)
 from parsec.backend.postgresql.handler import send_signal
 from parsec.backend.postgresql.utils import (
     Q,
@@ -17,6 +22,29 @@ from parsec.backend.postgresql.utils import (
     q_device_internal_id,
     q_user_internal_id,
     q_human_internal_id,
+)
+
+
+_q_check_active_users_limit = Q(
+    f"""
+    SELECT
+        (
+            organization.active_users_limit is NULL
+            OR (
+                SELECT
+                    count(*)
+                FROM
+                    user_
+                WHERE
+                    user_.organization = organization._id AND
+                    user_.revoked_on IS NULL
+            ) < organization.active_users_limit
+        ) as allowed
+    FROM
+        organization
+    WHERE
+        organization.organization_id = $organization_id
+"""
 )
 
 
@@ -135,10 +163,11 @@ VALUES (
 async def _do_create_user_with_human_handle(
     conn, organization_id: OrganizationID, user: User, first_device: Device
 ) -> None:
+    assert user.human_handle is not None
     # Create human handle if needed
     await conn.execute(
         *_q_insert_human_if_not_exists(
-            organization_id=organization_id,
+            organization_id=organization_id.str,
             email=user.human_handle.email,
             label=user.human_handle.label,
         )
@@ -148,12 +177,12 @@ async def _do_create_user_with_human_handle(
     try:
         result = await conn.execute(
             *_q_insert_user_with_human_handle(
-                organization_id=organization_id,
-                user_id=user.user_id,
+                organization_id=organization_id.str,
+                user_id=user.user_id.str,
                 profile=user.profile.value,
                 user_certificate=user.user_certificate,
                 redacted_user_certificate=user.redacted_user_certificate,
-                user_certifier=user.user_certifier,
+                user_certifier=user.user_certifier.str if user.user_certifier else None,
                 created_on=user.created_on,
                 email=user.human_handle.email,
             )
@@ -169,10 +198,10 @@ async def _do_create_user_with_human_handle(
     now = pendulum_now()
     not_revoked_users = await conn.fetch(
         *_q_get_not_revoked_users_for_human(
-            organization_id=organization_id, email=user.human_handle.email, now=now
+            organization_id=organization_id.str, email=user.human_handle.email, now=now
         )
     )
-    if len(not_revoked_users) != 1 or not_revoked_users[0]["user_id"] != user.user_id:
+    if len(not_revoked_users) != 1 or not_revoked_users[0]["user_id"] != user.user_id.str:
         # Exception cancels the transaction so the user insertion is automatically cancelled
         raise UserAlreadyExistsError(
             f"Human handle `{user.human_handle}` already corresponds to a non-revoked user"
@@ -185,12 +214,12 @@ async def _do_create_user_without_human_handle(
     try:
         result = await conn.execute(
             *_q_insert_user(
-                organization_id=organization_id,
-                user_id=user.user_id,
+                organization_id=organization_id.str,
+                user_id=user.user_id.str,
                 profile=user.profile.value,
                 user_certificate=user.user_certificate,
                 redacted_user_certificate=user.redacted_user_certificate,
-                user_certifier=user.user_certifier,
+                user_certifier=user.user_certifier.str if user.user_certifier else None,
                 created_on=user.created_on,
             )
         )
@@ -226,12 +255,17 @@ async def _create_user(
 
 @query(in_transaction=True)
 async def query_create_user(
-    conn,
-    organization_id: OrganizationID,
-    user: User,
-    first_device: Device,
-    invitation_token: Optional[UUID] = None,
+    conn, organization_id: OrganizationID, user: User, first_device: Device
 ) -> None:
+    record = await conn.fetchrow(*_q_check_active_users_limit(organization_id=organization_id.str))
+    if not record["allowed"]:
+        raise UserActiveUsersLimitReached()
+    # Note we don't lock anything in postgresql after checking active users limit.
+    # This means we are not protected against concurrency (i.e. multiple concurrent
+    # user creation will first check the active user limit is not reached then
+    # commit their new user, ending up with more than the users than the limit !).
+    # This is considered "fine enough" given concurrency on user creation is very
+    # low and worse outcome would be to go slightly above user limit.
     await _create_user(conn, organization_id, user, first_device)
 
 
@@ -240,7 +274,7 @@ async def _create_device(
 ) -> None:
     if not first_device:
         existing_devices = await conn.fetch(
-            *_q_get_user_devices(organization_id=organization_id, user_id=device.user_id)
+            *_q_get_user_devices(organization_id=organization_id.str, user_id=device.user_id.str)
         )
         if not existing_devices:
             raise UserNotFoundError(f"User `{device.user_id}` doesn't exists")
@@ -251,13 +285,13 @@ async def _create_device(
     try:
         result = await conn.execute(
             *_q_insert_device(
-                organization_id=organization_id,
-                user_id=device.user_id,
-                device_id=device.device_id,
-                device_label=device.device_label,
+                organization_id=organization_id.str,
+                user_id=device.user_id.str,
+                device_id=device.device_id.str,
+                device_label=device.device_label.str if device.device_label else None,
                 device_certificate=device.device_certificate,
                 redacted_device_certificate=device.redacted_device_certificate,
-                device_certifier=device.device_certifier,
+                device_certifier=device.device_certifier.str if device.device_certifier else None,
                 created_on=device.created_on,
             )
         )
@@ -272,7 +306,7 @@ async def _create_device(
 async def query_create_device(
     conn, organization_id: OrganizationID, device: Device, encrypted_answer: bytes = b""
 ) -> None:
-    await _create_device(conn, organization_id, device, encrypted_answer)
+    await _create_device(conn, organization_id, device, bool(encrypted_answer))
     await send_signal(
         conn,
         BackendEvent.DEVICE_CREATED,

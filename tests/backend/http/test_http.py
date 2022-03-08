@@ -1,107 +1,16 @@
-# Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
+# Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2016-2021 Scille SAS
 
 import pytest
 import trio
-import ssl
 import h11
-from uuid import uuid4
-from typing import Optional, Tuple
 
 from parsec import __version__ as parsec_version
-from parsec.api.protocol import OrganizationID, InvitationType
+from parsec.api.protocol import OrganizationID, InvitationToken, InvitationType
 from parsec.core.types.backend_address import BackendInvitationAddr
 from parsec.backend.app import MAX_INITIAL_HTTP_REQUEST_SIZE
 
 from tests.common import customize_fixtures
-
-
-async def open_stream_to_backend(backend_addr):
-    stream = await trio.open_tcp_stream(backend_addr.hostname, backend_addr.port)
-    if backend_addr.use_ssl:
-        ssl_context = ssl.create_default_context(ssl.Purpose.SERVER_AUTH)
-        ssl_context.load_default_certs()
-        stream = trio.SSLStream(stream, ssl_context, server_hostname=backend_addr.hostname)
-    return stream
-
-
-def craft_http_request(target="/", headers={}, protocol="1.0"):
-    # Use HTTP 1.0 by default given 1.1 requires Host header
-    req = f"GET {target} HTTP/{protocol}\r\n"
-    req += "\r\n".join(f"{key}: {value}" for key, value in headers.items())
-    while not req.endswith("\r\n\r\n"):
-        req += "\r\n"
-    return req.encode("ascii")
-
-
-def parse_http_response(raw):
-    head, _ = raw.split(b"\r\n\r\n", 1)  # Ignore the body part
-    status, *headers = head.split(b"\r\n")
-    protocole, status_code, status_label = status.split(b" ", 2)
-    assert protocole == b"HTTP/1.1"
-    cooked_status = (int(status_code.decode("ascii")), status_label.decode("ascii"))
-    cooked_headers = {}
-    for header in headers:
-        key, value = header.split(b": ")
-        cooked_headers[key.decode("ascii").lower()] = value.decode("ascii")
-    return cooked_status, cooked_headers
-
-
-@pytest.fixture
-def backend_http_send(running_backend, backend_addr):
-    async def _http_send(
-        target: Optional[str] = None,
-        req: Optional[bytes] = None,
-        sanity_checks: bool = True,
-        addr=backend_addr,
-    ) -> Tuple[int, dict, bytes]:
-        stream = await open_stream_to_backend(addr)
-        assert (target or req) and not (target and req)
-        if not req:
-            req = craft_http_request(target)
-        await stream.send_all(req)
-
-        # In theory there is no guarantee `stream.receive_some()` outputs
-        # an entire HTTP request (it typically depends on the TCP stack and
-        # the network). However given we mock the TCP stack in the tests
-        # (see `OpenTCPStreamMockWrapper` class), we have the guarantee
-        # a buffer send through `stream.send_data()` on the backend side
-        # won't be splitted into multiple `stream.receive_some()` on the
-        # client side (and vice-versa). However it's still possible for
-        # multiple `stream.send_data()` to be merged and outputed on a
-        # single `stream.receive_some()`.
-        # Of course this is totally dependant of the backend's implementation
-        # so things may change in the future ;-)
-        rep = await stream.receive_some()
-        status, headers = parse_http_response(rep)
-        body = rep.split(b"\r\n\r\n", 1)[1]
-        content_size = int(headers.get("content-length", "0"))
-        if content_size:
-            while len(body) < content_size:
-                body += await stream.receive_some()
-            # No need to check for another request beeing put after the
-            # body in the buffer given we don't use keep alive
-            assert len(body) == content_size
-        else:
-            assert body == b""
-        if sanity_checks:
-            # Cheap checks on always present headers
-            assert "date" in headers
-            assert headers["server"] == "parsec"
-            # We never support any sort of keep-alive
-            assert headers["connection"] == "close"
-            await assert_stream_closed_on_peer_side(stream)
-        return status, headers, body
-
-    return _http_send
-
-
-async def assert_stream_closed_on_peer_side(stream):
-    # Peer should send EOF and close connection
-    rep = await stream.receive_some()
-    assert rep == b""
-    # From now on, trying to send new request should fail
-    with pytest.raises(trio.BrokenResourceError):
-        await stream.send_all(b"GET / HTTP/1.0\r\n\r\n")
+from tests.backend.http.conftest import open_stream_to_backend, parse_http_response
 
 
 async def _do_test_redirect(backend_http_send):
@@ -160,15 +69,17 @@ async def test_forward_proto_enforce_https(backend, backend_http_send):
 @pytest.mark.trio
 async def test_invalid_request_line(backend_http_send):
     for req in [
-        b"\r\n\r\n",
+        b"\x00",  # Early check should detect this has no chance of being an HTTP request
+        b"\r\n\r\n",  # Missing everything :/
         b"HTTP/1.0\r\n\r\n",  # Missing method and target
         "GET /开始 HTTP/1.0\r\n\r\n".encode("utf8"),  # UTF-8 is not ISO-8859-1 !
         b"GET /\xf1 HTTP/1.0\r\n\r\n",  # Target part must be ISO-8859-1
-        b"G\xf1T / HTTP/1.0\r\n\r\n",  # Method must be ISO-8859-1)
+        b"G\xf1T / HTTP/1.0\r\n\r\n",  # Method must be ISO-8859-1
         b"GET / HTTP/42.0\r\n\r\n",  # Only supported in Cyberpunk 2077
     ]:
-        status, _, _ = await backend_http_send(req=req)
-        assert status == (400, "Bad Request")
+        with trio.fail_after(1):
+            status, _, _ = await backend_http_send(req=req)
+            assert status == (400, "Bad Request")
 
 
 @pytest.mark.trio
@@ -437,7 +348,7 @@ async def test_get_redirect_invitation(backend_http_send, backend_addr):
         backend_addr=backend_addr,
         organization_id=OrganizationID("Org"),
         invitation_type=InvitationType.USER,
-        token=uuid4(),
+        token=InvitationToken.new(),
     )
     # TODO: should use invitation_addr.to_redirection_url() when available !
     *_, target = invitation_addr.to_url().split("/")

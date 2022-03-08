@@ -1,6 +1,7 @@
-# Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
+# Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2016-2021 Scille SAS
 
 import pytest
+import pendulum
 from unittest.mock import ANY
 from uuid import uuid4
 
@@ -9,6 +10,7 @@ from parsec.api.protocol import (
     packb,
     unpackb,
     InvalidMessageError,
+    InvitationToken,
     InvitationType,
     HandshakeFailedChallenge,
     HandshakeBadIdentity,
@@ -23,7 +25,10 @@ from parsec.api.protocol import (
     InvitedClientHandshake,
     HandshakeOrganizationExpired,
 )
+from parsec.api.protocol.handshake import answer_serializer
+
 from parsec.api.version import API_V2_VERSION, ApiVersion
+from parsec.utils import BALLPARK_CLIENT_EARLY_OFFSET, BALLPARK_CLIENT_LATE_OFFSET
 
 
 def test_good_authenticated_handshake(alice):
@@ -59,7 +64,7 @@ def test_good_authenticated_handshake(alice):
 @pytest.mark.parametrize("invitation_type", (InvitationType.USER, InvitationType.DEVICE))
 def test_good_invited_handshake(coolorg, invitation_type):
     organization_id = OrganizationID("Org")
-    token = uuid4()
+    token = InvitationToken.new()
 
     sh = ServerHandshake()
     ch = InvitedClientHandshake(
@@ -153,6 +158,9 @@ def test_process_challenge_req_good_api_version(
         "handshake": "challenge",
         "challenge": b"1234567890",
         "supported_api_versions": [backend_version],
+        "backend_timestamp": pendulum.now(),
+        "ballpark_client_early_offset": BALLPARK_CLIENT_EARLY_OFFSET,
+        "ballpark_client_late_offset": BALLPARK_CLIENT_LATE_OFFSET,
     }
     monkeypatch.setattr(ch, "SUPPORTED_API_VERSIONS", [client_version])
 
@@ -214,6 +222,9 @@ def test_process_challenge_req_good_multiple_api_version(
         "handshake": "challenge",
         "challenge": b"1234567890",
         "supported_api_versions": list(backend_versions),
+        "backend_timestamp": pendulum.now(),
+        "ballpark_client_early_offset": BALLPARK_CLIENT_EARLY_OFFSET,
+        "ballpark_client_late_offset": BALLPARK_CLIENT_LATE_OFFSET,
     }
     monkeypatch.setattr(ch, "SUPPORTED_API_VERSIONS", client_versions)
 
@@ -315,8 +326,8 @@ def test_process_challenge_req_good_multiple_api_version(
 )
 def test_process_answer_req_bad_format(req, alice):
     for key, good_value in [
-        ("organization_id", alice.organization_id),
-        ("device_id", alice.device_id),
+        ("organization_id", str(alice.organization_id)),
+        ("device_id", str(alice.device_id)),
         ("rvk", alice.root_verify_key.encode()),
         ("token", uuid4()),
     ]:
@@ -339,10 +350,10 @@ def test_build_result_req_bad_key(alice, bob):
         "handshake": "answer",
         "type": HandshakeType.AUTHENTICATED.value,
         "client_api_version": API_V2_VERSION,
-        "organization_id": alice.organization_id,
-        "device_id": alice.device_id,
+        "organization_id": str(alice.organization_id),
+        "device_id": str(alice.device_id),
         "rvk": alice.root_verify_key.encode(),
-        "answer": alice.signing_key.sign(sh.challenge),
+        "answer": alice.signing_key.sign(answer_serializer.dumps({"answer": sh.challenge})),
     }
     sh.process_answer_req(packb(answer))
     with pytest.raises(HandshakeFailedChallenge):
@@ -356,10 +367,12 @@ def test_build_result_req_bad_challenge(alice):
         "handshake": "answer",
         "type": HandshakeType.AUTHENTICATED.value,
         "client_api_version": API_V2_VERSION,
-        "organization_id": alice.organization_id,
-        "device_id": alice.device_id,
+        "organization_id": str(alice.organization_id),
+        "device_id": str(alice.device_id),
         "rvk": alice.root_verify_key.encode(),
-        "answer": alice.signing_key.sign(sh.challenge + b"-dummy"),
+        "answer": alice.signing_key.sign(
+            answer_serializer.dumps({"answer": sh.challenge + b"-dummy"})
+        ),
     }
     sh.process_answer_req(packb(answer))
     with pytest.raises(HandshakeFailedChallenge):
@@ -384,10 +397,10 @@ def test_build_bad_outcomes(alice, method, expected_result):
         "handshake": "answer",
         "type": HandshakeType.AUTHENTICATED.value,
         "client_api_version": API_V2_VERSION,
-        "organization_id": alice.organization_id,
-        "device_id": alice.device_id,
+        "organization_id": str(alice.organization_id),
+        "device_id": str(alice.device_id),
         "rvk": alice.root_verify_key.encode(),
-        "answer": alice.signing_key.sign(sh.challenge),
+        "answer": alice.signing_key.sign(answer_serializer.dumps({"answer": sh.challenge})),
     }
     sh.process_answer_req(packb(answer))
     req = getattr(sh, method)()

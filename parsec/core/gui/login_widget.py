@@ -1,11 +1,11 @@
-# Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
+# Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2016-2021 Scille SAS
 
 from pathlib import Path
 
 from PyQt5.QtCore import pyqtSignal, Qt
 from PyQt5.QtWidgets import QWidget
 
-from parsec.core.local_device import list_available_devices, AvailableDevice
+from parsec.core.local_device import list_available_devices, AvailableDevice, DeviceFileType
 
 from parsec.core.gui.lang import translate as _
 from parsec.core.gui.parsec_application import ParsecApp
@@ -13,6 +13,7 @@ from parsec.core.gui.ui.login_widget import Ui_LoginWidget
 from parsec.core.gui.ui.account_button import Ui_AccountButton
 from parsec.core.gui.ui.login_accounts_widget import Ui_LoginAccountsWidget
 from parsec.core.gui.ui.login_password_input_widget import Ui_LoginPasswordInputWidget
+from parsec.core.gui.ui.login_smartcard_input_widget import Ui_LoginSmartcardInputWidget
 from parsec.core.gui.ui.login_no_devices_widget import Ui_LoginNoDevicesWidget
 
 
@@ -25,7 +26,7 @@ class AccountButton(QWidget, Ui_AccountButton):
         self.device = device
         self.label_device.setText(self.device.device_display)
         self.label_name.setText(self.device.short_user_display)
-        self.label_organization.setText(self.device.organization_id)
+        self.label_organization.setText(str(self.device.organization_id))
 
     def mousePressEvent(self, event):
         if event.button() & Qt.LeftButton:
@@ -47,9 +48,9 @@ class LoginAccountsWidget(QWidget, Ui_LoginAccountsWidget):
         pass
 
 
-class LoginPasswordInputWidget(QWidget, Ui_LoginPasswordInputWidget):
+class LoginSmartcardInputWidget(QWidget, Ui_LoginSmartcardInputWidget):
     back_clicked = pyqtSignal()
-    log_in_clicked = pyqtSignal(Path, str)
+    log_in_clicked = pyqtSignal(AvailableDevice)
 
     def __init__(self, device, hide_back=False):
         super().__init__()
@@ -60,18 +61,52 @@ class LoginPasswordInputWidget(QWidget, Ui_LoginPasswordInputWidget):
         self.button_back.clicked.connect(self.back_clicked.emit)
         self.button_login.clicked.connect(self._on_log_in_clicked)
         self.label_instructions.setText(
-            _("TEXT_LOGIN_ENTER_PASSWORD_INSTRUCTIONS_organization-device-user-email").format(
+            _("TEXT_LOGIN_SELECT_SMARTCARD_INSTRUCTIONS_organization-device-user").format(
                 organization=self.device.organization_id,
                 user=self.device.short_user_display,
                 device=self.device.device_display,
-                email="",
             )
         )
 
     def _on_log_in_clicked(self):
         self.button_login.setDisabled(True)
         self.button_login.setText(_("ACTION_LOGGING_IN"))
-        self.log_in_clicked.emit(self.device.key_file_path, self.line_edit_password.text())
+        self.log_in_clicked.emit(self.device)
+
+    def keyPressEvent(self, event):
+        if event.key() in (Qt.Key_Return, Qt.Key_Enter) and self.button_login.isEnabled():
+            self._on_log_in_clicked()
+        event.accept()
+
+    def reset(self):
+        self.button_login.setDisabled(True)
+        self.button_login.setText(_("ACTION_LOG_IN"))
+
+
+class LoginPasswordInputWidget(QWidget, Ui_LoginPasswordInputWidget):
+    back_clicked = pyqtSignal()
+    log_in_clicked = pyqtSignal(AvailableDevice, str)
+
+    def __init__(self, device, hide_back=False):
+        super().__init__()
+        self.setupUi(self)
+        self.device = device
+        if hide_back:
+            self.button_back.hide()
+        self.button_back.clicked.connect(self.back_clicked.emit)
+        self.button_login.clicked.connect(self._on_log_in_clicked)
+        self.label_instructions.setText(
+            _("TEXT_LOGIN_ENTER_PASSWORD_INSTRUCTIONS_organization-device-user").format(
+                organization=self.device.organization_id,
+                user=self.device.short_user_display,
+                device=self.device.device_display,
+            )
+        )
+
+    def _on_log_in_clicked(self):
+        self.button_login.setDisabled(True)
+        self.button_login.setText(_("ACTION_LOGGING_IN"))
+        self.log_in_clicked.emit(self.device, self.line_edit_password.text())
 
     def keyPressEvent(self, event):
         if event.key() in (Qt.Key_Return, Qt.Key_Enter) and self.button_login.isEnabled():
@@ -104,6 +139,7 @@ class LoginNoDevicesWidget(QWidget, Ui_LoginNoDevicesWidget):
 
 class LoginWidget(QWidget, Ui_LoginWidget):
     login_with_password_clicked = pyqtSignal(Path, str)
+    login_with_smartcard_clicked = pyqtSignal(Path)
     create_organization_clicked = pyqtSignal()
     join_organization_clicked = pyqtSignal()
     login_canceled = pyqtSignal()
@@ -164,18 +200,27 @@ class LoginWidget(QWidget, Ui_LoginWidget):
 
     def _on_account_clicked(self, device, hide_back=False):
         self._clear_widget()
-        lw = LoginPasswordInputWidget(device, hide_back=hide_back)
-        lw.back_clicked.connect(self._on_back_clicked)
-        lw.log_in_clicked.connect(self.try_login)
-        self.widget.layout().addWidget(lw)
-        lw.line_edit_password.setFocus()
+        if device.type == DeviceFileType.PASSWORD:
+            lw = LoginPasswordInputWidget(device, hide_back=hide_back)
+            lw.back_clicked.connect(self._on_back_clicked)
+            lw.log_in_clicked.connect(self.try_login_with_password)
+            self.widget.layout().addWidget(lw)
+            lw.line_edit_password.setFocus()
+        elif device.type == DeviceFileType.SMARTCARD:
+            lw = LoginSmartcardInputWidget(device, hide_back=hide_back)
+            lw.back_clicked.connect(self._on_back_clicked)
+            lw.log_in_clicked.connect(self.try_login_with_smartcard)
+            self.widget.layout().addWidget(lw)
 
     def _on_back_clicked(self):
         self.login_canceled.emit()
         self.reload_devices()
 
-    def try_login(self, key_file, password):
-        self.login_with_password_clicked.emit(key_file, password)
+    def try_login_with_password(self, device, password):
+        self.login_with_password_clicked.emit(device.key_file_path, password)
+
+    def try_login_with_smartcard(self, device):
+        self.login_with_smartcard_clicked.emit(device.key_file_path)
 
     def disconnect_all(self):
         pass

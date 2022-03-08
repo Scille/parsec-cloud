@@ -1,10 +1,12 @@
-# Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
+# Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2016-2021 Scille SAS
 
 import pytest
 import trio
 
+from parsec.api.data import EntryName
 from parsec.backend.backend_events import BackendEvent
-from parsec.api.protocol import RealmRole
+from parsec.api.protocol import RealmRole, HandshakeType
+from parsec.core.types import OrganizationConfig
 from parsec.core.backend_connection import (
     BackendAuthenticatedConn,
     BackendConnStatus,
@@ -31,9 +33,28 @@ async def alice_backend_conn(alice, event_bus_factory, running_backend_ready):
 
 
 @pytest.mark.trio
-async def test_init_with_backend_online(running_backend, event_bus, alice):
+@pytest.mark.parametrize("apiv22_organization_cmd_supported", (True, False))
+async def test_init_with_backend_online(
+    running_backend, event_bus, alice, apiv22_organization_cmd_supported
+):
     monitor_initialized = False
     monitor_teardown = False
+
+    # Mock organization config command
+    async def _mocked_organization_config(client_ctx, msg):
+        if apiv22_organization_cmd_supported:
+            return {
+                "user_profile_outsider_allowed": True,
+                "active_users_limit": None,
+                "status": "ok",
+            }
+        else:
+            # Backend with API support <2.2, the client should be able to fallback
+            return {"status": "unknown_command"}
+
+    running_backend.backend.apis[HandshakeType.AUTHENTICATED][
+        "organization_config"
+    ] = _mocked_organization_config
 
     async def _monitor(*, task_status=trio.TASK_STATUS_IGNORED):
         nonlocal monitor_initialized, monitor_teardown
@@ -48,6 +69,11 @@ async def test_init_with_backend_online(running_backend, event_bus, alice):
         alice.organization_addr, alice.device_id, alice.signing_key, event_bus
     )
     assert conn.status == BackendConnStatus.LOST
+    default_organization_config = OrganizationConfig(
+        user_profile_outsider_allowed=False, active_users_limit=None
+    )
+    assert conn.get_organization_config() == default_organization_config
+
     conn.register_monitor(_monitor)
     with event_bus.listen() as spy:
         async with conn.run():
@@ -66,6 +92,15 @@ async def test_init_with_backend_online(running_backend, event_bus, alice):
             assert conn.status == BackendConnStatus.READY
             assert monitor_initialized
             assert not monitor_teardown
+
+            # Test organization config retrieval
+            if apiv22_organization_cmd_supported:
+                assert conn.get_organization_config() == OrganizationConfig(
+                    user_profile_outsider_allowed=True, active_users_limit=None
+                )
+            else:
+                # Default value
+                assert conn.get_organization_config() == default_organization_config
 
             # Test command
             rep = await conn.cmds.ping("foo")
@@ -89,6 +124,11 @@ async def test_init_with_backend_offline(event_bus, alice):
         alice.organization_addr, alice.device_id, alice.signing_key, event_bus
     )
     assert conn.status == BackendConnStatus.LOST
+    default_organization_config = OrganizationConfig(
+        user_profile_outsider_allowed=False, active_users_limit=None
+    )
+    assert conn.get_organization_config() == default_organization_config
+
     with event_bus.listen() as spy:
         async with conn.run():
             await spy.wait_with_timeout(
@@ -96,6 +136,7 @@ async def test_init_with_backend_offline(event_bus, alice):
                 {"status": BackendConnStatus.LOST, "status_exc": spy.ANY},
             )
             assert conn.status == BackendConnStatus.LOST
+            assert conn.get_organization_config() == default_organization_config
 
             # Test command not possible
             with pytest.raises(BackendNotAvailable):
@@ -104,7 +145,7 @@ async def test_init_with_backend_offline(event_bus, alice):
 
 @pytest.mark.trio
 @pytest.mark.parametrize("during_bootstrap", (True, False))
-async def test_monitor_crash(running_backend, event_bus, alice, during_bootstrap):
+async def test_monitor_crash(caplog, running_backend, event_bus, alice, during_bootstrap):
     async def _bad_monitor(*, task_status=trio.TASK_STATUS_IGNORED):
         if during_bootstrap:
             raise RuntimeError("D'oh !")
@@ -123,6 +164,9 @@ async def test_monitor_crash(running_backend, event_bus, alice, during_bootstrap
                 {"status": BackendConnStatus.CRASHED, "status_exc": spy.ANY},
             )
             assert conn.status == BackendConnStatus.CRASHED
+            caplog.assert_occured_once(
+                "[error    ] Unhandled exception            [parsec.core.backend_connection.authenticated]"
+            )
 
             # Test command not possible
             with pytest.raises(BackendNotAvailable) as exc:
@@ -209,7 +253,7 @@ async def test_concurrency_sends(running_backend, alice, event_bus):
 
 @pytest.mark.trio
 async def test_realm_notif_on_new_entry_sync(running_backend, alice_backend_conn, alice2_user_fs):
-    wid = await alice2_user_fs.workspace_create("foo")
+    wid = await alice2_user_fs.workspace_create(EntryName("foo"))
     workspace = alice2_user_fs.get_workspace(wid)
 
     await workspace.touch("/foo")
@@ -238,7 +282,7 @@ async def test_realm_notif_on_new_workspace_sync(
     running_backend, alice_backend_conn, alice2_user_fs
 ):
     uid = alice2_user_fs.user_manifest_id
-    wid = await alice2_user_fs.workspace_create("foo")
+    wid = await alice2_user_fs.workspace_create(EntryName("foo"))
 
     with alice_backend_conn.event_bus.listen() as spy:
         await alice2_user_fs.sync()
@@ -262,7 +306,7 @@ async def test_realm_notif_on_new_workspace_sync(
 
 @pytest.mark.trio
 async def test_realm_notif_maintenance(running_backend, alice_backend_conn, alice2_user_fs):
-    wid = await alice2_user_fs.workspace_create("foo")
+    wid = await alice2_user_fs.workspace_create(EntryName("foo"))
     await alice2_user_fs.sync()
 
     with alice_backend_conn.event_bus.listen() as spy:

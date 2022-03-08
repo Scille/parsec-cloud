@@ -1,4 +1,4 @@
-# Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
+# Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2016-2021 Scille SAS
 
 import pytest
 import trio
@@ -7,9 +7,12 @@ from PyQt5 import QtCore
 from async_generator import asynccontextmanager
 from functools import partial
 
-from uuid import uuid4
-
-from parsec.api.protocol import InvitationType, InvitationDeletedReason
+from parsec.api.protocol import (
+    InvitationToken,
+    InvitationType,
+    InvitationDeletedReason,
+    DeviceLabel,
+)
 from parsec.core.types import BackendInvitationAddr
 from parsec.core.invite import DeviceGreetInitialCtx
 from parsec.core.gui.lang import translate
@@ -33,6 +36,7 @@ def catch_claim_device_widget(widget_catcher_factory):
 
 @pytest.fixture
 def ClaimDeviceTestBed(
+    monkeypatch,
     aqtbot,
     catch_claim_device_widget,
     autoclose_dialog,
@@ -42,9 +46,14 @@ def ClaimDeviceTestBed(
     alice,
     alice_backend_cmds,
 ):
+    # Disable the sync monitor to avoid concurrent sync right when the claim finish
+    monkeypatch.setattr(
+        "parsec.core.sync_monitor.freeze_sync_monitor_mockpoint", trio.sleep_forever
+    )
+
     class _ClaimDeviceTestBed:
         def __init__(self):
-            self.requested_device_label = "PC1"
+            self.requested_device_label = DeviceLabel("PC1")
             self.password = "P@ssw0rd."
             self.steps_done = []
 
@@ -80,7 +89,7 @@ def ClaimDeviceTestBed(
                 organization_id=self.author.organization_id, greeter_user_id=self.author.user_id
             )
             invitation_addr = BackendInvitationAddr.build(
-                backend_addr=self.author.organization_addr,
+                backend_addr=self.author.organization_addr.get_backend_addr(),
                 organization_id=self.author.organization_id,
                 invitation_type=InvitationType.DEVICE,
                 token=invitation.token,
@@ -88,7 +97,7 @@ def ClaimDeviceTestBed(
 
             # Switch to device claim page
 
-            await aqtbot.run(gui.add_instance, invitation_addr.to_url())
+            gui.add_instance(invitation_addr.to_url())
 
             cd_w = await catch_claim_device_widget()
             assert isinstance(cd_w, ClaimDeviceWidget)
@@ -144,7 +153,7 @@ def ClaimDeviceTestBed(
 
         async def step_1_start_claim(self):
             cdi_w = self.claim_device_instructions_widget
-            await aqtbot.mouse_click(cdi_w.button_start, QtCore.Qt.LeftButton)
+            aqtbot.mouse_click(cdi_w.button_start, QtCore.Qt.LeftButton)
 
             def _claimer_started():
                 assert not cdi_w.button_start.isEnabled()
@@ -183,7 +192,7 @@ def ClaimDeviceTestBed(
             cdce_w = self.claim_device_code_exchange_widget
 
             # Pretend we have choosen the right code
-            await aqtbot.run(cdce_w.code_input_widget.good_code_clicked.emit)
+            cdce_w.code_input_widget.good_code_clicked.emit()
 
             self.greeter_in_progress_ctx = await self.greeter_in_progress_ctx.do_wait_peer_trust()
             claimer_sas = self.greeter_in_progress_ctx.claimer_sas
@@ -222,17 +231,22 @@ def ClaimDeviceTestBed(
             cdpi_w = self.claim_device_provide_info_widget
             device_label = self.requested_device_label
 
-            await aqtbot.run(cdpi_w.line_edit_device.clear)
+            cdpi_w.line_edit_device.clear()
 
             assert not cdpi_w.button_ok.isEnabled()
 
-            await aqtbot.key_clicks(cdpi_w.line_edit_device, device_label)
-            await aqtbot.key_clicks(cdpi_w.widget_password.line_edit_password, self.password)
-            await aqtbot.key_clicks(cdpi_w.widget_password.line_edit_password_check, self.password)
+            aqtbot.key_clicks(cdpi_w.line_edit_device, device_label.str)
+            aqtbot.key_clicks(
+                cdpi_w.widget_auth.main_layout.itemAt(0).widget().line_edit_password, self.password
+            )
+            aqtbot.key_clicks(
+                cdpi_w.widget_auth.main_layout.itemAt(0).widget().line_edit_password_check,
+                self.password,
+            )
 
             assert cdpi_w.button_ok.isEnabled()
 
-            await aqtbot.mouse_click(cdpi_w.button_ok, QtCore.Qt.LeftButton)
+            aqtbot.mouse_click(cdpi_w.button_ok, QtCore.Qt.LeftButton)
 
             def _claim_info_submitted():
                 assert not cdpi_w.button_ok.isEnabled()
@@ -264,6 +278,10 @@ def ClaimDeviceTestBed(
                 central_widget = gui.test_get_central_widget()
                 assert central_widget and central_widget.isVisible()
                 assert autoclose_dialog.dialogs == [("", "The device was successfully created!")]
+
+                # Claimed device should start with a speculative user manifest
+                um = central_widget.core.user_fs.get_user_manifest()
+                assert um.speculative
 
             await aqtbot.wait_until(_claim_done)
 
@@ -306,7 +324,7 @@ async def test_claim_device_offline(
             cdi_w = self.claim_device_instructions_widget
 
             with running_backend.offline():
-                await aqtbot.mouse_click(cdi_w.button_start, QtCore.Qt.LeftButton)
+                aqtbot.mouse_click(cdi_w.button_start, QtCore.Qt.LeftButton)
                 await aqtbot.wait_until(partial(self._claim_aborted, expected_message))
 
             return None
@@ -324,7 +342,7 @@ async def test_claim_device_offline(
 
             with running_backend.offline():
                 assert not autoclose_dialog.dialogs
-                await aqtbot.run(cdce_w.code_input_widget.good_code_clicked.emit)
+                cdce_w.code_input_widget.good_code_clicked.emit()
                 await aqtbot.wait_until(partial(self._claim_aborted, expected_message))
             return None
 
@@ -341,13 +359,17 @@ async def test_claim_device_offline(
             device_label = self.requested_device_label
 
             with running_backend.offline():
-                await aqtbot.run(cdpi_w.line_edit_device.clear)
-                await aqtbot.key_clicks(cdpi_w.line_edit_device, device_label)
-                await aqtbot.key_clicks(cdpi_w.widget_password.line_edit_password, self.password)
-                await aqtbot.key_clicks(
-                    cdpi_w.widget_password.line_edit_password_check, self.password
+                cdpi_w.line_edit_device.clear()
+                aqtbot.key_clicks(cdpi_w.line_edit_device, device_label.str)
+                aqtbot.key_clicks(
+                    cdpi_w.widget_auth.main_layout.itemAt(0).widget().line_edit_password,
+                    self.password,
                 )
-                await aqtbot.mouse_click(cdpi_w.button_ok, QtCore.Qt.LeftButton)
+                aqtbot.key_clicks(
+                    cdpi_w.widget_auth.main_layout.itemAt(0).widget().line_edit_password_check,
+                    self.password,
+                )
+                aqtbot.mouse_click(cdpi_w.button_ok, QtCore.Qt.LeftButton)
                 await aqtbot.wait_until(partial(self._claim_aborted, expected_message))
 
             return None
@@ -400,7 +422,7 @@ async def test_claim_device_reset_by_peer(
             expected_message = translate("TEXT_CLAIM_DEVICE_PEER_RESET")
 
             async with self._reset_greeter():
-                await aqtbot.run(cdce_w.code_input_widget.good_code_clicked.emit)
+                cdce_w.code_input_widget.good_code_clicked.emit()
                 await aqtbot.wait_until(partial(self._claim_restart, expected_message))
 
             await self.bootstrap_after_restart()
@@ -420,13 +442,17 @@ async def test_claim_device_reset_by_peer(
             device_label = self.requested_device_label
 
             async with self._reset_greeter():
-                await aqtbot.run(cdpi_w.line_edit_device.clear)
-                await aqtbot.key_clicks(cdpi_w.line_edit_device, device_label)
-                await aqtbot.key_clicks(cdpi_w.widget_password.line_edit_password, self.password)
-                await aqtbot.key_clicks(
-                    cdpi_w.widget_password.line_edit_password_check, self.password
+                cdpi_w.line_edit_device.clear()
+                aqtbot.key_clicks(cdpi_w.line_edit_device, device_label.str)
+                aqtbot.key_clicks(
+                    cdpi_w.widget_auth.main_layout.itemAt(0).widget().line_edit_password,
+                    self.password,
                 )
-                await aqtbot.mouse_click(cdpi_w.button_ok, QtCore.Qt.LeftButton)
+                aqtbot.key_clicks(
+                    cdpi_w.widget_auth.main_layout.itemAt(0).widget().line_edit_password_check,
+                    self.password,
+                )
+                aqtbot.mouse_click(cdpi_w.button_ok, QtCore.Qt.LeftButton)
                 await aqtbot.wait_until(partial(self._claim_restart, expected_message))
 
             await self.bootstrap_after_restart()
@@ -483,7 +509,7 @@ async def test_claim_device_invitation_cancelled(
 
             await self._cancel_invitation()
 
-            await aqtbot.mouse_click(cdi_w.button_start, QtCore.Qt.LeftButton)
+            aqtbot.mouse_click(cdi_w.button_start, QtCore.Qt.LeftButton)
             await aqtbot.wait_until(partial(self._claim_restart, expected_message))
 
             return None
@@ -501,7 +527,7 @@ async def test_claim_device_invitation_cancelled(
             cdce_w = self.claim_device_code_exchange_widget
             await self._cancel_invitation()
 
-            await aqtbot.run(cdce_w.code_input_widget.good_code_clicked.emit)
+            cdce_w.code_input_widget.good_code_clicked.emit()
             await aqtbot.wait_until(partial(self._claim_restart, expected_message))
 
             return None
@@ -521,11 +547,16 @@ async def test_claim_device_invitation_cancelled(
 
             await self._cancel_invitation()
 
-            await aqtbot.run(cdpi_w.line_edit_device.clear)
-            await aqtbot.key_clicks(cdpi_w.line_edit_device, device_label)
-            await aqtbot.key_clicks(cdpi_w.widget_password.line_edit_password, self.password)
-            await aqtbot.key_clicks(cdpi_w.widget_password.line_edit_password_check, self.password)
-            await aqtbot.mouse_click(cdpi_w.button_ok, QtCore.Qt.LeftButton)
+            cdpi_w.line_edit_device.clear()
+            aqtbot.key_clicks(cdpi_w.line_edit_device, device_label.str)
+            aqtbot.key_clicks(
+                cdpi_w.widget_auth.main_layout.itemAt(0).widget().line_edit_password, self.password
+            )
+            aqtbot.key_clicks(
+                cdpi_w.widget_auth.main_layout.itemAt(0).widget().line_edit_password_check,
+                self.password,
+            )
+            aqtbot.mouse_click(cdpi_w.button_ok, QtCore.Qt.LeftButton)
             await aqtbot.wait_until(partial(self._claim_restart, expected_message))
 
             return None
@@ -555,7 +586,7 @@ async def test_claim_device_already_deleted(
         organization_id=alice.organization_id, greeter_user_id=alice.user_id
     )
     invitation_addr = BackendInvitationAddr.build(
-        backend_addr=alice.organization_addr,
+        backend_addr=alice.organization_addr.get_backend_addr(),
         organization_id=alice.organization_id,
         invitation_type=InvitationType.DEVICE,
         token=invitation.token,
@@ -568,7 +599,7 @@ async def test_claim_device_already_deleted(
         reason=InvitationDeletedReason.CANCELLED,
     )
 
-    await aqtbot.run(gui.add_instance, invitation_addr.to_url())
+    gui.add_instance(invitation_addr.to_url())
 
     def _assert_dialogs():
         assert len(autoclose_dialog.dialogs) == 1
@@ -587,21 +618,21 @@ async def test_claim_device_offline_backend(
         organization_id=alice.organization_id, greeter_user_id=alice.user_id
     )
     invitation_addr = BackendInvitationAddr.build(
-        backend_addr=alice.organization_addr,
+        backend_addr=alice.organization_addr.get_backend_addr(),
         organization_id=alice.organization_id,
         invitation_type=InvitationType.DEVICE,
         token=invitation.token,
     )
     with running_backend.offline():
-        await aqtbot.run(gui.add_instance, invitation_addr.to_url())
+        gui.add_instance(invitation_addr.to_url())
 
-    def _assert_dialogs():
-        assert len(autoclose_dialog.dialogs) == 1
-        assert autoclose_dialog.dialogs == [
-            ("Error", translate("TEXT_INVITATION_BACKEND_NOT_AVAILABLE"))
-        ]
+        def _assert_dialogs():
+            assert len(autoclose_dialog.dialogs) == 1
+            assert autoclose_dialog.dialogs == [
+                ("Error", translate("TEXT_INVITATION_BACKEND_NOT_AVAILABLE"))
+            ]
 
-    await aqtbot.wait_until(_assert_dialogs)
+        await aqtbot.wait_until(_assert_dialogs)
 
 
 @pytest.mark.gui
@@ -611,13 +642,13 @@ async def test_claim_device_unknown_invitation(
 ):
 
     invitation_addr = BackendInvitationAddr.build(
-        backend_addr=alice.organization_addr,
+        backend_addr=alice.organization_addr.get_backend_addr(),
         organization_id=alice.organization_id,
         invitation_type=InvitationType.DEVICE,
-        token=uuid4(),
+        token=InvitationToken.new(),
     )
 
-    await aqtbot.run(gui.add_instance, invitation_addr.to_url())
+    gui.add_instance(invitation_addr.to_url())
 
     def _assert_dialogs():
         assert len(autoclose_dialog.dialogs) == 1
@@ -640,3 +671,31 @@ async def test_claim_device_with_bad_start_arg(
     assert len(autoclose_dialog.dialogs) == 1
     assert autoclose_dialog.dialogs[0][0] == "Error"
     assert autoclose_dialog.dialogs[0][1] == "The link is invalid."
+
+
+@pytest.mark.gui
+@pytest.mark.trio
+async def test_claim_device_backend_desync(
+    aqtbot, running_backend, backend, autoclose_dialog, alice, gui, monkeypatch
+):
+
+    # Client is 5 minutes ahead
+    def _timestamp(self):
+        return pendulum_now().add(minutes=5)
+
+    monkeypatch.setattr("parsec.api.protocol.BaseClientHandshake.timestamp", _timestamp)
+
+    invitation_addr = BackendInvitationAddr.build(
+        backend_addr=alice.organization_addr.get_backend_addr(),
+        organization_id=alice.organization_id,
+        invitation_type=InvitationType.DEVICE,
+        token=InvitationToken.new(),
+    )
+
+    gui.add_instance(invitation_addr.to_url())
+
+    def _assert_dialogs():
+        assert len(autoclose_dialog.dialogs) == 1
+        assert autoclose_dialog.dialogs == [("Error", translate("TEXT_BACKEND_STATE_DESYNC"))]
+
+    await aqtbot.wait_until(_assert_dialogs)

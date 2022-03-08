@@ -1,4 +1,4 @@
-# Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
+# Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2016-2021 Scille SAS
 
 import attr
 import re
@@ -7,7 +7,6 @@ import pendulum
 from collections import defaultdict
 from typing import Union, Optional, Tuple
 from async_generator import asynccontextmanager
-from pendulum import datetime
 
 from parsec.crypto import SigningKey
 from parsec.api.data import (
@@ -18,10 +17,20 @@ from parsec.api.data import (
     DeviceCertificateContent,
     RealmRoleCertificateContent,
 )
-from parsec.api.protocol import OrganizationID, UserID, DeviceID, HumanHandle, RealmRole
-from parsec.backend.backend_events import BackendEvent
+from parsec.api.protocol import (
+    OrganizationID,
+    UserID,
+    DeviceID,
+    DeviceLabel,
+    HumanHandle,
+    RealmRole,
+    RealmID,
+    VlobID,
+)
 from parsec.core.types import LocalDevice, LocalUserManifest, BackendOrganizationBootstrapAddr
 from parsec.core.local_device import generate_new_device
+from parsec.core.fs.storage import UserStorage
+from parsec.backend.backend_events import BackendEvent
 from parsec.backend.user import User as BackendUser, Device as BackendDevice
 from parsec.backend.realm import RealmGrantedRole
 
@@ -34,6 +43,25 @@ def fixtures_customization(request):
         return request.node.function._fixtures_customization
     except AttributeError:
         return {}
+
+
+@pytest.fixture
+def next_timestamp():
+    """On windows, 2 calls to `pendulum.now()` can yield the same value.
+    For some tests, this creates edges cases we want to avoid.
+    """
+    last_timestamp = None
+
+    def _next_timestamp():
+        if pendulum.has_test_now():
+            return pendulum.now()
+        nonlocal last_timestamp
+        while last_timestamp == pendulum.now():
+            pass
+        last_timestamp = pendulum.now()
+        return last_timestamp
+
+    return _next_timestamp
 
 
 @attr.s
@@ -60,25 +88,22 @@ def organization_factory(backend_addr):
     organizations = set()
     count = 0
 
-    def _organization_factory(orgname=None, expiration_date=None):
+    def _organization_factory(orgname=None):
         nonlocal count
 
         if not orgname:
             count += 1
             orgname = f"Org{count}"
 
-        assert orgname not in organizations
         organization_id = OrganizationID(orgname)
+        assert organization_id not in organizations
         organizations.add(organization_id)
-
         bootstrap_token = f"<{orgname}-bootstrap-token>"
         bootstrap_addr = BackendOrganizationBootstrapAddr.build(
             backend_addr, organization_id=organization_id, token=bootstrap_token
         )
-
         root_signing_key = SigningKey.generate()
         addr = bootstrap_addr.generate_organization_addr(root_signing_key.verify_key)
-
         return OrganizationFullData(bootstrap_addr, addr, root_signing_key)
 
     return _organization_factory
@@ -90,13 +115,13 @@ def local_device_factory(coolorg):
     count = 0
 
     def _local_device_factory(
-        base_device_id: Optional[str] = None,
+        base_device_id: Optional[Union[str, DeviceID]] = None,
         org: OrganizationFullData = coolorg,
         profile: Optional[UserProfile] = None,
         has_human_handle: bool = True,
-        base_human_handle: Optional[str] = None,
+        base_human_handle: Optional[Union[str, HumanHandle]] = None,
         has_device_label: bool = True,
-        base_device_label: Optional[str] = None,
+        base_device_label: Optional[Union[str, DeviceLabel]] = None,
     ):
         nonlocal count
 
@@ -105,36 +130,40 @@ def local_device_factory(coolorg):
             base_device_id = f"user{count}@dev0"
 
         org_devices = devices[org.organization_id]
-        device_id = DeviceID(base_device_id)
+        if isinstance(base_device_id, DeviceID):
+            device_id = base_device_id
+        else:
+            device_id = DeviceID(base_device_id)
         assert not any(d for d in org_devices if d.device_id == device_id)
 
         if not has_device_label:
             assert base_device_label is None
             device_label = None
         elif not base_device_label:
-            device_label = f"My {device_id.device_name} machine"
-        else:
+            device_label = DeviceLabel(f"My {device_id.device_name} machine")
+        elif isinstance(base_device_label, DeviceLabel):
             device_label = base_device_label
+        else:
+            device_label = DeviceLabel(base_device_label)
 
         if not has_human_handle:
             assert base_human_handle is None
             human_handle = None
-        elif base_human_handle:
-            if isinstance(base_human_handle, HumanHandle):
-                human_handle = base_human_handle
-            else:
-                match = re.match(r"(.*) <(.*)>", base_human_handle)
-                if match:
-                    label, email = match.groups()
-                else:
-                    label = base_human_handle
-                    email = f"{device_id.user_id}@example.com"
-                human_handle = HumanHandle(email=email, label=label)
-        else:
-            name = device_id.user_id.capitalize()
+        elif not base_human_handle:
+            name = str(device_id.user_id).capitalize()
             human_handle = HumanHandle(
                 email=f"{device_id.user_id}@example.com", label=f"{name}y Mc{name}Face"
             )
+        elif isinstance(base_human_handle, HumanHandle):
+            human_handle = base_human_handle
+        else:
+            match = re.match(r"(.*) <(.*)>", base_human_handle)
+            if match:
+                label, email = match.groups()
+            else:
+                label = base_human_handle
+                email = f"{device_id.user_id}@example.com"
+            human_handle = HumanHandle(email=email, label=label)
 
         parent_device = None
         try:
@@ -185,7 +214,7 @@ def otherorg(organization_factory):
 
 @pytest.fixture
 def expiredorg(organization_factory):
-    expired_org = organization_factory("ExpiredOrg", pendulum.datetime(2010, 1, 1))
+    expired_org = organization_factory("ExpiredOrg")
     return expired_org
 
 
@@ -288,15 +317,14 @@ class InitialUserManifestState:
             return self._v1[(device.organization_id, device.user_id)]
 
         except KeyError:
-            now = pendulum.now()
-
+            timestamp = device.timestamp()
             remote_user_manifest = UserManifest(
                 author=device.device_id,
-                timestamp=now,
+                timestamp=timestamp,
                 id=device.user_manifest_id,
                 version=1,
-                created=now,
-                updated=now,
+                created=timestamp,
+                updated=timestamp,
                 last_processed_message=0,
                 workspaces=(),
             )
@@ -333,18 +361,39 @@ def initial_user_manifest_state():
 
 
 @pytest.fixture
-def initialize_userfs_storage_v1(initial_user_manifest_state, persistent_mockup):
-    async def _initialize_userfs_storage(storage):
-        if storage.get_user_manifest().base_version == 0:
-            with freeze_time("2000-01-01"):
-                user_manifest = initial_user_manifest_state.get_user_manifest_v1_for_device(
-                    storage.device
-                )
-            await storage.set_user_manifest(user_manifest)
-            # Chcekpoint 1 *is* the upload of user manifest v1
-            await storage.update_realm_checkpoint(1, {})
+def initialize_local_user_manifest(initial_user_manifest_state):
+    async def _initialize_local_user_manifest(
+        data_base_dir, device, initial_user_manifest: str
+    ) -> None:
+        assert initial_user_manifest in ("non_speculative_v0", "speculative_v0", "v1")
+        # Create a storage just for this operation (the underlying database
+        # will be reused by the core's storage thanks to `persistent_mockup`)
+        with freeze_time("2000-01-01", device=device) as timestamp:
+            async with UserStorage.run(data_base_dir, device) as storage:
+                assert storage.get_user_manifest().base_version == 0
 
-    return _initialize_userfs_storage
+                if initial_user_manifest == "v1":
+                    user_manifest = initial_user_manifest_state.get_user_manifest_v1_for_device(
+                        storage.device
+                    )
+                    await storage.set_user_manifest(user_manifest)
+                    # Chcekpoint 1 *is* the upload of user manifest v1
+                    await storage.update_realm_checkpoint(1, {})
+
+                elif initial_user_manifest == "non_speculative_v0":
+                    user_manifest = LocalUserManifest.new_placeholder(
+                        author=storage.device.device_id,
+                        id=storage.device.user_manifest_id,
+                        timestamp=timestamp,
+                        speculative=False,
+                    )
+                    await storage.set_user_manifest(user_manifest)
+
+                else:
+                    # Nothing to do given speculative placeholder is the default
+                    assert initial_user_manifest == "speculative_v0"
+
+    return _initialize_local_user_manifest
 
 
 def local_device_to_backend_user(
@@ -357,11 +406,11 @@ def local_device_to_backend_user(
         certifier_id = certifier.device_id
         certifier_signing_key = certifier.signing_key
 
-    now = pendulum.now()
+    timestamp = device.timestamp()
 
     user_certificate = UserCertificateContent(
         author=certifier_id,
-        timestamp=now,
+        timestamp=timestamp,
         user_id=device.user_id,
         public_key=device.public_key,
         profile=device.profile,
@@ -369,7 +418,7 @@ def local_device_to_backend_user(
     )
     device_certificate = DeviceCertificateContent(
         author=certifier_id,
-        timestamp=now,
+        timestamp=timestamp,
         device_id=device.device_id,
         device_label=device.device_label,
         verify_key=device.verify_key,
@@ -384,7 +433,7 @@ def local_device_to_backend_user(
         user_certificate=user_certificate.dump_and_sign(certifier_signing_key),
         redacted_user_certificate=redacted_user_certificate.dump_and_sign(certifier_signing_key),
         user_certifier=certifier_id,
-        created_on=now,
+        created_on=timestamp,
     )
 
     first_device = BackendDevice(
@@ -395,7 +444,7 @@ def local_device_to_backend_user(
             certifier_signing_key
         ),
         device_certifier=certifier_id,
-        created_on=now,
+        created_on=timestamp,
     )
 
     return user, first_device
@@ -487,9 +536,13 @@ def backend_data_binder_factory(request, backend_addr, initial_user_manifest_sta
                 author = device
             else:
                 author = self.get_device(device.organization_id, manifest.author)
-            realm_id = author.user_manifest_id
+            realm_id = RealmID(author.user_manifest_id.uuid)
+            vlob_id = VlobID(author.user_manifest_id.uuid)
 
             with self.backend.event_bus.listen() as spy:
+
+                # The realm needs to be created srictly before the manifest timestamp
+                realm_create_timestamp = manifest.timestamp.subtract(microseconds=1)
 
                 await self.backend.realm.create(
                     organization_id=author.organization_id,
@@ -498,14 +551,14 @@ def backend_data_binder_factory(request, backend_addr, initial_user_manifest_sta
                         user_id=author.user_id,
                         certificate=RealmRoleCertificateContent(
                             author=author.device_id,
-                            timestamp=manifest.timestamp,
+                            timestamp=realm_create_timestamp,
                             realm_id=realm_id,
                             user_id=author.user_id,
                             role=RealmRole.OWNER,
                         ).dump_and_sign(author.signing_key),
                         role=RealmRole.OWNER,
                         granted_by=author.device_id,
-                        granted_on=manifest.timestamp,
+                        granted_on=realm_create_timestamp,
                     ),
                 )
 
@@ -514,7 +567,7 @@ def backend_data_binder_factory(request, backend_addr, initial_user_manifest_sta
                     author=author.device_id,
                     realm_id=realm_id,
                     encryption_revision=1,
-                    vlob_id=author.user_manifest_id,
+                    vlob_id=vlob_id,
                     timestamp=manifest.timestamp,
                     blob=manifest.dump_sign_and_encrypt(
                         author_signkey=author.signing_key, key=author.user_manifest_key
@@ -529,7 +582,7 @@ def backend_data_binder_factory(request, backend_addr, initial_user_manifest_sta
                             {
                                 "organization_id": author.organization_id,
                                 "author": author.device_id,
-                                "realm_id": author.user_manifest_id,
+                                "realm_id": realm_id,
                                 "user": author.user_id,
                                 "role": RealmRole.OWNER,
                             },
@@ -539,9 +592,9 @@ def backend_data_binder_factory(request, backend_addr, initial_user_manifest_sta
                             {
                                 "organization_id": author.organization_id,
                                 "author": author.device_id,
-                                "realm_id": author.user_manifest_id,
+                                "realm_id": realm_id,
                                 "checkpoint": 1,
-                                "src_id": author.user_manifest_id,
+                                "src_id": vlob_id,
                                 "src_version": 1,
                             },
                         ),
@@ -551,47 +604,46 @@ def backend_data_binder_factory(request, backend_addr, initial_user_manifest_sta
         async def bind_organization(
             self,
             org: OrganizationFullData,
-            first_device: LocalDevice = None,
-            initial_user_manifest_in_v0: bool = False,
-            expiration_date: datetime = None,
+            first_device: LocalDevice,
+            initial_user_manifest: str = "v1",
         ):
-            bootstrap_token = f"<{org.organization_id}-bootstrap-token>"
-            await self.backend.organization.create(
-                org.organization_id, bootstrap_token, expiration_date
-            )
-            if first_device:
-                backend_user, backend_first_device = local_device_to_backend_user(first_device, org)
-                await self.backend.organization.bootstrap(
-                    org.organization_id,
-                    backend_user,
-                    backend_first_device,
-                    bootstrap_token,
-                    org.root_verify_key,
-                )
-                self.certificates_store.store_user(
-                    org.organization_id,
-                    backend_user.user_id,
-                    backend_user.user_certificate,
-                    backend_user.redacted_user_certificate,
-                )
-                self.certificates_store.store_device(
-                    org.organization_id,
-                    backend_first_device.device_id,
-                    backend_first_device.device_certificate,
-                    backend_first_device.redacted_device_certificate,
-                )
-                self.binded_local_devices.append(first_device)
+            assert initial_user_manifest in ("v1", "not_synced")
 
-                if not initial_user_manifest_in_v0:
-                    await self._create_realm_and_first_vlob(first_device)
+            await self.backend.organization.create(org.organization_id, org.bootstrap_token)
+            assert org.organization_id == first_device.organization_id
+            backend_user, backend_first_device = local_device_to_backend_user(first_device, org)
+            await self.backend.organization.bootstrap(
+                org.organization_id,
+                backend_user,
+                backend_first_device,
+                org.bootstrap_token,
+                org.root_verify_key,
+            )
+            self.certificates_store.store_user(
+                org.organization_id,
+                backend_user.user_id,
+                backend_user.user_certificate,
+                backend_user.redacted_user_certificate,
+            )
+            self.certificates_store.store_device(
+                org.organization_id,
+                backend_first_device.device_id,
+                backend_first_device.device_certificate,
+                backend_first_device.redacted_device_certificate,
+            )
+            self.binded_local_devices.append(first_device)
+
+            if initial_user_manifest == "v1":
+                await self._create_realm_and_first_vlob(first_device)
 
         async def bind_device(
             self,
             device: LocalDevice,
             certifier: Optional[LocalDevice] = None,
-            initial_user_manifest_in_v0: bool = False,
-            is_admin: bool = False,
+            initial_user_manifest: Optional[str] = None,
         ):
+            assert initial_user_manifest in (None, "v1", "not_synced")
+
             if not certifier:
                 try:
                     certifier = next(
@@ -606,6 +658,11 @@ def backend_data_binder_factory(request, backend_addr, initial_user_manifest_sta
 
             if any(d for d in self.binded_local_devices if d.user_id == device.user_id):
                 # User already created, only add device
+
+                # For clarity, user manifest state in backend should be only specified
+                # when creating the user
+                assert initial_user_manifest is None
+
                 await self.backend.user.create_device(device.organization_id, backend_device)
                 self.certificates_store.store_device(
                     device.organization_id,
@@ -631,15 +688,16 @@ def backend_data_binder_factory(request, backend_addr, initial_user_manifest_sta
                     backend_device.device_certificate,
                     backend_device.redacted_device_certificate,
                 )
-
-                if not initial_user_manifest_in_v0:
+                # By default we create user manifest v1 in backend
+                if initial_user_manifest in (None, "v1"):
                     await self._create_realm_and_first_vlob(device)
 
             self.binded_local_devices.append(device)
 
         async def bind_revocation(self, user_id: UserID, certifier: LocalDevice):
+            timestamp = certifier.timestamp()
             revoked_user_certificate = RevokedUserCertificateContent(
-                author=certifier.device_id, timestamp=pendulum.now(), user_id=user_id
+                author=certifier.device_id, timestamp=timestamp, user_id=user_id
             ).dump_and_sign(certifier.signing_key)
             await self.backend.user.revoke_user(
                 certifier.organization_id, user_id, revoked_user_certificate, certifier.device_id
@@ -664,13 +722,9 @@ def backend_data_binder_factory(request, backend_addr, initial_user_manifest_sta
     return _backend_data_binder_factory
 
 
-# TODO: should be separated between API v1 and v2
 @pytest.fixture
 def sock_from_other_organization_factory(
-    apiv1_backend_sock_factory,
-    backend_data_binder_factory,
-    organization_factory,
-    local_device_factory,
+    backend_sock_factory, backend_data_binder_factory, organization_factory, local_device_factory
 ):
     @asynccontextmanager
     async def _sock_from_other_organization_factory(
@@ -695,7 +749,7 @@ def sock_from_other_organization_factory(
         else:
             auth_as = other_device
 
-        async with apiv1_backend_sock_factory(backend, auth_as) as sock:
+        async with backend_sock_factory(backend, auth_as) as sock:
             sock.device = other_device
             yield sock
 

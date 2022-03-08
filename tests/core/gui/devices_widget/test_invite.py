@@ -1,10 +1,11 @@
-# Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
+# Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2016-2021 Scille SAS
 
 import pytest
 import trio
 from PyQt5 import QtCore
 from unittest.mock import ANY
 
+from parsec.api.protocol import DeviceLabel
 from parsec.core.backend_connection import backend_invited_cmds_factory
 from parsec.core.invite import claimer_retrieve_info
 from parsec.core.gui.greet_device_widget import (
@@ -32,7 +33,7 @@ async def test_invite_device_offline(aqtbot, logged_gui, autoclose_dialog, runni
 
     # TODO: not sure why but this timeout without running_backend fixture...
     with running_backend.offline():
-        await aqtbot.mouse_click(d_w.button_add_device, QtCore.Qt.LeftButton)
+        aqtbot.mouse_click(d_w.button_add_device, QtCore.Qt.LeftButton)
 
         def _invite_failed():
             assert autoclose_dialog.dialogs == [
@@ -57,7 +58,7 @@ async def test_invite_device_send_email(
 ):
     d_w = await logged_gui.test_switch_to_devices_widget()
 
-    await aqtbot.mouse_click(d_w.button_add_device, QtCore.Qt.LeftButton)
+    aqtbot.mouse_click(d_w.button_add_device, QtCore.Qt.LeftButton)
 
     # Device invitation widget should show up now
 
@@ -78,7 +79,7 @@ async def test_invite_device_send_email(
     await aqtbot.wait_until(_greet_device_displayed)
 
     if online:
-        await aqtbot.mouse_click(gdi_w.button_send_email, QtCore.Qt.LeftButton)
+        aqtbot.mouse_click(gdi_w.button_send_email, QtCore.Qt.LeftButton)
 
         def _email_sent():
             assert email_letterbox.emails == [(bob.human_handle.email, ANY)]
@@ -88,7 +89,7 @@ async def test_invite_device_send_email(
 
     else:
         with running_backend.offline():
-            await aqtbot.mouse_click(gdi_w.button_send_email, QtCore.Qt.LeftButton)
+            aqtbot.mouse_click(gdi_w.button_send_email, QtCore.Qt.LeftButton)
 
             def _email_send_failed():
                 assert autoclose_dialog.dialogs == [("Error", "Could not send the email.")]
@@ -105,7 +106,7 @@ async def test_invite_device_without_human_handle_cannot_send_email(
 ):
     d_w = await logged_gui.test_switch_to_devices_widget()
 
-    await aqtbot.mouse_click(d_w.button_add_device, QtCore.Qt.LeftButton)
+    aqtbot.mouse_click(d_w.button_add_device, QtCore.Qt.LeftButton)
 
     # Device invitation widget should show up now
 
@@ -135,13 +136,13 @@ async def test_invite_device_without_human_handle_cannot_send_email(
 async def test_invite_and_greet_device(
     aqtbot, logged_gui, running_backend, autoclose_dialog, catch_greet_device_widget, bob
 ):
-    requested_device_label = "PC1"
+    requested_device_label = DeviceLabel("PC1")
 
     # First switch to devices page, and click on "new device" button
 
     d_w = await logged_gui.test_switch_to_devices_widget()
 
-    await aqtbot.mouse_click(d_w.button_add_device, QtCore.Qt.LeftButton)
+    aqtbot.mouse_click(d_w.button_add_device, QtCore.Qt.LeftButton)
 
     # Device invitation widget should show up now with welcome page
 
@@ -200,7 +201,7 @@ async def test_invite_and_greet_device(
 
         # Start the greeting
 
-        await aqtbot.mouse_click(gdi_w.button_start, QtCore.Qt.LeftButton)
+        aqtbot.mouse_click(gdi_w.button_start, QtCore.Qt.LeftButton)
 
         def _greet_started():
             assert not gdi_w.button_start.isEnabled()
@@ -242,7 +243,7 @@ async def test_invite_and_greet_device(
 
         # Pretend we have choosen the right code
         # TODO: click on button instead of sending the corresponding event
-        await aqtbot.run(gdce_w.code_input_widget.good_code_clicked.emit)
+        gdce_w.code_input_widget.good_code_clicked.emit()
 
         def _wait_claimer_info():
             assert gdce_w.label_wait_info.isVisible()
@@ -260,7 +261,7 @@ async def test_invite_and_greet_device(
             # Devices list should be updated
             assert d_w.layout_devices.count() == 2
             item = d_w.layout_devices.itemAt(1)
-            assert item.widget().label_device_name.text() == requested_device_label
+            assert item.widget().label_device_name.text() == requested_device_label.str
             assert item.widget().label_is_current.text() == ""
 
         await aqtbot.wait_until(_greet_done)

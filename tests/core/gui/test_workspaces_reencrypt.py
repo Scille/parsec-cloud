@@ -1,4 +1,4 @@
-# Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
+# Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2016-2021 Scille SAS
 
 from functools import partial
 
@@ -11,6 +11,7 @@ from parsec.core.fs import (
     FSWorkspaceNoAccess,
     FSWorkspaceNotFoundError,
 )
+from parsec.api.data import EntryName
 from parsec.core.gui.lang import translate
 from parsec.core.gui.workspace_button import WorkspaceButton
 from parsec.core.types import WorkspaceRole
@@ -32,7 +33,7 @@ async def display_reencryption_button(aqtbot, monkeypatch, workspace_widget):
         assert workspace_widget.layout_workspaces.count() == 1
         wk_button = workspace_widget.layout_workspaces.itemAt(0).widget()
         assert isinstance(wk_button, WorkspaceButton)
-        assert wk_button.name == "w1"
+        assert wk_button.name == EntryName("w1")
 
     await aqtbot.wait_until(_workspace_displayed, timeout=2000)
     wk_button = workspace_widget.layout_workspaces.itemAt(0).widget()
@@ -53,7 +54,7 @@ async def display_reencryption_button(aqtbot, monkeypatch, workspace_widget):
 
 @pytest.fixture
 async def shared_workspace(running_backend, alice_user_fs, bob_user_fs, bob):
-    wid = await alice_user_fs.workspace_create("w1")
+    wid = await alice_user_fs.workspace_create(EntryName("w1"))
     await alice_user_fs.sync()
     await alice_user_fs.workspace_share(wid, bob.user_id, WorkspaceRole.READER)
     await alice_user_fs.process_last_messages()
@@ -92,7 +93,7 @@ async def test_workspace_reencryption_display(
         assert workspace_w.layout_workspaces.count() == 1
         wk_button = workspace_w.layout_workspaces.itemAt(0).widget()
         assert isinstance(wk_button, WorkspaceButton)
-        assert wk_button.name == "w1"
+        assert wk_button.name == EntryName("w1")
 
     await aqtbot.wait_until(partial(_workspace_displayed, w_w), timeout=2000)
     wk_button = w_w.layout_workspaces.itemAt(0).widget()
@@ -136,7 +137,7 @@ async def test_workspace_reencryption(
     async with aqtbot.wait_signals(
         [wk_button.button_reencrypt.clicked, wk_button.reencrypt_clicked]
     ):
-        await aqtbot.mouse_click(wk_button.button_reencrypt, QtCore.Qt.LeftButton)
+        aqtbot.mouse_click(wk_button.button_reencrypt, QtCore.Qt.LeftButton)
 
     def _reencrypt_button_not_displayed():
         assert not wk_button.button_reencrypt.isVisible()
@@ -161,7 +162,7 @@ async def test_workspace_reencryption_offline_backend(
     await display_reencryption_button(aqtbot, monkeypatch, w_w)
     wk_button = w_w.layout_workspaces.itemAt(0).widget()
     with running_backend.offline():
-        await aqtbot.mouse_click(wk_button.button_reencrypt, QtCore.Qt.LeftButton)
+        aqtbot.mouse_click(wk_button.button_reencrypt, QtCore.Qt.LeftButton)
 
         def _assert_error():
             assert len(autoclose_dialog.dialogs) == 1
@@ -192,7 +193,7 @@ async def test_workspace_reencryption_fs_error(
     wk_button = w_w.layout_workspaces.itemAt(0).widget()
 
     await alice_user_fs.workspace_start_reencryption(wk_button.workspace_id)
-    await aqtbot.mouse_click(wk_button.button_reencrypt, QtCore.Qt.LeftButton)
+    aqtbot.mouse_click(wk_button.button_reencrypt, QtCore.Qt.LeftButton)
 
     def _assert_error():
         assert len(autoclose_dialog.dialogs) == 1
@@ -235,7 +236,7 @@ async def test_workspace_reencryption_access_error(
             reencryption_needed_workspace, alice.user_id, WorkspaceRole.READER
         )
 
-    await aqtbot.mouse_click(wk_button.button_reencrypt, QtCore.Qt.LeftButton)
+    aqtbot.mouse_click(wk_button.button_reencrypt, QtCore.Qt.LeftButton)
 
     def _assert_error():
         assert len(autoclose_dialog.dialogs) == 2
@@ -272,7 +273,7 @@ async def test_workspace_reencryption_not_found_error(
     w_w.core.user_fs.workspace_start_reencryption = mocked_start_reencryption.__get__(
         w_w.core.user_fs
     )
-    await aqtbot.mouse_click(wk_button.button_reencrypt, QtCore.Qt.LeftButton)
+    aqtbot.mouse_click(wk_button.button_reencrypt, QtCore.Qt.LeftButton)
 
     def _assert_error():
         assert len(autoclose_dialog.dialogs) == 1
@@ -292,6 +293,7 @@ async def test_workspace_reencryption_not_found_error(
 )
 @customize_fixtures(logged_gui_as_admin=True)
 async def test_workspace_reencryption_do_one_batch_error(
+    caplog,
     aqtbot,
     running_backend,
     logged_gui,
@@ -324,7 +326,7 @@ async def test_workspace_reencryption_do_one_batch_error(
     w_w.core.user_fs.workspace_start_reencryption = mocked_start_reencryption.__get__(
         w_w.core.user_fs
     )
-    await aqtbot.mouse_click(wk_button.button_reencrypt, QtCore.Qt.LeftButton)
+    aqtbot.mouse_click(wk_button.button_reencrypt, QtCore.Qt.LeftButton)
 
     def _assert_error():
         assert len(autoclose_dialog.dialogs) == 1
@@ -332,6 +334,11 @@ async def test_workspace_reencryption_do_one_batch_error(
         assert wk_button.button_reencrypt.isVisible()
 
     await aqtbot.wait_until(_assert_error)
+    # Unexpected error is logged
+    if error_type is Exception:
+        caplog.assert_occured_once(
+            "[error    ] Uncatched error                [parsec.core.gui.trio_jobs]"
+        )
 
 
 @pytest.mark.gui
@@ -348,7 +355,7 @@ async def test_workspace_reencryption_continue(
     alice,
 ):
     # Create a shared workspace
-    wid = await alice_user_fs.workspace_create("w1")
+    wid = await alice_user_fs.workspace_create(EntryName("w1"))
     workspace = alice_user_fs.get_workspace(wid)
     await workspace.touch("/foo.txt")
     await workspace.sync()
@@ -373,7 +380,7 @@ async def test_workspace_reencryption_continue(
     async with aqtbot.wait_signals(
         [wk_button.button_reencrypt.clicked, wk_button.reencrypt_clicked]
     ):
-        await aqtbot.mouse_click(wk_button.button_reencrypt, QtCore.Qt.LeftButton)
+        aqtbot.mouse_click(wk_button.button_reencrypt, QtCore.Qt.LeftButton)
 
     def _reencrypt_button_not_displayed():
         assert not wk_button.button_reencrypt.isVisible()

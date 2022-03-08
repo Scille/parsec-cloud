@@ -1,4 +1,4 @@
-# Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
+# Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2016-2021 Scille SAS
 
 import trio
 from enum import IntEnum
@@ -7,18 +7,27 @@ from PyQt5.QtCore import pyqtSignal
 from PyQt5.QtGui import QFont
 from PyQt5.QtWidgets import QWidget
 
-from parsec.api.protocol import HumanHandle
+from parsec.api.protocol import DeviceLabel, HumanHandle
 from parsec.core.types import LocalDevice
-from parsec.core.local_device import LocalDeviceAlreadyExistsError, save_device_with_password
+from parsec.core.local_device import (
+    save_device_with_password_in_config,
+    save_device_with_smartcard_in_config,
+    DeviceFileType,
+    LocalDeviceCryptoError,
+    LocalDeviceError,
+    LocalDeviceNotFoundError,
+)
+from parsec.core.fs.storage.user_storage import user_storage_non_speculative_init
 from parsec.core.invite import claimer_retrieve_info, InvitePeerResetError
 from parsec.core.backend_connection import (
     backend_invited_cmds_factory,
     BackendConnectionRefused,
     BackendInvitationAlreadyUsed,
     BackendNotAvailable,
+    BackendOutOfBallparkError,
 )
 from parsec.core.gui import validators
-from parsec.core.gui.trio_thread import JobResultError, ThreadSafeQtSignal, QtToTrioJob
+from parsec.core.gui.trio_jobs import JobResultError, QtToTrioJob
 from parsec.core.gui.desktop import get_default_device
 from parsec.core.gui.custom_dialogs import show_error, GreyedDialog, show_info
 from parsec.core.gui.lang import translate as _
@@ -112,6 +121,11 @@ class Claimer:
                     new_device = await in_progress_ctx.do_claim_user(
                         requested_device_label=device_label, requested_human_handle=human_handle
                     )
+                    # Claiming a user means we are it first device, hence we know there
+                    # is no existing user manifest (hence our placeholder is non-speculative)
+                    await user_storage_non_speculative_init(
+                        data_base_dir=config.data_base_dir, device=new_device
+                    )
                     await self.job_oob_send.send((True, None, new_device))
                 except Exception as exc:
                     await self.job_oob_send.send((False, exc, None))
@@ -121,6 +135,8 @@ class Claimer:
             raise JobResultError(status="invitation-already-used", origin=exc)
         except BackendConnectionRefused as exc:
             raise JobResultError(status="invitation-not-found", origin=exc)
+        except BackendOutOfBallparkError as exc:
+            raise JobResultError(status="out-of-ballpark", origin=exc)
 
     async def retrieve_info(self):
         await self.main_oob_send.send(self.Step.RetrieveInfo)
@@ -159,7 +175,7 @@ class Claimer:
         if not r:
             raise JobResultError(status="wait-trust-failed", origin=exc)
 
-    async def claim_user(self, device_label, human_handle):
+    async def claim_user(self, device_label: DeviceLabel, human_handle: HumanHandle):
         await self.main_oob_send.send(self.Step.ClaimUser)
         await self.main_oob_send.send((device_label, human_handle))
         r, exc, new_device = await self.job_oob_recv.receive()
@@ -169,32 +185,57 @@ class Claimer:
 
 
 class ClaimUserFinalizeWidget(QWidget, Ui_ClaimUserFinalizeWidget):
-    succeeded = pyqtSignal(LocalDevice, str)
+    succeeded = pyqtSignal(LocalDevice, DeviceFileType, str)
     failed = pyqtSignal(object)  # QtToTrioJob or None
 
-    def __init__(self, config, new_device):
+    def __init__(self, config, jobs_ctx, new_device):
         super().__init__()
         self.setupUi(self)
         self.config = config
+        self.jobs_ctx = jobs_ctx
         self.new_device = new_device
-        self.widget_password.info_changed.connect(self.check_infos)
+
+        self.widget_auth.exclude_strings(
+            [
+                new_device.organization_addr.organization_id.str,
+                new_device.device_label.str,
+                new_device.human_handle.email,
+                new_device.human_handle.label,
+            ]
+        )
+        self.widget_auth.authentication_state_changed.connect(self.check_infos)
         self.button_finalize.setDisabled(True)
         self.button_finalize.clicked.connect(self._on_finalize_clicked)
 
     def check_infos(self, _=""):
-        if self.widget_password.is_valid():
+        if self.widget_auth.is_auth_valid():
             self.button_finalize.setDisabled(False)
         else:
             self.button_finalize.setDisabled(True)
 
     def _on_finalize_clicked(self):
-        password = self.widget_password.password
         try:
-            save_device_with_password(self.config.config_dir, self.new_device, password)
-            self.succeeded.emit(self.new_device, password)
-        except LocalDeviceAlreadyExistsError as exc:
-            show_error(self, _("TEXT_CLAIM_USER_DEVICE_ALREADY_EXISTS"), exception=exc)
-            self.failed.emit(None)
+            if self.widget_auth.get_auth_method() == DeviceFileType.PASSWORD:
+                save_device_with_password_in_config(
+                    config_dir=self.config.config_dir,
+                    device=self.new_device,
+                    password=self.widget_auth.get_auth(),
+                )
+            elif self.widget_auth.get_auth_method() == DeviceFileType.SMARTCARD:
+                save_device_with_smartcard_in_config(
+                    config_dir=self.config.config_dir, device=self.new_device
+                )
+            self.succeeded.emit(
+                self.new_device, self.widget_auth.get_auth_method(), self.widget_auth.get_auth()
+            )
+        except LocalDeviceCryptoError as exc:
+            if self.widget_auth.get_auth_method() == DeviceFileType.SMARTCARD:
+                show_error(self, _("TEXT_INVALID_SMARTCARD"), exception=exc)
+        except LocalDeviceNotFoundError as exc:
+            if self.widget_auth.get_auth_method() == DeviceFileType.PASSWORD:
+                show_error(self, _("TEXT_CANNOT_SAVE_DEVICE"), exception=exc)
+        except LocalDeviceError as exc:
+            show_error(self, _("TEXT_CANNOT_SAVE_DEVICE"), exception=exc)
 
 
 class ClaimUserCodeExchangeWidget(QWidget, Ui_ClaimUserCodeExchangeWidget):
@@ -245,17 +286,13 @@ class ClaimUserCodeExchangeWidget(QWidget, Ui_ClaimUserCodeExchangeWidget):
         self.wait_peer_trust_error.connect(self._on_wait_peer_trust_error)
 
         self.get_greeter_sas_job = self.jobs_ctx.submit_job(
-            ThreadSafeQtSignal(self, "get_greeter_sas_success", QtToTrioJob),
-            ThreadSafeQtSignal(self, "get_greeter_sas_error", QtToTrioJob),
-            self.claimer.get_greeter_sas,
+            self.get_greeter_sas_success, self.get_greeter_sas_error, self.claimer.get_greeter_sas
         )
 
     def _on_good_greeter_code_clicked(self):
         self.widget_greeter_code.setDisabled(True)
         self.signify_trust_job = self.jobs_ctx.submit_job(
-            ThreadSafeQtSignal(self, "signify_trust_success", QtToTrioJob),
-            ThreadSafeQtSignal(self, "signify_trust_error", QtToTrioJob),
-            self.claimer.signify_trust,
+            self.signify_trust_success, self.signify_trust_error, self.claimer.signify_trust
         )
 
     def _on_wrong_greeter_code_clicked(self):
@@ -290,12 +327,12 @@ class ClaimUserCodeExchangeWidget(QWidget, Ui_ClaimUserCodeExchangeWidget):
                 exc = job.exc.params.get("origin", None)
                 if isinstance(exc, InvitePeerResetError):
                     msg = _("TEXT_CLAIM_USER_PEER_RESET")
-                if isinstance(exc, BackendInvitationAlreadyUsed):
+                elif isinstance(exc, BackendInvitationAlreadyUsed):
                     msg = _("TEXT_INVITATION_ALREADY_USED")
             show_error(self, msg, exception=exc)
         self.failed.emit(job)
 
-    def _on_get_claimer_sas_success(self):
+    def _on_get_claimer_sas_success(self, job):
         assert self.get_claimer_sas_job
         assert self.get_claimer_sas_job.is_finished()
         assert self.get_claimer_sas_job.status == "ok"
@@ -305,9 +342,7 @@ class ClaimUserCodeExchangeWidget(QWidget, Ui_ClaimUserCodeExchangeWidget):
         self.widget_claimer_code.setVisible(True)
         self.line_edit_claimer_code.setText(str(claimer_sas))
         self.wait_peer_trust_job = self.jobs_ctx.submit_job(
-            ThreadSafeQtSignal(self, "wait_peer_trust_success", QtToTrioJob),
-            ThreadSafeQtSignal(self, "wait_peer_trust_error", QtToTrioJob),
-            self.claimer.wait_peer_trust,
+            self.wait_peer_trust_success, self.wait_peer_trust_error, self.claimer.wait_peer_trust
         )
 
     def _on_get_claimer_sas_error(self, job):
@@ -319,15 +354,13 @@ class ClaimUserCodeExchangeWidget(QWidget, Ui_ClaimUserCodeExchangeWidget):
         assert job.status != "ok"
         self.failed.emit(job)
 
-    def _on_signify_trust_success(self):
+    def _on_signify_trust_success(self, job):
         assert self.signify_trust_job
         assert self.signify_trust_job.is_finished()
         assert self.signify_trust_job.status == "ok"
         self.signify_trust_job = None
         self.get_claimer_sas_job = self.jobs_ctx.submit_job(
-            ThreadSafeQtSignal(self, "get_claimer_sas_success", QtToTrioJob),
-            ThreadSafeQtSignal(self, "get_claimer_sas_error", QtToTrioJob),
-            self.claimer.get_claimer_sas,
+            self.get_claimer_sas_success, self.get_claimer_sas_error, self.claimer.get_claimer_sas
         )
 
     def _on_signify_trust_error(self, job):
@@ -344,7 +377,7 @@ class ClaimUserCodeExchangeWidget(QWidget, Ui_ClaimUserCodeExchangeWidget):
                 exc = job.exc.params.get("origin", None)
                 if isinstance(exc, InvitePeerResetError):
                     msg = _("TEXT_CLAIM_USER_PEER_RESET")
-                if isinstance(exc, BackendInvitationAlreadyUsed):
+                elif isinstance(exc, BackendInvitationAlreadyUsed):
                     msg = _("TEXT_INVITATION_ALREADY_USED")
             show_error(self, msg, exception=exc)
         self.failed.emit(job)
@@ -372,20 +405,20 @@ class ClaimUserCodeExchangeWidget(QWidget, Ui_ClaimUserCodeExchangeWidget):
                 exc = job.exc.params.get("origin", None)
                 if isinstance(exc, InvitePeerResetError):
                     msg = _("TEXT_CLAIM_USER_PEER_RESET")
-                if isinstance(exc, BackendInvitationAlreadyUsed):
+                elif isinstance(exc, BackendInvitationAlreadyUsed):
                     msg = _("TEXT_INVITATION_ALREADY_USED")
             show_error(self, msg, exception=exc)
         self.failed.emit(job)
 
     def cancel(self):
         if self.signify_trust_job:
-            self.signify_trust_job.cancel_and_join()
+            self.signify_trust_job.cancel()
         if self.wait_peer_trust_job:
-            self.wait_peer_trust_job.cancel_and_join()
+            self.wait_peer_trust_job.cancel()
         if self.get_claimer_sas_job:
-            self.get_claimer_sas_job.cancel_and_join()
+            self.get_claimer_sas_job.cancel()
         if self.get_greeter_sas_job:
-            self.get_greeter_sas_job.cancel_and_join()
+            self.get_greeter_sas_job.cancel()
 
 
 class ClaimUserProvideInfoWidget(QWidget, Ui_ClaimUserProvideInfoWidget):
@@ -411,7 +444,7 @@ class ClaimUserProvideInfoWidget(QWidget, Ui_ClaimUserProvideInfoWidget):
         self.line_edit_user_email.validity_changed.connect(self.check_infos)
 
         self.line_edit_device.setText(get_default_device())
-        self.line_edit_device.set_validator(validators.DeviceNameValidator())
+        self.line_edit_device.set_validator(validators.DeviceLabelValidator())
         self.line_edit_device.validity_changed.connect(self.check_infos)
 
         self.claim_success.connect(self._on_claim_success)
@@ -431,10 +464,12 @@ class ClaimUserProvideInfoWidget(QWidget, Ui_ClaimUserProvideInfoWidget):
             self.button_ok.setDisabled(True)
 
     def _on_claim_clicked(self):
-        device_label = self.line_edit_device.text()
+        # No try/except given `self.line_edit_device` has already been validated against `DeviceLabel`
+        device_label = DeviceLabel(validators.trim_user_name(self.line_edit_device.text()))
         try:
             user_name = validators.trim_user_name(self.line_edit_user_full_name.text())
             human_handle = HumanHandle(email=self.line_edit_user_email.text(), label=user_name)
+            device_label = DeviceLabel(self.line_edit_device.text())
         except ValueError as exc:
             show_error(self, _("TEXT_CLAIM_USER_INVALID_HUMAN_HANDLE"), exception=exc)
             return
@@ -442,8 +477,8 @@ class ClaimUserProvideInfoWidget(QWidget, Ui_ClaimUserProvideInfoWidget):
         self.widget_info.setDisabled(True)
         self.label_wait.show()
         self.claim_job = self.jobs_ctx.submit_job(
-            ThreadSafeQtSignal(self, "claim_success", QtToTrioJob),
-            ThreadSafeQtSignal(self, "claim_error", QtToTrioJob),
+            self.claim_success,
+            self.claim_error,
             self.claimer.claim_user,
             device_label=device_label,
             human_handle=human_handle,
@@ -474,7 +509,7 @@ class ClaimUserProvideInfoWidget(QWidget, Ui_ClaimUserProvideInfoWidget):
                 exc = job.exc.params.get("origin", None)
                 if isinstance(exc, InvitePeerResetError):
                     msg = _("TEXT_CLAIM_USER_PEER_RESET")
-                if isinstance(exc, BackendInvitationAlreadyUsed):
+                elif isinstance(exc, BackendInvitationAlreadyUsed):
                     msg = _("TEXT_INVITATION_ALREADY_USED")
             show_error(self, msg, exception=exc)
         self.check_infos()
@@ -484,7 +519,7 @@ class ClaimUserProvideInfoWidget(QWidget, Ui_ClaimUserProvideInfoWidget):
 
     def cancel(self):
         if self.claim_job:
-            self.claim_job.cancel_and_join()
+            self.claim_job.cancel()
 
 
 class ClaimUserInstructionsWidget(QWidget, Ui_ClaimUserInstructionsWidget):
@@ -508,9 +543,7 @@ class ClaimUserInstructionsWidget(QWidget, Ui_ClaimUserInstructionsWidget):
         self.button_start.setDisabled(True)
         self.button_start.setText(_("TEXT_CLAIM_USER_WAITING"))
         self.wait_peer_job = self.jobs_ctx.submit_job(
-            ThreadSafeQtSignal(self, "wait_peer_success", QtToTrioJob),
-            ThreadSafeQtSignal(self, "wait_peer_error", QtToTrioJob),
-            self.claimer.wait_peer,
+            self.wait_peer_success, self.wait_peer_error, self.claimer.wait_peer
         )
 
     def _on_wait_peer_success(self, job):
@@ -536,7 +569,7 @@ class ClaimUserInstructionsWidget(QWidget, Ui_ClaimUserInstructionsWidget):
                 exc = job.exc.params.get("origin", None)
                 if isinstance(exc, InvitePeerResetError):
                     msg = _("TEXT_CLAIM_USER_PEER_RESET")
-                if isinstance(exc, BackendInvitationAlreadyUsed):
+                elif isinstance(exc, BackendInvitationAlreadyUsed):
                     msg = _("TEXT_INVITATION_ALREADY_USED")
             self.button_start.setDisabled(False)
             self.button_start.setText(_("ACTION_START"))
@@ -545,7 +578,7 @@ class ClaimUserInstructionsWidget(QWidget, Ui_ClaimUserInstructionsWidget):
 
     def cancel(self):
         if self.wait_peer_job:
-            self.wait_peer_job.cancel_and_join()
+            self.wait_peer_job.cancel()
 
 
 class ClaimUserWidget(QWidget, Ui_ClaimUserWidget):
@@ -574,16 +607,14 @@ class ClaimUserWidget(QWidget, Ui_ClaimUserWidget):
 
     def _run_claimer(self):
         self.claimer_job = self.jobs_ctx.submit_job(
-            ThreadSafeQtSignal(self, "claimer_success", QtToTrioJob),
-            ThreadSafeQtSignal(self, "claimer_error", QtToTrioJob),
+            self.claimer_success,
+            self.claimer_error,
             self.claimer.run,
             addr=self.addr,
             config=self.config,
         )
         self.retrieve_info_job = self.jobs_ctx.submit_job(
-            ThreadSafeQtSignal(self, "retrieve_info_success", QtToTrioJob),
-            ThreadSafeQtSignal(self, "retrieve_info_error", QtToTrioJob),
-            self.claimer.retrieve_info,
+            self.retrieve_info_success, self.retrieve_info_error, self.claimer.retrieve_info
         )
 
     def _on_retrieve_info_success(self, job):
@@ -610,7 +641,7 @@ class ClaimUserWidget(QWidget, Ui_ClaimUserWidget):
                 exc = job.exc.params.get("origin", None)
                 if isinstance(exc, InvitePeerResetError):
                     msg = _("TEXT_CLAIM_USER_PEER_RESET")
-                if isinstance(exc, BackendInvitationAlreadyUsed):
+                elif isinstance(exc, BackendInvitationAlreadyUsed):
                     msg = _("TEXT_INVITATION_ALREADY_USED")
             show_error(self, msg, exception=exc)
         # No point in retrying the process here, simply close the dialog
@@ -683,14 +714,13 @@ class ClaimUserWidget(QWidget, Ui_ClaimUserWidget):
         new_device = current_page.new_device
         current_page.hide()
         current_page.setParent(None)
-        page = ClaimUserFinalizeWidget(self.config, new_device)
+        page = ClaimUserFinalizeWidget(self.config, self.jobs_ctx, new_device)
         page.succeeded.connect(self._on_finished)
         page.failed.connect(self._on_page_failed_force_reject)
         self.main_layout.insertWidget(0, page)
 
-    def _on_finished(self, device, password):
-        show_info(self, _("TEXT_CLAIM_USER_SUCCESSFUL"))
-        self.status = (device, password)
+    def _on_finished(self, device, auth_method, password):
+        self.status = (device, auth_method, password)
         self.dialog.accept()
 
     def _on_claimer_success(self, job):
@@ -721,6 +751,8 @@ class ClaimUserWidget(QWidget, Ui_ClaimUserWidget):
             msg = _("TEXT_INVITATION_ALREADY_USED")
         elif job.status == "backend-not-available":
             msg = _("TEXT_INVITATION_BACKEND_NOT_AVAILABLE")
+        elif job.status == "out-of-ballpark":
+            msg = _("TEXT_BACKEND_STATE_DESYNC")
         else:
             msg = _("TEXT_CLAIM_USER_UNKNOWN_ERROR")
         if job.exc:
@@ -736,9 +768,9 @@ class ClaimUserWidget(QWidget, Ui_ClaimUserWidget):
             if current_page and getattr(current_page, "cancel", None):
                 current_page.cancel()
         if self.retrieve_info_job:
-            self.retrieve_info_job.cancel_and_join()
+            self.retrieve_info_job.cancel()
         if self.claimer_job:
-            self.claimer_job.cancel_and_join()
+            self.claimer_job.cancel()
 
     def on_close(self):
         self.cancel()

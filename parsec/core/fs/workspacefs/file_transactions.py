@@ -1,4 +1,4 @@
-# Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
+# Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2016-2021 Scille SAS
 
 from parsec.core.core_events import CoreEvent
 from typing import Tuple, List, Callable, Dict, Optional, cast, AsyncIterator
@@ -7,6 +7,7 @@ from collections import defaultdict
 from async_generator import asynccontextmanager
 
 from parsec.event_bus import EventBus
+from parsec.api.protocol import DeviceID
 from parsec.core.types import FileDescriptor, EntryID, LocalDevice
 
 from parsec.core.fs.remote_loader import RemoteLoader
@@ -83,14 +84,20 @@ class FileTransactions:
         local_storage: BaseWorkspaceStorage,
         remote_loader: RemoteLoader,
         event_bus: EventBus,
+        preferred_language: str,
     ):
         self.workspace_id = workspace_id
         self.get_workspace_entry = get_workspace_entry
-        self.local_author = device.device_id
+        self.device = device
         self.local_storage = local_storage
         self.remote_loader = remote_loader
         self.event_bus = event_bus
         self._write_count: Dict[FileDescriptor, int] = defaultdict(int)
+        self.preferred_language = preferred_language
+
+    @property
+    def local_author(self) -> DeviceID:
+        return self.device.device_id
 
     # Event helper
 
@@ -219,8 +226,11 @@ class FileTransactions:
                 return 0
 
             # Prepare
+            updated = self.device.timestamp()
             offset = normalize_argument(offset, manifest)
-            manifest, write_operations, removed_ids = prepare_write(manifest, len(content), offset)
+            manifest, write_operations, removed_ids = prepare_write(
+                manifest, len(content), offset, updated
+            )
 
             # Writing
             for chunk, offset in write_operations:
@@ -303,7 +313,8 @@ class FileTransactions:
             return
 
         # Prepare
-        manifest, write_operations, removed_ids = prepare_resize(manifest, length)
+        updated = self.device.timestamp()
+        manifest, write_operations, removed_ids = prepare_resize(manifest, length, updated)
 
         # Writing
         for chunk, offset in write_operations:

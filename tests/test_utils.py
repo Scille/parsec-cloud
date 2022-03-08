@@ -1,4 +1,4 @@
-# Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
+# Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2016-2021 Scille SAS
 
 import trio
 import pytest
@@ -20,6 +20,8 @@ async def job(fail=0, task_status=trio.TASK_STATUS_IGNORED):
 
 @pytest.mark.trio
 async def test_start_task_and_join(autojump_clock):
+    autojump_clock.setup()
+
     async with trio.open_service_nursery() as nursery:
         status = await start_task(nursery, job)
         success = status.value
@@ -32,6 +34,8 @@ async def test_start_task_and_join(autojump_clock):
 
 @pytest.mark.trio
 async def test_start_task_cancel_and_join(autojump_clock):
+    autojump_clock.setup()
+
     async with trio.open_service_nursery() as nursery:
         status = await start_task(nursery, job)
         success = status.value
@@ -45,6 +49,8 @@ async def test_start_task_cancel_and_join(autojump_clock):
 
 @pytest.mark.trio
 async def test_start_task_with_exception_before_started(autojump_clock):
+    autojump_clock.setup()
+
     async with trio.open_service_nursery() as nursery:
         with pytest.raises(RuntimeError):
             await start_task(nursery, job, -1)
@@ -52,6 +58,8 @@ async def test_start_task_with_exception_before_started(autojump_clock):
 
 @pytest.mark.trio
 async def test_start_task_with_exception_after_started(autojump_clock):
+    autojump_clock.setup()
+
     with pytest.raises(RuntimeError):
         async with trio.open_service_nursery() as nursery:
             status = await start_task(nursery, job, +1)

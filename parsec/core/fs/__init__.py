@@ -1,4 +1,4 @@
-# Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
+# Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2016-2021 Scille SAS
 
 from parsec.core.fs.userfs import UserFS
 from parsec.core.fs.exceptions import (
@@ -23,11 +23,11 @@ from parsec.core.fs.exceptions import (
     FSInvalidFileDescriptor,
     FSInvalidArgumentError,
     FSEndOfFileError,
+    FSNameTooLongError,
     # Remote operation errors
     FSBackendOfflineError,
     FSRemoteManifestNotFound,
     FSRemoteManifestNotFoundBadVersion,
-    FSRemoteManifestNotFoundBadTimestamp,
     FSRemoteBlockNotFound,
     FSRemoteSyncError,
     FSBadEncryptionRevision,
@@ -41,13 +41,16 @@ from parsec.core.fs.exceptions import (
     FSDeviceNotFoundError,
     FSInvalidTrustchainEror,
 )
+from parsec.core.fs.path import FsPath, AnyPath
 from parsec.core.fs.workspacefs import WorkspaceFS, WorkspaceFSTimestamped
-
 
 __all__ = (
     "UserFS",
     "WorkspaceFS",
     "WorkspaceFSTimestamped",
+    # Path
+    "FsPath",
+    "AnyPath",
     # Generic error classes
     "FSError",
     "FSOperationError",
@@ -69,11 +72,11 @@ __all__ = (
     "FSInvalidFileDescriptor",
     "FSInvalidArgumentError",
     "FSEndOfFileError",
+    "FSNameTooLongError",
     # Remote operation error
     "FSBackendOfflineError",
     "FSRemoteManifestNotFound",
     "FSRemoteManifestNotFoundBadVersion",
-    "FSRemoteManifestNotFoundBadTimestamp",
     "FSRemoteBlockNotFound",
     "FSRemoteSyncError",
     "FSBadEncryptionRevision",

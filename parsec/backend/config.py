@@ -1,4 +1,4 @@
-# Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
+# Parsec Cloud (https://parsec.cloud) Copyright (c) BSLv1.1 (eventually AGPLv3) 2016-2021 Scille SAS
 
 import attr
 from typing import List, Optional, Union, Tuple
@@ -7,7 +7,10 @@ from parsec.core.types import BackendAddr
 
 
 class BaseBlockStoreConfig:
-    pass
+    # Overloaded by children
+    @property
+    def type(self) -> str:
+        raise NotImplementedError
 
 
 @attr.s(frozen=True, auto_attribs=True)
@@ -96,8 +99,6 @@ class BackendConfig:
     db_url: str
     db_min_connections: int
     db_max_connections: int
-    db_first_tries_number: int
-    db_first_tries_sleep: int
 
     blockstore_config: BaseBlockStoreConfig
 
@@ -106,10 +107,12 @@ class BackendConfig:
     forward_proto_enforce_https: Optional[Tuple[bytes, bytes]]
     backend_addr: Optional[BackendAddr]
 
-    spontaneous_organization_bootstrap: bool
-    organization_bootstrap_webhook_url: Optional[str]
-
     debug: bool
+
+    organization_bootstrap_webhook_url: Optional[str] = None
+    organization_spontaneous_bootstrap: bool = False
+    organization_initial_active_users_limit: Optional[int] = None
+    organization_initial_user_profile_outsider_allowed: bool = True
 
     @property
     def db_type(self):

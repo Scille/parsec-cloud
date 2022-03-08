@@ -1,11 +1,9 @@
-# Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
+# Parsec Cloud (https://parsec.cloud) Copyright (c) BSLv1.1 (eventually AGPLv3) 2016-2021 Scille SAS
 
 import attr
 import pendulum
-from typing import Optional
+from typing import Optional, Union, List
 from secrets import token_hex
-
-from pendulum import DateTime
 
 from parsec.utils import timestamps_in_the_ballpark
 from parsec.crypto import VerifyKey
@@ -14,16 +12,14 @@ from parsec.api.protocol import (
     HandshakeType,
     organization_stats_serializer,
     APIV1_HandshakeType,
-    apiv1_organization_create_serializer,
     apiv1_organization_bootstrap_serializer,
-    apiv1_organization_stats_serializer,
-    apiv1_organization_status_serializer,
-    apiv1_organization_update_serializer,
+    organization_config_serializer,
 )
 from parsec.api.data import UserCertificateContent, DeviceCertificateContent, DataError, UserProfile
 from parsec.backend.user import User, Device
 from parsec.backend.webhooks import WebhooksComponent
-from parsec.backend.utils import catch_protocol_errors, api
+from parsec.backend.utils import catch_protocol_errors, api, Unset, UnsetType
+from parsec.backend.config import BackendConfig
 
 
 class OrganizationError(Exception):
@@ -58,18 +54,23 @@ class OrganizationExpiredError(OrganizationError):
 class Organization:
     organization_id: OrganizationID
     bootstrap_token: str
-    expiration_date: Optional[DateTime] = None
-    root_verify_key: Optional[VerifyKey] = None
+    is_expired: bool
+    root_verify_key: Optional[VerifyKey]
+    user_profile_outsider_allowed: bool
+    active_users_limit: Optional[int]
 
     def is_bootstrapped(self):
         return self.root_verify_key is not None
 
-    @property
-    def is_expired(self):
-        return self.expiration_date is not None and self.expiration_date <= DateTime.now()
-
     def evolve(self, **kwargs):
         return attr.evolve(self, **kwargs)
+
+
+@attr.s(slots=True, frozen=True, auto_attribs=True)
+class UsersPerProfileDetailItem:
+    profile: UserProfile
+    active: int
+    revoked: int
 
 
 @attr.s(slots=True, frozen=True, auto_attribs=True)
@@ -77,54 +78,38 @@ class OrganizationStats:
     data_size: int
     metadata_size: int
     users: int
+    active_users: int
+    realms: int
+    users_per_profile_detail: List[UsersPerProfileDetailItem]
+
+
+def generate_bootstrap_token() -> str:
+    return token_hex(32)
 
 
 class BaseOrganizationComponent:
-    def __init__(self, webhooks: WebhooksComponent, bootstrap_token_size: int = 32):
+    def __init__(self, webhooks: WebhooksComponent, config: BackendConfig):
         self.webhooks = webhooks
-        self.bootstrap_token_size = bootstrap_token_size
+        self._config = config
 
-    @api("organization_create", handshake_types=[APIV1_HandshakeType.ADMINISTRATION])
+    @api("organization_config", handshake_types=[HandshakeType.AUTHENTICATED])
     @catch_protocol_errors
-    async def api_organization_create(self, client_ctx, msg):
-        msg = apiv1_organization_create_serializer.req_load(msg)
-
-        bootstrap_token = token_hex(self.bootstrap_token_size)
-        expiration_date = msg.get("expiration_date", None)
+    async def api_authenticated_organization_config(self, client_ctx, msg):
+        msg = organization_config_serializer.req_load(msg)
+        organization_id = client_ctx.organization_id
         try:
-            await self.create(
-                msg["organization_id"],
-                bootstrap_token=bootstrap_token,
-                expiration_date=expiration_date,
-            )
-
-        except OrganizationAlreadyExistsError:
-            return {"status": "already_exists"}
-
-        rep = {"bootstrap_token": bootstrap_token, "status": "ok"}
-        if expiration_date:
-            rep["expiration_date"] = expiration_date
-
-        return apiv1_organization_create_serializer.rep_dump(rep)
-
-    @api("organization_status", handshake_types=[APIV1_HandshakeType.ADMINISTRATION])
-    @catch_protocol_errors
-    async def api_organization_status(self, client_ctx, msg):
-        msg = apiv1_organization_status_serializer.req_load(msg)
-
-        try:
-            organization = await self.get(msg["organization_id"])
+            organization = await self.get(organization_id)
 
         except OrganizationNotFoundError:
             return {"status": "not_found"}
 
-        return apiv1_organization_status_serializer.rep_dump(
-            {
-                "is_bootstrapped": organization.is_bootstrapped(),
-                "expiration_date": organization.expiration_date,
-                "status": "ok",
-            }
-        )
+        rep = {
+            "user_profile_outsider_allowed": organization.user_profile_outsider_allowed,
+            "active_users_limit": organization.active_users_limit,
+            "status": "ok",
+        }
+
+        return organization_config_serializer.rep_dump(rep)
 
     @api("organization_stats", handshake_types=[HandshakeType.AUTHENTICATED])
     @catch_protocol_errors
@@ -147,46 +132,14 @@ class BaseOrganizationComponent:
         return organization_stats_serializer.rep_dump(
             {
                 "status": "ok",
-                "users": stats.users,
                 "data_size": stats.data_size,
                 "metadata_size": stats.metadata_size,
-            }
-        )
-
-    @api("organization_stats", handshake_types=[APIV1_HandshakeType.ADMINISTRATION])
-    @catch_protocol_errors
-    async def apiv1_administration_organization_stats(self, client_ctx, msg):
-        msg = apiv1_organization_stats_serializer.req_load(msg)
-
-        try:
-            stats = await self.stats(msg["organization_id"])
-
-        except OrganizationNotFoundError:
-            return {"status": "not_found"}
-
-        return apiv1_organization_stats_serializer.rep_dump(
-            {
-                "status": "ok",
+                "realms": stats.realms,
                 "users": stats.users,
-                "data_size": stats.data_size,
-                "metadata_size": stats.metadata_size,
+                "active_users": stats.active_users,
+                "users_per_profile_detail": stats.users_per_profile_detail,
             }
         )
-
-    @api("organization_update", handshake_types=[APIV1_HandshakeType.ADMINISTRATION])
-    @catch_protocol_errors
-    async def api_organization_update(self, client_ctx, msg):
-        msg = apiv1_organization_update_serializer.req_load(msg)
-
-        try:
-            await self.set_expiration_date(
-                msg["organization_id"], expiration_date=msg["expiration_date"]
-            )
-
-        except OrganizationNotFoundError:
-            return {"status": "not_found"}
-
-        return apiv1_organization_update_serializer.rep_dump({"status": "ok"})
 
     @api("organization_bootstrap", handshake_types=[APIV1_HandshakeType.ANONYMOUS])
     @catch_protocol_errors
@@ -242,10 +195,9 @@ class BaseOrganizationComponent:
 
         now = pendulum.now()
         if not timestamps_in_the_ballpark(u_data.timestamp, now):
-            return {
-                "status": "invalid_certification",
-                "reason": f"Invalid timestamp in certification.",
-            }
+            return apiv1_organization_bootstrap_serializer.timestamp_out_of_ballpark_rep_dump(
+                backend_timestamp=now, client_timestamp=u_data.timestamp
+            )
 
         if ru_data:
             if ru_data.evolve(human_handle=u_data.human_handle) != u_data:
@@ -307,7 +259,7 @@ class BaseOrganizationComponent:
         except (OrganizationNotFoundError, OrganizationInvalidBootstrapTokenError):
             return {"status": "not_found"}
 
-        # Note: we let OrganizationFirstUserCreationError bobbles up given
+        # Note: we let OrganizationFirstUserCreationError bubbles up given
         # it should not occurs under normal circumstances
 
         # Finally notify webhook
@@ -322,7 +274,14 @@ class BaseOrganizationComponent:
         return apiv1_organization_bootstrap_serializer.rep_dump({"status": "ok"})
 
     async def create(
-        self, id: OrganizationID, bootstrap_token: str, expiration_date: Optional[DateTime] = None
+        self,
+        id: OrganizationID,
+        bootstrap_token: str,
+        # `None` is a valid value for some of those params, hence it cannot be used
+        # as "param not set" marker and we use a custom `Unset` singleton instead.
+        # `None` stands for "no limit"
+        active_users_limit: Union[UnsetType, Optional[int]] = Unset,
+        user_profile_outsider_allowed: Union[UnsetType, bool] = Unset,
     ) -> None:
         """
         Raises:
@@ -361,7 +320,16 @@ class BaseOrganizationComponent:
         """
         raise NotImplementedError()
 
-    async def set_expiration_date(self, id: OrganizationID, expiration_date: DateTime = None):
+    async def update(
+        self,
+        id: OrganizationID,
+        # `None` is a valid value for some of those params, hence it cannot be used
+        # as "param not set" marker and we use a custom `Unset` singleton instead.
+        is_expired: Union[UnsetType, bool] = Unset,
+        # `None` stands for "no limit"
+        active_users_limit: Union[UnsetType, Optional[int]] = Unset,
+        user_profile_outsider_allowed: Union[UnsetType, bool] = Unset,
+    ) -> None:
         """
         Raises:
             OrganizationNotFoundError

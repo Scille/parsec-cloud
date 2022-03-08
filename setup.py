@@ -1,15 +1,19 @@
 #!/usr/bin/env python
-# Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
+# Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2016-2021 Scille SAS
 
 import os
+from pathlib import Path
 
+import pkg_resources
 from setuptools import setup, find_packages, distutils, Command
 from setuptools.command.build_py import build_py
-
 
 # Awesome hack to load `__version__`
 __version__ = None
 exec(open("parsec/_version.py", encoding="utf-8").read())
+# Provide normalized version format (i.e. without leading "v") to avoid warning from setuptools
+assert __version__.startswith("v")
+__version__ = __version__[1:]
 
 
 def fix_pyqt_import():
@@ -261,91 +265,36 @@ class build_py_with_pyqt_resource_bundle_generation(build_py):
         return super().run()
 
 
-with open("README.rst") as readme_file:
+with open("README.rst", encoding="utf-8") as readme_file:
     readme = readme_file.read()
 
-with open("HISTORY.rst") as history_file:
+with open("HISTORY.rst", encoding="utf-8") as history_file:
     history = history_file.read()
 
 
-requirements = [
-    "attrs==19.2.0",
-    "click==7.0",
-    "msgpack==0.6.0",
-    "wsproto==0.15.0",
-    "h11==0.10.0",
-    # Can use marshmallow or the toasted flavour as you like ;-)
-    # "marshmallow==2.14.0",
-    "toastedmarshmallow==0.2.6",
-    "pendulum==2.1.2",
-    "PyNaCl==1.4.0",
-    "trio==0.16.0",
-    "trio_typing==0.5.0",
-    "async_generator>=1.9",
-    'contextvars==2.1;python_version<"3.7"',
-    "sentry-sdk==0.14.3",
-    "structlog==19.2.0",
-    "importlib_resources==1.0.2",
-    "colorama==0.4.0",  # structlog colored output
-    "async_exit_stack==1.0.1",
-    "outcome==1.0.0",
-    "packaging==20.4",
-]
+def get_requirement_from_file(file):
+    with open(file, encoding="utf-8") as requirements_txt:
+        return [str(r) for r in pkg_resources.parse_requirements(requirements_txt)]
 
 
-test_requirements = [
-    "pytest==5.4.3",
-    "pytest-cov==2.10.0",
-    "pytest-xdist==1.32.0",
-    "pytest-trio==0.5.2",
-    "pytest-qt==3.3.0",
-    "pytest-rerunfailures==9.0",
-    "hypothesis==5.3.0",
-    "hypothesis-trio==0.5.0",
-    "trustme==0.6.0",
-    # Winfsptest requirements
-    # We can't use `winfspy[test]` because of some pip limitations
-    # - see pip issues #7096/#6239/#4391/#988
-    # Looking forward to the new pip dependency resolver!
-    'pywin32==227;platform_system=="Windows"',
-    # Fix botocore and sphinx conflicting requirements on docutils
-    "docutils>=0.12,<0.16",
-    # Documentation generation requirements
-    "sphinx==2.4.3",
-    "sphinx-intl==2.0.0",
-    "sphinx-rtd-theme==0.4.3",
-    "psutil==5.7.3",
-]
+requirements = get_requirement_from_file("requirement/install_requirement.txt")
+test_requirements = get_requirement_from_file("requirement/test_requirement.txt")
+core_requirements = get_requirement_from_file("requirement/core_requirement.txt")
+backend_requirements = get_requirement_from_file("requirement/backend_requirement.txt")
 
-
-PYQT_DEPS = ["PyQt5==5.14.2", "pyqt5-sip==12.8.0"]
-BABEL_DEP = "Babel==2.6.0"
-WHEEL_DEP = "wheel==0.34.2"
-DOCUTILS_DEP = "docutils==0.15"
 extra_requirements = {
-    "core": [
-        *PYQT_DEPS,
-        BABEL_DEP,
-        'fusepy==3.0.1;platform_system=="Linux" or platform_system=="Darwin"',
-        'winfspy==0.8.0;platform_system=="Windows"',
-        "zxcvbn==4.4.27",
-        'psutil==5.7.3;platform_system=="Windows"',
-    ],
-    "backend": [
-        "jinja2==2.11.2",
-        # PostgreSQL
-        "triopg==0.5.0",
-        "trio-asyncio==0.11.0",
-        # S3
-        "boto3==1.12.34",
-        "botocore==1.15.34",
-        # Swift
-        "python-swiftclient==3.5.0",
-        "pbr==4.0.2",
-    ],
+    "core": core_requirements,
+    "backend": backend_requirements,
     "dev": test_requirements,
+    # Oxidation is a special case: for the moment it is experimental (i.e. not
+    # shipped in production) and only contains rewriting of Python parts so
+    # it can be safely ignored for any purpose.
+    "oxidation": [
+        f"libparsec @ file://localhost{Path(os.path.dirname(os.path.abspath(__file__))) / 'oxidation/libparsec_python'}"
+    ],
 }
-extra_requirements["all"] = sum(extra_requirements.values(), [])
+
+extra_requirements["all"] = sum([v for k, v in extra_requirements.items() if k != "oxidation"], [])
 extra_requirements["oeuf-jambon-fromage"] = extra_requirements["all"]
 
 setup(
@@ -356,10 +305,9 @@ setup(
     author="Scille SAS",
     author_email="contact@scille.fr",
     url="https://github.com/Scille/parsec-cloud",
-    python_requires="~=3.6",
+    python_requires="~=3.7",
     packages=find_packages(include=["parsec", "parsec.*"]),
     package_dir={"parsec": "parsec"},
-    setup_requires=[WHEEL_DEP, *PYQT_DEPS, BABEL_DEP, DOCUTILS_DEP],  # To generate resources bundle
     install_requires=requirements,
     extras_require=extra_requirements,
     cmdclass={
@@ -393,7 +341,6 @@ setup(
         "Operating System :: MacOS",
         "License :: OSI Approved :: GNU Affero General Public License v3 or later (AGPLv3+)",
         "Natural Language :: English",
-        "Programming Language :: Python :: 3.6",
         "Programming Language :: Python :: 3.7",
         "Programming Language :: Python :: 3.8",
     ],

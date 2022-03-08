@@ -1,4 +1,4 @@
-# Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
+# Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2016-2021 Scille SAS
 
 import pytest
 import trio
@@ -13,6 +13,7 @@ from hypothesis_trio.stateful import (
     multiple,
 )
 
+from parsec.api.data import EntryName
 from parsec.core.types import WorkspaceRole
 from parsec.core.fs import FSWorkspaceNotFoundError, FSWorkspaceNoAccess
 
@@ -93,7 +94,7 @@ def test_sync_monitor_stateful(
 
         def get_next_workspace_name(self):
             self.workspace_count = self.workspace_count + 1
-            return f"w{self.workspace_count}"
+            return EntryName(f"w{self.workspace_count}")
 
         def get_workspace(self, device_id, wid):
             return self.user_fs_per_device[device_id].get_workspace(wid)

@@ -1,21 +1,20 @@
-# Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
+# Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2016-2021 Scille SAS
 
 import pytest
-from uuid import UUID
 from pendulum import datetime
 
-from parsec.api.protocol import RealmRole, APIEvent
+from parsec.api.protocol import VlobID, RealmID, RealmRole, APIEvent
 from parsec.backend.realm import RealmGrantedRole
 from parsec.backend.backend_events import BackendEvent
 
 from tests.backend.common import events_subscribe, events_listen_nowait
 
 
-NOW = datetime(2000, 1, 1)
-VLOB_ID = UUID("00000000000000000000000000000001")
-OTHER_VLOB_ID = UUID("00000000000000000000000000000002")
-YET_ANOTHER_VLOB_ID = UUID("00000000000000000000000000000003")
-REALM_ID = UUID("0000000000000000000000000000000A")
+NOW = datetime(2000, 1, 3)
+VLOB_ID = VlobID.from_hex("00000000000000000000000000000001")
+OTHER_VLOB_ID = VlobID.from_hex("00000000000000000000000000000002")
+YET_ANOTHER_VLOB_ID = VlobID.from_hex("00000000000000000000000000000003")
+REALM_ID = RealmID.from_hex("0000000000000000000000000000000A")
 
 
 @pytest.mark.trio
@@ -233,9 +232,9 @@ async def test_vlobs_updated_event_not_participant(backend, alice_backend_sock, 
 @pytest.mark.trio
 @pytest.mark.parametrize("realm_created_by_self", (True, False))
 async def test_vlobs_updated_event_realm_created_after_subscribe(
-    backend, alice_backend_sock, alice, alice2, realm, realm_created_by_self
+    backend, alice_backend_sock, alice, alice2, realm_created_by_self
 ):
-    realm_id = UUID("0000000000000000000000000000000A")
+    realm_id = RealmID.from_hex("0000000000000000000000000000000A")
     await events_subscribe(alice_backend_sock)
 
     # New realm, should get events anyway

@@ -1,4 +1,4 @@
-# Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
+# Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2016-2021 Scille SAS
 
 from collections import namedtuple
 
@@ -6,12 +6,13 @@ from PyQt5.QtCore import QCoreApplication, pyqtSignal, QEvent, QTimer
 from PyQt5.QtGui import QPixmap, QColor
 from PyQt5.QtWidgets import QWidget, QComboBox
 
+from parsec.api.protocol.types import UserProfile
 from parsec.core.types import UserInfo
 from parsec.core.fs import FSError, FSBackendOfflineError
 from parsec.core.types import WorkspaceRole
 from parsec.core.backend_connection import BackendNotAvailable
 
-from parsec.core.gui.trio_thread import JobResultError, ThreadSafeQtSignal, QtToTrioJob
+from parsec.core.gui.trio_jobs import JobResultError, QtToTrioJob
 
 from parsec.core.gui.custom_dialogs import show_error, GreyedDialog
 from parsec.core.gui.custom_widgets import Pixmap
@@ -88,6 +89,8 @@ class SharingWidget(QWidget, Ui_SharingWidget):
         self.setupUi(self)
 
         self.combo_role.installEventFilter(self)
+        if not enabled:
+            self.combo_role.setStyleSheet("background-color: #DDDDDD;")
 
         self.role = role
         self.current_user_role = current_user_role
@@ -116,6 +119,16 @@ class SharingWidget(QWidget, Ui_SharingWidget):
                 if current_index < index:
                     break
                 self.combo_role.insertItem(index, get_role_translation(role))
+                if self.user_info.profile == UserProfile.OUTSIDER and role in (
+                    WorkspaceRole.MANAGER,
+                    WorkspaceRole.OWNER,
+                ):
+                    item = self.combo_role.model().item(index)
+                    item.setEnabled(False)
+                    font = item.font()
+                    font.setStrikeOut(True)
+                    item.setFont(font)
+                    item.setToolTip(_("NOT_ALLOWED_FOR_OUTSIDER_PROFILE_TOOLTIP"))
 
         self.combo_role.setCurrentIndex(_ROLES_TO_INDEX[self.role])
         self.combo_role.currentIndexChanged.connect(self.on_role_changed)
@@ -168,6 +181,7 @@ class WorkspaceSharingWidget(QWidget, Ui_WorkspaceSharingWidget):
     def __init__(self, user_fs, workspace_fs, core, jobs_ctx):
         super().__init__()
         self.setupUi(self)
+        self.setStyleSheet("background-color: #FFFFFF;")
         self.user_fs = user_fs
         self.core = core
         self.jobs_ctx = jobs_ctx
@@ -181,7 +195,7 @@ class WorkspaceSharingWidget(QWidget, Ui_WorkspaceSharingWidget):
         self.get_users_error.connect(self._on_get_users_error)
         self.line_edit_filter.textChanged.connect(self._on_filter_changed)
 
-        ws_entry = self.jobs_ctx.run_sync(self.workspace_fs.get_workspace_entry)
+        ws_entry = self.workspace_fs.get_workspace_entry()
         self.current_user_role = ws_entry.role
         self.reset()
 
@@ -234,8 +248,8 @@ class WorkspaceSharingWidget(QWidget, Ui_WorkspaceSharingWidget):
         if sharing_widget:
             sharing_widget.set_status_updating()
         self.jobs_ctx.submit_job(
-            ThreadSafeQtSignal(self, "share_success", QtToTrioJob),
-            ThreadSafeQtSignal(self, "share_error", QtToTrioJob),
+            self.share_success,
+            self.share_error,
             _do_share_workspace,
             user_fs=self.user_fs,
             workspace_fs=self.workspace_fs,
@@ -319,8 +333,8 @@ class WorkspaceSharingWidget(QWidget, Ui_WorkspaceSharingWidget):
         self.spinner.show()
         self.widget_users.hide()
         self.jobs_ctx.submit_job(
-            ThreadSafeQtSignal(self, "get_users_success", QtToTrioJob),
-            ThreadSafeQtSignal(self, "get_users_error", QtToTrioJob),
+            self.get_users_success,
+            self.get_users_error,
             _do_get_users,
             core=self.core,
             workspace_fs=self.workspace_fs,
@@ -328,7 +342,7 @@ class WorkspaceSharingWidget(QWidget, Ui_WorkspaceSharingWidget):
 
     @classmethod
     def show_modal(cls, user_fs, workspace_fs, core, jobs_ctx, parent, on_finished):
-        workspace_name = jobs_ctx.run_sync(workspace_fs.get_workspace_name)
+        workspace_name = workspace_fs.get_workspace_name()
 
         w = cls(user_fs=user_fs, workspace_fs=workspace_fs, core=core, jobs_ctx=jobs_ctx)
         d = GreyedDialog(

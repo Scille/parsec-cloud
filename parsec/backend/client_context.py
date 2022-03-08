@@ -1,9 +1,12 @@
-# Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
+# Parsec Cloud (https://parsec.cloud) Copyright (c) BSLv1.1 (eventually AGPLv3) 2016-2021 Scille SAS
 
+from enum import Enum
+from typing import Optional, Union, Tuple, Set, Dict
+from structlog import BoundLogger
 import trio
-from typing import Optional
 
 from parsec.crypto import VerifyKey, PublicKey
+from parsec.event_bus import EventBusConnectionContext
 from parsec.api.version import ApiVersion
 from parsec.api.transport import Transport
 from parsec.api.data import UserProfile
@@ -13,13 +16,18 @@ from parsec.api.protocol import (
     UserID,
     DeviceName,
     DeviceID,
+    RealmID,
     HumanHandle,
+    DeviceLabel,
+    HandshakeType,
+    APIV1_HandshakeType,
 )
 from parsec.backend.invite import Invitation
 
 
 class BaseClientContext:
     __slots__ = ("transport", "handshake")
+    logger: BoundLogger
 
     def __init__(self, transport: Transport, handshake: ServerHandshake):
         self.transport = transport
@@ -30,7 +38,7 @@ class BaseClientContext:
         return self.handshake.backend_api_version
 
     @property
-    def handshake_type(self) -> str:
+    def handshake_type(self) -> Union[HandshakeType, APIV1_HandshakeType]:
         return self.handshake.answer_type
 
 
@@ -39,6 +47,7 @@ class AuthenticatedClientContext(BaseClientContext):
         "organization_id",
         "device_id",
         "human_handle",
+        "device_label",
         "profile",
         "public_key",
         "verify_key",
@@ -57,6 +66,7 @@ class AuthenticatedClientContext(BaseClientContext):
         organization_id: OrganizationID,
         device_id: DeviceID,
         human_handle: Optional[HumanHandle],
+        device_label: Optional[DeviceLabel],
         profile: UserProfile,
         public_key: PublicKey,
         verify_key: VerifyKey,
@@ -66,12 +76,13 @@ class AuthenticatedClientContext(BaseClientContext):
         self.profile = profile
         self.device_id = device_id
         self.human_handle = human_handle
+        self.device_label = device_label
         self.public_key = public_key
         self.verify_key = verify_key
 
-        self.event_bus_ctx = None  # Overwritten in BackendApp.handle_client
-        self.channels = trio.open_memory_channel(100)
-        self.realms = set()
+        self.event_bus_ctx: EventBusConnectionContext
+        self.channels = trio.open_memory_channel[Tuple[Enum, Dict[str, object]]](100)
+        self.realms: Set[RealmID] = set()
         self.events_subscribed = False
 
         self.conn_id = self.transport.conn_id
@@ -99,7 +110,7 @@ class AuthenticatedClientContext(BaseClientContext):
 
     @property
     def device_display(self) -> str:
-        return self.device_label or str(self.device_id.device_name)
+        return str(self.device_label or self.device_id.device_name)
 
     @property
     def send_events_channel(self):
@@ -131,7 +142,7 @@ class InvitedClientContext(BaseClientContext):
             conn_id=self.conn_id,
             handshake_type=self.handshake_type.value,
             organization_id=self.organization_id,
-            invitation=self.invitation,
+            invitation_token=self.invitation.token,
         )
 
     def __repr__(self):

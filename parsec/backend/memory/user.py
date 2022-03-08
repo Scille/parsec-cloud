@@ -1,9 +1,9 @@
-# Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
+# Parsec Cloud (https://parsec.cloud) Copyright (c) BSLv1.1 (eventually AGPLv3) 2016-2021 Scille SAS
 
 from parsec.backend.backend_events import BackendEvent
 import attr
 import pendulum
-from typing import Tuple, List, Dict, Optional
+from typing import Iterable, Tuple, List, Dict, Optional
 from collections import defaultdict
 
 from parsec.api.protocol import OrganizationID, UserID, DeviceID, DeviceName, HumanHandle
@@ -14,11 +14,10 @@ from parsec.backend.user import (
     Trustchain,
     GetUserAndDevicesResult,
     HumanFindResultItem,
-    UserInvitation,
-    DeviceInvitation,
     UserAlreadyExistsError,
     UserAlreadyRevokedError,
     UserNotFoundError,
+    UserActiveUsersLimitReached,
 )
 
 
@@ -27,22 +26,29 @@ class OrganizationStore:
     human_handle_to_user_id: Dict[HumanHandle, UserID] = attr.ib(factory=dict)
     users: Dict[UserID, User] = attr.ib(factory=dict)
     devices: Dict[UserID, Dict[DeviceName, Device]] = attr.ib(factory=lambda: defaultdict(dict))
-    invitations: Dict[UserID, UserInvitation] = attr.ib(factory=dict)
 
 
 class MemoryUserComponent(BaseUserComponent):
     def __init__(self, send_event, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self._send_event = send_event
-        self._organizations = defaultdict(OrganizationStore)
+        self._organizations: Dict[OrganizationID, OrganizationStore] = defaultdict(
+            OrganizationStore
+        )
 
-    def register_components(self, **other_components):
-        pass
+    def register_components(self, **other_components) -> None:
+        self._organization_component = other_components["organization"]
 
     async def create_user(
         self, organization_id: OrganizationID, user: User, first_device: Device
     ) -> None:
         org = self._organizations[organization_id]
+        active_users_limit = self._organization_component._organizations[
+            organization_id
+        ].active_users_limit
+        active_users = (u for u in org.users.values() if u.revoked_on is None)
+        if active_users_limit is not None and active_users_limit <= len(list(active_users)):
+            raise UserActiveUsersLimitReached()
 
         if user.user_id in org.users:
             raise UserAlreadyExistsError(f"User `{user.user_id}` already exists")
@@ -89,7 +95,7 @@ class MemoryUserComponent(BaseUserComponent):
 
     async def _get_trustchain(
         self, organization_id: OrganizationID, *devices_ids, redacted: bool = False
-    ):
+    ) -> Trustchain:
         trustchain_devices = set()
         trustchain_users = set()
         trustchain_revoked_users = set()
@@ -171,10 +177,10 @@ class MemoryUserComponent(BaseUserComponent):
         return GetUserAndDevicesResult(
             user_certificate=user.redacted_user_certificate if redacted else user.user_certificate,
             revoked_user_certificate=user.revoked_user_certificate,
-            device_certificates=[
+            device_certificates=tuple(
                 d.redacted_device_certificate if redacted else d.device_certificate
                 for d in user_devices.values()
-            ],
+            ),
             trustchain_device_certificates=trustchain.devices,
             trustchain_user_certificates=trustchain.users,
             trustchain_revoked_user_certificates=trustchain.revoked_users,
@@ -204,53 +210,6 @@ class MemoryUserComponent(BaseUserComponent):
         device = self._get_device(organization_id, device_id)
         return user, device
 
-    async def find(
-        self,
-        organization_id: OrganizationID,
-        query: Optional[str] = None,
-        page: int = 1,
-        per_page: int = 100,
-        omit_revoked: bool = False,
-    ):
-        assert page >= 1
-        assert per_page >= 1
-
-        org = self._organizations[organization_id]
-        users = org.users
-
-        if query:
-            try:
-                UserID(query)
-            except ValueError:
-                # Contains invalid caracters, no need to go further
-                return ([], 0)
-
-            results = [
-                user_id for user_id in users.keys() if user_id.lower().find(query.lower()) != -1
-            ]
-
-        else:
-            results = users.keys()
-
-        if omit_revoked:
-            now = pendulum.now()
-
-            def _user_is_revoked(user_id):
-                revoked_on = org.users[user_id].revoked_on
-                return revoked_on is not None and revoked_on <= now
-
-            results = [user_id for user_id in results if not _user_is_revoked(user_id)]
-
-        total = len(results)
-
-        # PostgreSQL does case insensitive sort
-        sorted_results = sorted(results, key=lambda s: s.lower())
-
-        # Handle pagination
-        paginated_results = sorted_results[(page - 1) * per_page : page * per_page]
-
-        return paginated_results, total
-
     async def find_humans(
         self,
         organization_id: OrganizationID,
@@ -266,6 +225,7 @@ class MemoryUserComponent(BaseUserComponent):
         org = self._organizations[organization_id]
 
         # Query is run against human handle field, hence non-human are automatically ignored
+        users: Iterable[User]
         if query:
             users = []
             for user in org.users.values():
@@ -278,14 +238,14 @@ class MemoryUserComponent(BaseUserComponent):
         else:
             users = org.users.values()
             if omit_non_human:
-                users = [r for r in users if r.human_handle]
+                users = [r for r in users if r.human_handle is not None]
         # Sort human by label
         users = [
             *sorted(
-                [res for res in users if res.human_handle],
-                key=lambda r: r.human_handle.label.lower(),
+                [res for res in users if res.human_handle is not None],
+                key=lambda r: r.human_handle.label.lower(),  # type: ignore
             ),
-            *[res for res in users if not res.human_handle],
+            *[res for res in users if res.human_handle is None],
         ]
         now = pendulum.now()
         results = [
@@ -307,108 +267,13 @@ class MemoryUserComponent(BaseUserComponent):
 
         return paginated_results, total
 
-    async def create_user_invitation(
-        self, organization_id: OrganizationID, invitation: UserInvitation
-    ) -> None:
-        org = self._organizations[organization_id]
-
-        if invitation.user_id in org.users:
-            raise UserAlreadyExistsError(f"User `{invitation.user_id}` already exists")
-        org.invitations[invitation.user_id] = invitation
-
-    async def get_user_invitation(
-        self, organization_id: OrganizationID, user_id: UserID
-    ) -> UserInvitation:
-        org = self._organizations[organization_id]
-
-        if user_id in org.users:
-            raise UserAlreadyExistsError(user_id)
-        try:
-            return org.invitations[user_id]
-        except KeyError:
-            raise UserNotFoundError(user_id)
-
-    async def claim_user_invitation(
-        self, organization_id: OrganizationID, user_id: UserID, encrypted_claim: bytes = b""
-    ) -> UserInvitation:
-        invitation = await self.get_user_invitation(organization_id, user_id)
-        await self._send_event(
-            BackendEvent.USER_CLAIMED,
-            organization_id=organization_id,
-            user_id=invitation.user_id,
-            encrypted_claim=encrypted_claim,
-        )
-        return invitation
-
-    async def cancel_user_invitation(
-        self, organization_id: OrganizationID, user_id: UserID
-    ) -> None:
-        org = self._organizations[organization_id]
-
-        if org.invitations.pop(user_id, None):
-            await self._send_event(
-                BackendEvent.USER_INVITATION_CANCELLED,
-                organization_id=organization_id,
-                user_id=user_id,
-            )
-
-    async def create_device_invitation(
-        self, organization_id: OrganizationID, invitation: DeviceInvitation
-    ) -> None:
-        org = self._organizations[organization_id]
-
-        user_devices = self._get_user_devices(organization_id, invitation.device_id.user_id)
-        if invitation.device_id.device_name in user_devices:
-            raise UserAlreadyExistsError(f"Device `{invitation.device_id}` already exists")
-
-        org.invitations[invitation.device_id] = invitation
-
-    async def get_device_invitation(
-        self, organization_id: OrganizationID, device_id: DeviceID
-    ) -> DeviceInvitation:
-        org = self._organizations[organization_id]
-
-        user_devices = self._get_user_devices(organization_id, device_id.user_id)
-        if device_id.device_name in user_devices:
-            raise UserAlreadyExistsError(device_id)
-
-        try:
-            return org.invitations[device_id]
-
-        except KeyError:
-            raise UserNotFoundError(device_id)
-
-    async def claim_device_invitation(
-        self, organization_id: OrganizationID, device_id: DeviceID, encrypted_claim: bytes = b""
-    ) -> DeviceInvitation:
-        invitation = await self.get_device_invitation(organization_id, device_id)
-        await self._send_event(
-            BackendEvent.DEVICE_CLAIMED,
-            organization_id=organization_id,
-            device_id=invitation.device_id,
-            encrypted_claim=encrypted_claim,
-        )
-        return invitation
-
-    async def cancel_device_invitation(
-        self, organization_id: OrganizationID, device_id: DeviceID
-    ) -> None:
-        org = self._organizations[organization_id]
-
-        if org.invitations.pop(device_id, None):
-            await self._send_event(
-                BackendEvent.DEVICE_INVITATION_CANCELLED,
-                organization_id=organization_id,
-                device_id=device_id,
-            )
-
     async def revoke_user(
         self,
         organization_id: OrganizationID,
         user_id: UserID,
         revoked_user_certificate: bytes,
         revoked_user_certifier: DeviceID,
-        revoked_on: pendulum.DateTime = None,
+        revoked_on: Optional[pendulum.DateTime] = None,
     ) -> None:
         org = self._organizations[organization_id]
 

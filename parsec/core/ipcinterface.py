@@ -1,6 +1,6 @@
-# Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
+# Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2016-2021 Scille SAS
 
-import platform
+import sys
 import trio
 from functools import partial
 from contextlib import contextmanager
@@ -123,7 +123,7 @@ def _install_posix_file_lock(socket_file: Path):
 async def run_ipc_server(
     cmd_handler, socket_file: Path, win32_mutex_name: str = DEFAULT_WIN32_MUTEX_NAME
 ):
-    if platform.system() == "Windows":
+    if sys.platform == "win32":
         with _install_win32_mutex(win32_mutex_name):
             async with _run_tcp_server(socket_file, cmd_handler):
                 yield

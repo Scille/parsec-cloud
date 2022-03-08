@@ -1,4 +1,4 @@
-# Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
+# Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2016-2021 Scille SAS
 
 from typing import Tuple, List, Sequence, Optional
 from pendulum import DateTime, now as pendulum_now
@@ -19,7 +19,7 @@ class TrustchainError(Exception):
 
 
 def _build_signature_path(*devices_ids):
-    return " <-sign- ".join(devices_ids)
+    return " <-sign- ".join([str(d) for d in devices_ids])
 
 
 class CertifState:

@@ -1,10 +1,12 @@
-# Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
+# Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2016-2021 Scille SAS
 
 import pytest
 from pathlib import Path
 from pendulum import datetime
 
 from hypothesis_trio.stateful import run_state_machine_as_test, TrioAsyncioRuleBasedStateMachine
+
+from parsec.api.data import EntryName
 
 from parsec.core.fs.storage import WorkspaceStorage
 from parsec.core.fs.workspacefs.file_transactions import FileTransactions
@@ -17,14 +19,18 @@ from tests.common import call_with_control
 
 
 @pytest.fixture
-def transactions_factory(event_bus, remote_devices_manager_factory):
+def transactions_factory(event_bus, remote_devices_manager_factory, core_config):
     async def _transactions_factory(device, backend_cmds, local_storage, cls=SyncTransactions):
         def _get_workspace_entry():
             return workspace_entry
 
-        workspace_entry = WorkspaceEntry.new("test")
+        async def _get_previous_workspace_entry():
+            # The tests shouldn't need this yet
+            assert False
+
+        workspace_entry = WorkspaceEntry.new(EntryName("test"), device.timestamp())
         workspace_manifest = LocalWorkspaceManifest.new_placeholder(
-            device.device_id, id=workspace_entry.id, now=datetime(2000, 1, 1)
+            device.device_id, id=workspace_entry.id, timestamp=datetime(2000, 1, 1)
         )
         async with local_storage.lock_entry_id(workspace_entry.id):
             await local_storage.set_manifest(workspace_entry.id, workspace_manifest)
@@ -34,6 +40,7 @@ def transactions_factory(event_bus, remote_devices_manager_factory):
             device,
             workspace_entry.id,
             _get_workspace_entry,
+            _get_previous_workspace_entry,
             backend_cmds,
             remote_devices_manager,
             local_storage,
@@ -46,6 +53,7 @@ def transactions_factory(event_bus, remote_devices_manager_factory):
             local_storage,
             remote_loader,
             event_bus,
+            core_config,
         )
 
     return _transactions_factory
@@ -62,8 +70,8 @@ def file_transactions_factory(event_bus, remote_devices_manager_factory, transac
 
 
 @pytest.fixture
-async def alice_transaction_local_storage(alice, persistent_mockup):
-    async with WorkspaceStorage.run(alice, Path("/dummy"), EntryID()) as storage:
+async def alice_transaction_local_storage(alice):
+    async with WorkspaceStorage.run(Path("/dummy"), alice, EntryID.new()) as storage:
         yield storage
 
 
@@ -117,6 +125,7 @@ def user_fs_offline_state_machine(
             self.user_fs_controller = await self.get_root_nursery().start(
                 call_with_control, _user_fs_controlled_cb
             )
+            return self.user_fs_controller
 
         async def stop_user_fs(self):
             try:
@@ -153,9 +162,9 @@ def user_fs_online_state_machine(
     user_fs_offline_state_machine, backend_factory, server_factory, backend_addr, reset_testbed
 ):
     class UserFSOnlineStateMachine(user_fs_offline_state_machine):
-        async def start_backend(self):
+        async def start_backend(self, **kwargs):
             async def _backend_controlled_cb(started_cb):
-                async with backend_factory() as backend:
+                async with backend_factory(**kwargs) as backend:
                     async with server_factory(backend.handle_client, backend_addr) as server:
                         await started_cb(backend=backend, server=server)
 

@@ -1,8 +1,8 @@
-# Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
+# Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2016-2021 Scille SAS
 
 from pathlib import Path
 from collections import defaultdict
-from typing import Dict, Tuple, Set, Optional, Union, AsyncIterator, NoReturn, Pattern
+from typing import cast, Dict, Tuple, Set, Optional, Union, AsyncIterator, NoReturn, Pattern
 
 import trio
 from trio import lowlevel
@@ -18,20 +18,41 @@ from parsec.core.types import (
     FileDescriptor,
     BaseLocalManifest,
     LocalFileManifest,
+    LocalWorkspaceManifest,
 )
+from parsec.core.config import DEFAULT_WORKSPACE_STORAGE_CACHE_SIZE
 from parsec.core.fs.exceptions import FSError, FSLocalMissError, FSInvalidFileDescriptor
 
 from parsec.core.fs.storage.local_database import LocalDatabase
 from parsec.core.fs.storage.manifest_storage import ManifestStorage
 from parsec.core.fs.storage.chunk_storage import ChunkStorage, BlockStorage
-from parsec.core.fs.storage.version import WORKSPACE_DATA_STORAGE_NAME, WORKSPACE_CACHE_STORAGE_NAME
+from parsec.core.fs.storage.version import (
+    get_workspace_data_storage_db_path,
+    get_workspace_cache_storage_db_path,
+)
 
 
 logger = get_logger()
 
-# TODO: should be in config.py
-DEFAULT_BLOCK_CACHE_SIZE = 512 * 1024 * 1024
 DEFAULT_CHUNK_VACUUM_THRESHOLD = 512 * 1024 * 1024
+
+
+async def workspace_storage_non_speculative_init(
+    data_base_dir: Path, device: LocalDevice, workspace_id: EntryID
+) -> None:
+    db_path = get_workspace_data_storage_db_path(data_base_dir, device, workspace_id)
+
+    # Local data storage service
+    async with LocalDatabase.run(db_path) as data_localdb:
+
+        # Manifest storage service
+        async with ManifestStorage.run(device, data_localdb, workspace_id) as manifest_storage:
+
+            timestamp = device.timestamp()
+            manifest = LocalWorkspaceManifest.new_placeholder(
+                author=device.device_id, id=workspace_id, timestamp=timestamp, speculative=False
+            )
+            await manifest_storage.set_manifest(workspace_id, manifest)
 
 
 class BaseWorkspaceStorage:
@@ -42,12 +63,10 @@ class BaseWorkspaceStorage:
     def __init__(
         self,
         device: LocalDevice,
-        path: Path,
         workspace_id: EntryID,
         block_storage: ChunkStorage,
         chunk_storage: ChunkStorage,
     ):
-        self.path = path
         self.device = device
         self.device_id = device.device_id
         self.workspace_id = workspace_id
@@ -74,6 +93,12 @@ class BaseWorkspaceStorage:
         return FileDescriptor(self.fd_counter)
 
     # Manifest interface
+
+    def get_workspace_manifest(self) -> LocalWorkspaceManifest:
+        """
+        Raises nothing, workspace manifest is guaranteed to be always available
+        """
+        raise NotImplementedError
 
     async def get_manifest(self, entry_id: EntryID) -> BaseLocalManifest:
         raise NotImplementedError
@@ -147,17 +172,17 @@ class BaseWorkspaceStorage:
 
     async def set_clean_block(self, block_id: BlockID, block: bytes) -> None:
         assert isinstance(block_id, BlockID)
-        return await self.block_storage.set_chunk(ChunkID(block_id), block)
+        return await self.block_storage.set_chunk(ChunkID(block_id.uuid), block)
 
     async def clear_clean_block(self, block_id: BlockID) -> None:
         assert isinstance(block_id, BlockID)
         try:
-            await self.block_storage.clear_chunk(ChunkID(block_id))
+            await self.block_storage.clear_chunk(ChunkID(block_id.uuid))
         except FSLocalMissError:
             pass
 
     async def get_dirty_block(self, block_id: BlockID) -> bytes:
-        return await self.chunk_storage.get_chunk(ChunkID(block_id))
+        return await self.chunk_storage.get_chunk(ChunkID(block_id.uuid))
 
     # Chunk interface
 
@@ -206,7 +231,6 @@ class WorkspaceStorage(BaseWorkspaceStorage):
     def __init__(
         self,
         device: LocalDevice,
-        path: Path,
         workspace_id: EntryID,
         data_localdb: LocalDatabase,
         cache_localdb: LocalDatabase,
@@ -214,7 +238,7 @@ class WorkspaceStorage(BaseWorkspaceStorage):
         chunk_storage: ChunkStorage,
         manifest_storage: ManifestStorage,
     ):
-        super().__init__(device, path, workspace_id, block_storage, chunk_storage)
+        super().__init__(device, workspace_id, block_storage, chunk_storage)
         self.data_localdb = data_localdb
         self.cache_localdb = cache_localdb
         self.manifest_storage = manifest_storage
@@ -223,27 +247,39 @@ class WorkspaceStorage(BaseWorkspaceStorage):
     @asynccontextmanager
     async def run(
         cls,
+        data_base_dir: Path,
         device: LocalDevice,
-        path: Path,
         workspace_id: EntryID,
-        cache_size: int = DEFAULT_BLOCK_CACHE_SIZE,
-        vacuum_threshold: int = DEFAULT_CHUNK_VACUUM_THRESHOLD,
+        cache_size: int = DEFAULT_WORKSPACE_STORAGE_CACHE_SIZE,
+        data_vacuum_threshold: int = DEFAULT_CHUNK_VACUUM_THRESHOLD,
     ) -> AsyncIterator["WorkspaceStorage"]:
-        data_path = path / WORKSPACE_DATA_STORAGE_NAME
-        cache_path = path / WORKSPACE_CACHE_STORAGE_NAME
+        data_path = get_workspace_data_storage_db_path(data_base_dir, device, workspace_id)
+        cache_path = get_workspace_cache_storage_db_path(data_base_dir, device, workspace_id)
+
+        # The cache database usually doesn't require vacuuming as it already has a maximum size.
+        # However, vacuuming might still be necessary after a change in the configuration.
+        # The cache size plus 10% seems like a reasonable configuration to avoid false positive.
+        cache_localdb_vaccuum_threshold = int(cache_size * 1.1)
 
         # Local cache storage service
-        async with LocalDatabase.run(cache_path) as cache_localdb:
+        async with LocalDatabase.run(
+            cache_path, vacuum_threshold=cache_localdb_vaccuum_threshold
+        ) as cache_localdb:
 
             # Local data storage service
             async with LocalDatabase.run(
-                data_path, vacuum_threshold=vacuum_threshold
+                data_path, vacuum_threshold=data_vacuum_threshold
             ) as data_localdb:
 
                 # Block storage service
                 async with BlockStorage.run(
                     device, cache_localdb, cache_size=cache_size
                 ) as block_storage:
+
+                    # Clean up block storage and run vacuum if necessary
+                    # (e.g after changing the cache size)
+                    await block_storage.cleanup()
+                    await cache_localdb.run_vacuum()
 
                     # Manifest storage service
                     async with ManifestStorage.run(
@@ -256,7 +292,6 @@ class WorkspaceStorage(BaseWorkspaceStorage):
                             # Instanciate workspace storage
                             instance = cls(
                                 device,
-                                path,
                                 workspace_id,
                                 data_localdb=data_localdb,
                                 cache_localdb=cache_localdb,
@@ -264,6 +299,11 @@ class WorkspaceStorage(BaseWorkspaceStorage):
                                 chunk_storage=chunk_storage,
                                 manifest_storage=manifest_storage,
                             )
+
+                            # Populate the cache with the workspace manifest to be able to
+                            # access it synchronously at all time
+                            await instance._load_workspace_manifest()
+                            assert instance.workspace_id in instance.manifest_storage._cache
 
                             # Load "prevent sync" pattern
                             await instance._load_prevent_sync_pattern()
@@ -293,6 +333,41 @@ class WorkspaceStorage(BaseWorkspaceStorage):
         return await self.manifest_storage.get_need_sync_entries()
 
     # Manifest interface
+
+    async def _load_workspace_manifest(self) -> None:
+        try:
+            await self.manifest_storage.get_manifest(self.workspace_id)
+
+        except FSLocalMissError:
+            # It is possible to lack the workspace manifest in local if our
+            # device hasn't tried to access it yet (and we are not the creator
+            # of the workspace, in which case the workspacefs local db is
+            # initialized with a non-speculative local manifest placeholder).
+            # In such case it is easy to fall back on an empty manifest
+            # which is a good enough aproximation of the very first version
+            # of the manifest (field `created` is invalid, but it will be
+            # correction by the merge during sync).
+            # This approach also guarantees the workspace root folder is always
+            # consistent (ls/touch/mkdir always works on it), which is not the
+            # case for the others files and folders (as their access may
+            # require communication with the backend).
+            # This is especially important when the workspace is accessed from
+            # file system mountpoint given having a weird error popup when clicking
+            # on the mountpoint from the file explorer really feel like a bug :/
+            timestamp = self.device.timestamp()
+            manifest = LocalWorkspaceManifest.new_placeholder(
+                author=self.device.device_id,
+                id=self.workspace_id,
+                timestamp=timestamp,
+                speculative=True,
+            )
+            await self.manifest_storage.set_manifest(self.workspace_id, manifest)
+
+    def get_workspace_manifest(self) -> LocalWorkspaceManifest:
+        """
+        Raises nothing, workspace manifest is guaranteed to be always available
+        """
+        return cast(LocalWorkspaceManifest, self.manifest_storage._cache[self.workspace_id])
 
     async def get_manifest(self, entry_id: EntryID) -> BaseLocalManifest:
         """Raises: FSLocalMissError"""
@@ -366,13 +441,13 @@ class WorkspaceStorageTimestamped(BaseWorkspaceStorage):
     def __init__(self, workspace_storage: BaseWorkspaceStorage, timestamp: DateTime):
         super().__init__(
             workspace_storage.device,
-            workspace_storage.path,
             workspace_storage.workspace_id,
             block_storage=workspace_storage.block_storage,
             chunk_storage=workspace_storage.chunk_storage,
         )
 
         self._cache: Dict[EntryID, BaseLocalManifest] = {}
+        self.workspace_storage = workspace_storage
         self.timestamp = timestamp
         self.manifest_storage = None
 
@@ -411,6 +486,12 @@ class WorkspaceStorageTimestamped(BaseWorkspaceStorage):
         raise FSError("Not implemented : WorkspaceStorage is timestamped")
 
     # Manifest interface
+
+    def get_workspace_manifest(self) -> LocalWorkspaceManifest:
+        """
+        Raises nothing, workspace manifest is guaranteed to be always available
+        """
+        return self.workspace_storage.get_workspace_manifest()
 
     async def get_manifest(self, entry_id: EntryID) -> BaseLocalManifest:
         """Raises: FSLocalMissError"""

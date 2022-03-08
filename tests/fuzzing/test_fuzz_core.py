@@ -1,4 +1,4 @@
-# Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
+# Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2016-2021 Scille SAS
 
 import pytest
 import trio
@@ -8,6 +8,7 @@ from collections import defaultdict
 from random import randrange, choice
 from string import ascii_lowercase
 
+from parsec.api.data import EntryName
 from parsec.core.fs import FSError
 from parsec.core.types import WorkspaceRole
 
@@ -231,7 +232,7 @@ async def _fuzzer_cmd(id, core, workspace, fs_state):
 @pytest.mark.slow
 async def test_fuzz_core(request, running_backend, alice_core):
     await trio.sleep(0.1)  # Somehow fixes the test
-    wid = await alice_core.user_fs.workspace_create("w")
+    wid = await alice_core.user_fs.workspace_create(EntryName("w"))
     workspace = alice_core.user_fs.get_workspace(wid)
     try:
         async with trio.open_service_nursery() as nursery:

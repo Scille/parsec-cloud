@@ -1,10 +1,10 @@
-# Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
+# Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2016-2021 Scille SAS
 
 import pytest
 from pendulum import datetime
 
 from parsec.api.data import UserProfile
-from parsec.api.protocol import packb, user_get_serializer
+from parsec.api.protocol import packb, user_get_serializer, UserID
 
 from tests.common import freeze_time, customize_fixtures
 from tests.backend.common import user_get
@@ -159,7 +159,7 @@ async def test_api_user_get_bad_msg(alice_backend_sock, bad_msg):
 
 @pytest.mark.trio
 async def test_api_user_get_not_found(alice_backend_sock, coolorg):
-    rep = await user_get(alice_backend_sock, "dummy")
+    rep = await user_get(alice_backend_sock, UserID("dummy"))
     assert rep == {"status": "not_found"}
 
 

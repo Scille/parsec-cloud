@@ -1,24 +1,28 @@
-# Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
+# Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2016-2021 Scille SAS
 
-from parsec.core.core_events import CoreEvent
+import os
 import sys
 import trio
 import errno
 import ctypes
 import signal
 import threading
+import importlib_resources
 from pathlib import PurePath
 from fuse import FUSE
 from structlog import get_logger
 from contextlib import contextmanager
+from async_generator import asynccontextmanager
 from itertools import count
 
+from parsec.event_bus import EventBus
+from parsec.core import resources as resources_module
+from parsec.core.fs.userfs import UserFS
+from parsec.core.fs.workspacefs import WorkspaceFS
+from parsec.core.core_events import CoreEvent
 from parsec.core.mountpoint.fuse_operations import FuseOperations
 from parsec.core.mountpoint.thread_fs_access import ThreadFSAccess
 from parsec.core.mountpoint.exceptions import MountpointDriverCrash
-
-from parsec.core import resources
-from pathlib import Path
 
 
 __all__ = ("fuse_mountpoint_runner",)
@@ -52,9 +56,9 @@ async def _bootstrap_mountpoint(base_mountpoint_path: PurePath, workspace_fs) ->
     workspace_name = workspace_fs.get_workspace_name()
     for tentative in count(1):
         if tentative == 1:
-            dirname = workspace_name
+            dirname = workspace_name.str
         else:
-            dirname = f"{workspace_name} ({tentative})"
+            dirname = f"{workspace_name.str} ({tentative})"
         mountpoint_path = base_mountpoint_path / dirname
 
         try:
@@ -86,14 +90,13 @@ async def _teardown_mountpoint(mountpoint_path):
         pass
 
 
+@asynccontextmanager
 async def fuse_mountpoint_runner(
-    user_fs,
-    workspace_fs,
+    user_fs: UserFS,
+    workspace_fs: WorkspaceFS,
     base_mountpoint_path: PurePath,
     config: dict,
-    event_bus,
-    *,
-    task_status=trio.TASK_STATUS_IGNORED,
+    event_bus: EventBus,
 ):
     """
     Raises:
@@ -102,8 +105,7 @@ async def fuse_mountpoint_runner(
     fuse_thread_started = threading.Event()
     fuse_thread_stopped = threading.Event()
     trio_token = trio.lowlevel.current_trio_token()
-    fs_access = ThreadFSAccess(trio_token, workspace_fs)
-    fuse_operations = FuseOperations(event_bus, fs_access)
+    fs_access = ThreadFSAccess(trio_token, workspace_fs, event_bus)
 
     mountpoint_path, initial_st_dev = await _bootstrap_mountpoint(
         base_mountpoint_path, workspace_fs
@@ -115,6 +117,9 @@ async def fuse_mountpoint_runner(
         "workspace_id": workspace_fs.workspace_id,
         "timestamp": getattr(workspace_fs, "timestamp", None),
     }
+
+    fuse_operations = FuseOperations(fs_access, **event_kwargs)
+
     try:
         teardown_cancel_scope = None
         event_bus.send(CoreEvent.MOUNTPOINT_STARTING, **event_kwargs)
@@ -125,54 +130,58 @@ async def fuse_mountpoint_runner(
             # Note that this does not prevent the user from using a certain encoding
             # in the context of the parsec app and another encoding in the context of
             # an application accessing the mountpoint. In this case, an encoding error
-            # might be raised while fuspy tries to decode the path. If that happends,
+            # might be raised while fuspy tries to decode the path. If that happens,
             # fuspy will log the error and simply return EINVAL, which is acceptable.
             encoding = sys.getfilesystemencoding()
 
             def _run_fuse_thread():
-                fuse_platform_options = {}
-                if sys.platform == "darwin":
-                    fuse_platform_options = {
-                        "local": True,
-                        "volname": workspace_fs.get_workspace_name(),
-                        "volicon": Path(resources.__file__).absolute().parent / "parsec.icns",
-                    }
-                    # osxfuse-specific options :
-                    # - local : allows mountpoint to show up correctly in finder (+ desktop)
-                    # - volname : specify volume name (default is OSXFUSE [...])
-                    # - volicon : specify volume icon (default is macOS drive icon)
+                with importlib_resources.files(resources_module).joinpath(
+                    "parsec.icns"
+                ) as parsec_icns_path:
 
-                else:
-                    fuse_platform_options = {"auto_unmount": True}
+                    fuse_platform_options = {}
+                    if sys.platform == "darwin":
+                        fuse_platform_options = {
+                            "local": True,
+                            "volname": workspace_fs.get_workspace_name(),
+                            "volicon": str(parsec_icns_path.absolute()),
+                        }
+                        # osxfuse-specific options :
+                        # - local : allows mountpoint to show up correctly in finder (+ desktop)
+                        # - volname : specify volume name (default is OSXFUSE [...])
+                        # - volicon : specify volume icon (default is macOS drive icon)
 
-                logger.info("Starting fuse thread...", mountpoint=mountpoint_path)
-                try:
-                    # Do not let fuse start if the runner is stopping
-                    # It's important that `fuse_thread_started` is set before the check
-                    # in order to avoid race conditions
-                    fuse_thread_started.set()
-                    if teardown_cancel_scope is not None:
-                        return
-                    FUSE(
-                        fuse_operations,
-                        str(mountpoint_path.absolute()),
-                        foreground=True,
-                        encoding=encoding,
-                        **fuse_platform_options,
-                        **config,
-                    )
+                    else:
+                        fuse_platform_options = {"auto_unmount": True}
 
-                except Exception as exc:
+                    logger.info("Starting fuse thread...", mountpoint=mountpoint_path)
                     try:
-                        errcode = errno.errorcode[exc.args[0]]
-                    except (KeyError, IndexError):
-                        errcode = f"Unknown error code: {exc}"
-                    raise MountpointDriverCrash(
-                        f"Fuse has crashed on {mountpoint_path}: {errcode}"
-                    ) from exc
+                        # Do not let fuse start if the runner is stopping
+                        # It's important that `fuse_thread_started` is set before the check
+                        # in order to avoid race conditions
+                        fuse_thread_started.set()
+                        if teardown_cancel_scope is not None:
+                            return
+                        FUSE(
+                            fuse_operations,
+                            str(mountpoint_path.absolute()),
+                            foreground=True,
+                            encoding=encoding,
+                            **fuse_platform_options,
+                            **config,
+                        )
 
-                finally:
-                    fuse_thread_stopped.set()
+                    except Exception as exc:
+                        try:
+                            errcode = errno.errorcode[exc.args[0]]
+                        except (KeyError, IndexError):
+                            errcode = f"Unknown error code: {exc}"
+                        raise MountpointDriverCrash(
+                            f"Fuse has crashed on {mountpoint_path}: {errcode}"
+                        ) from exc
+
+                    finally:
+                        fuse_thread_stopped.set()
 
             # The fusepy runner (FUSE) relies on the `fuse_main_real` function from libfuse
             # This function is high-level helper on top of the libfuse API that is intended
@@ -186,15 +195,15 @@ async def fuse_mountpoint_runner(
                 )
                 await _wait_for_fuse_ready(mountpoint_path, fuse_thread_started, initial_st_dev)
 
-            event_bus.send(CoreEvent.MOUNTPOINT_STARTED, **event_kwargs)
-            task_status.started(mountpoint_path)
+            # Indicate the mountpoint is now started
+            yield mountpoint_path
 
     finally:
+        event_bus.send(CoreEvent.MOUNTPOINT_STOPPING, **event_kwargs)
         with trio.CancelScope(shield=True) as teardown_cancel_scope:
             await _stop_fuse_thread(
                 mountpoint_path, fuse_operations, fuse_thread_started, fuse_thread_stopped
             )
-            event_bus.send(CoreEvent.MOUNTPOINT_STOPPED, **event_kwargs)
             await _teardown_mountpoint(mountpoint_path)
 
 
@@ -228,24 +237,68 @@ async def _stop_fuse_thread(
     if fuse_thread_stopped.is_set() or not fuse_thread_started.is_set():
         return
     logger.info("Stopping fuse thread...", mountpoint=mountpoint_path)
+
+    # Fuse exit in macOS
     if sys.platform == "darwin":
+
         # The schedule_exit() solution doesn't work on macOS, instead freezes the application for
         # 120 seconds before a timeout occurs. The solution used is to call this function (macOS
         # equivalent to fusermount) in a subprocess to unmount.
-        await trio.run_process(["diskutil", "unmount", str(mountpoint_path)])
+        process_args = ["diskutil", "unmount", "force", str(mountpoint_path)]
+        process = await trio.open_process(process_args)
+
+        # Perform 300 attempts of 10 ms, i.e a 3 second timeout
+        # A while loop wouldn't be ideal here, especially since this code is protected against cancellation
+        for _ in range(300):
+            # Check if the attempt succeeded for 10 ms
+            if await trio.to_thread.run_sync(fuse_thread_stopped.wait, 0.01):
+                break
+            # Restart the unmount process if necessary, this is needed in
+            # case the stop is ordered before fuse has finished started (hence
+            # the unmount command can run before the OS mount has occured).
+            # Of course this means in theory we could be umounting by mistake
+            # an unrelated mountpoint that tooks our path, but it's a really
+            # unlikely event.
+            if process.poll() is not None:
+                process = await trio.open_process(process_args)
+        else:
+            logger.error("Fuse thread stop timeout", mountpoint=mountpoint_path)
+
+        # Wait for unmount process to complete if necessary
+        await process.wait()
+
+    # Fuse exit in linux
     else:
+
         # Schedule an exit in the fuse operations
         fuse_operations.schedule_exit()
-    # Loop over attemps at waking up the fuse operations
-    while True:
-        # Attempt to wake up the fuse operations
-        try:
-            await trio.Path(mountpoint_path / ".__shutdown_fuse__").exists()
-        # This might fail for many reasons
-        except OSError:
-            pass
-        # Check if the attempt succeeded for 10 ms
-        if await trio.to_thread.run_sync(fuse_thread_stopped.wait, 0.01):
-            break
+
+        # Ping fuse by performing an access from a daemon thread
+        def _ping_fuse_thread_target():
+            try:
+                os.stat(mountpoint_path / ".__shutdown_fuse__")
+            except OSError:
+                pass
+
+        # All kind of stuff can go wrong here if the access is performed while the fuse FS is already shutting down,
+        # from exotic exceptions to blocking forever. For this reason, we don't use `await trio.Path(...).exists()`
+        # but simply fire and forget a ping to the fuse FS. Either this ping succeeds in waking the FS up and thus
+        # starting its shutdown procedure, or it fails because the FS is already shutting down.
+        thread = threading.Thread(target=_ping_fuse_thread_target, daemon=True)
+        thread.start()
+
+        # Perform 100 attempts of 10 ms, i.e a 1 second timeout
+        # A while loop wouldn't be ideal here, especially since this code is protected against cancellation
+        for _ in range(100):
+            # Check if the attempt succeeded for 10 ms
+            if await trio.to_thread.run_sync(fuse_thread_stopped.wait, 0.01):
+                break
+            # Restart the daemon thread if necessary
+            if not thread.is_alive():
+                thread = threading.Thread(target=_ping_fuse_thread_target, daemon=True)
+                thread.start()
+        else:
+            logger.error("Fuse thread stop timeout", mountpoint=mountpoint_path)
+
     # The thread has now stopped
     logger.info("Fuse thread stopped", mountpoint=mountpoint_path)

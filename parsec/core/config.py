@@ -1,6 +1,7 @@
-# Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
+# Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2016-2021 Scille SAS
 
 import os
+import sys
 import attr
 import json
 from typing import Optional, FrozenSet
@@ -11,12 +12,13 @@ import base64
 from parsec.api.data import EntryID
 from parsec.core.types import BackendAddr
 
+DEFAULT_WORKSPACE_STORAGE_CACHE_SIZE = 512 * 1024 * 1024
 
 logger = get_logger()
 
 
 def get_default_data_base_dir(environ: dict) -> Path:
-    if os.name == "nt":
+    if sys.platform == "win32":
         return Path(environ["APPDATA"]) / "parsec/data"
     else:
         path = environ.get("XDG_DATA_HOME")
@@ -25,18 +27,8 @@ def get_default_data_base_dir(environ: dict) -> Path:
         return Path(path) / "parsec"
 
 
-def get_default_cache_base_dir(environ: dict) -> Path:
-    if os.name == "nt":
-        return Path(environ["APPDATA"]) / "parsec/cache"
-    else:
-        path = environ.get("XDG_CACHE_HOME")
-        if not path:
-            path = f"{environ.get('HOME')}/.cache"
-        return Path(path) / "parsec"
-
-
 def get_default_config_dir(environ: dict) -> Path:
-    if os.name == "nt":
+    if sys.platform == "win32":
         return Path(environ["APPDATA"]) / "parsec/config"
     else:
         path = environ.get("XDG_CONFIG_HOME")
@@ -53,7 +45,6 @@ def get_default_mountpoint_base_dir(environ: dict) -> Path:
 class CoreConfig:
     config_dir: Path
     data_base_dir: Path
-    cache_base_dir: Path
     mountpoint_base_dir: Path
     prevent_sync_pattern_path: Optional[Path] = None  # Use `default_pattern.ignore` by default
     preferred_org_creation_backend_addr: BackendAddr
@@ -70,6 +61,7 @@ class CoreConfig:
 
     sentry_url: Optional[str] = None
     telemetry_enabled: bool = True
+    workspace_storage_cache_size: int = DEFAULT_WORKSPACE_STORAGE_CACHE_SIZE
 
     gui_last_device: Optional[str] = None
     gui_tray_enabled: bool = True
@@ -96,7 +88,6 @@ class CoreConfig:
 def config_factory(
     config_dir: Path = None,
     data_base_dir: Path = None,
-    cache_base_dir: Path = None,
     mountpoint_base_dir: Path = None,
     prevent_sync_pattern_path: Optional[Path] = None,
     mountpoint_enabled: bool = False,
@@ -104,7 +95,9 @@ def config_factory(
     backend_max_cooldown: int = 30,
     backend_connection_keepalive: Optional[int] = 29,
     backend_max_connections: int = 4,
+    sentry_url: str = None,
     telemetry_enabled: bool = True,
+    workspace_storage_cache_size: int = DEFAULT_WORKSPACE_STORAGE_CACHE_SIZE,
     debug: bool = False,
     gui_last_device: str = None,
     gui_tray_enabled: bool = True,
@@ -132,12 +125,14 @@ def config_factory(
             "parsec://localhost:6777?no_ssl=true"
         )
 
+    if mountpoint_base_dir is None:
+        mountpoint_base_dir = get_default_mountpoint_base_dir(environ)
+
     data_base_dir = data_base_dir or get_default_data_base_dir(environ)
     core_config = CoreConfig(
         config_dir=config_dir or get_default_config_dir(environ),
         data_base_dir=data_base_dir,
-        cache_base_dir=cache_base_dir or get_default_cache_base_dir(environ),
-        mountpoint_base_dir=get_default_mountpoint_base_dir(environ),
+        mountpoint_base_dir=mountpoint_base_dir,
         prevent_sync_pattern_path=prevent_sync_pattern_path,
         mountpoint_enabled=mountpoint_enabled,
         disabled_workspaces=disabled_workspaces,
@@ -145,8 +140,9 @@ def config_factory(
         backend_connection_keepalive=backend_connection_keepalive,
         backend_max_connections=backend_max_connections,
         telemetry_enabled=telemetry_enabled,
+        workspace_storage_cache_size=workspace_storage_cache_size,
         debug=debug,
-        sentry_url=environ.get("SENTRY_URL") or None,
+        sentry_url=sentry_url,
         gui_last_device=gui_last_device,
         gui_tray_enabled=gui_tray_enabled,
         gui_language=gui_language,
@@ -166,10 +162,9 @@ def config_factory(
     # Make sure the directories exist on the system
     core_config.config_dir.mkdir(mode=0o700, parents=True, exist_ok=True)
     core_config.data_base_dir.mkdir(mode=0o700, parents=True, exist_ok=True)
-    core_config.cache_base_dir.mkdir(mode=0o700, parents=True, exist_ok=True)
 
     # Mountpoint base directory is not used on windows
-    if os.name != "nt":
+    if sys.platform != "win32":
         core_config.mountpoint_base_dir.mkdir(mode=0o700, parents=True, exist_ok=True)
 
     return core_config
@@ -188,16 +183,11 @@ def load_config(config_dir: Path, **extra_config) -> CoreConfig:
 
     except (ValueError, json.JSONDecodeError) as exc:
         # Config file broken, fallback to default
-        logger.warning(f"Ignoring invalid config in {config_file} ({exc})")
+        logger.warning("Ignoring invalid config", config_file=config_file, error=str(exc))
         data_conf = {}
 
     try:
         data_conf["data_base_dir"] = Path(data_conf["data_base_dir"])
-    except (KeyError, ValueError):
-        pass
-
-    try:
-        data_conf["cache_base_dir"] = Path(data_conf["cache_base_dir"])
     except (KeyError, ValueError):
         pass
 
@@ -207,7 +197,9 @@ def load_config(config_dir: Path, **extra_config) -> CoreConfig:
         pass
 
     try:
-        data_conf["disabled_workspaces"] = frozenset(map(EntryID, data_conf["disabled_workspaces"]))
+        data_conf["disabled_workspaces"] = frozenset(
+            map(EntryID.from_hex, data_conf["disabled_workspaces"])
+        )
     except (KeyError, ValueError):
         pass
 
@@ -218,7 +210,7 @@ def load_config(config_dir: Path, **extra_config) -> CoreConfig:
     except KeyError:
         pass
     except ValueError as exc:
-        logger.warning(f"Invalid value for `preferred_org_creation_backend_addr` ({exc})")
+        logger.warning("Invalid value for `preferred_org_creation_backend_addr`", error=str(exc))
         data_conf["preferred_org_creation_backend_addr"] = None
 
     try:
@@ -249,12 +241,12 @@ def save_config(config: CoreConfig):
         json.dumps(
             {
                 "data_base_dir": str(config.data_base_dir),
-                "cache_base_dir": str(config.cache_base_dir),
                 "prevent_sync_pattern": str(config.prevent_sync_pattern_path),
                 "telemetry_enabled": config.telemetry_enabled,
                 "disabled_workspaces": list(map(str, config.disabled_workspaces)),
                 "backend_max_cooldown": config.backend_max_cooldown,
                 "backend_connection_keepalive": config.backend_connection_keepalive,
+                "workspace_storage_cache_size": config.workspace_storage_cache_size,
                 "gui_last_device": config.gui_last_device,
                 "gui_tray_enabled": config.gui_tray_enabled,
                 "gui_language": config.gui_language,

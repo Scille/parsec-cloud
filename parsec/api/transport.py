@@ -1,4 +1,4 @@
-# Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
+# Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2016-2021 Scille SAS
 
 from uuid import uuid4
 from typing import Optional, Type, Union
@@ -20,6 +20,7 @@ from wsproto.events import (
     Pong,
 )
 
+from parsec._version import __version__
 from parsec.api.protocol.handshake import ServerHandshake
 
 
@@ -29,6 +30,7 @@ __all__ = ("TransportError", "Transport")
 logger = get_logger()
 WEBSOCKET_HANDSHAKE_TIMEOUT = 3.0
 TRANSPORT_TARGET = "/ws"
+USER_AGENT = f"parsec/{__version__}"
 
 
 class TransportError(Exception):
@@ -110,13 +112,21 @@ class Transport:
             raise TransportError(*exc.args) from exc
 
     @classmethod
-    async def init_for_client(cls: Type["Transport"], stream: Stream, host: str) -> "Transport":
+    async def init_for_client(
+        cls: Type["Transport"], stream: Stream, host: str, keepalive: Optional[int] = None
+    ) -> "Transport":
         ws = WSConnection(ConnectionType.CLIENT)
-        transport = cls(stream, ws)
+        transport = cls(stream, ws, keepalive)
 
         # Because this is a client WebSocket, we need to initiate the connection
         # handshake by sending a Request event.
-        await transport._net_send(Request(host=host, target=TRANSPORT_TARGET))
+        await transport._net_send(
+            Request(
+                host=host,
+                target=TRANSPORT_TARGET,
+                extra_headers=[(b"User-Agent", USER_AGENT.encode())],
+            )
+        )
 
         # Get handshake answer
         event = await transport._next_ws_event()

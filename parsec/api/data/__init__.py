@@ -1,4 +1,4 @@
-# Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
+# Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2016-2021 Scille SAS
 
 from parsec.api.data.base import (
     DataError,
@@ -9,7 +9,14 @@ from parsec.api.data.base import (
     BaseAPISignedData,
     BaseSignedDataSchema,
 )
-from parsec.api.data.entry import EntryID, EntryIDField, EntryName, EntryNameField
+from parsec.api.data.entry import (
+    EntryID,
+    EntryIDField,
+    EntryName,
+    EntryNameField,
+    EntryNameTooLongError,
+)
+
 from parsec.api.data.certif import (
     UserProfile,
     UserProfileField,
@@ -66,6 +73,7 @@ __all__ = (
     "EntryIDField",
     "EntryName",
     "EntryNameField",
+    "EntryNameTooLongError",
     # Certifs
     "UserProfile",
     "UserProfileField",

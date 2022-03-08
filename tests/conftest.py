@@ -1,6 +1,5 @@
-# Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
+# Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2016-2021 Scille SAS
 
-from parsec.core.core_events import CoreEvent
 import pytest
 import os
 import re
@@ -12,7 +11,9 @@ import trustme
 import socket
 import contextlib
 import pendulum
+import math
 from unittest.mock import patch
+import logging
 import structlog
 import trio
 from trio.testing import MockClock
@@ -27,10 +28,11 @@ import tempfile
 from parsec.monitoring import TaskMonitoringInstrument
 from parsec.core import CoreConfig
 from parsec.core.types import BackendAddr
+from parsec.core.core_events import CoreEvent
 from parsec.core.logged_core import logged_core_factory
 from parsec.core.backend_connection import BackendConnStatus
 from parsec.core.mountpoint.manager import get_mountpoint_runner
-from parsec.core.fs.storage import LocalDatabase, local_database, UserStorage
+from parsec.core.fs.storage import LocalDatabase
 
 from parsec.backend import backend_app_factory
 from parsec.backend.config import (
@@ -80,6 +82,7 @@ def pytest_addoption(parser):
     parser.addoption(
         "--realcrypto", action="store_true", help="Don't mock crypto operation to save time"
     )
+    parser.addoption("--runrust", action="store_true", help="Don't skip rust tests")
     parser.addoption(
         "--run-postgresql-cluster",
         action="store_true",
@@ -103,8 +106,6 @@ def mock_timezone_utc(request):
 
 
 def pytest_configure(config):
-    # Patch pytest-trio
-    patch_pytest_trio()
     # Configure structlog to redirect everything in logging
     structlog.configure(
         logger_factory=structlog.stdlib.LoggerFactory(),
@@ -139,41 +140,61 @@ def patch_caplog():
     def _remove_colors(msg):
         return re.sub(r"\x1B\[([0-9]{1,2}(;[0-9]{1,2})?)?[mGK]", "", str(msg))
 
+    def _find(self, log):
+        __tracebackhide__ = True
+        matches_msgs = []
+        matches_records = []
+        for record in self.records:
+            monochrome_msg = _remove_colors(record.msg)
+            if log in monochrome_msg:
+                matches_msgs.append(monochrome_msg)
+                matches_records.append(record)
+        return matches_msgs, matches_records
+
+    def _register_asserted_records(self, *records):
+        try:
+            asserted_records = self.asserted_records
+        except AttributeError:
+            asserted_records = set()
+            setattr(self, "asserted_records", asserted_records)
+        asserted_records.update(records)
+
     def _assert_occured(self, log):
         __tracebackhide__ = True
-        assert any([r for r in self.records if log in _remove_colors(r.msg)])
+        matches_msgs, matches_records = _find(self, log)
+        assert matches_msgs
+        _register_asserted_records(self, *matches_records)
+        return matches_msgs
+
+    def _assert_occured_once(self, log):
+        __tracebackhide__ = True
+        matches_msgs, matches_records = _find(self, log)
+        assert len(matches_msgs) == 1
+        _register_asserted_records(self, matches_records[0])
+        return matches_msgs[0]
+
+    def _assert_not_occured(self, log):
+        __tracebackhide__ = True
+        matches_msgs, matches_records = _find(self, log)
+        assert not matches_msgs
 
     LogCaptureFixture.assert_occured = _assert_occured
+    LogCaptureFixture.assert_occured_once = _assert_occured_once
+    LogCaptureFixture.assert_not_occured = _assert_not_occured
 
 
-def patch_pytest_trio():
-    # Fix while waiting for
-    # https://github.com/python-trio/pytest-trio/issues/77
-    import pytest_trio
-
-    vanilla_crash = pytest_trio.plugin.TrioTestContext.crash
-
-    def patched_crash(self, exc):
-        if exc is None:
-            task = trio.lowlevel.current_task()
-            for child_nursery in task.child_nurseries:
-                for child_exc in child_nursery._pending_excs:
-                    if not isinstance(exc, trio.Cancelled):
-                        vanilla_crash(self, child_exc)
-        vanilla_crash(self, exc)
-
-    pytest_trio.plugin.TrioTestContext.crash = patched_crash
-
-    def fget(self):
-        if self.crashed and not self._error_list:
-            self._error_list.append(trio.TrioInternalError("See pytest-trio issue #75"))
-        return self._error_list
-
-    def fset(self, value):
-        self._error_list = value
-
-    error_list = property(fget, fset)
-    pytest_trio.plugin.TrioTestContext.error_list = error_list
+@pytest.fixture(autouse=True)
+def no_logs_gte_error(caplog):
+    yield
+    # The test should use `caplog.assert_occured_once` to indicate a log was expected,
+    # otherwise we consider error logs as *actual* errors.
+    asserted_records = getattr(caplog, "asserted_records", set())
+    errors = [
+        record
+        for record in caplog.get_records("call")
+        if record.levelno >= logging.ERROR and record not in asserted_records
+    ]
+    assert not errors
 
 
 @pytest.fixture(scope="session")
@@ -203,12 +224,21 @@ def pytest_runtest_setup(item):
     if item.get_closest_marker("gui"):
         if not item.config.getoption("--rungui"):
             pytest.skip("need --rungui option to run")
+    if item.get_closest_marker("postgresql"):
+        if not item.config.getoption("--postgresql"):
+            pytest.skip("need --postgresql option to run")
+    if item.get_closest_marker("rust") and not item.config.getoption("--runrust"):
+        pytest.skip("need --runrust option to run")
 
 
 def pytest_collection_modifyitems(config, items):
     for item in items:
         if "trio" in item.keywords:
             item.fixturenames.append("task_monitoring")
+        if "gui" in item.keywords and "trio" in item.keywords:
+            import qtrio
+
+            item.add_marker(pytest.mark.trio(run=qtrio.run))
 
 
 @pytest.fixture
@@ -250,10 +280,12 @@ def realcrypto(unmock_crypto):
         yield
 
 
-@pytest.fixture(scope="session")
+@pytest.fixture
 def postgresql_url(request):
-    if not request.config.getoption("--postgresql"):
-        pytest.skip("`--postgresql` option not provided")
+    if not request.node.get_closest_marker("postgresql"):
+        raise RuntimeError(
+            "`postgresql_url` can only be used in tests decorated with `@pytest.mark.postgresql`"
+        )
     return get_postgresql_url()
 
 
@@ -274,13 +306,54 @@ async def asyncio_loop(request):
 
 @pytest.fixture
 def autojump_clock(request):
-    # Event dispatching through PostgreSQL LISTEN/NOTIFY is
-    # invisible from trio point of view, hence waiting for
-    # event with autojump_threshold=0 means we jump to timeout
+    # We don't mock the clock during fixture initialization to avoid weird
+    # too slow errors (e.g. logged core monitors waiting for backend).
+    clock = MockClock(rate=1, autojump_threshold=math.inf)
+
     if request.config.getoption("--postgresql"):
-        return MockClock(autojump_threshold=0.1)
+        # Event dispatching through PostgreSQL LISTEN/NOTIFY is
+        # invisible from trio point of view, hence waiting for
+        # event with autojump_threshold=0 means we jump to timeout
+        default_autojump_threshold = 0.1
+        default_rate = 0
+
+    elif request.node.get_closest_marker("gui"):
+        # Qt also need a non-zero threshold, otherwise Qt and trio threads fight in
+        # busy loops which makes the test a lot slower (and toast your CPU) !
+        default_autojump_threshold = 0.01
+        default_rate = 0
+
     else:
-        return MockClock(autojump_threshold=0)
+        # Data storage makes use of lock and `trio.to_thread.run_sync` which
+        # produces a jump in case of concurrent access
+        default_autojump_threshold = 0.01
+        default_rate = 0
+
+    used = False
+
+    def _setup(autojump_threshold=default_autojump_threshold, rate=default_rate):
+        nonlocal used
+        used = True
+        clock.autojump_threshold = autojump_threshold
+        clock.rate = rate
+
+    clock.setup = _setup
+    yield clock
+
+    # Easy to forget this fixture must be explicitly used
+    assert used
+
+    # Note we don't revert clock setup, so in theory fixtures teardown could
+    # suffer (for the same reason we protected fixtures init).
+    # This is because we cannot guarantee we are the first fixture to teardown,
+    # hence we don't know *when* we would be unsetting the clock, but this
+    # is fine for now given, unlike init, tearndown doesn't do complex waits.
+    #
+    # BTW, you might be thinking of providing a context manager instead of the
+    # setup method to fix this, however the current fixture must return the
+    # clock object (so pytest know this is the clock we want to use, and pytest
+    # doesn't support a fixture of fixture returning the clock) so we would have
+    # to put __enter__/__exit__ to the clock object which is a bit too much :/
 
 
 @pytest.fixture(scope="session")
@@ -395,8 +468,12 @@ def backend_addr(tcp_stream_spy, fixtures_customization, monkeypatch):
     return addr
 
 
-@pytest.fixture
-def persistent_mockup(monkeypatch):
+@pytest.fixture(autouse=True)
+def persistent_mockup(monkeypatch, fixtures_customization):
+    if fixtures_customization.get("real_data_storage", False):
+        yield
+        return
+
     @attr.s
     class MockupContext:
 
@@ -432,16 +509,10 @@ def persistent_mockup(monkeypatch):
     async def get_disk_usage(storage):
         return 0
 
-    @asynccontextmanager
-    async def thread_pool_runner(max_workers):
-        assert max_workers == 1
+    async def run_in_thread(storage, fn, *args):
+        return fn(*args)
 
-        async def run_in_thread(fn, *args):
-            return fn(*args)
-
-        yield run_in_thread
-
-    monkeypatch.setattr(local_database, "thread_pool_runner", thread_pool_runner)
+    monkeypatch.setattr(LocalDatabase, "run_in_thread", run_in_thread)
     monkeypatch.setattr(LocalDatabase, "_create_connection", _create_connection)
     monkeypatch.setattr(LocalDatabase, "_close", _close)
     monkeypatch.setattr(LocalDatabase, "get_disk_usage", get_disk_usage)
@@ -477,23 +548,24 @@ def backend_store(request):
 
 
 @pytest.fixture
-def blockstore(request, backend_store):
+def blockstore(request, backend_store, fixtures_customization):
     # TODO: allow to test against swift ?
     if backend_store.startswith("postgresql://"):
         config = PostgreSQLBlockStoreConfig()
     else:
         config = MockedBlockStoreConfig()
 
-    # More or less a hack to be able to to configure this fixture from
-    # the test function by adding tags to it
-    if request.node.get_closest_marker("raid0_blockstore"):
+    raid = fixtures_customization.get("blockstore_mode", "NO_RAID").upper()
+    if raid == "RAID0":
         config = RAID0BlockStoreConfig(blockstores=[config, MockedBlockStoreConfig()])
-    if request.node.get_closest_marker("raid1_blockstore"):
+    elif raid == "RAID1":
         config = RAID1BlockStoreConfig(blockstores=[config, MockedBlockStoreConfig()])
-    if request.node.get_closest_marker("raid5_blockstore"):
+    elif raid == "RAID5":
         config = RAID5BlockStoreConfig(
             blockstores=[config, MockedBlockStoreConfig(), MockedBlockStoreConfig()]
         )
+    else:
+        assert raid == "NO_RAID"
 
     return config
 
@@ -544,13 +616,17 @@ def backend_factory(
     @asynccontextmanager
     async def _backend_factory(populated=True, config={}, event_bus=None):
         ssl_context = fixtures_customization.get("backend_over_ssl", False)
+        nonlocal backend_store, blockstore
+        if fixtures_customization.get("backend_force_mocked"):
+            backend_store = "MOCKED"
+            assert fixtures_customization.get("blockstore_mode", "NO_RAID") == "NO_RAID"
+            blockstore = MockedBlockStoreConfig()
+
         config = BackendConfig(
             **{
                 "administration_token": "s3cr3t",
                 "db_min_connections": 1,
                 "db_max_connections": 5,
-                "db_first_tries_number": 1,
-                "db_first_tries_sleep": 1,
                 "debug": False,
                 "db_url": backend_store,
                 "blockstore_config": blockstore,
@@ -558,28 +634,43 @@ def backend_factory(
                 "backend_addr": None,
                 "forward_proto_enforce_https": None,
                 "ssl_context": ssl_context if ssl_context else False,
-                "spontaneous_organization_bootstrap": False,
                 "organization_bootstrap_webhook_url": None,
+                "organization_spontaneous_bootstrap": False,
                 **config,
             }
         )
 
         if not event_bus:
             event_bus = event_bus_factory()
-        # TODO: backend connection to postgresql will timeout if we use a trio
-        # mock clock with autothreshold. We should detect this and do something here...
         async with backend_app_factory(config, event_bus=event_bus) as backend:
             if populated:
                 with freeze_time("2000-01-01"):
                     binder = backend_data_binder_factory(backend)
-                    await binder.bind_organization(coolorg, alice)
                     await binder.bind_organization(
-                        expiredorg, expiredorgalice, expiration_date=pendulum.now()
+                        coolorg,
+                        alice,
+                        initial_user_manifest=fixtures_customization.get(
+                            "alice_initial_remote_user_manifest", "v1"
+                        ),
                     )
+                    await binder.bind_organization(expiredorg, expiredorgalice)
+                    await backend.organization.update(expiredorg.organization_id, is_expired=True)
                     await binder.bind_organization(otherorg, otheralice)
                     await binder.bind_device(alice2, certifier=alice)
-                    await binder.bind_device(adam, certifier=alice2)
-                    await binder.bind_device(bob, certifier=adam)
+                    await binder.bind_device(
+                        adam,
+                        certifier=alice2,
+                        initial_user_manifest=fixtures_customization.get(
+                            "adam_initial_remote_user_manifest", "v1"
+                        ),
+                    )
+                    await binder.bind_device(
+                        bob,
+                        certifier=adam,
+                        initial_user_manifest=fixtures_customization.get(
+                            "bob_initial_remote_user_manifest", "v1"
+                        ),
+                    )
 
             yield backend
 
@@ -587,21 +678,20 @@ def backend_factory(
 
 
 @pytest.fixture
-async def backend(backend_factory, request, fixtures_customization, backend_addr):
+async def backend(backend_factory, fixtures_customization, backend_addr):
     populated = not fixtures_customization.get("backend_not_populated", False)
     config = {}
     tmpdir = tempfile.mkdtemp(prefix="tmp-email-folder-")
     config["email_config"] = MockedEmailConfig(sender="Parsec <no-reply@parsec.com>", tmpdir=tmpdir)
     config["backend_addr"] = backend_addr
     if fixtures_customization.get("backend_spontaneous_organization_boostrap", False):
-        config["spontaneous_organization_bootstrap"] = True
+        config["organization_spontaneous_bootstrap"] = True
     if fixtures_customization.get("backend_has_webhook", False):
         # Invalid port, hence we should crash if by mistake we try to reach this url
         config["organization_bootstrap_webhook_url"] = "http://example.com:888888/webhook"
     forward_proto_enforce_https = fixtures_customization.get("backend_forward_proto_enforce_https")
     if forward_proto_enforce_https:
         config["forward_proto_enforce_https"] = forward_proto_enforce_https
-
     async with backend_factory(populated=populated, config=config) as backend:
         yield backend
 
@@ -645,7 +735,8 @@ def webhook_spy(monkeypatch):
     events = []
 
     class MockedRep:
-        def getcode(self):
+        @property
+        def status(self):
             return 200
 
     @contextmanager
@@ -696,28 +787,22 @@ def core_config(tmpdir, backend_addr, unused_tcp_port, fixtures_customization):
     tmpdir = Path(tmpdir)
     return CoreConfig(
         config_dir=tmpdir / "config",
-        cache_base_dir=tmpdir / "cache",
         data_base_dir=tmpdir / "data",
         mountpoint_base_dir=tmpdir / "mnt",
         preferred_org_creation_backend_addr=backend_addr,
+        gui_language=fixtures_customization.get("gui_language"),
     )
 
 
 @pytest.fixture
-def core_factory(
-    request, running_backend_ready, event_bus_factory, core_config, initialize_userfs_storage_v1
-):
+def core_factory(request, running_backend_ready, event_bus_factory, core_config):
     @asynccontextmanager
-    async def _core_factory(device, event_bus=None, user_manifest_in_v0=False):
-        await running_backend_ready.wait()
+    async def _core_factory(device, event_bus=None):
+        # Ensure test doesn't stay frozen if a bug in a fixture prevent the
+        # backend from starting
+        with trio.fail_after(3):
+            await running_backend_ready.wait()
         event_bus = event_bus or event_bus_factory()
-
-        if not user_manifest_in_v0:
-            # Create a storage just for this operation (the underlying database
-            # will be reused by the core's storage thanks to `persistent_mockup`)
-            path = core_config.data_base_dir / device.slug
-            async with UserStorage.run(device=device, path=path) as storage:
-                await initialize_userfs_storage_v1(storage)
 
         with event_bus.listen() as spy:
             async with logged_core_factory(core_config, device, event_bus) as core:
@@ -728,6 +813,7 @@ def core_factory(
                     await spy.wait_with_timeout(
                         CoreEvent.BACKEND_CONNECTION_CHANGED,
                         {"status": BackendConnStatus.READY, "status_exc": spy.ANY},
+                        timeout=2.0,  # 1 second might not be enough for postgresql 12 tests running in the CI
                     )
                 assert core.are_monitors_idle()
 
@@ -737,31 +823,57 @@ def core_factory(
 
 
 @pytest.fixture
-async def alice_core(core_factory, alice):
+async def alice_core(
+    core_config, fixtures_customization, initialize_local_user_manifest, core_factory, alice
+):
+    initial_user_manifest = fixtures_customization.get("alice_initial_local_user_manifest", "v1")
+    await initialize_local_user_manifest(
+        core_config.data_base_dir, alice, initial_user_manifest=initial_user_manifest
+    )
     async with core_factory(alice) as core:
         yield core
 
 
 @pytest.fixture
-async def alice2_core(core_factory, alice2):
-
+async def alice2_core(
+    core_config, fixtures_customization, initialize_local_user_manifest, core_factory, alice2
+):
+    initial_user_manifest = fixtures_customization.get("alice2_initial_local_user_manifest", "v1")
+    await initialize_local_user_manifest(
+        core_config.data_base_dir, alice2, initial_user_manifest=initial_user_manifest
+    )
     async with core_factory(alice2) as core:
         yield core
 
 
 @pytest.fixture
-async def otheralice_core(core_factory, otheralice):
+async def otheralice_core(core_config, initialize_local_user_manifest, core_factory, otheralice):
+    await initialize_local_user_manifest(
+        core_config.data_base_dir, otheralice, initial_user_manifest="v1"
+    )
     async with core_factory(otheralice) as core:
         yield core
 
 
 @pytest.fixture
-async def adam_core(core_factory, adam):
+async def adam_core(
+    core_config, fixtures_customization, initialize_local_user_manifest, core_factory, adam
+):
+    initial_user_manifest = fixtures_customization.get("adam_initial_local_user_manifest", "v1")
+    await initialize_local_user_manifest(
+        core_config.data_base_dir, adam, initial_user_manifest=initial_user_manifest
+    )
     async with core_factory(adam) as core:
         yield core
 
 
 @pytest.fixture
-async def bob_core(core_factory, bob):
+async def bob_core(
+    core_config, fixtures_customization, initialize_local_user_manifest, core_factory, bob
+):
+    initial_user_manifest = fixtures_customization.get("bob_initial_local_user_manifest", "v1")
+    await initialize_local_user_manifest(
+        core_config.data_base_dir, bob, initial_user_manifest=initial_user_manifest
+    )
     async with core_factory(bob) as core:
         yield core

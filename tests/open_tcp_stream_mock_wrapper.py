@@ -1,15 +1,14 @@
-# Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
+# Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2016-2021 Scille SAS
 
 from contextlib import contextmanager
 from unittest.mock import patch
 import inspect
 import trio
 
-from parsec.core.types import BackendAddr
-
 
 def addr_to_netloc(addr):
-    assert isinstance(addr, BackendAddr)
+    # Can't do that with Rust, no inheritance
+    # assert isinstance(addr, BackendAddr)
     return f"{addr.hostname}:{addr.port}"
 
 

@@ -1,4 +1,4 @@
-# Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
+# Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2016-2021 Scille SAS
 
 import pytest
 from string import ascii_lowercase
@@ -10,6 +10,8 @@ from hypothesis_trio.stateful import (
     run_state_machine_as_test,
     TrioAsyncioRuleBasedStateMachine,
 )
+
+from parsec.api.data import EntryName
 
 from tests.common import call_with_control, compare_fs_dumps
 
@@ -67,7 +69,7 @@ def test_fs_online_concurrent_tree_and_sync(
             self.user_fs1_controller = await self.start_fs(self.device1)
             self.user_fs2_controller = await self.start_fs(self.device2)
 
-            self.wid = await self.user_fs1.workspace_create("w")
+            self.wid = await self.user_fs1.workspace_create(EntryName("w"))
             workspace = self.user_fs1.get_workspace(self.wid)
             await workspace.sync()
             await self.user_fs1.sync()
@@ -111,7 +113,7 @@ def test_fs_online_concurrent_tree_and_sync(
             except OSError:
                 pass
 
-        @rule(fs=FSs, path=Files)
+        @rule(target=Files, fs=FSs, path=Files)
         async def delete_file(self, fs, path):
             workspace = fs.get_workspace(self.wid)
             try:
@@ -120,7 +122,7 @@ def test_fs_online_concurrent_tree_and_sync(
                 pass
             return path
 
-        @rule(fs=FSs, path=Folders)
+        @rule(target=Folders, fs=FSs, path=Folders)
         async def delete_folder(self, fs, path):
             workspace = fs.get_workspace(self.wid)
             try:

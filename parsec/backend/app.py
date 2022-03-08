@@ -1,10 +1,10 @@
-# Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
+# Parsec Cloud (https://parsec.cloud) Copyright (c) BSLv1.1 (eventually AGPLv3) 2016-2021 Scille SAS
 
-from typing import Dict, Optional
+from typing import Dict, Optional, NoReturn
 import trio
 from trio.abc import Stream
 from structlog import get_logger
-from logging import DEBUG as LOG_LEVEL_DEBUG
+from functools import partial
 from async_generator import asynccontextmanager
 from wsgiref.handlers import format_date_time
 from http import HTTPStatus
@@ -13,7 +13,6 @@ import h11
 from parsec._version import __version__ as parsec_version
 from parsec.backend.backend_events import BackendEvent
 from parsec.event_bus import EventBus
-from parsec.logging import get_log_level
 from parsec.api.transport import TransportError, TransportClosedByPeer, Transport, TRANSPORT_TARGET
 from parsec.api.protocol import (
     packb,
@@ -22,6 +21,9 @@ from parsec.api.protocol import (
     MessageSerializationError,
     InvalidMessageError,
     InvitationStatus,
+    OrganizationID,
+    UserID,
+    InvitationToken,
 )
 from parsec.backend.utils import CancelledByNewRequest, collect_apis
 from parsec.backend.config import BackendConfig
@@ -43,10 +45,8 @@ logger = get_logger()
 # connection (i.e. we ignore keep-alive)
 # The choice of 8Ko is more or less arbitrary but it range with what most web servers do.
 MAX_INITIAL_HTTP_REQUEST_SIZE = 8 * 1024
-
-
-def _filter_binary_fields(data):
-    return {k: v if not isinstance(v, bytes) else b"[...]" for k, v in data.items()}
+# Max size for HTTP body, 1Mo seems plenty given HTTP API never upload big chunk of data
+MAX_HTTP_BODY_SIZE = 1 * 1024 ** 2
 
 
 @asynccontextmanager
@@ -120,7 +120,7 @@ class BackendApp:
         else:
             self.server_header = b"parsec"
 
-    async def handle_client(self, stream):
+    async def handle_client(self, stream: Stream) -> None:
         # Uses max_size - 1 given h11 enforces the check only if it current
         # internal buffer doesn't contain an entire message.
         # Note that given we fetch by batches of MAX_INITIAL_HTTP_REQUEST_SIZE,
@@ -238,16 +238,51 @@ class BackendApp:
             # shutdown anyway, so we can safely ignore the fact peer has left
             pass
 
-    async def _handle_client_http(self, stream, conn, request):
+    async def _handle_client_http(
+        self, stream: Stream, conn: h11.Connection, request: h11.Request
+    ) -> None:
         # TODO: right now we handle a single request then close the connection
         # hence HTTP 1.1 keep-alive is not supported
-        req = HTTPRequest.from_h11_req(request)
+
+        async def _get_body(content_length: int) -> bytes:
+            if content_length <= 0 or content_length >= MAX_HTTP_BODY_SIZE:
+                return b""
+
+            body = b""
+            while True:
+                event = conn.next_event()
+
+                if event is h11.NEED_DATA:
+                    try:
+                        data = await stream.receive_some(MAX_INITIAL_HTTP_REQUEST_SIZE)
+                    except trio.BrokenResourceError:
+                        # The socket got broken in an unexpected way (the peer has most
+                        # likely left without telling us, or has reseted the connection)
+                        return b""
+                    conn.receive_data(data)
+                elif isinstance(event, h11.EndOfMessage):
+                    return body
+                elif isinstance(event, h11.Data):
+                    body += event.data
+                    # TODO: needed ? or h11 takes care of it ?
+                    if len(body) >= content_length:
+                        return body
+                elif isinstance(event, h11.ConnectionClosed):
+                    # Peer has left
+                    return b""
+                else:
+                    logger.error("Unexpected event", client_event=event)
+                    return b""
+
+        req = HTTPRequest.from_h11_req(request, _get_body)
+
         rep = await self.http.handle_request(req)
         await self._send_http_reply(
             stream, conn, status_code=rep.status_code, headers=rep.headers, data=rep.data
         )
+        logger.info("Request", method=req.method, path=req.path, status=rep.status_code)
 
-    async def _handle_client_websocket(self, stream, request):
+    async def _handle_client_websocket(self, stream: Stream, request: h11.Request) -> None:
         selected_logger = logger
 
         try:
@@ -283,20 +318,31 @@ class BackendApp:
                 with trio.CancelScope() as cancel_scope:
                     with self.event_bus.connection_context() as client_ctx.event_bus_ctx:
 
-                        def _on_revoked(event, organization_id, user_id):
+                        def _on_revoked(
+                            client_ctx: AuthenticatedClientContext,
+                            event: BackendEvent,
+                            organization_id: OrganizationID,
+                            user_id: UserID,
+                        ) -> None:
                             if (
                                 organization_id == client_ctx.organization_id
                                 and user_id == client_ctx.user_id
                             ):
                                 cancel_scope.cancel()
 
-                        def _on_expired(event, organization_id):
+                        def _on_expired(
+                            client_ctx: AuthenticatedClientContext,
+                            event: BackendEvent,
+                            organization_id: OrganizationID,
+                        ) -> None:
                             if organization_id == client_ctx.organization_id:
                                 cancel_scope.cancel()
 
-                        client_ctx.event_bus_ctx.connect(BackendEvent.USER_REVOKED, _on_revoked)
                         client_ctx.event_bus_ctx.connect(
-                            BackendEvent.ORGANIZATION_EXPIRED, _on_expired
+                            BackendEvent.USER_REVOKED, partial(_on_revoked, client_ctx)
+                        )
+                        client_ctx.event_bus_ctx.connect(
+                            BackendEvent.ORGANIZATION_EXPIRED, partial(_on_expired, client_ctx)
                         )
                         await self._handle_client_websocket_loop(transport, client_ctx)
 
@@ -311,8 +357,13 @@ class BackendApp:
                         with self.event_bus.connection_context() as event_bus_ctx:
 
                             def _on_invite_status_changed(
-                                event, organization_id, greeter, token, status
-                            ):
+                                client_ctx: InvitedClientContext,
+                                event: BackendEvent,
+                                organization_id: OrganizationID,
+                                greeter: UserID,
+                                token: InvitationToken,
+                                status: InvitationStatus,
+                            ) -> None:
                                 if (
                                     status == InvitationStatus.DELETED
                                     and organization_id == client_ctx.organization_id
@@ -321,17 +372,21 @@ class BackendApp:
                                     cancel_scope.cancel()
 
                             event_bus_ctx.connect(
-                                BackendEvent.INVITE_STATUS_CHANGED, _on_invite_status_changed
+                                BackendEvent.INVITE_STATUS_CHANGED,
+                                partial(_on_invite_status_changed, client_ctx),
                             )
                             await self._handle_client_websocket_loop(transport, client_ctx)
 
                 except CloseInviteConnection:
                     # If the invitation has been deleted after the invited handshake,
-                    # invitation commands can raise an InvitationAlreadyDeletedError.
-                    # This error is converted to a CloseInviteConnection
-                    # The connection shall be closed due to a BackendEvent.INVITE_STATUS_CHANGED
-                    # but nothing garantie that the event will be handled before cmd_func
-                    # errors returns. If this happen, let's also close the connection
+                    # an invitation commands can raise an InvitationAlreadyDeletedError.
+                    # This error is then converted by the api route to a
+                    # CloseInviteConnection and here we are.
+                    # In most cases the connection is closed from handling the
+                    # BackendEvent.INVITE_STATUS_CHANGED event, but nothing guarantee
+                    # that the event will be handled before a command is processed
+                    # and finish with this error.
+                    # So if this happens, let's also close the connection.
                     pass
 
                 finally:
@@ -359,7 +414,7 @@ class BackendApp:
             await transport.aclose()
             selected_logger.info("Connection dropped: invalid data", reason=str(exc))
 
-    async def _handle_client_websocket_loop(self, transport, client_ctx):
+    async def _handle_client_websocket_loop(self, transport: Transport, client_ctx) -> NoReturn:
         # Retrieve the allowed commands according to api version and auth type
         api_cmds = self.apis[client_ctx.handshake_type]
 
@@ -368,9 +423,8 @@ class BackendApp:
             # raw_req can be already defined if we received a new request
             # while processing a command
             raw_req = raw_req or await transport.recv()
+            rep: dict
             req = unpackb(raw_req)
-            if get_log_level() <= LOG_LEVEL_DEBUG:
-                client_ctx.logger.debug("Request", req=_filter_binary_fields(req))
             try:
                 cmd = req.get("cmd", "<missing>")
                 if not isinstance(cmd, str):
@@ -401,10 +455,7 @@ class BackendApp:
                     raw_req = exc.new_raw_req
                     continue
 
-            if get_log_level() <= LOG_LEVEL_DEBUG:
-                client_ctx.logger.debug("Response", rep=_filter_binary_fields(rep))
-            else:
-                client_ctx.logger.info("Request", cmd=cmd, status=rep["status"])
+            client_ctx.logger.info("Request", cmd=cmd, status=rep["status"])
             raw_rep = packb(rep)
             await transport.send(raw_rep)
             raw_req = None

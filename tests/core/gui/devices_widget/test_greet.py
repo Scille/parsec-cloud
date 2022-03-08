@@ -1,4 +1,4 @@
-# Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
+# Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2016-2021 Scille SAS
 
 import pytest
 import trio
@@ -8,8 +8,8 @@ from async_generator import asynccontextmanager
 from pendulum import now as pendulum_now
 
 from parsec.utils import start_task
+from parsec.api.protocol import InvitationType, HumanHandle, InvitationDeletedReason, DeviceLabel
 from parsec.core.gui.lang import translate
-from parsec.api.protocol import InvitationType, HumanHandle, InvitationDeletedReason
 from parsec.core.types import BackendInvitationAddr
 from parsec.core.backend_connection import backend_invited_cmds_factory
 from parsec.core.invite import claimer_retrieve_info
@@ -41,7 +41,7 @@ def GreetDeviceTestBed(
             self.requested_human_handle = HumanHandle(
                 email="brod@pe.com", label="Bender B. Rodriguez"
             )
-            self.requested_device_label = "PC1"
+            self.requested_device_label = DeviceLabel("PC1")
             self.steps_done = []
 
             # Set during bootstrap
@@ -80,7 +80,7 @@ def GreetDeviceTestBed(
                 organization_id=author.organization_id, greeter_user_id=author.user_id
             )
             invitation_addr = BackendInvitationAddr.build(
-                backend_addr=author.organization_addr,
+                backend_addr=author.organization_addr.get_backend_addr(),
                 organization_id=author.organization_id,
                 invitation_type=InvitationType.DEVICE,
                 token=invitation.token,
@@ -91,7 +91,7 @@ def GreetDeviceTestBed(
             assert devices_widget.layout_devices.count() == 2
 
             # Click on the invitation button
-            await aqtbot.mouse_click(devices_widget.button_add_device, QtCore.Qt.LeftButton)
+            aqtbot.mouse_click(devices_widget.button_add_device, QtCore.Qt.LeftButton)
             greet_device_widget = await catch_greet_device_widget()
             assert isinstance(greet_device_widget, GreetDeviceWidget)
 
@@ -145,7 +145,7 @@ def GreetDeviceTestBed(
         async def step_1_start_greet(self):
             gdi_w = self.greet_device_information_widget
 
-            await aqtbot.mouse_click(gdi_w.button_start, QtCore.Qt.LeftButton)
+            aqtbot.mouse_click(gdi_w.button_start, QtCore.Qt.LeftButton)
 
             def _greet_started():
                 assert not gdi_w.button_start.isEnabled()
@@ -199,7 +199,7 @@ def GreetDeviceTestBed(
             gdce_w = self.greet_device_code_exchange_widget
 
             # Pretent we have clicked on the right choice
-            await aqtbot.run(gdce_w.code_input_widget.good_code_clicked.emit)
+            gdce_w.code_input_widget.good_code_clicked.emit()
 
             self.claimer_in_progress_ctx = await self.claimer_in_progress_ctx.do_wait_peer_trust()
 
@@ -232,7 +232,7 @@ def GreetDeviceTestBed(
                 assert self.devices_widget.layout_devices.count() == 3
                 device_button = self.devices_widget.layout_devices.itemAt(2).widget()
                 assert isinstance(device_button, DeviceButton)
-                assert device_button.device_info.device_label == "PC1"
+                assert device_button.device_info.device_label == self.requested_device_label
                 assert device_button.label_device_name.text() == "PC1"
 
             await aqtbot.wait_until(_greet_done)
@@ -276,7 +276,7 @@ async def test_greet_device_offline(
             gui_w = self.greet_device_information_widget
 
             with running_backend.offline():
-                await aqtbot.mouse_click(gui_w.button_start, QtCore.Qt.LeftButton)
+                aqtbot.mouse_click(gui_w.button_start, QtCore.Qt.LeftButton)
                 await aqtbot.wait_until(partial(self._greet_aborted, expected_message))
 
             return None
@@ -300,7 +300,7 @@ async def test_greet_device_offline(
             guce_w = self.greet_device_code_exchange_widget
 
             with running_backend.offline():
-                await aqtbot.run(guce_w.code_input_widget.good_code_clicked.emit)
+                guce_w.code_input_widget.good_code_clicked.emit()
                 await aqtbot.wait_until(partial(self._greet_aborted, expected_message))
 
             return None
@@ -354,7 +354,7 @@ async def test_greet_device_reset_by_peer(aqtbot, GreetDeviceTestBed, autoclose_
             guce_w = self.greet_device_code_exchange_widget
 
             # Pretent we have click on the right choice
-            await aqtbot.run(guce_w.code_input_widget.good_code_clicked.emit)
+            guce_w.code_input_widget.good_code_clicked.emit()
 
             async with self._reset_claimer():
                 await aqtbot.wait_until(partial(self._greet_restart, expected_message))
@@ -380,10 +380,10 @@ async def test_greet_device_reset_by_peer(aqtbot, GreetDeviceTestBed, autoclose_
     "cancelled_step",
     [
         "step_1_start_greet",
-        pytest.param("step_2_start_claimer", marks=pytest.mark.xfail),
-        pytest.param("step_3_exchange_greeter_sas", marks=pytest.mark.xfail),
+        "step_2_start_claimer",
+        # step 3 displays the SAS code, so it won't detect the cancellation
         "step_4_exchange_claimer_sas",
-        pytest.param("step_5_provide_claim_info", marks=pytest.mark.xfail),
+        "step_5_provide_claim_info",
     ],
 )
 @customize_fixtures(logged_gui_as_admin=True)
@@ -407,18 +407,18 @@ async def test_greet_device_invitation_cancelled(
             assert not self.greet_device_information_widget.isVisible()
 
         async def cancelled_step_1_start_greet(self):
-            expected_message = translate("TEXT_GREET_DEVICE_WAIT_PEER_ERROR")
+            expected_message = translate("TEXT_INVITATION_ALREADY_USED")
             gui_w = self.greet_device_information_widget
 
             await self._cancel_invitation()
 
-            await aqtbot.mouse_click(gui_w.button_start, QtCore.Qt.LeftButton)
+            aqtbot.mouse_click(gui_w.button_start, QtCore.Qt.LeftButton)
             await aqtbot.wait_until(partial(self._greet_restart, expected_message))
 
             return None
 
         async def cancelled_step_2_start_claimer(self):
-            expected_message = translate("TEXT_GREET_DEVICE_WAIT_PEER_ERROR")
+            expected_message = translate("TEXT_INVITATION_ALREADY_USED")
             await self._cancel_invitation()
 
             await aqtbot.wait_until(partial(self._greet_restart, expected_message))
@@ -426,7 +426,7 @@ async def test_greet_device_invitation_cancelled(
             return None
 
         async def cancelled_step_3_exchange_greeter_sas(self):
-            expected_message = translate("TEXT_GREET_DEVICE_WAIT_PEER_TRUST_ERROR")
+            expected_message = translate("TEXT_INVITATION_ALREADY_USED")
             await self._cancel_invitation()
 
             await aqtbot.wait_until(partial(self._greet_restart, expected_message))
@@ -434,18 +434,18 @@ async def test_greet_device_invitation_cancelled(
             return None
 
         async def cancelled_step_4_exchange_claimer_sas(self):
-            expected_message = translate("TEXT_GREET_DEVICE_SIGNIFY_TRUST_ERROR")
+            expected_message = translate("TEXT_INVITATION_ALREADY_USED")
             guce_w = self.greet_device_code_exchange_widget
 
             await self._cancel_invitation()
 
-            await aqtbot.run(guce_w.code_input_widget.good_code_clicked.emit)
+            guce_w.code_input_widget.good_code_clicked.emit()
             await aqtbot.wait_until(partial(self._greet_restart, expected_message))
 
             return None
 
         async def cancelled_step_5_provide_claim_info(self):
-            expected_message = translate("TEXT_GREET_DEVICE_WAIT_PEER_TRUST_ERROR")
+            expected_message = translate("TEXT_INVITATION_ALREADY_USED")
 
             await self._cancel_invitation()
             await aqtbot.wait_until(partial(self._greet_restart, expected_message))

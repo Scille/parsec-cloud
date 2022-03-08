@@ -1,10 +1,12 @@
-# Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
+# Parsec Cloud (https://parsec.cloud) Copyright (c) BSLv1.1 (eventually AGPLv3) 2016-2021 Scille SAS
 
-from typing import Tuple, Dict, Optional
 from pendulum import now as pendulum_now
+from typing import Tuple, Dict, Optional, cast, Type
 
 from parsec.api.transport import Transport
 from parsec.api.protocol import (
+    DeviceID,
+    OrganizationID,
     ProtocolError,
     InvitationType,
     HandshakeType,
@@ -16,7 +18,6 @@ from parsec.backend.client_context import (
     AuthenticatedClientContext,
     InvitedClientContext,
     APIV1_AnonymousClientContext,
-    APIV1_AdministrationClientContext,
 )
 from parsec.backend.user import UserNotFoundError
 from parsec.backend.organization import OrganizationNotFoundError, OrganizationAlreadyExistsError
@@ -49,19 +50,9 @@ async def do_handshake(
                 backend, transport, handshake
             )
 
-        elif handshake.answer_type == APIV1_HandshakeType.AUTHENTICATED:
-            context, result_req, error_infos = await _apiv1_process_authenticated_answer(
-                backend, transport, handshake
-            )
-
-        elif handshake.answer_type == APIV1_HandshakeType.ANONYMOUS:
-            context, result_req, error_infos = await _apiv1_process_anonymous_answer(
-                backend, transport, handshake
-            )
-
         else:
-            assert handshake.answer_type == APIV1_HandshakeType.ADMINISTRATION
-            context, result_req, error_infos = await _apiv1_process_administration_answer(
+            assert handshake.answer_type == APIV1_HandshakeType.ANONYMOUS
+            context, result_req, error_infos = await _apiv1_process_anonymous_answer(
                 backend, transport, handshake
             )
 
@@ -87,8 +78,8 @@ async def _do_process_authenticated_answer(
     backend, transport: Transport, handshake: ServerHandshake, handshake_type
 ) -> Tuple[Optional[BaseClientContext], bytes, Optional[Dict]]:
 
-    organization_id = handshake.answer_data["organization_id"]
-    device_id = handshake.answer_data["device_id"]
+    organization_id = cast(OrganizationID, handshake.answer_data["organization_id"])
+    device_id = cast(DeviceID, handshake.answer_data["device_id"])
     expected_rvk = handshake.answer_data["rvk"]
 
     def _make_error_infos(reason):
@@ -125,6 +116,7 @@ async def _do_process_authenticated_answer(
         organization_id=organization_id,
         device_id=device_id,
         human_handle=user.human_handle,
+        device_label=device.device_label,
         profile=user.profile,
         public_key=user.public_key,
         verify_key=device.verify_key,
@@ -136,8 +128,8 @@ async def _do_process_authenticated_answer(
 async def _process_invited_answer(
     backend, transport: Transport, handshake: ServerHandshake
 ) -> Tuple[Optional[BaseClientContext], bytes, Optional[Dict]]:
-    organization_id = handshake.answer_data["organization_id"]
-    invitation_type = handshake.answer_data["invitation_type"]
+    organization_id = cast(OrganizationID, handshake.answer_data["organization_id"])
+    invitation_type = cast(InvitationType, handshake.answer_data["invitation_type"])
     token = handshake.answer_data["token"]
 
     def _make_error_infos(reason):
@@ -180,10 +172,11 @@ async def _process_invited_answer(
         result_req = handshake.build_bad_identity_result_req()
         return None, result_req, _make_error_infos("Bad invitation")
 
-    if handshake.answer_data["invitation_type"] == InvitationType.USER:
-        expected_invitation_type = UserInvitation
-    else:  # Device
-        expected_invitation_type = DeviceInvitation
+    expected_invitation_type: Type = (
+        UserInvitation
+        if handshake.answer_data["invitation_type"] == InvitationType.USER
+        else DeviceInvitation
+    )
     if not isinstance(invitation, expected_invitation_type):
         result_req = handshake.build_bad_identity_result_req()
         return None, result_req, _make_error_infos("Bad invitation")
@@ -195,18 +188,10 @@ async def _process_invited_answer(
     return context, result_req, None
 
 
-async def _apiv1_process_authenticated_answer(
-    backend, transport: Transport, handshake: ServerHandshake
-) -> Tuple[Optional[BaseClientContext], bytes, Optional[Dict]]:
-    return await _do_process_authenticated_answer(
-        backend, transport, handshake, APIV1_HandshakeType.AUTHENTICATED
-    )
-
-
 async def _apiv1_process_anonymous_answer(
     backend, transport: Transport, handshake: ServerHandshake
 ) -> Tuple[Optional[BaseClientContext], bytes, Optional[Dict]]:
-    organization_id = handshake.answer_data["organization_id"]
+    organization_id = cast(OrganizationID, handshake.answer_data["organization_id"])
     expected_rvk = handshake.answer_data["rvk"]
 
     def _make_error_infos(reason):
@@ -220,12 +205,10 @@ async def _apiv1_process_anonymous_answer(
         organization = await backend.organization.get(organization_id)
 
     except OrganizationNotFoundError:
-        if backend.config.spontaneous_organization_bootstrap:
+        if backend.config.organization_spontaneous_bootstrap:
             # Lazy creation of the organization with always the same empty token
             try:
-                await backend.organization.create(
-                    id=organization_id, bootstrap_token="", expiration_date=None
-                )
+                await backend.organization.create(id=organization_id, bootstrap_token="")
             except OrganizationAlreadyExistsError:
                 pass
             organization = await backend.organization.get(organization_id)
@@ -243,18 +226,5 @@ async def _apiv1_process_anonymous_answer(
         return None, result_req, _make_error_infos("Bad root verify key")
 
     context = APIV1_AnonymousClientContext(transport, handshake, organization_id=organization_id)
-    result_req = handshake.build_result_req()
-    return context, result_req, None
-
-
-async def _apiv1_process_administration_answer(
-    backend, transport: Transport, handshake: ServerHandshake
-) -> Tuple[Optional[BaseClientContext], bytes, Optional[Dict]]:
-    if handshake.answer_data["token"] != backend.config.administration_token:
-        result_req = handshake.build_bad_administration_token_result_req()
-        error_infos = {"reason": "Bad token", "handshake_type": APIV1_HandshakeType.ADMINISTRATION}
-        return None, result_req, error_infos
-
-    context = APIV1_AdministrationClientContext(transport, handshake)
     result_req = handshake.build_result_req()
     return context, result_req, None

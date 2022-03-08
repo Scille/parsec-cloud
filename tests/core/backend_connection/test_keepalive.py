@@ -1,4 +1,4 @@
-# Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
+# Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2016-2021 Scille SAS
 
 import pytest
 import trio
@@ -10,7 +10,6 @@ from parsec.core.backend_connection import (
     backend_authenticated_cmds_factory,
     backend_invited_cmds_factory,
     apiv1_backend_anonymous_cmds_factory,
-    apiv1_backend_administration_cmds_factory,
 )
 
 
@@ -83,7 +82,7 @@ async def test_invited_cmd_keepalive(
         organization_id=alice.organization_id, greeter_user_id=alice.user_id
     )
     invitation_addr = BackendInvitationAddr.build(
-        backend_addr=alice.organization_addr,
+        backend_addr=alice.organization_addr.get_backend_addr(),
         organization_id=alice.organization_id,
         invitation_type=InvitationType.DEVICE,
         token=invitation.token,
@@ -99,17 +98,5 @@ async def test_invited_cmd_keepalive(
 async def test_apiv1_anonymous_cmd_keepalive(mock_clock, monkeypatch, running_backend, coolorg):
     def _cmds_factory(keepalive):
         return apiv1_backend_anonymous_cmds_factory(coolorg.addr, keepalive=keepalive)
-
-    await _test_keepalive(mock_clock, monkeypatch, _cmds_factory)
-
-
-@pytest.mark.trio
-async def test_apiv1_administration_cmd_keepalive(
-    mock_clock, monkeypatch, running_backend, backend_addr, backend
-):
-    def _cmds_factory(keepalive):
-        return apiv1_backend_administration_cmds_factory(
-            backend_addr, backend.config.administration_token, keepalive=keepalive
-        )
 
     await _test_keepalive(mock_clock, monkeypatch, _cmds_factory)

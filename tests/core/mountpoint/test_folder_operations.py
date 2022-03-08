@@ -1,6 +1,7 @@
-# Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
+# Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2016-2021 Scille SAS
 
 import os
+import sys
 import errno
 from pathlib import Path
 from string import ascii_lowercase
@@ -15,6 +16,7 @@ from hypothesis.stateful import (
     run_state_machine_as_test,
 )
 from hypothesis import strategies as st
+from parsec.api.data import EntryName
 
 
 # The point is not to find breaking filenames here, so keep it simple
@@ -41,7 +43,7 @@ class expect_raises:
         # WinFSP error handling is not stricly similar to the real
         # Windows file system; so we often endup with the wrong exception
         # (e.g. `NotADirectoryError` when we expect `FileNotFoundError`)
-        if os.name == "nt":
+        if sys.platform == "win32":
             allowed = OSError
         else:
             allowed = type(self.expected_exc)
@@ -104,8 +106,8 @@ def test_folder_operations(tmpdir, caplog, hypothesis_settings, mountpoint_servi
             caplog.clear()
 
             async def _bootstrap(user_fs, mountpoint_manager):
-                wid = await user_fs.workspace_create("w")
-                self.parsec_root = await mountpoint_manager.mount_workspace(wid)
+                wid = await user_fs.workspace_create(EntryName("w"))
+                self.parsec_root = Path(await mountpoint_manager.mount_workspace(wid))
 
             self.mountpoint_service = mountpoint_service_factory(_bootstrap)
 

@@ -1,4 +1,4 @@
-# Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
+# Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2016-2021 Scille SAS
 
 import pytest
 import trio
@@ -7,7 +7,7 @@ from typing import Union
 import io
 from parsec.core.fs.exceptions import FSUnsupportedOperation, FSOffsetError, FSInvalidFileDescriptor
 from parsec.core.fs.workspacefs.workspacefile import WorkspaceFile
-from parsec.core.types import FsPath
+from parsec.core.fs import FsPath
 
 AnyPath = Union[FsPath, str]
 

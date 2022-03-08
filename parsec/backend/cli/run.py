@@ -1,20 +1,27 @@
-# Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
+# Parsec Cloud (https://parsec.cloud) Copyright (c) BSLv1.1 (eventually AGPLv3) 2016-2021 Scille SAS
 
 import ssl
 import trio
 import click
 from structlog import get_logger
-from typing import Tuple, Optional
+from typing import Optional, Tuple, List
 from itertools import count
 from collections import defaultdict
 import tempfile
+from pathlib import Path
 
 from parsec.utils import trio_run
-from parsec.cli_utils import cli_exception_handler
-from parsec.logging import configure_logging, configure_sentry_logging
-from parsec.backend import backend_app_factory
+from parsec.cli_utils import (
+    cli_exception_handler,
+    logging_config_options,
+    sentry_config_options,
+    debug_config_options,
+)
+from parsec.backend import backend_app_factory, BackendApp
 from parsec.backend.config import (
     BackendConfig,
+    EmailConfig,
+    BaseBlockStoreConfig,
     SmtpEmailConfig,
     MockedEmailConfig,
     MockedBlockStoreConfig,
@@ -34,7 +41,7 @@ DEFAULT_BACKEND_PORT = 6777
 DEFAULT_EMAIL_SENDER = "no-reply@parsec.com"
 
 
-def _split_with_escaping(txt):
+def _split_with_escaping(txt: str) -> List[str]:
     """
     Simple colon (i.e. `:`) escaping with backslash
     Rules (using slash instead of backslash to avoid weird encoding error):
@@ -65,7 +72,7 @@ def _split_with_escaping(txt):
     return parts
 
 
-def _parse_blockstore_param(value):
+def _parse_blockstore_param(value: str) -> BaseBlockStoreConfig:
     if value.upper() == "MOCKED":
         return MockedBlockStoreConfig()
     elif value.upper() == "POSTGRESQL":
@@ -119,14 +126,16 @@ def _parse_blockstore_param(value):
             raise click.BadParameter(f"Invalid blockstore type `{parts[0]}`")
 
 
-def _parse_blockstore_params(raw_params):
+def _parse_blockstore_params(raw_params: str) -> BaseBlockStoreConfig:
     raid_configs = defaultdict(list)
     for raw_param in raw_params:
+        raid_mode: Optional[str]
+        raid_node: Optional[int]
         raw_param_parts = raw_param.split(":", 2)
         if raw_param_parts[0].upper() in ("RAID0", "RAID1", "RAID5") and len(raw_param_parts) == 3:
-            raid_mode, raid_node, node_param = raw_param_parts
+            raid_mode, raw_raid_node, node_param = raw_param_parts
             try:
-                raid_node = int(raid_node)
+                raid_node = int(raw_raid_node)
             except ValueError:
                 raise click.BadParameter(f"Invalid node index `{raid_node}` (must be integer)")
         else:
@@ -170,8 +179,8 @@ def _parse_blockstore_params(raw_params):
 
 
 def _parse_forward_proto_enforce_https_check_param(
-    raw_param: Optional[str]
-) -> Optional[Tuple[str, str]]:
+    raw_param: Optional[str],
+) -> Optional[Tuple[bytes, bytes]]:
     if raw_param is None:
         return None
     try:
@@ -179,7 +188,7 @@ def _parse_forward_proto_enforce_https_check_param(
     except ValueError:
         raise click.BadParameter(f"Invalid format, should be `<header-name>:<header-value>`")
     # HTTP header key is case-insensitive unlike the header value
-    return (key.lower(), value)
+    return (key.lower().encode("utf8"), value.encode("utf8"))
 
 
 class DevOption(click.Option):
@@ -206,7 +215,20 @@ class DevOption(click.Option):
         return value, args
 
 
-@click.command(short_help="run the server", context_settings={"max_content_width": 400})
+@click.command(
+    context_settings={"max_content_width": 400},
+    short_help="run the server",
+    epilog="""Note each parameter has a corresponding environ variable with the `PARSEC_` prefix
+(e.g. `--email-port=42` parameter is equivalent to environ variable `PARSEC_EMAIL_PORT=42`).
+
+\b
+Parameters can also be specified by using the special environment variable `PARSEC_CMD_ARGS`.
+All available command line arguments can be used and environ variables within it will be expanded.
+For instance:
+
+    $ DB_URL=postgres:///parsec PARSEC_CMD_ARGS='--db=$DB_URL --host=0.0.0.0' parsec backend run
+""",
+)
 @click.option(
     "--host",
     "-H",
@@ -228,10 +250,15 @@ class DevOption(click.Option):
     "--db",
     required=True,
     envvar="PARSEC_DB",
+    metavar="URL",
     help="""Database configuration.
 Allowed values:
+
+\b
 -`MOCKED`: Mocked in memory
 -`postgresql://<...>`: Use PostgreSQL database
+
+\b
 """,
 )
 @click.option(
@@ -249,18 +276,19 @@ Allowed values:
     help="Maximum number of connections to the database if using PostgreSQL",
 )
 @click.option(
-    "--db-first-tries-number",
-    default=1,
+    "--maximum-database-connection-attempts",
+    default=10,
     show_default=True,
-    envvar="PARSEC_DB_FIRST_TRIES_NUMBER",
-    help="Number of tries allowed during initial database connection (0 is unlimited)",
+    envvar="PARSEC_MAXIMUM_DATABASE_CONNECTION_ATTEMPTS",
+    help="Maximum number of attempts at connecting to the database (0 means never retry)",
 )
 @click.option(
-    "--db-first-tries-sleep",
-    default=1,
+    "--pause-before-retry-database-connection",
+    type=float,
+    default=1.0,
     show_default=True,
-    envvar="PARSEC_DB_FIRST_TRIES_SLEEP",
-    help="Number of second waited between tries during initial database connection",
+    envvar="PARSEC_PAUSE_BEFORE_RETRY_DATABASE_CONNECTION",
+    help="Number of seconds before a new attempt at connecting to the database",
 )
 @click.option(
     "--blockstore",
@@ -269,8 +297,11 @@ Allowed values:
     multiple=True,
     callback=lambda ctx, param, value: _parse_blockstore_params(value),
     envvar="PARSEC_BLOCKSTORE",
+    metavar="CONFIG",
     help="""Blockstore configuration.
 Allowed values:
+
+\b
 -`MOCKED`: Mocked in memory
 -`POSTGRESQL`: Use the database specified in the `--db` param
 -`s3:[<endpoint_url>]:<region>:<bucket>:<key>:<secret>`: Use S3 storage
@@ -286,12 +317,15 @@ RAID0/1/5 cluster.
 Each configuration must be provided with the form
 `<raid_type>:<node>:<config>` with `<raid_type>` RAID0/RAID1/RAID5, `<node>` a
 integer and `<config>` the MOCKED/POSTGRESQL/S3/SWIFT config.
+
+\b
 """,
 )
 @click.option(
     "--administration-token",
     required=True,
     envvar="PARSEC_ADMINISTRATION_TOKEN",
+    metavar="TOKEN",
     help="Secret token to access the administration api",
 )
 @click.option(
@@ -312,6 +346,7 @@ reservation and change the bootstrap token)
 @click.option(
     "--organization-bootstrap-webhook",
     envvar="PARSEC_ORGANIZATION_BOOTSTRAP_WEBHOOK",
+    metavar="URL",
     help="""URL to notify 3rd party service that a new organization has been bootstrapped.
 
 Each time an organization is bootstrapped, an HTTP POST will be send to the URL
@@ -320,9 +355,23 @@ organization_id, device_id, device_label (can be null), human_email (can be null
 """,
 )
 @click.option(
+    "--organization-initial-active-users-limit",
+    envvar="PARSEC_ORGANIZATION_INITIAL_ACTIVE_USERS_LIMIT",
+    help="Non-revoked users limit used to configure newly created organizations (default: no limit)",
+    type=int,
+)
+@click.option(
+    "--organization-initial-user-profile-outsider-allowed",
+    envvar="PARSEC_ORGANIZATION_INITIAL_USER_PROFILE_OUTSIDER_ALLOWED",
+    help="Allow the outsider profiles for the newly created organizations (default: True)",
+    default=True,
+    type=bool,
+)
+@click.option(
     "--backend-addr",
     envvar="PARSEC_BACKEND_ADDR",
     required=True,
+    metavar="URL",
     type=BackendAddr.from_url,
     help="URL to reach this server (typically used in invitation emails)",
 )
@@ -375,7 +424,10 @@ organization_id, device_id, device_label (can be null), human_email (can be null
     ),
 )
 @click.option(
-    "--email-sender", envvar="PARSEC_EMAIL_SENDER", help="Sender address used in sent emails"
+    "--email-sender",
+    envvar="PARSEC_EMAIL_SENDER",
+    metavar="EMAIL",
+    help="Sender address used in sent emails",
 )
 @click.option(
     "--forward-proto-enforce-https",
@@ -404,67 +456,60 @@ organization_id, device_id, device_label (can be null), human_email (can be null
     envvar="PARSEC_SSL_CERTFILE",
     help="SSL certificate file. This setting enables serving Parsec over SSL.",
 )
-@click.option(
-    "--log-level",
-    "-l",
-    default="WARNING",
-    show_default=True,
-    type=click.Choice(("DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL")),
-    envvar="PARSEC_LOG_LEVEL",
-)
-@click.option(
-    "--log-format", "-f", type=click.Choice(("CONSOLE", "JSON")), envvar="PARSEC_LOG_FORMAT"
-)
-@click.option("--log-file", "-o", envvar="PARSEC_LOG_FILE")
-@click.option("--log-filter", envvar="PARSEC_LOG_FILTER")
-@click.option("--sentry-url", envvar="PARSEC_SENTRY_URL", help="Sentry URL for telemetry report")
-@click.option("--debug", is_flag=True, envvar="PARSEC_DEBUG")
+# Add --log-level/--log-format/--log-file
+@logging_config_options(default_log_level="INFO")
+# Add --sentry-url
+@sentry_config_options(configure_sentry=True)
 @click.option(
     "--dev",
     cls=DevOption,
     is_flag=True,
     is_eager=True,
-    help="Equivalent to `--debug --db=MOCKED --backend-addr=parsec://localhost:<port>(?no_ssl=False if ssl_context is defined) --email-sender=no-reply@parsec.com --email-host=MOCKED --blockstore=MOCKED --administration-token=s3cr3t`",
+    help=(
+        "Equivalent to `--debug --db=MOCKED"
+        " --blockstore=MOCKED --administration-token=s3cr3t"
+        " --email-sender=no-reply@parsec.com --email-host=MOCKED"
+        " --backend-addr=parsec://localhost:<port>(?no_ssl=False if ssl is not set)`"
+    ),
 )
+# Add --debug
+@debug_config_options
 def run_cmd(
-    host,
-    port,
-    db,
-    db_min_connections,
-    db_max_connections,
-    db_first_tries_number,
-    db_first_tries_sleep,
-    blockstore,
-    administration_token,
-    spontaneous_organization_bootstrap,
-    organization_bootstrap_webhook,
-    backend_addr,
-    email_host,
-    email_port,
-    email_host_user,
-    email_host_password,
-    email_use_ssl,
-    email_use_tls,
-    email_sender,
-    forward_proto_enforce_https,
-    ssl_keyfile,
-    ssl_certfile,
-    log_level,
-    log_format,
-    log_file,
-    log_filter,
-    sentry_url,
-    debug,
-    dev,
-):
-
+    host: str,
+    port: int,
+    db: str,
+    db_min_connections: int,
+    db_max_connections: int,
+    maximum_database_connection_attempts: int,
+    pause_before_retry_database_connection: float,
+    blockstore: BaseBlockStoreConfig,
+    administration_token: str,
+    spontaneous_organization_bootstrap: bool,
+    organization_bootstrap_webhook: str,
+    organization_initial_active_users_limit: int,
+    organization_initial_user_profile_outsider_allowed: bool,
+    backend_addr: BackendAddr,
+    email_host: str,
+    email_port: int,
+    email_host_user: Optional[str],
+    email_host_password: Optional[str],
+    email_use_ssl: bool,
+    email_use_tls: bool,
+    email_sender: str,
+    forward_proto_enforce_https: Optional[Tuple[bytes, bytes]],
+    ssl_keyfile: Optional[Path],
+    ssl_certfile: Optional[Path],
+    log_level: str,
+    log_format: str,
+    log_file: Optional[str],
+    sentry_url: Optional[str],
+    debug: bool,
+    dev: bool,
+) -> None:
     # Start a local backend
-    configure_logging(log_level, log_format, log_file, log_filter)
-    if sentry_url:
-        configure_sentry_logging(sentry_url)
 
     with cli_exception_handler(debug):
-
+        ssl_context: Optional[ssl.SSLContext]
         if ssl_certfile or ssl_keyfile:
             ssl_context = ssl.create_default_context(ssl.Purpose.CLIENT_AUTH)
             if ssl_certfile:
@@ -474,6 +519,7 @@ def run_cmd(
         else:
             ssl_context = None
 
+        email_config: EmailConfig
         if email_host == "MOCKED":
             tmpdir = tempfile.mkdtemp(prefix="tmp-email-folder-")
             if email_sender:
@@ -493,48 +539,115 @@ def run_cmd(
                 sender=email_sender,
             )
 
-        config = BackendConfig(
+        app_config = BackendConfig(
             administration_token=administration_token,
             db_url=db,
             db_min_connections=db_min_connections,
             db_max_connections=db_max_connections,
-            db_first_tries_number=db_first_tries_number,
-            db_first_tries_sleep=db_first_tries_sleep,
-            spontaneous_organization_bootstrap=spontaneous_organization_bootstrap,
-            organization_bootstrap_webhook_url=organization_bootstrap_webhook,
             blockstore_config=blockstore,
             email_config=email_config,
             ssl_context=True if ssl_context else False,
             forward_proto_enforce_https=forward_proto_enforce_https,
             backend_addr=backend_addr,
             debug=debug,
+            organization_bootstrap_webhook_url=organization_bootstrap_webhook,
+            organization_spontaneous_bootstrap=spontaneous_organization_bootstrap,
+            organization_initial_active_users_limit=organization_initial_active_users_limit,
+            organization_initial_user_profile_outsider_allowed=organization_initial_user_profile_outsider_allowed,
         )
-
-        async def _run_backend():
-            async with backend_app_factory(config=config) as backend:
-
-                async def _serve_client(stream):
-                    if ssl_context:
-                        stream = trio.SSLStream(stream, ssl_context, server_side=True)
-
-                    try:
-                        await backend.handle_client(stream)
-
-                    except Exception:
-                        # If we are here, something unexpected happened...
-                        logger.exception("Unexpected crash")
-                        await stream.aclose()
-
-                await trio.serve_tcp(_serve_client, port, host=host)
 
         click.echo(
             f"Starting Parsec Backend on {host}:{port}"
-            f" (db={config.db_type}"
-            f" blockstore={config.blockstore_config.type}"
-            f" backend_addr={config.backend_addr}"
+            f" (db={app_config.db_type}"
+            f" blockstore={app_config.blockstore_config.type}"
+            f" backend_addr={app_config.backend_addr}"
             f" email_config={str(email_config)})"
         )
         try:
-            trio_run(_run_backend, use_asyncio=True)
+            retry_policy = RetryPolicy(
+                maximum_database_connection_attempts, pause_before_retry_database_connection
+            )
+            trio_run(
+                _run_backend, host, port, ssl_context, retry_policy, app_config, use_asyncio=True
+            )
         except KeyboardInterrupt:
             click.echo("bye ;-)")
+
+
+class RetryPolicy:
+    def __init__(self, maximum_attempts: int = 10, pause_before_retry: float = 1.0):
+        self.maximum_attempts = maximum_attempts
+        self.pause_before_retry = pause_before_retry
+        self.current_attempt = 0  # No attempt at the moment
+
+    def new_attempt(self) -> None:
+        self.current_attempt += 1
+
+    def success(self) -> None:
+        self.current_attempt = 0
+
+    def is_expired(self) -> bool:
+        return self.current_attempt >= self.maximum_attempts
+
+    async def pause(self) -> None:
+        await trio.sleep(self.pause_before_retry)
+
+
+async def _run_backend(
+    host: str,
+    port: int,
+    ssl_context: Optional[ssl.SSLContext],
+    retry_policy: RetryPolicy,
+    app_config: BackendConfig,
+) -> None:
+    # Loop over connection attempts
+    while True:
+        try:
+            # New connection attempt
+            retry_policy.new_attempt()
+
+            # Run the backend app (and connect to the database)
+            async with backend_app_factory(config=app_config) as backend:
+
+                # Connection is successful, reset the retry policy
+                retry_policy.success()
+
+                # Serve backend through TCP
+                await _serve_backend(backend, host, port, ssl_context)
+
+        except ConnectionError as exc:
+            # The maximum number of attempt is reached
+            if retry_policy.is_expired():
+                raise
+            # Connection with the DB is dead, restart everything
+            logger.warning(
+                f"Database connection lost ({exc}), retrying in {retry_policy.pause_before_retry} seconds"
+            )
+            await retry_policy.pause()
+
+
+async def _serve_backend(
+    backend: BackendApp, host: str, port: int, ssl_context: Optional[ssl.SSLContext]
+) -> None:
+    # Client handler
+    async def _serve_client(stream: trio.abc.Stream) -> None:
+        if ssl_context:
+            stream = trio.SSLStream(stream, ssl_context, server_side=True)
+
+        try:
+            await backend.handle_client(stream)
+
+        except ConnectionError:
+            # Should be handled by the reconnection logic (see `_run_and_retry_back`)
+            raise
+
+        except Exception:
+            # If we are here, something unexpected happened...
+            logger.exception("Unexpected crash")
+            await stream.aclose()
+
+    # Provide a service nursery so multi-errors errors are handled
+    async with trio.open_service_nursery() as nursery:  # type: ignore[attr-defined]
+        await trio.serve_tcp(  # type: ignore[call-arg]
+            _serve_client, port, handler_nursery=nursery, host=host
+        )

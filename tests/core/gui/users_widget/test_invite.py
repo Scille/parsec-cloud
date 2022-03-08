@@ -1,4 +1,4 @@
-# Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
+# Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2016-2021 Scille SAS
 
 import pytest
 from unittest.mock import ANY
@@ -27,7 +27,7 @@ async def test_invite_user(
     )
 
     if online:
-        await aqtbot.mouse_click(u_w.button_add_user, QtCore.Qt.LeftButton)
+        aqtbot.mouse_click(u_w.button_add_user, QtCore.Qt.LeftButton)
 
         def _new_invitation_displayed():
             assert u_w.layout_users.count() == 4
@@ -38,7 +38,7 @@ async def test_invite_user(
             assert autoclose_dialog.dialogs == [
                 (
                     "",
-                    "The invitation to join your organization was successfuly sent at : <b>hubert.farnsworth@pe.com</b>",
+                    "The invitation to join your organization was successfully sent to : <b>hubert.farnsworth@pe.com</b>",
                 )
             ]
 
@@ -52,7 +52,7 @@ async def test_invite_user(
             "parsec.core.gui.users_widget.get_text_input",
             lambda *args, **kwargs: bob.human_handle.email,
         )
-        await aqtbot.mouse_click(u_w.button_add_user, QtCore.Qt.LeftButton)
+        aqtbot.mouse_click(u_w.button_add_user, QtCore.Qt.LeftButton)
 
         def _already_member():
             assert autoclose_dialog.dialogs == [
@@ -63,7 +63,7 @@ async def test_invite_user(
 
     else:
         with running_backend.offline():
-            await aqtbot.mouse_click(u_w.button_add_user, QtCore.Qt.LeftButton)
+            aqtbot.mouse_click(u_w.button_add_user, QtCore.Qt.LeftButton)
 
             def _email_send_failed():
                 assert autoclose_dialog.dialogs == [
@@ -72,6 +72,44 @@ async def test_invite_user(
 
             await aqtbot.wait_until(_email_send_failed)
             assert not email_letterbox.emails
+
+
+@pytest.mark.gui
+@pytest.mark.trio
+@customize_fixtures(logged_gui_as_admin=True)
+async def test_invite_and_greet_user_whith_active_users_limit_reached(
+    aqtbot, gui, alice, running_backend, monkeypatch, autoclose_dialog
+):
+    # Set the active user limit before login to ensure no cache information has been kept
+    await running_backend.backend.organization.update(alice.organization_id, active_users_limit=1)
+    await gui.test_switch_to_logged_in(alice)
+    u_w = await gui.test_switch_to_users_widget()
+
+    assert u_w.layout_users.count() == 3
+
+    monkeypatch.setattr(
+        "parsec.core.gui.users_widget.get_text_input",
+        lambda *args, **kwargs: "hubert.farnsworth@pe.com",
+    )
+
+    aqtbot.mouse_click(u_w.button_add_user, QtCore.Qt.LeftButton)
+
+    # The active user limit doesn't prevent to send invitation (check is
+    # enforced by the backend during claim finalization)
+
+    def _new_invitation_displayed():
+        assert u_w.layout_users.count() == 4
+        inv_btn = u_w.layout_users.itemAt(0).widget()
+        assert isinstance(inv_btn, UserInvitationButton)
+        assert inv_btn.email == "hubert.farnsworth@pe.com"
+        assert autoclose_dialog.dialogs == [
+            (
+                "",
+                "The invitation to join your organization was successfully sent to : <b>hubert.farnsworth@pe.com</b>",
+            )
+        ]
+
+    await aqtbot.wait_until(_new_invitation_displayed)
 
 
 @pytest.mark.gui
@@ -100,11 +138,11 @@ async def test_revoke_user(
 
     monkeypatch.setattr(
         "parsec.core.gui.users_widget.ask_question",
-        lambda *args: _("ACTION_USER_REVOCATION_CONFIRM"),
+        lambda *args, **kwargs: _("ACTION_USER_REVOCATION_CONFIRM"),
     )
 
     if online:
-        await aqtbot.run(bob_w.revoke_clicked.emit, bob_w.user_info)
+        bob_w.revoke_clicked.emit(bob_w.user_info)
 
         def _revocation_done():
             assert bob_w.user_info.is_revoked is True
@@ -119,7 +157,7 @@ async def test_revoke_user(
 
     else:
         with running_backend.offline():
-            await aqtbot.run(bob_w.revoke_clicked.emit, bob_w.user_info)
+            bob_w.revoke_clicked.emit(bob_w.user_info)
 
             def _revocation_error():
                 assert bob_w.user_info.is_revoked is False
@@ -151,10 +189,10 @@ async def test_revoke_user_not_allowed(
 
     monkeypatch.setattr(
         "parsec.core.gui.users_widget.ask_question",
-        lambda *args: _("ACTION_USER_REVOCATION_CONFIRM"),
+        lambda *args, **kwargs: _("ACTION_USER_REVOCATION_CONFIRM"),
     )
 
-    await aqtbot.run(alice_w.revoke_clicked.emit, alice_w.user_info)
+    alice_w.revoke_clicked.emit(alice_w.user_info)
 
     def _revocation_error():
         assert alice_w.user_info.is_revoked is False
@@ -180,22 +218,24 @@ async def test_cancel_user_invitation(
     email = "i@like.coffee"
 
     # Patch dialogs
-    monkeypatch.setattr("parsec.core.gui.users_widget.get_text_input", lambda *x, **y: email)
+    monkeypatch.setattr(
+        "parsec.core.gui.users_widget.get_text_input", lambda *args, **kwargs: email
+    )
     monkeypatch.setattr(
         "parsec.core.gui.users_widget.ask_question",
-        lambda *x, **y: _("TEXT_USER_INVITE_CANCEL_INVITE_ACCEPT"),
+        lambda *args, **kwargs: _("TEXT_USER_INVITE_CANCEL_INVITE_ACCEPT"),
     )
     u_w = await logged_gui.test_switch_to_users_widget()
 
     # Invite new user
-    await aqtbot.mouse_click(u_w.button_add_user, QtCore.Qt.LeftButton)
+    aqtbot.mouse_click(u_w.button_add_user, QtCore.Qt.LeftButton)
 
     def _new_invitation_displayed():
         assert u_w.layout_users.count() == 4
         assert autoclose_dialog.dialogs == [
             (
                 "",
-                f"The invitation to join your organization was successfuly sent at : <b>{ email }</b>",
+                f"The invitation to join your organization was successfully sent to : <b>{ email }</b>",
             )
         ]
 
@@ -205,7 +245,7 @@ async def test_cancel_user_invitation(
     assert user_invitation_w.email == email
 
     # Cancel invitation
-    await aqtbot.mouse_click(user_invitation_w.button_cancel, QtCore.Qt.LeftButton)
+    aqtbot.mouse_click(user_invitation_w.button_cancel, QtCore.Qt.LeftButton)
 
     def _new_invitation_removed():
         assert u_w.layout_users.count() == 3

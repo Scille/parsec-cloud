@@ -1,11 +1,11 @@
-# Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
+# Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2016-2021 Scille SAS
 
 from PyQt5.QtCore import pyqtSignal, Qt
 from PyQt5.QtWidgets import QWidget, QGraphicsDropShadowEffect, QLabel
 from PyQt5.QtGui import QColor
 
 from parsec.core.backend_connection import BackendNotAvailable, BackendConnectionError
-from parsec.core.gui.trio_thread import JobResultError, ThreadSafeQtSignal, QtToTrioJob
+from parsec.core.gui.trio_jobs import JobResultError, QtToTrioJob
 from parsec.core.gui.greet_device_widget import GreetDeviceWidget
 from parsec.core.gui.lang import translate as _
 from parsec.core.gui.custom_widgets import ensure_string_size
@@ -39,7 +39,8 @@ class DeviceButton(QWidget, Ui_DeviceButton):
 
 async def _do_invite_device(core):
     try:
-        return await core.new_device_invitation(send_email=False)
+        addr, email_sent_status = await core.new_device_invitation(send_email=False)
+        return addr, email_sent_status
     except BackendNotAvailable as exc:
         raise JobResultError("offline") from exc
     except BackendConnectionError as exc:
@@ -84,20 +85,18 @@ class DevicesWidget(QWidget, Ui_DevicesWidget):
 
     def invite_device(self):
         self.jobs_ctx.submit_job(
-            ThreadSafeQtSignal(self, "invite_success", QtToTrioJob),
-            ThreadSafeQtSignal(self, "invite_error", QtToTrioJob),
-            _do_invite_device,
-            core=self.core,
+            self.invite_success, self.invite_error, _do_invite_device, core=self.core
         )
 
     def _on_invite_success(self, job):
         assert job.is_finished()
         assert job.status == "ok"
 
+        invite_addr, email_sent_status = job.ret
         GreetDeviceWidget.show_modal(
             core=self.core,
             jobs_ctx=self.jobs_ctx,
-            invite_addr=job.ret,
+            invite_addr=invite_addr,
             parent=self,
             on_finished=self.reset,
         )
@@ -146,8 +145,5 @@ class DevicesWidget(QWidget, Ui_DevicesWidget):
         self.layout_devices.clear()
         self.spinner.show()
         self.jobs_ctx.submit_job(
-            ThreadSafeQtSignal(self, "list_success", QtToTrioJob),
-            ThreadSafeQtSignal(self, "list_error", QtToTrioJob),
-            _do_list_devices,
-            core=self.core,
+            self.list_success, self.list_error, _do_list_devices, core=self.core
         )

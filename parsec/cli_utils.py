@@ -1,11 +1,15 @@
-# Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
+# Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2016-2021 Scille SAS
 
+import sys
 import trio
 import click
 import traceback
-from functools import partial
+from functools import partial, wraps
 from async_generator import asynccontextmanager
 from contextlib import contextmanager
+
+from parsec.logging import configure_logging, configure_sentry_logging
+
 
 # Scheme stolen from py-spinners
 # MIT License Copyright (c) 2017 Manraj Singh
@@ -82,7 +86,10 @@ def cli_exception_handler(debug):
         raise SystemExit(0)
 
     except Exception as exc:
-        click.echo(click.style("Error: ", fg="red") + str(exc))
+        exc_msg = str(exc)
+        if not exc_msg.strip():
+            exc_msg = repr(exc)
+        click.echo(click.style("Error: ", fg="red") + exc_msg)
         if debug:
             raise
         else:
@@ -116,3 +123,82 @@ async def aconfirm(*args, **kwargs):
 
 async def aprompt(*args, **kwargs):
     return await trio.to_thread.run_sync(partial(click.prompt, *args, **kwargs))
+
+
+def logging_config_options(default_log_level: str):
+    LOG_LEVELS = ("DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL")
+    assert default_log_level in LOG_LEVELS
+
+    def _logging_config_options(fn):
+        @click.option(
+            "--log-level",
+            "-l",
+            type=click.Choice(LOG_LEVELS),
+            default=default_log_level,
+            show_default=True,
+            envvar="PARSEC_LOG_LEVEL",
+        )
+        @click.option(
+            "--log-format",
+            "-f",
+            type=click.Choice(("CONSOLE", "JSON")),
+            default="CONSOLE",
+            show_default=True,
+            envvar="PARSEC_LOG_FORMAT",
+        )
+        @click.option(
+            "--log-file", "-o", default=None, envvar="PARSEC_LOG_FILE", help="[default: stderr]"
+        )
+        @wraps(fn)
+        def wrapper(**kwargs):
+            # `click.open_file` considers "-" to be stdout
+            if kwargs["log_file"] in (None, "-"):
+
+                @contextmanager
+                def open_log_file():
+                    yield sys.stderr
+
+            else:
+                open_log_file = partial(click.open_file, kwargs["log_file"], "w")
+
+            with open_log_file() as fd:
+
+                configure_logging(
+                    log_level=kwargs["log_level"], log_format=kwargs["log_format"], log_stream=fd
+                )
+
+                return fn(**kwargs)
+
+        return wrapper
+
+    return _logging_config_options
+
+
+def sentry_config_options(configure_sentry: bool):
+    def _sentry_config_options(fn):
+        @click.option(
+            "--sentry-url",
+            metavar="URL",
+            envvar="PARSEC_SENTRY_URL",
+            help="Sentry URL for telemetry report",
+        )
+        @wraps(fn)
+        def wrapper(**kwargs):
+            if configure_sentry and kwargs["sentry_url"]:
+                configure_sentry_logging(kwargs["sentry_url"])
+
+            return fn(**kwargs)
+
+        return wrapper
+
+    return _sentry_config_options
+
+
+def debug_config_options(fn):
+    decorator = click.option(
+        "--debug",
+        is_flag=True,
+        # Don't prefix with `PARSEC_` given devs are lazy
+        envvar="DEBUG",
+    )
+    return decorator(fn)

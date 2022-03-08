@@ -1,4 +1,4 @@
-# Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
+# Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2016-2021 Scille SAS
 
 import trio
 from enum import Enum
@@ -9,19 +9,25 @@ from functools import partial
 
 from parsec.crypto import SigningKey
 from parsec.event_bus import EventBus
-from parsec.api.data import EntryID
 from parsec.api.protocol import DeviceID, APIEvent, AUTHENTICATED_CMDS
-from parsec.core.types import BackendOrganizationAddr
+from parsec.core.types import EntryID, BackendOrganizationAddr, OrganizationConfig
 from parsec.core.backend_connection import cmds
 from parsec.core.backend_connection.transport import connect_as_authenticated, TransportPool
-from parsec.core.backend_connection.exceptions import BackendNotAvailable, BackendConnectionRefused
+from parsec.core.backend_connection.exceptions import (
+    BackendNotAvailable,
+    BackendConnectionRefused,
+    BackendOutOfBallparkError,
+)
 from parsec.core.backend_connection.expose_cmds import expose_cmds_with_retrier
 from parsec.core.core_events import CoreEvent
 
 logger = get_logger()
 
+# Time before we try to reconnect after a desync
+DESYNC_RETRY_TIME = 10  # seconds
 
-BackendConnStatus = Enum("BackendConnStatus", "READY LOST INITIALIZING REFUSED CRASHED")
+
+BackendConnStatus = Enum("BackendConnStatus", "READY LOST INITIALIZING REFUSED CRASHED DESYNC")
 
 
 # Helper to copy exceptions (discarding the traceback but keeping the cause)
@@ -86,6 +92,7 @@ class BackendAuthenticatedCmds:
         cmds.realm_finish_reencryption_maintenance
     )
     organization_stats = expose_cmds_with_retrier(cmds.organization_stats)
+    organization_config = expose_cmds_with_retrier(cmds.organization_config)
 
 
 for cmd in AUTHENTICATED_CMDS:
@@ -104,31 +111,32 @@ def _handle_event(event_bus: EventBus, rep: dict) -> None:
         event_bus.send(CoreEvent.BACKEND_PINGED, ping=rep["ping"])
 
     elif rep["event"] == APIEvent.REALM_ROLES_UPDATED:
-        realm_id = EntryID(rep["realm_id"])
-        event_bus.send(CoreEvent.BACKEND_REALM_ROLES_UPDATED, realm_id=realm_id, role=rep["role"])
+        event_bus.send(
+            CoreEvent.BACKEND_REALM_ROLES_UPDATED,
+            realm_id=EntryID(rep["realm_id"].uuid),
+            role=rep["role"],
+        )
 
     elif rep["event"] == APIEvent.REALM_VLOBS_UPDATED:
-        src_id = EntryID(rep["src_id"])
-        realm_id = EntryID(rep["realm_id"])
         event_bus.send(
             CoreEvent.BACKEND_REALM_VLOBS_UPDATED,
-            realm_id=realm_id,
+            realm_id=EntryID(rep["realm_id"].uuid),
             checkpoint=rep["checkpoint"],
-            src_id=src_id,
+            src_id=EntryID(rep["src_id"].uuid),
             src_version=rep["src_version"],
         )
 
     elif rep["event"] == APIEvent.REALM_MAINTENANCE_STARTED:
         event_bus.send(
             CoreEvent.BACKEND_REALM_MAINTENANCE_STARTED,
-            realm_id=rep["realm_id"],
+            realm_id=EntryID(rep["realm_id"].uuid),
             encryption_revision=rep["encryption_revision"],
         )
 
     elif rep["event"] == APIEvent.REALM_MAINTENANCE_FINISHED:
         event_bus.send(
             CoreEvent.BACKEND_REALM_MAINTENANCE_FINISHED,
-            realm_id=rep["realm_id"],
+            realm_id=EntryID(rep["realm_id"].uuid),
             encryption_revision=rep["encryption_revision"],
         )
 
@@ -171,6 +179,13 @@ class BackendAuthenticatedConn:
         self._monitors_idle_event = trio.Event()
         self._monitors_idle_event.set()  # No monitors
         self._backend_connection_failures = 0
+        # organization config is very unlikely to change, hence we query it
+        # once when backend connection bootstraps, then keep the value in cache.
+        # On top of that, we pre-populate the cache with a "good enough" default
+        # value so organization config is guaranteed to be always available \o/
+        self._organization_config = OrganizationConfig(
+            user_profile_outsider_allowed=False, active_users_limit=None
+        )
         self.event_bus = event_bus
         self.max_cooldown = max_cooldown
 
@@ -189,7 +204,16 @@ class BackendAuthenticatedConn:
     def cmds(self) -> BackendAuthenticatedCmds:
         return self._cmds
 
-    def set_status(self, status: BackendConnStatus, status_exc: Optional[Exception] = None) -> None:
+    async def set_status(
+        self, status: BackendConnStatus, status_exc: Optional[Exception] = None
+    ) -> None:
+        # Do not set the status if we're being cancelled
+        # Not performing this check can lead to complicated race conditions.
+        # In particular, we have to remember that a cancelled task might still
+        # run code before the cancellation actually triggers. That means that
+        # a particular status might be overwritten between the call to cancel
+        # and the actual cancellation.
+        await trio.lowlevel.checkpoint_if_cancelled()
         old_status, self._status = self._status, status
         self._status_exc = status_exc
         if not self._status_event_sent or old_status != status:
@@ -202,6 +226,9 @@ class BackendAuthenticatedConn:
         # A better approach would be to make sure that components using this status
         # do not rely on this redundant event.
         self._status_event_sent = True
+
+    def get_organization_config(self) -> OrganizationConfig:
+        return self._organization_config
 
     def register_monitor(self, monitor_cb) -> None:
         if self._started:
@@ -232,7 +259,7 @@ class BackendAuthenticatedConn:
                     except (BackendNotAvailable, BackendConnectionRefused):
                         pass
                     except Exception as exc:
-                        self.set_status(
+                        await self.set_status(
                             BackendConnStatus.CRASHED,
                             BackendNotAvailable(f"Backend connection manager has crashed: {exc}"),
                         )
@@ -258,10 +285,18 @@ class BackendAuthenticatedConn:
                 self._backend_connection_failures += 1
                 logger.info("Backend offline", cooldown_time=cooldown_time)
                 await trio.sleep(cooldown_time)
-            else:
+            if self.status == BackendConnStatus.REFUSED:
                 # It's most likely useless to retry connection anyway
                 logger.info("Backend connection refused", status=self.status)
                 await trio.sleep_forever()
+            if self.status == BackendConnStatus.CRASHED:
+                # It's most likely useless to retry connection anyway
+                logger.info("Backend connection has crashed", status=self.status)
+                await trio.sleep_forever()
+            if self.status == BackendConnStatus.DESYNC:
+                # Try again in 10 seconds
+                logger.info("Backend connection is desync", status=self.status)
+                await trio.sleep(DESYNC_RETRY_TIME)
 
     def _cancel_manager_connect(self):
         if self._manager_connect_cancel_scope:
@@ -269,11 +304,29 @@ class BackendAuthenticatedConn:
 
     async def _manager_connect(self):
         async with self._acquire_transport(ignore_status=True, force_fresh=True) as transport:
-            self.set_status(BackendConnStatus.INITIALIZING)
+            await self.set_status(BackendConnStatus.INITIALIZING)
             self._backend_connection_failures = 0
             logger.info("Backend online")
 
-            await cmds.events_subscribe(transport)
+            rep = await cmds.organization_config(transport)
+            if rep["status"] != "ok":
+                # Authenticated's organization_config command has been introduced in API v2.2
+                # So a cheap trick to keep backward compatibility here is to
+                # stick with the pre-populated organization config cached value.
+                if rep["status"] != "unknown_command":
+                    raise BackendConnectionRefused(
+                        f"Error while fetching organization config: {rep}"
+                    )
+
+            else:
+                self._organization_config = OrganizationConfig(
+                    user_profile_outsider_allowed=rep["user_profile_outsider_allowed"],
+                    active_users_limit=rep["active_users_limit"],
+                )
+
+            rep = await cmds.events_subscribe(transport)
+            if rep["status"] != "ok":
+                raise BackendConnectionRefused(f"Error while events subscribing : {rep}")
 
             # Quis custodiet ipsos custodes?
             monitors_states = ["STALLED" for _ in range(len(self._monitors_cbs))]
@@ -302,7 +355,7 @@ class BackendAuthenticatedConn:
                                 monitors_nursery.start, partial(_wrap_monitor_cb, monitor_cb, idx)
                             )
 
-                    self.set_status(BackendConnStatus.READY)
+                    await self.set_status(BackendConnStatus.READY)
 
                     while True:
                         rep = await cmds.events_listen(transport, wait=True)
@@ -329,14 +382,23 @@ class BackendAuthenticatedConn:
 
         except BackendNotAvailable as exc:
             if not allow_not_available:
-                self.set_status(BackendConnStatus.LOST, exc)
+                await self.set_status(BackendConnStatus.LOST, exc)
                 self._cancel_manager_connect()
             raise
 
         except BackendConnectionRefused as exc:
-            self.set_status(BackendConnStatus.REFUSED, exc)
+            await self.set_status(BackendConnStatus.REFUSED, exc)
             self._cancel_manager_connect()
             raise
+
+        except BackendOutOfBallparkError as exc:
+            # Caller doesn't need to know about the desync,
+            # simply pretend that we lost the connection instead
+            new_exc = BackendNotAvailable()
+            new_exc.__cause__ = exc
+            await self.set_status(BackendConnStatus.DESYNC, new_exc)
+            self._cancel_manager_connect()
+            raise new_exc
 
 
 @asynccontextmanager

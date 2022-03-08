@@ -1,4 +1,4 @@
-# Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
+# Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2016-2021 Scille SAS
 
 import pytest
 from string import ascii_lowercase
@@ -12,6 +12,7 @@ from hypothesis_trio.stateful import (
     TrioAsyncioRuleBasedStateMachine,
     multiple,
 )
+from parsec.api.data import EntryName
 
 from tests.common import call_with_control
 
@@ -71,7 +72,7 @@ def test_fs_online_idempotent_sync(
             self.device = alice
             self.user_fs_controller = await self.start_user_fs(alice)
 
-            wid = await self.user_fs.workspace_create("w")
+            wid = await self.user_fs.workspace_create(EntryName("w"))
             self.workspace = self.user_fs.get_workspace(wid)
             await self.workspace.touch("/good_file.txt")
             await self.workspace.mkdir("/good_folder")

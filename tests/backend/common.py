@@ -1,4 +1,4 @@
-# Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
+# Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2016-2021 Scille SAS
 
 import trio
 from functools import partial
@@ -7,6 +7,8 @@ from async_generator import asynccontextmanager
 
 from parsec.api.protocol import (
     ping_serializer,
+    organization_stats_serializer,
+    organization_config_serializer,
     block_create_serializer,
     block_read_serializer,
     realm_create_serializer,
@@ -115,6 +117,19 @@ ping = CmdSock(
 )
 
 
+### Organization ###
+
+
+organization_config = CmdSock(
+    "organization_config", organization_config_serializer, check_rep_by_default=True
+)
+
+
+organization_stats = CmdSock(
+    "organization_stats", organization_stats_serializer, check_rep_by_default=True
+)
+
+
 ### Block ###
 
 
@@ -213,7 +228,7 @@ vlob_read = CmdSock(
 vlob_update = CmdSock(
     "vlob_update",
     vlob_update_serializer,
-    parse_args=lambda self, vlob_id, version, blob, encryption_revision=1, timestamp=None: {
+    parse_args=lambda self, vlob_id, version, blob, timestamp=None, encryption_revision=1: {
         "vlob_id": vlob_id,
         "version": version,
         "blob": blob,

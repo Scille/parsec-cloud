@@ -1,11 +1,9 @@
-# Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
+# Parsec Cloud (https://parsec.cloud) Copyright (c) BSLv1.1 (eventually AGPLv3) 2016-2021 Scille SAS
 
 import trio
 from unittest.mock import Mock
 import pbr.version
-from uuid import UUID
 from functools import partial
-
 
 original_version_info = pbr.version.VersionInfo
 
@@ -23,7 +21,7 @@ pbr.version.VersionInfo = Mock(side_effect=side_effect)
 import swiftclient
 from swiftclient.exceptions import ClientException
 
-from parsec.api.protocol import OrganizationID
+from parsec.api.protocol import OrganizationID, BlockID
 from parsec.backend.blockstore import BaseBlockStoreComponent
 from parsec.backend.block import BlockAlreadyExistsError, BlockNotFoundError, BlockTimeoutError
 
@@ -36,7 +34,7 @@ class SwiftBlockStoreComponent(BaseBlockStoreComponent):
         self._container = container
         self.swift_client.head_container(container)
 
-    async def read(self, organization_id: OrganizationID, id: UUID) -> bytes:
+    async def read(self, organization_id: OrganizationID, id: BlockID) -> bytes:
         slug = f"{organization_id}/{id}"
         try:
             headers, obj = await trio.to_thread.run_sync(
@@ -52,7 +50,7 @@ class SwiftBlockStoreComponent(BaseBlockStoreComponent):
 
         return obj
 
-    async def create(self, organization_id: OrganizationID, id: UUID, block: bytes) -> None:
+    async def create(self, organization_id: OrganizationID, id: BlockID, block: bytes) -> None:
         slug = f"{organization_id}/{id}"
         try:
             _, obj = await trio.to_thread.run_sync(

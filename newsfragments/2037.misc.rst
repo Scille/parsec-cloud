@@ -1,0 +1,1 @@
+Fixed some graphical gliches on MacOS when using dark mode.

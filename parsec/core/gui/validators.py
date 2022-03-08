@@ -1,16 +1,15 @@
-# Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
+# Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2016-2021 Scille SAS
 
 from PyQt5.QtCore import QRegularExpression
 from PyQt5.QtGui import QValidator, QIntValidator, QRegularExpressionValidator
 
-from parsec.api.protocol import OrganizationID, UserID, DeviceName, DeviceID
+from parsec.api.data import EntryName
+from parsec.api.protocol import OrganizationID, UserID, DeviceLabel
 from parsec.core.types import (
     BackendAddr,
     BackendActionAddr,
     BackendOrganizationAddr,
     BackendOrganizationBootstrapAddr,
-    BackendOrganizationClaimUserAddr,
-    BackendOrganizationClaimDeviceAddr,
 )
 
 
@@ -40,7 +39,7 @@ class BackendAddrValidator(QValidator):
         try:
             if len(string) == 0:
                 return QValidator.Intermediate, string, pos
-            BackendAddr.from_url(string)
+            BackendAddr.from_url(string, allow_http_redirection=True)
             return QValidator.Acceptable, string, pos
         except ValueError:
             return QValidator.Invalid, string, pos
@@ -51,7 +50,7 @@ class BackendOrganizationAddrValidator(QValidator):
         try:
             if len(string) == 0:
                 return QValidator.Intermediate, string, pos
-            BackendOrganizationAddr.from_url(string)
+            BackendOrganizationAddr.from_url(string, allow_http_redirection=True)
             return QValidator.Acceptable, string, pos
         except ValueError:
             return QValidator.Intermediate, string, pos
@@ -62,29 +61,7 @@ class BackendOrganizationBootstrapAddrValidator(QValidator):
         try:
             if len(string) == 0:
                 return QValidator.Intermediate, string, pos
-            BackendOrganizationBootstrapAddr.from_url(string)
-            return QValidator.Acceptable, string, pos
-        except ValueError:
-            return QValidator.Intermediate, string, pos
-
-
-class BackendOrganizationClaimUserAddrValidator(QValidator):
-    def validate(self, string, pos):
-        try:
-            if len(string) == 0:
-                return QValidator.Intermediate, string, pos
-            BackendOrganizationClaimUserAddr.from_url(string)
-            return QValidator.Acceptable, string, pos
-        except ValueError:
-            return QValidator.Intermediate, string, pos
-
-
-class BackendOrganizationClaimDeviceAddrValidator(QValidator):
-    def validate(self, string, pos):
-        try:
-            if len(string) == 0:
-                return QValidator.Intermediate, string, pos
-            BackendOrganizationClaimDeviceAddr.from_url(string)
+            BackendOrganizationBootstrapAddr.from_url(string, allow_http_redirection=True)
             return QValidator.Acceptable, string, pos
         except ValueError:
             return QValidator.Intermediate, string, pos
@@ -95,7 +72,7 @@ class BackendActionAddrValidator(QValidator):
         try:
             if len(string) == 0:
                 return QValidator.Intermediate, string, pos
-            BackendActionAddr.from_url(string)
+            BackendActionAddr.from_url(string, allow_http_redirection=True)
             return QValidator.Acceptable, string, pos
         except ValueError:
             return QValidator.Intermediate, string, pos
@@ -112,23 +89,12 @@ class UserIDValidator(QValidator):
             return QValidator.Invalid, string, pos
 
 
-class DeviceNameValidator(QValidator):
+class DeviceLabelValidator(QValidator):
     def validate(self, string, pos):
         try:
             if len(string) == 0:
                 return QValidator.Intermediate, string, pos
-            DeviceName(string)
-            return QValidator.Acceptable, string, pos
-        except ValueError:
-            return QValidator.Invalid, string, pos
-
-
-class DeviceIDValidator(QValidator):
-    def validate(self, string, pos):
-        try:
-            if len(string) == 0:
-                return QValidator.Intermediate, string, pos
-            DeviceID(string)
+            DeviceLabel(string)
             return QValidator.Acceptable, string, pos
         except ValueError:
             return QValidator.Invalid, string, pos
@@ -140,13 +106,13 @@ class EmailValidator(QRegularExpressionValidator):
 
 
 class WorkspaceNameValidator(QValidator):
-    def __init__(self):
-        self.regex = QRegularExpression(r"^.{1,256}$")
-
     def validate(self, string, pos):
-        if self.regex.match(string, pos).hasMatch():
-            return QValidator.Acceptable, string, pos
-        return QValidator.Invalid, string, pos
+        try:
+            if len(string) == 0:
+                return QValidator.Intermediate, string, pos
+            EntryName(string)
+        except ValueError:
+            return QValidator.Invalid, string, pos
 
 
 class NotEmptyValidator(QValidator):

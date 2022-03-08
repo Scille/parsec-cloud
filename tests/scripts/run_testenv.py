@@ -1,5 +1,5 @@
 #! /usr/bin/env python
-# Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
+# Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2016-2021 Scille SAS
 
 """
 Create a temporary environment and initialize a test setup for parsec.
@@ -14,7 +14,6 @@ import pkg_resources
 pkg_resources.require("parsec-cloud[all]")
 
 import os
-import platform
 import sys
 import re
 import tempfile
@@ -27,6 +26,7 @@ import psutil
 
 from parsec import __version__ as PARSEC_VERSION
 from parsec.utils import trio_run
+from parsec.cli_utils import logging_config_options
 from parsec.core.types import BackendAddr
 from parsec.core.config import get_default_config_dir
 from parsec.test_utils import initialize_test_organization
@@ -36,6 +36,8 @@ DEFAULT_BACKEND_PORT = 6888
 DEFAULT_ADMINISTRATION_TOKEN = "V8VjaXrOz6gUC6ZEHPab0DSsjfq6DmcJ"
 DEFAULT_EMAIL_HOST = "MOCKED"
 DEFAULT_DEVICE_PASSWORD = "test"
+DEFAULT_DATABASE = "MOCKED"
+DEFAULT_BLOCKSTORE = "MOCKED"
 
 
 # Helpers
@@ -44,7 +46,7 @@ DEFAULT_DEVICE_PASSWORD = "test"
 async def new_environment(source_file=None):
     export_lines = []
     tempdir = tempfile.mkdtemp()
-    if os.name == "nt":
+    if sys.platform == "win32":
         export = "set"
         env = {"APPDATA": tempdir}
     else:
@@ -87,7 +89,7 @@ Your environment will be configured with the following commands:
 
 async def generate_gui_config(backend_address):
     config_dir = None
-    if os.name == "nt":
+    if sys.platform == "win32":
         config_dir = trio.Path(os.environ["APPDATA"]) / "parsec/config"
     else:
         config_dir = trio.Path(os.environ["XDG_CONFIG_HOME"]) / "parsec"
@@ -107,7 +109,7 @@ async def generate_gui_config(backend_address):
 
 
 async def configure_mime_types():
-    if platform.system() == "Windows" or platform.system() == "Darwin":
+    if sys.platform == "win32" or sys.platform == "darwin":
         return
     XDG_DATA_HOME = os.environ["XDG_DATA_HOME"]
     desktop_file = trio.Path(f"{XDG_DATA_HOME}/applications/parsec.desktop")
@@ -124,14 +126,23 @@ StartupWMClass=Parsec
 MimeType=x-scheme-handler/parsec;
 """
     )
-    await trio.run_process("update-desktop-database -q".split(), check=False)
-    await trio.run_process("xdg-mime default parsec.desktop x-scheme-handler/parsec".split())
+    try:
+        await trio.run_process("update-desktop-database -q".split(), check=False)
+    except FileNotFoundError:
+        # Ignore if command is not available
+        pass
+    try:
+        await trio.run_process("xdg-mime default parsec.desktop x-scheme-handler/parsec".split())
+    except FileNotFoundError:
+        # Ignore if command is not available
+        pass
 
 
-async def restart_local_backend(administration_token, backend_port, email_host):
+async def restart_local_backend(administration_token, backend_port, email_host, db, blockstore):
     pattern = f"parsec.* backend.* run.* -P {backend_port}"
     command = (
-        f"{sys.executable} -Wignore -m parsec.cli backend run -b MOCKED --db MOCKED "
+        f"{sys.executable} -Wignore -m parsec.cli backend run --log-level=WARNING "
+        f"-b {blockstore} --db {db} "
         f"--email-host={email_host} -P {backend_port} "
         f"--spontaneous-organization-bootstrap "
         f"--administration-token {administration_token} --backend-addr parsec://localhost:{backend_port}?no_ssl=true"
@@ -152,7 +163,7 @@ async def restart_local_backend(administration_token, backend_port, email_host):
         backend_process.stdout.close()
 
     # Windows restart
-    if os.name == "nt" or True:
+    if sys.platform == "win32":
         await trio.to_thread.run_sync(_windows_target)
 
     # Linux restart
@@ -174,17 +185,19 @@ async def restart_local_backend(administration_token, backend_port, email_host):
 @click.command()
 @click.option("-B", "--backend-address", type=BackendAddr.from_url)
 @click.option("-p", "--backend-port", show_default=True, type=int, default=DEFAULT_BACKEND_PORT)
+@click.option("--db", show_default=True, type=str, default=DEFAULT_DATABASE)
+@click.option("-b", "--blockstore", show_default=True, type=str, default=DEFAULT_BLOCKSTORE)
 @click.option("-P", "--password", show_default=True, default=DEFAULT_DEVICE_PASSWORD)
 @click.option(
     "-T", "--administration-token", show_default=True, default=DEFAULT_ADMINISTRATION_TOKEN
 )
-@click.option("--force/--no-force", show_default=True, default=False)
 @click.option("--email-host", show_default=True, default=DEFAULT_EMAIL_HOST)
 @click.option("--add-random-users", show_default=True, default=0)
 @click.option("--add-random-devices", show_default=True, default=0)
 @click.option("-e", "--empty", is_flag=True)
 @click.option("--source-file", hidden=True)
-def main(**kwargs):
+@logging_config_options(default_log_level="WARNING")
+def main(log_level, log_file, log_format, **kwargs):
     """Create a temporary environment and initialize a test setup for parsec.
 
     WARNING: it also leaves an in-memory backend running in the background
@@ -230,9 +243,10 @@ def main(**kwargs):
 async def amain(
     backend_address,
     backend_port,
+    db,
+    blockstore,
     password,
     administration_token,
-    force,
     email_host,
     add_random_users,
     add_random_devices,
@@ -253,7 +267,7 @@ async def amain(
     # Start a local backend
     if backend_address is None:
         backend_address = await restart_local_backend(
-            administration_token, backend_port, email_host
+            administration_token, backend_port, email_host, db, blockstore
         )
         click.echo(
             f"""\
@@ -277,7 +291,6 @@ Using existing backend: {backend_address}
         backend_address=backend_address,
         password=password,
         administration_token=administration_token,
-        force=force,
         additional_users_number=add_random_users,
         additional_devices_number=add_random_devices,
     )

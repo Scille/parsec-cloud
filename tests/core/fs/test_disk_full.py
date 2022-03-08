@@ -1,4 +1,4 @@
-# Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
+# Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2016-2021 Scille SAS
 
 import trio
 import pytest
@@ -9,7 +9,7 @@ try:
 except ImportError:
     pytest.skip("Fuse is required", allow_module_level=True)
 
-
+from parsec.api.data import EntryName
 from parsec.core.fs import UserFS
 from parsec.core.logged_core import get_prevent_sync_pattern
 from parsec.core.remote_devices_manager import RemoteDevicesManager
@@ -33,12 +33,12 @@ async def alice_fs_context(loopback_fs, event_bus_factory, alice):
         ) as cmds:
             rdm = RemoteDevicesManager(cmds, alice.root_verify_key)
             async with UserFS.run(
-                alice, path, cmds, rdm, event_bus, get_prevent_sync_pattern()
+                path, alice, cmds, rdm, event_bus, get_prevent_sync_pattern()
             ) as user_fs:
                 yield user_fs
 
     async with _alice_context() as user_fs:
-        wid = await user_fs.workspace_create("w")
+        wid = await user_fs.workspace_create(EntryName("w"))
 
     @asynccontextmanager
     async def _alice_fs_context(allow_sqlite_error_at_exit=False):

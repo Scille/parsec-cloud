@@ -35,11 +35,11 @@ FORMS += forms/main_window.ui \
     forms/input_widget.ui \
     forms/workspace_sharing_widget.ui \
     forms/file_history_widget.ui \
-    forms/password_change_widget.ui \
     forms/timestamped_workspace_widget.ui \
     forms/empty_workspace_widget.ui \
     forms/loading_widget.ui \
     forms/password_strength_widget.ui \
+    forms/password_recovery.ui \
     forms/file_history_button.ui \
     forms/create_org_widget.ui \
     forms/greet_user_widget.ui \
@@ -59,16 +59,27 @@ FORMS += forms/main_window.ui \
     forms/claim_device_code_exchange_widget.ui \
     forms/claim_device_provide_info_widget.ui \
     forms/create_org_user_info_widget.ui \
-    forms/create_org_device_info_widget.ui \
     forms/account_button.ui \
     forms/login_accounts_widget.ui \
     forms/login_password_input_widget.ui \
     forms/login_no_devices_widget.ui \
     forms/spinner_widget.ui \
-    forms/password_choice_widget.ui \
+    forms/password_authentication_widget.ui \
     forms/temporary_workspace_widget.ui \
     forms/key_widget.ui \
-    forms/keys_widget.ui
+    forms/keys_widget.ui \
+    forms/qrcode_widget.ui \
+    forms/device_recovery_export_widget.ui \
+    forms/device_recovery_export_page1_widget.ui \
+    forms/device_recovery_export_page2_widget.ui \
+    forms/device_recovery_import_page1_widget.ui \
+    forms/device_recovery_import_widget.ui \
+    forms/smartcard_authentication_widget.ui \
+    forms/authentication_choice_widget.ui \
+    forms/authentication_change_widget.ui \
+    forms/login_smartcard_input_widget.ui \
+    forms/snackbar_widget.ui \
+    forms/file_status_widget.ui
 
 RESOURCES += rc/resources.qrc \
     forms/rc/resources.qrc

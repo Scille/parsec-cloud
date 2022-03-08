@@ -1,9 +1,13 @@
-# Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
+# Parsec Cloud (https://parsec.cloud) Copyright (c) BSLv1.1 (eventually AGPLv3) 2016-2021 Scille SAS
 
-from uuid import UUID
-
-from parsec.api.protocol import DeviceID, OrganizationID
-from parsec.api.protocol import block_create_serializer, block_read_serializer
+from parsec.api.protocol import (
+    OrganizationID,
+    DeviceID,
+    RealmID,
+    BlockID,
+    block_create_serializer,
+    block_read_serializer,
+)
 from parsec.backend.utils import catch_protocol_errors, api
 
 
@@ -80,7 +84,7 @@ class BaseBlockComponent:
         return block_create_serializer.rep_dump({"status": "ok"})
 
     async def read(
-        self, organization_id: OrganizationID, author: DeviceID, block_id: UUID
+        self, organization_id: OrganizationID, author: DeviceID, block_id: BlockID
     ) -> bytes:
         """
         Raises:
@@ -95,8 +99,8 @@ class BaseBlockComponent:
         self,
         organization_id: OrganizationID,
         author: DeviceID,
-        block_id: UUID,
-        realm: UUID,
+        block_id: BlockID,
+        realm_id: RealmID,
         block: bytes,
     ) -> None:
         """

@@ -1,15 +1,28 @@
-# Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
+# Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2016-2021 Scille SAS
 
 from typing import Tuple, Optional, cast, Dict, Sequence, Union
-from uuid import UUID
 from enum import Enum
 from secrets import token_bytes
 
+import pendulum
+from pendulum.datetime import DateTime
+
 from parsec.crypto import SigningKey, VerifyKey, CryptoError
 from parsec.serde import BaseSchema, OneOfSchema, fields, validate
+from parsec.utils import (
+    BALLPARK_CLIENT_EARLY_OFFSET,
+    BALLPARK_CLIENT_LATE_OFFSET,
+    BALLPARK_CLIENT_TOLERANCE,
+    timestamps_in_the_ballpark,
+)
 from parsec.api.protocol.base import ProtocolError, InvalidMessageError, serializer_factory
 from parsec.api.protocol.types import OrganizationID, DeviceID, OrganizationIDField, DeviceIDField
-from parsec.api.protocol.invite import InvitationType, InvitationTypeField
+from parsec.api.protocol.invite import (
+    InvitationToken,
+    InvitationTokenField,
+    InvitationType,
+    InvitationTypeField,
+)
 from parsec.api.version import ApiVersion, API_V1_VERSION, API_V2_VERSION
 
 
@@ -41,6 +54,10 @@ class HandshakeRevokedDevice(HandshakeError):
     pass
 
 
+class HandshakeOutOfBallparkError(HandshakeError):
+    pass
+
+
 class HandshakeAPIVersionError(HandshakeError):
     def __init__(
         self, backend_versions: Sequence[ApiVersion], client_versions: Sequence[ApiVersion] = []
@@ -68,9 +85,7 @@ HandshakeTypeField = fields.enum_field_factory(HandshakeType)
 
 
 class APIV1_HandshakeType(Enum):
-    AUTHENTICATED = "authenticated"
     ANONYMOUS = "anonymous"
-    ADMINISTRATION = "administration"
 
 
 APIV1_HandshakeTypeField = fields.enum_field_factory(APIV1_HandshakeType)
@@ -103,6 +118,14 @@ class HandshakeChallengeSchema(BaseSchema):
     handshake = fields.CheckedConstant("challenge", required=True)
     challenge = fields.Bytes(required=True)
     supported_api_versions = fields.List(ApiVersionField(), required=True)
+    # Those fields have been added to API version 2.4
+    # They are provided to the client in order to allow them to detect whether
+    # their system clock is out of sync and let them close the connection.
+    # They will be missing for older backend so they cannot be strictly required.
+    # TODO: This backward compatibility should be removed once Parsec < 2.4 support is dropped
+    ballpark_client_early_offset = fields.Float(required=False, missing=None)
+    ballpark_client_late_offset = fields.Float(required=False, missing=None)
+    backend_timestamp = fields.DateTime(required=False, missing=None)
 
 
 handshake_challenge_serializer = serializer_factory(HandshakeChallengeSchema)
@@ -114,6 +137,14 @@ class HandshakeAnswerVersionOnlySchema(BaseSchema):
 
 
 handshake_answer_version_only_serializer = serializer_factory(HandshakeAnswerVersionOnlySchema)
+
+
+class AnswerSchema(BaseSchema):
+    type = fields.CheckedConstant("signed_answer", required=True)
+    answer = fields.Bytes(required=True)
+
+
+answer_serializer = serializer_factory(AnswerSchema)
 
 
 class HandshakeAuthenticatedAnswerSchema(BaseSchema):
@@ -132,7 +163,7 @@ class HandshakeInvitedAnswerSchema(BaseSchema):
     client_api_version = ApiVersionField(required=True)
     organization_id = OrganizationIDField(required=True)
     invitation_type = InvitationTypeField(required=True)
-    token = fields.UUID(required=True)
+    token = InvitationTokenField(required=True)
 
 
 class HandshakeAnswerSchema(OneOfSchema):
@@ -149,16 +180,6 @@ class HandshakeAnswerSchema(OneOfSchema):
 handshake_answer_serializer = serializer_factory(HandshakeAnswerSchema)
 
 
-class APIV1_HandshakeAuthenticatedAnswerSchema(BaseSchema):
-    handshake = fields.CheckedConstant("answer", required=True)
-    type = fields.EnumCheckedConstant(APIV1_HandshakeType.AUTHENTICATED, required=True)
-    client_api_version = ApiVersionField(required=True)
-    organization_id = OrganizationIDField(required=True)
-    device_id = DeviceIDField(required=True)
-    rvk = fields.VerifyKey(required=True)
-    answer = fields.Bytes(required=True)
-
-
 class APIV1_HandshakeAnonymousAnswerSchema(BaseSchema):
     handshake = fields.CheckedConstant("answer", required=True)
     type = fields.EnumCheckedConstant(APIV1_HandshakeType.ANONYMOUS, required=True)
@@ -168,20 +189,9 @@ class APIV1_HandshakeAnonymousAnswerSchema(BaseSchema):
     rvk = fields.VerifyKey(missing=None)
 
 
-class APIV1_HandshakeAdministrationAnswerSchema(BaseSchema):
-    handshake = fields.CheckedConstant("answer", required=True)
-    type = fields.EnumCheckedConstant(APIV1_HandshakeType.ADMINISTRATION, required=True)
-    client_api_version = ApiVersionField(required=True)
-    token = fields.String(required=True)
-
-
 class APIV1_HandshakeAnswerSchema(OneOfSchema):
     type_field = "type"
-    type_schemas = {
-        APIV1_HandshakeType.AUTHENTICATED: APIV1_HandshakeAuthenticatedAnswerSchema(),
-        APIV1_HandshakeType.ANONYMOUS: APIV1_HandshakeAnonymousAnswerSchema(),
-        APIV1_HandshakeType.ADMINISTRATION: APIV1_HandshakeAdministrationAnswerSchema(),
-    }
+    type_schemas = {APIV1_HandshakeType.ANONYMOUS: APIV1_HandshakeAnonymousAnswerSchema()}
 
     def get_obj_type(self, obj: Dict[str, object]) -> APIV1_HandshakeType:
         return cast(APIV1_HandshakeType, obj["type"])
@@ -207,6 +217,10 @@ class ServerHandshake:
         # Challenge
         self.challenge_size = challenge_size
         self.challenge: bytes
+
+        # Once support APIV1 is dropped, we can do much better than exposing the answer data as
+        # a dictionary of arbitrary object. Instead, it could be deserialize as a dedicated and
+        # properly typed `HandshakeAnswer` object.
         self.answer_data: Dict[str, object]
         self.answer_type: Union[HandshakeType, APIV1_HandshakeType] = HandshakeType.NOT_INITIALIZED
 
@@ -229,6 +243,9 @@ class ServerHandshake:
                 "handshake": "challenge",
                 "challenge": self.challenge,
                 "supported_api_versions": self.SUPPORTED_API_VERSIONS,
+                "ballpark_client_early_offset": BALLPARK_CLIENT_EARLY_OFFSET,
+                "ballpark_client_late_offset": BALLPARK_CLIENT_LATE_OFFSET,
+                "backend_timestamp": pendulum.now(),
             }
         )
 
@@ -328,14 +345,23 @@ class ServerHandshake:
         if not self.state == "answer":
             raise HandshakeError("Invalid state.")
 
-        if self.answer_type in (HandshakeType.AUTHENTICATED, APIV1_HandshakeType.AUTHENTICATED):
+        if self.answer_type == HandshakeType.AUTHENTICATED:
             if not verify_key:
                 raise HandshakeError(
                     "`verify_key` param must be provided for authenticated handshake"
                 )
 
             try:
-                returned_challenge = verify_key.verify(self.answer_data["answer"])
+                answer = self.answer_data["answer"]
+                assert isinstance(answer, bytes)
+
+                if self.client_api_version >= (2, 5):
+                    returned_challenge = answer_serializer.loads(verify_key.verify(answer))[
+                        "answer"
+                    ]
+                else:
+                    returned_challenge = verify_key.verify(answer)
+
                 if returned_challenge != self.challenge:
                     raise HandshakeFailedChallenge("Invalid returned challenge")
 
@@ -353,17 +379,57 @@ class BaseClientHandshake:
         self.challenge_data: Dict[str, object]
         self.backend_api_version: ApiVersion
         self.client_api_version: ApiVersion
+        self.client_timestamp = self.timestamp()
+
+    def timestamp(self) -> DateTime:
+        # Exposed as a method for easier testing and monkeypatching
+        return pendulum.now()
 
     def load_challenge_req(self, req: bytes) -> None:
         self.challenge_data = handshake_challenge_serializer.loads(req)
+
+        # API version matching
         supported_api_version = cast(
             Sequence[ApiVersion], self.challenge_data["supported_api_versions"]
         )
-
-        # API version matching
         self.backend_api_version, self.client_api_version = _settle_compatible_versions(
             supported_api_version, self.SUPPORTED_API_VERSIONS
         )
+
+        # Parse and cast the challenge content
+        backend_timestamp = cast(
+            Optional[pendulum.DateTime], self.challenge_data.get("backend_timestamp")
+        )
+        ballpark_client_early_offset = cast(
+            Optional[float], self.challenge_data.get("ballpark_client_early_offset")
+        )
+        ballpark_client_late_offset = cast(
+            Optional[float], self.challenge_data.get("ballpark_client_late_offset")
+        )
+
+        # Those fields are missing with parsec API 2.3 and lower
+        if (
+            backend_timestamp is not None
+            and ballpark_client_early_offset is not None
+            and ballpark_client_late_offset is not None
+        ):
+
+            # Add `client_timestamp` to challenge data
+            # so the dictionnary exposes the same fields as `TimestampOutOfBallparkRepSchema`
+            self.challenge_data["client_timestamp"] = self.client_timestamp
+
+            # The client is a bit less tolerant than the backend
+            ballpark_client_early_offset *= BALLPARK_CLIENT_TOLERANCE
+            ballpark_client_late_offset *= BALLPARK_CLIENT_TOLERANCE
+
+            # Check whether our system clock is in sync with the backend
+            if not timestamps_in_the_ballpark(
+                client=self.client_timestamp,
+                backend=backend_timestamp,
+                ballpark_client_early_offset=ballpark_client_early_offset,
+                ballpark_client_late_offset=ballpark_client_late_offset,
+            ):
+                raise HandshakeOutOfBallparkError(self.challenge_data)
 
     def process_result_req(self, req: bytes) -> None:
         data = handshake_result_serializer.loads(req)
@@ -401,6 +467,7 @@ class AuthenticatedClientHandshake(BaseClientHandshake):
         user_signkey: SigningKey,
         root_verify_key: VerifyKey,
     ):
+        super().__init__()
         self.organization_id = organization_id
         self.device_id = device_id
         self.user_signkey = user_signkey
@@ -408,7 +475,19 @@ class AuthenticatedClientHandshake(BaseClientHandshake):
 
     def process_challenge_req(self, req: bytes) -> bytes:
         self.load_challenge_req(req)
-        answer = self.user_signkey.sign(self.challenge_data["challenge"])
+        challenge = self.challenge_data["challenge"]
+
+        assert isinstance(challenge, bytes)
+
+        # TO-DO remove the else for the next release
+        if self.backend_api_version >= (2, 5):
+            # TO-DO Need to use "BaseSignedData" ?
+            answer = self.user_signkey.sign(
+                answer_serializer.dumps({"type": "signed_answer", "answer": challenge})
+            )
+        else:
+            answer = self.user_signkey.sign(challenge)
+
         return self.HANDSHAKE_ANSWER_SERIALIZER.dumps(
             {
                 "handshake": "answer",
@@ -422,18 +501,16 @@ class AuthenticatedClientHandshake(BaseClientHandshake):
         )
 
 
-class APIV1_AuthenticatedClientHandshake(AuthenticatedClientHandshake):
-    SUPPORTED_API_VERSIONS = (API_V1_VERSION,)
-    HANDSHAKE_TYPE = APIV1_HandshakeType.AUTHENTICATED
-    HANDSHAKE_ANSWER_SERIALIZER = apiv1_handshake_answer_serializer
-
-
 class InvitedClientHandshake(BaseClientHandshake):
     SUPPORTED_API_VERSIONS = (API_V2_VERSION,)
 
     def __init__(
-        self, organization_id: OrganizationID, invitation_type: InvitationType, token: UUID
+        self,
+        organization_id: OrganizationID,
+        invitation_type: InvitationType,
+        token: InvitationToken,
     ):
+        super().__init__()
         self.organization_id = organization_id
         self.invitation_type = invitation_type
         self.token = token
@@ -458,6 +535,7 @@ class APIV1_AnonymousClientHandshake(BaseClientHandshake):
     def __init__(
         self, organization_id: OrganizationID, root_verify_key: Optional[VerifyKey] = None
     ):
+        super().__init__()
         self.organization_id = organization_id
         self.root_verify_key = root_verify_key
 
@@ -470,23 +548,5 @@ class APIV1_AnonymousClientHandshake(BaseClientHandshake):
                 "client_api_version": self.client_api_version,
                 "organization_id": self.organization_id,
                 "rvk": self.root_verify_key,
-            }
-        )
-
-
-class APIV1_AdministrationClientHandshake(BaseClientHandshake):
-    SUPPORTED_API_VERSIONS = (API_V1_VERSION,)
-
-    def __init__(self, token: str):
-        self.token = token
-
-    def process_challenge_req(self, req: bytes) -> bytes:
-        self.load_challenge_req(req)
-        return apiv1_handshake_answer_serializer.dumps(
-            {
-                "handshake": "answer",
-                "type": APIV1_HandshakeType.ADMINISTRATION,
-                "client_api_version": self.client_api_version,
-                "token": self.token,
             }
         )

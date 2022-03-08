@@ -1,13 +1,13 @@
-# Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
+# Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2016-2021 Scille SAS
 
 import pytest
-from uuid import uuid4
 
-from parsec.api.protocol import packb, unpackb, OrganizationID
+from parsec.api.protocol import packb, unpackb
 from parsec.api.version import ApiVersion, API_VERSION
 from parsec.api.transport import Transport
 from parsec.api.protocol import (
     AuthenticatedClientHandshake,
+    InvitationToken,
     InvitationType,
     InvitedClientHandshake,
     HandshakeRVKMismatch,
@@ -46,7 +46,7 @@ async def test_handshake_incompatible_version(backend, server_factory):
             "handshake": "answer",
             "type": "anonymous",
             "client_api_version": incompatible_version,
-            "organization_id": OrganizationID("Org"),
+            "organization_id": "Org",
             "token": "whatever",
         }
         await transport.send(packb(req))
@@ -56,7 +56,7 @@ async def test_handshake_incompatible_version(backend, server_factory):
             "result": "bad_protocol",
             "help": "No overlap between client API versions {3.0} and backend API versions {"
             + str(API_VERSION)
-            + ", 1.2}",
+            + ", 1.3}",
         }
 
 
@@ -143,7 +143,9 @@ async def test_invited_handshake_good(backend, server_factory, alice, invitation
 @pytest.mark.parametrize("invitation_type", InvitationType)
 async def test_invited_handshake_bad_token(backend, server_factory, coolorg, invitation_type):
     ch = InvitedClientHandshake(
-        organization_id=coolorg.organization_id, invitation_type=invitation_type, token=uuid4()
+        organization_id=coolorg.organization_id,
+        invitation_type=invitation_type,
+        token=InvitationToken.new(),
     )
     async with server_factory(backend.handle_client) as server:
         stream = server.connection_factory()
@@ -192,7 +194,7 @@ async def test_handshake_unknown_organization(
         ch = InvitedClientHandshake(
             organization_id=bad_org.organization_id,
             invitation_type=InvitationType.USER,
-            token=uuid4(),
+            token=InvitationToken.new(),
         )
     else:  # authenticated
         ch = AuthenticatedClientHandshake(
@@ -222,7 +224,7 @@ async def test_handshake_expired_organization(backend, server_factory, expiredor
         ch = InvitedClientHandshake(
             organization_id=expiredorg.organization_id,
             invitation_type=InvitationType.USER,
-            token=uuid4(),
+            token=InvitationToken.new(),
         )
     else:  # authenticated
         ch = AuthenticatedClientHandshake(

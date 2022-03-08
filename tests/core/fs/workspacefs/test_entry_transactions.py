@@ -1,6 +1,7 @@
-# Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
+# Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2016-2021 Scille SAS
 
 import os
+import sys
 import errno
 from pathlib import Path
 from string import ascii_lowercase
@@ -18,9 +19,11 @@ from hypothesis_trio.stateful import (
 )
 from hypothesis import strategies as st
 
+from parsec.api.data import EntryName
+from parsec.core.fs import FsPath
 from parsec.core.fs.storage import WorkspaceStorage
 from parsec.core.fs.exceptions import FSRemoteManifestNotFound
-from parsec.core.types import FsPath, EntryID, LocalFolderManifest
+from parsec.core.types import EntryID, LocalFolderManifest
 
 from tests.common import freeze_time, call_with_control
 
@@ -60,7 +63,7 @@ async def test_file_create(alice_entry_transactions, alice_file_transactions, al
         "need_sync": True,
         "created": datetime(2000, 1, 1),
         "updated": datetime(2000, 1, 2),
-        "children": ["foo.txt"],
+        "children": [EntryName("foo.txt")],
         "confinement_point": None,
     }
 
@@ -143,7 +146,7 @@ async def test_rename_non_empty_folder(alice_entry_transactions):
     foo2_id = await entry_transactions.entry_rename(FsPath("/foo"), FsPath("/foo2"))
     assert foo2_id == foo_id
     stat = await entry_transactions.entry_info(FsPath("/"))
-    assert stat["children"] == ["foo2"]
+    assert stat["children"] == [EntryName("foo2")]
 
     info = await entry_transactions.entry_info(FsPath("/foo2"))
     assert info["id"] == foo_id
@@ -246,7 +249,7 @@ class PathElement:
 
 
 @pytest.mark.slow
-@pytest.mark.skipif(os.name == "nt", reason="Windows path style not compatible with oracle")
+@pytest.mark.skipif(sys.platform == "win32", reason="Windows path style not compatible with oracle")
 def test_entry_transactions(
     tmpdir,
     hypothesis_settings,
@@ -267,7 +270,9 @@ def test_entry_transactions(
 
         async def start_transactions(self):
             async def _transactions_controlled_cb(started_cb):
-                async with WorkspaceStorage.run(alice, Path("/dummy"), EntryID()) as local_storage:
+                async with WorkspaceStorage.run(
+                    Path("/dummy"), alice, EntryID.new()
+                ) as local_storage:
                     entry_transactions = await entry_transactions_factory(
                         self.device, alice_backend_cmds, local_storage=local_storage
                     )
@@ -338,6 +343,11 @@ def test_entry_transactions(
                 path.to_oracle().unlink()
             except OSError as exc:
                 expected_exc = exc
+
+            # On MacOS, unlink() raises a PermissionError if used on a directory
+            if sys.platform == "darwin" and isinstance(expected_exc, PermissionError):
+                if path.to_oracle().is_dir():
+                    expected_exc = IsADirectoryError()
 
             with expect_raises(expected_exc):
                 await self.entry_transactions.file_delete(path.to_parsec())

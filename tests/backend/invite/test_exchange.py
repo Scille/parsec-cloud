@@ -1,11 +1,11 @@
-# Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
+# Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2016-2021 Scille SAS
 
 from parsec.backend.backend_events import BackendEvent
 import pytest
 import trio
 from pendulum import datetime
 
-from parsec.crypto import PrivateKey
+from parsec.crypto import PrivateKey, HashDigest
 from parsec.api.protocol import InvitationType
 
 from tests.backend.common import (
@@ -142,7 +142,7 @@ async def exchange_testbed(alice_backend_sock, invitation, invited_sock):
                 await peer_controller.peer_do(
                     invite_2a_claimer_send_hashed_nonce,
                     invited_sock,
-                    claimer_hashed_nonce=b"<claimer_hashed_nonce>",
+                    claimer_hashed_nonce=HashDigest.from_data(b"<claimer_nonce>"),
                 )
 
             elif order == "2b_send_nonce":
@@ -202,7 +202,10 @@ async def test_conduit_exchange_good(exchange_testbed, leader):
         await greeter_ctlr.send_order("2a_get_hashed_nonce")
 
     greeter_rep = await greeter_ctlr.get_result()
-    assert greeter_rep == {"status": "ok", "claimer_hashed_nonce": b"<claimer_hashed_nonce>"}
+    assert greeter_rep == {
+        "status": "ok",
+        "claimer_hashed_nonce": HashDigest.from_data(b"<claimer_nonce>"),
+    }
     await greeter_ctlr.send_order("2b_send_nonce")
 
     claimer_rep = await claimer_ctlr.get_result()
@@ -618,7 +621,8 @@ async def test_claimer_step_2_retry(
 
                         # Claimer now arrives and try to do step 2a
                         rep = await invite_2a_claimer_send_hashed_nonce(
-                            invited_sock, claimer_hashed_nonce=b"hashed nonce"
+                            invited_sock,
+                            claimer_hashed_nonce=HashDigest.from_data(b"<claimer_nonce>"),
                         )
                         assert rep == {"status": "invalid_state"}
 
@@ -642,7 +646,10 @@ async def test_claimer_step_2_retry(
                 rep = await invite_2a_greeter_get_hashed_nonce(
                     alice_backend_sock, token=invitation.token
                 )
-                assert rep == {"status": "ok", "claimer_hashed_nonce": b"retry hashed nonce"}
+                assert rep == {
+                    "status": "ok",
+                    "claimer_hashed_nonce": HashDigest.from_data(b"<retry_nonce>"),
+                }
                 rep = await invite_2b_greeter_send_nonce(
                     alice_backend_sock, token=invitation.token, greeter_nonce=b"greeter nonce"
                 )
@@ -650,7 +657,7 @@ async def test_claimer_step_2_retry(
 
             async def _greeter_step_2():
                 rep = await invite_2a_claimer_send_hashed_nonce(
-                    invited_sock, claimer_hashed_nonce=b"retry hashed nonce"
+                    invited_sock, claimer_hashed_nonce=HashDigest.from_data(b"<retry_nonce>")
                 )
                 assert rep == {"status": "ok", "greeter_nonce": b"greeter nonce"}
                 rep = await invite_2b_claimer_send_nonce(

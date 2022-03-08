@@ -1,11 +1,13 @@
-# Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
+# Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2016-2021 Scille SAS
 
 import os
 import trio
 import ssl
+import certifi
 from async_generator import asynccontextmanager
 from structlog import get_logger
-from typing import Optional, Union
+from typing import Optional
+from parsec.api.protocol.handshake import HandshakeOutOfBallparkError
 
 from parsec.crypto import SigningKey
 from parsec.api.transport import Transport, TransportError, TransportClosedByPeer
@@ -17,21 +19,18 @@ from parsec.api.protocol import (
     AuthenticatedClientHandshake,
     InvitedClientHandshake,
     APIV1_AnonymousClientHandshake,
-    APIV1_AuthenticatedClientHandshake,
-    APIV1_AdministrationClientHandshake,
 )
 from parsec.core.types import (
-    BackendAddr,
     BackendOrganizationAddr,
     BackendOrganizationBootstrapAddr,
     BackendInvitationAddr,
 )
 from parsec.core.backend_connection.exceptions import (
-    BackendConnectionError,
     BackendNotAvailable,
     BackendConnectionRefused,
     BackendInvitationAlreadyUsed,
     BackendInvitationNotFound,
+    BackendOutOfBallparkError,
     BackendProtocolError,
 )
 
@@ -40,46 +39,13 @@ logger = get_logger()
 
 
 async def apiv1_connect(
-    addr: Union[BackendAddr, BackendOrganizationBootstrapAddr, BackendOrganizationAddr],
-    device_id: Optional[DeviceID] = None,
-    signing_key: Optional[SigningKey] = None,
-    administration_token: Optional[str] = None,
-    keepalive: Optional[int] = None,
+    addr: BackendOrganizationBootstrapAddr, keepalive: Optional[int] = None
 ) -> Transport:
     """
     Raises:
         BackendConnectionError
     """
-    handshake: BaseClientHandshake
-
-    if administration_token:
-        if not isinstance(addr, BackendAddr):
-            raise BackendConnectionError(f"Invalid url format `{addr}`")
-        handshake = APIV1_AdministrationClientHandshake(administration_token)
-
-    elif not device_id:
-        if isinstance(addr, BackendOrganizationBootstrapAddr):
-            handshake = APIV1_AnonymousClientHandshake(addr.organization_id)
-        elif isinstance(addr, BackendOrganizationAddr):
-            handshake = APIV1_AnonymousClientHandshake(addr.organization_id, addr.root_verify_key)
-        else:
-            raise BackendConnectionError(
-                f"Invalid url format `{addr}` "
-                "(should be an organization url or organization bootstrap url)"
-            )
-
-    else:
-        if not isinstance(addr, BackendOrganizationAddr):
-            raise BackendConnectionError(
-                f"Invalid url format `{addr}` (should be an organization url)"
-            )
-
-        if not signing_key:
-            raise BackendConnectionError(f"Missing signing_key to connect as `{device_id}`")
-        handshake = APIV1_AuthenticatedClientHandshake(
-            addr.organization_id, device_id, signing_key, addr.root_verify_key
-        )
-
+    handshake = APIV1_AnonymousClientHandshake(addr.organization_id)
     return await _connect(addr.hostname, addr.port, addr.use_ssl, keepalive, handshake)
 
 
@@ -116,7 +82,9 @@ async def _connect(
         stream = await trio.open_tcp_stream(hostname, port)
 
     except OSError as exc:
-        logger.debug("Impossible to connect to backend", reason=exc)
+        logger.warning(
+            "Impossible to connect to backend", hostname=hostname, port=port, exc_info=exc
+        )
         raise BackendNotAvailable(exc) from exc
 
     if use_ssl:
@@ -128,14 +96,19 @@ async def _connect(
         transport.keepalive = keepalive
 
     except TransportError as exc:
-        logger.debug("Connection lost during transport creation", reason=exc)
+        logger.warning("Connection lost during transport creation", exc_info=exc)
         raise BackendNotAvailable(exc) from exc
 
     try:
         await _do_handshake(transport, handshake)
 
+    except BackendOutOfBallparkError:
+        transport.logger.info("Abort handshake due to the system clock being out of sync")
+        await transport.aclose()
+        raise
+
     except Exception as exc:
-        transport.logger.debug("Connection lost during handshake", reason=exc)
+        transport.logger.warning("Connection lost during handshake", exc_info=exc)
         await transport.aclose()
         raise
 
@@ -145,13 +118,20 @@ async def _connect(
 def _upgrade_stream_to_ssl(raw_stream, hostname):
     # The ssl context should be generated once and stored into the config
     # however this is tricky (should ssl configuration be stored per device ?)
-    cafile = os.environ.get("SSL_CAFILE")
 
-    ssl_context = ssl.create_default_context(ssl.Purpose.SERVER_AUTH)
+    # Don't load default system certificates and rely on our own instead.
+    # This is because system certificates are less reliable (and system
+    # certificates are tried first, so they can lead to a failure even if
+    # we bundle a valid certificate...)
+    # Certifi provides Mozilla's carefully curated collection of Root Certificates.
+    ssl_context = ssl.create_default_context(
+        purpose=ssl.Purpose.SERVER_AUTH, cadata=certifi.contents()
+    )
+
+    # Also provide custom certificates if any
+    cafile = os.environ.get("SSL_CAFILE")
     if cafile:
         ssl_context.load_verify_locations(cafile)
-    else:
-        ssl_context.load_default_certs()
 
     return trio.SSLStream(raw_stream, ssl_context, server_hostname=hostname)
 
@@ -166,6 +146,9 @@ async def _do_handshake(transport: Transport, handshake):
 
     except TransportError as exc:
         raise BackendNotAvailable(exc) from exc
+
+    except HandshakeOutOfBallparkError as exc:
+        raise BackendOutOfBallparkError(exc) from exc
 
     except HandshakeError as exc:
         if str(exc) == "Invalid handshake: Invitation not found":

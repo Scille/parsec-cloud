@@ -1,12 +1,11 @@
-# Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
+# Parsec Cloud (https://parsec.cloud) Copyright (c) BSLv1.1 (eventually AGPLv3) 2016-2021 Scille SAS
 
 import attr
 import pendulum
-from uuid import UUID
-from typing import List, Dict, Optional
+from typing import List, Dict, Optional, Tuple
 
 from parsec.api.data import UserProfile
-from parsec.api.protocol import DeviceID, UserID, OrganizationID
+from parsec.api.protocol import OrganizationID, DeviceID, UserID, RealmID
 from parsec.backend.backend_events import BackendEvent
 from parsec.backend.realm import (
     MaintenanceType,
@@ -19,6 +18,7 @@ from parsec.backend.realm import (
     RealmIncompatibleProfileError,
     RealmAlreadyExistsError,
     RealmRoleAlreadyGranted,
+    RealmRoleRequireGreaterTimestampError,
     RealmNotFoundError,
     RealmEncryptionRevisionError,
     RealmParticipantsMismatchError,
@@ -28,8 +28,7 @@ from parsec.backend.realm import (
 )
 from parsec.backend.user import BaseUserComponent, UserNotFoundError
 from parsec.backend.message import BaseMessageComponent
-from parsec.backend.memory.vlob import MemoryVlobComponent
-from parsec.backend.memory.block import MemoryBlockComponent
+from parsec.backend import memory
 
 
 @attr.s
@@ -37,16 +36,24 @@ class Realm:
     status: RealmStatus = attr.ib(factory=lambda: RealmStatus(None, None, None, 1))
     checkpoint: int = attr.ib(default=0)
     granted_roles: List[RealmGrantedRole] = attr.ib(factory=list)
+    last_role_change_per_user: Dict[UserID, pendulum.DateTime] = attr.ib(factory=dict)
 
     @property
-    def roles(self):
-        roles = {}
+    def roles(self) -> Dict[UserID, RealmRole]:
+        roles: Dict[UserID, RealmRole] = {}
         for x in sorted(self.granted_roles, key=lambda x: x.granted_on):
             if x.role is None:
                 roles.pop(x.user_id, None)
             else:
                 roles[x.user_id] = x.role
         return roles
+
+    def get_last_role(self, user_id: UserID) -> Optional[RealmGrantedRole]:
+        filtered_roles = [role for role in self.granted_roles if role.user_id == user_id]
+        try:
+            return max(filtered_roles, key=lambda role: role.granted_on)
+        except ValueError:
+            return None
 
 
 class MemoryRealmComponent(BaseRealmComponent):
@@ -56,15 +63,15 @@ class MemoryRealmComponent(BaseRealmComponent):
         self._message_component = None
         self._vlob_component = None
         self._block_component = None
-        self._realms = {}
+        self._realms: Dict[Tuple[OrganizationID, RealmID], Realm] = {}
         self._maintenance_reencryption_is_finished_hook = None
 
     def register_components(
         self,
         user: BaseUserComponent,
         message: BaseMessageComponent,
-        vlob: MemoryVlobComponent,
-        block: MemoryBlockComponent,
+        vlob: "memory.vlob.MemoryVlobComponent",
+        block: "memory.block.MemoryBlockComponent",
         **other_components,
     ):
         self._user_component = user
@@ -72,7 +79,7 @@ class MemoryRealmComponent(BaseRealmComponent):
         self._vlob_component = vlob
         self._block_component = block
 
-    def _get_realm(self, organization_id, realm_id):
+    def _get_realm(self, organization_id: OrganizationID, realm_id: RealmID) -> Realm:
         try:
             return self._realms[(organization_id, realm_id)]
         except KeyError:
@@ -81,6 +88,7 @@ class MemoryRealmComponent(BaseRealmComponent):
     async def create(
         self, organization_id: OrganizationID, self_granted_role: RealmGrantedRole
     ) -> None:
+        assert self_granted_role.granted_by is not None
         assert self_granted_role.granted_by.user_id == self_granted_role.user_id
         assert self_granted_role.role == RealmRole.OWNER
 
@@ -101,7 +109,7 @@ class MemoryRealmComponent(BaseRealmComponent):
             raise RealmAlreadyExistsError()
 
     async def get_status(
-        self, organization_id: OrganizationID, author: DeviceID, realm_id: UUID
+        self, organization_id: OrganizationID, author: DeviceID, realm_id: RealmID
     ) -> RealmStatus:
         realm = self._get_realm(organization_id, realm_id)
         if author.user_id not in realm.roles:
@@ -109,27 +117,28 @@ class MemoryRealmComponent(BaseRealmComponent):
         return realm.status
 
     async def get_stats(
-        self, organization_id: OrganizationID, author: DeviceID, realm_id: UUID
+        self, organization_id: OrganizationID, author: DeviceID, realm_id: RealmID
     ) -> RealmStats:
         realm = self._get_realm(organization_id, realm_id)
         if author.user_id not in realm.roles:
             raise RealmAccessError()
-        RealmStats.blocks_size = 0
-        RealmStats.vlobs_size = 0
+
+        blocks_size = 0
+        vlobs_size = 0
         for value in self._block_component._blockmetas.values():
             if value.realm_id == realm_id:
-                RealmStats.blocks_size += value.size
+                blocks_size += value.size
         for value in self._vlob_component._vlobs.values():
             if value.realm_id == realm_id:
-                RealmStats.vlobs_size += sum(len(blob) for (blob, _, _) in value.data)
+                vlobs_size += sum(len(blob) for (blob, _, _) in value.data)
 
-        return RealmStats
+        return RealmStats(blocks_size=blocks_size, vlobs_size=vlobs_size)
 
     async def get_current_roles(
-        self, organization_id: OrganizationID, realm_id: UUID
+        self, organization_id: OrganizationID, realm_id: RealmID
     ) -> Dict[UserID, RealmRole]:
         realm = self._get_realm(organization_id, realm_id)
-        roles = {}
+        roles: Dict[UserID, RealmRole] = {}
         for x in realm.granted_roles:
             if x.role is None:
                 roles.pop(x.user_id, None)
@@ -141,7 +150,7 @@ class MemoryRealmComponent(BaseRealmComponent):
         self,
         organization_id: OrganizationID,
         author: DeviceID,
-        realm_id: UUID,
+        realm_id: RealmID,
         since: pendulum.DateTime,
     ) -> List[bytes]:
         realm = self._get_realm(organization_id, realm_id)
@@ -158,8 +167,11 @@ class MemoryRealmComponent(BaseRealmComponent):
         new_role: RealmGrantedRole,
         recipient_message: Optional[bytes] = None,
     ) -> None:
+        assert new_role.granted_by is not None
         assert new_role.granted_by.user_id != new_role.user_id
 
+        # The only way for an OUTSIDER to be OWNER is to create his own realm
+        # (given he needs to have one to store it user manifest).
         try:
             user = self._user_component._get_user(organization_id, new_role.user_id)
         except UserNotFoundError:
@@ -181,6 +193,7 @@ class MemoryRealmComponent(BaseRealmComponent):
         owner_only = (RealmRole.OWNER,)
         owner_or_manager = (RealmRole.OWNER, RealmRole.MANAGER)
         existing_user_role = realm.roles.get(new_role.user_id)
+        needed_roles: Tuple[RealmRole, ...]
         if existing_user_role in owner_or_manager or new_role.role in owner_or_manager:
             needed_roles = owner_only
         else:
@@ -193,7 +206,38 @@ class MemoryRealmComponent(BaseRealmComponent):
         if existing_user_role == new_role.role:
             raise RealmRoleAlreadyGranted()
 
+        # Timestamps for the role certificates of a given user should be striclty increasing
+        last_role = realm.get_last_role(new_role.user_id)
+        if last_role is not None and last_role.granted_on >= new_role.granted_on:
+            raise RealmRoleRequireGreaterTimestampError(last_role.granted_on)
+
+        # Perfrom extra checks when removing write rights
+        if new_role.role in (RealmRole.READER, None):
+
+            # The change of role needs to occur strictly after the last upload for this user
+            realm_last_vlob_update = self._vlob_component._get_last_vlob_update(
+                organization_id, new_role.realm_id, new_role.user_id
+            )
+            if realm_last_vlob_update is not None and realm_last_vlob_update >= new_role.granted_on:
+                raise RealmRoleRequireGreaterTimestampError(realm_last_vlob_update)
+
+        # Perform extra checks when removing management rights
+        if new_role.role in (RealmRole.CONTRIBUTOR, RealmRole.READER, None):
+
+            # The change of role needs to occur strictly after the last change of role performed by this user
+            realm_last_role_change = realm.last_role_change_per_user.get(new_role.user_id)
+            if realm_last_role_change is not None and realm_last_role_change >= new_role.granted_on:
+                raise RealmRoleRequireGreaterTimestampError(realm_last_role_change)
+
+        # Update role and record last change timestamp for this user
         realm.granted_roles.append(new_role)
+        author_user_id = new_role.granted_by.user_id
+        current_value = realm.last_role_change_per_user.get(author_user_id)
+        realm.last_role_change_per_user[author_user_id] = (
+            new_role.granted_on
+            if current_value is None
+            else max(current_value, new_role.granted_on)
+        )
 
         await self._send_event(
             BackendEvent.REALM_ROLES_UPDATED,
@@ -217,7 +261,7 @@ class MemoryRealmComponent(BaseRealmComponent):
         self,
         organization_id: OrganizationID,
         author: DeviceID,
-        realm_id: UUID,
+        realm_id: RealmID,
         encryption_revision: int,
         per_participant_message: Dict[UserID, bytes],
         timestamp: pendulum.DateTime,
@@ -267,7 +311,7 @@ class MemoryRealmComponent(BaseRealmComponent):
         self,
         organization_id: OrganizationID,
         author: DeviceID,
-        realm_id: UUID,
+        realm_id: RealmID,
         encryption_revision: int,
     ) -> None:
         realm = self._get_realm(organization_id, realm_id)
@@ -299,7 +343,7 @@ class MemoryRealmComponent(BaseRealmComponent):
 
     async def get_realms_for_user(
         self, organization_id: OrganizationID, user: UserID
-    ) -> Dict[UUID, RealmRole]:
+    ) -> Dict[RealmID, RealmRole]:
         user_realms = {}
         for (realm_org_id, realm_id), realm in self._realms.items():
             if realm_org_id != organization_id:

@@ -1,4 +1,4 @@
-# Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
+# Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2016-2021 Scille SAS
 
 
 class InviteError(Exception):
@@ -20,11 +20,6 @@ class InviteAlreadyUsedError(InviteError):
         super().__init__(msg)
 
 
-class InviteAlreadyMemberError(InviteError):
-    def __init__(self, msg="Invited user is already a member of the organization"):
-        super().__init__(msg)
-
-
-class InviteTimestampError(InviteError):
-    def __init__(self, msg="Invalid timestamp"):
+class InviteActiveUsersLimitReachedError(InviteError):
+    def __init__(self, msg="Active users limit reached"):
         super().__init__(msg)
