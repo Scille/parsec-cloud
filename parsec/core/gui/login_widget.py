@@ -226,6 +226,8 @@ class LoginWidget(QWidget, Ui_LoginWidget):
             PendingRecruitment("3", "Hermes Conrad", "Planet_Express", "accepted", "16/02/3022"),
         ]
 
+        pending = []
+
         devices = [
             device
             for device in list_available_devices(self.config.config_dir)

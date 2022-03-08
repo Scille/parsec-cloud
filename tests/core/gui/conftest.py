@@ -15,7 +15,12 @@ from parsec.core.local_device import save_device_with_password_in_config
 from parsec.core.gui.main_window import MainWindow
 from parsec.core.gui.workspaces_widget import WorkspaceButton
 from parsec.core.gui.trio_jobs import QtToTrioJobScheduler
-from parsec.core.gui.login_widget import LoginWidget, LoginPasswordInputWidget, LoginAccountsWidget
+from parsec.core.gui.login_widget import (
+    LoginWidget,
+    LoginPasswordInputWidget,
+    LoginAccountsWidget,
+    AccountButton,
+)
 from parsec.core.gui.central_widget import CentralWidget
 from parsec.core.gui.lang import switch_language
 from parsec.core.gui.parsec_application import ParsecApp
@@ -351,6 +356,10 @@ def testing_main_window_cls(aqtbot):
             central_widget = self.test_get_central_widget()
             return central_widget.devices_widget
 
+        def test_get_enrollment_widget(self):
+            central_widget = self.test_get_central_widget()
+            return central_widget.enrollment_widget
+
         def test_get_mount_widget(self):
             central_widget = self.test_get_central_widget()
             return central_widget.mount_widget
@@ -402,7 +411,7 @@ def testing_main_window_cls(aqtbot):
                 assert isinstance(accounts_w, LoginAccountsWidget)
                 for i in range(accounts_w.accounts_widget.layout().count() - 1):
                     acc_w = accounts_w.accounts_widget.layout().itemAt(i).widget()
-                    if acc_w.device.slug == device.slug:
+                    if isinstance(acc_w, AccountButton) and acc_w.device.slug == device.slug:
                         async with aqtbot.wait_signal(accounts_w.account_clicked):
                             aqtbot.mouse_click(acc_w, QtCore.Qt.LeftButton)
                         break
@@ -426,6 +435,13 @@ def testing_main_window_cls(aqtbot):
             if not error:
                 await aqtbot.wait_until(_wait_logged_in)
             return self.test_get_central_widget()
+
+        async def test_switch_to_enrollment_widget(self, error=False):
+            central_widget = self.test_get_central_widget()
+            e_w = self.test_get_enrollment_widget()
+            async with aqtbot.wait_exposed(e_w):
+                aqtbot.mouse_click(central_widget.menu.button_enrollment, QtCore.Qt.LeftButton)
+            return e_w
 
         async def test_switch_to_devices_widget(self, error=False):
             central_widget = self.test_get_central_widget()

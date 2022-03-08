@@ -50,7 +50,7 @@
 }
 
 #button_accept:hover {
-	background-color: #8BE54A;
+	background-color: #7BB03E;
 }
 
 #button_reject {
@@ -66,7 +66,12 @@
 }
 
 #button_reject:hover {
-    background-color: #F66558;
+    background-color: #DB3327;
+}
+
+#button_reject:disabled, #button_accept:disabled {
+    background-color: #DDDDDD;
+    color: #999999;
 }</string>
   </property>
   <layout class="QVBoxLayout" name="verticalLayout">
@@ -121,7 +126,7 @@
           </property>
           <property name="font">
            <font>
-            <pointsize>12</pointsize>
+            <pointsize>13</pointsize>
             <weight>75</weight>
             <bold>true</bold>
            </font>
@@ -141,7 +146,7 @@
           </property>
           <property name="font">
            <font>
-            <pointsize>11</pointsize>
+            <pointsize>12</pointsize>
            </font>
           </property>
           <property name="text">
@@ -168,6 +173,12 @@
         </item>
         <item>
          <widget class="QLabel" name="label_certif">
+          <property name="font">
+           <font>
+            <weight>75</weight>
+            <bold>true</bold>
+           </font>
+          </property>
           <property name="text">
            <string/>
           </property>
