@@ -3,12 +3,13 @@
 from collections import namedtuple
 
 from PyQt5.QtCore import pyqtSignal
-from PyQt5.QtGui import QIcon
+from PyQt5.QtGui import QIcon, QColor
 from PyQt5.QtWidgets import QWidget
 
 from parsec.core.core_events import CoreEvent
 
 from parsec.core.gui.lang import translate
+from parsec.core.gui.custom_widgets import Pixmap
 from parsec.core.gui.snackbar_widget import SnackbarManager
 
 from parsec.core.gui.ui.enrollment_widget import Ui_EnrollmentWidget
@@ -31,15 +32,21 @@ class RecruitmentWidget(QWidget, Ui_RecruitmentWidget):
         self.label_name.setText(self.recruitment_info.name)
         self.label_email.setText(self.recruitment_info.email)
         self.label_date.setText(self.recruitment_info.date)
-        self.button_accept.setIcon(QIcon(":/icons/images/material/done.svg"))
-        self.button_reject.setIcon(QIcon(":/icons/images/material/clear.svg"))
+        accept_pix = Pixmap(":/icons/images/material/done.svg")
+        accept_pix.replace_color(QColor(0x00, 0x00, 0x00), QColor(0xFF, 0xFF, 0xFF))
+        reject_pix = Pixmap(":/icons/images/material/clear.svg")
+        reject_pix.replace_color(QColor(0x00, 0x00, 0x00), QColor(0xFF, 0xFF, 0xFF))
+        self.button_accept.setIcon(QIcon(accept_pix))
+        self.button_reject.setIcon(QIcon(reject_pix))
 
         if self.recruitment_info.certif_is_valid:
             self.button_accept.setVisible(True)
-            self.label_certif.setText(translate("TEXT_ENROLLMENT_CERTIFICATE_IS_VALID"))
+            self.label_certif.setStyleSheet("color: #8BC34A;")
+            self.label_certif.setText("✔ " + translate("TEXT_ENROLLMENT_CERTIFICATE_IS_VALID"))
         else:
             self.button_accept.setVisible(False)
-            self.label_certif.setText(translate("TEXT_ENROLLMENT_CERTIFICATE_IS_INVALID"))
+            self.label_certif.setStyleSheet("color: #F44336;")
+            self.label_certif.setText("✘ " + translate("TEXT_ENROLLMENT_CERTIFICATE_IS_INVALID"))
         self.button_accept.clicked.connect(lambda: self.accept_clicked.emit(self))
         self.button_reject.clicked.connect(lambda: self.reject_clicked.emit(self))
 
@@ -93,6 +100,7 @@ class EnrollmentWidget(QWidget, Ui_EnrollmentWidget):
 
     async def list_pending_recruitments(self):
         try:
+            self.label_empty_list.hide()
             self.clear_layout()
             # recruitments = await self.core.list_pending_recruitments()
             recruitments = [
@@ -122,165 +130,10 @@ class EnrollmentWidget(QWidget, Ui_EnrollmentWidget):
                 RecruitmentInfo(
                     "6", "Philip J. Fry", "philip.fry@planetexpress.com", "16/02/3022", True
                 ),
-                RecruitmentInfo(
-                    "1",
-                    "Hubert Farnsworth",
-                    "hubert.farnsworth@planetexpress.com",
-                    "16/02/3022",
-                    True,
-                ),
-                RecruitmentInfo(
-                    "2", "John A. Zoidberg", "john.zoidberg@planetexpress.com", "14/02/3022", True
-                ),
-                RecruitmentInfo(
-                    "3", "Leela Turanga", "leela.turanga@planetexpress.com", "14/02/3022", True
-                ),
-                RecruitmentInfo(
-                    "4",
-                    "Bender B. Rodriguez",
-                    "bender.rodriguez@planetexpress.com",
-                    "15/02/3022",
-                    True,
-                ),
-                RecruitmentInfo(
-                    "5", "Zapp Brannigan", "zapp.brannigan@doop.com", "15/02/3022", False
-                ),
-                RecruitmentInfo(
-                    "6", "Philip J. Fry", "philip.fry@planetexpress.com", "16/02/3022", True
-                ),
-                RecruitmentInfo(
-                    "1",
-                    "Hubert Farnsworth",
-                    "hubert.farnsworth@planetexpress.com",
-                    "16/02/3022",
-                    True,
-                ),
-                RecruitmentInfo(
-                    "2", "John A. Zoidberg", "john.zoidberg@planetexpress.com", "14/02/3022", True
-                ),
-                RecruitmentInfo(
-                    "3", "Leela Turanga", "leela.turanga@planetexpress.com", "14/02/3022", True
-                ),
-                RecruitmentInfo(
-                    "4",
-                    "Bender B. Rodriguez",
-                    "bender.rodriguez@planetexpress.com",
-                    "15/02/3022",
-                    True,
-                ),
-                RecruitmentInfo(
-                    "5", "Zapp Brannigan", "zapp.brannigan@doop.com", "15/02/3022", False
-                ),
-                RecruitmentInfo(
-                    "6", "Philip J. Fry", "philip.fry@planetexpress.com", "16/02/3022", True
-                ),
-                RecruitmentInfo(
-                    "1",
-                    "Hubert Farnsworth",
-                    "hubert.farnsworth@planetexpress.com",
-                    "16/02/3022",
-                    True,
-                ),
-                RecruitmentInfo(
-                    "2", "John A. Zoidberg", "john.zoidberg@planetexpress.com", "14/02/3022", True
-                ),
-                RecruitmentInfo(
-                    "3", "Leela Turanga", "leela.turanga@planetexpress.com", "14/02/3022", True
-                ),
-                RecruitmentInfo(
-                    "4",
-                    "Bender B. Rodriguez",
-                    "bender.rodriguez@planetexpress.com",
-                    "15/02/3022",
-                    True,
-                ),
-                RecruitmentInfo(
-                    "5", "Zapp Brannigan", "zapp.brannigan@doop.com", "15/02/3022", False
-                ),
-                RecruitmentInfo(
-                    "6", "Philip J. Fry", "philip.fry@planetexpress.com", "16/02/3022", True
-                ),
-                RecruitmentInfo(
-                    "1",
-                    "Hubert Farnsworth",
-                    "hubert.farnsworth@planetexpress.com",
-                    "16/02/3022",
-                    True,
-                ),
-                RecruitmentInfo(
-                    "2", "John A. Zoidberg", "john.zoidberg@planetexpress.com", "14/02/3022", True
-                ),
-                RecruitmentInfo(
-                    "3", "Leela Turanga", "leela.turanga@planetexpress.com", "14/02/3022", True
-                ),
-                RecruitmentInfo(
-                    "4",
-                    "Bender B. Rodriguez",
-                    "bender.rodriguez@planetexpress.com",
-                    "15/02/3022",
-                    True,
-                ),
-                RecruitmentInfo(
-                    "5", "Zapp Brannigan", "zapp.brannigan@doop.com", "15/02/3022", False
-                ),
-                RecruitmentInfo(
-                    "6", "Philip J. Fry", "philip.fry@planetexpress.com", "16/02/3022", True
-                ),
-                RecruitmentInfo(
-                    "1",
-                    "Hubert Farnsworth",
-                    "hubert.farnsworth@planetexpress.com",
-                    "16/02/3022",
-                    True,
-                ),
-                RecruitmentInfo(
-                    "2", "John A. Zoidberg", "john.zoidberg@planetexpress.com", "14/02/3022", True
-                ),
-                RecruitmentInfo(
-                    "3", "Leela Turanga", "leela.turanga@planetexpress.com", "14/02/3022", True
-                ),
-                RecruitmentInfo(
-                    "4",
-                    "Bender B. Rodriguez",
-                    "bender.rodriguez@planetexpress.com",
-                    "15/02/3022",
-                    True,
-                ),
-                RecruitmentInfo(
-                    "5", "Zapp Brannigan", "zapp.brannigan@doop.com", "15/02/3022", False
-                ),
-                RecruitmentInfo(
-                    "6", "Philip J. Fry", "philip.fry@planetexpress.com", "16/02/3022", True
-                ),
-                RecruitmentInfo(
-                    "1",
-                    "Hubert Farnsworth",
-                    "hubert.farnsworth@planetexpress.com",
-                    "16/02/3022",
-                    True,
-                ),
-                RecruitmentInfo(
-                    "2", "John A. Zoidberg", "john.zoidberg@planetexpress.com", "14/02/3022", True
-                ),
-                RecruitmentInfo(
-                    "3", "Leela Turanga", "leela.turanga@planetexpress.com", "14/02/3022", True
-                ),
-                RecruitmentInfo(
-                    "4",
-                    "Bender B. Rodriguez",
-                    "bender.rodriguez@planetexpress.com",
-                    "15/02/3022",
-                    True,
-                ),
-                RecruitmentInfo(
-                    "5", "Zapp Brannigan", "zapp.brannigan@doop.com", "15/02/3022", False
-                ),
-                RecruitmentInfo(
-                    "6", "Philip J. Fry", "philip.fry@planetexpress.com", "16/02/3022", True
-                ),
             ]
             if len(recruitments) == 0:
                 self.label_empty_list.setText(translate("TEXT_ENROLLMENT_NO_PENDING_RECRUITMENT"))
+                self.label_empty_list.show()
                 return
             for recruit in recruitments:
                 rw = RecruitmentWidget(recruit)
@@ -312,7 +165,7 @@ class EnrollmentWidget(QWidget, Ui_EnrollmentWidget):
         try:
             # await self.core.reject_recruit(token)
             SnackbarManager.inform(translate("TEXT_ENROLLMENT_REJECT_SUCCESS"))
-            self.main_layout.remoteWidget(recruitment_widget)
+            self.main_layout.removeWidget(recruitment_widget)
         except:
             SnackbarManager.warn(translate("TEXT_ENROLLMENT_REJECT_FAILURE"))
             recruitment_widget.set_buttons_enabled(True)
