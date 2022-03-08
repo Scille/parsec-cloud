@@ -35,11 +35,6 @@
 	border-radius: 8px;
 }
 
-#button_cancel {
-	border: none;
-	background: none;
-}
-
 #button_greet {
 	font-size: 13px;
 }
@@ -48,6 +43,7 @@
 	color: #F44336;
 	background: none;
 	font-size: 12px;
+	border: none;
 }
 
 #button_cancel:hover {
