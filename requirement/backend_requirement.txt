@@ -4,7 +4,7 @@ triopg==0.6.0
 trio-asyncio==0.12.0
 # S3
 boto3==1.21.14
-botocore==1.24.13
+botocore==1.24.14
 # Swift
 python-swiftclient==3.13.1
 pbr==5.8.1
