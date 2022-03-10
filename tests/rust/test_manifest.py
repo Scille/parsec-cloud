@@ -147,9 +147,11 @@ def test_file_manifest():
         assert py.created == rs.created
         assert py.updated == rs.updated
         assert len(py.blocks) == len(rs.blocks)
-        assert all(isinstance(b, BlockAccess) for b in rs.blocks)
         assert all(
-            b1.id == b2.id and b1.offset == b2.offset and b1.size == b2.size
+            isinstance(b2, BlockAccess)
+            and b1.id == b2.id
+            and b1.offset == b2.offset
+            and b1.size == b2.size
             for (b1, b2) in zip(py.blocks, rs.blocks)
         )
 
