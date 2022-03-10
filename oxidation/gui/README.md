@@ -70,14 +70,13 @@ ionic build && npx cap copy ios
 # TO WRITE => webAssembly
 
 # electron version
-# Generate `libparsec-neon-bindings/index.node` (basically a .so that node can load)
-pushd libparsec-neon-bindings
+# Generate `bindings/neon/index.node` (basically a .so that node can load)
+cd ../bindings/neon
 npm install && npm run build
-popd
-pushd gui
+cd ../../gui
 # Copy the node module so electron can find it for packaging
-cp ../libparsec-neon-bindings/index.node ./libparsec-neon-bindings # (unix)
-copy ..\libparsec-neon-bindings\index.node .\libparsec-neon-bindings # (windows)
+cp ../bindings/neon/index.node ./electron/libparsec/ # (unix)
+copy ..\bindings\neon\index.node .\electron\libparsec\ # (windows)
 
 # android version
 # TO WRITE => ?

@@ -1,4 +1,7 @@
 require('./rt/electron-rt');
-//////////////////////////////
-// User Defined Preload scripts below
-console.log('User Preload!');
+const { contextBridge } = require('electron');
+const libparsec = require('../../libparsec');
+
+contextBridge.exposeInMainWorld('libparsec', {
+  submitJob: libparsec.submitJob
+});

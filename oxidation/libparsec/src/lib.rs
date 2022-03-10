@@ -10,4 +10,4 @@ pub use libparsec_platform_native::{RuntimeContext, create_context};
 #[cfg(feature = "web")]
 pub use libparsec_platform_web::{RuntimeContext, create_context};
 
-pub use libparsec_crypto::*;
+pub use parsec_api_crypto::*;
