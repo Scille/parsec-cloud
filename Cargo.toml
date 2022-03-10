@@ -4,4 +4,5 @@ members = [
     "oxidation/libparsec_python",
     "oxidation/crates/*",
     "oxidation/bindings/neon",
+    "oxidation/bindings/android/libparsec/rust",
 ]
