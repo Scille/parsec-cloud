@@ -13,25 +13,23 @@ from parsec.core.gui.custom_widgets import Pixmap
 from parsec.core.gui.snackbar_widget import SnackbarManager
 
 from parsec.core.gui.ui.enrollment_widget import Ui_EnrollmentWidget
-from parsec.core.gui.ui.recruitment_widget import Ui_RecruitmentWidget
+from parsec.core.gui.ui.enrollment_button import Ui_EnrollmentButton
 
 
-RecruitmentInfo = namedtuple(
-    "RecruitmentInfo", ["token", "name", "email", "date", "certif_is_valid"]
-)
+EnrollmentInfo = namedtuple("EnrollmentInfo", ["token", "name", "email", "date", "certif_is_valid"])
 
 
-class RecruitmentWidget(QWidget, Ui_RecruitmentWidget):
+class EnrollmentButton(QWidget, Ui_EnrollmentButton):
     accept_clicked = pyqtSignal(QWidget)
     reject_clicked = pyqtSignal(QWidget)
 
-    def __init__(self, recruitment_info):
+    def __init__(self, enrollment_info):
         super().__init__()
         self.setupUi(self)
-        self.recruitment_info = recruitment_info
-        self.label_name.setText(self.recruitment_info.name)
-        self.label_email.setText(self.recruitment_info.email)
-        self.label_date.setText(self.recruitment_info.date)
+        self.enrollment_info = enrollment_info
+        self.label_name.setText(self.enrollment_info.name)
+        self.label_email.setText(self.enrollment_info.email)
+        self.label_date.setText(self.enrollment_info.date)
         accept_pix = Pixmap(":/icons/images/material/done.svg")
         accept_pix.replace_color(QColor(0x00, 0x00, 0x00), QColor(0xFF, 0xFF, 0xFF))
         reject_pix = Pixmap(":/icons/images/material/clear.svg")
@@ -39,7 +37,7 @@ class RecruitmentWidget(QWidget, Ui_RecruitmentWidget):
         self.button_accept.setIcon(QIcon(accept_pix))
         self.button_reject.setIcon(QIcon(reject_pix))
 
-        if self.recruitment_info.certif_is_valid:
+        if self.enrollment_info.certif_is_valid:
             self.button_accept.setVisible(True)
             self.label_certif.setStyleSheet("color: #8BC34A;")
             self.label_certif.setText("✔ " + translate("TEXT_ENROLLMENT_CERTIFICATE_IS_VALID"))
@@ -52,7 +50,7 @@ class RecruitmentWidget(QWidget, Ui_RecruitmentWidget):
 
     @property
     def token(self):
-        return self.recruitment_info.token
+        return self.enrollment_info.token
 
     def set_buttons_enabled(self, enabled):
         self.button_accept.setEnabled(enabled)
@@ -87,7 +85,7 @@ class EnrollmentWidget(QWidget, Ui_EnrollmentWidget):
             pass
 
     def reset(self):
-        self.jobs_ctx.submit_job(None, None, self.list_pending_recruitments)
+        self.jobs_ctx.submit_job(None, None, self.list_pending_enrollments)
 
     def clear_layout(self):
         while self.main_layout.count() != 0:
@@ -98,45 +96,45 @@ class EnrollmentWidget(QWidget, Ui_EnrollmentWidget):
                 w.hide()
                 w.setParent(None)
 
-    async def list_pending_recruitments(self):
+    async def list_pending_enrollments(self):
         try:
             self.label_empty_list.hide()
             self.clear_layout()
-            # recruitments = await self.core.list_pending_recruitments()
-            recruitments = [
-                RecruitmentInfo(
+            # enrollments = await self.core.list_pending_enrollments()
+            enrollments = [
+                EnrollmentInfo(
                     "1",
                     "Hubert Farnsworth",
                     "hubert.farnsworth@planetexpress.com",
                     "16/02/3022",
                     True,
                 ),
-                RecruitmentInfo(
+                EnrollmentInfo(
                     "2", "John A. Zoidberg", "john.zoidberg@planetexpress.com", "14/02/3022", True
                 ),
-                RecruitmentInfo(
+                EnrollmentInfo(
                     "3", "Leela Turanga", "leela.turanga@planetexpress.com", "14/02/3022", True
                 ),
-                RecruitmentInfo(
+                EnrollmentInfo(
                     "4",
                     "Bender B. Rodriguez",
                     "bender.rodriguez@planetexpress.com",
                     "15/02/3022",
                     True,
                 ),
-                RecruitmentInfo(
+                EnrollmentInfo(
                     "5", "Zapp Brannigan", "zapp.brannigan@doop.com", "15/02/3022", False
                 ),
-                RecruitmentInfo(
+                EnrollmentInfo(
                     "6", "Philip J. Fry", "philip.fry@planetexpress.com", "16/02/3022", True
                 ),
             ]
-            if len(recruitments) == 0:
-                self.label_empty_list.setText(translate("TEXT_ENROLLMENT_NO_PENDING_RECRUITMENT"))
+            if len(enrollments) == 0:
+                self.label_empty_list.setText(translate("TEXT_ENROLLMENT_NO_PENDING_enrollment"))
                 self.label_empty_list.show()
                 return
-            for recruit in recruitments:
-                rw = RecruitmentWidget(recruit)
+            for recruit in enrollments:
+                rw = EnrollmentButton(recruit)
                 rw.accept_clicked.connect(self._on_accept_clicked)
                 rw.reject_clicked.connect(self._on_reject_clicked)
                 self.main_layout.addWidget(rw)
@@ -146,26 +144,36 @@ class EnrollmentWidget(QWidget, Ui_EnrollmentWidget):
 
     def _on_accept_clicked(self, rw):
         rw.set_buttons_enabled(False)
-        self.jobs_ctx.submit_job(None, None, self.accept_recruit, recruitment_widget=rw)
+        self.jobs_ctx.submit_job(None, None, self.accept_recruit, enrollment_button=rw)
 
     def _on_reject_clicked(self, rw):
         rw.set_buttons_enabled(False)
-        self.jobs_ctx.submit_job(None, None, self.reject_recruit, recruitment_widget=rw)
+        self.jobs_ctx.submit_job(None, None, self.reject_recruit, enrollment_button=rw)
 
-    async def accept_recruit(self, recruitment_widget):
+    # Used to write tests for the time being
+    def _fake_accept(self):
+        pass
+
+    # Used to write tests for the time being
+    def _fake_reject(self):
+        pass
+
+    async def accept_recruit(self, enrollment_button):
         try:
             # await self.core.accept_recruit(token)
+            self._fake_accept()
             SnackbarManager.inform(translate("TEXT_ENROLLMENT_ACCEPT_SUCCESS"))
-            self.main_layout.removeWidget(recruitment_widget)
+            self.main_layout.removeWidget(enrollment_button)
         except:
             SnackbarManager.warn(translate("TEXT_ENROLLMENT_ACCEPT_FAILURE"))
-            recruitment_widget.set_buttons_enabled(True)
+            enrollment_button.set_buttons_enabled(True)
 
-    async def reject_recruit(self, recruitment_widget):
+    async def reject_recruit(self, enrollment_button):
         try:
             # await self.core.reject_recruit(token)
+            self._fake_reject()
             SnackbarManager.inform(translate("TEXT_ENROLLMENT_REJECT_SUCCESS"))
-            self.main_layout.removeWidget(recruitment_widget)
+            self.main_layout.removeWidget(enrollment_button)
         except:
             SnackbarManager.warn(translate("TEXT_ENROLLMENT_REJECT_FAILURE"))
-            recruitment_widget.set_buttons_enabled(True)
+            enrollment_button.set_buttons_enabled(True)

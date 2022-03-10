@@ -1,12 +1,12 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <ui version="4.0">
- <class>RecruitmentWidget</class>
- <widget class="QWidget" name="RecruitmentWidget">
+ <class>EnrollmentButton</class>
+ <widget class="QWidget" name="EnrollmentButton">
   <property name="geometry">
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>1213</width>
+    <width>1009</width>
     <height>100</height>
    </rect>
   </property>

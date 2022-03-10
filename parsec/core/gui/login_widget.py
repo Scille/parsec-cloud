@@ -16,42 +16,40 @@ from parsec.core.gui.ui.login_accounts_widget import Ui_LoginAccountsWidget
 from parsec.core.gui.ui.login_password_input_widget import Ui_LoginPasswordInputWidget
 from parsec.core.gui.ui.login_smartcard_input_widget import Ui_LoginSmartcardInputWidget
 from parsec.core.gui.ui.login_no_devices_widget import Ui_LoginNoDevicesWidget
-from parsec.core.gui.ui.recruitment_pending_button import Ui_RecruitmentPendingButton
+from parsec.core.gui.ui.enrollment_pending_button import Ui_EnrollmentPendingButton
 
 
-PendingRecruitment = namedtuple("PendingRecruitment", ["token", "name", "org", "status", "date"])
+PendingEnrollment = namedtuple("PendingEnrollment", ["token", "name", "org", "status", "date"])
 
 
-class RecruitmentPendingButton(QWidget, Ui_RecruitmentPendingButton):
+class EnrollmentPendingButton(QWidget, Ui_EnrollmentPendingButton):
     finalize_clicked = pyqtSignal(QWidget)
     clear_clicked = pyqtSignal(QWidget)
 
-    def __init__(self, recruitment_info):
+    def __init__(self, enrollment_info):
         super().__init__()
         self.setupUi(self)
-        self.recruitment_info = recruitment_info
-        self.label_org.setText(self.recruitment_info.org)
-        self.label_name.setText(self.recruitment_info.name)
-        if self.recruitment_info.status == "rejected":
-            self.label_status.setText("Rejected")
-            self.label_status.setToolTip("Your request to join the organization has been rejected.")
-            self.button_action.setText("Clear")
+        self.enrollment_info = enrollment_info
+        self.label_org.setText(self.enrollment_info.org)
+        self.label_name.setText(self.enrollment_info.name)
+        if self.enrollment_info.status == "rejected":
+            self.label_status.setText(_("TEXT_ENROLLMENT_STATUS_REJECTED"))
+            self.label_status.setToolTip(_("TEXT_ENROLLMENT_STATUS_REJECTED_TOOLTIP"))
+            self.button_action.setText(_("ACTION_ENROLLMENT_CLEAR"))
             self.button_action.clicked.connect(lambda: self.clear_clicked.emit(self))
-        elif self.recruitment_info.status == "accepted":
-            self.label_status.setText("Accepted")
-            self.label_status.setToolTip("Your request to join the organization has been accepted.")
-            self.button_action.setText("Finalize")
+        elif self.enrollment_info.status == "accepted":
+            self.label_status.setText(_("TEXT_ENROLLMENT_STATUS_ACCEPTED"))
+            self.label_status.setToolTip(_("TEXT_ENROLLMENT_STATUS_ACCEPTED_TOOLTIP"))
+            self.button_action.setText(_("ACTION_ENROLLMENT_FINALIZE"))
             self.button_action.clicked.connect(lambda: self.finalize_clicked.emit(self))
         else:
             self.button_action.hide()
-            self.label_status.setText("Pending")
-            self.label_status.setToolTip(
-                "Waiting for an admin to approve your request to join the organization."
-            )
+            self.label_status.setText(_("TEXT_ENROLLMENT_STATUS_PENDING"))
+            self.label_status.setToolTip(_("TEXT_ENROLLMENT_STATUS_PENDING_TOOLTIP"))
 
     @property
     def token(self):
-        return self.recruitment_info.token
+        return self.enrollment_info.token
 
 
 class AccountButton(QWidget, Ui_AccountButton):
@@ -72,8 +70,8 @@ class AccountButton(QWidget, Ui_AccountButton):
 
 class LoginAccountsWidget(QWidget, Ui_LoginAccountsWidget):
     account_clicked = pyqtSignal(AvailableDevice)
-    pending_finalize_clicked = pyqtSignal(PendingRecruitment)
-    pending_clear_clicked = pyqtSignal(PendingRecruitment)
+    pending_finalize_clicked = pyqtSignal(PendingEnrollment)
+    pending_clear_clicked = pyqtSignal(PendingEnrollment)
 
     def __init__(self, devices, pending):
         super().__init__()
@@ -83,16 +81,16 @@ class LoginAccountsWidget(QWidget, Ui_LoginAccountsWidget):
             ab.clicked.connect(self.account_clicked.emit)
             self.accounts_widget.layout().insertWidget(0, ab)
         for p in pending:
-            rpb = RecruitmentPendingButton(p)
-            rpb.finalize_clicked.connect(self._on_pending_finalize_clicked)
-            rpb.clear_clicked.connect(self._on_pending_clear_clicked)
-            self.accounts_widget.layout().insertWidget(0, rpb)
+            epb = EnrollmentPendingButton(p)
+            epb.finalize_clicked.connect(self._on_pending_finalize_clicked)
+            epb.clear_clicked.connect(self._on_pending_clear_clicked)
+            self.accounts_widget.layout().insertWidget(0, epb)
 
-    def _on_pending_clear_clicked(self, rpb):
-        self.pending_clear_clicked.emit(rpb.recruitment_info)
+    def _on_pending_clear_clicked(self, epb):
+        self.pending_clear_clicked.emit(epb.enrollment_info)
 
-    def _on_pending_finalize_clicked(self, rpb):
-        self.pending_finalize_clicked.emit(rpb.recruitment_info)
+    def _on_pending_finalize_clicked(self, epb):
+        self.pending_finalize_clicked.emit(epb.enrollment_info)
 
     def reset(self):
         pass
@@ -216,17 +214,16 @@ class LoginWidget(QWidget, Ui_LoginWidget):
             self.try_login()
         event.accept()
 
-    def reload_devices(self):
-        self._clear_widget()
-        # pending = list_pending_recruitements(self.config.config_dir)
-
-        pending = [
-            PendingRecruitment("1", "Amy Wong", "Planet_Express", "pending", "16/02/3022"),
-            PendingRecruitment("2", "Kiff Kroker", "Planet_Express", "rejected", "16/02/3022"),
-            PendingRecruitment("3", "Hermes Conrad", "Planet_Express", "accepted", "16/02/3022"),
+    def list_pending_enrollments(self):
+        return [
+            PendingEnrollment("1", "Amy Wong", "Planet_Express", "pending", "16/02/3022"),
+            PendingEnrollment("2", "Kiff Kroker", "Planet_Express", "rejected", "16/02/3022"),
+            PendingEnrollment("3", "Hermes Conrad", "Planet_Express", "accepted", "16/02/3022"),
         ]
 
-        pending = []
+    def reload_devices(self):
+        self._clear_widget()
+        pending = self.list_pending_enrollments()
 
         devices = [
             device
