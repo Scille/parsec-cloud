@@ -16,7 +16,13 @@ from tests.common import customize_fixtures, freeze_time
 @pytest.mark.gui
 @pytest.mark.trio
 async def test_expired_notification_logging(
-    aqtbot, running_backend, autoclose_dialog, expiredorgalice, gui_factory, core_config
+    aqtbot,
+    running_backend,
+    autoclose_dialog,
+    expiredorgalice,
+    gui_factory,
+    core_config,
+    snackbar_catcher,
 ):
 
     # Log has alice on an expired organization
@@ -40,7 +46,7 @@ async def test_expired_notification_logging(
 
     # Assert dialog
     def _expired_notified():
-        assert autoclose_dialog.dialogs == [("Error", "The organization has expired")]
+        assert snackbar_catcher.snackbars == [("WARN", "The organization has expired")]
 
     await aqtbot.wait_until(_expired_notified, timeout=3000)
 
@@ -48,7 +54,13 @@ async def test_expired_notification_logging(
 @pytest.mark.gui
 @pytest.mark.trio
 async def test_expired_notification_from_connection(
-    aqtbot, running_backend, autoclose_dialog, expiredorgalice, gui_factory, core_config
+    aqtbot,
+    running_backend,
+    autoclose_dialog,
+    expiredorgalice,
+    gui_factory,
+    core_config,
+    snackbar_catcher,
 ):
     save_device_with_password_in_config(core_config.config_dir, expiredorgalice, "P@ssw0rd")
     gui = await gui_factory()
@@ -91,7 +103,7 @@ async def test_expired_notification_from_connection(
 
     # Assert dialog
     def _expired_notified():
-        assert autoclose_dialog.dialogs == [("Error", "The organization has expired")]
+        assert snackbar_catcher.snackbars == [("WARN", "The organization has expired")]
 
     await aqtbot.wait_until(_expired_notified)
 
@@ -100,7 +112,7 @@ async def test_expired_notification_from_connection(
 @pytest.mark.trio
 @customize_fixtures(logged_gui_as_admin=True)
 async def test_expired_notification_from_update(
-    aqtbot, logged_gui, running_backend, autoclose_dialog, alice
+    aqtbot, logged_gui, running_backend, autoclose_dialog, alice, snackbar_catcher
 ):
 
     # Set expiration date
@@ -109,6 +121,6 @@ async def test_expired_notification_from_update(
         await spy.wait_with_timeout(BackendEvent.ORGANIZATION_EXPIRED)
 
     def _expired_notified():
-        assert autoclose_dialog.dialogs == [("Error", "The organization has expired")]
+        assert snackbar_catcher.snackbars == [("WARN", "The organization has expired")]
 
     await aqtbot.wait_until(_expired_notified)

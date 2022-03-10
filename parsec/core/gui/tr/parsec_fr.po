@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PROJECT VERSION\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2022-03-01 15:32+0100\n"
+"POT-Creation-Date: 2022-03-10 09:19+0100\n"
 "PO-Revision-Date: 2020-10-15 10:31+0200\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language: fr\n"
@@ -67,35 +67,35 @@ msgstr ""
 "Vous n'avez pas accès à l'espace de travail auquel appartient ce fichier."
 " Il n'a peut-être pas été partagé avec vous."
 
-msgid "NOTIF_INFO_WORKSPACE_READ_ONLY"
-msgstr "L'espace de travail est accessible en lecture seulement"
+msgid "TEXT_BACKEND_ADDR_COPIED_TO_CLIPBOARD"
+msgstr "L'adresse du serveur a été copiée dans le presse-papier."
 
-msgid "NOTIF_WARN_MOUNTPOINT_UNMOUNTED"
-msgstr ""
+msgid "TEXT_NOTIF_INFO_WORKSPACE_READ_ONLY"
+msgstr "Cet espace de travail est en lecture seule."
 
-msgid "NOTIF_WARN_WORKSPACE_READ_ACCESS_LOST_{}"
-msgstr ""
+msgid "TEXT_NOTIF_WARN_WORKSPACE_READ_ACCESS_LOST_workspace"
+msgstr "Perte des droits en lecture sur l'espace de travail <b>{workspace}</b>."
 
-msgid "NOTIF_WARN_WORKSPACE_WRITE_ACCESS_LOST_{}"
-msgstr ""
+msgid "TEXT_NOTIF_WARN_WORKSPACE_WRITE_ACCESS_LOST_workspace"
+msgstr "Perte des droits en écriture sur l'espace de travail <b>{workspace}</b>."
 
-msgid "NOTIF_WARN_WORKSPACE_IN_MAINTENANCE_{}"
-msgstr ""
+msgid "TEXT_NOTIF_WARN_WORKSPACE_IN_MAINTENANCE_workspace"
+msgstr "L'espace de travail <b>{workspace}</b> est en maintenance."
 
-msgid "NOTIF_WARN_MOUNTPOINT_REMOTE_ERROR_{}_{}"
-msgstr ""
+msgid "TEXT_NOTIF_WARN_MOUNTPOINT_REMOTE_ERROR_workspace-error"
+msgstr "Erreur de point de montage pour l'espace de travail <b>{workspace}</b>"
 
-msgid "NOTIF_ERR_MOUNTPOINT_UNEXPECTED_ERROR_{}_{}_{}"
-msgstr ""
+msgid "TEXT_NOTIF_ERR_MOUNTPOINT_UNEXPECTED_ERROR_workspace_operation_error"
+msgstr "Erreur de point de montage pour l'espace de travail <b>{workspace}</b>"
 
-msgid "NOTIF_INFO_WORKSPACE_SHARED_{}"
-msgstr ""
+msgid "TEXT_NOTIF_INFO_WORKSPACE_SHARED_workspace"
+msgstr "L'espace de travail <b>{workspace}</b> a été partagé avec vous."
 
-msgid "NOTIF_INFO_WORKSPACE_ROLE_UPDATED_{}"
-msgstr ""
+msgid "TEXT_NOTIF_INFO_WORKSPACE_ROLE_UPDATED_workspace"
+msgstr "Votre role sur l'espace de travail <b>{workspace}</b> a changé."
 
-msgid "NOTIF_INFO_WORKSPACE_UNSHARED_{}"
-msgstr ""
+msgid "TEXT_NOTIF_INFO_WORKSPACE_UNSHARED_workspace"
+msgstr "L'espace de travail <b>{workspace}</b> n'est plus partagé avec vous."
 
 msgid "TEXT_BACKEND_STATE_CONNECTED"
 msgstr "Connecté"
@@ -686,6 +686,9 @@ msgstr "Le lien d'invitation a été copié dans le presse-papier."
 
 msgid "TEXT_GREET_DEVICE_EMAIL_SENT"
 msgstr "Email envoyé"
+
+msgid "TEXT_GREET_DEVICE_EMAIL_SENT_email"
+msgstr "Email envoyé à <b>{email}</b>"
 
 msgid "TEXT_EMAIL_FAILED_TO_SEND_TITLE"
 msgstr "Échec de l'envoi de l'email"
@@ -1979,6 +1982,12 @@ msgstr "Copier le lien d'invitation"
 msgid "ACTION_USER_INVITE_COPY_EMAIL"
 msgstr "Copier l'adresse email"
 
+msgid "TEXT_GREET_USER_ADDR_COPIED_TO_CLIPBOARD"
+msgstr "Le lien d'invitation a été copié dans le presse-papier.\""
+
+msgid "TEXT_GREET_USER_EMAIL_COPIED_TO_CLIPBOARD"
+msgstr "L'email a été copié dans le presse-papier."
+
 msgid "TEXT_USER_IS_CURRENT"
 msgstr "vous"
 
@@ -2054,6 +2063,9 @@ msgstr ""
 
 msgid "TEXT_USER_LIST_RETRIEVABLE_FAILURE"
 msgstr "Impossible de récupérer la liste des utilisateurs depuis le serveur."
+
+msgid "TEXT_USER_INVITATION_CANCELLED"
+msgstr "L'invitation a été annulée."
 
 msgid "TEXT_INVITE_USER_CANCEL_ERROR"
 msgstr "Impossible d'annuler l'invitation."
@@ -2145,8 +2157,21 @@ msgstr "Cet utilisateur a été révoqué."
 msgid "NOT_ALLOWED_FOR_OUTSIDER_PROFILE_TOOLTIP"
 msgstr "Rôle non autorisé pour les utilisateurs externes."
 
-msgid "TEXT_WORKSPACE_SHARING_OFFLINE"
+msgid "TEXT_WORKSPACE_SHARING_NEW_OK_workspace-user"
+msgstr "L'espace de travail <b>{workspace}</b> a été partagé avec <b>{user}</b>."
+
+msgid "TEXT_WORKSPACE_SHARING_REMOVED_OK_workspace-user"
 msgstr ""
+"<b>{user}</b> a été exclu(e) du partage de l'espace de travail "
+"<b>{workspace}</b>."
+
+msgid "TEXT_WORKSPACE_SHARING_UPDATED_workspace-user"
+msgstr ""
+"Le rôle de <b>{user}</b> sur l'espace de travail <b>{workspace}</b> a été"
+" modifié."
+
+msgid "TEXT_WORKSPACE_SHARING_OFFLINE"
+msgstr "Impossible de contacter le serveur."
 
 msgid "TEXT_WORKSPACE_SHARING_UNSHARE_ERROR_workspace-user"
 msgstr ""

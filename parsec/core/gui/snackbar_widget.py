@@ -15,7 +15,7 @@ from PyQt5.QtCore import (
     QObject,
     QSize,
 )
-from PyQt5.QtGui import QPainter, QBrush, QColor
+from PyQt5.QtGui import QPainter, QBrush, QColor, QCursor
 from PyQt5.QtWidgets import QWidget
 
 from parsec.core.gui.custom_widgets import Pixmap
@@ -35,7 +35,7 @@ class SnackbarWidget(QWidget, Ui_SnackbarWidget):
 
     opacity = pyqtProperty(float, fset=_set_opacity, fget=_get_opacity)
 
-    def __init__(self, msg, icon=None, timeout=3000, action_text=None, action=None, animate=False):
+    def __init__(self, msg, icon=None, timeout=3000, action_text=None, action=None, animate=True):
         super().__init__()
         self.setupUi(self)
         self.animate = animate
@@ -48,6 +48,7 @@ class SnackbarWidget(QWidget, Ui_SnackbarWidget):
         if action_text and action:
             self.button_action.setText(action_text)
             self.button_action.clicked.connect(self._on_action_clicked)
+            self.button_action.setCursor(QCursor(Qt.PointingHandCursor))
         if icon:
             self.label_icon.setPixmap(icon)
         self.button_close.clicked.connect(self._on_timeout)
@@ -56,7 +57,6 @@ class SnackbarWidget(QWidget, Ui_SnackbarWidget):
         self.timer.setInterval(timeout)
         self.timer.setSingleShot(True)
         self.timer.timeout.connect(self._on_timeout)
-        self.main_window = ParsecApp.get_main_window()
         self.index = 0
 
         if self.animate:
@@ -101,16 +101,19 @@ class SnackbarWidget(QWidget, Ui_SnackbarWidget):
         painter.drawRoundedRect(rect, 10, 10)
 
     def move_popup(self):
+        main_window = ParsecApp.get_main_window()
+        if not main_window:
+            return
         offset = 10
         height = 101 if platform.system() == "Windows" else 75
-        width = min(500, self.main_window.size().width() - 40)
+        width = min(500, main_window.size().width() - 40)
         self.resize(QSize(width, height))
 
-        x = self.main_window.size().width() - width - 20
-        y = self.main_window.size().height() - ((height + offset) * (self.index + 1))
+        x = main_window.size().width() - width - 20
+        y = main_window.size().height() - ((height + offset) * (self.index + 1))
         # Hide the snackbar if the main window does not have enough space to show it
         self.set_visible(y > 30)
-        pos = self.main_window.mapToGlobal(QPoint(x, y))
+        pos = main_window.mapToGlobal(QPoint(x, y))
         self.setGeometry(pos.x(), pos.y(), width, height)
 
     def _on_timeout(self):
@@ -152,6 +155,8 @@ class SnackbarManager(QObject):
         super().__init__()
         self.snackbars = []
         ParsecApp.get_main_window().installEventFilter(self)
+        self.setParent(ParsecApp.get_main_window())
+        self.destroyed.connect(self._on_destroyed)
 
     def eventFilter(self, obj, event):
         if event.type() == QEvent.Move or event.type() == QEvent.Resize:
@@ -175,6 +180,9 @@ class SnackbarManager(QObject):
             sb.set_index(i)
         snackbar.show()
 
+    def _on_destroyed(self, _):
+        self.snackbars = []
+
     def _remove_snackbar(self, snackbar):
         try:
             self.snackbars.remove(snackbar)
@@ -197,7 +205,7 @@ class SnackbarManager(QObject):
         return cls._manager
 
     @classmethod
-    def inform(cls, msg, timeout=3000, action_text=None, action=None, animate=False):
+    def inform(cls, msg, timeout=3000, action_text=None, action=None, animate=True):
         pix = Pixmap(":/icons/images/material/info.svg")
         pix.replace_color(QColor(0, 0, 0), QColor(73, 153, 208))
         snackbar = SnackbarWidget(
@@ -206,7 +214,7 @@ class SnackbarManager(QObject):
         cls.get_manager().add_snackbar(snackbar)
 
     @classmethod
-    def congratulate(cls, msg, timeout=3000, action_text=None, action=None, animate=False):
+    def congratulate(cls, msg, timeout=3000, action_text=None, action=None, animate=True):
         pix = Pixmap(":/icons/images/material/check_circle.svg")
         pix.replace_color(QColor(0, 0, 0), QColor(73, 208, 86))
         snackbar = SnackbarWidget(
@@ -215,7 +223,7 @@ class SnackbarManager(QObject):
         cls.get_manager().add_snackbar(snackbar)
 
     @classmethod
-    def warn(cls, msg, timeout=3000, action_text=None, action=None, animate=False):
+    def warn(cls, msg, timeout=3000, action_text=None, action=None, animate=True):
         pix = Pixmap(":/icons/images/material/report_problem.svg")
         pix.replace_color(QColor(0, 0, 0), QColor(208, 102, 73))
         snackbar = SnackbarWidget(
