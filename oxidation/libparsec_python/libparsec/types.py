@@ -32,6 +32,7 @@ try:
         FileManifest,
         FolderManifest,
         WorkspaceManifest,
+        UserManifest,
     )
 except ImportError as exc:
     print(f"Import error in libparsec/types: {exc}")
@@ -67,4 +68,5 @@ __all__ = (
     "FileManifest",
     "FolderManifest",
     "WorkspaceManifest",
+    "UserManifest",
 )

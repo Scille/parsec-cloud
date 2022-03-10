@@ -7,6 +7,7 @@ mod binding_utils;
 mod crypto;
 mod ids;
 mod invite;
+#[allow(clippy::too_many_arguments)]
 mod manifest;
 
 /// A Python module implemented in Rust. The name of this function must match
@@ -51,5 +52,6 @@ fn _libparsec(_py: Python, m: &PyModule) -> PyResult<()> {
     m.add_class::<manifest::FolderManifest>()?;
     m.add_class::<manifest::WorkspaceEntry>()?;
     m.add_class::<manifest::WorkspaceManifest>()?;
+    m.add_class::<manifest::UserManifest>()?;
     Ok(())
 }

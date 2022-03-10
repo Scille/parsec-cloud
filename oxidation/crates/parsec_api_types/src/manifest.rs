@@ -12,7 +12,7 @@ use parsec_api_crypto::{HashDigest, SecretKey, SigningKey, VerifyKey};
 
 use crate::data_macros::{impl_transparent_data_format_conversion, new_data_struct_type};
 use crate::ext_types::new_uuid_type;
-use crate::{DateTime, DeviceID};
+use crate::{DataError, DateTime, DeviceID};
 
 macro_rules! impl_manifest_dump_load {
     ($name:ident) => {
@@ -37,24 +37,32 @@ macro_rules! impl_manifest_dump_load {
                 author_verify_key: &VerifyKey,
                 expected_author: &DeviceID,
                 expected_timestamp: DateTime,
-            ) -> Result<Self, &'static str> {
-                let signed = key.decrypt(encrypted).map_err(|_| "Invalid encryption")?;
+            ) -> Result<Self, DataError> {
+                let signed = key
+                    .decrypt(encrypted)
+                    .map_err(|_| DataError::InvalidEncryption)?;
                 let compressed = author_verify_key
                     .verify(&signed)
-                    .map_err(|_| "Invalid signature")?;
+                    .map_err(|_| DataError::InvalidSignature)?;
                 let mut serialized = vec![];
 
                 ZlibDecoder::new(&compressed[..])
                     .read_to_end(&mut serialized)
-                    .map_err(|_| "Invalid compression")?;
+                    .map_err(|_| DataError::InvalidCompression)?;
 
-                let obj = ::rmp_serde::from_read_ref::<_, Self>(&serialized)
-                    .map_err(|_| "Invalid serialization")?;
+                let obj = rmp_serde::from_read_ref::<_, Self>(&serialized)
+                    .map_err(|_| DataError::InvalidSerialization)?;
 
                 if obj.author != *expected_author {
-                    Err("Unexpected author")
+                    Err(DataError::UnexpectedAuthor {
+                        expected: expected_author.clone(),
+                        got: obj.author,
+                    })
                 } else if obj.timestamp != expected_timestamp {
-                    Err("Unexpected timestamp")
+                    Err(DataError::UnexpectedTimestamp {
+                        expected: expected_timestamp,
+                        got: obj.timestamp,
+                    })
                 } else {
                     Ok(obj)
                 }

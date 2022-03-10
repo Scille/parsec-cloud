@@ -813,6 +813,7 @@ dependencies = [
  "serde_test",
  "serde_with",
  "tests_fixtures",
+ "thiserror",
  "unicode-normalization",
  "url",
  "uuid",
