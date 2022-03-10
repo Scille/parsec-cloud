@@ -3,6 +3,7 @@
 import pytest
 from pendulum import datetime
 
+from parsec.api.data import EntryName
 from parsec.api.protocol import VlobID
 from parsec.core.fs import FSError
 from parsec.core.types import WorkspaceRole
@@ -13,7 +14,7 @@ from tests.common import freeze_time, customize_fixtures
 @pytest.fixture
 async def testbed(running_backend, alice_user_fs, alice, bob):
     with freeze_time("2000-01-01"):
-        wid = await alice_user_fs.workspace_create("w1")
+        wid = await alice_user_fs.workspace_create(EntryName("w1"))
         workspace = alice_user_fs.get_workspace(wid)
         await workspace.sync()
         local_manifest = await workspace.local_storage.get_manifest(wid)

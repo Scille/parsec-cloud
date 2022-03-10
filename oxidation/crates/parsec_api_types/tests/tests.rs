@@ -4,3 +4,8 @@
 use rstest_reuse;
 
 mod test_addr;
+mod test_certif;
+mod test_invite;
+mod test_manifest;
+mod test_message;
+mod test_sas_code;

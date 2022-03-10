@@ -4,7 +4,7 @@ import pytest
 
 from PyQt5 import QtCore, QtWidgets
 
-from parsec.api.data import UserProfile
+from parsec.api.data import UserProfile, EntryName
 from parsec.core.types import WorkspaceRole
 from parsec.core.local_device import save_device_with_password_in_config
 from parsec.core.gui.workspace_button import WorkspaceButton
@@ -33,7 +33,7 @@ async def gui_workspace_sharing(
         assert w_w.layout_workspaces.count() == 1
         wk_button = w_w.layout_workspaces.itemAt(0).widget()
         assert isinstance(wk_button, WorkspaceButton)
-        assert wk_button.name == "Workspace"
+        assert wk_button.name == EntryName("Workspace")
         assert wk_button.label_title.toolTip() == "Workspace (private)"
         assert wk_button.label_title.text() == "Workspace (private)"
         assert not autoclose_dialog.dialogs
@@ -148,7 +148,7 @@ async def test_share_workspace(
         assert w_w.layout_workspaces.count() == 1
         wk_button = w_w.layout_workspaces.itemAt(0).widget()
         assert isinstance(wk_button, WorkspaceButton)
-        assert wk_button.name == "Workspace"
+        assert wk_button.name == EntryName("Workspace")
         assert wk_button.label_title.toolTip() == "Workspace (shared with Adamy McAdamFace)"
         assert wk_button.label_title.text() == "Workspace (share..."
         assert not autoclose_dialog.dialogs
@@ -168,14 +168,14 @@ async def test_share_workspace(
         assert w_w.layout_workspaces.count() == 1
         wk_button = w_w.layout_workspaces.itemAt(0).widget()
         assert isinstance(wk_button, WorkspaceButton)
-        assert wk_button.name == "Workspace"
+        assert wk_button.name == EntryName("Workspace")
         assert not autoclose_dialog.dialogs
 
     await aqtbot.wait_until(_workspace_listed, timeout=2000)
 
     w_b = w_w.layout_workspaces.itemAt(0).widget()
     assert isinstance(w_b, WorkspaceButton)
-    assert w_b.workspace_name == "Workspace"
+    assert w_b.workspace_name == EntryName("Workspace")
     assert w_b.is_owner is False
 
     # Also check the workspace shared with view
@@ -320,7 +320,7 @@ async def test_share_workspace_while_connected(
     aqtbot, running_backend, logged_gui, autoclose_dialog, alice_user_fs, bob
 ):
     w_w = await logged_gui.test_switch_to_workspaces_widget()
-    wid = await alice_user_fs.workspace_create("Workspace")
+    wid = await alice_user_fs.workspace_create(EntryName("Workspace"))
 
     def _no_workspace_listed():
         assert w_w.layout_workspaces.count() == 1
@@ -346,7 +346,7 @@ async def test_unshare_workspace_while_connected(
     aqtbot, running_backend, logged_gui, autoclose_dialog, alice_user_fs, bob, snackbar_catcher
 ):
     w_w = await logged_gui.test_switch_to_workspaces_widget()
-    wid = await alice_user_fs.workspace_create("Workspace")
+    wid = await alice_user_fs.workspace_create(EntryName("Workspace"))
 
     await alice_user_fs.workspace_share(wid, bob.user_id, WorkspaceRole.MANAGER)
 
@@ -354,7 +354,7 @@ async def test_unshare_workspace_while_connected(
         assert w_w.layout_workspaces.count() == 1
         wk_button = w_w.layout_workspaces.itemAt(0).widget()
         assert isinstance(wk_button, WorkspaceButton)
-        wk_button.name == "Workspace"
+        wk_button.name == EntryName("Workspace")
 
     await aqtbot.wait_until(_one_workspace_listed, timeout=2000)
     assert snackbar_catcher.snackbars == [
@@ -392,7 +392,7 @@ async def test_rename_workspace_when_revoked(
     w_w = await logged_gui.test_switch_to_workspaces_widget()
 
     core = logged_gui.test_get_tab().core
-    wid = await core.user_fs.workspace_create("Workspace")
+    wid = await core.user_fs.workspace_create(EntryName("Workspace"))
 
     def _workspace_not_shared_listed():
         assert w_w.layout_workspaces.count() == 1
@@ -401,7 +401,7 @@ async def test_rename_workspace_when_revoked(
         assert wk_button.label_title.text() == "Workspace (private)"
         assert wk_button.label_title.toolTip() == "Workspace (private)"
         assert not wk_button.is_shared
-        assert wk_button.name == "Workspace"
+        assert wk_button.name == EntryName("Workspace")
 
     await aqtbot.wait_until(_workspace_not_shared_listed, timeout=2000)
 
@@ -414,7 +414,7 @@ async def test_rename_workspace_when_revoked(
         wk_button = w_w.layout_workspaces.itemAt(0).widget()
         assert isinstance(wk_button, WorkspaceButton)
         assert wk_button.is_shared
-        assert wk_button.name == "Workspace"
+        assert wk_button.name == EntryName("Workspace")
         assert wk_button.label_title.toolTip() == "Workspace (shared with Boby McBobFace)"
         assert wk_button.label_title.text() == "Workspace (shared ..."
 

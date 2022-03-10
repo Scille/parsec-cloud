@@ -282,7 +282,7 @@ def test_backend_organization_bootstrap_addr_good(base_url, expected, verify_key
         (
             # bad action param
             "parsec://foo:42/org?action=dummy&token=123",
-            "Expected `action=bootstrap_organization` value",
+            "Expected `action=bootstrap_organization` param value",
         ),
         (
             # missing org name

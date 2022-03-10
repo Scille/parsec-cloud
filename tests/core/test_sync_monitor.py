@@ -5,6 +5,7 @@ import trio
 import pytest
 from unittest.mock import ANY
 
+from parsec.api.data import EntryName
 from parsec.api.protocol import RealmID, VlobID
 from parsec.backend.backend_events import BackendEvent
 from parsec.core.backend_connection import BackendConnStatus
@@ -144,7 +145,7 @@ async def test_autosync_placeholder_workspace_manifest(
     # monitors to be idle before returning the core
     async with logged_core_factory(core_config, alice, event_bus=event_bus_factory()) as alice_core:
         with alice_core.event_bus.listen() as spy:
-            w1id = await alice_core.user_fs.workspace_create("w1")
+            w1id = await alice_core.user_fs.workspace_create(EntryName("w1"))
             # Wait for the sync monitor to sync the new workspace
             await spy.wait_multiple_with_timeout(
                 [
@@ -162,7 +163,7 @@ async def test_autosync_placeholder_workspace_manifest(
     ) as alice2_core:
         # Workspace created before user manifest placeholder sync
         with alice2_core.event_bus.listen() as spy:
-            w2id = await alice2_core.user_fs.workspace_create("w2")
+            w2id = await alice2_core.user_fs.workspace_create(EntryName("w2"))
             await spy.wait_multiple_with_timeout(
                 [
                     (CoreEvent.FS_ENTRY_SYNCED, {"id": alice2.user_manifest_id}),
@@ -180,7 +181,7 @@ async def test_autosync_on_modification(
     autojump_clock.setup()
 
     with alice_core.event_bus.listen() as spy:
-        wid = await alice_core.user_fs.workspace_create("w")
+        wid = await alice_core.user_fs.workspace_create(EntryName("w"))
         workspace = alice_core.user_fs.get_workspace(wid)
         # Wait for the sync monitor to sync the new workspace
         with trio.fail_after(60):  # autojump, so not *really* 60s
@@ -223,7 +224,7 @@ async def test_autosync_on_remote_modifications(
     autojump_clock.setup()
 
     with alice_core.event_bus.listen() as spy:
-        wid = await alice2_user_fs.workspace_create("w")
+        wid = await alice2_user_fs.workspace_create(EntryName("w"))
         await alice2_user_fs.sync()
 
         # Wait for event to come back to alice_core
@@ -290,7 +291,7 @@ async def test_reconnect_with_remote_changes(
 ):
     autojump_clock.setup()
 
-    wid = await alice_core.user_fs.workspace_create("w")
+    wid = await alice_core.user_fs.workspace_create(EntryName("w"))
     alice_w = alice_core.user_fs.get_workspace(wid)
     await alice_w.mkdir("/foo")
     await alice_w.touch("/bar.txt")
@@ -376,7 +377,7 @@ async def test_sync_confined_children_after_rename(
     autojump_clock.setup()
 
     # Create a workspace
-    wid = await alice_core.user_fs.workspace_create("w")
+    wid = await alice_core.user_fs.workspace_create(EntryName("w"))
     alice_w = alice_core.user_fs.get_workspace(wid)
 
     # Set a filter
@@ -459,7 +460,7 @@ async def test_sync_monitor_while_changing_roles(
     autojump_clock.setup()
 
     # Create a shared workspace
-    wid = await create_shared_workspace("w", alice_core, bob_core)
+    wid = await create_shared_workspace(EntryName("w"), alice_core, bob_core)
     alice_workspace = alice_core.user_fs.get_workspace(wid)
     bob_workspace = bob_core.user_fs.get_workspace(wid)
 
@@ -524,7 +525,7 @@ async def test_sync_with_concurrent_reencryption(
     autojump_clock.setup()
 
     # Create a shared workspace
-    wid = await create_shared_workspace("w", bob_user_fs, alice_core)
+    wid = await create_shared_workspace(EntryName("w"), bob_user_fs, alice_core)
     alice_workspace = alice_core.user_fs.get_workspace(wid)
     bob_workspace = bob_user_fs.get_workspace(wid)
 

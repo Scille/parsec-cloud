@@ -47,6 +47,7 @@ class NavigationBarWidget(QWidget):
         self.layout().addWidget(self.scroll_area)
         self.inner_widget = QWidget()
         self.inner_widget.setFixedHeight(25)
+        self.inner_widget.setStyleSheet("background-color: #EEEEEE;")
         self.inner_widget.setLayout(QHBoxLayout())
         self.scroll_area.setWidget(self.inner_widget)
         self.inner_widget.layout().setContentsMargins(0, 3, 0, 0)
@@ -95,15 +96,15 @@ class NavigationBarWidget(QWidget):
                 )
             label = None
             if idx != len(parts) - 1:
-                obj_name = part.replace(" ", "_")
-                label = ClickableLabel(part)
+                obj_name = str(idx)
+                label = ClickableLabel(part.str)
                 label.clicked.connect(self._on_label_clicked(idx))
                 label.setObjectName(f"label_{obj_name}")
                 label.setStyleSheet(
                     f"#label_{obj_name} {{ color: #999999; }} #label_{obj_name}:hover {{ color: #0092FF; }}"
                 )
             else:
-                label = QLabel(part)
+                label = QLabel(part.str)
                 label.setStyleSheet("color: #999999;")
             font = label.font()
             font.setBold(True)

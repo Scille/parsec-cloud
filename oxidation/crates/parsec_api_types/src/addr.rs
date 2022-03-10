@@ -7,8 +7,9 @@ use std::convert::TryFrom;
 use std::str::FromStr;
 use url::Url;
 
-use super::{EntryID, InvitationToken, InvitationType, OrganizationID};
 use parsec_api_crypto::VerifyKey;
+
+use super::{EntryID, InvitationToken, InvitationType, OrganizationID};
 
 const PARSEC_SCHEME: &str = "parsec";
 const PARSEC_SSL_DEFAULT_PORT: u16 = 443;
@@ -201,8 +202,9 @@ impl BaseBackendAddr {
     }
 
     pub fn to_url(&self) -> Url {
-        let mut url = Url::parse(&format!("{}://{}", PARSEC_SCHEME, &self.hostname)).unwrap();
-        url.set_port(self.port).unwrap();
+        let mut url = Url::parse(&format!("{}://{}", PARSEC_SCHEME, &self.hostname))
+            .unwrap_or_else(|_| unreachable!());
+        url.set_port(self.port).unwrap_or_else(|_| unreachable!());
         if !self.use_ssl {
             url.query_pairs_mut().append_pair("no_ssl", "true");
         }
@@ -211,8 +213,9 @@ impl BaseBackendAddr {
 
     pub fn to_http_redirection_url(&self) -> Url {
         let scheme = if self.use_ssl { "https" } else { "http" };
-        let mut url = Url::parse(&format!("{}://{}", scheme, &self.hostname)).unwrap();
-        url.set_port(self.port).unwrap();
+        let mut url = Url::parse(&format!("{}://{}", scheme, &self.hostname))
+            .unwrap_or_else(|_| unreachable!());
+        url.set_port(self.port).unwrap_or_else(|_| unreachable!());
         url
     }
 
@@ -220,8 +223,9 @@ impl BaseBackendAddr {
         let path = path.unwrap_or("");
         let scheme = if self.use_ssl { "https" } else { "http" };
 
-        let mut url = Url::parse(&format!("{}://{}", scheme, &self.hostname)).unwrap();
-        url.set_port(self.port).unwrap();
+        let mut url = Url::parse(&format!("{}://{}", scheme, &self.hostname))
+            .unwrap_or_else(|_| unreachable!());
+        url.set_port(self.port).unwrap_or_else(|_| unreachable!());
         url.set_path(path);
 
         url
@@ -436,10 +440,11 @@ impl BackendActionAddr {
     }
 }
 
-impl TryFrom<&str> for BackendActionAddr {
-    type Error = &'static str;
+impl std::str::FromStr for BackendActionAddr {
+    type Err = &'static str;
 
-    fn try_from(url: &str) -> Result<Self, Self::Error> {
+    #[inline]
+    fn from_str(url: &str) -> Result<Self, Self::Err> {
         if let Ok(addr) = url.parse::<BackendOrganizationBootstrapAddr>() {
             return Ok(BackendActionAddr::OrganizationBootstrap(addr));
         }
@@ -484,7 +489,7 @@ impl BackendOrganizationBootstrapAddr {
         let organization_id = extract_organization_id(parsed)?;
         let action = extract_action(pairs)?;
         if action != "bootstrap_organization" {
-            return Err("Expected `action=bootstrap_organization` value");
+            return Err("Expected `action=bootstrap_organization` param value");
         }
 
         let mut token_queries = pairs.filter(|(k, _)| k == "token");
@@ -493,7 +498,7 @@ impl BackendOrganizationBootstrapAddr {
         // the replacement character EF BF BD is used instead. This should be
         // ok for our usecase (but it differs from Python implementation).
         if token_queries.next().is_some() {
-            return Err("Multiple values for query `token`");
+            return Err("Multiple values for param `token`");
         }
         // Consider empty token as no token
         // It's important to do this cooking eagerly (instead of e.g. doing it in
@@ -518,9 +523,6 @@ impl BackendOrganizationBootstrapAddr {
             .push(self.organization_id.as_ref());
         url.query_pairs_mut()
             .append_pair("action", "bootstrap_organization");
-        // For legacy reasons, token must always be provided, hence default
-        // token is the empty one (which is used for spontaneous organization
-        // bootstrap without prior organization creation)
         if let Some(ref tk) = self.token {
             if !tk.is_empty() {
                 url.query_pairs_mut().append_pair("token", tk);
@@ -572,29 +574,29 @@ impl BackendOrganizationFileLinkAddr {
         let organization_id = extract_organization_id(parsed)?;
         let action = extract_action(pairs)?;
         if action != "file_link" {
-            return Err("Expected `action=file_link` query");
+            return Err("Expected `action=file_link` param value");
         }
 
         let mut workspace_id_queries = pairs.filter(|(k, _)| k == "workspace_id");
         let workspace_id = match workspace_id_queries.next() {
-            None => return Err("Missing mandatory `workspace_id` query"),
+            None => return Err("Missing mandatory `workspace_id` param"),
             Some((_, value)) => value
                 .parse::<EntryID>()
-                .or(Err("Invalid `workspace_id` query value"))?,
+                .or(Err("Invalid `workspace_id` param value"))?,
         };
         if workspace_id_queries.next().is_some() {
-            return Err("Multiple values for query `workspace_id`");
+            return Err("Multiple values for param `workspace_id`");
         }
 
         let mut path_queries = pairs.filter(|(k, _)| k == "path");
         let encrypted_path = match path_queries.next() {
-            None => return Err("Missing mandatory `path` query"),
+            None => return Err("Missing mandatory `path` param"),
             Some((_, value)) => {
-                binary_urlsafe_decode(&value).or(Err("Invalid `path` query value"))?
+                binary_urlsafe_decode(&value).or(Err("Invalid `path` param value"))?
             }
         };
         if path_queries.next().is_some() {
-            return Err("Multiple values for query `path`");
+            return Err("Multiple values for param `path`");
         }
 
         Ok(Self {
@@ -666,18 +668,18 @@ impl BackendInvitationAddr {
         let invitation_type = match extract_action(pairs)? {
             x if x == "claim_user" => InvitationType::User,
             x if x == "claim_device" => InvitationType::Device,
-            _ => return Err("Expected `action=claim_user` or `action=claim_device` value"),
+            _ => return Err("Expected `action=claim_user` or `action=claim_device` param value"),
         };
 
         let mut token_queries = pairs.filter(|(k, _)| k == "token");
         let token = match token_queries.next() {
-            None => return Err("Missing mandatory `token` query"),
+            None => return Err("Missing mandatory `token` param"),
             Some((_, value)) => value
                 .parse::<InvitationToken>()
-                .or(Err("Invalid `token` query value"))?,
+                .or(Err("Invalid `token` param value"))?,
         };
         if token_queries.next().is_some() {
-            return Err("Multiple values for query `token`");
+            return Err("Multiple values for param `token`");
         }
 
         Ok(Self {
@@ -732,12 +734,12 @@ impl BackendInvitationAddr {
 //   but backward compatibility prevent us from doing it :'(
 
 pub fn binary_urlsafe_encode(data: &[u8]) -> String {
-    BASE32.encode(data).replace("=", "s")
+    BASE32.encode(data).replace('=', "s")
 }
 
 pub fn binary_urlsafe_decode(data: &str) -> Result<Vec<u8>, &'static str> {
     let err = Err("Invalid base32 data");
-    BASE32.decode(data.replace("s", "=").as_bytes()).or(err)
+    BASE32.decode(data.replace('s', "=").as_bytes()).or(err)
 }
 
 pub fn export_root_verify_key(key: &VerifyKey) -> String {
@@ -746,7 +748,7 @@ pub fn export_root_verify_key(key: &VerifyKey) -> String {
 
 pub fn import_root_verify_key(encoded: &str) -> Result<VerifyKey, &'static str> {
     let err_msg = "Invalid root verify key";
-    let encoded_b32 = encoded.replace("s", "=");
+    let encoded_b32 = encoded.replace('s', "=");
     // TODO: would be better to directly decode into key
     let buff = BASE32.decode(encoded_b32.as_bytes()).or(Err(err_msg))?;
     VerifyKey::try_from(buff.as_slice()).map_err(|_| err_msg)

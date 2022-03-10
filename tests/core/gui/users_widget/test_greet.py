@@ -278,10 +278,19 @@ def GreetUserTestBed(
                 assert guci_w.label_warning.text() == translate(
                     "TEXT_LABEL_USER_ROLE_RECOMMANDATIONS"
                 )
-                # Default profile choice is STANDARD
-                assert guci_w.combo_profile.currentData() == UserProfile.STANDARD
+                # Default profile choice is None
+                assert guci_w.combo_profile.currentData() is None
+                assert guci_w.button_create_user.isEnabled() is False
 
             await aqtbot.wait_until(_check_info_displayed)
+
+            # Select the standard profile
+            guci_w.combo_profile.setCurrentIndex(2)
+
+            def _button_enabled():
+                assert guci_w.button_create_user.isEnabled() is True
+
+            await aqtbot.wait_until(_button_enabled)
 
             return "step_6_validate_claim_info"
 

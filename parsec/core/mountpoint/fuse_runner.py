@@ -56,9 +56,9 @@ async def _bootstrap_mountpoint(base_mountpoint_path: PurePath, workspace_fs) ->
     workspace_name = workspace_fs.get_workspace_name()
     for tentative in count(1):
         if tentative == 1:
-            dirname = workspace_name
+            dirname = workspace_name.str
         else:
-            dirname = f"{workspace_name} ({tentative})"
+            dirname = f"{workspace_name.str} ({tentative})"
         mountpoint_path = base_mountpoint_path / dirname
 
         try:

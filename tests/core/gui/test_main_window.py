@@ -4,7 +4,7 @@ import pytest
 from PyQt5 import QtCore, QtWidgets, QtGui
 
 from parsec.api.protocol import InvitationType, OrganizationID
-from parsec.api.data import UserProfile
+from parsec.api.data import UserProfile, EntryName
 from parsec.core.gui.lang import translate
 from parsec.core.gui.login_widget import LoginPasswordInputWidget
 from parsec.core.local_device import (
@@ -124,7 +124,7 @@ async def logged_gui_with_files(
 
     def _entry_available():
         assert f_w.workspace_fs is not None
-        assert f_w.workspace_fs.get_workspace_name() == "w1"
+        assert f_w.workspace_fs.get_workspace_name() == EntryName("w1")
         assert f_w.table_files.rowCount() == 1
 
     await aqtbot.wait_until(_entry_available)
@@ -616,7 +616,7 @@ async def test_link_file_unknown_org(
 async def test_outsider_profil_limit(
     aqtbot, running_backend, adam, core_config, gui_factory, alice_user_fs
 ):
-    wid = await alice_user_fs.workspace_create("workspace1")
+    wid = await alice_user_fs.workspace_create(EntryName("workspace1"))
     await alice_user_fs.workspace_share(wid, adam.user_id, WorkspaceRole.READER)
     await alice_user_fs.process_last_messages()
     await alice_user_fs.sync()

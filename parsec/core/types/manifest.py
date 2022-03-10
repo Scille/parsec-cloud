@@ -25,6 +25,13 @@ from parsec.api.data import (
     EntryNameField,
     EntryIDField,
 )
+from parsec.api.data.manifest import (
+    _PyBlockAccess,
+    _PyFileManifest,
+    _PyFolderManifest,
+    _PyWorkspaceManifest,
+    _PyWorkspaceEntry,
+)
 from parsec.core.types.base import BaseLocalData
 from enum import Enum
 
@@ -75,7 +82,7 @@ class Chunk(BaseData):
         stop = fields.Integer(required=True, validate=validate.Range(min=1))
         raw_offset = fields.Integer(required=True, validate=validate.Range(min=0))
         raw_size = fields.Integer(required=True, validate=validate.Range(min=1))
-        access = fields.Nested(BlockAccess.SCHEMA_CLS, required=True, allow_none=True)
+        access = fields.Nested(_PyBlockAccess.SCHEMA_CLS, required=True, allow_none=True)
 
         @post_load
         def make_obj(self, data):
@@ -337,7 +344,7 @@ class BaseLocalManifest(BaseLocalData):
 class LocalFileManifest(BaseLocalManifest):
     class SCHEMA_CLS(BaseSchema):
         type = fields.EnumCheckedConstant(LocalManifestType.LOCAL_FILE_MANIFEST, required=True)
-        base = fields.Nested(RemoteFileManifest.SCHEMA_CLS, required=True)
+        base = fields.Nested(_PyFileManifest.SCHEMA_CLS, required=True)
         need_sync = fields.Boolean(required=True)
         updated = fields.DateTime(required=True)
         size = fields.Integer(required=True, validate=validate.Range(min=0))
@@ -483,7 +490,7 @@ class LocalFolderishManifestMixin:
 
     def evolve_children_and_mark_updated(
         self: LocalFolderishManifestTypeVar,
-        data: Dict[str, Optional[EntryID]],
+        data: Dict[EntryName, Optional[EntryID]],
         prevent_sync_pattern: Pattern,
         timestamp: DateTime,
     ) -> LocalFolderishManifestTypeVar:
@@ -516,7 +523,7 @@ class LocalFolderishManifestMixin:
                 continue
             # Add new entry
             new_children[name] = entry_id
-            if prevent_sync_pattern.match(name):
+            if prevent_sync_pattern.match(name.str):
                 new_local_confinement_points.add(entry_id)
             else:
                 actually_updated = True
@@ -579,7 +586,7 @@ class LocalFolderishManifestMixin:
             {
                 entry_id
                 for name, entry_id in self.children.items()
-                if prevent_sync_pattern.match(name)
+                if prevent_sync_pattern.match(name.str)
             }
         )
         if not remote_confinement_points:
@@ -623,7 +630,7 @@ class LocalFolderishManifestMixin:
 class LocalFolderManifest(BaseLocalManifest, LocalFolderishManifestMixin):
     class SCHEMA_CLS(BaseSchema):
         type = fields.EnumCheckedConstant(LocalManifestType.LOCAL_FOLDER_MANIFEST, required=True)
-        base = fields.Nested(RemoteFolderManifest.SCHEMA_CLS, required=True)
+        base = fields.Nested(_PyFolderManifest.SCHEMA_CLS, required=True)
         need_sync = fields.Boolean(required=True)
         updated = fields.DateTime(required=True)
         children = fields.FrozenMap(EntryNameField(), EntryIDField(required=True), required=True)
@@ -740,7 +747,7 @@ class LocalFolderManifest(BaseLocalManifest, LocalFolderishManifestMixin):
 class LocalWorkspaceManifest(BaseLocalManifest, LocalFolderishManifestMixin):
     class SCHEMA_CLS(BaseSchema):
         type = fields.EnumCheckedConstant(LocalManifestType.LOCAL_WORKSPACE_MANIFEST, required=True)
-        base = fields.Nested(RemoteWorkspaceManifest.SCHEMA_CLS, required=True)
+        base = fields.Nested(_PyWorkspaceManifest.SCHEMA_CLS, required=True)
         need_sync = fields.Boolean(required=True)
         updated = fields.DateTime(required=True)
         children = fields.FrozenMap(EntryNameField(), EntryIDField(required=True), required=True)
@@ -873,7 +880,7 @@ class LocalUserManifest(BaseLocalManifest):
         need_sync = fields.Boolean(required=True)
         updated = fields.DateTime(required=True)
         last_processed_message = fields.Integer(required=True, validate=validate.Range(min=0))
-        workspaces = fields.FrozenList(fields.Nested(WorkspaceEntry.SCHEMA_CLS), required=True)
+        workspaces = fields.FrozenList(fields.Nested(_PyWorkspaceEntry.SCHEMA_CLS), required=True)
         # Speculative placeholders are created when we want to access the
         # user manifest but didn't retrieve it from backend yet. This implies:
         # - non-placeholders cannot be speculative

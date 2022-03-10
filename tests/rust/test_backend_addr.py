@@ -701,7 +701,7 @@ def test_backend_invitation_addr_from_url():
         rs_ba = BackendInvitationAddr.from_url(
             f"parsec://parsec.cloud/MyOrg?action=do_something&token={TOKEN}"
         )
-    assert str(excinfo.value) == "Expected `action=claim_user` or `action=claim_device` value"
+    assert str(excinfo.value) == "Expected `action=claim_user` or `action=claim_device` param value"
 
     # Missing token
     with pytest.raises(ValueError) as excinfo:

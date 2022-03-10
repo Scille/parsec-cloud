@@ -1,0 +1,25 @@
+[package]
+name = "parsec_api_protocol"
+version = "0.0.0"
+edition = "2021"
+license = " BUSL-1.1"
+autotests = false
+
+[[test]]
+name = "integration"
+path = "tests/tests.rs"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+parsec_api_crypto = { version = "0.0.0", path = "../parsec_api_crypto" }
+parsec_api_types = { version = "0.0.0", path = "../parsec_api_types" }
+
+paste = "1.0.5"
+rmp-serde = "1.0.0"
+serde = {version = "1.0.127", features = ["derive"]}
+serde_with = "1.11.0"
+
+[dev-dependencies]
+hex-literal = "0.3.3"
+rstest = "0.12.0"

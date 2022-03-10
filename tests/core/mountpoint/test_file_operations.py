@@ -5,6 +5,7 @@ import sys
 import pytest
 from hypothesis.stateful import RuleBasedStateMachine, initialize, rule, run_state_machine_as_test
 from hypothesis import strategies as st
+from parsec.api.data import EntryName
 
 
 # Just an arbitrary value to limit the size of data hypothesis generates
@@ -28,7 +29,7 @@ def test_file_operations(tmpdir, caplog, hypothesis_settings, mountpoint_service
 
             async def _bootstrap(user_fs, mountpoint_manager):
                 nonlocal wpath
-                wid = await user_fs.workspace_create("w")
+                wid = await user_fs.workspace_create(EntryName("w"))
                 wpath = await mountpoint_manager.mount_workspace(wid)
 
             self.mountpoint_service = mountpoint_service_factory(_bootstrap)

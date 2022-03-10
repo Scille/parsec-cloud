@@ -14,7 +14,9 @@ from parsec.core.gui.ui.mount_widget import Ui_MountWidget
 
 class MountWidget(QWidget, Ui_MountWidget):
     widget_switched = pyqtSignal(list)
-    folder_changed = pyqtSignal(str, str)
+    # First argument is an EntryName but since it can be None,
+    # we can't set the type.
+    folder_changed = pyqtSignal(object, str)
 
     def __init__(self, core, jobs_ctx, event_bus, **kwargs):
         super().__init__(**kwargs)

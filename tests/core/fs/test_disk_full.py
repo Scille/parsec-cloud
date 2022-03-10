@@ -9,7 +9,7 @@ try:
 except ImportError:
     pytest.skip("Fuse is required", allow_module_level=True)
 
-
+from parsec.api.data import EntryName
 from parsec.core.fs import UserFS
 from parsec.core.logged_core import get_prevent_sync_pattern
 from parsec.core.remote_devices_manager import RemoteDevicesManager
@@ -38,7 +38,7 @@ async def alice_fs_context(loopback_fs, event_bus_factory, alice):
                 yield user_fs
 
     async with _alice_context() as user_fs:
-        wid = await user_fs.workspace_create("w")
+        wid = await user_fs.workspace_create(EntryName("w"))
 
     @asynccontextmanager
     async def _alice_fs_context(allow_sqlite_error_at_exit=False):

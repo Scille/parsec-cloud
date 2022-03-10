@@ -11,6 +11,8 @@ from hypothesis_trio.stateful import (
     TrioAsyncioRuleBasedStateMachine,
 )
 
+from parsec.api.data import EntryName
+
 from tests.common import call_with_control, compare_fs_dumps
 
 # The point is not to find breaking filenames here, so keep it simple
@@ -67,7 +69,7 @@ def test_fs_online_concurrent_tree_and_sync(
             self.user_fs1_controller = await self.start_fs(self.device1)
             self.user_fs2_controller = await self.start_fs(self.device2)
 
-            self.wid = await self.user_fs1.workspace_create("w")
+            self.wid = await self.user_fs1.workspace_create(EntryName("w"))
             workspace = self.user_fs1.get_workspace(self.wid)
             await workspace.sync()
             await self.user_fs1.sync()

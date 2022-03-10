@@ -32,7 +32,10 @@ fn round_trip() {
 fn bad_decrypt() {
     let sk = SecretKey::generate();
 
-    assert_eq!(sk.decrypt(b""), Err("Invalid data size"));
+    assert_eq!(
+        sk.decrypt(b""),
+        Err("The nonce must be exactly 24 bytes long")
+    );
 
     assert_eq!(sk.decrypt(&[0; 64]), Err("Decryption error"));
 }
@@ -54,3 +57,13 @@ test_msgpack_serialization!(
     hex!("856785fb1f72d3e2fdace29f02fbf8da9161cc84baec9669870f5c69fa5dc7e6"),
     hex!("c420856785fb1f72d3e2fdace29f02fbf8da9161cc84baec9669870f5c69fa5dc7e6")
 );
+
+#[test]
+fn hmac() {
+    let sk = SecretKey::from(hex!(
+        "2ff13803789977db4f8ccabfb6b26f3e70eb4453d396dcb2315f7690cbc2e3f1"
+    ));
+    let data = b"all your base are belong to us";
+    let hmac = sk.hmac(data, 5);
+    assert_eq!(hmac, hex!("a0f507f4be"));
+}

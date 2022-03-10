@@ -27,7 +27,7 @@ fn round_trip() {
     let pubkey = privkey.public_key();
 
     let data = b"Hello, world !";
-    let ciphered = pubkey.encrypt_from_self(data);
+    let ciphered = pubkey.encrypt_for_self(data);
 
     let data2 = privkey.decrypt_from_self(&ciphered).unwrap();
     assert_eq!(data2, data);

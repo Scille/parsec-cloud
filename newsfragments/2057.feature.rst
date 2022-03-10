@@ -1,0 +1,1 @@
+Force the choice of a role when greeting a new user

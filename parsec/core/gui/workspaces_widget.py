@@ -61,6 +61,8 @@ async def _do_workspace_create(core, workspace_name):
     try:
         workspace_name = EntryName(workspace_name)
     except ValueError:
+        # This should never occurs given new_name is checked by a validator in the GUI
+        # TODO: improve this logic ?
         raise JobResultError("invalid-name")
     workspace_id = await core.user_fs.workspace_create(workspace_name)
     return workspace_id
@@ -70,6 +72,8 @@ async def _do_workspace_rename(core, workspace_id, new_name, button):
     try:
         new_name = EntryName(new_name)
     except ValueError:
+        # This should never occurs given new_name is checked by a validator in the GUI
+        # TODO: improve this logic ?
         raise JobResultError("invalid-name")
     try:
         await core.user_fs.workspace_rename(workspace_id, new_name)

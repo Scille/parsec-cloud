@@ -3,6 +3,8 @@
 import pytest
 from PyQt5 import QtWidgets
 
+from parsec.api.data import EntryName
+
 
 @pytest.fixture
 def catch_file_history_widget(widget_catcher_factory):
@@ -15,7 +17,7 @@ async def test_file_history(
     aqtbot, running_backend, logged_gui, autoclose_dialog, catch_file_history_widget
 ):
     core = logged_gui.test_get_core()
-    wid = await core.user_fs.workspace_create("wksp1")
+    wid = await core.user_fs.workspace_create(EntryName("wksp1"))
     wfs = core.user_fs.get_workspace(wid)
 
     w_w = logged_gui.test_get_workspaces_widget()
@@ -25,7 +27,7 @@ async def test_file_history(
 
     await aqtbot.wait_until(_workspace_available)
 
-    f_w = await logged_gui.test_switch_to_files_widget("wksp1")
+    f_w = await logged_gui.test_switch_to_files_widget(EntryName("wksp1"))
 
     # Add an entry to the workspace
     await wfs.touch("/file.txt")

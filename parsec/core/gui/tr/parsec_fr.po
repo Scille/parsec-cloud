@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PROJECT VERSION\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2022-02-04 10:36+0100\n"
+"POT-Creation-Date: 2022-03-10 09:19+0100\n"
 "PO-Revision-Date: 2020-10-15 10:31+0200\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language: fr\n"
@@ -70,8 +70,8 @@ msgstr ""
 msgid "TEXT_BACKEND_ADDR_COPIED_TO_CLIPBOARD"
 msgstr "L'adresse du serveur a été copiée dans le presse-papier."
 
-msgid "NOTIF_INFO_WORKSPACE_READ_ONLY"
-msgstr ""
+msgid "TEXT_NOTIF_INFO_WORKSPACE_READ_ONLY"
+msgstr "Cet espace de travail est en lecture seule."
 
 msgid "TEXT_NOTIF_WARN_WORKSPACE_READ_ACCESS_LOST_workspace"
 msgstr "Perte des droits en lecture sur l'espace de travail <b>{workspace}</b>."
@@ -83,7 +83,7 @@ msgid "TEXT_NOTIF_WARN_WORKSPACE_IN_MAINTENANCE_workspace"
 msgstr "L'espace de travail <b>{workspace}</b> est en maintenance."
 
 msgid "TEXT_NOTIF_WARN_MOUNTPOINT_REMOTE_ERROR_workspace-error"
-msgstr ""
+msgstr "Erreur de point de montage pour l'espace de travail <b>{workspace}</b>"
 
 msgid "TEXT_NOTIF_ERR_MOUNTPOINT_UNEXPECTED_ERROR_workspace_operation_error"
 msgstr "Erreur de point de montage pour l'espace de travail <b>{workspace}</b>"
@@ -773,6 +773,9 @@ msgstr "Suite à une annulation de l'invité, il faut redémarrer le precessus"
 msgid "TEXT_GREET_USER_PEER_RESET"
 msgstr "Suite à une annulation de l'invité, il faut redémarrer le processus."
 
+msgid "TEXT_SELECT_USER_PROFILE"
+msgstr "Veuillez sélectionner le profil de l'utilisateur :"
+
 msgid "TEXT_USER_PROFILE_OUTSIDER"
 msgstr "Externe"
 
@@ -782,8 +785,29 @@ msgstr "Standard"
 msgid "TEXT_USER_PROFILE_ADMIN"
 msgstr "Administrateur"
 
+msgid "TEXT_USER_PROFILE_STANDARD_TOOLTIP"
+msgstr ""
+"Le profil <b>Utilisateur Standard</b> accède aux espaces de travail dans "
+"lesquelles il est invité ; il peut créer un espace de travail et le "
+"partager ; il peut accéder à l'annuaire des utilisateurs de "
+"l'organisation."
+
+msgid "TEXT_USER_PROFILE_ADMIN_TOOLTIP"
+msgstr ""
+"Le profil <b>Administrateur</b> gère l'organisation. Les administrateurs "
+"peuvent ajouter ou retirer des utilisateurs de l'organisation. Un "
+"administrateur a également accès aux fonctionnalités d'un utilisateur "
+"standard."
+
 msgid "NOT_ALLOWED_OUTSIDER_PROFILE_TOOLTIP"
 msgstr "Votre configuration actuelle n'autorise pas ce type de profil"
+
+msgid "TEXT_USER_PROFILE_OUTSIDER_TOOLTIP"
+msgstr ""
+"Le profil <b>Utilisateur Externe</b> est invité à partager les données "
+"d'un espace de travail en mode <b>Lecteur</b> ou <b>Contributeur</b> mais"
+" ne peut pas créer d'espace de travail ni ne peut accéder à l'annuaire "
+"des utilisateurs de l'organisation"
 
 msgid "TEXT_GREET_USER_INVALID_HUMAN_HANDLE"
 msgstr "L'email n'est pas valide."
@@ -1824,16 +1848,15 @@ msgstr "Activer la télémétrie"
 
 msgid "TEXT_ENABLE_TELEMETRY_INSTRUCTIONS"
 msgstr ""
-"La télémétrie est utilisée dans Parsec pour envoyer automatiquement des "
-"rapports d'erreur anonymes.<br />\n"
-"Ces informations nous aident à améliorer votre expérience utilisateur.<br"
-" />\n"
+"En cas de bug ou dysfonctionnement du logiciel, la télémétrie permet "
+"l'envoi automatique de rapports anonymes à notre support technique, et "
+"ainsi d’améliorer votre expérience utilisateur avec Parsec.<br />\n"
 "<br />\n"
 "Voulez-vous activer la télémétrie ? Vous pourrez modifier cette option "
 "dans la configuration."
 
 msgid "ACTION_ENABLE_TELEMETRY_ACCEPT"
-msgstr "Activer la télémétrie"
+msgstr "Oui"
 
 msgid "ACTION_ENABLE_TELEMETRY_REFUSE"
 msgstr "Non"
@@ -2531,6 +2554,48 @@ msgstr "Par"
 msgid "ACTION_FILE_HISTORY_LOAD_MORE_ENTRIES"
 msgstr "Charger plus d'entrées"
 
+msgid "TEXT_FILE_INFO_LOCATION"
+msgstr "Emplacement"
+
+msgid "TEXT_FILE_INFO_TYPE"
+msgstr "Type"
+
+msgid "TEXT_FILE_INFO_SIZE"
+msgstr "Taille"
+
+msgid "TEXT_FILE_INFO_NON_APPLICABLE"
+msgstr "N/A"
+
+msgid "TEXT_FILE_INFO_WORKSPACE"
+msgstr "Espace de travail"
+
+msgid "TEXT_FILE_INFO_CREATED_ON"
+msgstr "Créé le"
+
+msgid "TEXT_FILE_INFO_CREATED_BY"
+msgstr "Créé par"
+
+msgid "TEXT_FILE_INFO_UPDATED_ON"
+msgstr "Mise à jour le"
+
+msgid "TEXT_FILE_INFO_UPDATED_BY"
+msgstr "Mise à jour par"
+
+msgid "TEXT_FILE_INFO_AVAILABILITY"
+msgstr "Disponibilité"
+
+msgid "TEXT_FILE_INFO_UPLOADED"
+msgstr "Téléchargé"
+
+msgid "TEXT_FILE_INFO_BLOCKS_LOCAL"
+msgstr "Blocs locaux uniquement"
+
+msgid "TEXT_FILE_INFO_BLOCKS_REMOTE"
+msgstr "Blocs distants uniquement"
+
+msgid "TEXT_FILE_INFO_BLOCKS_BOTH"
+msgstr "Blocs locaux et distants"
+
 msgid "TEXT_FILE_BACK_TO_WORKSPACES_TOOLTIP"
 msgstr "Retour à la liste des espaces de travail"
 
@@ -2804,61 +2869,4 @@ msgstr "Créer un nouvel espace de travail"
 
 msgid "ACTION_WORKSPACE_GOTO_FILE_LINK"
 msgstr "Trouver un fichier via son lien"
-
-#~ msgid "TEXT_FILE_INFO_LOCATION"
-#~ msgstr "Emplacement"
-
-#~ msgid "TEXT_FILE_INFO_TYPE"
-#~ msgstr "Type"
-
-#~ msgid "TEXT_FILE_INFO_SIZE"
-#~ msgstr "Taille"
-
-#~ msgid "TEXT_FILE_INFO_WORKSPACE"
-#~ msgstr "Espace de travail"
-
-#~ msgid "TEXT_FILE_INFO_CREATED_ON"
-#~ msgstr "Créé le"
-
-#~ msgid "TEXT_FILE_INFO_CREATED_BY"
-#~ msgstr "Créé par"
-
-#~ msgid "TEXT_FILE_INFO_UPDATED_ON"
-#~ msgstr "Mise à jour le"
-
-#~ msgid "TEXT_FILE_INFO_UPDATED_BY"
-#~ msgstr "Mise à jour par"
-
-#~ msgid "TEXT_FILE_INFO_AVAILABILITY"
-#~ msgstr "Disponibilité"
-
-#~ msgid "TEXT_FILE_INFO_UPLOADED"
-#~ msgstr "Téléchargé"
-
-#~ msgid "TEXT_FILE_INFO_BLOCKS_LOCAL"
-#~ msgstr "Blocs locaux uniquement"
-
-#~ msgid "TEXT_FILE_INFO_BLOCKS_REMOTE"
-#~ msgstr "Blocs distants uniquement"
-
-#~ msgid "TEXT_FILE_INFO_BLOCKS_BOTH"
-#~ msgstr "Blocs locaux et distants"
-
-#~ msgid "TEXT_FILE_INFO_NON_APPLICABLE"
-#~ msgstr "N/A"
-
-#~ msgid "NOTIF_WARN_MOUNTPOINT_UNMOUNTED"
-#~ msgstr ""
-
-#~ msgid "NOTIF_INFO_MOUNTPOINT_UNMOUNTED"
-#~ msgstr ""
-
-#~ msgid "TEXT_NOTIF_INFO_WORKSPACE_READ_ONLY"
-#~ msgstr "L'espace de travail est accessible en lecture seulement"
-
-#~ msgid "TEXT_NOTIF_WARN_MOUNTPOINT_REMOTE_ERROR_workspace-error"
-#~ msgstr "Erreur de point de montage pour l'espace de travail <b>{workspace}</b>"
-
-#~ msgid "TEXT_NOTIF_WARN_MOUNTPOINT_REMOTE_ERROR_workspace_error"
-#~ msgstr ""
 

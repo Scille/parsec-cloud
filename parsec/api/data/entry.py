@@ -1,20 +1,16 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2016-2021 Scille SAS
 
-from unicodedata import normalize
 from typing import TYPE_CHECKING
 
 from parsec.types import UUID4
 from parsec.serde import fields
+from parsec.api.protocol import StrBased
 
 
 __all__ = ("EntryID", "EntryIDField", "EntryName", "EntryNameField")
 
 
-class EntryNameInvalidError(ValueError):
-    pass
-
-
-class EntryNameTooLongError(EntryNameInvalidError):
+class EntryNameTooLongError(ValueError):
     pass
 
 
@@ -35,20 +31,28 @@ if not TYPE_CHECKING:
 EntryIDField = fields.uuid_based_field_factory(EntryID)
 
 
-class EntryName(str):
-    __slots__ = ()
+class EntryName(StrBased):
+    # Ignore the REGEX
+    REGEX = None
+    MAX_BYTE_SIZE = 255
 
-    def __new__(cls, raw: str) -> "EntryName":
-        raw = normalize("NFC", raw)
-        # Stick to UNIX filesystem philosophy:
-        # - no `.` or `..` name
-        # - no `/` or null byte in the name
-        # - max 255 bytes long name
-        if len(raw.encode("utf8")) >= 256:
-            raise EntryNameTooLongError(raw)
+    def __init__(self, raw: str):
+        try:
+            super().__init__(raw)
+        except ValueError:
+            raise EntryNameTooLongError("Invalid data")
         if raw == "" or raw == "." or raw == ".." or "/" in raw or "\x00" in raw:
-            raise EntryNameInvalidError(raw)
-        return super(EntryName, cls).__new__(cls, raw)
+            raise ValueError("Invalid data")
+
+
+_PyEntryName = EntryName
+if not TYPE_CHECKING:
+    try:
+        from libparsec.types import EntryName as _RsEntryName
+    except:
+        pass
+    else:
+        EntryName = _RsEntryName
 
 
 EntryNameField = fields.str_based_field_factory(EntryName)

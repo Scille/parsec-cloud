@@ -13,7 +13,7 @@ from hypothesis_trio.stateful import (
 from pendulum import now as pendulum_now
 
 from parsec.api.protocol import RealmID, RealmRole
-from parsec.api.data import RealmRoleCertificateContent
+from parsec.api.data import RealmRoleCertificateContent, EntryName
 from parsec.backend.realm import RealmGrantedRole
 
 from tests.common import call_with_control
@@ -120,7 +120,7 @@ def test_workspace_reencryption_need(
             self.backend_data_binder = backend_data_binder_factory(self.backend)
 
             await self.start_user_fs()
-            self.wid = await self.user_fs.workspace_create("w")
+            self.wid = await self.user_fs.workspace_create(EntryName("w"))
             await self.user_fs.sync()
             self.workspacefs = self.user_fs.get_workspace(self.wid)
 

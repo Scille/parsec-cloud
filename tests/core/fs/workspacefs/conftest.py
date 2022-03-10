@@ -2,11 +2,13 @@
 
 import pytest
 
+from parsec.api.data import EntryName
+
 
 @pytest.fixture
 @pytest.mark.trio
 async def alice_workspace(alice_user_fs, running_backend):
-    wid = await alice_user_fs.workspace_create("w")
+    wid = await alice_user_fs.workspace_create(EntryName("w"))
     workspace = alice_user_fs.get_workspace(wid)
 
     await workspace.mkdir("/foo")
@@ -21,7 +23,7 @@ async def alice_workspace(alice_user_fs, running_backend):
 @pytest.fixture
 @pytest.mark.trio
 async def bob_workspace(bob_user_fs, running_backend):
-    wid = await bob_user_fs.workspace_create("w")
+    wid = await bob_user_fs.workspace_create(EntryName("w"))
     workspace = bob_user_fs.get_workspace(wid)
 
     await workspace.mkdir("/foo")

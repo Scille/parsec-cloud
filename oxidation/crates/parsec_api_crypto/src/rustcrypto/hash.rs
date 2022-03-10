@@ -1,12 +1,11 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BSLv1.1 (eventually AGPLv3) 2016-2021 Scille SAS
 
-use std::hash::Hash;
-
 use serde::{Deserialize, Serialize};
 use serde_bytes::ByteBuf;
 use sha2::{Digest, Sha256};
+use std::hash::Hash;
 
-#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, Hash)]
+#[derive(Clone, PartialEq, Eq, Serialize, Deserialize, Hash)]
 #[serde(into = "ByteBuf", try_from = "ByteBuf")]
 pub struct HashDigest(digest::Output<Sha256>);
 
@@ -20,6 +19,17 @@ impl HashDigest {
 
     pub fn hexdigest(&self) -> String {
         hex::encode(self.0.as_slice())
+    }
+}
+
+impl std::fmt::Debug for HashDigest {
+    fn fmt(&self, formatter: &mut ::std::fmt::Formatter) -> std::fmt::Result {
+        write!(
+            formatter,
+            "{}({})",
+            stringify!(HashDigest),
+            &self.hexdigest()
+        )
     }
 }
 
