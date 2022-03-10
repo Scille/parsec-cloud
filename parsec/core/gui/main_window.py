@@ -10,6 +10,7 @@ from PyQt5.QtGui import QColor, QIcon, QKeySequence, QResizeEvent, QCloseEvent
 from PyQt5.QtWidgets import QWidget, QMainWindow, QMenu, QShortcut, QMenuBar
 
 from parsec import __version__ as PARSEC_VERSION
+from parsec.core.gui.enrollment_query_widget import EnrollmentQueryWidget
 from parsec.event_bus import EventBus, EventCallback
 from parsec.api.protocol import InvitationType
 from parsec.core.types import (
@@ -386,6 +387,10 @@ class MainWindow(QMainWindow, Ui_MainWindow):  # type: ignore[misc]
         elif url == "":
             show_error(self, _("TEXT_JOIN_ORG_INVALID_URL"))
             return
+        # TODO: remove this once enrollment is implemented
+        elif url == "enrollment":
+            self._on_enrollment_query_clicked("parsec://ignored")
+            return
 
         action_addr = None
         try:
@@ -407,6 +412,23 @@ class MainWindow(QMainWindow, Ui_MainWindow):  # type: ignore[misc]
         else:
             show_error(self, _("TEXT_INVALID_URL"))
             return
+
+    def _on_enrollment_query_clicked(self, action_addr: str) -> None:
+        widget: EnrollmentQueryWidget
+
+        def _on_finished() -> None:
+            nonlocal widget
+            if not widget.status:
+                return
+            self.reload_login_devices()
+
+        widget = EnrollmentQueryWidget.show_modal(
+            jobs_ctx=self.jobs_ctx,
+            config=self.config,
+            addr=action_addr,
+            parent=self,
+            on_finished=_on_finished,
+        )
 
     def _on_claim_user_clicked(self, action_addr: BackendInvitationAddr) -> None:
         widget: ClaimDeviceWidget
