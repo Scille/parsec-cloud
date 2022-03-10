@@ -1,7 +1,6 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2016-2021 Scille SAS
 
 import attr
-from uuid import UUID
 from typing import Optional, List, Tuple
 
 from parsec.crypto import (
@@ -26,7 +25,14 @@ from parsec.api.data import (
     DeviceCertificateContent,
     UserCertificateContent,
 )
-from parsec.api.protocol import DeviceName, DeviceID, HumanHandle, InvitationDeletedReason
+from parsec.api.protocol import (
+    DeviceName,
+    DeviceID,
+    HumanHandle,
+    InvitationToken,
+    InvitationDeletedReason,
+    DeviceLabel,
+)
 from parsec.core.backend_connection import BackendInvitedCmds
 from parsec.core.types import LocalDevice
 from parsec.core.invite.exceptions import (
@@ -53,7 +59,7 @@ def _check_rep(rep, step_name):
 
 @attr.s(slots=True, frozen=True, auto_attribs=True)
 class BaseGreetInitialCtx:
-    token: UUID
+    token: InvitationToken
     _cmds: BackendInvitedCmds
 
     async def _do_wait_peer(self) -> Tuple[SASCode, SASCode, SecretKey]:
@@ -125,7 +131,7 @@ class DeviceGreetInitialCtx(BaseGreetInitialCtx):
 
 @attr.s(slots=True, frozen=True, auto_attribs=True)
 class BaseGreetInProgress1Ctx:
-    token: UUID
+    token: InvitationToken
     greeter_sas: SASCode
 
     _claimer_sas: SASCode
@@ -165,7 +171,7 @@ class DeviceGreetInProgress1Ctx(BaseGreetInProgress1Ctx):
 
 @attr.s(slots=True, frozen=True, auto_attribs=True)
 class BaseGreetInProgress2Ctx:
-    token: UUID
+    token: InvitationToken
     claimer_sas: SASCode
 
     _shared_secret_key: SecretKey
@@ -201,7 +207,7 @@ class DeviceGreetInProgress2Ctx(BaseGreetInProgress2Ctx):
 
 @attr.s(slots=True, frozen=True, auto_attribs=True)
 class UserGreetInProgress3Ctx:
-    token: UUID
+    token: InvitationToken
 
     _shared_secret_key: SecretKey
     _cmds: BackendInvitedCmds
@@ -231,7 +237,7 @@ class UserGreetInProgress3Ctx:
 
 @attr.s(slots=True, frozen=True, auto_attribs=True)
 class DeviceGreetInProgress3Ctx:
-    token: UUID
+    token: InvitationToken
 
     _shared_secret_key: SecretKey
     _cmds: BackendInvitedCmds
@@ -259,8 +265,8 @@ class DeviceGreetInProgress3Ctx:
 
 @attr.s(slots=True, frozen=True, auto_attribs=True)
 class UserGreetInProgress4Ctx:
-    token: UUID
-    requested_device_label: Optional[str]
+    token: InvitationToken
+    requested_device_label: Optional[DeviceLabel]
     requested_human_handle: Optional[HumanHandle]
 
     _public_key: PublicKey
@@ -271,7 +277,7 @@ class UserGreetInProgress4Ctx:
     async def do_create_new_user(
         self,
         author: LocalDevice,
-        device_label: Optional[str],
+        device_label: Optional[DeviceLabel],
         human_handle: Optional[HumanHandle],
         profile: UserProfile,
     ) -> None:
@@ -345,14 +351,16 @@ class UserGreetInProgress4Ctx:
 
 @attr.s(slots=True, frozen=True, auto_attribs=True)
 class DeviceGreetInProgress4Ctx:
-    token: UUID
-    requested_device_label: Optional[str]
+    token: InvitationToken
+    requested_device_label: Optional[DeviceLabel]
 
     _verify_key: VerifyKey
     _shared_secret_key: SecretKey
     _cmds: BackendInvitedCmds
 
-    async def do_create_new_device(self, author: LocalDevice, device_label: Optional[str]) -> None:
+    async def do_create_new_device(
+        self, author: LocalDevice, device_label: Optional[DeviceLabel]
+    ) -> None:
         device_id = author.user_id.to_device_id(DeviceName.new())
         try:
             timestamp = author.timestamp()

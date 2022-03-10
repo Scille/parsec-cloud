@@ -6,11 +6,12 @@ from collections import defaultdict
 from typing import List, Dict, Tuple, AsyncIterator, cast, Pattern, Callable, Optional, Awaitable
 from pendulum import DateTime
 
+from parsec.core.fs.workspacefs.entry_transactions import BlockInfo
 from parsec.crypto import CryptoError
 from parsec.event_bus import EventBus
 from parsec.api.data import BaseManifest as BaseRemoteManifest, BlockAccess
 from parsec.api.data import FileManifest as RemoteFileManifest
-from parsec.api.protocol import UserID, MaintenanceType
+from parsec.api.protocol import UserID, MaintenanceType, RealmID
 from parsec.core.types import (
     EntryID,
     EntryName,
@@ -114,14 +115,12 @@ class WorkspaceFS:
         try:
             name = self.get_workspace_name()
         except Exception:
-            name = "<could not retrieve name>"
+            name = EntryName("<could not retrieve name>")
         return f"<{type(self).__name__}(id={self.workspace_id!r}, name={name!r})>"
 
-    async def get_file_blocks_to_load(
-        self, path: AnyPath, limit: int = 1000000000
-    ) -> Tuple[int, int, List[BlockAccess]]:
+    async def get_blocks_by_type(self, path: AnyPath, limit: int = 1000000000) -> BlockInfo:
         path = FsPath(path)
-        return await self.transactions.entry_missing_data(path, limit)
+        return await self.transactions.entry_get_blocks_by_type(path, limit)
 
     async def load_block(self, block: BlockAccess) -> None:
         """
@@ -149,7 +148,7 @@ class WorkspaceFS:
         """
         return await self.remote_loader.receive_load_blocks(blocks, nursery)
 
-    def get_workspace_name(self) -> str:
+    def get_workspace_name(self) -> EntryName:
         return self.get_workspace_entry().name
 
     def get_encryption_revision(self) -> int:
@@ -218,7 +217,7 @@ class WorkspaceFS:
             pass
 
         try:
-            rep = await self.backend_cmds.realm_status(self.workspace_id)
+            rep = await self.backend_cmds.realm_status(RealmID(self.workspace_id.uuid))
 
         except BackendNotAvailable as exc:
             raise FSBackendOfflineError(str(exc)) from exc
@@ -753,7 +752,7 @@ class WorkspaceFS:
             if not isinstance(manifest, (LocalFolderManifest, LocalWorkspaceManifest)):
                 return result
 
-            children: Dict[str, Dict[str, object]] = {}
+            children: Dict[EntryName, Dict[str, object]] = {}
             for key, value in manifest.children.items():
                 children[key] = await rec(value)
             result["children"] = children

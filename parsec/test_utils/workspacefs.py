@@ -2,6 +2,7 @@
 
 import string
 
+from parsec.api.data.entry import EntryName
 from parsec.core.fs import FsPath, UserFS, WorkspaceFS, FSFileNotFoundError
 from parsec.core.types import EntryID
 
@@ -16,7 +17,7 @@ async def make_workspace_dir_inconsistent(workspace: WorkspaceFS, dir: FsPath):
     rep_info = await workspace.transactions.entry_info(dir)
     rep_manifest = await workspace.local_storage.get_manifest(rep_info["id"])
     children = rep_manifest.children
-    children["newfail.txt"] = EntryID("b9295787-d9aa-6cbd-be27-1ff83ac72fa6")
+    children[EntryName("newfail.txt")] = EntryID.from_hex("b9295787-d9aa-6cbd-be27-1ff83ac72fa6")
     rep_manifest.evolve(children=children)
     async with workspace.local_storage.lock_manifest(rep_info["id"]):
         await workspace.local_storage.set_manifest(rep_info["id"], rep_manifest)
@@ -73,7 +74,7 @@ async def make_workspace_dir_complex_versions(workspace: WorkspaceFS, dir: FsPat
         await workspace.sync()
 
 
-async def create_inconsistent_workspace(user_fs: UserFS, name="w") -> WorkspaceFS:
+async def create_inconsistent_workspace(user_fs: UserFS, name=EntryName("w")) -> WorkspaceFS:
     wid = await user_fs.workspace_create(name)
     workspace = user_fs.get_workspace(wid)
     await make_workspace_dir_inconsistent(workspace, FsPath("/rep"))

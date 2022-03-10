@@ -131,7 +131,7 @@ class WorkspaceButton(QWidget, Ui_WorkspaceButton):
                     if i > 4:
                         break
                     label = getattr(self, "file{}_name".format(i))
-                    label.setText(f)
+                    label.setText(f.str)
         else:
             widget_temp = self.widget_empty.layout().itemAt(0).widget()
             widget_temp.label_timestamp.setText(format_datetime(self.timestamp))
@@ -301,7 +301,7 @@ class WorkspaceButton(QWidget, Ui_WorkspaceButton):
 
     def reload_workspace_name(self, workspace_name):
         self.workspace_name = workspace_name
-        display = workspace_name
+        display = workspace_name.str
         extra_space = 40
 
         if not self.timestamped:
@@ -329,6 +329,10 @@ class WorkspaceButton(QWidget, Ui_WorkspaceButton):
             display += "-" + _("TEXT_WORKSPACE_IS_TIMESTAMPED_date").format(
                 date=format_datetime(self.workspace_fs.timestamp)
             )
+            if self.is_shared:
+                extra_space += 40
+            if self.is_owner:
+                extra_space += 40
         self.label_title.setToolTip(display)
         size = self.size().width() - extra_space
         self.label_title.setText(ensure_string_size(display, size, self.label_title.font()))

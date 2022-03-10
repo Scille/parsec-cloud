@@ -20,7 +20,7 @@ macro_rules! impl_debug_from_display {
 
 macro_rules! new_string_based_id_type {
     (pub $name:ident, $bytes_size:expr, $pattern:expr) => {
-        #[derive(Clone, SerializeDisplay, DeserializeFromStr, PartialEq, Eq)]
+        #[derive(Clone, SerializeDisplay, DeserializeFromStr, PartialEq, Eq, Hash)]
         pub struct $name(String);
 
         impl Default for $name {
@@ -52,7 +52,8 @@ macro_rules! new_string_based_id_type {
             fn from_str(s: &str) -> Result<Self, Self::Err> {
                 let id: String = s.nfc().collect();
                 lazy_static! {
-                    static ref PATTERN: Regex = Regex::new($pattern).unwrap();
+                    static ref PATTERN: Regex =
+                        Regex::new($pattern).unwrap_or_else(|_| unreachable!());
                 }
                 // ID must respect regex AND be contained within $bytes_size bytes
                 if PATTERN.is_match(&id) && id.len() <= $bytes_size {
@@ -97,6 +98,12 @@ impl UserID {
  */
 
 new_string_based_id_type!(pub DeviceName, 32, r"^[\w\-]{1,32}$");
+
+/*
+ * DeviceLabel
+*/
+
+new_string_based_id_type!(pub DeviceLabel, 255, r"^.+$");
 
 /*
  * DeviceID
@@ -145,7 +152,7 @@ impl From<DeviceID> for String {
 
 #[derive(Clone, Serialize, Deserialize, Eq)]
 #[serde(try_from = "(&str, &str)", into = "(String, String)")]
-#[non_exhaustive] // Prevent initialization within going through the factory
+#[non_exhaustive] // Prevent initialization without going through the factory
 pub struct HumanHandle {
     pub email: String,
     // Label is purely informative
@@ -172,10 +179,10 @@ impl HumanHandle {
         let label = label.nfc().collect::<String>();
 
         // TODO: how to check the email  easily ?
-        if email.is_empty() || email.len() > 255 {
+        if email.is_empty() || email.len() >= 255 {
             return Err("Invalid email address");
         }
-        if label.is_empty() || label.len() > 255 {
+        if label.is_empty() || label.len() >= 255 {
             return Err("Invalid label");
         }
 
@@ -206,7 +213,8 @@ impl From<HumanHandle> for (String, String) {
  * UserProfile
  */
 
-#[derive(Copy, Clone, Debug, Serialize, Deserialize, PartialEq, Eq)]
+#[derive(Copy, Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(rename_all = "UPPERCASE")]
 pub enum UserProfile {
     /// Standard user can create new realms and invite new devices for himself.
     ///
@@ -216,12 +224,8 @@ pub enum UserProfile {
     /// access redacted certificates (i.e. the realms created by an outsider
     /// cannot be shared and the outsider cannot be OWNER/MANAGER
     /// on a realm shared with him)
-
-    #[serde(rename = "ADMIN")]
     Admin,
-    #[serde(rename = "STANDARD")]
     Standard,
-    #[serde(rename = "OUTSIDER")]
     Outsider,
 }
 

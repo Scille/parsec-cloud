@@ -13,6 +13,7 @@ from parsec.core.gui.trio_jobs import JobResultError, QtToTrioJob
 from parsec.core.gui.custom_dialogs import show_error, GreyedDialog, show_info, show_info_copy_link
 from parsec.core.gui.lang import translate as _
 from parsec.core.gui.qrcode_widget import generate_qr_code
+from parsec.core.gui.snackbar_widget import SnackbarManager
 from parsec.core.gui import desktop
 from parsec.core.gui.ui.greet_device_widget import Ui_GreetDeviceWidget
 from parsec.core.gui.ui.greet_device_code_exchange_widget import Ui_GreetDeviceCodeExchangeWidget
@@ -167,7 +168,7 @@ class GreetDeviceInstructionsWidget(QWidget, Ui_GreetDeviceInstructionsWidget):
 
     def _on_copy_addr_clicked(self):
         desktop.copy_to_clipboard(self.invite_addr.to_url())
-        show_info(self, _("TEXT_GREET_DEVICE_ADDR_COPIED_TO_CLIPBOARD"))
+        SnackbarManager.inform(_("TEXT_GREET_DEVICE_ADDR_COPIED_TO_CLIPBOARD"))
 
     def _on_button_send_email_clicked(self):
         self.button_send_email.setDisabled(True)
@@ -183,6 +184,11 @@ class GreetDeviceInstructionsWidget(QWidget, Ui_GreetDeviceInstructionsWidget):
         if email_sent_status == InvitationEmailSentStatus.SUCCESS:
             self.button_send_email.setText(_("TEXT_GREET_DEVICE_EMAIL_SENT"))
             self.button_send_email.setDisabled(True)
+            SnackbarManager.inform(
+                _("TEXT_GREET_DEVICE_EMAIL_SENT_email").format(
+                    email=self.core.device.human_handle.email
+                )
+            )
         else:
             if email_sent_status == InvitationEmailSentStatus.BAD_RECIPIENT:
                 show_info_copy_link(

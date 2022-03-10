@@ -11,6 +11,7 @@ from PyQt5 import QtCore, QtTest
 from pytestqt.exceptions import TimeoutError
 
 from parsec import __version__ as parsec_version
+from parsec.api.data import EntryName
 from parsec.core.local_device import save_device_with_password_in_config
 from parsec.core.gui.main_window import MainWindow
 from parsec.core.gui.workspaces_widget import WorkspaceButton
@@ -88,19 +89,26 @@ class AsyncQtBot:
 
     @asynccontextmanager
     async def wait_signals(self, signals, *, timeout=5000):
-        with trio.fail_after(timeout / 1000):
-            async with AsyncExitStack() as stack:
-                for signal in signals:
-                    await stack.enter_async_context(qtrio._core.wait_signal_context(signal))
-                yield
+        __tracebackhide__ = True
+        try:
+            with trio.fail_after(timeout / 1000):
+                async with AsyncExitStack() as stack:
+                    for signal in signals:
+                        await stack.enter_async_context(qtrio._core.wait_signal_context(signal))
+                    yield
+        # Supress context in order to simplify the tracebacks in pytest
+        except trio.TooSlowError:
+            raise trio.TooSlowError from None
 
     @asynccontextmanager
     async def wait_signal(self, signal, *, timeout=5000):
+        __tracebackhide__ = True
         async with self.wait_signals((signal,), timeout=timeout):
             yield
 
     @asynccontextmanager
     async def wait_active(self, widget, *, timeout=5000):
+        __tracebackhide__ = True
         deadline = trio.current_time() + timeout / 1000
         yield
         while True:
@@ -112,6 +120,7 @@ class AsyncQtBot:
 
     @asynccontextmanager
     async def wait_exposed(self, widget, *, timeout=5000):
+        __tracebackhide__ = True
         deadline = trio.current_time() + timeout / 1000
         yield
         while True:
@@ -146,6 +155,35 @@ def autoclose_dialog(monkeypatch):
     )
     monkeypatch.setattr(
         "parsec.core.gui.custom_dialogs.GreyedDialog.open", _dialog_exec, raising=False
+    )
+    return spy
+
+
+@pytest.fixture
+def snackbar_catcher(monkeypatch):
+    class SnackbarSpy:
+        def __init__(self):
+            self.snackbars = []
+
+        def reset(self):
+            self.snackbars = []
+
+    spy = SnackbarSpy()
+
+    def _show_snackbar(message, *args, **kargs):
+        spy.snackbars.append(message)
+
+    monkeypatch.setattr(
+        "parsec.core.gui.snackbar_widget.SnackbarManager.warn",
+        lambda msg, *args, **kwargs: _show_snackbar(("WARN", msg)),
+    )
+    monkeypatch.setattr(
+        "parsec.core.gui.snackbar_widget.SnackbarManager.inform",
+        lambda msg, *args, **kwargs: _show_snackbar(("INFO", msg)),
+    )
+    monkeypatch.setattr(
+        "parsec.core.gui.snackbar_widget.SnackbarManager.congratulate",
+        lambda msg, *args, **kwargs: _show_snackbar(("CONGRATULATE", msg)),
     )
     return spy
 
@@ -421,6 +459,7 @@ def testing_main_window_cls(aqtbot):
             return w_w
 
         async def test_switch_to_files_widget(self, workspace_name, error=False):
+            assert isinstance(workspace_name, EntryName)
             w_w = await self.test_switch_to_workspaces_widget()
 
             for i in range(w_w.layout_workspaces.count()):

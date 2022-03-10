@@ -67,7 +67,6 @@ FORMS += forms/main_window.ui \
     forms/password_authentication_widget.ui \
     forms/temporary_workspace_widget.ui \
     forms/key_widget.ui \
-    forms/keys_widget.ui \
     forms/qrcode_widget.ui \
     forms/device_recovery_export_widget.ui \
     forms/device_recovery_export_page1_widget.ui \
@@ -77,7 +76,9 @@ FORMS += forms/main_window.ui \
     forms/smartcard_authentication_widget.ui \
     forms/authentication_choice_widget.ui \
     forms/authentication_change_widget.ui \
-    forms/login_smartcard_input_widget.ui
+    forms/login_smartcard_input_widget.ui \
+    forms/snackbar_widget.ui \
+    forms/file_status_widget.ui
 
 RESOURCES += rc/resources.qrc \
     forms/rc/resources.qrc

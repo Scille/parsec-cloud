@@ -4,7 +4,7 @@ import pytest
 
 from PyQt5 import QtCore, QtWidgets
 
-from parsec.api.data import UserProfile
+from parsec.api.data import UserProfile, EntryName
 from parsec.core.types import WorkspaceRole
 from parsec.core.local_device import save_device_with_password_in_config
 from parsec.core.gui.workspace_button import WorkspaceButton
@@ -33,7 +33,7 @@ async def gui_workspace_sharing(
         assert w_w.layout_workspaces.count() == 1
         wk_button = w_w.layout_workspaces.itemAt(0).widget()
         assert isinstance(wk_button, WorkspaceButton)
-        assert wk_button.name == "Workspace"
+        assert wk_button.name == EntryName("Workspace")
         assert wk_button.label_title.toolTip() == "Workspace (private)"
         assert wk_button.label_title.text() == "Workspace (private)"
         assert not autoclose_dialog.dialogs
@@ -86,6 +86,7 @@ async def test_share_workspace(
     adam,
     catch_share_workspace_widget,
     monkeypatch,
+    snackbar_catcher,
 ):
 
     _, w_w, share_w_w = gui_workspace_sharing
@@ -108,8 +109,17 @@ async def test_share_workspace(
     assert user_w.user_info.short_user_display == adam.human_handle.label
     user_w.status_timer.setInterval(200)
 
+    snackbar_catcher.reset()
+
+    def _sharing_updated():
+        assert snackbar_catcher.snackbars == [
+            ("INFO", "The workspace <b>Workspace</b> has been shared with <b>Adamy McAdamFace</b>.")
+        ]
+
     async with aqtbot.wait_signal(share_w_w.share_success):
         user_w.combo_role.setCurrentIndex(3)
+
+    await aqtbot.wait_until(_sharing_updated)
 
     async with aqtbot.wait_signal(user_w.status_timer.timeout):
 
@@ -138,7 +148,7 @@ async def test_share_workspace(
         assert w_w.layout_workspaces.count() == 1
         wk_button = w_w.layout_workspaces.itemAt(0).widget()
         assert isinstance(wk_button, WorkspaceButton)
-        assert wk_button.name == "Workspace"
+        assert wk_button.name == EntryName("Workspace")
         assert wk_button.label_title.toolTip() == "Workspace (shared with Adamy McAdamFace)"
         assert wk_button.label_title.text() == "Workspace (share..."
         assert not autoclose_dialog.dialogs
@@ -158,14 +168,14 @@ async def test_share_workspace(
         assert w_w.layout_workspaces.count() == 1
         wk_button = w_w.layout_workspaces.itemAt(0).widget()
         assert isinstance(wk_button, WorkspaceButton)
-        assert wk_button.name == "Workspace"
+        assert wk_button.name == EntryName("Workspace")
         assert not autoclose_dialog.dialogs
 
     await aqtbot.wait_until(_workspace_listed, timeout=2000)
 
     w_b = w_w.layout_workspaces.itemAt(0).widget()
     assert isinstance(w_b, WorkspaceButton)
-    assert w_b.workspace_name == "Workspace"
+    assert w_b.workspace_name == EntryName("Workspace")
     assert w_b.is_owner is False
 
     # Also check the workspace shared with view
@@ -194,7 +204,7 @@ async def test_share_workspace(
 
     user_w = share_w_w.scroll_content.layout().itemAt(2).widget()
     assert user_w.user_info.user_id == alice.user_id
-    assert user_w.role == "NOT_SHARED"
+    assert user_w.role is None
     assert not user_w.is_current_user
     assert user_w.combo_role.currentIndex() == 0
     assert user_w.isEnabled() is True
@@ -203,7 +213,7 @@ async def test_share_workspace(
 @pytest.mark.gui
 @pytest.mark.trio
 async def test_share_workspace_offline(
-    aqtbot, running_backend, logged_gui, gui_workspace_sharing, autoclose_dialog
+    aqtbot, running_backend, logged_gui, gui_workspace_sharing, snackbar_catcher
 ):
     _, w_w, share_w_w = gui_workspace_sharing
 
@@ -219,11 +229,9 @@ async def test_share_workspace_offline(
         user_w.combo_role.setCurrentIndex(3)
 
         def _error_shown():
-            assert len(autoclose_dialog.dialogs) == 1
-            assert autoclose_dialog.dialogs[0] == (
-                "Error",
-                translate("TEXT_WORKSPACE_SHARING_OFFLINE"),
-            )
+            assert snackbar_catcher.snackbars == [
+                ("WARN", translate("TEXT_WORKSPACE_SHARING_OFFLINE"))
+            ]
 
         await aqtbot.wait_until(_error_shown)
 
@@ -235,7 +243,7 @@ async def test_share_workspace_offline(
 @customize_fixtures(logged_gui_as_admin=True)
 @customize_fixtures(bob_profile=UserProfile.OUTSIDER)
 async def test_share_with_outsider_limit_roles(
-    aqtbot, running_backend, logged_gui, gui_workspace_sharing, autoclose_dialog
+    aqtbot, running_backend, logged_gui, gui_workspace_sharing, snackbar_catcher
 ):
     _, w_w, share_w_w = gui_workspace_sharing
 
@@ -245,23 +253,22 @@ async def test_share_with_outsider_limit_roles(
     await aqtbot.wait_until(_users_listed)
 
     for role_index, role_name in [(3, "Manager"), (4, "Owner")]:
-
         select_bob_w = share_w_w.scroll_content.layout().itemAt(2).widget()
         assert select_bob_w.label_email.text() == "bob@example.com"
-        # Switch bob to an invalid role
         assert select_bob_w.combo_role.itemText(role_index) == role_name
         assert select_bob_w.combo_role.model().item(role_index).isEnabled() is False
 
         select_bob_w.combo_role.setCurrentIndex(3)
 
         def _error_shown():
-            assert len(autoclose_dialog.dialogs) == 1
-            assert autoclose_dialog.dialogs[0] == (
-                "Error",
-                translate("TEXT_WORKSPACE_SHARING_SHARE_ERROR_workspace-user").format(
-                    workspace="Workspace", user="Boby McBobFace"
-                ),
-            )
+            assert snackbar_catcher.snackbars == [
+                (
+                    "WARN",
+                    translate("TEXT_WORKSPACE_SHARING_SHARE_ERROR_workspace-user").format(
+                        workspace="Workspace", user="Boby McBobFace"
+                    ),
+                )
+            ]
 
         await aqtbot.wait_until(_error_shown)
 
@@ -281,7 +288,6 @@ async def test_workspace_sharing_filter_users(
     def _users_visible():
         visible = 0
         for i in range(share_w_w.scroll_content.layout().count() - 1):
-            print(share_w_w.scroll_content.layout().itemAt(i).widget().label_name.text())
             if share_w_w.scroll_content.layout().itemAt(i).widget().isVisible():
                 visible += 1
         return visible
@@ -314,7 +320,7 @@ async def test_share_workspace_while_connected(
     aqtbot, running_backend, logged_gui, autoclose_dialog, alice_user_fs, bob
 ):
     w_w = await logged_gui.test_switch_to_workspaces_widget()
-    wid = await alice_user_fs.workspace_create("Workspace")
+    wid = await alice_user_fs.workspace_create(EntryName("Workspace"))
 
     def _no_workspace_listed():
         assert w_w.layout_workspaces.count() == 1
@@ -337,10 +343,10 @@ async def test_share_workspace_while_connected(
 @pytest.mark.gui
 @pytest.mark.trio
 async def test_unshare_workspace_while_connected(
-    aqtbot, running_backend, logged_gui, autoclose_dialog, alice_user_fs, bob
+    aqtbot, running_backend, logged_gui, autoclose_dialog, alice_user_fs, bob, snackbar_catcher
 ):
     w_w = await logged_gui.test_switch_to_workspaces_widget()
-    wid = await alice_user_fs.workspace_create("Workspace")
+    wid = await alice_user_fs.workspace_create(EntryName("Workspace"))
 
     await alice_user_fs.workspace_share(wid, bob.user_id, WorkspaceRole.MANAGER)
 
@@ -348,9 +354,13 @@ async def test_unshare_workspace_while_connected(
         assert w_w.layout_workspaces.count() == 1
         wk_button = w_w.layout_workspaces.itemAt(0).widget()
         assert isinstance(wk_button, WorkspaceButton)
-        wk_button.name == "Workspace"
+        wk_button.name == EntryName("Workspace")
 
     await aqtbot.wait_until(_one_workspace_listed, timeout=2000)
+    assert snackbar_catcher.snackbars == [
+        ("INFO", "The workspace <b>Workspace</b> has been shared with you.")
+    ]
+    snackbar_catcher.reset()
 
     await alice_user_fs.workspace_share(wid, bob.user_id, None)
 
@@ -365,6 +375,9 @@ async def test_unshare_workspace_while_connected(
         "Error",
         translate("TEXT_FILE_SHARING_REVOKED_workspace").format(workspace="Workspace"),
     )
+    assert snackbar_catcher.snackbars == [
+        ("INFO", "The workspace <b>Workspace</b> is no longer shared with you.")
+    ]
 
 
 @pytest.mark.skip(
@@ -379,7 +392,7 @@ async def test_rename_workspace_when_revoked(
     w_w = await logged_gui.test_switch_to_workspaces_widget()
 
     core = logged_gui.test_get_tab().core
-    wid = await core.user_fs.workspace_create("Workspace")
+    wid = await core.user_fs.workspace_create(EntryName("Workspace"))
 
     def _workspace_not_shared_listed():
         assert w_w.layout_workspaces.count() == 1
@@ -388,7 +401,7 @@ async def test_rename_workspace_when_revoked(
         assert wk_button.label_title.text() == "Workspace (private)"
         assert wk_button.label_title.toolTip() == "Workspace (private)"
         assert not wk_button.is_shared
-        assert wk_button.name == "Workspace"
+        assert wk_button.name == EntryName("Workspace")
 
     await aqtbot.wait_until(_workspace_not_shared_listed, timeout=2000)
 
@@ -401,7 +414,7 @@ async def test_rename_workspace_when_revoked(
         wk_button = w_w.layout_workspaces.itemAt(0).widget()
         assert isinstance(wk_button, WorkspaceButton)
         assert wk_button.is_shared
-        assert wk_button.name == "Workspace"
+        assert wk_button.name == EntryName("Workspace")
         assert wk_button.label_title.toolTip() == "Workspace (shared with Boby McBobFace)"
         assert wk_button.label_title.text() == "Workspace (shared ..."
 

@@ -252,6 +252,7 @@ async def test_serialize_types(data_base_dir, alice, workspace_id, type):
     "type", [LocalWorkspaceManifest, LocalFolderManifest, LocalFileManifest, LocalUserManifest]
 )
 @pytest.mark.trio
+@pytest.mark.skip("Legacy types are not handled in Rust")
 @customize_fixtures(real_data_storage=True)
 async def test_deserialize_legacy_types(data_base_dir, alice, workspace_id, type):
     # In parsec < 1.15, the author field used to be None for placeholders
@@ -510,7 +511,7 @@ async def test_vacuum(data_base_dir, alice, workspace_id):
     data_size = 1 * 1024 * 1024
     chunk = Chunk.new(0, data_size)
     async with WorkspaceStorage.run(
-        data_base_dir, alice, workspace_id, vacuum_threshold=data_size // 2
+        data_base_dir, alice, workspace_id, data_vacuum_threshold=data_size // 2
     ) as aws:
 
         # Make sure the storage is empty

@@ -9,7 +9,13 @@ from functools import partial
 
 from parsec.utils import start_task
 from parsec.core.gui.lang import translate
-from parsec.api.protocol import InvitationType, HumanHandle, InvitationDeletedReason, UserProfile
+from parsec.api.protocol import (
+    DeviceLabel,
+    InvitationType,
+    InvitationDeletedReason,
+    HumanHandle,
+    UserProfile,
+)
 from parsec.core.types import BackendInvitationAddr
 from parsec.core.backend_connection import backend_invited_cmds_factory
 from parsec.core.invite import claimer_retrieve_info
@@ -42,7 +48,7 @@ def GreetUserTestBed(
         def __init__(self):
             self.requested_email = "pfry@pe.com"
             self.requested_label = "Philip J. Fry"
-            self.requested_device_label = "PC1"
+            self.requested_device_label = DeviceLabel("PC1")
             self.granted_email = self.requested_email
             self.granted_label = self.requested_label
             self.granted_device_label = self.requested_device_label
@@ -92,7 +98,7 @@ def GreetUserTestBed(
                 claimer_email=claimer_email,
             )
             invitation_addr = BackendInvitationAddr.build(
-                backend_addr=author.organization_addr,
+                backend_addr=author.organization_addr.get_backend_addr(),
                 organization_id=author.organization_id,
                 invitation_type=InvitationType.USER,
                 token=invitation.token,
@@ -268,14 +274,23 @@ def GreetUserTestBed(
                 assert guci_w.isVisible()
                 assert guci_w.line_edit_user_full_name.text() == self.requested_label
                 assert guci_w.line_edit_user_email.text() == self.requested_email
-                assert guci_w.line_edit_device.text() == self.requested_device_label
+                assert guci_w.line_edit_device.text() == self.requested_device_label.str
                 assert guci_w.label_warning.text() == translate(
                     "TEXT_LABEL_USER_ROLE_RECOMMANDATIONS"
                 )
-                # Default profile choice is STANDARD
-                assert guci_w.combo_profile.currentData() == UserProfile.STANDARD
+                # Default profile choice is None
+                assert guci_w.combo_profile.currentData() is None
+                assert guci_w.button_create_user.isEnabled() is False
 
             await aqtbot.wait_until(_check_info_displayed)
+
+            # Select the standard profile
+            guci_w.combo_profile.setCurrentIndex(2)
+
+            def _button_enabled():
+                assert guci_w.button_create_user.isEnabled() is True
+
+            await aqtbot.wait_until(_button_enabled)
 
             return "step_6_validate_claim_info"
 
@@ -323,7 +338,7 @@ async def test_greet_user(GreetUserTestBed):
 async def test_greet_user_modified_claim_info(GreetUserTestBed, backend, coolorg):
     granted_email = "zorro@example.com"
     granted_label = "Don Diego De La Vega"
-    granted_device_label = "Tornado"
+    granted_device_label = DeviceLabel("Tornado")
 
     class ModifiedClaimInfoTestBed(GreetUserTestBed):
         async def step_5_provide_claim_info(self):
@@ -337,7 +352,7 @@ async def test_greet_user_modified_claim_info(GreetUserTestBed, backend, coolorg
 
             guci_w.line_edit_user_full_name.setText(self.granted_label)
             guci_w.line_edit_user_email.setText(self.granted_email)
-            guci_w.line_edit_device.setText(self.granted_device_label)
+            guci_w.line_edit_device.setText(self.granted_device_label.str)
             for index in range(guci_w.combo_profile.model().rowCount()):
                 item = guci_w.combo_profile.model().item(index)
                 if item.text() == translate("TEXT_USER_PROFILE_ADMIN"):

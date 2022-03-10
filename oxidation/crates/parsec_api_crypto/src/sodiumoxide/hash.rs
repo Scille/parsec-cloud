@@ -3,7 +3,7 @@
 use serde::{Deserialize, Serialize};
 use sodiumoxide::crypto::hash::sha256;
 
-#[derive(Clone, Debug, PartialEq, Eq, Hash, Deserialize, Serialize)]
+#[derive(Clone, PartialEq, Eq, Hash, Deserialize, Serialize)]
 #[serde(transparent)]
 pub struct HashDigest(sha256::Digest);
 
@@ -17,6 +17,17 @@ impl HashDigest {
 
     pub fn hexdigest(&self) -> String {
         hex::encode(self.0.as_ref())
+    }
+}
+
+impl std::fmt::Debug for HashDigest {
+    fn fmt(&self, formatter: &mut ::std::fmt::Formatter) -> std::fmt::Result {
+        write!(
+            formatter,
+            "{}({})",
+            stringify!(HashDigest),
+            &self.hexdigest()
+        )
     }
 }
 

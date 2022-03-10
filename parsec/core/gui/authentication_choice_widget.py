@@ -1,14 +1,13 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2016-2021 Scille SAS
 
+from typing import List
 from PyQt5.QtWidgets import QWidget
 from PyQt5.QtCore import pyqtSignal
 
 from parsec.core.local_device import is_smartcard_extension_available, DeviceFileType
-
 from parsec.core.gui.lang import translate
 from parsec.core.gui.password_authentication_widget import PasswordAuthenticationWidget
 from parsec.core.gui.smartcard_authentication_widget import SmartCardAuthenticationWidget
-
 from parsec.core.gui.ui.authentication_choice_widget import Ui_AuthenticationChoiceWidget
 
 
@@ -25,10 +24,12 @@ class AuthenticationChoiceWidget(QWidget, Ui_AuthenticationChoiceWidget):
             self.combo_auth_method.addItem(
                 translate("TEXT_AUTH_METHOD_SMARTCARD"), DeviceFileType.SMARTCARD
             )
+        self.combo_auth_method.setStyleSheet("background-color: #FFFFFF;")
         self.combo_auth_method.setCurrentIndex(0)
         if self.combo_auth_method.count() == 1:
             self.combo_auth_method.setEnabled(False)
             self.combo_auth_method.setToolTip(translate("TEXT_ONLY_ONE_AUTH_METHOD_AVAILABLE"))
+            self.combo_auth_method.setStyleSheet("background-color: #DDDDDD;")
         self.auth_widgets = {
             DeviceFileType.PASSWORD: PasswordAuthenticationWidget(),
             DeviceFileType.SMARTCARD: SmartCardAuthenticationWidget(),
@@ -59,7 +60,7 @@ class AuthenticationChoiceWidget(QWidget, Ui_AuthenticationChoiceWidget):
     def _on_smartcard_state_changed(self, state):
         self.authentication_state_changed.emit(self.current_auth_method, state)
 
-    def exclude_strings(self, strings):
+    def exclude_strings(self, strings: List[str]) -> None:
         self.auth_widgets[DeviceFileType.PASSWORD].set_excluded_strings(strings)
 
     def get_auth_method(self):

@@ -4,7 +4,7 @@ import time
 
 import trio
 from pathlib import Path
-from typing import AsyncIterator, AsyncContextManager, TypeVar, List
+from typing import AsyncIterator, AsyncContextManager, TypeVar, List, Optional
 from async_generator import asynccontextmanager
 
 
@@ -128,7 +128,7 @@ class ChunkStorage:
             intersect_rows = cursor.fetchall()
             cursor.execute(f"""DROP TABLE IF EXISTS {table_name}""")
 
-        return [ChunkID(bytes=id_bytes) for (id_bytes,) in intersect_rows]
+        return [ChunkID.from_bytes(id_bytes) for (id_bytes,) in intersect_rows]
 
     async def get_chunk(self, chunk_id: ChunkID) -> bytes:
         async with self._open_cursor() as cursor:
@@ -190,7 +190,7 @@ class BlockStorage(ChunkStorage):
     @asynccontextmanager
     async def run(  # type: ignore[override]
         cls, device: LocalDevice, localdb: LocalDatabase, cache_size: int
-    ) -> AsyncIterator["ChunkStorage"]:
+    ) -> AsyncIterator["BlockStorage"]:
         async with cls(device, localdb, cache_size)._run() as self:
             yield self
 
@@ -200,6 +200,14 @@ class BlockStorage(ChunkStorage):
         # convenient to perform the commit right away as it does't cost much (at
         # least compare to the downloading of the block).
         return self.localdb.open_cursor(commit=True)
+
+    @asynccontextmanager
+    async def _reenter_cursor(self, cursor: Optional[Cursor]) -> AsyncIterator[Cursor]:
+        if cursor is not None:
+            yield cursor
+            return
+        async with self._open_cursor() as cursor:
+            yield cursor
 
     # Garbage collection
 
@@ -229,6 +237,14 @@ class BlockStorage(ChunkStorage):
                 VALUES (?, ?, ?, ?, ?)""",
                 (chunk_id.bytes, len(ciphered), False, time.time(), ciphered),
             )
+
+            # Perform cleanup if necessary
+            await self.cleanup(cursor)
+
+    async def cleanup(self, cursor: Optional[Cursor] = None) -> None:
+
+        # Update database
+        async with self._reenter_cursor(cursor) as cursor:
 
             # Count the chunks
             cursor.execute("SELECT COUNT(*) FROM chunks")

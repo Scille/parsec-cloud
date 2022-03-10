@@ -3,12 +3,12 @@
 import os
 import sys
 import errno
-from uuid import uuid4
 from itertools import count
 import trio
 import pytest
 from pathlib import Path, PurePath
 
+from parsec.api.data import EntryID, EntryName
 from parsec.core.mountpoint import (
     mountpoint_manager_factory,
     MountpointConfigurationError,
@@ -54,7 +54,7 @@ async def test_mount_unknown_workspace(base_mountpoint, alice_user_fs, event_bus
     async with mountpoint_manager_factory(
         alice_user_fs, event_bus, base_mountpoint
     ) as mountpoint_manager:
-        wid = uuid4()
+        wid = EntryID.new()
         with pytest.raises(MountpointConfigurationError) as exc:
             await mountpoint_manager.mount_workspace(wid)
 
@@ -67,7 +67,7 @@ async def test_base_mountpoint_not_created(base_mountpoint, alice_user_fs, event
     # Path should be created if it doesn' exist
     base_mountpoint = base_mountpoint / "dummy/dummy/dummy"
 
-    wid = await alice_user_fs.workspace_create("w")
+    wid = await alice_user_fs.workspace_create(EntryName("w"))
     workspace = alice_user_fs.get_workspace(wid)
     await workspace.touch("/bar.txt")
 
@@ -84,11 +84,14 @@ async def test_base_mountpoint_not_created(base_mountpoint, alice_user_fs, event
 @pytest.mark.trio
 @pytest.mark.mountpoint
 @pytest.mark.skipif(sys.platform == "win32", reason="Windows uses drive")
+@pytest.mark.skipif(
+    sys.platform == "darwin", reason="Inconsistent on Catalina. TODO: bring back with Monterey CI"
+)
 async def test_mountpoint_path_already_in_use(
     base_mountpoint, running_backend, alice_user_fs, alice2_user_fs
 ):
     # Create a workspace and make it available in two devices
-    wid = await alice_user_fs.workspace_create("w")
+    wid = await alice_user_fs.workspace_create(EntryName("w"))
     await alice_user_fs.sync()
     await alice2_user_fs.sync()
 
@@ -128,7 +131,7 @@ async def test_mount_and_explore_workspace(
 ):
     # Populate a bit the fs first...
 
-    wid = await alice_user_fs.workspace_create("w")
+    wid = await alice_user_fs.workspace_create(EntryName("w"))
     workspace = alice_user_fs.get_workspace(wid)
     await workspace.mkdir("/foo")
     await workspace.touch("/bar.txt")
@@ -186,7 +189,7 @@ async def test_mount_and_explore_workspace(
 async def test_idempotent_mount(base_mountpoint, alice_user_fs, event_bus, manual_unmount):
     # Populate a bit the fs first...
 
-    wid = await alice_user_fs.workspace_create("w")
+    wid = await alice_user_fs.workspace_create(EntryName("w"))
     workspace = alice_user_fs.get_workspace(wid)
     await workspace.touch("/bar.txt")
 
@@ -218,12 +221,15 @@ async def test_idempotent_mount(base_mountpoint, alice_user_fs, event_bus, manua
 
 @pytest.mark.trio
 @pytest.mark.mountpoint
+@pytest.mark.skipif(
+    sys.platform == "darwin", reason="Inconsistent on Catalina. TODO: bring back with Monterey CI"
+)
 async def test_work_within_logged_core(base_mountpoint, core_config, alice, tmpdir):
     core_config = core_config.evolve(mountpoint_base_dir=base_mountpoint)
 
     async with logged_core_factory(core_config, alice) as alice_core:
         manager = alice_core.mountpoint_manager
-        wid = await alice_core.user_fs.workspace_create("w")
+        wid = await alice_core.user_fs.workspace_create(EntryName("w"))
         workspace = alice_core.user_fs.get_workspace(wid)
         await workspace.touch("/bar.txt")
 
@@ -242,7 +248,7 @@ def test_manifest_not_available(mountpoint_service_factory):
 
     async def _bootstrap(user_fs, mountpoint_manager):
         nonlocal x_path
-        wid = await user_fs.workspace_create("x")
+        wid = await user_fs.workspace_create(EntryName("x"))
         workspace = user_fs.get_workspace(wid)
         await workspace.touch("/foo.txt")
         foo_id = await workspace.path_id("/foo.txt")
@@ -266,8 +272,8 @@ def test_manifest_not_available(mountpoint_service_factory):
 @pytest.mark.mountpoint
 async def test_get_path_in_mountpoint(base_mountpoint, alice_user_fs, event_bus):
     # Populate a bit the fs first...
-    wid = await alice_user_fs.workspace_create("mounted_wksp")
-    wid2 = await alice_user_fs.workspace_create("not_mounted_wksp")
+    wid = await alice_user_fs.workspace_create(EntryName("mounted_wksp"))
+    wid2 = await alice_user_fs.workspace_create(EntryName("not_mounted_wksp"))
     workspace1 = alice_user_fs.get_workspace(wid)
     workspace2 = alice_user_fs.get_workspace(wid2)
     await workspace1.touch("/bar.txt")
@@ -340,7 +346,7 @@ async def test_mountpoint_revoke_access(
     new_role = None if revoking == "read" else WorkspaceRole.READER
 
     # Bob creates and share two files with Alice
-    wid = await create_shared_workspace("w", bob_user_fs, alice_user_fs, alice2_user_fs)
+    wid = await create_shared_workspace(EntryName("w"), bob_user_fs, alice_user_fs, alice2_user_fs)
     workspace = bob_user_fs.get_workspace(wid)
     await workspace.touch("/foo.txt")
     await workspace.touch("/bar.txt")
@@ -504,7 +510,7 @@ def test_stat_mountpoint(mountpoint_service):
 async def test_mountpoint_access_unicode(base_mountpoint, alice_user_fs, event_bus):
     weird_name = "ÉŸ奇怪😀🔫🐍"
 
-    wid = await alice_user_fs.workspace_create(weird_name)
+    wid = await alice_user_fs.workspace_create(EntryName(weird_name))
     workspace = alice_user_fs.get_workspace(wid)
     await workspace.touch(f"/{weird_name}")
 
@@ -544,10 +550,13 @@ def test_nested_rw_access(mountpoint_service):
 @pytest.mark.mountpoint
 @pytest.mark.parametrize("n", [10, 100, 1000])
 @pytest.mark.parametrize("base_path", ["/", "/foo"])
+@pytest.mark.skipif(
+    sys.platform == "darwin", reason="Inconsistent on Catalina. TODO: bring back with Monterey CI"
+)
 async def test_mountpoint_iterdir_with_many_files(
     n, base_path, base_mountpoint, alice_user_fs, event_bus
 ):
-    wid = await alice_user_fs.workspace_create("w")
+    wid = await alice_user_fs.workspace_create(EntryName("w"))
     workspace = alice_user_fs.get_workspace(wid)
     await workspace.mkdir(base_path, parents=True, exist_ok=True)
     names = [f"some_file_{i:03d}.txt" for i in range(n)]
@@ -578,6 +587,9 @@ async def test_mountpoint_iterdir_with_many_files(
 
 @pytest.mark.trio
 @pytest.mark.mountpoint
+@pytest.mark.skipif(
+    sys.platform == "darwin", reason="Inconsistent on Catalina. TODO: bring back with Monterey CI"
+)
 async def test_cancel_mount_workspace(base_mountpoint, alice_user_fs, event_bus):
     """
     This function tests the race conditions between the mounting of a workspace
@@ -588,7 +600,7 @@ async def test_cancel_mount_workspace(base_mountpoint, alice_user_fs, event_bus)
 
         [x * 0.00001 for x in range(2000, 2500)]
     """
-    wid = await alice_user_fs.workspace_create("w")
+    wid = await alice_user_fs.workspace_create(EntryName("w"))
 
     # Reuse the same mountpoint manager for all the mountings to
     # make sure state is not polutated by previous mount attempts

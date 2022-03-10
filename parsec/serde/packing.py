@@ -60,7 +60,11 @@ def unpackb(raw_data: bytes, exc_cls=SerdePackingError) -> dict:
 
     try:
         ret = msgpack_unpackb(
-            raw_data, ext_hook=_unpackb_ext_hook, raw=False, max_bin_len=MAX_BIN_LEN
+            raw_data,
+            ext_hook=_unpackb_ext_hook,
+            raw=False,
+            max_bin_len=MAX_BIN_LEN,
+            strict_map_key=False,
         )
 
     except (ExtraData, ValueError, FormatError, StackError) as exc:
@@ -76,7 +80,7 @@ def unpackb(raw_data: bytes, exc_cls=SerdePackingError) -> dict:
 class Unpacker:
     def __init__(self, exc_cls=SerdePackingError):
         self._unpacker = msgpack_Unpacker(
-            ext_hook=_unpackb_ext_hook, raw=False, max_bin_len=MAX_BIN_LEN
+            ext_hook=_unpackb_ext_hook, raw=False, max_bin_len=MAX_BIN_LEN, strict_map_key=False
         )
         self._exc_cls = exc_cls
 

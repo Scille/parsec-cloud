@@ -6,6 +6,7 @@ import pytest
 from PyQt5 import QtCore, QtWidgets, QtGui
 from PyQt5.QtGui import QGuiApplication
 
+from parsec.api.data import EntryName
 from parsec.core.types import WorkspaceRole
 from parsec.core.fs import FsPath
 
@@ -14,27 +15,8 @@ from parsec.core.gui.file_items import FileType, TYPE_DATA_INDEX
 from parsec.test_utils import create_inconsistent_workspace
 
 
-@pytest.fixture
-async def files_widget_testbed(monkeypatch, aqtbot, logged_gui):
-    c_w = logged_gui.test_get_central_widget()
-    w_w = logged_gui.test_get_workspaces_widget()
-    workspace_name = "wksp1"
-
-    # Create the workspace
-    user_fs = logged_gui.test_get_core().user_fs
-    wid = await user_fs.workspace_create(workspace_name)
-    wfs = user_fs.get_workspace(wid)
-
-    # Now wait for GUI to take it into account
-    def _workspace_available():
-        assert w_w.layout_workspaces.count() == 1
-
-    await aqtbot.wait_until(_workspace_available)
-
-    f_w = await logged_gui.test_switch_to_files_widget(workspace_name)
-
+def create_files_widget_testbed(monkeypatch, aqtbot, logged_gui, user_fs, wfs, f_w, c_w):
     # === Testbed class is full of helpers ===
-
     class FilesWidgetTestbed:
         def __init__(self):
             self.logged_gui = logged_gui
@@ -43,7 +25,7 @@ async def files_widget_testbed(monkeypatch, aqtbot, logged_gui):
             self.files_widget = f_w
 
         def pwd(self):
-            return c_w.label_title3.text()
+            return str(c_w.navigation_bar_widget.get_current_path())
 
         def ls(self):
             items = []
@@ -58,7 +40,7 @@ async def files_widget_testbed(monkeypatch, aqtbot, logged_gui):
             return items
 
         async def cd(self, path):
-            current_path_parts = [x for x in c_w.label_title3.text().split("/") if x]
+            current_path_parts = [p for p in c_w.navigation_bar_widget.paths]
             if path.startswith("/"):
                 raise ValueError("Absolute path not supported")
             for name in path.split("/"):
@@ -71,12 +53,12 @@ async def files_widget_testbed(monkeypatch, aqtbot, logged_gui):
                     current_path_parts.pop()
                 else:
                     f_w.table_files.item_activated.emit(FileType.Folder, name)
-                    current_path_parts.append(name)
+                    current_path_parts.append(EntryName(name))
 
                 def _path_reached():
-                    fs_path = FsPath("/" + "/".join(current_path_parts))
+                    fs_path = FsPath("/" + "/".join([part.str for part in current_path_parts]))
                     assert f_w.current_directory == fs_path
-                    assert c_w.label_title3.text() == str(fs_path)
+                    assert c_w.navigation_bar_widget.get_current_path() == fs_path
 
                 await aqtbot.wait_until(_path_reached)
 
@@ -128,7 +110,7 @@ async def files_widget_testbed(monkeypatch, aqtbot, logged_gui):
             async with aqtbot.wait_signal(f_w.table_files.paste_clicked):
                 aqtbot.key_click(f_w.table_files, "V", modifier=QtCore.Qt.ControlModifier)
 
-        async def check_files_view(self, path, expected_entries, workspace_name="wksp1"):
+        async def check_files_view(self, path, expected_entries, workspace_name=EntryName("wksp1")):
             expected_table_files = []
             # Parent dir line brings to workspaces list if we looking into workspace's root
             if path == "/":
@@ -146,8 +128,8 @@ async def files_widget_testbed(monkeypatch, aqtbot, logged_gui):
 
             def _view_ok():
                 # Check title (top part of the GUI)
-                assert c_w.label_title2.text() == workspace_name
-                assert c_w.label_title3.text() == path
+                assert c_w.navigation_bar_widget.workspace_name == workspace_name
+                assert str(c_w.navigation_bar_widget.get_current_path()) == path
                 # Now check actual files view
                 assert f_w.workspace_fs.get_workspace_name() == workspace_name
                 assert f_w.table_files.rowCount() == len(expected_table_files)
@@ -207,6 +189,28 @@ async def files_widget_testbed(monkeypatch, aqtbot, logged_gui):
             await aqtbot.wait_until(wait_until or _item_renamed)
 
     return FilesWidgetTestbed()
+
+
+@pytest.fixture
+async def files_widget_testbed(monkeypatch, aqtbot, logged_gui):
+    c_w = logged_gui.test_get_central_widget()
+    w_w = logged_gui.test_get_workspaces_widget()
+    workspace_name = EntryName("wksp1")
+
+    # Create the workspace
+    user_fs = logged_gui.test_get_core().user_fs
+    wid = await user_fs.workspace_create(workspace_name)
+    wfs = user_fs.get_workspace(wid)
+
+    # Now wait for GUI to take it into account
+    def _workspace_available():
+        assert w_w.layout_workspaces.count() == 1
+
+    await aqtbot.wait_until(_workspace_available)
+
+    f_w = await logged_gui.test_switch_to_files_widget(workspace_name)
+
+    return create_files_widget_testbed(monkeypatch, aqtbot, logged_gui, user_fs, wfs, f_w, c_w)
 
 
 @pytest.mark.gui
@@ -412,7 +416,7 @@ async def test_show_inconsistent_dir(
 
     # Create a new workspace and make user GUI knows about it
     await tb.logged_gui.test_switch_to_workspaces_widget()
-    await create_inconsistent_workspace(user_fs=tb.user_fs, name="wksp2")
+    await create_inconsistent_workspace(user_fs=tb.user_fs, name=EntryName("wksp2"))
 
     # Now wait for GUI to take it into account
     def _workspace_available():
@@ -421,13 +425,15 @@ async def test_show_inconsistent_dir(
     await aqtbot.wait_until(_workspace_available)
 
     # Jump into the workspace, should be fine
-    await tb.logged_gui.test_switch_to_files_widget(workspace_name="wksp2")
-    await tb.check_files_view(workspace_name="wksp2", path="/", expected_entries=["rep/"])
+    await tb.logged_gui.test_switch_to_files_widget(workspace_name=EntryName("wksp2"))
+    await tb.check_files_view(
+        workspace_name=EntryName("wksp2"), path="/", expected_entries=["rep/"]
+    )
 
     # Now go into the folder containing the `newfail.txt` inconsistent file
     await tb.cd("rep")
     await tb.check_files_view(
-        workspace_name="wksp2", path="/rep", expected_entries=["foo.txt", "newfail.txt!"]
+        workspace_name=EntryName("wksp2"), path="/rep", expected_entries=["foo.txt", "newfail.txt!"]
     )
 
 
@@ -438,7 +444,7 @@ async def test_copy_cut_between_workspaces(aqtbot, autoclose_dialog, files_widge
 
     # Create a new workspace and make user GUI knows about it
     await tb.logged_gui.test_switch_to_workspaces_widget()
-    await tb.user_fs.workspace_create("wksp2")
+    await tb.user_fs.workspace_create(EntryName("wksp2"))
 
     # Now wait for GUI to take it into account
     def _workspace_available():
@@ -454,23 +460,25 @@ async def test_copy_cut_between_workspaces(aqtbot, autoclose_dialog, files_widge
 
     # 1) Test the copy
     await tb.copy("foo")
-    await tb.logged_gui.test_switch_to_files_widget(workspace_name="wksp2")
+    await tb.logged_gui.test_switch_to_files_widget(workspace_name=EntryName("wksp2"))
     await tb.paste()
-    await tb.check_files_view(workspace_name="wksp2", path="/", expected_entries=["foo/"])
+    await tb.check_files_view(
+        workspace_name=EntryName("wksp2"), path="/", expected_entries=["foo/"]
+    )
     await tb.cd("foo")
     await tb.check_files_view(
-        workspace_name="wksp2", path="/foo", expected_entries=["bar.txt", "spam.txt"]
+        workspace_name=EntryName("wksp2"), path="/foo", expected_entries=["bar.txt", "spam.txt"]
     )
 
     # 2) Test the cut
     await tb.cut(["bar.txt", "spam.txt"])
-    await tb.logged_gui.test_switch_to_files_widget(workspace_name="wksp1")
+    await tb.logged_gui.test_switch_to_files_widget(workspace_name=EntryName("wksp1"))
     await tb.paste()
     await tb.check_files_view(path="/", expected_entries=["foo/", "bar.txt", "spam.txt"])
     # Make sure the files are no longer in the initial workspace
-    await tb.logged_gui.test_switch_to_files_widget(workspace_name="wksp2")
+    await tb.logged_gui.test_switch_to_files_widget(workspace_name=EntryName("wksp2"))
     await tb.cd("foo")
-    await tb.check_files_view(workspace_name="wksp2", path="/foo", expected_entries=[])
+    await tb.check_files_view(workspace_name=EntryName("wksp2"), path="/foo", expected_entries=[])
 
 
 @pytest.mark.gui
@@ -709,3 +717,102 @@ async def test_use_file_link(aqtbot, autoclose_dialog, files_widget_testbed):
 
 
 # Note: other file link tests are in test_main_window.py
+
+
+@pytest.fixture
+def catch_file_status_widget(widget_catcher_factory):
+    return widget_catcher_factory("parsec.core.gui.file_status_widget.FileStatusWidget")
+
+
+@pytest.mark.gui
+@pytest.mark.trio
+async def test_show_file_status(
+    running_backend, aqtbot, autoclose_dialog, files_widget_testbed, catch_file_status_widget
+):
+    tb = files_widget_testbed
+    f_w = files_widget_testbed.files_widget
+
+    # Populate the workspace
+    await tb.workspace_fs.mkdir("/foo")
+    await tb.workspace_fs.mkdir("/foo/innerfoo")
+    await tb.workspace_fs.touch("/foo/bar.txt")
+    await tb.check_files_view(path="/", expected_entries=["foo/"])
+
+    await f_w.workspace_fs.sync()
+
+    await tb.cd("foo")
+
+    await tb.check_files_view(path="/foo", expected_entries=["innerfoo/", "bar.txt"])
+
+    # Try to open status with two files selected
+    await tb.apply_selection(["bar.txt", "innerfoo"])
+
+    selected_files = f_w.table_files.selected_files()
+    assert len(selected_files) == 2
+    f_w.show_status()
+
+    assert autoclose_dialog.dialogs == [
+        ("Error", _("TEXT_FILE_STATUS_MULTIPLE_FILES_SELECTED_ERROR"))
+    ]
+    autoclose_dialog.reset()
+
+    # Select a single file
+    await tb.apply_selection("bar.txt")
+    selected_files = f_w.table_files.selected_files()
+    assert len(selected_files) == 1
+
+    f_w.show_status()
+    file_status_w = await catch_file_status_widget()
+    assert file_status_w
+
+    def _wait_status_shown():
+        assert file_status_w.label_location.text().endswith(str(Path("/foo/bar.txt")))
+        assert file_status_w.label_workspace.text() == "wksp1"
+        assert file_status_w.label_filetype.text() == "file"
+        assert file_status_w.label_size.text() == "0 B"
+        assert file_status_w.label_created_on.text() != "" and file_status_w.label_created_on.text() != _(
+            "TEXT_FILE_INFO_NON_APPLICABLE"
+        )
+        assert file_status_w.label_created_by.text() == "Boby McBobFace"
+        assert file_status_w.label_last_updated_on.text() != "" and file_status_w.label_last_updated_on.text() != _(
+            "TEXT_FILE_INFO_NON_APPLICABLE"
+        )
+        assert file_status_w.label_last_updated_by.text() == "Boby McBobFace"
+        assert file_status_w.label_availability.text() == _("TEXT_YES")
+        assert file_status_w.label_uploaded.text() == _("TEXT_YES")
+        assert file_status_w.label_local.text() == "0"
+        assert file_status_w.label_remote.text() == "0"
+        assert file_status_w.label_both.text() == "0"
+
+    await aqtbot.wait_until(_wait_status_shown)
+    file_status_w.dialog.accept()
+
+    # Select a single dir
+    await tb.apply_selection("innerfoo")
+    selected_files = f_w.table_files.selected_files()
+    assert len(selected_files) == 1
+
+    f_w.show_status()
+    file_status_w = await catch_file_status_widget()
+    assert file_status_w
+
+    def _wait_status_shown():
+        assert file_status_w.label_location.text().endswith(str(Path("/foo/innerfoo")))
+        assert file_status_w.label_workspace.text() == "wksp1"
+        assert file_status_w.label_filetype.text() == "folder"
+        assert file_status_w.label_size.text() == _("TEXT_FILE_INFO_NON_APPLICABLE")
+        assert file_status_w.label_created_on.text() != "" and file_status_w.label_created_on.text() != _(
+            "TEXT_FILE_INFO_NON_APPLICABLE"
+        )
+        assert file_status_w.label_created_by.text() == "Boby McBobFace"
+        assert file_status_w.label_last_updated_on.text() != "" and file_status_w.label_last_updated_on.text() != _(
+            "TEXT_FILE_INFO_NON_APPLICABLE"
+        )
+        assert file_status_w.label_last_updated_by.text() == "Boby McBobFace"
+        assert file_status_w.label_availability.text() == _("TEXT_FILE_INFO_NON_APPLICABLE")
+        assert file_status_w.label_uploaded.text() == _("TEXT_FILE_INFO_NON_APPLICABLE")
+        assert file_status_w.label_local.text() == _("TEXT_FILE_INFO_NON_APPLICABLE")
+        assert file_status_w.label_remote.text() == _("TEXT_FILE_INFO_NON_APPLICABLE")
+        assert file_status_w.label_both.text() == _("TEXT_FILE_INFO_NON_APPLICABLE")
+
+    await aqtbot.wait_until(_wait_status_shown)

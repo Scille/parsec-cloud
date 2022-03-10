@@ -25,6 +25,8 @@ from parsec.api.protocol import (
     HumanHandleField,
     OrganizationIDField,
     DeviceIDField,
+    DeviceLabel,
+    DeviceLabelField,
 )
 from parsec.api.data import DataError, UserProfile
 from parsec.core.types import EntryID, LocalDevice, BackendOrganizationAddr
@@ -79,7 +81,7 @@ class LegacyDeviceFileSchema(BaseSchema):
     # those fields have been added to the device file so the login page in
     # the GUI can use them to provide useful information.
     human_handle = HumanHandleField(allow_none=True, missing=None)
-    device_label = fields.String(allow_none=True, missing=None)
+    device_label = DeviceLabelField(allow_none=True, missing=None)
 
 
 class BaseDeviceFileSchema(BaseSchema):
@@ -89,7 +91,7 @@ class BaseDeviceFileSchema(BaseSchema):
 
     # Override those fields to make them required (although `None` is still valid)
     human_handle = HumanHandleField(required=True, allow_none=True)
-    device_label = fields.String(required=True, allow_none=True)
+    device_label = DeviceLabelField(required=True, allow_none=True)
 
     # Store device ID, organization ID and slug in the device file
     # For legacy versions, this information is available in the file name
@@ -147,7 +149,7 @@ def generate_new_device(
     device_id: Optional[DeviceID] = None,
     profile: UserProfile = UserProfile.STANDARD,
     human_handle: Optional[HumanHandle] = None,
-    device_label: Optional[str] = None,
+    device_label: Optional[DeviceLabel] = None,
     signing_key: Optional[SigningKey] = None,
     private_key: Optional[PrivateKey] = None,
 ) -> LocalDevice:
@@ -171,7 +173,7 @@ class AvailableDevice:
     organization_id: OrganizationID
     device_id: DeviceID
     human_handle: Optional[HumanHandle]
-    device_label: Optional[str]
+    device_label: Optional[DeviceLabel]
     slug: str
     type: DeviceFileType
 
@@ -185,7 +187,7 @@ class AvailableDevice:
 
     @property
     def device_display(self) -> str:
-        return self.device_label or str(self.device_id.device_name)
+        return str(self.device_label if self.device_label else self.device_id.device_name)
 
     @property
     def slughash(self) -> str:

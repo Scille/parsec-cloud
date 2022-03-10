@@ -6,6 +6,7 @@ import time
 import threading
 from pathlib import Path
 
+from parsec.api.data import EntryName
 from parsec.core.fs.utils import ntstatus
 
 
@@ -17,10 +18,10 @@ def test_rename_to_another_drive(mountpoint_service):
 
     async def _bootstrap(user_fs, mountpoint_manager):
         nonlocal x_path, y_path
-        xid = await user_fs.workspace_create("x")
+        xid = await user_fs.workspace_create(EntryName("x"))
         xworkspace = user_fs.get_workspace(xid)
         await xworkspace.touch("/foo.txt")
-        yid = await user_fs.workspace_create("y")
+        yid = await user_fs.workspace_create(EntryName("y"))
         x_path = await mountpoint_manager.mount_workspace(xid)
         y_path = await mountpoint_manager.mount_workspace(yid)
         print(x_path, y_path)
@@ -152,7 +153,7 @@ def test_mount_workspace_with_non_win32_friendly_name(mountpoint_service_factory
 
         for name, _ in items:
             # Apply bad name to both the mountpoint folder and data inside it
-            wid = await user_fs.workspace_create(name)
+            wid = await user_fs.workspace_create(EntryName(name))
             workspace = user_fs.get_workspace(wid)
             await workspace.touch(f"/{name}")
             workspaces.append(await mountpoint_manager.mount_workspace(wid))
@@ -177,10 +178,10 @@ def test_mount_workspace_with_too_long_name(mountpoint_service_factory):
     too_long_once_encoded = "x" + "😀" * 16
 
     async def _bootstrap(user_fs, mountpoint_manager):
-        wid = await user_fs.workspace_create(too_long)
+        wid = await user_fs.workspace_create(EntryName(too_long))
         workspaces.append(await mountpoint_manager.mount_workspace(wid))
 
-        wid = await user_fs.workspace_create(too_long_once_encoded)
+        wid = await user_fs.workspace_create(EntryName(too_long_once_encoded))
         workspaces.append(await mountpoint_manager.mount_workspace(wid))
 
     workspaces = []

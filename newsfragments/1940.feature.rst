@@ -1,0 +1,1 @@
+Added --recipiant option to share_workspace command and the human_find command in the CLI

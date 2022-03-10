@@ -5,6 +5,7 @@ from hypothesis import strategies as st
 from hypothesis_trio.stateful import initialize, rule
 from pendulum import now
 
+from parsec.api.data import EntryName
 from parsec.api.protocol import RealmRole, UserProfile
 from parsec.core.fs.exceptions import FSReadOnlyError, FSWorkspaceNoWriteAccess
 
@@ -139,7 +140,7 @@ def test_timestamp_causality(
             self.diana_controller = await self.start_user_fs(diana)
 
             # Carl
-            self.wid = await self.carl_fs.workspace_create("w")
+            self.wid = await self.carl_fs.workspace_create(EntryName("w"))
             await self.carl_fs.workspace_share(self.wid, alice.user_id, RealmRole.READER)
             await self.carl_fs.workspace_share(self.wid, bob.user_id, RealmRole.CONTRIBUTOR)
             await self.carl_fs.workspace_share(self.wid, diana.user_id, RealmRole.OWNER)

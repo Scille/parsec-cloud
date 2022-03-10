@@ -5,6 +5,8 @@ from typing import Optional
 from PyQt5.QtCore import pyqtSignal
 from PyQt5.QtWidgets import QWidget
 
+from parsec.core.fs import FsPath
+
 from parsec.core.gui.files_widget import FilesWidget, Clipboard
 from parsec.core.gui.workspaces_widget import WorkspacesWidget
 from parsec.core.gui.ui.mount_widget import Ui_MountWidget
@@ -12,7 +14,9 @@ from parsec.core.gui.ui.mount_widget import Ui_MountWidget
 
 class MountWidget(QWidget, Ui_MountWidget):
     widget_switched = pyqtSignal(list)
-    folder_changed = pyqtSignal(str, str)
+    # First argument is an EntryName but since it can be None,
+    # we can't set the type.
+    folder_changed = pyqtSignal(object, str)
 
     def __init__(self, core, jobs_ctx, event_bus, **kwargs):
         super().__init__(**kwargs)
@@ -36,6 +40,11 @@ class MountWidget(QWidget, Ui_MountWidget):
 
     def load_workspace(self, workspace_fs, default_path, select=False):
         self.show_files_widget(workspace_fs, default_path, select)
+
+    def load_path(self, path):
+        if not self.files_widget.isVisible():
+            return
+        self.files_widget.load(FsPath(str(path)))
 
     def show_files_widget(self, workspace_fs, default_path, selected=False, mount_it=False):
         self.workspaces_widget.hide()

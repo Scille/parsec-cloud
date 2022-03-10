@@ -8,8 +8,14 @@ from pathlib import Path
 from uuid import uuid4
 from pendulum import now as pendulum_now
 
-from parsec.api.data import UserProfile, UserCertificateContent, DeviceCertificateContent, EntryID
-from parsec.api.protocol import OrganizationID, DeviceID, HumanHandle, DeviceName
+from parsec.api.data import (
+    UserProfile,
+    UserCertificateContent,
+    DeviceCertificateContent,
+    EntryID,
+    EntryName,
+)
+from parsec.api.protocol import OrganizationID, DeviceID, HumanHandle, DeviceName, DeviceLabel
 from parsec.crypto import SigningKey
 from parsec.core import logged_core_factory
 from parsec.core.logged_core import LoggedCore
@@ -62,7 +68,7 @@ async def initialize_test_organization(
         alice_device = await bootstrap_organization(
             cmds=anonymous_cmds,
             human_handle=HumanHandle(label="Alice", email="alice@example.com"),
-            device_label="laptop",
+            device_label=DeviceLabel("laptop"),
         )
         await user_storage_non_speculative_init(
             data_base_dir=config.data_base_dir, device=alice_device
@@ -81,7 +87,7 @@ async def initialize_test_organization(
 
             # Create new device "pc" for Alice
             other_alice_device = await _register_new_device(
-                cmds=alice_cmds, author=alice_device, device_label="pc"
+                cmds=alice_cmds, author=alice_device, device_label=DeviceLabel("pc")
             )
             save_device_with_password_in_config(
                 config_dir=config_dir, device=other_alice_device, password=password
@@ -90,7 +96,7 @@ async def initialize_test_organization(
             bob_device = await _register_new_user(
                 cmds=alice_cmds,
                 author=alice_device,
-                device_label="laptop",
+                device_label=DeviceLabel("laptop"),
                 human_handle=HumanHandle(email="bob@example.com", label="Bob"),
                 profile=UserProfile.STANDARD,
             )
@@ -105,7 +111,7 @@ async def initialize_test_organization(
             toto_device = await _register_new_user(
                 cmds=alice_cmds,
                 author=alice_device,
-                device_label="laptop",
+                device_label=DeviceLabel("laptop"),
                 human_handle=HumanHandle(email="toto@example.com", label="Toto"),
                 profile=UserProfile.OUTSIDER,
             )
@@ -116,11 +122,11 @@ async def initialize_test_organization(
                 config_dir=config_dir, device=toto_device, password=password
             )
             # Create Alice workspace
-            alice_ws_id = await alice_core.user_fs.workspace_create("alice_workspace")
+            alice_ws_id = await alice_core.user_fs.workspace_create(EntryName("alice_workspace"))
             # Create context manager
             async with logged_core_factory(config, bob_device) as bob_core:
                 # Create Bob workspace
-                bob_ws_id = await bob_core.user_fs.workspace_create("bob_workspace")
+                bob_ws_id = await bob_core.user_fs.workspace_create(EntryName("bob_workspace"))
                 # Bob share workspace with Alice
                 await bob_core.user_fs.workspace_share(
                     bob_ws_id, alice_device.user_id, WorkspaceRole.MANAGER
@@ -156,7 +162,7 @@ async def initialize_test_organization(
 
 async def _add_random_device(cmds, device, additional_devices_number):
     for _ in range(additional_devices_number):
-        device_label = "device_" + str(uuid4())[:9]
+        device_label = DeviceLabel("device_" + str(uuid4())[:9])
         await _register_new_device(cmds=cmds, author=device, device_label=device_label)
 
 
@@ -186,7 +192,7 @@ async def _add_random_users(
         user_device = await _register_new_user(
             cmds=cmds,
             author=author,
-            device_label="desktop",
+            device_label=DeviceLabel("desktop"),
             human_handle=HumanHandle(email=f"{name}@gmail.com", label=name),
             profile=user_profile,
         )
@@ -261,7 +267,7 @@ async def _claim_device(cmds, requested_device_label):
 async def _register_new_user(
     cmds: BackendAuthenticatedCmds,
     author: LocalDevice,
-    device_label: Optional[str],
+    device_label: Optional[DeviceLabel],
     human_handle: Optional[HumanHandle],
     profile: UserProfile,
 ) -> LocalDevice:
@@ -310,7 +316,7 @@ async def _register_new_user(
 
 
 async def _register_new_device(
-    cmds: BackendAuthenticatedCmds, author: LocalDevice, device_label: Optional[str]
+    cmds: BackendAuthenticatedCmds, author: LocalDevice, device_label: Optional[DeviceLabel]
 ):
     new_device = LocalDevice(
         organization_addr=author.organization_addr,

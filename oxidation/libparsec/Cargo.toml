@@ -9,6 +9,7 @@ edition = "2021"
 libparsec_platform_native = { path = "./crates/platform_native", optional = true }
 libparsec_platform_web = { path = "./crates/platform_web", optional = true }
 parsec_api_crypto = { version = "0.0.0", path = "../crates/parsec_api_crypto" }
+parsec_api_types = { version = "0.0.0", path = "../crates/parsec_api_types" }
 
 [features]
 default = ["native"]

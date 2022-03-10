@@ -1,7 +1,6 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2016-2021 Scille SAS
 
-from uuid import UUID
-from typing import Tuple, Optional
+from typing import Tuple, Optional, TYPE_CHECKING
 from urllib.parse import urlsplit, urlunsplit, parse_qs, quote_plus, unquote_plus, urlencode
 from marshmallow import ValidationError
 
@@ -13,7 +12,7 @@ from parsec.crypto import (
     binary_urlsafe_decode,
     binary_urlsafe_encode,
 )
-from parsec.api.protocol import OrganizationID, InvitationType
+from parsec.api.protocol import OrganizationID, InvitationType, InvitationToken
 from parsec.api.data import EntryID
 
 
@@ -151,6 +150,10 @@ class BackendAddr:
         # Return a list to easily manage the order of params
         return [("no_ssl", "true")] if not self._use_ssl else []
 
+    def get_backend_addr(self):
+        # Compatibility with Rust where inheritance doesn't exist
+        return self
+
     @property
     def hostname(self):
         return self._hostname
@@ -168,7 +171,17 @@ class BackendAddr:
         return self._use_ssl
 
 
-class BackendOrganizationAddr(BackendAddr):
+_PyBackendAddr = BackendAddr
+if not TYPE_CHECKING:
+    try:
+        from libparsec.types import BackendAddr as _RsBackendAddr
+    except ImportError:
+        pass
+    else:
+        BackendAddr = _RsBackendAddr
+
+
+class BackendOrganizationAddr(_PyBackendAddr):
     """
     Represent the URL to access an organization within a backend
     (e.g. ``parsec://parsec.example.com/MyOrg?rvk=7NFDS4VQLP3XPCMTSEN34ZOXKGGIMTY2W2JI2SPIHB2P3M6K4YWAssss``)
@@ -229,29 +242,49 @@ class BackendOrganizationAddr(BackendAddr):
         )
 
 
-class BackendActionAddr(BackendAddr):
+_PyBackendOrganizationAddr = BackendOrganizationAddr
+if not TYPE_CHECKING:
+    try:
+        from libparsec.types import BackendOrganizationAddr as _RsBackendOrganizationAddr
+    except ImportError:
+        pass
+    else:
+        BackendOrganizationAddr = _RsBackendOrganizationAddr
+
+
+class BackendActionAddr(_PyBackendAddr):
     __slots__ = ()
 
     @classmethod
     def from_url(cls, url: str, **kwargs):
-        if cls is not BackendActionAddr:
-            return BackendAddr.from_url.__func__(cls, url, **kwargs)
+        if cls is not _PyBackendActionAddr:
+            return _PyBackendAddr.from_url.__func__(cls, url, **kwargs)
 
         else:
             for type in (
-                BackendOrganizationBootstrapAddr,
-                BackendOrganizationFileLinkAddr,
-                BackendInvitationAddr,
+                _PyBackendOrganizationBootstrapAddr,
+                _PyBackendOrganizationFileLinkAddr,
+                _PyBackendInvitationAddr,
             ):
                 try:
-                    return BackendAddr.from_url.__func__(type, url, **kwargs)
+                    return _PyBackendAddr.from_url.__func__(type, url, **kwargs)
                 except ValueError:
                     pass
 
             raise ValueError("Invalid URL format")
 
 
-class BackendOrganizationBootstrapAddr(BackendActionAddr):
+_PyBackendActionAddr = BackendActionAddr
+if not TYPE_CHECKING:
+    try:
+        from libparsec.types import BackendActionAddr as _RsBackendActionAddr
+    except ImportError:
+        pass
+    else:
+        BackendActionAddr = _RsBackendActionAddr
+
+
+class BackendOrganizationBootstrapAddr(_PyBackendActionAddr):
     """
     Represent the URL to bootstrap an organization within a backend
     (e.g. ``parsec://parsec.example.com/my_org?action=bootstrap_organization&token=1234ABCD``)
@@ -276,7 +309,7 @@ class BackendOrganizationBootstrapAddr(BackendActionAddr):
         if len(value) != 1:
             raise ValueError("Missing mandatory `action` param")
         if value[0] != "bootstrap_organization":
-            raise ValueError("Expected `action=bootstrap_organization` value")
+            raise ValueError("Expected `action=bootstrap_organization` param value")
 
         value = params.pop("token", ())
         if len(value) > 1:
@@ -310,7 +343,7 @@ class BackendOrganizationBootstrapAddr(BackendActionAddr):
         )
 
     def generate_organization_addr(self, root_verify_key: VerifyKey) -> BackendOrganizationAddr:
-        return BackendOrganizationAddr.build(
+        return _PyBackendOrganizationAddr.build(
             backend_addr=self, organization_id=self.organization_id, root_verify_key=root_verify_key
         )
 
@@ -326,7 +359,19 @@ class BackendOrganizationBootstrapAddr(BackendActionAddr):
         return self._token if self._token is not None else ""
 
 
-class BackendOrganizationFileLinkAddr(BackendActionAddr):
+_PyBackendOrganizationBootstrapAddr = BackendOrganizationBootstrapAddr
+if not TYPE_CHECKING:
+    try:
+        from libparsec.types import (
+            BackendOrganizationBootstrapAddr as _RsBackendOrganizationBootstrapAddr,
+        )
+    except ImportError:
+        pass
+    else:
+        BackendOrganizationBootstrapAddr = _RsBackendOrganizationBootstrapAddr
+
+
+class BackendOrganizationFileLinkAddr(_PyBackendActionAddr):
     """
     Represent the URL to share a file link
     (e.g. ``parsec://parsec.example.com/my_org?action=file_link&workspace_id=xx&path=yy``)
@@ -358,13 +403,13 @@ class BackendOrganizationFileLinkAddr(BackendActionAddr):
         if len(value) != 1:
             raise ValueError("Missing mandatory `action` param")
         if value[0] != "file_link":
-            raise ValueError("Expected `action=file_link` value")
+            raise ValueError("Expected `action=file_link` param value")
 
         value = params.pop("workspace_id", ())
         if len(value) != 1:
             raise ValueError("Missing mandatory `workspace_id` param")
         try:
-            kwargs["workspace_id"] = EntryID(value[0])
+            kwargs["workspace_id"] = EntryID.from_hex(value[0])
         except ValueError as exc:
             raise ValueError("Invalid `workspace_id` param value") from exc
 
@@ -418,6 +463,18 @@ class BackendOrganizationFileLinkAddr(BackendActionAddr):
         return self._encrypted_path
 
 
+_PyBackendOrganizationFileLinkAddr = BackendOrganizationFileLinkAddr
+if not TYPE_CHECKING:
+    try:
+        from libparsec.types import (
+            BackendOrganizationFileLinkAddr as _RsBackendOrganizationFileLinkAddr,
+        )
+    except ImportError:
+        pass
+    else:
+        BackendOrganizationFileLinkAddr = _RsBackendOrganizationFileLinkAddr
+
+
 class BackendOrganizationAddrField(fields.Field):
     def _deserialize(self, value, attr, data):
         try:
@@ -432,7 +489,7 @@ class BackendOrganizationAddrField(fields.Field):
         return value.to_url()
 
 
-class BackendInvitationAddr(BackendActionAddr):
+class BackendInvitationAddr(_PyBackendActionAddr):
     """
     Represent the URL to invite a user or a device
     (e.g. ``parsec://parsec.example.com/my_org?action=claim_user&token=3a50b191122b480ebb113b10216ef343``)
@@ -444,7 +501,7 @@ class BackendInvitationAddr(BackendActionAddr):
         self,
         organization_id: OrganizationID,
         invitation_type: InvitationType,
-        token: UUID,
+        token: InvitationToken,
         **kwargs,
     ):
         super().__init__(**kwargs)
@@ -468,13 +525,13 @@ class BackendInvitationAddr(BackendActionAddr):
         elif value[0] == "claim_device":
             kwargs["invitation_type"] = InvitationType.DEVICE
         else:
-            raise ValueError("Expected `action=claim_user` or `action=claim_device` value")
+            raise ValueError("Expected `action=claim_user` or `action=claim_device` param value")
 
         value = params.pop("token", ())
         if len(value) != 1:
             raise ValueError("Missing mandatory `token` param")
         try:
-            kwargs["token"] = UUID(value[0])
+            kwargs["token"] = InvitationToken.from_hex(value[0])
         except ValueError:
             raise ValueError("Invalid `token` param value")
 
@@ -504,7 +561,7 @@ class BackendInvitationAddr(BackendActionAddr):
         backend_addr: BackendAddr,
         organization_id: OrganizationID,
         invitation_type: InvitationType,
-        token: UUID,
+        token: InvitationToken,
     ) -> "BackendInvitationAddr":
         return cls(
             hostname=backend_addr.hostname,
@@ -515,8 +572,8 @@ class BackendInvitationAddr(BackendActionAddr):
             token=token,
         )
 
-    def generate_organization_addr(self, root_verify_key: VerifyKey) -> BackendOrganizationAddr:
-        return BackendOrganizationAddr.build(
+    def generate_organization_addr(self, root_verify_key: VerifyKey) -> _PyBackendOrganizationAddr:
+        return _PyBackendOrganizationAddr.build(
             backend_addr=self, organization_id=self.organization_id, root_verify_key=root_verify_key
         )
 
@@ -529,5 +586,15 @@ class BackendInvitationAddr(BackendActionAddr):
         return self._invitation_type
 
     @property
-    def token(self) -> UUID:
+    def token(self) -> InvitationToken:
         return self._token
+
+
+_PyBackendInvitationAddr = BackendInvitationAddr
+if not TYPE_CHECKING:
+    try:
+        from libparsec.types import BackendInvitationAddr as _RsBackendInvitationAddr
+    except ImportError:
+        pass
+    else:
+        BackendInvitationAddr = _RsBackendInvitationAddr

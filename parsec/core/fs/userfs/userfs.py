@@ -35,7 +35,7 @@ from parsec.api.data import (
     PingMessageContent,
     UserManifest,
 )
-from parsec.api.protocol import UserID, DeviceID, MaintenanceType
+from parsec.api.protocol import UserID, DeviceID, MaintenanceType, RealmID, VlobID
 from parsec.core.types import (
     EntryID,
     EntryName,
@@ -44,6 +44,7 @@ from parsec.core.types import (
     WorkspaceRole,
     LocalUserManifest,
 )
+from parsec.core.config import DEFAULT_WORKSPACE_STORAGE_CACHE_SIZE
 
 # TODO: handle exceptions status...
 from parsec.core.backend_connection import (
@@ -98,7 +99,7 @@ class ReencryptionJob:
             FSWorkspaceInMaintenance
             FSWorkspaceNoAccess
         """
-        workspace_id = self.new_workspace_entry.id
+        workspace_id = RealmID(self.new_workspace_entry.id.uuid)
         new_encryption_revision = self.new_workspace_entry.encryption_revision
 
         # Get the batch
@@ -179,6 +180,7 @@ class UserFS:
         event_bus: EventBus,
         prevent_sync_pattern: Pattern[str],
         preferred_language: str,
+        workspace_storage_cache_size: int,
     ):
         self.data_base_dir = data_base_dir
         self.device = device
@@ -187,6 +189,7 @@ class UserFS:
         self.event_bus = event_bus
         self.prevent_sync_pattern = prevent_sync_pattern
         self.preferred_language = preferred_language
+        self.workspace_storage_cache_size = workspace_storage_cache_size
 
         self.storage: UserStorage  # Setup by UserStorage.run factory
 
@@ -231,6 +234,7 @@ class UserFS:
         event_bus: EventBus,
         prevent_sync_pattern: Pattern[str],
         preferred_language: str = "en",
+        workspace_storage_cache_size: int = DEFAULT_WORKSPACE_STORAGE_CACHE_SIZE,
     ) -> AsyncIterator[UserFSTypeVar]:
         self = cls(
             data_base_dir,
@@ -240,6 +244,7 @@ class UserFS:
             event_bus,
             prevent_sync_pattern,
             preferred_language,
+            workspace_storage_cache_size,
         )
 
         # Run user storage
@@ -322,7 +327,10 @@ class UserFS:
             task_status: TaskStatus[WorkspaceStorage] = trio.TASK_STATUS_IGNORED
         ) -> None:
             async with WorkspaceStorage.run(
-                data_base_dir=self.data_base_dir, device=self.device, workspace_id=workspace_id
+                data_base_dir=self.data_base_dir,
+                device=self.device,
+                workspace_id=workspace_id,
+                cache_size=self.workspace_storage_cache_size,
             ) as workspace_storage:
                 task_status.started(workspace_storage)
                 await trio.sleep_forever()
@@ -376,12 +384,9 @@ class UserFS:
 
         return workspace
 
-    async def workspace_create(self, name: AnyEntryName) -> EntryID:
-        """
-        Raises:
-            ValueError: if name is passed as str but cannot be converted to `EntryName`
-        """
-        name = EntryName(name)
+    async def workspace_create(self, name: EntryName) -> EntryID:
+        assert isinstance(name, EntryName)
+
         async with self._update_user_manifest_lock:
             timestamp = self.device.timestamp()
             workspace_entry = WorkspaceEntry.new(name, timestamp=timestamp)
@@ -414,13 +419,13 @@ class UserFS:
 
         return workspace_entry.id
 
-    async def workspace_rename(self, workspace_id: EntryID, new_name: AnyEntryName) -> None:
+    async def workspace_rename(self, workspace_id: EntryID, new_name: EntryName) -> None:
         """
         Raises:
             FSWorkspaceNotFoundError
-            ValueError: if name is passed as str but cannot be converted to `EntryName`
         """
-        new_name = EntryName(new_name)
+        assert isinstance(new_name, EntryName)
+
         async with self._update_user_manifest_lock:
             user_manifest = self.get_user_manifest()
             workspace_entry = user_manifest.get_workspace_entry(workspace_id)
@@ -445,7 +450,7 @@ class UserFS:
         try:
             # Note encryption_revision is always 1 given we never reencrypt
             # the user manifest's realm
-            rep = await self.backend_cmds.vlob_read(1, self.user_manifest_id, version)
+            rep = await self.backend_cmds.vlob_read(1, VlobID(self.user_manifest_id.uuid), version)
 
         except BackendNotAvailable as exc:
             raise FSBackendOfflineError(str(exc)) from exc
@@ -572,7 +577,7 @@ class UserFS:
             certif = RealmRoleCertificateContent.build_realm_root_certif(
                 author=self.device.device_id,
                 timestamp=self.device.timestamp(),
-                realm_id=self.device.user_manifest_id,
+                realm_id=RealmID(self.device.user_manifest_id.uuid),
             ).dump_and_sign(self.device.signing_key)
 
             try:
@@ -613,11 +618,15 @@ class UserFS:
             # the user manifest's realm
             if to_sync_um.version == 1:
                 rep = await self.backend_cmds.vlob_create(
-                    self.user_manifest_id, 1, self.user_manifest_id, timestamp, ciphered
+                    RealmID(self.user_manifest_id.uuid),
+                    1,
+                    VlobID(self.user_manifest_id.uuid),
+                    timestamp,
+                    ciphered,
                 )
             else:
                 rep = await self.backend_cmds.vlob_update(
-                    1, self.user_manifest_id, to_sync_um.version, timestamp, ciphered
+                    1, VlobID(self.user_manifest_id.uuid), to_sync_um.version, timestamp, ciphered
                 )
 
         except BackendNotAvailable as exc:
@@ -746,7 +755,7 @@ class UserFS:
         role_certificate = RealmRoleCertificateContent(
             author=self.device.device_id,
             timestamp=timestamp,
-            realm_id=workspace_id,
+            realm_id=RealmID(workspace_id.uuid),
             user_id=recipient,
             role=role,
         ).dump_and_sign(self.device.signing_key)
@@ -1062,7 +1071,7 @@ class UserFS:
         # Finally send command to the backend
         try:
             rep = await self.backend_cmds.realm_start_reencryption_maintenance(
-                workspace_id, encryption_revision, timestamp, per_user_ciphered_msgs
+                RealmID(workspace_id.uuid), encryption_revision, timestamp, per_user_ciphered_msgs
             )
 
         except BackendNotAvailable as exc:
@@ -1148,7 +1157,7 @@ class UserFS:
 
         # First make sure the workspace is under maintenance
         try:
-            rep = await self.backend_cmds.realm_status(workspace_entry.id)
+            rep = await self.backend_cmds.realm_status(RealmID(workspace_entry.id.uuid))
 
         except BackendNotAvailable as exc:
             raise FSBackendOfflineError(str(exc)) from exc

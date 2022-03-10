@@ -10,9 +10,11 @@ use sodiumoxide::crypto::sign::{
  * SigningKey
  */
 
-#[derive(Clone, Debug, PartialEq, Eq, Deserialize, Serialize)]
+#[derive(Clone, PartialEq, Eq, Deserialize, Serialize)]
 #[serde(into = "ByteBuf", try_from = "ByteBuf")]
 pub struct SigningKey(ed25519::SecretKey);
+
+crate::macros::impl_key_debug!(SigningKey);
 
 impl SigningKey {
     pub const ALGORITHM: &'static str = "ed25519";
@@ -76,9 +78,11 @@ impl From<SigningKey> for ByteBuf {
  * VerifyKey
  */
 
-#[derive(Clone, Debug, PartialEq, Eq, Deserialize, Serialize)]
+#[derive(Clone, PartialEq, Eq, Deserialize, Serialize)]
 #[serde(transparent)]
 pub struct VerifyKey(ed25519::PublicKey);
+
+crate::macros::impl_key_debug!(VerifyKey);
 
 super::utils::impl_try_from!(VerifyKey, ed25519::PublicKey);
 
@@ -86,7 +90,7 @@ impl VerifyKey {
     pub const ALGORITHM: &'static str = "ed25519";
     pub const SIZE: usize = PUBLICKEYBYTES;
 
-    pub fn unsecure_unwrap<'a>(&self, signed: &'a [u8]) -> Option<&'a [u8]> {
+    pub fn unsecure_unwrap(signed: &[u8]) -> Option<&[u8]> {
         signed.get(SIGNATUREBYTES..)
     }
 

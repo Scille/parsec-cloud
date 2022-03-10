@@ -6,6 +6,7 @@ import trio
 import pytest
 from pathlib import Path
 
+from parsec.api.data import EntryName
 from parsec.core.fs import FsPath
 from parsec.core.core_events import CoreEvent
 from parsec.core.mountpoint.manager import mountpoint_manager_factory
@@ -69,9 +70,9 @@ def test_empty_read_then_reopen(tmpdir, mountpoint_service):
 @pytest.mark.mountpoint
 @pytest.mark.skipif(sys.platform == "darwin", reason="TODO : crash on macOS")
 async def test_remote_error_event(
-    tmpdir, monkeypatch, caplog, running_backend, alice_user_fs, bob_user_fs, monitor
+    tmpdir, monkeypatch, caplog, running_backend, alice_user_fs, bob_user_fs
 ):
-    wid = await create_shared_workspace("w1", bob_user_fs, alice_user_fs)
+    wid = await create_shared_workspace(EntryName("w1"), bob_user_fs, alice_user_fs)
 
     base_mountpoint = Path(tmpdir / "alice_mountpoint")
     async with mountpoint_manager_factory(

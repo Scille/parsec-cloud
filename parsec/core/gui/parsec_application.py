@@ -92,10 +92,7 @@ class ParsecApp(QApplication):
 
     @classmethod
     def get_main_window(cls):
-        # Avoid recursive imports
-        from .main_window import MainWindow
-
         for win in cls.topLevelWidgets():
-            if isinstance(win, MainWindow):
+            if win.objectName() == "MainWindow":
                 return win
         return None

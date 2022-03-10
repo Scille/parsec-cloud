@@ -25,6 +25,13 @@ from parsec.api.data import (
     EntryNameField,
     EntryIDField,
 )
+from parsec.api.data.manifest import (
+    _PyBlockAccess,
+    _PyFileManifest,
+    _PyFolderManifest,
+    _PyWorkspaceManifest,
+    _PyWorkspaceEntry,
+)
 from parsec.core.types.base import BaseLocalData
 from enum import Enum
 
@@ -44,7 +51,7 @@ WorkspaceRole = RealmRole
 
 
 class ChunkID(UUID4):
-    pass
+    __slots__ = ()
 
 
 ChunkIDField = fields.uuid_based_field_factory(ChunkID)
@@ -75,7 +82,7 @@ class Chunk(BaseData):
         stop = fields.Integer(required=True, validate=validate.Range(min=1))
         raw_offset = fields.Integer(required=True, validate=validate.Range(min=0))
         raw_size = fields.Integer(required=True, validate=validate.Range(min=1))
-        access = fields.Nested(BlockAccess.SCHEMA_CLS, required=True, allow_none=True)
+        access = fields.Nested(_PyBlockAccess.SCHEMA_CLS, required=True, allow_none=True)
 
         @post_load
         def make_obj(self, data):
@@ -102,15 +109,12 @@ class Chunk(BaseData):
             return attr.astuple(self).__eq__(attr.astuple(other))
         raise TypeError
 
-    # Properties
-
-    @property
     def is_block(self):
         # Requires an access
         if self.access is None:
             return False
         # Pseudo block
-        if not self.is_pseudo_block:
+        if not self.is_pseudo_block():
             return False
         # Offset inconsistent
         if self.raw_offset != self.access.offset:
@@ -120,7 +124,6 @@ class Chunk(BaseData):
             return False
         return True
 
-    @property
     def is_pseudo_block(self):
         # Not left aligned
         if self.start != self.raw_offset:
@@ -136,7 +139,7 @@ class Chunk(BaseData):
     def new(cls, start: int, stop: int) -> "Chunk":
         assert start < stop
         return cls(
-            id=ChunkID(),
+            id=ChunkID.new(),
             start=start,
             stop=stop,
             raw_offset=start,
@@ -147,7 +150,7 @@ class Chunk(BaseData):
     @classmethod
     def from_block_acess(cls, block_access: BlockAccess):
         return cls(
-            id=ChunkID(block_access.id),
+            id=ChunkID(block_access.id.uuid),
             raw_offset=block_access.offset,
             raw_size=block_access.size,
             start=block_access.offset,
@@ -159,7 +162,7 @@ class Chunk(BaseData):
 
     def evolve_as_block(self, data: bytes) -> "Chunk":
         # No-op
-        if self.is_block:
+        if self.is_block():
             return self
 
         # Check alignement
@@ -168,7 +171,7 @@ class Chunk(BaseData):
 
         # Craft access
         access = BlockAccess(
-            id=BlockID(self.id),
+            id=BlockID(self.id.uuid),
             key=SecretKey.generate(),
             offset=self.start,
             size=self.stop - self.start,
@@ -181,7 +184,7 @@ class Chunk(BaseData):
     # Export
 
     def get_block_access(self) -> Optional[BlockAccess]:
-        if not self.is_block:
+        if not self.is_block():
             raise TypeError("This chunk does not correspond to a block")
         return self.access
 
@@ -341,7 +344,7 @@ class BaseLocalManifest(BaseLocalData):
 class LocalFileManifest(BaseLocalManifest):
     class SCHEMA_CLS(BaseSchema):
         type = fields.EnumCheckedConstant(LocalManifestType.LOCAL_FILE_MANIFEST, required=True)
-        base = fields.Nested(RemoteFileManifest.SCHEMA_CLS, required=True)
+        base = fields.Nested(_PyFileManifest.SCHEMA_CLS, required=True)
         need_sync = fields.Boolean(required=True)
         updated = fields.DateTime(required=True)
         size = fields.Integer(required=True, validate=validate.Range(min=0))
@@ -414,7 +417,7 @@ class LocalFileManifest(BaseLocalManifest):
         for chunks in self.blocks:
             if len(chunks) != 1:
                 return False
-            if not chunks[0].is_block:
+            if not chunks[0].is_block():
                 return False
         return True
 
@@ -487,7 +490,7 @@ class LocalFolderishManifestMixin:
 
     def evolve_children_and_mark_updated(
         self: LocalFolderishManifestTypeVar,
-        data: Dict[str, Optional[EntryID]],
+        data: Dict[EntryName, Optional[EntryID]],
         prevent_sync_pattern: Pattern,
         timestamp: DateTime,
     ) -> LocalFolderishManifestTypeVar:
@@ -520,7 +523,7 @@ class LocalFolderishManifestMixin:
                 continue
             # Add new entry
             new_children[name] = entry_id
-            if prevent_sync_pattern.match(name):
+            if prevent_sync_pattern.match(name.str):
                 new_local_confinement_points.add(entry_id)
             else:
                 actually_updated = True
@@ -583,7 +586,7 @@ class LocalFolderishManifestMixin:
             {
                 entry_id
                 for name, entry_id in self.children.items()
-                if prevent_sync_pattern.match(name)
+                if prevent_sync_pattern.match(name.str)
             }
         )
         if not remote_confinement_points:
@@ -627,7 +630,7 @@ class LocalFolderishManifestMixin:
 class LocalFolderManifest(BaseLocalManifest, LocalFolderishManifestMixin):
     class SCHEMA_CLS(BaseSchema):
         type = fields.EnumCheckedConstant(LocalManifestType.LOCAL_FOLDER_MANIFEST, required=True)
-        base = fields.Nested(RemoteFolderManifest.SCHEMA_CLS, required=True)
+        base = fields.Nested(_PyFolderManifest.SCHEMA_CLS, required=True)
         need_sync = fields.Boolean(required=True)
         updated = fields.DateTime(required=True)
         children = fields.FrozenMap(EntryNameField(), EntryIDField(required=True), required=True)
@@ -744,7 +747,7 @@ class LocalFolderManifest(BaseLocalManifest, LocalFolderishManifestMixin):
 class LocalWorkspaceManifest(BaseLocalManifest, LocalFolderishManifestMixin):
     class SCHEMA_CLS(BaseSchema):
         type = fields.EnumCheckedConstant(LocalManifestType.LOCAL_WORKSPACE_MANIFEST, required=True)
-        base = fields.Nested(RemoteWorkspaceManifest.SCHEMA_CLS, required=True)
+        base = fields.Nested(_PyWorkspaceManifest.SCHEMA_CLS, required=True)
         need_sync = fields.Boolean(required=True)
         updated = fields.DateTime(required=True)
         children = fields.FrozenMap(EntryNameField(), EntryIDField(required=True), required=True)
@@ -877,7 +880,7 @@ class LocalUserManifest(BaseLocalManifest):
         need_sync = fields.Boolean(required=True)
         updated = fields.DateTime(required=True)
         last_processed_message = fields.Integer(required=True, validate=validate.Range(min=0))
-        workspaces = fields.FrozenList(fields.Nested(WorkspaceEntry.SCHEMA_CLS), required=True)
+        workspaces = fields.FrozenList(fields.Nested(_PyWorkspaceEntry.SCHEMA_CLS), required=True)
         # Speculative placeholders are created when we want to access the
         # user manifest but didn't retrieve it from backend yet. This implies:
         # - non-placeholders cannot be speculative

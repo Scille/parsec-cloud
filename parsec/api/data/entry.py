@@ -1,61 +1,58 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2016-2021 Scille SAS
 
-from unicodedata import normalize
-from uuid import UUID, uuid4
-from typing import Union, Type, TypeVar
+from typing import TYPE_CHECKING
 
+from parsec.types import UUID4
 from parsec.serde import fields
+from parsec.api.protocol import StrBased
+
 
 __all__ = ("EntryID", "EntryIDField", "EntryName", "EntryNameField")
 
 
-EntryIDTypeVar = TypeVar("EntryIDTypeVar", bound="EntryID")
-
-
-class EntryNameInvalidError(ValueError):
+class EntryNameTooLongError(ValueError):
     pass
 
 
-class EntryNameTooLongError(EntryNameInvalidError):
-    pass
-
-
-class EntryID(UUID):
+class EntryID(UUID4):
     __slots__ = ()
 
-    def __init__(self, raw: Union[UUID, bytes, str]):
-        if isinstance(raw, UUID):
-            super().__init__(bytes=raw.bytes)
-        elif isinstance(raw, bytes):
-            super().__init__(bytes=raw)
-        else:
-            super().__init__(hex=raw)
 
-    def __repr__(self) -> str:
-        return f"<EntryID {self.hex}>"
-
-    @classmethod
-    def new(cls: Type[EntryIDTypeVar]) -> EntryIDTypeVar:
-        return cls(uuid4())
+_PyEntryID = EntryID
+if not TYPE_CHECKING:
+    try:
+        from libparsec.types import EntryID as _RsEntryID
+    except:
+        pass
+    else:
+        EntryID = _RsEntryID
 
 
 EntryIDField = fields.uuid_based_field_factory(EntryID)
 
 
-class EntryName(str):
-    __slots__ = ()
+class EntryName(StrBased):
+    # Ignore the REGEX
+    REGEX = None
+    MAX_BYTE_SIZE = 255
 
-    def __new__(cls, raw: str) -> "EntryName":
-        raw = normalize("NFC", raw)
-        # Stick to UNIX filesystem philosophy:
-        # - no `.` or `..` name
-        # - no `/` or null byte in the name
-        # - max 255 bytes long name
-        if len(raw.encode("utf8")) >= 256:
-            raise EntryNameTooLongError(raw)
+    def __init__(self, raw: str):
+        try:
+            super().__init__(raw)
+        except ValueError:
+            raise EntryNameTooLongError("Invalid data")
         if raw == "" or raw == "." or raw == ".." or "/" in raw or "\x00" in raw:
-            raise EntryNameInvalidError(raw)
-        return super(EntryName, cls).__new__(cls, raw)
+            raise ValueError("Invalid data")
+
+
+_PyEntryName = EntryName
+if not TYPE_CHECKING:
+    try:
+        from libparsec.types import EntryName as _RsEntryName
+    except:
+        pass
+    else:
+        EntryName = _RsEntryName
 
 
 EntryNameField = fields.str_based_field_factory(EntryName)

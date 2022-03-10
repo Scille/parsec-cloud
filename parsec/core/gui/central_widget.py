@@ -1,10 +1,10 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2016-2021 Scille SAS
 
 from typing import Optional, cast
-from pathlib import PurePath
-from PyQt5.QtCore import pyqtSignal
+from PyQt5.QtCore import pyqtSignal, pyqtBoundSignal
 from PyQt5.QtGui import QPixmap, QColor, QIcon
 from PyQt5.QtWidgets import QGraphicsDropShadowEffect, QWidget, QMenu
+from pathlib import PurePath
 
 from parsec.event_bus import EventBus, EventCallback
 from parsec.api.protocol import (
@@ -12,6 +12,7 @@ from parsec.api.protocol import (
     HandshakeRevokedDevice,
     HandshakeOrganizationExpired,
 )
+from parsec.api.data import EntryName
 from parsec.api.data.manifest import WorkspaceEntry
 from parsec.core.core_events import CoreEvent
 from parsec.core.logged_core import LoggedCore, OrganizationStats
@@ -29,6 +30,7 @@ from parsec.core.fs import (
     FSWorkspaceInMaintenance,
 )
 from parsec.core.gui.trio_jobs import QtToTrioJobScheduler
+from parsec.core.gui.snackbar_widget import SnackbarManager
 from parsec.core.gui.mount_widget import MountWidget
 from parsec.core.gui.users_widget import UsersWidget
 from parsec.core.gui.devices_widget import DevicesWidget
@@ -93,11 +95,11 @@ class CentralWidget(QWidget, Ui_CentralWidget):  # type: ignore[misc]
         core: LoggedCore,
         jobs_ctx: QtToTrioJobScheduler,
         event_bus: EventBus,
-        systray_notification: pyqtSignal,
+        systray_notification: pyqtBoundSignal,
         file_link_addr: Optional[BackendOrganizationFileLinkAddr] = None,
-        **kwargs: object,
+        parent: Optional[QWidget] = None,
     ):
-        super().__init__(**kwargs)
+        super().__init__(parent=parent)
 
         self.setupUi(self)
         self.jobs_ctx = jobs_ctx
@@ -105,6 +107,7 @@ class CentralWidget(QWidget, Ui_CentralWidget):  # type: ignore[misc]
         self.event_bus = event_bus
         self.systray_notification = systray_notification
         self.last_notification = 0.0
+        self.desync_notified = False
 
         self.menu = MenuWidget(parent=self)
         self.widget_menu.layout().addWidget(self.menu)
@@ -118,9 +121,7 @@ class CentralWidget(QWidget, Ui_CentralWidget):  # type: ignore[misc]
         self.set_user_info()
         menu = QMenu()
         copy_backend_addr_act = menu.addAction(_("ACTION_COPY_BACKEND_ADDR"))
-        copy_backend_addr_act.triggered.connect(
-            lambda: desktop.copy_to_clipboard(self.core.device.organization_addr.to_url())
-        )
+        copy_backend_addr_act.triggered.connect(self._on_copy_backend_addr)
         menu.addSeparator()
         change_auth_act = menu.addAction(_("ACTION_DEVICE_MENU_CHANGE_AUTHENTICATION"))
         change_auth_act.triggered.connect(self.change_authentication)
@@ -142,11 +143,8 @@ class CentralWidget(QWidget, Ui_CentralWidget):  # type: ignore[misc]
         self.menu.devices_clicked.connect(self.show_devices_widget)
         self.connection_state_changed.connect(self._on_connection_state_changed)
 
-        self.widget_title2.hide()
-        self.icon_title3.hide()
-        self.label_title3.setText("")
-        self.icon_title3.apply_style()
-        self.icon_title3.apply_style()
+        self.navigation_bar_widget.clear()
+        self.navigation_bar_widget.route_clicked.connect(self._on_route_clicked)
 
         effect = QGraphicsDropShadowEffect(self)
         effect.setColor(QColor(100, 100, 100))
@@ -190,6 +188,10 @@ class CentralWidget(QWidget, Ui_CentralWidget):  # type: ignore[misc]
     def _show_user_menu(self) -> None:
         self.button_user.showMenu()
 
+    def _on_copy_backend_addr(self) -> None:
+        desktop.copy_to_clipboard(self.core.device.organization_addr.to_url())
+        SnackbarManager.inform(_("TEXT_BACKEND_ADDR_COPIED_TO_CLIPBOARD"))
+
     def set_user_info(self) -> None:
         org = self.core.device.organization_id
         username = self.core.device.short_user_display
@@ -202,16 +204,14 @@ class CentralWidget(QWidget, Ui_CentralWidget):  # type: ignore[misc]
             core=self.core, jobs_ctx=self.jobs_ctx, parent=self, on_finished=None
         )
 
-    def _on_folder_changed(self, workspace_name: Optional[str], path: Optional[str]) -> None:
+    def _on_route_clicked(self, path: FsPath) -> None:
+        self.mount_widget.load_path(path)
+
+    def _on_folder_changed(self, workspace_name: Optional[EntryName], path: Optional[str]) -> None:
         if workspace_name and path:
-            self.widget_title2.show()
-            self.label_title2.setText(workspace_name)
-            self.icon_title3.show()
-            self.label_title3.setText(path)
+            self.navigation_bar_widget.from_path(workspace_name, path)
         else:
-            self.widget_title2.hide()
-            self.icon_title3.hide()
-            self.label_title3.setText("")
+            self.navigation_bar_widget.clear()
 
     def handle_event(self, event: CoreEvent, **kwargs: object) -> None:
         if event == CoreEvent.BACKEND_CONNECTION_CHANGED:
@@ -222,11 +222,14 @@ class CentralWidget(QWidget, Ui_CentralWidget):  # type: ignore[misc]
             current_time = time.time()
             if self.last_notification == 0.0 or current_time >= self.last_notification + 3:  # 3s
                 self.systray_notification.emit(
-                    "", _("NOTIF_INFO_WORKSPACE_READ_ONLY"), 3000
+                    "", _("TEXT_NOTIF_INFO_WORKSPACE_READ_ONLY"), 3000
                 )  # 3000ms
                 self.last_notification = current_time
         elif event == CoreEvent.MOUNTPOINT_STOPPED:
-            self.new_notification.emit("WARNING", _("NOTIF_WARN_MOUNTPOINT_UNMOUNTED"))
+            pass
+            # Not taking this event into account since we cannot yet distinguish
+            # whether the workspace has been unmounted by the user or not.
+            # self.new_notification.emit("INFO", _("NOTIF_WARN_MOUNTPOINT_UNMOUNTED"))
         elif event == CoreEvent.MOUNTPOINT_REMOTE_ERROR:
             assert isinstance(kwargs["exc"], Exception)
             assert isinstance(kwargs["mountpoint"], PurePath)
@@ -234,14 +237,22 @@ class CentralWidget(QWidget, Ui_CentralWidget):  # type: ignore[misc]
             exc = kwargs["exc"]
             abspath = kwargs["path"].with_mountpoint(kwargs["mountpoint"])
             if isinstance(exc, FSWorkspaceNoReadAccess):
-                msg = _("NOTIF_WARN_WORKSPACE_READ_ACCESS_LOST_{}").format(abspath)
+                msg = _("TEXT_NOTIF_WARN_WORKSPACE_READ_ACCESS_LOST_workspace").format(
+                    workspace=abspath
+                )
             elif isinstance(exc, FSWorkspaceNoWriteAccess):
-                msg = _("NOTIF_WARN_WORKSPACE_WRITE_ACCESS_LOST_{}").format(abspath)
+                msg = _("TEXT_NOTIF_WARN_WORKSPACE_WRITE_ACCESS_LOST_workspace").format(
+                    workspace=abspath
+                )
             elif isinstance(exc, FSWorkspaceInMaintenance):
-                msg = _("NOTIF_WARN_WORKSPACE_IN_MAINTENANCE_{}").format(abspath)
+                msg = _("TEXT_NOTIF_WARN_WORKSPACE_IN_MAINTENANCE_workspace").format(
+                    workspace=abspath
+                )
             else:
-                msg = _("NOTIF_WARN_MOUNTPOINT_REMOTE_ERROR_{}_{}").format(abspath, str(exc))
-            self.new_notification.emit("WARNING", msg)
+                msg = _("TEXT_NOTIF_WARN_MOUNTPOINT_REMOTE_ERROR_workspace-error").format(
+                    workspace=abspath, error=str(exc)
+                )
+            self.new_notification.emit("WARN", msg)
         elif event in (
             CoreEvent.MOUNTPOINT_UNHANDLED_ERROR,
             CoreEvent.MOUNTPOINT_TRIO_DEADLOCK_ERROR,
@@ -253,9 +264,9 @@ class CentralWidget(QWidget, Ui_CentralWidget):  # type: ignore[misc]
             exc = kwargs["exc"]
             abspath = kwargs["path"].with_mountpoint(kwargs["mountpoint"])
             self.new_notification.emit(
-                "ERROR",
-                _("NOTIF_ERR_MOUNTPOINT_UNEXPECTED_ERROR_{}_{}_{}").format(
-                    kwargs["operation"], abspath, str(kwargs["exc"])
+                "WARN",
+                _("TEXT_NOTIF_ERR_MOUNTPOINT_UNEXPECTED_ERROR_workspace_operation_error").format(
+                    operation=kwargs["operation"], workspace=abspath, error=str(kwargs["exc"])
                 ),
             )
         elif event == CoreEvent.SHARING_UPDATED:
@@ -267,18 +278,25 @@ class CentralWidget(QWidget, Ui_CentralWidget):  # type: ignore[misc]
             previous_entry: Optional[WorkspaceEntry] = kwargs["previous_entry"]
             new_role = new_entry.role
             previous_role = previous_entry.role if previous_entry is not None else None
+            print(previous_role, new_role)
             if new_role is not None and previous_role is None:
                 self.new_notification.emit(
-                    "INFO", _("NOTIF_INFO_WORKSPACE_SHARED_{}").format(new_entry.name)
+                    "INFO",
+                    _("TEXT_NOTIF_INFO_WORKSPACE_SHARED_workspace").format(
+                        workspace=new_entry.name
+                    ),
                 )
-            elif new_role is not None and previous_role is not None:
+            elif new_role is not None and previous_role is not None and new_role != previous_role:
                 self.new_notification.emit(
-                    "INFO", _("NOTIF_INFO_WORKSPACE_ROLE_UPDATED_{}").format(new_entry.name)
+                    "INFO",
+                    _("TEXT_NOTIF_INFO_WORKSPACE_ROLE_UPDATED_workspace").format(
+                        workspace=new_entry.name
+                    ),
                 )
             elif new_role is None and previous_role is not None:
                 name = previous_entry.name  # type: ignore
                 self.new_notification.emit(
-                    "INFO", _("NOTIF_INFO_WORKSPACE_UNSHARED_{}").format(name)
+                    "INFO", _("TEXT_NOTIF_INFO_WORKSPACE_UNSHARED_workspace").format(workspace=name)
                 )
 
     def _load_organization_stats(self, delay: float = 0) -> None:
@@ -318,33 +336,49 @@ class CentralWidget(QWidget, Ui_CentralWidget):  # type: ignore[misc]
 
         elif status == BackendConnStatus.REFUSED:
             disconnected = True
+            text = _("TEXT_BACKEND_STATE_DISCONNECTED")
+            icon = QPixmap(":/icons/images/material/cloud_off.svg")
             assert isinstance(status_exc, Exception)
             cause = status_exc.__cause__
             if isinstance(cause, HandshakeAPIVersionError):
-                tooltip = _("TEXT_BACKEND_STATE_API_MISMATCH_versions").format(
+                tooltip = text = _("TEXT_BACKEND_STATE_API_MISMATCH_versions").format(
                     versions=", ".join([str(v.version) for v in cause.backend_versions])
                 )
             elif isinstance(cause, HandshakeRevokedDevice):
                 tooltip = _("TEXT_BACKEND_STATE_REVOKED_DEVICE")
-                notif = ("REVOKED", tooltip)
-                self.new_notification.emit(*notif)
+                notif = ("WARN", tooltip)
             elif isinstance(cause, HandshakeOrganizationExpired):
                 tooltip = _("TEXT_BACKEND_STATE_ORGANIZATION_EXPIRED")
-                notif = ("EXPIRED", tooltip)
-                self.new_notification.emit(*notif)
+                notif = ("WARN", tooltip)
             else:
                 tooltip = _("TEXT_BACKEND_STATE_UNKNOWN")
-            text = _("TEXT_BACKEND_STATE_DISCONNECTED")
-            icon = QPixmap(":/icons/images/material/cloud_off.svg")
-            notif = ("WARNING", tooltip)
+                notif = ("WARN", tooltip)
 
         elif status == BackendConnStatus.CRASHED:
             assert isinstance(status_exc, Exception)
             text = _("TEXT_BACKEND_STATE_DISCONNECTED")
             tooltip = _("TEXT_BACKEND_STATE_CRASHED_cause").format(cause=str(status_exc.__cause__))
             icon = QPixmap(":/icons/images/material/cloud_off.svg")
-            notif = ("ERROR", tooltip)
+            notif = ("WARN", tooltip)
             disconnected = True
+
+        elif status == BackendConnStatus.DESYNC:
+            assert isinstance(status_exc, Exception)
+            text = _("TEXT_BACKEND_STATE_DISCONNECTED")
+            tooltip = _("TEXT_BACKEND_STATE_DESYNC")
+            icon = QPixmap(":/icons/images/material/cloud_off.svg")
+            notif = None
+            disconnected = False
+
+            # The disconnection for being out-of-sync with the backend
+            # is only shown once per login. This is useful in the case
+            # of backends with API version 2.3 and older as it's going
+            # to successfully connect every 10 seconds before being
+            # thrown off by the sync monitor.
+            if not self.desync_notified:
+                self.desync_notified = True
+                notif = ("WARN", tooltip)
+                disconnected = True
 
         self.menu.set_connection_state(text, tooltip, icon)
         if notif:
@@ -374,8 +408,12 @@ class CentralWidget(QWidget, Ui_CentralWidget):  # type: ignore[misc]
         self.menu.label_organization_size.clear()
 
     def on_new_notification(self, notif_type: str, msg: str) -> None:
-        if notif_type in ["REVOKED", "EXPIRED"]:
-            show_error(self, msg)
+        if notif_type == "CONGRATULATE":
+            SnackbarManager.congratulate(msg)
+        elif notif_type == "WARN":
+            SnackbarManager.warn(msg)
+        else:
+            SnackbarManager.inform(msg)
 
     def go_to_file_link(self, addr: BackendOrganizationFileLinkAddr, mount: bool = True) -> None:
         """
@@ -420,9 +458,7 @@ class CentralWidget(QWidget, Ui_CentralWidget):  # type: ignore[misc]
         self.devices_widget.show()
 
     def clear_widgets(self) -> None:
-        self.widget_title2.hide()
-        self.icon_title3.hide()
-        self.label_title3.setText("")
+        self.navigation_bar_widget.clear()
         self.users_widget.hide()
         self.mount_widget.hide()
         self.devices_widget.hide()

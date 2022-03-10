@@ -6,7 +6,7 @@ mod sealed_box {
 
     use blake2::{
         digest::{Update, VariableOutput},
-        VarBlake2b,
+        Blake2bVar,
     };
     use crypto_box::{
         aead::{self, Aead},
@@ -27,7 +27,7 @@ mod sealed_box {
     /// nonce = Blake2b(ephemeral_pk||target_pk)
     /// nonce_length = 24
     fn get_nonce(ephemeral_pk: &PublicKey, target_pk: &PublicKey) -> [u8; BOX_NONCELENGTH] {
-        let mut hasher = VarBlake2b::new(BOX_NONCELENGTH).unwrap();
+        let mut hasher = Blake2bVar::new(BOX_NONCELENGTH).unwrap();
 
         hasher.update(ephemeral_pk.as_bytes());
         hasher.update(target_pk.as_bytes());
@@ -100,9 +100,11 @@ use crate::SecretKey;
  * PrivateKey
  */
 
-#[derive(Clone, Debug, Deserialize, Serialize)]
+#[derive(Clone, Deserialize, Serialize)]
 #[serde(into = "ByteBuf", try_from = "ByteBuf")]
 pub struct PrivateKey(crypto_box::SecretKey);
+
+crate::macros::impl_key_debug!(PrivateKey);
 
 impl PartialEq for PrivateKey {
     fn eq(&self, other: &Self) -> bool {
@@ -129,7 +131,7 @@ impl PrivateKey {
 
     pub fn generate_shared_secret_key(&self, peer_public_key: &PublicKey) -> SecretKey {
         SecretKey::from(x25519(
-            self.0.to_bytes(),
+            *self.0.as_bytes(),
             peer_public_key.0.as_bytes().to_owned(),
         ))
     }
@@ -177,7 +179,7 @@ impl TryFrom<ByteBuf> for PrivateKey {
 
 impl From<PrivateKey> for ByteBuf {
     fn from(data: PrivateKey) -> Self {
-        Self::from(data.0.to_bytes())
+        Self::from(*data.0.as_bytes())
     }
 }
 
@@ -185,9 +187,11 @@ impl From<PrivateKey> for ByteBuf {
  * PublicKey
  */
 
-#[derive(Clone, Debug, Deserialize, Serialize)]
+#[derive(Clone, Deserialize, Serialize)]
 #[serde(into = "ByteBuf", try_from = "ByteBuf")]
 pub struct PublicKey(crypto_box::PublicKey);
+
+crate::macros::impl_key_debug!(PublicKey);
 
 impl PartialEq for PublicKey {
     fn eq(&self, other: &Self) -> bool {
@@ -200,7 +204,7 @@ impl PublicKey {
     pub const ALGORITHM: &'static str = "curve25519blake2bxsalsa20poly1305";
     pub const SIZE: usize = KEY_SIZE;
 
-    pub fn encrypt_from_self(&self, data: &[u8]) -> Vec<u8> {
+    pub fn encrypt_for_self(&self, data: &[u8]) -> Vec<u8> {
         sealed_box::seal(data, &self.0)
     }
 }

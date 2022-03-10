@@ -1,13 +1,11 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2016-2021 Scille SAS
 
-from uuid import UUID
-
 from PyQt5.QtCore import Qt, pyqtSignal
 from PyQt5.QtWidgets import QWidget, QMenu, QGraphicsDropShadowEffect, QLabel
 from PyQt5.QtGui import QColor
 from math import ceil
 
-from parsec.api.protocol import InvitationType, InvitationEmailSentStatus
+from parsec.api.protocol import InvitationToken, InvitationType, InvitationEmailSentStatus
 from parsec.api.data import UserProfile
 from parsec.core.types import BackendInvitationAddr, UserInfo
 
@@ -20,12 +18,12 @@ from parsec.core.backend_connection import (
 from parsec.core.gui.trio_jobs import JobResultError, QtToTrioJob
 from parsec.core.gui.custom_dialogs import (
     show_error,
-    show_info,
     ask_question,
     get_text_input,
     show_info_copy_link,
 )
 from parsec.core.gui.custom_widgets import ensure_string_size, Pixmap
+from parsec.core.gui.snackbar_widget import SnackbarManager
 from parsec.core.gui.flow_layout import FlowLayout
 from parsec.core.gui import validators
 from parsec.core.gui import desktop
@@ -39,22 +37,21 @@ USERS_PER_PAGE = 100
 
 
 class UserInvitationButton(QWidget, Ui_UserInvitationButton):
-    greet_clicked = pyqtSignal(UUID)
-    cancel_clicked = pyqtSignal(UUID)
+    greet_clicked = pyqtSignal(InvitationToken)
+    cancel_clicked = pyqtSignal(InvitationToken)
 
     def __init__(self, email, addr):
         super().__init__()
         self.setupUi(self)
         self.addr = addr
         self.email = email
-        self.label_addr.setText(ensure_string_size(str(self.addr), 260, self.label_addr.font()))
+        self.label_addr.setText(ensure_string_size(str(self.addr), 160, self.label_addr.font()))
         self.label_addr.setToolTip(str(self.addr))
-        self.label_email.setText(ensure_string_size(self.email, 260, self.label_email.font()))
+        self.label_email.setText(ensure_string_size(self.email, 160, self.label_email.font()))
         self.label_email.setToolTip(self.email)
 
         self.button_greet.clicked.connect(self._on_greet_clicked)
         self.button_cancel.clicked.connect(self._on_cancel_clicked)
-        self.button_cancel.apply_style()
         self.label_icon.apply_style()
         self.setContextMenuPolicy(Qt.CustomContextMenu)
         self.customContextMenuRequested.connect(self.show_context_menu)
@@ -76,9 +73,11 @@ class UserInvitationButton(QWidget, Ui_UserInvitationButton):
 
     def copy_addr(self):
         desktop.copy_to_clipboard(str(self.addr))
+        SnackbarManager.inform(_("TEXT_GREET_USER_ADDR_COPIED_TO_CLIPBOARD"))
 
     def copy_email(self):
         desktop.copy_to_clipboard(self.email)
+        SnackbarManager.inform(_("TEXT_GREET_USER_EMAIL_COPIED_TO_CLIPBOARD"))
 
     @property
     def token(self):
@@ -134,17 +133,19 @@ class UserButton(QWidget, Ui_UserButton):
         if self.user_info.is_revoked:
             self.setToolTip(_("TEXT_USER_IS_REVOKED"))
             self.widget.setStyleSheet("background-color: #DDDDDD;")
+            self.label_revoked.setText(_("TEXT_USER_IS_REVOKED"))
         else:
+            self.label_revoked.setText("")
             self.setToolTip("")
             self.widget.setStyleSheet("background-color: #FFFFFF;")
         if self.user_info.human_handle:
             self.label_email.setText(
-                ensure_string_size(self.user_info.human_handle.email, 260, self.label_email.font())
+                ensure_string_size(self.user_info.human_handle.email, 160, self.label_email.font())
             )
             self.label_email.setToolTip(self.user_info.human_handle.email)
 
         self.label_username.setText(
-            ensure_string_size(self.user_info.short_user_display, 260, self.label_username.font())
+            ensure_string_size(self.user_info.short_user_display, 160, self.label_username.font())
         )
         self.label_username.setToolTip(self.user_info.short_user_display)
         self.label_role.setText(profiles_txt[self.user_info.profile])
@@ -369,8 +370,9 @@ class UsersWidget(QWidget, Ui_UsersWidget):
         assert job.status == "ok"
 
         user_info = job.ret
-        show_info(
-            self, _("TEXT_USER_REVOKE_SUCCESS_user").format(user=user_info.short_user_display)
+        SnackbarManager.inform(
+            _("TEXT_USER_REVOKE_SUCCESS_user").format(user=user_info.short_user_display),
+            timeout=5000,
         )
         for i in range(self.layout_users.count()):
             item = self.layout_users.itemAt(i)
@@ -476,7 +478,7 @@ class UsersWidget(QWidget, Ui_UsersWidget):
 
         for invitation in reversed(invitations):
             addr = BackendInvitationAddr.build(
-                backend_addr=self.core.device.organization_addr,
+                backend_addr=self.core.device.organization_addr.get_backend_addr(),
                 organization_id=self.core.device.organization_id,
                 invitation_type=InvitationType.USER,
                 token=invitation["token"],
@@ -509,6 +511,7 @@ class UsersWidget(QWidget, Ui_UsersWidget):
     def _on_cancel_invitation_success(self, job):
         assert job.is_finished()
         assert job.status == "ok"
+        SnackbarManager.inform(_("TEXT_USER_INVITATION_CANCELLED"))
         self.reset()
 
     def _on_cancel_invitation_error(self, job):
@@ -523,8 +526,7 @@ class UsersWidget(QWidget, Ui_UsersWidget):
 
         email, invitation_addr, email_sent_status = job.ret
         if email_sent_status == InvitationEmailSentStatus.SUCCESS:
-
-            show_info(self, _("TEXT_USER_INVITE_SUCCESS_email").format(email=email))
+            SnackbarManager.inform(_("TEXT_USER_INVITE_SUCCESS_email").format(email=email))
         elif email_sent_status == InvitationEmailSentStatus.BAD_RECIPIENT:
             show_info_copy_link(
                 self,

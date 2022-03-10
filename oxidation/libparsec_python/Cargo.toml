@@ -15,9 +15,12 @@ crate-type = ["cdylib"]
 libparsec = { version = "0.1.0", path = "../libparsec" }
 # Temporary dependencies
 parsec_api_crypto = { version = "0.0.0", path = "../crates/parsec_api_crypto" }
+parsec_api_types = { version = "0.0.0", path = "../crates/parsec_api_types" }
+uuid = { version = "1.0.0-alpha.1", features = ["serde", "v4", "fast-rng"] }
+chrono = {version = "0.4.19", features = ["serde"]}
 
 [dependencies.pyo3]
-version = "0.15.0"
+version = "0.16.0"
 # "extension-module" tells pyo3 we want to build an extension module (skips linking against libpython.so)
 # "abi3-py37" tells pyo3 (and maturin) to build using the stable ABI with minimum Python version 3.7
 features = ["extension-module", "abi3-py37"]

@@ -61,6 +61,8 @@ async def _do_workspace_create(core, workspace_name):
     try:
         workspace_name = EntryName(workspace_name)
     except ValueError:
+        # This should never occurs given new_name is checked by a validator in the GUI
+        # TODO: improve this logic ?
         raise JobResultError("invalid-name")
     workspace_id = await core.user_fs.workspace_create(workspace_name)
     return workspace_id
@@ -70,6 +72,8 @@ async def _do_workspace_rename(core, workspace_id, new_name, button):
     try:
         new_name = EntryName(new_name)
     except ValueError:
+        # This should never occurs given new_name is checked by a validator in the GUI
+        # TODO: improve this logic ?
         raise JobResultError("invalid-name")
     try:
         await core.user_fs.workspace_rename(workspace_id, new_name)
@@ -216,7 +220,9 @@ class WorkspacesWidget(QWidget, Ui_WorkspacesWidget):
         self.reencryption_needs_success.connect(self.on_reencryption_needs_success)
         self.reencryption_needs_error.connect(self.on_reencryption_needs_error)
         self.workspace_reencryption_progress.connect(self._on_workspace_reencryption_progress)
+        self.mount_success.connect(self.on_mount_success)
         self.mount_error.connect(self.on_mount_error)
+        self.unmount_success.connect(self.on_unmount_success)
         self.unmount_error.connect(self.on_unmount_error)
         self.file_open_success.connect(self._on_file_open_success)
         self.file_open_error.connect(self._on_file_open_error)
@@ -344,11 +350,17 @@ class WorkspacesWidget(QWidget, Ui_WorkspacesWidget):
             key = (workspace_fs.workspace_id, getattr(workspace_fs, "timestamp", None))
             button = old_mapping.pop(key, None)
 
+            # Retrieve current role for ourself
+            user_id = workspace_fs.device.user_id
+            current_role = users_roles.get(user_id)
+
             # Create and bind button if it doesn't exist
             if button is None:
                 button = WorkspaceButton(workspace_fs, parent=self)
                 button.clicked.connect(self.load_workspace)
                 if self.core.device.is_outsider:
+                    button.button_share.hide()
+                elif current_role in (WorkspaceRole.READER, WorkspaceRole.CONTRIBUTOR):
                     button.button_share.hide()
                 else:
                     button.share_clicked.connect(self.share_workspace)
@@ -438,6 +450,9 @@ class WorkspacesWidget(QWidget, Ui_WorkspacesWidget):
         label.setAlignment(Qt.AlignHCenter | Qt.AlignVCenter)
         self.layout_workspaces.addWidget(label)
 
+    def on_mount_success(self, job):
+        self.reset()
+
     def on_mount_error(self, job):
         if isinstance(job.exc, MountpointError):
             workspace_id = job.arguments.get("workspace_id")
@@ -449,6 +464,9 @@ class WorkspacesWidget(QWidget, Ui_WorkspacesWidget):
                 show_error(self, _("TEXT_WORKSPACE_CANNOT_MOUNT_NO_DRIVE"), exception=job.exc)
             else:
                 show_error(self, _("TEXT_WORKSPACE_CANNOT_MOUNT"), exception=job.exc)
+
+    def on_unmount_success(self, job):
+        self.reset()
 
     def on_unmount_error(self, job):
         if isinstance(job.exc, MountpointError):

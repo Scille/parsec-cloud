@@ -2,10 +2,10 @@
 
 import pytest
 import pendulum
-import uuid
 
 from PyQt5 import QtCore
 
+from parsec.api.data import EntryID, EntryName
 from parsec.core.gui.file_table import FileTable
 from parsec.core.gui.lang import switch_language
 
@@ -59,10 +59,10 @@ def test_file_table_sort(qtbot, core_config):
     w = FileTable(parent=None)
     qtbot.add_widget(w)
     w.add_parent_workspace()
-    w.add_folder("Dir1", uuid.uuid4(), True, False)
+    w.add_folder(EntryName("Dir1"), EntryID.new(), True, False)
     w.add_file(
-        "File1.txt",
-        uuid.uuid4(),
+        EntryName("File1.txt"),
+        EntryID.new(),
         100,
         pendulum.datetime(2000, 1, 15),
         pendulum.datetime(2000, 1, 20),
@@ -70,8 +70,8 @@ def test_file_table_sort(qtbot, core_config):
         False,
     )
     w.add_file(
-        "AnotherFile.txt",
-        uuid.uuid4(),
+        EntryName("AnotherFile.txt"),
+        EntryID.new(),
         80,
         pendulum.datetime(2000, 1, 10),
         pendulum.datetime(2000, 1, 25),

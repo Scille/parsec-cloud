@@ -3,5 +3,6 @@
 #[cfg_attr(feature = "use-sodiumoxide", path = "sodiumoxide/mod.rs")]
 #[cfg_attr(feature = "use-rustcrypto", path = "rustcrypto/mod.rs")]
 mod implementation;
+mod macros;
 
 pub use implementation::*;

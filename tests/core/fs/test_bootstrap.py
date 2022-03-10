@@ -2,9 +2,9 @@
 
 import pytest
 from pendulum import datetime
-from unittest.mock import ANY
 
-from parsec.api.data import UserManifest, WorkspaceEntry
+from parsec.crypto import SecretKey
+from parsec.api.data import UserManifest, WorkspaceEntry, EntryName
 from parsec.core.types import LocalUserManifest, WorkspaceRole
 from parsec.core.fs.storage.local_database import LocalDatabase
 from parsec.core.fs.storage.manifest_storage import ManifestStorage
@@ -38,7 +38,7 @@ async def test_workspace_manifest_access_while_speculative(user_fs_factory, alic
 
     with freeze_time("2000-01-01"):
         async with user_fs_factory(alice) as user_fs:
-            wksp_id = await user_fs.workspace_create("wksp")
+            wksp_id = await user_fs.workspace_create(EntryName("wksp"))
             # Retreive where the database is stored
             wksp = user_fs.get_workspace(wksp_id)
             wksp_manifest_storage_db_path = wksp.local_storage.manifest_storage.path
@@ -84,13 +84,14 @@ async def test_concurrent_devices_agree_on_user_manifest(
     alice2,
     with_speculative,
 ):
+    KEY = SecretKey.generate()
 
     # I call this "diagonal programming"...
     with freeze_time("2000-01-01"):
         if with_speculative != "both":
             await user_storage_non_speculative_init(data_base_dir=data_base_dir, device=alice)
         async with user_fs_factory(alice, data_base_dir=data_base_dir) as user_fs1:
-            wksp1_id = await user_fs1.workspace_create("wksp1")
+            wksp1_id = await user_fs1.workspace_create(EntryName("wksp1"))
 
             with freeze_time("2000-01-02"):
                 if with_speculative not in ("both", "alice2"):
@@ -98,7 +99,7 @@ async def test_concurrent_devices_agree_on_user_manifest(
                         data_base_dir=data_base_dir, device=alice2
                     )
                 async with user_fs_factory(alice2, data_base_dir=data_base_dir) as user_fs2:
-                    wksp2_id = await user_fs2.workspace_create("wksp2")
+                    wksp2_id = await user_fs2.workspace_create(EntryName("wksp2"))
 
                     with freeze_time("2000-01-03"):
                         # Only now the backend appear online, this is to ensure each
@@ -125,18 +126,18 @@ async def test_concurrent_devices_agree_on_user_manifest(
                                 # Now, both user fs should have the same view on data
                                 expected_workspaces_entries = (
                                     WorkspaceEntry(
-                                        name="wksp1",
+                                        name=EntryName("wksp1"),
                                         id=wksp1_id,
-                                        key=ANY,
+                                        key=KEY,
                                         encryption_revision=1,
                                         encrypted_on=datetime(2000, 1, 1),
                                         role_cached_on=datetime(2000, 1, 1),
                                         role=WorkspaceRole.OWNER,
                                     ),
                                     WorkspaceEntry(
-                                        name="wksp2",
+                                        name=EntryName("wksp2"),
                                         id=wksp2_id,
-                                        key=ANY,
+                                        key=KEY,
                                         encryption_revision=1,
                                         encrypted_on=datetime(2000, 1, 2),
                                         role_cached_on=datetime(2000, 1, 2),
@@ -160,8 +161,39 @@ async def test_concurrent_devices_agree_on_user_manifest(
                                     workspaces=expected_workspaces_entries,
                                     speculative=False,
                                 )
-                                assert user_fs1.get_user_manifest() == expected_user_manifest
-                                assert user_fs2.get_user_manifest() == expected_user_manifest
+
+                                user_fs1_manifest = user_fs1.get_user_manifest()
+                                user_fs2_manifest = user_fs2.get_user_manifest()
+
+                                # We use to use ANY for the "key" argument in expected_user_manifest,
+                                # so that we could compare the two instances safely. Sadly, ANY doesn't
+                                # play nicely with the Rust bindings, so we instead update the instances
+                                # to change the key.
+                                user_fs1_manifest = user_fs1_manifest.evolve(
+                                    workspaces=tuple(
+                                        w.evolve(key=KEY) for w in user_fs1_manifest.workspaces
+                                    ),
+                                    base=user_fs1_manifest.base.evolve(
+                                        workspaces=tuple(
+                                            w.evolve(key=KEY)
+                                            for w in user_fs1_manifest.base.workspaces
+                                        )
+                                    ),
+                                )
+                                user_fs2_manifest = user_fs2_manifest.evolve(
+                                    workspaces=tuple(
+                                        w.evolve(key=KEY) for w in user_fs2_manifest.workspaces
+                                    ),
+                                    base=user_fs2_manifest.base.evolve(
+                                        workspaces=tuple(
+                                            w.evolve(key=KEY)
+                                            for w in user_fs2_manifest.base.workspaces
+                                        )
+                                    ),
+                                )
+
+                                assert user_fs1_manifest == expected_user_manifest
+                                assert user_fs2_manifest == expected_user_manifest
 
 
 @pytest.mark.trio
@@ -174,7 +206,7 @@ async def test_concurrent_devices_agree_on_workspace_manifest(
     async with user_fs_factory(alice) as alice_user_fs:
         async with user_fs_factory(alice2) as alice2_user_fs:
             with freeze_time("2000-01-01"):
-                wksp_id = await alice_user_fs.workspace_create("wksp")
+                wksp_id = await alice_user_fs.workspace_create(EntryName("wksp"))
             # Sync user manifest (containing the workspace entry), but
             # not the corresponding workspace manifest !
             with freeze_time("2000-01-02"):
@@ -210,7 +242,7 @@ async def test_concurrent_devices_agree_on_workspace_manifest(
                 "is_placeholder": False,
                 "need_sync": False,
                 "type": "folder",
-                "children": ["from_alice", "from_alice2"],
+                "children": [EntryName("from_alice"), EntryName("from_alice2")],
                 "confinement_point": None,
             }
             alice_wksp_stat = await alice_wksp.path_info("/")
@@ -226,7 +258,7 @@ async def test_empty_user_manifest_placeholder_noop_on_resolve_sync(
     # Alice creates a workspace and sync it
     async with user_fs_factory(alice) as alice_user_fs:
         with freeze_time("2000-01-02"):
-            await alice_user_fs.workspace_create("wksp1")
+            await alice_user_fs.workspace_create(EntryName("wksp1"))
         with freeze_time("2000-01-03"):
             await alice_user_fs.sync()
         alice_user_manifest_v1 = alice_user_fs.get_user_manifest()
@@ -274,7 +306,7 @@ async def test_empty_workspace_manifest_placeholder_noop_on_resolve_sync(
         async with user_fs_factory(alice2) as alice2_user_fs:
             # First Alice creates a workspace, then populates and syncs it
             with freeze_time("2000-01-01"):
-                wksp_id = await alice_user_fs.workspace_create("wksp")
+                wksp_id = await alice_user_fs.workspace_create(EntryName("wksp"))
             alice_wksp = alice_user_fs.get_workspace(wksp_id)
             with freeze_time("2000-01-02"):
                 await alice_wksp.mkdir("/from_alice")
@@ -317,6 +349,6 @@ async def test_empty_workspace_manifest_placeholder_noop_on_resolve_sync(
                 "is_placeholder": False,
                 "need_sync": False,
                 "type": "folder",
-                "children": ["from_alice"],
+                "children": [EntryName("from_alice")],
                 "confinement_point": None,
             }

@@ -6,10 +6,9 @@ from botocore.exceptions import (
     ClientError as S3ClientError,
     EndpointConnectionError as S3EndpointConnectionError,
 )
-from uuid import UUID
 from functools import partial
 
-from parsec.api.protocol import OrganizationID
+from parsec.api.protocol import OrganizationID, BlockID
 from parsec.backend.blockstore import BaseBlockStoreComponent
 from parsec.backend.block import BlockAlreadyExistsError, BlockNotFoundError, BlockTimeoutError
 
@@ -28,7 +27,7 @@ class S3BlockStoreComponent(BaseBlockStoreComponent):
         self._s3_bucket = s3_bucket
         self._s3.head_bucket(Bucket=s3_bucket)
 
-    async def read(self, organization_id: OrganizationID, id: UUID) -> bytes:
+    async def read(self, organization_id: OrganizationID, id: BlockID) -> bytes:
         slug = f"{organization_id}/{id}"
         try:
             obj = self._s3.get_object(Bucket=self._s3_bucket, Key=slug)
@@ -45,7 +44,7 @@ class S3BlockStoreComponent(BaseBlockStoreComponent):
 
         return obj["Body"].read()
 
-    async def create(self, organization_id: OrganizationID, id: UUID, block: bytes) -> None:
+    async def create(self, organization_id: OrganizationID, id: BlockID, block: bytes) -> None:
         slug = f"{organization_id}/{id}"
         try:
             await trio.to_thread.run_sync(

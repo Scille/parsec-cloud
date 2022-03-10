@@ -2,12 +2,17 @@
 
 from parsec.backend.backend_events import BackendEvent
 import attr
-from uuid import UUID
 from typing import List, Optional, Tuple
 from collections import defaultdict
 from pendulum import DateTime, now as pendulum_now
 
-from parsec.api.protocol import OrganizationID, UserID, InvitationStatus, InvitationDeletedReason
+from parsec.api.protocol import (
+    OrganizationID,
+    UserID,
+    InvitationToken,
+    InvitationStatus,
+    InvitationDeletedReason,
+)
 from parsec.backend.invite import (
     ConduitState,
     NEXT_CONDUIT_STATE,
@@ -50,7 +55,7 @@ class MemoryInviteComponent(BaseInviteComponent):
     def _get_invitation_and_conduit(
         self,
         organization_id: OrganizationID,
-        token: UUID,
+        token: InvitationToken,
         expected_greeter: Optional[UserID] = None,
     ) -> Tuple[Invitation, Conduit]:
         org = self._organizations[organization_id]
@@ -65,7 +70,7 @@ class MemoryInviteComponent(BaseInviteComponent):
         self,
         organization_id: OrganizationID,
         greeter: Optional[UserID],
-        token: UUID,
+        token: InvitationToken,
         state: ConduitState,
         payload: bytes,
     ) -> ConduitListenCtx:
@@ -258,7 +263,7 @@ class MemoryInviteComponent(BaseInviteComponent):
         self,
         organization_id: OrganizationID,
         greeter: UserID,
-        token: UUID,
+        token: InvitationToken,
         on: DateTime,
         reason: InvitationDeletedReason,
     ) -> None:
@@ -286,12 +291,12 @@ class MemoryInviteComponent(BaseInviteComponent):
                 invitations.append(invitation)
         return sorted(invitations, key=lambda x: x.created_on)
 
-    async def info(self, organization_id: OrganizationID, token: UUID) -> Invitation:
+    async def info(self, organization_id: OrganizationID, token: InvitationToken) -> Invitation:
         invitation, _ = self._get_invitation_and_conduit(organization_id, token)
         return invitation
 
     async def claimer_joined(
-        self, organization_id: OrganizationID, greeter: UserID, token: UUID
+        self, organization_id: OrganizationID, greeter: UserID, token: InvitationToken
     ) -> None:
         await self._send_event(
             BackendEvent.INVITE_STATUS_CHANGED,
@@ -302,7 +307,7 @@ class MemoryInviteComponent(BaseInviteComponent):
         )
 
     async def claimer_left(
-        self, organization_id: OrganizationID, greeter: UserID, token: UUID
+        self, organization_id: OrganizationID, greeter: UserID, token: InvitationToken
     ) -> None:
         await self._send_event(
             BackendEvent.INVITE_STATUS_CHANGED,

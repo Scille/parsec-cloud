@@ -81,7 +81,7 @@ def get_conflict_filename(
 
 def full_name(name: EntryName, suffix: str) -> EntryName:
     # Separate file name from the extentions (if any)
-    name_parts = name.split(".")
+    name_parts = name.str.split(".")
     non_empty_indexes = (i for i, part in enumerate(name_parts) if part)
     first_non_empty_index = next(non_empty_indexes, len(name_parts) - 1)
     original_base_name = ".".join(name_parts[: first_non_empty_index + 1])

@@ -3,7 +3,8 @@
 from PyQt5.QtCore import QRegularExpression
 from PyQt5.QtGui import QValidator, QIntValidator, QRegularExpressionValidator
 
-from parsec.api.protocol import OrganizationID, UserID, DeviceName, DeviceID
+from parsec.api.data import EntryName
+from parsec.api.protocol import OrganizationID, UserID, DeviceLabel
 from parsec.core.types import (
     BackendAddr,
     BackendActionAddr,
@@ -88,23 +89,12 @@ class UserIDValidator(QValidator):
             return QValidator.Invalid, string, pos
 
 
-class DeviceNameValidator(QValidator):
+class DeviceLabelValidator(QValidator):
     def validate(self, string, pos):
         try:
             if len(string) == 0:
                 return QValidator.Intermediate, string, pos
-            DeviceName(string)
-            return QValidator.Acceptable, string, pos
-        except ValueError:
-            return QValidator.Invalid, string, pos
-
-
-class DeviceIDValidator(QValidator):
-    def validate(self, string, pos):
-        try:
-            if len(string) == 0:
-                return QValidator.Intermediate, string, pos
-            DeviceID(string)
+            DeviceLabel(string)
             return QValidator.Acceptable, string, pos
         except ValueError:
             return QValidator.Invalid, string, pos
@@ -116,13 +106,13 @@ class EmailValidator(QRegularExpressionValidator):
 
 
 class WorkspaceNameValidator(QValidator):
-    def __init__(self):
-        self.regex = QRegularExpression(r"^.{1,256}$")
-
     def validate(self, string, pos):
-        if self.regex.match(string, pos).hasMatch():
-            return QValidator.Acceptable, string, pos
-        return QValidator.Invalid, string, pos
+        try:
+            if len(string) == 0:
+                return QValidator.Intermediate, string, pos
+            EntryName(string)
+        except ValueError:
+            return QValidator.Invalid, string, pos
 
 
 class NotEmptyValidator(QValidator):

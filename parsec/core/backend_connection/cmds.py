@@ -1,7 +1,6 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2016-2021 Scille SAS
 
 from typing import Tuple, List, Dict, Optional
-from uuid import UUID
 import pendulum
 
 from parsec.crypto import VerifyKey, PublicKey
@@ -9,6 +8,10 @@ from parsec.api.transport import Transport, TransportError
 from parsec.api.protocol import (
     OrganizationID,
     UserID,
+    RealmID,
+    VlobID,
+    BlockID,
+    InvitationToken,
     ProtocolError,
     InvitationType,
     InvitationDeletedReason,
@@ -56,8 +59,11 @@ from parsec.api.protocol import (
     user_revoke_serializer,
     device_create_serializer,
 )
-from parsec.core.types import EntryID
-from parsec.core.backend_connection.exceptions import BackendNotAvailable, BackendProtocolError
+from parsec.core.backend_connection.exceptions import (
+    BackendNotAvailable,
+    BackendProtocolError,
+    BackendOutOfBallparkError,
+)
 
 
 async def _send_cmd(transport: Transport, serializer, **req) -> dict:
@@ -99,6 +105,13 @@ async def _send_cmd(transport: Transport, serializer, **req) -> dict:
     if rep["status"] == "invalid_msg_format":
         transport.logger.error("Invalid request data according to backend", cmd=req["cmd"], rep=rep)
         raise BackendProtocolError("Invalid request data according to backend")
+
+    if rep["status"] == "bad_timestamp":
+        raise BackendOutOfBallparkError(rep)
+
+    # Backward compatibility with older backends (<= v2.3)
+    if rep["status"] == "invalid_certification" and "timestamp" in rep["reason"]:
+        raise BackendOutOfBallparkError(rep)
 
     return rep
 
@@ -143,9 +156,9 @@ async def message_get(transport: Transport, offset: int) -> dict:
 
 async def vlob_create(
     transport: Transport,
-    realm_id: UUID,
+    realm_id: RealmID,
     encryption_revision: int,
-    vlob_id: UUID,
+    vlob_id: VlobID,
     timestamp: pendulum.DateTime,
     blob: bytes,
 ) -> dict:
@@ -164,7 +177,7 @@ async def vlob_create(
 async def vlob_read(
     transport: Transport,
     encryption_revision: int,
-    vlob_id: UUID,
+    vlob_id: VlobID,
     version: int = None,
     timestamp: pendulum.DateTime = None,
 ) -> dict:
@@ -182,7 +195,7 @@ async def vlob_read(
 async def vlob_update(
     transport: Transport,
     encryption_revision: int,
-    vlob_id: UUID,
+    vlob_id: VlobID,
     version: int,
     timestamp: pendulum.DateTime,
     blob: bytes,
@@ -199,7 +212,7 @@ async def vlob_update(
     )
 
 
-async def vlob_poll_changes(transport: Transport, realm_id: UUID, last_checkpoint: int) -> dict:
+async def vlob_poll_changes(transport: Transport, realm_id: RealmID, last_checkpoint: int) -> dict:
     return await _send_cmd(
         transport,
         vlob_poll_changes_serializer,
@@ -209,14 +222,14 @@ async def vlob_poll_changes(transport: Transport, realm_id: UUID, last_checkpoin
     )
 
 
-async def vlob_list_versions(transport: Transport, vlob_id: UUID) -> dict:
+async def vlob_list_versions(transport: Transport, vlob_id: VlobID) -> dict:
     return await _send_cmd(
         transport, vlob_list_versions_serializer, cmd="vlob_list_versions", vlob_id=vlob_id
     )
 
 
 async def vlob_maintenance_get_reencryption_batch(
-    transport: Transport, realm_id: UUID, encryption_revision: int, size: int
+    transport: Transport, realm_id: RealmID, encryption_revision: int, size: int
 ) -> dict:
     return await _send_cmd(
         transport,
@@ -230,9 +243,9 @@ async def vlob_maintenance_get_reencryption_batch(
 
 async def vlob_maintenance_save_reencryption_batch(
     transport: Transport,
-    realm_id: UUID,
+    realm_id: RealmID,
     encryption_revision: int,
-    batch: List[Tuple[EntryID, int, bytes]],
+    batch: List[Tuple[VlobID, int, bytes]],
 ) -> dict:
     return await _send_cmd(
         transport,
@@ -253,13 +266,13 @@ async def realm_create(transport: Transport, role_certificate: bytes) -> dict:
     )
 
 
-async def realm_status(transport: Transport, realm_id: UUID) -> dict:
+async def realm_status(transport: Transport, realm_id: RealmID) -> dict:
     return await _send_cmd(
         transport, realm_status_serializer, cmd="realm_status", realm_id=realm_id
     )
 
 
-async def realm_get_role_certificates(transport: Transport, realm_id: UUID) -> dict:
+async def realm_get_role_certificates(transport: Transport, realm_id: RealmID) -> dict:
     return await _send_cmd(
         transport,
         realm_get_role_certificates_serializer,
@@ -282,7 +295,7 @@ async def realm_update_roles(
 
 async def realm_start_reencryption_maintenance(
     transport: Transport,
-    realm_id: UUID,
+    realm_id: RealmID,
     encryption_revision: int,
     timestamp: pendulum.DateTime,
     per_participant_message: Dict[UserID, bytes],
@@ -299,7 +312,7 @@ async def realm_start_reencryption_maintenance(
 
 
 async def realm_finish_reencryption_maintenance(
-    transport: Transport, realm_id: UUID, encryption_revision: int
+    transport: Transport, realm_id: RealmID, encryption_revision: int
 ) -> dict:
     return await _send_cmd(
         transport,
@@ -313,7 +326,9 @@ async def realm_finish_reencryption_maintenance(
 ### Block API ###
 
 
-async def block_create(transport: Transport, block_id: UUID, realm_id: UUID, block: bytes) -> dict:
+async def block_create(
+    transport: Transport, block_id: BlockID, realm_id: RealmID, block: bytes
+) -> dict:
     return await _send_cmd(
         transport,
         block_create_serializer,
@@ -324,7 +339,7 @@ async def block_create(transport: Transport, block_id: UUID, realm_id: UUID, blo
     )
 
 
-async def block_read(transport: Transport, block_id: UUID) -> dict:
+async def block_read(transport: Transport, block_id: BlockID) -> dict:
     return await _send_cmd(transport, block_read_serializer, cmd="block_read", block_id=block_id)
 
 
@@ -348,7 +363,9 @@ async def invite_list(transport: Transport):
     return await _send_cmd(transport, invite_list_serializer, cmd="invite_list")
 
 
-async def invite_delete(transport: Transport, token: UUID, reason: InvitationDeletedReason):
+async def invite_delete(
+    transport: Transport, token: InvitationToken, reason: InvitationDeletedReason
+):
     return await _send_cmd(
         transport, invite_delete_serializer, cmd="invite_delete", token=token, reason=reason
     )
@@ -368,7 +385,7 @@ async def invite_1_claimer_wait_peer(transport: Transport, claimer_public_key: P
 
 
 async def invite_1_greeter_wait_peer(
-    transport: Transport, token: UUID, greeter_public_key: PublicKey
+    transport: Transport, token: InvitationToken, greeter_public_key: PublicKey
 ):
     return await _send_cmd(
         transport,
@@ -388,7 +405,7 @@ async def invite_2a_claimer_send_hashed_nonce(transport: Transport, claimer_hash
     )
 
 
-async def invite_2a_greeter_get_hashed_nonce(transport: Transport, token: UUID):
+async def invite_2a_greeter_get_hashed_nonce(transport: Transport, token: InvitationToken):
     return await _send_cmd(
         transport,
         invite_2a_greeter_get_hashed_nonce_serializer,
@@ -397,7 +414,9 @@ async def invite_2a_greeter_get_hashed_nonce(transport: Transport, token: UUID):
     )
 
 
-async def invite_2b_greeter_send_nonce(transport: Transport, token: UUID, greeter_nonce: bytes):
+async def invite_2b_greeter_send_nonce(
+    transport: Transport, token: InvitationToken, greeter_nonce: bytes
+):
     return await _send_cmd(
         transport,
         invite_2b_greeter_send_nonce_serializer,
@@ -416,7 +435,7 @@ async def invite_2b_claimer_send_nonce(transport: Transport, claimer_nonce: byte
     )
 
 
-async def invite_3a_greeter_wait_peer_trust(transport: Transport, token: UUID):
+async def invite_3a_greeter_wait_peer_trust(transport: Transport, token: InvitationToken):
     return await _send_cmd(
         transport,
         invite_3a_greeter_wait_peer_trust_serializer,
@@ -439,7 +458,7 @@ async def invite_3b_claimer_wait_peer_trust(transport: Transport):
     )
 
 
-async def invite_3b_greeter_signify_trust(transport: Transport, token: UUID):
+async def invite_3b_greeter_signify_trust(transport: Transport, token: InvitationToken):
     return await _send_cmd(
         transport,
         invite_3b_greeter_signify_trust_serializer,
@@ -448,7 +467,9 @@ async def invite_3b_greeter_signify_trust(transport: Transport, token: UUID):
     )
 
 
-async def invite_4_greeter_communicate(transport: Transport, token: UUID, payload: Optional[bytes]):
+async def invite_4_greeter_communicate(
+    transport: Transport, token: InvitationToken, payload: Optional[bytes]
+):
     return await _send_cmd(
         transport,
         invite_4_greeter_communicate_serializer,

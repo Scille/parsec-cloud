@@ -7,6 +7,7 @@ from pathlib import Path
 from inspect import iscoroutinefunction
 from queue import Queue
 
+from parsec.api.data import EntryName
 from parsec.utils import start_task
 from parsec.core.mountpoint import mountpoint_manager_factory
 
@@ -108,7 +109,7 @@ def mountpoint_service(mountpoint_service_factory):
 
     async def _bootstrap(user_fs, mountpoint_manager):
         nonlocal wid, wpath
-        wid = await user_fs.workspace_create("w")
+        wid = await user_fs.workspace_create(EntryName("w"))
         wpath = await mountpoint_manager.mount_workspace(wid)
 
     service = mountpoint_service_factory(_bootstrap)

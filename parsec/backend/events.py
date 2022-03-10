@@ -2,7 +2,18 @@
 
 import trio
 
-from parsec.api.protocol import events_subscribe_serializer, events_listen_serializer, APIEvent
+from parsec.api.protocol import (
+    OrganizationID,
+    DeviceID,
+    UserID,
+    RealmID,
+    RealmRole,
+    InvitationStatus,
+    InvitationToken,
+    events_subscribe_serializer,
+    events_listen_serializer,
+    APIEvent,
+)
 from parsec.backend.utils import catch_protocol_errors, run_with_breathing_transport, api
 from parsec.backend.realm import BaseRealmComponent
 from parsec.backend.backend_events import BackendEvent
@@ -20,7 +31,15 @@ class EventsComponent:
     async def api_events_subscribe(self, client_ctx, msg):
         msg = events_subscribe_serializer.req_load(msg)
 
-        def _on_roles_updated(event, backend_event, organization_id, author, realm_id, user, role):
+        def _on_roles_updated(
+            event: APIEvent,
+            backend_event: BackendEvent,
+            organization_id: OrganizationID,
+            author: DeviceID,
+            realm_id: RealmID,
+            user: UserID,
+            role: RealmRole,
+        ) -> None:
             if organization_id != client_ctx.organization_id or user != client_ctx.user_id:
                 return
 
@@ -41,7 +60,13 @@ class EventsComponent:
             except trio.WouldBlock:
                 client_ctx.logger.warning("dropping event (queue is full)")
 
-        def _on_pinged(event, backend_event, organization_id, author, ping):
+        def _on_pinged(
+            event: APIEvent,
+            backend_event: BackendEvent,
+            organization_id: OrganizationID,
+            author: DeviceID,
+            ping: str,
+        ) -> None:
             if organization_id != client_ctx.organization_id or author == client_ctx.device_id:
                 return
 
@@ -50,7 +75,14 @@ class EventsComponent:
             except trio.WouldBlock:
                 client_ctx.logger.warning("dropping event (queue is full)")
 
-        def _on_realm_events(event, backend_event, organization_id, author, realm_id, **kwargs):
+        def _on_realm_events(
+            event: APIEvent,
+            backend_event: BackendEvent,
+            organization_id: OrganizationID,
+            author: DeviceID,
+            realm_id: RealmID,
+            **kwargs
+        ) -> None:
             if (
                 organization_id != client_ctx.organization_id
                 or author == client_ctx.device_id
@@ -65,7 +97,14 @@ class EventsComponent:
             except trio.WouldBlock:
                 client_ctx.logger.warning("dropping event (queue is full)")
 
-        def _on_message_received(event, backend_event, organization_id, author, recipient, index):
+        def _on_message_received(
+            event: APIEvent,
+            backend_event: BackendEvent,
+            organization_id: OrganizationID,
+            author: DeviceID,
+            recipient: UserID,
+            index: int,
+        ) -> None:
             if organization_id != client_ctx.organization_id or recipient != client_ctx.user_id:
                 return
 
@@ -75,8 +114,13 @@ class EventsComponent:
                 client_ctx.logger.warning("dropping event (queue is full)")
 
         def _on_invite_status_changed(
-            event, backend_event, organization_id, greeter, token, status
-        ):
+            event: APIEvent,
+            backend_event: BackendEvent,
+            organization_id: OrganizationID,
+            greeter: UserID,
+            token: InvitationToken,
+            status: InvitationStatus,
+        ) -> None:
             if organization_id != client_ctx.organization_id or greeter != client_ctx.user_id:
                 return
 

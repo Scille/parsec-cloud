@@ -1,13 +1,13 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2016-2021 Scille SAS
 
 import attr
-from typing import Optional, Tuple, Dict, Any, Type, TypeVar
+from typing import Optional, Tuple, Dict, Any, Type, TypeVar, TYPE_CHECKING
 from pendulum import DateTime
 
-from parsec.types import UUID4, FrozenDict
+from parsec.types import FrozenDict
 from parsec.crypto import SecretKey, HashDigest
 from parsec.serde import fields, validate, post_load, OneOfSchema, pre_load
-from parsec.api.protocol import RealmRole, RealmRoleField, DeviceID
+from parsec.api.protocol import RealmRole, RealmRoleField, DeviceID, BlockID, BlockIDField
 from parsec.api.data.base import (
     BaseData,
     BaseSchema,
@@ -18,16 +18,10 @@ from parsec.api.data.base import (
 from parsec.api.data.entry import EntryID, EntryIDField, EntryName, EntryNameField
 from enum import Enum
 
+
 LOCAL_AUTHOR_LEGACY_PLACEHOLDER = DeviceID(
     "LOCAL_AUTHOR_LEGACY_PLACEHOLDER@LOCAL_AUTHOR_LEGACY_PLACEHOLDER"
 )
-
-
-class BlockID(UUID4):
-    pass
-
-
-BlockIDField = fields.uuid_based_field_factory(BlockID)
 
 
 class ManifestType(Enum):
@@ -57,6 +51,16 @@ class BlockAccess(BaseData):
     digest: HashDigest
 
 
+_PyBlockAccess = BlockAccess
+if not TYPE_CHECKING:
+    try:
+        from libparsec.types import BlockAccess as _RsBlockAccess
+    except:
+        pass
+    else:
+        BlockAccess = _RsBlockAccess
+
+
 WorkspaceEntryTypeVar = TypeVar("WorkspaceEntryTypeVar", bound="WorkspaceEntry")
 
 
@@ -84,9 +88,12 @@ class WorkspaceEntry(BaseData):
     role: Optional[RealmRole]
 
     @classmethod
-    def new(cls: Type[WorkspaceEntryTypeVar], name: str, timestamp: DateTime) -> "WorkspaceEntry":
-        return WorkspaceEntry(
-            name=EntryName(name),
+    def new(
+        cls: Type[WorkspaceEntryTypeVar], name: EntryName, timestamp: DateTime
+    ) -> "WorkspaceEntry":
+        assert isinstance(name, EntryName)
+        return _PyWorkspaceEntry(
+            name=name,
             id=EntryID.new(),
             key=SecretKey.generate(),
             encryption_revision=1,
@@ -97,6 +104,16 @@ class WorkspaceEntry(BaseData):
 
     def is_revoked(self) -> bool:
         return self.role is None
+
+
+_PyWorkspaceEntry = WorkspaceEntry
+if not TYPE_CHECKING:
+    try:
+        from libparsec.types import WorkspaceEntry as _RsWorkspaceEntry
+    except:
+        pass
+    else:
+        WorkspaceEntry = _RsWorkspaceEntry
 
 
 T = TypeVar("T")
@@ -114,9 +131,9 @@ class BaseManifest(BaseAPISignedData):
         @property
         def type_schemas(self) -> Dict[ManifestType, Type[OneOfSchema]]:  # type: ignore[override]
             return {
-                ManifestType.FILE_MANIFEST: FileManifest.SCHEMA_CLS,
-                ManifestType.FOLDER_MANIFEST: FolderManifest.SCHEMA_CLS,
-                ManifestType.WORKSPACE_MANIFEST: WorkspaceManifest.SCHEMA_CLS,
+                ManifestType.FILE_MANIFEST: _PyFileManifest.SCHEMA_CLS,
+                ManifestType.FOLDER_MANIFEST: _PyFolderManifest.SCHEMA_CLS,
+                ManifestType.WORKSPACE_MANIFEST: _PyWorkspaceManifest.SCHEMA_CLS,
                 ManifestType.USER_MANIFEST: UserManifest.SCHEMA_CLS,
             }
 
@@ -165,7 +182,7 @@ class FolderManifest(BaseManifest):
         def fix_legacy(self, data: Dict[str, Any]) -> Dict[str, Any]:
             # Compatibility with versions <= 1.14
             if data["author"] is None:
-                data["author"] = LOCAL_AUTHOR_LEGACY_PLACEHOLDER
+                data["author"] = str(LOCAL_AUTHOR_LEGACY_PLACEHOLDER)
             return data
 
         @post_load
@@ -194,6 +211,16 @@ class FolderManifest(BaseManifest):
     children: FrozenDict[EntryName, EntryID]
 
 
+_PyFolderManifest = FolderManifest
+if not TYPE_CHECKING:
+    try:
+        from libparsec.types import FolderManifest as _RsFolderManifest
+    except:
+        pass
+    else:
+        FolderManifest = _RsFolderManifest
+
+
 @attr.s(slots=True, frozen=True, auto_attribs=True, kw_only=True, eq=False)
 class FileManifest(BaseManifest):
     class SCHEMA_CLS(BaseSignedDataSchema):
@@ -206,13 +233,13 @@ class FileManifest(BaseManifest):
         updated = fields.DateTime(required=True)
         size = fields.Integer(required=True, validate=validate.Range(min=0))
         blocksize = fields.Integer(required=True, validate=validate.Range(min=8))
-        blocks = fields.FrozenList(fields.Nested(BlockAccess.SCHEMA_CLS), required=True)
+        blocks = fields.FrozenList(fields.Nested(_PyBlockAccess.SCHEMA_CLS), required=True)
 
         @pre_load
         def fix_legacy(self, data: Dict[str, T]) -> Dict[str, T]:
             # Compatibility with versions <= 1.14
             if data["author"] is None:
-                data["author"] = LOCAL_AUTHOR_LEGACY_PLACEHOLDER
+                data["author"] = str(LOCAL_AUTHOR_LEGACY_PLACEHOLDER)
             return data
 
         @post_load
@@ -243,6 +270,16 @@ class FileManifest(BaseManifest):
     blocks: Tuple[BlockAccess]
 
 
+_PyFileManifest = FileManifest
+if not TYPE_CHECKING:
+    try:
+        from libparsec.types import FileManifest as _RsFileManifest
+    except:
+        pass
+    else:
+        FileManifest = _RsFileManifest
+
+
 @attr.s(slots=True, frozen=True, auto_attribs=True, kw_only=True, eq=False)
 class WorkspaceManifest(BaseManifest):
     class SCHEMA_CLS(BaseSignedDataSchema):
@@ -258,7 +295,7 @@ class WorkspaceManifest(BaseManifest):
         def fix_legacy(self, data: Dict[str, T]) -> Dict[str, T]:
             # Compatibility with versions <= 1.14
             if data["author"] is None:
-                data["author"] = LOCAL_AUTHOR_LEGACY_PLACEHOLDER
+                data["author"] = str(LOCAL_AUTHOR_LEGACY_PLACEHOLDER)
             return data
 
         @post_load
@@ -272,6 +309,16 @@ class WorkspaceManifest(BaseManifest):
     children: FrozenDict[EntryName, EntryID]
 
 
+_PyWorkspaceManifest = WorkspaceManifest
+if not TYPE_CHECKING:
+    try:
+        from libparsec.types import WorkspaceManifest as _RsWorkspaceManifest
+    except:
+        pass
+    else:
+        WorkspaceManifest = _RsWorkspaceManifest
+
+
 @attr.s(slots=True, frozen=True, auto_attribs=True, kw_only=True, eq=False)
 class UserManifest(BaseManifest):
     class SCHEMA_CLS(BaseSignedDataSchema):
@@ -282,13 +329,13 @@ class UserManifest(BaseManifest):
         created = fields.DateTime(required=True)
         updated = fields.DateTime(required=True)
         last_processed_message = fields.Integer(required=True, validate=validate.Range(min=0))
-        workspaces = fields.List(fields.Nested(WorkspaceEntry.SCHEMA_CLS), required=True)
+        workspaces = fields.List(fields.Nested(_PyWorkspaceEntry.SCHEMA_CLS), required=True)
 
         @pre_load
         def fix_legacy(self, data: Dict[str, T]) -> Dict[str, T]:
             # Compatibility with versions <= 1.14
             if data["author"] is None:
-                data["author"] = LOCAL_AUTHOR_LEGACY_PLACEHOLDER
+                data["author"] = str(LOCAL_AUTHOR_LEGACY_PLACEHOLDER)
             return data
 
         @post_load
@@ -304,3 +351,13 @@ class UserManifest(BaseManifest):
 
     def get_workspace_entry(self, workspace_id: EntryID) -> Optional[WorkspaceEntry]:
         return next((w for w in self.workspaces if w.id == workspace_id), None)
+
+
+_PyUserManifest = UserManifest
+if not TYPE_CHECKING:
+    try:
+        from libparsec.types import UserManifest as _RsUserManifest
+    except:
+        pass
+    else:
+        UserManifest = _RsUserManifest

@@ -56,9 +56,9 @@ async def _bootstrap_mountpoint(base_mountpoint_path: PurePath, workspace_fs) ->
     workspace_name = workspace_fs.get_workspace_name()
     for tentative in count(1):
         if tentative == 1:
-            dirname = workspace_name
+            dirname = workspace_name.str
         else:
-            dirname = f"{workspace_name} ({tentative})"
+            dirname = f"{workspace_name.str} ({tentative})"
         mountpoint_path = base_mountpoint_path / dirname
 
         try:
@@ -135,7 +135,9 @@ async def fuse_mountpoint_runner(
             encoding = sys.getfilesystemencoding()
 
             def _run_fuse_thread():
-                with importlib_resources.path(resources_module, "parsec.icns") as parsec_icns_path:
+                with importlib_resources.files(resources_module).joinpath(
+                    "parsec.icns"
+                ) as parsec_icns_path:
 
                     fuse_platform_options = {}
                     if sys.platform == "darwin":

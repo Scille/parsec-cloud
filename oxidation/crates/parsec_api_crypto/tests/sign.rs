@@ -33,7 +33,7 @@ fn round_trip() {
     let verified_data = vk.verify(&signed).unwrap();
     assert_eq!(verified_data, data);
 
-    let unwrapped_data = vk.unsecure_unwrap(&signed).unwrap();
+    let unwrapped_data = VerifyKey::unsecure_unwrap(&signed).unwrap();
     assert_eq!(unwrapped_data, &data[..]);
 }
 
@@ -48,7 +48,7 @@ fn signature_verification_spec() {
     let text = vk.verify(&signedtext).unwrap();
     assert_eq!(text, b"all your base are belong to us");
 
-    let unwrappedtext = vk.unsecure_unwrap(&signedtext).unwrap();
+    let unwrappedtext = VerifyKey::unsecure_unwrap(&signedtext).unwrap();
     assert_eq!(unwrappedtext, b"all your base are belong to us");
 }
 
