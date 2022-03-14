@@ -1,1 +1,0 @@
-Display some messages using snackbars instead of dialogs

@@ -1,1 +1,0 @@
-The cache size per workspace can now be configured through the entry `workspace_storage_cache_size` in the configuration file. The default value is 524288000, i.e. 512 MB.

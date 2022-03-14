@@ -1,3 +1,0 @@
-Added new right click option for a file in a workspace, that shows
-the status of a file (created and updated when and by whom, type, location,
-number of part of a file present locally / remotely)
