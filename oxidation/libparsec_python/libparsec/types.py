@@ -17,6 +17,7 @@ try:
         BlockID,
         RealmID,
         VlobID,
+        ChunkID,
         InvitationToken,
         SASCode,
         generate_sas_codes,
@@ -33,6 +34,11 @@ try:
         FolderManifest,
         WorkspaceManifest,
         UserManifest,
+        Chunk,
+        LocalFileManifest,
+        LocalFolderManifest,
+        LocalWorkspaceManifest,
+        LocalUserManifest,
     )
 except ImportError as exc:
     print(f"Import error in libparsec/types: {exc}")
@@ -53,6 +59,7 @@ __all__ = (
     "BlockID",
     "RealmID",
     "VlobID",
+    "ChunkID",
     "InvitationToken",
     "SASCode",
     "generate_sas_codes",
@@ -69,4 +76,9 @@ __all__ = (
     "FolderManifest",
     "WorkspaceManifest",
     "UserManifest",
+    "Chunk",
+    "LocalFileManifest",
+    "LocalFolderManifest",
+    "LocalWorkspaceManifest",
+    "LocalUserManifest",
 )

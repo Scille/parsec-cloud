@@ -2,7 +2,7 @@
 
 import attr
 import functools
-from typing import Optional, Tuple, TypeVar, Type, Union, FrozenSet, Pattern, Dict
+from typing import Optional, Tuple, TypeVar, Type, Union, FrozenSet, Pattern, Dict, TYPE_CHECKING
 from pendulum import DateTime
 
 from parsec.types import UUID4, FrozenDict
@@ -15,8 +15,8 @@ from parsec.api.data import (
     WorkspaceEntry,
     BlockAccess,
     BlockID,
-    BaseManifest as BaseRemoteManifest,
     UserManifest as RemoteUserManifest,
+    BaseManifest as BaseRemoteManifest,
     WorkspaceManifest as RemoteWorkspaceManifest,
     FolderManifest as RemoteFolderManifest,
     FileManifest as RemoteFileManifest,
@@ -30,6 +30,7 @@ from parsec.api.data.manifest import (
     _PyFileManifest,
     _PyFolderManifest,
     _PyWorkspaceManifest,
+    _PyUserManifest,
     _PyWorkspaceEntry,
 )
 from parsec.core.types.base import BaseLocalData
@@ -53,6 +54,15 @@ WorkspaceRole = RealmRole
 class ChunkID(UUID4):
     __slots__ = ()
 
+
+_PyChunkID = ChunkID
+if not TYPE_CHECKING:
+    try:
+        from libparsec.types import ChunkID as _RsChunkID
+    except:
+        pass
+    else:
+        ChunkID = _RsChunkID
 
 ChunkIDField = fields.uuid_based_field_factory(ChunkID)
 
@@ -148,7 +158,7 @@ class Chunk(BaseData):
         )
 
     @classmethod
-    def from_block_acess(cls, block_access: BlockAccess):
+    def from_block_access(cls, block_access: BlockAccess):
         return cls(
             id=ChunkID(block_access.id.uuid),
             raw_offset=block_access.offset,
@@ -189,6 +199,16 @@ class Chunk(BaseData):
         return self.access
 
 
+_PyChunk = Chunk
+if not TYPE_CHECKING:
+    try:
+        from libparsec.types import Chunk as _RsChunk
+    except:
+        pass
+    else:
+        Chunk = _RsChunk
+
+
 # Manifests data classes
 
 
@@ -226,10 +246,10 @@ class BaseLocalManifest(BaseLocalData):
         @property
         def type_schemas(self):
             return {
-                LocalManifestType.LOCAL_FILE_MANIFEST: LocalFileManifest.SCHEMA_CLS,
-                LocalManifestType.LOCAL_FOLDER_MANIFEST: LocalFolderManifest.SCHEMA_CLS,
-                LocalManifestType.LOCAL_WORKSPACE_MANIFEST: LocalWorkspaceManifest.SCHEMA_CLS,
-                LocalManifestType.LOCAL_USER_MANIFEST: LocalUserManifest.SCHEMA_CLS,
+                LocalManifestType.LOCAL_FILE_MANIFEST: _PyLocalFileManifest.SCHEMA_CLS,
+                LocalManifestType.LOCAL_FOLDER_MANIFEST: _PyLocalFolderManifest.SCHEMA_CLS,
+                LocalManifestType.LOCAL_WORKSPACE_MANIFEST: _PyLocalWorkspaceManifest.SCHEMA_CLS,
+                LocalManifestType.LOCAL_USER_MANIFEST: _PyLocalUserManifest.SCHEMA_CLS,
             }
 
         def get_obj_type(self, obj):
@@ -350,7 +370,7 @@ class LocalFileManifest(BaseLocalManifest):
         size = fields.Integer(required=True, validate=validate.Range(min=0))
         blocksize = fields.Integer(required=True, validate=validate.Range(min=8))
         blocks = fields.FrozenList(
-            fields.FrozenList(fields.Nested(Chunk.SCHEMA_CLS)), required=True
+            fields.FrozenList(fields.Nested(_PyChunk.SCHEMA_CLS)), required=True
         )
 
         @post_load
@@ -448,7 +468,9 @@ class LocalFileManifest(BaseLocalManifest):
             updated=remote.updated,
             size=remote.size,
             blocksize=remote.blocksize,
-            blocks=tuple((Chunk.from_block_acess(block_access),) for block_access in remote.blocks),
+            blocks=tuple(
+                (Chunk.from_block_access(block_access),) for block_access in remote.blocks
+            ),
         )
 
     def to_remote(self, author: DeviceID, timestamp: DateTime) -> RemoteFileManifest:
@@ -477,6 +499,15 @@ class LocalFileManifest(BaseLocalManifest):
             return False
         return super().match_remote(remote_manifest)
 
+
+_PyLocalFileManifest = LocalFileManifest
+if not TYPE_CHECKING:
+    try:
+        from libparsec.types import LocalFileManifest as _RsLocalFileManifest
+    except:
+        pass
+    else:
+        LocalFileManifest = _RsLocalFileManifest
 
 LocalFolderishManifestTypeVar = TypeVar(
     "LocalFolderishManifestTypeVar", bound="LocalFolderishManifestMixin"
@@ -743,6 +774,16 @@ class LocalFolderManifest(BaseLocalManifest, LocalFolderishManifestMixin):
         )
 
 
+_PyLocalFolderManifest = LocalFolderManifest
+if not TYPE_CHECKING:
+    try:
+        from libparsec.types import LocalFolderManifest as _RsLocalFolderManifest
+    except:
+        pass
+    else:
+        LocalFolderManifest = _RsLocalFolderManifest
+
+
 @attr.s(slots=True, frozen=True, auto_attribs=True, kw_only=True, eq=False)
 class LocalWorkspaceManifest(BaseLocalManifest, LocalFolderishManifestMixin):
     class SCHEMA_CLS(BaseSchema):
@@ -872,11 +913,21 @@ class LocalWorkspaceManifest(BaseLocalManifest, LocalFolderishManifestMixin):
         )
 
 
+_PyLocalWorkspaceManifest = LocalWorkspaceManifest
+if not TYPE_CHECKING:
+    try:
+        from libparsec.types import LocalWorkspaceManifest as _RsLocalWorkspaceManifest
+    except:
+        pass
+    else:
+        LocalWorkspaceManifest = _RsLocalWorkspaceManifest
+
+
 @attr.s(slots=True, frozen=True, auto_attribs=True, kw_only=True, eq=False)
 class LocalUserManifest(BaseLocalManifest):
     class SCHEMA_CLS(BaseSchema):
         type = fields.EnumCheckedConstant(LocalManifestType.LOCAL_USER_MANIFEST, required=True)
-        base = fields.Nested(RemoteUserManifest.SCHEMA_CLS, required=True)
+        base = fields.Nested(_PyUserManifest.SCHEMA_CLS, required=True)
         need_sync = fields.Boolean(required=True)
         updated = fields.DateTime(required=True)
         last_processed_message = fields.Integer(required=True, validate=validate.Range(min=0))
@@ -974,3 +1025,13 @@ class LocalUserManifest(BaseLocalManifest):
             last_processed_message=self.last_processed_message,
             workspaces=self.workspaces,
         )
+
+
+_PyLocalUserManifest = LocalUserManifest
+if not TYPE_CHECKING:
+    try:
+        from libparsec.types import LocalUserManifest as _RsLocalUserManifest
+    except:
+        pass
+    else:
+        LocalUserManifest = _RsLocalUserManifest

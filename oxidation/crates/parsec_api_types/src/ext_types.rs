@@ -87,7 +87,7 @@ impl std::fmt::Display for DateTime {
         write!(
             f,
             "{}",
-            self.0.to_rfc3339_opts(chrono::SecondsFormat::Micros, true)
+            self.0.to_rfc3339_opts(chrono::SecondsFormat::Secs, false)
         )
     }
 }
@@ -242,7 +242,7 @@ mod tests {
 
 macro_rules! new_uuid_type {
     (pub $name:ident) => {
-        #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash)]
+        #[derive(Clone, Copy, Debug, PartialEq, Eq, PartialOrd, Hash)]
         pub struct $name(uuid::Uuid);
 
         impl $name {

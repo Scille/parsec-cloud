@@ -37,6 +37,10 @@ impl EntryName {
         }
     }
 
+    fn __repr__(&self) -> PyResult<String> {
+        Ok(format!("<EntryName {}>", self.0))
+    }
+
     fn __richcmp__(&self, py: Python, other: &EntryName, op: CompareOp) -> PyObject {
         match op {
             CompareOp::Eq => (self.0.as_ref() == other.0.as_ref()).into_py(py),
@@ -48,10 +52,6 @@ impl EntryName {
 
     fn __str__(&self) -> PyResult<String> {
         Ok(self.0.to_string())
-    }
-
-    fn __repr__(&self) -> PyResult<String> {
-        Ok(format!("{:?}", self.0))
     }
 
     fn __hash__(&self, py: Python) -> PyResult<isize> {
@@ -1041,10 +1041,9 @@ impl UserManifest {
     fn get_workspace_entry(&self, workspace_id: EntryID) -> PyResult<Option<WorkspaceEntry>> {
         Ok(self
             .0
-            .workspaces
-            .iter()
-            .find(|w| w.id == workspace_id.0)
-            .map(|w| WorkspaceEntry(w.clone())))
+            .get_workspace_entry(workspace_id.0)
+            .cloned()
+            .map(WorkspaceEntry))
     }
 
     fn __richcmp__(&self, py: Python, other: &Self, op: CompareOp) -> PyObject {

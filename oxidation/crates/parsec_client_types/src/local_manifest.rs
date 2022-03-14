@@ -2,6 +2,7 @@
 
 use serde::{Deserialize, Serialize};
 use serde_with::serde_as;
+use std::collections::hash_map::RandomState;
 use std::collections::{HashMap, HashSet};
 use std::num::NonZeroU64;
 
@@ -53,6 +54,74 @@ pub struct Chunk {
     pub raw_offset: u64,
     pub raw_size: NonZeroU64,
     pub access: Option<BlockAccess>,
+}
+
+impl Chunk {
+    pub fn from_block_access(block_access: BlockAccess) -> Result<Self, &'static str> {
+        let raw_size = NonZeroU64::try_from(block_access.size).map_err(|_| "invalid raw size")?;
+        let stop = NonZeroU64::try_from(block_access.offset + block_access.size)
+            .map_err(|_| "invalid stop")?;
+        Ok(Self {
+            id: parsec_api_types::ChunkID::from(*block_access.id),
+            raw_offset: block_access.offset,
+            raw_size,
+            start: block_access.offset,
+            stop,
+            access: Some(block_access),
+        })
+    }
+
+    pub fn evolve_as_block(&self, data: &[u8]) -> Result<Self, &'static str> {
+        let mut result = self.clone();
+        // No-op
+        if result.is_block() {
+            return Ok(result);
+        }
+
+        // Check alignement
+        if result.raw_offset != result.start {
+            return Err("This chunk is not aligned");
+        }
+
+        // Craft access
+        result.access = Some(parsec_api_types::BlockAccess {
+            id: parsec_api_types::BlockID::from(*result.id),
+            key: parsec_api_crypto::SecretKey::generate(),
+            offset: result.start,
+            size: u64::from(result.stop) - result.start,
+            digest: parsec_api_crypto::HashDigest::from_data(data),
+        });
+
+        Ok(result)
+    }
+
+    pub fn is_block(&self) -> bool {
+        // Requires an access
+        if let Some(access) = &self.access {
+            // Pseudo block
+            !(!self.is_pseudo_block()
+                // Offset inconsistent
+                || self.raw_offset != access.offset
+                // Size inconsistent
+                || u64::from(self.raw_size) != access.size)
+        } else {
+            false
+        }
+    }
+
+    pub fn is_pseudo_block(&self) -> bool {
+        // Not left aligned
+        !self.start != self.raw_offset
+            // Not right aligned
+            || u64::from(self.stop) != self.raw_offset + u64::from(self.raw_size)
+    }
+
+    pub fn get_block_access(&self) -> Result<Option<BlockAccess>, &'static str> {
+        if !self.is_block() {
+            return Err("This chunk does not coresspond to a block");
+        }
+        Ok(self.access.clone())
+    }
 }
 
 /*
@@ -110,6 +179,99 @@ impl From<LocalFileManifest> for LocalFileManifestData {
 }
 
 impl_local_manifest_dump_load!(LocalFileManifest);
+
+impl LocalFileManifest {
+    pub fn get_chunks(&self, block: usize) -> Vec<Chunk> {
+        self.blocks.get(block).cloned().unwrap_or_default()
+    }
+
+    pub fn is_reshaped(&self) -> bool {
+        for chunks in self.blocks.iter() {
+            if chunks.len() != 1 || !chunks[0].is_block() {
+                return false;
+            }
+        }
+        true
+    }
+
+    pub fn assert_integrity(&self) {
+        let mut current = 0;
+        for (i, chunks) in self.blocks.iter().enumerate() {
+            assert_eq!(i as u64 * *self.blocksize, current);
+            assert!(!chunks.is_empty());
+            for chunk in chunks {
+                assert_eq!(chunk.start, current);
+                assert!(chunk.start < chunk.stop.into());
+                assert!(chunk.raw_offset <= chunk.start);
+                assert!(u64::from(chunk.stop) <= chunk.raw_offset + u64::from(chunk.raw_size));
+                current = chunk.stop.into()
+            }
+        }
+        assert_eq!(current, self.size);
+    }
+
+    pub fn from_remote(remote: FileManifest) -> Result<Self, &'static str> {
+        let base = remote.clone();
+        let blocks = remote
+            .blocks
+            .into_iter()
+            .map(Chunk::from_block_access)
+            .collect::<Result<Vec<_>, _>>()?
+            .into_iter()
+            .map(|b| vec![b])
+            .collect();
+
+        Ok(Self {
+            base,
+            need_sync: false,
+            updated: remote.updated,
+            size: remote.size,
+            blocksize: remote.blocksize,
+            blocks,
+        })
+    }
+
+    pub fn to_remote(
+        &self,
+        author: DeviceID,
+        timestamp: DateTime,
+    ) -> Result<FileManifest, &'static str> {
+        self.assert_integrity();
+        assert!(self.is_reshaped());
+
+        let blocks = self
+            .blocks
+            .iter()
+            .map(|chunks| chunks[0].get_block_access())
+            .collect::<Result<Vec<_>, _>>()?
+            .into_iter()
+            .flatten()
+            .collect();
+
+        Ok(FileManifest {
+            author,
+            timestamp,
+            id: self.base.id,
+            parent: self.base.parent,
+            version: self.base.version + 1,
+            created: self.base.created,
+            updated: self.updated,
+            size: self.size,
+            blocksize: self.blocksize,
+            blocks,
+        })
+    }
+
+    pub fn match_remote(&self, remote_manifest: &FileManifest) -> Result<bool, &'static str> {
+        if !self.is_reshaped() {
+            return Ok(false);
+        }
+        let mut reference =
+            self.to_remote(remote_manifest.author.clone(), remote_manifest.timestamp)?;
+        reference.version = remote_manifest.version;
+        Ok(&reference == remote_manifest)
+    }
+}
 
 /*
  * LocalFolderManifest
@@ -183,6 +345,64 @@ impl From<LocalFolderManifest> for LocalFolderManifestData {
 }
 
 impl_local_manifest_dump_load!(LocalFolderManifest);
+
+impl LocalFolderManifest {
+    pub fn _filter_local_confinement_points(&self) -> Self {
+        let mut result = self.clone();
+
+        if result.local_confinement_points.is_empty() {
+            return result;
+        }
+
+        result
+            .children
+            .retain(|_, entry_id| !self.local_confinement_points.contains(entry_id));
+
+        result.local_confinement_points.clear();
+        result
+    }
+
+    pub fn _restore_remote_confinement_points(&self) -> Self {
+        let mut result = self.clone();
+
+        if result.remote_confinement_points.is_empty() {
+            return result;
+        }
+
+        for (name, entry_id) in self.base.children.iter() {
+            if self.remote_confinement_points.contains(entry_id) {
+                result.children.insert(name.clone(), *entry_id);
+            }
+        }
+        result.remote_confinement_points.clear();
+        result
+    }
+
+    pub fn to_remote(&self, author: DeviceID, timestamp: DateTime) -> FolderManifest {
+        // Filter confined entries
+        let mut processed_manifest = self._filter_local_confinement_points();
+        // Restore filtered entries
+        processed_manifest = processed_manifest._restore_remote_confinement_points();
+        // Create remote manifest
+        FolderManifest {
+            author,
+            timestamp,
+            id: self.base.id,
+            parent: self.base.parent,
+            version: self.base.version + 1,
+            created: self.base.created,
+            updated: self.updated,
+            children: processed_manifest.children,
+        }
+    }
+
+    pub fn match_remote(&self, remote_manifest: &FolderManifest) -> bool {
+        let mut reference =
+            self.to_remote(remote_manifest.author.clone(), remote_manifest.timestamp);
+        reference.version = remote_manifest.version;
+        reference == *remote_manifest
+    }
+}
 
 /*
  * LocalWorkspaceManifest
@@ -279,6 +499,61 @@ impl From<LocalWorkspaceManifest> for LocalWorkspaceManifestData {
     }
 }
 
+impl LocalWorkspaceManifest {
+    pub fn _filter_local_confinement_points(&self) -> Self {
+        let mut result = self.clone();
+
+        if result.local_confinement_points.is_empty() {
+            return result;
+        }
+
+        result
+            .children
+            .retain(|_, entry_id| !self.local_confinement_points.contains(entry_id));
+
+        result.local_confinement_points.clear();
+        result
+    }
+
+    pub fn _restore_remote_confinement_points(&self) -> Self {
+        let mut result = self.clone();
+
+        if result.remote_confinement_points.is_empty() {
+            return result;
+        }
+
+        for (name, entry_id) in self.base.children.iter() {
+            if self.remote_confinement_points.contains(entry_id) {
+                result.children.insert(name.clone(), *entry_id);
+            }
+        }
+        result.remote_confinement_points.clear();
+        result
+    }
+
+    pub fn to_remote(&self, author: DeviceID, timestamp: DateTime) -> WorkspaceManifest {
+        let mut processed_manifest = self._filter_local_confinement_points();
+        processed_manifest = processed_manifest._restore_remote_confinement_points();
+
+        WorkspaceManifest {
+            author,
+            timestamp,
+            id: self.base.id,
+            version: self.base.version + 1,
+            created: self.base.created,
+            updated: self.updated,
+            children: processed_manifest.children,
+        }
+    }
+
+    pub fn match_remote(&self, remote_manifest: &WorkspaceManifest) -> bool {
+        let mut reference =
+            self.to_remote(remote_manifest.author.clone(), remote_manifest.timestamp);
+        reference.version = remote_manifest.version;
+        reference == *remote_manifest
+    }
+}
+
 /*
  * LocalUserManifest
  */
@@ -345,6 +620,48 @@ impl From<LocalUserManifest> for LocalUserManifestData {
             last_processed_message: obj.last_processed_message,
             workspaces: obj.workspaces,
             speculative: Some(obj.speculative),
+        }
+    }
+}
+
+impl LocalUserManifest {
+    pub fn evolve_workspaces(&self, workspace: WorkspaceEntry) -> Self {
+        let mut out = self.clone();
+        let mut workspaces = HashMap::<_, _, RandomState>::from_iter(
+            self.workspaces.clone().into_iter().map(|w| (w.id, w)),
+        );
+        workspaces.insert(workspace.id, workspace);
+        out.workspaces = workspaces.into_values().collect();
+        out
+    }
+
+    pub fn get_workspace_entry(&self, workspace_id: EntryID) -> Option<&WorkspaceEntry> {
+        self.workspaces.iter().find(|w| w.id == workspace_id)
+    }
+
+    pub fn from_remote(remote: UserManifest) -> Self {
+        let base = remote.clone();
+
+        Self {
+            base,
+            need_sync: false,
+            updated: remote.updated,
+            last_processed_message: remote.last_processed_message,
+            workspaces: remote.workspaces,
+            speculative: false,
+        }
+    }
+
+    pub fn to_remote(&self, author: DeviceID, timestamp: DateTime) -> UserManifest {
+        UserManifest {
+            author,
+            timestamp,
+            id: self.base.id,
+            version: self.base.version + 1,
+            created: self.base.created,
+            updated: self.updated,
+            last_processed_message: self.last_processed_message,
+            workspaces: self.workspaces.clone(),
         }
     }
 }

@@ -134,7 +134,7 @@ class BaseManifest(BaseAPISignedData):
                 ManifestType.FILE_MANIFEST: _PyFileManifest.SCHEMA_CLS,
                 ManifestType.FOLDER_MANIFEST: _PyFolderManifest.SCHEMA_CLS,
                 ManifestType.WORKSPACE_MANIFEST: _PyWorkspaceManifest.SCHEMA_CLS,
-                ManifestType.USER_MANIFEST: UserManifest.SCHEMA_CLS,
+                ManifestType.USER_MANIFEST: _PyUserManifest.SCHEMA_CLS,
             }
 
         def get_obj_type(self, obj: Dict[str, T]) -> T:

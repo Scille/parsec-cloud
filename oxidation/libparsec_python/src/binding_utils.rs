@@ -4,7 +4,7 @@ use pyo3::basic::CompareOp;
 use pyo3::conversion::IntoPy;
 use pyo3::exceptions::PyValueError;
 use pyo3::prelude::PyModule;
-use pyo3::types::{PyDict, PyTuple};
+use pyo3::types::{PyDict, PyFrozenSet, PyTuple};
 use pyo3::FromPyObject;
 use pyo3::{PyAny, PyObject, PyResult, Python};
 
@@ -84,6 +84,7 @@ pub fn kwargs_extract_optional<'a, T: FromPyObject<'a>>(
     name: &str,
 ) -> PyResult<Option<T>> {
     match args.get_item(name) {
+        Some(item) if item.is_none() => Ok(None),
         Some(item) => match item.extract::<T>() {
             Ok(v) => Ok(Some(v)),
             Err(err) => Err(PyValueError::new_err(format!(
@@ -124,4 +125,48 @@ pub fn kwargs_extract_optional_custom<T>(
         },
         None => Ok(None),
     }
+}
+
+// This implementation is due to
+// https://github.com/PyO3/pyo3/blob/39d2b9d96476e6cc85ca43e720e035e0cdff7a45/src/types/set.rs#L240
+// where Hashset is PySet in FromPyObject trait
+pub fn kwargs_extract_required_frozenset<'a, T: FromPyObject<'a> + Eq + std::hash::Hash>(
+    args: &'a PyDict,
+    name: &str,
+) -> PyResult<std::collections::HashSet<T>> {
+    match kwargs_extract_optional_frozenset::<T>(args, name)? {
+        Some(v) => Ok(v),
+        None => Err(PyValueError::new_err(format!(
+            "Missing `{}` argument",
+            name
+        ))),
+    }
+}
+
+pub fn kwargs_extract_optional_frozenset<'a, T: FromPyObject<'a> + Eq + std::hash::Hash>(
+    args: &'a PyDict,
+    name: &str,
+) -> PyResult<Option<std::collections::HashSet<T>>> {
+    match args.get_item(name) {
+        Some(item) if item.is_none() => Ok(None),
+        Some(item) => match item.downcast::<PyFrozenSet>() {
+            Ok(set) => Ok(Some(
+                set.iter()
+                    .map(T::extract)
+                    .collect::<PyResult<std::collections::HashSet<T>>>()?,
+            )),
+            Err(err) => Err(PyValueError::new_err(format!(
+                "Invalid `{}` argument: {}",
+                name, err
+            ))),
+        },
+        None => Ok(None),
+    }
+}
+
+pub fn pattern_match(prevent_sync_pattern: &PyAny, pattern: &str) -> PyResult<bool> {
+    prevent_sync_pattern
+        .call_method1("match", (pattern,))?
+        .extract::<Option<PyObject>>()
+        .map(|b| b.is_some())
 }
