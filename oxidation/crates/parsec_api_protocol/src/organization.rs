@@ -5,16 +5,16 @@ use serde_with::{serde_as, Bytes};
 
 use crate::impl_api_protocol_dump_load;
 use parsec_api_crypto::VerifyKey;
-use parsec_api_types::{DeviceID, DeviceLabel, OrganizationID, UserProfile};
+use parsec_api_types::{maybe_field, DeviceID, DeviceLabel, OrganizationID, UserProfile};
 
 /*
- * APIV1_OrganizationBootstrapReqSchema
+ * APIV1_OrganizationBootstrapReq
  */
 
 #[serde_as]
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
-#[serde(rename = "APIV1_OrganizationBootstrapReqSchema")]
-pub struct APIV1OrganizationBootstrapReqSchema {
+#[serde(rename = "APIV1_OrganizationBootstrapReq")]
+pub struct APIV1OrganizationBootstrapReq {
     pub cmd: String,
     pub bootstrap_token: String,
     pub root_verify_key: VerifyKey,
@@ -36,31 +36,37 @@ pub struct APIV1OrganizationBootstrapReqSchema {
     pub redacted_device_certificate: Option<Vec<u8>>,
 }
 
-impl_api_protocol_dump_load!(APIV1OrganizationBootstrapReqSchema);
+impl_api_protocol_dump_load!(APIV1OrganizationBootstrapReq);
 
 /*
- * APIV1_OrganizationBootstrapRepSchema
+ * APIV1_OrganizationBootstrapRep
  */
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
-#[serde(rename = "APIV1_OrganizationBootstrapRepSchema")]
+#[serde(rename = "APIV1_OrganizationBootstrapRep")]
 #[serde(tag = "status", rename_all = "snake_case")]
-pub enum APIV1OrganizationBootstrapRepSchema {
+pub enum APIV1OrganizationBootstrapRep {
     Ok,
-    InvalidCertification { reason: String },
-    InvalidData { reason: String },
+    InvalidCertification {
+        #[serde(default, deserialize_with = "maybe_field::deserialize_some")]
+        reason: Option<String>,
+    },
+    InvalidData {
+        #[serde(default, deserialize_with = "maybe_field::deserialize_some")]
+        reason: Option<String>,
+    },
     AlreadyBootstrapped,
     NotFound,
 }
 
-impl_api_protocol_dump_load!(APIV1OrganizationBootstrapRepSchema);
+impl_api_protocol_dump_load!(APIV1OrganizationBootstrapRep);
 
 /*
- * OrganizationBootstrapWebhookSchema
+ * OrganizationBootstrapWebhook
  */
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
-pub struct OrganizationBootstrapWebhookSchema {
+pub struct OrganizationBootstrapWebhook {
     pub organization_id: OrganizationID,
     pub device_id: DeviceID,
     pub device_label: DeviceLabel,
@@ -69,68 +75,69 @@ pub struct OrganizationBootstrapWebhookSchema {
 }
 
 /*
- * UsersPerProfileDetailItemSchema
+ * UsersPerProfileDetailItem
  */
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
-pub struct UsersPerProfileDetailItemSchema {
+pub struct UsersPerProfileDetailItem {
     pub profile: UserProfile,
     pub active: u64,
     pub revoked: u64,
 }
 
 /*
- * OrganizationStatsReqSchema
+ * OrganizationStatsReq
  */
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
-pub struct OrganizationStatsReqSchema {
+pub struct OrganizationStatsReq {
     pub cmd: String,
 }
 
-impl_api_protocol_dump_load!(OrganizationStatsReqSchema);
+impl_api_protocol_dump_load!(OrganizationStatsReq);
 
 /*
- * OrganizationStatsRepSchema
+ * OrganizationStatsRep
  */
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
 #[serde(tag = "status", rename_all = "snake_case")]
-pub enum OrganizationStatsRepSchema {
+pub enum OrganizationStatsRep {
     Ok {
         data_size: u64,
         metadata_size: u64,
         realms: u64,
         users: u64,
         active_users: u64,
-        users_per_profile_detail: Vec<UsersPerProfileDetailItemSchema>,
+        users_per_profile_detail: Vec<UsersPerProfileDetailItem>,
     },
     NotAllowed {
-        reason: String,
+        #[serde(default, deserialize_with = "maybe_field::deserialize_some")]
+        reason: Option<String>,
     },
     NotFound,
 }
 
-impl_api_protocol_dump_load!(OrganizationStatsRepSchema);
+impl_api_protocol_dump_load!(OrganizationStatsRep);
 
 /*
- * OrganizationConfigReqSchema
+ * OrganizationConfigReq
  */
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
-pub struct OrganizationConfigReqSchema {
+pub struct OrganizationConfigReq {
     pub cmd: String,
 }
 
-impl_api_protocol_dump_load!(OrganizationConfigReqSchema);
+impl_api_protocol_dump_load!(OrganizationConfigReq);
 
 /*
- * OrganizationConfigRepSchema
+ * OrganizationConfigRep
  */
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
 #[serde(tag = "status", rename_all = "snake_case")]
-pub enum OrganizationConfigRepSchema {
+pub enum OrganizationConfigRep {
     Ok {
         user_profile_outsider_allowed: bool,
         active_users_limit: Option<u64>,
@@ -138,4 +145,4 @@ pub enum OrganizationConfigRepSchema {
     NotFound,
 }
 
-impl_api_protocol_dump_load!(OrganizationConfigRepSchema);
+impl_api_protocol_dump_load!(OrganizationConfigRep);

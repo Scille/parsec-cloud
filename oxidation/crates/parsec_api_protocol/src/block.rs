@@ -7,12 +7,12 @@ use crate::impl_api_protocol_dump_load;
 use parsec_api_types::{BlockID, RealmID};
 
 /*
- * BlockCreateReqSchema
+ * BlockCreateReq
  */
 
 #[serde_as]
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
-pub struct BlockCreateReqSchema {
+pub struct BlockCreateReq {
     pub cmd: String,
     pub block_id: BlockID,
     pub realm_id: RealmID,
@@ -20,15 +20,16 @@ pub struct BlockCreateReqSchema {
     pub block: Vec<u8>,
 }
 
-impl_api_protocol_dump_load!(BlockCreateReqSchema);
+impl_api_protocol_dump_load!(BlockCreateReq);
 
 /*
- * BlockCreateRepSchema
+ * BlockCreateRep
  */
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
 #[serde(tag = "status", rename_all = "snake_case")]
-pub enum BlockCreateRepSchema {
+#[non_exhaustive]
+pub enum BlockCreateRep {
     Ok,
     AlreadyExists,
     NotFound,
@@ -37,28 +38,28 @@ pub enum BlockCreateRepSchema {
     InMaintenance,
 }
 
-impl_api_protocol_dump_load!(BlockCreateRepSchema);
+impl_api_protocol_dump_load!(BlockCreateRep);
 
 /*
- * BlockReadReqSchema
+ * BlockReadReq
  */
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
-pub struct BlockReadReqSchema {
+pub struct BlockReadReq {
     pub cmd: String,
     pub block_id: BlockID,
 }
 
-impl_api_protocol_dump_load!(BlockReadReqSchema);
+impl_api_protocol_dump_load!(BlockReadReq);
 
 /*
- * BlockReadRepSchema
+ * BlockReadRep
  */
 
 #[serde_as]
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
 #[serde(tag = "status", rename_all = "snake_case")]
-pub enum BlockReadRepSchema {
+pub enum BlockReadRep {
     Ok {
         #[serde_as(as = "Bytes")]
         block: Vec<u8>,
@@ -69,4 +70,4 @@ pub enum BlockReadRepSchema {
     InMaintenance,
 }
 
-impl_api_protocol_dump_load!(BlockReadRepSchema);
+impl_api_protocol_dump_load!(BlockReadRep);

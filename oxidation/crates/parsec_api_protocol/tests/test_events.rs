@@ -14,18 +14,18 @@ fn serde_events_listen_req() {
     //   wait: false
     let data = hex!("82a3636d64ad6576656e74735f6c697374656ea477616974c2");
 
-    let expected = EventsListenReqSchema {
+    let expected = EventsListenReq {
         cmd: "events_listen".to_owned(),
         wait: false,
     };
 
-    let schema = EventsListenReqSchema::load(&data).unwrap();
+    let schema = EventsListenReq::load(&data).unwrap();
 
     assert_eq!(schema, expected);
 
     // Also test serialization round trip
     let data2 = schema.dump();
-    let schema2 = EventsListenReqSchema::load(&data2).unwrap();
+    let schema2 = EventsListenReq::load(&data2).unwrap();
 
     assert_eq!(schema2, expected);
 }
@@ -41,9 +41,9 @@ fn serde_events_listen_req() {
         &hex!(
             "83a56576656e74a670696e676564a470696e67a6666f6f626172a6737461747573a26f6b"
         )[..],
-        EventsListenRepSchema::Ok(APIEvent::Pinged(EventsPingedRepSchema {
+        EventsListenRep::Ok(APIEvent::Pinged {
             ping: "foobar".to_owned(),
-        }))
+        })
     )
 )]
 #[case::message_received(
@@ -57,9 +57,9 @@ fn serde_events_listen_req() {
             "83a56576656e74b06d6573736167652e7265636569766564a5696e64657800a67374617475"
             "73a26f6b"
         )[..],
-        EventsListenRepSchema::Ok(APIEvent::MessageReceived(EventsMessageReceivedRepSchema {
+        EventsListenRep::Ok(APIEvent::MessageReceived{
             index: 0,
-        }))
+        })
     )
 )]
 #[case::invite_status_changed(
@@ -75,12 +75,11 @@ fn serde_events_listen_req() {
             "696f6e5f737461747573a449444c45a6737461747573a26f6ba5746f6b656ed802d864b93d"
             "ed264aae9ae583fd3d40c45a"
         )[..],
-        EventsListenRepSchema::Ok(APIEvent::InviteStatusChanged(
-            EventsInviteStatusChangedRepSchema {
+        EventsListenRep::Ok(APIEvent::InviteStatusChanged {
                 invitation_status: InvitationStatus::Idle,
                 token: "d864b93ded264aae9ae583fd3d40c45a".parse().unwrap(),
             },
-        ))
+        )
     )
 )]
 #[case::realm_maintenance_finished(
@@ -96,12 +95,11 @@ fn serde_events_listen_req() {
             "696e74656e616e63655f66696e6973686564a87265616c6d5f6964d8021d3353157d7d4e95"
             "ad2fdea7b3bd19c5a6737461747573a26f6b"
         )[..],
-        EventsListenRepSchema::Ok(APIEvent::RealmMaintenanceFinished(
-            EventsRealmMaintenanceFinishedRepSchema {
+        EventsListenRep::Ok(APIEvent::RealmMaintenanceFinished{
                 realm_id: "1d3353157d7d4e95ad2fdea7b3bd19c5".parse().unwrap(),
                 encryption_revision: 0,
             }
-        ))
+        )
     )
 )]
 #[case::realm_maintenance_started(
@@ -117,12 +115,11 @@ fn serde_events_listen_req() {
             "696e74656e616e63655f73746172746564a87265616c6d5f6964d8021d3353157d7d4e95ad"
             "2fdea7b3bd19c5a6737461747573a26f6b"
         )[..],
-        EventsListenRepSchema::Ok(APIEvent::RealmMaintenanceStarted(
-            EventsRealmMaintenanceStartedRepSchema {
+        EventsListenRep::Ok(APIEvent::RealmMaintenanceStarted {
                 realm_id: "1d3353157d7d4e95ad2fdea7b3bd19c5".parse().unwrap(),
                 encryption_revision: 0,
             }
-        ))
+        )
     )
 )]
 #[case::realm_vlobs_updated(
@@ -141,14 +138,12 @@ fn serde_events_listen_req() {
             "022b5f314728134a12863da1ce49c112f6ab7372635f76657273696f6e00a6737461747573"
             "a26f6b"
         )[..],
-        EventsListenRepSchema::Ok(APIEvent::RealmVlobsUpdated(
-            EventsRealmVlobsUpdatedRepSchema {
+        EventsListenRep::Ok(APIEvent::RealmVlobsUpdated {
                 realm_id: "1d3353157d7d4e95ad2fdea7b3bd19c5".parse().unwrap(),
                 checkpoint: 0,
                 src_id: "2b5f314728134a12863da1ce49c112f6".parse().unwrap(),
                 src_version: 0,
-            }
-        ))
+        })
     )
 )]
 #[case::realm_roles_updated(
@@ -164,12 +159,10 @@ fn serde_events_listen_req() {
             "021d3353157d7d4e95ad2fdea7b3bd19c5a4726f6c65a54f574e4552a6737461747573a26f"
             "6b"
         )[..],
-        EventsListenRepSchema::Ok(APIEvent::RealmRolesUdpated(
-            EventsRealmRolesUpdatedRepSchema {
+        EventsListenRep::Ok(APIEvent::RealmRolesUdpated {
                 realm_id: "1d3353157d7d4e95ad2fdea7b3bd19c5".parse().unwrap(),
                 role: RealmRole::Owner,
-            }
-        ))
+        })
     )
 )]
 #[case::cancelled(
@@ -181,8 +174,8 @@ fn serde_events_listen_req() {
         &hex!(
             "82a6726561736f6ea6666f6f626172a6737461747573a963616e63656c6c6564"
         )[..],
-        EventsListenRepSchema::Cancelled {
-            reason: "foobar".to_owned()
+        EventsListenRep::Cancelled {
+            reason: Some("foobar".to_owned())
         }
     )
 )]
@@ -194,19 +187,19 @@ fn serde_events_listen_req() {
         &hex!(
             "81a6737461747573a96e6f5f6576656e7473"
         )[..],
-        EventsListenRepSchema::NoEvents
+        EventsListenRep::NoEvents
     )
 )]
-fn serde_events_listen_rep(#[case] data_expected: (&[u8], EventsListenRepSchema)) {
+fn serde_events_listen_rep(#[case] data_expected: (&[u8], EventsListenRep)) {
     let (data, expected) = data_expected;
 
-    let schema = EventsListenRepSchema::load(&data).unwrap();
+    let schema = EventsListenRep::load(&data).unwrap();
 
     assert_eq!(schema, expected);
 
     // Also test serialization round trip
     let data2 = schema.dump();
-    let schema2 = EventsListenRepSchema::load(&data2).unwrap();
+    let schema2 = EventsListenRep::load(&data2).unwrap();
 
     assert_eq!(schema2, expected);
 }
@@ -218,17 +211,17 @@ fn serde_events_subscribe_req() {
     //   cmd: "events_subscribe"
     let data = hex!("81a3636d64b06576656e74735f737562736372696265");
 
-    let expected = EventsSubscribeReqSchema {
+    let expected = EventsSubscribeReq {
         cmd: "events_subscribe".to_owned(),
     };
 
-    let schema = EventsSubscribeReqSchema::load(&data).unwrap();
+    let schema = EventsSubscribeReq::load(&data).unwrap();
 
     assert_eq!(schema, expected);
 
     // Also test serialization round trip
     let data2 = schema.dump();
-    let schema2 = EventsSubscribeReqSchema::load(&data2).unwrap();
+    let schema2 = EventsSubscribeReq::load(&data2).unwrap();
 
     assert_eq!(schema2, expected);
 }
@@ -240,15 +233,15 @@ fn serde_events_subscribe_rep() {
     //   status: "ok"
     let data = hex!("81a6737461747573a26f6b");
 
-    let expected = EventsSubscribeRepSchema::Ok;
+    let expected = EventsSubscribeRep::Ok;
 
-    let schema = EventsSubscribeRepSchema::load(&data).unwrap();
+    let schema = EventsSubscribeRep::load(&data).unwrap();
 
     assert_eq!(schema, expected);
 
     // Also test serialization round trip
     let data2 = schema.dump();
-    let schema2 = EventsSubscribeRepSchema::load(&data2).unwrap();
+    let schema2 = EventsSubscribeRep::load(&data2).unwrap();
 
     assert_eq!(schema2, expected);
 }

@@ -24,7 +24,7 @@ fn serde_vlob_create_req() {
         "4728134a12863da1ce49c112f6"
     );
 
-    let expected = VlobCreateReqSchema {
+    let expected = VlobCreateReq {
         cmd: "vlob_create".to_owned(),
         realm_id: "1d3353157d7d4e95ad2fdea7b3bd19c5".parse().unwrap(),
         encryption_revision: 8,
@@ -33,13 +33,13 @@ fn serde_vlob_create_req() {
         blob: b"foobar".to_vec(),
     };
 
-    let schema = VlobCreateReqSchema::load(&data).unwrap();
+    let schema = VlobCreateReq::load(&data).unwrap();
 
     assert_eq!(schema, expected);
 
     // Also test serialization round trip
     let data2 = schema.dump();
-    let schema2 = VlobCreateReqSchema::load(&data2).unwrap();
+    let schema2 = VlobCreateReq::load(&data2).unwrap();
 
     assert_eq!(schema2, expected);
 }
@@ -53,7 +53,7 @@ fn serde_vlob_create_req() {
         &hex!(
             "81a6737461747573a26f6b"
         )[..],
-        VlobCreateRepSchema::Ok
+        VlobCreateRep::Ok
     )
 )]
 #[case::already_exists(
@@ -65,8 +65,8 @@ fn serde_vlob_create_req() {
         &hex!(
             "82a6726561736f6ea6666f6f626172a6737461747573ae616c72656164795f657869737473"
         )[..],
-        VlobCreateRepSchema::AlreadyExists {
-            reason: "foobar".to_owned()
+        VlobCreateRep::AlreadyExists {
+            reason: Some("foobar".to_owned())
         }
     )
 )]
@@ -78,7 +78,7 @@ fn serde_vlob_create_req() {
         &hex!(
             "81a6737461747573ab6e6f745f616c6c6f776564"
         )[..],
-        VlobCreateRepSchema::NotAllowed
+        VlobCreateRep::NotAllowed
     )
 )]
 #[case::bad_encryption_revision(
@@ -89,7 +89,7 @@ fn serde_vlob_create_req() {
         &hex!(
             "81a6737461747573b76261645f656e6372797074696f6e5f7265766973696f6e"
         )[..],
-        VlobCreateRepSchema::BadEncryptionRevision
+        VlobCreateRep::BadEncryptionRevision
     )
 )]
 #[case::in_maintenance(
@@ -100,19 +100,19 @@ fn serde_vlob_create_req() {
         &hex!(
             "81a6737461747573ae696e5f6d61696e74656e616e6365"
         )[..],
-        VlobCreateRepSchema::InMaintenance
+        VlobCreateRep::InMaintenance
     )
 )]
-fn serde_vlob_create_rep(#[case] data_expected: (&[u8], VlobCreateRepSchema)) {
+fn serde_vlob_create_rep(#[case] data_expected: (&[u8], VlobCreateRep)) {
     let (data, expected) = data_expected;
 
-    let schema = VlobCreateRepSchema::load(&data).unwrap();
+    let schema = VlobCreateRep::load(&data).unwrap();
 
     assert_eq!(schema, expected);
 
     // Also test serialization round trip
     let data2 = schema.dump();
-    let schema2 = VlobCreateRepSchema::load(&data2).unwrap();
+    let schema2 = VlobCreateRep::load(&data2).unwrap();
 
     assert_eq!(schema2, expected);
 }
@@ -132,7 +132,7 @@ fn serde_vlob_read_req() {
         "022b5f314728134a12863da1ce49c112f6"
     );
 
-    let expected = VlobReadReqSchema {
+    let expected = VlobReadReq {
         cmd: "vlob_read".to_owned(),
         encryption_revision: 8,
         vlob_id: "2b5f314728134a12863da1ce49c112f6".parse().unwrap(),
@@ -140,13 +140,13 @@ fn serde_vlob_read_req() {
         timestamp: Some("2000-1-2T01:00:00Z".parse().unwrap()),
     };
 
-    let schema = VlobReadReqSchema::load(&data).unwrap();
+    let schema = VlobReadReq::load(&data).unwrap();
 
     assert_eq!(schema, expected);
 
     // Also test serialization round trip
     let data2 = schema.dump();
-    let schema2 = VlobReadReqSchema::load(&data2).unwrap();
+    let schema2 = VlobReadReq::load(&data2).unwrap();
 
     assert_eq!(schema2, expected);
 }
@@ -167,7 +167,7 @@ fn serde_vlob_read_req() {
         "6772616e7465645f6f6ed70141cc375188000000a4626c6f62c406666f6f626172a6737461"
         "747573a26f6ba974696d657374616d70d70141cc375188000000a776657273696f6e08"
         )[..],
-        VlobReadRepSchema::Ok {
+        VlobReadRep::Ok {
             version: 8,
             blob: b"foobar".to_vec(),
             author: "alice@dev1".parse().unwrap(),
@@ -185,8 +185,8 @@ fn serde_vlob_read_req() {
         &hex!(
             "82a6726561736f6ea6666f6f626172a6737461747573a96e6f745f666f756e64"
         )[..],
-        VlobReadRepSchema::NotFound {
-            reason: "foobar".to_owned(),
+        VlobReadRep::NotFound {
+            reason: Some("foobar".to_owned()),
         }
     )
 )]
@@ -198,7 +198,7 @@ fn serde_vlob_read_req() {
         &hex!(
             "81a6737461747573ab6e6f745f616c6c6f776564"
         )[..],
-        VlobReadRepSchema::NotAllowed
+        VlobReadRep::NotAllowed
     )
 )]
 #[case::bad_version(
@@ -209,7 +209,7 @@ fn serde_vlob_read_req() {
         &hex!(
             "81a6737461747573ab6261645f76657273696f6e"
         )[..],
-        VlobReadRepSchema::BadVersion
+        VlobReadRep::BadVersion
     )
 )]
 #[case::bad_encryption_revision(
@@ -220,7 +220,7 @@ fn serde_vlob_read_req() {
         &hex!(
             "81a6737461747573b76261645f656e6372797074696f6e5f7265766973696f6e"
         )[..],
-        VlobReadRepSchema::BadEncryptionRevision
+        VlobReadRep::BadEncryptionRevision
     )
 )]
 #[case::in_maintenance(
@@ -231,19 +231,19 @@ fn serde_vlob_read_req() {
         &hex!(
             "81a6737461747573ae696e5f6d61696e74656e616e6365"
         )[..],
-        VlobReadRepSchema::InMaintenance
+        VlobReadRep::InMaintenance
     )
 )]
-fn serde_vlob_read_rep(#[case] data_expected: (&[u8], VlobReadRepSchema)) {
+fn serde_vlob_read_rep(#[case] data_expected: (&[u8], VlobReadRep)) {
     let (data, expected) = data_expected;
 
-    let schema = VlobReadRepSchema::load(&data).unwrap();
+    let schema = VlobReadRep::load(&data).unwrap();
 
     assert_eq!(schema, expected);
 
     // Also test serialization round trip
     let data2 = schema.dump();
-    let schema2 = VlobReadRepSchema::load(&data2).unwrap();
+    let schema2 = VlobReadRep::load(&data2).unwrap();
 
     assert_eq!(schema2, expected);
 }
@@ -264,7 +264,7 @@ fn serde_vlob_update_req() {
         "7273696f6e08a7766c6f625f6964d8022b5f314728134a12863da1ce49c112f6"
     );
 
-    let expected = VlobUpdateReqSchema {
+    let expected = VlobUpdateReq {
         cmd: "vlob_update".to_owned(),
         encryption_revision: 8,
         vlob_id: "2b5f314728134a12863da1ce49c112f6".parse().unwrap(),
@@ -273,13 +273,13 @@ fn serde_vlob_update_req() {
         blob: b"foobar".to_vec(),
     };
 
-    let schema = VlobUpdateReqSchema::load(&data).unwrap();
+    let schema = VlobUpdateReq::load(&data).unwrap();
 
     assert_eq!(schema, expected);
 
     // Also test serialization round trip
     let data2 = schema.dump();
-    let schema2 = VlobUpdateReqSchema::load(&data2).unwrap();
+    let schema2 = VlobUpdateReq::load(&data2).unwrap();
 
     assert_eq!(schema2, expected);
 }
@@ -293,7 +293,7 @@ fn serde_vlob_update_req() {
         &hex!(
             "81a6737461747573a26f6b"
         )[..],
-        VlobUpdateRepSchema::Ok
+        VlobUpdateRep::Ok
     )
 )]
 #[case::not_found(
@@ -305,8 +305,8 @@ fn serde_vlob_update_req() {
         &hex!(
             "82a6726561736f6ea6666f6f626172a6737461747573a96e6f745f666f756e64"
         )[..],
-        VlobUpdateRepSchema::NotFound {
-            reason: "foobar".to_owned(),
+        VlobUpdateRep::NotFound {
+            reason: Some("foobar".to_owned()),
         }
     )
 )]
@@ -318,7 +318,7 @@ fn serde_vlob_update_req() {
         &hex!(
             "81a6737461747573ab6e6f745f616c6c6f776564"
         )[..],
-        VlobUpdateRepSchema::NotAllowed
+        VlobUpdateRep::NotAllowed
     )
 )]
 #[case::bad_version(
@@ -329,7 +329,7 @@ fn serde_vlob_update_req() {
         &hex!(
             "81a6737461747573ab6261645f76657273696f6e"
         )[..],
-        VlobUpdateRepSchema::BadVersion
+        VlobUpdateRep::BadVersion
     )
 )]
 #[case::bad_encryption_revision(
@@ -340,7 +340,7 @@ fn serde_vlob_update_req() {
         &hex!(
             "81a6737461747573b76261645f656e6372797074696f6e5f7265766973696f6e"
         )[..],
-        VlobUpdateRepSchema::BadEncryptionRevision
+        VlobUpdateRep::BadEncryptionRevision
     )
 )]
 #[case::in_maintenance(
@@ -351,19 +351,19 @@ fn serde_vlob_update_req() {
         &hex!(
             "81a6737461747573ae696e5f6d61696e74656e616e6365"
         )[..],
-        VlobUpdateRepSchema::InMaintenance
+        VlobUpdateRep::InMaintenance
     )
 )]
-fn serde_vlob_update_rep(#[case] data_expected: (&[u8], VlobUpdateRepSchema)) {
+fn serde_vlob_update_rep(#[case] data_expected: (&[u8], VlobUpdateRep)) {
     let (data, expected) = data_expected;
 
-    let schema = VlobUpdateRepSchema::load(&data).unwrap();
+    let schema = VlobUpdateRep::load(&data).unwrap();
 
     assert_eq!(schema, expected);
 
     // Also test serialization round trip
     let data2 = schema.dump();
-    let schema2 = VlobUpdateRepSchema::load(&data2).unwrap();
+    let schema2 = VlobUpdateRep::load(&data2).unwrap();
 
     assert_eq!(schema2, expected);
 }
@@ -380,19 +380,19 @@ fn serde_vlob_poll_changes_req() {
         "6e7408a87265616c6d5f6964d8021d3353157d7d4e95ad2fdea7b3bd19c5"
     );
 
-    let expected = VlobPollChangesReqSchema {
+    let expected = VlobPollChangesReq {
         cmd: "vlob_poll_changes".to_owned(),
         realm_id: "1d3353157d7d4e95ad2fdea7b3bd19c5".parse().unwrap(),
         last_checkpoint: 8,
     };
 
-    let schema = VlobPollChangesReqSchema::load(&data).unwrap();
+    let schema = VlobPollChangesReq::load(&data).unwrap();
 
     assert_eq!(schema, expected);
 
     // Also test serialization round trip
     let data2 = schema.dump();
-    let schema2 = VlobPollChangesReqSchema::load(&data2).unwrap();
+    let schema2 = VlobPollChangesReq::load(&data2).unwrap();
 
     assert_eq!(schema2, expected);
 }
@@ -409,7 +409,7 @@ fn serde_vlob_poll_changes_req() {
             "83a76368616e67657381d8022b5f314728134a12863da1ce49c112f608b263757272656e74"
             "5f636865636b706f696e7408a6737461747573a26f6b"
         )[..],
-        VlobPollChangesRepSchema::Ok {
+        VlobPollChangesRep::Ok {
             changes: HashMap::from([("2b5f314728134a12863da1ce49c112f6".parse().unwrap(), 8)]),
             current_checkpoint: 8,
         }
@@ -423,7 +423,7 @@ fn serde_vlob_poll_changes_req() {
         &hex!(
             "81a6737461747573ab6e6f745f616c6c6f776564"
         )[..],
-        VlobPollChangesRepSchema::NotAllowed
+        VlobPollChangesRep::NotAllowed
     )
 )]
 #[case::not_found(
@@ -435,8 +435,8 @@ fn serde_vlob_poll_changes_req() {
         &hex!(
             "82a6726561736f6ea6666f6f626172a6737461747573a96e6f745f666f756e64"
         )[..],
-        VlobPollChangesRepSchema::NotFound {
-            reason: "foobar".to_owned()
+        VlobPollChangesRep::NotFound {
+            reason: Some("foobar".to_owned())
         }
     )
 )]
@@ -448,19 +448,19 @@ fn serde_vlob_poll_changes_req() {
         &hex!(
             "81a6737461747573ae696e5f6d61696e74656e616e6365"
         )[..],
-        VlobPollChangesRepSchema::InMaintenance
+        VlobPollChangesRep::InMaintenance
     )
 )]
-fn serde_vlob_poll_changes_rep(#[case] data_expected: (&[u8], VlobPollChangesRepSchema)) {
+fn serde_vlob_poll_changes_rep(#[case] data_expected: (&[u8], VlobPollChangesRep)) {
     let (data, expected) = data_expected;
 
-    let schema = VlobPollChangesRepSchema::load(&data).unwrap();
+    let schema = VlobPollChangesRep::load(&data).unwrap();
 
     assert_eq!(schema, expected);
 
     // Also test serialization round trip
     let data2 = schema.dump();
-    let schema2 = VlobPollChangesRepSchema::load(&data2).unwrap();
+    let schema2 = VlobPollChangesRep::load(&data2).unwrap();
 
     assert_eq!(schema2, expected);
 }
@@ -476,18 +476,18 @@ fn serde_vlob_list_versions_req() {
         "4728134a12863da1ce49c112f6"
     );
 
-    let expected = VlobListVersionsReqSchema {
+    let expected = VlobListVersionsReq {
         cmd: "vlob_list_versions".to_owned(),
         vlob_id: "2b5f314728134a12863da1ce49c112f6".parse().unwrap(),
     };
 
-    let schema = VlobListVersionsReqSchema::load(&data).unwrap();
+    let schema = VlobListVersionsReq::load(&data).unwrap();
 
     assert_eq!(schema, expected);
 
     // Also test serialization round trip
     let data2 = schema.dump();
-    let schema2 = VlobListVersionsReqSchema::load(&data2).unwrap();
+    let schema2 = VlobListVersionsReq::load(&data2).unwrap();
 
     assert_eq!(schema2, expected);
 }
@@ -503,7 +503,7 @@ fn serde_vlob_list_versions_req() {
             "82a6737461747573a26f6ba876657273696f6e73810892d70141cc375188000000aa616c69"
             "63654064657631"
         )[..],
-        VlobListVersionsRepSchema::Ok {
+        VlobListVersionsRep::Ok {
             versions: HashMap::from([(
                 8,
                 (
@@ -522,7 +522,7 @@ fn serde_vlob_list_versions_req() {
         &hex!(
             "81a6737461747573ab6e6f745f616c6c6f776564"
         )[..],
-        VlobListVersionsRepSchema::NotAllowed
+        VlobListVersionsRep::NotAllowed
     )
 )]
 #[case::not_found(
@@ -534,8 +534,8 @@ fn serde_vlob_list_versions_req() {
         &hex!(
             "82a6726561736f6ea6666f6f626172a6737461747573a96e6f745f666f756e64"
         )[..],
-        VlobListVersionsRepSchema::NotFound {
-            reason: "foobar".to_owned()
+        VlobListVersionsRep::NotFound {
+            reason: Some("foobar".to_owned())
         }
     )
 )]
@@ -547,19 +547,19 @@ fn serde_vlob_list_versions_req() {
         &hex!(
             "81a6737461747573ae696e5f6d61696e74656e616e6365"
         )[..],
-        VlobListVersionsRepSchema::InMaintenance
+        VlobListVersionsRep::InMaintenance
     )
 )]
-fn serde_vlob_list_versions_rep(#[case] data_expected: (&[u8], VlobListVersionsRepSchema)) {
+fn serde_vlob_list_versions_rep(#[case] data_expected: (&[u8], VlobListVersionsRep)) {
     let (data, expected) = data_expected;
 
-    let schema = VlobListVersionsRepSchema::load(&data).unwrap();
+    let schema = VlobListVersionsRep::load(&data).unwrap();
 
     assert_eq!(schema, expected);
 
     // Also test serialization round trip
     let data2 = schema.dump();
-    let schema2 = VlobListVersionsRepSchema::load(&data2).unwrap();
+    let schema2 = VlobListVersionsRep::load(&data2).unwrap();
 
     assert_eq!(schema2, expected);
 }
@@ -578,20 +578,20 @@ fn serde_vlob_maintenance_get_reencryption_batch_req() {
         "6964d8021d3353157d7d4e95ad2fdea7b3bd19c5a473697a6508"
     );
 
-    let expected = VlobMaintenanceGetReencryptionBatchReqSchema {
+    let expected = VlobMaintenanceGetReencryptionBatchReq {
         cmd: "vlob_maintenance_get_reencryption_batch".to_owned(),
         realm_id: "1d3353157d7d4e95ad2fdea7b3bd19c5".parse().unwrap(),
         encryption_revision: 8,
         size: 8,
     };
 
-    let schema = VlobMaintenanceGetReencryptionBatchReqSchema::load(&data).unwrap();
+    let schema = VlobMaintenanceGetReencryptionBatchReq::load(&data).unwrap();
 
     assert_eq!(schema, expected);
 
     // Also test serialization round trip
     let data2 = schema.dump();
-    let schema2 = VlobMaintenanceGetReencryptionBatchReqSchema::load(&data2).unwrap();
+    let schema2 = VlobMaintenanceGetReencryptionBatchReq::load(&data2).unwrap();
 
     assert_eq!(schema2, expected);
 }
@@ -613,8 +613,8 @@ fn serde_vlob_maintenance_get_reencryption_batch_req() {
             "82a562617463689183a776657273696f6e08a7766c6f625f6964d8022b5f314728134a1286"
             "3da1ce49c112f6a4626c6f62c406666f6f626172a6737461747573a26f6b"
         )[..],
-        VlobMaintenanceGetReencryptionBatchRepSchema::Ok {
-            batch: vec![ReencryptionBatchEntrySchema {
+        VlobMaintenanceGetReencryptionBatchRep::Ok {
+            batch: vec![ReencryptionBatchEntry {
                 vlob_id: "2b5f314728134a12863da1ce49c112f6".parse().unwrap(),
                 version: 8,
                 blob: b"foobar".to_vec(),
@@ -630,7 +630,7 @@ fn serde_vlob_maintenance_get_reencryption_batch_req() {
         &hex!(
             "81a6737461747573ab6e6f745f616c6c6f776564"
         )[..],
-        VlobMaintenanceGetReencryptionBatchRepSchema::NotAllowed
+        VlobMaintenanceGetReencryptionBatchRep::NotAllowed
     )
 )]
 #[case::not_found(
@@ -642,8 +642,8 @@ fn serde_vlob_maintenance_get_reencryption_batch_req() {
         &hex!(
             "82a6726561736f6ea6666f6f626172a6737461747573a96e6f745f666f756e64"
         )[..],
-        VlobMaintenanceGetReencryptionBatchRepSchema::NotFound {
-            reason: "foobar".to_owned()
+        VlobMaintenanceGetReencryptionBatchRep::NotFound {
+            reason: Some("foobar".to_owned())
         }
     )
 )]
@@ -657,8 +657,8 @@ fn serde_vlob_maintenance_get_reencryption_batch_req() {
             "82a6726561736f6ea6666f6f626172a6737461747573b26e6f745f696e5f6d61696e74656e"
             "616e6365"
         )[..],
-        VlobMaintenanceGetReencryptionBatchRepSchema::NotInMaintenance {
-            reason: "foobar".to_owned()
+        VlobMaintenanceGetReencryptionBatchRep::NotInMaintenance {
+            reason: Some("foobar".to_owned())
         }
     )
 )]
@@ -670,7 +670,7 @@ fn serde_vlob_maintenance_get_reencryption_batch_req() {
         &hex!(
             "81a6737461747573b76261645f656e6372797074696f6e5f7265766973696f6e"
         )[..],
-        VlobMaintenanceGetReencryptionBatchRepSchema::BadEncryptionRevision
+        VlobMaintenanceGetReencryptionBatchRep::BadEncryptionRevision
     )
 )]
 #[case::maintenance_error(
@@ -683,23 +683,23 @@ fn serde_vlob_maintenance_get_reencryption_batch_req() {
             "82a6726561736f6ea6666f6f626172a6737461747573b16d61696e74656e616e63655f6572"
             "726f72"
         )[..],
-        VlobMaintenanceGetReencryptionBatchRepSchema::MaintenanceError {
-            reason: "foobar".to_owned()
+        VlobMaintenanceGetReencryptionBatchRep::MaintenanceError {
+            reason: Some("foobar".to_owned())
         }
     )
 )]
 fn serde_vlob_maintenance_get_reencryption_batch_rep(
-    #[case] data_expected: (&[u8], VlobMaintenanceGetReencryptionBatchRepSchema),
+    #[case] data_expected: (&[u8], VlobMaintenanceGetReencryptionBatchRep),
 ) {
     let (data, expected) = data_expected;
 
-    let schema = VlobMaintenanceGetReencryptionBatchRepSchema::load(&data).unwrap();
+    let schema = VlobMaintenanceGetReencryptionBatchRep::load(&data).unwrap();
 
     assert_eq!(schema, expected);
 
     // Also test serialization round trip
     let data2 = schema.dump();
-    let schema2 = VlobMaintenanceGetReencryptionBatchRepSchema::load(&data2).unwrap();
+    let schema2 = VlobMaintenanceGetReencryptionBatchRep::load(&data2).unwrap();
 
     assert_eq!(schema2, expected);
 }
@@ -726,24 +726,24 @@ fn serde_vlob_maintenance_save_reencryption_batch_req() {
         "bd19c5"
     );
 
-    let expected = VlobMaintenanceSaveReencryptionBatchReqSchema {
+    let expected = VlobMaintenanceSaveReencryptionBatchReq {
         cmd: "vlob_maintenance_save_reencryption_batch".to_owned(),
         realm_id: "1d3353157d7d4e95ad2fdea7b3bd19c5".parse().unwrap(),
         encryption_revision: 8,
-        batch: vec![ReencryptionBatchEntrySchema {
+        batch: vec![ReencryptionBatchEntry {
             vlob_id: "2b5f314728134a12863da1ce49c112f6".parse().unwrap(),
             version: 8,
             blob: b"foobar".to_vec(),
         }],
     };
 
-    let schema = VlobMaintenanceSaveReencryptionBatchReqSchema::load(&data).unwrap();
+    let schema = VlobMaintenanceSaveReencryptionBatchReq::load(&data).unwrap();
 
     assert_eq!(schema, expected);
 
     // Also test serialization round trip
     let data2 = schema.dump();
-    let schema2 = VlobMaintenanceSaveReencryptionBatchReqSchema::load(&data2).unwrap();
+    let schema2 = VlobMaintenanceSaveReencryptionBatchReq::load(&data2).unwrap();
 
     assert_eq!(schema2, expected);
 }
@@ -759,7 +759,7 @@ fn serde_vlob_maintenance_save_reencryption_batch_req() {
         &hex!(
             "83a4646f6e6508a6737461747573a26f6ba5746f74616c08"
         )[..],
-        VlobMaintenanceSaveReencryptionBatchRepSchema::Ok { total: 8, done: 8 }
+        VlobMaintenanceSaveReencryptionBatchRep::Ok { total: 8, done: 8 }
     )
 )]
 #[case::not_allowed(
@@ -770,7 +770,7 @@ fn serde_vlob_maintenance_save_reencryption_batch_req() {
         &hex!(
             "81a6737461747573ab6e6f745f616c6c6f776564"
         )[..],
-        VlobMaintenanceSaveReencryptionBatchRepSchema::NotAllowed
+        VlobMaintenanceSaveReencryptionBatchRep::NotAllowed
     )
 )]
 #[case::not_found(
@@ -782,8 +782,8 @@ fn serde_vlob_maintenance_save_reencryption_batch_req() {
         &hex!(
             "82a6726561736f6ea6666f6f626172a6737461747573a96e6f745f666f756e64"
         )[..],
-        VlobMaintenanceSaveReencryptionBatchRepSchema::NotFound {
-            reason: "foobar".to_owned()
+        VlobMaintenanceSaveReencryptionBatchRep::NotFound {
+            reason: Some("foobar".to_owned())
         }
     )
 )]
@@ -797,8 +797,8 @@ fn serde_vlob_maintenance_save_reencryption_batch_req() {
             "82a6726561736f6ea6666f6f626172a6737461747573b26e6f745f696e5f6d61696e74656e"
             "616e6365"
         )[..],
-        VlobMaintenanceSaveReencryptionBatchRepSchema::NotInMaintenance {
-            reason: "foobar".to_owned()
+        VlobMaintenanceSaveReencryptionBatchRep::NotInMaintenance {
+            reason: Some("foobar".to_owned())
         }
     )
 )]
@@ -810,7 +810,7 @@ fn serde_vlob_maintenance_save_reencryption_batch_req() {
         &hex!(
             "81a6737461747573b76261645f656e6372797074696f6e5f7265766973696f6e"
         )[..],
-        VlobMaintenanceSaveReencryptionBatchRepSchema::BadEncryptionRevision
+        VlobMaintenanceSaveReencryptionBatchRep::BadEncryptionRevision
     )
 )]
 #[case::maintenance_error(
@@ -823,23 +823,23 @@ fn serde_vlob_maintenance_save_reencryption_batch_req() {
             "82a6726561736f6ea6666f6f626172a6737461747573b16d61696e74656e616e63655f6572"
             "726f72"
         )[..],
-        VlobMaintenanceSaveReencryptionBatchRepSchema::MaintenanceError {
-            reason: "foobar".to_owned()
+        VlobMaintenanceSaveReencryptionBatchRep::MaintenanceError {
+            reason: Some("foobar".to_owned())
         }
     )
 )]
 fn serde_vlob_maintenance_save_reencryption_batch_rep(
-    #[case] data_expected: (&[u8], VlobMaintenanceSaveReencryptionBatchRepSchema),
+    #[case] data_expected: (&[u8], VlobMaintenanceSaveReencryptionBatchRep),
 ) {
     let (data, expected) = data_expected;
 
-    let schema = VlobMaintenanceSaveReencryptionBatchRepSchema::load(&data).unwrap();
+    let schema = VlobMaintenanceSaveReencryptionBatchRep::load(&data).unwrap();
 
     assert_eq!(schema, expected);
 
     // Also test serialization round trip
     let data2 = schema.dump();
-    let schema2 = VlobMaintenanceSaveReencryptionBatchRepSchema::load(&data2).unwrap();
+    let schema2 = VlobMaintenanceSaveReencryptionBatchRep::load(&data2).unwrap();
 
     assert_eq!(schema2, expected);
 }

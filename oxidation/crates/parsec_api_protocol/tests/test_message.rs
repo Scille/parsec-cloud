@@ -13,18 +13,18 @@ fn serde_message_get_req() {
     //   offset: 8
     let data = hex!("82a3636d64ab6d6573736167655f676574a66f666673657408");
 
-    let expected = MessageGetReqSchema {
+    let expected = MessageGetReq {
         cmd: "message_get".to_owned(),
         offset: 8,
     };
 
-    let schema = MessageGetReqSchema::load(&data).unwrap();
+    let schema = MessageGetReq::load(&data).unwrap();
 
     assert_eq!(schema, expected);
 
     // Also test serialization round trip
     let data2 = schema.dump();
-    let schema2 = MessageGetReqSchema::load(&data2).unwrap();
+    let schema2 = MessageGetReq::load(&data2).unwrap();
 
     assert_eq!(schema2, expected);
 }
@@ -48,8 +48,8 @@ fn serde_message_get_rep() {
         "747573a26f6b"
     );
 
-    let expected = MessageGetRepSchema::Ok {
-        messages: vec![MessageSchema {
+    let expected = MessageGetRep::Ok {
+        messages: vec![Message {
             count: 1,
             sender: "alice@dev1".parse().unwrap(),
             timestamp: "2000-1-2T01:00:00Z".parse().unwrap(),
@@ -57,13 +57,13 @@ fn serde_message_get_rep() {
         }],
     };
 
-    let schema = MessageGetRepSchema::load(&data).unwrap();
+    let schema = MessageGetRep::load(&data).unwrap();
 
     assert_eq!(schema, expected);
 
     // Also test serialization round trip
     let data2 = schema.dump();
-    let schema2 = MessageGetRepSchema::load(&data2).unwrap();
+    let schema2 = MessageGetRep::load(&data2).unwrap();
 
     assert_eq!(schema2, expected);
 }

@@ -5,17 +5,17 @@ use serde_with::{serde_as, Bytes};
 use std::num::NonZeroU64;
 
 use crate::impl_api_protocol_dump_load;
-use parsec_api_types::{HumanHandle, UserID};
+use parsec_api_types::{maybe_field, HumanHandle, UserID};
 
 /*** Access user API ***/
 
 /*
- * TrustchainSchema
+ * Trustchain
  */
 
 #[serde_as]
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
-pub struct TrustchainSchema {
+pub struct Trustchain {
     #[serde_as(as = "Vec<Bytes>")]
     pub devices: Vec<Vec<u8>>,
     #[serde_as(as = "Vec<Bytes>")]
@@ -25,25 +25,25 @@ pub struct TrustchainSchema {
 }
 
 /*
- * UserGetReqSchema
+ * UserGetReq
  */
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
-pub struct UserGetReqSchema {
+pub struct UserGetReq {
     pub cmd: String,
     pub user_id: UserID,
 }
 
-impl_api_protocol_dump_load!(UserGetReqSchema);
+impl_api_protocol_dump_load!(UserGetReq);
 
 /*
- * UserGetRepSchema
+ * UserGetRep
  */
 
 #[serde_as]
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
 #[serde(tag = "status", rename_all = "snake_case")]
-pub enum UserGetRepSchema {
+pub enum UserGetRep {
     Ok {
         #[serde_as(as = "Bytes")]
         user_certificate: Vec<u8>,
@@ -51,22 +51,22 @@ pub enum UserGetRepSchema {
         revoked_user_certificate: Vec<u8>,
         #[serde_as(as = "Vec<Bytes>")]
         device_certificates: Vec<Vec<u8>>,
-        trustchain: TrustchainSchema,
+        trustchain: Trustchain,
     },
     NotFound,
 }
 
-impl_api_protocol_dump_load!(UserGetRepSchema);
+impl_api_protocol_dump_load!(UserGetRep);
 
 /*** User creation API ***/
 
 /*
- * UserCreateReqSchema
+ * UserCreateReq
  */
 
 #[serde_as]
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
-pub struct UserCreateReqSchema {
+pub struct UserCreateReq {
     pub cmd: String,
     #[serde_as(as = "Bytes")]
     pub user_certificate: Vec<u8>,
@@ -79,64 +79,88 @@ pub struct UserCreateReqSchema {
     pub redacted_device_certificate: Vec<u8>,
 }
 
-impl_api_protocol_dump_load!(UserCreateReqSchema);
+impl_api_protocol_dump_load!(UserCreateReq);
 
 /*
- * UserCreateRepSchema
+ * UserCreateRep
  */
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
 #[serde(tag = "status", rename_all = "snake_case")]
-pub enum UserCreateRepSchema {
+pub enum UserCreateRep {
     Ok,
-    NotAllowed { reason: String },
-    InvalidCertification { reason: String },
-    InvalidData { reason: String },
-    AlreadyExists { reason: String },
-    ActiveUsersLimitReached { reason: String },
+    NotAllowed {
+        #[serde(default, deserialize_with = "maybe_field::deserialize_some")]
+        reason: Option<String>,
+    },
+    InvalidCertification {
+        #[serde(default, deserialize_with = "maybe_field::deserialize_some")]
+        reason: Option<String>,
+    },
+    InvalidData {
+        #[serde(default, deserialize_with = "maybe_field::deserialize_some")]
+        reason: Option<String>,
+    },
+    AlreadyExists {
+        #[serde(default, deserialize_with = "maybe_field::deserialize_some")]
+        reason: Option<String>,
+    },
+    ActiveUsersLimitReached {
+        #[serde(default, deserialize_with = "maybe_field::deserialize_some")]
+        reason: Option<String>,
+    },
 }
 
-impl_api_protocol_dump_load!(UserCreateRepSchema);
+impl_api_protocol_dump_load!(UserCreateRep);
 
 /*
- * UserRevokeReqSchema
+ * UserRevokeReq
  */
 
 #[serde_as]
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
-pub struct UserRevokeReqSchema {
+pub struct UserRevokeReq {
     pub cmd: String,
     #[serde_as(as = "Bytes")]
     pub revoked_user_certificate: Vec<u8>,
 }
 
-impl_api_protocol_dump_load!(UserRevokeReqSchema);
+impl_api_protocol_dump_load!(UserRevokeReq);
 
 /*
- * UserRevokeRepSchema
+ * UserRevokeRep
  */
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
 #[serde(tag = "status", rename_all = "snake_case")]
-pub enum UserRevokeRepSchema {
+pub enum UserRevokeRep {
     Ok,
-    NotAllowed { reason: String },
-    InvalidCertification { reason: String },
+    NotAllowed {
+        #[serde(default, deserialize_with = "maybe_field::deserialize_some")]
+        reason: Option<String>,
+    },
+    InvalidCertification {
+        #[serde(default, deserialize_with = "maybe_field::deserialize_some")]
+        reason: Option<String>,
+    },
     NotFound,
-    AlreadyRevoked { reason: String },
+    AlreadyRevoked {
+        #[serde(default, deserialize_with = "maybe_field::deserialize_some")]
+        reason: Option<String>,
+    },
 }
 
-impl_api_protocol_dump_load!(UserRevokeRepSchema);
+impl_api_protocol_dump_load!(UserRevokeRep);
 
 /*** Device creation API ***/
 
 /*
- * DeviceCreateReqSchema
+ * DeviceCreateReq
  */
 
 #[serde_as]
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
-pub struct DeviceCreateReqSchema {
+pub struct DeviceCreateReq {
     pub cmd: String,
     #[serde_as(as = "Bytes")]
     pub device_certificate: Vec<u8>,
@@ -145,32 +169,44 @@ pub struct DeviceCreateReqSchema {
     pub redacted_device_certificate: Vec<u8>,
 }
 
-impl_api_protocol_dump_load!(DeviceCreateReqSchema);
+impl_api_protocol_dump_load!(DeviceCreateReq);
 
 /*
- * DeviceCreateRepSchema
+ * DeviceCreateRep
  */
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
 #[serde(tag = "status", rename_all = "snake_case")]
-pub enum DeviceCreateRepSchema {
+pub enum DeviceCreateRep {
     Ok,
-    InvalidCertification { reason: String },
-    BadUserId { reason: String },
-    InvalidData { reason: String },
-    AlreadyExists { reason: String },
+    InvalidCertification {
+        #[serde(default, deserialize_with = "maybe_field::deserialize_some")]
+        reason: Option<String>,
+    },
+    BadUserId {
+        #[serde(default, deserialize_with = "maybe_field::deserialize_some")]
+        reason: Option<String>,
+    },
+    InvalidData {
+        #[serde(default, deserialize_with = "maybe_field::deserialize_some")]
+        reason: Option<String>,
+    },
+    AlreadyExists {
+        #[serde(default, deserialize_with = "maybe_field::deserialize_some")]
+        reason: Option<String>,
+    },
 }
 
-impl_api_protocol_dump_load!(DeviceCreateRepSchema);
+impl_api_protocol_dump_load!(DeviceCreateRep);
 
 /*** Hman search API ***/
 
 /*
- * HumanFindReqSchema
+ * HumanFindReq
  */
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
-pub struct HumanFindReqSchema {
+pub struct HumanFindReq {
     pub cmd: String,
     pub query: Option<String>,
     pub omit_revoked: bool,
@@ -179,35 +215,36 @@ pub struct HumanFindReqSchema {
     pub per_page: NonZeroU64,
 }
 
-impl_api_protocol_dump_load!(HumanFindReqSchema);
+impl_api_protocol_dump_load!(HumanFindReq);
 
 /*
- * HumanFindResultItemSchema
+ * HumanFindResultItem
  */
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
-pub struct HumanFindResultItemSchema {
+pub struct HumanFindResultItem {
     pub user_id: UserID,
     pub human_handle: Option<HumanHandle>,
     pub revoked: bool,
 }
 
 /*
- * HumanFindResultItemSchema
+ * HumanFindResultItem
  */
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
 #[serde(tag = "status", rename_all = "snake_case")]
-pub enum HumanFindRepSchema {
+pub enum HumanFindRep {
     Ok {
-        results: Vec<HumanFindResultItemSchema>,
+        results: Vec<HumanFindResultItem>,
         page: NonZeroU64,
         per_page: NonZeroU64,
         total: u64,
     },
     NotAllowed {
-        reason: String,
+        #[serde(default, deserialize_with = "maybe_field::deserialize_some")]
+        reason: Option<String>,
     },
 }
 
-impl_api_protocol_dump_load!(HumanFindRepSchema);
+impl_api_protocol_dump_load!(HumanFindRep);

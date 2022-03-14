@@ -19,18 +19,18 @@ fn serde_user_get_req() {
         "32386561303031376663366263633034643461"
     );
 
-    let expected = UserGetReqSchema {
+    let expected = UserGetReq {
         cmd: "user_get".to_owned(),
         user_id: "109b68ba5cdf428ea0017fc6bcc04d4a".parse().unwrap(),
     };
 
-    let schema = UserGetReqSchema::load(&data).unwrap();
+    let schema = UserGetReq::load(&data).unwrap();
 
     assert_eq!(schema, expected);
 
     // Also test serialization round trip
     let data2 = schema.dump();
-    let schema2 = UserGetReqSchema::load(&data2).unwrap();
+    let schema2 = UserGetReq::load(&data2).unwrap();
 
     assert_eq!(schema2, expected);
 }
@@ -56,11 +56,11 @@ fn serde_user_get_req() {
             "757365727391c406666f6f626172a5757365727391c406666f6f626172b0757365725f6365"
             "727469666963617465c406666f6f626172"
         )[..],
-        UserGetRepSchema::Ok {
+        UserGetRep::Ok {
             user_certificate: b"foobar".to_vec(),
             revoked_user_certificate: b"foobar".to_vec(),
             device_certificates: vec![b"foobar".to_vec()],
-            trustchain: TrustchainSchema {
+            trustchain: Trustchain {
                 users: vec![b"foobar".to_vec()],
                 devices: vec![b"foobar".to_vec()],
                 revoked_users: vec![b"foobar".to_vec()],
@@ -76,19 +76,19 @@ fn serde_user_get_req() {
         &hex!(
             "81a6737461747573a96e6f745f666f756e64"
         )[..],
-        UserGetRepSchema::NotFound
+        UserGetRep::NotFound
     )
 )]
-fn serde_user_get_rep(#[case] data_expected: (&[u8], UserGetRepSchema)) {
+fn serde_user_get_rep(#[case] data_expected: (&[u8], UserGetRep)) {
     let (data, expected) = data_expected;
 
-    let schema = UserGetRepSchema::load(&data).unwrap();
+    let schema = UserGetRep::load(&data).unwrap();
 
     assert_eq!(schema, expected);
 
     // Also test serialization round trip
     let data2 = schema.dump();
-    let schema2 = UserGetRepSchema::load(&data2).unwrap();
+    let schema2 = UserGetRep::load(&data2).unwrap();
 
     assert_eq!(schema2, expected);
 }
@@ -109,7 +109,7 @@ fn serde_user_create_req() {
         "626172b0757365725f6365727469666963617465c406666f6f626172"
     );
 
-    let expected = UserCreateReqSchema {
+    let expected = UserCreateReq {
         cmd: "user_create".to_owned(),
         user_certificate: b"foobar".to_vec(),
         device_certificate: b"foobar".to_vec(),
@@ -117,13 +117,13 @@ fn serde_user_create_req() {
         redacted_device_certificate: b"foobar".to_vec(),
     };
 
-    let schema = UserCreateReqSchema::load(&data).unwrap();
+    let schema = UserCreateReq::load(&data).unwrap();
 
     assert_eq!(schema, expected);
 
     // Also test serialization round trip
     let data2 = schema.dump();
-    let schema2 = UserCreateReqSchema::load(&data2).unwrap();
+    let schema2 = UserCreateReq::load(&data2).unwrap();
 
     assert_eq!(schema2, expected);
 }
@@ -137,7 +137,7 @@ fn serde_user_create_req() {
         &hex!(
             "81a6737461747573a26f6b"
         )[..],
-        UserCreateRepSchema::Ok
+        UserCreateRep::Ok
     )
 )]
 #[case::not_allowed(
@@ -149,8 +149,8 @@ fn serde_user_create_req() {
         &hex!(
             "82a6726561736f6ea6666f6f626172a6737461747573ab6e6f745f616c6c6f776564"
         )[..],
-        UserCreateRepSchema::NotAllowed {
-            reason: "foobar".to_owned()
+        UserCreateRep::NotAllowed {
+            reason: Some("foobar".to_owned())
         }
     )
 )]
@@ -164,8 +164,8 @@ fn serde_user_create_req() {
             "82a6726561736f6ea6666f6f626172a6737461747573b5696e76616c69645f636572746966"
             "69636174696f6e"
         )[..],
-        UserCreateRepSchema::InvalidCertification {
-            reason: "foobar".to_owned()
+        UserCreateRep::InvalidCertification {
+            reason: Some("foobar".to_owned())
         }
     )
 )]
@@ -178,8 +178,8 @@ fn serde_user_create_req() {
         &hex!(
             "82a6726561736f6ea6666f6f626172a6737461747573ac696e76616c69645f64617461"
         )[..],
-        UserCreateRepSchema::InvalidData {
-            reason: "foobar".to_owned()
+        UserCreateRep::InvalidData {
+            reason: Some("foobar".to_owned())
         }
     )
 )]
@@ -192,8 +192,8 @@ fn serde_user_create_req() {
         &hex!(
             "82a6726561736f6ea6666f6f626172a6737461747573ae616c72656164795f657869737473"
         )[..],
-        UserCreateRepSchema::AlreadyExists {
-            reason: "foobar".to_owned()
+        UserCreateRep::AlreadyExists {
+            reason: Some("foobar".to_owned())
         }
     )
 )]
@@ -207,21 +207,21 @@ fn serde_user_create_req() {
             "82a6726561736f6ea6666f6f626172a6737461747573ba6163746976655f75736572735f6c"
             "696d69745f72656163686564"
         )[..],
-        UserCreateRepSchema::ActiveUsersLimitReached {
-            reason: "foobar".to_owned()
+        UserCreateRep::ActiveUsersLimitReached {
+            reason: Some("foobar".to_owned())
         }
     )
 )]
-fn serde_user_create_rep(#[case] data_expected: (&[u8], UserCreateRepSchema)) {
+fn serde_user_create_rep(#[case] data_expected: (&[u8], UserCreateRep)) {
     let (data, expected) = data_expected;
 
-    let schema = UserCreateRepSchema::load(&data).unwrap();
+    let schema = UserCreateRep::load(&data).unwrap();
 
     assert_eq!(schema, expected);
 
     // Also test serialization round trip
     let data2 = schema.dump();
-    let schema2 = UserCreateRepSchema::load(&data2).unwrap();
+    let schema2 = UserCreateRep::load(&data2).unwrap();
 
     assert_eq!(schema2, expected);
 }
@@ -237,18 +237,18 @@ fn serde_user_revoke_req() {
         "6963617465c406666f6f626172"
     );
 
-    let expected = UserRevokeReqSchema {
+    let expected = UserRevokeReq {
         cmd: "user_revoke".to_owned(),
         revoked_user_certificate: b"foobar".to_vec(),
     };
 
-    let schema = UserRevokeReqSchema::load(&data).unwrap();
+    let schema = UserRevokeReq::load(&data).unwrap();
 
     assert_eq!(schema, expected);
 
     // Also test serialization round trip
     let data2 = schema.dump();
-    let schema2 = UserRevokeReqSchema::load(&data2).unwrap();
+    let schema2 = UserRevokeReq::load(&data2).unwrap();
 
     assert_eq!(schema2, expected);
 }
@@ -262,7 +262,7 @@ fn serde_user_revoke_req() {
         &hex!(
             "81a6737461747573a26f6b"
         )[..],
-        UserRevokeRepSchema::Ok
+        UserRevokeRep::Ok
     )
 )]
 #[case::not_allowed(
@@ -274,8 +274,8 @@ fn serde_user_revoke_req() {
         &hex!(
             "82a6726561736f6ea6666f6f626172a6737461747573ab6e6f745f616c6c6f776564"
         )[..],
-        UserRevokeRepSchema::NotAllowed {
-            reason: "foobar".to_owned()
+        UserRevokeRep::NotAllowed {
+            reason: Some("foobar".to_owned())
         }
     )
 )]
@@ -289,8 +289,8 @@ fn serde_user_revoke_req() {
             "82a6726561736f6ea6666f6f626172a6737461747573b5696e76616c69645f636572746966"
             "69636174696f6e"
         )[..],
-        UserRevokeRepSchema::InvalidCertification {
-            reason: "foobar".to_owned()
+        UserRevokeRep::InvalidCertification {
+            reason: Some("foobar".to_owned())
         }
     )
 )]
@@ -302,7 +302,7 @@ fn serde_user_revoke_req() {
         &hex!(
             "81a6737461747573a96e6f745f666f756e64"
         )[..],
-        UserRevokeRepSchema::NotFound
+        UserRevokeRep::NotFound
     )
 )]
 #[case::already_revoked(
@@ -315,21 +315,21 @@ fn serde_user_revoke_req() {
             "82a6726561736f6ea6666f6f626172a6737461747573af616c72656164795f7265766f6b65"
             "64"
         )[..],
-        UserRevokeRepSchema::AlreadyRevoked {
-            reason: "foobar".to_owned()
+        UserRevokeRep::AlreadyRevoked {
+            reason: Some("foobar".to_owned())
         }
     )
 )]
-fn serde_user_revoke_rep(#[case] data_expected: (&[u8], UserRevokeRepSchema)) {
+fn serde_user_revoke_rep(#[case] data_expected: (&[u8], UserRevokeRep)) {
     let (data, expected) = data_expected;
 
-    let schema = UserRevokeRepSchema::load(&data).unwrap();
+    let schema = UserRevokeRep::load(&data).unwrap();
 
     assert_eq!(schema, expected);
 
     // Also test serialization round trip
     let data2 = schema.dump();
-    let schema2 = UserRevokeRepSchema::load(&data2).unwrap();
+    let schema2 = UserRevokeRep::load(&data2).unwrap();
 
     assert_eq!(schema2, expected);
 }
@@ -347,19 +347,19 @@ fn serde_device_create_req() {
         "c406666f6f626172"
     );
 
-    let expected = DeviceCreateReqSchema {
+    let expected = DeviceCreateReq {
         cmd: "device_create".to_owned(),
         device_certificate: b"foobar".to_vec(),
         redacted_device_certificate: b"foobar".to_vec(),
     };
 
-    let schema = DeviceCreateReqSchema::load(&data).unwrap();
+    let schema = DeviceCreateReq::load(&data).unwrap();
 
     assert_eq!(schema, expected);
 
     // Also test serialization round trip
     let data2 = schema.dump();
-    let schema2 = DeviceCreateReqSchema::load(&data2).unwrap();
+    let schema2 = DeviceCreateReq::load(&data2).unwrap();
 
     assert_eq!(schema2, expected);
 }
@@ -373,7 +373,7 @@ fn serde_device_create_req() {
         &hex!(
             "81a6737461747573a26f6b"
         )[..],
-        DeviceCreateRepSchema::Ok
+        DeviceCreateRep::Ok
     )
 )]
 #[case::invalid_certification(
@@ -386,8 +386,8 @@ fn serde_device_create_req() {
             "82a6726561736f6ea6666f6f626172a6737461747573b5696e76616c69645f636572746966"
             "69636174696f6e"
         )[..],
-        DeviceCreateRepSchema::InvalidCertification {
-            reason: "foobar".to_owned()
+        DeviceCreateRep::InvalidCertification {
+            reason: Some("foobar".to_owned())
         }
     )
 )]
@@ -400,8 +400,8 @@ fn serde_device_create_req() {
         &hex!(
             "82a6726561736f6ea6666f6f626172a6737461747573ab6261645f757365725f6964"
         )[..],
-        DeviceCreateRepSchema::BadUserId {
-            reason: "foobar".to_owned()
+        DeviceCreateRep::BadUserId {
+            reason: Some("foobar".to_owned())
         }
     )
 )]
@@ -414,8 +414,8 @@ fn serde_device_create_req() {
         &hex!(
             "82a6726561736f6ea6666f6f626172a6737461747573ac696e76616c69645f64617461"
         )[..],
-        DeviceCreateRepSchema::InvalidData {
-            reason: "foobar".to_owned()
+        DeviceCreateRep::InvalidData {
+            reason: Some("foobar".to_owned())
         }
     )
 )]
@@ -428,21 +428,21 @@ fn serde_device_create_req() {
         &hex!(
             "82a6726561736f6ea6666f6f626172a6737461747573ae616c72656164795f657869737473"
         )[..],
-        DeviceCreateRepSchema::AlreadyExists {
-            reason: "foobar".to_owned()
+        DeviceCreateRep::AlreadyExists {
+            reason: Some("foobar".to_owned())
         }
     )
 )]
-fn serde_device_create_rep(#[case] data_expected: (&[u8], DeviceCreateRepSchema)) {
+fn serde_device_create_rep(#[case] data_expected: (&[u8], DeviceCreateRep)) {
     let (data, expected) = data_expected;
 
-    let schema = DeviceCreateRepSchema::load(&data).unwrap();
+    let schema = DeviceCreateRep::load(&data).unwrap();
 
     assert_eq!(schema, expected);
 
     // Also test serialization round trip
     let data2 = schema.dump();
-    let schema2 = DeviceCreateRepSchema::load(&data2).unwrap();
+    let schema2 = DeviceCreateRep::load(&data2).unwrap();
 
     assert_eq!(schema2, expected);
 }
@@ -463,7 +463,7 @@ fn serde_human_find_req() {
         "72"
     );
 
-    let expected = HumanFindReqSchema {
+    let expected = HumanFindReq {
         cmd: "human_find".to_owned(),
         query: Some("foobar".to_owned()),
         omit_revoked: false,
@@ -472,13 +472,13 @@ fn serde_human_find_req() {
         per_page: NonZeroU64::new(8).unwrap(),
     };
 
-    let schema = HumanFindReqSchema::load(&data).unwrap();
+    let schema = HumanFindReq::load(&data).unwrap();
 
     assert_eq!(schema, expected);
 
     // Also test serialization round trip
     let data2 = schema.dump();
-    let schema2 = HumanFindReqSchema::load(&data2).unwrap();
+    let schema2 = HumanFindReq::load(&data2).unwrap();
 
     assert_eq!(schema2, expected);
 }
@@ -505,8 +505,8 @@ fn serde_human_find_req() {
             "64663432386561303031376663366263633034643461a77265766f6b6564c2a67374617475"
             "73a26f6ba5746f74616c08"
         )[..],
-        HumanFindRepSchema::Ok {
-            results: vec![HumanFindResultItemSchema {
+        HumanFindRep::Ok {
+            results: vec![HumanFindResultItem {
                 user_id: "109b68ba5cdf428ea0017fc6bcc04d4a".parse().unwrap(),
                 human_handle: Some(HumanHandle::new("bob@dev1", "bob").unwrap()),
                 revoked: false,
@@ -526,21 +526,21 @@ fn serde_human_find_req() {
         &hex!(
             "82a6726561736f6ea6666f6f626172a6737461747573ab6e6f745f616c6c6f776564"
         )[..],
-        HumanFindRepSchema::NotAllowed {
-            reason: "foobar".to_owned()
+        HumanFindRep::NotAllowed {
+            reason: Some("foobar".to_owned())
         }
     )
 )]
-fn serde_human_find_rep(#[case] data_expected: (&[u8], HumanFindRepSchema)) {
+fn serde_human_find_rep(#[case] data_expected: (&[u8], HumanFindRep)) {
     let (data, expected) = data_expected;
 
-    let schema = HumanFindRepSchema::load(&data).unwrap();
+    let schema = HumanFindRep::load(&data).unwrap();
 
     assert_eq!(schema, expected);
 
     // Also test serialization round trip
     let data2 = schema.dump();
-    let schema2 = HumanFindRepSchema::load(&data2).unwrap();
+    let schema2 = HumanFindRep::load(&data2).unwrap();
 
     assert_eq!(schema2, expected);
 }

@@ -3,7 +3,7 @@
 use serde::{Deserialize, Serialize};
 
 use crate::{impl_api_protocol_dump_load, InvitationStatus};
-use parsec_api_types::{InvitationToken, RealmID, RealmRole, VlobID};
+use parsec_api_types::{maybe_field, InvitationToken, RealmID, RealmRole, VlobID};
 
 /*
  * APIEvent
@@ -13,132 +13,78 @@ use parsec_api_types::{InvitationToken, RealmID, RealmRole, VlobID};
 #[serde(tag = "event")]
 pub enum APIEvent {
     #[serde(rename = "pinged")]
-    Pinged(EventsPingedRepSchema),
+    Pinged { ping: String },
     #[serde(rename = "message.received")]
-    MessageReceived(EventsMessageReceivedRepSchema),
+    MessageReceived { index: u64 },
     #[serde(rename = "invite.status_changed")]
-    InviteStatusChanged(EventsInviteStatusChangedRepSchema),
+    InviteStatusChanged {
+        token: InvitationToken,
+        invitation_status: InvitationStatus,
+    },
     #[serde(rename = "realm.maintenance_finished")]
-    RealmMaintenanceFinished(EventsRealmMaintenanceFinishedRepSchema),
+    RealmMaintenanceFinished {
+        realm_id: RealmID,
+        encryption_revision: u64,
+    },
     #[serde(rename = "realm.maintenance_started")]
-    RealmMaintenanceStarted(EventsRealmMaintenanceStartedRepSchema),
+    RealmMaintenanceStarted {
+        realm_id: RealmID,
+        encryption_revision: u64,
+    },
     #[serde(rename = "realm.vlobs_updated")]
-    RealmVlobsUpdated(EventsRealmVlobsUpdatedRepSchema),
+    RealmVlobsUpdated {
+        realm_id: RealmID,
+        checkpoint: u64,
+        src_id: VlobID,
+        src_version: u64,
+    },
     #[serde(rename = "realm.roles_updated")]
-    RealmRolesUdpated(EventsRealmRolesUpdatedRepSchema),
+    RealmRolesUdpated { realm_id: RealmID, role: RealmRole },
 }
-
 /*
- * EventsPingedRepSchema
+ * EventsListenReq
  */
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
-pub struct EventsPingedRepSchema {
-    pub ping: String,
-}
-
-/*
- * EventsRealmRolesUpdatedRepSchema
- */
-
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
-pub struct EventsRealmRolesUpdatedRepSchema {
-    pub realm_id: RealmID,
-    pub role: RealmRole,
-}
-
-/*
- * EventsRealmVlobsUpdatedRepSchema
- */
-
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
-pub struct EventsRealmVlobsUpdatedRepSchema {
-    pub realm_id: RealmID,
-    pub checkpoint: u64,
-    pub src_id: VlobID,
-    pub src_version: u64,
-}
-
-/*
- * EventsRealmMaintenanceStartedRepSchema
- */
-
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
-pub struct EventsRealmMaintenanceStartedRepSchema {
-    pub realm_id: RealmID,
-    pub encryption_revision: u64,
-}
-
-/*
- * EventsRealmMaintenanceFinishedRepSchema
- */
-
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
-pub struct EventsRealmMaintenanceFinishedRepSchema {
-    pub realm_id: RealmID,
-    pub encryption_revision: u64,
-}
-
-/*
- * EventsMessageReceivedRepSchema
- */
-
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
-pub struct EventsMessageReceivedRepSchema {
-    pub index: u64,
-}
-
-/*
- * EventsInviteStatusChangedRepSchema
- */
-
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
-pub struct EventsInviteStatusChangedRepSchema {
-    pub token: InvitationToken,
-    pub invitation_status: InvitationStatus,
-}
-
-/*
- * EventsListenReqSchema
- */
-
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
-pub struct EventsListenReqSchema {
+pub struct EventsListenReq {
     pub cmd: String,
     pub wait: bool,
 }
 
-impl_api_protocol_dump_load!(EventsListenReqSchema);
+impl_api_protocol_dump_load!(EventsListenReq);
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
 #[serde(tag = "status", rename_all = "snake_case")]
-pub enum EventsListenRepSchema {
+pub enum EventsListenRep {
     Ok(APIEvent),
-    Cancelled { reason: String },
+    Cancelled {
+        #[serde(default, deserialize_with = "maybe_field::deserialize_some")]
+        reason: Option<String>,
+    },
     NoEvents,
 }
 
-impl_api_protocol_dump_load!(EventsListenRepSchema);
+impl_api_protocol_dump_load!(EventsListenRep);
 
 /*
- * EventsSubscribeReqSchema
+ * EventsSubscribeReq
  */
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
-pub struct EventsSubscribeReqSchema {
+pub struct EventsSubscribeReq {
     pub cmd: String,
 }
 
-impl_api_protocol_dump_load!(EventsSubscribeReqSchema);
+impl_api_protocol_dump_load!(EventsSubscribeReq);
 
 /*
- * EventsSubscribeRepSchema
+ * EventsSubscribeRep
  */
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
 #[serde(tag = "status", rename_all = "snake_case")]
-pub enum EventsSubscribeRepSchema {
+pub enum EventsSubscribeRep {
     Ok,
 }
 
-impl_api_protocol_dump_load!(EventsSubscribeRepSchema);
+impl_api_protocol_dump_load!(EventsSubscribeRep);

@@ -28,7 +28,7 @@ fn serde_api_v1_organization_bootstrap_req() {
         "c406666f6f626172"
     );
 
-    let expected = APIV1OrganizationBootstrapReqSchema {
+    let expected = APIV1OrganizationBootstrapReq {
         cmd: "api_v1_organization_bootstrap".to_owned(),
         bootstrap_token: "foobar".to_owned(),
         root_verify_key: VerifyKey::from(hex!(
@@ -40,13 +40,13 @@ fn serde_api_v1_organization_bootstrap_req() {
         redacted_device_certificate: Some(b"foobar".to_vec()),
     };
 
-    let schema = APIV1OrganizationBootstrapReqSchema::load(&data).unwrap();
+    let schema = APIV1OrganizationBootstrapReq::load(&data).unwrap();
 
     assert_eq!(schema, expected);
 
     // Also test serialization round trip
     let data2 = schema.dump();
-    let schema2 = APIV1OrganizationBootstrapReqSchema::load(&data2).unwrap();
+    let schema2 = APIV1OrganizationBootstrapReq::load(&data2).unwrap();
 
     assert_eq!(schema2, expected);
 }
@@ -60,7 +60,7 @@ fn serde_api_v1_organization_bootstrap_req() {
         &hex!(
             "81a6737461747573a26f6b"
         )[..],
-        APIV1OrganizationBootstrapRepSchema::Ok
+        APIV1OrganizationBootstrapRep::Ok
     )
 )]
 #[case::invalid_certification(
@@ -73,8 +73,8 @@ fn serde_api_v1_organization_bootstrap_req() {
             "82a6726561736f6ea6666f6f626172a6737461747573b5696e76616c69645f636572746966"
             "69636174696f6e"
         )[..],
-        APIV1OrganizationBootstrapRepSchema::InvalidCertification {
-            reason: "foobar".to_owned()
+        APIV1OrganizationBootstrapRep::InvalidCertification {
+            reason: Some("foobar".to_owned())
         }
     )
 )]
@@ -87,8 +87,8 @@ fn serde_api_v1_organization_bootstrap_req() {
         &hex!(
             "82a6726561736f6ea6666f6f626172a6737461747573ac696e76616c69645f64617461"
         )[..],
-        APIV1OrganizationBootstrapRepSchema::InvalidData {
-            reason: "foobar".to_owned()
+        APIV1OrganizationBootstrapRep::InvalidData {
+            reason: Some("foobar".to_owned())
         }
     )
 )]
@@ -100,7 +100,7 @@ fn serde_api_v1_organization_bootstrap_req() {
         &hex!(
             "81a6737461747573b4616c72656164795f626f6f747374726170706564"
         )[..],
-        APIV1OrganizationBootstrapRepSchema::AlreadyBootstrapped
+        APIV1OrganizationBootstrapRep::AlreadyBootstrapped
     )
 )]
 #[case::not_found(
@@ -111,21 +111,21 @@ fn serde_api_v1_organization_bootstrap_req() {
         &hex!(
             "81a6737461747573a96e6f745f666f756e64"
         )[..],
-        APIV1OrganizationBootstrapRepSchema::NotFound
+        APIV1OrganizationBootstrapRep::NotFound
     )
 )]
 fn serde_api_v1_organization_bootstrap_rep(
-    #[case] data_expected: (&[u8], APIV1OrganizationBootstrapRepSchema),
+    #[case] data_expected: (&[u8], APIV1OrganizationBootstrapRep),
 ) {
     let (data, expected) = data_expected;
 
-    let schema = APIV1OrganizationBootstrapRepSchema::load(&data).unwrap();
+    let schema = APIV1OrganizationBootstrapRep::load(&data).unwrap();
 
     assert_eq!(schema, expected);
 
     // Also test serialization round trip
     let data2 = schema.dump();
-    let schema2 = APIV1OrganizationBootstrapRepSchema::load(&data2).unwrap();
+    let schema2 = APIV1OrganizationBootstrapRep::load(&data2).unwrap();
 
     assert_eq!(schema2, expected);
 }
@@ -137,17 +137,17 @@ fn serde_organization_stats_req() {
     //   cmd: "organization_stats"
     let data = hex!("81a3636d64b26f7267616e697a6174696f6e5f7374617473");
 
-    let expected = OrganizationStatsReqSchema {
+    let expected = OrganizationStatsReq {
         cmd: "organization_stats".to_owned(),
     };
 
-    let schema = OrganizationStatsReqSchema::load(&data).unwrap();
+    let schema = OrganizationStatsReq::load(&data).unwrap();
 
     assert_eq!(schema, expected);
 
     // Also test serialization round trip
     let data2 = schema.dump();
-    let schema2 = OrganizationStatsReqSchema::load(&data2).unwrap();
+    let schema2 = OrganizationStatsReq::load(&data2).unwrap();
 
     assert_eq!(schema2, expected);
 }
@@ -170,13 +170,13 @@ fn serde_organization_stats_req() {
             "65725f70726f66696c655f64657461696c9183a770726f66696c65a541444d494ea6616374"
             "69766501a77265766f6b656400"
         )[..],
-        OrganizationStatsRepSchema::Ok {
+        OrganizationStatsRep::Ok {
             data_size: 8,
             metadata_size: 8,
             realms: 1,
             users: 1,
             active_users: 1,
-            users_per_profile_detail: vec![UsersPerProfileDetailItemSchema {
+            users_per_profile_detail: vec![UsersPerProfileDetailItem {
                 profile: UserProfile::Admin,
                 active: 1,
                 revoked: 0,
@@ -193,8 +193,8 @@ fn serde_organization_stats_req() {
         &hex!(
             "82a6726561736f6ea6666f6f626172a6737461747573ab6e6f745f616c6c6f776564"
         )[..],
-        OrganizationStatsRepSchema::NotAllowed {
-            reason: "foobar".to_owned()
+        OrganizationStatsRep::NotAllowed {
+            reason: Some("foobar".to_owned())
         }
     )
 )]
@@ -206,19 +206,19 @@ fn serde_organization_stats_req() {
         &hex!(
             "81a6737461747573a96e6f745f666f756e64"
         )[..],
-        OrganizationStatsRepSchema::NotFound
+        OrganizationStatsRep::NotFound
     )
 )]
-fn serde_organization_stats_rep(#[case] data_expected: (&[u8], OrganizationStatsRepSchema)) {
+fn serde_organization_stats_rep(#[case] data_expected: (&[u8], OrganizationStatsRep)) {
     let (data, expected) = data_expected;
 
-    let schema = OrganizationStatsRepSchema::load(&data).unwrap();
+    let schema = OrganizationStatsRep::load(&data).unwrap();
 
     assert_eq!(schema, expected);
 
     // Also test serialization round trip
     let data2 = schema.dump();
-    let schema2 = OrganizationStatsRepSchema::load(&data2).unwrap();
+    let schema2 = OrganizationStatsRep::load(&data2).unwrap();
 
     assert_eq!(schema2, expected);
 }
@@ -230,17 +230,17 @@ fn serde_organization_config_req() {
     //   cmd: "organization_config"
     let data = hex!("81a3636d64b36f7267616e697a6174696f6e5f636f6e666967");
 
-    let expected = OrganizationConfigReqSchema {
+    let expected = OrganizationConfigReq {
         cmd: "organization_config".to_owned(),
     };
 
-    let schema = OrganizationConfigReqSchema::load(&data).unwrap();
+    let schema = OrganizationConfigReq::load(&data).unwrap();
 
     assert_eq!(schema, expected);
 
     // Also test serialization round trip
     let data2 = schema.dump();
-    let schema2 = OrganizationConfigReqSchema::load(&data2).unwrap();
+    let schema2 = OrganizationConfigReq::load(&data2).unwrap();
 
     assert_eq!(schema2, expected);
 }
@@ -257,7 +257,7 @@ fn serde_organization_config_req() {
             "83b26163746976655f75736572735f6c696d697401a6737461747573a26f6bbd757365725f"
             "70726f66696c655f6f757473696465725f616c6c6f776564c2"
         )[..],
-        OrganizationConfigRepSchema::Ok {
+        OrganizationConfigRep::Ok {
             user_profile_outsider_allowed: false,
             active_users_limit: Some(1),
         }
@@ -271,19 +271,19 @@ fn serde_organization_config_req() {
         &hex!(
             "81a6737461747573a96e6f745f666f756e64"
         )[..],
-        OrganizationConfigRepSchema::NotFound
+        OrganizationConfigRep::NotFound
     )
 )]
-fn serde_organization_config_rep(#[case] data_expected: (&[u8], OrganizationConfigRepSchema)) {
+fn serde_organization_config_rep(#[case] data_expected: (&[u8], OrganizationConfigRep)) {
     let (data, expected) = data_expected;
 
-    let schema = OrganizationConfigRepSchema::load(&data).unwrap();
+    let schema = OrganizationConfigRep::load(&data).unwrap();
 
     assert_eq!(schema, expected);
 
     // Also test serialization round trip
     let data2 = schema.dump();
-    let schema2 = OrganizationConfigRepSchema::load(&data2).unwrap();
+    let schema2 = OrganizationConfigRep::load(&data2).unwrap();
 
     assert_eq!(schema2, expected);
 }

@@ -20,7 +20,7 @@ use parsec_api_types::HumanHandle;
             "84ad636c61696d65725f656d61696caa616c6963654064657631a3636d64aa696e76697465"
             "5f6e6577aa73656e645f656d61696cc3a474797065a455534552"
         )[..],
-        InviteNewReqSchema::User {
+        InviteNewReq::User {
             cmd: "invite_new".to_owned(),
             claimer_email: "alice@dev1".to_owned(),
             send_email: true,
@@ -38,22 +38,22 @@ use parsec_api_types::HumanHandle;
             "83a3636d64aa696e766974655f6e6577aa73656e645f656d61696cc3a474797065a6444556"
             "494345"
         )[..],
-        InviteNewReqSchema::Device {
+        InviteNewReq::Device {
             cmd: "invite_new".to_owned(),
             send_email: true,
         }
     )
 )]
-fn serde_invite_new_req(#[case] data_expected: (&[u8], InviteNewReqSchema)) {
+fn serde_invite_new_req(#[case] data_expected: (&[u8], InviteNewReq)) {
     let (data, expected) = data_expected;
 
-    let schema = InviteNewReqSchema::load(&data).unwrap();
+    let schema = InviteNewReq::load(&data).unwrap();
 
     assert_eq!(schema, expected);
 
     // Also test serialization round trip
     let data2 = schema.dump();
-    let schema2 = InviteNewReqSchema::load(&data2).unwrap();
+    let schema2 = InviteNewReq::load(&data2).unwrap();
 
     assert_eq!(schema2, expected);
 }
@@ -70,7 +70,7 @@ fn serde_invite_new_req(#[case] data_expected: (&[u8], InviteNewReqSchema)) {
             "83aa656d61696c5f73656e74a753554343455353a6737461747573a26f6ba5746f6b656ed8"
             "02d864b93ded264aae9ae583fd3d40c45a"
         )[..],
-        InviteNewRepSchema::Ok {
+        InviteNewRep::Ok {
             token: "d864b93ded264aae9ae583fd3d40c45a".parse().unwrap(),
             email_sent: InvitationEmailSentStatus::Success,
         }
@@ -84,7 +84,7 @@ fn serde_invite_new_req(#[case] data_expected: (&[u8], InviteNewReqSchema)) {
         &hex!(
             "81a6737461747573ab6e6f745f616c6c6f776564"
         )[..],
-        InviteNewRepSchema::NotAllowed
+        InviteNewRep::NotAllowed
     )
 )]
 #[case::already_member(
@@ -95,7 +95,7 @@ fn serde_invite_new_req(#[case] data_expected: (&[u8], InviteNewReqSchema)) {
         &hex!(
             "81a6737461747573ae616c72656164795f6d656d626572"
         )[..],
-        InviteNewRepSchema::AlreadyMember
+        InviteNewRep::AlreadyMember
     )
 )]
 #[case::not_available(
@@ -106,19 +106,19 @@ fn serde_invite_new_req(#[case] data_expected: (&[u8], InviteNewReqSchema)) {
         &hex!(
             "81a6737461747573ad6e6f745f617661696c61626c65"
         )[..],
-        InviteNewRepSchema::NotAvailable
+        InviteNewRep::NotAvailable
     )
 )]
-fn serde_invite_new_rep(#[case] data_expected: (&[u8], InviteNewRepSchema)) {
+fn serde_invite_new_rep(#[case] data_expected: (&[u8], InviteNewRep)) {
     let (data, expected) = data_expected;
 
-    let schema = InviteNewRepSchema::load(&data).unwrap();
+    let schema = InviteNewRep::load(&data).unwrap();
 
     assert_eq!(schema, expected);
 
     // Also test serialization round trip
     let data2 = schema.dump();
-    let schema2 = InviteNewRepSchema::load(&data2).unwrap();
+    let schema2 = InviteNewRep::load(&data2).unwrap();
 
     assert_eq!(schema2, expected);
 }
@@ -135,19 +135,19 @@ fn serde_invite_delete_req() {
         "6f6b656ed802d864b93ded264aae9ae583fd3d40c45a"
     );
 
-    let expected = InviteDeleteReqSchema {
+    let expected = InviteDeleteReq {
         cmd: "invite_delete".to_owned(),
         token: "d864b93ded264aae9ae583fd3d40c45a".parse().unwrap(),
         reason: InvitationDeletedReason::Finished,
     };
 
-    let schema = InviteDeleteReqSchema::load(&data).unwrap();
+    let schema = InviteDeleteReq::load(&data).unwrap();
 
     assert_eq!(schema, expected);
 
     // Also test serialization round trip
     let data2 = schema.dump();
-    let schema2 = InviteDeleteReqSchema::load(&data2).unwrap();
+    let schema2 = InviteDeleteReq::load(&data2).unwrap();
 
     assert_eq!(schema2, expected);
 }
@@ -161,7 +161,7 @@ fn serde_invite_delete_req() {
         &hex!(
             "81a6737461747573a26f6b"
         )[..],
-        InviteDeleteRepSchema::Ok
+        InviteDeleteRep::Ok
     )
 )]
 #[case::not_found(
@@ -172,7 +172,7 @@ fn serde_invite_delete_req() {
         &hex!(
             "81a6737461747573a96e6f745f666f756e64"
         )[..],
-        InviteDeleteRepSchema::NotFound
+        InviteDeleteRep::NotFound
     )
 )]
 #[case::already_deleted(
@@ -183,19 +183,19 @@ fn serde_invite_delete_req() {
         &hex!(
             "81a6737461747573af616c72656164795f64656c65746564"
         )[..],
-        InviteDeleteRepSchema::AlreadyDeleted
+        InviteDeleteRep::AlreadyDeleted
     )
 )]
-fn serde_invite_delete_rep(#[case] data_expected: (&[u8], InviteDeleteRepSchema)) {
+fn serde_invite_delete_rep(#[case] data_expected: (&[u8], InviteDeleteRep)) {
     let (data, expected) = data_expected;
 
-    let schema = InviteDeleteRepSchema::load(&data).unwrap();
+    let schema = InviteDeleteRep::load(&data).unwrap();
 
     assert_eq!(schema, expected);
 
     // Also test serialization round trip
     let data2 = schema.dump();
-    let schema2 = InviteDeleteRepSchema::load(&data2).unwrap();
+    let schema2 = InviteDeleteRep::load(&data2).unwrap();
 
     assert_eq!(schema2, expected);
 }
@@ -207,17 +207,17 @@ fn serde_invite_list_req() {
     //   cmd: "invite_list"
     let data = hex!("81a3636d64ab696e766974655f6c697374");
 
-    let expected = InviteListReqSchema {
+    let expected = InviteListReq {
         cmd: "invite_list".to_owned(),
     };
 
-    let schema = InviteListReqSchema::load(&data).unwrap();
+    let schema = InviteListReq::load(&data).unwrap();
 
     assert_eq!(schema, expected);
 
     // Also test serialization round trip
     let data2 = schema.dump();
-    let schema2 = InviteListReqSchema::load(&data2).unwrap();
+    let schema2 = InviteListReq::load(&data2).unwrap();
 
     assert_eq!(schema2, expected);
 }
@@ -251,15 +251,15 @@ fn serde_invite_list_rep() {
         "6f6b"
     );
 
-    let expected = InviteListRepSchema::Ok {
+    let expected = InviteListRep::Ok {
         invitations: vec![
-            InviteListItemSchema::User {
+            InviteListItem::User {
                 token: "d864b93ded264aae9ae583fd3d40c45a".parse().unwrap(),
                 created_on: "2000-1-2T01:00:00Z".parse().unwrap(),
                 claimer_email: "alice@dev1".to_owned(),
                 status: InvitationStatus::Idle,
             },
-            InviteListItemSchema::Device {
+            InviteListItem::Device {
                 token: "d864b93ded264aae9ae583fd3d40c45a".parse().unwrap(),
                 created_on: "2000-1-2T01:00:00Z".parse().unwrap(),
                 status: InvitationStatus::Idle,
@@ -267,13 +267,13 @@ fn serde_invite_list_rep() {
         ],
     };
 
-    let schema = InviteListRepSchema::load(&data).unwrap();
+    let schema = InviteListRep::load(&data).unwrap();
 
     assert_eq!(schema, expected);
 
     // Also test serialization round trip
     let data2 = schema.dump();
-    let schema2 = InviteListRepSchema::load(&data2).unwrap();
+    let schema2 = InviteListRep::load(&data2).unwrap();
 
     assert_eq!(schema2, expected);
 }
@@ -285,17 +285,17 @@ fn serde_invite_info_req() {
     //   cmd: "invite_info"
     let data = hex!("81a3636d64ab696e766974655f696e666f");
 
-    let expected = InviteInfoReqSchema {
+    let expected = InviteInfoReq {
         cmd: "invite_info".to_owned(),
     };
 
-    let schema = InviteInfoReqSchema::load(&data).unwrap();
+    let schema = InviteInfoReq::load(&data).unwrap();
 
     assert_eq!(schema, expected);
 
     // Also test serialization round trip
     let data2 = schema.dump();
-    let schema2 = InviteInfoReqSchema::load(&data2).unwrap();
+    let schema2 = InviteInfoReq::load(&data2).unwrap();
 
     assert_eq!(schema2, expected);
 }
@@ -316,7 +316,7 @@ fn serde_invite_info_req() {
             "5f6964d9203130396236386261356364663432386561303031376663366263633034643461"
             "a6737461747573a26f6ba474797065a455534552"
         )[..],
-        InviteInfoRepSchema::Ok(InviteInfoUserOrDeviceRep::User {
+        InviteInfoRep::Ok(InviteInfoUserOrDeviceRep::User {
             claimer_email: "alice@dev1".to_owned(),
             greeter_user_id: "109b68ba5cdf428ea0017fc6bcc04d4a".parse().unwrap(),
             greeter_human_handle: HumanHandle::new("bob@dev1", "bob").unwrap(),
@@ -336,23 +336,23 @@ fn serde_invite_info_req() {
             "677265657465725f757365725f6964d9203130396236386261356364663432386561303031"
             "376663366263633034643461a6737461747573a26f6ba474797065a6444556494345"
         )[..],
-        InviteInfoRepSchema::Ok(InviteInfoUserOrDeviceRep::Device {
+        InviteInfoRep::Ok(InviteInfoUserOrDeviceRep::Device {
                 greeter_user_id: "109b68ba5cdf428ea0017fc6bcc04d4a".parse().unwrap(),
                 greeter_human_handle: HumanHandle::new("bob@dev1", "bob").unwrap(),
             }
         )
     )
 )]
-fn serde_invite_info_rep(#[case] data_expected: (&[u8], InviteInfoRepSchema)) {
+fn serde_invite_info_rep(#[case] data_expected: (&[u8], InviteInfoRep)) {
     let (data, expected) = data_expected;
 
-    let schema = InviteInfoRepSchema::load(&data).unwrap();
+    let schema = InviteInfoRep::load(&data).unwrap();
 
     assert_eq!(schema, expected);
 
     // Also test serialization round trip
     let data2 = schema.dump();
-    let schema2 = InviteInfoRepSchema::load(&data2).unwrap();
+    let schema2 = InviteInfoRep::load(&data2).unwrap();
 
     assert_eq!(schema2, expected);
 }
@@ -369,20 +369,20 @@ fn serde_invite_1_claimer_wait_peer_req() {
         "725f776169745f70656572"
     );
 
-    let expected = Invite1ClaimerWaitPeerReqSchema {
+    let expected = Invite1ClaimerWaitPeerReq {
         cmd: "invite_1_claimer_wait_peer".to_owned(),
         claimer_public_key: PublicKey::from(hex!(
             "6507907d33bae6b5980b32fa03f3ebac56141b126e44f352ea46c5f22cd5ac57"
         )),
     };
 
-    let schema = Invite1ClaimerWaitPeerReqSchema::load(&data).unwrap();
+    let schema = Invite1ClaimerWaitPeerReq::load(&data).unwrap();
 
     assert_eq!(schema, expected);
 
     // Also test serialization round trip
     let data2 = schema.dump();
-    let schema2 = Invite1ClaimerWaitPeerReqSchema::load(&data2).unwrap();
+    let schema2 = Invite1ClaimerWaitPeerReq::load(&data2).unwrap();
 
     assert_eq!(schema2, expected);
 }
@@ -398,7 +398,7 @@ fn serde_invite_1_claimer_wait_peer_req() {
             "82b2677265657465725f7075626c69635f6b6579c4206507907d33bae6b5980b32fa03f3eb"
             "ac56141b126e44f352ea46c5f22cd5ac57a6737461747573a26f6b"
         )[..],
-        Invite1ClaimerWaitPeerRepSchema::Ok {
+        Invite1ClaimerWaitPeerRep::Ok {
             greeter_public_key: PublicKey::from(hex!(
                 "6507907d33bae6b5980b32fa03f3ebac56141b126e44f352ea46c5f22cd5ac57"
             )),
@@ -413,7 +413,7 @@ fn serde_invite_1_claimer_wait_peer_req() {
         &hex!(
             "81a6737461747573a96e6f745f666f756e64"
         )[..],
-        Invite1ClaimerWaitPeerRepSchema::NotFound
+        Invite1ClaimerWaitPeerRep::NotFound
     )
 )]
 #[case::invalid_state(
@@ -424,21 +424,19 @@ fn serde_invite_1_claimer_wait_peer_req() {
         &hex!(
             "81a6737461747573ad696e76616c69645f7374617465"
         )[..],
-        Invite1ClaimerWaitPeerRepSchema::InvalidState
+        Invite1ClaimerWaitPeerRep::InvalidState
     )
 )]
-fn serde_invite_1_claimer_wait_peer_rep(
-    #[case] data_expected: (&[u8], Invite1ClaimerWaitPeerRepSchema),
-) {
+fn serde_invite_1_claimer_wait_peer_rep(#[case] data_expected: (&[u8], Invite1ClaimerWaitPeerRep)) {
     let (data, expected) = data_expected;
 
-    let schema = Invite1ClaimerWaitPeerRepSchema::load(&data).unwrap();
+    let schema = Invite1ClaimerWaitPeerRep::load(&data).unwrap();
 
     assert_eq!(schema, expected);
 
     // Also test serialization round trip
     let data2 = schema.dump();
-    let schema2 = Invite1ClaimerWaitPeerRepSchema::load(&data2).unwrap();
+    let schema2 = Invite1ClaimerWaitPeerRep::load(&data2).unwrap();
 
     assert_eq!(schema2, expected);
 }
@@ -456,7 +454,7 @@ fn serde_invite_1_greeter_wait_peer_req() {
         "44f352ea46c5f22cd5ac57a5746f6b656ed802d864b93ded264aae9ae583fd3d40c45a"
     );
 
-    let expected = Invite1GreeterWaitPeerReqSchema {
+    let expected = Invite1GreeterWaitPeerReq {
         cmd: "invite_1_greeter_wait_peer".to_owned(),
         token: "d864b93ded264aae9ae583fd3d40c45a".parse().unwrap(),
         greeter_public_key: PublicKey::from(hex!(
@@ -464,13 +462,13 @@ fn serde_invite_1_greeter_wait_peer_req() {
         )),
     };
 
-    let schema = Invite1GreeterWaitPeerReqSchema::load(&data).unwrap();
+    let schema = Invite1GreeterWaitPeerReq::load(&data).unwrap();
 
     assert_eq!(schema, expected);
 
     // Also test serialization round trip
     let data2 = schema.dump();
-    let schema2 = Invite1GreeterWaitPeerReqSchema::load(&data2).unwrap();
+    let schema2 = Invite1GreeterWaitPeerReq::load(&data2).unwrap();
 
     assert_eq!(schema2, expected);
 }
@@ -486,7 +484,7 @@ fn serde_invite_1_greeter_wait_peer_req() {
             "82b2636c61696d65725f7075626c69635f6b6579c4206507907d33bae6b5980b32fa03f3eb"
             "ac56141b126e44f352ea46c5f22cd5ac57a6737461747573a26f6b"
         )[..],
-        Invite1GreeterWaitPeerRepSchema::Ok {
+        Invite1GreeterWaitPeerRep::Ok {
             claimer_public_key: PublicKey::from(hex!(
                 "6507907d33bae6b5980b32fa03f3ebac56141b126e44f352ea46c5f22cd5ac57"
             )),
@@ -501,7 +499,7 @@ fn serde_invite_1_greeter_wait_peer_req() {
         &hex!(
             "81a6737461747573a96e6f745f666f756e64"
         )[..],
-        Invite1GreeterWaitPeerRepSchema::NotFound
+        Invite1GreeterWaitPeerRep::NotFound
     )
 )]
 #[case::already_deleted(
@@ -512,7 +510,7 @@ fn serde_invite_1_greeter_wait_peer_req() {
         &hex!(
             "81a6737461747573af616c72656164795f64656c65746564"
         )[..],
-        Invite1GreeterWaitPeerRepSchema::AlreadyDeleted
+        Invite1GreeterWaitPeerRep::AlreadyDeleted
     )
 )]
 #[case::invalid_state(
@@ -523,21 +521,19 @@ fn serde_invite_1_greeter_wait_peer_req() {
         &hex!(
             "81a6737461747573ad696e76616c69645f7374617465"
         )[..],
-        Invite1GreeterWaitPeerRepSchema::InvalidState
+        Invite1GreeterWaitPeerRep::InvalidState
     )
 )]
-fn serde_invite_1_greeter_wait_peer_rep(
-    #[case] data_expected: (&[u8], Invite1GreeterWaitPeerRepSchema),
-) {
+fn serde_invite_1_greeter_wait_peer_rep(#[case] data_expected: (&[u8], Invite1GreeterWaitPeerRep)) {
     let (data, expected) = data_expected;
 
-    let schema = Invite1GreeterWaitPeerRepSchema::load(&data).unwrap();
+    let schema = Invite1GreeterWaitPeerRep::load(&data).unwrap();
 
     assert_eq!(schema, expected);
 
     // Also test serialization round trip
     let data2 = schema.dump();
-    let schema2 = Invite1GreeterWaitPeerRepSchema::load(&data2).unwrap();
+    let schema2 = Invite1GreeterWaitPeerRep::load(&data2).unwrap();
 
     assert_eq!(schema2, expected);
 }
@@ -554,20 +550,20 @@ fn serde_invite_2a_claimer_send_hashed_nonce_hash_nonce_req() {
         "61696d65725f73656e645f6861736865645f6e6f6e63655f686173685f6e6f6e6365"
     );
 
-    let expected = Invite2aClaimerSendHashedNonceHashNonceReqSchema {
+    let expected = Invite2aClaimerSendHashedNonceHashNonceReq {
         cmd: "invite_2a_claimer_send_hashed_nonce_hash_nonce".to_owned(),
         claimer_hashed_nonce: HashDigest::from(hex!(
             "e37ce3b00a1f15b3de62029972345420b76313a885c6ccc6e3b5547857b3ecc6"
         )),
     };
 
-    let schema = Invite2aClaimerSendHashedNonceHashNonceReqSchema::load(&data).unwrap();
+    let schema = Invite2aClaimerSendHashedNonceHashNonceReq::load(&data).unwrap();
 
     assert_eq!(schema, expected);
 
     // Also test serialization round trip
     let data2 = schema.dump();
-    let schema2 = Invite2aClaimerSendHashedNonceHashNonceReqSchema::load(&data2).unwrap();
+    let schema2 = Invite2aClaimerSendHashedNonceHashNonceReq::load(&data2).unwrap();
 
     assert_eq!(schema2, expected);
 }
@@ -582,7 +578,7 @@ fn serde_invite_2a_claimer_send_hashed_nonce_hash_nonce_req() {
         &hex!(
             "82ad677265657465725f6e6f6e6365c406666f6f626172a6737461747573a26f6b"
         )[..],
-        Invite2aClaimerSendHashedNonceHashNonceRepSchema::Ok {
+        Invite2aClaimerSendHashedNonceHashNonceRep::Ok {
             greeter_nonce: b"foobar".to_vec(),
         }
     )
@@ -595,7 +591,7 @@ fn serde_invite_2a_claimer_send_hashed_nonce_hash_nonce_req() {
         &hex!(
             "81a6737461747573a96e6f745f666f756e64"
         )[..],
-        Invite2aClaimerSendHashedNonceHashNonceRepSchema::NotFound
+        Invite2aClaimerSendHashedNonceHashNonceRep::NotFound
     )
 )]
 // Generated from Python implementation (Parsec v2.6.0+dev)
@@ -606,7 +602,7 @@ fn serde_invite_2a_claimer_send_hashed_nonce_hash_nonce_req() {
         &hex!(
             "81a6737461747573af616c72656164795f64656c65746564"
         )[..],
-        Invite2aClaimerSendHashedNonceHashNonceRepSchema::AlreadyDeleted
+        Invite2aClaimerSendHashedNonceHashNonceRep::AlreadyDeleted
     )
 )]
 // Generated from Python implementation (Parsec v2.6.0+dev)
@@ -617,21 +613,21 @@ fn serde_invite_2a_claimer_send_hashed_nonce_hash_nonce_req() {
         &hex!(
             "81a6737461747573ad696e76616c69645f7374617465"
         )[..],
-        Invite2aClaimerSendHashedNonceHashNonceRepSchema::InvalidState
+        Invite2aClaimerSendHashedNonceHashNonceRep::InvalidState
     )
 )]
 fn serde_invite_2a_claimer_send_hashed_nonce_hash_nonce_rep(
-    #[case] data_expected: (&[u8], Invite2aClaimerSendHashedNonceHashNonceRepSchema),
+    #[case] data_expected: (&[u8], Invite2aClaimerSendHashedNonceHashNonceRep),
 ) {
     let (data, expected) = data_expected;
 
-    let schema = Invite2aClaimerSendHashedNonceHashNonceRepSchema::load(&data).unwrap();
+    let schema = Invite2aClaimerSendHashedNonceHashNonceRep::load(&data).unwrap();
 
     assert_eq!(schema, expected);
 
     // Also test serialization round trip
     let data2 = schema.dump();
-    let schema2 = Invite2aClaimerSendHashedNonceHashNonceRepSchema::load(&data2).unwrap();
+    let schema2 = Invite2aClaimerSendHashedNonceHashNonceRep::load(&data2).unwrap();
 
     assert_eq!(schema2, expected);
 }
@@ -647,7 +643,7 @@ fn serde_invite_2a_claimer_send_hashed_nonce_hash_nonce_rep(
             "82b4636c61696d65725f6861736865645f6e6f6e6365c420e37ce3b00a1f15b3de62029972"
             "345420b76313a885c6ccc6e3b5547857b3ecc6a6737461747573a26f6b"
         )[..],
-        Invite2aGreeterGetHashedNonceRepSchema::Ok {
+        Invite2aGreeterGetHashedNonceRep::Ok {
             claimer_hashed_nonce: HashDigest::from(hex!(
                 "e37ce3b00a1f15b3de62029972345420b76313a885c6ccc6e3b5547857b3ecc6"
             )),
@@ -662,7 +658,7 @@ fn serde_invite_2a_claimer_send_hashed_nonce_hash_nonce_rep(
         &hex!(
             "81a6737461747573a96e6f745f666f756e64"
         )[..],
-        Invite2aGreeterGetHashedNonceRepSchema::NotFound
+        Invite2aGreeterGetHashedNonceRep::NotFound
     )
 )]
 #[case::already_deleted(
@@ -673,7 +669,7 @@ fn serde_invite_2a_claimer_send_hashed_nonce_hash_nonce_rep(
         &hex!(
             "81a6737461747573af616c72656164795f64656c65746564"
         )[..],
-        Invite2aGreeterGetHashedNonceRepSchema::AlreadyDeleted
+        Invite2aGreeterGetHashedNonceRep::AlreadyDeleted
     )
 )]
 #[case::invalid_state(
@@ -684,21 +680,21 @@ fn serde_invite_2a_claimer_send_hashed_nonce_hash_nonce_rep(
         &hex!(
             "81a6737461747573ad696e76616c69645f7374617465"
         )[..],
-        Invite2aGreeterGetHashedNonceRepSchema::InvalidState
+        Invite2aGreeterGetHashedNonceRep::InvalidState
     )
 )]
 fn serde_invite_2a_greeter_get_hashed_nonce_rep(
-    #[case] data_expected: (&[u8], Invite2aGreeterGetHashedNonceRepSchema),
+    #[case] data_expected: (&[u8], Invite2aGreeterGetHashedNonceRep),
 ) {
     let (data, expected) = data_expected;
 
-    let schema = Invite2aGreeterGetHashedNonceRepSchema::load(&data).unwrap();
+    let schema = Invite2aGreeterGetHashedNonceRep::load(&data).unwrap();
 
     assert_eq!(schema, expected);
 
     // Also test serialization round trip
     let data2 = schema.dump();
-    let schema2 = Invite2aGreeterGetHashedNonceRepSchema::load(&data2).unwrap();
+    let schema2 = Invite2aGreeterGetHashedNonceRep::load(&data2).unwrap();
 
     assert_eq!(schema2, expected);
 }
@@ -713,7 +709,7 @@ fn serde_invite_2a_greeter_get_hashed_nonce_rep(
         &hex!(
             "82ad636c61696d65725f6e6f6e6365c406666f6f626172a6737461747573a26f6b"
         )[..],
-        Invite2bGreeterSendNonceRepSchema::Ok {
+        Invite2bGreeterSendNonceRep::Ok {
             claimer_nonce: b"foobar".to_vec(),
         }
     )
@@ -726,7 +722,7 @@ fn serde_invite_2a_greeter_get_hashed_nonce_rep(
         &hex!(
             "81a6737461747573a96e6f745f666f756e64"
         )[..],
-        Invite2bGreeterSendNonceRepSchema::NotFound
+        Invite2bGreeterSendNonceRep::NotFound
     )
 )]
 #[case::already_deleted(
@@ -737,7 +733,7 @@ fn serde_invite_2a_greeter_get_hashed_nonce_rep(
         &hex!(
             "81a6737461747573af616c72656164795f64656c65746564"
         )[..],
-        Invite2bGreeterSendNonceRepSchema::AlreadyDeleted
+        Invite2bGreeterSendNonceRep::AlreadyDeleted
     )
 )]
 #[case::invalid_state(
@@ -748,21 +744,21 @@ fn serde_invite_2a_greeter_get_hashed_nonce_rep(
         &hex!(
             "81a6737461747573ad696e76616c69645f7374617465"
         )[..],
-        Invite2bGreeterSendNonceRepSchema::InvalidState
+        Invite2bGreeterSendNonceRep::InvalidState
     )
 )]
 fn serde_invite_2b_greeter_send_nonce_rep(
-    #[case] data_expected: (&[u8], Invite2bGreeterSendNonceRepSchema),
+    #[case] data_expected: (&[u8], Invite2bGreeterSendNonceRep),
 ) {
     let (data, expected) = data_expected;
 
-    let schema = Invite2bGreeterSendNonceRepSchema::load(&data).unwrap();
+    let schema = Invite2bGreeterSendNonceRep::load(&data).unwrap();
 
     assert_eq!(schema, expected);
 
     // Also test serialization round trip
     let data2 = schema.dump();
-    let schema2 = Invite2bGreeterSendNonceRepSchema::load(&data2).unwrap();
+    let schema2 = Invite2bGreeterSendNonceRep::load(&data2).unwrap();
 
     assert_eq!(schema2, expected);
 }
@@ -778,18 +774,18 @@ fn serde_invite_2b_claimer_send_nonce_req() {
         "5f636c61696d65725f73656e645f6e6f6e6365"
     );
 
-    let expected = Invite2bClaimerSendNonceReqSchema {
+    let expected = Invite2bClaimerSendNonceReq {
         cmd: "invite_2b_claimer_send_nonce".to_owned(),
         claimer_nonce: b"foobar".to_vec(),
     };
 
-    let schema = Invite2bClaimerSendNonceReqSchema::load(&data).unwrap();
+    let schema = Invite2bClaimerSendNonceReq::load(&data).unwrap();
 
     assert_eq!(schema, expected);
 
     // Also test serialization round trip
     let data2 = schema.dump();
-    let schema2 = Invite2bClaimerSendNonceReqSchema::load(&data2).unwrap();
+    let schema2 = Invite2bClaimerSendNonceReq::load(&data2).unwrap();
 
     assert_eq!(schema2, expected);
 }
@@ -803,7 +799,7 @@ fn serde_invite_2b_claimer_send_nonce_req() {
         &hex!(
             "81a6737461747573a26f6b"
         )[..],
-        Invite2bClaimerSendNonceRepSchema::Ok
+        Invite2bClaimerSendNonceRep::Ok
     )
 )]
 #[case::not_found(
@@ -814,7 +810,7 @@ fn serde_invite_2b_claimer_send_nonce_req() {
         &hex!(
             "81a6737461747573a96e6f745f666f756e64"
         )[..],
-        Invite2bClaimerSendNonceRepSchema::NotFound
+        Invite2bClaimerSendNonceRep::NotFound
     )
 )]
 #[case::invalid_state(
@@ -825,21 +821,21 @@ fn serde_invite_2b_claimer_send_nonce_req() {
         &hex!(
             "81a6737461747573ad696e76616c69645f7374617465"
         )[..],
-        Invite2bClaimerSendNonceRepSchema::InvalidState
+        Invite2bClaimerSendNonceRep::InvalidState
     )
 )]
 fn serde_invite_2b_claimer_send_nonce_rep(
-    #[case] data_expected: (&[u8], Invite2bClaimerSendNonceRepSchema),
+    #[case] data_expected: (&[u8], Invite2bClaimerSendNonceRep),
 ) {
     let (data, expected) = data_expected;
 
-    let schema = Invite2bClaimerSendNonceRepSchema::load(&data).unwrap();
+    let schema = Invite2bClaimerSendNonceRep::load(&data).unwrap();
 
     assert_eq!(schema, expected);
 
     // Also test serialization round trip
     let data2 = schema.dump();
-    let schema2 = Invite2bClaimerSendNonceRepSchema::load(&data2).unwrap();
+    let schema2 = Invite2bClaimerSendNonceRep::load(&data2).unwrap();
 
     assert_eq!(schema2, expected);
 }
@@ -855,18 +851,18 @@ fn serde_invite_3a_greeter_wait_peer_trust_req() {
         "757374a5746f6b656ed802d864b93ded264aae9ae583fd3d40c45a"
     );
 
-    let expected = Invite3aGreeterWaitPeerTrustReqSchema {
+    let expected = Invite3aGreeterWaitPeerTrustReq {
         cmd: "invite_3a_greeter_wait_peer_trust".to_owned(),
         token: "d864b93ded264aae9ae583fd3d40c45a".parse().unwrap(),
     };
 
-    let schema = Invite3aGreeterWaitPeerTrustReqSchema::load(&data).unwrap();
+    let schema = Invite3aGreeterWaitPeerTrustReq::load(&data).unwrap();
 
     assert_eq!(schema, expected);
 
     // Also test serialization round trip
     let data2 = schema.dump();
-    let schema2 = Invite3aGreeterWaitPeerTrustReqSchema::load(&data2).unwrap();
+    let schema2 = Invite3aGreeterWaitPeerTrustReq::load(&data2).unwrap();
 
     assert_eq!(schema2, expected);
 }
@@ -880,7 +876,7 @@ fn serde_invite_3a_greeter_wait_peer_trust_req() {
         &hex!(
             "81a6737461747573a26f6b"
         )[..],
-        Invite3aGreeterWaitPeerTrustRepSchema::Ok
+        Invite3aGreeterWaitPeerTrustRep::Ok
     )
 )]
 #[case::not_found(
@@ -891,7 +887,7 @@ fn serde_invite_3a_greeter_wait_peer_trust_req() {
         &hex!(
             "81a6737461747573a96e6f745f666f756e64"
         )[..],
-        Invite3aGreeterWaitPeerTrustRepSchema::NotFound
+        Invite3aGreeterWaitPeerTrustRep::NotFound
     )
 )]
 #[case::already_deleted(
@@ -902,7 +898,7 @@ fn serde_invite_3a_greeter_wait_peer_trust_req() {
         &hex!(
             "81a6737461747573af616c72656164795f64656c65746564"
         )[..],
-        Invite3aGreeterWaitPeerTrustRepSchema::AlreadyDeleted
+        Invite3aGreeterWaitPeerTrustRep::AlreadyDeleted
     )
 )]
 #[case::invalid_state(
@@ -913,21 +909,21 @@ fn serde_invite_3a_greeter_wait_peer_trust_req() {
         &hex!(
             "81a6737461747573ad696e76616c69645f7374617465"
         )[..],
-        Invite3aGreeterWaitPeerTrustRepSchema::InvalidState
+        Invite3aGreeterWaitPeerTrustRep::InvalidState
     )
 )]
 fn serde_invite_3a_greeter_wait_peer_trust_rep(
-    #[case] data_expected: (&[u8], Invite3aGreeterWaitPeerTrustRepSchema),
+    #[case] data_expected: (&[u8], Invite3aGreeterWaitPeerTrustRep),
 ) {
     let (data, expected) = data_expected;
 
-    let schema = Invite3aGreeterWaitPeerTrustRepSchema::load(&data).unwrap();
+    let schema = Invite3aGreeterWaitPeerTrustRep::load(&data).unwrap();
 
     assert_eq!(schema, expected);
 
     // Also test serialization round trip
     let data2 = schema.dump();
-    let schema2 = Invite3aGreeterWaitPeerTrustRepSchema::load(&data2).unwrap();
+    let schema2 = Invite3aGreeterWaitPeerTrustRep::load(&data2).unwrap();
 
     assert_eq!(schema2, expected);
 }
@@ -942,17 +938,17 @@ fn serde_invite_3b_claimer_wait_peer_trust_req() {
         "757374"
     );
 
-    let expected = Invite3bClaimerWaitPeerTrustReqSchema {
+    let expected = Invite3bClaimerWaitPeerTrustReq {
         cmd: "invite_3b_claimer_wait_peer_trust".to_owned(),
     };
 
-    let schema = Invite3bClaimerWaitPeerTrustReqSchema::load(&data).unwrap();
+    let schema = Invite3bClaimerWaitPeerTrustReq::load(&data).unwrap();
 
     assert_eq!(schema, expected);
 
     // Also test serialization round trip
     let data2 = schema.dump();
-    let schema2 = Invite3bClaimerWaitPeerTrustReqSchema::load(&data2).unwrap();
+    let schema2 = Invite3bClaimerWaitPeerTrustReq::load(&data2).unwrap();
 
     assert_eq!(schema2, expected);
 }
@@ -966,7 +962,7 @@ fn serde_invite_3b_claimer_wait_peer_trust_req() {
         &hex!(
             "81a6737461747573a26f6b"
         )[..],
-        Invite3bClaimerWaitPeerTrustRepSchema::Ok
+        Invite3bClaimerWaitPeerTrustRep::Ok
     )
 )]
 #[case::not_found(
@@ -977,7 +973,7 @@ fn serde_invite_3b_claimer_wait_peer_trust_req() {
         &hex!(
             "81a6737461747573a96e6f745f666f756e64"
         )[..],
-        Invite3bClaimerWaitPeerTrustRepSchema::NotFound
+        Invite3bClaimerWaitPeerTrustRep::NotFound
     )
 )]
 #[case::invalid_state(
@@ -988,21 +984,21 @@ fn serde_invite_3b_claimer_wait_peer_trust_req() {
         &hex!(
             "81a6737461747573ad696e76616c69645f7374617465"
         )[..],
-        Invite3bClaimerWaitPeerTrustRepSchema::InvalidState
+        Invite3bClaimerWaitPeerTrustRep::InvalidState
     )
 )]
 fn serde_invite_3b_claimer_wait_peer_trust_rep(
-    #[case] data_expected: (&[u8], Invite3bClaimerWaitPeerTrustRepSchema),
+    #[case] data_expected: (&[u8], Invite3bClaimerWaitPeerTrustRep),
 ) {
     let (data, expected) = data_expected;
 
-    let schema = Invite3bClaimerWaitPeerTrustRepSchema::load(&data).unwrap();
+    let schema = Invite3bClaimerWaitPeerTrustRep::load(&data).unwrap();
 
     assert_eq!(schema, expected);
 
     // Also test serialization round trip
     let data2 = schema.dump();
-    let schema2 = Invite3bClaimerWaitPeerTrustRepSchema::load(&data2).unwrap();
+    let schema2 = Invite3bClaimerWaitPeerTrustRep::load(&data2).unwrap();
 
     assert_eq!(schema2, expected);
 }
@@ -1018,18 +1014,18 @@ fn serde_invite_3b_greeter_signify_trust_req() {
         "a5746f6b656ed802d864b93ded264aae9ae583fd3d40c45a"
     );
 
-    let expected = Invite3bGreeterSignifyTrustReqSchema {
+    let expected = Invite3bGreeterSignifyTrustReq {
         cmd: "invite_3b_greeter_signify_trust".to_owned(),
         token: "d864b93ded264aae9ae583fd3d40c45a".parse().unwrap(),
     };
 
-    let schema = Invite3bGreeterSignifyTrustReqSchema::load(&data).unwrap();
+    let schema = Invite3bGreeterSignifyTrustReq::load(&data).unwrap();
 
     assert_eq!(schema, expected);
 
     // Also test serialization round trip
     let data2 = schema.dump();
-    let schema2 = Invite3bGreeterSignifyTrustReqSchema::load(&data2).unwrap();
+    let schema2 = Invite3bGreeterSignifyTrustReq::load(&data2).unwrap();
 
     assert_eq!(schema2, expected);
 }
@@ -1043,7 +1039,7 @@ fn serde_invite_3b_greeter_signify_trust_req() {
         &hex!(
             "81a6737461747573a26f6b"
         )[..],
-        Invite3bGreeterSignifyTrustRepSchema::Ok
+        Invite3bGreeterSignifyTrustRep::Ok
     )
 )]
 #[case::not_found(
@@ -1054,7 +1050,7 @@ fn serde_invite_3b_greeter_signify_trust_req() {
         &hex!(
             "81a6737461747573a96e6f745f666f756e64"
         )[..],
-        Invite3bGreeterSignifyTrustRepSchema::NotFound
+        Invite3bGreeterSignifyTrustRep::NotFound
     )
 )]
 #[case::already_deleted(
@@ -1065,7 +1061,7 @@ fn serde_invite_3b_greeter_signify_trust_req() {
         &hex!(
             "81a6737461747573af616c72656164795f64656c65746564"
         )[..],
-        Invite3bGreeterSignifyTrustRepSchema::AlreadyDeleted
+        Invite3bGreeterSignifyTrustRep::AlreadyDeleted
     )
 )]
 #[case::invalid_state(
@@ -1076,21 +1072,21 @@ fn serde_invite_3b_greeter_signify_trust_req() {
         &hex!(
             "81a6737461747573ad696e76616c69645f7374617465"
         )[..],
-        Invite3bGreeterSignifyTrustRepSchema::InvalidState
+        Invite3bGreeterSignifyTrustRep::InvalidState
     )
 )]
 fn serde_invite_3b_greeter_signify_trust_rep(
-    #[case] data_expected: (&[u8], Invite3bGreeterSignifyTrustRepSchema),
+    #[case] data_expected: (&[u8], Invite3bGreeterSignifyTrustRep),
 ) {
     let (data, expected) = data_expected;
 
-    let schema = Invite3bGreeterSignifyTrustRepSchema::load(&data).unwrap();
+    let schema = Invite3bGreeterSignifyTrustRep::load(&data).unwrap();
 
     assert_eq!(schema, expected);
 
     // Also test serialization round trip
     let data2 = schema.dump();
-    let schema2 = Invite3bGreeterSignifyTrustRepSchema::load(&data2).unwrap();
+    let schema2 = Invite3bGreeterSignifyTrustRep::load(&data2).unwrap();
 
     assert_eq!(schema2, expected);
 }
@@ -1102,17 +1098,17 @@ fn serde_invite_3a_claimer_signify_trust_req() {
     //   cmd: "invite_3a_claimer_signify_trust"
     let data = hex!("81a3636d64bf696e766974655f33615f636c61696d65725f7369676e6966795f7472757374");
 
-    let expected = Invite3aClaimerSignifyTrustReqSchema {
+    let expected = Invite3aClaimerSignifyTrustReq {
         cmd: "invite_3a_claimer_signify_trust".to_owned(),
     };
 
-    let schema = Invite3aClaimerSignifyTrustReqSchema::load(&data).unwrap();
+    let schema = Invite3aClaimerSignifyTrustReq::load(&data).unwrap();
 
     assert_eq!(schema, expected);
 
     // Also test serialization round trip
     let data2 = schema.dump();
-    let schema2 = Invite3aClaimerSignifyTrustReqSchema::load(&data2).unwrap();
+    let schema2 = Invite3aClaimerSignifyTrustReq::load(&data2).unwrap();
 
     assert_eq!(schema2, expected);
 }
@@ -1126,7 +1122,7 @@ fn serde_invite_3a_claimer_signify_trust_req() {
         &hex!(
             "81a6737461747573a26f6b"
         )[..],
-        Invite3aClaimerSignifyTrustRepSchema::Ok
+        Invite3aClaimerSignifyTrustRep::Ok
     )
 )]
 #[case::not_found(
@@ -1137,7 +1133,7 @@ fn serde_invite_3a_claimer_signify_trust_req() {
         &hex!(
             "81a6737461747573a96e6f745f666f756e64"
         )[..],
-        Invite3aClaimerSignifyTrustRepSchema::NotFound
+        Invite3aClaimerSignifyTrustRep::NotFound
     )
 )]
 #[case::invalid_state(
@@ -1148,21 +1144,21 @@ fn serde_invite_3a_claimer_signify_trust_req() {
         &hex!(
             "81a6737461747573ad696e76616c69645f7374617465"
         )[..],
-        Invite3aClaimerSignifyTrustRepSchema::InvalidState
+        Invite3aClaimerSignifyTrustRep::InvalidState
     )
 )]
 fn serde_invite_3a_claimer_signify_trust_rep(
-    #[case] data_expected: (&[u8], Invite3aClaimerSignifyTrustRepSchema),
+    #[case] data_expected: (&[u8], Invite3aClaimerSignifyTrustRep),
 ) {
     let (data, expected) = data_expected;
 
-    let schema = Invite3aClaimerSignifyTrustRepSchema::load(&data).unwrap();
+    let schema = Invite3aClaimerSignifyTrustRep::load(&data).unwrap();
 
     assert_eq!(schema, expected);
 
     // Also test serialization round trip
     let data2 = schema.dump();
-    let schema2 = Invite3aClaimerSignifyTrustRepSchema::load(&data2).unwrap();
+    let schema2 = Invite3aClaimerSignifyTrustRep::load(&data2).unwrap();
 
     assert_eq!(schema2, expected);
 }
@@ -1179,19 +1175,19 @@ fn serde_invite_4_greeter_communicate_req() {
         "796c6f6164c406666f6f626172a5746f6b656ed802d864b93ded264aae9ae583fd3d40c45a"
     );
 
-    let expected = Invite4GreeterCommunicateReqSchema {
+    let expected = Invite4GreeterCommunicateReq {
         cmd: "invite_4_greeter_communicate".to_owned(),
         token: "d864b93ded264aae9ae583fd3d40c45a".parse().unwrap(),
         payload: b"foobar".to_vec(),
     };
 
-    let schema = Invite4GreeterCommunicateReqSchema::load(&data).unwrap();
+    let schema = Invite4GreeterCommunicateReq::load(&data).unwrap();
 
     assert_eq!(schema, expected);
 
     // Also test serialization round trip
     let data2 = schema.dump();
-    let schema2 = Invite4GreeterCommunicateReqSchema::load(&data2).unwrap();
+    let schema2 = Invite4GreeterCommunicateReq::load(&data2).unwrap();
 
     assert_eq!(schema2, expected);
 }
@@ -1206,7 +1202,7 @@ fn serde_invite_4_greeter_communicate_req() {
         &hex!(
             "82a77061796c6f6164c406666f6f626172a6737461747573a26f6b"
         )[..],
-        Invite4GreeterCommunicateRepSchema::Ok {
+        Invite4GreeterCommunicateRep::Ok {
             payload: b"foobar".to_vec(),
         }
     )
@@ -1219,7 +1215,7 @@ fn serde_invite_4_greeter_communicate_req() {
         &hex!(
             "81a6737461747573a96e6f745f666f756e64"
         )[..],
-        Invite4GreeterCommunicateRepSchema::NotFound
+        Invite4GreeterCommunicateRep::NotFound
     )
 )]
 #[case::already_deleted(
@@ -1230,7 +1226,7 @@ fn serde_invite_4_greeter_communicate_req() {
         &hex!(
             "81a6737461747573af616c72656164795f64656c65746564"
         )[..],
-        Invite4GreeterCommunicateRepSchema::AlreadyDeleted
+        Invite4GreeterCommunicateRep::AlreadyDeleted
     )
 )]
 #[case::invalid_state(
@@ -1241,21 +1237,21 @@ fn serde_invite_4_greeter_communicate_req() {
         &hex!(
             "81a6737461747573ad696e76616c69645f7374617465"
         )[..],
-        Invite4GreeterCommunicateRepSchema::InvalidState
+        Invite4GreeterCommunicateRep::InvalidState
     )
 )]
 fn serde_invite_4_greeter_communicate_rep(
-    #[case] data_expected: (&[u8], Invite4GreeterCommunicateRepSchema),
+    #[case] data_expected: (&[u8], Invite4GreeterCommunicateRep),
 ) {
     let (data, expected) = data_expected;
 
-    let schema = Invite4GreeterCommunicateRepSchema::load(&data).unwrap();
+    let schema = Invite4GreeterCommunicateRep::load(&data).unwrap();
 
     assert_eq!(schema, expected);
 
     // Also test serialization round trip
     let data2 = schema.dump();
-    let schema2 = Invite4GreeterCommunicateRepSchema::load(&data2).unwrap();
+    let schema2 = Invite4GreeterCommunicateRep::load(&data2).unwrap();
 
     assert_eq!(schema2, expected);
 }
@@ -1271,18 +1267,18 @@ fn serde_invite_4_claimer_communicate_req() {
         "796c6f6164c406666f6f626172"
     );
 
-    let expected = Invite4ClaimerCommunicateReqSchema {
+    let expected = Invite4ClaimerCommunicateReq {
         cmd: "invite_4_claimer_communicate".to_owned(),
         payload: b"foobar".to_vec(),
     };
 
-    let schema = Invite4ClaimerCommunicateReqSchema::load(&data).unwrap();
+    let schema = Invite4ClaimerCommunicateReq::load(&data).unwrap();
 
     assert_eq!(schema, expected);
 
     // Also test serialization round trip
     let data2 = schema.dump();
-    let schema2 = Invite4ClaimerCommunicateReqSchema::load(&data2).unwrap();
+    let schema2 = Invite4ClaimerCommunicateReq::load(&data2).unwrap();
 
     assert_eq!(schema2, expected);
 }
@@ -1297,7 +1293,7 @@ fn serde_invite_4_claimer_communicate_req() {
         &hex!(
             "82a77061796c6f6164c406666f6f626172a6737461747573a26f6b"
         )[..],
-        Invite4ClaimerCommunicateRepSchema::Ok {
+        Invite4ClaimerCommunicateRep::Ok {
             payload: b"foobar".to_vec(),
         }
     )
@@ -1310,7 +1306,7 @@ fn serde_invite_4_claimer_communicate_req() {
         &hex!(
             "81a6737461747573a96e6f745f666f756e64"
         )[..],
-        Invite4ClaimerCommunicateRepSchema::NotFound
+        Invite4ClaimerCommunicateRep::NotFound
     )
 )]
 #[case::invalid_state(
@@ -1321,21 +1317,21 @@ fn serde_invite_4_claimer_communicate_req() {
         &hex!(
             "81a6737461747573ad696e76616c69645f7374617465"
         )[..],
-        Invite4ClaimerCommunicateRepSchema::InvalidState
+        Invite4ClaimerCommunicateRep::InvalidState
     )
 )]
 fn serde_invite_4_claimer_communicate_rep(
-    #[case] data_expected: (&[u8], Invite4ClaimerCommunicateRepSchema),
+    #[case] data_expected: (&[u8], Invite4ClaimerCommunicateRep),
 ) {
     let (data, expected) = data_expected;
 
-    let schema = Invite4ClaimerCommunicateRepSchema::load(&data).unwrap();
+    let schema = Invite4ClaimerCommunicateRep::load(&data).unwrap();
 
     assert_eq!(schema, expected);
 
     // Also test serialization round trip
     let data2 = schema.dump();
-    let schema2 = Invite4ClaimerCommunicateRepSchema::load(&data2).unwrap();
+    let schema2 = Invite4ClaimerCommunicateRep::load(&data2).unwrap();
 
     assert_eq!(schema2, expected);
 }

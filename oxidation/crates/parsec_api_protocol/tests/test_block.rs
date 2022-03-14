@@ -19,20 +19,20 @@ fn serde_block_create_req() {
         "7d7d4e95ad2fdea7b3bd19c5"
     );
 
-    let expected = BlockCreateReqSchema {
+    let expected = BlockCreateReq {
         cmd: "block_create".to_owned(),
         block_id: "57c629b69d6c4abbaf651cafa46dbc93".parse().unwrap(),
         realm_id: "1d3353157d7d4e95ad2fdea7b3bd19c5".parse().unwrap(),
         block: b"foobar".to_vec(),
     };
 
-    let schema = BlockCreateReqSchema::load(&data).unwrap();
+    let schema = BlockCreateReq::load(&data).unwrap();
 
     assert_eq!(schema, expected);
 
     // Also test serialization round trip
     let data2 = schema.dump();
-    let schema2 = BlockCreateReqSchema::load(&data2).unwrap();
+    let schema2 = BlockCreateReq::load(&data2).unwrap();
     assert_eq!(schema2, expected);
 }
 
@@ -45,7 +45,7 @@ fn serde_block_create_req() {
         &hex!(
             "81a6737461747573a26f6b"
         )[..],
-        BlockCreateRepSchema::Ok
+        BlockCreateRep::Ok
     )
 )]
 #[case::already_exists(
@@ -56,7 +56,7 @@ fn serde_block_create_req() {
         &hex!(
             "81a6737461747573ae616c72656164795f657869737473"
         )[..],
-        BlockCreateRepSchema::AlreadyExists
+        BlockCreateRep::AlreadyExists
     )
 )]
 #[case::not_found(
@@ -67,7 +67,7 @@ fn serde_block_create_req() {
         &hex!(
             "81a6737461747573a96e6f745f666f756e64"
         )[..],
-        BlockCreateRepSchema::NotFound
+        BlockCreateRep::NotFound
     )
 )]
 #[case::timeout(
@@ -78,7 +78,7 @@ fn serde_block_create_req() {
         &hex!(
             "81a6737461747573a774696d656f7574"
         )[..],
-        BlockCreateRepSchema::Timeout
+        BlockCreateRep::Timeout
     )
 )]
 #[case::not_allowed(
@@ -89,7 +89,7 @@ fn serde_block_create_req() {
         &hex!(
             "81a6737461747573ab6e6f745f616c6c6f776564"
         )[..],
-        BlockCreateRepSchema::NotAllowed
+        BlockCreateRep::NotAllowed
     )
 )]
 #[case::in_maintenance(
@@ -100,19 +100,19 @@ fn serde_block_create_req() {
         &hex!(
             "81a6737461747573ae696e5f6d61696e74656e616e6365"
         )[..],
-        BlockCreateRepSchema::InMaintenance
+        BlockCreateRep::InMaintenance
     )
 )]
-fn serde_block_create_rep(#[case] data_expected: (&[u8], BlockCreateRepSchema)) {
+fn serde_block_create_rep(#[case] data_expected: (&[u8], BlockCreateRep)) {
     let (data, expected) = data_expected;
 
-    let schema = BlockCreateRepSchema::load(&data).unwrap();
+    let schema = BlockCreateRep::load(&data).unwrap();
 
     assert_eq!(schema, expected);
 
     // Also test serialization round trip
     let data2 = schema.dump();
-    let schema2 = BlockCreateRepSchema::load(&data2).unwrap();
+    let schema2 = BlockCreateRep::load(&data2).unwrap();
     assert_eq!(schema2, expected);
 }
 
@@ -127,18 +127,18 @@ fn serde_block_read_req() {
         "6b5f72656164"
     );
 
-    let expected = BlockReadReqSchema {
+    let expected = BlockReadReq {
         cmd: "block_read".to_owned(),
         block_id: "57c629b69d6c4abbaf651cafa46dbc93".parse().unwrap(),
     };
 
-    let schema = BlockReadReqSchema::load(&data).unwrap();
+    let schema = BlockReadReq::load(&data).unwrap();
 
     assert_eq!(schema, expected);
 
     // Also test serialization round trip
     let data2 = schema.dump();
-    let schema2 = BlockReadReqSchema::load(&data2).unwrap();
+    let schema2 = BlockReadReq::load(&data2).unwrap();
     assert_eq!(schema2, expected);
 }
 
@@ -152,7 +152,7 @@ fn serde_block_read_req() {
         &hex!(
             "82a5626c6f636bc406666f6f626172a6737461747573a26f6b"
         )[..],
-        BlockReadRepSchema::Ok {
+        BlockReadRep::Ok {
             block: b"foobar".to_vec(),
         }
     )
@@ -165,7 +165,7 @@ fn serde_block_read_req() {
         &hex!(
             "81a6737461747573a96e6f745f666f756e64"
         )[..],
-        BlockReadRepSchema::NotFound
+        BlockReadRep::NotFound
     )
 )]
 #[case::timeout(
@@ -176,7 +176,7 @@ fn serde_block_read_req() {
         &hex!(
             "81a6737461747573a774696d656f7574"
         )[..],
-        BlockReadRepSchema::Timeout
+        BlockReadRep::Timeout
     )
 )]
 #[case::not_allowed(
@@ -187,7 +187,7 @@ fn serde_block_read_req() {
         &hex!(
             "81a6737461747573ab6e6f745f616c6c6f776564"
         )[..],
-        BlockReadRepSchema::NotAllowed
+        BlockReadRep::NotAllowed
     )
 )]
 #[case::in_maintenance(
@@ -198,18 +198,18 @@ fn serde_block_read_req() {
         &hex!(
             "81a6737461747573ae696e5f6d61696e74656e616e6365"
         )[..],
-        BlockReadRepSchema::InMaintenance
+        BlockReadRep::InMaintenance
     )
 )]
-fn serde_block_read_rep(#[case] data_expected: (&[u8], BlockReadRepSchema)) {
+fn serde_block_read_rep(#[case] data_expected: (&[u8], BlockReadRep)) {
     let (data, expected) = data_expected;
 
-    let schema = BlockReadRepSchema::load(&data).unwrap();
+    let schema = BlockReadRep::load(&data).unwrap();
 
     assert_eq!(schema, expected);
 
     // Also test serialization round trip
     let data2 = schema.dump();
-    let schema2 = BlockReadRepSchema::load(&data2).unwrap();
+    let schema2 = BlockReadRep::load(&data2).unwrap();
     assert_eq!(schema2, expected);
 }
