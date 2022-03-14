@@ -157,7 +157,7 @@ impl VerifyKey {
 
 #[pyclass]
 #[derive(PartialEq, Eq, Clone)]
-pub(crate) struct SecretKey(pub parsec_api_crypto::SecretKey);
+pub struct SecretKey(pub parsec_api_crypto::SecretKey);
 
 #[pymethods]
 impl SecretKey {
@@ -220,8 +220,8 @@ impl SecretKey {
 }
 
 #[pyclass]
-#[derive(PartialEq, Eq)]
-pub(crate) struct PrivateKey(parsec_api_crypto::PrivateKey);
+#[derive(PartialEq, Eq, Clone)]
+pub(crate) struct PrivateKey(pub parsec_api_crypto::PrivateKey);
 
 #[pymethods]
 impl PrivateKey {
@@ -268,8 +268,8 @@ impl PrivateKey {
 }
 
 #[pyclass]
-#[derive(PartialEq, Eq)]
-pub(crate) struct PublicKey(parsec_api_crypto::PublicKey);
+#[derive(PartialEq, Eq, Clone)]
+pub(crate) struct PublicKey(pub parsec_api_crypto::PublicKey);
 
 #[pymethods]
 impl PublicKey {

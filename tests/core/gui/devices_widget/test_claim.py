@@ -202,7 +202,7 @@ def ClaimDeviceTestBed(
                 assert not cdce_w.code_input_widget.isVisible()
                 assert cdce_w.widget_claimer_code.isVisible()
                 assert cdce_w.line_edit_claimer_code.isVisible()
-                assert cdce_w.line_edit_claimer_code.text() == claimer_sas
+                assert cdce_w.line_edit_claimer_code.text() == claimer_sas.str
 
             await aqtbot.wait_until(_claimer_sas_code_displayed)
 
