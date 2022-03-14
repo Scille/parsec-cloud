@@ -48,6 +48,9 @@ jobs:
   - bash: |
       set -eux
       python -m build --wheel
+    env:
+      # oxidation extra_requirements referes to a local path which is forbidden by pypi
+      IGNORE_OXIDATION: "true"
     displayName: 'Build Wheel'
   - publish: dist/
     artifact: wheel
@@ -159,6 +162,7 @@ jobs:
     displayName: 'Rust Tests'
   - bash: |
       set -eux
+      # Don't use the wheel built in step 0 given it doesn't containt oxidation extra
       pip install .[all,oxidation]
       # Remove the parsec folder from the source to force use of the wheel
       rm -rf parsec

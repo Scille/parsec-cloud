@@ -294,6 +294,12 @@ extra_requirements = {
     ],
 }
 
+
+# Cannot have direct dependency when upload on Pypi
+if os.environ.get("IGNORE_OXIDATION"):
+    extra_requirements.pop("oxidation")
+
+
 extra_requirements["all"] = sum([v for k, v in extra_requirements.items() if k != "oxidation"], [])
 extra_requirements["oeuf-jambon-fromage"] = extra_requirements["all"]
 
