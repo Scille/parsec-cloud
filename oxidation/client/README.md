@@ -6,8 +6,8 @@ npm install -g @ionic/cli native-run cordova-res
 2 - Parsec GUI Ionic project creation
 ```shell
 # Location must be /parsec-cloud/oxidation
-ionic start ionic blank --type=vue --capacitor
-pushd ionic
+ionic start client blank --type=vue --capacitor
+pushd client
 npm install @capacitor-community/electron
 # Ionic project must be build at least one time before adding capacitor plugins
 ionic build
@@ -73,7 +73,7 @@ ionic build && npx cap copy ios
 # Generate `bindings/neon/index.node` (basically a .so that node can load)
 cd ../bindings/neon
 npm install && npm run build
-cd ../../ionic
+cd ../../client
 # Copy the node module so electron can find it for packaging
 cp ../bindings/neon/index.node ./electron/libparsec/ # (unix)
 copy ..\bindings\neon\index.node .\electron\libparsec\ # (windows)

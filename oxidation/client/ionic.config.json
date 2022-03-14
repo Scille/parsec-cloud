@@ -1,5 +1,5 @@
 {
-  "name": "ionic",
+  "name": "client",
   "integrations": {
     "capacitor": {}
   },
