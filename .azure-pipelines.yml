@@ -484,7 +484,7 @@ jobs:
 
 - job: 's2_windows_installer_build'
   displayName: 'Windows installer build'
-  condition: startsWith(variables['build.sourceBranch'], 'refs/tags/')
+  # condition: startsWith(variables['build.sourceBranch'], 'refs/tags/')
   timeoutInMinutes: 60
   pool:
     vmImage: 'windows-latest'
