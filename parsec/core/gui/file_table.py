@@ -329,7 +329,7 @@ class FileTable(QTableWidget):
         item.setData(ENTRY_ID_DATA_INDEX, entry_id)
         self.setItem(row_idx, Column.ICON, item)
         item = CustomTableItem(folder_name.str)
-        item.setData(NAME_DATA_INDEX, folder_name)
+        item.setData(NAME_DATA_INDEX, folder_name.str)
         item.setToolTip(
             "\n".join(folder_name.str[i : i + 64] for i in range(0, len(folder_name.str), 64))
         )
@@ -380,7 +380,7 @@ class FileTable(QTableWidget):
         item.setToolTip(
             "\n".join(file_name.str[i : i + 64] for i in range(0, len(file_name.str), 64))
         )
-        item.setData(NAME_DATA_INDEX, file_name)
+        item.setData(NAME_DATA_INDEX, file_name.str)
         item.setData(TYPE_DATA_INDEX, FileType.File)
         item.setData(ENTRY_ID_DATA_INDEX, entry_id)
         self.setItem(row_idx, Column.NAME, item)
@@ -418,7 +418,7 @@ class FileTable(QTableWidget):
         item.setToolTip(
             "\n".join(file_name.str[i : i + 64] for i in range(0, len(file_name.str), 64))
         )
-        item.setData(NAME_DATA_INDEX, file_name)
+        item.setData(NAME_DATA_INDEX, file_name.str)
         item.setData(TYPE_DATA_INDEX, FileType.Inconsistency)
         item.setData(ENTRY_ID_DATA_INDEX, entry_id)
         item.setBackground(inconsistency_color)
