@@ -5,6 +5,61 @@ History
 .. towncrier release notes start
 
 
+Parsec v2.7.0-rc2 (2022-03-14)
+------------------------------
+
+Features
+~~~~~~~~
+
+* Reduces the size of users and devices  (`#1445
+  <https://github.com/Scille/parsec-cloud/issues/1445>`__)
+* Added an explicit message for a revoked user  (`#1464
+  <https://github.com/Scille/parsec-cloud/issues/1464>`__)
+* Better display disabled items in combo boxes (`#1864
+  <https://github.com/Scille/parsec-cloud/issues/1864>`__)
+* Added option to copy the server address (`#1882
+  <https://github.com/Scille/parsec-cloud/issues/1882>`__)
+* Added snackbars for quick messages (`#1885 <https://github.com/Scille/parsec-
+  cloud/issues/1885>`__)
+* Improve the detection and management of clients that have out-of-sync clocks
+  compare to the backend.  (`#1894 <https://github.com/Scille/parsec-
+  cloud/issues/1894>`__)
+* Added a navigation bar to help navigate through a workspace  (`#1916
+  <https://github.com/Scille/parsec-cloud/issues/1916>`__)
+* Added --recipiant option to share_workspace command and the human_find command
+  in the CLI  (`#1940 <https://github.com/Scille/parsec-cloud/issues/1940>`__)
+* Added new right click option for a file in a workspace, that shows the status
+  of a file (created and updated when and by whom, type, location, number of
+  part of a file present locally / remotely)  (`#1941
+  <https://github.com/Scille/parsec-cloud/issues/1941>`__)
+* The cache size per workspace can now be configured through the entry
+  `workspace_storage_cache_size` in the configuration file. The default value is
+  524288000, i.e. 512 MB.  (`#1983 <https://github.com/Scille/parsec-
+  cloud/issues/1983>`__)
+* Display some messages using snackbars instead of dialogs (`#2014
+  <https://github.com/Scille/parsec-cloud/issues/2014>`__)
+* Force the choice of a role when greeting a new user (`#2057
+  <https://github.com/Scille/parsec-cloud/issues/2057>`__)
+
+Bugfixes
+~~~~~~~~
+
+* Logging out of one tab now correctly update the list of available login device
+  (`#1896 <https://github.com/Scille/parsec-cloud/issues/1896>`__)
+* Fix refresh in workspaces when displaying a timestamped workspace on the gui
+  (`#1909 <https://github.com/Scille/parsec-cloud/issues/1909>`__)
+* Improve client/server handshake mechanism (`#2047
+  <https://github.com/Scille/parsec-cloud/issues/2047>`__)
+
+Miscellaneous internal changes
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+* Changed user icons depending on their role (`#1889
+  <https://github.com/Scille/parsec-cloud/issues/1889>`__)
+* Fixed some graphical gliches on MacOS when using dark mode.  (`#2037
+  <https://github.com/Scille/parsec-cloud/issues/2037>`__)
+
+
 Parsec v2.6.0 (2021-11-09)
 --------------------------
 
