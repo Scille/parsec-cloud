@@ -19,20 +19,22 @@ fn serde_block_create_req() {
         "7d7d4e95ad2fdea7b3bd19c5"
     );
 
-    let expected = BlockCreateReq {
-        cmd: "block_create".to_owned(),
-        block_id: "57c629b69d6c4abbaf651cafa46dbc93".parse().unwrap(),
-        realm_id: "1d3353157d7d4e95ad2fdea7b3bd19c5".parse().unwrap(),
-        block: b"foobar".to_vec(),
+    let expected = Cmd {
+        cmd: "block_create",
+        req: BlockCreateReq {
+            block_id: "57c629b69d6c4abbaf651cafa46dbc93".parse().unwrap(),
+            realm_id: "1d3353157d7d4e95ad2fdea7b3bd19c5".parse().unwrap(),
+            block: b"foobar".to_vec(),
+        },
     };
 
-    let schema = BlockCreateReq::load(&data).unwrap();
+    let schema = Cmd::loads(&data);
 
     assert_eq!(schema, expected);
 
     // Also test serialization round trip
-    let data2 = schema.dump();
-    let schema2 = BlockCreateReq::load(&data2).unwrap();
+    let data2 = Authenticated::dumps(&expected.req).unwrap();
+    let schema2 = Cmd::loads(&data2);
     assert_eq!(schema2, expected);
 }
 
@@ -127,18 +129,20 @@ fn serde_block_read_req() {
         "6b5f72656164"
     );
 
-    let expected = BlockReadReq {
-        cmd: "block_read".to_owned(),
-        block_id: "57c629b69d6c4abbaf651cafa46dbc93".parse().unwrap(),
+    let expected = Cmd {
+        cmd: "block_read",
+        req: BlockReadReq {
+            block_id: "57c629b69d6c4abbaf651cafa46dbc93".parse().unwrap(),
+        },
     };
 
-    let schema = BlockReadReq::load(&data).unwrap();
+    let schema = Cmd::loads(&data);
 
     assert_eq!(schema, expected);
 
     // Also test serialization round trip
-    let data2 = schema.dump();
-    let schema2 = BlockReadReq::load(&data2).unwrap();
+    let data2 = Authenticated::dumps(&expected.req).unwrap();
+    let schema2 = Cmd::loads(&data2);
     assert_eq!(schema2, expected);
 }
 

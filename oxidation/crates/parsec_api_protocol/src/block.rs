@@ -13,14 +13,11 @@ use parsec_api_types::{BlockID, RealmID};
 #[serde_as]
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
 pub struct BlockCreateReq {
-    pub cmd: String,
     pub block_id: BlockID,
     pub realm_id: RealmID,
     #[serde_as(as = "Bytes")]
     pub block: Vec<u8>,
 }
-
-impl_api_protocol_dump_load!(BlockCreateReq);
 
 /*
  * BlockCreateRep
@@ -46,11 +43,8 @@ impl_api_protocol_dump_load!(BlockCreateRep);
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
 pub struct BlockReadReq {
-    pub cmd: String,
     pub block_id: BlockID,
 }
-
-impl_api_protocol_dump_load!(BlockReadReq);
 
 /*
  * BlockReadRep
