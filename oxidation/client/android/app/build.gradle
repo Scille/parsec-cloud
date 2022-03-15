@@ -3,7 +3,7 @@ apply plugin: 'com.android.application'
 android {
     compileSdkVersion rootProject.ext.compileSdkVersion
     defaultConfig {
-        applicationId "io.ionic.starter"
+        applicationId "com.scille.parsec"
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.targetSdkVersion
         versionCode 1
@@ -37,6 +37,7 @@ dependencies {
     androidTestImplementation "androidx.test.ext:junit:$androidxJunitVersion"
     androidTestImplementation "androidx.test.espresso:espresso-core:$androidxEspressoCoreVersion"
     implementation project(':capacitor-cordova-android-plugins')
+    implementation project(':libparsec')
 }
 
 apply from: 'capacitor.build.gradle'
@@ -48,4 +49,21 @@ try {
     }
 } catch(Exception e) {
     logger.info("google-services.json not found, google-services plugin not applied. Push Notifications won't work")
+}
+
+// Capacitor output an error log during application init if this folder is not available
+task ensureAssetsPublicPluginsDirExists {
+    doFirst {
+        if (!project.file("src/main/assets/public/plugins/keep").exists()) {
+            project.file("src/main/assets/public/plugins").mkdirs()
+            project.file("src/main/assets/public/plugins/keep").createNewFile()
+        }
+    }
+}
+
+tasks.whenTaskAdded { task -> {
+    if (task.name == 'preDebugBuild' || task.name == "preReleaseBuild") {
+        task.dependsOn ensureAssetsPublicPluginsDirExists
+    }
+}
 }

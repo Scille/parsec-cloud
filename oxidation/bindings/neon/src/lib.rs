@@ -1,15 +1,20 @@
 #[macro_use]
 extern crate lazy_static;
 
-use neon::prelude::*;
+use neon::{prelude::*};
 use std::sync::Mutex;
 
-fn submit_job(mut cx: FunctionContext) -> JsResult<JsUndefined> {
-    let success = cx.argument::<JsFunction>(0)?.root(&mut cx);
-    let error = cx.argument::<JsFunction>(1)?.root(&mut cx);
-    let cmd = cx.argument::<JsString>(2)?.value(&mut cx).to_owned();
-    let payload = cx.argument::<JsString>(3)?.value(&mut cx).to_owned();
+fn submit_job(mut cx: FunctionContext) -> JsResult<JsPromise> {
+    // Cordova bridge API for Android requests the params to be passed as a JS Object,
+    // hence we have to comply with this ourself to provide the same API accross plateforms.
+    let options = cx.argument::<JsObject>(0)?;
+    let cmd: Handle<JsString> = options.get(&mut cx, "cmd")?;
+    let cmd = cmd.value(&mut cx);
+    let payload: Handle<JsString> = options.get(&mut cx, "payload")?;
+    let payload = payload.value(&mut cx);
+
     let channel = cx.channel();
+    let (deferred, promise) = cx.promise();
 
     lazy_static! {
         static ref LIBPARSEC_CTX: Mutex<libparsec_bindings_common::RuntimeContext> = Mutex::new(libparsec_bindings_common::create_context());
@@ -22,21 +27,35 @@ fn submit_job(mut cx: FunctionContext) -> JsResult<JsUndefined> {
         let res = libparsec_bindings_common::decode_and_execute(&cmd, &payload);
 
         channel.send(move |mut cx| {
-            let (callback, arg) = match res {
-                Ok(data) => (success, data),
-                Err(err) => (error, err),
+
+            // Cordova bridge API for Android requests the return value to
+            // be a JS Object, hence we have to comply with this ourself to
+            // provide the same API accross plateforms.
+            fn _build_arg<'a>(cx: &mut TaskContext<'a>, value: &str) -> JsResult<'a, JsObject> {
+                let arg = cx.empty_object();
+                let arg_value = cx.string(value);
+                arg.set(cx, "value", arg_value)?;
+                Ok(arg)
+            }
+
+            match res {
+                Ok(data) => {
+                    let arg = _build_arg(&mut cx, &data)?;
+                    deferred.resolve(&mut cx, arg);
+                },
+                Err(err) => {
+                    let arg = _build_arg(&mut cx, &err)?;
+                    deferred.reject(&mut cx, arg);
+                },
             };
-            let callback = callback.into_inner(&mut cx);
-            let this = cx.undefined();
-            let args = vec![cx.string(arg).upcast::<JsValue>()];
-            callback.call(&mut cx, this, args)?;
+
             Ok(())
         });
 
     }));
 
     match submitted {
-        Ok(_) => Ok(cx.undefined()),
+        Ok(_) => Ok(promise),
         Err(err) => cx.throw_error(err)
     }
 }

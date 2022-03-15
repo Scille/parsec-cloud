@@ -1,86 +1,85 @@
-1 - Pre-requirements
+tl;dr:
+
 ```shell
-npm install -g @ionic/cli native-run cordova-res
+npm install
+
+# Electron dev
+npm run electron-open
+# *modify stuff*
+npm run electron-copy
+
+# Android dev
+npm run android-open
+# *modify stuff*
+npm run android-copy
 ```
 
-2 - Parsec GUI Ionic project creation
+
+## 1 - Install requirements
+
 ```shell
-# Location must be /parsec-cloud/oxidation
-ionic start client blank --type=vue --capacitor
-pushd client
-npm install @capacitor-community/electron
-# Ionic project must be build at least one time before adding capacitor plugins
-ionic build
-# Then we add the capacitor platforms
-npx cap add @capacitor-community/electron
-ionic cap add android
-ionic cap add ios
+npm install  # install dependecies
 ```
 
-3 - Launch specific versions (For development purpose)
+Among other things, `npm install` installs ionic/vue/capacitor CLI locally, use them with npx:
 ```shell
-# web browser version
-ionic serve
-
-# electron version
-npx cap open @capacitor-community/electron
-
-# android version
-npx cap open android
-
-# ios version
-npx cap open ios
+npx ionic --help
 ```
 
-4 - Update specific versions (For development purpose)
+## 2 - Web dev
+
 ```shell
-# web browser version
-ionic build
-
-# electron version
-ionic build && npx cap copy @capacitor-community/electron
-
-# android version
-ionic build && npx cap copy android
-
-# ios version
-ionic build && npx cap copy ios
+npx serve
 ```
 
-5 - Build and package specific versions (For production purpose)
+Note: libparsec is not available on web platform so far :(
+
+## 2 - Electron dev
+
+First libparsec's neon bindings must be built:
 ```shell
-# web browser version
-# TO WRITE
-
-# electron version
-# TO WRITE
-
-# android version
-# TO WRITE
-
-# ios version
-# TO WRITE
-```
-
-5 - Specific bindings (For development purpose)
-```shell
-# Location must be /parsec-cloud/oxidation
-
-# web browser version
-# TO WRITE => webAssembly
-
-# electron version
-# Generate `bindings/neon/index.node` (basically a .so that node can load)
 cd ../bindings/neon
-npm install && npm run build
-cd ../../client
-# Copy the node module so electron can find it for packaging
-cp ../bindings/neon/index.node ./electron/libparsec/ # (unix)
-copy ..\bindings\neon\index.node .\electron\libparsec\ # (windows)
+npm install
+npm run build  # Generate an index.node file
+```
+Note the `index.node` will be automatically copied by electron on build (see
+`libparsec` script defined in `client/electron/package.json`)
 
-# android version
-# TO WRITE => ?
+Then for regular build:
+```shell
+npx ionic build  # update the `dist` folder
+npx cap copy @capacitor-community/electron # copy `dist` into `electron/app` folder
+cd electron
+npm run electron:dist
+npm run electron:dist -- --dir  # To debug the generated payload
+npm run electron:dist -- --linux snap  # To generate a subset (see `npx electron-builder build --help`)
+```
 
-# ios version
-# TO WRITE => ?
+Or for incremental development:
+```shell
+npx ionic build && npx cap copy @capacitor-community/electron # Create/refresh `electron/app`
+npx cap open @capacitor-community/electron  # Open the app with a live reloader on `electron/app`
+cd electron
+npm electron:start  # Equivalent to above, have a look to `electron/package.json` ;-)
+npm libparsec  # Copy the libparsec index.node if it has been rebuilt
+```
+
+## 3 - Android dev
+
+For regular build:
+```shell
+npx ionic build  # update the `dist` folder
+npx cap copy android # copy `dist` into `android/app` folder
+npx cap open android  # Open Android studio
+```
+
+Note: Libparsec is automatically (re)build as needed when building the Android project.
+
+## 4 - iOS dev
+
+For regular build:
+```shell
+npx ionic build  # update the `dist` folder
+npx cap copy ios # copy `dist` into `ios/app` folder
+npx cap open ios  # Open XCode
 ```

@@ -66,10 +66,10 @@ pub extern "C" fn Java_com_scille_libparsec_Runtime_submitJob(
         let env2 = jvm.attach_current_thread().unwrap();
         let (method, payload) = match  res {
             Ok(data) => {
-                ("success", data)
+                ("resolve", data)
             },
             Err(err) => {
-                ("error", err)
+                ("reject", err)
             },
         };
 

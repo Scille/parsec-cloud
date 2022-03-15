@@ -12,6 +12,6 @@ libparsec_bindings_common = { path = "../common" }
 lazy_static = "1.4.0"
 
 [dependencies.neon]
-version = "0.9"
+version = "0.10"
 default-features = false
-features = ["napi-6", "channel-api"]
+features = ["napi-6", "channel-api", "promise-api"]

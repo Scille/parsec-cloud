@@ -7,7 +7,13 @@
     "build": "vue-cli-service build",
     "test:unit": "vue-cli-service test:unit",
     "test:e2e": "vue-cli-service test:e2e",
-    "lint": "vue-cli-service lint"
+    "lint": "vue-cli-service lint",
+    "android:copy": "npx ionic build && npx cap copy android",
+    "ios:copy": "npx ionic build && npx cap copy ios",
+    "electron:copy": "npx ionic build && npx cap copy @capacitor-community/electron && cd electron && npm run libparsec",
+    "android:open": "npm run android:copy && npx cap open android",
+    "ios:open": "npm run ios:copy && npx cap open ios",
+    "electron:open": "npm run electron:copy && npx cap open @capacitor-community/electron"
   },
   "dependencies": {
     "@capacitor-community/electron": "^4.1.0",
@@ -26,6 +32,7 @@
   },
   "devDependencies": {
     "@capacitor/cli": "3.4.3",
+    "@ionic/cli": "^6.0.0",
     "@types/jest": "^27.0.2",
     "@typescript-eslint/eslint-plugin": "^5.6.0",
     "@typescript-eslint/parser": "^5.6.0",
@@ -35,7 +42,7 @@
     "@vue/cli-plugin-router": "~5.0.0-rc.1",
     "@vue/cli-plugin-typescript": "~5.0.0-rc.1",
     "@vue/cli-plugin-unit-jest": "~5.0.0-rc.1",
-    "@vue/cli-service": "~5.0.0-rc.1",
+    "@vue/cli-service": "5.0.1",
     "@vue/eslint-config-typescript": "^9.1.0",
     "@vue/test-utils": "^2.0.0-rc.16",
     "@vue/vue3-jest": "^27.0.0-alpha.3",
@@ -44,6 +51,7 @@
     "eslint": "^8.4.1",
     "eslint-plugin-vue": "^8.2.0",
     "jest": "^27.3.1",
+    "native-run": "^1.5.0",
     "ts-jest": "^27.0.7",
     "typescript": "^4.3.5"
   },

@@ -1,12 +1,11 @@
 {
-  "appId": "com.yourdoamnin.yourapp",
+  "appId": "com.scille.parsec",
   "directories": {
     "buildResources": "resources"
   },
   "files": [
     "assets/**/*",
     "build/**/*",
-    "capacitor.config.*",
     "app/**/*"
   ],
   "publish": {

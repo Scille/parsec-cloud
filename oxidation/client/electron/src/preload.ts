@@ -1,7 +1,9 @@
 require('./rt/electron-rt');
-const { contextBridge } = require('electron');
-const libparsec = require('../../libparsec');
 
-contextBridge.exposeInMainWorld('libparsec', {
-  submitJob: libparsec.submitJob
-});
+import { contextBridge } from 'electron'
+
+const libparsec = require('./libparsec')
+
+contextBridge.exposeInMainWorld('libparsec_plugin', {
+  submitJob: libparsec.submitJob,
+})

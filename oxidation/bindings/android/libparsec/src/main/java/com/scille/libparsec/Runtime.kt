@@ -1,8 +1,8 @@
 package com.scille.libparsec
 
 interface IJobCallback {
-    fun success(string: String)
-    fun error(string: String)
+    fun resolve(string: String)
+    fun reject(string: String)
 }
 
 class Runtime {

@@ -8,3 +8,9 @@ plugins {
 task clean(type: Delete) {
     delete rootProject.buildDir
 }
+
+// If the current build.gradle is executed it means we are building a standalone
+// libparsec AAR (as opposed to run the `build.gradle` in `client/android/` which
+// contains a full Parsec APK application with dependency on the libparsec module)
+// So we share the same configuration between AAR and APK projects.
+apply from: file("$rootDir/../../gui/android/variables.gradle")

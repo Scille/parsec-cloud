@@ -1,3 +1,7 @@
+# Copied web assets
+app/src/main/assets/public
+
+
 # Using Android gitignore template: https://github.com/github/gitignore/blob/HEAD/Android.gitignore
 
 # Built application files
@@ -88,9 +92,3 @@ lint/tmp/
 
 # Android Profiling
 *.hprof
-
-# Cordova plugins for Capacitor
-capacitor-cordova-android-plugins
-
-# Copied web assets
-app/src/main/assets/public

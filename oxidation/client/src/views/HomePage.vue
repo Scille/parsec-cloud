@@ -18,12 +18,15 @@
         <div>
             <ion-button @click="onSubmit">Let's go!</ion-button>
         </div>
+        <div>
+          status: {{ status }}
+        </div>
       </div>
     </ion-content>
   </ion-page>
 </template>
 
-<script lang="ts">
+<script setup lang="ts">
 import {
     IonContent,
     IonHeader,
@@ -33,54 +36,54 @@ import {
     IonButton,
     toastController
 } from '@ionic/vue';
-import { defineComponent, ref } from 'vue';
+import { ref } from 'vue';
 
-const key = "1UT2bs6chdW4AnXbkSS18EuwOAgWIr7ROcHnicUhdAA="
-const message = "Ym9ueW91ciE="
+import { libparsec } from "../plugins/libparsec";
 
-export default defineComponent({
-  name: 'HomePage',
-  components: {
-    IonContent,
-    IonHeader,
-    IonPage,
-    IonTitle,
-    IonToolbar,
-    IonButton
-  },
-  setup() {
-    const content = ref();
-    return { content, onSubmit }
-  }
-});
+
+const status = ref("uninitialized")
+const key = ref("1UT2bs6chdW4AnXbkSS18EuwOAgWIr7ROcHnicUhdAA=")
+const message = ref("Ym9ueW91ciE=")
+
 
 async function onSubmit(): Promise<any> {
-    console.log("calling encrypt...");
-    const encrypted = await encrypt(key, message);
-    console.log(encrypted);
-    console.log("calling decrypt...");
-    const decrypted = await decrypt(key, encrypted);
-    console.log(decrypted);
-    toastController.create({
-        message: decrypted,
-        duration: 2000
-    }).then((toast) => {
-        toast.present();
-    });
-}
+  console.log("onSubmit !")
+  // Avoid concurrency modification
+  var key_value = key.value
+  var message_value = message.value
 
-async function encrypt(key: string, cleartext: string): Promise<string> {
-    return new Promise((resolve, reject) => {
-        const w: any = window;
-        w.libparsec.submitJob(resolve, reject, "encrypt", `${key}:${cleartext}`);
-    });
-}
+  try {
+    console.log("calling encrypt...")
+    var encrypted = await libparsec.encrypt(key_value, message_value)
 
-async function decrypt(key: string, cyphertext: string): Promise<string> {
-    return new Promise((resolve, reject) => {
-        const w: any = window;
-        w.libparsec.submitJob(resolve, reject, "decrypt", `${key}:${cyphertext}`);
-    });
+    console.log("calling decrypt...")
+    var decrypted = await libparsec.decrypt(key_value, encrypted)
+
+    if (decrypted != message_value) {
+      throw `Decrypted data differs from original data !\nDecrypted: ${decrypted}\nEncrypted: ${encrypted}`;
+    }
+
+  } catch (error) {
+    var errmsg = `Error: ${error}`
+    status.value = errmsg
+    console.log(errmsg)
+    var errtoast = await toastController.create({
+      message: "Encryption/decryption error :'-(",
+      duration: 2000
+    })
+    errtoast.present()
+    return
+  }
+
+  {
+    var okmsg = `Encrypted message: ${encrypted}`
+    status.value = okmsg
+    var oktoast = await toastController.create({
+      message: "All good ;-)",
+      duration: 2000
+    })
+    oktoast.present()
+  }
 }
 </script>
 
