@@ -169,7 +169,7 @@ pub fn generate_sas_code_candidates<'p>(
     let candidates: Vec<parsec_api_types::SASCode> = valid_sas.0.generate_sas_code_candidates(size);
     let py_candidates: Vec<PyObject> = candidates
         .iter()
-        .map(|v| SASCode::new(&v.to_string()).unwrap().into_py(py))
+        .map(|v| SASCode::new(v.as_ref()).unwrap().into_py(py))
         .collect();
 
     Ok(PyList::new(py, py_candidates))
