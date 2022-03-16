@@ -4,14 +4,14 @@ tl;dr:
 npm install
 
 # Electron dev
-npm run electron-open
+npm run electron:open
 # *modify stuff*
-npm run electron-copy
+npm run electron:copy
 
 # Android dev
-npm run android-open
+npm run android:open
 # *modify stuff*
-npm run android-copy
+npm run android:copy
 ```
 
 
