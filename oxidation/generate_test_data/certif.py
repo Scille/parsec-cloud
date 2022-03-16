@@ -1,7 +1,7 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) BSLv1.1 (eventually AGPLv3) 2016-2021 Scille SAS
 # flake8: noqa
 
-from utils import *
+from protocol.utils import *
 
 from parsec.api.protocol import *
 from parsec.api.data import *

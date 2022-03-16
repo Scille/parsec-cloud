@@ -12,7 +12,8 @@ macro_rules! impl_local_manifest_dump_load {
     ($name:ident) => {
         impl $name {
             pub fn dump_and_encrypt(&self, key: &SecretKey) -> Vec<u8> {
-                let serialized = rmp_serde::to_vec_named(&self).unwrap_or_else(|_| unreachable!());
+                let serialized =
+                    ::rmp_serde::to_vec_named(&self).unwrap_or_else(|_| unreachable!());
                 key.encrypt(&serialized)
             }
 
@@ -21,7 +22,7 @@ macro_rules! impl_local_manifest_dump_load {
                 key: &SecretKey,
             ) -> Result<Self, &'static str> {
                 let serialized = key.decrypt(encrypted).map_err(|_| "Invalid encryption")?;
-                rmp_serde::from_read_ref::<_, Self>(&serialized)
+                ::rmp_serde::from_read_ref::<_, Self>(&serialized)
                     .map_err(|_| "Invalid serialization")
             }
         }

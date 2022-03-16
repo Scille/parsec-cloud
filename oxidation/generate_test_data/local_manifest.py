@@ -3,7 +3,7 @@
 
 from uuid import UUID
 
-from utils import *
+from protocol.utils import *
 from parsec.crypto import *
 from parsec.api.protocol import *
 from parsec.api.data import *

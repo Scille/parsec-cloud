@@ -2,19 +2,19 @@
 
 use serde::{Deserialize, Serialize};
 
-use crate::impl_api_protocol_dump_load;
-
 /*
  * PingReq
  */
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
-pub struct PingReq {
-    pub cmd: String,
+pub struct AuthenticatedPingReq {
     pub ping: String,
 }
 
-impl_api_protocol_dump_load!(PingReq);
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
+pub struct InvitedPingReq {
+    pub ping: String,
+}
 
 /*
  * PingRep
@@ -22,8 +22,12 @@ impl_api_protocol_dump_load!(PingReq);
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
 #[serde(tag = "status", rename_all = "snake_case")]
-pub enum PingRep {
+pub enum AuthenticatedPingRep {
     Ok { pong: String },
 }
 
-impl_api_protocol_dump_load!(PingRep);
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
+#[serde(tag = "status", rename_all = "snake_case")]
+pub enum InvitedPingRep {
+    Ok { pong: String },
+}

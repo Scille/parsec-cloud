@@ -3,7 +3,6 @@
 use serde::{Deserialize, Serialize};
 use serde_with::{serde_as, Bytes};
 
-use crate::impl_api_protocol_dump_load;
 use parsec_api_types::{DateTime, DeviceID};
 
 /*
@@ -12,11 +11,8 @@ use parsec_api_types::{DateTime, DeviceID};
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
 pub struct MessageGetReq {
-    pub cmd: String,
     pub offset: u64,
 }
-
-impl_api_protocol_dump_load!(MessageGetReq);
 
 /*
  * Message
@@ -41,5 +37,3 @@ pub struct Message {
 pub enum MessageGetRep {
     Ok { messages: Vec<Message> },
 }
-
-impl_api_protocol_dump_load!(MessageGetRep);

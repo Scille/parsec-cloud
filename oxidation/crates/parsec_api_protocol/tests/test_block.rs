@@ -13,29 +13,30 @@ fn serde_block_create_req() {
     //   block_id: ext(2, hex!("57c629b69d6c4abbaf651cafa46dbc93"))
     //   cmd: "block_create"
     //   realm_id: ext(2, hex!("1d3353157d7d4e95ad2fdea7b3bd19c5"))
-    let data = hex!(
+    let raw = hex!(
         "84a5626c6f636bc406666f6f626172a8626c6f636b5f6964d80257c629b69d6c4abbaf651c"
         "afa46dbc93a3636d64ac626c6f636b5f637265617465a87265616c6d5f6964d8021d335315"
         "7d7d4e95ad2fdea7b3bd19c5"
     );
 
-    let expected = Cmd {
-        cmd: "block_create",
-        req: BlockCreateReq {
-            block_id: "57c629b69d6c4abbaf651cafa46dbc93".parse().unwrap(),
-            realm_id: "1d3353157d7d4e95ad2fdea7b3bd19c5".parse().unwrap(),
-            block: b"foobar".to_vec(),
-        },
+    let req = authenticated_cmds::block_create::Req {
+        block_id: "57c629b69d6c4abbaf651cafa46dbc93".parse().unwrap(),
+        realm_id: "1d3353157d7d4e95ad2fdea7b3bd19c5".parse().unwrap(),
+        block: b"foobar".to_vec(),
     };
 
-    let schema = Cmd::loads(&data);
+    let expected = authenticated_cmds::AnyCmdReq::BlockCreate(req.clone());
 
-    assert_eq!(schema, expected);
+    let data = authenticated_cmds::AnyCmdReq::loads(&raw).unwrap();
+
+    assert_eq!(data, expected);
 
     // Also test serialization round trip
-    let data2 = Authenticated::dumps(&expected.req).unwrap();
-    let schema2 = Cmd::loads(&data2);
-    assert_eq!(schema2, expected);
+    let raw2 = req.dumps().unwrap();
+
+    let data2 = authenticated_cmds::AnyCmdReq::loads(&raw2).unwrap();
+
+    assert_eq!(data2, expected);
 }
 
 #[rstest]
@@ -47,7 +48,7 @@ fn serde_block_create_req() {
         &hex!(
             "81a6737461747573a26f6b"
         )[..],
-        BlockCreateRep::Ok
+        authenticated_cmds::block_create::Rep::Ok
     )
 )]
 #[case::already_exists(
@@ -58,7 +59,7 @@ fn serde_block_create_req() {
         &hex!(
             "81a6737461747573ae616c72656164795f657869737473"
         )[..],
-        BlockCreateRep::AlreadyExists
+        authenticated_cmds::block_create::Rep::AlreadyExists
     )
 )]
 #[case::not_found(
@@ -69,7 +70,7 @@ fn serde_block_create_req() {
         &hex!(
             "81a6737461747573a96e6f745f666f756e64"
         )[..],
-        BlockCreateRep::NotFound
+        authenticated_cmds::block_create::Rep::NotFound
     )
 )]
 #[case::timeout(
@@ -80,7 +81,7 @@ fn serde_block_create_req() {
         &hex!(
             "81a6737461747573a774696d656f7574"
         )[..],
-        BlockCreateRep::Timeout
+        authenticated_cmds::block_create::Rep::Timeout
     )
 )]
 #[case::not_allowed(
@@ -91,7 +92,7 @@ fn serde_block_create_req() {
         &hex!(
             "81a6737461747573ab6e6f745f616c6c6f776564"
         )[..],
-        BlockCreateRep::NotAllowed
+        authenticated_cmds::block_create::Rep::NotAllowed
     )
 )]
 #[case::in_maintenance(
@@ -102,20 +103,22 @@ fn serde_block_create_req() {
         &hex!(
             "81a6737461747573ae696e5f6d61696e74656e616e6365"
         )[..],
-        BlockCreateRep::InMaintenance
+        authenticated_cmds::block_create::Rep::InMaintenance
     )
 )]
-fn serde_block_create_rep(#[case] data_expected: (&[u8], BlockCreateRep)) {
-    let (data, expected) = data_expected;
+fn serde_block_create_rep(#[case] raw_expected: (&[u8], authenticated_cmds::block_create::Rep)) {
+    let (raw, expected) = raw_expected;
 
-    let schema = BlockCreateRep::load(&data).unwrap();
+    let data = authenticated_cmds::block_create::Rep::loads(&raw).unwrap();
 
-    assert_eq!(schema, expected);
+    assert_eq!(data, expected);
 
     // Also test serialization round trip
-    let data2 = schema.dump();
-    let schema2 = BlockCreateRep::load(&data2).unwrap();
-    assert_eq!(schema2, expected);
+    let raw2 = data.dumps().unwrap();
+
+    let data2 = authenticated_cmds::block_create::Rep::loads(&raw2).unwrap();
+
+    assert_eq!(data2, expected);
 }
 
 #[rstest]
@@ -124,26 +127,27 @@ fn serde_block_read_req() {
     // Content:
     //   block_id: ext(2, hex!("57c629b69d6c4abbaf651cafa46dbc93"))
     //   cmd: "block_read"
-    let data = hex!(
+    let raw = hex!(
         "82a8626c6f636b5f6964d80257c629b69d6c4abbaf651cafa46dbc93a3636d64aa626c6f63"
         "6b5f72656164"
     );
 
-    let expected = Cmd {
-        cmd: "block_read",
-        req: BlockReadReq {
-            block_id: "57c629b69d6c4abbaf651cafa46dbc93".parse().unwrap(),
-        },
+    let req = authenticated_cmds::block_read::Req {
+        block_id: "57c629b69d6c4abbaf651cafa46dbc93".parse().unwrap(),
     };
 
-    let schema = Cmd::loads(&data);
+    let expected = authenticated_cmds::AnyCmdReq::BlockRead(req.clone());
 
-    assert_eq!(schema, expected);
+    let data = authenticated_cmds::AnyCmdReq::loads(&raw).unwrap();
+
+    assert_eq!(data, expected);
 
     // Also test serialization round trip
-    let data2 = Authenticated::dumps(&expected.req).unwrap();
-    let schema2 = Cmd::loads(&data2);
-    assert_eq!(schema2, expected);
+    let raw2 = req.dumps().unwrap();
+
+    let data2 = authenticated_cmds::AnyCmdReq::loads(&raw2).unwrap();
+
+    assert_eq!(data2, expected);
 }
 
 #[rstest]
@@ -156,7 +160,7 @@ fn serde_block_read_req() {
         &hex!(
             "82a5626c6f636bc406666f6f626172a6737461747573a26f6b"
         )[..],
-        BlockReadRep::Ok {
+        authenticated_cmds::block_read::Rep::Ok {
             block: b"foobar".to_vec(),
         }
     )
@@ -169,7 +173,7 @@ fn serde_block_read_req() {
         &hex!(
             "81a6737461747573a96e6f745f666f756e64"
         )[..],
-        BlockReadRep::NotFound
+        authenticated_cmds::block_read::Rep::NotFound
     )
 )]
 #[case::timeout(
@@ -180,7 +184,7 @@ fn serde_block_read_req() {
         &hex!(
             "81a6737461747573a774696d656f7574"
         )[..],
-        BlockReadRep::Timeout
+        authenticated_cmds::block_read::Rep::Timeout
     )
 )]
 #[case::not_allowed(
@@ -191,7 +195,7 @@ fn serde_block_read_req() {
         &hex!(
             "81a6737461747573ab6e6f745f616c6c6f776564"
         )[..],
-        BlockReadRep::NotAllowed
+        authenticated_cmds::block_read::Rep::NotAllowed
     )
 )]
 #[case::in_maintenance(
@@ -202,18 +206,20 @@ fn serde_block_read_req() {
         &hex!(
             "81a6737461747573ae696e5f6d61696e74656e616e6365"
         )[..],
-        BlockReadRep::InMaintenance
+        authenticated_cmds::block_read::Rep::InMaintenance
     )
 )]
-fn serde_block_read_rep(#[case] data_expected: (&[u8], BlockReadRep)) {
-    let (data, expected) = data_expected;
+fn serde_block_read_rep(#[case] raw_expected: (&[u8], authenticated_cmds::block_read::Rep)) {
+    let (raw, expected) = raw_expected;
 
-    let schema = BlockReadRep::load(&data).unwrap();
+    let data = authenticated_cmds::block_read::Rep::loads(&raw).unwrap();
 
-    assert_eq!(schema, expected);
+    assert_eq!(data, expected);
 
     // Also test serialization round trip
-    let data2 = schema.dump();
-    let schema2 = BlockReadRep::load(&data2).unwrap();
-    assert_eq!(schema2, expected);
+    let raw2 = data.dumps().unwrap();
+
+    let data2 = authenticated_cmds::block_read::Rep::loads(&raw2).unwrap();
+
+    assert_eq!(data2, expected);
 }

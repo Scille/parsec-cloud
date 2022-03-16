@@ -3,7 +3,6 @@
 use serde::{Deserialize, Serialize};
 use serde_with::{serde_as, Bytes};
 
-use crate::impl_api_protocol_dump_load;
 use parsec_api_types::{BlockID, RealmID};
 
 /*
@@ -25,7 +24,6 @@ pub struct BlockCreateReq {
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
 #[serde(tag = "status", rename_all = "snake_case")]
-#[non_exhaustive]
 pub enum BlockCreateRep {
     Ok,
     AlreadyExists,
@@ -34,8 +32,6 @@ pub enum BlockCreateRep {
     NotAllowed,
     InMaintenance,
 }
-
-impl_api_protocol_dump_load!(BlockCreateRep);
 
 /*
  * BlockReadReq
@@ -63,5 +59,3 @@ pub enum BlockReadRep {
     NotAllowed,
     InMaintenance,
 }
-
-impl_api_protocol_dump_load!(BlockReadRep);

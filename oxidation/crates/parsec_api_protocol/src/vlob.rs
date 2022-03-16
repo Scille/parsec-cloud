@@ -4,7 +4,6 @@ use serde::{Deserialize, Serialize};
 use serde_with::{serde_as, Bytes};
 use std::collections::HashMap;
 
-use crate::impl_api_protocol_dump_load;
 use parsec_api_types::{maybe_field, DateTime, DeviceID, RealmID, VlobID};
 
 /*
@@ -14,7 +13,6 @@ use parsec_api_types::{maybe_field, DateTime, DeviceID, RealmID, VlobID};
 #[serde_as]
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
 pub struct VlobCreateReq {
-    pub cmd: String,
     pub realm_id: RealmID,
     pub encryption_revision: u64,
     pub vlob_id: VlobID,
@@ -28,8 +26,6 @@ pub struct VlobCreateReq {
     #[serde_as(as = "Bytes")]
     pub blob: Vec<u8>,
 }
-
-impl_api_protocol_dump_load!(VlobCreateReq);
 
 /*
  * VlobCreateRep
@@ -48,8 +44,6 @@ pub enum VlobCreateRep {
     InMaintenance,
 }
 
-impl_api_protocol_dump_load!(VlobCreateRep);
-
 /*
  * VlobReadReq
  */
@@ -57,14 +51,11 @@ impl_api_protocol_dump_load!(VlobCreateRep);
 #[serde_as]
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
 pub struct VlobReadReq {
-    pub cmd: String,
     pub encryption_revision: u64,
     pub vlob_id: VlobID,
     pub version: Option<u64>,
     pub timestamp: Option<DateTime>,
 }
-
-impl_api_protocol_dump_load!(VlobReadReq);
 
 /*
  * VlobReadRep
@@ -95,8 +86,6 @@ pub enum VlobReadRep {
     InMaintenance,
 }
 
-impl_api_protocol_dump_load!(VlobReadRep);
-
 /*
  * VlobUpdateReq
  */
@@ -104,7 +93,6 @@ impl_api_protocol_dump_load!(VlobReadRep);
 #[serde_as]
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
 pub struct VlobUpdateReq {
-    pub cmd: String,
     pub encryption_revision: u64,
     pub vlob_id: VlobID,
     pub timestamp: DateTime,
@@ -112,8 +100,6 @@ pub struct VlobUpdateReq {
     #[serde_as(as = "Bytes")]
     pub blob: Vec<u8>,
 }
-
-impl_api_protocol_dump_load!(VlobUpdateReq);
 
 /*
  * VlobUpdateRep
@@ -133,20 +119,15 @@ pub enum VlobUpdateRep {
     InMaintenance,
 }
 
-impl_api_protocol_dump_load!(VlobUpdateRep);
-
 /*
  * VlobPollChangesReq
  */
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
 pub struct VlobPollChangesReq {
-    pub cmd: String,
     pub realm_id: RealmID,
     pub last_checkpoint: u64,
 }
-
-impl_api_protocol_dump_load!(VlobPollChangesReq);
 
 /*
  * VlobPollChangesRep
@@ -167,19 +148,14 @@ pub enum VlobPollChangesRep {
     InMaintenance,
 }
 
-impl_api_protocol_dump_load!(VlobPollChangesRep);
-
 /*
  * VlobPollChangesRep
  */
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
 pub struct VlobListVersionsReq {
-    pub cmd: String,
     pub vlob_id: VlobID,
 }
-
-impl_api_protocol_dump_load!(VlobListVersionsReq);
 
 /*
  * VlobListVersionsRep
@@ -199,21 +175,16 @@ pub enum VlobListVersionsRep {
     InMaintenance,
 }
 
-impl_api_protocol_dump_load!(VlobListVersionsRep);
-
 /*
  * VlobMaintenanceGetReencryptionBatchReq
  */
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
 pub struct VlobMaintenanceGetReencryptionBatchReq {
-    pub cmd: String,
     pub realm_id: RealmID,
     pub encryption_revision: u64,
     pub size: u64,
 }
-
-impl_api_protocol_dump_load!(VlobMaintenanceGetReencryptionBatchReq);
 
 /*
  * ReencryptionBatchEntry
@@ -254,24 +225,19 @@ pub enum VlobMaintenanceGetReencryptionBatchRep {
     },
 }
 
-impl_api_protocol_dump_load!(VlobMaintenanceGetReencryptionBatchRep);
-
 /*
  * VlobMaintenanceSaveReencryptionBatchReq
  */
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
 pub struct VlobMaintenanceSaveReencryptionBatchReq {
-    pub cmd: String,
     pub realm_id: RealmID,
     pub encryption_revision: u64,
     pub batch: Vec<ReencryptionBatchEntry>,
 }
 
-impl_api_protocol_dump_load!(VlobMaintenanceSaveReencryptionBatchReq);
-
 /*
- * VlobMaintenanceSaveReencryptionBatchReq
+ * VlobMaintenanceSaveReencryptionBatchRep
  */
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
@@ -296,5 +262,3 @@ pub enum VlobMaintenanceSaveReencryptionBatchRep {
         reason: Option<String>,
     },
 }
-
-impl_api_protocol_dump_load!(VlobMaintenanceSaveReencryptionBatchRep);

@@ -3,7 +3,7 @@
 
 import trio
 import tempfile
-from utils import *
+from protocol.utils import *
 
 from parsec.crypto import *
 from parsec.api.protocol import *

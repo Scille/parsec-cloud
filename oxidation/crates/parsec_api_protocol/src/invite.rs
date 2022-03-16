@@ -3,7 +3,6 @@
 use serde::{Deserialize, Serialize};
 use serde_with::{serde_as, Bytes};
 
-use crate::impl_api_protocol_dump_load;
 use parsec_api_crypto::{HashDigest, PublicKey};
 use parsec_api_types::{DateTime, HumanHandle, InvitationToken, UserID};
 
@@ -27,17 +26,13 @@ pub enum InvitationType {
 #[serde(rename_all = "UPPERCASE")]
 pub enum InviteNewReq {
     User {
-        cmd: String,
         claimer_email: String,
         send_email: bool,
     },
     Device {
-        cmd: String,
         send_email: bool,
     },
 }
-
-impl_api_protocol_dump_load!(InviteNewReq);
 
 /*
  * InvitationEmailSentStatus
@@ -67,8 +62,6 @@ pub enum InviteNewRep {
     NotAvailable,
 }
 
-impl_api_protocol_dump_load!(InviteNewRep);
-
 /*
  * InvitationDeletedReason
  */
@@ -87,12 +80,9 @@ pub enum InvitationDeletedReason {
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
 pub struct InviteDeleteReq {
-    pub cmd: String,
     pub token: InvitationToken,
     pub reason: InvitationDeletedReason,
 }
-
-impl_api_protocol_dump_load!(InviteDeleteReq);
 
 /*
  * InviteDeleteRep
@@ -106,18 +96,12 @@ pub enum InviteDeleteRep {
     AlreadyDeleted,
 }
 
-impl_api_protocol_dump_load!(InviteDeleteRep);
-
 /*
  * InviteListReq
  */
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
-pub struct InviteListReq {
-    pub cmd: String,
-}
-
-impl_api_protocol_dump_load!(InviteListReq);
+pub struct InviteListReq;
 
 /*
  * InvitationStatus
@@ -162,18 +146,12 @@ pub enum InviteListRep {
     Ok { invitations: Vec<InviteListItem> },
 }
 
-impl_api_protocol_dump_load!(InviteListRep);
-
 /*
  * InviteInfoReq
  */
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
-pub struct InviteInfoReq {
-    pub cmd: String,
-}
-
-impl_api_protocol_dump_load!(InviteInfoReq);
+pub struct InviteInfoReq;
 
 /*
  * InviteUserOrDeviceRep
@@ -204,19 +182,14 @@ pub enum InviteInfoRep {
     Ok(InviteInfoUserOrDeviceRep),
 }
 
-impl_api_protocol_dump_load!(InviteInfoRep);
-
 /*
  * Invite1ClaimerWaitPeerReq
  */
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
 pub struct Invite1ClaimerWaitPeerReq {
-    pub cmd: String,
     pub claimer_public_key: PublicKey,
 }
-
-impl_api_protocol_dump_load!(Invite1ClaimerWaitPeerReq);
 
 /*
  * Invite1ClaimerWaitPeerRep
@@ -230,20 +203,15 @@ pub enum Invite1ClaimerWaitPeerRep {
     InvalidState,
 }
 
-impl_api_protocol_dump_load!(Invite1ClaimerWaitPeerRep);
-
 /*
  * Invite1GreeterWaitPeerReq
  */
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
 pub struct Invite1GreeterWaitPeerReq {
-    pub cmd: String,
     pub token: InvitationToken,
     pub greeter_public_key: PublicKey,
 }
-
-impl_api_protocol_dump_load!(Invite1GreeterWaitPeerReq);
 
 /*
  * Invite1GreeterWaitPeerRep
@@ -258,19 +226,14 @@ pub enum Invite1GreeterWaitPeerRep {
     InvalidState,
 }
 
-impl_api_protocol_dump_load!(Invite1GreeterWaitPeerRep);
-
 /*
  * Invite2aClaimerSendHashedNonceHashNonceReq
  */
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
 pub struct Invite2aClaimerSendHashedNonceHashNonceReq {
-    pub cmd: String,
     pub claimer_hashed_nonce: HashDigest,
 }
-
-impl_api_protocol_dump_load!(Invite2aClaimerSendHashedNonceHashNonceReq);
 
 /*
  * Invite2aClaimerSendHashedNonceHashNonceRep
@@ -289,7 +252,14 @@ pub enum Invite2aClaimerSendHashedNonceHashNonceRep {
     InvalidState,
 }
 
-impl_api_protocol_dump_load!(Invite2aClaimerSendHashedNonceHashNonceRep);
+/*
+ * Invite2aGreeterGetHashedNonceReq
+ */
+
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
+pub struct Invite2aGreeterGetHashedNonceReq {
+    pub token: InvitationToken,
+}
 
 /*
  * Invite2aGreeterGetHashedNonceRep
@@ -304,7 +274,17 @@ pub enum Invite2aGreeterGetHashedNonceRep {
     InvalidState,
 }
 
-impl_api_protocol_dump_load!(Invite2aGreeterGetHashedNonceRep);
+/*
+ * Invite2bGreeterSendNonceReq
+ */
+
+#[serde_as]
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
+pub struct Invite2bGreeterSendNonceReq {
+    pub token: InvitationToken,
+    #[serde_as(as = "Bytes")]
+    pub greeter_nonce: Vec<u8>,
+}
 
 /*
  * Invite2bGreeterSendNonceRep
@@ -323,8 +303,6 @@ pub enum Invite2bGreeterSendNonceRep {
     InvalidState,
 }
 
-impl_api_protocol_dump_load!(Invite2bGreeterSendNonceRep);
-
 /*
  * Invite2bClaimerSendNonceReq
  */
@@ -332,12 +310,9 @@ impl_api_protocol_dump_load!(Invite2bGreeterSendNonceRep);
 #[serde_as]
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
 pub struct Invite2bClaimerSendNonceReq {
-    pub cmd: String,
     #[serde_as(as = "Bytes")]
     pub claimer_nonce: Vec<u8>,
 }
-
-impl_api_protocol_dump_load!(Invite2bClaimerSendNonceReq);
 
 /*
  * Invite2bClaimerSendNonceRep
@@ -351,19 +326,14 @@ pub enum Invite2bClaimerSendNonceRep {
     InvalidState,
 }
 
-impl_api_protocol_dump_load!(Invite2bClaimerSendNonceRep);
-
 /*
  * Invite2bClaimerSendNonceReq
  */
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
 pub struct Invite3aGreeterWaitPeerTrustReq {
-    pub cmd: String,
     pub token: InvitationToken,
 }
-
-impl_api_protocol_dump_load!(Invite3aGreeterWaitPeerTrustReq);
 
 /*
  * Invite3aGreeterWaitPeerTrustRep
@@ -378,18 +348,12 @@ pub enum Invite3aGreeterWaitPeerTrustRep {
     InvalidState,
 }
 
-impl_api_protocol_dump_load!(Invite3aGreeterWaitPeerTrustRep);
-
 /*
  * Invite3bClaimerWaitPeerTrustReq
  */
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
-pub struct Invite3bClaimerWaitPeerTrustReq {
-    pub cmd: String,
-}
-
-impl_api_protocol_dump_load!(Invite3bClaimerWaitPeerTrustReq);
+pub struct Invite3bClaimerWaitPeerTrustReq;
 
 /*
  * Invite3bClaimerWaitPeerTrustRep
@@ -403,19 +367,14 @@ pub enum Invite3bClaimerWaitPeerTrustRep {
     InvalidState,
 }
 
-impl_api_protocol_dump_load!(Invite3bClaimerWaitPeerTrustRep);
-
 /*
  * Invite3bGreeterSignifyTrustReq
  */
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
 pub struct Invite3bGreeterSignifyTrustReq {
-    pub cmd: String,
     pub token: InvitationToken,
 }
-
-impl_api_protocol_dump_load!(Invite3bGreeterSignifyTrustReq);
 
 /*
  * Invite3bGreeterSignifyTrustRep
@@ -430,18 +389,12 @@ pub enum Invite3bGreeterSignifyTrustRep {
     InvalidState,
 }
 
-impl_api_protocol_dump_load!(Invite3bGreeterSignifyTrustRep);
-
 /*
  * Invite3aClaimerSignifyTrustReq
  */
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
-pub struct Invite3aClaimerSignifyTrustReq {
-    pub cmd: String,
-}
-
-impl_api_protocol_dump_load!(Invite3aClaimerSignifyTrustReq);
+pub struct Invite3aClaimerSignifyTrustReq;
 
 /*
  * Invite3aClaimerSignifyTrustRep
@@ -455,8 +408,6 @@ pub enum Invite3aClaimerSignifyTrustRep {
     InvalidState,
 }
 
-impl_api_protocol_dump_load!(Invite3aClaimerSignifyTrustRep);
-
 /*
  * Invite4GreeterCommunicateReq
  */
@@ -464,13 +415,10 @@ impl_api_protocol_dump_load!(Invite3aClaimerSignifyTrustRep);
 #[serde_as]
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
 pub struct Invite4GreeterCommunicateReq {
-    pub cmd: String,
     pub token: InvitationToken,
     #[serde_as(as = "Bytes")]
     pub payload: Vec<u8>,
 }
-
-impl_api_protocol_dump_load!(Invite4GreeterCommunicateReq);
 
 /*
  * Invite4GreeterCommunicateRep
@@ -489,8 +437,6 @@ pub enum Invite4GreeterCommunicateRep {
     InvalidState,
 }
 
-impl_api_protocol_dump_load!(Invite4GreeterCommunicateRep);
-
 /*
  * Invite4GreeterCommunicateRep
  */
@@ -498,12 +444,9 @@ impl_api_protocol_dump_load!(Invite4GreeterCommunicateRep);
 #[serde_as]
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
 pub struct Invite4ClaimerCommunicateReq {
-    pub cmd: String,
     #[serde_as(as = "Bytes")]
     pub payload: Vec<u8>,
 }
-
-impl_api_protocol_dump_load!(Invite4ClaimerCommunicateReq);
 
 /*
  * Invite4GreeterCommunicateRep
@@ -520,5 +463,3 @@ pub enum Invite4ClaimerCommunicateRep {
     NotFound,
     InvalidState,
 }
-
-impl_api_protocol_dump_load!(Invite4ClaimerCommunicateRep);

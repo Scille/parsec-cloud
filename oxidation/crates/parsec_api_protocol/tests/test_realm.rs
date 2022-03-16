@@ -12,25 +12,27 @@ fn serde_realm_create_req() {
     // Content:
     //   cmd: "realm_create"
     //   role_certificate: hex!("666f6f626172")
-    let data = hex!(
+    let raw = hex!(
         "82a3636d64ac7265616c6d5f637265617465b0726f6c655f6365727469666963617465c406"
         "666f6f626172"
     );
 
-    let expected = RealmCreateReq {
-        cmd: "realm_create".to_owned(),
+    let req = authenticated_cmds::realm_create::Req {
         role_certificate: b"foobar".to_vec(),
     };
 
-    let schema = RealmCreateReq::load(&data).unwrap();
+    let expected = authenticated_cmds::AnyCmdReq::RealmCreate(req.clone());
 
-    assert_eq!(schema, expected);
+    let data = authenticated_cmds::AnyCmdReq::loads(&raw).unwrap();
+
+    assert_eq!(data, expected);
 
     // Also test serialization round trip
-    let data2 = schema.dump();
-    let schema2 = RealmCreateReq::load(&data2).unwrap();
+    let raw2 = data.dumps().unwrap();
 
-    assert_eq!(schema2, expected);
+    let data2 = authenticated_cmds::AnyCmdReq::loads(&raw2).unwrap();
+
+    assert_eq!(data2, expected);
 }
 
 #[rstest]
@@ -42,7 +44,7 @@ fn serde_realm_create_req() {
         &hex!(
             "81a6737461747573a26f6b"
         )[..],
-        RealmCreateRep::Ok
+        authenticated_cmds::realm_create::Rep::Ok
     )
 )]
 #[case::invalid_certification(
@@ -55,21 +57,21 @@ fn serde_realm_create_req() {
             "82a6726561736f6ea6666f6f626172a6737461747573b5696e76616c69645f636572746966"
             "69636174696f6e"
         )[..],
-        RealmCreateRep::InvalidCertification {
+        authenticated_cmds::realm_create::Rep::InvalidCertification {
             reason: Some("foobar".to_owned()),
         }
     )
 )]
-#[case::invalid_data(
+#[case::invalid_raw(
     (
         // Generated from Python implementation (Parsec v2.6.0+dev)
         // Content:
         //   reason: "foobar"
-        //   status: "invalid_data"
+        //   status: "invalid_raw"
         &hex!(
             "82a6726561736f6ea6666f6f626172a6737461747573ac696e76616c69645f64617461"
         )[..],
-        RealmCreateRep::InvalidData {
+        authenticated_cmds::realm_create::Rep::InvalidData {
             reason: Some("foobar".to_owned()),
         }
     )
@@ -83,7 +85,7 @@ fn serde_realm_create_req() {
         &hex!(
             "82a6726561736f6ea6666f6f626172a6737461747573a96e6f745f666f756e64"
         )[..],
-        RealmCreateRep::NotFound {
+        authenticated_cmds::realm_create::Rep::NotFound {
             reason: Some("foobar".to_owned()),
         }
     )
@@ -96,21 +98,22 @@ fn serde_realm_create_req() {
         &hex!(
             "81a6737461747573ae616c72656164795f657869737473"
         )[..],
-        RealmCreateRep::AlreadyExists
+        authenticated_cmds::realm_create::Rep::AlreadyExists
     )
 )]
-fn serde_realm_create_rep(#[case] data_expected: (&[u8], RealmCreateRep)) {
-    let (data, expected) = data_expected;
+fn serde_realm_create_rep(#[case] raw_expected: (&[u8], authenticated_cmds::realm_create::Rep)) {
+    let (raw, expected) = raw_expected;
 
-    let schema = RealmCreateRep::load(&data).unwrap();
+    let data = authenticated_cmds::realm_create::Rep::loads(&raw).unwrap();
 
-    assert_eq!(schema, expected);
+    assert_eq!(data, expected);
 
     // Also test serialization round trip
-    let data2 = schema.dump();
-    let schema2 = RealmCreateRep::load(&data2).unwrap();
+    let raw2 = data.dumps().unwrap();
 
-    assert_eq!(schema2, expected);
+    let data2 = authenticated_cmds::realm_create::Rep::loads(&raw2).unwrap();
+
+    assert_eq!(data2, expected);
 }
 
 #[rstest]
@@ -119,25 +122,27 @@ fn serde_realm_status_req() {
     // Content:
     //   cmd: "realm_status"
     //   realm_id: ext(2, hex!("1d3353157d7d4e95ad2fdea7b3bd19c5"))
-    let data = hex!(
+    let raw = hex!(
         "82a3636d64ac7265616c6d5f737461747573a87265616c6d5f6964d8021d3353157d7d4e95"
         "ad2fdea7b3bd19c5"
     );
 
-    let expected = RealmStatusReq {
-        cmd: "realm_status".to_owned(),
+    let req = authenticated_cmds::realm_status::Req {
         realm_id: "1d3353157d7d4e95ad2fdea7b3bd19c5".parse().unwrap(),
     };
 
-    let schema = RealmStatusReq::load(&data).unwrap();
+    let expected = authenticated_cmds::AnyCmdReq::RealmStatus(req.clone());
 
-    assert_eq!(schema, expected);
+    let data = authenticated_cmds::AnyCmdReq::loads(&raw).unwrap();
+
+    assert_eq!(data, expected);
 
     // Also test serialization round trip
-    let data2 = schema.dump();
-    let schema2 = RealmStatusReq::load(&data2).unwrap();
+    let raw2 = data.dumps().unwrap();
 
-    assert_eq!(schema2, expected);
+    let data2 = authenticated_cmds::AnyCmdReq::loads(&raw2).unwrap();
+
+    assert_eq!(data2, expected);
 }
 
 #[rstest]
@@ -158,7 +163,7 @@ fn serde_realm_status_req() {
             "656e616e63655f74797065b2474152424147455f434f4c4c454354494f4ea6737461747573"
             "a26f6b"
         )[..],
-        RealmStatusRep::Ok {
+        authenticated_cmds::realm_status::Rep::Ok {
             in_maintenance: true,
             maintenance_type: Some(MaintenanceType::GarbageCollection),
             maintenance_started_on: Some("2000-1-2T01:00:00Z".parse().unwrap()),
@@ -175,7 +180,7 @@ fn serde_realm_status_req() {
         &hex!(
             "81a6737461747573ab6e6f745f616c6c6f776564"
         )[..],
-        RealmStatusRep::NotAllowed
+        authenticated_cmds::realm_status::Rep::NotAllowed
     )
 )]
 #[case::not_found(
@@ -187,23 +192,24 @@ fn serde_realm_status_req() {
         &hex!(
             "82a6726561736f6ea6666f6f626172a6737461747573a96e6f745f666f756e64"
         )[..],
-        RealmStatusRep::NotFound {
+        authenticated_cmds::realm_status::Rep::NotFound {
             reason: Some("foobar".to_owned())
         }
     )
 )]
-fn serde_realm_status_rep(#[case] data_expected: (&[u8], RealmStatusRep)) {
-    let (data, expected) = data_expected;
+fn serde_realm_status_rep(#[case] raw_expected: (&[u8], authenticated_cmds::realm_status::Rep)) {
+    let (raw, expected) = raw_expected;
 
-    let schema = RealmStatusRep::load(&data).unwrap();
+    let data = authenticated_cmds::realm_status::Rep::loads(&raw).unwrap();
 
-    assert_eq!(schema, expected);
+    assert_eq!(data, expected);
 
     // Also test serialization round trip
-    let data2 = schema.dump();
-    let schema2 = RealmStatusRep::load(&data2).unwrap();
+    let raw2 = data.dumps().unwrap();
 
-    assert_eq!(schema2, expected);
+    let data2 = authenticated_cmds::realm_status::Rep::loads(&raw2).unwrap();
+
+    assert_eq!(data2, expected);
 }
 
 #[rstest]
@@ -212,25 +218,27 @@ fn serde_realm_stats_req() {
     // Content:
     //   cmd: "realm_stats"
     //   realm_id: ext(2, hex!("1d3353157d7d4e95ad2fdea7b3bd19c5"))
-    let data = hex!(
+    let raw = hex!(
         "82a3636d64ab7265616c6d5f7374617473a87265616c6d5f6964d8021d3353157d7d4e95ad"
         "2fdea7b3bd19c5"
     );
 
-    let expected = RealmStatsReq {
-        cmd: "realm_stats".to_owned(),
+    let req = authenticated_cmds::realm_stats::Req {
         realm_id: "1d3353157d7d4e95ad2fdea7b3bd19c5".parse().unwrap(),
     };
 
-    let schema = RealmStatsReq::load(&data).unwrap();
+    let expected = authenticated_cmds::AnyCmdReq::RealmStats(req.clone());
 
-    assert_eq!(schema, expected);
+    let data = authenticated_cmds::AnyCmdReq::loads(&raw).unwrap();
+
+    assert_eq!(data, expected);
 
     // Also test serialization round trip
-    let data2 = schema.dump();
-    let schema2 = RealmStatsReq::load(&data2).unwrap();
+    let raw2 = data.dumps().unwrap();
 
-    assert_eq!(schema2, expected);
+    let data2 = authenticated_cmds::AnyCmdReq::loads(&raw2).unwrap();
+
+    assert_eq!(data2, expected);
 }
 
 #[rstest]
@@ -244,7 +252,7 @@ fn serde_realm_stats_req() {
         &hex!(
             "83ab626c6f636b735f73697a6508a6737461747573a26f6baa766c6f62735f73697a6508"
         )[..],
-        RealmStatsRep::Ok {
+        authenticated_cmds::realm_stats::Rep::Ok {
             blocks_size: 8,
             vlobs_size: 8,
         }
@@ -258,7 +266,7 @@ fn serde_realm_stats_req() {
         &hex!(
             "81a6737461747573ab6e6f745f616c6c6f776564"
         )[..],
-        RealmStatsRep::NotAllowed
+        authenticated_cmds::realm_stats::Rep::NotAllowed
     )
 )]
 #[case::not_found(
@@ -270,23 +278,24 @@ fn serde_realm_stats_req() {
         &hex!(
             "82a6726561736f6ea6666f6f626172a6737461747573a96e6f745f666f756e64"
         )[..],
-        RealmStatsRep::NotFound {
+        authenticated_cmds::realm_stats::Rep::NotFound {
             reason: Some("foobar".to_owned())
         }
     )
 )]
-fn serde_realm_stats_rep(#[case] data_expected: (&[u8], RealmStatsRep)) {
-    let (data, expected) = data_expected;
+fn serde_realm_stats_rep(#[case] raw_expected: (&[u8], authenticated_cmds::realm_stats::Rep)) {
+    let (raw, expected) = raw_expected;
 
-    let schema = RealmStatsRep::load(&data).unwrap();
+    let data = authenticated_cmds::realm_stats::Rep::loads(&raw).unwrap();
 
-    assert_eq!(schema, expected);
+    assert_eq!(data, expected);
 
     // Also test serialization round trip
-    let data2 = schema.dump();
-    let schema2 = RealmStatsRep::load(&data2).unwrap();
+    let raw2 = data.dumps().unwrap();
 
-    assert_eq!(schema2, expected);
+    let data2 = authenticated_cmds::realm_stats::Rep::loads(&raw2).unwrap();
+
+    assert_eq!(data2, expected);
 }
 
 #[rstest]
@@ -296,27 +305,29 @@ fn serde_realm_get_role_certificates_req() {
     //   cmd: "realm_get_role_certificates"
     //   realm_id: ext(2, hex!("1d3353157d7d4e95ad2fdea7b3bd19c5"))
     //   since: ext(1, 946774800.0)
-    let data = hex!(
+    let raw = hex!(
         "83a3636d64bb7265616c6d5f6765745f726f6c655f636572746966696361746573a8726561"
         "6c6d5f6964d8021d3353157d7d4e95ad2fdea7b3bd19c5a573696e6365d70141cc37518800"
         "0000"
     );
 
-    let expected = RealmGetRoleCertificatesReq {
-        cmd: "realm_get_role_certificates".to_owned(),
+    let req = authenticated_cmds::realm_get_role_certificates::Req {
         realm_id: "1d3353157d7d4e95ad2fdea7b3bd19c5".parse().unwrap(),
         since: Some("2000-1-2T01:00:00Z".parse().unwrap()),
     };
 
-    let schema = RealmGetRoleCertificatesReq::load(&data).unwrap();
+    let expected = authenticated_cmds::AnyCmdReq::RealmGetRoleCertificates(req.clone());
 
-    assert_eq!(schema, expected);
+    let data = authenticated_cmds::AnyCmdReq::loads(&raw).unwrap();
+
+    assert_eq!(data, expected);
 
     // Also test serialization round trip
-    let data2 = schema.dump();
-    let schema2 = RealmGetRoleCertificatesReq::load(&data2).unwrap();
+    let raw2 = data.dumps().unwrap();
 
-    assert_eq!(schema2, expected);
+    let data2 = authenticated_cmds::AnyCmdReq::loads(&raw2).unwrap();
+
+    assert_eq!(data2, expected);
 }
 
 #[rstest]
@@ -329,7 +340,7 @@ fn serde_realm_get_role_certificates_req() {
         &hex!(
             "82ac63657274696669636174657391c406666f6f626172a6737461747573a26f6b"
         )[..],
-        RealmGetRoleCertificatesRep::Ok {
+        authenticated_cmds::realm_get_role_certificates::Rep::Ok {
             certificates: vec![b"foobar".to_vec()],
         }
     )
@@ -342,7 +353,7 @@ fn serde_realm_get_role_certificates_req() {
         &hex!(
             "81a6737461747573ab6e6f745f616c6c6f776564"
         )[..],
-        RealmGetRoleCertificatesRep::NotAllowed
+        authenticated_cmds::realm_get_role_certificates::Rep::NotAllowed
     )
 )]
 #[case::not_found(
@@ -354,25 +365,26 @@ fn serde_realm_get_role_certificates_req() {
         &hex!(
             "82a6726561736f6ea6666f6f626172a6737461747573a96e6f745f666f756e64"
         )[..],
-        RealmGetRoleCertificatesRep::NotFound {
+        authenticated_cmds::realm_get_role_certificates::Rep::NotFound {
             reason: Some("foobar".to_owned())
         }
     )
 )]
 fn serde_realm_get_role_certificates_rep(
-    #[case] data_expected: (&[u8], RealmGetRoleCertificatesRep),
+    #[case] raw_expected: (&[u8], authenticated_cmds::realm_get_role_certificates::Rep),
 ) {
-    let (data, expected) = data_expected;
+    let (raw, expected) = raw_expected;
 
-    let schema = RealmGetRoleCertificatesRep::load(&data).unwrap();
+    let data = authenticated_cmds::realm_get_role_certificates::Rep::loads(&raw).unwrap();
 
-    assert_eq!(schema, expected);
+    assert_eq!(data, expected);
 
     // Also test serialization round trip
-    let data2 = schema.dump();
-    let schema2 = RealmGetRoleCertificatesRep::load(&data2).unwrap();
+    let raw2 = data.dumps().unwrap();
 
-    assert_eq!(schema2, expected);
+    let data2 = authenticated_cmds::realm_get_role_certificates::Rep::loads(&raw2).unwrap();
+
+    assert_eq!(data2, expected);
 }
 
 #[rstest]
@@ -382,27 +394,29 @@ fn serde_realm_update_roles_req() {
     //   cmd: "realm_update_roles"
     //   recipient_message: hex!("666f6f626172")
     //   role_certificate: hex!("666f6f626172")
-    let data = hex!(
+    let raw = hex!(
         "83a3636d64b27265616c6d5f7570646174655f726f6c6573b1726563697069656e745f6d65"
         "7373616765c406666f6f626172b0726f6c655f6365727469666963617465c406666f6f6261"
         "72"
     );
 
-    let expected = RealmUpdateRolesReq {
-        cmd: "realm_update_roles".to_owned(),
+    let req = authenticated_cmds::realm_update_roles::Req {
         role_certificate: b"foobar".to_vec(),
         recipient_message: Some(b"foobar".to_vec()),
     };
 
-    let schema = RealmUpdateRolesReq::load(&data).unwrap();
+    let expected = authenticated_cmds::AnyCmdReq::RealmUpdateRoles(req.clone());
 
-    assert_eq!(schema, expected);
+    let data = authenticated_cmds::AnyCmdReq::loads(&raw).unwrap();
+
+    assert_eq!(data, expected);
 
     // Also test serialization round trip
-    let data2 = schema.dump();
-    let schema2 = RealmUpdateRolesReq::load(&data2).unwrap();
+    let raw2 = data.dumps().unwrap();
 
-    assert_eq!(schema2, expected);
+    let data2 = authenticated_cmds::AnyCmdReq::loads(&raw2).unwrap();
+
+    assert_eq!(data2, expected);
 }
 
 #[rstest]
@@ -414,7 +428,7 @@ fn serde_realm_update_roles_req() {
         &hex!(
             "81a6737461747573a26f6b"
         )[..],
-        RealmUpdateRolesRep::Ok
+        authenticated_cmds::realm_update_roles::Rep::Ok
     )
 )]
 #[case::not_allowed(
@@ -426,7 +440,7 @@ fn serde_realm_update_roles_req() {
         &hex!(
             "82a6726561736f6ea6666f6f626172a6737461747573ab6e6f745f616c6c6f776564"
         )[..],
-        RealmUpdateRolesRep::NotAllowed {
+        authenticated_cmds::realm_update_roles::Rep::NotAllowed {
             reason: Some("foobar".to_owned())
         }
     )
@@ -441,21 +455,21 @@ fn serde_realm_update_roles_req() {
             "82a6726561736f6ea6666f6f626172a6737461747573b5696e76616c69645f636572746966"
             "69636174696f6e"
         )[..],
-        RealmUpdateRolesRep::InvalidCertification {
+        authenticated_cmds::realm_update_roles::Rep::InvalidCertification {
             reason: Some("foobar".to_owned())
         }
     )
 )]
-#[case::invalid_data(
+#[case::invalid_raw(
     (
         // Generated from Python implementation (Parsec v2.6.0+dev)
         // Content:
         //   reason: "foobar"
-        //   status: "invalid_data"
+        //   status: "invalid_raw"
         &hex!(
             "82a6726561736f6ea6666f6f626172a6737461747573ac696e76616c69645f64617461"
         )[..],
-        RealmUpdateRolesRep::InvalidData {
+        authenticated_cmds::realm_update_roles::Rep::InvalidData {
             reason: Some("foobar".to_owned())
         }
     )
@@ -468,7 +482,7 @@ fn serde_realm_update_roles_req() {
         &hex!(
             "81a6737461747573af616c72656164795f6772616e746564"
         )[..],
-        RealmUpdateRolesRep::AlreadyGranted
+        authenticated_cmds::realm_update_roles::Rep::AlreadyGranted
     )
 )]
 #[case::incompatible_profile(
@@ -481,7 +495,7 @@ fn serde_realm_update_roles_req() {
             "82a6726561736f6ea6666f6f626172a6737461747573b4696e636f6d70617469626c655f70"
             "726f66696c65"
         )[..],
-        RealmUpdateRolesRep::IncompatibleProfile {
+        authenticated_cmds::realm_update_roles::Rep::IncompatibleProfile {
             reason: Some("foobar".to_owned())
         }
     )
@@ -495,7 +509,7 @@ fn serde_realm_update_roles_req() {
         &hex!(
             "82a6726561736f6ea6666f6f626172a6737461747573a96e6f745f666f756e64"
         )[..],
-        RealmUpdateRolesRep::NotFound {
+        authenticated_cmds::realm_update_roles::Rep::NotFound {
             reason: Some("foobar".to_owned())
         }
     )
@@ -508,21 +522,24 @@ fn serde_realm_update_roles_req() {
         &hex!(
             "81a6737461747573ae696e5f6d61696e74656e616e6365"
         )[..],
-        RealmUpdateRolesRep::InMaintenance
+        authenticated_cmds::realm_update_roles::Rep::InMaintenance
     )
 )]
-fn serde_realm_update_roles_rep(#[case] data_expected: (&[u8], RealmUpdateRolesRep)) {
-    let (data, expected) = data_expected;
+fn serde_realm_update_roles_rep(
+    #[case] raw_expected: (&[u8], authenticated_cmds::realm_update_roles::Rep),
+) {
+    let (raw, expected) = raw_expected;
 
-    let schema = RealmUpdateRolesRep::load(&data).unwrap();
+    let data = authenticated_cmds::realm_update_roles::Rep::loads(&raw).unwrap();
 
-    assert_eq!(schema, expected);
+    assert_eq!(data, expected);
 
     // Also test serialization round trip
-    let data2 = schema.dump();
-    let schema2 = RealmUpdateRolesRep::load(&data2).unwrap();
+    let raw2 = data.dumps().unwrap();
 
-    assert_eq!(schema2, expected);
+    let data2 = authenticated_cmds::realm_update_roles::Rep::loads(&raw2).unwrap();
+
+    assert_eq!(data2, expected);
 }
 
 #[rstest]
@@ -534,7 +551,7 @@ fn serde_realm_start_reencryption_maintenance_req() {
     //   encryption_revision: 8
     //   per_participant_message: {109b68ba5cdf428ea0017fc6bcc04d4a:hex!("666f6f626172")}
     //   realm_id: ext(2, hex!("1d3353157d7d4e95ad2fdea7b3bd19c5"))
-    let data = hex!(
+    let raw = hex!(
         "85a3636d64d9247265616c6d5f73746172745f7265656e6372797074696f6e5f6d61696e74"
         "656e616e6365b3656e6372797074696f6e5f7265766973696f6e08b77065725f7061727469"
         "636970616e745f6d65737361676581d9203130396236386261356364663432386561303031"
@@ -542,8 +559,7 @@ fn serde_realm_start_reencryption_maintenance_req() {
         "4e95ad2fdea7b3bd19c5a974696d657374616d70d70141cc375188000000"
     );
 
-    let expected = RealmStartReencryptionMaintenanceReq {
-        cmd: "realm_start_reencryption_maintenance".to_owned(),
+    let req = authenticated_cmds::realm_start_reencryption_maintenance::Req {
         realm_id: "1d3353157d7d4e95ad2fdea7b3bd19c5".parse().unwrap(),
         encryption_revision: 8,
         timestamp: "2000-1-2T01:00:00Z".parse().unwrap(),
@@ -553,15 +569,18 @@ fn serde_realm_start_reencryption_maintenance_req() {
         )]),
     };
 
-    let schema = RealmStartReencryptionMaintenanceReq::load(&data).unwrap();
+    let expected = authenticated_cmds::AnyCmdReq::RealmStartReencryptionMaintenance(req.clone());
 
-    assert_eq!(schema, expected);
+    let data = authenticated_cmds::AnyCmdReq::loads(&raw).unwrap();
+
+    assert_eq!(data, expected);
 
     // Also test serialization round trip
-    let data2 = schema.dump();
-    let schema2 = RealmStartReencryptionMaintenanceReq::load(&data2).unwrap();
+    let raw2 = data.dumps().unwrap();
 
-    assert_eq!(schema2, expected);
+    let data2 = authenticated_cmds::AnyCmdReq::loads(&raw2).unwrap();
+
+    assert_eq!(data2, expected);
 }
 
 #[rstest]
@@ -573,7 +592,7 @@ fn serde_realm_start_reencryption_maintenance_req() {
         &hex!(
             "81a6737461747573a26f6b"
         )[..],
-        RealmStartReencryptionMaintenanceRep::Ok
+        authenticated_cmds::realm_start_reencryption_maintenance::Rep::Ok
     )
 )]
 #[case::not_allowed(
@@ -584,7 +603,7 @@ fn serde_realm_start_reencryption_maintenance_req() {
         &hex!(
             "81a6737461747573ab6e6f745f616c6c6f776564"
         )[..],
-        RealmStartReencryptionMaintenanceRep::NotAllowed
+        authenticated_cmds::realm_start_reencryption_maintenance::Rep::NotAllowed
     )
 )]
 #[case::not_found(
@@ -596,7 +615,7 @@ fn serde_realm_start_reencryption_maintenance_req() {
         &hex!(
             "82a6726561736f6ea6666f6f626172a6737461747573a96e6f745f666f756e64"
         )[..],
-        RealmStartReencryptionMaintenanceRep::NotFound {
+        authenticated_cmds::realm_start_reencryption_maintenance::Rep::NotFound {
             reason: Some("foobar".to_owned())
         }
     )
@@ -609,7 +628,7 @@ fn serde_realm_start_reencryption_maintenance_req() {
         &hex!(
             "81a6737461747573b76261645f656e6372797074696f6e5f7265766973696f6e"
         )[..],
-        RealmStartReencryptionMaintenanceRep::BadEncryptionRevision
+        authenticated_cmds::realm_start_reencryption_maintenance::Rep::BadEncryptionRevision
     )
 )]
 #[case::participant_mismatch(
@@ -622,7 +641,7 @@ fn serde_realm_start_reencryption_maintenance_req() {
             "82a6726561736f6ea6666f6f626172a6737461747573b47061727469636970616e745f6d69"
             "736d61746368"
         )[..],
-        RealmStartReencryptionMaintenanceRep::ParticipantMismatch {
+        authenticated_cmds::realm_start_reencryption_maintenance::Rep::ParticipantMismatch {
             reason: Some("foobar".to_owned())
         }
     )
@@ -637,7 +656,7 @@ fn serde_realm_start_reencryption_maintenance_req() {
             "82a6726561736f6ea6666f6f626172a6737461747573b16d61696e74656e616e63655f6572"
             "726f72"
         )[..],
-        RealmStartReencryptionMaintenanceRep::MaintenanceError {
+        authenticated_cmds::realm_start_reencryption_maintenance::Rep::MaintenanceError {
             reason: Some("foobar".to_owned())
         }
     )
@@ -650,23 +669,28 @@ fn serde_realm_start_reencryption_maintenance_req() {
         &hex!(
             "81a6737461747573ae696e5f6d61696e74656e616e6365"
         )[..],
-        RealmStartReencryptionMaintenanceRep::InMaintenance
+        authenticated_cmds::realm_start_reencryption_maintenance::Rep::InMaintenance
     )
 )]
 fn serde_realm_start_reencryption_maintenance_rep(
-    #[case] data_expected: (&[u8], RealmStartReencryptionMaintenanceRep),
+    #[case] raw_expected: (
+        &[u8],
+        authenticated_cmds::realm_start_reencryption_maintenance::Rep,
+    ),
 ) {
-    let (data, expected) = data_expected;
+    let (raw, expected) = raw_expected;
 
-    let schema = RealmStartReencryptionMaintenanceRep::load(&data).unwrap();
+    let data = authenticated_cmds::realm_start_reencryption_maintenance::Rep::loads(&raw).unwrap();
 
-    assert_eq!(schema, expected);
+    assert_eq!(data, expected);
 
     // Also test serialization round trip
-    let data2 = schema.dump();
-    let schema2 = RealmStartReencryptionMaintenanceRep::load(&data2).unwrap();
+    let raw2 = data.dumps().unwrap();
 
-    assert_eq!(schema2, expected);
+    let data2 =
+        authenticated_cmds::realm_start_reencryption_maintenance::Rep::loads(&raw2).unwrap();
+
+    assert_eq!(data2, expected);
 }
 
 #[rstest]
@@ -676,27 +700,29 @@ fn serde_realm_finish_reencryption_maintenance_req() {
     //   cmd: "realm_finish_reencryption_maintenance"
     //   encryption_revision: 8
     //   realm_id: ext(2, hex!("1d3353157d7d4e95ad2fdea7b3bd19c5"))
-    let data = hex!(
+    let raw = hex!(
         "83a3636d64d9257265616c6d5f66696e6973685f7265656e6372797074696f6e5f6d61696e"
         "74656e616e6365b3656e6372797074696f6e5f7265766973696f6e08a87265616c6d5f6964"
         "d8021d3353157d7d4e95ad2fdea7b3bd19c5"
     );
 
-    let expected = RealmFinishReencryptionMaintenanceReq {
-        cmd: "realm_finish_reencryption_maintenance".to_owned(),
+    let req = authenticated_cmds::realm_finish_reencryption_maintenance::Req {
         realm_id: "1d3353157d7d4e95ad2fdea7b3bd19c5".parse().unwrap(),
         encryption_revision: 8,
     };
 
-    let schema = RealmFinishReencryptionMaintenanceReq::load(&data).unwrap();
+    let expected = authenticated_cmds::AnyCmdReq::RealmFinishReencryptionMaintenance(req.clone());
 
-    assert_eq!(schema, expected);
+    let data = authenticated_cmds::AnyCmdReq::loads(&raw).unwrap();
+
+    assert_eq!(data, expected);
 
     // Also test serialization round trip
-    let data2 = schema.dump();
-    let schema2 = RealmFinishReencryptionMaintenanceReq::load(&data2).unwrap();
+    let raw2 = data.dumps().unwrap();
 
-    assert_eq!(schema2, expected);
+    let data2 = authenticated_cmds::AnyCmdReq::loads(&raw2).unwrap();
+
+    assert_eq!(data2, expected);
 }
 
 #[rstest]
@@ -708,7 +734,7 @@ fn serde_realm_finish_reencryption_maintenance_req() {
         &hex!(
             "81a6737461747573a26f6b"
         )[..],
-        RealmFinishReencryptionMaintenanceRep::Ok
+        authenticated_cmds::realm_finish_reencryption_maintenance::Rep::Ok
     )
 )]
 #[case::not_allowed(
@@ -719,7 +745,7 @@ fn serde_realm_finish_reencryption_maintenance_req() {
         &hex!(
             "81a6737461747573ab6e6f745f616c6c6f776564"
         )[..],
-        RealmFinishReencryptionMaintenanceRep::NotAllowed
+        authenticated_cmds::realm_finish_reencryption_maintenance::Rep::NotAllowed
     )
 )]
 #[case::not_found(
@@ -731,7 +757,7 @@ fn serde_realm_finish_reencryption_maintenance_req() {
         &hex!(
             "82a6726561736f6ea6666f6f626172a6737461747573a96e6f745f666f756e64"
         )[..],
-        RealmFinishReencryptionMaintenanceRep::NotFound {
+        authenticated_cmds::realm_finish_reencryption_maintenance::Rep::NotFound {
             reason: Some("foobar".to_owned())
         }
     )
@@ -744,7 +770,7 @@ fn serde_realm_finish_reencryption_maintenance_req() {
         &hex!(
             "81a6737461747573b76261645f656e6372797074696f6e5f7265766973696f6e"
         )[..],
-        RealmFinishReencryptionMaintenanceRep::BadEncryptionRevision
+        authenticated_cmds::realm_finish_reencryption_maintenance::Rep::BadEncryptionRevision
     )
 )]
 #[case::not_in_maintenance(
@@ -757,7 +783,7 @@ fn serde_realm_finish_reencryption_maintenance_req() {
             "82a6726561736f6ea6666f6f626172a6737461747573b26e6f745f696e5f6d61696e74656e"
             "616e6365"
         )[..],
-        RealmFinishReencryptionMaintenanceRep::NotInMaintenance {
+        authenticated_cmds::realm_finish_reencryption_maintenance::Rep::NotInMaintenance {
             reason: Some("foobar".to_owned())
         }
     )
@@ -772,23 +798,28 @@ fn serde_realm_finish_reencryption_maintenance_req() {
             "82a6726561736f6ea6666f6f626172a6737461747573b16d61696e74656e616e63655f6572"
             "726f72"
         )[..],
-        RealmFinishReencryptionMaintenanceRep::MaintenanceError {
+        authenticated_cmds::realm_finish_reencryption_maintenance::Rep::MaintenanceError {
             reason: Some("foobar".to_owned())
         }
     )
 )]
 fn serde_realm_finish_reencryption_maintenance_rep(
-    #[case] data_expected: (&[u8], RealmFinishReencryptionMaintenanceRep),
+    #[case] raw_expected: (
+        &[u8],
+        authenticated_cmds::realm_finish_reencryption_maintenance::Rep,
+    ),
 ) {
-    let (data, expected) = data_expected;
+    let (raw, expected) = raw_expected;
 
-    let schema = RealmFinishReencryptionMaintenanceRep::load(&data).unwrap();
+    let data = authenticated_cmds::realm_finish_reencryption_maintenance::Rep::loads(&raw).unwrap();
 
-    assert_eq!(schema, expected);
+    assert_eq!(data, expected);
 
     // Also test serialization round trip
-    let data2 = schema.dump();
-    let schema2 = RealmFinishReencryptionMaintenanceRep::load(&data2).unwrap();
+    let raw2 = data.dumps().unwrap();
 
-    assert_eq!(schema2, expected);
+    let data2 =
+        authenticated_cmds::realm_finish_reencryption_maintenance::Rep::loads(&raw2).unwrap();
+
+    assert_eq!(data2, expected);
 }

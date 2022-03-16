@@ -174,7 +174,8 @@ macro_rules! impl_dump_and_encrypt {
     ($name:ident) => {
         impl $name {
             pub fn dump_and_encrypt(&self, key: &::parsec_api_crypto::SecretKey) -> Vec<u8> {
-                let serialized = rmp_serde::to_vec_named(&self).unwrap_or_else(|_| unreachable!());
+                let serialized =
+                    ::rmp_serde::to_vec_named(&self).unwrap_or_else(|_| unreachable!());
                 let mut e =
                     ::flate2::write::ZlibEncoder::new(Vec::new(), flate2::Compression::default());
                 use std::io::Write;
@@ -200,7 +201,7 @@ macro_rules! impl_decrypt_and_load {
                     .read_to_end(&mut serialized)
                     .map_err(|_| "Invalid compression")?;
                 let obj: $name =
-                    rmp_serde::from_read_ref(&serialized).map_err(|_| "Invalid serialization")?;
+                    ::rmp_serde::from_read_ref(&serialized).map_err(|_| "Invalid serialization")?;
                 Ok(obj)
             }
         }

@@ -4,7 +4,6 @@ use serde::{Deserialize, Serialize};
 use serde_with::{serde_as, Bytes};
 use std::num::NonZeroU64;
 
-use crate::impl_api_protocol_dump_load;
 use parsec_api_types::{maybe_field, HumanHandle, UserID};
 
 /*** Access user API ***/
@@ -30,11 +29,8 @@ pub struct Trustchain {
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
 pub struct UserGetReq {
-    pub cmd: String,
     pub user_id: UserID,
 }
-
-impl_api_protocol_dump_load!(UserGetReq);
 
 /*
  * UserGetRep
@@ -56,8 +52,6 @@ pub enum UserGetRep {
     NotFound,
 }
 
-impl_api_protocol_dump_load!(UserGetRep);
-
 /*** User creation API ***/
 
 /*
@@ -67,7 +61,6 @@ impl_api_protocol_dump_load!(UserGetRep);
 #[serde_as]
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
 pub struct UserCreateReq {
-    pub cmd: String,
     #[serde_as(as = "Bytes")]
     pub user_certificate: Vec<u8>,
     #[serde_as(as = "Bytes")]
@@ -78,8 +71,6 @@ pub struct UserCreateReq {
     #[serde_as(as = "Bytes")]
     pub redacted_device_certificate: Vec<u8>,
 }
-
-impl_api_protocol_dump_load!(UserCreateReq);
 
 /*
  * UserCreateRep
@@ -111,8 +102,6 @@ pub enum UserCreateRep {
     },
 }
 
-impl_api_protocol_dump_load!(UserCreateRep);
-
 /*
  * UserRevokeReq
  */
@@ -120,12 +109,9 @@ impl_api_protocol_dump_load!(UserCreateRep);
 #[serde_as]
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
 pub struct UserRevokeReq {
-    pub cmd: String,
     #[serde_as(as = "Bytes")]
     pub revoked_user_certificate: Vec<u8>,
 }
-
-impl_api_protocol_dump_load!(UserRevokeReq);
 
 /*
  * UserRevokeRep
@@ -150,8 +136,6 @@ pub enum UserRevokeRep {
     },
 }
 
-impl_api_protocol_dump_load!(UserRevokeRep);
-
 /*** Device creation API ***/
 
 /*
@@ -161,15 +145,12 @@ impl_api_protocol_dump_load!(UserRevokeRep);
 #[serde_as]
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
 pub struct DeviceCreateReq {
-    pub cmd: String,
     #[serde_as(as = "Bytes")]
     pub device_certificate: Vec<u8>,
     // Same certificate than above, but expurged of device_label
     #[serde_as(as = "Bytes")]
     pub redacted_device_certificate: Vec<u8>,
 }
-
-impl_api_protocol_dump_load!(DeviceCreateReq);
 
 /*
  * DeviceCreateRep
@@ -197,8 +178,6 @@ pub enum DeviceCreateRep {
     },
 }
 
-impl_api_protocol_dump_load!(DeviceCreateRep);
-
 /*** Hman search API ***/
 
 /*
@@ -207,15 +186,12 @@ impl_api_protocol_dump_load!(DeviceCreateRep);
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
 pub struct HumanFindReq {
-    pub cmd: String,
     pub query: Option<String>,
     pub omit_revoked: bool,
     pub omit_non_human: bool,
     pub page: NonZeroU64,
     pub per_page: NonZeroU64,
 }
-
-impl_api_protocol_dump_load!(HumanFindReq);
 
 /*
  * HumanFindResultItem
@@ -229,7 +205,7 @@ pub struct HumanFindResultItem {
 }
 
 /*
- * HumanFindResultItem
+ * HumanFindRep
  */
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
@@ -246,5 +222,3 @@ pub enum HumanFindRep {
         reason: Option<String>,
     },
 }
-
-impl_api_protocol_dump_load!(HumanFindRep);

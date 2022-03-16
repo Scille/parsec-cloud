@@ -11,29 +11,40 @@ mod realm;
 mod user;
 mod vlob;
 
-pub use block::*;
+use block::*;
 pub use cmds::*;
-pub use events::*;
-pub use invite::*;
-pub use message::*;
-pub use organization::*;
-pub use ping::*;
-pub use realm::*;
-pub use user::*;
-pub use vlob::*;
+use events::*;
+use invite::*;
+use message::*;
+use organization::*;
+use ping::*;
+use realm::*;
+use user::*;
+use vlob::*;
 
-macro_rules! impl_api_protocol_dump_load {
+pub use events::APIEvent;
+pub use invite::{
+    InvitationDeletedReason, InvitationEmailSentStatus, InvitationStatus, InvitationType,
+    InviteInfoUserOrDeviceRep, InviteListItem,
+};
+pub use message::Message;
+pub use organization::{OrganizationBootstrapWebhook, UsersPerProfileDetailItem};
+pub use realm::MaintenanceType;
+pub use user::{HumanFindResultItem, Trustchain};
+pub use vlob::ReencryptionBatchEntry;
+
+macro_rules! impl_dumps_loads {
     ($name:ident) => {
         impl $name {
-            pub fn dump(&self) -> Vec<u8> {
-                rmp_serde::to_vec_named(&self).unwrap_or_else(|_| unreachable!())
+            pub fn dumps(&self) -> Result<Vec<u8>, &'static str> {
+                ::rmp_serde::to_vec_named(self).map_err(|_| "Serialization failed")
             }
 
-            pub fn load(data: &[u8]) -> Result<Self, &'static str> {
-                rmp_serde::from_read_ref::<_, Self>(&data).map_err(|_| "Invalid data")
+            pub fn loads(buf: &[u8]) -> Result<Self, &'static str> {
+                ::rmp_serde::from_read_ref::<_, Self>(buf).map_err(|_| "Deserialization failed")
             }
         }
     };
 }
 
-pub(crate) use impl_api_protocol_dump_load;
+pub(crate) use impl_dumps_loads;

@@ -2,45 +2,10 @@
 # flake8: noqa
 
 from pendulum import datetime
-from oxidation.generate_test_data.utils import *
+from utils import *
 from parsec.crypto import *
 from parsec.api.protocol import *
 from parsec.api.data import *
-
-################### OrganizationBootstrap ##################
-
-serializer = apiv1_organization_bootstrap_serializer
-serialized = serializer.req_dumps(
-    {
-        "cmd": "api_v1_organization_bootstrap",
-        "bootstrap_token": "foobar",
-        "root_verify_key": VerifyKey(
-            unhexlify("6507907d33bae6b5980b32fa03f3ebac56141b126e44f352ea46c5f22cd5ac57")
-        ),
-        "user_certificate": b"foobar",
-        "device_certificate": b"foobar",
-        "redacted_user_certificate": b"foobar",
-        "redacted_device_certificate": b"foobar",
-    }
-)
-serializer.req_loads(serialized)
-display("api_v1_organization_bootstrap_req", serialized, [])
-
-serialized = serializer.rep_dumps({"status": "invalid_certification", "reason": "foobar"})
-serializer.rep_loads(serialized)
-display("api_v1_organization_bootstrap_rep_invalid_certification", serialized, [])
-
-serialized = serializer.rep_dumps({"status": "invalid_data", "reason": "foobar"})
-serializer.rep_loads(serialized)
-display("api_v1_organization_bootstrap_rep_invalid_data", serialized, [])
-
-serialized = serializer.rep_dumps({"status": "already_bootstrapped"})
-serializer.rep_loads(serialized)
-display("api_v1_organization_bootstrap_rep_already_bootstrapped", serialized, [])
-
-serialized = serializer.rep_dumps({"status": "not_found"})
-serializer.rep_loads(serialized)
-display("api_v1_organization_bootstrap_rep_not_found", serialized, [])
 
 ################### OrganizationStats ##################
 

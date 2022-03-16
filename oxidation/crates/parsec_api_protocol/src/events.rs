@@ -2,8 +2,9 @@
 
 use serde::{Deserialize, Serialize};
 
-use crate::{impl_api_protocol_dump_load, InvitationStatus};
 use parsec_api_types::{maybe_field, InvitationToken, RealmID, RealmRole, VlobID};
+
+use crate::InvitationStatus;
 
 /*
  * APIEvent
@@ -47,11 +48,8 @@ pub enum APIEvent {
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
 pub struct EventsListenReq {
-    pub cmd: String,
     pub wait: bool,
 }
-
-impl_api_protocol_dump_load!(EventsListenReq);
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
 #[serde(tag = "status", rename_all = "snake_case")]
@@ -64,18 +62,12 @@ pub enum EventsListenRep {
     NoEvents,
 }
 
-impl_api_protocol_dump_load!(EventsListenRep);
-
 /*
  * EventsSubscribeReq
  */
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
-pub struct EventsSubscribeReq {
-    pub cmd: String,
-}
-
-impl_api_protocol_dump_load!(EventsSubscribeReq);
+pub struct EventsSubscribeReq;
 
 /*
  * EventsSubscribeRep
@@ -86,5 +78,3 @@ impl_api_protocol_dump_load!(EventsSubscribeReq);
 pub enum EventsSubscribeRep {
     Ok,
 }
-
-impl_api_protocol_dump_load!(EventsSubscribeRep);

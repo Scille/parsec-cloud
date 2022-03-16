@@ -2,7 +2,7 @@
 # flake8: noqa
 
 from pendulum import datetime
-from oxidation.generate_test_data.utils import *
+from utils import *
 from parsec.crypto import *
 from parsec.api.protocol import *
 from parsec.api.data import *
@@ -233,6 +233,15 @@ display("invite_2a_claimer_send_hashed_nonce_hash_nonce_rep_invalid_state", seri
 
 serializer = invite_2a_greeter_get_hashed_nonce_serializer
 
+serialized = serializer.req_dumps(
+    {
+        "cmd": "invite_2a_greeter_get_hashed_nonce",
+        "token": InvitationToken.from_hex("d864b93ded264aae9ae583fd3d40c45a"),
+    }
+)
+serializer.req_loads(serialized)
+display("invite_2a_greeter_get_hashed_nonce_req", serialized, [])
+
 serialized = serializer.rep_dumps(
     {
         "claimer_hashed_nonce": HashDigest(
@@ -259,6 +268,16 @@ display("invite_2a_greeter_get_hashed_nonce_rep_invalid_state", serialized, [])
 
 serializer = invite_2b_greeter_send_nonce_serializer
 
+serialized = serializer.req_dumps(
+    {
+        "cmd": "invite_2b_greeter_send_nonce",
+        "token": InvitationToken.from_hex("d864b93ded264aae9ae583fd3d40c45a"),
+        "greeter_nonce": b"foobar",
+    }
+)
+serializer.req_loads(serialized)
+display("invite_2b_greeter_send_nonce_req", serialized, [])
+
 serialized = serializer.rep_dumps({"claimer_nonce": b"foobar"})
 serializer.rep_loads(serialized)
 display("invite_2b_greeter_send_nonce_rep", serialized, [])
@@ -275,7 +294,7 @@ serialized = serializer.rep_dumps({"status": "invalid_state"})
 serializer.rep_loads(serialized)
 display("invite_2b_greeter_send_nonce_rep_invalid_state", serialized, [])
 
-################### Invite2bClaimerSendNonce ##################
+################## Invite2bClaimerSendNonce ##################
 
 serializer = invite_2b_claimer_send_nonce_serializer
 

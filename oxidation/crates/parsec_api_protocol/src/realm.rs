@@ -4,7 +4,6 @@ use serde::{Deserialize, Serialize};
 use serde_with::{serde_as, Bytes};
 use std::collections::HashMap;
 
-use crate::impl_api_protocol_dump_load;
 use parsec_api_types::{maybe_field, DateTime, DeviceID, RealmID, UserID};
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
@@ -21,12 +20,9 @@ pub enum MaintenanceType {
 #[serde_as]
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
 pub struct RealmCreateReq {
-    pub cmd: String,
     #[serde_as(as = "Bytes")]
     pub role_certificate: Vec<u8>,
 }
-
-impl_api_protocol_dump_load!(RealmCreateReq);
 
 /*
  * RealmCreateRep
@@ -51,19 +47,14 @@ pub enum RealmCreateRep {
     AlreadyExists,
 }
 
-impl_api_protocol_dump_load!(RealmCreateRep);
-
 /*
  * RealmStatusReq
  */
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
 pub struct RealmStatusReq {
-    pub cmd: String,
     pub realm_id: RealmID,
 }
-
-impl_api_protocol_dump_load!(RealmStatusReq);
 
 /*
  * RealmStatusRep
@@ -87,19 +78,14 @@ pub enum RealmStatusRep {
     },
 }
 
-impl_api_protocol_dump_load!(RealmStatusRep);
-
 /*
  * RealmStatsReq
  */
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
 pub struct RealmStatsReq {
-    pub cmd: String,
     pub realm_id: RealmID,
 }
-
-impl_api_protocol_dump_load!(RealmStatsReq);
 
 /*
  * RealmStatsRep
@@ -119,8 +105,6 @@ pub enum RealmStatsRep {
     },
 }
 
-impl_api_protocol_dump_load!(RealmStatsRep);
-
 /*
  * RealmGetRoleCertificatesReq
  */
@@ -128,12 +112,9 @@ impl_api_protocol_dump_load!(RealmStatsRep);
 #[serde_as]
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
 pub struct RealmGetRoleCertificatesReq {
-    pub cmd: String,
     pub realm_id: RealmID,
     pub since: Option<DateTime>,
 }
-
-impl_api_protocol_dump_load!(RealmGetRoleCertificatesReq);
 
 /*
  * RealmGetRoleCertificatesRep
@@ -154,8 +135,6 @@ pub enum RealmGetRoleCertificatesRep {
     },
 }
 
-impl_api_protocol_dump_load!(RealmGetRoleCertificatesRep);
-
 /*
  * RealmUpdateRolesReq
  */
@@ -163,14 +142,11 @@ impl_api_protocol_dump_load!(RealmGetRoleCertificatesRep);
 #[serde_as]
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
 pub struct RealmUpdateRolesReq {
-    pub cmd: String,
     #[serde_as(as = "Bytes")]
     pub role_certificate: Vec<u8>,
     #[serde_as(as = "Option<Bytes>")]
     pub recipient_message: Option<Vec<u8>>,
 }
-
-impl_api_protocol_dump_load!(RealmUpdateRolesReq);
 
 /*
  * RealmUpdateRolesRep
@@ -203,8 +179,6 @@ pub enum RealmUpdateRolesRep {
     InMaintenance,
 }
 
-impl_api_protocol_dump_load!(RealmUpdateRolesRep);
-
 /*
  * RealmStartReencryptionMaintenanceReq
  */
@@ -212,15 +186,12 @@ impl_api_protocol_dump_load!(RealmUpdateRolesRep);
 #[serde_as]
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
 pub struct RealmStartReencryptionMaintenanceReq {
-    pub cmd: String,
     pub realm_id: RealmID,
     pub encryption_revision: u64,
     pub timestamp: DateTime,
     #[serde_as(as = "HashMap<_, Bytes>")]
     pub per_participant_message: HashMap<UserID, Vec<u8>>,
 }
-
-impl_api_protocol_dump_load!(RealmStartReencryptionMaintenanceReq);
 
 /*
  * RealmStartReencryptionMaintenanceRep
@@ -247,20 +218,15 @@ pub enum RealmStartReencryptionMaintenanceRep {
     InMaintenance,
 }
 
-impl_api_protocol_dump_load!(RealmStartReencryptionMaintenanceRep);
-
 /*
  * RealmFinishReencryptionMaintenanceReq
  */
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
 pub struct RealmFinishReencryptionMaintenanceReq {
-    pub cmd: String,
     pub realm_id: RealmID,
     pub encryption_revision: u64,
 }
-
-impl_api_protocol_dump_load!(RealmFinishReencryptionMaintenanceReq);
 
 /*
  * RealmFinishReencryptionMaintenanceRep
@@ -285,5 +251,3 @@ pub enum RealmFinishReencryptionMaintenanceRep {
         reason: Option<String>,
     },
 }
-
-impl_api_protocol_dump_load!(RealmFinishReencryptionMaintenanceRep);
