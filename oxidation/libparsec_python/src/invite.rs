@@ -114,9 +114,9 @@ impl SASCode {
 
     fn __richcmp__(&self, py: Python, other: &SASCode, op: CompareOp) -> PyObject {
         match op {
-            CompareOp::Eq => (self.0.to_string() == other.0.to_string()).into_py(py),
-            CompareOp::Ne => (self.0.to_string() != other.0.to_string()).into_py(py),
-            CompareOp::Lt => (self.0.to_string() < other.0.to_string()).into_py(py),
+            CompareOp::Eq => (self.0 == other.0).into_py(py),
+            CompareOp::Ne => (self.0 != other.0).into_py(py),
+            CompareOp::Lt => (self.0 < other.0).into_py(py),
             _ => py.NotImplemented(),
         }
     }

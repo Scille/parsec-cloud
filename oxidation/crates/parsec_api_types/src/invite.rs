@@ -65,7 +65,7 @@ const SAS_CODE_PATTERN: &str = concat!("^[", SAS_CODE_CHARS!(), "]{4}$");
 const SAS_CODE_LEN: usize = 4;
 const SAS_CODE_BITS: u32 = 20;
 
-#[derive(Debug, PartialEq, Eq)]
+#[derive(Debug, PartialEq, Eq, PartialOrd)]
 pub struct SASCode(String);
 
 impl std::fmt::Display for SASCode {
@@ -127,11 +127,11 @@ impl From<SASCode> for String {
 
 impl SASCode {
     pub fn generate_sas_code_candidates(&self, size: usize) -> Vec<SASCode> {
-        let mut sas_codes: Vec<SASCode> = Vec::<SASCode>::new();
-
         if size == 0 {
-            return sas_codes;
+            return vec![];
         }
+
+        let mut sas_codes = Vec::<SASCode>::with_capacity(size);
 
         sas_codes.push(SASCode(self.to_string()));
         while sas_codes.len() < size {
