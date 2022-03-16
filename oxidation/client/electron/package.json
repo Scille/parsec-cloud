@@ -14,7 +14,7 @@
   "main": "build/src/index.js",
   "scripts": {
     "build": "tsc && electron-rebuild && npm run libparsec",
-    "libparsec:copy": "mkdir -p build/src/libparsec && cp ../../bindings/neon/index.node build/src/libparsec",
+    "libparsec:copy": "mkdir -p build/src/libparsec || md build\\src\\libparsec && cp ../../bindings/neon/index.node build/src/libparsec || copy ..\\..\\bindings\\neon\\index.node build\\src\\libparsec",
     "libparsec:build": "cd ../../bindings/neon/ && npm run build",
     "libparsec": "npm run libparsec:build && npm run libparsec:copy",
     "electron:start-live": "npm run libparsec && node ./live-runner.js",
