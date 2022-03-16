@@ -27,62 +27,54 @@
 </template>
 
 <script setup lang="ts">
-import {
-    IonContent,
-    IonHeader,
-    IonPage,
-    IonTitle,
-    IonToolbar,
-    IonButton,
-    toastController
-} from '@ionic/vue';
+import { toastController } from '@ionic/vue';
 import { ref } from 'vue';
 
 import { libparsec } from "../plugins/libparsec";
 
 
-const status = ref("uninitialized")
-const key = ref("1UT2bs6chdW4AnXbkSS18EuwOAgWIr7ROcHnicUhdAA=")
-const message = ref("Ym9ueW91ciE=")
+const status = ref("uninitialized");
+const key = ref("1UT2bs6chdW4AnXbkSS18EuwOAgWIr7ROcHnicUhdAA=");
+const message = ref("Ym9ueW91ciE=");
 
 
 async function onSubmit(): Promise<any> {
-  console.log("onSubmit !")
+  console.log("onSubmit !");
   // Avoid concurrency modification
-  var key_value = key.value
-  var message_value = message.value
+  const key_value = key.value;
+  const message_value = message.value;
 
   try {
-    console.log("calling encrypt...")
-    var encrypted = await libparsec.encrypt(key_value, message_value)
+    console.log("calling encrypt...");
+    var encrypted = await libparsec.encrypt(key_value, message_value);
 
-    console.log("calling decrypt...")
-    var decrypted = await libparsec.decrypt(key_value, encrypted)
+    console.log("calling decrypt...");
+    var decrypted = await libparsec.decrypt(key_value, encrypted);
 
     if (decrypted != message_value) {
       throw `Decrypted data differs from original data !\nDecrypted: ${decrypted}\nEncrypted: ${encrypted}`;
     }
 
   } catch (error) {
-    var errmsg = `Error: ${error}`
-    status.value = errmsg
-    console.log(errmsg)
-    var errtoast = await toastController.create({
+    const errmsg = `Error: ${error}`;
+    status.value = errmsg;
+    console.log(errmsg);
+    const errtoast = await toastController.create({
       message: "Encryption/decryption error :'-(",
       duration: 2000
-    })
-    errtoast.present()
-    return
+    });
+    errtoast.present();
+    return;
   }
 
   {
-    var okmsg = `Encrypted message: ${encrypted}`
-    status.value = okmsg
-    var oktoast = await toastController.create({
+    const okmsg = `Encrypted message: ${encrypted}`;
+    status.value = okmsg;
+    const oktoast = await toastController.create({
       message: "All good ;-)",
       duration: 2000
-    })
-    oktoast.present()
+    });
+    oktoast.present();
   }
 }
 </script>
