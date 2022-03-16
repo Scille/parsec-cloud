@@ -27,7 +27,15 @@
 </template>
 
 <script setup lang="ts">
-import { toastController } from '@ionic/vue';
+import {
+    IonContent,
+    IonHeader,
+    IonPage,
+    IonTitle,
+    IonToolbar,
+    IonButton,
+    toastController
+} from '@ionic/vue';
 import { ref } from 'vue';
 
 import { libparsec } from "../plugins/libparsec";
