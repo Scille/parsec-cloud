@@ -83,3 +83,20 @@ npx ionic build  # update the `dist` folder
 npx cap copy ios # copy `dist` into `ios/app` folder
 npx cap open ios  # Open XCode
 ```
+
+## BONUS - How to start a blank ionic project with Electron
+
+```shell
+# Pre-requirements
+npm install -g @ionic/cli native-run cordova-res
+# Location must be where you want the project folder
+ionic start blank-project blank --type=vue --capacitor
+pushd blank-project
+npm install @capacitor-community/electron
+# Ionic project must be build at least one time before adding capacitor plugins
+ionic build
+# Then we add the capacitor platforms
+npx cap add @capacitor-community/electron
+ionic cap add android
+ionic cap add ios
+```
