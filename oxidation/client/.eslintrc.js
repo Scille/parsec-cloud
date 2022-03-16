@@ -16,6 +16,20 @@ module.exports = {
     'no-debugger': process.env.NODE_ENV === 'production' ? 'warn' : 'off',
     'vue/no-deprecated-slot-attribute': 'off',
     '@typescript-eslint/no-explicit-any': 'off',
+    'no-var': 'error',
+    'semi': 'error',
+    'no-useless-return': 'error',
+    'no-trailing-spaces': 'error',
+    'no-multiple-empty-lines': ['error', { 'max': 1, 'maxEOF': 0 }],
+    'prefer-const': 'error',
+    'comma-dangle': 'error',
+    'indent': ['error', 2],
+    'vue/html-indent': ['error', 2],
+    'camelcase': 'error',
+    'max-len': ['error', 140],
+    'quotes': ['error', 'single', {'avoidEscape': true}],
+    'eqeqeq': 'error',
+    '@typescript-eslint/explicit-function-return-type': 'off'
   },
   overrides: [
     {
@@ -26,6 +40,12 @@ module.exports = {
       env: {
         jest: true
       }
+    },
+    {
+      files: ['*.ts', '*.vue'],
+      rules: {
+        '@typescript-eslint/explicit-function-return-type': 'error'
+      }
     }
   ]
-}
+};
