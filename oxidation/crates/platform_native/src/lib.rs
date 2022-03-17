@@ -1,3 +1,5 @@
+// Parsec Cloud (https://parsec.cloud) Copyright (c) BSLv1.1 (eventually AGPLv3) 2016-2021 Scille SAS
+
 use std::thread::JoinHandle;
 
 pub fn create_context() -> RuntimeContext {
@@ -5,25 +7,23 @@ pub fn create_context() -> RuntimeContext {
 
     // Simple thread to execute jobs
     let thread_join_handle = std::thread::spawn(move || {
-        loop {
-            match receiver.recv() {
-                Ok(func) => {
-                    func();
-                },
-                Err(std::sync::mpsc::RecvError) => {
-                    // Peer has closed the channel
-                    break;
-                },
-            }
+        while let Ok(func) = receiver.recv() {
+            func();
         }
+        // Peer has closed the channel
     });
 
-    RuntimeContext {job_sender: sender, thread_join_handle}
+    RuntimeContext {
+        job_sender: sender,
+        thread_join_handle,
+    }
 }
 
 pub fn destroy_context(ctx: RuntimeContext) {
     drop(ctx.job_sender);
-    ctx.thread_join_handle.join().expect("Cannot job runtime context thread !");
+    ctx.thread_join_handle
+        .join()
+        .expect("Cannot job runtime context thread !");
 }
 
 type JobFn = Box<dyn FnOnce() + Send>;
@@ -35,6 +35,6 @@ pub struct RuntimeContext {
 
 impl RuntimeContext {
     pub fn submit_job(&mut self, func: JobFn) -> Result<(), &'static str> {
-        self.job_sender.send(func).map_err(|_| { "submit_failed" })
+        self.job_sender.send(func).map_err(|_| "submit_failed")
     }
 }
