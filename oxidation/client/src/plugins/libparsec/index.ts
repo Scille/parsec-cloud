@@ -17,7 +17,7 @@ const libparsecPlugin = registerPlugin<LibParsecPlugin>(
 
 // High-level API
 
-/*eslint @typescript-eslint/no-empty-function: ["error", { "allow": ["private-constructors"] }]*/
+/* eslint @typescript-eslint/no-empty-function: ["error", { "allow": ["private-constructors"] }] */
 class LibParsec {
   // Singleton stuff
 

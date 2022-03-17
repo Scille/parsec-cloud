@@ -30,7 +30,25 @@ module.exports = {
     'max-len': ['error', 140],
     'quotes': ['error', 'single', {'avoidEscape': true}],
     'eqeqeq': 'error',
-    '@typescript-eslint/explicit-function-return-type': 'off'
+    '@typescript-eslint/explicit-function-return-type': 'off',
+    'dot-notation': 'error',
+    'no-alert': 'error',
+    'comma-spacing': 'error',
+    'eol-last': 'error',
+    'no-useless-concat': 'error',
+    'prefer-template': 'error',
+    'spaced-comment': [
+      'error',
+      'always',
+      {
+        'block': {'balanced': true}
+      }
+    ],
+    'array-bracket-spacing': 'error',
+    'arrow-parens': 'error',
+    'arrow-spacing': 'error',
+    'block-spacing': 'error',
+    'brace-style': 'error'
   },
   overrides: [
     {

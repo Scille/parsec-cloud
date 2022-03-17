@@ -81,17 +81,6 @@ async function onSubmit(): Promise<any> {
     duration: 2000
   });
   oktoast.present();
-  toto();
-}
-
-function toto(): boolean {
-  console.log('toto');
-  const yellow = false;
-  if (yellow) {
-    return true;
-  } else {
-    return 'chiasse';
-  }
 }
 </script>
 
