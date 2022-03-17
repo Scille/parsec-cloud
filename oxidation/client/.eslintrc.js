@@ -4,6 +4,7 @@ module.exports = {
     node: true
   },
   'extends': [
+    // Don't forget to also update plugin configuration in .pre-commit-config.yaml !
     'plugin:vue/vue3-essential',
     'eslint:recommended',
     '@vue/typescript/recommended'
