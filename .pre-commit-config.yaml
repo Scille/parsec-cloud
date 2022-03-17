@@ -23,7 +23,8 @@ repos:
       entry: python ./misc/license_headers.py add
       language: python
       language_version: python3
-      types_or: [python, sql, rust]
+      # see: https://github.com/pre-commit/identify/blob/master/identify/extensions.py
+      types_or: [python, sql, rust, vue, ts, tsx, javascript, jsx]
 
 # Python
 

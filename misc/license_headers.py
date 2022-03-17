@@ -148,14 +148,14 @@ LICENSERS_MAP = {
     re.compile(r"^parsec/backend/.*\.py"): PythonBSLLicenser,
     re.compile(r"^parsec/core/gui/_resources_rc.py$"): SkipLicenser,
     re.compile(r"^parsec/core/gui/ui/"): SkipLicenser,
-    re.compile(r"^oxidation/(.*/)?target/"): SkipLicenser,
+    re.compile(r"^oxidation/(.*/)?(target|node_modules|build|dist)/"): SkipLicenser,
     re.compile(r"^oxidation/.*\.rs$"): RustBSLLicenser,
     re.compile(r"^oxidation/.*\.py$"): PythonBSLLicenser,
     re.compile(r"^oxidation/.*\.sql$"): SqlBSLLicenser,
-    re.compile(r"^oxidation/(.*/)?node_modules/"): SkipLicenser,
-    re.compile(r"^oxidation/(.*/)?build/"): SkipLicenser,
-    re.compile(r"^oxidation/client/.*\.(ts|js)$"): JavascriptBSLLicenser,
-    re.compile(r"^oxidation/client/.*\.vue$"): VueBSLLicenser,
+    # Js project is a minefield full of node_modules/build/dist/assets etc.
+    # so we just cut simple and add copyright only to the important stuff
+    re.compile(r"^oxidation/client/src/.*\.(ts|js)$"): JavascriptBSLLicenser,
+    re.compile(r"^oxidation/client/src/.*\.vue$"): VueBSLLicenser,
     re.compile(r"^.*\.py$"): PythonAGPLLicenser,
     re.compile(r"^.*\.sql$"): SqlAGPLLicenser,
 }
@@ -164,7 +164,14 @@ LICENSERS_MAP = {
 def get_files(pathes: Iterable[Path]) -> Iterator[Path]:
     for path in pathes:
         if path.is_dir():
-            for f in chain(path.glob("**/*.py"), path.glob("**/*.sql"), path.glob("**/*.rs")):
+            for f in chain(
+                path.glob("**/*.py"),
+                path.glob("**/*.sql"),
+                path.glob("**/*.rs"),
+                path.glob("**/*.js"),
+                path.glob("**/*.ts"),
+                path.glob("**/*.vue"),
+            ):
                 yield f
         elif path.is_file():
             yield path
