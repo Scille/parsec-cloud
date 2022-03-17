@@ -116,6 +116,22 @@ class RustBSLLicenser(Licenser):
     )
 
 
+class JavascriptBSLLicenser(Licenser):
+    NAME = "BSL"
+    HEADER = f"// Parsec Cloud (https://parsec.cloud) Copyright (c) BSLv1.1 (eventually AGPLv3) 2016-{THIS_YEAR} Scille SAS"
+    HEADER_RE = re.compile(
+        r"^// Parsec Cloud \(https://parsec\.cloud\) Copyright \(c\) BSLv1.1 \(eventually AGPLv3\) 2016-(?P<year>[0-9]{4}) Scille SAS$"
+    )
+
+
+class VueBSLLicenser(Licenser):
+    NAME = "BSL"
+    HEADER = f"<!-- Parsec Cloud (https://parsec.cloud) Copyright (c) BSLv1.1 (eventually AGPLv3) 2016-{THIS_YEAR} Scille SAS -->"
+    HEADER_RE = re.compile(
+        r"^<!-- Parsec Cloud \(https://parsec\.cloud\) Copyright \(c\) BSLv1.1 \(eventually AGPLv3\) 2016-(?P<year>[0-9]{4}) Scille SAS -->$"
+    )
+
+
 class SkipLicenser(Licenser):
     @classmethod
     def check_header(cls, file: Path) -> bool:
@@ -136,6 +152,10 @@ LICENSERS_MAP = {
     re.compile(r"^oxidation/.*\.rs$"): RustBSLLicenser,
     re.compile(r"^oxidation/.*\.py$"): PythonBSLLicenser,
     re.compile(r"^oxidation/.*\.sql$"): SqlBSLLicenser,
+    re.compile(r"^oxidation/(.*/)?node_modules/"): SkipLicenser,
+    re.compile(r"^oxidation/(.*/)?build/"): SkipLicenser,
+    re.compile(r"^oxidation/client/.*\.(ts|js)$"): JavascriptBSLLicenser,
+    re.compile(r"^oxidation/client/.*\.vue$"): VueBSLLicenser,
     re.compile(r"^.*\.py$"): PythonAGPLLicenser,
     re.compile(r"^.*\.sql$"): SqlAGPLLicenser,
 }
