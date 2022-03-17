@@ -611,7 +611,7 @@ class WorkspacesWidget(QWidget, Ui_WorkspacesWidget):
             _("TEXT_WORKSPACE_RENAME_TITLE"),
             _("TEXT_WORKSPACE_RENAME_INSTRUCTIONS"),
             placeholder=_("TEXT_WORKSPACE_RENAME_PLACEHOLDER"),
-            default_text=workspace_button.name,
+            default_text=workspace_button.name.str,
             button_text=_("ACTION_WORKSPACE_RENAME_CONFIRM"),
             validator=validators.WorkspaceNameValidator(),
         )
