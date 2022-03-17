@@ -281,7 +281,7 @@ class ClaimDeviceCodeExchangeWidget(QWidget, Ui_ClaimDeviceCodeExchangeWidget):
         claimer_sas = job.ret
         self.widget_greeter_code.setVisible(False)
         self.widget_claimer_code.setVisible(True)
-        self.line_edit_claimer_code.setText(str(claimer_sas))
+        self.line_edit_claimer_code.setText(claimer_sas.str)
         self.wait_peer_trust_job = self.jobs_ctx.submit_job(
             self.wait_peer_trust_success, self.wait_peer_trust_error, self.claimer.wait_peer_trust
         )

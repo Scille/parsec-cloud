@@ -1,5 +1,6 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BSLv1.1 (eventually AGPLv3) 2016-2021 Scille SAS
 
+use rand::seq::SliceRandom;
 use rand::Rng;
 use regex::Regex;
 use serde::{Deserialize, Serialize};
@@ -64,7 +65,7 @@ const SAS_CODE_PATTERN: &str = concat!("^[", SAS_CODE_CHARS!(), "]{4}$");
 const SAS_CODE_LEN: usize = 4;
 const SAS_CODE_BITS: u32 = 20;
 
-#[derive(Debug, PartialEq, Eq)]
+#[derive(Debug, PartialEq, Eq, PartialOrd)]
 pub struct SASCode(String);
 
 impl std::fmt::Display for SASCode {
@@ -126,7 +127,13 @@ impl From<SASCode> for String {
 
 impl SASCode {
     pub fn generate_sas_code_candidates(&self, size: usize) -> Vec<SASCode> {
-        let mut sas_codes = vec![];
+        if size == 0 {
+            return vec![];
+        }
+
+        let mut sas_codes = Vec::<SASCode>::with_capacity(size);
+
+        sas_codes.push(SASCode(self.to_string()));
         while sas_codes.len() < size {
             let num = rand::thread_rng().gen_range(0..(2u32.pow(SAS_CODE_BITS) - 1));
             let candidate = SASCode::try_from(num).unwrap_or_else(|_| unreachable!());
@@ -134,6 +141,7 @@ impl SASCode {
                 sas_codes.push(candidate);
             }
         }
+        sas_codes.shuffle(&mut rand::thread_rng());
         sas_codes
     }
 

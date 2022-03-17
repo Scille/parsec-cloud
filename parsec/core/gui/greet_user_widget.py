@@ -450,7 +450,7 @@ class GreetUserCodeExchangeWidget(QWidget, Ui_GreetUserCodeExchangeWidget):
         assert job.is_finished()
         assert job.status == "ok"
         greeter_sas = job.ret
-        self.line_edit_greeter_code.setText(str(greeter_sas))
+        self.line_edit_greeter_code.setText(greeter_sas.str)
         self.wait_peer_trust_job = self.jobs_ctx.submit_job(
             self.wait_peer_trust_success, self.wait_peer_trust_error, self.greeter.wait_peer_trust
         )
