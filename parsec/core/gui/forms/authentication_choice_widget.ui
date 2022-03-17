@@ -13,6 +13,12 @@
   <property name="windowTitle">
    <string>Form</string>
   </property>
+  <property name="styleSheet">
+   <string notr="true">#AuthenticationChoiceWidget, #scrollAreaWidgetContents {
+    background-color: #F4F4F4;
+}
+   </string>
+  </property>
   <layout class="QVBoxLayout" name="verticalLayout">
    <property name="spacing">
     <number>20</number>
