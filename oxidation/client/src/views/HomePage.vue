@@ -88,7 +88,7 @@ async function onSubmit(): Promise<any> {
 }
 </script>
 
-<style scoped>
+<style lang="scss" scoped>
 #container {
     text-align: center;
     position: absolute;
@@ -96,14 +96,14 @@ async function onSubmit(): Promise<any> {
     right: 0;
     top: 50%;
     transform: translateY(-50%);
-}
 
-#container strong {
-    font-size: 20px;
-    line-height: 26px;
-}
+    strong {
+        font-size: 20px;
+        line-height: 26px;
+    }
 
-#container a {
-    text-decoration: none;
+    a {
+        text-decoration: none;
+    }
 }
 </style>
