@@ -11,14 +11,18 @@
     <ion-content :fullscreen="true">
       <ion-header collapse="condense">
         <ion-toolbar>
-          <ion-title size="large">Parsec</ion-title>
+          <ion-title size="large">
+            Parsec
+          </ion-title>
         </ion-toolbar>
       </ion-header>
 
       <div id="container">
         <strong>Ready to create Parsec?</strong>
         <div>
-          <ion-button @click="onSubmit">Let's go!</ion-button>
+          <ion-button @click="onSubmit">
+            Let's go!
+          </ion-button>
         </div>
         <div>
           status: {{ status }}

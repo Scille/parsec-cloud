@@ -5,7 +5,7 @@ module.exports = {
   },
   'extends': [
     // Don't forget to also update plugin configuration in .pre-commit-config.yaml !
-    'plugin:vue/vue3-essential',
+    'plugin:vue/vue3-strongly-recommended',
     'eslint:recommended',
     'plugin:@typescript-eslint/recommended',
     '@vue/typescript/recommended'
@@ -24,7 +24,6 @@ module.exports = {
     'prefer-const': 'error',
     'comma-dangle': 'error',
     'indent': ['error', 2],
-    'vue/html-indent': ['error', 2],
     'camelcase': 'error',
     'max-len': ['error', 140],
     'quotes': ['error', 'single', {'avoidEscape': true}],
@@ -49,6 +48,7 @@ module.exports = {
     'brace-style': 'error',
     '@typescript-eslint/explicit-function-return-type': 'off',
     '@typescript-eslint/no-explicit-any': 'off',
+    'vue/html-indent': ['error', 2],
     'vue/no-deprecated-slot-attribute': 'off'
   },
   overrides: [
