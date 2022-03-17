@@ -1,13 +1,15 @@
-#[macro_use] extern crate lazy_static;
-extern crate jni;
+// Parsec Cloud (https://parsec.cloud) Copyright (c) BSLv1.1 (eventually AGPLv3) 2016-2021 Scille SAS
+
+#[macro_use]
+extern crate lazy_static;
 extern crate android_logger;
+extern crate jni;
 
-use std::sync::Mutex;
-use log::Level;
 use android_logger::Config;
+use jni::objects::{JClass, JObject, JString, JValue};
 use jni::JNIEnv;
-use jni::objects::{JClass, JString, JObject, JValue};
-
+use log::Level;
+use std::sync::Mutex;
 
 #[no_mangle]
 #[allow(non_snake_case)]
@@ -16,9 +18,7 @@ pub extern "C" fn Java_com_scille_libparsec_Runtime_startRuntime(
     _class: JClass,
 ) -> bool {
     // TODO: initialize the runtime from here ?
-    android_logger::init_once(
-        Config::default().with_min_level(Level::Trace)
-    );
+    android_logger::init_once(Config::default().with_min_level(Level::Trace));
     log::info!("LibParsec runtime initialized !");
     true
 }
@@ -29,9 +29,9 @@ pub extern "C" fn Java_com_scille_libparsec_Runtime_submitJob(
     env: JNIEnv,
     _class: JClass,
     callback: JObject,
-    cmd: JString,  // TODO: use JByteBuffer instead
-    payload: JString,  // TODO: use JByteBuffer instead
-) -> bool  {
+    cmd: JString,     // TODO: use JByteBuffer instead
+    payload: JString, // TODO: use JByteBuffer instead
+) -> bool {
     log::info!("LibParsec .submitJob ????");
     let cmd: String = env
         .get_string(cmd)
@@ -42,9 +42,14 @@ pub extern "C" fn Java_com_scille_libparsec_Runtime_submitJob(
         .expect("Couldn't get java string!")
         .into();
 
-    log::info!("LibParsec .submitJob lazy static stuff, cmd={}, payload={}", &cmd, &payload);
+    log::info!(
+        "LibParsec .submitJob lazy static stuff, cmd={}, payload={}",
+        &cmd,
+        &payload
+    );
     lazy_static! {
-        static ref LIBPARSEC_CTX: Mutex<libparsec_bindings_common::RuntimeContext> = Mutex::new(libparsec_bindings_common::create_context());
+        static ref LIBPARSEC_CTX: Mutex<libparsec_bindings_common::RuntimeContext> =
+            Mutex::new(libparsec_bindings_common::create_context());
     }
 
     let mut runtime = LIBPARSEC_CTX.lock().unwrap();
@@ -64,24 +69,21 @@ pub extern "C" fn Java_com_scille_libparsec_Runtime_submitJob(
         log::info!("LibParsec call ok !");
 
         let env2 = jvm.attach_current_thread().unwrap();
-        let (method, payload) = match  res {
-            Ok(data) => {
-                ("resolve", data)
-            },
-            Err(err) => {
-                ("reject", err)
-            },
+        let (method, payload) = match res {
+            Ok(data) => ("resolve", data),
+            Err(err) => ("reject", err),
         };
 
         let payload = env2
-        .new_string(payload)
-        .expect("Couldn't create java string!");
+            .new_string(payload)
+            .expect("Couldn't create java string!");
 
         log::info!("LibParsec about to call callback...");
         let call_res = env2.call_method(
-        callback_global_ref.as_obj(),
-        method, "(Ljava/lang/String;)V",
-        &[JValue::from(payload)],
+            callback_global_ref.as_obj(),
+            method,
+            "(Ljava/lang/String;)V",
+            &[JValue::from(payload)],
         );
         log::info!("LibParsec about callback called !");
         if let Err(err) = call_res {
@@ -99,9 +101,6 @@ pub extern "C" fn Java_com_scille_libparsec_Runtime_submitJob(
         }
     }
 }
-
-
-
 
 // #[macro_use]
 // extern crate lazy_static;

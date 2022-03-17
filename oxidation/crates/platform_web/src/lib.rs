@@ -1,3 +1,5 @@
+// Parsec Cloud (https://parsec.cloud) Copyright (c) BSLv1.1 (eventually AGPLv3) 2016-2021 Scille SAS
+
 pub fn create_context() -> RuntimeContext {
     unimplemented!()
 }
@@ -8,8 +10,7 @@ pub fn destroy_context(_ctx: RuntimeContext) {
 
 type JobFn = Box<dyn FnOnce() + Send>;
 
-pub struct RuntimeContext {
-}
+pub struct RuntimeContext {}
 
 impl RuntimeContext {
     pub fn submit_job(&mut self, _func: JobFn) -> Result<(), &'static str> {
