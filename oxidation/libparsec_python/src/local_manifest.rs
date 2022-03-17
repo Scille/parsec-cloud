@@ -1,12 +1,13 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BSLv1.1 (eventually AGPLv3) 2016-2021 Scille SAS
 
 use pyo3::basic::CompareOp;
-use pyo3::exceptions::PyValueError;
+use pyo3::exceptions::{PyAssertionError, PyValueError};
 use pyo3::prelude::*;
 use pyo3::types::{IntoPyDict, PyBool, PyBytes, PyDict, PyTuple, PyType};
 use std::collections::hash_map::RandomState;
 use std::collections::{HashMap, HashSet};
 use std::num::NonZeroU64;
+use std::panic;
 
 use crate::binding_utils::{
     kwargs_extract_optional, kwargs_extract_optional_custom, kwargs_extract_required,
@@ -250,8 +251,14 @@ impl LocalFileManifest {
         Ok(format!("{:?}", self.0))
     }
 
-    fn get_chunks(&self, block: usize) -> PyResult<Vec<Chunk>> {
-        Ok(self.0.get_chunks(block).into_iter().map(Chunk).collect())
+    fn get_chunks<'p>(&self, py: Python<'p>, block: usize) -> PyResult<&'p PyTuple> {
+        let elems: Vec<PyObject> = self
+            .0
+            .get_chunks(block)
+            .into_iter()
+            .map(|x| Chunk(x).into_py(py))
+            .collect();
+        Ok(PyTuple::new(py, elems))
     }
 
     fn is_reshaped(&self) -> PyResult<bool> {
@@ -259,8 +266,11 @@ impl LocalFileManifest {
     }
 
     fn assert_integrity(&self) -> PyResult<()> {
-        self.0.assert_integrity();
-        Ok(())
+        let result = panic::catch_unwind(|| self.0.assert_integrity());
+        match result {
+            Ok(_) => Ok(()),
+            Err(_) => Err(PyAssertionError::new_err("assert")),
+        }
     }
 
     #[classmethod]
@@ -278,6 +288,19 @@ impl LocalFileManifest {
                 .to_remote(author.0, timestamp)
                 .map_err(PyValueError::new_err)?,
         ))
+    }
+
+    #[classmethod]
+    // Python signature includes variables that are unused in LocalFileManifest
+    #[allow(unused_variables)]
+    fn from_remote_with_local_context(
+        _cls: &PyType,
+        remote: FileManifest,
+        prevent_sync_pattern: &PyAny,
+        local_manifest: Self,
+        timestamp: &PyAny,
+    ) -> PyResult<Self> {
+        Self::from_remote(_cls, remote)
     }
 
     fn match_remote(&self, remote_manifest: &FileManifest) -> PyResult<bool> {
@@ -414,7 +437,6 @@ impl LocalFileManifest {
     }
 
     fn asdict<'py>(&self, py: Python<'py>) -> PyResult<&'py PyDict> {
-        let id = EntryID(self.0.base.id).into_py(py);
         let parent = EntryID(self.0.base.parent).into_py(py);
         let created = rs_to_py_datetime(py, self.0.base.created)?;
         let updated = rs_to_py_datetime(py, self.0.updated)?;
@@ -426,7 +448,6 @@ impl LocalFileManifest {
             .collect::<Vec<Vec<_>>>()
             .into_py(py);
         Ok([
-            ("id", id.to_object(py)),
             ("parent", parent.to_object(py)),
             ("created", created.to_object(py)),
             ("updated", updated.to_object(py)),

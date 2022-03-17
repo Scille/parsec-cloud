@@ -29,13 +29,20 @@ def test_local_file_manifest():
 
     assert LocalFileManifest is _RsLocalFileManifest
 
-    def _assert_local_file_manifest_eq(py, rs):
-        assert py.base == rs.base
+    def _assert_local_file_manifest_eq(py, rs, exclude_base=False, exclude_id=False):
+        if not exclude_base:
+            assert py.base == rs.base
         assert py.need_sync == rs.need_sync
         assert py.updated == rs.updated
         assert py.size == rs.size
         assert py.blocksize == rs.blocksize
         assert len(py.blocks) == len(rs.blocks)
+        if not exclude_id:
+            assert py.id == rs.id
+        assert py.created == rs.created
+        assert py.base_version == rs.base_version
+        assert py.is_placeholder == rs.is_placeholder
+        assert py.is_reshaped() == rs.is_reshaped()
         for (b1, b2) in zip(py.blocks, rs.blocks):
             assert len(b1) == len(b2)
             assert all(
@@ -48,6 +55,24 @@ def test_local_file_manifest():
                 and c1.access == c2.access
                 for (c1, c2) in zip(b1, b2)
             )
+
+    def _assert_file_manifest_eq(py, rs):
+        assert py.author == rs.author
+        assert py.parent == rs.parent
+        assert py.version == rs.version
+        assert py.size == rs.size
+        assert py.blocksize == rs.blocksize
+        assert py.timestamp == rs.timestamp
+        assert py.created == rs.created
+        assert py.updated == rs.updated
+        assert len(py.blocks) == len(rs.blocks)
+        assert all(
+            isinstance(b2, BlockAccess)
+            and b1.id == b2.id
+            and b1.offset == b2.offset
+            and b1.size == b2.size
+            for (b1, b2) in zip(py.blocks, rs.blocks)
+        )
 
     kwargs = {
         "base": FileManifest(
@@ -154,6 +179,54 @@ def test_local_file_manifest():
     py_lfm = py_lfm.evolve(**kwargs)
     rs_lfm = rs_lfm.evolve(**kwargs)
     _assert_local_file_manifest_eq(py_lfm, rs_lfm)
+
+    with pytest.raises(AssertionError):
+        py_lfm.assert_integrity()
+    with pytest.raises(AssertionError):
+        rs_lfm.assert_integrity()
+
+    assert py_lfm.to_stats() == rs_lfm.to_stats()
+    assert py_lfm.parent == rs_lfm.parent
+    assert py_lfm.get_chunks(0) == rs_lfm.get_chunks(0)
+    assert py_lfm.get_chunks(1000) == rs_lfm.get_chunks(1000)
+    assert py_lfm.asdict() == rs_lfm.asdict()
+
+    ts = pendulum.now()
+    ei = EntryID.new()
+    di = DeviceID("a@b")
+
+    # Without blocksize
+    py_lfm = _PyLocalFileManifest.new_placeholder(author=di, parent=ei, timestamp=ts)
+    rs_lfm = LocalFileManifest.new_placeholder(author=di, parent=ei, timestamp=ts)
+    _assert_local_file_manifest_eq(py_lfm, rs_lfm, exclude_base=True, exclude_id=True)
+    # With blocksize
+    py_lfm = _PyLocalFileManifest.new_placeholder(
+        author=di, parent=ei, timestamp=ts, blocksize=1024
+    )
+    rs_lfm = LocalFileManifest.new_placeholder(author=di, parent=ei, timestamp=ts, blocksize=1024)
+    _assert_local_file_manifest_eq(py_lfm, rs_lfm, exclude_base=True, exclude_id=True)
+
+    py_rfm = py_lfm.to_remote(author=di, timestamp=ts)
+    rs_rfm = rs_lfm.to_remote(author=di, timestamp=ts)
+    _assert_file_manifest_eq(py_rfm, rs_rfm)
+
+    py_lfm2 = _PyLocalFileManifest.from_remote(py_rfm)
+    rs_lfm2 = LocalFileManifest.from_remote(rs_rfm)
+    _assert_local_file_manifest_eq(py_lfm2, rs_lfm2, exclude_base=True, exclude_id=True)
+
+    py_lfm2 = _PyLocalFileManifest.from_remote_with_local_context(
+        remote=py_rfm, prevent_sync_pattern=r".+", local_manifest=py_lfm2, timestamp=ts
+    )
+    rs_lfm2 = LocalFileManifest.from_remote_with_local_context(
+        remote=rs_rfm, prevent_sync_pattern=r".+", local_manifest=rs_lfm2, timestamp=ts
+    )
+
+    assert py_lfm.match_remote(py_rfm) == rs_lfm.match_remote(rs_rfm)
+
+    py_lfm = py_lfm.evolve_and_mark_updated(timestamp=ts, **{"size": 4096})
+    rs_lfm = rs_lfm.evolve_and_mark_updated(timestamp=ts, **{"size": 4096})
+
+    _assert_local_file_manifest_eq(py_lfm, rs_lfm, exclude_base=True, exclude_id=True)
 
 
 @pytest.mark.rust
