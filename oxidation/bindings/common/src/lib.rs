@@ -28,9 +28,9 @@ pub fn decode_and_execute(cmd: &str, payload: &str) -> Result<String, String>
 
     match cmd {
         "encrypt" => {
-            _get_key_and_data(payload).and_then(|(key, data)| {
+            _get_key_and_data(payload).map(|(key, data)| {
                 let encrypted = key.encrypt(&data);
-                Ok(base64::encode(encrypted))
+                base64::encode(encrypted)
             })
         },
         "decrypt" => {

@@ -5,17 +5,10 @@ pub fn create_context() -> RuntimeContext {
 
     // Simple thread to execute jobs
     let thread_join_handle = std::thread::spawn(move || {
-        loop {
-            match receiver.recv() {
-                Ok(func) => {
-                    func();
-                },
-                Err(std::sync::mpsc::RecvError) => {
-                    // Peer has closed the channel
-                    break;
-                },
-            }
+        while let Ok(func) = receiver.recv() {
+            func();
         }
+        // Peer has closed the channel
     });
 
     RuntimeContext {job_sender: sender, thread_join_handle}
