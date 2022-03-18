@@ -856,7 +856,7 @@ class FilesWidget(QWidget, Ui_FilesWidget):
             _do_move_files,
             workspace_fs=self.workspace_fs,
             target_dir=target_dir,
-            source_files=[(file_type, src_path)],
+            source_files=[(src_path, file_type)],
             source_workspace=self.workspace_fs,
         )
 
