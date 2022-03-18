@@ -431,7 +431,7 @@ class WorkspacesWidget(QWidget, Ui_WorkspacesWidget):
         # Loop over buttons
         for button in self.workspace_button_mapping.values():
             # Filter by name
-            if name_filter is not None and name_filter not in button.name.lower():
+            if name_filter is not None and name_filter not in button.name.str.lower():
                 continue
             # Filter by user
             if user_filter is not None and user_filter not in button.users_roles:
