@@ -1,1 +1,0 @@
-Ignore the creation of `.fuse_hidden` files when we delete a file who is currently open

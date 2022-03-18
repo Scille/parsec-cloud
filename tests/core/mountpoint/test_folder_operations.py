@@ -214,11 +214,7 @@ def test_folder_operations(tmpdir, caplog, hypothesis_settings, mountpoint_servi
         def iterdir(self, path):
             expected_exc = None
             try:
-                expected_children = {
-                    x.name
-                    for x in path.to_oracle().iterdir()
-                    if not x.name.__contains__(".fuse_hidden")
-                }
+                expected_children = {x.name for x in path.to_oracle().iterdir()}
             except OSError as exc:
                 expected_exc = exc
 
