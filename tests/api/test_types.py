@@ -150,7 +150,8 @@ def test_sas_code():
     with pytest.raises(ValueError):
         SASCode.from_int(2 ** 20)
 
-    with pytest.raises(ValueError):
+    # OverflowError for Rust binding
+    with pytest.raises((ValueError, OverflowError)):
         SASCode.from_int(-1)
 
     for invalid in ["", "AAA", "AAAAA", "aaaa", "AAAI", "AAAO", "AAA0", "AAA1"]:

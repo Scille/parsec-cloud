@@ -16,6 +16,7 @@ from PyQt5.QtWidgets import (
 )
 from PyQt5.QtSvg import QSvgWidget
 
+from parsec.api.data import SASCode
 from parsec.core.gui.ui.code_input_widget import Ui_CodeInputWidget
 from parsec.core.gui.ui.spinner_widget import Ui_SpinnerWidget
 
@@ -49,10 +50,10 @@ class CodeInputWidget(QWidget, Ui_CodeInputWidget):
     none_clicked = pyqtSignal()
 
     class CodeButton(QPushButton):
-        clicked_with_code = pyqtSignal(str)
+        clicked_with_code = pyqtSignal(SASCode)
 
         def __init__(self, code):
-            super().__init__(str(code))
+            super().__init__(code.str)
             self.code = code
             font = self.font()
             font.setBold(True)

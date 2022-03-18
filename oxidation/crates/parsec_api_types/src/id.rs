@@ -229,6 +229,29 @@ pub enum UserProfile {
     Outsider,
 }
 
+impl FromStr for UserProfile {
+    type Err = &'static str;
+
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        match s.to_uppercase().as_str() {
+            "ADMIN" => Ok(Self::Admin),
+            "STANDARD" => Ok(Self::Standard),
+            "OUTSIDER" => Ok(Self::Outsider),
+            _ => Err("Invalid InvitationType"),
+        }
+    }
+}
+
+impl ToString for UserProfile {
+    fn to_string(&self) -> String {
+        match self {
+            Self::Admin => String::from("ADMIN"),
+            Self::Standard => String::from("STANDARD"),
+            Self::Outsider => String::from("OUTSIDER"),
+        }
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
