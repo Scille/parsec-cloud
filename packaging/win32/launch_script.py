@@ -12,7 +12,9 @@ multiprocessing.freeze_support()
 
 from parsec.cli import cli
 
-os.environ["SENTRY_URL"] = "https://863e60bbef39406896d2b7a5dbd491bb@sentry.io/1212848"
+os.environ[
+    "PARSEC_SENTRY_DSN"
+] = "https://863e60bbef39406896d2b7a5dbd491bb@o155936.ingest.sentry.io/1212848"
 os.environ["PREFERRED_ORG_CREATION_BACKEND_ADDR"] = "parsec://saas.parsec.cloud"
 os.makedirs(os.path.expandvars("%APPDATA%\\\\parsec"), exist_ok=True)
 
