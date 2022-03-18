@@ -561,8 +561,10 @@ def run_cmd(
             f"Starting Parsec Backend on {host}:{port}"
             f" (db={app_config.db_type}"
             f" blockstore={app_config.blockstore_config.type}"
+            f" email={email_config.type}"
+            f" telemetry={'on' if sentry_dsn else 'off'}"
             f" backend_addr={app_config.backend_addr}"
-            f" email_config={str(email_config)})"
+            ")"
         )
         try:
             retry_policy = RetryPolicy(
