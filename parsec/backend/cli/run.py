@@ -502,7 +502,8 @@ def run_cmd(
     log_level: str,
     log_format: str,
     log_file: Optional[str],
-    sentry_url: Optional[str],
+    sentry_dsn: Optional[str],
+    sentry_environment: str,
     debug: bool,
     dev: bool,
 ) -> None:

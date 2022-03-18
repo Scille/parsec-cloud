@@ -291,10 +291,16 @@ Example:
 Sentry
 ------
 
-* ``--sentry-url <url>``
-* Environ: ``PARSEC_SENTRY_URL``
+* ``--sentry-dsn <url>``
+* Environ: ``PARSEC_SENTRY_DSN``
 
 `Sentry <https://sentry.io/>`_ URL for telemetry report.
+
+* ``--sentry-environment <name>``
+* Environ: ``PARSEC_SENTRY_ENVIRONMENT``
+* Default: ``production``
+
+Customize environment name for Sentry's telemetry reports.
 
 Debug
 -----
