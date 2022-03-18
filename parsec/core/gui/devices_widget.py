@@ -23,7 +23,7 @@ class DeviceButton(QWidget, Ui_DeviceButton):
         self.device_info = device_info
         self.label_icon.apply_style()
         self.label_device_name.setText(
-            ensure_string_size(self.device_info.device_display, 190, self.label_device_name.font())
+            ensure_string_size(self.device_info.device_display, 170, self.label_device_name.font())
         )
         self.label_device_name.setToolTip(self.device_info.device_display)
         if self.is_current_device:
