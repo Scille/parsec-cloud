@@ -15,6 +15,7 @@ from parsec.core.gui.file_status_widget import FileStatusWidget
 from parsec.core.types import WorkspaceRole, EntryID
 from parsec.core.fs import FsPath, WorkspaceFS, WorkspaceFSTimestamped
 from parsec.core.fs.exceptions import (
+    FSLocalStorageOperationalError,
     FSRemoteManifestNotFound,
     FSInvalidArgumentError,
     FSFileNotFoundError,
@@ -735,6 +736,12 @@ class FilesWidget(QWidget, Ui_FilesWidget):
         # Propagate job result errors
         except JobResultError:
             raise
+
+        # Disk full
+        except FSLocalStorageOperationalError as exc:
+            text = _("TEXT_FILE_IMPORT_LOCAL_STORAGE_ERROR")
+            show_error(self, text, exception=exc)
+            raise JobResultError("error") from exc
 
         # Show a dialog when an unexpected error occurs
         except Exception as exc:
