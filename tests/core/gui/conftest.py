@@ -421,6 +421,9 @@ def testing_main_window_cls(aqtbot):
             password_w = l_w.widget.layout().itemAt(0).widget()
             aqtbot.key_clicks(password_w.line_edit_password, password)
 
+            # Wait for the password to actually be typed
+            await aqtbot.wait_until(lambda: password_w.line_edit_password.text() == password)
+
             signal = tabw.logged_in if not error else tabw.login_failed
             async with aqtbot.wait_signals([l_w.login_with_password_clicked, signal]):
                 aqtbot.mouse_click(password_w.button_login, QtCore.Qt.LeftButton)
