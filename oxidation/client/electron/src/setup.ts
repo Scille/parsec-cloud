@@ -16,18 +16,18 @@ import { join } from 'path';
 const reloadWatcher = {
   debouncer: null,
   ready: false,
-  watcher: null,
+  watcher: null
 };
 export function setupReloadWatcher(electronCapacitorApp: ElectronCapacitorApp): void {
   reloadWatcher.watcher = chokidar
     .watch(join(app.getAppPath(), 'app'), {
       ignored: /[/\\]\./,
-      persistent: true,
+      persistent: true
     })
     .on('ready', () => {
       reloadWatcher.ready = true;
     })
-    .on('all', (_event, _path) => {
+    .on('all', () => {
       if (reloadWatcher.ready) {
         clearTimeout(reloadWatcher.debouncer);
         reloadWatcher.debouncer = setTimeout(async () => {
@@ -53,7 +53,7 @@ export class ElectronCapacitorApp {
   ];
   private AppMenuBarMenuTemplate: (MenuItem | MenuItemConstructorOptions)[] = [
     { role: process.platform === 'darwin' ? 'appMenu' : 'fileMenu' },
-    { role: 'viewMenu' },
+    { role: 'viewMenu' }
   ];
   private mainWindowState;
   private loadWebApp;
@@ -79,12 +79,12 @@ export class ElectronCapacitorApp {
     // Setup our web app loader, this lets us load apps like react, vue, and angular without changing their build chains.
     this.loadWebApp = electronServe({
       directory: join(app.getAppPath(), 'app'),
-      scheme: this.customScheme,
+      scheme: this.customScheme
     });
   }
 
   // Helper function to load in the app.
-  private async loadMainWindow(thisRef: any) {
+  private async loadMainWindow(thisRef: any): Promise<void> {
     await thisRef.loadWebApp(thisRef.MainWindow);
   }
 
@@ -103,7 +103,7 @@ export class ElectronCapacitorApp {
     );
     this.mainWindowState = windowStateKeeper({
       defaultWidth: 1000,
-      defaultHeight: 800,
+      defaultHeight: 800
     });
     // Setup preload script path and construct our main window.
     const preloadPath = join(app.getAppPath(), 'build', 'src', 'preload.js');
@@ -119,8 +119,8 @@ export class ElectronCapacitorApp {
         contextIsolation: true,
         // Use preload to inject the electron varriant overrides for capacitor plugins.
         // preload: join(app.getAppPath(), "node_modules", "@capacitor-community", "electron", "dist", "runtime", "electron-rt.js"),
-        preload: preloadPath,
-      },
+        preload: preloadPath
+      }
     });
     this.mainWindowState.manage(this.MainWindow);
 
@@ -165,7 +165,8 @@ export class ElectronCapacitorApp {
     // Setup the main manu bar at the top of our window.
     Menu.setApplicationMenu(Menu.buildFromTemplate(this.AppMenuBarMenuTemplate));
 
-    // If the splashscreen is enabled, show it first while the main window loads then dwitch it out for the main window, or just load the main window from the start.
+    /* If the splashscreen is enabled, show it first while the main window loads then dwitch it out for the main window,
+    or just load the main window from the start. */
     if (this.CapacitorFileConfig.electron?.splashScreenEnabled) {
       this.SplashScreen = new CapacitorSplashScreen({
         imageFilePath: join(
@@ -174,7 +175,7 @@ export class ElectronCapacitorApp {
           this.CapacitorFileConfig.electron?.splashScreenImageName ?? 'splash.png'
         ),
         windowWidth: 400,
-        windowHeight: 400,
+        windowHeight: 400
       });
       this.SplashScreen.init(this.loadMainWindow, this);
     } else {
@@ -189,7 +190,7 @@ export class ElectronCapacitorApp {
         return { action: 'allow' };
       }
     });
-    this.MainWindow.webContents.on('will-navigate', (event, _newURL) => {
+    this.MainWindow.webContents.on('will-navigate', (event) => {
       if (!this.MainWindow.webContents.getURL().includes(this.customScheme)) {
         event.preventDefault();
       }
@@ -225,9 +226,9 @@ export function setupContentSecurityPolicy(customScheme: string): void {
         'Content-Security-Policy': [
           electronIsDev
             ? `default-src ${customScheme}://* 'unsafe-inline' devtools://* 'unsafe-eval' data:`
-            : `default-src ${customScheme}://* 'unsafe-inline' data:`,
-        ],
-      },
+            : `default-src ${customScheme}://* 'unsafe-inline' data:`
+        ]
+      }
     });
   });
 }

@@ -10,20 +10,18 @@ const reloadWatcher = {
   debouncer: null,
   ready: false,
   watcher: null,
-  restarting: false,
+  restarting: false
 };
 
-///*
 function runBuild() {
-  return new Promise((resolve, _reject) => {
-    let tempChild = cp.spawn(npmCmd, ['run', 'build']);
+  return new Promise((resolve) => {
+    const tempChild = cp.spawn(npmCmd, ['run', 'build']);
     tempChild.once('exit', () => {
       resolve();
     });
     tempChild.stdout.pipe(process.stdout);
   });
 }
-//*/
 
 async function spawnElectron() {
   if (child !== null) {
@@ -45,12 +43,12 @@ function setupReloadWatcher() {
   reloadWatcher.watcher = chokidar
     .watch('./src/**/*', {
       ignored: /[/\\]\./,
-      persistent: true,
+      persistent: true
     })
     .on('ready', () => {
       reloadWatcher.ready = true;
     })
-    .on('all', (_event, _path) => {
+    .on('all', () => {
       if (reloadWatcher.ready) {
         clearTimeout(reloadWatcher.debouncer);
         reloadWatcher.debouncer = setTimeout(async () => {

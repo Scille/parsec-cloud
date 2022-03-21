@@ -15,7 +15,7 @@ unhandled();
 const trayMenuTemplate: (MenuItemConstructorOptions | MenuItem)[] = [new MenuItem({ label: 'Quit App', role: 'quit' })];
 const appMenuBarMenuTemplate: (MenuItemConstructorOptions | MenuItem)[] = [
   { role: process.platform === 'darwin' ? 'appMenu' : 'fileMenu' },
-  { role: 'viewMenu' },
+  { role: 'viewMenu' }
 ];
 
 // Get Config options from capacitor.config
@@ -28,7 +28,7 @@ const myCapacitorApp = new ElectronCapacitorApp(capacitorFileConfig, trayMenuTem
 // If deeplinking is enabled then we will set it up here.
 if (capacitorFileConfig.electron?.deepLinkingEnabled) {
   setupElectronDeepLinking(myCapacitorApp, {
-    customProtocol: capacitorFileConfig.electron.deepLinkingCustomProtocol ?? 'mycapacitorapp',
+    customProtocol: capacitorFileConfig.electron.deepLinkingCustomProtocol ?? 'mycapacitorapp'
   });
 }
 
@@ -38,7 +38,7 @@ if (electronIsDev) {
 }
 
 // Run Application
-(async () => {
+(async (): Promise<any> => {
   // Wait for electron app to be ready.
   await app.whenReady();
   // Security - Set Content-Security-Policy based on whether or not we are in dev mode.
