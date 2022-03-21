@@ -2,7 +2,7 @@ import type { CapacitorElectronConfig } from '@capacitor-community/electron';
 import {
   CapElectronEventEmitter,
   CapacitorSplashScreen,
-  setupCapacitorElectronPlugins,
+  setupCapacitorElectronPlugins
 } from '@capacitor-community/electron';
 import chokidar from 'chokidar';
 import type { MenuItemConstructorOptions } from 'electron';
@@ -49,7 +49,7 @@ export class ElectronCapacitorApp {
   private TrayIcon: Tray | null = null;
   private CapacitorFileConfig: CapacitorElectronConfig;
   private TrayMenuTemplate: (MenuItem | MenuItemConstructorOptions)[] = [
-    new MenuItem({ label: 'Quit App', role: 'quit' }),
+    new MenuItem({ label: 'Quit App', role: 'quit' })
   ];
   private AppMenuBarMenuTemplate: (MenuItem | MenuItemConstructorOptions)[] = [
     { role: process.platform === 'darwin' ? 'appMenu' : 'fileMenu' },
